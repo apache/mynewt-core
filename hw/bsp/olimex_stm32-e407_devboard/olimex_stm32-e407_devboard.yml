@@ -1,0 +1,2 @@
+bsp.mcu: stm32f4xx  
+bsp.name: "olimex_stm32-e407_devboard"
