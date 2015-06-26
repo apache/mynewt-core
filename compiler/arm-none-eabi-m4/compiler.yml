@@ -8,3 +8,6 @@ compiler.path.objsize: arm-none-eabi-objsize
 compiler.flags.default: -mcpu=cortex-m4 -mthumb-interwork -mthumb 
 compiler.flags.optimized: -Os 
 compiler.flags.debug: [compiler.flags.default, -O3 -ggdb]
+
+compiler.ld.flags: -static -lgcc 
+compiler.ld.resolve_circular_deps: true 
