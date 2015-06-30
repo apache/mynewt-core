@@ -3,7 +3,7 @@
  *
  * CMSIS-style functionality to support dynamic vectors
  */ 
-#include "cmsis_nvic.h"
+#include "bsp/cmsis_nvic.h"
 
 #define NVIC_RAM_VECTOR_ADDRESS   (0x20000000)  // Location of vectors in RAM
 

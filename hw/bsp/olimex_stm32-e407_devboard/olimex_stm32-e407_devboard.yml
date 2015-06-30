@@ -1,2 +1,3 @@
-bsp.mcu: stm32f4xx  
-bsp.name: "olimex_stm32-e407_devboard"
+pkg.name: "olimex_stm32-e407_devboard"
+pkg.linkerscript: "olimex_stm32-e407_devboard.ld" 
+pkg.deps: os
