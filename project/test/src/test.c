@@ -75,7 +75,7 @@ task2_handler(void *arg)
         t = os_sched_get_current_task();
         assert(t->t_func == task2_handler);
        
-        os_time_delay(t, 10);
+        os_time_delay(10);
 
         os_eventq_put(&my_evq1, &my_osev1);
 
