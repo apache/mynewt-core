@@ -15,7 +15,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include "os.h"
+#include "os/os.h"
 
 /* Create a memory pool for testing */
 #define NUM_MEM_BLOCKS  (10)
