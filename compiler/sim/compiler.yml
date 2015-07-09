@@ -10,3 +10,5 @@ compiler.flags.base: >
 
 compiler.flags.default: [compiler.flags.base]
 compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
+
+compiler.ld.mapfile: false
