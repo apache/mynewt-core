@@ -1,0 +1,2 @@
+project.name: boot
+project.pkgs: pkg/os pkg/bootutil
