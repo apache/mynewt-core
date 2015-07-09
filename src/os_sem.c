@@ -178,16 +178,13 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
 
         /* We will put this task to sleep */
         sched = 1;
+        os_sched_sleep(current, timeout);
     }
 
     OS_EXIT_CRITICAL(sr);
 
     if (sched) {
-        os_sched_sleep(current, timeout);
-
-        /* XXX: what happens if task gets posted an event while waiting for
-           a sem? Does the task get woken up? */
-
+        os_sched(NULL, 0);
         /* Check if we timed out or got the semaphore */
         if (current->t_flags & OS_TASK_FLAG_SEM_WAIT) {
             OS_ENTER_CRITICAL(sr);
