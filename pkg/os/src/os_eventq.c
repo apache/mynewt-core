@@ -77,12 +77,14 @@ pull_one:
         ev->ev_queued = 0;
     } else {
         evq->evq_task = os_sched_get_current_task();
-        /* put this task to sleep for a long time... 
-         * XXX: implement sleep until woken, right now requires a timeout 
-         */
-        OS_EXIT_CRITICAL(sr); 
+        /* XXX: Is there a possible issue where we wake this task up because
+           it is sleeping but no event was posted? I guess in that case we
+           will end up waiting here anyway... */
         os_sched_sleep(evq->evq_task, OS_TIMEOUT_NEVER);
-        /* Sched sleep returns when the task has been woken up */
+        OS_EXIT_CRITICAL(sr);
+
+        os_sched(NULL, 0);
+
         OS_ENTER_CRITICAL(sr); 
         evq->evq_task = NULL;
         goto pull_one;

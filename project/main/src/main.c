@@ -29,7 +29,7 @@ task1_handler(void *arg)
 
         ++g_task1_loops;
 
-        os_sched_sleep(t, 1000);
+        os_time_delay(1000);
     }
 }
 
