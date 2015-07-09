@@ -1,18 +1,9 @@
-/**
- * Copyright (c) 2015 Stack Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/******************************************************************************
+** Copyright Silver Spring Networks 2004 - 2010
+** All rights reserved.
+**
+** $Id: main.c 76842 2015-03-26 05:00:46Z wills $
+******************************************************************************/
 #include "os/os.h"
 #include <assert.h>
 
@@ -42,6 +33,7 @@ task1_handler(void *arg)
     }
 }
 
+
 /**
  * init_tasks
  *  
@@ -63,11 +55,16 @@ init_tasks(void)
 /**
  * main
  *  
- * Main for the given project. Main initializes the OS, calls init tasks, then 
- * calls os start to start the tasks running. 
+ * Main for the given project. Main initializes the OS, the system timer and 
+ * the "sanity" task. The sanity task is a software watchdog, making sure all 
+ * running tasks are either checking in or waiting on an event. The sanity task 
+ * also initializes all of the UCOS tasks, so that initialization is done at the
+ * priority task level. 
  *  
  * @return int NOTE: this function should never return!
  */
+volatile int main_loop_counter;
+
 int
 main(void)
 {
@@ -77,9 +74,10 @@ main(void)
     rc = init_tasks();
     os_start();
 
-    /* We should never get here! */
-    assert(0);
-
+    /* Dont think we should ever get here */
+    while (1) {
+        ++main_loop_counter;
+    }
     return rc;
 }
 
