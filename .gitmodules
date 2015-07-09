@@ -1,3 +1,0 @@
-[submodule "pkg/os"]
-	path = pkg/os
-	url = https://github.com/micosa/stackrtos.git
