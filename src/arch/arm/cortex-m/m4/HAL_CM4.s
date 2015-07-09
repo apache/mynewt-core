@@ -35,10 +35,6 @@
         .file   "HAL_CM4.S"
         .syntax unified
 
-        .equ    TCB_STACKF, 32
-        .equ    TCB_TSTACK, 40
-
-
 /*----------------------------------------------------------------------------
  *      Functions
  *---------------------------------------------------------------------------*/
@@ -47,43 +43,6 @@
 
         .section ".text"
         .align  2
-
-
-/*--------------------------- rt_set_PSP ------------------------------------*/
-
-#       void rt_set_PSP (U32 stack);
-
-        .thumb_func
-        .type   rt_set_PSP, %function
-        .global rt_set_PSP
-rt_set_PSP:
-        .fnstart
-        .cantunwind
-
-        MSR     PSP,R0
-        BX      LR
-
-        .fnend
-        .size   rt_set_PSP, .-rt_set_PSP
-
-
-/*--------------------------- rt_get_PSP ------------------------------------*/
-
-#       U32 rt_get_PSP (void);
-
-        .thumb_func
-        .type   rt_get_PSP, %function
-        .global rt_get_PSP
-rt_get_PSP:
-        .fnstart
-        .cantunwind
-
-        MRS     R0,PSP
-        BX      LR
-
-        .fnend
-        .size   rt_get_PSP, .-rt_get_PSP
-
 
 /*--------------------------- os_set_env ------------------------------------*/
 
@@ -106,6 +65,7 @@ os_set_env:
         MOVNE   R0,#0x02                /* Privileged Thread mode, use PSP */
         MOVEQ   R0,#0x03                /* Unprivileged Thread mode, use PSP */
         MSR     CONTROL,R0
+        ISB
         BX      LR
 
         .fnend
@@ -119,10 +79,6 @@ os_set_env:
         .type   SVC_Handler, %function
         .global SVC_Handler
 SVC_Handler:
-        .ifdef  IFX_XMC4XXX
-        .global SVC_Handler_Veneer
-SVC_Handler_Veneer:
-        .endif
         .fnstart
         .cantunwind
 
@@ -138,58 +94,11 @@ SVC_Handler_Veneer:
 
         MRS     R12,PSP                 /* Read PSP */
         STM     R12,{R0-R2}             /* Store return values */
-
-        LDR     R3,=g_os_run_list       /* Get highest priority task ready to run */
-        LDR     R2,[R3]                 /* Store in R2 */
-        LDR     R3,=g_current_task      /* Get current task */
-        LDR     R1,[R3]                 /* Current task in R1 */
-        CMP     R1,R2
-        IT      EQ
-        BXEQ    LR                      /* RETI, no task switch */
-
-        CBZ     R1,SVC_Next             /* Runtask deleted? */
-        TST     LR,#0x10                /* is it extended frame? */
-        #ifdef  __FPU_PRESENT
-        ITTE    EQ
-        VSTMDBEQ R12!,{S16-S31}         /* yes, stack also VFP hi-regs */
-        #else
-        ITE    EQ
-        #endif
-        MOVEQ   R0,#0x01                /* os_tsk->stack_frame val */
-        MOVNE   R0,#0x00
-        STRB    R0,[R1,#TCB_STACKF]     /* os_tsk.run->stack_frame = val */
-        STMDB   R12!,{R4-R11}           /* Save Old context */
-        STR     R12,[R1,#TCB_TSTACK]    /* Update os_tsk.run->tsk_stack */
-
-SVC_Next:
-        STR     R2,[R3]                 /* os_tsk.run = os_tsk.new */
-
-        LDR     R12,[R2,#TCB_TSTACK]    /* os_tsk.new->tsk_stack */
-        LDMIA   R12!,{R4-R11}           /* Restore New Context */
-        LDRB    R0,[R2,#TCB_STACKF]     /* Stack Frame */
-        CMP     R0,#0                   /* Basic/Extended Stack Frame */
-        #ifdef  __FPU_PRESENT
-        ITTE    NE
-        VLDMIANE R12!,{S16-S31}         /* restore VFP hi-registers */
-        #else
-        ITE    NE
-        #endif
-        MVNNE   LR,#~0xFFFFFFED         /* set EXC_RETURN value */
-        MVNEQ   LR,#~0xFFFFFFFD
-        MSR     PSP,R12                 /* Write PSP */
-
-SVC_Exit:
-        .ifdef  IFX_XMC4XXX
-        PUSH    {LR}
-        POP     {PC}
-        .else
-        BX      LR
-        .endif
+        BX      LR                      /* Return from interrupt */
 
         /*------------------- User SVC ------------------------------*/
-
 SVC_User:
-        PUSH    {R4,LR}                 /* Save Registers */
+        PUSH    {R4,LR}                 /* Save EXC_RETURN */
         LDR     R2,=SVC_Count
         LDR     R2,[R2]
         CMP     R1,R2
@@ -204,7 +113,8 @@ SVC_User:
         MRS     R12,PSP
         STM     R12,{R0-R3}             /* Function return values */
 SVC_Done:
-        POP     {R4,PC}                 /* RETI */
+        POP     {R4,LR}                 /* Restore EXC_RETURN */
+        BX      LR                      /* Return from interrupt */
 
         .fnend
         .size   SVC_Handler, .-SVC_Handler
@@ -217,12 +127,7 @@ SVC_Done:
         .thumb_func
         .type   PendSV_Handler, %function
         .global PendSV_Handler
-        .global Sys_Switch
 PendSV_Handler:
-        .ifdef  IFX_XMC4XXX
-        .global PendSV_Handler_Veneer
-PendSV_Handler_Veneer:
-        .endif
         .fnstart
         .cantunwind
 
@@ -251,15 +156,10 @@ PendSV_Handler_Veneer:
 /*-------------------------- SysTick_Handler --------------------------------*/
 
 #       void SysTick_Handler (void);
-
         .thumb_func
         .type   SysTick_Handler, %function
         .global SysTick_Handler
 SysTick_Handler:
-        .ifdef  IFX_XMC4XXX
-        .global SysTick_Handler_Veneer
-SysTick_Handler_Veneer:
-        .endif
         .fnstart
         .cantunwind
 

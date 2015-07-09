@@ -31,6 +31,7 @@ typedef enum os_task_state {
 
 /* Task flags */
 #define OS_TASK_FLAG_NO_TIMEOUT     (0x0001U)
+#define OS_TASK_FLAG_SEM_WAIT       (0x0002U)
 
 typedef void (*os_task_func_t)(void *);
 
@@ -54,6 +55,7 @@ struct os_task {
     TAILQ_ENTRY(os_task) t_run_list;
     TAILQ_ENTRY(os_task) t_sleep_list;
     SLIST_ENTRY(os_task) t_mutex_list;
+    SLIST_ENTRY(os_task) t_sem_list;
 };
 
 int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t, 
