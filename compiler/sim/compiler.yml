@@ -2,7 +2,7 @@
 
 compiler.path.cc: "/usr/local/bin/gcc-5" 
 compiler.path.archive: "ar"
-compiler.path.objdump: "objdump"
+compiler.path.objdump: "gobjdump"
 compiler.path.objsize: "objsize"
 
 compiler.flags.base: >
