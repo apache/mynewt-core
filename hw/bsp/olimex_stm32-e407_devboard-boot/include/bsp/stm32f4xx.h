@@ -260,7 +260,7 @@ typedef enum IRQn
 
 #include <stdint.h>
 #include "system_stm32f4xx.h"
-#include "core_cm4.h" 
+#include "cmsis-core/core_cm4.h" 
 
 
 /** @addtogroup Exported_types

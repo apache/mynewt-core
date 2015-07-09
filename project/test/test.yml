@@ -1,2 +1,2 @@
 project.name: test
-project.pkgs: os
+project.pkgs: pkg/os

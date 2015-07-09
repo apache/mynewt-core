@@ -3,8 +3,6 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "os/arch/arm/os/cortex-m/core_cmFunc.h"
-
 /* XXX: Where? */
 #include "bsp/stm32f4xx.h"
 
