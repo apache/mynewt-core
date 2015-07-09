@@ -32,8 +32,8 @@ struct os_memblock {
 
 /* XXX: Change this structure so that we keep the first address in the pool? */
 /* XXX: add memory debug structure and associated code */
-/* Possible change how I coded the SLIST_HEAD here. It is odd... */
-
+/* XXX: Change how I coded the SLIST_HEAD here. It should be named:
+   SLIST_HEAD(,os_memblock) mp_head; */
 
 /* Memory pool */
 struct os_mempool {

@@ -17,11 +17,16 @@
 #include "os/os.h"
 #include "os/os_arch.h"
 
-#include "os/cortex-m/core_cmFunc.h"
-#include "os/cortex-m/rt_HAL_CM.h"
-#include "os/cortex-m/core_cmInstr.h"
-#include "os/cortex-m/m4/core_cm4.h"
+/* XXX: How do we know which cortex to use? */
+#define __CMSIS_GENERIC
+#include "cmsis-core/core_cm4.h"
 
+/* XXX: not sure how much of the intrinsic code is specific to M4. */
+
+/* XXX: this is cortex-m specific; not sure if applies to M0-M4. */
+#define INITIAL_xPSR    0x01000000
+
+/* XXX: This is cortex-m specific stuff. Not sure if applies to M0-M4 */
 struct stack_frame {
     uint32_t    r4;
     uint32_t    r5;
@@ -43,8 +48,6 @@ struct stack_frame {
 
 int     die_line;
 char    *die_module;
-
-int os_tick_irqn;
 
 #define SVC_ArgN(n) \
   register int __r##n __asm("r"#n);
@@ -78,40 +81,8 @@ int os_tick_irqn;
   );
 #endif
 
-#define OS_TICK         1000
-#define OS_CLOCK        168000000
-#define OS_TRV          ((uint32_t)(((double)OS_CLOCK*(double)OS_TICK)/1E6)-1)
-uint32_t const os_trv = OS_TRV;
-
+/* WWW: remove this or do this better */
 uint32_t os_flags = OS_RUN_PRIV;
-
-__inline static void
-rt_systick_init (void)
-{
-    NVIC_ST_RELOAD  = os_trv;
-    NVIC_ST_CURRENT = 0;
-    NVIC_ST_CTRL    = 0x0007;
-    NVIC_SYS_PRI3  |= 0xFF000000;
-}
-
-__inline static void
-rt_svc_init (void) 
-{
-#if !(__TARGET_ARCH_6S_M)
-    int sh,prigroup;
-#endif
-    NVIC_SYS_PRI3 |= 0x00FF0000;
-#if (__TARGET_ARCH_6S_M)
-    NVIC_SYS_PRI2 |= (NVIC_SYS_PRI3<<(8+1)) & 0xFC000000;
-#else
-    sh       = 8 - __clz (~((NVIC_SYS_PRI3 << 8) & 0xFF000000));
-    prigroup = ((NVIC_AIR_CTRL >> 8) & 0x07);
-    if (prigroup >= sh) {
-        sh = prigroup + 1;
-    }
-    NVIC_SYS_PRI2 = ((0xFEFFFFFF << sh) & 0xFF000000) | (NVIC_SYS_PRI2 & 0x00FFFFFF);
-#endif
-}
 
 void
 timer_handler(void)
@@ -124,8 +95,7 @@ timer_handler(void)
 void
 os_arch_ctx_sw(struct os_task *t)
 {
-    /* Set the PendSV interrupt pending to force context switch */
-    SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+    os_bsp_ctx_sw();
 }
 
 os_sr_t 
@@ -133,8 +103,9 @@ os_arch_save_sr(void)
 {
     uint32_t isr_ctx;
 
-    isr_ctx = __disable_irq();
-    return (isr_ctx); 
+    isr_ctx = __get_PRIMASK();
+    __disable_irq();
+    return (isr_ctx & 1); 
 }
 
 void
@@ -182,8 +153,6 @@ void
 os_arch_init(void)
 {
     os_init_idle_task();
-
-    rt_svc_init();
 }
 
 __attribute__((always_inline)) 
@@ -203,6 +172,22 @@ os_arch_os_init(void)
     err = OS_ERR_IN_ISR;
     if (__get_IPSR() == 0) {
         err = OS_OK;
+
+        /* Call bsp related OS initializations */
+        os_bsp_init();
+
+        /* 
+         * Set the os environment. This will set stack pointers and, based
+         * on the contents of os_flags, will determine if the tasks run in
+         * priviliged or un-privileged mode.
+         */
+        os_set_env();
+
+        /* XXX: the code for os_set_env() is in the .s file. NOTE: there are
+         * no DSB/ISB instructions in that code but there are in the old
+         * os_start code. Why? Do I need them in the assembly code? Read up
+           on this!!! */
+
         /* Check if priviliged or not */
         if ((__get_CONTROL() & 1) == 0) {
             os_arch_init();
@@ -214,27 +199,25 @@ os_arch_os_init(void)
     return err;
 }
 
-void
+uint32_t
 os_arch_start(void)
 {
     struct os_task *t;
-    //os_sr_t sr;
 
-    //OS_ENTER_CRITICAL(sr);
+    /* Get the highest priority ready to run to set the current task */
     t = os_sched_next_task(0);
     os_sched_set_current_task(t);
 
-    /* WWW: might have to modify this to go through SVC so it cant get
-       interrupted. ie. make this svc... not sure yet. This should work though 
-    */
-    __set_PSP((uint32_t)t->t_stackptr + sizeof(struct stack_frame));
+    /* Adjust PSP so it looks like this task just took an exception */
+    __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    rt_systick_init();
-    os_tick_irqn = -1;
+    os_bsp_systick_init(OS_TIME_TICK * 1000);
 
-    t->t_func(t->t_arg);
-    //OS_EXIT_CRITICAL(sr);
+    /* Perform context switch */
+    os_arch_ctx_sw(t);
+
+    return (uint32_t)(t->t_arg);
 }
 
 __attribute__((always_inline)) 
@@ -248,37 +231,30 @@ os_error_t
 os_arch_os_start(void)
 {
     os_error_t err;
-    uint32_t stack[8];
-
-    /* WWW */
-    os_set_env();
 
     err = OS_ERR_IN_ISR;
     if (__get_IPSR() == 0) {
-        /* Get the current mode of the processor */
+        /* 
+         * The following switch statement is really just a sanity check to
+         * insure that the os initialization routine was called prior to the
+         * os start routine.
+         */
         err = OS_OK;
         switch (__get_CONTROL() & 0x03) {
+        /* 
+         * These two cases are for completeness. Thread mode should be set
+         * to use PSP already.
+         * 
+         * Fall-through intentional!
+         */ 
         case 0x00:
-            /* We are running in priviliged Thread mode w/SP = MSP. */
-            /* WWW: why are we doing this? */
-            __set_PSP((uint32_t)(stack + 8));
-            if (os_flags & 1) {
-                __set_CONTROL(0x02);
-            } else {
-                __set_CONTROL(0x03);
-            }
-            __DSB();
-            __ISB();
-            break;
         case 0x01:
-            /* Unpriviliged Thread mode w/sp = MSP. This is an error */
             err = OS_ERR_PRIV;
+            break;
         case 0x02:
             /* Privileged Thread mode w/SP = PSP */
             if ((os_flags & 1) == 0) {
-              __set_CONTROL(0x03);
-              __DSB();
-              __ISB();
+                err = OS_ERR_PRIV;
             }
             break;
         case 0x03:
@@ -289,13 +265,11 @@ os_arch_os_start(void)
             break;
         }
         if (err == OS_OK) {
-            //svc_os_arch_start();
-            os_arch_start();
+            /* Always start OS through SVC call */
+            svc_os_arch_start();
         }
     }
 
     return err;
 }
 
-/* WWW: we should add code to be able to lock/unlock the scheduler.
-   This is rt_tsk_lock and rt_tsk_unlock in mbed */

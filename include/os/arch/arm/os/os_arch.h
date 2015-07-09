@@ -26,7 +26,7 @@ struct os_task;
 #define OS_RUN_PRIV         (1)
 
 /* Time tick in miliseconds that the OS runs */
-#define OS_TIME_TICK        (1000)
+#define OS_TIME_TICK        (1)
 #define OS_TICKS_PER_SEC    (OS_TIME_TICK * 1000)
 
 /* CPU status register */
@@ -51,8 +51,13 @@ void os_arch_ctx_sw(struct os_task *);
 void os_arch_ctx_sw_isr(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t);
-void os_arch_start(void);
+uint32_t os_arch_start(void);
 os_error_t os_arch_os_init(void);
 os_error_t os_arch_os_start(void);
+
+/* External function prototypes supplied by BSP */
+void os_bsp_systick_init(uint32_t os_tick_usecs);
+void os_bsp_init(void);
+void os_bsp_ctx_sw(void);
 
 #endif /* _OS_ARCH_X86_H */ 

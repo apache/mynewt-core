@@ -100,6 +100,16 @@ os_mutex_release(struct os_mutex *mu)
         SLIST_NEXT(rdy, t_mutex_list) = NULL;
         os_sched_wakeup(rdy, 0, 0);
 
+        /* XXX: I wonder if the following is possible: we are waiting on
+         * a mutex or semaphore or something and os_sched_wakeup gets
+         * called. Can getting a semaphore while waiting on a mutex wake
+         * us up if we get the semaphore? Look at this...
+         * NOTE: os_sched_wakeup() will always remove the current task from
+         * the mutex list. Shouldn't only this particular call to wakeup, or
+         * a timeout if waiting for a mutex for a time, be the only times that
+         * this can/should happen?
+         */
+
         /* Set mutex internals */
         mu->mu_level = 1;
         mu->mu_prio = rdy->t_prio;
