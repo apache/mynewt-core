@@ -298,8 +298,14 @@ start_timer(void)
     }
 }
 
+void 
+os_arch_os_init(void)
+{
+    return;
+}
+
 void
-os_arch_start(void)
+os_arch_os_start(void)
 {
     struct stack_frame *sf; 
     struct os_task *t;
