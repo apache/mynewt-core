@@ -98,15 +98,26 @@ os_sched(struct os_task *next_t, int isr)
 }
 
 
+/**
+ * os sched sleep 
+ *  
+ * Removes the task from the run list and puts it on the sleep list. 
+ *  
+ * NOTE: must be called with interrupts disabled! This function does not call 
+ * the scheduler 
+ * 
+ * @param t Task to put to sleep
+ * @param nticks Number of ticks to put task to sleep
+ * 
+ * @return int 
+ */
 int 
 os_sched_sleep(struct os_task *t, os_time_t nticks) 
 {
     struct os_task *entry;
-    os_sr_t sr; 
 
     entry = NULL; 
 
-    OS_ENTER_CRITICAL(sr);
     TAILQ_REMOVE(&g_os_run_list, t, t_run_list);
     t->t_state = OS_TASK_SLEEP;
     t->t_next_wakeup = os_time_get() + nticks;
@@ -126,9 +137,6 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
             TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_sleep_list); 
         }
     }
-    OS_EXIT_CRITICAL(sr);
-
-    os_sched(NULL, 0);
 
     return (0);
 }

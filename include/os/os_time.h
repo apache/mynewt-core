@@ -28,6 +28,7 @@ typedef uint32_t os_time_t;
 
 os_time_t os_time_get(void);
 void os_time_tick(void);
+void os_time_delay(int32_t osticks);
 
 #define OS_TIME_TICK_LT(__t1, __t2) ((int32_t) ((__t1) - (__t2)) < 0)
 #define OS_TIME_TICK_GT(__t1, __t2) ((int32_t) ((__t1) - (__t2)) > 0)
