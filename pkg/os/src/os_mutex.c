@@ -215,10 +215,11 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
 
     /* Set mutex pointer in task */
     current->t_mutex = mu;
+    os_sched_sleep(current, timeout);
 
     OS_EXIT_CRITICAL(sr);
 
-    os_sched_sleep(current, timeout);
+    os_sched(NULL, 0);
 
     /* XXX: not sure if there is a better way to do this... */
     if (mu->mu_owner == current) {

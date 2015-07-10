@@ -31,13 +31,18 @@ _clear_stack(os_stack_t *stack_bottom, int size)
     }
 }
 
-
-
 static inline uint8_t 
 os_task_next_id(void)
 {
-    /* WWW: doesnt this need to be protected? */
-    return (g_task_id++);
+    uint8_t rc;
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
+    rc = g_task_id;
+    g_task_id++;
+    OS_EXIT_CRITICAL(sr);
+
+    return (rc);
 }
 
 int 

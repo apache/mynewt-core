@@ -34,3 +34,24 @@ os_time_tick(void)
     ++g_os_time;
     OS_EXIT_CRITICAL(sr);
 }
+
+/**
+ * os time delay 
+ *  
+ * Puts the current task to sleep for the specified number of os ticks. There 
+ * is no delay if ticks is <= 0. 
+ * 
+ * @param osticks Number of ticks to delay (<= 0 means no delay).
+ */
+void
+os_time_delay(int32_t osticks)
+{
+    os_sr_t sr;
+
+    if (osticks > 0) {
+        OS_ENTER_CRITICAL(sr);
+        os_sched_sleep(os_sched_get_current_task(), (os_time_t)osticks);
+        OS_EXIT_CRITICAL(sr);
+        os_sched(NULL, 0);
+    }
+}
