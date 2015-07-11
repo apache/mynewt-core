@@ -21,8 +21,7 @@
 
 TAILQ_HEAD(, os_task) g_os_run_list = TAILQ_HEAD_INITIALIZER(g_os_run_list); 
 
-TAILQ_HEAD(sleep_list, os_task) g_os_sleep_list = 
-    TAILQ_HEAD_INITIALIZER(g_os_sleep_list); 
+TAILQ_HEAD(, os_task) g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list); 
 
 struct os_task *g_current_task; 
 
