@@ -87,8 +87,8 @@ os_sem_release(struct os_sem *sem)
            all the flags? Is this a problem? */
 
         /* There is one waiting. Wake it up */
-        SLIST_REMOVE_HEAD(&sem->sem_head, t_sem_list);
-        SLIST_NEXT(rdy, t_sem_list) = NULL;
+        SLIST_REMOVE_HEAD(&sem->sem_head, t_obj_list);
+        SLIST_NEXT(rdy, t_obj_list) = NULL;
         os_sched_wakeup(rdy, 0, 0);
 
         /* Schedule if waiting task higher priority */
@@ -162,7 +162,7 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
         last = NULL;
         if (!SLIST_EMPTY(&sem->sem_head)) {
             /* Insert in priority order */
-            SLIST_FOREACH(entry, &sem->sem_head, t_sem_list) {
+            SLIST_FOREACH(entry, &sem->sem_head, t_obj_list) {
                 if (current->t_prio < entry->t_prio) { 
                     break;
                 }
@@ -171,9 +171,9 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
         }
 
         if (last) {
-            SLIST_INSERT_AFTER(last, current, t_sem_list);
+            SLIST_INSERT_AFTER(last, current, t_obj_list);
         } else {
-            SLIST_INSERT_HEAD(&sem->sem_head, current, t_sem_list);
+            SLIST_INSERT_HEAD(&sem->sem_head, current, t_obj_list);
         }
 
         /* We will put this task to sleep */
@@ -233,8 +233,8 @@ os_sem_delete(struct os_sem *sem)
     /* Now, go through all the tasks waiting on the semaphore */
     while (!SLIST_EMPTY(&sem->sem_head)) {
         rdy = SLIST_FIRST(&sem->sem_head);
-        SLIST_REMOVE_HEAD(&sem->sem_head, t_sem_list);
-        SLIST_NEXT(rdy, t_sem_list) = NULL;
+        SLIST_REMOVE_HEAD(&sem->sem_head, t_obj_list);
+        SLIST_NEXT(rdy, t_obj_list) = NULL;
         os_sched_wakeup(rdy, 0, 0);
     }
 

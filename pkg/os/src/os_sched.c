@@ -21,7 +21,7 @@
 
 TAILQ_HEAD(, os_task) g_os_run_list = TAILQ_HEAD_INITIALIZER(g_os_run_list); 
 
-TAILQ_HEAD(, os_task) g_os_sleep_list = 
+TAILQ_HEAD(sleep_list, os_task) g_os_sleep_list = 
     TAILQ_HEAD_INITIALIZER(g_os_sleep_list); 
 
 struct os_task *g_current_task; 
@@ -47,15 +47,15 @@ os_sched_insert(struct os_task *t, int isr)
     if (!isr) {
         OS_ENTER_CRITICAL(sr); 
     }
-    TAILQ_FOREACH(entry, &g_os_run_list, t_run_list) {
+    TAILQ_FOREACH(entry, &g_os_run_list, t_os_list) {
         if (t->t_prio < entry->t_prio) { 
             break;
         }
     }
     if (entry) {
-        TAILQ_INSERT_BEFORE(entry, (struct os_task *) t, t_run_list);
+        TAILQ_INSERT_BEFORE(entry, (struct os_task *) t, t_os_list);
     } else {
-        TAILQ_INSERT_TAIL(&g_os_run_list, (struct os_task *) t, t_run_list);
+        TAILQ_INSERT_TAIL(&g_os_run_list, (struct os_task *) t, t_os_list);
     }
     if (!isr) {
         OS_EXIT_CRITICAL(sr);
@@ -118,23 +118,23 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
 
     entry = NULL; 
 
-    TAILQ_REMOVE(&g_os_run_list, t, t_run_list);
+    TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
     t->t_state = OS_TASK_SLEEP;
     t->t_next_wakeup = os_time_get() + nticks;
     if (nticks == OS_TIMEOUT_NEVER) {
         t->t_flags |= OS_TASK_FLAG_NO_TIMEOUT;
-        TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_sleep_list); 
+        TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_os_list); 
     } else {
-        TAILQ_FOREACH(entry, &g_os_sleep_list, t_sleep_list) {
+        TAILQ_FOREACH(entry, &g_os_sleep_list, t_os_list) {
             if ((t->t_flags & OS_TASK_FLAG_NO_TIMEOUT) ||
                     OS_TIME_TICK_GT(entry->t_next_wakeup, t->t_next_wakeup)) {
                 break;
             }
         }
         if (entry) {
-            TAILQ_INSERT_BEFORE(entry, t, t_sleep_list); 
+            TAILQ_INSERT_BEFORE(entry, t, t_os_list); 
         } else {
-            TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_sleep_list); 
+            TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_os_list); 
         }
     }
 
@@ -153,8 +153,8 @@ os_sched_wakeup(struct os_task *t, int sched_now, int isr)
     /* Remove self from mutex list if waiting on one */
     if (t->t_mutex) {
         assert(!SLIST_EMPTY(&t->t_mutex->mu_head));
-        SLIST_REMOVE(&t->t_mutex->mu_head, t, os_task, t_mutex_list);
-        SLIST_NEXT(t, t_mutex_list) = NULL;
+        SLIST_REMOVE(&t->t_mutex->mu_head, t, os_task, t_obj_list);
+        SLIST_NEXT(t, t_obj_list) = NULL;
         t->t_mutex = NULL; 
     }
 
@@ -162,7 +162,7 @@ os_sched_wakeup(struct os_task *t, int sched_now, int isr)
     t->t_state = OS_TASK_READY;
     t->t_next_wakeup = 0;
     t->t_flags &= ~OS_TASK_FLAG_NO_TIMEOUT;
-    TAILQ_REMOVE(&g_os_sleep_list, t, t_sleep_list);
+    TAILQ_REMOVE(&g_os_sleep_list, t, t_os_list);
     os_sched_insert(t, isr);
     if (!isr) {
         OS_EXIT_CRITICAL(sr);
@@ -182,7 +182,8 @@ os_sched_wakeup(struct os_task *t, int sched_now, int isr)
 struct os_task *  
 os_sched_next_task(int isr) 
 {
-    struct os_task *t; 
+    struct os_task *t;
+    struct os_task *next;
     os_time_t now; 
     os_sr_t sr;
 
@@ -191,19 +192,23 @@ os_sched_next_task(int isr)
     if (!isr) {
         OS_ENTER_CRITICAL(sr);
     }
+
     /*
      * Wakeup any tasks that have their sleep timer expired
      */
-    TAILQ_FOREACH(t, &g_os_sleep_list, t_sleep_list) {
+    t = TAILQ_FIRST(&g_os_sleep_list);
+    while (t) {
         /* If task waiting forever, do not check next wakeup time */
         if (t->t_flags & OS_TASK_FLAG_NO_TIMEOUT) {
             break;
         }
+        next = TAILQ_NEXT(t, t_os_list);
         if (OS_TIME_TICK_GEQ(now, t->t_next_wakeup)) {
             os_sched_wakeup(t, 0, isr);
         } else {
             break;
         }
+        t = next;
     }
 
     /* 
@@ -234,7 +239,7 @@ void
 os_sched_resort(struct os_task *t) 
 {
     if (t->t_state == OS_TASK_READY) {
-        TAILQ_REMOVE(&g_os_run_list, t, t_run_list);
+        TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
         os_sched_insert(t, 0);
     }
 }

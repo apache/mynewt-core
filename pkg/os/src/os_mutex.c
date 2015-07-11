@@ -96,8 +96,8 @@ os_mutex_release(struct os_mutex *mu)
         assert(rdy->t_mutex);
         rdy->t_mutex = NULL;
 
-        SLIST_REMOVE_HEAD(&mu->mu_head, t_mutex_list);
-        SLIST_NEXT(rdy, t_mutex_list) = NULL;
+        SLIST_REMOVE_HEAD(&mu->mu_head, t_obj_list);
+        SLIST_NEXT(rdy, t_obj_list) = NULL;
         os_sched_wakeup(rdy, 0, 0);
 
         /* XXX: I wonder if the following is possible: we are waiting on
@@ -199,7 +199,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     last = NULL;
     if (!SLIST_EMPTY(&mu->mu_head)) {
         /* Insert in priority order */
-        SLIST_FOREACH(entry, &mu->mu_head, t_mutex_list) {
+        SLIST_FOREACH(entry, &mu->mu_head, t_obj_list) {
             if (current->t_prio < entry->t_prio) { 
                 break;
             }
@@ -208,9 +208,9 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     }
 
     if (last) {
-        SLIST_INSERT_AFTER(last, current, t_mutex_list);
+        SLIST_INSERT_AFTER(last, current, t_obj_list);
     } else {
-        SLIST_INSERT_HEAD(&mu->mu_head, current, t_mutex_list);
+        SLIST_INSERT_HEAD(&mu->mu_head, current, t_obj_list);
     }
 
     /* Set mutex pointer in task */
@@ -273,8 +273,8 @@ os_mutex_delete(struct os_mutex *mu)
         rdy = SLIST_FIRST(&mu->mu_head);
         assert(rdy->t_mutex);
         rdy->t_mutex = NULL;
-        SLIST_REMOVE_HEAD(&mu->mu_head, t_mutex_list);
-        SLIST_NEXT(rdy, t_mutex_list) = NULL;
+        SLIST_REMOVE_HEAD(&mu->mu_head, t_obj_list);
+        SLIST_NEXT(rdy, t_obj_list) = NULL;
         os_sched_wakeup(rdy, 0, 0);
     }
 

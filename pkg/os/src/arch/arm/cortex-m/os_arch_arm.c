@@ -81,7 +81,7 @@ char    *die_module;
   );
 #endif
 
-/* WWW: remove this or do this better */
+/* XXX: determine how we will deal with running un-privileged */
 uint32_t os_flags = OS_RUN_PRIV;
 
 void

@@ -72,5 +72,8 @@ void os_init_idle_task(void);
 #include "os/os_sem.h"
 #include "os/os_mempool.h"
 
+/* WWW */
+void test_debug_display(int num);
+/* WWW */
 
 #endif /* _OS_H */
