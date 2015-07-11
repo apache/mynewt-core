@@ -51,11 +51,13 @@ struct os_task {
     struct os_mutex *t_mutex;
 
     os_task_state_t t_state;
-    os_time_t t_next_wakeup; 
-    TAILQ_ENTRY(os_task) t_run_list;
-    TAILQ_ENTRY(os_task) t_sleep_list;
-    SLIST_ENTRY(os_task) t_mutex_list;
-    SLIST_ENTRY(os_task) t_sem_list;
+    os_time_t t_next_wakeup;
+    
+    /* Used to chain task to either the run or sleep list */ 
+    TAILQ_ENTRY(os_task) t_os_list;
+
+    /* Used to chain task to an object such as a semaphore or mutex */
+    SLIST_ENTRY(os_task) t_obj_list;
 };
 
 int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t, 
