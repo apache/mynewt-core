@@ -49,7 +49,11 @@ static volatile int g_sem_test;
 
 /* 
  * TEST NUMBERS:
- *      10: XXX
+ *  10: In this test we have the highest priority task getting the semaphore
+ *  then sleeping. Two lower priority tasks then wake up and attempt to get
+ *  the semaphore. They are blocked until the higher priority task releases
+ *  the semaphore, at which point the lower priority tasks should wake up in
+ *  order, get the semaphore, then release it and go back to sleep.
  * 
  */
 
