@@ -1,14 +1,22 @@
 # Stack Test Repository 
 
-# Installing 
+# Overview
 
-We use sub-modules in the .gitmodules file to point to the various packages being 
-developed and linked into this repository.  In order to download all the necessary 
-sources, once clone'ing the dev\_test directory, issue the following commands: 
+This is a test repository containing the full stack repository, to make a working 
+set of compiled images 
 
-$ git submodule init 
-$ git submodule update 
+# Sub-Trees
 
-In order to update the submodules with newer code, issue: 
+This repository has links to other packages distributed by Micosa, examples 
+include: 
 
-$ git submodule update 
+* OS (http://github.com/micosa/os)
+* CMSIS-CORE (http://github.com/micosa/cmsis-core)
+
+These packages are imported into this repository using git subtrees.  To see a 
+full set of remote repositories, look at the setup-remotes.sh script, which 
+adds the remote repositories.
+
+In order to update these repositories, git subtree merging should be employed, 
+where changes are made locally and tested within the dev_test repository first, 
+and then pushed upstream once tested. 
