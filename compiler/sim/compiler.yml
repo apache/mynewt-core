@@ -1,0 +1,14 @@
+############################# Compiler Variables #############################
+
+compiler.path.cc: "/usr/local/bin/gcc-5" 
+compiler.path.archive: "ar"
+compiler.path.objdump: "gobjdump"
+compiler.path.objsize: "objsize"
+
+compiler.flags.base: >
+    -m32
+
+compiler.flags.default: [compiler.flags.base]
+compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
+
+compiler.ld.mapfile: false
