@@ -1,3 +1,0 @@
-pkg.name: os
-pkg.vers: 0.1 
-pkg.deps: libs/cmsis-core 
