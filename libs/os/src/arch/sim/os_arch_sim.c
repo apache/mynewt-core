@@ -273,6 +273,7 @@ timer_handler(int sig)
     time_last = time_now;
     g_pending_ticks = 0;
 
+    os_sched_os_timer_exp();
     os_sched(NULL, 1); 
 }
 
@@ -312,7 +313,7 @@ os_arch_os_start(void)
 
     start_timer();
 
-    t = os_sched_next_task(0);
+    t = os_sched_next_task();
     os_sched_set_current_task(t);
 
     sf = (struct stack_frame *) t->t_stackptr;

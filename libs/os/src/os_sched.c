@@ -25,17 +25,23 @@ TAILQ_HEAD(, os_task) g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);
 
 struct os_task *g_current_task; 
 
-
 /**
- * Insert a newly created task into the scheduler list.  This causes the task to 
- * be evaluated for running when os_scheduler_run() is called.
+ * os sched insert
+ *  
+ * Insert a task into the scheduler list. This causes the task to be evaluated
+ * for running when os_sched is called. 
+ * 
+ * @param t     Pointer to task to insert in run list
+ * 
+ * @return int  OS_OK: task was inserted into run list 
+ *              OS_EINVAL: Task was not in ready state. 
  */
-int 
-os_sched_insert(struct os_task *t, int isr) 
+os_error_t
+os_sched_insert(struct os_task *t) 
 {
     struct os_task *entry; 
     os_sr_t sr; 
-    int rc;
+    os_error_t rc;
 
     if (t->t_state != OS_TASK_READY) {
         rc = OS_EINVAL;
@@ -43,9 +49,7 @@ os_sched_insert(struct os_task *t, int isr)
     }
 
     entry = NULL;
-    if (!isr) {
-        OS_ENTER_CRITICAL(sr); 
-    }
+    OS_ENTER_CRITICAL(sr); 
     TAILQ_FOREACH(entry, &g_os_run_list, t_os_list) {
         if (t->t_prio < entry->t_prio) { 
             break;
@@ -56,27 +60,53 @@ os_sched_insert(struct os_task *t, int isr)
     } else {
         TAILQ_INSERT_TAIL(&g_os_run_list, (struct os_task *) t, t_os_list);
     }
-    if (!isr) {
-        OS_EXIT_CRITICAL(sr);
-    }
+    OS_EXIT_CRITICAL(sr);
 
     return (0);
 err:
     return (rc);
 }
 
+/**
+ * os sched get current task 
+ *  
+ * Returns the currently running task. Note that this task may or may not be 
+ * the highest priority task ready to run. 
+ * 
+ * 
+ * @return struct os_task* 
+ */
 struct os_task * 
 os_sched_get_current_task(void)
 {
     return (g_current_task);
 }
 
+/**
+ * os sched set current task 
+ *  
+ * Sets the currently running task to 't'. Note that this function simply sets 
+ * the global variable holding the currently running task. It does not perform 
+ * a context switch or change the os run or sleep list. 
+ * 
+ * @param t Pointer to currently running task.
+ */
 void 
 os_sched_set_current_task(struct os_task *t) 
 {
     g_current_task = t;
 }
 
+/**
+ * os sched 
+ *  
+ * Performs a context switch. When called, it will either find the highest 
+ * priority task ready to run if next_t is NULL (i.e. the head of the os run 
+ * list) or will schedule next_t as the task to run.
+ * 
+ * @param next_t Task to run
+ * @param isr    Flag denoting whether we are inside an isr (0:no, 1:yes).
+ */
 void
 os_sched(struct os_task *next_t, int isr) 
 {
@@ -85,30 +115,34 @@ os_sched(struct os_task *next_t, int isr)
     OS_ENTER_CRITICAL(sr);
 
     if (!next_t) {
-        next_t = os_sched_next_task(isr);
+        next_t = os_sched_next_task();
     }
 
     if (next_t != os_sched_get_current_task()) {
-        os_arch_ctx_sw(next_t);
         OS_EXIT_CRITICAL(sr);
+        if (isr) {
+            os_arch_ctx_sw_isr(next_t);
+        } else {
+            os_arch_ctx_sw(next_t);
+        }
+
     } else {
         OS_EXIT_CRITICAL(sr);
     }
 }
 
-
 /**
  * os sched sleep 
  *  
  * Removes the task from the run list and puts it on the sleep list. 
- *  
- * NOTE: must be called with interrupts disabled! This function does not call 
- * the scheduler 
  * 
  * @param t Task to put to sleep
  * @param nticks Number of ticks to put task to sleep
  * 
- * @return int 
+ * @return int
+ *  
+ * NOTE: must be called with interrupts disabled! This function does not call 
+ * the scheduler 
  */
 int 
 os_sched_sleep(struct os_task *t, os_time_t nticks) 
@@ -140,14 +174,22 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
     return (0);
 }
 
+/**
+ * os sched wakeup 
+ *  
+ * Called to wake up a task. Waking up a task consists of setting the task state
+ * to READY and moving it from the sleep list to the run list. 
+ * 
+ * @param t     Pointer to task to wake up. 
+ * 
+ * @return int 
+ *  
+ * NOTE: This function must be called with interrupts disabled. 
+ */
 int 
-os_sched_wakeup(struct os_task *t, int sched_now, int isr) 
+os_sched_wakeup(struct os_task *t) 
 {
     os_sr_t sr; 
-
-    if (!isr) {
-        OS_ENTER_CRITICAL(sr); 
-    }
 
     /* Remove self from mutex list if waiting on one */
     if (t->t_mutex) {
@@ -162,24 +204,22 @@ os_sched_wakeup(struct os_task *t, int sched_now, int isr)
     t->t_next_wakeup = 0;
     t->t_flags &= ~OS_TASK_FLAG_NO_TIMEOUT;
     TAILQ_REMOVE(&g_os_sleep_list, t, t_os_list);
-    os_sched_insert(t, isr);
-    if (!isr) {
-        OS_EXIT_CRITICAL(sr);
-    }
-
-    if (sched_now) {
-        os_sched(NULL, isr);
-    }
+    os_sched_insert(t);
 
     return (0);
 }
 
-
 /**
- * Get the next task to run. 
+ * os sched os timer exp 
+ *  
+ * Called when the OS tick timer expires. Search the sleep list for any tasks 
+ * that need waking up. This occurs when the current OS time exceeds the next 
+ * wakeup time stored in the task. Any tasks that need waking up will be 
+ * removed from the sleep list and added to the run list. 
+ * 
  */
-struct os_task *  
-os_sched_next_task(int isr) 
+void
+os_sched_os_timer_exp(void)
 {
     struct os_task *t;
     struct os_task *next;
@@ -188,9 +228,7 @@ os_sched_next_task(int isr)
 
     now = os_time_get();
 
-    if (!isr) {
-        OS_ENTER_CRITICAL(sr);
-    }
+    OS_ENTER_CRITICAL(sr);
 
     /*
      * Wakeup any tasks that have their sleep timer expired
@@ -203,22 +241,31 @@ os_sched_next_task(int isr)
         }
         next = TAILQ_NEXT(t, t_os_list);
         if (OS_TIME_TICK_GEQ(now, t->t_next_wakeup)) {
-            os_sched_wakeup(t, 0, isr);
+            os_sched_wakeup(t);
         } else {
             break;
         }
         t = next;
     }
 
-    /* 
-     * Run the head of the run list
-     */
-    t = TAILQ_FIRST(&g_os_run_list);
-    if (!isr) {
-        OS_EXIT_CRITICAL(sr); 
-    }
+    OS_EXIT_CRITICAL(sr); 
+}
 
-    return (t);
+/**
+ * os sched next task 
+ *  
+ * Returns the task that we should be running. This is the task at the head 
+ * of the run list. 
+ *  
+ * NOTE: if you want to guarantee that the os run list does not change after 
+ * calling this function you have to call it with interrupts disabled. 
+ * 
+ * @return struct os_task* 
+ */
+struct os_task *  
+os_sched_next_task(void) 
+{
+    return (TAILQ_FIRST(&g_os_run_list));
 }
 
 /**
@@ -239,7 +286,7 @@ os_sched_resort(struct os_task *t)
 {
     if (t->t_state == OS_TASK_READY) {
         TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
-        os_sched_insert(t, 0);
+        os_sched_insert(t);
     }
 }
 

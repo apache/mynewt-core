@@ -89,11 +89,18 @@ timer_handler(void)
 {
     os_time_tick();
     os_callout_tick();
+    os_sched_os_timer_exp();
     os_sched(NULL, 1); 
 }
 
 void
 os_arch_ctx_sw(struct os_task *t)
+{
+    os_bsp_ctx_sw();
+}
+
+void
+os_arch_ctx_sw_isr(struct os_task *t)
 {
     os_bsp_ctx_sw();
 }
@@ -205,7 +212,7 @@ os_arch_start(void)
     struct os_task *t;
 
     /* Get the highest priority ready to run to set the current task */
-    t = os_sched_next_task(0);
+    t = os_sched_next_task();
     os_sched_set_current_task(t);
 
     /* Adjust PSP so it looks like this task just took an exception */
