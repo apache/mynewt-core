@@ -83,11 +83,20 @@ os_sem_release(struct os_sem *sem)
     if (rdy) {
         /* Clear flag that we are waiting on the semaphore */
         rdy->t_flags &= ~OS_TASK_FLAG_SEM_WAIT;
+<<<<<<< HEAD
+=======
+        /* XXX: should os_sched_wakeup clear this flag? Should it clear
+           all the flags? Is this a problem? */
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
         /* There is one waiting. Wake it up */
         SLIST_REMOVE_HEAD(&sem->sem_head, t_obj_list);
         SLIST_NEXT(rdy, t_obj_list) = NULL;
+<<<<<<< HEAD
         os_sched_wakeup(rdy);
+=======
+        os_sched_wakeup(rdy, 0, 0);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
         /* Schedule if waiting task higher priority */
         if (current->t_prio > rdy->t_prio) {
@@ -211,7 +220,10 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
 os_error_t
 os_sem_delete(struct os_sem *sem)
 {
+<<<<<<< HEAD
     int resched;
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     os_sr_t sr;
     struct os_task *current;
     struct os_task *rdy;
@@ -222,7 +234,10 @@ os_sem_delete(struct os_sem *sem)
     }
 
     /* Get currently running task */
+<<<<<<< HEAD
     resched = 0;
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     current = os_sched_get_current_task();
 
     OS_ENTER_CRITICAL(sr);
@@ -230,6 +245,7 @@ os_sem_delete(struct os_sem *sem)
     /* Remove all tokens from semaphore */
     sem->sem_tokens = 0;
 
+<<<<<<< HEAD
     /* Any tasks waiting? */
     rdy = SLIST_FIRST(&sem->sem_head);
     if (rdy) {
@@ -252,6 +268,26 @@ os_sem_delete(struct os_sem *sem)
     /* Re-schedule if needed*/
     if (resched) {
         os_sched(rdy, 0);
+=======
+    /* Now, go through all the tasks waiting on the semaphore */
+    while (!SLIST_EMPTY(&sem->sem_head)) {
+        rdy = SLIST_FIRST(&sem->sem_head);
+        SLIST_REMOVE_HEAD(&sem->sem_head, t_obj_list);
+        SLIST_NEXT(rdy, t_obj_list) = NULL;
+        os_sched_wakeup(rdy, 0, 0);
+    }
+
+    /* XXX: the os_sched_next_task() call is sort of heavyweight. Should
+       I just check priority of first task on sem list? */
+    /* Is there a task that is ready that is higher priority than us? */
+    rdy = os_sched_next_task(0);
+    if (rdy != current) {
+        /* Re-schedule */
+        OS_EXIT_CRITICAL(sr);
+        os_sched(rdy, 0);
+    } else {
+        OS_EXIT_CRITICAL(sr);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     }
 
     return OS_OK;

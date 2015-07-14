@@ -36,10 +36,18 @@ struct os_mutex
     -> What debug information should we add to this structure? Who last
     acquired the mutex? File/line where it was released?
     -> Should we add a name to the mutex?
+<<<<<<< HEAD
     -> Should we add a "os_mutex_inspect() api?
 */
 
 /* XXX: api to create
+=======
+    -> Should we add a "os_mutex_inspect() api, like ucos?
+*/
+
+/* XXX: api to create
+os_mutex_pend();
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 os_mutex_inspect(); 
 */ 
 

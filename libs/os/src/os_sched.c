@@ -25,6 +25,7 @@ TAILQ_HEAD(, os_task) g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);
 
 struct os_task *g_current_task; 
 
+<<<<<<< HEAD
 /**
  * os sched insert
  *  
@@ -42,6 +43,19 @@ os_sched_insert(struct os_task *t)
     struct os_task *entry; 
     os_sr_t sr; 
     os_error_t rc;
+=======
+
+/**
+ * Insert a newly created task into the scheduler list.  This causes the task to 
+ * be evaluated for running when os_scheduler_run() is called.
+ */
+int 
+os_sched_insert(struct os_task *t, int isr) 
+{
+    struct os_task *entry; 
+    os_sr_t sr; 
+    int rc;
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
     if (t->t_state != OS_TASK_READY) {
         rc = OS_EINVAL;
@@ -49,7 +63,13 @@ os_sched_insert(struct os_task *t)
     }
 
     entry = NULL;
+<<<<<<< HEAD
     OS_ENTER_CRITICAL(sr); 
+=======
+    if (!isr) {
+        OS_ENTER_CRITICAL(sr); 
+    }
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     TAILQ_FOREACH(entry, &g_os_run_list, t_os_list) {
         if (t->t_prio < entry->t_prio) { 
             break;
@@ -60,13 +80,20 @@ os_sched_insert(struct os_task *t)
     } else {
         TAILQ_INSERT_TAIL(&g_os_run_list, (struct os_task *) t, t_os_list);
     }
+<<<<<<< HEAD
     OS_EXIT_CRITICAL(sr);
+=======
+    if (!isr) {
+        OS_EXIT_CRITICAL(sr);
+    }
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
     return (0);
 err:
     return (rc);
 }
 
+<<<<<<< HEAD
 /**
  * os sched get current task 
  *  
@@ -76,12 +103,15 @@ err:
  * 
  * @return struct os_task* 
  */
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 struct os_task * 
 os_sched_get_current_task(void)
 {
     return (g_current_task);
 }
 
+<<<<<<< HEAD
 /**
  * os sched set current task 
  *  
@@ -91,12 +121,15 @@ os_sched_get_current_task(void)
  * 
  * @param t Pointer to currently running task.
  */
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 void 
 os_sched_set_current_task(struct os_task *t) 
 {
     g_current_task = t;
 }
 
+<<<<<<< HEAD
 /**
  * os sched 
  *  
@@ -107,6 +140,8 @@ os_sched_set_current_task(struct os_task *t)
  * @param next_t Task to run
  * @param isr    Flag denoting whether we are inside an isr (0:no, 1:yes).
  */
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 void
 os_sched(struct os_task *next_t, int isr) 
 {
@@ -115,6 +150,7 @@ os_sched(struct os_task *next_t, int isr)
     OS_ENTER_CRITICAL(sr);
 
     if (!next_t) {
+<<<<<<< HEAD
         next_t = os_sched_next_task();
     }
 
@@ -126,23 +162,45 @@ os_sched(struct os_task *next_t, int isr)
             os_arch_ctx_sw(next_t);
         }
 
+=======
+        next_t = os_sched_next_task(isr);
+    }
+
+    if (next_t != os_sched_get_current_task()) {
+        os_arch_ctx_sw(next_t);
+        OS_EXIT_CRITICAL(sr);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     } else {
         OS_EXIT_CRITICAL(sr);
     }
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 /**
  * os sched sleep 
  *  
  * Removes the task from the run list and puts it on the sleep list. 
+<<<<<<< HEAD
+=======
+ *  
+ * NOTE: must be called with interrupts disabled! This function does not call 
+ * the scheduler 
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
  * 
  * @param t Task to put to sleep
  * @param nticks Number of ticks to put task to sleep
  * 
+<<<<<<< HEAD
  * @return int
  *  
  * NOTE: must be called with interrupts disabled! This function does not call 
  * the scheduler 
+=======
+ * @return int 
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
  */
 int 
 os_sched_sleep(struct os_task *t, os_time_t nticks) 
@@ -174,6 +232,7 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
     return (0);
 }
 
+<<<<<<< HEAD
 /**
  * os sched wakeup 
  *  
@@ -191,6 +250,17 @@ os_sched_wakeup(struct os_task *t)
 {
     os_sr_t sr; 
 
+=======
+int 
+os_sched_wakeup(struct os_task *t, int sched_now, int isr) 
+{
+    os_sr_t sr; 
+
+    if (!isr) {
+        OS_ENTER_CRITICAL(sr); 
+    }
+
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     /* Remove self from mutex list if waiting on one */
     if (t->t_mutex) {
         assert(!SLIST_EMPTY(&t->t_mutex->mu_head));
@@ -204,11 +274,23 @@ os_sched_wakeup(struct os_task *t)
     t->t_next_wakeup = 0;
     t->t_flags &= ~OS_TASK_FLAG_NO_TIMEOUT;
     TAILQ_REMOVE(&g_os_sleep_list, t, t_os_list);
+<<<<<<< HEAD
     os_sched_insert(t);
+=======
+    os_sched_insert(t, isr);
+    if (!isr) {
+        OS_EXIT_CRITICAL(sr);
+    }
+
+    if (sched_now) {
+        os_sched(NULL, isr);
+    }
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
     return (0);
 }
 
+<<<<<<< HEAD
 /**
  * os sched os timer exp 
  *  
@@ -220,6 +302,14 @@ os_sched_wakeup(struct os_task *t)
  */
 void
 os_sched_os_timer_exp(void)
+=======
+
+/**
+ * Get the next task to run. 
+ */
+struct os_task *  
+os_sched_next_task(int isr) 
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 {
     struct os_task *t;
     struct os_task *next;
@@ -228,7 +318,13 @@ os_sched_os_timer_exp(void)
 
     now = os_time_get();
 
+<<<<<<< HEAD
     OS_ENTER_CRITICAL(sr);
+=======
+    if (!isr) {
+        OS_ENTER_CRITICAL(sr);
+    }
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
     /*
      * Wakeup any tasks that have their sleep timer expired
@@ -241,13 +337,18 @@ os_sched_os_timer_exp(void)
         }
         next = TAILQ_NEXT(t, t_os_list);
         if (OS_TIME_TICK_GEQ(now, t->t_next_wakeup)) {
+<<<<<<< HEAD
             os_sched_wakeup(t);
+=======
+            os_sched_wakeup(t, 0, isr);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
         } else {
             break;
         }
         t = next;
     }
 
+<<<<<<< HEAD
     OS_EXIT_CRITICAL(sr); 
 }
 
@@ -266,6 +367,17 @@ struct os_task *
 os_sched_next_task(void) 
 {
     return (TAILQ_FIRST(&g_os_run_list));
+=======
+    /* 
+     * Run the head of the run list
+     */
+    t = TAILQ_FIRST(&g_os_run_list);
+    if (!isr) {
+        OS_EXIT_CRITICAL(sr); 
+    }
+
+    return (t);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 }
 
 /**
@@ -286,7 +398,11 @@ os_sched_resort(struct os_task *t)
 {
     if (t->t_state == OS_TASK_READY) {
         TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
+<<<<<<< HEAD
         os_sched_insert(t);
+=======
+        os_sched_insert(t, 0);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     }
 }
 

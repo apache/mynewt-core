@@ -68,7 +68,11 @@ os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg,
             stack_size);
 
     /* insert this task into the scheduler list */
+<<<<<<< HEAD
     rc = os_sched_insert(t);
+=======
+    rc = os_sched_insert(t, 0);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     if (rc != OS_OK) {
         goto err;
     }
