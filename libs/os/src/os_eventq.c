@@ -29,7 +29,6 @@ os_eventq_init(struct os_eventq *evq)
 void
 os_eventq_put2(struct os_eventq *evq, struct os_event *ev, int isr)
 {
-<<<<<<< HEAD
     int resched;
     os_sr_t sr; 
 
@@ -56,33 +55,6 @@ os_eventq_put2(struct os_eventq *evq, struct os_event *ev, int isr)
 
     if (resched) {
         os_sched(NULL, isr);
-=======
-    os_sr_t sr; 
-
-    if (!isr) {
-        OS_ENTER_CRITICAL(sr);
-    }
-
-    /* Do not queue if already queued */
-    if (ev->ev_queued) {
-        if (!isr) {
-            OS_EXIT_CRITICAL(sr);
-        }
-        return;
-    }
-    ev->ev_queued = 1; 
-
-    TAILQ_INSERT_TAIL(&evq->evq_list, ev, ev_next);
-    if (evq->evq_task) {
-        if (!isr) {
-            OS_EXIT_CRITICAL(sr);
-        }
-        os_sched_wakeup(evq->evq_task, 1, isr);
-    } else {
-        if (!isr) {
-            OS_EXIT_CRITICAL(sr);
-        }
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     }
 }
 
@@ -106,12 +78,6 @@ pull_one:
         ev->ev_queued = 0;
     } else {
         evq->evq_task = os_sched_get_current_task();
-<<<<<<< HEAD
-=======
-        /* XXX: Is there a possible issue where we wake this task up because
-           it is sleeping but no event was posted? I guess in that case we
-           will end up waiting here anyway... */
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
         os_sched_sleep(evq->evq_task, OS_TIMEOUT_NEVER);
         OS_EXIT_CRITICAL(sr);
 
@@ -133,11 +99,6 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
 
     OS_ENTER_CRITICAL(sr);
     TAILQ_REMOVE(&evq->evq_list, ev, ev_next); 
-<<<<<<< HEAD
     ev->ev_queued = 0;
     OS_EXIT_CRITICAL(sr);
-=======
-    OS_EXIT_CRITICAL(sr);
-    ev->ev_queued = 0;
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 }

@@ -98,21 +98,7 @@ os_mutex_release(struct os_mutex *mu)
 
         SLIST_REMOVE_HEAD(&mu->mu_head, t_obj_list);
         SLIST_NEXT(rdy, t_obj_list) = NULL;
-<<<<<<< HEAD
         os_sched_wakeup(rdy);
-=======
-        os_sched_wakeup(rdy, 0, 0);
-
-        /* XXX: I wonder if the following is possible: we are waiting on
-         * a mutex or semaphore or something and os_sched_wakeup gets
-         * called. Can getting a semaphore while waiting on a mutex wake
-         * us up if we get the semaphore? Look at this...
-         * NOTE: os_sched_wakeup() will always remove the current task from
-         * the mutex list. Shouldn't only this particular call to wakeup, or
-         * a timeout if waiting for a mutex for a time, be the only times that
-         * this can/should happen?
-         */
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 
         /* Set mutex internals */
         mu->mu_level = 1;
@@ -124,11 +110,7 @@ os_mutex_release(struct os_mutex *mu)
 
     /* Do we need to re-schedule? */
     resched = 0;
-<<<<<<< HEAD
     rdy = os_sched_next_task();
-=======
-    rdy = os_sched_next_task(0);
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     if (rdy != current) {
         resched = 1;
     }
@@ -229,11 +211,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
 
     os_sched(NULL, 0);
 
-<<<<<<< HEAD
     /* If we are owner we did not time out. */
-=======
-    /* XXX: not sure if there is a better way to do this... */
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     if (mu->mu_owner == current) {
         rc = OS_OK; 
     } else {
@@ -287,19 +265,11 @@ os_mutex_delete(struct os_mutex *mu)
         rdy->t_mutex = NULL;
         SLIST_REMOVE_HEAD(&mu->mu_head, t_obj_list);
         SLIST_NEXT(rdy, t_obj_list) = NULL;
-<<<<<<< HEAD
         os_sched_wakeup(rdy);
     }
 
     /* Is there a task that is ready that is higher priority than us? */
     rdy = os_sched_next_task();
-=======
-        os_sched_wakeup(rdy, 0, 0);
-    }
-
-    /* Is there a task that is ready that is higher priority than us? */
-    rdy = os_sched_next_task(0);
->>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     if (rdy != current) {
         /* Re-schedule */
         OS_EXIT_CRITICAL(sr);
