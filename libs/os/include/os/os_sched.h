@@ -21,12 +21,20 @@
 
 struct os_task *os_sched_get_current_task(void);
 void os_sched_set_current_task(struct os_task *);
+<<<<<<< HEAD
 struct os_task *os_sched_next_task(void);
 void os_sched(struct os_task *, int);
 void os_sched_os_timer_exp(void);
 os_error_t os_sched_insert(struct os_task *);
 int os_sched_sleep(struct os_task *, os_time_t nticks);
 int os_sched_wakeup(struct os_task *);
+=======
+struct os_task *os_sched_next_task(int);
+void os_sched(struct os_task *, int);
+int os_sched_insert(struct os_task *, int); 
+int os_sched_sleep(struct os_task *, os_time_t nticks);
+int os_sched_wakeup(struct os_task *, int, int);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 void os_sched_resort(struct os_task *);
 
 #endif /* _OS_SCHED_H */

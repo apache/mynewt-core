@@ -89,7 +89,10 @@ timer_handler(void)
 {
     os_time_tick();
     os_callout_tick();
+<<<<<<< HEAD
     os_sched_os_timer_exp();
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     os_sched(NULL, 1); 
 }
 
@@ -99,12 +102,15 @@ os_arch_ctx_sw(struct os_task *t)
     os_bsp_ctx_sw();
 }
 
+<<<<<<< HEAD
 void
 os_arch_ctx_sw_isr(struct os_task *t)
 {
     os_bsp_ctx_sw();
 }
 
+=======
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
 os_sr_t 
 os_arch_save_sr(void)
 {
@@ -212,7 +218,11 @@ os_arch_start(void)
     struct os_task *t;
 
     /* Get the highest priority ready to run to set the current task */
+<<<<<<< HEAD
     t = os_sched_next_task();
+=======
+    t = os_sched_next_task(0);
+>>>>>>> 5aae54c3cfdb6e772bedf9235b354855aa7f536a
     os_sched_set_current_task(t);
 
     /* Adjust PSP so it looks like this task just took an exception */
