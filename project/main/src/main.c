@@ -55,16 +55,12 @@ init_tasks(void)
 /**
  * main
  *  
- * Main for the given project. Main initializes the OS, the system timer and 
- * the "sanity" task. The sanity task is a software watchdog, making sure all 
- * running tasks are either checking in or waiting on an event. The sanity task 
- * also initializes all of the UCOS tasks, so that initialization is done at the
- * priority task level. 
+ * The main function for the project. This function initializes the os, calls 
+ * init_tasks to initialize tasks (and possibly other objects), then starts the 
+ * OS. We should not return from os start. 
  *  
  * @return int NOTE: this function should never return!
  */
-volatile int main_loop_counter;
-
 int
 main(void)
 {
@@ -74,10 +70,9 @@ main(void)
     rc = init_tasks();
     os_start();
 
-    /* Dont think we should ever get here */
-    while (1) {
-        ++main_loop_counter;
-    }
+    /* os start should never return. If it does, this should be an error */
+    assert(0);
+
     return rc;
 }
 
