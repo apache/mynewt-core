@@ -27,13 +27,9 @@ uint32_t g_os_idle_ctr;
 void
 os_idle_task(void *arg)
 {
-    os_sr_t sr; 
-
+    /* For now, idle task simply increments a counter to show it is running. */
     while (1) {
-        /* XXX: do we really need to enable/disable interrupts here? */ 
-        OS_ENTER_CRITICAL(sr);
         ++g_os_idle_ctr;
-        OS_EXIT_CRITICAL(sr);
     }
 }
 
@@ -60,8 +56,4 @@ os_start(void)
 
     err = os_arch_os_start();
     assert(err == OS_OK);
-
-    while (1) {
-        /* XXX: should probably assert or exit() with an error here. */
-    }
 }

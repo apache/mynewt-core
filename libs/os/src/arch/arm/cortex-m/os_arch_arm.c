@@ -21,12 +21,10 @@
 #define __CMSIS_GENERIC
 #include "cmsis-core/core_cm4.h"
 
-/* XXX: not sure how much of the intrinsic code is specific to M4. */
-
-/* XXX: this is cortex-m specific; not sure if applies to M0-M4. */
+/* Initial program status register */
 #define INITIAL_xPSR    0x01000000
 
-/* XXX: This is cortex-m specific stuff. Not sure if applies to M0-M4 */
+/* Stack frame structure */
 struct stack_frame {
     uint32_t    r4;
     uint32_t    r5;
@@ -189,11 +187,6 @@ os_arch_os_init(void)
          * priviliged or un-privileged mode.
          */
         os_set_env();
-
-        /* XXX: the code for os_set_env() is in the .s file. NOTE: there are
-         * no DSB/ISB instructions in that code but there are in the old
-         * os_start code. Why? Do I need them in the assembly code? Read up
-           on this!!! */
 
         /* Check if priviliged or not */
         if ((__get_CONTROL() & 1) == 0) {
