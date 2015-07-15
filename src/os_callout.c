@@ -109,21 +109,29 @@ os_callout_func_reset(struct os_callout_func *cf, int32_t ticks,
     return (rc);
 }
 
-/* XXX: assume called from interrupt context, no need to disable interrupts
- */
 void 
 os_callout_tick(void)
 {
+    os_sr_t sr;
     struct os_callout *c; 
     uint32_t now;
 
     now = os_time_get();
 
-    c = NULL;
-    TAILQ_FOREACH(c, &g_callout_list, c_next) {
-        if (OS_TIME_TICK_GEQ(now, c->c_ticks)) {
-            TAILQ_REMOVE(&g_callout_list, c, c_next);
-            c->c_flags &= ~OS_CALLOUT_F_QUEUED;
+    while (1) {
+        OS_ENTER_CRITICAL(sr);
+        c = TAILQ_FIRST(&g_callout_list);
+        if (c) {
+            if (OS_TIME_TICK_GEQ(now, c->c_ticks)) {
+                TAILQ_REMOVE(&g_callout_list, c, c_next);
+                c->c_flags &= ~OS_CALLOUT_F_QUEUED;
+            } else {
+                c = NULL;
+            }
+        }
+        OS_EXIT_CRITICAL(sr);
+
+        if (c) {
             os_eventq_put2(c->c_evq, &c->c_ev, 1);
         } else {
             break;
