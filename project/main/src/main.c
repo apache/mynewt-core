@@ -5,6 +5,7 @@
 ** $Id: main.c 76842 2015-03-26 05:00:46Z wills $
 ******************************************************************************/
 #include "os/os.h"
+#include "../../../hal/include/hal/hal_gpio.h"
 #include <assert.h>
 
 /* Init all tasks */
@@ -15,13 +16,19 @@ static volatile int g_task1_loops;
 
 #define TASK1_PRIO (1) 
 struct os_task task1;
-os_stack_t stack1[OS_STACK_ALIGN(1024)]; 
+os_stack_t stack1[OS_STACK_ALIGN(1024)];
+
+int led_pin;
 
 void 
 task1_handler(void *arg)
 {
     int led_state;
-    struct os_task *t; 
+    struct os_task *t;
+
+    /* Set the led pin for the E407 devboard */
+    led_pin = 45;
+    gpio_init_out(led_pin, 1);
 
     while (1) {
         t = os_sched_get_current_task();
@@ -30,6 +37,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         os_time_delay(1000);
+        gpio_toggle(led_pin);
     }
 }
 

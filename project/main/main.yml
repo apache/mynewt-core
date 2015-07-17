@@ -1,2 +1,2 @@
 project.name: main
-project.pkgs: libs/os 
+project.pkgs: libs/os hw/mcu/stm/stm32f4xx
