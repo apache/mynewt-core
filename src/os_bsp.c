@@ -15,7 +15,7 @@
 #define PEND_SV_PRIO    (0x0F)
 #define SYSTICK_PRIO    (0x0E)
 
-/* XXX: is this correct? */
+/* Make the SVC instruction highest priority */
 #define SVC_PRIO        (0)
 
 /**
