@@ -130,7 +130,7 @@ ffs_format_full(void)
     ffs_root_dir = NULL;
 
     /* Create root directory. */
-    rc = ffs_new_file(&ffs_root_dir, NULL, "", 1);
+    rc = ffs_new_file(&ffs_root_dir, NULL, "", 0, 1);
     if (rc != 0) {
         return rc;
     }

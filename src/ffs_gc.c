@@ -74,7 +74,10 @@ ffs_gc(uint16_t *out_sector_id)
         return FFS_EFLASH_ERROR;
     }
 
-    *out_sector_id = ffs_scratch_sector_id;
+    if (out_sector_id != NULL) {
+        *out_sector_id = ffs_scratch_sector_id;
+    }
+
     ffs_scratch_sector_id = from_sector_id;
 
     return 0;

@@ -30,8 +30,8 @@ ffs_path_parse_next(struct ffs_path_parser *parser)
         return FFS_EINVAL;
     }
 
-    memcpy(parser->fpp_token, parser->fpp_path + parser->fpp_off, token_len);
-    parser->fpp_token[token_len] = '\0';
+    parser->fpp_token = parser->fpp_path + parser->fpp_off;
+    parser->fpp_token_len = token_len;
     parser->fpp_off += token_len + 1;
 
     return 0;
@@ -48,12 +48,19 @@ ffs_path_parser_new(struct ffs_path_parser *parser, const char *path)
 static int
 ffs_path_find_child(struct ffs_inode **out_inode,
                     struct ffs_inode *parent,
-                    const char *name)
+                    const char *name, int name_len)
 {
     struct ffs_inode *cur;
+    int str_rc;
+    int rc;
 
     SLIST_FOREACH(cur, &parent->fi_child_list, fi_sibling_next) {
-        if (strcmp(cur->fi_filename, name) == 0) {
+        rc = ffs_inode_filename_cmp(&str_rc, cur, name, name_len);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (str_rc == 0) {
             *out_inode = cur;
             return 0;
         }
@@ -87,18 +94,19 @@ ffs_path_find(struct ffs_path_parser *parser, struct ffs_inode **out_inode,
         case FFS_PATH_TOKEN_BRANCH:
             if (parent == NULL) {
                 /* First directory must be root. */
-                if (parser->fpp_token[0] != '\0') {
+                if (parser->fpp_token_len != 0) {
                     return FFS_ENOENT;
                 }
 
                 inode = ffs_root_dir;
             } else {
                 /* Ignore empty intermediate directory names. */
-                if (parser->fpp_token[0] == '\0') {
+                if (parser->fpp_token_len == 0) {
                     break;
                 }
 
-                rc = ffs_path_find_child(&inode, parent, parser->fpp_token);
+                rc = ffs_path_find_child(&inode, parent, parser->fpp_token,
+                                         parser->fpp_token_len);
                 if (rc != 0) {
                     goto done;
                 }
@@ -110,7 +118,8 @@ ffs_path_find(struct ffs_path_parser *parser, struct ffs_inode **out_inode,
                 return FFS_ENOENT;
             }
 
-            rc = ffs_path_find_child(&inode, parent, parser->fpp_token);
+            rc = ffs_path_find_child(&inode, parent, parser->fpp_token,
+                                     parser->fpp_token_len);
             goto done;
         }
     }

@@ -164,6 +164,7 @@ ffs_inode_from_disk(struct ffs_inode *out_inode,
                     const struct ffs_disk_inode *disk_inode,
                     uint16_t sector_id, uint32_t offset)
 {
+    int cached_name_len;
     int rc;
 
     out_inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
@@ -174,12 +175,16 @@ ffs_inode_from_disk(struct ffs_inode *out_inode,
     out_inode->fi_flags = disk_inode->fdi_flags;
     out_inode->fi_filename_len = disk_inode->fdi_filename_len;
 
+    if (out_inode->fi_filename_len > FFS_SHORT_FILENAME_LEN) {
+        cached_name_len = FFS_SHORT_FILENAME_LEN;
+    } else {
+        cached_name_len = out_inode->fi_filename_len;
+    }
     rc = ffs_flash_read(sector_id, offset + sizeof *disk_inode,
-                        out_inode->fi_filename, out_inode->fi_filename_len);
+                        out_inode->fi_filename, cached_name_len);
     if (rc != 0) {
         return rc;
     }
-    out_inode->fi_filename[out_inode->fi_filename_len] = '\0';
 
     return 0;
 }
@@ -244,30 +249,6 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
             return rc;
         }
     }
-
-    return 0;
-}
-
-int
-ffs_inode_read(struct ffs_inode *out_inode, uint16_t sector_id,
-               uint32_t offset)
-{
-    struct ffs_disk_inode disk_inode;
-    int rc;
-
-    rc = ffs_inode_read_disk(&disk_inode, out_inode->fi_filename,
-                             sector_id, offset);
-    if (rc != 0) {
-        return rc;
-    }
-
-    out_inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
-    out_inode->fi_base.fb_id = disk_inode.fdi_id;
-    out_inode->fi_base.fb_seq = disk_inode.fdi_seq;
-    out_inode->fi_base.fb_sector_id = sector_id;
-    out_inode->fi_base.fb_offset = offset;
-    out_inode->fi_flags = disk_inode.fdi_flags;
-    out_inode->fi_filename_len = disk_inode.fdi_filename_len;
 
     return 0;
 }
@@ -350,11 +331,70 @@ ffs_inode_remove_child(struct ffs_inode *child)
 }
 
 int
-ffs_disk_inode_is_root(const struct ffs_disk_inode *disk_inode)
+ffs_inode_is_root(const struct ffs_disk_inode *disk_inode)
 {
     return disk_inode->fdi_parent_id == FFS_ID_NONE         &&
            disk_inode->fdi_flags & FFS_INODE_F_DIRECTORY    &&
            !(disk_inode->fdi_flags & FFS_INODE_F_DELETED)   &&
            disk_inode->fdi_filename_len == 0;
+}
+
+int
+ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
+                       const char *name, int name_len)
+{
+    static uint8_t buf[128];
+    uint32_t sector_off;
+    int chunk_len;
+    int rem_len;
+    int off;
+    int rc;
+
+    if (inode->fi_filename_len != name_len) {
+        *result = inode->fi_filename_len - name_len;
+        return 0;
+    }
+
+
+    if (name_len <= FFS_SHORT_FILENAME_LEN) {
+        chunk_len = name_len;
+    } else {
+        chunk_len = FFS_SHORT_FILENAME_LEN;
+    }
+    *result = strncmp(inode->fi_filename, name, chunk_len);
+
+    /* If filename is short, it is fulled cached in RAM. */
+    if (name_len <= FFS_SHORT_FILENAME_LEN) {
+        return 0;
+    }
+
+    /* Otherwise, read the filename from flash. */
+    off = FFS_SHORT_FILENAME_LEN;
+    while (off < name_len) {
+        rem_len = name_len - off;
+        if (rem_len > sizeof buf) {
+            chunk_len = sizeof buf;
+        } else {
+            chunk_len = rem_len;
+        }
+
+        sector_off = inode->fi_base.fb_offset +
+                     sizeof (struct ffs_disk_inode) +
+                     off;
+        rc = ffs_flash_read(inode->fi_base.fb_sector_id,
+                            sector_off, buf, chunk_len);
+        if (rc != 0) {
+            return rc;
+        }
+
+        *result = strncmp(buf, name + off, chunk_len);
+        if (*result != 0) {
+            break;
+        }
+
+        off += chunk_len;
+    }
+
+    return 0;
 }
 

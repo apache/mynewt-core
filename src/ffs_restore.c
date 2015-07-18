@@ -188,7 +188,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t sector_id,
         } 
 
 
-        if (ffs_disk_inode_is_root(disk_inode)) {
+        if (ffs_inode_is_root(disk_inode)) {
             ffs_root_dir = inode;
         }
     }

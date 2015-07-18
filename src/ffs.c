@@ -207,13 +207,12 @@ ffs_file_len(const struct ffs_file *file)
 
 int
 ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
-             const char *filename, int is_dir)
+             const char *filename, uint16_t filename_len, int is_dir)
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode *inode;
     uint16_t sector_id;
     uint32_t offset;
-    int filename_len;
     int rc;
 
     inode = ffs_inode_alloc();
@@ -222,7 +221,6 @@ ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
         goto err;
     }
 
-    filename_len = strlen(filename);
     rc = ffs_reserve_space(&sector_id, &offset,
                            sizeof disk_inode + filename_len);
     if (rc != 0) {
@@ -317,13 +315,15 @@ ffs_open(struct ffs_file **out_file, const char *filename,
         }
 
         assert(parser.fpp_token_type == FFS_PATH_TOKEN_LEAF); // XXX
-        rc = ffs_new_file(&file->ff_inode, parent, parser.fpp_token, 0);
+        rc = ffs_new_file(&file->ff_inode, parent, parser.fpp_token,
+                          parser.fpp_token_len, 0);
         if (rc != 0) {
             goto done;
         }
     } else if (access_flags & FFS_ACCESS_TRUNCATE) {
         ffs_unlink_internal(filename);
-        rc = ffs_new_file(&file->ff_inode, parent, parser.fpp_token, 0);
+        rc = ffs_new_file(&file->ff_inode, parent, parser.fpp_token,
+                          parser.fpp_token_len, 0);
         if (rc != 0) {
             goto done;
         }
@@ -734,7 +734,8 @@ ffs_mkdir(const char *path)
         goto done;
     }
 
-    rc = ffs_new_file(&inode, parent, parser.fpp_token, 1);
+    rc = ffs_new_file(&inode, parent, parser.fpp_token, parser.fpp_token_len,
+                      1);
     if (rc != 0) {
         goto done;
     }

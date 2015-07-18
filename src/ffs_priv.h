@@ -17,7 +17,7 @@
 #define FFS_SECTOR_ID_SCRATCH   0xffff
 #define FFS_SECTOR_ID_OFFSET    18
 
-#define FFS_FILENAME_LEN        32
+#define FFS_SHORT_FILENAME_LEN  16
 
 #define FFS_BLOCK_SIZE          512
 #define FFS_BLOCK_DATA_LEN      (FFS_BLOCK_SIZE -                   \
@@ -97,7 +97,7 @@ struct ffs_inode {
     uint16_t fi_flags;
     uint32_t fi_data_len; /* If file. */
     uint16_t fi_filename_len;
-    uint8_t fi_filename[FFS_FILENAME_LEN + 1];
+    uint8_t fi_filename[FFS_SHORT_FILENAME_LEN];
 };
 
 struct ffs_file {
@@ -129,8 +129,9 @@ struct ffs_disk_object {
 
 struct ffs_path_parser {
     int fpp_token_type;
-    char fpp_token[FFS_FILENAME_LEN + 1];
     const char *fpp_path;
+    const char *fpp_token;
+    int fpp_token_len;
     int fpp_off;
 };
 
@@ -187,8 +188,6 @@ void ffs_inode_insert_block(struct ffs_inode *inode, struct ffs_block *block);
 int ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode,
                         char *out_filename, uint16_t sector_id,
                         uint32_t offset);
-int ffs_inode_read(struct ffs_inode *out_inode, uint16_t sector_id,
-                   uint32_t offset);
 int ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
                          const char *filename, uint16_t sector_id,
                          uint32_t offset);
@@ -199,7 +198,9 @@ void ffs_inode_dec_refcnt(struct ffs_inode *inode);
 void ffs_inode_add_child(struct ffs_inode *parent, struct ffs_inode *child);
 void ffs_inode_remove_child(struct ffs_inode *child);
 void ffs_inode_delete_from_ram(struct ffs_inode *inode);
-int ffs_disk_inode_is_root(const struct ffs_disk_inode *disk_inode);
+int ffs_inode_is_root(const struct ffs_disk_inode *disk_inode);
+int ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
+                           const char *name, int name_len);
 
 struct ffs_block *ffs_block_alloc(void);
 void ffs_block_free(struct ffs_block *block);
@@ -221,7 +222,7 @@ void ffs_block_from_disk(struct ffs_block *out_block,
 int ffs_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
                       uint16_t size);
 int ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
-                 const char *filename, int is_dir);
+                 const char *filename, uint16_t filename_len, int is_dir);
 void ffs_free_all(void);
 
 int ffs_format_scratch_sector(uint16_t sector_id);
