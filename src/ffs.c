@@ -615,20 +615,23 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     return 0;
 }
 
-int
-ffs_write(struct ffs_file *file, const void *data, int len)
+static int
+ffs_write_chunk(struct ffs_file *file, const void *data, int len)
 {
     struct ffs_write_info write_info;
     uint32_t file_offset;
+    uint16_t chunk_size;
     int rc;
 
-    ffs_lock();
+    assert(len <= FFS_BLOCK_MAX_DATA_SZ);
 
     if (!(file->ff_access_flags & FFS_ACCESS_WRITE)) {
-        rc = FFS_ERDONLY;
-        goto done;
+        return FFS_ERDONLY;
     }
 
+    /* The append flag forces all writes to the end of the file, regardless of
+     * seek position.
+     */
     if (file->ff_access_flags & FFS_ACCESS_APPEND) {
         file_offset = file->ff_inode->fi_data_len;
     } else {
@@ -637,15 +640,50 @@ ffs_write(struct ffs_file *file, const void *data, int len)
 
     rc = ffs_calc_write_overlay(&write_info, file->ff_inode, file_offset, len);
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
     rc = ffs_write_gen(&write_info, file->ff_inode, data, len);
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
+    /* A write always results in a seek position one past the end of the
+     * write.
+     */
     file->ff_offset = file_offset + len;
+
+    return 0;
+}
+
+int
+ffs_write(struct ffs_file *file, const void *data, int len)
+{
+    struct ffs_write_info write_info;
+    const uint8_t *data_ptr;
+    uint32_t file_offset;
+    uint16_t chunk_size;
+    int rc;
+
+    ffs_lock();
+
+    /* Write data as a sequence of blocks. */
+    data_ptr = data;
+    while (len > 0) {
+        if (len > FFS_BLOCK_MAX_DATA_SZ) {
+            chunk_size = FFS_BLOCK_MAX_DATA_SZ;
+        } else {
+            chunk_size = len;
+        }
+
+        rc = ffs_write_chunk(file, data_ptr, chunk_size);
+        if (rc != 0) {
+            goto done;
+        }
+
+        len -= chunk_size;
+        data_ptr += chunk_size;
+    }
 
     rc = 0;
 

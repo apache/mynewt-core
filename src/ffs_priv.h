@@ -32,6 +32,8 @@
 
 #define FFS_BLOCK_F_DELETED     0x01
 
+#define FFS_BLOCK_MAX_DATA_SZ   2048 /* XXX: This may be calculated. */
+
 
 struct ffs_disk_block {
     uint32_t fdb_magic;
