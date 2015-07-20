@@ -12,3 +12,5 @@ git remote add olimex_stm32-e407_devboard https://github.com/micosa/olimex_stm32
 git remote add olimex_stm32-e407_devboard-boot https://github.com/micosa/olimex_stm32-e407_devboard-boot.git 
 # subtree @ compiler/sim 
 git remote add compiler_sim https://github.com/micosa/sim_compiler.git
+# subtree @ libs/ffs
+git remote add ffs https://github.com/micosa/ffs.git
