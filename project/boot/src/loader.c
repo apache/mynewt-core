@@ -7,6 +7,7 @@
 #include "stm32f4xx/stm32f4xx.h"
 
 #include "bootutil/img_hdr.h"
+#include "bootutil/bootutil.h"
 
 uint32_t __attribute__((section (".shared_section"))) __image_offset__;
 
