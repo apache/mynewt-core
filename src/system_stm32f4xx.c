@@ -120,7 +120,7 @@
   * @{
   */
 
-#include "bsp/stm32f4xx.h"
+#include "stm32f4xx/stm32f4xx.h"
 
 /**
   * @}
