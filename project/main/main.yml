@@ -1,2 +1,3 @@
 project.name: main
+# WWW: hack. Should not have to include mcu package here! Should come from bsp.
 project.pkgs: libs/os hw/mcu/stm/stm32f4xx

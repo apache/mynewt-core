@@ -71,6 +71,7 @@
 #define STM32F4
 #endif /* STM32F4 */
 
+ /* WWW: Once I get ability to pass -D into builds, this will get removed.*/
 /* Uncomment the line below according to the target STM32 device used in your
    application 
   */
@@ -97,6 +98,7 @@
 /*  Tip: To avoid modifying this file each time you need to switch between these
         devices, you can define the device in your toolchain compiler preprocessor.
   */
+/* WWW: Once I get the ability to pass -D into builds, I will remove this */
 #if !defined  (USE_HAL_DRIVER)
 /**
  * @brief Comment the line below if you will not use the peripherals drivers.
@@ -105,38 +107,6 @@
    */
 #define USE_HAL_DRIVER
 #endif /* USE_HAL_DRIVER */
-
-/* 
- * WWW:
- * 1) These defines are here for now but this should move. We should be moving
- * certain MCU files into the bsp I think. The stm32f4xx_hal_conf.h is expected
- * to be modified based on your platform. This one goes in the bsp. 
- *  
- */
- /**
- * @brief In the following line adjust the value of External High Speed oscillator (HSE)
-   used in your application 
-   
-   Tip: To avoid modifying this file each time you need to use different HSE, you
-        can define the HSE value in your toolchain compiler preprocessor.
-  */           
-
-#if !defined  (HSE_VALUE) 
-  #define HSE_VALUE    ((uint32_t)8000000) /*!< Value of the External oscillator in Hz */
-#endif /* HSE_VALUE */
-
-/**
- * @brief In the following line adjust the External High Speed oscillator (HSE) Startup 
-   Timeout value 
-   */
-#if !defined  (HSE_STARTUP_TIMEOUT) 
-  #define HSE_STARTUP_TIMEOUT    ((uint16_t)0x0500)   /*!< Time out for HSE start up */
-#endif /* HSE_STARTUP_TIMEOUT */   
-
-#if !defined  (HSI_VALUE)   
-  #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
-#endif /* HSI_VALUE */   
-/* WWW */
 
 /**
   * @brief CMSIS Device version number V2.3.0
@@ -241,8 +211,7 @@ typedef enum
   * @}
   */
 #if defined (USE_HAL_DRIVER)
-/* WWW */
-// #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal.h"
 #endif /* USE_HAL_DRIVER */
 
 #ifdef __cplusplus

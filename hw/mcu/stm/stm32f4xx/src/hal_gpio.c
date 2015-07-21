@@ -16,8 +16,8 @@
 
 #include "hal/hal_gpio.h"
 #include "stm32f4xx/stm32f4xx.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_rcc.h"
+#include "stm32f4xx/stm32f4xx_hal_gpio.h"
+#include "stm32f4xx/stm32f4xx_hal_rcc.h"
 #include <assert.h>
 
 /* 

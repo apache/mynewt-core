@@ -4,7 +4,7 @@
 #include <string.h>
 
 /* XXX: Where? */
-#include "bsp/stm32f4xx.h"
+#include "stm32f4xx/stm32f4xx.h"
 
 #include "bootutil/img_hdr.h"
 
