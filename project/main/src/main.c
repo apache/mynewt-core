@@ -6,7 +6,7 @@
 ******************************************************************************/
 #include "os/os.h"
 /* WWW: This is a hack! I should not have to define the path in this manner. */
-#include "../../../hal/include/hal/hal_gpio.h"
+#include "hal/hal_gpio.h"
 #include <assert.h>
 
 /* Init all tasks */
@@ -24,7 +24,6 @@ int led_pin;
 void 
 task1_handler(void *arg)
 {
-    int led_state;
     struct os_task *t;
 
     /* Set the led pin for the E407 devboard */
