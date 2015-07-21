@@ -41,7 +41,10 @@ typedef unsigned int os_stack_t;
 /* Exit a critical section, restore processor state and unblock interrupts */
 #define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
 
+void _Die(char *file, int line);
+
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
+void timer_handler(void);
 void os_arch_ctx_sw(struct os_task *);
 void os_arch_ctx_sw_isr(struct os_task *);
 os_sr_t os_arch_save_sr(void);

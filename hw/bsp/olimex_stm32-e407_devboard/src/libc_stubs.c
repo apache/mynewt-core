@@ -1,3 +1,14 @@
+void * _sbrk(int c);
+int _close(int fd);
+int _fstat(int fd, void *s);
+void _exit(int s);
+int _kill(int pid, int sig);
+int _write(int fd, void *b, int nb);
+int _isatty(int c);
+int _lseek(int fd, int off, int w);
+int _read(int fd, void *b, int nb);
+int _getpid(void);
+
 void * 
 _sbrk(int c) 
 {
@@ -54,6 +65,6 @@ _read(int fd, void *b, int nb)
 }
 
 int 
-_getpid() {
+_getpid(void) {
     return -1;
 }
