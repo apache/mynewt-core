@@ -5,6 +5,7 @@
 ** $Id: main.c 76842 2015-03-26 05:00:46Z wills $
 ******************************************************************************/
 #include "os/os.h"
+/* WWW: This is a hack! I should not have to define the path in this manner. */
 #include "../../../hal/include/hal/hal_gpio.h"
 #include <assert.h>
 
