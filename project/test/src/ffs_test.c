@@ -283,12 +283,13 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
     const struct ffs_inode *inode;
     const struct ffs_block *block;
     const struct ffs_base *base;
+    int i;
 
     ffs_test_assert_file(root_dir, ffs_root_dir, "");
     ffs_test_assert_branch_touched(ffs_root_dir);
 
     /* Ensure no orphaned inodes or blocks. */
-    FFS_HASH_FOREACH(base) {
+    FFS_HASH_FOREACH(base, i) {
         switch (base->fb_type) {
         case FFS_OBJECT_TYPE_INODE:
             inode = (void *)base;
@@ -666,6 +667,44 @@ ffs_test_append(void)
     } };
 
     ffs_test_assert_system(expected_system);
+}
+
+static void
+ffs_test_read(void)
+{
+    struct ffs_file *file;
+    uint8_t buf[16];
+    uint32_t len;
+    int rc;
+
+    printf("\tread test\n");
+
+    rc = ffs_format(ffs_sector_descs);
+    assert(rc == 0);
+
+    ffs_test_util_create_file("/myfile.txt", "1234567890", 10);
+
+    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_READ);
+    assert(rc == 0);
+    assert(ffs_file_len(file) == 10);
+    assert(ffs_getpos(file) == 0);
+
+    len = 4;
+    rc = ffs_read(file, buf, &len);
+    assert(rc == 0);
+    assert(len == 4);
+    assert(memcmp(buf, "1234", 4) == 0);
+    assert(ffs_getpos(file) == 4);
+
+    len = sizeof buf - 4;
+    rc = ffs_read(file, buf + 4, &len);
+    assert(rc == 0);
+    assert(len == 6);
+    assert(memcmp(buf, "1234567890", 10) == 0);
+    assert(ffs_getpos(file) == 10);
+
+    rc = ffs_close(file);
+    assert(rc == 0);
 }
 
 static void
@@ -1262,6 +1301,7 @@ ffs_test(void)
     ffs_test_rename();
     ffs_test_truncate();
     ffs_test_append();
+    ffs_test_read();
     ffs_test_overwrite_one();
     ffs_test_overwrite_two();
     ffs_test_overwrite_three();
