@@ -52,8 +52,8 @@ ffs_block_write_disk(uint16_t *out_sector_id, uint32_t *out_offset,
     uint16_t sector_id;
     int rc;
 
-    rc = ffs_reserve_space(&sector_id, &offset,
-                           sizeof *disk_block + disk_block->fdb_data_len);
+    rc = ffs_misc_reserve_space(&sector_id, &offset,
+                                sizeof *disk_block + disk_block->fdb_data_len);
     if (rc != 0) {
         return rc;
     }

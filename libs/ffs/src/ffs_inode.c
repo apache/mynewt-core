@@ -141,7 +141,7 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
     uint16_t sector_id;
     int rc;
 
-    rc = ffs_reserve_space(&sector_id, &offset, sizeof disk_inode);
+    rc = ffs_misc_reserve_space(&sector_id, &offset, sizeof disk_inode);
     if (rc != 0) {
         return rc;
     }
@@ -201,8 +201,8 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
     int rc;
 
     filename_len = strlen(filename);
-    rc = ffs_reserve_space(&sector_id, &offset,
-                           sizeof disk_inode + filename_len);
+    rc = ffs_misc_reserve_space(&sector_id, &offset,
+                                sizeof disk_inode + filename_len);
     if (rc != 0) {
         return rc;
     }

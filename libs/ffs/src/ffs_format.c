@@ -154,7 +154,7 @@ ffs_format_full(const struct ffs_sector_desc *sector_descs)
         }
     }
 
-    rc = ffs_validate_scratch();
+    rc = ffs_misc_validate_scratch();
     if (rc != 0) {
         goto err;
     }
@@ -164,12 +164,12 @@ ffs_format_full(const struct ffs_sector_desc *sector_descs)
     ffs_root_dir = NULL;
 
     /* Create root directory. */
-    rc = ffs_new_file(&ffs_root_dir, NULL, "", 0, 1);
+    rc = ffs_file_new(&ffs_root_dir, NULL, "", 0, 1);
     if (rc != 0) {
         goto err;
     }
 
-    rc = ffs_validate_root();
+    rc = ffs_misc_validate_root();
     if (rc != 0) {
         goto err;
     }

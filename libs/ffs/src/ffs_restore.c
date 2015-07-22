@@ -507,14 +507,14 @@ ffs_restore_full(const struct ffs_sector_desc *sector_descs)
         }
     }
 
-    rc = ffs_validate_scratch();
+    rc = ffs_misc_validate_scratch();
     if (rc != 0) {
         return rc;
     }
 
     ffs_restore_sweep();
 
-    rc = ffs_validate_root();
+    rc = ffs_misc_validate_root();
     if (rc != 0) {
         return rc;
     }

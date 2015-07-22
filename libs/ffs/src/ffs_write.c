@@ -127,7 +127,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     disk_block.fdb_ecc = 0;
 
     disk_size = ffs_write_disk_size(write_info, &disk_block);
-    rc = ffs_reserve_space(&sector_id, &offset, disk_size);
+    rc = ffs_misc_reserve_space(&sector_id, &offset, disk_size);
     if (rc != 0) {
         return rc;
     }
