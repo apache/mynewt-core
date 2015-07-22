@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "os/queue.h"
 #include "os/os_mempool.h"
+#include "ffs/ffs.h"
 
 #define FFS_ID_NONE             0xffffffff
 
@@ -173,6 +174,7 @@ int ffs_path_find_inode(struct ffs_inode **out_inode, const char *filename);
 
 void ffs_restore_sweep(void);
 int ffs_restore_object(const struct ffs_disk_object *disk_object);
+int ffs_restore_sector(int sector_id);
 
 uint32_t ffs_base_disk_size(const struct ffs_base *base);
 
@@ -229,17 +231,21 @@ void ffs_free_all(void);
 
 int ffs_format_scratch_sector(uint16_t sector_id);
 int ffs_format_from_scratch_sector(uint16_t sector_id);
-int ffs_format_sector(uint16_t sector_id);
-int ffs_format_full(void);
+int ffs_format_full(const struct ffs_sector_desc *sector_descs);
 
 int ffs_gc(uint16_t *out_sector_id);
 
+int ffs_validate_scratch(void);
+int ffs_validate_root(void);
+
+int ffs_sector_desc_validate(const struct ffs_sector_desc *sector_desc);
 void ffs_sector_set_magic(struct ffs_disk_sector *disk_sector);
 int ffs_sector_magic_is_set(const struct ffs_disk_sector *disk_sector);
 int ffs_sector_is_scratch(const struct ffs_disk_sector *disk_sector);
 
 #define FFS_HASH_FOREACH(base)                                          \
-    for (int FHF_i = 0; FHF_i < FFS_HASH_SIZE; FHF_i++)                 \
+    int FHF_i;                                                          \
+    for (FHF_i = 0; FHF_i < FFS_HASH_SIZE; FHF_i++)                     \
         SLIST_FOREACH((base), &ffs_hash[FHF_i], fb_hash_next)
 
 #endif

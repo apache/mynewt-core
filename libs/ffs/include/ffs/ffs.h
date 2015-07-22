@@ -37,9 +37,8 @@ int
 ffs_close(struct ffs_file *file);
 int
 ffs_init(void);
-int ffs_detect_sectors(const struct ffs_sector_desc *sectors);
-int
-ffs_format(void);
+int ffs_detect(const struct ffs_sector_desc *sector_descs);
+int ffs_format(const struct ffs_sector_desc *sector_descs);
 int
 ffs_read(struct ffs_file *file, void *data, uint32_t *len);
 int
@@ -52,15 +51,6 @@ int
 ffs_rename(const char *from, const char *to);
 int ffs_unlink(const char *filename);
 int ffs_mkdir(const char *path);
-int
-flash_write(const void *src, uint32_t address, uint32_t length);
-int
-flash_read(void *dst, uint32_t address, uint32_t length);
-int
-flash_erase_sector(uint32_t offset);
-
-
-extern const struct ffs_sector_desc *temp_ffs_sectors;
 
 #endif
 

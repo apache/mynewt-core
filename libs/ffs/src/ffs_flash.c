@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "hal/hal_flash.h"
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 

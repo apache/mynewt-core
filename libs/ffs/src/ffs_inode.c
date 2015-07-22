@@ -15,6 +15,8 @@ ffs_inode_alloc(void)
         memset(inode, 0, sizeof *inode);
     }
 
+    inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
+
     return inode;
 }
 
@@ -271,6 +273,8 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
     if (rc != 0) {
         return rc;
     }
+
+    return 0;
 }
 
 int
@@ -361,7 +365,7 @@ ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
     } else {
         chunk_len = FFS_SHORT_FILENAME_LEN;
     }
-    *result = strncmp(inode->fi_filename, name, chunk_len);
+    *result = strncmp((char *)inode->fi_filename, name, chunk_len);
 
     /* If filename is short, it is fulled cached in RAM. */
     if (name_len <= FFS_SHORT_FILENAME_LEN) {
@@ -387,7 +391,7 @@ ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
             return rc;
         }
 
-        *result = strncmp(buf, name + off, chunk_len);
+        *result = strncmp((char *)buf, name + off, chunk_len);
         if (*result != 0) {
             break;
         }

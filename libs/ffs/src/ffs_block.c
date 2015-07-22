@@ -14,6 +14,8 @@ ffs_block_alloc(void)
         memset(block, 0, sizeof *block);
     }
 
+    block->fb_base.fb_type = FFS_OBJECT_TYPE_BLOCK;
+
     return block;
 }
 
@@ -140,6 +142,8 @@ ffs_block_delete_from_disk(const struct ffs_block *block)
     if (rc != 0) {
         return rc;
     }
+
+    return 0;
 }
 
 void

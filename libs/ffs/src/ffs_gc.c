@@ -44,7 +44,6 @@ ffs_gc(uint16_t *out_sector_id)
     uint32_t obj_size;
     uint32_t to_offset;
     int rc;
-    int i;
 
     rc = ffs_format_from_scratch_sector(ffs_scratch_sector_id);
     if (rc != 0) {
@@ -71,7 +70,7 @@ ffs_gc(uint16_t *out_sector_id)
 
     rc = ffs_format_scratch_sector(from_sector_id);
     if (rc != 0) {
-        return FFS_EFLASH_ERROR;
+        return rc;
     }
 
     if (out_sector_id != NULL) {
