@@ -242,7 +242,6 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
         return FFS_EUNEXP;
     }
 
-    assert(out_disk_inode->fdi_filename_len < FFS_FILENAME_LEN);
     /* XXX: General inode validation. */
     if (out_filename != NULL) {
         rc = ffs_flash_read(sector_id, offset + sizeof *out_disk_inode,
@@ -261,8 +260,6 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
                      uint32_t offset)
 {
     int rc;
-
-    assert(disk_inode->fdi_filename_len < FFS_FILENAME_LEN);
 
     rc = ffs_flash_write(sector_id, offset, disk_inode, sizeof *disk_inode);
     if (rc != 0) {
