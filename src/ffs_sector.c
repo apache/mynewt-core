@@ -3,6 +3,12 @@
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
+int
+ffs_sector_desc_validate(const struct ffs_sector_desc *sector_desc)
+{
+    return 0;
+}
+
 void
 ffs_sector_set_magic(struct ffs_disk_sector *disk_sector)
 {
