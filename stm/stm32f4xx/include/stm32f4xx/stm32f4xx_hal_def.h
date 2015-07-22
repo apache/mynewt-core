@@ -45,7 +45,6 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx/stm32f4xx.h"
 //#include "Legacy/stm32_hal_legacy.h"
 #include <stdio.h>
 
@@ -71,6 +70,7 @@ typedef enum
   HAL_LOCKED   = 0x01  
 } HAL_LockTypeDef;
 
+#include "stm32f4xx/stm32f4xx.h"
 /* Exported macro ------------------------------------------------------------*/
 #define HAL_MAX_DELAY      0xFFFFFFFF
 

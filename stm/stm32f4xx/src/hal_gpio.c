@@ -179,6 +179,8 @@ hal_gpio_init(int pin, GPIO_InitTypeDef *cfg)
 
     /* Initialize pin as an input, setting proper mode */
     HAL_GPIO_Init(portmap[port], cfg);
+
+    return 0;
 }
 
 /**
