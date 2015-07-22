@@ -56,6 +56,7 @@ ffs_format_scratch_sector(uint16_t sector_id)
     if (rc != 0) {
         return rc;
     }
+    sector->fsi_cur = 0;
 
     memset(&disk_sector, 0, sizeof disk_sector);
     ffs_sector_set_magic(&disk_sector);
@@ -82,7 +83,7 @@ ffs_format_sector(uint16_t sector_id)
     if (rc != 0) {
         return rc;
     }
-
+    sector->fsi_cur = 0;
 
     memset(&disk_sector, 0, sizeof disk_sector);
     ffs_sector_set_magic(&disk_sector);
