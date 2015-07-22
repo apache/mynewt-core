@@ -96,6 +96,32 @@ ffs_format_sector(uint16_t sector_id)
     return 0;
 }
 
+void
+ffs_format_ram(void)
+{
+    struct ffs_base_list *list;
+    struct ffs_inode *inode;
+    struct ffs_base *base;
+    int i;
+
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
+        list = ffs_hash + i;
+
+        base = SLIST_FIRST(list);
+        while (base != NULL) {
+            if (base->fb_type == FFS_OBJECT_TYPE_INODE) {
+                inode = (void *)base;
+                while (inode->fi_refcnt > 0) {
+                    ffs_inode_dec_refcnt(inode);
+                }
+                base = SLIST_FIRST(list);
+            } else {
+                base = SLIST_NEXT(base, fb_hash_next);
+            }
+        }
+    }
+}
+
 int
 ffs_format_full(const struct ffs_sector_desc *sector_descs)
 {
@@ -133,7 +159,7 @@ ffs_format_full(const struct ffs_sector_desc *sector_descs)
         goto err;
     }
 
-    ffs_free_all();
+    ffs_format_ram();
     ffs_next_id = 0;
     ffs_root_dir = NULL;
 

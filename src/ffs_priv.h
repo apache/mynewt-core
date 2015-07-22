@@ -172,10 +172,7 @@ int ffs_path_find(struct ffs_path_parser *parser,
                   struct ffs_inode **out_parent);
 int ffs_path_find_inode(struct ffs_inode **out_inode, const char *filename);
 
-void ffs_restore_sweep(void);
-int ffs_restore_sector(int sector_id);
-
-uint32_t ffs_base_disk_size(const struct ffs_base *base);
+int ffs_restore_full(const struct ffs_sector_desc *sector_descs);
 
 struct ffs_inode *ffs_inode_alloc(void);
 void ffs_inode_free(struct ffs_inode *inode);
@@ -204,6 +201,8 @@ void ffs_inode_delete_from_ram(struct ffs_inode *inode);
 int ffs_inode_is_root(const struct ffs_disk_inode *disk_inode);
 int ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
                            const char *name, int name_len);
+int ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
+                   void *data, uint32_t *len);
 
 struct ffs_block *ffs_block_alloc(void);
 void ffs_block_free(struct ffs_block *block);
@@ -226,7 +225,7 @@ int ffs_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
                       uint16_t size);
 int ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
                  const char *filename, uint8_t filename_len, int is_dir);
-void ffs_free_all(void);
+void ffs_format_ram(void);
 
 int ffs_format_scratch_sector(uint16_t sector_id);
 int ffs_format_from_scratch_sector(uint16_t sector_id);
@@ -234,18 +233,19 @@ int ffs_format_full(const struct ffs_sector_desc *sector_descs);
 
 int ffs_gc(uint16_t *out_sector_id);
 
-int ffs_validate_scratch(void);
-int ffs_validate_root(void);
-
 int ffs_sector_desc_validate(const struct ffs_sector_desc *sector_desc);
 void ffs_sector_set_magic(struct ffs_disk_sector *disk_sector);
 int ffs_sector_magic_is_set(const struct ffs_disk_sector *disk_sector);
 int ffs_sector_is_scratch(const struct ffs_disk_sector *disk_sector);
 
-#define FFS_HASH_FOREACH(base)                                          \
-    int FHF_i;                                                          \
-    for (FHF_i = 0; FHF_i < FFS_HASH_SIZE; FHF_i++)                     \
-        SLIST_FOREACH((base), &ffs_hash[FHF_i], fb_hash_next)
+int ffs_validate_root(void);
+int ffs_validate_scratch(void);
+
+int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
+
+#define FFS_HASH_FOREACH(base, i)                                       \
+    for ((i) = 0; (i) < FFS_HASH_SIZE; (i)++)                           \
+        SLIST_FOREACH((base), &ffs_hash[i], fb_hash_next)
 
 #endif
 
