@@ -31,160 +31,91 @@ static struct os_mutex ffs_mutex;
 static void
 ffs_lock(void)
 {
-#if 0
     int rc;
 
-    rc = os_mutex_pend(&ffs_mutex, 0xffffffff);
+    rc = 0;//os_mutex_pend(&ffs_mutex, 0xffffffff);
     assert(rc == 0);
-#endif
 }
 
 static void
 ffs_unlock(void)
 {
-#if 0
     int rc;
 
-    rc = os_mutex_release(&ffs_mutex);
+    rc = 0;//os_mutex_release(&ffs_mutex);
     assert(rc == 0);
-#endif
 }
 
-static int
-ffs_reserve_space_sector(uint32_t *out_offset, uint16_t sector_id,
-                         uint16_t size)
-{
-    const struct ffs_sector_info *sector;
-    uint32_t space;
-
-    sector = ffs_sectors + sector_id;
-    space = sector->fsi_length - sector->fsi_cur;
-    if (space >= size) {
-        *out_offset = sector->fsi_cur;
-        return 0;
-    }
-
-    return FFS_EFULL;
-}
-
-int
-ffs_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
-                  uint16_t size)
-{
-    uint16_t sector_id;
-    int rc;
-    int i;
-
-    for (i = 0; i < ffs_num_sectors; i++) {
-        if (i != ffs_scratch_sector_id) {
-            rc = ffs_reserve_space_sector(out_offset, i, size);
-            if (rc == 0) {
-                *out_sector_id = i;
-                return 0;
-            }
-        }
-    }
-
-    rc = ffs_gc(&sector_id);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = ffs_reserve_space_sector(out_offset, sector_id, size);
-    if (rc != 0) {
-        return rc;
-    }
-
-    *out_sector_id = sector_id;
-
-    return rc;
-}
-
+/**
+ * Closes the specified file and invalidates the file handle.  If the file has
+ * already been unlinked, and this is the last open handle to the file, this
+ * operation causes the file to be deleted.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
 ffs_close(struct ffs_file *file)
 {
     int rc;
 
     ffs_lock();
-
-    ffs_inode_dec_refcnt(file->ff_inode);
-
-    rc = os_memblock_put(&ffs_file_pool, file);
-    if (rc != 0) {
-        rc = FFS_EOS;
-        goto done;
-    }
-
-    rc = 0;
-
-done:
+    rc = ffs_file_close(file);
     ffs_unlock();
+
     return rc;
 }
 
-static int
-ffs_unlink_internal(const char *filename)
-{
-    struct ffs_inode *inode;
-    int rc;
-
-    rc = ffs_path_find_inode(&inode, filename);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (inode->fi_refcnt > 1) {
-        if (inode->fi_parent != NULL) {
-            assert(inode->fi_parent->fi_flags & FFS_INODE_F_DIRECTORY);
-            SLIST_REMOVE(&inode->fi_parent->fi_child_list, inode, ffs_inode,
-                         fi_sibling_next);
-            inode->fi_parent = NULL;
-        }
-    }
-
-    rc = ffs_inode_delete_from_disk(inode);
-    if (rc != 0) {
-        return rc;
-    }
-
-    ffs_inode_dec_refcnt(inode);
-
-    return 0;
-}
-
+/**
+ * Unlinks the file or directory at the specified path.  If the path refers to
+ * a directory, all the directory's descendants are recursively unlinked.  Any
+ * open file handles refering to an unlinked file remain valid, and can be
+ * read from and written to.
+ *
+ * @path                    The path of the file or directory to unlink.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
-ffs_unlink(const char *filename)
+ffs_unlink(const char *path)
 {
     int rc;
 
     ffs_lock();
-    rc = ffs_unlink_internal(filename);
+    rc = ffs_path_unlink(path);
     ffs_unlock();
 
     return rc;
 }
 
+/**
+ * Positions a file's read and write pointer at the specified offset.  The
+ * offset is expressed as the number of bytes from the start of the file (i.e.,
+ * seeking to 0 places the pointer at the first byte in the file).
+ *
+ * @param file              The file to reposition.
+ * @param offset            The offset from the start of the file to seek to.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
 ffs_seek(struct ffs_file *file, uint32_t offset)
 {
     int rc;
 
     ffs_lock();
-
-    if (offset > file->ff_inode->fi_data_len) {
-        rc = FFS_ERANGE;
-        goto done;
-    }
-
-    file->ff_offset = offset;
-
-    rc = 0;
-
-done:
+    rc = ffs_file_seek(file, offset);
     ffs_unlock();
+
     return rc;
 }
 
+/**
+ * Retrieves the current read and write position of the specified open file.
+ *
+ * @param file              The file to query.
+ *
+ * @return                  The file offset, in bytes.
+ */
 uint32_t
 ffs_getpos(const struct ffs_file *file)
 {
@@ -197,6 +128,13 @@ ffs_getpos(const struct ffs_file *file)
     return offset;
 }
 
+/**
+ * Retrieves the current length of the specified open file.
+ *
+ * @param file              The file to query.
+ *
+ * @return                  The length of the file, in bytes.
+ */
 uint32_t
 ffs_file_len(const struct ffs_file *file)
 {
@@ -209,218 +147,81 @@ ffs_file_len(const struct ffs_file *file)
     return len;
 }
 
+/**
+ * Opens a file at the specified path.  The result of opening a nonexistent
+ * file depends on the access flags specified.  All intermediate directories
+ * must have already been created.
+ *
+ * The mode strings passed to fopen() map to ffs_open()'s access flags as
+ * follows:
+ *   "r"  -  FFS_ACCESS_READ
+ *   "r+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE
+ *   "w"  -  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
+ *   "w+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
+ *   "a"  -  FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *   "a+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *
+ * @param out_file          On success, a pointer to the newly-created file
+ *                          handle gets written here.
+ * @param path              The path of the file to open.
+ * @param access_flags      Flags controlling file access; see above table.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
-ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
-             const char *filename, uint8_t filename_len, int is_dir)
+ffs_open(struct ffs_file **out_file, const char *path, uint8_t access_flags)
 {
-    struct ffs_disk_inode disk_inode;
-    struct ffs_inode *inode;
-    uint16_t sector_id;
-    uint32_t offset;
-    int rc;
-
-    inode = ffs_inode_alloc();
-    if (inode == NULL) {
-        rc = FFS_ENOMEM;
-        goto err;
-    }
-
-    rc = ffs_reserve_space(&sector_id, &offset,
-                           sizeof disk_inode + filename_len);
-    if (rc != 0) {
-        goto err;
-    }
-
-    memset(&disk_inode, 0xff, sizeof disk_inode);
-    disk_inode.fdi_magic = FFS_INODE_MAGIC;
-    disk_inode.fdi_id = ffs_next_id++;
-    disk_inode.fdi_seq = 0;
-    if (parent == NULL) {
-        disk_inode.fdi_parent_id = FFS_ID_NONE;
-    } else {
-        disk_inode.fdi_parent_id = parent->fi_base.fb_id;
-    }
-    disk_inode.fdi_flags = 0;
-    if (is_dir) {
-        disk_inode.fdi_flags |= FFS_INODE_F_DIRECTORY;
-    }
-    disk_inode.fdi_filename_len = filename_len;
-
-    rc = ffs_inode_write_disk(&disk_inode, filename, sector_id, offset);
-    if (rc != 0) {
-        goto err;
-    }
-
-    rc = ffs_inode_from_disk(inode, &disk_inode, sector_id, offset);
-    if (rc != 0) {
-        goto err;
-    }
-    if (parent != NULL) {
-        SLIST_INSERT_HEAD(&parent->fi_child_list, inode, fi_sibling_next);
-        inode->fi_parent = parent;
-    }
-    inode->fi_refcnt = 1;
-    inode->fi_data_len = 0;
-
-    ffs_hash_insert(&inode->fi_base);
-    *out_inode = inode;
-
-    return 0;
-
-err:
-    ffs_inode_free(inode);
-    return rc;
-}
-
-int
-ffs_open(struct ffs_file **out_file, const char *filename,
-         uint8_t access_flags)
-{
-    struct ffs_path_parser parser;
-    struct ffs_inode *parent;
-    struct ffs_inode *inode;
-    struct ffs_file *file;
     int rc;
 
     ffs_lock();
-
-    file = NULL;
-
-    /* XXX: Validate arguments. */
-    if (!(access_flags & (FFS_ACCESS_READ | FFS_ACCESS_WRITE))) {
-        rc = FFS_EINVAL;
-        goto done;
-    }
-    if (access_flags & FFS_ACCESS_APPEND &&
-        !(access_flags & FFS_ACCESS_WRITE)) {
-
-        rc = FFS_EINVAL;
-        goto done;
-    }
-    if (access_flags & FFS_ACCESS_APPEND &&
-        access_flags & FFS_ACCESS_TRUNCATE) {
-
-        rc = FFS_EINVAL;
-        goto done;
-    }
-
-    file = os_memblock_get(&ffs_file_pool);
-    if (file == NULL) {
-        rc = FFS_ENOMEM;
-        goto done;
-    }
-
-    ffs_path_parser_new(&parser, filename);
-    rc = ffs_path_find(&parser, &inode, &parent);
-    if (rc == FFS_ENOENT) {
-        if (parent == NULL || !(access_flags & FFS_ACCESS_WRITE)) {
-            goto done;
-        }
-
-        assert(parser.fpp_token_type == FFS_PATH_TOKEN_LEAF); // XXX
-        rc = ffs_new_file(&file->ff_inode, parent, parser.fpp_token,
-                          parser.fpp_token_len, 0);
-        if (rc != 0) {
-            goto done;
-        }
-    } else if (access_flags & FFS_ACCESS_TRUNCATE) {
-        ffs_unlink_internal(filename);
-        rc = ffs_new_file(&file->ff_inode, parent, parser.fpp_token,
-                          parser.fpp_token_len, 0);
-        if (rc != 0) {
-            goto done;
-        }
-    } else {
-        file->ff_inode = inode;
-    }
-
-    if (access_flags & FFS_ACCESS_APPEND) {
-        file->ff_offset = file->ff_inode->fi_data_len;
-    } else {
-        file->ff_offset = 0;
-    }
-    file->ff_inode->fi_refcnt++;
-    file->ff_access_flags = access_flags;
-
-    *out_file = file;
-    rc = 0;
-
-done:
-    if (rc != 0) {
-        os_memblock_put(&ffs_file_pool, file);
-    }
+    rc = ffs_file_open(out_file, path, access_flags);
     ffs_unlock();
+
     return rc;
 }
 
+/**
+ * Performs a rename and / or move of the specified source path to the
+ * specified * destination.  The source path can refer to either a file or a
+ * directory.  All intermediate directories in the destination path must
+ * already have been created.  If the source path refers to a file, the
+ * destination path must contain a full filename path (i.e., if performing a
+ * move, the destination path should end with the same filename in the source
+ * path).  If an object already exists at the specified destination path, this
+ * function causes it to be unlinked prior to the rename (i.e., the destination
+ * gets clobbered).
+ *
+ * @param from              The source path.
+ * @param to                The destination path.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
 int
 ffs_rename(const char *from, const char *to)
 {
-    struct ffs_path_parser parser;
-    struct ffs_inode *from_parent;
-    struct ffs_inode *from_inode;
-    struct ffs_inode *to_parent;
-    struct ffs_inode *to_inode;
     int rc;
 
     ffs_lock();
-
-    ffs_path_parser_new(&parser, from);
-    rc = ffs_path_find(&parser, &from_inode, &from_parent);
-    if (rc != 0) {
-        goto done;
-    }
-
-    ffs_path_parser_new(&parser, to);
-    rc = ffs_path_find(&parser, &to_inode, &to_parent);
-    switch (rc) {
-    case 0:
-        /* The user is clobbering something with the rename. */
-        if ((from_inode->fi_flags & FFS_INODE_F_DIRECTORY) ^
-            (to_inode->fi_flags   & FFS_INODE_F_DIRECTORY)) {
-
-            /* Cannot clobber one type of file with another. */
-            rc = EINVAL;
-            goto done;
-        }
-
-        ffs_inode_dec_refcnt(to_inode);
-        break;
-
-    case FFS_ENOENT:
-        assert(to_parent != NULL);
-        if (parser.fpp_token_type != FFS_PATH_TOKEN_LEAF) {
-            /* Intermediate directory doesn't exist. */
-            rc = EINVAL;
-            goto done;
-        }
-        break;
-
-    default:
-        goto done;
-    }
-
-    if (from_parent != to_parent) {
-        if (from_parent != NULL) {
-            ffs_inode_remove_child(from_inode);
-        }
-        if (to_parent != NULL) {
-            ffs_inode_add_child(to_parent, from_inode);
-        }
-    }
-
-    rc = ffs_inode_rename(from_inode, parser.fpp_token);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = 0;
-
-done:
+    rc = ffs_path_rename(from, to);
     ffs_unlock();
+
     return rc;
 }
 
+/**
+ * Reads data from the specified file.  If more data is requested than remains
+ * in the file, all available data is retrieved.  Note: this type of short read
+ * results in a success return code.
+ *
+ * @param file              The file to read from.
+ * @param data              The destination buffer to read into.
+ * @param len               (in/out) in:  The number of bytes to read.
+ *                                   out: The number of bytes actually read.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
 int
 ffs_read(struct ffs_file *file, void *data, uint32_t *len)
 {
@@ -477,37 +278,12 @@ ffs_write(struct ffs_file *file, const void *data, int len)
 int
 ffs_mkdir(const char *path)
 {
-    struct ffs_path_parser parser;
-    struct ffs_inode *parent;
-    struct ffs_inode *inode;
     int rc;
 
     ffs_lock();
-
-    ffs_path_parser_new(&parser, path);
-    rc = ffs_path_find(&parser, &inode, &parent);
-    if (rc == 0) {
-        rc = FFS_EEXIST;
-        goto done;
-    }
-    if (rc != FFS_ENOENT) {
-        goto done;
-    }
-    if (parser.fpp_token_type != FFS_PATH_TOKEN_LEAF || parent == NULL) {
-        rc = FFS_ENOENT;
-        goto done;
-    }
-
-    rc = ffs_new_file(&inode, parent, parser.fpp_token, parser.fpp_token_len,
-                      1);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = 0;
-
-done:
+    rc = ffs_path_new_dir(path);
     ffs_unlock();
+
     return rc;
 }
 
@@ -575,8 +351,12 @@ ffs_init(void)
     static os_membuf_t block_buf[
         OS_MEMPOOL_SIZE(FFS_NUM_BLOCKS, sizeof (struct ffs_block))];
 
-
     ffs_format_ram();
+
+    rc = os_mutex_create(&ffs_mutex);
+    if (rc != 0) {
+        return FFS_EOS;
+    }
 
     rc = os_mempool_init(&ffs_file_pool, FFS_NUM_FILES,
                          sizeof (struct ffs_file), &file_buf[0],

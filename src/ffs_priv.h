@@ -171,6 +171,9 @@ int ffs_path_find(struct ffs_path_parser *parser,
                   struct ffs_inode **out_inode,
                   struct ffs_inode **out_parent);
 int ffs_path_find_inode(struct ffs_inode **out_inode, const char *filename);
+int ffs_path_unlink(const char *filename);
+int ffs_path_rename(const char *from, const char *to);
+int ffs_path_new_dir(const char *path);
 
 int ffs_restore_full(const struct ffs_sector_desc *sector_descs);
 
@@ -221,9 +224,14 @@ void ffs_block_from_disk(struct ffs_block *out_block,
                          const struct ffs_disk_block *disk_block,
                          uint16_t sector_id, uint32_t offset);
 
-int ffs_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
-                      uint16_t size);
-int ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
+int ffs_misc_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
+                           uint16_t size);
+
+int ffs_file_open(struct ffs_file **out_file, const char *filename,
+                  uint8_t access_flags);
+int ffs_file_seek(struct ffs_file *file, uint32_t offset);
+int ffs_file_close(struct ffs_file *file);
+int ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
                  const char *filename, uint8_t filename_len, int is_dir);
 void ffs_format_ram(void);
 
@@ -238,8 +246,8 @@ void ffs_sector_set_magic(struct ffs_disk_sector *disk_sector);
 int ffs_sector_magic_is_set(const struct ffs_disk_sector *disk_sector);
 int ffs_sector_is_scratch(const struct ffs_disk_sector *disk_sector);
 
-int ffs_validate_root(void);
-int ffs_validate_scratch(void);
+int ffs_misc_validate_root(void);
+int ffs_misc_validate_scratch(void);
 
 int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
 
