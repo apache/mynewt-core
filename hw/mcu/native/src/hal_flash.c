@@ -108,7 +108,6 @@ find_sector(uint32_t address)
 int
 flash_erase_sector(uint32_t address)
 {
-    uint32_t addr;
     int sector_id;
 
     ensure_file_open();
