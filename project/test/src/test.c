@@ -1,4 +1,5 @@
 #include "os/os.h"
+#include "ffs_test.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -152,6 +153,8 @@ main(int argc, char **argv)
     if (os_mempool_test()) {
         exit(0);
     }
+
+    ffs_test();
 
     test_num = 0;
 

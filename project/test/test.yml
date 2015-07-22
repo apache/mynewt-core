@@ -1,2 +1,2 @@
 project.name: test
-project.pkgs: libs/os
+project.pkgs: libs/os libs/ffs hw/mcu/native
