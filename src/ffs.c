@@ -2,16 +2,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "hal/hal_flash.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
 #define FFS_NUM_FILES           8
-#define FFS_NUM_INODES          2048
-#define FFS_NUM_BLOCKS          10240
+#define FFS_NUM_INODES          100
+#define FFS_NUM_BLOCKS          100
 
-struct ffs_sector_info *ffs_sectors;
+#define FFS_MAX_SECTORS         32 /* XXX: Temporary. */
+
+struct ffs_sector_info ffs_sector_array[FFS_MAX_SECTORS];
+struct ffs_sector_info *ffs_sectors = ffs_sector_array;
 int ffs_num_sectors;
 uint16_t ffs_scratch_sector_id;
 
@@ -277,7 +281,6 @@ ffs_open(struct ffs_file **out_file, const char *filename,
     struct ffs_inode *inode;
     struct ffs_file *file;
     int rc;
-    int i;
 
     ffs_lock();
 
@@ -620,7 +623,6 @@ ffs_write_chunk(struct ffs_file *file, const void *data, int len)
 {
     struct ffs_write_info write_info;
     uint32_t file_offset;
-    uint16_t chunk_size;
     int rc;
 
     assert(len <= FFS_BLOCK_MAX_DATA_SZ);
@@ -659,9 +661,7 @@ ffs_write_chunk(struct ffs_file *file, const void *data, int len)
 int
 ffs_write(struct ffs_file *file, const void *data, int len)
 {
-    struct ffs_write_info write_info;
     const uint8_t *data_ptr;
-    uint32_t file_offset;
     uint16_t chunk_size;
     int rc;
 
@@ -811,7 +811,7 @@ ffs_free_all(void)
     }
 }
 
-static int
+int
 ffs_validate_scratch(void)
 {
     uint32_t scratch_len;
@@ -833,18 +833,23 @@ ffs_validate_scratch(void)
 }
 
 int
-ffs_format(void)
+ffs_validate_root(void)
+{
+    if (ffs_root_dir == NULL) {
+        return FFS_ECORRUPT;
+    }
+
+    return 0;
+}
+
+int
+ffs_format(const struct ffs_sector_desc *sector_descs)
 {
     int rc;
 
     ffs_lock();
 
-    rc = ffs_format_full();
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = ffs_validate_scratch();
+    rc = ffs_format_full(sector_descs);
     if (rc != 0) {
         goto done;
     }
@@ -857,103 +862,15 @@ done:
 }
 
 static int
-ffs_parse_sector_descs(const struct ffs_sector_desc *sector_descs)
-{
-    int rc;
-    int i;
-
-    for (i = 0; sector_descs[i].fsd_length != 0; i++) {
-        /* XXX: Validate sector. */
-    }
-    ffs_num_sectors = i;
-
-    ffs_sectors = malloc(ffs_num_sectors * sizeof *ffs_sectors);
-    if (ffs_sectors == NULL) {
-        return FFS_ENOMEM;
-    }
-    for (i = 0; i < ffs_num_sectors; i++) {
-        ffs_sectors[i].fsi_offset = sector_descs[i].fsd_offset;
-        ffs_sectors[i].fsi_length = sector_descs[i].fsd_length;
-        ffs_sectors[i].fsi_cur = 0;
-    }
-
-    return 0;
-}
-
-static int
-ffs_read_disk_object(struct ffs_disk_object *out_disk_object,
-                     int sector_id, uint32_t offset)
-{
-    uint32_t magic;
-    int rc;
-
-    rc = ffs_flash_read(sector_id, offset, &magic, sizeof magic);
-    if (rc != 0) {
-        return rc;
-    }
-
-    switch (magic) {
-    case FFS_INODE_MAGIC:
-        out_disk_object->fdo_type = FFS_OBJECT_TYPE_INODE;
-        rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, NULL,
-                                 sector_id, offset);
-        break;
-
-    case FFS_BLOCK_MAGIC:
-        out_disk_object->fdo_type = FFS_OBJECT_TYPE_BLOCK;
-        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, sector_id,
-                                 offset);
-        break;
-
-    case 0xffffffff:
-        rc = FFS_EEMPTY;
-        break;
-
-    default:
-        rc = FFS_ECORRUPT;
-        break;
-    }
-
-    if (rc != 0) {
-        return rc;
-    }
-
-    out_disk_object->fdo_sector_id = sector_id;
-    out_disk_object->fdo_offset = offset;
-
-    return 0;
-}
-
-static int
-ffs_disk_object_size(const struct ffs_disk_object *disk_object)
-{
-    switch (disk_object->fdo_type) {
-    case FFS_OBJECT_TYPE_INODE:
-        return sizeof disk_object->fdo_disk_inode +
-                      disk_object->fdo_disk_inode.fdi_filename_len;
-
-    case FFS_OBJECT_TYPE_BLOCK:
-        return sizeof disk_object->fdo_disk_block +
-                      disk_object->fdo_disk_block.fdb_data_len;
-
-    default:
-        assert(0);
-        return 1;
-    }
-}
-
-static int
-ffs_detect_one_sector(int sector_id, uint32_t *out_cur)
+ffs_detect_one_sector(uint16_t *out_sector_id, uint32_t sector_offset)
 {
     struct ffs_disk_sector disk_sector;
-    struct ffs_disk_object disk_object;
-    uint32_t off;
     int rc;
 
     /* Parse sector header. */
-    rc = ffs_flash_read(sector_id, 0, &disk_sector, sizeof disk_sector);
+    rc = flash_read(&disk_sector, sector_offset, sizeof disk_sector);
     if (rc != 0) {
-        return rc;
+        return FFS_EFLASH_ERROR;
     }
 
     if (disk_sector.fds_magic[0] != FFS_SECTOR_MAGIC0 ||
@@ -964,40 +881,17 @@ ffs_detect_one_sector(int sector_id, uint32_t *out_cur)
         return FFS_ECORRUPT;
     }
 
-    if (disk_sector.fds_id == FFS_SECTOR_ID_SCRATCH) {
-        if (ffs_scratch_sector_id != 0xffff) {
-            /* Two scratch sectors. */
-            return FFS_ECORRUPT;
-        } else {
-            ffs_scratch_sector_id = sector_id;
-            return 0;
-        }
-    }
+    *out_sector_id = disk_sector.fds_id;
 
-    /* Find end of sector. */
-    off = sizeof disk_sector;
-    while (1) {
-        rc = ffs_read_disk_object(&disk_object, sector_id, off);
-        switch (rc) {
-        case 0:
-            ffs_restore_object(&disk_object);
-            off += ffs_disk_object_size(&disk_object);
-            break;
-
-        case FFS_EEMPTY:
-        case FFS_ERANGE:
-            *out_cur = off;
-            return 0;
-
-        default:
-            return rc;
-        }
-    }
+    return 0;
 }
 
+
 int
-ffs_detect_sectors(const struct ffs_sector_desc *sectors)
+ffs_detect(const struct ffs_sector_desc *sector_descs)
 {
+    uint16_t sector_id;
+    int use_sector;
     int rc;
     int i;
 
@@ -1005,16 +899,46 @@ ffs_detect_sectors(const struct ffs_sector_desc *sectors)
     /* XXX: Ensure block size is a factor of all sector sizes. */
 
     ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
+    ffs_num_sectors = 0;
 
-    rc = ffs_parse_sector_descs(sectors);
-    if (rc != 0) {
-        return rc;
-    }
+    for (i = 0; sector_descs[i].fsd_length != 0; i++) {
+        rc = ffs_detect_one_sector(&sector_id, sector_descs[i].fsd_offset);
+        switch (rc) {
+        case 0:
+            use_sector = 1;
+            break;
 
-    for (i = 0; i < ffs_num_sectors; i++) {
-        rc = ffs_detect_one_sector(i, &ffs_sectors[i].fsi_cur);
-        if (rc != 0) {
-            return rc;
+        case FFS_ECORRUPT:
+            use_sector = 0;
+            break;
+
+        default:
+            goto err;
+        }
+
+        if (use_sector) {
+            if (sector_id == FFS_SECTOR_ID_SCRATCH &&
+                ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
+
+                /* Don't use more than one scratch sector. */
+                use_sector = 0;
+            }
+        }
+
+        if (use_sector) {
+            ffs_sectors[ffs_num_sectors].fsi_offset =
+                sector_descs[i].fsd_offset;
+            ffs_sectors[ffs_num_sectors].fsi_length =
+                sector_descs[i].fsd_length;
+            ffs_sectors[ffs_num_sectors].fsi_cur = 0;
+
+            ffs_num_sectors++;
+
+            if (sector_id == FFS_SECTOR_ID_SCRATCH) {
+                ffs_scratch_sector_id = ffs_num_sectors - 1;
+            } else {
+                ffs_restore_sector(ffs_num_sectors - 1);
+            }
         }
     }
 
@@ -1025,7 +949,17 @@ ffs_detect_sectors(const struct ffs_sector_desc *sectors)
 
     ffs_restore_sweep();
 
+    rc = ffs_validate_root();
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
+
+err:
+    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
+    ffs_num_sectors = 0;
+    return rc;
 }
 
 int

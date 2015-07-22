@@ -90,6 +90,8 @@ ffs_restore_dummy_inode(struct ffs_inode **out_inode, uint32_t id, int is_dir)
         inode->fi_flags |= FFS_INODE_F_DIRECTORY;
     }
 
+    ffs_hash_insert(&inode->fi_base);
+
     *out_inode = inode;
 
     return 0;
@@ -317,5 +319,97 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
     }
 
     return rc;
+}
+
+static int
+ffs_read_disk_object(struct ffs_disk_object *out_disk_object,
+                     int sector_id, uint32_t offset)
+{
+    uint32_t magic;
+    int rc;
+
+    rc = ffs_flash_read(sector_id, offset, &magic, sizeof magic);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch (magic) {
+    case FFS_INODE_MAGIC:
+        out_disk_object->fdo_type = FFS_OBJECT_TYPE_INODE;
+        rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, NULL,
+                                 sector_id, offset);
+        break;
+
+    case FFS_BLOCK_MAGIC:
+        out_disk_object->fdo_type = FFS_OBJECT_TYPE_BLOCK;
+        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, sector_id,
+                                 offset);
+        break;
+
+    case 0xffffffff:
+        rc = FFS_EEMPTY;
+        break;
+
+    default:
+        rc = FFS_ECORRUPT;
+        break;
+    }
+
+    if (rc != 0) {
+        return rc;
+    }
+
+    out_disk_object->fdo_sector_id = sector_id;
+    out_disk_object->fdo_offset = offset;
+
+    return 0;
+}
+
+static int
+ffs_disk_object_size(const struct ffs_disk_object *disk_object)
+{
+    switch (disk_object->fdo_type) {
+    case FFS_OBJECT_TYPE_INODE:
+        return sizeof disk_object->fdo_disk_inode +
+                      disk_object->fdo_disk_inode.fdi_filename_len;
+
+    case FFS_OBJECT_TYPE_BLOCK:
+        return sizeof disk_object->fdo_disk_block +
+                      disk_object->fdo_disk_block.fdb_data_len;
+
+    default:
+        assert(0);
+        return 1;
+    }
+}
+
+int
+ffs_restore_sector(int sector_id)
+{
+    struct ffs_sector_info *sector;
+    struct ffs_disk_sector disk_sector;
+    struct ffs_disk_object disk_object;
+    int rc;
+
+    sector = ffs_sectors + sector_id;
+
+    /* Find end of sector. */
+    sector->fsi_cur = sizeof disk_sector;
+    while (1) {
+        rc = ffs_read_disk_object(&disk_object, sector_id, sector->fsi_cur);
+        switch (rc) {
+        case 0:
+            ffs_restore_object(&disk_object);
+            sector->fsi_cur += ffs_disk_object_size(&disk_object);
+            break;
+
+        case FFS_EEMPTY:
+        case FFS_ERANGE:
+            return 0;
+
+        default:
+            return rc;
+        }
+    }
 }
 
