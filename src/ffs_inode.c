@@ -399,3 +399,56 @@ ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
     return 0;
 }
 
+int
+ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
+               void *data, uint32_t *len)
+{
+    struct ffs_block *block;
+    uint32_t bytes_read;
+    uint32_t bytes_left;
+    uint32_t sector_off;
+    uint32_t block_off;
+    uint32_t chunk_len;
+    uint8_t *dst;
+    int rc;
+
+    dst = data;
+    bytes_read = 0;
+    bytes_left = *len;
+
+    rc = ffs_inode_seek(inode, offset, NULL, &block, &block_off);
+    if (rc != 0) {
+        goto done;
+    }
+
+
+    while (block != NULL && bytes_left > 0) {
+        if (bytes_left > block->fb_data_len - block_off) {
+            chunk_len = block->fb_data_len - block_off;
+        } else {
+            chunk_len = bytes_left;
+        }
+
+        sector_off = block->fb_base.fb_offset +
+                     sizeof (struct ffs_disk_block) +
+                     block_off;
+        rc = ffs_flash_read(block->fb_base.fb_sector_id, sector_off, dst,
+                            chunk_len);
+        if (rc != 0) {
+            goto done;
+        }
+
+        dst += chunk_len;
+        bytes_read += chunk_len;
+        bytes_left -= chunk_len;
+        block = SLIST_NEXT(block, fb_next);
+        block_off = 0;
+    }
+
+    rc = 0;
+
+done:
+    *len = bytes_read;
+    return rc;
+}
+
