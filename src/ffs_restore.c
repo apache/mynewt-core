@@ -294,7 +294,7 @@ err:
     return rc;
 }
 
-int
+static int
 ffs_restore_object(const struct ffs_disk_object *disk_object)
 {
     int rc;
@@ -322,8 +322,8 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
 }
 
 static int
-ffs_read_disk_object(struct ffs_disk_object *out_disk_object,
-                     int sector_id, uint32_t offset)
+ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
+                        int sector_id, uint32_t offset)
 {
     uint32_t magic;
     int rc;
@@ -366,7 +366,7 @@ ffs_read_disk_object(struct ffs_disk_object *out_disk_object,
 }
 
 static int
-ffs_disk_object_size(const struct ffs_disk_object *disk_object)
+ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
 {
     switch (disk_object->fdo_type) {
     case FFS_OBJECT_TYPE_INODE:
@@ -393,14 +393,13 @@ ffs_restore_sector(int sector_id)
 
     sector = ffs_sectors + sector_id;
 
-    /* Find end of sector. */
     sector->fsi_cur = sizeof disk_sector;
     while (1) {
-        rc = ffs_read_disk_object(&disk_object, sector_id, sector->fsi_cur);
+        rc = ffs_restore_disk_object(&disk_object, sector_id, sector->fsi_cur);
         switch (rc) {
         case 0:
             ffs_restore_object(&disk_object);
-            sector->fsi_cur += ffs_disk_object_size(&disk_object);
+            sector->fsi_cur += ffs_restore_disk_object_size(&disk_object);
             break;
 
         case FFS_EEMPTY:

@@ -211,7 +211,7 @@ ffs_file_len(const struct ffs_file *file)
 
 int
 ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
-             const char *filename, uint16_t filename_len, int is_dir)
+             const char *filename, uint8_t filename_len, int is_dir)
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode *inode;
