@@ -189,8 +189,6 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
 int 
 os_sched_wakeup(struct os_task *t) 
 {
-    os_sr_t sr; 
-
     /* Remove self from mutex list if waiting on one */
     if (t->t_mutex) {
         assert(!SLIST_EMPTY(&t->t_mutex->mu_head));
