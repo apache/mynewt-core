@@ -1,0 +1,110 @@
+#include <string.h>
+#include "stm32f4xx/stm32f4xx_hal_def.h"
+#include "stm32f4xx/stm32f4xx_hal_flash.h"
+#include "stm32f4xx/stm32f4xx_hal_flash_ex.h"
+#include "hal/hal_flash.h"
+
+static const struct flash_sector_desc {
+    uint32_t fsd_offset;
+    uint32_t fsd_length;
+    int fsd_sector_id;
+} flash_sector_descs[] = {
+    { 0x08000000, 16 * 1024, FLASH_SECTOR_0 },
+    { 0x08004000, 16 * 1024, FLASH_SECTOR_1 },
+    { 0x08008000, 16 * 1024, FLASH_SECTOR_2 },
+    { 0x0800c000, 16 * 1024, FLASH_SECTOR_3 },
+    { 0x08010000, 64 * 1024, FLASH_SECTOR_4 },
+    { 0x08020000, 128 * 1024, FLASH_SECTOR_5 },
+    { 0x08040000, 128 * 1024, FLASH_SECTOR_6 },
+    { 0x08060000, 128 * 1024, FLASH_SECTOR_7 },
+    { 0x08080000, 128 * 1024, FLASH_SECTOR_8 },
+    { 0x080a0000, 128 * 1024, FLASH_SECTOR_9 },
+    { 0x080c0000, 128 * 1024, FLASH_SECTOR_10 },
+    { 0x080e0000, 128 * 1024, FLASH_SECTOR_11 },
+};
+
+#define FLASH_NUM_SECTORS   (int)(sizeof flash_sector_descs /       \
+                                  sizeof flash_sector_descs[0])
+
+int
+flash_read(void *dst, uint32_t address, uint32_t num_bytes)
+{
+    memcpy(dst, (void *)address, num_bytes);
+    return 0;
+}
+
+int
+flash_write(const void *src, uint32_t address, uint32_t num_bytes)
+{
+    const uint8_t *sptr;
+    uint32_t i;
+    int rc;
+
+    sptr = src;
+    for (i = 0; i < num_bytes; i++) {
+        rc = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, sptr[i]);
+        if (rc != 0) {
+            return rc;
+        }
+
+        address++;
+    }
+
+    return 0;
+}
+
+static void
+flash_erase_sector_id(int sector_id)
+{
+    FLASH_Erase_Sector(sector_id, FLASH_VOLTAGE_RANGE_1);
+}
+
+int
+flash_erase_sector(uint32_t sector_address)
+{
+    int i;
+
+    for (i = 0; i < FLASH_NUM_SECTORS; i++) {
+        if (flash_sector_descs[i].fsd_offset == sector_address) {
+            flash_erase_sector_id(flash_sector_descs[i].fsd_sector_id);
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
+int
+flash_erase(uint32_t address, uint32_t num_bytes)
+{
+    const struct flash_sector_desc *sector;
+    uint32_t end;
+    int i;
+
+    end = address + num_bytes;
+
+    for (i = 0; i < FLASH_NUM_SECTORS; i++) {
+        sector = flash_sector_descs + i;
+
+        if (sector->fsd_offset >= end) {
+            return 0;
+        }
+
+        if (address >= sector->fsd_offset &&
+            address < sector->fsd_offset + sector->fsd_length) {
+
+            flash_erase_sector_id(sector->fsd_sector_id);
+        }
+    }
+
+    return 0;
+}
+
+int
+flash_init(void)
+{
+    HAL_FLASH_Unlock();
+
+    return 0;
+}
+
