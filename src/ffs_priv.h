@@ -55,7 +55,7 @@ struct ffs_disk_inode {
     uint32_t fdi_seq;
     uint32_t fdi_parent_id;
     uint16_t fdi_flags;
-    uint16_t fdi_filename_len;
+    uint8_t fdi_filename_len;
     uint32_t fdi_ecc; /* Real size tbd. */
     /* Followed by filename. */
 };
@@ -70,12 +70,12 @@ struct ffs_disk_sector {
 #define FFS_OBJECT_TYPE_BLOCK   2
 
 struct ffs_base {
-    uint8_t fb_type;
+    SLIST_ENTRY(ffs_base) fb_hash_next;
     uint32_t fb_id;
     uint32_t fb_seq;
-    uint16_t fb_sector_id;
     uint32_t fb_offset;
-    SLIST_ENTRY(ffs_base) fb_hash_next;
+    uint16_t fb_sector_id;
+    uint8_t fb_type;
 };
 
 struct ffs_block {
@@ -83,8 +83,8 @@ struct ffs_block {
     struct ffs_inode *fb_inode;
     SLIST_ENTRY(ffs_block) fb_next;
     uint32_t fb_rank;
-    uint16_t fb_flags;
     uint16_t fb_data_len;
+    uint8_t fb_flags;
 };
 
 SLIST_HEAD(ffs_inode_list, ffs_inode);
@@ -96,10 +96,10 @@ struct ffs_inode {
         struct ffs_inode_list fi_child_list;  /* If directory. */
     };
     struct ffs_inode *fi_parent;
-    uint8_t fi_refcnt;
-    uint16_t fi_flags;
     uint32_t fi_data_len; /* If file. */
-    uint16_t fi_filename_len;
+    uint8_t fi_filename_len;
+    uint8_t fi_flags;
+    uint8_t fi_refcnt;
     uint8_t fi_filename[FFS_SHORT_FILENAME_LEN];
 };
 
@@ -173,7 +173,6 @@ int ffs_path_find(struct ffs_path_parser *parser,
 int ffs_path_find_inode(struct ffs_inode **out_inode, const char *filename);
 
 void ffs_restore_sweep(void);
-int ffs_restore_object(const struct ffs_disk_object *disk_object);
 int ffs_restore_sector(int sector_id);
 
 uint32_t ffs_base_disk_size(const struct ffs_base *base);
@@ -226,7 +225,7 @@ void ffs_block_from_disk(struct ffs_block *out_block,
 int ffs_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
                       uint16_t size);
 int ffs_new_file(struct ffs_inode **out_inode, struct ffs_inode *parent,
-                 const char *filename, uint16_t filename_len, int is_dir);
+                 const char *filename, uint8_t filename_len, int is_dir);
 void ffs_free_all(void);
 
 int ffs_format_scratch_sector(uint16_t sector_id);

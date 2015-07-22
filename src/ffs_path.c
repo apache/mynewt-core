@@ -26,7 +26,7 @@ ffs_path_parse_next(struct ffs_path_parser *parser)
         token_len = token_end - parser->fpp_off;
     }
 
-    if (token_len > FFS_FILENAME_LEN) {
+    if (token_len > FFS_FILENAME_MAX_LEN) {
         return FFS_EINVAL;
     }
 
