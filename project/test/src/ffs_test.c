@@ -38,7 +38,7 @@ ffs_test_util_assert_len_consistent(const struct ffs_file *file)
 }
 
 static void
-ffs_test_util_assert_contents(const char *filename, const uint8_t *contents,
+ffs_test_util_assert_contents(const char *filename, const char *contents,
                               int contents_len)
 {
     struct ffs_file *file;
@@ -88,7 +88,7 @@ ffs_test_util_block_count(const char *filename)
 }
 
 struct ffs_test_block_desc {
-    uint8_t *data;
+    const char *data;
     int data_len;
 };
 
@@ -100,7 +100,7 @@ ffs_test_util_create_file_blocks(const char *filename,
     struct ffs_file *file;
     uint32_t total_len;
     uint32_t offset;
-    uint8_t *buf;
+    char *buf;
     int num_writes;
     int rc;
     int i;
@@ -143,19 +143,19 @@ ffs_test_util_create_file_blocks(const char *filename,
 }
 
 static void
-ffs_test_util_create_file(const char *filename, const uint8_t *contents,
+ffs_test_util_create_file(const char *filename, const char *contents,
                           int contents_len)
 {
     struct ffs_test_block_desc block;
 
-    block.data = (uint8_t *)contents;
+    block.data = contents;
     block.data_len = contents_len;
 
     ffs_test_util_create_file_blocks(filename, &block, 0);
 }
 
 static void
-ffs_test_util_append_file(const char *filename, const uint8_t *contents,
+ffs_test_util_append_file(const char *filename, const char *contents,
                           int contents_len)
 {
     struct ffs_file *file;
@@ -176,7 +176,7 @@ ffs_test_util_append_file(const char *filename, const uint8_t *contents,
 struct ffs_test_file_desc {
     const char *filename;
     int is_dir;
-    uint8_t *contents;
+    const char *contents;
     int contents_len;
     struct ffs_test_file_desc *children;
 };
@@ -478,7 +478,7 @@ static void
 ffs_test_rename(void)
 {
     struct ffs_file *file;
-    const uint8_t contents[] = "contents";
+    const char contents[] = "contents";
     int rc;
 
     printf("\trename test\n");
@@ -1254,7 +1254,7 @@ ffs_test_long_filename(void)
 static void
 ffs_test_large_write(void)
 {
-    static uint8_t data[FFS_BLOCK_MAX_DATA_SZ * 5];
+    static char data[FFS_BLOCK_MAX_DATA_SZ * 5];
     int rc;
     int i;
 
