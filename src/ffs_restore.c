@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include "hal/hal_flash.h"
 #include "os/os_mempool.h"
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
