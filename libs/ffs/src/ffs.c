@@ -421,333 +421,59 @@ done:
     return rc;
 }
 
-struct ffs_write_info {
-    struct ffs_block *fwi_prev_block;
-    struct ffs_block *fwi_start_block;
-    struct ffs_block *fwi_end_block;
-    uint32_t fwi_start_offset;
-    uint32_t fwi_end_offset;
-    uint32_t fwi_extra_length;
-};
-
-static int
-ffs_calc_write_overlay(struct ffs_write_info *out_write_info,
-                       const struct ffs_inode *inode, 
-                       uint32_t file_offset, uint32_t write_len)
-{
-    struct ffs_block *block;
-    uint32_t block_offset;
-    uint32_t chunk_len;
-    int rc;
-
-    rc = ffs_inode_seek(inode, file_offset,
-                        &out_write_info->fwi_prev_block,
-                        &out_write_info->fwi_start_block,
-                        &out_write_info->fwi_start_offset);
-    if (rc != 0) {
-        return rc;
-    }
-
-    block_offset = out_write_info->fwi_start_offset;
-    block = out_write_info->fwi_start_block;
-    while (1) {
-        if (block == NULL) {
-            out_write_info->fwi_end_block = NULL;
-            out_write_info->fwi_end_offset = 0;
-            out_write_info->fwi_extra_length = write_len;
-            return 0;
-        }
-
-        chunk_len = block->fb_data_len - block_offset;
-        if (chunk_len > write_len) {
-            out_write_info->fwi_end_block = block;
-            out_write_info->fwi_end_offset = block_offset + write_len;
-            out_write_info->fwi_extra_length = 0;
-            return 0;
-        }
-
-        write_len -= chunk_len;
-        block_offset = 0;
-        block = SLIST_NEXT(block, fb_next);
-    }
-}
-
-static uint32_t
-ffs_write_disk_size(const struct ffs_write_info *write_info,
-                    const struct ffs_disk_block *data_disk_block)
-{
-    const struct ffs_block *block;
-    uint32_t size;
-
-    /* New data disk block. */
-    size = sizeof *data_disk_block + data_disk_block->fdb_data_len;
-
-    /* Accumulate sizes of delete blocks. */
-    if (write_info->fwi_start_block != NULL) {
-        block = SLIST_NEXT(write_info->fwi_start_block, fb_next);
-        while (1) {
-            if (block == NULL) {
-                break;
-            }
-
-            size += sizeof (struct ffs_disk_block);
-
-            if (block == write_info->fwi_end_block) {
-                break;
-            }
-
-            block = SLIST_NEXT(block, fb_next);
-        }
-    }
-
-    return size;
-}
-
-static int
-ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
-              const void *data, int data_len)
-{
-    struct ffs_disk_block disk_block;
-    struct ffs_block *block;
-    struct ffs_block *next;
-    uint32_t expected_cur;
-    uint32_t disk_size;
-    uint32_t chunk_len;
-    uint32_t offset;
-    uint32_t cur;
-    uint16_t sector_id;
-    int rc;
-
-    disk_block.fdb_data_len = data_len;
-    if (write_info->fwi_start_block != NULL) {
-        disk_block.fdb_data_len += write_info->fwi_start_offset;
-        disk_block.fdb_id = write_info->fwi_start_block->fb_base.fb_id;
-        disk_block.fdb_seq = write_info->fwi_start_block->fb_base.fb_seq + 1;
-        disk_block.fdb_rank = write_info->fwi_start_block->fb_rank;
-    } else {
-        disk_block.fdb_id = ffs_next_id++;
-        disk_block.fdb_seq = 0;
-        if (write_info->fwi_prev_block != NULL) {
-            disk_block.fdb_rank = write_info->fwi_prev_block->fb_rank + 1;
-        } else {
-            disk_block.fdb_rank = 0;
-        }
-    }
-
-    if (write_info->fwi_end_block != NULL) {
-        disk_block.fdb_data_len += write_info->fwi_end_block->fb_data_len -
-                                   write_info->fwi_end_offset;
-    }
-
-    disk_block.fdb_magic = FFS_BLOCK_MAGIC;
-    disk_block.fdb_inode_id = inode->fi_base.fb_id;
-    disk_block.reserved16 = 0;
-    disk_block.fdb_flags = 0;
-    disk_block.fdb_ecc = 0;
-
-    disk_size = ffs_write_disk_size(write_info, &disk_block);
-    rc = ffs_reserve_space(&sector_id, &offset, disk_size);
-    if (rc != 0) {
-        return rc;
-    }
-    expected_cur = ffs_sectors[sector_id].fsi_cur + disk_size;
-
-    rc = ffs_flash_write(sector_id, offset, &disk_block, sizeof disk_block);
-    if (rc != 0) {
-        return rc;
-    }
-
-    cur = offset + sizeof disk_block;
-
-    if (write_info->fwi_start_block != NULL) {
-        chunk_len = write_info->fwi_start_offset;
-        rc = ffs_flash_copy(
-            write_info->fwi_start_block->fb_base.fb_sector_id,
-            write_info->fwi_start_block->fb_base.fb_offset + sizeof disk_block,
-            sector_id, cur, chunk_len);
-        if (rc != 0) {
-            return rc;
-        }
-        cur += chunk_len;
-    }
-
-    rc = ffs_flash_write(sector_id, cur, data, data_len);
-    if (rc != 0) {
-        return rc;
-    }
-    cur += data_len;
-
-    if (write_info->fwi_end_block != NULL) {
-        chunk_len = write_info->fwi_end_block->fb_data_len -
-                    write_info->fwi_end_offset;
-        rc = ffs_flash_copy(
-            write_info->fwi_end_block->fb_base.fb_sector_id,
-            write_info->fwi_end_block->fb_base.fb_offset +
-                sizeof disk_block + write_info->fwi_end_offset,
-            sector_id, cur, chunk_len);
-        if (rc != 0) {
-            return rc;
-        }
-        cur += chunk_len;
-    }
-
-    assert(cur - offset == sizeof disk_block + disk_block.fdb_data_len);
-
-    if (write_info->fwi_start_block != NULL) {
-        next = SLIST_NEXT(write_info->fwi_start_block, fb_next);
-        if (next != NULL) {
-            ffs_block_delete_list_from_disk(next,
-                                            write_info->fwi_end_block);
-        }
-        ffs_block_delete_list_from_ram(write_info->fwi_start_block,
-                                       write_info->fwi_end_block);
-    }
-
-    block = ffs_block_alloc();
-    if (block == NULL) {
-        return FFS_ENOMEM;
-    }
-
-    ffs_block_from_disk(block, &disk_block, sector_id, offset);
-    block->fb_inode = inode;
-    ffs_hash_insert(&block->fb_base);
-    ffs_inode_insert_block(inode, block);
-
-    assert(ffs_sectors[sector_id].fsi_cur == expected_cur);
-
-    return 0;
-}
-
-static int
-ffs_write_chunk(struct ffs_file *file, const void *data, int len)
-{
-    struct ffs_write_info write_info;
-    uint32_t file_offset;
-    int rc;
-
-    assert(len <= FFS_BLOCK_MAX_DATA_SZ);
-
-    if (!(file->ff_access_flags & FFS_ACCESS_WRITE)) {
-        return FFS_ERDONLY;
-    }
-
-    /* The append flag forces all writes to the end of the file, regardless of
-     * seek position.
-     */
-    if (file->ff_access_flags & FFS_ACCESS_APPEND) {
-        file_offset = file->ff_inode->fi_data_len;
-    } else {
-        file_offset = file->ff_offset;
-    }
-
-    rc = ffs_calc_write_overlay(&write_info, file->ff_inode, file_offset, len);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = ffs_write_gen(&write_info, file->ff_inode, data, len);
-    if (rc != 0) {
-        return rc;
-    }
-
-    /* A write always results in a seek position one past the end of the
-     * write.
-     */
-    file->ff_offset = file_offset + len;
-
-    return 0;
-}
-
-int
-ffs_write(struct ffs_file *file, const void *data, int len)
-{
-    const uint8_t *data_ptr;
-    uint16_t chunk_size;
-    int rc;
-
-    ffs_lock();
-
-    /* Write data as a sequence of blocks. */
-    data_ptr = data;
-    while (len > 0) {
-        if (len > FFS_BLOCK_MAX_DATA_SZ) {
-            chunk_size = FFS_BLOCK_MAX_DATA_SZ;
-        } else {
-            chunk_size = len;
-        }
-
-        rc = ffs_write_chunk(file, data_ptr, chunk_size);
-        if (rc != 0) {
-            goto done;
-        }
-
-        len -= chunk_size;
-        data_ptr += chunk_size;
-    }
-
-    rc = 0;
-
-done:
-    ffs_unlock();
-    return rc;
-}
-
 int
 ffs_read(struct ffs_file *file, void *data, uint32_t *len)
 {
-    struct ffs_block *block;
-    uint32_t bytes_read;
-    uint32_t bytes_left;
-    uint32_t sector_off;
-    uint32_t block_off;
-    uint32_t chunk_len;
-    uint8_t *dst;
     int rc;
 
     ffs_lock();
 
-    dst = data;
-    bytes_read = 0;
-    bytes_left = *len;
-
-    rc = ffs_inode_seek(file->ff_inode, file->ff_offset, NULL, &block,
-                        &block_off);
+    rc = ffs_inode_read(file->ff_inode, file->ff_offset, data, len);
     if (rc != 0) {
         goto done;
     }
 
-
-    while (block != NULL && bytes_left > 0) {
-        if (bytes_left > block->fb_data_len) {
-            chunk_len = block->fb_data_len;
-        } else {
-            chunk_len = bytes_left;
-        }
-
-        sector_off = block->fb_base.fb_offset +
-                     sizeof (struct ffs_disk_block) +
-                     block_off;
-        rc = ffs_flash_read(block->fb_base.fb_sector_id, sector_off, dst,
-                            chunk_len);
-        if (rc != 0) {
-            goto done;
-        }
-
-        dst += chunk_len;
-        bytes_read += chunk_len;
-        bytes_left -= chunk_len;
-        block = SLIST_NEXT(block, fb_next);
-        block_off = 0;
-    }
+    file->ff_offset += *len;
 
     rc = 0;
 
 done:
-    *len = bytes_read;
     ffs_unlock();
     return rc;
 }
 
+/**
+ * Writes the supplied data to the specified file handle.
+ *
+ * @param file              The file to write to.
+ * @param data              The data to write.
+ * @param len               The number of bytes to write.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int
+ffs_write(struct ffs_file *file, const void *data, int len)
+{
+    int rc;
+
+    ffs_lock();
+    rc = ffs_write_to_file(file, data, len);
+    ffs_unlock();
+
+    return rc;
+}
+
+/**
+ * Creates the directory represented by the specified path.  All intermediate
+ * directories must already exist.  The specified path must start with a '/'
+ * character.
+ *
+ * @param path                  The directory to create.
+ *
+ * @return                      0 on success;
+ *                              nonzero on failure.
+ */
 int
 ffs_mkdir(const char *path)
 {
@@ -785,183 +511,58 @@ done:
     return rc;
 }
 
-void
-ffs_free_all(void)
-{
-    struct ffs_base_list *list;
-    struct ffs_inode *inode;
-    struct ffs_base *base;
-    int i;
-
-    for (i = 0; i < FFS_HASH_SIZE; i++) {
-        list = ffs_hash + i;
-
-        base = SLIST_FIRST(list);
-        while (base != NULL) {
-            if (base->fb_type == FFS_OBJECT_TYPE_INODE) {
-                inode = (void *)base;
-                while (inode->fi_refcnt > 0) {
-                    ffs_inode_dec_refcnt(inode);
-                }
-                base = SLIST_FIRST(list);
-            } else {
-                base = SLIST_NEXT(base, fb_hash_next);
-            }
-        }
-    }
-}
-
-int
-ffs_validate_scratch(void)
-{
-    uint32_t scratch_len;
-    int i;
-
-    if (ffs_scratch_sector_id == FFS_SECTOR_ID_SCRATCH) {
-        /* No scratch sector. */
-        return FFS_ECORRUPT;
-    }
-
-    scratch_len = ffs_sectors[ffs_scratch_sector_id].fsi_length;
-    for (i = 0; i < ffs_num_sectors; i++) {
-        if (ffs_sectors[i].fsi_length > scratch_len) {
-            return FFS_ECORRUPT;
-        }
-    }
-
-    return 0;
-}
-
-int
-ffs_validate_root(void)
-{
-    if (ffs_root_dir == NULL) {
-        return FFS_ECORRUPT;
-    }
-
-    return 0;
-}
-
+/**
+ * Erases all the specified sectors and initializes them with a clean ffs
+ * file system.
+ *
+ * @param sector_descs      The set of sectors to format.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
 int
 ffs_format(const struct ffs_sector_desc *sector_descs)
 {
     int rc;
 
     ffs_lock();
-
     rc = ffs_format_full(sector_descs);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = 0;
-
-done:
     ffs_unlock();
+
     return rc;
 }
 
-static int
-ffs_detect_one_sector(uint16_t *out_sector_id, uint32_t sector_offset)
-{
-    struct ffs_disk_sector disk_sector;
-    int rc;
-
-    /* Parse sector header. */
-    rc = flash_read(&disk_sector, sector_offset, sizeof disk_sector);
-    if (rc != 0) {
-        return FFS_EFLASH_ERROR;
-    }
-
-    if (disk_sector.fds_magic[0] != FFS_SECTOR_MAGIC0 ||
-        disk_sector.fds_magic[1] != FFS_SECTOR_MAGIC1 ||
-        disk_sector.fds_magic[2] != FFS_SECTOR_MAGIC2 ||
-        disk_sector.fds_magic[3] != FFS_SECTOR_MAGIC3) {
-
-        return FFS_ECORRUPT;
-    }
-
-    *out_sector_id = disk_sector.fds_id;
-
-    return 0;
-}
-
-
+/**
+ * Searches for a valid ffs file system among the specified sectors.  This
+ * function succeeds if a file system is detected among any subset of the
+ * supplied sectors.  If the sector set does not contain a valid file system,
+ * a new one can be created via a call to ffs_format().
+ *
+ * @param sector_descs      The sector set to search.  This array must be
+ *                          terminated with a 0-length sector.
+ *
+ * @return                  0 on success;
+ *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          other nonzero on error.
+ */
 int
 ffs_detect(const struct ffs_sector_desc *sector_descs)
 {
-    uint16_t sector_id;
-    int use_sector;
     int rc;
-    int i;
 
-    /* XXX: Ensure scratch sector is big enough. */
-    /* XXX: Ensure block size is a factor of all sector sizes. */
+    ffs_lock();
+    rc = ffs_restore_full(sector_descs);
+    ffs_unlock();
 
-    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
-    ffs_num_sectors = 0;
-
-    for (i = 0; sector_descs[i].fsd_length != 0; i++) {
-        rc = ffs_detect_one_sector(&sector_id, sector_descs[i].fsd_offset);
-        switch (rc) {
-        case 0:
-            use_sector = 1;
-            break;
-
-        case FFS_ECORRUPT:
-            use_sector = 0;
-            break;
-
-        default:
-            goto err;
-        }
-
-        if (use_sector) {
-            if (sector_id == FFS_SECTOR_ID_SCRATCH &&
-                ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
-
-                /* Don't use more than one scratch sector. */
-                use_sector = 0;
-            }
-        }
-
-        if (use_sector) {
-            ffs_sectors[ffs_num_sectors].fsi_offset =
-                sector_descs[i].fsd_offset;
-            ffs_sectors[ffs_num_sectors].fsi_length =
-                sector_descs[i].fsd_length;
-            ffs_sectors[ffs_num_sectors].fsi_cur = 0;
-
-            ffs_num_sectors++;
-
-            if (sector_id == FFS_SECTOR_ID_SCRATCH) {
-                ffs_scratch_sector_id = ffs_num_sectors - 1;
-            } else {
-                ffs_restore_sector(ffs_num_sectors - 1);
-            }
-        }
-    }
-
-    rc = ffs_validate_scratch();
-    if (rc != 0) {
-        return rc;
-    }
-
-    ffs_restore_sweep();
-
-    rc = ffs_validate_root();
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-
-err:
-    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
-    ffs_num_sectors = 0;
     return rc;
 }
 
+/**
+ * Initializes the ffs memory and data structures.  This must be called before
+ * any ffs operations are attempted.
+ *
+ * @return                  0 on success; nonzero on error.
+ */
 int
 ffs_init(void)
 {
@@ -975,7 +576,7 @@ ffs_init(void)
         OS_MEMPOOL_SIZE(FFS_NUM_BLOCKS, sizeof (struct ffs_block))];
 
 
-    ffs_free_all();
+    ffs_format_ram();
 
     rc = os_mempool_init(&ffs_file_pool, FFS_NUM_FILES,
                          sizeof (struct ffs_file), &file_buf[0],

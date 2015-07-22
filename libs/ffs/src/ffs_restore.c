@@ -383,7 +383,7 @@ ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
     }
 }
 
-int
+static int
 ffs_restore_sector(int sector_id)
 {
     struct ffs_sector_info *sector;
@@ -410,5 +410,119 @@ ffs_restore_sector(int sector_id)
             return rc;
         }
     }
+}
+
+static int
+ffs_restore_detect_one_sector(uint16_t *out_sector_id, uint32_t sector_offset)
+{
+    struct ffs_disk_sector disk_sector;
+    int rc;
+
+    /* Parse sector header. */
+    rc = flash_read(&disk_sector, sector_offset, sizeof disk_sector);
+    if (rc != 0) {
+        return FFS_EFLASH_ERROR;
+    }
+
+    if (disk_sector.fds_magic[0] != FFS_SECTOR_MAGIC0 ||
+        disk_sector.fds_magic[1] != FFS_SECTOR_MAGIC1 ||
+        disk_sector.fds_magic[2] != FFS_SECTOR_MAGIC2 ||
+        disk_sector.fds_magic[3] != FFS_SECTOR_MAGIC3) {
+
+        return FFS_ECORRUPT;
+    }
+
+    *out_sector_id = disk_sector.fds_id;
+
+    return 0;
+}
+
+/**
+ * Searches for a valid ffs file system among the specified sectors.  This
+ * function succeeds if a file system is detected among any subset of the
+ * supplied sectors.  If the sector set does not contain a valid file system,
+ * a new one can be created via a call to ffs_format().
+ *
+ * @param sector_descs      The sector set to search.  This array must be
+ *                          terminated with a 0-length sector.
+ *
+ * @return                  0 on success;
+ *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          other nonzero on error.
+ */
+int
+ffs_restore_full(const struct ffs_sector_desc *sector_descs)
+{
+    uint16_t sector_id;
+    int use_sector;
+    int rc;
+    int i;
+
+    /* XXX: Ensure scratch sector is big enough. */
+    /* XXX: Ensure block size is a factor of all sector sizes. */
+
+    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
+    ffs_num_sectors = 0;
+
+    for (i = 0; sector_descs[i].fsd_length != 0; i++) {
+        rc = ffs_restore_detect_one_sector(&sector_id,
+                                           sector_descs[i].fsd_offset);
+        switch (rc) {
+        case 0:
+            use_sector = 1;
+            break;
+
+        case FFS_ECORRUPT:
+            use_sector = 0;
+            break;
+
+        default:
+            goto err;
+        }
+
+        if (use_sector) {
+            if (sector_id == FFS_SECTOR_ID_SCRATCH &&
+                ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
+
+                /* Don't use more than one scratch sector. */
+                use_sector = 0;
+            }
+        }
+
+        if (use_sector) {
+            ffs_sectors[ffs_num_sectors].fsi_offset =
+                sector_descs[i].fsd_offset;
+            ffs_sectors[ffs_num_sectors].fsi_length =
+                sector_descs[i].fsd_length;
+            ffs_sectors[ffs_num_sectors].fsi_cur = 0;
+
+            ffs_num_sectors++;
+
+            if (sector_id == FFS_SECTOR_ID_SCRATCH) {
+                ffs_scratch_sector_id = ffs_num_sectors - 1;
+            } else {
+                ffs_restore_sector(ffs_num_sectors - 1);
+            }
+        }
+    }
+
+    rc = ffs_validate_scratch();
+    if (rc != 0) {
+        return rc;
+    }
+
+    ffs_restore_sweep();
+
+    rc = ffs_validate_root();
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+
+err:
+    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
+    ffs_num_sectors = 0;
+    return rc;
 }
 
