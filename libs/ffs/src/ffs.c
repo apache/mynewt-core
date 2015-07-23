@@ -12,8 +12,6 @@
 #define FFS_NUM_INODES          100
 #define FFS_NUM_BLOCKS          100
 
-#define FFS_MAX_SECTORS         32 /* XXX: Temporary. */
-
 struct ffs_sector_info ffs_sector_array[FFS_MAX_SECTORS];
 struct ffs_sector_info *ffs_sectors = ffs_sector_array;
 int ffs_num_sectors;
@@ -351,8 +349,6 @@ ffs_init(void)
     static os_membuf_t block_buf[
         OS_MEMPOOL_SIZE(FFS_NUM_BLOCKS, sizeof (struct ffs_block))];
 
-    ffs_format_ram();
-
     rc = os_mutex_create(&ffs_mutex);
     if (rc != 0) {
         return FFS_EOS;
@@ -383,6 +379,8 @@ ffs_init(void)
     if (rc != 0) {
         return FFS_EOS;
     }
+
+    ffs_hash_init();
 
     return 0;
 }

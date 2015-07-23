@@ -13,8 +13,8 @@ struct ffs_write_info {
 
 static int
 ffs_write_calc_info(struct ffs_write_info *out_write_info,
-                       const struct ffs_inode *inode, 
-                       uint32_t file_offset, uint32_t write_len)
+                    const struct ffs_inode *inode,
+                    uint32_t file_offset, uint32_t write_len)
 {
     struct ffs_block *block;
     uint32_t block_offset;
@@ -82,6 +82,26 @@ ffs_write_disk_size(const struct ffs_write_info *write_info,
     }
 
     return size;
+}
+
+static void
+ffs_write_delete_block_list_from_ram(struct ffs_block *first,
+                                     struct ffs_block *last)
+{
+    struct ffs_block *next;
+    struct ffs_block *cur;
+
+    cur = first;
+    while (cur != NULL) {
+        next = SLIST_NEXT(cur, fb_next);
+
+        ffs_block_delete_from_ram(cur);
+        if (cur == last) {
+            break;
+        }
+
+        cur = next;
+    }
 }
 
 static int
@@ -156,6 +176,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     if (rc != 0) {
         return rc;
     }
+
     cur += data_len;
 
     if (write_info->fwi_end_block != NULL) {
@@ -180,8 +201,8 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
             ffs_block_delete_list_from_disk(next,
                                             write_info->fwi_end_block);
         }
-        ffs_block_delete_list_from_ram(write_info->fwi_start_block,
-                                       write_info->fwi_end_block);
+        ffs_write_delete_block_list_from_ram(write_info->fwi_start_block,
+                                             write_info->fwi_end_block);
     }
 
     block = ffs_block_alloc();

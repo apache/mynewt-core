@@ -27,6 +27,12 @@ ffs_inode_free(struct ffs_inode *inode)
 }
 
 uint32_t
+ffs_inode_disk_size(const struct ffs_inode *inode)
+{
+    return sizeof (struct ffs_disk_inode) + inode->fi_filename_len;
+}
+
+uint32_t
 ffs_inode_calc_data_length(const struct ffs_inode *inode)
 {
     const struct ffs_block *block;

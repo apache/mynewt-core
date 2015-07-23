@@ -25,6 +25,12 @@ ffs_block_free(struct ffs_block *block)
     os_memblock_put(&ffs_block_pool, block);
 }
 
+uint32_t
+ffs_block_disk_size(const struct ffs_block *block)
+{
+    return sizeof (struct ffs_disk_block) + block->fb_data_len;
+}
+
 int
 ffs_block_read_disk(struct ffs_disk_block *out_disk_block, uint16_t sector_id,
                     uint32_t offset)
@@ -109,27 +115,12 @@ ffs_block_delete_from_ram(struct ffs_block *block)
     ffs_block_free(block);
 }
 
-void
-ffs_block_delete_list_from_ram(struct ffs_block *first, struct ffs_block *last)
-{
-    struct ffs_block *next;
-    struct ffs_block *cur;
-
-    cur = first;
-    while (cur != NULL) {
-        next = SLIST_NEXT(cur, fb_next);
-        ffs_block_delete_from_ram(cur);
-        if (cur == last) {
-            break;
-        }
-        cur = next;
-    }
-}
 
 int
 ffs_block_delete_from_disk(const struct ffs_block *block)
 {
     struct ffs_disk_block disk_block;
+    uint16_t sector_id;
     int rc;
 
     memset(&disk_block, 0, sizeof disk_block);
@@ -138,7 +129,7 @@ ffs_block_delete_from_disk(const struct ffs_block *block)
     disk_block.fdb_seq = block->fb_base.fb_seq + 1;
     disk_block.fdb_flags = FFS_BLOCK_F_DELETED;
 
-    rc = ffs_block_write_disk(NULL, NULL, &disk_block, NULL);
+    rc = ffs_block_write_disk(&sector_id, NULL, &disk_block, NULL);
     if (rc != 0) {
         return rc;
     }
