@@ -50,8 +50,10 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
         goto err;
     }
     if (parent != NULL) {
-        SLIST_INSERT_HEAD(&parent->fi_child_list, inode, fi_sibling_next);
-        inode->fi_parent = parent;
+        rc = ffs_inode_add_child(parent, inode);
+        if (rc != 0) {
+            goto err;
+        }
     }
     inode->fi_refcnt = 1;
     inode->fi_data_len = 0;
