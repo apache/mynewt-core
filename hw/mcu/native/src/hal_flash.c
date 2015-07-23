@@ -27,22 +27,35 @@ static const struct flash_sector_desc {
                                   sizeof flash_sector_descs[0])
 
 static void
-doerase(int addr, int len)
+flash_native_erase(uint32_t addr, uint32_t len)
 {
+    static uint8_t buf[256];
+    uint32_t end;
+    int chunk_sz;
     int rc;
-    int i;
+
+    end = addr + len;
+    memset(buf, 0xff, sizeof buf);
 
     rc = fseek(file, addr, SEEK_SET);
     assert(rc == 0);
 
-    for (i = 0; i < len; i++) {
-        fputc(0xff, file);
+    while (addr < end) {
+        if (end - addr < sizeof buf) {
+            chunk_sz = end - addr;
+        } else {
+            chunk_sz = sizeof buf;
+        }
+        rc = fwrite(buf, chunk_sz, 1, file);
+        assert(rc == 1);
+
+        addr += chunk_sz;
     }
     fflush(file);
 }
 
 static void
-ensure_file_open(void)
+flash_native_ensure_file_open(void)
 {
     int expected_sz;
     int i;
@@ -55,7 +68,7 @@ ensure_file_open(void)
 
         file = tmpfile();
         assert(file != NULL);
-        doerase(0, expected_sz);
+        flash_native_erase(0, expected_sz);
     }
 }
 
@@ -66,7 +79,7 @@ flash_write(const void *src, uint32_t address, uint32_t length)
     int c;
     int i;
 
-    ensure_file_open();
+    flash_native_ensure_file_open();
     s = src;
     fseek(file, address, SEEK_SET);
     for (i = 0; i < length; i++) {
@@ -84,7 +97,7 @@ flash_write(const void *src, uint32_t address, uint32_t length)
 int
 flash_read(void *dst, uint32_t address, uint32_t length)
 {
-    ensure_file_open();
+    flash_native_ensure_file_open();
     fseek(file, address, SEEK_SET);
     fread(dst, length, 1, file);
 
@@ -110,14 +123,14 @@ flash_erase_sector(uint32_t address)
 {
     int sector_id;
 
-    ensure_file_open();
+    flash_native_ensure_file_open();
 
     sector_id = find_sector(address);
     if (sector_id == -1) {
         return -1;
     }
 
-    doerase(address, flash_sector_descs[sector_id].fsd_length);
+    flash_native_erase(address, flash_sector_descs[sector_id].fsd_length);
 
     return 0;
 }
