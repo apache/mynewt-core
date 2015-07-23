@@ -28,7 +28,6 @@ ffs_gc_base_disk_size(const struct ffs_base *base)
     }
 }
 
-static uint32_t ffs_gc_keep_counts[FFS_MAX_SECTORS]; /* XXX: temporary. */
 /**
  * Selects the most appropriate sector for garbage collection.
  *
@@ -37,32 +36,31 @@ static uint32_t ffs_gc_keep_counts[FFS_MAX_SECTORS]; /* XXX: temporary. */
 static uint16_t
 ffs_gc_select_sector(void)
 {
-    const struct ffs_base *base;
-    uint32_t best_trash;
-    uint32_t trash;
+    const struct ffs_sector *sector;
     uint16_t best_sector_id;
+    int8_t diff;
     int i;
 
     best_sector_id = 0;
-    best_trash = 0;
-    for (i = 0; i < ffs_num_sectors; i++) {
-        ffs_gc_keep_counts[i] = 0;
-    }
+    for (i = 1; i < ffs_num_sectors; i++) {
+        if (i == ffs_scratch_sector_id) {
+            continue;
+        }
 
-    FFS_HASH_FOREACH(base, i) {
-        ffs_gc_keep_counts[base->fb_sector_id] += ffs_gc_base_disk_size(base);
-    }
-
-    for (i = 0; i < ffs_num_sectors; i++) {
-        if (i != ffs_scratch_sector_id) {
-            assert(ffs_gc_keep_counts[i] <= ffs_sectors[i].fsi_length);
-            trash = ffs_sectors[i].fsi_length - ffs_gc_keep_counts[i];
-            if (trash > best_trash) {
+        sector = ffs_sectors + i;
+        if (sector->fs_length > ffs_sectors[best_sector_id].fs_length) {
+            best_sector_id = i;
+        } else if (best_sector_id == ffs_scratch_sector_id) {
+            best_sector_id = i;
+        } else {
+            diff = ffs_sectors[i].fs_seq - ffs_sectors[best_sector_id].fs_seq;
+            if (diff < 0) {
                 best_sector_id = i;
-                best_trash = trash;
             }
         }
     }
+
+    assert(best_sector_id != ffs_scratch_sector_id);
 
     return best_sector_id;
 }
@@ -72,7 +70,7 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
                    uint32_t data_len, uint16_t to_sector_id)
 {
     struct ffs_disk_block disk_block;
-    struct ffs_sector_info *to_sector;
+    struct ffs_sector *to_sector;
     struct ffs_block *block;
     struct ffs_block *next;
     struct ffs_inode *inode;
@@ -90,7 +88,7 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
     disk_block.fdb_flags = first_block->fb_flags;
     disk_block.fdb_data_len = data_len;
 
-    to_offset = to_sector->fsi_cur;
+    to_offset = to_sector->fs_cur;
     rc = ffs_flash_write(to_sector_id, to_offset,
                          &disk_block, sizeof disk_block);
     if (rc != 0) {
@@ -103,7 +101,7 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
     while (1) {
         rc = ffs_flash_copy(block->fb_base.fb_sector_id,
                             block->fb_base.fb_offset + sizeof disk_block,
-                            to_sector_id, to_sector->fsi_cur,
+                            to_sector_id, to_sector->fs_cur,
                             block->fb_data_len);
         if (rc != 0) {
             return rc;
@@ -192,7 +190,8 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
 int
 ffs_gc(uint16_t *out_sector_id)
 {
-    struct ffs_sector_info *to_sector;
+    struct ffs_sector *from_sector;
+    struct ffs_sector *to_sector;
     struct ffs_inode *inode;
     struct ffs_base *base;
     uint32_t to_offset;
@@ -207,8 +206,6 @@ ffs_gc(uint16_t *out_sector_id)
     }
 
     from_sector_id = ffs_gc_select_sector();
-    to_sector = ffs_sectors + ffs_scratch_sector_id;
-
     FFS_HASH_FOREACH(base, i) {
         if (base->fb_type == FFS_OBJECT_TYPE_INODE) {
             inode = (struct ffs_inode *)base;
@@ -222,10 +219,11 @@ ffs_gc(uint16_t *out_sector_id)
         }
     }
 
+    to_sector = ffs_sectors + ffs_scratch_sector_id;
     FFS_HASH_FOREACH(base, i) {
         if (base->fb_sector_id == from_sector_id) {
             obj_size = ffs_gc_base_disk_size(base);
-            to_offset = to_sector->fsi_cur;
+            to_offset = to_sector->fs_cur;
             rc = ffs_flash_copy(from_sector_id, base->fb_offset,
                                 ffs_scratch_sector_id, to_offset,
                                 obj_size);
@@ -237,7 +235,9 @@ ffs_gc(uint16_t *out_sector_id)
         }
     }
 
-    rc = ffs_format_scratch_sector(from_sector_id);
+    from_sector = ffs_sectors + from_sector_id;
+    from_sector->fs_seq++;
+    rc = ffs_format_sector(from_sector_id, 1);
     if (rc != 0) {
         return rc;
     }
@@ -249,5 +249,25 @@ ffs_gc(uint16_t *out_sector_id)
     ffs_scratch_sector_id = from_sector_id;
 
     return 0;
+}
+
+int
+ffs_gc_until(uint16_t *out_sector_id, uint32_t space)
+{
+    int rc;
+    int i;
+
+    for (i = 0; i < ffs_num_sectors; i++) {
+        rc = ffs_gc(out_sector_id);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (ffs_sector_free_space(ffs_sectors + *out_sector_id) >= space) {
+            return 0;
+        }
+    }
+
+    return FFS_EFULL;
 }
 

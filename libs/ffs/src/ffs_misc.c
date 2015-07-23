@@ -23,9 +23,9 @@ ffs_misc_validate_scratch(void)
         return FFS_ECORRUPT;
     }
 
-    scratch_len = ffs_sectors[ffs_scratch_sector_id].fsi_length;
+    scratch_len = ffs_sectors[ffs_scratch_sector_id].fs_length;
     for (i = 0; i < ffs_num_sectors; i++) {
-        if (ffs_sectors[i].fsi_length > scratch_len) {
+        if (ffs_sectors[i].fs_length > scratch_len) {
             return FFS_ECORRUPT;
         }
     }
@@ -35,15 +35,15 @@ ffs_misc_validate_scratch(void)
 
 static int
 ffs_misc_reserve_space_sector(uint32_t *out_offset, uint16_t sector_id,
-                         uint16_t size)
+                              uint16_t size)
 {
-    const struct ffs_sector_info *sector;
+    const struct ffs_sector *sector;
     uint32_t space;
 
     sector = ffs_sectors + sector_id;
-    space = sector->fsi_length - sector->fsi_cur;
+    space = sector->fs_length - sector->fs_cur;
     if (space >= size) {
-        *out_offset = sector->fsi_cur;
+        *out_offset = sector->fs_cur;
         return 0;
     }
 
@@ -68,15 +68,16 @@ ffs_misc_reserve_space(uint16_t *out_sector_id, uint32_t *out_offset,
         }
     }
 
-    rc = ffs_gc(&sector_id);
+    /* No sector can accomodate the request.  Garbage collect until a sector
+     * has enough space.
+     */
+    rc = ffs_gc_until(&sector_id, size);
     if (rc != 0) {
         return rc;
     }
 
     rc = ffs_misc_reserve_space_sector(out_offset, sector_id, size);
-    if (rc != 0) {
-        return rc;
-    }
+    assert(rc == 0);
 
     *out_sector_id = sector_id;
 
