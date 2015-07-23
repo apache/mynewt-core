@@ -151,7 +151,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     if (rc != 0) {
         return rc;
     }
-    expected_cur = ffs_sectors[sector_id].fsi_cur + disk_size;
+    expected_cur = ffs_sectors[sector_id].fs_cur + disk_size;
 
     rc = ffs_flash_write(sector_id, offset, &disk_block, sizeof disk_block);
     if (rc != 0) {
@@ -215,7 +215,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     ffs_hash_insert(&block->fb_base);
     ffs_inode_insert_block(inode, block);
 
-    assert(ffs_sectors[sector_id].fsi_cur == expected_cur);
+    assert(ffs_sectors[sector_id].fs_cur == expected_cur);
 
     return 0;
 }

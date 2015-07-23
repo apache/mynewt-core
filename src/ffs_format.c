@@ -8,33 +8,24 @@ int
 ffs_format_from_scratch_sector(uint16_t sector_id)
 {
     struct ffs_disk_sector disk_sector;
-    struct ffs_sector_info *sector;
     int rc;
 
     assert(sector_id < ffs_num_sectors);
-    sector = ffs_sectors + sector_id;
-
     rc = ffs_flash_read(sector_id, 0, &disk_sector, sizeof disk_sector);
     if (rc != 0) {
         return rc;
     }
 
     if (!ffs_sector_is_scratch(&disk_sector)) {
-        rc = flash_erase_sector(sector->fsi_offset);
-        if (rc != 0) {
-            return rc;
-        }
-
-        ffs_sector_set_magic(&disk_sector);
-        rc = ffs_flash_write(sector_id, 0, &disk_sector,
-                             sizeof disk_sector.fds_magic);
+        rc = ffs_format_sector(sector_id, 0);
         if (rc != 0) {
             return rc;
         }
     } else {
-        disk_sector.fds_id = sector_id;
-        rc = ffs_flash_write(sector_id, FFS_SECTOR_ID_OFFSET,
-                             &disk_sector.fds_id, sizeof disk_sector.fds_id);
+        disk_sector.fds_is_scratch = 0;
+        rc = ffs_flash_write(sector_id, FFS_SECTOR_OFFSET_IS_SCRATCH,
+                             &disk_sector.fds_is_scratch,
+                             sizeof disk_sector.fds_is_scratch);
         if (rc != 0) {
             return rc;
         }
@@ -44,51 +35,30 @@ ffs_format_from_scratch_sector(uint16_t sector_id)
 }
 
 int
-ffs_format_scratch_sector(uint16_t sector_id)
+ffs_format_sector(uint16_t sector_id, int is_scratch)
 {
     struct ffs_disk_sector disk_sector;
-    struct ffs_sector_info *sector;
+    struct ffs_sector *sector;
+    uint32_t write_len;
     int rc;
 
     sector = ffs_sectors + sector_id;
 
-    rc = flash_erase(sector->fsi_offset, sector->fsi_length);
+    rc = flash_erase(sector->fs_offset, sector->fs_length);
     if (rc != 0) {
         return rc;
     }
-    sector->fsi_cur = 0;
+    sector->fs_cur = 0;
 
-    memset(&disk_sector, 0, sizeof disk_sector);
-    ffs_sector_set_magic(&disk_sector);
+    ffs_sector_to_disk(&disk_sector, sector);
 
-    rc = ffs_flash_write(sector_id, 0, &disk_sector.fds_magic,
-                         sizeof disk_sector.fds_magic);
-    if (rc != 0) {
-        return rc;
+    if (is_scratch) {
+        write_len = sizeof disk_sector - 1;
+    } else {
+        write_len = sizeof disk_sector;
     }
 
-    return 0;
-}
-
-static int
-ffs_format_sector(uint16_t sector_id)
-{
-    struct ffs_disk_sector disk_sector;
-    struct ffs_sector_info *sector;
-    int rc;
-
-    sector = ffs_sectors + sector_id;
-
-    rc = flash_erase(sector->fsi_offset, sector->fsi_length);
-    if (rc != 0) {
-        return rc;
-    }
-    sector->fsi_cur = 0;
-
-    memset(&disk_sector, 0, sizeof disk_sector);
-    ffs_sector_set_magic(&disk_sector);
-
-    rc = ffs_flash_write(sector_id, 0, &disk_sector, sizeof disk_sector);
+    rc = ffs_flash_write(sector_id, 0, &disk_sector.fds_magic, write_len);
     if (rc != 0) {
         return rc;
     }
@@ -140,15 +110,12 @@ ffs_format_full(const struct ffs_sector_desc *sector_descs)
 
     ffs_num_sectors = i;
     for (i = 0; i < ffs_num_sectors; i++) {
-        ffs_sectors[i].fsi_offset = sector_descs[i].fsd_offset;
-        ffs_sectors[i].fsi_length = sector_descs[i].fsd_length;
-        ffs_sectors[i].fsi_cur = 0;
+        ffs_sectors[i].fs_offset = sector_descs[i].fsd_offset;
+        ffs_sectors[i].fs_length = sector_descs[i].fsd_length;
+        ffs_sectors[i].fs_cur = 0;
+        ffs_sectors[i].fs_seq = 0;
 
-        if (i == ffs_scratch_sector_id) {
-            rc = ffs_format_scratch_sector(i);
-        } else {
-            rc = ffs_format_sector(i);
-        }
+        rc = ffs_format_sector(i, i == ffs_scratch_sector_id);
         if (rc != 0) {
             goto err;
         }

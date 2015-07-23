@@ -12,8 +12,8 @@
 #define FFS_NUM_INODES          100
 #define FFS_NUM_BLOCKS          100
 
-struct ffs_sector_info ffs_sector_array[FFS_MAX_SECTORS];
-struct ffs_sector_info *ffs_sectors = ffs_sector_array;
+struct ffs_sector ffs_sector_array[FFS_MAX_SECTORS];
+struct ffs_sector *ffs_sectors = ffs_sector_array;
 int ffs_num_sectors;
 uint16_t ffs_scratch_sector_id;
 

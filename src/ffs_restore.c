@@ -390,20 +390,20 @@ ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
 static int
 ffs_restore_sector(int sector_id)
 {
-    struct ffs_sector_info *sector;
+    struct ffs_sector *sector;
     struct ffs_disk_sector disk_sector;
     struct ffs_disk_object disk_object;
     int rc;
 
     sector = ffs_sectors + sector_id;
 
-    sector->fsi_cur = sizeof disk_sector;
+    sector->fs_cur = sizeof disk_sector;
     while (1) {
-        rc = ffs_restore_disk_object(&disk_object, sector_id, sector->fsi_cur);
+        rc = ffs_restore_disk_object(&disk_object, sector_id, sector->fs_cur);
         switch (rc) {
         case 0:
             ffs_restore_object(&disk_object);
-            sector->fsi_cur += ffs_restore_disk_object_size(&disk_object);
+            sector->fs_cur += ffs_restore_disk_object_size(&disk_object);
             break;
 
         case FFS_EEMPTY:
@@ -417,7 +417,7 @@ ffs_restore_sector(int sector_id)
 }
 
 static int
-ffs_restore_detect_one_sector(uint16_t *out_sector_id, uint32_t sector_offset)
+ffs_restore_detect_one_sector(int *out_is_scratch, uint32_t sector_offset)
 {
     struct ffs_disk_sector disk_sector;
     int rc;
@@ -436,7 +436,7 @@ ffs_restore_detect_one_sector(uint16_t *out_sector_id, uint32_t sector_offset)
         return FFS_ECORRUPT;
     }
 
-    *out_sector_id = disk_sector.fds_id;
+    *out_is_scratch = disk_sector.fds_is_scratch == 0xff;
 
     return 0;
 }
@@ -457,8 +457,8 @@ ffs_restore_detect_one_sector(uint16_t *out_sector_id, uint32_t sector_offset)
 int
 ffs_restore_full(const struct ffs_sector_desc *sector_descs)
 {
-    uint16_t sector_id;
     int use_sector;
+    int is_scratch;
     int rc;
     int i;
 
@@ -469,7 +469,7 @@ ffs_restore_full(const struct ffs_sector_desc *sector_descs)
     ffs_num_sectors = 0;
 
     for (i = 0; sector_descs[i].fsd_length != 0; i++) {
-        rc = ffs_restore_detect_one_sector(&sector_id,
+        rc = ffs_restore_detect_one_sector(&is_scratch,
                                            sector_descs[i].fsd_offset);
         switch (rc) {
         case 0:
@@ -485,24 +485,22 @@ ffs_restore_full(const struct ffs_sector_desc *sector_descs)
         }
 
         if (use_sector) {
-            if (sector_id == FFS_SECTOR_ID_SCRATCH &&
-                ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
-
+            if (is_scratch && ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
                 /* Don't use more than one scratch sector. */
                 use_sector = 0;
             }
         }
 
         if (use_sector) {
-            ffs_sectors[ffs_num_sectors].fsi_offset =
+            ffs_sectors[ffs_num_sectors].fs_offset =
                 sector_descs[i].fsd_offset;
-            ffs_sectors[ffs_num_sectors].fsi_length =
+            ffs_sectors[ffs_num_sectors].fs_length =
                 sector_descs[i].fsd_length;
-            ffs_sectors[ffs_num_sectors].fsi_cur = 0;
+            ffs_sectors[ffs_num_sectors].fs_cur = 0;
 
             ffs_num_sectors++;
 
-            if (sector_id == FFS_SECTOR_ID_SCRATCH) {
+            if (is_scratch) {
                 ffs_scratch_sector_id = ffs_num_sectors - 1;
             } else {
                 ffs_restore_sector(ffs_num_sectors - 1);

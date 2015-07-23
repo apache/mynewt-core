@@ -16,7 +16,7 @@
 #define FFS_INODE_MAGIC         0x925f8bc0
 
 #define FFS_SECTOR_ID_SCRATCH   0xffff
-#define FFS_SECTOR_ID_OFFSET    18
+#define FFS_SECTOR_OFFSET_IS_SCRATCH   23
 
 #define FFS_SHORT_FILENAME_LEN  16
 
@@ -64,8 +64,10 @@ struct ffs_disk_inode {
 
 struct ffs_disk_sector {
     uint32_t fds_magic[4];
+    uint32_t fds_length;
     uint16_t reserved16;
-    uint16_t fds_id;
+    uint8_t fds_seq;
+    uint8_t fds_is_scratch;
 };
 
 #define FFS_OBJECT_TYPE_INODE   1
@@ -111,10 +113,11 @@ struct ffs_file {
     uint8_t ff_access_flags;
 };
 
-struct ffs_sector_info {
-    uint32_t fsi_offset;
-    uint32_t fsi_length;
-    uint32_t fsi_cur;
+struct ffs_sector {
+    uint32_t fs_offset;
+    uint32_t fs_length;
+    uint32_t fs_cur;
+    uint8_t fs_seq;
 };
 
 struct ffs_disk_object {
@@ -143,7 +146,7 @@ extern struct os_mempool ffs_file_pool;
 extern struct os_mempool ffs_inode_pool;
 extern struct os_mempool ffs_block_pool;
 extern uint32_t ffs_next_id;
-extern struct ffs_sector_info *ffs_sectors;
+extern struct ffs_sector *ffs_sectors;
 extern int ffs_num_sectors;
 extern uint16_t ffs_scratch_sector_id;
 
@@ -151,7 +154,7 @@ SLIST_HEAD(ffs_base_list, ffs_base);
 extern struct ffs_base_list ffs_hash[FFS_HASH_SIZE];
 extern struct ffs_inode *ffs_root_dir;
 
-struct ffs_sector_info *ffs_flash_find_sector(uint16_t logical_id);
+struct ffs_sector *ffs_flash_find_sector(uint16_t logical_id);
 int ffs_flash_read(uint16_t sector_id, uint32_t offset,
                    void *data, uint32_t len);
 int ffs_flash_write(uint16_t sector_id, uint32_t offset,
@@ -240,16 +243,20 @@ int ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
                  const char *filename, uint8_t filename_len, int is_dir);
 void ffs_format_ram(void);
 
-int ffs_format_scratch_sector(uint16_t sector_id);
+int ffs_format_sector(uint16_t sector_id, int is_scratch);
 int ffs_format_from_scratch_sector(uint16_t sector_id);
 int ffs_format_full(const struct ffs_sector_desc *sector_descs);
 
 int ffs_gc(uint16_t *out_sector_id);
+int ffs_gc_until(uint16_t *out_sector_id, uint32_t space);
 
 int ffs_sector_desc_validate(const struct ffs_sector_desc *sector_desc);
 void ffs_sector_set_magic(struct ffs_disk_sector *disk_sector);
 int ffs_sector_magic_is_set(const struct ffs_disk_sector *disk_sector);
 int ffs_sector_is_scratch(const struct ffs_disk_sector *disk_sector);
+void ffs_sector_to_disk(struct ffs_disk_sector *out_disk_sector,
+                        const struct ffs_sector *sector);
+uint32_t ffs_sector_free_space(const struct ffs_sector *sector);
 
 int ffs_misc_validate_root(void);
 int ffs_misc_validate_scratch(void);
