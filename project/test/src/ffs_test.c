@@ -23,6 +23,12 @@ static const struct ffs_sector_desc ffs_sector_descs[] = {
         { 0, 0 },
 };
 
+static const struct ffs_sector_desc ffs_sector_descs_two[] = {
+        { 0x00020000, 128 * 1024 },
+        { 0x00040000, 128 * 1024 },
+        { 0, 0 },
+};
+
 static void
 ffs_test_util_assert_len_consistent(const struct ffs_file *file)
 {
@@ -328,17 +334,17 @@ ffs_test_assert_system(const struct ffs_test_file_desc *root_dir)
      */
     ffs_test_assert_system_once(root_dir);
 
-    /* Clear cached data and restore from flash (i.e, simulate a reboot). */
-    rc = ffs_init();
-    assert(rc == 0);
-    rc = ffs_detect(ffs_sector_descs);
+    /* Force a garbage collection cycle. */
+    rc = ffs_gc(NULL);
     assert(rc == 0);
 
     /* Ensure file system is still as expected. */
     ffs_test_assert_system_once(root_dir);
 
-    /* Force a garbage collection cycle. */
-    rc = ffs_gc(NULL);
+    /* Clear cached data and restore from flash (i.e, simulate a reboot). */
+    rc = ffs_init();
+    assert(rc == 0);
+    rc = ffs_detect(ffs_sector_descs);
     assert(rc == 0);
 
     /* Ensure file system is still as expected. */
@@ -1286,6 +1292,50 @@ ffs_test_large_write(void)
     ffs_test_assert_system(expected_system);
 }
 
+static void
+ffs_test_gc(void)
+{
+    int rc;
+
+    struct ffs_test_block_desc blocks[8] = { {
+        .data = "1",
+        .data_len = 1,
+    }, {
+        .data = "2",
+        .data_len = 1,
+    }, {
+        .data = "3",
+        .data_len = 1,
+    }, {
+        .data = "4",
+        .data_len = 1,
+    }, {
+        .data = "5",
+        .data_len = 1,
+    }, {
+        .data = "6",
+        .data_len = 1,
+    }, {
+        .data = "7",
+        .data_len = 1,
+    }, {
+        .data = "8",
+        .data_len = 1,
+    } };
+
+    printf("\tgarbage collection test\n");
+
+    /*** Setup. */
+    rc = ffs_format(ffs_sector_descs_two);
+    assert(rc == 0);
+
+    ffs_test_util_create_file_blocks("/myfile.txt", blocks, 8);
+
+    ffs_gc(NULL);
+
+    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+}
+
 int
 ffs_test(void)
 {
@@ -1308,6 +1358,7 @@ ffs_test(void)
     ffs_test_overwrite_many();
     ffs_test_long_filename();
     ffs_test_large_write();
+    ffs_test_gc();
 
     return 0;
 }
