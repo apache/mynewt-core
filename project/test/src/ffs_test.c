@@ -284,6 +284,30 @@ ffs_test_assert_block_present(const struct ffs_block *block)
 }
 
 static void
+ffs_test_assert_children_sorted(const struct ffs_inode *inode)
+{
+    const struct ffs_inode *child;
+    const struct ffs_inode *prev;
+    int cmp;
+    int rc;
+
+    prev = NULL;
+    SLIST_FOREACH(child, &inode->fi_child_list, fi_sibling_next) {
+        if (prev != NULL) {
+            rc = ffs_inode_filename_cmp_flash(&cmp, prev, child);
+            assert(rc == 0);
+            assert(cmp < 0);
+        }
+
+        if (child->fi_flags & FFS_INODE_F_DIRECTORY) {
+            ffs_test_assert_children_sorted(child);
+        }
+
+        prev = child;
+    }
+}
+
+static void
 ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
 {
     const struct ffs_inode *inode;
@@ -322,6 +346,9 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
             break;
         }
     }
+
+    /* Ensure proper sorting. */
+    ffs_test_assert_children_sorted(ffs_root_dir);
 }
 
 static void
@@ -1336,6 +1363,62 @@ ffs_test_gc(void)
     assert(ffs_test_util_block_count("/myfile.txt") == 1);
 }
 
+static void
+ffs_test_many_children(void)
+{
+    int rc;
+
+    printf("\tmany children test\n");
+
+    /*** Setup. */
+    rc = ffs_format(ffs_sector_descs);
+    assert(rc == 0);
+
+    ffs_test_util_create_file("/zasdf", NULL, 0);
+    ffs_test_util_create_file("/FfD", NULL, 0);
+    ffs_test_util_create_file("/4Zvv", NULL, 0);
+    ffs_test_util_create_file("/*(*2fs", NULL, 0);
+    ffs_test_util_create_file("/pzzd", NULL, 0);
+    ffs_test_util_create_file("/zasdf0", NULL, 0);
+    ffs_test_util_create_file("/23132.bin", NULL, 0);
+    ffs_test_util_create_file("/asldkfjaldskfadsfsdf.txt", NULL, 0);
+    ffs_test_util_create_file("/sdgaf", NULL, 0);
+    ffs_test_util_create_file("/939302**", NULL, 0);
+    rc = ffs_mkdir("/dir");
+    ffs_test_util_create_file("/dir/itw82", NULL, 0);
+    ffs_test_util_create_file("/dir/124", NULL, 0);
+
+    struct ffs_test_file_desc *expected_system =
+        (struct ffs_test_file_desc[]) { {
+            .filename = "",
+            .is_dir = 1,
+            .children = (struct ffs_test_file_desc[]) {
+                { "zasdf" },
+                { "FfD" },
+                { "4Zvv" },
+                { "*(*2fs" },
+                { "pzzd" },
+                { "zasdf0" },
+                { "23132.bin" },
+                { "asldkfjaldskfadsfsdf.txt" },
+                { "sdgaf" },
+                { "939302**" },
+                {
+                    .filename = "dir",
+                    .is_dir = 1,
+                    .children = (struct ffs_test_file_desc[]) {
+                        { "itw82" },
+                        { "124" },
+                        { NULL },
+                    },
+                },
+                { NULL },
+            }
+    } };
+
+    ffs_test_assert_system(expected_system);
+}
+
 int
 ffs_test(void)
 {
@@ -1359,6 +1442,7 @@ ffs_test(void)
     ffs_test_long_filename();
     ffs_test_large_write();
     ffs_test_gc();
+    ffs_test_many_children();
 
     return 0;
 }
