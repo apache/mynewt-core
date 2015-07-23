@@ -187,7 +187,10 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t sector_id,
                 goto err;
             }
 
-            ffs_inode_add_child(parent, inode);
+            rc = ffs_inode_add_child(parent, inode);
+            if (rc != 0) {
+                goto err;
+            }
         } 
 
 

@@ -52,18 +52,21 @@ ffs_path_find_child(struct ffs_inode **out_inode,
                     const char *name, int name_len)
 {
     struct ffs_inode *cur;
-    int str_rc;
+    int cmp;
     int rc;
 
     SLIST_FOREACH(cur, &parent->fi_child_list, fi_sibling_next) {
-        rc = ffs_inode_filename_cmp(&str_rc, cur, name, name_len);
+        rc = ffs_inode_filename_cmp_ram(&cmp, cur, name, name_len);
         if (rc != 0) {
             return rc;
         }
 
-        if (str_rc == 0) {
+        if (cmp == 0) {
             *out_inode = cur;
             return 0;
+        }
+        if (cmp > 0) {
+            break;
         }
     }
 
@@ -223,7 +226,10 @@ ffs_path_rename(const char *from, const char *to)
             ffs_inode_remove_child(from_inode);
         }
         if (to_parent != NULL) {
-            ffs_inode_add_child(to_parent, from_inode);
+            rc = ffs_inode_add_child(to_parent, from_inode);
+            if (rc != 0) {
+                return rc;
+            }
         }
     }
 
