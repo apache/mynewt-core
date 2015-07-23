@@ -23,12 +23,6 @@ static const struct ffs_sector_desc ffs_sector_descs[] = {
         { 0, 0 },
 };
 
-static const struct ffs_sector_desc ffs_sector_descs_two[] = {
-        { 0x00020000, 128 * 1024 },
-        { 0x00040000, 128 * 1024 },
-        { 0, 0 },
-};
-
 static void
 ffs_test_util_assert_len_consistent(const struct ffs_file *file)
 {
@@ -377,6 +371,42 @@ ffs_test_assert_system(const struct ffs_test_file_desc *root_dir)
     /* Ensure file system is still as expected. */
     ffs_test_assert_system_once(root_dir);
 }
+
+static void
+ffs_test_assert_sector_seqs(int seq1, int count1, int seq2, int count2)
+{
+    struct ffs_disk_sector disk_sector;
+    int cur1;
+    int cur2;
+    int rc;
+    int i;
+
+    cur1 = 0;
+    cur2 = 0;
+
+    for (i = 0; i < ffs_num_sectors; i++) {
+        rc = ffs_flash_read(i, 0, &disk_sector, sizeof disk_sector);
+        assert(rc == 0);
+        assert(ffs_sector_magic_is_set(&disk_sector));
+        assert(disk_sector.fds_seq == ffs_sectors[i].fs_seq);
+        if (i == ffs_scratch_sector_id) {
+            assert(disk_sector.fds_is_scratch == 0xff);
+        } else {
+            assert(disk_sector.fds_is_scratch == 0);
+        }
+
+        if (ffs_sectors[i].fs_seq == seq1) {
+            cur1++;
+        } else if (ffs_sectors[i].fs_seq == seq2) {
+            cur2++;
+        } else {
+            assert(0);
+        }
+    }
+
+    assert(cur1 == count1 && cur2 == count2);
+}
+
 
 static void
 ffs_test_mkdir(void)
@@ -1320,50 +1350,6 @@ ffs_test_large_write(void)
 }
 
 static void
-ffs_test_gc(void)
-{
-    int rc;
-
-    struct ffs_test_block_desc blocks[8] = { {
-        .data = "1",
-        .data_len = 1,
-    }, {
-        .data = "2",
-        .data_len = 1,
-    }, {
-        .data = "3",
-        .data_len = 1,
-    }, {
-        .data = "4",
-        .data_len = 1,
-    }, {
-        .data = "5",
-        .data_len = 1,
-    }, {
-        .data = "6",
-        .data_len = 1,
-    }, {
-        .data = "7",
-        .data_len = 1,
-    }, {
-        .data = "8",
-        .data_len = 1,
-    } };
-
-    printf("\tgarbage collection test\n");
-
-    /*** Setup. */
-    rc = ffs_format(ffs_sector_descs_two);
-    assert(rc == 0);
-
-    ffs_test_util_create_file_blocks("/myfile.txt", blocks, 8);
-
-    ffs_gc(NULL);
-
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
-}
-
-static void
 ffs_test_many_children(void)
 {
     int rc;
@@ -1419,6 +1405,97 @@ ffs_test_many_children(void)
     ffs_test_assert_system(expected_system);
 }
 
+static void
+ffs_test_gc(void)
+{
+    int rc;
+
+    static const struct ffs_sector_desc sector_descs_two[] = {
+        { 0x00020000, 128 * 1024 },
+        { 0x00040000, 128 * 1024 },
+        { 0, 0 },
+    };
+
+    struct ffs_test_block_desc blocks[8] = { {
+        .data = "1",
+        .data_len = 1,
+    }, {
+        .data = "2",
+        .data_len = 1,
+    }, {
+        .data = "3",
+        .data_len = 1,
+    }, {
+        .data = "4",
+        .data_len = 1,
+    }, {
+        .data = "5",
+        .data_len = 1,
+    }, {
+        .data = "6",
+        .data_len = 1,
+    }, {
+        .data = "7",
+        .data_len = 1,
+    }, {
+        .data = "8",
+        .data_len = 1,
+    } };
+
+    printf("\tgarbage collection test\n");
+
+    /*** Setup. */
+    rc = ffs_format(sector_descs_two);
+    assert(rc == 0);
+
+    ffs_test_util_create_file_blocks("/myfile.txt", blocks, 8);
+
+    ffs_gc(NULL);
+
+    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+}
+
+static void
+ffs_test_wear_level(void)
+{
+    int rc;
+    int i;
+    int j;
+
+    static const struct ffs_sector_desc sector_descs_uniform[] = {
+        { 0x00000000, 2 * 1024 },
+        { 0x00020000, 2 * 1024 },
+        { 0x00040000, 2 * 1024 },
+        { 0x00060000, 2 * 1024 },
+        { 0x00080000, 2 * 1024 },
+        { 0, 0 },
+    };
+
+    printf("\twear level test\n");
+
+    /*** Setup. */
+    rc = ffs_format(sector_descs_uniform);
+    assert(rc == 0);
+
+    /* Ensure sectors rotate properly. */
+    for (i = 0; i < 255; i++) {
+        for (j = 0; j < ffs_num_sectors; j++) {
+            ffs_test_assert_sector_seqs(i, ffs_num_sectors - j, i + 1, j);
+            ffs_gc(NULL);
+        }
+    }
+
+    /* Ensure proper rollover of sequence numbers. */
+    for (j = 0; j < ffs_num_sectors; j++) {
+        ffs_test_assert_sector_seqs(255, ffs_num_sectors - j, 0, j);
+        ffs_gc(NULL);
+    }
+    for (j = 0; j < ffs_num_sectors; j++) {
+        ffs_test_assert_sector_seqs(0, ffs_num_sectors - j, 1, j);
+        ffs_gc(NULL);
+    }
+}
+
 int
 ffs_test(void)
 {
@@ -1441,8 +1518,9 @@ ffs_test(void)
     ffs_test_overwrite_many();
     ffs_test_long_filename();
     ffs_test_large_write();
-    ffs_test_gc();
     ffs_test_many_children();
+    ffs_test_gc();
+    ffs_test_wear_level();
 
     return 0;
 }
