@@ -94,3 +94,14 @@ ffs_hash_remove(struct ffs_base *base)
     SLIST_REMOVE(list, base, ffs_base, fb_hash_next);
 }
 
+void
+ffs_hash_init(void)
+{
+    int i;
+
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
+        ffs_hash[i] =
+            (struct ffs_base_list)SLIST_HEAD_INITIALIZER(&ffs_hash[i]);
+    }
+}
+

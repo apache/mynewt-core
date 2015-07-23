@@ -26,6 +26,8 @@
 
 #define FFS_HASH_SIZE           256
 
+#define FFS_MAX_SECTORS         32 /* XXX: Temporary. */
+
 #define FFS_INODE_F_DELETED     0x01
 #define FFS_INODE_F_DUMMY       0x02
 #define FFS_INODE_F_DIRECTORY   0x04
@@ -113,7 +115,6 @@ struct ffs_sector_info {
     uint32_t fsi_offset;
     uint32_t fsi_length;
     uint32_t fsi_cur;
-    uint32_t fsi_trash;
 };
 
 struct ffs_disk_object {
@@ -164,6 +165,7 @@ int ffs_hash_find_inode(struct ffs_inode **out_inode, uint32_t id);
 int ffs_hash_find_block(struct ffs_block **out_block, uint32_t id);
 void ffs_hash_insert(struct ffs_base *base);
 void ffs_hash_remove(struct ffs_base *base);
+void ffs_hash_init(void);
 
 int ffs_path_parse_next(struct ffs_path_parser *parser);
 void ffs_path_parser_new(struct ffs_path_parser *parser, const char *path);
@@ -209,6 +211,7 @@ int ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
 
 struct ffs_block *ffs_block_alloc(void);
 void ffs_block_free(struct ffs_block *block);
+uint32_t ffs_block_disk_size(const struct ffs_block *block);
 int ffs_block_read_disk(struct ffs_disk_block *out_disk_block,
                         uint16_t sector_id, uint32_t offset);
 int ffs_block_write_disk(uint16_t *out_sector_id, uint32_t *out_offset,
