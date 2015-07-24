@@ -12,7 +12,7 @@
 #define FFS_NUM_INODES          100
 #define FFS_NUM_BLOCKS          100
 
-struct ffs_sector ffs_sector_array[FFS_MAX_SECTORS];
+static struct ffs_sector ffs_sector_array[FFS_MAX_SECTORS];
 struct ffs_sector *ffs_sectors = ffs_sector_array;
 int ffs_num_sectors;
 uint16_t ffs_scratch_sector_id;
@@ -56,9 +56,11 @@ ffs_close(struct ffs_file *file)
 {
     int rc;
 
-    ffs_lock();
-    rc = ffs_file_close(file);
-    ffs_unlock();
+    if (file != NULL) {
+        ffs_lock();
+        rc = ffs_file_close(file);
+        ffs_unlock();
+    }
 
     return rc;
 }
@@ -79,9 +81,21 @@ ffs_unlink(const char *path)
     int rc;
 
     ffs_lock();
-    rc = ffs_path_unlink(path);
-    ffs_unlock();
 
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_path_unlink(path);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_unlock();
     return rc;
 }
 
@@ -172,9 +186,22 @@ ffs_open(struct ffs_file **out_file, const char *path, uint8_t access_flags)
     int rc;
 
     ffs_lock();
-    rc = ffs_file_open(out_file, path, access_flags);
-    ffs_unlock();
 
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_file_open(out_file, path, access_flags);
+    if (rc != 0) {
+        goto done;
+    }
+
+done:
+    ffs_unlock();
+    if (rc != 0) {
+        *out_file = NULL;
+    }
     return rc;
 }
 
@@ -201,9 +228,21 @@ ffs_rename(const char *from, const char *to)
     int rc;
 
     ffs_lock();
-    rc = ffs_path_rename(from, to);
-    ffs_unlock();
 
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_path_rename(from, to);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_unlock();
     return rc;
 }
 
@@ -226,6 +265,11 @@ ffs_read(struct ffs_file *file, void *data, uint32_t *len)
     int rc;
 
     ffs_lock();
+
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
 
     rc = ffs_inode_read(file->ff_inode, file->ff_offset, data, len);
     if (rc != 0) {
@@ -257,9 +301,21 @@ ffs_write(struct ffs_file *file, const void *data, int len)
     int rc;
 
     ffs_lock();
-    rc = ffs_write_to_file(file, data, len);
-    ffs_unlock();
 
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_write_to_file(file, data, len);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_unlock();
     return rc;
 }
 
@@ -279,9 +335,19 @@ ffs_mkdir(const char *path)
     int rc;
 
     ffs_lock();
-    rc = ffs_path_new_dir(path);
-    ffs_unlock();
 
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_path_new_dir(path);
+    if (rc != 0) {
+        goto done;
+    }
+
+done:
+    ffs_unlock();
     return rc;
 }
 
@@ -329,6 +395,12 @@ ffs_detect(const struct ffs_sector_desc *sector_descs)
     ffs_unlock();
 
     return rc;
+}
+
+int
+ffs_ready(void)
+{
+    return ffs_root_dir != NULL;
 }
 
 /**
