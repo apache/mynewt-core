@@ -159,7 +159,7 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
         TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_os_list); 
     } else {
         TAILQ_FOREACH(entry, &g_os_sleep_list, t_os_list) {
-            if ((t->t_flags & OS_TASK_FLAG_NO_TIMEOUT) ||
+            if ((entry->t_flags & OS_TASK_FLAG_NO_TIMEOUT) ||
                     OS_TIME_TICK_GT(entry->t_next_wakeup, t->t_next_wakeup)) {
                 break;
             }
