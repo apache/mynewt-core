@@ -23,6 +23,7 @@
 #define FFS_EOS                 10
 #define FFS_EEXIST              11
 #define FFS_ERDONLY             12
+#define FFS_EUNINIT             13
 
 struct ffs_sector_desc {
     uint32_t fsd_offset;
@@ -51,6 +52,7 @@ int
 ffs_rename(const char *from, const char *to);
 int ffs_unlink(const char *filename);
 int ffs_mkdir(const char *path);
+int ffs_ready(void);
 
 #endif
 
