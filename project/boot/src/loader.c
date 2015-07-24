@@ -51,7 +51,7 @@ boot_jump(const struct image_header *hdr)
 
     /* Second word contains address of entry point (Reset_Handler). */
     base0entry = *(uint32_t *)(img_start + 4);
-    jump_addr = base0entry;// + img_start - FLASH_BASE;
+    jump_addr = base0entry;
     fn = (jump_fn *)jump_addr;
 
     /* Remap memory such that flash gets mapped to the code region. */
