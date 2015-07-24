@@ -50,9 +50,8 @@
 /**
   * @brief This is the list of modules to be used in the HAL driver 
   */
-/* WWW */
-#if 0
 #define HAL_MODULE_ENABLED
+#if 0
 #define HAL_ADC_MODULE_ENABLED
 #define HAL_CAN_MODULE_ENABLED
 #define HAL_CRC_MODULE_ENABLED
@@ -91,12 +90,9 @@
 #define HAL_PCD_MODULE_ENABLED
 #define HAL_HCD_MODULE_ENABLED
 #else
-#define HAL_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
 #endif
-/* WWW*/
-
 
 /* ########################## HSE/HSI Values adaptation ##################### */
 /**
