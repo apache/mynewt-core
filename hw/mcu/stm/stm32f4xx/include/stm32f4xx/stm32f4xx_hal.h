@@ -51,6 +51,21 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp/stm32f4xx_hal_conf.h"
 
+/* Helper functions to enable/disable interrupts. */
+#define __HAL_DISABLE_INTERRUPTS(x)                     \
+    do {                                                \
+        x = __get_PRIMASK();                            \
+        __disable_irq();                                \
+    } while(0);
+
+#define __HAL_ENABLE_INTERRUPTS(x)                      \
+    do {                                                \
+        if (!x) {                                       \
+            __enable_irq();                             \
+        }                                               \
+    } while(0);
+
+
 /** @addtogroup STM32F4xx_HAL_Driver
   * @{
   */
