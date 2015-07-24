@@ -303,6 +303,7 @@ os_error_t
 os_arch_os_init(void)
 {
     os_init_idle_task();
+    return OS_OK;
 }
 
 os_error_t

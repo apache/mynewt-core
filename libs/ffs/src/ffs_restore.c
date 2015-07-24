@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include "hal/hal_flash.h"
 #include "os/os_mempool.h"
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
@@ -89,6 +90,8 @@ ffs_restore_dummy_inode(struct ffs_inode **out_inode, uint32_t id, int is_dir)
     if (is_dir) {
         inode->fi_flags |= FFS_INODE_F_DIRECTORY;
     }
+
+    ffs_hash_insert(&inode->fi_base);
 
     *out_inode = inode;
 
@@ -184,7 +187,10 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t sector_id,
                 goto err;
             }
 
-            ffs_inode_add_child(parent, inode);
+            rc = ffs_inode_add_child(parent, inode);
+            if (rc != 0) {
+                goto err;
+            }
         } 
 
 
@@ -292,7 +298,7 @@ err:
     return rc;
 }
 
-int
+static int
 ffs_restore_object(const struct ffs_disk_object *disk_object)
 {
     int rc;
@@ -316,6 +322,209 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
         break;
     }
 
+    return rc;
+}
+
+static int
+ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
+                        int sector_id, uint32_t offset)
+{
+    uint32_t magic;
+    int rc;
+
+    rc = ffs_flash_read(sector_id, offset, &magic, sizeof magic);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch (magic) {
+    case FFS_INODE_MAGIC:
+        out_disk_object->fdo_type = FFS_OBJECT_TYPE_INODE;
+        rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, NULL,
+                                 sector_id, offset);
+        break;
+
+    case FFS_BLOCK_MAGIC:
+        out_disk_object->fdo_type = FFS_OBJECT_TYPE_BLOCK;
+        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, sector_id,
+                                 offset);
+        break;
+
+    case 0xffffffff:
+        rc = FFS_EEMPTY;
+        break;
+
+    default:
+        rc = FFS_ECORRUPT;
+        break;
+    }
+
+    if (rc != 0) {
+        return rc;
+    }
+
+    out_disk_object->fdo_sector_id = sector_id;
+    out_disk_object->fdo_offset = offset;
+
+    return 0;
+}
+
+static int
+ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
+{
+    switch (disk_object->fdo_type) {
+    case FFS_OBJECT_TYPE_INODE:
+        return sizeof disk_object->fdo_disk_inode +
+                      disk_object->fdo_disk_inode.fdi_filename_len;
+
+    case FFS_OBJECT_TYPE_BLOCK:
+        return sizeof disk_object->fdo_disk_block +
+                      disk_object->fdo_disk_block.fdb_data_len;
+
+    default:
+        assert(0);
+        return 1;
+    }
+}
+
+static int
+ffs_restore_sector(int sector_id)
+{
+    struct ffs_sector *sector;
+    struct ffs_disk_sector disk_sector;
+    struct ffs_disk_object disk_object;
+    int rc;
+
+    sector = ffs_sectors + sector_id;
+
+    sector->fs_cur = sizeof disk_sector;
+    while (1) {
+        rc = ffs_restore_disk_object(&disk_object, sector_id, sector->fs_cur);
+        switch (rc) {
+        case 0:
+            ffs_restore_object(&disk_object);
+            sector->fs_cur += ffs_restore_disk_object_size(&disk_object);
+            break;
+
+        case FFS_EEMPTY:
+        case FFS_ERANGE:
+            return 0;
+
+        default:
+            return rc;
+        }
+    }
+}
+
+static int
+ffs_restore_detect_one_sector(int *out_is_scratch, uint32_t sector_offset)
+{
+    struct ffs_disk_sector disk_sector;
+    int rc;
+
+    /* Parse sector header. */
+    rc = flash_read(&disk_sector, sector_offset, sizeof disk_sector);
+    if (rc != 0) {
+        return FFS_EFLASH_ERROR;
+    }
+
+    if (disk_sector.fds_magic[0] != FFS_SECTOR_MAGIC0 ||
+        disk_sector.fds_magic[1] != FFS_SECTOR_MAGIC1 ||
+        disk_sector.fds_magic[2] != FFS_SECTOR_MAGIC2 ||
+        disk_sector.fds_magic[3] != FFS_SECTOR_MAGIC3) {
+
+        return FFS_ECORRUPT;
+    }
+
+    *out_is_scratch = disk_sector.fds_is_scratch == 0xff;
+
+    return 0;
+}
+
+/**
+ * Searches for a valid ffs file system among the specified sectors.  This
+ * function succeeds if a file system is detected among any subset of the
+ * supplied sectors.  If the sector set does not contain a valid file system,
+ * a new one can be created via a call to ffs_format().
+ *
+ * @param sector_descs      The sector set to search.  This array must be
+ *                          terminated with a 0-length sector.
+ *
+ * @return                  0 on success;
+ *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          other nonzero on error.
+ */
+int
+ffs_restore_full(const struct ffs_sector_desc *sector_descs)
+{
+    int use_sector;
+    int is_scratch;
+    int rc;
+    int i;
+
+    /* XXX: Ensure scratch sector is big enough. */
+    /* XXX: Ensure block size is a factor of all sector sizes. */
+
+    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
+    ffs_num_sectors = 0;
+
+    for (i = 0; sector_descs[i].fsd_length != 0; i++) {
+        rc = ffs_restore_detect_one_sector(&is_scratch,
+                                           sector_descs[i].fsd_offset);
+        switch (rc) {
+        case 0:
+            use_sector = 1;
+            break;
+
+        case FFS_ECORRUPT:
+            use_sector = 0;
+            break;
+
+        default:
+            goto err;
+        }
+
+        if (use_sector) {
+            if (is_scratch && ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
+                /* Don't use more than one scratch sector. */
+                use_sector = 0;
+            }
+        }
+
+        if (use_sector) {
+            ffs_sectors[ffs_num_sectors].fs_offset =
+                sector_descs[i].fsd_offset;
+            ffs_sectors[ffs_num_sectors].fs_length =
+                sector_descs[i].fsd_length;
+            ffs_sectors[ffs_num_sectors].fs_cur = 0;
+
+            ffs_num_sectors++;
+
+            if (is_scratch) {
+                ffs_scratch_sector_id = ffs_num_sectors - 1;
+            } else {
+                ffs_restore_sector(ffs_num_sectors - 1);
+            }
+        }
+    }
+
+    rc = ffs_misc_validate_scratch();
+    if (rc != 0) {
+        return rc;
+    }
+
+    ffs_restore_sweep();
+
+    rc = ffs_misc_validate_root();
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+
+err:
+    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
+    ffs_num_sectors = 0;
     return rc;
 }
 

@@ -5,6 +5,8 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
+static uint8_t ffs_inode_filename_buf[2][128];
+
 struct ffs_inode *
 ffs_inode_alloc(void)
 {
@@ -15,6 +17,8 @@ ffs_inode_alloc(void)
         memset(inode, 0, sizeof *inode);
     }
 
+    inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
+
     return inode;
 }
 
@@ -22,6 +26,12 @@ void
 ffs_inode_free(struct ffs_inode *inode)
 {
     os_memblock_put(&ffs_inode_pool, inode);
+}
+
+uint32_t
+ffs_inode_disk_size(const struct ffs_inode *inode)
+{
+    return sizeof (struct ffs_disk_inode) + inode->fi_filename_len;
 }
 
 uint32_t
@@ -139,7 +149,7 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
     uint16_t sector_id;
     int rc;
 
-    rc = ffs_reserve_space(&sector_id, &offset, sizeof disk_inode);
+    rc = ffs_misc_reserve_space(&sector_id, &offset, sizeof disk_inode);
     if (rc != 0) {
         return rc;
     }
@@ -199,8 +209,8 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
     int rc;
 
     filename_len = strlen(filename);
-    rc = ffs_reserve_space(&sector_id, &offset,
-                           sizeof disk_inode + filename_len);
+    rc = ffs_misc_reserve_space(&sector_id, &offset,
+                                sizeof disk_inode + filename_len);
     if (rc != 0) {
         return rc;
     }
@@ -240,7 +250,6 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
         return FFS_EUNEXP;
     }
 
-    assert(out_disk_inode->fdi_filename_len < FFS_FILENAME_LEN);
     /* XXX: General inode validation. */
     if (out_filename != NULL) {
         rc = ffs_flash_read(sector_id, offset + sizeof *out_disk_inode,
@@ -260,8 +269,6 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
 {
     int rc;
 
-    assert(disk_inode->fdi_filename_len < FFS_FILENAME_LEN);
-
     rc = ffs_flash_write(sector_id, offset, disk_inode, sizeof *disk_inode);
     if (rc != 0) {
         return rc;
@@ -271,6 +278,8 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
     if (rc != 0) {
         return rc;
     }
+
+    return 0;
 }
 
 int
@@ -307,14 +316,60 @@ ffs_inode_seek(const struct ffs_inode *inode, uint32_t offset,
     return 0;
 }
 
-void
+static int
+ffs_inode_read_filename_chunk(const struct ffs_inode *inode,
+                              uint8_t filename_offset, void *buf, int len)
+{
+    uint32_t sector_off;
+    int rc;
+
+    assert(filename_offset + len <= inode->fi_filename_len);
+
+    sector_off = inode->fi_base.fb_offset +
+                 sizeof (struct ffs_disk_inode) +
+                 filename_offset;
+
+    rc = ffs_flash_read(inode->fi_base.fb_sector_id, sector_off, buf, len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+int
 ffs_inode_add_child(struct ffs_inode *parent, struct ffs_inode *child)
 {
+    struct ffs_inode *prev;
+    struct ffs_inode *cur;
+    int cmp;
+    int rc;
+
     assert(parent->fi_flags & FFS_INODE_F_DIRECTORY);
     assert(child->fi_parent == NULL);
-    /* XXX: Sort alphabetically. */
-    SLIST_INSERT_HEAD(&parent->fi_child_list, child, fi_sibling_next);
+
+    prev = NULL;
+    SLIST_FOREACH(cur, &parent->fi_child_list, fi_sibling_next) {
+        rc = ffs_inode_filename_cmp_flash(&cmp, child, cur);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (cmp < 0) {
+            break;
+        }
+
+        prev = cur;
+    }
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&parent->fi_child_list, child, fi_sibling_next);
+    } else {
+        SLIST_INSERT_AFTER(prev, child, fi_sibling_next);
+    }
     child->fi_parent = parent;
+
+    return 0;
 }
 
 void
@@ -340,59 +395,165 @@ ffs_inode_is_root(const struct ffs_disk_inode *disk_inode)
 }
 
 int
-ffs_inode_filename_cmp(int *result, const struct ffs_inode *inode,
-                       const char *name, int name_len)
+ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
+                           const char *name, int name_len)
 {
-    static uint8_t buf[128];
-    uint32_t sector_off;
+    int short_len;
     int chunk_len;
     int rem_len;
     int off;
     int rc;
 
-    if (inode->fi_filename_len != name_len) {
-        *result = inode->fi_filename_len - name_len;
-        return 0;
+    if (name_len < inode->fi_filename_len) {
+        short_len = name_len;
+    } else {
+        short_len = inode->fi_filename_len;
     }
 
-
-    if (name_len <= FFS_SHORT_FILENAME_LEN) {
-        chunk_len = name_len;
+    if (short_len <= FFS_SHORT_FILENAME_LEN) {
+        chunk_len = short_len;
     } else {
         chunk_len = FFS_SHORT_FILENAME_LEN;
     }
-    *result = strncmp(inode->fi_filename, name, chunk_len);
+    *result = strncmp((char *)inode->fi_filename, name, chunk_len);
 
-    /* If filename is short, it is fulled cached in RAM. */
-    if (name_len <= FFS_SHORT_FILENAME_LEN) {
-        return 0;
-    }
-
-    /* Otherwise, read the filename from flash. */
-    off = FFS_SHORT_FILENAME_LEN;
-    while (off < name_len) {
-        rem_len = name_len - off;
-        if (rem_len > sizeof buf) {
-            chunk_len = sizeof buf;
+    off = chunk_len;
+    while (*result == 0 && off < short_len) {
+        rem_len = short_len - off;
+        if (rem_len > sizeof ffs_inode_filename_buf[0]) {
+            chunk_len = sizeof ffs_inode_filename_buf[0];
         } else {
             chunk_len = rem_len;
         }
 
-        sector_off = inode->fi_base.fb_offset +
-                     sizeof (struct ffs_disk_inode) +
-                     off;
-        rc = ffs_flash_read(inode->fi_base.fb_sector_id,
-                            sector_off, buf, chunk_len);
+        rc = ffs_inode_read_filename_chunk(inode, off,
+                                           ffs_inode_filename_buf[0],
+                                           chunk_len);
         if (rc != 0) {
             return rc;
         }
 
-        *result = strncmp(buf, name + off, chunk_len);
-        if (*result != 0) {
-            break;
+        *result = strncmp((char *)ffs_inode_filename_buf[0], name + off,
+                          chunk_len);
+        off += chunk_len;
+    }
+
+    if (*result == 0) {
+        *result = inode->fi_filename_len - name_len;
+    }
+
+    return 0;
+}
+
+int
+ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
+               void *data, uint32_t *len)
+{
+    struct ffs_block *block;
+    uint32_t bytes_read;
+    uint32_t bytes_left;
+    uint32_t sector_off;
+    uint32_t block_off;
+    uint32_t chunk_len;
+    uint8_t *dst;
+    int rc;
+
+    dst = data;
+    bytes_read = 0;
+    bytes_left = *len;
+
+    rc = ffs_inode_seek(inode, offset, NULL, &block, &block_off);
+    if (rc != 0) {
+        goto done;
+    }
+
+
+    while (block != NULL && bytes_left > 0) {
+        if (bytes_left > block->fb_data_len - block_off) {
+            chunk_len = block->fb_data_len - block_off;
+        } else {
+            chunk_len = bytes_left;
         }
 
+        sector_off = block->fb_base.fb_offset +
+                     sizeof (struct ffs_disk_block) +
+                     block_off;
+        rc = ffs_flash_read(block->fb_base.fb_sector_id, sector_off, dst,
+                            chunk_len);
+        if (rc != 0) {
+            goto done;
+        }
+
+        dst += chunk_len;
+        bytes_read += chunk_len;
+        bytes_left -= chunk_len;
+        block = SLIST_NEXT(block, fb_next);
+        block_off = 0;
+    }
+
+    rc = 0;
+
+done:
+    *len = bytes_read;
+    return rc;
+}
+
+int
+ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
+                             const struct ffs_inode *inode2)
+{
+    int short_len;
+    int chunk_len;
+    int rem_len;
+    int off;
+    int rc;
+
+    if (inode1->fi_filename_len < inode2->fi_filename_len) {
+        short_len = inode1->fi_filename_len;
+    } else {
+        short_len = inode2->fi_filename_len;
+    }
+
+    if (short_len <= FFS_SHORT_FILENAME_LEN) {
+        chunk_len = short_len;
+    } else {
+        chunk_len = FFS_SHORT_FILENAME_LEN;
+    }
+    *result = strncmp((char *)inode1->fi_filename,
+                      (char *)inode2->fi_filename,
+                      chunk_len);
+
+    off = chunk_len;
+    while (*result == 0 && off < short_len) {
+        rem_len = short_len - off;
+        if (rem_len > sizeof ffs_inode_filename_buf[0]) {
+            chunk_len = sizeof ffs_inode_filename_buf[0];
+        } else {
+            chunk_len = rem_len;
+        }
+
+        rc = ffs_inode_read_filename_chunk(inode1, off,
+                                           ffs_inode_filename_buf[0],
+                                           chunk_len);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = ffs_inode_read_filename_chunk(inode2, off,
+                                           ffs_inode_filename_buf[1],
+                                           chunk_len);
+        if (rc != 0) {
+            return rc;
+        }
+
+        *result = strncmp((char *)ffs_inode_filename_buf[0],
+                          (char *)ffs_inode_filename_buf[1],
+                          chunk_len);
         off += chunk_len;
+    }
+
+    if (*result == 0) {
+        *result = inode1->fi_filename_len - inode2->fi_filename_len;
     }
 
     return 0;

@@ -6,7 +6,7 @@ compiler.path.objdump: "gobjdump"
 compiler.path.objsize: "objsize"
 
 compiler.flags.base: >
-    -m32
+    -m32 -Wall -Werror
 
 compiler.flags.default: [compiler.flags.base]
 compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
