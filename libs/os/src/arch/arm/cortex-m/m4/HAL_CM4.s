@@ -1,11 +1,20 @@
-/*----------------------------------------------------------------------------
- *      RL-ARM - RTX
- *----------------------------------------------------------------------------
- *      Name:    HAL_CM4.S
- *      Purpose: Hardware Abstraction Layer for Cortex-M4
- *      Rev.:    V4.70
- *----------------------------------------------------------------------------
+/**
+ * Copyright (c) 2015 Stack Inc.
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*----------------------------------------------------------------------------
  * Copyright (c) 1999-2009 KEIL, 2009-2013 ARM Germany GmbH
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +54,6 @@
         .align  2
 
 /*--------------------------- os_set_env ------------------------------------*/
-
 #       void os_set_env (void);
         /* Switch to Unprivileged/Privileged Thread mode, use PSP. */
 
@@ -70,6 +78,28 @@ os_set_env:
 
         .fnend
         .size   os_set_env, .-os_set_env
+/*--------------------------- os_set_env ------------------------------------*/
+
+
+/*--------------------------- os_arch_init_task_stack------------------------*/
+#       void os_arch_init_task_stack(os_stack_t *sf);
+# NOTE: This function only stores R4 through R11 on stack. The reason we do 
+# this is that the application may have stored some values in some of the
+# registers and we want to preserve those values (position independent code
+# is a good example). The other registers are handled in the C startup code.
+        .thumb_func
+        .type   os_arch_init_task_stack, %function
+        .global os_arch_init_task_stack
+os_arch_init_task_stack:
+        .fnstart
+
+        STMIA   R0,{R4-R11}
+        BX      LR
+
+        .fnend
+        .size   os_arch_init_task_stack, .-os_arch_init_task_stack
+/*--------------------------- os_set_env ------------------------------------*/
+
 
 /*-------------------------- SVC_Handler ------------------------------------*/
 

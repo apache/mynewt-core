@@ -140,10 +140,13 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* Get stack frame pointer */
     s = (os_stack_t *) ((uint8_t *) stack_top - sizeof(*sf));
 
-    /* Zero out R4-R11, R0-R3, R12, LR */
-    for (i = 0; i < 14; ++i) {
+    /* Zero out R1-R3, R12, LR */
+    for (i = 9; i < 14; ++i) {
         s[i] = 0;
     }
+
+    /* Set registers R4 - R11 on stack. */
+    os_arch_init_task_stack(s);
 
     /* Set remaining portions of stack frame */
     sf = (struct stack_frame *) s;

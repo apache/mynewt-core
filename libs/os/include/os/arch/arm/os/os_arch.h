@@ -58,7 +58,8 @@ void os_arch_init(void);
 uint32_t os_arch_start(void);
 os_error_t os_arch_os_init(void);
 os_error_t os_arch_os_start(void);
-void os_set_env();
+void os_set_env(void);
+void os_arch_init_task_stack(os_stack_t *sf);
 
 /* External function prototypes supplied by BSP */
 void os_bsp_systick_init(uint32_t os_tick_usecs);
