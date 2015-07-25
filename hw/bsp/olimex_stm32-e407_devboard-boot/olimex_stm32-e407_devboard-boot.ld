@@ -1,17 +1,17 @@
 /* Linker script for STM32F407 */
 
+/* XXX: Currently only runs from RAM */
+
 /* Linker script to configure memory regions. */
 MEMORY
 { 
-  RAM (rwx) :       ORIGIN = 0x20000200, LENGTH = 0x1fe00
-  FLASH (rx) :      ORIGIN = 0x08000000, LENGTH = 0x10000
-
-  /* Region of SRAM that is shared by bootloader and image. */
-  SHARED (rw) :     ORIGIN = 0x20000188, LENGTH = 0x78
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 1024K
+  CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
+  RAM (rwx) : ORIGIN = 0x20000188, LENGTH = 0x1FE78
 }
 
 /* Linker script to place sections and symbol values. Should be used together
- * with other linker script that defines memory regions FLASH and CODE.
+ * with other linker script that defines memory regions FLASH and RAM.
  * It references following symbols, which must be defined in code:
  *   Reset_Handler : Entry of reset handler
  * 
@@ -65,18 +65,19 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
-    } > FLASH
+    } > RAM
 
     .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > FLASH
+    } > RAM
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > FLASH
+    } > RAM
+
     __exidx_end = .;
 
     __etext = .;
@@ -85,41 +86,12 @@ SECTIONS
     {
         __data_start__ = .;
         *(vtable)
-        *(.data*)
+        *(.data)
 
-        . = ALIGN(4);
-        /* preinit data */
-        PROVIDE_HIDDEN (__preinit_array_start = .);
-        KEEP(*(.preinit_array))
-        PROVIDE_HIDDEN (__preinit_array_end = .);
-
-        . = ALIGN(4);
-        /* init data */
-        PROVIDE_HIDDEN (__init_array_start = .);
-        KEEP(*(SORT(.init_array.*)))
-        KEEP(*(.init_array))
-        PROVIDE_HIDDEN (__init_array_end = .);
-
-
-        . = ALIGN(4);
-        /* finit data */
-        PROVIDE_HIDDEN (__fini_array_start = .);
-        KEEP(*(SORT(.fini_array.*)))
-        KEEP(*(.fini_array))
-        PROVIDE_HIDDEN (__fini_array_end = .);
-
-        KEEP(*(.jcr*))
-        . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
 
     } > RAM
-
-    .shared :
-    {
-        . = ALIGN(4);
-        KEEP(*(.shared_section))
-    } > SHARED
 
     .bss :
     {

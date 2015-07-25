@@ -428,10 +428,12 @@ ffs_restore_detect_one_sector(int *out_is_scratch, uint32_t sector_offset)
         return FFS_EFLASH_ERROR;
     }
 
-    if (disk_sector.fds_magic[0] != FFS_SECTOR_MAGIC0 ||
-        disk_sector.fds_magic[1] != FFS_SECTOR_MAGIC1 ||
-        disk_sector.fds_magic[2] != FFS_SECTOR_MAGIC2 ||
-        disk_sector.fds_magic[3] != FFS_SECTOR_MAGIC3) {
+    if (!ffs_sector_magic_is_set(&disk_sector)) {
+        return FFS_ECORRUPT;
+    }
+
+    if (disk_sector.fds_is_scratch != 0 &&
+        disk_sector.fds_is_scratch != 0xff) {
 
         return FFS_ECORRUPT;
     }
