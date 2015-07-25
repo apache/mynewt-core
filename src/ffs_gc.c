@@ -137,6 +137,7 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
     struct ffs_block *prev_block;
     struct ffs_block *block;
     uint32_t data_len;
+    uint32_t perspective_data_len;
     int rc;
 
     assert(!(inode->fi_flags & FFS_INODE_F_DIRECTORY));
@@ -150,7 +151,17 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
                 first_block = block;
             }
 
-            data_len += block->fb_data_len;
+            perspective_data_len = data_len + block->fb_data_len;
+            if (perspective_data_len <= FFS_BLOCK_MAX_DATA_SZ) {
+                data_len = perspective_data_len;
+            } else {
+                rc = ffs_gc_block_chain(first_block, prev_block, data_len,
+                                        to_sector_id);
+                if (rc != 0) {
+                    return rc;
+                }
+                data_len = block->fb_data_len;
+            }
         } else {
             if (first_block != NULL) {
                 rc = ffs_gc_block_chain(first_block, prev_block, data_len,
