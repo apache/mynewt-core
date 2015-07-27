@@ -346,7 +346,8 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
 }
 
 static void
-ffs_test_assert_system(const struct ffs_test_file_desc *root_dir)
+ffs_test_assert_system(const struct ffs_test_file_desc *root_dir,
+                       const struct ffs_sector_desc *sector_descs)
 {
     int rc;
 
@@ -365,7 +366,7 @@ ffs_test_assert_system(const struct ffs_test_file_desc *root_dir)
     /* Clear cached data and restore from flash (i.e, simulate a reboot). */
     rc = ffs_init();
     assert(rc == 0);
-    rc = ffs_detect(ffs_sector_descs);
+    rc = ffs_detect(sector_descs);
     assert(rc == 0);
 
     /* Ensure file system is still as expected. */
@@ -406,7 +407,6 @@ ffs_test_assert_sector_seqs(int seq1, int count1, int seq2, int count2)
 
     assert(cur1 == count1 && cur2 == count2);
 }
-
 
 static void
 ffs_test_mkdir(void)
@@ -480,7 +480,7 @@ ffs_test_mkdir(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -534,7 +534,7 @@ ffs_test_unlink(void)
             .is_dir = 1,
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -604,7 +604,7 @@ ffs_test_rename(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -661,7 +661,7 @@ ffs_test_truncate(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -729,7 +729,7 @@ ffs_test_append(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -892,7 +892,7 @@ ffs_test_overwrite_one(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -1033,7 +1033,7 @@ ffs_test_overwrite_two(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -1182,7 +1182,7 @@ ffs_test_overwrite_three(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -1269,7 +1269,7 @@ ffs_test_overwrite_many(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -1311,7 +1311,7 @@ ffs_test_long_filename(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -1321,10 +1321,17 @@ ffs_test_large_write(void)
     int rc;
     int i;
 
+    static const struct ffs_sector_desc sector_descs_two[] = {
+        { 0x00020000, 128 * 1024 },
+        { 0x00040000, 128 * 1024 },
+        { 0, 0 },
+    };
+
+
     printf("\tlarge write test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(sector_descs_two);
     assert(rc == 0);
 
     for (i = 0; i < sizeof data; i++) {
@@ -1332,6 +1339,19 @@ ffs_test_large_write(void)
     }
 
     ffs_test_util_create_file("/myfile.txt", data, sizeof data);
+
+    /* Ensure large write was split across the appropriate number of data
+     * blocks.
+     */
+    assert(ffs_test_util_block_count("/myfile.txt") ==
+           sizeof data / FFS_BLOCK_MAX_DATA_SZ);
+
+    /* Garbage collect and then ensure the large file is still properly divided
+     * according to max data block size.
+     */
+    ffs_gc(NULL);
+    assert(ffs_test_util_block_count("/myfile.txt") ==
+           sizeof data / FFS_BLOCK_MAX_DATA_SZ);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1346,7 +1366,7 @@ ffs_test_large_write(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, sector_descs_two);
 }
 
 static void
@@ -1402,7 +1422,7 @@ ffs_test_many_children(void)
             }
     } };
 
-    ffs_test_assert_system(expected_system);
+    ffs_test_assert_system(expected_system, ffs_sector_descs);
 }
 
 static void
@@ -1444,7 +1464,6 @@ ffs_test_gc(void)
 
     printf("\tgarbage collection test\n");
 
-    /*** Setup. */
     rc = ffs_format(sector_descs_two);
     assert(rc == 0);
 
