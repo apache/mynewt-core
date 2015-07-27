@@ -30,8 +30,10 @@
  * example. Looks like if it gets interrupted while doing config an error
  * may occur. Read/modify write could cause screw-ups. 
  *  
- * 3) What about priority of interrupt? How is that handled? I am 
- * talking about the priority of the external interrupts on the gpio. 
+ * 3) Currently, this code does not change the interrupt priority of the 
+ * external interrupt vectors in the NVIC. The application developer must 
+ * decide on the priority level for each external interrupt and program that 
+ * by using the CMSIS NVIC API  (NVIC_SetPriority and NVIC_SetPriorityGrouping) 
  */
 
 /* 
