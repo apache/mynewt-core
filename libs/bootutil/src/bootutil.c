@@ -2,12 +2,14 @@
 #include <inttypes.h>
 #include "hal/hal_flash.h"
 #include "ffs/ffs.h"
+#include "ffsutil/ffsutil.h"
 #include "bootutil/crc32.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
 
-#define BOOT_PATH_CUR   "/boot/cur"
-#define BOOT_PATH_NEXT  "/boot/next"
+#define BOOT_PATH_CUR       "/boot/cur"
+#define BOOT_PATH_NEXT      "/boot/next"
+#define BOOT_PATH_STATUS    "/boot/status"
 
 int
 boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
@@ -26,32 +28,16 @@ boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
 static int
 boot_vect_read_one(struct image_version *ver, const char *path)
 {
-    struct ffs_file *file;
     uint32_t len;
     int rc;
 
-    rc = ffs_open(&file, path, FFS_ACCESS_READ);
-    if (rc != 0) {
-        rc = BOOT_EBADVECT;
-        goto done;
-    }
-
     len = sizeof *ver;
-    rc = ffs_read(file, ver, &len);
-    if (rc != 0) {
-        rc = BOOT_EFILE;
-        goto done;
-    }
-    if (len != sizeof *ver) {
-        rc = BOOT_EBADVECT;
-        goto done;
+    rc = ffsutil_read_file(path, ver, &len);
+    if (rc != 0 || len != sizeof *ver) {
+        return BOOT_EBADVECT;
     }
 
-    rc = 0;
-
-done:
-    ffs_close(file);
-    return rc;
+    return 0;
 }
 
 int
@@ -142,3 +128,78 @@ boot_read_image_headers(struct image_header *out_headers, int *out_num_headers,
     *out_num_headers = i;
 }
 
+int
+boot_read_status(struct boot_status *out_status,
+                 struct boot_status_entry *out_entries,
+                 int num_sectors)
+{
+    struct ffs_file *file;
+    uint32_t len;
+    int rc;
+
+    rc = ffs_open(&file, BOOT_PATH_STATUS, FFS_ACCESS_READ);
+    if (rc != 0) {
+        rc = BOOT_EBADSTATUS;
+        goto done;
+    }
+
+    len = sizeof *out_status;
+    rc = ffs_read(file, out_status, &len);
+    if (rc != 0 || len != sizeof out_status) {
+        rc = BOOT_EBADSTATUS;
+        goto done;
+    }
+
+    len = num_sectors * sizeof *out_entries;
+    rc = ffs_read(file, out_entries, &len);
+    if (rc != 0 || len != num_sectors * sizeof out_entries) {
+        rc = BOOT_EBADSTATUS;
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_close(file);
+    return rc;
+}
+
+int
+boot_write_status(const struct boot_status *status,
+                  const struct boot_status_entry *entries,
+                  int num_sectors)
+{
+    struct ffs_file *file;
+    int rc;
+
+    rc = ffs_open(&file, BOOT_PATH_STATUS,
+                  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
+    if (rc != 0) {
+        rc = BOOT_EFILE;
+        goto done;
+    }
+
+    rc = ffs_write(file, status, sizeof *status);
+    if (rc != 0) {
+        rc = BOOT_EFILE;
+        goto done;
+    }
+
+    rc = ffs_write(file, entries, num_sectors * sizeof *entries);
+    if (rc != 0) {
+        rc = BOOT_EFILE;
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_close(file);
+    return rc;
+}
+
+void
+boot_clear_status(void)
+{
+    ffs_unlink(BOOT_PATH_STATUS);
+}
