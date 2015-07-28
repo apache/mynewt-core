@@ -16,6 +16,7 @@ static const uint32_t boot_img_addrs[2] = {
     0x08080000,
 };
 
+/** Internal flash layout. */
 static const struct ffs_sector_desc loader_sector_descs[] = {
     [0] =  { 0x08000000, 16 * 1024 },
     [1] =  { 0x08004000, 16 * 1024 },
@@ -32,20 +33,25 @@ static const struct ffs_sector_desc loader_sector_descs[] = {
     { 0, 0 },
 };
 
-static const uint16_t boot_img_parts[] = {
+/** Contains indices of the sectors which can contain image data. */
+static const uint16_t boot_img_sectors[] = {
     5, 6, 7, 8, 9, 10, 11
 };
 
-#define BOOT_NUM_IMG_PARTS \
-    ((int)(sizeof boot_img_parts / sizeof boot_img_parts[0]))
+#define BOOT_NUM_IMG_SECTORS \
+    ((int)(sizeof boot_img_sectors / sizeof boot_img_sectors[0]))
 
-static const uint16_t boot_sector_idx_scratch = 11;
+#define BOOT_SECTOR_IDX_SCRATCH 11
 
 static struct image_header boot_img_hdrs[2];
-static int boot_num_hdrs;
 static struct boot_status boot_status;
-static struct boot_status_entry boot_status_entries[BOOT_NUM_IMG_PARTS];
+static struct boot_status_entry boot_status_entries[BOOT_NUM_IMG_SECTORS];
 
+/**
+ * Boots the image described by the supplied image header.
+ *
+ * @param hdr                   The header for the image to boot.
+ */
 static void
 boot_jump(const struct image_header *hdr)
 {
@@ -55,6 +61,9 @@ boot_jump(const struct image_header *hdr)
     uint32_t img_start;
     uint32_t jump_addr;
     jump_fn *fn;
+
+    /* PIC code not currently supported. */
+    assert(!(hdr->ih_flags & IMAGE_F_PIC));
 
     img_start = boot_img_addrs[0] + hdr->ih_hdr_size;
 
@@ -74,6 +83,14 @@ boot_jump(const struct image_header *hdr)
     fn();
 }
 
+/**
+ * Searches flash for an image with the specified version number.
+ *
+ * @param ver                   The version number to search for.
+ *
+ * @return                      The image slot containing the specified image
+ *                              on success; -1 on failure.
+ */
 static int
 boot_find_image_slot(const struct image_version *ver)
 {
@@ -88,6 +105,14 @@ boot_find_image_slot(const struct image_version *ver)
     return -1;
 }
 
+/**
+ * Selects a slot number to boot from, based on the contents of the boot
+ * vector.
+ *
+ * @return                      The slot number to boot from on success;
+ *                              -1 if an appropriate slot could not be
+ *                              determined.
+ */
 static int
 boot_select_image_slot(void)
 {
@@ -117,30 +142,49 @@ boot_select_image_slot(void)
     return -1;
 }
 
-/** Returns sector num. */
+/**
+ * Searches the current boot status for the specified image-num,part-num pair.
+ *
+ * @param image_num             The image number to search for.
+ * @param part_num              The part number of the specified image to
+ *                                  search for.
+ *
+ * @return                      The sector index containing the specified image
+ *                              part number;
+ *                              -1 if the part number is not present in flash.
+ */
 static int
 boot_find_image_part(int image_num, int part_num)
 {
     int i;
 
-    for (i = 0; i < BOOT_NUM_IMG_PARTS; i++) {
+    for (i = 0; i < BOOT_NUM_IMG_SECTORS; i++) {
         if (boot_status_entries[i].bse_image_num == image_num &&
             boot_status_entries[i].bse_part_num == part_num) {
 
-            return boot_img_parts[i];
+            return boot_img_sectors[i];
         }
     }
 
     return -1;
 }
 
+/**
+ * Locates the specified sector index within the array of image sectors.
+ *
+ * @param sector_idx            The sector index to search for.
+ *
+ * @return                      The index of the element in boot_img_sectors
+ *                              that contains the sought after sector index;
+ *                              -1 if the sector index is not present.
+ */
 static int
 boot_find_image_sector_idx(int sector_idx)
 {
     int i;
 
-    for (i = 0; i < BOOT_NUM_IMG_PARTS; i++) {
-        if (boot_img_parts[i] == sector_idx) {
+    for (i = 0; i < BOOT_NUM_IMG_SECTORS; i++) {
+        if (boot_img_sectors[i] == sector_idx) {
             return i;
         }
     }
@@ -155,7 +199,7 @@ boot_erase_sector(int sector_idx)
     int rc;
 
     sector_desc = loader_sector_descs + sector_idx;
-    rc = flash_erase_sector(sector_desc->fsd_offset);
+    rc = flash_erase(sector_desc->fsd_offset, sector_desc->fsd_length);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -163,6 +207,15 @@ boot_erase_sector(int sector_idx)
     return 0;
 }
 
+/**
+ * Copies the contents of one sector to another.  The destination sector must
+ * be erased prior to this function being called.
+ *
+ * @param from_sector_idx       The index of the source sector.
+ * @param to_sector_idx         The index of the destination sector.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 boot_copy_sector(int from_sector_idx, int to_sector_idx)
 {
@@ -207,81 +260,56 @@ boot_copy_sector(int from_sector_idx, int to_sector_idx)
     return 0;
 }
 
+/**
+ * Swaps the contents of two flash sectors.
+ *
+ * @param sector_idx_1          The index of one sector to swap.  This sector
+ *                                  must be part of the first image slot.
+ * @param part_num_1            The image part number stored in the first
+ *                                  sector.
+ * @param sector_idx_2          The index of the other sector to swap.  This
+ *                                  sector must be part of the second image
+ *                                  slot.
+ * @param part_num_2            The image part number stored in the second
+ *                                  sector.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
-boot_swap_sectors(int src_sector_idx,
-                  uint8_t src_image_num, uint8_t src_part_num,
-                  int dst_sector_idx,
-                  uint8_t dst_image_num, uint8_t dst_part_num)
+boot_move_sector(int from_sector_idx, int to_sector_idx,
+                 uint8_t part_num)
 {
-    int scratch_image_idx;
     int src_image_idx;
     int dst_image_idx;
     int rc;
 
-    src_image_idx = boot_find_image_sector_idx(src_sector_idx);
+    src_image_idx = boot_find_image_sector_idx(from_sector_idx);
     assert(src_image_idx != -1);
 
-    dst_image_idx = boot_find_image_sector_idx(dst_sector_idx);
+    dst_image_idx = boot_find_image_sector_idx(to_sector_idx);
     assert(dst_image_idx != -1);
 
-    scratch_image_idx = boot_find_image_sector_idx(boot_sector_idx_scratch);
-    assert(scratch_image_idx != -1);
-
-    rc = boot_erase_sector(boot_sector_idx_scratch);
+    rc = boot_erase_sector(to_sector_idx);
     if (rc != 0) {
         return rc;
     }
 
-    rc = boot_copy_sector(dst_sector_idx, boot_sector_idx_scratch);
+    rc = boot_copy_sector(from_sector_idx, to_sector_idx);
     if (rc != 0) {
         return rc;
     }
 
-    boot_status_entries[dst_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot_status_entries[dst_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    boot_status_entries[scratch_image_idx].bse_image_num = dst_image_num;
-    boot_status_entries[scratch_image_idx].bse_part_num = dst_part_num;
-
+    boot_status_entries[src_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[src_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[dst_image_idx].bse_image_num = 1;
+    boot_status_entries[dst_image_idx].bse_part_num = part_num;
     rc = boot_write_status(&boot_status, boot_status_entries,
-                           BOOT_NUM_IMG_PARTS);
+                           BOOT_NUM_IMG_SECTORS);
     if (rc != 0) {
         return rc;
     }
 
-    rc = boot_erase_sector(dst_sector_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_copy_sector(src_sector_idx, dst_sector_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    boot_status_entries[dst_image_idx].bse_image_num = src_image_num;
-    boot_status_entries[dst_image_idx].bse_part_num = src_part_num;
-    rc = boot_write_status(&boot_status, boot_status_entries,
-                           BOOT_NUM_IMG_PARTS);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_erase_sector(src_sector_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_copy_sector(boot_sector_idx_scratch, src_sector_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    boot_status_entries[src_image_idx].bse_image_num = dst_image_num;
-    boot_status_entries[src_image_idx].bse_part_num = dst_part_num;
-    boot_status_entries[scratch_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot_status_entries[scratch_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    rc = boot_write_status(&boot_status, boot_status_entries,
-                           BOOT_NUM_IMG_PARTS);
+    rc = boot_erase_sector(from_sector_idx);
     if (rc != 0) {
         return rc;
     }
@@ -289,11 +317,116 @@ boot_swap_sectors(int src_sector_idx,
     return 0;
 }
 
+/**
+ * Swaps the contents of two flash sectors.
+ *
+ * @param sector_idx_1          The index of one sector to swap.  This sector
+ *                                  must be part of the first image slot.
+ * @param part_num_1            The image part number stored in the first
+ *                                  sector.
+ * @param sector_idx_2          The index of the other sector to swap.  This
+ *                                  sector must be part of the second image
+ *                                  slot.
+ * @param part_num_2            The image part number stored in the second
+ *                                  sector.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static int
+boot_swap_sectors(int sector_idx_1, uint8_t part_num_1,
+                  int sector_idx_2, uint8_t part_num_2)
+{
+    int scratch_image_idx;
+    int src_image_idx;
+    int dst_image_idx;
+    int rc;
+
+    src_image_idx = boot_find_image_sector_idx(sector_idx_1);
+    assert(src_image_idx != -1);
+
+    dst_image_idx = boot_find_image_sector_idx(sector_idx_2);
+    assert(dst_image_idx != -1);
+
+    scratch_image_idx = boot_find_image_sector_idx(BOOT_SECTOR_IDX_SCRATCH);
+    assert(scratch_image_idx != -1);
+
+    rc = boot_erase_sector(BOOT_SECTOR_IDX_SCRATCH);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_copy_sector(sector_idx_2, BOOT_SECTOR_IDX_SCRATCH);
+    if (rc != 0) {
+        return rc;
+    }
+
+    boot_status_entries[dst_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[dst_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[scratch_image_idx].bse_image_num = 0;
+    boot_status_entries[scratch_image_idx].bse_part_num = part_num_2;
+
+    rc = boot_write_status(&boot_status, boot_status_entries,
+                           BOOT_NUM_IMG_SECTORS);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_erase_sector(sector_idx_2);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_copy_sector(sector_idx_1, sector_idx_2);
+    if (rc != 0) {
+        return rc;
+    }
+
+    boot_status_entries[dst_image_idx].bse_image_num = 1;
+    boot_status_entries[dst_image_idx].bse_part_num = part_num_1;
+    rc = boot_write_status(&boot_status, boot_status_entries,
+                           BOOT_NUM_IMG_SECTORS);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_erase_sector(sector_idx_1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_copy_sector(BOOT_SECTOR_IDX_SCRATCH, sector_idx_1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    boot_status_entries[src_image_idx].bse_image_num = 0;
+    boot_status_entries[src_image_idx].bse_part_num = part_num_2;
+    boot_status_entries[scratch_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[scratch_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    rc = boot_write_status(&boot_status, boot_status_entries,
+                           BOOT_NUM_IMG_SECTORS);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/**
+ * Swaps the two images in flash.  If a prior copy operation was interrupted
+ * by a system reset, this function completes that operation.
+ *
+ * @param img1_length           The length, in bytes, of the slot 1 image.
+ * @param img2_length           The length, in bytes, of the slot 2 image.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 boot_copy_image(uint32_t img1_length, uint32_t img2_length)
 {
     const struct ffs_sector_desc *sector_desc;
     uint32_t off;
+    int dst_image_sector_idx;
     int src_sector_idx;
     int dst_sector_idx;
     int part_num;
@@ -302,15 +435,34 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
     part_num = 0;
     off = 0;
     while (off < img2_length) {
+        /* Determine which sector contains the current part of the image that
+         * we want to boot.
+         */
         src_sector_idx = boot_find_image_part(1, part_num);
         if (src_sector_idx == -1) {
             return BOOT_EBADIMAGE;
         }
 
-        dst_sector_idx = boot_img_parts[part_num];
+        /* Determine which sector we want to copy the source to. */
+        dst_sector_idx = boot_img_sectors[part_num];
+
         if (src_sector_idx != dst_sector_idx) {
-            rc = boot_swap_sectors(src_sector_idx, 1, part_num,
-                                   dst_sector_idx, 0, part_num);
+            /* Determine what is already in the destination sector. */
+            dst_image_sector_idx = boot_find_image_sector_idx(dst_sector_idx);
+
+            if (boot_status_entries[dst_image_sector_idx].bse_image_num ==
+                BOOT_IMAGE_NUM_NONE) {
+
+                /* The destination doesn't contain anything useful; we don't
+                 * need to back up its contents.
+                 */
+                rc = boot_move_sector(src_sector_idx, dst_sector_idx,
+                                      part_num);
+            } else {
+                /* Swap the two sectors. */
+                rc = boot_swap_sectors(dst_sector_idx, part_num,
+                                       src_sector_idx, part_num);
+            }
             if (rc != 0) {
                 return rc;
             }
@@ -322,10 +474,15 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
         off += sector_desc->fsd_length;
     }
 
+    /* Slot 1 may still contain the remainder of the image we don't want to
+     * run.  We need to copy the remainder into slot 2 so that the image is
+     * contiguous.
+     */
     dst_sector_idx = src_sector_idx + 1;
     while (off < img1_length) {
-        rc = boot_swap_sectors(src_sector_idx, 1, part_num,
-                               dst_sector_idx, 0, part_num);
+        src_sector_idx = boot_img_sectors[part_num];
+
+        rc = boot_move_sector(src_sector_idx, dst_sector_idx, part_num);
         if (rc != 0) {
             return rc;
         }
@@ -348,14 +505,14 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
     int part_num;
     int i;
 
-    for (i = 0; i < BOOT_NUM_IMG_PARTS; i++) {
-        sector_idx = boot_img_parts[i];
+    for (i = 0; i < BOOT_NUM_IMG_SECTORS; i++) {
+        sector_idx = boot_img_sectors[i];
         if (loader_sector_descs[sector_idx].fsd_offset == addr) {
             break;
         }
     }
 
-    assert(i < BOOT_NUM_IMG_PARTS);
+    assert(i < BOOT_NUM_IMG_SECTORS);
 
     offset = 0;
     part_num = 0;
@@ -370,19 +527,33 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
         sector_idx++;
     }
 
-    assert(i <= BOOT_NUM_IMG_PARTS);
+    assert(i <= BOOT_NUM_IMG_SECTORS);
 }
 
+/**
+ * Builds a default boot status corresponding to all images being fully present
+ * in their slots.
+ */
 static void
 boot_build_status(void)
 {
     memset(boot_status_entries, 0xff, sizeof boot_status_entries);
 
-    boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
-    boot_status.bs_img2_length = boot_img_hdrs[1].ih_img_size;
+    if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
+        boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
+        boot_build_status_one(0, boot_img_addrs[0],
+                              boot_img_hdrs[0].ih_img_size);
+    } else {
+        boot_status.bs_img1_length = 0;
+    }
 
-    boot_build_status_one(0, boot_img_addrs[0], boot_img_hdrs[0].ih_img_size);
-    boot_build_status_one(1, boot_img_addrs[1], boot_img_hdrs[1].ih_img_size);
+    if (boot_img_hdrs[1].ih_magic == IMAGE_MAGIC) {
+        boot_status.bs_img2_length = boot_img_hdrs[1].ih_img_size;
+        boot_build_status_one(1, boot_img_addrs[1],
+                              boot_img_hdrs[1].ih_img_size);
+    } else {
+        boot_status.bs_img2_length = 0;
+    }
 }
 
 static void
@@ -412,24 +583,38 @@ main(void)
 
     boot_init_flash();
 
+    /* Determine if an image copy operation was interrupted (i.e., the system
+     * was reset before the boot loader could finish its task last time).
+     */
     rc = boot_read_status(&boot_status, boot_status_entries,
-                          BOOT_NUM_IMG_PARTS);
+                          BOOT_NUM_IMG_SECTORS);
     if (rc == 0) {
-        /* We are resuming a partial image copy. */
+        /* We are resuming an interrupted image copy. */
         rc = boot_copy_image(boot_status.bs_img1_length,
                              boot_status.bs_img2_length);
-        assert(rc == 0); // XXX;
+
+        /* We failed to put the images back together; there is really no
+         * solution here.
+         */
+        assert(rc == 0);
     }
 
-    boot_read_image_headers(boot_img_hdrs, &boot_num_hdrs, boot_img_addrs, 2);
+    boot_read_image_headers(boot_img_hdrs, boot_img_addrs, 2);
     boot_build_status();
 
     slot = boot_select_image_slot();
     if (slot == -1) {
-        /* Last-known-good image isn't present either.  Just boot from the
-         * first image slot.
+        /* Either there is no image vector, or none of the requested images are
+         * present.  Just try booting from the first image slot.
          */
-        slot = 0;
+        if (boot_img_hdrs[0].ih_magic != IMAGE_MAGIC_NONE) {
+            slot = 0;
+        } else if (boot_img_hdrs[1].ih_magic != IMAGE_MAGIC_NONE) {
+            slot = 1;
+        } else {
+            /* No images present. */
+            assert(0);
+        }
     }
 
     switch (slot) {
@@ -438,9 +623,16 @@ main(void)
         break;
 
     case 1:
-        rc = boot_copy_image(boot_img_hdrs[0].ih_img_size,
-                             boot_img_hdrs[1].ih_img_size);
-        assert(rc == 0); // XXX;
+        /* The user wants to run the image in the secondary slot.  The contents
+         * of this slot need to moved to the primary slot.
+         */
+        rc = boot_copy_image(boot_status.bs_img1_length,
+                             boot_status.bs_img2_length);
+
+        /* We failed to put the images back together; there is really no
+         * solution here.
+         */
+        assert(rc == 0);
 
         boot_hdr = &boot_img_hdrs[1];
         break;
