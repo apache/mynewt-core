@@ -4,6 +4,7 @@
 #include <string.h>
 #include "hal/hal_flash.h"
 #include "ffs/ffs.h"
+#include "ffsutil/ffsutil.h"
 #include "bootutil/bootutil.h"
 
 /* XXX: Where? */
@@ -55,7 +56,7 @@ boot_jump(const struct image_header *hdr)
     uint32_t jump_addr;
     jump_fn *fn;
 
-    img_start = boot_img_addrs[0] + hdr->hdr_size;
+    img_start = boot_img_addrs[0] + hdr->ih_hdr_size;
 
     /* First word contains initial MSP value. */
     __set_MSP(*(uint32_t *)img_start);
@@ -74,19 +75,42 @@ boot_jump(const struct image_header *hdr)
 }
 
 static int
-boot_select_image_slot(void)
+boot_find_image_slot(const struct image_version *ver)
 {
-    struct image_version cur_ver;
-    int rc;
     int i;
 
-    rc = boot_vect_read_cur(&cur_ver);
+    for (i = 0; i < 2; i++) {
+        if (memcmp(&boot_img_hdrs[i].ih_ver, ver, sizeof *ver) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int
+boot_select_image_slot(void)
+{
+    struct image_version ver;
+    int slot;
+    int rc;
+
+    rc = boot_vect_read_test(&ver);
     if (rc == 0) {
-        for (i = 0; i < 2; i++) {
-            if (memcmp(&boot_img_hdrs[i].ih_ver, &cur_ver,
-                       sizeof cur_ver) == 0) {
-                return i;
-            }
+        boot_vect_delete_test();
+        slot = boot_find_image_slot(&ver);
+        if (slot != -1) {
+            return slot;
+        }
+    }
+
+    rc = boot_vect_read_main(&ver);
+    if (rc == 0) {
+        slot = boot_find_image_slot(&ver);
+        if (slot == -1) {
+            boot_vect_delete_main();
+        } else {
+            return slot;
         }
     }
 
@@ -111,12 +135,24 @@ boot_find_image_part(int image_num, int part_num)
 }
 
 static int
+boot_find_image_sector_idx(int sector_idx)
+{
+    int i;
+
+    for (i = 0; i < BOOT_NUM_IMG_PARTS; i++) {
+        if (boot_img_parts[i] == sector_idx) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int
 boot_erase_sector(int sector_idx)
 {
     const struct ffs_sector_desc *sector_desc;
     int rc;
-
-    assert(sector_idx >= 0 && sector_idx < BOOT_NUM_IMG_PARTS);
 
     sector_desc = loader_sector_descs + sector_idx;
     rc = flash_erase_sector(sector_desc->fsd_offset);
@@ -172,6 +208,88 @@ boot_copy_sector(int from_sector_idx, int to_sector_idx)
 }
 
 static int
+boot_swap_sectors(int src_sector_idx,
+                  uint8_t src_image_num, uint8_t src_part_num,
+                  int dst_sector_idx,
+                  uint8_t dst_image_num, uint8_t dst_part_num)
+{
+    int scratch_image_idx;
+    int src_image_idx;
+    int dst_image_idx;
+    int rc;
+
+    src_image_idx = boot_find_image_sector_idx(src_sector_idx);
+    assert(src_image_idx != -1);
+
+    dst_image_idx = boot_find_image_sector_idx(dst_sector_idx);
+    assert(dst_image_idx != -1);
+
+    scratch_image_idx = boot_find_image_sector_idx(boot_sector_idx_scratch);
+    assert(scratch_image_idx != -1);
+
+    rc = boot_erase_sector(boot_sector_idx_scratch);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_copy_sector(dst_sector_idx, boot_sector_idx_scratch);
+    if (rc != 0) {
+        return rc;
+    }
+
+    boot_status_entries[dst_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[dst_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[scratch_image_idx].bse_image_num = dst_image_num;
+    boot_status_entries[scratch_image_idx].bse_part_num = dst_part_num;
+
+    rc = boot_write_status(&boot_status, boot_status_entries,
+                           BOOT_NUM_IMG_PARTS);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_erase_sector(dst_sector_idx);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_copy_sector(src_sector_idx, dst_sector_idx);
+    if (rc != 0) {
+        return rc;
+    }
+
+    boot_status_entries[dst_image_idx].bse_image_num = src_image_num;
+    boot_status_entries[dst_image_idx].bse_part_num = src_part_num;
+    rc = boot_write_status(&boot_status, boot_status_entries,
+                           BOOT_NUM_IMG_PARTS);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_erase_sector(src_sector_idx);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = boot_copy_sector(boot_sector_idx_scratch, src_sector_idx);
+    if (rc != 0) {
+        return rc;
+    }
+
+    boot_status_entries[src_image_idx].bse_image_num = dst_image_num;
+    boot_status_entries[src_image_idx].bse_part_num = dst_part_num;
+    boot_status_entries[scratch_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_status_entries[scratch_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    rc = boot_write_status(&boot_status, boot_status_entries,
+                           BOOT_NUM_IMG_PARTS);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
 boot_copy_image(uint32_t img1_length, uint32_t img2_length)
 {
     const struct ffs_sector_desc *sector_desc;
@@ -191,26 +309,8 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
 
         dst_sector_idx = boot_img_parts[part_num];
         if (src_sector_idx != dst_sector_idx) {
-            if (src_sector_idx != boot_sector_idx_scratch) {
-                rc = boot_erase_sector(boot_sector_idx_scratch);
-                if (rc != 0) {
-                    return rc;
-                }
-            }
-
-            rc = boot_copy_sector(dst_sector_idx, boot_sector_idx_scratch);
-            if (rc != 0) {
-                return rc;
-            }
-
-            /* XXX: Record status to ffs. */
-
-            rc = boot_erase_sector(dst_sector_idx);
-            if (rc != 0) {
-                return rc;
-            }
-
-            rc = boot_copy_sector(boot_sector_idx_scratch, dst_sector_idx);
+            rc = boot_swap_sectors(src_sector_idx, 1, part_num,
+                                   dst_sector_idx, 0, part_num);
             if (rc != 0) {
                 return rc;
             }
@@ -224,13 +324,8 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
 
     dst_sector_idx = src_sector_idx + 1;
     while (off < img1_length) {
-        rc = boot_erase_sector(dst_sector_idx);
-        if (rc != 0) {
-            return rc;
-        }
-
-        src_sector_idx = boot_img_parts[part_num];
-        rc = boot_copy_sector(src_sector_idx, dst_sector_idx);
+        rc = boot_swap_sectors(src_sector_idx, 1, part_num,
+                               dst_sector_idx, 0, part_num);
         if (rc != 0) {
             return rc;
         }
@@ -245,11 +340,54 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
     return 0;
 }
 
-int
-main(void)
+static void
+boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 {
-    const struct image_header *boot_hdr;
-    int slot;
+    uint32_t offset;
+    int sector_idx;
+    int part_num;
+    int i;
+
+    for (i = 0; i < BOOT_NUM_IMG_PARTS; i++) {
+        sector_idx = boot_img_parts[i];
+        if (loader_sector_descs[sector_idx].fsd_offset == addr) {
+            break;
+        }
+    }
+
+    assert(i < BOOT_NUM_IMG_PARTS);
+
+    offset = 0;
+    part_num = 0;
+    while (offset < length) {
+        assert(boot_status_entries[i].bse_image_num == 0xff);
+        boot_status_entries[i].bse_image_num = image_num;
+        boot_status_entries[i].bse_part_num = part_num;
+
+        offset += loader_sector_descs[sector_idx].fsd_length;
+        part_num++;
+        i++;
+        sector_idx++;
+    }
+
+    assert(i <= BOOT_NUM_IMG_PARTS);
+}
+
+static void
+boot_build_status(void)
+{
+    memset(boot_status_entries, 0xff, sizeof boot_status_entries);
+
+    boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
+    boot_status.bs_img2_length = boot_img_hdrs[1].ih_img_size;
+
+    boot_build_status_one(0, boot_img_addrs[0], boot_img_hdrs[0].ih_img_size);
+    boot_build_status_one(1, boot_img_addrs[1], boot_img_hdrs[1].ih_img_size);
+}
+
+static void
+boot_init_flash(void)
+{
     int rc;
 
     rc = flash_init();
@@ -261,6 +399,19 @@ main(void)
     /* Look for an ffs file system in internal flash. */
     ffs_detect(loader_sector_descs);
 
+    /* Just make sure the boot directory exists. */
+    rc = ffs_mkdir("/boot");
+}
+
+int
+main(void)
+{
+    const struct image_header *boot_hdr;
+    int slot;
+    int rc;
+
+    boot_init_flash();
+
     rc = boot_read_status(&boot_status, boot_status_entries,
                           BOOT_NUM_IMG_PARTS);
     if (rc == 0) {
@@ -271,18 +422,14 @@ main(void)
     }
 
     boot_read_image_headers(boot_img_hdrs, &boot_num_hdrs, boot_img_addrs, 2);
+    boot_build_status();
 
     slot = boot_select_image_slot();
     if (slot == -1) {
-        /* Current image is not in flash.  Fall back to last-known-good. */
-        boot_vect_repair();
-        slot = boot_select_image_slot();
-        if (slot == -1) {
-            /* Last-known-good image isn't present either.  Just boot from the
-             * first image slot.
-             */
-            slot = 0;
-        }
+        /* Last-known-good image isn't present either.  Just boot from the
+         * first image slot.
+         */
+        slot = 0;
     }
 
     switch (slot) {
@@ -291,10 +438,9 @@ main(void)
         break;
 
     case 1:
-        rc = boot_copy_image(boot_img_hdrs[0].img_size,
-                             boot_img_hdrs[1].img_size);
+        rc = boot_copy_image(boot_img_hdrs[0].ih_img_size,
+                             boot_img_hdrs[1].ih_img_size);
         assert(rc == 0); // XXX;
-        boot_vect_rotate();
 
         boot_hdr = &boot_img_hdrs[1];
         break;
