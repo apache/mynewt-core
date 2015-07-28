@@ -7,8 +7,8 @@
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
 
-#define BOOT_PATH_CUR       "/boot/cur"
-#define BOOT_PATH_NEXT      "/boot/next"
+#define BOOT_PATH_MAIN      "/boot/main"
+#define BOOT_PATH_TEST      "/boot/test"
 #define BOOT_PATH_STATUS    "/boot/status"
 
 int
@@ -18,11 +18,11 @@ boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
     uint32_t crc_len;
     uint32_t crc;
 
-    crc_off = offsetof(struct image_header, crc32) + sizeof hdr->crc32;
-    crc_len = hdr->hdr_size - crc_off + hdr->img_size;
+    crc_off = offsetof(struct image_header, ih_crc32) + sizeof hdr->ih_crc32;
+    crc_len = hdr->ih_hdr_size - crc_off + hdr->ih_img_size;
     crc = crc32(0, (void *)(addr + crc_off), crc_len);
 
-    return crc == hdr->crc32;
+    return crc == hdr->ih_crc32;
 }
 
 static int
@@ -32,7 +32,7 @@ boot_vect_read_one(struct image_version *ver, const char *path)
     int rc;
 
     len = sizeof *ver;
-    rc = ffsutil_read_file(path, ver, &len);
+    rc = ffsutil_read_file(path, ver, 0, &len);
     if (rc != 0 || len != sizeof *ver) {
         return BOOT_EBADVECT;
     }
@@ -41,57 +41,39 @@ boot_vect_read_one(struct image_version *ver, const char *path)
 }
 
 int
-boot_vect_read_cur(struct image_version *out_ver)
+boot_vect_read_test(struct image_version *out_ver)
 {
     int rc;
 
-    rc = boot_vect_read_one(out_ver, BOOT_PATH_CUR);
-    if (rc != 0) {
-        return rc; // XXX
-    }
-
-    return 0;
+    rc = boot_vect_read_one(out_ver, BOOT_PATH_TEST);
+    return rc;
 }
 
 int
-boot_vect_rotate(void)
+boot_vect_read_main(struct image_version *out_ver)
 {
     int rc;
 
-    rc = ffs_rename(BOOT_PATH_NEXT, BOOT_PATH_CUR);
-    switch (rc) {
-    case 0:
-        /* Last-known-good moved into the current position. */
-        return 0;
-
-    case FFS_ENOENT:
-        /* There was no last-known-goot specified; no change. */
-        return 0;
-
-    default:
-        /* File system error. */
-        return BOOT_EFILE;
-    }
+    rc = boot_vect_read_one(out_ver, BOOT_PATH_MAIN);
+    return rc;
 }
 
 int
-boot_vect_repair(void)
+boot_vect_delete_test(void)
 {
     int rc;
 
-    rc = ffs_rename(BOOT_PATH_NEXT, BOOT_PATH_CUR);
+    rc = ffs_unlink(BOOT_PATH_TEST);
+    return rc;
+}
 
-    switch (rc) {
-    case 0:
-        return 0;
+int
+boot_vect_delete_main(void)
+{
+    int rc;
 
-    case FFS_ENOENT:
-        ffs_unlink(BOOT_PATH_CUR);
-        return 0;
-
-    default:
-        return BOOT_EFILE;
-    }
+    rc = ffs_unlink(BOOT_PATH_MAIN);
+    return rc;
 }
 
 static int
@@ -104,7 +86,7 @@ boot_read_image_header(struct image_header *out_hdr, uint32_t flash_address)
         return BOOT_EFLASH;
     }
 
-    if (out_hdr->magic != IMG_MAGIC) {
+    if (out_hdr->ih_magic != IMAGE_MAGIC) {
         return BOOT_EBADIMAGE;
     }
 

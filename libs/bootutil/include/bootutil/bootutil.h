@@ -10,6 +10,8 @@ struct image_header;
 #define BOOT_EBADVECT   4
 #define BOOT_EBADSTATUS 5
 
+#define BOOT_IMAGE_NUM_NONE     0xff
+
 struct boot_status_entry {
     uint8_t bse_image_num;
     uint8_t bse_part_num;
@@ -22,9 +24,10 @@ struct boot_status {
 };
 
 int boot_crc_is_valid(uint32_t addr, const struct image_header *hdr);
-int boot_vect_read_cur(struct image_version *out_ver);
-int boot_vect_rotate(void);
-int boot_vect_repair(void);
+int boot_vect_read_test(struct image_version *out_ver);
+int boot_vect_read_main(struct image_version *out_ver);
+int boot_vect_delete_test(void);
+int boot_vect_delete_main(void);
 void boot_read_image_headers(struct image_header *out_headers,
                              int *out_num_headers, const uint32_t *addresses,
                              int num_addresses);
