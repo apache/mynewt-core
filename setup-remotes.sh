@@ -18,3 +18,5 @@ git remote add mcu https://github.com/micosa/mcu.git
 git remote add hal https://github.com/micosa/hal.git
 # subtree @ libs/ffs
 git remote add ffs https://github.com/micosa/ffs.git
+# subtree @ libs/ffsutil
+git remote add ffsutil https://github.com/micosa/ffsutil.git
