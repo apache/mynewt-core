@@ -40,6 +40,14 @@ boot_vect_read_one(struct image_version *ver, const char *path)
     return 0;
 }
 
+/**
+ * Retrieves from the boot vector the version number of the test image (i.e.,
+ * the image that has not been proven stable, and which will only run once).
+ *
+ * @param out_ver           On success, the test version gets written here.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
 boot_vect_read_test(struct image_version *out_ver)
 {
@@ -49,6 +57,13 @@ boot_vect_read_test(struct image_version *out_ver)
     return rc;
 }
 
+/**
+ * Retrieves from the boot vector the version number of the main image.
+ *
+ * @param out_ver           On success, the main version gets written here.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
 boot_vect_read_main(struct image_version *out_ver)
 {
@@ -58,6 +73,11 @@ boot_vect_read_main(struct image_version *out_ver)
     return rc;
 }
 
+/**
+ * Deletes the test image version number from the boot vector.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
 boot_vect_delete_test(void)
 {
@@ -67,6 +87,11 @@ boot_vect_delete_test(void)
     return rc;
 }
 
+/**
+ * Deletes the main image version number from the boot vector.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
 int
 boot_vect_delete_main(void)
 {
@@ -93,23 +118,51 @@ boot_read_image_header(struct image_header *out_hdr, uint32_t flash_address)
     return 0;
 }
 
+/**
+ * Reads the header of each image present in flash.  Headers corresponding to
+ * empty image slots are filled with 0xff bytes.
+ *
+ * @param out_headers           Points to an array of image headers.  Each
+ *                              element is filled with the header of the
+ *                              corresponding image in flash.
+ * @param addresses             An array containing the flash addresses of each
+ *                              image slot.
+ * @param num_addresses         The number of headers to read.  This should
+ *                              also be equal to the lengths of the out_headers
+ *                              and addresses arrays.
+ */
 void
-boot_read_image_headers(struct image_header *out_headers, int *out_num_headers,
+boot_read_image_headers(struct image_header *out_headers,
                         const uint32_t *addresses, int num_addresses)
 {
+    struct image_header *hdr;
     int rc;
     int i;
 
     for (i = 0; i < num_addresses; i++) {
-        rc = boot_read_image_header(out_headers + i, addresses[i]);
-        if (rc != 0) {
-            break;
+        hdr = out_headers + i;
+        rc = boot_read_image_header(hdr, addresses[i]);
+        if (rc != 0 || hdr->ih_magic != IMAGE_MAGIC) {
+            memset(hdr, 0xff, sizeof *hdr);
         }
     }
-
-    *out_num_headers = i;
 }
 
+/**
+ * Reads the boot status from the flash file system.  The boot status contains
+ * the current state of an interrupted image copy operation.  If the boot
+ * status is not present in the file system, the implication is that there is
+ * no copy operation in progress.
+ *
+ * @param out_status            On success, the boot status gets written here.
+ * @param out_entries           On success, the array of boot entries gets
+ *                              written here.
+ * @param num_sectors           The number of flash sectors capable of storing
+ *                              image data.  This is equal to the length of the
+ *                              out_entries array.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 int
 boot_read_status(struct boot_status *out_status,
                  struct boot_status_entry *out_entries,
@@ -146,6 +199,18 @@ done:
     return rc;
 }
 
+/**
+ * Writes the supplied boot status to the flash file system.  The boot status
+ * contains the current state of an in-progress image copy operation.
+ *
+ * @param status                The boot status base to write.
+ * @param entries               The array of boot status entries to write.
+ * @param num_sectors           The number of flash sectors capable of storing
+ *                              image data.  This is equal to the length of the
+ *                              entries array.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 int
 boot_write_status(const struct boot_status *status,
                   const struct boot_status_entry *entries,
@@ -180,6 +245,12 @@ done:
     return rc;
 }
 
+/**
+ * Erases the boot status from the flash file system.  The boot status
+ * contains the current state of an in-progress image copy operation.  By
+ * erasing the boot status, it is implied that there is no copy operation in
+ * progress.
+ */
 void
 boot_clear_status(void)
 {

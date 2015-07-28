@@ -1,7 +1,10 @@
 #ifndef H_IMG_HDR_
 #define H_IMG_HDR_
 
-#define IMAGE_MAGIC     0x96f3b83c
+#include <inttypes.h>
+
+#define IMAGE_MAGIC         0x96f3b83c
+#define IMAGE_MAGIC_NONE    0xffffffff
 
 #define IMAGE_F_PIC     0x00000001
 
@@ -9,6 +12,7 @@ struct image_version {
     uint8_t iv_major;
     uint8_t iv_minor;
     uint16_t iv_revision;
+    uint32_t iv_build_num;
 };
 
 struct image_header {

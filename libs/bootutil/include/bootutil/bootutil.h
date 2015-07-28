@@ -29,8 +29,7 @@ int boot_vect_read_main(struct image_version *out_ver);
 int boot_vect_delete_test(void);
 int boot_vect_delete_main(void);
 void boot_read_image_headers(struct image_header *out_headers,
-                             int *out_num_headers, const uint32_t *addresses,
-                             int num_addresses);
+                             const uint32_t *addresses, int num_addresses);
 int boot_read_status(struct boot_status *out_status,
                      struct boot_status_entry *out_entries,
                      int num_sectors);
