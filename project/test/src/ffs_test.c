@@ -1541,6 +1541,8 @@ ffs_test(void)
     ffs_test_gc();
     ffs_test_wear_level();
 
+    printf("\n");
+
     return 0;
 }
 

@@ -1,5 +1,6 @@
 #include "os/os.h"
 #include "ffs_test.h"
+#include "boot_test.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -155,6 +156,8 @@ main(int argc, char **argv)
     }
 
     ffs_test();
+
+    boot_test();
 
     test_num = 0;
 
