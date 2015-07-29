@@ -7,7 +7,7 @@
 #include "../src/ffs_priv.h"
 #include "ffs_test.h"
 
-static const struct ffs_sector_desc ffs_sector_descs[] = {
+static const struct ffs_area_desc ffs_area_descs[] = {
         { 0x00000000, 16 * 1024 },
         { 0x00004000, 16 * 1024 },
         { 0x00008000, 16 * 1024 },
@@ -347,7 +347,7 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
 
 static void
 ffs_test_assert_system(const struct ffs_test_file_desc *root_dir,
-                       const struct ffs_sector_desc *sector_descs)
+                       const struct ffs_area_desc *area_descs)
 {
     int rc;
 
@@ -366,7 +366,7 @@ ffs_test_assert_system(const struct ffs_test_file_desc *root_dir,
     /* Clear cached data and restore from flash (i.e, simulate a reboot). */
     rc = ffs_init();
     assert(rc == 0);
-    rc = ffs_detect(sector_descs);
+    rc = ffs_detect(area_descs);
     assert(rc == 0);
 
     /* Ensure file system is still as expected. */
@@ -374,9 +374,9 @@ ffs_test_assert_system(const struct ffs_test_file_desc *root_dir,
 }
 
 static void
-ffs_test_assert_sector_seqs(int seq1, int count1, int seq2, int count2)
+ffs_test_assert_area_seqs(int seq1, int count1, int seq2, int count2)
 {
-    struct ffs_disk_sector disk_sector;
+    struct ffs_disk_area disk_area;
     int cur1;
     int cur2;
     int rc;
@@ -385,20 +385,20 @@ ffs_test_assert_sector_seqs(int seq1, int count1, int seq2, int count2)
     cur1 = 0;
     cur2 = 0;
 
-    for (i = 0; i < ffs_num_sectors; i++) {
-        rc = ffs_flash_read(i, 0, &disk_sector, sizeof disk_sector);
+    for (i = 0; i < ffs_num_areas; i++) {
+        rc = ffs_flash_read(i, 0, &disk_area, sizeof disk_area);
         assert(rc == 0);
-        assert(ffs_sector_magic_is_set(&disk_sector));
-        assert(disk_sector.fds_seq == ffs_sectors[i].fs_seq);
-        if (i == ffs_scratch_sector_id) {
-            assert(disk_sector.fds_is_scratch == 0xff);
+        assert(ffs_area_magic_is_set(&disk_area));
+        assert(disk_area.fds_seq == ffs_areas[i].fs_seq);
+        if (i == ffs_scratch_area_id) {
+            assert(disk_area.fds_is_scratch == 0xff);
         } else {
-            assert(disk_sector.fds_is_scratch == 0);
+            assert(disk_area.fds_is_scratch == 0);
         }
 
-        if (ffs_sectors[i].fs_seq == seq1) {
+        if (ffs_areas[i].fs_seq == seq1) {
             cur1++;
-        } else if (ffs_sectors[i].fs_seq == seq2) {
+        } else if (ffs_areas[i].fs_seq == seq2) {
             cur2++;
         } else {
             assert(0);
@@ -416,7 +416,7 @@ ffs_test_mkdir(void)
 
     printf("\tmkdir test\n");
 
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     rc = ffs_mkdir("/a/b/c/d");
@@ -480,7 +480,7 @@ ffs_test_mkdir(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -496,7 +496,7 @@ ffs_test_unlink(void)
 
     printf("\tunlink test\n");
 
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     rc = ffs_open(&file1, filename, FFS_ACCESS_READ | FFS_ACCESS_WRITE);
@@ -534,7 +534,7 @@ ffs_test_unlink(void)
             .is_dir = 1,
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -546,7 +546,7 @@ ffs_test_rename(void)
 
     printf("\trename test\n");
 
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     rc = ffs_rename("/nonexistent.txt", "/newname.txt");
@@ -604,7 +604,7 @@ ffs_test_rename(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -615,7 +615,7 @@ ffs_test_truncate(void)
 
     printf("\ttruncate test\n");
 
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     rc = ffs_open(&file, "/myfile.txt",
@@ -661,7 +661,7 @@ ffs_test_truncate(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -672,7 +672,7 @@ ffs_test_append(void)
 
     printf("\tappend test\n");
 
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND);
@@ -729,7 +729,7 @@ ffs_test_append(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -742,7 +742,7 @@ ffs_test_read(void)
 
     printf("\tread test\n");
 
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     ffs_test_util_create_file("/myfile.txt", "1234567890", 10);
@@ -779,7 +779,7 @@ ffs_test_overwrite_one(void)
     printf("\toverwrite one test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     ffs_test_util_append_file("/myfile.txt", "abcdefgh", 8);
@@ -892,7 +892,7 @@ ffs_test_overwrite_one(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -912,7 +912,7 @@ ffs_test_overwrite_two(void)
     printf("\toverwrite two test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     /*** Overwrite two blocks (middle). */
@@ -1033,7 +1033,7 @@ ffs_test_overwrite_two(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -1056,7 +1056,7 @@ ffs_test_overwrite_three(void)
     printf("\toverwrite three test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     /*** Overwrite three blocks (middle). */
@@ -1182,7 +1182,7 @@ ffs_test_overwrite_three(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -1205,7 +1205,7 @@ ffs_test_overwrite_many(void)
     printf("\toverwrite many test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     /*** Overwrite middle of first block. */
@@ -1269,7 +1269,7 @@ ffs_test_overwrite_many(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -1280,7 +1280,7 @@ ffs_test_long_filename(void)
     printf("\tlong filename test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     ffs_test_util_create_file("/12345678901234567890.txt", "contents", 8);
@@ -1311,7 +1311,7 @@ ffs_test_long_filename(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -1321,7 +1321,7 @@ ffs_test_large_write(void)
     int rc;
     int i;
 
-    static const struct ffs_sector_desc sector_descs_two[] = {
+    static const struct ffs_area_desc area_descs_two[] = {
         { 0x00020000, 128 * 1024 },
         { 0x00040000, 128 * 1024 },
         { 0, 0 },
@@ -1331,7 +1331,7 @@ ffs_test_large_write(void)
     printf("\tlarge write test\n");
 
     /*** Setup. */
-    rc = ffs_format(sector_descs_two);
+    rc = ffs_format(area_descs_two);
     assert(rc == 0);
 
     for (i = 0; i < sizeof data; i++) {
@@ -1366,7 +1366,7 @@ ffs_test_large_write(void)
             } },
     } };
 
-    ffs_test_assert_system(expected_system, sector_descs_two);
+    ffs_test_assert_system(expected_system, area_descs_two);
 }
 
 static void
@@ -1377,7 +1377,7 @@ ffs_test_many_children(void)
     printf("\tmany children test\n");
 
     /*** Setup. */
-    rc = ffs_format(ffs_sector_descs);
+    rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
     ffs_test_util_create_file("/zasdf", NULL, 0);
@@ -1422,7 +1422,7 @@ ffs_test_many_children(void)
             }
     } };
 
-    ffs_test_assert_system(expected_system, ffs_sector_descs);
+    ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
 static void
@@ -1430,7 +1430,7 @@ ffs_test_gc(void)
 {
     int rc;
 
-    static const struct ffs_sector_desc sector_descs_two[] = {
+    static const struct ffs_area_desc area_descs_two[] = {
         { 0x00020000, 128 * 1024 },
         { 0x00040000, 128 * 1024 },
         { 0, 0 },
@@ -1464,7 +1464,7 @@ ffs_test_gc(void)
 
     printf("\tgarbage collection test\n");
 
-    rc = ffs_format(sector_descs_two);
+    rc = ffs_format(area_descs_two);
     assert(rc == 0);
 
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 8);
@@ -1481,7 +1481,7 @@ ffs_test_wear_level(void)
     int i;
     int j;
 
-    static const struct ffs_sector_desc sector_descs_uniform[] = {
+    static const struct ffs_area_desc area_descs_uniform[] = {
         { 0x00000000, 2 * 1024 },
         { 0x00020000, 2 * 1024 },
         { 0x00040000, 2 * 1024 },
@@ -1493,24 +1493,24 @@ ffs_test_wear_level(void)
     printf("\twear level test\n");
 
     /*** Setup. */
-    rc = ffs_format(sector_descs_uniform);
+    rc = ffs_format(area_descs_uniform);
     assert(rc == 0);
 
-    /* Ensure sectors rotate properly. */
+    /* Ensure areas rotate properly. */
     for (i = 0; i < 255; i++) {
-        for (j = 0; j < ffs_num_sectors; j++) {
-            ffs_test_assert_sector_seqs(i, ffs_num_sectors - j, i + 1, j);
+        for (j = 0; j < ffs_num_areas; j++) {
+            ffs_test_assert_area_seqs(i, ffs_num_areas - j, i + 1, j);
             ffs_gc(NULL);
         }
     }
 
     /* Ensure proper rollover of sequence numbers. */
-    for (j = 0; j < ffs_num_sectors; j++) {
-        ffs_test_assert_sector_seqs(255, ffs_num_sectors - j, 0, j);
+    for (j = 0; j < ffs_num_areas; j++) {
+        ffs_test_assert_area_seqs(255, ffs_num_areas - j, 0, j);
         ffs_gc(NULL);
     }
-    for (j = 0; j < ffs_num_sectors; j++) {
-        ffs_test_assert_sector_seqs(0, ffs_num_sectors - j, 1, j);
+    for (j = 0; j < ffs_num_areas; j++) {
+        ffs_test_assert_area_seqs(0, ffs_num_areas - j, 1, j);
         ffs_gc(NULL);
     }
 }

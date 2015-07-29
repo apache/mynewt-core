@@ -146,10 +146,10 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
 {
     struct ffs_disk_inode disk_inode;
     uint32_t offset;
-    uint16_t sector_id;
+    uint16_t area_id;
     int rc;
 
-    rc = ffs_misc_reserve_space(&sector_id, &offset, sizeof disk_inode);
+    rc = ffs_misc_reserve_space(&area_id, &offset, sizeof disk_inode);
     if (rc != 0) {
         return rc;
     }
@@ -161,7 +161,7 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
     disk_inode.fdi_flags = inode->fi_flags | FFS_INODE_F_DELETED;
     disk_inode.fdi_filename_len = 0;
 
-    rc = ffs_inode_write_disk(&disk_inode, "", sector_id, offset);
+    rc = ffs_inode_write_disk(&disk_inode, "", area_id, offset);
     if (rc != 0) {
         return rc;
     }
@@ -172,7 +172,7 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
 int
 ffs_inode_from_disk(struct ffs_inode *out_inode,
                     const struct ffs_disk_inode *disk_inode,
-                    uint16_t sector_id, uint32_t offset)
+                    uint16_t area_id, uint32_t offset)
 {
     int cached_name_len;
     int rc;
@@ -180,7 +180,7 @@ ffs_inode_from_disk(struct ffs_inode *out_inode,
     out_inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
     out_inode->fi_base.fb_id = disk_inode->fdi_id;
     out_inode->fi_base.fb_seq = disk_inode->fdi_seq;
-    out_inode->fi_base.fb_sector_id = sector_id;
+    out_inode->fi_base.fb_area_id = area_id;
     out_inode->fi_base.fb_offset = offset;
     out_inode->fi_flags = disk_inode->fdi_flags;
     out_inode->fi_filename_len = disk_inode->fdi_filename_len;
@@ -190,7 +190,7 @@ ffs_inode_from_disk(struct ffs_inode *out_inode,
     } else {
         cached_name_len = out_inode->fi_filename_len;
     }
-    rc = ffs_flash_read(sector_id, offset + sizeof *disk_inode,
+    rc = ffs_flash_read(area_id, offset + sizeof *disk_inode,
                         out_inode->fi_filename, cached_name_len);
     if (rc != 0) {
         return rc;
@@ -204,12 +204,12 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
 {
     struct ffs_disk_inode disk_inode;
     uint32_t offset;
-    uint16_t sector_id;
+    uint16_t area_id;
     int filename_len;
     int rc;
 
     filename_len = strlen(filename);
-    rc = ffs_misc_reserve_space(&sector_id, &offset,
+    rc = ffs_misc_reserve_space(&area_id, &offset,
                                 sizeof disk_inode + filename_len);
     if (rc != 0) {
         return rc;
@@ -222,12 +222,12 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
     disk_inode.fdi_flags = inode->fi_flags;
     disk_inode.fdi_filename_len = filename_len;
 
-    rc = ffs_inode_write_disk(&disk_inode, filename, sector_id, offset);
+    rc = ffs_inode_write_disk(&disk_inode, filename, area_id, offset);
     if (rc != 0) {
         return rc;
     }
 
-    rc = ffs_inode_from_disk(inode, &disk_inode, sector_id, offset);
+    rc = ffs_inode_from_disk(inode, &disk_inode, area_id, offset);
     if (rc != 0) {
         return rc;
     }
@@ -237,11 +237,11 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
 
 int
 ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
-                    uint16_t sector_id, uint32_t offset)
+                    uint16_t area_id, uint32_t offset)
 {
     int rc;
 
-    rc = ffs_flash_read(sector_id, offset, out_disk_inode,
+    rc = ffs_flash_read(area_id, offset, out_disk_inode,
                         sizeof *out_disk_inode);
     if (rc != 0) {
         return rc;
@@ -252,7 +252,7 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
 
     /* XXX: General inode validation. */
     if (out_filename != NULL) {
-        rc = ffs_flash_read(sector_id, offset + sizeof *out_disk_inode,
+        rc = ffs_flash_read(area_id, offset + sizeof *out_disk_inode,
                             out_filename, out_disk_inode->fdi_filename_len);
         if (rc != 0) {
             return rc;
@@ -264,16 +264,16 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
 
 int
 ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
-                     const char *filename, uint16_t sector_id,
+                     const char *filename, uint16_t area_id,
                      uint32_t offset)
 {
     int rc;
 
-    rc = ffs_flash_write(sector_id, offset, disk_inode, sizeof *disk_inode);
+    rc = ffs_flash_write(area_id, offset, disk_inode, sizeof *disk_inode);
     if (rc != 0) {
         return rc;
     }
-    rc = ffs_flash_write(sector_id, offset + sizeof *disk_inode, filename,
+    rc = ffs_flash_write(area_id, offset + sizeof *disk_inode, filename,
                          disk_inode->fdi_filename_len);
     if (rc != 0) {
         return rc;
@@ -320,16 +320,16 @@ static int
 ffs_inode_read_filename_chunk(const struct ffs_inode *inode,
                               uint8_t filename_offset, void *buf, int len)
 {
-    uint32_t sector_off;
+    uint32_t area_off;
     int rc;
 
     assert(filename_offset + len <= inode->fi_filename_len);
 
-    sector_off = inode->fi_base.fb_offset +
-                 sizeof (struct ffs_disk_inode) +
-                 filename_offset;
+    area_off = inode->fi_base.fb_offset +
+               sizeof (struct ffs_disk_inode) +
+               filename_offset;
 
-    rc = ffs_flash_read(inode->fi_base.fb_sector_id, sector_off, buf, len);
+    rc = ffs_flash_read(inode->fi_base.fb_area_id, area_off, buf, len);
     if (rc != 0) {
         return rc;
     }
@@ -452,7 +452,7 @@ ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
     struct ffs_block *block;
     uint32_t bytes_read;
     uint32_t bytes_left;
-    uint32_t sector_off;
+    uint32_t area_off;
     uint32_t block_off;
     uint32_t chunk_len;
     uint8_t *dst;
@@ -475,10 +475,10 @@ ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
             chunk_len = bytes_left;
         }
 
-        sector_off = block->fb_base.fb_offset +
-                     sizeof (struct ffs_disk_block) +
-                     block_off;
-        rc = ffs_flash_read(block->fb_base.fb_sector_id, sector_off, dst,
+        area_off = block->fb_base.fb_offset +
+                   sizeof (struct ffs_disk_block) +
+                   block_off;
+        rc = ffs_flash_read(block->fb_base.fb_area_id, area_off, dst,
                             chunk_len);
         if (rc != 0) {
             goto done;

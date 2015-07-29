@@ -9,7 +9,7 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode *inode;
-    uint16_t sector_id;
+    uint16_t area_id;
     uint32_t offset;
     int rc;
 
@@ -19,7 +19,7 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
         goto err;
     }
 
-    rc = ffs_misc_reserve_space(&sector_id, &offset,
+    rc = ffs_misc_reserve_space(&area_id, &offset,
                                 sizeof disk_inode + filename_len);
     if (rc != 0) {
         goto err;
@@ -40,12 +40,12 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
     }
     disk_inode.fdi_filename_len = filename_len;
 
-    rc = ffs_inode_write_disk(&disk_inode, filename, sector_id, offset);
+    rc = ffs_inode_write_disk(&disk_inode, filename, area_id, offset);
     if (rc != 0) {
         goto err;
     }
 
-    rc = ffs_inode_from_disk(inode, &disk_inode, sector_id, offset);
+    rc = ffs_inode_from_disk(inode, &disk_inode, area_id, offset);
     if (rc != 0) {
         goto err;
     }

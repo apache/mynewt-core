@@ -4,11 +4,11 @@
 #include "stm32f4xx/stm32f4xx_hal_flash_ex.h"
 #include "hal/hal_flash.h"
 
-static const struct flash_sector_desc {
-    uint32_t fsd_offset;
-    uint32_t fsd_length;
-    int fsd_sector_id;
-} flash_sector_descs[] = {
+static const struct flash_area_desc {
+    uint32_t fad_offset;
+    uint32_t fad_length;
+    int fad_sector_id;
+} flash_area_descs[] = {
     { 0x08000000, 16 * 1024, FLASH_SECTOR_0 },
     { 0x08004000, 16 * 1024, FLASH_SECTOR_1 },
     { 0x08008000, 16 * 1024, FLASH_SECTOR_2 },
@@ -23,8 +23,8 @@ static const struct flash_sector_desc {
     { 0x080e0000, 128 * 1024, FLASH_SECTOR_11 },
 };
 
-#define FLASH_NUM_SECTORS   (int)(sizeof flash_sector_descs /       \
-                                  sizeof flash_sector_descs[0])
+#define FLASH_NUM_AREAS   (int)(sizeof flash_area_descs /       \
+                                sizeof flash_area_descs[0])
 
 int
 flash_read(void *dst, uint32_t address, uint32_t num_bytes)
@@ -64,9 +64,9 @@ flash_erase_sector(uint32_t sector_address)
 {
     int i;
 
-    for (i = 0; i < FLASH_NUM_SECTORS; i++) {
-        if (flash_sector_descs[i].fsd_offset == sector_address) {
-            flash_erase_sector_id(flash_sector_descs[i].fsd_sector_id);
+    for (i = 0; i < FLASH_NUM_AREAS; i++) {
+        if (flash_area_descs[i].fad_offset == sector_address) {
+            flash_erase_sector_id(flash_area_descs[i].fad_sector_id);
             return 0;
         }
     }
@@ -77,23 +77,23 @@ flash_erase_sector(uint32_t sector_address)
 int
 flash_erase(uint32_t address, uint32_t num_bytes)
 {
-    const struct flash_sector_desc *sector;
+    const struct flash_area_desc *area;
     uint32_t end;
     int i;
 
     end = address + num_bytes;
 
-    for (i = 0; i < FLASH_NUM_SECTORS; i++) {
-        sector = flash_sector_descs + i;
+    for (i = 0; i < FLASH_NUM_AREAS; i++) {
+        area = flash_area_descs + i;
 
-        if (sector->fsd_offset >= end) {
+        if (area->fad_offset >= end) {
             return 0;
         }
 
-        if (address >= sector->fsd_offset &&
-            address < sector->fsd_offset + sector->fsd_length) {
+        if (address >= area->fad_offset &&
+            address < area->fad_offset + area->fad_length) {
 
-            flash_erase_sector_id(sector->fsd_sector_id);
+            flash_erase_sector_id(area->fad_sector_id);
         }
     }
 

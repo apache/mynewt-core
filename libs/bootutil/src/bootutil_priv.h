@@ -36,10 +36,10 @@ void boot_read_image_headers(struct image_header *out_headers,
                              const uint32_t *addresses, int num_addresses);
 int boot_read_status(struct boot_status *out_status,
                      struct boot_status_entry *out_entries,
-                     int num_sectors);
+                     int num_areas);
 int boot_write_status(const struct boot_status *status,
                       const struct boot_status_entry *entries,
-                      int num_sectors);
+                      int num_areas);
 void boot_clear_status(void);
 
 #endif

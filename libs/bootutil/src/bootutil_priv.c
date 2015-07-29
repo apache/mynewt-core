@@ -152,17 +152,17 @@ boot_read_image_headers(struct image_header *out_headers,
  *
  * @param out_status            On success, the boot status gets written here.
  * @param out_entries           On success, the array of boot entries gets
- *                              written here.
- * @param num_sectors           The number of flash sectors capable of storing
- *                              image data.  This is equal to the length of the
- *                              out_entries array.
+ *                                  written here.
+ * @param num_areas             The number of flash areas capable of storing
+ *                                  image data.  This is equal to the length of
+ *                                  the out_entries array.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
 boot_read_status(struct boot_status *out_status,
                  struct boot_status_entry *out_entries,
-                 int num_sectors)
+                 int num_areas)
 {
     struct ffs_file *file;
     uint32_t len;
@@ -182,9 +182,9 @@ boot_read_status(struct boot_status *out_status,
         goto done;
     }
 
-    len = num_sectors * sizeof *out_entries;
+    len = num_areas * sizeof *out_entries;
     rc = ffs_read(file, out_entries, &len);
-    if (rc != 0 || len != num_sectors * sizeof *out_entries) {
+    if (rc != 0 || len != num_areas * sizeof *out_entries) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }
@@ -196,7 +196,7 @@ boot_read_status(struct boot_status *out_status,
         out_status->bs_img2_length = 0;
     }
 
-    for (i = 0; i < num_sectors; i++) {
+    for (i = 0; i < num_areas; i++) {
         if (out_entries[i].bse_image_num == 0 &&
             out_status->bs_img1_length == 0) {
 
@@ -224,16 +224,16 @@ done:
  *
  * @param status                The boot status base to write.
  * @param entries               The array of boot status entries to write.
- * @param num_sectors           The number of flash sectors capable of storing
- *                              image data.  This is equal to the length of the
- *                              entries array.
+ * @param num_areas             The number of flash areas capable of storing
+ *                                  image data.  This is equal to the length of
+ *                                  the entries array.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
 boot_write_status(const struct boot_status *status,
                   const struct boot_status_entry *entries,
-                  int num_sectors)
+                  int num_areas)
 {
     struct ffs_file *file;
     int rc;
@@ -251,7 +251,7 @@ boot_write_status(const struct boot_status *status,
         goto done;
     }
 
-    rc = ffs_write(file, entries, num_sectors * sizeof *entries);
+    rc = ffs_write(file, entries, num_areas * sizeof *entries);
     if (rc != 0) {
         rc = BOOT_EFILE;
         goto done;

@@ -116,7 +116,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     uint32_t chunk_len;
     uint32_t offset;
     uint32_t cur;
-    uint16_t sector_id;
+    uint16_t area_id;
     int rc;
 
     disk_block.fdb_data_len = data_len;
@@ -147,13 +147,13 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     disk_block.fdb_ecc = 0;
 
     disk_size = ffs_write_disk_size(write_info, &disk_block);
-    rc = ffs_misc_reserve_space(&sector_id, &offset, disk_size);
+    rc = ffs_misc_reserve_space(&area_id, &offset, disk_size);
     if (rc != 0) {
         return rc;
     }
-    expected_cur = ffs_sectors[sector_id].fs_cur + disk_size;
+    expected_cur = ffs_areas[area_id].fs_cur + disk_size;
 
-    rc = ffs_flash_write(sector_id, offset, &disk_block, sizeof disk_block);
+    rc = ffs_flash_write(area_id, offset, &disk_block, sizeof disk_block);
     if (rc != 0) {
         return rc;
     }
@@ -163,16 +163,16 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     if (write_info->fwi_start_block != NULL) {
         chunk_len = write_info->fwi_start_offset;
         rc = ffs_flash_copy(
-            write_info->fwi_start_block->fb_base.fb_sector_id,
+            write_info->fwi_start_block->fb_base.fb_area_id,
             write_info->fwi_start_block->fb_base.fb_offset + sizeof disk_block,
-            sector_id, cur, chunk_len);
+            area_id, cur, chunk_len);
         if (rc != 0) {
             return rc;
         }
         cur += chunk_len;
     }
 
-    rc = ffs_flash_write(sector_id, cur, data, data_len);
+    rc = ffs_flash_write(area_id, cur, data, data_len);
     if (rc != 0) {
         return rc;
     }
@@ -183,10 +183,10 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
         chunk_len = write_info->fwi_end_block->fb_data_len -
                     write_info->fwi_end_offset;
         rc = ffs_flash_copy(
-            write_info->fwi_end_block->fb_base.fb_sector_id,
+            write_info->fwi_end_block->fb_base.fb_area_id,
             write_info->fwi_end_block->fb_base.fb_offset +
                 sizeof disk_block + write_info->fwi_end_offset,
-            sector_id, cur, chunk_len);
+            area_id, cur, chunk_len);
         if (rc != 0) {
             return rc;
         }
@@ -210,12 +210,12 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
         return FFS_ENOMEM;
     }
 
-    ffs_block_from_disk(block, &disk_block, sector_id, offset);
+    ffs_block_from_disk(block, &disk_block, area_id, offset);
     block->fb_inode = inode;
     ffs_hash_insert(&block->fb_base);
     ffs_inode_insert_block(inode, block);
 
-    assert(ffs_sectors[sector_id].fs_cur == expected_cur);
+    assert(ffs_areas[area_id].fs_cur == expected_cur);
 
     return 0;
 }

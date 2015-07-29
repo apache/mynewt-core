@@ -15,7 +15,7 @@ static uint32_t boot_img_addrs[2] = {
 };
 
 /** Internal flash layout. */
-static struct ffs_sector_desc loader_sector_descs[] = {
+static struct ffs_area_desc boot_area_descs[] = {
     [0] =  { 0x08000000, 16 * 1024 },
     [1] =  { 0x08004000, 16 * 1024 },
     [2] =  { 0x08008000, 16 * 1024 },
@@ -31,15 +31,15 @@ static struct ffs_sector_desc loader_sector_descs[] = {
     { 0, 0 },
 };
 
-/** Contains indices of the sectors which can contain image data. */
-static uint16_t boot_img_sectors[] = {
+/** Contains indices of the areas which can contain image data. */
+static uint16_t boot_img_areas[] = {
     5, 6, 7, 8, 9, 10, 11
 };
 
-#define BOOT_NUM_IMG_SECTORS \
-    ((int)(sizeof boot_img_sectors / sizeof boot_img_sectors[0]))
+#define BOOT_NUM_IMG_AREAS \
+    ((int)(sizeof boot_img_areas / sizeof boot_img_areas[0]))
 
-#define BOOT_SECTOR_IDX_SCRATCH 11
+#define BOOT_AREA_IDX_SCRATCH 11
 
 
 /**
@@ -78,22 +78,6 @@ boot_jump(const struct image_header *hdr, uint32_t image_addr)
     fn();
 }
 
-void
-myformat(void)
-{
-    int rc;
-
-    static const struct ffs_sector_desc format_sector_descs[] = {
-        [0] =  { 0x08004000, 16 * 1024 },
-        [1] =  { 0x08008000, 16 * 1024 },
-        [2] =  { 0x0800c000, 16 * 1024 },
-        { 0, 0 },
-    };
-
-    rc = ffs_format(format_sector_descs);
-    assert(rc == 0);
-}
-
 int
 main(void)
 {
@@ -101,11 +85,11 @@ main(void)
     int rc;
 
     const struct boot_req req = {
-        .br_sector_descs = loader_sector_descs,
+        .br_area_descs = boot_area_descs,
         .br_image_addrs = boot_img_addrs,
-        .br_image_sectors = boot_img_sectors,
-        .br_scratch_sector_idx = BOOT_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_NUM_IMG_SECTORS,
+        .br_image_areas = boot_img_areas,
+        .br_scratch_area_idx = BOOT_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 

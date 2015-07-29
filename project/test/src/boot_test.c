@@ -20,7 +20,7 @@ static uint32_t boot_test_img_addrs[2] = {
 };
 
 /** Internal flash layout. */
-static struct ffs_sector_desc boot_test_sector_descs[] = {
+static struct ffs_area_desc boot_test_area_descs[] = {
     [0] =  { 0x00000000, 16 * 1024 },
     [1] =  { 0x00004000, 16 * 1024 },
     [2] =  { 0x00008000, 16 * 1024 },
@@ -36,23 +36,23 @@ static struct ffs_sector_desc boot_test_sector_descs[] = {
     { 0, 0 },
 };
 
-static const struct ffs_sector_desc boot_test_format_descs[] = {
+static const struct ffs_area_desc boot_test_format_descs[] = {
     [0] =  { 0x00004000, 16 * 1024 },
     [1] =  { 0x00008000, 16 * 1024 },
     [2] =  { 0x0000c000, 16 * 1024 },
     { 0, 0 },
 };
 
-/** Contains indices of the sectors which can contain image data. */
-static uint16_t boot_test_img_sectors[] = {
+/** Contains indices of the areas which can contain image data. */
+static uint16_t boot_test_img_areas[] = {
     5, 6, 7, 8, 9, 10, 11
 };
 
-#define BOOT_TEST_NUM_IMG_SECTORS \
-    ((int)(sizeof boot_test_img_sectors / sizeof boot_test_img_sectors[0]))
+#define BOOT_TEST_NUM_IMG_AREAS \
+    ((int)(sizeof boot_test_img_areas / sizeof boot_test_img_areas[0]))
 
-#define BOOT_TEST_SECTOR_IDX_SCRATCH 11
-#define BOOT_TEST_IMG_SECTOR_IDX_SCRATCH 6
+#define BOOT_TEST_AREA_IDX_SCRATCH 11
+#define BOOT_TEST_IMG_AREA_IDX_SCRATCH 6
 
 static uint8_t
 boot_test_util_byte_at(int img_msb, uint32_t image_offset)
@@ -69,17 +69,17 @@ boot_test_util_byte_at(int img_msb, uint32_t image_offset)
 static void
 boot_test_util_init_flash(void)
 {
-    const struct ffs_sector_desc *sector_desc;
+    const struct ffs_area_desc *area_desc;
     int rc;
 
     rc = flash_init();
     assert(rc == 0);
 
-    for (sector_desc = boot_test_sector_descs;
-         sector_desc->fsd_length != 0;
-         sector_desc++) {
+    for (area_desc = boot_test_area_descs;
+         area_desc->fad_length != 0;
+         area_desc++) {
 
-        rc = flash_erase(sector_desc->fsd_offset, sector_desc->fsd_length);
+        rc = flash_erase(area_desc->fad_offset, area_desc->fad_length);
         assert(rc == 0);
     }
 
@@ -94,71 +94,71 @@ boot_test_util_init_flash(void)
 }
 
 static void
-boot_test_util_copy_sector(int from_sector_idx, int to_sector_idx)
+boot_test_util_copy_area(int from_area_idx, int to_area_idx)
 {
-    const struct ffs_sector_desc *from_sector_desc;
-    const struct ffs_sector_desc *to_sector_desc;
+    const struct ffs_area_desc *from_area_desc;
+    const struct ffs_area_desc *to_area_desc;
     void *buf;
     int rc;
 
-    from_sector_desc = boot_test_sector_descs + from_sector_idx;
-    to_sector_desc = boot_test_sector_descs + to_sector_idx;
+    from_area_desc = boot_test_area_descs + from_area_idx;
+    to_area_desc = boot_test_area_descs + to_area_idx;
 
-    assert(from_sector_desc->fsd_length == to_sector_desc->fsd_length);
+    assert(from_area_desc->fad_length == to_area_desc->fad_length);
 
-    buf = malloc(from_sector_desc->fsd_length);
+    buf = malloc(from_area_desc->fad_length);
     assert(buf != NULL);
 
-    rc = flash_read(buf, from_sector_desc->fsd_offset,
-                    from_sector_desc->fsd_length);
+    rc = flash_read(buf, from_area_desc->fad_offset,
+                    from_area_desc->fad_length);
     assert(rc == 0);
 
-    rc = flash_erase(to_sector_desc->fsd_offset, to_sector_desc->fsd_length);
+    rc = flash_erase(to_area_desc->fad_offset, to_area_desc->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf, to_sector_desc->fsd_offset,
-                     to_sector_desc->fsd_length);
+    rc = flash_write(buf, to_area_desc->fad_offset,
+                     to_area_desc->fad_length);
     assert(rc == 0);
 
     free(buf);
 }
 
 static void
-boot_test_util_swap_sectors(int sector_idx1, int sector_idx2)
+boot_test_util_swap_areas(int area_idx1, int area_idx2)
 {
-    const struct ffs_sector_desc *sector_desc1;
-    const struct ffs_sector_desc *sector_desc2;
+    const struct ffs_area_desc *area_desc1;
+    const struct ffs_area_desc *area_desc2;
     void *buf1;
     void *buf2;
     int rc;
 
-    sector_desc1 = boot_test_sector_descs + sector_idx1;
-    sector_desc2 = boot_test_sector_descs + sector_idx2;
+    area_desc1 = boot_test_area_descs + area_idx1;
+    area_desc2 = boot_test_area_descs + area_idx2;
 
-    assert(sector_desc1->fsd_length == sector_desc2->fsd_length);
+    assert(area_desc1->fad_length == area_desc2->fad_length);
 
-    buf1 = malloc(sector_desc1->fsd_length);
+    buf1 = malloc(area_desc1->fad_length);
     assert(buf1 != NULL);
 
-    buf2 = malloc(sector_desc2->fsd_length);
+    buf2 = malloc(area_desc2->fad_length);
     assert(buf2 != NULL);
 
-    rc = flash_read(buf1, sector_desc1->fsd_offset, sector_desc1->fsd_length);
+    rc = flash_read(buf1, area_desc1->fad_offset, area_desc1->fad_length);
     assert(rc == 0);
 
-    rc = flash_read(buf2, sector_desc2->fsd_offset, sector_desc2->fsd_length);
+    rc = flash_read(buf2, area_desc2->fad_offset, area_desc2->fad_length);
     assert(rc == 0);
 
-    rc = flash_erase(sector_desc1->fsd_offset, sector_desc1->fsd_length);
+    rc = flash_erase(area_desc1->fad_offset, area_desc1->fad_length);
     assert(rc == 0);
 
-    rc = flash_erase(sector_desc2->fsd_offset, sector_desc2->fsd_length);
+    rc = flash_erase(area_desc2->fad_offset, area_desc2->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf2, sector_desc1->fsd_offset, sector_desc1->fsd_length);
+    rc = flash_write(buf2, area_desc1->fad_offset, area_desc1->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf1, sector_desc2->fsd_offset, sector_desc2->fsd_length);
+    rc = flash_write(buf1, area_desc2->fad_offset, area_desc2->fad_length);
     assert(rc == 0);
 
     free(buf1);
@@ -204,25 +204,25 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
 }
 
 static void
-boot_test_util_verify_sector(const struct ffs_sector_desc *sector_desc,
-                             const struct image_header *hdr,
-                             uint32_t image_addr, int img_msb)
+boot_test_util_verify_area(const struct ffs_area_desc *area_desc,
+                           const struct image_header *hdr,
+                           uint32_t image_addr, int img_msb)
 {
     struct image_header temp_hdr;
-    uint32_t sector_end;
+    uint32_t area_end;
     uint32_t img_size;
     uint32_t img_off;
     uint32_t img_end;
     uint32_t addr;
     uint8_t buf[256];
-    int rem_sector;
+    int rem_area;
     int past_image;
     int chunk_sz;
     int rem_img;
     int rc;
     int i;
 
-    addr = sector_desc->fsd_offset;
+    addr = area_desc->fad_offset;
 
     if (hdr != NULL) {
         img_size = hdr->ih_img_size;
@@ -238,22 +238,22 @@ boot_test_util_verify_sector(const struct ffs_sector_desc *sector_desc,
         img_size = 0;
     }
 
-    sector_end = sector_desc->fsd_offset + sector_desc->fsd_length;
+    area_end = area_desc->fad_offset + area_desc->fad_length;
     img_end = image_addr + img_size;
     past_image = addr >= img_end;
 
-    while (addr < sector_end) {
-        rem_sector = sector_end - addr;
+    while (addr < area_end) {
+        rem_area = area_end - addr;
         rem_img = img_end - addr;
 
         if (hdr != NULL) {
             img_off = addr - image_addr - hdr->ih_hdr_size;
         }
 
-        if (rem_sector > sizeof buf) {
+        if (rem_area > sizeof buf) {
             chunk_sz = sizeof buf;
         } else {
-            chunk_sz = rem_sector;
+            chunk_sz = rem_area;
         }
 
         rc = flash_read(buf, addr, chunk_sz);
@@ -286,31 +286,31 @@ static void
 boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
                             const struct image_header *hdr1, int orig_slot_1)
 {
-    const struct ffs_sector_desc *sector_desc;
-    int sector_idx;
+    const struct ffs_area_desc *area_desc;
+    int area_idx;
 
-    sector_idx = boot_test_img_sectors[0];
+    area_idx = boot_test_img_areas[0];
 
     while (1) {
-        sector_desc = boot_test_sector_descs + sector_idx;
-        if (sector_desc->fsd_offset == boot_test_img_addrs[1]) {
+        area_desc = boot_test_area_descs + area_idx;
+        if (area_desc->fad_offset == boot_test_img_addrs[1]) {
             break;
         }
 
-        boot_test_util_verify_sector(sector_desc, hdr0,
-                                     boot_test_img_addrs[0], orig_slot_0);
-        sector_idx++;
+        boot_test_util_verify_area(area_desc, hdr0, boot_test_img_addrs[0],
+                                   orig_slot_0);
+        area_idx++;
     }
 
     while (1) {
-        if (sector_idx == BOOT_TEST_SECTOR_IDX_SCRATCH) {
+        if (area_idx == BOOT_TEST_AREA_IDX_SCRATCH) {
             break;
         }
 
-        sector_desc = boot_test_sector_descs + sector_idx;
-        boot_test_util_verify_sector(sector_desc, hdr1,
-                                     boot_test_img_addrs[1], orig_slot_1);
-        sector_idx++;
+        area_desc = boot_test_area_descs + area_idx;
+        boot_test_util_verify_area(area_desc, hdr1, boot_test_img_addrs[1],
+                                   orig_slot_1);
+        area_idx++;
     }
 }
 
@@ -331,11 +331,11 @@ boot_test_nv_ns_10(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -371,11 +371,11 @@ boot_test_nv_ns_01(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -419,11 +419,11 @@ boot_test_nv_ns_11(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -460,11 +460,11 @@ boot_test_vm_ns_10(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -503,11 +503,11 @@ boot_test_vm_ns_01(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -554,11 +554,11 @@ boot_test_vm_ns_11_a(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -606,11 +606,11 @@ boot_test_vm_ns_11_b(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -634,7 +634,7 @@ boot_test_vm_ns_11_b(void)
 }
 
 static void
-boot_test_vm_ns_11_2sectors(void)
+boot_test_vm_ns_11_2areas(void)
 {
     struct boot_rsp rsp;
     int rc;
@@ -658,15 +658,15 @@ boot_test_vm_ns_11_2sectors(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
-    printf("\tvector-main no-status 1-1-2sectors test\n");
+    printf("\tvector-main no-status 1-1-2areas test\n");
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
@@ -688,7 +688,7 @@ boot_test_vm_ns_11_2sectors(void)
 static void
 boot_test_nv_bs_10(void)
 {
-    struct boot_status_entry entries[BOOT_TEST_NUM_IMG_SECTORS];
+    struct boot_status_entry entries[BOOT_TEST_NUM_IMG_AREAS];
     struct boot_status status;
     struct boot_rsp rsp;
     int rc;
@@ -703,11 +703,11 @@ boot_test_nv_bs_10(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -715,17 +715,17 @@ boot_test_nv_bs_10(void)
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 0);
-    boot_test_util_swap_sectors(boot_test_img_sectors[0],
-                                BOOT_TEST_SECTOR_IDX_SCRATCH);
+    boot_test_util_swap_areas(boot_test_img_areas[0],
+                                BOOT_TEST_AREA_IDX_SCRATCH);
 
     memset(&status, 0xff, sizeof status);
     status.bs_img2_length = hdr.ih_img_size;
 
     memset(entries, 0xff, sizeof entries);
-    entries[BOOT_TEST_IMG_SECTOR_IDX_SCRATCH].bse_image_num = 1;
-    entries[BOOT_TEST_IMG_SECTOR_IDX_SCRATCH].bse_part_num = 0;
+    entries[BOOT_TEST_IMG_AREA_IDX_SCRATCH].bse_image_num = 1;
+    entries[BOOT_TEST_IMG_AREA_IDX_SCRATCH].bse_part_num = 0;
 
-    rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_SECTORS);
+    rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_AREAS);
     assert(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -741,7 +741,7 @@ boot_test_nv_bs_10(void)
 static void
 boot_test_nv_bs_11(void)
 {
-    struct boot_status_entry entries[BOOT_TEST_NUM_IMG_SECTORS];
+    struct boot_status_entry entries[BOOT_TEST_NUM_IMG_AREAS];
     struct boot_status status;
     struct boot_rsp rsp;
     int rc;
@@ -765,11 +765,11 @@ boot_test_nv_bs_11(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -778,8 +778,8 @@ boot_test_nv_bs_11(void)
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
-    boot_test_util_copy_sector(boot_test_img_sectors[0],
-                               BOOT_TEST_SECTOR_IDX_SCRATCH);
+    boot_test_util_copy_area(boot_test_img_areas[0],
+                             BOOT_TEST_AREA_IDX_SCRATCH);
 
     memset(&status, 0xff, sizeof status);
     status.bs_img1_length = hdr0.ih_img_size;
@@ -788,10 +788,10 @@ boot_test_nv_bs_11(void)
     memset(entries, 0xff, sizeof entries);
     entries[3].bse_image_num = 1;
     entries[3].bse_part_num = 0;
-    entries[BOOT_TEST_IMG_SECTOR_IDX_SCRATCH].bse_image_num = 0;
-    entries[BOOT_TEST_IMG_SECTOR_IDX_SCRATCH].bse_part_num = 0;
+    entries[BOOT_TEST_IMG_AREA_IDX_SCRATCH].bse_image_num = 0;
+    entries[BOOT_TEST_IMG_AREA_IDX_SCRATCH].bse_part_num = 0;
 
-    rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_SECTORS);
+    rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_AREAS);
     assert(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -805,9 +805,9 @@ boot_test_nv_bs_11(void)
 }
 
 static void
-boot_test_nv_bs_11_2sectors(void)
+boot_test_nv_bs_11_2areas(void)
 {
-    struct boot_status_entry entries[BOOT_TEST_NUM_IMG_SECTORS];
+    struct boot_status_entry entries[BOOT_TEST_NUM_IMG_AREAS];
     struct boot_status status;
     struct boot_rsp rsp;
     int rc;
@@ -831,21 +831,20 @@ boot_test_nv_bs_11_2sectors(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
-    printf("\tno-vector basic-status 1-1-2sectors test\n");
+    printf("\tno-vector basic-status 1-1-2areas test\n");
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
-    boot_test_util_swap_sectors(boot_test_img_sectors[0],
-                                boot_test_img_sectors[3]);
+    boot_test_util_swap_areas(boot_test_img_areas[0], boot_test_img_areas[3]);
 
     memset(&status, 0xff, sizeof status);
     status.bs_img1_length = hdr0.ih_img_size;
@@ -861,7 +860,7 @@ boot_test_nv_bs_11_2sectors(void)
     entries[4].bse_image_num = 1;
     entries[4].bse_part_num = 1;
 
-    rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_SECTORS);
+    rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_AREAS);
     assert(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -900,11 +899,11 @@ boot_test_vb_ns_11(void)
     };
 
     struct boot_req req = {
-        .br_sector_descs = boot_test_sector_descs,
+        .br_area_descs = boot_test_area_descs,
         .br_image_addrs = boot_test_img_addrs,
-        .br_image_sectors = boot_test_img_sectors,
-        .br_scratch_sector_idx = BOOT_TEST_SECTOR_IDX_SCRATCH,
-        .br_num_image_sectors = BOOT_TEST_NUM_IMG_SECTORS,
+        .br_image_areas = boot_test_img_areas,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
         .br_num_slots = 2,
     };
 
@@ -955,10 +954,10 @@ boot_test(void)
     boot_test_vm_ns_01();
     boot_test_vm_ns_11_a();
     boot_test_vm_ns_11_b();
-    boot_test_vm_ns_11_2sectors();
+    boot_test_vm_ns_11_2areas();
     boot_test_nv_bs_10();
     boot_test_nv_bs_11();
-    boot_test_nv_bs_11_2sectors();
+    boot_test_nv_bs_11_2areas();
     boot_test_vb_ns_11();
 
     printf("\n");
