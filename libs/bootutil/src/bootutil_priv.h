@@ -12,6 +12,10 @@ struct image_header;
 
 #define BOOT_IMAGE_NUM_NONE     0xff
 
+#define BOOT_PATH_MAIN      "/boot/main"
+#define BOOT_PATH_TEST      "/boot/test"
+#define BOOT_PATH_STATUS    "/boot/status"
+
 struct boot_status_entry {
     uint8_t bse_image_num;
     uint8_t bse_part_num;

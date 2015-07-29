@@ -7,10 +7,6 @@
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
 
-#define BOOT_PATH_MAIN      "/boot/main"
-#define BOOT_PATH_TEST      "/boot/test"
-#define BOOT_PATH_STATUS    "/boot/status"
-
 int
 boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
 {
@@ -171,6 +167,7 @@ boot_read_status(struct boot_status *out_status,
     struct ffs_file *file;
     uint32_t len;
     int rc;
+    int i;
 
     rc = ffs_open(&file, BOOT_PATH_STATUS, FFS_ACCESS_READ);
     if (rc != 0) {
@@ -180,16 +177,38 @@ boot_read_status(struct boot_status *out_status,
 
     len = sizeof *out_status;
     rc = ffs_read(file, out_status, &len);
-    if (rc != 0 || len != sizeof out_status) {
+    if (rc != 0 || len != sizeof *out_status) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }
 
     len = num_sectors * sizeof *out_entries;
     rc = ffs_read(file, out_entries, &len);
-    if (rc != 0 || len != num_sectors * sizeof out_entries) {
+    if (rc != 0 || len != num_sectors * sizeof *out_entries) {
         rc = BOOT_EBADSTATUS;
         goto done;
+    }
+
+    if (out_status->bs_img1_length == 0xffffffff) {
+        out_status->bs_img1_length = 0;
+    }
+    if (out_status->bs_img2_length == 0xffffffff) {
+        out_status->bs_img2_length = 0;
+    }
+
+    for (i = 0; i < num_sectors; i++) {
+        if (out_entries[i].bse_image_num == 0 &&
+            out_status->bs_img1_length == 0) {
+
+            rc = BOOT_EBADSTATUS;
+            goto done;
+        }
+        if (out_entries[i].bse_image_num == 1 &&
+            out_status->bs_img2_length == 0) {
+
+            rc = BOOT_EBADSTATUS;
+            goto done;
+        }
     }
 
     rc = 0;
