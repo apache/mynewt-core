@@ -8,6 +8,8 @@
 
 #define IMAGE_F_PIC     0x00000001
 
+#define IMAGE_HEADER_CRC_OFFSET     4
+
 struct image_version {
     uint8_t iv_major;
     uint8_t iv_minor;

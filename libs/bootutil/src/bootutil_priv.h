@@ -1,5 +1,5 @@
-#ifndef H_BOOTUTIL_
-#define H_BOOTUTIL_
+#ifndef H_BOOTUTIL_PRIV_
+#define H_BOOTUTIL_PRIV_
 
 #include "bootutil/image.h"
 struct image_header;

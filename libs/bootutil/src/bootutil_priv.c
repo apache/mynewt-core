@@ -5,7 +5,7 @@
 #include "ffsutil/ffsutil.h"
 #include "bootutil/crc32.h"
 #include "bootutil/image.h"
-#include "bootutil/bootutil.h"
+#include "bootutil_priv.h"
 
 #define BOOT_PATH_MAIN      "/boot/main"
 #define BOOT_PATH_TEST      "/boot/test"
@@ -18,7 +18,7 @@ boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
     uint32_t crc_len;
     uint32_t crc;
 
-    crc_off = offsetof(struct image_header, ih_crc32) + sizeof hdr->ih_crc32;
+    crc_off = IMAGE_HEADER_CRC_OFFSET + sizeof hdr->ih_crc32;
     crc_len = hdr->ih_hdr_size - crc_off + hdr->ih_img_size;
     crc = crc32(0, (void *)(addr + crc_off), crc_len);
 
