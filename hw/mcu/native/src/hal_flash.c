@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
+#include "hal/hal_flash.h"
 
 static FILE *file;
 
@@ -75,20 +76,44 @@ flash_native_ensure_file_open(void)
 int
 flash_write(const void *src, uint32_t address, uint32_t length)
 {
-    const uint8_t *s;
-    int c;
+    static uint8_t buf[256];
+    uint32_t cur;
+    uint32_t end;
+    int chunk_sz;
+    int rc;
     int i;
 
-    flash_native_ensure_file_open();
-    s = src;
-    fseek(file, address, SEEK_SET);
-    for (i = 0; i < length; i++) {
-        c = fgetc(file);
-        assert(c != EOF);
-        assert((s[i] & c) == s[i]);
-        fseek(file, -1, SEEK_CUR);
-        fputc(s[i], file);
+    if (length == 0) {
+        return 0;
     }
+
+    end = address + length;
+
+    flash_native_ensure_file_open();
+
+    fseek(file, address, SEEK_SET);
+
+    cur = address;
+    while (cur < end) {
+        if (end - cur < sizeof buf) {
+            chunk_sz = end - cur;
+        } else {
+            chunk_sz = sizeof buf;
+        }
+
+        rc = flash_read(buf, cur, chunk_sz);
+        assert(rc == 0);
+
+        for (i = 0; i < chunk_sz; i++) {
+            assert(buf[i] == 0xff);
+        }
+
+        cur += chunk_sz;
+    }
+
+    fseek(file, address, SEEK_SET);
+    rc = fwrite(src, length, 1, file);
+    assert(rc == 1);
 
     fflush(file);
     return 0;
@@ -158,6 +183,12 @@ flash_erase(uint32_t address, uint32_t num_bytes)
         }
     }
 
+    return 0;
+}
+
+int
+flash_init(void)
+{
     return 0;
 }
 
