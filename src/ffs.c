@@ -12,10 +12,10 @@
 #define FFS_NUM_INODES          100
 #define FFS_NUM_BLOCKS          100
 
-static struct ffs_sector ffs_sector_array[FFS_MAX_SECTORS];
-struct ffs_sector *ffs_sectors = ffs_sector_array;
-int ffs_num_sectors;
-uint16_t ffs_scratch_sector_id;
+static struct ffs_area ffs_area_array[FFS_MAX_AREAS];
+struct ffs_area *ffs_areas = ffs_area_array;
+int ffs_num_areas;
+uint16_t ffs_scratch_area_id;
 
 struct os_mempool ffs_file_pool;
 struct os_mempool ffs_inode_pool;
@@ -354,46 +354,46 @@ done:
 }
 
 /**
- * Erases all the specified sectors and initializes them with a clean ffs
+ * Erases all the specified areas and initializes them with a clean ffs
  * file system.
  *
- * @param sector_descs      The set of sectors to format.
+ * @param area_descs        The set of areas to format.
  *
  * @return                  0 on success;
  *                          nonzero on failure.
  */
 int
-ffs_format(const struct ffs_sector_desc *sector_descs)
+ffs_format(const struct ffs_area_desc *area_descs)
 {
     int rc;
 
     ffs_lock();
-    rc = ffs_format_full(sector_descs);
+    rc = ffs_format_full(area_descs);
     ffs_unlock();
 
     return rc;
 }
 
 /**
- * Searches for a valid ffs file system among the specified sectors.  This
+ * Searches for a valid ffs file system among the specified areas.  This
  * function succeeds if a file system is detected among any subset of the
- * supplied sectors.  If the sector set does not contain a valid file system,
+ * supplied areas.  If the area set does not contain a valid file system,
  * a new one can be created via a call to ffs_format().
  *
- * @param sector_descs      The sector set to search.  This array must be
- *                          terminated with a 0-length sector.
+ * @param area_descs        The area set to search.  This array must be
+ *                              terminated with a 0-length area.
  *
  * @return                  0 on success;
  *                          FFS_ECORRUPT if no valid file system was detected;
  *                          other nonzero on error.
  */
 int
-ffs_detect(const struct ffs_sector_desc *sector_descs)
+ffs_detect(const struct ffs_area_desc *area_descs)
 {
     int rc;
 
     ffs_lock();
-    rc = ffs_restore_full(sector_descs);
+    rc = ffs_restore_full(area_descs);
     ffs_unlock();
 
     return rc;

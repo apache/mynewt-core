@@ -5,27 +5,27 @@
 #include "ffs/ffs.h"
 
 int
-ffs_format_from_scratch_sector(uint16_t sector_id)
+ffs_format_from_scratch_area(uint16_t area_id)
 {
-    struct ffs_disk_sector disk_sector;
+    struct ffs_disk_area disk_area;
     int rc;
 
-    assert(sector_id < ffs_num_sectors);
-    rc = ffs_flash_read(sector_id, 0, &disk_sector, sizeof disk_sector);
+    assert(area_id < ffs_num_areas);
+    rc = ffs_flash_read(area_id, 0, &disk_area, sizeof disk_area);
     if (rc != 0) {
         return rc;
     }
 
-    if (!ffs_sector_is_scratch(&disk_sector)) {
-        rc = ffs_format_sector(sector_id, 0);
+    if (!ffs_area_is_scratch(&disk_area)) {
+        rc = ffs_format_area(area_id, 0);
         if (rc != 0) {
             return rc;
         }
     } else {
-        disk_sector.fds_is_scratch = 0;
-        rc = ffs_flash_write(sector_id, FFS_SECTOR_OFFSET_IS_SCRATCH,
-                             &disk_sector.fds_is_scratch,
-                             sizeof disk_sector.fds_is_scratch);
+        disk_area.fds_is_scratch = 0;
+        rc = ffs_flash_write(area_id, FFS_AREA_OFFSET_IS_SCRATCH,
+                             &disk_area.fds_is_scratch,
+                             sizeof disk_area.fds_is_scratch);
         if (rc != 0) {
             return rc;
         }
@@ -35,30 +35,30 @@ ffs_format_from_scratch_sector(uint16_t sector_id)
 }
 
 int
-ffs_format_sector(uint16_t sector_id, int is_scratch)
+ffs_format_area(uint16_t area_id, int is_scratch)
 {
-    struct ffs_disk_sector disk_sector;
-    struct ffs_sector *sector;
+    struct ffs_disk_area disk_area;
+    struct ffs_area *area;
     uint32_t write_len;
     int rc;
 
-    sector = ffs_sectors + sector_id;
+    area = ffs_areas + area_id;
 
-    rc = flash_erase(sector->fs_offset, sector->fs_length);
+    rc = flash_erase(area->fs_offset, area->fs_length);
     if (rc != 0) {
         return rc;
     }
-    sector->fs_cur = 0;
+    area->fs_cur = 0;
 
-    ffs_sector_to_disk(&disk_sector, sector);
+    ffs_area_to_disk(&disk_area, area);
 
     if (is_scratch) {
-        write_len = sizeof disk_sector - 1;
+        write_len = sizeof disk_area - 1;
     } else {
-        write_len = sizeof disk_sector;
+        write_len = sizeof disk_area;
     }
 
-    rc = ffs_flash_write(sector_id, 0, &disk_sector.fds_magic, write_len);
+    rc = ffs_flash_write(area_id, 0, &disk_area.fds_magic, write_len);
     if (rc != 0) {
         return rc;
     }
@@ -93,29 +93,29 @@ ffs_format_ram(void)
 }
 
 int
-ffs_format_full(const struct ffs_sector_desc *sector_descs)
+ffs_format_full(const struct ffs_area_desc *area_descs)
 {
     int rc;
     int i;
 
-    /* Select largest sector to be the initial scratch sector. */
-    ffs_scratch_sector_id = 0;
-    for (i = 1; sector_descs[i].fsd_length != 0; i++) {
-        if (sector_descs[i].fsd_length >
-            sector_descs[ffs_scratch_sector_id].fsd_length) {
+    /* Select largest area to be the initial scratch area. */
+    ffs_scratch_area_id = 0;
+    for (i = 1; area_descs[i].fad_length != 0; i++) {
+        if (area_descs[i].fad_length >
+            area_descs[ffs_scratch_area_id].fad_length) {
 
-            ffs_scratch_sector_id = i;
+            ffs_scratch_area_id = i;
         }
     }
 
-    ffs_num_sectors = i;
-    for (i = 0; i < ffs_num_sectors; i++) {
-        ffs_sectors[i].fs_offset = sector_descs[i].fsd_offset;
-        ffs_sectors[i].fs_length = sector_descs[i].fsd_length;
-        ffs_sectors[i].fs_cur = 0;
-        ffs_sectors[i].fs_seq = 0;
+    ffs_num_areas = i;
+    for (i = 0; i < ffs_num_areas; i++) {
+        ffs_areas[i].fs_offset = area_descs[i].fad_offset;
+        ffs_areas[i].fs_length = area_descs[i].fad_length;
+        ffs_areas[i].fs_cur = 0;
+        ffs_areas[i].fs_seq = 0;
 
-        rc = ffs_format_sector(i, i == ffs_scratch_sector_id);
+        rc = ffs_format_area(i, i == ffs_scratch_area_id);
         if (rc != 0) {
             goto err;
         }
@@ -144,8 +144,8 @@ ffs_format_full(const struct ffs_sector_desc *sector_descs)
     return 0;
 
 err:
-    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
-    ffs_num_sectors = 0;
+    ffs_scratch_area_id = FFS_AREA_ID_SCRATCH;
+    ffs_num_areas = 0;
     return rc;
 }
 

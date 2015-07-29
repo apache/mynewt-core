@@ -85,7 +85,7 @@ ffs_restore_dummy_inode(struct ffs_inode **out_inode, uint32_t id, int is_dir)
     }
     inode->fi_base.fb_id = id;
     inode->fi_refcnt = 1;
-    inode->fi_base.fb_sector_id = FFS_SECTOR_ID_SCRATCH;
+    inode->fi_base.fb_area_id = FFS_AREA_ID_SCRATCH;
     inode->fi_flags = FFS_INODE_F_DUMMY;
     if (is_dir) {
         inode->fi_flags |= FFS_INODE_F_DIRECTORY;
@@ -125,7 +125,7 @@ ffs_restore_inode_gets_replaced(int *out_should_replace,
 }
 
 static int
-ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t sector_id,
+ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t area_id,
                   uint32_t offset)
 {
     struct ffs_inode *parent;
@@ -148,7 +148,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t sector_id,
             if (inode->fi_parent != NULL) {
                 ffs_inode_remove_child(inode);
             }
-            ffs_inode_from_disk(inode, disk_inode, sector_id, offset);
+            ffs_inode_from_disk(inode, disk_inode, area_id, offset);
         }
         break;
 
@@ -161,7 +161,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t sector_id,
         new_inode = 1;
         do_add = 1;
 
-        rc = ffs_inode_from_disk(inode, disk_inode, sector_id, offset);
+        rc = ffs_inode_from_disk(inode, disk_inode, area_id, offset);
         if (rc != 0) {
             goto err;
         }
@@ -234,7 +234,7 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
 }
 
 static int
-ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t sector_id,
+ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t area_id,
                   uint32_t offset)
 {
     struct ffs_block *block;
@@ -253,7 +253,7 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t sector_id,
         }
 
         if (do_replace) {
-            ffs_block_from_disk(block, disk_block, sector_id, offset);
+            ffs_block_from_disk(block, disk_block, area_id, offset);
         }
         break;
 
@@ -265,7 +265,7 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t sector_id,
         }
         new_block = 1;
 
-        ffs_block_from_disk(block, disk_block, sector_id, offset);
+        ffs_block_from_disk(block, disk_block, area_id, offset);
         ffs_hash_insert(&block->fb_base);
 
         rc = ffs_hash_find_inode(&block->fb_inode, disk_block->fdb_inode_id);
@@ -306,13 +306,13 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
     switch (disk_object->fdo_type) {
     case FFS_OBJECT_TYPE_INODE:
         rc = ffs_restore_inode(&disk_object->fdo_disk_inode,
-                               disk_object->fdo_sector_id,
+                               disk_object->fdo_area_id,
                                disk_object->fdo_offset);
         break;
 
     case FFS_OBJECT_TYPE_BLOCK:
         rc = ffs_restore_block(&disk_object->fdo_disk_block,
-                               disk_object->fdo_sector_id,
+                               disk_object->fdo_area_id,
                                disk_object->fdo_offset);
         break;
 
@@ -327,12 +327,12 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
 
 static int
 ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
-                        int sector_id, uint32_t offset)
+                        int area_id, uint32_t offset)
 {
     uint32_t magic;
     int rc;
 
-    rc = ffs_flash_read(sector_id, offset, &magic, sizeof magic);
+    rc = ffs_flash_read(area_id, offset, &magic, sizeof magic);
     if (rc != 0) {
         return rc;
     }
@@ -341,12 +341,12 @@ ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
     case FFS_INODE_MAGIC:
         out_disk_object->fdo_type = FFS_OBJECT_TYPE_INODE;
         rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, NULL,
-                                 sector_id, offset);
+                                 area_id, offset);
         break;
 
     case FFS_BLOCK_MAGIC:
         out_disk_object->fdo_type = FFS_OBJECT_TYPE_BLOCK;
-        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, sector_id,
+        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, area_id,
                                  offset);
         break;
 
@@ -363,7 +363,7 @@ ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
         return rc;
     }
 
-    out_disk_object->fdo_sector_id = sector_id;
+    out_disk_object->fdo_area_id = area_id;
     out_disk_object->fdo_offset = offset;
 
     return 0;
@@ -388,22 +388,22 @@ ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
 }
 
 static int
-ffs_restore_sector(int sector_id)
+ffs_restore_area(int area_id)
 {
-    struct ffs_sector *sector;
-    struct ffs_disk_sector disk_sector;
+    struct ffs_area *area;
+    struct ffs_disk_area disk_area;
     struct ffs_disk_object disk_object;
     int rc;
 
-    sector = ffs_sectors + sector_id;
+    area = ffs_areas + area_id;
 
-    sector->fs_cur = sizeof disk_sector;
+    area->fs_cur = sizeof disk_area;
     while (1) {
-        rc = ffs_restore_disk_object(&disk_object, sector_id, sector->fs_cur);
+        rc = ffs_restore_disk_object(&disk_object, area_id, area->fs_cur);
         switch (rc) {
         case 0:
             ffs_restore_object(&disk_object);
-            sector->fs_cur += ffs_restore_disk_object_size(&disk_object);
+            area->fs_cur += ffs_restore_disk_object_size(&disk_object);
             break;
 
         case FFS_EEMPTY:
@@ -417,95 +417,93 @@ ffs_restore_sector(int sector_id)
 }
 
 static int
-ffs_restore_detect_one_sector(int *out_is_scratch, uint32_t sector_offset)
+ffs_restore_detect_one_area(int *out_is_scratch, uint32_t area_offset)
 {
-    struct ffs_disk_sector disk_sector;
+    struct ffs_disk_area disk_area;
     int rc;
 
-    /* Parse sector header. */
-    rc = flash_read(&disk_sector, sector_offset, sizeof disk_sector);
+    /* Parse area header. */
+    rc = flash_read(&disk_area, area_offset, sizeof disk_area);
     if (rc != 0) {
         return FFS_EFLASH_ERROR;
     }
 
-    if (!ffs_sector_magic_is_set(&disk_sector)) {
+    if (!ffs_area_magic_is_set(&disk_area)) {
         return FFS_ECORRUPT;
     }
 
-    if (disk_sector.fds_is_scratch != 0 &&
-        disk_sector.fds_is_scratch != 0xff) {
+    if (disk_area.fds_is_scratch != 0 &&
+        disk_area.fds_is_scratch != 0xff) {
 
         return FFS_ECORRUPT;
     }
 
-    *out_is_scratch = disk_sector.fds_is_scratch == 0xff;
+    *out_is_scratch = disk_area.fds_is_scratch == 0xff;
 
     return 0;
 }
 
 /**
- * Searches for a valid ffs file system among the specified sectors.  This
+ * Searches for a valid ffs file system among the specified areas.  This
  * function succeeds if a file system is detected among any subset of the
- * supplied sectors.  If the sector set does not contain a valid file system,
+ * supplied areas.  If the area set does not contain a valid file system,
  * a new one can be created via a call to ffs_format().
  *
- * @param sector_descs      The sector set to search.  This array must be
- *                          terminated with a 0-length sector.
+ * @param area_descs        The area set to search.  This array must be
+ *                              terminated with a 0-length area.
  *
  * @return                  0 on success;
  *                          FFS_ECORRUPT if no valid file system was detected;
  *                          other nonzero on error.
  */
 int
-ffs_restore_full(const struct ffs_sector_desc *sector_descs)
+ffs_restore_full(const struct ffs_area_desc *area_descs)
 {
-    int use_sector;
+    int use_area;
     int is_scratch;
     int rc;
     int i;
 
-    /* XXX: Ensure scratch sector is big enough. */
-    /* XXX: Ensure block size is a factor of all sector sizes. */
+    /* XXX: Ensure scratch area is big enough. */
+    /* XXX: Ensure block size is a factor of all area sizes. */
 
-    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
-    ffs_num_sectors = 0;
+    ffs_scratch_area_id = FFS_AREA_ID_SCRATCH;
+    ffs_num_areas = 0;
 
-    for (i = 0; sector_descs[i].fsd_length != 0; i++) {
-        rc = ffs_restore_detect_one_sector(&is_scratch,
-                                           sector_descs[i].fsd_offset);
+    for (i = 0; area_descs[i].fad_length != 0; i++) {
+        rc = ffs_restore_detect_one_area(&is_scratch,
+                                         area_descs[i].fad_offset);
         switch (rc) {
         case 0:
-            use_sector = 1;
+            use_area = 1;
             break;
 
         case FFS_ECORRUPT:
-            use_sector = 0;
+            use_area = 0;
             break;
 
         default:
             goto err;
         }
 
-        if (use_sector) {
-            if (is_scratch && ffs_scratch_sector_id != FFS_SECTOR_ID_SCRATCH) {
-                /* Don't use more than one scratch sector. */
-                use_sector = 0;
+        if (use_area) {
+            if (is_scratch && ffs_scratch_area_id != FFS_AREA_ID_SCRATCH) {
+                /* Don't use more than one scratch area. */
+                use_area = 0;
             }
         }
 
-        if (use_sector) {
-            ffs_sectors[ffs_num_sectors].fs_offset =
-                sector_descs[i].fsd_offset;
-            ffs_sectors[ffs_num_sectors].fs_length =
-                sector_descs[i].fsd_length;
-            ffs_sectors[ffs_num_sectors].fs_cur = 0;
+        if (use_area) {
+            ffs_areas[ffs_num_areas].fs_offset = area_descs[i].fad_offset;
+            ffs_areas[ffs_num_areas].fs_length = area_descs[i].fad_length;
+            ffs_areas[ffs_num_areas].fs_cur = 0;
 
-            ffs_num_sectors++;
+            ffs_num_areas++;
 
             if (is_scratch) {
-                ffs_scratch_sector_id = ffs_num_sectors - 1;
+                ffs_scratch_area_id = ffs_num_areas - 1;
             } else {
-                ffs_restore_sector(ffs_num_sectors - 1);
+                ffs_restore_area(ffs_num_areas - 1);
             }
         }
     }
@@ -525,8 +523,8 @@ ffs_restore_full(const struct ffs_sector_desc *sector_descs)
     return 0;
 
 err:
-    ffs_scratch_sector_id = FFS_SECTOR_ID_SCRATCH;
-    ffs_num_sectors = 0;
+    ffs_scratch_area_id = FFS_AREA_ID_SCRATCH;
+    ffs_num_areas = 0;
     return rc;
 }
 

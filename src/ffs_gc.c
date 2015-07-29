@@ -29,54 +29,54 @@ ffs_gc_base_disk_size(const struct ffs_base *base)
 }
 
 /**
- * Selects the most appropriate sector for garbage collection.
+ * Selects the most appropriate area for garbage collection.
  *
- * @return                  The ID of the sector to garbage collect.
+ * @return                  The ID of the area to garbage collect.
  */
 static uint16_t
-ffs_gc_select_sector(void)
+ffs_gc_select_area(void)
 {
-    const struct ffs_sector *sector;
-    uint16_t best_sector_id;
+    const struct ffs_area *area;
+    uint16_t best_area_id;
     int8_t diff;
     int i;
 
-    best_sector_id = 0;
-    for (i = 1; i < ffs_num_sectors; i++) {
-        if (i == ffs_scratch_sector_id) {
+    best_area_id = 0;
+    for (i = 1; i < ffs_num_areas; i++) {
+        if (i == ffs_scratch_area_id) {
             continue;
         }
 
-        sector = ffs_sectors + i;
-        if (sector->fs_length > ffs_sectors[best_sector_id].fs_length) {
-            best_sector_id = i;
-        } else if (best_sector_id == ffs_scratch_sector_id) {
-            best_sector_id = i;
+        area = ffs_areas + i;
+        if (area->fs_length > ffs_areas[best_area_id].fs_length) {
+            best_area_id = i;
+        } else if (best_area_id == ffs_scratch_area_id) {
+            best_area_id = i;
         } else {
-            diff = ffs_sectors[i].fs_seq - ffs_sectors[best_sector_id].fs_seq;
+            diff = ffs_areas[i].fs_seq - ffs_areas[best_area_id].fs_seq;
             if (diff < 0) {
-                best_sector_id = i;
+                best_area_id = i;
             }
         }
     }
 
-    assert(best_sector_id != ffs_scratch_sector_id);
+    assert(best_area_id != ffs_scratch_area_id);
 
-    return best_sector_id;
+    return best_area_id;
 }
 
 static int
 ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
-                   uint32_t data_len, uint16_t to_sector_id)
+                   uint32_t data_len, uint16_t to_area_id)
 {
     struct ffs_disk_block disk_block;
-    struct ffs_sector *to_sector;
+    struct ffs_area *to_area;
     struct ffs_block *block;
     struct ffs_block *next;
     uint32_t to_offset;
     int rc;
 
-    to_sector = ffs_sectors + to_sector_id;
+    to_area = ffs_areas + to_area_id;
 
     memset(&disk_block, 0, sizeof disk_block);
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
@@ -87,8 +87,8 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
     disk_block.fdb_flags = first_block->fb_flags;
     disk_block.fdb_data_len = data_len;
 
-    to_offset = to_sector->fs_cur;
-    rc = ffs_flash_write(to_sector_id, to_offset,
+    to_offset = to_area->fs_cur;
+    rc = ffs_flash_write(to_area_id, to_offset,
                          &disk_block, sizeof disk_block);
     if (rc != 0) {
         return rc;
@@ -96,15 +96,15 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
 
     block = first_block;
     while (1) {
-        rc = ffs_flash_copy(block->fb_base.fb_sector_id,
+        rc = ffs_flash_copy(block->fb_base.fb_area_id,
                             block->fb_base.fb_offset + sizeof disk_block,
-                            to_sector_id, to_sector->fs_cur,
+                            to_area_id, to_area->fs_cur,
                             block->fb_data_len);
         if (rc != 0) {
             return rc;
         }
 
-        block->fb_base.fb_sector_id = to_sector_id;
+        block->fb_base.fb_area_id = to_area_id;
         block->fb_base.fb_offset = to_offset;
 
         next = SLIST_NEXT(block, fb_next);
@@ -127,8 +127,8 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
 }
 
 static int
-ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
-                    uint16_t to_sector_id)
+ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_area_id,
+                    uint16_t to_area_id)
 {
     struct ffs_block *first_block;
     struct ffs_block *prev_block;
@@ -143,7 +143,7 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
     prev_block = NULL;
     data_len = 0;
     SLIST_FOREACH(block, &inode->fi_block_list, fb_next) {
-        if (block->fb_base.fb_sector_id == from_sector_id) {
+        if (block->fb_base.fb_area_id == from_area_id) {
             if (first_block == NULL) {
                 first_block = block;
             }
@@ -153,7 +153,7 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
                 data_len = prospective_data_len;
             } else {
                 rc = ffs_gc_block_chain(first_block, prev_block, data_len,
-                                        to_sector_id);
+                                        to_area_id);
                 if (rc != 0) {
                     return rc;
                 }
@@ -164,7 +164,7 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
         } else {
             if (first_block != NULL) {
                 rc = ffs_gc_block_chain(first_block, prev_block, data_len,
-                                        to_sector_id);
+                                        to_area_id);
                 if (rc != 0) {
                     return rc;
                 }
@@ -178,7 +178,7 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
 
     if (first_block != NULL) {
         rc = ffs_gc_block_chain(first_block, prev_block, data_len,
-                                to_sector_id);
+                                to_area_id);
         if (rc != 0) {
             return rc;
         }
@@ -192,37 +192,37 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_sector_id,
 /**
  * Triggers a garbage collection cycle.
  *
- * @param out_sector_id     On success, the ID of the cleaned up sector gets
- *                          written here.  Pass null if you do not need this
- *                          information.
+ * @param out_area_id       On success, the ID of the cleaned up area gets
+ *                              written here.  Pass null if you do not need
+ *                              this information.
  *
  * @return                  0 on success; nonzero on error.
  */
 int
-ffs_gc(uint16_t *out_sector_id)
+ffs_gc(uint16_t *out_area_id)
 {
-    struct ffs_sector *from_sector;
-    struct ffs_sector *to_sector;
+    struct ffs_area *from_area;
+    struct ffs_area *to_area;
     struct ffs_inode *inode;
     struct ffs_base *base;
     uint32_t to_offset;
     uint32_t obj_size;
-    uint16_t from_sector_id;
+    uint16_t from_area_id;
     int rc;
     int i;
 
-    rc = ffs_format_from_scratch_sector(ffs_scratch_sector_id);
+    rc = ffs_format_from_scratch_area(ffs_scratch_area_id);
     if (rc != 0) {
         return rc;
     }
 
-    from_sector_id = ffs_gc_select_sector();
+    from_area_id = ffs_gc_select_area();
     FFS_HASH_FOREACH(base, i) {
         if (base->fb_type == FFS_OBJECT_TYPE_INODE) {
             inode = (struct ffs_inode *)base;
             if (!(inode->fi_flags & FFS_INODE_F_DIRECTORY)) {
-                rc = ffs_gc_inode_blocks(inode, from_sector_id,
-                                         ffs_scratch_sector_id);
+                rc = ffs_gc_inode_blocks(inode, from_area_id,
+                                         ffs_scratch_area_id);
                 if (rc != 0) {
                     return rc;
                 }
@@ -230,51 +230,51 @@ ffs_gc(uint16_t *out_sector_id)
         }
     }
 
-    to_sector = ffs_sectors + ffs_scratch_sector_id;
+    to_area = ffs_areas + ffs_scratch_area_id;
     FFS_HASH_FOREACH(base, i) {
-        if (base->fb_sector_id == from_sector_id) {
+        if (base->fb_area_id == from_area_id) {
             obj_size = ffs_gc_base_disk_size(base);
-            to_offset = to_sector->fs_cur;
-            rc = ffs_flash_copy(from_sector_id, base->fb_offset,
-                                ffs_scratch_sector_id, to_offset,
+            to_offset = to_area->fs_cur;
+            rc = ffs_flash_copy(from_area_id, base->fb_offset,
+                                ffs_scratch_area_id, to_offset,
                                 obj_size);
             if (rc != 0) {
                 return rc;
             }
-            base->fb_sector_id = ffs_scratch_sector_id;
+            base->fb_area_id = ffs_scratch_area_id;
             base->fb_offset = to_offset;
         }
     }
 
-    from_sector = ffs_sectors + from_sector_id;
-    from_sector->fs_seq++;
-    rc = ffs_format_sector(from_sector_id, 1);
+    from_area = ffs_areas + from_area_id;
+    from_area->fs_seq++;
+    rc = ffs_format_area(from_area_id, 1);
     if (rc != 0) {
         return rc;
     }
 
-    if (out_sector_id != NULL) {
-        *out_sector_id = ffs_scratch_sector_id;
+    if (out_area_id != NULL) {
+        *out_area_id = ffs_scratch_area_id;
     }
 
-    ffs_scratch_sector_id = from_sector_id;
+    ffs_scratch_area_id = from_area_id;
 
     return 0;
 }
 
 int
-ffs_gc_until(uint16_t *out_sector_id, uint32_t space)
+ffs_gc_until(uint16_t *out_area_id, uint32_t space)
 {
     int rc;
     int i;
 
-    for (i = 0; i < ffs_num_sectors; i++) {
-        rc = ffs_gc(out_sector_id);
+    for (i = 0; i < ffs_num_areas; i++) {
+        rc = ffs_gc(out_area_id);
         if (rc != 0) {
             return rc;
         }
 
-        if (ffs_sector_free_space(ffs_sectors + *out_sector_id) >= space) {
+        if (ffs_area_free_space(ffs_areas + *out_area_id) >= space) {
             return 0;
         }
     }
