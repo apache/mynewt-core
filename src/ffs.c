@@ -56,11 +56,13 @@ ffs_close(struct ffs_file *file)
 {
     int rc;
 
-    if (file != NULL) {
-        ffs_lock();
-        rc = ffs_file_close(file);
-        ffs_unlock();
+    if (file == NULL) {
+        return 0;
     }
+
+    ffs_lock();
+    rc = ffs_file_close(file);
+    ffs_unlock();
 
     return rc;
 }
@@ -443,11 +445,6 @@ ffs_init(void)
     rc = os_mempool_init(&ffs_block_pool, FFS_NUM_BLOCKS,
                          sizeof (struct ffs_block), &block_buf[0],
                          "ffs_block_pool");
-    if (rc != 0) {
-        return FFS_EOS;
-    }
-
-    rc = os_mutex_create(&ffs_mutex);
     if (rc != 0) {
         return FFS_EOS;
     }
