@@ -1,11 +1,11 @@
-/* Linker script for STM32F407 when running code from SRAM */
+/* Linker script for STM32F407 when running from flash and not using the bootloader */
 
 /* Linker script to configure memory regions. */
 MEMORY
 { 
   FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 1024K
   CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000 
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -40,8 +40,9 @@ SECTIONS
 {
     .text :
     {
-        __vector_tbl_reloc__ = .;
+        __isr_vector_start = .;
         KEEP(*(.isr_vector))
+        __isr_vector_end = .;
         *(.text*)
 
         KEEP(*(.init))
@@ -64,23 +65,30 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
-    } > RAM
+    } > FLASH
 
     .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > RAM
+    } > FLASH
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > RAM
+    } > FLASH
 
     __exidx_end = .;
 
-    . = ALIGN(8);
     __etext = .;
+
+    .vector_relocation :
+    {
+        . = ALIGN(4);
+        __vector_tbl_reloc__ = .;
+        . = . + (__isr_vector_end - __isr_vector_start);
+        . = ALIGN(4);
+    } > RAM
         
     .data : AT (__etext)
     {

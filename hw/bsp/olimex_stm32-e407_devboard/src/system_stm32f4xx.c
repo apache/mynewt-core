@@ -121,6 +121,9 @@
   */
 
 #include "stm32f4xx/stm32f4xx.h"
+/* WWW */
+#include "bsp/cmsis_nvic.h"
+/* WWW */
 
 /**
   * @}
@@ -142,12 +145,6 @@
 /*!< Uncomment the following line if you need to use external SRAM mounted
      on STM324xG_EVAL/STM324x7I_EVAL boards as data memory  */
 /* #define DATA_IN_ExtSRAM */
-
-/*!< Uncomment the following line if you need to relocate your vector Table in
-     Internal SRAM. */
-#define VECT_TAB_SRAM
-#define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
-                                   This value must be a multiple of 0x200. */
 /******************************************************************************/
 
 /************************* PLL Parameters *************************************/
@@ -247,12 +244,8 @@ void SystemInit(void)
      AHB/APBx prescalers and Flash settings ----------------------------------*/
   SetSysClock();
 
-  /* Configure the Vector Table location add offset address ------------------*/
-#ifdef VECT_TAB_SRAM
-  SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
-#else
-  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
-#endif
+  /* Relocate the vector table */
+  NVIC_Relocate();
 }
 
 /**
