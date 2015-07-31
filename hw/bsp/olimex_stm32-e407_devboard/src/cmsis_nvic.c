@@ -5,29 +5,49 @@
  */ 
 #include "bsp/cmsis_nvic.h"
 
-#define NVIC_RAM_VECTOR_ADDRESS   (0x20000000)  // Location of vectors in RAM
+extern char __isr_vector[];
+extern char __vector_tbl_reloc__[];
 
-static unsigned char vtor_relocated;
+void
+NVIC_Relocate(void)
+{
+    uint32_t *current_location;
+    uint32_t *new_location;
+    int i;
 
-void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector) {
-    uint32_t *vectors = (uint32_t*)SCB->VTOR;
-    uint32_t i;
+    /* 
+     * Relocate the vector table from its current position to the position
+     * designated in the linker script.
+     */
+    current_location = (uint32_t *)&__isr_vector;
+    new_location = (uint32_t *)&__vector_tbl_reloc__;
 
-    // Copy and switch to dynamic vectors if the first time called
-    if (!vtor_relocated) {
-        uint32_t *old_vectors = vectors;
-        vectors = (uint32_t*)NVIC_RAM_VECTOR_ADDRESS;
-        for (i=0; i<NVIC_NUM_VECTORS; i++) {
-            vectors[i] = old_vectors[i];
+    if (new_location != current_location) {
+        for (i = 0; i < NVIC_NUM_VECTORS; i++) {
+            new_location[i] = current_location[i];
         }
-        SCB->VTOR = (uint32_t)NVIC_RAM_VECTOR_ADDRESS;
-        vtor_relocated = 1;
     }
-    vectors[IRQn + 16] = vector;
+
+    /* Set VTOR */
+    SCB->VTOR = (uint32_t)&__vector_tbl_reloc__;
 }
 
-uint32_t NVIC_GetVector(IRQn_Type IRQn) {
-    uint32_t *vectors = (uint32_t*)SCB->VTOR;
-    return vectors[IRQn + 16];
+void
+NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
+{
+    uint32_t *vectors;
+
+    vectors = (uint32_t *)SCB->VTOR;
+    vectors[IRQn + NVIC_USER_IRQ_OFFSET] = vector;
+    __DMB();
+}
+
+uint32_t
+NVIC_GetVector(IRQn_Type IRQn)
+{
+    uint32_t *vectors;
+
+    vectors = (uint32_t*)SCB->VTOR;
+    return vectors[IRQn + NVIC_USER_IRQ_OFFSET];
 }
 
