@@ -1,8 +1,3 @@
-void * 
-_sbrk(int c) 
-{
-    return ((void *) 0);
-}
 
 int 
 _close(int fd)
