@@ -320,7 +320,6 @@ boot_test_nv_ns_10(void)
     struct boot_rsp rsp;
     int rc;
 
-
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
         .ih_crc32 = 0,

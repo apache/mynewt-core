@@ -304,19 +304,19 @@ ffs_test_assert_children_sorted(const struct ffs_inode *inode)
 static void
 ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
 {
+    const struct ffs_object *object;
     const struct ffs_inode *inode;
     const struct ffs_block *block;
-    const struct ffs_base *base;
     int i;
 
     ffs_test_assert_file(root_dir, ffs_root_dir, "");
     ffs_test_assert_branch_touched(ffs_root_dir);
 
     /* Ensure no orphaned inodes or blocks. */
-    FFS_HASH_FOREACH(base, i) {
-        switch (base->fb_type) {
+    FFS_HASH_FOREACH(object, i) {
+        switch (object->fo_type) {
         case FFS_OBJECT_TYPE_INODE:
-            inode = (void *)base;
+            inode = (void *)object;
             assert(!(inode->fi_flags &
                         (FFS_INODE_F_DELETED | FFS_INODE_F_DUMMY)));
             if (inode->fi_parent == NULL) {
@@ -331,7 +331,7 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
             break;
 
         case FFS_OBJECT_TYPE_BLOCK:
-            block = (void *)base;
+            block = (void *)object;
             ffs_test_assert_block_present(block);
             break;
 
@@ -389,16 +389,16 @@ ffs_test_assert_area_seqs(int seq1, int count1, int seq2, int count2)
         rc = ffs_flash_read(i, 0, &disk_area, sizeof disk_area);
         assert(rc == 0);
         assert(ffs_area_magic_is_set(&disk_area));
-        assert(disk_area.fds_seq == ffs_areas[i].fs_seq);
+        assert(disk_area.fda_gc_seq == ffs_areas[i].fa_gc_seq);
         if (i == ffs_scratch_area_id) {
-            assert(disk_area.fds_is_scratch == 0xff);
+            assert(disk_area.fda_is_scratch == 0xff);
         } else {
-            assert(disk_area.fds_is_scratch == 0);
+            assert(disk_area.fda_is_scratch == 0);
         }
 
-        if (ffs_areas[i].fs_seq == seq1) {
+        if (ffs_areas[i].fa_gc_seq == seq1) {
             cur1++;
-        } else if (ffs_areas[i].fs_seq == seq2) {
+        } else if (ffs_areas[i].fa_gc_seq == seq2) {
             cur2++;
         } else {
             assert(0);
@@ -1317,7 +1317,7 @@ ffs_test_long_filename(void)
 static void
 ffs_test_large_write(void)
 {
-    static char data[FFS_BLOCK_MAX_DATA_SZ * 5];
+    static char data[FFS_BLOCK_MAX_DATA_SZ_MAX * 5];
     int rc;
     int i;
 
@@ -1344,14 +1344,14 @@ ffs_test_large_write(void)
      * blocks.
      */
     assert(ffs_test_util_block_count("/myfile.txt") ==
-           sizeof data / FFS_BLOCK_MAX_DATA_SZ);
+           sizeof data / FFS_BLOCK_MAX_DATA_SZ_MAX);
 
     /* Garbage collect and then ensure the large file is still properly divided
      * according to max data block size.
      */
     ffs_gc(NULL);
     assert(ffs_test_util_block_count("/myfile.txt") ==
-           sizeof data / FFS_BLOCK_MAX_DATA_SZ);
+           sizeof data / FFS_BLOCK_MAX_DATA_SZ_MAX);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
