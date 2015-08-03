@@ -17,6 +17,7 @@
 #ifndef _OS_MUTEX_H_
 #define _OS_MUTEX_H_
 
+#include "os/os.h"
 #include "os/queue.h"
 
 struct os_mutex
