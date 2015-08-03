@@ -1,6 +1,4 @@
-/* Linker script for STM32F407 */
-
-/* XXX: Currently only runs from RAM */
+/* Linker script for STM32F407 when running code from SRAM */
 
 /* Linker script to configure memory regions. */
 MEMORY
@@ -42,6 +40,7 @@ SECTIONS
 {
     .text :
     {
+        __vector_tbl_reloc__ = .;
         KEEP(*(.isr_vector))
         *(.text*)
 
@@ -80,14 +79,37 @@ SECTIONS
 
     __exidx_end = .;
 
+    . = ALIGN(8);
     __etext = .;
         
     .data : AT (__etext)
     {
         __data_start__ = .;
         *(vtable)
-        *(.data)
+        *(.data*)
 
+        /* preinit data */
+        PROVIDE_HIDDEN (__preinit_array_start = .);
+        KEEP(*(.preinit_array))
+        PROVIDE_HIDDEN (__preinit_array_end = .);
+
+        . = ALIGN(4);
+        /* init data */
+        PROVIDE_HIDDEN (__init_array_start = .);
+        KEEP(*(SORT(.init_array.*)))
+        KEEP(*(.init_array))
+        PROVIDE_HIDDEN (__init_array_end = .);
+
+
+        . = ALIGN(4);
+        /* finit data */
+        PROVIDE_HIDDEN (__fini_array_start = .);
+        KEEP(*(SORT(.fini_array.*)))
+        KEEP(*(.fini_array))
+        PROVIDE_HIDDEN (__fini_array_end = .);
+
+        KEEP(*(.jcr*))
+        . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
 
@@ -102,14 +124,9 @@ SECTIONS
         . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
-    
-    .heap (COPY):
-    {
-        __end__ = .;
-        end = __end__;
-        *(.heap*)
-        __HeapLimit = .;
-    } > RAM
+
+    __HeapBase = .;
+    __HeapLimit = __StackLimit;
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
@@ -118,6 +135,11 @@ SECTIONS
     {
         *(.stack*)
     } > RAM
+
+    .ccm (NOLOAD):
+    {
+        *(.ccm*)
+    } > CCM
 
     /* Set stack top to end of RAM, and stack limit move down by
      * size of stack_dummy section */
