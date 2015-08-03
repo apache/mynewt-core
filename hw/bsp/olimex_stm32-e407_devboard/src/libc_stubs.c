@@ -9,12 +9,6 @@ int _lseek(int fd, int off, int w);
 int _read(int fd, void *b, int nb);
 int _getpid(void);
 
-void * 
-_sbrk(int c) 
-{
-    return ((void *) 0);
-}
-
 int 
 _close(int fd)
 {
