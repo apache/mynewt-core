@@ -8,18 +8,18 @@
  * Calculates the amount of disk space required by the specified object.
  */
 static uint32_t
-ffs_gc_base_disk_size(const struct ffs_base *base)
+ffs_gc_object_disk_size(const struct ffs_object *object)
 {
     const struct ffs_inode *inode;
     const struct ffs_block *block;
 
-    switch (base->fb_type) {
+    switch (object->fo_type) {
     case FFS_OBJECT_TYPE_INODE:
-        inode = (void *)base;
+        inode = (void *)object;
         return sizeof (struct ffs_disk_inode) + inode->fi_filename_len;
 
     case FFS_OBJECT_TYPE_BLOCK:
-        block = (void *)base;
+        block = (void *)object;
         return sizeof (struct ffs_disk_block) + block->fb_data_len;
 
     default:
@@ -48,12 +48,12 @@ ffs_gc_select_area(void)
         }
 
         area = ffs_areas + i;
-        if (area->fs_length > ffs_areas[best_area_id].fs_length) {
+        if (area->fa_length > ffs_areas[best_area_id].fa_length) {
             best_area_id = i;
         } else if (best_area_id == ffs_scratch_area_id) {
             best_area_id = i;
         } else {
-            diff = ffs_areas[i].fs_seq - ffs_areas[best_area_id].fs_seq;
+            diff = ffs_areas[i].fa_gc_seq - ffs_areas[best_area_id].fa_gc_seq;
             if (diff < 0) {
                 best_area_id = i;
             }
@@ -80,14 +80,14 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
 
     memset(&disk_block, 0, sizeof disk_block);
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
-    disk_block.fdb_id = first_block->fb_base.fb_id;
-    disk_block.fdb_seq = first_block->fb_base.fb_seq + 1;
+    disk_block.fdb_id = first_block->fb_object.fo_id;
+    disk_block.fdb_seq = first_block->fb_object.fo_seq + 1;
     disk_block.fdb_rank = first_block->fb_rank;
-    disk_block.fdb_inode_id = first_block->fb_inode->fi_base.fb_id;
+    disk_block.fdb_inode_id = first_block->fb_inode->fi_object.fo_id;
     disk_block.fdb_flags = first_block->fb_flags;
     disk_block.fdb_data_len = data_len;
 
-    to_offset = to_area->fs_cur;
+    to_offset = to_area->fa_cur;
     rc = ffs_flash_write(to_area_id, to_offset,
                          &disk_block, sizeof disk_block);
     if (rc != 0) {
@@ -96,16 +96,16 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
 
     block = first_block;
     while (1) {
-        rc = ffs_flash_copy(block->fb_base.fb_area_id,
-                            block->fb_base.fb_offset + sizeof disk_block,
-                            to_area_id, to_area->fs_cur,
+        rc = ffs_flash_copy(block->fb_object.fo_area_id,
+                            block->fb_object.fo_area_offset + sizeof disk_block,
+                            to_area_id, to_area->fa_cur,
                             block->fb_data_len);
         if (rc != 0) {
             return rc;
         }
 
-        block->fb_base.fb_area_id = to_area_id;
-        block->fb_base.fb_offset = to_offset;
+        block->fb_object.fo_area_id = to_area_id;
+        block->fb_object.fo_area_offset = to_offset;
 
         next = SLIST_NEXT(block, fb_next);
         if (block != first_block) {
@@ -143,13 +143,13 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_area_id,
     prev_block = NULL;
     data_len = 0;
     SLIST_FOREACH(block, &inode->fi_block_list, fb_next) {
-        if (block->fb_base.fb_area_id == from_area_id) {
+        if (block->fb_object.fo_area_id == from_area_id) {
             if (first_block == NULL) {
                 first_block = block;
             }
 
             prospective_data_len = data_len + block->fb_data_len;
-            if (prospective_data_len <= FFS_BLOCK_MAX_DATA_SZ) {
+            if (prospective_data_len <= ffs_block_max_data_sz) {
                 data_len = prospective_data_len;
             } else {
                 rc = ffs_gc_block_chain(first_block, prev_block, data_len,
@@ -204,7 +204,7 @@ ffs_gc(uint16_t *out_area_id)
     struct ffs_area *from_area;
     struct ffs_area *to_area;
     struct ffs_inode *inode;
-    struct ffs_base *base;
+    struct ffs_object *object;
     uint32_t to_offset;
     uint32_t obj_size;
     uint16_t from_area_id;
@@ -217,9 +217,9 @@ ffs_gc(uint16_t *out_area_id)
     }
 
     from_area_id = ffs_gc_select_area();
-    FFS_HASH_FOREACH(base, i) {
-        if (base->fb_type == FFS_OBJECT_TYPE_INODE) {
-            inode = (struct ffs_inode *)base;
+    FFS_HASH_FOREACH(object, i) {
+        if (object->fo_type == FFS_OBJECT_TYPE_INODE) {
+            inode = (struct ffs_inode *)object;
             if (!(inode->fi_flags & FFS_INODE_F_DIRECTORY)) {
                 rc = ffs_gc_inode_blocks(inode, from_area_id,
                                          ffs_scratch_area_id);
@@ -231,23 +231,23 @@ ffs_gc(uint16_t *out_area_id)
     }
 
     to_area = ffs_areas + ffs_scratch_area_id;
-    FFS_HASH_FOREACH(base, i) {
-        if (base->fb_area_id == from_area_id) {
-            obj_size = ffs_gc_base_disk_size(base);
-            to_offset = to_area->fs_cur;
-            rc = ffs_flash_copy(from_area_id, base->fb_offset,
+    FFS_HASH_FOREACH(object, i) {
+        if (object->fo_area_id == from_area_id) {
+            obj_size = ffs_gc_object_disk_size(object);
+            to_offset = to_area->fa_cur;
+            rc = ffs_flash_copy(from_area_id, object->fo_area_offset,
                                 ffs_scratch_area_id, to_offset,
                                 obj_size);
             if (rc != 0) {
                 return rc;
             }
-            base->fb_area_id = ffs_scratch_area_id;
-            base->fb_offset = to_offset;
+            object->fo_area_id = ffs_scratch_area_id;
+            object->fo_area_offset = to_offset;
         }
     }
 
     from_area = ffs_areas + from_area_id;
-    from_area->fs_seq++;
+    from_area->fa_gc_seq++;
     rc = ffs_format_area(from_area_id, 1);
     if (rc != 0) {
         return rc;

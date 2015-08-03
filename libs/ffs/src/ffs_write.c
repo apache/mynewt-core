@@ -2,15 +2,48 @@
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
+/**
+ * Structure describing an individual write operation.  Indicates which blocks
+ * get overwritten and at what offsets.
+ */
 struct ffs_write_info {
+    /* The data block immediately before the one being written. */
     struct ffs_block *fwi_prev_block;
+
+    /* The first data block being overwritten; null if no overwrite. */
     struct ffs_block *fwi_start_block;
+
+    /* The last data block being overwritten (incl.); null if no overwrite. */
     struct ffs_block *fwi_end_block;
+
+    /* The offset within the first overwritten block where the new write
+     * begins; undefined if no overwrite.
+     */
     uint32_t fwi_start_offset;
+
+    /* The offset within the last overwritten block where the new write ends;
+     * undefined if no overwrite.
+     */
     uint32_t fwi_end_offset;
+
+    /* The amount of data being appended to the file.  This is equal to the
+     * total length of the write minus all overwritten bytes.
+     */
     uint32_t fwi_extra_length;
 };
 
+/**
+ * Calculates a write info struct corresponding to the specified write
+ * operation.
+ *
+ * @param out_write_info        On success, this gets populated.
+ * @param inode                 The inode corresponding to the file being
+ *                                  written to.
+ * @param file_offset           The file offset of the start of the write.
+ * @param write_len             The number of bytes to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 ffs_write_calc_info(struct ffs_write_info *out_write_info,
                     const struct ffs_inode *inode,
@@ -21,6 +54,7 @@ ffs_write_calc_info(struct ffs_write_info *out_write_info,
     uint32_t chunk_len;
     int rc;
 
+    /* Find the first block being overwritten along with its predecessor. */
     rc = ffs_inode_seek(inode, file_offset,
                         &out_write_info->fwi_prev_block,
                         &out_write_info->fwi_start_block,
@@ -29,6 +63,13 @@ ffs_write_calc_info(struct ffs_write_info *out_write_info,
         return rc;
     }
 
+    /* Find the last block being overwritten; iterate through blocks in the
+     * file until either:
+     *     o we have reached the end of the file (i.e., no overwrite or partial
+     *       overwrite).
+     *     o we have advanced the full 'write_len' bytes (i.e., the new write
+     *       only overwrites existing data); or
+     */
     block_offset = out_write_info->fwi_start_offset;
     block = out_write_info->fwi_start_block;
     while (1) {
@@ -53,6 +94,15 @@ ffs_write_calc_info(struct ffs_write_info *out_write_info,
     }
 }
 
+/**
+ * Calculates the amount of disk space required for the specified write
+ * operation.
+ *
+ * @param write_info            The write operation to measure.
+ * @param data_disk_block       The disk block header for the write.
+ *
+ * @return                      The amount of required disk space.
+ */
 static uint32_t
 ffs_write_disk_size(const struct ffs_write_info *write_info,
                     const struct ffs_disk_block *data_disk_block)
@@ -84,6 +134,9 @@ ffs_write_disk_size(const struct ffs_write_info *write_info,
     return size;
 }
 
+/**
+ * Deletes from ram the specified list of data blocks, inclusive.
+ */
 static void
 ffs_write_delete_block_list_from_ram(struct ffs_block *first,
                                      struct ffs_block *last)
@@ -104,6 +157,22 @@ ffs_write_delete_block_list_from_ram(struct ffs_block *first,
     }
 }
 
+/**
+ * Performs a single write operation, overwriting existing data blocks as
+ * necessary.  A write operation can specify no more than a single block's
+ * worth of data.  That is, the length of data must not exceed the maximum
+ * block size.
+ *
+ * @param write_info            Describes the write operation to perform;
+ *                                  calculated via a call to
+ *                                  ffs_write_calc_info.
+ * @param inode                 The inode corresponding to the file being
+ *                                  written to.
+ * @param data                  The raw data to write to the file.
+ * @param data_len              The number of bytes to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
               const void *data, int data_len)
@@ -111,7 +180,6 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     struct ffs_disk_block disk_block;
     struct ffs_block *block;
     struct ffs_block *next;
-    uint32_t expected_cur;
     uint32_t disk_size;
     uint32_t chunk_len;
     uint32_t offset;
@@ -119,13 +187,22 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     uint16_t area_id;
     int rc;
 
+    assert(data_len <= ffs_block_max_data_sz);
+
+    /* Build the disk block header corresponding to the write. */
     disk_block.fdb_data_len = data_len;
     if (write_info->fwi_start_block != NULL) {
-        disk_block.fdb_data_len += write_info->fwi_start_offset;
-        disk_block.fdb_id = write_info->fwi_start_block->fb_base.fb_id;
-        disk_block.fdb_seq = write_info->fwi_start_block->fb_base.fb_seq + 1;
+        /* One or more blocks are being overwritten.  Supersede the first
+         * overwritten block with the new one.
+         */
+        disk_block.fdb_id = write_info->fwi_start_block->fb_object.fo_id;
+        disk_block.fdb_seq = write_info->fwi_start_block->fb_object.fo_seq + 1;
         disk_block.fdb_rank = write_info->fwi_start_block->fb_rank;
+
+        /* Add the non-overwritten part of the block to the total length. */
+        disk_block.fdb_data_len += write_info->fwi_start_offset;
     } else {
+        /* No overwrite; allocate a new object ID. */
         disk_block.fdb_id = ffs_next_id++;
         disk_block.fdb_seq = 0;
         if (write_info->fwi_prev_block != NULL) {
@@ -136,23 +213,22 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     }
 
     if (write_info->fwi_end_block != NULL) {
+        /* This is a complete overwrite.  Add the leftovers at the end to the
+         * total length.
+         */
         disk_block.fdb_data_len += write_info->fwi_end_block->fb_data_len -
                                    write_info->fwi_end_offset;
     }
-
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
-    disk_block.fdb_inode_id = inode->fi_base.fb_id;
-    disk_block.reserved16 = 0;
+    disk_block.fdb_inode_id = inode->fi_object.fo_id;
     disk_block.fdb_flags = 0;
-    disk_block.fdb_ecc = 0;
 
+    /* Write the new data block to disk. */
     disk_size = ffs_write_disk_size(write_info, &disk_block);
     rc = ffs_misc_reserve_space(&area_id, &offset, disk_size);
     if (rc != 0) {
         return rc;
     }
-    expected_cur = ffs_areas[area_id].fs_cur + disk_size;
-
     rc = ffs_flash_write(area_id, offset, &disk_block, sizeof disk_block);
     if (rc != 0) {
         return rc;
@@ -163,8 +239,9 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     if (write_info->fwi_start_block != NULL) {
         chunk_len = write_info->fwi_start_offset;
         rc = ffs_flash_copy(
-            write_info->fwi_start_block->fb_base.fb_area_id,
-            write_info->fwi_start_block->fb_base.fb_offset + sizeof disk_block,
+            write_info->fwi_start_block->fb_object.fo_area_id,
+            write_info->fwi_start_block->fb_object.fo_area_offset +
+                sizeof disk_block,
             area_id, cur, chunk_len);
         if (rc != 0) {
             return rc;
@@ -183,8 +260,8 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
         chunk_len = write_info->fwi_end_block->fb_data_len -
                     write_info->fwi_end_offset;
         rc = ffs_flash_copy(
-            write_info->fwi_end_block->fb_base.fb_area_id,
-            write_info->fwi_end_block->fb_base.fb_offset +
+            write_info->fwi_end_block->fb_object.fo_area_id,
+            write_info->fwi_end_block->fb_object.fo_area_offset +
                 sizeof disk_block + write_info->fwi_end_offset,
             area_id, cur, chunk_len);
         if (rc != 0) {
@@ -212,10 +289,8 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
 
     ffs_block_from_disk(block, &disk_block, area_id, offset);
     block->fb_inode = inode;
-    ffs_hash_insert(&block->fb_base);
+    ffs_hash_insert(&block->fb_object);
     ffs_inode_insert_block(inode, block);
-
-    assert(ffs_areas[area_id].fs_cur == expected_cur);
 
     return 0;
 }
@@ -227,7 +302,7 @@ ffs_write_chunk(struct ffs_file *file, const void *data, int len)
     uint32_t file_offset;
     int rc;
 
-    assert(len <= FFS_BLOCK_MAX_DATA_SZ);
+    assert(len <= ffs_block_max_data_sz);
 
     if (!(file->ff_access_flags & FFS_ACCESS_WRITE)) {
         return FFS_ERDONLY;
@@ -270,8 +345,8 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
     /* Write data as a sequence of blocks. */
     data_ptr = data;
     while (len > 0) {
-        if (len > FFS_BLOCK_MAX_DATA_SZ) {
-            chunk_size = FFS_BLOCK_MAX_DATA_SZ;
+        if (len > ffs_block_max_data_sz) {
+            chunk_size = ffs_block_max_data_sz;
         } else {
             chunk_size = len;
         }

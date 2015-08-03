@@ -6,84 +6,86 @@
 #include "os/os_mempool.h"
 #include "ffs/ffs.h"
 
-#define FFS_ID_NONE             0xffffffff
+#define FFS_ID_NONE                 0xffffffff
 
-#define FFS_AREA_MAGIC0         0xb98a31e2
-#define FFS_AREA_MAGIC1         0x7fb0428c
-#define FFS_AREA_MAGIC2         0xace08253
-#define FFS_AREA_MAGIC3         0xb185fc8e
-#define FFS_BLOCK_MAGIC         0x53ba23b9
-#define FFS_INODE_MAGIC         0x925f8bc0
+#define FFS_AREA_MAGIC0             0xb98a31e2
+#define FFS_AREA_MAGIC1             0x7fb0428c
+#define FFS_AREA_MAGIC2             0xace08253
+#define FFS_AREA_MAGIC3             0xb185fc8e
+#define FFS_BLOCK_MAGIC             0x53ba23b9
+#define FFS_INODE_MAGIC             0x925f8bc0
 
-#define FFS_AREA_ID_SCRATCH     0xffff
-#define FFS_AREA_OFFSET_IS_SCRATCH   23
+#define FFS_AREA_ID_NONE            0xffff
+#define FFS_AREA_OFFSET_IS_SCRATCH  23
 
-#define FFS_SHORT_FILENAME_LEN  16
+#define FFS_SHORT_FILENAME_LEN      16
 
-#define FFS_BLOCK_SIZE          512
-#define FFS_BLOCK_DATA_LEN      (FFS_BLOCK_SIZE -                   \
-                                 sizeof (struct ffs_disk_block))
+#define FFS_BLOCK_SIZE              512
+#define FFS_BLOCK_DATA_LEN          (FFS_BLOCK_SIZE -                   \
+                                    sizeof (struct ffs_disk_block))
 
-#define FFS_HASH_SIZE           256
+#define FFS_HASH_SIZE               256
 
-#define FFS_MAX_AREAS           32 /* XXX: Temporary. */
+#define FFS_INODE_F_DELETED         0x01
+#define FFS_INODE_F_DUMMY           0x02
+#define FFS_INODE_F_DIRECTORY       0x04
+#define FFS_INODE_F_TEST            0x80
 
-#define FFS_INODE_F_DELETED     0x01
-#define FFS_INODE_F_DUMMY       0x02
-#define FFS_INODE_F_DIRECTORY   0x04
-#define FFS_INODE_F_TEST        0x80
+#define FFS_BLOCK_F_DELETED         0x01
 
-#define FFS_BLOCK_F_DELETED     0x01
-
-#define FFS_BLOCK_MAX_DATA_SZ   2048 /* XXX: This may be calculated. */
+#define FFS_BLOCK_MAX_DATA_SZ_MAX   2048
 
 
-struct ffs_disk_block {
-    uint32_t fdb_magic;
-    uint32_t fdb_id;
-    uint32_t fdb_seq;
-    uint32_t fdb_rank;
-    uint32_t fdb_inode_id;
+/** On-disk representation of an area header. */
+struct ffs_disk_area {
+    uint32_t fda_magic[4];  /* FFS_AREA_MAGIC{0,1,2,3} */
+    uint32_t fda_length;    /* Total size of area, in bytes. */
     uint16_t reserved16;
-    uint16_t fdb_flags;
-    uint16_t fdb_data_len;
-    uint32_t fdb_ecc; /* Real size tbd. */
-    /* Followed by 'length' bytes of data. */
+    uint8_t fda_gc_seq;     /* Garbage collection count. */
+    uint8_t fda_is_scratch; /* 0xff if scratch area; otherwise 0x00. */
+    /* XXX: ECC for area header. */
 };
 
+/** On-disk representation of an inode (file or directory). */
 struct ffs_disk_inode {
-    uint32_t fdi_magic;
-    uint32_t fdi_id;
-    uint32_t fdi_seq;
-    uint32_t fdi_parent_id;
-    uint16_t fdi_flags;
-    uint8_t fdi_filename_len;
-    uint32_t fdi_ecc; /* Real size tbd. */
+    uint32_t fdi_magic;     /* FFS_INODE_MAGIC */
+    uint32_t fdi_id;        /* Unique object ID. */
+    uint32_t fdi_seq;       /* Sequence number; greater supersedes lesser. */
+    uint32_t fdi_parent_id; /* Object ID of parent directory inode. */
+    uint16_t fdi_flags;     /* FFS_INODE_F_[...] */
+    uint8_t reserved8;
+    uint8_t fdi_filename_len;   /* Length of filename, in bytes. */
+    /* XXX: ECC for inode header and filename. */
     /* Followed by filename. */
 };
 
-struct ffs_disk_area {
-    uint32_t fds_magic[4];
-    uint32_t fds_length;
-    uint16_t reserved16;
-    uint8_t fds_seq;
-    uint8_t fds_is_scratch;
+/** On-disk representation of a data block. */
+struct ffs_disk_block {
+    uint32_t fdb_magic;     /* FFS_BLOCK_MAGIC */
+    uint32_t fdb_id;        /* Unique object ID. */
+    uint32_t fdb_seq;       /* Sequence number; greater supersedes lesser. */
+    uint32_t fdb_rank;      /* Relative offset within file; 0 = first. */
+    uint32_t fdb_inode_id;  /* Object ID of owning inode. */
+    uint16_t fdb_flags;     /* FFS_BLOCK_F_[...] */
+    uint16_t fdb_data_len;  /* Length of data contents, in bytes. */
+    /* XXX: ECC for block header and contents. */
+    /* Followed by 'length' bytes of data. */
 };
 
 #define FFS_OBJECT_TYPE_INODE   1
 #define FFS_OBJECT_TYPE_BLOCK   2
 
-struct ffs_base {
-    SLIST_ENTRY(ffs_base) fb_hash_next;
-    uint32_t fb_id;
-    uint32_t fb_seq;
-    uint32_t fb_offset;
-    uint16_t fb_area_id;
-    uint8_t fb_type;
+struct ffs_object {
+    SLIST_ENTRY(ffs_object) fb_hash_next;
+    uint32_t fo_id;
+    uint32_t fo_seq;
+    uint32_t fo_area_offset;
+    uint16_t fo_area_id;
+    uint8_t fo_type;
 };
 
 struct ffs_block {
-    struct ffs_base fb_base;
+    struct ffs_object fb_object;
     struct ffs_inode *fb_inode;
     SLIST_ENTRY(ffs_block) fb_next;
     uint32_t fb_rank;
@@ -91,16 +93,18 @@ struct ffs_block {
     uint8_t fb_flags;
 };
 
+SLIST_HEAD(ffs_block_list, ffs_block);
 SLIST_HEAD(ffs_inode_list, ffs_inode);
+
 struct ffs_inode {
-    struct ffs_base fi_base;
+    struct ffs_object fi_object;
     SLIST_ENTRY(ffs_inode) fi_sibling_next;
     union {
-        SLIST_HEAD(, ffs_block) fi_block_list;  /* If file. */
-        struct ffs_inode_list fi_child_list;  /* If directory. */
+        struct ffs_block_list fi_block_list;    /* If file. */
+        struct ffs_inode_list fi_child_list;    /* If directory. */
     };
-    struct ffs_inode *fi_parent;
-    uint32_t fi_data_len; /* If file. */
+    struct ffs_inode *fi_parent;    /* Pointer to parent directory inode. */
+    uint32_t fi_data_len;           /* If file. */
     uint8_t fi_filename_len;
     uint8_t fi_flags;
     uint8_t fi_refcnt;
@@ -114,10 +118,10 @@ struct ffs_file {
 };
 
 struct ffs_area {
-    uint32_t fs_offset;
-    uint32_t fs_length;
-    uint32_t fs_cur;
-    uint8_t fs_seq;
+    uint32_t fa_offset;
+    uint32_t fa_length;
+    uint32_t fa_cur;
+    uint8_t fa_gc_seq;
 };
 
 struct ffs_disk_object {
@@ -147,11 +151,12 @@ extern struct os_mempool ffs_inode_pool;
 extern struct os_mempool ffs_block_pool;
 extern uint32_t ffs_next_id;
 extern struct ffs_area *ffs_areas;
-extern int ffs_num_areas;
+extern uint16_t ffs_num_areas;
 extern uint16_t ffs_scratch_area_id;
+extern uint16_t ffs_block_max_data_sz;
 
-SLIST_HEAD(ffs_base_list, ffs_base);
-extern struct ffs_base_list ffs_hash[FFS_HASH_SIZE];
+SLIST_HEAD(ffs_object_list, ffs_object);
+extern struct ffs_object_list ffs_hash[FFS_HASH_SIZE];
 extern struct ffs_inode *ffs_root_dir;
 
 struct ffs_area *ffs_flash_find_area(uint16_t logical_id);
@@ -163,11 +168,11 @@ int ffs_flash_copy(uint16_t area_id_from, uint32_t offset_from,
                    uint16_t area_id_to, uint32_t offset_to,
                    uint32_t len);
 
-struct ffs_base *ffs_hash_find(uint32_t id);
+struct ffs_object *ffs_hash_find(uint32_t id);
 int ffs_hash_find_inode(struct ffs_inode **out_inode, uint32_t id);
 int ffs_hash_find_block(struct ffs_block **out_block, uint32_t id);
-void ffs_hash_insert(struct ffs_base *base);
-void ffs_hash_remove(struct ffs_base *base);
+void ffs_hash_insert(struct ffs_object *object);
+void ffs_hash_remove(struct ffs_object *object);
 void ffs_hash_init(void);
 
 int ffs_path_parse_next(struct ffs_path_parser *parser);
@@ -234,6 +239,7 @@ void ffs_block_from_disk(struct ffs_block *out_block,
 
 int ffs_misc_reserve_space(uint16_t *out_area_id, uint32_t *out_offset,
                            uint16_t size);
+int ffs_misc_set_num_areas(uint16_t num_areas);
 
 int ffs_file_open(struct ffs_file **out_file, const char *filename,
                   uint8_t access_flags);
@@ -251,7 +257,6 @@ int ffs_gc(uint16_t *out_area_id);
 int ffs_gc_until(uint16_t *out_area_id, uint32_t space);
 
 int ffs_area_desc_validate(const struct ffs_area_desc *area_desc);
-void ffs_area_set_magic(struct ffs_disk_area *disk_area);
 int ffs_area_magic_is_set(const struct ffs_disk_area *disk_area);
 int ffs_area_is_scratch(const struct ffs_disk_area *disk_area);
 void ffs_area_to_disk(struct ffs_disk_area *out_disk_area,
@@ -260,12 +265,14 @@ uint32_t ffs_area_free_space(const struct ffs_area *area);
 
 int ffs_misc_validate_root(void);
 int ffs_misc_validate_scratch(void);
+void ffs_misc_invalidate(void);
+void ffs_misc_set_max_block_data_size(void);
 
 int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
 
-#define FFS_HASH_FOREACH(base, i)                                       \
+#define FFS_HASH_FOREACH(object, i)                                     \
     for ((i) = 0; (i) < FFS_HASH_SIZE; (i)++)                           \
-        SLIST_FOREACH((base), &ffs_hash[i], fb_hash_next)
+        SLIST_FOREACH((object), &ffs_hash[i], fb_hash_next)
 
 #endif
 

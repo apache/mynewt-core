@@ -22,10 +22,10 @@ ffs_format_from_scratch_area(uint16_t area_id)
             return rc;
         }
     } else {
-        disk_area.fds_is_scratch = 0;
+        disk_area.fda_is_scratch = 0;
         rc = ffs_flash_write(area_id, FFS_AREA_OFFSET_IS_SCRATCH,
-                             &disk_area.fds_is_scratch,
-                             sizeof disk_area.fds_is_scratch);
+                             &disk_area.fda_is_scratch,
+                             sizeof disk_area.fda_is_scratch);
         if (rc != 0) {
             return rc;
         }
@@ -44,11 +44,11 @@ ffs_format_area(uint16_t area_id, int is_scratch)
 
     area = ffs_areas + area_id;
 
-    rc = flash_erase(area->fs_offset, area->fs_length);
+    rc = flash_erase(area->fa_offset, area->fa_length);
     if (rc != 0) {
         return rc;
     }
-    area->fs_cur = 0;
+    area->fa_cur = 0;
 
     ffs_area_to_disk(&disk_area, area);
 
@@ -58,7 +58,7 @@ ffs_format_area(uint16_t area_id, int is_scratch)
         write_len = sizeof disk_area;
     }
 
-    rc = ffs_flash_write(area_id, 0, &disk_area.fds_magic, write_len);
+    rc = ffs_flash_write(area_id, 0, &disk_area.fda_magic, write_len);
     if (rc != 0) {
         return rc;
     }
@@ -69,24 +69,24 @@ ffs_format_area(uint16_t area_id, int is_scratch)
 void
 ffs_format_ram(void)
 {
-    struct ffs_base_list *list;
+    struct ffs_object_list *list;
+    struct ffs_object *object;
     struct ffs_inode *inode;
-    struct ffs_base *base;
     int i;
 
     for (i = 0; i < FFS_HASH_SIZE; i++) {
         list = ffs_hash + i;
 
-        base = SLIST_FIRST(list);
-        while (base != NULL) {
-            if (base->fb_type == FFS_OBJECT_TYPE_INODE) {
-                inode = (void *)base;
+        object = SLIST_FIRST(list);
+        while (object != NULL) {
+            if (object->fo_type == FFS_OBJECT_TYPE_INODE) {
+                inode = (void *)object;
                 while (inode->fi_refcnt > 0) {
                     ffs_inode_dec_refcnt(inode);
                 }
-                base = SLIST_FIRST(list);
+                object = SLIST_FIRST(list);
             } else {
-                base = SLIST_NEXT(base, fb_hash_next);
+                object = SLIST_NEXT(object, fb_hash_next);
             }
         }
     }
@@ -98,6 +98,9 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
     int rc;
     int i;
 
+    /* Start from a clean state. */
+    ffs_misc_invalidate();
+
     /* Select largest area to be the initial scratch area. */
     ffs_scratch_area_id = 0;
     for (i = 1; area_descs[i].fad_length != 0; i++) {
@@ -108,12 +111,16 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
         }
     }
 
-    ffs_num_areas = i;
+    rc = ffs_misc_set_num_areas(i);
+    if (rc != 0) {
+        goto err;
+    }
+
     for (i = 0; i < ffs_num_areas; i++) {
-        ffs_areas[i].fs_offset = area_descs[i].fad_offset;
-        ffs_areas[i].fs_length = area_descs[i].fad_length;
-        ffs_areas[i].fs_cur = 0;
-        ffs_areas[i].fs_seq = 0;
+        ffs_areas[i].fa_offset = area_descs[i].fad_offset;
+        ffs_areas[i].fa_length = area_descs[i].fad_length;
+        ffs_areas[i].fa_cur = 0;
+        ffs_areas[i].fa_gc_seq = 0;
 
         rc = ffs_format_area(i, i == ffs_scratch_area_id);
         if (rc != 0) {
@@ -141,11 +148,12 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
         goto err;
     }
 
+    ffs_misc_set_max_block_data_size();
+
     return 0;
 
 err:
-    ffs_scratch_area_id = FFS_AREA_ID_SCRATCH;
-    ffs_num_areas = 0;
+    ffs_misc_invalidate();
     return rc;
 }
 

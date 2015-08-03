@@ -17,7 +17,7 @@ ffs_inode_alloc(void)
         memset(inode, 0, sizeof *inode);
     }
 
-    inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
+    inode->fi_object.fo_type = FFS_OBJECT_TYPE_INODE;
 
     return inode;
 }
@@ -56,7 +56,7 @@ ffs_inode_parent_id(const struct ffs_inode *inode)
     if (inode->fi_parent == NULL) {
         return FFS_ID_NONE;
     } else {
-        return inode->fi_parent->fi_base.fb_id;
+        return inode->fi_parent->fi_object.fo_id;
     }
 }
 
@@ -70,7 +70,7 @@ ffs_inode_insert_block(struct ffs_inode *inode, struct ffs_block *block)
 
     prev = NULL;
     SLIST_FOREACH(cur, &inode->fi_block_list, fb_next) {
-        assert(block->fb_base.fb_id != cur->fb_base.fb_id);
+        assert(block->fb_object.fo_id != cur->fb_object.fo_id);
         assert(block->fb_rank != cur->fb_rank);
         if (block->fb_rank < cur->fb_rank) {
             break;
@@ -119,7 +119,7 @@ ffs_inode_delete_from_ram(struct ffs_inode *inode)
         }
     }
 
-    ffs_hash_remove(&inode->fi_base);
+    ffs_hash_remove(&inode->fi_object);
 
     if (inode->fi_parent != NULL) {
         ffs_inode_remove_child(inode);
@@ -155,8 +155,8 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
     }
 
     disk_inode.fdi_magic = FFS_INODE_MAGIC;
-    disk_inode.fdi_id = inode->fi_base.fb_id;
-    disk_inode.fdi_seq = inode->fi_base.fb_seq + 1;
+    disk_inode.fdi_id = inode->fi_object.fo_id;
+    disk_inode.fdi_seq = inode->fi_object.fo_seq + 1;
     disk_inode.fdi_parent_id = ffs_inode_parent_id(inode);
     disk_inode.fdi_flags = inode->fi_flags | FFS_INODE_F_DELETED;
     disk_inode.fdi_filename_len = 0;
@@ -177,11 +177,11 @@ ffs_inode_from_disk(struct ffs_inode *out_inode,
     int cached_name_len;
     int rc;
 
-    out_inode->fi_base.fb_type = FFS_OBJECT_TYPE_INODE;
-    out_inode->fi_base.fb_id = disk_inode->fdi_id;
-    out_inode->fi_base.fb_seq = disk_inode->fdi_seq;
-    out_inode->fi_base.fb_area_id = area_id;
-    out_inode->fi_base.fb_offset = offset;
+    out_inode->fi_object.fo_type = FFS_OBJECT_TYPE_INODE;
+    out_inode->fi_object.fo_id = disk_inode->fdi_id;
+    out_inode->fi_object.fo_seq = disk_inode->fdi_seq;
+    out_inode->fi_object.fo_area_id = area_id;
+    out_inode->fi_object.fo_area_offset = offset;
     out_inode->fi_flags = disk_inode->fdi_flags;
     out_inode->fi_filename_len = disk_inode->fdi_filename_len;
 
@@ -216,8 +216,8 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
     }
 
     disk_inode.fdi_magic = FFS_INODE_MAGIC;
-    disk_inode.fdi_id = inode->fi_base.fb_id;
-    disk_inode.fdi_seq = inode->fi_base.fb_seq + 1;
+    disk_inode.fdi_id = inode->fi_object.fo_id;
+    disk_inode.fdi_seq = inode->fi_object.fo_seq + 1;
     disk_inode.fdi_parent_id = ffs_inode_parent_id(inode);
     disk_inode.fdi_flags = inode->fi_flags;
     disk_inode.fdi_filename_len = filename_len;
@@ -250,7 +250,6 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
         return FFS_EUNEXP;
     }
 
-    /* XXX: General inode validation. */
     if (out_filename != NULL) {
         rc = ffs_flash_read(area_id, offset + sizeof *out_disk_inode,
                             out_filename, out_disk_inode->fdi_filename_len);
@@ -325,11 +324,11 @@ ffs_inode_read_filename_chunk(const struct ffs_inode *inode,
 
     assert(filename_offset + len <= inode->fi_filename_len);
 
-    area_off = inode->fi_base.fb_offset +
+    area_off = inode->fi_object.fo_area_offset +
                sizeof (struct ffs_disk_inode) +
                filename_offset;
 
-    rc = ffs_flash_read(inode->fi_base.fb_area_id, area_off, buf, len);
+    rc = ffs_flash_read(inode->fi_object.fo_area_id, area_off, buf, len);
     if (rc != 0) {
         return rc;
     }
@@ -475,10 +474,10 @@ ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
             chunk_len = bytes_left;
         }
 
-        area_off = block->fb_base.fb_offset +
+        area_off = block->fb_object.fo_area_offset +
                    sizeof (struct ffs_disk_block) +
                    block_off;
-        rc = ffs_flash_read(block->fb_base.fb_area_id, area_off, dst,
+        rc = ffs_flash_read(block->fb_object.fo_area_id, area_off, dst,
                             chunk_len);
         if (rc != 0) {
             goto done;

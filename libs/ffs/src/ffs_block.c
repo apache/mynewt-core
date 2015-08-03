@@ -14,7 +14,7 @@ ffs_block_alloc(void)
         memset(block, 0, sizeof *block);
     }
 
-    block->fb_base.fb_type = FFS_OBJECT_TYPE_BLOCK;
+    block->fb_object.fo_type = FFS_OBJECT_TYPE_BLOCK;
 
     return block;
 }
@@ -92,11 +92,11 @@ ffs_block_from_disk(struct ffs_block *out_block,
                     const struct ffs_disk_block *disk_block,
                     uint16_t area_id, uint32_t offset)
 {
-    out_block->fb_base.fb_type = FFS_OBJECT_TYPE_BLOCK;
-    out_block->fb_base.fb_id = disk_block->fdb_id;
-    out_block->fb_base.fb_seq = disk_block->fdb_seq;
-    out_block->fb_base.fb_area_id = area_id;
-    out_block->fb_base.fb_offset = offset;
+    out_block->fb_object.fo_type = FFS_OBJECT_TYPE_BLOCK;
+    out_block->fb_object.fo_id = disk_block->fdb_id;
+    out_block->fb_object.fo_seq = disk_block->fdb_seq;
+    out_block->fb_object.fo_area_id = area_id;
+    out_block->fb_object.fo_area_offset = offset;
     out_block->fb_rank = disk_block->fdb_rank;
     out_block->fb_data_len = disk_block->fdb_data_len;
 }
@@ -104,7 +104,7 @@ ffs_block_from_disk(struct ffs_block *out_block,
 void
 ffs_block_delete_from_ram(struct ffs_block *block)
 {
-    ffs_hash_remove(&block->fb_base);
+    ffs_hash_remove(&block->fb_object);
 
     if (block->fb_inode != NULL) {
         SLIST_REMOVE(&block->fb_inode->fi_block_list, block, ffs_block,
@@ -125,8 +125,8 @@ ffs_block_delete_from_disk(const struct ffs_block *block)
 
     memset(&disk_block, 0, sizeof disk_block);
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
-    disk_block.fdb_id = block->fb_base.fb_id;
-    disk_block.fdb_seq = block->fb_base.fb_seq + 1;
+    disk_block.fdb_id = block->fb_object.fo_id;
+    disk_block.fdb_seq = block->fb_object.fo_seq + 1;
     disk_block.fdb_flags = FFS_BLOCK_F_DELETED;
 
     rc = ffs_block_write_disk(&area_id, NULL, &disk_block, NULL);
