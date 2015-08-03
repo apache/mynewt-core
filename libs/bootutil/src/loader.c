@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include "hal/hal_flash.h"
+#include "os/os_malloc.h"
 #include "ffs/ffs.h"
 #include "ffsutil/ffsutil.h"
 #include "bootutil/loader.h"
@@ -11,7 +12,7 @@
 static const struct boot_req *boot_req;
 struct image_header boot_img_hdrs[2];
 struct boot_status boot_status;
-struct boot_status_entry boot_status_entries[64]; // XXX
+struct boot_status_entry *boot_status_entries;
 const struct ffs_area_desc *boot_area_descs;
 
 /**
@@ -121,11 +122,11 @@ boot_slot_to_area_idx(int slot_num)
 /**
  * Locates the specified area index within the array of image areas.
  *
- * @param area_idx            The area index to search for.
+ * @param area_idx              The area index to search for.
  *
- * @return                      The index of the element in boot_req->br_image_areas
- *                              that contains the sought after area index;
- *                              -1 if the area index is not present.
+ * @return                      The index of the element in the image area
+ *                              array.  that contains the sought after area
+ *                              index; -1 if the area index is not present.
  */
 static int
 boot_find_image_area_idx(int area_idx)
@@ -488,7 +489,8 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 static void
 boot_build_status(void)
 {
-    memset(boot_status_entries, 0xff, sizeof boot_status_entries);
+    memset(boot_status_entries, 0xff,
+           boot_req->br_num_image_areas * sizeof *boot_status_entries);
 
     if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
         boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
@@ -507,22 +509,31 @@ boot_build_status(void)
     }
 }
 
-static void
+static int
 boot_init_flash(void)
 {
     int rc;
 
     rc = flash_init();
-    assert(rc == 0);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
 
     rc = ffs_init();
-    assert(rc == 0);
+    if (rc != 0) {
+        return BOOT_EFILE;
+    }
 
-    /* Look for an ffs file system in internal flash. */
+    /* Look for an ffs file system in internal flash.  If no file system gets
+     * detected, all subsequent file operations will fail, but the boot loader
+     * should proceed anyway.
+     */
     ffs_detect(boot_req->br_area_descs);
 
-    /* Just make sure the boot directory exists. */
+    /* Create the boot directory if it doesn't already exist. */
     ffs_mkdir("/boot");
+
+    return 0;
 }
 
 /**
@@ -543,7 +554,16 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 
     boot_req = req;
 
-    boot_init_flash();
+    boot_status_entries =
+        os_malloc(req->br_num_image_areas * sizeof *boot_status_entries);
+    if (boot_status_entries == NULL) {
+        return BOOT_ENOMEM;
+    }
+
+    rc = boot_init_flash();
+    if (rc != 0) {
+        return rc;
+    }
 
     /* Determine if an image copy operation was interrupted (i.e., the system
      * was reset before the boot loader could finish its task last time).
@@ -555,10 +575,12 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         rc = boot_copy_image(boot_status.bs_img1_length,
                              boot_status.bs_img2_length);
 
-        /* We failed to put the images back together; there is really no
-         * solution here.
-         */
-        assert(rc == 0);
+        if (rc != 0) {
+            /* We failed to put the images back together; there is really no
+             * solution here.
+             */
+            return rc;
+        }
     }
 
     boot_read_image_headers(boot_img_hdrs, boot_req->br_image_addrs, 2);
@@ -575,7 +597,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
             slot = 1;
         } else {
             /* No images present. */
-            assert(0);
+            return BOOT_EBADIMAGE;
         }
     }
 
@@ -591,10 +613,12 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         rc = boot_copy_image(boot_status.bs_img1_length,
                              boot_status.bs_img2_length);
 
-        /* We failed to put the images back together; there is really no
-         * solution here.
-         */
-        assert(rc == 0);
+        if (rc != 0) {
+            /* We failed to put the images back together; there is really no
+             * solution here.
+             */
+            return rc;
+        }
 
         rsp->br_hdr = &boot_img_hdrs[1];
         break;

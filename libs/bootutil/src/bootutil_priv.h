@@ -9,6 +9,7 @@ struct image_header;
 #define BOOT_EBADIMAGE  3
 #define BOOT_EBADVECT   4
 #define BOOT_EBADSTATUS 5
+#define BOOT_ENOMEM     6
 
 #define BOOT_IMAGE_NUM_NONE     0xff
 
