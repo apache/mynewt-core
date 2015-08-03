@@ -7,15 +7,16 @@
 #include "os/os_mutex.h"
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
+extern struct os_task *g_current_task;  /* XXX */
 
 #define FFS_NUM_FILES           8
 #define FFS_NUM_INODES          100
 #define FFS_NUM_BLOCKS          100
 
-static struct ffs_area ffs_area_array[FFS_MAX_AREAS];
-struct ffs_area *ffs_areas = ffs_area_array;
-int ffs_num_areas;
+struct ffs_area *ffs_areas;
+uint16_t ffs_num_areas;
 uint16_t ffs_scratch_area_id;
+uint16_t ffs_block_max_data_sz;
 
 struct os_mempool ffs_file_pool;
 struct os_mempool ffs_inode_pool;
@@ -31,8 +32,10 @@ ffs_lock(void)
 {
     int rc;
 
-    rc = 0;//os_mutex_pend(&ffs_mutex, 0xffffffff);
-    assert(rc == 0);
+    if (g_current_task != NULL) { /* XXX */
+        rc = os_mutex_pend(&ffs_mutex, 0xffffffff);
+        assert(rc == 0);
+    }
 }
 
 static void
@@ -40,8 +43,10 @@ ffs_unlock(void)
 {
     int rc;
 
-    rc = 0;//os_mutex_release(&ffs_mutex);
-    assert(rc == 0);
+    if (g_current_task != NULL) { /* XXX */
+        rc = os_mutex_release(&ffs_mutex);
+        assert(rc == 0);
+    }
 }
 
 /**
@@ -399,6 +404,12 @@ ffs_detect(const struct ffs_area_desc *area_descs)
     return rc;
 }
 
+/**
+ * Indicates whether a valid filesystem has been initialized, either via
+ * detection or formatting.
+ *
+ * @return                  1 if a file system is present; 0 otherwise.
+ */
 int
 ffs_ready(void)
 {

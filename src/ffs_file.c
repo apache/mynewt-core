@@ -32,7 +32,7 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
     if (parent == NULL) {
         disk_inode.fdi_parent_id = FFS_ID_NONE;
     } else {
-        disk_inode.fdi_parent_id = parent->fi_base.fb_id;
+        disk_inode.fdi_parent_id = parent->fi_object.fo_id;
     }
     disk_inode.fdi_flags = 0;
     if (is_dir) {
@@ -58,7 +58,7 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
     inode->fi_refcnt = 1;
     inode->fi_data_len = 0;
 
-    ffs_hash_insert(&inode->fi_base);
+    ffs_hash_insert(&inode->fi_object);
     *out_inode = inode;
 
     return 0;
@@ -80,12 +80,12 @@ ffs_file_open(struct ffs_file **out_file, const char *filename,
 
     file = NULL;
 
-    /* XXX: Validate arguments. */
+    /* Reject invalid access flag combinations. */
     if (!(access_flags & (FFS_ACCESS_READ | FFS_ACCESS_WRITE))) {
         rc = FFS_EINVAL;
         goto err;
     }
-    if (access_flags & FFS_ACCESS_APPEND &&
+    if (access_flags & (FFS_ACCESS_APPEND | FFS_ACCESS_TRUNCATE) &&
         !(access_flags & FFS_ACCESS_WRITE)) {
 
         rc = FFS_EINVAL;
@@ -107,25 +107,47 @@ ffs_file_open(struct ffs_file **out_file, const char *filename,
     ffs_path_parser_new(&parser, filename);
     rc = ffs_path_find(&parser, &inode, &parent);
     if (rc == FFS_ENOENT) {
-        if (parent == NULL || !(access_flags & FFS_ACCESS_WRITE)) {
+        /* The file does not exist.  This is fatal for read-only opens. */
+        if (!(access_flags & FFS_ACCESS_WRITE)) {
             goto err;
         }
 
-        assert(parser.fpp_token_type == FFS_PATH_TOKEN_LEAF); // XXX
-        rc = ffs_file_new(&file->ff_inode, parent, parser.fpp_token,
-                          parser.fpp_token_len, 0);
-        if (rc != 0) {
+        /* Make sure the parent directory exists. */
+        if (parent == NULL) {
             goto err;
         }
-    } else if (access_flags & FFS_ACCESS_TRUNCATE) {
-        ffs_path_unlink(filename);
+
+        /* Create a new file at the specified path. */
         rc = ffs_file_new(&file->ff_inode, parent, parser.fpp_token,
                           parser.fpp_token_len, 0);
         if (rc != 0) {
             goto err;
         }
     } else {
-        file->ff_inode = inode;
+        /* The file already exists. */
+
+        /* Reject an attempt to open a directory. */
+        if (parser.fpp_token_type != FFS_PATH_TOKEN_LEAF) {
+            rc = FFS_EINVAL;
+            goto err;
+        }
+
+        if (access_flags & FFS_ACCESS_TRUNCATE) {
+            /* The user is truncating the file.  Unlink the old file and create
+             * a new one in its place.
+             */
+            ffs_path_unlink(filename);
+            rc = ffs_file_new(&file->ff_inode, parent, parser.fpp_token,
+                              parser.fpp_token_len, 0);
+            if (rc != 0) {
+                goto err;
+            }
+        } else {
+            /* The user is not truncating the file.  Point the file handle to
+             * the existing inode.
+             */
+            file->ff_inode = inode;
+        }
     }
 
     if (access_flags & FFS_ACCESS_APPEND) {

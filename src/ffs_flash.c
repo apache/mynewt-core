@@ -13,11 +13,11 @@ ffs_flash_read(uint16_t area_id, uint32_t offset, void *data, uint32_t len)
 
     area = ffs_areas + area_id;
 
-    if (offset + len > area->fs_length) {
+    if (offset + len > area->fa_length) {
         return FFS_ERANGE;
     }
 
-    rc = flash_read(data, area->fs_offset + offset, len);
+    rc = flash_read(data, area->fa_offset + offset, len);
     return rc;
 }
 
@@ -31,17 +31,17 @@ ffs_flash_write(uint16_t area_id, uint32_t offset, const void *data,
     assert(area_id < ffs_num_areas);
 
     area = ffs_areas + area_id;
-    assert(offset >= area->fs_cur);
-    if (offset + len > area->fs_length) {
+    assert(offset >= area->fa_cur);
+    if (offset + len > area->fa_length) {
         return FFS_ERANGE;
     }
 
-    rc = flash_write(data, area->fs_offset + offset, len);
+    rc = flash_write(data, area->fa_offset + offset, len);
     if (rc != 0) {
         return FFS_EFLASH_ERROR;
     }
 
-    area->fs_cur = offset + len;
+    area->fa_cur = offset + len;
 
     return 0;
 }
