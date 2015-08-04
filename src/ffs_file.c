@@ -9,7 +9,7 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode *inode;
-    uint16_t area_id;
+    uint16_t area_idx;
     uint32_t offset;
     int rc;
 
@@ -19,7 +19,7 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
         goto err;
     }
 
-    rc = ffs_misc_reserve_space(&area_id, &offset,
+    rc = ffs_misc_reserve_space(&area_idx, &offset,
                                 sizeof disk_inode + filename_len);
     if (rc != 0) {
         goto err;
@@ -40,12 +40,12 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
     }
     disk_inode.fdi_filename_len = filename_len;
 
-    rc = ffs_inode_write_disk(&disk_inode, filename, area_id, offset);
+    rc = ffs_inode_write_disk(&disk_inode, filename, area_idx, offset);
     if (rc != 0) {
         goto err;
     }
 
-    rc = ffs_inode_from_disk(inode, &disk_inode, area_id, offset);
+    rc = ffs_inode_from_disk(inode, &disk_inode, area_idx, offset);
     if (rc != 0) {
         goto err;
     }
@@ -56,7 +56,6 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
         }
     }
     inode->fi_refcnt = 1;
-    inode->fi_data_len = 0;
 
     ffs_hash_insert(&inode->fi_object);
     *out_inode = inode;
@@ -151,7 +150,7 @@ ffs_file_open(struct ffs_file **out_file, const char *filename,
     }
 
     if (access_flags & FFS_ACCESS_APPEND) {
-        file->ff_offset = file->ff_inode->fi_data_len;
+        file->ff_offset = ffs_inode_calc_data_length(file->ff_inode);
     } else {
         file->ff_offset = 0;
     }
@@ -170,7 +169,7 @@ err:
 int
 ffs_file_seek(struct ffs_file *file, uint32_t offset)
 { 
-    if (offset > file->ff_inode->fi_data_len) {
+    if (offset > ffs_inode_calc_data_length(file->ff_inode)) {
         return FFS_ERANGE;
     }
 

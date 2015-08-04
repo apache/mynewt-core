@@ -4,14 +4,14 @@
 #include "ffs_priv.h"
 
 int
-ffs_flash_read(uint16_t area_id, uint32_t offset, void *data, uint32_t len)
+ffs_flash_read(uint16_t area_idx, uint32_t offset, void *data, uint32_t len)
 {
     const struct ffs_area *area;
     int rc;
 
-    assert(area_id < ffs_num_areas);
+    assert(area_idx < ffs_num_areas);
 
-    area = ffs_areas + area_id;
+    area = ffs_areas + area_idx;
 
     if (offset + len > area->fa_length) {
         return FFS_ERANGE;
@@ -22,15 +22,15 @@ ffs_flash_read(uint16_t area_id, uint32_t offset, void *data, uint32_t len)
 }
 
 int
-ffs_flash_write(uint16_t area_id, uint32_t offset, const void *data,
+ffs_flash_write(uint16_t area_idx, uint32_t offset, const void *data,
                 uint32_t len)
 {
     struct ffs_area *area;
     int rc;
 
-    assert(area_id < ffs_num_areas);
+    assert(area_idx < ffs_num_areas);
 
-    area = ffs_areas + area_id;
+    area = ffs_areas + area_idx;
     assert(offset >= area->fa_cur);
     if (offset + len > area->fa_length) {
         return FFS_ERANGE;

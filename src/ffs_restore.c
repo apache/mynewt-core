@@ -48,10 +48,8 @@ void
 ffs_restore_sweep(void)
 {
     struct ffs_object_list *list;
-    struct ffs_inode *inode;
     struct ffs_object *object;
     struct ffs_object *next;
-    int rc;
     int i;
 
     for (i = 0; i < FFS_HASH_SIZE; i++) {
@@ -60,16 +58,7 @@ ffs_restore_sweep(void)
         object = SLIST_FIRST(list);
         while (object != NULL) {
             next = SLIST_NEXT(object, fb_hash_next);
-
-            rc = ffs_delete_if_trash(object);
-            if (rc == 0) {
-                if (object->fo_type == FFS_OBJECT_TYPE_INODE) {
-                    inode = (void *)object;
-                    if (!(inode->fi_flags & FFS_INODE_F_DIRECTORY)) {
-                        inode->fi_data_len = ffs_inode_calc_data_length(inode);
-                    }
-                }
-            }
+            ffs_delete_if_trash(object);
 
             object = next;
         }
@@ -87,7 +76,7 @@ ffs_restore_dummy_inode(struct ffs_inode **out_inode, uint32_t id, int is_dir)
     }
     inode->fi_object.fo_id = id;
     inode->fi_refcnt = 1;
-    inode->fi_object.fo_area_id = FFS_AREA_ID_NONE;
+    inode->fi_object.fo_area_idx = FFS_AREA_ID_NONE;
     inode->fi_flags = FFS_INODE_F_DUMMY;
     if (is_dir) {
         inode->fi_flags |= FFS_INODE_F_DIRECTORY;
@@ -133,13 +122,13 @@ ffs_restore_inode_gets_replaced(int *out_should_replace,
  * and adds it if appropriate.
  *
  * @param disk_inode            The inode just read from flash.
- * @param area_id               The index of the area containing the inode.
+ * @param area_idx              The index of the area containing the inode.
  * @param area_offset           The offset within the area of the inode.
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t area_id,
+ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t area_idx,
                   uint32_t area_offset)
 {
     struct ffs_inode *parent;
@@ -162,7 +151,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t area_id,
             if (inode->fi_parent != NULL) {
                 ffs_inode_remove_child(inode);
             }
-            ffs_inode_from_disk(inode, disk_inode, area_id, area_offset);
+            ffs_inode_from_disk(inode, disk_inode, area_idx, area_offset);
         }
         break;
 
@@ -175,7 +164,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t area_id,
         new_inode = 1;
         do_add = 1;
 
-        rc = ffs_inode_from_disk(inode, disk_inode, area_id, area_offset);
+        rc = ffs_inode_from_disk(inode, disk_inode, area_idx, area_offset);
         if (rc != 0) {
             goto err;
         }
@@ -274,13 +263,13 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
  * disk data block.
  *
  * @param disk_block            The source disk block to convert.
- * @param area_id               The ID of the area containing the block.
+ * @param area_idx              The ID of the area containing the block.
  * @param area_offset           The area_offset within the area of the block.
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t area_id,
+ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t area_idx,
                   uint32_t area_offset)
 {
     struct ffs_block *block;
@@ -299,7 +288,7 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t area_id,
         }
 
         if (do_replace) {
-            ffs_block_from_disk(block, disk_block, area_id, area_offset);
+            ffs_block_from_disk(block, disk_block, area_idx, area_offset);
         }
         break;
 
@@ -311,7 +300,7 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t area_id,
         }
         new_block = 1;
 
-        ffs_block_from_disk(block, disk_block, area_id, area_offset);
+        ffs_block_from_disk(block, disk_block, area_idx, area_offset);
         ffs_hash_insert(&block->fb_object);
 
         rc = ffs_hash_find_inode(&block->fb_inode, disk_block->fdb_inode_id);
@@ -359,13 +348,13 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
     switch (disk_object->fdo_type) {
     case FFS_OBJECT_TYPE_INODE:
         rc = ffs_restore_inode(&disk_object->fdo_disk_inode,
-                               disk_object->fdo_area_id,
+                               disk_object->fdo_area_idx,
                                disk_object->fdo_offset);
         break;
 
     case FFS_OBJECT_TYPE_BLOCK:
         rc = ffs_restore_block(&disk_object->fdo_disk_block,
-                               disk_object->fdo_area_id,
+                               disk_object->fdo_area_idx,
                                disk_object->fdo_offset);
         break;
 
@@ -383,19 +372,19 @@ ffs_restore_object(const struct ffs_disk_object *disk_object)
  *
  * @param out_disk_object       On success, the restored object gets written
  *                                  here.
- * @param area_id               The area to read the object from.
+ * @param area_idx              The area to read the object from.
  * @param area_offset           The offset within the area to read from.
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
 ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
-                        int area_id, uint32_t area_offset)
+                        int area_idx, uint32_t area_offset)
 {
     uint32_t magic;
     int rc;
 
-    rc = ffs_flash_read(area_id, area_offset, &magic, sizeof magic);
+    rc = ffs_flash_read(area_idx, area_offset, &magic, sizeof magic);
     if (rc != 0) {
         return rc;
     }
@@ -404,12 +393,12 @@ ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
     case FFS_INODE_MAGIC:
         out_disk_object->fdo_type = FFS_OBJECT_TYPE_INODE;
         rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, NULL,
-                                 area_id, area_offset);
+                                 area_idx, area_offset);
         break;
 
     case FFS_BLOCK_MAGIC:
         out_disk_object->fdo_type = FFS_OBJECT_TYPE_BLOCK;
-        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, area_id,
+        rc = ffs_block_read_disk(&out_disk_object->fdo_disk_block, area_idx,
                                  area_offset);
         break;
 
@@ -426,7 +415,7 @@ ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
         return rc;
     }
 
-    out_disk_object->fdo_area_id = area_id;
+    out_disk_object->fdo_area_idx = area_idx;
     out_disk_object->fdo_offset = area_offset;
 
     return 0;
@@ -459,23 +448,23 @@ ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
  * Reads the specified area from disk and loads its contents into the RAM
  * representation.
  *
- * @param area_id               The index of the area to read.
+ * @param area_idx              The index of the area to read.
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_restore_area_contents(int area_id)
+ffs_restore_area_contents(int area_idx)
 {
     struct ffs_area *area;
     struct ffs_disk_area disk_area;
     struct ffs_disk_object disk_object;
     int rc;
 
-    area = ffs_areas + area_id;
+    area = ffs_areas + area_idx;
 
     area->fa_cur = sizeof disk_area;
     while (1) {
-        rc = ffs_restore_disk_object(&disk_object, area_id, area->fa_cur);
+        rc = ffs_restore_disk_object(&disk_object, area_idx, area->fa_cur);
         switch (rc) {
         case 0:
             ffs_restore_object(&disk_object);
@@ -537,7 +526,7 @@ ffs_restore_corrupt_flash(void)
     }
 
     FFS_HASH_FOREACH(object, i) {
-        if (object->fo_area_id == bad_idx) {
+        if (object->fo_area_idx == bad_idx) {
             switch (object->fo_type) {
             case FFS_OBJECT_TYPE_INODE:
                 ((struct ffs_inode *) object)->fi_flags |= FFS_INODE_F_DUMMY;
@@ -564,7 +553,7 @@ ffs_restore_corrupt_flash(void)
         return rc;
     }
 
-    ffs_scratch_area_id = bad_idx;
+    ffs_scratch_area_idx = bad_idx;
 
     return 0;
 }
@@ -586,13 +575,13 @@ int
 ffs_restore_full(const struct ffs_area_desc *area_descs)
 {
     struct ffs_disk_area disk_area;
-    int cur_area_id;
+    int cur_area_idx;
     int use_area;
     int rc;
     int i;
 
     /* Start from a clean state. */
-    ffs_misc_invalidate();
+    ffs_misc_reset();
 
     /* Read each area from flash. */
     for (i = 0; area_descs[i].fad_length != 0; i++) {
@@ -612,7 +601,7 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
         if (use_area) {
             if (disk_area.fda_id == FFS_AREA_ID_NONE &&
-                ffs_scratch_area_id != FFS_AREA_ID_NONE) {
+                ffs_scratch_area_idx != FFS_AREA_ID_NONE) {
 
                 /* Don't allow more than one scratch area. */
                 use_area = 0;
@@ -621,30 +610,30 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
         if (use_area) {
             /* Populate RAM with a representation of this area. */
-            cur_area_id = ffs_num_areas;
+            cur_area_idx = ffs_num_areas;
 
             rc = ffs_misc_set_num_areas(ffs_num_areas + 1);
             if (rc != 0) {
                 goto err;
             }
 
-            ffs_areas[cur_area_id].fa_offset = area_descs[i].fad_offset;
-            ffs_areas[cur_area_id].fa_length = area_descs[i].fad_length;
-            ffs_areas[cur_area_id].fa_cur = sizeof (struct ffs_disk_area);
-            ffs_areas[cur_area_id].fa_gc_seq = disk_area.fda_gc_seq;
-            ffs_areas[cur_area_id].fa_id = disk_area.fda_id;
+            ffs_areas[cur_area_idx].fa_offset = area_descs[i].fad_offset;
+            ffs_areas[cur_area_idx].fa_length = area_descs[i].fad_length;
+            ffs_areas[cur_area_idx].fa_cur = sizeof (struct ffs_disk_area);
+            ffs_areas[cur_area_idx].fa_gc_seq = disk_area.fda_gc_seq;
+            ffs_areas[cur_area_idx].fa_id = disk_area.fda_id;
 
             if (disk_area.fda_id == FFS_AREA_ID_NONE) {
-                ffs_scratch_area_id = cur_area_id;
+                ffs_scratch_area_idx = cur_area_idx;
             } else {
-                ffs_restore_area_contents(cur_area_id);
+                ffs_restore_area_contents(cur_area_idx);
             }
         }
     }
 
     /* All areas have been restored from flash. */
 
-    if (ffs_scratch_area_id == FFS_AREA_ID_NONE) {
+    if (ffs_scratch_area_idx == FFS_AREA_ID_NONE) {
         /* No scratch area.  The system may have been rebooted in the middle of
          * a garbage collection cycle.  Look for a candidate scratch area.
          */
@@ -679,7 +668,7 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
     return 0;
 
 err:
-    ffs_misc_invalidate();
+    ffs_misc_reset();
     return rc;
 }
 
