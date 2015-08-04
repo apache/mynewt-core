@@ -28,7 +28,6 @@ struct boot_status {
     /* Followed by sequence of boot status entries. */
 };
 
-int boot_crc_is_valid(uint32_t addr, const struct image_header *hdr);
 int boot_vect_read_test(struct image_version *out_ver);
 int boot_vect_read_main(struct image_version *out_ver);
 int boot_vect_delete_test(void);

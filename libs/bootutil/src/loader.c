@@ -213,11 +213,11 @@ boot_copy_area(int from_area_idx, int to_area_idx)
 /**
  * Swaps the contents of two flash areas.
  *
- * @param area_idx_1          The index of one area to swap.  This area
+ * @param area_idx_1            The index of one area to swap.  This area
  *                                  must be part of the first image slot.
  * @param part_num_1            The image part number stored in the first
  *                                  area.
- * @param area_idx_2          The index of the other area to swap.  This
+ * @param area_idx_2            The index of the other area to swap.  This
  *                                  area must be part of the second image
  *                                  slot.
  * @param part_num_2            The image part number stored in the second
@@ -632,10 +632,11 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         break;
     }
 
+    /* Always boot from the primary slot. */
     rsp->br_image_addr = boot_req->br_image_addrs[0];
 
+    /* After successful boot, there should not be a status file. */
     ffs_unlink(BOOT_PATH_STATUS);
 
     return 0;
 }
-

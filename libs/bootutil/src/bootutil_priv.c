@@ -7,49 +7,6 @@
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
 
-int
-boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
-{
-    uint32_t crc_len;
-    uint32_t off;
-    uint32_t crc;
-    int chunk_sz;
-    int rc;
-
-    static uint8_t buf[256];
-
-    /* Calculate start of crc input, relative to the start of the header. */
-    off = IMAGE_HEADER_CRC_OFFSET + sizeof hdr->ih_crc32;
-
-    /* Calculate length of crc input. */
-    crc_len = hdr->ih_hdr_size - off + hdr->ih_img_size;
-
-    /* Calculate absolute start of crc input. */
-    off += addr;
-
-    /* Apply crc to the image. */
-    crc = 0;
-    while (crc_len > 0) {
-        if (crc_len < sizeof buf) {
-            chunk_sz = crc_len;
-        } else {
-            chunk_sz = sizeof buf;
-        }
-
-        rc = flash_read(off, buf, chunk_sz);
-        if (rc != 0) {
-            return 0;
-        }
-
-        crc = crc32(crc, buf, chunk_sz);
-
-        off += chunk_sz;
-        crc_len -= chunk_sz;
-    }
-
-    return crc == hdr->ih_crc32;
-}
-
 static int
 boot_vect_read_one(struct image_version *ver, const char *path)
 {
