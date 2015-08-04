@@ -10,13 +10,42 @@
 int
 boot_crc_is_valid(uint32_t addr, const struct image_header *hdr)
 {
-    uint32_t crc_off;
     uint32_t crc_len;
+    uint32_t off;
     uint32_t crc;
+    int chunk_sz;
+    int rc;
 
-    crc_off = IMAGE_HEADER_CRC_OFFSET + sizeof hdr->ih_crc32;
-    crc_len = hdr->ih_hdr_size - crc_off + hdr->ih_img_size;
-    crc = crc32(0, (void *)(addr + crc_off), crc_len);
+    static uint8_t buf[256];
+
+    /* Calculate start of crc input, relative to the start of the header. */
+    off = IMAGE_HEADER_CRC_OFFSET + sizeof hdr->ih_crc32;
+
+    /* Calculate length of crc input. */
+    crc_len = hdr->ih_hdr_size - off + hdr->ih_img_size;
+
+    /* Calculate absolute start of crc input. */
+    off += addr;
+
+    /* Apply crc to the image. */
+    crc = 0;
+    while (crc_len > 0) {
+        if (crc_len < sizeof buf) {
+            chunk_sz = crc_len;
+        } else {
+            chunk_sz = sizeof buf;
+        }
+
+        rc = flash_read(off, buf, chunk_sz);
+        if (rc != 0) {
+            return 0;
+        }
+
+        crc = crc32(crc, buf, chunk_sz);
+
+        off += chunk_sz;
+        crc_len -= chunk_sz;
+    }
 
     return crc == hdr->ih_crc32;
 }
@@ -119,13 +148,13 @@ boot_read_image_header(struct image_header *out_hdr, uint32_t flash_address)
  * empty image slots are filled with 0xff bytes.
  *
  * @param out_headers           Points to an array of image headers.  Each
- *                              element is filled with the header of the
- *                              corresponding image in flash.
+ *                                  element is filled with the header of the
+ *                                  corresponding image in flash.
  * @param addresses             An array containing the flash addresses of each
- *                              image slot.
+ *                                  image slot.
  * @param num_addresses         The number of headers to read.  This should
- *                              also be equal to the lengths of the out_headers
- *                              and addresses arrays.
+ *                                  also be equal to the lengths of the
+ *                                  out_headers and addresses arrays.
  */
 void
 boot_read_image_headers(struct image_header *out_headers,

@@ -3,10 +3,10 @@
 
 #include <inttypes.h>
 
-#define IMAGE_MAGIC         0x96f3b83c
-#define IMAGE_MAGIC_NONE    0xffffffff
+#define IMAGE_MAGIC                 0x96f3b83c
+#define IMAGE_MAGIC_NONE            0xffffffff
 
-#define IMAGE_F_PIC     0x00000001
+#define IMAGE_F_PIC                 0x00000001
 
 #define IMAGE_HEADER_CRC_OFFSET     4
 
