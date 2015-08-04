@@ -1517,7 +1517,7 @@ ffs_test_wear_level(void)
 }
 
 static void
-ffs_test_corruption(void)
+ffs_test_corrupt_scratch(void)
 {
     int non_scratch_id;
     int scratch_id;
@@ -1529,7 +1529,7 @@ ffs_test_corruption(void)
         { 0, 0 },
     };
 
-    printf("\tcorruption test\n");
+    printf("\tcorrupt scratch area test\n");
 
     /*** Setup. */
     rc = ffs_format(area_descs_two);
@@ -1606,7 +1606,7 @@ ffs_test(void)
     ffs_test_many_children();
     ffs_test_gc();
     ffs_test_wear_level();
-    ffs_test_corruption();
+    ffs_test_corrupt_scratch();
 
     printf("\n");
 
