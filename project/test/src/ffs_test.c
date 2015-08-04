@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "hal/hal_flash.h"
 #include "ffs/ffs.h"
 #include "../src/ffs_priv.h"
 #include "ffs_test.h"
@@ -171,6 +172,29 @@ ffs_test_util_append_file(const char *filename, const char *contents,
 
     rc = ffs_close(file);
     assert(rc == 0);
+}
+
+static void
+ffs_copy_area(const struct ffs_area_desc *from, const struct ffs_area_desc *to)
+{
+    void *buf;
+    int rc;
+
+    assert(from->fad_length == to->fad_length);
+
+    buf = malloc(from->fad_length);
+    assert(buf != NULL);
+
+    rc = flash_read(buf, from->fad_offset, from->fad_length);
+    assert(rc == 0);
+
+    rc = flash_erase(to->fad_offset, to->fad_length);
+    assert(rc == 0);
+
+    rc = flash_write(buf, to->fad_offset, to->fad_length);
+    assert(rc == 0);
+
+    free(buf);
 }
 
 struct ffs_test_file_desc {
@@ -391,9 +415,7 @@ ffs_test_assert_area_seqs(int seq1, int count1, int seq2, int count2)
         assert(ffs_area_magic_is_set(&disk_area));
         assert(disk_area.fda_gc_seq == ffs_areas[i].fa_gc_seq);
         if (i == ffs_scratch_area_id) {
-            assert(disk_area.fda_is_scratch == 0xff);
-        } else {
-            assert(disk_area.fda_is_scratch == 0);
+            assert(disk_area.fda_id == FFS_AREA_ID_NONE);
         }
 
         if (ffs_areas[i].fa_gc_seq == seq1) {
@@ -1515,6 +1537,71 @@ ffs_test_wear_level(void)
     }
 }
 
+static void
+ffs_test_corruption(void)
+{
+    int non_scratch_id;
+    int scratch_id;
+    int rc;
+
+    static const struct ffs_area_desc area_descs_two[] = {
+        { 0x00020000, 128 * 1024 },
+        { 0x00040000, 128 * 1024 },
+        { 0, 0 },
+    };
+
+    printf("\tcorruption test\n");
+
+    /*** Setup. */
+    rc = ffs_format(area_descs_two);
+    assert(rc == 0);
+
+    ffs_test_util_create_file("/myfile.txt", "contents", 8);
+
+    /* Copy the current contents of the non-scratch area to the scratch area.
+     * This will make the scratch area look like it only partially participated
+     * in a garbage collection cycle.
+     */
+    scratch_id = ffs_scratch_area_id;
+    non_scratch_id = scratch_id ^ 1;
+    ffs_copy_area(area_descs_two + non_scratch_id,
+                  area_descs_two + ffs_scratch_area_id);
+
+    /* Add some more data to the non-scratch area. */
+    rc = ffs_mkdir("/mydir");
+    assert(rc == 0);
+
+    /* Ensure the file system is successfully detected and valid, despite
+     * corruption.
+     */
+
+    rc = ffs_init();
+    assert(rc == 0);
+
+    rc = ffs_detect(area_descs_two);
+    assert(rc == 0);
+
+    assert(ffs_scratch_area_id == scratch_id);
+
+    struct ffs_test_file_desc *expected_system =
+        (struct ffs_test_file_desc[]) { {
+            .filename = "",
+            .is_dir = 1,
+            .children = (struct ffs_test_file_desc[]) { {
+                .filename = "mydir",
+                .is_dir = 1,
+            }, {
+                .filename = "myfile.txt",
+                .contents = "contents",
+                .contents_len = 8,
+            }, {
+                .filename = NULL,
+            } },
+    } };
+
+    ffs_test_assert_system(expected_system, area_descs_two);
+}
+
 int
 ffs_test(void)
 {
@@ -1540,6 +1627,7 @@ ffs_test(void)
     ffs_test_many_children();
     ffs_test_gc();
     ffs_test_wear_level();
+    ffs_test_corruption();
 
     printf("\n");
 
