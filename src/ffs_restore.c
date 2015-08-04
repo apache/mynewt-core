@@ -511,8 +511,15 @@ ffs_restore_detect_one_area(struct ffs_disk_area *out_disk_area,
     return 0;
 }
 
+/**
+ * Repairs the effects of a corrupt scratch area.  Scratch area corruption can
+ * occur when the system resets while a garbage collection cycle is in
+ * progress.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
-ffs_restore_corrupt_flash(void)
+ffs_restore_corrupt_scratch(void)
 {
     struct ffs_object *object;
     uint16_t good_idx;
@@ -520,11 +527,22 @@ ffs_restore_corrupt_flash(void)
     int rc;
     int i;
 
+    /* Search for a pair of areas with identical IDs.  If found, these areas
+     * represent the source and destination areas of a garbage collection
+     * cycle.  The shorter of the two areas was the destination area.  Since
+     * the garbage collection cycle did not finish, the source area contains a
+     * more complete set of objects than the destination area.
+     *
+     * good_idx = index of source area.
+     * bad_idx  = index of destination area; this will be turned into the
+     *            scratch area.
+     */
     rc = ffs_area_find_corrupt_scratch(&good_idx, &bad_idx);
     if (rc != 0) {
         return rc;
     }
 
+    /* Invalidate all objects resident in the bad area. */
     FFS_HASH_FOREACH(object, i) {
         if (object->fo_area_idx == bad_idx) {
             switch (object->fo_type) {
@@ -543,16 +561,19 @@ ffs_restore_corrupt_flash(void)
         }
     }
 
+    /* Now that the objects in the scratch area have been invalidated, reload
+     * everything from the good area.
+     */
     rc = ffs_restore_area_contents(good_idx);
     if (rc != 0) {
         return rc;
     }
 
+    /* Convert the bad area into a scratch area. */
     rc = ffs_format_area(bad_idx, 1);
     if (rc != 0) {
         return rc;
     }
-
     ffs_scratch_area_idx = bad_idx;
 
     return 0;
@@ -637,7 +658,7 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
         /* No scratch area.  The system may have been rebooted in the middle of
          * a garbage collection cycle.  Look for a candidate scratch area.
          */
-        rc = ffs_restore_corrupt_flash();
+        rc = ffs_restore_corrupt_scratch();
         if (rc != 0) {
             goto err;
         }
