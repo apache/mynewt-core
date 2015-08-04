@@ -248,6 +248,11 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
 {
     assert(old_block->fb_object.fo_id == disk_block->fdb_id);
 
+    if (old_block->fb_flags & FFS_BLOCK_F_DUMMY) {
+        *out_should_replace = 1;
+        return 0;
+    }
+
     if (old_block->fb_object.fo_seq < disk_block->fdb_seq) {
         *out_should_replace = 1;
         return 0;
@@ -500,27 +505,66 @@ ffs_restore_area_contents(int area_id)
  *                              nonzero on failure.
  */
 static int
-ffs_restore_detect_one_area(int *out_is_scratch, uint32_t area_offset)
+ffs_restore_detect_one_area(struct ffs_disk_area *out_disk_area,
+                            uint32_t area_offset)
 {
-    struct ffs_disk_area disk_area;
     int rc;
 
-    rc = flash_read(&disk_area, area_offset, sizeof disk_area);
+    rc = flash_read(out_disk_area, area_offset, sizeof *out_disk_area);
     if (rc != 0) {
         return FFS_EFLASH_ERROR;
     }
 
-    if (!ffs_area_magic_is_set(&disk_area)) {
+    if (!ffs_area_magic_is_set(out_disk_area)) {
         return FFS_ECORRUPT;
     }
 
-    if (disk_area.fda_is_scratch != 0 &&
-        disk_area.fda_is_scratch != 0xff) {
+    return 0;
+}
 
-        return FFS_ECORRUPT;
+static int
+ffs_restore_corrupt_flash(void)
+{
+    struct ffs_object *object;
+    uint16_t good_idx;
+    uint16_t bad_idx;
+    int rc;
+    int i;
+
+    rc = ffs_area_find_corrupt_scratch(&good_idx, &bad_idx);
+    if (rc != 0) {
+        return rc;
     }
 
-    *out_is_scratch = disk_area.fda_is_scratch == 0xff;
+    FFS_HASH_FOREACH(object, i) {
+        if (object->fo_area_id == bad_idx) {
+            switch (object->fo_type) {
+            case FFS_OBJECT_TYPE_INODE:
+                ((struct ffs_inode *) object)->fi_flags |= FFS_INODE_F_DUMMY;
+                break;
+
+            case FFS_OBJECT_TYPE_BLOCK:
+                ((struct ffs_block *) object)->fb_flags |= FFS_BLOCK_F_DUMMY;
+                break;
+
+            default:
+                assert(0);
+                return FFS_ECORRUPT;
+            }
+        }
+    }
+
+    rc = ffs_restore_area_contents(good_idx);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ffs_format_area(bad_idx, 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    ffs_scratch_area_id = bad_idx;
 
     return 0;
 }
@@ -541,8 +585,8 @@ ffs_restore_detect_one_area(int *out_is_scratch, uint32_t area_offset)
 int
 ffs_restore_full(const struct ffs_area_desc *area_descs)
 {
+    struct ffs_disk_area disk_area;
     int cur_area_id;
-    int is_scratch;
     int use_area;
     int rc;
     int i;
@@ -552,8 +596,7 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
     /* Read each area from flash. */
     for (i = 0; area_descs[i].fad_length != 0; i++) {
-        rc = ffs_restore_detect_one_area(&is_scratch,
-                                         area_descs[i].fad_offset);
+        rc = ffs_restore_detect_one_area(&disk_area, area_descs[i].fad_offset);
         switch (rc) {
         case 0:
             use_area = 1;
@@ -568,7 +611,9 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
         }
 
         if (use_area) {
-            if (is_scratch && ffs_scratch_area_id != FFS_AREA_ID_NONE) {
+            if (disk_area.fda_id == FFS_AREA_ID_NONE &&
+                ffs_scratch_area_id != FFS_AREA_ID_NONE) {
+
                 /* Don't allow more than one scratch area. */
                 use_area = 0;
             }
@@ -586,8 +631,10 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
             ffs_areas[cur_area_id].fa_offset = area_descs[i].fad_offset;
             ffs_areas[cur_area_id].fa_length = area_descs[i].fad_length;
             ffs_areas[cur_area_id].fa_cur = sizeof (struct ffs_disk_area);
+            ffs_areas[cur_area_id].fa_gc_seq = disk_area.fda_gc_seq;
+            ffs_areas[cur_area_id].fa_id = disk_area.fda_id;
 
-            if (is_scratch) {
+            if (disk_area.fda_id == FFS_AREA_ID_NONE) {
                 ffs_scratch_area_id = cur_area_id;
             } else {
                 ffs_restore_area_contents(cur_area_id);
@@ -596,6 +643,16 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
     }
 
     /* All areas have been restored from flash. */
+
+    if (ffs_scratch_area_id == FFS_AREA_ID_NONE) {
+        /* No scratch area.  The system may have been rebooted in the middle of
+         * a garbage collection cycle.  Look for a candidate scratch area.
+         */
+        rc = ffs_restore_corrupt_flash();
+        if (rc != 0) {
+            goto err;
+        }
+    }
 
     /* Ensure this file system contains a valid scratch area. */
     rc = ffs_misc_validate_scratch();

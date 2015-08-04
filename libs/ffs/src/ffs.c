@@ -50,6 +50,52 @@ ffs_unlock(void)
 }
 
 /**
+ * Opens a file at the specified path.  The result of opening a nonexistent
+ * file depends on the access flags specified.  All intermediate directories
+ * must have already been created.
+ *
+ * The mode strings passed to fopen() map to ffs_open()'s access flags as
+ * follows:
+ *   "r"  -  FFS_ACCESS_READ
+ *   "r+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE
+ *   "w"  -  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
+ *   "w+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
+ *   "a"  -  FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *   "a+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *
+ * @param out_file          On success, a pointer to the newly-created file
+ *                              handle gets written here.
+ * @param path              The path of the file to open.
+ * @param access_flags      Flags controlling file access; see above table.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int
+ffs_open(struct ffs_file **out_file, const char *path, uint8_t access_flags)
+{
+    int rc;
+
+    ffs_lock();
+
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_file_open(out_file, path, access_flags);
+    if (rc != 0) {
+        goto done;
+    }
+
+done:
+    ffs_unlock();
+    if (rc != 0) {
+        *out_file = NULL;
+    }
+    return rc;
+}
+
+/**
  * Closes the specified file and invalidates the file handle.  If the file has
  * already been unlinked, and this is the last open handle to the file, this
  * operation causes the file to be deleted.
@@ -69,40 +115,6 @@ ffs_close(struct ffs_file *file)
     rc = ffs_file_close(file);
     ffs_unlock();
 
-    return rc;
-}
-
-/**
- * Unlinks the file or directory at the specified path.  If the path refers to
- * a directory, all the directory's descendants are recursively unlinked.  Any
- * open file handles refering to an unlinked file remain valid, and can be
- * read from and written to.
- *
- * @path                    The path of the file or directory to unlink.
- *
- * @return                  0 on success; nonzero on failure.
- */
-int
-ffs_unlink(const char *path)
-{
-    int rc;
-
-    ffs_lock();
-
-    if (!ffs_ready()) {
-        rc = FFS_EUNINIT;
-        goto done;
-    }
-
-    rc = ffs_path_unlink(path);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = 0;
-
-done:
-    ffs_unlock();
     return rc;
 }
 
@@ -167,93 +179,6 @@ ffs_file_len(const struct ffs_file *file)
 }
 
 /**
- * Opens a file at the specified path.  The result of opening a nonexistent
- * file depends on the access flags specified.  All intermediate directories
- * must have already been created.
- *
- * The mode strings passed to fopen() map to ffs_open()'s access flags as
- * follows:
- *   "r"  -  FFS_ACCESS_READ
- *   "r+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE
- *   "w"  -  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
- *   "w+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
- *   "a"  -  FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
- *   "a+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
- *
- * @param out_file          On success, a pointer to the newly-created file
- *                          handle gets written here.
- * @param path              The path of the file to open.
- * @param access_flags      Flags controlling file access; see above table.
- *
- * @return                  0 on success; nonzero on failure.
- */
-int
-ffs_open(struct ffs_file **out_file, const char *path, uint8_t access_flags)
-{
-    int rc;
-
-    ffs_lock();
-
-    if (!ffs_ready()) {
-        rc = FFS_EUNINIT;
-        goto done;
-    }
-
-    rc = ffs_file_open(out_file, path, access_flags);
-    if (rc != 0) {
-        goto done;
-    }
-
-done:
-    ffs_unlock();
-    if (rc != 0) {
-        *out_file = NULL;
-    }
-    return rc;
-}
-
-/**
- * Performs a rename and / or move of the specified source path to the
- * specified * destination.  The source path can refer to either a file or a
- * directory.  All intermediate directories in the destination path must
- * already have been created.  If the source path refers to a file, the
- * destination path must contain a full filename path (i.e., if performing a
- * move, the destination path should end with the same filename in the source
- * path).  If an object already exists at the specified destination path, this
- * function causes it to be unlinked prior to the rename (i.e., the destination
- * gets clobbered).
- *
- * @param from              The source path.
- * @param to                The destination path.
- *
- * @return                  0 on success;
- *                          nonzero on failure.
- */
-int
-ffs_rename(const char *from, const char *to)
-{
-    int rc;
-
-    ffs_lock();
-
-    if (!ffs_ready()) {
-        rc = FFS_EUNINIT;
-        goto done;
-    }
-
-    rc = ffs_path_rename(from, to);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = 0;
-
-done:
-    ffs_unlock();
-    return rc;
-}
-
-/**
  * Reads data from the specified file.  If more data is requested than remains
  * in the file, all available data is retrieved.  Note: this type of short read
  * results in a success return code.
@@ -293,7 +218,7 @@ done:
 }
 
 /**
- * Writes the supplied data to the specified file handle.
+ * Writes the supplied data to the current offset of the specified file handle.
  *
  * @param file              The file to write to.
  * @param data              The data to write.
@@ -315,6 +240,81 @@ ffs_write(struct ffs_file *file, const void *data, int len)
     }
 
     rc = ffs_write_to_file(file, data, len);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_unlock();
+    return rc;
+}
+
+/**
+ * Unlinks the file or directory at the specified path.  If the path refers to
+ * a directory, all the directory's descendants are recursively unlinked.  Any
+ * open file handles refering to an unlinked file remain valid, and can be
+ * read from and written to.
+ *
+ * @path                    The path of the file or directory to unlink.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int
+ffs_unlink(const char *path)
+{
+    int rc;
+
+    ffs_lock();
+
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_path_unlink(path);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ffs_unlock();
+    return rc;
+}
+
+/**
+ * Performs a rename and / or move of the specified source path to the
+ * specified * destination.  The source path can refer to either a file or a
+ * directory.  All intermediate directories in the destination path must
+ * already have been created.  If the source path refers to a file, the
+ * destination path must contain a full filename path (i.e., if performing a
+ * move, the destination path should end with the same filename in the source
+ * path).  If an object already exists at the specified destination path, this
+ * function causes it to be unlinked prior to the rename (i.e., the destination
+ * gets clobbered).
+ *
+ * @param from              The source path.
+ * @param to                The destination path.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int
+ffs_rename(const char *from, const char *to)
+{
+    int rc;
+
+    ffs_lock();
+
+    if (!ffs_ready()) {
+        rc = FFS_EUNINIT;
+        goto done;
+    }
+
+    rc = ffs_path_rename(from, to);
     if (rc != 0) {
         goto done;
     }
