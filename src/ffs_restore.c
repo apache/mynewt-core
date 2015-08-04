@@ -499,7 +499,7 @@ ffs_restore_detect_one_area(struct ffs_disk_area *out_disk_area,
 {
     int rc;
 
-    rc = flash_read(out_disk_area, area_offset, sizeof *out_disk_area);
+    rc = flash_read(area_offset, out_disk_area, sizeof *out_disk_area);
     if (rc != 0) {
         return FFS_EFLASH_ERROR;
     }
