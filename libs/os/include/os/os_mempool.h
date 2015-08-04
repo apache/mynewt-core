@@ -57,6 +57,10 @@ typedef uint32_t os_membuf_t;
 typedef uint64_t os_membuf_t;
 #endif
 
+/** Calculates the number of bytes required to initialize a memory pool. */
+#define OS_MEMPOOL_BYTES(n,blksize)     \
+    (sizeof (os_membuf_t) * OS_MEMPOOL_SIZE((n), (blksize)))
+
 /* Initialize a memory pool */
 os_error_t os_mempool_init(struct os_mempool *mp, int blocks, int block_size, 
                            void *membuf, char *name);
