@@ -75,7 +75,7 @@ flash_native_ensure_file_open(void)
 }
 
 int
-flash_write(const void *src, uint32_t address, uint32_t length)
+flash_write(uint32_t address, const void *src, uint32_t length)
 {
     static uint8_t buf[256];
     uint32_t cur;
@@ -102,9 +102,9 @@ flash_write(const void *src, uint32_t address, uint32_t length)
             chunk_sz = sizeof buf;
         }
 
-        rc = flash_read(buf, cur, chunk_sz);
+        /* Ensure data is not being overwritten. */
+        rc = flash_read(cur, buf, chunk_sz);
         assert(rc == 0);
-
         for (i = 0; i < chunk_sz; i++) {
             assert(buf[i] == 0xff);
         }
@@ -121,7 +121,7 @@ flash_write(const void *src, uint32_t address, uint32_t length)
 }
 
 int
-flash_read(void *dst, uint32_t address, uint32_t length)
+flash_read(uint32_t address, void *dst, uint32_t length)
 {
     flash_native_ensure_file_open();
     fseek(file, address, SEEK_SET);

@@ -27,14 +27,14 @@ static const struct flash_area_desc {
                                 sizeof flash_area_descs[0])
 
 int
-flash_read(void *dst, uint32_t address, uint32_t num_bytes)
+flash_read(uint32_t address, void *dst, uint32_t num_bytes)
 {
     memcpy(dst, (void *)address, num_bytes);
     return 0;
 }
 
 int
-flash_write(const void *src, uint32_t address, uint32_t num_bytes)
+flash_write(uint32_t address, const void *src, uint32_t num_bytes)
 {
     const uint8_t *sptr;
     uint32_t i;

@@ -193,13 +193,13 @@ boot_copy_area(int from_area_idx, int to_area_idx)
         }
 
         from_addr = from_area_desc->fad_offset + off;
-        rc = flash_read(buf, from_addr, chunk_sz);
+        rc = flash_read(from_addr, buf, chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
         to_addr = to_area_desc->fad_offset + off;
-        rc = flash_write(buf, to_addr, chunk_sz);
+        rc = flash_write(to_addr, buf, chunk_sz);
         if (rc != 0) {
             return rc;
         }
@@ -374,6 +374,8 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
     int dst_image_area_idx;
     int src_area_idx;
     int dst_area_idx;
+    int src_img_num;
+    int dst_img_num;
     int part_num;
     int rc;
 
@@ -405,8 +407,10 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
                                       img_num, part_num);
             } else {
                 /* Swap the two areas. */
-                rc = boot_swap_areas(src_area_idx, img_num ^ 1, part_num,
-                                       dst_area_idx, img_num, part_num);
+                src_img_num = img_num ^ 1;
+                dst_img_num = img_num;
+                rc = boot_swap_areas(src_area_idx, src_img_num, part_num,
+                                     dst_area_idx, dst_img_num, part_num);
             }
             if (rc != 0) {
                 return rc;

@@ -17,7 +17,7 @@ ffs_flash_read(uint16_t area_idx, uint32_t offset, void *data, uint32_t len)
         return FFS_ERANGE;
     }
 
-    rc = flash_read(data, area->fa_offset + offset, len);
+    rc = flash_read(area->fa_offset + offset, data, len);
     return rc;
 }
 
@@ -36,7 +36,7 @@ ffs_flash_write(uint16_t area_idx, uint32_t offset, const void *data,
         return FFS_ERANGE;
     }
 
-    rc = flash_write(data, area->fa_offset + offset, len);
+    rc = flash_write(area->fa_offset + offset, data, len);
     if (rc != 0) {
         return FFS_EFLASH_ERROR;
     }

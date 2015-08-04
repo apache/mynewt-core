@@ -109,14 +109,14 @@ boot_test_util_copy_area(int from_area_idx, int to_area_idx)
     buf = malloc(from_area_desc->fad_length);
     assert(buf != NULL);
 
-    rc = flash_read(buf, from_area_desc->fad_offset,
+    rc = flash_read(from_area_desc->fad_offset, buf,
                     from_area_desc->fad_length);
     assert(rc == 0);
 
     rc = flash_erase(to_area_desc->fad_offset, to_area_desc->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf, to_area_desc->fad_offset,
+    rc = flash_write(to_area_desc->fad_offset, buf,
                      to_area_desc->fad_length);
     assert(rc == 0);
 
@@ -143,10 +143,10 @@ boot_test_util_swap_areas(int area_idx1, int area_idx2)
     buf2 = malloc(area_desc2->fad_length);
     assert(buf2 != NULL);
 
-    rc = flash_read(buf1, area_desc1->fad_offset, area_desc1->fad_length);
+    rc = flash_read(area_desc1->fad_offset, buf1, area_desc1->fad_length);
     assert(rc == 0);
 
-    rc = flash_read(buf2, area_desc2->fad_offset, area_desc2->fad_length);
+    rc = flash_read(area_desc2->fad_offset, buf2, area_desc2->fad_length);
     assert(rc == 0);
 
     rc = flash_erase(area_desc1->fad_offset, area_desc1->fad_length);
@@ -155,10 +155,10 @@ boot_test_util_swap_areas(int area_idx1, int area_idx2)
     rc = flash_erase(area_desc2->fad_offset, area_desc2->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf2, area_desc1->fad_offset, area_desc1->fad_length);
+    rc = flash_write(area_desc1->fad_offset, buf2, area_desc1->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf1, area_desc2->fad_offset, area_desc2->fad_length);
+    rc = flash_write(area_desc2->fad_offset, buf1, area_desc2->fad_length);
     assert(rc == 0);
 
     free(buf1);
@@ -179,7 +179,7 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
 
     off = boot_test_img_addrs[slot];
 
-    rc = flash_write(hdr, off, sizeof *hdr);
+    rc = flash_write(off, hdr, sizeof *hdr);
     assert(rc == 0);
 
     off += hdr->ih_hdr_size;
@@ -196,7 +196,7 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
             buf[i] = boot_test_util_byte_at(slot, image_off + i);
         }
 
-        rc = flash_write(buf, off + image_off, chunk_sz);
+        rc = flash_write(off + image_off, buf, chunk_sz);
         assert(rc == 0);
 
         image_off += chunk_sz;
@@ -228,7 +228,7 @@ boot_test_util_verify_area(const struct ffs_area_desc *area_desc,
         img_size = hdr->ih_img_size;
 
         if (addr == image_addr) {
-            rc = flash_read(&temp_hdr, image_addr, sizeof temp_hdr);
+            rc = flash_read(image_addr, &temp_hdr, sizeof temp_hdr);
             assert(rc == 0);
             assert(memcmp(&temp_hdr, hdr, sizeof *hdr) == 0);
 
@@ -256,7 +256,7 @@ boot_test_util_verify_area(const struct ffs_area_desc *area_desc,
             chunk_sz = rem_area;
         }
 
-        rc = flash_read(buf, addr, chunk_sz);
+        rc = flash_read(addr, buf, chunk_sz);
         assert(rc == 0);
 
         for (i = 0; i < chunk_sz; i++) {

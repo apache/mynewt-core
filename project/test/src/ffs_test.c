@@ -168,13 +168,13 @@ ffs_copy_area(const struct ffs_area_desc *from, const struct ffs_area_desc *to)
     buf = malloc(from->fad_length);
     assert(buf != NULL);
 
-    rc = flash_read(buf, from->fad_offset, from->fad_length);
+    rc = flash_read(from->fad_offset, buf, from->fad_length);
     assert(rc == 0);
 
     rc = flash_erase(to->fad_offset, to->fad_length);
     assert(rc == 0);
 
-    rc = flash_write(buf, to->fad_offset, to->fad_length);
+    rc = flash_write(to->fad_offset, buf, to->fad_length);
     assert(rc == 0);
 
     free(buf);

@@ -102,7 +102,7 @@ boot_read_image_header(struct image_header *out_hdr, uint32_t flash_address)
 {
     int rc;
 
-    rc = flash_read(out_hdr, flash_address, sizeof *out_hdr);
+    rc = flash_read(flash_address, out_hdr, sizeof *out_hdr);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
