@@ -1,4 +1,3 @@
-#define STM32F407xx // XXX ccollins temp
 #define HAL_FLASH_MODULE_ENABLED
 /**
   ******************************************************************************
