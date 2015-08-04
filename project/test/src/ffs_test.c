@@ -25,20 +25,6 @@ static const struct ffs_area_desc ffs_area_descs[] = {
 };
 
 static void
-ffs_test_util_assert_len_consistent(const struct ffs_file *file)
-{
-    const struct ffs_block *block;
-    uint32_t data_len;
-
-    data_len = 0;
-    SLIST_FOREACH(block, &file->ff_inode->fi_block_list, fb_next) {
-        data_len += block->fb_data_len;
-    }
-
-    assert(data_len == file->ff_inode->fi_data_len);
-}
-
-static void
 ffs_test_util_assert_contents(const char *filename, const char *contents,
                               int contents_len)
 {
@@ -58,7 +44,6 @@ ffs_test_util_assert_contents(const char *filename, const char *contents,
     assert(rc == 0);
     assert(len == contents_len);
     assert(memcmp(buf, contents, contents_len) == 0);
-    ffs_test_util_assert_len_consistent(file);
 
     rc = ffs_close(file);
     assert(rc == 0);
@@ -167,8 +152,6 @@ ffs_test_util_append_file(const char *filename, const char *contents,
 
     rc = ffs_write(file, contents, contents_len);
     assert(rc == 0);
-
-    ffs_test_util_assert_len_consistent(file);
 
     rc = ffs_close(file);
     assert(rc == 0);
@@ -348,10 +331,6 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
             } else {
                 ffs_test_assert_child_inode_present(inode);
             }
-            if (!(inode->fi_flags & FFS_INODE_F_DIRECTORY)) {
-                assert(inode->fi_data_len ==
-                       ffs_inode_calc_data_length(inode));
-            }
             break;
 
         case FFS_OBJECT_TYPE_BLOCK:
@@ -388,7 +367,7 @@ ffs_test_assert_system(const struct ffs_test_file_desc *root_dir,
     ffs_test_assert_system_once(root_dir);
 
     /* Clear cached data and restore from flash (i.e, simulate a reboot). */
-    rc = ffs_init();
+    rc = ffs_misc_reset();
     assert(rc == 0);
     rc = ffs_detect(area_descs);
     assert(rc == 0);
@@ -414,7 +393,7 @@ ffs_test_assert_area_seqs(int seq1, int count1, int seq2, int count2)
         assert(rc == 0);
         assert(ffs_area_magic_is_set(&disk_area));
         assert(disk_area.fda_gc_seq == ffs_areas[i].fa_gc_seq);
-        if (i == ffs_scratch_area_id) {
+        if (i == ffs_scratch_area_idx) {
             assert(disk_area.fda_id == FFS_AREA_ID_NONE);
         }
 
@@ -1562,10 +1541,10 @@ ffs_test_corruption(void)
      * This will make the scratch area look like it only partially participated
      * in a garbage collection cycle.
      */
-    scratch_id = ffs_scratch_area_id;
+    scratch_id = ffs_scratch_area_idx;
     non_scratch_id = scratch_id ^ 1;
     ffs_copy_area(area_descs_two + non_scratch_id,
-                  area_descs_two + ffs_scratch_area_id);
+                  area_descs_two + ffs_scratch_area_idx);
 
     /* Add some more data to the non-scratch area. */
     rc = ffs_mkdir("/mydir");
@@ -1575,13 +1554,13 @@ ffs_test_corruption(void)
      * corruption.
      */
 
-    rc = ffs_init();
+    rc = ffs_misc_reset();
     assert(rc == 0);
 
     rc = ffs_detect(area_descs_two);
     assert(rc == 0);
 
-    assert(ffs_scratch_area_id == scratch_id);
+    assert(ffs_scratch_area_idx == scratch_id);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
