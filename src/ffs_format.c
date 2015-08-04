@@ -22,10 +22,9 @@ ffs_format_from_scratch_area(uint16_t area_id)
             return rc;
         }
     } else {
-        disk_area.fda_is_scratch = 0;
-        rc = ffs_flash_write(area_id, FFS_AREA_OFFSET_IS_SCRATCH,
-                             &disk_area.fda_is_scratch,
-                             sizeof disk_area.fda_is_scratch);
+        disk_area.fda_id = area_id;
+        rc = ffs_flash_write(area_id, FFS_AREA_OFFSET_ID,
+                             &disk_area.fda_id, sizeof disk_area.fda_id);
         if (rc != 0) {
             return rc;
         }
@@ -53,7 +52,7 @@ ffs_format_area(uint16_t area_id, int is_scratch)
     ffs_area_to_disk(&disk_area, area);
 
     if (is_scratch) {
-        write_len = sizeof disk_area - 1;
+        write_len = sizeof disk_area - sizeof disk_area.fda_id;
     } else {
         write_len = sizeof disk_area;
     }
@@ -121,6 +120,12 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
         ffs_areas[i].fa_length = area_descs[i].fad_length;
         ffs_areas[i].fa_cur = 0;
         ffs_areas[i].fa_gc_seq = 0;
+
+        if (i == ffs_scratch_area_id) {
+            ffs_areas[i].fa_id = FFS_AREA_ID_NONE;
+        } else {
+            ffs_areas[i].fa_id = i;
+        }
 
         rc = ffs_format_area(i, i == ffs_scratch_area_id);
         if (rc != 0) {

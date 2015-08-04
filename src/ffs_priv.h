@@ -16,9 +16,10 @@
 #define FFS_INODE_MAGIC             0x925f8bc0
 
 #define FFS_AREA_ID_NONE            0xffff
-#define FFS_AREA_OFFSET_IS_SCRATCH  23
+#define FFS_AREA_VER                0
+#define FFS_AREA_OFFSET_ID          22
 
-#define FFS_SHORT_FILENAME_LEN      16
+#define FFS_SHORT_FILENAME_LEN      1
 
 #define FFS_BLOCK_SIZE              512
 #define FFS_BLOCK_DATA_LEN          (FFS_BLOCK_SIZE -                   \
@@ -26,23 +27,29 @@
 
 #define FFS_HASH_SIZE               256
 
+/* These inode flags are used in the disk and RAM representations. */
 #define FFS_INODE_F_DELETED         0x01
-#define FFS_INODE_F_DUMMY           0x02
-#define FFS_INODE_F_DIRECTORY       0x04
+#define FFS_INODE_F_DIRECTORY       0x02
+
+/* These inode flags are only used in the RAM representation. */
+#define FFS_INODE_F_DUMMY           0x04
 #define FFS_INODE_F_TEST            0x80
 
+/* These block flags are used in the disk and RAM representations. */
 #define FFS_BLOCK_F_DELETED         0x01
 
-#define FFS_BLOCK_MAX_DATA_SZ_MAX   2048
+/* These block flags are only used in the RAM representation. */
+#define FFS_BLOCK_F_DUMMY           0x02
 
+#define FFS_BLOCK_MAX_DATA_SZ_MAX   2048
 
 /** On-disk representation of an area header. */
 struct ffs_disk_area {
     uint32_t fda_magic[4];  /* FFS_AREA_MAGIC{0,1,2,3} */
     uint32_t fda_length;    /* Total size of area, in bytes. */
-    uint16_t reserved16;
+    uint8_t fda_ver;        /* 0 */
     uint8_t fda_gc_seq;     /* Garbage collection count. */
-    uint8_t fda_is_scratch; /* 0xff if scratch area; otherwise 0x00. */
+    uint16_t fda_id;        /* 0xffff if scratch area. */
     /* XXX: ECC for area header. */
 };
 
@@ -122,6 +129,7 @@ struct ffs_area {
     uint32_t fa_length;
     uint32_t fa_cur;
     uint8_t fa_gc_seq;
+    uint16_t fa_id;
 };
 
 struct ffs_disk_object {
@@ -262,6 +270,8 @@ int ffs_area_is_scratch(const struct ffs_disk_area *disk_area);
 void ffs_area_to_disk(struct ffs_disk_area *out_disk_area,
                         const struct ffs_area *area);
 uint32_t ffs_area_free_space(const struct ffs_area *area);
+int ffs_area_find_corrupt_scratch(uint16_t *out_good_idx,
+                                  uint16_t *out_bad_idx);
 
 int ffs_misc_validate_root(void);
 int ffs_misc_validate_scratch(void);
