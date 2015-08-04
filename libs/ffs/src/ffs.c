@@ -5,22 +5,23 @@
 #include "hal/hal_flash.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
+#include "os/os_malloc.h"
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 extern struct os_task *g_current_task;  /* XXX */
 
-#define FFS_NUM_FILES           8
-#define FFS_NUM_INODES          100
-#define FFS_NUM_BLOCKS          100
-
 struct ffs_area *ffs_areas;
 uint16_t ffs_num_areas;
-uint16_t ffs_scratch_area_id;
+uint16_t ffs_scratch_area_idx;
 uint16_t ffs_block_max_data_sz;
 
 struct os_mempool ffs_file_pool;
 struct os_mempool ffs_inode_pool;
 struct os_mempool ffs_block_pool;
+
+void *ffs_file_mem;
+void *ffs_inode_mem;
+void *ffs_block_mem;
 
 struct ffs_inode *ffs_root_dir;
 uint32_t ffs_next_id;
@@ -172,7 +173,7 @@ ffs_file_len(const struct ffs_file *file)
     uint32_t len;
 
     ffs_lock();
-    len = file->ff_inode->fi_data_len;
+    len = ffs_inode_calc_data_length(file->ff_inode);
     ffs_unlock();
 
     return len;
@@ -427,41 +428,35 @@ ffs_init(void)
 {
     int rc;
 
-    static os_membuf_t file_buf[
-        OS_MEMPOOL_SIZE(FFS_NUM_FILES, sizeof (struct ffs_file))];
-    static os_membuf_t inode_buf[
-        OS_MEMPOOL_SIZE(FFS_NUM_INODES, sizeof (struct ffs_inode))];
-    static os_membuf_t block_buf[
-        OS_MEMPOOL_SIZE(FFS_NUM_BLOCKS, sizeof (struct ffs_block))];
+    ffs_config_init();
 
     rc = os_mutex_create(&ffs_mutex);
     if (rc != 0) {
         return FFS_EOS;
     }
 
-    rc = os_mempool_init(&ffs_file_pool, FFS_NUM_FILES,
-                         sizeof (struct ffs_file), &file_buf[0],
-                         "ffs_file_pool");
-    if (rc != 0) {
-        return FFS_EOS;
+    ffs_file_mem = os_malloc(
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_files, sizeof (struct ffs_file)));
+    if (ffs_file_mem == NULL) {
+        return FFS_ENOMEM;
     }
 
-    rc = os_mempool_init(&ffs_inode_pool, FFS_NUM_INODES,
-                         sizeof (struct ffs_inode), &inode_buf[0],
-                         "ffs_inode_pool");
-    if (rc != 0) {
-        return FFS_EOS;
+    ffs_inode_mem = os_malloc(
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_inodes, sizeof (struct ffs_inode)));
+    if (ffs_inode_mem == NULL) {
+        return FFS_ENOMEM;
     }
 
-    rc = os_mempool_init(&ffs_block_pool, FFS_NUM_BLOCKS,
-                         sizeof (struct ffs_block), &block_buf[0],
-                         "ffs_block_pool");
-    if (rc != 0) {
-        return FFS_EOS;
+    ffs_block_mem = os_malloc(
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks, sizeof (struct ffs_block)));
+    if (ffs_block_mem == NULL) {
+        return FFS_ENOMEM;
     }
 
-    ffs_hash_init();
+    rc = ffs_misc_reset();
+    if (rc != 0) {
+        return rc;
+    }
 
     return 0;
 }
-

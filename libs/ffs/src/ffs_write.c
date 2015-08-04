@@ -184,7 +184,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     uint32_t chunk_len;
     uint32_t offset;
     uint32_t cur;
-    uint16_t area_id;
+    uint16_t area_idx;
     int rc;
 
     assert(data_len <= ffs_block_max_data_sz);
@@ -225,11 +225,11 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
 
     /* Write the new data block to disk. */
     disk_size = ffs_write_disk_size(write_info, &disk_block);
-    rc = ffs_misc_reserve_space(&area_id, &offset, disk_size);
+    rc = ffs_misc_reserve_space(&area_idx, &offset, disk_size);
     if (rc != 0) {
         return rc;
     }
-    rc = ffs_flash_write(area_id, offset, &disk_block, sizeof disk_block);
+    rc = ffs_flash_write(area_idx, offset, &disk_block, sizeof disk_block);
     if (rc != 0) {
         return rc;
     }
@@ -239,17 +239,17 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     if (write_info->fwi_start_block != NULL) {
         chunk_len = write_info->fwi_start_offset;
         rc = ffs_flash_copy(
-            write_info->fwi_start_block->fb_object.fo_area_id,
+            write_info->fwi_start_block->fb_object.fo_area_idx,
             write_info->fwi_start_block->fb_object.fo_area_offset +
                 sizeof disk_block,
-            area_id, cur, chunk_len);
+            area_idx, cur, chunk_len);
         if (rc != 0) {
             return rc;
         }
         cur += chunk_len;
     }
 
-    rc = ffs_flash_write(area_id, cur, data, data_len);
+    rc = ffs_flash_write(area_idx, cur, data, data_len);
     if (rc != 0) {
         return rc;
     }
@@ -260,10 +260,10 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
         chunk_len = write_info->fwi_end_block->fb_data_len -
                     write_info->fwi_end_offset;
         rc = ffs_flash_copy(
-            write_info->fwi_end_block->fb_object.fo_area_id,
+            write_info->fwi_end_block->fb_object.fo_area_idx,
             write_info->fwi_end_block->fb_object.fo_area_offset +
                 sizeof disk_block + write_info->fwi_end_offset,
-            area_id, cur, chunk_len);
+            area_idx, cur, chunk_len);
         if (rc != 0) {
             return rc;
         }
@@ -287,7 +287,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
         return FFS_ENOMEM;
     }
 
-    ffs_block_from_disk(block, &disk_block, area_id, offset);
+    ffs_block_from_disk(block, &disk_block, area_idx, offset);
     block->fb_inode = inode;
     ffs_hash_insert(&block->fb_object);
     ffs_inode_insert_block(inode, block);
@@ -312,7 +312,7 @@ ffs_write_chunk(struct ffs_file *file, const void *data, int len)
      * seek position.
      */
     if (file->ff_access_flags & FFS_ACCESS_APPEND) {
-        file_offset = file->ff_inode->fi_data_len;
+        file_offset = ffs_inode_calc_data_length(file->ff_inode);
     } else {
         file_offset = file->ff_offset;
     }

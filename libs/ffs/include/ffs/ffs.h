@@ -25,6 +25,14 @@
 #define FFS_ERDONLY             12
 #define FFS_EUNINIT             13
 
+struct ffs_config {
+    uint32_t fc_num_inodes;
+    uint32_t fc_num_blocks;
+    uint32_t fc_num_files;
+};
+
+extern struct ffs_config ffs_config;
+
 struct ffs_area_desc {
     uint32_t fad_offset;    /* Flash offset of start of area. */
     uint32_t fad_length;    /* Size of area, in bytes. */

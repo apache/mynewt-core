@@ -21,10 +21,6 @@
 
 #define FFS_SHORT_FILENAME_LEN      1
 
-#define FFS_BLOCK_SIZE              512
-#define FFS_BLOCK_DATA_LEN          (FFS_BLOCK_SIZE -                   \
-                                    sizeof (struct ffs_disk_block))
-
 #define FFS_HASH_SIZE               256
 
 /* These inode flags are used in the disk and RAM representations. */
@@ -47,7 +43,7 @@
 struct ffs_disk_area {
     uint32_t fda_magic[4];  /* FFS_AREA_MAGIC{0,1,2,3} */
     uint32_t fda_length;    /* Total size of area, in bytes. */
-    uint8_t fda_ver;        /* 0 */
+    uint8_t fda_ver;        /* Current ffs version: 0 */
     uint8_t fda_gc_seq;     /* Garbage collection count. */
     uint16_t fda_id;        /* 0xffff if scratch area. */
     /* XXX: ECC for area header. */
@@ -87,7 +83,7 @@ struct ffs_object {
     uint32_t fo_id;
     uint32_t fo_seq;
     uint32_t fo_area_offset;
-    uint16_t fo_area_id;
+    uint16_t fo_area_idx;
     uint8_t fo_type;
 };
 
@@ -111,7 +107,6 @@ struct ffs_inode {
         struct ffs_inode_list fi_child_list;    /* If directory. */
     };
     struct ffs_inode *fi_parent;    /* Pointer to parent directory inode. */
-    uint32_t fi_data_len;           /* If file. */
     uint8_t fi_filename_len;
     uint8_t fi_flags;
     uint8_t fi_refcnt;
@@ -134,7 +129,7 @@ struct ffs_area {
 
 struct ffs_disk_object {
     int fdo_type;
-    uint16_t fdo_area_id;
+    uint16_t fdo_area_idx;
     uint32_t fdo_offset;
     union {
         struct ffs_disk_inode fdo_disk_inode;
@@ -154,13 +149,16 @@ struct ffs_path_parser {
     int fpp_off;
 };
 
+extern void *ffs_file_mem;
+extern void *ffs_block_mem;
+extern void *ffs_inode_mem;
 extern struct os_mempool ffs_file_pool;
 extern struct os_mempool ffs_inode_pool;
 extern struct os_mempool ffs_block_pool;
 extern uint32_t ffs_next_id;
 extern struct ffs_area *ffs_areas;
 extern uint16_t ffs_num_areas;
-extern uint16_t ffs_scratch_area_id;
+extern uint16_t ffs_scratch_area_idx;
 extern uint16_t ffs_block_max_data_sz;
 
 SLIST_HEAD(ffs_object_list, ffs_object);
@@ -168,13 +166,15 @@ extern struct ffs_object_list ffs_hash[FFS_HASH_SIZE];
 extern struct ffs_inode *ffs_root_dir;
 
 struct ffs_area *ffs_flash_find_area(uint16_t logical_id);
-int ffs_flash_read(uint16_t area_id, uint32_t offset,
+int ffs_flash_read(uint16_t area_idx, uint32_t offset,
                    void *data, uint32_t len);
-int ffs_flash_write(uint16_t area_id, uint32_t offset,
+int ffs_flash_write(uint16_t area_idx, uint32_t offset,
                     const void *data, uint32_t len);
 int ffs_flash_copy(uint16_t area_id_from, uint32_t offset_from,
                    uint16_t area_id_to, uint32_t offset_to,
                    uint32_t len);
+
+void ffs_config_init(void);
 
 struct ffs_object *ffs_hash_find(uint32_t id);
 int ffs_hash_find_inode(struct ffs_inode **out_inode, uint32_t id);
@@ -203,14 +203,14 @@ void ffs_inode_delete_from_ram(struct ffs_inode *inode);
 int ffs_inode_delete_from_disk(const struct ffs_inode *inode);
 int ffs_inode_from_disk(struct ffs_inode *out_inode,
                         const struct ffs_disk_inode *disk_inode,
-                        uint16_t area_id, uint32_t offset);
+                        uint16_t area_idx, uint32_t offset);
 int ffs_inode_rename(struct ffs_inode *inode, const char *filename);
 void ffs_inode_insert_block(struct ffs_inode *inode, struct ffs_block *block);
 int ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode,
-                        char *out_filename, uint16_t area_id,
+                        char *out_filename, uint16_t area_idx,
                         uint32_t offset);
 int ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
-                         const char *filename, uint16_t area_id,
+                         const char *filename, uint16_t area_idx,
                          uint32_t offset);
 int ffs_inode_seek(const struct ffs_inode *inode, uint32_t offset,
                    struct ffs_block **out_prev_block,
@@ -231,8 +231,8 @@ struct ffs_block *ffs_block_alloc(void);
 void ffs_block_free(struct ffs_block *block);
 uint32_t ffs_block_disk_size(const struct ffs_block *block);
 int ffs_block_read_disk(struct ffs_disk_block *out_disk_block,
-                        uint16_t area_id, uint32_t offset);
-int ffs_block_write_disk(uint16_t *out_area_id, uint32_t *out_offset,
+                        uint16_t area_idx, uint32_t offset);
+int ffs_block_write_disk(uint16_t *out_area_idx, uint32_t *out_offset,
                          const struct ffs_disk_block *disk_block,
                          const void *data);
 void ffs_block_delete_from_ram(struct ffs_block *block);
@@ -243,9 +243,9 @@ void ffs_block_delete_list_from_disk(const struct ffs_block *first,
                                      const struct ffs_block *last);
 void ffs_block_from_disk(struct ffs_block *out_block,
                          const struct ffs_disk_block *disk_block,
-                         uint16_t area_id, uint32_t offset);
+                         uint16_t area_idx, uint32_t offset);
 
-int ffs_misc_reserve_space(uint16_t *out_area_id, uint32_t *out_offset,
+int ffs_misc_reserve_space(uint16_t *out_area_idx, uint32_t *out_offset,
                            uint16_t size);
 int ffs_misc_set_num_areas(uint16_t num_areas);
 
@@ -255,14 +255,13 @@ int ffs_file_seek(struct ffs_file *file, uint32_t offset);
 int ffs_file_close(struct ffs_file *file);
 int ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
                  const char *filename, uint8_t filename_len, int is_dir);
-void ffs_format_ram(void);
 
-int ffs_format_area(uint16_t area_id, int is_scratch);
-int ffs_format_from_scratch_area(uint16_t area_id);
+int ffs_format_area(uint16_t area_idx, int is_scratch);
+int ffs_format_from_scratch_area(uint16_t area_idx, uint16_t area_id);
 int ffs_format_full(const struct ffs_area_desc *area_descs);
 
-int ffs_gc(uint16_t *out_area_id);
-int ffs_gc_until(uint16_t *out_area_id, uint32_t space);
+int ffs_gc(uint16_t *out_area_idx);
+int ffs_gc_until(uint16_t *out_area_idx, uint32_t space);
 
 int ffs_area_desc_validate(const struct ffs_area_desc *area_desc);
 int ffs_area_magic_is_set(const struct ffs_disk_area *disk_area);
@@ -275,7 +274,7 @@ int ffs_area_find_corrupt_scratch(uint16_t *out_good_idx,
 
 int ffs_misc_validate_root(void);
 int ffs_misc_validate_scratch(void);
-void ffs_misc_invalidate(void);
+int ffs_misc_reset(void);
 void ffs_misc_set_max_block_data_size(void);
 
 int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
