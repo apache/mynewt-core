@@ -84,4 +84,3 @@ ffs_area_find_corrupt_scratch(uint16_t *out_good_idx, uint16_t *out_bad_idx)
 
     return FFS_ECORRUPT;
 }
-
