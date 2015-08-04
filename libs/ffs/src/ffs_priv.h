@@ -161,6 +161,9 @@ extern uint16_t ffs_num_areas;
 extern uint16_t ffs_scratch_area_idx;
 extern uint16_t ffs_block_max_data_sz;
 
+#define FFS_FLASH_BUF_SZ        256
+extern uint8_t ffs_flash_buf[FFS_FLASH_BUF_SZ];
+
 SLIST_HEAD(ffs_object_list, ffs_object);
 extern struct ffs_object_list ffs_hash[FFS_HASH_SIZE];
 extern struct ffs_inode *ffs_root_dir;
@@ -267,7 +270,7 @@ int ffs_area_desc_validate(const struct ffs_area_desc *area_desc);
 int ffs_area_magic_is_set(const struct ffs_disk_area *disk_area);
 int ffs_area_is_scratch(const struct ffs_disk_area *disk_area);
 void ffs_area_to_disk(struct ffs_disk_area *out_disk_area,
-                        const struct ffs_area *area);
+                      const struct ffs_area *area);
 uint32_t ffs_area_free_space(const struct ffs_area *area);
 int ffs_area_find_corrupt_scratch(uint16_t *out_good_idx,
                                   uint16_t *out_bad_idx);

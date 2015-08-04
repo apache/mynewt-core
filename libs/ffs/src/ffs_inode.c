@@ -5,7 +5,13 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
-static uint8_t ffs_inode_filename_buf[2][128];
+/* Partition the flash buffer into two equal halves; used for filename
+ * comparisons.
+ */
+#define FFS_INODE_FILENAME_BUF_SZ   (sizeof ffs_flash_buf / 2)
+static uint8_t *ffs_inode_filename_buf0 = ffs_flash_buf;
+static uint8_t *ffs_inode_filename_buf1 =
+    ffs_flash_buf + FFS_INODE_FILENAME_BUF_SZ;
 
 struct ffs_inode *
 ffs_inode_alloc(void)
@@ -417,20 +423,20 @@ ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
     off = chunk_len;
     while (*result == 0 && off < short_len) {
         rem_len = short_len - off;
-        if (rem_len > sizeof ffs_inode_filename_buf[0]) {
-            chunk_len = sizeof ffs_inode_filename_buf[0];
+        if (rem_len > FFS_INODE_FILENAME_BUF_SZ) {
+            chunk_len = FFS_INODE_FILENAME_BUF_SZ;
         } else {
             chunk_len = rem_len;
         }
 
         rc = ffs_inode_read_filename_chunk(inode, off,
-                                           ffs_inode_filename_buf[0],
+                                           ffs_inode_filename_buf0,
                                            chunk_len);
         if (rc != 0) {
             return rc;
         }
 
-        *result = strncmp((char *)ffs_inode_filename_buf[0], name + off,
+        *result = strncmp((char *)ffs_inode_filename_buf0, name + off,
                           chunk_len);
         off += chunk_len;
     }
@@ -523,28 +529,28 @@ ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
     off = chunk_len;
     while (*result == 0 && off < short_len) {
         rem_len = short_len - off;
-        if (rem_len > sizeof ffs_inode_filename_buf[0]) {
-            chunk_len = sizeof ffs_inode_filename_buf[0];
+        if (rem_len > FFS_INODE_FILENAME_BUF_SZ) {
+            chunk_len = FFS_INODE_FILENAME_BUF_SZ;
         } else {
             chunk_len = rem_len;
         }
 
         rc = ffs_inode_read_filename_chunk(inode1, off,
-                                           ffs_inode_filename_buf[0],
+                                           ffs_inode_filename_buf0,
                                            chunk_len);
         if (rc != 0) {
             return rc;
         }
 
         rc = ffs_inode_read_filename_chunk(inode2, off,
-                                           ffs_inode_filename_buf[1],
+                                           ffs_inode_filename_buf1,
                                            chunk_len);
         if (rc != 0) {
             return rc;
         }
 
-        *result = strncmp((char *)ffs_inode_filename_buf[0],
-                          (char *)ffs_inode_filename_buf[1],
+        *result = strncmp((char *)ffs_inode_filename_buf0,
+                          (char *)ffs_inode_filename_buf1,
                           chunk_len);
         off += chunk_len;
     }
