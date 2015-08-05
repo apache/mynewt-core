@@ -5,17 +5,48 @@
 struct ffs_area_desc;
 struct image_header;
 
+/** A request object instructing the boot loader how to proceed. */
 struct boot_req {
+    /**
+     * Array of area descriptors indicating the layout of internal flash; must
+     * be terminated with a 0-length element.
+     */
     struct ffs_area_desc *br_area_descs;
-    uint32_t *br_image_addrs;
+
+    /**
+     * Array of indices of elements in the br_area_descs array; indicates which
+     * areas hold image data.
+     */
     uint16_t *br_image_areas;
+
+    /**
+     * Array of indices of elements in the br_area_descs array; indicates which
+     * areas represent the beginning of an image slot.  This should be a subset
+     * of the br_image_areas array.
+     */
+    uint16_t *br_slot_areas;
+
+    /**
+     * The number of image areas (i.e., the size of the br_image_areas array).
+     */
+    uint16_t br_num_image_areas;
+
+    /** The index of the area to use as the image scratch area. */
     uint16_t br_scratch_area_idx;
-    int br_num_image_areas;
-    int br_num_slots;
 };
 
+/**
+ * A response object provided by the boot loader code; indicates where to jump
+ * to execute the main image.
+ */
 struct boot_rsp {
+    /** A pointer to the header of the image to be executed. */
     const struct image_header *br_hdr;
+
+    /**
+     * The flash offset of the image to execute.  Indicates the position of
+     * the image header.
+     */
     uint32_t br_image_addr;
 };
 

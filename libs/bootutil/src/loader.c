@@ -9,11 +9,44 @@
 #include "bootutil/loader.h"
 #include "bootutil_priv.h"
 
+/** Number of image slots in flash; currently limited to two. */
+#define BOOT_NUM_SLOTS              2
+
+/** The request object provided by the client. */
 static const struct boot_req *boot_req;
+
+/** Image headers read from flash. */
 struct image_header boot_img_hdrs[2];
+
+/**
+ * The boot status header read from the file system, or generated if not
+ * present on disk.  The boot status indicates the state of the image slots in
+ * case the system was restarted while images were being moved in flash.
+ */
 struct boot_status boot_status;
+
+/** The entries associated with the boot status header. */
 struct boot_status_entry *boot_status_entries;
-const struct ffs_area_desc *boot_area_descs;
+
+/**
+ * Calculates the flash offset of the specified image slot.
+ *
+ * @param slot_num              The number of the slot to calculate.
+ *
+ * @return                      The flash offset of the image slot.
+ */
+static uint32_t
+boot_slot_addr(int slot_num)
+{
+    const struct ffs_area_desc *area_desc;
+    uint16_t area_idx;
+
+    assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
+
+    area_idx = boot_req->br_slot_areas[slot_num];
+    area_desc = boot_req->br_area_descs + area_idx;
+    return area_desc->fad_offset;
+}
 
 /**
  * Searches flash for an image with the specified version number.
@@ -106,11 +139,11 @@ boot_slot_to_area_idx(int slot_num)
 {
     int i;
 
-    assert(slot_num >= 0 && slot_num < boot_req->br_num_slots);
+    assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
     for (i = 0; boot_req->br_area_descs[i].fad_length != 0; i++) {
         if (boot_req->br_area_descs[i].fad_offset ==
-            boot_req->br_image_addrs[slot_num]) {
+            boot_slot_addr(slot_num)) {
 
             return i;
         }
@@ -453,6 +486,9 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
     return 0;
 }
 
+/**
+ * Builds a single default boot status for the specified image slot.
+ */
 static void
 boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 {
@@ -488,7 +524,9 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 
 /**
  * Builds a default boot status corresponding to all images being fully present
- * in their slots.
+ * in their slots.  This function is used when a boot status is not present in
+ * flash (i.e., in the usual case when the previous boot operation ran to
+ * completion).
  */
 static void
 boot_build_status(void)
@@ -498,7 +536,7 @@ boot_build_status(void)
 
     if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
         boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
-        boot_build_status_one(0, boot_req->br_image_addrs[0],
+        boot_build_status_one(0, boot_slot_addr(0),
                               boot_img_hdrs[0].ih_img_size);
     } else {
         boot_status.bs_img1_length = 0;
@@ -506,13 +544,18 @@ boot_build_status(void)
 
     if (boot_img_hdrs[1].ih_magic == IMAGE_MAGIC) {
         boot_status.bs_img2_length = boot_img_hdrs[1].ih_img_size;
-        boot_build_status_one(1, boot_req->br_image_addrs[1],
+        boot_build_status_one(1, boot_slot_addr(1),
                               boot_img_hdrs[1].ih_img_size);
     } else {
         boot_status.bs_img2_length = 0;
     }
 }
 
+/**
+ * Initializes the flash driver and file system for use by the boot loader.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 boot_init_flash(void)
 {
@@ -553,8 +596,10 @@ boot_init_flash(void)
 int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
+    uint32_t image_addrs[BOOT_NUM_SLOTS];
     int slot;
     int rc;
+    int i;
 
     boot_req = req;
 
@@ -587,7 +632,11 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         }
     }
 
-    boot_read_image_headers(boot_img_hdrs, boot_req->br_image_addrs, 2);
+    for (i = 0; i < BOOT_NUM_SLOTS; i++) {
+        image_addrs[i] = boot_slot_addr(i);
+    }
+
+    boot_read_image_headers(boot_img_hdrs, image_addrs, BOOT_NUM_SLOTS);
     boot_build_status();
 
     slot = boot_select_image_slot();
@@ -633,7 +682,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     }
 
     /* Always boot from the primary slot. */
-    rsp->br_image_addr = boot_req->br_image_addrs[0];
+    rsp->br_image_addr = image_addrs[0];
 
     /* After successful boot, there should not be a status file. */
     ffs_unlink(BOOT_PATH_STATUS);
