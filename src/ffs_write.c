@@ -295,6 +295,16 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     return 0;
 }
 
+/**
+ * Writes a size-constrained chunk of contiguous data to a file.  The chunk
+ * must not be larger than the maximum block data size.
+ *
+ * @param file                  The file to write to.
+ * @param data                  The data to write.
+ * @param len                   The length of data to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 ffs_write_chunk(struct ffs_file *file, const void *data, int len)
 {
@@ -335,6 +345,15 @@ ffs_write_chunk(struct ffs_file *file, const void *data, int len)
     return 0;
 }
 
+/**
+ * Writes a chunk of contiguous data to a file.
+ *
+ * @param file                  The file to write to.
+ * @param data                  The data to write.
+ * @param len                   The length of data to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 int
 ffs_write_to_file(struct ffs_file *file, const void *data, int len)
 {
