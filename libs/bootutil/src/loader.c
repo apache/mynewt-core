@@ -7,6 +7,7 @@
 #include "ffs/ffs.h"
 #include "ffsutil/ffsutil.h"
 #include "bootutil/loader.h"
+#include "bootutil/image.h"
 #include "bootutil_priv.h"
 
 /** Number of image slots in flash; currently limited to two. */

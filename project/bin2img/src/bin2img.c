@@ -8,6 +8,10 @@
 #include "bootutil/image.h"
 #include "crc32.h"
 
+#if !defined(__BYTE_ORDER__) || (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#error "Machine must be little endian"
+#endif
+
 static void
 print_usage(FILE *stream)
 {
