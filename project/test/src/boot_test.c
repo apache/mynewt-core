@@ -13,12 +13,6 @@
 
 #define BOOT_TEST_HEADER_SIZE       0x200
 
-/** Image slots. */
-static uint32_t boot_test_img_addrs[2] = {
-    0x00020000,
-    0x00080000,
-};
-
 /** Internal flash layout. */
 static struct ffs_area_desc boot_test_area_descs[] = {
     [0] =  { 0x00000000, 16 * 1024 },
@@ -46,6 +40,17 @@ static const struct ffs_area_desc boot_test_format_descs[] = {
 /** Contains indices of the areas which can contain image data. */
 static uint16_t boot_test_img_areas[] = {
     5, 6, 7, 8, 9, 10, 11
+};
+
+/** Areas representing the beginning of image slots. */
+static uint16_t boot_test_slot_areas[] = {
+    5, 8,
+};
+
+/** Flash offsets of the two image slots. */
+static uint32_t boot_test_img_addrs[] = {
+    0x20000,
+    0x80000,
 };
 
 #define BOOT_TEST_NUM_IMG_AREAS \
@@ -331,11 +336,10 @@ boot_test_nv_ns_10(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
-        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
+        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
     };
 
     printf("\tno-vector no-status 1-0 test\n");
@@ -371,11 +375,10 @@ boot_test_nv_ns_01(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tno-vector no-status 0-1 test\n");
@@ -419,11 +422,10 @@ boot_test_nv_ns_11(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tno-vector no-status 1-1 test\n");
@@ -460,11 +462,10 @@ boot_test_vm_ns_10(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tvector-main no-status 1-0 test\n");
@@ -503,11 +504,10 @@ boot_test_vm_ns_01(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tvector-main no-status 0-1 test\n");
@@ -554,11 +554,10 @@ boot_test_vm_ns_11_a(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tvector-main no-status 1-1-a test\n");
@@ -606,11 +605,10 @@ boot_test_vm_ns_11_b(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tvector-main no-status 1-1-b test\n");
@@ -658,11 +656,10 @@ boot_test_vm_ns_11_2areas(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tvector-main no-status 1-1-2areas test\n");
@@ -703,11 +700,10 @@ boot_test_nv_bs_10(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tno-vector basic-status 1-0 test\n");
@@ -765,11 +761,10 @@ boot_test_nv_bs_11(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tno-vector basic-status 1-1 test\n");
@@ -831,11 +826,10 @@ boot_test_nv_bs_11_2areas(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tno-vector basic-status 1-1-2areas test\n");
@@ -899,11 +893,10 @@ boot_test_vb_ns_11(void)
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
-        .br_image_addrs = boot_test_img_addrs,
         .br_image_areas = boot_test_img_areas,
+        .br_slot_areas = boot_test_slot_areas,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
-        .br_num_slots = 2,
     };
 
     printf("\tvector-both no-status 1-1 test\n");
