@@ -1,2 +1,3 @@
 project.name: bin2img
-project.pkgs: libs/bootutil
+project.pkgs: 
+    - libs/bootutil

@@ -1,0 +1,7 @@
+pkg.name: libs/bootutil
+pkg.vers: 0.1 
+pkg.deps: 
+    - libs/os 
+    - libs/ffs 
+    - libs/ffsutil 
+    - hw/hal

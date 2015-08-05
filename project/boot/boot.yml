@@ -1,2 +1,7 @@
 project.name: boot
-project.pkgs: libs/os libs/bootutil libs/ffs libs/ffsutil hw/mcu/stm/stm32f4xx
+project.pkgs: 
+    - libs/os 
+    - libs/bootutil 
+    - libs/ffs 
+    - libs/ffsutil 
+    - hw/mcu/stm/stm32f4xx
