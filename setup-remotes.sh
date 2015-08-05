@@ -20,3 +20,5 @@ git remote add hal https://github.com/micosa/hal.git
 git remote add ffs https://github.com/micosa/ffs.git
 # subtree @ libs/ffsutil
 git remote add ffsutil https://github.com/micosa/ffsutil.git
+# subtree @ project/bin2img
+git remote add bin2img https://github.com/micosa/bin2img.git
