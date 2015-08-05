@@ -1,3 +1,0 @@
-pkg.name: ffs
-pkg.vers: 0.1 
-pkg.deps: libs/os hw/hal
