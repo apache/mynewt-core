@@ -1,18 +1,10 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
+#include "stm32f4xx/stm32f4xx.h"
 #include "ffs/ffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
-
-/* XXX: Where? */
-#include "stm32f4xx/stm32f4xx.h"
-
-/** Image slots. */
-static uint32_t boot_img_addrs[2] = {
-    0x08020000,
-    0x08080000,
-};
 
 /** Internal flash layout. */
 static struct ffs_area_desc boot_area_descs[] = {
@@ -33,14 +25,18 @@ static struct ffs_area_desc boot_area_descs[] = {
 
 /** Contains indices of the areas which can contain image data. */
 static uint16_t boot_img_areas[] = {
-    5, 6, 7, 8, 9, 10, 11
+    5, 6, 7, 8, 9, 10, 11,
+};
+
+/** Areas representing the beginning of image slots. */
+static uint16_t boot_slot_areas[] = {
+    5, 8,
 };
 
 #define BOOT_NUM_IMG_AREAS \
     ((int)(sizeof boot_img_areas / sizeof boot_img_areas[0]))
 
 #define BOOT_AREA_IDX_SCRATCH 11
-
 
 /**
  * Boots the image described by the supplied image header.
@@ -86,11 +82,10 @@ main(void)
 
     const struct boot_req req = {
         .br_area_descs = boot_area_descs,
-        .br_image_addrs = boot_img_addrs,
         .br_image_areas = boot_img_areas,
-        .br_scratch_area_idx = BOOT_AREA_IDX_SCRATCH,
+        .br_slot_areas = boot_slot_areas,
         .br_num_image_areas = BOOT_NUM_IMG_AREAS,
-        .br_num_slots = 2,
+        .br_scratch_area_idx = BOOT_AREA_IDX_SCRATCH,
     };
 
     rc = boot_go(&req, &rsp);
