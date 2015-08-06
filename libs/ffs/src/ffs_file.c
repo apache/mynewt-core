@@ -9,8 +9,8 @@ ffs_file_new(struct ffs_inode **out_inode, struct ffs_inode *parent,
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode *inode;
-    uint16_t area_idx;
     uint32_t offset;
+    uint8_t area_idx;
     int rc;
 
     inode = ffs_inode_alloc();

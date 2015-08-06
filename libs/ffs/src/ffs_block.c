@@ -32,7 +32,7 @@ ffs_block_disk_size(const struct ffs_block *block)
 }
 
 int
-ffs_block_read_disk(struct ffs_disk_block *out_disk_block, uint16_t area_idx,
+ffs_block_read_disk(struct ffs_disk_block *out_disk_block, uint8_t area_idx,
                     uint32_t offset)
 {
     int rc;
@@ -50,12 +50,12 @@ ffs_block_read_disk(struct ffs_disk_block *out_disk_block, uint16_t area_idx,
 }
 
 int
-ffs_block_write_disk(uint16_t *out_area_idx, uint32_t *out_offset,
+ffs_block_write_disk(uint8_t *out_area_idx, uint32_t *out_offset,
                      const struct ffs_disk_block *disk_block,
                      const void *data)
 {
     uint32_t offset;
-    uint16_t area_idx;
+    uint8_t area_idx;
     int rc;
 
     rc = ffs_misc_reserve_space(&area_idx, &offset,
@@ -90,7 +90,7 @@ ffs_block_write_disk(uint16_t *out_area_idx, uint32_t *out_offset,
 void
 ffs_block_from_disk(struct ffs_block *out_block,
                     const struct ffs_disk_block *disk_block,
-                    uint16_t area_idx, uint32_t offset)
+                    uint8_t area_idx, uint32_t offset)
 {
     out_block->fb_object.fo_type = FFS_OBJECT_TYPE_BLOCK;
     out_block->fb_object.fo_id = disk_block->fdb_id;
@@ -119,7 +119,7 @@ int
 ffs_block_delete_from_disk(const struct ffs_block *block)
 {
     struct ffs_disk_block disk_block;
-    uint16_t area_idx;
+    uint8_t area_idx;
     int rc;
 
     memset(&disk_block, 0, sizeof disk_block);

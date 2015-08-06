@@ -150,7 +150,7 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
 {
     struct ffs_disk_inode disk_inode;
     uint32_t offset;
-    uint16_t area_idx;
+    uint8_t area_idx;
     int rc;
 
     rc = ffs_misc_reserve_space(&area_idx, &offset, sizeof disk_inode);
@@ -176,7 +176,7 @@ ffs_inode_delete_from_disk(const struct ffs_inode *inode)
 int
 ffs_inode_from_disk(struct ffs_inode *out_inode,
                     const struct ffs_disk_inode *disk_inode,
-                    uint16_t area_idx, uint32_t offset)
+                    uint8_t area_idx, uint32_t offset)
 {
     int cached_name_len;
     int rc;
@@ -208,7 +208,7 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
 {
     struct ffs_disk_inode disk_inode;
     uint32_t offset;
-    uint16_t area_idx;
+    uint8_t area_idx;
     int filename_len;
     int rc;
 
@@ -241,7 +241,7 @@ ffs_inode_rename(struct ffs_inode *inode, const char *filename)
 
 int
 ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
-                    uint16_t area_idx, uint32_t offset)
+                    uint8_t area_idx, uint32_t offset)
 {
     int rc;
 
@@ -267,7 +267,7 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
 
 int
 ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
-                     const char *filename, uint16_t area_idx,
+                     const char *filename, uint8_t area_idx,
                      uint32_t offset)
 {
     int rc;

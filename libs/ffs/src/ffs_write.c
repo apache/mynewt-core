@@ -184,7 +184,7 @@ ffs_write_gen(const struct ffs_write_info *write_info, struct ffs_inode *inode,
     uint32_t chunk_len;
     uint32_t offset;
     uint32_t cur;
-    uint16_t area_idx;
+    uint8_t area_idx;
     int rc;
 
     assert(data_len <= ffs_block_max_data_sz);

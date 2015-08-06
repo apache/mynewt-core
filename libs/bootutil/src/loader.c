@@ -40,7 +40,7 @@ static uint32_t
 boot_slot_addr(int slot_num)
 {
     const struct ffs_area_desc *area_desc;
-    uint16_t area_idx;
+    uint8_t area_idx;
 
     assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
