@@ -27,7 +27,6 @@ enum gpio_mode_e
     GPIO_MODE_IN = 0,
     GPIO_MODE_OUT = 1
 };
-
 typedef enum gpio_mode_e gpio_mode_t;
 
 /*
@@ -35,12 +34,28 @@ typedef enum gpio_mode_e gpio_mode_t;
  */
 enum gpio_pull
 {
-    GPIO_PULL_NONE = 0,
-    GPIO_PULL_UP = 1,
-    GPIO_PULL_DOWN = 2
+    GPIO_PULL_NONE = 0,     /* pull-up/down not enabled */
+    GPIO_PULL_UP = 1,       /* pull-up enabled */
+    GPIO_PULL_DOWN = 2      /* pull-down enabled */
 };
-
 typedef enum gpio_pull gpio_pull_t;
+
+/*
+ * IRQ trigger type. 
+ */
+enum gpio_irq_trigger
+{
+    GPIO_TRIG_NONE = 0,
+    GPIO_TRIG_RISING = 1,   /* IRQ occurs on rising edge */
+    GPIO_TRIG_FALLING = 2,  /* IRQ occurs on falling edge */
+    GPIO_TRIG_BOTH = 3,     /* IRQ occurs on either edge */
+    GPIO_TRIG_LOW = 4,      /* IRQ occurs when line is low */
+    GPIO_TRIG_HIGH = 5      /* IRQ occurs when line is high */
+};
+typedef enum gpio_irq_trigger gpio_irq_trig_t;
+
+/* Function proto for GPIO irq handler functions */
+typedef void (*gpio_irq_handler_t)(void *arg);
 
 /**
  * gpio init in 
@@ -115,5 +130,12 @@ int gpio_read(int pin);
  * @param pin Pin number to toggle
  */
 void gpio_toggle(int pin);
+
+int gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
+                  gpio_irq_trig_t trig, gpio_pull_t pull);
+void gpio_irq_release(int pin);
+void gpio_irq_enable(int pin);
+void gpio_irq_disable(int pin);
+
 
 #endif /* H_HAL_GPIO_ */
