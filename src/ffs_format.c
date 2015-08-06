@@ -5,7 +5,7 @@
 #include "ffs/ffs.h"
 
 int
-ffs_format_from_scratch_area(uint16_t area_idx, uint16_t area_id)
+ffs_format_from_scratch_area(uint8_t area_idx, uint8_t area_id)
 {
     struct ffs_disk_area disk_area;
     int rc;
@@ -35,7 +35,7 @@ ffs_format_from_scratch_area(uint16_t area_idx, uint16_t area_id)
 }
 
 int
-ffs_format_area(uint16_t area_idx, int is_scratch)
+ffs_format_area(uint8_t area_idx, int is_scratch)
 {
     struct ffs_disk_area disk_area;
     struct ffs_area *area;
@@ -79,6 +79,11 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
     /* Select largest area to be the initial scratch area. */
     ffs_scratch_area_idx = 0;
     for (i = 1; area_descs[i].fad_length != 0; i++) {
+        if (i >= FFS_MAX_AREAS) {
+            rc = FFS_EINVAL;
+            goto err;
+        }
+
         if (area_descs[i].fad_length >
             area_descs[ffs_scratch_area_idx].fad_length) {
 

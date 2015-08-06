@@ -35,8 +35,8 @@ ffs_misc_validate_scratch(void)
 }
 
 static int
-ffs_misc_reserve_space_area(uint32_t *out_offset, uint16_t area_idx,
-                              uint16_t size)
+ffs_misc_reserve_space_area(uint32_t *out_offset, uint8_t area_idx,
+                            uint16_t size)
 {
     const struct ffs_area *area;
     uint32_t space;
@@ -52,10 +52,10 @@ ffs_misc_reserve_space_area(uint32_t *out_offset, uint16_t area_idx,
 }
 
 int
-ffs_misc_reserve_space(uint16_t *out_area_idx, uint32_t *out_offset,
+ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_offset,
                        uint16_t size)
 {
-    uint16_t area_idx;
+    uint8_t area_idx;
     int rc;
     int i;
 
@@ -86,7 +86,7 @@ ffs_misc_reserve_space(uint16_t *out_area_idx, uint32_t *out_offset,
 }
 
 int
-ffs_misc_set_num_areas(uint16_t num_areas)
+ffs_misc_set_num_areas(uint8_t num_areas)
 {
     if (num_areas == 0) {
         free(ffs_areas);

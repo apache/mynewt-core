@@ -128,7 +128,7 @@ ffs_restore_inode_gets_replaced(int *out_should_replace,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint16_t area_idx,
+ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
                   uint32_t area_offset)
 {
     struct ffs_inode *parent;
@@ -269,7 +269,7 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_restore_block(const struct ffs_disk_block *disk_block, uint16_t area_idx,
+ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
                   uint32_t area_offset)
 {
     struct ffs_block *block;
@@ -606,6 +606,11 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
     /* Read each area from flash. */
     for (i = 0; area_descs[i].fad_length != 0; i++) {
+        if (i > FFS_MAX_AREAS) {
+            rc = FFS_EINVAL;
+            goto err;
+        }
+
         rc = ffs_restore_detect_one_area(&disk_area, area_descs[i].fad_offset);
         switch (rc) {
         case 0:

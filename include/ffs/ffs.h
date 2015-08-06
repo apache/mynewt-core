@@ -10,6 +10,8 @@
 
 #define FFS_FILENAME_MAX_LEN    256  /* Does not include null terminator. */
 
+#define FFS_MAX_AREAS           256
+
 #define FFS_EOK                 0
 #define FFS_ECORRUPT            1
 #define FFS_EFLASH_ERROR        2

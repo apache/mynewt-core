@@ -37,7 +37,7 @@ static uint16_t
 ffs_gc_select_area(void)
 {
     const struct ffs_area *area;
-    uint16_t best_area_idx;
+    uint8_t best_area_idx;
     int8_t diff;
     int i;
 
@@ -67,7 +67,7 @@ ffs_gc_select_area(void)
 
 static int
 ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
-                   uint32_t data_len, uint16_t to_area_idx)
+                   uint32_t data_len, uint8_t to_area_idx)
 {
     struct ffs_disk_block disk_block;
     struct ffs_area *to_area;
@@ -127,8 +127,8 @@ ffs_gc_block_chain(struct ffs_block *first_block, struct ffs_block *last_block,
 }
 
 static int
-ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_area_idx,
-                    uint16_t to_area_idx)
+ffs_gc_inode_blocks(struct ffs_inode *inode, uint8_t from_area_idx,
+                    uint8_t to_area_idx)
 {
     struct ffs_block *first_block;
     struct ffs_block *prev_block;
@@ -197,7 +197,7 @@ ffs_gc_inode_blocks(struct ffs_inode *inode, uint16_t from_area_idx,
  * @return                  0 on success; nonzero on error.
  */
 int
-ffs_gc(uint16_t *out_area_idx)
+ffs_gc(uint8_t *out_area_idx)
 {
     struct ffs_area *from_area;
     struct ffs_area *to_area;
@@ -205,7 +205,7 @@ ffs_gc(uint16_t *out_area_idx)
     struct ffs_object *object;
     uint32_t to_offset;
     uint32_t obj_size;
-    uint16_t from_area_idx;
+    uint8_t from_area_idx;
     int rc;
     int i;
 
@@ -262,7 +262,7 @@ ffs_gc(uint16_t *out_area_idx)
 }
 
 int
-ffs_gc_until(uint16_t *out_area_idx, uint32_t space)
+ffs_gc_until(uint8_t *out_area_idx, uint32_t space)
 {
     int rc;
     int i;

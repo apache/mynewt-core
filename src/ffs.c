@@ -11,8 +11,8 @@
 extern struct os_task *g_current_task;  /* XXX */
 
 struct ffs_area *ffs_areas;
-uint16_t ffs_num_areas;
-uint16_t ffs_scratch_area_idx;
+uint8_t ffs_num_areas;
+uint8_t ffs_scratch_area_idx;
 uint16_t ffs_block_max_data_sz;
 
 struct os_mempool ffs_file_pool;
