@@ -34,6 +34,12 @@
  * external interrupt vectors in the NVIC. The application developer must 
  * decide on the priority level for each external interrupt and program that 
  * by using the CMSIS NVIC API  (NVIC_SetPriority and NVIC_SetPriorityGrouping) 
+ *  
+ * 4) The code probably does not handle "re-purposing" gpio very well. 
+ * "Re-purposing" means changing a gpio from input to output, or calling 
+ * gpio_init_in and expecting previously enabled interrupts to be stopped. 
+ *  
+ * 5) Possbily add access to HAL_GPIO_DeInit. 
  */
 
 /* 
@@ -111,44 +117,51 @@ struct gpio_irq_obj
 
 static struct gpio_irq_obj gpio_irq_handlers[16];
 
+/**
+ * ext irq handler 
+ *  
+ * Handles the gpio interrupt attached to a gpio pin. 
+ * 
+ * @param index 
+ */
+static void
+ext_irq_handler(int index)
+{
+    uint32_t mask;
+
+    mask = 1 << index;
+    if (__HAL_GPIO_EXTI_GET_IT(mask) != RESET) {
+        __HAL_GPIO_EXTI_CLEAR_IT(mask);
+        gpio_irq_handlers[index].isr(gpio_irq_handlers[index].arg);
+    }
+}
+
 /* External interrupt 0 */
 static void
 ext_irq0(void)
 {
-    if (__HAL_GPIO_EXTI_GET_IT(EXTI_PR_PR0) != RESET) {
-        __HAL_GPIO_EXTI_CLEAR_IT(EXTI_PR_PR0);
-        gpio_irq_handlers[0].isr(gpio_irq_handlers[0].arg);
-    }
+    ext_irq_handler(0);
 }
 
 /* External interrupt 1 */
 static void
 ext_irq1(void)
 {
-    if (__HAL_GPIO_EXTI_GET_IT(EXTI_PR_PR1) != RESET) {
-        __HAL_GPIO_EXTI_CLEAR_IT(EXTI_PR_PR1);
-        gpio_irq_handlers[1].isr(gpio_irq_handlers[1].arg);
-    }
+    ext_irq_handler(1);
 }
 
 /* External interrupt 2 */
 static void
 ext_irq2(void)
 {
-    if (__HAL_GPIO_EXTI_GET_IT(EXTI_PR_PR2) != RESET) {
-        __HAL_GPIO_EXTI_CLEAR_IT(EXTI_PR_PR2);
-        gpio_irq_handlers[2].isr(gpio_irq_handlers[2].arg);
-    }
+    ext_irq_handler(2);
 }
 
 /* External interrupt 3 */
 static void
 ext_irq3(void)
 {
-    if (__HAL_GPIO_EXTI_GET_IT(EXTI_PR_PR3) != RESET) {
-        __HAL_GPIO_EXTI_CLEAR_IT(EXTI_PR_PR3);
-        gpio_irq_handlers[3].isr(gpio_irq_handlers[3].arg);
-    }
+    ext_irq_handler(3);
 }
 
 /**
@@ -160,10 +173,7 @@ ext_irq3(void)
 static void
 ext_irq4(void)
 {
-    if (__HAL_GPIO_EXTI_GET_IT(EXTI_PR_PR4) != RESET) {
-        __HAL_GPIO_EXTI_CLEAR_IT(EXTI_PR_PR4);
-        gpio_irq_handlers[4].isr(gpio_irq_handlers[4].arg);
-    }
+    ext_irq_handler(4);
 }
 
 /**
@@ -175,15 +185,10 @@ ext_irq4(void)
 static void
 ext_irq9_5(void)
 {
-    int mask;
     int index;
 
     for (index = 5; index <= 9; ++index) {
-        mask = 1 << index;
-        if (__HAL_GPIO_EXTI_GET_IT(mask) != RESET) {
-            __HAL_GPIO_EXTI_CLEAR_IT(mask);
-            gpio_irq_handlers[index].isr(gpio_irq_handlers[index].arg);
-        }
+        ext_irq_handler(index);
     }
 }
 
@@ -196,15 +201,10 @@ ext_irq9_5(void)
 static void
 ext_irq15_10(void)
 {
-    int mask;
     int index;
 
     for (index = 10; index <= 15; ++index) {
-        mask = 1 << index;
-        if (__HAL_GPIO_EXTI_GET_IT(mask) != RESET) {
-            __HAL_GPIO_EXTI_CLEAR_IT(mask);
-            gpio_irq_handlers[index].isr(gpio_irq_handlers[index].arg);
-        }
+        ext_irq_handler(index);
     }
 }
 
@@ -330,9 +330,11 @@ hal_gpio_set_nvic(IRQn_Type irqn)
         break;
     }
 
-    /* Set isr in vector table */
-    NVIC_SetVector(irqn, isr);
-    NVIC_EnableIRQ(irqn);
+    /* Set isr in vector table if not yet set */
+    if (NVIC_GetVector(irqn) != isr) {
+        NVIC_SetVector(irqn, isr);
+        NVIC_EnableIRQ(irqn);
+    }
 }
 
 /**
@@ -554,28 +556,26 @@ gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
     }
 
     /* Check to make sure no error has occurred */
-    if (rc) {
-        return rc;
-    }
-
-    /* Disable interrupt and clear any pending */
-    pin_mask = GPIO_MASK(pin);
-    EXTI->IMR &= ~pin_mask;
-    __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
-
-    /* Set the gpio irq handler */
-    index = GPIO_INDEX(pin);
-    gpio_irq_handlers[index].isr = handler;
-    gpio_irq_handlers[index].arg = arg;
-
-    /* Configure the GPIO */
-    init_cfg.Mode = mode;
-    init_cfg.Pull = pull;
-    rc = hal_gpio_init(pin, &init_cfg);
     if (!rc) {
-        /* Enable interrupt vector in NVIC */
-        irqn = hal_gpio_pin_to_irq(pin);
-        hal_gpio_set_nvic(irqn);
+        /* Disable interrupt and clear any pending */
+        gpio_irq_disable(pin);
+        pin_mask = GPIO_MASK(pin);
+        __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
+
+        /* Set the gpio irq handler */
+        index = GPIO_INDEX(pin);
+        gpio_irq_handlers[index].isr = handler;
+        gpio_irq_handlers[index].arg = arg;
+
+        /* Configure the GPIO */
+        init_cfg.Mode = mode;
+        init_cfg.Pull = pull;
+        rc = hal_gpio_init(pin, &init_cfg);
+        if (!rc) {
+            /* Enable interrupt vector in NVIC */
+            irqn = hal_gpio_pin_to_irq(pin);
+            hal_gpio_set_nvic(irqn);
+        }
     }
 
     return rc;

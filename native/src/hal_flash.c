@@ -2,29 +2,31 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
+#include "hal/hal_flash.h"
 
 static FILE *file;
 
-static const struct flash_sector_desc {
-    uint32_t fsd_offset;
-    uint32_t fsd_length;
-} flash_sector_descs[] = {
-    { 0x00000000, 16 * 1024 },
-    { 0x00004000, 16 * 1024 },
-    { 0x00008000, 16 * 1024 },
-    { 0x0000c000, 16 * 1024 },
-    { 0x00010000, 64 * 1024 },
-    { 0x00020000, 128 * 1024 },
-    { 0x00040000, 128 * 1024 },
-    { 0x00060000, 128 * 1024 },
-    { 0x00080000, 128 * 1024 },
-    { 0x000a0000, 128 * 1024 },
-    { 0x000c0000, 128 * 1024 },
-    { 0x000e0000, 128 * 1024 },
+static const struct flash_area_desc {
+    uint32_t fad_offset;
+    uint32_t fad_length;
+    uint32_t fad_sector_id;
+} flash_area_descs[] = {
+    { 0x00000000, 16 * 1024,  0 },
+    { 0x00004000, 16 * 1024,  1 },
+    { 0x00008000, 16 * 1024,  2 },
+    { 0x0000c000, 16 * 1024,  3 },
+    { 0x00010000, 64 * 1024,  4 },
+    { 0x00020000, 128 * 1024, 5 },
+    { 0x00040000, 128 * 1024, 6 },
+    { 0x00060000, 128 * 1024, 7 },
+    { 0x00080000, 128 * 1024, 8 },
+    { 0x000a0000, 128 * 1024, 9 },
+    { 0x000c0000, 128 * 1024, 10 },
+    { 0x000e0000, 128 * 1024, 11 },
 };
 
-#define FLASH_NUM_SECTORS   (int)(sizeof flash_sector_descs /       \
-                                  sizeof flash_sector_descs[0])
+#define FLASH_NUM_AREAS   (int)(sizeof flash_area_descs /       \
+                                sizeof flash_area_descs[0])
 
 static void
 flash_native_erase(uint32_t addr, uint32_t len)
@@ -62,8 +64,8 @@ flash_native_ensure_file_open(void)
 
     if (file == NULL) {
         expected_sz = 0;
-        for (i = 0; i < FLASH_NUM_SECTORS; i++) {
-            expected_sz += flash_sector_descs[i].fsd_length;
+        for (i = 0; i < FLASH_NUM_AREAS; i++) {
+            expected_sz += flash_area_descs[i].fad_length;
         }
 
         file = tmpfile();
@@ -73,29 +75,53 @@ flash_native_ensure_file_open(void)
 }
 
 int
-flash_write(const void *src, uint32_t address, uint32_t length)
+flash_write(uint32_t address, const void *src, uint32_t length)
 {
-    const uint8_t *s;
-    int c;
+    static uint8_t buf[256];
+    uint32_t cur;
+    uint32_t end;
+    int chunk_sz;
+    int rc;
     int i;
 
-    flash_native_ensure_file_open();
-    s = src;
-    fseek(file, address, SEEK_SET);
-    for (i = 0; i < length; i++) {
-        c = fgetc(file);
-        assert(c != EOF);
-        assert((s[i] & c) == s[i]);
-        fseek(file, -1, SEEK_CUR);
-        fputc(s[i], file);
+    if (length == 0) {
+        return 0;
     }
+
+    end = address + length;
+
+    flash_native_ensure_file_open();
+
+    fseek(file, address, SEEK_SET);
+
+    cur = address;
+    while (cur < end) {
+        if (end - cur < sizeof buf) {
+            chunk_sz = end - cur;
+        } else {
+            chunk_sz = sizeof buf;
+        }
+
+        /* Ensure data is not being overwritten. */
+        rc = flash_read(cur, buf, chunk_sz);
+        assert(rc == 0);
+        for (i = 0; i < chunk_sz; i++) {
+            assert(buf[i] == 0xff);
+        }
+
+        cur += chunk_sz;
+    }
+
+    fseek(file, address, SEEK_SET);
+    rc = fwrite(src, length, 1, file);
+    assert(rc == 1);
 
     fflush(file);
     return 0;
 }
 
 int
-flash_read(void *dst, uint32_t address, uint32_t length)
+flash_read(uint32_t address, void *dst, uint32_t length)
 {
     flash_native_ensure_file_open();
     fseek(file, address, SEEK_SET);
@@ -105,12 +131,12 @@ flash_read(void *dst, uint32_t address, uint32_t length)
 }
 
 static int
-find_sector(uint32_t address)
+find_area(uint32_t address)
 {
     int i;
 
-    for (i = 0; i < FLASH_NUM_SECTORS; i++) {
-        if (flash_sector_descs[i].fsd_offset == address) {
+    for (i = 0; i < FLASH_NUM_AREAS; i++) {
+        if (flash_area_descs[i].fad_offset == address) {
             return i;
         }
     }
@@ -119,18 +145,36 @@ find_sector(uint32_t address)
 }
 
 int
-flash_erase_sector(uint32_t address)
+flash_erase_sector(uint32_t sector_address)
 {
+    int next_sector_id;
     int sector_id;
+    int area_id;
 
     flash_native_ensure_file_open();
 
-    sector_id = find_sector(address);
-    if (sector_id == -1) {
+    area_id = find_area(sector_address);
+    if (area_id == -1) {
         return -1;
     }
 
-    flash_native_erase(address, flash_sector_descs[sector_id].fsd_length);
+    sector_id = flash_area_descs[area_id].fad_sector_id;
+    while (1) {
+        flash_native_erase(sector_address,
+                           flash_area_descs[area_id].fad_length);
+
+        area_id++;
+        if (area_id >= FLASH_NUM_AREAS) {
+            break;
+        }
+
+        next_sector_id = flash_area_descs[area_id].fad_sector_id;
+        if (next_sector_id != sector_id) {
+            break;
+        }
+
+        sector_id = next_sector_id;
+    }
 
     return 0;
 }
@@ -138,26 +182,34 @@ flash_erase_sector(uint32_t address)
 int
 flash_erase(uint32_t address, uint32_t num_bytes)
 {
-    const struct flash_sector_desc *sector;
+    const struct flash_area_desc *area;
     uint32_t end;
     int i;
 
+    flash_native_ensure_file_open();
+
     end = address + num_bytes;
 
-    for (i = 0; i < FLASH_NUM_SECTORS; i++) {
-        sector = flash_sector_descs + i;
+    for (i = 0; i < FLASH_NUM_AREAS; i++) {
+        area = flash_area_descs + i;
 
-        if (sector->fsd_offset >= end) {
+        if (area->fad_offset >= end) {
             return 0;
         }
 
-        if (address >= sector->fsd_offset &&
-            address < sector->fsd_offset + sector->fsd_length) {
+        if (address >= area->fad_offset &&
+            address < area->fad_offset + area->fad_length) {
 
-            flash_erase_sector(sector->fsd_offset);
+            flash_native_erase(area->fad_offset, area->fad_length);
         }
     }
 
+    return 0;
+}
+
+int
+flash_init(void)
+{
     return 0;
 }
 
