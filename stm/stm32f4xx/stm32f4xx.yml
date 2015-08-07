@@ -1,2 +1,0 @@
-pkg.name: "stm32f4xx"
-pkg.deps: hw/hal libs/cmsis-core hw/bsp/olimex_stm32-e407_devboard

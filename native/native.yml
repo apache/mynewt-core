@@ -1,2 +1,0 @@
-pkg.name: "native"
-pkg.deps: hw/hal
