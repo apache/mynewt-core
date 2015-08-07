@@ -117,6 +117,18 @@ struct gpio_irq_obj
 
 static struct gpio_irq_obj gpio_irq_handlers[16];
 
+struct ext_irqs
+{
+    volatile uint32_t irq0;
+    volatile uint32_t irq1;
+    volatile uint32_t irq2;
+    volatile uint32_t irq3;
+    volatile uint32_t irq4;
+    volatile uint32_t irq9_5;
+    volatile uint32_t irq15_10;
+};
+struct ext_irqs ext_irq_counts;
+
 /**
  * ext irq handler 
  *  
@@ -140,6 +152,7 @@ ext_irq_handler(int index)
 static void
 ext_irq0(void)
 {
+    ++ext_irq_counts.irq0;
     ext_irq_handler(0);
 }
 
@@ -147,6 +160,7 @@ ext_irq0(void)
 static void
 ext_irq1(void)
 {
+    ++ext_irq_counts.irq1;
     ext_irq_handler(1);
 }
 
@@ -154,6 +168,7 @@ ext_irq1(void)
 static void
 ext_irq2(void)
 {
+    ++ext_irq_counts.irq2;
     ext_irq_handler(2);
 }
 
@@ -161,6 +176,7 @@ ext_irq2(void)
 static void
 ext_irq3(void)
 {
+    ++ext_irq_counts.irq3;
     ext_irq_handler(3);
 }
 
@@ -173,6 +189,7 @@ ext_irq3(void)
 static void
 ext_irq4(void)
 {
+    ++ext_irq_counts.irq4;
     ext_irq_handler(4);
 }
 
@@ -187,6 +204,7 @@ ext_irq9_5(void)
 {
     int index;
 
+    ++ext_irq_counts.irq9_5;
     for (index = 5; index <= 9; ++index) {
         ext_irq_handler(index);
     }
@@ -203,6 +221,7 @@ ext_irq15_10(void)
 {
     int index;
 
+    ++ext_irq_counts.irq15_10;
     for (index = 10; index <= 15; ++index) {
         ext_irq_handler(index);
     }
