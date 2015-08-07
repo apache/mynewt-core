@@ -34,26 +34,49 @@ ffs_misc_validate_scratch(void)
     return 0;
 }
 
+/**
+ * Reserves the specified number of bytes within the specified area.
+ *
+ * @param out_area_offset       On success, the offset within the area gets
+ *                                  written here.
+ * @param space                 The number of bytes of free space required.
+ *
+ * @return                      0 on success;
+ *                              FFS_EFULL if the area has insufficient free
+ *                                  space.
+ */
 static int
-ffs_misc_reserve_space_area(uint32_t *out_offset, uint8_t area_idx,
-                            uint16_t size)
+ffs_misc_reserve_space_area(uint32_t *out_area_offset, uint8_t area_idx,
+                            uint16_t space)
 {
     const struct ffs_area *area;
-    uint32_t space;
+    uint32_t available;
 
     area = ffs_areas + area_idx;
-    space = area->fa_length - area->fa_cur;
-    if (space >= size) {
-        *out_offset = area->fa_cur;
+    available = area->fa_length - area->fa_cur;
+    if (available >= space) {
+        *out_area_offset = area->fa_cur;
         return 0;
     }
 
     return FFS_EFULL;
 }
 
+/**
+ * Finds an area that can accommodate an object of the specified size.  If no
+ * such area exists, this function performs a garbage collection cycle.
+ *
+ * @param out_area_idx          On success, the index of the suitable area gets
+ *                                  written here.
+ * @param out_area_offset       On success, the offset within the suitable area
+ *                                  gets written here.
+ * @param space                 The number of bytes of free space required.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 int
-ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_offset,
-                       uint16_t size)
+ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_area_offset,
+                       uint16_t space)
 {
     uint8_t area_idx;
     int rc;
@@ -61,7 +84,7 @@ ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_offset,
 
     for (i = 0; i < ffs_num_areas; i++) {
         if (i != ffs_scratch_area_idx) {
-            rc = ffs_misc_reserve_space_area(out_offset, i, size);
+            rc = ffs_misc_reserve_space_area(out_area_offset, i, space);
             if (rc == 0) {
                 *out_area_idx = i;
                 return 0;
@@ -69,15 +92,15 @@ ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_offset,
         }
     }
 
-    /* No area can accomodate the request.  Garbage collect until a area
+    /* No area can accomodate the request.  Garbage collect until an area
      * has enough space.
      */
-    rc = ffs_gc_until(&area_idx, size);
+    rc = ffs_gc_until(&area_idx, space);
     if (rc != 0) {
         return rc;
     }
 
-    rc = ffs_misc_reserve_space_area(out_offset, area_idx, size);
+    rc = ffs_misc_reserve_space_area(out_area_offset, area_idx, space);
     assert(rc == 0);
 
     *out_area_idx = area_idx;
@@ -124,8 +147,13 @@ ffs_misc_set_max_block_data_size(void)
     } else {
         ffs_block_max_data_sz = FFS_BLOCK_MAX_DATA_SZ_MAX;
     }
+
+    /* XXX: Ensure no blocks exist with too large of a data size. */
 }
 
+/**
+ * Fully resets the ffs RAM representation.
+ */
 int
 ffs_misc_reset(void)
 {
@@ -138,16 +166,16 @@ ffs_misc_reset(void)
         return FFS_EOS;
     }
 
-    rc = os_mempool_init(&ffs_inode_pool, ffs_config.fc_num_inodes,
-                         sizeof (struct ffs_inode), ffs_inode_mem,
-                         "ffs_inode_pool");
+    rc = os_mempool_init(&ffs_inode_entry_pool, ffs_config.fc_num_inodes,
+                         sizeof (struct ffs_inode_entry), ffs_inode_mem,
+                         "ffs_inode_entry_pool");
     if (rc != 0) {
         return FFS_EOS;
     }
 
-    rc = os_mempool_init(&ffs_block_pool, ffs_config.fc_num_blocks,
-                         sizeof (struct ffs_block), ffs_block_mem,
-                         "ffs_block_pool");
+    rc = os_mempool_init(&ffs_hash_entry_pool, ffs_config.fc_num_blocks,
+                         sizeof (struct ffs_hash_entry), ffs_hash_entry_mem,
+                         "ffs_hash_entry_pool");
     if (rc != 0) {
         return FFS_EOS;
     }
@@ -161,7 +189,9 @@ ffs_misc_reset(void)
     ffs_root_dir = NULL;
     ffs_scratch_area_idx = FFS_AREA_ID_NONE;
 
-    ffs_next_id = 0;
+    ffs_hash_next_file_id = FFS_ID_FILE_MIN;
+    ffs_hash_next_dir_id = FFS_ID_DIR_MIN;
+    ffs_hash_next_block_id = FFS_ID_BLOCK_MIN;
 
     return 0;
 }

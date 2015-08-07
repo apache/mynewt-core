@@ -4,6 +4,11 @@
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
+/**
+ * Turns a scratch area into a non-scratch area.  If the specified area is not
+ * actually a scratch area, this function falls back to a slower full format
+ * operation.
+ */
 int
 ffs_format_from_scratch_area(uint8_t area_idx, uint8_t area_id)
 {
@@ -34,6 +39,9 @@ ffs_format_from_scratch_area(uint8_t area_idx, uint8_t area_id)
     return 0;
 }
 
+/**
+ * Formats a single scratch area.
+ */
 int
 ffs_format_area(uint8_t area_idx, int is_scratch)
 {
@@ -67,6 +75,15 @@ ffs_format_area(uint8_t area_idx, int is_scratch)
     return 0;
 }
 
+/**
+ * Erases all the specified areas and initializes them with a clean ffs
+ * file system.
+ *
+ * @param area_descs        The set of areas to format.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
 int
 ffs_format_full(const struct ffs_area_desc *area_descs)
 {
@@ -138,4 +155,3 @@ err:
     ffs_misc_reset();
     return rc;
 }
-

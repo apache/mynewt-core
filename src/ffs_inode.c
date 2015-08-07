@@ -13,25 +13,23 @@ static uint8_t *ffs_inode_filename_buf0 = ffs_flash_buf;
 static uint8_t *ffs_inode_filename_buf1 =
     ffs_flash_buf + FFS_INODE_FILENAME_BUF_SZ;
 
-struct ffs_inode *
-ffs_inode_alloc(void)
+struct ffs_inode_entry *
+ffs_inode_entry_alloc(void)
 {
-    struct ffs_inode *inode;
+    struct ffs_inode_entry *inode_entry;
 
-    inode = os_memblock_get(&ffs_inode_pool);
-    if (inode != NULL) {
-        memset(inode, 0, sizeof *inode);
+    inode_entry = os_memblock_get(&ffs_inode_entry_pool);
+    if (inode_entry != NULL) {
+        memset(inode_entry, 0, sizeof *inode_entry);
     }
 
-    inode->fi_object.fo_type = FFS_OBJECT_TYPE_INODE;
-
-    return inode;
+    return inode_entry;
 }
 
 void
-ffs_inode_free(struct ffs_inode *inode)
+ffs_inode_entry_free(struct ffs_inode_entry *inode_entry)
 {
-    os_memblock_put(&ffs_inode_pool, inode);
+    os_memblock_put(&ffs_inode_entry_pool, inode_entry);
 }
 
 uint32_t
@@ -40,207 +38,8 @@ ffs_inode_disk_size(const struct ffs_inode *inode)
     return sizeof (struct ffs_disk_inode) + inode->fi_filename_len;
 }
 
-uint32_t
-ffs_inode_calc_data_length(const struct ffs_inode *inode)
-{
-    const struct ffs_block *block;
-    uint32_t len;
-
-    assert(!(inode->fi_flags & FFS_INODE_F_DIRECTORY));
-
-    len = 0;
-    SLIST_FOREACH(block, &inode->fi_block_list, fb_next) {
-        len += block->fb_data_len;
-    }
-
-    return len;
-}
-
-uint32_t
-ffs_inode_parent_id(const struct ffs_inode *inode)
-{
-    if (inode->fi_parent == NULL) {
-        return FFS_ID_NONE;
-    } else {
-        return inode->fi_parent->fi_object.fo_id;
-    }
-}
-
-void
-ffs_inode_insert_block(struct ffs_inode *inode, struct ffs_block *block)
-{
-    struct ffs_block *prev;
-    struct ffs_block *cur;
-
-    assert(!(inode->fi_flags & FFS_INODE_F_DIRECTORY));
-
-    prev = NULL;
-    SLIST_FOREACH(cur, &inode->fi_block_list, fb_next) {
-        assert(block->fb_object.fo_id != cur->fb_object.fo_id);
-        assert(block->fb_rank != cur->fb_rank);
-        if (block->fb_rank < cur->fb_rank) {
-            break;
-        }
-
-        prev = cur;
-    }
-
-    if (prev == NULL) {
-        SLIST_INSERT_HEAD(&inode->fi_block_list, block, fb_next);
-    } else {
-        SLIST_INSERT_AFTER(prev, block, fb_next);
-    }
-}
-
-static struct ffs_inode_list ffs_inode_delete_list;
-
-static void
-ffs_inode_dec_refcnt_only(struct ffs_inode *inode)
-{
-    assert(inode->fi_refcnt > 0);
-    inode->fi_refcnt--;
-    if (inode->fi_refcnt == 0) {
-        if (inode->fi_parent != NULL) {
-            ffs_inode_remove_child(inode);
-        }
-        SLIST_INSERT_HEAD(&ffs_inode_delete_list, inode, fi_sibling_next);
-    }
-}
-
-void
-ffs_inode_delete_from_ram(struct ffs_inode *inode)
-{
-    struct ffs_inode *child;
-    struct ffs_block *block;
-
-    if (inode->fi_flags & FFS_INODE_F_DIRECTORY) {
-        while ((child = SLIST_FIRST(&inode->fi_child_list)) != NULL) {
-            ffs_inode_dec_refcnt_only(child);
-        }
-    } else {
-        while ((block = SLIST_FIRST(&inode->fi_block_list)) != NULL) {
-            ffs_block_delete_from_ram(block);
-        }
-    }
-
-    ffs_hash_remove(&inode->fi_object);
-
-    if (inode->fi_parent != NULL) {
-        ffs_inode_remove_child(inode);
-    }
-
-    ffs_inode_free(inode);
-}
-
-void
-ffs_inode_dec_refcnt(struct ffs_inode *inode)
-{
-    struct ffs_inode *cur;
-
-    ffs_inode_dec_refcnt_only(inode);
-
-    while ((cur = SLIST_FIRST(&ffs_inode_delete_list)) != NULL) {
-        SLIST_REMOVE(&ffs_inode_delete_list, cur, ffs_inode, fi_sibling_next);
-        ffs_inode_delete_from_ram(cur);
-    }
-}
-
 int
-ffs_inode_delete_from_disk(const struct ffs_inode *inode)
-{
-    struct ffs_disk_inode disk_inode;
-    uint32_t offset;
-    uint8_t area_idx;
-    int rc;
-
-    rc = ffs_misc_reserve_space(&area_idx, &offset, sizeof disk_inode);
-    if (rc != 0) {
-        return rc;
-    }
-
-    disk_inode.fdi_magic = FFS_INODE_MAGIC;
-    disk_inode.fdi_id = inode->fi_object.fo_id;
-    disk_inode.fdi_seq = inode->fi_object.fo_seq + 1;
-    disk_inode.fdi_parent_id = ffs_inode_parent_id(inode);
-    disk_inode.fdi_flags = inode->fi_flags | FFS_INODE_F_DELETED;
-    disk_inode.fdi_filename_len = 0;
-
-    rc = ffs_inode_write_disk(&disk_inode, "", area_idx, offset);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-int
-ffs_inode_from_disk(struct ffs_inode *out_inode,
-                    const struct ffs_disk_inode *disk_inode,
-                    uint8_t area_idx, uint32_t offset)
-{
-    int cached_name_len;
-    int rc;
-
-    out_inode->fi_object.fo_type = FFS_OBJECT_TYPE_INODE;
-    out_inode->fi_object.fo_id = disk_inode->fdi_id;
-    out_inode->fi_object.fo_seq = disk_inode->fdi_seq;
-    out_inode->fi_object.fo_area_idx = area_idx;
-    out_inode->fi_object.fo_area_offset = offset;
-    out_inode->fi_flags = disk_inode->fdi_flags;
-    out_inode->fi_filename_len = disk_inode->fdi_filename_len;
-
-    if (out_inode->fi_filename_len > FFS_SHORT_FILENAME_LEN) {
-        cached_name_len = FFS_SHORT_FILENAME_LEN;
-    } else {
-        cached_name_len = out_inode->fi_filename_len;
-    }
-    rc = ffs_flash_read(area_idx, offset + sizeof *disk_inode,
-                        out_inode->fi_filename, cached_name_len);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-int
-ffs_inode_rename(struct ffs_inode *inode, const char *filename)
-{
-    struct ffs_disk_inode disk_inode;
-    uint32_t offset;
-    uint8_t area_idx;
-    int filename_len;
-    int rc;
-
-    filename_len = strlen(filename);
-    rc = ffs_misc_reserve_space(&area_idx, &offset,
-                                sizeof disk_inode + filename_len);
-    if (rc != 0) {
-        return rc;
-    }
-
-    disk_inode.fdi_magic = FFS_INODE_MAGIC;
-    disk_inode.fdi_id = inode->fi_object.fo_id;
-    disk_inode.fdi_seq = inode->fi_object.fo_seq + 1;
-    disk_inode.fdi_parent_id = ffs_inode_parent_id(inode);
-    disk_inode.fdi_flags = inode->fi_flags;
-    disk_inode.fdi_filename_len = filename_len;
-
-    rc = ffs_inode_write_disk(&disk_inode, filename, area_idx, offset);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = ffs_inode_from_disk(inode, &disk_inode, area_idx, offset);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-int
-ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
+ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode,
                     uint8_t area_idx, uint32_t offset)
 {
     int rc;
@@ -252,14 +51,6 @@ ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode, char *out_filename,
     }
     if (out_disk_inode->fdi_magic != FFS_INODE_MAGIC) {
         return FFS_EUNEXP;
-    }
-
-    if (out_filename != NULL) {
-        rc = ffs_flash_read(area_idx, offset + sizeof *out_disk_inode,
-                            out_filename, out_disk_inode->fdi_filename_len);
-        if (rc != 0) {
-            return rc;
-        }
     }
 
     return 0;
@@ -276,45 +67,279 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
     if (rc != 0) {
         return rc;
     }
-    rc = ffs_flash_write(area_idx, offset + sizeof *disk_inode, filename,
-                         disk_inode->fdi_filename_len);
-    if (rc != 0) {
-        return rc;
+
+    if (disk_inode->fdi_filename_len != 0) {
+        rc = ffs_flash_write(area_idx, offset + sizeof *disk_inode, filename,
+                             disk_inode->fdi_filename_len);
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     return 0;
 }
 
 int
-ffs_inode_seek(const struct ffs_inode *inode, uint32_t offset,
-               struct ffs_block **out_prev_block,
-               struct ffs_block **out_block, uint32_t *out_block_off)
+ffs_inode_calc_data_length(uint32_t *out_len,
+                           const struct ffs_inode_entry *inode_entry)
 {
-    struct ffs_block *prev_block;
-    struct ffs_block *block;
+    const struct ffs_hash_entry *cur;
+    struct ffs_block block;
+    int rc;
 
-    prev_block = NULL;
-    block = SLIST_FIRST(&inode->fi_block_list);
-    while (block != NULL && offset >= block->fb_data_len) {
-        offset -= block->fb_data_len;
+    assert(ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id));
 
-        prev_block = block;
-        block = SLIST_NEXT(block, fb_next);
+    *out_len = 0;
+
+    cur = inode_entry->fi_last_block;
+    while (cur != NULL) {
+        rc = ffs_block_from_hash_entry(&block, cur);
+        if (rc != 0) {
+            return rc;
+        }
+
+        *out_len += block.fb_data_len;
+
+        cur = block.fb_prev;
     }
 
-    if (block == NULL && offset != 0) {
-        return FFS_ERANGE;
+    return 0;
+}
+
+int
+ffs_inode_from_entry(struct ffs_inode *out_inode,
+                     struct ffs_inode_entry *entry)
+{
+    struct ffs_disk_inode disk_inode;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int cached_name_len;
+    int rc;
+
+    ffs_flash_loc_expand(&area_idx, &area_offset,
+                         entry->fi_hash_entry.fhe_flash_loc);
+
+    rc = ffs_inode_read_disk(&disk_inode, area_idx, area_offset);
+    if (rc != 0) {
+        return rc;
     }
 
-    if (out_prev_block != NULL) {
-        *out_prev_block = prev_block;
+    out_inode->fi_entry = entry;
+    out_inode->fi_seq = disk_inode.fdi_seq;
+    if (disk_inode.fdi_parent_id == FFS_ID_NONE) {
+        out_inode->fi_parent = NULL;
+    } else {
+        out_inode->fi_parent = ffs_hash_find_inode(disk_inode.fdi_parent_id);
     }
-    if (out_block != NULL) {
-        *out_block = block;
+    out_inode->fi_filename_len = disk_inode.fdi_filename_len;
+
+    if (out_inode->fi_filename_len > FFS_SHORT_FILENAME_LEN) {
+        cached_name_len = FFS_SHORT_FILENAME_LEN;
+    } else {
+        cached_name_len = out_inode->fi_filename_len;
     }
-    if (out_block_off != NULL) {
-        *out_block_off = offset;
+    if (cached_name_len != 0) {
+        rc = ffs_flash_read(area_idx, area_offset + sizeof disk_inode,
+                            out_inode->fi_filename, cached_name_len);
+        if (rc != 0) {
+            return rc;
+        }
     }
+
+    return 0;
+}
+
+uint32_t
+ffs_inode_parent_id(const struct ffs_inode *inode)
+{
+    if (inode->fi_parent == NULL) {
+        return FFS_ID_NONE;
+    } else {
+        return inode->fi_parent->fi_hash_entry.fhe_id;
+    }
+}
+
+static struct ffs_inode_list ffs_inode_delete_list;
+
+static int
+ffs_inode_dec_refcnt_only(struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_inode inode;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    assert(inode_entry->fi_refcnt > 0);
+    inode_entry->fi_refcnt--;
+    if (inode_entry->fi_refcnt == 0) {
+        ffs_flash_loc_expand(&area_idx, &area_offset,
+                             inode_entry->fi_hash_entry.fhe_flash_loc);
+        if (area_idx != FFS_AREA_ID_NONE) {
+            rc = ffs_inode_from_entry(&inode, inode_entry);
+            if (rc != 0) {
+                return rc;
+            }
+
+            if (inode.fi_parent != NULL) {
+                ffs_inode_remove_child(&inode);
+            }
+        }
+        SLIST_INSERT_HEAD(&ffs_inode_delete_list, inode_entry,
+                          fi_sibling_next);
+    }
+
+    return 0;
+}
+
+static int
+ffs_inode_delete_from_ram(struct ffs_hash_entry **out_next,
+                          struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_inode_entry *child;
+    struct ffs_inode inode;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    if (ffs_hash_id_is_dir(inode_entry->fi_hash_entry.fhe_id)) {
+        while ((child = SLIST_FIRST(&inode_entry->fi_child_list)) != NULL) {
+            rc = ffs_inode_dec_refcnt_only(child);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+    } else {
+        while (inode_entry->fi_last_block != NULL) {
+            if (*out_next == inode_entry->fi_last_block) {
+                *out_next = SLIST_NEXT(inode_entry->fi_last_block, fhe_next);
+            }
+
+            rc = ffs_block_delete_from_ram(inode_entry->fi_last_block);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+    }
+
+    ffs_flash_loc_expand(&area_idx, &area_offset,
+                         inode_entry->fi_hash_entry.fhe_flash_loc);
+    if (area_idx != FFS_AREA_ID_NONE) {
+        rc = ffs_inode_from_entry(&inode, inode_entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (inode.fi_parent != NULL) {
+            ffs_inode_remove_child(&inode);
+        }
+    }
+
+    if (*out_next == &inode_entry->fi_hash_entry) {
+        *out_next = SLIST_NEXT(&inode_entry->fi_hash_entry, fhe_next);
+    }
+
+    ffs_hash_remove(&inode_entry->fi_hash_entry);
+    ffs_inode_entry_free(inode_entry);
+
+    return 0;
+}
+
+int
+ffs_inode_dec_refcnt(struct ffs_hash_entry **out_next,
+                     struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_inode_entry *cur;
+    struct ffs_hash_entry *next;
+    int rc;
+
+    ffs_inode_dec_refcnt_only(inode_entry);
+
+    next = SLIST_NEXT(&inode_entry->fi_hash_entry, fhe_next);
+    while ((cur = SLIST_FIRST(&ffs_inode_delete_list)) != NULL) {
+        SLIST_REMOVE(&ffs_inode_delete_list, cur, ffs_inode_entry,
+                     fi_sibling_next);
+        rc = ffs_inode_delete_from_ram(&next, cur);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
+    if (out_next != NULL) {
+        *out_next = next;
+    }
+
+    return 0;
+}
+
+int
+ffs_inode_delete_from_disk(struct ffs_inode *inode)
+{
+    struct ffs_disk_inode disk_inode;
+    uint32_t offset;
+    uint8_t area_idx;
+    int rc;
+
+    /* Make sure it isn't already deleted. */
+    assert(inode->fi_parent != NULL);
+
+    rc = ffs_misc_reserve_space(&area_idx, &offset, sizeof disk_inode);
+    if (rc != 0) {
+        return rc;
+    }
+
+    disk_inode.fdi_magic = FFS_INODE_MAGIC;
+    disk_inode.fdi_id = inode->fi_entry->fi_hash_entry.fhe_id;
+    disk_inode.fdi_seq = inode->fi_seq + 1;
+    disk_inode.fdi_parent_id = FFS_ID_NONE;
+    disk_inode.fdi_filename_len = 0;
+
+    rc = ffs_inode_write_disk(&disk_inode, "", area_idx, offset);
+    if (rc != 0) {
+        return rc;
+    }
+
+    inode->fi_entry->fi_hash_entry.fhe_flash_loc =
+        ffs_flash_loc(area_idx, offset);
+
+    return 0;
+}
+
+int
+ffs_inode_rename(struct ffs_inode_entry *inode_entry,
+                 struct ffs_inode_entry *new_parent, const char *filename)
+{
+    struct ffs_disk_inode disk_inode;
+    struct ffs_inode inode;
+    uint32_t offset;
+    uint8_t area_idx;
+    int filename_len;
+    int rc;
+
+    rc = ffs_inode_from_entry(&inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+    inode.fi_parent = new_parent;
+
+    filename_len = strlen(filename);
+    rc = ffs_misc_reserve_space(&area_idx, &offset,
+                                sizeof disk_inode + filename_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    disk_inode.fdi_magic = FFS_INODE_MAGIC;
+    disk_inode.fdi_id = inode_entry->fi_hash_entry.fhe_id;
+    disk_inode.fdi_seq = inode.fi_seq + 1;
+    disk_inode.fdi_parent_id = ffs_inode_parent_id(&inode);
+    disk_inode.fdi_filename_len = filename_len;
+
+    rc = ffs_inode_write_disk(&disk_inode, filename, area_idx, offset);
+    if (rc != 0) {
+        return rc;
+    }
+
+    inode_entry->fi_hash_entry.fhe_flash_loc = ffs_flash_loc(area_idx, offset);
 
     return 0;
 }
@@ -323,16 +348,17 @@ static int
 ffs_inode_read_filename_chunk(const struct ffs_inode *inode,
                               uint8_t filename_offset, void *buf, int len)
 {
-    uint32_t area_off;
+    uint32_t area_offset;
+    uint8_t area_idx;
     int rc;
 
     assert(filename_offset + len <= inode->fi_filename_len);
 
-    area_off = inode->fi_object.fo_area_offset +
-               sizeof (struct ffs_disk_inode) +
-               filename_offset;
+    ffs_flash_loc_expand(&area_idx, &area_offset,
+                         inode->fi_entry->fi_hash_entry.fhe_flash_loc);
+    area_offset += sizeof (struct ffs_disk_inode) + filename_offset;
 
-    rc = ffs_flash_read(inode->fi_object.fo_area_idx, area_off, buf, len);
+    rc = ffs_flash_read(area_idx, area_offset, buf, len);
     if (rc != 0) {
         return rc;
     }
@@ -341,19 +367,32 @@ ffs_inode_read_filename_chunk(const struct ffs_inode *inode,
 }
 
 int
-ffs_inode_add_child(struct ffs_inode *parent, struct ffs_inode *child)
+ffs_inode_add_child(struct ffs_inode_entry *parent,
+                    struct ffs_inode_entry *child)
 {
-    struct ffs_inode *prev;
-    struct ffs_inode *cur;
+    struct ffs_inode_entry *prev;
+    struct ffs_inode_entry *cur;
+    struct ffs_inode child_inode;
+    struct ffs_inode cur_inode;
     int cmp;
     int rc;
 
-    assert(parent->fi_flags & FFS_INODE_F_DIRECTORY);
-    assert(child->fi_parent == NULL);
+    assert(ffs_hash_id_is_dir(parent->fi_hash_entry.fhe_id));
+
+    rc = ffs_inode_from_entry(&child_inode, child);
+    if (rc != 0) {
+        return rc;
+    }
 
     prev = NULL;
     SLIST_FOREACH(cur, &parent->fi_child_list, fi_sibling_next) {
-        rc = ffs_inode_filename_cmp_flash(&cmp, child, cur);
+        assert(cur != child);
+        rc = ffs_inode_from_entry(&cur_inode, cur);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = ffs_inode_filename_cmp_flash(&cmp, &child_inode, &cur_inode);
         if (rc != 0) {
             return rc;
         }
@@ -370,7 +409,6 @@ ffs_inode_add_child(struct ffs_inode *parent, struct ffs_inode *child)
     } else {
         SLIST_INSERT_AFTER(prev, child, fi_sibling_next);
     }
-    child->fi_parent = parent;
 
     return 0;
 }
@@ -378,23 +416,13 @@ ffs_inode_add_child(struct ffs_inode *parent, struct ffs_inode *child)
 void
 ffs_inode_remove_child(struct ffs_inode *child)
 {
-    struct ffs_inode *parent;
+    struct ffs_inode_entry *parent;
 
     parent = child->fi_parent;
     assert(parent != NULL);
-    assert(parent->fi_flags & FFS_INODE_F_DIRECTORY);
-    assert(child->fi_parent == parent);
-    SLIST_REMOVE(&parent->fi_child_list, child, ffs_inode, fi_sibling_next);
-    child->fi_parent = NULL;
-}
-
-int
-ffs_inode_is_root(const struct ffs_disk_inode *disk_inode)
-{
-    return disk_inode->fdi_parent_id == FFS_ID_NONE         &&
-           disk_inode->fdi_flags & FFS_INODE_F_DIRECTORY    &&
-           !(disk_inode->fdi_flags & FFS_INODE_F_DELETED)   &&
-           disk_inode->fdi_filename_len == 0;
+    assert(ffs_hash_id_is_dir(parent->fi_hash_entry.fhe_id));
+    SLIST_REMOVE(&parent->fi_child_list, child->fi_entry, ffs_inode_entry,
+                 fi_sibling_next);
 }
 
 int
@@ -446,59 +474,6 @@ ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
     }
 
     return 0;
-}
-
-int
-ffs_inode_read(const struct ffs_inode *inode, uint32_t offset,
-               void *data, uint32_t *len)
-{
-    struct ffs_block *block;
-    uint32_t bytes_read;
-    uint32_t bytes_left;
-    uint32_t area_off;
-    uint32_t block_off;
-    uint32_t chunk_len;
-    uint8_t *dst;
-    int rc;
-
-    dst = data;
-    bytes_read = 0;
-    bytes_left = *len;
-
-    rc = ffs_inode_seek(inode, offset, NULL, &block, &block_off);
-    if (rc != 0) {
-        goto done;
-    }
-
-
-    while (block != NULL && bytes_left > 0) {
-        if (bytes_left > block->fb_data_len - block_off) {
-            chunk_len = block->fb_data_len - block_off;
-        } else {
-            chunk_len = bytes_left;
-        }
-
-        area_off = block->fb_object.fo_area_offset +
-                   sizeof (struct ffs_disk_block) +
-                   block_off;
-        rc = ffs_flash_read(block->fb_object.fo_area_idx, area_off, dst,
-                            chunk_len);
-        if (rc != 0) {
-            goto done;
-        }
-
-        dst += chunk_len;
-        bytes_read += chunk_len;
-        bytes_left -= chunk_len;
-        block = SLIST_NEXT(block, fb_next);
-        block_off = 0;
-    }
-
-    rc = 0;
-
-done:
-    *len = bytes_read;
-    return rc;
 }
 
 int
@@ -562,3 +537,195 @@ ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
     return 0;
 }
 
+/**
+ * Finds the set of blocks composing the specified address range within the
+ * supplied file inode.  This information is returned in the form of a
+ * seek_info object.
+ *
+ * @param inode_entry           The file inode to seek within.
+ * @param offset                The start address of the region to seek to.
+ * @param length                The length of the region to seek to.
+ * @param out_seek_info         On success, this gets populated with the result
+ *                                  of the seek operation.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+ffs_inode_seek(const struct ffs_inode_entry *inode_entry, uint32_t offset,
+               uint32_t length, struct ffs_seek_info *out_seek_info)
+{
+    struct ffs_hash_entry *cur_entry;
+    struct ffs_block block;
+    uint32_t block_start;
+    uint32_t cur_offset;
+    uint32_t file_len;
+    uint32_t seek_end;
+    int rc;
+
+    assert(ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id));
+
+    rc = ffs_inode_calc_data_length(&file_len, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (offset > file_len) {
+        return FFS_ERANGE;
+    }
+    if (offset == file_len) {
+        memset(&out_seek_info->fsi_last_block, 0,
+               sizeof out_seek_info->fsi_last_block);
+        out_seek_info->fsi_last_block.fb_id = FFS_ID_NONE;
+        out_seek_info->fsi_block_file_off = 0;
+        out_seek_info->fsi_file_len = file_len;
+        return 0;
+    }
+
+    seek_end = offset + length;
+
+    cur_entry = inode_entry->fi_last_block;
+    cur_offset = file_len;
+    while (1) {
+        rc = ffs_block_from_hash_entry(&block, cur_entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        block_start = cur_offset - block.fb_data_len;
+        if (seek_end > block_start) {
+            out_seek_info->fsi_last_block = block;
+            out_seek_info->fsi_block_file_off = block_start;
+            out_seek_info->fsi_file_len = file_len;
+            return 0;
+        }
+
+        cur_offset = block_start;
+        cur_entry = block.fb_prev;
+    }
+}
+
+/**
+ * Reads data from the specified file inode.
+ *
+ * @param inode_entry           The inode to read from.
+ * @param offset                The offset within the file to start the read
+ *                                  at.
+ * @param data                  On success, the read data gets written here.
+ * @param len
+ */
+int
+ffs_inode_read(const struct ffs_inode_entry *inode_entry, uint32_t offset,
+               uint32_t len, void *out_data, uint32_t *out_len)
+{
+    struct ffs_seek_info seek_info;
+    struct ffs_block block;
+    uint32_t src_start;
+    uint32_t src_end;
+    uint32_t dst_off;
+    uint32_t area_offset;
+    uint32_t block_start;
+    uint32_t read_len;
+    uint16_t block_off;
+    uint16_t chunk_len;
+    uint8_t *dst;
+    uint8_t area_idx;
+    int rc;
+
+    dst = out_data;
+
+    rc = ffs_inode_seek(inode_entry, offset, len, &seek_info);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (seek_info.fsi_last_block.fb_id == FFS_ID_NONE) {
+        *out_len = 0;
+        return 0;
+    }
+
+    block = seek_info.fsi_last_block;
+    block_start = seek_info.fsi_block_file_off;
+    src_start = offset;
+
+    if (block_start + seek_info.fsi_last_block.fb_data_len > len) {
+        src_end = offset + len;
+    } else {
+        src_end = block_start + seek_info.fsi_last_block.fb_data_len;
+    }
+
+    read_len = src_end - src_start;
+    dst_off = read_len;
+
+    while (1) {
+        if (block_start < src_start) {
+            chunk_len = src_end - src_start;
+            block_off = src_start - block_start;
+        } else {
+            chunk_len = src_end - block_start;
+            block_off = 0;
+        }
+        assert(chunk_len <= dst_off);
+        dst_off -= chunk_len;
+
+        ffs_flash_loc_expand(&area_idx, &area_offset, block.fb_flash_loc);
+        area_offset += sizeof (struct ffs_disk_block);
+        area_offset += block_off;
+
+        rc = ffs_flash_read(area_idx, area_offset, dst + dst_off, chunk_len);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (dst_off == 0) {
+            break;
+        }
+
+        src_end -= chunk_len;
+
+        assert(block.fb_prev != NULL);
+        rc = ffs_block_from_hash_entry(&block, block.fb_prev);
+        if (rc != 0) {
+            return rc;
+        }
+
+        block_start -= block.fb_data_len;
+    }
+
+    *out_len = read_len;
+
+    return 0;
+}
+
+/**
+ * Unlinks the file or directory represented by the specified inode.  If the
+ * inode represents a directory, all the directory's descendants are
+ * recursively unlinked.  Any open file handles refering to an unlinked file
+ * remain valid, and can be read from and written to.
+ *
+ * @inode                   The inode to unlink.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int
+ffs_inode_unlink(struct ffs_inode *inode)
+{
+    int rc;
+
+    if (inode->fi_parent == NULL) {
+        return FFS_ENOENT;
+    }
+
+    ffs_inode_remove_child(inode);
+
+    rc = ffs_inode_delete_from_disk(inode);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ffs_inode_dec_refcnt(NULL, inode->fi_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}

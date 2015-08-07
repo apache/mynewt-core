@@ -52,7 +52,7 @@ int ffs_read(struct ffs_file *file, void *data, uint32_t *len);
 int ffs_write(struct ffs_file *file, const void *data, int len);
 int ffs_seek(struct ffs_file *file, uint32_t offset);
 uint32_t ffs_getpos(const struct ffs_file *file);
-uint32_t ffs_file_len(const struct ffs_file *file);
+int ffs_file_len(uint32_t *out_len, const struct ffs_file *file);
 int ffs_rename(const char *from, const char *to);
 int ffs_unlink(const char *filename);
 int ffs_mkdir(const char *path);
