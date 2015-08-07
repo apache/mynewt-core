@@ -253,6 +253,8 @@ boot_test_util_verify_area(const struct ffs_area_desc *area_desc,
 
         if (hdr != NULL) {
             img_off = addr - image_addr - hdr->ih_hdr_size;
+        } else {
+            img_off = 0;
         }
 
         if (rem_area > sizeof buf) {

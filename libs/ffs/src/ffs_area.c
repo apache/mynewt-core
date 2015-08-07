@@ -3,12 +3,6 @@
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
-int
-ffs_area_desc_validate(const struct ffs_area_desc *area_desc)
-{
-    return 0;
-}
-
 static void
 ffs_area_set_magic(struct ffs_disk_area *disk_area)
 {
@@ -52,6 +46,19 @@ ffs_area_free_space(const struct ffs_area *area)
     return area->fa_length - area->fa_cur;
 }
 
+/**
+ * Finds a corrupt scratch area.  An area is indentified as a corrupt scratch
+ * area if it and another area share the same ID.  Among two areas with the
+ * same ID, the one with fewer bytes written is the corrupt scratch area.
+ *
+ * @param out_good_idx          On success, the index of the good area (longer
+ *                                  of the two areas) gets written here.
+ * @param out_bad_idx           On success, the index of the corrupt scratch
+ *                                  area gets written here.
+ *
+ * @return                      0 if a corrupt scratch area was identified;
+ *                              FFS_ENOENT if one was not found.
+ */
 int
 ffs_area_find_corrupt_scratch(uint16_t *out_good_idx, uint16_t *out_bad_idx)
 {
@@ -82,5 +89,5 @@ ffs_area_find_corrupt_scratch(uint16_t *out_good_idx, uint16_t *out_bad_idx)
         }
     }
 
-    return FFS_ECORRUPT;
+    return FFS_ENOENT;
 }

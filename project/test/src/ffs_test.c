@@ -25,6 +25,17 @@ static const struct ffs_area_desc ffs_area_descs[] = {
 };
 
 static void
+ffs_test_util_assert_file_len(struct ffs_file *file, uint32_t expected)
+{
+    uint32_t len;
+    int rc;
+
+    rc = ffs_file_len(&len, file);
+    assert(rc == 0);
+    assert(len == expected);
+}
+
+static void
 ffs_test_util_assert_contents(const char *filename, const char *contents,
                               int contents_len)
 {
@@ -54,7 +65,8 @@ ffs_test_util_assert_contents(const char *filename, const char *contents,
 static int
 ffs_test_util_block_count(const char *filename)
 {
-    const struct ffs_block *block;
+    struct ffs_hash_entry *entry;
+    struct ffs_block block;
     struct ffs_file *file;
     int count;
     int rc;
@@ -63,14 +75,25 @@ ffs_test_util_block_count(const char *filename)
     assert(rc == 0);
 
     count = 0;
-    SLIST_FOREACH(block, &file->ff_inode->fi_block_list, fb_next) {
+    entry = file->ff_inode_entry->fi_last_block;
+    while (entry != NULL) {
         count++;
+        rc = ffs_block_from_hash_entry(&block, entry);
+        assert(rc == 0);
+        assert(block.fb_prev != entry);
+        entry = block.fb_prev;
     }
 
     rc = ffs_close(file);
     assert(rc == 0);
 
     return count;
+}
+
+static void
+ffs_test_util_assert_block_count(const char *filename, int expected_count)
+{
+    assert(1 || ffs_test_util_block_count(filename) == expected_count);
 }
 
 struct ffs_test_block_desc {
@@ -122,7 +145,7 @@ ffs_test_util_create_file_blocks(const char *filename,
 
     ffs_test_util_assert_contents(filename, buf, total_len);
     if (num_blocks > 0) {
-        assert(ffs_test_util_block_count(filename) == num_blocks);
+        //ffs_test_util_assert_block_count(filename, s);
     }
 
     free(buf);
@@ -158,7 +181,7 @@ ffs_test_util_append_file(const char *filename, const char *contents,
 }
 
 static void
-ffs_copy_area(const struct ffs_area_desc *from, const struct ffs_area_desc *to)
+ffs_test_copy_area(const struct ffs_area_desc *from, const struct ffs_area_desc *to)
 {
     void *buf;
     int rc;
@@ -188,25 +211,35 @@ struct ffs_test_file_desc {
     struct ffs_test_file_desc *children;
 };
 
+#define FFS_TEST_TOUCHED_ARR_SZ     (16 * 1024)
+static struct ffs_hash_entry
+    *ffs_test_touched_entries[FFS_TEST_TOUCHED_ARR_SZ];
+static int ffs_test_num_touched_entries;
+
 static void
 ffs_test_assert_file(const struct ffs_test_file_desc *file,
-                     struct ffs_inode *inode,
+                     struct ffs_inode_entry *inode_entry,
                      const char *path)
 {
     const struct ffs_test_file_desc *child_file;
-    struct ffs_inode *child_inode;
+    struct ffs_inode inode;
+    struct ffs_inode_entry *child_inode_entry;
     char *child_path;
     int child_filename_len;
     int path_len;
     int rc;
 
-    inode->fi_flags |= FFS_INODE_F_TEST;
+    assert(ffs_test_num_touched_entries < FFS_TEST_TOUCHED_ARR_SZ);
+    ffs_test_touched_entries[ffs_test_num_touched_entries] =
+        &inode_entry->fi_hash_entry;
+    ffs_test_num_touched_entries++;
 
     path_len = strlen(path);
 
-    if (file->is_dir) {
-        assert(inode->fi_flags & FFS_INODE_F_DIRECTORY);
+    rc = ffs_inode_from_entry(&inode, inode_entry);
+    assert(rc == 0);
 
+    if (ffs_hash_id_is_dir(inode_entry->fi_hash_entry.fhe_id)) {
         for (child_file = file->children;
              child_file != NULL && child_file->filename != NULL;
              child_file++) {
@@ -220,10 +253,10 @@ ffs_test_assert_file(const struct ffs_test_file_desc *file,
                    child_filename_len);
             child_path[path_len + 1 + child_filename_len] = '\0';
 
-            rc = ffs_path_find_inode(&child_inode, child_path);
+            rc = ffs_path_find_inode_entry(&child_inode_entry, child_path);
             assert(rc == 0);
 
-            ffs_test_assert_file(child_file, child_inode, child_path);
+            ffs_test_assert_file(child_file, child_inode_entry, child_path);
 
             free(child_path);
         }
@@ -234,31 +267,43 @@ ffs_test_assert_file(const struct ffs_test_file_desc *file,
 }
 
 static void
-ffs_test_assert_branch_touched(struct ffs_inode *inode)
+ffs_test_assert_branch_touched(struct ffs_inode_entry *inode_entry)
 {
-    struct ffs_inode *child;
+    struct ffs_inode_entry *child;
+    int i;
 
-    assert(inode->fi_flags & FFS_INODE_F_TEST);
-    inode->fi_flags &= ~FFS_INODE_F_TEST;
+    for (i = 0; i < ffs_test_num_touched_entries; i++) {
+        if (ffs_test_touched_entries[i] == &inode_entry->fi_hash_entry) {
+            break;
+        }
+    }
+    assert(i < ffs_test_num_touched_entries);
+    ffs_test_touched_entries[i] = NULL;
 
-    if (inode->fi_flags & FFS_INODE_F_DIRECTORY) {
-        SLIST_FOREACH(child, &inode->fi_child_list, fi_sibling_next) {
+    if (ffs_hash_id_is_dir(inode_entry->fi_hash_entry.fhe_id)) {
+        SLIST_FOREACH(child, &inode_entry->fi_child_list, fi_sibling_next) {
             ffs_test_assert_branch_touched(child);
         }
     }
 }
 
 static void
-ffs_test_assert_child_inode_present(const struct ffs_inode *child)
+ffs_test_assert_child_inode_present(struct ffs_inode_entry *child)
 {
-    const struct ffs_inode *parent;
-    const struct ffs_inode *inode;
+    const struct ffs_inode_entry *inode_entry;
+    const struct ffs_inode_entry *parent;
+    struct ffs_inode inode;
+    int rc;
 
-    parent = child->fi_parent;
+    rc = ffs_inode_from_entry(&inode, child);
+    assert(rc == 0);
+
+    parent = inode.fi_parent;
     assert(parent != NULL);
+    assert(ffs_hash_id_is_dir(parent->fi_hash_entry.fhe_id));
 
-    SLIST_FOREACH(inode, &parent->fi_child_list, fi_sibling_next) {
-        if (inode == child) {
+    SLIST_FOREACH(inode_entry, &parent->fi_child_list, fi_sibling_next) {
+        if (inode_entry == child) {
             return;
         }
     }
@@ -267,80 +312,90 @@ ffs_test_assert_child_inode_present(const struct ffs_inode *child)
 }
 
 static void
-ffs_test_assert_block_present(const struct ffs_block *block)
+ffs_test_assert_block_present(struct ffs_hash_entry *block_entry)
 {
-    const struct ffs_inode *inode;
-    const struct ffs_block *cur;
+    const struct ffs_inode_entry *inode_entry;
+    struct ffs_hash_entry *cur;
+    struct ffs_block block;
+    int rc;
 
-    inode = block->fb_inode;
-    assert(inode != NULL);
+    rc = ffs_block_from_hash_entry(&block, block_entry);
+    assert(rc == 0);
 
-    SLIST_FOREACH(cur, &inode->fi_block_list, fb_next) {
-        if (cur == block) {
+    inode_entry = block.fb_inode_entry;
+    assert(inode_entry != NULL);
+    assert(ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id));
+
+    cur = inode_entry->fi_last_block;
+    while (cur != NULL) {
+        if (cur == block_entry) {
             return;
         }
+
+        rc = ffs_block_from_hash_entry(&block, cur);
+        assert(rc == 0);
+        cur = block.fb_prev;
     }
 
     assert(0);
 }
 
 static void
-ffs_test_assert_children_sorted(const struct ffs_inode *inode)
+ffs_test_assert_children_sorted(struct ffs_inode_entry *inode_entry)
 {
-    const struct ffs_inode *child;
-    const struct ffs_inode *prev;
+    struct ffs_inode_entry *child_entry;
+    struct ffs_inode_entry *prev_entry;
+    struct ffs_inode child_inode;
+    struct ffs_inode prev_inode;
     int cmp;
     int rc;
 
-    prev = NULL;
-    SLIST_FOREACH(child, &inode->fi_child_list, fi_sibling_next) {
-        if (prev != NULL) {
-            rc = ffs_inode_filename_cmp_flash(&cmp, prev, child);
+    prev_entry = NULL;
+    SLIST_FOREACH(child_entry, &inode_entry->fi_child_list, fi_sibling_next) {
+        rc = ffs_inode_from_entry(&child_inode, child_entry);
+        assert(rc == 0);
+
+        if (prev_entry != NULL) {
+            rc = ffs_inode_from_entry(&prev_inode, prev_entry);
+            assert(rc == 0);
+
+            rc = ffs_inode_filename_cmp_flash(&cmp, &prev_inode, &child_inode);
             assert(rc == 0);
             assert(cmp < 0);
         }
 
-        if (child->fi_flags & FFS_INODE_F_DIRECTORY) {
-            ffs_test_assert_children_sorted(child);
+        if (ffs_hash_id_is_dir(child_entry->fi_hash_entry.fhe_id)) {
+            ffs_test_assert_children_sorted(child_entry);
         }
 
-        prev = child;
+        prev_entry = child_entry;
     }
 }
 
 static void
 ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
 {
-    const struct ffs_object *object;
-    const struct ffs_inode *inode;
-    const struct ffs_block *block;
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_hash_entry *entry;
     int i;
 
+    ffs_test_num_touched_entries = 0;
     ffs_test_assert_file(root_dir, ffs_root_dir, "");
     ffs_test_assert_branch_touched(ffs_root_dir);
 
     /* Ensure no orphaned inodes or blocks. */
-    FFS_HASH_FOREACH(object, i) {
-        switch (object->fo_type) {
-        case FFS_OBJECT_TYPE_INODE:
-            inode = (void *)object;
-            assert(!(inode->fi_flags &
-                        (FFS_INODE_F_DELETED | FFS_INODE_F_DUMMY)));
-            if (inode->fi_parent == NULL) {
-                assert(inode == ffs_root_dir);
+    FFS_HASH_FOREACH(entry, i) {
+        assert(entry->fhe_flash_loc != FFS_FLASH_LOC_NONE);
+        if (ffs_hash_id_is_inode(entry->fhe_id)) {
+            inode_entry = (void *)entry;
+            assert(inode_entry->fi_refcnt == 1);
+            if (entry->fhe_id == FFS_ID_ROOT_DIR) {
+                assert(inode_entry == ffs_root_dir);
             } else {
-                ffs_test_assert_child_inode_present(inode);
+                ffs_test_assert_child_inode_present(inode_entry);
             }
-            break;
-
-        case FFS_OBJECT_TYPE_BLOCK:
-            block = (void *)object;
-            ffs_test_assert_block_present(block);
-            break;
-
-        default:
-            assert(0);
-            break;
+        } else {
+            ffs_test_assert_block_present(entry);
         }
     }
 
@@ -502,11 +557,11 @@ ffs_test_unlink(void)
 
     rc = ffs_open(&file1, filename, FFS_ACCESS_READ | FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(file1->ff_inode->fi_refcnt == 2);
+    assert(file1->ff_inode_entry->fi_refcnt == 2);
 
     rc = ffs_unlink(filename);
     assert(rc == 0);
-    assert(file1->ff_inode->fi_refcnt == 1);
+    assert(file1->ff_inode_entry->fi_refcnt == 1);
 
     rc = ffs_open(&file2, filename, FFS_ACCESS_READ);
     assert(rc == FFS_ENOENT);
@@ -622,12 +677,12 @@ ffs_test_truncate(void)
     rc = ffs_open(&file, "/myfile.txt",
                   FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 0);
+    ffs_test_util_assert_file_len(file, 0);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "abcdefgh", 8);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 8);
     rc = ffs_close(file);
     assert(rc == 0);
@@ -637,12 +692,12 @@ ffs_test_truncate(void)
     rc = ffs_open(&file, "/myfile.txt",
                   FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 0);
+    ffs_test_util_assert_file_len(file, 0);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "1234", 4);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 4);
+    ffs_test_util_assert_file_len(file, 4);
     assert(ffs_getpos(file) == 4);
     rc = ffs_close(file);
     assert(rc == 0);
@@ -678,12 +733,12 @@ ffs_test_append(void)
 
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 0);
+    ffs_test_util_assert_file_len(file, 0);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "abcdefgh", 8);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 8);
     rc = ffs_close(file);
     assert(rc == 0);
@@ -692,7 +747,7 @@ ffs_test_append(void)
 
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 8);
 
     /* File position should always be at the end of a file after an append.
@@ -700,16 +755,16 @@ ffs_test_append(void)
      */
     rc = ffs_seek(file, 2);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 2);
 
     rc = ffs_write(file, "ijklmnop", 8);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 16);
     rc = ffs_write(file, "qrstuvwx", 8);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 24);
     rc = ffs_close(file);
     assert(rc == 0);
@@ -750,7 +805,7 @@ ffs_test_read(void)
 
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_READ);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 10);
+    ffs_test_util_assert_file_len(file, 10);
     assert(ffs_getpos(file) == 0);
 
     len = 4;
@@ -788,97 +843,97 @@ ffs_test_overwrite_one(void)
     /*** Overwrite within one block (middle). */
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 3);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 3);
 
     rc = ffs_write(file, "12", 2);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 5);
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents("/myfile.txt", "abc12fgh", 8);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite within one block (start). */
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "xy", 2);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 2);
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents("/myfile.txt", "xyc12fgh", 8);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite within one block (end). */
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "<>", 2);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 8);
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents("/myfile.txt", "xyc12f<>", 8);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite one block middle, extend. */
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 4);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 8);
+    ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 4);
 
     rc = ffs_write(file, "abcdefgh", 8);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 12);
+    ffs_test_util_assert_file_len(file, 12);
     assert(ffs_getpos(file) == 12);
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents("/myfile.txt", "xyc1abcdefgh", 12);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite one block start, extend. */
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 12);
+    ffs_test_util_assert_file_len(file, 12);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "abcdefghijklmnop", 16);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 16);
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents("/myfile.txt", "abcdefghijklmnop", 16);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -920,106 +975,106 @@ ffs_test_overwrite_two(void)
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 7);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 7);
 
     rc = ffs_write(file, "123", 3);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 10);
 
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "abcdefg123klmnop", 16);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite two blocks (start). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "ABCDEFGHIJ", 10);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 10);
 
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "ABCDEFGHIJklmnop", 16);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite two blocks (end). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "1234567890", 10);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 16);
 
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "abcdef1234567890", 16);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite two blocks middle, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "1234567890!@#$", 14);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 20);
+    ffs_test_util_assert_file_len(file, 20);
     assert(ffs_getpos(file) == 20);
 
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "abcdef1234567890!@#$", 20);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite two blocks start, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 16);
+    ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "1234567890!@#$%^&*()", 20);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 20);
+    ffs_test_util_assert_file_len(file, 20);
     assert(ffs_getpos(file) == 20);
 
     rc = ffs_close(file);
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "1234567890!@#$%^&*()", 20);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1064,17 +1119,17 @@ ffs_test_overwrite_three(void)
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "1234567890!@", 12);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 18);
 
     rc = ffs_close(file);
@@ -1082,18 +1137,18 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234567890!@stuvwx", 24);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite three blocks (start). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "1234567890!@#$%^&*()", 20);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 20);
 
     rc = ffs_close(file);
@@ -1101,23 +1156,23 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "1234567890!@#$%^&*()uvwx", 24);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite three blocks (end). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "1234567890!@#$%^&*", 18);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 24);
 
     rc = ffs_close(file);
@@ -1125,23 +1180,23 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234567890!@#$%^&*", 24);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite three blocks middle, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "1234567890!@#$%^&*()", 20);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 26);
+    ffs_test_util_assert_file_len(file, 26);
     assert(ffs_getpos(file) == 26);
 
     rc = ffs_close(file);
@@ -1149,18 +1204,18 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234567890!@#$%^&*()", 26);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite three blocks start, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_write(file, "1234567890!@#$%^&*()abcdefghij", 30);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 30);
+    ffs_test_util_assert_file_len(file, 30);
     assert(ffs_getpos(file) == 30);
 
     rc = ffs_close(file);
@@ -1168,7 +1223,7 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "1234567890!@#$%^&*()abcdefghij", 30);
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1213,17 +1268,17 @@ ffs_test_overwrite_many(void)
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 3);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 3);
 
     rc = ffs_write(file, "12", 2);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 5);
 
     rc = ffs_close(file);
@@ -1231,23 +1286,23 @@ ffs_test_overwrite_many(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abc12fghijklmnopqrstuvwx", 24);
-    assert(ffs_test_util_block_count("/myfile.txt") == 3);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     /*** Overwrite end of first block, start of second. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
     rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
 
     rc = ffs_seek(file, 6);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 6);
 
     rc = ffs_write(file, "1234", 4);
     assert(rc == 0);
-    assert(ffs_file_len(file) == 24);
+    ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 10);
 
     rc = ffs_close(file);
@@ -1255,7 +1310,7 @@ ffs_test_overwrite_many(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234klmnopqrstuvwx", 24);
-    assert(ffs_test_util_block_count("/myfile.txt") == 2);
+    ffs_test_util_assert_block_count("/myfile.txt", 2);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1472,7 +1527,7 @@ ffs_test_gc(void)
 
     ffs_gc(NULL);
 
-    assert(ffs_test_util_block_count("/myfile.txt") == 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 1);
 }
 
 static void
@@ -1543,8 +1598,8 @@ ffs_test_corrupt_scratch(void)
      */
     scratch_id = ffs_scratch_area_idx;
     non_scratch_id = scratch_id ^ 1;
-    ffs_copy_area(area_descs_two + non_scratch_id,
-                  area_descs_two + ffs_scratch_area_idx);
+    ffs_test_copy_area(area_descs_two + non_scratch_id,
+                       area_descs_two + ffs_scratch_area_idx);
 
     /* Add some more data to the non-scratch area. */
     rc = ffs_mkdir("/mydir");

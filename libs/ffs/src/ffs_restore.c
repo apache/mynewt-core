@@ -6,107 +6,112 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
-static int
-ffs_delete_if_trash(struct ffs_object *object)
-{
-    struct ffs_inode *inode;
-    struct ffs_block *block;
-
-    switch (object->fo_type) {
-    case FFS_OBJECT_TYPE_INODE:
-        inode = (void *)object;
-        if (inode->fi_flags & FFS_INODE_F_DELETED) {
-            ffs_inode_delete_from_ram(inode);
-            return 1;
-        } else if (inode->fi_flags & FFS_INODE_F_DUMMY) {
-            /* This inode is referenced by other objects, but it does not exist
-             * in the file system.  This indicates file system corruption.
-             * Just delete the inode and everything that references it.
-             */
-            ffs_inode_delete_from_ram(inode);
-            return 1;
-        } else {
-            return 0;
-        }
-
-    case FFS_OBJECT_TYPE_BLOCK:
-        block = (void *)object;
-        if (block->fb_flags & FFS_BLOCK_F_DELETED || block->fb_inode == NULL) {
-            ffs_block_delete_from_ram(block);
-            return 1;
-        } else {
-            return 0;
-        }
-
-    default:
-        assert(0);
-        return 0;
-    }
-}
-
-void
+/**
+ * Performs a sweep of the RAM representation at the end of a successful
+ * restore.  Deletes all dummy inodes that were being kept around to allow the
+ * restore to proceed.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
 ffs_restore_sweep(void)
 {
-    struct ffs_object_list *list;
-    struct ffs_object *object;
-    struct ffs_object *next;
+    struct ffs_hash_entry *entry;
+    struct ffs_hash_entry *next;
+    struct ffs_hash_list *list;
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_inode inode;
+    int del;
+    int rc;
     int i;
 
     for (i = 0; i < FFS_HASH_SIZE; i++) {
         list = ffs_hash + i;
 
-        object = SLIST_FIRST(list);
-        while (object != NULL) {
-            next = SLIST_NEXT(object, fb_hash_next);
-            ffs_delete_if_trash(object);
+        entry = SLIST_FIRST(list);
+        while (entry != NULL) {
+            next = SLIST_NEXT(entry, fhe_next);
+            if (ffs_hash_id_is_inode(entry->fhe_id)) {
+                inode_entry = (struct ffs_inode_entry *)entry;
 
-            object = next;
+                del = 0;
+                if (inode_entry->fi_refcnt == 0) {
+                    del = 1;
+                    inode_entry->fi_refcnt++;
+                } else if (entry->fhe_flash_loc == FFS_FLASH_LOC_NONE) {
+                    del = 1;
+                } else if (entry->fhe_id != FFS_ID_ROOT_DIR) {
+                    rc = ffs_inode_from_entry(&inode, inode_entry);
+                    if (rc != 0) {
+                        return rc;
+                    }
+
+                    if (inode.fi_parent == NULL) {
+                        del = 1;
+                    }
+                }
+
+                if (del) {
+                    rc = ffs_inode_dec_refcnt(&next, inode_entry);
+                    if (rc != 0) {
+                        return rc;
+                    }
+                }
+            }
+
+            entry = next;
         }
     }
+
+    return 0;
 }
 
 static int
-ffs_restore_dummy_inode(struct ffs_inode **out_inode, uint32_t id, int is_dir)
+ffs_restore_dummy_inode(struct ffs_inode_entry **out_inode_entry, uint32_t id)
 {
-    struct ffs_inode *inode;
+    struct ffs_inode_entry *inode_entry;
 
-    inode = ffs_inode_alloc();
-    if (inode == NULL) {
+    inode_entry = ffs_inode_entry_alloc();
+    if (inode_entry == NULL) {
         return FFS_ENOMEM;
     }
-    inode->fi_object.fo_id = id;
-    inode->fi_refcnt = 1;
-    inode->fi_object.fo_area_idx = FFS_AREA_ID_NONE;
-    inode->fi_flags = FFS_INODE_F_DUMMY;
-    if (is_dir) {
-        inode->fi_flags |= FFS_INODE_F_DIRECTORY;
-    }
+    inode_entry->fi_hash_entry.fhe_id = id;
+    inode_entry->fi_hash_entry.fhe_flash_loc = FFS_FLASH_LOC_NONE;
+    inode_entry->fi_refcnt = 0;
 
-    ffs_hash_insert(&inode->fi_object);
+    ffs_hash_insert(&inode_entry->fi_hash_entry);
 
-    *out_inode = inode;
+    *out_inode_entry = inode_entry;
 
     return 0;
 }
 
 static int
 ffs_restore_inode_gets_replaced(int *out_should_replace,
-                                const struct ffs_inode *old_inode,
+                                struct ffs_inode_entry *old_inode_entry,
                                 const struct ffs_disk_inode *disk_inode)
 {
-    assert(old_inode->fi_object.fo_id == disk_inode->fdi_id);
+    struct ffs_inode old_inode;
+    int rc;
 
-    if (old_inode->fi_flags & FFS_INODE_F_DUMMY) {
+    assert(old_inode_entry->fi_hash_entry.fhe_id == disk_inode->fdi_id);
+
+    if (old_inode_entry->fi_refcnt == 0) {
         *out_should_replace = 1;
         return 0;
     }
 
-    if (old_inode->fi_object.fo_seq < disk_inode->fdi_seq) {
+    rc = ffs_inode_from_entry(&old_inode, old_inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (old_inode.fi_seq < disk_inode->fdi_seq) {
         *out_should_replace = 1;
         return 0;
     }
 
-    if (old_inode->fi_object.fo_seq == disk_inode->fdi_seq) {
+    if (old_inode.fi_seq == disk_inode->fdi_seq) {
         /* This is a duplicate of an previously-read inode.  This should never
          * happen.
          */
@@ -118,7 +123,7 @@ ffs_restore_inode_gets_replaced(int *out_should_replace,
 }
 
 /**
- * Determines if the speciifed inode should be added to the RAM representation
+ * Determines if the specified inode should be added to the RAM representation
  * and adds it if appropriate.
  *
  * @param disk_inode            The inode just read from flash.
@@ -131,85 +136,94 @@ static int
 ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
                   uint32_t area_offset)
 {
-    struct ffs_inode *parent;
-    struct ffs_inode *inode;
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_inode_entry *parent;
+    struct ffs_inode inode;
     int new_inode;
     int do_add;
     int rc;
 
     new_inode = 0;
 
-    rc = ffs_hash_find_inode(&inode, disk_inode->fdi_id);
-    switch (rc) {
-    case 0:
-        rc = ffs_restore_inode_gets_replaced(&do_add, inode, disk_inode);
+    inode_entry = ffs_hash_find_inode(disk_inode->fdi_id);
+    if (inode_entry != NULL) {
+        rc = ffs_restore_inode_gets_replaced(&do_add, inode_entry, disk_inode);
         if (rc != 0) {
             goto err;
         }
 
         if (do_add) {
-            if (inode->fi_parent != NULL) {
-                ffs_inode_remove_child(inode);
-            }
-            ffs_inode_from_disk(inode, disk_inode, area_idx, area_offset);
-        }
-        break;
+            if (inode_entry->fi_hash_entry.fhe_flash_loc !=
+                FFS_FLASH_LOC_NONE) {
 
-    case FFS_ENOENT:
-        inode = ffs_inode_alloc();
-        if (inode == NULL) {
+                rc = ffs_inode_from_entry(&inode, inode_entry);
+                if (rc != 0) {
+                    return rc;
+                }
+                if (inode.fi_parent != NULL) {
+                    ffs_inode_remove_child(&inode);
+                }
+            }
+ 
+            inode_entry->fi_hash_entry.fhe_flash_loc =
+                ffs_flash_loc(area_idx, area_offset);
+        }
+    } else {
+        inode_entry = ffs_inode_entry_alloc();
+        if (inode_entry == NULL) {
             rc = FFS_ENOMEM;
             goto err;
         }
         new_inode = 1;
         do_add = 1;
 
-        rc = ffs_inode_from_disk(inode, disk_inode, area_idx, area_offset);
-        if (rc != 0) {
-            goto err;
-        }
-        inode->fi_refcnt = 1;
+        inode_entry->fi_hash_entry.fhe_id = disk_inode->fdi_id;
+        inode_entry->fi_hash_entry.fhe_flash_loc =
+            ffs_flash_loc(area_idx, area_offset);
 
-        ffs_hash_insert(&inode->fi_object);
-        break;
-
-    default:
-        rc = FFS_ECORRUPT;
-        goto err;
+        ffs_hash_insert(&inode_entry->fi_hash_entry);
     }
 
     if (do_add) {
+        inode_entry->fi_refcnt = 1;
+
         if (disk_inode->fdi_parent_id != FFS_ID_NONE) {
-            rc = ffs_hash_find_inode(&parent, disk_inode->fdi_parent_id);
-            if (rc == FFS_ENOENT) {
+            parent = ffs_hash_find_inode(disk_inode->fdi_parent_id);
+            if (parent == NULL) {
                 rc = ffs_restore_dummy_inode(&parent,
-                                             disk_inode->fdi_parent_id, 1);
-            }
-            if (rc != 0) {
-                goto err;
+                                             disk_inode->fdi_parent_id);
+                if (rc != 0) {
+                    goto err;
+                }
             }
 
-            rc = ffs_inode_add_child(parent, inode);
+            rc = ffs_inode_add_child(parent, inode_entry);
             if (rc != 0) {
                 goto err;
             }
         } 
 
 
-        if (ffs_inode_is_root(disk_inode)) {
-            ffs_root_dir = inode;
+        if (inode_entry->fi_hash_entry.fhe_id == FFS_ID_ROOT_DIR) {
+            ffs_root_dir = inode_entry;
         }
     }
 
-    if (inode->fi_object.fo_id >= ffs_next_id) {
-        ffs_next_id = inode->fi_object.fo_id + 1;
+    if (ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id)) {
+        if (inode_entry->fi_hash_entry.fhe_id > ffs_hash_next_file_id) {
+            ffs_hash_next_file_id = inode_entry->fi_hash_entry.fhe_id + 1;
+        }
+    } else {
+        if (inode_entry->fi_hash_entry.fhe_id > ffs_hash_next_dir_id) {
+            ffs_hash_next_dir_id = inode_entry->fi_hash_entry.fhe_id + 1;
+        }
     }
 
     return 0;
 
 err:
     if (new_inode) {
-        ffs_inode_free(inode);
+        ffs_inode_entry_free(inode_entry);
     }
     return rc;
 }
@@ -235,19 +249,14 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
                                 const struct ffs_block *old_block,
                                 const struct ffs_disk_block *disk_block)
 {
-    assert(old_block->fb_object.fo_id == disk_block->fdb_id);
+    assert(old_block->fb_id == disk_block->fdb_id);
 
-    if (old_block->fb_flags & FFS_BLOCK_F_DUMMY) {
+    if (old_block->fb_seq < disk_block->fdb_seq) {
         *out_should_replace = 1;
         return 0;
     }
 
-    if (old_block->fb_object.fo_seq < disk_block->fdb_seq) {
-        *out_should_replace = 1;
-        return 0;
-    }
-
-    if (old_block->fb_object.fo_seq == disk_block->fdb_seq) {
+    if (old_block->fb_seq == disk_block->fdb_seq) {
         /* This is a duplicate of an previously-read inode.  This should never
          * happen.
          */
@@ -272,62 +281,71 @@ static int
 ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
                   uint32_t area_offset)
 {
-    struct ffs_block *block;
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_hash_entry *entry;
+    struct ffs_block block;
     int do_replace;
     int new_block;
     int rc;
 
     new_block = 0;
 
-    rc = ffs_hash_find_block(&block, disk_block->fdb_id);
-    switch (rc) {
-    case 0:
-        rc = ffs_restore_block_gets_replaced(&do_replace, block, disk_block);
+    entry = ffs_hash_find_block(disk_block->fdb_id);
+    if (entry != NULL) {
+        rc = ffs_block_from_hash_entry_no_ptrs(&block, entry);
         if (rc != 0) {
             goto err;
         }
 
-        if (do_replace) {
-            ffs_block_from_disk(block, disk_block, area_idx, area_offset);
-        }
-        break;
-
-    case FFS_ENOENT:
-        block = ffs_block_alloc();
-        if (block == NULL) {
-            rc = FFS_ENOMEM;
-            goto err;
-        }
-        new_block = 1;
-
-        ffs_block_from_disk(block, disk_block, area_idx, area_offset);
-        ffs_hash_insert(&block->fb_object);
-
-        rc = ffs_hash_find_inode(&block->fb_inode, disk_block->fdb_inode_id);
-        if (rc == FFS_ENOENT) {
-            rc = ffs_restore_dummy_inode(&block->fb_inode,
-                                         disk_block->fdb_inode_id, 0);
-        }
+        rc = ffs_restore_block_gets_replaced(&do_replace, &block, disk_block);
         if (rc != 0) {
             goto err;
         }
-        ffs_inode_insert_block(block->fb_inode, block);
-        break;
 
-    default:
-        rc = FFS_ECORRUPT;
-        goto err;
+        if (!do_replace) {
+            /* The new block is superseded by the old; nothing to do. */
+            return 0;
+        }
+
+        ffs_block_delete_from_ram(entry);
     }
 
-    if (block->fb_object.fo_id >= ffs_next_id) {
-        ffs_next_id = block->fb_object.fo_id + 1;
+    entry = ffs_hash_entry_alloc();
+    if (entry == NULL) {
+        rc = FFS_ENOMEM;
+        goto err;
+    }
+    new_block = 1;
+    entry->fhe_id = disk_block->fdb_id;
+    entry->fhe_flash_loc = ffs_flash_loc(area_idx, area_offset);
+
+    /* The block is ready to be inserted into the hash. */
+
+    inode_entry = ffs_hash_find_inode(disk_block->fdb_inode_id);
+    if (inode_entry == NULL) {
+        rc = ffs_restore_dummy_inode(&inode_entry, disk_block->fdb_inode_id);
+        if (rc != 0) {
+            goto err;
+        }
+    }
+
+    if (inode_entry->fi_last_block == NULL ||
+        inode_entry->fi_last_block->fhe_id == disk_block->fdb_prev_id) {
+
+        inode_entry->fi_last_block = entry;
+    }
+
+    ffs_hash_insert(entry);
+
+    if (disk_block->fdb_id >= ffs_hash_next_block_id) {
+        ffs_hash_next_block_id = disk_block->fdb_id + 1;
     }
 
     return 0;
 
 err:
     if (new_block) {
-        ffs_block_free(block);
+        ffs_hash_entry_free(entry);
     }
     return rc;
 }
@@ -392,8 +410,8 @@ ffs_restore_disk_object(struct ffs_disk_object *out_disk_object,
     switch (magic) {
     case FFS_INODE_MAGIC:
         out_disk_object->fdo_type = FFS_OBJECT_TYPE_INODE;
-        rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, NULL,
-                                 area_idx, area_offset);
+        rc = ffs_inode_read_disk(&out_disk_object->fdo_disk_inode, area_idx,
+                                 area_offset);
         break;
 
     case FFS_BLOCK_MAGIC:
@@ -455,9 +473,9 @@ ffs_restore_disk_object_size(const struct ffs_disk_object *disk_object)
 static int
 ffs_restore_area_contents(int area_idx)
 {
-    struct ffs_area *area;
-    struct ffs_disk_area disk_area;
     struct ffs_disk_object disk_object;
+    struct ffs_disk_area disk_area;
+    struct ffs_area *area;
     int rc;
 
     area = ffs_areas + area_idx;
@@ -521,9 +539,13 @@ ffs_restore_detect_one_area(struct ffs_disk_area *out_disk_area,
 static int
 ffs_restore_corrupt_scratch(void)
 {
-    struct ffs_object *object;
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_hash_entry *entry;
+    struct ffs_hash_entry *next;
+    uint32_t area_offset;
     uint16_t good_idx;
     uint16_t bad_idx;
+    uint8_t area_idx;
     int rc;
     int i;
 
@@ -543,21 +565,26 @@ ffs_restore_corrupt_scratch(void)
     }
 
     /* Invalidate all objects resident in the bad area. */
-    FFS_HASH_FOREACH(object, i) {
-        if (object->fo_area_idx == bad_idx) {
-            switch (object->fo_type) {
-            case FFS_OBJECT_TYPE_INODE:
-                ((struct ffs_inode *) object)->fi_flags |= FFS_INODE_F_DUMMY;
-                break;
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
+        entry = SLIST_FIRST(&ffs_hash[i]);
+        while (entry != NULL) {
+            next = SLIST_NEXT(entry, fhe_next);
 
-            case FFS_OBJECT_TYPE_BLOCK:
-                ((struct ffs_block *) object)->fb_flags |= FFS_BLOCK_F_DUMMY;
-                break;
-
-            default:
-                assert(0);
-                return FFS_ECORRUPT;
+            ffs_flash_loc_expand(&area_idx, &area_offset,
+                                 entry->fhe_flash_loc);
+            if (area_idx == bad_idx) {
+                if (ffs_hash_id_is_block(entry->fhe_id)) {
+                    rc = ffs_block_delete_from_ram(entry);
+                    if (rc != 0) {
+                        return rc;
+                    }
+                } else {
+                    inode_entry = (struct ffs_inode_entry *)entry;
+                    inode_entry->fi_refcnt = 0;
+                }
             }
+
+            entry = next;
         }
     }
 
@@ -688,6 +715,8 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
     /* Set the maximum data block size according to the size of the smallest
      * area.
+     * XXX Don't set size less than largest existing block (in case set of
+     * areas was changed).
      */
     ffs_misc_set_max_block_data_size();
 

@@ -8,6 +8,7 @@
 #include "os/os_malloc.h"
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
+
 extern struct os_task *g_current_task;  /* XXX */
 
 struct ffs_area *ffs_areas;
@@ -16,15 +17,14 @@ uint8_t ffs_scratch_area_idx;
 uint16_t ffs_block_max_data_sz;
 
 struct os_mempool ffs_file_pool;
-struct os_mempool ffs_inode_pool;
-struct os_mempool ffs_block_pool;
+struct os_mempool ffs_inode_entry_pool;
+struct os_mempool ffs_hash_entry_pool;
 
 void *ffs_file_mem;
 void *ffs_inode_mem;
-void *ffs_block_mem;
+void *ffs_hash_entry_mem;
 
-struct ffs_inode *ffs_root_dir;
-uint32_t ffs_next_id;
+struct ffs_inode_entry *ffs_root_dir;
 
 static struct os_mutex ffs_mutex;
 
@@ -101,6 +101,8 @@ done:
  * already been unlinked, and this is the last open handle to the file, this
  * operation causes the file to be deleted.
  *
+ * @param file              The file handle to close.
+ *
  * @return                  0 on success; nonzero on failure.
  */
 int
@@ -167,16 +169,16 @@ ffs_getpos(const struct ffs_file *file)
  *
  * @return                  The length of the file, in bytes.
  */
-uint32_t
-ffs_file_len(const struct ffs_file *file)
+int
+ffs_file_len(uint32_t *out_len, const struct ffs_file *file)
 {
-    uint32_t len;
+    int rc;
 
     ffs_lock();
-    len = ffs_inode_calc_data_length(file->ff_inode);
+    rc = ffs_inode_calc_data_length(out_len, file->ff_inode_entry);
     ffs_unlock();
 
-    return len;
+    return rc;
 }
 
 /**
@@ -204,7 +206,7 @@ ffs_read(struct ffs_file *file, void *data, uint32_t *len)
         goto done;
     }
 
-    rc = ffs_inode_read(file->ff_inode, file->ff_offset, data, len);
+    rc = ffs_inode_read(file->ff_inode_entry, file->ff_offset, *len, data, len);
     if (rc != 0) {
         goto done;
     }
@@ -288,7 +290,7 @@ done:
 
 /**
  * Performs a rename and / or move of the specified source path to the
- * specified * destination.  The source path can refer to either a file or a
+ * specified destination.  The source path can refer to either a file or a
  * directory.  All intermediate directories in the destination path must
  * already have been created.  If the source path refers to a file, the
  * destination path must contain a full filename path (i.e., if performing a
@@ -447,9 +449,10 @@ ffs_init(void)
         return FFS_ENOMEM;
     }
 
-    ffs_block_mem = os_malloc(
-        OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks, sizeof (struct ffs_block)));
-    if (ffs_block_mem == NULL) {
+    ffs_hash_entry_mem = os_malloc(
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks,
+                         sizeof (struct ffs_hash_entry)));
+    if (ffs_hash_entry_mem == NULL) {
         return FFS_ENOMEM;
     }
 
