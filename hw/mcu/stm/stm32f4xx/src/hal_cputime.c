@@ -42,6 +42,13 @@ struct cputime_data g_cputime;
 /* Queue for timers */
 TAILQ_HEAD(cputime_qhead, cpu_timer) g_cputimer_q;
 
+/**
+ * cputime set ocmp 
+ *  
+ * Set the OCMP used by the cputime module to the desired cputime. 
+ * 
+ * @param timer Pointer to timer.
+ */
 static void
 cputime_set_ocmp(struct cpu_timer *timer)
 {
@@ -55,6 +62,14 @@ cputime_set_ocmp(struct cpu_timer *timer)
     }
 }
 
+/**
+ * cputime chk expiration 
+ *  
+ * Iterates through the cputimer queue to determine if any timers have expired. 
+ * If the timer has expired the timer is removed from the queue and the timer 
+ * callback function is executed. 
+ * 
+ */
 static void
 cputime_chk_expiration(void)
 {
@@ -81,6 +96,12 @@ cputime_chk_expiration(void)
     __HAL_ENABLE_INTERRUPTS(ctx);
 }
 
+/**
+ * tim5 isr 
+ *  
+ * This is the global timer interrupt routine. 
+ * 
+ */
 static void
 tim5_isr(void)
 {
@@ -108,6 +129,17 @@ tim5_isr(void)
     }
 }
 
+/**
+ * cputime init 
+ *  
+ * Initialize the cputime module. This must be called after os_init is called 
+ * and before any other timer API are used. This should be called only once 
+ * and should be called before TIM5 is used. 
+ * 
+ * @param clock_freq The desired cputime frequency, in hertz (Hz).
+ * 
+ * @return int 0 on success; -1 on error.
+ */
 int
 cputime_init(uint32_t clock_freq)
 {
@@ -191,6 +223,13 @@ cputime_init(uint32_t clock_freq)
     return 0;
 }
 
+/**
+ * cputime get
+ *  
+ * Returns cputime as a 64-bit number. 
+ * 
+ * @return uint64_t The 64-bit representation of cputime.
+ */
 uint64_t 
 cputime_get(void)
 {
@@ -213,12 +252,28 @@ cputime_get(void)
     return cpu_time;
 }
 
+/**
+ * cputime low 
+ *  
+ * Returns the low 32 bits of cputime. 
+ * 
+ * @return uint32_t The lower 32 bits of cputime
+ */
 uint32_t
 cputime_low(void)
 {
     return TIM5->CNT;
 }
 
+/**
+ * cputime nsecs to ticks 
+ *  
+ * Converts the given number of nanoseconds into cputime ticks. 
+ * 
+ * @param usecs The number of nanoseconds to convert to ticks
+ * 
+ * @return uint32_t The number of ticks corresponding to 'nsecs'
+ */
 uint32_t 
 cputime_nsecs_to_ticks(uint32_t nsecs)
 {
@@ -228,6 +283,15 @@ cputime_nsecs_to_ticks(uint32_t nsecs)
     return ticks;
 }
 
+/**
+ * cputime ticks to nsecs
+ *  
+ * Convert the given number of ticks into nanoseconds. 
+ * 
+ * @param ticks The number of ticks to convert to nanoseconds.
+ * 
+ * @return uint32_t The number of nanoseconds corresponding to 'ticks'
+ */
 uint32_t 
 cputime_ticks_to_nsecs(uint32_t ticks)
 {
@@ -239,6 +303,15 @@ cputime_ticks_to_nsecs(uint32_t ticks)
     return nsecs;
 }
 
+/**
+ * cputime usecs to ticks 
+ *  
+ * Converts the given number of microseconds into cputime ticks. 
+ * 
+ * @param usecs The number of microseconds to convert to ticks
+ * 
+ * @return uint32_t The number of ticks corresponding to 'usecs'
+ */
 uint32_t 
 cputime_usecs_to_ticks(uint32_t usecs)
 {
@@ -248,6 +321,15 @@ cputime_usecs_to_ticks(uint32_t usecs)
     return ticks;
 }
 
+/**
+ * cputime ticks to usecs
+ *  
+ * Convert the given number of ticks into microseconds. 
+ * 
+ * @param ticks The number of ticks to convert to microseconds.
+ * 
+ * @return uint32_t The number of microseconds corresponding to 'ticks'
+ */
 uint32_t 
 cputime_ticks_to_usecs(uint32_t ticks)
 {
@@ -257,6 +339,13 @@ cputime_ticks_to_usecs(uint32_t ticks)
     return us;
 }
 
+/**
+ * cputime delay ticks
+ *  
+ * Wait until the number of ticks has elapsed. This is a blocking delay. 
+ * 
+ * @param ticks The number of ticks to wait.
+ */
 void 
 cputime_delay_ticks(uint32_t ticks)
 {
@@ -268,15 +357,29 @@ cputime_delay_ticks(uint32_t ticks)
     }
 }
 
+/**
+ * cputime delay nsecs 
+ *  
+ * Wait until 'nsecs' nanoseconds has elapsed. This is a blocking delay. 
+ *  
+ * @param nsecs The number of nanoseconds to wait.
+ */
 void 
-cputime_delay_nsecs(uint32_t nsec_delay)
+cputime_delay_nsecs(uint32_t nsecs)
 {
     uint32_t ticks;
 
-    ticks = cputime_nsecs_to_ticks(nsec_delay);
+    ticks = cputime_nsecs_to_ticks(nsecs);
     cputime_delay_ticks(ticks);
 }
 
+/**
+ * cputime delay usecs 
+ *  
+ * Wait until 'usecs' microseconds has elapsed. This is a blocking delay. 
+ *  
+ * @param usecs The number of usecs to wait.
+ */
 void 
 cputime_delay_usecs(uint32_t usecs)
 {
@@ -286,17 +389,34 @@ cputime_delay_usecs(uint32_t usecs)
     cputime_delay_ticks(ticks);
 }
 
+/**
+ * cputime timer init
+ * 
+ * 
+ * @param timer The timer to initialize. Cannot be NULL.
+ * @param fp    The timer callback function. Cannot be NULL.
+ * @param arg   Pointer to data object to pass to timer. 
+ */
 void 
 cputime_timer_init(struct cpu_timer *timer, cputimer_func fp, void *arg)
 {
     assert(timer != NULL);
+    assert(fp != NULL);
 
     timer->cb = fp;
     timer->arg = arg;
     timer->link.tqe_prev = (void *) NULL;
 }
 
-/* XXX: should this use a mutex? not sure... */
+/**
+ * cputime timer start 
+ *  
+ * Start a cputimer that will expire at 'cputime'. If cputime has already 
+ * passed, the timer callback will still be called (at interrupt context). 
+ * 
+ * @param timer     Pointer to timer to start. Cannot be NULL.
+ * @param cputime   The cputime at which the timer should expire.
+ */
 void 
 cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
 {
@@ -305,6 +425,7 @@ cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
 
     assert(timer != NULL);
 
+    /* XXX: should this use a mutex? not sure... */
     __HAL_DISABLE_INTERRUPTS(ctx);
 
     timer->cputime = cputime;
@@ -330,6 +451,15 @@ cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
     __HAL_ENABLE_INTERRUPTS(ctx);
 }
 
+/**
+ * cputimer timer relative 
+ *  
+ * Sets a cpu timer that will expire 'usecs' microseconds from the current 
+ * cputime. 
+ * 
+ * @param timer Pointer to timer. Cannot be NULL.
+ * @param usecs The number of usecs from now at which the timer will expire.
+ */
 void 
 cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs)
 {
@@ -341,6 +471,15 @@ cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs)
     cputime_timer_start(timer, cputime);
 }
 
+/**
+ * cputime timer stop 
+ *  
+ * Stops a cputimer from running. The timer is removed from the timer queue 
+ * and interrupts are disabled if no timers are left on the queue. Can be 
+ * called even if timer is running. 
+ * 
+ * @param timer Pointer to cputimer to stop. Cannot be NULL.
+ */
 void 
 cputime_timer_stop(struct cpu_timer *timer)
 {
