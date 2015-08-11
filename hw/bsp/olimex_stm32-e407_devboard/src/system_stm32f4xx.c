@@ -121,10 +121,7 @@
   */
 
 #include "stm32f4xx/stm32f4xx.h"
-/* WWW */
 #include "bsp/cmsis_nvic.h"
-/* WWW */
-
 /**
   * @}
   */
