@@ -79,12 +79,9 @@ ffs_block_write_disk(uint8_t *out_area_idx, uint32_t *out_area_offset,
 
 static void
 ffs_block_from_disk_no_ptrs(struct ffs_block *out_block,
-                            const struct ffs_disk_block *disk_block,
-                            uint8_t area_idx, uint32_t area_offset)
+                            const struct ffs_disk_block *disk_block)
 {
-    out_block->fb_id = disk_block->fdb_id;
     out_block->fb_seq = disk_block->fdb_seq;
-    out_block->fb_flash_loc = ffs_flash_loc(area_idx, area_offset);
     out_block->fb_inode_entry = NULL;
     out_block->fb_prev = NULL;
     out_block->fb_data_len = disk_block->fdb_data_len;
@@ -95,7 +92,7 @@ ffs_block_from_disk(struct ffs_block *out_block,
                     const struct ffs_disk_block *disk_block,
                     uint8_t area_idx, uint32_t area_offset)
 {
-    ffs_block_from_disk_no_ptrs(out_block, disk_block, area_idx, area_offset);
+    ffs_block_from_disk_no_ptrs(out_block, disk_block);
 
     out_block->fb_inode_entry = ffs_hash_find_inode(disk_block->fdb_inode_id);
     if (out_block->fb_inode_entry == NULL) {
@@ -125,7 +122,7 @@ ffs_block_to_disk(const struct ffs_block *block,
     assert(block->fb_inode_entry != NULL);
 
     out_disk_block->fdb_magic = FFS_BLOCK_MAGIC;
-    out_disk_block->fdb_id = block->fb_id;
+    out_disk_block->fdb_id = block->fb_hash_entry->fhe_id;
     out_disk_block->fdb_seq = block->fb_seq;
     out_disk_block->fdb_inode_id = block->fb_inode_entry->fi_hash_entry.fhe_id;
     if (block->fb_prev == NULL) {
@@ -179,7 +176,7 @@ ffs_block_delete_from_ram(struct ffs_hash_entry *block_entry)
  */
 int
 ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
-                                  const struct ffs_hash_entry *block_entry)
+                                  struct ffs_hash_entry *block_entry)
 {
     struct ffs_disk_block disk_block;
     uint32_t area_offset;
@@ -194,7 +191,8 @@ ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
         return rc;
     }
 
-    ffs_block_from_disk_no_ptrs(out_block, &disk_block, area_idx, area_offset);
+    out_block->fb_hash_entry = block_entry;
+    ffs_block_from_disk_no_ptrs(out_block, &disk_block);
 
     return 0;
 }
@@ -211,7 +209,7 @@ ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
  */
 int
 ffs_block_from_hash_entry(struct ffs_block *out_block,
-                          const struct ffs_hash_entry *block_entry)
+                          struct ffs_hash_entry *block_entry)
 {
     struct ffs_disk_block disk_block;
     uint32_t area_offset;
@@ -226,6 +224,7 @@ ffs_block_from_hash_entry(struct ffs_block *out_block,
         return rc;
     }
 
+    out_block->fb_hash_entry = block_entry;
     rc = ffs_block_from_disk(out_block, &disk_block, area_idx, area_offset);
     if (rc != 0) {
         return rc;
