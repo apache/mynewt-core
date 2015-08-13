@@ -394,7 +394,7 @@ ffs_inode_add_child(struct ffs_inode_entry *parent,
             return rc;
         }
 
-        rc = ffs_inode_filename_cmp_flash(&cmp, &child_inode, &cur_inode);
+        rc = ffs_inode_filename_cmp_flash(&child_inode, &cur_inode, &cmp);
         if (rc != 0) {
             return rc;
         }
@@ -428,8 +428,9 @@ ffs_inode_remove_child(struct ffs_inode *child)
 }
 
 int
-ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
-                           const char *name, int name_len)
+ffs_inode_filename_cmp_ram(const struct ffs_inode *inode,
+                           const char *name, int name_len,
+                           int *result)
 {
     int short_len;
     int chunk_len;
@@ -479,8 +480,9 @@ ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
 }
 
 int
-ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
-                             const struct ffs_inode *inode2)
+ffs_inode_filename_cmp_flash(const struct ffs_inode *inode1,
+                             const struct ffs_inode *inode2,
+                             int *result)
 {
     int short_len;
     int chunk_len;

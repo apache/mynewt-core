@@ -240,10 +240,12 @@ int ffs_inode_add_child(struct ffs_inode_entry *parent,
                         struct ffs_inode_entry *child);
 void ffs_inode_remove_child(struct ffs_inode *child);
 int ffs_inode_is_root(const struct ffs_disk_inode *disk_inode);
-int ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
-                               const char *name, int name_len);
-int ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
-                                 const struct ffs_inode *inode2);
+int ffs_inode_filename_cmp_ram(const struct ffs_inode *inode,
+                               const char *name, int name_len,
+                               int *result);
+int ffs_inode_filename_cmp_flash(const struct ffs_inode *inode1,
+                                 const struct ffs_inode *inode2,
+                                 int *result);
 int ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
                    uint32_t len, void *data, uint32_t *out_len);
 int ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
