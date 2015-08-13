@@ -62,7 +62,7 @@ ffs_path_find_child(struct ffs_inode_entry *parent,
             return rc;
         }
 
-        rc = ffs_inode_filename_cmp_ram(&cmp, &inode, name, name_len);
+        rc = ffs_inode_filename_cmp_ram(&inode, name, name_len, &cmp);
         if (rc != 0) {
             return rc;
         }

@@ -360,7 +360,7 @@ ffs_test_assert_children_sorted(struct ffs_inode_entry *inode_entry)
             rc = ffs_inode_from_entry(&prev_inode, prev_entry);
             assert(rc == 0);
 
-            rc = ffs_inode_filename_cmp_flash(&cmp, &prev_inode, &child_inode);
+            rc = ffs_inode_filename_cmp_flash(&prev_inode, &child_inode, &cmp);
             assert(rc == 0);
             assert(cmp < 0);
         }
