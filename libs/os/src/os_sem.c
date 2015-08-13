@@ -155,6 +155,9 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
     } else if (timeout == 0) {
         rc = OS_TIMEOUT;
     } else {
+        /* Silence gcc maybe-uninitialized warning. */
+        rc = OS_OK;
+
         /* Link current task to tasks waiting for semaphore */
         current->t_flags |= OS_TASK_FLAG_SEM_WAIT;
         last = NULL;
