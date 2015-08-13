@@ -58,7 +58,7 @@ ffs_format_area(uint8_t area_idx, int is_scratch)
     }
     area->fa_cur = 0;
 
-    ffs_area_to_disk(&disk_area, area);
+    ffs_area_to_disk(area, &disk_area);
 
     if (is_scratch) {
         ffs_areas[area_idx].fa_id = FFS_AREA_ID_NONE;
@@ -137,7 +137,7 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
     }
 
     /* Create root directory. */
-    rc = ffs_file_new(&ffs_root_dir, NULL, "", 0, 1);
+    rc = ffs_file_new(NULL, "", 0, 1, &ffs_root_dir);
     if (rc != 0) {
         goto err;
     }

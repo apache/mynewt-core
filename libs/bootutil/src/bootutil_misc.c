@@ -155,7 +155,7 @@ boot_read_status(struct boot_status *out_status,
     int rc;
     int i;
 
-    rc = ffs_open(&file, BOOT_PATH_STATUS, FFS_ACCESS_READ);
+    rc = ffs_open(BOOT_PATH_STATUS, FFS_ACCESS_READ, &file);
     if (rc != 0) {
         rc = BOOT_EBADSTATUS;
         goto done;
@@ -224,8 +224,8 @@ boot_write_status(const struct boot_status *status,
     struct ffs_file *file;
     int rc;
 
-    rc = ffs_open(&file, BOOT_PATH_STATUS,
-                  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
+    rc = ffs_open(BOOT_PATH_STATUS, FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE,
+                  &file);
     if (rc != 0) {
         rc = BOOT_EFILE;
         goto done;

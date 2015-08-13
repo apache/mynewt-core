@@ -32,8 +32,8 @@ ffs_gc_copy_object(struct ffs_hash_entry *entry, uint8_t to_area_idx,
         copy_len = sizeof (struct ffs_disk_block) + block.fb_data_len;
     }
 
-    ffs_flash_loc_expand(&from_area_idx, &from_area_offset,
-                         entry->fhe_flash_loc);
+    ffs_flash_loc_expand(entry->fhe_flash_loc,
+                         &from_area_idx, &from_area_offset);
     rc = ffs_flash_copy(from_area_idx, from_area_offset, to_area_idx,
                         to_area_offset, copy_len);
     if (rc != 0) {
@@ -108,8 +108,8 @@ ffs_gc_block_chain_low_mem(struct ffs_hash_entry *last_entry,
             return rc;
         }
 
-        ffs_flash_loc_expand(&from_area_idx, &from_area_offset,
-                             block.fb_hash_entry->fhe_flash_loc);
+        ffs_flash_loc_expand(block.fb_hash_entry->fhe_flash_loc,
+                             &from_area_idx, &from_area_offset);
 
         copy_len = sizeof (struct ffs_disk_block) + block.fb_data_len;
         rc = ffs_flash_copy(from_area_idx, from_area_offset, to_area_idx,
@@ -170,8 +170,8 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
         }
         data_offset -= block.fb_data_len;
 
-        ffs_flash_loc_expand(&from_area_idx, &from_area_offset,
-                             block.fb_hash_entry->fhe_flash_loc);
+        ffs_flash_loc_expand(block.fb_hash_entry->fhe_flash_loc,
+                             &from_area_idx, &from_area_offset);
         from_area_offset += sizeof disk_block;
         rc = ffs_flash_read(from_area_idx, from_area_offset,
                             data + data_offset, block.fb_data_len);
@@ -243,7 +243,7 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
             return rc;
         }
 
-        ffs_flash_loc_expand(&area_idx, &area_offset, entry->fhe_flash_loc);
+        ffs_flash_loc_expand(entry->fhe_flash_loc, &area_idx, &area_offset);
         if (area_idx == from_area_idx) {
             if (last_entry == NULL) {
                 last_entry = entry;
@@ -329,7 +329,7 @@ ffs_gc(uint8_t *out_area_idx)
 
     to_area = ffs_areas + ffs_scratch_area_idx;
     FFS_HASH_FOREACH(entry, i) {
-        ffs_flash_loc_expand(&area_idx, &area_offset, entry->fhe_flash_loc);
+        ffs_flash_loc_expand(entry->fhe_flash_loc, &area_idx, &area_offset);
         if (area_idx == from_area_idx) {
             to_offset = to_area->fa_cur;
             rc = ffs_gc_copy_object(entry, ffs_scratch_area_idx, to_offset);
@@ -360,9 +360,9 @@ ffs_gc(uint8_t *out_area_idx)
  * enough free space after every area has been garbage collected, this function
  * fails.
  *
+ * @param space                 The number of bytes of free space required.
  * @param out_area_idx          On success, the index of the area which can
  *                                  accommodate the necessary data.
- * @param space                 The number of bytes of free space required.
  *
  * @return                      0 on success;
  *                              FFS_EFULL if the necessary space could not be
@@ -370,7 +370,7 @@ ffs_gc(uint8_t *out_area_idx)
  *                              nonzero on other failure.
  */
 int
-ffs_gc_until(uint8_t *out_area_idx, uint32_t space)
+ffs_gc_until(uint32_t space, uint8_t *out_area_idx)
 {
     int rc;
     int i;

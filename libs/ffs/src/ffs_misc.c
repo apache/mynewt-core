@@ -37,17 +37,18 @@ ffs_misc_validate_scratch(void)
 /**
  * Reserves the specified number of bytes within the specified area.
  *
+ * @param area_idx              The index of the area to reserve from.
+ * @param space                 The number of bytes of free space required.
  * @param out_area_offset       On success, the offset within the area gets
  *                                  written here.
- * @param space                 The number of bytes of free space required.
  *
  * @return                      0 on success;
  *                              FFS_EFULL if the area has insufficient free
  *                                  space.
  */
 static int
-ffs_misc_reserve_space_area(uint32_t *out_area_offset, uint8_t area_idx,
-                            uint16_t space)
+ffs_misc_reserve_space_area(uint8_t area_idx, uint16_t space,
+                            uint32_t *out_area_offset)
 {
     const struct ffs_area *area;
     uint32_t available;
@@ -66,17 +67,17 @@ ffs_misc_reserve_space_area(uint32_t *out_area_offset, uint8_t area_idx,
  * Finds an area that can accommodate an object of the specified size.  If no
  * such area exists, this function performs a garbage collection cycle.
  *
+ * @param space                 The number of bytes of free space required.
  * @param out_area_idx          On success, the index of the suitable area gets
  *                                  written here.
  * @param out_area_offset       On success, the offset within the suitable area
  *                                  gets written here.
- * @param space                 The number of bytes of free space required.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
-ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_area_offset,
-                       uint16_t space)
+ffs_misc_reserve_space(uint16_t space,
+                       uint8_t *out_area_idx, uint32_t *out_area_offset)
 {
     uint8_t area_idx;
     int rc;
@@ -84,7 +85,7 @@ ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_area_offset,
 
     for (i = 0; i < ffs_num_areas; i++) {
         if (i != ffs_scratch_area_idx) {
-            rc = ffs_misc_reserve_space_area(out_area_offset, i, space);
+            rc = ffs_misc_reserve_space_area(i, space, out_area_offset);
             if (rc == 0) {
                 *out_area_idx = i;
                 return 0;
@@ -95,12 +96,12 @@ ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_area_offset,
     /* No area can accomodate the request.  Garbage collect until an area
      * has enough space.
      */
-    rc = ffs_gc_until(&area_idx, space);
+    rc = ffs_gc_until(space, &area_idx);
     if (rc != 0) {
         return rc;
     }
 
-    rc = ffs_misc_reserve_space_area(out_area_offset, area_idx, space);
+    rc = ffs_misc_reserve_space_area(area_idx, space, out_area_offset);
     assert(rc == 0);
 
     *out_area_idx = area_idx;

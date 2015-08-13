@@ -64,15 +64,15 @@ ffs_unlock(void)
  *   "a"  -  FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
  *   "a+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
  *
- * @param out_file          On success, a pointer to the newly-created file
- *                              handle gets written here.
  * @param path              The path of the file to open.
  * @param access_flags      Flags controlling file access; see above table.
+ * @param out_file          On success, a pointer to the newly-created file
+ *                              handle gets written here.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-ffs_open(struct ffs_file **out_file, const char *path, uint8_t access_flags)
+ffs_open(const char *path, uint8_t access_flags, struct ffs_file **out_file)
 {
     int rc;
 
@@ -166,16 +166,18 @@ ffs_getpos(const struct ffs_file *file)
  * Retrieves the current length of the specified open file.
  *
  * @param file              The file to query.
+ * @param out_len           On success, the number of bytes in the file gets
+ *                              written here.
  *
- * @return                  The length of the file, in bytes.
+ * @return                  0 on success; nonzero on failure.
  */
 int
-ffs_file_len(uint32_t *out_len, const struct ffs_file *file)
+ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
 {
     int rc;
 
     ffs_lock();
-    rc = ffs_inode_calc_data_length(out_len, file->ff_inode_entry);
+    rc = ffs_inode_calc_data_length(file->ff_inode_entry, out_len);
     ffs_unlock();
 
     return rc;
@@ -191,8 +193,7 @@ ffs_file_len(uint32_t *out_len, const struct ffs_file *file)
  * @param len               (in/out) in:  The number of bytes to read.
  *                                   out: The number of bytes actually read.
  *
- * @return                  0 on success;
- *                          nonzero on failure.
+ * @return                  0 on success; nonzero on failure.
  */
 int
 ffs_read(struct ffs_file *file, void *data, uint32_t *len)

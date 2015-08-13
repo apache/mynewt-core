@@ -8,7 +8,7 @@
 #define FFS_ACCESS_APPEND       0x04
 #define FFS_ACCESS_TRUNCATE     0x08
 
-#define FFS_FILENAME_MAX_LEN    256  /* Does not include null terminator. */
+#define FFS_FILENAME_MAX_LEN    256  /* Does not require null terminator. */
 
 #define FFS_MAX_AREAS           256
 
@@ -42,8 +42,8 @@ struct ffs_area_desc {
 
 struct ffs_file;
 
-int ffs_open(struct ffs_file **out_file, const char *filename,
-             uint8_t access_flags);
+int ffs_open(const char *filename, uint8_t access_flags,
+             struct ffs_file **out_file);
 int ffs_close(struct ffs_file *file);
 int ffs_init(void);
 int ffs_detect(const struct ffs_area_desc *area_descs);
@@ -52,7 +52,7 @@ int ffs_read(struct ffs_file *file, void *data, uint32_t *len);
 int ffs_write(struct ffs_file *file, const void *data, int len);
 int ffs_seek(struct ffs_file *file, uint32_t offset);
 uint32_t ffs_getpos(const struct ffs_file *file);
-int ffs_file_len(uint32_t *out_len, const struct ffs_file *file);
+int ffs_file_len(const struct ffs_file *file, uint32_t *out_len);
 int ffs_rename(const char *from, const char *to);
 int ffs_unlink(const char *filename);
 int ffs_mkdir(const char *path);

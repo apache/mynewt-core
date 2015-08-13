@@ -148,8 +148,8 @@ ffs_flash_loc(uint8_t area_idx, uint32_t area_offset)
  * flash-area-index,flash-area-offset pair.
  */
 void
-ffs_flash_loc_expand(uint8_t *out_area_idx, uint32_t *out_area_offset,
-                     uint32_t flash_loc)
+ffs_flash_loc_expand(uint32_t flash_loc, uint8_t *out_area_idx,
+                     uint32_t *out_area_offset)
 {
     *out_area_idx = flash_loc >> 24;
     *out_area_offset = flash_loc & 0x00ffffff;

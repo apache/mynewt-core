@@ -29,8 +29,8 @@ ffs_area_is_scratch(const struct ffs_disk_area *disk_area)
 }
 
 void
-ffs_area_to_disk(struct ffs_disk_area *out_disk_area,
-                 const struct ffs_area *area)
+ffs_area_to_disk(const struct ffs_area *area,
+                 struct ffs_disk_area *out_disk_area)
 {
     memset(out_disk_area, 0, sizeof *out_disk_area);
     ffs_area_set_magic(out_disk_area);

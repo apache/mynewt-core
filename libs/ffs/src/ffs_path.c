@@ -47,9 +47,9 @@ ffs_path_parser_new(struct ffs_path_parser *parser, const char *path)
 }
 
 static int
-ffs_path_find_child(struct ffs_inode_entry **out_inode_entry,
-                    struct ffs_inode_entry *parent,
-                    const char *name, int name_len)
+ffs_path_find_child(struct ffs_inode_entry *parent,
+                    const char *name, int name_len,
+                    struct ffs_inode_entry **out_inode_entry)
 {
     struct ffs_inode_entry *cur;
     struct ffs_inode inode;
@@ -116,9 +116,8 @@ ffs_path_find(struct ffs_path_parser *parser,
                     break;
                 }
 
-                rc = ffs_path_find_child(&inode_entry, parent,
-                                         parser->fpp_token,
-                                         parser->fpp_token_len);
+                rc = ffs_path_find_child(parent, parser->fpp_token,
+                                         parser->fpp_token_len, &inode_entry);
                 if (rc != 0) {
                     goto done;
                 }
@@ -130,8 +129,8 @@ ffs_path_find(struct ffs_path_parser *parser,
                 return FFS_ENOENT;
             }
 
-            rc = ffs_path_find_child(&inode_entry, parent, parser->fpp_token,
-                                     parser->fpp_token_len);
+            rc = ffs_path_find_child(parent, parser->fpp_token,
+                                     parser->fpp_token_len, &inode_entry);
             goto done;
         }
     }
@@ -145,8 +144,8 @@ done:
 }
 
 int
-ffs_path_find_inode_entry(struct ffs_inode_entry **out_inode_entry,
-                          const char *filename)
+ffs_path_find_inode_entry(const char *filename,
+                          struct ffs_inode_entry **out_inode_entry)
 {
     struct ffs_path_parser parser;
     int rc;
@@ -174,7 +173,7 @@ ffs_path_unlink(const char *path)
     struct ffs_inode inode;
     int rc;
 
-    rc = ffs_path_find_inode_entry(&inode_entry, path);
+    rc = ffs_path_find_inode_entry(path, &inode_entry);
     if (rc != 0) {
         return rc;
     }
@@ -316,8 +315,8 @@ ffs_path_new_dir(const char *path)
         return FFS_ENOENT;
     }
 
-    rc = ffs_file_new(&inode, parent, parser.fpp_token, parser.fpp_token_len,
-                      1);
+    rc = ffs_file_new(parent, parser.fpp_token, parser.fpp_token_len, 1, 
+                      &inode);
     if (rc != 0) {
         return rc;
     }

@@ -30,7 +30,7 @@ ffs_test_util_assert_file_len(struct ffs_file *file, uint32_t expected)
     uint32_t len;
     int rc;
 
-    rc = ffs_file_len(&len, file);
+    rc = ffs_file_len(file, &len);
     assert(rc == 0);
     assert(len == expected);
 }
@@ -44,7 +44,7 @@ ffs_test_util_assert_contents(const char *filename, const char *contents,
     void *buf;
     int rc;
 
-    rc = ffs_open(&file, filename, FFS_ACCESS_READ);
+    rc = ffs_open(filename, FFS_ACCESS_READ, &file);
     assert(rc == 0);
 
     len = contents_len + 1;
@@ -71,7 +71,7 @@ ffs_test_util_block_count(const char *filename)
     int count;
     int rc;
 
-    rc = ffs_open(&file, filename, FFS_ACCESS_READ);
+    rc = ffs_open(filename, FFS_ACCESS_READ, &file);
     assert(rc == 0);
 
     count = 0;
@@ -114,7 +114,7 @@ ffs_test_util_create_file_blocks(const char *filename,
     int rc;
     int i;
 
-    rc = ffs_open(&file, filename, FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
+    rc = ffs_open(filename, FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE, &file);
     assert(rc == 0);
 
     total_len = 0;
@@ -170,7 +170,7 @@ ffs_test_util_append_file(const char *filename, const char *contents,
     struct ffs_file *file;
     int rc;
 
-    rc = ffs_open(&file, filename, FFS_ACCESS_WRITE | FFS_ACCESS_APPEND);
+    rc = ffs_open(filename, FFS_ACCESS_WRITE | FFS_ACCESS_APPEND, &file);
     assert(rc == 0);
 
     rc = ffs_write(file, contents, contents_len);
@@ -253,7 +253,7 @@ ffs_test_assert_file(const struct ffs_test_file_desc *file,
                    child_filename_len);
             child_path[path_len + 1 + child_filename_len] = '\0';
 
-            rc = ffs_path_find_inode_entry(&child_inode_entry, child_path);
+            rc = ffs_path_find_inode_entry(child_path, &child_inode_entry);
             assert(rc == 0);
 
             ffs_test_assert_file(child_file, child_inode_entry, child_path);
@@ -494,7 +494,7 @@ ffs_test_mkdir(void)
     rc = ffs_mkdir("/a/b/c/d");
     assert(rc == 0);
 
-    rc = ffs_open(&file, "/a/b/c/d/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/a/b/c/d/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
 
     rc = ffs_close(file);
@@ -556,7 +556,7 @@ ffs_test_unlink(void)
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
-    rc = ffs_open(&file1, filename, FFS_ACCESS_READ | FFS_ACCESS_WRITE);
+    rc = ffs_open(filename, FFS_ACCESS_READ | FFS_ACCESS_WRITE, &file1);
     assert(rc == 0);
     assert(file1->ff_inode_entry->fi_refcnt == 2);
 
@@ -564,7 +564,7 @@ ffs_test_unlink(void)
     assert(rc == 0);
     assert(file1->ff_inode_entry->fi_refcnt == 1);
 
-    rc = ffs_open(&file2, filename, FFS_ACCESS_READ);
+    rc = ffs_open(filename, FFS_ACCESS_READ, &file2);
     assert(rc == FFS_ENOENT);
 
     rc = ffs_write(file1, contents, strlen(contents));
@@ -582,7 +582,7 @@ ffs_test_unlink(void)
     rc = ffs_close(file1);
     assert(rc == 0);
 
-    rc = ffs_open(&file1, filename, FFS_ACCESS_READ);
+    rc = ffs_open(filename, FFS_ACCESS_READ, &file1);
     assert(rc == FFS_ENOENT);
 
     struct ffs_test_file_desc *expected_system =
@@ -618,7 +618,7 @@ ffs_test_rename(void)
     rc = ffs_rename("/myfile.txt", "/myfile2.txt");
     assert(rc == 0);
 
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_READ);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_READ, &file);
     assert(rc == FFS_ENOENT);
 
     ffs_test_util_assert_contents("/myfile2.txt", contents, sizeof contents);
@@ -675,8 +675,8 @@ ffs_test_truncate(void)
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
-    rc = ffs_open(&file, "/myfile.txt",
-                  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE,
+                  &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 0);
     assert(ffs_getpos(file) == 0);
@@ -690,8 +690,8 @@ ffs_test_truncate(void)
 
     ffs_test_util_assert_contents("/myfile.txt", "abcdefgh", 8);
 
-    rc = ffs_open(&file, "/myfile.txt",
-                  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE,
+                  &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 0);
     assert(ffs_getpos(file) == 0);
@@ -732,7 +732,7 @@ ffs_test_append(void)
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 0);
     assert(ffs_getpos(file) == 0);
@@ -746,7 +746,7 @@ ffs_test_append(void)
 
     ffs_test_util_assert_contents("/myfile.txt", "abcdefgh", 8);
 
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE | FFS_ACCESS_APPEND, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 8);
@@ -804,7 +804,7 @@ ffs_test_read(void)
 
     ffs_test_util_create_file("/myfile.txt", "1234567890", 10);
 
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_READ);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_READ, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 10);
     assert(ffs_getpos(file) == 0);
@@ -842,7 +842,7 @@ ffs_test_overwrite_one(void)
     ffs_test_util_append_file("/myfile.txt", "abcdefgh", 8);
 
     /*** Overwrite within one block (middle). */
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
@@ -863,7 +863,7 @@ ffs_test_overwrite_one(void)
     ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite within one block (start). */
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
@@ -879,7 +879,7 @@ ffs_test_overwrite_one(void)
     ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite within one block (end). */
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
@@ -900,7 +900,7 @@ ffs_test_overwrite_one(void)
     ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite one block middle, extend. */
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 8);
     assert(ffs_getpos(file) == 0);
@@ -921,7 +921,7 @@ ffs_test_overwrite_one(void)
     ffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite one block start, extend. */
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 12);
     assert(ffs_getpos(file) == 0);
@@ -974,7 +974,7 @@ ffs_test_overwrite_two(void)
 
     /*** Overwrite two blocks (middle). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
@@ -997,7 +997,7 @@ ffs_test_overwrite_two(void)
 
     /*** Overwrite two blocks (start). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
@@ -1015,7 +1015,7 @@ ffs_test_overwrite_two(void)
 
     /*** Overwrite two blocks (end). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
@@ -1038,7 +1038,7 @@ ffs_test_overwrite_two(void)
 
     /*** Overwrite two blocks middle, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
@@ -1061,7 +1061,7 @@ ffs_test_overwrite_two(void)
 
     /*** Overwrite two blocks start, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 16);
     assert(ffs_getpos(file) == 0);
@@ -1118,7 +1118,7 @@ ffs_test_overwrite_three(void)
 
     /*** Overwrite three blocks (middle). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
@@ -1142,7 +1142,7 @@ ffs_test_overwrite_three(void)
 
     /*** Overwrite three blocks (start). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
@@ -1161,7 +1161,7 @@ ffs_test_overwrite_three(void)
 
     /*** Overwrite three blocks (end). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
@@ -1185,7 +1185,7 @@ ffs_test_overwrite_three(void)
 
     /*** Overwrite three blocks middle, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
@@ -1209,7 +1209,7 @@ ffs_test_overwrite_three(void)
 
     /*** Overwrite three blocks start, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
@@ -1267,7 +1267,7 @@ ffs_test_overwrite_many(void)
 
     /*** Overwrite middle of first block. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);
@@ -1291,7 +1291,7 @@ ffs_test_overwrite_many(void)
 
     /*** Overwrite end of first block, start of second. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = ffs_open(&file, "/myfile.txt", FFS_ACCESS_WRITE);
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_WRITE, &file);
     assert(rc == 0);
     ffs_test_util_assert_file_len(file, 24);
     assert(ffs_getpos(file) == 0);

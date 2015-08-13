@@ -186,8 +186,8 @@ int ffs_flash_copy(uint8_t area_id_from, uint32_t offset_from,
                    uint8_t area_id_to, uint32_t offset_to,
                    uint32_t len);
 uint32_t ffs_flash_loc(uint8_t area_idx, uint32_t offset);
-void ffs_flash_loc_expand(uint8_t *out_area_idx, uint32_t *out_area_offset,
-                          uint32_t flash_loc);
+void ffs_flash_loc_expand(uint32_t flash_loc, uint8_t *out_area_idx,
+                          uint32_t *out_area_offset);
 
 void ffs_config_init(void);
 
@@ -209,8 +209,8 @@ void ffs_path_parser_new(struct ffs_path_parser *parser, const char *path);
 int ffs_path_find(struct ffs_path_parser *parser,
                   struct ffs_inode_entry **out_inode_entry,
                   struct ffs_inode_entry **out_parent);
-int ffs_path_find_inode_entry(struct ffs_inode_entry **out_inode_entry,
-                              const char *filename);
+int ffs_path_find_inode_entry(const char *filename,
+                              struct ffs_inode_entry **out_inode_entry);
 int ffs_path_unlink(const char *filename);
 int ffs_path_rename(const char *from, const char *to);
 int ffs_path_new_dir(const char *path);
@@ -219,8 +219,8 @@ int ffs_restore_full(const struct ffs_area_desc *area_descs);
 
 struct ffs_inode_entry *ffs_inode_entry_alloc(void);
 void ffs_inode_entry_free(struct ffs_inode_entry *inode_entry);
-int ffs_inode_calc_data_length(uint32_t *out_len,
-                               struct ffs_inode_entry *inode_entry);
+int ffs_inode_calc_data_length(struct ffs_inode_entry *inode_entry,
+                               uint32_t *out_len);
 uint32_t ffs_inode_parent_id(const struct ffs_inode *inode);
 int ffs_inode_delete_from_disk(struct ffs_inode *inode);
 int ffs_inode_entry_from_disk(struct ffs_inode_entry *out_inode,
@@ -229,13 +229,13 @@ int ffs_inode_entry_from_disk(struct ffs_inode_entry *out_inode,
 int ffs_inode_rename(struct ffs_inode_entry *inode_entry,
                      struct ffs_inode_entry *new_parent, const char *filename);
 void ffs_inode_insert_block(struct ffs_inode *inode, struct ffs_block *block);
-int ffs_inode_read_disk(struct ffs_disk_inode *out_disk_inode,
-                        uint8_t area_idx, uint32_t offset);
+int ffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
+                        struct ffs_disk_inode *out_disk_inode);
 int ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
                          const char *filename, uint8_t area_idx,
                          uint32_t offset);
-int ffs_inode_dec_refcnt(struct ffs_hash_entry **out_next,
-                         struct ffs_inode_entry *inode_entry);
+int ffs_inode_dec_refcnt(struct ffs_inode_entry *inode_entry,
+                         struct ffs_hash_entry **out_next);
 int ffs_inode_add_child(struct ffs_inode_entry *parent,
                         struct ffs_inode_entry *child);
 void ffs_inode_remove_child(struct ffs_inode *child);
@@ -254,11 +254,11 @@ int ffs_inode_unlink(struct ffs_inode *inode);
 
 struct ffs_block *ffs_block_alloc(void);
 void ffs_block_free(struct ffs_block *block);
-int ffs_block_read_disk(struct ffs_disk_block *out_disk_block,
-                        uint8_t area_idx, uint32_t offset);
-int ffs_block_write_disk(uint8_t *out_area_idx, uint32_t *out_offset,
-                         const struct ffs_disk_block *disk_block,
-                         const void *data);
+int ffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
+                        struct ffs_disk_block *out_disk_block);
+int ffs_block_write_disk(const struct ffs_disk_block *disk_block,
+                         const void *data,
+                         uint8_t *out_area_idx, uint32_t *out_area_offset);
 int ffs_block_delete_from_ram(struct ffs_hash_entry *entry);
 void ffs_block_delete_list_from_ram(struct ffs_block *first,
                                     struct ffs_block *last);
@@ -271,29 +271,29 @@ int ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
 int ffs_block_from_hash_entry(struct ffs_block *out_block,
                               struct ffs_hash_entry *entry);
 
-int ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_offset,
-                           uint16_t size);
+int ffs_misc_reserve_space(uint16_t space,
+                           uint8_t *out_area_idx, uint32_t *out_area_offset);
 int ffs_misc_set_num_areas(uint8_t num_areas);
 
 int ffs_file_open(struct ffs_file **out_file, const char *filename,
                   uint8_t access_flags);
 int ffs_file_seek(struct ffs_file *file, uint32_t offset);
 int ffs_file_close(struct ffs_file *file);
-int ffs_file_new(struct ffs_inode_entry **out_inode_entry,
-                 struct ffs_inode_entry *parent,
-                 const char *filename, uint8_t filename_len, int is_dir);
+int ffs_file_new(struct ffs_inode_entry *parent, const char *filename,
+                 uint8_t filename_len, int is_dir,
+                 struct ffs_inode_entry **out_inode_entry);
 
 int ffs_format_area(uint8_t area_idx, int is_scratch);
 int ffs_format_from_scratch_area(uint8_t area_idx, uint8_t area_id);
 int ffs_format_full(const struct ffs_area_desc *area_descs);
 
 int ffs_gc(uint8_t *out_area_idx);
-int ffs_gc_until(uint8_t *out_area_idx, uint32_t space);
+int ffs_gc_until(uint32_t space, uint8_t *out_area_idx);
 
 int ffs_area_magic_is_set(const struct ffs_disk_area *disk_area);
 int ffs_area_is_scratch(const struct ffs_disk_area *disk_area);
-void ffs_area_to_disk(struct ffs_disk_area *out_disk_area,
-                      const struct ffs_area *area);
+void ffs_area_to_disk(const struct ffs_area *area,
+                      struct ffs_disk_area *out_disk_area);
 uint32_t ffs_area_free_space(const struct ffs_area *area);
 int ffs_area_find_corrupt_scratch(uint16_t *out_good_idx,
                                   uint16_t *out_bad_idx);

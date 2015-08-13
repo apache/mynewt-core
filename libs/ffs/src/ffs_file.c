@@ -7,20 +7,20 @@
  * Creates a new empty file and writes it to the file system.  If a file with
  * the specified path already exists, the behavior is undefined.
  *
- * @param out_inode_entry       On success, this points to the inode
- *                                  corresponding to the new file.
  * @param parent                The parent directory to insert the new file in.
  * @param filename              The name of the file to create.
  * @param filename_len          The length of the filename, in characters.
  * @param is_dir                1 if this is a directory; 0 if it is a normal
  *                                  file.
+ * @param out_inode_entry       On success, this points to the inode
+ *                                  corresponding to the new file.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
-ffs_file_new(struct ffs_inode_entry **out_inode_entry,
-             struct ffs_inode_entry *parent,
-             const char *filename, uint8_t filename_len, int is_dir)
+ffs_file_new(struct ffs_inode_entry *parent, const char *filename,
+             uint8_t filename_len, int is_dir,
+             struct ffs_inode_entry **out_inode_entry)
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode_entry *inode_entry;
@@ -34,8 +34,8 @@ ffs_file_new(struct ffs_inode_entry **out_inode_entry,
         goto err;
     }
 
-    rc = ffs_misc_reserve_space(&area_idx, &offset,
-                                sizeof disk_inode + filename_len);
+    rc = ffs_misc_reserve_space(sizeof disk_inode + filename_len,
+                                &area_idx, &offset);
     if (rc != 0) {
         goto err;
     }
@@ -145,8 +145,8 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
         }
 
         /* Create a new file at the specified path. */
-        rc = ffs_file_new(&file->ff_inode_entry, parent, parser.fpp_token,
-                          parser.fpp_token_len, 0);
+        rc = ffs_file_new(parent, parser.fpp_token, parser.fpp_token_len, 0,
+                          &file->ff_inode_entry);
         if (rc != 0) {
             goto err;
         }
@@ -164,8 +164,8 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
              * a new one in its place.
              */
             ffs_path_unlink(path);
-            rc = ffs_file_new(&file->ff_inode_entry, parent, parser.fpp_token,
-                              parser.fpp_token_len, 0);
+            rc = ffs_file_new(parent, parser.fpp_token, parser.fpp_token_len,
+                              0, &file->ff_inode_entry);
             if (rc != 0) {
                 goto err;
             }
@@ -178,8 +178,8 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
     }
 
     if (access_flags & FFS_ACCESS_APPEND) {
-        rc = ffs_inode_calc_data_length(&file->ff_offset,
-                                        file->ff_inode_entry);
+        rc = ffs_inode_calc_data_length(file->ff_inode_entry,
+                                        &file->ff_offset);
         if (rc != 0) {
             goto err;
         }
@@ -214,7 +214,7 @@ ffs_file_seek(struct ffs_file *file, uint32_t offset)
     uint32_t len;
     int rc;
 
-    rc = ffs_inode_calc_data_length(&len, file->ff_inode_entry);
+    rc = ffs_inode_calc_data_length(file->ff_inode_entry, &len);
     if (rc != 0) {
         return rc;
     }
@@ -241,7 +241,7 @@ ffs_file_close(struct ffs_file *file)
 {
     int rc;
 
-    rc = ffs_inode_dec_refcnt(NULL, file->ff_inode_entry);
+    rc = ffs_inode_dec_refcnt(file->ff_inode_entry, NULL);
     if (rc != 0) {
         return rc;
     }

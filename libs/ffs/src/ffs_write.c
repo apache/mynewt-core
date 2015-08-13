@@ -88,14 +88,14 @@ ffs_write_over_block(struct ffs_hash_entry *entry, uint16_t left_copy_len,
     block.fb_data_len = left_copy_len + new_data_len + right_copy_len;
     ffs_block_to_disk(&block, &disk_block);
 
-    rc = ffs_misc_reserve_space(&dst_area_idx, &dst_area_offset,
-                                sizeof disk_block + disk_block.fdb_data_len);
+    rc = ffs_misc_reserve_space(sizeof disk_block + disk_block.fdb_data_len,
+                                &dst_area_idx, &dst_area_offset);
     if (rc != 0) {
         return rc;
     }
 
-    ffs_flash_loc_expand(&src_area_idx, &src_area_offset,
-                         entry->fhe_flash_loc);
+    ffs_flash_loc_expand(entry->fhe_flash_loc,
+                         &src_area_idx, &src_area_offset);
 
     block_off = 0;
 
@@ -185,7 +185,7 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
     }
     disk_block.fdb_data_len = len;
 
-    rc = ffs_block_write_disk(&area_idx, &area_offset, &disk_block, data);
+    rc = ffs_block_write_disk(&disk_block, data, &area_idx, &area_offset);
     if (rc != 0) {
         return rc;
     }
@@ -200,9 +200,9 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
 }
 
 static int
-ffs_write_calc_info(struct ffs_write_info *out_write_info,
-                    struct ffs_inode_entry *inode_entry,
-                    uint32_t file_offset, uint32_t write_len)
+ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
+                    uint32_t file_offset, uint32_t write_len,
+                    struct ffs_write_info *out_write_info)
 {
     struct ffs_hash_entry *entry;
     struct ffs_seek_info seek_info;
@@ -360,8 +360,8 @@ ffs_write_gen(const struct ffs_write_info *write_info,
         block.fb_seq++;
         ffs_block_to_disk(&block, &disk_block);
 
-        rc = ffs_block_write_disk(&area_idx, &area_offset, &disk_block,
-                                  data + data_offset);
+        rc = ffs_block_write_disk(&disk_block, data + data_offset,
+                                  &area_idx, &area_offset);
         if (rc != 0) {
             return rc;
         }
@@ -397,7 +397,7 @@ ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
     struct ffs_write_info write_info;
     int rc;
 
-    rc = ffs_write_calc_info(&write_info, inode_entry, file_offset, len);
+    rc = ffs_write_calc_info(inode_entry, file_offset, len, &write_info);
     if (rc != 0) {
         return rc;
     }
@@ -438,8 +438,8 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
      * seek position.
      */
     if (file->ff_access_flags & FFS_ACCESS_APPEND) {
-        rc = ffs_inode_calc_data_length(&file->ff_offset,
-                                        file->ff_inode_entry);
+        rc = ffs_inode_calc_data_length(file->ff_inode_entry,
+                                        &file->ff_offset);
         if (rc != 0) {
             return rc;
         }

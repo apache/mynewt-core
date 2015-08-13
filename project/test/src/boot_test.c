@@ -285,7 +285,7 @@ boot_test_util_verify_status_clear(void)
     struct ffs_file *file;
     int rc;
 
-    rc = ffs_open(&file, BOOT_PATH_STATUS, FFS_ACCESS_READ);
+    rc = ffs_open(BOOT_PATH_STATUS, FFS_ACCESS_READ, &file);
     assert(rc == FFS_ENOENT);
 }
 
