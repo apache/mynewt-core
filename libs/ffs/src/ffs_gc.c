@@ -83,7 +83,7 @@ ffs_gc_select_area(void)
 }
 
 static int
-ffs_gc_block_chain_low_mem(struct ffs_hash_entry *last_entry,
+ffs_gc_block_chain_copy(struct ffs_hash_entry *last_entry,
                            uint32_t data_len, uint8_t to_area_idx)
 {
     struct ffs_hash_entry *entry;
@@ -127,19 +127,19 @@ ffs_gc_block_chain_low_mem(struct ffs_hash_entry *last_entry,
 
 /**
  * Moves a chain of blocks from one area to another.  This function attempts to
- * collate the blocks into a single new block in the destination area.  If
- * there is insufficient heap memory do to this, the function falls back to
- * copying each block separately.
+ * collate the blocks into a single new block in the destination area.
  *
  * @param last_entry            The last block entry in the chain.
  * @param data_len              The total length of data to collate.
  * @param to_area_idx           The index of the area to copy to.
  *
- * @param                       0 on success; nonzero on failure.
+ * @return                      0 on success;
+ *                              FFS_ENOMEM if there is insufficient heap;
+ *                              other nonzero on failure.
  */
 static int
-ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
-                   uint32_t data_len, uint8_t to_area_idx)
+ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
+                           uint32_t data_len, uint8_t to_area_idx)
 {
     struct ffs_disk_block disk_block;
     struct ffs_hash_entry *entry;
@@ -154,8 +154,7 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
 
     data = os_malloc(data_len);
     if (data == NULL) {
-        /* Not enough memory; just copy each block separately. */
-        rc = ffs_gc_block_chain_low_mem(last_entry, data_len, to_area_idx);
+        rc = FFS_ENOMEM;
         goto done;
     }
 
@@ -219,6 +218,43 @@ done:
     return rc;
 }
 
+/**
+ * Moves a chain of blocks from one area to another.  This function attempts to
+ * collate the blocks into a single new block in the destination area.  If
+ * there is insufficient heap memory do to this, the function falls back to
+ * copying each block separately.
+ *
+ * @param last_entry            The last block entry in the chain.
+ * @param multiple_blocks       0=single block; 1=more than one block.
+ * @param data_len              The total length of data to collate.
+ * @param to_area_idx           The index of the area to copy to.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static int
+ffs_gc_block_chain(struct ffs_hash_entry *last_entry, int multiple_blocks,
+                   uint32_t data_len, uint8_t to_area_idx)
+{
+    int rc;
+
+    if (!multiple_blocks) {
+        /* If there is only one block, collation has the same effect as a
+         * simple copy.  Just perform the more efficient copy.
+         */
+        rc = ffs_gc_block_chain_copy(last_entry, data_len, to_area_idx);
+    } else {
+        rc = ffs_gc_block_chain_collate(last_entry, data_len, to_area_idx);
+        if (rc == FFS_ENOMEM) {
+            /* Insufficient heap for collation; just copy each block one by
+             * one.
+             */
+            rc = ffs_gc_block_chain_copy(last_entry, data_len, to_area_idx);
+        }
+    }
+
+    return rc;
+}
+
 static int
 ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
                     uint8_t to_area_idx)
@@ -230,12 +266,14 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
     uint32_t area_offset;
     uint32_t data_len;
     uint8_t area_idx;
+    int multiple_blocks;
     int rc;
 
     assert(ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id));
 
     data_len = 0;
     last_entry = NULL;
+    multiple_blocks = 0;
     entry = inode_entry->fie_last_block_entry;
     while (entry != NULL) {
         rc = ffs_block_from_hash_entry(&block, entry);
@@ -252,23 +290,30 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
             prospective_data_len = data_len + block.fb_data_len;
             if (prospective_data_len <= ffs_block_max_data_sz) {
                 data_len = prospective_data_len;
+                if (last_entry != entry) {
+                    multiple_blocks = 1;
+                }
             } else {
-                rc = ffs_gc_block_chain(last_entry, data_len, to_area_idx);
+                rc = ffs_gc_block_chain(last_entry, multiple_blocks, data_len,
+                                        to_area_idx);
                 if (rc != 0) {
                     return rc;
                 }
                 last_entry = entry;
                 data_len = block.fb_data_len;
+                multiple_blocks = 0;
             }
         } else {
             if (last_entry != NULL) {
-                rc = ffs_gc_block_chain(last_entry, data_len, to_area_idx);
+                rc = ffs_gc_block_chain(last_entry, multiple_blocks, data_len,
+                                        to_area_idx);
                 if (rc != 0) {
                     return rc;
                 }
 
                 last_entry = NULL;
                 data_len = 0;
+                multiple_blocks = 0;
             }
         }
 
@@ -276,7 +321,8 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
     }
 
     if (last_entry != NULL) {
-        rc = ffs_gc_block_chain(last_entry, data_len, to_area_idx);
+        rc = ffs_gc_block_chain(last_entry, multiple_blocks, data_len,
+                                to_area_idx);
         if (rc != 0) {
             return rc;
         }
