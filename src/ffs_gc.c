@@ -189,7 +189,7 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
     disk_block.fdb_id = block.fb_hash_entry->fhe_id;
     disk_block.fdb_seq = block.fb_seq + 1;
-    disk_block.fdb_inode_id = block.fb_inode_entry->fi_hash_entry.fhe_id;
+    disk_block.fdb_inode_id = block.fb_inode_entry->fie_hash_entry.fhe_id;
     if (entry == NULL) {
         disk_block.fdb_prev_id = FFS_ID_NONE;
     } else {
@@ -232,11 +232,11 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
     uint8_t area_idx;
     int rc;
 
-    assert(ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id));
+    assert(ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id));
 
     data_len = 0;
     last_entry = NULL;
-    entry = inode_entry->fi_last_block;
+    entry = inode_entry->fie_last_block_entry;
     while (entry != NULL) {
         rc = ffs_block_from_hash_entry(&block, entry);
         if (rc != 0) {

@@ -75,11 +75,11 @@ ffs_restore_dummy_inode(struct ffs_inode_entry **out_inode_entry, uint32_t id)
     if (inode_entry == NULL) {
         return FFS_ENOMEM;
     }
-    inode_entry->fi_hash_entry.fhe_id = id;
-    inode_entry->fi_hash_entry.fhe_flash_loc = FFS_FLASH_LOC_NONE;
+    inode_entry->fie_hash_entry.fhe_id = id;
+    inode_entry->fie_hash_entry.fhe_flash_loc = FFS_FLASH_LOC_NONE;
     inode_entry->fi_refcnt = 0;
 
-    ffs_hash_insert(&inode_entry->fi_hash_entry);
+    ffs_hash_insert(&inode_entry->fie_hash_entry);
 
     *out_inode_entry = inode_entry;
 
@@ -94,7 +94,7 @@ ffs_restore_inode_gets_replaced(int *out_should_replace,
     struct ffs_inode old_inode;
     int rc;
 
-    assert(old_inode_entry->fi_hash_entry.fhe_id == disk_inode->fdi_id);
+    assert(old_inode_entry->fie_hash_entry.fhe_id == disk_inode->fdi_id);
 
     if (old_inode_entry->fi_refcnt == 0) {
         *out_should_replace = 1;
@@ -153,7 +153,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
         }
 
         if (do_add) {
-            if (inode_entry->fi_hash_entry.fhe_flash_loc !=
+            if (inode_entry->fie_hash_entry.fhe_flash_loc !=
                 FFS_FLASH_LOC_NONE) {
 
                 rc = ffs_inode_from_entry(&inode, inode_entry);
@@ -165,7 +165,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
                 }
             }
  
-            inode_entry->fi_hash_entry.fhe_flash_loc =
+            inode_entry->fie_hash_entry.fhe_flash_loc =
                 ffs_flash_loc(area_idx, area_offset);
         }
     } else {
@@ -177,11 +177,11 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
         new_inode = 1;
         do_add = 1;
 
-        inode_entry->fi_hash_entry.fhe_id = disk_inode->fdi_id;
-        inode_entry->fi_hash_entry.fhe_flash_loc =
+        inode_entry->fie_hash_entry.fhe_id = disk_inode->fdi_id;
+        inode_entry->fie_hash_entry.fhe_flash_loc =
             ffs_flash_loc(area_idx, area_offset);
 
-        ffs_hash_insert(&inode_entry->fi_hash_entry);
+        ffs_hash_insert(&inode_entry->fie_hash_entry);
     }
 
     if (do_add) {
@@ -204,18 +204,18 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
         } 
 
 
-        if (inode_entry->fi_hash_entry.fhe_id == FFS_ID_ROOT_DIR) {
+        if (inode_entry->fie_hash_entry.fhe_id == FFS_ID_ROOT_DIR) {
             ffs_root_dir = inode_entry;
         }
     }
 
-    if (ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id)) {
-        if (inode_entry->fi_hash_entry.fhe_id > ffs_hash_next_file_id) {
-            ffs_hash_next_file_id = inode_entry->fi_hash_entry.fhe_id + 1;
+    if (ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id)) {
+        if (inode_entry->fie_hash_entry.fhe_id > ffs_hash_next_file_id) {
+            ffs_hash_next_file_id = inode_entry->fie_hash_entry.fhe_id + 1;
         }
     } else {
-        if (inode_entry->fi_hash_entry.fhe_id > ffs_hash_next_dir_id) {
-            ffs_hash_next_dir_id = inode_entry->fi_hash_entry.fhe_id + 1;
+        if (inode_entry->fie_hash_entry.fhe_id > ffs_hash_next_dir_id) {
+            ffs_hash_next_dir_id = inode_entry->fie_hash_entry.fhe_id + 1;
         }
     }
 
@@ -329,10 +329,10 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
         }
     }
 
-    if (inode_entry->fi_last_block == NULL ||
-        inode_entry->fi_last_block->fhe_id == disk_block->fdb_prev_id) {
+    if (inode_entry->fie_last_block_entry == NULL ||
+        inode_entry->fie_last_block_entry->fhe_id == disk_block->fdb_prev_id) {
 
-        inode_entry->fi_last_block = entry;
+        inode_entry->fie_last_block_entry = entry;
     }
 
     ffs_hash_insert(entry);

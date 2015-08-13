@@ -41,7 +41,6 @@ struct ffs_disk_area {
     uint8_t fda_gc_seq;     /* Garbage collection count. */
     uint8_t reserved8;
     uint8_t fda_id;         /* 0xff if scratch area. */
-    /* XXX: ECC for area header. */
 };
 
 /** On-disk representation of an inode (file or directory). */
@@ -53,7 +52,6 @@ struct ffs_disk_inode {
     uint16_t reserved16;    /* FFS_INODE_F_[...] */
     uint8_t reserved8;
     uint8_t fdi_filename_len;   /* Length of filename, in bytes. */
-    /* XXX: ECC for inode header and filename. */
     /* Followed by filename. */
 };
 
@@ -67,10 +65,13 @@ struct ffs_disk_block {
                                FFS_ID_NONE if this is the first block. */
     uint16_t reserved16;    /* FFS_BLOCK_F_[...] */
     uint16_t fdb_data_len;  /* Length of data contents, in bytes. */
-    /* XXX: ECC for block header and contents. */
     /* Followed by 'length' bytes of data. */
 };
 
+/**
+ * What gets stored in the hash table.  Each entry represents a data block or
+ * an inode.
+ */
 struct ffs_hash_entry {
     SLIST_ENTRY(ffs_hash_entry) fhe_next;
     uint32_t fhe_id;        /* 0 - 0x7fffffff if inode; else if block. */
@@ -80,24 +81,27 @@ struct ffs_hash_entry {
 SLIST_HEAD(ffs_block_list, ffs_block);
 SLIST_HEAD(ffs_inode_list, ffs_inode_entry);
 
+/** Each inode hash entry is actually one of these. */
 struct ffs_inode_entry {
-    struct ffs_hash_entry fi_hash_entry;
-    SLIST_ENTRY(ffs_inode_entry) fi_sibling_next;
+    struct ffs_hash_entry fie_hash_entry;
+    SLIST_ENTRY(ffs_inode_entry) fie_sibling_next;
     union {
-        struct ffs_inode_list fi_child_list;    /* If directory. */
-        struct ffs_hash_entry *fi_last_block;   /* If file. */
+        struct ffs_inode_list fie_child_list;           /* If directory. */
+        struct ffs_hash_entry *fie_last_block_entry;    /* If file. */
     };
     uint8_t fi_refcnt;
 };
 
+/** Full inode representation; not stored permanently RAM. */
 struct ffs_inode {
-    struct ffs_inode_entry *fi_entry;
+    struct ffs_inode_entry *fi_inode_entry;
     uint32_t fi_seq;
     struct ffs_inode_entry *fi_parent; /* Pointer to parent directory inode. */
     uint8_t fi_filename_len;
     uint8_t fi_filename[FFS_SHORT_FILENAME_LEN]; /* 3 bytes. */
 };
 
+/** Full data block representation; not stored permanently RAM. */
 struct ffs_block {
     struct ffs_hash_entry *fb_hash_entry;
     uint32_t fb_seq;

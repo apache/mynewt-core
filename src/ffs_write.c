@@ -177,11 +177,11 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
     disk_block.fdb_id = ffs_hash_next_block_id++;
     disk_block.fdb_seq = 0;
-    disk_block.fdb_inode_id = inode_entry->fi_hash_entry.fhe_id;
-    if (inode_entry->fi_last_block == NULL) {
+    disk_block.fdb_inode_id = inode_entry->fie_hash_entry.fhe_id;
+    if (inode_entry->fie_last_block_entry == NULL) {
         disk_block.fdb_prev_id = FFS_ID_NONE;
     } else {
-        disk_block.fdb_prev_id = inode_entry->fi_last_block->fhe_id;
+        disk_block.fdb_prev_id = inode_entry->fie_last_block_entry->fhe_id;
     }
     disk_block.fdb_data_len = len;
 
@@ -194,7 +194,7 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
     entry->fhe_flash_loc = ffs_flash_loc(area_idx, area_offset);
     ffs_hash_insert(entry);
 
-    inode_entry->fi_last_block = entry;
+    inode_entry->fie_last_block_entry = entry;
 
     return 0;
 }
@@ -314,7 +314,7 @@ ffs_write_gen(const struct ffs_write_info *write_info,
         entry = write_info->fwi_end_block;
     } else {
         /* New data extends past the end of the existing block. */
-        entry = inode_entry->fi_last_block;
+        entry = inode_entry->fie_last_block_entry;
     }
 
     if (write_info->fwi_start_block == entry) {

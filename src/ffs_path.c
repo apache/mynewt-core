@@ -56,7 +56,7 @@ ffs_path_find_child(struct ffs_inode_entry **out_inode_entry,
     int cmp;
     int rc;
 
-    SLIST_FOREACH(cur, &parent->fi_child_list, fi_sibling_next) {
+    SLIST_FOREACH(cur, &parent->fie_child_list, fie_sibling_next) {
         rc = ffs_inode_from_entry(&inode, cur);
         if (rc != 0) {
             return rc;
@@ -231,8 +231,8 @@ ffs_path_rename(const char *from, const char *to)
     switch (rc) {
     case 0:
         /* The user is clobbering something with the rename. */
-        if (ffs_hash_id_is_dir(from_inode_entry->fi_hash_entry.fhe_id) ^
-            ffs_hash_id_is_dir(to_inode_entry->fi_hash_entry.fhe_id)) {
+        if (ffs_hash_id_is_dir(from_inode_entry->fie_hash_entry.fhe_id) ^
+            ffs_hash_id_is_dir(to_inode_entry->fie_hash_entry.fhe_id)) {
 
             /* Cannot clobber one type of file with another. */
             return FFS_EINVAL;

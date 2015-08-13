@@ -51,7 +51,7 @@ ffs_file_new(struct ffs_inode_entry **out_inode_entry,
     if (parent == NULL) {
         disk_inode.fdi_parent_id = FFS_ID_NONE;
     } else {
-        disk_inode.fdi_parent_id = parent->fi_hash_entry.fhe_id;
+        disk_inode.fdi_parent_id = parent->fie_hash_entry.fhe_id;
     }
     disk_inode.fdi_filename_len = filename_len;
 
@@ -60,8 +60,9 @@ ffs_file_new(struct ffs_inode_entry **out_inode_entry,
         goto err;
     }
 
-    inode_entry->fi_hash_entry.fhe_id = disk_inode.fdi_id;
-    inode_entry->fi_hash_entry.fhe_flash_loc = ffs_flash_loc(area_idx, offset);
+    inode_entry->fie_hash_entry.fhe_id = disk_inode.fdi_id;
+    inode_entry->fie_hash_entry.fhe_flash_loc =
+        ffs_flash_loc(area_idx, offset);
     inode_entry->fi_refcnt = 1;
 
     if (parent != NULL) {
@@ -73,7 +74,7 @@ ffs_file_new(struct ffs_inode_entry **out_inode_entry,
         assert(disk_inode.fdi_id == FFS_ID_ROOT_DIR);
     }
 
-    ffs_hash_insert(&inode_entry->fi_hash_entry);
+    ffs_hash_insert(&inode_entry->fie_hash_entry);
     *out_inode_entry = inode_entry;
 
     return 0;
