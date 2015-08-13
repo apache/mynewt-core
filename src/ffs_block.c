@@ -7,15 +7,15 @@
 /**
  * Reads a data block header from flash.
  *
- * @param out_disk_block        On success, the block header is writteh here.
  * @param area_idx              The index of the area to read from.
  * @param area_offset           The offset within the area to read from.
+ * @param out_disk_block        On success, the block header is writteh here.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
-ffs_block_read_disk(struct ffs_disk_block *out_disk_block, uint8_t area_idx,
-                    uint32_t area_offset)
+ffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
+                    struct ffs_disk_block *out_disk_block)
 {
     int rc;
 
@@ -34,26 +34,26 @@ ffs_block_read_disk(struct ffs_disk_block *out_disk_block, uint8_t area_idx,
 /**
  * Writes the specified data block to a suitable location in flash.
  *
+ * @param disk_block            Points to the disk block to write.
+ * @param data                  The contents of the data block.
  * @param out_area_idx          On success, contains the index of the area
  *                                  written to.
  * @param out_area_offset       On success, contains the offset within the area
  *                                  written to.
- * @param disk_block            Points to the disk block to write.
- * @param data                  The contents of the data block.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
-ffs_block_write_disk(uint8_t *out_area_idx, uint32_t *out_area_offset,
-                     const struct ffs_disk_block *disk_block,
-                     const void *data)
+ffs_block_write_disk(const struct ffs_disk_block *disk_block,
+                     const void *data,
+                     uint8_t *out_area_idx, uint32_t *out_area_offset)
 {
     uint32_t offset;
     uint8_t area_idx;
     int rc;
 
-    rc = ffs_misc_reserve_space(&area_idx, &offset,
-                                sizeof *disk_block + disk_block->fdb_data_len);
+    rc = ffs_misc_reserve_space(sizeof *disk_block + disk_block->fdb_data_len,
+                                &area_idx, &offset);
     if (rc != 0) {
         return rc;
     }
@@ -186,8 +186,8 @@ ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
 
     assert(ffs_hash_id_is_block(block_entry->fhe_id));
 
-    ffs_flash_loc_expand(&area_idx, &area_offset, block_entry->fhe_flash_loc);
-    rc = ffs_block_read_disk(&disk_block, area_idx, area_offset);
+    ffs_flash_loc_expand(block_entry->fhe_flash_loc, &area_idx, &area_offset);
+    rc = ffs_block_read_disk(area_idx, area_offset, &disk_block);
     if (rc != 0) {
         return rc;
     }
@@ -219,8 +219,8 @@ ffs_block_from_hash_entry(struct ffs_block *out_block,
 
     assert(ffs_hash_id_is_block(block_entry->fhe_id));
 
-    ffs_flash_loc_expand(&area_idx, &area_offset, block_entry->fhe_flash_loc);
-    rc = ffs_block_read_disk(&disk_block, area_idx, area_offset);
+    ffs_flash_loc_expand(block_entry->fhe_flash_loc, &area_idx, &area_offset);
+    rc = ffs_block_read_disk(area_idx, area_offset, &disk_block);
     if (rc != 0) {
         return rc;
     }
