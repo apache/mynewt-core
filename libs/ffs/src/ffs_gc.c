@@ -83,6 +83,61 @@ ffs_gc_select_area(void)
 }
 
 static int
+ffs_gc_block_chain_low_mem(struct ffs_hash_entry *last_entry,
+                           uint32_t data_len, uint8_t to_area_idx)
+{
+    struct ffs_hash_entry *entry;
+    struct ffs_area *to_area;
+    struct ffs_block block;
+    uint32_t from_area_offset;
+    uint32_t bytes_copied;
+    uint16_t copy_len;
+    uint8_t from_area_idx;
+    int rc;
+
+    to_area = ffs_areas + to_area_idx;
+
+    bytes_copied = 0;
+    entry = last_entry;
+
+    while (bytes_copied < data_len) {
+        assert(entry != NULL);
+
+        rc = ffs_block_from_hash_entry(&block, entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        ffs_flash_loc_expand(&from_area_idx, &from_area_offset,
+                             block.fb_flash_loc);
+
+        copy_len = sizeof (struct ffs_disk_block) + block.fb_data_len;
+        rc = ffs_flash_copy(from_area_idx, from_area_offset, to_area_idx,
+                            to_area->fa_cur, copy_len);
+        if (rc != 0) {
+            return rc;
+        }
+        bytes_copied += block.fb_data_len;
+
+        entry = block.fb_prev;
+    }
+
+    return 0;
+}
+
+/**
+ * Moves a chain of blocks from one area to another.  This function attempts to
+ * collate the blocks into a single new block in the destination area.  If
+ * there is insufficient heap memory do to this, the function falls back to
+ * copying each block separately.
+ *
+ * @param last_entry            The last block entry in the chain.
+ * @param data_len              The total length of data to collate.
+ * @param to_area_idx           The index of the area to copy to.
+ *
+ * @param                       0 on success; nonzero on failure.
+ */
+static int
 ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
                    uint32_t data_len, uint8_t to_area_idx)
 {
@@ -99,8 +154,8 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
 
     data = os_malloc(data_len);
     if (data == NULL) {
-        /* XXX Fall back to single copy. */
-        rc = FFS_ENOMEM;
+        /* Not enough memory; just copy each block separately. */
+        rc = ffs_gc_block_chain_low_mem(last_entry, data_len, to_area_idx);
         goto done;
     }
 
