@@ -22,17 +22,18 @@ struct ffs_write_info {
     uint32_t fwi_end_block_data_offset;
 
     /* The offset within the first overwritten block where the new write
-     * begins; undefined if no overwrite.
+     * begins; 0 if no overwrite.
      */
     uint32_t fwi_start_offset;
 
     /* The offset within the last overwritten block where the new write ends;
-     * undefined if no overwrite.
+     * 0 if no overwrite.
      */
     uint32_t fwi_end_offset;
 
     /* The amount of data being appended to the file.  This is equal to the
-     * total length of the write minus all overwritten bytes.
+     * total length of the write minus all overwritten bytes; 0 if no appended
+     * data.
      */
     uint32_t fwi_extra_length;
 };
@@ -212,17 +213,19 @@ ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
     uint32_t block_end;
     int rc;
 
+    out_write_info->fwi_start_block = NULL;
+    out_write_info->fwi_end_block = NULL;
+    out_write_info->fwi_end_block_data_offset = 0;
+    out_write_info->fwi_start_offset = 0;
+    out_write_info->fwi_end_offset = 0;
+    out_write_info->fwi_extra_length = 0;
+
     rc = ffs_inode_seek(inode_entry, file_offset, write_len, &seek_info);
     if (rc != 0) {
         return rc;
     }
 
     if (seek_info.fsi_last_block.fb_hash_entry == NULL) {
-        out_write_info->fwi_start_block = NULL;
-        out_write_info->fwi_end_block = NULL;
-        out_write_info->fwi_end_block_data_offset = 0;
-        out_write_info->fwi_start_offset = 0;
-        out_write_info->fwi_end_offset = 0;
         out_write_info->fwi_extra_length = write_len;
         return 0;
     }
@@ -231,12 +234,8 @@ ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
 
     if (write_end > seek_info.fsi_file_len) {
         out_write_info->fwi_extra_length = write_end - seek_info.fsi_file_len;
-        out_write_info->fwi_end_block = NULL;
-        out_write_info->fwi_end_offset = 0;
-        out_write_info->fwi_end_block_data_offset = 0;
         data_left = write_len - out_write_info->fwi_extra_length;
     } else {
-        out_write_info->fwi_extra_length = 0;
         out_write_info->fwi_end_block = seek_info.fsi_last_block.fb_hash_entry;
         out_write_info->fwi_end_offset =
             write_end - seek_info.fsi_block_file_off;
@@ -246,9 +245,7 @@ ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
         data_left = write_len + (block_end - write_end);
     }
 
-    if (file_offset > seek_info.fsi_block_file_off) {
-        out_write_info->fwi_end_block_data_offset = 0;
-    } else {
+    if (file_offset <= seek_info.fsi_block_file_off) {
         out_write_info->fwi_end_block_data_offset =
             seek_info.fsi_block_file_off - file_offset;
     }

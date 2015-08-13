@@ -103,23 +103,21 @@ ffs_restore_inode_gets_replaced(struct ffs_inode_entry *old_inode_entry,
 
     rc = ffs_inode_from_entry(&old_inode, old_inode_entry);
     if (rc != 0) {
+        *out_should_replace = 0;
         return rc;
-    }
-
-    if (old_inode.fi_seq < disk_inode->fdi_seq) {
+    } else if (old_inode.fi_seq < disk_inode->fdi_seq) {
         *out_should_replace = 1;
         return 0;
-    }
-
-    if (old_inode.fi_seq == disk_inode->fdi_seq) {
+    } else if (old_inode.fi_seq == disk_inode->fdi_seq) {
         /* This is a duplicate of an previously-read inode.  This should never
          * happen.
          */
+        *out_should_replace = 0;
         return FFS_ECORRUPT;
+    } else {
+        *out_should_replace = 0;
+        return 0;
     }
-
-    *out_should_replace = 0;
-    return 0;
 }
 
 /**
