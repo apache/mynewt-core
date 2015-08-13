@@ -99,8 +99,7 @@ struct ffs_inode {
 };
 
 struct ffs_block {
-    uint32_t fb_id;
-    uint32_t fb_flash_loc; /* Upper-byte = area idx; rest = area offset. */
+    struct ffs_hash_entry *fb_hash_entry;
     uint32_t fb_seq;
     struct ffs_inode_entry *fb_inode_entry;
     struct ffs_hash_entry *fb_prev;
@@ -217,7 +216,7 @@ int ffs_restore_full(const struct ffs_area_desc *area_descs);
 struct ffs_inode_entry *ffs_inode_entry_alloc(void);
 void ffs_inode_entry_free(struct ffs_inode_entry *inode_entry);
 int ffs_inode_calc_data_length(uint32_t *out_len,
-                               const struct ffs_inode_entry *inode_entry);
+                               struct ffs_inode_entry *inode_entry);
 uint32_t ffs_inode_parent_id(const struct ffs_inode *inode);
 int ffs_inode_delete_from_disk(struct ffs_inode *inode);
 int ffs_inode_entry_from_disk(struct ffs_inode_entry *out_inode,
@@ -241,9 +240,9 @@ int ffs_inode_filename_cmp_ram(int *result, const struct ffs_inode *inode,
                                const char *name, int name_len);
 int ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
                                  const struct ffs_inode *inode2);
-int ffs_inode_read(const struct ffs_inode_entry *inode_entry, uint32_t offset,
+int ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
                    uint32_t len, void *data, uint32_t *out_len);
-int ffs_inode_seek(const struct ffs_inode_entry *inode_entry, uint32_t offset,
+int ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
                    uint32_t length, struct ffs_seek_info *out_seek_info);
 int ffs_inode_from_entry(struct ffs_inode *out_inode,
                          struct ffs_inode_entry *entry);
@@ -264,9 +263,9 @@ void ffs_block_delete_list_from_disk(const struct ffs_block *first,
 void ffs_block_to_disk(const struct ffs_block *block,
                        struct ffs_disk_block *out_disk_block);
 int ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
-                                      const struct ffs_hash_entry *entry);
+                                      struct ffs_hash_entry *entry);
 int ffs_block_from_hash_entry(struct ffs_block *out_block,
-                              const struct ffs_hash_entry *entry);
+                              struct ffs_hash_entry *entry);
 
 int ffs_misc_reserve_space(uint8_t *out_area_idx, uint32_t *out_offset,
                            uint16_t size);

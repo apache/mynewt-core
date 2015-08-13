@@ -201,7 +201,7 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
 
 static int
 ffs_write_calc_info(struct ffs_write_info *out_write_info,
-                    const struct ffs_inode_entry *inode_entry,
+                    struct ffs_inode_entry *inode_entry,
                     uint32_t file_offset, uint32_t write_len)
 {
     struct ffs_hash_entry *entry;
@@ -217,7 +217,7 @@ ffs_write_calc_info(struct ffs_write_info *out_write_info,
         return rc;
     }
 
-    if (seek_info.fsi_last_block.fb_id == FFS_ID_NONE) {
+    if (seek_info.fsi_last_block.fb_hash_entry == NULL) {
         out_write_info->fwi_start_block = NULL;
         out_write_info->fwi_end_block = NULL;
         out_write_info->fwi_end_block_data_offset = 0;
@@ -237,8 +237,7 @@ ffs_write_calc_info(struct ffs_write_info *out_write_info,
         data_left = write_len - out_write_info->fwi_extra_length;
     } else {
         out_write_info->fwi_extra_length = 0;
-        out_write_info->fwi_end_block =
-            ffs_hash_find(seek_info.fsi_last_block.fb_id);
+        out_write_info->fwi_end_block = seek_info.fsi_last_block.fb_hash_entry;
         out_write_info->fwi_end_offset =
             write_end - seek_info.fsi_block_file_off;
 
@@ -254,8 +253,7 @@ ffs_write_calc_info(struct ffs_write_info *out_write_info,
             seek_info.fsi_block_file_off - file_offset;
     }
 
-    entry = ffs_hash_find(seek_info.fsi_last_block.fb_id);
-    assert(entry != NULL);
+    entry = seek_info.fsi_last_block.fb_hash_entry;
 
     while (1) {
         rc = ffs_block_from_hash_entry(&block, entry);

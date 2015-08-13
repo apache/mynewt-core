@@ -249,7 +249,7 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
                                 const struct ffs_block *old_block,
                                 const struct ffs_disk_block *disk_block)
 {
-    assert(old_block->fb_id == disk_block->fdb_id);
+    assert(old_block->fb_hash_entry->fhe_id == disk_block->fdb_id);
 
     if (old_block->fb_seq < disk_block->fdb_seq) {
         *out_should_replace = 1;
@@ -271,7 +271,7 @@ ffs_restore_block_gets_replaced(int *out_should_replace,
  * Populates the ffs RAM state with the memory representation of the specified
  * disk data block.
  *
- * @param disk_block            The source disk block to convert.
+ * @param disk_block            The source disk block to insert.
  * @param area_idx              The ID of the area containing the block.
  * @param area_offset           The area_offset within the area of the block.
  *

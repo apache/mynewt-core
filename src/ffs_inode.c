@@ -81,9 +81,9 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
 
 int
 ffs_inode_calc_data_length(uint32_t *out_len,
-                           const struct ffs_inode_entry *inode_entry)
+                           struct ffs_inode_entry *inode_entry)
 {
-    const struct ffs_hash_entry *cur;
+    struct ffs_hash_entry *cur;
     struct ffs_block block;
     int rc;
 
@@ -551,7 +551,7 @@ ffs_inode_filename_cmp_flash(int *result, const struct ffs_inode *inode1,
  * @return                      0 on success; nonzero on failure.
  */
 int
-ffs_inode_seek(const struct ffs_inode_entry *inode_entry, uint32_t offset,
+ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
                uint32_t length, struct ffs_seek_info *out_seek_info)
 {
     struct ffs_hash_entry *cur_entry;
@@ -575,7 +575,7 @@ ffs_inode_seek(const struct ffs_inode_entry *inode_entry, uint32_t offset,
     if (offset == file_len) {
         memset(&out_seek_info->fsi_last_block, 0,
                sizeof out_seek_info->fsi_last_block);
-        out_seek_info->fsi_last_block.fb_id = FFS_ID_NONE;
+        out_seek_info->fsi_last_block.fb_hash_entry = NULL;
         out_seek_info->fsi_block_file_off = 0;
         out_seek_info->fsi_file_len = file_len;
         return 0;
@@ -614,7 +614,7 @@ ffs_inode_seek(const struct ffs_inode_entry *inode_entry, uint32_t offset,
  * @param len
  */
 int
-ffs_inode_read(const struct ffs_inode_entry *inode_entry, uint32_t offset,
+ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
                uint32_t len, void *out_data, uint32_t *out_len)
 {
     struct ffs_seek_info seek_info;
@@ -638,7 +638,7 @@ ffs_inode_read(const struct ffs_inode_entry *inode_entry, uint32_t offset,
         return rc;
     }
 
-    if (seek_info.fsi_last_block.fb_id == FFS_ID_NONE) {
+    if (seek_info.fsi_last_block.fb_hash_entry == NULL) {
         *out_len = 0;
         return 0;
     }
@@ -667,7 +667,8 @@ ffs_inode_read(const struct ffs_inode_entry *inode_entry, uint32_t offset,
         assert(chunk_len <= dst_off);
         dst_off -= chunk_len;
 
-        ffs_flash_loc_expand(&area_idx, &area_offset, block.fb_flash_loc);
+        ffs_flash_loc_expand(&area_idx, &area_offset,
+                             block.fb_hash_entry->fhe_flash_loc);
         area_offset += sizeof (struct ffs_disk_block);
         area_offset += block_off;
 

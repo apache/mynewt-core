@@ -109,7 +109,7 @@ ffs_gc_block_chain_low_mem(struct ffs_hash_entry *last_entry,
         }
 
         ffs_flash_loc_expand(&from_area_idx, &from_area_offset,
-                             block.fb_flash_loc);
+                             block.fb_hash_entry->fhe_flash_loc);
 
         copy_len = sizeof (struct ffs_disk_block) + block.fb_data_len;
         rc = ffs_flash_copy(from_area_idx, from_area_offset, to_area_idx,
@@ -171,7 +171,7 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
         data_offset -= block.fb_data_len;
 
         ffs_flash_loc_expand(&from_area_idx, &from_area_offset,
-                             block.fb_flash_loc);
+                             block.fb_hash_entry->fhe_flash_loc);
         from_area_offset += sizeof disk_block;
         rc = ffs_flash_read(from_area_idx, from_area_offset,
                             data + data_offset, block.fb_data_len);
@@ -187,7 +187,7 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry,
 
     memset(&disk_block, 0, sizeof disk_block);
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
-    disk_block.fdb_id = block.fb_id;
+    disk_block.fdb_id = block.fb_hash_entry->fhe_id;
     disk_block.fdb_seq = block.fb_seq + 1;
     disk_block.fdb_inode_id = block.fb_inode_entry->fi_hash_entry.fhe_id;
     if (entry == NULL) {
