@@ -116,7 +116,7 @@ ffs_misc_set_num_areas(uint8_t num_areas)
         free(ffs_areas);
         ffs_areas = NULL;
     } else {
-        ffs_areas = os_realloc(ffs_areas, num_areas * sizeof *ffs_areas);
+        ffs_areas = realloc(ffs_areas, num_areas * sizeof *ffs_areas);
         if (ffs_areas == NULL) {
             return FFS_ENOMEM;
         }

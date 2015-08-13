@@ -152,7 +152,7 @@ ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
     uint8_t from_area_idx;
     int rc;
 
-    data = os_malloc(data_len);
+    data = malloc(data_len);
     if (data == NULL) {
         rc = FFS_ENOMEM;
         goto done;
