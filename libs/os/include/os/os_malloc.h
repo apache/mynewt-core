@@ -1,11 +1,15 @@
 #ifndef H_OS_MALLOC_
 #define H_OS_MALLOC_
 
-#include <stddef.h>
+#include "os/os_heap.h"
 
-void *os_malloc(size_t size);
-void os_free(void *mem);
-void *os_realloc(void *ptr, size_t size);
+#undef  malloc
+#define malloc  os_malloc
+
+#undef  free
+#define free    os_free
+
+#undef  realloc
+#define realloc  os_realloc
 
 #endif
-

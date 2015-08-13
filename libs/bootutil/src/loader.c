@@ -605,7 +605,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     boot_req = req;
 
     boot_status_entries =
-        os_malloc(req->br_num_image_areas * sizeof *boot_status_entries);
+        malloc(req->br_num_image_areas * sizeof *boot_status_entries);
     if (boot_status_entries == NULL) {
         return BOOT_ENOMEM;
     }

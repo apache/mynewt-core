@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "os/os_mutex.h"
-#include "os/os_malloc.h"
+#include "os/os_heap.h"
 
 extern struct os_task *g_current_task;  /* XXX */
 

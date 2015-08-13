@@ -438,19 +438,19 @@ ffs_init(void)
         return FFS_EOS;
     }
 
-    ffs_file_mem = os_malloc(
+    ffs_file_mem = malloc(
         OS_MEMPOOL_BYTES(ffs_config.fc_num_files, sizeof (struct ffs_file)));
     if (ffs_file_mem == NULL) {
         return FFS_ENOMEM;
     }
 
-    ffs_inode_mem = os_malloc(
+    ffs_inode_mem = malloc(
         OS_MEMPOOL_BYTES(ffs_config.fc_num_inodes, sizeof (struct ffs_inode)));
     if (ffs_inode_mem == NULL) {
         return FFS_ENOMEM;
     }
 
-    ffs_hash_entry_mem = os_malloc(
+    ffs_hash_entry_mem = malloc(
         OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks,
                          sizeof (struct ffs_hash_entry)));
     if (ffs_hash_entry_mem == NULL) {
