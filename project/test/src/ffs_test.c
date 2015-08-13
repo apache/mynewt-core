@@ -75,7 +75,7 @@ ffs_test_util_block_count(const char *filename)
     assert(rc == 0);
 
     count = 0;
-    entry = file->ff_inode_entry->fi_last_block;
+    entry = file->ff_inode_entry->fie_last_block_entry;
     while (entry != NULL) {
         count++;
         rc = ffs_block_from_hash_entry(&block, entry);
@@ -231,7 +231,7 @@ ffs_test_assert_file(const struct ffs_test_file_desc *file,
 
     assert(ffs_test_num_touched_entries < FFS_TEST_TOUCHED_ARR_SZ);
     ffs_test_touched_entries[ffs_test_num_touched_entries] =
-        &inode_entry->fi_hash_entry;
+        &inode_entry->fie_hash_entry;
     ffs_test_num_touched_entries++;
 
     path_len = strlen(path);
@@ -239,7 +239,7 @@ ffs_test_assert_file(const struct ffs_test_file_desc *file,
     rc = ffs_inode_from_entry(&inode, inode_entry);
     assert(rc == 0);
 
-    if (ffs_hash_id_is_dir(inode_entry->fi_hash_entry.fhe_id)) {
+    if (ffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
         for (child_file = file->children;
              child_file != NULL && child_file->filename != NULL;
              child_file++) {
@@ -273,15 +273,15 @@ ffs_test_assert_branch_touched(struct ffs_inode_entry *inode_entry)
     int i;
 
     for (i = 0; i < ffs_test_num_touched_entries; i++) {
-        if (ffs_test_touched_entries[i] == &inode_entry->fi_hash_entry) {
+        if (ffs_test_touched_entries[i] == &inode_entry->fie_hash_entry) {
             break;
         }
     }
     assert(i < ffs_test_num_touched_entries);
     ffs_test_touched_entries[i] = NULL;
 
-    if (ffs_hash_id_is_dir(inode_entry->fi_hash_entry.fhe_id)) {
-        SLIST_FOREACH(child, &inode_entry->fi_child_list, fi_sibling_next) {
+    if (ffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
+        SLIST_FOREACH(child, &inode_entry->fie_child_list, fie_sibling_next) {
             ffs_test_assert_branch_touched(child);
         }
     }
@@ -300,9 +300,9 @@ ffs_test_assert_child_inode_present(struct ffs_inode_entry *child)
 
     parent = inode.fi_parent;
     assert(parent != NULL);
-    assert(ffs_hash_id_is_dir(parent->fi_hash_entry.fhe_id));
+    assert(ffs_hash_id_is_dir(parent->fie_hash_entry.fhe_id));
 
-    SLIST_FOREACH(inode_entry, &parent->fi_child_list, fi_sibling_next) {
+    SLIST_FOREACH(inode_entry, &parent->fie_child_list, fie_sibling_next) {
         if (inode_entry == child) {
             return;
         }
@@ -324,9 +324,9 @@ ffs_test_assert_block_present(struct ffs_hash_entry *block_entry)
 
     inode_entry = block.fb_inode_entry;
     assert(inode_entry != NULL);
-    assert(ffs_hash_id_is_file(inode_entry->fi_hash_entry.fhe_id));
+    assert(ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id));
 
-    cur = inode_entry->fi_last_block;
+    cur = inode_entry->fie_last_block_entry;
     while (cur != NULL) {
         if (cur == block_entry) {
             return;
@@ -351,7 +351,8 @@ ffs_test_assert_children_sorted(struct ffs_inode_entry *inode_entry)
     int rc;
 
     prev_entry = NULL;
-    SLIST_FOREACH(child_entry, &inode_entry->fi_child_list, fi_sibling_next) {
+    SLIST_FOREACH(child_entry, &inode_entry->fie_child_list,
+                  fie_sibling_next) {
         rc = ffs_inode_from_entry(&child_inode, child_entry);
         assert(rc == 0);
 
@@ -364,7 +365,7 @@ ffs_test_assert_children_sorted(struct ffs_inode_entry *inode_entry)
             assert(cmp < 0);
         }
 
-        if (ffs_hash_id_is_dir(child_entry->fi_hash_entry.fhe_id)) {
+        if (ffs_hash_id_is_dir(child_entry->fie_hash_entry.fhe_id)) {
             ffs_test_assert_children_sorted(child_entry);
         }
 

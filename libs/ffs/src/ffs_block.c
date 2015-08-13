@@ -124,7 +124,8 @@ ffs_block_to_disk(const struct ffs_block *block,
     out_disk_block->fdb_magic = FFS_BLOCK_MAGIC;
     out_disk_block->fdb_id = block->fb_hash_entry->fhe_id;
     out_disk_block->fdb_seq = block->fb_seq;
-    out_disk_block->fdb_inode_id = block->fb_inode_entry->fi_hash_entry.fhe_id;
+    out_disk_block->fdb_inode_id =
+        block->fb_inode_entry->fie_hash_entry.fhe_id;
     if (block->fb_prev == NULL) {
         out_disk_block->fdb_prev_id = FFS_ID_NONE;
     } else {
@@ -152,8 +153,8 @@ ffs_block_delete_from_ram(struct ffs_hash_entry *block_entry)
     }
 
     assert(block.fb_inode_entry != NULL);
-    if (block.fb_inode_entry->fi_last_block == block_entry) {
-        block.fb_inode_entry->fi_last_block = block.fb_prev;
+    if (block.fb_inode_entry->fie_last_block_entry == block_entry) {
+        block.fb_inode_entry->fie_last_block_entry = block.fb_prev;
     }
 
     ffs_hash_remove(block_entry);
