@@ -33,6 +33,12 @@ MEMORY
  *   __StackLimit
  *   __StackTop
  *   __stack
+ *   __coredata_start__
+ *   __coredata_end__
+ *   __ccm_bss_start__
+ *   __ccm_bss_end__
+ *   __ecoredata
+ *   __ccm_end__
  */
 ENTRY(Reset_Handler)
 
@@ -81,8 +87,24 @@ SECTIONS
 
     . = ALIGN(8);
     __etext = .;
-        
-    .data : AT (__etext)
+
+    .coredata : AT (__etext)
+    {
+        __coredata_start__ = .;
+        *(.data.core)
+        . = ALIGN(8);
+        __coredata_end__ = .;
+    } > CCM
+
+    __ecoredata = __etext + SIZEOF(.coredata);
+
+    /* This section is here so that the start of .data has the same VMA and LMA */
+    .ram_coredata (NOLOAD):
+    {
+        . = . + SIZEOF(.coredata);
+    } > RAM
+
+    .data : AT (__ecoredata)
     {
         __data_start__ = .;
         *(vtable)
@@ -115,6 +137,20 @@ SECTIONS
 
     } > RAM
 
+    /* Create CCM section */
+    .ccm (NOLOAD):
+    {
+        . = ALIGN(4);
+        __ccm_bss_start__ = .;
+        *(.bss.core)
+        . = ALIGN(4);
+        __ccm_bss_end__ = .;
+        *(.ccm*)
+        *(.bss.core.nz)
+        __ccm_end__ = .;
+        . = ALIGN(4);
+    } > CCM
+
     .bss :
     {
         . = ALIGN(4);
@@ -132,13 +168,6 @@ SECTIONS
         *(.heap*)
         __HeapLimit = .;
     } > RAM
-
-    /* Create CCM section */
-    .ccm (NOLOAD):
-    {
-        *(.ccm*)
-        __ccm_end__ = .;
-    } > CCM
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign

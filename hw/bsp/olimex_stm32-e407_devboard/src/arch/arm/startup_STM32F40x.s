@@ -178,16 +178,10 @@ __isr_vector:
     .globl    Reset_Handler
     .type    Reset_Handler, %function
 Reset_Handler:
-/*     Loop to copy data from read only memory to RAM. The ranges
- *      of copy from/to are specified by following symbols evaluated in
- *      linker script.
- *      __etext: End of code section, i.e., begin of data sections to copy from.
- *      __data_start__/__data_end__: RAM address range that data should be
- *      copied to. Both must be aligned to 4 bytes boundary.  */
-
+/* Copy data core section from flash to RAM */
     ldr    r1, =__etext
-    ldr    r2, =__data_start__
-    ldr    r3, =__data_end__
+    ldr    r2, =__coredata_start__
+    ldr    r3, =__coredata_end__
 
 .LC0:
     cmp     r2, r3
@@ -196,6 +190,35 @@ Reset_Handler:
     strlt   r0, [r2], #4
     blt    .LC0
 
+/*     Loop to copy data from read only memory to RAM. The ranges
+ *      of copy from/to are specified by following symbols evaluated in
+ *      linker script.
+ *      __etext: End of code section, i.e., begin of data sections to copy from.
+ *      __data_start__/__data_end__: RAM address range that data should be
+ *      copied to. Both must be aligned to 4 bytes boundary.  */
+    ldr    r1, =__ecoredata
+    ldr    r2, =__data_start__
+    ldr    r3, =__data_end__
+
+.LC1:
+    cmp     r2, r3
+    ittt    lt
+    ldrlt   r0, [r1], #4
+    strlt   r0, [r2], #4
+    blt    .LC1
+
+/* Set the bss core section to zero */
+    mov     r0, #0
+    ldr     r1, =__ccm_bss_start__
+    ldr     r2, =__ccm_bss_end__
+
+.LC2:
+    cmp     r1, r2
+    itt     lt
+    strlt   r0, [r1], #4
+    blt    .LC2
+
+/* Call system initialization and startup routines */
     ldr    r0, =SystemInit
     blx    r0
     ldr    r0, =_start
