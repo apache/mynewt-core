@@ -88,9 +88,10 @@ boot_select_image_slot(void)
 
     rc = boot_vect_read_test(&ver);
     if (rc == 0) {
-        boot_vect_delete_test();
         slot = boot_find_image_slot(&ver);
-        if (slot != -1) {
+        if (slot == -1) {
+            boot_vect_delete_test();
+        } else {
             return slot;
         }
     }
@@ -438,7 +439,7 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
                  * need to back up its contents.
                  */
                 rc = boot_move_area(src_area_idx, dst_area_idx,
-                                      img_num, part_num);
+                                    img_num, part_num);
             } else {
                 /* Swap the two areas. */
                 src_img_num = img_num ^ 1;
@@ -602,22 +603,26 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     int rc;
     int i;
 
+    /* Set the global boot request object.  The remainder of the boot process
+     * will reference the global.
+     */
     boot_req = req;
 
-    boot_status_entries =
-        malloc(req->br_num_image_areas * sizeof *boot_status_entries);
-    if (boot_status_entries == NULL) {
-        return BOOT_ENOMEM;
-    }
-
+    /* Initialize the flash hardware and the file system. */
     rc = boot_init_flash();
     if (rc != 0) {
         return rc;
     }
 
-    /* Determine if an image copy operation was interrupted (i.e., the system
-     * was reset before the boot loader could finish its task last time).
+    /* Read the boot status to determine if an image copy operation was
+     * interrupted (i.e., the system was reset before the boot loader could
+     * finish its task last time).
      */
+    boot_status_entries =
+        malloc(req->br_num_image_areas * sizeof *boot_status_entries);
+    if (boot_status_entries == NULL) {
+        return BOOT_ENOMEM;
+    }
     rc = boot_read_status(&boot_status, boot_status_entries,
                           boot_req->br_num_image_areas);
     if (rc == 0) {
@@ -633,13 +638,21 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         }
     }
 
+    /* Cache the flash address of each image slot. */
     for (i = 0; i < BOOT_NUM_SLOTS; i++) {
         image_addrs[i] = boot_slot_addr(i);
     }
 
+    /* Attempt to read an image header from each slot. */
     boot_read_image_headers(boot_img_hdrs, image_addrs, BOOT_NUM_SLOTS);
+
+    /* Build a boot status structure indicating the flash location of each
+     * image part.  This structure will need to be used if an image copy
+     * operation is required.
+     */
     boot_build_status();
 
+    /* Determine which image the user wants to run, and where it is located. */
     slot = boot_select_image_slot();
     if (slot == -1) {
         /* Either there is no image vector, or none of the requested images are
@@ -687,6 +700,9 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 
     /* After successful boot, there should not be a status file. */
     ffs_unlink(BOOT_PATH_STATUS);
+
+    /* If an image is being tested, it should only be booted into once. */
+    boot_vect_delete_test();
 
     return 0;
 }

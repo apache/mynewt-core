@@ -17,15 +17,17 @@ struct image_header;
 #define BOOT_PATH_TEST      "/boot/test"
 #define BOOT_PATH_STATUS    "/boot/status"
 
-struct boot_status_entry {
-    uint8_t bse_image_num;
-    uint8_t bse_part_num;
-};
-
 struct boot_status {
     uint32_t bs_img1_length;
     uint32_t bs_img2_length;
-    /* Followed by sequence of boot status entries. */
+    /* Followed by sequence of boot status entries; file size indicates number
+     * of entries.
+     */
+};
+
+struct boot_status_entry {
+    uint8_t bse_image_num;
+    uint8_t bse_part_num;
 };
 
 int boot_vect_read_test(struct image_version *out_ver);

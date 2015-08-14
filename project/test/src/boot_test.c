@@ -38,12 +38,12 @@ static const struct ffs_area_desc boot_test_format_descs[] = {
 };
 
 /** Contains indices of the areas which can contain image data. */
-static uint16_t boot_test_img_areas[] = {
+static uint8_t boot_test_img_areas[] = {
     5, 6, 7, 8, 9, 10, 11
 };
 
 /** Areas representing the beginning of image slots. */
-static uint16_t boot_test_slot_areas[] = {
+static uint8_t boot_test_slot_areas[] = {
     5, 8,
 };
 
