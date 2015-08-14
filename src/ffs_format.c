@@ -142,12 +142,15 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
         goto err;
     }
 
-    rc = ffs_misc_validate_root();
+    rc = ffs_misc_validate_root_dir();
     if (rc != 0) {
         goto err;
     }
 
-    ffs_misc_set_max_block_data_size();
+    rc = ffs_misc_set_max_block_data_len(0);
+    if (rc != 0) {
+        goto err;
+    }
 
     return 0;
 

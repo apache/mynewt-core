@@ -54,7 +54,7 @@ struct ffs_disk_inode {
 An inode filename's length cannot exceed 256 characters.  The filename need not
 contain a null terminator.  The following characters are not allowed in a
 filename:
-    * /
+    * /  (slash character)
     * \0 (NUL character)
 
 /** On-disk representation of a data block. */
@@ -74,10 +74,11 @@ Each data block contains the ID of the previous data block in the file.
 Together, the set of blocks in a file form a reverse singly-linked list.
 
 The maximum number of data bytes that a block can contain is determined at
-initialization-time.  The result is the greatest number which satisfies both of
+initialization-time.  The result is the greatest number which satisfies all of
 the following restrictions:
-    * No more than half the size of the smallest area.
+    * No more than half the size of the smallest area. (XXX)
     * No more than 2048.
+    * No smaller than the data length of any existing data block.
 
 The 2048 number was chosen somewhat arbitrarily, and may change in the future.
 
@@ -95,8 +96,8 @@ follows:
 
 A valid ffs file system must contain a single "scratch area."  The scratch area
 does not contain any objects of its own, and is only used during garbage
-collection.  The scratch area must have a size greater than or equal to all
-other areas in flash.  
+collection.  The scratch area must have a size greater than or equal to each of
+the other areas in flash.  
 
 *** RAM REPRESENTATION
 
@@ -151,16 +152,15 @@ walked backwards.  This introduces a number of speed inefficiencies:
 
 *** DATA BLOCK CACHE
 The speed issue is addressed by a data block cache, which contains a much more
-convenient non-reversed linked list of data block representations.  The benefit
-of using a cache is that the size of the cache need not be proportional to the
+convenient doubly-linked list of data block representations.  The benefit of
+using a cache is that the size of the cache need not be proportional to the
 size of the file system.  In other words, a cache can address speed efficiency
 concerns without negatively impacting the file system's scalability.  The cache
-will be populated as a result of internal seek operations.
+is populated as a result of internal seek operations.
 
 The following data structures are used in the data block cache.
 
 /** Represents a single data block. */
-
 struct ffs_block_cache_entry {
     struct ffs_hash_entry *fbce_entry;            /* Pointer to real block. */
     uint32_t fbce_seq;
@@ -261,15 +261,12 @@ area:
 
     (3) If the object references a nonexistant inode (parent directory in the
         case of an inode; owning file in the case of a data block), insert a
-        temporary "dummy" inode into the hash table so that the inter-object
-        links can be maintained until the absent inode is eventually restored.
-        Dummy inodes are identified by a reference count of 0.
+        temporary "dummy" inode into the hash table so that inter-object links
+        can be maintained until the absent inode is eventually restored.  Dummy
+        inodes are identified by a reference count of 0.
 
     (4) If a delete record for an inode is encountered, the inode is marked as
         a dummy.
-
-    (5) If a delete record for a block is encountered, the block is immediately
-        deleted from the RAM representation.
 
 After all areas have been restored, a sweep is performed across the entire RAM
 representation so that invalid inodes can be deleted from memory.  An inode is
@@ -281,12 +278,12 @@ of a file, these are constituent data blocks.  Note: These deletions occur only
 in RAM; nothing gets written to flash at this time.
 
 In addition, a single scratch area is identified during the detection process.
-The first area whose 'fda_id' value is set to 0xffff is designated as
-the file system scratch area.  If no valid scratch area is found, the cause
-could be that the system was restarted while a garbage collection cycle was in
-progress.  Such a condition is identified by the presence of two areas with
-the same ID.  In such a case, the shorter of the two areas is erased and
-designated as the scratch area.
+The first area whose 'fda_id' value is set to 0xff is designated as the file
+system scratch area.  If no valid scratch area is found, the cause could be
+that the system was restarted while a garbage collection cycle was in progress.
+Such a condition is identified by the presence of two areas with the same ID.
+In such a case, the shorter of the two areas is erased and designated as the
+scratch area.
 
 *** FORMATTING
 
@@ -305,9 +302,9 @@ following function:
 int ffs_format(const struct ffs_area_desc *area_descs);
 
 On success, an area header is written to each of the specified locations.  The
-largest area in the set is designated as the scratch area.
+largest area in the set is designated as the initial scratch area.
 
-*** WRITING
+*** FLASH WRITES
 
 The ffs implementation always writes in a strictly sequential fashion within an
 area.  For each area, the system keeps track of the current offset.  Whenever
@@ -347,15 +344,15 @@ Because the inode's ID is unchanged, all dependent objects remain valid.
 *** UNLINKING FILES AND DIRECTORIES
 
 When a file or directory is unlinked from its parent directory, a deletion
-record for the unlinked inode gets written to flash.  The deletion record has
-the following properties:
+record for the unlinked inode gets written to flash.  The deletion record is an
+inode with the following properties:
     * ID: Unchanged
     * Sequence number: Previous value plus one.
     * Parent inode ID: FFS_ID_NONE
 
 If the unlinked inode is a directory, then all the directory's children inodes
-are recursively unlinked as well.  A breadth-first traversal is used to
-prevent stack overflow due to recursion.
+are recursively unlinked as well.  A non-recursive breadth-first traversal is
+used to prevent stack overflow due to recursion.
 
 When a file inode is unlinked, no deletion records need to be written for the
 file's constituent data blocks.  During the next file system detection, it is
@@ -368,9 +365,9 @@ a reference count, and a file isn't deleted from the RAM representation until
 its reference code drops to 0.  Any attempt to open an unlinked file fail,
 even if the file is referenced by other file handles.
 
-*** OVERWRITING PARTS OF A FILE
+*** WRITING TO A FILE
 
-The following procedure is used whenever part of a file gets overwritten.
+The following procedure is used whenever the application code writes to a file.
 First, if the write operation specifies too much data to fit into a single
 block, the operation is split into several separate write operations.  Then,
 for each write operation:
@@ -378,17 +375,29 @@ for each write operation:
     (1) Determine which existing blocks the write operation overlaps
         (n = number of overwritten blocks).
 
-    (2) If n > 1, then for each block in [1, 2, ... n - 1],
-        write a new block containing the updated contents.  The new block
-        supersedes the first overlapped block.  That is, it has the following
-        properties:
-            * ID: Unchanged
-            * Sequence number: Previous value plus one.
+    (2) If n = 0, this is an append operation.  Write a data block with the
+        following properties:
+            * ID: New unique value.
+            * Sequence number: 0.
 
-    (3) Write the nth block.  The nth block includes any additional data which
-        does not overlap any existing blocks (i.e., appended data).  As with
-        the other blocks, its ID is unchanged and its sequence number is
-        incremented.
+    (3) Else (n > 1), this write overlaps existing data.
+            (a) For each block in [1, 2, ... n - 1], write a new block
+                containing the updated contents.  The new block supersedes the
+                first overlapped block.  That is, it has the following
+                properties:
+                    * ID: Unchanged
+                    * Sequence number: Previous value plus one.
+
+            (b) Write the nth block.  The nth block includes any additional
+                data which does not overlap any existing blocks (i.e., appended
+                data).  As with the other blocks, its ID is unchanged and its
+                sequence number is incremented.
+
+Appended data can only be written to the end of the file.  That is, "holes" are
+not supported.
+
+In the case of overlap, non-overlapped portions of blocks are copied to the new
+data blocks.
 
 *** GARBAGE COLLECTION
 
