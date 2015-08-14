@@ -3,16 +3,51 @@
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
+/**
+ * Determines if the file system contains a valid root directory.  For the root
+ * directory to be valid, it must be present and have the following traits:
+ *     o ID equal to FFS_ID_ROOT_DIR.
+ *     o No parent inode.
+ *
+ * @return                      0 if there is a valid root directory;
+ *                              FFS_ECORRUPT if there is not a valid root
+ *                                  directory;
+ *                              nonzero on other error.
+ */
 int
-ffs_misc_validate_root(void)
+ffs_misc_validate_root_dir(void)
 {
+    struct ffs_inode inode;
+    int rc;
+
     if (ffs_root_dir == NULL) {
+        return FFS_ECORRUPT;
+    }
+
+    if (ffs_root_dir->fie_hash_entry.fhe_id != FFS_ID_ROOT_DIR) {
+        return FFS_ECORRUPT;
+    }
+
+    rc = ffs_inode_from_entry(&inode, ffs_root_dir);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (inode.fi_parent != NULL) {
         return FFS_ECORRUPT;
     }
 
     return 0;
 }
 
+/**
+ * Determines if the system contains a valid scratch area.  For a scratch area
+ * to be valid, it must be at least as large as the other areas in the file
+ * system.
+ *
+ * @return                      0 if there is a valid scratch area;
+ *                              FFS_ECORRUPT otherwise.
+ */
 int
 ffs_misc_validate_scratch(void)
 {
@@ -83,6 +118,7 @@ ffs_misc_reserve_space(uint16_t space,
     int rc;
     int i;
 
+    /* Find the first area with sufficient free space. */
     for (i = 0; i < ffs_num_areas; i++) {
         if (i != ffs_scratch_area_idx) {
             rc = ffs_misc_reserve_space_area(i, space, out_area_offset);
@@ -93,7 +129,7 @@ ffs_misc_reserve_space(uint16_t space,
         }
     }
 
-    /* No area can accomodate the request.  Garbage collect until an area
+    /* No area can accommodate the request.  Garbage collect until an area
      * has enough space.
      */
     rc = ffs_gc_until(space, &area_idx);
@@ -101,6 +137,10 @@ ffs_misc_reserve_space(uint16_t space,
         return rc;
     }
 
+    /* Now try to reserve space.  If insufficient space was reclaimed with
+     * garbage collection, the above call would have failed, so this should
+     * succeed.
+     */
     rc = ffs_misc_reserve_space_area(area_idx, space, out_area_offset);
     assert(rc == 0);
 
@@ -127,8 +167,45 @@ ffs_misc_set_num_areas(uint8_t num_areas)
     return 0;
 }
 
-void
-ffs_misc_set_max_block_data_size(void)
+/**
+ * Calculates the data length of the largest block that could fit in an area of
+ * the specified size.
+ */
+static uint32_t
+ffs_misc_area_capacity_one(uint32_t area_length)
+{
+    return area_length -
+           sizeof (struct ffs_disk_area) -
+           sizeof (struct ffs_disk_block);
+}
+
+/**
+ * Calculates the data length of the largest block that could fit as a pair in
+ * an area of the specified size.
+ */
+static uint32_t
+ffs_misc_area_capacity_two(uint32_t area_length)
+{
+    return (area_length - sizeof (struct ffs_disk_area)) / 2 -
+           sizeof (struct ffs_disk_block);
+}
+
+/**
+ * Calculates and sets the maximum block data length that the system supports.
+ * The result of the calculation is the greatest number which satisfies all of
+ * the following restrictions:
+ *     o No more than half the size of the smallest area.
+ *     o No more than 2048.
+ *     o No smaller than the data length of any existing data block.
+ *
+ * @param min_size              The minimum allowed data length.  This is the
+ *                                  data length of the largest block currently
+ *                                  in the file system.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+ffs_misc_set_max_block_data_len(uint16_t min_data_len)
 {
     uint32_t smallest_area;
     uint32_t half_smallest;
@@ -141,19 +218,29 @@ ffs_misc_set_max_block_data_size(void)
         }
     }
 
-    half_smallest = (smallest_area - sizeof (struct ffs_disk_area)) / 2 -
-                    sizeof (struct ffs_disk_block);
+    /* Don't allow a data block size bigger than the smallest area. */
+    if (ffs_misc_area_capacity_one(smallest_area) < min_data_len) {
+        return FFS_ECORRUPT;
+    }
+
+    half_smallest = ffs_misc_area_capacity_two(smallest_area);
     if (half_smallest < FFS_BLOCK_MAX_DATA_SZ_MAX) {
         ffs_block_max_data_sz = half_smallest;
     } else {
         ffs_block_max_data_sz = FFS_BLOCK_MAX_DATA_SZ_MAX;
     }
 
-    /* XXX: Ensure no blocks exist with too large of a data size. */
+    if (ffs_block_max_data_sz < min_data_len) {
+        ffs_block_max_data_sz = min_data_len;
+    }
+
+    return 0;
 }
 
 /**
  * Fully resets the ffs RAM representation.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ffs_misc_reset(void)

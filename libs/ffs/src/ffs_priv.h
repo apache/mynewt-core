@@ -300,10 +300,10 @@ uint32_t ffs_area_free_space(const struct ffs_area *area);
 int ffs_area_find_corrupt_scratch(uint16_t *out_good_idx,
                                   uint16_t *out_bad_idx);
 
-int ffs_misc_validate_root(void);
+int ffs_misc_validate_root_dir(void);
 int ffs_misc_validate_scratch(void);
 int ffs_misc_reset(void);
-void ffs_misc_set_max_block_data_size(void);
+int ffs_misc_set_max_block_data_len(uint16_t min_data_len);
 
 int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
 

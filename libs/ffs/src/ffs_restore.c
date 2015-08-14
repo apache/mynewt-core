@@ -6,6 +6,49 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
+static uint16_t ffs_restore_largest_block_data_len;
+
+static int
+ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
+                                     int *out_should_sweep)
+{
+    struct ffs_inode inode;
+    int rc;
+
+
+    /* Determine if the inode is a dummy.  Dummy inodes have a reference count
+     * of 0.  If it is a dummy, increment its reference count back to 1 so that
+     * it can be properly deleted.  The presence of a dummy inode during the
+     * final sweep step indicates file system corruption.  The only option is
+     * to delete the dummy inode and all its children.
+     */
+    if (inode_entry->fi_refcnt == 0) {
+        *out_should_sweep = 1;
+        inode_entry->fi_refcnt++;
+        return 0;
+    }
+
+    /* Determine if the inode has been deleted.  If an inode has no parent (and
+     * it isn't the root directory), it has been deleted from the disk and
+     * should be swept from the RAM representation.
+     */
+    if (inode_entry->fie_hash_entry.fhe_id != FFS_ID_ROOT_DIR) {
+        rc = ffs_inode_from_entry(&inode, inode_entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (inode.fi_parent == NULL) {
+            *out_should_sweep = 1;
+            return 0;
+        }
+    }
+
+    /* This is a normal inode; don't sweep it. */
+    *out_should_sweep = 0;
+    return 0;
+}
+
 /**
  * Performs a sweep of the RAM representation at the end of a successful
  * restore.  Deletes all dummy inodes that were being kept around to allow the
@@ -16,15 +59,17 @@
 int
 ffs_restore_sweep(void)
 {
+    struct ffs_inode_entry *inode_entry;
     struct ffs_hash_entry *entry;
     struct ffs_hash_entry *next;
     struct ffs_hash_list *list;
-    struct ffs_inode_entry *inode_entry;
-    struct ffs_inode inode;
     int del;
     int rc;
     int i;
 
+    /* Iterate through every object in the hash table, deleting all inodes that
+     * should be removed.
+     */
     for (i = 0; i < FFS_HASH_SIZE; i++) {
         list = ffs_hash + i;
 
@@ -34,21 +79,10 @@ ffs_restore_sweep(void)
             if (ffs_hash_id_is_inode(entry->fhe_id)) {
                 inode_entry = (struct ffs_inode_entry *)entry;
 
-                del = 0;
-                if (inode_entry->fi_refcnt == 0) {
-                    del = 1;
-                    inode_entry->fi_refcnt++;
-                } else if (entry->fhe_flash_loc == FFS_FLASH_LOC_NONE) {
-                    del = 1;
-                } else if (entry->fhe_id != FFS_ID_ROOT_DIR) {
-                    rc = ffs_inode_from_entry(&inode, inode_entry);
-                    if (rc != 0) {
-                        return rc;
-                    }
-
-                    if (inode.fi_parent == NULL) {
-                        del = 1;
-                    }
+                /* Determine if this inode needs to be deleted. */
+                rc = ffs_restore_should_sweep_inode_entry(inode_entry, &del);
+                if (rc != 0) {
+                    return rc;
                 }
 
                 if (del) {
@@ -66,6 +100,18 @@ ffs_restore_sweep(void)
     return 0;
 }
 
+/**
+ * Creates a dummy inode and inserts it into the hash table.  A dummy inode is
+ * a temporary placeholder for a real inode that has not been restored yet.
+ * These are necessary so that the inter-object links can be maintained until
+ * the absent inode is eventually restored.  Dummy inodes are identified by a
+ * reference count of 0.
+ *
+ * @param id                    The ID of the dummy inode to create.
+ * @param out_inode_entry       On success, the dummy inode gets written here.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 ffs_restore_dummy_inode(uint32_t id, struct ffs_inode_entry **out_inode_entry)
 {
@@ -86,6 +132,19 @@ ffs_restore_dummy_inode(uint32_t id, struct ffs_inode_entry **out_inode_entry)
     return 0;
 }
 
+/**
+ * Determines if an already-restored inode should be replaced by another inode
+ * just read from flash.  This function should only be called if both inodes
+ * share the same ID.  The existing inode gets replaced if:
+ *     o It is a dummy inode.
+ *     o Its sequence number is less than that of the new inode.
+ *
+ * @param old_inode_entry       The already-restored inode to test.
+ * @param disk_inode            The inode just read from flash.
+ * @param out_should_replace    On success, 0=don't replace; 1=do replace.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 ffs_restore_inode_gets_replaced(struct ffs_inode_entry *old_inode_entry,
                                 const struct ffs_disk_inode *disk_inode,
@@ -105,19 +164,23 @@ ffs_restore_inode_gets_replaced(struct ffs_inode_entry *old_inode_entry,
     if (rc != 0) {
         *out_should_replace = 0;
         return rc;
-    } else if (old_inode.fi_seq < disk_inode->fdi_seq) {
+    }
+
+    if (old_inode.fi_seq < disk_inode->fdi_seq) {
         *out_should_replace = 1;
         return 0;
-    } else if (old_inode.fi_seq == disk_inode->fdi_seq) {
-        /* This is a duplicate of an previously-read inode.  This should never
+    }
+
+    if (old_inode.fi_seq == disk_inode->fdi_seq) {
+        /* This is a duplicate of a previously-read inode.  This should never
          * happen.
          */
         *out_should_replace = 0;
         return FFS_ECORRUPT;
-    } else {
-        *out_should_replace = 0;
-        return 0;
     }
+
+    *out_should_replace = 0;
+    return 0;
 }
 
 /**
@@ -337,6 +400,10 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
 
     if (disk_block->fdb_id >= ffs_hash_next_block_id) {
         ffs_hash_next_block_id = disk_block->fdb_id + 1;
+    }
+
+    if (disk_block->fdb_data_len > ffs_restore_largest_block_data_len) {
+        ffs_restore_largest_block_data_len = disk_block->fdb_data_len;
     }
 
     return 0;
@@ -628,6 +695,7 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
     /* Start from a clean state. */
     ffs_misc_reset();
+    ffs_restore_largest_block_data_len = 0;
 
     /* Read each area from flash. */
     for (i = 0; area_descs[i].fad_length != 0; i++) {
@@ -706,7 +774,7 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
     ffs_restore_sweep();
 
     /* Make sure the file system contains a valid root directory. */
-    rc = ffs_misc_validate_root();
+    rc = ffs_misc_validate_root_dir();
     if (rc != 0) {
         goto err;
     }
@@ -716,7 +784,10 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
      * XXX Don't set size less than largest existing block (in case set of
      * areas was changed).
      */
-    ffs_misc_set_max_block_data_size();
+    rc = ffs_misc_set_max_block_data_len(ffs_restore_largest_block_data_len);
+    if (rc != 0) {
+        goto err;
+    }
 
     return 0;
 
