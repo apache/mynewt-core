@@ -78,7 +78,7 @@ cputime_chk_expiration(void)
 
     __HAL_DISABLE_INTERRUPTS(ctx);
     while ((timer = TAILQ_FIRST(&g_cputimer_q)) != NULL) {
-        if ((int32_t)(cputime_low() - timer->cputime) >= 0) {
+        if ((int32_t)(cputime_get32() - timer->cputime) >= 0) {
             TAILQ_REMOVE(&g_cputimer_q, timer, link);
             timer->cb(timer->arg);
         } else {
@@ -224,14 +224,14 @@ cputime_init(uint32_t clock_freq)
 }
 
 /**
- * cputime get
+ * cputime get64
  *  
  * Returns cputime as a 64-bit number. 
  * 
  * @return uint64_t The 64-bit representation of cputime.
  */
 uint64_t 
-cputime_get(void)
+cputime_get64(void)
 {
     uint32_t ctx;
     uint32_t high;
@@ -253,14 +253,14 @@ cputime_get(void)
 }
 
 /**
- * cputime low 
+ * cputime get32 
  *  
  * Returns the low 32 bits of cputime. 
  * 
  * @return uint32_t The lower 32 bits of cputime
  */
 uint32_t
-cputime_low(void)
+cputime_get32(void)
 {
     return TIM5->CNT;
 }
@@ -351,8 +351,8 @@ cputime_delay_ticks(uint32_t ticks)
 {
     uint32_t until;
 
-    until = cputime_low() + ticks;
-    while ((int32_t)(cputime_low() - until) < 0) {
+    until = cputime_get32() + ticks;
+    while ((int32_t)(cputime_get32() - until) < 0) {
         /* Loop here till finished */
     }
 }
@@ -467,7 +467,7 @@ cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs)
 
     assert(timer != NULL);
 
-    cputime = cputime_low() + cputime_usecs_to_ticks(usecs);
+    cputime = cputime_get32() + cputime_usecs_to_ticks(usecs);
     cputime_timer_start(timer, cputime);
 }
 
