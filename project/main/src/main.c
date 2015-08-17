@@ -111,16 +111,16 @@ cputime_test(void)
 
     /* Test delays */
     OS_ENTER_CRITICAL(sr);
-    temp = cputime_low();
+    temp = cputime_get32();
     cputime_delay_usecs(30);
-    ticks = cputime_low() - temp;
+    ticks = cputime_get32() - temp;
     temp = cputime_ticks_to_usecs(ticks);
     g_late_ticks = temp;
     assert((uint32_t)(temp - 30) <= 1UL);
 
-    temp = cputime_low();
+    temp = cputime_get32();
     cputime_delay_ticks(5000);
-    ticks = cputime_low() - temp;
+    ticks = cputime_get32() - temp;
     assert(ticks > 5000);
     g_late_ticks = ticks - 5000;
     OS_EXIT_CRITICAL(sr);
@@ -215,7 +215,7 @@ test_timer_cb(void *arg)
     struct timer_test_data *tdata;
 
     tdata = (struct timer_test_data *)arg;
-    tdata->cputime = cputime_low();
+    tdata->cputime = cputime_get32();
     tdata->cntr += 1;
 }
 
@@ -261,12 +261,12 @@ task3_handler(void *arg)
         switch (tnum) {
         case 0:
             /* Start a timer that will expire in the future */
-            timeout = cputime_low() + cputime_usecs_to_ticks(330);
+            timeout = cputime_get32() + cputime_usecs_to_ticks(330);
             cputime_timer_start(&tcpu1, timeout);
 
             /* Wait to get timeout */
             cputime_delay_usecs(350);
-            dt = (int32_t)(cputime_low() - timeout);
+            dt = (int32_t)(cputime_get32() - timeout);
             assert(dt >= 0);
             
             /* Better have count incremented! */
@@ -277,7 +277,7 @@ task3_handler(void *arg)
         case 1:
             /* Start three timers and make sure they fire off in correct
                order */
-            timeout = cputime_low();
+            timeout = cputime_get32();
             cputime_timer_start(&tcpu1, timeout + cputime_usecs_to_ticks(330));
             cputime_timer_start(&tcpu2, timeout + cputime_usecs_to_ticks(980));
             cputime_timer_start(&tcpu3, timeout + cputime_usecs_to_ticks(733));
@@ -305,7 +305,7 @@ task3_handler(void *arg)
 
             /* Wait to get timeout */
             cputime_delay_usecs(1000);
-            dt = (int32_t)(cputime_low() - timeout);
+            dt = (int32_t)(cputime_get32() - timeout);
             assert(dt >= 0);
 
             /* Better have count incremented! */
@@ -361,7 +361,7 @@ task3_handler(void *arg)
             assert(g_tcpu3_data.cntr == 1);
 
             ostime = os_time_get();
-            timeout = cputime_low() + cputime_usecs_to_ticks(3700000);
+            timeout = cputime_get32() + cputime_usecs_to_ticks(3700000);
             cputime_timer_start(&tcpu4, timeout);
 
             ev = os_eventq_get(&g_timer_test_evq);
@@ -387,7 +387,7 @@ task3_handler(void *arg)
             }
             break;
         case 3:
-            timeout = cputime_low();
+            timeout = cputime_get32();
             cputime_timer_start(&tcpu1, timeout + cputime_usecs_to_ticks(666));
             cputime_timer_start(&tcpu2, timeout + cputime_usecs_to_ticks(555));
             cputime_timer_start(&tcpu3, timeout + cputime_usecs_to_ticks(444));
