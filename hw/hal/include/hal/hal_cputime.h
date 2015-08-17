@@ -45,22 +45,22 @@ struct cpu_timer
 int cputime_init(uint32_t clock_freq);
 
 /**
- * cputime get
+ * cputime get64
  *  
  * Returns cputime as a 64-bit number. 
  * 
  * @return uint64_t The 64-bit representation of cputime.
  */
-uint64_t cputime_get(void);
+uint64_t cputime_get64(void);
 
 /**
- * cputime low 
+ * cputime get32 
  *  
  * Returns the low 32 bits of cputime. 
  * 
  * @return uint32_t The lower 32 bits of cputime
  */
-uint32_t cputime_low(void);
+uint32_t cputime_get32(void);
 
 /**
  * cputime nsecs to ticks 
