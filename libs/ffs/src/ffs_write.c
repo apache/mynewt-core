@@ -237,7 +237,7 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
     uint8_t area_idx;
     int rc;
 
-    entry = ffs_hash_entry_alloc();
+    entry = ffs_block_entry_alloc();
     if (entry == NULL) {
         return FFS_ENOMEM;
     }

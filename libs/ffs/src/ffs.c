@@ -18,11 +18,11 @@ uint16_t ffs_block_max_data_sz;
 
 struct os_mempool ffs_file_pool;
 struct os_mempool ffs_inode_entry_pool;
-struct os_mempool ffs_hash_entry_pool;
+struct os_mempool ffs_block_entry_pool;
 
 void *ffs_file_mem;
 void *ffs_inode_mem;
-void *ffs_hash_entry_mem;
+void *ffs_block_entry_mem;
 
 struct ffs_inode_entry *ffs_root_dir;
 
@@ -453,11 +453,11 @@ ffs_init(void)
         return FFS_ENOMEM;
     }
 
-    free(ffs_hash_entry_mem);
-    ffs_hash_entry_mem = malloc(
+    free(ffs_block_entry_mem);
+    ffs_block_entry_mem = malloc(
         OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks,
                          sizeof (struct ffs_hash_entry)));
-    if (ffs_hash_entry_mem == NULL) {
+    if (ffs_block_entry_mem == NULL) {
         return FFS_ENOMEM;
     }
 

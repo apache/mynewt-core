@@ -262,9 +262,9 @@ ffs_misc_reset(void)
         return FFS_EOS;
     }
 
-    rc = os_mempool_init(&ffs_hash_entry_pool, ffs_config.fc_num_blocks,
-                         sizeof (struct ffs_hash_entry), ffs_hash_entry_mem,
-                         "ffs_hash_entry_pool");
+    rc = os_mempool_init(&ffs_block_entry_pool, ffs_config.fc_num_blocks,
+                         sizeof (struct ffs_hash_entry), ffs_block_entry_mem,
+                         "ffs_block_entry_pool");
     if (rc != 0) {
         return FFS_EOS;
     }

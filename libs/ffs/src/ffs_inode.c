@@ -33,6 +33,7 @@ ffs_inode_entry_alloc(void)
 void
 ffs_inode_entry_free(struct ffs_inode_entry *inode_entry)
 {
+    assert(ffs_hash_id_is_inode(inode_entry->fie_hash_entry.fhe_id));
     os_memblock_put(&ffs_inode_entry_pool, inode_entry);
 }
 
