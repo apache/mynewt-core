@@ -47,13 +47,14 @@ struct ffs_disk_area {
 
 /** On-disk representation of an inode (file or directory). */
 struct ffs_disk_inode {
-    uint32_t fdi_magic;     /* FFS_INODE_MAGIC */
-    uint32_t fdi_id;        /* Unique object ID. */
-    uint32_t fdi_seq;       /* Sequence number; greater supersedes lesser. */
-    uint32_t fdi_parent_id; /* Object ID of parent directory inode. */
+    uint32_t fdi_magic;         /* FFS_INODE_MAGIC */
+    uint32_t fdi_id;            /* Unique object ID. */
+    uint32_t fdi_seq;           /* Sequence number; greater supersedes
+                                   lesser. */
+    uint32_t fdi_parent_id;     /* Object ID of parent directory inode. */
     uint8_t reserved8;
     uint8_t fdi_filename_len;   /* Length of filename, in bytes. */
-    uint16_t fdi_crc16;
+    uint16_t fdi_crc16;         /* Covers rest of header and filename. */
     /* Followed by filename. */
 };
 
@@ -68,8 +69,8 @@ struct ffs_disk_block {
     uint32_t fdb_prev_id;   /* Object ID of previous block in file;
                                FFS_ID_NONE if this is the first block. */
     uint16_t fdb_data_len;  /* Length of data contents, in bytes. */
-    uint16_t fdb_crc16;
-    /* Followed by 'length' bytes of data. */
+    uint16_t fdb_crc16;     /* Covers rest of header and data. */
+    /* Followed by 'fdb_data_len' bytes of data. */
 };
 
 #define FFS_DISK_BLOCK_OFFSET_CRC  20

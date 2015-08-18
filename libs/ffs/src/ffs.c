@@ -387,7 +387,7 @@ ffs_format(const struct ffs_area_desc *area_descs)
  * Searches for a valid ffs file system among the specified areas.  This
  * function succeeds if a file system is detected among any subset of the
  * supplied areas.  If the area set does not contain a valid file system,
- * a new one can be created via a call to ffs_format().
+ * a new one can be created via a separate call to ffs_format().
  *
  * @param area_descs        The area set to search.  This array must be
  *                              terminated with a 0-length area.
@@ -438,18 +438,22 @@ ffs_init(void)
         return FFS_EOS;
     }
 
+    free(ffs_file_mem);
     ffs_file_mem = malloc(
         OS_MEMPOOL_BYTES(ffs_config.fc_num_files, sizeof (struct ffs_file)));
     if (ffs_file_mem == NULL) {
         return FFS_ENOMEM;
     }
 
+    free(ffs_inode_mem);
     ffs_inode_mem = malloc(
-        OS_MEMPOOL_BYTES(ffs_config.fc_num_inodes, sizeof (struct ffs_inode)));
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_inodes,
+                        sizeof (struct ffs_inode_entry)));
     if (ffs_inode_mem == NULL) {
         return FFS_ENOMEM;
     }
 
+    free(ffs_hash_entry_mem);
     ffs_hash_entry_mem = malloc(
         OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks,
                          sizeof (struct ffs_hash_entry)));

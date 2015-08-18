@@ -1746,6 +1746,66 @@ ffs_test_corrupt_block(void)
     ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
+static void
+ffs_test_large_unlink(void)
+{
+    char filename[256];
+    int rc;
+    int i;
+    int j;
+    int k;
+
+    printf("\tlarge unlink test\n");
+
+    /*** Setup. */
+    ffs_config.fc_num_inodes = 1024;
+    ffs_config.fc_num_blocks = 1024;
+
+    rc = ffs_init();
+    assert(rc == 0);
+
+    rc = ffs_format(ffs_area_descs);
+    assert(rc == 0);
+
+    for (i = 0; i < 5; i++) {
+        snprintf(filename, sizeof filename, "/dir0_%d", i);
+        rc = ffs_mkdir(filename);
+        assert(rc == 0);
+
+        for (j = 0; j < 5; j++) {
+            snprintf(filename, sizeof filename, "/dir0_%d/dir1_%d", i, j);
+            rc = ffs_mkdir(filename);
+            assert(rc == 0);
+
+            for (k = 0; k < 5; k++) {
+                snprintf(filename, sizeof filename,
+                         "/dir0_%d/dir1_%d/file2_%d", i, j, k);
+                ffs_test_util_create_file(filename, "contents", 8);
+            }
+        }
+
+        for (j = 0; j < 15; j++) {
+            snprintf(filename, sizeof filename, "/dir0_%d/file1_%d", i, j);
+            ffs_test_util_create_file(filename, "contents", 8);
+        }
+    }
+
+    for (i = 0; i < 5; i++) {
+        snprintf(filename, sizeof filename, "/dir0_%d", i);
+        rc = ffs_unlink(filename);
+        assert(rc == 0);
+    }
+
+    /* The entire file system should be empty. */
+    struct ffs_test_file_desc *expected_system =
+        (struct ffs_test_file_desc[]) { {
+            .filename = "",
+            .is_dir = 1,
+    } };
+
+    ffs_test_assert_system(expected_system, ffs_area_descs);
+}
+
 int
 ffs_test(void)
 {
@@ -1773,6 +1833,7 @@ ffs_test(void)
     ffs_test_wear_level();
     ffs_test_corrupt_scratch();
     ffs_test_corrupt_block();
+    ffs_test_large_unlink();
 
     printf("\n");
 
