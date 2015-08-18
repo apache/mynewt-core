@@ -74,8 +74,9 @@ flash_native_ensure_file_open(void)
     }
 }
 
-int
-flash_write(uint32_t address, const void *src, uint32_t length)
+static int
+flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
+                            int allow_overwrite)
 {
     static uint8_t buf[256];
     uint32_t cur;
@@ -103,10 +104,12 @@ flash_write(uint32_t address, const void *src, uint32_t length)
         }
 
         /* Ensure data is not being overwritten. */
-        rc = flash_read(cur, buf, chunk_sz);
-        assert(rc == 0);
-        for (i = 0; i < chunk_sz; i++) {
-            assert(buf[i] == 0xff);
+        if (!allow_overwrite) {
+            rc = flash_read(cur, buf, chunk_sz);
+            assert(rc == 0);
+            for (i = 0; i < chunk_sz; i++) {
+                assert(buf[i] == 0xff);
+            }
         }
 
         cur += chunk_sz;
@@ -117,6 +120,46 @@ flash_write(uint32_t address, const void *src, uint32_t length)
     assert(rc == 1);
 
     fflush(file);
+    return 0;
+}
+
+int
+flash_write(uint32_t address, const void *src, uint32_t length)
+{
+    return flash_native_write_internal(address, src, length, 0);
+}
+
+int
+flash_native_overwrite(uint32_t address, const void *src, uint32_t length)
+{
+    return flash_native_write_internal(address, src, length, 1);
+}
+
+int
+flash_native_memset(uint32_t offset, uint8_t c, uint32_t len)
+{
+    uint8_t buf[256];
+    int chunk_sz;
+    int rc;
+
+    memset(buf, c, sizeof buf);
+
+    while (len > 0) {
+        if (len > sizeof buf) {
+            chunk_sz = sizeof buf;
+        } else {
+            chunk_sz = len;
+        }
+
+        rc = flash_native_overwrite(offset, buf, chunk_sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        offset += chunk_sz;
+        len -= chunk_sz;
+    }
+
     return 0;
 }
 
