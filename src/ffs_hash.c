@@ -106,26 +106,6 @@ ffs_hash_remove(struct ffs_hash_entry *entry)
     SLIST_REMOVE(list, entry, ffs_hash_entry, fhe_next);
 }
 
-struct ffs_hash_entry *
-ffs_hash_entry_alloc(void)
-{
-    struct ffs_hash_entry *entry;
-
-    entry = os_memblock_get(&ffs_hash_entry_pool);
-    if (entry != NULL) {
-        memset(entry, 0, sizeof *entry);
-    }
-
-    return entry;
-}
-
-void
-ffs_hash_entry_free(struct ffs_hash_entry *entry)
-{
-    os_memblock_put(&ffs_hash_entry_pool, entry);
-}
-
-
 void
 ffs_hash_init(void)
 {

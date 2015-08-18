@@ -5,6 +5,26 @@
 #include "ffs_priv.h"
 #include "crc16.h"
 
+struct ffs_hash_entry *
+ffs_block_entry_alloc(void)
+{
+    struct ffs_hash_entry *entry;
+
+    entry = os_memblock_get(&ffs_block_entry_pool);
+    if (entry != NULL) {
+        memset(entry, 0, sizeof *entry);
+    }
+
+    return entry;
+}
+
+void
+ffs_block_entry_free(struct ffs_hash_entry *entry)
+{
+    assert(ffs_hash_id_is_block(entry->fhe_id));
+    os_memblock_put(&ffs_block_entry_pool, entry);
+}
+
 /**
  * Reads a data block header from flash.
  *
@@ -165,7 +185,7 @@ ffs_block_delete_from_ram(struct ffs_hash_entry *block_entry)
     }
 
     ffs_hash_remove(block_entry);
-    ffs_hash_entry_free(block_entry);
+    ffs_block_entry_free(block_entry);
 
     return 0;
 }

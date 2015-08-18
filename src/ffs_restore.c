@@ -458,7 +458,7 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
         ffs_block_delete_from_ram(entry);
     }
 
-    entry = ffs_hash_entry_alloc();
+    entry = ffs_block_entry_alloc();
     if (entry == NULL) {
         rc = FFS_ENOMEM;
         goto err;
@@ -500,7 +500,7 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
 
 err:
     if (new_block) {
-        ffs_hash_entry_free(entry);
+        ffs_block_entry_free(entry);
     }
     return rc;
 }
