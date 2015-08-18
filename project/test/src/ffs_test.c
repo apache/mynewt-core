@@ -1749,6 +1749,7 @@ ffs_test_corrupt_block(void)
 static void
 ffs_test_large_unlink(void)
 {
+    static char file_contents[1024 * 4];
     char filename[256];
     int rc;
     int i;
@@ -1780,13 +1781,15 @@ ffs_test_large_unlink(void)
             for (k = 0; k < 5; k++) {
                 snprintf(filename, sizeof filename,
                          "/dir0_%d/dir1_%d/file2_%d", i, j, k);
-                ffs_test_util_create_file(filename, "contents", 8);
+                ffs_test_util_create_file(filename, file_contents,
+                                          sizeof file_contents);
             }
         }
 
         for (j = 0; j < 15; j++) {
             snprintf(filename, sizeof filename, "/dir0_%d/file1_%d", i, j);
-            ffs_test_util_create_file(filename, "contents", 8);
+            ffs_test_util_create_file(filename, file_contents,
+                                      sizeof file_contents);
         }
     }
 

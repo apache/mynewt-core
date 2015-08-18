@@ -5,42 +5,47 @@
 #include "ffs/ffs.h"
 
 static int
-ffs_gc_copy_object(struct ffs_hash_entry *entry, uint8_t to_area_idx,
-                   uint32_t to_area_offset)
+ffs_gc_copy_object(struct ffs_hash_entry *entry, uint16_t object_size,
+                   uint8_t to_area_idx)
 {
-    struct ffs_inode_entry *inode_entry;
-    struct ffs_inode inode;
-    struct ffs_block block;
     uint32_t from_area_offset;
-    uint16_t copy_len;
+    uint32_t to_area_offset;
     uint8_t from_area_idx;
     int rc;
 
-    if (ffs_hash_id_is_inode(entry->fhe_id)) {
-        inode_entry = (struct ffs_inode_entry *)entry;
-        rc = ffs_inode_from_entry(&inode, inode_entry);
-        if (rc != 0) {
-            return rc;
-        }
-        copy_len = sizeof (struct ffs_disk_inode) + inode.fi_filename_len;
-    } else {
-        rc = ffs_block_from_hash_entry(&block, entry);
-        if (rc != 0) {
-            return rc;
-        }
-
-        copy_len = sizeof (struct ffs_disk_block) + block.fb_data_len;
-    }
-
     ffs_flash_loc_expand(entry->fhe_flash_loc,
                          &from_area_idx, &from_area_offset);
+    to_area_offset = ffs_areas[to_area_idx].fa_cur;
+
     rc = ffs_flash_copy(from_area_idx, from_area_offset, to_area_idx,
-                        to_area_offset, copy_len);
+                        to_area_offset, object_size);
     if (rc != 0) {
         return rc;
     }
 
     entry->fhe_flash_loc = ffs_flash_loc(to_area_idx, to_area_offset);
+
+    return 0;
+}
+
+static int
+ffs_gc_copy_inode(struct ffs_inode_entry *inode_entry, uint8_t to_area_idx)
+{
+    struct ffs_inode inode;
+    uint16_t copy_len;
+    int rc;
+
+    rc = ffs_inode_from_entry(&inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+    copy_len = sizeof (struct ffs_disk_inode) + inode.fi_filename_len;
+
+    rc = ffs_gc_copy_object(&inode_entry->fie_hash_entry, copy_len,
+                            to_area_idx);
+    if (rc != 0) {
+        return rc;
+    }
 
     return 0;
 }
@@ -83,24 +88,19 @@ ffs_gc_select_area(void)
 }
 
 static int
-ffs_gc_block_chain_copy(struct ffs_hash_entry *last_entry,
-                           uint32_t data_len, uint8_t to_area_idx)
+ffs_gc_block_chain_copy(struct ffs_hash_entry *last_entry, uint32_t data_len,
+                        uint8_t to_area_idx)
 {
     struct ffs_hash_entry *entry;
-    struct ffs_area *to_area;
     struct ffs_block block;
-    uint32_t from_area_offset;
-    uint32_t bytes_copied;
+    uint32_t data_bytes_copied;
     uint16_t copy_len;
-    uint8_t from_area_idx;
     int rc;
 
-    to_area = ffs_areas + to_area_idx;
-
-    bytes_copied = 0;
+    data_bytes_copied = 0;
     entry = last_entry;
 
-    while (bytes_copied < data_len) {
+    while (data_bytes_copied < data_len) {
         assert(entry != NULL);
 
         rc = ffs_block_from_hash_entry(&block, entry);
@@ -108,16 +108,12 @@ ffs_gc_block_chain_copy(struct ffs_hash_entry *last_entry,
             return rc;
         }
 
-        ffs_flash_loc_expand(block.fb_hash_entry->fhe_flash_loc,
-                             &from_area_idx, &from_area_offset);
-
         copy_len = sizeof (struct ffs_disk_block) + block.fb_data_len;
-        rc = ffs_flash_copy(from_area_idx, from_area_offset, to_area_idx,
-                            to_area->fa_cur, copy_len);
+        rc = ffs_gc_copy_object(entry, copy_len, to_area_idx);
         if (rc != 0) {
             return rc;
         }
-        bytes_copied += block.fb_data_len;
+        data_bytes_copied += block.fb_data_len;
 
         entry = block.fb_prev;
     }
@@ -132,6 +128,14 @@ ffs_gc_block_chain_copy(struct ffs_hash_entry *last_entry,
  * @param last_entry            The last block entry in the chain.
  * @param data_len              The total length of data to collate.
  * @param to_area_idx           The index of the area to copy to.
+ * @param inout_next            This parameter is only necessary if you are
+ *                                  calling this function during an iteration
+ *                                  of the entire hash table; pass null
+ *                                  otherwise.
+ *                              On input, this points to the next hash entry
+ *                                  you plan on processing.
+ *                              On output, this points to the next hash entry
+ *                                  that should be processed.
  *
  * @return                      0 on success;
  *                              FFS_ENOMEM if there is insufficient heap;
@@ -139,7 +143,8 @@ ffs_gc_block_chain_copy(struct ffs_hash_entry *last_entry,
  */
 static int
 ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
-                           uint32_t data_len, uint8_t to_area_idx)
+                           uint32_t data_len, uint8_t to_area_idx,
+                           struct ffs_hash_entry **inout_next)
 {
     struct ffs_disk_block disk_block;
     struct ffs_hash_entry *entry;
@@ -179,6 +184,9 @@ ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
         }
 
         if (entry != last_entry) {
+            if (inout_next != NULL && *inout_next == entry) {
+                *inout_next = SLIST_NEXT(entry, fhe_next);
+            }
             ffs_block_delete_from_ram(entry);
         }
         entry = block.fb_prev;
@@ -234,12 +242,21 @@ done:
  * @param multiple_blocks       0=single block; 1=more than one block.
  * @param data_len              The total length of data to collate.
  * @param to_area_idx           The index of the area to copy to.
+ * @param inout_next            This parameter is only necessary if you are
+ *                                  calling this function during an iteration
+ *                                  of the entire hash table; pass null
+ *                                  otherwise.
+ *                              On input, this points to the next hash entry
+ *                                  you plan on processing.
+ *                              On output, this points to the next hash entry
+ *                                  that should be processed.
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
 ffs_gc_block_chain(struct ffs_hash_entry *last_entry, int multiple_blocks,
-                   uint32_t data_len, uint8_t to_area_idx)
+                   uint32_t data_len, uint8_t to_area_idx,
+                   struct ffs_hash_entry **inout_next)
 {
     int rc;
 
@@ -249,7 +266,8 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry, int multiple_blocks,
          */
         rc = ffs_gc_block_chain_copy(last_entry, data_len, to_area_idx);
     } else {
-        rc = ffs_gc_block_chain_collate(last_entry, data_len, to_area_idx);
+        rc = ffs_gc_block_chain_collate(last_entry, data_len, to_area_idx,
+                                        inout_next);
         if (rc == FFS_ENOMEM) {
             /* Insufficient heap for collation; just copy each block one by
              * one.
@@ -263,7 +281,7 @@ ffs_gc_block_chain(struct ffs_hash_entry *last_entry, int multiple_blocks,
 
 static int
 ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
-                    uint8_t to_area_idx)
+                    uint8_t to_area_idx, struct ffs_hash_entry **inout_next)
 {
     struct ffs_hash_entry *last_entry;
     struct ffs_hash_entry *entry;
@@ -301,7 +319,7 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
                 }
             } else {
                 rc = ffs_gc_block_chain(last_entry, multiple_blocks, data_len,
-                                        to_area_idx);
+                                        to_area_idx, inout_next);
                 if (rc != 0) {
                     return rc;
                 }
@@ -312,7 +330,7 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
         } else {
             if (last_entry != NULL) {
                 rc = ffs_gc_block_chain(last_entry, multiple_blocks, data_len,
-                                        to_area_idx);
+                                        to_area_idx, inout_next);
                 if (rc != 0) {
                     return rc;
                 }
@@ -328,7 +346,7 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
 
     if (last_entry != NULL) {
         rc = ffs_gc_block_chain(last_entry, multiple_blocks, data_len,
-                                to_area_idx);
+                                to_area_idx, inout_next);
         if (rc != 0) {
             return rc;
         }
@@ -338,7 +356,34 @@ ffs_gc_inode_blocks(struct ffs_inode_entry *inode_entry, uint8_t from_area_idx,
 }
 
 /**
- * Triggers a garbage collection cycle.
+ * Triggers a garbage collection cycle.  This is implemented as follows:
+ *
+ *  (1) The non-scratch area with the lowest garbage collection sequence
+ *      number is selected as the "source area."  If there are other areas
+ *      with the same sequence number, the first one encountered is selected.
+ *
+ *  (2) The source area's ID is written to the scratch area's header,
+ *      transforming it into a non-scratch ID.  The former scratch area is now
+ *      known as the "destination area."
+ *
+ *  (3) The RAM representation is exhaustively searched for objects which are
+ *      resident in the source area.  The copy is accomplished as follows:
+ *
+ *      For each inode:
+ *          (a) If the inode is resident in the source area, copy the inode
+ *              record to the destination area.
+ *
+ *          (b) Walk the inode's list of data blocks, starting with the last
+ *              block in the file.  Each block that is resident in the source
+ *              area is copied to the destination area.  If there is a run of
+ *              two or more blocks that are resident in the source area, they
+ *              are consolidated and copied to the destination area as a single
+ *              new block.
+ *
+ *  (4) The source area is reformatted as a scratch sector (i.e., its header
+ *      indicates an ID of 0xffff).  The area's garbage collection sequence
+ *      number is incremented prior to rewriting the header.  This area is now
+ *      the new scratch sector.
  *
  * @param out_area_idx      On success, the ID of the cleaned up area gets
  *                              written here.  Pass null if you do not need
@@ -350,11 +395,11 @@ int
 ffs_gc(uint8_t *out_area_idx)
 {
     struct ffs_hash_entry *entry;
+    struct ffs_hash_entry *next;
     struct ffs_area *from_area;
     struct ffs_area *to_area;
     struct ffs_inode_entry *inode_entry;
     uint32_t area_offset;
-    uint32_t to_offset;
     uint8_t from_area_idx;
     uint8_t area_idx;
     int rc;
@@ -362,35 +407,52 @@ ffs_gc(uint8_t *out_area_idx)
 
     from_area_idx = ffs_gc_select_area();
     from_area = ffs_areas + from_area_idx;
+    to_area = ffs_areas + ffs_scratch_area_idx;
 
     rc = ffs_format_from_scratch_area(ffs_scratch_area_idx, from_area->fa_id);
     if (rc != 0) {
         return rc;
     }
 
-    FFS_HASH_FOREACH(entry, i) {
-        if (ffs_hash_id_is_file(entry->fhe_id)) {
-            inode_entry = (struct ffs_inode_entry *)entry;
-            rc = ffs_gc_inode_blocks(inode_entry, from_area_idx,
-                                     ffs_scratch_area_idx);
-            if (rc != 0) {
-                return rc;
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
+        entry = SLIST_FIRST(ffs_hash + i);
+        while (entry != NULL) {
+            next = SLIST_NEXT(entry, fhe_next);
+
+            if (ffs_hash_id_is_inode(entry->fhe_id)) {
+                /* The inode gets copied if it is in the source area. */
+                ffs_flash_loc_expand(entry->fhe_flash_loc,
+                                     &area_idx, &area_offset);
+                inode_entry = (struct ffs_inode_entry *)entry;
+                if (area_idx == from_area_idx) {
+                    rc = ffs_gc_copy_inode(inode_entry, ffs_scratch_area_idx);
+                    if (rc != 0) {
+                        return rc;
+                    }
+                }
+
+                /* If the inode is a file, all constituent data blocks that are
+                 * resident in the source area get copied.
+                 */
+                if (ffs_hash_id_is_file(entry->fhe_id)) {
+                    rc = ffs_gc_inode_blocks(inode_entry, from_area_idx,
+                                             ffs_scratch_area_idx, &next);
+                    if (rc != 0) {
+                        return rc;
+                    }
+                }
             }
+
+            entry = next;
         }
     }
 
-    to_area = ffs_areas + ffs_scratch_area_idx;
-    FFS_HASH_FOREACH(entry, i) {
-        ffs_flash_loc_expand(entry->fhe_flash_loc, &area_idx, &area_offset);
-        if (area_idx == from_area_idx) {
-            to_offset = to_area->fa_cur;
-            rc = ffs_gc_copy_object(entry, ffs_scratch_area_idx, to_offset);
-            if (rc != 0) {
-                return rc;
-            }
-        }
-    }
+    /* The amount of written data should never increase as a result of a gc
+     * cycle.
+     */
+    assert(to_area->fa_cur <= from_area->fa_cur);
 
+    /* Turn the source area into the new scratch area. */
     from_area->fa_gc_seq++;
     rc = ffs_format_area(from_area_idx, 1);
     if (rc != 0) {
