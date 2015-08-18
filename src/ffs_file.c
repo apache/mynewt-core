@@ -3,6 +3,32 @@
 #include "ffs_priv.h"
 #include "ffs/ffs.h"
 
+static struct ffs_file *
+ffs_file_alloc(void)
+{
+    struct ffs_file *file;
+
+    file = os_memblock_get(&ffs_file_pool);
+    if (file != NULL) {
+        memset(file, 0, sizeof *file);
+    }
+
+    return file;
+}
+
+static int
+ffs_file_free(struct ffs_file *file)
+{
+    int rc;
+
+    rc = os_memblock_put(&ffs_file_pool, file);
+    if (rc != 0) {
+        return FFS_EOS;
+    }
+
+    return 0;
+}
+
 /**
  * Creates a new empty file and writes it to the file system.  If a file with
  * the specified path already exists, the behavior is undefined.
@@ -126,7 +152,7 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
         goto err;
     }
 
-    file = os_memblock_get(&ffs_file_pool);
+    file = ffs_file_alloc();
     if (file == NULL) {
         rc = FFS_ENOMEM;
         goto err;
@@ -179,8 +205,7 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
     }
 
     if (access_flags & FFS_ACCESS_APPEND) {
-        rc = ffs_inode_calc_data_length(file->ff_inode_entry,
-                                        &file->ff_offset);
+        rc = ffs_inode_data_len(file->ff_inode_entry, &file->ff_offset);
         if (rc != 0) {
             goto err;
         }
@@ -195,7 +220,7 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
     return 0;
 
 err:
-    os_memblock_put(&ffs_file_pool, file);
+    ffs_file_free(file);
     return rc;
 }
 
@@ -215,7 +240,7 @@ ffs_file_seek(struct ffs_file *file, uint32_t offset)
     uint32_t len;
     int rc;
 
-    rc = ffs_inode_calc_data_length(file->ff_inode_entry, &len);
+    rc = ffs_inode_data_len(file->ff_inode_entry, &len);
     if (rc != 0) {
         return rc;
     }
@@ -247,9 +272,9 @@ ffs_file_close(struct ffs_file *file)
         return rc;
     }
 
-    rc = os_memblock_put(&ffs_file_pool, file);
+    rc = ffs_file_free(file);
     if (rc != 0) {
-        return FFS_EOS;
+        return rc;
     }
 
     return 0;

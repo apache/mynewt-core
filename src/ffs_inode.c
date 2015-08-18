@@ -117,6 +117,22 @@ ffs_inode_calc_data_length(struct ffs_inode_entry *inode_entry,
 }
 
 int
+ffs_inode_data_len(struct ffs_inode_entry *inode_entry, uint32_t *out_len)
+{
+    struct ffs_cache_inode *cache_inode;
+    int rc;
+
+    rc = ffs_cache_inode_assure(&cache_inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    *out_len = cache_inode->fci_file_size;
+
+    return 0;
+}
+
+int
 ffs_inode_from_entry(struct ffs_inode *out_inode,
                      struct ffs_inode_entry *entry)
 {
@@ -198,6 +214,7 @@ ffs_inode_delete_from_ram(struct ffs_inode_entry *inode_entry)
         }
     }
 
+    ffs_cache_inode_delete(inode_entry);
     ffs_hash_remove(&inode_entry->fie_hash_entry);
     ffs_inode_entry_free(inode_entry);
 
@@ -599,37 +616,37 @@ int
 ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
                uint32_t length, struct ffs_seek_info *out_seek_info)
 {
+    struct ffs_cache_inode *cache_inode;
     struct ffs_hash_entry *cur_entry;
     struct ffs_block block;
     uint32_t block_start;
     uint32_t cur_offset;
-    uint32_t file_len;
     uint32_t seek_end;
     int rc;
 
     assert(ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id));
 
-    rc = ffs_inode_calc_data_length(inode_entry, &file_len);
+    rc = ffs_cache_inode_assure(&cache_inode, inode_entry);
     if (rc != 0) {
         return rc;
     }
 
-    if (offset > file_len) {
+    if (offset > cache_inode->fci_file_size) {
         return FFS_ERANGE;
     }
-    if (offset == file_len) {
+    if (offset == cache_inode->fci_file_size) {
         memset(&out_seek_info->fsi_last_block, 0,
                sizeof out_seek_info->fsi_last_block);
         out_seek_info->fsi_last_block.fb_hash_entry = NULL;
         out_seek_info->fsi_block_file_off = 0;
-        out_seek_info->fsi_file_len = file_len;
+        out_seek_info->fsi_file_len = cache_inode->fci_file_size;
         return 0;
     }
 
     seek_end = offset + length;
 
     cur_entry = inode_entry->fie_last_block_entry;
-    cur_offset = file_len;
+    cur_offset = cache_inode->fci_file_size;
     while (1) {
         rc = ffs_block_from_hash_entry(&block, cur_entry);
         if (rc != 0) {
@@ -640,7 +657,7 @@ ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
         if (seek_end > block_start) {
             out_seek_info->fsi_last_block = block;
             out_seek_info->fsi_block_file_off = block_start;
-            out_seek_info->fsi_file_len = file_len;
+            out_seek_info->fsi_file_len = cache_inode->fci_file_size;
             return 0;
         }
 

@@ -31,6 +31,7 @@ struct ffs_config {
     uint32_t fc_num_inodes;
     uint32_t fc_num_blocks;
     uint32_t fc_num_files;
+    uint32_t fc_num_cache_inodes;
 };
 
 extern struct ffs_config ffs_config;
@@ -52,7 +53,7 @@ int ffs_read(struct ffs_file *file, void *data, uint32_t *len);
 int ffs_write(struct ffs_file *file, const void *data, int len);
 int ffs_seek(struct ffs_file *file, uint32_t offset);
 uint32_t ffs_getpos(const struct ffs_file *file);
-int ffs_file_len(const struct ffs_file *file, uint32_t *out_len);
+int ffs_file_len(struct ffs_file *file, uint32_t *out_len);
 int ffs_rename(const char *from, const char *to);
 int ffs_unlink(const char *filename);
 int ffs_mkdir(const char *path);

@@ -165,31 +165,33 @@ struct ffs_path_parser {
 };
 
 /** Represents a single data block. */
-struct ffs_block_cache_entry {
-    struct ffs_hash_entry *fbce_entry;            /* Pointer to real block. */
-    uint32_t fbce_seq;
-    uint16_t fbce_data_len;
-    TAILQ_ENTRY(ffs_block_cache_entry) fbce_link; /* Next / prev block. */
-    uint32_t fbce_file_offset;              /* File offset of this block. */
+struct ffs_cache_block {
+    struct ffs_hash_entry *fcb_entry;            /* Pointer to real block. */
+    uint32_t fcb_seq;
+    uint16_t fcb_data_len;
+    TAILQ_ENTRY(ffs_cache_block_entry) fcb_link; /* Next / prev block. */
+    uint32_t fcb_file_offset;              /* File offset of this block. */
 };
 
-TAILQ_HEAD(ffs_block_cache_list, ffs_block_cache_entry);
+TAILQ_HEAD(ffs_cache_block_list, ffs_cache_block);
 
 /** Represents all or part of a file. */
-struct ffs_file_cache_entry {
-    SLIST_ENTRY(ffs_file_cache_entry) *ffce_next; /* Needed for hash table. */
-    struct ffs_inode_entry *ffce_inode_entry;     /* Pointer to real file. */
-    struct ffs_block_cache_list ffce_block_list;  /* List of cached blocks. */
-    uint32_t ffce_file_size;                      /* Total file size. */
-    uint32_t ffce_cache_length;       /* Cumulative length of cached data. */
+struct ffs_cache_inode {
+    TAILQ_ENTRY(ffs_cache_inode) fci_link;  /* Sorted; LRU at tail. */
+    struct ffs_inode_entry *fci_inode_entry;     /* Pointer to real file. */
+    struct ffs_cache_block_list fci_block_list;  /* List of cached blocks. */
+    uint32_t fci_file_size;                      /* Total file size. */
+    uint32_t fci_cache_length;       /* Cumulative length of cached data. */
 };
 
 extern void *ffs_file_mem;
 extern void *ffs_block_entry_mem;
 extern void *ffs_inode_mem;
+extern void *ffs_cache_inode_mem;
 extern struct os_mempool ffs_file_pool;
 extern struct os_mempool ffs_inode_entry_pool;
 extern struct os_mempool ffs_block_entry_pool;
+extern struct os_mempool ffs_cache_inode_pool;
 extern uint32_t ffs_hash_next_file_id;
 extern uint32_t ffs_hash_next_dir_id;
 extern uint32_t ffs_hash_next_block_id;
@@ -232,6 +234,12 @@ int ffs_block_from_hash_entry_no_ptrs(struct ffs_block *out_block,
                                       struct ffs_hash_entry *entry);
 int ffs_block_from_hash_entry(struct ffs_block *out_block,
                               struct ffs_hash_entry *entry);
+
+/* @cache */
+void ffs_cache_inode_delete(const struct ffs_inode_entry *inode_entry);
+int ffs_cache_inode_assure(struct ffs_cache_inode **out_entry,
+                           struct ffs_inode_entry *inode_entry);
+void ffs_cache_clear(void);
 
 /* @crc */
 int ffs_crc_flash(uint16_t initial_crc, uint8_t area_idx, uint32_t area_offset,
@@ -297,6 +305,7 @@ struct ffs_inode_entry *ffs_inode_entry_alloc(void);
 void ffs_inode_entry_free(struct ffs_inode_entry *inode_entry);
 int ffs_inode_calc_data_length(struct ffs_inode_entry *inode_entry,
                                uint32_t *out_len);
+int ffs_inode_data_len(struct ffs_inode_entry *inode_entry, uint32_t *out_len);
 uint32_t ffs_inode_parent_id(const struct ffs_inode *inode);
 int ffs_inode_delete_from_disk(struct ffs_inode *inode);
 int ffs_inode_entry_from_disk(struct ffs_inode_entry *out_inode,

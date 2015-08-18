@@ -19,10 +19,12 @@ uint16_t ffs_block_max_data_sz;
 struct os_mempool ffs_file_pool;
 struct os_mempool ffs_inode_entry_pool;
 struct os_mempool ffs_block_entry_pool;
+struct os_mempool ffs_cache_inode_pool;
 
 void *ffs_file_mem;
 void *ffs_inode_mem;
 void *ffs_block_entry_mem;
+void *ffs_cache_inode_mem;
 
 struct ffs_inode_entry *ffs_root_dir;
 
@@ -172,12 +174,12 @@ ffs_getpos(const struct ffs_file *file)
  * @return                  0 on success; nonzero on failure.
  */
 int
-ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
+ffs_file_len(struct ffs_file *file, uint32_t *out_len)
 {
     int rc;
 
     ffs_lock();
-    rc = ffs_inode_calc_data_length(file->ff_inode_entry, out_len);
+    rc = ffs_inode_data_len(file->ff_inode_entry, out_len);
     ffs_unlock();
 
     return rc;
@@ -433,6 +435,8 @@ ffs_init(void)
 
     ffs_config_init();
 
+    ffs_cache_clear();
+
     rc = os_mutex_create(&ffs_mutex);
     if (rc != 0) {
         return FFS_EOS;
@@ -458,6 +462,14 @@ ffs_init(void)
         OS_MEMPOOL_BYTES(ffs_config.fc_num_blocks,
                          sizeof (struct ffs_hash_entry)));
     if (ffs_block_entry_mem == NULL) {
+        return FFS_ENOMEM;
+    }
+
+    free(ffs_cache_inode_mem);
+    ffs_cache_inode_mem = malloc(
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_cache_inodes,
+                         sizeof (struct ffs_cache_inode)));
+    if (ffs_cache_inode_mem == NULL) {
         return FFS_ENOMEM;
     }
 
