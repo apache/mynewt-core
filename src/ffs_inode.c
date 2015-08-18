@@ -283,8 +283,8 @@ ffs_inode_process_unlink_list(struct ffs_hash_entry **inout_next)
         while (child != NULL) {
             child_next = SLIST_NEXT(child, fie_sibling_next);
 
-            if (out_next != NULL && *out_next == &child->fie_hash_entry) {
-                *out_next = &child_next->fie_hash_entry;
+            if (inout_next != NULL && *inout_next == &child->fie_hash_entry) {
+                *inout_next = &child_next->fie_hash_entry;
             }
 
             if (ffs_hash_id_is_dir(child->fie_hash_entry.fhe_id)) {
