@@ -3,6 +3,7 @@
 #include <string.h>
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
+#include "crc16.h"
 
 /**
  * Reads a data block header from flash.
@@ -48,23 +49,24 @@ ffs_block_write_disk(const struct ffs_disk_block *disk_block,
                      const void *data,
                      uint8_t *out_area_idx, uint32_t *out_area_offset)
 {
-    uint32_t offset;
+    uint32_t area_offset;
     uint8_t area_idx;
     int rc;
 
     rc = ffs_misc_reserve_space(sizeof *disk_block + disk_block->fdb_data_len,
-                                &area_idx, &offset);
+                                &area_idx, &area_offset);
     if (rc != 0) {
         return rc;
     }
 
-    rc = ffs_flash_write(area_idx, offset, disk_block, sizeof *disk_block);
+    rc = ffs_flash_write(area_idx, area_offset, disk_block,
+                         sizeof *disk_block);
     if (rc != 0) {
         return rc;
     }
 
     if (disk_block->fdb_data_len > 0) {
-        rc = ffs_flash_write(area_idx, offset + sizeof *disk_block,
+        rc = ffs_flash_write(area_idx, area_offset + sizeof *disk_block,
                              data, disk_block->fdb_data_len);
         if (rc != 0) {
             return rc;
@@ -72,7 +74,12 @@ ffs_block_write_disk(const struct ffs_disk_block *disk_block,
     }
 
     *out_area_idx = area_idx;
-    *out_area_offset = offset;
+    *out_area_offset = area_offset;
+
+#if FFS_DEBUG
+    rc = ffs_crc_disk_block_validate(disk_block, area_idx, area_offset);
+    assert(rc == 0);
+#endif
 
     return 0;
 }

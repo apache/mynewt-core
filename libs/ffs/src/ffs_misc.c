@@ -1,7 +1,8 @@
 #include <assert.h>
 #include "os/os_malloc.h"
-#include "ffs_priv.h"
 #include "ffs/ffs.h"
+#include "ffs_priv.h"
+#include "crc16.h"
 
 /**
  * Determines if the file system contains a valid root directory.  For the root
@@ -283,4 +284,3 @@ ffs_misc_reset(void)
 
     return 0;
 }
-

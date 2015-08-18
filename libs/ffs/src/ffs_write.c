@@ -1,7 +1,7 @@
 #include <assert.h>
-#include "ffs_priv.h"
 #include "ffs/ffs.h"
-
+#include "ffs_priv.h"
+#include "crc16.h"
 
 /**
  * Structure describing an individual write operation.  Indicates which blocks
@@ -37,6 +37,59 @@ struct ffs_write_info {
      */
     uint32_t fwi_extra_length;
 };
+
+static int
+ffs_write_fill_crc16_overwrite(struct ffs_disk_block *disk_block,
+                               uint8_t src_area_idx, uint32_t src_area_offset,
+                               uint16_t left_copy_len, uint16_t right_copy_len,
+                               const void *new_data, uint16_t new_data_len)
+{
+    uint16_t block_off;
+    uint16_t crc16;
+    int rc;
+
+    block_off = 0;
+
+    crc16 = ffs_crc_disk_block_hdr(disk_block);
+    block_off += sizeof *disk_block;
+
+    /* Copy data from the start of the old block, in case the new data starts
+     * at a non-zero offset.
+     */
+    if (left_copy_len > 0) {
+        rc = ffs_crc_flash(crc16, src_area_idx,
+                                  src_area_offset + block_off,
+                                  left_copy_len, &crc16);
+        if (rc != 0) {
+            return rc;
+        }
+        block_off += left_copy_len;
+    }
+
+    /* Write the new data into the data block.  This may extend the block's
+     * length beyond its old value.
+     */
+    crc16 = crc16_ccitt(crc16, new_data, new_data_len);
+    block_off += new_data_len;
+
+    /* Copy data from the end of the old block, in case the new data doesn't
+     * extend to the end of the block.
+     */
+    if (right_copy_len > 0) {
+        rc = ffs_crc_flash(crc16, src_area_idx, src_area_offset + block_off,
+                           right_copy_len, &crc16);
+        if (rc != 0) {
+            return rc;
+        }
+        block_off += right_copy_len;
+    }
+
+    assert(block_off == sizeof *disk_block + disk_block->fdb_data_len);
+
+    disk_block->fdb_crc16 = crc16;
+
+    return 0;
+}
 
 /**
  * Overwrites an existing data block.  The resulting block has the same ID as
@@ -89,14 +142,22 @@ ffs_write_over_block(struct ffs_hash_entry *entry, uint16_t left_copy_len,
     block.fb_data_len = left_copy_len + new_data_len + right_copy_len;
     ffs_block_to_disk(&block, &disk_block);
 
+    ffs_flash_loc_expand(entry->fhe_flash_loc,
+                         &src_area_idx, &src_area_offset);
+
+    rc = ffs_write_fill_crc16_overwrite(&disk_block,
+                                        src_area_idx, src_area_offset,
+                                        left_copy_len, right_copy_len,
+                                        new_data, new_data_len);
+    if (rc != 0) {
+        return rc;
+    }
+
     rc = ffs_misc_reserve_space(sizeof disk_block + disk_block.fdb_data_len,
                                 &dst_area_idx, &dst_area_offset);
     if (rc != 0) {
         return rc;
     }
-
-    ffs_flash_loc_expand(entry->fhe_flash_loc,
-                         &src_area_idx, &src_area_offset);
 
     block_off = 0;
 
@@ -148,6 +209,12 @@ ffs_write_over_block(struct ffs_hash_entry *entry, uint16_t left_copy_len,
 
     entry->fhe_flash_loc = ffs_flash_loc(dst_area_idx, dst_area_offset);
 
+#if FFS_DEBUG
+    rc = ffs_crc_disk_block_validate(&disk_block, dst_area_idx,
+                                     dst_area_offset);
+    assert(rc == 0);
+#endif
+
     return 0;
 }
 
@@ -185,6 +252,7 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
         disk_block.fdb_prev_id = inode_entry->fie_last_block_entry->fhe_id;
     }
     disk_block.fdb_data_len = len;
+    ffs_crc_disk_block_fill(&disk_block, data);
 
     rc = ffs_block_write_disk(&disk_block, data, &area_idx, &area_offset);
     if (rc != 0) {
@@ -356,6 +424,7 @@ ffs_write_gen(const struct ffs_write_info *write_info,
 
         block.fb_seq++;
         ffs_block_to_disk(&block, &disk_block);
+        ffs_crc_disk_block_fill(&disk_block, data + data_offset);
 
         rc = ffs_block_write_disk(&disk_block, data + data_offset,
                                   &area_idx, &area_offset);

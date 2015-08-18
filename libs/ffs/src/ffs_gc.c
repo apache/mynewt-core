@@ -145,7 +145,7 @@ ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
     struct ffs_hash_entry *entry;
     struct ffs_area *to_area;
     struct ffs_block block;
-    uint32_t to_offset;
+    uint32_t to_area_offset;
     uint32_t from_area_offset;
     uint32_t data_offset;
     uint8_t *data;
@@ -195,23 +195,29 @@ ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
         disk_block.fdb_prev_id = entry->fhe_id;
     }
     disk_block.fdb_data_len = data_len;
+    ffs_crc_disk_block_fill(&disk_block, data);
 
-    to_offset = to_area->fa_cur;
-    rc = ffs_flash_write(to_area_idx, to_offset,
+    to_area_offset = to_area->fa_cur;
+    rc = ffs_flash_write(to_area_idx, to_area_offset,
                          &disk_block, sizeof disk_block);
     if (rc != 0) {
         goto done;
     }
 
-    rc = ffs_flash_write(to_area_idx, to_offset + sizeof disk_block,
+    rc = ffs_flash_write(to_area_idx, to_area_offset + sizeof disk_block,
                          data, data_len);
     if (rc != 0) {
         goto done;
     }
 
-    last_entry->fhe_flash_loc = ffs_flash_loc(to_area_idx, to_offset);
+    last_entry->fhe_flash_loc = ffs_flash_loc(to_area_idx, to_area_offset);
 
     rc = 0;
+
+#if FFS_DEBUG
+    rc = ffs_crc_disk_block_validate(&disk_block, to_area_idx, to_area_offset);
+    assert(rc == 0);
+#endif
 
 done:
     free(data);

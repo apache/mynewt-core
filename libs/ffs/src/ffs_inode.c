@@ -4,6 +4,7 @@
 #include "os/os_mempool.h"
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
+#include "crc16.h"
 
 /* Partition the flash buffer into two equal halves; used for filename
  * comparisons.
@@ -12,6 +13,9 @@
 static uint8_t *ffs_inode_filename_buf0 = ffs_flash_buf;
 static uint8_t *ffs_inode_filename_buf1 =
     ffs_flash_buf + FFS_INODE_FILENAME_BUF_SZ;
+
+/** A list of directory inodes with pending unlink operations. */
+static struct ffs_hash_list ffs_inode_unlink_list;
 
 struct ffs_inode_entry *
 ffs_inode_entry_alloc(void)
@@ -59,22 +63,27 @@ ffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
 int
 ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
                      const char *filename, uint8_t area_idx,
-                     uint32_t offset)
+                     uint32_t area_offset)
 {
     int rc;
 
-    rc = ffs_flash_write(area_idx, offset, disk_inode, sizeof *disk_inode);
+    rc = ffs_flash_write(area_idx, area_offset, disk_inode, sizeof *disk_inode);
     if (rc != 0) {
         return rc;
     }
 
     if (disk_inode->fdi_filename_len != 0) {
-        rc = ffs_flash_write(area_idx, offset + sizeof *disk_inode, filename,
-                             disk_inode->fdi_filename_len);
+        rc = ffs_flash_write(area_idx, area_offset + sizeof *disk_inode,
+                             filename, disk_inode->fdi_filename_len);
         if (rc != 0) {
             return rc;
         }
     }
+
+#if FFS_DEBUG
+    rc = ffs_crc_disk_inode_validate(disk_inode, area_idx, area_offset);
+    assert(rc == 0);
+#endif
 
     return 0;
 }
@@ -159,84 +168,33 @@ ffs_inode_parent_id(const struct ffs_inode *inode)
     }
 }
 
-static struct ffs_inode_list ffs_inode_delete_list;
-
 static int
-ffs_inode_dec_refcnt_only(struct ffs_inode_entry *inode_entry)
+ffs_inode_delete_blocks_from_ram(struct ffs_inode_entry *inode_entry)
 {
-    struct ffs_inode inode;
-    uint32_t area_offset;
-    uint8_t area_idx;
     int rc;
 
-    assert(inode_entry->fi_refcnt > 0);
-    inode_entry->fi_refcnt--;
-    if (inode_entry->fi_refcnt == 0) {
-        ffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
-                             &area_idx, &area_offset);
-        if (area_idx != FFS_AREA_ID_NONE) {
-            rc = ffs_inode_from_entry(&inode, inode_entry);
-            if (rc != 0) {
-                return rc;
-            }
+    assert(ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id));
 
-            if (inode.fi_parent != NULL) {
-                ffs_inode_remove_child(&inode);
-            }
+    while (inode_entry->fie_last_block_entry != NULL) {
+        rc = ffs_block_delete_from_ram(inode_entry->fie_last_block_entry);
+        if (rc != 0) {
+            return rc;
         }
-        SLIST_INSERT_HEAD(&ffs_inode_delete_list, inode_entry,
-                          fie_sibling_next);
     }
 
     return 0;
 }
 
 static int
-ffs_inode_delete_from_ram(struct ffs_inode_entry *inode_entry,
-                          struct ffs_hash_entry **out_next)
+ffs_inode_delete_from_ram(struct ffs_inode_entry *inode_entry)
 {
-    struct ffs_inode_entry *child;
-    struct ffs_inode inode;
-    uint32_t area_offset;
-    uint8_t area_idx;
     int rc;
 
-    if (ffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
-        while ((child = SLIST_FIRST(&inode_entry->fie_child_list)) != NULL) {
-            rc = ffs_inode_dec_refcnt_only(child);
-            if (rc != 0) {
-                return rc;
-            }
-        }
-    } else {
-        while (inode_entry->fie_last_block_entry != NULL) {
-            if (*out_next == inode_entry->fie_last_block_entry) {
-                *out_next = SLIST_NEXT(inode_entry->fie_last_block_entry,
-                                       fhe_next);
-            }
-
-            rc = ffs_block_delete_from_ram(inode_entry->fie_last_block_entry);
-            if (rc != 0) {
-                return rc;
-            }
-        }
-    }
-
-    ffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
-                         &area_idx, &area_offset);
-    if (area_idx != FFS_AREA_ID_NONE) {
-        rc = ffs_inode_from_entry(&inode, inode_entry);
+    if (ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id)) {
+        rc = ffs_inode_delete_blocks_from_ram(inode_entry);
         if (rc != 0) {
             return rc;
         }
-
-        if (inode.fi_parent != NULL) {
-            ffs_inode_remove_child(&inode);
-        }
-    }
-
-    if (*out_next == &inode_entry->fie_hash_entry) {
-        *out_next = SLIST_NEXT(&inode_entry->fie_hash_entry, fhe_next);
     }
 
     ffs_hash_remove(&inode_entry->fie_hash_entry);
@@ -245,28 +203,106 @@ ffs_inode_delete_from_ram(struct ffs_inode_entry *inode_entry,
     return 0;
 }
 
+/**
+ * Decrements the reference count of the specified inode entry.
+ *
+ * @param out_next              On success, this points to the next hash entry
+ *                                  that should be processed if the entire
+ *                                  hash table is being iterated.  This is
+ *                                  necessary because this function may result
+ *                                  in multiple deletions.  Pass null if you
+ *                                  don't need this information.
+ */
 int
-ffs_inode_dec_refcnt(struct ffs_inode_entry *inode_entry,
-                     struct ffs_hash_entry **out_next)
+ffs_inode_dec_refcnt(struct ffs_inode_entry *inode_entry)
 {
-    struct ffs_inode_entry *cur;
-    struct ffs_hash_entry *next;
     int rc;
 
-    ffs_inode_dec_refcnt_only(inode_entry);
+    assert(inode_entry->fie_refcnt > 0);
 
-    next = SLIST_NEXT(&inode_entry->fie_hash_entry, fhe_next);
-    while ((cur = SLIST_FIRST(&ffs_inode_delete_list)) != NULL) {
-        SLIST_REMOVE(&ffs_inode_delete_list, cur, ffs_inode_entry,
-                     fie_sibling_next);
-        rc = ffs_inode_delete_from_ram(cur, &next);
+    inode_entry->fie_refcnt--;
+    if (inode_entry->fie_refcnt == 0) {
+        rc = ffs_inode_delete_from_ram(inode_entry);
         if (rc != 0) {
             return rc;
         }
     }
 
-    if (out_next != NULL) {
-        *out_next = next;
+    return 0;
+}
+
+/**
+ * Inserts the specified inode entry into the unlink list.  Because a hash
+ * entry only has a single 'next' pointer, this function removes the entry from
+ * the hash table prior to inserting it into the unlink list.
+ *
+ * @param inode_entry           The inode entry to insert.
+ */
+static void
+ffs_inode_insert_unlink_list(struct ffs_inode_entry *inode_entry)
+{
+    ffs_hash_remove(&inode_entry->fie_hash_entry);
+    SLIST_INSERT_HEAD(&ffs_inode_unlink_list, &inode_entry->fie_hash_entry,
+                      fhe_next);
+}
+
+/**
+ * Unlinks every directory inode entry present in the unlink list.  After this
+ * function completes:
+ *     o Each descendant directory is deleted from RAM.
+ *     o Each descendant file has its reference count decremented (and deleted
+ *       from RAM if its reference count reaches zero).
+ *
+ * @param inout_next            This parameter is only necessary if you are
+ *                                  calling this function during an iteration
+ *                                  of the entire hash table; pass null
+ *                                  otherwise.
+ *                              On input, this points to the next hash entry
+ *                                  you plan on processing.
+ *                              On output, this points to the next hash entry
+ *                                  that should be processed.
+ */
+static int
+ffs_inode_process_unlink_list(struct ffs_hash_entry **inout_next)
+{
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_inode_entry *child_next;
+    struct ffs_inode_entry *child;
+    struct ffs_hash_entry *hash_entry;
+    int rc;
+
+    while ((hash_entry = SLIST_FIRST(&ffs_inode_unlink_list)) != NULL) {
+        assert(ffs_hash_id_is_dir(hash_entry->fhe_id));
+
+        SLIST_REMOVE_HEAD(&ffs_inode_unlink_list, fhe_next);
+
+        inode_entry = (struct ffs_inode_entry *)hash_entry;
+
+        /* Recursively unlink each child. */
+        child = SLIST_FIRST(&inode_entry->fie_child_list);
+        while (child != NULL) {
+            child_next = SLIST_NEXT(child, fie_sibling_next);
+
+            if (out_next != NULL && *out_next == &child->fie_hash_entry) {
+                *out_next = &child_next->fie_hash_entry;
+            }
+
+            if (ffs_hash_id_is_dir(child->fie_hash_entry.fhe_id)) {
+                ffs_inode_insert_unlink_list(child);
+            } else {
+                rc = ffs_inode_dec_refcnt(child);
+                if (rc != 0) {
+                    return rc;
+                }
+            }
+
+            child = child_next;
+        }
+
+        /* The directory is already removed from the hash table; just free its
+         * memory.
+         */
+        ffs_inode_entry_free(inode_entry);
     }
 
     return 0;
@@ -288,11 +324,14 @@ ffs_inode_delete_from_disk(struct ffs_inode *inode)
         return rc;
     }
 
+    inode->fi_seq++;
+
     disk_inode.fdi_magic = FFS_INODE_MAGIC;
     disk_inode.fdi_id = inode->fi_inode_entry->fie_hash_entry.fhe_id;
-    disk_inode.fdi_seq = inode->fi_seq + 1;
+    disk_inode.fdi_seq = inode->fi_seq;
     disk_inode.fdi_parent_id = FFS_ID_NONE;
     disk_inode.fdi_filename_len = 0;
+    ffs_crc_disk_inode_fill(&disk_inode, "");
 
     rc = ffs_inode_write_disk(&disk_inode, "", area_idx, offset);
     if (rc != 0) {
@@ -334,6 +373,7 @@ ffs_inode_rename(struct ffs_inode_entry *inode_entry,
     disk_inode.fdi_seq = inode.fi_seq + 1;
     disk_inode.fdi_parent_id = ffs_inode_parent_id(&inode);
     disk_inode.fdi_filename_len = filename_len;
+    ffs_crc_disk_inode_fill(&disk_inode, filename);
 
     rc = ffs_inode_write_disk(&disk_inode, filename, area_idx, offset);
     if (rc != 0) {
@@ -701,13 +741,42 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
     return 0;
 }
 
+int
+ffs_inode_unlink_from_ram(struct ffs_inode *inode,
+                          struct ffs_hash_entry **out_next)
+{
+    int rc;
+
+    if (inode->fi_parent != NULL) {
+        ffs_inode_remove_child(inode);
+    }
+
+    if (ffs_hash_id_is_dir(inode->fi_inode_entry->fie_hash_entry.fhe_id)) {
+        ffs_inode_insert_unlink_list(inode->fi_inode_entry);
+        rc = ffs_inode_process_unlink_list(out_next);
+    } else {
+        rc = ffs_inode_dec_refcnt(inode->fi_inode_entry);
+    }
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
 /**
  * Unlinks the file or directory represented by the specified inode.  If the
  * inode represents a directory, all the directory's descendants are
  * recursively unlinked.  Any open file handles refering to an unlinked file
  * remain valid, and can be read from and written to.
  *
- * @inode                   The inode to unlink.
+ * When an inode is unlinked, the following events occur:
+ *     o inode deletion record is written to disk.
+ *     o inode is removed from parent's child list.
+ *     o inode's reference count is decreased (if this brings it to zero, the
+ *       inode is fully deleted from RAM).
+ *
+ * @param inode             The inode to unlink.
  *
  * @return                  0 on success; nonzero on failure.
  */
@@ -716,18 +785,12 @@ ffs_inode_unlink(struct ffs_inode *inode)
 {
     int rc;
 
-    if (inode->fi_parent == NULL) {
-        return FFS_ENOENT;
-    }
-
-    ffs_inode_remove_child(inode);
-
     rc = ffs_inode_delete_from_disk(inode);
     if (rc != 0) {
         return rc;
     }
 
-    rc = ffs_inode_dec_refcnt(inode->fi_inode_entry, NULL);
+    rc = ffs_inode_unlink_from_ram(inode, NULL);
     if (rc != 0) {
         return rc;
     }

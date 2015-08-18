@@ -8,6 +8,8 @@
 #include "../src/ffs_priv.h"
 #include "ffs_test.h"
 
+int flash_native_memset(uint32_t offset, uint8_t c, uint32_t len);
+
 static const struct ffs_area_desc ffs_area_descs[] = {
         { 0x00000000, 16 * 1024 },
         { 0x00004000, 16 * 1024 },
@@ -93,7 +95,7 @@ ffs_test_util_block_count(const char *filename)
 static void
 ffs_test_util_assert_block_count(const char *filename, int expected_count)
 {
-    assert(1 || ffs_test_util_block_count(filename) == expected_count);
+    assert(ffs_test_util_block_count(filename) == expected_count);
 }
 
 struct ffs_test_block_desc {
@@ -145,7 +147,7 @@ ffs_test_util_create_file_blocks(const char *filename,
 
     ffs_test_util_assert_contents(filename, buf, total_len);
     if (num_blocks > 0) {
-        //ffs_test_util_assert_block_count(filename, s);
+        ffs_test_util_assert_block_count(filename, num_blocks);
     }
 
     free(buf);
@@ -389,7 +391,7 @@ ffs_test_assert_system_once(const struct ffs_test_file_desc *root_dir)
         assert(entry->fhe_flash_loc != FFS_FLASH_LOC_NONE);
         if (ffs_hash_id_is_inode(entry->fhe_id)) {
             inode_entry = (void *)entry;
-            assert(inode_entry->fi_refcnt == 1);
+            assert(inode_entry->fie_refcnt == 1);
             if (entry->fhe_id == FFS_ID_ROOT_DIR) {
                 assert(inode_entry == ffs_root_dir);
             } else {
@@ -543,8 +545,7 @@ ffs_test_mkdir(void)
 static void
 ffs_test_unlink(void)
 {
-    const char *filename = "/mytest.txt";
-    const char *contents = "unlink test";
+    struct ffs_file *file0;
     struct ffs_file *file1;
     struct ffs_file *file2;
     uint8_t buf[64];
@@ -556,18 +557,55 @@ ffs_test_unlink(void)
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
 
-    rc = ffs_open(filename, FFS_ACCESS_READ | FFS_ACCESS_WRITE, &file1);
-    assert(rc == 0);
-    assert(file1->ff_inode_entry->fi_refcnt == 2);
+    ffs_test_util_create_file("/file0.txt", "0", 1);
 
-    rc = ffs_unlink(filename);
+    rc = ffs_open("/file0.txt", FFS_ACCESS_READ | FFS_ACCESS_WRITE, &file0);
     assert(rc == 0);
-    assert(file1->ff_inode_entry->fi_refcnt == 1);
+    assert(file0->ff_inode_entry->fie_refcnt == 2);
 
-    rc = ffs_open(filename, FFS_ACCESS_READ, &file2);
+    rc = ffs_unlink("/file0.txt");
+    assert(rc == 0);
+    assert(file0->ff_inode_entry->fie_refcnt == 1);
+
+    rc = ffs_open("/file0.txt", FFS_ACCESS_READ, &file2);
     assert(rc == FFS_ENOENT);
 
-    rc = ffs_write(file1, contents, strlen(contents));
+    rc = ffs_write(file0, "00", 2);
+    assert(rc == 0);
+
+    rc = ffs_seek(file0, 0);
+    assert(rc == 0);
+
+    len = sizeof buf;
+    rc = ffs_read(file0, buf, &len);
+    assert(rc == 0);
+    assert(len == 2);
+    assert(memcmp(buf, "00", 2) == 0);
+
+    rc = ffs_close(file0);
+    assert(rc == 0);
+
+    rc = ffs_open("/file0.txt", FFS_ACCESS_READ, &file0);
+    assert(rc == FFS_ENOENT);
+
+    /* Nested unlink. */
+    rc = ffs_mkdir("/mydir");
+    assert(rc == 0);
+    ffs_test_util_create_file("/mydir/file1.txt", "1", 2);
+
+    rc = ffs_open("/mydir/file1.txt", FFS_ACCESS_READ | FFS_ACCESS_WRITE,
+                  &file1);
+    assert(rc == 0);
+    assert(file1->ff_inode_entry->fie_refcnt == 2);
+
+    rc = ffs_unlink("/mydir");
+    assert(rc == 0);
+    assert(file1->ff_inode_entry->fie_refcnt == 1);
+
+    rc = ffs_open("/mydir/file1.txt", FFS_ACCESS_READ, &file2);
+    assert(rc == FFS_ENOENT);
+
+    rc = ffs_write(file1, "11", 2);
     assert(rc == 0);
 
     rc = ffs_seek(file1, 0);
@@ -576,13 +614,13 @@ ffs_test_unlink(void)
     len = sizeof buf;
     rc = ffs_read(file1, buf, &len);
     assert(rc == 0);
-    assert(len == strlen(contents));
-    assert(memcmp(buf, contents, strlen(contents)) == 0);
+    assert(len == 2);
+    assert(memcmp(buf, "11", 2) == 0);
 
     rc = ffs_close(file1);
     assert(rc == 0);
 
-    rc = ffs_open(filename, FFS_ACCESS_READ, &file1);
+    rc = ffs_open("/mydir/file1.txt", FFS_ACCESS_READ, &file1);
     assert(rc == FFS_ENOENT);
 
     struct ffs_test_file_desc *expected_system =
@@ -993,7 +1031,7 @@ ffs_test_overwrite_two(void)
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "abcdefg123klmnop", 16);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 2);
 
     /*** Overwrite two blocks (start). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
@@ -1011,7 +1049,7 @@ ffs_test_overwrite_two(void)
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "ABCDEFGHIJklmnop", 16);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 2);
 
     /*** Overwrite two blocks (end). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
@@ -1034,7 +1072,7 @@ ffs_test_overwrite_two(void)
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "abcdef1234567890", 16);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 2);
 
     /*** Overwrite two blocks middle, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
@@ -1057,7 +1095,7 @@ ffs_test_overwrite_two(void)
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "abcdef1234567890!@#$", 20);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 2);
 
     /*** Overwrite two blocks start, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
@@ -1075,7 +1113,7 @@ ffs_test_overwrite_two(void)
     assert(rc == 0);
 
     ffs_test_util_assert_contents( "/myfile.txt", "1234567890!@#$%^&*()", 20);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 2);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1138,7 +1176,7 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234567890!@stuvwx", 24);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     /*** Overwrite three blocks (start). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
@@ -1157,7 +1195,7 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "1234567890!@#$%^&*()uvwx", 24);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     /*** Overwrite three blocks (end). */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
@@ -1181,7 +1219,7 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234567890!@#$%^&*", 24);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     /*** Overwrite three blocks middle, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
@@ -1205,7 +1243,7 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234567890!@#$%^&*()", 26);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     /*** Overwrite three blocks start, extend. */
     ffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
@@ -1224,7 +1262,7 @@ ffs_test_overwrite_three(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "1234567890!@#$%^&*()abcdefghij", 30);
-    ffs_test_util_assert_block_count("/myfile.txt", 1);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1311,7 +1349,7 @@ ffs_test_overwrite_many(void)
 
     ffs_test_util_assert_contents( "/myfile.txt",
                                    "abcdef1234klmnopqrstuvwx", 24);
-    ffs_test_util_assert_block_count("/myfile.txt", 2);
+    ffs_test_util_assert_block_count("/myfile.txt", 3);
 
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
@@ -1637,6 +1675,77 @@ ffs_test_corrupt_scratch(void)
     ffs_test_assert_system(expected_system, area_descs_two);
 }
 
+static void
+ffs_test_corrupt_block(void)
+{
+    struct ffs_block block;
+    struct ffs_file *file;
+    uint32_t flash_offset;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    printf("\tcorrupt data block test\n");
+
+    /*** Setup. */
+    rc = ffs_format(ffs_area_descs);
+    assert(rc == 0);
+
+    rc = ffs_mkdir("/mydir");
+    assert(rc == 0);
+
+    ffs_test_util_create_file("/mydir/a", "aaaa", 4);
+    ffs_test_util_create_file("/mydir/b", "bbbb", 4);
+    ffs_test_util_create_file("/mydir/c", "cccc", 4);
+
+    /* Corrupt the 'b' file; make it look like it only got half written. */
+    rc = ffs_open("/mydir/b", FFS_ACCESS_READ, &file);
+    assert(rc == 0);
+
+    rc = ffs_block_from_hash_entry(&block,
+                                   file->ff_inode_entry->fie_last_block_entry);
+    assert(rc == 0);
+
+    ffs_flash_loc_expand(block.fb_hash_entry->fhe_flash_loc, &area_idx,
+                         &area_offset);
+    flash_offset = ffs_areas[area_idx].fa_offset + area_offset;
+    rc = flash_native_memset(flash_offset + sizeof (struct ffs_disk_block) + 2,
+                             0xff, 2);
+    assert(rc == 0);
+
+    rc = ffs_misc_reset();
+    assert(rc == 0);
+    rc = ffs_detect(ffs_area_descs);
+    assert(rc == 0);
+
+    /* The entire file should be removed. */
+
+    struct ffs_test_file_desc *expected_system =
+        (struct ffs_test_file_desc[]) { {
+            .filename = "",
+            .is_dir = 1,
+            .children = (struct ffs_test_file_desc[]) { {
+                .filename = "mydir",
+                .is_dir = 1,
+                .children = (struct ffs_test_file_desc[]) { {
+                    .filename = "a",
+                    .contents = "aaaa",
+                    .contents_len = 4,
+                }, {
+                    .filename = "c",
+                    .contents = "cccc",
+                    .contents_len = 4,
+                }, {
+                    .filename = NULL,
+                } },
+            }, {
+                .filename = NULL,
+            } },
+    } };
+
+    ffs_test_assert_system(expected_system, ffs_area_descs);
+}
+
 int
 ffs_test(void)
 {
@@ -1663,10 +1772,9 @@ ffs_test(void)
     ffs_test_gc();
     ffs_test_wear_level();
     ffs_test_corrupt_scratch();
+    ffs_test_corrupt_block();
 
     printf("\n");
 
     return 0;
 }
-
-
