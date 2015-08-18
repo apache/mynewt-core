@@ -1809,12 +1809,10 @@ ffs_test_large_unlink(void)
     ffs_test_assert_system(expected_system, ffs_area_descs);
 }
 
-int
-ffs_test(void)
+static void
+ffs_test_all(void)
 {
     int rc;
-
-    printf("flash file system testing\n");
 
     rc = ffs_init();
     assert(rc == 0);
@@ -1837,7 +1835,19 @@ ffs_test(void)
     ffs_test_corrupt_scratch();
     ffs_test_corrupt_block();
     ffs_test_large_unlink();
+}
 
+int
+ffs_test(void)
+{
+    printf("flash file system testing (inode cache size = 1)\n");
+    ffs_config.fc_num_cache_inodes = 1;
+    ffs_test_all();
+    printf("\n");
+
+    printf("flash file system testing (inode cache size = 32)\n");
+    ffs_config.fc_num_cache_inodes = 32;
+    ffs_test_all();
     printf("\n");
 
     return 0;

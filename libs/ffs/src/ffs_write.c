@@ -35,7 +35,7 @@ struct ffs_write_info {
      * total length of the write minus all overwritten bytes; 0 if no appended
      * data.
      */
-    uint32_t fwi_extra_length;
+    uint16_t fwi_append_len;
 };
 
 static int
@@ -286,7 +286,7 @@ ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
     out_write_info->fwi_end_block_data_offset = 0;
     out_write_info->fwi_start_offset = 0;
     out_write_info->fwi_end_offset = 0;
-    out_write_info->fwi_extra_length = 0;
+    out_write_info->fwi_append_len = 0;
 
     rc = ffs_inode_seek(inode_entry, file_offset, write_len, &seek_info);
     if (rc != 0) {
@@ -294,15 +294,15 @@ ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
     }
 
     if (seek_info.fsi_last_block.fb_hash_entry == NULL) {
-        out_write_info->fwi_extra_length = write_len;
+        out_write_info->fwi_append_len = write_len;
         return 0;
     }
 
     write_end = file_offset + write_len;
 
     if (write_end > seek_info.fsi_file_len) {
-        out_write_info->fwi_extra_length = write_end - seek_info.fsi_file_len;
-        data_left = write_len - out_write_info->fwi_extra_length;
+        out_write_info->fwi_append_len = write_end - seek_info.fsi_file_len;
+        data_left = write_len - out_write_info->fwi_append_len;
     } else {
         out_write_info->fwi_end_block = seek_info.fsi_last_block.fb_hash_entry;
         out_write_info->fwi_end_offset =
@@ -460,6 +460,7 @@ static int
 ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
                 const void *data, int len)
 {
+    struct ffs_cache_inode *cache_inode;
     struct ffs_write_info write_info;
     int rc;
 
@@ -471,6 +472,15 @@ ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
     rc = ffs_write_gen(&write_info, inode_entry, data, len);
     if (rc != 0) {
         return rc;
+    }
+
+    if (write_info.fwi_append_len > 0) {
+        rc = ffs_cache_inode_assure(&cache_inode, inode_entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        cache_inode->fci_file_size += write_info.fwi_append_len;
     }
 
     return 0;
@@ -504,8 +514,7 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
      * seek position.
      */
     if (file->ff_access_flags & FFS_ACCESS_APPEND) {
-        rc = ffs_inode_calc_data_length(file->ff_inode_entry,
-                                        &file->ff_offset);
+        rc = ffs_inode_data_len(file->ff_inode_entry, &file->ff_offset);
         if (rc != 0) {
             return rc;
         }

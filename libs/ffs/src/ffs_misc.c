@@ -248,6 +248,8 @@ ffs_misc_reset(void)
 {
     int rc;
 
+    ffs_cache_clear();
+
     rc = os_mempool_init(&ffs_file_pool, ffs_config.fc_num_files,
                          sizeof (struct ffs_file), ffs_file_mem,
                          "ffs_file_pool");
@@ -265,6 +267,13 @@ ffs_misc_reset(void)
     rc = os_mempool_init(&ffs_block_entry_pool, ffs_config.fc_num_blocks,
                          sizeof (struct ffs_hash_entry), ffs_block_entry_mem,
                          "ffs_block_entry_pool");
+    if (rc != 0) {
+        return FFS_EOS;
+    }
+
+    rc = os_mempool_init(&ffs_cache_inode_pool, ffs_config.fc_num_cache_inodes,
+                         sizeof (struct ffs_cache_inode),
+                         ffs_cache_inode_mem, "ffs_cache_inode_pool");
     if (rc != 0) {
         return FFS_EOS;
     }
