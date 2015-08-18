@@ -6,7 +6,58 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
+/**
+ * The size of the largest data block encountered during detection.  This is
+ * used to ensure that the maximum block data size is not set lower than the
+ * size of an existing block.
+ */
 static uint16_t ffs_restore_largest_block_data_len;
+
+/**
+ * Checks the CRC of each block in a chain of data blocks.
+ *
+ * @param last_block_entry      The entry corresponding to the last block in
+ *                                  the chain.
+ *
+ * @return                      0 if the block chain is OK;
+ *                              FFS_ECORRUPT if corruption is detected;
+ *                              nonzero on other error.
+ */
+static int
+ffs_restore_validate_block_chain(struct ffs_hash_entry *last_block_entry)
+{
+    struct ffs_disk_block disk_block;
+    struct ffs_hash_entry *cur;
+    struct ffs_block block;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    cur = last_block_entry;
+
+    while (cur != NULL) {
+        ffs_flash_loc_expand(cur->fhe_flash_loc, &area_idx, &area_offset);
+
+        rc = ffs_block_read_disk(area_idx, area_offset, &disk_block);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = ffs_crc_disk_block_validate(&disk_block, area_idx, area_offset);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = ffs_block_from_hash_entry(&block, cur);
+        if (rc != 0) {
+            return rc;
+        }
+
+        cur = block.fb_prev;
+    }
+
+    return 0;
+}
 
 static int
 ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
@@ -15,16 +66,15 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
     struct ffs_inode inode;
     int rc;
 
-
     /* Determine if the inode is a dummy.  Dummy inodes have a reference count
      * of 0.  If it is a dummy, increment its reference count back to 1 so that
      * it can be properly deleted.  The presence of a dummy inode during the
      * final sweep step indicates file system corruption.  The only option is
      * to delete the dummy inode and all its children.
      */
-    if (inode_entry->fi_refcnt == 0) {
+    if (inode_entry->fie_refcnt == 0) {
         *out_should_sweep = 1;
-        inode_entry->fi_refcnt++;
+        inode_entry->fie_refcnt++;
         return 0;
     }
 
@@ -44,15 +94,33 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
         }
     }
 
-    /* This is a normal inode; don't sweep it. */
+    /* If this is a file inode, verify that none of its constituent blocks are
+     * corrupt via a CRC check.
+     */
+    if (ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id)) {
+        rc = ffs_restore_validate_block_chain(
+                inode_entry->fie_last_block_entry);
+        if (rc == FFS_ECORRUPT) {
+            *out_should_sweep = 1;
+            return 0;
+        } else if (rc != 0) {
+            return rc;
+        }
+    }
+
+    /* This is a valid inode; don't sweep it. */
     *out_should_sweep = 0;
     return 0;
 }
 
 /**
  * Performs a sweep of the RAM representation at the end of a successful
- * restore.  Deletes all dummy inodes that were being kept around to allow the
- * restore to proceed.
+ * restore.  The sweep phase performs the following actions of each inode in
+ * the file system:
+ *     1. If the inode is a dummy, it is fully deleted from RAM.
+ *     2. Else, a CRC check is performed on each of the inode's constituent
+ *        blocks.  If corruption is detected, the inode is fully deleted from
+ *        RAM.
  *
  * @return                      0 on success; nonzero on failure.
  */
@@ -63,6 +131,7 @@ ffs_restore_sweep(void)
     struct ffs_hash_entry *entry;
     struct ffs_hash_entry *next;
     struct ffs_hash_list *list;
+    struct ffs_inode inode;
     int del;
     int rc;
     int i;
@@ -86,10 +155,17 @@ ffs_restore_sweep(void)
                 }
 
                 if (del) {
-                    rc = ffs_inode_dec_refcnt(inode_entry, &next);
+                    rc = ffs_inode_from_entry(&inode, inode_entry);
                     if (rc != 0) {
                         return rc;
                     }
+
+                    /* Remove the inode and all its children from RAM. */
+                    rc = ffs_inode_unlink_from_ram(&inode, &next);
+                    if (rc != 0) {
+                        return rc;
+                    }
+                    next = SLIST_FIRST(list);
                 }
             }
 
@@ -123,7 +199,7 @@ ffs_restore_dummy_inode(uint32_t id, struct ffs_inode_entry **out_inode_entry)
     }
     inode_entry->fie_hash_entry.fhe_id = id;
     inode_entry->fie_hash_entry.fhe_flash_loc = FFS_FLASH_LOC_NONE;
-    inode_entry->fi_refcnt = 0;
+    inode_entry->fie_refcnt = 0;
 
     ffs_hash_insert(&inode_entry->fie_hash_entry);
 
@@ -155,7 +231,7 @@ ffs_restore_inode_gets_replaced(struct ffs_inode_entry *old_inode_entry,
 
     assert(old_inode_entry->fie_hash_entry.fhe_id == disk_inode->fdi_id);
 
-    if (old_inode_entry->fi_refcnt == 0) {
+    if (old_inode_entry->fie_refcnt == 0) {
         *out_should_replace = 1;
         return 0;
     }
@@ -246,7 +322,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
     }
 
     if (do_add) {
-        inode_entry->fi_refcnt = 1;
+        inode_entry->fie_refcnt = 1;
 
         if (disk_inode->fdi_parent_id != FFS_ID_NONE) {
             parent = ffs_hash_find_inode(disk_inode->fdi_parent_id);
@@ -278,6 +354,17 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
         if (inode_entry->fie_hash_entry.fhe_id > ffs_hash_next_dir_id) {
             ffs_hash_next_dir_id = inode_entry->fie_hash_entry.fhe_id + 1;
         }
+    }
+
+    /* Check the inode's CRC.  If the inode is corrupt, mark it as a dummy
+     * node.  If the corrupt inode does not get superseded by a valid revision,
+     * it will get deleted during the sweep phase.
+     */
+    rc = ffs_crc_disk_inode_validate(disk_inode, area_idx, area_offset);
+    if (rc == FFS_ECORRUPT) {
+        inode_entry->fie_refcnt = 0;
+    } else if (rc != 0) {
+        goto err;
     }
 
     return 0;
@@ -402,6 +489,9 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
         ffs_hash_next_block_id = disk_block->fdb_id + 1;
     }
 
+    /* Make sure the maximum block data size is not set lower than the size of
+     * an existing block.
+     */
     if (disk_block->fdb_data_len > ffs_restore_largest_block_data_len) {
         ffs_restore_largest_block_data_len = disk_block->fdb_data_len;
     }
@@ -645,7 +735,7 @@ ffs_restore_corrupt_scratch(void)
                     }
                 } else {
                     inode_entry = (struct ffs_inode_entry *)entry;
-                    inode_entry->fi_refcnt = 0;
+                    inode_entry->fie_refcnt = 0;
                 }
             }
 
@@ -738,13 +828,14 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
             ffs_areas[cur_area_idx].fa_offset = area_descs[i].fad_offset;
             ffs_areas[cur_area_idx].fa_length = area_descs[i].fad_length;
-            ffs_areas[cur_area_idx].fa_cur = sizeof (struct ffs_disk_area);
             ffs_areas[cur_area_idx].fa_gc_seq = disk_area.fda_gc_seq;
             ffs_areas[cur_area_idx].fa_id = disk_area.fda_id;
 
             if (disk_area.fda_id == FFS_AREA_ID_NONE) {
+                ffs_areas[cur_area_idx].fa_cur = FFS_AREA_OFFSET_ID;
                 ffs_scratch_area_idx = cur_area_idx;
             } else {
+                ffs_areas[cur_area_idx].fa_cur = sizeof (struct ffs_disk_area);
                 ffs_restore_area_contents(cur_area_idx);
             }
         }
@@ -795,4 +886,3 @@ err:
     ffs_misc_reset();
     return rc;
 }
-

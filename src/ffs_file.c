@@ -54,6 +54,7 @@ ffs_file_new(struct ffs_inode_entry *parent, const char *filename,
         disk_inode.fdi_parent_id = parent->fie_hash_entry.fhe_id;
     }
     disk_inode.fdi_filename_len = filename_len;
+    ffs_crc_disk_inode_fill(&disk_inode, filename);
 
     rc = ffs_inode_write_disk(&disk_inode, filename, area_idx, offset);
     if (rc != 0) {
@@ -63,7 +64,7 @@ ffs_file_new(struct ffs_inode_entry *parent, const char *filename,
     inode_entry->fie_hash_entry.fhe_id = disk_inode.fdi_id;
     inode_entry->fie_hash_entry.fhe_flash_loc =
         ffs_flash_loc(area_idx, offset);
-    inode_entry->fi_refcnt = 1;
+    inode_entry->fie_refcnt = 1;
 
     if (parent != NULL) {
         rc = ffs_inode_add_child(parent, inode_entry);
@@ -134,7 +135,7 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
     ffs_path_parser_new(&parser, path);
     rc = ffs_path_find(&parser, &inode, &parent);
     if (rc == FFS_ENOENT) {
-        /* The file does not exist.  This is fatal for read-only opens. */
+        /* The file does not exist.  This is an error for read-only opens. */
         if (!(access_flags & FFS_ACCESS_WRITE)) {
             goto err;
         }
@@ -186,7 +187,7 @@ ffs_file_open(struct ffs_file **out_file, const char *path,
     } else {
         file->ff_offset = 0;
     }
-    file->ff_inode_entry->fi_refcnt++;
+    file->ff_inode_entry->fie_refcnt++;
     file->ff_access_flags = access_flags;
 
     *out_file = file;
@@ -241,7 +242,7 @@ ffs_file_close(struct ffs_file *file)
 {
     int rc;
 
-    rc = ffs_inode_dec_refcnt(file->ff_inode_entry, NULL);
+    rc = ffs_inode_dec_refcnt(file->ff_inode_entry);
     if (rc != 0) {
         return rc;
     }
