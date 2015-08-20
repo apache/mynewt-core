@@ -28,6 +28,7 @@
 #define FFS_EUNINIT             13
 
 struct ffs_config {
+    uint32_t fc_hash_size;
     uint32_t fc_num_inodes;
     uint32_t fc_num_blocks;
     uint32_t fc_num_files;

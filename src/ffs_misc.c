@@ -285,7 +285,10 @@ ffs_misc_reset(void)
         return FFS_EOS;
     }
 
-    ffs_hash_init();
+    rc = ffs_hash_init();
+    if (rc != 0) {
+        return rc;
+    }
 
     free(ffs_areas);
     ffs_areas = NULL;

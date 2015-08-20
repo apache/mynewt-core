@@ -3,6 +3,7 @@
 struct ffs_config ffs_config;
 
 const struct ffs_config ffs_config_dflt = {
+    .fc_hash_size = 256,
     .fc_num_inodes = 100,
     .fc_num_blocks = 100,
     .fc_num_files = 16,
@@ -13,6 +14,9 @@ const struct ffs_config ffs_config_dflt = {
 void
 ffs_config_init(void)
 {
+    if (ffs_config.fc_hash_size == 0) {
+        ffs_config.fc_hash_size = ffs_config_dflt.fc_hash_size;
+    }
     if (ffs_config.fc_num_inodes == 0) {
         ffs_config.fc_num_inodes = ffs_config_dflt.fc_num_inodes;
     }

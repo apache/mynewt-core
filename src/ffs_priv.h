@@ -31,8 +31,6 @@
 
 #define FFS_SHORT_FILENAME_LEN      3
 
-#define FFS_HASH_SIZE               256
-
 #define FFS_BLOCK_MAX_DATA_SZ_MAX   2048
 
 /** On-disk representation of an area header. */
@@ -202,7 +200,7 @@ extern uint16_t ffs_block_max_data_sz;
 #define FFS_FLASH_BUF_SZ        256
 extern uint8_t ffs_flash_buf[FFS_FLASH_BUF_SZ];
 
-extern struct ffs_hash_list ffs_hash[FFS_HASH_SIZE];
+extern struct ffs_hash_list *ffs_hash;
 extern struct ffs_inode_entry *ffs_root_dir;
 
 /* @area */
@@ -305,7 +303,7 @@ struct ffs_inode_entry *ffs_hash_find_inode(uint32_t id);
 struct ffs_hash_entry *ffs_hash_find_block(uint32_t id);
 void ffs_hash_insert(struct ffs_hash_entry *entry);
 void ffs_hash_remove(struct ffs_hash_entry *entry);
-void ffs_hash_init(void);
+int ffs_hash_init(void);
 
 /* @inode */
 struct ffs_inode_entry *ffs_inode_entry_alloc(void);
@@ -376,7 +374,7 @@ int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
 
 
 #define FFS_HASH_FOREACH(entry, i)                                      \
-    for ((i) = 0; (i) < FFS_HASH_SIZE; (i)++)                           \
+    for ((i) = 0; (i) < ffs_config.fc_hash_size; (i)++)                 \
         SLIST_FOREACH((entry), &ffs_hash[i], fhe_next)
 
 #define FFS_FLASH_LOC_NONE  ffs_flash_loc(FFS_AREA_ID_NONE, 0)
