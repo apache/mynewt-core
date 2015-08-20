@@ -28,11 +28,22 @@
 #define FFS_EUNINIT             13
 
 struct ffs_config {
+    /** Number of hash table slots; default=256. */
     uint32_t fc_hash_size;
+
+    /** Maximum number of inodes; default=1024. */
     uint32_t fc_num_inodes;
+
+    /** Maximum number of data blocks; default=4096. */
     uint32_t fc_num_blocks;
+
+    /** Maximum number of open files; default=4. */
     uint32_t fc_num_files;
+
+    /** Inode cache size; default=4. */
     uint32_t fc_num_cache_inodes;
+
+    /** Data block cache size; default=64. */
     uint32_t fc_num_cache_blocks;
 };
 

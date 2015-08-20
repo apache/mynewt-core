@@ -100,20 +100,22 @@ struct ffs_inode_entry {
 
 /** Full inode representation; not stored permanently RAM. */
 struct ffs_inode {
-    struct ffs_inode_entry *fi_inode_entry;
-    uint32_t fi_seq;
-    struct ffs_inode_entry *fi_parent; /* Pointer to parent directory inode. */
-    uint8_t fi_filename_len;
-    uint8_t fi_filename[FFS_SHORT_FILENAME_LEN]; /* 3 bytes. */
+    struct ffs_inode_entry *fi_inode_entry; /* Points to actual inode entry. */
+    uint32_t fi_seq;                        /* Sequence number; greater
+                                               supersedes lesser. */
+    struct ffs_inode_entry *fi_parent;      /* Points to parent directory. */
+    uint8_t fi_filename_len;                /* # chars in filename. */
+    uint8_t fi_filename[FFS_SHORT_FILENAME_LEN]; /* First 3 bytes. */
 };
 
 /** Full data block representation; not stored permanently RAM. */
 struct ffs_block {
-    struct ffs_hash_entry *fb_hash_entry;
-    uint32_t fb_seq;
-    struct ffs_inode_entry *fb_inode_entry;
-    struct ffs_hash_entry *fb_prev;
-    uint16_t fb_data_len;
+    struct ffs_hash_entry *fb_hash_entry;   /* Points to actual block entry. */
+    uint32_t fb_seq;                        /* Sequence number; greater
+                                               supersedes lesser. */
+    struct ffs_inode_entry *fb_inode_entry; /* Owning inode. */
+    struct ffs_hash_entry *fb_prev;         /* Previous block in file. */
+    uint16_t fb_data_len;                   /* # of data bytes in block. */
     uint16_t reserved16;
 };
 
@@ -162,18 +164,18 @@ struct ffs_path_parser {
     int fpp_off;
 };
 
-/** Represents a single data block. */
+/** Represents a single cached data block. */
 struct ffs_cache_block {
-    TAILQ_ENTRY(ffs_cache_block) fcb_link; /* Next / prev block. */
+    TAILQ_ENTRY(ffs_cache_block) fcb_link; /* Next / prev cached block. */
     struct ffs_block fcb_block;
     uint32_t fcb_file_offset;              /* File offset of this block. */
 };
 
 TAILQ_HEAD(ffs_cache_block_list, ffs_cache_block);
 
-/** Represents all or part of a file. */
+/** Represents a single cached file inode. */
 struct ffs_cache_inode {
-    TAILQ_ENTRY(ffs_cache_inode) fci_link;  /* Sorted; LRU at tail. */
+    TAILQ_ENTRY(ffs_cache_inode) fci_link;       /* Sorted; LRU at tail. */
     struct ffs_inode fci_inode;
     struct ffs_cache_block_list fci_block_list;  /* List of cached blocks. */
     uint32_t fci_file_size;                      /* Total file size. */

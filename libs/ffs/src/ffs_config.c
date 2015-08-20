@@ -6,7 +6,7 @@ const struct ffs_config ffs_config_dflt = {
     .fc_hash_size = 256,
     .fc_num_inodes = 100,
     .fc_num_blocks = 100,
-    .fc_num_files = 16,
+    .fc_num_files = 4,
     .fc_num_cache_inodes = 4,
     .fc_num_cache_blocks = 64,
 };
