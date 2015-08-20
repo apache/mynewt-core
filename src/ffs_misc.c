@@ -278,6 +278,13 @@ ffs_misc_reset(void)
         return FFS_EOS;
     }
 
+    rc = os_mempool_init(&ffs_cache_block_pool, ffs_config.fc_num_cache_blocks,
+                         sizeof (struct ffs_cache_block),
+                         ffs_cache_block_mem, "ffs_cache_block_pool");
+    if (rc != 0) {
+        return FFS_EOS;
+    }
+
     ffs_hash_init();
 
     free(ffs_areas);

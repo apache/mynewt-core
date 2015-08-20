@@ -3,41 +3,6 @@
 #include "ffs_priv.h"
 #include "crc16.h"
 
-/**
- * Structure describing an individual write operation.  Indicates which blocks
- * get overwritten and at what offsets.
- */
-struct ffs_write_info {
-    /* The first data block being overwritten; null if no overwrite. */
-    struct ffs_hash_entry *fwi_start_block;
-
-    /* The last data block being overwritten; null if no overwrite or if
-     * write extends past current end of file.
-     */
-    struct ffs_hash_entry *fwi_end_block;
-
-    /* The offset within the new data that gets written to the last overwritten
-     * block; 0 if no ovewrite.
-     */
-    uint32_t fwi_end_block_data_offset;
-
-    /* The offset within the first overwritten block where the new write
-     * begins; 0 if no overwrite.
-     */
-    uint32_t fwi_start_offset;
-
-    /* The offset within the last overwritten block where the new write ends;
-     * 0 if no overwrite.
-     */
-    uint32_t fwi_end_offset;
-
-    /* The amount of data being appended to the file.  This is equal to the
-     * total length of the write minus all overwritten bytes; 0 if no appended
-     * data.
-     */
-    uint16_t fwi_append_len;
-};
-
 static int
 ffs_write_fill_crc16_overwrite(struct ffs_disk_block *disk_block,
                                uint8_t src_area_idx, uint32_t src_area_offset,
@@ -228,9 +193,10 @@ ffs_write_over_block(struct ffs_hash_entry *entry, uint16_t left_copy_len,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
+ffs_write_append(struct ffs_cache_inode *cache_inode, const void *data,
                  uint16_t len)
 {
+    struct ffs_inode_entry *inode_entry;
     struct ffs_hash_entry *entry;
     struct ffs_disk_block disk_block;
     uint32_t area_offset;
@@ -241,6 +207,8 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
     if (entry == NULL) {
         return FFS_ENOMEM;
     }
+
+    inode_entry = cache_inode->fci_inode.fi_inode_entry;
 
     disk_block.fdb_magic = FFS_BLOCK_MAGIC;
     disk_block.fdb_id = ffs_hash_next_block_id++;
@@ -265,76 +233,12 @@ ffs_write_append(struct ffs_inode_entry *inode_entry, const void *data,
 
     inode_entry->fie_last_block_entry = entry;
 
+    cache_inode->fci_file_size += len;
+
+    /* Add appended block to the cache. */
+    ffs_cache_seek(cache_inode, cache_inode->fci_file_size - 1, NULL);
+
     return 0;
-}
-
-static int
-ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
-                    uint32_t file_offset, uint32_t write_len,
-                    struct ffs_write_info *out_write_info)
-{
-    struct ffs_hash_entry *entry;
-    struct ffs_seek_info seek_info;
-    struct ffs_block block;
-    uint32_t data_left;
-    uint32_t write_end;
-    uint32_t block_end;
-    int rc;
-
-    out_write_info->fwi_start_block = NULL;
-    out_write_info->fwi_end_block = NULL;
-    out_write_info->fwi_end_block_data_offset = 0;
-    out_write_info->fwi_start_offset = 0;
-    out_write_info->fwi_end_offset = 0;
-    out_write_info->fwi_append_len = 0;
-
-    rc = ffs_inode_seek(inode_entry, file_offset, write_len, &seek_info);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (seek_info.fsi_last_block.fb_hash_entry == NULL) {
-        out_write_info->fwi_append_len = write_len;
-        return 0;
-    }
-
-    write_end = file_offset + write_len;
-
-    if (write_end > seek_info.fsi_file_len) {
-        out_write_info->fwi_append_len = write_end - seek_info.fsi_file_len;
-        data_left = write_len - out_write_info->fwi_append_len;
-    } else {
-        out_write_info->fwi_end_block = seek_info.fsi_last_block.fb_hash_entry;
-        out_write_info->fwi_end_offset =
-            write_end - seek_info.fsi_block_file_off;
-
-        block_end = seek_info.fsi_block_file_off +
-                    seek_info.fsi_last_block.fb_data_len;
-        data_left = write_len + (block_end - write_end);
-    }
-
-    if (file_offset <= seek_info.fsi_block_file_off) {
-        out_write_info->fwi_end_block_data_offset =
-            seek_info.fsi_block_file_off - file_offset;
-    }
-
-    entry = seek_info.fsi_last_block.fb_hash_entry;
-
-    while (1) {
-        rc = ffs_block_from_hash_entry(&block, entry);
-        if (rc != 0) {
-            return rc;
-        }
-
-        if (block.fb_data_len >= data_left) {
-            out_write_info->fwi_start_block = entry;
-            out_write_info->fwi_start_offset = block.fb_data_len - data_left;
-            return 0;
-        }
-
-        data_left -= block.fb_data_len;
-        entry = block.fb_prev;
-    }
 }
 
 /**
@@ -350,139 +254,75 @@ ffs_write_calc_info(struct ffs_inode_entry *inode_entry,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_write_gen(const struct ffs_write_info *write_info,
-              struct ffs_inode_entry *inode_entry, const void *data,
-              uint16_t data_len)
+ffs_write_gen(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
+              const void *data, uint16_t data_len)
 {
-    struct ffs_disk_block disk_block;
-    struct ffs_hash_entry *entry;
-    struct ffs_block block;
-    uint32_t area_offset;
+    struct ffs_cache_inode *cache_inode;
+    struct ffs_cache_block *cache_block;
+    uint32_t append_len;
     uint32_t data_offset;
-    uint16_t copy_len;
+    uint32_t block_end;
+    uint32_t dst_off;
+    uint16_t chunk_off;
     uint16_t chunk_sz;
-    uint8_t area_idx;
     int rc;
 
     assert(data_len <= ffs_block_max_data_sz);
 
+    rc = ffs_cache_inode_ensure(&cache_inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
     /** Handle the simple append case first. */
-    if (write_info->fwi_start_block == NULL) {
-        rc = ffs_write_append(inode_entry, data, data_len);
+    if (file_offset == cache_inode->fci_file_size) {
+        rc = ffs_write_append(cache_inode, data, data_len);
         return rc;
     }
 
-    /** Write last block. */
-    data_offset = write_info->fwi_end_block_data_offset;
-    chunk_sz = data_len - write_info->fwi_end_block_data_offset;
-    if (write_info->fwi_end_block != NULL) {
-        entry = write_info->fwi_end_block;
+    dst_off = file_offset + data_len;
+    data_offset = data_len;
+    cache_block = NULL;
+
+    if (dst_off > cache_inode->fci_file_size) {
+        append_len = dst_off - cache_inode->fci_file_size;
     } else {
-        /* New data extends past the end of the existing block. */
-        entry = inode_entry->fie_last_block_entry;
+        append_len = 0;
     }
 
-    if (write_info->fwi_start_block == entry) {
-        /* This last block is also the first block; preserve old data which
-         * is located before the start of the new data.
-         */
-        copy_len = write_info->fwi_start_offset;
-    } else {
-        /* This isn't the first block; no data at the start of the block
-         * needs to be preserved.
-         */
-        copy_len = 0;
-    }
+    do {
+        if (cache_block == NULL) {
+            rc = ffs_cache_seek(cache_inode, dst_off - 1, &cache_block);
+            if (rc != 0) {
+                return rc;
+            }
+        }
 
-    rc = ffs_write_over_block(entry, copy_len, data + data_offset,
-                              chunk_sz);
-    if (rc != 0) {
-        return rc;
-    }
+        if (cache_block->fcb_file_offset < file_offset) {
+            chunk_off = file_offset - cache_block->fcb_file_offset;
+        } else {
+            chunk_off = 0;
+        }
 
-    /* If the last block was also the first block, there is nothing else to
-     * write.
-     */
-    if (entry == write_info->fwi_start_block) {
-        return 0;
-    }
+        chunk_sz = cache_block->fcb_block.fb_data_len - chunk_off;
+        block_end = cache_block->fcb_file_offset +
+                    cache_block->fcb_block.fb_data_len;
+        if (block_end != dst_off) {
+            chunk_sz += (int)(dst_off - block_end);
+        }
 
-    /** Write intermediate blocks. */
-    rc = ffs_block_from_hash_entry(&block, entry);
-    if (rc != 0) {
-        return rc;
-    }
-    entry = block.fb_prev;
-
-    while (entry != write_info->fwi_start_block) {
-        rc = ffs_block_from_hash_entry(&block, entry);
+        data_offset = cache_block->fcb_file_offset + chunk_off - file_offset;
+        rc = ffs_write_over_block(cache_block->fcb_block.fb_hash_entry,
+                                  chunk_off, data + data_offset, chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
-        data_offset -= block.fb_data_len;
+        dst_off -= chunk_sz;
+        cache_block = TAILQ_PREV(cache_block, ffs_cache_block_list, fcb_link);
+    } while (data_offset > 0);
 
-        block.fb_seq++;
-        ffs_block_to_disk(&block, &disk_block);
-        ffs_crc_disk_block_fill(&disk_block, data + data_offset);
-
-        rc = ffs_block_write_disk(&disk_block, data + data_offset,
-                                  &area_idx, &area_offset);
-        if (rc != 0) {
-            return rc;
-        }
-        entry->fhe_flash_loc = ffs_flash_loc(area_idx, area_offset);
-
-        entry = block.fb_prev;
-    }
-
-    /** Write first block. */
-    rc = ffs_write_over_block(entry, write_info->fwi_start_offset,
-                              data, data_offset);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-/**
- * Writes a size-constrained chunk of contiguous data to a file.  The chunk
- * must not be larger than the maximum block data size.
- *
- * @param file                  The file to write to.
- * @param data                  The data to write.
- * @param len                   The length of data to write.
- *
- * @return                      0 on success; nonzero on failure.
- */
-static int
-ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
-                const void *data, int len)
-{
-    struct ffs_cache_inode *cache_inode;
-    struct ffs_write_info write_info;
-    int rc;
-
-    rc = ffs_write_calc_info(inode_entry, file_offset, len, &write_info);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = ffs_write_gen(&write_info, inode_entry, data, len);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (write_info.fwi_append_len > 0) {
-        rc = ffs_cache_inode_assure(&cache_inode, inode_entry);
-        if (rc != 0) {
-            return rc;
-        }
-
-        cache_inode->fci_file_size += write_info.fwi_append_len;
-    }
-
+    cache_inode->fci_file_size += append_len;
     return 0;
 }
 
@@ -529,8 +369,8 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
             chunk_size = len;
         }
 
-        rc = ffs_write_chunk(file->ff_inode_entry, file->ff_offset, data_ptr,
-                             chunk_size);
+        rc = ffs_write_gen(file->ff_inode_entry, file->ff_offset, data_ptr,
+                           chunk_size);
         if (rc != 0) {
             return rc;
         }
