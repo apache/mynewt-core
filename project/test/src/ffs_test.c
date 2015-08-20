@@ -98,11 +98,6 @@ ffs_test_util_assert_block_count(const char *filename, int expected_count)
     assert(ffs_test_util_block_count(filename) == expected_count);
 }
 
-struct ffs_test_block_desc {
-    const char *data;
-    int data_len;
-};
-
 static void
 ffs_test_util_create_file_blocks(const char *filename,
                                  const struct ffs_test_block_desc *blocks,
@@ -205,13 +200,48 @@ ffs_test_copy_area(const struct ffs_area_desc *from, const struct ffs_area_desc 
     free(buf);
 }
 
-struct ffs_test_file_desc {
-    const char *filename;
-    int is_dir;
-    const char *contents;
-    int contents_len;
-    struct ffs_test_file_desc *children;
-};
+static void
+ffs_test_util_create_subtree(const char *parent_path,
+                             const struct ffs_test_file_desc *elem)
+{
+    char *path;
+    int rc;
+    int i;
+
+    if (parent_path == NULL) {
+        path = malloc(1);
+        assert(path != NULL);
+        path[0] = '\0';
+    } else {
+        path = malloc(strlen(parent_path) + 1 + strlen(elem->filename) + 1);
+        assert(path != NULL);
+
+        sprintf(path, "%s/%s", parent_path, elem->filename);
+    }
+
+    if (elem->is_dir) {
+        if (parent_path != NULL) {
+            rc = ffs_mkdir(path);
+            assert(rc == 0);
+        }
+
+        if (elem->children != NULL) {
+            for (i = 0; elem->children[i].filename != NULL; i++) {
+                ffs_test_util_create_subtree(path, elem->children + i);
+            }
+        }
+    } else {
+        ffs_test_util_create_file(path, elem->contents, elem->contents_len);
+    }
+
+    free(path);
+}
+
+static void
+ffs_test_util_create_tree(const struct ffs_test_file_desc *root_dir)
+{
+    ffs_test_util_create_subtree(NULL, root_dir);
+}
 
 #define FFS_TEST_TOUCHED_ARR_SZ     (16 * 1024)
 static struct ffs_hash_entry
@@ -1810,6 +1840,31 @@ ffs_test_large_unlink(void)
 }
 
 static void
+ffs_test_large_system(void)
+{
+    int rc;
+
+    printf("\t\tlarge system test\n");
+
+    /*** Setup. */
+    rc = ffs_format(ffs_area_descs);
+    assert(rc == 0);
+    ffs_test_util_create_tree(ffs_test_system_01);
+
+    ffs_test_assert_system(ffs_test_system_01, ffs_area_descs);
+
+    rc = ffs_unlink("/lvl1dir-0000");
+    assert(rc == 0);
+
+    rc = ffs_unlink("/lvl1dir-0004");
+    assert(rc == 0);
+
+    rc = ffs_mkdir("/lvl1dir-0000");
+
+    ffs_test_assert_system(ffs_test_system_01_rm_1014_mk10, ffs_area_descs);
+}
+
+static void
 ffs_test_all(void)
 {
     int rc;
@@ -1835,6 +1890,7 @@ ffs_test_all(void)
     ffs_test_corrupt_scratch();
     ffs_test_corrupt_block();
     ffs_test_large_unlink();
+    ffs_test_large_system();
 }
 
 int
