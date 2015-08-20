@@ -233,6 +233,7 @@ ffs_write_append(struct ffs_cache_inode *cache_inode, const void *data,
 
     inode_entry->fie_last_block_entry = entry;
 
+    /* Update cached inode with the new file size. */
     cache_inode->fci_file_size += len;
 
     /* Add appended block to the cache. */
@@ -254,8 +255,8 @@ ffs_write_append(struct ffs_cache_inode *cache_inode, const void *data,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_write_gen(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
-              const void *data, uint16_t data_len)
+ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
+                const void *data, uint16_t data_len)
 {
     struct ffs_cache_inode *cache_inode;
     struct ffs_cache_block *cache_block;
@@ -279,6 +280,8 @@ ffs_write_gen(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
         rc = ffs_write_append(cache_inode, data, data_len);
         return rc;
     }
+
+    /** This is not an append; i.e., old data is getting overwritten. */
 
     dst_off = file_offset + data_len;
     data_offset = data_len;
@@ -369,7 +372,7 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
             chunk_size = len;
         }
 
-        rc = ffs_write_gen(file->ff_inode_entry, file->ff_offset, data_ptr,
+        rc = ffs_write_chunk(file->ff_inode_entry, file->ff_offset, data_ptr,
                            chunk_size);
         if (rc != 0) {
             return rc;

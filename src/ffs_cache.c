@@ -222,32 +222,6 @@ ffs_cache_block_acquire(void)
     return cache_block;
 }
 
-struct ffs_cache_block *
-ffs_cache_block_find(struct ffs_cache_inode *cache_inode, uint32_t offset)
-{
-    struct ffs_cache_block *cache_block;
-    uint32_t cache_start;
-    uint32_t cache_end;
-    uint32_t block_end;
-
-    ffs_cache_inode_range(cache_inode, &cache_start, &cache_end);
-
-    if (offset < cache_start || offset >= cache_end) {
-        return NULL;
-    }
-
-    TAILQ_FOREACH(cache_block, &cache_inode->fci_block_list, fcb_link) {
-        block_end = cache_block->fcb_file_offset +
-                    cache_block->fcb_block.fb_data_len;
-        if (offset >= cache_block->fcb_file_offset && offset < block_end) {
-            break;
-        }
-    }
-
-    assert(cache_block != NULL);
-    return cache_block;
-}
-
 static int
 ffs_cache_block_populate(struct ffs_cache_block *cache_block,
                          struct ffs_hash_entry *block_entry,
