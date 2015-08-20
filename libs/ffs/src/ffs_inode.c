@@ -33,8 +33,10 @@ ffs_inode_entry_alloc(void)
 void
 ffs_inode_entry_free(struct ffs_inode_entry *inode_entry)
 {
-    assert(ffs_hash_id_is_inode(inode_entry->fie_hash_entry.fhe_id));
-    os_memblock_put(&ffs_inode_entry_pool, inode_entry);
+    if (inode_entry != NULL) {
+        assert(ffs_hash_id_is_inode(inode_entry->fie_hash_entry.fhe_id));
+        os_memblock_put(&ffs_inode_entry_pool, inode_entry);
+    }
 }
 
 uint32_t
@@ -687,7 +689,7 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
     uint32_t dst_off;
     uint32_t src_off;
     uint32_t src_end;
-    uint16_t chunk_off;
+    uint16_t block_off;
     uint16_t chunk_sz;
     uint8_t *dptr;
     int rc;
@@ -706,16 +708,16 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
     if (src_end > cache_inode->fci_file_size) {
         src_end = cache_inode->fci_file_size;
     }
+
+    /* Initialize variables for the first iteration. */
     dst_off = src_end - offset;
-
     src_off = src_end;
-
     dptr = out_data;
-
     cache_block = NULL;
 
-    /* XXX: Cache lookahead. */
-
+    /* Read each relevant block into the destination buffer, iterating in
+     * reverse.
+     */
     while (dst_off > 0) {
         if (cache_block == NULL) {
             rc = ffs_cache_seek(cache_inode, src_off - 1, &cache_block);
@@ -725,14 +727,14 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
         }
 
         if (cache_block->fcb_file_offset < offset) {
-            chunk_off = offset - cache_block->fcb_file_offset;
+            block_off = offset - cache_block->fcb_file_offset;
         } else {
-            chunk_off = 0;
+            block_off = 0;
         }
 
         block_end = cache_block->fcb_file_offset +
                     cache_block->fcb_block.fb_data_len;
-        chunk_sz = cache_block->fcb_block.fb_data_len - chunk_off;
+        chunk_sz = cache_block->fcb_block.fb_data_len - block_off;
         if (block_end > src_end) {
             chunk_sz -= block_end - src_end;
         }
@@ -740,7 +742,7 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
         dst_off -= chunk_sz;
         src_off -= chunk_sz;
 
-        rc = ffs_block_read_data(&cache_block->fcb_block, chunk_off, chunk_sz,
+        rc = ffs_block_read_data(&cache_block->fcb_block, block_off, chunk_sz,
                                  dptr + dst_off);
         if (rc != 0) {
             return rc;
