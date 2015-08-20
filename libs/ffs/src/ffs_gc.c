@@ -414,7 +414,7 @@ ffs_gc(uint8_t *out_area_idx)
         return rc;
     }
 
-    for (i = 0; i < FFS_HASH_SIZE; i++) {
+    for (i = 0; i < ffs_config.fc_hash_size; i++) {
         entry = SLIST_FIRST(ffs_hash + i);
         while (entry != NULL) {
             next = SLIST_NEXT(entry, fhe_next);

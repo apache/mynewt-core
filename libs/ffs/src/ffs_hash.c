@@ -4,7 +4,7 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
-struct ffs_hash_list ffs_hash[FFS_HASH_SIZE];
+struct ffs_hash_list *ffs_hash;
 
 uint32_t ffs_hash_next_dir_id;
 uint32_t ffs_hash_next_file_id;
@@ -37,7 +37,7 @@ ffs_hash_id_is_block(uint32_t id)
 static int
 ffs_hash_fn(uint32_t id)
 {
-    return id % FFS_HASH_SIZE;
+    return id % ffs_config.fc_hash_size;
 }
 
 struct ffs_hash_entry *
@@ -106,14 +106,23 @@ ffs_hash_remove(struct ffs_hash_entry *entry)
     SLIST_REMOVE(list, entry, ffs_hash_entry, fhe_next);
 }
 
-void
+int
 ffs_hash_init(void)
 {
     int i;
 
-    for (i = 0; i < FFS_HASH_SIZE; i++) {
+    free(ffs_hash);
+
+    ffs_hash = malloc(ffs_config.fc_hash_size * sizeof *ffs_hash);
+    if (ffs_hash == NULL) {
+        return FFS_ENOMEM;
+    }
+
+    for (i = 0; i < ffs_config.fc_hash_size; i++) {
         ffs_hash[i] =
             (struct ffs_hash_list)SLIST_HEAD_INITIALIZER(&ffs_hash[i]);
     }
+
+    return 0;
 }
 
