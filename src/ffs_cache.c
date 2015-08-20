@@ -9,6 +9,21 @@ TAILQ_HEAD(ffs_cache_inode_list, ffs_cache_inode);
 static struct ffs_cache_inode_list ffs_cache_inode_list =
     TAILQ_HEAD_INITIALIZER(ffs_cache_inode_list);
 
+
+static struct ffs_hash_entry *
+ffs_cache_inode_last_entry(struct ffs_cache_inode *cache_inode)
+{
+    struct ffs_cache_block *cache_block;
+
+    if (TAILQ_EMPTY(&cache_inode->fci_block_list)) {
+        return NULL;
+    }
+
+    cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
+                             ffs_cache_block_list);
+    return cache_block->fcb_block.fb_hash_entry;
+}
+
 static void
 ffs_cache_inode_free_blocks(struct ffs_cache_inode *cache_inode)
 {
@@ -245,54 +260,123 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
                struct ffs_cache_block **out_cache_block)
 {
     struct ffs_cache_block *cache_block;
+    struct ffs_block block;
+    struct ffs_hash_entry *last_cached_entry;
     struct ffs_hash_entry *block_entry;
+    struct ffs_hash_entry *pred_entry;
     uint32_t cache_start;
     uint32_t cache_end;
-    uint32_t offset;
+    uint32_t block_start;
+    uint32_t block_end;
     int rc;
 
     ffs_cache_inode_range(cache_inode, &cache_start, &cache_end);
     if (to <= cache_start) {
+        /* Seeking prior to cache.  Iterate backwards from cache start. */
         cache_block = TAILQ_FIRST(&cache_inode->fci_block_list);
     } else if (to < cache_end) {
+        /* Seeking within cache.  Iterate backwards from cache end. */
         cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
                                  ffs_cache_block_list);
     } else {
+        /* Seeking beyond end of cache.  Iterate backwards from file end.  If
+         * sought-after block is adjacent to cache end, its cache entry will
+         * get appended to the current cache.  Otherwise, the current cache
+         * will be freed and replaced with the single requested block.
+         */
         cache_block = NULL;
     }
 
     if (cache_block != NULL) {
+        /* We are starting the search from within the cache. */
         block_entry = cache_block->fcb_block.fb_hash_entry;
-        offset = cache_block->fcb_file_offset;
+        block_end = cache_block->fcb_file_offset;
     } else {
+        /* Cache is empty or user is seeking beyond end of cache.  Start
+         * iteration from the end of the file.
+         */
         block_entry =
             cache_inode->fci_inode.fi_inode_entry->fie_last_block_entry;
-        offset = cache_inode->fci_file_size;
+        block_end = cache_inode->fci_file_size;
     }
 
     while (1) {
-        if (cache_block == NULL) {
+        if (block_end < cache_start) {
+            /* We are looking before the start of the cache.  Allocate a new
+             * cache block and prepend it to the cache.
+             */
+            assert(cache_block == NULL);
             cache_block = ffs_cache_block_acquire();
-            rc = ffs_cache_block_populate(cache_block, block_entry, offset);
+            rc = ffs_cache_block_populate(cache_block, block_entry,
+                                          block_end);
             if (rc != 0) {
                 return rc;
             }
 
             TAILQ_INSERT_HEAD(&cache_inode->fci_block_list, cache_block,
                               fcb_link);
-
         }
 
-        offset = cache_block->fcb_file_offset;
-        if (offset <= to) {
+        /* Calculate the file block_end of the start of this block.  This is
+         * used to determine if this block contains the sought-after offset.
+         */
+        if (cache_block != NULL) {
+            /* Current block is cached. */
+            block_start = cache_block->fcb_file_offset;
+            pred_entry = cache_block->fcb_block.fb_prev;
+        } else {
+            /* We are looking beyond the end of the cache.  Read the data block
+             * from flash.
+             */
+            rc = ffs_block_from_hash_entry(&block, block_entry);
+            if (rc != 0) {
+                return rc;
+            }
+
+            block_start = block_end - block.fb_data_len;
+            pred_entry = block.fb_prev;
+        }
+
+        if (block_start <= to) {
+            /* This block contains the requested address; iteration is
+             * complete.
+             */
+           if (cache_block == NULL) {
+                /* The block isn't cached, so it must come after the cache end.
+                 * Append it to the cache if it directly follows.  Otherwise,
+                 * erase the current cache and populate it with this single
+                 * block.
+                 */
+                cache_block = ffs_cache_block_acquire();
+                cache_block->fcb_block = block;
+                cache_block->fcb_file_offset = block_start;
+
+                last_cached_entry = ffs_cache_inode_last_entry(cache_inode);
+                if (last_cached_entry != NULL &&
+                    last_cached_entry == pred_entry) {
+
+                    TAILQ_INSERT_TAIL(&cache_inode->fci_block_list,
+                                      cache_block, fcb_link);
+                } else {
+                    ffs_cache_inode_free_blocks(cache_inode);
+                    TAILQ_INSERT_HEAD(&cache_inode->fci_block_list,
+                                      cache_block, fcb_link);
+                }
+            }
+
             if (out_cache_block != NULL) {
                 *out_cache_block = cache_block;
             }
             break;
         }
 
-        block_entry = cache_block->fcb_block.fb_prev;
-        cache_block = TAILQ_PREV(cache_block, ffs_cache_block_list, fcb_link);
+        /* Prepare for next iteration. */
+        if (cache_block != NULL) {
+            cache_block = TAILQ_PREV(cache_block, ffs_cache_block_list,
+                                     fcb_link);
+        }
+        block_entry = pred_entry;
+        block_end = block_start;
     }
 
     return 0;

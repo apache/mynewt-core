@@ -255,10 +255,9 @@ ffs_write_append(struct ffs_cache_inode *cache_inode, const void *data,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
+ffs_write_chunk(struct ffs_cache_inode *cache_inode, uint32_t file_offset,
                 const void *data, uint16_t data_len)
 {
-    struct ffs_cache_inode *cache_inode;
     struct ffs_cache_block *cache_block;
     uint32_t append_len;
     uint32_t data_offset;
@@ -269,11 +268,6 @@ ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
     int rc;
 
     assert(data_len <= ffs_block_max_data_sz);
-
-    rc = ffs_cache_inode_ensure(&cache_inode, inode_entry);
-    if (rc != 0) {
-        return rc;
-    }
 
     /** Handle the simple append case first. */
     if (file_offset == cache_inode->fci_file_size) {
@@ -341,6 +335,7 @@ ffs_write_chunk(struct ffs_inode_entry *inode_entry, uint32_t file_offset,
 int
 ffs_write_to_file(struct ffs_file *file, const void *data, int len)
 {
+    struct ffs_cache_inode *cache_inode;
     const uint8_t *data_ptr;
     uint16_t chunk_size;
     int rc;
@@ -353,14 +348,16 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
         return 0;
     }
 
+    rc = ffs_cache_inode_ensure(&cache_inode, file->ff_inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
     /* The append flag forces all writes to the end of the file, regardless of
      * seek position.
      */
     if (file->ff_access_flags & FFS_ACCESS_APPEND) {
-        rc = ffs_inode_data_len(file->ff_inode_entry, &file->ff_offset);
-        if (rc != 0) {
-            return rc;
-        }
+        file->ff_offset = cache_inode->fci_file_size;
     }
 
     /* Write data as a sequence of blocks. */
@@ -372,8 +369,8 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
             chunk_size = len;
         }
 
-        rc = ffs_write_chunk(file->ff_inode_entry, file->ff_offset, data_ptr,
-                           chunk_size);
+        rc = ffs_write_chunk(cache_inode, file->ff_offset, data_ptr,
+                             chunk_size);
         if (rc != 0) {
             return rc;
         }
