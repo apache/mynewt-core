@@ -1,10 +1,18 @@
 ***** FFS
 
+*** HISTORY
+Rev.    Date            Changes
+3       2015/08/20      More cache specifics; updated ffs_read() function type.
+2       2015/08/17      Addition of crc16; clarification of sweep phase.
+1       2015/08/13
+
+
 *** SUMMARY
 
-ffs (working title) is a flash file system with the following aims:
+ffs (working title) is a flash file system with the following priorities:
     * Minimal RAM usage
     * Reliability
+
 
 *** DISK STRUCTURE
 
@@ -41,19 +49,19 @@ part of a file's contents.
 
 /** On-disk representation of an inode (file or directory). */
 struct ffs_disk_inode {
-    uint32_t fdi_magic;     /* FFS_INODE_MAGIC */
-    uint32_t fdi_id;        /* Unique object ID. */
-    uint32_t fdi_seq;       /* Sequence number; greater supersedes lesser. */
-    uint32_t fdi_parent_id; /* Object ID of parent directory inode. */
-    uint16_t reserved16;
+    uint32_t fdi_magic;         /* FFS_INODE_MAGIC */
+    uint32_t fdi_id;            /* Unique object ID. */
+    uint32_t fdi_seq;           /* Sequence number; greater supersedes
+                                   lesser. */
+    uint32_t fdi_parent_id;     /* Object ID of parent directory inode. */
     uint8_t reserved8;
     uint8_t fdi_filename_len;   /* Length of filename, in bytes. */
+    uint16_t fdi_crc16;         /* Covers rest of header and filename. */
     /* Followed by filename. */
 };
 
-An inode filename's length cannot exceed 256 characters.  The filename need not
-contain a null terminator.  The following characters are not allowed in a
-filename:
+An inode filename's length cannot exceed 256 bytes.  The filename is not
+null-terminated.  The following ASCII characters are not allowed in a filename:
     * /  (slash character)
     * \0 (NUL character)
 
@@ -65,9 +73,9 @@ struct ffs_disk_block {
     uint32_t fdb_inode_id;  /* Object ID of owning inode. */
     uint32_t fdb_prev_id;   /* Object ID of previous block in file;
                                FFS_ID_NONE if this is the first block. */
-    uint16_t reserved16;
     uint16_t fdb_data_len;  /* Length of data contents, in bytes. */
-    /* Followed by 'length' bytes of data. */
+    uint16_t fdb_crc16;     /* Covers rest of header and data. */
+    /* Followed by 'fdb_data_len' bytes of data. */
 };
 
 Each data block contains the ID of the previous data block in the file.
@@ -76,9 +84,8 @@ Together, the set of blocks in a file form a reverse singly-linked list.
 The maximum number of data bytes that a block can contain is determined at
 initialization-time.  The result is the greatest number which satisfies all of
 the following restrictions:
-    * No more than half the size of the smallest area. (XXX)
-    * No more than 2048.
-    * No smaller than the data length of any existing data block.
+    o No more than 2048.
+    o At least two maximum-sized blocks can fit in the smallest area.
 
 The 2048 number was chosen somewhat arbitrarily, and may change in the future.
 
@@ -92,6 +99,7 @@ follows:
       * 0x80000000 - 0xfffffffe: Data blocks.
       * 0xffffffff             : Reserved (FFS_ID_NONE)
 
+
 *** SCRATCH AREA
 
 A valid ffs file system must contain a single "scratch area."  The scratch area
@@ -99,15 +107,16 @@ does not contain any objects of its own, and is only used during garbage
 collection.  The scratch area must have a size greater than or equal to each of
 the other areas in flash.  
 
+
 *** RAM REPRESENTATION
 
 The file system comprises a set of objects of the following two types:
     1) inode
     2) data block
 
-Every object in the file system is stored in a 256-slot hash table.  An
-object's hash key is derived from its 32-bit ID.  All objects are represented
-by the following structure:
+Every object in the file system is stored in a hash table (size is
+configurable; default is 256 slots).  An object's hash key is derived from its
+32-bit ID.  All objects are represented by the following structure:
 
 struct ffs_hash_entry {
     SLIST_ENTRY(ffs_hash_entry) fhe_next;
@@ -119,11 +128,9 @@ For each data block, the above structure is all that is stored in RAM.  To
 acquire more information about a data block, the block header must be read from
 flash.
 
-Inodes require a fuller RAM representation to capture the structure of the
-file system.  There are two types of inodes: files and directories.  We have to
-know which inodes a directory-inode contains, and which blocks a file-inode
-contains.  Each inode hash entry is actually an instance of the following
-structure:
+Inodes require a fuller RAM representation to capture the structure of the file
+system.  There are two types of inodes: files and directories.  Each inode hash
+entry is actually an instance of the following structure:
 
 struct ffs_inode_entry {
     struct ffs_hash_entry fie_hash_entry;
@@ -143,50 +150,148 @@ character set.
 File inodes contain a pointer to the last data block in the file
 (fie_last_block).  For most file operations, the reversed block list must be
 walked backwards.  This introduces a number of speed inefficiencies:
-    * Obtaining information about any data block requires a separate flash
-      read.
     * All data blocks must be read to determine the length of the file.
     * Data blocks often need to be processed sequentially.  The reversed nature
       of the block list transforms this from linear time to an O(n^2)
       operation.
 
-*** DATA BLOCK CACHE
-The speed issue is addressed by a data block cache, which contains a much more
-convenient doubly-linked list of data block representations.  The benefit of
-using a cache is that the size of the cache need not be proportional to the
-size of the file system.  In other words, a cache can address speed efficiency
-concerns without negatively impacting the file system's scalability.  The cache
-is populated as a result of internal seek operations.
+Furthermore, obtaining information about any constituent data block requires a
+separate flash read.
 
-The following data structures are used in the data block cache.
 
-/** Represents a single data block. */
-struct ffs_block_cache_entry {
-    struct ffs_hash_entry *fbce_entry;            /* Pointer to real block. */
-    uint32_t fbce_seq;
-    uint16_t fbce_data_len;
-    TAILQ_ENTRY(ffs_block_cache_entry) fbce_link; /* Next / prev block. */
-    uint32_t fbce_file_offset;              /* File offset of this block. */
+*** INODE CACHE AND DATA BLOCK CACHE
+The speed issues are addressed by a pair of caches.  Cached inodes entries
+contain the file length and a much more convenient doubly-linked list of cached
+data blocks.  The benefit of using caches is that the size of the caches need
+not be proportional to the size of the file system.  In other words, caches can
+address speed efficiency concerns without negatively impacting the file
+system's scalability.
+
+The following data structures are used in the inode and data block caches.
+
+/** Full data block representation; not stored permanently RAM. */
+struct ffs_block {
+    struct ffs_hash_entry *fb_hash_entry;   /* Points to actual block entry. */
+    uint32_t fb_seq;                        /* Sequence number; greater
+                                               supersedes lesser. */
+    struct ffs_inode_entry *fb_inode_entry; /* Owning inode. */
+    struct ffs_hash_entry *fb_prev;         /* Previous block in file. */
+    uint16_t fb_data_len;                   /* # of data bytes in block. */
+    uint16_t reserved16;
+}
+
+/** Represents a single cached data block. */
+struct ffs_cache_block {
+    TAILQ_ENTRY(ffs_cache_block) fcb_link; /* Next / prev cached block. */
+    struct ffs_block fcb_block;            /* Full data block. */
+    uint32_t fcb_file_offset;              /* File offset of this block. */
 };
 
+/** Full inode representation; not stored permanently RAM. */
+struct ffs_inode {
+    struct ffs_inode_entry *fi_inode_entry; /* Points to actual inode entry. */
+    uint32_t fi_seq;                        /* Sequence number; greater
+                                               supersedes lesser. */
+    struct ffs_inode_entry *fi_parent;      /* Points to parent directory. */
+    uint8_t fi_filename_len;                /* # chars in filename. */
+    uint8_t fi_filename[FFS_SHORT_FILENAME_LEN]; /* First 3 bytes. */
+};
+
+/** Doubly-linked tail queue of cached blocks; contained in cached inodes. */
 TAILQ_HEAD(ffs_block_cache_list, ffs_block_cache_entry);
 
-/** Represents all or part of a file. */
-struct ffs_file_cache_entry {
-    SLIST_ENTRY(ffs_file_cache_entry) *ffce_next; /* Needed for hash table. */
-    struct ffs_inode_entry *ffce_inode_entry;     /* Pointer to real file. */
-    struct ffs_block_cache_list ffce_block_list;  /* List of cached blocks. */
-    uint32_t ffce_file_size;                      /* Total file size. */
-    uint32_t ffce_cache_length;       /* Cumulative length of cached data. */
+/** Represents a single cached file inode. */
+struct ffs_cache_inode {
+    TAILQ_ENTRY(ffs_cache_inode) fci_link;       /* Sorted; LRU at tail. */
+    struct ffs_inode fci_inode;                  /* Full inode. */
+    struct ffs_cache_block_list fci_block_list;  /* List of cached blocks. */
+    uint32_t fci_file_len;                       /* Total file size. */
 };
 
-All cached blocks for a particular file are contiguous.  E.g., if the start and
-end of a file are cached, then the middle must also be cached.  A block is only
-cached if its owning file is also cached.
+Only file inodes are cached; directory inodes are never cached.
+
+Within a cached inode, all cached data blocks for contiguous.  E.g., if the
+start and end of a file are cached, then the middle must also be cached.  A
+data block is only cached if its owning file is also cached.
+
+Internally, cached inodes are stored in a singly-linked list, ordered by time
+of use.  The most-recently-used entry is the first element in the list.  If a
+new inode needs to be cached, but the inode cache is full, the
+least-recently-used entry is freed to make room for the new one.  The following operations cause an inode to be cached:
+    * Querying a file's length.
+    * Seeking within a file.
+    * Reading from a file.
+    * Writing to a file.
+
+The following operations cause a data block to be cached:
+    * Reading from the block.
+    * Writing to the block.
+
+If one of the above operations is applied to a data block that is not currently cached, ffs uses the following procedure to cache the necessary blocks:
+    1. If none of the owning inode's blocks are currently cached, allocate a
+       cached block entry and insert it into the inode's list.
+    2. Else if the requested file offset is less than that of the first cached
+       block, bridge the gap between the inode's sequence of cached blocks and
+       the block that now needs to be cached.  This is accomplished by caching
+       each block in the gap, finishing with the requested block.
+    3. Else (the requested offset is beyond the end of the cache),
+        a. If the requested offset belongs to the block that immediately
+           follows the end of the cache, cache the block and append it to the
+           list.
+        b. Else, clear the cache, and populate it with the single entry
+           corresponding to the requested block.
+
+If the system is unable to allocate a cached block entry at any point during
+the above procedure, the system frees up other blocks currently in the cache.
+This is accomplished as follows:
+    1. Iterate the inode cache in reverse (i.e., start with the
+       least-recently-used entry).  For each entry:
+        a. If the entry's cached block list is empty, advance to the next
+           entry.
+        b. Else, free all the cached blocks in the entry's list.
+
+Because the system imposes a minimum block cache size of one, the above
+procedure will always reclaim at least one cache block entry.  The above
+procedure may result in the freeing of the block list that belongs to the very
+inode being operated on.  This is OK, as the final block to get cached is
+always the block being requested.
 
 *** FILENAME CACHE
 It may also be necessary to speed up filename lookups with a second cache.
 Details TBD.
+
+
+*** CONFIGURATION
+The file system is configured by populating fields in a global structure.  Each
+field in the structure corresponds to a setting.  All configuration must be
+done prior to calling ffs_init().  The configuration structure is defined as
+follows:
+
+struct ffs_config {
+    /** Number of hash table slots; default=256. */
+    uint32_t fc_hash_size;
+
+    /** Maximum number of inodes; default=1024. */
+    uint32_t fc_num_inodes;
+
+    /** Maximum number of data blocks; default=4096. */
+    uint32_t fc_num_blocks;
+
+    /** Maximum number of open files; default=4. */
+    uint32_t fc_num_files;
+
+    /** Inode cache size; default=4. */
+    uint32_t fc_num_cache_inodes;
+
+    /** Data block cache size; default=64. */
+    uint32_t fc_num_cache_blocks;
+};
+
+extern struct ffs_config ffs_config;
+
+Any fields that are set to 0 (or not set at all) inherit the corresponding
+default value.
+
 
 *** INITIALIZATION
 
@@ -212,6 +317,7 @@ The expected initialization sequence is as follows:
     (2) If no file system detected, format a new file system in a specific
         region of flash.
 
+
 *** DETECTION
 
 The file system detection process consists of scanning a specified set of
@@ -223,7 +329,7 @@ following function:
  * Searches for a valid ffs file system among the specified areas.  This
  * function succeeds if a file system is detected among any subset of the
  * supplied areas.  If the area set does not contain a valid file system,
- * a new one can be created via a call to ffs_format().
+ * a new one can be created via a separate call to ffs_format().
  *
  * @param area_descs        The area set to search.  This array must be
  *                              terminated with a 0-length area.
@@ -247,13 +353,15 @@ A detected file system is valid if:
     (3) The root directory inode is present.
 
 During detection, each indicated region of flash is checked for a valid area
-header.  The contents of each valid non-scratch area are restored into the ffs
-RAM representation.  The following procedure is applied to each object in the
-area:
+header.  The contents of each valid non-scratch area are then restored into the
+ffs RAM representation.  The following procedure is applied to each object in
+the area:
 
     (1) Convert the disk object into its corresponding RAM representation and
-        insert it into the hash table.  All inodes start with an initial
-        reference count of 1, indicating ownership by their parent directory.
+        insert it into the hash table.  If the object is an inode:
+            o Its crc16 is verified; if invalid, the object is discarded.
+            o Its reference count is initialized to 1, indicating ownership by
+              its parent directory.
 
     (2) If an object with the same ID is already present, then one supersedes
         the other.  Accept the object with the greater sequence number and
@@ -268,14 +376,22 @@ area:
     (4) If a delete record for an inode is encountered, the inode is marked as
         a dummy.
 
+Note: in the above procedure, a crc check is applied to inodes, but not to data
+blocks.  The data block crc check is delayed until the sweep phase, described
+below.
+
 After all areas have been restored, a sweep is performed across the entire RAM
-representation so that invalid inodes can be deleted from memory.  An inode is
-invalid if its reference count is 0.
+representation so that invalid inodes can be deleted from memory.  For each
+inode:
+    * If its reference count is 0, delete it from the RAM representation.
+    * Else, perform a crc verification on each of its constituent data blocks.
+      If any block fails this check, delete the inode from the RAM
+      representation.
 
 When an inode is deleted during this sweep, all dependent objects are also
-deleted.  In the case of a directory, these are children inodes; in the case
-of a file, these are constituent data blocks.  Note: These deletions occur only
-in RAM; nothing gets written to flash at this time.
+deleted.  In the case of a directory, these are children inodes; in the case of
+a file, these are constituent data blocks.  Note: These deletions occur only in
+RAM; nothing gets written to flash at this time.
 
 In addition, a single scratch area is identified during the detection process.
 The first area whose 'fda_id' value is set to 0xff is designated as the file
@@ -284,6 +400,7 @@ that the system was restarted while a garbage collection cycle was in progress.
 Such a condition is identified by the presence of two areas with the same ID.
 In such a case, the shorter of the two areas is erased and designated as the
 scratch area.
+
 
 *** FORMATTING
 
@@ -304,6 +421,7 @@ int ffs_format(const struct ffs_area_desc *area_descs);
 On success, an area header is written to each of the specified locations.  The
 largest area in the set is designated as the initial scratch area.
 
+
 *** FLASH WRITES
 
 The ffs implementation always writes in a strictly sequential fashion within an
@@ -311,12 +429,13 @@ area.  For each area, the system keeps track of the current offset.  Whenever
 an object gets written to an area, it gets written to that area's current
 offset, and the offset is increased by the object's disk size.
 
-Whenever a write needs to be performed, the ffs implementation selects the
+When a write needs to be performed, the ffs implementation selects the
 appropriate destination area by iterating though each area until one with
 sufficient free space is encountered.
 
 There is no write buffering.  Each call to a write function results in a write
 operation being sent to the flash hardware.
+
 
 *** NEW OBJECTS
 
@@ -327,8 +446,9 @@ properties:
     * Sequence number: 0
 
 When a new file or directory is created, a corresponding inode is written to
-flash.  Likewise, a new data block results in the writing of a corresponding
-disk object.
+flash.  Likewise, a new data block also results in the writing of a
+corresponding disk object.
+
 
 *** MOVING / RENAMING FILES AND DIRECTORIES
 
@@ -341,6 +461,7 @@ rewritten to flash with the following properties:
 
 Because the inode's ID is unchanged, all dependent objects remain valid.
 
+
 *** UNLINKING FILES AND DIRECTORIES
 
 When a file or directory is unlinked from its parent directory, a deletion
@@ -351,8 +472,8 @@ inode with the following properties:
     * Parent inode ID: FFS_ID_NONE
 
 If the unlinked inode is a directory, then all the directory's children inodes
-are recursively unlinked as well.  A non-recursive breadth-first traversal is
-used to prevent stack overflow due to recursion.
+are recursively unlinked as well.  This is implemented using non-recursive
+breadth-first traversal is used to prevent stack overflow due to recursion.
 
 When a file inode is unlinked, no deletion records need to be written for the
 file's constituent data blocks.  During the next file system detection, it is
@@ -364,6 +485,7 @@ can continued to use the file handle to read and write data.  All files retain
 a reference count, and a file isn't deleted from the RAM representation until
 its reference code drops to 0.  Any attempt to open an unlinked file fail,
 even if the file is referenced by other file handles.
+
 
 *** WRITING TO A FILE
 
@@ -381,9 +503,9 @@ for each write operation:
             * Sequence number: 0.
 
     (3) Else (n > 1), this write overlaps existing data.
-            (a) For each block in [1, 2, ... n - 1], write a new block
-                containing the updated contents.  The new block supersedes the
-                first overlapped block.  That is, it has the following
+            (a) For each block in [1, 2, ... n-1], write a new block
+                containing the updated contents.  Each new block supersedes the
+                block it overwrites.  That is, each block has the following
                 properties:
                     * ID: Unchanged
                     * Sequence number: Previous value plus one.
@@ -396,8 +518,9 @@ for each write operation:
 Appended data can only be written to the end of the file.  That is, "holes" are
 not supported.
 
-In the case of overlap, non-overlapped portions of blocks are copied to the new
-data blocks.
+In the case of overlap, non-overlapped portions of blocks are written alongside
+the new data in the blocks.
+
 
 *** GARBAGE COLLECTION
 
@@ -407,51 +530,57 @@ procedure is described below:
 
     (1) The non-scratch area with the lowest garbage collection sequence
         number is selected as the "source area."  If there are other areas
-        with the same sequence number, the first one encountered is selected.
+        with the same sequence number, the one with the smallest flash offset
+        is selected. 
 
     (2) The source area's ID is written to the scratch area's header,
         transforming it into a non-scratch ID.  The former scratch area is now
         known as the "destination area."
 
-    (3) The RAM representation is exhaustively searched for objects which are
-        resident in the source area.  The copy is accomplished as follows:
+    (3) The RAM representation is exhaustively searched for collectible
+        objects.  The following procedure is applied to each inode in the
+        system:
 
-        For each inode:
-            (a) If the inode is resident in the source area, copy the inode
-                record to the destination area.
+        (a) If the inode is resident in the source area, copy the inode record
+            to the destination area.
 
-            (b) Walk the inode's list of data blocks, starting with the last
-                block in the file.  Each block that is resident in the source
-                area is copied to the destination area.  If there is a run of
-                two or more blocks that are resident in the source area, they
-                are consolidated and copied to the destination area as a single
-                new block.
+        (b) If the inode is a file inode, walk the inode's list of data blocks,
+            starting with the last block in the file.  Each block that is
+            resident in the source area is copied to the destination area.  If
+            there is a run of two or more blocks that are resident in the
+            source area, they are consolidated and copied to the destination
+            area as a single new block.
 
-    (4) The source area is reformatted as a scratch sector (i.e., its header
-        indicates an ID of 0xffff).  The area's garbage collection sequence
-        number is incremented prior to rewriting the header.  This area is now
-        the new scratch sector.
+    (4) The source area is reformatted as a scratch sector (i.e., is is fully
+        erased, and its header is rewritten with an ID of 0xff).  The area's
+        garbage collection sequence number is incremented prior to rewriting
+        the header.  This area is now the new scratch sector.
+
 
 *** MISC
 
     * RAM usage:
         o 24 bytes per inode
         o 12 bytes per data block
-        o 24 bytes per inode cache entry
-        o 24 bytes per data block cache entry
+        o 36 bytes per inode cache entry
+        o 32 bytes per data block cache entry
     * Maximum filename size: 256 characters
     * Disallowed filename characters: '/' and '\0'
 
+
 *** ISSUES
 
-    * Some sort of ECC is required for the disk contents.  This is needed for
-      two reasons:
-        o detect and correct broken flash
-        o provide indication that a record is fully written (e.g., in case of
-          unexpected system reset).
-
-    * No solution when 32-bit ID space is exhausted; file system becomes
+    * No solution when the 32-bit ID space is exhausted; file system becomes
       read-only.
+    * Hash function may be suboptimal. XXX
+
+
+*** FUTURE ENHANCEMENTS
+
+    * Error correction
+    * Encryption
+    * Compression
+
 
 *** API
 
@@ -520,8 +649,10 @@ uint32_t ffs_getpos(const struct ffs_file *file);
  * Retrieves the current length of the specified open file.
  *
  * @param file              The file to query.
+ * @param out_len           On success, the number of bytes in the file gets
+ *                              written here.
  *
- * @return                  The length of the file, in bytes.
+ * @return                  0 on success; nonzero on failure.
  */
 int ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
 
@@ -532,15 +663,15 @@ int ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
  * results in a success return code.
  *
  * @param file              The file to read from.
- * @param data              The destination buffer to read into.
- * @param len               (in/out) in:  The number of bytes to read.
- *                                   out: The number of bytes actually read.
+ * @param len               The number of bytes to attempt to read.
+ * @param out_data          The destination buffer to read into.
+ * @param out_len           On success, the number of bytes actually read gets
+ *                              written here.  Pass null if you don't care.
  *
- * @return                  0 on success;
- *                          nonzero on failure.
+ * @return                  0 on success; nonzero on failure.
  */
-int
-ffs_read(struct ffs_file *file, void *data, uint32_t *len)
+int ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
+             uint32_t *out_len)
 
 
 /**
