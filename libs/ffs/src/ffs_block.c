@@ -260,3 +260,24 @@ ffs_block_from_hash_entry(struct ffs_block *out_block,
 
     return 0;
 }
+
+int
+ffs_block_read_data(const struct ffs_block *block, uint16_t offset,
+                    uint16_t length, void *dst)
+{
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    ffs_flash_loc_expand(block->fb_hash_entry->fhe_flash_loc,
+                         &area_idx, &area_offset);
+    area_offset += sizeof (struct ffs_disk_block);
+    area_offset += offset;
+
+    rc = ffs_flash_read(area_idx, area_offset, dst, length);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}

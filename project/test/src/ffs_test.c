@@ -473,7 +473,7 @@ ffs_test_mkdir(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\tmkdir test\n");
+    printf("\t\tmkdir test\n");
 
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
@@ -552,7 +552,7 @@ ffs_test_unlink(void)
     uint32_t len;
     int rc;
 
-    printf("\tunlink test\n");
+    printf("\t\tunlink test\n");
 
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
@@ -639,7 +639,7 @@ ffs_test_rename(void)
     const char contents[] = "contents";
     int rc;
 
-    printf("\trename test\n");
+    printf("\t\trename test\n");
 
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
@@ -708,7 +708,7 @@ ffs_test_truncate(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\ttruncate test\n");
+    printf("\t\ttruncate test\n");
 
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
@@ -765,7 +765,7 @@ ffs_test_append(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\tappend test\n");
+    printf("\t\tappend test\n");
 
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
@@ -835,7 +835,7 @@ ffs_test_read(void)
     uint32_t len;
     int rc;
 
-    printf("\tread test\n");
+    printf("\t\tread test\n");
 
     rc = ffs_format(ffs_area_descs);
     assert(rc == 0);
@@ -871,7 +871,7 @@ ffs_test_overwrite_one(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\toverwrite one test\n");
+    printf("\t\toverwrite one test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1004,7 +1004,7 @@ ffs_test_overwrite_two(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\toverwrite two test\n");
+    printf("\t\toverwrite two test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1148,7 +1148,7 @@ ffs_test_overwrite_three(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\toverwrite three test\n");
+    printf("\t\toverwrite three test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1297,7 +1297,7 @@ ffs_test_overwrite_many(void)
     struct ffs_file *file;
     int rc;
 
-    printf("\toverwrite many test\n");
+    printf("\t\toverwrite many test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1372,7 +1372,7 @@ ffs_test_long_filename(void)
 {
     int rc;
 
-    printf("\tlong filename test\n");
+    printf("\t\tlong filename test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1423,7 +1423,7 @@ ffs_test_large_write(void)
     };
 
 
-    printf("\tlarge write test\n");
+    printf("\t\tlarge write test\n");
 
     /*** Setup. */
     rc = ffs_format(area_descs_two);
@@ -1469,7 +1469,7 @@ ffs_test_many_children(void)
 {
     int rc;
 
-    printf("\tmany children test\n");
+    printf("\t\tmany children test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1557,7 +1557,7 @@ ffs_test_gc(void)
         .data_len = 1,
     } };
 
-    printf("\tgarbage collection test\n");
+    printf("\t\tgarbage collection test\n");
 
     rc = ffs_format(area_descs_two);
     assert(rc == 0);
@@ -1585,7 +1585,7 @@ ffs_test_wear_level(void)
         { 0, 0 },
     };
 
-    printf("\twear level test\n");
+    printf("\t\twear level test\n");
 
     /*** Setup. */
     rc = ffs_format(area_descs_uniform);
@@ -1623,7 +1623,7 @@ ffs_test_corrupt_scratch(void)
         { 0, 0 },
     };
 
-    printf("\tcorrupt scratch area test\n");
+    printf("\t\tcorrupt scratch area test\n");
 
     /*** Setup. */
     rc = ffs_format(area_descs_two);
@@ -1685,7 +1685,7 @@ ffs_test_corrupt_block(void)
     uint8_t area_idx;
     int rc;
 
-    printf("\tcorrupt data block test\n");
+    printf("\t\tcorrupt data block test\n");
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1756,7 +1756,7 @@ ffs_test_large_unlink(void)
     int j;
     int k;
 
-    printf("\tlarge unlink test\n");
+    printf("\t\tlarge unlink test\n");
 
     /*** Setup. */
     ffs_config.fc_num_inodes = 1024;
@@ -1840,13 +1840,23 @@ ffs_test_all(void)
 int
 ffs_test(void)
 {
-    printf("flash file system testing (inode cache size = 1)\n");
+    printf("flash file system testing\n");
+
+    printf("\tcache size = 1,1\n");
     ffs_config.fc_num_cache_inodes = 1;
+    ffs_config.fc_num_cache_blocks = 1;
     ffs_test_all();
     printf("\n");
 
-    printf("flash file system testing (inode cache size = 32)\n");
+    printf("\tcache size = 4,32\n");
+    ffs_config.fc_num_cache_inodes = 4;
+    ffs_config.fc_num_cache_blocks = 32;
+    ffs_test_all();
+    printf("\n");
+
+    printf("\tcache size = 32,1024\n");
     ffs_config.fc_num_cache_inodes = 32;
+    ffs_config.fc_num_cache_blocks = 1024;
     ffs_test_all();
     printf("\n");
 

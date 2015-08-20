@@ -32,6 +32,7 @@ struct ffs_config {
     uint32_t fc_num_blocks;
     uint32_t fc_num_files;
     uint32_t fc_num_cache_inodes;
+    uint32_t fc_num_cache_blocks;
 };
 
 extern struct ffs_config ffs_config;

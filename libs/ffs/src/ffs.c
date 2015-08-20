@@ -20,11 +20,13 @@ struct os_mempool ffs_file_pool;
 struct os_mempool ffs_inode_entry_pool;
 struct os_mempool ffs_block_entry_pool;
 struct os_mempool ffs_cache_inode_pool;
+struct os_mempool ffs_cache_block_pool;
 
 void *ffs_file_mem;
 void *ffs_inode_mem;
 void *ffs_block_entry_mem;
 void *ffs_cache_inode_mem;
+void *ffs_cache_block_mem;
 
 struct ffs_inode_entry *ffs_root_dir;
 
@@ -470,6 +472,14 @@ ffs_init(void)
         OS_MEMPOOL_BYTES(ffs_config.fc_num_cache_inodes,
                          sizeof (struct ffs_cache_inode)));
     if (ffs_cache_inode_mem == NULL) {
+        return FFS_ENOMEM;
+    }
+
+    free(ffs_cache_block_mem);
+    ffs_cache_block_mem = malloc(
+        OS_MEMPOOL_BYTES(ffs_config.fc_num_cache_blocks,
+                         sizeof (struct ffs_cache_block)));
+    if (ffs_cache_block_mem == NULL) {
         return FFS_ENOMEM;
     }
 

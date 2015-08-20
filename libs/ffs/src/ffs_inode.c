@@ -122,7 +122,7 @@ ffs_inode_data_len(struct ffs_inode_entry *inode_entry, uint32_t *out_len)
     struct ffs_cache_inode *cache_inode;
     int rc;
 
-    rc = ffs_cache_inode_assure(&cache_inode, inode_entry);
+    rc = ffs_cache_inode_ensure(&cache_inode, inode_entry);
     if (rc != 0) {
         return rc;
     }
@@ -224,12 +224,8 @@ ffs_inode_delete_from_ram(struct ffs_inode_entry *inode_entry)
 /**
  * Decrements the reference count of the specified inode entry.
  *
- * @param out_next              On success, this points to the next hash entry
- *                                  that should be processed if the entire
- *                                  hash table is being iterated.  This is
- *                                  necessary because this function may result
- *                                  in multiple deletions.  Pass null if you
- *                                  don't need this information.
+ * @param inode_entry               The inode entry whose reference count
+ *                                      should be decremented.
  */
 int
 ffs_inode_dec_refcnt(struct ffs_inode_entry *inode_entry)
@@ -624,9 +620,10 @@ ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
     uint32_t seek_end;
     int rc;
 
+    assert(length > 0);
     assert(ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id));
 
-    rc = ffs_cache_inode_assure(&cache_inode, inode_entry);
+    rc = ffs_cache_inode_ensure(&cache_inode, inode_entry);
     if (rc != 0) {
         return rc;
     }
@@ -647,6 +644,7 @@ ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
 
     cur_entry = inode_entry->fie_last_block_entry;
     cur_offset = cache_inode->fci_file_size;
+
     while (1) {
         rc = ffs_block_from_hash_entry(&block, cur_entry);
         if (rc != 0) {
@@ -672,89 +670,86 @@ ffs_inode_seek(struct ffs_inode_entry *inode_entry, uint32_t offset,
  * @param inode_entry           The inode to read from.
  * @param offset                The offset within the file to start the read
  *                                  at.
- * @param data                  On success, the read data gets written here.
- * @param len
+ * @param len                   The number of bytes to attempt to read.
+ * @param out_data              On success, the read data gets written here.
+ * @param out_len               On success, the number of bytes actually read
+ *                                  gets written here.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
                uint32_t len, void *out_data, uint32_t *out_len)
 {
-    struct ffs_seek_info seek_info;
-    struct ffs_block block;
-    uint32_t src_start;
-    uint32_t src_end;
+    struct ffs_cache_inode *cache_inode;
+    struct ffs_cache_block *cache_block;
+    uint32_t block_end;
     uint32_t dst_off;
-    uint32_t area_offset;
-    uint32_t block_start;
-    uint32_t read_len;
-    uint16_t block_off;
-    uint16_t chunk_len;
-    uint8_t *dst;
-    uint8_t area_idx;
+    uint32_t src_off;
+    uint32_t src_end;
+    uint16_t chunk_off;
+    uint16_t chunk_sz;
+    uint8_t *dptr;
     int rc;
 
-    dst = out_data;
-
-    rc = ffs_inode_seek(inode_entry, offset, len, &seek_info);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (seek_info.fsi_last_block.fb_hash_entry == NULL) {
+    if (len == 0) {
         *out_len = 0;
         return 0;
     }
 
-    block = seek_info.fsi_last_block;
-    block_start = seek_info.fsi_block_file_off;
-    src_start = offset;
-
-    if (block_start + seek_info.fsi_last_block.fb_data_len > len) {
-        src_end = offset + len;
-    } else {
-        src_end = block_start + seek_info.fsi_last_block.fb_data_len;
+    rc = ffs_cache_inode_ensure(&cache_inode, inode_entry);
+    if (rc != 0) {
+        return rc;
     }
 
-    read_len = src_end - src_start;
-    dst_off = read_len;
+    src_end = offset + len;
+    if (src_end > cache_inode->fci_file_size) {
+        src_end = cache_inode->fci_file_size;
+    }
+    dst_off = src_end - offset;
 
-    while (1) {
-        if (block_start < src_start) {
-            chunk_len = src_end - src_start;
-            block_off = src_start - block_start;
+    src_off = src_end;
+
+    dptr = out_data;
+
+    cache_block = NULL;
+
+    /* XXX: Cache lookahead. */
+
+    while (dst_off > 0) {
+        if (cache_block == NULL) {
+            rc = ffs_cache_seek(cache_inode, src_off - 1, &cache_block);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+
+        if (cache_block->fcb_file_offset < offset) {
+            chunk_off = offset - cache_block->fcb_file_offset;
         } else {
-            chunk_len = src_end - block_start;
-            block_off = 0;
+            chunk_off = 0;
         }
-        assert(chunk_len <= dst_off);
-        dst_off -= chunk_len;
 
-        ffs_flash_loc_expand(block.fb_hash_entry->fhe_flash_loc,
-                             &area_idx, &area_offset);
-        area_offset += sizeof (struct ffs_disk_block);
-        area_offset += block_off;
+        block_end = cache_block->fcb_file_offset +
+                    cache_block->fcb_block.fb_data_len;
+        chunk_sz = cache_block->fcb_block.fb_data_len - chunk_off;
+        if (block_end > src_end) {
+            chunk_sz -= block_end - src_end;
+        }
 
-        rc = ffs_flash_read(area_idx, area_offset, dst + dst_off, chunk_len);
+        dst_off -= chunk_sz;
+        src_off -= chunk_sz;
+
+        rc = ffs_block_read_data(&cache_block->fcb_block, chunk_off, chunk_sz,
+                                 dptr + dst_off);
         if (rc != 0) {
             return rc;
         }
 
-        if (dst_off == 0) {
-            break;
-        }
-
-        src_end -= chunk_len;
-
-        assert(block.fb_prev != NULL);
-        rc = ffs_block_from_hash_entry(&block, block.fb_prev);
-        if (rc != 0) {
-            return rc;
-        }
-
-        block_start -= block.fb_data_len;
+        cache_block = TAILQ_PREV(cache_block, ffs_cache_block_list, fcb_link);
     }
 
-    *out_len = read_len;
+    *out_len = src_end - offset;
 
     return 0;
 }
