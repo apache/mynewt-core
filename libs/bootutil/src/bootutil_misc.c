@@ -10,12 +10,11 @@
 static int
 boot_vect_read_one(struct image_version *ver, const char *path)
 {
-    uint32_t len;
+    uint32_t bytes_read;
     int rc;
 
-    len = sizeof *ver;
-    rc = ffsutil_read_file(path, ver, 0, &len);
-    if (rc != 0 || len != sizeof *ver) {
+    rc = ffsutil_read_file(path, 0, sizeof *ver, ver, &bytes_read);
+    if (rc != 0 || bytes_read != sizeof *ver) {
         return BOOT_EBADVECT;
     }
 
@@ -151,7 +150,7 @@ boot_read_status(struct boot_status *out_status,
                  int num_areas)
 {
     struct ffs_file *file;
-    uint32_t len;
+    uint32_t bytes_read;
     int rc;
     int i;
 
@@ -161,16 +160,15 @@ boot_read_status(struct boot_status *out_status,
         goto done;
     }
 
-    len = sizeof *out_status;
-    rc = ffs_read(file, out_status, &len);
-    if (rc != 0 || len != sizeof *out_status) {
+    rc = ffs_read(file, sizeof *out_status, out_status, &bytes_read);
+    if (rc != 0 || bytes_read != sizeof *out_status) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }
 
-    len = num_areas * sizeof *out_entries;
-    rc = ffs_read(file, out_entries, &len);
-    if (rc != 0 || len != num_areas * sizeof *out_entries) {
+    rc = ffs_read(file, num_areas * sizeof *out_entries, out_entries,
+                  &bytes_read);
+    if (rc != 0 || bytes_read != num_areas * sizeof *out_entries) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }

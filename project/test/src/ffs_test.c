@@ -42,20 +42,19 @@ ffs_test_util_assert_contents(const char *filename, const char *contents,
                               int contents_len)
 {
     struct ffs_file *file;
-    uint32_t len;
+    uint32_t bytes_read;
     void *buf;
     int rc;
 
     rc = ffs_open(filename, FFS_ACCESS_READ, &file);
     assert(rc == 0);
 
-    len = contents_len + 1;
-    buf = malloc(len);
+    buf = malloc(contents_len + 1);
     assert(buf != NULL);
 
-    rc = ffs_read(file, buf, &len);
+    rc = ffs_read(file, contents_len + 1, buf, &bytes_read);
     assert(rc == 0);
-    assert(len == contents_len);
+    assert(bytes_read == contents_len);
     assert(memcmp(buf, contents, contents_len) == 0);
 
     rc = ffs_close(file);
@@ -579,7 +578,7 @@ ffs_test_unlink(void)
     struct ffs_file *file1;
     struct ffs_file *file2;
     uint8_t buf[64];
-    uint32_t len;
+    uint32_t bytes_read;
     int rc;
 
     printf("\t\tunlink test\n");
@@ -606,10 +605,9 @@ ffs_test_unlink(void)
     rc = ffs_seek(file0, 0);
     assert(rc == 0);
 
-    len = sizeof buf;
-    rc = ffs_read(file0, buf, &len);
+    rc = ffs_read(file0, sizeof buf, buf, &bytes_read);
     assert(rc == 0);
-    assert(len == 2);
+    assert(bytes_read == 2);
     assert(memcmp(buf, "00", 2) == 0);
 
     rc = ffs_close(file0);
@@ -641,10 +639,9 @@ ffs_test_unlink(void)
     rc = ffs_seek(file1, 0);
     assert(rc == 0);
 
-    len = sizeof buf;
-    rc = ffs_read(file1, buf, &len);
+    rc = ffs_read(file1, sizeof buf, buf, &bytes_read);
     assert(rc == 0);
-    assert(len == 2);
+    assert(bytes_read == 2);
     assert(memcmp(buf, "11", 2) == 0);
 
     rc = ffs_close(file1);
@@ -862,7 +859,7 @@ ffs_test_read(void)
 {
     struct ffs_file *file;
     uint8_t buf[16];
-    uint32_t len;
+    uint32_t bytes_read;
     int rc;
 
     printf("\t\tread test\n");
@@ -877,17 +874,15 @@ ffs_test_read(void)
     ffs_test_util_assert_file_len(file, 10);
     assert(ffs_getpos(file) == 0);
 
-    len = 4;
-    rc = ffs_read(file, buf, &len);
+    rc = ffs_read(file, 4, buf, &bytes_read);
     assert(rc == 0);
-    assert(len == 4);
+    assert(bytes_read == 4);
     assert(memcmp(buf, "1234", 4) == 0);
     assert(ffs_getpos(file) == 4);
 
-    len = sizeof buf - 4;
-    rc = ffs_read(file, buf + 4, &len);
+    rc = ffs_read(file, sizeof buf - 4, buf + 4, &bytes_read);
     assert(rc == 0);
-    assert(len == 6);
+    assert(bytes_read == 6);
     assert(memcmp(buf, "1234567890", 10) == 0);
     assert(ffs_getpos(file) == 10);
 

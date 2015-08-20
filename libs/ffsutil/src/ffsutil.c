@@ -2,7 +2,8 @@
 #include "ffsutil/ffsutil.h"
 
 int
-ffsutil_read_file(const char *path, void *dst, uint32_t offset, uint32_t *len)
+ffsutil_read_file(const char *path, uint32_t offset, uint32_t len, void *dst,
+                  uint32_t *out_len)
 {
     struct ffs_file *file;
     int rc;
@@ -12,7 +13,7 @@ ffsutil_read_file(const char *path, void *dst, uint32_t offset, uint32_t *len)
         goto done;
     }
 
-    rc = ffs_read(file, dst, len);
+    rc = ffs_read(file, len, dst, out_len);
     if (rc != 0) {
         goto done;
     }

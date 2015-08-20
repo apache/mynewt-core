@@ -62,7 +62,8 @@ int ffs_close(struct ffs_file *file);
 int ffs_init(void);
 int ffs_detect(const struct ffs_area_desc *area_descs);
 int ffs_format(const struct ffs_area_desc *area_descs);
-int ffs_read(struct ffs_file *file, void *data, uint32_t *len);
+int ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
+             uint32_t *out_len);
 int ffs_write(struct ffs_file *file, const void *data, int len);
 int ffs_seek(struct ffs_file *file, uint32_t offset);
 uint32_t ffs_getpos(const struct ffs_file *file);
