@@ -695,7 +695,9 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
     int rc;
 
     if (len == 0) {
-        *out_len = 0;
+        if (out_len != NULL) {
+            *out_len = 0;
+        }
         return 0;
     }
 
@@ -751,7 +753,9 @@ ffs_inode_read(struct ffs_inode_entry *inode_entry, uint32_t offset,
         cache_block = TAILQ_PREV(cache_block, ffs_cache_block_list, fcb_link);
     }
 
-    *out_len = src_end - offset;
+    if (out_len != NULL) {
+        *out_len = src_end - offset;
+    }
 
     return 0;
 }

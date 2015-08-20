@@ -193,15 +193,18 @@ ffs_file_len(struct ffs_file *file, uint32_t *out_len)
  * results in a success return code.
  *
  * @param file              The file to read from.
- * @param data              The destination buffer to read into.
- * @param len               (in/out) in:  The number of bytes to read.
- *                                   out: The number of bytes actually read.
+ * @param len               The number of bytes to attempt to read.
+ * @param out_data          The destination buffer to read into.
+ * @param out_len           On success, the number of bytes actually read gets
+ *                              written here.  Pass null if you don't care.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-ffs_read(struct ffs_file *file, void *data, uint32_t *len)
+ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
+         uint32_t *out_len)
 {
+    uint32_t bytes_read;
     int rc;
 
     ffs_lock();
@@ -211,12 +214,16 @@ ffs_read(struct ffs_file *file, void *data, uint32_t *len)
         goto done;
     }
 
-    rc = ffs_inode_read(file->ff_inode_entry, file->ff_offset, *len, data, len);
+    rc = ffs_inode_read(file->ff_inode_entry, file->ff_offset, len, out_data,
+                        &bytes_read);
     if (rc != 0) {
         goto done;
     }
 
-    file->ff_offset += *len;
+    file->ff_offset += bytes_read;
+    if (out_len != NULL) {
+        *out_len = bytes_read;
+    }
 
     rc = 0;
 
