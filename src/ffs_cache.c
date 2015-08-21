@@ -3,186 +3,11 @@
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 
-static void ffs_cache_block_free(struct ffs_cache_block *entry);
-
 TAILQ_HEAD(ffs_cache_inode_list, ffs_cache_inode);
 static struct ffs_cache_inode_list ffs_cache_inode_list =
     TAILQ_HEAD_INITIALIZER(ffs_cache_inode_list);
 
-
-static struct ffs_hash_entry *
-ffs_cache_inode_last_entry(struct ffs_cache_inode *cache_inode)
-{
-    struct ffs_cache_block *cache_block;
-
-    if (TAILQ_EMPTY(&cache_inode->fci_block_list)) {
-        return NULL;
-    }
-
-    cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
-                             ffs_cache_block_list);
-    return cache_block->fcb_block.fb_hash_entry;
-}
-
-static void
-ffs_cache_inode_free_blocks(struct ffs_cache_inode *cache_inode)
-{
-    struct ffs_cache_block *cache_block;
-
-    while ((cache_block = TAILQ_FIRST(&cache_inode->fci_block_list)) != NULL) {
-        TAILQ_REMOVE(&cache_inode->fci_block_list, cache_block, fcb_link);
-        ffs_cache_block_free(cache_block);
-    }
-}
-
-static struct ffs_cache_inode *
-ffs_cache_inode_alloc(void)
-{
-    struct ffs_cache_inode *entry;
-
-    entry = os_memblock_get(&ffs_cache_inode_pool);
-    if (entry != NULL) {
-        memset(entry, 0, sizeof *entry);
-        entry->fci_block_list = (struct ffs_cache_block_list)
-            TAILQ_HEAD_INITIALIZER(entry->fci_block_list);
-    }
-
-    return entry;
-}
-
-static void
-ffs_cache_inode_free(struct ffs_cache_inode *entry)
-{
-    if (entry != NULL) {
-        ffs_cache_inode_free_blocks(entry);
-        os_memblock_put(&ffs_cache_inode_pool, entry);
-    }
-}
-
-static struct ffs_cache_inode *
-ffs_cache_inode_acquire(void)
-{
-    struct ffs_cache_inode *entry;
-
-    entry = ffs_cache_inode_alloc();
-    if (entry == NULL) {
-        entry = TAILQ_LAST(&ffs_cache_inode_list, ffs_cache_inode_list);
-        assert(entry != NULL);
-
-        TAILQ_REMOVE(&ffs_cache_inode_list, entry, fci_link);
-        ffs_cache_inode_free(entry);
-
-        entry = ffs_cache_inode_alloc();
-    }
-
-    assert(entry != NULL);
-
-    return entry;
-}
-
-static struct ffs_cache_inode *
-ffs_cache_inode_find(const struct ffs_inode_entry *inode_entry)
-{
-    struct ffs_cache_inode *cur;
-
-    TAILQ_FOREACH(cur, &ffs_cache_inode_list, fci_link) {
-        if (cur->fci_inode.fi_inode_entry == inode_entry) {
-            return cur;
-        }
-    }
-
-    return NULL;
-}
-
-void
-ffs_cache_inode_delete(const struct ffs_inode_entry *inode_entry)
-{
-    struct ffs_cache_inode *entry;
-
-    entry = ffs_cache_inode_find(inode_entry);
-    if (entry == NULL) {
-        return;
-    }
-
-    TAILQ_REMOVE(&ffs_cache_inode_list, entry, fci_link);
-    ffs_cache_inode_free(entry);
-}
-
-static int
-ffs_cache_populate_entry(struct ffs_cache_inode *cache_inode,
-                         struct ffs_inode_entry *inode_entry)
-{
-    int rc;
-
-    memset(cache_inode, 0, sizeof *cache_inode);
-
-    rc = ffs_inode_from_entry(&cache_inode->fci_inode, inode_entry);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = ffs_inode_calc_data_length(cache_inode->fci_inode.fi_inode_entry,
-                                    &cache_inode->fci_file_size);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-int
-ffs_cache_inode_ensure(struct ffs_cache_inode **out_cache_inode,
-                       struct ffs_inode_entry *inode_entry)
-{
-    struct ffs_cache_inode *cache_inode;
-    int rc;
-
-    cache_inode = ffs_cache_inode_find(inode_entry);
-    if (cache_inode != NULL) {
-        rc = 0;
-        goto done;
-    }
-
-    cache_inode = ffs_cache_inode_acquire();
-    rc = ffs_cache_populate_entry(cache_inode, inode_entry);
-    if (rc != 0) {
-        goto done;
-    }
-
-    TAILQ_INSERT_HEAD(&ffs_cache_inode_list, cache_inode, fci_link);
-
-    rc = 0;
-
-done:
-    if (rc == 0) {
-        *out_cache_inode = cache_inode;
-    } else {
-        ffs_cache_inode_free(cache_inode);
-        *out_cache_inode = NULL;
-    }
-    return rc;
-}
-
-static void
-ffs_cache_inode_range(const struct ffs_cache_inode *cache_inode,
-                      uint32_t *out_start, uint32_t *out_end)
-{
-    struct ffs_cache_block *cache_block;
-
-    cache_block = TAILQ_FIRST(&cache_inode->fci_block_list);
-    if (cache_block == NULL) {
-        *out_start = 0;
-        *out_end = 0;
-        return;
-    }
-
-    *out_start = cache_block->fcb_file_offset;
-
-    cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
-                             ffs_cache_block_list);
-    *out_end = cache_block->fcb_file_offset +
-               cache_block->fcb_block.fb_data_len;
-}
+static void ffs_cache_collect_blocks(void);
 
 static struct ffs_cache_block *
 ffs_cache_block_alloc(void)
@@ -203,22 +28,6 @@ ffs_cache_block_free(struct ffs_cache_block *entry)
     if (entry != NULL) {
         os_memblock_put(&ffs_cache_block_pool, entry);
     }
-}
-
-static void
-ffs_cache_collect_blocks(void)
-{
-    struct ffs_cache_inode *cache_inode;
-
-    TAILQ_FOREACH_REVERSE(cache_inode, &ffs_cache_inode_list,
-                          ffs_cache_inode_list, fci_link) {
-        if (!TAILQ_EMPTY(&cache_inode->fci_block_list)) {
-            ffs_cache_inode_free_blocks(cache_inode);
-            return;
-        }
-    }
-
-    assert(0);
 }
 
 static struct ffs_cache_block *
@@ -255,26 +64,253 @@ ffs_cache_block_populate(struct ffs_cache_block *cache_block,
     return 0;
 }
 
+static struct ffs_cache_inode *
+ffs_cache_inode_alloc(void)
+{
+    struct ffs_cache_inode *entry;
+
+    entry = os_memblock_get(&ffs_cache_inode_pool);
+    if (entry != NULL) {
+        memset(entry, 0, sizeof *entry);
+        entry->fci_block_list = (struct ffs_cache_block_list)
+            TAILQ_HEAD_INITIALIZER(entry->fci_block_list);
+    }
+
+    return entry;
+}
+
+static void
+ffs_cache_inode_free_blocks(struct ffs_cache_inode *cache_inode)
+{
+    struct ffs_cache_block *cache_block;
+
+    while ((cache_block = TAILQ_FIRST(&cache_inode->fci_block_list)) != NULL) {
+        TAILQ_REMOVE(&cache_inode->fci_block_list, cache_block, fcb_link);
+        ffs_cache_block_free(cache_block);
+    }
+}
+
+static void
+ffs_cache_inode_free(struct ffs_cache_inode *entry)
+{
+    if (entry != NULL) {
+        ffs_cache_inode_free_blocks(entry);
+        os_memblock_put(&ffs_cache_inode_pool, entry);
+    }
+}
+
+static struct ffs_cache_inode *
+ffs_cache_inode_acquire(void)
+{
+    struct ffs_cache_inode *entry;
+
+    entry = ffs_cache_inode_alloc();
+    if (entry == NULL) {
+        entry = TAILQ_LAST(&ffs_cache_inode_list, ffs_cache_inode_list);
+        assert(entry != NULL);
+
+        TAILQ_REMOVE(&ffs_cache_inode_list, entry, fci_link);
+        ffs_cache_inode_free(entry);
+
+        entry = ffs_cache_inode_alloc();
+    }
+
+    assert(entry != NULL);
+
+    return entry;
+}
+
+static int
+ffs_cache_inode_populate(struct ffs_cache_inode *cache_inode,
+                         struct ffs_inode_entry *inode_entry)
+{
+    int rc;
+
+    memset(cache_inode, 0, sizeof *cache_inode);
+
+    rc = ffs_inode_from_entry(&cache_inode->fci_inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ffs_inode_calc_data_length(cache_inode->fci_inode.fi_inode_entry,
+                                    &cache_inode->fci_file_size);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/**
+ * Retrieves the block entry corresponding to the last cached block in the
+ * specified inode's list.  If the inode has no cached blocks, this function
+ * returns null.
+ */
+static struct ffs_hash_entry *
+ffs_cache_inode_last_entry(struct ffs_cache_inode *cache_inode)
+{
+    struct ffs_cache_block *cache_block;
+
+    if (TAILQ_EMPTY(&cache_inode->fci_block_list)) {
+        return NULL;
+    }
+
+    cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
+                             ffs_cache_block_list);
+    return cache_block->fcb_block.fb_hash_entry;
+}
+
+static struct ffs_cache_inode *
+ffs_cache_inode_find(const struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_cache_inode *cur;
+
+    TAILQ_FOREACH(cur, &ffs_cache_inode_list, fci_link) {
+        if (cur->fci_inode.fi_inode_entry == inode_entry) {
+            return cur;
+        }
+    }
+
+    return NULL;
+}
+
+static void
+ffs_cache_inode_range(const struct ffs_cache_inode *cache_inode,
+                      uint32_t *out_start, uint32_t *out_end)
+{
+    struct ffs_cache_block *cache_block;
+
+    cache_block = TAILQ_FIRST(&cache_inode->fci_block_list);
+    if (cache_block == NULL) {
+        *out_start = 0;
+        *out_end = 0;
+        return;
+    }
+
+    *out_start = cache_block->fcb_file_offset;
+
+    cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
+                             ffs_cache_block_list);
+    *out_end = cache_block->fcb_file_offset +
+               cache_block->fcb_block.fb_data_len;
+}
+
+static void
+ffs_cache_collect_blocks(void)
+{
+    struct ffs_cache_inode *cache_inode;
+
+    TAILQ_FOREACH_REVERSE(cache_inode, &ffs_cache_inode_list,
+                          ffs_cache_inode_list, fci_link) {
+        if (!TAILQ_EMPTY(&cache_inode->fci_block_list)) {
+            ffs_cache_inode_free_blocks(cache_inode);
+            return;
+        }
+    }
+
+    assert(0);
+}
+
+void
+ffs_cache_inode_delete(const struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_cache_inode *entry;
+
+    entry = ffs_cache_inode_find(inode_entry);
+    if (entry == NULL) {
+        return;
+    }
+
+    TAILQ_REMOVE(&ffs_cache_inode_list, entry, fci_link);
+    ffs_cache_inode_free(entry);
+}
+
 int
-ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
+ffs_cache_inode_ensure(struct ffs_cache_inode **out_cache_inode,
+                       struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_cache_inode *cache_inode;
+    int rc;
+
+    cache_inode = ffs_cache_inode_find(inode_entry);
+    if (cache_inode != NULL) {
+        rc = 0;
+        goto done;
+    }
+
+    cache_inode = ffs_cache_inode_acquire();
+    rc = ffs_cache_inode_populate(cache_inode, inode_entry);
+    if (rc != 0) {
+        goto done;
+    }
+
+    TAILQ_INSERT_HEAD(&ffs_cache_inode_list, cache_inode, fci_link);
+
+    rc = 0;
+
+done:
+    if (rc == 0) {
+        *out_cache_inode = cache_inode;
+    } else {
+        ffs_cache_inode_free(cache_inode);
+        *out_cache_inode = NULL;
+    }
+    return rc;
+}
+
+/**
+ * Finds the data block containing the specified offset within a file inode.
+ * If the block is not yet cached, it gets cached as a result of this
+ * operation.  This function modifies the inode's cached block list according
+ * to the following procedure:
+ *
+ *  1. If none of the owning inode's blocks are currently cached, allocate a
+ *     cached block entry and insert it into the inode's list.
+ *  2. Else if the requested file offset is less than that of the first cached
+ *     block, bridge the gap between the inode's sequence of cached blocks and
+ *     the block that now needs to be cached.  This is accomplished by caching
+ *     each block in the gap, finishing with the requested block.
+ *  3. Else (the requested offset is beyond the end of the cache),
+ *      a. If the requested offset belongs to the block that immediately
+ *         follows the end of the cache, cache the block and append it to the
+ *         list.
+ *      b. Else, clear the cache, and populate it with the single entry
+ *         corresponding to the requested block.
+ *
+ * @param cache_inode           The cached file inode to seek within.
+ * @param seek_offset           The file offset to seek to.
+ * @param out_cache_block       On success, the requested cached block gets
+ *                                  written here; pass null if you don't need
+ *                                  this.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t seek_offset,
                struct ffs_cache_block **out_cache_block)
 {
     struct ffs_cache_block *cache_block;
-    struct ffs_block block;
     struct ffs_hash_entry *last_cached_entry;
     struct ffs_hash_entry *block_entry;
     struct ffs_hash_entry *pred_entry;
+    struct ffs_block block;
     uint32_t cache_start;
     uint32_t cache_end;
     uint32_t block_start;
     uint32_t block_end;
     int rc;
 
+    /* Empty files have no blocks that can be cached. */
+    if (cache_inode->fci_file_size == 0) {
+        return FFS_ENOENT;
+    }
+
     ffs_cache_inode_range(cache_inode, &cache_start, &cache_end);
-    if (to <= cache_start) {
+    if (seek_offset <= cache_start) {
         /* Seeking prior to cache.  Iterate backwards from cache start. */
         cache_block = TAILQ_FIRST(&cache_inode->fci_block_list);
-    } else if (to < cache_end) {
+    } else if (seek_offset < cache_end) {
         /* Seeking within cache.  Iterate backwards from cache end. */
         cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
                                  ffs_cache_block_list);
@@ -300,6 +336,7 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
         block_end = cache_inode->fci_file_size;
     }
 
+    /* Scan backwards until we find the block containing the seek offest. */
     while (1) {
         if (block_end < cache_start) {
             /* We are looking before the start of the cache.  Allocate a new
@@ -317,8 +354,8 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
                               fcb_link);
         }
 
-        /* Calculate the file block_end of the start of this block.  This is
-         * used to determine if this block contains the sought-after offset.
+        /* Calculate the file offset of the start of this block.  This is used
+         * to determine if this block contains the sought-after offset.
          */
         if (cache_block != NULL) {
             /* Current block is cached. */
@@ -337,7 +374,7 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
             pred_entry = block.fb_prev;
         }
 
-        if (block_start <= to) {
+        if (block_start <= seek_offset) {
             /* This block contains the requested address; iteration is
              * complete.
              */
@@ -382,6 +419,9 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
     return 0;
 }
 
+/**
+ * Frees all cached inodes and blocks.
+ */
 void
 ffs_cache_clear(void)
 {
