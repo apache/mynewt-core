@@ -38,6 +38,50 @@ ffs_test_util_assert_file_len(struct ffs_file *file, uint32_t expected)
 }
 
 static void
+ffs_test_util_assert_cache_is_sane(const char *filename)
+{
+    struct ffs_cache_inode *cache_inode;
+    struct ffs_cache_block *cache_block;
+    struct ffs_file *file;
+    uint32_t cache_start;
+    uint32_t cache_end;
+    uint32_t block_end;
+    int rc;
+
+    rc = ffs_open(filename, FFS_ACCESS_READ, &file);
+    assert(rc == 0);
+
+    rc = ffs_cache_inode_ensure(&cache_inode, file->ff_inode_entry);
+    assert(rc == 0);
+
+    ffs_cache_inode_range(cache_inode, &cache_start, &cache_end);
+
+    if (TAILQ_EMPTY(&cache_inode->fci_block_list)) {
+        assert(cache_start == 0 && cache_end == 0);
+    } else {
+        TAILQ_FOREACH(cache_block, &cache_inode->fci_block_list, fcb_link) {
+            if (cache_block == TAILQ_FIRST(&cache_inode->fci_block_list)) {
+                assert(cache_block->fcb_file_offset == cache_start);
+            } else {
+                /* Ensure no gap between this block and its predecessor. */
+                assert(cache_block->fcb_file_offset == block_end);
+            }
+
+            block_end = cache_block->fcb_file_offset +
+                        cache_block->fcb_block.fb_data_len;
+            if (cache_block == TAILQ_LAST(&cache_inode->fci_block_list,
+                                          ffs_cache_block_list)) {
+
+                assert(block_end == cache_end);
+            }
+        }
+    }
+
+    rc = ffs_close(file);
+    assert(rc == 0);
+}
+
+static void
 ffs_test_util_assert_contents(const char *filename, const char *contents,
                               int contents_len)
 {
@@ -61,6 +105,8 @@ ffs_test_util_assert_contents(const char *filename, const char *contents,
     assert(rc == 0);
 
     free(buf);
+
+    ffs_test_util_assert_cache_is_sane(filename);
 }
 
 static int
@@ -95,6 +141,33 @@ static void
 ffs_test_util_assert_block_count(const char *filename, int expected_count)
 {
     assert(ffs_test_util_block_count(filename) == expected_count);
+}
+
+static void
+ffs_test_util_assert_cache_range(const char *filename,
+                                 uint32_t expected_cache_start,
+                                 uint32_t expected_cache_end)
+{
+    struct ffs_cache_inode *cache_inode;
+    struct ffs_file *file;
+    uint32_t cache_start;
+    uint32_t cache_end;
+    int rc;
+
+    rc = ffs_open(filename, FFS_ACCESS_READ, &file);
+    assert(rc == 0);
+
+    rc = ffs_cache_inode_ensure(&cache_inode, file->ff_inode_entry);
+    assert(rc == 0);
+
+    ffs_cache_inode_range(cache_inode, &cache_start, &cache_end);
+    assert(cache_start == expected_cache_start);
+    assert(cache_end == expected_cache_end);
+
+    rc = ffs_close(file);
+    assert(rc == 0);
+
+    ffs_test_util_assert_cache_is_sane(filename);
 }
 
 static void
@@ -1855,12 +1928,100 @@ ffs_test_large_system(void)
     assert(rc == 0);
 
     rc = ffs_mkdir("/lvl1dir-0000");
+    assert(rc == 0);
 
     ffs_test_assert_system(ffs_test_system_01_rm_1014_mk10, ffs_area_descs);
 }
 
 static void
-ffs_test_all(void)
+ffs_test_cache_large_file(void)
+{
+    static char data[FFS_BLOCK_MAX_DATA_SZ_MAX * 5];
+    struct ffs_file *file;
+    uint8_t b;
+    int rc;
+
+    printf("\tlarge file cache test\n");
+
+    /*** Setup. */
+    rc = ffs_format(ffs_area_descs);
+    assert(rc == 0);
+
+    ffs_test_util_create_file("/myfile.txt", data, sizeof data);
+    ffs_cache_clear();
+
+    /* Opening a file should not cause any blocks to get cached. */
+    rc = ffs_open("/myfile.txt", FFS_ACCESS_READ, &file);
+    assert(rc == 0);
+    ffs_test_util_assert_cache_range("/myfile.txt", 0, 0);
+
+    /* Cache first block. */
+    rc = ffs_seek(file, ffs_block_max_data_sz * 0);
+    assert(rc == 0);
+    rc = ffs_read(file, 1, &b, NULL);
+    assert(rc == 0);
+    ffs_test_util_assert_cache_range("/myfile.txt",
+                                     ffs_block_max_data_sz * 0,
+                                     ffs_block_max_data_sz * 1);
+
+    /* Cache second block. */
+    rc = ffs_seek(file, ffs_block_max_data_sz * 1);
+    assert(rc == 0);
+    rc = ffs_read(file, 1, &b, NULL);
+    assert(rc == 0);
+    ffs_test_util_assert_cache_range("/myfile.txt",
+                                     ffs_block_max_data_sz * 0,
+                                     ffs_block_max_data_sz * 2);
+
+
+    /* Cache fourth block; prior cache should get erased. */
+    rc = ffs_seek(file, ffs_block_max_data_sz * 3);
+    assert(rc == 0);
+    rc = ffs_read(file, 1, &b, NULL);
+    assert(rc == 0);
+    ffs_test_util_assert_cache_range("/myfile.txt",
+                                     ffs_block_max_data_sz * 3,
+                                     ffs_block_max_data_sz * 4);
+
+    /* Cache second and third blocks. */
+    rc = ffs_seek(file, ffs_block_max_data_sz * 1);
+    assert(rc == 0);
+    rc = ffs_read(file, 1, &b, NULL);
+    assert(rc == 0);
+    ffs_test_util_assert_cache_range("/myfile.txt",
+                                     ffs_block_max_data_sz * 1,
+                                     ffs_block_max_data_sz * 4);
+
+    /* Cache fifth block. */
+    rc = ffs_seek(file, ffs_block_max_data_sz * 4);
+    assert(rc == 0);
+    rc = ffs_read(file, 1, &b, NULL);
+    assert(rc == 0);
+    ffs_test_util_assert_cache_range("/myfile.txt",
+                                     ffs_block_max_data_sz * 1,
+                                     ffs_block_max_data_sz * 5);
+
+    rc = ffs_close(file);
+    assert(rc == 0);
+}
+
+static void
+ffs_test_cache(void)
+{
+    int rc;
+
+    memset(&ffs_config, 0, sizeof ffs_config);
+    ffs_config.fc_num_cache_inodes = 4;
+    ffs_config.fc_num_cache_blocks = 64;
+
+    rc = ffs_init();
+    assert(rc == 0);
+
+    ffs_test_cache_large_file();
+}
+
+static void
+ffs_test_gen(void)
 {
     int rc;
 
@@ -1891,24 +2052,28 @@ ffs_test_all(void)
 int
 ffs_test(void)
 {
-    printf("flash file system testing\n");
+    printf("flash file system general testing\n");
 
     printf("\tcache size = 1,1\n");
     ffs_config.fc_num_cache_inodes = 1;
     ffs_config.fc_num_cache_blocks = 1;
-    ffs_test_all();
+    ffs_test_gen();
     printf("\n");
 
     printf("\tcache size = 4,32\n");
     ffs_config.fc_num_cache_inodes = 4;
     ffs_config.fc_num_cache_blocks = 32;
-    ffs_test_all();
+    ffs_test_gen();
     printf("\n");
 
     printf("\tcache size = 32,1024\n");
     ffs_config.fc_num_cache_inodes = 32;
     ffs_config.fc_num_cache_blocks = 1024;
-    ffs_test_all();
+    ffs_test_gen();
+    printf("\n");
+
+    printf("flash file system cache testing\n");
+    ffs_test_cache();
     printf("\n");
 
     return 0;
