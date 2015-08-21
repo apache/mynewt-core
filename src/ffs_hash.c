@@ -44,16 +44,25 @@ struct ffs_hash_entry *
 ffs_hash_find(uint32_t id)
 {
     struct ffs_hash_entry *entry;
+    struct ffs_hash_entry *prev;
     struct ffs_hash_list *list;
     int idx;
 
     idx = ffs_hash_fn(id);
     list = ffs_hash + idx;
 
+    prev = NULL;
     SLIST_FOREACH(entry, list, fhe_next) {
         if (entry->fhe_id == id) {
+            /* Put entry at the front of the list. */
+            if (prev != NULL) {
+                SLIST_NEXT(prev, fhe_next) = SLIST_NEXT(entry, fhe_next);
+                SLIST_INSERT_HEAD(list, entry, fhe_next);
+            }
             return entry;
         }
+
+        prev = entry;
     }
 
     return NULL;
@@ -90,8 +99,7 @@ ffs_hash_insert(struct ffs_hash_entry *entry)
     idx = ffs_hash_fn(entry->fhe_id);
     list = ffs_hash + idx;
 
-    SLIST_NEXT(entry, fhe_next) = SLIST_FIRST(list);
-    SLIST_FIRST(list) = entry;
+    SLIST_INSERT_HEAD(list, entry, fhe_next);
 }
 
 void
@@ -119,8 +127,7 @@ ffs_hash_init(void)
     }
 
     for (i = 0; i < ffs_config.fc_hash_size; i++) {
-        ffs_hash[i] =
-            (struct ffs_hash_list)SLIST_HEAD_INITIALIZER(&ffs_hash[i]);
+        SLIST_INIT(ffs_hash + i);
     }
 
     return 0;
