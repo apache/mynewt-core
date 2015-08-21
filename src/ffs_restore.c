@@ -349,11 +349,11 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
     }
 
     if (ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id)) {
-        if (inode_entry->fie_hash_entry.fhe_id > ffs_hash_next_file_id) {
+        if (inode_entry->fie_hash_entry.fhe_id >= ffs_hash_next_file_id) {
             ffs_hash_next_file_id = inode_entry->fie_hash_entry.fhe_id + 1;
         }
     } else {
-        if (inode_entry->fie_hash_entry.fhe_id > ffs_hash_next_dir_id) {
+        if (inode_entry->fie_hash_entry.fhe_id >= ffs_hash_next_dir_id) {
             ffs_hash_next_dir_id = inode_entry->fie_hash_entry.fhe_id + 1;
         }
     }
