@@ -341,7 +341,7 @@ ffs_write_to_file(struct ffs_file *file, const void *data, int len)
     int rc;
 
     if (!(file->ff_access_flags & FFS_ACCESS_WRITE)) {
-        return FFS_ERDONLY;
+        return FFS_EACCESS;
     }
 
     if (len == 0) {

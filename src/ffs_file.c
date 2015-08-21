@@ -21,9 +21,11 @@ ffs_file_free(struct ffs_file *file)
 {
     int rc;
 
-    rc = os_memblock_put(&ffs_file_pool, file);
-    if (rc != 0) {
-        return FFS_EOS;
+    if (file != NULL) {
+        rc = os_memblock_put(&ffs_file_pool, file);
+        if (rc != 0) {
+            return FFS_EOS;
+        }
     }
 
     return 0;
@@ -250,6 +252,48 @@ ffs_file_seek(struct ffs_file *file, uint32_t offset)
     }
 
     file->ff_offset = offset;
+    return 0;
+}
+
+/**
+ * Reads data from the specified file.  If more data is requested than remains
+ * in the file, all available data is retrieved.  Note: this type of short read
+ * results in a success return code.
+ *
+ * @param file              The file to read from.
+ * @param len               The number of bytes to attempt to read.
+ * @param out_data          The destination buffer to read into.
+ * @param out_len           On success, the number of bytes actually read gets
+ *                              written here.  Pass null if you don't care.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int
+ffs_file_read(struct ffs_file *file, uint32_t len, void *out_data,
+              uint32_t *out_len)
+{
+    uint32_t bytes_read;
+    int rc;
+
+    if (!ffs_ready()) {
+        return FFS_EUNINIT;
+    }
+
+    if (!(file->ff_access_flags & FFS_ACCESS_READ)) {
+        return FFS_EACCESS;
+    }
+
+    rc = ffs_inode_read(file->ff_inode_entry, file->ff_offset, len, out_data,
+                        &bytes_read);
+    if (rc != 0) {
+        return rc;
+    }
+
+    file->ff_offset += bytes_read;
+    if (out_len != NULL) {
+        *out_len = bytes_read;
+    }
+
     return 0;
 }
 

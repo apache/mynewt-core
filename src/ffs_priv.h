@@ -264,6 +264,8 @@ void ffs_config_init(void);
 int ffs_file_open(struct ffs_file **out_file, const char *filename,
                   uint8_t access_flags);
 int ffs_file_seek(struct ffs_file *file, uint32_t offset);
+int ffs_file_read(struct ffs_file *file, uint32_t len, void *out_data,
+                  uint32_t *out_len);
 int ffs_file_close(struct ffs_file *file);
 int ffs_file_new(struct ffs_inode_entry *parent, const char *filename,
                  uint8_t filename_len, int is_dir,

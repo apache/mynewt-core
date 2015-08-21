@@ -204,31 +204,12 @@ int
 ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
          uint32_t *out_len)
 {
-    uint32_t bytes_read;
     int rc;
 
     ffs_lock();
-
-    if (!ffs_ready()) {
-        rc = FFS_EUNINIT;
-        goto done;
-    }
-
-    rc = ffs_inode_read(file->ff_inode_entry, file->ff_offset, len, out_data,
-                        &bytes_read);
-    if (rc != 0) {
-        goto done;
-    }
-
-    file->ff_offset += bytes_read;
-    if (out_len != NULL) {
-        *out_len = bytes_read;
-    }
-
-    rc = 0;
-
-done:
+    rc = ffs_file_read(file, len, out_data, out_len);
     ffs_unlock();
+
     return rc;
 }
 
