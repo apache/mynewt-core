@@ -37,7 +37,7 @@ ffs_hash_id_is_block(uint32_t id)
 static int
 ffs_hash_fn(uint32_t id)
 {
-    return id % ffs_config.fc_hash_size;
+    return id % FFS_HASH_SIZE;
 }
 
 struct ffs_hash_entry *
@@ -121,12 +121,12 @@ ffs_hash_init(void)
 
     free(ffs_hash);
 
-    ffs_hash = malloc(ffs_config.fc_hash_size * sizeof *ffs_hash);
+    ffs_hash = malloc(FFS_HASH_SIZE * sizeof *ffs_hash);
     if (ffs_hash == NULL) {
         return FFS_ENOMEM;
     }
 
-    for (i = 0; i < ffs_config.fc_hash_size; i++) {
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
         SLIST_INIT(ffs_hash + i);
     }
 
