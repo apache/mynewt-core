@@ -175,7 +175,7 @@ ffs_cache_inode_find(const struct ffs_inode_entry *inode_entry)
     return NULL;
 }
 
-static void
+void
 ffs_cache_inode_range(const struct ffs_cache_inode *cache_inode,
                       uint32_t *out_start, uint32_t *out_end)
 {
@@ -307,13 +307,18 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t seek_offset,
     }
 
     ffs_cache_inode_range(cache_inode, &cache_start, &cache_end);
-    if (seek_offset <= cache_start) {
+    if (cache_end != 0 && seek_offset < cache_start) {
         /* Seeking prior to cache.  Iterate backwards from cache start. */
         cache_block = TAILQ_FIRST(&cache_inode->fci_block_list);
+        block_entry = cache_block->fcb_block.fb_prev;
+        block_end = cache_block->fcb_file_offset;
+        cache_block = NULL;
     } else if (seek_offset < cache_end) {
         /* Seeking within cache.  Iterate backwards from cache end. */
         cache_block = TAILQ_LAST(&cache_inode->fci_block_list,
                                  ffs_cache_block_list);
+        block_entry = cache_block->fcb_block.fb_hash_entry;
+        block_end = cache_end;
     } else {
         /* Seeking beyond end of cache.  Iterate backwards from file end.  If
          * sought-after block is adjacent to cache end, its cache entry will
@@ -321,16 +326,6 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t seek_offset,
          * will be freed and replaced with the single requested block.
          */
         cache_block = NULL;
-    }
-
-    if (cache_block != NULL) {
-        /* We are starting the search from within the cache. */
-        block_entry = cache_block->fcb_block.fb_hash_entry;
-        block_end = cache_block->fcb_file_offset;
-    } else {
-        /* Cache is empty or user is seeking beyond end of cache.  Start
-         * iteration from the end of the file.
-         */
         block_entry =
             cache_inode->fci_inode.fi_inode_entry->fie_last_block_entry;
         block_end = cache_inode->fci_file_size;
@@ -338,7 +333,7 @@ ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t seek_offset,
 
     /* Scan backwards until we find the block containing the seek offest. */
     while (1) {
-        if (block_end < cache_start) {
+        if (block_end <= cache_start) {
             /* We are looking before the start of the cache.  Allocate a new
              * cache block and prepend it to the cache.
              */
