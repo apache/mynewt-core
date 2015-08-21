@@ -217,7 +217,8 @@ data block is only cached if its owning file is also cached.
 Internally, cached inodes are stored in a singly-linked list, ordered by time
 of use.  The most-recently-used entry is the first element in the list.  If a
 new inode needs to be cached, but the inode cache is full, the
-least-recently-used entry is freed to make room for the new one.  The following operations cause an inode to be cached:
+least-recently-used entry is freed to make room for the new one.  The following
+operations cause an inode to be cached:
     * Querying a file's length.
     * Seeking within a file.
     * Reading from a file.
@@ -227,7 +228,8 @@ The following operations cause a data block to be cached:
     * Reading from the block.
     * Writing to the block.
 
-If one of the above operations is applied to a data block that is not currently cached, ffs uses the following procedure to cache the necessary blocks:
+If one of the above operations is applied to a data block that is not currently
+cached, ffs uses the following procedure to cache the necessary blocks:
     1. If none of the owning inode's blocks are currently cached, allocate a
        cached block entry and insert it into the inode's list.
     2. Else if the requested file offset is less than that of the first cached
