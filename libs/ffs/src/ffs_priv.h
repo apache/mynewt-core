@@ -8,6 +8,8 @@
 
 #define FFS_DEBUG 1
 
+#define FFS_HASH_SIZE               256
+
 #define FFS_ID_DIR_MIN              0
 #define FFS_ID_DIR_MAX              0x10000000
 #define FFS_ID_FILE_MIN             0x10000000
@@ -374,7 +376,7 @@ int ffs_write_to_file(struct ffs_file *file, const void *data, int len);
 
 
 #define FFS_HASH_FOREACH(entry, i)                                      \
-    for ((i) = 0; (i) < ffs_config.fc_hash_size; (i)++)                 \
+    for ((i) = 0; (i) < FFS_HASH_SIZE; (i)++)                 \
         SLIST_FOREACH((entry), &ffs_hash[i], fhe_next)
 
 #define FFS_FLASH_LOC_NONE  ffs_flash_loc(FFS_AREA_ID_NONE, 0)

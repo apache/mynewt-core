@@ -141,7 +141,7 @@ ffs_restore_sweep(void)
     /* Iterate through every object in the hash table, deleting all inodes that
      * should be removed.
      */
-    for (i = 0; i < ffs_config.fc_hash_size; i++) {
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
         list = ffs_hash + i;
 
         entry = SLIST_FIRST(list);
@@ -722,7 +722,7 @@ ffs_restore_corrupt_scratch(void)
     }
 
     /* Invalidate all objects resident in the bad area. */
-    for (i = 0; i < ffs_config.fc_hash_size; i++) {
+    for (i = 0; i < FFS_HASH_SIZE; i++) {
         entry = SLIST_FIRST(&ffs_hash[i]);
         while (entry != NULL) {
             next = SLIST_NEXT(entry, fhe_next);
