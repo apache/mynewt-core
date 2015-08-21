@@ -242,6 +242,8 @@ int ffs_block_read_data(const struct ffs_block *block, uint16_t offset,
 void ffs_cache_inode_delete(const struct ffs_inode_entry *inode_entry);
 int ffs_cache_inode_ensure(struct ffs_cache_inode **out_entry,
                            struct ffs_inode_entry *inode_entry);
+void ffs_cache_inode_range(const struct ffs_cache_inode *cache_inode,
+                           uint32_t *out_start, uint32_t *out_end);
 int ffs_cache_seek(struct ffs_cache_inode *cache_inode, uint32_t to,
                    struct ffs_cache_block **out_cache_block);
 void ffs_cache_clear(void);
