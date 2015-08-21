@@ -24,7 +24,7 @@
 #define FFS_EUNEXP              9
 #define FFS_EOS                 10
 #define FFS_EEXIST              11
-#define FFS_ERDONLY             12
+#define FFS_EACCESS             12
 #define FFS_EUNINIT             13
 
 struct ffs_config {
