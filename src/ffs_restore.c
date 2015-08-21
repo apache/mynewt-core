@@ -85,6 +85,7 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
     if (inode_entry->fie_hash_entry.fhe_id != FFS_ID_ROOT_DIR) {
         rc = ffs_inode_from_entry(&inode, inode_entry);
         if (rc != 0) {
+            *out_should_sweep = 0;
             return rc;
         }
 
@@ -104,6 +105,7 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
             *out_should_sweep = 1;
             return 0;
         } else if (rc != 0) {
+            *out_should_sweep = 0;
             return rc;
         }
     }
