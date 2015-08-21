@@ -29,6 +29,7 @@ void *ffs_cache_inode_mem;
 void *ffs_cache_block_mem;
 
 struct ffs_inode_entry *ffs_root_dir;
+struct ffs_inode_entry *ffs_lost_found_dir;
 
 static struct os_mutex ffs_mutex;
 
@@ -344,7 +345,7 @@ ffs_mkdir(const char *path)
         goto done;
     }
 
-    rc = ffs_path_new_dir(path);
+    rc = ffs_path_new_dir(path, NULL);
     if (rc != 0) {
         goto done;
     }

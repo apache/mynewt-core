@@ -142,6 +142,12 @@ ffs_format_full(const struct ffs_area_desc *area_descs)
         goto err;
     }
 
+    /* Create "lost+found" directory. */
+    rc = ffs_misc_create_lost_found_dir();
+    if (rc != 0) {
+        goto err;
+    }
+
     rc = ffs_misc_validate_root_dir();
     if (rc != 0) {
         goto err;

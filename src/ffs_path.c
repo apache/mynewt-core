@@ -260,22 +260,6 @@ ffs_path_rename(const char *from, const char *to)
         return rc;
     }
 
-    if (from_parent != to_parent) {
-        if (from_parent != NULL) {
-            rc = ffs_inode_from_entry(&inode, from_inode_entry);
-            if (rc != 0) {
-                return rc;
-            }
-            ffs_inode_remove_child(&inode);
-        }
-        if (to_parent != NULL) {
-            rc = ffs_inode_add_child(to_parent, from_inode_entry);
-            if (rc != 0) {
-                return rc;
-            }
-        }
-    }
-
     rc = ffs_inode_rename(from_inode_entry, to_parent, parser.fpp_token);
     if (rc != 0) {
         return rc;
@@ -296,15 +280,15 @@ ffs_path_rename(const char *from, const char *to)
  *                                  does not exist.
  */
 int
-ffs_path_new_dir(const char *path)
+ffs_path_new_dir(const char *path, struct ffs_inode_entry **out_inode_entry)
 {
     struct ffs_path_parser parser;
+    struct ffs_inode_entry *inode_entry;
     struct ffs_inode_entry *parent;
-    struct ffs_inode_entry *inode;
     int rc;
 
     ffs_path_parser_new(&parser, path);
-    rc = ffs_path_find(&parser, &inode, &parent);
+    rc = ffs_path_find(&parser, &inode_entry, &parent);
     if (rc == 0) {
         return FFS_EEXIST;
     }
@@ -316,9 +300,13 @@ ffs_path_new_dir(const char *path)
     }
 
     rc = ffs_file_new(parent, parser.fpp_token, parser.fpp_token_len, 1, 
-                      &inode);
+                      &inode_entry);
     if (rc != 0) {
         return rc;
+    }
+
+    if (out_inode_entry != NULL) {
+        *out_inode_entry = inode_entry;
     }
 
     return 0;

@@ -362,11 +362,12 @@ ffs_inode_delete_from_disk(struct ffs_inode *inode)
 
 int
 ffs_inode_rename(struct ffs_inode_entry *inode_entry,
-                 struct ffs_inode_entry *new_parent, const char *filename)
+                 struct ffs_inode_entry *new_parent,
+                 const char *new_filename)
 {
     struct ffs_disk_inode disk_inode;
     struct ffs_inode inode;
-    uint32_t offset;
+    uint32_t area_offset;
     uint8_t area_idx;
     int filename_len;
     int rc;
@@ -375,11 +376,38 @@ ffs_inode_rename(struct ffs_inode_entry *inode_entry,
     if (rc != 0) {
         return rc;
     }
-    inode.fi_parent = new_parent;
 
-    filename_len = strlen(filename);
+    if (inode.fi_parent != new_parent) {
+        if (inode.fi_parent != NULL) {
+            ffs_inode_remove_child(&inode);
+        }
+        if (new_parent != NULL) {
+            rc = ffs_inode_add_child(new_parent, inode.fi_inode_entry);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+        inode.fi_parent = new_parent;
+    }
+
+    if (new_filename != NULL) {
+        filename_len = strlen(new_filename);
+    } else {
+        filename_len = inode.fi_filename_len;
+        ffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
+                             &area_idx, &area_offset);
+        rc = ffs_flash_read(area_idx,
+                            area_offset + sizeof (struct ffs_disk_inode),
+                            ffs_flash_buf, filename_len);
+        if (rc != 0) {
+            return rc;
+        }
+
+        new_filename = (char *)ffs_flash_buf;
+    }
+
     rc = ffs_misc_reserve_space(sizeof disk_inode + filename_len,
-                                &area_idx, &offset);
+                                &area_idx, &area_offset);
     if (rc != 0) {
         return rc;
     }
@@ -389,15 +417,16 @@ ffs_inode_rename(struct ffs_inode_entry *inode_entry,
     disk_inode.fdi_seq = inode.fi_seq + 1;
     disk_inode.fdi_parent_id = ffs_inode_parent_id(&inode);
     disk_inode.fdi_filename_len = filename_len;
-    ffs_crc_disk_inode_fill(&disk_inode, filename);
+    ffs_crc_disk_inode_fill(&disk_inode, new_filename);
 
-    rc = ffs_inode_write_disk(&disk_inode, filename, area_idx, offset);
+    rc = ffs_inode_write_disk(&disk_inode, new_filename, area_idx,
+                              area_offset);
     if (rc != 0) {
         return rc;
     }
 
     inode_entry->fie_hash_entry.fhe_flash_loc =
-        ffs_flash_loc(area_idx, offset);
+        ffs_flash_loc(area_idx, area_offset);
 
     return 0;
 }

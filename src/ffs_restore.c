@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #include "hal/hal_flash.h"
 #include "os/os_mempool.h"
@@ -59,6 +60,59 @@ ffs_restore_validate_block_chain(struct ffs_hash_entry *last_block_entry)
     return 0;
 }
 
+/**
+ * If the specified inode entry is a dummy directory, this function moves
+ * all its children to the lost+found directory.
+ *
+ * @param inode_entry           The parent inode to test and empty.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static int
+ffs_restore_migrate_orphan_children(struct ffs_inode_entry *inode_entry)
+{
+    struct ffs_inode_entry *lost_found_sub;
+    struct ffs_inode_entry *child_entry;
+    //struct ffs_inode child_inode;
+    char buf[32];
+    int rc;
+
+    if (!ffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
+        /* Not a directory. */
+        return 0;
+    }
+
+    if (inode_entry->fie_refcnt != 0) {
+        /* Not a dummy. */
+        return 0;
+    }
+
+    if (SLIST_EMPTY(&inode_entry->fie_child_list)) {
+        /* No children to migrate. */
+        return 0;
+    }
+
+    /* Create a directory in lost+found to hold the dummy directory's
+     * contents.
+     */
+    snprintf(buf, sizeof buf, "/lost+found/%lu",
+             (unsigned long)inode_entry->fie_hash_entry.fhe_id);
+    rc = ffs_path_new_dir(buf, &lost_found_sub);
+    if (rc != 0 && rc != FFS_EEXIST) {
+        return rc;
+    }
+
+    /* Move each child into the new subdirectory. */
+    while ((child_entry = SLIST_FIRST(&inode_entry->fie_child_list)) != NULL) {
+        rc = ffs_inode_rename(child_entry, lost_found_sub, NULL);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
+    return 0;
+}
+
 static int
 ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
                                      int *out_should_sweep)
@@ -69,8 +123,9 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
     /* Determine if the inode is a dummy.  Dummy inodes have a reference count
      * of 0.  If it is a dummy, increment its reference count back to 1 so that
      * it can be properly deleted.  The presence of a dummy inode during the
-     * final sweep step indicates file system corruption.  The only option is
-     * to delete the dummy inode and all its children.
+     * final sweep step indicates file system corruption.  If the inode is a
+     * directory, all its children should have been migrated to the /lost+found
+     * directory prior to this.
      */
     if (inode_entry->fie_refcnt == 0) {
         *out_should_sweep = 1;
@@ -119,8 +174,10 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
  * Performs a sweep of the RAM representation at the end of a successful
  * restore.  The sweep phase performs the following actions of each inode in
  * the file system:
- *     1. If the inode is a dummy, it is fully deleted from RAM.
- *     2. Else, a CRC check is performed on each of the inode's constituent
+ *     1. If the inode is a dummy directory, its children are migrated to the
+ *        lost+found directory.
+ *     2. Else if the inode is a dummy file, it is fully deleted from RAM.
+ *     3. Else, a CRC check is performed on each of the inode's constituent
  *        blocks.  If corruption is detected, the inode is fully deleted from
  *        RAM.
  *
@@ -149,6 +206,15 @@ ffs_restore_sweep(void)
             next = SLIST_NEXT(entry, fhe_next);
             if (ffs_hash_id_is_inode(entry->fhe_id)) {
                 inode_entry = (struct ffs_inode_entry *)entry;
+
+                /* If this is a dummy inode directory, the file system is
+                 * corrupted.  Move the directory's children inodes to the
+                 * lost+found directory.
+                 */
+                rc = ffs_restore_migrate_orphan_children(inode_entry);
+                if (rc != 0) {
+                    return rc;
+                }
 
                 /* Determine if this inode needs to be deleted. */
                 rc = ffs_restore_should_sweep_inode_entry(inode_entry, &del);
@@ -857,6 +923,12 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
 
     /* Ensure this file system contains a valid scratch area. */
     rc = ffs_misc_validate_scratch();
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Ensure there is a "/lost+found" directory. */
+    rc = ffs_misc_create_lost_found_dir();
     if (rc != 0) {
         goto err;
     }
