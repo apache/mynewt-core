@@ -206,6 +206,7 @@ extern uint8_t ffs_flash_buf[FFS_FLASH_BUF_SZ];
 
 extern struct ffs_hash_list *ffs_hash;
 extern struct ffs_inode_entry *ffs_root_dir;
+extern struct ffs_inode_entry *ffs_lost_found_dir;
 
 /* @area */
 int ffs_area_magic_is_set(const struct ffs_disk_area *disk_area);
@@ -321,7 +322,8 @@ int ffs_inode_entry_from_disk(struct ffs_inode_entry *out_inode,
                               const struct ffs_disk_inode *disk_inode,
                               uint8_t area_idx, uint32_t offset);
 int ffs_inode_rename(struct ffs_inode_entry *inode_entry,
-                     struct ffs_inode_entry *new_parent, const char *filename);
+                     struct ffs_inode_entry *new_parent,
+                     const char *new_filename);
 void ffs_inode_insert_block(struct ffs_inode *inode, struct ffs_block *block);
 int ffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
                         struct ffs_disk_inode *out_disk_inode);
@@ -355,8 +357,9 @@ int ffs_misc_reserve_space(uint16_t space,
 int ffs_misc_set_num_areas(uint8_t num_areas);
 int ffs_misc_validate_root_dir(void);
 int ffs_misc_validate_scratch(void);
-int ffs_misc_reset(void);
+int ffs_misc_create_lost_found_dir(void);
 int ffs_misc_set_max_block_data_len(uint16_t min_data_len);
+int ffs_misc_reset(void);
 
 /* @path */
 int ffs_path_parse_next(struct ffs_path_parser *parser);
@@ -368,7 +371,8 @@ int ffs_path_find_inode_entry(const char *filename,
                               struct ffs_inode_entry **out_inode_entry);
 int ffs_path_unlink(const char *filename);
 int ffs_path_rename(const char *from, const char *to);
-int ffs_path_new_dir(const char *path);
+int ffs_path_new_dir(const char *path,
+                     struct ffs_inode_entry **out_inode_entry);
 
 /* @restore */
 int ffs_restore_full(const struct ffs_area_desc *area_descs);

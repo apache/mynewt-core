@@ -250,7 +250,8 @@ ffs_test_util_append_file(const char *filename, const char *contents,
 }
 
 static void
-ffs_test_copy_area(const struct ffs_area_desc *from, const struct ffs_area_desc *to)
+ffs_test_copy_area(const struct ffs_area_desc *from,
+                   const struct ffs_area_desc *to)
 {
     void *buf;
     int rc;
@@ -375,6 +376,10 @@ ffs_test_assert_branch_touched(struct ffs_inode_entry *inode_entry)
 {
     struct ffs_inode_entry *child;
     int i;
+
+    if (inode_entry == ffs_lost_found_dir) {
+        return;
+    }
 
     for (i = 0; i < ffs_test_num_touched_entries; i++) {
         if (ffs_test_touched_entries[i] == &inode_entry->fie_hash_entry) {
@@ -1934,6 +1939,88 @@ ffs_test_large_system(void)
 }
 
 static void
+ffs_test_lost_found(void)
+{
+    char buf[32];
+    struct ffs_inode_entry *inode_entry;
+    uint32_t flash_offset;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    printf("\t\tlost+found test\n");
+
+    /*** Setup. */
+    rc = ffs_format(ffs_area_descs);
+    assert(rc == 0);
+
+    rc = ffs_mkdir("/mydir");
+    assert(rc == 0);
+    rc = ffs_mkdir("/mydir/dir1");
+    assert(rc == 0);
+
+    ffs_test_util_create_file("/mydir/file1", "aaaa", 4);
+    ffs_test_util_create_file("/mydir/dir1/file2", "bbbb", 4);
+
+    /* Corrupt the mydir inode. */
+    rc = ffs_path_find_inode_entry("/mydir", &inode_entry);
+    assert(rc == 0);
+
+    snprintf(buf, sizeof buf, "%lu",
+             (unsigned long)inode_entry->fie_hash_entry.fhe_id);
+
+    ffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
+                         &area_idx, &area_offset);
+    flash_offset = ffs_areas[area_idx].fa_offset + area_offset;
+    rc = flash_native_memset(flash_offset + 10, 0xff, 1);
+    assert(rc == 0);
+
+    /* Clear cached data and restore from flash (i.e, simulate a reboot). */
+    rc = ffs_misc_reset();
+    assert(rc == 0);
+    rc = ffs_detect(ffs_area_descs);
+    assert(rc == 0);
+
+    /* All contents should now be in the lost+found dir. */
+    struct ffs_test_file_desc *expected_system =
+        (struct ffs_test_file_desc[]) { {
+            .filename = "",
+            .is_dir = 1,
+            .children = (struct ffs_test_file_desc[]) { {
+                .filename = "lost+found",
+                .is_dir = 1,
+                .children = (struct ffs_test_file_desc[]) { {
+                    .filename = buf,
+                    .is_dir = 1,
+                    .children = (struct ffs_test_file_desc[]) { {
+                        .filename = "file1",
+                        .contents = "aaaa",
+                        .contents_len = 4,
+                    }, {
+                        .filename = "dir1",
+                        .is_dir = 1,
+                        .children = (struct ffs_test_file_desc[]) { {
+                            .filename = "file2",
+                            .contents = "bbbb",
+                            .contents_len = 4,
+                        }, {
+                            .filename = NULL,
+                        } },
+                    }, {
+                        .filename = NULL,
+                    } },
+                }, {
+                    .filename = NULL,
+                } },
+            }, {
+                .filename = NULL,
+            } }
+    } };
+
+    ffs_test_assert_system(expected_system, ffs_area_descs);
+}
+
+static void
 ffs_test_cache_large_file(void)
 {
     static char data[FFS_BLOCK_MAX_DATA_SZ_MAX * 5];
@@ -2047,6 +2134,7 @@ ffs_test_gen(void)
     ffs_test_corrupt_block();
     ffs_test_large_unlink();
     ffs_test_large_system();
+    ffs_test_lost_found();
 }
 
 int

@@ -238,6 +238,26 @@ ffs_misc_set_max_block_data_len(uint16_t min_data_len)
     return 0;
 }
 
+int
+ffs_misc_create_lost_found_dir(void)
+{
+    int rc;
+
+    rc = ffs_path_new_dir("/lost+found", &ffs_lost_found_dir);
+    switch (rc) {
+    case 0:
+        return 0;
+
+    case FFS_EEXIST:
+        rc = ffs_path_find_inode_entry("/lost+found", &ffs_lost_found_dir);
+        return rc;
+
+    default:
+        return rc;
+    }
+}
+
+
 /**
  * Fully resets the ffs RAM representation.
  *
@@ -295,6 +315,7 @@ ffs_misc_reset(void)
     ffs_num_areas = 0;
 
     ffs_root_dir = NULL;
+    ffs_lost_found_dir = NULL;
     ffs_scratch_area_idx = FFS_AREA_ID_NONE;
 
     ffs_hash_next_file_id = FFS_ID_FILE_MIN;
