@@ -452,18 +452,18 @@ os_mutex_test(int test_num)
     os_mutex_init(&g_mutex1);
     os_mutex_init(&g_mutex2);
 
-    os_task_init(&task4, "task4", task4_handler, NULL, TASK4_PRIO, stack4, 
-                 OS_STACK_ALIGN(1024));
+    os_task_init(&task4, "task4", task4_handler, NULL, TASK4_PRIO, 
+            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(1024));
 
-    os_task_init(&task5, "task5", task5_handler, NULL, TASK5_PRIO, stack5, 
-                 OS_STACK_ALIGN(1024));
+    os_task_init(&task5, "task5", task5_handler, NULL, TASK5_PRIO, 
+            OS_WAIT_FOREVER, stack5, OS_STACK_ALIGN(1024));
 
-    os_task_init(&task6, "task6", task6_handler, NULL, TASK6_PRIO, stack6, 
-                 OS_STACK_ALIGN(1024));
+    os_task_init(&task6, "task6", task6_handler, NULL, TASK6_PRIO, 
+            OS_WAIT_FOREVER, stack6, OS_STACK_ALIGN(1024));
 
     if (test_num != 1) {
-        os_task_init(&task7, "task7", task7_handler, NULL, TASK7_PRIO, stack7,
-                     OS_STACK_ALIGN(1024));
+        os_task_init(&task7, "task7", task7_handler, NULL, TASK7_PRIO, 
+                OS_WAIT_FOREVER, stack7, OS_STACK_ALIGN(1024));
     }
 }
 

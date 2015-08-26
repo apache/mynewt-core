@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef _OS_ARCH_X86_H 
-#define _OS_ARCH_X86_H 
+#ifndef _OS_ARCH_SIM_H 
+#define _OS_ARCH_SIM_H 
 
 struct os_task;
 
 /* Time tick in miliseconds that the OS runs */
 
-#define OS_TIME_TICK (1000)
+#define OS_TIME_TICK (1)
 #define OS_TICKS_PER_SEC (OS_TIME_TICK * 1000)
 
 /* CPU status register */
@@ -56,4 +56,4 @@ void os_arch_restore_sr(int);
 os_error_t os_arch_os_init(void);
 os_error_t os_arch_os_start(void);
 
-#endif /* _OS_ARCH_X86_H */ 
+#endif /* _OS_ARCH_SIM_H */ 

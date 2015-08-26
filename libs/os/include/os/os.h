@@ -63,7 +63,12 @@ enum os_error {
     OS_NOT_STARTED = 9,     /* Operating must be started to call this function, but isn't */
 };
 
+#define OS_WAIT_FOREVER (-1) 
+
 typedef enum os_error os_error_t;
+
+#define OS_SANITY_STACK_SIZE (1024) 
+#define OS_SANITY_PRIO (0xfe)
 
 #define OS_IDLE_STACK_SIZE (1024) 
 #define OS_IDLE_PRIO (0xff)
@@ -75,6 +80,7 @@ void os_start(void);
  * should be called by application developers as those that should not. */
 void os_init_idle_task(void);
 
+#include "os/os_sanity.h"
 #include "os/os_arch.h"
 #include "os/os_time.h"
 #include "os/os_task.h"

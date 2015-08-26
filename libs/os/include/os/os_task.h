@@ -18,6 +18,7 @@
 #define _OS_TASK_H
 
 #include "os/os.h"
+#include "os/os_sanity.h" 
 #include "os/queue.h"
 
 #ifndef OS_TASK_NAME_SIZE
@@ -50,6 +51,8 @@ struct os_task {
 
     struct os_mutex *t_mutex;
 
+    struct os_sanity_check t_sanity_check; 
+
     os_task_state_t t_state;
     os_time_t t_next_wakeup;
     
@@ -60,8 +63,10 @@ struct os_task {
     SLIST_ENTRY(os_task) t_obj_list;
 };
 
-int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t, 
-        os_stack_t *, uint16_t);
+int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t,
+        os_time_t, os_stack_t *, uint16_t);
+
+int os_task_sanity_checkin(struct os_task *);
 
 
 #endif /* _OS_TASK_H */

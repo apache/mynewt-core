@@ -48,7 +48,8 @@ void
 os_init_idle_task(void)
 {
     os_task_init(&g_idle_task, "idle", os_idle_task, NULL, 
-            OS_IDLE_PRIO, g_idle_task_stack, OS_IDLE_STACK_SIZE);
+            OS_IDLE_PRIO, OS_WAIT_FOREVER, g_idle_task_stack, 
+            OS_IDLE_STACK_SIZE);
 }
 
 void

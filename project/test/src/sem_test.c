@@ -470,18 +470,18 @@ os_sem_test(int test_num)
     err = os_sem_init(&g_sem2, 1);
     assert(err == OS_OK);
 
-    os_task_init(&task10, "task10", task10_handler, NULL, TASK10_PRIO, stack10, 
-                 OS_STACK_ALIGN(1024));
+    os_task_init(&task10, "task10", task10_handler, NULL, TASK10_PRIO, 
+            OS_WAIT_FOREVER, stack10, OS_STACK_ALIGN(1024));
 
-    os_task_init(&task11, "task11", task11_handler, NULL, TASK11_PRIO, stack11, 
-                 OS_STACK_ALIGN(1024));
+    os_task_init(&task11, "task11", task11_handler, NULL, TASK11_PRIO, 
+            OS_WAIT_FOREVER, stack11, OS_STACK_ALIGN(1024));
 
-    os_task_init(&task12, "task12", task12_handler, NULL, TASK12_PRIO, stack12, 
-                 OS_STACK_ALIGN(1024));
+    os_task_init(&task12, "task12", task12_handler, NULL, TASK12_PRIO, 
+            OS_WAIT_FOREVER, stack12, OS_STACK_ALIGN(1024));
 
     if (test_num != 10) {
         os_task_init(&task13, "task13", task13_handler, NULL, TASK13_PRIO, 
-                     stack13, OS_STACK_ALIGN(1024));
+                OS_WAIT_FOREVER, stack13, OS_STACK_ALIGN(1024));
     }
 }
 

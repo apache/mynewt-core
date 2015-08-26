@@ -65,6 +65,7 @@ task1_handler(void *arg)
         ev = os_eventq_get(&my_evq1); 
         switch (ev->ev_type) {
         case OS_EVENT_T_STERLY:
+            os_task_sanity_checkin(NULL);  
             printf("Pong!\n");
             fflush(stdout);
             os_eventq_put(&my_evq2, &my_osev2);
@@ -187,12 +188,12 @@ main(int argc, char **argv)
         os_eventq_init(&my_evq3);
 
         os_task_init(&task1, "task1", task1_handler, NULL, 
-                TASK1_PRIO, stack1, OS_STACK_ALIGN(1024));
+                TASK1_PRIO, 10, stack1, OS_STACK_ALIGN(1024));
 
         os_task_init(&task2, "task2", task2_handler, NULL, 
-                TASK2_PRIO, stack2, OS_STACK_ALIGN(1024));
+                TASK2_PRIO, OS_WAIT_FOREVER, stack2, OS_STACK_ALIGN(1024));
         os_task_init(&task3, "task3", task3_handler, NULL, 
-                TASK3_PRIO, stack3, OS_STACK_ALIGN(1024));
+                TASK3_PRIO, OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(1024));
     } else if (test_num < 10) {
         os_mutex_test(test_num);
     } else if (test_num < 20) {

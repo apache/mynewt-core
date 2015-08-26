@@ -46,9 +46,32 @@ os_task_next_id(void)
 }
 
 int 
-os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg, 
-        uint8_t prio, os_stack_t *stack_bottom, uint16_t stack_size)
+os_task_sanity_checkin(struct os_task *t)
 {
+    int rc; 
+
+    if (t == NULL) {
+        t = os_sched_get_current_task();
+    }
+
+    rc = os_sanity_check_reset(&t->t_sanity_check);
+    if (rc != OS_OK) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+
+
+int 
+os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg, 
+        uint8_t prio, os_time_t sanity_itvl, os_stack_t *stack_bottom, 
+        uint16_t stack_size)
+{
+    struct os_sanity_check *sc; 
     int rc; 
 
     memset(t, 0, sizeof(*t));
@@ -62,6 +85,21 @@ os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg,
     t->t_state = OS_TASK_READY;
     t->t_name = name;
     t->t_next_wakeup = 0; 
+
+    rc = os_sanity_check_init(&t->t_sanity_check); 
+    if (rc != OS_OK) {
+        goto err;
+    }
+
+    if (sanity_itvl != OS_WAIT_FOREVER) {
+        sc = (struct os_sanity_check *) &t->t_sanity_check; 
+        sc->sc_checkin_itvl = sanity_itvl;
+        
+        rc = os_sanity_check_register(sc);
+        if (rc != OS_OK) {
+            goto err;
+        }
+    }
 
     _clear_stack(stack_bottom, stack_size);
     t->t_stackptr = os_arch_task_stack_init(t, &stack_bottom[stack_size], 

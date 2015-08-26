@@ -447,13 +447,13 @@ init_tasks(void)
     os_sem_init(&g_test_sem, 0);
 
     os_task_init(&task1, "task1", task1_handler, NULL, 
-            TASK1_PRIO, stack1, TASK1_STACK_SIZE);
+            TASK1_PRIO, OS_WAIT_FOREVER, stack1, TASK1_STACK_SIZE);
 
     os_task_init(&task2, "task2", task2_handler, NULL, 
-            TASK2_PRIO, stack2, TASK2_STACK_SIZE);
+            TASK2_PRIO, OS_WAIT_FOREVER, stack2, TASK2_STACK_SIZE);
 
     os_task_init(&task3, "task3", task3_handler, NULL, 
-            TASK3_PRIO, stack3, TASK3_STACK_SIZE);
+            TASK3_PRIO, OS_WAIT_FOREVER, stack3, TASK3_STACK_SIZE);
 
     tasks_initialized = 1;
     return 0;
