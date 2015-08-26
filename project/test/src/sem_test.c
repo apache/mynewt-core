@@ -88,7 +88,7 @@ sem_test_basic(struct os_sem *sem, struct os_task *t)
     printf("Performing basic semaphore testing\n");
 
     /* Test some error cases */
-    err = os_sem_create(NULL, 1);
+    err = os_sem_init(NULL, 1);
     if (err != OS_INVALID_PARM) {
         printf("Error: expected error from semaphore create (err=%d)\n", err);
         goto semaphore_err_exit;
@@ -202,7 +202,7 @@ task10_handler(void *arg)
     }
 
     /* Must "re-create" sem1 for testing */
-    err = os_sem_create(&g_sem1, 1);
+    err = os_sem_init(&g_sem1, 1);
     assert(err == OS_OK);
 
     if (g_sem_test == 10) {
@@ -465,9 +465,9 @@ os_sem_test(int test_num)
         exit(0);
     }
 
-    err = os_sem_create(&g_sem1, 1);
+    err = os_sem_init(&g_sem1, 1);
     assert(err == OS_OK);
-    err = os_sem_create(&g_sem2, 1);
+    err = os_sem_init(&g_sem2, 1);
     assert(err == OS_OK);
 
     os_task_init(&task10, "task10", task10_handler, NULL, TASK10_PRIO, stack10, 

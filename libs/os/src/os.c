@@ -23,6 +23,10 @@ struct os_task g_idle_task;
 os_stack_t g_idle_task_stack[OS_IDLE_STACK_SIZE]; 
 
 uint32_t g_os_idle_ctr;
+/* Default zero.  Set by the architecture specific code when os is started.
+ */
+int g_os_started; 
+
 
 void
 os_idle_task(void *arg)
@@ -32,6 +36,13 @@ os_idle_task(void *arg)
         ++g_os_idle_ctr;
     }
 }
+
+int 
+os_started(void) 
+{
+    return (g_os_started);
+}
+
 
 void
 os_init_idle_task(void)

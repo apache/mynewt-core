@@ -44,8 +44,8 @@ struct os_mutex
 os_mutex_inspect(); 
 */ 
 
-/* Create a mutex */
-os_error_t os_mutex_create(struct os_mutex *mu);
+/* Initialize a mutex */
+os_error_t os_mutex_init(struct os_mutex *mu);
 
 /* Release a mutex */
 os_error_t os_mutex_release(struct os_mutex *mu);

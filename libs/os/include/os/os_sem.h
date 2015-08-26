@@ -38,7 +38,7 @@ struct os_sem
 */ 
 
 /* Create a semaphore */
-os_error_t os_sem_create(struct os_sem *sem, uint16_t tokens);
+os_error_t os_sem_init(struct os_sem *sem, uint16_t tokens);
 
 /* Release a semaphore */
 os_error_t os_sem_release(struct os_sem *sem);

@@ -78,7 +78,7 @@ mutex_test_basic(struct os_mutex *mu, struct os_task *t)
     printf("Performing basic mutex testing\n");
 
     /* Test some error cases */
-    err = os_mutex_create(NULL);
+    err = os_mutex_init(NULL);
     if (err != OS_INVALID_PARM) {
         printf("Error: expected error from mutex create (err=%d)\n", err);
         goto mutex_err_exit;
@@ -449,8 +449,8 @@ os_mutex_test(int test_num)
     g_task4_val = 0;
     g_task5_val = 0;
     g_task6_val = 0;
-    os_mutex_create(&g_mutex1);
-    os_mutex_create(&g_mutex2);
+    os_mutex_init(&g_mutex1);
+    os_mutex_init(&g_mutex2);
 
     os_task_init(&task4, "task4", task4_handler, NULL, TASK4_PRIO, stack4, 
                  OS_STACK_ALIGN(1024));

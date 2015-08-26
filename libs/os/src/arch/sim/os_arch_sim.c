@@ -317,6 +317,8 @@ os_arch_os_start(void)
     t = os_sched_next_task();
     os_sched_set_current_task(t);
 
+    g_os_started = 1; 
+
     sf = (struct stack_frame *) t->t_stackptr;
     sim_longjmp(sf->sf_jb, CTX_SWITCH_TASK); 
 }

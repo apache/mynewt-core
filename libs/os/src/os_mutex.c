@@ -29,7 +29,7 @@
  *      OS_OK               no error.
  */
 os_error_t
-os_mutex_create(struct os_mutex *mu)
+os_mutex_init(struct os_mutex *mu)
 {
     if (!mu) {
         return OS_INVALID_PARM;
@@ -63,6 +63,11 @@ os_mutex_release(struct os_mutex *mu)
     os_sr_t sr;
     struct os_task *current;
     struct os_task *rdy;
+
+    /* Check if OS is started */
+    if (!g_os_started) {
+        return (OS_NOT_STARTED);
+    }
 
     /* Check for valid mutex */
     if (!mu) {
@@ -148,6 +153,11 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     struct os_task *current;
     struct os_task *entry;
     struct os_task *last;
+
+    /* OS must be started when calling this function */
+    if (!g_os_started) {
+        return (OS_NOT_STARTED);
+    }
 
     /* Check for valid mutex */
     if (!mu) {
@@ -238,6 +248,11 @@ os_mutex_delete(struct os_mutex *mu)
     os_sr_t sr;
     struct os_task *current;
     struct os_task *rdy;
+
+    /* OS must be started to call this function */
+    if (!g_os_started) {
+        return (OS_NOT_STARTED);
+    }
 
     /* Check for valid mutex */
     if (!mu) {

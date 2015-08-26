@@ -217,6 +217,9 @@ os_arch_start(void)
     /* Intitialize and start system clock timer */
     os_bsp_systick_init(OS_TIME_TICK * 1000);
 
+    /* Mark the OS as started, right before we run our first task */
+    g_os_started = 1; 
+
     /* Perform context switch */
     os_arch_ctx_sw(t);
 

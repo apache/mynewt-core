@@ -36,7 +36,7 @@
  *      OS_OK               no error.
  */
 os_error_t
-os_sem_create(struct os_sem *sem, uint16_t tokens)
+os_sem_init(struct os_sem *sem, uint16_t tokens)
 {
     if (!sem) {
         return OS_INVALID_PARM;
@@ -66,6 +66,11 @@ os_sem_release(struct os_sem *sem)
     os_sr_t sr;
     struct os_task *current;
     struct os_task *rdy;
+
+    /* OS must be started to release semaphores */ 
+    if (!g_os_started) {
+        return (OS_NOT_STARTED);
+    }
 
     /* Check for valid semaphore */
     if (!sem) {
@@ -133,6 +138,11 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
     struct os_task *current;
     struct os_task *entry;
     struct os_task *last;
+
+    /* Check if OS is started */
+    if (!g_os_started) {
+        return (OS_NOT_STARTED);
+    }
 
     /* Check for valid semaphore */
     if (!sem) {
@@ -218,6 +228,11 @@ os_sem_delete(struct os_sem *sem)
     os_sr_t sr;
     struct os_task *current;
     struct os_task *rdy;
+
+    /* OS must be started in order to call this function */
+    if (!g_os_started) {
+        return (OS_NOT_STARTED);
+    }
 
     /* Check for valid semaphore */
     if (!sem) {

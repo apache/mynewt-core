@@ -37,6 +37,18 @@
         )
 
 
+/** 
+ * Whether or not the operating system has been started.  Set to 
+ * 1 right before first task is run.
+ */
+extern int g_os_started; 
+
+/**
+ * Returns 1 if the OS has been started, 0 if it has not yet been 
+ * been started.
+ */
+int os_started(void);
+
 /* OS error enumerations */
 enum os_error {
     OS_OK = 0, 
@@ -48,6 +60,7 @@ enum os_error {
     OS_TIMEOUT = 6,
     OS_ERR_IN_ISR = 7,      /* Function cannot be called from ISR */
     OS_ERR_PRIV = 8,        /* Privileged access error */
+    OS_NOT_STARTED = 9,     /* Operating must be started to call this function, but isn't */
 };
 
 typedef enum os_error os_error_t;

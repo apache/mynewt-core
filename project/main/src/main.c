@@ -443,8 +443,8 @@ task3_handler(void *arg)
 int
 init_tasks(void)
 {
-    /* Create global test semaphore */
-    os_sem_create(&g_test_sem, 0);
+    /* Initialize global test semaphore */
+    os_sem_init(&g_test_sem, 0);
 
     os_task_init(&task1, "task1", task1_handler, NULL, 
             TASK1_PRIO, stack1, TASK1_STACK_SIZE);
