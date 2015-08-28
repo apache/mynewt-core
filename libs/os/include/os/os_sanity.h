@@ -20,6 +20,8 @@
 #ifndef _OS_SANITY_H
 #define _OS_SANITY_H
 
+#include <stdint.h> 
+
 #include "os/os_time.h"
 #include "os/queue.h" 
 
