@@ -1,6 +1,9 @@
 #include "os/os.h"
-#include "ffs_test.h"
 #include "boot_test.h"
+
+#include "ffs/ffs.h"
+#include "ffs/ffs_test.h"
+#include "testutil/testutil.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -149,6 +152,10 @@ main(int argc, char **argv)
     int ch;
     char *endptr = NULL;
 
+    tu_config.tc_base_path = NULL;
+    tu_config.tc_verbose = 1;
+    tu_init();
+
     os_init();
 
     /* Perform memory pool tests */
@@ -156,7 +163,7 @@ main(int argc, char **argv)
         exit(0);
     }
 
-    ffs_test();
+    ffs_test_all();
 
     boot_test();
 

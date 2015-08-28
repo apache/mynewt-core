@@ -383,17 +383,25 @@ blocks.  The data block crc check is delayed until the sweep phase, described
 below.
 
 After all areas have been restored, a sweep is performed across the entire RAM
-representation so that invalid inodes can be deleted from memory.  For each
-inode:
-    * If its reference count is 0, delete it from the RAM representation.
+representation so that invalid inodes can be deleted from memory.
+
+For each directory inode:
+    * If its reference count is 0 (i.e., it is a dummy), migrate its children
+      to the /lost+found directory, and delete it from the RAM representation.
+    * If its parent reference is null (i.e., it was superseded or deleted),
+      delete it and all its children from the RAM representation.
+
+For each file inode:
+    * If its reference count is 0 (i.e., it is a dummy), delete it from the RAM
+      representation.
     * Else, perform a crc verification on each of its constituent data blocks.
       If any block fails this check, delete the inode from the RAM
       representation.
 
-When an inode is deleted during this sweep, all dependent objects are also
-deleted.  In the case of a directory, these are children inodes; in the case of
-a file, these are constituent data blocks.  Note: These deletions occur only in
-RAM; nothing gets written to flash at this time.
+When an object is deleted during this sweep, it is only deleted from the RAM
+representation; nothing is written to disk.  When objects are migrated to the
+lost+found directory, their parent inode reference is permanently updated on
+the disk.
 
 In addition, a single scratch area is identified during the detection process.
 The first area whose 'fda_id' value is set to 0xff is designated as the file
@@ -711,8 +719,7 @@ int ffs_unlink(const char *path);
  * move, the destination path should end with the same filename in the source
  * path).  If an object already exists at the specified destination path, this
  * function causes it to be unlinked prior to the rename (i.e., the
- * destination
- * gets clobbered).
+ * destination gets clobbered).
  *
  * @param from              The source path.
  * @param to                The destination path.

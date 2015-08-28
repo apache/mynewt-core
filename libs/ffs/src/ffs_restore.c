@@ -170,6 +170,14 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
     return 0;
 }
 
+static void
+ffs_restore_inode_from_dummy_entry(struct ffs_inode *out_inode,
+                                   struct ffs_inode_entry *inode_entry)
+{
+    memset(out_inode, 0, sizeof *out_inode);
+    out_inode->fi_inode_entry = inode_entry;
+}
+
 /**
  * Performs a sweep of the RAM representation at the end of a successful
  * restore.  The sweep phase performs the following actions of each inode in
@@ -223,9 +231,16 @@ ffs_restore_sweep(void)
                 }
 
                 if (del) {
-                    rc = ffs_inode_from_entry(&inode, inode_entry);
-                    if (rc != 0) {
-                        return rc;
+                    if (inode_entry->fie_hash_entry.fhe_flash_loc ==
+                        FFS_FLASH_LOC_NONE) {
+
+                        ffs_restore_inode_from_dummy_entry(&inode,
+                                                           inode_entry);
+                    } else {
+                        rc = ffs_inode_from_entry(&inode, inode_entry);
+                        if (rc != 0) {
+                            return rc;
+                        }
                     }
 
                     /* Remove the inode and all its children from RAM. */
@@ -350,6 +365,15 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
 
     new_inode = 0;
 
+    /* Check the inode's CRC.  If the inode is corrupt, mark it as a dummy
+     * node.  If the corrupt inode does not get superseded by a valid revision,
+     * it will get deleted during the sweep phase.
+     */
+    rc = ffs_crc_disk_inode_validate(disk_inode, area_idx, area_offset);
+    if (rc != 0) {
+        goto err;
+    }
+
     inode_entry = ffs_hash_find_inode(disk_inode->fdi_id);
     if (inode_entry != NULL) {
         rc = ffs_restore_inode_gets_replaced(inode_entry, disk_inode, &do_add);
@@ -424,17 +448,6 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
         }
     }
 
-    /* Check the inode's CRC.  If the inode is corrupt, mark it as a dummy
-     * node.  If the corrupt inode does not get superseded by a valid revision,
-     * it will get deleted during the sweep phase.
-     */
-    rc = ffs_crc_disk_inode_validate(disk_inode, area_idx, area_offset);
-    if (rc == FFS_ECORRUPT) {
-        inode_entry->fie_refcnt = 0;
-    } else if (rc != 0) {
-        goto err;
-    }
-
     return 0;
 
 err:
@@ -505,6 +518,15 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
     int rc;
 
     new_block = 0;
+
+    /* Check the inode's CRC.  If the inode is corrupt, mark it as a dummy
+     * node.  If the corrupt inode does not get superseded by a valid revision,
+     * it will get deleted during the sweep phase.
+     */
+    rc = ffs_crc_disk_block_validate(disk_block, area_idx, area_offset);
+    if (rc != 0) {
+        goto err;
+    }
 
     entry = ffs_hash_find_block(disk_block->fdb_id);
     if (entry != NULL) {

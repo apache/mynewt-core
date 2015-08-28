@@ -22,3 +22,7 @@ git remote add ffs https://github.com/micosa/ffs.git
 git remote add ffsutil https://github.com/micosa/ffsutil.git
 # subtree @ project/bin2img
 git remote add bin2img https://github.com/micosa/bin2img.git
+# subtree @ libs/testutil
+git remote add testutil https://github.com/micosa/testutil.git
+# subtree @ hw/bsp/native
+git remote add native-bsp https://github.com/micosa/native-bsp.git

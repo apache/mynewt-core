@@ -1,5 +1,5 @@
-#ifndef H_FFS_TEST_
-#define H_FFS_TEST_
+#ifndef H_FFS_TEST_PRIV_
+#define H_FFS_TEST_PRIV_
 
 struct ffs_test_block_desc {
     const char *data;
