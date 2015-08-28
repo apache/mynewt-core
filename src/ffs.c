@@ -428,7 +428,7 @@ ffs_init(void)
 
     ffs_cache_clear();
 
-    rc = os_mutex_create(&ffs_mutex);
+    rc = os_mutex_init(&ffs_mutex);
     if (rc != 0) {
         return FFS_EOS;
     }
