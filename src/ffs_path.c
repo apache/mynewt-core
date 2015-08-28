@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
@@ -46,23 +47,32 @@ ffs_path_parser_new(struct ffs_path_parser *parser, const char *path)
 }
 
 static int
-ffs_path_find_child(struct ffs_inode **out_inode,
-                    struct ffs_inode *parent,
-                    const char *name, int name_len)
+ffs_path_find_child(struct ffs_inode_entry *parent,
+                    const char *name, int name_len,
+                    struct ffs_inode_entry **out_inode_entry)
 {
-    struct ffs_inode *cur;
-    int str_rc;
+    struct ffs_inode_entry *cur;
+    struct ffs_inode inode;
+    int cmp;
     int rc;
 
-    SLIST_FOREACH(cur, &parent->fi_child_list, fi_sibling_next) {
-        rc = ffs_inode_filename_cmp(&str_rc, cur, name, name_len);
+    SLIST_FOREACH(cur, &parent->fie_child_list, fie_sibling_next) {
+        rc = ffs_inode_from_entry(&inode, cur);
         if (rc != 0) {
             return rc;
         }
 
-        if (str_rc == 0) {
-            *out_inode = cur;
+        rc = ffs_inode_filename_cmp_ram(&inode, name, name_len, &cmp);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (cmp == 0) {
+            *out_inode_entry = cur;
             return 0;
+        }
+        if (cmp > 0) {
+            break;
         }
     }
 
@@ -70,21 +80,22 @@ ffs_path_find_child(struct ffs_inode **out_inode,
 }
 
 int
-ffs_path_find(struct ffs_path_parser *parser, struct ffs_inode **out_inode,
-              struct ffs_inode **out_parent)
+ffs_path_find(struct ffs_path_parser *parser,
+              struct ffs_inode_entry **out_inode_entry,
+              struct ffs_inode_entry **out_parent)
 {
-    struct ffs_inode *parent;
-    struct ffs_inode *inode;
+    struct ffs_inode_entry *parent;
+    struct ffs_inode_entry *inode_entry;
     int rc;
 
-    *out_inode = NULL;
+    *out_inode_entry = NULL;
     if (out_parent != NULL) {
         *out_parent = NULL;
     }
 
-    inode = NULL;
+    inode_entry = NULL;
     while (1) {
-        parent = inode;
+        parent = inode_entry;
         rc = ffs_path_parse_next(parser);
         if (rc != 0) {
             return rc;
@@ -98,15 +109,15 @@ ffs_path_find(struct ffs_path_parser *parser, struct ffs_inode **out_inode,
                     return FFS_ENOENT;
                 }
 
-                inode = ffs_root_dir;
+                inode_entry = ffs_root_dir;
             } else {
                 /* Ignore empty intermediate directory names. */
                 if (parser->fpp_token_len == 0) {
                     break;
                 }
 
-                rc = ffs_path_find_child(&inode, parent, parser->fpp_token,
-                                         parser->fpp_token_len);
+                rc = ffs_path_find_child(parent, parser->fpp_token,
+                                         parser->fpp_token_len, &inode_entry);
                 if (rc != 0) {
                     goto done;
                 }
@@ -118,14 +129,14 @@ ffs_path_find(struct ffs_path_parser *parser, struct ffs_inode **out_inode,
                 return FFS_ENOENT;
             }
 
-            rc = ffs_path_find_child(&inode, parent, parser->fpp_token,
-                                     parser->fpp_token_len);
+            rc = ffs_path_find_child(parent, parser->fpp_token,
+                                     parser->fpp_token_len, &inode_entry);
             goto done;
         }
     }
 
 done:
-    *out_inode = inode;
+    *out_inode_entry = inode_entry;
     if (out_parent != NULL) {
         *out_parent = parent;
     }
@@ -133,14 +144,170 @@ done:
 }
 
 int
-ffs_path_find_inode(struct ffs_inode **out_inode, const char *filename)
+ffs_path_find_inode_entry(const char *filename,
+                          struct ffs_inode_entry **out_inode_entry)
 {
     struct ffs_path_parser parser;
     int rc;
 
     ffs_path_parser_new(&parser, filename);
-    rc = ffs_path_find(&parser, out_inode, NULL);
+    rc = ffs_path_find(&parser, out_inode_entry, NULL);
 
     return rc;
 }
 
+/**
+ * Unlinks the file or directory at the specified path.  If the path refers to
+ * a directory, all the directory's descendants are recursively unlinked.  Any
+ * open file handles refering to an unlinked file remain valid, and can be
+ * read from and written to.
+ *
+ * @path                    The path of the file or directory to unlink.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int
+ffs_path_unlink(const char *path)
+{
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_inode inode;
+    int rc;
+
+    rc = ffs_path_find_inode_entry(path, &inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ffs_inode_from_entry(&inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ffs_inode_unlink(&inode);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/**
+ * Performs a rename and / or move of the specified source path to the
+ * specified destination.  The source path can refer to either a file or a
+ * directory.  All intermediate directories in the destination path must
+ * already have been created.  If the source path refers to a file, the
+ * destination path must contain a full filename path (i.e., if performing a
+ * move, the destination path should end with the same filename in the source
+ * path).  If an object already exists at the specified destination path, this
+ * function causes it to be unlinked prior to the rename (i.e., the destination
+ * gets clobbered).
+ *
+ * @param from              The source path.
+ * @param to                The destination path.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int
+ffs_path_rename(const char *from, const char *to)
+{
+    struct ffs_path_parser parser;
+    struct ffs_inode_entry *from_inode_entry;
+    struct ffs_inode_entry *to_inode_entry;
+    struct ffs_inode_entry *from_parent;
+    struct ffs_inode_entry *to_parent;
+    struct ffs_inode inode;
+    int rc;
+
+    ffs_path_parser_new(&parser, from);
+    rc = ffs_path_find(&parser, &from_inode_entry, &from_parent);
+    if (rc != 0) {
+        return rc;
+    }
+
+    ffs_path_parser_new(&parser, to);
+    rc = ffs_path_find(&parser, &to_inode_entry, &to_parent);
+    switch (rc) {
+    case 0:
+        /* The user is clobbering something with the rename. */
+        if (ffs_hash_id_is_dir(from_inode_entry->fie_hash_entry.fhe_id) ^
+            ffs_hash_id_is_dir(to_inode_entry->fie_hash_entry.fhe_id)) {
+
+            /* Cannot clobber one type of file with another. */
+            return FFS_EINVAL;
+        }
+
+        rc = ffs_inode_from_entry(&inode, to_inode_entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = ffs_inode_unlink(&inode);
+        if (rc != 0) {
+            return rc;
+        }
+        break;
+
+    case FFS_ENOENT:
+        assert(to_parent != NULL);
+        if (parser.fpp_token_type != FFS_PATH_TOKEN_LEAF) {
+            /* Intermediate directory doesn't exist. */
+            return FFS_EINVAL;
+        }
+        break;
+
+    default:
+        return rc;
+    }
+
+    rc = ffs_inode_rename(from_inode_entry, to_parent, parser.fpp_token);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/**
+ * Creates a new directory at the specified path.
+ *
+ * @param path                  The path of the directory to create.
+ *
+ * @return                      0 on success;
+ *                              FFS_EEXIST if there is another file or
+ *                                  directory at the specified path.
+ *                              FFS_ENONT if a required intermediate directory
+ *                                  does not exist.
+ */
+int
+ffs_path_new_dir(const char *path, struct ffs_inode_entry **out_inode_entry)
+{
+    struct ffs_path_parser parser;
+    struct ffs_inode_entry *inode_entry;
+    struct ffs_inode_entry *parent;
+    int rc;
+
+    ffs_path_parser_new(&parser, path);
+    rc = ffs_path_find(&parser, &inode_entry, &parent);
+    if (rc == 0) {
+        return FFS_EEXIST;
+    }
+    if (rc != FFS_ENOENT) {
+        return rc;
+    }
+    if (parser.fpp_token_type != FFS_PATH_TOKEN_LEAF || parent == NULL) {
+        return FFS_ENOENT;
+    }
+
+    rc = ffs_file_new(parent, parser.fpp_token, parser.fpp_token_len, 1, 
+                      &inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (out_inode_entry != NULL) {
+        *out_inode_entry = inode_entry;
+    }
+
+    return 0;
+}

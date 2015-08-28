@@ -1,0 +1,782 @@
+***** FFS
+
+*** HISTORY
+Rev.    Date            Changes
+3       2015/08/20      More cache specifics; updated ffs_read() function type.
+2       2015/08/17      Addition of crc16; clarification of sweep phase.
+1       2015/08/13
+
+
+*** SUMMARY
+
+ffs (working title) is a flash file system with the following priorities:
+    * Minimal RAM usage
+    * Reliability
+
+
+*** DISK STRUCTURE
+
+At the top level, an ffs disk is partitioned into areas.  An area is a region
+of disk with the following properties:
+    (1) An area can be fully erased without affecting any other areas.
+    (2) A write to one area does not restrict writes to other areas.
+
+Clarification of point (2): some flash hardware divides its memory space into
+"blocks."  Writes within a block must be sequential, but writes to one block
+have no effect on what parts of other blocks can be written.  Thus, for flash
+hardware with such a restriction, each area must comprise a discrete number of
+blocks.
+
+While not strictly necessary, it is recommended that all areas have the same
+size.
+
+On disk, each area is prefixed with the following header:
+
+/** On-disk representation of an area header. */
+struct ffs_disk_area {
+    uint32_t fda_magic[4];  /* FFS_AREA_MAGIC{0,1,2,3} */
+    uint32_t fda_length;    /* Total size of area, in bytes (includes hdr). */
+    uint8_t fda_ver;        /* Current ffs version: 0 */
+    uint8_t fda_gc_seq;     /* Garbage collection count. */
+    uint8_t reserved8;
+    uint8_t fda_id;         /* 0xff if scratch area. */
+};
+
+Beyond its header, an area contains a sequence of disk objects, representing
+the contents of the file system.  There are two types of objects: inodes and
+data blocks.  An inode represents a file or directory; a data block represents
+part of a file's contents.
+
+/** On-disk representation of an inode (file or directory). */
+struct ffs_disk_inode {
+    uint32_t fdi_magic;         /* FFS_INODE_MAGIC */
+    uint32_t fdi_id;            /* Unique object ID. */
+    uint32_t fdi_seq;           /* Sequence number; greater supersedes
+                                   lesser. */
+    uint32_t fdi_parent_id;     /* Object ID of parent directory inode. */
+    uint8_t reserved8;
+    uint8_t fdi_filename_len;   /* Length of filename, in bytes. */
+    uint16_t fdi_crc16;         /* Covers rest of header and filename. */
+    /* Followed by filename. */
+};
+
+An inode filename's length cannot exceed 256 bytes.  The filename is not
+null-terminated.  The following ASCII characters are not allowed in a filename:
+    * /  (slash character)
+    * \0 (NUL character)
+
+/** On-disk representation of a data block. */
+struct ffs_disk_block {
+    uint32_t fdb_magic;     /* FFS_BLOCK_MAGIC */
+    uint32_t fdb_id;        /* Unique object ID. */
+    uint32_t fdb_seq;       /* Sequence number; greater supersedes lesser. */
+    uint32_t fdb_inode_id;  /* Object ID of owning inode. */
+    uint32_t fdb_prev_id;   /* Object ID of previous block in file;
+                               FFS_ID_NONE if this is the first block. */
+    uint16_t fdb_data_len;  /* Length of data contents, in bytes. */
+    uint16_t fdb_crc16;     /* Covers rest of header and data. */
+    /* Followed by 'fdb_data_len' bytes of data. */
+};
+
+Each data block contains the ID of the previous data block in the file.
+Together, the set of blocks in a file form a reverse singly-linked list.
+
+The maximum number of data bytes that a block can contain is determined at
+initialization-time.  The result is the greatest number which satisfies all of
+the following restrictions:
+    o No more than 2048.
+    o At least two maximum-sized blocks can fit in the smallest area.
+
+The 2048 number was chosen somewhat arbitrarily, and may change in the future.
+
+
+*** ID SPACE
+
+All disk objects have a unique 32-bit ID.  The ID space is partitioned as
+follows:
+      * 0x00000000 - 0x0fffffff: Directory inodes.
+      * 0x10000000 - 0x7fffffff: File inodes.
+      * 0x80000000 - 0xfffffffe: Data blocks.
+      * 0xffffffff             : Reserved (FFS_ID_NONE)
+
+
+*** SCRATCH AREA
+
+A valid ffs file system must contain a single "scratch area."  The scratch area
+does not contain any objects of its own, and is only used during garbage
+collection.  The scratch area must have a size greater than or equal to each of
+the other areas in flash.  
+
+
+*** RAM REPRESENTATION
+
+The file system comprises a set of objects of the following two types:
+    1) inode
+    2) data block
+
+Every object in the file system is stored in a hash table (size is
+configurable; default is 256 slots).  An object's hash key is derived from its
+32-bit ID.  All objects are represented by the following structure:
+
+struct ffs_hash_entry {
+    SLIST_ENTRY(ffs_hash_entry) fhe_next;
+    uint32_t fhe_id;        /* 0 - 0x7fffffff if inode; else if block. */
+    uint32_t fhe_flash_loc; /* Upper-byte = area idx; rest = area offset. */
+};
+
+For each data block, the above structure is all that is stored in RAM.  To
+acquire more information about a data block, the block header must be read from
+flash.
+
+Inodes require a fuller RAM representation to capture the structure of the file
+system.  There are two types of inodes: files and directories.  Each inode hash
+entry is actually an instance of the following structure:
+
+struct ffs_inode_entry {
+    struct ffs_hash_entry fie_hash_entry;
+    SLIST_ENTRY(ffs_inode) fie_sibling_next;
+    union {
+        struct ffs_inode_list fie_child_list;   /* If directory. */
+        struct ffs_hash_entry *fie_last_block;  /* If file. */
+    };
+    uint8_t fie_refcnt;
+    /* Three bytes of padding! */
+};
+
+A directory inode contains a list of its child files and directories
+(fie_child_list).  These entries are sorted alphabetically using the ASCII
+character set.
+
+File inodes contain a pointer to the last data block in the file
+(fie_last_block).  For most file operations, the reversed block list must be
+walked backwards.  This introduces a number of speed inefficiencies:
+    * All data blocks must be read to determine the length of the file.
+    * Data blocks often need to be processed sequentially.  The reversed nature
+      of the block list transforms this from linear time to an O(n^2)
+      operation.
+
+Furthermore, obtaining information about any constituent data block requires a
+separate flash read.
+
+
+*** INODE CACHE AND DATA BLOCK CACHE
+The speed issues are addressed by a pair of caches.  Cached inodes entries
+contain the file length and a much more convenient doubly-linked list of cached
+data blocks.  The benefit of using caches is that the size of the caches need
+not be proportional to the size of the file system.  In other words, caches can
+address speed efficiency concerns without negatively impacting the file
+system's scalability.
+
+The following data structures are used in the inode and data block caches.
+
+/** Full data block representation; not stored permanently RAM. */
+struct ffs_block {
+    struct ffs_hash_entry *fb_hash_entry;   /* Points to actual block entry. */
+    uint32_t fb_seq;                        /* Sequence number; greater
+                                               supersedes lesser. */
+    struct ffs_inode_entry *fb_inode_entry; /* Owning inode. */
+    struct ffs_hash_entry *fb_prev;         /* Previous block in file. */
+    uint16_t fb_data_len;                   /* # of data bytes in block. */
+    uint16_t reserved16;
+}
+
+/** Represents a single cached data block. */
+struct ffs_cache_block {
+    TAILQ_ENTRY(ffs_cache_block) fcb_link; /* Next / prev cached block. */
+    struct ffs_block fcb_block;            /* Full data block. */
+    uint32_t fcb_file_offset;              /* File offset of this block. */
+};
+
+/** Full inode representation; not stored permanently RAM. */
+struct ffs_inode {
+    struct ffs_inode_entry *fi_inode_entry; /* Points to actual inode entry. */
+    uint32_t fi_seq;                        /* Sequence number; greater
+                                               supersedes lesser. */
+    struct ffs_inode_entry *fi_parent;      /* Points to parent directory. */
+    uint8_t fi_filename_len;                /* # chars in filename. */
+    uint8_t fi_filename[FFS_SHORT_FILENAME_LEN]; /* First 3 bytes. */
+};
+
+/** Doubly-linked tail queue of cached blocks; contained in cached inodes. */
+TAILQ_HEAD(ffs_block_cache_list, ffs_block_cache_entry);
+
+/** Represents a single cached file inode. */
+struct ffs_cache_inode {
+    TAILQ_ENTRY(ffs_cache_inode) fci_link;       /* Sorted; LRU at tail. */
+    struct ffs_inode fci_inode;                  /* Full inode. */
+    struct ffs_cache_block_list fci_block_list;  /* List of cached blocks. */
+    uint32_t fci_file_len;                       /* Total file size. */
+};
+
+Only file inodes are cached; directory inodes are never cached.
+
+Within a cached inode, all cached data blocks for contiguous.  E.g., if the
+start and end of a file are cached, then the middle must also be cached.  A
+data block is only cached if its owning file is also cached.
+
+Internally, cached inodes are stored in a singly-linked list, ordered by time
+of use.  The most-recently-used entry is the first element in the list.  If a
+new inode needs to be cached, but the inode cache is full, the
+least-recently-used entry is freed to make room for the new one.  The following
+operations cause an inode to be cached:
+    * Querying a file's length.
+    * Seeking within a file.
+    * Reading from a file.
+    * Writing to a file.
+
+The following operations cause a data block to be cached:
+    * Reading from the block.
+    * Writing to the block.
+
+If one of the above operations is applied to a data block that is not currently
+cached, ffs uses the following procedure to cache the necessary blocks:
+    1. If none of the owning inode's blocks are currently cached, allocate a
+       cached block entry and insert it into the inode's list.
+    2. Else if the requested file offset is less than that of the first cached
+       block, bridge the gap between the inode's sequence of cached blocks and
+       the block that now needs to be cached.  This is accomplished by caching
+       each block in the gap, finishing with the requested block.
+    3. Else (the requested offset is beyond the end of the cache),
+        a. If the requested offset belongs to the block that immediately
+           follows the end of the cache, cache the block and append it to the
+           list.
+        b. Else, clear the cache, and populate it with the single entry
+           corresponding to the requested block.
+
+If the system is unable to allocate a cached block entry at any point during
+the above procedure, the system frees up other blocks currently in the cache.
+This is accomplished as follows:
+    1. Iterate the inode cache in reverse (i.e., start with the
+       least-recently-used entry).  For each entry:
+        a. If the entry's cached block list is empty, advance to the next
+           entry.
+        b. Else, free all the cached blocks in the entry's list.
+
+Because the system imposes a minimum block cache size of one, the above
+procedure will always reclaim at least one cache block entry.  The above
+procedure may result in the freeing of the block list that belongs to the very
+inode being operated on.  This is OK, as the final block to get cached is
+always the block being requested.
+
+*** FILENAME CACHE
+It may also be necessary to speed up filename lookups with a second cache.
+Details TBD.
+
+
+*** CONFIGURATION
+The file system is configured by populating fields in a global structure.  Each
+field in the structure corresponds to a setting.  All configuration must be
+done prior to calling ffs_init().  The configuration structure is defined as
+follows:
+
+struct ffs_config {
+    /** Number of hash table slots; default=256. */
+    uint32_t fc_hash_size;
+
+    /** Maximum number of inodes; default=1024. */
+    uint32_t fc_num_inodes;
+
+    /** Maximum number of data blocks; default=4096. */
+    uint32_t fc_num_blocks;
+
+    /** Maximum number of open files; default=4. */
+    uint32_t fc_num_files;
+
+    /** Inode cache size; default=4. */
+    uint32_t fc_num_cache_inodes;
+
+    /** Data block cache size; default=64. */
+    uint32_t fc_num_cache_blocks;
+};
+
+extern struct ffs_config ffs_config;
+
+Any fields that are set to 0 (or not set at all) inherit the corresponding
+default value.
+
+
+*** INITIALIZATION
+
+There are two means of initializing an ffs file system:
+    (1) Restore an existing file system via detection.
+    (2) Create a new file system via formatting.
+
+Both methods require the user to describe how the flash memory is divided into
+areas.  This is accomplished with an array of struct ffs_area_desc, defined as
+follows:
+
+struct ffs_area_desc {
+    uint32_t fad_offset;    /* Flash offset of start of area. */
+    uint32_t fad_length;    /* Size of area, in bytes. */
+};
+
+An array of area descriptors is terminated by an entry with a fad_length field
+of 0.
+
+The expected initialization sequence is as follows:
+
+    (1) Detect an ffs file system anywhere in flash.
+    (2) If no file system detected, format a new file system in a specific
+        region of flash.
+
+
+*** DETECTION
+
+The file system detection process consists of scanning a specified set of
+flash regions for valid ffs areas, and populating the RAM representation of
+the file system with the detected objects.  Detection is initiated with the
+following function:
+
+/**
+ * Searches for a valid ffs file system among the specified areas.  This
+ * function succeeds if a file system is detected among any subset of the
+ * supplied areas.  If the area set does not contain a valid file system,
+ * a new one can be created via a separate call to ffs_format().
+ *
+ * @param area_descs        The area set to search.  This array must be
+ *                              terminated with a 0-length area.
+ *
+ * @return                  0 on success;
+ *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          other nonzero on error.
+ */
+int ffs_detect(const struct ffs_area_desc *area_descs);
+
+As indicated, not every area descriptor needs to reference a valid ffs area.
+Detection is successful as long as a complete file system is detected
+somewhere in the specified regions of flash.  If an application is unsure
+where a file system might be located, it is expected that the application
+would initiate detection across the entire flash region.
+
+A detected file system is valid if:
+    (1) At least one non-scratch area is present.
+    (2) At least one scratch area is present (only the first gets used if
+        there is more than one).
+    (3) The root directory inode is present.
+
+During detection, each indicated region of flash is checked for a valid area
+header.  The contents of each valid non-scratch area are then restored into the
+ffs RAM representation.  The following procedure is applied to each object in
+the area:
+
+    (1) Convert the disk object into its corresponding RAM representation and
+        insert it into the hash table.  If the object is an inode:
+            o Its crc16 is verified; if invalid, the object is discarded.
+            o Its reference count is initialized to 1, indicating ownership by
+              its parent directory.
+
+    (2) If an object with the same ID is already present, then one supersedes
+        the other.  Accept the object with the greater sequence number and
+        discard the other.
+
+    (3) If the object references a nonexistant inode (parent directory in the
+        case of an inode; owning file in the case of a data block), insert a
+        temporary "dummy" inode into the hash table so that inter-object links
+        can be maintained until the absent inode is eventually restored.  Dummy
+        inodes are identified by a reference count of 0.
+
+    (4) If a delete record for an inode is encountered, the inode is marked as
+        a dummy.
+
+Note: in the above procedure, a crc check is applied to inodes, but not to data
+blocks.  The data block crc check is delayed until the sweep phase, described
+below.
+
+After all areas have been restored, a sweep is performed across the entire RAM
+representation so that invalid inodes can be deleted from memory.  For each
+inode:
+    * If its reference count is 0, delete it from the RAM representation.
+    * Else, perform a crc verification on each of its constituent data blocks.
+      If any block fails this check, delete the inode from the RAM
+      representation.
+
+When an inode is deleted during this sweep, all dependent objects are also
+deleted.  In the case of a directory, these are children inodes; in the case of
+a file, these are constituent data blocks.  Note: These deletions occur only in
+RAM; nothing gets written to flash at this time.
+
+In addition, a single scratch area is identified during the detection process.
+The first area whose 'fda_id' value is set to 0xff is designated as the file
+system scratch area.  If no valid scratch area is found, the cause could be
+that the system was restarted while a garbage collection cycle was in progress.
+Such a condition is identified by the presence of two areas with the same ID.
+In such a case, the shorter of the two areas is erased and designated as the
+scratch area.
+
+
+*** FORMATTING
+
+A new file system is created via formatting.  Formatting is achieved via the
+following function:
+
+/**
+ * Erases all the specified areas and initializes them with a clean ffs
+ * file system.
+ *
+ * @param area_descs        The set of areas to format.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int ffs_format(const struct ffs_area_desc *area_descs);
+
+On success, an area header is written to each of the specified locations.  The
+largest area in the set is designated as the initial scratch area.
+
+
+*** FLASH WRITES
+
+The ffs implementation always writes in a strictly sequential fashion within an
+area.  For each area, the system keeps track of the current offset.  Whenever
+an object gets written to an area, it gets written to that area's current
+offset, and the offset is increased by the object's disk size.
+
+When a write needs to be performed, the ffs implementation selects the
+appropriate destination area by iterating though each area until one with
+sufficient free space is encountered.
+
+There is no write buffering.  Each call to a write function results in a write
+operation being sent to the flash hardware.
+
+
+*** NEW OBJECTS
+
+Whenever a new object is written to disk, it is assigned the following
+properties:
+    * ID: A unique value is selected from the 32-bit ID space, as appropriate
+      for the object's type.
+    * Sequence number: 0
+
+When a new file or directory is created, a corresponding inode is written to
+flash.  Likewise, a new data block also results in the writing of a
+corresponding disk object.
+
+
+*** MOVING / RENAMING FILES AND DIRECTORIES
+
+When a file or directory is moved or renamed, its corresponding inode is
+rewritten to flash with the following properties:
+    * ID: Unchanged
+    * Sequence number: Previous value plus one.
+    * Parent inode: As specified by the move / rename operation.
+    * Filename: As specified by the move / rename operation.
+
+Because the inode's ID is unchanged, all dependent objects remain valid.
+
+
+*** UNLINKING FILES AND DIRECTORIES
+
+When a file or directory is unlinked from its parent directory, a deletion
+record for the unlinked inode gets written to flash.  The deletion record is an
+inode with the following properties:
+    * ID: Unchanged
+    * Sequence number: Previous value plus one.
+    * Parent inode ID: FFS_ID_NONE
+
+If the unlinked inode is a directory, then all the directory's children inodes
+are recursively unlinked as well.  This is implemented using non-recursive
+breadth-first traversal is used to prevent stack overflow due to recursion.
+
+When a file inode is unlinked, no deletion records need to be written for the
+file's constituent data blocks.  During the next file system detection, it is
+recognized that the data blocks belong to a deleted file, so they are not
+restored into the RAM representation.
+
+If a file has an open handle at the time it gets unlinked, application code
+can continued to use the file handle to read and write data.  All files retain
+a reference count, and a file isn't deleted from the RAM representation until
+its reference code drops to 0.  Any attempt to open an unlinked file fail,
+even if the file is referenced by other file handles.
+
+
+*** WRITING TO A FILE
+
+The following procedure is used whenever the application code writes to a file.
+First, if the write operation specifies too much data to fit into a single
+block, the operation is split into several separate write operations.  Then,
+for each write operation:
+
+    (1) Determine which existing blocks the write operation overlaps
+        (n = number of overwritten blocks).
+
+    (2) If n = 0, this is an append operation.  Write a data block with the
+        following properties:
+            * ID: New unique value.
+            * Sequence number: 0.
+
+    (3) Else (n > 1), this write overlaps existing data.
+            (a) For each block in [1, 2, ... n-1], write a new block
+                containing the updated contents.  Each new block supersedes the
+                block it overwrites.  That is, each block has the following
+                properties:
+                    * ID: Unchanged
+                    * Sequence number: Previous value plus one.
+
+            (b) Write the nth block.  The nth block includes any additional
+                data which does not overlap any existing blocks (i.e., appended
+                data).  As with the other blocks, its ID is unchanged and its
+                sequence number is incremented.
+
+Appended data can only be written to the end of the file.  That is, "holes" are
+not supported.
+
+In the case of overlap, non-overlapped portions of blocks are written alongside
+the new data in the blocks.
+
+
+*** GARBAGE COLLECTION
+
+When the file system is too full to accomodate a write operation, the system
+must perform garbage collection to make room.  The garbage collection
+procedure is described below:
+
+    (1) The non-scratch area with the lowest garbage collection sequence
+        number is selected as the "source area."  If there are other areas
+        with the same sequence number, the one with the smallest flash offset
+        is selected. 
+
+    (2) The source area's ID is written to the scratch area's header,
+        transforming it into a non-scratch ID.  The former scratch area is now
+        known as the "destination area."
+
+    (3) The RAM representation is exhaustively searched for collectible
+        objects.  The following procedure is applied to each inode in the
+        system:
+
+        (a) If the inode is resident in the source area, copy the inode record
+            to the destination area.
+
+        (b) If the inode is a file inode, walk the inode's list of data blocks,
+            starting with the last block in the file.  Each block that is
+            resident in the source area is copied to the destination area.  If
+            there is a run of two or more blocks that are resident in the
+            source area, they are consolidated and copied to the destination
+            area as a single new block.
+
+    (4) The source area is reformatted as a scratch sector (i.e., is is fully
+        erased, and its header is rewritten with an ID of 0xff).  The area's
+        garbage collection sequence number is incremented prior to rewriting
+        the header.  This area is now the new scratch sector.
+
+
+*** MISC
+
+    * RAM usage:
+        o 24 bytes per inode
+        o 12 bytes per data block
+        o 36 bytes per inode cache entry
+        o 32 bytes per data block cache entry
+    * Maximum filename size: 256 characters
+    * Disallowed filename characters: '/' and '\0'
+
+
+*** ISSUES
+
+    * No solution when the 32-bit ID space is exhausted; file system becomes
+      read-only.
+    * Hash function may be suboptimal. XXX
+
+
+*** FUTURE ENHANCEMENTS
+
+    * Error correction
+    * Encryption
+    * Compression
+
+
+*** API
+
+struct ffs_file;
+
+/**
+ * Opens a file at the specified path.  The result of opening a nonexistent
+ * file depends on the access flags specified.  All intermediate directories
+ * must have already been created.
+ *
+ * The mode strings passed to fopen() map to ffs_open()'s access flags as
+ * follows:
+ *   "r"  -  FFS_ACCESS_READ
+ *   "r+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE
+ *   "w"  -  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
+ *   "w+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
+ *   "a"  -  FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *   "a+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *
+ * @param out_file          On success, a pointer to the newly-created file
+ *                              handle gets written here.
+ * @param path              The path of the file to open.
+ * @param access_flags      Flags controlling file access; see above table.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int ffs_open(const char *path, uint8_t access_flags,
+             struct ffs_file **out_file);
+
+
+/**
+ * Closes the specified file and invalidates the file handle.  If the file has
+ * already been unlinked, and this is the last open handle to the file, this
+ * operation causes the file to be deleted.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int ffs_close(struct ffs_file *file);
+
+
+/**
+ * Positions a file's read and write pointer at the specified offset.  The
+ * offset is expressed as the number of bytes from the start of the file
+ * (i.e.,
+ * seeking to 0 places the pointer at the first byte in the file).
+ *
+ * @param file              The file to reposition.
+ * @param offset            The offset from the start of the file to seek to.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int ffs_seek(struct ffs_file *file, uint32_t offset);
+
+
+/**
+ * Retrieves the current read and write position of the specified open file.
+ *
+ * @param file              The file to query.
+ *
+ * @return                  The file offset, in bytes.
+ */
+uint32_t ffs_getpos(const struct ffs_file *file);
+
+
+/**
+ * Retrieves the current length of the specified open file.
+ *
+ * @param file              The file to query.
+ * @param out_len           On success, the number of bytes in the file gets
+ *                              written here.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
+
+
+/**
+ * Reads data from the specified file.  If more data is requested than remains
+ * in the file, all available data is retrieved.  Note: this type of short read
+ * results in a success return code.
+ *
+ * @param file              The file to read from.
+ * @param len               The number of bytes to attempt to read.
+ * @param out_data          The destination buffer to read into.
+ * @param out_len           On success, the number of bytes actually read gets
+ *                              written here.  Pass null if you don't care.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
+             uint32_t *out_len)
+
+
+/**
+ * Writes the supplied data to the current offset of the specified file handle.
+ *
+ * @param file              The file to write to.
+ * @param data              The data to write.
+ * @param len               The number of bytes to write.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int ffs_write(struct ffs_file *file, const void *data, int len);
+
+
+/**
+ * Unlinks the file or directory at the specified path.  If the path refers to
+ * a directory, all the directory's descendants are recursively unlinked.  Any
+ * open file handles refering to an unlinked file remain valid, and can be
+ * read from and written to.
+ *
+ * @path                    The path of the file or directory to unlink.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int ffs_unlink(const char *path);
+
+
+/**
+ * Performs a rename and / or move of the specified source path to the
+ * specified * destination.  The source path can refer to either a file or a
+ * directory.  All intermediate directories in the destination path must
+ * already have been created.  If the source path refers to a file, the
+ * destination path must contain a full filename path (i.e., if performing a
+ * move, the destination path should end with the same filename in the source
+ * path).  If an object already exists at the specified destination path, this
+ * function causes it to be unlinked prior to the rename (i.e., the
+ * destination
+ * gets clobbered).
+ *
+ * @param from              The source path.
+ * @param to                The destination path.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int ffs_rename(const char *from, const char *to);
+
+
+/**
+ * Creates the directory represented by the specified path.  All intermediate
+ * directories must already exist.  The specified path must start with a '/'
+ * character.
+ *
+ * @param path                  The directory to create.
+ *
+ * @return                      0 on success;
+ *                              nonzero on failure.
+ */
+int ffs_mkdir(const char *path);
+
+
+/**
+ * Erases all the specified areas and initializes them with a clean ffs
+ * file system.
+ *
+ * @param area_descs        The set of areas to format.
+ *
+ * @return                  0 on success;
+ *                          nonzero on failure.
+ */
+int ffs_format(const struct ffs_area_desc *area_descs);
+
+
+/**
+ * Searches for a valid ffs file system among the specified areas.  This
+ * function succeeds if a file system is detected among any subset of the
+ * supplied areas.  If the area set does not contain a valid file system,
+ * a new one can be created via a call to ffs_format().
+ *
+ * @param area_descs        The area set to search.  This array must be
+ *                              terminated with a 0-length area.
+ *
+ * @return                  0 on success;
+ *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          other nonzero on error.
+ */
+int ffs_detect(const struct ffs_area_desc *area_descs);
+
+
+/**
+ * Indicates whether a valid filesystem has been initialized, either via
+ * detection or formatting.
+ *
+ * @return                  1 if a file system is present; 0 otherwise.
+ */
+int ffs_ready(void);
+
+
+/**
+ * Initializes the ffs memory and data structures.  This must be called before
+ * any ffs operations are attempted.
+ *
+ * @return                  0 on success; nonzero on error.
+ */
+int ffs_init(void);

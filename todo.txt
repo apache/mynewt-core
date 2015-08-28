@@ -1,0 +1,10 @@
+Short term:
+* Implement tests to verify blocks and inodes are properly restored if
+  superseded by a corrupt object.
+* On corrupt disk restore, scan for the next magic number to recover the rest
+  of the disk.
+
+Long term:
+* ECC
+* Compression
+* Encryption
