@@ -35,10 +35,10 @@ MEMORY
  *   __stack
  *   __coredata_start__
  *   __coredata_end__
- *   __ccm_bss_start__
- *   __ccm_bss_end__
+ *   __corebss_start__
+ *   __corebss_end__
  *   __ecoredata
- *   __ccm_end__
+ *   __ecorebs
  */
 ENTRY(Reset_Handler)
 
@@ -139,18 +139,17 @@ SECTIONS
 
     } > RAM
 
-    /* Create CCM section */
-    .ccm (NOLOAD):
+    .corebss (NOLOAD):
     {
         . = ALIGN(4);
-        __ccm_bss_start__ = .;
+        __corebss_start__ = .;
         *(.bss.core)
         . = ALIGN(4);
-        __ccm_bss_end__ = .;
-        *(.ccm*)
+        __corebss_end__ = .;
+        *(.corebss*)
         *(.bss.core.nz)
-        __ccm_end__ = .;
         . = ALIGN(4);
+        __ecorebss = .;
     } > CCM
 
     .bss :
@@ -185,6 +184,6 @@ SECTIONS
     PROVIDE(__stack = __StackTop);
     
     /* Check for CCM overflow */
-    ASSERT(__StackLimit >= __ccm_end__, "CCM overflow!")
+    ASSERT(__StackLimit >= __ecorebss, "CCM overflow!")
 }
 

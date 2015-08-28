@@ -209,8 +209,8 @@ Reset_Handler:
 
 /* Set the bss core section to zero */
     mov     r0, #0
-    ldr     r1, =__ccm_bss_start__
-    ldr     r2, =__ccm_bss_end__
+    ldr     r1, =__corebss_start__
+    ldr     r2, =__corebss_end__
 
 .LC2:
     cmp     r1, r2
