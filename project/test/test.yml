@@ -1,7 +1,8 @@
 project.name: test
-project.pkgs: 
-    - libs/os 
-    - libs/ffs 
-    - libs/ffsutil 
-    - libs/bootutil 
+project.pkgs:
+    - libs/testutil
+    - libs/os
+    - libs/ffs
+    - libs/ffsutil
+    - libs/bootutil
     - hw/mcu/native
