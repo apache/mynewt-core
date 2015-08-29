@@ -36,7 +36,7 @@ struct cpu_timer
  *  
  * Initialize the cputime module. This must be called after os_init is called 
  * and before any other timer API are used. This should be called only once 
- * and should be called before TIM5 is used. 
+ * and should be called before the hardware timer is used. 
  * 
  * @param clock_freq The desired cputime frequency, in hertz (Hz).
  * 
