@@ -33,7 +33,7 @@ struct cputime_data
 {
     uint32_t ticks_per_usec;    /* number of ticks per usec */
     uint32_t cputime_high;      /* high word of 64-bit cpu time */
-    uint32_t tim5_isrs;         /* Number of timer interrupts */
+    uint32_t timer_isrs;        /* Number of timer interrupts */
     uint32_t ocmp_ints;         /* Number of ocmp interrupts */
     uint32_t uif_ints;          /* Number of overflow interrupts */
 };
@@ -112,7 +112,7 @@ tim5_isr(void)
     TIM5->SR = ~sr;
 
     /* Count # of interrupts */
-    ++g_cputime.tim5_isrs;
+    ++g_cputime.timer_isrs;
 
     /* If overflow, increment high word of cpu time */
     if (sr & TIM_SR_UIF) {
@@ -134,7 +134,7 @@ tim5_isr(void)
  *  
  * Initialize the cputime module. This must be called after os_init is called 
  * and before any other timer API are used. This should be called only once 
- * and should be called before TIM5 is used. 
+ * and should be called before the hardware timer is used. 
  * 
  * @param clock_freq The desired cputime frequency, in hertz (Hz).
  * 
