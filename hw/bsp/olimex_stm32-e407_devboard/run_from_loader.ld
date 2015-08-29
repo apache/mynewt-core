@@ -29,6 +29,7 @@ MEMORY
  *   __bss_end__
  *   __end__
  *   end
+ *   __HeapBase
  *   __HeapLimit
  *   __StackLimit
  *   __StackTop
@@ -167,14 +168,9 @@ SECTIONS
         . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
-    
-    .heap (COPY):
-    {
-        __end__ = .;
-        end = __end__;
-        *(.heap*)
-        __HeapLimit = .;
-    } > RAM
+
+    __HeapBase = .;
+    __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
