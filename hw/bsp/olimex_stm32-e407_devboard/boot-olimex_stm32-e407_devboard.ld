@@ -29,10 +29,17 @@ MEMORY
  *   __bss_end__
  *   __end__
  *   end
+ *   __HeapBase
  *   __HeapLimit
  *   __StackLimit
  *   __StackTop
  *   __stack
+ *   __coredata_start__
+ *   __coredata_end__
+ *   __corebss_start__
+ *   __corebss_end__
+ *   __ecoredata
+ *   __ecorebss
  */
 ENTRY(Reset_Handler)
 
@@ -81,8 +88,24 @@ SECTIONS
 
     . = ALIGN(8);
     __etext = .;
-        
-    .data : AT (__etext)
+
+    .coredata : AT (__etext)
+    {
+        __coredata_start__ = .;
+        *(.data.core)
+        . = ALIGN(8);
+        __coredata_end__ = .;
+    } > CCM
+
+    __ecoredata = __etext + SIZEOF(.coredata);
+
+    /* This section is here so that the start of .data has the same VMA and LMA */
+    .ram_coredata (NOLOAD):
+    {
+        . = . + SIZEOF(.coredata);
+    } > RAM
+
+    .data : AT (__ecoredata)
     {
         __data_start__ = .;
         *(vtable)
@@ -115,6 +138,19 @@ SECTIONS
 
     } > RAM
 
+    .corebss (NOLOAD):
+    {
+        . = ALIGN(4);
+        __corebss_start__ = .;
+        *(.bss.core)
+        . = ALIGN(4);
+        __corebss_end__ = .;
+        *(.corebss*)
+        *(.bss.core.nz)
+        . = ALIGN(4);
+        __ecorebss = .;
+    } > CCM
+
     .bss :
     {
         . = ALIGN(4);
@@ -124,9 +160,9 @@ SECTIONS
         . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
-
+    
     __HeapBase = .;
-    __HeapLimit = __StackLimit;
+    __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
@@ -134,20 +170,14 @@ SECTIONS
     .stack_dummy (COPY):
     {
         *(.stack*)
-    } > RAM
-
-    .ccm (NOLOAD):
-    {
-        *(.ccm*)
     } > CCM
 
-    /* Set stack top to end of RAM, and stack limit move down by
-     * size of stack_dummy section */
-    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+    /* Set stack top to end of CCM; stack limit is bottom of stack */
+    __StackTop = ORIGIN(CCM) + LENGTH(CCM);
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
     
-    /* Check if data + heap + stack exceeds RAM limit */
-    ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
+    /* Check for CCM overflow */
+    ASSERT(__StackLimit >= __ecorebss, "CCM overflow!")
 }
 

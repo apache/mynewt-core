@@ -1,4 +1,5 @@
 project.name: boot
+project.identities: bootloader
 project.pkgs: 
     - libs/os 
     - libs/bootutil 
