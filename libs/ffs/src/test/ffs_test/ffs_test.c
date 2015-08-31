@@ -1747,7 +1747,7 @@ TEST_CASE(ffs_test_corrupt_scratch)
     ffs_test_assert_system(expected_system, area_descs_two);
 }
 
-TEST_CASE(ffs_test_corrupt_block)
+TEST_CASE(ffs_test_incomplete_block)
 {
     struct ffs_block block;
     struct ffs_file *file;
@@ -1755,7 +1755,6 @@ TEST_CASE(ffs_test_corrupt_block)
     uint32_t area_offset;
     uint8_t area_idx;
     int rc;
-
 
     /*** Setup. */
     rc = ffs_format(ffs_area_descs);
@@ -1814,6 +1813,90 @@ TEST_CASE(ffs_test_corrupt_block)
                 }, {
                     .filename = "c",
                     .contents = "cccc",
+                    .contents_len = 4,
+                }, {
+                    .filename = NULL,
+                } },
+            }, {
+                .filename = NULL,
+            } },
+    } };
+
+    ffs_test_assert_system(expected_system, ffs_area_descs);
+}
+
+TEST_CASE(ffs_test_corrupt_block)
+{
+    struct ffs_block block;
+    struct ffs_file *file;
+    uint32_t flash_offset;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    /*** Setup. */
+    rc = ffs_format(ffs_area_descs);
+    TEST_ASSERT(rc == 0);
+
+    rc = ffs_mkdir("/mydir");
+    TEST_ASSERT(rc == 0);
+
+    ffs_test_util_create_file("/mydir/a", "aaaa", 4);
+    ffs_test_util_create_file("/mydir/b", "bbbb", 4);
+    ffs_test_util_create_file("/mydir/c", "cccc", 4);
+
+    /* Add a second block to the 'b' file. */
+    ffs_test_util_append_file("/mydir/b", "1234", 4);
+
+    /* Corrupt the 'b' file; overwrite the second block's magic number. */
+    rc = ffs_open("/mydir/b", FFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == 0);
+
+    rc = ffs_block_from_hash_entry(&block,
+                                   file->ff_inode_entry->fie_last_block_entry);
+    TEST_ASSERT(rc == 0);
+
+    ffs_flash_loc_expand(block.fb_hash_entry->fhe_flash_loc, &area_idx,
+                         &area_offset);
+    flash_offset = ffs_areas[area_idx].fa_offset + area_offset;
+    rc = flash_native_memset(flash_offset, 0x43, 4);
+    TEST_ASSERT(rc == 0);
+
+    /* Write a fourth file. This file should get restored even though the
+     * previous object has an invalid magic number.
+     */
+    ffs_test_util_create_file("/mydir/d", "dddd", 4);
+
+    rc = ffs_misc_reset();
+    TEST_ASSERT(rc == 0);
+    rc = ffs_detect(ffs_area_descs);
+    TEST_ASSERT(rc == 0);
+
+    /* The entire second block should be removed; the file should only contain
+     * the first block.
+     */
+    struct ffs_test_file_desc *expected_system =
+        (struct ffs_test_file_desc[]) { {
+            .filename = "",
+            .is_dir = 1,
+            .children = (struct ffs_test_file_desc[]) { {
+                .filename = "mydir",
+                .is_dir = 1,
+                .children = (struct ffs_test_file_desc[]) { {
+                    .filename = "a",
+                    .contents = "aaaa",
+                    .contents_len = 4,
+                }, {
+                    .filename = "b",
+                    .contents = "bbbb",
+                    .contents_len = 4,
+                }, {
+                    .filename = "c",
+                    .contents = "cccc",
+                    .contents_len = 4,
+                }, {
+                    .filename = "d",
+                    .contents = "dddd",
                     .contents_len = 4,
                 }, {
                     .filename = NULL,
@@ -2099,6 +2182,7 @@ ffs_test_gen(void)
     ffs_test_gc();
     ffs_test_wear_level();
     ffs_test_corrupt_scratch();
+    ffs_test_incomplete_block();
     ffs_test_corrupt_block();
     ffs_test_large_unlink();
     ffs_test_large_system();

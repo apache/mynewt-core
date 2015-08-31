@@ -718,23 +718,29 @@ static int
 ffs_restore_area_contents(int area_idx)
 {
     struct ffs_disk_object disk_object;
-    struct ffs_disk_area disk_area;
     struct ffs_area *area;
     int rc;
 
     area = ffs_areas + area_idx;
 
-    area->fa_cur = sizeof disk_area;
+    area->fa_cur = sizeof (struct ffs_disk_area);
     while (1) {
-        rc = ffs_restore_disk_object(area_idx, area->fa_cur, &disk_object);
+        rc = ffs_restore_disk_object(area_idx, area->fa_cur,  &disk_object);
         switch (rc) {
         case 0:
+            /* Valid object; restore it into the RAM representation. */
             ffs_restore_object(&disk_object);
             area->fa_cur += ffs_restore_disk_object_size(&disk_object);
             break;
 
+        case FFS_ECORRUPT:
+            /* Invalid object; keep scanning for a valid magic number. */
+            area->fa_cur++;
+            break;
+
         case FFS_EEMPTY:
         case FFS_ERANGE:
+            /* End of disk encountered; area fully restored. */
             return 0;
 
         default:
