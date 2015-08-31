@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include "testutil/testutil.h"
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
 #include "crc16.h"
@@ -96,10 +97,9 @@ ffs_block_write_disk(const struct ffs_disk_block *disk_block,
     *out_area_idx = area_idx;
     *out_area_offset = area_offset;
 
-#if FFS_DEBUG
-    rc = ffs_crc_disk_block_validate(disk_block, area_idx, area_offset);
-    assert(rc == 0);
-#endif
+    TEST_ASSERT(ffs_crc_disk_block_validate(disk_block, area_idx,
+                                            area_offset) == 0,
+                "newly-written block failed CRC check");
 
     return 0;
 }

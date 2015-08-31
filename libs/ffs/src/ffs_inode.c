@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#include "testutil/testutil.h"
 #include "os/os_mempool.h"
 #include "ffs/ffs.h"
 #include "ffs_priv.h"
@@ -83,10 +84,9 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
         }
     }
 
-#if FFS_DEBUG
-    rc = ffs_crc_disk_inode_validate(disk_inode, area_idx, area_offset);
-    assert(rc == 0);
-#endif
+    TEST_ASSERT(ffs_crc_disk_inode_validate(disk_inode, area_idx,
+                                            area_offset) == 0,
+                "newly-written inode failed CRC check");
 
     return 0;
 }

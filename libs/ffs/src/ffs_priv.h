@@ -6,8 +6,6 @@
 #include "os/os_mempool.h"
 #include "ffs/ffs.h"
 
-#define FFS_DEBUG 1
-
 #define FFS_HASH_SIZE               256
 
 #define FFS_ID_DIR_MIN              0
