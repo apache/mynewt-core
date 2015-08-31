@@ -519,9 +519,8 @@ ffs_restore_block(const struct ffs_disk_block *disk_block, uint8_t area_idx,
 
     new_block = 0;
 
-    /* Check the inode's CRC.  If the inode is corrupt, mark it as a dummy
-     * node.  If the corrupt inode does not get superseded by a valid revision,
-     * it will get deleted during the sweep phase.
+    /* Check the block's CRC.  If the block is corrupt, discard it.  If this
+     * block would have superseded another, the old block becomes current.
      */
     rc = ffs_crc_disk_block_validate(disk_block, area_idx, area_offset);
     if (rc != 0) {

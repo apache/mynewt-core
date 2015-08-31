@@ -1768,7 +1768,12 @@ TEST_CASE(ffs_test_corrupt_block)
     ffs_test_util_create_file("/mydir/b", "bbbb", 4);
     ffs_test_util_create_file("/mydir/c", "cccc", 4);
 
-    /* Corrupt the 'b' file; make it look like it only got half written. */
+    /* Add a second block to the 'b' file. */
+    ffs_test_util_append_file("/mydir/b", "1234", 4);
+
+    /* Corrupt the 'b' file; make it look like the second block only got half
+     * written.
+     */
     rc = ffs_open("/mydir/b", FFS_ACCESS_READ, &file);
     TEST_ASSERT(rc == 0);
 
@@ -1788,8 +1793,9 @@ TEST_CASE(ffs_test_corrupt_block)
     rc = ffs_detect(ffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    /* The entire file should be removed. */
-
+    /* The entire second block should be removed; the file should only contain
+     * the first block.
+     */
     struct ffs_test_file_desc *expected_system =
         (struct ffs_test_file_desc[]) { {
             .filename = "",
@@ -1803,8 +1809,8 @@ TEST_CASE(ffs_test_corrupt_block)
                     .contents_len = 4,
                 }, {
                     .filename = "b",
-                    .contents = NULL,
-                    .contents_len = 0,
+                    .contents = "bbbb",
+                    .contents_len = 4,
                 }, {
                     .filename = "c",
                     .contents = "cccc",
