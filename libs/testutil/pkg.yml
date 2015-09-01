@@ -1,2 +1,5 @@
 pkg.name: libs/testutil
 pkg.vers: 0.1 
+pkg.deps:
+    - libs/ffs
+    - libs/ffsutil

@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "testutil/testutil.h"
-#include "testutil_priv.h"
 
 static char tu_io_buf[1024];
 
