@@ -1,8 +1,8 @@
 #include "os/os.h"
-#include "boot_test.h"
 
 #include "ffs/ffs.h"
 #include "ffs/ffs_test.h"
+#include "bootutil/bootutil_test.h"
 #include "testutil/testutil.h"
 
 #include <stdio.h>
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 
     ffs_test_all();
 
-    boot_test();
+    boot_test_all();
 
     test_num = 0;
 

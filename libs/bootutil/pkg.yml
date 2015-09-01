@@ -4,4 +4,5 @@ pkg.deps:
     - libs/os 
     - libs/ffs 
     - libs/ffsutil 
+    - libs/testutil
     - hw/hal

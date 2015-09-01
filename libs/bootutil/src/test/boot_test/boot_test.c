@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include "testutil/testutil.h"
 #include "hal/hal_flash.h"
 #include "ffs/ffs.h"
 #include "ffsutil/ffsutil.h"
@@ -65,7 +66,7 @@ boot_test_util_byte_at(int img_msb, uint32_t image_offset)
     uint32_t u32;
     uint8_t *u8p;
 
-    assert(image_offset < 0x01000000);
+    TEST_ASSERT(image_offset < 0x01000000);
     u32 = image_offset + (img_msb << 24);
     u8p = (void *)&u32;
     return u8p[image_offset % 4];
@@ -78,24 +79,24 @@ boot_test_util_init_flash(void)
     int rc;
 
     rc = flash_init();
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     for (area_desc = boot_test_area_descs;
          area_desc->fad_length != 0;
          area_desc++) {
 
         rc = flash_erase(area_desc->fad_offset, area_desc->fad_length);
-        assert(rc == 0);
+        TEST_ASSERT(rc == 0);
     }
 
     rc = ffs_init();
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = ffs_format(boot_test_format_descs);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = ffs_mkdir("/boot");
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 }
 
 static void
@@ -109,21 +110,21 @@ boot_test_util_copy_area(int from_area_idx, int to_area_idx)
     from_area_desc = boot_test_area_descs + from_area_idx;
     to_area_desc = boot_test_area_descs + to_area_idx;
 
-    assert(from_area_desc->fad_length == to_area_desc->fad_length);
+    TEST_ASSERT(from_area_desc->fad_length == to_area_desc->fad_length);
 
     buf = malloc(from_area_desc->fad_length);
-    assert(buf != NULL);
+    TEST_ASSERT(buf != NULL);
 
     rc = flash_read(from_area_desc->fad_offset, buf,
                     from_area_desc->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_erase(to_area_desc->fad_offset, to_area_desc->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_write(to_area_desc->fad_offset, buf,
                      to_area_desc->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     free(buf);
 }
@@ -140,31 +141,31 @@ boot_test_util_swap_areas(int area_idx1, int area_idx2)
     area_desc1 = boot_test_area_descs + area_idx1;
     area_desc2 = boot_test_area_descs + area_idx2;
 
-    assert(area_desc1->fad_length == area_desc2->fad_length);
+    TEST_ASSERT(area_desc1->fad_length == area_desc2->fad_length);
 
     buf1 = malloc(area_desc1->fad_length);
-    assert(buf1 != NULL);
+    TEST_ASSERT(buf1 != NULL);
 
     buf2 = malloc(area_desc2->fad_length);
-    assert(buf2 != NULL);
+    TEST_ASSERT(buf2 != NULL);
 
     rc = flash_read(area_desc1->fad_offset, buf1, area_desc1->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_read(area_desc2->fad_offset, buf2, area_desc2->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_erase(area_desc1->fad_offset, area_desc1->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_erase(area_desc2->fad_offset, area_desc2->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_write(area_desc1->fad_offset, buf2, area_desc1->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = flash_write(area_desc2->fad_offset, buf1, area_desc2->fad_length);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     free(buf1);
     free(buf2);
@@ -180,12 +181,12 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
     int rc;
     int i;
 
-    assert(slot == 0 || slot == 1);
+    TEST_ASSERT(slot == 0 || slot == 1);
 
     off = boot_test_img_addrs[slot];
 
     rc = flash_write(off, hdr, sizeof *hdr);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     off += hdr->ih_hdr_size;
 
@@ -202,7 +203,7 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
         }
 
         rc = flash_write(off + image_off, buf, chunk_sz);
-        assert(rc == 0);
+        TEST_ASSERT(rc == 0);
 
         image_off += chunk_sz;
     }
@@ -234,8 +235,8 @@ boot_test_util_verify_area(const struct ffs_area_desc *area_desc,
 
         if (addr == image_addr) {
             rc = flash_read(image_addr, &temp_hdr, sizeof temp_hdr);
-            assert(rc == 0);
-            assert(memcmp(&temp_hdr, hdr, sizeof *hdr) == 0);
+            TEST_ASSERT(rc == 0);
+            TEST_ASSERT(memcmp(&temp_hdr, hdr, sizeof *hdr) == 0);
 
             addr += hdr->ih_hdr_size;
         }
@@ -264,14 +265,14 @@ boot_test_util_verify_area(const struct ffs_area_desc *area_desc,
         }
 
         rc = flash_read(addr, buf, chunk_sz);
-        assert(rc == 0);
+        TEST_ASSERT(rc == 0);
 
         for (i = 0; i < chunk_sz; i++) {
             if (rem_img > 0) {
-                assert(buf[i] == boot_test_util_byte_at(img_msb,
+                TEST_ASSERT(buf[i] == boot_test_util_byte_at(img_msb,
                                                         img_off + i));
             } else if (past_image) {
-                assert(buf[i] == 0xff);
+                TEST_ASSERT(buf[i] == 0xff);
             }
         }
 
@@ -286,7 +287,7 @@ boot_test_util_verify_status_clear(void)
     int rc;
 
     rc = ffs_open(BOOT_PATH_STATUS, FFS_ACCESS_READ, &file);
-    assert(rc == FFS_ENOENT);
+    TEST_ASSERT(rc == FFS_ENOENT);
 }
 
 static void
@@ -321,8 +322,7 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
     }
 }
 
-static void
-boot_test_nv_ns_10(void)
+TEST_CASE(boot_test_nv_ns_10)
 {
     struct boot_rsp rsp;
     int rc;
@@ -344,23 +344,20 @@ boot_test_nv_ns_10(void)
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
     };
 
-    printf("\tno-vector no-status 1-0 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_nv_ns_01(void)
+TEST_CASE(boot_test_nv_ns_01)
 {
     struct boot_rsp rsp;
     int rc;
@@ -383,23 +380,20 @@ boot_test_nv_ns_01(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tno-vector no-status 0-1 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 1);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr, 1, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_nv_ns_11(void)
+TEST_CASE(boot_test_nv_ns_11)
 {
     struct boot_rsp rsp;
     int rc;
@@ -429,25 +423,22 @@ boot_test_nv_ns_11(void)
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
-
-    printf("\tno-vector no-status 1-1 test\n");
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_vm_ns_10(void)
+TEST_CASE(boot_test_vm_ns_10)
 {
     struct boot_rsp rsp;
     int rc;
@@ -470,26 +461,23 @@ boot_test_vm_ns_10(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tvector-main no-status 1-0 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 0);
 
     rc = ffsutil_write_file(BOOT_PATH_MAIN, &hdr.ih_ver, sizeof hdr.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_vm_ns_01(void)
+TEST_CASE(boot_test_vm_ns_01)
 {
     struct boot_rsp rsp;
     int rc;
@@ -512,26 +500,23 @@ boot_test_vm_ns_01(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tvector-main no-status 0-1 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 1);
 
     rc = ffsutil_write_file(BOOT_PATH_MAIN, &hdr.ih_ver, sizeof hdr.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr, 1, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_vm_ns_11_a(void)
+TEST_CASE(boot_test_vm_ns_11_a)
 {
     struct boot_rsp rsp;
     int rc;
@@ -561,28 +546,25 @@ boot_test_vm_ns_11_a(void)
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
-
-    printf("\tvector-main no-status 1-1-a test\n");
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
     rc = ffsutil_write_file(BOOT_PATH_MAIN, &hdr0.ih_ver, sizeof hdr0.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_vm_ns_11_b(void)
+TEST_CASE(boot_test_vm_ns_11_b)
 {
     struct boot_rsp rsp;
     int rc;
@@ -613,27 +595,24 @@ boot_test_vm_ns_11_b(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tvector-main no-status 1-1-b test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
     rc = ffsutil_write_file(BOOT_PATH_MAIN, &hdr1.ih_ver, sizeof hdr1.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_vm_ns_11_2areas(void)
+TEST_CASE(boot_test_vm_ns_11_2areas)
 {
     struct boot_rsp rsp;
     int rc;
@@ -664,27 +643,24 @@ boot_test_vm_ns_11_2areas(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tvector-main no-status 1-1-2areas test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
     rc = ffsutil_write_file(BOOT_PATH_MAIN, &hdr1.ih_ver, sizeof hdr1.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_nv_bs_10(void)
+TEST_CASE(boot_test_nv_bs_10)
 {
     struct boot_status_entry entries[BOOT_TEST_NUM_IMG_AREAS];
     struct boot_status status;
@@ -708,8 +684,6 @@ boot_test_nv_bs_10(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tno-vector basic-status 1-0 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 0);
     boot_test_util_swap_areas(boot_test_img_areas[0],
@@ -723,20 +697,19 @@ boot_test_nv_bs_10(void)
     entries[BOOT_TEST_IMG_AREA_IDX_SCRATCH].bse_part_num = 0;
 
     rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_AREAS);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_nv_bs_11(void)
+TEST_CASE(boot_test_nv_bs_11)
 {
     struct boot_status_entry entries[BOOT_TEST_NUM_IMG_AREAS];
     struct boot_status status;
@@ -769,8 +742,6 @@ boot_test_nv_bs_11(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tno-vector basic-status 1-1 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
@@ -788,20 +759,19 @@ boot_test_nv_bs_11(void)
     entries[BOOT_TEST_IMG_AREA_IDX_SCRATCH].bse_part_num = 0;
 
     rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_AREAS);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_nv_bs_11_2areas(void)
+TEST_CASE(boot_test_nv_bs_11_2areas)
 {
     struct boot_status_entry entries[BOOT_TEST_NUM_IMG_AREAS];
     struct boot_status status;
@@ -834,8 +804,6 @@ boot_test_nv_bs_11_2areas(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tno-vector basic-status 1-1-2areas test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
@@ -856,20 +824,19 @@ boot_test_nv_bs_11_2areas(void)
     entries[4].bse_part_num = 1;
 
     rc = boot_write_status(&status, entries, BOOT_TEST_NUM_IMG_AREAS);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
 }
 
-static void
-boot_test_vb_ns_11(void)
+TEST_CASE(boot_test_vb_ns_11)
 {
     struct boot_rsp rsp;
     int rc;
@@ -901,24 +868,22 @@ boot_test_vb_ns_11(void)
         .br_num_image_areas = BOOT_TEST_NUM_IMG_AREAS,
     };
 
-    printf("\tvector-both no-status 1-1 test\n");
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
     rc = ffsutil_write_file(BOOT_PATH_MAIN, &hdr0.ih_ver, sizeof hdr0.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     rc = ffsutil_write_file(BOOT_PATH_TEST, &hdr1.ih_ver, sizeof hdr1.ih_ver);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     /* First boot should use the test image. */
     rc = boot_go(&req, &rsp);
-    assert(rc == 0);
+    TEST_ASSERT(rc == 0);
 
-    assert(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
@@ -926,21 +891,18 @@ boot_test_vb_ns_11(void)
     /* Ensure all subsequent boots use the main image. */
     for (i = 0; i < 10; i++) {
         rc = boot_go(&req, &rsp);
-        assert(rc == 0);
+        TEST_ASSERT(rc == 0);
 
-        assert(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-        assert(rsp.br_image_addr == boot_test_img_addrs[0]);
+        TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
+        TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
 
         boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
         boot_test_util_verify_status_clear();
     }
 }
 
-void
-boot_test(void)
+TEST_SUITE(boot_test_main)
 {
-    printf("boot loader testing\n");
-
     boot_test_nv_ns_10();
     boot_test_nv_ns_01();
     boot_test_nv_ns_11();
@@ -953,6 +915,27 @@ boot_test(void)
     boot_test_nv_bs_11();
     boot_test_nv_bs_11_2areas();
     boot_test_vb_ns_11();
-
-    printf("\n");
 }
+
+int
+boot_test_all(void)
+{
+    boot_test_main();
+    return tu_any_failed;
+}
+
+#ifdef PKG_TEST
+
+int
+main(void)
+{
+    tu_config.tc_base_path = NULL;
+    tu_config.tc_verbose = 1;
+    tu_init();
+
+    boot_test_all();
+
+    return tu_any_failed;
+}
+
+#endif
