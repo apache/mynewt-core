@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "os/os_test.h"
 #include "ffs/ffs_test.h"
 #include "bootutil/bootutil_test.h"
