@@ -15,6 +15,7 @@
  */
 
 #include "os/os.h"
+#include "os_priv.h"
 
 #ifdef __APPLE__
 #define _XOPEN_SOURCE
@@ -26,7 +27,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <assert.h> 
-
 
 /* XXX: 
  * Stack must be 16-byte aligned, any changes to this structure 
@@ -91,6 +91,11 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     void *s_cur;
     volatile int block_isr_off; 
     int rc; 
+
+    /* Make sure another task isn't creating this one.  In sim, this causes
+     * corruption of the original task's stack.
+     */
+    assert(!os_started());
 
     s = (os_stack_t *) ((uint8_t *) stack_top - sizeof(*sf));
     sf = (struct stack_frame *) s;
@@ -229,11 +234,11 @@ initialize_signals(void)
 {
     struct sigaction sa;
 
-    sigemptyset(&g_sigset); 
+    sigemptyset(&g_sigset);
     sigaddset(&g_sigset, SIGALRM); 
     sigaddset(&g_sigset, SIGVTALRM);
 
-    sa.sa_mask = g_sigset;
+    memset(&sa, 0, sizeof sa);
     sa.sa_handler = timer_handler;
 
     sigaction(SIGALRM, &sa, NULL);
@@ -302,6 +307,11 @@ start_timer(void)
 os_error_t 
 os_arch_os_init(void)
 {
+    g_current_task = NULL;
+
+    TAILQ_INIT(&g_os_run_list);
+    TAILQ_INIT(&g_os_sleep_list);
+
     os_init_idle_task();
     os_sanity_task_init(); 
     return OS_OK;
@@ -322,5 +332,7 @@ os_arch_os_start(void)
 
     sf = (struct stack_frame *) t->t_stackptr;
     sim_longjmp(sf->sf_jb, CTX_SWITCH_TASK); 
+
+    return 0;
 }
 
