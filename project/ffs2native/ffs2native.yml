@@ -1,0 +1,5 @@
+project.name: ffs2native
+project.pkgs: 
+    - libs/os
+    - libs/ffs
+    - hw/hal
