@@ -38,10 +38,8 @@ ffs_lock(void)
 {
     int rc;
 
-    if (g_current_task != NULL) { /* XXX */
-        rc = os_mutex_pend(&ffs_mutex, 0xffffffff);
-        assert(rc == 0);
-    }
+    rc = os_mutex_pend(&ffs_mutex, 0xffffffff);
+    assert(rc == 0 || rc == OS_NOT_STARTED);
 }
 
 static void
@@ -49,10 +47,8 @@ ffs_unlock(void)
 {
     int rc;
 
-    if (g_current_task != NULL) { /* XXX */
-        rc = os_mutex_release(&ffs_mutex);
-        assert(rc == 0);
-    }
+    rc = os_mutex_release(&ffs_mutex);
+    assert(rc == 0 || rc == OS_NOT_STARTED);
 }
 
 /**

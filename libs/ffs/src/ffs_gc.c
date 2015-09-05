@@ -223,9 +223,11 @@ ffs_gc_block_chain_collate(struct ffs_hash_entry *last_entry,
 
     rc = 0;
 
+#if 0
     TEST_ASSERT(ffs_crc_disk_block_validate(&disk_block, to_area_idx,
                                             to_area_offset) == 0,
                 "newly-written block failed CRC check");
+#endif
 
 done:
     free(data);

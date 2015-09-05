@@ -84,9 +84,11 @@ ffs_inode_write_disk(const struct ffs_disk_inode *disk_inode,
         }
     }
 
+#if 0
     TEST_ASSERT(ffs_crc_disk_inode_validate(disk_inode, area_idx,
                                             area_offset) == 0,
                 "newly-written inode failed CRC check");
+#endif
 
     return 0;
 }

@@ -944,12 +944,21 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
          */
         rc = ffs_restore_corrupt_scratch();
         if (rc != 0) {
+            if (rc == FFS_ENOENT) {
+                rc = FFS_ECORRUPT;
+            }
             goto err;
         }
     }
 
     /* Ensure this file system contains a valid scratch area. */
     rc = ffs_misc_validate_scratch();
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Make sure the file system contains a valid root directory. */
+    rc = ffs_misc_validate_root_dir();
     if (rc != 0) {
         goto err;
     }
@@ -965,16 +974,8 @@ ffs_restore_full(const struct ffs_area_desc *area_descs)
      */
     ffs_restore_sweep();
 
-    /* Make sure the file system contains a valid root directory. */
-    rc = ffs_misc_validate_root_dir();
-    if (rc != 0) {
-        goto err;
-    }
-
     /* Set the maximum data block size according to the size of the smallest
      * area.
-     * XXX Don't set size less than largest existing block (in case set of
-     * areas was changed).
      */
     rc = ffs_misc_set_max_block_data_len(ffs_restore_largest_block_data_len);
     if (rc != 0) {

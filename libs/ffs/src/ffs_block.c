@@ -97,9 +97,11 @@ ffs_block_write_disk(const struct ffs_disk_block *disk_block,
     *out_area_idx = area_idx;
     *out_area_offset = area_offset;
 
+#if 0
     TEST_ASSERT(ffs_crc_disk_block_validate(disk_block, area_idx,
                                             area_offset) == 0,
                 "newly-written block failed CRC check");
+#endif
 
     return 0;
 }
