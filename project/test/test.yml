@@ -5,7 +5,6 @@ project.pkgs:
     - libs/ffs
     - libs/ffsutil
     - libs/bootutil
-    - hw/mcu/native
 
 project.identities:
     - test

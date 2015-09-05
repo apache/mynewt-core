@@ -103,8 +103,12 @@ flash_erase(uint32_t address, uint32_t num_bytes)
 int
 flash_init(void)
 {
-    HAL_FLASH_Unlock();
+    int rc;
+
+    rc = HAL_FLASH_Unlock();
+    if (rc != 0) {
+        return -1;
+    }
 
     return 0;
 }
-

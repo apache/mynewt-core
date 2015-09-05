@@ -9,6 +9,7 @@ jmp_buf tu_case_jb;
 int tu_case_reported;
 int tu_case_failed;
 int tu_case_fail_idx;
+int tu_case_idx;
 
 const char *tu_case_name;
 
@@ -17,9 +18,10 @@ const char *tu_case_name;
 static char tu_case_buf[TU_CASE_BUF_SZ];
 static int tu_case_buf_len;
 
-static void
+void
 tu_case_abort(void)
 {
+    tu_case_write_pass_auto();
     longjmp(tu_case_jb, 1);
 }
 
@@ -39,7 +41,7 @@ tu_case_vappend_buf(const char *format, va_list ap)
         tu_case_buf_len = TU_CASE_BUF_SZ - 1;
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -77,6 +79,12 @@ tu_case_init(const char *name)
     tu_case_fail_idx = 0;
 }
 
+void
+tu_case_complete(void)
+{
+    tu_case_idx++;
+}
+
 static void
 tu_case_write_fail_buf(void)
 {
@@ -84,7 +92,7 @@ tu_case_write_fail_buf(void)
     int rc;
 
     if (tu_config.tc_verbose) {
-        printf("[FAIL] %s %s", tu_case_name, tu_case_buf);
+        printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
     }
 
     rc = snprintf(filename, sizeof filename, "fail-%04d.txt",
@@ -125,7 +133,7 @@ tu_case_write_pass_buf(void)
     int rc;
 
     if (tu_config.tc_verbose) {
-        printf("[pass] %s\n", tu_case_name);
+        printf("[pass] %s/%s\n", tu_suite_name, tu_case_name);
         if (tu_case_buf_len > 0) {
             printf("%s", tu_case_buf);
         }
@@ -150,8 +158,10 @@ tu_case_append_manual_pass_msg(void)
 void
 tu_case_write_pass_auto(void)
 {
-    tu_case_buf_len = 0;
-    tu_case_write_pass_buf();
+    if (!tu_case_reported) {
+        tu_case_buf_len = 0;
+        tu_case_write_pass_buf();
+    }
 }
 
 void

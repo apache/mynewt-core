@@ -61,6 +61,7 @@ ffs_test_util_assert_cache_is_sane(const char *filename)
     if (TAILQ_EMPTY(&cache_inode->fci_block_list)) {
         TEST_ASSERT(cache_start == 0 && cache_end == 0);
     } else {
+        block_end = 0;  /* Pacify gcc. */
         TAILQ_FOREACH(cache_block, &cache_inode->fci_block_list, fcb_link) {
             if (cache_block == TAILQ_FIRST(&cache_inode->fci_block_list)) {
                 TEST_ASSERT(cache_block->fcb_file_offset == cache_start);
@@ -2143,8 +2144,7 @@ TEST_CASE(ffs_test_cache_large_file)
     TEST_ASSERT(rc == 0);
 }
 
-static void
-ffs_test_cache(void)
+TEST_SUITE(ffs_suite_cache)
 {
     int rc;
 
@@ -2191,29 +2191,23 @@ ffs_test_gen(void)
 
 TEST_SUITE(gen_1_1)
 {
-    printf("cache size = 1,1\n");
     ffs_config.fc_num_cache_inodes = 1;
     ffs_config.fc_num_cache_blocks = 1;
     ffs_test_gen();
-    printf("\n");
 }
 
 TEST_SUITE(gen_4_32)
 {
-    printf("cache size = 4,32\n");
     ffs_config.fc_num_cache_inodes = 4;
     ffs_config.fc_num_cache_blocks = 32;
     ffs_test_gen();
-    printf("\n");
 }
 
 TEST_SUITE(gen_32_1024)
 {
-    printf("cache size = 32,1024\n");
     ffs_config.fc_num_cache_inodes = 32;
     ffs_config.fc_num_cache_blocks = 1024;
     ffs_test_gen();
-    printf("\n");
 }
 
 int
@@ -2222,7 +2216,7 @@ ffs_test_all(void)
     gen_1_1();
     gen_4_32();
     gen_32_1024();
-    ffs_test_cache();
+    ffs_suite_cache();
 
     return tu_any_failed;
 }
@@ -2232,13 +2226,11 @@ ffs_test_all(void)
 int
 main(void)
 {
-    tu_config.tc_base_path = NULL;
+    tu_config.tc_base_path = NULL;//".";
     tu_config.tc_verbose = 1;
     tu_init();
 
     ffs_test_all();
-
-    printf("\n");
 
     return tu_any_failed;
 }

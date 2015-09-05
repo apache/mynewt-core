@@ -20,7 +20,7 @@
 #include <assert.h> 
 
 struct os_task g_idle_task; 
-os_stack_t g_idle_task_stack[OS_IDLE_STACK_SIZE]; 
+os_stack_t g_idle_task_stack[OS_STACK_ALIGN(OS_IDLE_STACK_SIZE)];
 
 uint32_t g_os_idle_ctr;
 /* Default zero.  Set by the architecture specific code when os is started.
@@ -49,7 +49,7 @@ os_init_idle_task(void)
 {
     os_task_init(&g_idle_task, "idle", os_idle_task, NULL, 
             OS_IDLE_PRIO, OS_WAIT_FOREVER, g_idle_task_stack, 
-            OS_IDLE_STACK_SIZE);
+            OS_STACK_ALIGN(OS_IDLE_STACK_SIZE));
 }
 
 void

@@ -24,7 +24,7 @@
 #define MEM_BLOCK_SIZE  (80)
 
 /* Limit max blocks for testing */
-#define MEMPOOL_TEST_MAX_BLOCKS     (65536)
+#define MEMPOOL_TEST_MAX_BLOCKS     (128)
 
 #if OS_CFG_ALIGNMENT == OS_CFG_ALIGN_4
 int alignment = 4;

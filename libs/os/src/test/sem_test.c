@@ -21,17 +21,19 @@
 #include "os/os_sem.h"
 #include "os_test_priv.h"
 
+#define SEM_TEST_STACK_SIZE     512
+
 struct os_task task1;
-os_stack_t stack1[OS_STACK_ALIGN(1024)]; 
+os_stack_t stack1[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
 
 struct os_task task2;
-os_stack_t stack2[OS_STACK_ALIGN(1024)];
+os_stack_t stack2[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
 
 struct os_task task3;
-os_stack_t stack3[OS_STACK_ALIGN(1024)];
+os_stack_t stack3[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
 
 struct os_task task4;
-os_stack_t stack4[OS_STACK_ALIGN(1024)];
+os_stack_t stack4[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
 
 #define TASK1_PRIO (1) 
 #define TASK2_PRIO (2) 
@@ -77,7 +79,7 @@ sem_test_sleep_task_handler(void *arg)
     TEST_ASSERT(t->t_func == sem_test_sleep_task_handler);
 
     os_time_delay(2000);
-    os_test_arch_stop();
+    os_test_restart();
 }
 
 static void
@@ -180,7 +182,7 @@ sem_test_basic_handler(void *arg)
                 "Task: task=%p prio=%u\n", sem_test_sem_to_s(sem), t,
                 t->t_prio);
 
-    os_test_arch_stop();
+    os_test_restart();
 }
 
 static void 
@@ -209,7 +211,7 @@ sem_test_1_task1_handler(void *arg)
         os_time_delay(100);
     }
 
-    os_test_arch_stop();
+    os_test_restart();
 }
 
 TEST_CASE(os_sem_test_basic)
@@ -222,9 +224,9 @@ TEST_CASE(os_sem_test_basic)
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_basic_handler, NULL, TASK1_PRIO, 
-            OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(1024));
+            OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
-    os_test_arch_start();
+    os_start();
 }
 
 static void 
@@ -249,15 +251,17 @@ TEST_CASE(os_sem_test_case_1)
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_1_task1_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(1024));
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task2, "task2", sem_test_1_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2, OS_STACK_ALIGN(1024));
+                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task3, "task3", sem_test_1_task3_handler, NULL, TASK3_PRIO, 
-                 OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(1024));
+                 OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
-    os_test_arch_start();
+    os_start();
 }
 
 static void 
@@ -288,18 +292,20 @@ TEST_CASE(os_sem_test_case_2)
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(1024));
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task2, "task2", sem_test_2_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2, OS_STACK_ALIGN(1024));
+                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task3, "task3", sem_test_2_task3_handler, NULL, TASK3_PRIO,
-            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(1024));
+            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task4, "task4", sem_test_2_task4_handler, NULL, TASK4_PRIO,
-            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(1024));
+            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
-    os_test_arch_start();
+    os_start();
 }
 
 static void 
@@ -330,18 +336,20 @@ TEST_CASE(os_sem_test_case_3)
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(1024));
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task2, "task2", sem_test_3_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2, OS_STACK_ALIGN(1024));
+                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task3, "task3", sem_test_3_task3_handler, NULL, TASK3_PRIO,
-            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(1024));
+            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task4, "task4", sem_test_3_task4_handler, NULL, TASK4_PRIO,
-            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(1024));
+            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
-    os_test_arch_start();
+    os_start();
 }
 
 static void 
@@ -373,18 +381,20 @@ TEST_CASE(os_sem_test_case_4)
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(1024));
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task2, "task2", sem_test_4_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2, OS_STACK_ALIGN(1024));
+                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
+                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task3, "task3", sem_test_4_task3_handler, NULL, TASK3_PRIO,
-            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(1024));
+                 OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
     os_task_init(&task4, "task4", sem_test_4_task4_handler, NULL, TASK4_PRIO,
-            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(1024));
+                 OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
 
-    os_test_arch_start();
+    os_start();
 }
 
 TEST_SUITE(os_sem_test_suite)

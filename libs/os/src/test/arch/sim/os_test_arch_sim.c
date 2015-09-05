@@ -4,23 +4,10 @@
 #include <string.h>
 #include <sys/time.h>
 #include "os/os.h"
-
-extern sigset_t g_sigset;  
-static jmp_buf g_mutex_test_jb;
+#include "os_test_priv.h"
 
 void
-os_test_arch_start(void)
-{
-    int rc;
-
-    rc = setjmp(g_mutex_test_jb);
-    if (rc == 0) {
-        os_start();
-    }
-}
-
-void
-os_test_arch_stop(void)
+os_test_restart(void)
 {
     struct sigaction sa;
     struct itimerval it;
@@ -29,7 +16,6 @@ os_test_arch_stop(void)
     g_os_started = 0;
 
     memset(&sa, 0, sizeof sa);
-    //sigemptyset(&sa.sa_mask);
     sa.sa_handler = SIG_IGN;
 
     sigaction(SIGALRM, &sa, NULL);
@@ -41,6 +27,4 @@ os_test_arch_stop(void)
         perror("Cannot set itimer");
         abort();
     }
-
-    longjmp(g_mutex_test_jb, 1);
 }

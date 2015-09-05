@@ -7,8 +7,8 @@
 int
 os_test_all(void)
 {
-    //os_mempool_test_suite();
-    //os_mutex_test_suite();
+    os_mempool_test_suite();
+    os_mutex_test_suite();
     os_sem_test_suite();
 
     return tu_case_failed;
@@ -17,7 +17,7 @@ os_test_all(void)
 #ifdef PKG_TEST
 
 int
-main(void)
+main(int argc, char **argv)
 {
     tu_config.tc_base_path = NULL;
     tu_config.tc_verbose = 1;

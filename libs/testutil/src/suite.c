@@ -3,9 +3,7 @@
 #include "testutil_priv.h"
 
 const char *tu_suite_name;
-
-/* This gets optimized out without the initialization. */
-int tu_suite_failed = 0;
+int tu_suite_failed;
 
 static void
 tu_suite_set_name(const char *name)
