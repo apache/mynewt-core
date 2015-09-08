@@ -1,0 +1,5 @@
+pkg.name: "hw/mcu/nordic/nrf52xxx"
+pkg.deps: 
+    - hw/hal 
+    - libs/cmsis-core 
+    - hw/bsp/nrf52pdk
