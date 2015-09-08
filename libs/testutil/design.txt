@@ -1,5 +1,14 @@
 ****** TEST AUTOMATION
 
+*** HISTORY
+Rev.    Date            Changes
+2       2015/09/07      Addition of tu_restart(); clarification of exported
+                            preprocessor symbols.
+1       2015/08/28
+
+
+*** SUMMARY
+
 Automated testing can be done in either of two ways:
     1. Testing a set of packages on embedded hardware or a simulated
        environment.
@@ -42,19 +51,22 @@ test code.  Each test image typically consists of the following:
 
 A package may optionally contain a set of test cases.  Test cases are not
 normally compiled and linked when a package is built; they are only included
-when the "test" identity is specified.  All of a package's test code goes in
-subdirectories with its 'src/test' directory.  For example, the ffs package
-contains the following directory:
+when the "test" identity is specified.  All of a
+package's test code goes in its 'src/test' directory.  For example, the ffs
+package's test code is located in the following directory:
 
-    libs/ffs/src/test/ffs_test/
+    libs/ffs/src/test/
 
 This directory contains the source and header files that implement the ffs test
-code.  The 'ffs_test' directory could be named anything, and it could have
-sibling directories containing additional tests.
+code.
 
-The test code has access to all the header files in the package's src,
-src/test, and include directories, as well as the include directories pulled in
-as package dependencies.
+The test code has access to all the header files in the following directories:
+    * src
+    * src/arch/<target-arch>
+    * include
+    * src/test
+    * src/test/arch/<target-arch>
+    * include directories of all package dependencies
 
 Package test code typically depends on the testutil package, described later in
 this document.  If a package's test code uses testutil, then the package itself
@@ -63,6 +75,10 @@ needs to have testutil in its dependency list.
 Some test cases or test initialization code may be platform-specific.  In such
 cases, the platform-specific function definitions are placed in arch
 subdirectories within the package test directory.
+
+When test code is built (i.e., when the "test" identity is specified), the
+stack tool defines the "TEST" macro.  This macro is defined during complilation
+of all C source files in all projects and packages..
 
 
 ***** TESTUTIL
@@ -84,8 +100,8 @@ Tests are structures according to the following hierarchy:
 
 I.e., a test consists of test suites, and a test suite consits of test cases.
 
-The test code uses testutil to define test suites and test cases.  The code
-which executes the test suites is thes test itself.
+The test code uses testutil to define test suites and test cases.
+
 
 *** TESTUTIL EXAMPLE
 
@@ -190,15 +206,17 @@ Each 'fail' file would contain a string describing the failure.
 *** TESTUTIL API
 
 struct tu_config {
-    /* If nonzero, test results are printed to stdout. */
+    /** If nonzero, test results are printed to stdout. */
     int tc_print_results;
 
-    /* Name of the base results directory (e.g., "test-results").  If null,
+    /**
+     * Name of the base results directory (e.g., "test-results").  If null,
      * results are not written to disk.
      */
     const char *tc_results_path;
 
-    /* Array of flash areas where an ffs file system should be located.  Unused
+    /**
+     * Array of flash areas where an ffs file system should be located.  Unused
      * if run in a simulated environment.  This array must be terminated with a
      * zero-length area.
      */
@@ -212,7 +230,7 @@ Description:
 
 -
 
-int tu_init(void);
+int tu_init(void)
 
 Description:
     Initializes the test framework according to the contents of the tu_config
@@ -223,6 +241,10 @@ Description:
     file system is detected in the specified region of flash, the region is
     formatted with a new file system.  This function must be called before any
     tests are run.
+
+    If, immediately prior to a call to tu_init(), the UUT was restarted via a
+    call to tu_restart(), this function skips all the test cases that have
+    already been executed.  See tu_restart() for details.
 
     Returns 0 on success; nonzero on failure.
 
@@ -245,12 +267,6 @@ Description:
     If no fail_msg is specified, only the first line gets reported.
 
     The test case proceeds as normal after this macro is invoked.
-
-    This macro can also be called from non-test code.  If the code was not
-    built with the test identity, this macro expands to the empty string.
-    Typically, package code encloses computationally-expensive checks in this
-    macro.  In production builds, the checks are removed; in test builds, the
-    checks are present.
 
 Example:
     TEST_ASSERT(num_blocks == 1024,
@@ -286,8 +302,6 @@ Description:
         |<file>:<line-number>| manual pass
         <msg>
 
-    if no msg is specified, only the first line gets reported.
-
     After this function is called, the remainder of the test case is not
     executed.  If the current test has already failed when this macro is
     invoked, the macro has no effect.
@@ -318,6 +332,7 @@ Description:
     The return value is 0 if the test case passed; nonzero if it failed.
     Generally, the return code is not used.
 
+
 -
 
 TEST_SUITE(test_suite_name) { /* test suite code */ }
@@ -330,12 +345,59 @@ Description:
     The return value is 0 if the test suite passed; nonzero if it failed.
     Generally, the return code is not used.
 
+-
+
+void tu_restart(void)
+
+Description:
+    This function is used when a system reset is necessary to proceed with
+    testing.  For example, the OS is designed to run forever once started, so a
+    test which creates several OS tasks and then starts the OS has no means of
+    completing.  This function, when called from such a test, gracefully ends
+    the current test case and proceeds to the next test case.
+
+    The particulars of this function depend on whether it is called from a
+    simulated environment.  In a simulated environment, this function uses a
+    longjmp() call to break out of the current test case.
+
+    In a non-simulated environment, this function performs the following
+    procedure:
+
+        1. Record the current test status to the file system.
+        2. Perform a software reset of the UUT.
+        3. Read test status and delete it from the file system.
+        4. Skip all previously completed test cases.
+
+    If this function is called before any results have been reported for the
+    current test case, a "pass" result gets reported.
+
+    Note: after this function performs a software reset, the UUT may not be
+    fully initialized, depending on the test environment.  For example, if the
+    UUT has been set up to run the test image from RAM via JTAG, variables in
+    the .data section will not get properly initialized by the software reset.
+    Proper initialization in this case would require that data be re-read from
+    the image file via an additional run of the JTAG script.
+
+-
+
+ASSERT_IF_TEST(cond)
+
+Description:
+    The effect of this macro depends on whether the TEST macro is defined:
+
+        If defined:     expands to assert().
+        If not defined: expands to nothing.
+
+    This macro is not intended for use within test cases.  Instead, it should
+    be used in normal non-test code to perform computationally-expensive
+    checks.  In non-test builds, the checks do not get performed.
+
 
 ***** INDIVIDUAL PACKAGE TESTING
 
 Testing individual packages is performed via the "target test" stack tool
 command.  When testing is done in this manner, the stack tool automatically
-runs the test code on the host machine, and there is no need for an extra stack
+runs the test code on the host machine.  There is no need for an extra stack
 project for producing a test image.
 
 Testing a package in this manner requires a special target that is specific to
@@ -361,10 +423,12 @@ The test is run by specifying the following stack arguments:
 
     target test testffs
 
+When the "target test" command is used, the PKG_TEST macro is defined during
+compilation of the package under test.  This is in addition to the TEST macro,
+which is defined during compilation of all packages.
+
 
 ***** ISSUES / QUESTIONS
-
-XXX Need to define a CPP symbol when the test identity is specified.
 
 * For individual package tests, the requirement for a separate target for each
   package may become unwieldy.  Perhaps the stack tool should be modified to
