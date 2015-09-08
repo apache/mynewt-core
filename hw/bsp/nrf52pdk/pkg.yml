@@ -1,0 +1,6 @@
+pkg.name: "hw/bsp/nrf52pdk"
+pkg.linkerscript: "nrf52pdk.ld" 
+pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
+pkg.deps: 
+    - libs/os 
+    - hw/mcu/nordic/nrf52xxx
