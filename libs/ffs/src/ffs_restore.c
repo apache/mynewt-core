@@ -15,7 +15,7 @@
 static uint16_t ffs_restore_largest_block_data_len;
 
 /**
- * Checks the CRC of each block in a chain of data blocks.
+ * Checks that each block a chain of data blocks was properly restored.
  *
  * @param last_block_entry      The entry corresponding to the last block in
  *                                  the chain.
@@ -44,11 +44,6 @@ ffs_restore_validate_block_chain(struct ffs_hash_entry *last_block_entry)
             return rc;
         }
 
-        rc = ffs_crc_disk_block_validate(&disk_block, area_idx, area_offset);
-        if (rc != 0) {
-            return rc;
-        }
-
         rc = ffs_block_from_hash_entry(&block, cur);
         if (rc != 0) {
             return rc;
@@ -73,7 +68,6 @@ ffs_restore_migrate_orphan_children(struct ffs_inode_entry *inode_entry)
 {
     struct ffs_inode_entry *lost_found_sub;
     struct ffs_inode_entry *child_entry;
-    //struct ffs_inode child_inode;
     char buf[32];
     int rc;
 
@@ -150,8 +144,8 @@ ffs_restore_should_sweep_inode_entry(struct ffs_inode_entry *inode_entry,
         }
     }
 
-    /* If this is a file inode, verify that none of its constituent blocks are
-     * corrupt via a CRC check.
+    /* If this is a file inode, verify that all of its constituent blocks are
+     * present.
      */
     if (ffs_hash_id_is_file(inode_entry->fie_hash_entry.fhe_id)) {
         rc = ffs_restore_validate_block_chain(
@@ -365,10 +359,7 @@ ffs_restore_inode(const struct ffs_disk_inode *disk_inode, uint8_t area_idx,
 
     new_inode = 0;
 
-    /* Check the inode's CRC.  If the inode is corrupt, mark it as a dummy
-     * node.  If the corrupt inode does not get superseded by a valid revision,
-     * it will get deleted during the sweep phase.
-     */
+    /* Check the inode's CRC.  If the inode is corrupt, discard it. */
     rc = ffs_crc_disk_inode_validate(disk_inode, area_idx, area_offset);
     if (rc != 0) {
         goto err;

@@ -54,7 +54,7 @@ ffs_unlock(void)
 /**
  * Opens a file at the specified path.  The result of opening a nonexistent
  * file depends on the access flags specified.  All intermediate directories
- * must have already been created.
+ * must already exist.
  *
  * The mode strings passed to fopen() map to ffs_open()'s access flags as
  * follows:
@@ -100,7 +100,7 @@ done:
 /**
  * Closes the specified file and invalidates the file handle.  If the file has
  * already been unlinked, and this is the last open handle to the file, this
- * operation causes the file to be deleted.
+ * operation causes the file to be deleted from disk.
  *
  * @param file              The file handle to close.
  *
@@ -125,10 +125,10 @@ ffs_close(struct ffs_file *file)
 /**
  * Positions a file's read and write pointer at the specified offset.  The
  * offset is expressed as the number of bytes from the start of the file (i.e.,
- * seeking to 0 places the pointer at the first byte in the file).
+ * seeking to offset 0 places the pointer at the first byte in the file).
  *
  * @param file              The file to reposition.
- * @param offset            The offset from the start of the file to seek to.
+ * @param offset            The 0-based file offset to seek to.
  *
  * @return                  0 on success; nonzero on failure.
  */
@@ -217,8 +217,7 @@ ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
  * @param data              The data to write.
  * @param len               The number of bytes to write.
  *
- * @return                  0 on success;
- *                          nonzero on failure.
+ * @return                  0 on success; nonzero on failure.
  */
 int
 ffs_write(struct ffs_file *file, const void *data, int len)
@@ -282,12 +281,11 @@ done:
  * Performs a rename and / or move of the specified source path to the
  * specified destination.  The source path can refer to either a file or a
  * directory.  All intermediate directories in the destination path must
- * already have been created.  If the source path refers to a file, the
- * destination path must contain a full filename path (i.e., if performing a
- * move, the destination path should end with the same filename in the source
- * path).  If an object already exists at the specified destination path, this
- * function causes it to be unlinked prior to the rename (i.e., the destination
- * gets clobbered).
+ * already exist.  If the source path refers to a file, the destination path
+ * must contain a full filename path, rather than just the new parent
+ * directory.  If an object already exists at the specified destination path,
+ * this function causes it to be unlinked prior to the rename (i.e., the
+ * destination gets clobbered).
  *
  * @param from              The source path.
  * @param to                The destination path.
