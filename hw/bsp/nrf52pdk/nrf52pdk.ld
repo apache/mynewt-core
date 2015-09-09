@@ -57,7 +57,7 @@ SECTIONS
     .text :
     {
         __isr_vector_start = .;
-        KEEP(*(.Vectors))
+        KEEP(*(.isr_vector))
         __isr_vector_end = .;
         *(.text*)
 
@@ -152,14 +152,8 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
-    .heap (COPY):
-    {
-        __HeapBase = .;
-        __end__ = .;
-        end = __end__;
-        *(.heap*)
-        __HeapLimit = .;
-    } > RAM
+    /* Heap starts after BSS */
+    __HeapBase = .;
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
@@ -175,7 +169,10 @@ SECTIONS
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
 
+    /* Top of head is the bottom of the stack */
+    __HeapLimit = __StackLimit;
+
     /* Check if data + heap + stack exceeds RAM limit */
-    ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
+    ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
 }
 

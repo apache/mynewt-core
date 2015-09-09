@@ -56,7 +56,7 @@ __StackTop:
 #ifdef __HEAP_SIZE
     .equ    Heap_Size, __HEAP_SIZE
 #else
-    .equ    Heap_Size, 2048
+    .equ    Heap_Size, 0
 #endif
     .globl    __HeapBase
     .globl    __HeapLimit
@@ -68,10 +68,10 @@ __HeapBase:
 __HeapLimit:
     .size __HeapLimit, . - __HeapLimit
     
-    .section .Vectors
+    .section .isr_vector
     .align 2
-    .globl __Vectors
-__Vectors:
+    .globl __isr_vector
+__isr_vector:
     .long    __StackTop            /* Top of Stack */
     .long   Reset_Handler               /* Reset Handler */
     .long   NMI_Handler                 /* NMI Handler */
@@ -128,210 +128,8 @@ __Vectors:
     .long   SPIM2_SPIS2_SPI2_IRQHandler
     .long   RTC2_IRQHandler
     .long   I2S_IRQHandler
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
-    .long   0                         /*Reserved */
 
-    .size    __Vectors, . - __Vectors
+    .size    __isr_vector, . - __isr_vector
 
 /* Reset Handler */
 

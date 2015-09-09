@@ -30,6 +30,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "bsp/cmsis_nvic.h"
 #include "nrf52xxx/nrf.h"
 #include "nrf52xxx/system_nrf52.h"
 
@@ -134,6 +135,8 @@ void SystemInit(void)
     #endif
 
     SystemCoreClockUpdate();
+
+    NVIC_Relocate();
 }
 
 static bool ftpan_32(void)

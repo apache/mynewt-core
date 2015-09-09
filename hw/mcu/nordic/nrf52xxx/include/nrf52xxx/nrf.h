@@ -31,9 +31,6 @@
 #ifndef NRF_H
 #define NRF_H
 
-/* WWW: this should get passed in when we build */
-#define NRF52
-
 #if defined(_WIN32)         
     /* Do not include nrf51 specific files when building for PC host */
 #elif defined(__unix)       
