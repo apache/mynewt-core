@@ -56,9 +56,9 @@
   *-----------------------------------------------------------------------------
   *        APB2 Prescaler                         | 2
   *-----------------------------------------------------------------------------
-  *        HSE Frequency(Hz)                      | 8000000
+  *        HSE Frequency(Hz)                      | 12000000
   *-----------------------------------------------------------------------------
-  *        PLL_M                                  | 8
+  *        PLL_M                                  | 12
   *-----------------------------------------------------------------------------
   *        PLL_N                                  | 336
   *-----------------------------------------------------------------------------
@@ -146,7 +146,7 @@
 
 /************************* PLL Parameters *************************************/
 /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
-#define PLL_M      8
+#define PLL_M      12
 #define PLL_N      336
 
 /* SYSCLK = PLL_VCO / PLL_P */
@@ -176,7 +176,7 @@
   * @{
   */
 
-  uint32_t SystemCoreClock = 168000000;
+uint32_t SystemCoreClock = 168000000;
 
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
@@ -415,7 +415,6 @@ static void SetSysClock(void)
   { /* If HSE fails to start-up, the application will have wrong clock
          configuration. User can add here some code to deal with this error */
   }
-
 }
 
 /**
