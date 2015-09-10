@@ -175,11 +175,8 @@ ffs_write_over_block(struct ffs_hash_entry *entry, uint16_t left_copy_len,
 
     entry->fhe_flash_loc = ffs_flash_loc(dst_area_idx, dst_area_offset);
 
-#if 0
-    TEST_ASSERT(ffs_crc_disk_block_validate(&disk_block, dst_area_idx,
-                                            dst_area_offset) == 0,
-                "newly-written block failed CRC check");
-#endif
+    ASSERT_IF_TEST(ffs_crc_disk_block_validate(&disk_block, dst_area_idx,
+                                               dst_area_offset) == 0);
 
     return 0;
 }
