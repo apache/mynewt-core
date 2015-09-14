@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#include "testutil/testutil.h"
 #include "os/os.h"
 #include "os_test_priv.h"
 
@@ -27,4 +28,6 @@ os_test_restart(void)
         perror("Cannot set itimer");
         abort();
     }
+
+    tu_restart();
 }
