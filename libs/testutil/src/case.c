@@ -83,16 +83,15 @@ tu_case_set_name(const char *name)
 void
 tu_case_init(const char *name)
 {
-    int rc;
-
     tu_case_reported = 0;
     tu_case_failed = 0;
+    tu_case_fail_idx = 0;
 
     tu_case_set_name(name);
-    rc = tu_report_mkdir_case();
-    assert(rc == 0);
 
-    tu_case_fail_idx = 0;
+    if (tu_config.tc_case_init_cb != NULL) {
+        tu_config.tc_case_init_cb(tu_config.tc_case_init_arg);
+    }
 }
 
 void
@@ -104,25 +103,19 @@ tu_case_complete(void)
 static void
 tu_case_write_fail_buf(void)
 {
-    char filename[14];
-    int rc;
-
-    if (tu_config.tc_verbose) {
-        printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
-    }
-
-    rc = snprintf(filename, sizeof filename, "fail-%04d.txt",
-                  tu_case_fail_idx++);
-    assert(rc < sizeof filename);
-
-    rc = tu_report_write_file(filename, (uint8_t *)tu_case_buf,
-                                    tu_case_buf_len);
-    assert(rc == 0);
-
     tu_case_reported = 1;
     tu_case_failed = 1;
     tu_suite_failed = 1;
     tu_any_failed = 1;
+
+    if (tu_config.tc_print_results) {
+        printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
+    }
+
+    if (tu_config.tc_case_fail_cb != NULL) {
+        tu_config.tc_case_fail_cb(tu_case_buf, tu_case_buf_len,
+                                  tu_config.tc_case_fail_arg);
+    }
 }
 
 static void
@@ -146,20 +139,19 @@ tu_case_append_assert_msg(const char *expr)
 static void
 tu_case_write_pass_buf(void)
 {
-    int rc;
-
-    if (tu_config.tc_verbose) {
+    if (tu_config.tc_print_results) {
         printf("[pass] %s/%s\n", tu_suite_name, tu_case_name);
         if (tu_case_buf_len > 0) {
             printf("%s", tu_case_buf);
         }
     }
 
-    rc = tu_report_write_file("pass.txt", (uint8_t *)tu_case_buf,
-                              tu_case_buf_len);
-    assert(rc == 0);
-
     tu_case_reported = 1;
+
+    if (tu_config.tc_case_pass_cb != NULL) {
+        tu_config.tc_case_pass_cb(tu_case_buf, tu_case_buf_len,
+                                  tu_config.tc_case_pass_arg);
+    }
 }
 
 static void

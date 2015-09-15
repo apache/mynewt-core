@@ -945,8 +945,7 @@ boot_test_all(void)
 int
 main(void)
 {
-    tu_config.tc_base_path = NULL;
-    tu_config.tc_verbose = 1;
+    tu_config.tc_print_results = 1;
     tu_init();
 
     boot_test_all();

@@ -30,11 +30,11 @@ tu_suite_set_name(const char *name)
 void
 tu_suite_init(const char *name)
 {
-    int rc;
-
     tu_suite_failed = 0;
 
     tu_suite_set_name(name);
-    rc = tu_report_mkdir_suite();
-    assert(rc == 0);
+
+    if (tu_config.tc_suite_init_cb != NULL) {
+        tu_config.tc_suite_init_cb(tu_config.tc_suite_init_arg);
+    }
 }

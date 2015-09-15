@@ -19,18 +19,47 @@
 
 #include <inttypes.h>
 #include <setjmp.h>
-struct ffs_area_desc;
+
+/*****************************************************************************
+ * Public declarations                                                       *
+ *****************************************************************************/
+
+typedef void tu_case_init_fn_t(void *arg);
+typedef void tu_case_report_fn_t(char *msg, int msg_len, void *arg);
+typedef void tu_suite_init_fn_t(void *arg);
+typedef void tu_restart_fn_t(void *arg);
 
 struct tu_config {
-    int tc_verbose;
-    const char *tc_base_path;
-    const struct ffs_area_desc *tc_area_descs;
+    int tc_print_results;
+
+    tu_case_init_fn_t *tc_case_init_cb;
+    void *tc_case_init_arg;
+
+    tu_case_report_fn_t *tc_case_fail_cb;
+    void *tc_case_fail_arg;
+
+    tu_case_report_fn_t *tc_case_pass_cb;
+    void *tc_case_pass_arg;
+
+    tu_suite_init_fn_t *tc_suite_init_cb;
+    void *tc_suite_init_arg;
+
+    tu_restart_fn_t *tc_restart_cb;
+    void *tc_restart_arg;
 };
 
 extern struct tu_config tu_config;
+extern const char *tu_suite_name;
+extern const char *tu_case_name;
+extern int tu_first_idx;
 
 int tu_init(void);
 void tu_restart(void);
+
+
+/*****************************************************************************
+ * Private declarations                                                      *
+ *****************************************************************************/
 
 void tu_suite_init(const char *name);
 
@@ -42,14 +71,9 @@ void tu_case_write_pass_auto(void);
 void tu_case_pass_manual(const char *file, int line,
                          const char *format, ...);
 
+
 extern int tu_any_failed;
-
-extern int tu_first_idx;
-
-extern const char *tu_suite_name;
 extern int tu_suite_failed;
-
-extern const char *tu_case_name;
 extern int tu_case_reported;
 extern int tu_case_failed;
 extern int tu_case_idx;
