@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nrf52xxx/nrf52.h"
 #include "nrf52xxx/system_nrf52.h"
 
