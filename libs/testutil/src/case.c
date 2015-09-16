@@ -24,7 +24,6 @@
 jmp_buf tu_case_jb;
 int tu_case_reported;
 int tu_case_failed;
-int tu_case_fail_idx;
 int tu_case_idx;
 
 const char *tu_case_name;
@@ -85,7 +84,6 @@ tu_case_init(const char *name)
 {
     tu_case_reported = 0;
     tu_case_failed = 0;
-    tu_case_fail_idx = 0;
 
     tu_case_set_name(name);
 

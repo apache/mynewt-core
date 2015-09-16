@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,33 +14,18 @@
  * limitations under the License.
  */
 
-#include <assert.h>
-#include "hal/hal_flash.h"
-#include "testutil/testutil.h"
-#include "testutil_priv.h"
+#ifndef H_TESTREPORT_
+#define H_TESTREPORT_
 
-struct tu_config tu_config;
-int tu_any_failed;
-int tu_first_idx;
+struct ffs_area_desc;
 
-int
-tu_init(void)
-{
-    tu_any_failed = 0;
+struct tr_config {
+    const char *tc_base_path;
+    const struct ffs_area_desc *tc_area_descs;
+};
 
-    return 0;
-}
+extern struct tr_config tr_config;
 
-void
-tu_restart(void)
-{
-    tu_case_write_pass_auto();
+int tr_init(void);
 
-    tu_first_idx = tu_case_idx + 1;
-
-    if (tu_config.tc_restart_cb != NULL) {
-        tu_config.tc_restart_cb(tu_config.tc_restart_arg);
-    }
-
-    tu_arch_restart();
-}
+#endif

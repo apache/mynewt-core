@@ -4,6 +4,7 @@ project.pkgs:
     - libs/os
     - libs/ffs
     - libs/bootutil
+    - libs/testreport
 
 project.identities:
     - test
