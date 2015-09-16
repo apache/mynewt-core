@@ -3,6 +3,5 @@ pkg.vers: 0.1
 pkg.deps: 
     - libs/os 
     - libs/ffs 
-    - libs/ffsutil 
     - libs/testutil
     - hw/hal

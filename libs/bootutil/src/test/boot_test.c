@@ -23,7 +23,7 @@
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
 #include "ffs/ffs.h"
-#include "ffsutil/ffsutil.h"
+#include "ffs/ffsutil.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "../src/bootutil_priv.h"

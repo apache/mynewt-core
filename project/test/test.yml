@@ -3,7 +3,6 @@ project.pkgs:
     - libs/testutil
     - libs/os
     - libs/ffs
-    - libs/ffsutil
     - libs/bootutil
 
 project.identities:

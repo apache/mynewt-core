@@ -15,7 +15,7 @@
  */
 
 #include "ffs/ffs.h"
-#include "ffsutil/ffsutil.h"
+#include "ffs/ffsutil.h"
 
 int
 ffsutil_read_file(const char *path, uint32_t offset, uint32_t len, void *dst,

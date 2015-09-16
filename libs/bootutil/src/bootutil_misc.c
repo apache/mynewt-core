@@ -18,7 +18,7 @@
 #include <inttypes.h>
 #include "hal/hal_flash.h"
 #include "ffs/ffs.h"
-#include "ffsutil/ffsutil.h"
+#include "ffs/ffsutil.h"
 #include "bootutil/crc32.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"

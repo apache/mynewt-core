@@ -21,7 +21,7 @@
 #include "hal/hal_flash.h"
 #include "os/os_malloc.h"
 #include "ffs/ffs.h"
-#include "ffsutil/ffsutil.h"
+#include "ffs/ffsutil.h"
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
