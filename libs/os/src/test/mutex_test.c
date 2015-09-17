@@ -24,7 +24,11 @@
 #include "os/os_mutex.h"
 #include "os_test_priv.h"
 
+#if ARCH == sim 
+#define MUTEX_TEST_STACK_SIZE   1024
+#else
 #define MUTEX_TEST_STACK_SIZE   256
+#endif
 
 struct os_task task14;
 os_stack_t stack14[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];

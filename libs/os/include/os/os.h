@@ -90,5 +90,6 @@ void os_init_idle_task(void);
 #include "os/os_mutex.h"
 #include "os/os_sem.h"
 #include "os/os_mempool.h"
+#include "os/os_mbuf.h"
 
 #endif /* _OS_H */

@@ -20,6 +20,7 @@
 void os_test_restart(void);
 
 int os_mempool_test_suite(void);
+int os_mbuf_test_suite(void);
 int os_mutex_test_suite(void);
 int os_sem_test_suite(void);
 

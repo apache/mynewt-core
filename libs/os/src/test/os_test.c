@@ -26,6 +26,7 @@ os_test_all(void)
     os_mempool_test_suite();
     os_mutex_test_suite();
     os_sem_test_suite();
+    os_mbuf_test_suite();
 
     return tu_case_failed;
 }

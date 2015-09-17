@@ -21,7 +21,11 @@
 #include "os/os_sem.h"
 #include "os_test_priv.h"
 
+#if ARCH == sim
+#define SEM_TEST_STACK_SIZE     1024
+#else 
 #define SEM_TEST_STACK_SIZE     512
+#endif
 
 struct os_task task1;
 os_stack_t stack1[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
