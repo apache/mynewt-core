@@ -22,7 +22,7 @@ compiler.path.objdump: "gobjdump"
 compiler.path.objsize: "objsize"
 
 compiler.flags.base: >
-    -m32 -Wall -Werror
+    -m32 -Wall -Werror -ggdb -O0
 
 compiler.flags.default: [compiler.flags.base]
 compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
