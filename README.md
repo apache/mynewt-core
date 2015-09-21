@@ -1,8 +1,8 @@
-# Stack Test Repository 
+# Mynewt Test Repository 
 
 # Overview
 
-This is the stack developer's test repository.  It contains the major stack 
+This is the Mynewt developer's test repository.  It contains the major Mynewt
 packages that are being worked on, along with a few projects used for 
 compiling the packages into working projects, these are: 
 
@@ -19,17 +19,12 @@ compiling the packages into working projects, these are:
 
 The dev\_test repository includes the following packages: 
 
-* OS (http://github.com/stackos/os): Core RTOS 
-* CMSIS-CORE (http://github.com/stackos/cmsis-core): Cortex M abstractions, packaged 
-  from ARM mbed distribution.
-* FFS (http://github.com/stackos/ffs): Flash filesystem, optimized for small 
-  flashes. 
-* FFSUTIL (http://github.com/stackos/ffsutil): Utility functions for using the FFS 
-  package. 
-* BOOTUTIL (http://github.com/stackos/bootutil): Core bootloader functions used
-  by the boot project. 
-* NETUTIL (http://github.com/stackos/netutil): Network utilities shared amongst 
-  networking stacks. 
+* OS: Core RTOS 
+* CMSIS-CORE: Cortex M abstractions, packaged from ARM mbed distribution.
+* FFS: Flash filesystem, optimized for small flashes. 
+* FFSUTIL: Utility functions for using the FFS package. 
+* BOOTUTIL: Core bootloader functions used by the boot project. 
+* NETUTIL: Network utilities shared amongst networking stacks. 
 
 These packages are imported into this repository using git subtrees.  To see a 
 full set of remote repositories, look at the setup-remotes.sh script, which 
@@ -38,17 +33,13 @@ adds the remote repositories.
 Additionally, this repostiory contains board support packages for the following 
 boards: 
 
-* olimex\_stm32-e407\_devboard (http://github.com/stackos/olimex_stm32-e407_devboard/): 
-  Board Support for the Olimex STM32-E407 
-* olimex\_stm32-e407\_devboard-boot (http://github.com/stackos/olimex_stm32-e407_devboard-boot/): 
-  Board Support for the Olimex STM32-E407 bootloader. 
+* olimex\_stm32-e407\_devboard: Board Support for the Olimex STM32-E407 
+* olimex\_stm32-e407\_devboard-boot: Board Support for the Olimex STM32-E407 bootloader. 
 
 And MCU related packages for the following microcontrollers: 
 
-* STM32F4XX (http://github.com/stackos/stm32f4xx/): MCU definitions for the 
-  STMicro F4XX processor series.
-* Native (http://github.com/stackos/native): Native (Simulated) MCU 
-  definitions.
+* STM32F4XX: MCU definitions for the STMicro F4XX processor series.
+* Native: Native (Simulated) MCU definitions.
 
 In order to update these repositories, git subtree merging should be employed, 
 where changes are made locally and tested within the dev\_test repository first, 
@@ -61,5 +52,5 @@ compatible with the Apache 2 license.  See the LICENSE file for more information
 
 # Contact 
 
-For any questions on the dev\_test repository, please contact the Stack 
+For any questions on the dev\_test repository, please contact the Mynewt 
 developer's list (stack-dev@googlegroups.com).  

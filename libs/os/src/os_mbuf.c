@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Stack Inc.
+ * Copyright (c) Runtime Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,7 +307,59 @@ err:
     return (NULL);
 }
 
+#if 0
+
 /**
- * 
+ * Rearrange a mbuf chain so that len bytes are contiguous, 
+ * and in the data area of an mbuf (so that OS_MBUF_DATA() will 
+ * work on a structure of size len.)  Returns the resulting 
+ * mbuf chain on success, free's it and returns NULL on failure.
  *
+ * If there is room, it will add up to "max_protohdr - len" 
+ * extra bytes to the contiguous region, in an attempt to avoid being
+ * called next time.
+ *
+ * @param omp The mbuf pool to take the mbufs out of 
+ * @param om The mbuf chain to make contiguous
+ * @param len The number of bytes in the chain to make contiguous
+ *
+ * @return The contiguous mbuf chain on success, NULL on failure.
  */
+struct os_mbuf *
+os_mbuf_pullup(struct os_mbuf_pool *omp, struct os_mbuf *om, uint16_t len)
+{
+    struct os_mbuf *newm;
+
+    if (len > omp->omp_databuf_len) {
+        goto err;
+    }
+
+    /* Is 'n' bytes already contiguous? */
+    if (((uint8_t *) &om->om_databuf[0] + OS_MBUF_END_OFF(omp)) - 
+            OS_MBUF_DATA(om, uint8_t *) >= len) {
+        newm = om;
+        goto done;
+    }
+
+    /* Nope, OK. Allocate a new buffer, and then go through and copy 'n' 
+     * bytes into that buffer.
+     */
+    newm = os_mbuf_get(omp, OS_MBUF_START_OFF(omp));
+    if (!newm) {
+        goto err;
+    }
+
+    written = 0; 
+    while (written < len
+
+
+done:
+    return (newm);
+err:
+    if (om) {
+        os_mbuf_free_chain(om);
+    }
+
+    return (NULL);
+}
+#endif

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Stack Inc.
+ * Copyright (c) 2015 Runtime Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,10 @@ TEST_CASE(os_mbuf_test_case_3)
     memcpy(cmpbuf, OS_MBUF_DATA(m, uint8_t *), m->om_len);
     TEST_ASSERT_FATAL(memcmp(cmpbuf, databuf, sizeof(databuf)) == 0, 
             "Databuf doesn't match cmpbuf");
+}
+
+TEST_SUITE(os_mbuf_test_case_4)
+{
 }
 
 TEST_SUITE(os_mbuf_test_suite)
