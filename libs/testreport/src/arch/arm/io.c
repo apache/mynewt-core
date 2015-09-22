@@ -16,11 +16,11 @@
 
 #include <stddef.h>
 #include "ffs/ffs.h"
-#include "ffsutil/ffsutil.h"
+#include "ffs/ffsutil.h"
 #include "testreport_priv.h"
 
 int
-tr_io_write(const char *path, const uint8_t *contents, size_t len)
+tr_io_write(const char *path, const void *contents, size_t len)
 {
     int rc;
 
