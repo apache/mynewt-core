@@ -29,4 +29,6 @@ main(void)
     os_test_all();
     ffs_test_all();
     boot_test_all();
+
+    return 0;
 }
