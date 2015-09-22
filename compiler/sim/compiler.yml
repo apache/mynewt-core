@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Stack Inc.
+# Copyright (c) 2015 Runtime Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ compiler.path.objdump: "gobjdump"
 compiler.path.objsize: "objsize"
 
 compiler.flags.base: >
-    -m32 -Wall -Werror
+    -m32 -Wall -Werror -ggdb -O0
 
 compiler.flags.default: [compiler.flags.base]
 compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
