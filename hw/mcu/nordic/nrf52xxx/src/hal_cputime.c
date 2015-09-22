@@ -13,18 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string.h>
 #include <stdint.h>
 #include <assert.h>
 #include "bsp/cmsis_nvic.h"
 #include "hal/hal_cputime.h"
-#include "stm32f4xx/stm32f4xx.h"
-#include "stm32f4xx/stm32f4xx_hal_rcc.h"
+#include "nrf52xxx/nrf52.h"
+#include "nrf52xxx/nrf52_bitfields.h"
+#include "nrf52xxx/nrf52_hal.h"
+
+/* Maximum timer frequency */
+#define NRF52_MAX_TIMER_FREQ    (16000000)
+
+/* Use these defines to select a timer and the compare channels */
+#define CPUTIMER                NRF_TIMER0
+#define CPUTIMER_IRQ            (TIMER0_IRQn)
+#define CPUTIMER_CC_CNTR        (0)
+#define CPUTIMER_CC_OVERFLOW    (1)
+#define CPUTIMER_CC_INT         (2)
+
+/* Interrupt mask for interrupt enable/clear */
+#define CPUTIMER_INT_MASK(x)    ((1 << (uint32_t)(x)) << 16)
 
 /* XXX:
  *  - Must determine how to set priority of cpu timer interrupt
  *  - Determine if we should use a mutex as opposed to disabling interrupts
- *  - Should I use a macro for the timer being used? This is so I can
- *  easily change the timer from 2 to 5? What about compare channel?
+ *  - Should I use macro for compare channel?
  *  - Sync to OSTIME.
  */
 
@@ -42,23 +56,40 @@ struct cputime_data g_cputime;
 /* Queue for timers */
 TAILQ_HEAD(cputime_qhead, cpu_timer) g_cputimer_q;
 
+__STATIC_INLINE void
+cputime_disable_ocmp(void)
+{
+    CPUTIMER->INTENCLR = CPUTIMER_INT_MASK(CPUTIMER_CC_INT);
+}
+
 /**
  * cputime set ocmp 
  *  
  * Set the OCMP used by the cputime module to the desired cputime. 
+ *  
+ * NOTE: Must be called with interrupts disabled. 
  * 
  * @param timer Pointer to timer.
  */
 static void
 cputime_set_ocmp(struct cpu_timer *timer)
 {
-    TIM5->DIER &= ~TIM_DIER_CC4IE;
-    TIM5->CCR4 = timer->cputime;
-    TIM5->SR = ~TIM_SR_CC4IF;
-    TIM5->DIER |= TIM_DIER_CC4IE;
-    if ((int32_t)(TIM5->CNT - timer->cputime) >= 0) {
-        /* Force interrupt to occur as we may have missed it */
-        TIM5->EGR = TIM_EGR_CC4G;
+    /* Disable ocmp interrupt and set new value */
+    cputime_disable_ocmp();
+
+    /* Set output compare register to timer expiration */
+    CPUTIMER->CC[CPUTIMER_CC_INT] = timer->cputime;
+
+    /* Clear interrupt flag*/
+    CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_INT] = 0;
+
+    /* Enable the output compare interrupt */
+    CPUTIMER->INTENSET = CPUTIMER_INT_MASK(CPUTIMER_CC_INT);
+
+    /* Force interrupt to occur as we may have missed it */
+    if ((int32_t)(cputime_get32() - timer->cputime) >= 0) {
+        /* XXX: I dont see a way to force an interrupt to occur.
+           I guess we can use the NVIC to cause an interrupt. Fix This */
     }
 }
 
@@ -91,7 +122,7 @@ cputime_chk_expiration(void)
     if (timer) {
         cputime_set_ocmp(timer);
     } else {
-        TIM5->DIER &= ~TIM_DIER_CC4IE;
+        cputime_disable_ocmp();
     }
     __HAL_ENABLE_INTERRUPTS(ctx);
 }
@@ -105,24 +136,32 @@ cputime_chk_expiration(void)
 static void
 cputime_isr(void)
 {
-    uint32_t sr;
+    uint32_t compare;
+    uint32_t overflow;
 
-    /* Clear the interrupt sources */
-    sr = TIM5->SR;
-    TIM5->SR = ~sr;
+    /* Check interrupt source. If set, clear them */
+    compare = CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_INT];
+    if (compare) {
+        CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_INT] = 0;
+    }
+    overflow = CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW];
+    if (overflow) {
+        CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW] = 0;
+    }
 
     /* Count # of interrupts */
     ++g_cputime.timer_isrs;
 
     /* If overflow, increment high word of cpu time */
-    if (sr & TIM_SR_UIF) {
+    if (overflow) {
         ++g_cputime.uif_ints;
         ++g_cputime.cputime_high;
     }
 
     /* Check if output compare occurred */
-    if (sr & TIM_SR_CC4IF) {
-        if (TIM5->DIER & TIM_DIER_CC4IE) {
+    if (compare) {
+        /* Only call routine if interrupt is enabled */
+        if (CPUTIMER->INTENCLR & CPUTIMER_INT_MASK(CPUTIMER_CC_INT)) {
             ++g_cputime.ocmp_ints;
             cputime_chk_expiration();
         }
@@ -145,7 +184,7 @@ cputime_init(uint32_t clock_freq)
 {
     uint32_t ctx;
     uint32_t max_freq;
-    uint32_t pre_scalar;
+    uint32_t pre_scaler;
 
     /* Clock frequency must be at least 1 MHz */
     if (clock_freq < 1000000U) {
@@ -153,14 +192,44 @@ cputime_init(uint32_t clock_freq)
     }
 
     /* Check if clock frequency exceeds max. range */
-    max_freq = SystemCoreClock / 2;
+    max_freq = NRF52_MAX_TIMER_FREQ;
     if (clock_freq > max_freq) {
         return -1;
     }
 
     /* Is this exact frequency obtainable? */
-    pre_scalar = max_freq / clock_freq;
-    if ((pre_scalar * clock_freq) != max_freq) {
+    pre_scaler = max_freq / clock_freq;
+    if ((pre_scaler * clock_freq) != max_freq) {
+        return -1;
+    }
+
+    /* 
+     * Pre-scaler is 4 bits and is a 2^n, so the only possible values that
+     * work are 1, 2, 4, 8 and 16, which gives a valid pre-scaler of 0, 1, 2,
+     * 3 or 4.
+     */
+    switch (pre_scaler) {
+    case 1:
+        pre_scaler = 0;
+        break;
+    case 2:
+        pre_scaler = 1;
+        break;
+    case 4:
+        pre_scaler = 2;
+        break;
+    case 8:
+        pre_scaler = 3;
+        break;
+    case 16:
+        pre_scaler = 4;
+        break;
+    default:
+        pre_scaler = 0xFFFFFFFF;
+        break;
+    }
+
+    if (pre_scaler == 0xFFFFFFFF) {
         return -1;
     }
 
@@ -173,50 +242,29 @@ cputime_init(uint32_t clock_freq)
     /* Set the clock frequency */
     g_cputime.ticks_per_usec = clock_freq / 1000000U;
 
-    /* XXX: what about timer reset? */
+    /* XXX: no way to halt the timer in debug mode that I can see */
 
-    /* Enable the timer in the peripheral enable regiseter */
-    __HAL_RCC_TIM5_CLK_ENABLE();
+    /* Stop the timer first */
+    CPUTIMER->TASKS_STOP = 1;
 
-    /* In debug mode, we want this timer to be halted */
-    DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM5_STOP;
+    /* Put the timer in timer mode using 32 bits. */
+    CPUTIMER->MODE = TIMER_MODE_MODE_Timer;
+    CPUTIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
 
-    /* 
-     * Counter is an up counter with event generation disabled. We disable the
-     * timer with this first write, just in case.
-     */ 
-    TIM5->DIER = 0;
-    TIM5->CR1 = 0;
-    TIM5->CR2 = 0;
-    TIM5->SMCR = 0;
+    /* Set the pre-scaler*/
+    CPUTIMER->PRESCALER = pre_scaler;
 
-    /* Configure compare 4 mode register */
-    TIM5->CCMR2 = TIM5->CCMR2 & 0xFF;
+    /* Start the timer */
+    CPUTIMER->TASKS_START = 1;
 
-    /* Set the auto-reload to 0xFFFFFFFF */
-    TIM5->ARR = 0xFFFFFFFF;
-
-    /* Set the pre-scalar and load it */
-    TIM5->PSC= pre_scalar - 1;
-    TIM5->EGR |= TIM_EGR_UG;
-
-    /* Clear overflow and compare interrupt flags */
-    TIM5->SR = ~(TIM_SR_CC4IF | TIM_SR_UIF);
+    /*  Use an output compare to generate an overflow */
+    CPUTIMER->CC[CPUTIMER_CC_OVERFLOW] = 0;
+    CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW] = 0;
+    CPUTIMER->INTENSET = CPUTIMER_INT_MASK(CPUTIMER_CC_OVERFLOW);
 
     /* Set isr in vector table and enable interrupt */
-    NVIC_SetVector(TIM5_IRQn, (uint32_t)cputime_isr);
-    NVIC_EnableIRQ(TIM5_IRQn);
-
-    /* Enable overflow interrupt */
-    TIM5->DIER = TIM_DIER_UIE;
-
-    /* XXX: If we want to sync to os time, we can read SysTick and set
-     the timer counter based on the Systick counter and current os time */
-    /* Clear the counter (just in case) */
-    TIM5->CNT = 0;
-
-    /* Enable the timer */
-    TIM5->CR1 = TIM_CR1_URS | TIM_CR1_CEN;
+    NVIC_SetVector(CPUTIMER_IRQ, (uint32_t)cputime_isr);
+    NVIC_EnableIRQ(CPUTIMER_IRQ);
 
     __HAL_ENABLE_INTERRUPTS(ctx);
 
@@ -240,10 +288,10 @@ cputime_get64(void)
 
     __HAL_DISABLE_INTERRUPTS(ctx);
     high = g_cputime.cputime_high;
-    low = TIM5->CNT;
-    if (TIM5->SR & TIM_SR_UIF) {
+    low = cputime_get32();
+    if (CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW]) {
         ++high;
-        low = TIM5->CNT;
+        low = cputime_get32();
     }
     __HAL_ENABLE_INTERRUPTS(ctx);
 
@@ -262,7 +310,13 @@ cputime_get64(void)
 uint32_t
 cputime_get32(void)
 {
-    return TIM5->CNT;
+    uint32_t cpu_time;
+
+    /* Force a capture of the timer into 'cntr' capture channel; read it */
+    CPUTIMER->TASKS_CAPTURE[CPUTIMER_CC_CNTR] = 1;
+    cpu_time = CPUTIMER->CC[CPUTIMER_CC_CNTR];
+
+    return cpu_time;
 }
 
 /**
@@ -503,7 +557,7 @@ cputime_timer_stop(struct cpu_timer *timer)
             if (entry) {
                 cputime_set_ocmp(entry);
             } else {
-                TIM5->DIER &= ~TIM_DIER_CC4IE;
+                cputime_disable_ocmp();
             }
         }
     }
