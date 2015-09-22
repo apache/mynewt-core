@@ -25,6 +25,11 @@ os_time_get(void)
     return (g_os_time);
 }
 
+/**
+ * Called for every single tick by the architecture specific functions.
+ *
+ * Increases the os_time by 1 tick. 
+ */
 void
 os_time_tick(void)
 {
@@ -36,8 +41,6 @@ os_time_tick(void)
 }
 
 /**
- * os time delay 
- *  
  * Puts the current task to sleep for the specified number of os ticks. There 
  * is no delay if ticks is <= 0. 
  * 

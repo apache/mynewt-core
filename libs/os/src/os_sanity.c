@@ -28,6 +28,13 @@ struct os_task g_os_sanity_task;
 os_stack_t g_os_sanity_task_stack[OS_STACK_ALIGN(OS_SANITY_STACK_SIZE)];
 
 
+/**
+ * Initialize a sanity check
+ *
+ * @param sc The sanity check to initialize
+ *
+ * @return 0 on success, error code on failure.
+ */
 int 
 os_sanity_check_init(struct os_sanity_check *sc)
 {
@@ -36,13 +43,18 @@ os_sanity_check_init(struct os_sanity_check *sc)
     return (0);
 }
 
+/**
+ * Lock the sanity check list
+ *
+ * @return 0 on success, error code on failure. 
+ */
 static int
 os_sanity_check_list_lock(void)
 {
     int rc; 
 
     if (!g_os_started) {
-        return (OS_OK);
+        return (0);
     }
 
     rc = os_mutex_pend(&g_os_sanity_check_mu, OS_WAIT_FOREVER);
@@ -50,18 +62,23 @@ os_sanity_check_list_lock(void)
         goto err;
     }
 
-    return (OS_OK);
+    return (0);
 err:
     return (rc);
 }
 
+/**
+ * Unlock the sanity check list 
+ *
+ * @return 0 on success, error code on failure
+ */
 static int 
 os_sanity_check_list_unlock(void)
 {
     int rc; 
 
     if (!g_os_started) {
-        return (OS_OK);
+        return (0);
     }
 
     rc = os_mutex_release(&g_os_sanity_check_mu);
@@ -69,12 +86,18 @@ os_sanity_check_list_unlock(void)
         goto err;
     }
 
-    return (OS_OK);
+    return (0);
 err:
     return (rc);
 }
 
-
+/**
+ * Register a sanity check 
+ *
+ * @param sc The sanity check to register 
+ *
+ * @return 0 on success, error code on failure
+ */
 int 
 os_sanity_check_register(struct os_sanity_check *sc)
 {
@@ -97,6 +120,15 @@ err:
     return (rc);
 }
 
+
+/**
+ * Reset the os sanity check, so that it doesn't trip up the 
+ * sanity timer.
+ *
+ * @param sc The sanity check to reset 
+ *
+ * @return 0 on success, error code on failure 
+ */
 int 
 os_sanity_check_reset(struct os_sanity_check *sc)
 {
@@ -119,7 +151,15 @@ err:
     return (rc);
 }
 
-
+/**
+ * The main sanity check task loop.  This executes every SANITY_CHECK_NUM_SECS
+ * and goes through to see if any of the registered sanity checks are expired.
+ * If the sanity checks have expired, it restarts the operating system.
+ *
+ * @param arg unused 
+ *
+ * @return never 
+ */
 static void
 os_sanity_task_loop(void *arg)
 {
@@ -159,7 +199,11 @@ os_sanity_task_loop(void *arg)
     }
 }
 
-
+/**
+ * Initialize the sanity task and mutex. 
+ *
+ * @return 0 on success, error code on failure
+ */
 int 
 os_sanity_task_init(void)
 {
