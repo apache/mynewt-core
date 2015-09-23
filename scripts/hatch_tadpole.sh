@@ -17,10 +17,11 @@ declare -a DIRS=("/hw/mcu/native" "/hw/bsp/native" "/hw/hal" "/libs/os" "/compil
 for dir in "${DIRS[@]}"
 do
     echo "Copying $dir"
-    find "$LARVA_DIR/$dir" -type d -name "bin" -prune -exec rm -rf {} \;
-    find "$LARVA_DIR/$dir" -type d -name "obj" -prune -exec rm -rf {} \;
-
     rm -rf "$TADPOLE_DIR/$dir"
     cp -rf "$LARVA_DIR/$dir" "$TADPOLE_DIR/$dir"
+    
+    find "$TADPOLE_DIR/$dir" -type d -name "bin" -prune -exec rm -rf {} \;
+    find "$TADPOLE_DIR/$dir" -type d -name "obj" -prune -exec rm -rf {} \;
+    find "$TADPOLE_DIR/$dir" -type f -name "*.swp" -prune -exec rm -f {} \;
 done
 
