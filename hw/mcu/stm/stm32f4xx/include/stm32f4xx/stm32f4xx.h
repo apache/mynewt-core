@@ -71,40 +71,12 @@
 #define STM32F4
 #endif /* STM32F4 */
 
- /* WWW: Once I get ability to pass -D into builds, this will get removed.*/
-/* Uncomment the line below according to the target STM32 device used in your
-   application 
-  */
-#if !defined (STM32F405xx) && !defined (STM32F415xx) && !defined (STM32F407xx) && !defined (STM32F417xx) && \
-    !defined (STM32F427xx) && !defined (STM32F437xx) && !defined (STM32F429xx) && !defined (STM32F439xx) && \
-    !defined (STM32F401xC) && !defined (STM32F401xE) && !defined (STM32F411xE) && !defined (STM32F446xx)
-  /* #define STM32F405xx */   /*!< STM32F405RG, STM32F405VG and STM32F405ZG Devices */
-  /* #define STM32F415xx */   /*!< STM32F415RG, STM32F415VG and STM32F415ZG Devices */
-  #define STM32F407xx         /*!< STM32F407VG, STM32F407VE, STM32F407ZG, STM32F407ZE, STM32F407IG  and STM32F407IE Devices */
-  /* #define STM32F417xx */   /*!< STM32F417VG, STM32F417VE, STM32F417ZG, STM32F417ZE, STM32F417IG and STM32F417IE Devices */
-  /* #define STM32F427xx */   /*!< STM32F427VG, STM32F427VI, STM32F427ZG, STM32F427ZI, STM32F427IG and STM32F427II Devices */
-  /* #define STM32F437xx */   /*!< STM32F437VG, STM32F437VI, STM32F437ZG, STM32F437ZI, STM32F437IG and STM32F437II Devices */
-  /* #define STM32F429xx */   /*!< STM32F429VG, STM32F429VI, STM32F429ZG, STM32F429ZI, STM32F429BG, STM32F429BI, STM32F429NG, 
-                                   STM32F439NI, STM32F429IG  and STM32F429II Devices */
-  /* #define STM32F439xx */   /*!< STM32F439VG, STM32F439VI, STM32F439ZG, STM32F439ZI, STM32F439BG, STM32F439BI, STM32F439NG, 
-                                   STM32F439NI, STM32F439IG and STM32F439II Devices */
-  /* #define STM32F401xC */   /*!< STM32F401CB, STM32F401CC, STM32F401RB, STM32F401RC, STM32F401VB and STM32F401VC Devices */
-  /* #define STM32F401xE */   /*!< STM32F401CD, STM32F401RD, STM32F401VD, STM32F401CE, STM32F401RE and STM32F401VE Devices */
-  /* #define STM32F411xE */   /*!< STM32F411CD, STM32F411RD, STM32F411VD, STM32F411CE, STM32F411RE and STM32F411VE Devices */
-  /* #define STM32F446xx */   /*!< STM32F446MC, STM32F446ME, STM32F446RC, STM32F446RE, STM32F446VC, STM32F446VE, STM32F446ZC, 
-                                   and STM32F446ZE Devices */ 
-#endif
-   
-/*  Tip: To avoid modifying this file each time you need to switch between these
-        devices, you can define the device in your toolchain compiler preprocessor.
-  */
-/* WWW: Once I get the ability to pass -D into builds, I will remove this */
-#if !defined  (USE_HAL_DRIVER)
 /**
- * @brief Comment the line below if you will not use the peripherals drivers.
-   In this case, these drivers will not be included and the application code will 
-   be based on direct access to peripherals registers 
+ * @brief Define USER_PROVIDES_HAL if you will not use the peripherals
+    drivers. In this case, these drivers will not be included and the
+    application code will be based on direct access to peripherals registers 
    */
+#if !defined (USER_PROVIDES_HAL)
 #define USE_HAL_DRIVER
 #endif /* USE_HAL_DRIVER */
 

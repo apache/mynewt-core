@@ -44,10 +44,6 @@
  extern "C" {
 #endif
 
- /* WWW: should not be here! */
-#define STM32F407xx
-/* WWW */
-
 /* Includes ------------------------------------------------------------------*/
 #include "bsp/stm32f4xx_hal_conf.h"
 
