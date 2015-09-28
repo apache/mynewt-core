@@ -78,16 +78,16 @@ nffs_test_util_assert_cache_is_sane(const char *filename)
         TEST_ASSERT(cache_start == 0 && cache_end == 0);
     } else {
         block_end = 0;  /* Pacify gcc. */
-        TAILQ_FOREACH(cache_block, &cache_inode->nci_block_list, fcb_link) {
+        TAILQ_FOREACH(cache_block, &cache_inode->nci_block_list, ncb_link) {
             if (cache_block == TAILQ_FIRST(&cache_inode->nci_block_list)) {
-                TEST_ASSERT(cache_block->fcb_file_offset == cache_start);
+                TEST_ASSERT(cache_block->ncb_file_offset == cache_start);
             } else {
                 /* Ensure no gap between this block and its predecessor. */
-                TEST_ASSERT(cache_block->fcb_file_offset == block_end);
+                TEST_ASSERT(cache_block->ncb_file_offset == block_end);
             }
 
-            block_end = cache_block->fcb_file_offset +
-                        cache_block->fcb_block.nb_data_len;
+            block_end = cache_block->ncb_file_offset +
+                        cache_block->ncb_block.nb_data_len;
             if (cache_block == TAILQ_LAST(&cache_inode->nci_block_list,
                                           nffs_cache_block_list)) {
 

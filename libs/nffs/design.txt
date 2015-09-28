@@ -1,24 +1,27 @@
-***** FFS
+***** NFFS
 
 *** HISTORY
 Rev.    Date            Changes
+5       2015/09/28      Rename to Newtron Flash File System.
 4       2015/09/08      Fix some badly-specified CRC behavior; clarification of
                             behavior during restore of corrupt disk.
-3       2015/08/20      More cache specifics; updated ffs_read() function type.
+3       2015/08/20      More cache specifics; updated nffs_read() function
+                            type.
 2       2015/08/17      Addition of crc16; clarification of sweep phase.
 1       2015/08/13
 
 
 *** SUMMARY
 
-ffs is a flash file system with the following priorities:
+Newtron Flash File System (nffs) is a flash file system with the following
+priorities:
     * Minimal RAM usage
     * Reliability
 
 
 *** DISK STRUCTURE
 
-At the top level, an ffs disk is partitioned into areas.  An area is a region
+At the top level, an nffs disk is partitioned into areas.  An area is a region
 of disk with the following properties:
     (1) An area can be fully erased without affecting any other areas.
     (2) A write to one area does not restrict writes to other areas.
@@ -35,13 +38,13 @@ size.
 On disk, each area is prefixed with the following header:
 
 /** On-disk representation of an area header. */
-struct ffs_disk_area {
-    uint32_t fda_magic[4];  /* FFS_AREA_MAGIC{0,1,2,3} */
-    uint32_t fda_length;    /* Total size of area, in bytes (includes hdr). */
-    uint8_t fda_ver;        /* Current ffs version: 0 */
-    uint8_t fda_gc_seq;     /* Garbage collection count. */
+struct nffs_disk_area {
+    uint32_t nda_magic[4];  /* NFFS_AREA_MAGIC{0,1,2,3} */
+    uint32_t nda_length;    /* Total size of area, in bytes. */
+    uint8_t nda_ver;        /* Current nffs version: 0 */
+    uint8_t nda_gc_seq;     /* Garbage collection count. */
     uint8_t reserved8;
-    uint8_t fda_id;         /* 0xff if scratch area. */
+    uint8_t nda_id;         /* 0xff if scratch area. */
 };
 
 Beyond its header, an area contains a sequence of disk objects, representing
@@ -50,15 +53,15 @@ data blocks.  An inode represents a file or directory; a data block represents
 part of a file's contents.
 
 /** On-disk representation of an inode (file or directory). */
-struct ffs_disk_inode {
-    uint32_t fdi_magic;         /* FFS_INODE_MAGIC */
-    uint32_t fdi_id;            /* Unique object ID. */
-    uint32_t fdi_seq;           /* Sequence number; greater supersedes
+struct nffs_disk_inode {
+    uint32_t ndi_magic;         /* NFFS_INODE_MAGIC */
+    uint32_t ndi_id;            /* Unique object ID. */
+    uint32_t ndi_seq;           /* Sequence number; greater supersedes
                                    lesser. */
-    uint32_t fdi_parent_id;     /* Object ID of parent directory inode. */
+    uint32_t ndi_parent_id;     /* Object ID of parent directory inode. */
     uint8_t reserved8;
-    uint8_t fdi_filename_len;   /* Length of filename, in bytes. */
-    uint16_t fdi_crc16;         /* Covers rest of header and filename. */
+    uint8_t ndi_filename_len;   /* Length of filename, in bytes. */
+    uint16_t ndi_crc16;         /* Covers rest of header and filename. */
     /* Followed by filename. */
 };
 
@@ -69,16 +72,16 @@ filename:
     * \0 (NUL character)
 
 /** On-disk representation of a data block. */
-struct ffs_disk_block {
-    uint32_t fdb_magic;     /* FFS_BLOCK_MAGIC */
-    uint32_t fdb_id;        /* Unique object ID. */
-    uint32_t fdb_seq;       /* Sequence number; greater supersedes lesser. */
-    uint32_t fdb_inode_id;  /* Object ID of owning inode. */
-    uint32_t fdb_prev_id;   /* Object ID of previous block in file;
-                               FFS_ID_NONE if this is the first block. */
-    uint16_t fdb_data_len;  /* Length of data contents, in bytes. */
-    uint16_t fdb_crc16;     /* Covers rest of header and data. */
-    /* Followed by 'fdb_data_len' bytes of data. */
+struct nffs_disk_block {
+    uint32_t ndb_magic;     /* NFFS_BLOCK_MAGIC */
+    uint32_t ndb_id;        /* Unique object ID. */
+    uint32_t ndb_seq;       /* Sequence number; greater supersedes lesser. */
+    uint32_t ndb_inode_id;  /* Object ID of owning inode. */
+    uint32_t ndb_prev_id;   /* Object ID of previous block in file;
+                               NFFS_ID_NONE if this is the first block. */
+    uint16_t ndb_data_len;  /* Length of data contents, in bytes. */
+    uint16_t ndb_crc16;     /* Covers rest of header and data. */
+    /* Followed by 'ndb_data_len' bytes of data. */
 };
 
 Each data block contains the ID of the previous data block in the file.
@@ -100,12 +103,12 @@ follows:
       * 0x00000000 - 0x0fffffff: Directory inodes.
       * 0x10000000 - 0x7fffffff: File inodes.
       * 0x80000000 - 0xfffffffe: Data blocks.
-      * 0xffffffff             : Reserved (FFS_ID_NONE)
+      * 0xffffffff             : Reserved (NFFS_ID_NONE)
 
 
 *** SCRATCH AREA
 
-A valid ffs file system must contain a single "scratch area."  The scratch
+A valid nffs file system must contain a single "scratch area."  The scratch
 area does not contain any objects of its own, and is only used during garbage
 collection.  The scratch area must have a size greater than or equal to each
 of the other areas in flash.
@@ -122,10 +125,14 @@ object's hash key is derived from its 32-bit ID.  Each list in the hash table
 is sorted by time of use; most-recently-used is at the front of the list. All
 objects are represented by the following structure:
 
-struct ffs_hash_entry {
-    SLIST_ENTRY(ffs_hash_entry) fhe_next;
-    uint32_t fhe_id;        /* 0 - 0x7fffffff if inode; else if block. */
-    uint32_t fhe_flash_loc; /* Upper-byte = area idx; rest = area offset. */
+/**
+ * What gets stored in the hash table.  Each entry represents a data block or
+ * an inode.
+ */
+struct nffs_hash_entry {
+    SLIST_ENTRY(nffs_hash_entry) nhe_next;
+    uint32_t nhe_id;        /* 0 - 0x7fffffff if inode; else if block. */
+    uint32_t nhe_flash_loc; /* Upper-byte = area idx; rest = area offset. */
 };
 
 For each data block, the above structure is all that is stored in RAM.  To
@@ -136,15 +143,15 @@ Inodes require a fuller RAM representation to capture the structure of the
 file system.  There are two types of inodes: files and directories.  Each
 inode hash entry is actually an instance of the following structure:
 
-struct ffs_inode_entry {
-    struct ffs_hash_entry fie_hash_entry;
-    SLIST_ENTRY(ffs_inode) fie_sibling_next;
+/** Each inode hash entry is actually one of these. */
+struct nffs_inode_entry {
+    struct nffs_hash_entry nie_hash_entry;
+    SLIST_ENTRY(nffs_inode_entry) nie_sibling_next;
     union {
-        struct ffs_inode_list fie_child_list;   /* If directory. */
-        struct ffs_hash_entry *fie_last_block;  /* If file. */
+        struct nffs_inode_list nie_child_list;           /* If directory */
+        struct nffs_hash_entry *nie_last_block_entry;    /* If file */
     };
-    uint8_t fie_refcnt;
-    /* Three bytes of padding! */
+    uint8_t nie_refcnt;
 };
 
 A directory inode contains a list of its child files and directories
@@ -152,8 +159,8 @@ A directory inode contains a list of its child files and directories
 character set.
 
 A file inode contains a pointer to the last data block in the file
-(fie_last_block).  For most file operations, the reversed block list must be
-walked backwards.  This introduces a number of speed inefficiencies:
+(nie_last_block_entry).  For most file operations, the reversed block list must
+be walked backwards.  This introduces a number of speed inefficiencies:
     * All data blocks must be read to determine the length of the file.
     * Data blocks often need to be processed sequentially.  The reversed
       nature of the block list transforms this from linear time to an O(n^2)
@@ -171,51 +178,49 @@ caches need not be proportional to the size of the file system.  In other
 words, caches can address speed efficiency concerns without negatively
 impacting the file system's scalability.
 
-ffs requires both caches during normal operation, so it is not possible to
+nffs requires both caches during normal operation, so it is not possible to
 disable them.  However, the cache sizes are configurable, and both caches can
 be configured with a size of one if RAM usage must be minimized.
 
 The following data structures are used in the inode and data block caches.
 
 /** Full data block representation; not stored permanently in RAM. */
-struct ffs_block {
-    struct ffs_hash_entry *fb_hash_entry;   /* Points to actual block hash
-                                               entry. */
-    uint32_t fb_seq;                        /* Sequence number; greater
-                                               supersedes lesser. */
-    struct ffs_inode_entry *fb_inode_entry; /* Owning inode. */
-    struct ffs_hash_entry *fb_prev;         /* Previous block in file. */
-    uint16_t fb_data_len;                   /* # of data bytes in block. */
+struct nffs_block {
+    struct nffs_hash_entry *nb_hash_entry;   /* Points to real block entry. */
+    uint32_t nb_seq;                         /* Sequence number; greater
+                                                supersedes lesser. */
+    struct nffs_inode_entry *nb_inode_entry; /* Owning inode. */
+    struct nffs_hash_entry *nb_prev;         /* Previous block in file. */
+    uint16_t nb_data_len;                    /* # of data bytes in block. */
     uint16_t reserved16;
-}
+};
 
 /** Represents a single cached data block. */
-struct ffs_cache_block {
-    TAILQ_ENTRY(ffs_cache_block) fcb_link; /* Next / prev cached block. */
-    struct ffs_block fcb_block;            /* Full data block. */
-    uint32_t fcb_file_offset;              /* File offset of this block. */
+struct nffs_cache_block {
+    TAILQ_ENTRY(nffs_cache_block) ncb_link; /* Next / prev cached block. */
+    struct nffs_block ncb_block;            /* Full data block. */
+    uint32_t ncb_file_offset;               /* File offset of this block. */
 };
 
 /** Full inode representation; not stored permanently in RAM. */
-struct ffs_inode {
-    struct ffs_inode_entry *fi_inode_entry; /* Points to actual inode hash
-                                               entry. */
-    uint32_t fi_seq;                        /* Sequence number; greater
-                                               supersedes lesser. */
-    struct ffs_inode_entry *fi_parent;      /* Points to parent directory. */
-    uint8_t fi_filename_len;                /* # chars in filename. */
-    uint8_t fi_filename[FFS_SHORT_FILENAME_LEN]; /* First 3 bytes. */
+struct nffs_inode {
+    struct nffs_inode_entry *ni_inode_entry; /* Points to real inode entry. */
+    uint32_t ni_seq;                         /* Sequence number; greater
+                                                supersedes lesser. */
+    struct nffs_inode_entry *ni_parent;      /* Points to parent directory. */
+    uint8_t ni_filename_len;                 /* # chars in filename. */
+    uint8_t ni_filename[NFFS_SHORT_FILENAME_LEN]; /* First 3 bytes. */
 };
 
 /** Doubly-linked tail queue of cached blocks; contained in cached inodes. */
-TAILQ_HEAD(ffs_block_cache_list, ffs_block_cache_entry);
+TAILQ_HEAD(nffs_block_cache_list, nffs_block_cache_entry);
 
 /** Represents a single cached file inode. */
-struct ffs_cache_inode {
-    TAILQ_ENTRY(ffs_cache_inode) fci_link;       /* Sorted; LRU at tail. */
-    struct ffs_inode fci_inode;                  /* Full inode. */
-    struct ffs_cache_block_list fci_block_list;  /* List of cached blocks. */
-    uint32_t fci_file_len;                       /* Total file size. */
+struct nffs_cache_inode {
+    TAILQ_ENTRY(nffs_cache_inode) nci_link;        /* Sorted; LRU at tail. */
+    struct nffs_inode nci_inode;                   /* Full inode. */
+    struct nffs_cache_block_list nci_block_list;   /* List of cached blocks. */
+    uint32_t nci_file_size;                        /* Total file size. */
 };
 
 Only file inodes are cached; directory inodes are never cached.
@@ -239,7 +244,7 @@ The following operations cause a data block to be cached:
     * Writing to the block.
 
 If one of the above operations is applied to a data block that is not currently
-cached, ffs uses the following procedure to cache the necessary block:
+cached, nffs uses the following procedure to cache the necessary block:
     1. If none of the owning inode's blocks are currently cached, allocate a
        cached block entry corresponding to the requested block and insert it
        into the inode's list.
@@ -273,27 +278,27 @@ always the block being requested.
 *** CONFIGURATION
 The file system is configured by populating fields in a global structure.
 Each field in the structure corresponds to a setting.  All configuration must
-be done prior to calling ffs_init().  The configuration structure is defined
+be done prior to calling nffs_init().  The configuration structure is defined
 as follows:
 
-struct ffs_config {
+struct nffs_config {
     /** Maximum number of inodes; default=1024. */
-    uint32_t fc_num_inodes;
+    uint32_t nc_num_inodes;
 
     /** Maximum number of data blocks; default=4096. */
-    uint32_t fc_num_blocks;
+    uint32_t nc_num_blocks;
 
     /** Maximum number of open files; default=4. */
-    uint32_t fc_num_files;
+    uint32_t nc_num_files;
 
     /** Inode cache size; default=4. */
-    uint32_t fc_num_cache_inodes;
+    uint32_t nc_num_cache_inodes;
 
     /** Data block cache size; default=64. */
-    uint32_t fc_num_cache_blocks;
+    uint32_t nc_num_cache_blocks;
 };
 
-extern struct ffs_config ffs_config;
+extern struct nffs_config nffs_config;
 
 Any fields that are set to 0 (or not set at all) inherit the corresponding
 default value.  This means that it is impossible to configure any setting with
@@ -302,17 +307,17 @@ a value of zero.
 
 *** INITIALIZATION
 
-There are two means of initializing an ffs file system:
+There are two means of initializing an nffs file system:
     (1) Restore an existing file system via detection.
     (2) Create a new file system via formatting.
 
 Both methods require the user to describe how the flash memory is divided into
-areas.  This is accomplished with an array of struct ffs_area_desc, defined as
+areas.  This is accomplished with an array of struct nffs_area_desc, defined as
 follows:
 
-struct ffs_area_desc {
-    uint32_t fad_offset;    /* Flash offset of start of area. */
-    uint32_t fad_length;    /* Size of area, in bytes. */
+struct nffs_area_desc {
+    uint32_t nad_offset;    /* Flash offset of start of area. */
+    uint32_t nad_length;    /* Size of area, in bytes. */
 };
 
 An array of area descriptors is terminated by an entry with a fad_length field
@@ -320,7 +325,7 @@ of 0.
 
 One common initialization sequence is the following:
 
-    (1) Detect an ffs file system anywhere in flash.
+    (1) Detect an nffs file system anywhere in flash.
     (2) If no file system detected, format a new file system in a specific
         region of flash.
 
@@ -328,26 +333,26 @@ One common initialization sequence is the following:
 *** DETECTION
 
 The file system detection process consists of scanning a specified set of
-flash regions for valid ffs areas, and then populating the RAM representation
+flash regions for valid nffs areas, and then populating the RAM representation
 of the file system with the detected objects.  Detection is initiated with the
 following function:
 
 /**
- * Searches for a valid ffs file system among the specified areas.  This
+ * Searches for a valid nffs file system among the specified areas.  This
  * function succeeds if a file system is detected among any subset of the
  * supplied areas.  If the area set does not contain a valid file system,
- * a new one can be created via a separate call to ffs_format().
+ * a new one can be created via a separate call to nffs_format().
  *
  * @param area_descs        The area set to search.  This array must be
  *                              terminated with a 0-length area.
  *
  * @return                  0 on success;
- *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          NFFS_ECORRUPT if no valid file system was detected;
  *                          other nonzero on error.
  */
-int ffs_detect(const struct ffs_area_desc *area_descs);
+int nffs_detect(const struct nffs_area_desc *area_descs);
 
-As indicated, not every area descriptor needs to reference a valid ffs area.
+As indicated, not every area descriptor needs to reference a valid nffs area.
 Detection is successful as long as a complete file system is detected
 somewhere in the specified regions of flash.  If an application is unsure
 where a file system might be located, it can initiate detection across the
@@ -361,7 +366,7 @@ A detected file system is valid if:
 
 During detection, each indicated region of flash is checked for a valid area
 header.  The contents of each valid non-scratch area are then restored into
-the ffs RAM representation.  The following procedure is applied to each object
+the nffs RAM representation.  The following procedure is applied to each object
 in the area:
 
     (1) Verify the object's integrity via a crc16 check.  If invalid, the
@@ -386,9 +391,9 @@ in the area:
     (5) If a delete record for an inode is encountered, the inode's parent
         pointer is set to null to indicate that it should be removed from RAM.
 
-If ffs encounters an object that cannot be identified (i.e., its magic number
+If nffs encounters an object that cannot be identified (i.e., its magic number
 is not valid), it scans the remainder of the flash area for the next valid
-magic number.  Upon encountering a valid object, ffs resumes the procedure
+magic number.  Upon encountering a valid object, nffs resumes the procedure
 described above.
 
 After all areas have been restored, a sweep is performed across the entire RAM
@@ -428,7 +433,7 @@ A new file system is created via formatting.  Formatting is achieved via the
 following function:
 
 /**
- * Erases all the specified areas and initializes them with a clean ffs
+ * Erases all the specified areas and initializes them with a clean nffs
  * file system.
  *
  * @param area_descs        The set of areas to format.
@@ -436,7 +441,7 @@ following function:
  * @return                  0 on success;
  *                          nonzero on failure.
  */
-int ffs_format(const struct ffs_area_desc *area_descs);
+int nffs_format(const struct nffs_area_desc *area_descs);
 
 On success, an area header is written to each of the specified locations.  The
 largest area in the set is designated as the initial scratch area.
@@ -444,12 +449,12 @@ largest area in the set is designated as the initial scratch area.
 
 *** FLASH WRITES
 
-The ffs implementation always writes in a strictly sequential fashion within an
+The nffs implementation always writes in a strictly sequential fashion within an
 area.  For each area, the system keeps track of the current offset.  Whenever
 an object gets written to an area, it gets written to that area's current
 offset, and the offset is increased by the object's disk size.
 
-When a write needs to be performed, the ffs implementation selects the
+When a write needs to be performed, the nffs implementation selects the
 appropriate destination area by iterating though each area until one with
 sufficient free space is encountered.
 
@@ -489,7 +494,7 @@ record for the unlinked inode gets written to flash.  The deletion record is an
 inode with the following properties:
     * ID: Unchanged
     * Sequence number: Previous value plus one.
-    * Parent inode ID: FFS_ID_NONE
+    * Parent inode ID: NFFS_ID_NONE
 
 When an inode is unlinked, no deletion records need to be written for the
 inode's dependent objects (constituent data blocks or child inodes).  During
@@ -593,21 +598,21 @@ procedure is described below:
 
 *** API
 
-struct ffs_file;
+struct nffs_file;
 
 /**
  * Opens a file at the specified path.  The result of opening a nonexistent
  * file depends on the access flags specified.  All intermediate directories
  * must already exist.
  *
- * The mode strings passed to fopen() map to ffs_open()'s access flags as
+ * The mode strings passed to fopen() map to nffs_open()'s access flags as
  * follows:
- *   "r"  -  FFS_ACCESS_READ
- *   "r+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE
- *   "w"  -  FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
- *   "w+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE
- *   "a"  -  FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
- *   "a+" -  FFS_ACCESS_READ | FFS_ACCESS_WRITE | FFS_ACCESS_APPEND
+ *   "r"  -  NFFS_ACCESS_READ
+ *   "r+" -  NFFS_ACCESS_READ | NFFS_ACCESS_WRITE
+ *   "w"  -  NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE
+ *   "w+" -  NFFS_ACCESS_READ | NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE
+ *   "a"  -  NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND
+ *   "a+" -  NFFS_ACCESS_READ | NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND
  *
  * @param out_file          On success, a pointer to the newly-created file
  *                              handle gets written here.
@@ -616,8 +621,8 @@ struct ffs_file;
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_open(const char *path, uint8_t access_flags,
-             struct ffs_file **out_file);
+int nffs_open(const char *path, uint8_t access_flags,
+              struct nffs_file **out_file);
 
 
 /**
@@ -627,7 +632,7 @@ int ffs_open(const char *path, uint8_t access_flags,
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_close(struct ffs_file *file);
+int nffs_close(struct nffs_file *file);
 
 
 /**
@@ -640,7 +645,7 @@ int ffs_close(struct ffs_file *file);
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_seek(struct ffs_file *file, uint32_t offset);
+int nffs_seek(struct nffs_file *file, uint32_t offset);
 
 
 /**
@@ -650,7 +655,7 @@ int ffs_seek(struct ffs_file *file, uint32_t offset);
  *
  * @return                  The file offset, in bytes.
  */
-uint32_t ffs_getpos(const struct ffs_file *file);
+uint32_t nffs_getpos(const struct nffs_file *file);
 
 
 /**
@@ -662,7 +667,7 @@ uint32_t ffs_getpos(const struct ffs_file *file);
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
+int nffs_file_len(const struct nffs_file *file, uint32_t *out_len)
 
 
 /**
@@ -678,8 +683,8 @@ int ffs_file_len(const struct ffs_file *file, uint32_t *out_len)
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
-             uint32_t *out_len)
+int nffs_read(struct nffs_file *file, uint32_t len, void *out_data,
+              uint32_t *out_len)
 
 
 /**
@@ -691,7 +696,7 @@ int ffs_read(struct ffs_file *file, uint32_t len, void *out_data,
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_write(struct ffs_file *file, const void *data, int len);
+int nffs_write(struct nffs_file *file, const void *data, int len);
 
 
 /**
@@ -704,7 +709,7 @@ int ffs_write(struct ffs_file *file, const void *data, int len);
  *
  * @return                  0 on success; nonzero on failure.
  */
-int ffs_unlink(const char *path);
+int nffs_unlink(const char *path);
 
 
 /**
@@ -723,7 +728,7 @@ int ffs_unlink(const char *path);
  * @return                  0 on success;
  *                          nonzero on failure.
  */
-int ffs_rename(const char *from, const char *to);
+int nffs_rename(const char *from, const char *to);
 
 
 /**
@@ -736,11 +741,11 @@ int ffs_rename(const char *from, const char *to);
  * @return                      0 on success;
  *                              nonzero on failure.
  */
-int ffs_mkdir(const char *path);
+int nffs_mkdir(const char *path);
 
 
 /**
- * Erases all the specified areas and initializes them with a clean ffs
+ * Erases all the specified areas and initializes them with a clean nffs
  * file system.
  *
  * @param area_descs        The set of areas to format.
@@ -748,23 +753,23 @@ int ffs_mkdir(const char *path);
  * @return                  0 on success;
  *                          nonzero on failure.
  */
-int ffs_format(const struct ffs_area_desc *area_descs);
+int nffs_format(const struct nffs_area_desc *area_descs);
 
 
 /**
- * Searches for a valid ffs file system among the specified areas.  This
+ * Searches for a valid nffs file system among the specified areas.  This
  * function succeeds if a file system is detected among any subset of the
  * supplied areas.  If the area set does not contain a valid file system,
- * a new one can be created via a call to ffs_format().
+ * a new one can be created via a call to nffs_format().
  *
  * @param area_descs        The area set to search.  This array must be
  *                              terminated with a 0-length area.
  *
  * @return                  0 on success;
- *                          FFS_ECORRUPT if no valid file system was detected;
+ *                          NFFS_ECORRUPT if no valid file system was detected;
  *                          other nonzero on error.
  */
-int ffs_detect(const struct ffs_area_desc *area_descs);
+int nffs_detect(const struct nffs_area_desc *area_descs);
 
 
 /**
@@ -773,13 +778,13 @@ int ffs_detect(const struct ffs_area_desc *area_descs);
  *
  * @return                  1 if a file system is present; 0 otherwise.
  */
-int ffs_ready(void);
+int nffs_ready(void);
 
 
 /**
- * Initializes the ffs memory and data structures.  This must be called before
- * any ffs operations are attempted.
+ * Initializes the nffs memory and data structures.  This must be called before
+ * any nffs operations are attempted.
  *
  * @return                  0 on success; nonzero on error.
  */
-int ffs_init(void);
+int nffs_init(void);

@@ -63,7 +63,7 @@ struct nffs_config {
 extern struct nffs_config nffs_config;
 
 struct nffs_area_desc {
-    uint32_t nad_offset;    /* Flash onffset of start of area. */
+    uint32_t nad_offset;    /* Flash offset of start of area. */
     uint32_t nad_length;    /* Size of area, in bytes. */
 };
 
@@ -78,7 +78,7 @@ int nffs_format(const struct nffs_area_desc *area_descs);
 int nffs_read(struct nffs_file *file, uint32_t len, void *out_data,
               uint32_t *out_len);
 int nffs_write(struct nffs_file *file, const void *data, int len);
-int nffs_seek(struct nffs_file *file, uint32_t onffset);
+int nffs_seek(struct nffs_file *file, uint32_t offset);
 uint32_t nffs_getpos(const struct nffs_file *file);
 int nffs_file_len(struct nffs_file *file, uint32_t *out_len);
 int nffs_rename(const char *from, const char *to);
@@ -87,4 +87,3 @@ int nffs_mkdir(const char *path);
 int nffs_ready(void);
 
 #endif
-

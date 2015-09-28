@@ -773,15 +773,15 @@ nffs_inode_read(struct nffs_inode_entry *inode_entry, uint32_t offset,
             }
         }
 
-        if (cache_block->fcb_file_offset < offset) {
-            block_off = offset - cache_block->fcb_file_offset;
+        if (cache_block->ncb_file_offset < offset) {
+            block_off = offset - cache_block->ncb_file_offset;
         } else {
             block_off = 0;
         }
 
-        block_end = cache_block->fcb_file_offset +
-                    cache_block->fcb_block.nb_data_len;
-        chunk_sz = cache_block->fcb_block.nb_data_len - block_off;
+        block_end = cache_block->ncb_file_offset +
+                    cache_block->ncb_block.nb_data_len;
+        chunk_sz = cache_block->ncb_block.nb_data_len - block_off;
         if (block_end > src_end) {
             chunk_sz -= block_end - src_end;
         }
@@ -789,13 +789,13 @@ nffs_inode_read(struct nffs_inode_entry *inode_entry, uint32_t offset,
         dst_off -= chunk_sz;
         src_off -= chunk_sz;
 
-        rc = nffs_block_read_data(&cache_block->fcb_block, block_off, chunk_sz,
+        rc = nffs_block_read_data(&cache_block->ncb_block, block_off, chunk_sz,
                                   dptr + dst_off);
         if (rc != 0) {
             return rc;
         }
 
-        cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list, fcb_link);
+        cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list, ncb_link);
     }
 
     if (out_len != NULL) {

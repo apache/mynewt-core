@@ -19,7 +19,7 @@
 
 #include <inttypes.h>
 
-int nffsutil_read_file(const char *path, uint32_t onffset, uint32_t len,
+int nffsutil_read_file(const char *path, uint32_t offset, uint32_t len,
                        void *dst, uint32_t *out_len);
 int nffsutil_write_file(const char *path, const void *data, uint32_t len);
 

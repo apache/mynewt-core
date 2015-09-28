@@ -308,28 +308,28 @@ nffs_write_chunk(struct nffs_cache_inode *cache_inode, uint32_t file_offset,
             }
         }
 
-        if (cache_block->fcb_file_offset < file_offset) {
-            chunk_off = file_offset - cache_block->fcb_file_offset;
+        if (cache_block->ncb_file_offset < file_offset) {
+            chunk_off = file_offset - cache_block->ncb_file_offset;
         } else {
             chunk_off = 0;
         }
 
-        chunk_sz = cache_block->fcb_block.nb_data_len - chunk_off;
-        block_end = cache_block->fcb_file_offset +
-                    cache_block->fcb_block.nb_data_len;
+        chunk_sz = cache_block->ncb_block.nb_data_len - chunk_off;
+        block_end = cache_block->ncb_file_offset +
+                    cache_block->ncb_block.nb_data_len;
         if (block_end != dst_off) {
             chunk_sz += (int)(dst_off - block_end);
         }
 
-        data_offset = cache_block->fcb_file_offset + chunk_off - file_offset;
-        rc = nffs_write_over_block(cache_block->fcb_block.nb_hash_entry,
+        data_offset = cache_block->ncb_file_offset + chunk_off - file_offset;
+        rc = nffs_write_over_block(cache_block->ncb_block.nb_hash_entry,
                                    chunk_off, data + data_offset, chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
         dst_off -= chunk_sz;
-        cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list, fcb_link);
+        cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list, ncb_link);
     } while (data_offset > 0);
 
     cache_inode->nci_file_size += append_len;

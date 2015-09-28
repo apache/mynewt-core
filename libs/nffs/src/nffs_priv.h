@@ -182,19 +182,19 @@ struct nffs_path_parser {
 
 /** Represents a single cached data block. */
 struct nffs_cache_block {
-    TAILQ_ENTRY(nffs_cache_block) fcb_link; /* Next / prev cached block. */
-    struct nffs_block fcb_block;
-    uint32_t fcb_file_offset;              /* File offset of this block. */
+    TAILQ_ENTRY(nffs_cache_block) ncb_link; /* Next / prev cached block. */
+    struct nffs_block ncb_block;            /* Full data block. */
+    uint32_t ncb_file_offset;               /* File offset of this block. */
 };
 
 TAILQ_HEAD(nffs_cache_block_list, nffs_cache_block);
 
 /** Represents a single cached file inode. */
 struct nffs_cache_inode {
-    TAILQ_ENTRY(nffs_cache_inode) nci_link;       /* Sorted; LRU at tail. */
-    struct nffs_inode nci_inode;
-    struct nffs_cache_block_list nci_block_list;  /* List of cached blocks. */
-    uint32_t nci_file_size;                      /* Total file size. */
+    TAILQ_ENTRY(nffs_cache_inode) nci_link;        /* Sorted; LRU at tail. */
+    struct nffs_inode nci_inode;                   /* Full inode. */
+    struct nffs_cache_block_list nci_block_list;   /* List of cached blocks. */
+    uint32_t nci_file_size;                        /* Total file size. */
 };
 
 extern void *nffs_file_mem;

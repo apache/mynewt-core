@@ -69,13 +69,13 @@ nffs_cache_block_populate(struct nffs_cache_block *cache_block,
 {
     int rc;
 
-    rc = nffs_block_from_hash_entry(&cache_block->fcb_block, block_entry);
+    rc = nffs_block_from_hash_entry(&cache_block->ncb_block, block_entry);
     if (rc != 0) {
         return rc;
     }
 
-    cache_block->fcb_file_offset = end_offset -
-                                   cache_block->fcb_block.nb_data_len;
+    cache_block->ncb_file_offset = end_offset -
+                                   cache_block->ncb_block.nb_data_len;
 
     return 0;
 }
@@ -101,7 +101,7 @@ nffs_cache_inode_free_blocks(struct nffs_cache_inode *cache_inode)
     struct nffs_cache_block *cache_block;
 
     while ((cache_block = TAILQ_FIRST(&cache_inode->nci_block_list)) != NULL) {
-        TAILQ_REMOVE(&cache_inode->nci_block_list, cache_block, fcb_link);
+        TAILQ_REMOVE(&cache_inode->nci_block_list, cache_block, ncb_link);
         nffs_cache_block_free(cache_block);
     }
 }
@@ -174,7 +174,7 @@ nffs_cache_inode_last_entry(struct nffs_cache_inode *cache_inode)
 
     cache_block = TAILQ_LAST(&cache_inode->nci_block_list,
                              nffs_cache_block_list);
-    return cache_block->fcb_block.nb_hash_entry;
+    return cache_block->ncb_block.nb_hash_entry;
 }
 
 static struct nffs_cache_inode *
@@ -204,12 +204,12 @@ nffs_cache_inode_range(const struct nffs_cache_inode *cache_inode,
         return;
     }
 
-    *out_start = cache_block->fcb_file_offset;
+    *out_start = cache_block->ncb_file_offset;
 
     cache_block = TAILQ_LAST(&cache_inode->nci_block_list,
                              nffs_cache_block_list);
-    *out_end = cache_block->fcb_file_offset +
-               cache_block->fcb_block.nb_data_len;
+    *out_end = cache_block->ncb_file_offset +
+               cache_block->ncb_block.nb_data_len;
 }
 
 static void
@@ -326,14 +326,14 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
     if (cache_end != 0 && seek_offset < cache_start) {
         /* Seeking prior to cache.  Iterate backwards from cache start. */
         cache_block = TAILQ_FIRST(&cache_inode->nci_block_list);
-        block_entry = cache_block->fcb_block.nb_prev;
-        block_end = cache_block->fcb_file_offset;
+        block_entry = cache_block->ncb_block.nb_prev;
+        block_end = cache_block->ncb_file_offset;
         cache_block = NULL;
     } else if (seek_offset < cache_end) {
         /* Seeking within cache.  Iterate backwards from cache end. */
         cache_block = TAILQ_LAST(&cache_inode->nci_block_list,
                                  nffs_cache_block_list);
-        block_entry = cache_block->fcb_block.nb_hash_entry;
+        block_entry = cache_block->ncb_block.nb_hash_entry;
         block_end = cache_end;
     } else {
         /* Seeking beyond end of cache.  Iterate backwards from file end.  If
@@ -362,7 +362,7 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
             }
 
             TAILQ_INSERT_HEAD(&cache_inode->nci_block_list, cache_block,
-                              fcb_link);
+                              ncb_link);
         }
 
         /* Calculate the file offset of the start of this block.  This is used
@@ -370,8 +370,8 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
          */
         if (cache_block != NULL) {
             /* Current block is cached. */
-            block_start = cache_block->fcb_file_offset;
-            pred_entry = cache_block->fcb_block.nb_prev;
+            block_start = cache_block->ncb_file_offset;
+            pred_entry = cache_block->ncb_block.nb_prev;
         } else {
             /* We are looking beyond the end of the cache.  Read the data block
              * from flash.
@@ -396,19 +396,19 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
                  * block.
                  */
                 cache_block = nffs_cache_block_acquire();
-                cache_block->fcb_block = block;
-                cache_block->fcb_file_offset = block_start;
+                cache_block->ncb_block = block;
+                cache_block->ncb_file_offset = block_start;
 
                 last_cached_entry = nffs_cache_inode_last_entry(cache_inode);
                 if (last_cached_entry != NULL &&
                     last_cached_entry == pred_entry) {
 
                     TAILQ_INSERT_TAIL(&cache_inode->nci_block_list,
-                                      cache_block, fcb_link);
+                                      cache_block, ncb_link);
                 } else {
                     nffs_cache_inode_free_blocks(cache_inode);
                     TAILQ_INSERT_HEAD(&cache_inode->nci_block_list,
-                                      cache_block, fcb_link);
+                                      cache_block, ncb_link);
                 }
             }
 
@@ -421,7 +421,7 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
         /* Prepare for next iteration. */
         if (cache_block != NULL) {
             cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list,
-                                     fcb_link);
+                                     ncb_link);
         }
         block_entry = pred_entry;
         block_end = block_start;
