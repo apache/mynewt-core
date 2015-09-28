@@ -18,12 +18,12 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include "stm32f4xx/stm32f4xx.h"
-#include "ffs/ffs.h"
+#include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 
 /** Internal flash layout. */
-static struct ffs_area_desc boot_area_descs[] = {
+static struct nffs_area_desc boot_area_descs[] = {
     [0] =  { 0x08000000, 16 * 1024 },
     [1] =  { 0x08004000, 16 * 1024 },
     [2] =  { 0x08008000, 16 * 1024 },

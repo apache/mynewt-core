@@ -1,7 +1,7 @@
 project.name: boot
 project.identities: bootloader
-project.pkgs: 
-    - libs/os 
-    - libs/bootutil 
-    - libs/ffs 
+project.pkgs:
+    - libs/os
+    - libs/bootutil
+    - libs/nffs
     - hw/mcu/stm/stm32f4xx

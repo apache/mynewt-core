@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-#include <stddef.h>
-#include "os/os_test.h"
-#include "nffs/nffs_test.h"
-#include "bootutil/bootutil_test.h"
-#include "testutil/testutil.h"
+#ifndef H_NFFS_TEST_PRIV_
+#define H_NFFS_TEST_PRIV_
 
-int
-main(void)
-{
-    tu_config.tc_print_results = 1;
-    tu_init();
+struct nffs_test_block_desc {
+    const char *data;
+    int data_len;
+};
 
-    os_test_all();
-    nffs_test_all();
-    boot_test_all();
+struct nffs_test_file_desc {
+    const char *filename;
+    int is_dir;
+    const char *contents;
+    int contents_len;
+    struct nffs_test_file_desc *children;
+};
 
-    return 0;
-}
+int nffs_test(void);
+
+extern const struct nffs_test_file_desc *nffs_test_system_01;
+extern const struct nffs_test_file_desc *nffs_test_system_01_rm_1014_mk10;
+
+#endif
+

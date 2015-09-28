@@ -14,21 +14,9 @@
  * limitations under the License.
  */
 
-#include <stddef.h>
-#include "os/os_test.h"
-#include "nffs/nffs_test.h"
-#include "bootutil/bootutil_test.h"
-#include "testutil/testutil.h"
+#ifndef H_NFFS_TEST_
+#define H_NFFS_TEST_
 
-int
-main(void)
-{
-    tu_config.tc_print_results = 1;
-    tu_init();
+int nffs_test_all(void);
 
-    os_test_all();
-    nffs_test_all();
-    boot_test_all();
-
-    return 0;
-}
+#endif

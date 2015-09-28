@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "hal/hal_flash.h"
-#include "ffs/ffs.h"
+#include "nffs/nffs.h"
 #include "testutil/testutil.h"
 #include "testreport/testreport.h"
 #include "testreport_priv.h"
@@ -87,14 +87,14 @@ tr_init(void)
                 return -1;
             }
 
-            rc = ffs_init();
+            rc = nffs_init();
             if (rc != 0) {
                 return -1;
             }
 
-            rc = ffs_detect(tr_config.tc_area_descs);
-            if (rc == FFS_ECORRUPT) {
-                rc = ffs_format(tr_config.tc_area_descs);
+            rc = nffs_detect(tr_config.tc_area_descs);
+            if (rc == NFFS_ECORRUPT) {
+                rc = nffs_format(tr_config.tc_area_descs);
             }
             if (rc != 0) {
                 return -1;

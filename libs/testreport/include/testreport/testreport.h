@@ -17,11 +17,11 @@
 #ifndef H_TESTREPORT_
 #define H_TESTREPORT_
 
-struct ffs_area_desc;
+struct nffs_area_desc;
 
 struct tr_config {
     const char *tc_base_path;
-    const struct ffs_area_desc *tc_area_descs;
+    const struct nffs_area_desc *tc_area_descs;
 };
 
 extern struct tr_config tr_config;

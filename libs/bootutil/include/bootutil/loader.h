@@ -18,7 +18,7 @@
 #define H_LOADER_
 
 #include <inttypes.h>
-struct ffs_area_desc;
+struct nffs_area_desc;
 struct image_header;
 
 /** A request object instructing the boot loader how to proceed. */
@@ -27,7 +27,7 @@ struct boot_req {
      * Array of area descriptors indicating the layout of internal flash; must
      * be terminated with a 0-length element.
      */
-    struct ffs_area_desc *br_area_descs;
+    struct nffs_area_desc *br_area_descs;
 
     /**
      * Array of indices of elements in the br_area_descs array; indicates which

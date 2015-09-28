@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-#include <stddef.h>
-#include "os/os_test.h"
-#include "nffs/nffs_test.h"
-#include "bootutil/bootutil_test.h"
-#include "testutil/testutil.h"
+#ifndef H_NFFSUTIL_
+#define H_NFFSUTIL_
 
-int
-main(void)
-{
-    tu_config.tc_print_results = 1;
-    tu_init();
+#include <inttypes.h>
 
-    os_test_all();
-    nffs_test_all();
-    boot_test_all();
+int nffsutil_read_file(const char *path, uint32_t onffset, uint32_t len,
+                       void *dst, uint32_t *out_len);
+int nffsutil_write_file(const char *path, const void *data, uint32_t len);
 
-    return 0;
-}
+#endif
