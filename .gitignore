@@ -3,4 +3,5 @@ bin
 obj
 tags
 .gdb_history
+*~
 .nest

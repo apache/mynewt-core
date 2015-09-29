@@ -1,0 +1,6 @@
+pkg.name: "hw/bsp/stm32f3discovery"
+pkg.linkerscript: "stm32f3discovery.ld" 
+pkg.linkerscript.bootloader.OVERWRITE: "boot-stm32f3discovery.ld"
+pkg.cflags: -DSTM32F303xC
+pkg.deps: 
+    - hw/mcu/stm/stm32f3xx
