@@ -15,9 +15,9 @@
  */
 
 #include <string.h>
-#include "stm32f4xx/stm32f4xx_hal_def.h"
-#include "stm32f4xx/stm32f4xx_hal_flash.h"
-#include "stm32f4xx/stm32f4xx_hal_flash_ex.h"
+#include "mcu/stm32f4xx_hal_def.h"
+#include "mcu/stm32f4xx_hal_flash.h"
+#include "mcu/stm32f4xx_hal_flash_ex.h"
 #include "hal/hal_flash.h"
 
 static const struct flash_area_desc {

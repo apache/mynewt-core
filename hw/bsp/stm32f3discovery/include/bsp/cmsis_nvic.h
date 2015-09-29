@@ -28,7 +28,7 @@
 #define NVIC_NUM_VECTORS      (16 + 81)   // CORE + MCU Peripherals
 #define NVIC_USER_IRQ_OFFSET  16
 
-#include "stm32f3xx/stm32f3xx.h"
+#include "mcu/stm32f3xx.h"
 
 #ifdef __cplusplus
 extern "C" {

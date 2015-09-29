@@ -47,8 +47,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "bsp/cmsis_nvic.h"
-#include "nrf52xxx/nrf.h"
-#include "nrf52xxx/system_nrf52.h"
+#include "mcu/nrf.h"
+#include "mcu/system_nrf52.h"
 
 /*lint ++flb "Enter library region" */
 

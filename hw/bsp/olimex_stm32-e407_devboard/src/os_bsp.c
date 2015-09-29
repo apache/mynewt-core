@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "stm32f4xx/stm32f4xx.h"
-#include "stm32f4xx/system_stm32f4xx.h"
+#include "mcu/stm32f4xx.h"
+#include "mcu/system_stm32f4xx.h"
 
 /* 
  * Exception priorities. The higher the number, the lower the priority. A

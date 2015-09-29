@@ -85,7 +85,7 @@
   * @{
   */
 
-#include "stm32f3xx/stm32f3xx.h"
+#include "mcu/stm32f3xx.h"
 #include "bsp/cmsis_nvic.h"
 
 /**

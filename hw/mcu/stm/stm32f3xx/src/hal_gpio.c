@@ -16,10 +16,10 @@
 
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
-#include "stm32f3xx/stm32f3xx.h"
-#include "stm32f3xx/stm32f3xx_hal.h"
-#include "stm32f3xx/stm32f3xx_hal_gpio.h"
-#include "stm32f3xx/stm32f3xx_hal_rcc.h"
+#include "mcu/stm32f3xx.h"
+#include "mcu/stm32f3xx_hal.h"
+#include "mcu/stm32f3xx_hal_gpio.h"
+#include "mcu/stm32f3xx_hal_rcc.h"
 #include <assert.h>
 
  /* XXX: Notes
