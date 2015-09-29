@@ -1,5 +1,5 @@
-pkg.name: "hw/mcu/nordic/nrf52xxx"
-pkg.deps: 
+egg.name: "hw/mcu/nordic/nrf52xxx"
+egg.deps: 
     - hw/hal 
     - libs/cmsis-core 
     - hw/bsp/nrf52pdk

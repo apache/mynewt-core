@@ -1,5 +1,5 @@
 project.name: test
-project.pkgs:
+project.eggs:
     - libs/testutil
     - libs/os
     - libs/nffs

@@ -1,0 +1,3 @@
+egg.name: "hw/bsp/native"
+egg.deps: 
+    - hw/mcu/native

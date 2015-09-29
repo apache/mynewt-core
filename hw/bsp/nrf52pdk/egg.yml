@@ -1,0 +1,7 @@
+egg.name: "hw/bsp/nrf52pdk"
+egg.linkerscript: "nrf52pdk.ld" 
+egg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
+egg.cflags: -DNRF52
+egg.deps: 
+    - libs/os 
+    - hw/mcu/nordic/nrf52xxx

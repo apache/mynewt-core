@@ -1,2 +1,0 @@
-pkg.name: "hw/mcu/native"
-pkg.deps: hw/hal

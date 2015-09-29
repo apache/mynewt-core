@@ -1,6 +1,6 @@
-pkg.name: libs/nffs
-pkg.vers: 0.1 
-pkg.deps: 
+egg.name: libs/nffs
+egg.vers: 0.1 
+egg.deps: 
     - libs/os 
     - libs/testutil
     - hw/hal
