@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
-#include <stddef.h>
-#include "os/os_test.h"
+
 #include "nffs/nffs_test.h"
-#include "bootutil/bootutil_test.h"
-#include "testutil/testutil.h"
 
 int
-main(void)
+nffs_test_all(void)
 {
-    tu_config.tc_print_results = 1;
-    tu_init();
-
-    os_test_all();
-    nffs_test_all();
-    boot_test_all();
-
     return 0;
 }

@@ -2,7 +2,7 @@ project.name: test
 project.pkgs:
     - libs/testutil
     - libs/os
-    - libs/ffs
+    - libs/nffs
     - libs/bootutil
     - libs/testreport
 

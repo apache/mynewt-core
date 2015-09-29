@@ -20,8 +20,8 @@
 #include <string.h>
 #include "hal/hal_flash.h"
 #include "os/os_malloc.h"
-#include "ffs/ffs.h"
-#include "ffs/ffsutil.h"
+#include "nffs/nffs.h"
+#include "nffs/nffsutil.h"
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
@@ -55,14 +55,14 @@ struct boot_status_entry *boot_status_entries;
 static uint32_t
 boot_slot_addr(int slot_num)
 {
-    const struct ffs_area_desc *area_desc;
+    const struct nffs_area_desc *area_desc;
     uint8_t area_idx;
 
     assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
     area_idx = boot_req->br_slot_areas[slot_num];
     area_desc = boot_req->br_area_descs + area_idx;
-    return area_desc->fad_offset;
+    return area_desc->nad_offset;
 }
 
 /**
@@ -159,8 +159,8 @@ boot_slot_to_area_idx(int slot_num)
 
     assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
-    for (i = 0; boot_req->br_area_descs[i].fad_length != 0; i++) {
-        if (boot_req->br_area_descs[i].fad_offset ==
+    for (i = 0; boot_req->br_area_descs[i].nad_length != 0; i++) {
+        if (boot_req->br_area_descs[i].nad_offset ==
             boot_slot_addr(slot_num)) {
 
             return i;
@@ -196,11 +196,11 @@ boot_find_image_area_idx(int area_idx)
 static int
 boot_erase_area(int area_idx)
 {
-    const struct ffs_area_desc *area_desc;
+    const struct nffs_area_desc *area_desc;
     int rc;
 
     area_desc = boot_req->br_area_descs + area_idx;
-    rc = flash_erase(area_desc->fad_offset, area_desc->fad_length);
+    rc = flash_erase(area_desc->nad_offset, area_desc->nad_length);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -220,8 +220,8 @@ boot_erase_area(int area_idx)
 static int
 boot_copy_area(int from_area_idx, int to_area_idx)
 {
-    const struct ffs_area_desc *from_area_desc;
-    const struct ffs_area_desc *to_area_desc;
+    const struct nffs_area_desc *from_area_desc;
+    const struct nffs_area_desc *to_area_desc;
     uint32_t from_addr;
     uint32_t to_addr;
     uint32_t off;
@@ -233,23 +233,23 @@ boot_copy_area(int from_area_idx, int to_area_idx)
     from_area_desc = boot_req->br_area_descs + from_area_idx;
     to_area_desc = boot_req->br_area_descs + to_area_idx;
 
-    assert(to_area_desc->fad_length >= from_area_desc->fad_length);
+    assert(to_area_desc->nad_length >= from_area_desc->nad_length);
 
     off = 0;
-    while (off < from_area_desc->fad_length) {
-        if (from_area_desc->fad_length - off > sizeof buf) {
+    while (off < from_area_desc->nad_length) {
+        if (from_area_desc->nad_length - off > sizeof buf) {
             chunk_sz = sizeof buf;
         } else {
-            chunk_sz = from_area_desc->fad_length - off;
+            chunk_sz = from_area_desc->nad_length - off;
         }
 
-        from_addr = from_area_desc->fad_offset + off;
+        from_addr = from_area_desc->nad_offset + off;
         rc = flash_read(from_addr, buf, chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
-        to_addr = to_area_desc->fad_offset + off;
+        to_addr = to_area_desc->nad_offset + off;
         rc = flash_write(to_addr, buf, chunk_sz);
         if (rc != 0) {
             return rc;
@@ -420,7 +420,7 @@ boot_swap_areas(int area_idx_1, int img_num_1, uint8_t part_num_1,
 static int
 boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
 {
-    const struct ffs_area_desc *area_desc;
+    const struct nffs_area_desc *area_desc;
     uint32_t off;
     int dst_image_area_idx;
     int src_area_idx;
@@ -469,7 +469,7 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
         }
 
         area_desc = boot_req->br_area_descs + dst_area_idx;
-        off += area_desc->fad_length;
+        off += area_desc->nad_length;
 
         part_num++;
     }
@@ -517,7 +517,7 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 
     for (i = 0; i < boot_req->br_num_image_areas; i++) {
         area_idx = boot_req->br_image_areas[i];
-        if (boot_req->br_area_descs[area_idx].fad_offset == addr) {
+        if (boot_req->br_area_descs[area_idx].nad_offset == addr) {
             break;
         }
     }
@@ -531,7 +531,7 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
         boot_status_entries[i].bse_image_num = image_num;
         boot_status_entries[i].bse_part_num = part_num;
 
-        offset += boot_req->br_area_descs[area_idx].fad_length;
+        offset += boot_req->br_area_descs[area_idx].nad_length;
         part_num++;
         i++;
         area_idx++;
@@ -584,19 +584,19 @@ boot_init_flash(void)
         return BOOT_EFLASH;
     }
 
-    rc = ffs_init();
+    rc = nffs_init();
     if (rc != 0) {
         return BOOT_EFILE;
     }
 
-    /* Look for an ffs file system in internal flash.  If no file system gets
+    /* Look for an nffs file system in internal flash.  If no file system gets
      * detected, all subsequent file operations will fail, but the boot loader
      * should proceed anyway.
      */
-    ffs_detect(boot_req->br_area_descs);
+    nffs_detect(boot_req->br_area_descs);
 
     /* Create the boot directory if it doesn't already exist. */
-    ffs_mkdir("/boot");
+    nffs_mkdir("/boot");
 
     return 0;
 }
@@ -715,7 +715,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     rsp->br_image_addr = image_addrs[0];
 
     /* After successful boot, there should not be a status file. */
-    ffs_unlink(BOOT_PATH_STATUS);
+    nffs_unlink(BOOT_PATH_STATUS);
 
     /* If an image is being tested, it should only be booted into once. */
     boot_vect_delete_test();

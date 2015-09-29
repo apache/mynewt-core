@@ -1,5 +1,4 @@
 pkg.name: libs/os
 pkg.vers: 0.1 
 pkg.deps:
-    - libs/cmsis-core
     - libs/testutil
