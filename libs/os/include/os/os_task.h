@@ -21,6 +21,10 @@
 #include "os/os_sanity.h" 
 #include "os/queue.h"
 
+/* The highest and lowest task priorities */
+#define OS_TASK_PRI_HIGHEST (0)
+#define OS_TASK_PRI_LOWEST  (0xff)
+
 #ifndef OS_TASK_NAME_SIZE
 #define OS_TASK_NAME_SIZE (36) 
 #endif 
