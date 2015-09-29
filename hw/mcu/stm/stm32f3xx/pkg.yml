@@ -1,4 +1,0 @@
-pkg.name: "hw/mcu/stm/stm32f3xx"
-pkg.deps: 
-    - hw/hal 
-    - libs/cmsis-core 
