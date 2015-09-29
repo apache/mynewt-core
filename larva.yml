@@ -1,0 +1,65 @@
+name: larva
+url: https://github.com/mynewt/larva/
+eggs:
+    libs/bootutil:
+        vers: 0.1.0
+        deps:
+            - libs/os@none#stable
+            - libs/ffs@none#stable
+            - libs/testutil@none#stable
+            - hw/hal@none#stable
+    libs/cmsis-core:
+        vers: 0.1.0
+    libs/ffs:
+        vers: 0.1.0
+        deps:
+            - libs/os@none#stable
+            - libs/testutil@none#stable
+            - hw/hal@none#stable
+    libs/os:
+        vers: 0.1.0
+        deps:
+            - libs/testutil@none#stable
+            - libs/cmsis-core@none#stable
+    libs/testreport:
+        vers: 0.1.0
+        deps:
+            - libs/testutil@none#stable
+            - libs/ffs@none#stable
+    hw/bsp/native:
+        vers: 0.0.0
+        deps:
+            - hw/mcu/native@none#stable
+    hw/bsp/olimex_stm32-e407_devboard:
+        vers: 0.0.0
+        deps:
+            - hw/mcu/stm/stm32f4xx@none#stable
+    hw/mcu/stm/stm32f4xx:
+        vers: 0.0.0
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+    libs/testutil:
+        vers: 0.1.0
+        deps:
+            - hw/hal@none#stable
+            - libs/os@none#stable
+    hw/bsp/nrf52pdk:
+        vers: 0.0.0
+        deps:
+            - libs/os@none#stable
+            - hw/mcu/nordic/nrf52xxx@none#stable
+    hw/mcu/native:
+        vers: 0.0.0
+        deps:
+            - hw/hal@none#stable
+    hw/mcu/nordic/nrf52xxx:
+        vers: 0.0.0
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+            - hw/bsp/nrf52pdk@none#stable
+    hw/hal:
+        vers: 0.1.0
+        deps:
+            - libs/os@none#stable
