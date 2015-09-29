@@ -16,19 +16,19 @@
 
 /**
  * XXX
- * This is a hack of a tool which prints the structure of an ffs file system.
+ * This is a hack of a tool which prints the structure of an nffs file system.
  * It needs to be rewritten properly.
  */
 
 #include <assert.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include "../src/ffs_priv.h"
+#include "../src/nffs_priv.h"
 #include "os/queue.h"
-#include "ffs/ffs.h"
+#include "nffs/nffs.h"
 #include "hal/hal_flash.h"
 
-static const struct ffs_area_desc area_descs[] = {
+static const struct nffs_area_desc area_descs[] = {
     { 0x00020000, 128 * 1024 },
     { 0x00040000, 128 * 1024 },
     { 0, 0 },
@@ -56,22 +56,23 @@ copyfs(FILE *fp)
 }
 
 static void
-print_inode_entry(struct ffs_inode_entry *inode_entry, int indent)
+print_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 {
-    struct ffs_inode inode;
-    char name[FFS_FILENAME_MAX_LEN + 1];
+    struct nffs_inode inode;
+    char name[NFFS_FILENAME_MAX_LEN + 1];
     uint32_t area_offset;
     uint8_t area_idx;
     int rc;
 
-    rc = ffs_inode_from_entry(&inode, inode_entry);
+    rc = nffs_inode_from_entry(&inode, inode_entry);
     assert(rc == 0);
 
-    ffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
+    nffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
                          &area_idx, &area_offset);
 
-    rc = ffs_flash_read(area_idx, area_offset + sizeof (struct ffs_disk_inode),
-                        name, inode.fi_filename_len);
+    rc = nffs_flash_read(area_idx,
+                         area_offset + sizeof (struct nffs_disk_inode),
+                         name, inode.fi_filename_len);
     assert(rc == 0);
 
     name[inode.fi_filename_len] = '\0';
@@ -80,13 +81,13 @@ print_inode_entry(struct ffs_inode_entry *inode_entry, int indent)
 }
 
 static void
-process_inode_entry(struct ffs_inode_entry *inode_entry, int indent)
+process_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 {
-    struct ffs_inode_entry *child;
+    struct nffs_inode_entry *child;
 
     print_inode_entry(inode_entry, indent);
 
-    if (ffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
+    if (nffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
         SLIST_FOREACH(child, &inode_entry->fie_child_list, fie_sibling_next) {
             process_inode_entry(child, indent + 2);
         }
@@ -96,7 +97,7 @@ process_inode_entry(struct ffs_inode_entry *inode_entry, int indent)
 static void
 printfs(void)
 {
-    process_inode_entry(ffs_root_dir, 0);
+    process_inode_entry(nffs_root_dir, 0);
 }
 
 int
@@ -112,10 +113,10 @@ main(int argc, char **argv)
 
     copyfs(fp);
 
-    rc = ffs_init();
+    rc = nffs_init();
     assert(rc == 0);
 
-    rc = ffs_detect(area_descs);
+    rc = nffs_detect(area_descs);
     assert(rc == 0);
 
     printfs();

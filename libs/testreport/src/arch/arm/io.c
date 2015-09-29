@@ -15,8 +15,8 @@
  */
 
 #include <stddef.h>
-#include "ffs/ffs.h"
-#include "ffs/ffsutil.h"
+#include "nffs/nffs.h"
+#include "nffs/nffsutil.h"
 #include "testreport_priv.h"
 
 int
@@ -24,7 +24,7 @@ tr_io_write(const char *path, const void *contents, size_t len)
 {
     int rc;
 
-    rc = ffsutil_write_file(path, contents, len);
+    rc = nffsutil_write_file(path, contents, len);
     if (rc != 0) {
         return -1;
     }
@@ -37,8 +37,8 @@ tr_io_mkdir(const char *path)
 {
     int rc;
 
-    rc = ffs_mkdir(path);
-    if (rc != 0 && rc != FFS_EEXIST) {
+    rc = nffs_mkdir(path);
+    if (rc != 0 && rc != NFFS_EEXIST) {
         return -1;
     }
 
@@ -50,8 +50,8 @@ tr_io_rmdir(const char *path)
 {
     int rc;
 
-    rc = ffs_unlink(path);
-    if (rc != 0 && rc != FFS_ENOENT) {
+    rc = nffs_unlink(path);
+    if (rc != 0 && rc != NFFS_ENOENT) {
         return -1;
     }
 
@@ -64,7 +64,7 @@ tr_io_read(const char *path, void *out_data, size_t len, size_t *out_len)
     uint32_t u32;
     int rc;
 
-    rc = ffsutil_read_file(path, 0, len, out_data, &u32);
+    rc = nffsutil_read_file(path, 0, len, out_data, &u32);
     if (rc != 0) {
         return -1;
     }
@@ -79,8 +79,8 @@ tr_io_delete(const char *path)
 {
     int rc;
 
-    rc = ffs_unlink(path);
-    if (rc != 0 && rc != FFS_ENOENT) {
+    rc = nffs_unlink(path);
+    if (rc != 0 && rc != NFFS_ENOENT) {
         return -1;
     }
 

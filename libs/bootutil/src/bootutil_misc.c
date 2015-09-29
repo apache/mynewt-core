@@ -17,8 +17,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include "hal/hal_flash.h"
-#include "ffs/ffs.h"
-#include "ffs/ffsutil.h"
+#include "nffs/nffs.h"
+#include "nffs/nffsutil.h"
 #include "bootutil/crc32.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
@@ -29,7 +29,7 @@ boot_vect_read_one(struct image_version *ver, const char *path)
     uint32_t bytes_read;
     int rc;
 
-    rc = ffsutil_read_file(path, 0, sizeof *ver, ver, &bytes_read);
+    rc = nffsutil_read_file(path, 0, sizeof *ver, ver, &bytes_read);
     if (rc != 0 || bytes_read != sizeof *ver) {
         return BOOT_EBADVECT;
     }
@@ -80,7 +80,7 @@ boot_vect_delete_test(void)
 {
     int rc;
 
-    rc = ffs_unlink(BOOT_PATH_TEST);
+    rc = nffs_unlink(BOOT_PATH_TEST);
     return rc;
 }
 
@@ -94,7 +94,7 @@ boot_vect_delete_main(void)
 {
     int rc;
 
-    rc = ffs_unlink(BOOT_PATH_MAIN);
+    rc = nffs_unlink(BOOT_PATH_MAIN);
     return rc;
 }
 
@@ -165,25 +165,25 @@ boot_read_status(struct boot_status *out_status,
                  struct boot_status_entry *out_entries,
                  int num_areas)
 {
-    struct ffs_file *file;
+    struct nffs_file *file;
     uint32_t bytes_read;
     int rc;
     int i;
 
-    rc = ffs_open(BOOT_PATH_STATUS, FFS_ACCESS_READ, &file);
+    rc = nffs_open(BOOT_PATH_STATUS, NFFS_ACCESS_READ, &file);
     if (rc != 0) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }
 
-    rc = ffs_read(file, sizeof *out_status, out_status, &bytes_read);
+    rc = nffs_read(file, sizeof *out_status, out_status, &bytes_read);
     if (rc != 0 || bytes_read != sizeof *out_status) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }
 
-    rc = ffs_read(file, num_areas * sizeof *out_entries, out_entries,
-                  &bytes_read);
+    rc = nffs_read(file, num_areas * sizeof *out_entries, out_entries,
+                   &bytes_read);
     if (rc != 0 || bytes_read != num_areas * sizeof *out_entries) {
         rc = BOOT_EBADSTATUS;
         goto done;
@@ -214,7 +214,7 @@ boot_read_status(struct boot_status *out_status,
     rc = 0;
 
 done:
-    ffs_close(file);
+    nffs_close(file);
     return rc;
 }
 
@@ -235,23 +235,23 @@ boot_write_status(const struct boot_status *status,
                   const struct boot_status_entry *entries,
                   int num_areas)
 {
-    struct ffs_file *file;
+    struct nffs_file *file;
     int rc;
 
-    rc = ffs_open(BOOT_PATH_STATUS, FFS_ACCESS_WRITE | FFS_ACCESS_TRUNCATE,
-                  &file);
+    rc = nffs_open(BOOT_PATH_STATUS, NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE,
+                   &file);
     if (rc != 0) {
         rc = BOOT_EFILE;
         goto done;
     }
 
-    rc = ffs_write(file, status, sizeof *status);
+    rc = nffs_write(file, status, sizeof *status);
     if (rc != 0) {
         rc = BOOT_EFILE;
         goto done;
     }
 
-    rc = ffs_write(file, entries, num_areas * sizeof *entries);
+    rc = nffs_write(file, entries, num_areas * sizeof *entries);
     if (rc != 0) {
         rc = BOOT_EFILE;
         goto done;
@@ -260,7 +260,7 @@ boot_write_status(const struct boot_status *status,
     rc = 0;
 
 done:
-    ffs_close(file);
+    nffs_close(file);
     return rc;
 }
 
@@ -273,5 +273,5 @@ done:
 void
 boot_clear_status(void)
 {
-    ffs_unlink(BOOT_PATH_STATUS);
+    nffs_unlink(BOOT_PATH_STATUS);
 }
