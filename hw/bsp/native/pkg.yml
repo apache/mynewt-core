@@ -1,3 +1,0 @@
-pkg.name: "hw/bsp/native"
-pkg.deps: 
-    - hw/mcu/native

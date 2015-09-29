@@ -1,5 +1,0 @@
-pkg.name: libs/testreport
-pkg.vers: 0.1 
-pkg.deps:
-    - libs/testutil
-    - libs/nffs

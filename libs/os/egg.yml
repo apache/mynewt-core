@@ -1,0 +1,4 @@
+egg.name: libs/os
+egg.vers: 0.1 
+egg.deps:
+    - libs/testutil

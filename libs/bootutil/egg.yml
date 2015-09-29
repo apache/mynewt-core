@@ -1,6 +1,6 @@
-pkg.name: libs/bootutil
-pkg.vers: 0.1 
-pkg.deps: 
+egg.name: libs/bootutil
+egg.vers: 0.1 
+egg.deps: 
     - libs/os 
     - libs/nffs
     - libs/testutil

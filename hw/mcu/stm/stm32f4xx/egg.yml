@@ -1,0 +1,4 @@
+egg.name: "hw/mcu/stm/stm32f4xx"
+egg.deps: 
+    - hw/hal 
+    - libs/cmsis-core 
