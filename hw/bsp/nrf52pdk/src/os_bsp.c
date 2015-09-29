@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "nrf52xxx/nrf52.h"
-#include "nrf52xxx/system_nrf52.h"
+#include "mcu/nrf52.h"
+#include "mcu/system_nrf52.h"
 
 /* 
  * Exception priorities. The higher the number, the lower the priority. A

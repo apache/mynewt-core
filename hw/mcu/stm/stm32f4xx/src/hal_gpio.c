@@ -16,9 +16,9 @@
 
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
-#include "stm32f4xx/stm32f4xx.h"
-#include "stm32f4xx/stm32f4xx_hal_gpio.h"
-#include "stm32f4xx/stm32f4xx_hal_rcc.h"
+#include "mcu/stm32f4xx.h"
+#include "mcu/stm32f4xx_hal_gpio.h"
+#include "mcu/stm32f4xx_hal_rcc.h"
 #include <assert.h>
 
  /* XXX: Notes

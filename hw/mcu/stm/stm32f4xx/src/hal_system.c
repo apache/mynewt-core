@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "stm32f4xx/stm32f407xx.h"
+#include "mcu/stm32f407xx.h"
 #include "hal/hal_system.h"
 
 void

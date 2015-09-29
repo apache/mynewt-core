@@ -38,7 +38,7 @@
        
   [..]
   The microcontroller IO pins are connected to onboard peripherals/modules through a 
-  multiplexer that allows only one peripheral’s alternate function (AF) connected 
+  multiplexer that allows only one peripheral's alternate function (AF) connected 
   to an IO pin at a time. In this way, there can be no conflict between peripherals 
   sharing the same IO pin. 
   
@@ -129,7 +129,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f3xx/stm32f3xx_hal.h"
+#include "mcu/stm32f3xx_hal.h"
 
 /** @addtogroup STM32F3xx_HAL_Driver
   * @{
