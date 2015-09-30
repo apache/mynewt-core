@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,12 +17,18 @@
 #include "os/os.h"
 #include "os/os_arch.h"
 
-/* XXX: How do we know which cortex to use? */
-#define __CMSIS_GENERIC
-#include "cmsis-core/core_cm4.h"
-
 /* Initial program status register */
 #define INITIAL_xPSR    0x01000000
+
+/*
+ * Exception priorities. The higher the number, the lower the priority. A
+ * higher priority exception will interrupt a lower priority exception.
+ */
+#define PEND_SV_PRIO    ((1 << __NVIC_PRIO_BITS) - 1)
+#define SYSTICK_PRIO    (PEND_SV_PRIO - 1)
+
+/* Make the SVC instruction highest priority */
+#define SVC_PRIO        (1)
 
 /* Stack frame structure */
 struct stack_frame {
@@ -88,29 +94,31 @@ timer_handler(void)
     os_time_tick();
     os_callout_tick();
     os_sched_os_timer_exp();
-    os_sched(NULL, 1); 
+    os_sched(NULL, 1);
 }
 
 void
 os_arch_ctx_sw(struct os_task *t)
 {
-    os_bsp_ctx_sw();
+    /* Set PendSV interrupt pending bit to force context switch */
+    SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }
 
 void
 os_arch_ctx_sw_isr(struct os_task *t)
 {
-    os_bsp_ctx_sw();
+    /* Set PendSV interrupt pending bit to force context switch */
+    SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }
 
-os_sr_t 
+os_sr_t
 os_arch_save_sr(void)
 {
     uint32_t isr_ctx;
 
     isr_ctx = __get_PRIMASK();
     __disable_irq();
-    return (isr_ctx & 1); 
+    return (isr_ctx & 1);
 }
 
 void
@@ -131,7 +139,7 @@ _Die(char *file, int line)
 }
 
 os_stack_t *
-os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size) 
+os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
     int i;
     os_stack_t *s;
@@ -151,7 +159,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* Set remaining portions of stack frame */
     sf = (struct stack_frame *) s;
     sf->xpsr = INITIAL_xPSR;
-    sf->pc = (uint32_t)t->t_func; 
+    sf->pc = (uint32_t)t->t_func;
     sf->r0 = (uint32_t)t->t_arg;
 
     return (s);
@@ -163,7 +171,7 @@ os_arch_init(void)
     os_init_idle_task();
 }
 
-__attribute__((always_inline)) 
+__attribute__((always_inline))
 static inline void
 svc_os_arch_init(void)
 {
@@ -171,7 +179,7 @@ svc_os_arch_init(void)
     SVC_Call(os_arch_init);
 }
 
-os_error_t 
+os_error_t
 os_arch_os_init(void)
 {
     os_error_t err;
@@ -184,7 +192,13 @@ os_arch_os_init(void)
         /* Call bsp related OS initializations */
         os_bsp_init();
 
-        /* 
+        /* Set the PendSV interrupt exception priority to the lowest priority */
+        NVIC_SetPriority(PendSV_IRQn, PEND_SV_PRIO);
+
+        /* Set the SVC interrupt to priority 0 (highest configurable) */
+        NVIC_SetPriority(SVCall_IRQn, SVC_PRIO);
+
+        /*
          * Set the os environment. This will set stack pointers and, based
          * on the contents of os_flags, will determine if the tasks run in
          * priviliged or un-privileged mode.
@@ -202,6 +216,27 @@ os_arch_os_init(void)
     return err;
 }
 
+/**
+ * os systick init
+ *
+ * Initializes systick for the MCU
+ */
+static void
+os_systick_init(uint32_t os_tick_usecs)
+{
+    uint32_t reload_val;
+
+    reload_val = (((uint64_t)SystemCoreClock * os_tick_usecs) / 1000000) - 1;
+
+    /* Set the system time ticker up */
+    SysTick->LOAD = reload_val;
+    SysTick->VAL = 0;
+    SysTick->CTRL = 0x0007;
+
+    /* Set the system tick priority */
+    NVIC_SetPriority(SysTick_IRQn, SYSTICK_PRIO);
+}
+
 uint32_t
 os_arch_start(void)
 {
@@ -215,10 +250,11 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_bsp_systick_init(OS_TIME_TICK * 1000);
+
+    os_systick_init(OS_TIME_TICK * 1000);
 
     /* Mark the OS as started, right before we run our first task */
-    g_os_started = 1; 
+    g_os_started = 1;
 
     /* Perform context switch */
     os_arch_ctx_sw(t);
@@ -226,14 +262,14 @@ os_arch_start(void)
     return (uint32_t)(t->t_arg);
 }
 
-__attribute__((always_inline)) 
+__attribute__((always_inline))
 static inline void svc_os_arch_start(void)
 {
     SVC_Arg0();
     SVC_Call(os_arch_start);
 }
 
-os_error_t 
+os_error_t
 os_arch_os_start(void)
 {
     os_error_t err;
@@ -247,12 +283,12 @@ os_arch_os_start(void)
          */
         err = OS_OK;
         switch (__get_CONTROL() & 0x03) {
-        /* 
+        /*
          * These two cases are for completeness. Thread mode should be set
          * to use PSP already.
-         * 
+         *
          * Fall-through intentional!
-         */ 
+         */
         case 0x00:
         case 0x01:
             err = OS_ERR_PRIV;

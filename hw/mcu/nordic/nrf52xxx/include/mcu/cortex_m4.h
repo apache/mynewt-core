@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-void
-os_bsp_init(void)
-{
-}
+#ifndef __MCU_CORTEX_M4_H__
+#define __MCU_CORTEX_M4_H__
 
+#include "mcu/nrf52.h"
 
+#endif /* __MCU_CORTEX_M4_H__ */
