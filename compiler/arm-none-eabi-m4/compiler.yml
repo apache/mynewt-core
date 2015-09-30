@@ -19,6 +19,7 @@ compiler.path.archive: arm-none-eabi-ar
 compiler.path.as: arm-none-eabi-gcc -x assembler-with-cpp 
 compiler.path.objdump: arm-none-eabi-objdump 
 compiler.path.objsize: arm-none-eabi-objsize 
+compiler.path.objcopy: arm-none-eabi-objcopy
 
 
 compiler.flags.default: -mcpu=cortex-m4 -mthumb-interwork -mthumb -Wall -Werror

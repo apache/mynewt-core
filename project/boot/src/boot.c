@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include "stm32f4xx/stm32f4xx.h"
+#include "mcu/stm32f4xx.h"
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
