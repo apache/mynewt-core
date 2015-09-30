@@ -20,6 +20,7 @@ compiler.path.cc: "/usr/local/bin/gcc-5"
 compiler.path.archive: "ar"
 compiler.path.objdump: "gobjdump"
 compiler.path.objsize: "objsize"
+compiler.path.objcopy: "gobjcopy"
 
 compiler.flags.base: >
     -m32 -Wall -Werror -ggdb -O0
