@@ -21,7 +21,7 @@
 #include "os/os_sem.h"
 #include "os_test_priv.h"
 
-#if ARCH == sim
+#ifdef ARCH_sim
 #define SEM_TEST_STACK_SIZE     1024
 #else 
 #define SEM_TEST_STACK_SIZE     512

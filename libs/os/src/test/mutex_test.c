@@ -24,7 +24,7 @@
 #include "os/os_mutex.h"
 #include "os_test_priv.h"
 
-#if ARCH == sim 
+#ifdef ARCH_sim
 #define MUTEX_TEST_STACK_SIZE   1024
 #else
 #define MUTEX_TEST_STACK_SIZE   256
