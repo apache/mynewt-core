@@ -112,7 +112,8 @@ struct os_mbuf {
     ((__om)->om_flags & OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR))
 
 
-#define OS_MBUF_PKTHDR(__om) ((struct os_mbuf_pkthdr *) &(__om)->om_databuf[0])
+#define OS_MBUF_PKTHDR(__om) ((struct os_mbuf_pkthdr *)     \
+    ((uint8_t *)&(__om)->om_data + sizeof(struct os_mbuf)))
 
 /*
  * Access the data of a mbuf, and cast it to type
@@ -122,9 +123,6 @@ struct os_mbuf {
  */
 #define OS_MBUF_DATA(__om, __type) \
      (__type) ((__om)->om_data)
-
-
-
 
 /**
  * Returns the end offset of a mbuf buffer 
