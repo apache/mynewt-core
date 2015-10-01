@@ -369,7 +369,7 @@ nffs_test_assert_file(const struct nffs_test_file_desc *file,
              child_file++) {
 
             child_filename_len = strlen(child_file->filename);
-            child_path = malloc(path_len + 1 + child_filename_len);
+            child_path = malloc(path_len + 1 + child_filename_len + 1);
             TEST_ASSERT(child_path != NULL);
             memcpy(child_path, path, path_len);
             child_path[path_len] = '/';
@@ -386,7 +386,7 @@ nffs_test_assert_file(const struct nffs_test_file_desc *file,
         }
     } else {
         nffs_test_util_assert_contents(path, file->contents,
-                                      file->contents_len);
+                                       file->contents_len);
     }
 }
 
