@@ -15,10 +15,10 @@
 #
 
 compiler.path.cc: arm-none-eabi-gcc
-compiler.path.archive: arm-none-eabi-ar 
-compiler.path.as: arm-none-eabi-gcc -x assembler-with-cpp 
-compiler.path.objdump: arm-none-eabi-objdump 
-compiler.path.objsize: arm-none-eabi-objsize 
+compiler.path.archive: arm-none-eabi-ar
+compiler.path.as: arm-none-eabi-gcc -x assembler-with-cpp
+compiler.path.objdump: arm-none-eabi-objdump
+compiler.path.objsize: arm-none-eabi-size
 compiler.path.objcopy: arm-none-eabi-objcopy
 
 
