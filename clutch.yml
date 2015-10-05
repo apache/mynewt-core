@@ -1,65 +1,88 @@
 name: larva
 url: https://github.com/mynewt/larva/
 eggs:
-    libs/bootutil:
-        vers: 0.1.0
-        deps:
-            - libs/os@none#stable
-            - libs/ffs@none#stable
-            - libs/testutil@none#stable
-            - hw/hal@none#stable
-    libs/cmsis-core:
-        vers: 0.1.0
-    libs/ffs:
-        vers: 0.1.0
-        deps:
-            - libs/os@none#stable
-            - libs/testutil@none#stable
-            - hw/hal@none#stable
-    libs/os:
-        vers: 0.1.0
-        deps:
-            - libs/testutil@none#stable
-            - libs/cmsis-core@none#stable
-    libs/testreport:
-        vers: 0.1.0
-        deps:
-            - libs/testutil@none#stable
-            - libs/ffs@none#stable
-    hw/bsp/native:
-        vers: 0.0.0
-        deps:
-            - hw/mcu/native@none#stable
-    hw/bsp/olimex_stm32-e407_devboard:
-        vers: 0.0.0
-        deps:
-            - hw/mcu/stm/stm32f4xx@none#stable
-    hw/mcu/stm/stm32f4xx:
-        vers: 0.0.0
-        deps:
-            - hw/hal@none#stable
-            - libs/cmsis-core@none#stable
-    libs/testutil:
-        vers: 0.1.0
-        deps:
-            - hw/hal@none#stable
-            - libs/os@none#stable
-    hw/bsp/nrf52pdk:
-        vers: 0.0.0
-        deps:
-            - libs/os@none#stable
-            - hw/mcu/nordic/nrf52xxx@none#stable
-    hw/mcu/native:
-        vers: 0.0.0
-        deps:
-            - hw/hal@none#stable
     hw/mcu/nordic/nrf52xxx:
         vers: 0.0.0
+        hash: 8a7bc81788f47155db0c16220b52e6bdf5a01b03
         deps:
             - hw/hal@none#stable
             - libs/cmsis-core@none#stable
             - hw/bsp/nrf52pdk@none#stable
+    libs/nffs:
+        vers: 0.1.0
+        hash: 5e1f7415d343b51d76f8602e845832ccdd525216
+        deps:
+            - libs/os@none#stable
+            - libs/testutil@none#stable
+            - hw/hal@none#stable
+    hw/bsp/nrf52pdk:
+        vers: 0.0.0
+        hash: 09fec7a15c3e099a145e0fd04c831b3a7959f4d2
+        deps:
+            - libs/os@none#stable
+            - hw/mcu/nordic/nrf52xxx@none#stable
+    hw/bsp/native:
+        vers: 0.0.0
+        hash: 0844179a579cc60b4d30ad801c0254c4e3749c92
+        deps:
+            - hw/mcu/native@none#stable
+    hw/mcu/native:
+        vers: 0.0.0
+        hash: 816238d3c024ff05c338c87d8383dc269727be52
+        deps:
+            - hw/hal@none#stable
+    libs/cmsis-core:
+        vers: 0.1.0
+        hash: ea2cde94b556ccdc21e586be3302b36df9cf1f02
+    hw/bsp/olimex_stm32-e407_devboard:
+        vers: 0.0.0
+        hash: 7259a219fe44c8a2a648566c6b021cf1a57e7875
+        deps:
+            - hw/mcu/stm/stm32f4xx@none#stable
+    hw/bsp/stm32f3discovery:
+        vers: 0.0.0
+        hash: 7c3d6e9488d502bc8b61c1c3e345113ff8532313
+        deps:
+            - hw/mcu/stm/stm32f3xx@none#stable
     hw/hal:
         vers: 0.1.0
+        hash: 27f394b5602bbd221d9e785467bfb7d5f4ef1e91
         deps:
+            - libs/os@none#stable
+    hw/mcu/stm/stm32f3xx:
+        vers: 0.0.0
+        hash: 7e6c905e882ccc71ee4f14ea69b68bdbd999450a
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+    libs/bootutil:
+        vers: 0.1.0
+        hash: cf63c7b6e78fb1b7ff97f491aa7839d87ffa1f10
+        deps:
+            - libs/os@none#stable
+            - libs/nffs@none#stable
+            - libs/testutil@none#stable
+            - hw/hal@none#stable
+    libs/os:
+        vers: 0.1.0
+        hash: 999a3419d9959d3c39b11dcc67d79c7888b4b765
+        deps:
+            - libs/testutil@none#stable
+    hw/mcu/stm/stm32f4xx:
+        vers: 0.0.0
+        hash: 7f678cf3238235a15bec3da0bb41f30d098beac5
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+    libs/testreport:
+        vers: 0.1.0
+        hash: 8ea2c49b8d11b7c554bec4091145add1ee0ecf8e
+        deps:
+            - libs/testutil@none#stable
+            - libs/nffs@none#stable
+    libs/testutil:
+        vers: 0.1.0
+        hash: 189f2f4b3e0b71202e6dfe4545290b6d1c0544aa
+        deps:
+            - hw/hal@none#stable
             - libs/os@none#stable
