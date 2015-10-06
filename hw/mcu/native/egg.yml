@@ -1,2 +1,4 @@
 egg.name: "hw/mcu/native"
-egg.deps: hw/hal
+egg.deps:
+    - hw/hal
+    - compiler/sim
