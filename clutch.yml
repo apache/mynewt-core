@@ -1,65 +1,113 @@
 name: larva
 url: https://github.com/mynewt/larva/
 eggs:
-    libs/bootutil:
+    hw/bsp/olimex_stm32-e407_devboard:
+        vers: 0.0.0
+        hash: 7259a219fe44c8a2a648566c6b021cf1a57e7875
+        deps:
+            - hw/mcu/stm/stm32f4xx@none#stable
+    hw/mcu/stm/stm32f3xx:
+        vers: 0.0.0
+        hash: cdd80bece2c222c96dec9b1dbdb6ad565ba0b5e7
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+            - compiler/arm-none-eabi-m4@none#stable
+    libs/nffs:
         vers: 0.1.0
+        hash: 07c59bc8b344de62660f3f3b6770a88254e09ee5
         deps:
             - libs/os@none#stable
-            - libs/ffs@none#stable
             - libs/testutil@none#stable
             - hw/hal@none#stable
-    libs/cmsis-core:
+    libs/testreport:
         vers: 0.1.0
-    libs/ffs:
+        hash: 8ea2c49b8d11b7c554bec4091145add1ee0ecf8e
+        deps:
+            - libs/testutil@none#stable
+            - libs/nffs@none#stable
+    libs/bootutil:
         vers: 0.1.0
+        hash: cf63c7b6e78fb1b7ff97f491aa7839d87ffa1f10
         deps:
             - libs/os@none#stable
+            - libs/nffs@none#stable
             - libs/testutil@none#stable
             - hw/hal@none#stable
     libs/os:
         vers: 0.1.0
+        hash: 999a3419d9959d3c39b11dcc67d79c7888b4b765
         deps:
             - libs/testutil@none#stable
-            - libs/cmsis-core@none#stable
-    libs/testreport:
-        vers: 0.1.0
-        deps:
-            - libs/testutil@none#stable
-            - libs/ffs@none#stable
-    hw/bsp/native:
-        vers: 0.0.0
-        deps:
-            - hw/mcu/native@none#stable
-    hw/bsp/olimex_stm32-e407_devboard:
-        vers: 0.0.0
-        deps:
-            - hw/mcu/stm/stm32f4xx@none#stable
     hw/mcu/stm/stm32f4xx:
         vers: 0.0.0
+        hash: 603c3f79152acd4a9329e2e0ea613d519b307672
         deps:
             - hw/hal@none#stable
             - libs/cmsis-core@none#stable
+            - compiler/arm-none-eabi-m4@none#stable
+    project/test:
+        vers: 0.1.0
+        hash: 30e62f604de558c48227806cc65a1ccdcfd0756c
+        deps:
+            - libs/testutil@none#stable
+            - libs/os@none#stable
+            - libs/nffs@none#stable
+            - libs/bootutil@none#stable
+            - libs/testreport@none#stable
+    hw/hal:
+        vers: 0.1.0
+        hash: 27f394b5602bbd221d9e785467bfb7d5f4ef1e91
+        deps:
+            - libs/os@none#stable
+    hw/bsp/native:
+        vers: 0.0.0
+        hash: 0844179a579cc60b4d30ad801c0254c4e3749c92
+        deps:
+            - hw/mcu/native@none#stable
     libs/testutil:
         vers: 0.1.0
+        hash: 189f2f4b3e0b71202e6dfe4545290b6d1c0544aa
         deps:
             - hw/hal@none#stable
             - libs/os@none#stable
+    hw/mcu/native:
+        vers: 0.0.0
+        hash: 156b1b1bb7b51162a1164a7eb98e3a6bc921ec24
+        deps:
+            - hw/hal@none#stable
+            - compiler/sim@none#stable
+    compiler/arm-none-eabi-m4:
+        vers: 0.1.0
+        hash: 70921a4716498a0b7d5f368b574ce5916a7dc77f
+    hw/bsp/stm32f3discovery:
+        vers: 0.0.0
+        hash: 7c3d6e9488d502bc8b61c1c3e345113ff8532313
+        deps:
+            - hw/mcu/stm/stm32f3xx@none#stable
     hw/bsp/nrf52pdk:
         vers: 0.0.0
+        hash: 09fec7a15c3e099a145e0fd04c831b3a7959f4d2
         deps:
             - libs/os@none#stable
             - hw/mcu/nordic/nrf52xxx@none#stable
-    hw/mcu/native:
-        vers: 0.0.0
+    project/blinky:
+        vers: 0.1.0
+        hash: fa5f47bdfb3f3d1305113da3bf0aafd54e14494e
         deps:
+            - libs/os@none#stable
             - hw/hal@none#stable
     hw/mcu/nordic/nrf52xxx:
         vers: 0.0.0
+        hash: 5b40b3ceda32e7a09ecac49dd9115989bafe091c
         deps:
             - hw/hal@none#stable
             - libs/cmsis-core@none#stable
             - hw/bsp/nrf52pdk@none#stable
-    hw/hal:
+            - compiler/arm-none-eabi-m4@none#stable
+    compiler/sim:
         vers: 0.1.0
-        deps:
-            - libs/os@none#stable
+        hash: 3b72c69948b1f35cd0aa6d2765f7529c017cd99f
+    libs/cmsis-core:
+        vers: 0.1.0
+        hash: ea2cde94b556ccdc21e586be3302b36df9cf1f02
