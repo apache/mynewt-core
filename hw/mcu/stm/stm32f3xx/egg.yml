@@ -1,4 +1,5 @@
 egg.name: "hw/mcu/stm/stm32f3xx"
 egg.deps: 
     - hw/hal 
-    - libs/cmsis-core 
+    - libs/cmsis-core
+    - compiler/arm-none-eabi-m4
