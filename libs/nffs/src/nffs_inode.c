@@ -240,6 +240,21 @@ nffs_inode_delete_from_ram(struct nffs_inode_entry *inode_entry)
 }
 
 /**
+ * Inserts the specified inode entry into the unlink list.  Because a hash
+ * entry only has a single 'next' pointer, this function removes the entry from
+ * the hash table prior to inserting it into the unlink list.
+ *
+ * @param inode_entry           The inode entry to insert.
+ */
+static void
+nffs_inode_insert_unlink_list(struct nffs_inode_entry *inode_entry)
+{
+    nffs_hash_remove(&inode_entry->nie_hash_entry);
+    SLIST_INSERT_HEAD(&nffs_inode_unlink_list, &inode_entry->nie_hash_entry,
+                      nhe_next);
+}
+
+/**
  * Decrements the reference count of the specified inode entry.
  *
  * @param inode_entry               The inode entry whose reference count
@@ -254,28 +269,17 @@ nffs_inode_dec_refcnt(struct nffs_inode_entry *inode_entry)
 
     inode_entry->nie_refcnt--;
     if (inode_entry->nie_refcnt == 0) {
-        rc = nffs_inode_delete_from_ram(inode_entry);
-        if (rc != 0) {
-            return rc;
+        if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
+            rc = nffs_inode_delete_from_ram(inode_entry);
+            if (rc != 0) {
+                return rc;
+            }
+        } else {
+            nffs_inode_insert_unlink_list(inode_entry);
         }
     }
 
     return 0;
-}
-
-/**
- * Inserts the specified inode entry into the unlink list.  Because a hash
- * entry only has a single 'next' pointer, this function removes the entry from
- * the hash table prior to inserting it into the unlink list.
- *
- * @param inode_entry           The inode entry to insert.
- */
-static void
-nffs_inode_insert_unlink_list(struct nffs_inode_entry *inode_entry)
-{
-    nffs_hash_remove(&inode_entry->nie_hash_entry);
-    SLIST_INSERT_HEAD(&nffs_inode_unlink_list, &inode_entry->nie_hash_entry,
-                      nhe_next);
 }
 
 /**
@@ -319,13 +323,9 @@ nffs_inode_process_unlink_list(struct nffs_hash_entry **inout_next)
                 *inout_next = &child_next->nie_hash_entry;
             }
 
-            if (nffs_hash_id_is_dir(child->nie_hash_entry.nhe_id)) {
-                nffs_inode_insert_unlink_list(child);
-            } else {
-                rc = nffs_inode_dec_refcnt(child);
-                if (rc != 0) {
-                    return rc;
-                }
+            rc = nffs_inode_dec_refcnt(child);
+            if (rc != 0) {
+                return rc;
             }
 
             child = child_next;
