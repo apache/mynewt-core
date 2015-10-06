@@ -88,8 +88,7 @@ cputime_set_ocmp(struct cpu_timer *timer)
 
     /* Force interrupt to occur as we may have missed it */
     if ((int32_t)(cputime_get32() - timer->cputime) >= 0) {
-        /* XXX: I dont see a way to force an interrupt to occur.
-           I guess we can use the NVIC to cause an interrupt. Fix This */
+        NVIC_SetPendingIRQ(CPUTIMER_IRQ);
     }
 }
 
@@ -128,7 +127,7 @@ cputime_chk_expiration(void)
 }
 
 /**
- * tim5 isr 
+ * cputime isr 
  *  
  * This is the global timer interrupt routine. 
  * 
@@ -158,13 +157,18 @@ cputime_isr(void)
         ++g_cputime.cputime_high;
     }
 
-    /* Check if output compare occurred */
-    if (compare) {
-        /* Only call routine if interrupt is enabled */
-        if (CPUTIMER->INTENCLR & CPUTIMER_INT_MASK(CPUTIMER_CC_INT)) {
-            ++g_cputime.ocmp_ints;
-            cputime_chk_expiration();
-        }
+    /* 
+     * NOTE: we dont check the 'compare' variable here due to how the timer
+     * is implemented on this chip. There is no way to force an output
+     * compare, so if we are late setting the output compare (i.e. the timer
+     * counter is already passed the output compare value), we use the NVIC
+     * to set a pending interrupt. This means that there will be no compare
+     * flag set, so all we do is check to see if the compare interrupt is
+     * enabled.
+     */
+    if (CPUTIMER->INTENCLR & CPUTIMER_INT_MASK(CPUTIMER_CC_INT)) {
+        ++g_cputime.ocmp_ints;
+        cputime_chk_expiration();
     }
 }
 
