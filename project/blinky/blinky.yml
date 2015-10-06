@@ -1,0 +1,3 @@
+project.name: blinky
+project.eggs:
+    - libs/os
