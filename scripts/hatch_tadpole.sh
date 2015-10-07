@@ -13,7 +13,7 @@ fi
 LARVA_DIR=$1
 TADPOLE_DIR=$2
 
-declare -a DIRS=("/hw/mcu/native" "/hw/bsp/native" "/hw/hal" "/libs/os" "/compiler/sim") 
+declare -a DIRS=("/hw/mcu/native" "/hw/bsp/native" "/hw/hal" "/libs/os" "libs/testutil" "/compiler/sim") 
 for dir in "${DIRS[@]}"
 do
     echo "Copying $dir"
