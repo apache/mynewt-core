@@ -20,9 +20,7 @@
 struct os_task;
 
 /* Time tick in miliseconds that the OS runs */
-
-#define OS_TIME_TICK (1)
-#define OS_TICKS_PER_SEC (OS_TIME_TICK * 1000)
+#define OS_TICKS_PER_SEC (1000)
 
 /* CPU status register */
 typedef unsigned int os_sr_t;

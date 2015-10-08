@@ -218,8 +218,10 @@ os_arch_os_init(void)
 
 /**
  * os systick init
- *
+ *  
  * Initializes systick for the MCU
+ * 
+ * @param os_tick_usecs The number of microseconds in an os time tick
  */
 static void
 os_systick_init(uint32_t os_tick_usecs)
@@ -250,8 +252,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-
-    os_systick_init(OS_TIME_TICK * 1000);
+    os_systick_init(1000000 / OS_TICKS_PER_SEC);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
