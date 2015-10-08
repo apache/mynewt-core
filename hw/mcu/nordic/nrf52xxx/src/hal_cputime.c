@@ -169,6 +169,9 @@ cputime_isr(void)
     if (CPUTIMER->INTENCLR & CPUTIMER_INT_MASK(CPUTIMER_CC_INT)) {
         ++g_cputime.ocmp_ints;
         cputime_chk_expiration();
+
+        /* XXX: Recommended by nordic to make sure interrupts are cleared */
+        compare = CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_INT];
     }
 }
 
