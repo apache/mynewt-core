@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef _OS_EVENTQ_H 
-#define _OS_EVENTQ_H 
+#ifndef _OS_EVENTQ_H
+#define _OS_EVENTQ_H
 
-struct os_event { 
-    uint8_t ev_queued; 
+struct os_event {
+    uint8_t ev_queued;
     uint8_t ev_type;
     void *ev_arg;
-    TAILQ_ENTRY(os_event) ev_next; 
+    STAILQ_ENTRY(os_event) ev_next;
 };
 
-#define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued) 
-
-#define OS_EVENT_INITIALIZER(ev, __type, __arg) { \
-    0, (__type), (__arg), { NULL } \
-}
+#define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued)
 
 #define OS_EVENT_T_TIMER (1)
-#define OS_EVENT_T_PERUSER (16) 
+#define OS_EVENT_T_PERUSER (16)
 
 struct os_eventq {
     struct os_task *evq_task;
-    TAILQ_HEAD(, os_event) evq_list;
+    STAILQ_HEAD(, os_event) evq_list;
 };
 
 void os_eventq_init(struct os_eventq *);
