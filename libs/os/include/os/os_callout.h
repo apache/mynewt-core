@@ -19,13 +19,10 @@
 #define _OS_CALLOUT_H
 
 #define OS_CALLOUT_F_QUEUED (0x01)
-#define OS_CALLOUT_QUEUED(__c) ((__c)->c_flags & OS_CALLOUT_F_QUEUED)
 
 struct os_callout {
     struct os_event c_ev;
     struct os_eventq *c_evq;
-    uint8_t c_flags;
-    uint8_t _pad[3];
     uint32_t c_ticks;
     TAILQ_ENTRY(os_callout) c_next;
 };
@@ -45,6 +42,11 @@ void os_callout_stop(struct os_callout *);
 int os_callout_reset(struct os_callout *, int32_t);
 void os_callout_tick(void);
 
+static inline int
+os_callout_queued(struct os_callout *c)
+{
+    return c->c_next.tqe_prev != NULL;
+}
 #endif /* _OS_CALLOUT_H */
 
 
