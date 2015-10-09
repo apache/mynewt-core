@@ -1,8 +1,8 @@
-# Mynewt Test Repository 
+# Mynewt Repository 
 
 # Overview
 
-This is the Mynewt developer's test repository.  It contains the major Mynewt
+This is the main Mynewt development repository.  It contains the major Mynewt
 packages that are being worked on, along with a few projects used for 
 compiling the packages into working projects, these are: 
 
