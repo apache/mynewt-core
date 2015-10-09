@@ -46,9 +46,9 @@ os_callout_stop(struct os_callout *c)
 
     OS_ENTER_CRITICAL(sr);
 
-    if (OS_CALLOUT_QUEUED(c)) {
+    if (os_callout_queued(c)) {
         TAILQ_REMOVE(&g_callout_list, c, c_next);
-        c->c_flags &= ~OS_CALLOUT_F_QUEUED;
+        c->c_next.tqe_prev = NULL;
     }
 
     if (c->c_evq) {
@@ -79,7 +79,6 @@ os_callout_reset(struct os_callout *c, int32_t ticks)
     }
 
     c->c_ticks = os_time_get() + ticks;
-    c->c_flags |= OS_CALLOUT_F_QUEUED;
 
     entry = NULL;
     TAILQ_FOREACH(entry, &g_callout_list, c_next) {
@@ -116,7 +115,7 @@ os_callout_tick(void)
         if (c) {
             if (OS_TIME_TICK_GEQ(now, c->c_ticks)) {
                 TAILQ_REMOVE(&g_callout_list, c, c_next);
-                c->c_flags &= ~OS_CALLOUT_F_QUEUED;
+                c->c_next.tqe_prev = NULL;
             } else {
                 c = NULL;
             }

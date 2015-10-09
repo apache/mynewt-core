@@ -23,7 +23,7 @@ void
 os_eventq_init(struct os_eventq *evq)
 {
     memset(evq, 0, sizeof(*evq));
-    TAILQ_INIT(&evq->evq_list);
+    STAILQ_INIT(&evq->evq_list);
 }
 
 void
@@ -35,14 +35,14 @@ os_eventq_put2(struct os_eventq *evq, struct os_event *ev, int isr)
     OS_ENTER_CRITICAL(sr);
 
     /* Do not queue if already queued */
-    if (ev->ev_queued) {
+    if (OS_EVENT_QUEUED(ev)) {
         OS_EXIT_CRITICAL(sr);
         return;
     }
 
     /* Queue the event */
     ev->ev_queued = 1;
-    TAILQ_INSERT_TAIL(&evq->evq_list, ev, ev_next);
+    STAILQ_INSERT_TAIL(&evq->evq_list, ev, ev_next);
 
     /* If task waiting on event, wake it up. */
     resched = 0;
@@ -72,9 +72,9 @@ os_eventq_get(struct os_eventq *evq)
 
     OS_ENTER_CRITICAL(sr);
 pull_one:
-    ev = TAILQ_FIRST(&evq->evq_list);
+    ev = STAILQ_FIRST(&evq->evq_list);
     if (ev) {
-        TAILQ_REMOVE(&evq->evq_list, ev, ev_next);
+        STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
         ev->ev_queued = 0;
     } else {
         evq->evq_task = os_sched_get_current_task();
@@ -98,8 +98,8 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
     os_sr_t sr;
 
     OS_ENTER_CRITICAL(sr);
-    if (ev->ev_queued) {
-        TAILQ_REMOVE(&evq->evq_list, ev, ev_next);
+    if (OS_EVENT_QUEUED(ev)) {
+        STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
     }
     ev->ev_queued = 0;
     OS_EXIT_CRITICAL(sr);
