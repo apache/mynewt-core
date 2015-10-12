@@ -370,9 +370,6 @@ nffs_inode_delete_from_disk(struct nffs_inode *inode)
         return rc;
     }
 
-    inode->ni_inode_entry->nie_hash_entry.nhe_flash_loc =
-        nffs_flash_loc(area_idx, offset);
-
     return 0;
 }
 
