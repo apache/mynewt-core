@@ -323,6 +323,14 @@ nffs_misc_reset(void)
         return NFFS_EOS;
     }
 
+    rc = os_mempool_init(&nffs_dir_pool,
+                         nffs_config.nc_num_dirs,
+                         sizeof (struct nffs_dir),
+                         nffs_dir_mem, "nffs_dir_pool");
+    if (rc != 0) {
+        return NFFS_EOS;
+    }
+
     rc = nffs_hash_init();
     if (rc != 0) {
         return rc;

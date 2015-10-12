@@ -446,7 +446,7 @@ nffs_inode_rename(struct nffs_inode_entry *inode_entry,
 
 static int
 nffs_inode_read_filename_chunk(const struct nffs_inode *inode,
-                              uint8_t filename_offset, void *buf, int len)
+                               uint8_t filename_offset, void *buf, int len)
 {
     uint32_t area_offset;
     uint8_t area_idx;
@@ -466,9 +466,54 @@ nffs_inode_read_filename_chunk(const struct nffs_inode *inode,
     return 0;
 }
 
+/**
+ * Retrieves the filename of the specified inode.  The retrieved
+ * filename is always null-terminated.  To ensure enough space to hold the full
+ * filename plus a null-termintor, a destination buffer of size
+ * (NFFS_FILENAME_MAX_LEN + 1) should be used.
+ *
+ * @param inode_entry           The inode entry to query.
+ * @param max_len               The size of the "out_name" character buffer.
+ * @param out_name              On success, the entry's filename is written
+ *                                  here; always null-terminated.
+ * @param out_name_len          On success, contains the actual length of the
+ *                                  filename, NOT including the
+ *                                  null-terminator.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nffs_inode_read_filename(struct nffs_inode_entry *inode_entry, size_t max_len,
+                         char *out_name, uint8_t *out_full_len)
+{
+    struct nffs_inode inode;
+    int read_len;
+    int rc;
+
+    rc = nffs_inode_from_entry(&inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (max_len > inode.ni_filename_len) {
+        read_len = inode.ni_filename_len;
+    } else {
+        read_len = max_len - 1;
+    }
+
+    rc = nffs_inode_read_filename_chunk(&inode, 0, out_name, read_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    out_name[read_len] = '\0';
+
+    return 0;
+}
+
 int
 nffs_inode_add_child(struct nffs_inode_entry *parent,
-                    struct nffs_inode_entry *child)
+                     struct nffs_inode_entry *child)
 {
     struct nffs_inode_entry *prev;
     struct nffs_inode_entry *cur;
@@ -523,12 +568,13 @@ nffs_inode_remove_child(struct nffs_inode *child)
     assert(nffs_hash_id_is_dir(parent->nie_hash_entry.nhe_id));
     SLIST_REMOVE(&parent->nie_child_list, child->ni_inode_entry,
                  nffs_inode_entry, nie_sibling_next);
+    SLIST_NEXT(child->ni_inode_entry, nie_sibling_next) = NULL;
 }
 
 int
 nffs_inode_filename_cmp_ram(const struct nffs_inode *inode,
-                           const char *name, int name_len,
-                           int *result)
+                            const char *name, int name_len,
+                            int *result)
 {
     int short_len;
     int chunk_len;
