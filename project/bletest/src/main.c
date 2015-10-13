@@ -21,6 +21,7 @@
 #include <string.h>
 
 /* BLE */
+#include "nimble/ble.h"
 #include "host/host_hci.h"
 #include "controller/ll_adv.h"
 
@@ -64,7 +65,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* Some application configurations */
 #define BLETEST_CFG_ADV_ITVL        (2000000 / BLE_LL_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE        BLE_ADV_TYPE_ADV_IND
+#define BLETEST_CFG_ADV_TYPE        BLE_ADV_TYPE_ADV_NONCONN_IND
 
 void 
 host_task_handler(void *arg)
