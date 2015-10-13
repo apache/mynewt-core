@@ -45,6 +45,21 @@ static const struct nffs_area_desc nffs_area_descs[] = {
 };
 
 static void
+nffs_test_util_assert_ent_name(struct nffs_dirent *dirent,
+                               const char *expected_name)
+{
+    char name[NFFS_FILENAME_MAX_LEN + 1];
+    uint8_t name_len;
+    int rc;
+
+    rc = nffs_dirent_name(dirent, sizeof name, name, &name_len);
+    TEST_ASSERT(rc == 0);
+    if (rc == 0) {
+        TEST_ASSERT(strcmp(name, expected_name) == 0);
+    }
+}
+
+static void
 nffs_test_util_assert_file_len(struct nffs_file *file, uint32_t expected)
 {
     uint32_t len;
@@ -2163,6 +2178,89 @@ TEST_CASE(nffs_test_cache_large_file)
     TEST_ASSERT(rc == 0);
 }
 
+TEST_CASE(nffs_test_readdir)
+{
+    struct nffs_dirent *dirent;
+    struct nffs_dir *dir;
+    int rc;
+
+    /*** Setup. */
+    rc = nffs_format(nffs_area_descs);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    rc = nffs_mkdir("/mydir");
+    TEST_ASSERT_FATAL(rc == 0);
+
+    nffs_test_util_create_file("/mydir/b", "bbbb", 4);
+    nffs_test_util_create_file("/mydir/a", "aaaa", 4);
+    rc = nffs_mkdir("/mydir/c");
+    TEST_ASSERT_FATAL(rc == 0);
+
+    /* Nonexistent directory. */
+    rc = nffs_opendir("/asdf", &dir);
+    TEST_ASSERT(rc == NFFS_ENOENT);
+
+    /* Real directory. */
+    rc = nffs_opendir("/mydir", &dir);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+    nffs_test_util_assert_ent_name(dirent, "a");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 0);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+    nffs_test_util_assert_ent_name(dirent, "b");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 0);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+    nffs_test_util_assert_ent_name(dirent, "c");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == NFFS_ENOENT);
+
+    rc = nffs_closedir(dir);
+    TEST_ASSERT(rc == 0);
+
+    /* Delete entries while iterating. */
+    rc = nffs_opendir("/mydir", &dir);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+
+    nffs_test_util_assert_ent_name(dirent, "a");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 0);
+
+    rc = nffs_unlink("/mydir/b");
+    TEST_ASSERT(rc == 0);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+
+    rc = nffs_unlink("/mydir/c");
+    TEST_ASSERT(rc == 0);
+
+    rc = nffs_unlink("/mydir");
+    TEST_ASSERT(rc == 0);
+
+    nffs_test_util_assert_ent_name(dirent, "c");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == NFFS_ENOENT);
+
+    rc = nffs_closedir(dir);
+    TEST_ASSERT(rc == 0);
+
+    /* Ensure directory is gone. */
+    rc = nffs_opendir("/mydir", &dir);
+    TEST_ASSERT(rc == NFFS_ENOENT);
+}
+
 TEST_SUITE(nffs_suite_cache)
 {
     int rc;
@@ -2206,6 +2304,7 @@ nffs_test_gen(void)
     nffs_test_large_unlink();
     nffs_test_large_system();
     nffs_test_lost_found();
+    nffs_test_readdir();
 }
 
 TEST_SUITE(gen_1_1)

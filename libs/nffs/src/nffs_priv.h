@@ -197,12 +197,23 @@ struct nffs_cache_inode {
     uint32_t nci_file_size;                        /* Total file size. */
 };
 
+struct nffs_dirent {
+    struct nffs_inode_entry *nde_inode_entry;
+};
+
+struct nffs_dir {
+    struct nffs_inode_entry *nd_parent_inode_entry;
+    struct nffs_dirent nd_dirent;
+};
+
 extern void *nffs_file_mem;
 extern void *nffs_block_entry_mem;
 extern void *nffs_inode_mem;
 extern void *nffs_cache_inode_mem;
 extern void *nffs_cache_block_mem;
+extern void *nffs_dir_mem;
 extern struct os_mempool nffs_file_pool;
+extern struct os_mempool nffs_dir_pool;
 extern struct os_mempool nffs_inode_entry_pool;
 extern struct os_mempool nffs_block_entry_pool;
 extern struct os_mempool nffs_cache_inode_pool;
@@ -279,6 +290,11 @@ void nffs_crc_disk_inode_fill(struct nffs_disk_inode *disk_inode,
 /* @config */
 void nffs_config_init(void);
 
+/* @dir */
+int nffs_dir_open(const char *path, struct nffs_dir **out_dir);
+int nffs_dir_read(struct nffs_dir *dir, struct nffs_dirent **out_dirent);
+int nffs_dir_close(struct nffs_dir *dir);
+
 /* @file */
 int nffs_file_open(struct nffs_file **out_file, const char *filename,
                    uint8_t access_flags);
@@ -351,6 +367,9 @@ int nffs_inode_add_child(struct nffs_inode_entry *parent,
                          struct nffs_inode_entry *child);
 void nffs_inode_remove_child(struct nffs_inode *child);
 int nffs_inode_is_root(const struct nffs_disk_inode *disk_inode);
+int nffs_inode_read_filename(struct nffs_inode_entry *inode_entry,
+                             size_t max_len, char *out_name,
+                             uint8_t *out_full_len);
 int nffs_inode_filename_cmp_ram(const struct nffs_inode *inode,
                                 const char *name, int name_len,
                                 int *result);
