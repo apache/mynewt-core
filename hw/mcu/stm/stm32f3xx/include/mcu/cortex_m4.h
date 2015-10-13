@@ -17,6 +17,6 @@
 #ifndef __MCU_CORTEX_M4_H__
 #define __MCU_CORTEX_M4_H__
 
-#include "mcu/stm32f3xx.h"
+#include "mcu/stm32f30x.h"
 
 #endif /* __MCU_CORTEX_M4_H__ */
