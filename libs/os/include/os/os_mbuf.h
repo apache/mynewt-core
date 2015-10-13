@@ -194,6 +194,10 @@ int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp, uint16_t,
 
 /* Allocate a new mbuf out of the os_mbuf_pool */ 
 struct os_mbuf *os_mbuf_get(struct os_mbuf_pool *omp, uint16_t);
+
+/* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
+struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp);
+
 /* Duplicate a mbuf from the pool */
 struct os_mbuf *os_mbuf_dup(struct os_mbuf_pool *omp, struct os_mbuf *m);
 
@@ -203,6 +207,7 @@ int os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *m, void *,
 
 /* Free a mbuf */
 int os_mbuf_free(struct os_mbuf_pool *omp, struct os_mbuf *mb);
+
 /* Free a mbuf chain */
 int os_mbuf_free_chain(struct os_mbuf_pool *omp, struct os_mbuf *om);
 

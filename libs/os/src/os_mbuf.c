@@ -90,7 +90,7 @@ os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp,
 struct os_mbuf * 
 os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
 {
-    struct os_mbuf *om; 
+    struct os_mbuf *om;
 
     om = os_memblock_get(omp->omp_pool);
     if (!om) {
@@ -105,6 +105,21 @@ os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
     return (om);
 err:
     return (NULL);
+}
+
+/* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
+struct os_mbuf *
+os_mbuf_get_pkthdr(struct os_mbuf_pool *omp)
+{
+    struct os_mbuf *om;
+
+    om = os_mbuf_get(omp, 0);
+    if (om) {
+        om->om_flags |= OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR);
+        om->om_data += omp->omp_hdr_len + sizeof(struct os_mbuf_pkthdr);
+    }
+
+    return om;
 }
 
 /**
