@@ -23,6 +23,10 @@ extern "C" {
 /* LED pins */
 #define LED_BLINK_PIN   (0x1)
 
+/* Logical UART ports */
+#define UART_CNT	2
+#define CONSOLE_UART	0
+
 #ifdef __cplusplus
 }
 #endif
