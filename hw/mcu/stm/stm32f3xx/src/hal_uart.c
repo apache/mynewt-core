@@ -99,8 +99,10 @@ uart_irq_handler(int num)
             regs->TDR = data;
         }
     }
-    if (u->u_tx_end == 1 && isr & USART_ISR_TC && u->u_tx_done) {
-        u->u_tx_done(u->u_func_arg);
+    if (u->u_tx_end == 1 && isr & USART_ISR_TC) {
+        if (u->u_tx_done) {
+            u->u_tx_done(u->u_func_arg);
+        }
         u->u_tx_end = 0;
         regs->CR1 &= ~USART_CR1_TCIE;
     }
