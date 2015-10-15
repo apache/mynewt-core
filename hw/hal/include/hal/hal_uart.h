@@ -71,8 +71,8 @@ void uart_start_tx(int uart);
  * uart start rx
  *
  * Upper layers have consumed some data, and are now ready to receive more.
- * This can be meaningful e.g. if uart_rx_char had previously indicated that
- * no more data can be accepted.
+ * This is meaningful after uart_rx_char callback has returned -1 telling
+ * that no more data can be accepted.
  */
 void uart_start_rx(int uart);
 
