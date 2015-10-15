@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,37 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
-#include "mcu/stm32f3xx.h"
-#include "mcu/stm32f3xx_hal.h"
-#include "mcu/stm32f3xx_hal_gpio.h"
-#include "mcu/stm32f3xx_hal_rcc.h"
+#include "mcu/stm32f30x.h"
+#include "mcu/stm32f30x_exti.h"
+#include "mcu/stm32f30x_gpio.h"
+#include "mcu/stm32f30x_rcc.h"
+#include "mcu/stm32f30x_syscfg.h"
+#include <stdlib.h>
 #include <assert.h>
 
  /* XXX: Notes
  * 1) Right now, we are not disabling the NVIC interrupt source; we only
  * disable the external interrupt from occurring. Dont think either way
- * to do it is an issue... when we release we may want to disable the NVIC 
- *  
- * 2) investigate how thread safe these routines are. HAL_GPIO_Init, for
+ * to do it is an issue... when we release we may want to disable the NVIC
+ *
+ * 2) investigate how thread safe these routines are. _GPIO_Init, for
  * example. Looks like if it gets interrupted while doing config an error
- * may occur. Read/modify write could cause screw-ups. 
- *  
- * 3) Currently, this code does not change the interrupt priority of the 
- * external interrupt vectors in the NVIC. The application developer must 
- * decide on the priority level for each external interrupt and program that 
- * by using the CMSIS NVIC API  (NVIC_SetPriority and NVIC_SetPriorityGrouping) 
- *  
- * 4) The code probably does not handle "re-purposing" gpio very well. 
- * "Re-purposing" means changing a gpio from input to output, or calling 
- * gpio_init_in and expecting previously enabled interrupts to be stopped. 
- *  
- * 5) Possbily add access to HAL_GPIO_DeInit. 
+ * may occur. Read/modify write could cause screw-ups.
+ *
+ * 3) Currently, this code does not change the interrupt priority of the
+ * external interrupt vectors in the NVIC. The application developer must
+ * decide on the priority level for each external interrupt and program that
+ * by using the CMSIS NVIC API  (NVIC_SetPriority and NVIC_SetPriorityGrouping)
+ *
+ * 4) The code probably does not handle "re-purposing" gpio very well.
+ * "Re-purposing" means changing a gpio from input to output, or calling
+ * gpio_init_in and expecting previously enabled interrupts to be stopped.
+ *
+ * 5) Possbily add access to HAL_GPIO_DeInit.
  */
 
-/* 
+/*
  * GPIO pin mapping
  *
  * The stm32F4xx processors have 16 gpio pins per port. We map the logical pin
@@ -51,15 +52,15 @@
  *      Port A: PA0-PA15 map to pins 0 - 15.
  *      Port B: PB0-PB15 map to pins 16 - 31.
  *      Port C: PC0-PC15 map to pins 32 - 47.
- * 
+ *
  *      To convert a gpio to pin number, do the following:
  *          - Convert port label to its numeric value (A=0, B=1, C=2, etc).
  *          - Multiply by 16.
  *          - Add port pin number.
- * 
+ *
  *      Ex: PD11 = (4 * 16) + 11 = 75.
  *          PA0 = (0 * 16) + 0 = 0
- */ 
+ */
 #define GPIO_INDEX(pin)     ((pin) & 0x0F)
 #define GPIO_PORT(pin)      (((pin) >> 4) & 0x0F)
 #define GPIO_MASK(pin)      (1 << GPIO_INDEX(pin))
@@ -129,20 +130,17 @@ struct ext_irqs {
 struct ext_irqs ext_irq_counts;
 
 /**
- * ext irq handler 
- *  
- * Handles the gpio interrupt attached to a gpio pin. 
- * 
- * @param index 
+ * ext irq handler
+ *
+ * Handles the gpio interrupt attached to a gpio pin.
+ *
+ * @param index
  */
 static void
 ext_irq_handler(int index)
 {
-    uint32_t mask;
-
-    mask = 1 << index;
-    if (__HAL_GPIO_EXTI_GET_IT(mask) != RESET) {
-        __HAL_GPIO_EXTI_CLEAR_IT(mask);
+    if (EXTI_GetFlagStatus(index) != RESET) {
+        EXTI_ClearFlag(index);
         gpio_irq_handlers[index].isr(gpio_irq_handlers[index].arg);
     }
 }
@@ -181,9 +179,9 @@ ext_irq3(void)
 
 /**
  * ext irq4
- *  
+ *
  *  External interrupt handler for external interrupt 4.
- * 
+ *
  */
 static void
 ext_irq4(void)
@@ -193,10 +191,10 @@ ext_irq4(void)
 }
 
 /**
- * ext irq9_5 
- *  
- *  External interrupt handler for irqs 9 through 5. 
- * 
+ * ext irq9_5
+ *
+ *  External interrupt handler for irqs 9 through 5.
+ *
  */
 static void
 ext_irq9_5(void)
@@ -210,10 +208,10 @@ ext_irq9_5(void)
 }
 
 /**
- * ext irq15_10 
- *  
- *  External interrupt handler for irqs 15 through 10. 
- * 
+ * ext irq15_10
+ *
+ *  External interrupt handler for irqs 15 through 10.
+ *
  */
 static void
 ext_irq15_10(void)
@@ -227,44 +225,44 @@ ext_irq15_10(void)
 }
 
 /**
- * hal gpio clk enable 
- *  
- * Enable the port peripheral clock 
- * 
- * @param port_idx 
+ * hal gpio clk enable
+ *
+ * Enable the port peripheral clock
+ *
+ * @param port_idx
  */
-static void 
+static void
 hal_gpio_clk_enable(uint32_t port_idx)
 {
     switch (port_idx) {
         case 0:
-            __GPIOA_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
             break;
         case 1:
-            __GPIOB_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
             break;
         case 2:
-            __GPIOC_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
             break;
         case 3:
-            __GPIOD_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
             break;
         case 4:
-            __GPIOE_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);
             break;
 #if defined GPIOF_BASE
         case 5:
-            __GPIOF_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
             break;
 #endif
 #if defined GPIOG_BASE
         case 6:
-            __GPIOG_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOG, ENABLE);
             break;
 #endif
 #if defined GPIOH_BASE
         case 7:
-            __GPIOH_CLK_ENABLE();
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOH, ENABLE);
             break;
 #endif
         default:
@@ -274,14 +272,14 @@ hal_gpio_clk_enable(uint32_t port_idx)
 }
 
 /**
- * hal gpio pin to irq 
- *  
- * Converts the logical pin number to the IRQ number associated with the 
- * external interrupt for that particular GPIO. 
- * 
- * @param pin 
- * 
- * @return IRQn_Type 
+ * hal gpio pin to irq
+ *
+ * Converts the logical pin number to the IRQ number associated with the
+ * external interrupt for that particular GPIO.
+ *
+ * @param pin
+ *
+ * @return IRQn_Type
  */
 static IRQn_Type
 hal_gpio_pin_to_irq(int pin)
@@ -313,7 +311,7 @@ hal_gpio_set_nvic(IRQn_Type irqn)
     case EXTI1_IRQn:
         isr = (uint32_t)&ext_irq1;
         break;
-    case EXTI2_TSC_IRQn:
+    case EXTI2_TS_IRQn:
         isr = (uint32_t)&ext_irq2;
         break;
     case EXTI3_IRQn:
@@ -342,13 +340,13 @@ hal_gpio_set_nvic(IRQn_Type irqn)
 
 /**
  * hal gpio init
- *  
- * Called to initialize a gpio. 
- * 
- * @param pin 
- * @param cfg 
- * 
- * @return int 
+ *
+ * Called to initialize a gpio.
+ *
+ * @param pin
+ * @param cfg
+ *
+ * @return int
  */
 static int
 hal_gpio_init(int pin, GPIO_InitTypeDef *cfg)
@@ -363,123 +361,126 @@ hal_gpio_init(int pin, GPIO_InitTypeDef *cfg)
     }
 
     mcu_pin_mask = GPIO_MASK(pin);
-    cfg->Pin = mcu_pin_mask;
+    cfg->GPIO_Pin = mcu_pin_mask;
 
     /* Enable the GPIO clockl */
     hal_gpio_clk_enable(port);
 
     /* Initialize pin as an input, setting proper mode */
-    HAL_GPIO_Init(portmap[port], cfg);
+    GPIO_Init(portmap[port], cfg);
 
     return 0;
 }
 
 /**
- * gpio init in 
- *  
- * Initializes the specified pin as an input 
- * 
+ * gpio init in
+ *
+ * Initializes the specified pin as an input
+ *
  * @param pin   Pin number to set as input
  * @param pull  pull type
- * 
- * @return int  0: no error; -1 otherwise. 
+ *
+ * @return int  0: no error; -1 otherwise.
  */
 int
-gpio_init_in(int pin, gpio_pull_t pull)
+gpio_init_in(int pin, enum gpio_pull pull)
 {
     int rc;
     GPIO_InitTypeDef init_cfg;
 
-    init_cfg.Mode = GPIO_MODE_INPUT;
-    init_cfg.Pull = pull;
+    init_cfg.GPIO_Mode = GPIO_Mode_IN;
+    init_cfg.GPIO_Speed = GPIO_Speed_Level_2;
+    init_cfg.GPIO_OType = GPIO_OType_PP;
+    switch (pull) {
+    case GPIO_PULL_NONE:
+        init_cfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        break;
+    case GPIO_PULL_UP:
+        init_cfg.GPIO_PuPd = GPIO_PuPd_UP;
+        break;
+    case GPIO_PULL_DOWN:
+        init_cfg.GPIO_PuPd = GPIO_PuPd_DOWN;
+        break;
+    }
 
     rc = hal_gpio_init(pin, &init_cfg);
     return rc;
 }
 
 /**
- * gpio init out 
- *  
- * Initialize the specified pin as an output, setting the pin to the specified 
- * value. 
- * 
+ * gpio init out
+ *
+ * Initialize the specified pin as an output, setting the pin to the specified
+ * value.
+ *
  * @param pin Pin number to set as output
  * @param val Value to set pin
- * 
- * @return int  0: no error; -1 otherwise. 
+ *
+ * @return int  0: no error; -1 otherwise.
  */
 int gpio_init_out(int pin, int val)
 {
     int rc;
     GPIO_InitTypeDef init_cfg;
 
-    init_cfg.Mode = GPIO_MODE_OUTPUT_PP;
-    init_cfg.Pull = GPIO_NOPULL;
-    init_cfg.Speed = GPIO_SPEED_HIGH;
-    init_cfg.Alternate = 0;
+    init_cfg.GPIO_Mode = GPIO_Mode_OUT;
+    init_cfg.GPIO_Speed = GPIO_Speed_Level_2;
+    init_cfg.GPIO_OType = GPIO_OType_PP;
+    init_cfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
 
     rc = hal_gpio_init(pin, &init_cfg);
     return rc;
 }
 
 /**
- * gpio set 
- *  
- * Sets specified pin to 1 (high) 
- * 
- * @param pin 
+ * gpio set
+ *
+ * Sets specified pin to 1 (high)
+ *
+ * @param pin
  */
 void gpio_set(int pin)
 {
-    int port;
-    uint32_t mcu_pin_mask;
-
-    port = GPIO_PORT(pin);
-    mcu_pin_mask = GPIO_MASK(pin);
-    HAL_GPIO_WritePin(portmap[port], mcu_pin_mask, GPIO_PIN_SET);
+    gpio_write(pin, 1);
 }
 
 /**
  * gpio clear
- *  
- * Sets specified pin to 0 (low). 
- * 
- * @param pin 
+ *
+ * Sets specified pin to 0 (low).
+ *
+ * @param pin
  */
 void gpio_clear(int pin)
 {
-    int port;
-    uint32_t mcu_pin_mask;
-
-    port = GPIO_PORT(pin);
-    mcu_pin_mask = GPIO_MASK(pin);
-    HAL_GPIO_WritePin(portmap[port], mcu_pin_mask, GPIO_PIN_RESET);
+    gpio_write(pin, 0);
 }
 
 /**
- * gpio write 
- *  
+ * gpio write
+ *
  * Write a value (either high or low) to the specified pin.
- * 
+ *
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
 void gpio_write(int pin, int val)
 {
-    if (val) {
-        gpio_set(pin);
-    } else {
-        gpio_clear(pin);
-    }
+    int port;
+    uint32_t mcu_pin_mask;
+
+    port = GPIO_PORT(pin);
+    mcu_pin_mask = GPIO_MASK(pin);
+    GPIO_WriteBit(portmap[port], mcu_pin_mask, val);
 }
 
 /**
- * gpio read 
- *  
- * Reads the specified pin. 
- *  
+ * gpio read
+ *
+ * Reads the specified pin.
+ *
  * @param pin Pin number to read
- * 
+ *
  * @return int 0: low, 1: high
  */
 int gpio_read(int pin)
@@ -489,63 +490,64 @@ int gpio_read(int pin)
 
     port = GPIO_PORT(pin);
     mcu_pin_mask = GPIO_MASK(pin);
-    return HAL_GPIO_ReadPin(portmap[port], mcu_pin_mask);
+    return GPIO_ReadInputDataBit(portmap[port], mcu_pin_mask);
 }
 
 /**
- * gpio toggle 
- *  
+ * gpio toggle
+ *
  * Toggles the specified pin
- * 
+ *
  * @param pin Pin number to toggle
  */
 void gpio_toggle(int pin)
 {
-    if (gpio_read(pin)) {
-        gpio_clear(pin);
-    } else {
-        gpio_set(pin);
-    }
+    gpio_write(pin, !gpio_read(pin));
 }
 
 /**
  * gpio irq init
- * 
- * Initialize an external interrupt on a gpio pin 
- * 
+ *
+ * Initialize an external interrupt on a gpio pin
+ *
  * @param pin       Pin number to enable gpio.
  * @param handler   Interrupt handler
  * @param arg       Argument to pass to interrupt handler
  * @param trig      Trigger mode of interrupt
  * @param pull      Push/pull mode of input.
- * 
- * @return int 
+ *
+ * @return int
  */
 int
 gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-              gpio_irq_trig_t trig, gpio_pull_t pull)
+              gpio_irq_trig_t trig, enum gpio_pull pull)
 {
     int rc;
     int irqn;
     int index;
     uint32_t pin_mask;
-    uint32_t mode;
-    GPIO_InitTypeDef init_cfg;
+    EXTI_InitTypeDef exti_cfg;
 
     /* Configure the gpio for an external interrupt */
     rc = 0;
+
+    pin_mask = GPIO_MASK(pin);
+    index = GPIO_INDEX(pin);
+
+    exti_cfg.EXTI_Line = index;
+    exti_cfg.EXTI_Mode = EXTI_Mode_Interrupt;
     switch (trig) {
     case GPIO_TRIG_NONE:
         rc = -1;
         break;
     case GPIO_TRIG_RISING:
-        mode = GPIO_MODE_IT_RISING;
+        exti_cfg.EXTI_Trigger = EXTI_Trigger_Rising;
         break;
     case GPIO_TRIG_FALLING:
-        mode = GPIO_MODE_IT_FALLING;
+        exti_cfg.EXTI_Trigger = EXTI_Trigger_Falling;
         break;
     case GPIO_TRIG_BOTH:
-        mode = GPIO_MODE_IT_RISING_FALLING;
+        exti_cfg.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
         break;
     case GPIO_TRIG_LOW:
         rc = -1;
@@ -557,23 +559,29 @@ gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
         rc = -1;
         break;
     }
+    exti_cfg.EXTI_LineCmd = ENABLE;
 
     /* Check to make sure no error has occurred */
     if (!rc) {
         /* Disable interrupt and clear any pending */
         gpio_irq_disable(pin);
-        pin_mask = GPIO_MASK(pin);
-        __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
+        EXTI_ClearFlag(pin_mask);
+
+        gpio_init_in(pin, pull);
+
+        /* Configure SYSCFG */
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+        /* Configure EXTI */
+        SYSCFG_EXTILineConfig(GPIO_PORT(pin), index);
+
+        EXTI_Init(&exti_cfg);
 
         /* Set the gpio irq handler */
-        index = GPIO_INDEX(pin);
         gpio_irq_handlers[index].isr = handler;
         gpio_irq_handlers[index].arg = arg;
 
         /* Configure the GPIO */
-        init_cfg.Mode = mode;
-        init_cfg.Pull = pull;
-        rc = hal_gpio_init(pin, &init_cfg);
         if (!rc) {
             /* Enable interrupt vector in NVIC */
             irqn = hal_gpio_pin_to_irq(pin);
@@ -586,13 +594,13 @@ gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
 
 /**
  * gpio irq release
- *  
- * No longer interrupt when something occurs on the pin. NOTE: this function 
- * does not change the GPIO push/pull setting nor does it change the 
- * SYSCFG EXTICR registers. It also does not disable the NVIC interrupt enable 
- * setting for the irq. 
- * 
- * @param pin 
+ *
+ * No longer interrupt when something occurs on the pin. NOTE: this function
+ * does not change the GPIO push/pull setting nor does it change the
+ * SYSCFG EXTICR registers. It also does not disable the NVIC interrupt enable
+ * setting for the irq.
+ *
+ * @param pin
  */
 void
 gpio_irq_release(int pin)
@@ -605,7 +613,7 @@ gpio_irq_release(int pin)
 
     /* Clear any pending interrupts */
     pin_mask = GPIO_MASK(pin);
-    __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
+    EXTI_ClearFlag(pin_mask);
 
     /* Clear out the irq handler */
     index = GPIO_INDEX(pin);
@@ -614,11 +622,11 @@ gpio_irq_release(int pin)
 }
 
 /**
- * gpio irq enable 
- *  
- * Enable the irq on the specified pin 
- * 
- * @param pin 
+ * gpio irq enable
+ *
+ * Enable the irq on the specified pin
+ *
+ * @param pin
  */
 void
 gpio_irq_enable(int pin)
@@ -635,9 +643,9 @@ gpio_irq_enable(int pin)
 
 /**
  * gpio irq disable
- * 
- * 
- * @param pin 
+ *
+ *
+ * @param pin
  */
 void
 gpio_irq_disable(int pin)
