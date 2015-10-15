@@ -25,14 +25,13 @@
 #include "nffs_priv.h"
 #include "nffs/nffs.h"
 
-extern struct os_task *g_current_task;  /* XXX */
-
 struct nffs_area *nffs_areas;
 uint8_t nffs_num_areas;
 uint8_t nffs_scratch_area_idx;
 uint16_t nffs_block_max_data_sz;
 
 struct os_mempool nffs_file_pool;
+struct os_mempool nffs_dir_pool;
 struct os_mempool nffs_inode_entry_pool;
 struct os_mempool nffs_block_entry_pool;
 struct os_mempool nffs_cache_inode_pool;
@@ -43,6 +42,7 @@ void *nffs_inode_mem;
 void *nffs_block_entry_mem;
 void *nffs_cache_inode_mem;
 void *nffs_cache_block_mem;
+void *nffs_dir_mem;
 
 struct nffs_inode_entry *nffs_root_dir;
 struct nffs_inode_entry *nffs_lost_found_dir;
@@ -366,6 +366,141 @@ done:
 }
 
 /**
+ * Opens the directory at the specified path.  The directory's contents can be
+ * read with subsequent calls to nffs_readdir().  When you are done with the
+ * directory handle, close it with nffs_closedir().
+ *
+ * Unlinking files from the directory while it is open may result in
+ * unpredictable behavior.  New files can be created inside the directory.
+ *
+ * @param path                  The directory to open.
+ * @param out_dir               On success, points to the directory handle.
+ *
+ * @return                      0 on success;
+ *                              NFFS_ENOENT if the specified directory does not
+ *                                  exist;
+ *                              other nonzero on error.
+ */
+int
+nffs_opendir(const char *path, struct nffs_dir **out_dir)
+{
+    int rc;
+
+    nffs_lock();
+
+    if (!nffs_ready()) {
+        rc = NFFS_EUNINIT;
+        goto done;
+    }
+
+    rc = nffs_dir_open(path, out_dir);
+
+done:
+    nffs_unlock();
+    return rc;
+}
+
+/**
+ * Reads the next entry in an open directory.
+ *
+ * @param dir                   The directory handle to read from.
+ * @param out_dirent            On success, points to the next child entry in
+ *                                  the specified directory.
+ *
+ * @return                      0 on success;
+ *                              NFFS_ENOENT if there are no more entries in the
+ *                                  parent directory;
+ *                              other nonzero on error.
+ */
+int
+nffs_readdir(struct nffs_dir *dir, struct nffs_dirent **out_dirent)
+{
+    int rc;
+
+    nffs_lock();
+    rc = nffs_dir_read(dir, out_dirent);
+    nffs_unlock();
+
+    return rc;
+}
+
+/**
+ * Closes the specified directory handle.
+ *
+ * @param dir                   The directory to close.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nffs_closedir(struct nffs_dir *dir)
+{
+    int rc;
+
+    nffs_lock();
+    rc = nffs_dir_close(dir);
+    nffs_unlock();
+
+    return rc;
+}
+
+/**
+ * Retrieves the filename of the specified directory entry.  The retrieved
+ * filename is always null-terminated.  To ensure enough space to hold the full
+ * filename plus a null-termintor, a destination buffer of size
+ * (NFFS_FILENAME_MAX_LEN + 1) should be used.
+ *
+ * @param dirent                The directory entry to query.
+ * @param max_len               The size of the "out_name" character buffer.
+ * @param out_name              On success, the entry's filename is written
+ *                                  here; always null-terminated.
+ * @param out_name_len          On success, contains the actual length of the
+ *                                  filename, NOT including the
+ *                                  null-terminator.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nffs_dirent_name(struct nffs_dirent *dirent, size_t max_len,
+                 char *out_name, uint8_t *out_name_len)
+{
+    int rc;
+
+    nffs_lock();
+
+    assert(dirent != NULL && dirent->nde_inode_entry != NULL);
+    rc = nffs_inode_read_filename(dirent->nde_inode_entry, max_len, out_name,
+                                  out_name_len);
+
+    nffs_unlock();
+
+    return rc;
+}
+
+/**
+ * Tells you whether the specified directory entry is a sub-directory or a
+ * regular file.
+ *
+ * @param dirent                The directory entry to query.
+ *
+ * @return                      1: The entry is a directory;
+ *                              0: The entry is a regular file.
+ */
+int
+nffs_dirent_is_dir(const struct nffs_dirent *dirent)
+{
+    uint32_t id;
+
+    nffs_lock();
+
+    assert(dirent != NULL && dirent->nde_inode_entry != NULL);
+    id = dirent->nde_inode_entry->nie_hash_entry.nhe_id;
+
+    nffs_unlock();
+
+    return nffs_hash_id_is_dir(id);
+}
+
+/**
  * Erases all the specified areas and initializes them with a clean nffs
  * file system.
  *
@@ -479,6 +614,14 @@ nffs_init(void)
         OS_MEMPOOL_BYTES(nffs_config.nc_num_cache_blocks,
                          sizeof (struct nffs_cache_block)));
     if (nffs_cache_block_mem == NULL) {
+        return NFFS_ENOMEM;
+    }
+
+    free(nffs_dir_mem);
+    nffs_dir_mem = malloc(
+        OS_MEMPOOL_BYTES(nffs_config.nc_num_dirs,
+                         sizeof (struct nffs_dir)));
+    if (nffs_dir_mem == NULL) {
         return NFFS_ENOMEM;
     }
 

@@ -17,6 +17,7 @@
 #ifndef H_NFFS_
 #define H_NFFS_
 
+#include <stddef.h>
 #include <inttypes.h>
 
 #define NFFS_ACCESS_READ        0x01
@@ -53,6 +54,9 @@ struct nffs_config {
     /** Maximum number of open files; default=4. */
     uint32_t nc_num_files;
 
+    /** Maximum number of open directories; default=4. */
+    uint32_t nc_num_dirs;
+
     /** Inode cache size; default=4. */
     uint32_t nc_num_cache_inodes;
 
@@ -68,6 +72,8 @@ struct nffs_area_desc {
 };
 
 struct nffs_file;
+struct nffs_dir;
+struct nffs_dirent;
 
 int nffs_open(const char *filename, uint8_t access_flags,
               struct nffs_file **out_file);
@@ -85,5 +91,13 @@ int nffs_rename(const char *from, const char *to);
 int nffs_unlink(const char *filename);
 int nffs_mkdir(const char *path);
 int nffs_ready(void);
+
+int nffs_opendir(const char *path, struct nffs_dir **out_dir);
+int nffs_readdir(struct nffs_dir *dir, struct nffs_dirent **out_dirent);
+int nffs_closedir(struct nffs_dir *dir);
+
+int nffs_dirent_name(struct nffs_dirent *dirent, size_t max_len,
+                     char *out_name, uint8_t *out_name_len);
+int nffs_dirent_is_dir(const struct nffs_dirent *dirent);
 
 #endif

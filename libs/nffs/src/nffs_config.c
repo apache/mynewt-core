@@ -24,6 +24,7 @@ const struct nffs_config nffs_config_dflt = {
     .nc_num_files = 4,
     .nc_num_cache_inodes = 4,
     .nc_num_cache_blocks = 64,
+    .nc_num_dirs = 4,
 };
 
 void
@@ -43,5 +44,8 @@ nffs_config_init(void)
     }
     if (nffs_config.nc_num_cache_blocks == 0) {
         nffs_config.nc_num_cache_blocks = nffs_config_dflt.nc_num_cache_blocks;
+    }
+    if (nffs_config.nc_num_dirs == 0) {
+        nffs_config.nc_num_dirs = nffs_config_dflt.nc_num_dirs;
     }
 }

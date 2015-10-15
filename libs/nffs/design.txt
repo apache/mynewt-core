@@ -2,6 +2,7 @@
 
 *** HISTORY
 Rev.    Date            Changes
+6       2015/10/12      Add directory-reading API.
 5       2015/09/28      Rename to Newtron Flash File System.
 4       2015/09/08      Fix some badly-specified CRC behavior; clarification of
                             behavior during restore of corrupt disk.
@@ -755,6 +756,81 @@ int nffs_mkdir(const char *path);
  */
 int nffs_format(const struct nffs_area_desc *area_descs);
 
+
+/**
+ * Opens the directory at the specified path.  The directory's contents can be
+ * read with subsequent calls to nffs_readdir().  When you are done with the
+ * directory handle, close it with nffs_closedir().
+ *
+ * Unlinking files from the directory while it is open may result in
+ * unpredictable behavior.  New files can be created inside the directory.
+ *
+ * @param path                  The directory to open.
+ * @param out_dir               On success, points to the directory handle.
+ *
+ * @return                      0 on success;
+ *                              NFFS_ENOENT if the specified directory does not
+ *                                  exist;
+ *                              other nonzero on error.
+ */
+int nffs_opendir(const char *path, struct nffs_dir **out_dir);
+
+
+/**
+ * Reads the next entry in an open directory.
+ *
+ * @param dir                   The directory handle to read from.
+ * @param out_dirent            On success, points to the next child entry in
+ *                                  the specified directory.
+ *
+ * @return                      0 on success;
+ *                              NFFS_ENOENT if there are no more entries in the
+ *                                  parent directory;
+ *                              other nonzero on error.
+ */
+int nffs_readdir(struct nffs_dir *dir, struct nffs_dirent **out_dirent);
+
+
+/**
+ * Closes the specified directory handle.
+ *
+ * @param dir                   The directory to close.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int nffs_closedir(struct nffs_dir *dir);
+
+
+/**
+ * Retrieves the filename of the specified directory entry.  The retrieved
+ * filename is always null-terminated.  To ensure enough space to hold the full
+ * filename plus a null-termintor, a destination buffer of size
+ * (NFFS_FILENAME_MAX_LEN + 1) should be used.
+ *
+ * @param dirent                The directory entry to query.
+ * @param max_len               The size of the "out_name" character buffer.
+ * @param out_name              On success, the entry's filename is written
+ *                                  here; always null-terminated.
+ * @param out_name_len          On success, contains the actual length of the
+ *                                  filename, NOT including the
+ *                                  null-terminator.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int nffs_dirent_name(struct nffs_dirent *dirent, size_t max_len,
+                     char *out_name, uint8_t *out_name_len);
+
+
+/**
+ * Tells you whether the specified directory entry is a sub-directory or a
+ * regular file.
+ *
+ * @param dirent                The directory entry to query.
+ *
+ * @return                      1: The entry is a directory;
+ *                              0: The entry is a regular file.
+ */
+int nffs_dirent_is_dir(const struct nffs_dirent *dirent);
 
 /**
  * Searches for a valid nffs file system among the specified areas.  This
