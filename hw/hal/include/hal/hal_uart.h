@@ -26,6 +26,14 @@
 typedef int (*uart_tx_char)(void *arg);
 
 /*
+ * Function prototype for UART driver to report that transmission is
+ * complete. This should be called when transmission of last byte is
+ * finished.
+ * Driver must call this with interrupts disabled.
+ */
+typedef void (*uart_tx_done)(void *arg);
+
+/*
  * Function prototype for UART driver to report incoming byte of data.
  * Returns -1 if data was dropped.
  * Driver must call this with interrupts disabled.
@@ -38,7 +46,8 @@ typedef int (*uart_rx_char)(void *arg, uint8_t byte);
  * Initializes given uart. Mapping of logical UART number to physical
  * UART/GPIO pins is in TBD.
  */
-int uart_init(int uart, uart_tx_char tx_func, uart_rx_char rx_func, void *arg);
+int uart_init_cbs(int uart, uart_tx_char tx_func, uart_tx_done tx_done,
+  uart_rx_char rx_func, void *arg);
 
 enum uart_parity {
     UART_PARITY_NONE = 0,	/* no parity */

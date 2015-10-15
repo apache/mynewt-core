@@ -35,6 +35,7 @@ struct uart {
     int u_rx_char;
     uart_rx_char u_rx_func;
     uart_tx_char u_tx_func;
+    uart_tx_done u_tx_done;
     void *u_func_arg;
 };
 
@@ -73,6 +74,9 @@ uart_poller(void *arg)
                          * No more data to send.
                          */
                         uart->u_tx_run = 0;
+                        if (uart->u_tx_done) {
+                            uart->u_tx_done(uart->u_func_arg);
+                        }
                         OS_EXIT_CRITICAL(sr);
                         break;
                     }
@@ -180,7 +184,8 @@ uart_start_rx(int port)
 }
 
 int
-uart_init(int port, uart_tx_char tx_func, uart_rx_char rx_func, void *arg)
+uart_init_cbs(int port, uart_tx_char tx_func, uart_tx_done tx_done,
+  uart_rx_char rx_func, void *arg)
 {
     struct uart *uart;
     int rc;
@@ -194,6 +199,7 @@ uart_init(int port, uart_tx_char tx_func, uart_rx_char rx_func, void *arg)
         return -1;
     }
     uart->u_tx_func = tx_func;
+    uart->u_tx_done = tx_done;
     uart->u_rx_func = rx_func;
     uart->u_func_arg = arg;
     uart->u_rx_char = -1;

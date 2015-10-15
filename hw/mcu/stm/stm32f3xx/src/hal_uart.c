@@ -29,9 +29,11 @@ struct uart {
     USART_TypeDef *u_regs;
     uint8_t u_open:1;
     uint8_t u_rx_stall:1;
+    uint8_t u_tx_end:1;
     uint8_t u_rx_data;
     uart_rx_char u_rx_func;
     uart_tx_char u_tx_func;
+    uart_tx_done u_tx_done;
     void *u_func_arg;
 };
 static struct uart uarts[UART_CNT];
@@ -43,7 +45,8 @@ struct uart_irq {
 static struct uart_irq uart_irqs[3];
 
 int
-uart_init(int port, uart_tx_char tx_func, uart_rx_char rx_func, void *arg)
+uart_init_cbs(int port, uart_tx_char tx_func, uart_tx_done tx_done,
+  uart_rx_char rx_func, void *arg)
 {
     struct uart *u;
 
@@ -56,6 +59,7 @@ uart_init(int port, uart_tx_char tx_func, uart_rx_char rx_func, void *arg)
     }
     u->u_rx_func = rx_func;
     u->u_tx_func = tx_func;
+    u->u_tx_done = tx_done;
     u->u_func_arg = arg;
     return 0;
 }
@@ -89,9 +93,16 @@ uart_irq_handler(int num)
         data = u->u_tx_func(u->u_func_arg);
         if (data < 0) {
             regs->CR1 &= ~USART_CR1_TXEIE;
+            regs->CR1 |= USART_CR1_TCIE;
+            u->u_tx_end = 1;
         } else {
             regs->TDR = data;
         }
+    }
+    if (u->u_tx_end == 1 && isr & USART_ISR_TC && u->u_tx_done) {
+        u->u_tx_done(u->u_func_arg);
+        u->u_tx_end = 0;
+        regs->CR1 &= ~USART_CR1_TCIE;
     }
 }
 
@@ -118,9 +129,14 @@ void
 uart_start_tx(int port)
 {
     struct uart *u;
+    int sr;
 
     u = &uarts[port];
+    __HAL_DISABLE_INTERRUPTS(sr);
+    u->u_regs->CR1 &= ~USART_CR1_TCIE;
     u->u_regs->CR1 |= USART_CR1_TXEIE;
+    u->u_tx_end = 0;
+    __HAL_ENABLE_INTERRUPTS(sr);
 }
 
 static void
