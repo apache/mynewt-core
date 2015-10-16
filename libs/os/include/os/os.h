@@ -67,10 +67,7 @@ enum os_error {
 
 typedef enum os_error os_error_t;
 
-#define OS_SANITY_STACK_SIZE (1024) 
 #define OS_SANITY_PRIO (0xfe)
-
-#define OS_IDLE_STACK_SIZE (1024) 
 #define OS_IDLE_PRIO (0xff)
 
 void os_init(void);

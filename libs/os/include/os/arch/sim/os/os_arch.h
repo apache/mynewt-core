@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OS_ARCH_SIM_H 
-#define _OS_ARCH_SIM_H 
+#ifndef _OS_ARCH_SIM_H
+#define _OS_ARCH_SIM_H
 
 struct os_task;
 
@@ -28,21 +28,27 @@ typedef unsigned int os_sr_t;
 #define OS_STACK_PATTERN (0xdeadbeef)
 
 typedef unsigned int os_stack_t;
-#define OS_ALIGNMENT (4) 
+#define OS_ALIGNMENT (4)
 #define OS_STACK_ALIGNMENT (16)
+
+/*
+ * Stack sizes for common OS tasks
+ */
+#define OS_SANITY_STACK_SIZE (1024)
+#define OS_IDLE_STACK_SIZE (1024)
 
 #define OS_STACK_ALIGN(__nmemb) \
     (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
 
 /* Enter a critical section, save processor state, and block interrupts */
-#define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr()) 
+#define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr())
 /* Exit a critical section, restore processor state and unblock interrupts */
 #define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
 
 /* Define special stackos sections */
-#define sec_data_core 
-#define sec_bss_core 
-#define sec_bss_nz_core 
+#define sec_data_core
+#define sec_bss_core
+#define sec_bss_nz_core
 
 void _Die(char *file, int line);
 
@@ -54,4 +60,4 @@ void os_arch_restore_sr(int);
 os_error_t os_arch_os_init(void);
 os_error_t os_arch_os_start(void);
 
-#endif /* _OS_ARCH_SIM_H */ 
+#endif /* _OS_ARCH_SIM_H */

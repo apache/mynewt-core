@@ -92,11 +92,6 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     volatile int block_isr_off; 
     int rc; 
 
-    /* Make sure another task isn't creating this one.  In sim, this causes
-     * corruption of the original task's stack.
-     */
-    assert(!os_started());
-
     s = (os_stack_t *) ((uint8_t *) stack_top - sizeof(*sf));
     sf = (struct stack_frame *) s;
     sf->sf_sigsblocked = 0;
