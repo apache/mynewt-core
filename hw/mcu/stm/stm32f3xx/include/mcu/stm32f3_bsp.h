@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef __MCU_STM32F3_CFG_H_
-#define __MCU_STM32F3_CFG_H_
+#ifndef __MCU_STM32F3_BSP_H_
+#define __MCU_STM32F3_BSP_H_
 
 /**
  * BSP specific UART settings.
@@ -39,4 +39,4 @@ const struct stm32f3_uart_cfg *bsp_uart_config(int port);
  */
 int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull);
 
-#endif /* __MCU_STM32F3_CFG_H_ */
+#endif /* __MCU_STM32F3_BSP_H_ */
