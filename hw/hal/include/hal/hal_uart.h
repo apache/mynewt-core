@@ -23,7 +23,7 @@
  * Returns -1 if no more data is available for TX.
  * Driver must call this with interrupts disabled.
  */
-typedef int (*uart_tx_char)(void *arg);
+typedef int (*hal_uart_tx_char)(void *arg);
 
 /*
  * Function prototype for UART driver to report that transmission is
@@ -31,58 +31,58 @@ typedef int (*uart_tx_char)(void *arg);
  * finished.
  * Driver must call this with interrupts disabled.
  */
-typedef void (*uart_tx_done)(void *arg);
+typedef void (*hal_uart_tx_done)(void *arg);
 
 /*
  * Function prototype for UART driver to report incoming byte of data.
  * Returns -1 if data was dropped.
  * Driver must call this with interrupts disabled.
  */
-typedef int (*uart_rx_char)(void *arg, uint8_t byte);
+typedef int (*hal_uart_rx_char)(void *arg, uint8_t byte);
 
 /**
- * uart init
+ * hal uart init
  *
  * Initializes given uart. Mapping of logical UART number to physical
- * UART/GPIO pins is in TBD.
+ * UART/GPIO pins is in BSP.
  */
-int uart_init_cbs(int uart, uart_tx_char tx_func, uart_tx_done tx_done,
-  uart_rx_char rx_func, void *arg);
+int hal_uart_init_cbs(int uart, hal_uart_tx_char tx_func,
+  hal_uart_tx_done tx_done, hal_uart_rx_char rx_func, void *arg);
 
-enum uart_parity {
-    UART_PARITY_NONE = 0,	/* no parity */
-    UART_PARITY_ODD = 1,	/* odd parity bit */
-    UART_PARITY_EVEN = 2	/* even parity bit */
+enum hal_uart_parity {
+    HAL_UART_PARITY_NONE = 0,	/* no parity */
+    HAL_UART_PARITY_ODD = 1,	/* odd parity bit */
+    HAL_UART_PARITY_EVEN = 2	/* even parity bit */
 };
 
-enum uart_flow_ctl {
-    UART_FLOW_CTL_NONE = 0,	/* no flow control */
-    UART_FLOW_CTL_RTS_CTS = 1	/* RTS/CTS */
+enum hal_uart_flow_ctl {
+    HAL_UART_FLOW_CTL_NONE = 0,		/* no flow control */
+    HAL_UART_FLOW_CTL_RTS_CTS = 1	/* RTS/CTS */
 };
 
 /**
- * uart config
+ * hal uart config
  *
  * Applies given configuration to UART.
  */
-int uart_config(int uart, int32_t speed, uint8_t databits, uint8_t stopbits,
-  enum uart_parity parity, enum uart_flow_ctl flow_ctl);
+int hal_uart_config(int uart, int32_t speed, uint8_t databits, uint8_t stopbits,
+  enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl);
 
 /**
- * uart start tx
+ * hal uart start tx
  *
  * More data queued for transmission. UART driver will start asking for that
  * data.
  */
-void uart_start_tx(int uart);
+void hal_uart_start_tx(int uart);
 
 /**
- * uart start rx
+ * hal uart start rx
  *
  * Upper layers have consumed some data, and are now ready to receive more.
  * This is meaningful after uart_rx_char callback has returned -1 telling
  * that no more data can be accepted.
  */
-void uart_start_rx(int uart);
+void hal_uart_start_rx(int uart);
 
 #endif /* H_HAL_UART_H_ */

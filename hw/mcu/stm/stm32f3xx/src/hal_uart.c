@@ -25,30 +25,30 @@
 #include <assert.h>
 #include <stdlib.h>
 
-struct uart {
+struct hal_uart {
     USART_TypeDef *u_regs;
     uint8_t u_open:1;
     uint8_t u_rx_stall:1;
     uint8_t u_tx_end:1;
     uint8_t u_rx_data;
-    uart_rx_char u_rx_func;
-    uart_tx_char u_tx_func;
-    uart_tx_done u_tx_done;
+    hal_uart_rx_char u_rx_func;
+    hal_uart_tx_char u_tx_func;
+    hal_uart_tx_done u_tx_done;
     void *u_func_arg;
 };
-static struct uart uarts[UART_CNT];
+static struct hal_uart uarts[UART_CNT];
 
-struct uart_irq {
-    struct uart *ui_uart;
+struct hal_uart_irq {
+    struct hal_uart *ui_uart;
     volatile uint32_t ui_cnt;
 };
-static struct uart_irq uart_irqs[3];
+static struct hal_uart_irq uart_irqs[3];
 
 int
-uart_init_cbs(int port, uart_tx_char tx_func, uart_tx_done tx_done,
-  uart_rx_char rx_func, void *arg)
+hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
+  hal_uart_rx_char rx_func, void *arg)
 {
-    struct uart *u;
+    struct hal_uart *u;
 
     if (port >= UART_CNT) {
         return -1;
@@ -67,8 +67,8 @@ uart_init_cbs(int port, uart_tx_char tx_func, uart_tx_done tx_done,
 static void
 uart_irq_handler(int num)
 {
-    struct uart_irq *ui;
-    struct uart *u;
+    struct hal_uart_irq *ui;
+    struct hal_uart *u;
     USART_TypeDef *regs;
     uint32_t isr;
     int data;
@@ -109,9 +109,9 @@ uart_irq_handler(int num)
 }
 
 void
-uart_start_rx(int port)
+hal_uart_start_rx(int port)
 {
-    struct uart *u;
+    struct hal_uart *u;
     int sr;
     int rc;
 
@@ -128,9 +128,9 @@ uart_start_rx(int port)
 }
 
 void
-uart_start_tx(int port)
+hal_uart_start_tx(int port)
 {
-    struct uart *u;
+    struct hal_uart *u;
     int sr;
 
     u = &uarts[port];
@@ -161,10 +161,10 @@ uart_irq3(void)
 }
 
 static void
-hal_uart_set_nvic(IRQn_Type irqn, struct uart *uart)
+hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
 {
     uint32_t isr;
-    struct uart_irq *ui = NULL;
+    struct hal_uart_irq *ui = NULL;
 
     switch (irqn) {
     case USART1_IRQn:
@@ -197,10 +197,10 @@ hal_uart_set_nvic(IRQn_Type irqn, struct uart *uart)
 }
 
 int
-uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
-  enum uart_parity parity, enum uart_flow_ctl flow_ctl)
+hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
+  enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
-    struct uart *u;
+    struct hal_uart *u;
     const struct stm32f3_uart_cfg *cfg;
     USART_InitTypeDef uart;
 
@@ -247,13 +247,13 @@ uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     }
 
     switch (parity) {
-    case UART_PARITY_NONE:
+    case HAL_UART_PARITY_NONE:
         uart.USART_Parity = USART_Parity_No;
         break;
-    case UART_PARITY_ODD:
+    case HAL_UART_PARITY_ODD:
         uart.USART_Parity = USART_Parity_Odd;
         break;
-    case UART_PARITY_EVEN:
+    case HAL_UART_PARITY_EVEN:
         uart.USART_Parity = USART_Parity_Even;
         break;
     }
@@ -261,10 +261,10 @@ uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     uart.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
     switch (flow_ctl) {
-    case UART_FLOW_CTL_NONE:
+    case HAL_UART_FLOW_CTL_NONE:
         uart.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         break;
-    case UART_FLOW_CTL_RTS_CTS:
+    case HAL_UART_FLOW_CTL_RTS_CTS:
         uart.USART_HardwareFlowControl = USART_HardwareFlowControl_RTS_CTS;
         if (cfg->suc_pin_rts < 0 || cfg->suc_pin_cts < 0) {
             /*
@@ -280,7 +280,7 @@ uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     hal_gpio_init_af(cfg->suc_pin_tx, cfg->suc_pin_af, 0);
     hal_gpio_init_af(cfg->suc_pin_rx, cfg->suc_pin_af, 0);
-    if (flow_ctl == UART_FLOW_CTL_RTS_CTS) {
+    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
         hal_gpio_init_af(cfg->suc_pin_rts, cfg->suc_pin_af, 0);
         hal_gpio_init_af(cfg->suc_pin_cts, cfg->suc_pin_af, 0);
     }
