@@ -20,6 +20,7 @@
 #include "mcu/stm32f30x_gpio.h"
 #include "mcu/stm32f30x_rcc.h"
 #include "mcu/stm32f30x_syscfg.h"
+#include "mcu/stm32f3_bsp.h"
 #include <stdlib.h>
 #include <assert.h>
 
@@ -299,6 +300,19 @@ hal_gpio_pin_to_irq(int pin)
     return irqn;
 }
 
+static uint8_t
+hal_gpio_pull_to_cfg(enum gpio_pull pull)
+{
+    switch (pull) {
+    default:
+        return GPIO_PuPd_NOPULL;
+    case GPIO_PULL_UP:
+        return GPIO_PuPd_UP;
+    case GPIO_PULL_DOWN:
+        return GPIO_PuPd_DOWN;
+    }
+}
+
 static void
 hal_gpio_set_nvic(IRQn_Type irqn)
 {
@@ -385,26 +399,14 @@ hal_gpio_init(int pin, GPIO_InitTypeDef *cfg)
 int
 gpio_init_in(int pin, enum gpio_pull pull)
 {
-    int rc;
     GPIO_InitTypeDef init_cfg;
 
     init_cfg.GPIO_Mode = GPIO_Mode_IN;
     init_cfg.GPIO_Speed = GPIO_Speed_Level_2;
     init_cfg.GPIO_OType = GPIO_OType_PP;
-    switch (pull) {
-    case GPIO_PULL_NONE:
-        init_cfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        break;
-    case GPIO_PULL_UP:
-        init_cfg.GPIO_PuPd = GPIO_PuPd_UP;
-        break;
-    case GPIO_PULL_DOWN:
-        init_cfg.GPIO_PuPd = GPIO_PuPd_DOWN;
-        break;
-    }
+    init_cfg.GPIO_PuPd = hal_gpio_pull_to_cfg(pull);
 
-    rc = hal_gpio_init(pin, &init_cfg);
-    return rc;
+    return hal_gpio_init(pin, &init_cfg);
 }
 
 /**
@@ -420,7 +422,6 @@ gpio_init_in(int pin, enum gpio_pull pull)
  */
 int gpio_init_out(int pin, int val)
 {
-    int rc;
     GPIO_InitTypeDef init_cfg;
 
     init_cfg.GPIO_Mode = GPIO_Mode_OUT;
@@ -428,7 +429,24 @@ int gpio_init_out(int pin, int val)
     init_cfg.GPIO_OType = GPIO_OType_PP;
     init_cfg.GPIO_PuPd = GPIO_PuPd_NOPULL;
 
-    rc = hal_gpio_init(pin, &init_cfg);
+    return hal_gpio_init(pin, &init_cfg);
+}
+
+int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull)
+{
+    GPIO_InitTypeDef gpio;
+    int rc;
+
+    gpio.GPIO_Mode = GPIO_Mode_AF;
+    gpio.GPIO_Speed = GPIO_Speed_Level_2;
+    gpio.GPIO_OType = GPIO_OType_PP;
+    gpio.GPIO_PuPd = hal_gpio_pull_to_cfg(pull);
+
+    rc = hal_gpio_init(pin, &gpio);
+    if (rc == 0) {
+        GPIO_PinAFConfig(portmap[GPIO_PORT(pin)], GPIO_INDEX(pin), af_type);
+        rc = 0;
+    }
     return rc;
 }
 

@@ -35,8 +35,14 @@ typedef uint32_t os_sr_t;
 #define OS_STACK_PATTERN    (0xdeadbeef)
 
 typedef uint32_t os_stack_t;
-#define OS_ALIGNMENT        (4) 
+#define OS_ALIGNMENT        (4)
 #define OS_STACK_ALIGNMENT  (8)
+
+/*
+ * Stack sizes for common OS tasks
+ */
+#define OS_SANITY_STACK_SIZE (64)
+#define OS_IDLE_STACK_SIZE (32)
 
 #define OS_STACK_ALIGN(__nmemb) \
     (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))

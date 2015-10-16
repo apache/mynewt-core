@@ -1,0 +1,5 @@
+egg.name: libs/console
+egg.vers: 0.1 
+egg.deps:
+    - hw/hal
+    - libs/os

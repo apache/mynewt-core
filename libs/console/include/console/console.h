@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
+#ifndef __CONSOLE_H__
+#define __CONSOLE_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef void (*console_rx_cb)(int full_line);
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
+int console_init(console_rx_cb rx_cb);
+void console_write(char *str, int cnt);
+int console_read(char *str, int cnt);
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __NATIVE_BSP_H */
+#endif /* __CONSOLE_H__ */

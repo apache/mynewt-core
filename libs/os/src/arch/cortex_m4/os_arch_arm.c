@@ -183,11 +183,17 @@ os_error_t
 os_arch_os_init(void)
 {
     os_error_t err;
+    int i;
 
     /* Cannot be called within an ISR */
     err = OS_ERR_IN_ISR;
     if (__get_IPSR() == 0) {
         err = OS_OK;
+
+        /* Drop priority for all interrupts */
+        for (i = 0; i < sizeof(NVIC->IP); i++) {
+            NVIC->IP[i] = 0xff;
+        }
 
         /* Call bsp related OS initializations */
         os_bsp_init();
@@ -205,7 +211,7 @@ os_arch_os_init(void)
          */
         os_set_env();
 
-        /* Check if priviliged or not */
+        /* Check if priviledged or not */
         if ((__get_CONTROL() & 1) == 0) {
             os_arch_init();
         } else {
