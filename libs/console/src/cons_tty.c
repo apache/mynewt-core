@@ -67,30 +67,36 @@ console_pull_char_head(struct console_ring *cr)
     }
 }
 
-void
-console_write(char *str, int cnt)
+static void
+console_write_char(char ch)
 {
     struct console_tty *ct = &console_tty;
     int sr;
-    int i;
 
     OS_ENTER_CRITICAL(sr);
-    i = 0;
-    while (i < cnt) {
-        if (CONSOLE_HEAD_INC(&ct->ct_tx) == ct->ct_tx.cr_tail) {
-            /* TX needs to drain */
-            hal_uart_start_tx(CONSOLE_UART);
-            OS_EXIT_CRITICAL(sr);
-            os_time_delay(1);
-            OS_ENTER_CRITICAL(sr);
-        } else {
-            if (str[i] == '\n') {
-                console_add_char(&ct->ct_tx, '\r');
-            }
-            console_add_char(&ct->ct_tx, str[i++]);
-        }
+    while (CONSOLE_HEAD_INC(&ct->ct_tx) == ct->ct_tx.cr_tail) {
+        /* TX needs to drain */
+        hal_uart_start_tx(CONSOLE_UART);
+        OS_EXIT_CRITICAL(sr);
+        os_time_delay(1);
+        OS_ENTER_CRITICAL(sr);
     }
+    console_add_char(&ct->ct_tx, ch);
     OS_EXIT_CRITICAL(sr);
+}
+
+void
+console_write(char *str, int cnt)
+{
+    int i;
+
+    i = 0;
+    for (i = 0; i < cnt; i++) {
+        if (str[i] == '\n') {
+            console_write_char('\r');
+        }
+        console_write_char(str[i]);
+    }
     hal_uart_start_tx(CONSOLE_UART);
 }
 
