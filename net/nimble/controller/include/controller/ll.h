@@ -46,14 +46,22 @@ struct ll_obj
 
 struct ll_stats
 {
-    uint32_t rx_malformed_pkts;
     uint32_t rx_crc_ok;
     uint32_t rx_crc_fail;
     uint32_t rx_bytes;
+    uint32_t rx_adv_ind;
+    uint32_t rx_adv_direct_ind;
+    uint32_t rx_adv_nonconn_ind;
     uint32_t rx_scan_reqs;
+    uint32_t rx_scan_rsps;
+    uint32_t rx_connect_reqs;
+    uint32_t rx_scan_ind;
+    uint32_t rx_unk_pdu;
+    uint32_t rx_malformed_pkts;
 };
 
 extern struct ll_stats g_ll_stats;
+extern struct ll_obj g_ll_data;
 
 /* States */
 #define BLE_LL_STATE_STANDBY        (0)
@@ -61,8 +69,6 @@ extern struct ll_stats g_ll_stats;
 #define BLE_LL_STATE_SCANNING       (2)
 #define BLE_LL_STATE_INITITATING    (3)
 #define BLE_LL_STATE_CONNECT        (4)
-
-extern struct ll_obj g_ll_data;
 
 /* BLE LL Task Events */
 #define BLE_LL_EVENT_HCI_CMD        (OS_EVENT_T_PERUSER)
@@ -96,14 +102,14 @@ struct ll_dev_addr
     uint8_t u8[BLE_DEV_ADDR_LEN];
 };
 
-#define BLE_IS_DEV_ADDR_STATIC(dev_addr)       ((dev_addr.u8[5] & 0xc0) == 0xc0)
-#define BLE_IS_DEV_ADDR_RESOLVABLE(dev_addr)   ((dev_addr.u8[5] & 0xc0) == 0x40)
-#define BLE_IS_DEV_ADDR_UNRESOLVABLE(dev_addr) ((dev_addr.u8[5] & 0xc0) == 0x00)
+#define BLE_IS_DEV_ADDR_STATIC(addr)        ((addr->u8[5] & 0xc0) == 0xc0)
+#define BLE_IS_DEV_ADDR_RESOLVABLE(addr)    ((addr->u8[5] & 0xc0) == 0x40)
+#define BLE_IS_DEV_ADDR_UNRESOLVABLE(addr)  ((addr->u8[5] & 0xc0) == 0x00)
 
 /* 
  * LL packet format
  * 
- *  -> Premable         (1 byte)
+ *  -> Preamble         (1 byte)
  *  -> Access Address   (4 bytes)
  *  -> PDU              (2 to 257 octets)
  *  -> CRC              (3 bytes)
@@ -111,6 +117,8 @@ struct ll_dev_addr
 #define BLE_LL_PREAMBLE_LEN     (1)
 #define BLE_LL_ACC_ADDR_LEN     (4)
 #define BLE_LL_CRC_LEN          (3)
+#define BLE_LL_OVERHEAD_LEN     \
+    (BLE_LL_CRC_LEN + BLE_LL_ACC_ADDR_LEN + BLE_LL_PREAMBLE_LEN)
 #define BLE_LL_PDU_HDR_LEN      (2)
 #define BLE_LL_MIN_PDU_LEN      (BLE_LL_PDU_HDR_LEN)
 #define BLE_LL_MAX_PDU_LEN      (257)
@@ -408,14 +416,21 @@ enum ll_init_filt_policy
     BLE_LL_INIT_FILT_SINGLE,
 };
 
-/* External API */
-void ll_event_adv_tx_done(void *arg);
+/*--- External API ---*/
+/* Initialize the Link Layer */
+int ll_init(void);
+
+/* 'Boolean' function returning true if address is a valid random address */
+int ll_is_valid_rand_addr(uint8_t *addr);
+
+/* Calculate the amount of time a pdu of 'len' bytes will take to transmit */
+uint16_t ll_pdu_tx_time_get(uint16_t len);
 
 /*--- PHY interfaces ---*/
+/* Called by the PHY when a packet has started */
 int ll_rx_start(struct os_mbuf *rxpdu);
 
-/* Called by the PHY when a receive packet ends */
+/* Called by the PHY when a packet reception ends */
 int ll_rx_end(struct os_mbuf *rxpdu, int crcok);
-
 
 #endif /* H_LL_ */

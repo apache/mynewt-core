@@ -24,6 +24,7 @@
 #include "nimble/ble.h"
 #include "host/host_hci.h"
 #include "controller/ll_adv.h"
+#include "controller/ll.h"
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -44,11 +45,6 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
 
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_ADV_DATA_MAX_LEN];
-
-/* XXX: dont belong here */
-extern int host_hci_init(void);
-extern int ll_init(void);
-/* XXX */
 
 /* Create a mbuf pool */
 #define MBUF_NUM_MBUFS      (16)
@@ -90,7 +86,16 @@ host_task_handler(void *arg)
 
     /* Create some advertising data */
     dptr = &g_host_adv_data[0];
-    dptr[0] = 0x08;
+
+    /* Place flags in first */
+    dptr[0] = 2;
+    dptr[1] = 0x01;     /* Flags identifier */
+    dptr[2] = 0x06;
+    dptr += 3;
+    adv_len = 3;
+
+    /* Add local name */
+    dptr[0] = 15;   /* Length of this data, not including the length */
     dptr[1] = 0x09;
     dptr[2] = 'r';
     dptr[3] = 'u';
@@ -99,8 +104,15 @@ host_task_handler(void *arg)
     dptr[6] = 'i';
     dptr[7] = 'm';
     dptr[8] = 'e';
-    adv_len = 9;
-    dptr += 9;
+    dptr[9] = '-';
+    dptr[10] = 'm';
+    dptr[11] = 'y';
+    dptr[12] = 'n';
+    dptr[13] = 'e';
+    dptr[14] = 'w';
+    dptr[15] = 't';
+    adv_len += 16;
+    dptr += 16;
 
     /* Add local device address */
     dptr[0] = 0x08;

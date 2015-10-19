@@ -18,8 +18,7 @@
 #include <string.h>
 #include "os/os.h"
 #include "nimble/hci_common.h"
-#include "controller/ll.h" /* XXX: not good that this needs to be included */
-#include "controller/ll_adv.h"
+#include "nimble/hci_transport.h"
 
 #define HCI_CMD_BUFS        (4)
 #define HCI_CMD_BUF_SIZE    (260)       /* XXX: temporary, Fix later */
@@ -49,34 +48,10 @@ host_hci_le_cmdbuf_get(uint16_t ocf, uint8_t len)
     return cmd;
 }
 
-/* XXX:
- * this needs the LL event queue from the LL global data. Not sure I
- * would want this here. In fact, I know I dont. This should be a transport
- * layer call and that should do it.
- */
-int
-host_hci_cmd_send(void *cmdbuf)
+static int
+host_hci_cmd_send(uint8_t *cmdbuf)
 {
-    os_error_t err;
-    struct os_event *ev;
-
-    /* Get an event structure off the queue */
-    ev = (struct os_event *)os_memblock_get(&g_hci_os_event_pool);
-    if (!ev) {
-        err = os_memblock_put(&g_hci_cmd_pool, cmdbuf);
-        assert(err == OS_OK);
-        return -1;
-    }
-
-    /* XXX: I am not happy that the host has access to the g_ll_data here
-       we need to change this! */
-    /* XXX: Do I need to initialize the tailq entry at all? */
-    ev->ev_queued = 0;
-    ev->ev_type = BLE_LL_EVENT_HCI_CMD;
-    ev->ev_arg = cmdbuf;
-    os_eventq_put(&g_ll_data.ll_evq, ev);
-
-    return 0;
+    return hci_transport_host_cmd_send(cmdbuf);
 }
 
 int
@@ -117,7 +92,7 @@ host_hci_cmd_le_set_adv_params(struct hci_adv_params *adv)
     }
 
     cmd = host_hci_le_cmdbuf_get(BLE_HCI_OCF_LE_SET_ADV_PARAMS, 
-                                 BLE_HCI_CMD_SET_ADV_PARAM_LEN);
+                                 BLE_HCI_SET_ADV_PARAM_LEN);
     if (cmd) {
         dptr = cmd + BLE_HCI_CMD_HDR_LEN;
         htole16(dptr, adv->adv_itvl_min);
@@ -198,7 +173,7 @@ host_hci_cmd_le_set_rand_addr(uint8_t *addr)
     rc = -1;
     if (addr ) {
         cmd = host_hci_le_cmdbuf_get(BLE_HCI_OCF_LE_SET_RAND_ADDR,
-                                         BLE_DEV_ADDR_LEN);
+                                     BLE_DEV_ADDR_LEN);
         if (cmd) {
             memcpy(cmd + BLE_HCI_CMD_HDR_LEN, addr, BLE_DEV_ADDR_LEN);
             rc = host_hci_cmd_send(cmd);
@@ -217,7 +192,7 @@ host_hci_cmd_le_set_event_mask(uint64_t event_mask)
     /* XXX: Parameter checking event_mask? */
     rc = -1;
     cmd = host_hci_le_cmdbuf_get(BLE_HCI_OCF_LE_SET_EVENT_MASK, 
-                                     sizeof(uint64_t));
+                                 sizeof(uint64_t));
     if (cmd) {
         htole64(cmd + BLE_HCI_CMD_HDR_LEN, event_mask);
         rc = host_hci_cmd_send(cmd);
@@ -235,7 +210,7 @@ host_hci_cmd_le_set_adv_enable(uint8_t enable)
     /* XXX: parameter error check */
     rc = -1;
     cmd = host_hci_le_cmdbuf_get(BLE_HCI_OCF_LE_SET_ADV_ENABLE, 
-                                     BLE_HCI_CMD_SET_ADV_ENABLE_LEN);
+                                 BLE_HCI_SET_ADV_ENABLE_LEN);
     if (cmd) {
         /* Set the data in the command */
         cmd[BLE_HCI_CMD_HDR_LEN] = enable;
