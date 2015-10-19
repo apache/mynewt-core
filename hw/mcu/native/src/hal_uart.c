@@ -33,9 +33,9 @@ struct uart {
     int u_fd;
     int u_tx_run;
     int u_rx_char;
-    uart_rx_char u_rx_func;
-    uart_tx_char u_tx_func;
-    uart_tx_done u_tx_done;
+    hal_uart_rx_char u_rx_func;
+    hal_uart_tx_char u_tx_func;
+    hal_uart_tx_done u_tx_done;
     void *u_func_arg;
 };
 
@@ -165,7 +165,7 @@ err:
 }
 
 void
-uart_start_tx(int port)
+hal_uart_start_tx(int port)
 {
     int sr;
 
@@ -178,14 +178,14 @@ uart_start_tx(int port)
 }
 
 void
-uart_start_rx(int port)
+hal_uart_start_rx(int port)
 {
     /* nothing to do here */
 }
 
 int
-uart_init_cbs(int port, uart_tx_char tx_func, uart_tx_done tx_done,
-  uart_rx_char rx_func, void *arg)
+hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
+  hal_uart_rx_char rx_func, void *arg)
 {
     struct uart *uart;
     int rc;
@@ -214,8 +214,9 @@ uart_init_cbs(int port, uart_tx_char tx_func, uart_tx_done tx_done,
     return 0;
 }
 
-int uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
-  enum uart_parity parity, enum uart_flow_ctl flow_ctl)
+int
+hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
+  enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
     struct uart *uart;
 
