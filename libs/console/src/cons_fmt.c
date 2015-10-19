@@ -16,6 +16,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <console/console.h>
+#include <os/os_time.h>
 
 #define CONS_OUTPUT_MAX_LINE	128
 
@@ -24,6 +25,9 @@ void console_printf(const char *fmt, ...)
     va_list args;
     char buf[CONS_OUTPUT_MAX_LINE];
     int len;
+
+    len = snprintf(buf, sizeof(buf), "%lu:", os_time_get());
+    console_write(buf, len);
 
     va_start(args, fmt);
     len = vsnprintf(buf, sizeof(buf), fmt, args);
