@@ -84,6 +84,9 @@ console_write(char *str, int cnt)
             os_time_delay(1);
             OS_ENTER_CRITICAL(sr);
         } else {
+            if (str[i] == '\n') {
+                console_add_char(&ct->ct_tx, '\r');
+            }
             console_add_char(&ct->ct_tx, str[i++]);
         }
     }
