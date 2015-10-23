@@ -43,16 +43,19 @@ int g_led_pin;
 /* Our global device address (public) */
 uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
 
+/* Our random address (in case we need it) */
+uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
+
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_ADV_DATA_MAX_LEN];
 
-/* Create a mbuf pool */
+/* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
 #define MBUF_BUF_SIZE       (256)
-#define MBUF_HDR_LEN        (16)
 #define MBUF_MEMBLOCK_SIZE  \
-    (sizeof(struct os_mbuf) + sizeof(struct os_mbuf_pkthdr) + \
-    MBUF_HDR_LEN + MBUF_BUF_SIZE)
+    (MBUF_BUF_SIZE + sizeof(struct os_mbuf) + sizeof(struct os_mbuf_pkthdr) + \
+     sizeof(struct ble_mbuf_hdr))
+
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
 
 struct os_mbuf_pool g_mbuf_pool; 
@@ -60,39 +63,25 @@ struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* Some application configurations */
-#define BLETEST_CFG_ADV_ITVL        (2000000 / BLE_LL_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE        BLE_ADV_TYPE_ADV_NONCONN_IND
+#define BLETEST_ROLE_ADVERTISER     (0)
+#define BLETEST_ROLE_SCANNER        (1)
+#define BLETEST_CFG_ADV_ITVL        (500000 / BLE_LL_ADV_ITVL)
+#define BLETEST_CFG_ADV_TYPE        BLE_ADV_TYPE_ADV_SCAN_IND
+#define BLETEST_CFG_SCAN_ITVL       (500000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_SCAN_WINDOW     (400000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_ROLE            (BLETEST_ROLE_SCANNER)
 
-void 
-host_task_handler(void *arg)
+uint8_t
+bletest_create_adv_pdu(uint8_t *dptr)
 {
-    int rc;
-    int state;
-    uint8_t adv_len;
-    uint8_t *dptr;
-    struct hci_adv_params adv;
-    uint16_t adv_itvl;
-    uint32_t next_os_adv_time;
-
-    /* Set the led pin as an output */
-    g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
-
-    /* Initialize host HCI */
-    host_hci_init();
-
-    /* Initialize the BLE LL */
-    ll_init();
-
-    /* Create some advertising data */
-    dptr = &g_host_adv_data[0];
+    uint8_t len;
 
     /* Place flags in first */
     dptr[0] = 2;
     dptr[1] = 0x01;     /* Flags identifier */
     dptr[2] = 0x06;
     dptr += 3;
-    adv_len = 3;
+    len = 3;
 
     /* Add local name */
     dptr[0] = 15;   /* Length of this data, not including the length */
@@ -111,15 +100,29 @@ host_task_handler(void *arg)
     dptr[13] = 'e';
     dptr[14] = 'w';
     dptr[15] = 't';
-    adv_len += 16;
     dptr += 16;
+    len += 16;
 
     /* Add local device address */
     dptr[0] = 0x08;
     dptr[1] = 0x1B;
     dptr[2] = 0x00;
     memcpy(dptr + 3, g_dev_addr, BLE_DEV_ADDR_LEN);
-    adv_len += 9;
+    len += 9;
+
+    return len;
+}
+
+void
+bletest_init_advertising(void)
+{
+    int rc;
+    uint8_t adv_len;
+    uint16_t adv_itvl;
+    struct hci_adv_params adv;
+
+    /* Create the advertising PDU */
+    adv_len = bletest_create_adv_pdu(&g_host_adv_data[0]);
 
     /* Set advertising parameters */
     adv_itvl = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
@@ -136,10 +139,52 @@ host_task_handler(void *arg)
     /* Set advertising data */
     rc = host_hci_cmd_le_set_adv_data(&g_host_adv_data[0], adv_len);
     assert(rc == 0);
+}
 
-    /* Set rate at which we will turn on/off advertising */
+void
+bletest_init_scanner(void)
+{
+    int rc;
+
+    /* Set scanning parameters */
+    rc = host_hci_cmd_le_set_scan_params(BLE_HCI_SCAN_TYPE_ACTIVE,
+                                         BLETEST_CFG_SCAN_ITVL,
+                                         BLETEST_CFG_SCAN_WINDOW,
+                                         BLE_ADV_OWN_ADDR_PUBLIC,
+                                         BLE_HCI_SCAN_FILT_NO_WL);
+    assert(rc == 0);
+}
+
+void 
+host_task_handler(void *arg)
+{
+    int rc;
+    int state;
+    uint32_t next_os_time;
+
+    /* Set the led pin as an output */
+    g_led_pin = LED_BLINK_PIN;
+    gpio_init_out(g_led_pin, 1);
+
+    /* Initialize host HCI */
+    host_hci_init();
+
+    /* Initialize the BLE LL */
+    ll_init();
+
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+    /* Initialize the advertiser */
+    bletest_init_advertising();
+    next_os_time = os_time_get();
+#endif
+
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
+    /* Initialize the scanner */
+    bletest_init_scanner();
+#endif
+
     state = 0;
-    next_os_adv_time = os_time_get();
+    next_os_time = os_time_get();
 
     /* Sit in a loop transmitting advertising packets */
     while (1) {
@@ -152,8 +197,9 @@ host_task_handler(void *arg)
         /* Toggle the LED */
         gpio_toggle(g_led_pin);
 
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
         /* Enable advertising */
-        if ((int32_t)(os_time_get() - next_os_adv_time) >= 0) {
+        if ((int32_t)(os_time_get() - next_os_time) >= 0) {
             if (state) {
                 rc = host_hci_cmd_le_set_adv_enable(0);
                 assert(rc == 0);
@@ -163,16 +209,23 @@ host_task_handler(void *arg)
                 assert(rc == 0);
                 state = 1;
             }
-            next_os_adv_time += (OS_TICKS_PER_SEC * 30);
+            next_os_time += (OS_TICKS_PER_SEC * 60);
         }
-
-#if 0
-        /* Wait for a bit */
-        os_time_delay(100 * OS_TIME_TICK);
-
-        /* Disable advertising */
-        rc = host_hci_cmd_le_set_adv_enable(0);
-        assert(rc == 0);
+#endif
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
+        /* Enable scanning */
+        if ((int32_t)(os_time_get() - next_os_time) >= 0) {
+            if (state) {
+                rc = host_hci_cmd_le_set_scan_enable(0, 1);
+                assert(rc == 0);
+                state = 0;
+            } else {
+                rc = host_hci_cmd_le_set_scan_enable(1, 1);
+                assert(rc == 0);
+                state = 1;
+            }
+            next_os_time += (OS_TICKS_PER_SEC * 60);
+        }
 #endif
     }
 }
@@ -222,8 +275,9 @@ main(void)
     rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS, 
             MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
 
-    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_HDR_LEN, 
-                           MBUF_MEMBLOCK_SIZE, MBUF_NUM_MBUFS);
+    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, 
+                           sizeof(struct ble_mbuf_hdr), MBUF_MEMBLOCK_SIZE, 
+                           MBUF_NUM_MBUFS);
     assert(rc == 0);
 
     /* Dummy device address */
@@ -236,7 +290,7 @@ main(void)
 
     /* 
      * Seed random number generator with least significant bytes of device
-     * address
+     * address.
      */ 
     seed = 0;
     for (i = 0; i < 4; ++i) {
