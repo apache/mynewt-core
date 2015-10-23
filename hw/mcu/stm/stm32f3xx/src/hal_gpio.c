@@ -420,7 +420,8 @@ gpio_init_in(int pin, enum gpio_pull pull)
  *
  * @return int  0: no error; -1 otherwise.
  */
-int gpio_init_out(int pin, int val)
+int
+gpio_init_out(int pin, int val)
 {
     GPIO_InitTypeDef init_cfg;
 
@@ -432,7 +433,13 @@ int gpio_init_out(int pin, int val)
     return hal_gpio_init(pin, &init_cfg);
 }
 
-int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull)
+/**
+ * gpio init af
+ *
+ * Configure the specified pin for AF.
+ */
+int
+hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull)
 {
     GPIO_InitTypeDef gpio;
     int rc;
@@ -457,7 +464,8 @@ int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull)
  *
  * @param pin
  */
-void gpio_set(int pin)
+void
+gpio_set(int pin)
 {
     gpio_write(pin, 1);
 }
@@ -469,7 +477,8 @@ void gpio_set(int pin)
  *
  * @param pin
  */
-void gpio_clear(int pin)
+void
+gpio_clear(int pin)
 {
     gpio_write(pin, 0);
 }
@@ -482,7 +491,8 @@ void gpio_clear(int pin)
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
-void gpio_write(int pin, int val)
+void
+gpio_write(int pin, int val)
 {
     int port;
     uint32_t mcu_pin_mask;
@@ -501,7 +511,8 @@ void gpio_write(int pin, int val)
  *
  * @return int 0: low, 1: high
  */
-int gpio_read(int pin)
+int
+gpio_read(int pin)
 {
     int port;
     uint32_t mcu_pin_mask;
@@ -518,7 +529,8 @@ int gpio_read(int pin)
  *
  * @param pin Pin number to toggle
  */
-void gpio_toggle(int pin)
+void
+gpio_toggle(int pin)
 {
     gpio_write(pin, !gpio_read(pin));
 }

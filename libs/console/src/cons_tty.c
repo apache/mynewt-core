@@ -67,28 +67,37 @@ console_pull_char_head(struct console_ring *cr)
     }
 }
 
-void
-console_write(char *str, int cnt)
+static void
+console_write_char(char ch)
 {
     struct console_tty *ct = &console_tty;
     int sr;
-    int i;
 
     OS_ENTER_CRITICAL(sr);
-    i = 0;
-    while (i < cnt) {
-        if (CONSOLE_HEAD_INC(&ct->ct_tx) == ct->ct_tx.cr_tail) {
-            /* TX needs to drain */
-            uart_start_tx(CONSOLE_UART);
-            OS_EXIT_CRITICAL(sr);
-            os_time_delay(1);
-            OS_ENTER_CRITICAL(sr);
-        } else {
-            console_add_char(&ct->ct_tx, str[i++]);
-        }
+    while (CONSOLE_HEAD_INC(&ct->ct_tx) == ct->ct_tx.cr_tail) {
+        /* TX needs to drain */
+        hal_uart_start_tx(CONSOLE_UART);
+        OS_EXIT_CRITICAL(sr);
+        os_time_delay(1);
+        OS_ENTER_CRITICAL(sr);
     }
+    console_add_char(&ct->ct_tx, ch);
     OS_EXIT_CRITICAL(sr);
-    uart_start_tx(CONSOLE_UART);
+}
+
+void
+console_write(char *str, int cnt)
+{
+    int i;
+
+    i = 0;
+    for (i = 0; i < cnt; i++) {
+        if (str[i] == '\n') {
+            console_write_char('\r');
+        }
+        console_write_char(str[i]);
+    }
+    hal_uart_start_tx(CONSOLE_UART);
 }
 
 int
@@ -115,7 +124,7 @@ console_read(char *str, int cnt)
     }
     OS_EXIT_CRITICAL(sr);
     if (i >= 0) {
-        uart_start_rx(CONSOLE_UART);
+        hal_uart_start_rx(CONSOLE_UART);
     }
     return i;
 }
@@ -182,7 +191,7 @@ console_rx_char(void *arg, uint8_t data)
         console_add_char(rx, data);
         break;
     }
-    uart_start_tx(CONSOLE_UART);
+    hal_uart_start_tx(CONSOLE_UART);
     return 0;
 }
 
@@ -192,7 +201,7 @@ console_init(console_rx_cb rx_cb)
     struct console_tty *ct = &console_tty;
     int rc;
 
-    rc = uart_init_cbs(CONSOLE_UART, console_tx_char, NULL, console_rx_char,
+    rc = hal_uart_init_cbs(CONSOLE_UART, console_tx_char, NULL, console_rx_char,
       ct);
     if (rc) {
         return rc;
@@ -203,8 +212,8 @@ console_init(console_rx_cb rx_cb)
     ct->ct_rx.cr_buf = ct->ct_rx_buf;
     ct->ct_rx_cb = rx_cb;
 
-    rc = uart_config(CONSOLE_UART, 115200, 8, 1, UART_PARITY_NONE,
-      UART_FLOW_CTL_NONE);
+    rc = hal_uart_config(CONSOLE_UART, 115200, 8, 1, HAL_UART_PARITY_NONE,
+      HAL_UART_FLOW_CTL_NONE);
     if (rc) {
         return rc;
     }

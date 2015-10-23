@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <stdint.h>
+#include "mcu/nrf52_hal.h"
 
-#ifndef H_BSP_H
-#define H_BSP_H
+static const struct nrf52_uart_cfg uart_cfg = {
+    .suc_pin_tx = 6,
+    .suc_pin_rx = 8,
+    .suc_pin_rts = 5,
+    .suc_pin_cts = 7
+};
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* LED pins */
-#define LED_BLINK_PIN   (17)
-
-/* UART info */
-#define CONSOLE_UART    0
-
-#ifdef __cplusplus
+const struct nrf52_uart_cfg *bsp_uart_config(void)
+{
+    return &uart_cfg;
 }
-#endif
-
-#endif  /* H_BSP_H */

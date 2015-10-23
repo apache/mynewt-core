@@ -1,11 +1,10 @@
-
 /**
- * Copyright (c) 2015 Stack Inc.
+ * Copyright (c) 2015 Runtime Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -35,6 +34,18 @@
             __enable_irq();                             \
         }                                               \
     } while(0);
+
+struct nrf52_uart_cfg {
+    int8_t suc_pin_tx;                          /* pins for IO */
+    int8_t suc_pin_rx;
+    int8_t suc_pin_rts;
+    int8_t suc_pin_cts;
+};
+const struct nrf52_uart_cfg *bsp_uart_config(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* H_NRF52_HAL_ */
 

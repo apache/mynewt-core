@@ -439,6 +439,24 @@ int gpio_init_out(int pin, int val)
 }
 
 /**
+ * gpio init af
+ *
+ * Configure the specified pin for AF.
+ */
+int
+hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull)
+{
+    GPIO_InitTypeDef gpio;
+
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Speed = GPIO_SPEED_HIGH;
+    gpio.Pull = pull;
+    gpio.Alternate = af_type;
+
+    return hal_gpio_init(pin, &gpio);
+}
+
+/**
  * gpio set 
  *  
  * Sets specified pin to 1 (high) 

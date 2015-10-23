@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef __MCU_STM32F3_BSP_H_
-#define __MCU_STM32F3_BSP_H_
+#ifndef __MCU_STM32F4_BSP_H_
+#define __MCU_STM32F4_BSP_H_
 
 /**
  * BSP specific UART settings.
  */
-struct stm32f3_uart_cfg {
+struct stm32f4_uart_cfg {
     USART_TypeDef *suc_uart;			/* UART dev registers */
-    void (*suc_rcc_cmd)(uint32_t, FunctionalState); /* RCC function to call */
+    volatile uint32_t *suc_rcc_reg;		/* RCC register to modify */
     uint32_t suc_rcc_dev;			/* RCC device ID */
     int8_t suc_pin_tx;				/* pins for IO */
     int8_t suc_pin_rx;
     int8_t suc_pin_rts;
     int8_t suc_pin_cts;
     uint8_t suc_pin_af;				/* AF selection for this */
-    enum IRQn suc_irqn;				/* NVIC IRQn */
+    IRQn_Type suc_irqn;				/* NVIC IRQn */
 };
 
-const struct stm32f3_uart_cfg *bsp_uart_config(int port);
+const struct stm32f4_uart_cfg *bsp_uart_config(int port);
 
 /*
- * Internal API for stm32f3xx mcu specific code.
+ * Internal API for stm32f4xx mcu specific code.
  */
 int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull);
 
-#endif /* __MCU_STM32F3_BSP_H_ */
+#endif /* __MCU_STM32F4_BSP_H_ */
