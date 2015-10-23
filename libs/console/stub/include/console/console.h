@@ -34,7 +34,6 @@ static int inline console_read(char *str, int cnt)
 
 static void inline console_printf(const char *fmt, ...)
 {
-    ;
 }
 
 #endif /* __CONSOLE__ */
