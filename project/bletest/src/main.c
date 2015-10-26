@@ -23,7 +23,6 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "host/host_hci.h"
-#include "controller/ll_adv.h"
 #include "controller/ll.h"
 
 /* Init all tasks */
@@ -35,7 +34,6 @@ int init_tasks(void);
 #define HOST_STACK_SIZE     OS_STACK_ALIGN(256)
 struct os_task host_task;
 os_stack_t host_stack[HOST_STACK_SIZE];
-static volatile int g_host_loops;
 
 /* For LED toggling */
 int g_led_pin;
@@ -47,7 +45,7 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
 /* A buffer for host advertising data */
-uint8_t g_host_adv_data[BLE_ADV_DATA_MAX_LEN];
+uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
@@ -65,11 +63,13 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 /* Some application configurations */
 #define BLETEST_ROLE_ADVERTISER     (0)
 #define BLETEST_ROLE_SCANNER        (1)
-#define BLETEST_CFG_ADV_ITVL        (500000 / BLE_LL_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE        BLE_ADV_TYPE_ADV_SCAN_IND
+#define BLETEST_CFG_ADV_ITVL        (500000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_TYPE        BLE_HCI_ADV_TYPE_ADV_SCAN_IND
 #define BLETEST_CFG_SCAN_ITVL       (500000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW     (400000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_ROLE            (BLETEST_ROLE_SCANNER)
+uint32_t g_next_os_time;
+int bletest_state;
 
 uint8_t
 bletest_create_adv_pdu(uint8_t *dptr)
@@ -128,10 +128,10 @@ bletest_init_advertising(void)
     adv_itvl = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
     adv.adv_channel_map = 0x07;
-    adv.adv_filter_policy = BLE_ADV_FILT_NONE;
-    adv.own_addr_type = BLE_ADV_OWN_ADDR_PUBLIC;
-    adv.peer_addr_type = BLE_ADV_PEER_ADDR_PUBLIC;
-    adv.adv_itvl_min = BLE_LL_ADV_ITVL_NONCONN_MIN;
+    adv.adv_filter_policy = BLE_HCI_ADV_FILT_NONE;
+    adv.own_addr_type = BLE_HCI_ADV_OWN_ADDR_PUBLIC;
+    adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
+    adv.adv_itvl_min = BLE_HCI_ADV_ITVL_NONCONN_MIN;
     adv.adv_itvl_max = adv_itvl;
     rc = host_hci_cmd_le_set_adv_params(&adv);
     assert(rc == 0);
@@ -150,7 +150,7 @@ bletest_init_scanner(void)
     rc = host_hci_cmd_le_set_scan_params(BLE_HCI_SCAN_TYPE_ACTIVE,
                                          BLETEST_CFG_SCAN_ITVL,
                                          BLETEST_CFG_SCAN_WINDOW,
-                                         BLE_ADV_OWN_ADDR_PUBLIC,
+                                         BLE_HCI_ADV_OWN_ADDR_PUBLIC,
                                          BLE_HCI_SCAN_FILT_NO_WL);
     assert(rc == 0);
 }
@@ -158,14 +158,6 @@ bletest_init_scanner(void)
 void 
 host_task_handler(void *arg)
 {
-    int rc;
-    int state;
-    uint32_t next_os_time;
-
-    /* Set the led pin as an output */
-    g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
-
     /* Initialize host HCI */
     host_hci_init();
 
@@ -175,7 +167,6 @@ host_task_handler(void *arg)
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Initialize the advertiser */
     bletest_init_advertising();
-    next_os_time = os_time_get();
 #endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
@@ -183,51 +174,49 @@ host_task_handler(void *arg)
     bletest_init_scanner();
 #endif
 
-    state = 0;
-    next_os_time = os_time_get();
+    /* Init bletest varibles */
+    bletest_state = 0;
+    g_next_os_time = os_time_get();
 
-    /* Sit in a loop transmitting advertising packets */
-    while (1) {
-        /* Number of times through the loop */
-        ++g_host_loops;
+    /* Call the host hci task */
+    host_hci_task(arg);
+}
 
-        /* Wait 1 second */
-        os_time_delay(OS_TICKS_PER_SEC);
-
-        /* Toggle the LED */
-        gpio_toggle(g_led_pin);
+void
+bletest_execute(void)
+{
+    int rc;
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-        /* Enable advertising */
-        if ((int32_t)(os_time_get() - next_os_time) >= 0) {
-            if (state) {
-                rc = host_hci_cmd_le_set_adv_enable(0);
-                assert(rc == 0);
-                state = 0;
-            } else {
-                rc = host_hci_cmd_le_set_adv_enable(1);
-                assert(rc == 0);
-                state = 1;
-            }
-            next_os_time += (OS_TICKS_PER_SEC * 60);
+    /* Enable advertising */
+    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+        if (bletest_state) {
+            rc = host_hci_cmd_le_set_adv_enable(0);
+            assert(rc == 0);
+            bletest_state = 0;
+        } else {
+            rc = host_hci_cmd_le_set_adv_enable(1);
+            assert(rc == 0);
+            bletest_state = 1;
         }
+        g_next_os_time += (OS_TICKS_PER_SEC * 60);
+    }
 #endif
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
-        /* Enable scanning */
-        if ((int32_t)(os_time_get() - next_os_time) >= 0) {
-            if (state) {
-                rc = host_hci_cmd_le_set_scan_enable(0, 1);
-                assert(rc == 0);
-                state = 0;
-            } else {
-                rc = host_hci_cmd_le_set_scan_enable(1, 1);
-                assert(rc == 0);
-                state = 1;
-            }
-            next_os_time += (OS_TICKS_PER_SEC * 60);
+    /* Enable scanning */
+    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+        if (bletest_state) {
+            rc = host_hci_cmd_le_set_scan_enable(0, 1);
+            assert(rc == 0);
+            bletest_state = 0;
+        } else {
+            rc = host_hci_cmd_le_set_scan_enable(1, 1);
+            assert(rc == 0);
+            bletest_state = 1;
         }
-#endif
+        g_next_os_time += (OS_TICKS_PER_SEC * 60);
     }
+#endif
 }
 
 /**
@@ -298,6 +287,10 @@ main(void)
         seed <<= 8;
     }
     srand(seed);
+
+    /* Set the led pin as an output */
+    g_led_pin = LED_BLINK_PIN;
+    gpio_init_out(g_led_pin, 1);
 
     /* Init tasks */
     init_tasks();
