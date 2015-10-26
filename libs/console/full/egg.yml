@@ -1,4 +1,4 @@
-egg.name: libs/console
+egg.name: libs/console/full
 egg.vers: 0.1 
 egg.deps:
     - hw/hal
