@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef _OS_TIME_H 
-#define _OS_TIME_H 
+#ifndef _OS_TIME_H
+#define _OS_TIME_H
+
+#include <stdint.h>
 
 typedef uint32_t os_time_t;
 
@@ -33,6 +35,5 @@ void os_time_delay(int32_t osticks);
 #define OS_TIME_TICK_LT(__t1, __t2) ((int32_t) ((__t1) - (__t2)) < 0)
 #define OS_TIME_TICK_GT(__t1, __t2) ((int32_t) ((__t1) - (__t2)) > 0)
 #define OS_TIME_TICK_GEQ(__t1, __t2) ((int32_t) ((__t1) - (__t2)) >= 0)
-
 
 #endif /* _OS_TIME_H */
