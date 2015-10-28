@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <assert.h>
+#include <string.h>
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_cputime.h"
-#include <assert.h>
-#include <string.h>
+#include "console/console.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -158,6 +159,12 @@ bletest_init_scanner(void)
 void 
 host_task_handler(void *arg)
 {
+    int rc;
+
+    /* Init the console */
+    rc = console_init(NULL);
+    assert(rc == 0);
+
     /* Initialize host HCI */
     host_hci_init();
 
@@ -177,6 +184,9 @@ host_task_handler(void *arg)
     /* Init bletest varibles */
     bletest_state = 0;
     g_next_os_time = os_time_get();
+
+    /* We are initialized */
+    console_printf("Nimble stack initialized");
 
     /* Call the host hci task */
     host_hci_task(arg);
