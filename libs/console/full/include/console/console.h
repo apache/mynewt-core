@@ -21,6 +21,7 @@ typedef void (*console_rx_cb)(int full_line);
 int console_init(console_rx_cb rx_cb);
 void console_write(char *str, int cnt);
 int console_read(char *str, int cnt);
+void console_blocking_mode(void);
 
 void console_printf(const char *fmt, ...);
 

@@ -26,6 +26,8 @@
 #define CONSOLE_HEAD_INC(cr)	(((cr)->cr_head + 1) & ((cr)->cr_size - 1))
 #define CONSOLE_TAIL_INC(cr)	(((cr)->cr_tail + 1) & ((cr)->cr_size - 1))
 
+typedef void (*console_write_char)(char);
+
 struct console_ring {
     uint8_t cr_head;
     uint8_t cr_tail;
@@ -40,6 +42,7 @@ struct console_tty {
     struct console_ring ct_rx;
     uint8_t ct_rx_buf[CONSOLE_RX_BUF_SZ]; /* must be after console_ring */
     console_rx_cb ct_rx_cb;	/* callback that input is ready */
+    console_write_char ct_write_char;
 } console_tty;
 
 static void
@@ -68,7 +71,7 @@ console_pull_char_head(struct console_ring *cr)
 }
 
 static void
-console_write_char(char ch)
+console_queue_char(char ch)
 {
     struct console_tty *ct = &console_tty;
     int sr;
@@ -85,17 +88,44 @@ console_write_char(char ch)
     OS_EXIT_CRITICAL(sr);
 }
 
+static void
+console_blocking_tx(char ch)
+{
+    hal_uart_blocking_tx(CONSOLE_UART, ch);
+}
+
+void
+console_blocking_mode(void)
+{
+    struct console_tty *ct = &console_tty;
+    int sr;
+    uint8_t byte;
+
+    OS_ENTER_CRITICAL(sr);
+    ct->ct_write_char = console_blocking_tx;
+
+    /*
+     * Flush console output queue.
+     */
+    while (ct->ct_tx.cr_head != ct->ct_tx.cr_tail) {
+        byte = console_pull_char(&ct->ct_tx);
+        console_blocking_tx(byte);
+    }
+    OS_EXIT_CRITICAL(sr);
+}
+
 void
 console_write(char *str, int cnt)
 {
+    struct console_tty *ct = &console_tty;
     int i;
 
     i = 0;
     for (i = 0; i < cnt; i++) {
         if (str[i] == '\n') {
-            console_write_char('\r');
+            ct->ct_write_char('\r');
         }
-        console_write_char(str[i]);
+        ct->ct_write_char(str[i]);
     }
     hal_uart_start_tx(CONSOLE_UART);
 }
@@ -211,6 +241,7 @@ console_init(console_rx_cb rx_cb)
     ct->ct_rx.cr_size = CONSOLE_RX_BUF_SZ;
     ct->ct_rx.cr_buf = ct->ct_rx_buf;
     ct->ct_rx_cb = rx_cb;
+    ct->ct_write_char = console_queue_char;
 
     rc = hal_uart_config(CONSOLE_UART, 115200, 8, 1, HAL_UART_PARITY_NONE,
       HAL_UART_FLOW_CTL_NONE);

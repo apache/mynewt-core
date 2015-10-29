@@ -128,6 +128,28 @@ hal_uart_start_rx(int port)
 }
 
 void
+hal_uart_blocking_tx(int port, uint8_t data)
+{
+    struct hal_uart *u;
+    USART_TypeDef *regs;
+
+    u = &uarts[port];
+    if (port >= UART_CNT || !u->u_open) {
+        return;
+    }
+    regs = u->u_regs;
+
+    while (!(regs->ISR & USART_ISR_TXE));
+
+    regs->TDR = data;
+
+    /*
+     * Waits for TX to complete.
+     */
+    while (!(regs->ISR & USART_ISR_TC));
+}
+
+void
 hal_uart_start_tx(int port)
 {
     struct hal_uart *u;

@@ -51,11 +51,8 @@ hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
 {
     struct hal_uart *u;
 
-    if (port >= UART_CNT) {
-        return -1;
-    }
     u = &uarts[port];
-    if (u->u_open) {
+    if (port >= UART_CNT || u->u_open) {
         return -1;
     }
     u->u_rx_func = rx_func;
@@ -140,6 +137,28 @@ hal_uart_start_tx(int port)
     u->u_regs->CR1 |= USART_CR1_TXEIE;
     u->u_tx_end = 0;
     __HAL_ENABLE_INTERRUPTS(sr);
+}
+
+void
+hal_uart_blocking_tx(int port, uint8_t data)
+{
+    struct hal_uart *u;
+    USART_TypeDef *regs;
+
+    u = &uarts[port];
+    if (port >= UART_CNT || u->u_open) {
+        return;
+    }
+    regs = u->u_regs;
+
+    while (!(regs->SR & USART_SR_TXE));
+
+    regs->DR = data;
+
+    /*
+     * Waits for TX to complete.
+     */
+    while (!(regs->SR & USART_SR_TC));
 }
 
 static void

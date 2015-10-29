@@ -123,6 +123,12 @@ hal_uart_start_rx(int port)
     }
 }
 
+void
+hal_uart_blocking_tx(int port, uint8_t data)
+{
+    /* XXXX fill this in */
+}
+
 static void
 uart_irq_handler(void)
 {

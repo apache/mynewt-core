@@ -18,21 +18,25 @@
 
 typedef void (*console_rx_cb)(int full_line);
 
-static int inline console_init(console_rx_cb rxcb)
+static int inline
+console_init(console_rx_cb rxcb)
 {
     return 0;
 }
 
-static void inline console_write(char *str, int cnt)
-{
-}
-
-static int inline console_read(char *str, int cnt)
+static int inline
+console_read(char *str, int cnt)
 {
     return 0;
 }
 
-static void inline console_printf(const char *fmt, ...)
+static void inline
+console_blocking_mode(void)
+{
+}
+
+static void inline
+console_printf(const char *fmt, ...)
 {
 }
 
