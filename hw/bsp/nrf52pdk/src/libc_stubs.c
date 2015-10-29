@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -25,7 +25,7 @@ int _lseek(int fd, int off, int w);
 int _read(int fd, void *b, int nb);
 int _getpid(void);
 
-int 
+int
 _close(int fd)
 {
     return -1;
@@ -38,31 +38,31 @@ _fstat(int fd, void *s)
 }
 
 
-void 
+void
 _exit(int s)
 {
-    while (1) {} 
+    while (1) {}
 }
 
-int 
+int
 _kill(int pid, int sig)
 {
     return -1;
 }
 
-int 
-_write(int fd, void *b, int nb) 
+int
+_write(int fd, void *b, int nb)
 {
     return -1;
 }
 
-int 
+int
 _isatty(int c)
 {
     return -1;
 }
 
-int 
+int
 _lseek(int fd, int off, int w)
 {
     return -1;
@@ -74,7 +74,7 @@ _read(int fd, void *b, int nb)
     return -1;
 }
 
-int 
+int
 _getpid(void) {
     return -1;
 }
