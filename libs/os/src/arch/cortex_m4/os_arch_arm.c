@@ -50,9 +50,6 @@ struct stack_frame {
     uint32_t    xpsr;
 };
 
-int     die_line;
-char    *die_module;
-
 #define SVC_ArgN(n) \
   register int __r##n __asm("r"#n);
 
@@ -126,15 +123,6 @@ os_arch_restore_sr(os_sr_t isr_ctx)
 {
     if (!isr_ctx) {
         __enable_irq();
-    }
-}
-
-void
-_Die(char *file, int line)
-{
-    die_line = line;
-    die_module = file;
-    while (1) {
     }
 }
 

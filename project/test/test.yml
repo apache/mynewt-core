@@ -5,6 +5,7 @@ project.eggs:
     - libs/nffs
     - libs/bootutil
     - libs/testreport
+    - libs/console/full
 
 project.identities:
     - test

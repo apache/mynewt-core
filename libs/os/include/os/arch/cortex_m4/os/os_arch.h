@@ -57,9 +57,6 @@ typedef uint32_t os_stack_t;
 #define sec_bss_core    __attribute__((section(".bss.core")))
 #define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
 
-/* Define "assert" funtion */
-void _Die(char *file, int line);
-
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
 void timer_handler(void);
 void os_arch_ctx_sw(struct os_task *);
