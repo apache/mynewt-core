@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <stddef.h>
+
+void *_sbrk(int incr);
 
 void
 os_bsp_init(void)
 {
+    /*
+     * XXX this reference is here to keep this function in.
+     */
+    _sbrk(0);
 }
