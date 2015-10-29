@@ -26,7 +26,7 @@ void console_printf(const char *fmt, ...)
     char buf[CONS_OUTPUT_MAX_LINE];
     int len;
 
-    len = snprintf(buf, sizeof(buf), "%lu:", os_time_get());
+    len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
     console_write(buf, len);
 
     va_start(args, fmt);
