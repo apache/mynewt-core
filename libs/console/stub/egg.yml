@@ -1,3 +1,4 @@
 egg.name: libs/console/stub
 egg.vers: 0.1 
 egg.deps:
+egg.caps: console

@@ -1,5 +1,6 @@
 egg.name: libs/console/full
-egg.vers: 0.1 
+egg.vers: 0.1
 egg.deps:
     - hw/hal
     - libs/os
+egg.caps: console
