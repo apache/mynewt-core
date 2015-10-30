@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-#include "mcu/stm32f407xx.h"
-#include "mcu/stm32f4xx_hal_def.h"
+#include <mcu/cortex_m4.h>
 #include "hal/hal_system.h"
 
 void
 system_reset(void)
 {
-    NVIC_SystemReset();
+    while (1) {
+        asm("bkpt");
+        NVIC_SystemReset();
+    }
 }
 
 uint32_t

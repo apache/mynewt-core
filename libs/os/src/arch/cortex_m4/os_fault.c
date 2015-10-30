@@ -15,6 +15,7 @@
  */
 
 #include <console/console.h>
+#include <hal/hal_system.h>
 #include "os/os.h"
 
 #include <stdint.h>
@@ -36,7 +37,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     os_die_module = file;
     console_blocking_mode();
     console_printf("Assert '%s; failed in %s:%d\n", e, file, line);
-    _exit(1);
+    system_reset();
 }
 
 struct exception_frame {
@@ -80,5 +81,5 @@ os_default_irq(struct trap_frame *tf)
     console_printf("ICSR:%8.8x HFSR:%8.8x CFSR:%8.8x",
       SCB->ICSR, SCB->HFSR, SCB->CFSR);
     console_printf("BFAR:%8.8x MMFAR:%8.8x", SCB->BFAR, SCB->MMFAR);
-    while(1);
+    system_reset();
 }
