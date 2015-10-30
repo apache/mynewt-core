@@ -158,6 +158,10 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 void
 os_arch_init(void)
 {
+    /*
+     * Trap on divide-by-zero.
+     */
+    SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
     os_init_idle_task();
 }
 
@@ -227,9 +231,9 @@ os_arch_os_init(void)
 
 /**
  * os systick init
- *  
+ *
  * Initializes systick for the MCU
- * 
+ *
  * @param os_tick_usecs The number of microseconds in an os time tick
  */
 static void
@@ -286,7 +290,7 @@ os_arch_os_start(void)
 
     err = OS_ERR_IN_ISR;
     if (__get_IPSR() == 0) {
-        /* 
+        /*
          * The following switch statement is really just a sanity check to
          * insure that the os initialization routine was called prior to the
          * os start routine.
