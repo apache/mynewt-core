@@ -71,6 +71,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_ITVL       (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW     (650000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_ROLE            (BLETEST_ROLE_SCANNER)
+#define BLETEST_CFG_SCAN_TYPE       (BLE_HCI_SCAN_TYPE_ACTIVE)
 uint32_t g_next_os_time;
 int bletest_state;
 
@@ -180,7 +181,7 @@ bletest_init_scanner(void)
     int rc;
 
     /* Set scanning parameters */
-    rc = host_hci_cmd_le_set_scan_params(BLE_HCI_SCAN_TYPE_PASSIVE,
+    rc = host_hci_cmd_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                          BLETEST_CFG_SCAN_ITVL,
                                          BLETEST_CFG_SCAN_WINDOW,
                                          BLE_HCI_ADV_OWN_ADDR_PUBLIC,
