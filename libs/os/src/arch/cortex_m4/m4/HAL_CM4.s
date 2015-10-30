@@ -201,6 +201,30 @@ SysTick_Handler:
         .fnend
         .size   SysTick_Handler, .-SysTick_Handler
 
+        .thumb_func
+        .type   os_default_irq_asm, %function
+        .global os_default_irq_asm
+os_default_irq_asm:
+        .fnstart
+        .cantunwind
+
+        /*
+         * LR = 0xfffffff9 if we were using MSP as SP
+         * LR = 0xfffffffd if we were using PSP as SP
+         */
+        TST     LR,#4
+        ITE     EQ
+        MRSEQ   R3,MSP
+        MRSNE   R3,PSP
+        PUSH    {R3-R11,LR}
+        MOV     R0, SP
+        BL      os_default_irq
+        POP     {R3-R11,LR}                 /* Restore EXC_RETURN */
+        BX      LR
+
+        .fnend
+        .size   os_default_irq_asm, .-os_default_irq_asm
+
         .end
 
 /*----------------------------------------------------------------------------

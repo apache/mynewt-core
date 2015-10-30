@@ -17,6 +17,8 @@
 #include "os/os.h"
 #include "os/os_arch.h"
 
+#include <bsp/cmsis_nvic.h>
+
 /* Initial program status register */
 #define INITIAL_xPSR    0x01000000
 
@@ -181,6 +183,19 @@ os_arch_os_init(void)
         /* Drop priority for all interrupts */
         for (i = 0; i < sizeof(NVIC->IP); i++) {
             NVIC->IP[i] = 0xff;
+        }
+
+        /*
+         * Install default interrupt handler, which'll print out system
+         * state at the time of the interrupt, and few other regs which
+         * should help in trying to figure out what went wrong.
+         */
+        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm); /* Hardfault */
+        NVIC_SetVector(MemoryManagement_IRQn, (uint32_t)os_default_irq_asm);
+        NVIC_SetVector(BusFault_IRQn, (uint32_t)os_default_irq_asm);
+        NVIC_SetVector(UsageFault_IRQn, (uint32_t)os_default_irq_asm);
+        for (i = 0; i < NVIC_NUM_VECTORS - NVIC_USER_IRQ_OFFSET; i++) {
+            NVIC_SetVector(i, (uint32_t)os_default_irq_asm);
         }
 
         /* Call bsp related OS initializations */
