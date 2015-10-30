@@ -24,7 +24,7 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "host/host_hci.h"
-#include "controller/ll.h"
+#include "controller/ble_ll.h"
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -202,7 +202,7 @@ host_task_handler(void *arg)
     host_hci_init();
 
     /* Initialize the BLE LL */
-    ll_init();
+    ble_ll_init();
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Initialize the advertiser */
