@@ -23,7 +23,7 @@ compiler.path.objsize: "objsize"
 compiler.path.objcopy: "gobjcopy"
 
 compiler.flags.base: >
-    -m32 -Wall -Werror -ggdb -O0
+    -m32 -Wall -Werror -ggdb -O0 -DMN_OSX
 
 compiler.flags.default: [compiler.flags.base]
 compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
