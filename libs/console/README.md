@@ -4,6 +4,9 @@
 #  full - contains actual implemetation
 #  stub - has stubs for the API
 #
-# So write of a library can use console_printf(), and builder of a
-# project can stub that out.
+# You can write of a library which uses console_printf(), and builder of a
+# project can select which one they'll use.
+# For the library/egg, list in the egg.yml console as the required capability.
+# Project builder will then include either libs/console/full or
+# libs/console/stub as their choice.
 #
