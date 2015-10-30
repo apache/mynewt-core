@@ -5,3 +5,4 @@ tags
 .gdb_history
 *~
 .nest
+.DS_Store

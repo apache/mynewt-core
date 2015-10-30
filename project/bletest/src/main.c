@@ -47,6 +47,7 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
+uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
@@ -64,13 +65,39 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 /* Some application configurations */
 #define BLETEST_ROLE_ADVERTISER     (0)
 #define BLETEST_ROLE_SCANNER        (1)
+#define BLETEST_CFG_FILT_DUP_ADV    (0)
 #define BLETEST_CFG_ADV_ITVL        (500000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE        BLE_HCI_ADV_TYPE_ADV_SCAN_IND
-#define BLETEST_CFG_SCAN_ITVL       (500000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_SCAN_WINDOW     (400000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_SCAN_ITVL       (700000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_SCAN_WINDOW     (650000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_ROLE            (BLETEST_ROLE_SCANNER)
 uint32_t g_next_os_time;
 int bletest_state;
+
+void
+bletest_inc_adv_pkt_num(void)
+{
+    int rc;
+    uint8_t *dptr;
+    uint8_t digit;
+
+    dptr = &g_host_adv_data[18];
+    while (dptr >= &g_host_adv_data[13]) {
+        digit = *dptr;
+        ++digit;
+        if (digit == 58) {
+            digit = 48;
+            *dptr = digit;
+            --dptr;
+        } else {
+            *dptr = digit;
+            break;
+        }
+    }
+
+    rc = host_hci_cmd_le_set_adv_data(g_host_adv_data, g_host_adv_len);
+    assert(rc == 0);
+}
 
 uint8_t
 bletest_create_adv_pdu(uint8_t *dptr)
@@ -95,12 +122,12 @@ bletest_create_adv_pdu(uint8_t *dptr)
     dptr[7] = 'm';
     dptr[8] = 'e';
     dptr[9] = '-';
-    dptr[10] = 'm';
-    dptr[11] = 'y';
-    dptr[12] = 'n';
-    dptr[13] = 'e';
-    dptr[14] = 'w';
-    dptr[15] = 't';
+    dptr[10] = '0';
+    dptr[11] = '0';
+    dptr[12] = '0';
+    dptr[13] = '0';
+    dptr[14] = '0';
+    dptr[15] = '0';
     dptr += 16;
     len += 16;
 
@@ -110,6 +137,8 @@ bletest_create_adv_pdu(uint8_t *dptr)
     dptr[2] = 0x00;
     memcpy(dptr + 3, g_dev_addr, BLE_DEV_ADDR_LEN);
     len += 9;
+
+    g_host_adv_len = len;
 
     return len;
 }
@@ -140,6 +169,9 @@ bletest_init_advertising(void)
     /* Set advertising data */
     rc = host_hci_cmd_le_set_adv_data(&g_host_adv_data[0], adv_len);
     assert(rc == 0);
+
+    /* Set scan response data */
+    rc = host_hci_cmd_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
 }
 
 void
@@ -148,7 +180,7 @@ bletest_init_scanner(void)
     int rc;
 
     /* Set scanning parameters */
-    rc = host_hci_cmd_le_set_scan_params(BLE_HCI_SCAN_TYPE_ACTIVE,
+    rc = host_hci_cmd_le_set_scan_params(BLE_HCI_SCAN_TYPE_PASSIVE,
                                          BLETEST_CFG_SCAN_ITVL,
                                          BLETEST_CFG_SCAN_WINDOW,
                                          BLE_HCI_ADV_OWN_ADDR_PUBLIC,
@@ -216,11 +248,11 @@ bletest_execute(void)
     /* Enable scanning */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
         if (bletest_state) {
-            rc = host_hci_cmd_le_set_scan_enable(0, 1);
+            rc = host_hci_cmd_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
             bletest_state = 0;
         } else {
-            rc = host_hci_cmd_le_set_scan_enable(1, 1);
+            rc = host_hci_cmd_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
             bletest_state = 1;
         }
@@ -280,12 +312,21 @@ main(void)
     assert(rc == 0);
 
     /* Dummy device address */
+#if BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER
     g_dev_addr[0] = 0x00;
     g_dev_addr[1] = 0x00;
     g_dev_addr[2] = 0x00;
     g_dev_addr[3] = 0x88;
     g_dev_addr[4] = 0x88;
     g_dev_addr[5] = 0x08;
+#else
+    g_dev_addr[0] = 0x00;
+    g_dev_addr[1] = 0x00;
+    g_dev_addr[2] = 0x00;
+    g_dev_addr[3] = 0x99;
+    g_dev_addr[4] = 0x99;
+    g_dev_addr[5] = 0x09;
+#endif
 
     /* 
      * Seed random number generator with least significant bytes of device
