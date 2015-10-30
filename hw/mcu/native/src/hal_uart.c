@@ -18,7 +18,13 @@
 #include "hal/hal_uart.h"
 #include "bsp/bsp.h"
 
+#ifdef MN_LINUX
+#include <pty.h>
+#endif
+#ifdef MN_OSX
 #include <util.h>
+#endif
+#include <stdio.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <unistd.h>
