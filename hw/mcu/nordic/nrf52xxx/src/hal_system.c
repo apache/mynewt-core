@@ -21,7 +21,12 @@ void
 system_reset(void)
 {
     while (1) {
-        asm("bkpt");
+        if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
+            /*
+             * If debugger is attached, breakpoint here.
+             */
+            asm("bkpt");
+        }
         NVIC_SystemReset();
     }
 }
