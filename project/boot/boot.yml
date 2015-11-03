@@ -4,4 +4,4 @@ project.eggs:
     - libs/os
     - libs/bootutil
     - libs/nffs
-    - hw/mcu/stm/stm32f4xx
+    - libs/console/stub
