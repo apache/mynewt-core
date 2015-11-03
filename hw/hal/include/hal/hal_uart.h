@@ -41,7 +41,7 @@ typedef void (*hal_uart_tx_done)(void *arg);
 typedef int (*hal_uart_rx_char)(void *arg, uint8_t byte);
 
 /**
- * hal uart init
+ * hal uart init cbs
  *
  * Initializes given uart. Mapping of logical UART number to physical
  * UART/GPIO pins is in BSP.
