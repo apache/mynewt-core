@@ -189,6 +189,12 @@ hal_uart_start_rx(int port)
     /* nothing to do here */
 }
 
+void
+hal_uart_blocking_tx(int port, uint8_t data)
+{
+    /* XXXX fill this in */
+}
+
 int
 hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
   hal_uart_rx_char rx_func, void *arg)
