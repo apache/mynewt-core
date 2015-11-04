@@ -1,0 +1,5 @@
+project.name: host_test
+project.eggs: 
+    - libs/os 
+    - net/nimble/host
+    - libs/console/full
