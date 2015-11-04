@@ -63,17 +63,19 @@ struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* Some application configurations */
-#define BLETEST_ROLE_ADVERTISER     (0)
-#define BLETEST_ROLE_SCANNER        (1)
-#define BLETEST_CFG_FILT_DUP_ADV    (0)
-#define BLETEST_CFG_ADV_ITVL        (500000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE        BLE_HCI_ADV_TYPE_ADV_SCAN_IND
-#define BLETEST_CFG_SCAN_ITVL       (700000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_SCAN_WINDOW     (650000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_ROLE            (BLETEST_ROLE_SCANNER)
-#define BLETEST_CFG_SCAN_TYPE       (BLE_HCI_SCAN_TYPE_ACTIVE)
+#define BLETEST_ROLE_ADVERTISER         (0)
+#define BLETEST_ROLE_SCANNER            (1)
+#define BLETEST_CFG_FILT_DUP_ADV        (0)
+#define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_SCAN_IND
+#define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
+#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
+
 uint32_t g_next_os_time;
-int bletest_state;
+int g_bletest_state;
 
 void
 bletest_inc_adv_pkt_num(void)
@@ -173,20 +175,45 @@ bletest_init_advertising(void)
 
     /* Set scan response data */
     rc = host_hci_cmd_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
+    assert(rc == 0);
 }
 
 void
 bletest_init_scanner(void)
 {
     int rc;
+    uint8_t dev_addr[BLE_DEV_ADDR_LEN];
+    uint8_t filter_policy;
 
     /* Set scanning parameters */
     rc = host_hci_cmd_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                          BLETEST_CFG_SCAN_ITVL,
                                          BLETEST_CFG_SCAN_WINDOW,
                                          BLE_HCI_ADV_OWN_ADDR_PUBLIC,
-                                         BLE_HCI_SCAN_FILT_NO_WL);
+                                         BLETEST_CFG_SCAN_FILT_POLICY);
     assert(rc == 0);
+
+    filter_policy = BLETEST_CFG_SCAN_FILT_POLICY;
+    if (filter_policy & 1) {
+        /* Add some whitelist addresses */
+        dev_addr[0] = 0x91;
+        dev_addr[1] = 0xab;
+        dev_addr[2] = 0x1c;
+        dev_addr[3] = 0x7e;
+        dev_addr[4] = 0x4f;
+        dev_addr[5] = 0xd0;
+        rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
+        assert(rc == 0);
+
+        dev_addr[0] = 0x94;
+        dev_addr[1] = 0x0e;
+        dev_addr[2] = 0xf4;
+        dev_addr[3] = 0x8f;
+        dev_addr[4] = 0x20;
+        dev_addr[5] = 0xe7;
+        rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_RANDOM);
+        assert(rc == 0);
+    }
 }
 
 void 
@@ -215,7 +242,7 @@ host_task_handler(void *arg)
 #endif
 
     /* Init bletest varibles */
-    bletest_state = 0;
+    g_bletest_state = 0;
     g_next_os_time = os_time_get();
 
     /* We are initialized */
@@ -233,14 +260,14 @@ bletest_execute(void)
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Enable advertising */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-        if (bletest_state) {
+        if (g_bletest_state) {
             rc = host_hci_cmd_le_set_adv_enable(0);
             assert(rc == 0);
-            bletest_state = 0;
+            g_bletest_state = 0;
         } else {
             rc = host_hci_cmd_le_set_adv_enable(1);
             assert(rc == 0);
-            bletest_state = 1;
+            g_bletest_state = 1;
         }
         g_next_os_time += (OS_TICKS_PER_SEC * 60);
     }
@@ -248,14 +275,14 @@ bletest_execute(void)
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
     /* Enable scanning */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-        if (bletest_state) {
+        if (g_bletest_state) {
             rc = host_hci_cmd_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
-            bletest_state = 0;
+            g_bletest_state = 0;
         } else {
             rc = host_hci_cmd_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
-            bletest_state = 1;
+            g_bletest_state = 1;
         }
         g_next_os_time += (OS_TICKS_PER_SEC * 60);
     }
