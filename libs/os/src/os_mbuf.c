@@ -359,6 +359,80 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
     return (len > 0 ? -1 : 0);
 }
 
+void
+os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len)
+{
+    int len = req_len;
+    struct os_mbuf *m;
+    int count;
+
+    if ((m = mp) == NULL)
+        return;
+    if (len >= 0) {
+        /*
+         * Trim from head.
+         */
+        while (m != NULL && len > 0) {
+            if (m->om_len <= len) {
+                len -= m->om_len;
+                m->om_len = 0;
+                m = SLIST_NEXT(m, om_next);
+            } else {
+                m->om_len -= len;
+                m->om_data += len;
+                len = 0;
+            }
+        }
+        if (OS_MBUF_IS_PKTHDR(mp))
+            OS_MBUF_PKTHDR(mp)->omp_len -= (req_len - len);
+    } else {
+        /*
+         * Trim from tail.  Scan the mbuf chain,
+         * calculating its length and finding the last mbuf.
+         * If the adjustment only affects this mbuf, then just
+         * adjust and return.  Otherwise, rescan and truncate
+         * after the remaining size.
+         */
+        len = -len;
+        count = 0;
+        for (;;) {
+            count += m->om_len;
+            if (SLIST_NEXT(m, om_next) == (struct os_mbuf *)0)
+                break;
+            m = SLIST_NEXT(m, om_next);
+        }
+        if (m->om_len >= len) {
+            m->om_len -= len;
+            if (OS_MBUF_IS_PKTHDR(mp))
+                OS_MBUF_PKTHDR(mp)->omp_len -= len;
+            return;
+        }
+        count -= len;
+        if (count < 0)
+            count = 0;
+        /*
+         * Correct length for chain is "count".
+         * Find the mbuf with last data, adjust its length,
+         * and toss data from remaining mbufs on chain.
+         */
+        m = mp;
+        if (OS_MBUF_IS_PKTHDR(m))
+            OS_MBUF_PKTHDR(m)->omp_len = count;
+        for (; m; m = SLIST_NEXT(m, om_next)) {
+            if (m->om_len >= count) {
+                m->om_len = count;
+                if (SLIST_NEXT(m, om_next) != NULL) {
+                    os_mbuf_free_chain(omp, SLIST_NEXT(m, om_next));
+                    SLIST_NEXT(m, om_next) = NULL;
+                }
+                break;
+            }
+            count -= m->om_len;
+        }
+    }
+}
+
+
 #if 0
 
 /**

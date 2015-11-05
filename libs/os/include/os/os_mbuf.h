@@ -214,4 +214,7 @@ int os_mbuf_free(struct os_mbuf_pool *omp, struct os_mbuf *mb);
 /* Free a mbuf chain */
 int os_mbuf_free_chain(struct os_mbuf_pool *omp, struct os_mbuf *om);
 
+void os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len);
+
+
 #endif /* _OS_MBUF_H */ 
