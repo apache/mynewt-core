@@ -231,8 +231,8 @@ console_init(console_rx_cb rx_cb)
     struct console_tty *ct = &console_tty;
     int rc;
 
-    rc = hal_uart_init_cbs(CONSOLE_UART, console_tx_char, NULL, console_rx_char,
-      ct);
+    rc = hal_uart_init_cbs(CONSOLE_UART, console_tx_char, NULL, 
+            console_rx_char, ct);
     if (rc) {
         return rc;
     }

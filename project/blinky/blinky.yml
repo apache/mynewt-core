@@ -1,4 +1,5 @@
 project.name: blinky
 project.eggs:
-    - libs/console/stub
+    - libs/console/full
+    - libs/shell 
     - libs/os

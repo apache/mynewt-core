@@ -31,7 +31,7 @@
 #include <string.h>
 
 #define UART_MAX_BYTES_PER_POLL	64
-#define UART_POLLER_STACK_SZ	1024
+#define UART_POLLER_STACK_SZ	(1024)
 #define UART_POLLER_PRIO	0
 
 struct uart {
@@ -123,12 +123,28 @@ uart_poller(void *arg)
     }
 }
 
+static void
+set_nonblock(int fd)
+{
+    int flags;
+
+    flags = fcntl(fd, F_GETFL);
+    if (flags == -1) {
+        perror("fcntl(F_GETFL) fail");
+        return;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+        perror("fcntl(F_SETFL) fail");
+        return;
+    }
+}
+
+
 static int
 uart_pty(void)
 {
     int fd;
     int loop_slave;
-    int flags;
     struct termios tios;
     char pty_name[32];
 
@@ -149,16 +165,6 @@ uart_pty(void)
     tios.c_lflag = 0;
     if (tcsetattr(loop_slave, TCSAFLUSH, &tios) < 0) {
         perror("tcsetattr() failed");
-        goto err;
-    }
-
-    flags = fcntl(fd, F_GETFL);
-    if (flags == -1) {
-        perror("fcntl(F_GETFL) fail");
-        goto err;
-    }
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-        perror("fcntl(F_SETFL) fail");
         goto err;
     }
 
@@ -192,7 +198,12 @@ hal_uart_start_rx(int port)
 void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
-    /* XXXX fill this in */
+    if (port >= UART_CNT || uarts[port].u_open == 0) {
+        return;
+    }
+
+    /* XXX: Count statistics and add error checking here. */
+    (void) write(uarts[port].u_fd, &data, sizeof(data));
 }
 
 int
@@ -240,10 +251,14 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (uart->u_open) {
         return -1;
     }
+
     uart->u_fd = uart_pty();
+
     if (uart->u_fd < 0) {
         return -1;
     }
+    set_nonblock(uart->u_fd);
+
     uart->u_open = 1;
     return 0;
 }

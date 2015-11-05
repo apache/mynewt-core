@@ -16,6 +16,8 @@
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
+#include "console/console.h" 
+#include "shell/shell.h"
 #include <assert.h>
 #include <string.h>
 
@@ -35,6 +37,11 @@ static volatile int g_task1_loops;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
+
+#define SHELL_TASK_PRIO (3) 
+#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
+
 static volatile int g_task2_loops;
 
 /* Global test semaphore */
@@ -126,6 +133,10 @@ main(void)
     int rc;
 
     os_init();
+
+    shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
+
+    (void) console_init(shell_console_rx_cb);
     rc = init_tasks();
     os_start();
 

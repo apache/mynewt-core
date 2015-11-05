@@ -1,0 +1,31 @@
+/**
+ * Copyright (c) 2015 Runtime Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef __SHELL_H__ 
+#define __SHELL_H__
+
+typedef int (*shell_cmd_func_t)(char **argv, int argc);
+struct shell_cmd {
+    char *sc_cmd;
+    shell_cmd_func_t sc_cmd_func;
+    STAILQ_ENTRY(shell_cmd) sc_next;
+};
+
+int shell_cmd_register(struct shell_cmd *sc, char *cmd, 
+        shell_cmd_func_t func);
+void shell_console_rx_cb(int full_line);
+int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size);
+
+#endif /* __SHELL_H__ */

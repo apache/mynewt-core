@@ -1,0 +1,5 @@
+egg.name: libs/shell 
+egg.vers: 0.1
+egg.deps:
+    - libs/console/full
+    - libs/os

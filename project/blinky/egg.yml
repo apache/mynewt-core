@@ -2,4 +2,6 @@ egg.name: project/blinky
 egg.vers: 0.1
 egg.deps:
     - libs/os
+    - libs/console/full
+    - libs/shell
     - hw/hal
