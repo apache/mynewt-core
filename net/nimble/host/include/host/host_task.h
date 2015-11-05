@@ -19,24 +19,8 @@
 
 #include <inttypes.h>
 
-
-/**
- * ---
- * XXX: This is all temporary.
- */
-#define BLE_HOST_MAX_CONNECTIONS 16
-
-struct ble_host_connection {
-    uint16_t bc_handle;
-    int bc_fd;
-};
-
 extern int ble_host_listen_enabled;
-extern struct ble_host_connection
-    ble_host_connections[BLE_HOST_MAX_CONNECTIONS];
-extern int ble_host_num_connections;
 
-struct ble_host_connection *ble_host_find_connection(uint16_t con_handle);
 /** --- */
 
 void ble_host_task_handler(void *arg);

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <assert.h>
 #include <string.h>
 #include "os/os.h"
@@ -74,8 +75,15 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
 
+/* BLETEST variables */
+#define BLETEST_STACK_SIZE              (64)
+#define BLETEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
 uint32_t g_next_os_time;
 int g_bletest_state;
+struct os_eventq g_bletest_evq;
+struct os_callout_func g_bletest_timer;
+struct os_task bletest_task;
+os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 
 void
 bletest_inc_adv_pkt_num(void)
@@ -289,6 +297,46 @@ bletest_execute(void)
 #endif
 }
 
+void
+bletest_timer_cb(void *arg)
+{
+    /* Call the bletest code */
+    bletest_execute();
+
+    /* Re-start the timer */
+    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC);
+}
+
+void
+bletest_task_handler(void *arg)
+{
+    struct os_event *ev;
+    struct os_callout_func *cf;
+
+    /* Initialize the host timer */
+    os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
+                         NULL);
+
+    /* Initialize eventq */
+    os_eventq_init(&g_bletest_evq);
+
+    bletest_timer_cb(NULL);
+
+    while (1) {
+        ev = os_eventq_get(&g_bletest_evq);
+        switch (ev->ev_type) {
+        case OS_EVENT_T_TIMER:
+            cf = (struct os_callout_func *)ev;
+            assert(cf->cf_func);
+            cf->cf_func(cf->cf_arg);
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
+}
+
 /**
  * init_tasks
  *  
@@ -302,6 +350,10 @@ init_tasks(void)
 {
     os_task_init(&host_task, "host", host_task_handler, NULL, HOST_TASK_PRIO, 
                  OS_WAIT_FOREVER, host_stack, HOST_STACK_SIZE);
+
+    os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL, 
+                 BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack, 
+                 BLETEST_STACK_SIZE);
 
     tasks_initialized = 1;
 

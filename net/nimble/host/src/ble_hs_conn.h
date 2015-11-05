@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef H_ITF_
-#define H_ITF_
+#ifndef H_BLE_HS_CONN_
+#define H_BLE_HS_CONN_
 
-struct ble_att_chan;
-struct os_eventq;
+#include "os/queue.h"
+#include "ble_l2cap.h"
 
-int ble_att_chan_open_default(struct ble_att_chan *ac);
-int ble_att_chan_poll(struct ble_att_chan *c, struct os_eventq *evq);
-int ble_host_sim_send_data_connectionless(uint16_t con_handle, uint16_t cid,
-                                          uint8_t *data, uint16_t len);
-int ble_sim_listen(uint16_t con_handle);
-int ble_host_sim_poll(void);
+struct ble_hs_conn *ble_host_find_connection(uint16_t con_handle);
+
+struct ble_hs_conn {
+    SLIST_ENTRY(ble_hs_conn) bhc_next;
+    uint16_t bhc_handle;
+    int bhc_fd; // XXX Temporary.
+
+    struct ble_l2cap_chan_list bhc_channels;
+};
+
+struct ble_hs_conn *ble_hs_conn_alloc(void);
+void ble_hs_conn_free(struct ble_hs_conn *conn);
+struct ble_hs_conn *ble_hs_conn_find(uint16_t con_handle);
+struct ble_hs_conn *ble_hs_conn_first(void);
+int ble_hs_conn_init(void);
 
 #endif

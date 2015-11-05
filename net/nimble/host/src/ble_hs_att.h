@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef H_ITF_
-#define H_ITF_
+#ifndef H_BLE_HS_ATT_
+#define H_BLE_HS_ATT_
 
-struct ble_att_chan;
-struct os_eventq;
-
-int ble_att_chan_open_default(struct ble_att_chan *ac);
-int ble_att_chan_poll(struct ble_att_chan *c, struct os_eventq *evq);
-int ble_host_sim_send_data_connectionless(uint16_t con_handle, uint16_t cid,
-                                          uint8_t *data, uint16_t len);
-int ble_sim_listen(uint16_t con_handle);
-int ble_host_sim_poll(void);
+struct ble_l2cap_chan *ble_hs_att_create_chan(void);
 
 #endif

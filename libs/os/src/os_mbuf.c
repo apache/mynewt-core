@@ -322,6 +322,43 @@ err:
     return (NULL);
 }
 
+/*
+ * Copy data from an mbuf chain starting "off" bytes from the beginning,
+ * continuing for "len" bytes, into the indicated buffer.
+ *
+ * @return                      0 on success;
+ *                              -1 if the mbuf does not contain enough data.
+ */
+int
+os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
+{
+    unsigned int count;
+    uint8_t *udst;
+
+    udst = dst;
+
+    while (off > 0) {
+        if (!m) {
+            return (-1);
+        }
+
+        if (off < m->om_len)
+            break;
+        off -= m->om_len;
+        m = SLIST_NEXT(m, om_next);
+    }
+    while (len > 0) {
+        count = min(m->om_len - off, len);
+        memcpy(m->om_data + off, udst, count);
+        len -= count;
+        udst += count;
+        off = 0;
+        m = SLIST_NEXT(m, om_next);
+    }
+
+    return (len > 0 ? -1 : 0);
+}
+
 #if 0
 
 /**
