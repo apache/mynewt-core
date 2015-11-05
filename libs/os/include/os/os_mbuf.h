@@ -202,7 +202,7 @@ struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp);
 struct os_mbuf *os_mbuf_dup(struct os_mbuf_pool *omp, struct os_mbuf *m);
 
 /* Copy data from an mbuf to a flat buffer. */
-void os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
+int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
 
 /* Append data onto a mbuf */
 int os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *m, void *, 
