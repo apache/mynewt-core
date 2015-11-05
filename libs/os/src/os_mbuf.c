@@ -349,7 +349,7 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
     }
     while (len > 0) {
         count = min(m->om_len - off, len);
-        memcpy(m->om_data + off, udst, count);
+        memcpy(udst, m->om_data + off, count);
         len -= count;
         udst += count;
         off = 0;
