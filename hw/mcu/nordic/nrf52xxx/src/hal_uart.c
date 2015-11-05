@@ -126,7 +126,31 @@ hal_uart_start_rx(int port)
 void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
-    /* XXXX fill this in */
+    struct hal_uart *u;
+
+    u = &uart;
+    if (!u->u_open) {
+        return;
+    }
+
+    /* If we have started, wait until the current uart dma buffer is done */
+    if (u->u_tx_started) {
+        while (NRF_UARTE0->EVENTS_ENDTX == 0) {
+            /* Wait here until the dma is finished */
+        }
+    }
+
+    NRF_UARTE0->EVENTS_ENDTX = 0;
+    NRF_UARTE0->TXD.PTR = (uint32_t)&data;
+    NRF_UARTE0->TXD.MAXCNT = 1;
+    NRF_UARTE0->TASKS_STARTTX = 1;
+
+    while (NRF_UARTE0->EVENTS_ENDTX == 0) {
+        /* Wait till done */
+    }
+
+    /* Stop the uart */
+    NRF_UARTE0->TASKS_STOPTX = 1;
 }
 
 static void
