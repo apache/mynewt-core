@@ -24,7 +24,7 @@
 #include "nffs/nffs.h"
 #include "nffs/nffs_test.h"
 #include "nffs_test_priv.h"
-#include "../src/nffs_priv.h"
+#include "nffs_priv.h"
 
 int flash_native_memset(uint32_t offset, uint8_t c, uint32_t len);
 
