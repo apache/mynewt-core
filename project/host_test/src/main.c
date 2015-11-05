@@ -19,7 +19,7 @@
 #include "os/os.h"
 #include "nimble/ble.h"
 #include "host/host_hci.h"
-#include "host/host_task.h"
+#include "host/ble_hs.h"
 
 #define HOST_TASK_PRIO (1) 
 #define HOST_STACK_SIZE (OS_STACK_ALIGN(4096))
