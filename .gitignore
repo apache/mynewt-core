@@ -6,3 +6,5 @@ tags
 *~
 .nest
 .DS_Store
+*.swp
+*.swo

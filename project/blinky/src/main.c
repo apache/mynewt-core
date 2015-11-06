@@ -18,6 +18,7 @@
 #include "hal/hal_gpio.h"
 #include "console/console.h" 
 #include "shell/shell.h"
+#include "util/log.h"
 #include <assert.h>
 #include <string.h>
 
@@ -41,6 +42,12 @@ os_stack_t stack2[TASK2_STACK_SIZE];
 #define SHELL_TASK_PRIO (3) 
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
+
+
+struct uls_mem log_mem;
+struct ul_storage log_mem_storage;
+struct util_log my_log;
+uint8_t log_buf[64 * 1024];
 
 static volatile int g_task2_loops;
 
@@ -131,6 +138,15 @@ int
 main(void)
 {
     int rc;
+
+    log_mem.um_buf = log_buf;
+    log_mem.um_buf_size = 64 * 1024;
+
+    uls_mem_init(&log_mem_storage, &log_mem);
+    util_log_register("log", &my_log, &log_mem_storage);
+
+    util_log_write(&my_log, (uint8_t *) "bla", sizeof("bla")-1);
+    util_log_write(&my_log, (uint8_t *) "bab", sizeof("bab")-1);
 
     os_init();
 

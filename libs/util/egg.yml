@@ -1,0 +1,8 @@
+egg.name: libs/util 
+egg.vers: 0.1
+egg.deps:
+    - libs/os
+egg.deps.SHELL:
+    - libs/console/full 
+    - libs/shell 
+egg.cflags.SHELL: -DSHELL_PRESENT 
