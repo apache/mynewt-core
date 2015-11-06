@@ -66,13 +66,14 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 /* Some application configurations */
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_SCAN_IND
+#define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
-#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
+#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
 
 /* BLETEST variables */
@@ -169,7 +170,7 @@ bletest_init_advertising(void)
     adv_itvl = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
     adv.adv_channel_map = 0x07;
-    adv.adv_filter_policy = BLE_HCI_ADV_FILT_NONE;
+    adv.adv_filter_policy = BLETEST_CFG_ADV_FILT_POLICY;
     adv.own_addr_type = BLE_HCI_ADV_OWN_ADDR_PUBLIC;
     adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
     adv.adv_itvl_min = BLE_HCI_ADV_ITVL_NONCONN_MIN;
@@ -204,22 +205,13 @@ bletest_init_scanner(void)
     filter_policy = BLETEST_CFG_SCAN_FILT_POLICY;
     if (filter_policy & 1) {
         /* Add some whitelist addresses */
-        dev_addr[0] = 0x91;
-        dev_addr[1] = 0xab;
-        dev_addr[2] = 0x1c;
-        dev_addr[3] = 0x7e;
-        dev_addr[4] = 0x4f;
-        dev_addr[5] = 0xd0;
+        dev_addr[0] = 0x00;
+        dev_addr[1] = 0x00;
+        dev_addr[2] = 0x00;
+        dev_addr[3] = 0x08;
+        dev_addr[4] = 0x08;
+        dev_addr[5] = 0x08;
         rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
-        assert(rc == 0);
-
-        dev_addr[0] = 0x94;
-        dev_addr[1] = 0x0e;
-        dev_addr[2] = 0xf4;
-        dev_addr[3] = 0x8f;
-        dev_addr[4] = 0x20;
-        dev_addr[5] = 0xe7;
-        rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_RANDOM);
         assert(rc == 0);
     }
 }
