@@ -232,7 +232,7 @@ os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *om, void *data,
             space = remainder;
         }
 
-        memcpy(OS_MBUF_DATA(last, void *), data, space);
+        memcpy(OS_MBUF_DATA(last, void *) + last->om_len , data, space);
 
         last->om_len += space;
         data += space;
