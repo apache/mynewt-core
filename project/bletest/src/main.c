@@ -208,8 +208,8 @@ bletest_init_scanner(void)
         dev_addr[0] = 0x00;
         dev_addr[1] = 0x00;
         dev_addr[2] = 0x00;
-        dev_addr[3] = 0x08;
-        dev_addr[4] = 0x08;
+        dev_addr[3] = 0x88;
+        dev_addr[4] = 0x88;
         dev_addr[5] = 0x08;
         rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
         assert(rc == 0);
