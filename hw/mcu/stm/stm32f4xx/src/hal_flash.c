@@ -18,39 +18,56 @@
 #include "mcu/stm32f4xx_hal_def.h"
 #include "mcu/stm32f4xx_hal_flash.h"
 #include "mcu/stm32f4xx_hal_flash_ex.h"
-#include "hal/hal_flash.h"
+#include "hal/hal_flash_int.h"
 
-static const struct flash_area_desc {
-    uint32_t fad_offset;
-    uint32_t fad_length;
-    int fad_sector_id;
-} flash_area_descs[] = {
-    { 0x08000000, 16 * 1024, FLASH_SECTOR_0 },
-    { 0x08004000, 16 * 1024, FLASH_SECTOR_1 },
-    { 0x08008000, 16 * 1024, FLASH_SECTOR_2 },
-    { 0x0800c000, 16 * 1024, FLASH_SECTOR_3 },
-    { 0x08010000, 64 * 1024, FLASH_SECTOR_4 },
-    { 0x08020000, 128 * 1024, FLASH_SECTOR_5 },
-    { 0x08040000, 128 * 1024, FLASH_SECTOR_6 },
-    { 0x08060000, 128 * 1024, FLASH_SECTOR_7 },
-    { 0x08080000, 128 * 1024, FLASH_SECTOR_8 },
-    { 0x080a0000, 128 * 1024, FLASH_SECTOR_9 },
-    { 0x080c0000, 128 * 1024, FLASH_SECTOR_10 },
-    { 0x080e0000, 128 * 1024, FLASH_SECTOR_11 },
+static int stm32f4_flash_read(uint32_t address, void *dst, uint32_t num_bytes);
+static int stm32f4_flash_write(uint32_t address, const void *src,
+  uint32_t num_bytes);
+static int stm32f4_flash_erase_sector(uint32_t sector_address);
+static int stm32f4_flash_init(void);
+
+static const struct hal_flash_funcs stm32f4_flash_funcs = {
+    .hff_read = stm32f4_flash_read,
+    .hff_write = stm32f4_flash_write,
+    .hff_erase_sector = stm32f4_flash_erase_sector,
+    .hff_init = stm32f4_flash_init
 };
 
-#define FLASH_NUM_AREAS   (int)(sizeof flash_area_descs /       \
-                                sizeof flash_area_descs[0])
+static const uint32_t stm32f4_flash_sectors[] = {
+    0x08000000,
+    0x08004000,
+    0x08008000,
+    0x0800c000,
+    0x08010000,
+    0x08020000,
+    0x08040000,
+    0x08060000,
+    0x08080000,
+    0x080a0000,
+    0x080c0000,
+    0x080e0000
+};
 
-int
-flash_read(uint32_t address, void *dst, uint32_t num_bytes)
+#define STM32F4_FLASH_NUM_AREAS                                         \
+    (int)(sizeof(stm32f4_flash_sectors) /                               \
+      sizeof(stm32f4_flash_sectors[0]))
+
+const struct hal_flash stm32f4_flash_dev = {
+    .hf_itf = &stm32f4_flash_funcs,
+    .hf_size = 1024 * 1024,
+    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS,
+    .hf_sectors = stm32f4_flash_sectors
+};
+
+static int
+stm32f4_flash_read(uint32_t address, void *dst, uint32_t num_bytes)
 {
     memcpy(dst, (void *)address, num_bytes);
     return 0;
 }
 
-int
-flash_write(uint32_t address, const void *src, uint32_t num_bytes)
+static int
+stm32f4_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
 {
     const uint8_t *sptr;
     uint32_t i;
@@ -70,19 +87,19 @@ flash_write(uint32_t address, const void *src, uint32_t num_bytes)
 }
 
 static void
-flash_erase_sector_id(int sector_id)
+stm32f4_flash_erase_sector_id(int sector_id)
 {
     FLASH_Erase_Sector(sector_id, FLASH_VOLTAGE_RANGE_1);
 }
 
-int
-flash_erase_sector(uint32_t sector_address)
+static int
+stm32f4_flash_erase_sector(uint32_t sector_address)
 {
     int i;
 
-    for (i = 0; i < FLASH_NUM_AREAS; i++) {
-        if (flash_area_descs[i].fad_offset == sector_address) {
-            flash_erase_sector_id(flash_area_descs[i].fad_sector_id);
+    for (i = 0; i < STM32F4_FLASH_NUM_AREAS; i++) {
+        if (stm32f4_flash_sectors[i] == sector_address) {
+            stm32f4_flash_erase_sector_id(i);
             return 0;
         }
     }
@@ -90,34 +107,8 @@ flash_erase_sector(uint32_t sector_address)
     return -1;
 }
 
-int
-flash_erase(uint32_t address, uint32_t num_bytes)
-{
-    const struct flash_area_desc *area;
-    uint32_t end;
-    int i;
-
-    end = address + num_bytes;
-
-    for (i = 0; i < FLASH_NUM_AREAS; i++) {
-        area = flash_area_descs + i;
-
-        if (area->fad_offset >= end) {
-            return 0;
-        }
-
-        if (address >= area->fad_offset &&
-            address < area->fad_offset + area->fad_length) {
-
-            flash_erase_sector_id(area->fad_sector_id);
-        }
-    }
-
-    return 0;
-}
-
-int
-flash_init(void)
+static int
+stm32f4_flash_init(void)
 {
     int rc;
 

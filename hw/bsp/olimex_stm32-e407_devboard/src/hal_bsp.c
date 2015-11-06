@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "hal/hal_gpio.h"
+#include "hal/hal_flash_int.h"
 #include "mcu/stm32f407xx.h"
 #include "mcu/stm32f4xx_hal_gpio_ex.h"
 #include "mcu/stm32f4_bsp.h"
@@ -34,8 +35,21 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
     }
 };
 
-const struct stm32f4_uart_cfg *bsp_uart_config(int port)
+const struct stm32f4_uart_cfg *
+bsp_uart_config(int port)
 {
     assert(port < UART_CNT);
     return &uart_cfg[port];
+}
+
+struct hal_flash *
+bsp_flash_dev(uint8_t id)
+{
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+    return &stm32f4_flash_dev;
 }
