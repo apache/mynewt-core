@@ -347,7 +347,7 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
         off -= m->om_len;
         m = SLIST_NEXT(m, om_next);
     }
-    while (len > 0) {
+    while (len > 0 && m != NULL) {
         count = min(m->om_len - off, len);
         memcpy(udst, m->om_data + off, count);
         len -= count;
