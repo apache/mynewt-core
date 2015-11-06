@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -19,11 +19,13 @@
 
 #include <inttypes.h>
 
-int flash_read(uint32_t address, void *dst, uint32_t num_bytes);
-int flash_write(uint32_t address, const void *src, uint32_t num_bytes);
-int flash_erase_sector(uint32_t sector_address);
-int flash_erase(uint32_t address, uint32_t num_bytes);
-int flash_init(void);
+int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
+  uint32_t num_bytes);
+int hal_flash_write(uint8_t flash_id, uint32_t address, const void *src,
+  uint32_t num_bytes);
+int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
+int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
+int hal_flash_init(void);
 
 #endif
 
