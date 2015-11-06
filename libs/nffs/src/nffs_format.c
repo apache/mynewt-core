@@ -68,7 +68,7 @@ nffs_format_area(uint8_t area_idx, int is_scratch)
 
     area = nffs_areas + area_idx;
 
-    rc = flash_erase(area->na_offset, area->na_length);
+    rc = hal_flash_erase(area->na_flash_id, area->na_offset, area->na_length);
     if (rc != 0) {
         return rc;
     }
@@ -132,6 +132,7 @@ nffs_format_full(const struct nffs_area_desc *area_descs)
     for (i = 0; i < nffs_num_areas; i++) {
         nffs_areas[i].na_offset = area_descs[i].nad_offset;
         nffs_areas[i].na_length = area_descs[i].nad_length;
+        nffs_areas[i].na_flash_id = area_descs[i].nad_flash_id;
         nffs_areas[i].na_cur = 0;
         nffs_areas[i].na_gc_seq = 0;
 

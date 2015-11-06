@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -65,9 +65,12 @@ static uint8_t boot_test_slot_areas[] = {
 };
 
 /** Flash offsets of the two image slots. */
-static uint32_t boot_test_img_addrs[] = {
-    0x20000,
-    0x80000,
+static struct {
+    uint8_t flash_id;
+    uint32_t address;
+} boot_test_img_addrs[] = {
+    { 0, 0x20000 },
+    { 0, 0x80000 },
 };
 
 #define BOOT_TEST_NUM_IMG_AREAS \
@@ -94,14 +97,15 @@ boot_test_util_init_flash(void)
     const struct nffs_area_desc *area_desc;
     int rc;
 
-    rc = flash_init();
+    rc = hal_flash_init();
     TEST_ASSERT(rc == 0);
 
     for (area_desc = boot_test_area_descs;
          area_desc->nad_length != 0;
          area_desc++) {
 
-        rc = flash_erase(area_desc->nad_offset, area_desc->nad_length);
+        rc = hal_flash_erase(area_desc->nad_flash_id, area_desc->nad_offset,
+                             area_desc->nad_length);
         TEST_ASSERT(rc == 0);
     }
 
@@ -131,15 +135,19 @@ boot_test_util_copy_area(int from_area_idx, int to_area_idx)
     buf = malloc(from_area_desc->nad_length);
     TEST_ASSERT(buf != NULL);
 
-    rc = flash_read(from_area_desc->nad_offset, buf,
-                    from_area_desc->nad_length);
+    rc = hal_flash_read(from_area_desc->nad_flash_id,
+                        from_area_desc->nad_offset, buf,
+                        from_area_desc->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_erase(to_area_desc->nad_offset, to_area_desc->nad_length);
+    rc = hal_flash_erase(to_area_desc->nad_flash_id,
+                         to_area_desc->nad_offset,
+                         to_area_desc->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_write(to_area_desc->nad_offset, buf,
-                     to_area_desc->nad_length);
+    rc = hal_flash_write(to_area_desc->nad_flash_id,
+                         to_area_desc->nad_offset, buf,
+                         to_area_desc->nad_length);
     TEST_ASSERT(rc == 0);
 
     free(buf);
@@ -165,22 +173,28 @@ boot_test_util_swap_areas(int area_idx1, int area_idx2)
     buf2 = malloc(area_desc2->nad_length);
     TEST_ASSERT(buf2 != NULL);
 
-    rc = flash_read(area_desc1->nad_offset, buf1, area_desc1->nad_length);
+    rc = hal_flash_read(area_desc1->nad_flash_id, area_desc1->nad_offset,
+                        buf1, area_desc1->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_read(area_desc2->nad_offset, buf2, area_desc2->nad_length);
+    rc = hal_flash_read(area_desc2->nad_flash_id, area_desc2->nad_offset,
+                        buf2, area_desc2->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_erase(area_desc1->nad_offset, area_desc1->nad_length);
+    rc = hal_flash_erase(area_desc1->nad_flash_id, area_desc1->nad_offset,
+                         area_desc1->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_erase(area_desc2->nad_offset, area_desc2->nad_length);
+    rc = hal_flash_erase(area_desc2->nad_flash_id, area_desc2->nad_offset,
+                         area_desc2->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_write(area_desc1->nad_offset, buf2, area_desc1->nad_length);
+    rc = hal_flash_write(area_desc1->nad_flash_id, area_desc1->nad_offset,
+                         buf2, area_desc1->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_write(area_desc2->nad_offset, buf1, area_desc2->nad_length);
+    rc = hal_flash_write(area_desc2->nad_flash_id, area_desc2->nad_offset,
+                         buf1, area_desc2->nad_length);
     TEST_ASSERT(rc == 0);
 
     free(buf1);
@@ -192,6 +206,7 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
 {
     uint32_t image_off;
     uint32_t off;
+    uint8_t flash_id;
     uint8_t buf[256];
     int chunk_sz;
     int rc;
@@ -199,9 +214,10 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
 
     TEST_ASSERT(slot == 0 || slot == 1);
 
-    off = boot_test_img_addrs[slot];
+    flash_id = boot_test_img_addrs[slot].flash_id;
+    off = boot_test_img_addrs[slot].address;
 
-    rc = flash_write(off, hdr, sizeof *hdr);
+    rc = hal_flash_write(flash_id, off, hdr, sizeof *hdr);
     TEST_ASSERT(rc == 0);
 
     off += hdr->ih_hdr_size;
@@ -218,7 +234,7 @@ boot_test_util_write_image(const struct image_header *hdr, int slot)
             buf[i] = boot_test_util_byte_at(slot, image_off + i);
         }
 
-        rc = flash_write(off + image_off, buf, chunk_sz);
+        rc = hal_flash_write(flash_id, off + image_off, buf, chunk_sz);
         TEST_ASSERT(rc == 0);
 
         image_off += chunk_sz;
@@ -250,7 +266,8 @@ boot_test_util_verify_area(const struct nffs_area_desc *area_desc,
         img_size = hdr->ih_img_size;
 
         if (addr == image_addr) {
-            rc = flash_read(image_addr, &temp_hdr, sizeof temp_hdr);
+            rc = hal_flash_read(area_desc->nad_flash_id, image_addr,
+                                &temp_hdr, sizeof temp_hdr);
             TEST_ASSERT(rc == 0);
             TEST_ASSERT(memcmp(&temp_hdr, hdr, sizeof *hdr) == 0);
 
@@ -280,7 +297,7 @@ boot_test_util_verify_area(const struct nffs_area_desc *area_desc,
             chunk_sz = rem_area;
         }
 
-        rc = flash_read(addr, buf, chunk_sz);
+        rc = hal_flash_read(area_desc->nad_flash_id, addr, buf, chunk_sz);
         TEST_ASSERT(rc == 0);
 
         for (i = 0; i < chunk_sz; i++) {
@@ -317,12 +334,13 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
 
     while (1) {
         area_desc = boot_test_area_descs + area_idx;
-        if (area_desc->nad_offset == boot_test_img_addrs[1]) {
+        if (area_desc->nad_offset == boot_test_img_addrs[1].address &&
+            area_desc->nad_flash_id == boot_test_img_addrs[1].flash_id) {
             break;
         }
 
-        boot_test_util_verify_area(area_desc, hdr0, boot_test_img_addrs[0],
-                                   orig_slot_0);
+        boot_test_util_verify_area(area_desc, hdr0,
+                                   boot_test_img_addrs[0].address, orig_slot_0);
         area_idx++;
     }
 
@@ -332,8 +350,8 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
         }
 
         area_desc = boot_test_area_descs + area_idx;
-        boot_test_util_verify_area(area_desc, hdr1, boot_test_img_addrs[1],
-                                   orig_slot_1);
+        boot_test_util_verify_area(area_desc, hdr1,
+                                   boot_test_img_addrs[1].address, orig_slot_1);
         area_idx++;
     }
 }
@@ -367,7 +385,8 @@ TEST_CASE(boot_test_nv_ns_10)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
@@ -403,7 +422,8 @@ TEST_CASE(boot_test_nv_ns_01)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr, 1, NULL, 0xff);
     boot_test_util_verify_status_clear();
@@ -448,7 +468,8 @@ TEST_CASE(boot_test_nv_ns_11)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
     boot_test_util_verify_status_clear();
@@ -487,7 +508,8 @@ TEST_CASE(boot_test_vm_ns_10)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
@@ -526,7 +548,8 @@ TEST_CASE(boot_test_vm_ns_01)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr, 1, NULL, 0xff);
     boot_test_util_verify_status_clear();
@@ -574,7 +597,8 @@ TEST_CASE(boot_test_vm_ns_11_a)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
     boot_test_util_verify_status_clear();
@@ -622,7 +646,8 @@ TEST_CASE(boot_test_vm_ns_11_b)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
@@ -670,7 +695,8 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
@@ -719,7 +745,8 @@ TEST_CASE(boot_test_nv_bs_10)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
@@ -781,7 +808,8 @@ TEST_CASE(boot_test_nv_bs_11)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
@@ -846,7 +874,8 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
@@ -899,7 +928,8 @@ TEST_CASE(boot_test_vb_ns_11)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
     boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
     boot_test_util_verify_status_clear();
@@ -910,7 +940,8 @@ TEST_CASE(boot_test_vb_ns_11)
         TEST_ASSERT(rc == 0);
 
         TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-        TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0]);
+        TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+        TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
 
         boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
         boot_test_util_verify_status_clear();

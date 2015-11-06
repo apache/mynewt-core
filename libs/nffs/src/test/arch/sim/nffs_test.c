@@ -295,13 +295,14 @@ nffs_test_copy_area(const struct nffs_area_desc *from,
     buf = malloc(from->nad_length);
     TEST_ASSERT(buf != NULL);
 
-    rc = flash_read(from->nad_offset, buf, from->nad_length);
+    rc = hal_flash_read(from->nad_flash_id, from->nad_offset, buf,
+                        from->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_erase(to->nad_offset, to->nad_length);
+    rc = hal_flash_erase(from->nad_flash_id, to->nad_offset, to->nad_length);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_write(to->nad_offset, buf, to->nad_length);
+    rc = hal_flash_write(to->nad_flash_id, to->nad_offset, buf, to->nad_length);
     TEST_ASSERT(rc == 0);
 
     free(buf);

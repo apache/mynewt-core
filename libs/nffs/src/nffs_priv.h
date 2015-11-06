@@ -147,6 +147,7 @@ struct nffs_area {
     uint32_t na_cur;
     uint16_t na_id;
     uint8_t na_gc_seq;
+    uint8_t na_flash_id;
 };
 
 struct nffs_disk_object {

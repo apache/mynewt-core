@@ -69,6 +69,7 @@ extern struct nffs_config nffs_config;
 struct nffs_area_desc {
     uint32_t nad_offset;    /* Flash offset of start of area. */
     uint32_t nad_length;    /* Size of area, in bytes. */
+    uint8_t nad_flash_id;   /* Logical flash id */
 };
 
 struct nffs_file;

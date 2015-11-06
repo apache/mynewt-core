@@ -52,8 +52,8 @@ struct boot_status_entry *boot_status_entries;
  *
  * @return                      The flash offset of the image slot.
  */
-static uint32_t
-boot_slot_addr(int slot_num)
+static void
+boot_slot_addr(int slot_num, uint8_t *flash_id, uint32_t *address)
 {
     const struct nffs_area_desc *area_desc;
     uint8_t area_idx;
@@ -62,7 +62,8 @@ boot_slot_addr(int slot_num)
 
     area_idx = boot_req->br_slot_areas[slot_num];
     area_desc = boot_req->br_area_descs + area_idx;
-    return area_desc->nad_offset;
+    *flash_id = area_desc->nad_flash_id;
+    *address = area_desc->nad_offset;
 }
 
 /**
@@ -156,12 +157,15 @@ static int
 boot_slot_to_area_idx(int slot_num)
 {
     int i;
+    uint8_t flash_id;
+    uint32_t address;
 
     assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
     for (i = 0; boot_req->br_area_descs[i].nad_length != 0; i++) {
-        if (boot_req->br_area_descs[i].nad_offset ==
-            boot_slot_addr(slot_num)) {
+        boot_slot_addr(slot_num, &flash_id, &address);
+        if (boot_req->br_area_descs[i].nad_offset == address &&
+          boot_req->br_area_descs[i].nad_flash_id == flash_id) {
 
             return i;
         }
@@ -200,7 +204,8 @@ boot_erase_area(int area_idx)
     int rc;
 
     area_desc = boot_req->br_area_descs + area_idx;
-    rc = flash_erase(area_desc->nad_offset, area_desc->nad_length);
+    rc = hal_flash_erase(area_desc->nad_flash_id, area_desc->nad_offset,
+                         area_desc->nad_length);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -244,13 +249,15 @@ boot_copy_area(int from_area_idx, int to_area_idx)
         }
 
         from_addr = from_area_desc->nad_offset + off;
-        rc = flash_read(from_addr, buf, chunk_sz);
+        rc = hal_flash_read(from_area_desc->nad_flash_id, from_addr, buf,
+                            chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
         to_addr = to_area_desc->nad_offset + off;
-        rc = flash_write(to_addr, buf, chunk_sz);
+        rc = hal_flash_write(to_area_desc->nad_flash_id, to_addr, buf,
+                             chunk_sz);
         if (rc != 0) {
             return rc;
         }
@@ -508,7 +515,8 @@ boot_copy_image(uint32_t img1_length, uint32_t img2_length)
  * Builds a single default boot status for the specified image slot.
  */
 static void
-boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
+boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
+                      uint32_t length)
 {
     uint32_t offset;
     int area_idx;
@@ -517,7 +525,8 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 
     for (i = 0; i < boot_req->br_num_image_areas; i++) {
         area_idx = boot_req->br_image_areas[i];
-        if (boot_req->br_area_descs[area_idx].nad_offset == addr) {
+        if (boot_req->br_area_descs[area_idx].nad_offset == addr &&
+            boot_req->br_area_descs[area_idx].nad_flash_id == flash_id) {
             break;
         }
     }
@@ -549,12 +558,16 @@ boot_build_status_one(int image_num, uint32_t addr, uint32_t length)
 static void
 boot_build_status(void)
 {
+    uint8_t flash_id;
+    uint32_t address;
+
     memset(boot_status_entries, 0xff,
            boot_req->br_num_image_areas * sizeof *boot_status_entries);
 
     if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
         boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
-        boot_build_status_one(0, boot_slot_addr(0),
+        boot_slot_addr(0, &flash_id, &address);
+        boot_build_status_one(0, flash_id, address,
                               boot_img_hdrs[0].ih_img_size);
     } else {
         boot_status.bs_img1_length = 0;
@@ -562,7 +575,8 @@ boot_build_status(void)
 
     if (boot_img_hdrs[1].ih_magic == IMAGE_MAGIC) {
         boot_status.bs_img2_length = boot_img_hdrs[1].ih_img_size;
-        boot_build_status_one(1, boot_slot_addr(1),
+        boot_slot_addr(1, &flash_id, &address);
+        boot_build_status_one(1, flash_id, address,
                               boot_img_hdrs[1].ih_img_size);
     } else {
         boot_status.bs_img2_length = 0;
@@ -579,7 +593,7 @@ boot_init_flash(void)
 {
     int rc;
 
-    rc = flash_init();
+    rc = hal_flash_init();
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -614,7 +628,7 @@ boot_init_flash(void)
 int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
-    uint32_t image_addrs[BOOT_NUM_SLOTS];
+    struct boot_image_location image_addrs[BOOT_NUM_SLOTS];
     int slot;
     int rc;
     int i;
@@ -656,7 +670,8 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 
     /* Cache the flash address of each image slot. */
     for (i = 0; i < BOOT_NUM_SLOTS; i++) {
-        image_addrs[i] = boot_slot_addr(i);
+        boot_slot_addr(i, &image_addrs[i].bil_flash_id,
+                       &image_addrs[i].bil_address);
     }
 
     /* Attempt to read an image header from each slot. */
@@ -712,7 +727,8 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     }
 
     /* Always boot from the primary slot. */
-    rsp->br_image_addr = image_addrs[0];
+    rsp->br_flash_id = image_addrs[0].bil_flash_id;
+    rsp->br_image_addr = image_addrs[0].bil_address;
 
     /* After successful boot, there should not be a status file. */
     nffs_unlink(BOOT_PATH_STATUS);

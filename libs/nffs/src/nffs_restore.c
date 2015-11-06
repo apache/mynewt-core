@@ -771,12 +771,13 @@ nffs_restore_area_contents(int area_idx)
  *                              nonzero on failure.
  */
 static int
-nffs_restore_detect_one_area(uint32_t area_offset,
+nffs_restore_detect_one_area(uint8_t flash_id, uint32_t area_offset,
                              struct nffs_disk_area *out_disk_area)
 {
     int rc;
 
-    rc = flash_read(area_offset, out_disk_area, sizeof *out_disk_area);
+    rc = hal_flash_read(flash_id, area_offset, out_disk_area,
+                        sizeof *out_disk_area);
     if (rc != 0) {
         return NFFS_EFLASH_ERROR;
     }
@@ -898,7 +899,8 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
             goto err;
         }
 
-        rc = nffs_restore_detect_one_area(area_descs[i].nad_offset,
+        rc = nffs_restore_detect_one_area(area_descs[i].nad_flash_id,
+                                          area_descs[i].nad_offset,
                                           &disk_area);
         switch (rc) {
         case 0:
@@ -933,6 +935,7 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
 
             nffs_areas[cur_area_idx].na_offset = area_descs[i].nad_offset;
             nffs_areas[cur_area_idx].na_length = area_descs[i].nad_length;
+            nffs_areas[cur_area_idx].na_flash_id = area_descs[i].nad_flash_id;
             nffs_areas[cur_area_idx].na_gc_seq = disk_area.nda_gc_seq;
             nffs_areas[cur_area_idx].na_id = disk_area.nda_id;
 

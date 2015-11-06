@@ -82,7 +82,7 @@ tr_init(void)
 
     if (tr_config.tc_base_path != NULL) {
         if (tr_config.tc_area_descs != NULL) {
-            rc = flash_init();
+            rc = hal_flash_init();
             if (rc != 0) {
                 return -1;
             }

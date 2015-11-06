@@ -46,12 +46,18 @@ struct boot_status_entry {
     uint8_t bse_part_num;
 };
 
+struct boot_image_location {
+    uint8_t bil_flash_id;
+    uint32_t bil_address;
+};
+
 int boot_vect_read_test(struct image_version *out_ver);
 int boot_vect_read_main(struct image_version *out_ver);
 int boot_vect_delete_test(void);
 int boot_vect_delete_main(void);
 void boot_read_image_headers(struct image_header *out_headers,
-                             const uint32_t *addresses, int num_addresses);
+                             const struct boot_image_location *addresses,
+                             int num_addresses);
 int boot_read_status(struct boot_status *out_status,
                      struct boot_status_entry *out_entries,
                      int num_areas);

@@ -24,7 +24,7 @@ struct image_header;
 /** A request object instructing the boot loader how to proceed. */
 struct boot_req {
     /**
-     * Array of area descriptors indicating the layout of internal flash; must
+     * Array of area descriptors indicating the layout of flash(es); must
      * be terminated with a 0-length element.
      */
     struct nffs_area_desc *br_area_descs;
@@ -63,6 +63,7 @@ struct boot_rsp {
      * The flash offset of the image to execute.  Indicates the position of
      * the image header.
      */
+    uint8_t br_flash_id;
     uint32_t br_image_addr;
 };
 

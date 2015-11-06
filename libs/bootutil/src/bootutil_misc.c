@@ -99,11 +99,13 @@ boot_vect_delete_main(void)
 }
 
 static int
-boot_read_image_header(struct image_header *out_hdr, uint32_t flash_address)
+boot_read_image_header(struct image_header *out_hdr,
+                       const struct boot_image_location *loc)
 {
     int rc;
 
-    rc = flash_read(flash_address, out_hdr, sizeof *out_hdr);
+    rc = hal_flash_read(loc->bil_flash_id, loc->bil_address, out_hdr,
+                        sizeof *out_hdr);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -130,7 +132,8 @@ boot_read_image_header(struct image_header *out_hdr, uint32_t flash_address)
  */
 void
 boot_read_image_headers(struct image_header *out_headers,
-                        const uint32_t *addresses, int num_addresses)
+                        const struct boot_image_location *addresses,
+                        int num_addresses)
 {
     struct image_header *hdr;
     int rc;
@@ -138,7 +141,7 @@ boot_read_image_headers(struct image_header *out_headers,
 
     for (i = 0; i < num_addresses; i++) {
         hdr = out_headers + i;
-        rc = boot_read_image_header(hdr, addresses[i]);
+        rc = boot_read_image_header(hdr, &addresses[i]);
         if (rc != 0 || hdr->ih_magic != IMAGE_MAGIC) {
             memset(hdr, 0xff, sizeof *hdr);
         }
