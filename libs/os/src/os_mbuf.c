@@ -111,12 +111,16 @@ err:
 struct os_mbuf *
 os_mbuf_get_pkthdr(struct os_mbuf_pool *omp)
 {
+    struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
 
     om = os_mbuf_get(omp, 0);
     if (om) {
         om->om_flags |= OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR);
         om->om_data += omp->omp_hdr_len + sizeof(struct os_mbuf_pkthdr);
+
+        pkthdr = OS_MBUF_PKTHDR(om);
+        pkthdr->omp_len = 0;
     }
 
     return om;
