@@ -32,7 +32,7 @@ host_test_task_handler(void *arg)
 {
     int rc;
 
-    host_init();
+    ble_hs_init();
 
     while (1) {
         os_time_delay(1000);
@@ -40,7 +40,7 @@ host_test_task_handler(void *arg)
             rc = ble_host_send_data_connectionless(1, 4, (uint8_t *)"BLAH", 4);
             printf("ble_host_send_data_connectionless(); rc=%d\n", rc);
         } else {
-            ble_host_poll();
+            ble_hs_poll();
         }
     }
 }

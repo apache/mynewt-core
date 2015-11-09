@@ -25,6 +25,7 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "host/host_hci.h"
+#include "host/ble_hs.h"
 #include "controller/ble_ll.h"
 
 /* Init all tasks */
@@ -226,7 +227,7 @@ host_task_handler(void *arg)
     assert(rc == 0);
 
     /* Initialize host HCI */
-    host_hci_init();
+    ble_hs_init();
 
     /* Initialize the BLE LL */
     ble_ll_init();
@@ -249,7 +250,7 @@ host_task_handler(void *arg)
     console_printf("Nimble stack initialized");
 
     /* Call the host hci task */
-    host_hci_task(arg);
+    ble_hs_task_handler(arg);
 }
 
 void
