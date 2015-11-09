@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* mbed Microcontroller Library - cmsis_nvic for STM32F4
+/* mbed Microcontroller Library - cmsis_nvic for XXXX
  * Copyright (c) 2009-2011 ARM Limited. All rights reserved.
  *
  * CMSIS-style functionality to support dynamic vectors
@@ -31,7 +31,7 @@ NVIC_Relocate(void)
     uint32_t *new_location;
     int i;
 
-    /* 
+    /*
      * Relocate the vector table from its current position to the position
      * designated in the linker script.
      */
