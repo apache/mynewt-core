@@ -47,24 +47,23 @@ shell_log_dump_entry(struct util_log *log, void *arg, void *dptr, uint16_t len)
     int dlen;
     int rc;
 
-    printf("Dumping shell!\n");
-
     rc = util_log_read(log, dptr, &ueh, 0, sizeof(ueh)); 
-    printf("rc = %d\n", rc);
     if (rc != sizeof(ueh)) {
         goto err;
     }
 
     dlen = min(len-sizeof(ueh), 128);
-    printf("Reading %d bytes of data\n", dlen);
 
     rc = util_log_read(log, dptr, data, sizeof(ueh), dlen);
-    printf("rc2 = %d, dlen = %d\n", rc, dlen);
     if (rc < 0) {
         goto err;
     }
     data[rc] = 0;
 
+    /* XXX: This is evil.  newlib printf does not like 64-bit 
+     * values, and this causes memory to be overwritten.  Cast to a 
+     * unsigned 32-bit value for now.
+     */
     console_printf("[%d] %s\n", (uint32_t) ueh.ue_ts, data);
 
     return (0);
