@@ -38,6 +38,19 @@ hal_flash_init(void)
     return rc;
 }
 
+uint32_t
+hal_flash_sector_size(struct hal_flash *hf, int sec_idx)
+{
+    uint32_t end;
+
+    if (sec_idx < hf->hf_sector_cnt) {
+        end = hf->hf_sectors[sec_idx + 1];
+    } else {
+        end = hf->hf_sectors[0] + hf->hf_size;
+    }
+    return end - hf->hf_sectors[sec_idx];
+}
+
 static int
 hal_flash_check_addr(struct hal_flash *hf, uint32_t addr)
 {
@@ -123,11 +136,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     area = hf->hf_sectors;
 
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        if (i < hf->hf_sector_cnt) {
-            end_area = area[i + 1];
-        } else {
-            end_area = hf->hf_sectors[0] + hf->hf_size;
-        }
+        end_area = area[i] + hal_flash_sector_size(hf, i);
         if (address < end_area && end > area[i]) {
             /*
              * If some region of eraseable area falls inside sector,

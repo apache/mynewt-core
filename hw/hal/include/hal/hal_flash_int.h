@@ -35,6 +35,11 @@ struct hal_flash {
     const uint32_t *hf_sectors;
 };
 
+/*
+ * Return size of the flash sector. sec_idx is index to hf_sectors array.
+ */
+uint32_t hal_flash_sector_size(struct hal_flash *hf, int sec_idx);
+
 /* External function prototype supplied by BSP */
 struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 

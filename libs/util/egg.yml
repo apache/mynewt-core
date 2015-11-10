@@ -1,6 +1,7 @@
 egg.name: libs/util 
 egg.vers: 0.1
 egg.deps:
+    - hw/hal
     - libs/os
 egg.deps.SHELL:
     - libs/console/full 
