@@ -19,6 +19,9 @@
 #include <string.h>
 
 #include "util/log.h" 
+#include "util/cbmem.h" 
+
+#include <stdio.h>
 
 #ifdef SHELL_PRESENT
 
@@ -27,6 +30,7 @@
 
 struct shell_cmd shell_log_cmd;
 int shell_registered;
+
 #endif 
 
 static STAILQ_HEAD(, util_log) g_util_log_list = 
@@ -34,70 +38,72 @@ static STAILQ_HEAD(, util_log) g_util_log_list =
 
 
 #ifdef SHELL_PRESENT 
-static void 
-shell_dump_log(struct util_log *log)
+
+static int 
+shell_log_dump_entry(struct util_log *log, void *arg, void *dptr, uint16_t len) 
 {
-    struct ul_entry_hdr hdr; 
-    struct ul_storage *uls;
-    uint8_t bla[256];
-    ul_off_t cur_off;
+    struct ul_entry_hdr ueh;
+    char data[128];
+    int dlen;
     int rc;
 
-    uls = log->ul_uls;
+    printf("Dumping shell!\n");
 
-    cur_off = log->ul_start_off;
-
-    while (cur_off < log->ul_cur_end_off) {
-        rc = uls->uls_read(uls, cur_off, &hdr, sizeof(hdr));
-        if (rc != 0) {
-            goto err;
-        }
-
-        rc = uls->uls_read(uls, cur_off + sizeof(hdr), bla, 
-                hdr.ue_len);
-        if (rc != 0) {
-            goto err;
-        }
-        bla[hdr.ue_len] = 0;
-
-        console_printf("[%d] [%d] [%x] %s", hdr.ue_ts, hdr.ue_len, 
-                hdr.ue_flags, bla);
-
-        cur_off += UL_ENTRY_SIZE(&hdr);
+    rc = util_log_read(log, dptr, &ueh, 0, sizeof(ueh)); 
+    printf("rc = %d\n", rc);
+    if (rc != sizeof(ueh)) {
+        goto err;
     }
 
-    return;
+    dlen = min(len-sizeof(ueh), 128);
+    printf("Reading %d bytes of data\n", dlen);
+
+    rc = util_log_read(log, dptr, data, sizeof(ueh), dlen);
+    printf("rc2 = %d, dlen = %d\n", rc, dlen);
+    if (rc < 0) {
+        goto err;
+    }
+    data[rc] = 0;
+
+    console_printf("[%d] %s\n", (uint32_t) ueh.ue_ts, data);
+
+    return (0);
 err:
-    return;
+    return (rc);
 }
 
 static int 
 shell_log_dump_all(char **argv, int argc)
 {
     struct util_log *log;
+    int rc;
 
     STAILQ_FOREACH(log, &g_util_log_list, ul_next) {
-        shell_dump_log(log);
+        rc = util_log_walk(log, shell_log_dump_entry, NULL);
+        if (rc != 0) {
+            goto err;
+        }
     }
 
     return (0);
+err:
+    return (rc);
 }
+
 #endif 
 
 static int 
-uls_mem_read(struct ul_storage *uls, ul_off_t off, void *buf, int len)
+ulh_cbmem_append(struct util_log *log, void *buf, int len) 
 {
-    struct uls_mem *umem;
+    struct cbmem *cbmem;
     int rc;
 
-    umem = (struct uls_mem *) uls->uls_arg;
+    cbmem = (struct cbmem *) log->ul_ulh->ulh_arg;
 
-    if (off + len > umem->um_buf_size) {
-        rc = -1;
+    rc = cbmem_append(cbmem, buf, len);
+    if (rc != 0) {
         goto err;
     }
-
-    memcpy(buf, umem->um_buf + off, len);
 
     return (0);
 err:
@@ -105,19 +111,53 @@ err:
 }
 
 static int 
-uls_mem_write(struct ul_storage *uls, ul_off_t off, void *buf, int len)
+ulh_cbmem_read(struct util_log *log, void *dptr, void *buf, uint16_t offset, 
+        uint16_t len) 
 {
-    struct uls_mem *umem;
+    struct cbmem *cbmem;
+    struct cbmem_entry_hdr *hdr;
     int rc;
 
-    umem = (struct uls_mem *) uls->uls_arg;
+    cbmem = (struct cbmem *) log->ul_ulh->ulh_arg;
+    hdr = (struct cbmem_entry_hdr *) dptr;
 
-    if (off + len > umem->um_buf_size) {
-        rc = -1;
+    rc = cbmem_read(cbmem, hdr, buf, offset, len);
+
+    return (rc);
+}
+
+static int 
+ulh_cbmem_walk(struct util_log *log, util_log_walk_func_t walk_func, void *arg)
+{
+    struct cbmem *cbmem;
+    struct cbmem_entry_hdr *hdr;
+    struct cbmem_iter iter;
+    int rc;
+
+    cbmem = (struct cbmem *) log->ul_ulh->ulh_arg;
+
+    rc = cbmem_lock_acquire(cbmem);
+    if (rc != 0) {
         goto err;
     }
+    
+    cbmem_iter_start(cbmem, &iter);
+    while (1) {
+        hdr = cbmem_iter_next(cbmem, &iter);
+        if (!hdr) {
+            break;
+        }
 
-    memcpy(umem->um_buf + off, buf, len);
+        rc = walk_func(log, arg, (void *) hdr, hdr->ceh_len);
+        if (rc == 1) {
+            break;
+        }
+    }
+
+    rc = cbmem_lock_release(cbmem);
+    if (rc != 0) {
+        goto err;
+    }
 
     return (0);
 err:
@@ -125,30 +165,38 @@ err:
 }
 
 static int 
-uls_mem_size(struct ul_storage *uls, ul_off_t *size)
+ulh_cbmem_flush(struct util_log *log)
 {
-    *size = ((struct uls_mem *) uls->uls_arg)->um_buf_size;
-
-    return (0);
-}
-
-
-int 
-uls_mem_init(struct ul_storage *uls, struct uls_mem *umem)
-{
-    uls->uls_arg = umem;
-    uls->uls_read = uls_mem_read;
-    uls->uls_write = uls_mem_write;
-    uls->uls_size = uls_mem_size;
-
-    return (0);
-}
-
-int 
-util_log_register(char *name, struct util_log *log, struct ul_storage *uls)
-{
+    struct cbmem *cbmem;
     int rc;
 
+    cbmem = (struct cbmem *) log->ul_ulh->ulh_arg;
+    
+    rc = cbmem_flush(cbmem);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+int 
+util_log_cbmem_handler_init(struct ul_handler *handler, struct cbmem *cbmem)
+{
+    handler->ulh_read = ulh_cbmem_read;
+    handler->ulh_append = ulh_cbmem_append;
+    handler->ulh_walk = ulh_cbmem_walk;
+    handler->ulh_flush = ulh_cbmem_flush;
+    handler->ulh_arg = (void *) cbmem;
+
+    return (0);
+}
+
+int 
+util_log_register(char *name, struct util_log *log, struct ul_handler *ulh)
+{
 #ifdef SHELL_PRESENT 
     if (!shell_registered) {
         /* register the shell */
@@ -159,77 +207,23 @@ util_log_register(char *name, struct util_log *log, struct ul_storage *uls)
 #endif
 
     log->ul_name = name;
-    log->ul_start_off = 0;
-    log->ul_last_off = -1;
-    log->ul_cur_end_off = -1;
-
-    log->ul_uls = uls;
-
-    rc = uls->uls_size(uls, &log->ul_end_off);
-    if (rc != 0) {
-        goto err;
-    }
+    log->ul_ulh = ulh;
 
     STAILQ_INSERT_TAIL(&g_util_log_list, log, ul_next);
 
     return (0);
-err:
-    return (rc);
-}
-
-
-static int
-ul_insert_next(struct util_log *log, struct ul_entry_hdr *ue, 
-        uint8_t *data)
-{
-    struct ul_storage *uls;
-    struct ul_entry_hdr last;
-    ul_off_t write_off;
-    int rc;
-
-    uls = log->ul_uls;
-
-    if (log->ul_last_off != -1) {
-        rc = uls->uls_read(uls, log->ul_last_off, &last, sizeof(last));
-        if (rc != 0) {
-            goto err;
-        }
-
-        write_off = log->ul_last_off + UL_ENTRY_SIZE(&last);
-    } else {
-        write_off = 0;
-    }
-
-    rc = uls->uls_write(uls, write_off, ue, sizeof(*ue));
-    if (rc != 0) {
-        goto err;
-    }
-
-    rc = uls->uls_write(uls, write_off + sizeof(*ue), 
-            data, ue->ue_len);
-    if (rc != 0) {
-        goto err;
-    }
-
-    log->ul_last_off = write_off;
-    log->ul_cur_end_off = write_off + UL_ENTRY_SIZE(ue);
-
-    return (0);
-err:
-    return (rc);
 }
 
 int
-util_log_write(struct util_log *log, uint8_t *data, uint16_t len)
+util_log_append(struct util_log *log, uint8_t *data, uint16_t len)
 {
-    struct ul_entry_hdr ue;
+    struct ul_entry_hdr *ue;
     int rc;
 
-    ue.ue_ts = os_time_get();
-    ue.ue_len = len;
-    ue.ue_flags = 0;
+    ue = (struct ul_entry_hdr *) data;
+    ue->ue_ts = (int64_t) os_time_get();
 
-    rc = ul_insert_next(log, &ue, data);
+    rc = log->ul_ulh->ulh_append(log, data, len + sizeof(*ue));
     if (rc != 0) {
         goto err;
     }
@@ -239,4 +233,43 @@ err:
     return (rc);
 }
 
+int 
+util_log_walk(struct util_log *log, util_log_walk_func_t walk_func, void *arg)
+{
+    int rc;
 
+    rc = log->ul_ulh->ulh_walk(log, walk_func, arg);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+int 
+util_log_read(struct util_log *log, void *dptr, void *buf, uint16_t off, 
+        uint16_t len)
+{
+    int rc;
+
+    rc = log->ul_ulh->ulh_read(log, dptr, buf, off, len);
+
+    return (rc);
+}
+
+int 
+util_log_flush(struct util_log *log)
+{
+    int rc;
+
+    rc = log->ul_ulh->ulh_flush(log);
+    if (rc != 0) {
+        goto err;
+    } 
+
+    return (0);
+err:
+    return (rc);
+}

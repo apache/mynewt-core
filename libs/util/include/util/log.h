@@ -16,48 +16,46 @@
 #ifndef __UTIL_LOG_H__ 
 #define __UTIL_LOG_H__
 
-typedef int32_t ul_off_t;
+#include "util/cbmem.h"
+#include <os/queue.h>
 
-/* Forward declare for function pointers */
-struct ul_storage;
+struct util_log;
 
-typedef int (*ul_storage_read_func_t)(struct ul_storage *, ul_off_t off, 
-        void *buf, int len);
-typedef int (*ul_storage_write_func_t)(struct ul_storage *, ul_off_t off, 
-        void *buf, int len);
-typedef int (*ul_storage_size_func_t)(struct ul_storage *uls, ul_off_t *size);
+typedef int (*util_log_walk_func_t)(struct util_log *, void *arg, void *offset, 
+        uint16_t len);
 
-struct uls_mem {
-    uint8_t *um_buf;
-    ul_off_t um_buf_size;
-};
+typedef int (*ulh_read_func_t)(struct util_log *, void *dptr, void *buf, 
+        uint16_t offset, uint16_t len);
+typedef int (*ulh_append_func_t)(struct util_log *, void *buf, int len);
+typedef int (*ulh_walk_func_t)(struct util_log *, 
+        util_log_walk_func_t walk_func, void *arg);
+typedef int (*ulh_flush_func_t)(struct util_log *);
 
-struct ul_storage {
-    ul_storage_read_func_t uls_read;
-    ul_storage_write_func_t uls_write;
-    ul_storage_size_func_t uls_size;
-    void *uls_arg;
+struct ul_handler {
+    ulh_read_func_t ulh_read;
+    ulh_append_func_t ulh_append;
+    ulh_walk_func_t ulh_walk;
+    ulh_flush_func_t ulh_flush;
+    void *ulh_arg;
 };
 
 struct ul_entry_hdr {
-    uint64_t ue_ts;
-    uint16_t ue_len;
-    uint16_t ue_flags;
+    int64_t ue_ts;
 }; 
-#define UL_ENTRY_SIZE(__ue) (sizeof(struct ul_entry_hdr) + (__ue)->ue_len)
 
 struct util_log {
     char *ul_name;
-    struct ul_storage *ul_uls;
-    ul_off_t ul_start_off;
-    ul_off_t ul_last_off;
-    ul_off_t ul_cur_end_off;
-    ul_off_t ul_end_off;
+    struct ul_handler *ul_ulh;
     STAILQ_ENTRY(util_log) ul_next;
 };
 
-int uls_mem_init(struct ul_storage *uls, struct uls_mem *umem);
-int util_log_register(char *name, struct util_log *log, struct ul_storage *uls);
-int util_log_write(struct util_log *log, uint8_t *data, uint16_t len);
+int util_log_cbmem_handler_init(struct ul_handler *, struct cbmem *);
+int util_log_register(char *name, struct util_log *log, struct ul_handler *);
+int util_log_append(struct util_log *log, uint8_t *data, uint16_t len);
+int util_log_read(struct util_log *log, void *dptr, void *buf, uint16_t off, 
+        uint16_t len);
+int util_log_walk(struct util_log *log, util_log_walk_func_t walk_func, 
+        void *arg);
+int util_log_flush(struct util_log *log);
 
 #endif /* __UTIL_LOG_H__ */
