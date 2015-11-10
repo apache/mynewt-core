@@ -6,3 +6,4 @@ egg.debugscript: nrf52pdk_debug.sh
 egg.cflags: -DNRF52
 egg.deps: 
     - hw/mcu/nordic/nrf52xxx
+    - net/nimble/drivers/nrf52
