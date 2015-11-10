@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-/* Linker script for STM32F407 when running from flash and not using the bootloader */
+
+/* Linker script for STM32F407 when running from flash and using the bootloader */
 
 /* Linker script to configure memory regions. */
 MEMORY
 { 
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 1024K
-  CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000 
+  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 384K /* First image slot. */
+  CCM (rwx) :   ORIGIN = 0x10000000, LENGTH = 64K
+  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 128K
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -55,12 +55,18 @@ MEMORY
  *   __corebss_start__
  *   __corebss_end__
  *   __ecoredata
- *   __ecorebs
+ *   __ecorebss
  */
 ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    /* Reserve space at the start of the image for the header. */
+    .imghdr (NOLOAD):
+    {
+        . = . + 0x20;
+    } > FLASH
+
     .text :
     {
         __isr_vector_start = .;

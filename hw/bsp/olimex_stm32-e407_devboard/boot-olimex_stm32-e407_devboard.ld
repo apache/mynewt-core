@@ -19,9 +19,9 @@
 /* Linker script to configure memory regions. */
 MEMORY
 { 
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 1024K
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K
   CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -87,18 +87,18 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
-    } > RAM
+    } > FLASH
 
     .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > RAM
+    } > FLASH
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > RAM
+    } > FLASH
 
     __exidx_end = .;
 
