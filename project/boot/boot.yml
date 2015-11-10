@@ -5,3 +5,4 @@ project.eggs:
     - libs/bootutil
     - libs/nffs
     - libs/console/stub
+    - libs/util

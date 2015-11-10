@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,42 +17,14 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include "mcu/stm32f4xx.h"
+#include <util/flash_map.h>
+#include <os/os.h>
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 
-/** Internal flash layout. */
-static struct nffs_area_desc boot_area_descs[] = {
-    [0] =  { 0x08000000, 16 * 1024 },
-    [1] =  { 0x08004000, 16 * 1024 },
-    [2] =  { 0x08008000, 16 * 1024 },
-    [3] =  { 0x0800c000, 16 * 1024 },
-    [4] =  { 0x08010000, 64 * 1024 },
-    [5] =  { 0x08020000, 128 * 1024 },
-    [6] =  { 0x08040000, 128 * 1024 },
-    [7] =  { 0x08060000, 128 * 1024 },
-    [8] =  { 0x08080000, 128 * 1024 },
-    [9] =  { 0x080a0000, 128 * 1024 },
-    [10] = { 0x080c0000, 128 * 1024 },
-    [11] = { 0x080e0000, 128 * 1024 },
-    { 0, 0 },
-};
-
-/** Contains indices of the areas which can contain image data. */
-static uint8_t boot_img_areas[] = {
-    5, 6, 7, 8, 9, 10, 11,
-};
-
-/** Areas representing the beginning of image slots. */
-static uint8_t boot_slot_areas[] = {
-    5, 8,
-};
-
-#define BOOT_NUM_IMG_AREAS \
-    ((int)(sizeof boot_img_areas / sizeof boot_img_areas[0]))
-
-#define BOOT_AREA_IDX_SCRATCH 11
+#define NFFS_AREA_MAX	16
+#define SEC_CNT_MAX	8
 
 /**
  * Boots the image described by the supplied image header.
@@ -93,16 +65,54 @@ boot_jump(const struct image_header *hdr, uint32_t image_addr)
 int
 main(void)
 {
+    struct nffs_area_desc descs[NFFS_AREA_MAX];
+    /** Contains indices of the areas which can contain image data. */
+    struct flash_area secs[SEC_CNT_MAX];
+    /** Areas representing the beginning of image slots. */
+    uint8_t img_areas[NFFS_AREA_MAX];
+    uint8_t img_starts[2];
+    int cnt;
     struct boot_rsp rsp;
     int rc;
-
-    const struct boot_req req = {
-        .br_area_descs = boot_area_descs,
-        .br_image_areas = boot_img_areas,
-        .br_slot_areas = boot_slot_areas,
-        .br_num_image_areas = BOOT_NUM_IMG_AREAS,
-        .br_scratch_area_idx = BOOT_AREA_IDX_SCRATCH,
+    int i, j;
+    struct boot_req req = {
+        .br_area_descs = descs,
+        .br_image_areas = img_areas,
+        .br_slot_areas = img_starts,
     };
+
+    os_init();
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, NULL);
+    assert(rc == 0 && cnt < SEC_CNT_MAX);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, secs);
+    img_starts[0] = 0;
+    for (i = 0; i < cnt; i++) {
+        img_areas[i] = i;
+        descs[i].nad_flash_id = secs[i].fa_flash_id;
+        descs[i].nad_offset = secs[i].fa_off;
+        descs[i].nad_length = secs[i].fa_size;
+    }
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, secs);
+    if (rc == 0 && cnt > 0) {
+        img_starts[1] = i;
+        for (j = 0; j < cnt; j++, i++) {
+            img_areas[i] = i;
+            descs[i].nad_flash_id = secs[j].fa_flash_id;
+            descs[i].nad_offset = secs[j].fa_off;
+            descs[i].nad_length = secs[j].fa_size;
+        }
+    }
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, secs);
+    if (rc == 0) {
+        for (j = 0; j < cnt; j++) {
+            img_areas[i] = i;
+            descs[i].nad_flash_id = secs[j].fa_flash_id;
+            descs[i].nad_offset = secs[j].fa_off;
+            descs[i].nad_length = secs[j].fa_size;
+        }
+    }
+    req.br_num_image_areas = i;
+    req.br_scratch_area_idx = i - 1;
 
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
