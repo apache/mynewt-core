@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -26,7 +26,7 @@
 
 #define IMAGE_HEADER_CRC_OFFSET     4
 
-#define IMAGE_HEADER_SIZE           28
+#define IMAGE_HEADER_SIZE           32
 
 struct image_version {
     uint8_t iv_major;
@@ -43,6 +43,7 @@ struct image_header {
     uint32_t ih_img_size; /* Does not include header. */
     uint32_t ih_flags;
     struct image_version ih_ver;
+    uint32_t _pad;
 };
 
 _Static_assert(sizeof(struct image_header) == IMAGE_HEADER_SIZE,

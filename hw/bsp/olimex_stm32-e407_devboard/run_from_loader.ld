@@ -19,9 +19,9 @@
 /* Linker script to configure memory regions. */
 MEMORY
 { 
-  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 0x60000 /* First image slot. */
+  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 384K /* First image slot. */
   CCM (rwx) :   ORIGIN = 0x10000000, LENGTH = 64K
-  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 0x20000 
+  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 128K
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -64,7 +64,7 @@ SECTIONS
     /* Reserve space at the start of the image for the header. */
     .imghdr (NOLOAD):
     {
-        . = . + 0x1c;
+        . = . + 0x20;
     } > FLASH
 
     .text :
