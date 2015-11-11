@@ -3,6 +3,7 @@ egg.vers: 0.1
 egg.deps:
     - hw/hal
     - libs/os
+    - libs/testutil
 egg.deps.SHELL:
     - libs/console/full 
     - libs/shell 
