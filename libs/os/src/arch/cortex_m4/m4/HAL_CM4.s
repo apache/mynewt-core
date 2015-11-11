@@ -225,6 +225,12 @@ os_default_irq_asm:
         .fnend
         .size   os_default_irq_asm, .-os_default_irq_asm
 
+	/*
+	 * Prevent libgcc unwind stuff from getting pulled in.
+	 */
+        .section ".data"
+	.global __aeabi_unwind_cpp_pr0
+__aeabi_unwind_cpp_pr0:
         .end
 
 /*----------------------------------------------------------------------------
