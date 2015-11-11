@@ -71,6 +71,32 @@ nffs_restore_validate_block_chain(struct nffs_hash_entry *last_block_entry)
     return 0;
 }
 
+static void
+u32toa(char *dst, uint32_t val)
+{
+	uint8_t tmp;
+	int idx = 0;
+	int i;
+	int print = 0;
+
+	for (i = 0; i < 8; i++) {
+		tmp = val >> 28;
+		if (tmp || i == 7) {
+			print = 1;
+		}
+		if (tmp < 10) {
+			tmp += '0';
+		} else {
+			tmp += 'a' - 10;
+		}
+		if (print) {
+			dst[idx++] = tmp;
+		}
+		val <<= 4;
+	}
+	dst[idx++] = '\0';
+}
+
 /**
  * If the specified inode entry is a dummy directory, this function moves
  * all its children to the lost+found directory.
@@ -105,8 +131,9 @@ nffs_restore_migrate_orphan_children(struct nffs_inode_entry *inode_entry)
     /* Create a directory in lost+found to hold the dummy directory's
      * contents.
      */
-    snprintf(buf, sizeof buf, "/lost+found/%lu",
-            (unsigned long)inode_entry->nie_hash_entry.nhe_id);
+    strcpy(buf, "/lost+found/");
+    u32toa(&buf[strlen(buf)], inode_entry->nie_hash_entry.nhe_id);
+
     rc = nffs_path_new_dir(buf, &lost_found_sub);
     if (rc != 0 && rc != NFFS_EEXIST) {
         return rc;
