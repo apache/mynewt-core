@@ -18,8 +18,8 @@
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
 
-const char *tu_suite_name;
-int tu_suite_failed;
+const char *tu_suite_name = 0;
+int tu_suite_failed = 0;
 
 static void
 tu_suite_set_name(const char *name)
