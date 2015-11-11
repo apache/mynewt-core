@@ -4,3 +4,5 @@ project.eggs:
     - net/nimble/controller
     - net/nimble/host
     - libs/console/full
+project.identities:
+    - BLE_DEVICE
