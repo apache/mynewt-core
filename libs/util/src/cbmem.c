@@ -215,6 +215,12 @@ cbmem_read(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr, void *buf,
         len = hdr->ceh_len - off;
     }
 
+    if (off > hdr->ceh_len) {
+        rc = -1;
+        cbmem_lock_release(cbmem);
+        goto err;
+    }
+
     memcpy(buf, (uint8_t *) hdr + sizeof(*hdr) + off, len);
 
     rc = cbmem_lock_release(cbmem);
@@ -229,8 +235,7 @@ err:
 
 
 int 
-cbmem_walk(struct cbmem *cbmem, cbmem_walk_func_t walk_func, 
-        void *arg)
+cbmem_walk(struct cbmem *cbmem, cbmem_walk_func_t walk_func, void *arg)
 {
     struct cbmem_entry_hdr *hdr;
     struct cbmem_iter iter;
