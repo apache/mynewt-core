@@ -4,7 +4,6 @@ egg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
 egg.downloadscript: nrf52pdk_download.sh
 egg.debugscript: nrf52pdk_debug.sh
 egg.cflags: -DNRF52
-egg.caps: ble_driver 
 egg.deps: 
     - hw/mcu/nordic/nrf52xxx
 egg.deps.BLE_DEVICE: 
