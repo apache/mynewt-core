@@ -29,14 +29,10 @@
 
 STATS_SECT_START(stats)
     STATS_SECT_ENTRY(num_registered)
-    STATS_SECT_ENTRY(garbage1)
-    STATS_SECT_ENTRY(garbage2)
 STATS_SECT_END(stats)
 
 STATS_NAME_START(stats)
     STATS_NAME(stats, num_registered)
-    STATS_NAME(stats, garbage1)
-    STATS_NAME(stats, garbage2)
 STATS_NAME_END(stats)
 
 STAILQ_HEAD(, stats_hdr) g_stats_registry = 
