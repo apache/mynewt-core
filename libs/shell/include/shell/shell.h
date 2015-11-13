@@ -16,7 +16,7 @@
 #ifndef __SHELL_H__ 
 #define __SHELL_H__
 
-typedef int (*shell_cmd_func_t)(char **argv, int argc);
+typedef int (*shell_cmd_func_t)(int argc, char **argv);
 struct shell_cmd {
     char *sc_cmd;
     shell_cmd_func_t sc_cmd_func;

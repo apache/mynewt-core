@@ -126,7 +126,7 @@ shell_cmd(char *cmd, char **argv, int argc)
     }
 
     if (sc) {
-        sc->sc_cmd_func(argv, argc);
+        sc->sc_cmd_func(argc, argv);
     } else {
         console_printf("Unknown command %s\n", cmd);
     }
@@ -219,7 +219,7 @@ shell_console_rx_cb(int full_line)
 }
 
 static int
-shell_echo_cmd(char **argv, int argc)
+shell_echo_cmd(int argc, char **argv)
 {
     int i; 
 

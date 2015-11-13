@@ -233,7 +233,6 @@ err:
     return (-1);
 }
 
-
 int 
 cbmem_walk(struct cbmem *cbmem, cbmem_walk_func_t walk_func, void *arg)
 {

@@ -29,7 +29,7 @@
 #include <console/console.h> 
 
 struct shell_cmd shell_log_cmd;
-int shell_registered;
+uint8_t shell_registered;
 
 #endif 
 
@@ -72,7 +72,7 @@ err:
 }
 
 static int 
-shell_log_dump_all(char **argv, int argc)
+shell_log_dump_all(int argc, char **argv)
 {
     struct util_log *log;
     int rc;

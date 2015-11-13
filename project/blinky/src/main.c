@@ -19,6 +19,7 @@
 #include "console/console.h" 
 #include "shell/shell.h"
 #include "util/log.h"
+#include "util/stats.h" 
 #include <assert.h>
 #include <string.h>
 
@@ -155,6 +156,9 @@ main(void)
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
 
     (void) console_init(shell_console_rx_cb);
+
+    stats_module_init();
+
     rc = init_tasks();
     os_start();
 
