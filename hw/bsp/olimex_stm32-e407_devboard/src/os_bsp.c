@@ -23,8 +23,9 @@ static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
         .fa_flash_id = 0,	/* internal flash */
         .fa_off = 0x08000000,	/* beginning */
-        .fa_size = (64 * 1024)  /* XXX need to shrink this */
+        .fa_size = (32 * 1024)
     },
+    /* 2 * 16K and 1*64K sectors here */
     [FLASH_AREA_IMAGE_0] = {
         .fa_flash_id = 0,
         .fa_off = 0x08020000,
