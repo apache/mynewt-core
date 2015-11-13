@@ -34,9 +34,6 @@ int init_tasks(void);
 
 /* Task 1 */
 #define HOST_TASK_PRIO      (1)
-#define HOST_STACK_SIZE     OS_STACK_ALIGN(256)
-struct os_task host_task;
-os_stack_t host_stack[HOST_STACK_SIZE];
 
 /* For LED toggling */
 int g_led_pin;
@@ -227,7 +224,7 @@ host_task_handler(void *arg)
     assert(rc == 0);
 
     /* Initialize host HCI */
-    ble_hs_init();
+    ble_hs_init(HOST_TASK_PRIO);
 
     /* Initialize the BLE LL */
     ble_ll_init();
@@ -341,9 +338,6 @@ bletest_task_handler(void *arg)
 int
 init_tasks(void)
 {
-    os_task_init(&host_task, "host", host_task_handler, NULL, HOST_TASK_PRIO, 
-                 OS_WAIT_FOREVER, host_stack, HOST_STACK_SIZE);
-
     os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL, 
                  BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack, 
                  BLETEST_STACK_SIZE);
