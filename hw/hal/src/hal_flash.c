@@ -43,7 +43,7 @@ hal_flash_sector_size(struct hal_flash *hf, int sec_idx)
 {
     uint32_t end;
 
-    if (sec_idx < hf->hf_sector_cnt) {
+    if (sec_idx < hf->hf_sector_cnt - 1) {
         end = hf->hf_sectors[sec_idx + 1];
     } else {
         end = hf->hf_sectors[0] + hf->hf_size;
