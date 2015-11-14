@@ -17,12 +17,13 @@
 #include <assert.h>
 #include <stddef.h>
 #include "testutil/testutil.h"
-#include "util_test_priv.h" 
+#include "util_test_priv.h"
 
 int
 util_test_all(void)
 {
     cbmem_test_suite();
+    flash_map_test_suite();
     return tu_case_failed;
 }
 

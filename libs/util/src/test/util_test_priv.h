@@ -18,5 +18,6 @@
 #define __UTIL_TEST_PRIV_
 
 int cbmem_test_suite(void);
+int flash_map_test_suite(void);
 
 #endif
