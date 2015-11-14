@@ -60,4 +60,6 @@ void os_arch_restore_sr(int);
 os_error_t os_arch_os_init(void);
 os_error_t os_arch_os_start(void);
 
+void os_bsp_init(void);
+
 #endif /* _OS_ARCH_SIM_H */
