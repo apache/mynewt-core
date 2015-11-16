@@ -89,6 +89,12 @@ TEST_CASE(flash_map_test_case_2)
     rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &sec_cnt, secs);
     TEST_ASSERT_FATAL(rc == 0, "flash_area_to_sectors failed");
 
+    for (i = 0; i < sec_cnt; i++) {
+        rc = hal_flash_erase_sector(secs[i].fa_flash_id, secs[i].fa_off);
+        TEST_ASSERT_FATAL(rc == 0, "hal_flash_erase_sector() failed");
+    }
+    TEST_ASSERT_FATAL(rc == 0, "read data != write data");
+
     memset(wd, 0xa5, sizeof(wd));
 
     /* write stuff to beginning of every sector */
