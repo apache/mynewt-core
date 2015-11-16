@@ -141,7 +141,7 @@ set_nonblock(int fd)
 
 
 static int
-uart_pty(void)
+uart_pty(int port)
 {
     int fd;
     int loop_slave;
@@ -168,7 +168,7 @@ uart_pty(void)
         goto err;
     }
 
-    printf("console at %s\n", pty_name);
+    printf("uart%d at %s\n", port, pty_name);
     return fd;
 err:
     close(fd);
@@ -252,8 +252,12 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         return -1;
     }
 
-    uart->u_fd = uart_pty();
-
+    if (port != CONSOLE_UART) {
+        uart->u_fd = uart_pty(port);
+    } else {
+        uart->u_fd = fileno_unlocked(stdout);
+        printf("uart%d at stdout\n", port);
+    }
     if (uart->u_fd < 0) {
         return -1;
     }
