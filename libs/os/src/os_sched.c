@@ -116,7 +116,7 @@ os_sched_ctx_sw_hook(struct os_task *next_t)
     }
 
     next_t->t_ctx_sw_cnt++;
-    next_t->t_run_time += g_os_time - g_os_last_ctx_sw_time;
+    g_current_task->t_run_time += g_os_time - g_os_last_ctx_sw_time;
     g_os_last_ctx_sw_time = g_os_time;
 }
 
