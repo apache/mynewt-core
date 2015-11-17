@@ -256,7 +256,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         uart->u_fd = uart_pty(port);
     } else {
         uart->u_fd = fileno_unlocked(stdout);
-        printf("uart%d at stdout\n", port);
     }
     if (uart->u_fd < 0) {
         return -1;
@@ -264,5 +263,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     set_nonblock(uart->u_fd);
 
     uart->u_open = 1;
+    if (port == CONSOLE_UART) {
+        printf("uart%d at stdout\n", port);
+    }
     return 0;
 }
