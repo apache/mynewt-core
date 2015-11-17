@@ -78,7 +78,6 @@ void gpio_write(int pin, int val)
         return;
     }
     hal_gpio[pin].val = (val != 0);
-    printf("GPIO %d is now %d\n", pin, val);
 }
 
 int
