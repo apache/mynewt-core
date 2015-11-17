@@ -101,6 +101,15 @@ shell_stats_display(int argc, char **argv)
     uint8_t *end;
 
     name = argv[1];
+    if (name == NULL || !strcmp(name, "")) {
+        console_printf("Must specify a statistic name to dump, "
+                "possible names are:\n");
+        STAILQ_FOREACH(hdr, &g_stats_registry, s_next) {
+            console_printf("\t%s\n", hdr->s_name);
+        }
+        goto done;
+    }
+
 
     hdr = stats_find(name);
     if (!hdr) {

@@ -4,3 +4,8 @@ egg.deps:
     - libs/testutil
 egg.req_caps:
     - console
+
+egg.deps.SHELL:
+    - libs/console/full 
+    - libs/shell 
+egg.cflags.SHELL: -DSHELL_PRESENT 

@@ -45,6 +45,12 @@ os_task_next_id(void)
     return (rc);
 }
 
+uint8_t 
+os_task_count(void)
+{
+    return (g_task_id);
+}
+
 int 
 os_task_sanity_checkin(struct os_task *t)
 {

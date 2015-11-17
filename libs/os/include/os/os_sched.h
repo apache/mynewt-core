@@ -19,6 +19,10 @@
 
 #include "os/os_task.h"
 
+typedef int (*os_sched_walk_func_t)(struct os_task *, void *arg);
+
+int os_sched_walk(os_sched_walk_func_t walk_func, void *arg);
+void os_sched_ctx_sw_hook(struct os_task *);
 struct os_task *os_sched_get_current_task(void);
 void os_sched_set_current_task(struct os_task *);
 struct os_task *os_sched_next_task(void);

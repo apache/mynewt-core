@@ -59,6 +59,9 @@ os_init(void)
 
     err = os_arch_os_init();
     assert(err == OS_OK);
+
+    err = os_info_init();
+    assert(err == OS_OK);
 }
 
 void

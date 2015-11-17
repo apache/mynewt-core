@@ -43,6 +43,8 @@
  */
 extern int g_os_started; 
 
+int os_info_init(void);
+
 /**
  * Returns 1 if the OS has been started, 0 if it has not yet been 
  * been started.
@@ -84,6 +86,7 @@ void os_init_idle_task(void);
 #include "os/os_sched.h"
 #include "os/os_eventq.h"
 #include "os/os_callout.h" 
+#include "os/os_heap.h"
 #include "os/os_mutex.h"
 #include "os/os_sem.h"
 #include "os/os_mempool.h"

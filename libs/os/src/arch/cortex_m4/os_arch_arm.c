@@ -99,6 +99,8 @@ timer_handler(void)
 void
 os_arch_ctx_sw(struct os_task *t)
 {
+    os_sched_ctx_sw_hook(t);
+
     /* Set PendSV interrupt pending bit to force context switch */
     SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }
@@ -106,6 +108,8 @@ os_arch_ctx_sw(struct os_task *t)
 void
 os_arch_ctx_sw_isr(struct os_task *t)
 {
+    os_sched_ctx_sw_hook(t);
+
     /* Set PendSV interrupt pending bit to force context switch */
     SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }

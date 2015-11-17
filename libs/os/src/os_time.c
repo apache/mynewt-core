@@ -17,7 +17,7 @@
 #include "os/os.h"
 #include "os/queue.h"
 
-static os_time_t g_os_time = 0;
+os_time_t g_os_time = 0;
 
 os_time_t  
 os_time_get(void)

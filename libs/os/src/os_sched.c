@@ -25,6 +25,9 @@ TAILQ_HEAD(, os_task) g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);
 
 struct os_task *g_current_task; 
 
+extern os_time_t g_os_time;
+os_time_t g_os_last_ctx_sw_time;
+
 /**
  * os sched insert
  *  
@@ -66,6 +69,57 @@ os_sched_insert(struct os_task *t)
 err:
     return (rc);
 }
+
+/**
+ * Walk all the active tasks currently being scheduled.
+ *
+ * @param walk_func The walk function to call for each task
+ * @param arg       The argument to pass the walk function
+ *
+ * @return 0 on success, < 0 on abort.
+ */
+int
+os_sched_walk(os_sched_walk_func_t walk_func, void *arg)
+{
+    struct os_task *t;
+    os_sr_t sr;
+    int rc;
+
+    /* Go through tasks and fill out the info blocks
+     */
+    OS_ENTER_CRITICAL(sr);
+    TAILQ_FOREACH(t, &g_os_run_list, t_os_list) {
+        rc = walk_func(t, arg);
+        if (rc != 0) {
+            goto done;
+        }
+    }
+
+    TAILQ_FOREACH(t, &g_os_sleep_list, t_os_list) {
+        rc = walk_func(t, arg);
+        if (rc != 0) {
+            goto done;
+        }
+    }
+
+done:
+    OS_EXIT_CRITICAL(sr);
+
+    return (rc);
+}
+
+void
+os_sched_ctx_sw_hook(struct os_task *next_t)
+{
+    if (g_current_task == next_t) {
+        return;
+    }
+
+    next_t->t_ctx_sw_cnt++;
+    next_t->t_run_time += g_os_time - g_os_last_ctx_sw_time;
+    g_os_last_ctx_sw_time = g_os_time;
+}
+
 
 /**
  * os sched get current task 
@@ -118,7 +172,7 @@ os_sched(struct os_task *next_t, int isr)
         next_t = os_sched_next_task();
     }
 
-    if (next_t != os_sched_get_current_task()) {
+    if (next_t != g_current_task) {
         OS_EXIT_CRITICAL(sr);
         if (isr) {
             os_arch_ctx_sw_isr(next_t);

@@ -47,7 +47,8 @@ struct os_task {
 
     uint8_t t_taskid;
     uint8_t t_prio;
-    uint8_t t_pad[2];
+    uint8_t t_state;
+    uint8_t t_pad;
 
     char *t_name;
     os_task_func_t t_func;
@@ -57,8 +58,9 @@ struct os_task {
 
     struct os_sanity_check t_sanity_check; 
 
-    os_task_state_t t_state;
     os_time_t t_next_wakeup;
+    os_time_t t_run_time;
+    uint32_t t_ctx_sw_cnt;
     
     /* Used to chain task to either the run or sleep list */ 
     TAILQ_ENTRY(os_task) t_os_list;
@@ -71,6 +73,7 @@ int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t,
         os_time_t, os_stack_t *, uint16_t);
 
 int os_task_sanity_checkin(struct os_task *);
+uint8_t os_task_count(void);
 
 
 #endif /* _OS_TASK_H */

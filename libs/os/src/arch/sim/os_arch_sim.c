@@ -152,6 +152,8 @@ os_arch_ctx_sw(struct os_task *next_t)
         }
     }
 
+    os_sched_ctx_sw_hook(next_t);
+
     os_sched_set_current_task(next_t);
 
     sf = (struct stack_frame *) next_t->t_stackptr;
@@ -195,6 +197,8 @@ os_arch_ctx_sw_isr(struct os_task *next_t)
     }
 
     isr_state(&block_isr_off, NULL);
+
+    os_sched_ctx_sw_hook(next_t);
 
     os_sched_set_current_task(next_t);
     
