@@ -170,7 +170,7 @@ void cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs);
  *  
  * Stops a cputimer from running. The timer is removed from the timer queue 
  * and interrupts are disabled if no timers are left on the queue. Can be 
- * called even if timer is running. 
+ * called even if timer is not running. 
  * 
  * @param timer Pointer to cputimer to stop. Cannot be NULL.
  */
