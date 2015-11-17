@@ -19,7 +19,9 @@
 #include "os/queue.h"
 
 #include "console/console.h"
+#ifdef SHELL_PRESENT
 #include "shell/shell.h" 
+#endif
 
 #include <string.h>
 
