@@ -139,23 +139,14 @@ set_nonblock(int fd)
     }
 }
 
-
 static int
-uart_pty(int port)
+uart_set_attr(int fd)
 {
-    int fd;
-    int loop_slave;
     struct termios tios;
-    char pty_name[32];
 
-    if (openpty(&fd, &loop_slave, pty_name, NULL, NULL) < 0) {
-        perror("openpty() failed");
-        return -1;
-    }
-
-    if (tcgetattr(loop_slave, &tios)) {
+    if (tcgetattr(fd, &tios)) {
         perror("tcgetattr() failed");
-        goto err;
+        return -1;
     }
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB);
@@ -163,12 +154,32 @@ uart_pty(int port)
     tios.c_iflag = IGNPAR | IXON;
     tios.c_oflag = 0;
     tios.c_lflag = 0;
-    if (tcsetattr(loop_slave, TCSAFLUSH, &tios) < 0) {
+    if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
         perror("tcsetattr() failed");
+        return -1;
+    }
+    return 0;
+}
+
+static int
+uart_pty(int port)
+{
+    int fd;
+    int loop_slave;
+    char pty_name[32];
+    char msg[64];
+
+    if (openpty(&fd, &loop_slave, pty_name, NULL, NULL) < 0) {
+        perror("openpty() failed");
+        return -1;
+    }
+
+    if (uart_set_attr(loop_slave)) {
         goto err;
     }
 
-    printf("uart%d at %s\n", port, pty_name);
+    snprintf(msg, sizeof(msg), "uart%d at %s\n", port, pty_name);
+    write(fileno(stdout), msg, strlen(msg));
     return fd;
 err:
     close(fd);
@@ -252,19 +263,12 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         return -1;
     }
 
-    if (port != CONSOLE_UART) {
-        uart->u_fd = uart_pty(port);
-    } else {
-        uart->u_fd = fileno_unlocked(stdout);
-    }
+    uart->u_fd = uart_pty(port);
     if (uart->u_fd < 0) {
         return -1;
     }
     set_nonblock(uart->u_fd);
 
     uart->u_open = 1;
-    if (port == CONSOLE_UART) {
-        printf("uart%d at stdout\n", port);
-    }
     return 0;
 }
