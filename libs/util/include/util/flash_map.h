@@ -50,6 +50,7 @@ struct flash_area {
 #define FLASH_AREA_IMAGE_0              1
 #define FLASH_AREA_IMAGE_1              2
 #define FLASH_AREA_IMAGE_SCRATCH        3
+#define FLASH_AREA_NFFS                 4
 
 /*
  * Initializes flash map. Memory will be referenced by flash_map code
@@ -77,5 +78,11 @@ int flash_area_erase(const struct flash_area *, uint32_t off, uint32_t len);
  * Given flash map index, return info about sectors within the area.
  */
 int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
+
+/*
+ * Given flash map index, return sector info in NFFS area desc format.
+ */
+struct nffs_area_desc;
+int flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad);
 
 #endif /* H_UTIL_FLASH_MAP_ */

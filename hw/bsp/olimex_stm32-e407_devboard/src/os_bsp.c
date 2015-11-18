@@ -40,6 +40,11 @@ static struct flash_area bsp_flash_areas[] = {
         .fa_flash_id = 0,
         .fa_off = 0x080e0000,
         .fa_size = (128 * 1024)
+    },
+    [FLASH_AREA_NFFS] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x08008000,
+        .fa_size = (32 * 1024)
     }
 };
 

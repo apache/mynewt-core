@@ -1,10 +1,13 @@
-egg.name: libs/util 
+egg.name: libs/util
 egg.vers: 0.1
 egg.deps:
     - hw/hal
     - libs/os
     - libs/testutil
 egg.deps.SHELL:
-    - libs/console/full 
-    - libs/shell 
-egg.cflags.SHELL: -DSHELL_PRESENT 
+    - libs/console/full
+    - libs/shell
+egg.cflags.SHELL: -DSHELL_PRESENT
+egg.deps.NFFS:
+    - libs/nffs
+egg.cflags.NFFS: -DNFFS_PRESENT

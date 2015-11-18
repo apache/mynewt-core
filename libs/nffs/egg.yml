@@ -1,6 +1,7 @@
 egg.name: libs/nffs
-egg.vers: 0.1 
-egg.deps: 
-    - libs/os 
+egg.vers: 0.1
+egg.identities: NFFS
+egg.deps:
+    - libs/os
     - libs/testutil
     - hw/hal

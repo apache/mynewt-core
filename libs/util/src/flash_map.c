@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string.h>
 
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
+#ifdef NFFS_PRESENT
+#include <nffs/nffs.h>
+#endif
 #include "util/flash_map.h"
 
 static const struct flash_area *flash_map;
@@ -75,6 +79,40 @@ flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret)
     }
     return 0;
 }
+
+#ifdef NFFS_PRESENT
+int
+flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad)
+{
+    int i;
+    struct hal_flash *hf;
+    const struct flash_area *fa;
+
+    if (!flash_map || idx >= flash_map_entries) {
+        return -1;
+    }
+    *cnt = 0;
+    fa = &flash_map[idx];
+
+    hf = bsp_flash_dev(fa->fa_flash_id);
+    for (i = 0; i < hf->hf_sector_cnt; i++) {
+        if (hf->hf_sectors[i] >= fa->fa_off &&
+          hf->hf_sectors[i] < fa->fa_off + fa->fa_size) {
+            if (nad) {
+                nad->nad_flash_id = fa->fa_flash_id;
+                nad->nad_offset = hf->hf_sectors[i];
+                nad->nad_length = hal_flash_sector_size(hf, i);
+                nad++;
+            }
+            *cnt = *cnt + 1;
+        }
+    }
+    if (nad) {
+        memset(nad, 0, sizeof(*nad));
+    }
+    return 0;
+}
+#endif /* NFFS_PRESENT */
 
 int
 flash_area_read(const struct flash_area *fa, uint32_t off, void *dst,
