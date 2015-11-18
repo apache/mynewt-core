@@ -20,27 +20,31 @@
 
 #define CONS_OUTPUT_MAX_LINE	128
 
-void console_printf(const char *fmt, ...)
+int
+console_vprintf(const char *fmt, va_list args)
+{
+    char buf[CONS_OUTPUT_MAX_LINE];
+    int len;
+
+    len = vsnprintf(buf, sizeof(buf), fmt, args);
+    if (len >= sizeof(buf)) {
+        len = sizeof(buf) - 1;
+    }
+    console_write(buf, len);
+    return len;
+}
+
+void
+console_printf(const char *fmt, ...)
 {
     va_list args;
-    char buf[CONS_OUTPUT_MAX_LINE];
+    char buf[24];
     int len;
 
     len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
     console_write(buf, len);
 
     va_start(args, fmt);
-    len = vsnprintf(buf, sizeof(buf), fmt, args);
+    len = console_vprintf(fmt, args);
     va_end(args);
-
-    if (len >= sizeof(buf)) {
-        len = sizeof(buf) - 1;
-    }
-    if (buf[len - 1] != '\n') {
-        if (len != sizeof(buf) - 1) {
-            len++;
-        }
-        buf[len - 1] = '\n';
-    }
-    console_write(buf, len);
 }

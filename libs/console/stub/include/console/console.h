@@ -16,6 +16,8 @@
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
+#include <stdarg.h>
+
 typedef void (*console_rx_cb)(int full_line);
 
 static int inline
@@ -36,8 +38,19 @@ console_blocking_mode(void)
 }
 
 static void inline
+console_write(const char *str, int cnt)
+{
+}
+
+static void inline
 console_printf(const char *fmt, ...)
 {
+}
+
+static int inline
+console_vprintf(const char *fmt, va_list args)
+{
+    return 0;
 }
 
 #endif /* __CONSOLE__ */

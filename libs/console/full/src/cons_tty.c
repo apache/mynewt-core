@@ -115,7 +115,7 @@ console_blocking_mode(void)
 }
 
 void
-console_write(char *str, int cnt)
+console_write(const char *str, int cnt)
 {
     struct console_tty *ct = &console_tty;
     int i;
