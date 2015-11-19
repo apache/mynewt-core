@@ -67,14 +67,13 @@ main(void)
 {
     struct nffs_area_desc descs[NFFS_AREA_MAX];
     /** Contains indices of the areas which can contain image data. */
-    struct flash_area secs[SEC_CNT_MAX];
-    /** Areas representing the beginning of image slots. */
     uint8_t img_areas[NFFS_AREA_MAX];
+    /** Areas representing the beginning of image slots. */
     uint8_t img_starts[2];
     int cnt;
+    int total;
     struct boot_rsp rsp;
     int rc;
-    int i, j;
     struct boot_req req = {
         .br_area_descs = descs,
         .br_image_areas = img_areas,
@@ -82,37 +81,23 @@ main(void)
     };
 
     os_init();
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, NULL);
-    assert(rc == 0 && cnt < SEC_CNT_MAX);
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, secs);
+    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, NULL);
+    assert(rc == 0 && cnt);
+    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, descs);
     img_starts[0] = 0;
-    for (i = 0; i < cnt; i++) {
-        img_areas[i] = i;
-        descs[i].nad_flash_id = secs[i].fa_flash_id;
-        descs[i].nad_offset = secs[i].fa_off;
-        descs[i].nad_length = secs[i].fa_size;
-    }
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, secs);
-    if (rc == 0 && cnt > 0) {
-        img_starts[1] = i;
-        for (j = 0; j < cnt; j++, i++) {
-            img_areas[i] = i;
-            descs[i].nad_flash_id = secs[j].fa_flash_id;
-            descs[i].nad_offset = secs[j].fa_off;
-            descs[i].nad_length = secs[j].fa_size;
-        }
-    }
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, secs);
-    if (rc == 0) {
-        for (j = 0; j < cnt; j++) {
-            img_areas[i] = i;
-            descs[i].nad_flash_id = secs[j].fa_flash_id;
-            descs[i].nad_offset = secs[j].fa_off;
-            descs[i].nad_length = secs[j].fa_size;
-        }
-    }
-    req.br_num_image_areas = i;
-    req.br_scratch_area_idx = i - 1;
+    total = cnt;
+
+    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
+    assert(rc == 0);
+    img_starts[1] = total;
+    total += cnt;
+
+    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
+    assert(rc == 0);
+    req.br_scratch_area_idx = total;
+
+    total += 1;
+    req.br_num_image_areas = total;
 
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
