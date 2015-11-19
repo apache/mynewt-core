@@ -111,9 +111,13 @@ struct os_mbuf {
 #define OS_MBUF_IS_PKTHDR(__om) \
     ((__om)->om_flags & OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR))
 
-
+/* Get a packet header pointer given an mbuf pointer */
 #define OS_MBUF_PKTHDR(__om) ((struct os_mbuf_pkthdr *)     \
     ((uint8_t *)&(__om)->om_data + sizeof(struct os_mbuf)))
+
+/* Given a mbuf packet header pointer, return a pointer to the mbuf */
+#define OS_MBUF_PKTHDR_TO_MBUF(__hdr)   \
+     (struct os_mbuf *)((uint8_t *)(__hdr) - sizeof(struct os_mbuf))
 
 /*
  * Access the data of a mbuf, and cast it to type

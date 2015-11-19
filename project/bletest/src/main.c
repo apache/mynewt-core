@@ -30,7 +30,6 @@
 
 /* Init all tasks */
 volatile int tasks_initialized;
-int init_tasks(void);
 
 /* Task 1 */
 #define HOST_TASK_PRIO      (1)
@@ -75,7 +74,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
 
 /* BLETEST variables */
-#define BLETEST_STACK_SIZE              (64)
+#define BLETEST_STACK_SIZE              (256)
 #define BLETEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
 uint32_t g_next_os_time;
 int g_bletest_state;
@@ -214,42 +213,6 @@ bletest_init_scanner(void)
     }
 }
 
-void 
-host_task_handler(void *arg)
-{
-    int rc;
-
-    /* Init the console */
-    rc = console_init(NULL);
-    assert(rc == 0);
-
-    /* Initialize host HCI */
-    ble_hs_init(HOST_TASK_PRIO);
-
-    /* Initialize the BLE LL */
-    ble_ll_init();
-
-#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-    /* Initialize the advertiser */
-    bletest_init_advertising();
-#endif
-
-#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
-    /* Initialize the scanner */
-    bletest_init_scanner();
-#endif
-
-    /* Init bletest varibles */
-    g_bletest_state = 0;
-    g_next_os_time = os_time_get();
-
-    /* We are initialized */
-    console_printf("Nimble stack initialized");
-
-    /* Call the host hci task */
-    ble_hs_task_handler(arg);
-}
-
 void
 bletest_execute(void)
 {
@@ -287,6 +250,11 @@ bletest_execute(void)
 #endif
 }
 
+/**
+ * Callback when BLE test timer expires. 
+ * 
+ * @param arg 
+ */
 void
 bletest_timer_cb(void *arg)
 {
@@ -297,18 +265,40 @@ bletest_timer_cb(void *arg)
     os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC);
 }
 
+/**
+ * BLE test task 
+ * 
+ * @param arg 
+ */
 void
 bletest_task_handler(void *arg)
 {
     struct os_event *ev;
     struct os_callout_func *cf;
 
+    /* We are initialized */
+    console_printf("Starting BLE test task");
+
+    /* Initialize eventq */
+    os_eventq_init(&g_bletest_evq);
+
     /* Initialize the host timer */
     os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
                          NULL);
 
-    /* Initialize eventq */
-    os_eventq_init(&g_bletest_evq);
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+    /* Initialize the advertiser */
+    bletest_init_advertising();
+#endif
+
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
+    /* Initialize the scanner */
+    bletest_init_scanner();
+#endif
+
+    /* Init bletest variables */
+    g_bletest_state = 0;
+    g_next_os_time = os_time_get();
 
     bletest_timer_cb(NULL);
 
@@ -335,7 +325,7 @@ bletest_task_handler(void *arg)
  *  
  * @return int 0 success; error otherwise.
  */
-int
+static int
 init_tasks(void)
 {
     os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL, 
@@ -343,6 +333,12 @@ init_tasks(void)
                  BLETEST_STACK_SIZE);
 
     tasks_initialized = 1;
+
+    /* Initialize host HCI */
+    ble_hs_init(HOST_TASK_PRIO);
+
+    /* Initialize the BLE LL */
+    ble_ll_init();
 
     return 0;
 }
@@ -409,6 +405,10 @@ main(void)
     /* Set the led pin as an output */
     g_led_pin = LED_BLINK_PIN;
     gpio_init_out(g_led_pin, 1);
+
+    /* Init the console */
+    rc = console_init(NULL);
+    assert(rc == 0);
 
     /* Init tasks */
     init_tasks();
