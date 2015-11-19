@@ -6,6 +6,7 @@ project.eggs:
     - libs/bootutil
     - libs/testreport
     - libs/console/full
+    - libs/util
 
 project.identities:
     - test

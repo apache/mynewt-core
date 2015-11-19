@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -20,6 +20,8 @@
 #include "bootutil/bootutil_test.h"
 #include "testutil/testutil.h"
 
+extern int util_test_all(void);
+
 int
 main(void)
 {
@@ -29,6 +31,7 @@ main(void)
     os_test_all();
     nffs_test_all();
     boot_test_all();
+    util_test_all();
 
     return 0;
 }
