@@ -1,0 +1,9 @@
+egg.name: libs/elua/elua_base
+egg.vers: 0.1
+egg.cflags: -DLUA_OPTIMIZE_MEMORY=2 -DLUA_CROSS_COMPILER -DLUA_USE_MKSTEMP -DLUA_NUMBER_INTEGRAL -DMYNEWT
+egg.req_caps:
+    - console
+egg.deps:
+    - libs/nffs
+    - libs/libc
+
