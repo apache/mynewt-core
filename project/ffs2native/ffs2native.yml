@@ -2,4 +2,5 @@ project.name: ffs2native
 project.eggs: 
     - libs/os
     - libs/nffs
+    - libs/console/full
     - hw/hal

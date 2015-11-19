@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -23,16 +23,24 @@
 #include <assert.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <strings.h>
 #include "../src/nffs_priv.h"
-#include "os/queue.h"
-#include "nffs/nffs.h"
-#include "hal/hal_flash.h"
+#include <os/queue.h>
+#include <nffs/nffs.h>
+#include <hal/hal_flash.h>
+#include <util/flash_map.h>
+#ifdef ARCH_sim
+#include <mcu/mcu_sim.h>
+#endif
 
-static const struct nffs_area_desc area_descs[] = {
-    { 0x00020000, 128 * 1024 },
-    { 0x00040000, 128 * 1024 },
-    { 0, 0 },
-};
+static const char *copy_in_dir;
+
+#define MAX_AREAS	16
+static struct nffs_area_desc area_descs[MAX_AREAS];
+
+static void usage(int rc);
 
 static void
 copyfs(FILE *fp)
@@ -41,14 +49,14 @@ copyfs(FILE *fp)
     int rc;
     int c;
 
-    dst_addr = area_descs[0].fad_offset;
+    dst_addr = area_descs[0].nad_offset;
     while (1) {
         c = getc(fp);
         if (c == EOF) {
             return;
         }
 
-        rc = flash_write(dst_addr, &c, 1);
+        rc = hal_flash_write(area_descs[0].nad_flash_id, dst_addr, &c, 1);
         assert(rc == 0);
 
         dst_addr++;
@@ -67,15 +75,15 @@ print_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
     rc = nffs_inode_from_entry(&inode, inode_entry);
     assert(rc == 0);
 
-    nffs_flash_loc_expand(inode_entry->fie_hash_entry.fhe_flash_loc,
+    nffs_flash_loc_expand(inode_entry->nie_hash_entry.nhe_flash_loc,
                          &area_idx, &area_offset);
 
     rc = nffs_flash_read(area_idx,
                          area_offset + sizeof (struct nffs_disk_inode),
-                         name, inode.fi_filename_len);
+                         name, inode.ni_filename_len);
     assert(rc == 0);
 
-    name[inode.fi_filename_len] = '\0';
+    name[inode.ni_filename_len] = '\0';
 
     printf("%*s%s\n", indent, "", name);
 }
@@ -87,8 +95,8 @@ process_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 
     print_inode_entry(inode_entry, indent);
 
-    if (nffs_hash_id_is_dir(inode_entry->fie_hash_entry.fhe_id)) {
-        SLIST_FOREACH(child, &inode_entry->fie_child_list, fie_sibling_next) {
+    if (nffs_hash_id_is_dir(inode_entry->nie_hash_entry.nhe_id)) {
+        SLIST_FOREACH(child, &inode_entry->nie_child_list, nie_sibling_next) {
             process_inode_entry(child, indent + 2);
         }
     }
@@ -100,25 +108,120 @@ printfs(void)
     process_inode_entry(nffs_root_dir, 0);
 }
 
+void
+copy_in_file(char *src, char *dst)
+{
+    struct nffs_file *nf;
+    FILE *fp;
+    int rc;
+    char data[32];
+
+    rc = nffs_open(dst, NFFS_ACCESS_WRITE, &nf);
+    assert(rc == 0);
+
+    fp = fopen(src, "r");
+    if (!fp) {
+        perror("fopen()");
+        assert(0);
+    }
+    while ((rc = fread(data, 1, sizeof(data), fp))) {
+        rc = nffs_write(nf, data, rc);
+        assert(rc == 0);
+    }
+    rc = nffs_close(nf);
+    assert(rc == 0);
+}
+
+void
+copy_in_directory(const char *src, const char *dst)
+{
+    DIR *dr;
+    struct dirent *entry;
+    char src_name[1024];
+    char dst_name[1024];
+    int rc;
+
+    dr = opendir(src);
+    if (!dr) {
+        perror("opendir");
+        usage(1);
+    }
+    while ((entry = readdir(dr))) {
+            snprintf(src_name, sizeof(src_name), "%s/%s", src, entry->d_name);
+            snprintf(dst_name, sizeof(dst_name), "%s/%s", dst, entry->d_name);
+        if (entry->d_type == DT_DIR &&
+          !strcmp(entry->d_name, ".") && !strcmp(entry->d_name, "..")) {
+            copy_in_directory(src_name, dst_name);
+            rc = nffs_mkdir(dst_name);
+            assert(rc == 0);
+        } else if (entry->d_type == DT_REG) {
+            copy_in_file(src_name, dst_name);
+        } else {
+            printf("Skipping %s\n", src_name);
+        }
+    }
+    closedir(dr);
+}
+
+static void
+usage(int rc)
+{
+    printf("Improper use\n");
+    exit(rc);
+}
+
 int
 main(int argc, char **argv)
 {
     FILE *fp;
     int rc;
+    int ch;
+    int cnt;
 
-    assert(argc >= 2);
+    while ((ch = getopt(argc, argv, "c:d:f:")) != -1) {
+        switch (ch) {
+        case 'c':
+            fp = fopen(optarg, "rb");
+            assert(fp != NULL);
+            copyfs(fp);
+            fclose(fp);
+            break;
+        case 'd':
+            copy_in_dir = optarg;
+            break;
+        case 'f':
+            native_flash_file = optarg;
+            break;
+        case '?':
+        default:
+            usage(0);
+        }
+    }
 
-    fp = fopen(argv[1], "rb");
-    assert(fp != NULL);
+    os_init();
+    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, area_descs);
+    assert(rc == 0);
 
-    copyfs(fp);
+    rc = hal_flash_init();
+    assert(rc == 0);
 
     rc = nffs_init();
     assert(rc == 0);
 
-    rc = nffs_detect(area_descs);
-    assert(rc == 0);
-
+    if (copy_in_dir) {
+        /*
+         * Build filesystem from contents of directory
+         */
+        rc = nffs_format(area_descs);
+        assert(rc == 0);
+        copy_in_directory(copy_in_dir, "/");
+    } else {
+        rc = nffs_detect(area_descs);
+        if (rc) {
+            printf("nffs_detect() failed\n");
+            exit(0);
+        }
+    }
     printfs();
 
     return 0;
