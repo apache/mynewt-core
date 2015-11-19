@@ -47,7 +47,7 @@ os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 struct cbmem log_mem;
 struct ul_handler log_mem_handler;
 struct util_log my_log;
-uint8_t log_buf[64 * 1024];
+uint8_t log_buf[12 * 1024];
 
 static volatile int g_task2_loops;
 
@@ -140,7 +140,7 @@ main(void)
     uint8_t entry[128];
     int rc;
 
-    cbmem_init(&log_mem, log_buf, 64 * 1024);
+    cbmem_init(&log_mem, log_buf, sizeof(log_buf));
     util_log_cbmem_handler_init(&log_mem_handler, &log_mem);
     util_log_register("log", &my_log, &log_mem_handler);
 
