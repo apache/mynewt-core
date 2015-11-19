@@ -18,8 +18,11 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
+#include <stdlib.h>
 #include "hal/hal_flash_int.h"
+#include "mcu/mcu_sim.h"
 
+char *native_flash_file;
 static FILE *file;
 
 static int native_flash_init(void);
@@ -244,6 +247,14 @@ native_flash_erase_sector(uint32_t sector_address)
 static int
 native_flash_init(void)
 {
+    if (native_flash_file) {
+        file = fopen(native_flash_file, "r+");
+        if (!file) {
+            file = fopen(native_flash_file, "w+");
+            assert(file);
+            flash_native_erase(0, native_flash_dev.hf_size);
+        }
+    }
     return 0;
 }
 
