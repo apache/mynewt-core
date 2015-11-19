@@ -16,12 +16,15 @@
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
-#include "console/console.h" 
+#include "console/console.h"
 #include "shell/shell.h"
 #include "util/log.h"
-#include "util/stats.h" 
+#include "util/stats.h"
 #include <assert.h>
 #include <string.h>
+#ifdef ARCH_sim
+#include <mcu/mcu_sim.h>
+#endif
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -135,10 +138,14 @@ init_tasks(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+main(int argc, char **argv)
 {
     uint8_t entry[128];
     int rc;
+
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
 
     cbmem_init(&log_mem, log_buf, sizeof(log_buf));
     util_log_cbmem_handler_init(&log_mem_handler, &log_mem);
