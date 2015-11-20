@@ -11,4 +11,4 @@ egg.deps.SHELL:
 egg.cflags.SHELL: -DSHELL_PRESENT 
 
 # Satisfy capability dependencies for the self-contained test executable.
-egg.deps.test: libs/console/stub
+egg.deps.selftest: libs/console/stub
