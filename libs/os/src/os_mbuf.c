@@ -326,6 +326,37 @@ err:
     return (NULL);
 }
 
+/**
+ * Locates the specified absolute offset within an mbuf chain.  The offset
+ * can be one past than the total length of the chain, but no greater.
+ *
+ * @param om                    The start of the mbuf chain to seek within.
+ * @param off                   The absolute address to find.
+ * @param out_off               On success, this points to the relative offset
+ *                                  within the returned mbuf.
+ *
+ * @return                      The mbuf containing the specified offset on
+ *                                  success.
+ *                              NULL if the specified offset is out of bounds.
+ */
+struct os_mbuf *
+os_mbuf_off(struct os_mbuf *om, int off, int *out_off)
+{
+    while (1) {
+        if (om == NULL) {
+            return NULL;
+        }
+
+        if (om->om_len >= off) {
+            *out_off = off;
+            return om;
+        }
+
+        off -= om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+}
+
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
  * continuing for "len" bytes, into the indicated buffer.
@@ -432,6 +463,61 @@ os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len)
                 break;
             }
             count -= m->om_len;
+        }
+    }
+}
+
+/**
+ * Performs a memory compare of the specified region of an mbuf chain against a
+ * flat buffer.
+ *
+ * @param om                    The start of the mbuf chain to compare.
+ * @param off                   The offset within the mbuf chain to start the
+ *                                  comparison.
+ * @param data                  The flat buffer to compare.
+ * @param len                   The length of the flat buffer.
+ *
+ * @return                      0 if both memory regions are identical;
+ *                              A memcmp return code if there is a mismatch;
+ *                              -1 if the mbuf is too short.
+ */
+int
+os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
+{
+    int chunk_sz;
+    int data_off;
+    int om_off;
+    int rc;
+
+    if (len <= 0) {
+        return 0;
+    }
+
+    data_off = 0;
+    om = os_mbuf_off((struct os_mbuf *)om, off, &om_off);
+    while (1) {
+        if (om == NULL) {
+            return -1;
+        }
+
+        chunk_sz = min(om->om_len - om_off, len - data_off);
+        if (chunk_sz > 0) {
+            rc = memcmp(om->om_data + om_off, data + data_off, chunk_sz);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+
+        data_off += chunk_sz;
+        if (data_off == len) {
+            return 0;
+        }
+
+        om = SLIST_NEXT(om, om_next);
+        om_off = 0;
+
+        if (om == NULL) {
+            return -1;
         }
     }
 }

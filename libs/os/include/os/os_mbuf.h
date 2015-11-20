@@ -205,6 +205,8 @@ struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp);
 /* Duplicate a mbuf from the pool */
 struct os_mbuf *os_mbuf_dup(struct os_mbuf_pool *omp, struct os_mbuf *m);
 
+struct os_mbuf * os_mbuf_off(struct os_mbuf *om, int off, int *out_off);
+
 /* Copy data from an mbuf to a flat buffer. */
 int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
 
@@ -219,6 +221,8 @@ int os_mbuf_free(struct os_mbuf_pool *omp, struct os_mbuf *mb);
 int os_mbuf_free_chain(struct os_mbuf_pool *omp, struct os_mbuf *om);
 
 void os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len);
+int os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data,
+                   int len);
 
 
 #endif /* _OS_MBUF_H */ 
