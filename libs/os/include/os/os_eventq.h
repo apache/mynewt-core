@@ -17,6 +17,8 @@
 #ifndef _OS_EVENTQ_H
 #define _OS_EVENTQ_H
 
+#include <inttypes.h>
+
 struct os_event {
     uint8_t ev_queued;
     uint8_t ev_type;
