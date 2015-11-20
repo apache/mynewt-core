@@ -522,6 +522,72 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
     }
 }
 
+/**
+ * Increases the length of an mbuf chain by adding data to the front.  If there
+ * is insufficient room in the leading mbuf, additional mbufs are allocated and
+ * prepended as necessary.  If this function fails to allocate an mbuf, the
+ * entire chain is freed.
+ *
+ * The specified mbuf chain does not need to contain a packet header.
+ *
+ * @param omp                   The mbuf pool to allocate from.
+ * @param om                    The head of the mbuf chain.
+ * @param len                   The number of bytes to prepend.
+ *
+ * @return                      The new head of the chain on success;
+ *                              NULL on failure.
+ */
+struct os_mbuf *
+os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om, int len)
+{
+    struct os_mbuf *p;
+    int leading;
+
+    while (1) {
+        /* Fill the available space at the front of the head of the chain, as
+         * needed.
+         */
+        leading = min(len, OS_MBUF_LEADINGSPACE(omp, om));
+
+        om->om_data -= leading;
+        om->om_len += leading;
+        if (OS_MBUF_IS_PKTHDR(om)) {
+            OS_MBUF_PKTHDR(om)->omp_len += leading;
+        }
+
+        len -= leading;
+        if (len == 0) {
+            break;
+        }
+
+        /* The current head didn't have enough space; allocate a new head. */
+        if (OS_MBUF_IS_PKTHDR(om)) {
+            p = os_mbuf_get_pkthdr(omp);
+        } else {
+            p = os_mbuf_get(omp, 0);
+        }
+        if (p == NULL) {
+            os_mbuf_free_chain(omp, om);
+            om = NULL;
+            break;
+        }
+
+        if (OS_MBUF_IS_PKTHDR(om)) {
+            _os_mbuf_copypkthdr(omp, p, om);
+            om->om_flags &= ~OS_MBUF_F_PKTHDR;
+        }
+
+        /* Move the new head's data pointer to the end so that data can be
+         * prepended.
+         */
+        p->om_data += OS_MBUF_TRAILINGSPACE(omp, p);
+
+        SLIST_NEXT(p, om_next) = om;
+        om = p;
+    }
+
+    return om;
+}
 
 #if 0
 
