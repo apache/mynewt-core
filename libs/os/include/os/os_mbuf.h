@@ -211,8 +211,8 @@ struct os_mbuf * os_mbuf_off(struct os_mbuf *om, int off, int *out_off);
 int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
 
 /* Append data onto a mbuf */
-int os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *m, void *, 
-        uint16_t);
+int os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *m,
+                   const void *data, uint16_t len);
 
 /* Free a mbuf */
 int os_mbuf_free(struct os_mbuf_pool *omp, struct os_mbuf *mb);
@@ -226,5 +226,8 @@ int os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data,
 
 struct os_mbuf *os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om,
                                 int len);
+int os_mbuf_copyinto(struct os_mbuf_pool *omp, struct os_mbuf *om, int off,
+                     const void *src, int len);
+void os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second);
 
 #endif /* _OS_MBUF_H */ 

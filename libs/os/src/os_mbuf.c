@@ -205,7 +205,7 @@ _os_mbuf_copypkthdr(struct os_mbuf_pool *omp, struct os_mbuf *new_buf,
  * @return 0 on success, and an error code on failure 
  */
 int 
-os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *om, void *data,  
+os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *om, const void *data,
         uint16_t len)
 {
     struct os_mbuf *last; 
@@ -342,18 +342,24 @@ err:
 struct os_mbuf *
 os_mbuf_off(struct os_mbuf *om, int off, int *out_off)
 {
+    struct os_mbuf *next;
+
     while (1) {
         if (om == NULL) {
             return NULL;
         }
 
-        if (om->om_len >= off) {
+        next = SLIST_NEXT(om, om_next);
+
+        if (om->om_len > off ||
+            (om->om_len == off && next == NULL)) {
+
             *out_off = off;
             return om;
         }
 
         off -= om->om_len;
-        om = SLIST_NEXT(om, om_next);
+        om = next;
     }
 }
 
@@ -587,6 +593,121 @@ os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om, int len)
     }
 
     return om;
+}
+
+/**
+ * Copies the contents of a flat buffer into an mbuf chain, starting at the
+ * specified destination offset.  If the mbuf is too small for the source data,
+ * it is extended as necessary.  If the destination mbuf contains a packet
+ * header, the header length is updated.
+ *
+ * @param omp                   The mbuf pool to allocate from.
+ * @param om                    The mbuf chain to copy into.
+ * @param off                   The offset within the chain to copy to.
+ * @param src                   The source buffer to copy from.
+ * @param len                   The number of bytes to copy.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+os_mbuf_copyinto(struct os_mbuf_pool *omp, struct os_mbuf *om, int off,
+                 const void *src, int len)
+{
+    struct os_mbuf *next;
+    struct os_mbuf *cur;
+    const uint8_t *sptr;
+    int copylen;
+    int cur_off;
+    int rc;
+
+    /* Find the mbuf,offset pair for the start of the destination. */
+    cur = os_mbuf_off(om, off, &cur_off);
+    if (cur == NULL) {
+        return -1;
+    }
+
+    /* Overwrite existing data until we reach the end of the chain. */
+    sptr = src;
+    while (1) {
+        copylen = min(cur->om_len - cur_off, len);
+        if (copylen > 0) {
+            memcpy(cur->om_data + cur_off, sptr, copylen);
+            sptr += copylen;
+            len -= copylen;
+
+            copylen = 0;
+        }
+
+        if (len == 0) {
+            /* All the source data fit in the existing mbuf chain. */
+            return 0;
+        }
+
+        next = SLIST_NEXT(cur, om_next);
+        if (next == NULL) {
+            break;
+        }
+
+        cur = next;
+    }
+
+    /* Append the remaining data to the end of the chain. */
+    rc = os_mbuf_append(omp, cur, sptr, len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Fix up the packet header, if one is present. */
+    if (OS_MBUF_IS_PKTHDR(om)) {
+        OS_MBUF_PKTHDR(om)->omp_len =
+            max(OS_MBUF_PKTHDR(om)->omp_len, off + len);
+    }
+
+    return 0;
+}
+
+/**
+ * Attaches a second mbuf chain onto the end of the first.  If the first chain
+ * contains a packet header, the header's length is updated.  If the second
+ * chain has a packet header, its header is cleared.
+ *
+ * @param first                 The mbuf chain being attached to.
+ * @param second                The mbuf chain that gets attached.
+ */
+void
+os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second)
+{
+    struct os_mbuf *next;
+    struct os_mbuf *cur;
+
+    /* Point 'cur' to the last buffer in the first chain. */
+    cur = first;
+    while (1) {
+        next = SLIST_NEXT(cur, om_next);
+        if (next == NULL) {
+            break;
+        }
+
+        cur = next;
+    }
+
+    /* Attach the second chain to the end of the first. */
+    SLIST_NEXT(cur, om_next) = second;
+
+    /* If the first chain has a packet header, calculate the length of the
+     * second chain and add it to the header length.
+     */
+    if (OS_MBUF_IS_PKTHDR(first)) {
+        if (OS_MBUF_IS_PKTHDR(second)) {
+            OS_MBUF_PKTHDR(first)->omp_len += OS_MBUF_PKTHDR(second)->omp_len;
+        } else {
+            for (cur = second; cur != NULL; cur = SLIST_NEXT(cur, om_next)) {
+                OS_MBUF_PKTHDR(first)->omp_len += cur->om_len;
+            }
+        }
+    }
+
+    second->om_flags &= ~OS_MBUF_F_PKTHDR;
 }
 
 #if 0
