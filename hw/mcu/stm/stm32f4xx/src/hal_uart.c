@@ -146,7 +146,7 @@ hal_uart_blocking_tx(int port, uint8_t data)
     USART_TypeDef *regs;
 
     u = &uarts[port];
-    if (port >= UART_CNT || u->u_open) {
+    if (port >= UART_CNT || !u->u_open) {
         return;
     }
     regs = u->u_regs;
