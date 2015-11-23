@@ -99,6 +99,9 @@ main(void)
     total += 1;
     req.br_num_image_areas = total;
 
+    for (cnt = 0; cnt < total; cnt++) {
+        img_areas[cnt] = cnt;
+    }
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
 
