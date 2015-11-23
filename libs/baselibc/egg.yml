@@ -1,0 +1,6 @@
+egg.name: libs/baselibc
+egg.vers: 0.1
+egg.req_caps:
+    - console
+egg.identities:
+    - LIBC
