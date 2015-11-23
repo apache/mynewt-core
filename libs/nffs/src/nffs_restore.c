@@ -916,7 +916,10 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
     int i;
 
     /* Start from a clean state. */
-    nffs_misc_reset();
+    rc = nffs_misc_reset();
+    if (rc) {
+        return rc;
+    }
     nffs_restore_largest_block_data_len = 0;
 
     /* Read each area from flash. */
