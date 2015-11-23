@@ -1,3 +1,4 @@
 project.name: bin2img
 project.eggs: 
     - libs/bootutil
+    - libs/console/stub
