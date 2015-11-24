@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef MYNEWT
+#include <console/console.h>
+#endif
 
 #define lua_c
 
@@ -40,7 +43,11 @@ static void laction (int i) {
 
 
 static void print_usage (void) {
+#ifndef MYNEWT
   fprintf(stderr,
+#else
+  console_printf(
+#endif
   "usage: %s [options] [script [args]].\n"
   "Available options are:\n"
   "  -e stat  execute string " LUA_QL("stat") "\n"
@@ -52,14 +59,21 @@ static void print_usage (void) {
   "  -        execute stdin and stop handling options\n"
   ,
   progname);
+#ifndef MYNEWT
   fflush(stderr);
+#endif
 }
 
 
 static void l_message (const char *pname, const char *msg) {
+#ifndef MYNEWT
   if (pname) fprintf(stderr, "%s: ", pname);
   fprintf(stderr, "%s\n", msg);
   fflush(stderr);
+#else
+  if (pname) console_printf("%s: ", pname);
+  console_printf("%s\n", msg);
+#endif
 }
 
 

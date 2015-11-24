@@ -5,5 +5,4 @@ egg.req_caps:
     - console
 egg.deps:
     - libs/nffs
-    - libs/libc
 

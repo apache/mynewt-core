@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef MYNEWT
+#include <console/console.h>
+#endif
 
 /* This file uses only the official API of Lua.
 ** Any function declared here could be written as an application function.
@@ -844,8 +847,13 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
 
 static int panic (lua_State *L) {
   (void)L;  /* to avoid warnings */
+#ifndef MYNEWT
   fprintf(stderr, "PANIC: unprotected error in call to Lua API (%s)\n",
                    lua_tostring(L, -1));
+#else
+  console_printf("PANIC: unprotected error in call to Lua API (%s)\n",
+    lua_tostring(L, -1));
+#endif
   return 0;
 }
 
