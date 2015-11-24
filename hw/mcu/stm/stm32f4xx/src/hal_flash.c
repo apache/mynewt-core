@@ -74,6 +74,11 @@ stm32f4_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
     int rc;
 
     sptr = src;
+    /*
+     * Clear status of previous operation.
+     */
+    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | \
+      FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR| FLASH_FLAG_PGSERR);
     for (i = 0; i < num_bytes; i++) {
         rc = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, sptr[i]);
         if (rc != 0) {
@@ -110,12 +115,6 @@ stm32f4_flash_erase_sector(uint32_t sector_address)
 static int
 stm32f4_flash_init(void)
 {
-    int rc;
-
-    rc = HAL_FLASH_Unlock();
-    if (rc != 0) {
-        return -1;
-    }
-
+    HAL_FLASH_Unlock();
     return 0;
 }
