@@ -36,7 +36,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     os_die_line = line;
     os_die_module = file;
     console_blocking_mode();
-    console_printf("Assert '%s; failed in %s:%d\n", e, file, line);
+    console_printf("Assert %s; failed in %s:%d\n", e ? e : "", file, line);
     system_reset();
 }
 
