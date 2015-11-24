@@ -23,6 +23,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -298,8 +299,9 @@ start_timer(void)
 
     rc = setitimer(ITIMER_VIRTUAL, &it, NULL);
     if (rc != 0) {
-        perror("Cannot set itimer");
-        abort();
+        const char msg[] = "Cannot set itimer";
+        write(2, msg, sizeof(msg));
+        _exit(1);
     }
 }
 
