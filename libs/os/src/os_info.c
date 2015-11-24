@@ -131,7 +131,7 @@ _os_task_copy_info(struct os_task *t, void *arg)
 
     walk->info->oti_tid = t->t_taskid;
     walk->info->oti_prio = t->t_prio;
-    strlcpy(walk->info->oti_name, t->t_name, OS_TASK_INFO_NAME_SIZE);
+    strncpy(walk->info->oti_name, t->t_name, OS_TASK_INFO_NAME_SIZE);
     walk->info->oti_state = (uint8_t) t->t_state;
     walk->info->oti_next_wakeup = t->t_next_wakeup;
     walk->info->oti_flags = t->t_flags;
