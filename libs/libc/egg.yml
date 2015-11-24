@@ -1,4 +1,0 @@
-egg.name: libs/libc
-egg.vers: 0.1
-egg.req_caps:
-    - console
