@@ -40,7 +40,7 @@ usage(char *progname, int rc)
       "     -f flash_file tells where binary flash file is located. It gets\n"
       "        created if it doesn't already exist.\n";
 
-    write(fileno(stderr), msg, strlen(msg));
+    write(2, msg, strlen(msg));
     exit(rc);
 }
 

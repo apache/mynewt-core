@@ -130,11 +130,13 @@ set_nonblock(int fd)
 
     flags = fcntl(fd, F_GETFL);
     if (flags == -1) {
-        perror("fcntl(F_GETFL) fail");
+        const char msg[] = "fcntl(F_GETFL) fail";
+        write(1, msg, sizeof(msg));
         return;
     }
     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-        perror("fcntl(F_SETFL) fail");
+        const char msg[] = "fcntl(F_SETFL) fail";
+        write(1, msg, sizeof(msg));
         return;
     }
 }
@@ -145,7 +147,8 @@ uart_set_attr(int fd)
     struct termios tios;
 
     if (tcgetattr(fd, &tios)) {
-        perror("tcgetattr() failed");
+        const char msg[] = "tcgetattr() failed";
+        write(1, msg, sizeof(msg));
         return -1;
     }
 
@@ -155,7 +158,8 @@ uart_set_attr(int fd)
     tios.c_oflag = 0;
     tios.c_lflag = 0;
     if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
-        perror("tcsetattr() failed");
+        const char msg[] = "tcsetattr() failed";
+        write(1, msg, sizeof(msg));
         return -1;
     }
     return 0;
@@ -170,7 +174,8 @@ uart_pty(int port)
     char msg[64];
 
     if (openpty(&fd, &loop_slave, pty_name, NULL, NULL) < 0) {
-        perror("openpty() failed");
+        const char msg[] = "openpty() failed";
+        write(1, msg, sizeof(msg));
         return -1;
     }
 
@@ -179,7 +184,7 @@ uart_pty(int port)
     }
 
     snprintf(msg, sizeof(msg), "uart%d at %s\n", port, pty_name);
-    write(fileno(stdout), msg, strlen(msg));
+    write(1, msg, strlen(msg));
     return fd;
 err:
     close(fd);

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
@@ -23,7 +24,8 @@
 #include "mcu/mcu_sim.h"
 
 char *native_flash_file;
-static FILE *file;
+static int file;
+static void *file_loc;
 
 static int native_flash_init(void);
 static int native_flash_read(uint32_t address, void *dst, uint32_t length);
@@ -66,38 +68,41 @@ const struct hal_flash native_flash_dev = {
 static void
 flash_native_erase(uint32_t addr, uint32_t len)
 {
-    static uint8_t buf[256];
-    uint32_t end;
-    int chunk_sz;
-    int rc;
+    memset(file_loc + addr, 0xff, len);
+}
 
-    end = addr + len;
-    memset(buf, 0xff, sizeof buf);
+static void
+flash_native_file_open(char *name)
+{
+    int created = 0;
+    extern char *tmpnam(char *s);
+    extern int ftruncate(int fd, off_t length);
 
-    rc = fseek(file, addr, SEEK_SET);
-    assert(rc == 0);
-
-    while (addr < end) {
-        if (end - addr < sizeof buf) {
-            chunk_sz = end - addr;
-        } else {
-            chunk_sz = sizeof buf;
-        }
-        rc = fwrite(buf, chunk_sz, 1, file);
-        assert(rc == 1);
-
-        addr += chunk_sz;
+    if (!name) {
+        name = tmpnam(NULL);
     }
-    fflush(file);
+    file = open(name, O_RDWR);
+    if (file < 0) {
+        file = open(name, O_RDWR | O_CREAT);
+        assert(file > 0);
+        created = 1;
+        if (ftruncate(file, native_flash_dev.hf_size) < 0) {
+            assert(0);
+        }
+    }
+    file_loc = mmap(0, native_flash_dev.hf_size,
+          PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
+    assert(file_loc != MAP_FAILED);
+    if (created) {
+        flash_native_erase(0, native_flash_dev.hf_size);
+    }
 }
 
 static void
 flash_native_ensure_file_open(void)
 {
-    if (file == NULL) {
-        file = tmpfile();
-        assert(file != NULL);
-        flash_native_erase(0, native_flash_dev.hf_size);
+    if (file == 0) {
+        flash_native_file_open(NULL);
     }
 }
 
@@ -120,8 +125,6 @@ flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
 
     flash_native_ensure_file_open();
 
-    fseek(file, address, SEEK_SET);
-
     cur = address;
     while (cur < end) {
         if (end - cur < sizeof buf) {
@@ -142,11 +145,8 @@ flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
         cur += chunk_sz;
     }
 
-    fseek(file, address, SEEK_SET);
-    rc = fwrite(src, length, 1, file);
-    assert(rc == 1);
+    memcpy((char *)file_loc + address, src, length);
 
-    fflush(file);
     return 0;
 }
 
@@ -156,37 +156,10 @@ native_flash_write(uint32_t address, const void *src, uint32_t length)
     return flash_native_write_internal(address, src, length, 0);
 }
 
-static int
-flash_native_overwrite(uint32_t address, const void *src, uint32_t length)
-{
-    return flash_native_write_internal(address, src, length, 1);
-}
-
 int
 flash_native_memset(uint32_t offset, uint8_t c, uint32_t len)
 {
-    uint8_t buf[256];
-    int chunk_sz;
-    int rc;
-
-    memset(buf, c, sizeof buf);
-
-    while (len > 0) {
-        if (len > sizeof buf) {
-            chunk_sz = sizeof buf;
-        } else {
-            chunk_sz = len;
-        }
-
-        rc = flash_native_overwrite(offset, buf, chunk_sz);
-        if (rc != 0) {
-            return rc;
-        }
-
-        offset += chunk_sz;
-        len -= chunk_sz;
-    }
-
+    memset(file_loc + offset, c, len);
     return 0;
 }
 
@@ -194,8 +167,7 @@ static int
 native_flash_read(uint32_t address, void *dst, uint32_t length)
 {
     flash_native_ensure_file_open();
-    fseek(file, address, SEEK_SET);
-    fread(dst, length, 1, file);
+    memcpy(dst, (char *)file_loc + address, length);
 
     return 0;
 }
@@ -248,12 +220,7 @@ static int
 native_flash_init(void)
 {
     if (native_flash_file) {
-        file = fopen(native_flash_file, "r+");
-        if (!file) {
-            file = fopen(native_flash_file, "w+");
-            assert(file);
-            flash_native_erase(0, native_flash_dev.hf_size);
-        }
+        flash_native_file_open(native_flash_file);
     }
     return 0;
 }
