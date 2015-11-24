@@ -519,7 +519,7 @@ boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
                       uint32_t length)
 {
     uint32_t offset;
-    int area_idx;
+    int area_idx = 0;
     int part_num;
     int i;
 
