@@ -30,3 +30,4 @@ compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
 
 compiler.ld.mapfile: false
 compiler.ld.resolve_circular_deps: true
+compiler.ld.flags: -lutil
