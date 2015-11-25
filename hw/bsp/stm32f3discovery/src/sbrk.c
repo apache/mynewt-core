@@ -17,7 +17,7 @@
 #include <errno.h>
 
 extern char _end;
-extern char _estack;
+extern char _user_heap_end;
 
 void *
 _sbrk(int incr)
@@ -28,17 +28,10 @@ _sbrk(int incr)
 
     if (incr < 0) {
         /* Returning memory to the heap. */
-        incr = -incr;
-        if (brk - incr < &_estack) {
-            prev_brk = (void *)-1;
-            errno = EINVAL;
-        } else {
-            prev_brk = brk;
-            brk -= incr;
-        }
+        prev_brk = (void *)-1;
     } else {
         /* Allocating memory from the heap. */
-        if (&_estack - brk >= incr) {
+        if (&_user_heap_end - brk >= incr) {
             prev_brk = brk;
             brk += incr;
         } else {
