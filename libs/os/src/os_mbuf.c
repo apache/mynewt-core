@@ -54,22 +54,84 @@
 
 #include <string.h>
 
+int 
+os_mqueue_init(struct os_mqueue *mq, void *arg)
+{
+    struct os_event *ev;
+
+    STAILQ_INIT(&mq->mq_head);
+    
+    ev = &mq->mq_ev;
+    memset(ev, 0, sizeof(*ev));
+    ev->ev_arg = arg;
+    ev->ev_type = OS_EVENT_T_MQUEUE_DATA;
+
+    return (0);
+}
+
+
+struct os_mbuf *
+os_mqueue_get(struct os_mqueue *mq)
+{
+    struct os_mbuf_pkthdr *mp;
+    struct os_mbuf *m;
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
+    mp = STAILQ_FIRST(&mq->mq_head);
+    if (mp) {
+        STAILQ_REMOVE_HEAD(&mq->mq_head, omp_next);
+    }
+    OS_EXIT_CRITICAL(sr);
+
+    m = OS_MBUF_PKTHDR_TO_MBUF(mp);
+
+    return (m);
+}
+
+int 
+os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *m)
+{
+    struct os_mbuf_pkthdr *mp;
+    os_sr_t sr;
+    int rc;
+
+    if (!OS_MBUF_IS_PKTHDR(m)) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    mp = OS_MBUF_PKTHDR(m);
+
+    OS_ENTER_CRITICAL(sr);
+    STAILQ_INSERT_TAIL(&mq->mq_head, mp, omp_next);
+    OS_EXIT_CRITICAL(sr);
+
+    /* Only post an event to the queue if its specified */
+    if (evq) {
+        os_eventq_put(evq, &mq->mq_ev);
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+
 /**
  * Initialize a pool of mbufs. 
  * 
  * @param omp     The mbuf pool to initialize 
  * @param mp      The memory pool that will hold this mbuf pool 
- * @param hdr_len The length of the header, in a header mbuf 
  * @param buf_len The length of the buffer itself. 
  * @param nbufs   The number of buffers in the pool 
  *
  * @return 0 on success, error code on failure. 
  */
 int 
-os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp, 
-        uint16_t hdr_len, uint16_t buf_len, uint16_t nbufs)
+os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp, uint16_t buf_len, 
+        uint16_t nbufs)
 {
-    omp->omp_hdr_len = hdr_len;
     omp->omp_databuf_len = buf_len - sizeof(struct os_mbuf);
     omp->omp_mbuf_count = nbufs;
     omp->omp_pool = mp;
@@ -101,6 +163,7 @@ os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
     om->om_flags = 0;
     om->om_len = 0;
     om->om_data = (&om->om_databuf[0] + leadingspace);
+    om->om_omp = omp;
 
     return (om);
 err:
@@ -109,18 +172,20 @@ err:
 
 /* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
 struct os_mbuf *
-os_mbuf_get_pkthdr(struct os_mbuf_pool *omp)
+os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t pkthdr_len)
 {
     struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
 
     om = os_mbuf_get(omp, 0);
     if (om) {
-        om->om_flags |= OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR);
-        om->om_data += omp->omp_hdr_len + sizeof(struct os_mbuf_pkthdr);
+        om->om_pkthdr_len = pkthdr_len;
+        om->om_data += pkthdr_len + sizeof(struct os_mbuf_pkthdr);
 
         pkthdr = OS_MBUF_PKTHDR(om);
         pkthdr->omp_len = 0;
+        pkthdr->omp_flags = 0;
+        STAILQ_NEXT(pkthdr, omp_next) = NULL;
     }
 
     return om;
@@ -135,11 +200,11 @@ os_mbuf_get_pkthdr(struct os_mbuf_pool *omp)
  * @return 0 on success, -1 on failure 
  */
 int 
-os_mbuf_free(struct os_mbuf_pool *omp, struct os_mbuf *om) 
+os_mbuf_free(struct os_mbuf *om) 
 {
     int rc;
 
-    rc = os_memblock_put(omp->omp_pool, om);
+    rc = os_memblock_put(om->om_omp->omp_pool, om);
     if (rc != 0) {
         goto err;
     }
@@ -158,7 +223,7 @@ err:
  * @return 0 on success, -1 on failure 
  */
 int 
-os_mbuf_free_chain(struct os_mbuf_pool *omp, struct os_mbuf *om)
+os_mbuf_free_chain(struct os_mbuf *om)
 {
     struct os_mbuf *next;
     int rc;
@@ -166,7 +231,7 @@ os_mbuf_free_chain(struct os_mbuf_pool *omp, struct os_mbuf *om)
     while (om != NULL) {
         next = SLIST_NEXT(om, om_next);
 
-        rc = os_mbuf_free(omp, om);
+        rc = os_mbuf_free(om);
         if (rc != 0) {
             goto err;
         }
@@ -187,11 +252,10 @@ err:
  * @param old_buf The old buffer to copy the packet header from
  */
 static inline void 
-_os_mbuf_copypkthdr(struct os_mbuf_pool *omp, struct os_mbuf *new_buf, 
-        struct os_mbuf *old_buf)
+_os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
 {
     memcpy(&new_buf->om_databuf[0], &old_buf->om_databuf[0], 
-            sizeof(struct os_mbuf_pkthdr) + omp->omp_hdr_len);
+            sizeof(struct os_mbuf_pkthdr) + old_buf->om_pkthdr_len);
 }
 
 /** 
@@ -205,19 +269,21 @@ _os_mbuf_copypkthdr(struct os_mbuf_pool *omp, struct os_mbuf *new_buf,
  * @return 0 on success, and an error code on failure 
  */
 int 
-os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *om, const void *data,
-        uint16_t len)
+os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 {
+    struct os_mbuf_pool *omp;
     struct os_mbuf *last; 
     struct os_mbuf *new;
     int remainder;
     int space;
     int rc;
 
-    if (omp == NULL || om == NULL) {
+    if (om == NULL) {
         rc = OS_EINVAL;
         goto err;
     }
+
+    omp = om->om_omp;
 
     /* Scroll to last mbuf in the chain */
     last = om;
@@ -226,7 +292,7 @@ os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *om, const void *data,
     }
 
     remainder = len;
-    space = OS_MBUF_TRAILINGSPACE(omp, last);
+    space = OS_MBUF_TRAILINGSPACE(last);
 
     /* If room in current mbuf, copy the first part of the data into the 
      * remaining space in that mbuf.
@@ -247,7 +313,7 @@ os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *om, const void *data,
      * data into it, until data is exhausted.
      */
     while (remainder > 0) {
-        new = os_mbuf_get(omp, OS_MBUF_START_OFF(omp)); 
+        new = os_mbuf_get(omp, 0); 
         if (!new) {
             break;
         }
@@ -286,10 +352,13 @@ err:
  * @return A pointer to the new chain of mbufs 
  */
 struct os_mbuf *
-os_mbuf_dup(struct os_mbuf_pool *omp, struct os_mbuf *om)
+os_mbuf_dup(struct os_mbuf *om)
 {
+    struct os_mbuf_pool *omp;
     struct os_mbuf *head;
     struct os_mbuf *copy; 
+
+    omp = om->om_omp;
 
     head = NULL;
     copy = NULL;
@@ -297,21 +366,21 @@ os_mbuf_dup(struct os_mbuf_pool *omp, struct os_mbuf *om)
     for (; om != NULL; om = SLIST_NEXT(om, om_next)) {
         if (head) {
             SLIST_NEXT(copy, om_next) = os_mbuf_get(omp, 
-                    OS_MBUF_LEADINGSPACE(omp, om)); 
+                    OS_MBUF_LEADINGSPACE(om)); 
             if (!SLIST_NEXT(copy, om_next)) {
-                os_mbuf_free_chain(omp, head);
+                os_mbuf_free_chain(head);
                 goto err;
             }
 
             copy = SLIST_NEXT(copy, om_next);
         } else {
-            head = os_mbuf_get(omp, OS_MBUF_LEADINGSPACE(omp, om));
+            head = os_mbuf_get(omp, OS_MBUF_LEADINGSPACE(om));
             if (!head) {
                 goto err;
             }
 
-            if (om->om_flags & OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR)) {
-                _os_mbuf_copypkthdr(omp, head, om);
+            if (OS_MBUF_IS_PKTHDR(om)) {
+                _os_mbuf_copypkthdr(head, om);
             }
             copy = head;
         }
@@ -401,7 +470,7 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
 }
 
 void
-os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len)
+os_mbuf_adj(struct os_mbuf *mp, int req_len)
 {
     int len = req_len;
     struct os_mbuf *m;
@@ -463,7 +532,7 @@ os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len)
             if (m->om_len >= count) {
                 m->om_len = count;
                 if (SLIST_NEXT(m, om_next) != NULL) {
-                    os_mbuf_free_chain(omp, SLIST_NEXT(m, om_next));
+                    os_mbuf_free_chain(SLIST_NEXT(m, om_next));
                     SLIST_NEXT(m, om_next) = NULL;
                 }
                 break;
@@ -544,7 +613,7 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
  *                              NULL on failure.
  */
 struct os_mbuf *
-os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om, int len)
+os_mbuf_prepend(struct os_mbuf *om, int len)
 {
     struct os_mbuf *p;
     int leading;
@@ -553,7 +622,7 @@ os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om, int len)
         /* Fill the available space at the front of the head of the chain, as
          * needed.
          */
-        leading = min(len, OS_MBUF_LEADINGSPACE(omp, om));
+        leading = min(len, OS_MBUF_LEADINGSPACE(om));
 
         om->om_data -= leading;
         om->om_len += leading;
@@ -568,25 +637,25 @@ os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om, int len)
 
         /* The current head didn't have enough space; allocate a new head. */
         if (OS_MBUF_IS_PKTHDR(om)) {
-            p = os_mbuf_get_pkthdr(omp);
+            p = os_mbuf_get_pkthdr(om->om_omp, om->om_pkthdr_len);
         } else {
-            p = os_mbuf_get(omp, 0);
+            p = os_mbuf_get(om->om_omp, 0);
         }
         if (p == NULL) {
-            os_mbuf_free_chain(omp, om);
+            os_mbuf_free_chain(om);
             om = NULL;
             break;
         }
 
         if (OS_MBUF_IS_PKTHDR(om)) {
-            _os_mbuf_copypkthdr(omp, p, om);
-            om->om_flags &= ~OS_MBUF_F_PKTHDR;
+            _os_mbuf_copypkthdr(p, om);
+            om->om_pkthdr_len = 0;
         }
 
         /* Move the new head's data pointer to the end so that data can be
          * prepended.
          */
-        p->om_data += OS_MBUF_TRAILINGSPACE(omp, p);
+        p->om_data += OS_MBUF_TRAILINGSPACE(p);
 
         SLIST_NEXT(p, om_next) = om;
         om = p;
@@ -610,8 +679,7 @@ os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om, int len)
  * @return                      0 on success; nonzero on failure.
  */
 int
-os_mbuf_copyinto(struct os_mbuf_pool *omp, struct os_mbuf *om, int off,
-                 const void *src, int len)
+os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
 {
     struct os_mbuf *next;
     struct os_mbuf *cur;
@@ -652,7 +720,7 @@ os_mbuf_copyinto(struct os_mbuf_pool *omp, struct os_mbuf *om, int off,
     }
 
     /* Append the remaining data to the end of the chain. */
-    rc = os_mbuf_append(omp, cur, sptr, len);
+    rc = os_mbuf_append(cur, sptr, len);
     if (rc != 0) {
         return rc;
     }
@@ -707,7 +775,7 @@ os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second)
         }
     }
 
-    second->om_flags &= ~OS_MBUF_F_PKTHDR;
+    second->om_pkthdr_len = 0;
 }
 
 #if 0
@@ -729,16 +797,19 @@ os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second)
  * @return The contiguous mbuf chain on success, NULL on failure.
  */
 struct os_mbuf *
-os_mbuf_pullup(struct os_mbuf_pool *omp, struct os_mbuf *om, uint16_t len)
+os_mbuf_pullup(struct os_mbuf *om, uint16_t len)
 {
+    struct os_mbuf_pool *omp;
     struct os_mbuf *newm;
+
+    omp = om->om_omp;
 
     if (len > omp->omp_databuf_len) {
         goto err;
     }
 
     /* Is 'n' bytes already contiguous? */
-    if (((uint8_t *) &om->om_databuf[0] + OS_MBUF_END_OFF(omp)) - 
+    if (((uint8_t *) &om->om_databuf[0] + omp->omp_databuf_len) - 
             OS_MBUF_DATA(om, uint8_t *) >= len) {
         newm = om;
         goto done;
@@ -747,7 +818,7 @@ os_mbuf_pullup(struct os_mbuf_pool *omp, struct os_mbuf *om, uint16_t len)
     /* Nope, OK. Allocate a new buffer, and then go through and copy 'n' 
      * bytes into that buffer.
      */
-    newm = os_mbuf_get(omp, OS_MBUF_START_OFF(omp));
+    newm = os_mbuf_get(omp, 0);
     if (!newm) {
         goto err;
     }

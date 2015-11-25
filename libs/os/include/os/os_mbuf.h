@@ -34,10 +34,6 @@ struct os_mbuf_pool {
      */
     uint16_t omp_mbuf_count;
     /**
-     * The length of the variable portion of the mbuf header
-     */
-    uint16_t omp_hdr_len;
-    /**
      * The memory pool which to allocate mbufs out of 
      */
     struct os_mempool *omp_pool;
@@ -51,7 +47,11 @@ struct os_mbuf_pkthdr {
     /**
      * Overall length of the packet. 
      */
-    uint32_t omp_len;
+    uint16_t omp_len;
+    /**
+     * Flags
+     */
+    uint16_t omp_flags;
     /**
      * Next packet in the mbuf chain.
      */
@@ -69,11 +69,20 @@ struct os_mbuf {
     /**
      * Flags associated with this buffer, see OS_MBUF_F_* defintions
      */
-    uint16_t om_flags;
+    uint8_t om_flags;
+    /**
+     * Length of packet header
+     */
+    uint8_t om_pkthdr_len;
     /**
      * Length of data in this buffer 
      */
     uint16_t om_len;
+
+    /**
+     * The mbuf pool this mbuf was allocated out of 
+     */
+    struct os_mbuf_pool *om_omp;
 
     /**
      * Pointer to next entry in the chained memory buffer
@@ -86,15 +95,10 @@ struct os_mbuf {
     uint8_t om_databuf[0];
 };
 
-/*
- * Mbuf flags: 
- *  - OS_MBUF_F_PKTHDR: Whether or not this mbuf is a packet header mbuf
- *  - OS_MBUF_F_USER: The base user defined mbuf flag, start defining your 
- *    own flags from this flag number.
- */
-
-#define OS_MBUF_F_PKTHDR (0)
-#define OS_MBUF_F_USER   (OS_MBUF_F_PKTHDR + 1) 
+struct os_mqueue {
+    STAILQ_HEAD(, os_mbuf_pkthdr) mq_head;
+    struct os_event mq_ev;
+};
 
 /*
  * Given a flag number, provide the mask for it
@@ -109,7 +113,7 @@ struct os_mbuf {
  * @param __om The mbuf to check 
  */
 #define OS_MBUF_IS_PKTHDR(__om) \
-    ((__om)->om_flags & OS_MBUF_F_MASK(OS_MBUF_F_PKTHDR))
+    ((__om)->om_pkthdr_len > 0)
 
 /* Get a packet header pointer given an mbuf pointer */
 #define OS_MBUF_PKTHDR(__om) ((struct os_mbuf_pkthdr *)     \
@@ -128,31 +132,19 @@ struct os_mbuf {
 #define OS_MBUF_DATA(__om, __type) \
      (__type) ((__om)->om_data)
 
-/**
- * Returns the end offset of a mbuf buffer 
- * 
- * @param __omp 
- */
-#define OS_MBUF_END_OFF(__omp) ((__omp)->omp_databuf_len)
-
-/**
- * Returns the start offset of a mbuf buffer
- */
-#define OS_MBUF_START_OFF(__omp) (0)
-
 
 /*
  * Called by OS_MBUF_LEADINGSPACE() macro
  */
 static inline uint16_t 
-_os_mbuf_leadingspace(struct os_mbuf_pool *omp, struct os_mbuf *om)
+_os_mbuf_leadingspace(struct os_mbuf *om)
 {
     uint16_t startoff;
     uint16_t leadingspace;
 
     startoff = 0;
     if (OS_MBUF_IS_PKTHDR(om)) {
-        startoff = sizeof(struct os_mbuf_pkthdr) + omp->omp_hdr_len;
+        startoff = sizeof(struct os_mbuf_pkthdr) + om->om_pkthdr_len; 
     }
 
     leadingspace = (uint16_t) (OS_MBUF_DATA(om, uint8_t *) - 
@@ -171,12 +163,16 @@ _os_mbuf_leadingspace(struct os_mbuf_pool *omp, struct os_mbuf *om)
  *
  * @return Amount of leading space available in the mbuf 
  */
-#define OS_MBUF_LEADINGSPACE(__omp, __om) _os_mbuf_leadingspace(__omp, __om)
+#define OS_MBUF_LEADINGSPACE(__om) _os_mbuf_leadingspace(__om)
 
 /* Called by OS_MBUF_TRAILINGSPACE() macro. */
 static inline uint16_t 
-_os_mbuf_trailingspace(struct os_mbuf_pool *omp, struct os_mbuf *om)
+_os_mbuf_trailingspace(struct os_mbuf *om)
 {
+    struct os_mbuf_pool *omp;
+
+    omp = om->om_omp;
+
     return (&om->om_databuf[0] + omp->omp_databuf_len) - om->om_data;
 }
 
@@ -189,21 +185,32 @@ _os_mbuf_trailingspace(struct os_mbuf_pool *omp, struct os_mbuf *om)
  *
  * @return The amount of trailing space available in the mbuf 
  */
-#define OS_MBUF_TRAILINGSPACE(__omp, __om) _os_mbuf_trailingspace(__omp, __om)
+#define OS_MBUF_TRAILINGSPACE(__om) _os_mbuf_trailingspace(__om)
 
+/* Mbuf queue functions */
+
+/* Initialize a mbuf queue */
+int os_mqueue_init(struct os_mqueue *, void *arg);
+
+/* Get an element from a mbuf queue */
+struct os_mbuf *os_mqueue_get(struct os_mqueue *);
+
+/* Put an element in a mbuf queue */
+int os_mqueue_put(struct os_mqueue *, struct os_eventq *, struct os_mbuf *);
 
 /* Initialize a mbuf pool */
-int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp, uint16_t, 
+int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp, 
         uint16_t, uint16_t);
 
 /* Allocate a new mbuf out of the os_mbuf_pool */ 
 struct os_mbuf *os_mbuf_get(struct os_mbuf_pool *omp, uint16_t);
 
 /* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
-struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp);
+struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, 
+        uint8_t pkthdr_len);
 
 /* Duplicate a mbuf from the pool */
-struct os_mbuf *os_mbuf_dup(struct os_mbuf_pool *omp, struct os_mbuf *m);
+struct os_mbuf *os_mbuf_dup(struct os_mbuf *m);
 
 struct os_mbuf * os_mbuf_off(struct os_mbuf *om, int off, int *out_off);
 
@@ -211,23 +218,20 @@ struct os_mbuf * os_mbuf_off(struct os_mbuf *om, int off, int *out_off);
 int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
 
 /* Append data onto a mbuf */
-int os_mbuf_append(struct os_mbuf_pool *omp, struct os_mbuf *m,
-                   const void *data, uint16_t len);
+int os_mbuf_append(struct os_mbuf *m, const void *, uint16_t);
 
 /* Free a mbuf */
-int os_mbuf_free(struct os_mbuf_pool *omp, struct os_mbuf *mb);
+int os_mbuf_free(struct os_mbuf *mb);
 
 /* Free a mbuf chain */
-int os_mbuf_free_chain(struct os_mbuf_pool *omp, struct os_mbuf *om);
+int os_mbuf_free_chain(struct os_mbuf *om);
 
-void os_mbuf_adj(struct os_mbuf_pool *omp, struct os_mbuf *mp, int req_len);
+void os_mbuf_adj(struct os_mbuf *mp, int req_len);
 int os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data,
                    int len);
 
-struct os_mbuf *os_mbuf_prepend(struct os_mbuf_pool *omp, struct os_mbuf *om,
-                                int len);
-int os_mbuf_copyinto(struct os_mbuf_pool *omp, struct os_mbuf *om, int off,
-                     const void *src, int len);
+struct os_mbuf *os_mbuf_prepend(struct os_mbuf *om, int len);
+int os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len);
 void os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second);
 
 #endif /* _OS_MBUF_H */ 
