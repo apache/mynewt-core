@@ -169,7 +169,7 @@ retry_alloc:
 	}
         if (result == NULL) {
             more_mem = _sbrk(size);
-            if (more_mem) {
+            if (more_mem != (void *)-1) {
                 add_malloc_block(more_mem, size);
                 goto retry_alloc;
             }
