@@ -32,7 +32,7 @@ int init_tasks(void);
 
 /* Shell */
 #define SHELL_TASK_PRIO      (8)
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(8192))
+#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 static struct shell_cmd lua_shell_cmd;
 
