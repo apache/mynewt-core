@@ -39,4 +39,7 @@ const struct stm32f3_uart_cfg *bsp_uart_config(int port);
  */
 int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull);
 
+struct hal_flash;
+extern const struct hal_flash stm32f3_flash_dev;
+
 #endif /* __MCU_STM32F3_BSP_H_ */

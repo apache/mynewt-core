@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <stddef.h>
+
 #include "hal/hal_gpio.h"
+#include "hal/hal_flash_int.h"
 #include "mcu/stm32f30x.h"
 #include "mcu/stm32f30x_rcc.h"
 #include "mcu/stm32f30x_gpio.h"
@@ -34,8 +37,21 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
     }
 };
 
-const struct stm32f3_uart_cfg *bsp_uart_config(int port)
+const struct stm32f3_uart_cfg *
+bsp_uart_config(int port)
 {
     assert(port < UART_CNT);
     return &uart_cfg[port];
+}
+
+const struct hal_flash *
+bsp_flash_dev(uint8_t id)
+{
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+    return &stm32f3_flash_dev;
 }

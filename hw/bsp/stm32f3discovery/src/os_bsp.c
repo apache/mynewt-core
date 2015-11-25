@@ -16,6 +16,24 @@
 void *_sbrk(int incr);
 void _close(int fd);
 
+/*
+ * XXXX for now have it here.
+ */
+#include <util/flash_map.h>
+
+static struct flash_area bsp_flash_areas[] = {
+    [FLASH_AREA_IMAGE_0] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x08000000,
+        .fa_size = (192 * 1024)
+    },
+    [FLASH_AREA_NFFS] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x08030000,
+        .fa_size = (32 * 1024)
+    }
+};
+
 void
 os_bsp_init(void)
 {
@@ -24,4 +42,6 @@ os_bsp_init(void)
      */
     _sbrk(0);
     _close(0);
+    flash_area_init(bsp_flash_areas,
+      sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 }
