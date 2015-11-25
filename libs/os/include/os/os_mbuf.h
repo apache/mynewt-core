@@ -17,6 +17,7 @@
 #ifndef _OS_MBUF_H 
 #define _OS_MBUF_H 
 
+#include "os/os_eventq.h"
 
 /**
  * A mbuf pool to allocate a mbufs out of.  This contains a pointer to the 
@@ -232,6 +233,7 @@ int os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data,
 
 struct os_mbuf *os_mbuf_prepend(struct os_mbuf *om, int len);
 int os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len);
-void os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second);
+void os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second);
+void *os_mbuf_extend(struct os_mbuf *om, uint16_t len);
 
 #endif /* _OS_MBUF_H */ 

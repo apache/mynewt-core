@@ -744,7 +744,7 @@ os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
  * @param second                The mbuf chain that gets attached.
  */
 void
-os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second)
+os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second)
 {
     struct os_mbuf *next;
     struct os_mbuf *cur;
@@ -777,6 +777,56 @@ os_mbuf_splice(struct os_mbuf *first, struct os_mbuf *second)
     }
 
     second->om_pkthdr_len = 0;
+}
+
+/**
+ * Increases the length of an mbuf chain by the specified amount.  If there is
+ * not sufficient room in the last buffer, a new buffer is allocated and
+ * appended to the chain.  It is an error to request more data than can fit in
+ * a single buffer.
+ *
+ * @param omp
+ * @param om                    The head of the chain to extend.
+ * @param len                   The number of bytes to extend by.
+ *
+ * @return                      A pointer to the new data on success;
+ *                              NULL on failure.
+ */
+void *
+os_mbuf_extend(struct os_mbuf *om, uint16_t len)
+{
+    struct os_mbuf *newm;
+    struct os_mbuf *last;
+    void *data;
+
+    if (len > om->om_omp->omp_databuf_len) {
+        return NULL;
+    }
+
+    /* Scroll to last mbuf in the chain */
+    last = om;
+    while (SLIST_NEXT(last, om_next) != NULL) {
+        last = SLIST_NEXT(last, om_next);
+    }
+
+    if (OS_MBUF_TRAILINGSPACE(last) < len) {
+        newm = os_mbuf_get(om->om_omp, 0);
+        if (newm == NULL) {
+            return NULL;
+        }
+
+        SLIST_NEXT(last, om_next) = newm;
+        last = newm;
+    }
+
+    data = last->om_data + last->om_len;
+    last->om_len += len;
+
+    if (OS_MBUF_IS_PKTHDR(om)) {
+        OS_MBUF_PKTHDR(om)->omp_len += len;
+    }
+
+    return data;
 }
 
 #if 0
