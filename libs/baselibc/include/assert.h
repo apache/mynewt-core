@@ -16,8 +16,10 @@
 #define assert(x) ((void)(0))
 
 #else
+#include <stddef.h>
 
-extern void __assert_func(const char *, unsigned int, const char *, const char *);
+extern void __assert_func(const char *, int, const char *, const char *)
+    __attribute((noreturn));
 
 #define assert(x) ((x) ? (void)0 : __assert_func(__FILE__, __LINE__, NULL, NULL))
 
