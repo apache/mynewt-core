@@ -113,7 +113,7 @@ struct os_mqueue {
  * @param __om The mbuf to check 
  */
 #define OS_MBUF_IS_PKTHDR(__om) \
-    ((__om)->om_pkthdr_len > 0)
+    ((__om)->om_pkthdr_len >= sizeof (struct os_mbuf_pkthdr))
 
 /* Get a packet header pointer given an mbuf pointer */
 #define OS_MBUF_PKTHDR(__om) ((struct os_mbuf_pkthdr *)     \
@@ -144,7 +144,7 @@ _os_mbuf_leadingspace(struct os_mbuf *om)
 
     startoff = 0;
     if (OS_MBUF_IS_PKTHDR(om)) {
-        startoff = sizeof(struct os_mbuf_pkthdr) + om->om_pkthdr_len; 
+        startoff = om->om_pkthdr_len;
     }
 
     leadingspace = (uint16_t) (OS_MBUF_DATA(om, uint8_t *) - 

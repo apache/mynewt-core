@@ -172,15 +172,15 @@ err:
 
 /* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
 struct os_mbuf *
-os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t pkthdr_len)
+os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t extra_pkthdr_len)
 {
     struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
 
     om = os_mbuf_get(omp, 0);
     if (om) {
-        om->om_pkthdr_len = pkthdr_len;
-        om->om_data += pkthdr_len + sizeof(struct os_mbuf_pkthdr);
+        om->om_pkthdr_len = extra_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
+        om->om_data += extra_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
 
         pkthdr = OS_MBUF_PKTHDR(om);
         pkthdr->omp_len = 0;
@@ -255,7 +255,7 @@ static inline void
 _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
 {
     memcpy(&new_buf->om_databuf[0], &old_buf->om_databuf[0], 
-            sizeof(struct os_mbuf_pkthdr) + old_buf->om_pkthdr_len);
+           old_buf->om_pkthdr_len);
 }
 
 /** 
@@ -637,7 +637,8 @@ os_mbuf_prepend(struct os_mbuf *om, int len)
 
         /* The current head didn't have enough space; allocate a new head. */
         if (OS_MBUF_IS_PKTHDR(om)) {
-            p = os_mbuf_get_pkthdr(om->om_omp, om->om_pkthdr_len);
+            p = os_mbuf_get_pkthdr(om->om_omp,
+                om->om_pkthdr_len - sizeof (struct os_mbuf_pkthdr));
         } else {
             p = os_mbuf_get(om->om_omp, 0);
         }
