@@ -55,8 +55,9 @@ int
 flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret)
 {
     int i;
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
     const struct flash_area *fa;
+    uint32_t start, size;
 
     if (!flash_map || idx >= flash_map_entries) {
         return -1;
@@ -66,12 +67,12 @@ flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret)
 
     hf = bsp_flash_dev(fa->fa_flash_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        if (hf->hf_sectors[i] >= fa->fa_off &&
-          hf->hf_sectors[i] < fa->fa_off + fa->fa_size) {
+        hf->hf_itf->hff_sector_info(i, &start, &size);
+        if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
             if (ret) {
                 ret->fa_flash_id = fa->fa_flash_id;
-                ret->fa_off = hf->hf_sectors[i];
-                ret->fa_size = hal_flash_sector_size(hf, i);
+                ret->fa_off = start;
+                ret->fa_size = size;
                 ret++;
             }
             *cnt = *cnt + 1;
@@ -85,8 +86,9 @@ int
 flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad)
 {
     int i;
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
     const struct flash_area *fa;
+    uint32_t start, size;
 
     if (!flash_map || idx >= flash_map_entries) {
         return -1;
@@ -96,12 +98,12 @@ flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad)
 
     hf = bsp_flash_dev(fa->fa_flash_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        if (hf->hf_sectors[i] >= fa->fa_off &&
-          hf->hf_sectors[i] < fa->fa_off + fa->fa_size) {
+        hf->hf_itf->hff_sector_info(i, &start, &size);
+        if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
             if (nad) {
                 nad->nad_flash_id = fa->fa_flash_id;
-                nad->nad_offset = hf->hf_sectors[i];
-                nad->nad_length = hal_flash_sector_size(hf, i);
+                nad->nad_offset = start;
+                nad->nad_length = size;
                 nad++;
             }
             *cnt = *cnt + 1;

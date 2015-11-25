@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <inttypes.h>
+#include <assert.h>
 #include <bsp/bsp.h>
 
 #include "hal/hal_flash.h"
@@ -22,7 +23,7 @@
 int
 hal_flash_init(void)
 {
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
     uint8_t i;
     int rc = 0;
 
@@ -39,22 +40,21 @@ hal_flash_init(void)
 }
 
 uint32_t
-hal_flash_sector_size(struct hal_flash *hf, int sec_idx)
+hal_flash_sector_size(const struct hal_flash *hf, int sec_idx)
 {
-    uint32_t end;
+    uint32_t size;
+    uint32_t start;
 
-    if (sec_idx < hf->hf_sector_cnt - 1) {
-        end = hf->hf_sectors[sec_idx + 1];
-    } else {
-        end = hf->hf_sectors[0] + hf->hf_size;
+    if (hf->hf_itf->hff_sector_info(sec_idx, &start, &size)) {
+        return 0;
     }
-    return end - hf->hf_sectors[sec_idx];
+    return size;
 }
 
 static int
-hal_flash_check_addr(struct hal_flash *hf, uint32_t addr)
+hal_flash_check_addr(const struct hal_flash *hf, uint32_t addr)
 {
-    if (addr < hf->hf_sectors[0] || addr > hf->hf_sectors[0] + hf->hf_size) {
+    if (addr < hf->hf_base_addr || addr > hf->hf_base_addr + hf->hf_size) {
         return -1;
     }
     return 0;
@@ -63,7 +63,7 @@ hal_flash_check_addr(struct hal_flash *hf, uint32_t addr)
 int
 hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
 
     hf = bsp_flash_dev(id);
     if (!hf) {
@@ -80,7 +80,7 @@ int
 hal_flash_write(uint8_t id, uint32_t address, const void *src,
   uint32_t num_bytes)
 {
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
 
     hf = bsp_flash_dev(id);
     if (!hf) {
@@ -96,7 +96,7 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
 int
 hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
 {
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
 
     hf = bsp_flash_dev(id);
     if (!hf) {
@@ -111,11 +111,12 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
 int
 hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
 {
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
+    uint32_t start, size;
     uint32_t end;
     uint32_t end_area;
-    const uint32_t *area;
     int i;
+    int rc;
 
     hf = bsp_flash_dev(id);
     if (!hf) {
@@ -133,16 +134,17 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
          */
         return -1;
     }
-    area = hf->hf_sectors;
 
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        end_area = area[i] + hal_flash_sector_size(hf, i);
-        if (address < end_area && end > area[i]) {
+        rc = hf->hf_itf->hff_sector_info(i, &start, &size);
+        assert(rc == 0);
+        end_area = start + size;
+        if (address < end_area && end > start) {
             /*
              * If some region of eraseable area falls inside sector,
              * erase the sector.
              */
-            if (hf->hf_itf->hff_erase_sector(area[i])) {
+            if (hf->hf_itf->hff_erase_sector(start)) {
                 return -1;
             }
         }

@@ -21,7 +21,7 @@
 #include "hal/hal_flash_int.h"
 #include "mcu/native_bsp.h"
 
-struct hal_flash *
+const struct hal_flash *
 bsp_flash_dev(uint8_t id)
 {
     /*
@@ -30,5 +30,5 @@ bsp_flash_dev(uint8_t id)
     if (id != 0) {
         return NULL;
     }
-    return (struct hal_flash *)&native_flash_dev;
+    return &native_flash_dev;
 }

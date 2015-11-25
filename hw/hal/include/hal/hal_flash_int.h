@@ -25,22 +25,23 @@ struct hal_flash_funcs {
     int (*hff_read)(uint32_t address, void *dst, uint32_t num_bytes);
     int (*hff_write)(uint32_t address, const void *src, uint32_t num_bytes);
     int (*hff_erase_sector)(uint32_t sector_address);
+    int (*hff_sector_info)(int idx, uint32_t *address, uint32_t *size);
     int (*hff_init)(void);
 };
 
 struct hal_flash {
     const struct hal_flash_funcs *hf_itf;
+    uint32_t hf_base_addr;
     uint32_t hf_size;
     int hf_sector_cnt;
-    const uint32_t *hf_sectors;
 };
 
 /*
  * Return size of the flash sector. sec_idx is index to hf_sectors array.
  */
-uint32_t hal_flash_sector_size(struct hal_flash *hf, int sec_idx);
+uint32_t hal_flash_sector_size(const struct hal_flash *hf, int sec_idx);
 
 /* External function prototype supplied by BSP */
-struct hal_flash *bsp_flash_dev(uint8_t flash_id);
+const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 
 #endif /* H_HAL_FLASH_INT */

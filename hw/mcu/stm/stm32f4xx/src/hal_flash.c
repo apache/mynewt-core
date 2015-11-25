@@ -24,12 +24,14 @@ static int stm32f4_flash_read(uint32_t address, void *dst, uint32_t num_bytes);
 static int stm32f4_flash_write(uint32_t address, const void *src,
   uint32_t num_bytes);
 static int stm32f4_flash_erase_sector(uint32_t sector_address);
+static int stm32f4_flash_sector_info(int idx, uint32_t *address, uint32_t *sz);
 static int stm32f4_flash_init(void);
 
 static const struct hal_flash_funcs stm32f4_flash_funcs = {
     .hff_read = stm32f4_flash_read,
     .hff_write = stm32f4_flash_write,
     .hff_erase_sector = stm32f4_flash_erase_sector,
+    .hff_sector_info = stm32f4_flash_sector_info,
     .hff_init = stm32f4_flash_init
 };
 
@@ -45,7 +47,8 @@ static const uint32_t stm32f4_flash_sectors[] = {
     0x08080000,
     0x080a0000,
     0x080c0000,
-    0x080e0000
+    0x080e0000,
+    0x08100000		/* End of flash */
 };
 
 #define STM32F4_FLASH_NUM_AREAS                                         \
@@ -54,9 +57,9 @@ static const uint32_t stm32f4_flash_sectors[] = {
 
 const struct hal_flash stm32f4_flash_dev = {
     .hf_itf = &stm32f4_flash_funcs,
+    .hf_base_addr = 0x08000000,
     .hf_size = 1024 * 1024,
-    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS,
-    .hf_sectors = stm32f4_flash_sectors
+    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS - 1,
 };
 
 static int
@@ -102,7 +105,7 @@ stm32f4_flash_erase_sector(uint32_t sector_address)
 {
     int i;
 
-    for (i = 0; i < STM32F4_FLASH_NUM_AREAS; i++) {
+    for (i = 0; i < STM32F4_FLASH_NUM_AREAS - 1; i++) {
         if (stm32f4_flash_sectors[i] == sector_address) {
             stm32f4_flash_erase_sector_id(i);
             return 0;
@@ -110,6 +113,14 @@ stm32f4_flash_erase_sector(uint32_t sector_address)
     }
 
     return -1;
+}
+
+static int
+stm32f4_flash_sector_info(int idx, uint32_t *address, uint32_t *sz)
+{
+    *address = stm32f4_flash_sectors[idx];
+    *sz = stm32f4_flash_sectors[idx + 1] - stm32f4_flash_sectors[idx];
+    return 0;
 }
 
 static int

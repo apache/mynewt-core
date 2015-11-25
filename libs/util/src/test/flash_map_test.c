@@ -31,7 +31,7 @@ TEST_CASE(flash_map_test_case_1)
     const struct flash_area *fa;
     int areas_checked = 0;
     int i, j, rc;
-    struct hal_flash *hf;
+    const struct hal_flash *hf;
     struct flash_area my_secs[32];
     int my_sec_cnt;
     uint32_t end;

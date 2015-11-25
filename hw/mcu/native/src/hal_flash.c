@@ -32,11 +32,13 @@ static int native_flash_read(uint32_t address, void *dst, uint32_t length);
 static int native_flash_write(uint32_t address, const void *src,
   uint32_t length);
 static int native_flash_erase_sector(uint32_t sector_address);
+static int native_flash_sector_info(int idx, uint32_t *address, uint32_t *size);
 
 static const struct hal_flash_funcs native_flash_funcs = {
     .hff_read = native_flash_read,
     .hff_write = native_flash_write,
     .hff_erase_sector = native_flash_erase_sector,
+    .hff_sector_info = native_flash_sector_info,
     .hff_init = native_flash_init
 };
 
@@ -60,9 +62,9 @@ static const uint32_t native_flash_sectors[] = {
 
 const struct hal_flash native_flash_dev = {
     .hf_itf = &native_flash_funcs,
+    .hf_base_addr = 0,
     .hf_size = 1024 * 1024,
     .hf_sector_cnt = FLASH_NUM_AREAS,
-    .hf_sectors = native_flash_sectors
 };
 
 static void
@@ -213,6 +215,16 @@ native_flash_erase_sector(uint32_t sector_address)
     }
     len = flash_sector_len(area_id);
     flash_native_erase(sector_address, len);
+    return 0;
+}
+
+static int
+native_flash_sector_info(int idx, uint32_t *address, uint32_t *size)
+{
+    assert(idx < FLASH_NUM_AREAS);
+
+    *address = native_flash_sectors[idx];
+    *size = flash_sector_len(idx);
     return 0;
 }
 

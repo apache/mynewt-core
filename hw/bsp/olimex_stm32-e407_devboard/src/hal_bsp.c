@@ -42,7 +42,7 @@ bsp_uart_config(int port)
     return &uart_cfg[port];
 }
 
-struct hal_flash *
+const struct hal_flash *
 bsp_flash_dev(uint8_t id)
 {
     /*
