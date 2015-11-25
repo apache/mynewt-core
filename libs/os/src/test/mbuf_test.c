@@ -38,7 +38,7 @@ os_mbuf_test_setup(void)
             MBUF_TEST_POOL_BUF_SIZE, &os_mbuf_membuf[0], "mbuf_pool");
     TEST_ASSERT_FATAL(rc == 0, "Error creating memory pool %d", rc);
 
-    rc = os_mbuf_pool_init(&os_mbuf_pool, &os_mbuf_mempool, 0, 
+    rc = os_mbuf_pool_init(&os_mbuf_pool, &os_mbuf_mempool,
             MBUF_TEST_POOL_BUF_SIZE, MBUF_TEST_POOL_BUF_COUNT);
     TEST_ASSERT_FATAL(rc == 0, "Error creating mbuf pool %d", rc);
 }
@@ -53,7 +53,7 @@ TEST_CASE(os_mbuf_test_case_1)
     m = os_mbuf_get(&os_mbuf_pool, 0);
     TEST_ASSERT_FATAL(m != NULL, "Error allocating mbuf");
 
-    rc = os_mbuf_free(&os_mbuf_pool, m);
+    rc = os_mbuf_free(m);
     TEST_ASSERT_FATAL(rc == 0, "Error free'ing mbuf %d", rc);
 }
 
@@ -68,14 +68,14 @@ TEST_CASE(os_mbuf_test_case_2)
     m = os_mbuf_get(&os_mbuf_pool, 0);
     TEST_ASSERT_FATAL(m != NULL, "Error allocating mbuf");
 
-    dup = os_mbuf_dup(&os_mbuf_pool, m);
+    dup = os_mbuf_dup(m);
     TEST_ASSERT_FATAL(dup != NULL, "NULL mbuf returned from dup");
     TEST_ASSERT_FATAL(dup != m, "duplicate matches original.");
 
-    rc = os_mbuf_free(&os_mbuf_pool, m);
+    rc = os_mbuf_free(m);
     TEST_ASSERT_FATAL(rc == 0, "Error free'ing mbuf m %d", rc);
     
-    rc = os_mbuf_free(&os_mbuf_pool, dup);
+    rc = os_mbuf_free(dup);
     TEST_ASSERT_FATAL(rc == 0, "Error free'ing mbuf dup %d", rc);
 
     m = os_mbuf_get(&os_mbuf_pool, 0);
@@ -86,16 +86,16 @@ TEST_CASE(os_mbuf_test_case_2)
 
     SLIST_NEXT(m, om_next) = m2; 
 
-    dup = os_mbuf_dup(&os_mbuf_pool, m);
+    dup = os_mbuf_dup(m);
     TEST_ASSERT_FATAL(dup != NULL, "NULL mbuf returned from dup");
     TEST_ASSERT_FATAL(dup != m, "Duplicate matches original");
     TEST_ASSERT_FATAL(SLIST_NEXT(dup, om_next) != NULL, 
             "NULL chained element, duplicate should match original");
 
-    rc = os_mbuf_free_chain(&os_mbuf_pool, m);
+    rc = os_mbuf_free_chain(m);
     TEST_ASSERT_FATAL(rc == 0, "Cannot free mbuf chain %d", rc);
 
-    rc = os_mbuf_free_chain(&os_mbuf_pool, dup);
+    rc = os_mbuf_free_chain(dup);
     TEST_ASSERT_FATAL(rc == 0, "Cannot free mbuf chain %d", rc);
 }
 
@@ -109,7 +109,7 @@ TEST_CASE(os_mbuf_test_case_3)
     m = os_mbuf_get(&os_mbuf_pool, 0);
     TEST_ASSERT_FATAL(m != NULL, "Error allocating mbuf");
 
-    rc = os_mbuf_append(&os_mbuf_pool, m, databuf, sizeof(databuf));
+    rc = os_mbuf_append(m, databuf, sizeof(databuf));
     TEST_ASSERT_FATAL(rc == 0, "Cannot add %d bytes to mbuf", 
             sizeof(databuf));
     TEST_ASSERT_FATAL(m->om_len == sizeof(databuf), 
