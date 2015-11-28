@@ -50,9 +50,7 @@ uint8_t g_host_adv_len;
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
 #define MBUF_BUF_SIZE       (256)
-#define MBUF_MEMBLOCK_SIZE  \
-    (MBUF_BUF_SIZE + sizeof(struct os_mbuf) + sizeof(struct os_mbuf_pkthdr) + \
-     sizeof(struct ble_mbuf_hdr))
+#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
 
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
 
