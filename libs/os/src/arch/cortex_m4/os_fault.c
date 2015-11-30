@@ -68,18 +68,18 @@ void
 os_default_irq(struct trap_frame *tf)
 {
     console_blocking_mode();
-    console_printf("Unhandled interrupt (%d), exception sp 0x%x\n",
+    console_printf("Unhandled interrupt (%d), exception sp 0x%08x\n",
       SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk, (uint32_t)tf->ef);
-    console_printf(" r0:0x%x  r1:0x%x  r2:0x%x  r3:0x%x\n",
+    console_printf(" r0:0x%08x  r1:0x%08x  r2:0x%08x  r3:0x%08x\n",
       tf->ef->r0, tf->ef->r1, tf->ef->r2, tf->ef->r3);
-    console_printf(" r4:0x%x  r5:0x%x  r6:0x%x  r7:0x%x\n",
+    console_printf(" r4:0x%08x  r5:0x%08x  r6:0x%08x  r7:0x%08x\n",
       tf->r4, tf->r5, tf->r6, tf->r7);
-    console_printf(" r8:0x%x  r9:0x%x  r10:0x%x  r11:0x%x\n",
+    console_printf(" r8:0x%08x  r9:0x%08x r10:0x%08x r11:0x%08x\n",
       tf->r8, tf->r9, tf->r10, tf->r11);
-    console_printf("r12:0x%x  lr:0x%x  pc:0x%x  psr:0x%x\n",
+    console_printf("r12:0x%08x  lr:0x%08x  pc:0x%08x psr:0x%08x\n",
       tf->ef->r12, tf->ef->lr, tf->ef->pc, tf->ef->psr);
-    console_printf("ICSR:0x%x  HFSR:0x%x  CFSR:0x%x\n",
+    console_printf("ICSR:0x%08x HFSR:0x%08x CFSR:0x%08x\n",
       SCB->ICSR, SCB->HFSR, SCB->CFSR);
-    console_printf("BFAR:0x%x  MMFAR:0x%x\n", SCB->BFAR, SCB->MMFAR);
+    console_printf("BFAR:0x%08x MMFAR:0x%08x\n", SCB->BFAR, SCB->MMFAR);
     system_reset();
 }
