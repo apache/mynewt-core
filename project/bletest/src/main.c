@@ -49,7 +49,7 @@ uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
-#define MBUF_BUF_SIZE       (256)
+#define MBUF_BUF_SIZE       (256 + sizeof(struct hci_data_hdr))
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
 
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -367,8 +367,7 @@ main(void)
     rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS, 
             MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
 
-    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, 
-                           sizeof(struct ble_mbuf_hdr), MBUF_MEMBLOCK_SIZE, 
+    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE, 
                            MBUF_NUM_MBUFS);
     assert(rc == 0);
 

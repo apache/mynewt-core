@@ -20,9 +20,11 @@
 #include "os/os_eventq.h"
 
 /**
- * A mbuf pool to allocate a mbufs out of.  This contains a pointer to the 
- * mempool to allocate mbufs out of, along with convenient housekeeping 
- * information on mbufs in the pool (e.g. length of variable packet header)
+ * A mbuf pool from which to allocate mbufs. This contains a pointer to the os 
+ * mempool to allocate mbufs out of, the total number of elements in the pool, 
+ * and the amount of "user" data in a non-packet header mbuf. The total pool 
+ * size, in bytes, should be: 
+ *  os_mbuf_count * (omp_databuf_len + sizeof(struct os_mbuf))
  */
 struct os_mbuf_pool {
     /** 
