@@ -48,6 +48,7 @@ os_eventq_put2(struct os_eventq *evq, struct os_event *ev, int isr)
     resched = 0;
     if (evq->evq_task) {
         os_sched_wakeup(evq->evq_task);
+        evq->evq_task = NULL;
         resched = 1;
     }
 
