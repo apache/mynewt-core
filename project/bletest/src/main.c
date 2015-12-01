@@ -61,6 +61,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 /* Some application configurations */
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
+#define BLETEST_ROLE_INITIATOR          (2)
 #define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
@@ -69,7 +70,13 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
-#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
+#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
+#define BLETEST_CFG_CONN_ITVL           (1000)  /* 1250 msecs */           
+#define BLETEST_CFG_SLAVE_LATENCY       (0)
+#define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
+#define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 10 seconds */
+#define BLETEST_CFG_MIN_CE_LEN          (1000)    
+#define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL * 2)
 
 /* BLETEST variables */
 #define BLETEST_STACK_SIZE              (256)
@@ -182,6 +189,7 @@ bletest_init_advertising(void)
     assert(rc == 0);
 }
 
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
 void
 bletest_init_scanner(void)
 {
@@ -210,6 +218,40 @@ bletest_init_scanner(void)
         assert(rc == 0);
     }
 }
+#endif
+
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
+void
+bletest_init_initiator(void)
+{
+    int rc;
+    struct hci_create_conn cc;
+    struct hci_create_conn *hcc;
+
+    /* Enable initiating */
+    hcc = &cc;
+    hcc->conn_itvl_max = BLETEST_CFG_CONN_ITVL;
+    hcc->conn_itvl_min = BLETEST_CFG_CONN_ITVL;
+    hcc->conn_latency = BLETEST_CFG_SLAVE_LATENCY;
+    hcc->filter_policy = BLETEST_CFG_INIT_FILTER_POLICY;
+    hcc->supervision_timeout = BLETEST_CFG_CONN_SPVN_TMO;
+    hcc->scan_itvl = BLETEST_CFG_SCAN_ITVL;
+    hcc->scan_window = BLETEST_CFG_SCAN_WINDOW;
+    hcc->peer_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
+    hcc->peer_addr[0] = 0x00;
+    hcc->peer_addr[1] = 0x00;
+    hcc->peer_addr[2] = 0x00;
+    hcc->peer_addr[3] = 0x99;
+    hcc->peer_addr[4] = 0x99;
+    hcc->peer_addr[5] = 0x09;
+    hcc->own_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
+    hcc->min_ce_len = BLETEST_CFG_MIN_CE_LEN;
+    hcc->max_ce_len = BLETEST_CFG_MAX_CE_LEN;
+
+    rc = host_hci_cmd_le_create_connection(hcc);
+    assert(rc == 0);
+}
+#endif
 
 void
 bletest_execute(void)
@@ -246,6 +288,9 @@ bletest_execute(void)
         g_next_os_time += (OS_TICKS_PER_SEC * 60);
     }
 #endif
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
+    (void)rc;
+#endif
 }
 
 /**
@@ -275,7 +320,7 @@ bletest_task_handler(void *arg)
     struct os_callout_func *cf;
 
     /* We are initialized */
-    console_printf("Starting BLE test task");
+    console_printf("Starting BLE test task\n");
 
     /* Initialize eventq */
     os_eventq_init(&g_bletest_evq);
@@ -292,6 +337,11 @@ bletest_task_handler(void *arg)
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
     /* Initialize the scanner */
     bletest_init_scanner();
+#endif
+
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
+    /* Initialize the scanner */
+    bletest_init_initiator();
 #endif
 
     /* Init bletest variables */

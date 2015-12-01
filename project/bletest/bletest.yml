@@ -4,3 +4,4 @@ project.eggs:
     - net/nimble/controller
     - net/nimble/host
     - libs/console/full
+    - libs/baselibc
