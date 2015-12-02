@@ -993,11 +993,57 @@ TEST_CASE(nffs_test_read)
     TEST_ASSERT(rc == 0);
 }
 
-TEST_CASE(nffs_test_overwrite_one)
+TEST_CASE(nffs_test_open)
 {
     struct nffs_file *file;
     int rc;
 
+    rc = nffs_format(nffs_area_descs);
+    TEST_ASSERT(rc == 0);
+
+    /*** Fail to open an invalid path (not rooted). */
+    rc = nffs_open("file", NFFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == NFFS_EINVAL);
+
+    /*** Fail to open a directory (root directory). */
+    rc = nffs_open("/", NFFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == NFFS_EINVAL);
+
+    /*** Fail to open a nonexistent file for reading. */
+    rc = nffs_open("/1234", NFFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == NFFS_ENOENT);
+
+    rc = nffs_mkdir("/dir");
+    TEST_ASSERT(rc == 0);
+
+    /*** Fail to open a directory. */
+    rc = nffs_open("/dir", NFFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == NFFS_EINVAL);
+
+    /*** Successfully open an existing file for reading. */
+    nffs_test_util_create_file("/dir/file.txt", "1234567890", 10);
+    rc = nffs_open("/dir/file.txt", NFFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == 0);
+    rc = nffs_close(file);
+    TEST_ASSERT(rc == 0);
+
+    /*** Successfully open an nonexistent file for writing. */
+    rc = nffs_open("/dir/file2.txt", NFFS_ACCESS_WRITE, &file);
+    TEST_ASSERT(rc == 0);
+    rc = nffs_close(file);
+    TEST_ASSERT(rc == 0);
+
+    /*** Ensure the file can be reopened. */
+    rc = nffs_open("/dir/file.txt", NFFS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == 0);
+    rc = nffs_close(file);
+    TEST_ASSERT(rc == 0);
+}
+
+TEST_CASE(nffs_test_overwrite_one)
+{
+    struct nffs_file *file;
+    int rc;
 
     /*** Setup. */
     rc = nffs_format(nffs_area_descs);
@@ -2201,6 +2247,10 @@ TEST_CASE(nffs_test_readdir)
     rc = nffs_opendir("/asdf", &dir);
     TEST_ASSERT(rc == NFFS_ENOENT);
 
+    /* Fail to opendir a file. */
+    rc = nffs_opendir("/mydir/a", &dir);
+    TEST_ASSERT(rc == NFFS_EINVAL);
+
     /* Real directory (with trailing slash). */
     rc = nffs_opendir("/mydir/", &dir);
     TEST_ASSERT_FATAL(rc == 0);
@@ -2307,6 +2357,7 @@ nffs_test_gen(void)
     nffs_test_truncate();
     nffs_test_append();
     nffs_test_read();
+    nffs_test_open();
     nffs_test_overwrite_one();
     nffs_test_overwrite_two();
     nffs_test_overwrite_three();
