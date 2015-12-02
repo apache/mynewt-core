@@ -50,19 +50,25 @@ nffs_dir_free(struct nffs_dir *dir)
 int
 nffs_dir_open(const char *path, struct nffs_dir **out_dir)
 {
+    struct nffs_inode_entry *parent_inode_entry;
     struct nffs_dir *dir;
     int rc;
+
+    rc = nffs_path_find_inode_entry(path, &parent_inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (!nffs_hash_id_is_dir(parent_inode_entry->nie_hash_entry.nhe_id)) {
+        return FS_EINVAL;
+    }
 
     dir = nffs_dir_alloc();
     if (dir == NULL) {
         return FS_ENOMEM;
     }
 
-    rc = nffs_path_find_inode_entry(path, &dir->nd_parent_inode_entry);
-    if (rc != 0) {
-        return rc;
-    }
-
+    dir->nd_parent_inode_entry = parent_inode_entry;
     dir->nd_parent_inode_entry->nie_refcnt++;
     memset(&dir->nd_dirent, 0, sizeof dir->nd_dirent);
 

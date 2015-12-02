@@ -191,15 +191,15 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
 
         /* Create a new file at the specified path. */
         rc = nffs_file_new(parent, parser.npp_token, parser.npp_token_len, 0,
-                          &file->nf_inode_entry);
+                           &file->nf_inode_entry);
         if (rc != 0) {
             goto err;
         }
-    } else {
+    } else if (rc == 0) {
         /* The file already exists. */
 
         /* Reject an attempt to open a directory. */
-        if (parser.npp_token_type != NFFS_PATH_TOKEN_LEAF) {
+        if (nffs_hash_id_is_dir(inode->nie_hash_entry.nhe_id)) {
             rc = FS_EINVAL;
             goto err;
         }
@@ -210,7 +210,7 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
              */
             nffs_path_unlink(path);
             rc = nffs_file_new(parent, parser.npp_token, parser.npp_token_len,
-                              0, &file->nf_inode_entry);
+                               0, &file->nf_inode_entry);
             if (rc != 0) {
                 goto err;
             }
@@ -220,6 +220,9 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
              */
             file->nf_inode_entry = inode;
         }
+    } else {
+        /* Invalid path. */
+        goto err;
     }
 
     if (access_flags & FS_ACCESS_APPEND) {

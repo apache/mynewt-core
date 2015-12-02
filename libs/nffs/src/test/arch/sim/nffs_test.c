@@ -999,11 +999,57 @@ TEST_CASE(nffs_test_read)
     TEST_ASSERT(rc == 0);
 }
 
-TEST_CASE(nffs_test_overwrite_one)
+TEST_CASE(nffs_test_open)
 {
     struct fs_file *file;
     int rc;
 
+    rc = nffs_format(nffs_area_descs);
+    TEST_ASSERT(rc == 0);
+
+    /*** Fail to open an invalid path (not rooted). */
+    rc = fs_open("file", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_EINVAL);
+
+    /*** Fail to open a directory (root directory). */
+    rc = fs_open("/", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_EINVAL);
+
+    /*** Fail to open a nonexistent file for reading. */
+    rc = fs_open("/1234", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_ENOENT);
+
+    rc = fs_mkdir("/dir");
+    TEST_ASSERT(rc == 0);
+
+    /*** Fail to open a directory. */
+    rc = fs_open("/dir", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_EINVAL);
+
+    /*** Successfully open an existing file for reading. */
+    nffs_test_util_create_file("/dir/file.txt", "1234567890", 10);
+    rc = fs_open("/dir/file.txt", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == 0);
+    rc = fs_close(file);
+    TEST_ASSERT(rc == 0);
+
+    /*** Successfully open an nonexistent file for writing. */
+    rc = fs_open("/dir/file2.txt", FS_ACCESS_WRITE, &file);
+    TEST_ASSERT(rc == 0);
+    rc = fs_close(file);
+    TEST_ASSERT(rc == 0);
+
+    /*** Ensure the file can be reopened. */
+    rc = fs_open("/dir/file.txt", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == 0);
+    rc = fs_close(file);
+    TEST_ASSERT(rc == 0);
+}
+
+TEST_CASE(nffs_test_overwrite_one)
+{
+    struct fs_file *file;
+    int rc;
 
     /*** Setup. */
     rc = nffs_format(nffs_area_descs);
@@ -2211,6 +2257,10 @@ TEST_CASE(nffs_test_readdir)
     rc = fs_opendir("/asdf", &dir);
     TEST_ASSERT(rc == FS_ENOENT);
 
+    /* Fail to opendir a file. */
+    rc = fs_opendir("/mydir/a", &dir);
+    TEST_ASSERT(rc == FS_EINVAL);
+
     /* Real directory (with trailing slash). */
     rc = fs_opendir("/mydir/", &dir);
     TEST_ASSERT_FATAL(rc == 0);
@@ -2317,6 +2367,7 @@ nffs_test_gen(void)
     nffs_test_truncate();
     nffs_test_append();
     nffs_test_read();
+    nffs_test_open();
     nffs_test_overwrite_one();
     nffs_test_overwrite_two();
     nffs_test_overwrite_three();
