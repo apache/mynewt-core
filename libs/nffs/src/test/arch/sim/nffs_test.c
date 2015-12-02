@@ -2201,8 +2201,8 @@ TEST_CASE(nffs_test_readdir)
     rc = nffs_opendir("/asdf", &dir);
     TEST_ASSERT(rc == NFFS_ENOENT);
 
-    /* Real directory. */
-    rc = nffs_opendir("/mydir", &dir);
+    /* Real directory (with trailing slash). */
+    rc = nffs_opendir("/mydir/", &dir);
     TEST_ASSERT_FATAL(rc == 0);
 
     rc = nffs_readdir(dir, &dirent);
@@ -2222,6 +2222,23 @@ TEST_CASE(nffs_test_readdir)
 
     rc = nffs_readdir(dir, &dirent);
     TEST_ASSERT(rc == NFFS_ENOENT);
+
+    rc = nffs_closedir(dir);
+    TEST_ASSERT(rc == 0);
+
+    /* Root directory. */
+    rc = nffs_opendir("/", &dir);
+    TEST_ASSERT(rc == 0);
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+
+    nffs_test_util_assert_ent_name(dirent, "lost+found");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+
+    rc = nffs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == 0);
+    nffs_test_util_assert_ent_name(dirent, "mydir");
+    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
 
     rc = nffs_closedir(dir);
     TEST_ASSERT(rc == 0);

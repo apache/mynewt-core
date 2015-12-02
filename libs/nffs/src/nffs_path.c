@@ -145,8 +145,16 @@ nffs_path_find(struct nffs_path_parser *parser,
                 return NFFS_ENOENT;
             }
 
-            rc = nffs_path_find_child(parent, parser->npp_token,
-                                      parser->npp_token_len, &inode_entry);
+            if (parser->npp_token_len == 0) {
+                /* If the path ends with a slash, the leaf is the parent, not
+                 * the trailing empty token.
+                 */
+                inode_entry = parent;
+                rc = 0;
+            } else {
+                rc = nffs_path_find_child(parent, parser->npp_token,
+                                          parser->npp_token_len, &inode_entry);
+            }
             goto done;
         }
     }
