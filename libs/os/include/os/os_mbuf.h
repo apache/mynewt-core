@@ -40,6 +40,11 @@ struct os_mbuf_pool {
      * The memory pool which to allocate mbufs out of 
      */
     struct os_mempool *omp_pool;
+
+    /**
+     * Link to the next mbuf pool for system memory pools.
+     */
+    STAILQ_ENTRY(os_mbuf_pool) omp_next;
 };
 
 
@@ -200,6 +205,16 @@ struct os_mbuf *os_mqueue_get(struct os_mqueue *);
 
 /* Put an element in a mbuf queue */
 int os_mqueue_put(struct os_mqueue *, struct os_eventq *, struct os_mbuf *);
+
+/* Register an mbuf pool with the system pool registry */
+int os_msys_register(struct os_mbuf_pool *);
+
+/* Return a mbuf from the system pool, given an indicative mbuf size */
+struct os_mbuf *os_msys_get(uint16_t dsize, uint16_t leadingspace);
+
+/* Return a packet header mbuf from the system pool */
+struct os_mbuf *os_msys_get_pkthdr(uint16_t dsize, uint16_t pkthdr_len);
+
 
 /* Initialize a mbuf pool */
 int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp, 

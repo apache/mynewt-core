@@ -27,6 +27,17 @@ struct shell_cmd {
 
 int shell_cmd_register(struct shell_cmd *sc, char *cmd, 
         shell_cmd_func_t func);
+
+
+#define SHELL_NLIP_PKT_START1 (6)
+#define SHELL_NLIP_PKT_START2 (9)
+#define SHELL_NLIP_DATA_START1 (4)
+#define SHELL_NLIP_DATA_START2 (20)
+
+typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
+int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
+int shell_nlip_output(struct os_mbuf *m);
+
 void shell_console_rx_cb(int full_line);
 int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size);
 

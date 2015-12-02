@@ -18,11 +18,17 @@
 
 #include <console/console.h>
 
-#include "shell/shell.h" 
+#include <shell/shell.h>
+#include <util/base64.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+static shell_nlip_input_func_t g_shell_nlip_in_func;
+static void *g_shell_nlip_in_arg;
+
+static struct os_mqueue g_shell_nlip_mq;
 
 #define OS_EVENT_T_CONSOLE_RDY (OS_EVENT_T_PERUSER)
 
@@ -39,6 +45,10 @@ char *argv[20];
 
 static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list = 
     STAILQ_HEAD_INITIALIZER(g_shell_cmd_list);
+
+static struct os_mbuf *g_nlip_mbuf;
+static uint16_t g_nlip_expected_len;
+
 
 static int 
 shell_cmd_list_lock(void)
@@ -157,6 +167,145 @@ shell_process_command(char *line, int len)
     return (0);
 }
 
+
+static int 
+shell_nlip_process(char *data, int len)
+{
+    uint16_t copy_len;
+    int rc;
+
+    rc = base64_decode(data, data);
+    if (rc < 0) {
+        goto err;
+    }
+    len = rc;
+
+    if (g_nlip_mbuf == NULL) {
+        if (len < 2) {
+            rc = -1;
+            goto err;
+        }
+
+        g_nlip_expected_len = ntohs(*(uint16_t *) data);
+        g_nlip_mbuf = os_msys_get_pkthdr(g_nlip_expected_len, 0);
+        if (!g_nlip_mbuf) {
+            rc = -1;
+            goto err;
+        }
+
+        data += sizeof(uint16_t);
+        len -= sizeof(uint16_t);
+    }
+
+    copy_len = min(g_nlip_expected_len - OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len,
+            len);
+
+    rc = os_mbuf_copyinto(g_nlip_mbuf, OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len, 
+            data, copy_len);
+    if (rc != 0) {
+        goto err;
+    }
+
+    if (OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len == g_nlip_expected_len) {
+        if (g_shell_nlip_in_func) {
+            g_shell_nlip_in_func(g_nlip_mbuf, g_shell_nlip_in_arg);
+        } else {
+            os_mbuf_free_chain(g_nlip_mbuf);
+        }
+        g_nlip_mbuf = NULL;
+        g_nlip_expected_len = 0;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+static int 
+shell_nlip_mtx(struct os_mbuf *m)
+{
+    uint8_t buf[12];
+    uint16_t totlen;
+    uint16_t dlen;
+    uint16_t off;
+    int rc;
+
+    /* Convert the mbuf into a packet.
+     *
+     * starts with 06 09 
+     * base64 encode:
+     *  - total packet length (uint16_t) 
+     *  - data 
+     * base64 encoded data must be less than 122 bytes per line to 
+     * avoid overflows and adhere to convention.
+     *
+     * continuation packets are preceded by 04 20 until the entire 
+     * buffer has been sent. 
+     */
+    totlen = OS_MBUF_PKTHDR(m)->omp_len;
+
+    while (totlen > 0) {
+        dlen = min(sizeof(buf), totlen);
+
+        rc = os_mbuf_copydata(m, off, dlen, buf);
+        if (rc != 0) {
+            goto err;
+        }
+        off += dlen;
+
+        console_write((char *) buf, dlen);
+        totlen -= dlen;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+static void
+shell_nlip_mqueue_process(void)
+{
+    struct os_mbuf *m;
+
+    /* Copy data out of the mbuf 12 bytes at a time and write it to 
+     * the console.
+     */
+    while (1) {
+        m = os_mqueue_get(&g_shell_nlip_mq);
+        if (!m) {
+            break;
+        }
+
+        (void) shell_nlip_mtx(m);
+
+        os_mbuf_free_chain(m);
+    }
+}
+
+int
+shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg)
+{
+    g_shell_nlip_in_func = nf;
+    g_shell_nlip_in_arg = arg;
+
+    return (0);
+}
+
+int 
+shell_nlip_output(struct os_mbuf *m)
+{
+    int rc;
+
+    rc = os_mqueue_put(&g_shell_nlip_mq, &shell_evq, m);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
 static int 
 shell_read_console(void)
 {
@@ -171,9 +320,30 @@ shell_read_console(void)
             break;
         }
 
-        rc = shell_process_command(shell_line, rc);
-        if (rc != 0) {
-            goto err;
+        if (rc > 2) {
+            if (shell_line[0] == SHELL_NLIP_PKT_START1 && 
+                    shell_line[1] == SHELL_NLIP_PKT_START2) {
+                if (g_nlip_mbuf) {
+                    os_mbuf_free_chain(g_nlip_mbuf);
+                    g_nlip_mbuf = NULL;
+                }
+                g_nlip_expected_len = 0;
+
+                rc = shell_nlip_process(shell_line, rc);
+            } else if (shell_line[0] == SHELL_NLIP_DATA_START1 && 
+                    shell_line[1] == SHELL_NLIP_DATA_START2) {
+                rc = shell_nlip_process(shell_line, rc);
+            } else {
+                rc = shell_process_command(shell_line, rc);
+                if (rc != 0) {
+                    goto err;
+                }
+            }
+        } else {
+            rc = shell_process_command(shell_line, rc);
+            if (rc != 0) {
+                goto err;
+            }
         }
     }
 
@@ -182,12 +352,14 @@ err:
     return (rc);
 }
 
+
 static void
 shell_task_func(void *arg) 
 {
     struct os_event *ev;
 
     os_eventq_init(&shell_evq);
+    os_mqueue_init(&g_shell_nlip_mq, NULL);
     
     console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
 
@@ -199,6 +371,9 @@ shell_task_func(void *arg)
             case OS_EVENT_T_CONSOLE_RDY: 
                 // Read and process all available lines on the console.
                 (void) shell_read_console();
+                break;
+            case OS_EVENT_T_MQUEUE_DATA:
+                shell_nlip_mqueue_process();
                 break;
         }
     }
@@ -253,7 +428,6 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
     if (rc != 0) {
         goto err;
     }
-
 
     return (0);
 err:

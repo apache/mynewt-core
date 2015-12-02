@@ -54,6 +54,9 @@
 
 #include <string.h>
 
+STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list = 
+    STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
+
 int 
 os_mqueue_init(struct os_mqueue *mq, void *arg)
 {
@@ -115,6 +118,83 @@ os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *m)
     return (0);
 err:
     return (rc);
+}
+
+int 
+os_msys_register(struct os_mbuf_pool *new_pool)  
+{
+    struct os_mbuf_pool *pool;
+
+    pool = NULL;
+    STAILQ_FOREACH(pool, &g_msys_pool_list, omp_next) {
+        if (new_pool->omp_databuf_len > pool->omp_databuf_len) {
+            break;
+        }
+    }
+
+    if (pool) {
+        STAILQ_INSERT_AFTER(&g_msys_pool_list, pool, new_pool, omp_next);
+    } else {
+        STAILQ_INSERT_TAIL(&g_msys_pool_list, new_pool, omp_next);
+    }
+
+    return (0);
+}
+
+static struct os_mbuf_pool *
+_os_msys_find_pool(uint16_t dsize) 
+{
+    struct os_mbuf_pool *pool;
+
+    pool = NULL;
+    STAILQ_FOREACH(pool, &g_msys_pool_list, omp_next) {
+        if (dsize <= pool->omp_databuf_len) {
+            break;
+        }
+    }
+
+    if (!pool) {
+        pool = STAILQ_LAST(&g_msys_pool_list, os_mbuf_pool, omp_next);
+    }
+
+    return (pool);
+}
+
+
+
+struct os_mbuf *
+os_msys_get(uint16_t dsize, uint16_t leadingspace)
+{
+    struct os_mbuf *m;
+    struct os_mbuf_pool *pool;
+
+    pool = _os_msys_find_pool(dsize);
+    if (!pool) {
+        goto err;
+    }
+
+    m = os_mbuf_get(pool, leadingspace);
+    return (m);
+err:
+    return (NULL);
+}
+
+
+struct os_mbuf *
+os_msys_get_pkthdr(uint16_t dsize, uint16_t pkthdr_len)
+{
+    struct os_mbuf *m;
+    struct os_mbuf_pool *pool;
+
+    pool = _os_msys_find_pool(dsize);
+    if (!pool) {
+        goto err;
+    }
+    
+    m = os_mbuf_get_pkthdr(pool, pkthdr_len);
+    return (m);
+err:
+    return (NULL);
 }
 
 
