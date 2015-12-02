@@ -37,7 +37,7 @@
 #include "devman.h"
 #endif
 #ifdef MYNEWT
-#include <nffs/nffs.h>
+#include <fs/fs.h>
 #endif
 
 #define FREELIST_REF	0	/* free list of references */
@@ -587,7 +587,7 @@ typedef struct LoadF {
 #ifndef MYNEWT
   FILE *f;
 #else
-  struct nffs_file *f;
+  struct fs_file *f;
   int readstatus;
 #endif
   char buff[LUAL_BUFFERSIZE];
@@ -614,7 +614,7 @@ static const char *getF (lua_State *L, void *ud, size_t *size) {
     int rc;
     uint32_t out_len;
 
-    rc = nffs_read(lf->f, sizeof(lf->buff), lf->buff, &out_len);
+    rc = fs_read(lf->f, sizeof(lf->buff), lf->buff, &out_len);
     if (rc || out_len == 0) {
       if (rc) {
         lf->readstatus = rc;
@@ -702,13 +702,13 @@ LUALIB_API int luaL_loadfile (lua_State *L, const char *filename) {
 #else
 
 int
-luaL_nffs_getc(struct nffs_file *nf)
+luaL_fs_getc(struct fs_file *nf)
 {
   int rc;
   uint32_t out_len;
   char ch;
 
-  rc = nffs_read(nf, 1, &ch, &out_len);
+  rc = fs_read(nf, 1, &ch, &out_len);
   if (rc || out_len == 0) {
     return -1;
   }
@@ -718,7 +718,7 @@ luaL_nffs_getc(struct nffs_file *nf)
 LUALIB_API int luaL_loadfile (lua_State *L, const char *filename) {
   LoadF lf;
   int status;
-  struct nffs_file *nf;
+  struct fs_file *nf;
   int rc;
   int c;
   int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
@@ -730,30 +730,30 @@ LUALIB_API int luaL_loadfile (lua_State *L, const char *filename) {
   else {
     lua_pushfstring(L, "@%s", filename);
 
-    rc = nffs_open(filename, NFFS_ACCESS_READ, &nf);
+    rc = fs_open(filename, FS_ACCESS_READ, &nf);
     if (rc || nf == NULL) {
-        return errfile(L, "nffs_open", fnameindex);
+        return errfile(L, "fs_open", fnameindex);
     }
     lf.f = nf;
   }
-  c = luaL_nffs_getc(lf.f);
+  c = luaL_fs_getc(lf.f);
   if (c == '#') {  /* Unix exec. file? */
     lf.extraline = 1;
-    while ((c = luaL_nffs_getc(lf.f)) != -1 && c != '\n') ;/* skip first line */
-    if (c == '\n') c = luaL_nffs_getc(lf.f);
+    while ((c = luaL_fs_getc(lf.f)) != -1 && c != '\n') ;/* skip first line */
+    if (c == '\n') c = luaL_fs_getc(lf.f);
   }
   if (c == LUA_SIGNATURE[0] && filename) {  /* binary file? */
-    rc = nffs_seek(lf.f, 0);  /* move back to beginning */
-    if (rc) return errfile(L, "nffs_seek", fnameindex);
+    rc = fs_seek(lf.f, 0);  /* move back to beginning */
+    if (rc) return errfile(L, "fs_seek", fnameindex);
     /* skip eventual `#!...' */
-   while ((c = luaL_nffs_getc(lf.f)) != -1 && c != LUA_SIGNATURE[0]) ;
+   while ((c = luaL_fs_getc(lf.f)) != -1 && c != LUA_SIGNATURE[0]) ;
     lf.extraline = 0;
   }
-  nffs_seek(lf.f, nffs_getpos(lf.f) - 1);
+  fs_seek(lf.f, fs_getpos(lf.f) - 1);
   lf.readstatus = 0;
   lf.srcp = NULL;
   status = lua_load(L, getF, &lf, lua_tostring(L, -1));
-  if (filename) nffs_close(lf.f);  /* close file (even in case of errors) */
+  if (filename) fs_close(lf.f);  /* close file (even in case of errors) */
   if (lf.readstatus) {
     lua_settop(L, fnameindex);  /* ignore results from `lua_load' */
     return errfile(L, "read", fnameindex);

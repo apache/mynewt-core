@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __SHELL_H__ 
-#define __SHELL_H__
 
-#include <os/os.h>
+#ifndef H_FSUTIL_
+#define H_FSUTIL_
 
-typedef int (*shell_cmd_func_t)(int argc, char **argv);
-struct shell_cmd {
-    char *sc_cmd;
-    shell_cmd_func_t sc_cmd_func;
-    STAILQ_ENTRY(shell_cmd) sc_next;
-};
+#include <inttypes.h>
 
-int shell_cmd_register(struct shell_cmd *sc, char *cmd, 
-        shell_cmd_func_t func);
-void shell_console_rx_cb(int full_line);
-int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size);
+int fsutil_read_file(const char *path, uint32_t offset, uint32_t len,
+                     void *dst, uint32_t *out_len);
+int fsutil_write_file(const char *path, const void *data, uint32_t len);
 
-#endif /* __SHELL_H__ */
+#endif

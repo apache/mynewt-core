@@ -27,13 +27,13 @@ nffs_path_parse_next(struct nffs_path_parser *parser)
     int token_len;
 
     if (parser->npp_token_type == NFFS_PATH_TOKEN_LEAF) {
-        return NFFS_EINVAL;
+        return FS_EINVAL;
     }
 
     slash_start = strchr(parser->npp_path + parser->npp_off, '/');
     if (slash_start == NULL) {
         if (parser->npp_token_type == NFFS_PATH_TOKEN_NONE) {
-            return NFFS_EINVAL;
+            return FS_EINVAL;
         }
         parser->npp_token_type = NFFS_PATH_TOKEN_LEAF;
         token_len = strlen(parser->npp_path + parser->npp_off);
@@ -44,7 +44,7 @@ nffs_path_parse_next(struct nffs_path_parser *parser)
     }
 
     if (token_len > NFFS_FILENAME_MAX_LEN) {
-        return NFFS_EINVAL;
+        return FS_EINVAL;
     }
 
     parser->npp_token = parser->npp_path + parser->npp_off;
@@ -92,7 +92,7 @@ nffs_path_find_child(struct nffs_inode_entry *parent,
         }
     }
 
-    return NFFS_ENOENT;
+    return FS_ENOENT;
 }
 
 int
@@ -122,7 +122,7 @@ nffs_path_find(struct nffs_path_parser *parser,
             if (parent == NULL) {
                 /* First directory must be root. */
                 if (parser->npp_token_len != 0) {
-                    return NFFS_ENOENT;
+                    return FS_ENOENT;
                 }
 
                 inode_entry = nffs_root_dir;
@@ -142,7 +142,7 @@ nffs_path_find(struct nffs_path_parser *parser,
         case NFFS_PATH_TOKEN_LEAF:
             if (parent == NULL) {
                 /* First token must be root directory. */
-                return NFFS_ENOENT;
+                return FS_ENOENT;
             }
 
             if (parser->npp_token_len == 0) {
@@ -258,7 +258,7 @@ nffs_path_rename(const char *from, const char *to)
             nffs_hash_id_is_dir(to_inode_entry->nie_hash_entry.nhe_id)) {
 
             /* Cannot clobber one type of file with another. */
-            return NFFS_EINVAL;
+            return FS_EINVAL;
         }
 
         rc = nffs_inode_from_entry(&inode, to_inode_entry);
@@ -272,11 +272,11 @@ nffs_path_rename(const char *from, const char *to)
         }
         break;
 
-    case NFFS_ENOENT:
+    case FS_ENOENT:
         assert(to_parent != NULL);
         if (parser.npp_token_type != NFFS_PATH_TOKEN_LEAF) {
             /* Intermediate directory doesn't exist. */
-            return NFFS_EINVAL;
+            return FS_EINVAL;
         }
         break;
 
@@ -298,9 +298,9 @@ nffs_path_rename(const char *from, const char *to)
  * @param path                  The path of the directory to create.
  *
  * @return                      0 on success;
- *                              NFFS_EEXIST if there is another file or
+ *                              FS_EEXIST if there is another file or
  *                                  directory at the specified path.
- *                              NFFS_ENONT if a required intermediate directory
+ *                              FS_ENONT if a required intermediate directory
  *                                  does not exist.
  */
 int
@@ -314,13 +314,13 @@ nffs_path_new_dir(const char *path, struct nffs_inode_entry **out_inode_entry)
     nffs_path_parser_new(&parser, path);
     rc = nffs_path_find(&parser, &inode_entry, &parent);
     if (rc == 0) {
-        return NFFS_EEXIST;
+        return FS_EEXIST;
     }
-    if (rc != NFFS_ENOENT) {
+    if (rc != FS_ENOENT) {
         return rc;
     }
     if (parser.npp_token_type != NFFS_PATH_TOKEN_LEAF || parent == NULL) {
-        return NFFS_ENOENT;
+        return FS_ENOENT;
     }
 
     rc = nffs_file_new(parent, parser.npp_token, parser.npp_token_len, 1, 

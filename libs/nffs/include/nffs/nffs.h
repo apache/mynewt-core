@@ -20,15 +20,17 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+#if 0
 #define NFFS_ACCESS_READ        0x01
 #define NFFS_ACCESS_WRITE       0x02
 #define NFFS_ACCESS_APPEND      0x04
 #define NFFS_ACCESS_TRUNCATE    0x08
+#endif
 
 #define NFFS_FILENAME_MAX_LEN   256  /* Does not require null terminator. */
 
 #define NFFS_MAX_AREAS          256
-
+#if 0
 #define NFFS_EOK                0
 #define NFFS_ECORRUPT           1
 #define NFFS_EFLASH_ERROR       2
@@ -43,7 +45,7 @@
 #define NFFS_EEXIST             11
 #define NFFS_EACCESS            12
 #define NFFS_EUNINIT            13
-
+#endif
 struct nffs_config {
     /** Maximum number of inodes; default=1024. */
     uint32_t nc_num_inodes;
@@ -72,33 +74,10 @@ struct nffs_area_desc {
     uint8_t nad_flash_id;   /* Logical flash id */
 };
 
-struct nffs_file;
-struct nffs_dir;
-struct nffs_dirent;
-
-int nffs_open(const char *filename, uint8_t access_flags,
-              struct nffs_file **out_file);
-int nffs_close(struct nffs_file *file);
 int nffs_init(void);
 int nffs_detect(const struct nffs_area_desc *area_descs);
 int nffs_format(const struct nffs_area_desc *area_descs);
-int nffs_read(struct nffs_file *file, uint32_t len, void *out_data,
-              uint32_t *out_len);
-int nffs_write(struct nffs_file *file, const void *data, int len);
-int nffs_seek(struct nffs_file *file, uint32_t offset);
-uint32_t nffs_getpos(const struct nffs_file *file);
-int nffs_file_len(struct nffs_file *file, uint32_t *out_len);
-int nffs_rename(const char *from, const char *to);
-int nffs_unlink(const char *filename);
-int nffs_mkdir(const char *path);
 int nffs_ready(void);
 
-int nffs_opendir(const char *path, struct nffs_dir **out_dir);
-int nffs_readdir(struct nffs_dir *dir, struct nffs_dirent **out_dirent);
-int nffs_closedir(struct nffs_dir *dir);
-
-int nffs_dirent_name(struct nffs_dirent *dirent, size_t max_len,
-                     char *out_name, uint8_t *out_name_len);
-int nffs_dirent_is_dir(const struct nffs_dirent *dirent);
 
 #endif

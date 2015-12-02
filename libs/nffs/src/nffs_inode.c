@@ -74,7 +74,7 @@ nffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
         return rc;
     }
     if (out_disk_inode->ndi_magic != NFFS_INODE_MAGIC) {
-        return NFFS_EUNEXP;
+        return FS_EUNEXP;
     }
 
     return 0;
@@ -719,7 +719,7 @@ nffs_inode_seek(struct nffs_inode_entry *inode_entry, uint32_t offset,
     }
 
     if (offset > cache_inode->nci_file_size) {
-        return NFFS_ERANGE;
+        return FS_ERANGE;
     }
     if (offset == cache_inode->nci_file_size) {
         memset(&out_seek_info->nsi_last_block, 0,

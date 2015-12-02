@@ -218,7 +218,7 @@ nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
 
     entry = nffs_block_entry_alloc();
     if (entry == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     inode_entry = cache_inode->nci_inode.ni_inode_entry;
@@ -353,8 +353,8 @@ nffs_write_to_file(struct nffs_file *file, const void *data, int len)
     uint16_t chunk_size;
     int rc;
 
-    if (!(file->nf_access_flags & NFFS_ACCESS_WRITE)) {
-        return NFFS_EACCESS;
+    if (!(file->nf_access_flags & FS_ACCESS_WRITE)) {
+        return FS_EACCESS;
     }
 
     if (len == 0) {
@@ -369,7 +369,7 @@ nffs_write_to_file(struct nffs_file *file, const void *data, int len)
     /* The append flag forces all writes to the end of the file, regardless of
      * seek position.
      */
-    if (file->nf_access_flags & NFFS_ACCESS_APPEND) {
+    if (file->nf_access_flags & FS_ACCESS_APPEND) {
         file->nf_offset = cache_inode->nci_file_size;
     }
 

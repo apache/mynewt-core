@@ -21,6 +21,7 @@
 #include <console/console.h>
 #include <shell/shell.h>
 #include <elua_base/elua.h>
+#include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <util/flash_map.h>
 #ifdef ARCH_sim
@@ -51,17 +52,17 @@ create_script_file(void)
 {
     char filename[] = "/foobar";
     char script[] = "print \"eat my shorts\"\n";
-    struct nffs_file *nf;
+    struct fs_file *nf;
     int rc;
 
-    rc = nffs_open(filename, NFFS_ACCESS_READ, &nf);
+    rc = fs_open(filename, FS_ACCESS_READ, &nf);
     if (rc) {
-        rc = nffs_open(filename, NFFS_ACCESS_WRITE, &nf);
+        rc = fs_open(filename, FS_ACCESS_WRITE, &nf);
         assert(rc == 0);
-        rc = nffs_write(nf, script, strlen(script));
+        rc = fs_write(nf, script, strlen(script));
         assert(rc == 0);
+        fs_close(nf);
     }
-    nffs_close(nf);
 }
 
 /**
@@ -102,7 +103,7 @@ main(int argc, char **argv)
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
     assert(rc == 0);
 
-    if (nffs_detect(descs) == NFFS_ECORRUPT) {
+    if (nffs_detect(descs) == FS_ECORRUPT) {
         rc = nffs_format(descs);
         assert(rc == 0);
     }

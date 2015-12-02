@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __SHELL_H__ 
-#define __SHELL_H__
+#ifndef __FS_PRIV_H__
+#define __FS_PRIV_H__
 
-#include <os/os.h>
+struct fs_ops;
+extern const struct fs_ops *fs_root_ops;
 
-typedef int (*shell_cmd_func_t)(int argc, char **argv);
-struct shell_cmd {
-    char *sc_cmd;
-    shell_cmd_func_t sc_cmd_func;
-    STAILQ_ENTRY(shell_cmd) sc_next;
-};
+#ifdef SHELL_PRESENT
+void fs_cli_init(void);
+#endif /* SHELL_PRESENT */
 
-int shell_cmd_register(struct shell_cmd *sc, char *cmd, 
-        shell_cmd_func_t func);
-void shell_console_rx_cb(int full_line);
-int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size);
-
-#endif /* __SHELL_H__ */
+#endif

@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "hal/hal_flash.h"
+#include "fs/fs.h"
 #include "nffs/nffs.h"
 #include "testutil/testutil.h"
 #include "testreport/testreport.h"
@@ -93,7 +94,7 @@ tr_init(void)
             }
 
             rc = nffs_detect(tr_config.tc_area_descs);
-            if (rc == NFFS_ECORRUPT) {
+            if (rc == FS_ECORRUPT) {
                 rc = nffs_format(tr_config.tc_area_descs);
             }
             if (rc != 0) {

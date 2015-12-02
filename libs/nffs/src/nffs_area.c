@@ -73,7 +73,7 @@ nffs_area_free_space(const struct nffs_area *area)
  *                                  area gets written here.
  *
  * @return                      0 if a corrupt scratch area was identified;
- *                              NFFS_ENOENT if one was not found.
+ *                              FS_ENOENT if one was not found.
  */
 int
 nffs_area_find_corrupt_scratch(uint16_t *out_good_idx, uint16_t *out_bad_idx)
@@ -105,5 +105,5 @@ nffs_area_find_corrupt_scratch(uint16_t *out_good_idx, uint16_t *out_bad_idx)
         }
     }
 
-    return NFFS_ENOENT;
+    return FS_ENOENT;
 }

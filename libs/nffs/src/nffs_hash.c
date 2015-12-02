@@ -139,7 +139,7 @@ nffs_hash_init(void)
 
     nffs_hash = malloc(NFFS_HASH_SIZE * sizeof *nffs_hash);
     if (nffs_hash == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     for (i = 0; i < NFFS_HASH_SIZE; i++) {

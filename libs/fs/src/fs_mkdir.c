@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <fs/fs.h>
+#include <fs/fs_if.h>
 
-#ifndef H_NFFSUTIL_
-#define H_NFFSUTIL_
+#include "fs_priv.h"
 
-#include <inttypes.h>
+int
+fs_rename(const char *from, const char *to)
+{
+    return fs_root_ops->f_rename(from, to);
+}
 
-int nffsutil_read_file(const char *path, uint32_t offset, uint32_t len,
-                       void *dst, uint32_t *out_len);
-int nffsutil_write_file(const char *path, const void *data, uint32_t len);
-
-#endif
+int
+fs_mkdir(const char *path)
+{
+    return fs_root_ops->f_mkdir(path);
+}

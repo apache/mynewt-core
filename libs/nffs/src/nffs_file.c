@@ -40,7 +40,7 @@ nffs_file_free(struct nffs_file *file)
     if (file != NULL) {
         rc = os_memblock_put(&nffs_file_pool, file);
         if (rc != 0) {
-            return NFFS_EOS;
+            return FS_EOS;
         }
     }
 
@@ -74,7 +74,7 @@ nffs_file_new(struct nffs_inode_entry *parent, const char *filename,
 
     inode_entry = nffs_inode_entry_alloc();
     if (inode_entry == NULL) {
-        rc = NFFS_ENOMEM;
+        rc = FS_ENOMEM;
         goto err;
     }
 
@@ -153,34 +153,34 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
     file = NULL;
 
     /* Reject invalid access flag combinations. */
-    if (!(access_flags & (NFFS_ACCESS_READ | NFFS_ACCESS_WRITE))) {
-        rc = NFFS_EINVAL;
+    if (!(access_flags & (FS_ACCESS_READ | FS_ACCESS_WRITE))) {
+        rc = FS_EINVAL;
         goto err;
     }
-    if (access_flags & (NFFS_ACCESS_APPEND | NFFS_ACCESS_TRUNCATE) &&
-        !(access_flags & NFFS_ACCESS_WRITE)) {
+    if (access_flags & (FS_ACCESS_APPEND | FS_ACCESS_TRUNCATE) &&
+        !(access_flags & FS_ACCESS_WRITE)) {
 
-        rc = NFFS_EINVAL;
+        rc = FS_EINVAL;
         goto err;
     }
-    if (access_flags & NFFS_ACCESS_APPEND &&
-        access_flags & NFFS_ACCESS_TRUNCATE) {
+    if (access_flags & FS_ACCESS_APPEND &&
+        access_flags & FS_ACCESS_TRUNCATE) {
 
-        rc = NFFS_EINVAL;
+        rc = FS_EINVAL;
         goto err;
     }
 
     file = nffs_file_alloc();
     if (file == NULL) {
-        rc = NFFS_ENOMEM;
+        rc = FS_ENOMEM;
         goto err;
     }
 
     nffs_path_parser_new(&parser, path);
     rc = nffs_path_find(&parser, &inode, &parent);
-    if (rc == NFFS_ENOENT) {
+    if (rc == FS_ENOENT) {
         /* The file does not exist.  This is an error for read-only opens. */
-        if (!(access_flags & NFFS_ACCESS_WRITE)) {
+        if (!(access_flags & FS_ACCESS_WRITE)) {
             goto err;
         }
 
@@ -200,11 +200,11 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
 
         /* Reject an attempt to open a directory. */
         if (parser.npp_token_type != NFFS_PATH_TOKEN_LEAF) {
-            rc = NFFS_EINVAL;
+            rc = FS_EINVAL;
             goto err;
         }
 
-        if (access_flags & NFFS_ACCESS_TRUNCATE) {
+        if (access_flags & FS_ACCESS_TRUNCATE) {
             /* The user is truncating the file.  Unlink the old file and create
              * a new one in its place.
              */
@@ -222,7 +222,7 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
         }
     }
 
-    if (access_flags & NFFS_ACCESS_APPEND) {
+    if (access_flags & FS_ACCESS_APPEND) {
         rc = nffs_inode_data_len(file->nf_inode_entry, &file->nf_offset);
         if (rc != 0) {
             goto err;
@@ -264,7 +264,7 @@ nffs_file_seek(struct nffs_file *file, uint32_t offset)
     }
 
     if (offset > len) {
-        return NFFS_ERANGE;
+        return FS_ERANGE;
     }
 
     file->nf_offset = offset;
@@ -292,11 +292,11 @@ nffs_file_read(struct nffs_file *file, uint32_t len, void *out_data,
     int rc;
 
     if (!nffs_ready()) {
-        return NFFS_EUNINIT;
+        return FS_EUNINIT;
     }
 
-    if (!(file->nf_access_flags & NFFS_ACCESS_READ)) {
-        return NFFS_EACCESS;
+    if (!(file->nf_access_flags & FS_ACCESS_READ)) {
+        return FS_EACCESS;
     }
 
     rc = nffs_inode_read(file->nf_inode_entry, file->nf_offset, len, out_data,

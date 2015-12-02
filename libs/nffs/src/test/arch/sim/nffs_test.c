@@ -21,6 +21,7 @@
 #include <errno.h>
 #include "hal/hal_flash.h"
 #include "testutil/testutil.h"
+#include "fs/fs.h"
 #include "nffs/nffs.h"
 #include "nffs/nffs_test.h"
 #include "nffs_test_priv.h"
@@ -45,14 +46,14 @@ static const struct nffs_area_desc nffs_area_descs[] = {
 };
 
 static void
-nffs_test_util_assert_ent_name(struct nffs_dirent *dirent,
+nffs_test_util_assert_ent_name(struct fs_dirent *dirent,
                                const char *expected_name)
 {
     char name[NFFS_FILENAME_MAX_LEN + 1];
     uint8_t name_len;
     int rc;
 
-    rc = nffs_dirent_name(dirent, sizeof name, name, &name_len);
+    rc = fs_dirent_name(dirent, sizeof name, name, &name_len);
     TEST_ASSERT(rc == 0);
     if (rc == 0) {
         TEST_ASSERT(strcmp(name, expected_name) == 0);
@@ -60,12 +61,12 @@ nffs_test_util_assert_ent_name(struct nffs_dirent *dirent,
 }
 
 static void
-nffs_test_util_assert_file_len(struct nffs_file *file, uint32_t expected)
+nffs_test_util_assert_file_len(struct fs_file *file, uint32_t expected)
 {
     uint32_t len;
     int rc;
 
-    rc = nffs_file_len(file, &len);
+    rc = fs_filelen(file, &len);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(len == expected);
 }
@@ -75,15 +76,17 @@ nffs_test_util_assert_cache_is_sane(const char *filename)
 {
     struct nffs_cache_inode *cache_inode;
     struct nffs_cache_block *cache_block;
+    struct fs_file *fs_file;
     struct nffs_file *file;
     uint32_t cache_start;
     uint32_t cache_end;
     uint32_t block_end;
     int rc;
 
-    rc = nffs_open(filename, NFFS_ACCESS_READ, &file);
+    rc = fs_open(filename, FS_ACCESS_READ, &fs_file);
     TEST_ASSERT(rc == 0);
 
+    file = (struct nffs_file *)fs_file;
     rc = nffs_cache_inode_ensure(&cache_inode, file->nf_inode_entry);
     TEST_ASSERT(rc == 0);
 
@@ -111,7 +114,7 @@ nffs_test_util_assert_cache_is_sane(const char *filename)
         }
     }
 
-    rc = nffs_close(file);
+    rc = fs_close(fs_file);
     TEST_ASSERT(rc == 0);
 }
 
@@ -119,23 +122,23 @@ static void
 nffs_test_util_assert_contents(const char *filename, const char *contents,
                               int contents_len)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     uint32_t bytes_read;
     void *buf;
     int rc;
 
-    rc = nffs_open(filename, NFFS_ACCESS_READ, &file);
+    rc = fs_open(filename, FS_ACCESS_READ, &file);
     TEST_ASSERT(rc == 0);
 
     buf = malloc(contents_len + 1);
     TEST_ASSERT(buf != NULL);
 
-    rc = nffs_read(file, contents_len + 1, buf, &bytes_read);
+    rc = fs_read(file, contents_len + 1, buf, &bytes_read);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(bytes_read == contents_len);
     TEST_ASSERT(memcmp(buf, contents, contents_len) == 0);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     free(buf);
@@ -149,12 +152,14 @@ nffs_test_util_block_count(const char *filename)
     struct nffs_hash_entry *entry;
     struct nffs_block block;
     struct nffs_file *file;
+    struct fs_file *fs_file;
     int count;
     int rc;
 
-    rc = nffs_open(filename, NFFS_ACCESS_READ, &file);
+    rc = fs_open(filename, FS_ACCESS_READ, &fs_file);
     TEST_ASSERT(rc == 0);
 
+    file = (struct nffs_file *)fs_file;
     count = 0;
     entry = file->nf_inode_entry->nie_last_block_entry;
     while (entry != NULL) {
@@ -165,7 +170,7 @@ nffs_test_util_block_count(const char *filename)
         entry = block.nb_prev;
     }
 
-    rc = nffs_close(file);
+    rc = fs_close(fs_file);
     TEST_ASSERT(rc == 0);
 
     return count;
@@ -184,13 +189,15 @@ nffs_test_util_assert_cache_range(const char *filename,
 {
     struct nffs_cache_inode *cache_inode;
     struct nffs_file *file;
+    struct fs_file *fs_file;
     uint32_t cache_start;
     uint32_t cache_end;
     int rc;
 
-    rc = nffs_open(filename, NFFS_ACCESS_READ, &file);
+    rc = fs_open(filename, FS_ACCESS_READ, &fs_file);
     TEST_ASSERT(rc == 0);
 
+    file = (struct nffs_file *)fs_file;
     rc = nffs_cache_inode_ensure(&cache_inode, file->nf_inode_entry);
     TEST_ASSERT(rc == 0);
 
@@ -198,7 +205,7 @@ nffs_test_util_assert_cache_range(const char *filename,
     TEST_ASSERT(cache_start == expected_cache_start);
     TEST_ASSERT(cache_end == expected_cache_end);
 
-    rc = nffs_close(file);
+    rc = fs_close(fs_file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_cache_is_sane(filename);
@@ -209,7 +216,7 @@ nffs_test_util_create_file_blocks(const char *filename,
                                  const struct nffs_test_block_desc *blocks,
                                  int num_blocks)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     uint32_t total_len;
     uint32_t offset;
     char *buf;
@@ -217,7 +224,7 @@ nffs_test_util_create_file_blocks(const char *filename,
     int rc;
     int i;
 
-    rc = nffs_open(filename, NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE, &file);
+    rc = fs_open(filename, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &file);
     TEST_ASSERT(rc == 0);
 
     total_len = 0;
@@ -227,13 +234,13 @@ nffs_test_util_create_file_blocks(const char *filename,
         num_writes = num_blocks;
     }
     for (i = 0; i < num_writes; i++) {
-        rc = nffs_write(file, blocks[i].data, blocks[i].data_len);
+        rc = fs_write(file, blocks[i].data, blocks[i].data_len);
         TEST_ASSERT(rc == 0);
 
         total_len += blocks[i].data_len;
     }
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     buf = malloc(total_len);
@@ -270,16 +277,16 @@ static void
 nffs_test_util_append_file(const char *filename, const char *contents,
                           int contents_len)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
-    rc = nffs_open(filename, NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND, &file);
+    rc = fs_open(filename, FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_write(file, contents, contents_len);
+    rc = fs_write(file, contents, contents_len);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 }
 
@@ -329,7 +336,7 @@ nffs_test_util_create_subtree(const char *parent_path,
 
     if (elem->is_dir) {
         if (parent_path != NULL) {
-            rc = nffs_mkdir(path);
+            rc = fs_mkdir(path);
             TEST_ASSERT(rc == 0);
         }
 
@@ -613,35 +620,35 @@ nffs_test_assert_area_seqs(int seq1, int count1, int seq2, int count2)
 static void
 nffs_test_mkdir(void)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/a/b/c/d");
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_mkdir("/a/b/c/d");
+    TEST_ASSERT(rc == FS_ENOENT);
 
-    rc = nffs_mkdir("asdf");
-    TEST_ASSERT(rc == NFFS_EINVAL);
+    rc = fs_mkdir("asdf");
+    TEST_ASSERT(rc == FS_EINVAL);
 
-    rc = nffs_mkdir("/a");
+    rc = fs_mkdir("/a");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/a/b");
+    rc = fs_mkdir("/a/b");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/a/b/c");
+    rc = fs_mkdir("/a/b/c");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/a/b/c/d");
+    rc = fs_mkdir("/a/b/c/d");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_open("/a/b/c/d/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/a/b/c/d/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     struct nffs_test_file_desc *expected_system =
@@ -686,9 +693,10 @@ nffs_test_mkdir(void)
 
 TEST_CASE(nffs_test_unlink)
 {
-    struct nffs_file *file0;
-    struct nffs_file *file1;
-    struct nffs_file *file2;
+    struct fs_file *file0;
+    struct fs_file *file1;
+    struct fs_file *file2;
+    struct nffs_file *nfs_file;
     uint8_t buf[64];
     uint32_t bytes_read;
     int rc;
@@ -698,67 +706,69 @@ TEST_CASE(nffs_test_unlink)
 
     nffs_test_util_create_file("/file0.txt", "0", 1);
 
-    rc = nffs_open("/file0.txt", NFFS_ACCESS_READ | NFFS_ACCESS_WRITE, &file0);
+    rc = fs_open("/file0.txt", FS_ACCESS_READ | FS_ACCESS_WRITE, &file0);
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(file0->nf_inode_entry->nie_refcnt == 2);
+    nfs_file = (struct nffs_file *)file0;
+    TEST_ASSERT(nfs_file->nf_inode_entry->nie_refcnt == 2);
 
-    rc = nffs_unlink("/file0.txt");
+    rc = fs_unlink("/file0.txt");
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(file0->nf_inode_entry->nie_refcnt == 1);
+    TEST_ASSERT(nfs_file->nf_inode_entry->nie_refcnt == 1);
 
-    rc = nffs_open("/file0.txt", NFFS_ACCESS_READ, &file2);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_open("/file0.txt", FS_ACCESS_READ, &file2);
+    TEST_ASSERT(rc == FS_ENOENT);
 
-    rc = nffs_write(file0, "00", 2);
-    TEST_ASSERT(rc == 0);
-
-    rc = nffs_seek(file0, 0);
+    rc = fs_write(file0, "00", 2);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_read(file0, sizeof buf, buf, &bytes_read);
+    rc = fs_seek(file0, 0);
+    TEST_ASSERT(rc == 0);
+
+    rc = fs_read(file0, sizeof buf, buf, &bytes_read);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(bytes_read == 2);
     TEST_ASSERT(memcmp(buf, "00", 2) == 0);
 
-    rc = nffs_close(file0);
+    rc = fs_close(file0);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_open("/file0.txt", NFFS_ACCESS_READ, &file0);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_open("/file0.txt", FS_ACCESS_READ, &file0);
+    TEST_ASSERT(rc == FS_ENOENT);
 
     /* Nested unlink. */
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
     nffs_test_util_create_file("/mydir/file1.txt", "1", 2);
 
-    rc = nffs_open("/mydir/file1.txt", NFFS_ACCESS_READ | NFFS_ACCESS_WRITE,
+    rc = fs_open("/mydir/file1.txt", FS_ACCESS_READ | FS_ACCESS_WRITE,
                   &file1);
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(file1->nf_inode_entry->nie_refcnt == 2);
+    nfs_file = (struct nffs_file *)file1;
+    TEST_ASSERT(nfs_file->nf_inode_entry->nie_refcnt == 2);
 
-    rc = nffs_unlink("/mydir");
+    rc = fs_unlink("/mydir");
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(file1->nf_inode_entry->nie_refcnt == 1);
+    TEST_ASSERT(nfs_file->nf_inode_entry->nie_refcnt == 1);
 
-    rc = nffs_open("/mydir/file1.txt", NFFS_ACCESS_READ, &file2);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_open("/mydir/file1.txt", FS_ACCESS_READ, &file2);
+    TEST_ASSERT(rc == FS_ENOENT);
 
-    rc = nffs_write(file1, "11", 2);
-    TEST_ASSERT(rc == 0);
-
-    rc = nffs_seek(file1, 0);
+    rc = fs_write(file1, "11", 2);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_read(file1, sizeof buf, buf, &bytes_read);
+    rc = fs_seek(file1, 0);
+    TEST_ASSERT(rc == 0);
+
+    rc = fs_read(file1, sizeof buf, buf, &bytes_read);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(bytes_read == 2);
     TEST_ASSERT(memcmp(buf, "11", 2) == 0);
 
-    rc = nffs_close(file1);
+    rc = fs_close(file1);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_open("/mydir/file1.txt", NFFS_ACCESS_READ, &file1);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_open("/mydir/file1.txt", FS_ACCESS_READ, &file1);
+    TEST_ASSERT(rc == FS_ENOENT);
 
     struct nffs_test_file_desc *expected_system =
         (struct nffs_test_file_desc[]) { {
@@ -771,7 +781,7 @@ TEST_CASE(nffs_test_unlink)
 
 TEST_CASE(nffs_test_rename)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     const char contents[] = "contents";
     int rc;
 
@@ -779,37 +789,37 @@ TEST_CASE(nffs_test_rename)
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_rename("/nonexistent.txt", "/newname.txt");
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_rename("/nonexistent.txt", "/newname.txt");
+    TEST_ASSERT(rc == FS_ENOENT);
 
     /*** Rename file. */
     nffs_test_util_create_file("/myfile.txt", contents, sizeof contents);
 
-    rc = nffs_rename("/myfile.txt", "badname");
-    TEST_ASSERT(rc == NFFS_EINVAL);
+    rc = fs_rename("/myfile.txt", "badname");
+    TEST_ASSERT(rc == FS_EINVAL);
 
-    rc = nffs_rename("/myfile.txt", "/myfile2.txt");
+    rc = fs_rename("/myfile.txt", "/myfile2.txt");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_READ, &file);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_open("/myfile.txt", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_ENOENT);
 
     nffs_test_util_assert_contents("/myfile2.txt", contents, sizeof contents);
 
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_rename("/myfile2.txt", "/mydir/myfile2.txt");
+    rc = fs_rename("/myfile2.txt", "/mydir/myfile2.txt");
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/mydir/myfile2.txt", contents,
                                   sizeof contents);
 
     /*** Rename directory. */
-    rc = nffs_rename("/mydir", "badname");
-    TEST_ASSERT(rc == NFFS_EINVAL);
+    rc = fs_rename("/mydir", "badname");
+    TEST_ASSERT(rc == FS_EINVAL);
 
-    rc = nffs_rename("/mydir", "/mydir2");
+    rc = fs_rename("/mydir", "/mydir2");
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/mydir2/myfile2.txt", contents,
@@ -839,39 +849,37 @@ TEST_CASE(nffs_test_rename)
 
 TEST_CASE(nffs_test_truncate)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE,
-                  &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 0);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "abcdefgh", 8);
+    rc = fs_write(file, "abcdefgh", 8);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 8);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 8);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "abcdefgh", 8);
 
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE,
-                  &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 0);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "1234", 4);
+    rc = fs_write(file, "1234", 4);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 4);
-    TEST_ASSERT(nffs_getpos(file) == 4);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 4);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "1234", 4);
@@ -894,51 +902,49 @@ TEST_CASE(nffs_test_truncate)
 
 TEST_CASE(nffs_test_append)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND,
-                   &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 0);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "abcdefgh", 8);
+    rc = fs_write(file, "abcdefgh", 8);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 8);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 8);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "abcdefgh", 8);
 
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND,
-                   &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 8);
+    TEST_ASSERT(fs_getpos(file) == 8);
 
     /* File position should always be at the end of a file after an append.
      * Seek to the middle prior to writing to test this.
      */
-    rc = nffs_seek(file, 2);
+    rc = fs_seek(file, 2);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 2);
+    TEST_ASSERT(fs_getpos(file) == 2);
 
-    rc = nffs_write(file, "ijklmnop", 8);
+    rc = fs_write(file, "ijklmnop", 8);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 16);
-    rc = nffs_write(file, "qrstuvwx", 8);
+    TEST_ASSERT(fs_getpos(file) == 16);
+    rc = fs_write(file, "qrstuvwx", 8);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 24);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 24);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt",
@@ -962,7 +968,7 @@ TEST_CASE(nffs_test_append)
 
 TEST_CASE(nffs_test_read)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     uint8_t buf[16];
     uint32_t bytes_read;
     int rc;
@@ -972,30 +978,30 @@ TEST_CASE(nffs_test_read)
 
     nffs_test_util_create_file("/myfile.txt", "1234567890", 10);
 
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_READ, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_READ, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 10);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_read(file, 4, buf, &bytes_read);
+    rc = fs_read(file, 4, buf, &bytes_read);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(bytes_read == 4);
     TEST_ASSERT(memcmp(buf, "1234", 4) == 0);
-    TEST_ASSERT(nffs_getpos(file) == 4);
+    TEST_ASSERT(fs_getpos(file) == 4);
 
-    rc = nffs_read(file, sizeof buf - 4, buf + 4, &bytes_read);
+    rc = fs_read(file, sizeof buf - 4, buf + 4, &bytes_read);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(bytes_read == 6);
     TEST_ASSERT(memcmp(buf, "1234567890", 10) == 0);
-    TEST_ASSERT(nffs_getpos(file) == 10);
+    TEST_ASSERT(fs_getpos(file) == 10);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 }
 
 TEST_CASE(nffs_test_overwrite_one)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
@@ -1006,95 +1012,95 @@ TEST_CASE(nffs_test_overwrite_one)
     nffs_test_util_append_file("/myfile.txt", "abcdefgh", 8);
 
     /*** Overwrite within one block (middle). */
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 3);
+    rc = fs_seek(file, 3);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 3);
+    TEST_ASSERT(fs_getpos(file) == 3);
 
-    rc = nffs_write(file, "12", 2);
+    rc = fs_write(file, "12", 2);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 5);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 5);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "abc12fgh", 8);
     nffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite within one block (start). */
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "xy", 2);
+    rc = fs_write(file, "xy", 2);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 2);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 2);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "xyc12fgh", 8);
     nffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite within one block (end). */
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "<>", 2);
+    rc = fs_write(file, "<>", 2);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 8);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 8);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "xyc12f<>", 8);
     nffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite one block middle, extend. */
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 4);
+    rc = fs_seek(file, 4);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 8);
-    TEST_ASSERT(nffs_getpos(file) == 4);
+    TEST_ASSERT(fs_getpos(file) == 4);
 
-    rc = nffs_write(file, "abcdefgh", 8);
+    rc = fs_write(file, "abcdefgh", 8);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 12);
-    TEST_ASSERT(nffs_getpos(file) == 12);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 12);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "xyc1abcdefgh", 12);
     nffs_test_util_assert_block_count("/myfile.txt", 1);
 
     /*** Overwrite one block start, extend. */
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 12);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "abcdefghijklmnop", 16);
+    rc = fs_write(file, "abcdefghijklmnop", 16);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 16);
-    rc = nffs_close(file);
+    TEST_ASSERT(fs_getpos(file) == 16);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents("/myfile.txt", "abcdefghijklmnop", 16);
@@ -1126,7 +1132,7 @@ TEST_CASE(nffs_test_overwrite_two)
         .data_len = 8,
     } };
 
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
@@ -1136,22 +1142,22 @@ TEST_CASE(nffs_test_overwrite_two)
 
     /*** Overwrite two blocks (middle). */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 7);
+    rc = fs_seek(file, 7);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 7);
+    TEST_ASSERT(fs_getpos(file) == 7);
 
-    rc = nffs_write(file, "123", 3);
+    rc = fs_write(file, "123", 3);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 10);
+    TEST_ASSERT(fs_getpos(file) == 10);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt", "abcdefg123klmnop", 16);
@@ -1159,17 +1165,17 @@ TEST_CASE(nffs_test_overwrite_two)
 
     /*** Overwrite two blocks (start). */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "ABCDEFGHIJ", 10);
+    rc = fs_write(file, "ABCDEFGHIJ", 10);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 10);
+    TEST_ASSERT(fs_getpos(file) == 10);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt", "ABCDEFGHIJklmnop", 16);
@@ -1177,22 +1183,22 @@ TEST_CASE(nffs_test_overwrite_two)
 
     /*** Overwrite two blocks (end). */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "1234567890", 10);
+    rc = fs_write(file, "1234567890", 10);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 16);
+    TEST_ASSERT(fs_getpos(file) == 16);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt", "abcdef1234567890", 16);
@@ -1200,22 +1206,22 @@ TEST_CASE(nffs_test_overwrite_two)
 
     /*** Overwrite two blocks middle, extend. */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "1234567890!@#$", 14);
+    rc = fs_write(file, "1234567890!@#$", 14);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 20);
-    TEST_ASSERT(nffs_getpos(file) == 20);
+    TEST_ASSERT(fs_getpos(file) == 20);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt", "abcdef1234567890!@#$", 20);
@@ -1223,17 +1229,17 @@ TEST_CASE(nffs_test_overwrite_two)
 
     /*** Overwrite two blocks start, extend. */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 2);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 16);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "1234567890!@#$%^&*()", 20);
+    rc = fs_write(file, "1234567890!@#$%^&*()", 20);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 20);
-    TEST_ASSERT(nffs_getpos(file) == 20);
+    TEST_ASSERT(fs_getpos(file) == 20);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt", "1234567890!@#$%^&*()", 20);
@@ -1268,7 +1274,7 @@ TEST_CASE(nffs_test_overwrite_three)
         .data_len = 8,
     } };
 
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
@@ -1278,22 +1284,22 @@ TEST_CASE(nffs_test_overwrite_three)
 
     /*** Overwrite three blocks (middle). */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "1234567890!@", 12);
+    rc = fs_write(file, "1234567890!@", 12);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 18);
+    TEST_ASSERT(fs_getpos(file) == 18);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1302,17 +1308,17 @@ TEST_CASE(nffs_test_overwrite_three)
 
     /*** Overwrite three blocks (start). */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "1234567890!@#$%^&*()", 20);
+    rc = fs_write(file, "1234567890!@#$%^&*()", 20);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 20);
+    TEST_ASSERT(fs_getpos(file) == 20);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1321,22 +1327,22 @@ TEST_CASE(nffs_test_overwrite_three)
 
     /*** Overwrite three blocks (end). */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "1234567890!@#$%^&*", 18);
+    rc = fs_write(file, "1234567890!@#$%^&*", 18);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 24);
+    TEST_ASSERT(fs_getpos(file) == 24);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1345,22 +1351,22 @@ TEST_CASE(nffs_test_overwrite_three)
 
     /*** Overwrite three blocks middle, extend. */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "1234567890!@#$%^&*()", 20);
+    rc = fs_write(file, "1234567890!@#$%^&*()", 20);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 26);
-    TEST_ASSERT(nffs_getpos(file) == 26);
+    TEST_ASSERT(fs_getpos(file) == 26);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1369,17 +1375,17 @@ TEST_CASE(nffs_test_overwrite_three)
 
     /*** Overwrite three blocks start, extend. */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_write(file, "1234567890!@#$%^&*()abcdefghij", 30);
+    rc = fs_write(file, "1234567890!@#$%^&*()abcdefghij", 30);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 30);
-    TEST_ASSERT(nffs_getpos(file) == 30);
+    TEST_ASSERT(fs_getpos(file) == 30);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1415,7 +1421,7 @@ TEST_CASE(nffs_test_overwrite_many)
         .data_len = 8,
     } };
 
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
 
@@ -1425,22 +1431,22 @@ TEST_CASE(nffs_test_overwrite_many)
 
     /*** Overwrite middle of first block. */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 3);
+    rc = fs_seek(file, 3);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 3);
+    TEST_ASSERT(fs_getpos(file) == 3);
 
-    rc = nffs_write(file, "12", 2);
+    rc = fs_write(file, "12", 2);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 5);
+    TEST_ASSERT(fs_getpos(file) == 5);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1449,22 +1455,22 @@ TEST_CASE(nffs_test_overwrite_many)
 
     /*** Overwrite end of first block, start of second. */
     nffs_test_util_create_file_blocks("/myfile.txt", blocks, 3);
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_WRITE, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_WRITE, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 0);
+    TEST_ASSERT(fs_getpos(file) == 0);
 
-    rc = nffs_seek(file, 6);
+    rc = fs_seek(file, 6);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 6);
+    TEST_ASSERT(fs_getpos(file) == 6);
 
-    rc = nffs_write(file, "1234", 4);
+    rc = fs_write(file, "1234", 4);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_file_len(file, 24);
-    TEST_ASSERT(nffs_getpos(file) == 10);
+    TEST_ASSERT(fs_getpos(file) == 10);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_contents( "/myfile.txt",
@@ -1498,10 +1504,10 @@ TEST_CASE(nffs_test_long_filename)
 
     nffs_test_util_create_file("/12345678901234567890.txt", "contents", 8);
 
-    rc = nffs_mkdir("/longdir12345678901234567890");
+    rc = fs_mkdir("/longdir12345678901234567890");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_rename("/12345678901234567890.txt",
+    rc = fs_rename("/12345678901234567890.txt",
                     "/longdir12345678901234567890/12345678901234567890.txt");
     TEST_ASSERT(rc == 0);
 
@@ -1599,7 +1605,7 @@ TEST_CASE(nffs_test_many_children)
     nffs_test_util_create_file("/asldkfjaldskfadsfsdf.txt", NULL, 0);
     nffs_test_util_create_file("/sdgaf", NULL, 0);
     nffs_test_util_create_file("/939302**", NULL, 0);
-    rc = nffs_mkdir("/dir");
+    rc = fs_mkdir("/dir");
     nffs_test_util_create_file("/dir/itw82", NULL, 0);
     nffs_test_util_create_file("/dir/124", NULL, 0);
 
@@ -1749,7 +1755,7 @@ TEST_CASE(nffs_test_corrupt_scratch)
                        area_descs_two + nffs_scratch_area_idx);
 
     /* Add some more data to the non-scratch area. */
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
 
     /* Ensure the file system is successfully detected and valid, despite
@@ -1786,6 +1792,7 @@ TEST_CASE(nffs_test_corrupt_scratch)
 TEST_CASE(nffs_test_incomplete_block)
 {
     struct nffs_block block;
+    struct fs_file *fs_file;
     struct nffs_file *file;
     uint32_t flash_offset;
     uint32_t area_offset;
@@ -1796,7 +1803,7 @@ TEST_CASE(nffs_test_incomplete_block)
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_create_file("/mydir/a", "aaaa", 4);
@@ -1809,8 +1816,9 @@ TEST_CASE(nffs_test_incomplete_block)
     /* Corrupt the 'b' file; make it look like the second block only got half
      * written.
      */
-    rc = nffs_open("/mydir/b", NFFS_ACCESS_READ, &file);
+    rc = fs_open("/mydir/b", FS_ACCESS_READ, &fs_file);
     TEST_ASSERT(rc == 0);
+    file = (struct nffs_file *)fs_file;
 
     rc = nffs_block_from_hash_entry(&block,
                                    file->nf_inode_entry->nie_last_block_entry);
@@ -1864,6 +1872,7 @@ TEST_CASE(nffs_test_incomplete_block)
 TEST_CASE(nffs_test_corrupt_block)
 {
     struct nffs_block block;
+    struct fs_file *fs_file;
     struct nffs_file *file;
     uint32_t flash_offset;
     uint32_t area_offset;
@@ -1874,7 +1883,7 @@ TEST_CASE(nffs_test_corrupt_block)
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_create_file("/mydir/a", "aaaa", 4);
@@ -1885,8 +1894,9 @@ TEST_CASE(nffs_test_corrupt_block)
     nffs_test_util_append_file("/mydir/b", "1234", 4);
 
     /* Corrupt the 'b' file; overwrite the second block's magic number. */
-    rc = nffs_open("/mydir/b", NFFS_ACCESS_READ, &file);
+    rc = fs_open("/mydir/b", FS_ACCESS_READ, &fs_file);
     TEST_ASSERT(rc == 0);
+    file = (struct nffs_file *)fs_file;
 
     rc = nffs_block_from_hash_entry(&block,
                                    file->nf_inode_entry->nie_last_block_entry);
@@ -1967,12 +1977,12 @@ TEST_CASE(nffs_test_large_unlink)
 
     for (i = 0; i < 5; i++) {
         snprintf(filename, sizeof filename, "/dir0_%d", i);
-        rc = nffs_mkdir(filename);
+        rc = fs_mkdir(filename);
         TEST_ASSERT(rc == 0);
 
         for (j = 0; j < 5; j++) {
             snprintf(filename, sizeof filename, "/dir0_%d/dir1_%d", i, j);
-            rc = nffs_mkdir(filename);
+            rc = fs_mkdir(filename);
             TEST_ASSERT(rc == 0);
 
             for (k = 0; k < 5; k++) {
@@ -1992,7 +2002,7 @@ TEST_CASE(nffs_test_large_unlink)
 
     for (i = 0; i < 5; i++) {
         snprintf(filename, sizeof filename, "/dir0_%d", i);
-        rc = nffs_unlink(filename);
+        rc = fs_unlink(filename);
         TEST_ASSERT(rc == 0);
     }
 
@@ -2018,13 +2028,13 @@ TEST_CASE(nffs_test_large_system)
 
     nffs_test_assert_system(nffs_test_system_01, nffs_area_descs);
 
-    rc = nffs_unlink("/lvl1dir-0000");
+    rc = fs_unlink("/lvl1dir-0000");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_unlink("/lvl1dir-0004");
+    rc = fs_unlink("/lvl1dir-0004");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/lvl1dir-0000");
+    rc = fs_mkdir("/lvl1dir-0000");
     TEST_ASSERT(rc == 0);
 
     nffs_test_assert_system(nffs_test_system_01_rm_1014_mk10, nffs_area_descs);
@@ -2044,9 +2054,9 @@ TEST_CASE(nffs_test_lost_found)
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
-    rc = nffs_mkdir("/mydir/dir1");
+    rc = fs_mkdir("/mydir/dir1");
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_create_file("/mydir/file1", "aaaa", 4);
@@ -2113,7 +2123,7 @@ TEST_CASE(nffs_test_lost_found)
 TEST_CASE(nffs_test_cache_large_file)
 {
     static char data[NFFS_BLOCK_MAX_DATA_SZ_MAX * 5];
-    struct nffs_file *file;
+    struct fs_file *file;
     uint8_t b;
     int rc;
 
@@ -2125,23 +2135,23 @@ TEST_CASE(nffs_test_cache_large_file)
     nffs_cache_clear();
 
     /* Opening a file should not cause any blocks to get cached. */
-    rc = nffs_open("/myfile.txt", NFFS_ACCESS_READ, &file);
+    rc = fs_open("/myfile.txt", FS_ACCESS_READ, &file);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_cache_range("/myfile.txt", 0, 0);
 
     /* Cache first block. */
-    rc = nffs_seek(file, nffs_block_max_data_sz * 0);
+    rc = fs_seek(file, nffs_block_max_data_sz * 0);
     TEST_ASSERT(rc == 0);
-    rc = nffs_read(file, 1, &b, NULL);
+    rc = fs_read(file, 1, &b, NULL);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_cache_range("/myfile.txt",
                                      nffs_block_max_data_sz * 0,
                                      nffs_block_max_data_sz * 1);
 
     /* Cache second block. */
-    rc = nffs_seek(file, nffs_block_max_data_sz * 1);
+    rc = fs_seek(file, nffs_block_max_data_sz * 1);
     TEST_ASSERT(rc == 0);
-    rc = nffs_read(file, 1, &b, NULL);
+    rc = fs_read(file, 1, &b, NULL);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_cache_range("/myfile.txt",
                                      nffs_block_max_data_sz * 0,
@@ -2149,134 +2159,134 @@ TEST_CASE(nffs_test_cache_large_file)
 
 
     /* Cache fourth block; prior cache should get erased. */
-    rc = nffs_seek(file, nffs_block_max_data_sz * 3);
+    rc = fs_seek(file, nffs_block_max_data_sz * 3);
     TEST_ASSERT(rc == 0);
-    rc = nffs_read(file, 1, &b, NULL);
+    rc = fs_read(file, 1, &b, NULL);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_cache_range("/myfile.txt",
                                      nffs_block_max_data_sz * 3,
                                      nffs_block_max_data_sz * 4);
 
     /* Cache second and third blocks. */
-    rc = nffs_seek(file, nffs_block_max_data_sz * 1);
+    rc = fs_seek(file, nffs_block_max_data_sz * 1);
     TEST_ASSERT(rc == 0);
-    rc = nffs_read(file, 1, &b, NULL);
+    rc = fs_read(file, 1, &b, NULL);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_cache_range("/myfile.txt",
                                      nffs_block_max_data_sz * 1,
                                      nffs_block_max_data_sz * 4);
 
     /* Cache fifth block. */
-    rc = nffs_seek(file, nffs_block_max_data_sz * 4);
+    rc = fs_seek(file, nffs_block_max_data_sz * 4);
     TEST_ASSERT(rc == 0);
-    rc = nffs_read(file, 1, &b, NULL);
+    rc = fs_read(file, 1, &b, NULL);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_cache_range("/myfile.txt",
                                      nffs_block_max_data_sz * 1,
                                      nffs_block_max_data_sz * 5);
 
-    rc = nffs_close(file);
+    rc = fs_close(file);
     TEST_ASSERT(rc == 0);
 }
 
 TEST_CASE(nffs_test_readdir)
 {
-    struct nffs_dirent *dirent;
-    struct nffs_dir *dir;
+    struct fs_dirent *dirent;
+    struct fs_dir *dir;
     int rc;
 
     /*** Setup. */
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT_FATAL(rc == 0);
 
-    rc = nffs_mkdir("/mydir");
+    rc = fs_mkdir("/mydir");
     TEST_ASSERT_FATAL(rc == 0);
 
     nffs_test_util_create_file("/mydir/b", "bbbb", 4);
     nffs_test_util_create_file("/mydir/a", "aaaa", 4);
-    rc = nffs_mkdir("/mydir/c");
+    rc = fs_mkdir("/mydir/c");
     TEST_ASSERT_FATAL(rc == 0);
 
     /* Nonexistent directory. */
-    rc = nffs_opendir("/asdf", &dir);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_opendir("/asdf", &dir);
+    TEST_ASSERT(rc == FS_ENOENT);
 
     /* Real directory (with trailing slash). */
-    rc = nffs_opendir("/mydir/", &dir);
+    rc = fs_opendir("/mydir/", &dir);
     TEST_ASSERT_FATAL(rc == 0);
 
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_ent_name(dirent, "a");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 0);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 0);
 
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_ent_name(dirent, "b");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 0);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 0);
 
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_ent_name(dirent, "c");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 1);
 
-    rc = nffs_readdir(dir, &dirent);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == FS_ENOENT);
 
-    rc = nffs_closedir(dir);
+    rc = fs_closedir(dir);
     TEST_ASSERT(rc == 0);
 
     /* Root directory. */
-    rc = nffs_opendir("/", &dir);
+    rc = fs_opendir("/", &dir);
     TEST_ASSERT(rc == 0);
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_ent_name(dirent, "lost+found");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 1);
 
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
     nffs_test_util_assert_ent_name(dirent, "mydir");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 1);
 
-    rc = nffs_closedir(dir);
+    rc = fs_closedir(dir);
     TEST_ASSERT(rc == 0);
 
     /* Delete entries while iterating. */
-    rc = nffs_opendir("/mydir", &dir);
+    rc = fs_opendir("/mydir", &dir);
     TEST_ASSERT_FATAL(rc == 0);
 
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_ent_name(dirent, "a");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 0);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 0);
 
-    rc = nffs_unlink("/mydir/b");
+    rc = fs_unlink("/mydir/b");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_readdir(dir, &dirent);
+    rc = fs_readdir(dir, &dirent);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_unlink("/mydir/c");
+    rc = fs_unlink("/mydir/c");
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_unlink("/mydir");
+    rc = fs_unlink("/mydir");
     TEST_ASSERT(rc == 0);
 
     nffs_test_util_assert_ent_name(dirent, "c");
-    TEST_ASSERT(nffs_dirent_is_dir(dirent) == 1);
+    TEST_ASSERT(fs_dirent_is_dir(dirent) == 1);
 
-    rc = nffs_readdir(dir, &dirent);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_readdir(dir, &dirent);
+    TEST_ASSERT(rc == FS_ENOENT);
 
-    rc = nffs_closedir(dir);
+    rc = fs_closedir(dir);
     TEST_ASSERT(rc == 0);
 
     /* Ensure directory is gone. */
-    rc = nffs_opendir("/mydir", &dir);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_opendir("/mydir", &dir);
+    TEST_ASSERT(rc == FS_ENOENT);
 }
 
 TEST_SUITE(nffs_suite_cache)

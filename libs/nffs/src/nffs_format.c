@@ -113,7 +113,7 @@ nffs_format_full(const struct nffs_area_desc *area_descs)
     nffs_scratch_area_idx = 0;
     for (i = 1; area_descs[i].nad_length != 0; i++) {
         if (i >= NFFS_MAX_AREAS) {
-            rc = NFFS_EINVAL;
+            rc = FS_EINVAL;
             goto err;
         }
 

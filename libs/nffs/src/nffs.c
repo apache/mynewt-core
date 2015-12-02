@@ -24,6 +24,7 @@
 #include "os/os_malloc.h"
 #include "nffs_priv.h"
 #include "nffs/nffs.h"
+#include "fs/fs_if.h"
 
 struct nffs_area *nffs_areas;
 uint8_t nffs_num_areas;
@@ -48,6 +49,49 @@ struct nffs_inode_entry *nffs_root_dir;
 struct nffs_inode_entry *nffs_lost_found_dir;
 
 static struct os_mutex nffs_mutex;
+
+static int nffs_open(const char *path, uint8_t access_flags,
+  struct fs_file **out_file);
+static int nffs_close(struct fs_file *fs_file);
+static int nffs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
+  uint32_t *out_len);
+static int nffs_write(struct fs_file *fs_file, const void *data, int len);
+static int nffs_seek(struct fs_file *fs_file, uint32_t offset);
+static uint32_t nffs_getpos(const struct fs_file *fs_file);
+static int nffs_file_len(const struct fs_file *fs_file, uint32_t *out_len);
+static int nffs_unlink(const char *path);
+static int nffs_rename(const char *from, const char *to);
+static int nffs_mkdir(const char *path);
+static int nffs_opendir(const char *path, struct fs_dir **out_fs_dir);
+static int nffs_readdir(struct fs_dir *dir, struct fs_dirent **out_dirent);
+static int nffs_closedir(struct fs_dir *dir);
+static int nffs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
+  char *out_name, uint8_t *out_name_len);
+static int nffs_dirent_is_dir(const struct fs_dirent *fs_dirent);
+
+static const struct fs_ops nffs_ops = {
+    .f_open = nffs_open,
+    .f_close = nffs_close,
+    .f_read = nffs_read,
+    .f_write = nffs_write,
+
+    .f_seek = nffs_seek,
+    .f_getpos = nffs_getpos,
+    .f_filelen = nffs_file_len,
+
+    .f_unlink = nffs_unlink,
+    .f_rename = nffs_rename,
+    .f_mkdir = nffs_mkdir,
+
+    .f_opendir = nffs_opendir,
+    .f_readdir = nffs_readdir,
+    .f_closedir = nffs_closedir,
+
+    .f_dirent_name = nffs_dirent_name,
+    .f_dirent_is_dir = nffs_dirent_is_dir,
+
+    .f_name = "nffs"
+};
 
 static void
 nffs_lock(void)
@@ -74,12 +118,12 @@ nffs_unlock(void)
  *
  * The mode strings passed to fopen() map to nffs_open()'s access flags as
  * follows:
- *   "r"  -  NFFS_ACCESS_READ
- *   "r+" -  NFFS_ACCESS_READ | NFFS_ACCESS_WRITE
- *   "w"  -  NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE
- *   "w+" -  NFFS_ACCESS_READ | NFFS_ACCESS_WRITE | NFFS_ACCESS_TRUNCATE
- *   "a"  -  NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND
- *   "a+" -  NFFS_ACCESS_READ | NFFS_ACCESS_WRITE | NFFS_ACCESS_APPEND
+ *   "r"  -  FS_ACCESS_READ
+ *   "r+" -  FS_ACCESS_READ | FS_ACCESS_WRITE
+ *   "w"  -  FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE
+ *   "w+" -  FS_ACCESS_READ | FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE
+ *   "a"  -  FS_ACCESS_WRITE | FS_ACCESS_APPEND
+ *   "a+" -  FS_ACCESS_READ | FS_ACCESS_WRITE | FS_ACCESS_APPEND
  *
  * @param path              The path of the file to open.
  * @param access_flags      Flags controlling file access; see above table.
@@ -88,27 +132,28 @@ nffs_unlock(void)
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
-nffs_open(const char *path, uint8_t access_flags, struct nffs_file **out_file)
+static int
+nffs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 {
     int rc;
+    struct nffs_file *out_file;
 
     nffs_lock();
 
     if (!nffs_ready()) {
-        rc = NFFS_EUNINIT;
+        rc = FS_EUNINIT;
         goto done;
     }
 
-    rc = nffs_file_open(out_file, path, access_flags);
+    rc = nffs_file_open(&out_file, path, access_flags);
     if (rc != 0) {
         goto done;
     }
-
+    *out_fs_file = (struct fs_file *)out_file;
 done:
     nffs_unlock();
     if (rc != 0) {
-        *out_file = NULL;
+        *out_fs_file = NULL;
     }
     return rc;
 }
@@ -122,10 +167,11 @@ done:
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
-nffs_close(struct nffs_file *file)
+static int
+nffs_close(struct fs_file *fs_file)
 {
     int rc;
+    struct nffs_file *file = (struct nffs_file *)fs_file;
 
     if (file == NULL) {
         return 0;
@@ -148,10 +194,11 @@ nffs_close(struct nffs_file *file)
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
-nffs_seek(struct nffs_file *file, uint32_t offset)
+static int
+nffs_seek(struct fs_file *fs_file, uint32_t offset)
 {
     int rc;
+    struct nffs_file *file = (struct nffs_file *)fs_file;
 
     nffs_lock();
     rc = nffs_file_seek(file, offset);
@@ -167,10 +214,11 @@ nffs_seek(struct nffs_file *file, uint32_t offset)
  *
  * @return                  The file offset, in bytes.
  */
-uint32_t
-nffs_getpos(const struct nffs_file *file)
+static uint32_t
+nffs_getpos(const struct fs_file *fs_file)
 {
     uint32_t offset;
+    const struct nffs_file *file = (const struct nffs_file *)fs_file;
 
     nffs_lock();
     offset = file->nf_offset;
@@ -188,10 +236,11 @@ nffs_getpos(const struct nffs_file *file)
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
-nffs_file_len(struct nffs_file *file, uint32_t *out_len)
+static int
+nffs_file_len(const struct fs_file *fs_file, uint32_t *out_len)
 {
     int rc;
+    const struct nffs_file *file = (const struct nffs_file *)fs_file;
 
     nffs_lock();
     rc = nffs_inode_data_len(file->nf_inode_entry, out_len);
@@ -213,11 +262,12 @@ nffs_file_len(struct nffs_file *file, uint32_t *out_len)
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
-nffs_read(struct nffs_file *file, uint32_t len, void *out_data,
+static int
+nffs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
           uint32_t *out_len)
 {
     int rc;
+    struct nffs_file *file = (struct nffs_file *)fs_file;
 
     nffs_lock();
     rc = nffs_file_read(file, len, out_data, out_len);
@@ -235,15 +285,16 @@ nffs_read(struct nffs_file *file, uint32_t len, void *out_data,
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
-nffs_write(struct nffs_file *file, const void *data, int len)
+static int
+nffs_write(struct fs_file *fs_file, const void *data, int len)
 {
     int rc;
+    struct nffs_file *file = (struct nffs_file *)fs_file;
 
     nffs_lock();
 
     if (!nffs_ready()) {
-        rc = NFFS_EUNINIT;
+        rc = FS_EUNINIT;
         goto done;
     }
 
@@ -269,7 +320,7 @@ done:
  *
  * @return                  0 on success; nonzero on failure.
  */
-int
+static int
 nffs_unlink(const char *path)
 {
     int rc;
@@ -277,7 +328,7 @@ nffs_unlink(const char *path)
     nffs_lock();
 
     if (!nffs_ready()) {
-        rc = NFFS_EUNINIT;
+        rc = FS_EUNINIT;
         goto done;
     }
 
@@ -309,7 +360,7 @@ done:
  * @return                  0 on success;
  *                          nonzero on failure.
  */
-int
+static int
 nffs_rename(const char *from, const char *to)
 {
     int rc;
@@ -317,7 +368,7 @@ nffs_rename(const char *from, const char *to)
     nffs_lock();
 
     if (!nffs_ready()) {
-        rc = NFFS_EUNINIT;
+        rc = FS_EUNINIT;
         goto done;
     }
 
@@ -343,7 +394,7 @@ done:
  * @return                      0 on success;
  *                              nonzero on failure.
  */
-int
+static int
 nffs_mkdir(const char *path)
 {
     int rc;
@@ -351,7 +402,7 @@ nffs_mkdir(const char *path)
     nffs_lock();
 
     if (!nffs_ready()) {
-        rc = NFFS_EUNINIT;
+        rc = FS_EUNINIT;
         goto done;
     }
 
@@ -377,19 +428,20 @@ done:
  * @param out_dir               On success, points to the directory handle.
  *
  * @return                      0 on success;
- *                              NFFS_ENOENT if the specified directory does not
+ *                              FS_ENOENT if the specified directory does not
  *                                  exist;
  *                              other nonzero on error.
  */
-int
-nffs_opendir(const char *path, struct nffs_dir **out_dir)
+static int
+nffs_opendir(const char *path, struct fs_dir **out_fs_dir)
 {
     int rc;
+    struct nffs_dir **out_dir = (struct nffs_dir **)out_fs_dir;
 
     nffs_lock();
 
     if (!nffs_ready()) {
-        rc = NFFS_EUNINIT;
+        rc = FS_EUNINIT;
         goto done;
     }
 
@@ -408,14 +460,16 @@ done:
  *                                  the specified directory.
  *
  * @return                      0 on success;
- *                              NFFS_ENOENT if there are no more entries in the
+ *                              FS_ENOENT if there are no more entries in the
  *                                  parent directory;
  *                              other nonzero on error.
  */
-int
-nffs_readdir(struct nffs_dir *dir, struct nffs_dirent **out_dirent)
+static int
+nffs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
 {
     int rc;
+    struct nffs_dir *dir = (struct nffs_dir *)fs_dir;
+    struct nffs_dirent **out_dirent = (struct nffs_dirent **)out_fs_dirent;
 
     nffs_lock();
     rc = nffs_dir_read(dir, out_dirent);
@@ -431,10 +485,11 @@ nffs_readdir(struct nffs_dir *dir, struct nffs_dirent **out_dirent)
  *
  * @return                      0 on success; nonzero on failure.
  */
-int
-nffs_closedir(struct nffs_dir *dir)
+static int
+nffs_closedir(struct fs_dir *fs_dir)
 {
     int rc;
+    struct nffs_dir *dir = (struct nffs_dir *)fs_dir;
 
     nffs_lock();
     rc = nffs_dir_close(dir);
@@ -459,11 +514,12 @@ nffs_closedir(struct nffs_dir *dir)
  *
  * @return                      0 on success; nonzero on failure.
  */
-int
-nffs_dirent_name(struct nffs_dirent *dirent, size_t max_len,
+static int
+nffs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
                  char *out_name, uint8_t *out_name_len)
 {
     int rc;
+    struct nffs_dirent *dirent = (struct nffs_dirent *)fs_dirent;
 
     nffs_lock();
 
@@ -485,10 +541,11 @@ nffs_dirent_name(struct nffs_dirent *dirent, size_t max_len,
  * @return                      1: The entry is a directory;
  *                              0: The entry is a regular file.
  */
-int
-nffs_dirent_is_dir(const struct nffs_dirent *dirent)
+static int
+nffs_dirent_is_dir(const struct fs_dirent *fs_dirent)
 {
     uint32_t id;
+    const struct nffs_dirent *dirent = (const struct nffs_dirent *)fs_dirent;
 
     nffs_lock();
 
@@ -531,7 +588,7 @@ nffs_format(const struct nffs_area_desc *area_descs)
  *                              terminated with a 0-length area.
  *
  * @return                  0 on success;
- *                          NFFS_ECORRUPT if no valid file system was detected;
+ *                          FS_ECORRUPT if no valid file system was detected;
  *                          other nonzero on error.
  */
 int
@@ -575,14 +632,14 @@ nffs_init(void)
 
     rc = os_mutex_init(&nffs_mutex);
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     free(nffs_file_mem);
     nffs_file_mem = malloc(
         OS_MEMPOOL_BYTES(nffs_config.nc_num_files, sizeof (struct nffs_file)));
     if (nffs_file_mem == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     free(nffs_inode_mem);
@@ -590,7 +647,7 @@ nffs_init(void)
         OS_MEMPOOL_BYTES(nffs_config.nc_num_inodes,
                         sizeof (struct nffs_inode_entry)));
     if (nffs_inode_mem == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     free(nffs_block_entry_mem);
@@ -598,7 +655,7 @@ nffs_init(void)
         OS_MEMPOOL_BYTES(nffs_config.nc_num_blocks,
                          sizeof (struct nffs_hash_entry)));
     if (nffs_block_entry_mem == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     free(nffs_cache_inode_mem);
@@ -606,7 +663,7 @@ nffs_init(void)
         OS_MEMPOOL_BYTES(nffs_config.nc_num_cache_inodes,
                          sizeof (struct nffs_cache_inode)));
     if (nffs_cache_inode_mem == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     free(nffs_cache_block_mem);
@@ -614,7 +671,7 @@ nffs_init(void)
         OS_MEMPOOL_BYTES(nffs_config.nc_num_cache_blocks,
                          sizeof (struct nffs_cache_block)));
     if (nffs_cache_block_mem == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     free(nffs_dir_mem);
@@ -622,7 +679,7 @@ nffs_init(void)
         OS_MEMPOOL_BYTES(nffs_config.nc_num_dirs,
                          sizeof (struct nffs_dir)));
     if (nffs_dir_mem == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     rc = nffs_misc_reset();
@@ -630,5 +687,6 @@ nffs_init(void)
         return rc;
     }
 
+    fs_register(&nffs_ops);
     return 0;
 }

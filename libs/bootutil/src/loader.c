@@ -21,7 +21,7 @@
 #include "hal/hal_flash.h"
 #include "os/os_malloc.h"
 #include "nffs/nffs.h"
-#include "nffs/nffsutil.h"
+#include "fs/fs.h"
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
@@ -610,7 +610,7 @@ boot_init_flash(void)
     nffs_detect(boot_req->br_area_descs);
 
     /* Create the boot directory if it doesn't already exist. */
-    nffs_mkdir("/boot");
+    fs_mkdir("/boot");
 
     return 0;
 }
@@ -731,7 +731,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     rsp->br_image_addr = image_addrs[0].bil_address;
 
     /* After successful boot, there should not be a status file. */
-    nffs_unlink(BOOT_PATH_STATUS);
+    fs_unlink(BOOT_PATH_STATUS);
 
     /* If an image is being tested, it should only be booted into once. */
     boot_vect_delete_test();

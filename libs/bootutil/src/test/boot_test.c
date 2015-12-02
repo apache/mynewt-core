@@ -22,8 +22,9 @@
 #include <inttypes.h>
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
+#include "fs/fs.h"
+#include "fs/fsutil.h"
 #include "nffs/nffs.h"
-#include "nffs/nffsutil.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "../src/bootutil_priv.h"
@@ -115,7 +116,7 @@ boot_test_util_init_flash(void)
     rc = nffs_format(boot_test_format_descs);
     TEST_ASSERT(rc == 0);
 
-    rc = nffs_mkdir("/boot");
+    rc = fs_mkdir("/boot");
     TEST_ASSERT(rc == 0);
 }
 
@@ -316,11 +317,11 @@ boot_test_util_verify_area(const struct nffs_area_desc *area_desc,
 static void
 boot_test_util_verify_status_clear(void)
 {
-    struct nffs_file *file;
+    struct fs_file *file;
     int rc;
 
-    rc = nffs_open(BOOT_PATH_STATUS, NFFS_ACCESS_READ, &file);
-    TEST_ASSERT(rc == NFFS_ENOENT);
+    rc = fs_open(BOOT_PATH_STATUS, FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_ENOENT);
 }
 
 static void
@@ -501,7 +502,7 @@ TEST_CASE(boot_test_vm_ns_10)
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 0);
 
-    rc = nffsutil_write_file(BOOT_PATH_MAIN, &hdr.ih_ver, sizeof hdr.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_MAIN, &hdr.ih_ver, sizeof hdr.ih_ver);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -541,7 +542,7 @@ TEST_CASE(boot_test_vm_ns_01)
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 1);
 
-    rc = nffsutil_write_file(BOOT_PATH_MAIN, &hdr.ih_ver, sizeof hdr.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_MAIN, &hdr.ih_ver, sizeof hdr.ih_ver);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -590,7 +591,7 @@ TEST_CASE(boot_test_vm_ns_11_a)
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
-    rc = nffsutil_write_file(BOOT_PATH_MAIN, &hdr0.ih_ver, sizeof hdr0.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_MAIN, &hdr0.ih_ver, sizeof hdr0.ih_ver);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -639,7 +640,7 @@ TEST_CASE(boot_test_vm_ns_11_b)
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
-    rc = nffsutil_write_file(BOOT_PATH_MAIN, &hdr1.ih_ver, sizeof hdr1.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_MAIN, &hdr1.ih_ver, sizeof hdr1.ih_ver);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -688,7 +689,7 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
-    rc = nffsutil_write_file(BOOT_PATH_MAIN, &hdr1.ih_ver, sizeof hdr1.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_MAIN, &hdr1.ih_ver, sizeof hdr1.ih_ver);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -917,10 +918,10 @@ TEST_CASE(boot_test_vb_ns_11)
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
-    rc = nffsutil_write_file(BOOT_PATH_MAIN, &hdr0.ih_ver, sizeof hdr0.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_MAIN, &hdr0.ih_ver, sizeof hdr0.ih_ver);
     TEST_ASSERT(rc == 0);
 
-    rc = nffsutil_write_file(BOOT_PATH_TEST, &hdr1.ih_ver, sizeof hdr1.ih_ver);
+    rc = fsutil_write_file(BOOT_PATH_TEST, &hdr1.ih_ver, sizeof hdr1.ih_ver);
     TEST_ASSERT(rc == 0);
 
     /* First boot should use the test image. */

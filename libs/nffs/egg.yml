@@ -3,5 +3,6 @@ egg.vers: 0.1
 egg.identities: NFFS
 egg.deps:
     - libs/os
+    - libs/fs
     - libs/testutil
     - hw/hal

@@ -21,6 +21,7 @@
 #include "os/queue.h"
 #include "os/os_mempool.h"
 #include "nffs/nffs.h"
+#include "fs/fs.h"
 
 #define NFFS_HASH_SIZE               256
 

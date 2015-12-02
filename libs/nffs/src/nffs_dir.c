@@ -40,7 +40,7 @@ nffs_dir_free(struct nffs_dir *dir)
     if (dir != NULL) {
         rc = os_memblock_put(&nffs_dir_pool, dir);
         if (rc != 0) {
-            return NFFS_EOS;
+            return FS_EOS;
         }
     }
 
@@ -55,7 +55,7 @@ nffs_dir_open(const char *path, struct nffs_dir **out_dir)
 
     dir = nffs_dir_alloc();
     if (dir == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
 
     rc = nffs_path_find_inode_entry(path, &dir->nd_parent_inode_entry);
@@ -91,7 +91,7 @@ nffs_dir_read(struct nffs_dir *dir, struct nffs_dirent **out_dirent)
 
     if (child == NULL) {
         *out_dirent = NULL;
-        return NFFS_ENOENT;
+        return FS_ENOENT;
     }
 
     child->nie_refcnt++;

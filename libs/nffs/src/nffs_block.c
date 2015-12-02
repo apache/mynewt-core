@@ -63,7 +63,7 @@ nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
         return rc;
     }
     if (out_disk_block->ndb_magic != NFFS_BLOCK_MAGIC) {
-        return NFFS_EUNEXP;
+        return FS_EUNEXP;
     }
 
     return 0;
@@ -138,13 +138,13 @@ nffs_block_from_disk(struct nffs_block *out_block,
 
     out_block->nb_inode_entry = nffs_hash_find_inode(disk_block->ndb_inode_id);
     if (out_block->nb_inode_entry == NULL) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     if (disk_block->ndb_prev_id != NFFS_ID_NONE) {
         out_block->nb_prev = nffs_hash_find_block(disk_block->ndb_prev_id);
         if (out_block->nb_prev == NULL) {
-            return NFFS_ECORRUPT;
+            return FS_ECORRUPT;
         }
     }
 

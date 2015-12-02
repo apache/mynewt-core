@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 #include "nffs_priv.h"
 #include "crc16.h"
 
@@ -93,7 +94,7 @@ nffs_crc_disk_block_validate(const struct nffs_disk_block *disk_block,
     }
 
     if (crc != disk_block->ndb_crc16) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     return 0;
@@ -153,7 +154,7 @@ nffs_crc_disk_inode_validate(const struct nffs_disk_inode *disk_inode,
     }
 
     if (crc != disk_inode->ndi_crc16) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     return 0;

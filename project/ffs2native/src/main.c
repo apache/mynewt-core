@@ -116,7 +116,7 @@ copy_in_file(char *src, char *dst)
     int rc;
     char data[32];
 
-    rc = nffs_open(dst, NFFS_ACCESS_WRITE, &nf);
+    rc = nffs_open(dst, FS_ACCESS_WRITE, &nf);
     assert(rc == 0);
 
     fp = fopen(src, "r");

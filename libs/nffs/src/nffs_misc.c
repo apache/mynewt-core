@@ -27,7 +27,7 @@
  *     o No parent inode.
  *
  * @return                      0 if there is a valid root directory;
- *                              NFFS_ECORRUPT if there is not a valid root
+ *                              FS_ECORRUPT if there is not a valid root
  *                                  directory;
  *                              nonzero on other error.
  */
@@ -38,11 +38,11 @@ nffs_misc_validate_root_dir(void)
     int rc;
 
     if (nffs_root_dir == NULL) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     if (nffs_root_dir->nie_hash_entry.nhe_id != NFFS_ID_ROOT_DIR) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     rc = nffs_inode_from_entry(&inode, nffs_root_dir);
@@ -51,7 +51,7 @@ nffs_misc_validate_root_dir(void)
     }
 
     if (inode.ni_parent != NULL) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     return 0;
@@ -63,7 +63,7 @@ nffs_misc_validate_root_dir(void)
  * system.
  *
  * @return                      0 if there is a valid scratch area;
- *                              NFFS_ECORRUPT otherwise.
+ *                              FS_ECORRUPT otherwise.
  */
 int
 nffs_misc_validate_scratch(void)
@@ -73,13 +73,13 @@ nffs_misc_validate_scratch(void)
 
     if (nffs_scratch_area_idx == NFFS_AREA_ID_NONE) {
         /* No scratch area. */
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     scratch_len = nffs_areas[nffs_scratch_area_idx].na_length;
     for (i = 0; i < nffs_num_areas; i++) {
         if (nffs_areas[i].na_length > scratch_len) {
-            return NFFS_ECORRUPT;
+            return FS_ECORRUPT;
         }
     }
 
@@ -95,7 +95,7 @@ nffs_misc_validate_scratch(void)
  *                                  written here.
  *
  * @return                      0 on success;
- *                              NFFS_EFULL if the area has insufficient free
+ *                              FS_EFULL if the area has insufficient free
  *                                  space.
  */
 static int
@@ -112,7 +112,7 @@ nffs_misc_reserve_space_area(uint8_t area_idx, uint16_t space,
         return 0;
     }
 
-    return NFFS_EFULL;
+    return FS_EFULL;
 }
 
 /**
@@ -175,7 +175,7 @@ nffs_misc_set_num_areas(uint8_t num_areas)
     } else {
         nffs_areas = realloc(nffs_areas, num_areas * sizeof *nffs_areas);
         if (nffs_areas == NULL) {
-            return NFFS_ENOMEM;
+            return FS_ENOMEM;
         }
     }
 
@@ -237,7 +237,7 @@ nffs_misc_set_max_block_data_len(uint16_t min_data_len)
 
     /* Don't allow a data block size bigger than the smallest area. */
     if (nffs_misc_area_capacity_one(smallest_area) < min_data_len) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     half_smallest = nffs_misc_area_capacity_two(smallest_area);
@@ -264,7 +264,7 @@ nffs_misc_create_lost_found_dir(void)
     case 0:
         return 0;
 
-    case NFFS_EEXIST:
+    case FS_EEXIST:
         rc = nffs_path_find_inode_entry("/lost+found", &nffs_lost_found_dir);
         return rc;
 
@@ -290,21 +290,21 @@ nffs_misc_reset(void)
                          sizeof (struct nffs_file), nffs_file_mem,
                          "nffs_file_pool");
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     rc = os_mempool_init(&nffs_inode_entry_pool, nffs_config.nc_num_inodes,
                          sizeof (struct nffs_inode_entry), nffs_inode_mem,
                          "nffs_inode_entry_pool");
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     rc = os_mempool_init(&nffs_block_entry_pool, nffs_config.nc_num_blocks,
                          sizeof (struct nffs_hash_entry), nffs_block_entry_mem,
                          "nffs_block_entry_pool");
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     rc = os_mempool_init(&nffs_cache_inode_pool,
@@ -312,7 +312,7 @@ nffs_misc_reset(void)
                          sizeof (struct nffs_cache_inode),
                          nffs_cache_inode_mem, "nffs_cache_inode_pool");
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     rc = os_mempool_init(&nffs_cache_block_pool,
@@ -320,7 +320,7 @@ nffs_misc_reset(void)
                          sizeof (struct nffs_cache_block),
                          nffs_cache_block_mem, "nffs_cache_block_pool");
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     rc = os_mempool_init(&nffs_dir_pool,
@@ -328,7 +328,7 @@ nffs_misc_reset(void)
                          sizeof (struct nffs_dir),
                          nffs_dir_mem, "nffs_dir_pool");
     if (rc != 0) {
-        return NFFS_EOS;
+        return FS_EOS;
     }
 
     rc = nffs_hash_init();

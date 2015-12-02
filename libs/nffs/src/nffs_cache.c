@@ -319,7 +319,7 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
 
     /* Empty files have no blocks that can be cached. */
     if (cache_inode->nci_file_size == 0) {
-        return NFFS_ENOENT;
+        return FS_ENOENT;
     }
 
     nffs_cache_inode_range(cache_inode, &cache_start, &cache_end);

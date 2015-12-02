@@ -37,7 +37,7 @@ static uint16_t nffs_restore_largest_block_data_len;
  *                                  the chain.
  *
  * @return                      0 if the block chain is OK;
- *                              NFFS_ECORRUPT if corruption is detected;
+ *                              FS_ECORRUPT if corruption is detected;
  *                              nonzero on other error.
  */
 static int
@@ -135,7 +135,7 @@ nffs_restore_migrate_orphan_children(struct nffs_inode_entry *inode_entry)
     u32toa(&buf[strlen(buf)], inode_entry->nie_hash_entry.nhe_id);
 
     rc = nffs_path_new_dir(buf, &lost_found_sub);
-    if (rc != 0 && rc != NFFS_EEXIST) {
+    if (rc != 0 && rc != FS_EEXIST) {
         return rc;
     }
 
@@ -193,7 +193,7 @@ nffs_restore_should_sweep_inode_entry(struct nffs_inode_entry *inode_entry,
     if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
         rc = nffs_restore_validate_block_chain(
                 inode_entry->nie_last_block_entry);
-        if (rc == NFFS_ECORRUPT) {
+        if (rc == FS_ECORRUPT) {
             *out_should_sweep = 1;
             return 0;
         } else if (rc != 0) {
@@ -316,7 +316,7 @@ nffs_restore_dummy_inode(uint32_t id,
 
     inode_entry = nffs_inode_entry_alloc();
     if (inode_entry == NULL) {
-        return NFFS_ENOMEM;
+        return FS_ENOMEM;
     }
     inode_entry->nie_hash_entry.nhe_id = id;
     inode_entry->nie_hash_entry.nhe_flash_loc = NFFS_FLASH_LOC_NONE;
@@ -373,7 +373,7 @@ nffs_restore_inode_gets_replaced(struct nffs_inode_entry *old_inode_entry,
          * happen.
          */
         *out_should_replace = 0;
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     *out_should_replace = 0;
@@ -436,7 +436,7 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
     } else {
         inode_entry = nffs_inode_entry_alloc();
         if (inode_entry == NULL) {
-            rc = NFFS_ENOMEM;
+            rc = FS_ENOMEM;
             goto err;
         }
         new_inode = 1;
@@ -525,7 +525,7 @@ nffs_restore_block_gets_replaced(const struct nffs_block *old_block,
         /* This is a duplicate of an previously-read inode.  This should never
          * happen.
          */
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     *out_should_replace = 0;
@@ -585,7 +585,7 @@ nffs_restore_block(const struct nffs_disk_block *disk_block, uint8_t area_idx,
 
     entry = nffs_block_entry_alloc();
     if (entry == NULL) {
-        rc = NFFS_ENOMEM;
+        rc = FS_ENOMEM;
         goto err;
     }
     new_block = 1;
@@ -658,7 +658,7 @@ nffs_restore_object(const struct nffs_disk_object *disk_object)
 
     default:
         assert(0);
-        rc = NFFS_EINVAL;
+        rc = FS_EINVAL;
         break;
     }
 
@@ -701,11 +701,11 @@ nffs_restore_disk_object(int area_idx, uint32_t area_offset,
         break;
 
     case 0xffffffff:
-        rc = NFFS_EEMPTY;
+        rc = FS_EEMPTY;
         break;
 
     default:
-        rc = NFFS_ECORRUPT;
+        rc = FS_ECORRUPT;
         break;
     }
 
@@ -769,13 +769,13 @@ nffs_restore_area_contents(int area_idx)
             area->na_cur += nffs_restore_disk_object_size(&disk_object);
             break;
 
-        case NFFS_ECORRUPT:
+        case FS_ECORRUPT:
             /* Invalid object; keep scanning for a valid magic number. */
             area->na_cur++;
             break;
 
-        case NFFS_EEMPTY:
-        case NFFS_ERANGE:
+        case FS_EEMPTY:
+        case FS_ERANGE:
             /* End of disk encountered; area fully restored. */
             return 0;
 
@@ -806,11 +806,11 @@ nffs_restore_detect_one_area(uint8_t flash_id, uint32_t area_offset,
     rc = hal_flash_read(flash_id, area_offset, out_disk_area,
                         sizeof *out_disk_area);
     if (rc != 0) {
-        return NFFS_EFLASH_ERROR;
+        return FS_HW_ERROR;
     }
 
     if (!nffs_area_magic_is_set(out_disk_area)) {
-        return NFFS_ECORRUPT;
+        return FS_ECORRUPT;
     }
 
     return 0;
@@ -903,7 +903,7 @@ nffs_restore_corrupt_scratch(void)
  *                              terminated with a 0-length area.
  *
  * @return                  0 on success;
- *                          NFFS_ECORRUPT if no valid file system was detected;
+ *                          FS_ECORRUPT if no valid file system was detected;
  *                          other nonzero on error.
  */
 int
@@ -925,7 +925,7 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
     /* Read each area from flash. */
     for (i = 0; area_descs[i].nad_length != 0; i++) {
         if (i > NFFS_MAX_AREAS) {
-            rc = NFFS_EINVAL;
+            rc = FS_EINVAL;
             goto err;
         }
 
@@ -937,7 +937,7 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
             use_area = 1;
             break;
 
-        case NFFS_ECORRUPT:
+        case FS_ECORRUPT:
             use_area = 0;
             break;
 
@@ -988,8 +988,8 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
          */
         rc = nffs_restore_corrupt_scratch();
         if (rc != 0) {
-            if (rc == NFFS_ENOENT) {
-                rc = NFFS_ECORRUPT;
+            if (rc == FS_ENOENT) {
+                rc = FS_ECORRUPT;
             }
             goto err;
         }

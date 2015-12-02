@@ -156,7 +156,7 @@ nffs_gc_block_chain_copy(struct nffs_hash_entry *last_entry, uint32_t data_len,
  *                                  that should be processed.
  *
  * @return                      0 on success;
- *                              NFFS_ENOMEM if there is insufficient heap;
+ *                              FS_ENOMEM if there is insufficient heap;
  *                              other nonzero on failure.
  */
 static int
@@ -177,7 +177,7 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
 
     data = malloc(data_len);
     if (data == NULL) {
-        rc = NFFS_ENOMEM;
+        rc = FS_ENOMEM;
         goto done;
     }
 
@@ -284,7 +284,7 @@ nffs_gc_block_chain(struct nffs_hash_entry *last_entry, int multiple_blocks,
     } else {
         rc = nffs_gc_block_chain_collate(last_entry, data_len, to_area_idx,
                                          inout_next);
-        if (rc == NFFS_ENOMEM) {
+        if (rc == FS_ENOMEM) {
             /* Insufficient heap for collation; just copy each block one by
              * one.
              */
@@ -498,7 +498,7 @@ nffs_gc(uint8_t *out_area_idx)
  *                                  accommodate the necessary data.
  *
  * @return                      0 on success;
- *                              NFFS_EFULL if the necessary space could not be
+ *                              FS_EFULL if the necessary space could not be
  *                                  freed.
  *                              nonzero on other failure.
  */
@@ -519,5 +519,5 @@ nffs_gc_until(uint32_t space, uint8_t *out_area_idx)
         }
     }
 
-    return NFFS_EFULL;
+    return FS_EFULL;
 }
