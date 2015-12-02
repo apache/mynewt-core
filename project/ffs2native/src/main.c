@@ -28,6 +28,7 @@
 #include <strings.h>
 #include "../src/nffs_priv.h"
 #include <os/queue.h>
+#include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <hal/hal_flash.h>
 #include <util/flash_map.h>
@@ -111,12 +112,12 @@ printfs(void)
 void
 copy_in_file(char *src, char *dst)
 {
-    struct nffs_file *nf;
+    struct fs_file *nf;
     FILE *fp;
     int rc;
     char data[32];
 
-    rc = nffs_open(dst, FS_ACCESS_WRITE, &nf);
+    rc = fs_open(dst, FS_ACCESS_WRITE, &nf);
     assert(rc == 0);
 
     fp = fopen(src, "r");
@@ -125,10 +126,10 @@ copy_in_file(char *src, char *dst)
         assert(0);
     }
     while ((rc = fread(data, 1, sizeof(data), fp))) {
-        rc = nffs_write(nf, data, rc);
+        rc = fs_write(nf, data, rc);
         assert(rc == 0);
     }
-    rc = nffs_close(nf);
+    rc = fs_close(nf);
     assert(rc == 0);
 }
 
@@ -152,7 +153,7 @@ copy_in_directory(const char *src, const char *dst)
         if (entry->d_type == DT_DIR &&
           !strcmp(entry->d_name, ".") && !strcmp(entry->d_name, "..")) {
             copy_in_directory(src_name, dst_name);
-            rc = nffs_mkdir(dst_name);
+            rc = fs_mkdir(dst_name);
             assert(rc == 0);
         } else if (entry->d_type == DT_REG) {
             copy_in_file(src_name, dst_name);
