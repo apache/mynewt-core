@@ -27,4 +27,5 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 
     snprintf(msg, sizeof(msg), "assert at %s:%d\n", file, line);
     write(1, msg, strlen(msg));
+    _exit(1);
 }
