@@ -85,7 +85,7 @@ flash_native_file_open(char *name)
     }
     file = open(name, O_RDWR);
     if (file < 0) {
-        file = open(name, O_RDWR | O_CREAT);
+        file = open(name, O_RDWR | O_CREAT, 0660);
         assert(file > 0);
         created = 1;
         if (ftruncate(file, native_flash_dev.hf_size) < 0) {
