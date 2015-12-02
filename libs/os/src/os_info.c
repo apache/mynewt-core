@@ -69,7 +69,7 @@ shell_os_tasks_display(int argc, char **argv)
     name = NULL;
     found = 0;
 
-    if (argv[1] != NULL && strcmp(argv[1], "")) {
+    if (argc > 1 && strcmp(argv[1], "")) {
         name = argv[1];
     }   
 
@@ -95,7 +95,7 @@ shell_os_tasks_display(int argc, char **argv)
         }
 
         console_printf("  %s (prio: %u, nw: %u, flags: 0x%x, "
-                "ssize: %u, cswcnt: %lu, tot_run_time: %ums)", 
+                "ssize: %u, cswcnt: %lu, tot_run_time: %ums)\n", 
                 info[i].oti_name, 
                 info[i].oti_prio, info[i].oti_next_wakeup, info[i].oti_flags, 
                 info[i].oti_stack_size,
