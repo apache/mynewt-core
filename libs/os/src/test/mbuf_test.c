@@ -50,6 +50,8 @@ TEST_CASE(os_mbuf_test_case_1)
     struct os_mbuf *m; 
     int rc;
 
+    os_mbuf_test_setup();
+
     m = os_mbuf_get(&os_mbuf_pool, 0);
     TEST_ASSERT_FATAL(m != NULL, "Error allocating mbuf");
 
@@ -63,6 +65,8 @@ TEST_CASE(os_mbuf_test_case_2)
     struct os_mbuf *m2;
     struct os_mbuf *dup;
     int rc;
+
+    os_mbuf_test_setup();
 
     /* Test first allocating and duplicating a single mbuf */
     m = os_mbuf_get(&os_mbuf_pool, 0);
@@ -106,6 +110,8 @@ TEST_CASE(os_mbuf_test_case_3)
     uint8_t databuf[] = {0xa, 0xb, 0xc, 0xd};
     uint8_t cmpbuf[] = {0xff, 0xff, 0xff, 0xff};
 
+    os_mbuf_test_setup();
+
     m = os_mbuf_get(&os_mbuf_pool, 0);
     TEST_ASSERT_FATAL(m != NULL, "Error allocating mbuf");
 
@@ -121,15 +127,98 @@ TEST_CASE(os_mbuf_test_case_3)
             "Databuf doesn't match cmpbuf");
 }
 
-TEST_SUITE(os_mbuf_test_case_4)
+static void
+os_mbuf_test_misc_assert_contiguous(struct os_mbuf *om, void *data, int len)
 {
+    TEST_ASSERT_FATAL(om != NULL);
+
+    if (OS_MBUF_IS_PKTHDR(om)) {
+        TEST_ASSERT(OS_MBUF_PKTLEN(om) == len);
+    }
+    TEST_ASSERT(om->om_len == len);
+    TEST_ASSERT(memcmp(om->om_data, data, len) == 0);
+}
+
+TEST_CASE(os_mbuf_test_pullup)
+{
+    struct os_mbuf *om;
+    struct os_mbuf *om2;
+    uint8_t data[256];
+    int rc;
+    int i;
+
+    os_mbuf_test_setup();
+
+    for (i = 0; i < sizeof data; i++) {
+        data[i] = i;
+    }
+
+    /*** Free when too much data is requested. */
+    om = os_mbuf_get_pkthdr(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om != NULL);
+
+    om = os_mbuf_pullup(om, 1);
+    TEST_ASSERT(om == NULL);
+
+    /*** No effect when all data is already at the start. */
+    om = os_mbuf_get_pkthdr(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om != NULL);
+
+    rc = os_mbuf_append(om, data, 1);
+    TEST_ASSERT_FATAL(rc == 0);
+    os_mbuf_test_misc_assert_contiguous(om, data, 1);
+
+    om = os_mbuf_pullup(om, 1);
+    os_mbuf_test_misc_assert_contiguous(om, data, 1);
+
+    /*** Spread data across four mbufs. */
+    om2 = os_mbuf_get(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om2 != NULL);
+    rc = os_mbuf_append(om2, data + 1, 1);
+    TEST_ASSERT_FATAL(rc == 0);
+    os_mbuf_concat(om, om2);
+
+    om2 = os_mbuf_get(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om2 != NULL);
+    rc = os_mbuf_append(om2, data + 2, 1);
+    TEST_ASSERT_FATAL(rc == 0);
+    os_mbuf_concat(om, om2);
+
+    om2 = os_mbuf_get(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om2 != NULL);
+    rc = os_mbuf_append(om2, data + 3, 1);
+    TEST_ASSERT_FATAL(rc == 0);
+    os_mbuf_concat(om, om2);
+
+    TEST_ASSERT_FATAL(OS_MBUF_PKTLEN(om) == 4);
+
+    om = os_mbuf_pullup(om, 4);
+    os_mbuf_test_misc_assert_contiguous(om, data, 4);
+
+    os_mbuf_free_chain(om);
+
+    /*** Require an allocation. */
+    om = os_mbuf_get_pkthdr(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om != NULL);
+
+    om->om_data += 100;
+    rc = os_mbuf_append(om, data, 100);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    om2 = os_mbuf_get(&os_mbuf_pool, 0);
+    TEST_ASSERT_FATAL(om2 != NULL);
+    rc = os_mbuf_append(om2, data + 100, 100);
+    TEST_ASSERT_FATAL(rc == 0);
+    os_mbuf_concat(om, om2);
+
+    om = os_mbuf_pullup(om, 200);
+    os_mbuf_test_misc_assert_contiguous(om, data, 200);
 }
 
 TEST_SUITE(os_mbuf_test_suite)
 {
-    os_mbuf_test_setup();
-
     os_mbuf_test_case_1();
     os_mbuf_test_case_2();
     os_mbuf_test_case_3();
+    os_mbuf_test_pullup();
 }

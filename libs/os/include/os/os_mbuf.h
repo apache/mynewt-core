@@ -132,6 +132,12 @@ struct os_mqueue {
 #define OS_MBUF_PKTHDR_TO_MBUF(__hdr)   \
      (struct os_mbuf *)((uint8_t *)(__hdr) - sizeof(struct os_mbuf))
 
+/**
+ * Gets the length of an entire mbuf chain.  The specified mbuf must have a
+ * packet header.
+ */
+#define OS_MBUF_PKTLEN(__om) (OS_MBUF_PKTHDR(__om)->omp_len)
+
 /*
  * Access the data of a mbuf, and cast it to type
  *
@@ -253,5 +259,6 @@ struct os_mbuf *os_mbuf_prepend(struct os_mbuf *om, int len);
 int os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len);
 void os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second);
 void *os_mbuf_extend(struct os_mbuf *om, uint16_t len);
+struct os_mbuf *os_mbuf_pullup(struct os_mbuf *om, uint16_t len);
 
 #endif /* _OS_MBUF_H */ 
