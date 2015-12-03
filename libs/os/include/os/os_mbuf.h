@@ -17,6 +17,7 @@
 #ifndef _OS_MBUF_H 
 #define _OS_MBUF_H 
 
+#include "os/queue.h"
 #include "os/os_eventq.h"
 
 /**
