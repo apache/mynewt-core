@@ -110,6 +110,7 @@ cputime_chk_expiration(void)
     while ((timer = TAILQ_FIRST(&g_cputimer_q)) != NULL) {
         if ((int32_t)(cputime_get32() - timer->cputime) >= 0) {
             TAILQ_REMOVE(&g_cputimer_q, timer, link);
+            timer->link.tqe_prev = NULL;
             timer->cb(timer->arg);
         } else {
             break;
@@ -474,6 +475,7 @@ cputime_timer_init(struct cpu_timer *timer, cputimer_func fp, void *arg)
  *  
  * Start a cputimer that will expire at 'cputime'. If cputime has already 
  * passed, the timer callback will still be called (at interrupt context). 
+ * Cannot be called when the timer has already started. 
  * 
  * @param timer     Pointer to timer to start. Cannot be NULL.
  * @param cputime   The cputime at which the timer should expire.
@@ -485,6 +487,7 @@ cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
     uint32_t ctx;
 
     assert(timer != NULL);
+    assert(timer->link.tqe_prev == NULL);
 
     /* XXX: should this use a mutex? not sure... */
     __HAL_DISABLE_INTERRUPTS(ctx);
@@ -537,7 +540,7 @@ cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs)
  *  
  * Stops a cputimer from running. The timer is removed from the timer queue 
  * and interrupts are disabled if no timers are left on the queue. Can be 
- * called even if timer is running. 
+ * called even if timer is not running. 
  * 
  * @param timer Pointer to cputimer to stop. Cannot be NULL.
  */
@@ -552,14 +555,15 @@ cputime_timer_stop(struct cpu_timer *timer)
 
     __HAL_DISABLE_INTERRUPTS(ctx);
 
-    /* If first on queue, we will need to reset OCMP */
     if (timer->link.tqe_prev != NULL) {
         reset_ocmp = 0;
         if (timer == TAILQ_FIRST(&g_cputimer_q)) {
+            /* If first on queue, we will need to reset OCMP */
             entry = TAILQ_NEXT(timer, link);
             reset_ocmp = 1;
         }
         TAILQ_REMOVE(&g_cputimer_q, timer, link);
+        timer->link.tqe_prev = NULL;
         if (reset_ocmp) {
             if (entry) {
                 cputime_set_ocmp(entry);
