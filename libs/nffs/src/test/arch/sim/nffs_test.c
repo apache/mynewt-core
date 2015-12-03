@@ -1002,6 +1002,7 @@ TEST_CASE(nffs_test_read)
 TEST_CASE(nffs_test_open)
 {
     struct fs_file *file;
+    struct fs_dir *dir;
     int rc;
 
     rc = nffs_format(nffs_area_descs);
@@ -1017,6 +1018,12 @@ TEST_CASE(nffs_test_open)
 
     /*** Fail to open a nonexistent file for reading. */
     rc = fs_open("/1234", FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_ENOENT);
+
+    /*** Fail to open a child of a nonexistent directory. */
+    rc = fs_open("/dir/myfile.txt", FS_ACCESS_WRITE, &file);
+    TEST_ASSERT(rc == FS_ENOENT);
+    rc = fs_opendir("/dir", &dir);
     TEST_ASSERT(rc == FS_ENOENT);
 
     rc = fs_mkdir("/dir");

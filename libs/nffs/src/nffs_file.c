@@ -178,8 +178,10 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
 
     nffs_path_parser_new(&parser, path);
     rc = nffs_path_find(&parser, &inode, &parent);
-    if (rc == FS_ENOENT) {
-        /* The file does not exist.  This is an error for read-only opens. */
+    if (rc == FS_ENOENT && parser.npp_token_type == NFFS_PATH_TOKEN_LEAF) {
+        /* The path is valid, but the file does not exist.  This is an error
+         * for read-only opens.
+         */
         if (!(access_flags & FS_ACCESS_WRITE)) {
             goto err;
         }
