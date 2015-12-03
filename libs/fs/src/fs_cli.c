@@ -65,7 +65,6 @@ fs_ls_cmd(int argc, char **argv)
         return 1;
     }
 
-    plen = strlen(path);
     rc = fs_open(path, FS_ACCESS_READ, &file);
     if (rc == 0) {
         fs_ls_file(path, file);
@@ -74,7 +73,13 @@ fs_ls_cmd(int argc, char **argv)
         goto done;
     }
 
-    strncpy(name, path, sizeof(name) - 1);
+    plen = strlen(path);
+    strncpy(name, path, sizeof(name) - 2);
+    if (name[plen - 1] != '/') {
+        name[plen++] = '/';
+        name[plen] = '\0';
+    }
+
     rc = fs_opendir(path, &dir);
     if (rc == 0) {
         do {
