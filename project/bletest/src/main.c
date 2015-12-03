@@ -62,10 +62,10 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_SCAN_IND
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
@@ -111,6 +111,7 @@ bletest_inc_adv_pkt_num(void)
 
     rc = host_hci_cmd_le_set_adv_data(g_host_adv_data, g_host_adv_len);
     assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 }
 
 uint8_t
@@ -179,14 +180,18 @@ bletest_init_advertising(void)
     adv.adv_itvl_max = adv_itvl;
     rc = host_hci_cmd_le_set_adv_params(&adv);
     assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
 
     /* Set advertising data */
     rc = host_hci_cmd_le_set_adv_data(&g_host_adv_data[0], adv_len);
     assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 
     /* Set scan response data */
     rc = host_hci_cmd_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
     assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 }
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
@@ -204,6 +209,7 @@ bletest_init_scanner(void)
                                          BLE_HCI_ADV_OWN_ADDR_PUBLIC,
                                          BLETEST_CFG_SCAN_FILT_POLICY);
     assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 
     filter_policy = BLETEST_CFG_SCAN_FILT_POLICY;
     if (filter_policy & 1) {
@@ -216,6 +222,7 @@ bletest_init_scanner(void)
         dev_addr[5] = 0x08;
         rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
         assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
     }
 }
 #endif
@@ -241,15 +248,16 @@ bletest_init_initiator(void)
     hcc->peer_addr[0] = 0x00;
     hcc->peer_addr[1] = 0x00;
     hcc->peer_addr[2] = 0x00;
-    hcc->peer_addr[3] = 0x99;
-    hcc->peer_addr[4] = 0x99;
-    hcc->peer_addr[5] = 0x09;
+    hcc->peer_addr[3] = 0x88;
+    hcc->peer_addr[4] = 0x88;
+    hcc->peer_addr[5] = 0x08;
     hcc->own_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
     hcc->min_ce_len = BLETEST_CFG_MIN_CE_LEN;
     hcc->max_ce_len = BLETEST_CFG_MAX_CE_LEN;
 
     rc = host_hci_cmd_le_create_connection(hcc);
     assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 }
 #endif
 
@@ -263,10 +271,12 @@ bletest_execute(void)
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
         if (g_bletest_state) {
             rc = host_hci_cmd_le_set_adv_enable(0);
+            host_hci_outstanding_opcode = 0;
             assert(rc == 0);
             g_bletest_state = 0;
         } else {
             rc = host_hci_cmd_le_set_adv_enable(1);
+            host_hci_outstanding_opcode = 0;
             assert(rc == 0);
             g_bletest_state = 1;
         }
@@ -279,10 +289,12 @@ bletest_execute(void)
         if (g_bletest_state) {
             rc = host_hci_cmd_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
+            host_hci_outstanding_opcode = 0;
             g_bletest_state = 0;
         } else {
             rc = host_hci_cmd_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
+            host_hci_outstanding_opcode = 0;
             g_bletest_state = 1;
         }
         g_next_os_time += (OS_TICKS_PER_SEC * 60);
