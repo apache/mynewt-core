@@ -12,10 +12,38 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-FLASH_OFFSET=0x08000000
-FILE_NAME=$1.elf.bin
+BASENAME=$1
+IS_BOOTLOADER=0
+BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
+VER=11.22.3333.0
+VER_FILE=version.txt # or somewhere else
 
-echo "Downloading" $FILE_NAME
+# Look for 'bootloader' from 2nd arg onwards
+shift
+while [ $# -gt 0 ]; do
+    if [ $1 == "bootloader" ]; then
+        IS_BOOTLOADER=1
+    fi
+    shift
+done
+
+if [ $IS_BOOTLOADER -eq 1 ]; then
+    FLASH_OFFSET=0x08000000
+    FILE_NAME=$BASENAME.elf.bin
+else
+    FLASH_OFFSET=0x08008000
+    FILE_NAME=$BASENAME.elf.img
+    if [ -f $VER_FILE ]; then
+        VER=`echo $VER_FILE`
+    fi
+    echo "Version is >" $VER "<"
+    $BIN2IMG $BASENAME.elf.bin $FILE_NAME $VER
+    if [ "$?" -ne 0 ]; then
+        exit 1
+    fi
+fi
+
+echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
 openocd -f board/stm32f3discovery.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 

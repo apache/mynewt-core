@@ -18,7 +18,7 @@
 **
 **  File        : stm32_flash.ld
 **
-**  Abstract    : Linker script for STM32F303VC Device with
+**  Abstract    : Linker script for bootloader on STM32F303VC Device with
 **                256KByte FLASH, 40KByte RAM
 **
 **                Set heap size, stack size and stack location according
@@ -27,8 +27,6 @@
 **                Set memory bank area and size if external memory is used.
 **
 **  Target      : STMicroelectronics STM32
-**
-**  Environment : Atollic TrueSTUDIO(R)
 **
 **  Distribution: The file is distributed “as is,” without any warranty
 **                of any kind.
@@ -49,13 +47,13 @@ ENTRY(Reset_Handler)
 _estack = 0x10002000;    /* end of CCMRAM */
 
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
+_Min_Heap_Size = 0x2000;      /* required amount of heap  */
 _Min_Stack_Size = 0x200; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-	FLASH (rx)      : ORIGIN = 0x8008000, LENGTH = 104K
+	FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 32K
 	RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 40K
 	CCMRAM (rw)      : ORIGIN = 0x10000000, LENGTH = 8K
 }
@@ -63,12 +61,6 @@ MEMORY
 /* Define output sections */
 SECTIONS
 {
-    /* Reserve space at the start of the image for the header. */
-    .imghdr (NOLOAD):
-    {
-        . = . + 0x20;
-    } > FLASH
-
   /* The startup code goes first into FLASH */
   .isr_vector :
   {
@@ -142,7 +134,7 @@ SECTIONS
      __vector_tbl_reloc__ = .;
      . = . + (__isr_vector_end - __isr_vector);
      . = ALIGN(4);
-  } > RAM
+  } > CCMRAM
 
   /* Initialized data sections goes into RAM, load LMA copy after code */
   .data : 
@@ -154,19 +146,6 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >RAM AT> FLASH
-
-  _siccmram = LOADADDR(.ccmram);
-
-  /* CCM-RAM section 
-  * 
-  * IMPORTANT NOTE! 
-  * If initialized variables will be placed in this section, 
-  * the startup code needs to be modified to copy the init-values.  
-  */
-  .ccmram :
-  {
-    . = ALIGN(4);
     _sccmram = .;       /* create a global symbol at ccmram start */
     *(.ccmram)
     *(.ccmram*)
@@ -175,7 +154,6 @@ SECTIONS
     _eccmram = .;       /* create a global symbol at ccmram end */
   } >CCMRAM AT> FLASH
 
-  
   /* Uninitialized data section */
   . = ALIGN(4);
   .bss :
@@ -190,18 +168,11 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM
+  } >CCMRAM
 
-  /* User_heap_stack section, used to check that there is enough RAM left */
-  ._user_heap :
-  {
-    . = ALIGN(4);
-    PROVIDE ( _user_heap_start = . );
-    . = . + _Min_Heap_Size;
-    . = ALIGN(4);
-  } >RAM  
-
-  _user_heap_end = ORIGIN(RAM) + LENGTH(RAM);
+  /* User_heap_stack section, placed at the end of RAM */
+  PROVIDE(_user_heap_start = ORIGIN(RAM) + LENGTH(RAM) - _Min_Heap_Size);
+  PROVIDE(_user_heap_end = ORIGIN(RAM) + LENGTH(RAM));
 
   .stack_dummy :
   {

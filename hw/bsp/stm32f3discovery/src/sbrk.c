@@ -16,14 +16,13 @@
 
 #include <errno.h>
 
-extern char _end;
+extern char _user_heap_start;
 extern char _user_heap_end;
+static char *_brk = &_user_heap_start;
 
 void *
 _sbrk(int incr)
 {
-    static char *brk = &_end;
-
     void *prev_brk;
 
     if (incr < 0) {
@@ -31,9 +30,9 @@ _sbrk(int incr)
         prev_brk = (void *)-1;
     } else {
         /* Allocating memory from the heap. */
-        if (&_user_heap_end - brk >= incr) {
-            prev_brk = brk;
-            brk += incr;
+        if (&_user_heap_end - _brk >= incr) {
+            prev_brk = _brk;
+            _brk += incr;
         } else {
             prev_brk = (void *)-1;
             errno = ENOMEM;

@@ -22,15 +22,30 @@ void _close(int fd);
 #include <util/flash_map.h>
 
 static struct flash_area bsp_flash_areas[] = {
+    [FLASH_AREA_BOOTLOADER] = {
+        .fa_flash_id = 0,       /* internal flash */
+        .fa_off = 0x08000000,   /* beginning */
+        .fa_size = (32 * 1024)
+    },
     [FLASH_AREA_IMAGE_0] = {
         .fa_flash_id = 0,
-        .fa_off = 0x08000000,
-        .fa_size = (192 * 1024)
+        .fa_off = 0x08008000,
+        .fa_size = (104 * 1024)
+    },
+    [FLASH_AREA_IMAGE_1] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x08022000,
+        .fa_size = (104 * 1024)
+    },
+    [FLASH_AREA_IMAGE_SCRATCH] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x0803c000,
+        .fa_size = (8 * 1024)
     },
     [FLASH_AREA_NFFS] = {
         .fa_flash_id = 0,
-        .fa_off = 0x08030000,
-        .fa_size = (32 * 1024)
+        .fa_off = 0x0803e000,
+        .fa_size = (8 * 1024)
     }
 };
 
