@@ -22,11 +22,11 @@
 
 struct os_mutex
 {
+    SLIST_HEAD(, os_task) mu_head;  /* chain of waiting tasks */
     uint8_t     _pad;
     uint8_t     mu_prio;            /* owner's default priority*/
     uint16_t    mu_level;           /* call nesting level */
     struct os_task *mu_owner;       /* owners task */
-    SLIST_HEAD(, os_task) mu_head;  /* chain of waiting tasks */
 };
 
 /* 

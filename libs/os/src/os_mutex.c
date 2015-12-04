@@ -98,11 +98,7 @@ os_mutex_release(struct os_mutex *mu)
     rdy = SLIST_FIRST(&mu->mu_head);
     if (rdy) {
         /* There is one waiting. Wake it up */
-        assert(rdy->t_mutex);
-        rdy->t_mutex = NULL;
-
-        SLIST_REMOVE_HEAD(&mu->mu_head, t_obj_list);
-        SLIST_NEXT(rdy, t_obj_list) = NULL;
+        assert(rdy->t_obj);
         os_sched_wakeup(rdy);
 
         /* Set mutex internals */
@@ -214,12 +210,16 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     }
 
     /* Set mutex pointer in task */
-    current->t_mutex = mu;
+    current->t_obj = mu;
+    current->t_flags |= OS_TASK_FLAG_MUTEX_WAIT;
     os_sched_sleep(current, timeout);
-
     OS_EXIT_CRITICAL(sr);
 
     os_sched(NULL, 0);
+
+    OS_ENTER_CRITICAL(sr);
+    current->t_flags &= ~OS_TASK_FLAG_MUTEX_WAIT;
+    OS_EXIT_CRITICAL(sr);
 
     /* If we are owner we did not time out. */
     if (mu->mu_owner == current) {
@@ -276,10 +276,7 @@ os_mutex_delete(struct os_mutex *mu)
     /* Now, go through all the tasks waiting on the mutex */
     while (!SLIST_EMPTY(&mu->mu_head)) {
         rdy = SLIST_FIRST(&mu->mu_head);
-        assert(rdy->t_mutex);
-        rdy->t_mutex = NULL;
-        SLIST_REMOVE_HEAD(&mu->mu_head, t_obj_list);
-        SLIST_NEXT(rdy, t_obj_list) = NULL;
+        assert(rdy->t_obj);
         os_sched_wakeup(rdy);
     }
 

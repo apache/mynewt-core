@@ -21,9 +21,9 @@
 
 struct os_sem
 {
+    SLIST_HEAD(, os_task) sem_head;     /* chain of waiting tasks */
     uint16_t    _pad;
     uint16_t    sem_tokens;             /* # of tokens */
-    SLIST_HEAD(, os_task) sem_head; /* chain of waiting tasks */
 };
 
 /* 

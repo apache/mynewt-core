@@ -95,7 +95,7 @@ sem_test_pend_release_loop(int delay, int timeout, int itvl)
 
     while (1) {
         err = os_sem_pend(&g_sem1, timeout);
-        TEST_ASSERT(err == OS_OK);
+        TEST_ASSERT((err == OS_OK) || (err == OS_TIMEOUT));
 
         err = os_sem_release(&g_sem1);
         TEST_ASSERT(err == OS_OK);

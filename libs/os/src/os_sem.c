@@ -86,12 +86,8 @@ os_sem_release(struct os_sem *sem)
     /* Check if tasks are waiting for the semaphore */
     rdy = SLIST_FIRST(&sem->sem_head);
     if (rdy) {
-        /* Clear flag that we are waiting on the semaphore */
+        /* Clear flag that we are waiting on the semaphore; wake up task */
         rdy->t_flags &= ~OS_TASK_FLAG_SEM_WAIT;
-
-        /* There is one waiting. Wake it up */
-        SLIST_REMOVE_HEAD(&sem->sem_head, t_obj_list);
-        SLIST_NEXT(rdy, t_obj_list) = NULL;
         os_sched_wakeup(rdy);
 
         /* Schedule if waiting task higher priority */
@@ -169,6 +165,7 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
         rc = OS_OK;
 
         /* Link current task to tasks waiting for semaphore */
+        current->t_obj = sem; 
         current->t_flags |= OS_TASK_FLAG_SEM_WAIT;
         last = NULL;
         if (!SLIST_EMPTY(&sem->sem_head)) {
@@ -258,9 +255,7 @@ os_sem_delete(struct os_sem *sem)
 
         /* Now, go through all the tasks waiting on the semaphore */
         while (rdy != NULL) {
-            SLIST_REMOVE_HEAD(&sem->sem_head, t_obj_list);
-            SLIST_NEXT(rdy, t_obj_list) = NULL;
-            os_sched_wakeup(rdy);
+            os_sched_wakeup(rdy); 
             rdy = SLIST_FIRST(&sem->sem_head);
         }
     }

@@ -178,6 +178,14 @@ mutex_test2_task14_handler(void *arg)
         g_task14_val = 1;
         os_time_delay(100);
 
+        /* 
+         * Task17 should have its mutex wait flag set; at least the first time
+         * through!
+         */
+        if (iters == 0) {
+            TEST_ASSERT(task17.t_flags & OS_TASK_FLAG_MUTEX_WAIT);
+        }
+
         if (g_mutex_test == 4) {
             os_mutex_delete(&g_mutex1);
             os_time_delay(150);
@@ -303,6 +311,7 @@ task17_handler(void *arg)
             err = os_mutex_pend(&g_mutex1, 10);
         } else {
             err = os_mutex_pend(&g_mutex1, 10000);
+            TEST_ASSERT((t->t_flags & OS_TASK_FLAG_MUTEX_WAIT) == 0);
         }
 
         if (g_mutex_test == 4 || g_mutex_test == 5) {

@@ -29,6 +29,18 @@
 #define OS_TASK_NAME_SIZE (36) 
 #endif 
 
+/* 
+ * Generic "object" structure. All objects that a task can wait on must
+ * have a SLIST_HEAD(, os_task) head_name as the first element in the object 
+ * structure. The element 'head_name' can be any name. See os_mutex.h or
+ * os_sem.h for an example.
+ */
+struct os_task_obj
+{
+    SLIST_HEAD(, os_task) obj_head;     /* chain of waiting tasks */
+};
+
+/* Task states */
 typedef enum os_task_state {
     OS_TASK_READY = 1, 
     OS_TASK_SLEEP = 2
@@ -37,6 +49,7 @@ typedef enum os_task_state {
 /* Task flags */
 #define OS_TASK_FLAG_NO_TIMEOUT     (0x0001U)
 #define OS_TASK_FLAG_SEM_WAIT       (0x0002U)
+#define OS_TASK_FLAG_MUTEX_WAIT     (0x0004U)
 
 typedef void (*os_task_func_t)(void *);
 
@@ -54,7 +67,7 @@ struct os_task {
     os_task_func_t t_func;
     void *t_arg;
 
-    struct os_mutex *t_mutex;
+    void *t_obj;
 
     struct os_sanity_check t_sanity_check; 
 

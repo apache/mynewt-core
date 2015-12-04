@@ -243,14 +243,17 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
 int 
 os_sched_wakeup(struct os_task *t) 
 {
+    struct os_task_obj *os_obj;
+
     assert(t->t_state == OS_TASK_SLEEP);
 
-    /* Remove self from mutex list if waiting on one */
-    if (t->t_mutex) {
-        assert(!SLIST_EMPTY(&t->t_mutex->mu_head));
-        SLIST_REMOVE(&t->t_mutex->mu_head, t, os_task, t_obj_list);
+    /* Remove self from object list if waiting on one */
+    if (t->t_obj) {
+        os_obj = (struct os_task_obj *)t->t_obj;
+        assert(!SLIST_EMPTY(&os_obj->obj_head));
+        SLIST_REMOVE(&os_obj->obj_head, t, os_task, t_obj_list);
         SLIST_NEXT(t, t_obj_list) = NULL;
-        t->t_mutex = NULL; 
+        t->t_obj = NULL; 
     }
 
     /* Remove task from sleep list */
