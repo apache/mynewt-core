@@ -76,6 +76,10 @@ parse_ver(struct image_version *out_ver, char *s)
     }
     out_ver->iv_revision = ul;
 
+    tok = strtok(NULL, ".");
+    if (tok == NULL) {
+        return -1;
+    }
     ul = strtoul(tok, &ep, 16);
     if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT32_MAX) {
         return -1;
