@@ -74,7 +74,6 @@ main(void)
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, &descs[total]);
     assert(rc == 0);
     total += cnt;
-    descs[total].nad_length = 0;
 
     nffs_config.nc_num_inodes = 50;
     nffs_config.nc_num_blocks = 50;

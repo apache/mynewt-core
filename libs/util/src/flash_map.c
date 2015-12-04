@@ -144,6 +144,7 @@ flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad)
             move_on = 1;
         }
     }
+    nad[*cnt].nad_length = 0;
     return 0;
 }
 #endif /* NFFS_PRESENT */
