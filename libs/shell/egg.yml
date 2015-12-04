@@ -3,5 +3,6 @@ egg.vers: 0.1
 egg.deps:
     - libs/console/full
     - libs/os
+    - libs/util
 egg.identities:
     - SHELL 
