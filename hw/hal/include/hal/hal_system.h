@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,6 +17,14 @@
 #ifndef H_HAL_SYSTEM_
 #define H_HAL_SYSTEM_
 
+/*
+ * System reset.
+ */
 void system_reset(void) __attribute((noreturn));
+
+/*
+ * Called by bootloader to start loaded program.
+ */
+void system_start(void *img_start) __attribute((noreturn));
 
 #endif

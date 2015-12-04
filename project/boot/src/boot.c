@@ -19,48 +19,13 @@
 #include <inttypes.h>
 #include <util/flash_map.h>
 #include <os/os.h>
+#include <hal/hal_system.h>
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 
-#define NFFS_AREA_MAX	16
+#define NFFS_AREA_MAX	32
 #define SEC_CNT_MAX	8
-
-/**
- * Boots the image described by the supplied image header.
- *
- * @param hdr                   The header for the image to boot.
- */
-static void
-boot_jump(const struct image_header *hdr, uint32_t image_addr)
-{
-    typedef void jump_fn(void);
-
-    uint32_t base0entry;
-    uint32_t img_start;
-    uint32_t jump_addr;
-    jump_fn *fn;
-
-    /* PIC code not currently supported. */
-    assert(!(hdr->ih_flags & IMAGE_F_PIC));
-
-    img_start = image_addr + hdr->ih_hdr_size;
-
-    /* First word contains initial MSP value. */
-    __set_MSP(*(uint32_t *)img_start);
-
-    /* Second word contains address of entry point (Reset_Handler). */
-    base0entry = *(uint32_t *)(img_start + 4);
-    jump_addr = base0entry;
-    fn = (jump_fn *)jump_addr;
-
-    /* Remap memory such that flash gets mapped to the code region. */
-    SYSCFG->MEMRMP = 0;
-    __DSB();
-
-    /* Jump to image. */
-    fn();
-}
 
 int
 main(void)
@@ -81,31 +46,44 @@ main(void)
     };
 
     os_init();
-    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, NULL);
-    assert(rc == 0 && cnt);
+
+    cnt = (NFFS_AREA_MAX / 2) - 3;
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, descs);
     img_starts[0] = 0;
     total = cnt;
 
+    cnt = (NFFS_AREA_MAX / 2) - 3;
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
     assert(rc == 0);
     img_starts[1] = total;
     total += cnt;
 
+    cnt = 1;
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
     assert(rc == 0);
     req.br_scratch_area_idx = total;
-
     total += 1;
+
     req.br_num_image_areas = total;
 
     for (cnt = 0; cnt < total; cnt++) {
         img_areas[cnt] = cnt;
     }
+
+    cnt = 2;
+    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, &descs[total]);
+    assert(rc == 0);
+    total += cnt;
+    descs[total].nad_length = 0;
+
+    nffs_config.nc_num_inodes = 50;
+    nffs_config.nc_num_blocks = 50;
+    nffs_config.nc_num_cache_blocks = 32;
+
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
 
-    boot_jump(rsp.br_hdr, rsp.br_image_addr);
+    system_start((void *)(rsp.br_image_addr + rsp.br_hdr->ih_hdr_size));
 
     return 0;
 }
