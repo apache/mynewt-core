@@ -16,6 +16,8 @@
 #ifndef __UTIL_BASE64_H 
 #define __UTIL_BASE64_H 
 
+#include <stdint.h>
+
 int base64_encode(const void *, int, char *, uint8_t);
 int base64_decode(const char *, void *buf);
 
