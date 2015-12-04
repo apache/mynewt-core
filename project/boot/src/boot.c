@@ -24,7 +24,7 @@
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 
-#define NFFS_AREA_MAX	32
+#define NFFS_AREA_MAX	34
 #define SEC_CNT_MAX	8
 
 int
@@ -70,7 +70,7 @@ main(void)
         img_areas[cnt] = cnt;
     }
 
-    cnt = 2;
+    cnt = 6;
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, &descs[total]);
     assert(rc == 0);
     total += cnt;
