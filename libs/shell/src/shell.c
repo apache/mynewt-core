@@ -224,10 +224,16 @@ err:
 static int 
 shell_nlip_mtx(struct os_mbuf *m)
 {
-    uint8_t buf[12];
+#define SHELL_NLIP_MTX_BUF_SIZE (12)
+    uint8_t readbuf[SHELL_NLIP_MTX_BUF_SIZE];
+    char encodebuf[BASE64_ENCODE_SIZE(SHELL_NLIP_MTX_BUF_SIZE)];
+    uint8_t esc_seq[2];
+    uint8_t pkt_seq[2];
     uint16_t totlen;
     uint16_t dlen;
     uint16_t off;
+    int elen;
+    uint16_t nwritten;
     int rc;
 
     /* Convert the mbuf into a packet.
@@ -243,18 +249,41 @@ shell_nlip_mtx(struct os_mbuf *m)
      * buffer has been sent. 
      */
     totlen = OS_MBUF_PKTHDR(m)->omp_len;
+    nwritten = 0;
+    off = 0;
+
+    pkt_seq[0] = SHELL_NLIP_PKT_START1;
+    pkt_seq[1] = SHELL_NLIP_PKT_START2;
+
+    esc_seq[0] = SHELL_NLIP_DATA_START1;
+    esc_seq[1] = SHELL_NLIP_DATA_START2;
+
+    /* Start a packet */
+    console_write((char *) pkt_seq, sizeof(pkt_seq));
 
     while (totlen > 0) {
-        dlen = min(sizeof(buf), totlen);
+        dlen = min(SHELL_NLIP_MTX_BUF_SIZE, totlen);
 
-        rc = os_mbuf_copydata(m, off, dlen, buf);
+        if (nwritten != 0 && 
+                ((nwritten + BASE64_ENCODE_SIZE(dlen)) % 122) == 0) {
+            console_write((char *) esc_seq, sizeof(esc_seq));
+            console_write("\n", sizeof("\n")-1);
+        }
+
+        rc = os_mbuf_copydata(m, off, dlen, readbuf);
         if (rc != 0) {
             goto err;
         }
         off += dlen;
 
-        console_write((char *) buf, dlen);
+        elen = base64_encode(readbuf, dlen, encodebuf, 
+                totlen - dlen > 0 ? 0 : 1);
+
+        console_write(encodebuf, elen);
+
+        nwritten += elen;
         totlen -= dlen;
+        
     }
 
     return (0);
@@ -329,10 +358,10 @@ shell_read_console(void)
                 }
                 g_nlip_expected_len = 0;
 
-                rc = shell_nlip_process(shell_line, rc);
+                rc = shell_nlip_process(&shell_line[2], rc-2);
             } else if (shell_line[0] == SHELL_NLIP_DATA_START1 && 
                     shell_line[1] == SHELL_NLIP_DATA_START2) {
-                rc = shell_nlip_process(shell_line, rc);
+                rc = shell_nlip_process(&shell_line[2], rc-2);
             } else {
                 rc = shell_process_command(shell_line, rc);
                 if (rc != 0) {

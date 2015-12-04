@@ -186,7 +186,7 @@ os_msys_get_pkthdr(uint16_t dsize, uint16_t pkthdr_len)
     struct os_mbuf *m;
     struct os_mbuf_pool *pool;
 
-    pool = _os_msys_find_pool(dsize);
+    pool = _os_msys_find_pool(dsize + pkthdr_len);
     if (!pool) {
         goto err;
     }
@@ -285,9 +285,11 @@ os_mbuf_free(struct os_mbuf *om)
 {
     int rc;
 
-    rc = os_memblock_put(om->om_omp->omp_pool, om);
-    if (rc != 0) {
-        goto err;
+    if (om->om_omp != NULL) {
+        rc = os_memblock_put(om->om_omp->omp_pool, om);
+        if (rc != 0) {
+            goto err;
+        }
     }
 
     return (0);

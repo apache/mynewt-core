@@ -19,6 +19,6 @@
 int base64_encode(const void *, int, char *, uint8_t);
 int base64_decode(const char *, void *buf);
 
-#define BASE64_ENCODE_SIZE(size) (((__size) * (4 / 3)) + 4)
+#define BASE64_ENCODE_SIZE(__size) (((__size) * (4 / 3)) + 4)
 
 #endif /* __UTIL_BASE64_H__ */
