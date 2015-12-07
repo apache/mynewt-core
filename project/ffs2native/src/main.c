@@ -37,6 +37,7 @@
 #endif
 
 static const char *copy_in_dir;
+static const char *progname;
 
 #define MAX_AREAS	16
 static struct nffs_area_desc area_descs[MAX_AREAS];
@@ -167,7 +168,11 @@ copy_in_directory(const char *src, const char *dst)
 static void
 usage(int rc)
 {
-    printf("Improper use\n");
+    printf("%s [-c]|[-d dir][-f flash_file]\n", progname);
+    printf("  Tool for operating on simulator flash image file\n");
+    printf("   -c: ...\n");
+    printf("   -d: use dir as root for NFFS portion and create flash image\n");
+    printf("   -f: flash_file is the name of the flash image file\n");
     exit(rc);
 }
 
@@ -178,6 +183,8 @@ main(int argc, char **argv)
     int rc;
     int ch;
     int cnt;
+
+    progname = argv[0];
 
     while ((ch = getopt(argc, argv, "c:d:f:")) != -1) {
         switch (ch) {
