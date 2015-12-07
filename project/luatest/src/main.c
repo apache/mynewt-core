@@ -100,6 +100,7 @@ main(int argc, char **argv)
 
     nffs_init();
 
+    cnt = NFFS_AREA_MAX;
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
     assert(rc == 0);
 
