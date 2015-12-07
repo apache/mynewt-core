@@ -87,7 +87,7 @@ print_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 
     name[inode.ni_filename_len] = '\0';
 
-    printf("%*s%s\n", indent, "", name);
+    printf("%*s%s\n", indent, "", name[0] == '\0' ? "/" : name);
 }
 
 static void
@@ -107,16 +107,18 @@ process_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 static void
 printfs(void)
 {
+    printf("\n\nNFFS contents:\n");
     process_inode_entry(nffs_root_dir, 0);
 }
 
-void
+static int
 copy_in_file(char *src, char *dst)
 {
     struct fs_file *nf;
     FILE *fp;
     int rc;
-    char data[32];
+    char data[2048];
+    int ret = 0;
 
     rc = fs_open(dst, FS_ACCESS_WRITE, &nf);
     assert(rc == 0);
@@ -128,10 +130,15 @@ copy_in_file(char *src, char *dst)
     }
     while ((rc = fread(data, 1, sizeof(data), fp))) {
         rc = fs_write(nf, data, rc);
-        assert(rc == 0);
+        if (rc) {
+            ret = rc;
+            break;
+        }
     }
     rc = fs_close(nf);
     assert(rc == 0);
+    fclose(fp);
+    return ret;
 }
 
 void
@@ -149,15 +156,30 @@ copy_in_directory(const char *src, const char *dst)
         usage(1);
     }
     while ((entry = readdir(dr))) {
-            snprintf(src_name, sizeof(src_name), "%s/%s", src, entry->d_name);
-            snprintf(dst_name, sizeof(dst_name), "%s/%s", dst, entry->d_name);
+        snprintf(src_name, sizeof(src_name), "%s/%s", src, entry->d_name);
+        snprintf(dst_name, sizeof(dst_name), "%s/%s", dst, entry->d_name);
         if (entry->d_type == DT_DIR &&
-          !strcmp(entry->d_name, ".") && !strcmp(entry->d_name, "..")) {
-            copy_in_directory(src_name, dst_name);
+          strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
             rc = fs_mkdir(dst_name);
+            copy_in_directory(src_name, dst_name);
             assert(rc == 0);
         } else if (entry->d_type == DT_REG) {
-            copy_in_file(src_name, dst_name);
+            printf("Copying %s\n", dst_name);
+            rc = copy_in_file(src_name, dst_name);
+            if (rc) {
+                printf("  error code %d ", rc);
+                switch (rc) {
+                case FS_ENOMEM:
+                    printf("out of memory\n");
+                    break;
+                case FS_EFULL:
+                    printf("disk is full\n");
+                    break;
+                default:
+                    printf("\n");
+                }
+                break;
+            }
         } else {
             printf("Skipping %s\n", src_name);
         }
@@ -222,7 +244,7 @@ main(int argc, char **argv)
          */
         rc = nffs_format(area_descs);
         assert(rc == 0);
-        copy_in_directory(copy_in_dir, "/");
+        copy_in_directory(copy_in_dir, "");
     } else {
         rc = nffs_detect(area_descs);
         if (rc) {
