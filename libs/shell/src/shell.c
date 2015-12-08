@@ -20,6 +20,7 @@
 
 #include <shell/shell.h>
 #include <util/base64.h>
+#include <util/endian.h>
 
 #include <stdio.h>
 #include <string.h>
