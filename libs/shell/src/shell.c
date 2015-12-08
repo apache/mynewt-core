@@ -19,8 +19,8 @@
 #include <console/console.h>
 
 #include <shell/shell.h>
+#include <os/endian.h>
 #include <util/base64.h>
-#include <util/endian.h>
 
 #include <stdio.h>
 #include <string.h>
