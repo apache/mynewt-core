@@ -51,8 +51,9 @@ const struct hal_flash stm32f3_flash_dev = {
     .hf_base_addr = STM32F3_BASE_ADDR,
 #ifdef STM32F303xC
     .hf_size = 256 * 1024,
-    .hf_sector_cnt = 128
+    .hf_sector_cnt = 128,
 #endif
+    .hf_align = 2
 };
 
 static int

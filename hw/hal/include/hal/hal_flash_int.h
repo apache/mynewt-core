@@ -34,6 +34,7 @@ struct hal_flash {
     uint32_t hf_base_addr;
     uint32_t hf_size;
     int hf_sector_cnt;
+    int hf_align;		/* Alignment requirement. 1 if unrestricted. */
 };
 
 /*

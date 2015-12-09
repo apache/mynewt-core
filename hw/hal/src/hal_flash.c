@@ -39,6 +39,18 @@ hal_flash_init(void)
     return rc;
 }
 
+uint8_t
+hal_flash_align(uint8_t flash_id)
+{
+    const struct hal_flash *hf;
+
+    hf = bsp_flash_dev(flash_id);
+    if (!hf) {
+        return 1;
+    }
+    return hf->hf_align;
+}
+
 uint32_t
 hal_flash_sector_size(const struct hal_flash *hf, int sec_idx)
 {

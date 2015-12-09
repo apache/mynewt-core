@@ -60,6 +60,7 @@ const struct hal_flash stm32f4_flash_dev = {
     .hf_base_addr = 0x08000000,
     .hf_size = 1024 * 1024,
     .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS - 1,
+    .hf_align = 1
 };
 
 static int

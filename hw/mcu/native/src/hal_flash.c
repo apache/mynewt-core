@@ -65,6 +65,7 @@ const struct hal_flash native_flash_dev = {
     .hf_base_addr = 0,
     .hf_size = 1024 * 1024,
     .hf_sector_cnt = FLASH_NUM_AREAS,
+    .hf_align = 1
 };
 
 static void
@@ -155,6 +156,7 @@ flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
 static int
 native_flash_write(uint32_t address, const void *src, uint32_t length)
 {
+    assert(address % native_flash_dev.hf_align == 0);
     return flash_native_write_internal(address, src, length, 0);
 }
 
