@@ -33,10 +33,17 @@
  */
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
+/* 
+ * NOTE: This linker script is for version 1.0 of the nrf52. See
+ * errata #33 and #34 on nordic infocenter website for details. This errata
+ * causes us to allocate a memory regision we call "CODE_RAM" so that we can
+ * access the full 64K RAM provided by the chip.
+ */ 
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x80000
-  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x8000
+  CODE_RAM (rwx) : ORIGIN = 0x8000000, LENGTH = 0x8000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -168,20 +175,20 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
-    /* Heap starts after BSS */
-    __HeapBase = .;
-
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
      * values to stack symbols later */
     .stack_dummy (COPY):
     {
         *(.stack*)
-    } > RAM
+    } > CODE_RAM
 
-    /* Set stack top to end of RAM, and stack limit move down by
-     * size of stack_dummy section */
-    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+    /* 
+     * Place heap and stack in CODE_RAM. Heap is at start, stack is at the
+     * top and stack limit is the bottom of the stack.
+     */
+    __HeapBase = ORIGIN(CODE_RAM);
+    __StackTop = ORIGIN(CODE_RAM) + LENGTH(CODE_RAM);
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
 
