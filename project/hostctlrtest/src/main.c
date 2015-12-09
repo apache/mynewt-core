@@ -101,13 +101,15 @@ bletest_inc_adv_pkt_num(void) { }
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
 static int
-hostctlrtest_on_disc(uint16_t conn_handle, int status,
-                     struct ble_gatt_service *service, void *arg)
+hostctlrtest_on_disc(uint16_t conn_handle, uint8_t ble_hs_status,
+                     uint8_t att_status, struct ble_gatt_service *service,
+                     void *arg)
 {
     int i;
 
-    if (status != 0) {
-        console_printf("service discovery failure: status=%d\n", status);
+    if (ble_hs_status != 0) {
+        console_printf("service discovery failure: ble_hs_status=%d "
+                       "att_status=%d\n", ble_hs_status, att_status);
         return 0;
     }
 
