@@ -33,7 +33,7 @@ int init_tasks(void);
 
 /* Shell */
 #define SHELL_TASK_PRIO      (8)
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
 static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 static struct shell_cmd lua_shell_cmd;
 
@@ -61,8 +61,8 @@ create_script_file(void)
         assert(rc == 0);
         rc = fs_write(nf, script, strlen(script));
         assert(rc == 0);
-        fs_close(nf);
     }
+    fs_close(nf);
 }
 
 /**
