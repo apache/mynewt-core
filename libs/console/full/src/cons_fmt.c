@@ -20,6 +20,9 @@
 
 #define CONS_OUTPUT_MAX_LINE	128
 
+/** Indicates whether the previous line of output was completed. */
+static int console_is_midline;
+
 int
 console_vprintf(const char *fmt, va_list args)
 {
@@ -31,6 +34,10 @@ console_vprintf(const char *fmt, va_list args)
         len = sizeof(buf) - 1;
     }
     console_write(buf, len);
+
+    if (len > 0) {
+        console_is_midline = buf[len - 1] != '\n';
+    }
     return len;
 }
 
@@ -41,8 +48,11 @@ console_printf(const char *fmt, ...)
     char buf[24];
     int len;
 
-    len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
-    console_write(buf, len);
+    /* Prefix each line with a timestamp. */
+    if (!console_is_midline) {
+        len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
+        console_write(buf, len);
+    }
 
     va_start(args, fmt);
     len = console_vprintf(fmt, args);
