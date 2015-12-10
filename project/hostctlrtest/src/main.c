@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
@@ -100,10 +101,72 @@ bletest_inc_adv_pkt_num(void) { }
 
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
+
 static int
-hostctlrtest_on_disc(uint16_t conn_handle, uint8_t ble_hs_status,
-                     uint8_t att_status, struct ble_gatt_service *service,
+hostctlrtest_on_read(uint16_t conn_handle, uint8_t ble_hs_status,
+                     uint8_t att_status, struct ble_gatt_attr *attr,
                      void *arg)
+{
+    uint8_t *u8ptr;
+    int i;
+
+    if (ble_hs_status != 0) {
+        console_printf("characteristic read failure: ble_hs_status=%d "
+                       "att_status=%d\n", ble_hs_status, att_status);
+        return 0;
+    }
+
+    console_printf("characteristic read: handle=%d value=", attr->handle);
+    u8ptr = attr->value;
+    for (i = 0; i < attr->value_len; i++) {
+        if (i != 0) {
+            console_printf(":");
+        }
+        console_printf("%02x", u8ptr[i]);
+    }
+    console_printf("\n");
+
+    return 0;
+}
+
+static int
+hostctlrtest_on_disc_c(uint16_t conn_handle, uint8_t ble_hs_status,
+                       uint8_t att_status, struct ble_gatt_chr *chr,
+                       void *arg)
+{
+    int i;
+
+    if (ble_hs_status != 0) {
+        console_printf("characteristic discovery failure: ble_hs_status=%d "
+                       "att_status=%d\n", ble_hs_status, att_status);
+        return 0;
+    }
+
+    if (chr == NULL) {
+        console_printf("characteristic discovery complete.\n");
+        return 0;
+    }
+
+    console_printf("characteristic discovered: decl_handle=%d value_handle=%d "
+                   "properties=%d uuid=", chr->decl_handle, chr->value_handle,
+                   chr->properties);
+    for (i = 0; i < 16; i++) {
+        if (i != 0) {
+            console_printf(":");
+        }
+        console_printf("%02x", chr->uuid128[i]);
+    }
+    console_printf("\n");
+
+    ble_gatt_read(conn_handle, chr->value_handle, hostctlrtest_on_read, NULL);
+
+    return 0;
+}
+
+static int
+hostctlrtest_on_disc_s(uint16_t conn_handle, uint8_t ble_hs_status,
+                       uint8_t att_status, struct ble_gatt_service *service,
+                       void *arg)
 {
     int i;
 
@@ -114,6 +177,7 @@ hostctlrtest_on_disc(uint16_t conn_handle, uint8_t ble_hs_status,
     }
 
     if (service == NULL) {
+        console_printf("service discovery complete.");
         return 0;
     }
 
@@ -127,11 +191,19 @@ hostctlrtest_on_disc(uint16_t conn_handle, uint8_t ble_hs_status,
     }
     console_printf("\n");
 
+    ble_gatt_disc_all_chars(conn_handle, service->start_handle,
+                            service->end_handle, hostctlrtest_on_disc_c,
+                            NULL);
+
     return 0;
 }
 #endif
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
+static uint16_t hostctlrtest_service_handle;
+static uint16_t hostctlrtest_char_handle;
+static uint16_t hostctlrtest_data_handle;
+
 static int
 hostctlrtest_attr_cb(struct ble_att_svr_entry *entry, uint8_t op,
                      union ble_att_svr_handle_arg *arg)
@@ -140,10 +212,33 @@ hostctlrtest_attr_cb(struct ble_att_svr_entry *entry, uint8_t op,
 
     assert(op == BLE_ATT_OP_READ_REQ);
 
-    htole16(buf, 0x1234);
+    if (entry->ha_handle_id == hostctlrtest_service_handle) {
+        console_printf("reading service declaration");
+        htole16(buf, 0x1234);
+        arg->aha_read.attr_data = buf;
+        arg->aha_read.attr_len = 2;
+    } else if (entry->ha_handle_id == hostctlrtest_char_handle) {
+        console_printf("reading characteristic declaration");
 
-    arg->aha_read.attr_data = buf;
-    arg->aha_read.attr_len = 2;
+        /* Properties. */
+        buf[0] = 0;
+
+        /* Value handle. */
+        htole16(buf + 1, hostctlrtest_data_handle);
+
+        /* UUID. */
+        htole16(buf + 3, 0x5656);
+
+        arg->aha_read.attr_data = buf;
+        arg->aha_read.attr_len = 5;
+    } else if (entry->ha_handle_id == hostctlrtest_data_handle) {
+        console_printf("reading characteristic value");
+        memcpy(buf, "hello", 5);
+        arg->aha_read.attr_data = buf;
+        arg->aha_read.attr_len = 5;
+    } else {
+        assert(0);
+    }
 
     return 0;
 }
@@ -152,13 +247,25 @@ static void
 hostctlrtest_register_attrs(void)
 {
     uint8_t uuid128[16];
-    uint16_t handle_id;
     int rc;
 
-    rc = ble_hs_uuid_from_16bit(0x2800, uuid128);
+    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_PRIMARY_SERVICE, uuid128);
+    assert(rc == 0);
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_service_handle,
+                              hostctlrtest_attr_cb);
     assert(rc == 0);
 
-    ble_att_svr_register(uuid128, 0, &handle_id, hostctlrtest_attr_cb);
+    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
+    assert(rc == 0);
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_char_handle,
+                              hostctlrtest_attr_cb);
+    assert(rc == 0);
+
+    rc = ble_hs_uuid_from_16bit(0x5656, uuid128);
+    assert(rc == 0);
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_data_handle,
+                              hostctlrtest_attr_cb);
+    assert(rc == 0);
 }
 #endif
 
@@ -172,7 +279,7 @@ hostctlrtest_on_connect(struct ble_gap_connect_desc *desc, void *arg)
                    desc->peer_addr[4], desc->peer_addr[5]);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
-    ble_gatt_disc_all_services(desc->handle, hostctlrtest_on_disc, NULL);
+    ble_gatt_disc_all_services(desc->handle, hostctlrtest_on_disc_s, NULL);
 #endif
 }
 
