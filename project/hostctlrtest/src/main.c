@@ -201,8 +201,10 @@ hostctlrtest_on_disc_s(uint16_t conn_handle, uint8_t ble_hs_status,
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
 static uint16_t hostctlrtest_service_handle;
-static uint16_t hostctlrtest_char_handle;
-static uint16_t hostctlrtest_data_handle;
+static uint16_t hostctlrtest_char1_handle;
+static uint16_t hostctlrtest_data1_handle;
+static uint16_t hostctlrtest_char2_handle;
+static uint16_t hostctlrtest_data2_handle;
 
 static int
 hostctlrtest_attr_cb(struct ble_att_svr_entry *entry, uint8_t op,
@@ -217,23 +219,42 @@ hostctlrtest_attr_cb(struct ble_att_svr_entry *entry, uint8_t op,
         htole16(buf, 0x1234);
         arg->aha_read.attr_data = buf;
         arg->aha_read.attr_len = 2;
-    } else if (entry->ha_handle_id == hostctlrtest_char_handle) {
-        console_printf("reading characteristic declaration");
+    } else if (entry->ha_handle_id == hostctlrtest_char1_handle) {
+        console_printf("reading characteristic1 declaration");
 
         /* Properties. */
         buf[0] = 0;
 
         /* Value handle. */
-        htole16(buf + 1, hostctlrtest_data_handle);
+        htole16(buf + 1, hostctlrtest_data1_handle);
 
         /* UUID. */
         htole16(buf + 3, 0x5656);
 
         arg->aha_read.attr_data = buf;
         arg->aha_read.attr_len = 5;
-    } else if (entry->ha_handle_id == hostctlrtest_data_handle) {
-        console_printf("reading characteristic value");
-        memcpy(buf, "hello", 5);
+    } else if (entry->ha_handle_id == hostctlrtest_data1_handle) {
+        console_printf("reading characteristic1 value");
+        memcpy(buf, "char1", 5);
+        arg->aha_read.attr_data = buf;
+        arg->aha_read.attr_len = 5;
+    } else if (entry->ha_handle_id == hostctlrtest_char2_handle) {
+        console_printf("reading characteristic2 declaration");
+
+        /* Properties. */
+        buf[0] = 0;
+
+        /* Value handle. */
+        htole16(buf + 1, hostctlrtest_data2_handle);
+
+        /* UUID. */
+        htole16(buf + 3, 0x6767);
+
+        arg->aha_read.attr_data = buf;
+        arg->aha_read.attr_len = 5;
+    } else if (entry->ha_handle_id == hostctlrtest_data2_handle) {
+        console_printf("reading characteristic2 value");
+        memcpy(buf, "char2", 5);
         arg->aha_read.attr_data = buf;
         arg->aha_read.attr_len = 5;
     } else {
@@ -249,21 +270,36 @@ hostctlrtest_register_attrs(void)
     uint8_t uuid128[16];
     int rc;
 
+    /* Service. */
     rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_PRIMARY_SERVICE, uuid128);
     assert(rc == 0);
     rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_service_handle,
                               hostctlrtest_attr_cb);
     assert(rc == 0);
 
+    /* Characteristic 1 (UUID=0x5656).*/
     rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
     assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_char_handle,
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_char1_handle,
                               hostctlrtest_attr_cb);
     assert(rc == 0);
 
     rc = ble_hs_uuid_from_16bit(0x5656, uuid128);
     assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_data_handle,
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_data1_handle,
+                              hostctlrtest_attr_cb);
+    assert(rc == 0);
+
+    /* Characteristic 2 (UUID=0x6767).*/
+    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
+    assert(rc == 0);
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_char2_handle,
+                              hostctlrtest_attr_cb);
+    assert(rc == 0);
+
+    rc = ble_hs_uuid_from_16bit(0x6767, uuid128);
+    assert(rc == 0);
+    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_data2_handle,
                               hostctlrtest_attr_cb);
     assert(rc == 0);
 }
