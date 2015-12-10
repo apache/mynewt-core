@@ -62,7 +62,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
@@ -267,14 +267,9 @@ bletest_execute(void)
     int rc;
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-    /* Enable advertising */
+    /*  */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-        if (g_bletest_state) {
-            rc = host_hci_cmd_le_set_adv_enable(0);
-            host_hci_outstanding_opcode = 0;
-            assert(rc == 0);
-            g_bletest_state = 0;
-        } else {
+        if (!g_bletest_state) {
             rc = host_hci_cmd_le_set_adv_enable(1);
             host_hci_outstanding_opcode = 0;
             assert(rc == 0);
@@ -328,6 +323,8 @@ bletest_timer_cb(void *arg)
 void
 bletest_task_handler(void *arg)
 {
+    int rc;
+    uint64_t event_mask;
     struct os_event *ev;
     struct os_callout_func *cf;
 
@@ -355,6 +352,12 @@ bletest_task_handler(void *arg)
     /* Initialize the scanner */
     bletest_init_initiator();
 #endif
+
+    /* Set the event mask we want to display */
+    event_mask = 0x7FF;
+    rc = host_hci_cmd_le_set_event_mask(event_mask);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 
     /* Init bletest variables */
     g_bletest_state = 0;
