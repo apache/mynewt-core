@@ -5,3 +5,4 @@ project.eggs:
     - net/nimble/host
     - libs/console/full
     - libs/baselibc
+project.cflags: -DBLETEST

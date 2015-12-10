@@ -65,7 +65,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
@@ -95,27 +95,36 @@ bletest_inc_adv_pkt_num(void)
     uint8_t *dptr;
     uint8_t digit;
 
-    dptr = &g_host_adv_data[18];
-    while (dptr >= &g_host_adv_data[13]) {
-        digit = *dptr;
-        ++digit;
-        if (digit == 58) {
-            digit = 48;
-            *dptr = digit;
-            --dptr;
-        } else {
-            *dptr = digit;
-            break;
+    if (g_host_adv_len != 0) {
+        dptr = &g_host_adv_data[18];
+        while (dptr >= &g_host_adv_data[13]) {
+            digit = *dptr;
+            ++digit;
+            if (digit == 58) {
+                digit = 48;
+                *dptr = digit;
+                --dptr;
+            } else {
+                *dptr = digit;
+                break;
+            }
         }
-    }
 
-    rc = host_hci_cmd_le_set_adv_data(g_host_adv_data, g_host_adv_len);
-    assert(rc == 0);
-    host_hci_outstanding_opcode = 0;
+        rc = host_hci_cmd_le_set_adv_data(g_host_adv_data, g_host_adv_len);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
+    }
 }
 
+/**
+ * Sets the advertising data to be sent in advertising pdu's which contain
+ * advertising data.
+ *
+ * @param dptr
+ * @return uint8_t
+ */
 uint8_t
-bletest_create_adv_pdu(uint8_t *dptr)
+bletest_set_adv_data(uint8_t *dptr)
 {
     uint8_t len;
 
@@ -163,35 +172,47 @@ bletest_init_advertising(void)
 {
     int rc;
     uint8_t adv_len;
-    uint16_t adv_itvl;
     struct hci_adv_params adv;
 
-    /* Create the advertising PDU */
-    adv_len = bletest_create_adv_pdu(&g_host_adv_data[0]);
-
     /* Set advertising parameters */
-    adv_itvl = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
     adv.adv_channel_map = 0x07;
     adv.adv_filter_policy = BLETEST_CFG_ADV_FILT_POLICY;
     adv.own_addr_type = BLE_HCI_ADV_OWN_ADDR_PUBLIC;
     adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
-    adv.adv_itvl_min = BLE_HCI_ADV_ITVL_NONCONN_MIN;
-    adv.adv_itvl_max = adv_itvl;
+    if ((adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) ||
+        (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD)) {
+        adv.peer_addr[0] = 0x00;
+        adv.peer_addr[1] = 0x00;
+        adv.peer_addr[2] = 0x00;
+        adv.peer_addr[3] = 0x99;
+        adv.peer_addr[4] = 0x99;
+        adv.peer_addr[5] = 0x09;
+        adv.adv_itvl_min = 0;
+        adv.adv_itvl_max = 0;
+        adv_len = 0;
+    } else {
+        adv.adv_itvl_min = BLE_HCI_ADV_ITVL_NONCONN_MIN;
+        adv.adv_itvl_max = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
+        adv_len = bletest_set_adv_data(&g_host_adv_data[0]);
+    }
+
+    /* Set the advertising parameters */
     rc = host_hci_cmd_le_set_adv_params(&adv);
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
-
     /* Set advertising data */
-    rc = host_hci_cmd_le_set_adv_data(&g_host_adv_data[0], adv_len);
-    assert(rc == 0);
-    host_hci_outstanding_opcode = 0;
+    if (adv_len != 0) {
+        rc = host_hci_cmd_le_set_adv_data(&g_host_adv_data[0], adv_len);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
 
-    /* Set scan response data */
-    rc = host_hci_cmd_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
-    assert(rc == 0);
-    host_hci_outstanding_opcode = 0;
+        /* Set scan response data */
+        rc = host_hci_cmd_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
+    }
 }
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
