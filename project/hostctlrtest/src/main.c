@@ -17,7 +17,7 @@
 #define HOSTCTLRTEST_ROLE_SCANNER            (1)
 #define HOSTCTLRTEST_ROLE_ADVERTISER         (2)
 
-#define HOSTCTLRTEST_CFG_ROLE                (2)
+#define HOSTCTLRTEST_CFG_ROLE                (0)
 
 #include <assert.h>
 #include <string.h>
@@ -57,11 +57,12 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
-static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+//static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+static uint8_t hostctlrtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
 static uint8_t hostctlrtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (16)
+#define MBUF_NUM_MBUFS      (8)
 #define MBUF_BUF_SIZE       (256 + sizeof(struct hci_data_hdr))
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
 
@@ -100,7 +101,7 @@ void
 bletest_inc_adv_pkt_num(void) { }
 
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
+#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
 
 static int
 hostctlrtest_on_read(uint16_t conn_handle, uint8_t ble_hs_status,
@@ -199,7 +200,7 @@ hostctlrtest_on_disc_s(uint16_t conn_handle, uint8_t ble_hs_status,
 }
 #endif
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
+#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
 static uint16_t hostctlrtest_service_handle;
 static uint16_t hostctlrtest_char1_handle;
 static uint16_t hostctlrtest_data1_handle;
@@ -314,7 +315,7 @@ hostctlrtest_on_connect(struct ble_gap_connect_desc *desc, void *arg)
                    desc->peer_addr[1], desc->peer_addr[2], desc->peer_addr[3],
                    desc->peer_addr[4], desc->peer_addr[5]);
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
+#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
     ble_gatt_disc_all_services(desc->handle, hostctlrtest_on_disc_s, NULL);
 #endif
 }
@@ -344,11 +345,11 @@ hostctlrtest_task_handler(void *arg)
     ble_gap_set_connect_cb(hostctlrtest_on_connect, NULL);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
+    hostctlrtest_register_attrs();
     console_printf("ble_gap_directed_connectable\n");
     rc = ble_gap_directed_connectable(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
                                       hostctlrtest_mst_addr);
 #else
-    hostctlrtest_register_attrs();
     console_printf("ble_gap_direct_connection_establishment\n");
     rc = ble_gap_direct_connection_establishment(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
                                                  hostctlrtest_slv_addr);
