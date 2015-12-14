@@ -57,8 +57,8 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
-//static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-static uint8_t hostctlrtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
+static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+//static uint8_t hostctlrtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
 static uint8_t hostctlrtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Create a mbuf pool of BLE mbufs */
@@ -342,17 +342,17 @@ hostctlrtest_task_handler(void *arg)
     g_hostctlrtest_state = 0;
     g_next_os_time = os_time_get();
     
-    ble_gap_set_connect_cb(hostctlrtest_on_connect, NULL);
+    ble_gap_conn_set_cb(hostctlrtest_on_connect, NULL);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
     hostctlrtest_register_attrs();
     console_printf("ble_gap_directed_connectable\n");
-    rc = ble_gap_directed_connectable(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                      hostctlrtest_mst_addr);
+    rc = ble_gap_conn_direct_connectable(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
+                                         hostctlrtest_mst_addr);
 #else
     console_printf("ble_gap_direct_connection_establishment\n");
-    rc = ble_gap_direct_connection_establishment(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                                 hostctlrtest_slv_addr);
+    rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
+                                     hostctlrtest_slv_addr);
 #endif
     assert(rc == 0);
 
