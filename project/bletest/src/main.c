@@ -24,9 +24,11 @@
 
 /* BLE */
 #include "nimble/ble.h"
+#include "nimble/hci_transport.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
+#include "controller/ble_ll_conn.h"
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -62,10 +64,10 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
@@ -87,6 +89,7 @@ struct os_eventq g_bletest_evq;
 struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
 os_stack_t bletest_stack[BLETEST_STACK_SIZE];
+uint32_t g_bletest_conn_end;
 
 void
 bletest_inc_adv_pkt_num(void)
@@ -288,17 +291,71 @@ bletest_execute(void)
     int rc;
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-    /*  */
+    int i;
+    uint16_t pktlen;
+    uint16_t handle;
+    struct os_mbuf *om;
+    struct ble_ll_conn_sm *connsm;
+
+    handle = 1;
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-        if (!g_bletest_state) {
+        if (g_bletest_state == 0) {
             rc = host_hci_cmd_le_set_adv_enable(1);
             host_hci_outstanding_opcode = 0;
             assert(rc == 0);
             g_bletest_state = 1;
+        } else if (g_bletest_state == 1) {
+            /* See if handle 1 has been created. If so, send packets */
+            connsm = ble_ll_conn_find_active_conn(handle);
+            if (connsm) {
+                /* Set connection end time */
+                g_bletest_conn_end = os_time_get() + (OS_TICKS_PER_SEC * 17);
+                g_bletest_state = 2;
+            }
+        } else if (g_bletest_state == 2) {
+            if ((int32_t)(os_time_get() - g_bletest_conn_end) >= 0) {
+                g_bletest_state = 3;
+                host_hci_cmd_disconnect(handle, BLE_ERR_REM_USER_CONN_TERM);
+                g_next_os_time += OS_TICKS_PER_SEC;
+                return;
+            }
+            ble_get_packet(om);
+            if (om) {
+
+                /* set payload length */
+                pktlen = 32;
+                om->om_len = 32 + 4;
+
+                /* Put the HCI header in the mbuf */
+                htole16(om->om_data, handle);
+                htole16(om->om_data + 2, om->om_len);
+
+                /* Place L2CAP header in packet */
+                htole16(om->om_data + 4, pktlen);
+                om->om_data[6] = 0;
+                om->om_data[7] = 0;
+
+                /* Fill with incrementing pattern */
+                for (i = 0; i < pktlen; ++i) {
+                    om->om_data[8 + i] = (uint8_t)(i + 1);
+                }
+
+                /* Add length */
+                om->om_len += 4;
+                OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
+                ble_hci_transport_host_acl_data_send(om);
+            }
+        } else {
+            /* We should be waiting for disconnect */
+            connsm = ble_ll_conn_find_active_conn(handle);
+            if (!connsm) {
+                g_bletest_state = 0;
+            }
         }
-        g_next_os_time += (OS_TICKS_PER_SEC * 60);
+        g_next_os_time += OS_TICKS_PER_SEC;
     }
 #endif
+
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
     /* Enable scanning */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
@@ -333,7 +390,7 @@ bletest_timer_cb(void *arg)
     bletest_execute();
 
     /* Re-start the timer */
-    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC);
+    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC/2);
 }
 
 /**
@@ -380,6 +437,15 @@ bletest_task_handler(void *arg)
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
+    /* Turn on all events */
+    event_mask = 0xffffffffffffffff;
+    rc = host_hci_cmd_set_event_mask(event_mask);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Wait some time before starting */
+    os_time_delay(OS_TICKS_PER_SEC);
+
     /* Init bletest variables */
     g_bletest_state = 0;
     g_next_os_time = os_time_get();
@@ -412,6 +478,8 @@ bletest_task_handler(void *arg)
 static int
 init_tasks(void)
 {
+    int rc;
+
     os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL, 
                  BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack, 
                  BLETEST_STACK_SIZE);
@@ -419,7 +487,8 @@ init_tasks(void)
     tasks_initialized = 1;
 
     /* Initialize host HCI */
-    ble_hs_init(HOST_TASK_PRIO);
+    rc = ble_hs_init(HOST_TASK_PRIO);
+    assert(rc == 0);
 
     /* Initialize the BLE LL */
     ble_ll_init();
