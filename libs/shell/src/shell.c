@@ -267,8 +267,8 @@ shell_nlip_mtx(struct os_mbuf *m)
 
         if (nwritten != 0 && 
                 ((nwritten + BASE64_ENCODE_SIZE(dlen)) % 122) == 0) {
-            console_write((char *) esc_seq, sizeof(esc_seq));
             console_write("\n", sizeof("\n")-1);
+            console_write((char *) esc_seq, sizeof(esc_seq));
         }
 
         rc = os_mbuf_copydata(m, off, dlen, readbuf);

@@ -2,5 +2,6 @@ project.name: blinky
 project.eggs:
     - libs/console/full
     - libs/shell
+    - libs/newtmgr
     - libs/util
     - libs/os

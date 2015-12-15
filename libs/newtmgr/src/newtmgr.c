@@ -16,9 +16,14 @@
 
 #include <os/os.h>
 
+#include <assert.h>
+
+#include <shell/shell.h>
+#include <newtmgr/newtmgr.h>
+
 #include <string.h>
 
-struct nmgr_transport g_nmgr_transport;
+struct nmgr_transport g_nmgr_shell_transport;
 
 struct os_mutex g_nmgr_group_list_lock;
 
@@ -26,7 +31,41 @@ struct os_eventq g_nmgr_evq;
 struct os_task g_nmgr_task;
 
 STAILQ_HEAD(, nmgr_group) g_nmgr_group_list = 
-    STAILQ_HEAD_INITIALIZER(nmgr_group);
+    STAILQ_HEAD_INITIALIZER(g_nmgr_group_list);
+
+static int nmgr_def_echo(struct nmgr_hdr *, struct os_mbuf *, uint16_t, 
+        struct nmgr_hdr *, struct os_mbuf *);
+
+static struct nmgr_group nmgr_def_group;
+/* ORDER MATTERS HERE.
+ * Each element represents the command ID, referenced from newtmgr.
+ */
+static struct nmgr_handler nmgr_def_group_handlers[] = {
+    {nmgr_def_echo, nmgr_def_echo}
+};
+
+
+static int 
+nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
+        struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+{
+    uint8_t echo_buf[128];
+    int rc;
+    
+    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), nmr->nh_len, echo_buf);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = nmgr_rsp_extend(rsp_hdr, rsp, echo_buf, nmr->nh_len);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
 
 int 
 nmgr_group_list_lock(void)
@@ -37,7 +76,7 @@ nmgr_group_list_lock(void)
         return (0);
     }
 
-    rc = os_mutex_pend(&g_nmgr_group_list_lock);
+    rc = os_mutex_pend(&g_nmgr_group_list_lock, OS_WAIT_FOREVER);
     if (rc != 0) {
         goto err;
     }
@@ -125,35 +164,53 @@ nmgr_find_handler(uint16_t group_id, uint16_t handler_id)
     struct nmgr_group *group;
     struct nmgr_handler *handler;
 
-    group = nmgr_find_group(hdr->nh_group);
+    group = nmgr_find_group(group_id);
     if (!group) {
         goto err;
     }
 
-    if (hdr->nh_id > group->ng_handlers_count) {
+    if (handler_id > group->ng_handlers_count) {
         goto err;
     }
 
-    handler = &group->ng_handlers[hdr->nh_id];
+    handler = &group->ng_handlers[handler_id];
 
     return (handler);
 err:
     return (NULL);
 }
 
+int
+nmgr_rsp_extend(struct nmgr_hdr *hdr, struct os_mbuf *rsp, void *data, 
+        uint16_t len)
+{
+    int rc;
+
+    rc = os_mbuf_append(rsp, data, len);
+    if (rc != 0) {
+        goto err;
+    }
+    hdr->nh_len += len;
+
+    return (0);
+err:
+    return (rc);
+}
 
 static int 
 nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {
     struct os_mbuf *rsp;
     struct nmgr_handler *handler;
+    struct nmgr_hdr *rsp_hdr;
     struct nmgr_hdr hdr;
     uint32_t off;
     uint32_t len;
+    int rc;
 
     rsp = os_msys_get_pkthdr(512, 0);
     if (!rsp) {
-        rc = EINVAL;
+        rc = OS_EINVAL;
         goto err;
     }
 
@@ -163,7 +220,7 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     while (off < len) {
         rc = os_mbuf_copydata(req, off, sizeof(hdr), &hdr);
         if (rc < 0) {
-            rc = EINVAL;
+            rc = OS_EINVAL;
             goto err;
         }
 
@@ -173,18 +230,39 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 
         handler = nmgr_find_handler(hdr.nh_group, hdr.nh_id);
         if (!handler) {
-            rc = EINVAL;
+            rc = OS_EINVAL;
             goto err;
         }
 
+        /* Build response header apriori.  Then pass to the handlers
+         * to fill out the response data, and adjust length & flags.
+         */
+        rsp_hdr = (struct nmgr_hdr *) os_mbuf_extend(rsp, 
+                sizeof(struct nmgr_hdr));
+        if (!rsp_hdr) {
+            rc = OS_EINVAL;
+            goto err;
+        }
+        rsp_hdr->nh_len = 0;
+        rsp_hdr->nh_flags = 0;
+        rsp_hdr->nh_op = (hdr.nh_op == NMGR_OP_READ) ? NMGR_OP_READ_RSP : 
+            NMGR_OP_WRITE_RSP;
+        rsp_hdr->nh_group = hdr.nh_group;
+        rsp_hdr->nh_id = hdr.nh_id;
+
+
         if (hdr.nh_op == NMGR_OP_READ) {
-            rc = handler->nh_read(&hdr, req, off, rsp);
+            rc = handler->nh_read(&hdr, req, off, rsp_hdr, rsp);
         } else if (hdr.nh_op == NMGR_OP_WRITE) {
-            rc = handler->nh_write(&hdr, req, off, rsp);
+            rc = handler->nh_write(&hdr, req, off, rsp_hdr, rsp);
         } else {
             rc = OS_EINVAL;
             goto err;
         }
+
+        rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
+        rsp_hdr->nh_group = htons(rsp_hdr->nh_group);
+        rsp_hdr->nh_id = htons(rsp_hdr->nh_id);
 
         off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
     }
@@ -280,16 +358,31 @@ err:
     return (rc);
 }
 
+
+static int 
+nmgr_default_groups_register(void)
+{
+    int rc;
+
+    NMGR_GROUP_SET_HANDLERS(&nmgr_def_group, nmgr_def_group_handlers);
+    nmgr_def_group.ng_group_id = NMGR_GROUP_ID_DEFAULT;
+
+    rc = nmgr_group_register(&nmgr_def_group);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
     
 int 
 nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
 {
     int rc;
 
-    rc = os_eventq_init(&g_nmgr_evq);
-    if (rc != 0) {
-        goto err;
-    }
+    os_eventq_init(&g_nmgr_evq);
     
     rc = nmgr_transport_init(&g_nmgr_shell_transport, nmgr_shell_out);
     if (rc != 0) {
@@ -302,8 +395,13 @@ nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
         goto err;
     }
 
-    rc = os_task_init(&nmgr_task, "newtmgr", nmgr_task, NULL, prio, 
+    rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL, prio, 
             OS_WAIT_FOREVER, stack_ptr, stack_len);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = nmgr_default_groups_register();
     if (rc != 0) {
         goto err;
     }

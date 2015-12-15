@@ -43,6 +43,7 @@ uint8_t stats_shell_registered;
 struct shell_cmd shell_stats_cmd;
 #endif
 
+
 #ifdef SHELL_PRESENT 
 
 static void 
@@ -130,6 +131,7 @@ done:
 
 #endif
 
+
 int 
 stats_module_init(void)
 {
@@ -140,6 +142,7 @@ stats_module_init(void)
         shell_cmd_register(&shell_stats_cmd, "stat", shell_stats_display);
     }
 #endif
+
 
     rc = stats_init(STATS_HDR(stats), STATS_SIZE_INIT_PARMS(stats, STATS_SIZE_32), 
             STATS_NAME_INIT_PARMS(stats));

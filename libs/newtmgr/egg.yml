@@ -2,4 +2,7 @@ egg.name: libs/newtmgr
 egg.vers: 0.1
 egg.deps:
     - libs/os
+    - libs/util
     - libs/testutil
+egg.deps.SHELL:
+    - libs/shell

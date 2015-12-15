@@ -87,7 +87,11 @@ os_mqueue_get(struct os_mqueue *mq)
     }
     OS_EXIT_CRITICAL(sr);
 
-    m = OS_MBUF_PKTHDR_TO_MBUF(mp);
+    if (mp) {
+        m = OS_MBUF_PKTHDR_TO_MBUF(mp);
+    } else {
+        m = NULL;
+    }
 
     return (m);
 }

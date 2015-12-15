@@ -20,6 +20,7 @@
 #include "shell/shell.h"
 #include "util/log.h"
 #include "util/stats.h"
+#include <newtmgr/newtmgr.h>
 #include <assert.h>
 #include <string.h>
 #ifdef ARCH_sim
@@ -47,6 +48,10 @@ os_stack_t stack2[TASK2_STACK_SIZE];
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
+#define NEWTMGR_TASK_PRIO (4)
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
+
 struct cbmem log_mem;
 struct ul_handler log_mem_handler;
 struct util_log my_log;
@@ -59,6 +64,16 @@ struct os_sem g_test_sem;
 
 /* For LED toggling */
 int g_led_pin;
+
+#define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
+#define DEFAULT_MBUF_MPOOL_NBUFS (5)
+
+uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN * 
+    DEFAULT_MBUF_MPOOL_NBUFS];
+
+struct os_mbuf_pool default_mbuf_pool;
+struct os_mempool default_mbuf_mpool;
+
 
 void 
 task1_handler(void *arg)
@@ -159,6 +174,20 @@ main(int argc, char **argv)
     util_log_append(&my_log, entry, sizeof("bab")-1);
 
     os_init();
+
+    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS, 
+            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data, 
+            "default_mbuf_data");
+    assert(rc == 0);
+
+    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool, 
+            DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
+    assert(rc == 0);
+
+    rc = os_msys_register(&default_mbuf_pool);
+    assert(rc == 0);
+
+    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
 
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
 

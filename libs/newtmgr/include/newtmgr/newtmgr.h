@@ -17,7 +17,11 @@
 #ifndef _NEWTMGR_H_
 #define _NEWTMGR_H_
 
-#include <util/tpq.h>
+/* First 64 groups are reserved for system level newtmgr commands.
+ * Per-user commands are then defined after group 64.
+ */
+#define NMGR_GROUP_ID_DEFAULT (0)
+#define NMGR_GROUP_ID_PERUSER (64)
 
 #define NMGR_OP_READ (0)
 #define NMGR_OP_READ_RSP (1) 
@@ -32,17 +36,16 @@ struct nmgr_hdr {
     uint16_t nh_id;
 };
 
-typedef int (*nmgr_handler_func_t)(struct nmgr_hdr *hdr, struct os_mbuf *req, 
-        uint16_t srcoff, struct os_mbuf *rsp);
+typedef int (*nmgr_handler_func_t)(struct nmgr_hdr *nmr, struct os_mbuf *req, 
+        uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
+
+#define NMGR_HANDLER_FUNC(__name)                                           \
+    int __name(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,  \
+            struct os_mbuf *rsp)
 
 struct nmgr_handler {
-    nmgr_handle_func_t nh_read;
-    nmgr_handle_func_t nh_write;
-};
-
-struct nmgr_pkt {
-    struct tpq_element np_tpq_elem;
-    struct os_mbuf np_m;
+    nmgr_handler_func_t nh_read;
+    nmgr_handler_func_t nh_write;
 };
 
 struct nmgr_group {
@@ -52,6 +55,12 @@ struct nmgr_group {
     STAILQ_ENTRY(nmgr_group) ng_next;
 };
 
+#define NMGR_GROUP_SET_HANDLERS(__group, __handlers)       \
+    (__group)->ng_handlers = (__handlers);                 \
+    (__group)->ng_handlers_count = (sizeof((__handlers)) / \
+            sizeof(struct nmgr_handler)); 
+
+struct nmgr_transport;
 typedef int (*nmgr_transport_out_func_t)(struct nmgr_transport *nt, 
         struct os_mbuf *m);
 
@@ -59,5 +68,8 @@ struct nmgr_transport {
     struct os_mqueue nt_imq;
     nmgr_transport_out_func_t nt_output; 
 };
+
+int nmgr_task_init(uint8_t, os_stack_t *, uint16_t);
+int nmgr_rsp_extend(struct nmgr_hdr *, struct os_mbuf *, void *data, uint16_t);
 
 #endif /* _NETMGR_H */
