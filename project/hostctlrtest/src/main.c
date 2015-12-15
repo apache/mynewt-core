@@ -307,16 +307,18 @@ hostctlrtest_register_attrs(void)
 #endif
 
 static void
-hostctlrtest_on_connect(struct ble_gap_connect_desc *desc, void *arg)
+hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
 {
     console_printf("connection complete; handle=%d status=%d "
                    "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                   desc->handle, desc->status, desc->peer_addr[0],
-                   desc->peer_addr[1], desc->peer_addr[2], desc->peer_addr[3],
-                   desc->peer_addr[4], desc->peer_addr[5]);
+                   event->connect.handle, event->connect.status,
+                   event->connect.peer_addr[0], event->connect.peer_addr[1],
+                   event->connect.peer_addr[2], event->connect.peer_addr[3],
+                   event->connect.peer_addr[4], event->connect.peer_addr[5]);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
-    ble_gatt_disc_all_services(desc->handle, hostctlrtest_on_disc_s, NULL);
+    ble_gatt_disc_all_services(event->connect.handle, hostctlrtest_on_disc_s,
+                               NULL);
 #endif
 }
 
