@@ -311,13 +311,13 @@ hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
 {
     console_printf("connection complete; handle=%d status=%d "
                    "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                   event->connect.handle, event->connect.status,
-                   event->connect.peer_addr[0], event->connect.peer_addr[1],
-                   event->connect.peer_addr[2], event->connect.peer_addr[3],
-                   event->connect.peer_addr[4], event->connect.peer_addr[5]);
+                   event->conn.handle, event->conn.status,
+                   event->conn.peer_addr[0], event->conn.peer_addr[1],
+                   event->conn.peer_addr[2], event->conn.peer_addr[3],
+                   event->conn.peer_addr[4], event->conn.peer_addr[5]);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
-    ble_gatt_disc_all_services(event->connect.handle, hostctlrtest_on_disc_s,
+    ble_gatt_disc_all_services(event->conn.handle, hostctlrtest_on_disc_s,
                                NULL);
 #endif
 }

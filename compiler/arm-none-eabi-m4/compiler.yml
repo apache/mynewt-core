@@ -24,7 +24,7 @@ compiler.path.objcopy: arm-none-eabi-objcopy
 
 compiler.flags.default: -mcpu=cortex-m4 -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions
 compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
-compiler.flags.debug: [compiler.flags.default, -O1 -ggdb]
+compiler.flags.debug: [compiler.flags.default, -Os -ggdb]
 
 compiler.ld.flags: -static -lgcc
 compiler.ld.resolve_circular_deps: true
