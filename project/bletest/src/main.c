@@ -28,6 +28,7 @@
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
+#include "controller/ble_ll_hci.h"
 #include "controller/ble_ll_conn.h"
 
 /* Init all tasks */
@@ -51,7 +52,8 @@ uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
-#define MBUF_BUF_SIZE       (256 + sizeof(struct hci_data_hdr))
+#define MBUF_BUF_SIZE       \
+    (((BLE_LL_CFG_ACL_DATA_PKT_LEN + 3) / 4) + sizeof(struct hci_data_hdr))
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
 
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -67,7 +69,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
@@ -191,13 +193,17 @@ bletest_init_advertising(void)
         adv.peer_addr[3] = 0x99;
         adv.peer_addr[4] = 0x99;
         adv.peer_addr[5] = 0x09;
+        adv_len = 0;
+    } else {
+        adv_len = bletest_set_adv_data(&g_host_adv_data[0]);
+    }
+
+    if (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) {
         adv.adv_itvl_min = 0;
         adv.adv_itvl_max = 0;
-        adv_len = 0;
     } else {
         adv.adv_itvl_min = BLE_HCI_ADV_ITVL_NONCONN_MIN;
         adv.adv_itvl_max = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
-        adv_len = bletest_set_adv_data(&g_host_adv_data[0]);
     }
 
     /* Set the advertising parameters */
@@ -285,6 +291,24 @@ bletest_init_initiator(void)
 }
 #endif
 
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+/* 
+ * Test wrapper to get packets. Only get a packet if we have more than half
+ * left
+ */ 
+static struct os_mbuf *
+bletest_get_packet(void)
+{
+    struct os_mbuf *om;
+
+    om = NULL;
+    if (g_mbuf_pool.omp_pool->mp_num_free >= (MBUF_NUM_MBUFS / 2)) {
+        ble_get_packet(om);
+    }
+    return om;
+}
+#endif
+
 void
 bletest_execute(void)
 {
@@ -316,34 +340,35 @@ bletest_execute(void)
             if ((int32_t)(os_time_get() - g_bletest_conn_end) >= 0) {
                 g_bletest_state = 3;
                 host_hci_cmd_disconnect(handle, BLE_ERR_REM_USER_CONN_TERM);
-                g_next_os_time += OS_TICKS_PER_SEC;
-                return;
-            }
-            ble_get_packet(om);
-            if (om) {
+            } else {
+                om = bletest_get_packet();
+                if (om) {
 
-                /* set payload length */
-                pktlen = 32;
-                om->om_len = 32 + 4;
+                    /* set payload length */
+                    pktlen = 32;
+                    om->om_len = 32 + 4;
 
-                /* Put the HCI header in the mbuf */
-                htole16(om->om_data, handle);
-                htole16(om->om_data + 2, om->om_len);
+                    /* Put the HCI header in the mbuf */
+                    htole16(om->om_data, handle);
+                    htole16(om->om_data + 2, om->om_len);
 
-                /* Place L2CAP header in packet */
-                htole16(om->om_data + 4, pktlen);
-                om->om_data[6] = 0;
-                om->om_data[7] = 0;
+                    /* Place L2CAP header in packet */
+                    htole16(om->om_data + 4, pktlen);
+                    om->om_data[6] = 0;
+                    om->om_data[7] = 0;
 
-                /* Fill with incrementing pattern */
-                for (i = 0; i < pktlen; ++i) {
-                    om->om_data[8 + i] = (uint8_t)(i + 1);
+                    /* Fill with incrementing pattern */
+                    for (i = 0; i < pktlen; ++i) {
+                        om->om_data[8 + i] = (uint8_t)(i + 1);
+                    }
+
+                    /* Add length */
+                    om->om_len += 4;
+                    OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
+                    ble_hci_transport_host_acl_data_send(om);
                 }
-
-                /* Add length */
-                om->om_len += 4;
-                OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                ble_hci_transport_host_acl_data_send(om);
+                g_next_os_time += OS_TICKS_PER_SEC / 10;
+                return;
             }
         } else {
             /* We should be waiting for disconnect */
@@ -389,8 +414,8 @@ bletest_timer_cb(void *arg)
     /* Call the bletest code */
     bletest_execute();
 
-    /* Re-start the timer */
-    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC/2);
+    /* Re-start the timer (run every 50 msecs) */
+    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC / 20);
 }
 
 /**
@@ -406,8 +431,8 @@ bletest_task_handler(void *arg)
     struct os_event *ev;
     struct os_callout_func *cf;
 
-    /* We are initialized */
-    console_printf("Starting BLE test task\n");
+    /* Wait one second before starting test task */
+    os_time_delay(OS_TICKS_PER_SEC);
 
     /* Initialize eventq */
     os_eventq_init(&g_bletest_evq);
@@ -418,16 +443,19 @@ bletest_task_handler(void *arg)
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Initialize the advertiser */
+    console_printf("Starting BLE test task as advertiser\n");
     bletest_init_advertising();
 #endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
     /* Initialize the scanner */
+    console_printf("Starting BLE test task as scanner\n");
     bletest_init_scanner();
 #endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
     /* Initialize the scanner */
+    console_printf("Starting BLE test task as initiator\n");
     bletest_init_initiator();
 #endif
 
