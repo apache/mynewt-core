@@ -196,6 +196,9 @@ SECTIONS
      * caveats:
      *    1. It does not get zeroed at init-time.
      *    2. You cannot use it as source memory for EasyDMA.
+     *
+     * This section exists because of a hardware defect; see errata 33 and 34
+     * in STM32F40x errata sheet.
      */
     .nzbss :
     {
