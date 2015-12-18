@@ -53,7 +53,7 @@ uint8_t g_host_adv_len;
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (16)
 #define MBUF_BUF_SIZE       \
-    (((BLE_LL_CFG_ACL_DATA_PKT_LEN + 3) / 4) + sizeof(struct hci_data_hdr))
+    ((BLE_LL_CFG_ACL_DATA_PKT_LEN + sizeof(struct hci_data_hdr) + 3) & 0xFFFC)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
 
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -440,6 +440,12 @@ bletest_task_handler(void *arg)
     /* Initialize the host timer */
     os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
                          NULL);
+
+    /* Send the reset command first */
+    rc = host_hci_cmd_send(BLE_HCI_OGF_CTLR_BASEBAND, BLE_HCI_OCF_CB_RESET,
+                           0, NULL);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Initialize the advertiser */
