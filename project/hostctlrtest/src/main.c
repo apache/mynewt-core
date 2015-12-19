@@ -72,22 +72,6 @@ struct os_mbuf_pool g_mbuf_pool;
 struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
-/* Some application configurations */
-#define HOSTCTLRTEST_CFG_FILT_DUP_ADV        (0)
-#define HOSTCTLRTEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
-#define HOSTCTLRTEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
-#define HOSTCTLRTEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
-#define HOSTCTLRTEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
-#define HOSTCTLRTEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
-#define HOSTCTLRTEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
-#define HOSTCTLRTEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
-#define HOSTCTLRTEST_CFG_CONN_ITVL           (1000)  /* 1250 msecs */           
-#define HOSTCTLRTEST_CFG_SLAVE_LATENCY       (0)
-#define HOSTCTLRTEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
-#define HOSTCTLRTEST_CFG_CONN_SPVN_TMO       (1000)  /* 10 seconds */
-#define HOSTCTLRTEST_CFG_MIN_CE_LEN          (1000)    
-#define HOSTCTLRTEST_CFG_MAX_CE_LEN          (HOSTCTLRTEST_CFG_CONN_ITVL * 2)
-
 /* HOSTCTLRTEST variables */
 #define HOSTCTLRTEST_STACK_SIZE              (256)
 #define HOSTCTLRTEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
