@@ -1,0 +1,5 @@
+egg.name: project/bin2img
+egg.vers: 0.1
+egg.deps:
+    - libs/bootutil
+    - libs/console/stub

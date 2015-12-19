@@ -1,0 +1,9 @@
+egg.name: project/boot
+egg.vers: 0.1
+egg.deps:
+    - libs/os
+    - libs/bootutil
+    - libs/nffs
+    - libs/console/stub
+    - libs/util
+    - libs/baselibc
