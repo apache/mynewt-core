@@ -20,7 +20,6 @@
 #include "shell/shell.h"
 #include "util/log.h"
 #include "util/stats.h"
-#include <newtmgr/newtmgr.h>
 #include <assert.h>
 #include <string.h>
 #ifdef ARCH_sim
@@ -47,10 +46,6 @@ os_stack_t stack2[TASK2_STACK_SIZE];
 #define SHELL_TASK_PRIO (3) 
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
-
-#define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
-os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct cbmem log_mem;
 struct ul_handler log_mem_handler;
@@ -186,8 +181,6 @@ main(int argc, char **argv)
 
     rc = os_msys_register(&default_mbuf_pool);
     assert(rc == 0);
-
-    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
 
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
 
