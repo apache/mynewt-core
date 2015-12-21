@@ -59,7 +59,9 @@ uint8_t g_host_adv_len;
 
 static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 //static uint8_t hostctlrtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
+#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
 static uint8_t hostctlrtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
+#endif
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (8)
@@ -331,12 +333,20 @@ hostctlrtest_task_handler(void *arg)
     ble_gap_conn_set_cb(hostctlrtest_on_connect, NULL);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
+    struct ble_gap_conn_adv_fields ad_fields;
+
     hostctlrtest_register_attrs();
-    console_printf("ble_gap_directed_connectable\n");
-    rc = ble_gap_conn_direct_connectable(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                         hostctlrtest_mst_addr);
+    console_printf("ADVERTISER\n");
+
+    ad_fields.name = "blahblah";
+    ad_fields.name_is_complete = 1;
+    rc = ble_gap_conn_set_adv_fields(&ad_fields);
+    assert(rc == 0);
+
+    rc = ble_gap_conn_advertise(BLE_GAP_DISC_MODE_NON, BLE_GAP_CONN_MODE_UND,
+                                NULL, 0);
 #else
-    console_printf("ble_gap_direct_connection_establishment\n");
+    console_printf("INITIATOR\n");
     rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
                                      hostctlrtest_slv_addr);
 #endif
