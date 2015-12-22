@@ -57,12 +57,10 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
 static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-//static uint8_t hostctlrtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
-#endif
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
 static uint8_t hostctlrtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
+//static uint8_t hostctlrtest_slv2_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
 #endif
 
 /* Create a mbuf pool of BLE mbufs */
@@ -321,8 +319,22 @@ hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
                        event->conn.peer_addr[4], event->conn.peer_addr[5]);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
-        ble_gatt_disc_all_services(event->conn.handle, hostctlrtest_on_disc_s,
-                                   NULL);
+        if (event->conn.status == 0) {
+            ble_gatt_disc_all_services(event->conn.handle,
+                                       hostctlrtest_on_disc_s, NULL);
+#if 0
+            int rc;
+            if (memcmp(event->conn.peer_addr, hostctlrtest_slv_addr) == 0) {
+                console_printf("CONNECTING TO DEVICE 2\n");
+                rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
+                                                 hostctlrtest_slv2_addr);
+                if (rc != 0) {
+                    console_printf("FAILED CONNECT; rc=%d\n", rc);
+                }
+            }
+#endif
+        }
+
         break;
 
     case BLE_GAP_CONN_EVENT_TYPE_ADV_RPT:
@@ -376,9 +388,9 @@ hostctlrtest_task_handler(void *arg)
                                 NULL, 0);
 #else
     console_printf("INITIATOR\n");
-    rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
-    //rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-    //                                 hostctlrtest_slv_addr);
+    //rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
+    rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
+                                     hostctlrtest_slv_addr);
 #endif
     assert(rc == 0);
 
