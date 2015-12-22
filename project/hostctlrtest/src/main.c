@@ -57,8 +57,10 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
+#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
 static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 //static uint8_t hostctlrtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
+#endif
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
 static uint8_t hostctlrtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 #endif
@@ -184,6 +186,20 @@ hostctlrtest_on_disc_s(uint16_t conn_handle, uint8_t ble_hs_status,
 
     return 0;
 }
+
+static void
+hostctlrtest_print_adv_rpt(struct ble_gap_conn_adv_rpt *adv)
+{
+    console_printf("Received advertisement report:\n");
+    console_printf("    addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
+                   adv->addr[0], adv->addr[1], adv->addr[2],
+                   adv->addr[3], adv->addr[4], adv->addr[5]);
+    console_printf("    flags=0x%02x\n", adv->fields.flags);
+    console_printf("    name=");
+    console_write((char *)adv->fields.name, adv->fields.name_len);
+    console_printf("%s\n");
+}
+
 #endif
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
@@ -295,17 +311,29 @@ hostctlrtest_register_attrs(void)
 static void
 hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
 {
-    console_printf("connection complete; handle=%d status=%d "
-                   "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                   event->conn.handle, event->conn.status,
-                   event->conn.peer_addr[0], event->conn.peer_addr[1],
-                   event->conn.peer_addr[2], event->conn.peer_addr[3],
-                   event->conn.peer_addr[4], event->conn.peer_addr[5]);
+    switch (event->type) {
+    case BLE_GAP_CONN_EVENT_TYPE_CONNECT:
+        console_printf("connection complete; handle=%d status=%d "
+                       "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
+                       event->conn.handle, event->conn.status,
+                       event->conn.peer_addr[0], event->conn.peer_addr[1],
+                       event->conn.peer_addr[2], event->conn.peer_addr[3],
+                       event->conn.peer_addr[4], event->conn.peer_addr[5]);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
-    ble_gatt_disc_all_services(event->conn.handle, hostctlrtest_on_disc_s,
-                               NULL);
+        ble_gatt_disc_all_services(event->conn.handle, hostctlrtest_on_disc_s,
+                                   NULL);
+        break;
+
+    case BLE_GAP_CONN_EVENT_TYPE_ADV_RPT:
+        hostctlrtest_print_adv_rpt(&event->adv);
+        break;
+
+    case BLE_GAP_CONN_EVENT_TYPE_SCAN_DONE:
+        console_printf("scan complete\n");
+        break;
 #endif
+    }
 }
 
 /**
@@ -333,22 +361,24 @@ hostctlrtest_task_handler(void *arg)
     ble_gap_conn_set_cb(hostctlrtest_on_connect, NULL);
 
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
-    struct ble_gap_conn_adv_fields ad_fields;
+    struct ble_hs_adv_fields fields;
 
     hostctlrtest_register_attrs();
     console_printf("ADVERTISER\n");
 
-    ad_fields.name = "blahblah";
-    ad_fields.name_is_complete = 1;
-    rc = ble_gap_conn_set_adv_fields(&ad_fields);
+    fields.name = (uint8_t *)"nimble";
+    fields.name_len = 6;
+    fields.name_is_complete = 1;
+    rc = ble_gap_conn_set_adv_fields(&fields);
     assert(rc == 0);
 
     rc = ble_gap_conn_advertise(BLE_GAP_DISC_MODE_NON, BLE_GAP_CONN_MODE_UND,
                                 NULL, 0);
 #else
     console_printf("INITIATOR\n");
-    rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                     hostctlrtest_slv_addr);
+    rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
+    //rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
+    //                                 hostctlrtest_slv_addr);
 #endif
     assert(rc == 0);
 
