@@ -17,7 +17,7 @@
 #define HOSTCTLRTEST_ROLE_SCANNER            (1)
 #define HOSTCTLRTEST_ROLE_ADVERTISER         (2)
 
-#define HOSTCTLRTEST_CFG_ROLE                (0)
+#define HOSTCTLRTEST_CFG_ROLE                (2)
 
 #include <assert.h>
 #include <string.h>
@@ -90,16 +90,14 @@ bletest_inc_adv_pkt_num(void) { }
 #if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
 
 static int
-hostctlrtest_on_read(uint16_t conn_handle, uint8_t ble_hs_status,
-                     uint8_t att_status, struct ble_gatt_attr *attr,
-                     void *arg)
+hostctlrtest_on_read(uint16_t conn_handle, int status,
+                     struct ble_gatt_attr *attr, void *arg)
 {
     uint8_t *u8ptr;
     int i;
 
-    if (ble_hs_status != 0) {
-        console_printf("characteristic read failure: ble_hs_status=%d "
-                       "att_status=%d\n", ble_hs_status, att_status);
+    if (status != 0) {
+        console_printf("characteristic read failure: status=%d\n", status);
         return 0;
     }
 
@@ -117,15 +115,14 @@ hostctlrtest_on_read(uint16_t conn_handle, uint8_t ble_hs_status,
 }
 
 static int
-hostctlrtest_on_disc_c(uint16_t conn_handle, uint8_t ble_hs_status,
-                       uint8_t att_status, struct ble_gatt_chr *chr,
-                       void *arg)
+hostctlrtest_on_disc_c(uint16_t conn_handle, int status,
+                       struct ble_gatt_chr *chr, void *arg)
 {
     int i;
 
-    if (ble_hs_status != 0) {
-        console_printf("characteristic discovery failure: ble_hs_status=%d "
-                       "att_status=%d\n", ble_hs_status, att_status);
+    if (status != 0) {
+        console_printf("characteristic discovery failure: status=%d\n",
+                       status);
         return 0;
     }
 
@@ -151,15 +148,13 @@ hostctlrtest_on_disc_c(uint16_t conn_handle, uint8_t ble_hs_status,
 }
 
 static int
-hostctlrtest_on_disc_s(uint16_t conn_handle, uint8_t ble_hs_status,
-                       uint8_t att_status, struct ble_gatt_service *service,
-                       void *arg)
+hostctlrtest_on_disc_s(uint16_t conn_handle, int status,
+                       struct ble_gatt_service *service, void *arg)
 {
     int i;
 
-    if (ble_hs_status != 0) {
-        console_printf("service discovery failure: ble_hs_status=%d "
-                       "att_status=%d\n", ble_hs_status, att_status);
+    if (status != 0) {
+        console_printf("service discovery failure: status=%d\n", status);
         return 0;
     }
 
