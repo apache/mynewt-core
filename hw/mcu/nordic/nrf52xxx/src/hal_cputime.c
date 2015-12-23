@@ -25,12 +25,19 @@
 /* Maximum timer frequency */
 #define NRF52_MAX_TIMER_FREQ    (16000000)
 
-/* Use these defines to select a timer and the compare channels */
+/* 
+ * Use these defines to select a timer and the compare channels. The reason
+ * channel 2 is left open for TIMER0 is that there are pre-programmed PPI
+ * channels that use timer 0 channel 2 for certain events. For example, the
+ * radio has RADIO->EVENTS_END tied to capture channel 2. This can be
+ * used to capture rx/tx end times.
+ */
+
 #define CPUTIMER                NRF_TIMER0
 #define CPUTIMER_IRQ            (TIMER0_IRQn)
 #define CPUTIMER_CC_CNTR        (0)
 #define CPUTIMER_CC_OVERFLOW    (1)
-#define CPUTIMER_CC_INT         (2)
+#define CPUTIMER_CC_INT         (3)
 
 /* Interrupt mask for interrupt enable/clear */
 #define CPUTIMER_INT_MASK(x)    ((1 << (uint32_t)(x)) << 16)

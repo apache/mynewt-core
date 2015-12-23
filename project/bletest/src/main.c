@@ -69,7 +69,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
@@ -370,11 +370,13 @@ bletest_execute(void)
                 g_next_os_time += OS_TICKS_PER_SEC / 10;
                 return;
             }
-        } else {
+        } else if (g_bletest_state == 3) {
             /* We should be waiting for disconnect */
             connsm = ble_ll_conn_find_active_conn(handle);
             if (!connsm) {
-                g_bletest_state = 0;
+                /* Set to 0 if you want to restart advertising */
+                //g_bletest_state = 0;
+                g_bletest_state = 4;
             }
         }
         g_next_os_time += OS_TICKS_PER_SEC;
