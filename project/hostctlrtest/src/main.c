@@ -204,11 +204,11 @@ static uint16_t hostctlrtest_data2_handle;
 
 static int
 hostctlrtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
-                     union ble_att_svr_handle_ctxt *ctxt, void *arg)
+                     union ble_att_svr_access_ctxt *ctxt, void *arg)
 {
     static uint8_t buf[128];
 
-    assert(op == BLE_ATT_OP_READ_REQ);
+    assert(op == BLE_ATT_ACCESS_OP_READ);
 
     if (handle_id == hostctlrtest_service_handle) {
         console_printf("reading service declaration");
