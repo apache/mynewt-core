@@ -26,7 +26,7 @@
 #include "nimble/ble.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
-#include "host/ble_hs_uuid.h"
+#include "host/ble_uuid.h"
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
@@ -128,7 +128,7 @@ prphtest_gatt_cb(uint16_t handle_id, uint8_t op,
 
     assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
 
-    uuid16 = ble_hs_uuid_16bit(ctxt->bgc_read.chr->uuid128);
+    uuid16 = ble_uuid_128_to_16(ctxt->bgc_read.chr->uuid128);
     switch (uuid16) {
     case PRPHTEST_CHR1_UUID:
         console_printf("reading characteristic1 value");
@@ -165,14 +165,14 @@ prphtest_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt)
 
     switch (op) {
     case BLE_GATT_REGISTER_OP_SVC:
-        uuid16 = ble_hs_uuid_16bit(ctxt->bgr_svc.svc->uuid128);
+        uuid16 = ble_uuid_128_to_16(ctxt->bgr_svc.svc->uuid128);
         assert(uuid16 != 0);
         console_printf("registered service 0x%04x with handle=%d\n",
                        uuid16, ctxt->bgr_svc.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
-        uuid16 = ble_hs_uuid_16bit(ctxt->bgr_chr.chr->uuid128);
+        uuid16 = ble_uuid_128_to_16(ctxt->bgr_chr.chr->uuid128);
         assert(uuid16 != 0);
         console_printf("registering characteristic 0x%04x with def_handle=%d "
                        "val_handle=%d\n",

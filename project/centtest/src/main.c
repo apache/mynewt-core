@@ -26,7 +26,7 @@
 #include "nimble/ble.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
-#include "host/ble_hs_uuid.h"
+#include "host/ble_uuid.h"
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
