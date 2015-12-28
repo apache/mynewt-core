@@ -76,66 +76,36 @@ os_stack_t prphtest_stack[PRPHTEST_STACK_SIZE];
 void
 bletest_inc_adv_pkt_num(void) { }
 
-static uint16_t prphtest_service_handle;
-static uint16_t prphtest_char1_handle;
-static uint16_t prphtest_data1_handle;
-static uint16_t prphtest_char2_handle;
-static uint16_t prphtest_data2_handle;
+static int
+prphtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
+                 union ble_att_svr_access_ctxt *ctxt, void *arg);
+
+static const struct ble_gatt_svc_def prphtest_svcs[] = { {
+    .type = BLE_GATT_SVC_TYPE_PRIMARY,
+    .uuid128 = (uint8_t[]){ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 },
+    .characteristics = (struct ble_gatt_chr_def[]) { {
+        .uuid128 = (uint8_t[]){ 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 },
+        .access_cb = prphtest_attr_cb,
+        .properties = 0,
+    }, {
+        .uuid128 = NULL, /* No more characteristics in this service. */
+    } },
+}, {
+    .type = BLE_GATT_SVC_TYPE_END, /* No more services. */
+}, };
 
 static int
 prphtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
-                     union ble_att_svr_access_ctxt *ctxt, void *arg)
+                 union ble_att_svr_access_ctxt *ctxt, void *arg)
 {
     static uint8_t buf[128];
 
     assert(op == BLE_ATT_ACCESS_OP_READ);
 
-    if (handle_id == prphtest_service_handle) {
-        console_printf("reading service declaration");
-        htole16(buf, 0x1234);
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 2;
-    } else if (handle_id == prphtest_char1_handle) {
-        console_printf("reading characteristic1 declaration");
-
-        /* Properties. */
-        buf[0] = 0;
-
-        /* Value handle. */
-        htole16(buf + 1, prphtest_data1_handle);
-
-        /* UUID. */
-        htole16(buf + 3, 0x5656);
-
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else if (handle_id == prphtest_data1_handle) {
-        console_printf("reading characteristic1 value");
-        memcpy(buf, "char1", 5);
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else if (handle_id == prphtest_char2_handle) {
-        console_printf("reading characteristic2 declaration");
-
-        /* Properties. */
-        buf[0] = 0;
-
-        /* Value handle. */
-        htole16(buf + 1, prphtest_data2_handle);
-
-        /* UUID. */
-        htole16(buf + 3, 0x6767);
-
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else if (handle_id == prphtest_data2_handle) {
-        console_printf("reading characteristic2 value");
-        memcpy(buf, "char2", 5);
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else {
-        assert(0);
-    }
+    console_printf("reading characteristic1 value");
+    memcpy(buf, "char1", 5);
+    ctxt->ahc_read.attr_data = buf;
+    ctxt->ahc_read.attr_len = 5;
 
     return 0;
 }
@@ -143,40 +113,9 @@ prphtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
 static void
 prphtest_register_attrs(void)
 {
-    uint8_t uuid128[16];
     int rc;
 
-    /* Service. */
-    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_PRIMARY_SERVICE, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &prphtest_service_handle,
-                              prphtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    /* Characteristic 1 (UUID=0x5656).*/
-    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &prphtest_char1_handle,
-                              prphtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    rc = ble_hs_uuid_from_16bit(0x5656, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &prphtest_data1_handle,
-                              prphtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    /* Characteristic 2 (UUID=0x6767).*/
-    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &prphtest_char2_handle,
-                              prphtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    rc = ble_hs_uuid_from_16bit(0x6767, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &prphtest_data2_handle,
-                              prphtest_attr_cb, NULL);
+    rc = ble_gatt_register_services(prphtest_svcs);
     assert(rc == 0);
 }
 
