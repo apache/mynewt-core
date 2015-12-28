@@ -107,6 +107,7 @@ static int
 centtest_on_disc_c(uint16_t conn_handle, int status,
                        struct ble_gatt_chr *chr, void *arg)
 {
+    int rc;
     int i;
 
     if (status != 0) {
@@ -131,7 +132,8 @@ centtest_on_disc_c(uint16_t conn_handle, int status,
     }
     console_printf("\n");
 
-    ble_gatt_read(conn_handle, chr->value_handle, centtest_on_read, NULL);
+    rc = ble_gatt_read(conn_handle, chr->value_handle, centtest_on_read, NULL);
+    assert(rc == 0);
 
     return 0;
 }
@@ -148,7 +150,7 @@ centtest_on_disc_s(uint16_t conn_handle, int status,
     }
 
     if (service == NULL) {
-        console_printf("service discovery complete.");
+        console_printf("service discovery complete.\n");
         return 0;
     }
 

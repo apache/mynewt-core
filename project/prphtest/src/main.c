@@ -77,15 +77,40 @@ void
 bletest_inc_adv_pkt_num(void) { }
 
 static int
-prphtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
-                 union ble_att_svr_access_ctxt *ctxt, void *arg);
+prphtest_gatt_cb(uint16_t handle_id, uint8_t op,
+                 union ble_gatt_access_ctxt *ctxt, void *arg);
+
+#define PRPHTEST_SVC1_UUID      0x1234
+#define PRPHTEST_SVC2_UUID      0x5678
+#define PRPHTEST_CHR1_UUID      0x1111
+#define PRPHTEST_CHR2_UUID      0x1112
+#define PRPHTEST_CHR3_UUID      0x5555
 
 static const struct ble_gatt_svc_def prphtest_svcs[] = { {
+    /*** Service 0x1234. */
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid128 = (uint8_t[]){ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 },
+    .uuid128 = BLE_UUID16(PRPHTEST_SVC1_UUID),
     .characteristics = (struct ble_gatt_chr_def[]) { {
-        .uuid128 = (uint8_t[]){ 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 },
-        .access_cb = prphtest_attr_cb,
+        /*** Characteristic 0x1111. */
+        .uuid128 = BLE_UUID16(PRPHTEST_CHR1_UUID),
+        .access_cb = prphtest_gatt_cb,
+        .properties = 0,
+    }, {
+        /*** Characteristic 0x1112. */
+        .uuid128 = BLE_UUID16(PRPHTEST_CHR2_UUID),
+        .access_cb = prphtest_gatt_cb,
+        .properties = 0,
+    }, {
+        .uuid128 = NULL, /* No more characteristics in this service. */
+    } },
+}, {
+    /*** Service 0x5678. */
+    .type = BLE_GATT_SVC_TYPE_PRIMARY,
+    .uuid128 = BLE_UUID16(PRPHTEST_SVC2_UUID),
+    .characteristics = (struct ble_gatt_chr_def[]) { {
+        /*** Characteristic 0x5555. */
+        .uuid128 = BLE_UUID16(PRPHTEST_CHR3_UUID),
+        .access_cb = prphtest_gatt_cb,
         .properties = 0,
     }, {
         .uuid128 = NULL, /* No more characteristics in this service. */
@@ -95,19 +120,70 @@ static const struct ble_gatt_svc_def prphtest_svcs[] = { {
 }, };
 
 static int
-prphtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
-                 union ble_att_svr_access_ctxt *ctxt, void *arg)
+prphtest_gatt_cb(uint16_t handle_id, uint8_t op,
+                 union ble_gatt_access_ctxt *ctxt, void *arg)
 {
     static uint8_t buf[128];
+    uint16_t uuid16;
 
-    assert(op == BLE_ATT_ACCESS_OP_READ);
+    assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
 
-    console_printf("reading characteristic1 value");
-    memcpy(buf, "char1", 5);
-    ctxt->ahc_read.attr_data = buf;
-    ctxt->ahc_read.attr_len = 5;
+    uuid16 = ble_hs_uuid_16bit(ctxt->bgc_read.chr->uuid128);
+    switch (uuid16) {
+    case PRPHTEST_CHR1_UUID:
+        console_printf("reading characteristic1 value");
+        memcpy(buf, "char1", 5);
+        ctxt->bgc_read.chr_len = 5;
+        break;
+
+    case PRPHTEST_CHR2_UUID:
+        console_printf("reading characteristic2 value");
+        memcpy(buf, "char2", 5);
+        ctxt->bgc_read.chr_len = 5;
+        break;
+
+    case PRPHTEST_CHR3_UUID:
+        console_printf("reading characteristic3 value");
+        memcpy(buf, "char3", 5);
+        ctxt->bgc_read.chr_len = 5;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+
+    ctxt->bgc_read.chr_data = buf;
 
     return 0;
+}
+
+static void
+prphtest_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt)
+{
+    uint16_t uuid16;
+
+    switch (op) {
+    case BLE_GATT_REGISTER_OP_SVC:
+        uuid16 = ble_hs_uuid_16bit(ctxt->bgr_svc.svc->uuid128);
+        assert(uuid16 != 0);
+        console_printf("registered service 0x%04x with handle=%d\n",
+                       uuid16, ctxt->bgr_svc.handle);
+        break;
+
+    case BLE_GATT_REGISTER_OP_CHR:
+        uuid16 = ble_hs_uuid_16bit(ctxt->bgr_chr.chr->uuid128);
+        assert(uuid16 != 0);
+        console_printf("registering characteristic 0x%04x with def_handle=%d "
+                       "val_handle=%d\n",
+                       uuid16, ctxt->bgr_chr.def_handle,
+                       ctxt->bgr_chr.val_handle);
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
 }
 
 static void
@@ -115,7 +191,7 @@ prphtest_register_attrs(void)
 {
     int rc;
 
-    rc = ble_gatt_register_services(prphtest_svcs);
+    rc = ble_gatt_register_services(prphtest_svcs, prphtest_register_cb);
     assert(rc == 0);
 }
 
