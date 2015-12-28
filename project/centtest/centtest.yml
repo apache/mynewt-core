@@ -1,4 +1,4 @@
-project.name: hostctlrtest
+project.name: centtest
 project.eggs: 
     - libs/os 
     - net/nimble/controller

@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define HOSTCTLRTEST_ROLE_INITIATOR          (0)
-#define HOSTCTLRTEST_ROLE_SCANNER            (1)
-#define HOSTCTLRTEST_ROLE_ADVERTISER         (2)
-
-#define HOSTCTLRTEST_CFG_ROLE                (2)
-
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -57,11 +51,8 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
-static uint8_t hostctlrtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
-static uint8_t hostctlrtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
-//static uint8_t hostctlrtest_slv2_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
-#endif
+static uint8_t centtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+static uint8_t centtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (8)
@@ -74,23 +65,21 @@ struct os_mbuf_pool g_mbuf_pool;
 struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
-/* HOSTCTLRTEST variables */
-#define HOSTCTLRTEST_STACK_SIZE              (256)
-#define HOSTCTLRTEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
+/* CENTTEST variables */
+#define CENTTEST_STACK_SIZE              (256)
+#define CENTTEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
 uint32_t g_next_os_time;
-int g_hostctlrtest_state;
-struct os_eventq g_hostctlrtest_evq;
-struct os_task hostctlrtest_task;
-os_stack_t hostctlrtest_stack[HOSTCTLRTEST_STACK_SIZE];
+int g_centtest_state;
+struct os_eventq g_centtest_evq;
+struct os_task centtest_task;
+os_stack_t centtest_stack[CENTTEST_STACK_SIZE];
 
 void
 bletest_inc_adv_pkt_num(void) { }
 
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
-
 static int
-hostctlrtest_on_read(uint16_t conn_handle, int status,
+centtest_on_read(uint16_t conn_handle, int status,
                      struct ble_gatt_attr *attr, void *arg)
 {
     uint8_t *u8ptr;
@@ -115,7 +104,7 @@ hostctlrtest_on_read(uint16_t conn_handle, int status,
 }
 
 static int
-hostctlrtest_on_disc_c(uint16_t conn_handle, int status,
+centtest_on_disc_c(uint16_t conn_handle, int status,
                        struct ble_gatt_chr *chr, void *arg)
 {
     int i;
@@ -142,13 +131,13 @@ hostctlrtest_on_disc_c(uint16_t conn_handle, int status,
     }
     console_printf("\n");
 
-    ble_gatt_read(conn_handle, chr->value_handle, hostctlrtest_on_read, NULL);
+    ble_gatt_read(conn_handle, chr->value_handle, centtest_on_read, NULL);
 
     return 0;
 }
 
 static int
-hostctlrtest_on_disc_s(uint16_t conn_handle, int status,
+centtest_on_disc_s(uint16_t conn_handle, int status,
                        struct ble_gatt_service *service, void *arg)
 {
     int i;
@@ -174,14 +163,14 @@ hostctlrtest_on_disc_s(uint16_t conn_handle, int status,
     console_printf("\n");
 
     ble_gatt_disc_all_chars(conn_handle, service->start_handle,
-                            service->end_handle, hostctlrtest_on_disc_c,
+                            service->end_handle, centtest_on_disc_c,
                             NULL);
 
     return 0;
 }
 
 static void
-hostctlrtest_print_adv_rpt(struct ble_gap_conn_adv_rpt *adv)
+centtest_print_adv_rpt(struct ble_gap_conn_adv_rpt *adv)
 {
     console_printf("Received advertisement report:\n");
     console_printf("    addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -193,116 +182,8 @@ hostctlrtest_print_adv_rpt(struct ble_gap_conn_adv_rpt *adv)
     console_printf("%s\n");
 }
 
-#endif
-
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
-static uint16_t hostctlrtest_service_handle;
-static uint16_t hostctlrtest_char1_handle;
-static uint16_t hostctlrtest_data1_handle;
-static uint16_t hostctlrtest_char2_handle;
-static uint16_t hostctlrtest_data2_handle;
-
-static int
-hostctlrtest_attr_cb(uint16_t handle_id, uint8_t *uuid128, uint8_t op,
-                     union ble_att_svr_access_ctxt *ctxt, void *arg)
-{
-    static uint8_t buf[128];
-
-    assert(op == BLE_ATT_ACCESS_OP_READ);
-
-    if (handle_id == hostctlrtest_service_handle) {
-        console_printf("reading service declaration");
-        htole16(buf, 0x1234);
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 2;
-    } else if (handle_id == hostctlrtest_char1_handle) {
-        console_printf("reading characteristic1 declaration");
-
-        /* Properties. */
-        buf[0] = 0;
-
-        /* Value handle. */
-        htole16(buf + 1, hostctlrtest_data1_handle);
-
-        /* UUID. */
-        htole16(buf + 3, 0x5656);
-
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else if (handle_id == hostctlrtest_data1_handle) {
-        console_printf("reading characteristic1 value");
-        memcpy(buf, "char1", 5);
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else if (handle_id == hostctlrtest_char2_handle) {
-        console_printf("reading characteristic2 declaration");
-
-        /* Properties. */
-        buf[0] = 0;
-
-        /* Value handle. */
-        htole16(buf + 1, hostctlrtest_data2_handle);
-
-        /* UUID. */
-        htole16(buf + 3, 0x6767);
-
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else if (handle_id == hostctlrtest_data2_handle) {
-        console_printf("reading characteristic2 value");
-        memcpy(buf, "char2", 5);
-        ctxt->ahc_read.attr_data = buf;
-        ctxt->ahc_read.attr_len = 5;
-    } else {
-        assert(0);
-    }
-
-    return 0;
-}
-
 static void
-hostctlrtest_register_attrs(void)
-{
-    uint8_t uuid128[16];
-    int rc;
-
-    /* Service. */
-    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_PRIMARY_SERVICE, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_service_handle,
-                              hostctlrtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    /* Characteristic 1 (UUID=0x5656).*/
-    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_char1_handle,
-                              hostctlrtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    rc = ble_hs_uuid_from_16bit(0x5656, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_data1_handle,
-                              hostctlrtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    /* Characteristic 2 (UUID=0x6767).*/
-    rc = ble_hs_uuid_from_16bit(BLE_ATT_UUID_CHARACTERISTIC, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_char2_handle,
-                              hostctlrtest_attr_cb, NULL);
-    assert(rc == 0);
-
-    rc = ble_hs_uuid_from_16bit(0x6767, uuid128);
-    assert(rc == 0);
-    rc = ble_att_svr_register(uuid128, 0, &hostctlrtest_data2_handle,
-                              hostctlrtest_attr_cb, NULL);
-    assert(rc == 0);
-}
-#endif
-
-static void
-hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
+centtest_on_connect(struct ble_gap_conn_event *event, void *arg)
 {
     switch (event->type) {
     case BLE_GAP_CONN_EVENT_TYPE_CONNECT:
@@ -313,33 +194,20 @@ hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
                        event->conn.peer_addr[2], event->conn.peer_addr[3],
                        event->conn.peer_addr[4], event->conn.peer_addr[5]);
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_INITIATOR
         if (event->conn.status == 0) {
             ble_gatt_disc_all_services(event->conn.handle,
-                                       hostctlrtest_on_disc_s, NULL);
-#if 0
-            int rc;
-            if (memcmp(event->conn.peer_addr, hostctlrtest_slv_addr) == 0) {
-                console_printf("CONNECTING TO DEVICE 2\n");
-                rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                                 hostctlrtest_slv2_addr);
-                if (rc != 0) {
-                    console_printf("FAILED CONNECT; rc=%d\n", rc);
-                }
-            }
-#endif
+                                       centtest_on_disc_s, NULL);
         }
 
         break;
 
     case BLE_GAP_CONN_EVENT_TYPE_ADV_RPT:
-        hostctlrtest_print_adv_rpt(&event->adv);
+        centtest_print_adv_rpt(&event->adv);
         break;
 
     case BLE_GAP_CONN_EVENT_TYPE_SCAN_DONE:
         console_printf("scan complete\n");
         break;
-#endif
     }
 }
 
@@ -349,7 +217,7 @@ hostctlrtest_on_connect(struct ble_gap_conn_event *event, void *arg)
  * @param arg 
  */
 void
-hostctlrtest_task_handler(void *arg)
+centtest_task_handler(void *arg)
 {
     struct os_event *ev;
     struct os_callout_func *cf;
@@ -359,38 +227,22 @@ hostctlrtest_task_handler(void *arg)
     console_printf("Starting BLE test task\n");
 
     /* Initialize eventq */
-    os_eventq_init(&g_hostctlrtest_evq);
+    os_eventq_init(&g_centtest_evq);
 
-    /* Init hostctlrtest variables */
-    g_hostctlrtest_state = 0;
+    /* Init centtest variables */
+    g_centtest_state = 0;
     g_next_os_time = os_time_get();
     
-    ble_gap_conn_set_cb(hostctlrtest_on_connect, NULL);
+    ble_gap_conn_set_cb(centtest_on_connect, NULL);
 
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
-    struct ble_hs_adv_fields fields;
-
-    hostctlrtest_register_attrs();
-    console_printf("ADVERTISER\n");
-
-    fields.name = (uint8_t *)"nimble";
-    fields.name_len = 6;
-    fields.name_is_complete = 1;
-    rc = ble_gap_conn_set_adv_fields(&fields);
-    assert(rc == 0);
-
-    rc = ble_gap_conn_advertise(BLE_GAP_DISC_MODE_NON, BLE_GAP_CONN_MODE_UND,
-                                NULL, 0);
-#else
     console_printf("INITIATOR\n");
     //rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
     rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                     hostctlrtest_slv_addr);
-#endif
+                                     centtest_slv_addr);
     assert(rc == 0);
 
     while (1) {
-        ev = os_eventq_get(&g_hostctlrtest_evq);
+        ev = os_eventq_get(&g_centtest_evq);
         switch (ev->ev_type) {
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
@@ -417,9 +269,9 @@ init_tasks(void)
 {
     int rc;
 
-    os_task_init(&hostctlrtest_task, "hostctlrtest", hostctlrtest_task_handler,
-                 NULL, HOSTCTLRTEST_TASK_PRIO, OS_WAIT_FOREVER,
-                 hostctlrtest_stack, HOSTCTLRTEST_STACK_SIZE);
+    os_task_init(&centtest_task, "centtest", centtest_task_handler,
+                 NULL, CENTTEST_TASK_PRIO, OS_WAIT_FOREVER,
+                 centtest_stack, CENTTEST_STACK_SIZE);
 
     tasks_initialized = 1;
 
@@ -464,11 +316,7 @@ main(void)
     assert(rc == 0);
 
     /* Dummy device address */
-#if HOSTCTLRTEST_CFG_ROLE == HOSTCTLRTEST_ROLE_ADVERTISER
-    memcpy(g_dev_addr, hostctlrtest_slv_addr, 6);
-#else
-    memcpy(g_dev_addr, hostctlrtest_mst_addr, 6);
-#endif
+    memcpy(g_dev_addr, centtest_mst_addr, 6);
 
     /* 
      * Seed random number generator with least significant bytes of device

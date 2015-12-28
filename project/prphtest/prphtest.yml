@@ -1,0 +1,7 @@
+project.name: prphtest
+project.eggs: 
+    - libs/os 
+    - net/nimble/controller
+    - net/nimble/host
+    - libs/console/full
+    - libs/baselibc
