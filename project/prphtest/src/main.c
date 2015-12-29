@@ -128,24 +128,24 @@ prphtest_gatt_cb(uint16_t handle_id, uint8_t op,
 
     assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
 
-    uuid16 = ble_uuid_128_to_16(ctxt->bgc_read.chr->uuid128);
+    uuid16 = ble_uuid_128_to_16(ctxt->chr_access.chr->uuid128);
     switch (uuid16) {
     case PRPHTEST_CHR1_UUID:
         console_printf("reading characteristic1 value");
         memcpy(buf, "char1", 5);
-        ctxt->bgc_read.chr_len = 5;
+        ctxt->chr_access.len = 5;
         break;
 
     case PRPHTEST_CHR2_UUID:
         console_printf("reading characteristic2 value");
         memcpy(buf, "char2", 5);
-        ctxt->bgc_read.chr_len = 5;
+        ctxt->chr_access.len = 5;
         break;
 
     case PRPHTEST_CHR3_UUID:
         console_printf("reading characteristic3 value");
         memcpy(buf, "char3", 5);
-        ctxt->bgc_read.chr_len = 5;
+        ctxt->chr_access.len = 5;
         break;
 
     default:
@@ -153,31 +153,31 @@ prphtest_gatt_cb(uint16_t handle_id, uint8_t op,
         break;
     }
 
-    ctxt->bgc_read.chr_data = buf;
+    ctxt->chr_access.data = buf;
 
     return 0;
 }
 
 static void
-prphtest_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt)
+prphtest_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
 {
     uint16_t uuid16;
 
     switch (op) {
     case BLE_GATT_REGISTER_OP_SVC:
-        uuid16 = ble_uuid_128_to_16(ctxt->bgr_svc.svc->uuid128);
+        uuid16 = ble_uuid_128_to_16(ctxt->svc_reg.svc->uuid128);
         assert(uuid16 != 0);
         console_printf("registered service 0x%04x with handle=%d\n",
-                       uuid16, ctxt->bgr_svc.handle);
+                       uuid16, ctxt->svc_reg.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
-        uuid16 = ble_uuid_128_to_16(ctxt->bgr_chr.chr->uuid128);
+        uuid16 = ble_uuid_128_to_16(ctxt->chr_reg.chr->uuid128);
         assert(uuid16 != 0);
         console_printf("registering characteristic 0x%04x with def_handle=%d "
                        "val_handle=%d\n",
-                       uuid16, ctxt->bgr_chr.def_handle,
-                       ctxt->bgr_chr.val_handle);
+                       uuid16, ctxt->chr_reg.def_handle,
+                       ctxt->chr_reg.val_handle);
         break;
 
     default:
@@ -191,7 +191,7 @@ prphtest_register_attrs(void)
 {
     int rc;
 
-    rc = ble_gatt_register_services(prphtest_svcs, prphtest_register_cb);
+    rc = ble_gatt_register_services(prphtest_svcs, prphtest_register_cb, NULL);
     assert(rc == 0);
 }
 
