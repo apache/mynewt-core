@@ -226,7 +226,7 @@ centtest_task_handler(void *arg)
     int rc;
 
     /* We are initialized */
-    console_printf("Starting BLE test task\n");
+    console_printf("INITIATOR\n");
 
     /* Initialize eventq */
     os_eventq_init(&g_centtest_evq);
@@ -237,7 +237,6 @@ centtest_task_handler(void *arg)
     
     ble_gap_conn_set_cb(centtest_on_connect, NULL);
 
-    console_printf("INITIATOR\n");
     //rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
     rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
                                      centtest_slv_addr);

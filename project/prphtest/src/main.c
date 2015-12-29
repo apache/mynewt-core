@@ -222,12 +222,13 @@ prphtest_on_connect(struct ble_gap_conn_event *event, void *arg)
 void
 prphtest_task_handler(void *arg)
 {
-    struct os_event *ev;
+    struct ble_hs_adv_fields fields;
     struct os_callout_func *cf;
+    struct os_event *ev;
     int rc;
 
     /* We are initialized */
-    console_printf("Starting BLE test task\n");
+    console_printf("ADVERTISER\n");
 
     /* Initialize eventq */
     os_eventq_init(&g_prphtest_evq);
@@ -238,10 +239,7 @@ prphtest_task_handler(void *arg)
     
     ble_gap_conn_set_cb(prphtest_on_connect, NULL);
 
-    struct ble_hs_adv_fields fields;
-
     prphtest_register_attrs();
-    console_printf("ADVERTISER\n");
 
     fields.name = (uint8_t *)"nimble";
     fields.name_len = 6;
