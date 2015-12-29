@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#include "os/os.h"
 #include "os/os_test.h"
 #include "testutil_priv.h"
 
 void
 tu_arch_restart(void)
 {
+    g_os_started = 0;
     tu_case_abort();
 }
