@@ -94,12 +94,12 @@ static const struct ble_gatt_svc_def prphtest_svcs[] = { {
         /*** Characteristic 0x1111. */
         .uuid128 = BLE_UUID16(PRPHTEST_CHR1_UUID),
         .access_cb = prphtest_gatt_cb,
-        .properties = 0,
+        .flags = 0,
     }, {
         /*** Characteristic 0x1112. */
         .uuid128 = BLE_UUID16(PRPHTEST_CHR2_UUID),
         .access_cb = prphtest_gatt_cb,
-        .properties = 0,
+        .flags = 0,
     }, {
         .uuid128 = NULL, /* No more characteristics in this service. */
     } },
@@ -111,7 +111,7 @@ static const struct ble_gatt_svc_def prphtest_svcs[] = { {
         /*** Characteristic 0x5555. */
         .uuid128 = BLE_UUID16(PRPHTEST_CHR3_UUID),
         .access_cb = prphtest_gatt_cb,
-        .properties = 0,
+        .flags = 0,
     }, {
         .uuid128 = NULL, /* No more characteristics in this service. */
     } },
