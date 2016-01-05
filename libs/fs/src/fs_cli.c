@@ -16,6 +16,7 @@
 
 #ifdef SHELL_PRESENT
 
+#include <inttypes.h>
 #include <string.h>
 
 #include <shell/shell.h>
@@ -32,7 +33,7 @@ fs_ls_file(const char *name, struct fs_file *file)
 
     len = 0;
     fs_filelen(file, &len);
-    console_printf("\t%6d %s\n", len, name);
+    console_printf("\t%6lu %s\n", (unsigned long)len, name);
 }
 
 static void

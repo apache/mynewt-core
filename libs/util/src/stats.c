@@ -81,7 +81,7 @@ shell_stats_display_entry(struct stats_hdr *hdr, uint8_t *ptr)
             console_printf("%s: %u\n", name, *(uint16_t *) ptr);
             break;
         case sizeof(uint32_t):
-            console_printf("%s: %u\n", name, *(uint32_t *) ptr);
+            console_printf("%s: %lu\n", name, *(unsigned long *) ptr);
             break;
         case sizeof(uint64_t):
             console_printf("%s: %llu\n", name, *(uint64_t *) ptr);

@@ -94,12 +94,12 @@ shell_os_tasks_display(int argc, char **argv)
             }
         }
 
-        console_printf("  %s (prio: %u, nw: %u, flags: 0x%x, "
-                "ssize: %u, cswcnt: %lu, tot_run_time: %ums)\n", 
-                info[i].oti_name, 
-                info[i].oti_prio, info[i].oti_next_wakeup, info[i].oti_flags, 
-                info[i].oti_stack_size,
-                info[i].oti_csw_cnt, info[i].oti_run_time);
+        console_printf("  %s (prio: %u, nw: %lu, flags: 0x%x, "
+                "ssize: %u, cswcnt: %lu, tot_run_time: %lums)\n",
+                info[i].oti_name, info[i].oti_prio,
+                (unsigned long)info[i].oti_next_wakeup, info[i].oti_flags,
+                info[i].oti_stack_size, (unsigned long)info[i].oti_csw_cnt,
+                (unsigned long)info[i].oti_run_time);
 
     }
 

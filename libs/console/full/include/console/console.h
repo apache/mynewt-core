@@ -25,7 +25,8 @@ void console_write(const char *str, int cnt);
 int console_read(char *str, int cnt);
 void console_blocking_mode(void);
 
-void console_printf(const char *fmt, ...);
+void console_printf(const char *fmt, ...)
+    __attribute__ ((format (printf, 1, 2)));;
 int console_vprintf(const char *fmt, va_list args);
 
 #endif /* __CONSOLE_H__ */

@@ -64,7 +64,7 @@ shell_log_dump_entry(struct util_log *log, void *arg, void *dptr, uint16_t len)
      * values, and this causes memory to be overwritten.  Cast to a 
      * unsigned 32-bit value for now.
      */
-    console_printf("[%d] %s\n", (uint32_t) ueh.ue_ts, data);
+    console_printf("[%lu] %s\n", (unsigned long) ueh.ue_ts, data);
 
     return (0);
 err:

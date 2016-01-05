@@ -42,6 +42,9 @@ console_write(const char *str, int cnt)
 {
 }
 
+static void inline console_printf(const char *fmt, ...)
+    __attribute__ ((format (printf, 1, 2)));
+
 static void inline
 console_printf(const char *fmt, ...)
 {
