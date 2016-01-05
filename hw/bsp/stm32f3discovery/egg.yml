@@ -6,3 +6,4 @@ egg.debugscript: "stm32f3discovery_debug.sh"
 egg.cflags: -DSTM32F303xC
 egg.deps: 
     - hw/mcu/stm/stm32f3xx
+    - libs/util
