@@ -20,6 +20,7 @@
 #include "shell/shell.h"
 #include "util/log.h"
 #include "util/stats.h"
+#include "util/config.h"
 #include <assert.h>
 #include <string.h>
 #ifdef ARCH_sim
@@ -156,6 +157,8 @@ main(int argc, char **argv)
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
 #endif
+
+    conf_module_init();
 
     cbmem_init(&log_mem, log_buf, sizeof(log_buf));
     util_log_cbmem_handler_init(&log_mem_handler, &log_mem);
