@@ -181,7 +181,7 @@ centtest_print_adv_rpt(struct ble_gap_conn_adv_rpt *adv)
     console_printf("    flags=0x%02x\n", adv->fields.flags);
     console_printf("    name=");
     console_write((char *)adv->fields.name, adv->fields.name_len);
-    console_printf("%s\n");
+    console_printf("\n");
 }
 
 static void

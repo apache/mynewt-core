@@ -241,6 +241,7 @@ prphtest_task_handler(void *arg)
 
     prphtest_register_attrs();
 
+    memset(&fields, 0, sizeof fields);
     fields.name = (uint8_t *)"nimble";
     fields.name_len = 6;
     fields.name_is_complete = 1;
