@@ -17,10 +17,14 @@
 #ifndef _NEWTMGR_H_
 #define _NEWTMGR_H_
 
+#include <inttypes.h>
+#include <os/os.h>
+
 /* First 64 groups are reserved for system level newtmgr commands.
  * Per-user commands are then defined after group 64.
  */
 #define NMGR_GROUP_ID_DEFAULT (0)
+#define NMGR_GROUP_ID_IMAGE   (1)
 #define NMGR_GROUP_ID_PERUSER (64)
 
 #define NMGR_OP_READ (0)
@@ -29,7 +33,7 @@
 #define NMGR_OP_WRITE_RSP (3) 
 
 struct nmgr_hdr {
-    uint8_t nh_op; 
+    uint8_t nh_op;
     uint8_t nh_flags;
     uint16_t nh_len;
     uint16_t nh_group;
@@ -71,5 +75,6 @@ struct nmgr_transport {
 
 int nmgr_task_init(uint8_t, os_stack_t *, uint16_t);
 int nmgr_rsp_extend(struct nmgr_hdr *, struct os_mbuf *, void *data, uint16_t);
+int nmgr_group_register(struct nmgr_group *group);
 
 #endif /* _NETMGR_H */

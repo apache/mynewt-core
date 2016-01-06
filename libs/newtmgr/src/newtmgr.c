@@ -106,7 +106,7 @@ err:
 }
 
 
-int 
+int
 nmgr_group_register(struct nmgr_group *group)
 {
     int rc;
@@ -181,7 +181,7 @@ err:
 }
 
 int
-nmgr_rsp_extend(struct nmgr_hdr *hdr, struct os_mbuf *rsp, void *data, 
+nmgr_rsp_extend(struct nmgr_hdr *hdr, struct os_mbuf *rsp, void *data,
         uint16_t len)
 {
     int rc;
@@ -250,7 +250,6 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         rsp_hdr->nh_group = hdr.nh_group;
         rsp_hdr->nh_id = hdr.nh_id;
 
-
         if (hdr.nh_op == NMGR_OP_READ) {
             rc = handler->nh_read(&hdr, req, off, rsp_hdr, rsp);
         } else if (hdr.nh_op == NMGR_OP_WRITE) {
@@ -271,6 +270,7 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 
     return (0);
 err:
+    os_mbuf_free_chain(rsp);
     return (rc);
 }
 
@@ -287,7 +287,8 @@ nmgr_process(struct nmgr_transport *nt)
         }
 
         nmgr_handle_req(nt, m);
-    } 
+        os_mbuf_free_chain(m);
+    }
 }
 
 void
@@ -340,7 +341,7 @@ err:
     return (rc);
 }
 
-int 
+static int
 nmgr_shell_in(struct os_mbuf *m, void *arg)
 {
     struct nmgr_transport *nt;
