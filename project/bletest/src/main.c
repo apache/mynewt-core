@@ -92,6 +92,7 @@ struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
 os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
+#define BLETEST_PKT_SIZE                (128)
 
 void
 bletest_inc_adv_pkt_num(void)
@@ -343,10 +344,9 @@ bletest_execute(void)
             } else {
                 om = bletest_get_packet();
                 if (om) {
-
                     /* set payload length */
-                    pktlen = 32;
-                    om->om_len = 32 + 4;
+                    pktlen = BLETEST_PKT_SIZE;
+                    om->om_len = BLETEST_PKT_SIZE + 4;
 
                     /* Put the HCI header in the mbuf */
                     htole16(om->om_data, handle);
@@ -357,7 +357,7 @@ bletest_execute(void)
                     om->om_data[6] = 0;
                     om->om_data[7] = 0;
 
-                    /* Fill with incrementing pattern */
+                    /* Fill with incrementing pattern (starting from 1) */
                     for (i = 0; i < pktlen; ++i) {
                         om->om_data[8 + i] = (uint8_t)(i + 1);
                     }
