@@ -191,7 +191,7 @@ prphtest_register_attrs(void)
 {
     int rc;
 
-    rc = ble_gatt_register_services(prphtest_svcs, prphtest_register_cb, NULL);
+    rc = ble_gatts_register_svcs(prphtest_svcs, prphtest_register_cb, NULL);
     assert(rc == 0);
 }
 

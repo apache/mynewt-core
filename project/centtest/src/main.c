@@ -132,7 +132,8 @@ centtest_on_disc_c(uint16_t conn_handle, int status,
     }
     console_printf("\n");
 
-    rc = ble_gatt_read(conn_handle, chr->value_handle, centtest_on_read, NULL);
+    rc = ble_gattc_read(conn_handle, chr->value_handle, centtest_on_read,
+                        NULL);
     assert(rc == 0);
 
     return 0;
@@ -164,7 +165,7 @@ centtest_on_disc_s(uint16_t conn_handle, int status,
     }
     console_printf("\n");
 
-    ble_gatt_disc_all_chars(conn_handle, service->start_handle,
+    ble_gattc_disc_all_chrs(conn_handle, service->start_handle,
                             service->end_handle, centtest_on_disc_c,
                             NULL);
 
@@ -197,8 +198,8 @@ centtest_on_connect(struct ble_gap_conn_event *event, void *arg)
                        event->conn.peer_addr[4], event->conn.peer_addr[5]);
 
         if (event->conn.status == 0) {
-            ble_gatt_disc_all_services(event->conn.handle,
-                                       centtest_on_disc_s, NULL);
+            ble_gattc_disc_all_svcs(event->conn.handle,
+                                    centtest_on_disc_s, NULL);
         }
 
         break;
