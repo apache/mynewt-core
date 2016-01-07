@@ -94,23 +94,37 @@ console_blocking_tx(char ch)
     hal_uart_blocking_tx(CONSOLE_UART, ch);
 }
 
+/*
+ * Flush cnt characters from console output queue.
+ */
+static void
+console_tx_flush(struct console_tty *ct, int cnt)
+{
+    int i;
+    uint8_t byte;
+
+    for (i = 0; i < cnt; i++) {
+        if (ct->ct_tx.cr_head == ct->ct_tx.cr_tail) {
+            /*
+             * Queue is empty.
+             */
+            break;
+        }
+        byte = console_pull_char(&ct->ct_tx);
+        console_blocking_tx(byte);
+    }
+}
+
 void
 console_blocking_mode(void)
 {
     struct console_tty *ct = &console_tty;
     int sr;
-    uint8_t byte;
 
     OS_ENTER_CRITICAL(sr);
     ct->ct_write_char = console_blocking_tx;
 
-    /*
-     * Flush console output queue.
-     */
-    while (ct->ct_tx.cr_head != ct->ct_tx.cr_tail) {
-        byte = console_pull_char(&ct->ct_tx);
-        console_blocking_tx(byte);
-    }
+    console_tx_flush(ct, CONSOLE_TX_BUF_SZ);
     OS_EXIT_CRITICAL(sr);
 }
 
@@ -178,13 +192,23 @@ console_tx_char(void *arg)
 }
 
 static int
+console_buf_space(struct console_ring *cr)
+{
+    int space;
+
+    space = (cr->cr_tail - cr->cr_head) & (cr->cr_size - 1);
+    return space - 1;
+}
+
+static int
 console_rx_char(void *arg, uint8_t data)
 {
     struct console_tty *ct = (struct console_tty *)arg;
     struct console_ring *tx = &ct->ct_tx;
     struct console_ring *rx = &ct->ct_rx;
+    int tx_space;
 
-    if (CONSOLE_HEAD_INC(&ct->ct_tx) == ct->ct_tx.cr_tail) {
+    if (CONSOLE_HEAD_INC(&ct->ct_rx) == ct->ct_rx.cr_tail) {
         /*
          * RX queue full. Reader must drain this.
          */
@@ -193,6 +217,8 @@ console_rx_char(void *arg, uint8_t data)
         }
         return -1;
     }
+
+    tx_space = console_buf_space(tx);
     /* echo */
     switch (data) {
     case '\r':
@@ -200,6 +226,9 @@ console_rx_char(void *arg, uint8_t data)
         /*
          * linefeed
          */
+        if (tx_space < 3) {
+            console_tx_flush(ct, 3);
+        }
         console_add_char(tx, '\n');
         console_add_char(tx, '\r');
         console_add_char(rx, '\n');
@@ -211,12 +240,18 @@ console_rx_char(void *arg, uint8_t data)
         /*
          * backspace
          */
+        if (tx_space < 3) {
+            console_tx_flush(ct, 3);
+        }
         console_add_char(tx, '\b');
         console_add_char(tx, ' ');
         console_add_char(tx, '\b');
         console_pull_char_head(rx);
         break;
     default:
+        if (tx_space < 1) {
+            console_tx_flush(ct, 1);
+        }
         console_add_char(tx, data);
         console_add_char(rx, data);
         break;
@@ -231,7 +266,7 @@ console_init(console_rx_cb rx_cb)
     struct console_tty *ct = &console_tty;
     int rc;
 
-    rc = hal_uart_init_cbs(CONSOLE_UART, console_tx_char, NULL, 
+    rc = hal_uart_init_cbs(CONSOLE_UART, console_tx_char, NULL,
             console_rx_char, ct);
     if (rc) {
         return rc;
