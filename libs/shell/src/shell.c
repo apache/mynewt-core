@@ -228,64 +228,64 @@ shell_nlip_mtx(struct os_mbuf *m)
 #define SHELL_NLIP_MTX_BUF_SIZE (12)
     uint8_t readbuf[SHELL_NLIP_MTX_BUF_SIZE];
     char encodebuf[BASE64_ENCODE_SIZE(SHELL_NLIP_MTX_BUF_SIZE)];
-    uint8_t esc_seq[2];
-    uint8_t pkt_seq[2];
+    char pkt_seq[2] = { SHELL_NLIP_PKT_START1, SHELL_NLIP_PKT_START2 };
+    char esc_seq[2] = { SHELL_NLIP_DATA_START1, SHELL_NLIP_DATA_START2 };
     uint16_t totlen;
     uint16_t dlen;
     uint16_t off;
+    int rb_off;
     int elen;
     uint16_t nwritten;
     int rc;
 
     /* Convert the mbuf into a packet.
      *
-     * starts with 06 09 
+     * starts with 06 09
      * base64 encode:
-     *  - total packet length (uint16_t) 
-     *  - data 
-     * base64 encoded data must be less than 122 bytes per line to 
+     *  - total packet length (uint16_t)
+     *  - data
+     * base64 encoded data must be less than 122 bytes per line to
      * avoid overflows and adhere to convention.
      *
-     * continuation packets are preceded by 04 20 until the entire 
-     * buffer has been sent. 
+     * continuation packets are preceded by 04 20 until the entire
+     * buffer has been sent.
      */
     totlen = OS_MBUF_PKTHDR(m)->omp_len;
     nwritten = 0;
     off = 0;
 
-    pkt_seq[0] = SHELL_NLIP_PKT_START1;
-    pkt_seq[1] = SHELL_NLIP_PKT_START2;
-
-    esc_seq[0] = SHELL_NLIP_DATA_START1;
-    esc_seq[1] = SHELL_NLIP_DATA_START2;
-
     /* Start a packet */
-    console_write((char *) pkt_seq, sizeof(pkt_seq));
+    console_write(pkt_seq, sizeof(pkt_seq));
+
+    rb_off = 2;
+    dlen = htons(totlen);
+    memcpy(readbuf, &dlen, sizeof(dlen));
 
     while (totlen > 0) {
-        dlen = min(SHELL_NLIP_MTX_BUF_SIZE, totlen);
+        dlen = min(SHELL_NLIP_MTX_BUF_SIZE - rb_off, totlen);
 
-        if (nwritten != 0 && 
+        if (nwritten != 0 &&
                 ((nwritten + BASE64_ENCODE_SIZE(dlen)) % 122) == 0) {
-            console_write("\n", sizeof("\n")-1);
-            console_write((char *) esc_seq, sizeof(esc_seq));
+            console_write("\n", 1);
+            console_write(esc_seq, sizeof(esc_seq));
         }
 
-        rc = os_mbuf_copydata(m, off, dlen, readbuf);
+        rc = os_mbuf_copydata(m, off, dlen, readbuf + rb_off);
         if (rc != 0) {
             goto err;
         }
         off += dlen;
 
-        elen = base64_encode(readbuf, dlen, encodebuf, 
+        elen = base64_encode(readbuf, dlen + rb_off, encodebuf,
                 totlen - dlen > 0 ? 0 : 1);
+        rb_off = 0;
 
         console_write(encodebuf, elen);
 
         nwritten += elen;
         totlen -= dlen;
-        
     }
+    console_write("\n", 1);
 
     return (0);
 err:
@@ -390,7 +390,7 @@ shell_task_func(void *arg)
 
     os_eventq_init(&shell_evq);
     os_mqueue_init(&g_shell_nlip_mq, NULL);
-    
+
     console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
 
     while (1) {
