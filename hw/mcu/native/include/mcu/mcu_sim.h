@@ -17,6 +17,7 @@
 #define __MCU_SIM_H__
 
 extern char *native_flash_file;
+extern char *native_uart_log_file;
 
 void mcu_sim_parse_args(int argc, char **argv);
 

@@ -36,9 +36,10 @@ static void
 usage(char *progname, int rc)
 {
     const char msg[] =
-      "Usage: %s [-f flash_file]\n"
+      "Usage: %s [-f flash_file] [-u uart_log_file]\n"
       "     -f flash_file tells where binary flash file is located. It gets\n"
-      "        created if it doesn't already exist.\n";
+      "        created if it doesn't already exist.\n"
+      "     -u uart_log_file puts all UART data exchanges into a logfile.\n";
 
     write(2, msg, strlen(msg));
     exit(rc);
@@ -50,10 +51,13 @@ mcu_sim_parse_args(int argc, char **argv)
     int ch;
     char *progname = argv[0];
 
-    while ((ch = getopt(argc, argv, "hf:")) != -1) {
+    while ((ch = getopt(argc, argv, "hf:u:")) != -1) {
         switch (ch) {
         case 'f':
             native_flash_file = optarg;
+            break;
+        case 'u':
+            native_uart_log_file = optarg;
             break;
         case 'h':
             usage(progname, 0);

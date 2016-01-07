@@ -24,6 +24,7 @@
 #ifdef MN_OSX
 #include <util.h>
 #endif
+#include <ctype.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <assert.h>
@@ -49,10 +50,80 @@ struct uart {
  * XXXX should try to use O_ASYNC/SIGIO for byte arrival notification,
  * so we wouldn't need an OS for pseudo ttys.
  */
+char *native_uart_log_file;
+static int uart_log_fd = -1;
+
 static struct uart uarts[UART_CNT];
 static int uart_poller_running;
 static struct os_task uart_poller_task;
 static os_stack_t uart_poller_stack[UART_POLLER_STACK_SZ];
+
+static void
+uart_open_log(void)
+{
+    if (native_uart_log_file && uart_log_fd < 0) {
+        uart_log_fd = open(native_uart_log_file, O_WRONLY | O_CREAT | O_TRUNC,
+          0666);
+        assert(uart_log_fd >= 0);
+    }
+}
+
+static void
+uart_log_data(struct uart *u, int istx, uint8_t data)
+{
+    static struct {
+        struct uart *uart;
+        int istx;
+        uint32_t time;
+        int chars_in_line;
+    } state = {
+        .uart = NULL,
+        .istx = 0
+    };
+    uint32_t now;
+    char tmpbuf[32];
+    int len;
+
+    if (uart_log_fd < 0) {
+        return;
+    }
+    now = os_time_get();
+    if (state.uart) {
+        if (u != state.uart || now != state.time || istx != state.istx) {
+            /*
+             * End current printout.
+             */
+            if (write(uart_log_fd, "\n", 1) != 1) {
+                assert(0);
+            }
+            state.uart = NULL;
+        } else {
+            if (state.chars_in_line == 8) {
+                if (write(uart_log_fd, "\n\t", 2) != 2) {
+                    assert(0);
+                }
+                state.chars_in_line = 0;
+            }
+            len = snprintf(tmpbuf, sizeof(tmpbuf), "%c (%02x) ",
+              isalnum(data) ? data : '?', data);
+            if (write(uart_log_fd, tmpbuf, len) != len) {
+                assert(0);
+            }
+            state.chars_in_line++;
+        }
+    }
+    if (u && state.uart == NULL) {
+        len = snprintf(tmpbuf, sizeof(tmpbuf), "%u:uart%d %s\n\t%c (%02x) ",
+          now, u - uarts, istx ? "tx" : "rx", isalnum(data) ? data : '?', data);
+        if (write(uart_log_fd, tmpbuf, len) != len) {
+            assert(0);
+        }
+        state.chars_in_line = 1;
+        state.uart = u;
+        state.istx = istx;
+        state.time = now;
+    }
+}
 
 static void
 uart_poller(void *arg)
@@ -86,6 +157,7 @@ uart_poller(void *arg)
                         OS_EXIT_CRITICAL(sr);
                         break;
                     }
+                    uart_log_data(uart, 1, ch);
                     OS_EXIT_CRITICAL(sr);
                     ch = rc;
                     rc = write(uart->u_fd, &ch, 1);
@@ -110,6 +182,7 @@ uart_poller(void *arg)
                 }
                 if (uart->u_rx_char >= 0) {
                     OS_ENTER_CRITICAL(sr);
+                    uart_log_data(uart, 0, uart->u_rx_char);
                     rc = uart->u_rx_func(uart->u_func_arg, uart->u_rx_char);
                     /* Delivered */
                     if (rc >= 0) {
@@ -119,6 +192,7 @@ uart_poller(void *arg)
                 }
             }
         }
+        uart_log_data(NULL, 0, 0);
         os_time_delay(10);
     }
 }
@@ -274,6 +348,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     }
     set_nonblock(uart->u_fd);
 
+    uart_open_log();
     uart->u_open = 1;
     return 0;
 }
