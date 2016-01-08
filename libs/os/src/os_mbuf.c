@@ -348,7 +348,6 @@ _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
 /** 
  * Append data onto a mbuf 
  *
- * @param omp  The mbuf pool this mbuf was allocated out of 
  * @param om   The mbuf to append the data onto 
  * @param data The data to append onto the mbuf 
  * @param len  The length of the data to append 
@@ -973,9 +972,9 @@ os_mbuf_pullup(struct os_mbuf *om, uint16_t len)
         om2->om_len += count;
         om->om_len -= count;
         space -= count;
-        if (om->om_len)
+        if (om->om_len) {
             om->om_data += count;
-        else {
+        } else {
             next = SLIST_NEXT(om, om_next);
             os_mbuf_free(om);
             om = next;

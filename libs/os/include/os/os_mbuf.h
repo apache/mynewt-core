@@ -188,7 +188,8 @@ _os_mbuf_trailingspace(struct os_mbuf *om)
 
     omp = om->om_omp;
 
-    return (&om->om_databuf[0] + omp->omp_databuf_len) - om->om_data;
+    return (&om->om_databuf[0] + omp->omp_databuf_len) -
+      (om->om_data + om->om_len);
 }
 
 /**
