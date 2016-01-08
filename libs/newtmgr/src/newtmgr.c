@@ -46,6 +46,8 @@ static struct nmgr_handler nmgr_def_group_handlers[] = {
 };
 
 
+struct json_encoder json_mbuf_encoder;
+
 static int 
 nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
@@ -58,6 +60,19 @@ nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         goto err;
     }
 
+    rc = nmgr_rsp_init(rsp_hdr, rsp);
+    if (rc != 0) {
+        goto err;
+    }
+
+    // You can write to the mbuf here.
+
+    rc = nmgr_rsp_finish(rsp_hdr, rsp);
+    if (rc != 0) {
+        goto err;
+    }
+
+
     rc = nmgr_rsp_extend(rsp_hdr, rsp, echo_buf, nmr->nh_len);
     if (rc != 0) {
         goto err;
@@ -67,6 +82,25 @@ nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
 err:
     return (rc);
 }
+
+static int 
+nmgr_json_write_mbuf(void *buf, uint8_t *data, int len)
+{
+    struct os_mbuf *m;
+    int rc;
+
+    m = (struct os_mbuf *) buf;
+
+    rc = os_mbuf_append(m, data, len);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
 
 int 
 nmgr_group_list_lock(void)
@@ -404,6 +438,11 @@ nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
     }
 
     rc = nmgr_default_groups_register();
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = json_encoder_init(&json_mbuf_encoder, json_write_mbuf);
     if (rc != 0) {
         goto err;
     }
