@@ -15,6 +15,7 @@
  */
 
 #include <os/os.h>
+#include <os/endian.h>
 
 #include <assert.h>
 
