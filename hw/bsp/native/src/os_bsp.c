@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <util/flash_map.h>
+#include <mcu/native_bsp.h>
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -45,7 +46,22 @@ static struct flash_area bsp_flash_areas[] = {
 
 };
 
-void os_bsp_init(void)
+/*
+ * Returns the flash map slot where the currently active image is located.
+ * If executing from internal flash from fixed location, that slot would
+ * be easy to find.
+ * If images are in external flash, and copied to RAM for execution, then
+ * this routine would have to figure out which one of those slots is being
+ * used.
+ */
+int
+bsp_imgr_current_slot(void)
+{
+    return FLASH_AREA_IMAGE_0;
+}
+
+void
+os_bsp_init(void)
 {
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));

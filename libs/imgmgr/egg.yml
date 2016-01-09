@@ -1,0 +1,5 @@
+egg.name: libs/imgmgr
+egg.vers: 0.1
+egg.deps:
+    - libs/newtmgr
+    - libs/bootutil

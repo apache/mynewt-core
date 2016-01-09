@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _IMGMGR_H_
+#define _IMGMGR_H_
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
+#define IMGMGR_NMGR_OP_LIST	0
+#define IMGMGR_NMGR_OP_UPLOAD	1
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
+#define IMGMGR_NMGR_MAX_MSG	120
 
-int bsp_imgr_current_slot(void);
+/*
+ * When accompanied by image, it's this structure followed by data.
+ * Response contains just the offset.
+ */
+struct imgmgr_upload_cmd {
+    uint32_t iuc_off;
+};
 
-#ifdef __cplusplus
-}
-#endif
+int imgmgr_module_init(void);
 
-#endif  /* __NATIVE_BSP_H */
+#endif /* _IMGMGR_H */
