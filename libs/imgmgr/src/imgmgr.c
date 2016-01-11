@@ -149,6 +149,7 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
          */
         img_state.upload.off = 0;
         active = bsp_imgr_current_slot();
+        best = -1;
 
         for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
             rc = imgr_read_ver(i, &ver);
