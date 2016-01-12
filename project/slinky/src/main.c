@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "os/os.h"
-#include "bsp/bsp.h"
-#include "hal/hal_gpio.h"
-#include "console/console.h"
-#include "shell/shell.h"
-#include "util/log.h"
-#include "util/stats.h"
-#include "util/config.h"
+#include <os/os.h>
+#include <bsp/bsp.h>
+#include <hal/hal_gpio.h>
+#include <hal/hal_flash.h>
+#include <console/console.h>
+#include <shell/shell.h>
+#include <util/log.h>
+#include <util/stats.h>
+#include <util/config.h>
+#include <util/flash_map.h>
+#include <fs/fs.h>
+#include <nffs/nffs.h>
 #include <newtmgr/newtmgr.h>
+#include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
 #ifdef ARCH_sim
@@ -40,16 +45,16 @@ os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
 
 /* Task 2 */
-#define TASK2_PRIO (2) 
+#define TASK2_PRIO (2)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
-#define SHELL_TASK_PRIO (3) 
+#define SHELL_TASK_PRIO (3)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
-#define NEWTMGR_TASK_PRIO (4) 
+#define NEWTMGR_TASK_PRIO (4)
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
@@ -66,10 +71,13 @@ struct os_sem g_test_sem;
 /* For LED toggling */
 int g_led_pin;
 
+/* NFFS */
+#define NFFS_AREA_MAX           (16)
+
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
 #define DEFAULT_MBUF_MPOOL_NBUFS (5)
 
-uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN * 
+uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
     DEFAULT_MBUF_MPOOL_NBUFS];
 
 struct os_mbuf_pool default_mbuf_pool;
@@ -77,7 +85,7 @@ struct os_mempool default_mbuf_mpool;
 
 int count;
 
-void 
+void
 task1_handler(void *arg)
 {
     struct os_task *t;
@@ -103,7 +111,7 @@ task1_handler(void *arg)
     }
 }
 
-void 
+void
 task2_handler(void *arg)
 {
     struct os_task *t;
@@ -123,10 +131,10 @@ task2_handler(void *arg)
 
 /**
  * init_tasks
- *  
- * Called by main.c after os_init(). This function performs initializations 
- * that are required before tasks are running. 
- *  
+ *
+ * Called by main.c after os_init(). This function performs initializations
+ * that are required before tasks are running.
+ *
  * @return int 0 success; error otherwise.
  */
 int
@@ -135,10 +143,10 @@ init_tasks(void)
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
-    os_task_init(&task1, "task1", task1_handler, NULL, 
+    os_task_init(&task1, "task1", task1_handler, NULL,
             TASK1_PRIO, OS_WAIT_FOREVER, stack1, TASK1_STACK_SIZE);
 
-    os_task_init(&task2, "task2", task2_handler, NULL, 
+    os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, stack2, TASK2_STACK_SIZE);
 
     tasks_initialized = 1;
@@ -147,11 +155,11 @@ init_tasks(void)
 
 /**
  * main
- *  
- * The main function for the project. This function initializes the os, calls 
- * init_tasks to initialize tasks (and possibly other objects), then starts the 
- * OS. We should not return from os start. 
- *  
+ *
+ * The main function for the project. This function initializes the os, calls
+ * init_tasks to initialize tasks (and possibly other objects), then starts the
+ * OS. We should not return from os start.
+ *
  * @return int NOTE: this function should never return!
  */
 int
@@ -159,6 +167,8 @@ main(int argc, char **argv)
 {
     uint8_t entry[128];
     int rc;
+    int cnt;
+    struct nffs_area_desc descs[NFFS_AREA_MAX];
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
@@ -191,11 +201,26 @@ main(int argc, char **argv)
     rc = os_msys_register(&default_mbuf_pool);
     assert(rc == 0);
 
+    rc = hal_flash_init();
+    assert(rc == 0);
+
+    rc = nffs_init();
+    assert(rc == 0);
+
+    cnt = NFFS_AREA_MAX;
+    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
+    assert(rc == 0);
+    if (nffs_detect(descs) == FS_ECORRUPT) {
+        rc = nffs_format(descs);
+        assert(rc == 0);
+    }
+
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
 
     (void) console_init(shell_console_rx_cb);
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
+    imgmgr_module_init();
 
     stats_module_init();
 

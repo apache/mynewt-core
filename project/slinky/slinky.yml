@@ -2,6 +2,7 @@ project.name: slinky
 project.eggs:
     - libs/newtmgr
     - libs/console/full
+    - libs/imgmgr
     - libs/shell
     - libs/util
     - libs/os
