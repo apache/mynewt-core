@@ -67,32 +67,29 @@ int
 imgr_boot_read(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
-    struct image_version ver;
+    struct imgmgr_bootrsp ibr;
     int rc;
 
-    rc = imgr_read_test(&ver);
+    rc = imgr_read_test(&ibr.ibr_test);
     if (rc) {
-        memset(&ver, 0xff, sizeof(ver));
-    }
-    rc = imgr_nmgr_append_ver(rsp_hdr, rsp, &ver);
-    if (rc) {
-        goto err;
+        memset(&ibr.ibr_test, 0xff, sizeof(ibr.ibr_test));
     }
 
-    rc = imgr_read_main(&ver);
+    rc = imgr_read_main(&ibr.ibr_main);
     if (rc) {
-        memset(&ver, 0xff, sizeof(ver));
-    }
-    rc = imgr_nmgr_append_ver(rsp_hdr, rsp, &ver);
-    if (rc) {
-        goto err;
+        memset(&ibr.ibr_main, 0xff, sizeof(ibr.ibr_main));
     }
 
-    rc = imgr_read_ver(bsp_imgr_current_slot(), &ver);
+    rc = imgr_read_ver(bsp_imgr_current_slot(), &ibr.ibr_active);
     if (rc) {
-        memset(&ver, 0xff, sizeof(ver));
+        memset(&ibr.ibr_active, 0xff, sizeof(ibr.ibr_active));
     }
-    rc = imgr_nmgr_append_ver(rsp_hdr, rsp, &ver);
+
+    imgr_ver_hton(&ibr.ibr_test);
+    imgr_ver_hton(&ibr.ibr_main);
+    imgr_ver_hton(&ibr.ibr_active);
+
+    rc = nmgr_rsp_extend(rsp_hdr, rsp, &ibr, sizeof(ibr));
     if (rc) {
         goto err;
     }

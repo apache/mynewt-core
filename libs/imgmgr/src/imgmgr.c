@@ -95,15 +95,21 @@ imgr_read_ver(int area_id, struct image_version *ver)
     return rc;
 }
 
-int
+void
+imgr_ver_hton(struct image_version *ver)
+{
+    ver->iv_revision = htons(ver->iv_revision);
+    ver->iv_build_num = htonl(ver->iv_build_num);
+}
+
+static int
 imgr_nmgr_append_ver(struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp,
   struct image_version *to_write)
 {
     struct image_version ver;
 
     ver = *to_write;
-    ver.iv_revision = htons(ver.iv_revision);
-    ver.iv_build_num = htonl(ver.iv_build_num);
+    imgr_ver_hton(&ver);
 
     return (nmgr_rsp_extend(rsp_hdr, rsp, &ver, sizeof(ver)));
 }

@@ -45,6 +45,6 @@ int imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
 
 int imgr_read_ver(int area_id, struct image_version *ver);
-int imgr_nmgr_append_ver(struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp,
-  struct image_version *to_write);
+void imgr_ver_hton(struct image_version *ver);
+
 #endif /* __IMGMGR_PRIV_H */
