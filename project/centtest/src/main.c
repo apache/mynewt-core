@@ -79,14 +79,15 @@ bletest_inc_adv_pkt_num(void) { }
 
 
 static int
-centtest_on_read(uint16_t conn_handle, int status,
-                     struct ble_gatt_attr *attr, void *arg)
+centtest_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
+                 struct ble_gatt_attr *attr, void *arg)
 {
     uint8_t *u8ptr;
     int i;
 
-    if (status != 0) {
-        console_printf("characteristic read failure: status=%d\n", status);
+    if (error != NULL) {
+        console_printf("characteristic read failure: status=%d\n",
+                       error->status);
         return 0;
     }
 
@@ -104,15 +105,15 @@ centtest_on_read(uint16_t conn_handle, int status,
 }
 
 static int
-centtest_on_disc_c(uint16_t conn_handle, int status,
-                       struct ble_gatt_chr *chr, void *arg)
+centtest_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
+                   struct ble_gatt_chr *chr, void *arg)
 {
     int rc;
     int i;
 
-    if (status != 0) {
+    if (error != NULL) {
         console_printf("characteristic discovery failure: status=%d\n",
-                       status);
+                       error->status);
         return 0;
     }
 
@@ -140,13 +141,14 @@ centtest_on_disc_c(uint16_t conn_handle, int status,
 }
 
 static int
-centtest_on_disc_s(uint16_t conn_handle, int status,
-                       struct ble_gatt_service *service, void *arg)
+centtest_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
+                   struct ble_gatt_service *service, void *arg)
 {
     int i;
 
-    if (status != 0) {
-        console_printf("service discovery failure: status=%d\n", status);
+    if (error != NULL) {
+        console_printf("service discovery failure: status=%d\n",
+                       error->status);
         return 0;
     }
 
