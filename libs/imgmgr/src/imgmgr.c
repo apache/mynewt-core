@@ -25,6 +25,7 @@
 #include <bootutil/image.h>
 
 #include "imgmgr/imgmgr.h"
+#include "imgmgr_priv.h"
 
 static int imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
@@ -41,6 +42,10 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_UPLOAD] = {
         .nh_read = imgr_noop,
         .nh_write = imgr_upload
+    },
+    [IMGMGR_NMGR_OP_BOOT] = {
+        .nh_read = imgr_boot_read,
+        .nh_write = imgr_boot_write
     }
 };
 
@@ -64,7 +69,7 @@ static struct {
  * Returns 1 if there is not a full image.
  * Returns 2 if slot is empty.
  */
-static int
+int
 imgr_read_ver(int area_id, struct image_version *ver)
 {
     struct image_header hdr;
@@ -90,6 +95,19 @@ imgr_read_ver(int area_id, struct image_version *ver)
     return rc;
 }
 
+int
+imgr_nmgr_append_ver(struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp,
+  struct image_version *to_write)
+{
+    struct image_version ver;
+
+    ver = *to_write;
+    ver.iv_revision = htons(ver.iv_revision);
+    ver.iv_build_num = htonl(ver.iv_build_num);
+
+    return (nmgr_rsp_extend(rsp_hdr, rsp, &ver, sizeof(ver)));
+}
+
 static int
 imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
   struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
@@ -103,7 +121,7 @@ imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         if (rc < 0) {
             continue;
         }
-        rc = nmgr_rsp_extend(rsp_hdr, rsp, &ver, sizeof(ver));
+        rc = imgr_nmgr_append_ver(rsp_hdr, rsp, &ver);
         if (rc) {
             goto err;
         }

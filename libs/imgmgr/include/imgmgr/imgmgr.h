@@ -19,16 +19,9 @@
 
 #define IMGMGR_NMGR_OP_LIST	0
 #define IMGMGR_NMGR_OP_UPLOAD	1
+#define IMGMGR_NMGR_OP_BOOT	2
 
 #define IMGMGR_NMGR_MAX_MSG	120
-
-/*
- * When accompanied by image, it's this structure followed by data.
- * Response contains just the offset.
- */
-struct imgmgr_upload_cmd {
-    uint32_t iuc_off;
-};
 
 int imgmgr_module_init(void);
 
