@@ -245,6 +245,17 @@ initialize_signals(void)
     sigaction(SIGVTALRM, &sa, NULL);
 }
 
+static void
+cancel_signals(void)
+{
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof sa);
+    sa.sa_handler = SIG_DFL;
+
+    sigaction(SIGALRM, &sa, NULL);
+    sigaction(SIGVTALRM, &sa, NULL);
+}
 
 static void
 timer_handler(int sig)
@@ -305,6 +316,24 @@ start_timer(void)
     }
 }
 
+static void
+stop_timer(void)
+{
+    struct itimerval it;
+    int rc;
+
+    memset(&it, 0, sizeof(it));
+
+    rc = setitimer(ITIMER_VIRTUAL, &it, NULL);
+    if (rc != 0) {
+        const char msg[] = "Cannot stop itimer";
+        write(2, msg, sizeof(msg));
+        _exit(1);
+    }
+
+    cancel_signals();
+}
+
 os_error_t 
 os_arch_os_init(void)
 {
@@ -340,3 +369,13 @@ os_arch_os_start(void)
     return 0;
 }
 
+/**
+ * Stops the tick timer and clears the "started" flag.  This function is only
+ * implemented for sim.
+ */
+void
+os_arch_os_stop(void)
+{
+    stop_timer();
+    g_os_started = 0;
+}

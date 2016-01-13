@@ -58,6 +58,7 @@ void os_arch_ctx_sw_isr(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(int);
 os_error_t os_arch_os_init(void);
+void os_arch_os_stop(void);
 os_error_t os_arch_os_start(void);
 
 void os_bsp_init(void);
