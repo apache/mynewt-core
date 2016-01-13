@@ -27,6 +27,8 @@ extern "C" {
 #define UART_CNT        1
 #define CONSOLE_UART    0
 
+int bsp_imgr_current_slot(void);
+
 #ifdef __cplusplus
 }
 #endif

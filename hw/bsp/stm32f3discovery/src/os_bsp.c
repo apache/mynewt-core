@@ -49,6 +49,12 @@ static struct flash_area bsp_flash_areas[] = {
     }
 };
 
+int
+bsp_imgr_current_slot(void)
+{
+    return FLASH_AREA_IMAGE_0;
+}
+
 void
 os_bsp_init(void)
 {
