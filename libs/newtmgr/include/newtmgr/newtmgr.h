@@ -23,14 +23,20 @@
 /* First 64 groups are reserved for system level newtmgr commands.
  * Per-user commands are then defined after group 64.
  */
-#define NMGR_GROUP_ID_DEFAULT (0)
-#define NMGR_GROUP_ID_IMAGE   (1)
-#define NMGR_GROUP_ID_PERUSER (64)
+#define NMGR_GROUP_ID_DEFAULT   (0)
+#define NMGR_GROUP_ID_IMAGE     (1)
+#define NMGR_GROUP_ID_PERUSER   (64)
 
-#define NMGR_OP_READ (0)
-#define NMGR_OP_READ_RSP (1) 
-#define NMGR_OP_WRITE (2)
-#define NMGR_OP_WRITE_RSP (3) 
+#define NMGR_OP_READ            (0)
+#define NMGR_OP_READ_RSP        (1)
+#define NMGR_OP_WRITE           (2)
+#define NMGR_OP_WRITE_RSP       (3)
+
+/*
+ * Id's for default group commands
+ */
+#define NMGR_ID_ECHO	        0
+#define NMGR_ID_CONS_ECHO_CTRL  1
 
 struct nmgr_hdr {
     uint8_t nh_op;

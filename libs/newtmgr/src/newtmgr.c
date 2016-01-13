@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include <shell/shell.h>
+#include <console/console.h>
 #include <newtmgr/newtmgr.h>
 
 #include <string.h>
@@ -34,25 +35,28 @@ struct os_task g_nmgr_task;
 STAILQ_HEAD(, nmgr_group) g_nmgr_group_list = 
     STAILQ_HEAD_INITIALIZER(g_nmgr_group_list);
 
-static int nmgr_def_echo(struct nmgr_hdr *, struct os_mbuf *, uint16_t, 
+static int nmgr_def_echo(struct nmgr_hdr *, struct os_mbuf *, uint16_t,
         struct nmgr_hdr *, struct os_mbuf *);
+static int nmgr_def_console_echo(struct nmgr_hdr *, struct os_mbuf *req,
+        uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
 
 static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
  */
 static struct nmgr_handler nmgr_def_group_handlers[] = {
-    {nmgr_def_echo, nmgr_def_echo}
+    [NMGR_ID_ECHO] = {nmgr_def_echo, nmgr_def_echo},
+    [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo}
 };
 
 
-static int 
+static int
 nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
     uint8_t echo_buf[128];
     int rc;
-    
+
     rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), nmr->nh_len, echo_buf);
     if (rc != 0) {
         goto err;
@@ -68,7 +72,31 @@ err:
     return (rc);
 }
 
-int 
+static int
+nmgr_def_console_echo(struct nmgr_hdr *nmr, struct os_mbuf *req,
+        uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+{
+    uint8_t echo_on;
+    int rc;
+
+    if (nmr->nh_len == sizeof(echo_on)) {
+        rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), sizeof(echo_on),
+          &echo_on);
+        if (rc != 0) {
+            goto err;
+        }
+        if (echo_on) {
+            console_echo(1);
+        } else {
+            console_echo(0);
+        }
+    }
+    return (0);
+err:
+    return (rc);
+}
+
+int
 nmgr_group_list_lock(void)
 {
     int rc;

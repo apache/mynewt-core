@@ -56,5 +56,10 @@ console_vprintf(const char *fmt, va_list args)
     return 0;
 }
 
+static void inline
+console_echo(int on)
+{
+}
+
 #endif /* __CONSOLE__ */
 
