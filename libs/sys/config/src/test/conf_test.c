@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "os/os.h"
-#include "testutil/testutil.h"
-#include "util/config.h"
+#include <os/os.h>
+#include <testutil/testutil.h>
+#include <config/config.h>
 
 uint8_t val8;
 
@@ -227,3 +227,18 @@ TEST_SUITE(config_test_suite)
     config_test_lookup();
     config_test_dir();
 }
+
+#ifdef PKG_TEST
+
+int
+main(int argc, char **argv)
+{
+    tu_config.tc_print_results = 1;
+    tu_init();
+
+    config_test_suite();
+
+    return tu_any_failed;
+}
+
+#endif
