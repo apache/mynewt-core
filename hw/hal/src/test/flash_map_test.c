@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "os/os.h"
-#include "testutil/testutil.h"
-#include "util/flash_map.h"
+#include <os/os.h>
+#include <testutil/testutil.h>
+#include "hal/flash_map.h"
 
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
@@ -149,3 +149,18 @@ TEST_SUITE(flash_map_test_suite)
     flash_map_test_case_1();
     flash_map_test_case_2();
 }
+
+#ifdef PKG_TEST
+
+int
+main(int argc, char **argv)
+{
+    tu_config.tc_print_results = 1;
+    tu_init();
+
+    flash_map_test_suite();
+
+    return tu_any_failed;
+}
+
+#endif

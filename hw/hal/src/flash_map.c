@@ -15,12 +15,12 @@
  */
 #include <string.h>
 
-#include <hal/hal_flash.h>
-#include <hal/hal_flash_int.h>
+#include "hal/hal_flash.h"
+#include "hal/hal_flash_int.h"
 #ifdef NFFS_PRESENT
 #include <nffs/nffs.h>
 #endif
-#include "util/flash_map.h"
+#include "hal/flash_map.h"
 
 static const struct flash_area *flash_map;
 static int flash_map_entries;

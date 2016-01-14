@@ -31,7 +31,7 @@
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <hal/hal_flash.h>
-#include <util/flash_map.h>
+#include <hal/flash_map.h>
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif

@@ -22,7 +22,7 @@
 #include <log/log.h>
 #include <stats/stats.h>
 #include <config/config.h>
-#include <util/flash_map.h>
+#include <hal/flash_map.h>
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <newtmgr/newtmgr.h>

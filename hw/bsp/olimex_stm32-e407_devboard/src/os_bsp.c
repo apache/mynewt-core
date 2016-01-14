@@ -17,7 +17,7 @@
 /*
  * XXXX for now have this here.
  */
-#include <util/flash_map.h>
+#include <hal/flash_map.h>
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {

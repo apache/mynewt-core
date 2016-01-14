@@ -6,4 +6,3 @@ egg.debugscript: "olimex_stm32-e407_devboard_debug.sh"
 egg.cflags: -DSTM32F407xx
 egg.deps: 
     - hw/mcu/stm/stm32f4xx
-    - libs/util

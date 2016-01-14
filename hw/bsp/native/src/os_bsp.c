@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <util/flash_map.h>
+#include <hal/flash_map.h>
 #include <mcu/native_bsp.h>
 
 static struct flash_area bsp_flash_areas[] = {

@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include <util/flash_map.h>
+#include <hal/flash_map.h>
 #include <os/os.h>
 #include <hal/hal_system.h>
 #include "nffs/nffs.h"

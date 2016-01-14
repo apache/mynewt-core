@@ -1,6 +1,5 @@
 egg.name: "hw/bsp/native"
 egg.deps: 
     - hw/mcu/native
-    - libs/util
 egg.deps.BLE_DEVICE:
     - net/nimble/drivers/native

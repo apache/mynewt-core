@@ -19,7 +19,7 @@
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
-#include <util/flash_map.h>
+#include <hal/flash_map.h>
 #include <newtmgr/newtmgr.h>
 
 #include <bootutil/image.h>
