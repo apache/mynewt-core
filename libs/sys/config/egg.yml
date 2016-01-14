@@ -1,0 +1,10 @@
+egg.name: libs/sys/config
+egg.vers: 0.1
+egg.deps:
+    - libs/util
+    - libs/testutil
+egg.deps.SHELL:
+    - libs/shell
+egg.req_caps.SHELL:
+    - console
+egg.cflags.SHELL: -DSHELL_PRESENT

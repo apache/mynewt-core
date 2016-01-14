@@ -19,9 +19,9 @@
 #include <hal/hal_flash.h>
 #include <console/console.h>
 #include <shell/shell.h>
-#include <util/log.h>
-#include <util/stats.h>
-#include <util/config.h>
+#include <log/log.h>
+#include <stats/stats.h>
+#include <config/config.h>
 #include <util/flash_map.h>
 #include <fs/fs.h>
 #include <nffs/nffs.h>

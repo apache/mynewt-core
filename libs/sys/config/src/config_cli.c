@@ -16,7 +16,7 @@
 
 #include <stddef.h>
 
-#include "util/config.h"
+#include "config/config.h"
 
 #ifdef SHELL_PRESENT
 #include <string.h>

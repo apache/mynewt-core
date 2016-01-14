@@ -2,5 +2,7 @@ project.name: blinky
 project.eggs:
     - libs/console/full
     - libs/shell
-    - libs/util
     - libs/os
+    - libs/sys/config
+    - libs/sys/log
+    - libs/sys/stats

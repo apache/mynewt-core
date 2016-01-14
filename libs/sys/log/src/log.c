@@ -18,8 +18,8 @@
 
 #include <string.h>
 
-#include "util/log.h" 
-#include "util/cbmem.h" 
+#include "log/log.h"
+#include <util/cbmem.h>
 
 #include <stdio.h>
 

@@ -5,4 +5,7 @@ egg.deps:
     - libs/console/full
     - libs/shell
     - libs/newtmgr
+    - libs/sys/config
+    - libs/sys/log
+    - libs/sys/stats
     - hw/hal

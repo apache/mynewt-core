@@ -18,9 +18,9 @@
 #include "hal/hal_gpio.h"
 #include "console/console.h"
 #include "shell/shell.h"
-#include "util/log.h"
-#include "util/stats.h"
-#include "util/config.h"
+#include "log/log.h"
+#include "stats/stats.h"
+#include "config/config.h"
 #include <assert.h>
 #include <string.h>
 #ifdef ARCH_sim

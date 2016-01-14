@@ -6,4 +6,7 @@ egg.deps:
     - libs/shell
     - libs/newtmgr
     - libs/imgmgr
+    - libs/sys/config
+    - libs/sys/log
+    - libs/sys/stats
     - hw/hal

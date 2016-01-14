@@ -18,11 +18,11 @@
 
 #include <string.h>
 
-#include "util/stats.h" 
+#include "stats/stats.h"
 
 #ifdef SHELL_PRESENT
-#include "shell/shell.h"
-#include "console/console.h"
+#include <shell/shell.h>
+#include <console/console.h>
 #endif
 
 #include <stdio.h>
