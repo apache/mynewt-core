@@ -143,7 +143,6 @@ eggs:
     libs/json:
         vers: 0.1.0
         hash: 59d0cdb993a7d2119b6b4762f0afd35dbff74192
-    :
         vers: 0.0.0
         hash: 1d49ecffda5c4d880b3477911691ed878fdd0fba
     net/nimble/host:
