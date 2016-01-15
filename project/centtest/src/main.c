@@ -175,43 +175,23 @@ centtest_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static void
-centtest_print_adv_rpt(struct ble_gap_conn_adv_rpt *adv)
+centtest_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
+                    void *arg)
 {
-    console_printf("Received advertisement report:\n");
-    console_printf("    addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                   adv->addr[0], adv->addr[1], adv->addr[2],
-                   adv->addr[3], adv->addr[4], adv->addr[5]);
-    console_printf("    flags=0x%02x\n", adv->fields.flags);
-    console_printf("    name=");
-    console_write((char *)adv->fields.name, adv->fields.name_len);
-    console_printf("\n");
-}
-
-static void
-centtest_on_connect(struct ble_gap_conn_event *event, void *arg)
-{
-    switch (event->type) {
-    case BLE_GAP_CONN_EVENT_TYPE_CONNECT:
+    switch (event) {
+    case BLE_GAP_EVENT_CONN:
         console_printf("connection complete; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       event->conn.handle, event->conn.status,
-                       event->conn.peer_addr[0], event->conn.peer_addr[1],
-                       event->conn.peer_addr[2], event->conn.peer_addr[3],
-                       event->conn.peer_addr[4], event->conn.peer_addr[5]);
+                       desc->conn_handle, status,
+                       desc->peer_addr[0], desc->peer_addr[1],
+                       desc->peer_addr[2], desc->peer_addr[3],
+                       desc->peer_addr[4], desc->peer_addr[5]);
 
-        if (event->conn.status == 0) {
-            ble_gattc_disc_all_svcs(event->conn.handle,
+        if (status == 0) {
+            ble_gattc_disc_all_svcs(desc->conn_handle,
                                     centtest_on_disc_s, NULL);
         }
 
-        break;
-
-    case BLE_GAP_CONN_EVENT_TYPE_ADV_RPT:
-        centtest_print_adv_rpt(&event->adv);
-        break;
-
-    case BLE_GAP_CONN_EVENT_TYPE_SCAN_DONE:
-        console_printf("scan complete\n");
         break;
     }
 }
@@ -238,11 +218,10 @@ centtest_task_handler(void *arg)
     g_centtest_state = 0;
     g_next_os_time = os_time_get();
     
-    ble_gap_conn_set_cb(centtest_on_connect, NULL);
-
     //rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
     rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                     centtest_slv_addr);
+                                     centtest_slv_addr,
+                                     centtest_on_connect, NULL);
     assert(rc == 0);
 
     while (1) {

@@ -196,20 +196,21 @@ prphtest_register_attrs(void)
 }
 
 static void
-prphtest_on_connect(struct ble_gap_conn_event *event, void *arg)
+prphtest_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
+                    void *arg)
 {
-    switch (event->type) {
-    case BLE_GAP_CONN_EVENT_TYPE_CONNECT:
+    switch (event) {
+    case BLE_GAP_EVENT_CONN:
         console_printf("connection complete; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       event->conn.handle, event->conn.status,
-                       event->conn.peer_addr[0], event->conn.peer_addr[1],
-                       event->conn.peer_addr[2], event->conn.peer_addr[3],
-                       event->conn.peer_addr[4], event->conn.peer_addr[5]);
+                       desc->conn_handle, status,
+                       desc->peer_addr[0], desc->peer_addr[1],
+                       desc->peer_addr[2], desc->peer_addr[3],
+                       desc->peer_addr[4], desc->peer_addr[5]);
         break;
 
     default:
-        console_printf("unexpected connection event; type=%d\n", event->type);
+        console_printf("unexpected connection event; type=%d\n", event);
         break;
     }
 }
@@ -237,8 +238,6 @@ prphtest_task_handler(void *arg)
     g_prphtest_state = 0;
     g_next_os_time = os_time_get();
     
-    ble_gap_conn_set_cb(prphtest_on_connect, NULL);
-
     prphtest_register_attrs();
 
     memset(&fields, 0, sizeof fields);
@@ -249,7 +248,7 @@ prphtest_task_handler(void *arg)
     assert(rc == 0);
 
     rc = ble_gap_conn_advertise(BLE_GAP_DISC_MODE_NON, BLE_GAP_CONN_MODE_UND,
-                                NULL, 0);
+                                NULL, 0, prphtest_on_connect, NULL);
     assert(rc == 0);
 
     while (1) {
