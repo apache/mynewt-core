@@ -65,16 +65,16 @@ struct json_value {
 #define JSON_VALUE_STRING(__jv, __str)        \
     (__jv)->jv_type = JSON_VALUE_TYPE_STRING; \
     (__jv)->jv_len = strlen(__str);           \
-    (__jv)->jv_val.str = str;
+    (__jv)->jv_val.str = (__str);
 
 #define JSON_VALUE_STRINGN(__jv, __str, __len) \
     (__jv)->jv_type = JSON_VALUE_TYPE_STRING;  \
     (__jv)->jv_len = __len;                    \
-    (__jv)->jv_val.str = str;
+    (__jv)->jv_val.str = (__str);
 
 #define JSON_VALUE_BOOL(__jv, __v)            \
     (__jv)->jv_type = JSON_VALUE_TYPE_BOOL;   \
-    (__jv)->jv_val.u = __v;
+    (__jv)->jv_val.u = (__v);
 
 #define JSON_VALUE_INT(__jv, __v)             \
     (__jv)->jv_type = JSON_VALUE_TYPE_INT64;  \

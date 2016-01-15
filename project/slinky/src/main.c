@@ -19,16 +19,18 @@
 #include <hal/hal_flash.h>
 #include <console/console.h>
 #include <shell/shell.h>
-#include <log/log.h>
-#include <stats/stats.h>
-#include <config/config.h>
-#include <hal/flash_map.h>
+#include <util/log.h>
+#include <util/stats.h>
+#include <util/config.h>
+#include <util/flash_map.h>
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <newtmgr/newtmgr.h>
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
+#include <json/json.h>
+
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
@@ -153,6 +155,37 @@ init_tasks(void)
     return 0;
 }
 
+static void 
+json_test(void)
+{
+    char req[128];
+    char req1[128];
+    char req2[128];
+    int rc;
+
+    struct json_attr_t attrs[] = {
+        {"cmd", t_string, .addr.string = req, .len = sizeof(req)},
+        {"group", t_string, .addr.string = req1, .len = sizeof(req1)},
+        {"req", t_string, .addr.string = req2, .len = sizeof(req2)},
+        {NULL},
+    };
+
+    char *json_data = "{\n" 
+        "  \"group\": \"sterly\",\n"
+        "  \"cmd\": \"read\",\n"
+        "  \"req\": \"{ \\\"name\\\": \\\"blablabalblala\\\" }\", \n"
+        "}\n";
+
+    rc = json_read_object(json_data, attrs, NULL);
+    req[127] = 0;
+
+    puts(json_data);
+    printf("%d req = %s, req1 = %s, req2 = %s\n", rc, req, req1, req2);
+}
+
+
+
+
 /**
  * main
  *
@@ -223,6 +256,8 @@ main(int argc, char **argv)
     imgmgr_module_init();
 
     stats_module_init();
+
+    json_test();
 
     rc = init_tasks();
     os_start();

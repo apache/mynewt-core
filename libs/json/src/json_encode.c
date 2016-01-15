@@ -73,18 +73,38 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
                     case '"':
                     case '/':
                     case '\\':
-                    case '\t':
-                    case '\r':
-                    case '\n':
-                    case '\f':
-                    case '\b':
                         encoder->je_write(encoder->je_arg, "\\", 
                                 sizeof("\\")-1);
+                        encoder->je_write(encoder->je_arg, 
+                                (char *) &jv->jv_val.str[i], 1);
+ 
+                        break;
+                    case '\t':
+                        encoder->je_write(encoder->je_arg, "\\t", 
+                                sizeof("\\t")-1);
+                        break;
+                    case '\r':
+                        encoder->je_write(encoder->je_arg, "\\r", 
+                                sizeof("\\r")-1);
+                        break;
+                    case '\n':
+                        encoder->je_write(encoder->je_arg, "\\n", 
+                                sizeof("\\n")-1);
+                        break;
+                    case '\f':
+                        encoder->je_write(encoder->je_arg, "\\f", 
+                                sizeof("\\f")-1);
+                        break;
+                    case '\b':
+                        encoder->je_write(encoder->je_arg, "\\b", 
+                                sizeof("\\b")-1);
+                        break;
+                   default:
+                        encoder->je_write(encoder->je_arg, 
+                                (char *) &jv->jv_val.str[i], 1);
                         break;
                 }
 
-                encoder->je_write(encoder->je_arg, (char *) &jv->jv_val.str[i], 
-                        1);
             }
             break;
         case JSON_VALUE_TYPE_ARRAY:
