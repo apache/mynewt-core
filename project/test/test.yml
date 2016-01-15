@@ -1,8 +1,8 @@
 project.name: test
 project.eggs:
+    - fs/nffs
     - libs/testutil
     - libs/os
-    - libs/nffs
     - libs/bootutil
     - libs/testreport
     - libs/console/full

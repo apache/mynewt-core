@@ -1,8 +1,8 @@
 egg.name: project/test
 egg.vers: 0.1
 egg.deps:
+    - fs/nffs
     - libs/testutil
     - libs/os
-    - libs/nffs
     - libs/bootutil
     - libs/testreport

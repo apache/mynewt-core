@@ -1,9 +1,9 @@
 project.name: luatest
 project.eggs:
+    - fs/nffs
     - libs/os
     - libs/elua/elua_base
     - libs/shell
     - libs/console/full
     - libs/util
-    - libs/nffs
     - libs/baselibc

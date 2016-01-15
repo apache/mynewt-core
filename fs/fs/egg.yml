@@ -1,4 +1,4 @@
-egg.name: libs/fs
+egg.name: fs/fs
 egg.deps.SHELL:
     - libs/shell
     - libs/console/full

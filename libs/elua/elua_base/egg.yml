@@ -4,5 +4,5 @@ egg.cflags: -DLUA_OPTIMIZE_MEMORY=2 -DLUA_CROSS_COMPILER -DLUA_USE_MKSTEMP -DLUA
 egg.req_caps:
     - console
 egg.deps:
-    - libs/fs
+    - fs/fs
 

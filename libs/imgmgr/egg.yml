@@ -1,6 +1,6 @@
 egg.name: libs/imgmgr
 egg.vers: 0.1
 egg.deps:
+    - fs/fs
     - libs/newtmgr
     - libs/bootutil
-    - libs/fs
