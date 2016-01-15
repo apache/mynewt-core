@@ -170,7 +170,7 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
     for (cursor = attrs; cursor->attribute != NULL; cursor++) {
         if (!cursor->nodefault) {
             lptr = json_target_address(cursor, parent, offset);
-            if (lptr != NULL)
+            if (lptr != NULL) {
                 switch (cursor->type) {
                 case t_integer:
                     memcpy(lptr, &cursor->dflt.integer, sizeof(int));
@@ -202,6 +202,7 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 case t_ignore:
                     break;
                 }
+            }
         }
     }
 
