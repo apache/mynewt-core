@@ -68,7 +68,24 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
             encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
             break;
         case JSON_VALUE_TYPE_STRING:
-            encoder->je_write(encoder->je_arg, jv->jv_val.str, jv->jv_len);
+            for (i = 0; i < jv->jv_len; i++) {
+                switch (jv->jv_val.str[i]) {
+                    case '"':
+                    case '/':
+                    case '\\':
+                    case '\t':
+                    case '\r':
+                    case '\n':
+                    case '\f':
+                    case '\b':
+                        encoder->je_write(encoder->je_arg, "\\", 
+                                sizeof("\\")-1);
+                        break;
+                }
+
+                encoder->je_write(encoder->je_arg, (char *) &jv->jv_val.str[i], 
+                        1);
+            }
             break;
         case JSON_VALUE_TYPE_ARRAY:
             JSON_ENCODE_ARRAY_START(encoder);
