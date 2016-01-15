@@ -1,4 +1,4 @@
-egg.name: project/blinky
+egg.name: project/slinky
 egg.vers: 0.1
 egg.deps:
     - libs/os

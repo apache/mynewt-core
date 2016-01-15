@@ -1,5 +1,5 @@
-project.name: ffs2native
-project.eggs: 
+egg.name: project/ffs2native
+egg.deps:
     - fs/nffs
     - libs/os
     - libs/console/full
