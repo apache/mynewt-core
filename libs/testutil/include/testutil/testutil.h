@@ -31,6 +31,7 @@ typedef void tu_restart_fn_t(void *arg);
 
 struct tu_config {
     int tc_print_results;
+    int tc_system_assert;
 
     tu_case_init_fn_t *tc_case_init_cb;
     void *tc_case_init_arg;

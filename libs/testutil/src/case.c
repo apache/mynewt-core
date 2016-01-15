@@ -177,6 +177,10 @@ tu_case_fail_assert(int fatal, const char *file, int line,
     va_list ap;
     int rc;
 
+    if (tu_config.tc_system_assert) {
+        assert(0);
+    }
+
     tu_case_buf_len = 0;
 
     tu_case_append_file_info(file, line);
