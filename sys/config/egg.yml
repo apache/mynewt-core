@@ -1,4 +1,4 @@
-egg.name: libs/sys/config
+egg.name: sys/config
 egg.vers: 0.1
 egg.deps:
     - libs/util

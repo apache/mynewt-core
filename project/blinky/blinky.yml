@@ -3,6 +3,6 @@ project.eggs:
     - libs/console/full
     - libs/shell
     - libs/os
-    - libs/sys/config
-    - libs/sys/log
-    - libs/sys/stats
+    - sys/config
+    - sys/log
+    - sys/stats

@@ -5,7 +5,7 @@ project.eggs:
     - libs/imgmgr
     - libs/shell
     - libs/util
-    - libs/sys/config
-    - libs/sys/log
-    - libs/sys/stats
+    - sys/config
+    - sys/log
+    - sys/stats
     - libs/os

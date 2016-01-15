@@ -1,4 +1,4 @@
-egg.name: libs/sys/log
+egg.name: sys/log
 egg.vers: 0.1
 egg.deps:
     - libs/os
