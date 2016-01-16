@@ -201,7 +201,7 @@ prphtest_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
 {
     switch (event) {
     case BLE_GAP_EVENT_CONN:
-        console_printf("connection complete; handle=%d status=%d "
+        console_printf("connection event; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
                        desc->conn_handle, status,
                        desc->peer_addr[0], desc->peer_addr[1],
@@ -244,10 +244,18 @@ prphtest_task_handler(void *arg)
     fields.name = (uint8_t *)"nimble";
     fields.name_len = 6;
     fields.name_is_complete = 1;
+
+    fields.uuids16 = (uint16_t[]) { PRPHTEST_SVC1_UUID, PRPHTEST_SVC2_UUID };
+    fields.num_uuids16 = 2;
+    fields.uuids16_is_complete = 1;
+
+    fields.le_role = 0;
+    fields.le_role_is_present = 1;
+
     rc = ble_gap_conn_set_adv_fields(&fields);
     assert(rc == 0);
 
-    rc = ble_gap_conn_advertise(BLE_GAP_DISC_MODE_NON, BLE_GAP_CONN_MODE_UND,
+    rc = ble_gap_conn_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
                                 NULL, 0, prphtest_on_connect, NULL);
     assert(rc == 0);
 

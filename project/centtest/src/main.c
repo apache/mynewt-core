@@ -51,7 +51,12 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
-static uint8_t centtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+/* Mynewt test device. */
+//static uint8_t centtest_slv_addr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+
+/* TI SensorTag. */
+static uint8_t centtest_slv_addr[6] = {0x82, 0x6a, 0xd0, 0x48, 0xb4, 0xb0};
+
 static uint8_t centtest_mst_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Create a mbuf pool of BLE mbufs */
@@ -219,9 +224,9 @@ centtest_task_handler(void *arg)
     g_next_os_time = os_time_get();
     
     //rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
-    rc = ble_gap_conn_direct_connect(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                                     centtest_slv_addr,
-                                     centtest_on_connect, NULL);
+    rc = ble_gap_conn_initiate(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
+                               centtest_slv_addr,
+                               centtest_on_connect, NULL);
     assert(rc == 0);
 
     while (1) {
