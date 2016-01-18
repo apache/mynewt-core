@@ -28,13 +28,24 @@ struct imgmgr_upload_cmd {
 };
 
 /*
- * Response to boot read.
+ * Response to list:
+ * {
+ *      "list":[ <version1>, <version2>]
+ * }
+ *
+ *
+ * Request to boot to version:
+ * {
+ *      "test":<version>
+ * }
+ *
+ * Response to boot read:
+ * {
+ *	"test":<version>,
+ *	"main":<version>,
+ *      "active":<version>
+ * }
  */
-struct imgmgr_bootrsp {
-    struct image_version ibr_test;	/* /boot/test */
-    struct image_version ibr_main;	/* /boot/main */
-    struct image_version ibr_active;	/* currently running image */
-};
 
 struct nmgr_hdr;
 struct os_mbuf;
@@ -45,6 +56,7 @@ int imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
 
 int imgr_read_ver(int area_id, struct image_version *ver);
-void imgr_ver_hton(struct image_version *ver);
+int imgr_ver_jsonstr(char *dst, int dstlen, char *key,
+  struct image_version *ver);
 
 #endif /* __IMGMGR_PRIV_H */

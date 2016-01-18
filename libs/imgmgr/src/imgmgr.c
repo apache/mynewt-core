@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 #include <hal/flash_map.h>
 #include <newtmgr/newtmgr.h>
 
@@ -42,11 +43,16 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_UPLOAD] = {
         .nh_read = imgr_noop,
         .nh_write = imgr_upload
-    },
+    }
+#ifdef FS_PRESENT
+    ,
     [IMGMGR_NMGR_OP_BOOT] = {
         .nh_read = imgr_boot_read,
         .nh_write = imgr_boot_write
     }
+#else
+    goob
+#endif
 };
 
 static struct nmgr_group imgr_nmgr_group = {
@@ -95,23 +101,73 @@ imgr_read_ver(int area_id, struct image_version *ver)
     return rc;
 }
 
-void
-imgr_ver_hton(struct image_version *ver)
+int
+imgr_ver_parse(char *src, struct image_version *ver)
 {
-    ver->iv_revision = htons(ver->iv_revision);
-    ver->iv_build_num = htonl(ver->iv_build_num);
+    unsigned long ul;
+    char *tok;
+    char *nxt;
+    char *ep;
+
+    memset(ver, 0, sizeof(*ver));
+
+    nxt = src;
+    tok = strsep(&nxt, ".");
+    ul = strtoul(tok, &ep, 10);
+    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT8_MAX) {
+        return -1;
+    }
+    ver->iv_major = ul;
+    if (nxt == NULL) {
+        return 0;
+    }
+    tok = strsep(&nxt, ".");
+    ul = strtoul(tok, &ep, 10);
+    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT8_MAX) {
+        return -1;
+    }
+    ver->iv_minor = ul;
+    if (nxt == NULL) {
+        return 0;
+    }
+
+    tok = strsep(&nxt, ".");
+    ul = strtoul(tok, &ep, 10);
+    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT16_MAX) {
+        return -1;
+    }
+    ver->iv_revision = ul;
+    if (nxt == NULL) {
+        return 0;
+    }
+
+    tok = nxt;
+    ul = strtoul(tok, &ep, 10);
+    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT32_MAX) {
+        return -1;
+    }
+    ver->iv_build_num = ul;
+
+    return 0;
 }
 
-static int
-imgr_nmgr_append_ver(struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp,
-  struct image_version *to_write)
+int
+imgr_ver_jsonstr(char *dst, int dstlen, char *key, struct image_version *ver)
 {
-    struct image_version ver;
+    int off = 0;
 
-    ver = *to_write;
-    imgr_ver_hton(&ver);
-
-    return (nmgr_rsp_extend(rsp_hdr, rsp, &ver, sizeof(ver)));
+    if (key) {
+        off = snprintf(dst, dstlen, "\"%s\":", key);
+    }
+    if (ver->iv_build_num) {
+        off += snprintf(dst + off, dstlen - off, "\"%u.%u.%u.%lu\"",
+          ver->iv_major, ver->iv_minor, ver->iv_revision,
+          (unsigned long)ver->iv_build_num);
+    } else {
+        off += snprintf(dst + off, dstlen - off, "\"%u.%u.%u\"",
+          ver->iv_major, ver->iv_minor, ver->iv_revision);
+    }
+    return off;
 }
 
 static int
@@ -119,21 +175,27 @@ imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
   struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
     struct image_version ver;
+    char str[128];
+    int off;
     int rc;
     int i;
+    int put_comma = 0;
 
+    off = snprintf(str, sizeof(str), "{\"images\":[");
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
         rc = imgr_read_ver(i, &ver);
         if (rc < 0) {
             continue;
         }
-        rc = imgr_nmgr_append_ver(rsp_hdr, rsp, &ver);
-        if (rc) {
-            goto err;
+        if (put_comma) {
+            off += snprintf(str + off, sizeof(str) - off, ",");
         }
+        put_comma = 1;
+        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, NULL, &ver);
     }
-    return 0;
-err:
+    off += snprintf(str + off, sizeof(str) - off, "]}");
+
+    rc = nmgr_rsp_extend(rsp_hdr, rsp, str, off);
     return rc;
 }
 

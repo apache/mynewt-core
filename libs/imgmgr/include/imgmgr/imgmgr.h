@@ -25,4 +25,7 @@
 
 int imgmgr_module_init(void);
 
+struct image_version;
+int imgr_ver_parse(char *src, struct image_version *ver);
+
 #endif /* _IMGMGR_H */

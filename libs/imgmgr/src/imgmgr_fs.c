@@ -18,13 +18,16 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <fs/fs.h>
 #include <fs/fsutil.h>
+#include <json/json.h>
 #include <bsp/bsp.h>
 
+#include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
 /* XXX share with bootutil */
@@ -32,6 +35,7 @@
 #define BOOT_PATH_MAIN          "/boot/main"
 #define BOOT_PATH_TEST          "/boot/test"
 
+#ifdef FS_PRESENT
 static int
 imgr_read_file(const char *path, struct image_version *ver)
 {
@@ -67,29 +71,39 @@ int
 imgr_boot_read(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
-    struct imgmgr_bootrsp ibr;
     int rc;
+    int prev_set = 0;
+    struct image_version ver;
+    char str[128];
+    int off;
 
-    rc = imgr_read_test(&ibr.ibr_test);
-    if (rc) {
-        memset(&ibr.ibr_test, 0xff, sizeof(ibr.ibr_test));
+    off = snprintf(str, sizeof(str), "{");
+    rc = imgr_read_test(&ver);
+    if (!rc) {
+        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, "test", &ver);
+        prev_set = 1;
     }
 
-    rc = imgr_read_main(&ibr.ibr_main);
-    if (rc) {
-        memset(&ibr.ibr_main, 0xff, sizeof(ibr.ibr_main));
+    rc = imgr_read_main(&ver);
+    if (!rc) {
+        if (prev_set) {
+            off += snprintf(str + off, sizeof(str) - off, ",");
+        }
+        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, "main", &ver);
+        prev_set = 1;
     }
 
-    rc = imgr_read_ver(bsp_imgr_current_slot(), &ibr.ibr_active);
-    if (rc) {
-        memset(&ibr.ibr_active, 0xff, sizeof(ibr.ibr_active));
+    rc = imgr_read_ver(bsp_imgr_current_slot(), &ver);
+    if (!rc) {
+        if (prev_set) {
+            off += snprintf(str + off, sizeof(str) - off, ",");
+        }
+        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, "active", &ver);
     }
 
-    imgr_ver_hton(&ibr.ibr_test);
-    imgr_ver_hton(&ibr.ibr_main);
-    imgr_ver_hton(&ibr.ibr_active);
+    off += snprintf(str + off, sizeof(str) - off, "}");
 
-    rc = nmgr_rsp_extend(rsp_hdr, rsp, &ibr, sizeof(ibr));
+    rc = nmgr_rsp_extend(rsp_hdr, rsp, str, off);
     if (rc) {
         goto err;
     }
@@ -103,19 +117,43 @@ int
 imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
-    struct image_version ver;
+    char incoming[64];
+    char test_ver_str[28];
+    const struct json_attr_t boot_write_attr[2] = {
+        [0] = {
+            .attribute = "test",
+            .type = JSON_VALUE_TYPE_STRING,
+            .addr.string = test_ver_str,
+            .len = sizeof(test_ver_str),
+        },
+        [1] = {
+            .attribute = NULL
+        }
+    };
     int rc;
-    int len;
+    const char *end;
+    struct image_version ver;
 
-    len = min(nmr->nh_len, sizeof(ver));
-    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), len, &ver);
-    if (rc || len < sizeof(ver)) {
+    if (nmr->nh_len > sizeof(incoming)) {
+        return OS_EINVAL;
+    }
+    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), nmr->nh_len, incoming);
+    if (rc) {
         return OS_EINVAL;
     }
 
-    ver.iv_revision = ntohs(ver.iv_revision);
-    ver.iv_build_num = ntohl(ver.iv_build_num);
+    rc = json_read_object(incoming, boot_write_attr, &end);
+    if (rc) {
+        return OS_EINVAL;
+    }
+
+    rc = imgr_ver_parse(boot_write_attr[0].addr.string, &ver);
+    if (rc) {
+        return OS_EINVAL;
+    }
+
     fs_mkdir(BOOT_PATH);
     rc = imgr_write_file(BOOT_PATH_TEST, &ver);
     return rc;
 }
+#endif
