@@ -17,7 +17,7 @@
 #include <fs/fs_if.h>
 #include "fs_priv.h"
 
-const struct fs_ops *fs_root_ops;
+const struct fs_ops *fs_root_ops = NULL;
 
 int
 fs_register(const struct fs_ops *fops)
