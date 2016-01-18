@@ -6,9 +6,9 @@ egg.req_caps:
     - console
 
 egg.deps.SHELL:
-    - libs/console/full 
     - libs/shell 
 egg.cflags.SHELL: -DSHELL_PRESENT 
-
+egg.reqs.SHELL:
+    - console
 # Satisfy capability dependencies for the self-contained test executable.
 egg.deps.selftest: libs/console/stub

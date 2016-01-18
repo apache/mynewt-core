@@ -1,5 +1,8 @@
 egg.name: fs/fs
 egg.deps.SHELL:
     - libs/shell
-    - libs/console/full
+egg.reqs.SHELL:
+    - console
 egg.cflags.SHELL: -DSHELL_PRESENT
+egg.identities:
+    - FS

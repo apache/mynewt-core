@@ -1,6 +1,8 @@
 egg.name: libs/imgmgr
 egg.vers: 0.1
 egg.deps:
-    - fs/fs
     - libs/newtmgr
     - libs/bootutil
+egg.deps.FS:
+    - fs/fs
+egg.cflags.FS: -DFS_PRESENT

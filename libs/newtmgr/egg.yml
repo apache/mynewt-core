@@ -5,5 +5,4 @@ egg.deps:
     - libs/json
     - libs/util
     - libs/testutil
-egg.deps.SHELL:
     - libs/shell

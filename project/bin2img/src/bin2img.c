@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "bootutil/image.h"
+#include "imgmgr/imgmgr.h"
 #include "crc32.h"
 
 #if !defined(__BYTE_ORDER__) || (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
@@ -34,59 +35,6 @@ print_usage(FILE *stream)
     fprintf(stream, "usage: bin2img <in-filename> <out-filename> <version>\n");
     fprintf(stream, "\n");
     fprintf(stream, "version numbers are of the form: XX.XX.XXXX.XXXXXXXX\n");
-}
-
-static int
-parse_ver(struct image_version *out_ver, char *s)
-{
-    unsigned long ul;
-    char *tok;
-    char *ep;
-
-    tok = strtok(s, ".");
-    if (tok == NULL) {
-        return -1;
-    }
-
-    ul = strtoul(tok, &ep, 16);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT8_MAX) {
-        return -1;
-    }
-    out_ver->iv_major = ul;
-
-    tok = strtok(NULL, ".");
-    if (tok == NULL) {
-        return -1;
-    }
-
-    ul = strtoul(tok, &ep, 16);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT8_MAX) {
-        return -1;
-    }
-    out_ver->iv_minor = ul;
-
-    tok = strtok(NULL, ".");
-    if (tok == NULL) {
-        return -1;
-    }
-
-    ul = strtoul(tok, &ep, 16);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT16_MAX) {
-        return -1;
-    }
-    out_ver->iv_revision = ul;
-
-    tok = strtok(NULL, ".");
-    if (tok == NULL) {
-        return -1;
-    }
-    ul = strtoul(tok, &ep, 16);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT32_MAX) {
-        return -1;
-    }
-    out_ver->iv_build_num = ul;
-
-    return 0;
 }
 
 static int
@@ -149,7 +97,7 @@ main(int argc, char **argv)
         return 1;
     }
 
-    rc = parse_ver(&hdr.ih_ver, argv[3]);
+    rc = imgr_ver_parse(argv[3], &hdr.ih_ver);
     if (rc != 0) {
         print_usage(stderr);
         return 1;
