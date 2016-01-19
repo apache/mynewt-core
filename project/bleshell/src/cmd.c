@@ -39,6 +39,34 @@ cmd_exec(struct cmd_entry *cmds, int argc, char **argv)
     return 0;
 }
 
+static void
+cmd_print_chr(struct bleshell_chr *chr)
+{
+    console_printf("        def_handle=%d val_handle=%d properties=0x%02x "
+                   "uuid=",
+                   chr->chr.decl_handle, chr->chr.value_handle,
+                   chr->chr.properties);
+    print_uuid(chr->chr.uuid128);
+    console_printf("\n");
+}
+
+static void
+cmd_print_svc(struct bleshell_svc *svc, int print_chrs)
+{
+    struct bleshell_chr *chr;
+
+    console_printf("    start=%d end=%d uuid=", svc->svc.start_handle,
+                   svc->svc.end_handle);
+    print_uuid(svc->svc.uuid128);
+    console_printf("\n");
+
+    if (print_chrs) {
+        STAILQ_FOREACH(chr, &svc->chrs, next) {
+            cmd_print_chr(chr);
+        }
+    }
+}
+
 /*****************************************************************************
  * $advertise                                                                *
  *****************************************************************************/
@@ -166,6 +194,38 @@ cmd_conn(int argc, char **argv)
  *****************************************************************************/
 
 static int
+cmd_disc_all_chrs(int argc, char **argv)
+{
+    uint16_t start_handle;
+    uint16_t conn_handle;
+    uint16_t end_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn");
+    if (conn_handle == -1) {
+        return -1;
+    }
+
+    start_handle = parse_arg_uint16("start");
+    if (start_handle == -1) {
+        return -1;
+    }
+
+    end_handle = parse_arg_uint16("end");
+    if (end_handle == -1) {
+        return -1;
+    }
+
+    rc = bleshell_disc_all_chrs(conn_handle, start_handle, end_handle);
+    if (rc != 0) {
+        console_printf("error discovering services; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
 cmd_disc_svc(int argc, char **argv)
 {
     int conn_handle;
@@ -186,6 +246,7 @@ cmd_disc_svc(int argc, char **argv)
 }
 
 static struct cmd_entry cmd_disc_entries[] = {
+    { "all_chrs", cmd_disc_all_chrs },
     { "svc", cmd_disc_svc },
     { NULL, NULL }
 };
@@ -213,6 +274,28 @@ cmd_show_addr(int argc, char **argv)
     console_printf("myaddr=");
     print_addr(g_dev_addr);
     console_printf("\n");
+
+    return 0;
+}
+
+static int
+cmd_show_chr(int argc, char **argv)
+{
+    struct bleshell_conn *conn;
+    struct bleshell_svc *svc;
+    int i;
+
+    for (i = 0; i < bleshell_num_conns; i++) {
+        conn = bleshell_conns + i;
+
+        console_printf("CONNECTION: handle=%d addr=", conn->handle);
+        print_addr(conn->addr);
+        console_printf("\n");
+
+        STAILQ_FOREACH(svc, &conn->svcs, next) {
+            cmd_print_svc(svc, 1);
+        }
+    }
 
     return 0;
 }
@@ -249,10 +332,7 @@ cmd_show_svc(int argc, char **argv)
         console_printf("\n");
 
         STAILQ_FOREACH(svc, &conn->svcs, next) {
-            console_printf("    start=%d end=%d uuid=", svc->svc.start_handle,
-                           svc->svc.end_handle);
-            print_uuid(svc->svc.uuid128);
-            console_printf("\n");
+            cmd_print_svc(svc, 0);
         }
     }
 
@@ -261,6 +341,7 @@ cmd_show_svc(int argc, char **argv)
 
 static struct cmd_entry cmd_show_entries[] = {
     { "addr", cmd_show_addr },
+    { "chr", cmd_show_chr },
     { "conn", cmd_show_conn },
     { "svc", cmd_show_svc },
     { NULL, NULL }

@@ -39,7 +39,7 @@
 #define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3) 
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(256))
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(384))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 /* For LED toggling */
@@ -69,10 +69,11 @@ struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* BLESHELL variables */
-#define BLESHELL_STACK_SIZE             (256)
+#define BLESHELL_STACK_SIZE             (128)
 #define BLESHELL_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
-#define BLESHELL_MAX_SVCS               16
+#define BLESHELL_MAX_SVCS               8
+#define BLESHELL_MAX_CHRS               8
 
 uint32_t g_next_os_time;
 int g_bleshell_state;
@@ -91,6 +92,9 @@ int bleshell_num_conns;
 
 static void *bleshell_svc_mem;
 static struct os_mempool bleshell_svc_pool;
+
+static void *bleshell_chr_mem;
+static struct os_mempool bleshell_chr_pool;
 
 static int
 bleshell_conn_find_idx(uint16_t handle)
@@ -178,9 +182,59 @@ bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
     }
 
     svc->svc = *gatt_svc;
+    STAILQ_INIT(&svc->chrs);
+
     STAILQ_INSERT_TAIL(&conn->svcs, svc, next);
 
     return svc;
+}
+
+static struct bleshell_svc *
+bleshell_svc_find(struct bleshell_conn *conn, uint16_t svc_start_handle)
+{
+    struct bleshell_svc *svc;
+
+    STAILQ_FOREACH(svc, &conn->svcs, next) {
+        if (svc->svc.start_handle == svc_start_handle) {
+            return svc;
+        }
+    }
+
+    return NULL;
+}
+
+static struct bleshell_chr *
+bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
+                 struct ble_gatt_chr *gatt_chr)
+{
+    struct bleshell_conn *conn;
+    struct bleshell_svc *svc;
+    struct bleshell_chr *chr;
+
+    conn = bleshell_conn_find(conn_handle);
+    if (conn == NULL) {
+        console_printf("RECEIVED SERVICE FOR UNKNOWN CONNECTION; HANDLE=%d\n",
+                       conn_handle);
+        return NULL;
+    }
+
+    svc = bleshell_svc_find(conn, svc_start_handle);
+    if (svc == NULL) {
+        console_printf("CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
+                       conn_handle);
+        return NULL;
+    }
+
+    chr = os_memblock_get(&bleshell_chr_pool);
+    if (chr == NULL) {
+        console_printf("OOM WHILE DISCOVERING CHARACTERISTIC\n");
+        return NULL;
+    }
+
+    chr->chr = *gatt_chr;
+    STAILQ_INSERT_TAIL(&svc->chrs, chr, next);
+
+    return chr;
 }
 
 static int
@@ -193,6 +247,27 @@ bleshell_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
                        error->att_handle);
     } else if (service != NULL) {
         bleshell_svc_add(conn_handle, service);
+    } else {
+        /* Service discovery complete. */
+    }
+
+    return 0;
+}
+
+int
+bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
+                   struct ble_gatt_chr *chr, void *arg)
+{
+    intmax_t *svc_start_handle;
+
+    svc_start_handle = arg;
+
+    if (error != NULL) {
+        console_printf("ERROR DISCOVERING CHARACTERISTIC: conn_handle=%d "
+                       "status=%d att_handle=%d\n",
+                       conn_handle, error->status, error->att_handle);
+    } else if (chr != NULL) {
+        bleshell_chr_add(conn_handle, *svc_start_handle, chr);
     } else {
         /* Service discovery complete. */
     }
@@ -228,6 +303,19 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
 
         break;
     }
+}
+
+int
+bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
+                       uint16_t end_handle)
+{
+    intmax_t svc_start_handle;
+    int rc;
+
+    svc_start_handle = start_handle;
+    rc = ble_gattc_disc_all_chrs(conn_handle, start_handle, end_handle,
+                                 bleshell_on_disc_c, &svc_start_handle);
+    return rc;
 }
 
 int
@@ -358,6 +446,15 @@ main(void)
     rc = os_mempool_init(&bleshell_svc_pool, BLESHELL_MAX_SVCS,
                          sizeof (struct bleshell_svc), bleshell_svc_mem,
                          "bleshell_svc_pool");
+    assert(rc == 0);
+
+    bleshell_chr_mem = malloc(
+        OS_MEMPOOL_BYTES(BLESHELL_MAX_CHRS, sizeof (struct bleshell_chr)));
+    assert(bleshell_chr_mem != NULL);
+
+    rc = os_mempool_init(&bleshell_chr_pool, BLESHELL_MAX_CHRS,
+                         sizeof (struct bleshell_chr), bleshell_chr_mem,
+                         "bleshell_chr_pool");
     assert(rc == 0);
 
     os_task_init(&bleshell_task, "bleshell", bleshell_task_handler,

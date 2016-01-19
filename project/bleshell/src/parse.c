@@ -97,7 +97,7 @@ parse_arg_find(char *key)
 }
 
 int
-parse_arg_int(char *name)
+parse_arg_int_bounds(char *name, int min, int max)
 {
     char *endptr;
     char *sval;
@@ -110,12 +110,25 @@ parse_arg_int(char *name)
 
     lval = strtol(sval, &endptr, 0);
     if (sval[0] != '\0' && *endptr == '\0' &&
-        lval >= INT_MIN && lval <= INT_MAX) {
+        lval >= min && lval <= max) {
 
         return lval;
     }
 
     return -1;
+
+}
+
+int
+parse_arg_int(char *name)
+{
+    return parse_arg_int_bounds(name, INT_MIN, INT_MAX);
+}
+
+uint16_t
+parse_arg_uint16(char *name)
+{
+    return parse_arg_int_bounds(name, 0, UINT16_MAX);
 }
 
 int
