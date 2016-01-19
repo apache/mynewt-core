@@ -138,9 +138,10 @@ json_target_address(const struct json_attr_t *cursor,
 }
 
 static int 
-json_internal_read_object(const char *cp, const struct json_attr_t *attrs, 
-        const struct json_array_t *parent, int offset, const char **end)
+json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attrs, 
+        const struct json_array_t *parent, int offset)
 {
+    char c;
     enum { 
         init, await_attr, in_attr, await_value, in_val_string,
         in_escape, in_val_token, post_val, post_array
@@ -160,11 +161,6 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
     memset(valbuf, '\0', sizeof(valbuf));
     memset(attrbuf, '\0', sizeof(attrbuf));
 #endif /* S_SPLINT_S */
-
-    if (end != NULL) { 
-        /* give it a well-defined value on parse failure */
-        *end = NULL; 
-    }
 
     /* stuff fields with defaults in case they're omitted in the JSON input */
     for (cursor = attrs; cursor->attribute != NULL; cursor++) {
@@ -207,35 +203,26 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
     }
 
     /* parse input JSON */
-    for (; *cp != '\0'; cp++) {
+    for (c = jb->jb_read_next(jb); c != '\0'; c = jb->jb_read_next(jb)) {
         switch (state) {
         case init:
-            if (isspace((unsigned char) *cp)) {
+            if (isspace((unsigned char) c)) {
                 continue;
-            } else if (*cp == '{') {
+            } else if (c == '{') {
                 state = await_attr;
             } else {
-                if (end != NULL) {
-                    *end = cp;
-                }
                 return JSON_ERR_OBSTART;
             }
             break;
         case await_attr:
-            if (isspace((unsigned char) *cp)) {
+            if (isspace((unsigned char) c)) {
                 continue;
-            } else if (*cp == '"') {
+            } else if (c == '"') {
                 state = in_attr;
                 pattr = attrbuf;
-                if (end != NULL) {
-                    *end = cp;
-                }
-            } else if (*cp == '}') {
+            } else if (c == '}') {
                 break;
             } else {
-                if (end != NULL) {
-                    *end = cp;
-                }
                 return JSON_ERR_ATTRSTART;
             }
             break;
@@ -244,7 +231,7 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 /* don't update end here, leave at attribute start */
                 return JSON_ERR_NULLPTR;
             }
-            if (*cp == '"') {
+            if (c == '"') {
                 *pattr++ = '\0';
                 for (cursor = attrs; cursor->attribute != NULL; cursor++) {
                     if (strcmp(cursor->attribute, attrbuf) == 0) {
@@ -270,30 +257,25 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 /* don't update end here, leave at attribute start */
                 return JSON_ERR_ATTRLEN;
             } else {
-                *pattr++ = *cp;
+                *pattr++ = c;
             }
             break;
         case await_value:
-            if (isspace((unsigned char) *cp) || *cp == ':') {
+            if (isspace((unsigned char) c) || c == ':') {
                 continue;
-            } else if (*cp == '[') {
+            } else if (c == '[') {
                 if (cursor->type != t_array) {
-                    if (end != NULL) {
-                        *end = cp;
-                    }
                     return JSON_ERR_NOARRAY;
                 }
-                substatus = json_read_array(cp, &cursor->addr.array, &cp);
+                c = jb->jb_read_prev(jb);
+                substatus = json_read_array(jb, &cursor->addr.array);
                 if (substatus != 0) {
                     return substatus;
                 }
                 state = post_array;
             } else if (cursor->type == t_array) {
-                if (end != NULL) {
-                    *end = cp;
-                }
                 return JSON_ERR_NOBRAK;
-            } else if (*cp == '"') {
+            } else if (c == '"') {
                 value_quoted = true;
                 state = in_val_string;
                 pval = valbuf;
@@ -301,7 +283,7 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 value_quoted = false;
                 state = in_val_token;
                 pval = valbuf;
-                *pval++ = *cp;
+                *pval++ = c;
             }
             break;
         case in_val_string:
@@ -309,9 +291,9 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 /* don't update end here, leave at value start */
                 return JSON_ERR_NULLPTR;
             }
-            if (*cp == '\\') {
+            if (c == '\\') {
                 state = in_escape;
-            } else if (*cp == '"') {
+            } else if (c == '"') {
                 *pval++ = '\0';
                 state = post_val;
             } else if (pval > valbuf + JSON_VAL_MAX - 1
@@ -319,7 +301,7 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 /* don't update end here, leave at value start */
                 return JSON_ERR_STRLONG;        /*  */
             } else {
-                *pval++ = *cp;
+                *pval++ = c;
             }
             break;
         case in_escape:
@@ -327,7 +309,7 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 /* don't update end here, leave at value start */
                 return JSON_ERR_NULLPTR;
             }
-            switch (*cp) {
+            switch (c) {
             case 'b':
                 *pval++ = '\b';
                 break;
@@ -344,15 +326,17 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 *pval++ = '\t';
                 break;
             case 'u':
-                for (n = 0; n < 4 && cp[n] != '\0'; n++) {
-                    uescape[n] = *cp++;
+                for (n = 0; n < 4 && c != '\0'; n++) {
+                    uescape[n] = c;
+                    c = jb->jb_read_next(jb);
                 }
-                --cp;
+                // Scroll back one
+                c = jb->jb_read_prev(jb);
                 (void)sscanf(uescape, "%04x", &u);
                 *pval++ = (char)u;        /* will truncate values above 0xff */
                 break;
             default:                /* handles double quote and solidus */
-                *pval++ = *cp;
+                *pval++ = c;
                 break;
             }
             state = in_val_string;
@@ -362,17 +346,17 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
                 /* don't update end here, leave at value start */
                 return JSON_ERR_NULLPTR;
             }
-            if (isspace((unsigned char) *cp) || *cp == ',' || *cp == '}') {
+            if (isspace((unsigned char) c) || c == ',' || c == '}') {
                 *pval = '\0';
                 state = post_val;
-                if (*cp == '}' || *cp == ',') {
-                    --cp;
+                if (c == '}' || c == ',') {
+                    c = jb->jb_read_prev(jb);
                 }
             } else if (pval > valbuf + JSON_VAL_MAX - 1) {
                 /* don't update end here, leave at value start */
                 return JSON_ERR_TOKLONG;
             } else {
-                *pval++ = *cp;
+                *pval++ = c;
             }
             break;
         case post_val:
@@ -486,17 +470,14 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
             }
             /*@fallthrough@*/
         case post_array:
-            if (isspace((unsigned char) *cp)) {
+            if (isspace((unsigned char) c)) {
                 continue;
-            } else if (*cp == ',') {
+            } else if (c == ',') {
                 state = await_attr;
-            } else if (*cp == '}') {
-                ++cp;
+            } else if (c == '}') {
+                c = jb->jb_read_next(jb);
                 goto good_parse;
             } else {
-                if (end != NULL) {
-                    *end = cp;
-                }
                 return JSON_ERR_BADTRAIL;
             }
             break;
@@ -505,45 +486,34 @@ json_internal_read_object(const char *cp, const struct json_attr_t *attrs,
 
   good_parse:
     /* in case there's another object following, consume trailing WS */
-    while (isspace((unsigned char) *cp)) {
-        ++cp;
-    }
-    if (end != NULL) {
-        *end = cp;
+    while (isspace((unsigned char) jb->jb_read_next(jb))) {
     }
     return 0;
 }
 
 int 
-json_read_array(const char *cp, const struct json_array_t *arr, 
-        const char **end)
+json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
 {
+    char valbuf[64];
+    char c;
     int substatus, offset, arrcount;
     char *tp;
+    int n, count;
 
-    if (end != NULL) {
-        /* give it a well-defined value on parse failure */
-        *end = NULL;
+    for (c = jb->jb_read_next(jb); isspace(c); c = jb->jb_read_next(jb)) {
     }
 
-    while (isspace((unsigned char) *cp)) {
-        cp++;
-    }
-
-    if (*cp != '[') {
+    if (c != '[') {
         return JSON_ERR_ARRAYSTART;
-    } else {
-        cp++;
-    }
+    } 
 
     tp = arr->arr.strings.store;
     arrcount = 0;
 
-    /* Check for empty array */
-    while (isspace((unsigned char) *cp)) {
-        cp++;
+    for (c = jb->jb_read_next(jb); isspace(c); c = jb->jb_read_next(jb)) {
     }
-    if (*cp == ']') {
+
+    if (c == ']') {
         goto breakout;
     }
 
@@ -551,25 +521,26 @@ json_read_array(const char *cp, const struct json_array_t *arr,
         char *ep = NULL;
         switch (arr->element_type) {
         case t_string:
-            if (isspace((unsigned char) *cp)) {
-                cp++;
+            if (isspace((unsigned char) c)) {
+                c = jb->jb_read_next(jb);
             }
-            if (*cp != '"') {
+            if (c != '"') {
                 return JSON_ERR_BADSTRING;
             } else {
-                ++cp;
+                c = jb->jb_read_next(jb);
             }
             arr->arr.strings.ptrs[offset] = tp;
             for (; tp - arr->arr.strings.store < arr->arr.strings.storelen;
                  tp++) {
-                if (*cp == '"') {
-                    ++cp;
+                if (c == '"') {
+                    c = jb->jb_read_next(jb);
                     *tp++ = '\0';
                     goto stringend;
-                } else if (*cp == '\0') {
+                } else if (c == '\0') {
                     return JSON_ERR_BADSTRING;
                 } else {
-                    *tp = *cp++;
+                    *tp = c;
+                    c = jb->jb_read_next(jb);
                 }
             }
             return JSON_ERR_BADSTRING;
@@ -578,47 +549,71 @@ json_read_array(const char *cp, const struct json_array_t *arr,
         case t_object:
         case t_structobject:
             substatus =
-                json_internal_read_object(cp, arr->arr.objects.subtype, arr,
-                                          offset, &cp);
+                json_internal_read_object(jb, arr->arr.objects.subtype, arr,
+                                          offset);
             if (substatus != 0) {
-                if (end != NULL) {
-                    end = &cp;
-                }
                 return substatus;
             }
             break;
         case t_integer:
-            arr->arr.integers.store[offset] = (int)strtol(cp, &ep, 0);
-            if (ep == cp) {
+            n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
+            valbuf[n] = '\0';
+
+            arr->arr.integers.store[offset] = (int)strtol(valbuf, &ep, 0);
+            if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
-                cp = ep;
+                count = ep - valbuf;
+                while (count-- > 0) {
+                    c = jb->jb_read_next(jb);
+                }
             }
             break;
         case t_uinteger:
-            arr->arr.uintegers.store[offset] = (unsigned int)strtoul(cp, &ep, 0);
-            if (ep == cp) {
+            n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
+            valbuf[n] = '\0';
+
+            arr->arr.uintegers.store[offset] = (unsigned int)strtoul(valbuf, &ep, 0);
+            if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
-                cp = ep;
+                count = ep - valbuf;
+                while (count-- > 0) {
+                    c = jb->jb_read_next(jb);
+                }
             }
             break;
         case t_real:
-            arr->arr.reals.store[offset] = strtod(cp, &ep);
-            if (ep == cp) {
+            n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
+            valbuf[n] = '\0';
+
+            arr->arr.reals.store[offset] = strtod(valbuf, &ep);
+            if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
-                cp = ep;
+                count = ep - valbuf;
+                while (count-- > 0) {
+                    c = jb->jb_read_next(jb);
+                }
             }
             break;
         case t_boolean:
-            if (strncmp(cp, "true", 4) == 0) {
+            n = jb->jb_readn(jb, valbuf, 5);
+            valbuf[n] = '\0';
+
+            if (strncmp(valbuf, "true", 4) == 0) {
                 arr->arr.booleans.store[offset] = true;
-                cp += 4;
+                count = 4;
+                while (count-- > 0) {
+                    c = jb->jb_read_next(jb);
+                }
             }
-            else if (strncmp(cp, "false", 5) == 0) {
+            else if (strncmp(valbuf, "false", 5) == 0) {
                 arr->arr.booleans.store[offset] = false;
-                cp += 5;
+                count = 5;
+                while (count-- > 0) {
+                    c = jb->jb_read_next(jb);
+                }
             }
             break;
         case t_character:
@@ -628,38 +623,31 @@ json_read_array(const char *cp, const struct json_array_t *arr,
             return JSON_ERR_SUBTYPE;
         }
         arrcount++;
-        if (isspace((unsigned char) *cp)) {
-            cp++;
+        if (isspace((unsigned char) c)) {
+            c = jb->jb_read_next(jb);
         }
-        if (*cp == ']') {
+        if (c == ']') {
             goto breakout;
-        } else if (*cp == ',') {
-            cp++;
+        } else if (c == ',') {
+            c = jb->jb_read_next(jb);
         } else {
             return JSON_ERR_BADSUBTRAIL;
         }
-    }
-    if (end != NULL) {
-        *end = cp;
     }
     return JSON_ERR_SUBTOOLONG;
   breakout:
     if (arr->count != NULL) {
         *(arr->count) = arrcount;
     }
-    if (end != NULL) {
-        *end = cp;
-    }
     return 0;
 }
 
 int 
-json_read_object(const char *cp, const struct json_attr_t *attrs, 
-        const char **end)
+json_read_object(struct json_buffer *jb, const struct json_attr_t *attrs)
 {
     int st;
 
-    st = json_internal_read_object(cp, attrs, NULL, 0, end);
+    st = json_internal_read_object(jb, attrs, NULL, 0);
     return st;
 }
 

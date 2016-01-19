@@ -17,6 +17,7 @@
 #ifndef _NEWTMGR_H_
 #define _NEWTMGR_H_
 
+#include <json/json.h> 
 #include <inttypes.h>
 #include <os/os.h>
 
@@ -45,6 +46,21 @@ struct nmgr_hdr {
     uint16_t nh_group;
     uint16_t nh_id;
 };
+
+struct nmgr_jbuf {
+    /* json_buffer must be first element in the structure */
+    struct json_buffer njb_buf;
+    struct json_encoder njb_enc;
+    struct os_mbuf *njb_m;
+    struct nmgr_hdr *njb_hdr;
+    uint16_t njb_off;
+    uint16_t njb_end;
+};
+int nmgr_jbuf_init(struct nmgr_jbuf *njb);
+int nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m, uint16_t off, 
+        uint16_t len);
+int nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
+        struct os_mbuf *m);
 
 typedef int (*nmgr_handler_func_t)(struct nmgr_hdr *nmr, struct os_mbuf *req, 
         uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);

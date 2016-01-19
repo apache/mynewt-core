@@ -34,12 +34,8 @@
 
 
 int 
-json_encode_object_start(struct json_encoder *encoder, void *buf, 
-        json_write_func_t wf)
+json_encode_object_start(struct json_encoder *encoder)
 {
-    encoder->je_write = wf;
-    encoder->je_arg = buf;
-
     JSON_ENCODE_OBJECT_START(encoder);
 
     return (0);
@@ -68,6 +64,7 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
             encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
             break;
         case JSON_VALUE_TYPE_STRING:
+            encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
             for (i = 0; i < jv->jv_len; i++) {
                 switch (jv->jv_val.str[i]) {
                     case '"':
@@ -106,6 +103,7 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
                 }
 
             }
+            encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
             break;
         case JSON_VALUE_TYPE_ARRAY:
             JSON_ENCODE_ARRAY_START(encoder);

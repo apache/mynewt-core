@@ -69,7 +69,7 @@ struct json_value {
 
 #define JSON_VALUE_STRINGN(__jv, __str, __len) \
     (__jv)->jv_type = JSON_VALUE_TYPE_STRING;  \
-    (__jv)->jv_len = __len;                    \
+    (__jv)->jv_len = (uint16_t) (__len);                    \
     (__jv)->jv_val.str = (__str);
 
 #define JSON_VALUE_BOOL(__jv, __v)            \
@@ -97,7 +97,7 @@ struct json_encoder {
 
 #define JSON_NITEMS(x) (int)(sizeof(x)/sizeof(x[0]))
 
-int json_encode_object_start(struct json_encoder *, void *, json_write_func_t);
+int json_encode_object_start(struct json_encoder *);
 int json_encode_object_entry(struct json_encoder *, char *, 
         struct json_value *);
 int json_encode_object_finish(struct json_encoder *);
@@ -178,11 +178,22 @@ struct json_attr_t {
     bool nodefault;
 };
 
+struct json_buffer;
+typedef char (*json_buffer_read_next_byte_t)(struct json_buffer *);
+typedef char (*json_buffer_read_prev_byte_t)(struct json_buffer *);
+typedef int (*json_buffer_readn_t)(struct json_buffer *, char *buf, int n);
+
+struct json_buffer {
+    json_buffer_readn_t jb_readn;
+    json_buffer_read_next_byte_t jb_read_next;
+    json_buffer_read_prev_byte_t jb_read_prev;
+};
+
 #define JSON_ATTR_MAX        31        /* max chars in JSON attribute name */
 #define JSON_VAL_MAX        512        /* max chars in JSON value part */
 
-int json_read_object(const char *, const struct json_attr_t *, const char **);
-int json_read_array(const char *, const struct json_array_t *, const char **);
+int json_read_object(struct json_buffer *, const struct json_attr_t *);
+int json_read_array(struct json_buffer *, const struct json_array_t *);
 
 #define JSON_ERR_OBSTART     1   /* non-WS when expecting object start */
 #define JSON_ERR_ATTRSTART   2   /* non-WS when expecting attrib start */
