@@ -22,10 +22,20 @@
 #define IMGMGR_NMGR_OP_BOOT	2
 
 #define IMGMGR_NMGR_MAX_MSG	120
+#define IMGMGR_NMGR_MAX_VER	25	/* 255.255.65535.4294967295\0 */
 
 int imgmgr_module_init(void);
 
 struct image_version;
+
+/*
+ * Parse version string in src, and fill in ver.
+ */
 int imgr_ver_parse(char *src, struct image_version *ver);
+
+/*
+ * Take version and convert it to string in dst.
+ */
+int imgr_ver_str(struct image_version *ver, char *dst);
 
 #endif /* _IMGMGR_H */

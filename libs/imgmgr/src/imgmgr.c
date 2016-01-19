@@ -19,7 +19,6 @@
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
-#include <stdio.h>
 #include <hal/flash_map.h>
 #include <newtmgr/newtmgr.h>
 #include <json/json.h>
@@ -52,8 +51,6 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
         .nh_read = imgr_boot_read,
         .nh_write = imgr_boot_write
     }
-#else
-    goob
 #endif
 };
 
@@ -103,102 +100,43 @@ imgr_read_ver(int area_id, struct image_version *ver)
     return rc;
 }
 
-int
-imgr_ver_parse(char *src, struct image_version *ver)
-{
-    unsigned long ul;
-    char *tok;
-    char *nxt;
-    char *ep;
-
-    memset(ver, 0, sizeof(*ver));
-
-    nxt = src;
-    tok = strsep(&nxt, ".");
-    ul = strtoul(tok, &ep, 10);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT8_MAX) {
-        return -1;
-    }
-    ver->iv_major = ul;
-    if (nxt == NULL) {
-        return 0;
-    }
-    tok = strsep(&nxt, ".");
-    ul = strtoul(tok, &ep, 10);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT8_MAX) {
-        return -1;
-    }
-    ver->iv_minor = ul;
-    if (nxt == NULL) {
-        return 0;
-    }
-
-    tok = strsep(&nxt, ".");
-    ul = strtoul(tok, &ep, 10);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT16_MAX) {
-        return -1;
-    }
-    ver->iv_revision = ul;
-    if (nxt == NULL) {
-        return 0;
-    }
-
-    tok = nxt;
-    ul = strtoul(tok, &ep, 10);
-    if (tok[0] == '\0' || ep[0] != '\0' || ul > UINT32_MAX) {
-        return -1;
-    }
-    ver->iv_build_num = ul;
-
-    return 0;
-}
-
-int
-imgr_ver_jsonstr(char *dst, int dstlen, char *key, struct image_version *ver)
-{
-    int off = 0;
-
-    if (key) {
-        off = snprintf(dst, dstlen, "\"%s\":", key);
-    }
-    if (ver->iv_build_num) {
-        off += snprintf(dst + off, dstlen - off, "\"%u.%u.%u.%lu\"",
-          ver->iv_major, ver->iv_minor, ver->iv_revision,
-          (unsigned long)ver->iv_build_num);
-    } else {
-        off += snprintf(dst + off, dstlen - off, "\"%u.%u.%u\"",
-          ver->iv_major, ver->iv_minor, ver->iv_revision);
-    }
-    return off;
-}
-
 static int
 imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
   struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
     struct image_version ver;
-    char str[128];
-    int off;
-    int rc;
     int i;
-    int put_comma = 0;
+    int rc;
+    struct json_encoder *enc;
+    struct json_value array;
+    struct json_value versions[4];
+    struct json_value *version_ptrs[4];
+    char vers_str[4][IMGMGR_NMGR_MAX_VER];
+    int ver_len;
+    int cnt = 0;
 
-    off = snprintf(str, sizeof(str), "{\"images\":[");
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
         rc = imgr_read_ver(i, &ver);
         if (rc < 0) {
             continue;
         }
-        if (put_comma) {
-            off += snprintf(str + off, sizeof(str) - off, ",");
-        }
-        put_comma = 1;
-        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, NULL, &ver);
+        ver_len = imgr_ver_str(&ver, vers_str[cnt]);
+        JSON_VALUE_STRINGN(&versions[cnt], vers_str[cnt], ver_len);
+        version_ptrs[cnt] = &versions[cnt];
+        cnt++;
     }
-    off += snprintf(str + off, sizeof(str) - off, "]}");
+    array.jv_type = JSON_VALUE_TYPE_ARRAY;
+    array.jv_len = cnt;
+    array.jv_val.composite.values = version_ptrs;
 
-    rc = nmgr_rsp_extend(rsp_hdr, rsp, str, off);
-    return rc;
+    enc = &nmgr_task_jbuf.njb_enc;
+    nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+
+    json_encode_object_start(enc);
+    json_encode_object_entry(enc, "images", &array);
+    json_encode_object_finish(enc);
+
+    return 0;
 }
 
 static int
@@ -213,7 +151,6 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
   struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
-    char json_data[32 + sizeof(img_data)];
     unsigned int off = UINT_MAX;
     const struct json_attr_t off_attr[3] = {
         [0] = {
@@ -230,20 +167,18 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         }
     };
     struct image_version ver;
+    struct json_encoder *enc;
+    struct json_value jv;
     int active;
     int best;
     int rc;
     int len;
     int i;
 
-    len = min(nmr->nh_len, sizeof(json_data));
+    nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
+      nmr->nh_len);
 
-    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), len, json_data);
-    if (rc) {
-        return OS_EINVAL;
-    }
-
-    rc = json_read_object(json_data, off_attr, NULL);
+    rc = json_read_object(&nmgr_task_jbuf.njb_buf, off_attr);
     if (rc || off == UINT_MAX) {
         return OS_EINVAL;
     }
@@ -326,13 +261,16 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         img_state.upload.off += len;
     }
 out:
-    off = snprintf(json_data, sizeof(json_data),
-      "{\"off\":%u}", img_state.upload.off);
-    rc = nmgr_rsp_extend(rsp_hdr, rsp, json_data, off);
-    if (rc != 0) {
-        return OS_ENOMEM;
-    }
-    return rc;
+    enc = &nmgr_task_jbuf.njb_enc;
+    nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+
+    json_encode_object_start(enc);
+
+    JSON_VALUE_UINT(&jv, img_state.upload.off);
+    json_encode_object_entry(enc, "off", &jv);
+    json_encode_object_finish(enc);
+
+    return 0;
 }
 
 int

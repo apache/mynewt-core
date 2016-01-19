@@ -67,57 +67,56 @@ imgr_write_file(const char *path, struct image_version *ver)
     return fsutil_write_file(path, ver, sizeof(*ver));
 }
 
+static void
+imgr_ver_jsonstr(struct json_encoder *enc, char *key,
+  struct image_version *ver)
+{
+    struct json_value jv;
+    char ver_str[IMGMGR_NMGR_MAX_VER];
+    int ver_len;
+
+    ver_len = imgr_ver_str(ver, ver_str);
+    JSON_VALUE_STRINGN(&jv, ver_str, ver_len);
+    json_encode_object_entry(enc, key, &jv);
+}
+
 int
 imgr_boot_read(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
     int rc;
-    int prev_set = 0;
+    struct json_encoder *enc;
     struct image_version ver;
-    char str[128];
-    int off;
 
-    off = snprintf(str, sizeof(str), "{");
+    enc = &nmgr_task_jbuf.njb_enc;
+    nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+
+    json_encode_object_start(enc);
+
     rc = imgr_read_test(&ver);
     if (!rc) {
-        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, "test", &ver);
-        prev_set = 1;
+        imgr_ver_jsonstr(enc, "test", &ver);
     }
 
     rc = imgr_read_main(&ver);
     if (!rc) {
-        if (prev_set) {
-            off += snprintf(str + off, sizeof(str) - off, ",");
-        }
-        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, "main", &ver);
-        prev_set = 1;
+        imgr_ver_jsonstr(enc, "main", &ver);
     }
 
     rc = imgr_read_ver(bsp_imgr_current_slot(), &ver);
     if (!rc) {
-        if (prev_set) {
-            off += snprintf(str + off, sizeof(str) - off, ",");
-        }
-        off += imgr_ver_jsonstr(str + off, sizeof(str) - off, "active", &ver);
+        imgr_ver_jsonstr(enc, "active", &ver);
     }
 
-    off += snprintf(str + off, sizeof(str) - off, "}");
-
-    rc = nmgr_rsp_extend(rsp_hdr, rsp, str, off);
-    if (rc) {
-        goto err;
-    }
+    json_encode_object_finish(enc);
 
     return 0;
-err:
-    return rc;
 }
 
 int
 imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
   uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
-    char incoming[64];
     char test_ver_str[28];
     const struct json_attr_t boot_write_attr[2] = {
         [0] = {
@@ -131,18 +130,12 @@ imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
         }
     };
     int rc;
-    const char *end;
     struct image_version ver;
 
-    if (nmr->nh_len > sizeof(incoming)) {
-        return OS_EINVAL;
-    }
-    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), nmr->nh_len, incoming);
-    if (rc) {
-        return OS_EINVAL;
-    }
+    nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
+      nmr->nh_len);
 
-    rc = json_read_object(incoming, boot_write_attr, &end);
+    rc = json_read_object(&nmgr_task_jbuf.njb_buf, boot_write_attr);
     if (rc) {
         return OS_EINVAL;
     }
