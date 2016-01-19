@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <errno.h>
+#include <assert.h>
 #include "console/console.h"
 #include "host/ble_uuid.h"
 #include "bleshell_priv.h"
@@ -96,8 +98,8 @@ parse_arg_find(char *key)
     return NULL;
 }
 
-int
-parse_arg_int_bounds(char *name, int min, int max)
+long
+parse_arg_long_bounds(char *name, long min, long max, int *out_status)
 {
     char *endptr;
     char *sval;
@@ -105,30 +107,32 @@ parse_arg_int_bounds(char *name, int min, int max)
 
     sval = parse_arg_find(name);
     if (sval == NULL) {
-        return -1;
+        *out_status = ENOENT;
+        return 0;
     }
 
     lval = strtol(sval, &endptr, 0);
     if (sval[0] != '\0' && *endptr == '\0' &&
         lval >= min && lval <= max) {
 
+        *out_status = 0;
         return lval;
     }
 
-    return -1;
-
+    *out_status = EINVAL;
+    return 0;
 }
 
-int
-parse_arg_int(char *name)
+long
+parse_arg_long(char *name, int *out_status)
 {
-    return parse_arg_int_bounds(name, INT_MIN, INT_MAX);
+    return parse_arg_long_bounds(name, LONG_MIN, LONG_MAX, out_status);
 }
 
 uint16_t
-parse_arg_uint16(char *name)
+parse_arg_uint16(char *name, int *out_status)
 {
-    return parse_arg_int_bounds(name, 0, UINT16_MAX);
+    return parse_arg_long_bounds(name, 0, UINT16_MAX, out_status);
 }
 
 int
@@ -139,35 +143,54 @@ parse_arg_kv(char *name, struct kv_pair *kvs)
 
     sval = parse_arg_find(name);
     if (sval == NULL) {
-        return -1;
+        return ENOENT;
     }
 
     kv = parse_kv_find(kvs, sval);
     if (kv == NULL) {
-        return -1;
+        return EINVAL;
     }
 
     return kv->val;
 }
 
-int
-parse_arg_mac(char *name, uint8_t *dst)
+static int
+parse_arg_byte_stream_no_delim(char *sval, uint8_t *dst, int len)
+{
+    unsigned long ul;
+    char *endptr;
+    char buf[3];
+    int i;
+
+    buf[2] = '\0';
+    for (i = 0; i < len; i++) {
+        buf[0] = sval[i * 2 + 0];
+        buf[1] = sval[i * 2 + 1];
+
+        ul = strtoul(buf, &endptr, 16);
+        if (*sval == '\0' || *endptr != '\0') {
+            return EINVAL;
+        }
+
+        assert(ul <= UINT8_MAX);
+        dst[i] = ul;
+    }
+
+    return 0;
+}
+
+static int
+parse_arg_byte_stream_delim(char *sval, uint8_t *dst, int len, char *delims)
 {
     unsigned long ul;
     char *endptr;
     char *token;
-    char *sval;
     int i;
 
-    sval = parse_arg_find(name);
-    if (sval == NULL) {
-        return -1;
-    }
-
-    token = strtok(sval, ":");
-    for (i = 0; i < 6; i++) {
+    token = strtok(sval, delims);
+    for (i = 0; i < len; i++) {
         if (token == NULL) {
-            return -1;
+            return EINVAL;
         }
 
         ul = strtoul(token, &endptr, 16);
@@ -177,7 +200,7 @@ parse_arg_mac(char *name, uint8_t *dst)
 
         dst[i] = ul;
 
-        token = strtok(NULL, ":");
+        token = strtok(NULL, delims);
     }
 
     if (token != NULL) {
@@ -185,6 +208,54 @@ parse_arg_mac(char *name, uint8_t *dst)
     }
 
     return 0;
+}
+
+int
+parse_arg_byte_stream(char *name, uint8_t *dst, int len)
+{
+    char *sval;
+
+    sval = parse_arg_find(name);
+    if (sval == NULL) {
+        return EINVAL;
+    }
+
+    if (strlen(sval) == len * 2) {
+        return parse_arg_byte_stream_no_delim(sval, dst, len);
+    } else {
+        return parse_arg_byte_stream_delim(sval, dst, len, ":-");
+    }
+}
+
+int
+parse_arg_mac(char *name, uint8_t *dst)
+{
+    return parse_arg_byte_stream(name, dst, 6);
+}
+
+int
+parse_arg_uuid(char *name, uint8_t *dst_uuid128)
+{
+    uint16_t uuid16;
+    int rc;
+
+    uuid16 = parse_arg_uint16(name, &rc);
+    switch (rc) {
+    case ENOENT:
+        return ENOENT;
+
+    case 0:
+        rc = ble_uuid_16_to_128(uuid16, dst_uuid128);
+        if (rc != 0) {
+            return EINVAL;
+        } else {
+            return 0;
+        }
+
+    default:
+        rc = parse_arg_byte_stream(name, dst_uuid128, 16);
+        return rc;
+    }
 }
 
 int

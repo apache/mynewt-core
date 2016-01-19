@@ -51,11 +51,13 @@ void print_uuid(void *uuid128);
 struct cmd_entry *parse_cmd_find(struct cmd_entry *cmds, char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
 char *parse_arg_find(char *key);
-int parse_arg_int_bounds(char *name, int min, int max);
-int parse_arg_int(char *name);
-uint16_t parse_arg_uint16(char *name);
+long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
+long parse_arg_long(char *name, int *staus);
+uint16_t parse_arg_uint16(char *name, int *status);
 int parse_arg_kv(char *name, struct kv_pair *kvs);
+int parse_arg_byte_stream(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);
+int parse_arg_uuid(char *name, uint8_t *dst_uuid128);
 int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
@@ -63,6 +65,8 @@ void periph_init(void);
 int bleshell_disc_svcs(uint16_t conn_handle);
 int bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
+int bleshell_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
+                               uint16_t end_handle, uint8_t *uuid128);
 int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr);

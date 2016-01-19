@@ -194,29 +194,38 @@ cmd_conn(int argc, char **argv)
  *****************************************************************************/
 
 static int
-cmd_disc_all_chrs(int argc, char **argv)
+cmd_disc_chr(int argc, char **argv)
 {
     uint16_t start_handle;
     uint16_t conn_handle;
     uint16_t end_handle;
+    uint8_t uuid128[16];
     int rc;
 
-    conn_handle = parse_arg_uint16("conn");
-    if (conn_handle == -1) {
-        return -1;
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
     }
 
-    start_handle = parse_arg_uint16("start");
-    if (start_handle == -1) {
-        return -1;
+    start_handle = parse_arg_uint16("start", &rc);
+    if (rc != 0) {
+        return rc;
     }
 
-    end_handle = parse_arg_uint16("end");
-    if (end_handle == -1) {
-        return -1;
+    end_handle = parse_arg_uint16("end", &rc);
+    if (rc != 0) {
+        return rc;
     }
 
-    rc = bleshell_disc_all_chrs(conn_handle, start_handle, end_handle);
+    rc = parse_arg_uuid("uuid", uuid128);
+    if (rc == 0) {
+        rc = bleshell_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
+                                        uuid128);
+    } else if (rc == ENOENT) {
+        rc = bleshell_disc_all_chrs(conn_handle, start_handle, end_handle);
+    } else  {
+        return rc;
+    }
     if (rc != 0) {
         console_printf("error discovering services; rc=%d\n", rc);
         return rc;
@@ -231,9 +240,9 @@ cmd_disc_svc(int argc, char **argv)
     int conn_handle;
     int rc;
 
-    conn_handle = parse_arg_int("conn");
-    if (conn_handle == -1) {
-        return -1;
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
     }
 
     rc = bleshell_disc_svcs(conn_handle);
@@ -246,7 +255,7 @@ cmd_disc_svc(int argc, char **argv)
 }
 
 static struct cmd_entry cmd_disc_entries[] = {
-    { "all_chrs", cmd_disc_all_chrs },
+    { "chr", cmd_disc_chr },
     { "svc", cmd_disc_svc },
     { NULL, NULL }
 };

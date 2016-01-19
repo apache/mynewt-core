@@ -163,6 +163,20 @@ bleshell_conn_delete_idx(int idx)
 }
 
 static struct bleshell_svc *
+bleshell_svc_find(struct bleshell_conn *conn, uint16_t svc_start_handle)
+{
+    struct bleshell_svc *svc;
+
+    STAILQ_FOREACH(svc, &conn->svcs, next) {
+        if (svc->svc.start_handle == svc_start_handle) {
+            return svc;
+        }
+    }
+
+    return NULL;
+}
+
+static struct bleshell_svc *
 bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
 {
     struct bleshell_conn *conn;
@@ -173,6 +187,12 @@ bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
         console_printf("RECEIVED SERVICE FOR UNKNOWN CONNECTION; HANDLE=%d\n",
                        conn_handle);
         return NULL;
+    }
+
+    svc = bleshell_svc_find(conn, gatt_svc->start_handle);
+    if (svc != NULL) {
+        /* Service already discovered. */
+        return svc;
     }
 
     svc = os_memblock_get(&bleshell_svc_pool);
@@ -189,19 +209,21 @@ bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
     return svc;
 }
 
-static struct bleshell_svc *
-bleshell_svc_find(struct bleshell_conn *conn, uint16_t svc_start_handle)
+static struct bleshell_chr *
+bleshell_chr_find(struct bleshell_conn *conn, struct bleshell_svc *svc,
+                  uint16_t chr_def_handle)
 {
-    struct bleshell_svc *svc;
+    struct bleshell_chr *chr;
 
-    STAILQ_FOREACH(svc, &conn->svcs, next) {
-        if (svc->svc.start_handle == svc_start_handle) {
-            return svc;
+    STAILQ_FOREACH(chr, &svc->chrs, next) {
+        if (chr->chr.decl_handle == chr_def_handle) {
+            return chr;
         }
     }
 
     return NULL;
 }
+
 
 static struct bleshell_chr *
 bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
@@ -223,6 +245,12 @@ bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
         console_printf("CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
                        conn_handle);
         return NULL;
+    }
+
+    chr = bleshell_chr_find(conn, svc, gatt_chr->decl_handle);
+    if (chr != NULL) {
+        /* Characteristic already discovered. */
+        return chr;
     }
 
     chr = os_memblock_get(&bleshell_chr_pool);
@@ -315,6 +343,20 @@ bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_all_chrs(conn_handle, start_handle, end_handle,
                                  bleshell_on_disc_c, &svc_start_handle);
+    return rc;
+}
+
+int
+bleshell_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
+                           uint16_t end_handle, uint8_t *uuid128)
+{
+    intmax_t svc_start_handle;
+    int rc;
+
+    svc_start_handle = start_handle;
+    rc = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
+                                     uuid128, bleshell_on_disc_c,
+                                     &svc_start_handle);
     return rc;
 }
 
