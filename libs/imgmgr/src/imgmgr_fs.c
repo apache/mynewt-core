@@ -122,7 +122,7 @@ imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
     const struct json_attr_t boot_write_attr[2] = {
         [0] = {
             .attribute = "test",
-            .type = JSON_VALUE_TYPE_STRING,
+            .type = t_string,
             .addr.string = test_ver_str,
             .len = sizeof(test_ver_str),
         },

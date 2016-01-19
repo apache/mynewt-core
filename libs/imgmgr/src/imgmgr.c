@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <hal/flash_map.h>
 #include <newtmgr/newtmgr.h>
+#include <json/json.h>
+#include <util/base64.h>
 
 #include <bootutil/image.h>
 
@@ -210,8 +212,23 @@ static int
 imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
   struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
-    char img_data[IMGMGR_NMGR_MAX_MSG];
-    struct imgmgr_upload_cmd *iuc;
+    char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
+    char json_data[32 + sizeof(img_data)];
+    unsigned int off = UINT_MAX;
+    const struct json_attr_t off_attr[3] = {
+        [0] = {
+            .attribute = "off",
+            .type = t_uinteger,
+            .addr.uinteger = &off,
+            .nodefault = true
+        },
+        [1] = {
+            .attribute = "data",
+            .type = t_string,
+            .addr.string = img_data,
+            .len = sizeof(img_data)
+        }
+    };
     struct image_version ver;
     int active;
     int best;
@@ -219,17 +236,26 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
     int len;
     int i;
 
-    len = min(nmr->nh_len, sizeof(img_data));
+    len = min(nmr->nh_len, sizeof(json_data));
 
-    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), len, img_data);
-    if (rc || len < sizeof(*iuc)) {
+    rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), len, json_data);
+    if (rc) {
         return OS_EINVAL;
     }
-    len -= sizeof(*iuc);
 
-    iuc = (struct imgmgr_upload_cmd *)img_data;
-    iuc->iuc_off = ntohl(iuc->iuc_off);
-    if (iuc->iuc_off == 0) {
+    rc = json_read_object(json_data, off_attr, NULL);
+    if (rc || off == UINT_MAX) {
+        return OS_EINVAL;
+    }
+    len = strlen(img_data);
+    if (len) {
+        len = base64_decode(img_data, img_data);
+        if (len < 0) {
+            return OS_EINVAL;
+        }
+    }
+
+    if (off == 0) {
         /*
          * New upload.
          */
@@ -284,7 +310,7 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
             assert(0);
             goto out;
         }
-    } else if (iuc->iuc_off != img_state.upload.off) {
+    } else if (off != img_state.upload.off) {
         /*
          * Invalid offset. Drop the data, and respond with the offset we're
          * expecting data for.
@@ -292,14 +318,17 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         rc = 0;
         goto out;
     }
-    rc = flash_area_write(img_state.upload.fa, img_state.upload.off,
-      iuc + 1, len);
-    assert(rc == 0);
-    img_state.upload.off += len;
 
+    if (len) {
+        rc = flash_area_write(img_state.upload.fa, img_state.upload.off,
+          img_data, len);
+        assert(rc == 0);
+        img_state.upload.off += len;
+    }
 out:
-    iuc->iuc_off = htonl(img_state.upload.off);
-    rc = nmgr_rsp_extend(rsp_hdr, rsp, img_data, sizeof(*iuc));
+    off = snprintf(json_data, sizeof(json_data),
+      "{\"off\":%u}", img_state.upload.off);
+    rc = nmgr_rsp_extend(rsp_hdr, rsp, json_data, off);
     if (rc != 0) {
         return OS_ENOMEM;
     }

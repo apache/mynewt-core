@@ -30,7 +30,7 @@ struct imgmgr_upload_cmd {
 /*
  * Response to list:
  * {
- *      "list":[ <version1>, <version2>]
+ *      "images":[ <version1>, <version2>]
  * }
  *
  *
@@ -44,6 +44,17 @@ struct imgmgr_upload_cmd {
  *	"test":<version>,
  *	"main":<version>,
  *      "active":<version>
+ * }
+ *
+ * Request to upload:
+ * {
+ *      "off":<offset>,
+ *      "data":<base64encoded binary>
+ * }
+ *
+ * Response to upload:
+ * {
+ *      "off":<offset
  * }
  */
 
