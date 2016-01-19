@@ -37,6 +37,7 @@ int
 json_encode_object_start(struct json_encoder *encoder)
 {
     JSON_ENCODE_OBJECT_START(encoder);
+    encoder->je_has_objects = 0;
 
     return (0);
 }
@@ -112,7 +113,9 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
                 if (rc != 0) {
                     goto err;
                 }
-                encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+                if (i != jv->jv_len - 1) {
+                    encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+                }
             }
             JSON_ENCODE_ARRAY_END(encoder);
             break;
@@ -146,6 +149,9 @@ json_encode_object_entry(struct json_encoder *encoder, char *key,
 {
     int rc;
 
+    if (encoder->je_has_objects) {
+        encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+    }
     /* Write the key entry */
     encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
     encoder->je_write(encoder->je_arg, key, strlen(key));
@@ -155,7 +161,7 @@ json_encode_object_entry(struct json_encoder *encoder, char *key,
     if (rc != 0) {
         goto err;
     }
-    encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+    encoder->je_has_objects = 1;
 
     return (0);
 err:
