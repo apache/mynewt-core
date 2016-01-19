@@ -30,6 +30,8 @@
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
 #include "controller/ble_ll_conn.h"
+#include "controller/ble_ll_scan.h"
+#include "controller/ble_ll_adv.h"
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -51,7 +53,7 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (16)
+#define MBUF_NUM_MBUFS      (20)
 #define MBUF_BUF_SIZE       \
     ((BLE_LL_CFG_ACL_DATA_PKT_LEN + sizeof(struct hci_data_hdr) + 3) & 0xFFFC)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
@@ -66,23 +68,25 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
-#define BLETEST_CFG_ADV_ITVL            (500000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_SCAN_WINDOW         (650000 / BLE_HCI_SCAN_ITVL)
+#define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_ITVL           (1000)  /* 1250 msecs */           
+#define BLETEST_CFG_CONN_ITVL           (1000)  /* in 1.25 msec increments */           
 #define BLETEST_CFG_SLAVE_LATENCY       (0)
 #define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 10 seconds */
-#define BLETEST_CFG_MIN_CE_LEN          (1000)    
-#define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL * 2)
+#define BLETEST_CFG_MIN_CE_LEN          (6)    
+#define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
+#define BLETEST_CFG_CONCURRENT_CONNS    (8)
 
 /* BLETEST variables */
+#define BLETEST_PKT_SIZE                (128)
 #define BLETEST_STACK_SIZE              (256)
 #define BLETEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
 uint32_t g_next_os_time;
@@ -92,8 +96,11 @@ struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
 os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
-#define BLETEST_PKT_SIZE                (128)
+uint8_t g_bletest_current_conns;
+uint8_t g_bletest_cur_peer_addr[BLE_DEV_ADDR_LEN];
+uint8_t g_last_handle_used;
 
+#if 0
 void
 bletest_inc_adv_pkt_num(void)
 {
@@ -121,6 +128,13 @@ bletest_inc_adv_pkt_num(void)
         host_hci_outstanding_opcode = 0;
     }
 }
+#else
+void
+bletest_inc_adv_pkt_num(void)
+{
+    return;
+}
+#endif
 
 /**
  * Sets the advertising data to be sent in advertising pdu's which contain
@@ -173,12 +187,16 @@ bletest_set_adv_data(uint8_t *dptr)
     return len;
 }
 
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
 void
 bletest_init_advertising(void)
 {
     int rc;
     uint8_t adv_len;
     struct hci_adv_params adv;
+
+    /* Just zero out advertising */
+    memset(&adv, 0, sizeof(struct hci_adv_params));
 
     /* Set advertising parameters */
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
@@ -188,22 +206,21 @@ bletest_init_advertising(void)
     adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
     if ((adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) ||
         (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD)) {
-        adv.peer_addr[0] = 0x00;
-        adv.peer_addr[1] = 0x00;
-        adv.peer_addr[2] = 0x00;
-        adv.peer_addr[3] = 0x99;
-        adv.peer_addr[4] = 0x99;
-        adv.peer_addr[5] = 0x09;
+        memcpy(adv.peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
         adv_len = 0;
     } else {
         adv_len = bletest_set_adv_data(&g_host_adv_data[0]);
     }
 
+    console_printf("Trying to connect to %x.%x.%x.%x.%x.%x\n",
+                   adv.peer_addr[0], adv.peer_addr[1], adv.peer_addr[2],
+                   adv.peer_addr[3], adv.peer_addr[4], adv.peer_addr[5]);
+
     if (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) {
         adv.adv_itvl_min = 0;
         adv.adv_itvl_max = 0;
     } else {
-        adv.adv_itvl_min = BLE_HCI_ADV_ITVL_NONCONN_MIN;
+        adv.adv_itvl_min = BLETEST_CFG_ADV_ITVL;
         adv.adv_itvl_max = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
     }
 
@@ -224,6 +241,7 @@ bletest_init_advertising(void)
         host_hci_outstanding_opcode = 0;
     }
 }
+#endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
 void
@@ -256,6 +274,28 @@ bletest_init_scanner(void)
         host_hci_outstanding_opcode = 0;
     }
 }
+
+void
+bletest_execute(void)
+{
+    int rc;
+
+    /* Enable scanning */
+    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+        if (g_bletest_state) {
+            rc = host_hci_cmd_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
+            assert(rc == 0);
+            host_hci_outstanding_opcode = 0;
+            g_bletest_state = 0;
+        } else {
+            rc = host_hci_cmd_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
+            assert(rc == 0);
+            host_hci_outstanding_opcode = 0;
+            g_bletest_state = 1;
+        }
+        g_next_os_time += (OS_TICKS_PER_SEC * 60);
+    }
+}
 #endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
@@ -276,19 +316,47 @@ bletest_init_initiator(void)
     hcc->scan_itvl = BLETEST_CFG_SCAN_ITVL;
     hcc->scan_window = BLETEST_CFG_SCAN_WINDOW;
     hcc->peer_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
-    hcc->peer_addr[0] = 0x00;
-    hcc->peer_addr[1] = 0x00;
-    hcc->peer_addr[2] = 0x00;
-    hcc->peer_addr[3] = 0x88;
-    hcc->peer_addr[4] = 0x88;
-    hcc->peer_addr[5] = 0x08;
+    memcpy(hcc->peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
     hcc->own_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
     hcc->min_ce_len = BLETEST_CFG_MIN_CE_LEN;
     hcc->max_ce_len = BLETEST_CFG_MAX_CE_LEN;
 
+    console_printf("Trying to connect to %x.%x.%x.%x.%x.%x\n",
+                   hcc->peer_addr[0], hcc->peer_addr[1], hcc->peer_addr[2],
+                   hcc->peer_addr[3], hcc->peer_addr[4], hcc->peer_addr[5]);
+
     rc = host_hci_cmd_le_create_connection(hcc);
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
+}
+
+void
+bletest_execute(void)
+{
+    uint16_t handle;
+
+    /* 
+     * Determine if there is an active connection for the current handle
+     * we are trying to create. If so, start looking for the next one
+     */
+    if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
+        handle = g_bletest_current_conns + 1;
+        if (ble_ll_conn_find_active_conn(handle)) {
+            /* Scanning better be stopped! */
+            assert(ble_ll_scan_enabled() == 0);
+
+            /* Add to current connections */
+            ++g_bletest_current_conns;
+
+            /* Move to next connection */
+            if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
+                /* restart initiating */
+                g_bletest_cur_peer_addr[5] += 1;
+                g_dev_addr[5] += 1;
+                bletest_init_initiator();
+            }
+        }
+    }
 }
 #endif
 
@@ -303,19 +371,18 @@ bletest_get_packet(void)
     struct os_mbuf *om;
 
     om = NULL;
-    if (g_mbuf_pool.omp_pool->mp_num_free >= (MBUF_NUM_MBUFS / 2)) {
+    if (g_mbuf_pool.omp_pool->mp_num_free >= 5) {
         ble_get_packet(om);
     }
     return om;
 }
-#endif
 
+#if 0
 void
 bletest_execute(void)
 {
     int rc;
 
-#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     int i;
     uint16_t pktlen;
     uint16_t handle;
@@ -334,7 +401,8 @@ bletest_execute(void)
             connsm = ble_ll_conn_find_active_conn(handle);
             if (connsm) {
                 /* Set connection end time */
-                g_bletest_conn_end = os_time_get() + (OS_TICKS_PER_SEC * 17);
+                g_bletest_conn_end = os_time_get() + 
+                    (OS_TICKS_PER_SEC * (60 * 15));
                 g_bletest_state = 2;
             }
         } else if (g_bletest_state == 2) {
@@ -381,29 +449,87 @@ bletest_execute(void)
         }
         g_next_os_time += OS_TICKS_PER_SEC;
     }
+}
+#else
+void
+bletest_execute(void)
+{
+    int i,j;
+    int rc;
+    uint16_t handle;
+    uint16_t pktlen;
+    struct os_mbuf *om;
+
+    /* See if we should start advertising again */
+    if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
+        handle = g_bletest_current_conns + 1;
+        if (ble_ll_conn_find_active_conn(handle)) {
+            /* advertising better be stopped! */
+            assert(ble_ll_adv_enabled() == 0);
+
+            /* Add to current connections */
+            ++g_bletest_current_conns;
+
+            /* Move to next connection */
+            if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
+                /* restart initiating */
+                g_bletest_cur_peer_addr[5] += 1;
+                g_dev_addr[5] += 1;
+                bletest_init_advertising();
+                rc = host_hci_cmd_le_set_adv_enable(1);
+                host_hci_outstanding_opcode = 0;
+                assert(rc == 0);
+            }
+        }
+    }
+
+    /* See if it is time to hand a data packet to the connection */
+    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+        if (g_bletest_current_conns) {
+            for (i = 0; i < g_bletest_current_conns; ++i) {
+                if ((g_last_handle_used == 0) || 
+                    (g_last_handle_used >= g_bletest_current_conns)) {
+                    g_last_handle_used = 1;
+                }
+                handle = g_last_handle_used;
+                if (ble_ll_conn_find_active_conn(handle)) {
+                    om = bletest_get_packet();
+                    if (om) {
+                        /* set payload length */
+                        pktlen = BLETEST_PKT_SIZE;
+                        om->om_len = BLETEST_PKT_SIZE + 4;
+
+                        /* Put the HCI header in the mbuf */
+                        htole16(om->om_data, handle);
+                        htole16(om->om_data + 2, om->om_len);
+
+                        /* Place L2CAP header in packet */
+                        htole16(om->om_data + 4, pktlen);
+                        om->om_data[6] = 0;
+                        om->om_data[7] = 0;
+
+                        /* Fill with incrementing pattern (starting from 1) */
+                        for (j = 0; j < pktlen; ++j) {
+                            om->om_data[8 + j] = (uint8_t)(j + 1);
+                        }
+
+                        /* Add length */
+                        om->om_len += 4;
+                        OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
+                        ble_hci_transport_host_acl_data_send(om);
+
+                        /* Increment last handle used */
+                        ++g_last_handle_used;
+                    }
+                }
+            }
+        }
+        g_next_os_time += OS_TICKS_PER_SEC;
+    }
+}
 #endif
 
-#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
-    /* Enable scanning */
-    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-        if (g_bletest_state) {
-            rc = host_hci_cmd_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
-            assert(rc == 0);
-            host_hci_outstanding_opcode = 0;
-            g_bletest_state = 0;
-        } else {
-            rc = host_hci_cmd_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
-            assert(rc == 0);
-            host_hci_outstanding_opcode = 0;
-            g_bletest_state = 1;
-        }
-        g_next_os_time += (OS_TICKS_PER_SEC * 60);
-    }
 #endif
-#if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
-    (void)rc;
-#endif
-}
 
 /**
  * Callback when BLE test timer expires. 
@@ -486,6 +612,13 @@ bletest_task_handler(void *arg)
     g_bletest_state = 0;
     g_next_os_time = os_time_get();
 
+    /* Begin advertising if we are an advertiser */
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+    rc = host_hci_cmd_le_set_adv_enable(1);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+#endif
+
     bletest_timer_cb(NULL);
 
     while (1) {
@@ -557,6 +690,7 @@ main(void)
 
     rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS, 
             MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
+    assert(rc == 0);
 
     rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE, 
                            MBUF_NUM_MBUFS);
@@ -570,6 +704,13 @@ main(void)
     g_dev_addr[3] = 0x88;
     g_dev_addr[4] = 0x88;
     g_dev_addr[5] = 0x08;
+
+    g_bletest_cur_peer_addr[0] = 0x00;
+    g_bletest_cur_peer_addr[1] = 0x00;
+    g_bletest_cur_peer_addr[2] = 0x00;
+    g_bletest_cur_peer_addr[3] = 0x99;
+    g_bletest_cur_peer_addr[4] = 0x99;
+    g_bletest_cur_peer_addr[5] = 0x09;
 #else
     g_dev_addr[0] = 0x00;
     g_dev_addr[1] = 0x00;
@@ -577,6 +718,13 @@ main(void)
     g_dev_addr[3] = 0x99;
     g_dev_addr[4] = 0x99;
     g_dev_addr[5] = 0x09;
+
+    g_bletest_cur_peer_addr[0] = 0x00;
+    g_bletest_cur_peer_addr[1] = 0x00;
+    g_bletest_cur_peer_addr[2] = 0x00;
+    g_bletest_cur_peer_addr[3] = 0x88;
+    g_bletest_cur_peer_addr[4] = 0x88;
+    g_bletest_cur_peer_addr[5] = 0x08;
 #endif
 
     /* 
