@@ -1,0 +1,8 @@
+project.name: bleshell
+project.eggs: 
+    - libs/os 
+    - net/nimble/controller
+    - net/nimble/host
+    - libs/console/full
+    - libs/shell
+    - libs/baselibc
