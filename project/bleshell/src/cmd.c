@@ -61,10 +61,34 @@ cmd_print_svc(struct bleshell_svc *svc, int print_chrs)
     console_printf("\n");
 
     if (print_chrs) {
-        STAILQ_FOREACH(chr, &svc->chrs, next) {
+        SLIST_FOREACH(chr, &svc->chrs, next) {
             cmd_print_chr(chr);
         }
     }
+}
+
+static int
+cmd_parse_conn_start_end(uint16_t *out_conn, uint16_t *out_start,
+                         uint16_t *out_end)
+{
+    int rc;
+
+    *out_conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    *out_start = parse_arg_uint16("start", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    *out_end = parse_arg_uint16("end", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 /*****************************************************************************
@@ -202,17 +226,7 @@ cmd_disc_chr(int argc, char **argv)
     uint8_t uuid128[16];
     int rc;
 
-    conn_handle = parse_arg_uint16("conn", &rc);
-    if (rc != 0) {
-        return rc;
-    }
-
-    start_handle = parse_arg_uint16("start", &rc);
-    if (rc != 0) {
-        return rc;
-    }
-
-    end_handle = parse_arg_uint16("end", &rc);
+    rc = cmd_parse_conn_start_end(&conn_handle, &start_handle, &end_handle);
     if (rc != 0) {
         return rc;
     }
@@ -237,6 +251,7 @@ cmd_disc_chr(int argc, char **argv)
 static int
 cmd_disc_svc(int argc, char **argv)
 {
+    uint8_t uuid128[16];
     int conn_handle;
     int rc;
 
@@ -245,7 +260,15 @@ cmd_disc_svc(int argc, char **argv)
         return rc;
     }
 
-    rc = bleshell_disc_svcs(conn_handle);
+    rc = parse_arg_uuid("uuid", uuid128);
+    if (rc == 0) {
+        rc = bleshell_disc_svc_by_uuid(conn_handle, uuid128);
+    } else if (rc == ENOENT) {
+        rc = bleshell_disc_svcs(conn_handle);
+    } else  {
+        return rc;
+    }
+
     if (rc != 0) {
         console_printf("error discovering services; rc=%d\n", rc);
         return rc;
@@ -266,6 +289,50 @@ cmd_disc(int argc, char **argv)
     int rc;
 
     rc = cmd_exec(cmd_disc_entries, argc, argv);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
+ * $find                                                                     *
+ *****************************************************************************/
+
+static int
+cmd_find_inc_svcs(int argc, char **argv)
+{
+    uint16_t start_handle;
+    uint16_t conn_handle;
+    uint16_t end_handle;
+    int rc;
+
+    rc = cmd_parse_conn_start_end(&conn_handle, &start_handle, &end_handle);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_find_inc_svcs(conn_handle, start_handle, end_handle);
+    if (rc != 0) {
+        console_printf("error finding included services; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static struct cmd_entry cmd_find_entries[] = {
+    { "inc_svcs", cmd_find_inc_svcs },
+    { NULL, NULL }
+};
+
+static int
+cmd_find(int argc, char **argv)
+{
+    int rc;
+
+    rc = cmd_exec(cmd_find_entries, argc, argv);
     if (rc != 0) {
         return rc;
     }
@@ -301,7 +368,7 @@ cmd_show_chr(int argc, char **argv)
         print_addr(conn->addr);
         console_printf("\n");
 
-        STAILQ_FOREACH(svc, &conn->svcs, next) {
+        SLIST_FOREACH(svc, &conn->svcs, next) {
             cmd_print_svc(svc, 1);
         }
     }
@@ -340,7 +407,7 @@ cmd_show_svc(int argc, char **argv)
         print_addr(conn->addr);
         console_printf("\n");
 
-        STAILQ_FOREACH(svc, &conn->svcs, next) {
+        SLIST_FOREACH(svc, &conn->svcs, next) {
             cmd_print_svc(svc, 0);
         }
     }
@@ -400,6 +467,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "adv", cmd_adv },
     { "conn", cmd_conn },
     { "disc", cmd_disc },
+    { "find", cmd_find },
     { "show", cmd_show },
     { "set", cmd_set },
     { NULL, NULL }

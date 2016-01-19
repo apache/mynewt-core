@@ -13,38 +13,48 @@ static int
 periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
                union ble_gatt_access_ctxt *ctxt, void *arg);
 
-static const struct ble_gatt_svc_def periph_svcs[] = { {
-    /*** Service 0x1234. */
-    .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid128 = BLE_UUID16(PERIPH_SVC1_UUID),
-    .characteristics = (struct ble_gatt_chr_def[]) { {
-        /*** Characteristic 0x1111. */
-        .uuid128 = BLE_UUID16(PERIPH_CHR1_UUID),
-        .access_cb = periph_gatt_cb,
-        .flags = 0,
-    }, {
-        /*** Characteristic 0x1112. */
-        .uuid128 = BLE_UUID16(PERIPH_CHR2_UUID),
-        .access_cb = periph_gatt_cb,
-        .flags = 0,
-    }, {
-        .uuid128 = NULL, /* No more characteristics in this service. */
-    } },
-}, {
-    /*** Service 0x5678. */
-    .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid128 = BLE_UUID16(PERIPH_SVC2_UUID),
-    .characteristics = (struct ble_gatt_chr_def[]) { {
-        /*** Characteristic 0x5555. */
-        .uuid128 = BLE_UUID16(PERIPH_CHR3_UUID),
-        .access_cb = periph_gatt_cb,
-        .flags = 0,
-    }, {
-        .uuid128 = NULL, /* No more characteristics in this service. */
-    } },
-}, {
-    .type = BLE_GATT_SVC_TYPE_END, /* No more services. */
-}, };
+static const struct ble_gatt_svc_def periph_svcs[] = {
+    [0] = {
+        /*** Service 0x1234. */
+        .type = BLE_GATT_SVC_TYPE_SECONDARY,
+        .uuid128 = BLE_UUID16(PERIPH_SVC1_UUID),
+        .characteristics = (struct ble_gatt_chr_def[]) { {
+            /*** Characteristic 0x1111. */
+            .uuid128 = BLE_UUID16(PERIPH_CHR1_UUID),
+            .access_cb = periph_gatt_cb,
+            .flags = 0,
+        }, {
+            /*** Characteristic 0x1112. */
+            .uuid128 = BLE_UUID16(PERIPH_CHR2_UUID),
+            .access_cb = periph_gatt_cb,
+            .flags = 0,
+        }, {
+            .uuid128 = NULL, /* No more characteristics in this service. */
+        } },
+    },
+
+    [1] = {
+        /*** Service 0x5678. */
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid128 = BLE_UUID16(PERIPH_SVC2_UUID),
+        .includes = (const struct ble_gatt_svc_def *[]) {
+            &periph_svcs[0],
+            NULL,
+        },
+        .characteristics = (struct ble_gatt_chr_def[]) { {
+            /*** Characteristic 0x5555. */
+            .uuid128 = BLE_UUID16(PERIPH_CHR3_UUID),
+            .access_cb = periph_gatt_cb,
+            .flags = 0,
+        }, {
+            .uuid128 = NULL, /* No more characteristics in this service. */
+        } },
+    },
+
+    {
+        .type = BLE_GATT_SVC_TYPE_END, /* No more services. */
+    },
+};
 
 static int
 periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,

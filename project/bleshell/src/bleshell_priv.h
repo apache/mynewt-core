@@ -20,20 +20,20 @@ struct kv_pair {
 };
 
 struct bleshell_chr {
-    STAILQ_ENTRY(bleshell_chr) next;
+    SLIST_ENTRY(bleshell_chr) next;
     struct ble_gatt_chr chr;
 };
 
-STAILQ_HEAD(bleshell_chr_list, bleshell_chr);
+SLIST_HEAD(bleshell_chr_list, bleshell_chr);
 
 struct bleshell_svc {
-    STAILQ_ENTRY(bleshell_svc) next;
+    SLIST_ENTRY(bleshell_svc) next;
     struct ble_gatt_service svc;
 
     struct bleshell_chr_list chrs;
 };
 
-STAILQ_HEAD(bleshell_svc_list, bleshell_svc);
+SLIST_HEAD(bleshell_svc_list, bleshell_svc);
 
 struct bleshell_conn {
     uint16_t handle;
@@ -63,10 +63,13 @@ int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
 void periph_init(void);
 int bleshell_disc_svcs(uint16_t conn_handle);
+int bleshell_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128);
 int bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bleshell_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                                uint16_t end_handle, uint8_t *uuid128);
+int bleshell_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
+                           uint16_t end_handle);
 int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr);

@@ -136,7 +136,7 @@ bleshell_conn_add(struct ble_gap_conn_desc *desc)
     conn->handle = desc->conn_handle;
     conn->addr_type = desc->peer_addr_type;
     memcpy(conn->addr, desc->peer_addr, 6);
-    STAILQ_INIT(&conn->svcs);
+    SLIST_INIT(&conn->svcs);
 
     return conn;
 }
@@ -151,8 +151,8 @@ bleshell_conn_delete_idx(int idx)
     assert(idx >= 0 && idx < bleshell_num_conns);
 
     conn = bleshell_conns + idx;
-    while ((svc = STAILQ_FIRST(&conn->svcs)) != NULL) {
-        STAILQ_REMOVE_HEAD(&conn->svcs, next);
+    while ((svc = SLIST_FIRST(&conn->svcs)) != NULL) {
+        SLIST_REMOVE_HEAD(&conn->svcs, next);
         os_memblock_put(&bleshell_svc_pool, svc);
     }
 
@@ -163,23 +163,52 @@ bleshell_conn_delete_idx(int idx)
 }
 
 static struct bleshell_svc *
-bleshell_svc_find(struct bleshell_conn *conn, uint16_t svc_start_handle)
+bleshell_svc_find_prev(struct bleshell_conn *conn, uint16_t svc_start_handle)
 {
+    struct bleshell_svc *prev;
     struct bleshell_svc *svc;
 
-    STAILQ_FOREACH(svc, &conn->svcs, next) {
-        if (svc->svc.start_handle == svc_start_handle) {
-            return svc;
+    prev = NULL;
+    SLIST_FOREACH(svc, &conn->svcs, next) {
+        if (svc->svc.start_handle >= svc_start_handle) {
+            break;
         }
+
+        prev = svc;
     }
 
-    return NULL;
+    return prev;
+}
+
+static struct bleshell_svc *
+bleshell_svc_find(struct bleshell_conn *conn, uint16_t svc_start_handle,
+                  struct bleshell_svc **out_prev)
+{
+    struct bleshell_svc *prev;
+    struct bleshell_svc *svc;
+
+    prev = bleshell_svc_find_prev(conn, svc_start_handle);
+    if (prev == NULL) {
+        svc = SLIST_FIRST(&conn->svcs);
+    } else {
+        svc = SLIST_NEXT(prev, next);
+    }
+
+    if (svc != NULL && svc->svc.start_handle != svc_start_handle) {
+        svc = NULL;
+    }
+
+    if (out_prev != NULL) {
+        *out_prev = prev;
+    }
+    return svc;
 }
 
 static struct bleshell_svc *
 bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
 {
     struct bleshell_conn *conn;
+    struct bleshell_svc *prev;
     struct bleshell_svc *svc;
 
     conn = bleshell_conn_find(conn_handle);
@@ -189,7 +218,7 @@ bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
         return NULL;
     }
 
-    svc = bleshell_svc_find(conn, gatt_svc->start_handle);
+    svc = bleshell_svc_find(conn, gatt_svc->start_handle, &prev);
     if (svc != NULL) {
         /* Service already discovered. */
         return svc;
@@ -200,28 +229,60 @@ bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
         console_printf("OOM WHILE DISCOVERING SERVICE\n");
         return NULL;
     }
+    memset(svc, 0, sizeof *svc);
 
     svc->svc = *gatt_svc;
-    STAILQ_INIT(&svc->chrs);
+    SLIST_INIT(&svc->chrs);
 
-    STAILQ_INSERT_TAIL(&conn->svcs, svc, next);
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&conn->svcs, svc, next);
+    } else {
+        SLIST_NEXT(prev, next) = svc;
+    }
 
     return svc;
 }
 
 static struct bleshell_chr *
-bleshell_chr_find(struct bleshell_conn *conn, struct bleshell_svc *svc,
-                  uint16_t chr_def_handle)
+bleshell_chr_find_prev(struct bleshell_svc *svc, uint16_t chr_def_handle)
 {
+    struct bleshell_chr *prev;
     struct bleshell_chr *chr;
 
-    STAILQ_FOREACH(chr, &svc->chrs, next) {
-        if (chr->chr.decl_handle == chr_def_handle) {
-            return chr;
+    prev = NULL;
+    SLIST_FOREACH(chr, &svc->chrs, next) {
+        if (chr->chr.decl_handle >= chr_def_handle) {
+            break;
         }
+
+        prev = chr;
     }
 
-    return NULL;
+    return prev;
+}
+
+static struct bleshell_chr *
+bleshell_chr_find(struct bleshell_svc *svc, uint16_t chr_def_handle,
+                  struct bleshell_chr **out_prev)
+{
+    struct bleshell_chr *prev;
+    struct bleshell_chr *chr;
+
+    prev = bleshell_chr_find_prev(svc, chr_def_handle);
+    if (prev == NULL) {
+        chr = SLIST_FIRST(&svc->chrs);
+    } else {
+        chr = SLIST_NEXT(prev, next);
+    }
+
+    if (chr != NULL && chr->chr.decl_handle != chr_def_handle) {
+        chr = NULL;
+    }
+
+    if (out_prev != NULL) {
+        *out_prev = prev;
+    }
+    return chr;
 }
 
 
@@ -230,8 +291,9 @@ bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
                  struct ble_gatt_chr *gatt_chr)
 {
     struct bleshell_conn *conn;
-    struct bleshell_svc *svc;
+    struct bleshell_chr *prev;
     struct bleshell_chr *chr;
+    struct bleshell_svc *svc;
 
     conn = bleshell_conn_find(conn_handle);
     if (conn == NULL) {
@@ -240,14 +302,14 @@ bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
         return NULL;
     }
 
-    svc = bleshell_svc_find(conn, svc_start_handle);
+    svc = bleshell_svc_find(conn, svc_start_handle, NULL);
     if (svc == NULL) {
         console_printf("CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
                        conn_handle);
         return NULL;
     }
 
-    chr = bleshell_chr_find(conn, svc, gatt_chr->decl_handle);
+    chr = bleshell_chr_find(svc, gatt_chr->decl_handle, &prev);
     if (chr != NULL) {
         /* Characteristic already discovered. */
         return chr;
@@ -258,9 +320,15 @@ bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
         console_printf("OOM WHILE DISCOVERING CHARACTERISTIC\n");
         return NULL;
     }
+    memset(chr, 0, sizeof *chr);
 
     chr->chr = *gatt_chr;
-    STAILQ_INSERT_TAIL(&svc->chrs, chr, next);
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&svc->chrs, chr, next);
+    } else {
+        SLIST_NEXT(prev, next) = chr;
+    }
 
     return chr;
 }
@@ -366,6 +434,27 @@ bleshell_disc_svcs(uint16_t conn_handle)
     int rc;
 
     rc = ble_gattc_disc_all_svcs(conn_handle, bleshell_on_disc_s, NULL);
+    return rc;
+}
+
+int
+bleshell_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
+{
+    int rc;
+
+    rc = ble_gattc_disc_svc_by_uuid(conn_handle, uuid128,
+                                    bleshell_on_disc_s, NULL);
+    return rc;
+}
+
+int
+bleshell_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
+                       uint16_t end_handle)
+{
+    int rc;
+
+    rc = ble_gattc_find_inc_svcs(conn_handle, start_handle, end_handle,
+                                 bleshell_on_disc_s, NULL);
     return rc;
 }
 
