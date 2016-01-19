@@ -74,6 +74,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 #define BLESHELL_MAX_SVCS               8
 #define BLESHELL_MAX_CHRS               8
+#define BLESHELL_MAX_DSCS               8
 
 uint32_t g_next_os_time;
 int g_bleshell_state;
@@ -95,6 +96,9 @@ static struct os_mempool bleshell_svc_pool;
 
 static void *bleshell_chr_mem;
 static struct os_mempool bleshell_chr_pool;
+
+static void *bleshell_dsc_mem;
+static struct os_mempool bleshell_dsc_pool;
 
 static int
 bleshell_conn_find_idx(uint16_t handle)
@@ -202,6 +206,22 @@ bleshell_svc_find(struct bleshell_conn *conn, uint16_t svc_start_handle,
         *out_prev = prev;
     }
     return svc;
+}
+
+static struct bleshell_svc *
+bleshell_svc_find_range(struct bleshell_conn *conn, uint16_t attr_handle)
+{
+    struct bleshell_svc *svc;
+
+    SLIST_FOREACH(svc, &conn->svcs, next) {
+        if (svc->svc.start_handle <= attr_handle &&
+            svc->svc.end_handle >= attr_handle) {
+
+            return svc;
+        }
+    }
+
+    return NULL;
 }
 
 static struct bleshell_svc *
@@ -333,6 +353,103 @@ bleshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
     return chr;
 }
 
+static struct bleshell_dsc *
+bleshell_dsc_find_prev(struct bleshell_chr *chr, uint16_t dsc_handle)
+{
+    struct bleshell_dsc *prev;
+    struct bleshell_dsc *dsc;
+
+    prev = NULL;
+    SLIST_FOREACH(dsc, &chr->dscs, next) {
+        if (dsc->dsc.handle >= dsc_handle) {
+            break;
+        }
+
+        prev = dsc;
+    }
+
+    return prev;
+}
+
+static struct bleshell_dsc *
+bleshell_dsc_find(struct bleshell_chr *chr, uint16_t dsc_handle,
+                  struct bleshell_dsc **out_prev)
+{
+    struct bleshell_dsc *prev;
+    struct bleshell_dsc *dsc;
+
+    prev = bleshell_dsc_find_prev(chr, dsc_handle);
+    if (prev == NULL) {
+        dsc = SLIST_FIRST(&chr->dscs);
+    } else {
+        dsc = SLIST_NEXT(prev, next);
+    }
+
+    if (dsc != NULL && dsc->dsc.handle != dsc_handle) {
+        dsc = NULL;
+    }
+
+    if (out_prev != NULL) {
+        *out_prev = prev;
+    }
+    return dsc;
+}
+
+static struct bleshell_dsc *
+bleshell_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
+                 struct ble_gatt_dsc *gatt_dsc)
+{
+    struct bleshell_conn *conn;
+    struct bleshell_dsc *prev;
+    struct bleshell_dsc *dsc;
+    struct bleshell_svc *svc;
+    struct bleshell_chr *chr;
+
+    conn = bleshell_conn_find(conn_handle);
+    if (conn == NULL) {
+        console_printf("RECEIVED SERVICE FOR UNKNOWN CONNECTION; HANDLE=%d\n",
+                       conn_handle);
+        return NULL;
+    }
+
+    svc = bleshell_svc_find_range(conn, chr_def_handle);
+    if (svc == NULL) {
+        console_printf("CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
+                       conn_handle);
+        return NULL;
+    }
+
+    chr = bleshell_chr_find(svc, chr_def_handle, NULL);
+    if (chr == NULL) {
+        console_printf("CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
+                       "HANDLE=%d\n", conn_handle);
+        return NULL;
+    }
+
+    dsc = bleshell_dsc_find(chr, gatt_dsc->handle, &prev);
+    if (dsc != NULL) {
+        /* Descriptor already discovered. */
+        return dsc;
+    }
+
+    dsc = os_memblock_get(&bleshell_dsc_pool);
+    if (dsc == NULL) {
+        console_printf("OOM WHILE DISCOVERING DESCRIPTOR\n");
+        return NULL;
+    }
+    memset(dsc, 0, sizeof *dsc);
+
+    dsc->dsc = *gatt_dsc;
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&chr->dscs, dsc, next);
+    } else {
+        SLIST_NEXT(prev, next) = dsc;
+    }
+
+    return dsc;
+}
+
 static int
 bleshell_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_service *service, void *arg)
@@ -350,11 +467,11 @@ bleshell_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
     return 0;
 }
 
-int
+static int
 bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_chr *chr, void *arg)
 {
-    intmax_t *svc_start_handle;
+    intptr_t *svc_start_handle;
 
     svc_start_handle = arg;
 
@@ -366,6 +483,109 @@ bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
         bleshell_chr_add(conn_handle, *svc_start_handle, chr);
     } else {
         /* Service discovery complete. */
+    }
+
+    return 0;
+}
+
+static int
+bleshell_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
+                   uint16_t chr_val_handle, struct ble_gatt_dsc *dsc,
+                   void *arg)
+{
+    intptr_t *chr_def_handle;
+
+    chr_def_handle = arg;
+
+    if (error != NULL) {
+        console_printf("ERROR DISCOVERING DESCRIPTOR: conn_handle=%d "
+                       "status=%d att_handle=%d\n",
+                       conn_handle, error->status, error->att_handle);
+    } else if (dsc != NULL) {
+        bleshell_dsc_add(conn_handle, *chr_def_handle, dsc);
+    } else {
+        /* Descriptor discovery complete. */
+    }
+
+    return 0;
+}
+
+static int
+bleshell_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
+                 struct ble_gatt_attr *attr, void *arg)
+{
+    uint8_t *u8p;
+    int i;
+
+    if (error != NULL) {
+        console_printf("ERROR READING CHARACTERISTIC: conn_handle=%d "
+                       "status=%d att_handle=%d\n",
+                       conn_handle, error->status, error->att_handle);
+    } else {
+        console_printf("characteristic read complete; conn_handle=%d "
+                       "attr_handle=%d len=%d value=", conn_handle,
+                       attr->handle, attr->value_len);
+        u8p = attr->value;
+        for (i = 0; i < attr->value_len; i++) {
+            console_printf("%s0x%02x", i != 0 ? ":" : "", u8p[i]);
+        }
+        console_printf("\n");
+    }
+
+    return 0;
+}
+
+static int
+bleshell_on_read_mult(uint16_t conn_handle, struct ble_gatt_error *error,
+                      uint16_t *attr_handles, uint8_t num_attr_handles,
+                      uint8_t *attr_data, uint16_t attr_data_len, void *arg)
+{
+    uint8_t *u8p;
+    int i;
+
+    if (error != NULL) {
+        console_printf("ERROR READING CHARACTERISTICS: conn_handle=%d "
+                       "status=%d att_handle=%d\n",
+                       conn_handle, error->status, error->att_handle);
+    } else {
+        console_printf("multiple characteristic read complete; conn_handle=%d "
+                       "attr_handles=", conn_handle);
+        for (i = 0; i < num_attr_handles; i++) {
+            console_printf("%s%d", i != 0 ? "," : "", attr_handles[i]);
+        }
+
+        console_printf(" len=%d value=", attr_data_len);
+        u8p = attr_data;
+        for (i = 0; i < attr_data_len; i++) {
+            console_printf("%s0x%02x", i != 0 ? ":" : "", u8p[i]);
+        }
+        console_printf("\n");
+    }
+
+    return 0;
+
+}
+
+static int
+bleshell_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
+                  struct ble_gatt_attr *attr, void *arg)
+{
+    uint8_t *u8p;
+    int i;
+
+    if (error != NULL) {
+        console_printf("ERROR WRITING CHARACTERISTIC: conn_handle=%d "
+                       "status=%d att_handle=%d\n",
+                       conn_handle, error->status, error->att_handle);
+    } else {
+        console_printf("characteristic write complete; conn_handle=%d "
+                       "attr_handle=%d len=%d value=", conn_handle,
+                       attr->handle, attr->value_len);
+        u8p = attr->value;
+        for (i = 0; i < attr->value_len; i++) {
+            console_printf("%s0x%02x", i != 0 ? ":" : "", u8p[i]);
+        }
+        console_printf("\n");
     }
 
     return 0;
@@ -405,7 +625,7 @@ int
 bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                        uint16_t end_handle)
 {
-    intmax_t svc_start_handle;
+    intptr_t svc_start_handle;
     int rc;
 
     svc_start_handle = start_handle;
@@ -418,7 +638,7 @@ int
 bleshell_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle, uint8_t *uuid128)
 {
-    intmax_t svc_start_handle;
+    intptr_t svc_start_handle;
     int rc;
 
     svc_start_handle = start_handle;
@@ -448,6 +668,19 @@ bleshell_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
 }
 
 int
+bleshell_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
+                       uint16_t chr_end_handle)
+{
+    intptr_t chr_def_handle;
+    int rc;
+
+    chr_def_handle = chr_val_handle - 1;
+    rc = ble_gattc_disc_all_dscs(conn_handle, chr_val_handle, chr_end_handle,
+                                 bleshell_on_disc_d, &chr_def_handle);
+    return rc;
+}
+
+int
 bleshell_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                        uint16_t end_handle)
 {
@@ -455,6 +688,79 @@ bleshell_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
 
     rc = ble_gattc_find_inc_svcs(conn_handle, start_handle, end_handle,
                                  bleshell_on_disc_s, NULL);
+    return rc;
+}
+
+int
+bleshell_read(uint16_t conn_handle, uint16_t attr_handle)
+{
+    int rc;
+
+    rc = ble_gattc_read(conn_handle, attr_handle, bleshell_on_read, NULL);
+    return rc;
+}
+
+int
+bleshell_read_long(uint16_t conn_handle, uint16_t attr_handle)
+{
+    int rc;
+
+    rc = ble_gattc_read_long(conn_handle, attr_handle, bleshell_on_read, NULL);
+    return rc;
+}
+
+int
+bleshell_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
+                      uint16_t end_handle, uint8_t *uuid128)
+{
+    int rc;
+
+    rc = ble_gattc_read_uuid(conn_handle, start_handle, end_handle, uuid128,
+                             bleshell_on_read, NULL);
+    return rc;
+}
+
+int
+bleshell_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
+                   int num_attr_handles)
+{
+    int rc;
+
+    rc = ble_gattc_read_mult(conn_handle, attr_handles, num_attr_handles,
+                             bleshell_on_read_mult, NULL);
+    return rc;
+}
+
+int
+bleshell_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
+               uint16_t value_len)
+{
+    int rc;
+
+    rc = ble_gattc_write(conn_handle, attr_handle, value, value_len,
+                         bleshell_on_write, NULL);
+    return rc;
+}
+
+int
+bleshell_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle, void *value,
+                      uint16_t value_len)
+{
+    int rc;
+
+    rc = ble_gattc_write_no_rsp(conn_handle, attr_handle, value, value_len,
+                                bleshell_on_write, NULL);
+    return rc;
+}
+
+int
+bleshell_write_long(uint16_t conn_handle, uint16_t attr_handle, void *value,
+                    uint16_t value_len)
+{
+    int rc;
+
+    rc = ble_gattc_write_long(conn_handle, attr_handle, value, value_len,
+                              bleshell_on_write, NULL);
     return rc;
 }
 
@@ -586,6 +892,15 @@ main(void)
     rc = os_mempool_init(&bleshell_chr_pool, BLESHELL_MAX_CHRS,
                          sizeof (struct bleshell_chr), bleshell_chr_mem,
                          "bleshell_chr_pool");
+    assert(rc == 0);
+
+    bleshell_dsc_mem = malloc(
+        OS_MEMPOOL_BYTES(BLESHELL_MAX_DSCS, sizeof (struct bleshell_dsc)));
+    assert(bleshell_dsc_mem != NULL);
+
+    rc = os_mempool_init(&bleshell_dsc_pool, BLESHELL_MAX_DSCS,
+                         sizeof (struct bleshell_dsc), bleshell_dsc_mem,
+                         "bleshell_dsc_pool");
     assert(rc == 0);
 
     os_task_init(&bleshell_task, "bleshell", bleshell_task_handler,

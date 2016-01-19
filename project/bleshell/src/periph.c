@@ -9,6 +9,12 @@
 #define PERIPH_CHR2_UUID      0x1112
 #define PERIPH_CHR3_UUID      0x5555
 
+#define CHR_F_FULL_ACCESS (BLE_GATT_CHR_F_READ              |   \
+                           BLE_GATT_CHR_F_WRITE_NO_RSP      |   \
+                           BLE_GATT_CHR_F_WRITE             |   \
+                           BLE_GATT_CHR_F_NOTIFY            |   \
+                           BLE_GATT_CHR_F_INDICATE)
+
 static int
 periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
                union ble_gatt_access_ctxt *ctxt, void *arg);
@@ -22,12 +28,12 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
             /*** Characteristic 0x1111. */
             .uuid128 = BLE_UUID16(PERIPH_CHR1_UUID),
             .access_cb = periph_gatt_cb,
-            .flags = 0,
+            .flags = CHR_F_FULL_ACCESS,
         }, {
             /*** Characteristic 0x1112. */
             .uuid128 = BLE_UUID16(PERIPH_CHR2_UUID),
             .access_cb = periph_gatt_cb,
-            .flags = 0,
+            .flags = BLE_GATT_CHR_F_READ,
         }, {
             .uuid128 = NULL, /* No more characteristics in this service. */
         } },
@@ -45,7 +51,7 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
             /*** Characteristic 0x5555. */
             .uuid128 = BLE_UUID16(PERIPH_CHR3_UUID),
             .access_cb = periph_gatt_cb,
-            .flags = 0,
+            .flags = CHR_F_FULL_ACCESS,
         }, {
             .uuid128 = NULL, /* No more characteristics in this service. */
         } },

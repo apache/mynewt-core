@@ -91,6 +91,9 @@ parse_arg_find(char *key)
 
     for (i = 0; i < cmd_num_args; i++) {
         if (strcmp(cmd_args[i][0], key) == 0) {
+            /* Erase parameter. */
+            cmd_args[i][0][0] = '\0';
+
             return cmd_args[i][1];
         }
     }
@@ -155,7 +158,8 @@ parse_arg_kv(char *name, struct kv_pair *kvs)
 }
 
 static int
-parse_arg_byte_stream_no_delim(char *sval, uint8_t *dst, int len)
+parse_arg_byte_stream_no_delim(char *sval, int max_len, uint8_t *dst,
+                               int *out_len)
 {
     unsigned long ul;
     char *endptr;
@@ -163,7 +167,17 @@ parse_arg_byte_stream_no_delim(char *sval, uint8_t *dst, int len)
     int i;
 
     buf[2] = '\0';
-    for (i = 0; i < len; i++) {
+    i = 0;
+    while (1) {
+        if (sval[i * 2] == '\0') {
+            *out_len = i;
+            return 0;
+        }
+
+        if (i >= max_len) {
+            return EINVAL;
+        }
+
         buf[0] = sval[i * 2 + 0];
         buf[1] = sval[i * 2 + 1];
 
@@ -174,22 +188,26 @@ parse_arg_byte_stream_no_delim(char *sval, uint8_t *dst, int len)
 
         assert(ul <= UINT8_MAX);
         dst[i] = ul;
-    }
 
-    return 0;
+        i++;
+    }
 }
 
 static int
-parse_arg_byte_stream_delim(char *sval, uint8_t *dst, int len, char *delims)
+parse_arg_byte_stream_delim(char *sval, char *delims, int max_len,
+                            uint8_t *dst, int *out_len)
 {
     unsigned long ul;
     char *endptr;
     char *token;
     int i;
 
-    token = strtok(sval, delims);
-    for (i = 0; i < len; i++) {
-        if (token == NULL) {
+    i = 0;
+    for (token = strtok(sval, delims);
+         token != NULL;
+         token = strtok(NULL, delims)) {
+
+        if (i >= max_len) {
             return EINVAL;
         }
 
@@ -199,20 +217,18 @@ parse_arg_byte_stream_delim(char *sval, uint8_t *dst, int len, char *delims)
         }
 
         dst[i] = ul;
-
-        token = strtok(NULL, delims);
+        i++;
     }
 
-    if (token != NULL) {
-        return -1;
-    }
+    *out_len = i;
 
     return 0;
 }
 
 int
-parse_arg_byte_stream(char *name, uint8_t *dst, int len)
+parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
 {
+    int total_len;
     char *sval;
 
     sval = parse_arg_find(name);
@@ -220,17 +236,35 @@ parse_arg_byte_stream(char *name, uint8_t *dst, int len)
         return EINVAL;
     }
 
-    if (strlen(sval) == len * 2) {
-        return parse_arg_byte_stream_no_delim(sval, dst, len);
+    total_len = strlen(sval);
+    if (strcspn(sval, ":-") == total_len) {
+        return parse_arg_byte_stream_no_delim(sval, max_len, dst, out_len);
     } else {
-        return parse_arg_byte_stream_delim(sval, dst, len, ":-");
+        return parse_arg_byte_stream_delim(sval, ":-", max_len, dst, out_len);
     }
 }
 
+static int
+parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len)
+{
+    int actual_len;
+    int rc;
+
+    rc = parse_arg_byte_stream(name, 6, dst, &actual_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (actual_len != len) {
+        return EINVAL;
+    }
+
+    return 0;
+}
 int
 parse_arg_mac(char *name, uint8_t *dst)
 {
-    return parse_arg_byte_stream(name, dst, 6);
+    return parse_arg_byte_stream_exact_length(name, dst, 6);
 }
 
 int
@@ -253,7 +287,7 @@ parse_arg_uuid(char *name, uint8_t *dst_uuid128)
         }
 
     default:
-        rc = parse_arg_byte_stream(name, dst_uuid128, 16);
+        rc = parse_arg_byte_stream_exact_length(name, dst_uuid128, 16);
         return rc;
     }
 }

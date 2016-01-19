@@ -241,7 +241,29 @@ cmd_disc_chr(int argc, char **argv)
         return rc;
     }
     if (rc != 0) {
-        console_printf("error discovering services; rc=%d\n", rc);
+        console_printf("error discovering characteristics; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+cmd_disc_dsc(int argc, char **argv)
+{
+    uint16_t start_handle;
+    uint16_t conn_handle;
+    uint16_t end_handle;
+    int rc;
+
+    rc = cmd_parse_conn_start_end(&conn_handle, &start_handle, &end_handle);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_disc_all_dscs(conn_handle, start_handle, end_handle);
+    if (rc != 0) {
+        console_printf("error discovering descriptors; rc=%d\n", rc);
         return rc;
     }
 
@@ -279,6 +301,7 @@ cmd_disc_svc(int argc, char **argv)
 
 static struct cmd_entry cmd_disc_entries[] = {
     { "chr", cmd_disc_chr },
+    { "dsc", cmd_disc_dsc },
     { "svc", cmd_disc_svc },
     { NULL, NULL }
 };
@@ -334,6 +357,98 @@ cmd_find(int argc, char **argv)
 
     rc = cmd_exec(cmd_find_entries, argc, argv);
     if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
+ * $read                                                                     *
+ *****************************************************************************/
+
+#define CMD_READ_MAX_ATTRS  8
+
+static int
+cmd_read(int argc, char **argv)
+{
+    uint16_t attr_handles[CMD_READ_MAX_ATTRS];
+    uint16_t conn_handle;
+    uint16_t start;
+    uint16_t end;
+    uint8_t uuid128[16];
+    uint8_t num_attr_handles;
+    int is_uuid;
+    int is_long;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    is_long = parse_arg_long("long", &rc);
+    if (rc == ENOENT) {
+        is_long = 0;
+    } else if (rc != 0) {
+        return rc;
+    }
+
+    for (num_attr_handles = 0;
+         num_attr_handles < CMD_READ_MAX_ATTRS;
+         num_attr_handles++) {
+
+        attr_handles[num_attr_handles] = parse_arg_uint16("attr", &rc);
+        if (rc == ENOENT) {
+            break;
+        } else if (rc != 0) {
+            return rc;
+        }
+    }
+
+    rc = parse_arg_uuid("uuid", uuid128);
+    if (rc == ENOENT) {
+        is_uuid = 0;
+    } else if (rc == 0) {
+        is_uuid = 1;
+    } else {
+        return rc;
+    }
+
+    start = parse_arg_uint16("start", &rc);
+    if (rc == ENOENT) {
+        start = 0;
+    } else if (rc != 0) {
+        return rc;
+    }
+
+    end = parse_arg_uint16("end", &rc);
+    if (rc == ENOENT) {
+        end = 0;
+    } else if (rc != 0) {
+        return rc;
+    }
+
+    if (num_attr_handles == 1) {
+        if (is_long) {
+            rc = bleshell_read_long(conn_handle, attr_handles[0]);
+        } else {
+            rc = bleshell_read(conn_handle, attr_handles[0]);
+        }
+    } else if (num_attr_handles > 1) {
+        rc = bleshell_read_mult(conn_handle, attr_handles, num_attr_handles);
+    } else if (is_uuid) {
+        if (start == 0 || end == 0) {
+            rc = EINVAL;
+        } else {
+            rc = bleshell_read_by_uuid(conn_handle, start, end, uuid128);
+        }
+    } else {
+        rc = EINVAL;
+    }
+
+    if (rc != 0) {
+        console_printf("error reading characteristic; rc=%d\n", rc);
         return rc;
     }
 
@@ -463,19 +578,82 @@ cmd_set(int argc, char **argv)
     return 0;
 }
 
+/*****************************************************************************
+ * $write                                                                    *
+ *****************************************************************************/
+
+static int
+cmd_write(int argc, char **argv)
+{
+    static uint8_t attr_val[BLE_ATT_ATTR_MAX_LEN];
+    static int attr_len;
+
+    uint16_t attr_handle;
+    uint16_t conn_handle;
+    int is_long;
+    int no_rsp;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    no_rsp = parse_arg_long("no_rsp", &rc);
+    if (rc == ENOENT) {
+        no_rsp = 0;
+    } else if (rc != 0) {
+        return rc;
+    }
+
+    is_long = parse_arg_long("long", &rc);
+    if (rc == ENOENT) {
+        is_long = 0;
+    } else if (rc != 0) {
+        return rc;
+    }
+
+    attr_handle = parse_arg_long("attr", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream("value", sizeof attr_val, attr_val, &attr_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (no_rsp) {
+        rc = bleshell_write_no_rsp(conn_handle, attr_handle, attr_val,
+                                   attr_len);
+    } else if (is_long) {
+        rc = bleshell_write_long(conn_handle, attr_handle, attr_val, attr_len);
+    } else {
+        rc = bleshell_write(conn_handle, attr_handle, attr_val, attr_len);
+    }
+    if (rc != 0) {
+        console_printf("error writing characteristic; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
+ * $init                                                                     *
+ *****************************************************************************/
+
 static struct cmd_entry cmd_b_entries[] = {
     { "adv", cmd_adv },
     { "conn", cmd_conn },
     { "disc", cmd_disc },
     { "find", cmd_find },
+    { "read", cmd_read },
     { "show", cmd_show },
     { "set", cmd_set },
+    { "write", cmd_write },
     { NULL, NULL }
 };
-
-/*****************************************************************************
- * $init                                                                     *
- *****************************************************************************/
 
 static int
 cmd_b_exec(int argc, char **argv)

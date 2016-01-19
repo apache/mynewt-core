@@ -19,11 +19,18 @@ struct kv_pair {
     int val;
 };
 
+struct bleshell_dsc {
+    SLIST_ENTRY(bleshell_dsc) next;
+    struct ble_gatt_dsc dsc;
+};
+SLIST_HEAD(bleshell_dsc_list, bleshell_dsc);
+
 struct bleshell_chr {
     SLIST_ENTRY(bleshell_chr) next;
     struct ble_gatt_chr chr;
-};
 
+    struct bleshell_dsc_list dscs;
+};
 SLIST_HEAD(bleshell_chr_list, bleshell_chr);
 
 struct bleshell_svc {
@@ -55,7 +62,7 @@ long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
 long parse_arg_long(char *name, int *staus);
 uint16_t parse_arg_uint16(char *name, int *status);
 int parse_arg_kv(char *name, struct kv_pair *kvs);
-int parse_arg_byte_stream(char *name, uint8_t *dst, int len);
+int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_mac(char *name, uint8_t *dst);
 int parse_arg_uuid(char *name, uint8_t *dst_uuid128);
 int parse_err_too_few_args(char *cmd_name);
@@ -68,8 +75,22 @@ int bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bleshell_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                                uint16_t end_handle, uint8_t *uuid128);
+int bleshell_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
+                           uint16_t chr_end_handle);
 int bleshell_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
+int bleshell_read(uint16_t conn_handle, uint16_t attr_handle);
+int bleshell_read_long(uint16_t conn_handle, uint16_t attr_handle);
+int bleshell_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
+                          uint16_t end_handle, uint8_t *uuid128);
+int bleshell_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
+                       int num_attr_handles);
+int bleshell_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
+                   uint16_t value_len);
+int bleshell_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
+                          void *value, uint16_t value_len);
+int bleshell_write_long(uint16_t conn_handle, uint16_t attr_handle,
+                        void *value, uint16_t value_len);
 int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr);
