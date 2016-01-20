@@ -93,26 +93,31 @@ stats_nmgr_read(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
     rc = nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr), 
             nmr->nh_len);
     if (rc != 0) {
+        rc = NMGR_ERR_EINVAL;
         goto err;
     }
 
     rc = json_read_object((struct json_buffer *) &nmgr_task_jbuf, attrs);
     if (rc != 0) {
+        rc = NMGR_ERR_EINVAL;
         goto err;
     }
 
     hdr = stats_group_find(stats_name);
     if (!hdr) {
-        rc = OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
         goto err;
     }
 
     rc = nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
     if (rc != 0) {
+        rc = NMGR_ERR_EUNKNOWN;
         goto err;
     }
 
     json_encode_object_start(&nmgr_task_jbuf.njb_enc);
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "r", &jv);
     JSON_VALUE_STRINGN(&jv, stats_name, strlen(stats_name));
     json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "n", &jv);
     json_encode_object_key(&nmgr_task_jbuf.njb_enc, "f");
@@ -123,7 +128,9 @@ stats_nmgr_read(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
 
     return (0);
 err:
-    return (rc);
+    nmgr_jbuf_setoerr(&nmgr_task_jbuf, rsp_hdr, rsp, rc);
+
+    return (0);
 }
 
 

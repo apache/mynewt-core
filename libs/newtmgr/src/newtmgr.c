@@ -376,6 +376,28 @@ nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr,
     return (0);
 }
 
+int 
+nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
+        struct os_mbuf *m, int errcode)
+{   
+    struct json_value jv;
+    int rc;
+
+    rc = nmgr_jbuf_setobuf(njb, hdr, m);
+    if (rc != 0) {
+        goto err;
+    }
+
+    json_encode_object_start(&njb->njb_enc);
+    JSON_VALUE_INT(&jv, errcode);
+    json_encode_object_entry(&njb->njb_enc, "r", &jv);
+    json_encode_object_finish(&njb->njb_enc);
+
+    return (0);
+err:
+    return (rc);
+}
+
 static int 
 nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {

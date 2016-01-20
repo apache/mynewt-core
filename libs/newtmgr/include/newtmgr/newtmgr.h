@@ -34,6 +34,18 @@
 #define NMGR_OP_WRITE           (2)
 #define NMGR_OP_WRITE_RSP       (3)
 
+
+/** 
+ * Newtmgr JSON error codes
+ */
+#define NMGR_ERR_EOK      (0)
+#define NMGR_ERR_EUNKNOWN (1)
+#define NMGR_ERR_ENOMEM   (2)
+#define NMGR_ERR_EINVAL   (3)
+#define NMGR_ERR_ETIMEOUT (4) 
+#define NMGR_ERR_EPERUSER (256)
+
+
 /*
  * Id's for default group commands
  */
@@ -62,6 +74,8 @@ int nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m, uint16_t off,
         uint16_t len);
 int nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
         struct os_mbuf *m);
+int nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
+        struct os_mbuf *m, int errcode);
 extern struct nmgr_jbuf nmgr_task_jbuf;
 
 typedef int (*nmgr_handler_func_t)(struct nmgr_hdr *nmr, struct os_mbuf *req, 
@@ -96,6 +110,7 @@ struct nmgr_transport {
     struct os_mqueue nt_imq;
     nmgr_transport_out_func_t nt_output; 
 };
+
 
 int nmgr_task_init(uint8_t, os_stack_t *, uint16_t);
 int nmgr_rsp_extend(struct nmgr_hdr *, struct os_mbuf *, void *data, uint16_t);
