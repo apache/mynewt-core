@@ -96,24 +96,34 @@ static int
 nmgr_def_console_echo(struct nmgr_hdr *nmr, struct os_mbuf *req,
         uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
 {
-    uint8_t echo_on;
+    int echo_on = 1;
     int rc;
+    struct json_attr_t attrs[3] = {
+        [0] = {
+            .attribute = "echo",
+            .type = t_integer,
+            .addr.integer = &echo_on,
+            .nodefault = 1
+        },
+        [1] = {
+            .attribute = NULL
+        }
+    };
 
-    if (nmr->nh_len == sizeof(echo_on)) {
-        rc = os_mbuf_copydata(req, srcoff + sizeof(*nmr), sizeof(echo_on),
-          &echo_on);
-        if (rc != 0) {
-            goto err;
-        }
-        if (echo_on) {
-            console_echo(1);
-        } else {
-            console_echo(0);
-        }
+    nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
+      nmr->nh_len);
+
+    rc = json_read_object(&nmgr_task_jbuf.njb_buf, attrs);
+    if (rc) {
+        return OS_EINVAL;
+    }
+
+    if (echo_on) {
+        console_echo(1);
+    } else {
+        console_echo(0);
     }
     return (0);
-err:
-    return (rc);
 }
 
 int
