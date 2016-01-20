@@ -117,7 +117,7 @@ imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
 
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
         rc = imgr_read_ver(i, &ver);
-        if (rc < 0) {
+        if (rc != 0) {
             continue;
         }
         ver_len = imgr_ver_str(&ver, vers_str[cnt]);
