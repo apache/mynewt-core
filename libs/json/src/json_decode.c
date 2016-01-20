@@ -500,7 +500,8 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
     char *tp;
     int n, count;
 
-    for (c = jb->jb_read_next(jb); isspace(c); c = jb->jb_read_next(jb)) {
+    for (c = jb->jb_read_next(jb); isspace((unsigned char)c);
+         c = jb->jb_read_next(jb)) {
     }
 
     if (c != '[') {
@@ -510,7 +511,8 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
     tp = arr->arr.strings.store;
     arrcount = 0;
 
-    for (c = jb->jb_read_next(jb); isspace(c); c = jb->jb_read_next(jb)) {
+    for (c = jb->jb_read_next(jb); isspace((unsigned char)c);
+         c = jb->jb_read_next(jb)) {
     }
 
     if (c == ']') {
