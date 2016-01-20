@@ -6,3 +6,6 @@ egg.deps:
     - libs/util
     - libs/testutil
     - libs/shell
+
+egg.identities:
+    - NEWTMGR 

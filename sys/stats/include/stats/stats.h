@@ -105,4 +105,12 @@ int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
 int stats_register(char *name, struct stats_hdr *shdr);
 struct stats_hdr *stats_find(char *name);
 
+/* Private */
+#ifdef NEWTMGR_PRESENT 
+int stats_nmgr_register_group(void);
+#endif 
+#ifdef SHELL_PRESENT
+int stats_shell_register(void);
+#endif
+
 #endif /* __UTIL_STATS_H__ */

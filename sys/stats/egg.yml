@@ -9,3 +9,4 @@ egg.deps.SHELL:
 egg.req_caps.SHELL:
     - console
 egg.cflags.SHELL: -DSHELL_PRESENT
+egg.cflags.NEWTMGR: -DNEWTMGR_PRESENT 

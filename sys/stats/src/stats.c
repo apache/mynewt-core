@@ -20,11 +20,6 @@
 
 #include "stats/stats.h"
 
-#ifdef SHELL_PRESENT
-#include <shell/shell.h>
-#include <console/console.h>
-#endif
-
 #include <stdio.h>
 
 STATS_SECT_START(stats)
@@ -38,111 +33,71 @@ STATS_NAME_END(stats)
 STAILQ_HEAD(, stats_hdr) g_stats_registry = 
     STAILQ_HEAD_INITIALIZER(g_stats_registry);
 
-#ifdef SHELL_PRESENT
-uint8_t stats_shell_registered;
-struct shell_cmd shell_stats_cmd;
-#endif
-
-
-#ifdef SHELL_PRESENT 
-
-static void 
-shell_stats_display_entry(struct stats_hdr *hdr, uint8_t *ptr)
+int 
+stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
 {
     char *name;
-    char buf[12];
-    int ent_n;
-    int len;
-#ifdef STATS_NAME_ENABLE
-    int i;
-#endif
-
-    name = NULL;
-
-#ifdef STATS_NAME_ENABLE
-    for (i = 0; i < hdr->s_map_cnt; i++) {
-        if (hdr->s_map[i].snm_off == ptr) {
-            name = hdr->s_map[i].snm_name;
-            break;
-        }
-    }
-#endif 
-
-    if (name == NULL) {
-        ent_n = (ptr - ((uint8_t *) hdr + sizeof(*hdr))) / hdr->s_size;
-
-        len = snprintf(buf, sizeof(buf), "s%d", ent_n);
-        buf[len] = 0;
-        name = buf;
-    }
-
-    switch (hdr->s_size) {
-        case sizeof(uint16_t):
-            console_printf("%s: %u\n", name, *(uint16_t *) ptr);
-            break;
-        case sizeof(uint32_t):
-            console_printf("%s: %lu\n", name, *(unsigned long *) ptr);
-            break;
-        case sizeof(uint64_t):
-            console_printf("%s: %llu\n", name, *(uint64_t *) ptr);
-            break;
-        default:
-            console_printf("Unknown stat size for %s %u\n", name, 
-                    hdr->s_size);
-            break;
-    }
-}
-
-static int 
-shell_stats_display(int argc, char **argv)
-{
-    struct stats_hdr *hdr;
-    char *name;
+    char name_buf[12];
     uint8_t *cur;
     uint8_t *end;
-
-    name = argv[1];
-    if (name == NULL || !strcmp(name, "")) {
-        console_printf("Must specify a statistic name to dump, "
-                "possible names are:\n");
-        STAILQ_FOREACH(hdr, &g_stats_registry, s_next) {
-            console_printf("\t%s\n", hdr->s_name);
-        }
-        goto done;
-    }
-
-
-    hdr = stats_find(name);
-    if (!hdr) {
-        console_printf("Could not find statistic %s\n", name);
-        goto done;
-    }
+    int rc;
 
     cur = (uint8_t *) hdr + sizeof(*hdr);
     end = (uint8_t *) hdr + sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);
+
     while (cur < end) {
-        shell_stats_display_entry(hdr, (uint8_t *) cur);
+        /*
+         * Access and display the statistic name.  Pass that to the 
+         * walk function
+         */
+        name = NULL;
+#ifdef STATS_NAME_ENABLE
+        for (i = 0; i < hdr->s_map_cnt; ++i) {
+            if (hdr->s_map[i].snm_off == cur) {
+                name = hdr->s_map[i].snm_name;
+                break;
+            }
+        }
+#endif 
+        if (name == NULL) {
+            ent_n = (cur - ((uint8_t *) hdr + sizeof(*hdr))) / hdr->s_size;
+            len = snprintf(name_buf, sizeof(name_buf), "s%d", ent_n);
+            name_buf[len] = '\0';
+            name = name_buf;
+        }
+
+        rc = walk_func(hdr, arg, name, cur);
+        if (rc != 0) {
+            goto err;
+        }
+
         cur += hdr->s_size;
     }
-
-done:
+    
     return (0);
+err:
+    return (rc);
 }
-
-#endif
 
 
 int 
 stats_module_init(void)
 {
     int rc;
-#ifdef SHELL_PRESENT
-    if (!stats_shell_registered) {
-        stats_shell_registered = 1;
-        shell_cmd_register(&shell_stats_cmd, "stat", shell_stats_display);
+
+#ifdef SHELL_PRESENT 
+    rc = stats_register_shell();
+    if (rc != 0) {
+        goto err;
     }
 #endif
 
+#ifdef NEWTMGR_PRESENT 
+    rc = stats_register_nmgr_group();
+    if (rc != 0) {
+        goto err;
+    }
+#endif 
 
     rc = stats_init(STATS_HDR(stats), STATS_SIZE_INIT_PARMS(stats, STATS_SIZE_32), 
             STATS_NAME_INIT_PARMS(stats));
