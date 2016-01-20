@@ -40,6 +40,8 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
     char name_buf[12];
     uint8_t *cur;
     uint8_t *end;
+    int ent_n;
+    int len;
     int rc;
 
     cur = (uint8_t *) hdr + sizeof(*hdr);
@@ -86,14 +88,14 @@ stats_module_init(void)
     int rc;
 
 #ifdef SHELL_PRESENT 
-    rc = stats_register_shell();
+    rc = stats_shell_register();
     if (rc != 0) {
         goto err;
     }
 #endif
 
 #ifdef NEWTMGR_PRESENT 
-    rc = stats_register_nmgr_group();
+    rc = stats_nmgr_register_group();
     if (rc != 0) {
         goto err;
     }
@@ -132,6 +134,38 @@ stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
     return (0);
 }
 
+int 
+stats_group_walk(stats_group_walk_func_t walk_func, void *arg)
+{
+    struct stats_hdr *hdr;
+    int rc;
+
+    STAILQ_FOREACH(hdr, &g_stats_registry, s_next) {
+        rc = walk_func(hdr, arg);
+        if (rc != 0) {
+            goto err;
+        }
+    }
+    return (0);
+err:
+    return (rc);
+}
+
+struct stats_hdr * 
+stats_group_find(char *name)
+{
+    struct stats_hdr *cur;
+
+    cur = NULL;
+    STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
+        if (!strcmp(cur->s_name, name)) {
+            break;
+        }
+    }
+
+    return (cur);
+}
+
 int
 stats_register(char *name, struct stats_hdr *shdr)
 {
@@ -159,18 +193,4 @@ err:
     return (rc);
 }
 
-struct stats_hdr * 
-stats_find(char *name)
-{
-    struct stats_hdr *cur;
-
-    cur = NULL;
-    STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
-        if (!strcmp(cur->s_name, name)) {
-            break;
-        }
-    }
-
-    return (cur);
-}
 

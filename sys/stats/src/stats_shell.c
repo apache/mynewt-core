@@ -31,8 +31,8 @@
 uint8_t stats_shell_registered;
 struct shell_cmd shell_stats_cmd;
 
-static void 
-shell_stats_display_entry(struct stats_hdr *hdr, void *arg, char *name,
+static int 
+stats_shell_display_entry(struct stats_hdr *hdr, void *arg, char *name,
         uint8_t *stat)
 {
     switch (hdr->s_size) {
@@ -50,6 +50,15 @@ shell_stats_display_entry(struct stats_hdr *hdr, void *arg, char *name,
                     hdr->s_size);
             break;
     }
+
+    return (0);
+}
+
+static int 
+stats_shell_display_group(struct stats_hdr *hdr, void *arg)
+{
+    console_printf("\t%s\n", hdr->s_name);
+    return (0);
 }
 
 static int 
@@ -63,15 +72,13 @@ shell_stats_display(int argc, char **argv)
     if (name == NULL || !strcmp(name, "")) {
         console_printf("Must specify a statistic name to dump, "
                 "possible names are:\n");
-        STAILQ_FOREACH(hdr, &g_stats_registry, s_next) {
-            console_printf("\t%s\n", hdr->s_name);
-        }
+        stats_group_walk(stats_shell_display_group, NULL);
         rc = OS_EINVAL;
     }
 
-    hdr = stats_find(name);
+    hdr = stats_group_find(name);
     if (!hdr) {
-        console_printf("Could not find statistic %s\n", name);
+        console_printf("Could not find statistic group %s\n", name);
         rc = OS_EINVAL;
         goto err;
     }

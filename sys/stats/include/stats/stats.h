@@ -103,7 +103,15 @@ int stats_module_init(void);
 int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt, 
     struct stats_name_map *map, uint8_t map_cnt);
 int stats_register(char *name, struct stats_hdr *shdr);
-struct stats_hdr *stats_find(char *name);
+
+typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *, 
+        uint8_t *);
+int stats_walk(struct stats_hdr *, stats_walk_func_t, void *);
+
+typedef int (*stats_group_walk_func_t)(struct stats_hdr *, void *);
+int stats_group_walk(stats_group_walk_func_t, void *);
+
+struct stats_hdr *stats_group_find(char *name);
 
 /* Private */
 #ifdef NEWTMGR_PRESENT 

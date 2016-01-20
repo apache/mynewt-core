@@ -142,6 +142,20 @@ err:
     return (rc);
 }
 
+int 
+json_encode_object_key(struct json_encoder *encoder, char *key)
+{
+    if (encoder->je_has_objects) {
+        encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+    }
+
+    /* Write the key entry */
+    encoder->je_write(encoder->je_arg, "\"", sizeof("\"")-1);
+    encoder->je_write(encoder->je_arg, key, strlen(key));
+    encoder->je_write(encoder->je_arg, "\": ", sizeof("\": ")-1);
+
+    return (0);
+}
 
 int 
 json_encode_object_entry(struct json_encoder *encoder, char *key, 
@@ -172,6 +186,8 @@ int
 json_encode_object_finish(struct json_encoder *encoder)
 {
     JSON_ENCODE_OBJECT_END(encoder);
+    /* Useful in case of nested objects. */
+    encoder->je_has_objects = 1;
 
     return (0);
 }

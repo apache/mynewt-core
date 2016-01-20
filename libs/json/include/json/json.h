@@ -99,6 +99,7 @@ struct json_encoder {
 #define JSON_NITEMS(x) (int)(sizeof(x)/sizeof(x[0]))
 
 int json_encode_object_start(struct json_encoder *);
+int json_encode_object_key(struct json_encoder *encoder, char *key);
 int json_encode_object_entry(struct json_encoder *, char *, 
         struct json_value *);
 int json_encode_object_finish(struct json_encoder *);
