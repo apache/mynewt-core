@@ -35,10 +35,8 @@ struct os_task g_nmgr_task;
 STAILQ_HEAD(, nmgr_group) g_nmgr_group_list = 
     STAILQ_HEAD_INITIALIZER(g_nmgr_group_list);
 
-static int nmgr_def_echo(struct nmgr_hdr *, struct os_mbuf *, uint16_t,
-        struct nmgr_hdr *, struct os_mbuf *);
-static int nmgr_def_console_echo(struct nmgr_hdr *, struct os_mbuf *req,
-        uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
+static int nmgr_def_echo(struct nmgr_jbuf *);
+static int nmgr_def_console_echo(struct nmgr_jbuf *);
 
 static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.
@@ -54,8 +52,7 @@ static struct nmgr_handler nmgr_def_group_handlers[] = {
 struct nmgr_jbuf nmgr_task_jbuf;
 
 static int
-nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
-        struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+nmgr_def_echo(struct nmgr_jbuf *njb)
 {
     uint8_t echo_buf[128];
     struct json_attr_t attrs[] = {
@@ -66,26 +63,15 @@ nmgr_def_echo(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
     struct json_value jv;
     int rc;
 
-    rc = nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
-            nmr->nh_len);
+    rc = json_read_object((struct json_buffer *) njb, attrs);
     if (rc != 0) {
         goto err;
     }
 
-    rc = json_read_object((struct json_buffer *) &nmgr_task_jbuf, attrs);
-    if (rc != 0) {
-        goto err;
-    }
-
-    rc = nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
-    if (rc != 0) {
-        goto err;
-    }
-
-    json_encode_object_start(&nmgr_task_jbuf.njb_enc);
+    json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_STRINGN(&jv, (char *) echo_buf, strlen((char *) echo_buf));
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "r", &jv);
-    json_encode_object_finish(&nmgr_task_jbuf.njb_enc);
+    json_encode_object_entry(&njb->njb_enc, "r", &jv);
+    json_encode_object_finish(&njb->njb_enc);
 
     return (0);
 err:
@@ -93,8 +79,7 @@ err:
 }
 
 static int
-nmgr_def_console_echo(struct nmgr_hdr *nmr, struct os_mbuf *req,
-        uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+nmgr_def_console_echo(struct nmgr_jbuf *njb)
 {
     int echo_on = 1;
     int rc;
@@ -110,10 +95,7 @@ nmgr_def_console_echo(struct nmgr_hdr *nmr, struct os_mbuf *req,
         }
     };
 
-    nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
-      nmr->nh_len);
-
-    rc = json_read_object(&nmgr_task_jbuf.njb_buf, attrs);
+    rc = json_read_object(&njb->njb_buf, attrs);
     if (rc) {
         return OS_EINVAL;
     }
@@ -269,7 +251,7 @@ nmgr_jbuf_read_next(struct json_buffer *jb)
         return '\0';
     }
 
-    rc = os_mbuf_copydata(njb->njb_m, njb->njb_off, 1, &c);
+    rc = os_mbuf_copydata(njb->njb_in_m, njb->njb_off, 1, &c);
     if (rc == -1) {
         c = '\0';
     }
@@ -292,7 +274,7 @@ nmgr_jbuf_read_prev(struct json_buffer *jb)
     }
 
     --njb->njb_off;
-    rc = os_mbuf_copydata(njb->njb_m, njb->njb_off, 1, &c);
+    rc = os_mbuf_copydata(njb->njb_in_m, njb->njb_off, 1, &c);
     if (rc == -1) {
         c = '\0';
     }
@@ -313,7 +295,7 @@ nmgr_jbuf_readn(struct json_buffer *jb, char *buf, int size)
     left = njb->njb_end - njb->njb_off;
     read = size > left ? left : size;
 
-    rc = os_mbuf_copydata(njb->njb_m, njb->njb_off, read, buf);
+    rc = os_mbuf_copydata(njb->njb_in_m, njb->njb_off, read, buf);
     if (rc != 0) {
         goto err;
     }
@@ -331,7 +313,7 @@ nmgr_jbuf_write(void *arg, char *data, int len)
 
     njb = (struct nmgr_jbuf *) arg;
 
-    rc = nmgr_rsp_extend(njb->njb_hdr, njb->njb_m, data, len);
+    rc = nmgr_rsp_extend(njb->njb_hdr, njb->njb_out_m, data, len);
     if (rc != 0) {
         goto err;
     }
@@ -355,38 +337,31 @@ nmgr_jbuf_init(struct nmgr_jbuf *njb)
     return (0);
 }
 
-int 
+static int 
 nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m, 
         uint16_t off, uint16_t len)
 {
     njb->njb_off = off;
     njb->njb_end = off + len;
-    njb->njb_m = m;
+    njb->njb_in_m = m;
 
     return (0);
 }
 
-int 
+static int 
 nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr,
         struct os_mbuf *m)
 {
-    njb->njb_m = m;
+    njb->njb_out_m = m;
     njb->njb_hdr = hdr;
 
     return (0);
 }
 
 int 
-nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
-        struct os_mbuf *m, int errcode)
+nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode)
 {   
     struct json_value jv;
-    int rc;
-
-    rc = nmgr_jbuf_setobuf(njb, hdr, m);
-    if (rc != 0) {
-        goto err;
-    }
 
     json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_INT(&jv, errcode);
@@ -394,8 +369,6 @@ nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr,
     json_encode_object_finish(&njb->njb_enc);
 
     return (0);
-err:
-    return (rc);
 }
 
 static int 
@@ -451,10 +424,23 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         rsp_hdr->nh_group = hdr.nh_group;
         rsp_hdr->nh_id = hdr.nh_id;
 
+        /*
+         * Setup state for JSON encoding.
+         */
+        rc = nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, off + sizeof(hdr),
+          hdr.nh_len);
+        if (rc) {
+            goto err;
+        }
+        rc = nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+        if (rc) {
+            goto err;
+        }
+
         if (hdr.nh_op == NMGR_OP_READ) {
-            rc = handler->nh_read(&hdr, req, off, rsp_hdr, rsp);
+            rc = handler->nh_read(&nmgr_task_jbuf);
         } else if (hdr.nh_op == NMGR_OP_WRITE) {
-            rc = handler->nh_write(&hdr, req, off, rsp_hdr, rsp);
+            rc = handler->nh_write(&nmgr_task_jbuf);
         } else {
             rc = OS_EINVAL;
             goto err;

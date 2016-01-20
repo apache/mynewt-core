@@ -29,8 +29,7 @@
 /* Source code is only included if the newtmgr library is enabled.  Otherwise
  * this file is compiled out for code size.
  */
-static int stats_nmgr_read(struct nmgr_hdr *, struct os_mbuf *, uint16_t,
-        struct nmgr_hdr *, struct os_mbuf *);
+static int stats_nmgr_read(struct nmgr_jbuf *njb);
 
 static struct nmgr_group shell_nmgr_group;
 
@@ -76,8 +75,7 @@ err:
 }
 
 static int 
-stats_nmgr_read(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff, 
-        struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+stats_nmgr_read(struct nmgr_jbuf *njb)
 {
     struct stats_hdr *hdr;
 #define STATS_NMGR_NAME_LEN (32)
@@ -90,14 +88,7 @@ stats_nmgr_read(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
     struct json_value jv;
     int rc;
 
-    rc = nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr), 
-            nmr->nh_len);
-    if (rc != 0) {
-        rc = NMGR_ERR_EINVAL;
-        goto err;
-    }
-
-    rc = json_read_object((struct json_buffer *) &nmgr_task_jbuf, attrs);
+    rc = json_read_object((struct json_buffer *) njb, attrs);
     if (rc != 0) {
         rc = NMGR_ERR_EINVAL;
         goto err;
@@ -109,26 +100,20 @@ stats_nmgr_read(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         goto err;
     }
 
-    rc = nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
-    if (rc != 0) {
-        rc = NMGR_ERR_EUNKNOWN;
-        goto err;
-    }
-
-    json_encode_object_start(&nmgr_task_jbuf.njb_enc);
+    json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "r", &jv);
+    json_encode_object_entry(&njb->njb_enc, "r", &jv);
     JSON_VALUE_STRINGN(&jv, stats_name, strlen(stats_name));
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "n", &jv);
-    json_encode_object_key(&nmgr_task_jbuf.njb_enc, "f");
-    json_encode_object_start(&nmgr_task_jbuf.njb_enc);
+    json_encode_object_entry(&njb->njb_enc, "n", &jv);
+    json_encode_object_key(&njb->njb_enc, "f");
+    json_encode_object_start(&njb->njb_enc);
     stats_walk(hdr, stats_nmgr_walk_func, &nmgr_task_jbuf.njb_enc);
-    json_encode_object_finish(&nmgr_task_jbuf.njb_enc);
-    json_encode_object_finish(&nmgr_task_jbuf.njb_enc);
+    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_finish(&njb->njb_enc);
 
     return (0);
 err:
-    nmgr_jbuf_setoerr(&nmgr_task_jbuf, rsp_hdr, rsp, rc);
+    nmgr_jbuf_setoerr(njb, rc);
 
     return (0);
 }

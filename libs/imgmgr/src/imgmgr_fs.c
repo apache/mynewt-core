@@ -81,15 +81,13 @@ imgr_ver_jsonstr(struct json_encoder *enc, char *key,
 }
 
 int
-imgr_boot_read(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+imgr_boot_read(struct nmgr_jbuf *njb)
 {
     int rc;
     struct json_encoder *enc;
     struct image_version ver;
 
-    enc = &nmgr_task_jbuf.njb_enc;
-    nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+    enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
 
@@ -114,8 +112,7 @@ imgr_boot_read(struct nmgr_hdr *nmr, struct os_mbuf *req,
 }
 
 int
-imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+imgr_boot_write(struct nmgr_jbuf *njb)
 {
     char test_ver_str[28];
     const struct json_attr_t boot_write_attr[2] = {
@@ -132,10 +129,7 @@ imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
     int rc;
     struct image_version ver;
 
-    nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
-      nmr->nh_len);
-
-    rc = json_read_object(&nmgr_task_jbuf.njb_buf, boot_write_attr);
+    rc = json_read_object(&njb->njb_buf, boot_write_attr);
     if (rc) {
         return OS_EINVAL;
     }

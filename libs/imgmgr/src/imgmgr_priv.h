@@ -61,10 +61,8 @@ struct imgmgr_upload_cmd {
 struct nmgr_hdr;
 struct os_mbuf;
 
-int imgr_boot_read(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
-int imgr_boot_write(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
+int imgr_boot_read(struct nmgr_jbuf *);
+int imgr_boot_write(struct nmgr_jbuf *);
 
 int imgr_read_ver(int area_id, struct image_version *ver);
 

@@ -64,22 +64,17 @@ struct nmgr_jbuf {
     /* json_buffer must be first element in the structure */
     struct json_buffer njb_buf;
     struct json_encoder njb_enc;
-    struct os_mbuf *njb_m;
+    struct os_mbuf *njb_in_m;
+    struct os_mbuf *njb_out_m;
     struct nmgr_hdr *njb_hdr;
     uint16_t njb_off;
     uint16_t njb_end;
 };
 int nmgr_jbuf_init(struct nmgr_jbuf *njb);
-int nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m, uint16_t off, 
-        uint16_t len);
-int nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
-        struct os_mbuf *m);
-int nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr, 
-        struct os_mbuf *m, int errcode);
+int nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode);
 extern struct nmgr_jbuf nmgr_task_jbuf;
 
-typedef int (*nmgr_handler_func_t)(struct nmgr_hdr *nmr, struct os_mbuf *req, 
-        uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
+typedef int (*nmgr_handler_func_t)(struct nmgr_jbuf *);
 
 #define NMGR_HANDLER_FUNC(__name)                                           \
     int __name(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,  \

@@ -29,17 +29,14 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-static int imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
-static int imgr_noop(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
-static int imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req,
-  uint16_t srcoff, struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp);
+static int imgr_list(struct nmgr_jbuf *);
+static int imgr_noop(struct nmgr_jbuf *);
+static int imgr_upload(struct nmgr_jbuf *);
 
 static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_LIST] = {
         .nh_read = imgr_list,
-        .nh_write = imgr_list
+        .nh_write = imgr_noop
     },
     [IMGMGR_NMGR_OP_UPLOAD] = {
         .nh_read = imgr_noop,
@@ -101,8 +98,7 @@ imgr_read_ver(int area_id, struct image_version *ver)
 }
 
 static int
-imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
-  struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+imgr_list(struct nmgr_jbuf *njb)
 {
     struct image_version ver;
     int i;
@@ -129,8 +125,7 @@ imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
     array.jv_len = cnt;
     array.jv_val.composite.values = version_ptrs;
 
-    enc = &nmgr_task_jbuf.njb_enc;
-    nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+    enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
     json_encode_object_entry(enc, "images", &array);
@@ -140,15 +135,13 @@ imgr_list(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
 }
 
 static int
-imgr_noop(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
-  struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+imgr_noop(struct nmgr_jbuf *njb)
 {
     return 0;
 }
 
 static int
-imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
-  struct nmgr_hdr *rsp_hdr, struct os_mbuf *rsp)
+imgr_upload(struct nmgr_jbuf *njb)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     unsigned int off = UINT_MAX;
@@ -175,10 +168,7 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
     int len;
     int i;
 
-    nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, srcoff + sizeof(*nmr),
-      nmr->nh_len);
-
-    rc = json_read_object(&nmgr_task_jbuf.njb_buf, off_attr);
+    rc = json_read_object(&njb->njb_buf, off_attr);
     if (rc || off == UINT_MAX) {
         return OS_EINVAL;
     }
@@ -261,8 +251,7 @@ imgr_upload(struct nmgr_hdr *nmr, struct os_mbuf *req, uint16_t srcoff,
         img_state.upload.off += len;
     }
 out:
-    enc = &nmgr_task_jbuf.njb_enc;
-    nmgr_jbuf_setobuf(&nmgr_task_jbuf, rsp_hdr, rsp);
+    enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
 
