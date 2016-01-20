@@ -94,5 +94,6 @@ int bleshell_write_long(uint16_t conn_handle, uint16_t attr_handle,
 int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr);
+int bleshell_conn_cancel(void);
 
 #endif

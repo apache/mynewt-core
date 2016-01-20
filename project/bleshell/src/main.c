@@ -100,6 +100,16 @@ static struct os_mempool bleshell_chr_pool;
 static void *bleshell_dsc_mem;
 static struct os_mempool bleshell_dsc_pool;
 
+static void
+bleshell_print_bytes(uint8_t *bytes, int len)
+{
+    int i;
+
+    for (i = 0; i < len; i++) {
+        console_printf("%s0x%02x", i != 0 ? ":" : "", bytes[i]);
+    }
+}
+
 static int
 bleshell_conn_find_idx(uint16_t handle)
 {
@@ -514,9 +524,6 @@ static int
 bleshell_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
                  struct ble_gatt_attr *attr, void *arg)
 {
-    uint8_t *u8p;
-    int i;
-
     if (error != NULL) {
         console_printf("ERROR READING CHARACTERISTIC: conn_handle=%d "
                        "status=%d att_handle=%d\n",
@@ -525,10 +532,7 @@ bleshell_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
         console_printf("characteristic read complete; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
                        attr->handle, attr->value_len);
-        u8p = attr->value;
-        for (i = 0; i < attr->value_len; i++) {
-            console_printf("%s0x%02x", i != 0 ? ":" : "", u8p[i]);
-        }
+        bleshell_print_bytes(attr->value, attr->value_len);
         console_printf("\n");
     }
 
@@ -540,7 +544,6 @@ bleshell_on_read_mult(uint16_t conn_handle, struct ble_gatt_error *error,
                       uint16_t *attr_handles, uint8_t num_attr_handles,
                       uint8_t *attr_data, uint16_t attr_data_len, void *arg)
 {
-    uint8_t *u8p;
     int i;
 
     if (error != NULL) {
@@ -555,10 +558,7 @@ bleshell_on_read_mult(uint16_t conn_handle, struct ble_gatt_error *error,
         }
 
         console_printf(" len=%d value=", attr_data_len);
-        u8p = attr_data;
-        for (i = 0; i < attr_data_len; i++) {
-            console_printf("%s0x%02x", i != 0 ? ":" : "", u8p[i]);
-        }
+        bleshell_print_bytes(attr_data, attr_data_len);
         console_printf("\n");
     }
 
@@ -570,9 +570,6 @@ static int
 bleshell_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
                   struct ble_gatt_attr *attr, void *arg)
 {
-    uint8_t *u8p;
-    int i;
-
     if (error != NULL) {
         console_printf("ERROR WRITING CHARACTERISTIC: conn_handle=%d "
                        "status=%d att_handle=%d\n",
@@ -581,12 +578,22 @@ bleshell_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
         console_printf("characteristic write complete; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
                        attr->handle, attr->value_len);
-        u8p = attr->value;
-        for (i = 0; i < attr->value_len; i++) {
-            console_printf("%s0x%02x", i != 0 ? ":" : "", u8p[i]);
-        }
+        bleshell_print_bytes(attr->value, attr->value_len);
         console_printf("\n");
     }
+
+    return 0;
+}
+
+static int
+bleshell_on_notify(uint16_t conn_handle, uint16_t attr_handle,
+                   uint8_t *attr_val, uint16_t attr_len, void *arg)
+{
+    console_printf("received notification from conn_handle=%d attr=%d "
+                   "len=%d value=", conn_handle, attr_handle, attr_len);
+
+    bleshell_print_bytes(attr_val, attr_len);
+    console_printf("\n");
 
     return 0;
 }
@@ -609,11 +616,17 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
         if (status == 0) {
             bleshell_conn_add(desc);
         } else {
-            conn_idx = bleshell_conn_find_idx(desc->conn_handle);
-            if (conn_idx == -1) {
-                console_printf("UNKNOWN CONNECTION\n");
+            if (desc->conn_handle == BLE_HS_CONN_HANDLE_NONE) {
+                if (status == BLE_HS_HCI_ERR(BLE_ERR_UNK_CONN_ID)) {
+                    console_printf("connection procedure cancelled.\n");
+                }
             } else {
-                bleshell_conn_delete_idx(conn_idx);
+                conn_idx = bleshell_conn_find_idx(desc->conn_handle);
+                if (conn_idx == -1) {
+                    console_printf("UNKNOWN CONNECTION\n");
+                } else {
+                    bleshell_conn_delete_idx(conn_idx);
+                }
             }
         }
 
@@ -668,15 +681,15 @@ bleshell_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
 }
 
 int
-bleshell_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
+bleshell_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
                        uint16_t chr_end_handle)
 {
-    intptr_t chr_def_handle;
+    intptr_t chr_def_handle_iptr;
     int rc;
 
-    chr_def_handle = chr_val_handle - 1;
-    rc = ble_gattc_disc_all_dscs(conn_handle, chr_val_handle, chr_end_handle,
-                                 bleshell_on_disc_d, &chr_def_handle);
+    chr_def_handle_iptr = chr_def_handle;
+    rc = ble_gattc_disc_all_dscs(conn_handle, chr_def_handle, chr_end_handle,
+                                 bleshell_on_disc_d, &chr_def_handle_iptr);
     return rc;
 }
 
@@ -737,8 +750,13 @@ bleshell_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
 {
     int rc;
 
-    rc = ble_gattc_write(conn_handle, attr_handle, value, value_len,
-                         bleshell_on_write, NULL);
+    if (conn_handle == BLE_HS_CONN_HANDLE_NONE) {
+        rc = ble_att_svr_write_local(attr_handle, value, value_len);
+    } else {
+        rc = ble_gattc_write(conn_handle, attr_handle, value, value_len,
+                             bleshell_on_write, NULL);
+    }
+
     return rc;
 }
 
@@ -793,6 +811,15 @@ bleshell_conn_initiate(int addr_type, uint8_t *peer_addr)
     return rc;
 }
 
+int
+bleshell_conn_cancel(void)
+{
+    int rc;
+
+    rc = ble_gap_conn_cancel();
+    return rc;
+}
+
 /**
  * BLE test task 
  * 
@@ -805,6 +832,8 @@ bleshell_task_handler(void *arg)
     struct os_callout_func *cf;
 
     periph_init();
+
+    ble_att_set_notify_cb(bleshell_on_notify, NULL);
 
     /* Initialize eventq */
     os_eventq_init(&g_bleshell_evq);

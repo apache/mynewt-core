@@ -15,6 +15,12 @@
                            BLE_GATT_CHR_F_NOTIFY            |   \
                            BLE_GATT_CHR_F_INDICATE)
 
+#define PERIPH_CHR_MAX_LEN  16
+
+
+static uint8_t periph_chr_data[3][PERIPH_CHR_MAX_LEN];
+static uint16_t periph_chr_lens[3];
+
 static int
 periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
                union ble_gatt_access_ctxt *ctxt, void *arg);
@@ -63,32 +69,24 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
 };
 
 static int
-periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-               union ble_gatt_access_ctxt *ctxt, void *arg)
+periph_gatt_read(uint16_t attr_handle, union ble_gatt_access_ctxt *ctxt,
+                 void *arg)
 {
-    static uint8_t buf[128];
     uint16_t uuid16;
-
-    assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
+    int idx;
 
     uuid16 = ble_uuid_128_to_16(ctxt->chr_access.chr->uuid128);
     switch (uuid16) {
     case PERIPH_CHR1_UUID:
-        console_printf("reading characteristic1 value\n");
-        memcpy(buf, "char1", 5);
-        ctxt->chr_access.len = 5;
+        idx = 0;
         break;
 
     case PERIPH_CHR2_UUID:
-        console_printf("reading characteristic2 value\n");
-        memcpy(buf, "char2", 5);
-        ctxt->chr_access.len = 5;
+        idx = 1;
         break;
 
     case PERIPH_CHR3_UUID:
-        console_printf("reading characteristic3 value\n");
-        memcpy(buf, "char3", 5);
-        ctxt->chr_access.len = 5;
+        idx = 2;
         break;
 
     default:
@@ -96,9 +94,63 @@ periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
         break;
     }
 
-    ctxt->chr_access.data = buf;
+    ctxt->chr_access.data = periph_chr_data[idx];
+    ctxt->chr_access.len = periph_chr_lens[idx];
 
     return 0;
+}
+
+static int
+periph_gatt_write(uint16_t attr_handle, union ble_gatt_access_ctxt *ctxt,
+                  void *arg)
+{
+    uint16_t uuid16;
+    int idx;
+
+    uuid16 = ble_uuid_128_to_16(ctxt->chr_access.chr->uuid128);
+    switch (uuid16) {
+    case PERIPH_CHR1_UUID:
+        idx = 0;
+        break;
+
+    case PERIPH_CHR2_UUID:
+        idx = 1;
+        break;
+
+    case PERIPH_CHR3_UUID:
+        idx = 2;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+
+    if (ctxt->chr_access.len > sizeof periph_chr_data[idx]) {
+        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+    }
+
+    memcpy(periph_chr_data[idx], ctxt->chr_access.data, ctxt->chr_access.len);
+    periph_chr_lens[idx] = ctxt->chr_access.len;
+
+    return 0;
+}
+
+static int
+periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
+               union ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    switch (op) {
+    case BLE_GATT_ACCESS_OP_READ_CHR:
+        return periph_gatt_read(attr_handle, ctxt, arg);
+
+    case BLE_GATT_ACCESS_OP_WRITE_CHR:
+        return periph_gatt_write(attr_handle, ctxt, arg);
+
+    default:
+        assert(0);
+        return -1;
+    }
 }
 
 static void
@@ -123,6 +175,15 @@ periph_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
                        ctxt->chr_reg.val_handle);
         break;
 
+    case BLE_GATT_REGISTER_OP_DSC:
+        uuid16 = ble_uuid_128_to_16(ctxt->dsc_reg.dsc->uuid128);
+        assert(uuid16 != 0);
+        console_printf("registering descriptor 0x%04x with handle=%d "
+                       "chr_handle=%d\n",
+                       uuid16, ctxt->dsc_reg.dsc_handle,
+                       ctxt->dsc_reg.chr_def_handle);
+        break;
+
     default:
         assert(0);
         break;
@@ -133,6 +194,13 @@ void
 periph_init(void)
 {
     int rc;
+
+    strcpy((char *)periph_chr_data[0], "hello0");
+    periph_chr_lens[0] = strlen((char *)periph_chr_data[0]);
+    strcpy((char *)periph_chr_data[1], "hello1");
+    periph_chr_lens[1] = strlen((char *)periph_chr_data[1]);
+    strcpy((char *)periph_chr_data[2], "hello2");
+    periph_chr_lens[2] = strlen((char *)periph_chr_data[2]);
 
     rc = ble_gatts_register_svcs(periph_svcs, periph_register_cb, NULL);
     assert(rc == 0);

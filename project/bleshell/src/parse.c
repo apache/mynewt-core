@@ -7,10 +7,9 @@
 #include "host/ble_uuid.h"
 #include "bleshell_priv.h"
 
-#define CMD_MAX_ARG_LEN     32
 #define CMD_MAX_ARGS        16
 
-static char cmd_args[CMD_MAX_ARGS][2][CMD_MAX_ARG_LEN];
+static char *cmd_args[CMD_MAX_ARGS][2];
 static int cmd_num_args;
 
 void
@@ -306,9 +305,7 @@ parse_arg_all(int argc, char **argv)
         val = strtok(NULL, "=");
 
         if (key != NULL && val != NULL) {
-            if (strlen(key) == 0 || strlen(key) >= CMD_MAX_ARG_LEN ||
-                strlen(val) >= CMD_MAX_ARG_LEN) {
-
+            if (strlen(key) == 0) {
                 console_printf("Error: invalid argument: %s\n", argv[i]);
                 return -1;
             }
@@ -318,8 +315,8 @@ parse_arg_all(int argc, char **argv)
                 return -1;
             }
 
-            strcpy(cmd_args[cmd_num_args][0], key);
-            strcpy(cmd_args[cmd_num_args][1], val);
+            cmd_args[cmd_num_args][0] = key;
+            cmd_args[cmd_num_args][1] = val;
             cmd_num_args++;
         }
     }

@@ -40,14 +40,28 @@ cmd_exec(struct cmd_entry *cmds, int argc, char **argv)
 }
 
 static void
+cmd_print_dsc(struct bleshell_dsc *dsc)
+{
+    console_printf("            dsc_handle=%d uuid=", dsc->dsc.handle);
+    print_uuid(dsc->dsc.uuid128);
+    console_printf("\n");
+}
+
+static void
 cmd_print_chr(struct bleshell_chr *chr)
 {
+    struct bleshell_dsc *dsc;
+
     console_printf("        def_handle=%d val_handle=%d properties=0x%02x "
                    "uuid=",
                    chr->chr.decl_handle, chr->chr.value_handle,
                    chr->chr.properties);
     print_uuid(chr->chr.uuid128);
     console_printf("\n");
+
+    SLIST_FOREACH(dsc, &chr->dscs, next) {
+        cmd_print_dsc(dsc);
+    }
 }
 
 static void
@@ -190,6 +204,16 @@ cmd_conn(int argc, char **argv)
     uint8_t peer_addr[6];
     int addr_type;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
+        rc = bleshell_conn_cancel();
+        if (rc != 0) {
+            console_printf("connection cancel fail: %d\n", rc);
+            return rc;
+        }
+
+        return 0;
+    }
 
     addr_type = parse_arg_kv("addr_type", cmd_conn_addr_types);
     if (addr_type == -1) {
