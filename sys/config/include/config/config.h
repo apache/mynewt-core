@@ -22,6 +22,8 @@
 #define CONF_MAX_DIR_DEPTH	8	/* max depth of config tree */
 #define CONF_NAME_SEPARATOR	"/"
 
+#define CONF_NMGR_OP		0
+
 enum conf_type {
     CONF_NONE = 0,
     CONF_DIR,
@@ -67,5 +69,7 @@ int conf_register(struct conf_node *parent, struct conf_node *child);
 struct conf_entry *conf_lookup(int argc, char **argv);
 
 int conf_parse_name(char *name, int *name_argc, char *name_argv[]);
+int conf_set_value(struct conf_entry *ce, char *val_str);
+char *conf_get_value(struct conf_entry *ce, char *buf, int buf_len);
 
 #endif /* __UTIL_CONFIG_H_ */

@@ -15,6 +15,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "config/config.h"
 
@@ -111,3 +112,81 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
 
     return 0;
 }
+
+int
+conf_set_value(struct conf_entry *ce, char *val_str)
+{
+    int32_t val;
+    char *eptr;
+
+    switch (ce->c_type) {
+    case CONF_INT8:
+    case CONF_INT16:
+    case CONF_INT32:
+        val = strtol(val_str, &eptr, 0);
+        if (*eptr != '\0') {
+            goto err;
+        }
+        if (ce->c_type == CONF_INT8) {
+            if (val < INT8_MIN || val > UINT8_MAX) {
+                goto err;
+            }
+            *(int8_t *)ce->c_val.single.val = val;
+        } else if (ce->c_type == CONF_INT16) {
+            if (val < INT16_MIN || val > UINT16_MAX) {
+                goto err;
+            }
+            *(int16_t *)ce->c_val.single.val = val;
+        } else if (ce->c_type == CONF_INT32) {
+            *(int32_t *)ce->c_val.single.val = val;
+        }
+        break;
+    case CONF_STRING:
+        val = strlen(val_str);
+        if (val + 1 > ce->c_val.array.maxlen) {
+            goto err;
+        }
+        strcpy(ce->c_val.array.val, val_str);
+        ce->c_val.array.len = val;
+        break;
+    default:
+        console_printf("Can't parse type %d\n", ce->c_type);
+        break;
+    }
+    return 0;
+err:
+    return -1;
+}
+
+/*
+ * Get value in printable string form. If value is not string, the value
+ * will be filled in *buf.
+ * Return value will be pointer to beginning of that buffer,
+ * except for string it will pointer to beginning of string.
+ */
+char *
+conf_get_value(struct conf_entry *ce, char *buf, int buf_len)
+{
+    int32_t val;
+
+    if (ce->c_type == CONF_STRING) {
+        return ce->c_val.array.val;
+    }
+    switch (ce->c_type) {
+    case CONF_INT8:
+    case CONF_INT16:
+    case CONF_INT32:
+        if (ce->c_type == CONF_INT8) {
+            val = *(int8_t *)ce->c_val.single.val;
+        } else if (ce->c_type == CONF_INT16) {
+            val = *(int16_t *)ce->c_val.single.val;
+        } else {
+            val = *(int32_t *)ce->c_val.single.val;
+        }
+        snprintf(buf, buf_len, "%ld", (long)val);
+        return buf;
+    default:
+        return NULL;
+    }
+}
+

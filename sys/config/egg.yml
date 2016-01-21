@@ -8,3 +8,6 @@ egg.deps.SHELL:
 egg.req_caps.SHELL:
     - console
 egg.cflags.SHELL: -DSHELL_PRESENT
+egg.deps.NEWTMGR:
+    - libs/newtmgr
+egg.cflags.NEWTMGR: -DNEWTMGR_PRESENT

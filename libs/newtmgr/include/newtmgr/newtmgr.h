@@ -27,6 +27,7 @@
 #define NMGR_GROUP_ID_DEFAULT   (0)
 #define NMGR_GROUP_ID_IMAGE     (1)
 #define NMGR_GROUP_ID_STATS     (2) 
+#define NMGR_GROUP_ID_CONFIG    (3)
 #define NMGR_GROUP_ID_PERUSER   (64)
 
 #define NMGR_OP_READ            (0)
