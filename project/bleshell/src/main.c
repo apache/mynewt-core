@@ -613,8 +613,8 @@ bleshell_on_notify(uint16_t conn_handle, uint16_t attr_handle,
     return 0;
 }
 
-static void
-bleshell_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
+static int
+bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                     void *arg)
 {
     int conn_idx;
@@ -623,20 +623,20 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
     case BLE_GAP_EVENT_CONN:
         console_printf("connection complete; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       desc->conn_handle, status,
-                       desc->peer_addr[0], desc->peer_addr[1],
-                       desc->peer_addr[2], desc->peer_addr[3],
-                       desc->peer_addr[4], desc->peer_addr[5]);
+                       ctxt->desc.conn_handle, status,
+                       ctxt->desc.peer_addr[0], ctxt->desc.peer_addr[1],
+                       ctxt->desc.peer_addr[2], ctxt->desc.peer_addr[3],
+                       ctxt->desc.peer_addr[4], ctxt->desc.peer_addr[5]);
 
         if (status == 0) {
-            bleshell_conn_add(desc);
+            bleshell_conn_add(&ctxt->desc);
         } else {
-            if (desc->conn_handle == BLE_HS_CONN_HANDLE_NONE) {
+            if (ctxt->desc.conn_handle == BLE_HS_CONN_HANDLE_NONE) {
                 if (status == BLE_HS_HCI_ERR(BLE_ERR_UNK_CONN_ID)) {
                     console_printf("connection procedure cancelled.\n");
                 }
             } else {
-                conn_idx = bleshell_conn_find_idx(desc->conn_handle);
+                conn_idx = bleshell_conn_find_idx(ctxt->desc.conn_handle);
                 if (conn_idx == -1) {
                     console_printf("UNKNOWN CONNECTION\n");
                 } else {
@@ -647,6 +647,8 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
 
         break;
     }
+
+    return 0;
 }
 
 int

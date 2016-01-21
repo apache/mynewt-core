@@ -195,24 +195,26 @@ prphtest_register_attrs(void)
     assert(rc == 0);
 }
 
-static void
-prphtest_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
+static int
+prphtest_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                     void *arg)
 {
     switch (event) {
     case BLE_GAP_EVENT_CONN:
         console_printf("connection event; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       desc->conn_handle, status,
-                       desc->peer_addr[0], desc->peer_addr[1],
-                       desc->peer_addr[2], desc->peer_addr[3],
-                       desc->peer_addr[4], desc->peer_addr[5]);
+                       ctxt->desc.conn_handle, status,
+                       ctxt->desc.peer_addr[0], ctxt->desc.peer_addr[1],
+                       ctxt->desc.peer_addr[2], ctxt->desc.peer_addr[3],
+                       ctxt->desc.peer_addr[4], ctxt->desc.peer_addr[5]);
         break;
 
     default:
         console_printf("unexpected connection event; type=%d\n", event);
         break;
     }
+
+    return 0;
 }
 
 /**

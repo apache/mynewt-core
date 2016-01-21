@@ -179,26 +179,28 @@ centtest_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
     return 0;
 }
 
-static void
-centtest_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
+static int
+centtest_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                     void *arg)
 {
     switch (event) {
     case BLE_GAP_EVENT_CONN:
         console_printf("connection complete; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       desc->conn_handle, status,
-                       desc->peer_addr[0], desc->peer_addr[1],
-                       desc->peer_addr[2], desc->peer_addr[3],
-                       desc->peer_addr[4], desc->peer_addr[5]);
+                       ctxt->desc.conn_handle, status,
+                       ctxt->desc.peer_addr[0], ctxt->desc.peer_addr[1],
+                       ctxt->desc.peer_addr[2], ctxt->desc.peer_addr[3],
+                       ctxt->desc.peer_addr[4], ctxt->desc.peer_addr[5]);
 
         if (status == 0) {
-            ble_gattc_disc_all_svcs(desc->conn_handle,
+            ble_gattc_disc_all_svcs(ctxt->desc.conn_handle,
                                     centtest_on_disc_s, NULL);
         }
 
         break;
     }
+
+    return 0;
 }
 
 /**
