@@ -53,7 +53,11 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
 
 static struct nmgr_group imgr_nmgr_group = {
     .ng_handlers = (struct nmgr_handler *)imgr_nmgr_handlers,
+#ifndef FS_PRESENT
     .ng_handlers_count = 2,
+#else
+    .ng_handlers_count = 3,
+#endif
     .ng_group_id = NMGR_GROUP_ID_IMAGE,
 };
 
