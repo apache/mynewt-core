@@ -42,7 +42,7 @@ static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
  */
-static struct nmgr_handler nmgr_def_group_handlers[] = {
+static const struct nmgr_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_ECHO] = {nmgr_def_echo, nmgr_def_echo},
     [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo}
 };
@@ -210,7 +210,7 @@ nmgr_find_handler(uint16_t group_id, uint16_t handler_id)
         goto err;
     }
 
-    if (handler_id > group->ng_handlers_count) {
+    if (handler_id >= group->ng_handlers_count) {
         goto err;
     }
 
@@ -554,7 +554,8 @@ nmgr_default_groups_register(void)
 {
     int rc;
 
-    NMGR_GROUP_SET_HANDLERS(&nmgr_def_group, nmgr_def_group_handlers);
+    NMGR_GROUP_SET_HANDLERS(&nmgr_def_group,
+      (struct nmgr_handler *)nmgr_def_group_handlers);
     nmgr_def_group.ng_group_id = NMGR_GROUP_ID_DEFAULT;
 
     rc = nmgr_group_register(&nmgr_def_group);
