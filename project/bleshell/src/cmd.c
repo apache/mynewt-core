@@ -388,6 +388,30 @@ cmd_find(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $mtu                                                                      *
+ *****************************************************************************/
+
+static int
+cmd_mtu(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_exchange_mtu(conn_handle);
+    if (rc != 0) {
+        console_printf("error exchanging mtu; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
  * $read                                                                     *
  *****************************************************************************/
 
@@ -582,6 +606,7 @@ cmd_show(int argc, char **argv)
 static int
 cmd_set(int argc, char **argv)
 {
+    uint16_t mtu;
     uint8_t addr[6];
     int good;
     int rc;
@@ -592,6 +617,19 @@ cmd_set(int argc, char **argv)
     if (rc == 0) {
         good = 1;
         memcpy(g_dev_addr, addr, 6);
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    mtu = parse_arg_uint16("mtu", &rc);
+    if (rc == 0) {
+        rc = ble_att_set_preferred_mtu(mtu);
+        if (rc == 0) {
+            good = 1;
+        }
+    }
+    if (rc != ENOENT) {
+        return rc;
     }
 
     if (!good) {
@@ -672,6 +710,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "conn", cmd_conn },
     { "disc", cmd_disc },
     { "find", cmd_find },
+    { "mtu", cmd_mtu },
     { "read", cmd_read },
     { "show", cmd_show },
     { "set", cmd_set },

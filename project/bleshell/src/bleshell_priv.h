@@ -69,6 +69,7 @@ int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
 void periph_init(void);
+int bleshell_exchange_mtu(uint16_t conn_handle);
 int bleshell_disc_svcs(uint16_t conn_handle);
 int bleshell_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128);
 int bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,

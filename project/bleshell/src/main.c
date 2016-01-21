@@ -101,6 +101,14 @@ static void *bleshell_dsc_mem;
 static struct os_mempool bleshell_dsc_pool;
 
 static void
+bleshell_print_error(char *msg, uint16_t conn_handle,
+                     struct ble_gatt_error *error)
+{
+    console_printf("%s: conn_handle=%d status=%d att_handle=%d\n",
+                   msg, conn_handle, error->status, error->att_handle);
+}
+
+static void
 bleshell_print_bytes(uint8_t *bytes, int len)
 {
     int i;
@@ -461,13 +469,25 @@ bleshell_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
 }
 
 static int
+bleshell_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
+                uint16_t mtu, void *arg)
+{
+    if (error != NULL) {
+        bleshell_print_error("ERROR EXCHANGING MTU", conn_handle, error);
+    } else {
+        console_printf("mtu exchange complete: conn_handle=%d mtu=%d\n",
+                       conn_handle, mtu);
+    }
+
+    return 0;
+}
+
+static int
 bleshell_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_service *service, void *arg)
 {
     if (error != NULL) {
-        console_printf("ERROR DISCOVERING SERVICE: conn_handle=%d status=%d "
-                       "att_handle=%d\n", conn_handle, error->status,
-                       error->att_handle);
+        bleshell_print_error("ERROR DISCOVERING SERVICE", conn_handle, error);
     } else if (service != NULL) {
         bleshell_svc_add(conn_handle, service);
     } else {
@@ -486,9 +506,8 @@ bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
     svc_start_handle = arg;
 
     if (error != NULL) {
-        console_printf("ERROR DISCOVERING CHARACTERISTIC: conn_handle=%d "
-                       "status=%d att_handle=%d\n",
-                       conn_handle, error->status, error->att_handle);
+        bleshell_print_error("ERROR DISCOVERING CHARACTERISTIC", conn_handle,
+                             error);
     } else if (chr != NULL) {
         bleshell_chr_add(conn_handle, *svc_start_handle, chr);
     } else {
@@ -508,9 +527,8 @@ bleshell_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
     chr_def_handle = arg;
 
     if (error != NULL) {
-        console_printf("ERROR DISCOVERING DESCRIPTOR: conn_handle=%d "
-                       "status=%d att_handle=%d\n",
-                       conn_handle, error->status, error->att_handle);
+        bleshell_print_error("ERROR DISCOVERING DESCRIPTOR", conn_handle,
+                             error);
     } else if (dsc != NULL) {
         bleshell_dsc_add(conn_handle, *chr_def_handle, dsc);
     } else {
@@ -525,9 +543,8 @@ bleshell_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
                  struct ble_gatt_attr *attr, void *arg)
 {
     if (error != NULL) {
-        console_printf("ERROR READING CHARACTERISTIC: conn_handle=%d "
-                       "status=%d att_handle=%d\n",
-                       conn_handle, error->status, error->att_handle);
+        bleshell_print_error("ERROR READING CHARACTERISTIC", conn_handle,
+                             error);
     } else {
         console_printf("characteristic read complete; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
@@ -547,9 +564,8 @@ bleshell_on_read_mult(uint16_t conn_handle, struct ble_gatt_error *error,
     int i;
 
     if (error != NULL) {
-        console_printf("ERROR READING CHARACTERISTICS: conn_handle=%d "
-                       "status=%d att_handle=%d\n",
-                       conn_handle, error->status, error->att_handle);
+        bleshell_print_error("ERROR READING CHARACTERISTICS", conn_handle,
+                             error);
     } else {
         console_printf("multiple characteristic read complete; conn_handle=%d "
                        "attr_handles=", conn_handle);
@@ -571,9 +587,8 @@ bleshell_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
                   struct ble_gatt_attr *attr, void *arg)
 {
     if (error != NULL) {
-        console_printf("ERROR WRITING CHARACTERISTIC: conn_handle=%d "
-                       "status=%d att_handle=%d\n",
-                       conn_handle, error->status, error->att_handle);
+        bleshell_print_error("ERROR WRITING CHARACTERISTIC", conn_handle,
+                             error);
     } else {
         console_printf("characteristic write complete; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
@@ -632,6 +647,15 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_desc *desc,
 
         break;
     }
+}
+
+int
+bleshell_exchange_mtu(uint16_t conn_handle)
+{
+    int rc;
+
+    rc = ble_gattc_exchange_mtu(conn_handle, bleshell_on_mtu, NULL);
+    return rc;
 }
 
 int

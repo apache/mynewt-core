@@ -232,7 +232,7 @@ parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
 
     sval = parse_arg_find(name);
     if (sval == NULL) {
-        return EINVAL;
+        return ENOENT;
     }
 
     total_len = strlen(sval);
