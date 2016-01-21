@@ -35,6 +35,8 @@
 #include "host/ble_gatt.h"
 #include "controller/ble_ll.h"
 
+#define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
+
 /* Task 1 */
 #define HOST_TASK_PRIO          (1)
 
@@ -99,6 +101,12 @@ static struct os_mempool bleshell_chr_pool;
 
 static void *bleshell_dsc_mem;
 static struct os_mempool bleshell_dsc_pool;
+
+const char *bleshell_device_name = "mynewt nimble";
+const uint16_t bleshell_appearance = BSWAP16(BLE_GAP_APPEARANCE_GEN_COMPUTER);
+const uint8_t bleshell_privacy_flag = 0;
+uint8_t bleshell_reconnect_addr[6];
+uint8_t bleshell_pref_conn_params[8];
 
 static void
 bleshell_print_error(char *msg, uint16_t conn_handle,
@@ -978,6 +986,12 @@ main(void)
 
     rc = cmd_init();
     assert(rc == 0);
+
+    /* Initialize the preferred parameters. */
+    htole16(bleshell_pref_conn_params + 0, BLE_GAP_INITIAL_CONN_ITVL_MIN);
+    htole16(bleshell_pref_conn_params + 2, BLE_GAP_INITIAL_CONN_ITVL_MAX);
+    htole16(bleshell_pref_conn_params + 4, 0);
+    htole16(bleshell_pref_conn_params + 6, BSWAP16(0x100));
 
     /* Start the OS */
     os_start();

@@ -2,6 +2,7 @@
 #include <string.h>
 #include "console/console.h"
 #include "host/ble_hs.h"
+#include "bleshell_priv.h"
 
 #define PERIPH_SVC1_UUID      0x1234
 #define PERIPH_SVC2_UUID      0x5678
@@ -22,11 +23,49 @@ static uint8_t periph_chr_data[3][PERIPH_CHR_MAX_LEN];
 static uint16_t periph_chr_lens[3];
 
 static int
+periph_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
+                      union ble_gatt_access_ctxt *ctxt, void *arg);
+
+static int
 periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
                union ble_gatt_access_ctxt *ctxt, void *arg);
 
 static const struct ble_gatt_svc_def periph_svcs[] = {
     [0] = {
+        /*** Service: GAP. */
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid128 = BLE_UUID16(BLE_GAP_SVC_UUID16),
+        .characteristics = (struct ble_gatt_chr_def[]) { {
+            /*** Characteristic: Device Name. */
+            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_DEVICE_NAME),
+            .access_cb = periph_chr_access_gap,
+            .flags = BLE_GATT_CHR_F_READ,
+        }, {
+            /*** Characteristic: Appearance. */
+            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_APPEARANCE),
+            .access_cb = periph_chr_access_gap,
+            .flags = BLE_GATT_CHR_F_READ,
+        }, {
+            /*** Characteristic: Peripheral Privacy Flag. */
+            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_PERIPH_PRIV_FLAG),
+            .access_cb = periph_chr_access_gap,
+            .flags = BLE_GATT_CHR_F_READ,
+        }, {
+            /*** Characteristic: Reconnection Address. */
+            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_RECONNECT_ADDR),
+            .access_cb = periph_chr_access_gap,
+            .flags = BLE_GATT_CHR_F_WRITE,
+        }, {
+            /*** Characteristic: Peripheral Preferred Connection Parameters. */
+            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS),
+            .access_cb = periph_chr_access_gap,
+            .flags = BLE_GATT_CHR_F_READ,
+        }, {
+            0, /* No more characteristics in this service. */
+        } },
+    },
+
+    [1] = {
         /*** Service 0x1234. */
         .type = BLE_GATT_SVC_TYPE_SECONDARY,
         .uuid128 = BLE_UUID16(PERIPH_SVC1_UUID),
@@ -41,16 +80,16 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
             .access_cb = periph_gatt_cb,
             .flags = BLE_GATT_CHR_F_READ,
         }, {
-            .uuid128 = NULL, /* No more characteristics in this service. */
+            0, /* No more characteristics in this service. */
         } },
     },
 
-    [1] = {
+    [2] = {
         /*** Service 0x5678. */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid128 = BLE_UUID16(PERIPH_SVC2_UUID),
         .includes = (const struct ble_gatt_svc_def *[]) {
-            &periph_svcs[0],
+            &periph_svcs[1],
             NULL,
         },
         .characteristics = (struct ble_gatt_chr_def[]) { {
@@ -59,12 +98,12 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
             .access_cb = periph_gatt_cb,
             .flags = CHR_F_FULL_ACCESS,
         }, {
-            .uuid128 = NULL, /* No more characteristics in this service. */
+            0, /* No more characteristics in this service. */
         } },
     },
 
     {
-        .type = BLE_GATT_SVC_TYPE_END, /* No more services. */
+        0, /* No more services. */
     },
 };
 
@@ -132,6 +171,57 @@ periph_gatt_write(uint16_t attr_handle, union ble_gatt_access_ctxt *ctxt,
 
     memcpy(periph_chr_data[idx], ctxt->chr_access.data, ctxt->chr_access.len);
     periph_chr_lens[idx] = ctxt->chr_access.len;
+
+    return 0;
+}
+
+static int
+periph_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
+                      union ble_gatt_access_ctxt *ctxt, void *arg)
+{
+    uint16_t uuid16;
+
+    uuid16 = ble_uuid_128_to_16(ctxt->chr_access.chr->uuid128);
+    assert(uuid16 != 0);
+
+    switch (uuid16) {
+    case BLE_GAP_CHR_UUID16_DEVICE_NAME:
+        assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
+        ctxt->chr_access.data = (void *)bleshell_device_name;
+        ctxt->chr_access.len = strlen(bleshell_device_name);
+        break;
+
+    case BLE_GAP_CHR_UUID16_APPEARANCE:
+        assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
+        ctxt->chr_access.data = (void *)&bleshell_appearance;
+        ctxt->chr_access.len = sizeof bleshell_appearance;
+        break;
+
+    case BLE_GAP_CHR_UUID16_PERIPH_PRIV_FLAG:
+        assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
+        ctxt->chr_access.data = (void *)&bleshell_privacy_flag;
+        ctxt->chr_access.len = sizeof bleshell_privacy_flag;
+        break;
+
+    case BLE_GAP_CHR_UUID16_RECONNECT_ADDR:
+        assert(op == BLE_GATT_ACCESS_OP_WRITE_CHR);
+        if (ctxt->chr_access.len != sizeof bleshell_reconnect_addr) {
+            return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+        }
+        memcpy(bleshell_reconnect_addr, ctxt->chr_access.data,
+               sizeof bleshell_reconnect_addr);
+        break;
+
+    case BLE_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS:
+        assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
+        ctxt->chr_access.data = (void *)&bleshell_pref_conn_params;
+        ctxt->chr_access.len = sizeof bleshell_pref_conn_params;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
 
     return 0;
 }

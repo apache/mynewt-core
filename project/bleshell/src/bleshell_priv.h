@@ -53,6 +53,12 @@ struct bleshell_conn {
 extern struct bleshell_conn bleshell_conns[BLESHELL_MAX_CONNS];
 extern int bleshell_num_conns;
 
+extern const char *bleshell_device_name;
+extern const uint16_t bleshell_appearance;
+extern const uint8_t bleshell_privacy_flag;
+extern uint8_t bleshell_reconnect_addr[6];
+extern uint8_t bleshell_pref_conn_params[8];
+
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
 struct cmd_entry *parse_cmd_find(struct cmd_entry *cmds, char *name);
