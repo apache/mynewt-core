@@ -107,6 +107,7 @@ const uint16_t bleshell_appearance = BSWAP16(BLE_GAP_APPEARANCE_GEN_COMPUTER);
 const uint8_t bleshell_privacy_flag = 0;
 uint8_t bleshell_reconnect_addr[6];
 uint8_t bleshell_pref_conn_params[8];
+uint8_t bleshell_gatt_service_changed[4];
 
 static void
 bleshell_print_error(char *msg, uint16_t conn_handle,

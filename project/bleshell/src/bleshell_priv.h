@@ -58,6 +58,7 @@ extern const uint16_t bleshell_appearance;
 extern const uint8_t bleshell_privacy_flag;
 extern uint8_t bleshell_reconnect_addr[6];
 extern uint8_t bleshell_pref_conn_params[8];
+uint8_t bleshell_gatt_service_changed[4];
 
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
