@@ -64,6 +64,7 @@ static struct nmgr_group imgr_nmgr_group = {
 static struct {
     struct {
         uint32_t off;
+        uint32_t size;
         const struct flash_area *fa;
     } upload;
 } img_state;
@@ -149,7 +150,8 @@ imgr_upload(struct nmgr_jbuf *njb)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     unsigned int off = UINT_MAX;
-    const struct json_attr_t off_attr[3] = {
+    unsigned int size = UINT_MAX;
+    const struct json_attr_t off_attr[4] = {
         [0] = {
             .attribute = "off",
             .type = t_uinteger,
@@ -161,6 +163,12 @@ imgr_upload(struct nmgr_jbuf *njb)
             .type = t_string,
             .addr.string = img_data,
             .len = sizeof(img_data)
+        },
+        [2] = {
+            .attribute = "len",
+            .type = t_uinteger,
+            .addr.uinteger = &size,
+            .nodefault = true
         }
     };
     struct image_version ver;
@@ -189,6 +197,7 @@ imgr_upload(struct nmgr_jbuf *njb)
          * New upload.
          */
         img_state.upload.off = 0;
+        img_state.upload.size = size;
         active = bsp_imgr_current_slot();
         best = -1;
 
@@ -248,11 +257,15 @@ imgr_upload(struct nmgr_jbuf *njb)
         goto out;
     }
 
-    if (len) {
+    if (len && img_state.upload.fa) {
         rc = flash_area_write(img_state.upload.fa, img_state.upload.off,
           img_data, len);
         assert(rc == 0);
         img_state.upload.off += len;
+        if (img_state.upload.size == img_state.upload.off) {
+            /* Done */
+            img_state.upload.fa = NULL;
+        }
     }
 out:
     enc = &njb->njb_enc;

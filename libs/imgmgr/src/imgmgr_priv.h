@@ -46,16 +46,18 @@ struct imgmgr_upload_cmd {
  *      "active":<version>
  * }
  *
- * Request to upload:
+ * Request to image upload:
  * {
  *      "off":<offset>,
+ *      "len":<img_size>		inspected when off = 0
  *      "data":<base64encoded binary>
  * }
  *
  * Response to upload:
  * {
- *      "off":<offset
+ *      "off":<offset>
  * }
+ *
  */
 
 struct nmgr_hdr;
