@@ -20,6 +20,11 @@
 extern "C" {
 #endif
 
+/* Define special stackos sections */
+#define sec_data_core
+#define sec_bss_core
+#define sec_bss_nz_core
+
 /* LED pins */
 #define LED_BLINK_PIN   (0x1)
 

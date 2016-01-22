@@ -64,8 +64,8 @@ MEMORY
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __nzbss_start__
- *   __nzbss_end__
+ *   __bssnz_start__
+ *   __bssnz_end__
  */
 ENTRY(Reset_Handler)
 
@@ -159,6 +159,23 @@ SECTIONS
         __data_end__ = .;
     } > RAM
 
+    /* Non-zeroed BSS.  This section is similar to BSS, with the following two
+     * caveats:
+     *    1. It does not get zeroed at init-time.
+     *    2. You cannot use it as source memory for EasyDMA.
+     *
+     * This section exists because of a hardware defect; see errata 33 and 34
+     * in STM32F40x errata sheet.
+     */
+    .bssnz :
+    {
+        . = ALIGN(4);
+        __bssnz_start__ = .;
+        *(.bss.core.nz*)
+        . = ALIGN(4);
+        __bssnz_end__ = .;
+    } > CODE_RAM
+
     .bss :
     {
         . = ALIGN(4);
@@ -191,22 +208,5 @@ SECTIONS
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
-
-    /* Non-zeroed BSS.  This section is similar to BSS, with the following two
-     * caveats:
-     *    1. It does not get zeroed at init-time.
-     *    2. You cannot use it as source memory for EasyDMA.
-     *
-     * This section exists because of a hardware defect; see errata 33 and 34
-     * in STM32F40x errata sheet.
-     */
-    .nzbss :
-    {
-        . = ALIGN(4);
-        __nzbss_start__ = .;
-        *(.nzbss*)
-        . = ALIGN(4);
-        __nzbss_end__ = .;
-    } > CODE_RAM
 }
 
