@@ -27,6 +27,9 @@ extern "C" {
 /* UART info */
 #define CONSOLE_UART    0
 
+/* Declaration of "non-zeroed" bss */
+#define nzbss_t   __attribute__((section(".nzbss")))
+
 #ifdef __cplusplus
 }
 #endif

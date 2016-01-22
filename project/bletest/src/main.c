@@ -25,6 +25,7 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "nimble/hci_transport.h"
+#include "nimble/hci_common.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
@@ -32,9 +33,6 @@
 #include "controller/ble_ll_conn.h"
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
-
-/* Init all tasks */
-volatile int tasks_initialized;
 
 /* Task 1 */
 #define HOST_TASK_PRIO      (1)
@@ -53,7 +51,7 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (20)
+#define MBUF_NUM_MBUFS      (40)
 #define MBUF_BUF_SIZE       \
     ((BLE_LL_CFG_ACL_DATA_PKT_LEN + sizeof(struct hci_data_hdr) + 3) & 0xFFFC)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
@@ -77,15 +75,16 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_ITVL           (1000)  /* in 1.25 msec increments */           
+#define BLETEST_CFG_CONN_ITVL           (64)  /* in 1.25 msec increments */           
 #define BLETEST_CFG_SLAVE_LATENCY       (0)
 #define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 10 seconds */
+#define BLETEST_CFG_CONN_SPVN_TMO       (2000)  /* 20 seconds */
 #define BLETEST_CFG_MIN_CE_LEN          (6)    
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
-#define BLETEST_CFG_CONCURRENT_CONNS    (8)
+#define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* BLETEST variables */
+#undef BLETEST_ADV_PKT_NUM
 #define BLETEST_PKT_SIZE                (128)
 #define BLETEST_STACK_SIZE              (256)
 #define BLETEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
@@ -94,13 +93,16 @@ int g_bletest_state;
 struct os_eventq g_bletest_evq;
 struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
-os_stack_t bletest_stack[BLETEST_STACK_SIZE];
+#if !defined(nzbss_t)
+#define nzbss_t
+#endif
+nzbss_t os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
 uint8_t g_bletest_current_conns;
 uint8_t g_bletest_cur_peer_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_last_handle_used;
 
-#if 0
+#ifdef BLETEST_ADV_PKT_NUM
 void
 bletest_inc_adv_pkt_num(void)
 {
@@ -127,12 +129,6 @@ bletest_inc_adv_pkt_num(void)
         assert(rc == 0);
         host_hci_outstanding_opcode = 0;
     }
-}
-#else
-void
-bletest_inc_adv_pkt_num(void)
-{
-    return;
 }
 #endif
 
@@ -333,7 +329,9 @@ bletest_init_initiator(void)
 void
 bletest_execute(void)
 {
+    int rc;
     uint16_t handle;
+    struct hci_conn_update hcu;
 
     /* 
      * Determine if there is an active connection for the current handle
@@ -342,6 +340,9 @@ bletest_execute(void)
     if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
         handle = g_bletest_current_conns + 1;
         if (ble_ll_conn_find_active_conn(handle)) {
+            /* Set next os time to start the connection update */
+            g_next_os_time = 0;
+
             /* Scanning better be stopped! */
             assert(ble_ll_scan_enabled() == 0);
 
@@ -354,6 +355,30 @@ bletest_execute(void)
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
                 bletest_init_initiator();
+            }
+        }
+    } else {
+        /* Issue a connection parameter update to connection handle 1 */
+        if (g_next_os_time == 0) {
+            g_next_os_time = os_time_get();
+            g_next_os_time += OS_TICKS_PER_SEC * 5;
+        } else {
+            if (g_next_os_time != 0xffffffff) {
+                if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+                    hcu.conn_latency = 0;
+                    hcu.supervision_timeout = 1000; 
+                    hcu.conn_itvl_min = 1000;
+                    hcu.conn_itvl_max = 1000;
+                    hcu.handle = 1;
+                    hcu.min_ce_len = 4;
+                    hcu.max_ce_len = 4;
+
+                    rc = host_hci_cmd_le_conn_update(&hcu);
+                    assert(rc == 0);
+                    host_hci_outstanding_opcode = 0;
+
+                    g_next_os_time = 0xffffffff;
+                }
             }
         }
     }
@@ -488,7 +513,7 @@ bletest_execute(void)
         if (g_bletest_current_conns) {
             for (i = 0; i < g_bletest_current_conns; ++i) {
                 if ((g_last_handle_used == 0) || 
-                    (g_last_handle_used >= g_bletest_current_conns)) {
+                    (g_last_handle_used > g_bletest_current_conns)) {
                     g_last_handle_used = 1;
                 }
                 handle = g_last_handle_used;
@@ -652,8 +677,6 @@ init_tasks(void)
     os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL, 
                  BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack, 
                  BLETEST_STACK_SIZE);
-
-    tasks_initialized = 1;
 
     /* Initialize host HCI */
     rc = ble_hs_init(HOST_TASK_PRIO);
