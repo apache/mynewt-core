@@ -557,6 +557,8 @@ nmgr_default_groups_register(void)
     NMGR_GROUP_SET_HANDLERS(&nmgr_def_group,
       (struct nmgr_handler *)nmgr_def_group_handlers);
     nmgr_def_group.ng_group_id = NMGR_GROUP_ID_DEFAULT;
+    nmgr_def_group.ng_handlers_count =
+      sizeof(nmgr_def_group_handlers) / sizeof(nmgr_def_group_handlers[0]);
 
     rc = nmgr_group_register(&nmgr_def_group);
     if (rc != 0) {
