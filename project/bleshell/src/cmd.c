@@ -664,6 +664,68 @@ cmd_show(int argc, char **argv)
  * $set                                                                      *
  *****************************************************************************/
 
+#define CMD_ADV_DATA_MAX_UUIDS16    8
+//#define CMD_ADV_DATA_MAX_UUIDS128   8
+
+static int
+cmd_set_adv_data(void)
+{
+    static uint16_t uuids16[8];
+    //static uint8_t uuids128[8][16];
+    struct ble_hs_adv_fields adv_fields;
+    uint16_t uuid16;
+    int tmp;
+    int rc;
+
+    memset(&adv_fields, 0, sizeof adv_fields);
+
+    while (1) {
+        uuid16 = parse_arg_uint16("uuid16", &rc);
+        if (rc == 0) {
+            if (adv_fields.num_uuids16 >= CMD_ADV_DATA_MAX_UUIDS16) {
+                return EINVAL;
+            }
+            uuids16[adv_fields.num_uuids16] = uuid16;
+            adv_fields.num_uuids16++;
+        } else if (rc == ENOENT) {
+            break;
+        } else {
+            return rc;
+        }
+    }
+    if (adv_fields.num_uuids16 > 0) {
+        adv_fields.uuids16 = uuids16;
+    }
+
+    tmp = parse_arg_long("uuids16_is_complete", &rc);
+    if (rc == 0) {
+        adv_fields.uuids16_is_complete = !!tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    adv_fields.name = (uint8_t *)parse_arg_find("name");
+    if (adv_fields.name != NULL) {
+        adv_fields.name_len = strlen((char *)adv_fields.name);
+    }
+
+    tmp = parse_arg_long_bounds("le_role", 0, 0xff, &rc);
+    if (rc == 0) {
+        adv_fields.le_role = tmp;
+        adv_fields.le_role_is_present = 1;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = bleshell_set_adv_data(&adv_fields);
+    if (rc != 0) {
+        console_printf("error setting advertisement data; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
 static int
 cmd_set(int argc, char **argv)
 {
@@ -671,6 +733,11 @@ cmd_set(int argc, char **argv)
     uint8_t addr[6];
     int good;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "adv_data") == 0) {
+        rc = cmd_set_adv_data();
+        return rc;
+    }
 
     good = 0;
 
@@ -688,8 +755,7 @@ cmd_set(int argc, char **argv)
         if (rc == 0) {
             good = 1;
         }
-    }
-    if (rc != ENOENT) {
+    } else if (rc != ENOENT) {
         return rc;
     }
 

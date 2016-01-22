@@ -913,7 +913,16 @@ bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
     int rc;
 
     rc = ble_gap_conn_disc(dur_ms, disc_mode, scan_type, filter_policy,
-                           bleshell_on_disc, NULL);
+                           bleshell_on_scan, NULL);
+    return rc;
+}
+
+int
+bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields)
+{
+    int rc;
+
+    rc = ble_gap_conn_set_adv_fields(adv_fields);
     return rc;
 }
 

@@ -6,6 +6,7 @@
 
 #include "host/ble_gatt.h"
 struct ble_gap_white_entry;
+struct ble_hs_adv_fields;
 
 #define BLESHELL_MAX_CONNS              8
 
@@ -109,5 +110,6 @@ int bleshell_wl_set(struct ble_gap_white_entry *white_list,
                     int white_list_count);
 int bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
                   uint8_t filter_policy);
+int bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 
 #endif
