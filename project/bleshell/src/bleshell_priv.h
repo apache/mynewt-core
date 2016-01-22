@@ -5,6 +5,7 @@
 #include "os/queue.h"
 
 #include "host/ble_gatt.h"
+struct ble_gap_white_entry;
 
 #define BLESHELL_MAX_CONNS              8
 
@@ -103,5 +104,10 @@ int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr);
 int bleshell_conn_cancel(void);
+int bleshell_term_conn(uint16_t conn_handle);
+int bleshell_wl_set(struct ble_gap_white_entry *white_list,
+                    int white_list_count);
+int bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
+                  uint8_t filter_policy);
 
 #endif

@@ -153,7 +153,6 @@ cmd_adv(int argc, char **argv)
         console_printf("invalid 'conn' parameter\n");
         return -1;
     }
-    
 
     disc = parse_arg_kv("disc", cmd_adv_disc_modes);
     if (disc == -1) {
@@ -504,6 +503,68 @@ cmd_read(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $scan                                                                     *
+ *****************************************************************************/
+
+static struct kv_pair cmd_scan_disc_modes[] = {
+    { "ltd", BLE_GAP_DISC_MODE_LTD },
+    { "gen", BLE_GAP_DISC_MODE_GEN },
+    { NULL }
+};
+
+static struct kv_pair cmd_scan_types[] = {
+    { "passive", BLE_HCI_SCAN_TYPE_PASSIVE },
+    { "active", BLE_HCI_SCAN_TYPE_ACTIVE },
+    { NULL }
+};
+
+static struct kv_pair cmd_scan_filt_policies[] = {
+    { "no_wl", BLE_HCI_SCAN_FILT_NO_WL },
+    { "use_wl", BLE_HCI_SCAN_FILT_USE_WL },
+    { "no_wl_inita", BLE_HCI_SCAN_FILT_NO_WL_INITA },
+    { "use_wl_inita", BLE_HCI_SCAN_FILT_USE_WL_INITA },
+    { NULL }
+};
+
+static int
+cmd_scan(int argc, char **argv)
+{
+    uint32_t dur;
+    int disc;
+    int type;
+    int filt;
+    int rc;
+
+    dur = parse_arg_uint16("dur", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    disc = parse_arg_kv("disc", cmd_scan_disc_modes);
+    if (disc == -1) {
+        return EINVAL;
+    }
+
+    type = parse_arg_kv("type", cmd_scan_types);
+    if (type == -1) {
+        return EINVAL;
+    }
+
+    filt = parse_arg_kv("filt", cmd_scan_filt_policies);
+    if (disc == -1) {
+        return EINVAL;
+    }
+
+    rc = bleshell_scan(dur, disc, type, filt);
+    if (rc != 0) {
+        console_printf("error scanning; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
  * $show                                                                     *
  *****************************************************************************/
 
@@ -641,6 +702,83 @@ cmd_set(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $terminate                                                                *
+ *****************************************************************************/
+
+static int
+cmd_term(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_term_conn(conn_handle);
+    if (rc != 0) {
+        console_printf("error terminating connection; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
+ * $white list                                                               *
+ *****************************************************************************/
+
+static struct kv_pair cmd_wl_addr_types[] = {
+    { "public",         BLE_HCI_CONN_PEER_ADDR_PUBLIC },
+    { "random",         BLE_HCI_CONN_PEER_ADDR_RANDOM },
+    { NULL }
+};
+
+#define CMD_WL_MAX_SZ   8
+
+static int
+cmd_wl(int argc, char **argv)
+{
+    static struct ble_gap_white_entry white_list[CMD_WL_MAX_SZ];
+    uint8_t addr_type;
+    uint8_t addr[6];
+    int wl_cnt;
+    int rc;
+
+    wl_cnt = 0;
+    while (1) {
+        if (wl_cnt >= CMD_WL_MAX_SZ) {
+            return EINVAL;
+        }
+
+        rc = parse_arg_mac("addr", addr);
+        if (rc == ENOENT) {
+            break;
+        } else if (rc != 0) {
+            return rc;
+        }
+
+        addr_type = parse_arg_kv("addr_type", cmd_wl_addr_types);
+        if (addr_type == -1) {
+            return EINVAL;
+        }
+
+        memcpy(white_list[wl_cnt].addr, addr, 6);
+        white_list[wl_cnt].addr_type = addr_type;
+        wl_cnt++;
+    }
+
+    if (wl_cnt == 0) {
+        return EINVAL;
+    }
+
+    bleshell_wl_set(white_list, wl_cnt);
+
+    return 0;
+}
+
+/*****************************************************************************
  * $write                                                                    *
  *****************************************************************************/
 
@@ -706,15 +844,18 @@ cmd_write(int argc, char **argv)
  *****************************************************************************/
 
 static struct cmd_entry cmd_b_entries[] = {
-    { "adv", cmd_adv },
-    { "conn", cmd_conn },
-    { "disc", cmd_disc },
-    { "find", cmd_find },
-    { "mtu", cmd_mtu },
-    { "read", cmd_read },
-    { "show", cmd_show },
-    { "set", cmd_set },
-    { "write", cmd_write },
+    { "adv",        cmd_adv },
+    { "conn",       cmd_conn },
+    { "disc",       cmd_disc },
+    { "find",       cmd_find },
+    { "mtu",        cmd_mtu },
+    { "read",       cmd_read },
+    { "scan",       cmd_scan },
+    { "show",       cmd_show },
+    { "set",        cmd_set },
+    { "term",       cmd_term },
+    { "wl",         cmd_wl },
+    { "write",      cmd_write },
     { NULL, NULL }
 };
 

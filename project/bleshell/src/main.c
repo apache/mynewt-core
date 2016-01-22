@@ -660,6 +660,38 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     return 0;
 }
 
+static void
+bleshell_on_wl_set(int status, void *arg)
+{
+    console_printf("white list set status=%d\n", status);
+}
+
+static void
+bleshell_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
+                 void *arg)
+{
+    switch (event) {
+    case BLE_GAP_EVENT_DISC_SUCCESS:
+        console_printf("received advertisement; event_type=%d addr_type=%d "
+                       "addr=", desc->event_type, desc->addr_type);
+        bleshell_print_bytes(desc->addr, 6);
+        console_printf(" length_data=%d rssi=%d data=", desc->length_data,
+                       desc->rssi);
+        bleshell_print_bytes(desc->data, desc->length_data);
+        /* XXX: Print fields. */
+        console_printf("\n");
+        break;
+
+    case BLE_GAP_EVENT_DISC_FINISHED:
+        console_printf("scanning finished; status=%d\n", status);
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+
 int
 bleshell_exchange_mtu(uint16_t conn_handle)
 {
@@ -763,8 +795,8 @@ bleshell_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
 {
     int rc;
 
-    rc = ble_gattc_read_uuid(conn_handle, start_handle, end_handle, uuid128,
-                             bleshell_on_read, NULL);
+    rc = ble_gattc_read_by_uuid(conn_handle, start_handle, end_handle, uuid128,
+                                bleshell_on_read, NULL);
     return rc;
 }
 
@@ -852,6 +884,36 @@ bleshell_conn_cancel(void)
     int rc;
 
     rc = ble_gap_conn_cancel();
+    return rc;
+}
+
+int
+bleshell_term_conn(uint16_t conn_handle)
+{
+    int rc;
+
+    rc = ble_gap_conn_terminate(conn_handle);
+    return rc;
+}
+
+int
+bleshell_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
+{
+    int rc;
+
+    rc = ble_gap_conn_wl_set(white_list, white_list_count, bleshell_on_wl_set,
+                             NULL);
+    return rc;
+}
+
+int
+bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
+              uint8_t filter_policy)
+{
+    int rc;
+
+    rc = ble_gap_conn_disc(dur_ms, disc_mode, scan_type, filter_policy,
+                           bleshell_on_disc, NULL);
     return rc;
 }
 
