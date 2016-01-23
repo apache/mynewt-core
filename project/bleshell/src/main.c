@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "bsp/bsp.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
@@ -75,14 +76,14 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLESHELL_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
 #define BLESHELL_MAX_SVCS               8
-#define BLESHELL_MAX_CHRS               8
-#define BLESHELL_MAX_DSCS               8
+#define BLESHELL_MAX_CHRS               32
+#define BLESHELL_MAX_DSCS               32
 
 uint32_t g_next_os_time;
 int g_bleshell_state;
 struct os_eventq g_bleshell_evq;
 struct os_task bleshell_task;
-os_stack_t bleshell_stack[BLESHELL_STACK_SIZE];
+bssnz_t os_stack_t bleshell_stack[BLESHELL_STACK_SIZE];
 
 struct bleshell_conn ble_shell_conns[BLESHELL_MAX_CONNS];
 int bleshell_num_conns;
@@ -90,7 +91,7 @@ int bleshell_num_conns;
 void
 bletest_inc_adv_pkt_num(void) { }
 
-struct bleshell_conn bleshell_conns[BLESHELL_MAX_CONNS];
+bssnz_t struct bleshell_conn bleshell_conns[BLESHELL_MAX_CONNS];
 int bleshell_num_conns;
 
 static void *bleshell_svc_mem;
@@ -284,7 +285,7 @@ bleshell_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
     if (prev == NULL) {
         SLIST_INSERT_HEAD(&conn->svcs, svc, next);
     } else {
-        SLIST_NEXT(prev, next) = svc;
+        SLIST_INSERT_AFTER(prev, svc, next);
     }
 
     return svc;
@@ -554,12 +555,14 @@ bleshell_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
     if (error != NULL) {
         bleshell_print_error("ERROR READING CHARACTERISTIC", conn_handle,
                              error);
-    } else {
-        console_printf("characteristic read complete; conn_handle=%d "
+    } else if (attr != NULL) {
+        console_printf("characteristic read; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
                        attr->handle, attr->value_len);
         bleshell_print_bytes(attr->value, attr->value_len);
         console_printf("\n");
+    } else {
+        console_printf("characteristic read complete\n");
     }
 
     return 0;
@@ -603,6 +606,31 @@ bleshell_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
                        "attr_handle=%d len=%d value=", conn_handle,
                        attr->handle, attr->value_len);
         bleshell_print_bytes(attr->value, attr->value_len);
+        console_printf("\n");
+    }
+
+    return 0;
+}
+
+static int
+bleshell_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
+                           struct ble_gatt_attr *attrs, uint8_t num_attrs,
+                           void *arg)
+{
+    int i;
+
+    if (error != NULL) {
+        bleshell_print_error("ERROR WRITING CHARACTERISTICS RELIABLY",
+                             conn_handle, error);
+    } else {
+        console_printf("characteristic write reliable complete; "
+                       "conn_handle=%d", conn_handle);
+
+        for (i = 0; i < num_attrs; i++) {
+            console_printf(" attr_handle=%d len=%d value=", attrs[i].handle,
+                           attrs[i].value_len);
+            bleshell_print_bytes(attrs[i].value, attrs[i].value_len);
+        }
         console_printf("\n");
     }
 
@@ -850,6 +878,17 @@ bleshell_write_long(uint16_t conn_handle, uint16_t attr_handle, void *value,
 }
 
 int
+bleshell_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
+                        int num_attrs)
+{
+    int rc;
+
+    rc = ble_gattc_write_reliable(conn_handle, attrs, num_attrs,
+                                  bleshell_on_write_reliable, NULL);
+    return rc;
+}
+
+int
 bleshell_adv_stop(void)
 {
     int rc;
@@ -873,7 +912,7 @@ bleshell_conn_initiate(int addr_type, uint8_t *peer_addr)
 {
     int rc;
 
-    rc = ble_gap_conn_initiate(addr_type, peer_addr, bleshell_on_connect,
+    rc = ble_gap_conn_initiate(addr_type, peer_addr, NULL, bleshell_on_connect,
                                NULL);
     return rc;
 }

@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <string.h>
+#include "bsp/bsp.h"
 #include "console/console.h"
 #include "shell/shell.h"
 
@@ -9,7 +10,11 @@
 
 #include "bleshell_priv.h"
 
+#define CMD_BUF_SZ      1024
+
 static struct shell_cmd cmd_b;
+
+static bssnz_t uint8_t cmd_buf[CMD_BUF_SZ];
 
 /*****************************************************************************
  * $misc                                                                     *
@@ -419,7 +424,7 @@ cmd_mtu(int argc, char **argv)
 static int
 cmd_read(int argc, char **argv)
 {
-    uint16_t attr_handles[CMD_READ_MAX_ATTRS];
+    static uint16_t attr_handles[CMD_READ_MAX_ATTRS];
     uint16_t conn_handle;
     uint16_t start;
     uint16_t end;
@@ -848,14 +853,17 @@ cmd_wl(int argc, char **argv)
  * $write                                                                    *
  *****************************************************************************/
 
+#define CMD_WRITE_MAX_ATTRS 16
+
 static int
 cmd_write(int argc, char **argv)
 {
-    static uint8_t attr_val[BLE_ATT_ATTR_MAX_LEN];
-    static int attr_len;
-
+    static struct ble_gatt_attr attrs[CMD_WRITE_MAX_ATTRS];
     uint16_t attr_handle;
     uint16_t conn_handle;
+    int total_attr_len;
+    int num_attrs;
+    int attr_len;
     int is_long;
     int no_rsp;
     int rc;
@@ -879,24 +887,58 @@ cmd_write(int argc, char **argv)
         return rc;
     }
 
-    attr_handle = parse_arg_long("attr", &rc);
-    if (rc != 0) {
-        return rc;
-    }
+    total_attr_len = 0;
+    num_attrs = 0;
+    while (1) {
+        attr_handle = parse_arg_long("attr", &rc);
+        if (rc == ENOENT) {
+            break;
+        } else if (rc != 0) {
+            return rc;
+        }
 
-    rc = parse_arg_byte_stream("value", sizeof attr_val, attr_val, &attr_len);
-    if (rc != 0) {
-        return rc;
+        rc = parse_arg_byte_stream("value", sizeof cmd_buf - total_attr_len,
+                                   cmd_buf + total_attr_len, &attr_len);
+        if (rc == ENOENT) {
+            break;
+        } else if (rc != 0) {
+            return rc;
+        }
+
+        if (num_attrs >= CMD_WRITE_MAX_ATTRS) {
+            return EINVAL;
+        }
+
+        attrs[num_attrs].handle = attr_handle;
+        attrs[num_attrs].offset = 0;
+        attrs[num_attrs].value_len = attr_len;
+        attrs[num_attrs].value = cmd_buf + total_attr_len;
+
+        total_attr_len += attr_len;
+        num_attrs++;
     }
 
     if (no_rsp) {
-        rc = bleshell_write_no_rsp(conn_handle, attr_handle, attr_val,
-                                   attr_len);
+        if (num_attrs != 1) {
+            return EINVAL;
+        }
+        rc = bleshell_write_no_rsp(conn_handle, attrs[0].handle,
+                                   attrs[0].value, attrs[0].value_len);
     } else if (is_long) {
-        rc = bleshell_write_long(conn_handle, attr_handle, attr_val, attr_len);
+        if (num_attrs != 1) {
+            return EINVAL;
+        }
+        rc = bleshell_write_long(conn_handle, attrs[0].handle,
+                                 attrs[0].value, attrs[0].value_len);
+    } else if (num_attrs > 1) {
+        rc = bleshell_write_reliable(conn_handle, attrs, num_attrs);
+    } else if (num_attrs == 1) {
+        rc = bleshell_write(conn_handle, attrs[0].handle,
+                            attrs[0].value, attrs[0].value_len);
     } else {
-        rc = bleshell_write(conn_handle, attr_handle, attr_val, attr_len);
+        return EINVAL;
     }
+
     if (rc != 0) {
         console_printf("error writing characteristic; rc=%d\n", rc);
         return rc;

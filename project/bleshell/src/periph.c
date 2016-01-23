@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include "bsp/bsp.h"
 #include "console/console.h"
 #include "host/ble_hs.h"
 #include "bleshell_priv.h"
@@ -19,8 +20,8 @@
 #define PERIPH_CHR_MAX_LEN  16
 
 
-static uint8_t periph_chr_data[3][PERIPH_CHR_MAX_LEN];
-static uint16_t periph_chr_lens[3];
+static bssnz_t uint8_t periph_chr_data[3][PERIPH_CHR_MAX_LEN];
+static bssnz_t uint16_t periph_chr_lens[3];
 
 static int
 periph_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
@@ -94,7 +95,7 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
             /*** Characteristic 0x1112. */
             .uuid128 = BLE_UUID16(PERIPH_CHR2_UUID),
             .access_cb = periph_gatt_cb,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = CHR_F_FULL_ACCESS,
         }, {
             0, /* No more characteristics in this service. */
         } },
