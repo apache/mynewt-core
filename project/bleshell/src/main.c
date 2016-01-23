@@ -128,6 +128,17 @@ bleshell_print_bytes(uint8_t *bytes, int len)
     }
 }
 
+static void
+bleshell_print_conn_desc(struct ble_gap_conn_desc *desc)
+{
+    console_printf("handle=%d peer_addr_type=%d peer_addr=",
+                   desc->conn_handle, desc->peer_addr_type);
+    bleshell_print_bytes(desc->peer_addr, 6);
+    console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d",
+                   desc->conn_itvl, desc->conn_latency,
+                   desc->supervision_timeout);
+}
+
 static int
 bleshell_conn_find_idx(uint16_t handle)
 {
@@ -658,12 +669,9 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 
     switch (event) {
     case BLE_GAP_EVENT_CONN:
-        console_printf("connection complete; handle=%d status=%d "
-                       "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       ctxt->desc.conn_handle, status,
-                       ctxt->desc.peer_addr[0], ctxt->desc.peer_addr[1],
-                       ctxt->desc.peer_addr[2], ctxt->desc.peer_addr[3],
-                       ctxt->desc.peer_addr[4], ctxt->desc.peer_addr[5]);
+        console_printf("connection complete; status=%d ", status);
+        bleshell_print_conn_desc(&ctxt->desc);
+        console_printf("\n");
 
         if (status == 0) {
             bleshell_conn_add(&ctxt->desc);
@@ -682,6 +690,12 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
             }
         }
 
+        break;
+
+    case BLE_GAP_EVENT_CONN_UPDATED:
+        console_printf("connection updated; status=%d ", status);
+        bleshell_print_conn_desc(&ctxt->desc);
+        console_printf("\n");
         break;
     }
 
@@ -908,7 +922,8 @@ bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type)
 }
 
 int
-bleshell_conn_initiate(int addr_type, uint8_t *peer_addr)
+bleshell_conn_initiate(int addr_type, uint8_t *peer_addr,
+                       struct ble_gap_conn_crt_params *params)
 {
     int rc;
 
@@ -962,6 +977,16 @@ bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields)
     int rc;
 
     rc = ble_gap_conn_set_adv_fields(adv_fields);
+    return rc;
+}
+
+int
+bleshell_update_conn(uint16_t conn_handle,
+                     struct ble_gap_conn_upd_params *params)
+{
+    int rc;
+
+    rc = ble_gap_conn_update_params(conn_handle, params);
     return rc;
 }
 

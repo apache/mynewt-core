@@ -137,6 +137,22 @@ parse_arg_uint16(char *name, int *out_status)
     return parse_arg_long_bounds(name, 0, UINT16_MAX, out_status);
 }
 
+uint16_t
+parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status)
+{
+    uint16_t val;
+    int rc;
+
+    val = parse_arg_uint16(name, &rc);
+    if (rc == ENOENT) {
+        val = dflt;
+        rc = 0;
+    }
+
+    *out_status = rc;
+    return val;
+}
+
 int
 parse_arg_kv(char *name, struct kv_pair *kvs)
 {

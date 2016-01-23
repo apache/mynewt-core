@@ -205,6 +205,7 @@ static struct kv_pair cmd_conn_addr_types[] = {
 static int
 cmd_conn(int argc, char **argv)
 {
+    struct ble_gap_conn_crt_params params;
     uint8_t peer_addr[6];
     int addr_type;
     int rc;
@@ -233,7 +234,49 @@ cmd_conn(int argc, char **argv)
         memset(peer_addr, 0, sizeof peer_addr);
     }
 
-    rc = bleshell_conn_initiate(addr_type, peer_addr);
+    params.scan_itvl = parse_arg_uint16_dflt("scan_itvl", 0x0010, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.scan_window = parse_arg_uint16_dflt("scan_window", 0x0010, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.itvl_min = parse_arg_uint16_dflt(
+        "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.itvl_max = parse_arg_uint16_dflt(
+        "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.latency = parse_arg_uint16_dflt("latency", 0, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.supervision_timeout = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_conn_initiate(addr_type, peer_addr, &params);
     if (rc != 0) {
         return rc;
     }
@@ -797,6 +840,63 @@ cmd_term(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $update connection parameters                                             *
+ *****************************************************************************/
+
+static int
+cmd_update(int argc, char **argv)
+{
+    struct ble_gap_conn_upd_params params;
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.itvl_min = parse_arg_uint16_dflt(
+        "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.itvl_max = parse_arg_uint16_dflt(
+        "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.latency = parse_arg_uint16_dflt("latency", 0, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.supervision_timeout = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_update_conn(conn_handle, &params);
+    if (rc != 0) {
+        console_printf("error updating connection; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
  * $white list                                                               *
  *****************************************************************************/
 
@@ -962,6 +1062,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "show",       cmd_show },
     { "set",        cmd_set },
     { "term",       cmd_term },
+    { "update",     cmd_update },
     { "wl",         cmd_wl },
     { "write",      cmd_write },
     { NULL, NULL }
