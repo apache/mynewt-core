@@ -25,6 +25,9 @@ extern "C" {
 #define sec_bss_core
 #define sec_bss_nz_core
 
+/* More convenient section placement macros. */
+#define bssnz_t
+
 /* LED pins */
 #define LED_BLINK_PIN   (0x1)
 

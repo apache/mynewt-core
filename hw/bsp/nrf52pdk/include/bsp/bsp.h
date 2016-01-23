@@ -26,14 +26,14 @@ extern "C" {
 #define sec_bss_core    __attribute__((section(".bss.core")))
 #define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
 
+/* More convenient section placement macros. */
+#define bssnz_t         sec_bss_nz_core
+
 /* LED pins */
 #define LED_BLINK_PIN   (17)
 
 /* UART info */
 #define CONSOLE_UART    0
-
-/* Declaration of "non-zeroed" bss */
-#define nzbss_t   __attribute__((section(".nzbss")))
 
 #ifdef __cplusplus
 }

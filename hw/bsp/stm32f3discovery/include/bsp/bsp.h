@@ -25,6 +25,9 @@ extern "C" {
 #define sec_bss_core    __attribute__((section(".bss.core")))
 #define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
 
+/* More convenient section placement macros. */
+#define bssnz_t         sec_bss_nz_core
+
 /* LED pins */
 #define LED_BLINK_PIN   (72)
 
