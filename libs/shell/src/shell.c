@@ -45,8 +45,10 @@ static struct os_event console_rdy_ev;
 
 static struct os_mutex g_shell_cmd_list_lock; 
 
-char shell_line[128];
-char *argv[20];
+static char shell_line[1024];
+static int shell_line_len;
+static char *argv[20];
+static uint8_t shell_full_line;
 
 static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list = 
     STAILQ_HEAD_INITIALIZER(g_shell_cmd_list);
@@ -362,7 +364,8 @@ shell_read_console(void)
     int rc;
 
     while (1) {
-        rc = console_read(shell_line, sizeof(shell_line));
+        rc = console_read(shell_line + shell_line_len,
+                          sizeof(shell_line) - shell_line_len);
         if (rc < 0) {
             goto err;
         }
@@ -370,19 +373,28 @@ shell_read_console(void)
             break;
         }
 
-        if (rc > 2) {
-            if (shell_line[0] == SHELL_NLIP_PKT_START1 && 
-                    shell_line[1] == SHELL_NLIP_PKT_START2) {
-                if (g_nlip_mbuf) {
-                    os_mbuf_free_chain(g_nlip_mbuf);
-                    g_nlip_mbuf = NULL;
-                }
-                g_nlip_expected_len = 0;
+        if (shell_full_line) {
+            shell_line_len = 0;
+            shell_full_line = 0;
+            if (rc > 2) {
+                if (shell_line[0] == SHELL_NLIP_PKT_START1 && 
+                        shell_line[1] == SHELL_NLIP_PKT_START2) {
+                    if (g_nlip_mbuf) {
+                        os_mbuf_free_chain(g_nlip_mbuf);
+                        g_nlip_mbuf = NULL;
+                    }
+                    g_nlip_expected_len = 0;
 
-                rc = shell_nlip_process(&shell_line[2], rc-2);
-            } else if (shell_line[0] == SHELL_NLIP_DATA_START1 && 
-                    shell_line[1] == SHELL_NLIP_DATA_START2) {
-                rc = shell_nlip_process(&shell_line[2], rc-2);
+                    rc = shell_nlip_process(&shell_line[2], rc-2);
+                } else if (shell_line[0] == SHELL_NLIP_DATA_START1 && 
+                        shell_line[1] == SHELL_NLIP_DATA_START2) {
+                    rc = shell_nlip_process(&shell_line[2], rc-2);
+                } else {
+                    rc = shell_process_command(shell_line, rc);
+                    if (rc != 0) {
+                        goto err;
+                    }
+                }
             } else {
                 rc = shell_process_command(shell_line, rc);
                 if (rc != 0) {
@@ -390,10 +402,7 @@ shell_read_console(void)
                 }
             }
         } else {
-            rc = shell_process_command(shell_line, rc);
-            if (rc != 0) {
-                goto err;
-            }
+            shell_line_len += rc;
         }
     }
 
@@ -438,8 +447,7 @@ shell_task_func(void *arg)
 void
 shell_console_rx_cb(int full_line)
 {
-    assert(full_line);
-
+    shell_full_line = full_line;
     os_eventq_put(&shell_evq, &console_rdy_ev);
 }
 

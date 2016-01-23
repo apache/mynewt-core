@@ -167,7 +167,6 @@ console_read(char *str, int cnt)
     OS_ENTER_CRITICAL(sr);
     for (i = 0; i < cnt; i++) {
         if (cr->cr_head == cr->cr_tail) {
-            i = -1;
             break;
         }
         ch = console_pull_char(cr);
