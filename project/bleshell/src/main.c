@@ -200,18 +200,21 @@ bleshell_print_adv_fields(struct ble_hs_adv_fields *fields)
         console_printf("    device_class=");
         bleshell_print_bytes(fields->device_class,
                              BLE_HS_ADV_DEVICE_CLASS_LEN);
+        console_printf("\n");
     }
 
     if (fields->slave_itvl_range != NULL) {
         console_printf("    slave_itvl_range=");
         bleshell_print_bytes(fields->slave_itvl_range,
                              BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
+        console_printf("\n");
     }
 
     if (fields->svc_data_uuid16 != NULL) {
         console_printf("    svc_data_uuid16=");
         bleshell_print_bytes(fields->svc_data_uuid16,
                              fields->svc_data_uuid16_len);
+        console_printf("\n");
     }
 
     if (fields->public_tgt_addr != NULL) {
@@ -221,6 +224,7 @@ bleshell_print_adv_fields(struct ble_hs_adv_fields *fields)
             print_addr(u8p);
             u8p += BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN;
         }
+        console_printf("\n");
     }
 
     if (fields->appearance_is_present) {
@@ -234,6 +238,7 @@ bleshell_print_adv_fields(struct ble_hs_adv_fields *fields)
     if (fields->le_addr != NULL) {
         console_printf("    le_addr=");
         bleshell_print_bytes(fields->le_addr, BLE_HS_ADV_LE_ADDR_LEN);
+        console_printf("\n");
     }
 
     if (fields->le_role_is_present) {
@@ -244,22 +249,26 @@ bleshell_print_adv_fields(struct ble_hs_adv_fields *fields)
         console_printf("    svc_data_uuid32=");
         bleshell_print_bytes(fields->svc_data_uuid32,
                              fields->svc_data_uuid32_len);
+        console_printf("\n");
     }
 
     if (fields->svc_data_uuid128 != NULL) {
         console_printf("    svc_data_uuid128=");
         bleshell_print_bytes(fields->svc_data_uuid128,
                              fields->svc_data_uuid128_len);
+        console_printf("\n");
     }
 
     if (fields->uri != NULL) {
         console_printf("    uri=");
         bleshell_print_bytes(fields->uri, fields->uri_len);
+        console_printf("\n");
     }
 
     if (fields->mfg_data != NULL) {
         console_printf("    mfg_data=");
         bleshell_print_bytes(fields->mfg_data, fields->mfg_data_len);
+        console_printf("\n");
     }
 }
 
