@@ -137,6 +137,12 @@ parse_arg_uint16(char *name, int *out_status)
     return parse_arg_long_bounds(name, 0, UINT16_MAX, out_status);
 }
 
+uint32_t
+parse_arg_uint32(char *name, int *out_status)
+{
+    return parse_arg_long_bounds(name, 0, UINT32_MAX, out_status);
+}
+
 uint16_t
 parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status)
 {
@@ -259,7 +265,7 @@ parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
     }
 }
 
-static int
+int
 parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len)
 {
     int actual_len;

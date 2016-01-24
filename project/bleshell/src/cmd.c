@@ -7,6 +7,7 @@
 #include "nimble/ble.h"
 #include "nimble/hci_common.h"
 #include "host/ble_gap.h"
+#include "host/ble_hs_adv.h"
 
 #include "bleshell_priv.h"
 
@@ -712,16 +713,46 @@ cmd_show(int argc, char **argv)
  * $set                                                                      *
  *****************************************************************************/
 
-#define CMD_ADV_DATA_MAX_UUIDS16    8
-//#define CMD_ADV_DATA_MAX_UUIDS128   8
+#define CMD_ADV_DATA_MAX_UUIDS16                8
+#define CMD_ADV_DATA_MAX_UUIDS32                8
+#define CMD_ADV_DATA_MAX_UUIDS128               8
+#define CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS       8
+#define CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN    32
+#define CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN    32
+#define CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN   32
+#define CMD_ADV_DATA_URI_MAX_LEN                32
+#define CMD_ADV_DATA_MFG_DATA_MAX_LEN           32
 
 static int
 cmd_set_adv_data(void)
 {
-    static uint16_t uuids16[8];
-    //static uint8_t uuids128[8][16];
+    static bssnz_t uint16_t uuids16[CMD_ADV_DATA_MAX_UUIDS16];
+    static bssnz_t uint32_t uuids32[CMD_ADV_DATA_MAX_UUIDS32];
+    static bssnz_t uint8_t uuids128[CMD_ADV_DATA_MAX_UUIDS128][16];
+    static bssnz_t uint8_t
+        public_tgt_addrs[CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS]
+                        [BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN];
+    static bssnz_t uint8_t device_class[BLE_HS_ADV_DEVICE_CLASS_LEN];
+    static bssnz_t uint8_t slave_itvl_range[BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN];
+    static bssnz_t uint8_t
+        svc_data_uuid16[CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN];
+    static bssnz_t uint8_t
+        svc_data_uuid32[CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN];
+    static bssnz_t uint8_t
+        svc_data_uuid128[CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN];
+    static bssnz_t uint8_t le_addr[BLE_HS_ADV_LE_ADDR_LEN];
+    static bssnz_t uint8_t uri[CMD_ADV_DATA_URI_MAX_LEN];
+    static bssnz_t uint8_t mfg_data[CMD_ADV_DATA_MFG_DATA_MAX_LEN];
     struct ble_hs_adv_fields adv_fields;
+    uint32_t uuid32;
     uint16_t uuid16;
+    uint8_t uuid128[16];
+    uint8_t public_tgt_addr[BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN];
+    int svc_data_uuid16_len;
+    int svc_data_uuid32_len;
+    int svc_data_uuid128_len;
+    int uri_len;
+    int mfg_data_len;
     int tmp;
     int rc;
 
@@ -752,15 +783,181 @@ cmd_set_adv_data(void)
         return rc;
     }
 
+    while (1) {
+        uuid32 = parse_arg_uint32("uuid32", &rc);
+        if (rc == 0) {
+            if (adv_fields.num_uuids32 >= CMD_ADV_DATA_MAX_UUIDS32) {
+                return EINVAL;
+            }
+            uuids32[adv_fields.num_uuids32] = uuid32;
+            adv_fields.num_uuids32++;
+        } else if (rc == ENOENT) {
+            break;
+        } else {
+            return rc;
+        }
+    }
+    if (adv_fields.num_uuids32 > 0) {
+        adv_fields.uuids32 = uuids32;
+    }
+
+    tmp = parse_arg_long("uuids32_is_complete", &rc);
+    if (rc == 0) {
+        adv_fields.uuids32_is_complete = !!tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    while (1) {
+        rc = parse_arg_byte_stream_exact_length("uuid128", uuid128, 16);
+        if (rc == 0) {
+            if (adv_fields.num_uuids128 >= CMD_ADV_DATA_MAX_UUIDS128) {
+                return EINVAL;
+            }
+            memcpy(uuids128[adv_fields.num_uuids128], uuid128, 16);
+            adv_fields.num_uuids128++;
+        } else if (rc == ENOENT) {
+            break;
+        } else {
+            return rc;
+        }
+    }
+    if (adv_fields.num_uuids128 > 0) {
+        adv_fields.uuids128 = uuids128;
+    }
+
+    tmp = parse_arg_long("uuids128_is_complete", &rc);
+    if (rc == 0) {
+        adv_fields.uuids128_is_complete = !!tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
     adv_fields.name = (uint8_t *)parse_arg_find("name");
     if (adv_fields.name != NULL) {
         adv_fields.name_len = strlen((char *)adv_fields.name);
     }
 
-    tmp = parse_arg_long_bounds("le_role", 0, 0xff, &rc);
+    tmp = parse_arg_long_bounds("tx_pwr_lvl", 0, 0xff, &rc);
     if (rc == 0) {
-        adv_fields.le_role = tmp;
+        adv_fields.tx_pwr_lvl = tmp;
+        adv_fields.tx_pwr_lvl_is_present = 1;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream_exact_length("device_class", device_class,
+                                            BLE_HS_ADV_DEVICE_CLASS_LEN);
+    if (rc == 0) {
+        adv_fields.device_class = device_class;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream_exact_length("slave_itvl_range",
+                                            slave_itvl_range,
+                                            BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
+    if (rc == 0) {
+        adv_fields.slave_itvl_range = slave_itvl_range;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream("svc_data_uuid16",
+                               CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN,
+                               svc_data_uuid16, &svc_data_uuid16_len);
+    if (rc == 0) {
+        adv_fields.svc_data_uuid16 = svc_data_uuid16;
+        adv_fields.svc_data_uuid16_len = svc_data_uuid16_len;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    while (1) {
+        rc = parse_arg_byte_stream_exact_length(
+            "public_tgt_addr", public_tgt_addr,
+            BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN);
+        if (rc == 0) {
+            if (adv_fields.num_public_tgt_addrs >=
+                CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS) {
+
+                return EINVAL;
+            }
+            memcpy(public_tgt_addrs[adv_fields.num_public_tgt_addrs],
+                   public_tgt_addr, BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN);
+            adv_fields.num_public_tgt_addrs++;
+        } else if (rc == ENOENT) {
+            break;
+        } else {
+            return rc;
+        }
+    }
+    if (adv_fields.num_public_tgt_addrs > 0) {
+        adv_fields.public_tgt_addr = (void *)public_tgt_addrs;
+    }
+
+    adv_fields.appearance = parse_arg_uint16("appearance", &rc);
+    if (rc == 0) {
+        adv_fields.appearance_is_present = 1;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    adv_fields.adv_itvl = parse_arg_uint16("adv_itvl", &rc);
+    if (rc == 0) {
+        adv_fields.adv_itvl_is_present = 1;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream_exact_length("le_addr", le_addr,
+                                            BLE_HS_ADV_LE_ADDR_LEN);
+    if (rc == 0) {
+        adv_fields.le_addr = le_addr;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    adv_fields.le_role = parse_arg_long_bounds("le_role", 0, 0xff, &rc);
+    if (rc == 0) {
         adv_fields.le_role_is_present = 1;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream("svc_data_uuid32",
+                               CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN,
+                               svc_data_uuid32, &svc_data_uuid32_len);
+    if (rc == 0) {
+        adv_fields.svc_data_uuid32 = svc_data_uuid32;
+        adv_fields.svc_data_uuid32_len = svc_data_uuid32_len;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream("svc_data_uuid128",
+                               CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN,
+                               svc_data_uuid128, &svc_data_uuid128_len);
+    if (rc == 0) {
+        adv_fields.svc_data_uuid128 = svc_data_uuid128;
+        adv_fields.svc_data_uuid128_len = svc_data_uuid128_len;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream("uri", CMD_ADV_DATA_URI_MAX_LEN, uri, &uri_len);
+    if (rc == 0) {
+        adv_fields.uri = uri;
+        adv_fields.uri_len = uri_len;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream("mfg_data", CMD_ADV_DATA_MFG_DATA_MAX_LEN,
+                               mfg_data, &mfg_data_len);
+    if (rc == 0) {
+        adv_fields.mfg_data = mfg_data;
+        adv_fields.mfg_data_len = mfg_data_len;
     } else if (rc != ENOENT) {
         return rc;
     }

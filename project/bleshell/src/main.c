@@ -30,6 +30,7 @@
 #include "nimble/ble.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
+#include "host/ble_hs_adv.h"
 #include "host/ble_uuid.h"
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
@@ -137,6 +138,129 @@ bleshell_print_conn_desc(struct ble_gap_conn_desc *desc)
     console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d",
                    desc->conn_itvl, desc->conn_latency,
                    desc->supervision_timeout);
+}
+
+static void
+bleshell_print_adv_fields(struct ble_hs_adv_fields *fields)
+{
+    uint32_t u32;
+    uint16_t u16;
+    uint8_t *u8p;
+    int i;
+
+    if (fields->flags_is_present) {
+        console_printf("    flags=0x%02x\n", fields->flags);
+    }
+
+    if (fields->uuids16 != NULL) {
+        console_printf("    uuids16(%scomplete)=",
+                       fields->uuids16_is_complete ? "" : "in");
+        u8p = fields->uuids16;
+        for (i = 0; i < fields->num_uuids16; i++) {
+            memcpy(&u16, u8p + i * 2, 2);
+            console_printf("0x%04x ", u16);
+        }
+        console_printf("\n");
+    }
+
+    if (fields->uuids32 != NULL) {
+        console_printf("    uuids32(%scomplete)=",
+                       fields->uuids32_is_complete ? "" : "in");
+        u8p = fields->uuids32;
+        for (i = 0; i < fields->num_uuids32; i++) {
+            memcpy(&u32, u8p + i * 4, 4);
+            console_printf("0x%08x ", (unsigned)u32);
+        }
+        console_printf("\n");
+    }
+
+    if (fields->uuids128 != NULL) {
+        console_printf("    uuids128(%scomplete)=",
+                       fields->uuids128_is_complete ? "" : "in");
+        u8p = fields->uuids128;
+        for (i = 0; i < fields->num_uuids128; i++) {
+            print_uuid(u8p);
+            console_printf(" ");
+            u8p += 16;
+        }
+        console_printf("\n");
+    }
+
+    if (fields->name != NULL) {
+        console_printf("    name(%scomplete)=",
+                       fields->name_is_complete ? "" : "in");
+        console_printf("%*s\n", fields->name_len, fields->name);
+    }
+
+    if (fields->tx_pwr_lvl_is_present) {
+        console_printf("    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
+    }
+
+    if (fields->device_class != NULL) {
+        console_printf("    device_class=");
+        bleshell_print_bytes(fields->device_class,
+                             BLE_HS_ADV_DEVICE_CLASS_LEN);
+    }
+
+    if (fields->slave_itvl_range != NULL) {
+        console_printf("    slave_itvl_range=");
+        bleshell_print_bytes(fields->slave_itvl_range,
+                             BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
+    }
+
+    if (fields->svc_data_uuid16 != NULL) {
+        console_printf("    svc_data_uuid16=");
+        bleshell_print_bytes(fields->svc_data_uuid16,
+                             fields->svc_data_uuid16_len);
+    }
+
+    if (fields->public_tgt_addr != NULL) {
+        console_printf("    public_tgt_addr=");
+        u8p = fields->public_tgt_addr;
+        for (i = 0; i < fields->num_public_tgt_addrs; i++) {
+            print_addr(u8p);
+            u8p += BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN;
+        }
+    }
+
+    if (fields->appearance_is_present) {
+        console_printf("    appearance=0x%04x\n", fields->appearance);
+    }
+
+    if (fields->adv_itvl_is_present) {
+        console_printf("    adv_itvl=0x%04x\n", fields->adv_itvl);
+    }
+
+    if (fields->le_addr != NULL) {
+        console_printf("    le_addr=");
+        bleshell_print_bytes(fields->le_addr, BLE_HS_ADV_LE_ADDR_LEN);
+    }
+
+    if (fields->le_role_is_present) {
+        console_printf("    le_role=0x%02x\n", fields->le_role);
+    }
+
+    if (fields->svc_data_uuid32 != NULL) {
+        console_printf("    svc_data_uuid32=");
+        bleshell_print_bytes(fields->svc_data_uuid32,
+                             fields->svc_data_uuid32_len);
+    }
+
+    if (fields->svc_data_uuid128 != NULL) {
+        console_printf("    svc_data_uuid128=");
+        bleshell_print_bytes(fields->svc_data_uuid128,
+                             fields->svc_data_uuid128_len);
+    }
+
+    if (fields->uri != NULL) {
+        console_printf("    uri=");
+        bleshell_print_bytes(fields->uri, fields->uri_len);
+    }
+
+    if (fields->mfg_data != NULL) {
+        console_printf("    mfg_data=");
+        bleshell_print_bytes(fields->mfg_data, fields->mfg_data_len);
+    }
 }
 
 static int
@@ -720,7 +844,8 @@ bleshell_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
         console_printf(" length_data=%d rssi=%d data=", desc->length_data,
                        desc->rssi);
         bleshell_print_bytes(desc->data, desc->length_data);
-        /* XXX: Print fields. */
+        console_printf(" fields:\n");
+        bleshell_print_adv_fields(desc->fields);
         console_printf("\n");
         break;
 
