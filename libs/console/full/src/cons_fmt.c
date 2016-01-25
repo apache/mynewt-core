@@ -21,7 +21,7 @@
 #define CONS_OUTPUT_MAX_LINE	128
 
 /** Indicates whether the previous line of output was completed. */
-static int console_is_midline;
+int console_is_midline;
 
 int
 console_vprintf(const char *fmt, va_list args)
