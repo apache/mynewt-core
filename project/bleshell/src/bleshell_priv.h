@@ -9,6 +9,7 @@ struct ble_gap_white_entry;
 struct ble_hs_adv_fields;
 struct ble_gap_conn_upd_params;
 struct ble_gap_conn_crt_params;
+struct hci_adv_params;
 
 #define BLESHELL_MAX_CONNS              8
 
@@ -64,6 +65,7 @@ extern uint8_t bleshell_reconnect_addr[6];
 extern uint8_t bleshell_pref_conn_params[8];
 uint8_t bleshell_gatt_service_changed[4];
 
+void bleshell_printf(const char *fmt, ...);
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
 struct cmd_entry *parse_cmd_find(struct cmd_entry *cmds, char *name);
@@ -108,7 +110,8 @@ int bleshell_write_long(uint16_t conn_handle, uint16_t attr_handle,
                         void *value, uint16_t value_len);
 int bleshell_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
                             int num_attrs);
-int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type);
+int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
+                       struct hci_adv_params *params);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr,
                            struct ble_gap_conn_crt_params *params);

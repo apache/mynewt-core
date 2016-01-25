@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <assert.h>
 #include "console/console.h"
@@ -13,12 +14,26 @@ static char *cmd_args[CMD_MAX_ARGS][2];
 static int cmd_num_args;
 
 void
+bleshell_printf(const char *fmt, ...)
+{
+    va_list args;
+
+    if (!console_is_midline) {
+        console_printf("(BLESHELL) ");
+    }
+
+    va_start(args, fmt);
+    console_vprintf(fmt, args);
+    va_end(args);
+}
+
+void
 print_addr(void *addr)
 {
     uint8_t *u8p;
 
     u8p = addr;
-    console_printf("%02x:%02x:%02x:%02x:%02x:%02x",
+    bleshell_printf("%02x:%02x:%02x:%02x:%02x:%02x",
                    u8p[0], u8p[1], u8p[2], u8p[3], u8p[4], u8p[5]);
 }
 
@@ -30,16 +45,16 @@ print_uuid(void *uuid128)
 
     uuid16 = ble_uuid_128_to_16(uuid128);
     if (uuid16 != 0) {
-        console_printf("0x%04x", uuid16);
+        bleshell_printf("0x%04x", uuid16);
         return;
     }
 
     u8p = uuid128;
 
     /* 00001101-0000-1000-8000-00805f9b34fb */
-    console_printf("%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13], u8p[12]);
-    console_printf("%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
-    console_printf("%02x%02x%02x%02x%02x%02x%02x%02x",
+    bleshell_printf("%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13], u8p[12]);
+    bleshell_printf("%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
+    bleshell_printf("%02x%02x%02x%02x%02x%02x%02x%02x",
                    u8p[7], u8p[6], u8p[5], u8p[4],
                    u8p[3], u8p[2], u8p[1], u8p[0]);
 }
@@ -47,7 +62,7 @@ print_uuid(void *uuid128)
 int
 parse_err_too_few_args(char *cmd_name)
 {
-    console_printf("Error: too few arguments for command \"%s\"\n", cmd_name);
+    bleshell_printf("Error: too few arguments for command \"%s\"\n", cmd_name);
     return -1;
 }
 
@@ -328,12 +343,12 @@ parse_arg_all(int argc, char **argv)
 
         if (key != NULL && val != NULL) {
             if (strlen(key) == 0) {
-                console_printf("Error: invalid argument: %s\n", argv[i]);
+                bleshell_printf("Error: invalid argument: %s\n", argv[i]);
                 return -1;
             }
 
             if (cmd_num_args >= CMD_MAX_ARGS) {
-                console_printf("Error: too many arguments");
+                bleshell_printf("Error: too many arguments");
                 return -1;
             }
 
