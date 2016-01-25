@@ -47,6 +47,10 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_BOOT] = {
         .nh_read = imgr_boot_read,
         .nh_write = imgr_boot_write
+    },
+    [IMGMGR_NMGR_OP_FILE] = {
+        .nh_read = imgr_noop,
+        .nh_write = imgr_file_upload
     }
 #endif
 };
@@ -56,18 +60,12 @@ static struct nmgr_group imgr_nmgr_group = {
 #ifndef FS_PRESENT
     .ng_handlers_count = 2,
 #else
-    .ng_handlers_count = 3,
+    .ng_handlers_count = 4,
 #endif
     .ng_group_id = NMGR_GROUP_ID_IMAGE,
 };
 
-static struct {
-    struct {
-        uint32_t off;
-        uint32_t size;
-        const struct flash_area *fa;
-    } upload;
-} img_state;
+struct imgr_state imgr_state;
 
 /*
  * Read version from image header from flash area 'area_id'.
@@ -196,8 +194,8 @@ imgr_upload(struct nmgr_jbuf *njb)
         /*
          * New upload.
          */
-        img_state.upload.off = 0;
-        img_state.upload.size = size;
+        imgr_state.upload.off = 0;
+        imgr_state.upload.size = size;
         active = bsp_imgr_current_slot();
         best = -1;
 
@@ -234,13 +232,13 @@ imgr_upload(struct nmgr_jbuf *njb)
             best = i;
         }
         if (best >= 0) {
-            rc = flash_area_open(best, &img_state.upload.fa);
+            rc = flash_area_open(best, &imgr_state.upload.fa);
             assert(rc == 0);
             /*
              * XXXX only erase if needed.
              */
-            rc = flash_area_erase(img_state.upload.fa, 0,
-              img_state.upload.fa->fa_size);
+            rc = flash_area_erase(imgr_state.upload.fa, 0,
+              imgr_state.upload.fa->fa_size);
         } else {
             /*
              * No slot where to upload!
@@ -248,7 +246,7 @@ imgr_upload(struct nmgr_jbuf *njb)
             assert(0);
             goto out;
         }
-    } else if (off != img_state.upload.off) {
+    } else if (off != imgr_state.upload.off) {
         /*
          * Invalid offset. Drop the data, and respond with the offset we're
          * expecting data for.
@@ -257,14 +255,14 @@ imgr_upload(struct nmgr_jbuf *njb)
         goto out;
     }
 
-    if (len && img_state.upload.fa) {
-        rc = flash_area_write(img_state.upload.fa, img_state.upload.off,
+    if (len && imgr_state.upload.fa) {
+        rc = flash_area_write(imgr_state.upload.fa, imgr_state.upload.off,
           img_data, len);
         assert(rc == 0);
-        img_state.upload.off += len;
-        if (img_state.upload.size == img_state.upload.off) {
+        imgr_state.upload.off += len;
+        if (imgr_state.upload.size == imgr_state.upload.off) {
             /* Done */
-            img_state.upload.fa = NULL;
+            imgr_state.upload.fa = NULL;
         }
     }
 out:
@@ -272,7 +270,7 @@ out:
 
     json_encode_object_start(enc);
 
-    JSON_VALUE_UINT(&jv, img_state.upload.off);
+    JSON_VALUE_UINT(&jv, imgr_state.upload.off);
     json_encode_object_entry(enc, "off", &jv);
     json_encode_object_finish(enc);
 

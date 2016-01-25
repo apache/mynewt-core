@@ -39,12 +39,14 @@ struct imgmgr_upload_cmd {
  *      "test":<version>
  * }
  *
+ *
  * Response to boot read:
  * {
  *	"test":<version>,
  *	"main":<version>,
  *      "active":<version>
  * }
+ *
  *
  * Request to image upload:
  * {
@@ -53,18 +55,42 @@ struct imgmgr_upload_cmd {
  *      "data":<base64encoded binary>
  * }
  *
+ *
  * Response to upload:
  * {
  *      "off":<offset>
  * }
  *
+ *
+ * Request to image upload:
+ * {
+ *      "off":<offset>
+ *	"name":<filename>		inspected when off = 0
+ *      "len":<file_size>		inspected when off = 0
+ *      "data":<base64encoded binary>
+ * }
  */
 
 struct nmgr_hdr;
 struct os_mbuf;
+struct fs_file;
+
+struct imgr_state {
+    struct {
+        uint32_t off;
+        uint32_t size;
+        const struct flash_area *fa;
+#ifdef FS_PRESENT
+        struct fs_file *file;
+#endif
+    } upload;
+};
+
+extern struct imgr_state imgr_state;
 
 int imgr_boot_read(struct nmgr_jbuf *);
 int imgr_boot_write(struct nmgr_jbuf *);
+int imgr_file_upload(struct nmgr_jbuf *);
 
 int imgr_read_ver(int area_id, struct image_version *ver);
 

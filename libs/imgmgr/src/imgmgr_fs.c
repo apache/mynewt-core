@@ -16,6 +16,7 @@
 #include <os/os.h>
 #include <os/endian.h>
 
+#include <limits.h>
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -25,6 +26,7 @@
 #include <fs/fs.h>
 #include <fs/fsutil.h>
 #include <json/json.h>
+#include <util/base64.h>
 #include <bsp/bsp.h>
 
 #include "imgmgr/imgmgr.h"
@@ -143,4 +145,100 @@ imgr_boot_write(struct nmgr_jbuf *njb)
     rc = imgr_write_file(BOOT_PATH_TEST, &ver);
     return rc;
 }
+
+int
+imgr_file_upload(struct nmgr_jbuf *njb)
+{
+    char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
+    char file_name[65];
+    unsigned int off = UINT_MAX;
+    unsigned int size = UINT_MAX;
+    const struct json_attr_t off_attr[5] = {
+        [0] = {
+            .attribute = "off",
+            .type = t_uinteger,
+            .addr.uinteger = &off,
+            .nodefault = true
+        },
+        [1] = {
+            .attribute = "data",
+            .type = t_string,
+            .addr.string = img_data,
+            .len = sizeof(img_data)
+        },
+        [2] = {
+            .attribute = "len",
+            .type = t_uinteger,
+            .addr.uinteger = &size,
+            .nodefault = true
+        },
+        [3] = {
+            .attribute = "name",
+            .type = t_string,
+            .addr.string = file_name,
+            .len = sizeof(file_name)
+        }
+    };
+    struct json_encoder *enc;
+    struct json_value jv;
+    int rc;
+    int len;
+
+    rc = json_read_object(&njb->njb_buf, off_attr);
+    if (rc || off == UINT_MAX) {
+        return OS_EINVAL;
+    }
+    len = strlen(img_data);
+    if (len) {
+        len = base64_decode(img_data, img_data);
+        if (len < 0) {
+            return OS_EINVAL;
+        }
+    }
+
+    if (off == 0) {
+        /*
+         * New upload.
+         */
+        imgr_state.upload.off = 0;
+        imgr_state.upload.size = size;
+
+        if (!strlen(file_name)) {
+            return OS_EINVAL;
+        }
+        rc = fs_open(file_name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE,
+          &imgr_state.upload.file);
+        if (rc) {
+            return OS_EINVAL;
+        }
+    } else if (off != imgr_state.upload.off) {
+        /*
+         * Invalid offset. Drop the data, and respond with the offset we're
+         * expecting data for.
+         */
+        rc = 0;
+        goto out;
+    }
+
+    if (len && imgr_state.upload.file) {
+        rc = fs_write(imgr_state.upload.file, img_data, len);
+        imgr_state.upload.off += len;
+        if (imgr_state.upload.size == imgr_state.upload.off) {
+            /* Done */
+            fs_close(imgr_state.upload.file);
+            imgr_state.upload.file = NULL;
+        }
+    }
+out:
+    enc = &njb->njb_enc;
+
+    json_encode_object_start(enc);
+
+    JSON_VALUE_UINT(&jv, imgr_state.upload.off);
+    json_encode_object_entry(enc, "off", &jv);
+    json_encode_object_finish(enc);
+
+    return 0;
+}
+
 #endif
