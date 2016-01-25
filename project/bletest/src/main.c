@@ -66,7 +66,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
@@ -93,10 +93,7 @@ int g_bletest_state;
 struct os_eventq g_bletest_evq;
 struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
-#if !defined(nzbss_t)
-#define nzbss_t
-#endif
-nzbss_t os_stack_t bletest_stack[BLETEST_STACK_SIZE];
+sec_bss_nz_core os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
 uint8_t g_bletest_current_conns;
 uint8_t g_bletest_cur_peer_addr[BLE_DEV_ADDR_LEN];
@@ -491,6 +488,11 @@ bletest_execute(void)
         if (ble_ll_conn_find_active_conn(handle)) {
             /* advertising better be stopped! */
             assert(ble_ll_adv_enabled() == 0);
+
+            /* Send the remote used features command */
+            rc = host_hci_cmd_le_read_rem_used_feat(handle);
+            host_hci_outstanding_opcode = 0;
+            assert(rc == 0);
 
             /* Add to current connections */
             ++g_bletest_current_conns;
