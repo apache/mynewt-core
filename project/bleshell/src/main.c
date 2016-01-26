@@ -1125,6 +1125,12 @@ bleshell_update_conn(uint16_t conn_handle,
     return rc;
 }
 
+void
+bleshell_chrup(uint16_t attr_handle)
+{
+    ble_gatts_chr_updated(attr_handle);
+}
+
 /**
  * BLE test task 
  * 

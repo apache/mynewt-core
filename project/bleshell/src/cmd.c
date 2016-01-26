@@ -317,6 +317,26 @@ cmd_conn(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $connect                                                                  *
+ *****************************************************************************/
+
+static int
+cmd_chrup(int argc, char **argv)
+{
+    uint16_t attr_handle;
+    int rc;
+
+    attr_handle = parse_arg_long("attr", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    bleshell_chrup(attr_handle);
+    
+    return 0;
+}
+
+/*****************************************************************************
  * $discover                                                                 *
  *****************************************************************************/
 
@@ -1282,6 +1302,7 @@ cmd_write(int argc, char **argv)
 static struct cmd_entry cmd_b_entries[] = {
     { "adv",        cmd_adv },
     { "conn",       cmd_conn },
+    { "chrup",      cmd_chrup },
     { "disc",       cmd_disc },
     { "find",       cmd_find },
     { "mtu",        cmd_mtu },

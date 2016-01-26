@@ -124,5 +124,6 @@ int bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
 int bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bleshell_update_conn(uint16_t conn_handle,
                          struct ble_gap_conn_upd_params *params);
+void bleshell_chrup(uint16_t attr_handle);
 
 #endif
