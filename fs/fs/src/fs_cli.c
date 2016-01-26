@@ -25,6 +25,9 @@
 #include "fs/fs.h"
 
 static struct shell_cmd fs_ls_struct;
+static struct shell_cmd fs_rm_struct;
+static struct shell_cmd fs_mkdir_struct;
+static struct shell_cmd fs_mv_struct;
 
 static void
 fs_ls_file(const char *name, struct fs_file *file)
@@ -110,14 +113,59 @@ done:
     return 0;
 }
 
-void
-fs_cli_init(void)
+static int
+fs_rm_cmd(int argc, char **argv)
+{
+    int i;
+    int rc;
+
+    for (i = 1; i < argc; i++) {
+        rc = fs_unlink(argv[i]);
+        if (rc) {
+            console_printf("Error removing %s - %d\n", argv[i], rc);
+        }
+    }
+    return 0;
+}
+
+static int
+fs_mkdir_cmd(int argc, char **argv)
+{
+    int i;
+    int rc;
+
+    for (i = 1; i < argc; i++) {
+        rc = fs_mkdir(argv[1]);
+        if (rc) {
+            console_printf("Error creating %s - %d\n", argv[i], rc);
+        }
+    }
+    return 0;
+}
+
+static int
+fs_mv_cmd(int argc, char **argv)
 {
     int rc;
 
-    rc = shell_cmd_register(&fs_ls_struct, "ls", fs_ls_cmd);
-    if (rc != 0) {
-        return;
+    if (argc != 3) {
+        rc = -1;
+        goto out;
     }
+    rc = fs_rename(argv[1], argv[2]);
+out:
+    if (rc) {
+        console_printf("Error moving - %d\n", rc);
+    }
+    return 0;
+}
+
+void
+fs_cli_init(void)
+{
+    shell_cmd_register(&fs_ls_struct, "ls", fs_ls_cmd);
+    shell_cmd_register(&fs_rm_struct, "rm", fs_rm_cmd);
+    shell_cmd_register(&fs_mkdir_struct, "mkdir", fs_mkdir_cmd);
+    shell_cmd_register(&fs_mv_struct, "mv", fs_mv_cmd);
 }
 #endif /* SHELL_PRESENT */
