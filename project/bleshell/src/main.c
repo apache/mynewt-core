@@ -59,7 +59,7 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
-static uint8_t bleshell_addr[6] = {0x00, 0x13, 0x50, 0x01, 0x02, 0x03};
+static uint8_t bleshell_addr[6] = {0x03, 0x02, 0x01, 0x50, 0x13, 0x00};
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (8)
