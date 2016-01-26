@@ -155,6 +155,7 @@ cmd_adv(int argc, char **argv)
         .adv_filter_policy = BLE_HCI_ADV_FILT_DEF,
     };
     uint8_t peer_addr[6];
+    uint8_t u8;
     int addr_type;
     int conn;
     int disc;
@@ -197,8 +198,10 @@ cmd_adv(int argc, char **argv)
         memset(peer_addr, 0, sizeof peer_addr);
     }
 
-    params.adv_channel_map = parse_arg_long_bounds("chan_map", 0, 0xff, &rc);
-    if (rc != 0 && rc != ENOENT) {
+    u8 = parse_arg_long_bounds("chan_map", 0, 0xff, &rc);
+    if (rc == 0) {
+        params.adv_channel_map = u8;
+    } else if (rc != ENOENT) {
         return rc;
     }
 
