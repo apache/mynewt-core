@@ -34,7 +34,7 @@ print_addr(void *addr)
 
     u8p = addr;
     bleshell_printf("%02x:%02x:%02x:%02x:%02x:%02x",
-                   u8p[0], u8p[1], u8p[2], u8p[3], u8p[4], u8p[5]);
+                   u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
 void
@@ -297,19 +297,43 @@ parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len)
 
     return 0;
 }
-int
-parse_arg_mac(char *name, uint8_t *dst)
+
+static void
+parse_reverse_bytes(uint8_t *bytes, int len)
 {
-    return parse_arg_byte_stream_exact_length(name, dst, 6);
+    uint8_t tmp;
+    int i;
+
+    for (i = 0; i < len / 2; i++) {
+        tmp = bytes[i];
+        bytes[i] = bytes[len - i - 1];
+        bytes[len - i - 1] = tmp;
+    }
 }
 
 int
-parse_arg_uuid(char *name, uint8_t *dst_uuid128)
+parse_arg_mac(char *name, uint8_t *dst)
 {
-    uint16_t uuid16;
     int rc;
 
-    uuid16 = parse_arg_uint16(name, &rc);
+    rc = parse_arg_byte_stream_exact_length(name, dst, 6);
+    if (rc != 0) {
+        return rc;
+    }
+
+    parse_reverse_bytes(dst, 6);
+
+    return 0;
+}
+
+int
+parse_arg_uuid(char *str, uint8_t *dst_uuid128)
+{
+    uint16_t uuid16;
+    char *tok;
+    int rc;
+
+    uuid16 = parse_arg_uint16(str, &rc);
     switch (rc) {
     case ENOENT:
         return ENOENT;
@@ -323,7 +347,48 @@ parse_arg_uuid(char *name, uint8_t *dst_uuid128)
         }
 
     default:
-        rc = parse_arg_byte_stream_exact_length(name, dst_uuid128, 16);
+        /* e7add801-b042-4876-aae1112855353cc1 */
+        if (strlen(str) == 35) {
+            tok = strtok(str, "-");
+            if (tok == NULL) {
+                return EINVAL;
+            }
+            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 0, 4);
+            if (rc != 0) {
+                return rc;
+            }
+
+            tok = strtok(NULL, "-");
+            if (tok == NULL) {
+                return EINVAL;
+            }
+            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 4, 2);
+            if (rc != 0) {
+                return rc;
+            }
+
+            tok = strtok(NULL, "-");
+            if (tok == NULL) {
+                return EINVAL;
+            }
+            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 6, 2);
+            if (rc != 0) {
+                return rc;
+            }
+
+            tok = strtok(NULL, "-");
+            if (tok == NULL) {
+                return EINVAL;
+            }
+            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 8, 8);
+            if (rc != 0) {
+                return rc;
+            }
+
+            return 0;
+        }
+
+        rc = parse_arg_byte_stream_exact_length(str, dst_uuid128, 16);
         return rc;
     }
 }
