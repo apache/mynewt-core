@@ -66,6 +66,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 #define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
@@ -340,6 +341,11 @@ bletest_execute(void)
             /* Set next os time to start the connection update */
             g_next_os_time = 0;
 
+            /* Ask for version information */
+            rc = host_hci_cmd_rd_rem_version(handle);
+            assert(rc == 0);
+            host_hci_outstanding_opcode = 0;
+
             /* Scanning better be stopped! */
             assert(ble_ll_scan_enabled() == 0);
 
@@ -491,6 +497,11 @@ bletest_execute(void)
 
             /* Send the remote used features command */
             rc = host_hci_cmd_le_read_rem_used_feat(handle);
+            host_hci_outstanding_opcode = 0;
+            assert(rc == 0);
+
+            /* Send the remote used features command */
+            rc = host_hci_cmd_rd_rem_version(handle);
             host_hci_outstanding_opcode = 0;
             assert(rc == 0);
 
