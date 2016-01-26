@@ -222,6 +222,11 @@ imgr_file_upload(struct nmgr_jbuf *njb)
 
     if (len && imgr_state.upload.file) {
         rc = fs_write(imgr_state.upload.file, img_data, len);
+        if (rc) {
+            fs_close(imgr_state.upload.file);
+            imgr_state.upload.file = NULL;
+            return OS_EINVAL;
+        }
         imgr_state.upload.off += len;
         if (imgr_state.upload.size == imgr_state.upload.off) {
             /* Done */
