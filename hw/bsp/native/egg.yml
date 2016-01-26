@@ -3,3 +3,4 @@ egg.deps:
     - hw/mcu/native
 egg.deps.BLE_DEVICE:
     - net/nimble/drivers/native
+egg.debugscript: "native_debug.sh"
