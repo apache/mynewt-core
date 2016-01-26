@@ -632,6 +632,11 @@ bletest_task_handler(void *arg)
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
+    /* Turn on all events */
+    rc = host_hci_cmd_rd_local_version();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
     /* Wait some time before starting */
     os_time_delay(OS_TICKS_PER_SEC);
 
