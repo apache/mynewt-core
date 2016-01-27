@@ -46,6 +46,8 @@
 #define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(384))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
+static struct os_mutex bleshell_mutex;
+
 /* For LED toggling */
 int g_led_pin;
 
@@ -110,6 +112,24 @@ const uint8_t bleshell_privacy_flag = 0;
 uint8_t bleshell_reconnect_addr[6];
 uint8_t bleshell_pref_conn_params[8];
 uint8_t bleshell_gatt_service_changed[4];
+
+void
+bleshell_lock(void)
+{
+    int rc;
+
+    rc = os_mutex_pend(&bleshell_mutex, 0xffffffff);
+    assert(rc == 0 || rc == OS_NOT_STARTED);
+}
+
+void
+bleshell_unlock(void)
+{
+    int rc;
+
+    rc = os_mutex_release(&bleshell_mutex);
+    assert(rc == 0 || rc == OS_NOT_STARTED);
+}
 
 static void
 bleshell_print_error(char *msg, uint16_t conn_handle,
@@ -640,6 +660,8 @@ static int
 bleshell_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_service *service, void *arg)
 {
+    bleshell_lock();
+
     if (error != NULL) {
         bleshell_print_error("ERROR DISCOVERING SERVICE", conn_handle, error);
     } else if (service != NULL) {
@@ -647,6 +669,8 @@ bleshell_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
     } else {
         /* Service discovery complete. */
     }
+
+    bleshell_unlock();
 
     return 0;
 }
@@ -656,6 +680,8 @@ bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_chr *chr, void *arg)
 {
     intptr_t *svc_start_handle;
+
+    bleshell_lock();
 
     svc_start_handle = arg;
 
@@ -668,6 +694,8 @@ bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
         /* Service discovery complete. */
     }
 
+    bleshell_unlock();
+
     return 0;
 }
 
@@ -677,6 +705,8 @@ bleshell_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
                    void *arg)
 {
     intptr_t *chr_def_handle;
+
+    bleshell_lock();
 
     chr_def_handle = arg;
 
@@ -688,6 +718,8 @@ bleshell_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
     } else {
         /* Descriptor discovery complete. */
     }
+
+    bleshell_unlock();
 
     return 0;
 }
@@ -800,6 +832,8 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 {
     int conn_idx;
 
+    bleshell_lock();
+
     switch (event) {
     case BLE_GAP_EVENT_CONN:
         bleshell_printf("connection complete; status=%d ", status);
@@ -836,6 +870,8 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         *ctxt->self_params = *ctxt->peer_params;
         break;
     }
+
+    bleshell_unlock();
 
     return 0;
 }
@@ -1274,6 +1310,9 @@ main(void)
     htole16(bleshell_pref_conn_params + 2, BLE_GAP_INITIAL_CONN_ITVL_MAX);
     htole16(bleshell_pref_conn_params + 4, 0);
     htole16(bleshell_pref_conn_params + 6, BSWAP16(0x100));
+
+    rc = os_mutex_init(&bleshell_mutex);
+    assert(rc == 0);
 
     /* Start the OS */
     os_start();

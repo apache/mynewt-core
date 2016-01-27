@@ -671,9 +671,13 @@ cmd_scan(int argc, char **argv)
 static int
 cmd_show_addr(int argc, char **argv)
 {
+    bleshell_lock();
+
     bleshell_printf("myaddr=");
     print_addr(g_dev_addr);
     bleshell_printf("\n");
+
+    bleshell_unlock();
 
     return 0;
 }
@@ -684,6 +688,8 @@ cmd_show_chr(int argc, char **argv)
     struct bleshell_conn *conn;
     struct bleshell_svc *svc;
     int i;
+
+    bleshell_lock();
 
     for (i = 0; i < bleshell_num_conns; i++) {
         conn = bleshell_conns + i;
@@ -697,6 +703,8 @@ cmd_show_chr(int argc, char **argv)
         }
     }
 
+    bleshell_unlock();
+
     return 0;
 }
 
@@ -706,6 +714,8 @@ cmd_show_conn(int argc, char **argv)
     struct bleshell_conn *conn;
     int i;
 
+    bleshell_lock();
+
     for (i = 0; i < bleshell_num_conns; i++) {
         conn = bleshell_conns + i;
 
@@ -713,6 +723,8 @@ cmd_show_conn(int argc, char **argv)
         print_addr(conn->addr);
         bleshell_printf(" addr_type=%d\n", conn->addr_type);
     }
+
+    bleshell_unlock();
 
     return 0;
 }
@@ -723,6 +735,8 @@ cmd_show_svc(int argc, char **argv)
     struct bleshell_conn *conn;
     struct bleshell_svc *svc;
     int i;
+
+    bleshell_lock();
 
     for (i = 0; i < bleshell_num_conns; i++) {
         conn = bleshell_conns + i;
@@ -735,6 +749,8 @@ cmd_show_svc(int argc, char **argv)
             cmd_print_svc(svc, 0);
         }
     }
+
+    bleshell_unlock();
 
     return 0;
 }
@@ -1324,16 +1340,19 @@ cmd_b_exec(int argc, char **argv)
 
     rc = parse_arg_all(argc - 1, argv + 1);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = cmd_exec(cmd_b_entries, argc, argv);
     if (rc != 0) {
         bleshell_printf("error\n");
-        return rc;
+        goto done;
     }
 
-    return 0;
+    rc = 0;
+
+done:
+    return rc;
 }
 
 int
