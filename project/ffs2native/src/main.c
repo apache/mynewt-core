@@ -104,11 +104,115 @@ process_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
     }
 }
 
+static int
+print_nffs_inode(int idx, uint32_t off)
+{
+    struct nffs_disk_inode ndi;
+    char filename[128];
+    int len;
+    int rc;
+
+    rc = nffs_flash_read(idx, off, &ndi, sizeof(ndi));
+    assert(rc == 0);
+
+    memset(filename, 0, sizeof(filename));
+    len = min(sizeof(filename) - 1, ndi.ndi_filename_len);
+    rc = nffs_flash_read(idx, off + sizeof(ndi), filename, len);
+    printf("      %x-%d inode %d/%d %s\n",
+      off, ndi.ndi_filename_len, ndi.ndi_id, ndi.ndi_seq, filename);
+    return sizeof(ndi) + ndi.ndi_filename_len;
+}
+
+static int
+print_nffs_block(int idx, uint32_t off)
+{
+    struct nffs_disk_block ndb;
+    int rc;
+
+    rc = nffs_flash_read(idx, off, &ndb, sizeof(ndb));
+    assert(rc == 0);
+
+    printf("      %x-%d block %u/%u belongs to %u\n",
+      off, ndb.ndb_data_len, ndb.ndb_id, ndb.ndb_seq, ndb.ndb_inode_id);
+    return sizeof(ndb) + ndb.ndb_data_len;
+}
+
+static int
+print_nffs_object(int idx, uint32_t off)
+{
+    uint32_t magic;
+    int rc;
+
+    rc = nffs_flash_read(idx, off, &magic, sizeof(magic));
+    assert(rc == 0);
+
+    switch (magic) {
+    case NFFS_INODE_MAGIC:
+        return print_nffs_inode(idx, off);
+
+    case NFFS_BLOCK_MAGIC:
+        return print_nffs_block(idx, off);
+        break;
+
+    case 0xffffffff:
+        assert(0);
+        return 0;
+
+    default:
+        printf("      %x Corruption\n", off);
+        return 1;
+    }
+}
+
+static void
+print_nffs_area(int idx)
+{
+    struct nffs_area *area;
+    struct nffs_disk_area darea;
+    int off;
+    int rc;
+
+    area = &nffs_areas[idx];
+    rc = nffs_flash_read(idx, 0, &darea, sizeof(darea));
+    assert(rc == 0);
+    if (!nffs_area_magic_is_set(&darea)) {
+        printf("Area header corrupt!\n");
+        return;
+    }
+    off = sizeof (struct nffs_disk_area);
+    while (off < area->na_cur) {
+        off += print_nffs_object(idx, off);
+    }
+}
+
+static void
+print_nffs_areas(void)
+{
+    int i;
+    struct nffs_area *area;
+
+    for (i = 0; i < nffs_num_areas; i++) {
+        if (nffs_scratch_area_idx == i) {
+            printf(" sc ");
+        } else {
+            printf("    ");
+        }
+
+        area = &nffs_areas[i];
+        printf("%d: cur:%d id:%d 0x%x-0x%x\n",
+          i, area->na_cur, area->na_id,
+          area->na_offset, area->na_offset + area->na_length);
+        print_nffs_area(i);
+    }
+}
+
 static void
 printfs(void)
 {
     printf("\n\nNFFS contents:\n");
     process_inode_entry(nffs_root_dir, 0);
+    printf("\nNFFS areas:\n");
+    print_nffs_areas();
 }
 
 static int
