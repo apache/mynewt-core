@@ -66,8 +66,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
@@ -96,6 +96,8 @@ struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
 sec_bss_nz_core os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
+int g_bletest_start_update;
+uint32_t g_bletest_conn_upd_time;
 uint8_t g_bletest_current_conns;
 uint8_t g_bletest_cur_peer_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_last_handle_used;
@@ -129,6 +131,25 @@ bletest_inc_adv_pkt_num(void)
     }
 }
 #endif
+
+void
+bletest_send_conn_update(uint16_t handle)
+{
+    int rc;
+    struct hci_conn_update hcu;
+
+    hcu.conn_latency = 4;
+    hcu.supervision_timeout = 2000; 
+    hcu.conn_itvl_min = 1000;
+    hcu.conn_itvl_max = 1000;
+    hcu.handle = handle;
+    hcu.min_ce_len = 4;
+    hcu.max_ce_len = 4;
+
+    rc = host_hci_cmd_le_conn_update(&hcu);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+}
 
 /**
  * Sets the advertising data to be sent in advertising pdu's which contain
@@ -329,7 +350,6 @@ bletest_execute(void)
 {
     int rc;
     uint16_t handle;
-    struct hci_conn_update hcu;
 
     /* 
      * Determine if there is an active connection for the current handle
@@ -367,21 +387,14 @@ bletest_execute(void)
             g_next_os_time += OS_TICKS_PER_SEC * 5;
         } else {
             if (g_next_os_time != 0xffffffff) {
+#if 1
                 if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-                    hcu.conn_latency = 4;
-                    hcu.supervision_timeout = 2000; 
-                    hcu.conn_itvl_min = 1000;
-                    hcu.conn_itvl_max = 1000;
-                    hcu.handle = 1;
-                    hcu.min_ce_len = 4;
-                    hcu.max_ce_len = 4;
-
-                    rc = host_hci_cmd_le_conn_update(&hcu);
-                    assert(rc == 0);
-                    host_hci_outstanding_opcode = 0;
-
+                    bletest_send_conn_update(1);
                     g_next_os_time = 0xffffffff;
                 }
+#else
+                g_next_os_time = 0xffffffff;
+#endif
             }
         }
     }
@@ -505,6 +518,10 @@ bletest_execute(void)
             host_hci_outstanding_opcode = 0;
             assert(rc == 0);
 
+            /* set conn update time */
+            g_bletest_conn_upd_time = os_time_get() + (OS_TICKS_PER_SEC * 5);
+            g_bletest_start_update = 1;
+
             /* Add to current connections */
             ++g_bletest_current_conns;
 
@@ -520,7 +537,14 @@ bletest_execute(void)
             }
         }
     }
-
+#if 0
+    if (g_bletest_start_update) {
+        if ((int32_t)(os_time_get() - g_bletest_conn_upd_time) >= 0) {
+            bletest_send_conn_update(1);
+            g_bletest_start_update = 0;
+        }
+    }
+#endif
     /* See if it is time to hand a data packet to the connection */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
         if (g_bletest_current_conns) {
