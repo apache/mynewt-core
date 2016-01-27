@@ -830,6 +830,11 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         bleshell_print_conn_desc(&ctxt->desc);
         bleshell_printf("\n");
         break;
+
+    case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+        bleshell_printf("connection update request; status=%d ", status);
+        *ctxt->self_params = *ctxt->peer_params;
+        break;
     }
 
     return 0;
