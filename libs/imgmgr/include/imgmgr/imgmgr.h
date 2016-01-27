@@ -23,6 +23,7 @@
 #define IMGMGR_NMGR_OP_FILE	3
 
 #define IMGMGR_NMGR_MAX_MSG	120
+#define IMGMGR_NMGR_MAX_NAME	64
 #define IMGMGR_NMGR_MAX_VER	25	/* 255.255.65535.4294967295\0 */
 
 int imgmgr_module_init(void);

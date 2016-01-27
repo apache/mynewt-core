@@ -147,10 +147,79 @@ imgr_boot_write(struct nmgr_jbuf *njb)
 }
 
 int
+imgr_file_download(struct nmgr_jbuf *njb)
+{
+    unsigned int off;
+    char tmp_str[IMGMGR_NMGR_MAX_NAME + 1];
+    char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
+    const struct json_attr_t dload_attr[3] = {
+        [0] = {
+            .attribute = "off",
+            .type = t_uinteger,
+            .addr.uinteger = &off
+        },
+        [1] = {
+            .attribute = "name",
+            .type = t_string,
+            .addr.string = tmp_str,
+            .len = sizeof(tmp_str)
+        }
+    };
+    int rc;
+    uint32_t out_len;
+    struct fs_file *file;
+    struct json_encoder *enc;
+    struct json_value jv;
+
+    rc = json_read_object(&njb->njb_buf, dload_attr);
+    if (rc || off == UINT_MAX) {
+        return OS_EINVAL;
+    }
+
+    rc = fs_open(tmp_str, FS_ACCESS_READ, &file);
+    if (rc || !file) {
+        return OS_EINVAL;
+    }
+
+    rc = fs_seek(file, off);
+    if (rc) {
+        goto err;
+    }
+    rc = fs_read(file, 32, tmp_str, &out_len);
+    if (rc) {
+        goto err;
+    }
+
+    out_len = base64_encode(tmp_str, out_len, img_data, 1);
+
+    enc = &njb->njb_enc;
+
+    json_encode_object_start(enc);
+
+    JSON_VALUE_UINT(&jv, off);
+    json_encode_object_entry(enc, "off", &jv);
+    JSON_VALUE_STRINGN(&jv, img_data, out_len);
+    json_encode_object_entry(enc, "data", &jv);
+    if (off == 0) {
+        rc = fs_filelen(file, &out_len);
+        JSON_VALUE_UINT(&jv, out_len);
+        json_encode_object_entry(enc, "len", &jv);
+    }
+    fs_close(file);
+
+    json_encode_object_finish(enc);
+
+    return 0;
+err:
+    fs_close(file);
+    return OS_EINVAL;
+}
+
+int
 imgr_file_upload(struct nmgr_jbuf *njb)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
-    char file_name[65];
+    char file_name[IMGMGR_NMGR_MAX_NAME + 1];
     unsigned int off = UINT_MAX;
     unsigned int size = UINT_MAX;
     const struct json_attr_t off_attr[5] = {
@@ -223,7 +292,9 @@ imgr_file_upload(struct nmgr_jbuf *njb)
     if (len && imgr_state.upload.file) {
         rc = fs_write(imgr_state.upload.file, img_data, len);
         if (rc) {
+            /*
             fs_close(imgr_state.upload.file);
+            */
             imgr_state.upload.file = NULL;
             return OS_EINVAL;
         }

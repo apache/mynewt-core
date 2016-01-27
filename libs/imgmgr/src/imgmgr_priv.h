@@ -91,6 +91,7 @@ extern struct imgr_state imgr_state;
 int imgr_boot_read(struct nmgr_jbuf *);
 int imgr_boot_write(struct nmgr_jbuf *);
 int imgr_file_upload(struct nmgr_jbuf *);
+int imgr_file_download(struct nmgr_jbuf *);
 
 int imgr_read_ver(int area_id, struct image_version *ver);
 
