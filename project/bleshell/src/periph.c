@@ -39,9 +39,6 @@ periph_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
 static int
 periph_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
                         union ble_gatt_access_ctxt *ctxt, void *arg);
-static int
-periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-               union ble_gatt_access_ctxt *ctxt, void *arg);
 
 static const struct ble_gatt_svc_def periph_svcs[] = {
     [0] = {
@@ -119,43 +116,6 @@ static const struct ble_gatt_svc_def periph_svcs[] = {
             0, /* No more characteristics in this service. */
         } },
     },
-    [3] = {
-        /*** Service 0x1234. */
-        .type = BLE_GATT_SVC_TYPE_SECONDARY,
-        .uuid128 = BLE_UUID16(PERIPH_SVC1_UUID),
-        .characteristics = (struct ble_gatt_chr_def[]) { {
-            /*** Characteristic 0x1111. */
-            .uuid128 = BLE_UUID16(PERIPH_CHR1_UUID),
-            .access_cb = periph_gatt_cb,
-            .flags = CHR_F_FULL_ACCESS,
-        }, {
-            /*** Characteristic 0x1112. */
-            .uuid128 = BLE_UUID16(PERIPH_CHR2_UUID),
-            .access_cb = periph_gatt_cb,
-            .flags = CHR_F_FULL_ACCESS,
-        }, {
-            0, /* No more characteristics in this service. */
-        } },
-    },
-
-    [4] = {
-        /*** Service 0x5678. */
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = BLE_UUID16(PERIPH_SVC2_UUID),
-        .includes = (const struct ble_gatt_svc_def *[]) {
-            &periph_svcs[3],
-            NULL,
-        },
-        .characteristics = (struct ble_gatt_chr_def[]) { {
-            /*** Characteristic 0x5555. */
-            .uuid128 = BLE_UUID16(PERIPH_CHR3_UUID),
-            .access_cb = periph_gatt_cb,
-            .flags = CHR_F_FULL_ACCESS,
-        }, {
-            0, /* No more characteristics in this service. */
-        } },
-    },
-
     {
         0, /* No more services. */
     },
@@ -174,74 +134,6 @@ periph_chr_write(uint8_t op, union ble_gatt_access_ctxt *ctxt,
     if (len != NULL) {
         *len = ctxt->chr_access.len;
     }
-
-    return 0;
-}
-
-static int
-periph_gatt_read(uint16_t attr_handle, union ble_gatt_access_ctxt *ctxt,
-                 void *arg)
-{
-    uint16_t uuid16;
-    int idx;
-
-    uuid16 = ble_uuid_128_to_16(ctxt->chr_access.chr->uuid128);
-    switch (uuid16) {
-    case PERIPH_CHR1_UUID:
-        idx = 0;
-        break;
-
-    case PERIPH_CHR2_UUID:
-        idx = 1;
-        break;
-
-    case PERIPH_CHR3_UUID:
-        idx = 2;
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
-
-    ctxt->chr_access.data = periph_chr_data[idx];
-    ctxt->chr_access.len = periph_chr_lens[idx];
-
-    return 0;
-}
-
-static int
-periph_gatt_write(uint16_t attr_handle, union ble_gatt_access_ctxt *ctxt,
-                  void *arg)
-{
-    uint16_t uuid16;
-    int idx;
-
-    uuid16 = ble_uuid_128_to_16(ctxt->chr_access.chr->uuid128);
-    switch (uuid16) {
-    case PERIPH_CHR1_UUID:
-        idx = 0;
-        break;
-
-    case PERIPH_CHR2_UUID:
-        idx = 1;
-        break;
-
-    case PERIPH_CHR3_UUID:
-        idx = 2;
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
-
-    if (ctxt->chr_access.len > sizeof periph_chr_data[idx]) {
-        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
-    }
-
-    memcpy(periph_chr_data[idx], ctxt->chr_access.data, ctxt->chr_access.len);
-    periph_chr_lens[idx] = ctxt->chr_access.len;
 
     return 0;
 }
@@ -307,13 +199,17 @@ periph_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
     assert(uuid16 != 0);
 
     switch (uuid16) {
-    case BLE_GAP_CHR_UUID16_DEVICE_NAME:
-        assert(op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-        if (ctxt->chr_access.len != sizeof bleshell_gatt_service_changed) {
-            return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+    case BLE_GATT_CHR_SERVICE_CHANGED_UUID16:
+        if (op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+            if (ctxt->chr_access.len != sizeof bleshell_gatt_service_changed) {
+                return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
+            }
+            memcpy(bleshell_gatt_service_changed, ctxt->chr_access.data,
+                   sizeof bleshell_gatt_service_changed);
+        } else if (op == BLE_GATT_ACCESS_OP_READ_CHR) {
+            ctxt->chr_access.data = (void *)&bleshell_gatt_service_changed;
+            ctxt->chr_access.len = sizeof bleshell_gatt_service_changed;
         }
-        memcpy(bleshell_gatt_service_changed, ctxt->chr_access.data,
-               sizeof bleshell_gatt_service_changed);
         break;
 
     default:
@@ -351,9 +247,16 @@ periph_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
         return 0;
 
     case PERIPH_CHR_NEW_ALERT:
-        rc = periph_chr_write(op, ctxt, 0, sizeof periph_new_alert_val,
-                              periph_new_alert_val, &periph_new_alert_val_len);
-        return rc;
+        if (op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+            rc = periph_chr_write(op, ctxt, 0, sizeof periph_new_alert_val,
+                                  periph_new_alert_val,
+                                  &periph_new_alert_val_len);
+            return rc;
+        } else if (op == BLE_GATT_ACCESS_OP_READ_CHR) {
+            ctxt->chr_access.data = (void *)&periph_new_alert_val;
+            ctxt->chr_access.len = sizeof periph_new_alert_val;
+            return 0;
+        }
 
     case PERIPH_CHR_SUP_UNR_ALERT_CAT_UUID:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
@@ -362,33 +265,27 @@ periph_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
         return 0;
 
     case PERIPH_CHR_UNR_ALERT_STAT_UUID:
-        rc = periph_chr_write(op, ctxt, 2, 2, &periph_unr_alert_stat, NULL);
+        if (op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+            rc = periph_chr_write(op, ctxt, 2, 2, &periph_unr_alert_stat, NULL);
+        } else {
+            ctxt->chr_access.data = (void *)&periph_unr_alert_stat;
+            ctxt->chr_access.len = sizeof periph_unr_alert_stat;
+            rc = 0;
+        }
         return rc;
 
     case PERIPH_CHR_ALERT_NOT_CTRL_PT:
-        rc = periph_chr_write(op, ctxt, 2, 2, &periph_alert_not_ctrl_pt, NULL);
+        if (op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+            rc = periph_chr_write(op, ctxt, 2, 2, &periph_alert_not_ctrl_pt,
+                                  NULL);
+        } else {
+            rc = BLE_ATT_ERR_UNLIKELY;
+        }
         return rc;
 
     default:
         assert(0);
         return BLE_ATT_ERR_UNLIKELY;
-    }
-}
-
-static int
-periph_gatt_cb(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-               union ble_gatt_access_ctxt *ctxt, void *arg)
-{
-    switch (op) {
-    case BLE_GATT_ACCESS_OP_READ_CHR:
-        return periph_gatt_read(attr_handle, ctxt, arg);
-
-    case BLE_GATT_ACCESS_OP_WRITE_CHR:
-        return periph_gatt_write(attr_handle, ctxt, arg);
-
-    default:
-        assert(0);
-        return -1;
     }
 }
 
