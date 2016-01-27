@@ -1104,7 +1104,7 @@ bleshell_conn_initiate(int addr_type, uint8_t *peer_addr,
     int rc;
 
     rc = ble_gap_conn_initiate(addr_type, peer_addr, NULL, bleshell_on_connect,
-                               NULL);
+                               params);
     return rc;
 }
 
