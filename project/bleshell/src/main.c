@@ -78,9 +78,9 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLESHELL_STACK_SIZE             (128)
 #define BLESHELL_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
-#define BLESHELL_MAX_SVCS               8
-#define BLESHELL_MAX_CHRS               32
-#define BLESHELL_MAX_DSCS               32
+#define BLESHELL_MAX_SVCS               32
+#define BLESHELL_MAX_CHRS               64
+#define BLESHELL_MAX_DSCS               64
 
 uint32_t g_next_os_time;
 int g_bleshell_state;
