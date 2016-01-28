@@ -35,17 +35,9 @@ int init_tasks(void);
 #define SHELL_TASK_PRIO      (8)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
 static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
-static struct shell_cmd lua_shell_cmd;
 
 /* NFFS */
 #define NFFS_AREA_MAX		16
-
-static int
-lua_cmd(int argc, char **argv)
-{
-    lua_main(argc, argv);
-    return 0;
-}
 
 static void
 create_script_file(void)
@@ -95,9 +87,6 @@ main(int argc, char **argv)
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
     console_init(shell_console_rx_cb);
 
-    rc = shell_cmd_register(&lua_shell_cmd, "lua", lua_cmd);
-    assert(rc == 0);
-
     nffs_init();
 
     cnt = NFFS_AREA_MAX;
@@ -109,6 +98,7 @@ main(int argc, char **argv)
         assert(rc == 0);
     }
 
+    lua_init();
     create_script_file();
 
     /* Start the OS */

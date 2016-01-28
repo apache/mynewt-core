@@ -13,4 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <shell/shell.h>
+#include <elua_base/elua.h>
 
+#ifdef MYNEWT
+
+#ifdef SHELL_PRESENT
+static struct shell_cmd lua_shell_cmd;
+
+static int
+lua_cmd(int argc, char **argv)
+{
+    lua_main(argc, argv);
+    return 0;
+}
+#endif
+
+int
+lua_init(void)
+{
+#ifdef SHELL_PRESENT
+    return shell_cmd_register(&lua_shell_cmd, "lua", lua_cmd);
+#else
+    return 0;
+#endif
+}
+#endif

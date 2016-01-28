@@ -19,4 +19,6 @@
 
 int lua_main( int argc, char **argv );
 
+int lua_init(void);
+
 #endif /* __ELUA_BASE_H__ */
