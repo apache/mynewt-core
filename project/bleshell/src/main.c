@@ -36,6 +36,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "controller/ble_ll.h"
+#include "../src/ble_hs_conn.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
@@ -877,6 +878,12 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 }
 
 static void
+bleshell_on_l2cap_update(int status, void *arg)
+{
+    bleshell_printf("l2cap update complete; status=%d\n", status);
+}
+
+static void
 bleshell_on_wl_set(int status, void *arg)
 {
     bleshell_printf("white list set status=%d\n", status);
@@ -1170,6 +1177,17 @@ void
 bleshell_chrup(uint16_t attr_handle)
 {
     ble_gatts_chr_updated(attr_handle);
+}
+
+int
+bleshell_l2cap_update(uint16_t conn_handle,
+                      struct ble_l2cap_sig_update_params *params)
+{
+    int rc;
+
+    rc = ble_l2cap_sig_update(conn_handle, params, bleshell_on_l2cap_update,
+                              NULL);
+    return rc;
 }
 
 /**

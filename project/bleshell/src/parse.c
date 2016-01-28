@@ -66,10 +66,10 @@ parse_err_too_few_args(char *cmd_name)
     return -1;
 }
 
-struct cmd_entry *
-parse_cmd_find(struct cmd_entry *cmds, char *name)
+const struct cmd_entry *
+parse_cmd_find(const struct cmd_entry *cmds, char *name)
 {
-    struct cmd_entry *cmd;
+    const struct cmd_entry *cmd;
     int i;
 
     for (i = 0; cmds[i].name != NULL; i++) {

@@ -8,6 +8,7 @@
 #include "nimble/hci_common.h"
 #include "host/ble_gap.h"
 #include "host/ble_hs_adv.h"
+#include "../src/ble_l2cap_priv.h"
 
 #include "bleshell_priv.h"
 
@@ -22,9 +23,9 @@ static bssnz_t uint8_t cmd_buf[CMD_BUF_SZ];
  *****************************************************************************/
 
 static int
-cmd_exec(struct cmd_entry *cmds, int argc, char **argv)
+cmd_exec(const struct cmd_entry *cmds, int argc, char **argv)
 {
-    struct cmd_entry *cmd;
+    const struct cmd_entry *cmd;
     int rc;
 
     if (argc <= 1) {
@@ -468,7 +469,7 @@ cmd_find_inc_svcs(int argc, char **argv)
     return 0;
 }
 
-static struct cmd_entry cmd_find_entries[] = {
+static const struct cmd_entry cmd_find_entries[] = {
     { "inc_svcs", cmd_find_inc_svcs },
     { NULL, NULL }
 };
@@ -479,6 +480,71 @@ cmd_find(int argc, char **argv)
     int rc;
 
     rc = cmd_exec(cmd_find_entries, argc, argv);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
+ * $l2cap                                                                    *
+ *****************************************************************************/
+
+static int
+cmd_l2cap_update(int argc, char **argv)
+{
+    struct ble_l2cap_sig_update_params params;
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.itvl_min = parse_arg_uint16_dflt(
+        "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.itvl_max = parse_arg_uint16_dflt(
+        "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.slave_latency = parse_arg_uint16_dflt("latency", 0, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.timeout_multiplier = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bleshell_l2cap_update(conn_handle, &params);
+    if (rc != 0) {
+        bleshell_printf("error txing l2cap update; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static const struct cmd_entry cmd_l2cap_entries[] = {
+    { "update", cmd_l2cap_update },
+    { NULL, NULL }
+};
+
+static int
+cmd_l2cap(int argc, char **argv)
+{
+    int rc;
+
+    rc = cmd_exec(cmd_l2cap_entries, argc, argv);
     if (rc != 0) {
         return rc;
     }
@@ -1321,6 +1387,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "chrup",      cmd_chrup },
     { "disc",       cmd_disc },
     { "find",       cmd_find },
+    { "l2cap",      cmd_l2cap },
     { "mtu",        cmd_mtu },
     { "read",       cmd_read },
     { "scan",       cmd_scan },

@@ -10,6 +10,8 @@ struct ble_hs_adv_fields;
 struct ble_gap_conn_upd_params;
 struct ble_gap_conn_crt_params;
 struct hci_adv_params;
+struct ble_l2cap_sig_update_req;
+struct ble_l2cap_sig_update_params;
 
 #define BLESHELL_MAX_CONNS              8
 
@@ -68,7 +70,8 @@ uint8_t bleshell_gatt_service_changed[4];
 void bleshell_printf(const char *fmt, ...);
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
-struct cmd_entry *parse_cmd_find(struct cmd_entry *cmds, char *name);
+const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
+                                       char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
 char *parse_arg_find(char *key);
 long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
@@ -127,5 +130,7 @@ int bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bleshell_update_conn(uint16_t conn_handle,
                          struct ble_gap_conn_upd_params *params);
 void bleshell_chrup(uint16_t attr_handle);
+int bleshell_l2cap_update(uint16_t conn_handle,
+                          struct ble_l2cap_sig_update_params *params);
 
 #endif
