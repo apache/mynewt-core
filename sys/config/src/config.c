@@ -17,77 +17,61 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <os/os.h>
+
 #include "config/config.h"
+#include "config_priv.h"
+
+static SLIST_HEAD(, conf_handler) conf_handlers =
+    SLIST_HEAD_INITIALIZER(&conf_handlers);
+
+int
+conf_init(void)
+{
+    int rc = 0;
 
 #ifdef SHELL_PRESENT
-#include <shell/shell.h>
-#include <console/console.h>
+    rc = conf_cli_register();
 #endif
-
-static struct conf_node g_conf_root;
-
-static struct conf_entry *
-conf_node_match(struct conf_node *cn, const char *name)
-{
-    int i;
-
-    for (i = 0; i < cn->cn_cnt; i++) {
-        if (!strcmp(name, cn->cn_array[i].c_name)) {
-            return &cn->cn_array[i];
-        }
-    }
-    return NULL;
+#ifdef NEWTMGR_PRESENT
+    rc = conf_nmgr_register();
+#endif
+    return rc;
 }
 
-/*
- * Register config node to a specific spot in the tree.
- */
 int
-conf_register(struct conf_node *parent, struct conf_node *child)
+conf_register(struct conf_handler *handler)
 {
-    struct conf_node *cn;
-    int i;
+    SLIST_INSERT_HEAD(&conf_handlers, handler, ch_list);
+    return 0;
+}
 
-    if (!parent) {
-        parent = &g_conf_root;
-    }
-
-    for (i = 0; i < child->cn_cnt; i++) {
-        SLIST_FOREACH(cn, &parent->cn_children, cn_next) {
-            if (conf_node_match(cn, child->cn_array[i].c_name)) {
-                return -1;
-            }
-        }
-    }
-    SLIST_INSERT_HEAD(&parent->cn_children, child, cn_next);
+int
+conf_load(void)
+{
+    /*
+     * for every config source
+     *    load config
+     *    apply config
+     *    commit all
+     */
     return 0;
 }
 
 /*
- * Lookup conf_entry based on name.
+ * Find conf_handler based on name.
  */
-struct conf_entry *
-conf_lookup(int argc, char **argv)
+struct conf_handler *
+conf_handler_lookup(char *name)
 {
-    int i;
-    struct conf_node *parent = &g_conf_root;
-    struct conf_entry *ret = NULL;
-    struct conf_node *cn;
+    struct conf_handler *ch;
 
-    for (i = 0; i < argc; i++) {
-        ret = NULL;
-        SLIST_FOREACH(cn, &parent->cn_children, cn_next) {
-            ret = conf_node_match(cn, argv[i]);
-            if (ret) {
-                break;
-            }
-        }
-        parent = cn;
-        if (!parent) {
-            return NULL;
+    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+        if (!strcmp(name, ch->ch_name)) {
+            return ch;
         }
     }
-    return ret;
+    return NULL;
 }
 
 /*
@@ -113,13 +97,25 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
     return 0;
 }
 
+static struct conf_handler *
+conf_parse_and_lookup(char *name, int *name_argc, char *name_argv[])
+{
+    int rc;
+
+    rc = conf_parse_name(name, name_argc, name_argv);
+    if (rc) {
+        return NULL;
+    }
+    return conf_handler_lookup(name_argv[0]);
+}
+
 int
-conf_set_value(struct conf_entry *ce, char *val_str)
+conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
 {
     int32_t val;
     char *eptr;
 
-    switch (ce->c_type) {
+    switch (type) {
     case CONF_INT8:
     case CONF_INT16:
     case CONF_INT32:
@@ -127,35 +123,74 @@ conf_set_value(struct conf_entry *ce, char *val_str)
         if (*eptr != '\0') {
             goto err;
         }
-        if (ce->c_type == CONF_INT8) {
+        if (type == CONF_INT8) {
             if (val < INT8_MIN || val > UINT8_MAX) {
                 goto err;
             }
-            *(int8_t *)ce->c_val.single.val = val;
-        } else if (ce->c_type == CONF_INT16) {
+            *(int8_t *)vp = val;
+        } else if (type == CONF_INT16) {
             if (val < INT16_MIN || val > UINT16_MAX) {
                 goto err;
             }
-            *(int16_t *)ce->c_val.single.val = val;
-        } else if (ce->c_type == CONF_INT32) {
-            *(int32_t *)ce->c_val.single.val = val;
+            *(int16_t *)vp = val;
+        } else if (type == CONF_INT32) {
+            *(int32_t *)vp = val;
         }
         break;
     case CONF_STRING:
         val = strlen(val_str);
-        if (val + 1 > ce->c_val.array.maxlen) {
+        if (val + 1 > maxlen) {
             goto err;
         }
-        strcpy(ce->c_val.array.val, val_str);
-        ce->c_val.array.len = val;
+        strcpy(vp, val_str);
         break;
     default:
-        console_printf("Can't parse type %d\n", ce->c_type);
-        break;
+        goto err;
     }
     return 0;
 err:
-    return -1;
+    return OS_INVALID_PARM;
+}
+
+char *
+conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
+{
+    int32_t val;
+
+    if (type == CONF_STRING) {
+        return vp;
+    }
+    switch (type) {
+    case CONF_INT8:
+    case CONF_INT16:
+    case CONF_INT32:
+        if (type == CONF_INT8) {
+            val = *(int8_t *)vp;
+        } else if (type == CONF_INT16) {
+            val = *(int16_t *)vp;
+        } else {
+            val = *(int32_t *)vp;
+        }
+        snprintf(buf, buf_len, "%ld", (long)val);
+        return buf;
+    default:
+        return NULL;
+    }
+}
+
+int
+conf_set_value(char *name, char *val_str)
+{
+    int name_argc;
+    char *name_argv[CONF_MAX_DIR_DEPTH];
+    struct conf_handler *ch;
+
+    ch = conf_parse_and_lookup(name, &name_argc, name_argv);
+    if (!ch) {
+        return OS_INVALID_PARM;
+    }
+
+    return ch->ch_set(name_argc - 1, &name_argv[1], val_str);
 }
 
 /*
@@ -165,28 +200,47 @@ err:
  * except for string it will pointer to beginning of string.
  */
 char *
-conf_get_value(struct conf_entry *ce, char *buf, int buf_len)
+conf_get_value(char *name, char *buf, int buf_len)
 {
-    int32_t val;
+    int name_argc;
+    char *name_argv[CONF_MAX_DIR_DEPTH];
+    struct conf_handler *ch;
 
-    if (ce->c_type == CONF_STRING) {
-        return ce->c_val.array.val;
-    }
-    switch (ce->c_type) {
-    case CONF_INT8:
-    case CONF_INT16:
-    case CONF_INT32:
-        if (ce->c_type == CONF_INT8) {
-            val = *(int8_t *)ce->c_val.single.val;
-        } else if (ce->c_type == CONF_INT16) {
-            val = *(int16_t *)ce->c_val.single.val;
-        } else {
-            val = *(int32_t *)ce->c_val.single.val;
-        }
-        snprintf(buf, buf_len, "%ld", (long)val);
-        return buf;
-    default:
+    ch = conf_parse_and_lookup(name, &name_argc, name_argv);
+    if (!ch) {
         return NULL;
     }
+
+    return ch->ch_get(name_argc - 1, &name_argv[1], buf, buf_len);
 }
 
+int
+conf_commit(char *name)
+{
+    int name_argc;
+    char *name_argv[CONF_MAX_DIR_DEPTH];
+    struct conf_handler *ch;
+    int rc;
+
+    if (name) {
+        ch = conf_parse_and_lookup(name, &name_argc, name_argv);
+        if (!ch) {
+            return OS_INVALID_PARM;
+        }
+        if (ch->ch_commit) {
+            return ch->ch_commit();
+        } else {
+            return 0;
+        }
+    } else {
+        SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+            if (ch->ch_commit) {
+                rc = ch->ch_commit();
+                if (rc) {
+                    return rc;
+                }
+            }
+        }
+        return 0;
+    }
+}

@@ -37,39 +37,27 @@ enum conf_type {
     CONF_DOUBLE
 } __attribute__((__packed__));
 
-struct conf_entry {
-    const char *c_name;
-    enum conf_type c_type;
-    union {
-        struct {	/* INT8, INT16, INT32, INT64, FLOAT, DOUBLE */
-            void *val;
-        } single;
-        struct {	/* STRING, BYTES */
-            uint16_t maxlen;
-            uint16_t len;
-            void *val;
-        } array;
-    } c_val;
+struct conf_handler {
+    SLIST_ENTRY(conf_handler) ch_list;
+    char *ch_name;
+    char *(*ch_get)(int argc, char **argv, char *val, int val_len_max);
+    int (*ch_set)(int argc, char **argv, char *val);
+    int (*ch_commit)();
 };
 
-struct conf_entry_dir {
-    const char *c_name;
-    enum conf_type c_type;	/* DIR */
-};
+int conf_init(void);
+int conf_register(struct conf_handler *);
+int conf_load(void);
 
-struct conf_node {
-    SLIST_ENTRY(conf_node) cn_next;
-    SLIST_HEAD(, conf_node) cn_children;
-    struct conf_entry *cn_array;
-    int cn_cnt;
-};
+int conf_set_value(char *name, char *val_str);
+char *conf_get_value(char *name, char *buf, int buf_len);
+int conf_commit(char *name);
 
-int conf_module_init(void);
-int conf_register(struct conf_node *parent, struct conf_node *child);
-struct conf_entry *conf_lookup(int argc, char **argv);
-
-int conf_parse_name(char *name, int *name_argc, char *name_argv[]);
-int conf_set_value(struct conf_entry *ce, char *val_str);
-char *conf_get_value(struct conf_entry *ce, char *buf, int buf_len);
+int conf_value_from_str(char *val_str, enum conf_type type, void *vp,
+  int maxlen);
+char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
+  int buf_len);
+#define CONF_VALUE_SET(str, type, val)                                  \
+    conf_value_from_str((str), (type), &(val), sizeof(val))
 
 #endif /* __UTIL_CONFIG_H_ */

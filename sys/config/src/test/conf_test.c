@@ -20,212 +20,154 @@
 #include <testutil/testutil.h>
 #include <config/config.h>
 
-uint8_t val8;
+static uint8_t val8;
 
-static struct conf_entry ce1 = {
-    .c_name = "ce1",
-    .c_type = CONF_INT8,
-    .c_val.single.val = &val8
-};
+static int test_get_called;
+static int test_set_called;
+static int test_commit_called;
 
-static struct conf_node cn1 = {
-    .cn_cnt = 1,
-    .cn_array = &ce1
-};
-
-static struct conf_entry ce2 = {
-    .c_name = "ce2",
-    .c_type = CONF_INT8,
-    .c_val.single.val = &val8
-};
-
-static struct conf_node cn2 = {
-    .cn_cnt = 1,
-    .cn_array = &ce2
-};
-
-static struct conf_entry ce_arr1[2] = {
-    [0] = {
-        .c_name = "cea1",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &val8
-    },
-    [1] = {
-        .c_name = "cea2",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &val8
+static char *
+ctest_handle_get(int argc, char **argv, char *val, int val_len_max)
+{
+    test_get_called = 1;
+    if (argc == 1 && !strcmp(argv[0], "mybar")) {
+        return conf_str_from_value(CONF_INT8, &val8, val, val_len_max);
     }
-};
+    return NULL;
+}
 
-static struct conf_node cn_arr1 = {
-    .cn_cnt = 2,
-    .cn_array = ce_arr1
-};
+static int
+ctest_handle_set(int argc, char **argv, char *val)
+{
+    uint8_t newval;
+    int rc;
 
-static struct conf_entry ce_arr2[2] = {
-    [0] = {
-        .c_name = "ce21",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &val8
-    },
-    [1] = {
-        .c_name = "cea2",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &val8
+    test_set_called = 1;
+    if (argc == 1 && !strcmp(argv[0], "mybar")) {
+        rc = CONF_VALUE_SET(val, CONF_INT8, newval);
+        TEST_ASSERT(rc == 0);
+        val8 = newval;
+        return 0;
     }
+    return OS_ENOENT;
+}
+
+static int
+ctest_handle_commit(void)
+{
+    test_commit_called = 1;
+    return 0;
+}
+
+struct conf_handler config_test_handler = {
+    .ch_name = "myfoo",
+    .ch_get = ctest_handle_get,
+    .ch_set = ctest_handle_set,
+    .ch_commit = ctest_handle_commit
 };
 
-static struct conf_node cn_arr2 = {
-    .cn_cnt = 2,
-    .cn_array = ce_arr2
-};
+static void
+ctest_clear_call_state(void)
+{
+    test_get_called = 0;
+    test_set_called = 0;
+    test_commit_called = 0;
+}
 
-static struct conf_entry_dir ce_dir = {
-    .c_name = "foo",
-    .c_type = CONF_DIR
-};
-
-static struct conf_node cn_dir = {
-    .cn_cnt = 1,
-    .cn_array = (struct conf_entry *)&ce_dir
-};
-
-static struct conf_entry ce_foo_arr1[2] = {
-    [0] = {
-        .c_name = "foo1",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &val8
-    },
-    [1] = {
-        .c_name = "foo2",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &val8
-    }
-};
-
-static struct conf_node cn_foo_arr1 = {
-    .cn_cnt = 2,
-    .cn_array = ce_foo_arr1
-};
+static int
+ctest_get_call_state(void)
+{
+    return test_get_called + test_set_called + test_commit_called;
+}
 
 TEST_CASE(config_empty_lookups)
 {
-    struct conf_entry *ce;
-    char *names1[] = { "foo", "bar" };
+    int rc;
+    char tmp[64], *str;
 
-    ce = conf_lookup(0, NULL);
-    TEST_ASSERT(ce == NULL);
+    rc = conf_set_value("foo/bar", "tmp");
+    TEST_ASSERT(rc != 0);
 
-    ce = conf_lookup(1, names1);
-    TEST_ASSERT(ce == NULL);
-
-    ce = conf_lookup(2, names1);
-    TEST_ASSERT(ce == NULL);
+    str = conf_get_value("foo/bar", tmp, sizeof(tmp));
+    TEST_ASSERT(str == NULL);
 }
 
 TEST_CASE(config_test_insert)
 {
     int rc;
 
-    /*
-     * Add 2 new ones
-     */
-    rc = conf_register(NULL, &cn1);
+    rc = conf_register(&config_test_handler);
     TEST_ASSERT(rc == 0);
-    rc = conf_register(NULL, &cn2);
-    TEST_ASSERT(rc == 0);
-
-    /*
-     * Fail adding same ones again
-     */
-    rc = conf_register(NULL, &cn1);
-    TEST_ASSERT(rc != 0);
-    rc = conf_register(NULL, &cn2);
-    TEST_ASSERT(rc != 0);
-
-    /*
-     * Add with multiple conf_entries
-     */
-    rc = conf_register(NULL, &cn_arr1);
-    TEST_ASSERT(rc == 0);
-
-    /*
-     * Cannot add it again
-     */
-    rc = conf_register(NULL, &cn_arr1);
-    TEST_ASSERT(rc != 0);
-
-    /*
-     * Should fail right away
-     */
-    rc = conf_register(NULL, &cn_arr2);
-    TEST_ASSERT(rc != 0);
-
 }
 
-TEST_CASE(config_test_lookup)
+TEST_CASE(config_test_getset_unknown)
 {
-    struct conf_entry *ce;
-    char *names1[] = { "foo", "bar" };
-    char *names2[] = { "ce1" };
-    char *names3[] = { "cea2" };
+    char tmp[64], *str;
+    int rc;
 
-    ce = conf_lookup(0, NULL);
-    TEST_ASSERT(ce == NULL);
+    rc = conf_set_value("foo/bar", "tmp");
+    TEST_ASSERT(rc != 0);
+    TEST_ASSERT(ctest_get_call_state() == 0);
 
-    ce = conf_lookup(1, names1);
-    TEST_ASSERT(ce == NULL);
+    str = conf_get_value("foo/bar", tmp, sizeof(tmp));
+    TEST_ASSERT(str == NULL);
+    TEST_ASSERT(ctest_get_call_state() == 0);
 
-    ce = conf_lookup(2, names1);
-    TEST_ASSERT(ce == NULL);
+    rc = conf_set_value("myfoo/bar", "tmp");
+    TEST_ASSERT(rc == OS_ENOENT);
+    TEST_ASSERT(test_set_called == 1);
+    ctest_clear_call_state();
 
-    ce = conf_lookup(1, names2);
-    TEST_ASSERT(ce != NULL);
-    TEST_ASSERT(!strcmp(ce->c_name, names2[0]));
-
-    ce = conf_lookup(1, names3);
-    TEST_ASSERT(ce != NULL);
-    TEST_ASSERT(!strcmp(ce->c_name, names3[0]));
+    str = conf_get_value("myfoo/bar", tmp, sizeof(tmp));
+    TEST_ASSERT(str == NULL);
+    TEST_ASSERT(test_get_called == 1);
+    ctest_clear_call_state();
 }
 
-TEST_CASE(config_test_dir)
+TEST_CASE(config_test_getset_int)
+{
+    char tmp[64], *str;
+    int rc;
+
+    rc = conf_set_value("myfoo/mybar", "42");
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(test_set_called == 1);
+    TEST_ASSERT(val8 == 42);
+    ctest_clear_call_state();
+
+    str = conf_get_value("myfoo/mybar", tmp, sizeof(tmp));
+    TEST_ASSERT(str);
+    TEST_ASSERT(test_get_called == 1);
+    TEST_ASSERT(!strcmp("42", tmp));
+    ctest_clear_call_state();
+}
+
+TEST_CASE(config_test_commit)
 {
     int rc;
-    struct conf_entry *ce;
-    char *names1[] = { "foo", "foo1" };
-    char *names2[] = { "foo", "foo2" };
-    char *names3[] = { "foo", "foo3" };
 
-    /*
-     * Add directory node, and node under.
-     */
-    rc = conf_register(NULL, &cn_dir);
+    rc = conf_commit("bar");
     TEST_ASSERT(rc == 0);
-    rc = conf_register(&cn_dir, &cn_foo_arr1);
+    TEST_ASSERT(ctest_get_call_state());
+
+    rc = conf_commit(NULL);
     TEST_ASSERT(rc == 0);
+    TEST_ASSERT(test_commit_called == 1);
+    ctest_clear_call_state();
 
-    ce = conf_lookup(1, names1);
-    TEST_ASSERT(ce != NULL);
-    TEST_ASSERT(ce->c_type == CONF_DIR);
-
-    ce = conf_lookup(2, names1);
-    TEST_ASSERT(ce != NULL);
-    TEST_ASSERT(!strcmp(ce->c_name, names1[1]));
-
-    ce = conf_lookup(2, names2);
-    TEST_ASSERT(ce != NULL);
-    TEST_ASSERT(!strcmp(ce->c_name, names2[1]));
-
-    ce = conf_lookup(2, names3);
-    TEST_ASSERT(ce == NULL);
+    rc = conf_commit("myfoo");
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(test_commit_called == 1);
+    ctest_clear_call_state();
 }
 
 TEST_SUITE(config_test_suite)
 {
     config_empty_lookups();
     config_test_insert();
-    config_test_lookup();
-    config_test_dir();
+    config_test_getset_unknown();
+    config_test_getset_int();
+    config_test_commit();
 }
 
 #ifdef PKG_TEST
@@ -236,7 +178,7 @@ main(int argc, char **argv)
     tu_config.tc_print_results = 1;
     tu_init();
 
-    config_test_suite();
+    conf_init();
 
     return tu_any_failed;
 }

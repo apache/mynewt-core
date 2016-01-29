@@ -32,15 +32,10 @@ shell_conf_command(int argc, char **argv)
 {
     char *name = NULL;
     char *val = NULL;
-    char *name_argv[CONF_MAX_DIR_DEPTH];
     char tmp_buf[16];
-    int name_argc;
     int rc;
-    struct conf_entry *ce;
 
     switch (argc) {
-    case 1:
-        break;
     case 2:
         name = argv[1];
         break;
@@ -52,26 +47,25 @@ shell_conf_command(int argc, char **argv)
         goto err;
     }
 
-    rc = conf_parse_name(name, &name_argc, name_argv);
-    if (rc) {
-        goto err;
+    if (!strcmp(name, "commit")) {
+        rc = conf_commit(val);
+        if (rc) {
+            val = "Failed to commit\n";
+        } else {
+            val = "Done\n";
+        }
+        console_printf(val);
+        return 0;
     }
-
-    ce = conf_lookup(name_argc, name_argv);
-    if (!ce) {
-        console_printf("No such config variable\n");
-        goto err;
-    }
-
     if (!val) {
-        val = conf_get_value(ce, tmp_buf, sizeof(tmp_buf));
+        val = conf_get_value(name, tmp_buf, sizeof(tmp_buf));
         if (!val) {
             console_printf("Cannot display value\n");
             goto err;
         }
-        console_printf("%s", val);
+        console_printf("%s\n", val);
     } else {
-        rc = conf_set_value(ce, val);
+        rc = conf_set_value(name, val);
         if (rc) {
             console_printf("Failed to set\n");
             goto err;
@@ -82,16 +76,11 @@ err:
     console_printf("Invalid args\n");
     return 0;
 }
-#endif
 
-int conf_module_init(void)
+int
+conf_cli_register(void)
 {
-#ifdef SHELL_PRESENT
-    shell_cmd_register(&shell_conf_cmd, "config", shell_conf_command);
-#endif
-#ifdef NEWTMGR_PRESENT
-    conf_nmgr_register();
-#endif
-    return 0;
+    return shell_cmd_register(&shell_conf_cmd, "config", shell_conf_command);
 }
+#endif
 

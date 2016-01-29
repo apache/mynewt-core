@@ -42,9 +42,6 @@ conf_nmgr_read(struct nmgr_jbuf *njb)
 {
     char tmp_str[max(CONF_MAX_DIR_DEPTH * 8, 16)];
     char *val_str;
-    char *name_argv[CONF_MAX_DIR_DEPTH];
-    int name_argc;
-    struct conf_entry *ce;
     const struct json_attr_t attr[2] = {
         [0] = {
             .attribute = "name",
@@ -64,16 +61,7 @@ conf_nmgr_read(struct nmgr_jbuf *njb)
         return OS_EINVAL;
     }
 
-    if (conf_parse_name(tmp_str, &name_argc, name_argv)) {
-        return OS_EINVAL;
-    }
-
-    ce = conf_lookup(name_argc, name_argv);
-    if (!ce) {
-        return OS_EINVAL;
-    }
-
-    val_str = conf_get_value(ce, tmp_str, sizeof(tmp_str));
+    val_str = conf_get_value(tmp_str, tmp_str, sizeof(tmp_str));
     if (!val_str) {
         return OS_EINVAL;
     }
@@ -89,17 +77,14 @@ conf_nmgr_read(struct nmgr_jbuf *njb)
 static int
 conf_nmgr_write(struct nmgr_jbuf *njb)
 {
-    char tmp_str[CONF_MAX_DIR_DEPTH * 8];
+    char name_str[CONF_MAX_DIR_DEPTH * 8];
     char val_str[256];
-    char *name_argv[CONF_MAX_DIR_DEPTH];
-    int name_argc;
-    struct conf_entry *ce;
     struct json_attr_t attr[3] = {
         [0] = {
             .attribute = "name",
             .type = t_string,
-            .addr.string = tmp_str,
-            .len = sizeof(tmp_str)
+            .addr.string = name_str,
+            .len = sizeof(name_str)
         },
         [1] = {
             .attribute = "val",
@@ -118,16 +103,7 @@ conf_nmgr_write(struct nmgr_jbuf *njb)
         return OS_EINVAL;
     }
 
-    if (conf_parse_name(tmp_str, &name_argc, name_argv)) {
-        return OS_EINVAL;
-    }
-
-    ce = conf_lookup(name_argc, name_argv);
-    if (!ce) {
-        return OS_EINVAL;
-    }
-
-    rc = conf_set_value(ce, val_str);
+    rc = conf_set_value(name_str, val_str);
     if (rc) {
         return OS_EINVAL;
     }

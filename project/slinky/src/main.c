@@ -85,35 +85,54 @@ uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
+static char *test_conf_get(int argc, char **argv, char *val, int max_len);
+static int test_conf_set(int argc, char **argv, char *val);
+static int test_conf_commit(void);
+
+static struct conf_handler test_conf_handler = {
+    .ch_name = "test",
+    .ch_get = test_conf_get,
+    .ch_set = test_conf_set,
+    .ch_commit = test_conf_commit
+};
+
 static uint8_t test8;
+static uint8_t test8_shadow;
 static char test_str[32];
 
-static const struct conf_entry test_conf_array[2] = {
-    [0] = {
-        .c_name = "8",
-        .c_type = CONF_INT8,
-        .c_val.single.val = &test8
-    },
-    [1] = {
-        .c_name = "str",
-        .c_type = CONF_STRING,
-        .c_val.array.val = test_str,
-        .c_val.array.maxlen = sizeof(test_str)
+static char *
+test_conf_get(int argc, char **argv, char *buf, int max_len)
+{
+    if (argc == 1) {
+        if (!strcmp(argv[0], "8")) {
+            return conf_str_from_value(CONF_INT8, &test8, buf, max_len);
+        } else if (!strcmp(argv[0], "str")) {
+            return test_str;
+        }
     }
-};
-static struct conf_node test_conf_array_node = {
-    .cn_cnt = 2,
-    .cn_array = (struct conf_entry *)test_conf_array
-};
+    return NULL;
+}
 
-static const struct conf_entry test_conf_dir = {
-    .c_name = "test",
-    .c_type = CONF_DIR
-};
-static struct conf_node test_conf_dir_node = {
-    .cn_cnt = 1,
-    .cn_array = (struct conf_entry *)&test_conf_dir
-};
+static int
+test_conf_set(int argc, char **argv, char *val)
+{
+    if (argc == 1) {
+        if (!strcmp(argv[0], "8")) {
+            return CONF_VALUE_SET(val, CONF_INT8, test8_shadow);
+        } else if (!strcmp(argv[0], "str")) {
+            return CONF_VALUE_SET(val, CONF_STRING, test_str);
+        }
+    }
+    return OS_ENOENT;
+}
+
+static int
+test_conf_commit(void)
+{
+    test8 = test8_shadow;
+
+    return 0;
+}
 
 void
 task1_handler(void *arg)
@@ -205,11 +224,8 @@ main(int argc, char **argv)
     mcu_sim_parse_args(argc, argv);
 #endif
 
-    conf_module_init();
-    rc = conf_register(NULL, &test_conf_dir_node);
-    assert(rc == 0);
-
-    rc = conf_register(&test_conf_dir_node, &test_conf_array_node);
+    conf_init();
+    rc = conf_register(&test_conf_handler);
     assert(rc == 0);
 
     cbmem_init(&log_mem, log_buf, sizeof(log_buf));

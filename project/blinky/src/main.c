@@ -158,7 +158,7 @@ main(int argc, char **argv)
     mcu_sim_parse_args(argc, argv);
 #endif
 
-    conf_module_init();
+    conf_init();
 
     cbmem_init(&log_mem, log_buf, sizeof(log_buf));
     util_log_cbmem_handler_init(&log_mem_handler, &log_mem);

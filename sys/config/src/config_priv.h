@@ -17,6 +17,7 @@
 #ifndef __CONFIG_PRIV_H_
 #define __CONFIG_PRIV_H_
 
+int conf_cli_register(void);
 int conf_nmgr_register(void);
 
 #endif /* __CONFIG_PRIV_H_ */
