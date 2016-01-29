@@ -32,8 +32,10 @@ static void *g_shell_nlip_in_arg;
 static struct os_mqueue g_shell_nlip_mq;
 
 #define OS_EVENT_T_CONSOLE_RDY (OS_EVENT_T_PERUSER)
+#define SHELL_HELP_PER_LINE	6
 
 static struct shell_cmd g_shell_echo_cmd;
+static struct shell_cmd g_shell_help_cmd;
 
 static struct os_task shell_task;
 static struct os_eventq shell_evq;
@@ -437,6 +439,31 @@ shell_echo_cmd(int argc, char **argv)
     return (0);
 }
 
+static int
+shell_help_cmd(int argc, char **argv)
+{
+    int rc;
+    int i = 0;
+    struct shell_cmd *sc;
+
+    rc = shell_cmd_list_lock();
+    if (rc != 0) {
+        return -1;
+    }
+
+    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
+        console_printf("%s \t", sc->sc_cmd);
+        if (i++ % SHELL_HELP_PER_LINE == SHELL_HELP_PER_LINE - 1) {
+            console_printf("\n");
+        }
+    }
+    if (i % SHELL_HELP_PER_LINE) {
+        console_printf("\n");
+    }
+    shell_cmd_list_unlock();
+
+    return (0);
+}
 
 int 
 shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
@@ -449,6 +476,11 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
     }
 
     rc = shell_cmd_register(&g_shell_echo_cmd, "echo", shell_echo_cmd);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = shell_cmd_register(&g_shell_help_cmd, "?", shell_help_cmd);
     if (rc != 0) {
         goto err;
     }
