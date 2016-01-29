@@ -53,7 +53,7 @@ int os_started(void);
 
 /* OS error enumerations */
 enum os_error {
-    OS_OK = 0, 
+    OS_OK = 0,
     OS_ENOMEM = 1,
     OS_EINVAL = 2,
     OS_INVALID_PARM = 3,
@@ -63,6 +63,7 @@ enum os_error {
     OS_ERR_IN_ISR = 7,      /* Function cannot be called from ISR */
     OS_ERR_PRIV = 8,        /* Privileged access error */
     OS_NOT_STARTED = 9,     /* Operating must be started to call this function, but isn't */
+    OS_ENOENT = 10,         /* No such thing */
 };
 
 #define OS_WAIT_FOREVER (-1) 
