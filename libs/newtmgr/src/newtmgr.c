@@ -38,13 +38,19 @@ STAILQ_HEAD(, nmgr_group) g_nmgr_group_list =
 static int nmgr_def_echo(struct nmgr_jbuf *);
 static int nmgr_def_console_echo(struct nmgr_jbuf *);
 
+/* Located in newtmgr_os.c */
+int nmgr_def_taskstat_read(struct nmgr_jbuf *);
+int nmgr_def_taskstat_write(struct nmgr_jbuf *);
+
+
 static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
  */
 static const struct nmgr_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_ECHO] = {nmgr_def_echo, nmgr_def_echo},
-    [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo}
+    [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo},
+    [NMGR_ID_TASKSTAT] = {nmgr_def_taskstat_read, nmgr_def_taskstat_write}
 };
 
 /* JSON buffer for NMGR task
@@ -315,6 +321,7 @@ nmgr_jbuf_write(void *arg, char *data, int len)
 
     rc = nmgr_rsp_extend(njb->njb_hdr, njb->njb_out_m, data, len);
     if (rc != 0) {
+        assert(0);
         goto err;
     }
 
@@ -365,7 +372,7 @@ nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode)
 
     json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_INT(&jv, errcode);
-    json_encode_object_entry(&njb->njb_enc, "r", &jv);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
     json_encode_object_finish(&njb->njb_enc);
 
     return (0);

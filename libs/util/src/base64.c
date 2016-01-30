@@ -57,6 +57,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdio.h>
+
 #include <util/base64.h>
 
 static const char base64_chars[] = 
@@ -119,6 +121,21 @@ base64_encode(const void *data, int size, char *s, uint8_t should_pad)
     *p = 0;
 
     return (p - s);
+}
+
+int 
+base64_pad(char *buf, int len)
+{
+    int remainder;
+
+    remainder = len % 4;
+    if (remainder == 0) {
+        return (0);
+    }
+
+    memset(buf, '=', 4 - remainder);
+
+    return (4 - remainder);
 }
 
 #define DECODE_ERROR -1

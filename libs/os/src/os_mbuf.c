@@ -388,7 +388,7 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
             space = remainder;
         }
 
-        memcpy(OS_MBUF_DATA(last, void *) + last->om_len , data, space);
+        memcpy(OS_MBUF_DATA(last, uint8_t *) + last->om_len , data, space);
 
         last->om_len += space;
         data += space;
@@ -405,7 +405,7 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
         }
 
         new->om_len = min(omp->omp_databuf_len, remainder);
-        memcpy(OS_MBUF_DATA(om, void *), data, new->om_len);
+        memcpy(OS_MBUF_DATA(new, void *), data, new->om_len);
         data += new->om_len;
         remainder -= new->om_len;
         SLIST_NEXT(last, om_next) = new;

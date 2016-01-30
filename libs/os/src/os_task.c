@@ -21,6 +21,8 @@
 
 uint8_t g_task_id;
 
+STAILQ_HEAD(, os_task) g_os_task_list = STAILQ_HEAD_INITIALIZER(g_os_task_list);
+
 static void
 _clear_stack(os_stack_t *stack_bottom, int size) 
 {
@@ -110,6 +112,11 @@ os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg,
     _clear_stack(stack_bottom, stack_size);
     t->t_stackptr = os_arch_task_stack_init(t, &stack_bottom[stack_size], 
             stack_size);
+    t->t_stackbase = stack_bottom;
+    t->t_stacksize = stack_size;
+
+    /* insert this task into the task list */
+    STAILQ_INSERT_TAIL(&g_os_task_list, t, t_os_task_list);
 
     /* insert this task into the scheduler list */
     rc = os_sched_insert(t);
@@ -117,8 +124,45 @@ os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg,
         goto err;
     }
 
+
     return (0);
 err:
     return (rc);
+}
+
+struct os_task *
+os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
+{
+    struct os_task *next;
+    os_sr_t sr;
+
+    if (prev != NULL) {
+        next = STAILQ_NEXT(prev, t_os_task_list);
+    } else {
+        next = STAILQ_FIRST(&g_os_task_list);
+    }
+
+    if (next == NULL) {
+        return (next);
+    }
+
+    /* Otherwise, copy OS task information into the OTI structure, and 
+     * return 1, which means continue
+     */
+    OS_ENTER_CRITICAL(sr);
+    oti->oti_prio = next->t_prio;
+    oti->oti_taskid = next->t_taskid;
+    oti->oti_state = next->t_state;
+    oti->oti_stkusage = (uint16_t) (next->t_stackptr - next->t_stackbase);
+    oti->oti_stksize = next->t_stacksize;
+    oti->oti_cswcnt = next->t_ctx_sw_cnt;
+    oti->oti_runtime = next->t_run_time;
+    oti->oti_last_checkin = next->t_sanity_check.sc_checkin_last;
+    oti->oti_next_checkin = next->t_sanity_check.sc_checkin_last + 
+        next->t_sanity_check.sc_checkin_itvl;
+    OS_EXIT_CRITICAL(sr);
+    strcpy(oti->oti_name, next->t_name);
+
+    return (next);
 }
 

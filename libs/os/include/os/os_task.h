@@ -53,8 +53,12 @@ typedef enum os_task_state {
 
 typedef void (*os_task_func_t)(void *);
 
+#define OS_TASK_MAX_NAME_LEN (32)
+
 struct os_task {
     os_stack_t *t_stackptr;
+    os_stack_t *t_stackbase;
+    
     uint16_t t_stacksize;
     uint16_t t_flags;
 
@@ -74,7 +78,10 @@ struct os_task {
     os_time_t t_next_wakeup;
     os_time_t t_run_time;
     uint32_t t_ctx_sw_cnt;
-    
+   
+    /* Global list of all tasks, irrespective of run or sleep lists */
+    STAILQ_ENTRY(os_task) t_os_task_list;
+
     /* Used to chain task to either the run or sleep list */ 
     TAILQ_ENTRY(os_task) t_os_list;
 
@@ -87,6 +94,25 @@ int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t,
 
 int os_task_sanity_checkin(struct os_task *);
 uint8_t os_task_count(void);
+
+struct os_task_info {
+    uint8_t oti_prio;
+    uint8_t oti_taskid;
+    uint8_t oti_state;
+    uint8_t oti_pad1;
+    uint8_t oti_pad2;
+    uint16_t oti_flags;
+    uint16_t oti_stkusage;
+    uint16_t oti_stksize;
+    uint32_t oti_cswcnt;
+    uint32_t oti_runtime;
+    os_time_t oti_last_checkin;
+    os_time_t oti_next_checkin;
+
+    char oti_name[OS_TASK_MAX_NAME_LEN];
+};
+struct os_task *os_task_info_get_next(const struct os_task *, 
+        struct os_task_info *);
 
 
 #endif /* _OS_TASK_H */

@@ -43,6 +43,9 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
     int ent_n;
     int len;
     int rc;
+#ifdef STATS_NAME_ENABLE
+    int i;
+#endif
 
     cur = (uint8_t *) hdr + sizeof(*hdr);
     end = (uint8_t *) hdr + sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);

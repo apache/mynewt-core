@@ -36,6 +36,7 @@ static struct os_mqueue g_shell_nlip_mq;
 
 static struct shell_cmd g_shell_echo_cmd;
 static struct shell_cmd g_shell_help_cmd;
+static struct shell_cmd g_shell_os_tasks_display_cmd;
 
 static struct os_task shell_task;
 static struct os_eventq shell_evq;
@@ -52,6 +53,7 @@ static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list =
 static struct os_mbuf *g_nlip_mbuf;
 static uint16_t g_nlip_expected_len;
 
+int shell_os_tasks_display_cmd(int argc, char **argv);
 
 static int 
 shell_cmd_list_lock(void)
@@ -238,6 +240,7 @@ shell_nlip_mtx(struct os_mbuf *m)
     int rb_off;
     int elen;
     uint16_t nwritten;
+    uint16_t linelen;
     int rc;
 
     /* Convert the mbuf into a packet.
@@ -259,6 +262,8 @@ shell_nlip_mtx(struct os_mbuf *m)
     /* Start a packet */
     console_write(pkt_seq, sizeof(pkt_seq));
 
+    linelen = 0; 
+
     rb_off = 2;
     dlen = htons(totlen);
     memcpy(readbuf, &dlen, sizeof(dlen));
@@ -266,27 +271,38 @@ shell_nlip_mtx(struct os_mbuf *m)
     while (totlen > 0) {
         dlen = min(SHELL_NLIP_MTX_BUF_SIZE - rb_off, totlen);
 
-        if (nwritten != 0 &&
-                ((nwritten + BASE64_ENCODE_SIZE(dlen)) % 122) == 0) {
-            console_write("\n", 1);
-            console_write(esc_seq, sizeof(esc_seq));
-        }
-
         rc = os_mbuf_copydata(m, off, dlen, readbuf + rb_off);
         if (rc != 0) {
             goto err;
         }
         off += dlen;
 
-        elen = base64_encode(readbuf, dlen + rb_off, encodebuf,
-                totlen - dlen > 0 ? 0 : 1);
-        rb_off = 0;
+        /* If the next packet will overwhelm the line length, truncate 
+         * this line.
+         */
+        if (linelen + 
+                BASE64_ENCODE_SIZE(min(SHELL_NLIP_MTX_BUF_SIZE - rb_off, 
+                        totlen - dlen)) >= 120) {
+            elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 1);
+            console_write(encodebuf, elen);
+            console_write("\n", 1);
+            console_write(esc_seq, sizeof(esc_seq));
+            linelen = 0;
+        } else {
+            elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 0);
+            console_write(encodebuf, elen);
+            linelen += elen;
+        }
 
-        console_write(encodebuf, elen);
+        rb_off = 0;
 
         nwritten += elen;
         totlen -= dlen;
     }
+
+    elen = base64_pad(encodebuf, linelen);
+    console_write(encodebuf, elen);
+    
     console_write("\n", 1);
 
     return (0);
@@ -481,6 +497,12 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
     }
 
     rc = shell_cmd_register(&g_shell_help_cmd, "?", shell_help_cmd);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = shell_cmd_register(&g_shell_os_tasks_display_cmd, "tasks", 
+            shell_os_tasks_display_cmd);
     if (rc != 0) {
         goto err;
     }

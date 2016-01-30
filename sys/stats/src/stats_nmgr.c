@@ -81,7 +81,7 @@ stats_nmgr_read(struct nmgr_jbuf *njb)
 #define STATS_NMGR_NAME_LEN (32)
     char stats_name[STATS_NMGR_NAME_LEN];
     struct json_attr_t attrs[] = {
-        { "n", t_string, .addr.string = &stats_name[0], 
+        { "name", t_string, .addr.string = &stats_name[0], 
             .len = sizeof(stats_name) },
         { NULL },
     };
@@ -102,11 +102,13 @@ stats_nmgr_read(struct nmgr_jbuf *njb)
 
     json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "r", &jv);
+    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "rc", &jv);
     JSON_VALUE_STRINGN(&jv, stats_name, strlen(stats_name));
-    json_encode_object_entry(&njb->njb_enc, "n", &jv);
-    json_encode_object_key(&njb->njb_enc, "f");
-    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "name", &jv);
+    JSON_VALUE_STRINGN(&jv, "sys", sizeof("sys")-1);
+    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "group", &jv);
+    json_encode_object_key(&nmgr_task_jbuf.njb_enc, "fields");
+    json_encode_object_start(&nmgr_task_jbuf.njb_enc);
     stats_walk(hdr, stats_nmgr_walk_func, &nmgr_task_jbuf.njb_enc);
     json_encode_object_finish(&njb->njb_enc);
     json_encode_object_finish(&njb->njb_enc);

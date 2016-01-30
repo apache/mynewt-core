@@ -70,44 +70,6 @@ err:
     return (rc);
 }
 
-/**
- * Walk all the active tasks currently being scheduled.
- *
- * @param walk_func The walk function to call for each task
- * @param arg       The argument to pass the walk function
- *
- * @return 0 on success, < 0 on abort.
- */
-int
-os_sched_walk(os_sched_walk_func_t walk_func, void *arg)
-{
-    struct os_task *t;
-    os_sr_t sr;
-    int rc;
-
-    /* Go through tasks and fill out the info blocks
-     */
-    OS_ENTER_CRITICAL(sr);
-    TAILQ_FOREACH(t, &g_os_run_list, t_os_list) {
-        rc = walk_func(t, arg);
-        if (rc != 0) {
-            goto done;
-        }
-    }
-
-    TAILQ_FOREACH(t, &g_os_sleep_list, t_os_list) {
-        rc = walk_func(t, arg);
-        if (rc != 0) {
-            goto done;
-        }
-    }
-
-done:
-    OS_EXIT_CRITICAL(sr);
-
-    return (rc);
-}
-
 void
 os_sched_ctx_sw_hook(struct os_task *next_t)
 {

@@ -77,7 +77,7 @@ int g_led_pin;
 #define NFFS_AREA_MAX           (16)
 
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
-#define DEFAULT_MBUF_MPOOL_NBUFS (5)
+#define DEFAULT_MBUF_MPOOL_NBUFS (10)
 
 uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
     DEFAULT_MBUF_MPOOL_NBUFS];
