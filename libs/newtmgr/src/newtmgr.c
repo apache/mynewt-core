@@ -41,7 +41,8 @@ static int nmgr_def_console_echo(struct nmgr_jbuf *);
 /* Located in newtmgr_os.c */
 int nmgr_def_taskstat_read(struct nmgr_jbuf *);
 int nmgr_def_taskstat_write(struct nmgr_jbuf *);
-
+int nmgr_def_mpstat_read(struct nmgr_jbuf *);
+int nmgr_def_mpstat_write(struct nmgr_jbuf *);
 
 static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.
@@ -50,7 +51,8 @@ static struct nmgr_group nmgr_def_group;
 static const struct nmgr_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_ECHO] = {nmgr_def_echo, nmgr_def_echo},
     [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo},
-    [NMGR_ID_TASKSTAT] = {nmgr_def_taskstat_read, nmgr_def_taskstat_write}
+    [NMGR_ID_TASKSTAT] = {nmgr_def_taskstat_read, NULL},
+    [NMGR_ID_MPSTAT] = {nmgr_def_mpstat_read, NULL},
 };
 
 /* JSON buffer for NMGR task
@@ -445,11 +447,22 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         }
 
         if (hdr.nh_op == NMGR_OP_READ) {
-            rc = handler->nh_read(&nmgr_task_jbuf);
+            if (handler->nh_read) {
+                rc = handler->nh_read(&nmgr_task_jbuf);
+            } else {
+                rc = OS_EINVAL;
+            }
         } else if (hdr.nh_op == NMGR_OP_WRITE) {
-            rc = handler->nh_write(&nmgr_task_jbuf);
+            if (handler->nh_write) {
+                rc = handler->nh_write(&nmgr_task_jbuf);
+            } else {
+                rc = OS_EINVAL;
+            }
         } else {
             rc = OS_EINVAL;
+        }
+
+        if (rc != 0) {
             goto err;
         }
 

@@ -40,9 +40,22 @@ struct os_mempool {
     int mp_block_size;          /* Size of the memory blocks, in bytes. */
     int mp_num_blocks;          /* The number of memory blocks. */
     int mp_num_free;            /* The number of free blocks left */
+    STAILQ_ENTRY(os_mempool) mp_list;
     SLIST_HEAD(,os_memblock);   /* Pointer to list of free blocks */
     char *name;                 /* Name for memory block */
 };
+
+#define OS_MEMPOOL_INFO_NAME_LEN (32)
+
+struct os_mempool_info {
+    int omi_block_size;
+    int omi_num_blocks;
+    int omi_num_free;
+    char omi_name[OS_MEMPOOL_INFO_NAME_LEN];
+};
+
+struct os_mempool *os_mempool_info_get_next(struct os_mempool *, 
+        struct os_mempool_info *);
 
 /* 
  * To calculate size of the memory buffer needed for the pool. NOTE: This size 

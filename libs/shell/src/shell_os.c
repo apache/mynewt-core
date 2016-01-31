@@ -54,11 +54,13 @@ shell_os_tasks_display_cmd(int argc, char **argv)
             }
         }
 
-        console_printf("  %s (prio: %u, nw: %lu, flags: 0x%x, "
-                "ssize: %u, cswcnt: %lu, tot_run_time: %lums)\n",
-                oti.oti_name, oti.oti_prio,
+        console_printf("  %s (prio: %u, tid: %u, lcheck: %lu, ncheck: %lu, "
+                "flags: 0x%x, ssize: %u, susage: %u, cswcnt: %lu, "
+                "tot_run_time: %lums)\n",
+                oti.oti_name, oti.oti_prio, oti.oti_taskid, 
+                (unsigned long)oti.oti_last_checkin,
                 (unsigned long)oti.oti_next_checkin, oti.oti_flags,
-                oti.oti_stksize, (unsigned long)oti.oti_cswcnt,
+                oti.oti_stksize, oti.oti_stkusage, (unsigned long)oti.oti_cswcnt,
                 (unsigned long)oti.oti_runtime);
 
     }
@@ -70,3 +72,46 @@ shell_os_tasks_display_cmd(int argc, char **argv)
     return (0);
 }
 
+int 
+shell_os_mpool_display_cmd(int argc, char **argv)
+{
+    struct os_mempool *mp;
+    struct os_mempool_info omi;
+    char *name;
+    int found;
+
+    name = NULL;
+    found = 0;
+
+    if (argc > 1 && strcmp(argv[1], "")) {
+        name = argv[1];
+    }
+
+    console_printf("Mempools: \n");
+    mp = NULL;
+    while (1) {
+        mp = os_mempool_info_get_next(mp, &omi);
+        if (mp == NULL) {
+            break;
+        }
+
+        if (name) {
+            if (strcmp(name, omi.omi_name)) {
+                continue;
+            } else {
+                found = 1;
+            }
+        }
+
+        console_printf("  %s (blksize: %d, nblocks: %d, nfree: %d)\n",
+                omi.omi_name, omi.omi_block_size, omi.omi_num_blocks,
+                omi.omi_num_free);
+    }
+
+    if (name && !found) {
+        console_printf("Couldn't find a memory pool with name %s\n", 
+                name);
+    }
+
+    return (0);
+}

@@ -23,7 +23,6 @@
 
 #include <string.h>
 
-
 int 
 nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
 {
@@ -76,6 +75,51 @@ nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
 
 int 
 nmgr_def_taskstat_write(struct nmgr_jbuf *njb)
+{
+    return (OS_EINVAL);
+}
+
+int 
+nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
+{
+    struct os_mempool *prev_mp;
+    struct os_mempool_info omi;
+    struct json_value jv;
+
+    json_encode_object_start(&njb->njb_enc);
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+
+    json_encode_object_key(&njb->njb_enc, "mpools");
+    json_encode_object_start(&njb->njb_enc);
+
+    prev_mp = NULL;
+    while (1) {
+        prev_mp = os_mempool_info_get_next(prev_mp, &omi);
+        if (prev_mp == NULL) {
+            break;
+        }
+
+        json_encode_object_key(&njb->njb_enc, omi.omi_name);
+
+        json_encode_object_start(&njb->njb_enc);
+        JSON_VALUE_UINT(&jv, omi.omi_block_size);
+        json_encode_object_entry(&njb->njb_enc, "blksiz", &jv);
+        JSON_VALUE_UINT(&jv, omi.omi_num_blocks);
+        json_encode_object_entry(&njb->njb_enc, "nblks", &jv);
+        JSON_VALUE_UINT(&jv, omi.omi_num_free);
+        json_encode_object_entry(&njb->njb_enc, "nfree", &jv);
+        json_encode_object_finish(&njb->njb_enc);
+    }
+
+    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_finish(&njb->njb_enc);
+
+    return (0);
+}
+
+int 
+nmgr_def_mpstat_write(struct nmgr_jbuf *njb)
 {
     return (OS_EINVAL);
 }

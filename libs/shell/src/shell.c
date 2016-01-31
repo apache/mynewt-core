@@ -37,6 +37,7 @@ static struct os_mqueue g_shell_nlip_mq;
 static struct shell_cmd g_shell_echo_cmd;
 static struct shell_cmd g_shell_help_cmd;
 static struct shell_cmd g_shell_os_tasks_display_cmd;
+static struct shell_cmd g_shell_os_mpool_display_cmd;
 
 static struct os_task shell_task;
 static struct os_eventq shell_evq;
@@ -54,6 +55,7 @@ static struct os_mbuf *g_nlip_mbuf;
 static uint16_t g_nlip_expected_len;
 
 int shell_os_tasks_display_cmd(int argc, char **argv);
+int shell_os_mpool_display_cmd(int argc, char **argv);
 
 static int 
 shell_cmd_list_lock(void)
@@ -503,6 +505,12 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
 
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd, "tasks", 
             shell_os_tasks_display_cmd);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = shell_cmd_register(&g_shell_os_mpool_display_cmd, "mempools",
+            shell_os_mpool_display_cmd);
     if (rc != 0) {
         goto err;
     }

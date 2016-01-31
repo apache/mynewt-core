@@ -16,6 +16,11 @@
 
 #include "os/os.h"
 
+#include <string.h>
+
+STAILQ_HEAD(, os_mempool) g_os_mempool_list = 
+    STAILQ_HEAD_INITIALIZER(g_os_mempool_list);
+
 /**
  * os mempool init
  *  
@@ -67,6 +72,8 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size, void *membuf,
 
     /* Last one in the list should be NULL */
     SLIST_NEXT(block_ptr, mb_next) = NULL;
+
+    STAILQ_INSERT_TAIL(&g_os_mempool_list, mp, mp_list);
 
     return OS_OK;
 }
@@ -148,3 +155,28 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
 
     return OS_OK;
 }
+
+
+struct os_mempool *
+os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
+{
+    struct os_mempool *cur;
+
+    if (mp == NULL) {
+        cur = STAILQ_FIRST(&g_os_mempool_list);
+    } else {
+        cur = STAILQ_NEXT(mp, mp_list);
+    }
+
+    if (cur == NULL) {
+        return (NULL);
+    }
+
+    omi->omi_block_size = cur->mp_block_size;
+    omi->omi_num_blocks = cur->mp_num_blocks;
+    omi->omi_num_free = cur->mp_num_free;
+    strncpy(omi->omi_name, cur->name, sizeof(omi->omi_name));
+
+    return (cur);
+}
+

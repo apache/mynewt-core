@@ -161,7 +161,7 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     oti->oti_next_checkin = next->t_sanity_check.sc_checkin_last + 
         next->t_sanity_check.sc_checkin_itvl;
     OS_EXIT_CRITICAL(sr);
-    strcpy(oti->oti_name, next->t_name);
+    strncpy(oti->oti_name, next->t_name, sizeof(oti->oti_name));
 
     return (next);
 }
