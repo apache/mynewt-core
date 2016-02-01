@@ -61,8 +61,8 @@ os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct cbmem log_mem;
-struct ul_handler log_mem_handler;
-struct util_log my_log;
+struct log_handler log_mem_handler;
+struct log my_log;
 uint8_t log_buf[12 * 1024];
 
 static volatile int g_task2_loops;
@@ -228,16 +228,18 @@ main(int argc, char **argv)
     rc = conf_register(&test_conf_handler);
     assert(rc == 0);
 
+    log_init();
+
     cbmem_init(&log_mem, log_buf, sizeof(log_buf));
-    util_log_cbmem_handler_init(&log_mem_handler, &log_mem);
-    util_log_register("log", &my_log, &log_mem_handler);
+    log_cbmem_handler_init(&log_mem_handler, &log_mem);
+    log_register("log", &my_log, &log_mem_handler);
 
     memset(entry, 0xff, 128);
-    memcpy(entry + sizeof(struct ul_entry_hdr), "bla", sizeof("bla")-1);
-    util_log_append(&my_log, entry, sizeof("bla")-1);
+    memcpy(entry + sizeof(struct log_entry_hdr), "bla", sizeof("bla")-1);
+    log_append(&my_log, entry, sizeof("bla")-1);
     memset(entry, 0xff, 128);
-    memcpy(entry + sizeof(struct ul_entry_hdr), "bab", sizeof("bab")-1);
-    util_log_append(&my_log, entry, sizeof("bab")-1);
+    memcpy(entry + sizeof(struct log_entry_hdr), "bab", sizeof("bab")-1);
+    log_append(&my_log, entry, sizeof("bab")-1);
 
     os_init();
 

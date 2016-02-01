@@ -74,6 +74,7 @@ shell_stats_display(int argc, char **argv)
                 "possible names are:\n");
         stats_group_walk(stats_shell_display_group, NULL);
         rc = OS_EINVAL;
+        goto err;
     }
 
     hdr = stats_group_find(name);
