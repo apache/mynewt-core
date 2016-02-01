@@ -1,5 +1,5 @@
-egg.name: "hw/mcu/nordic/nrf52xxx"
+egg.name: "hw/mcu/nordic/nrf51xxx"
 egg.deps: 
     - hw/hal 
     - libs/cmsis-core 
-    - compiler/arm-none-eabi-m4
+    - compiler/arm-none-eabi-m0

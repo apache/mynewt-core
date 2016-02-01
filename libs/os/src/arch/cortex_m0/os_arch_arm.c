@@ -19,6 +19,10 @@
 
 #include <bsp/cmsis_nvic.h>
 
+/* XXX*/
+extern void system_os_tick_init(uint32_t os_ticks_per_sec);
+/* XXX */
+
 /* Initial program status register */
 #define INITIAL_xPSR    0x01000000
 
@@ -236,6 +240,8 @@ os_arch_os_init(void)
 static void
 os_systick_init(uint32_t os_tick_usecs)
 {
+    /* XXX */
+#if 0
     uint32_t reload_val;
 
     reload_val = (((uint64_t)SystemCoreClock * os_tick_usecs) / 1000000) - 1;
@@ -247,6 +253,10 @@ os_systick_init(uint32_t os_tick_usecs)
 
     /* Set the system tick priority */
     NVIC_SetPriority(SysTick_IRQn, SYSTICK_PRIO);
+#else
+    system_os_tick_init(1024);
+#endif
+
 }
 
 uint32_t

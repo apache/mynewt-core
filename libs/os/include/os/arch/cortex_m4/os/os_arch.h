@@ -23,8 +23,8 @@
 struct os_task;
 
 /* Run in priviliged or unprivileged Thread mode */
-#define OS_RUN_UNPRIV       (0)
-#define OS_RUN_PRIV         (1)
+#define OS_RUN_PRIV         (0)
+#define OS_RUN_UNPRIV       (1)
 
 /* Time tick in miliseconds that the OS runs */
 #define OS_TICKS_PER_SEC    (1000)
