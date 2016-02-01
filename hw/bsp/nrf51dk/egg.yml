@@ -1,0 +1,10 @@
+egg.name: "hw/bsp/nrf51dk"
+egg.linkerscript: "nrf51dk.ld" 
+egg.linkerscript.bootloader.OVERWRITE: "boot-nrf51pdk.ld"
+egg.downloadscript: nrf51dk_download.sh
+egg.debugscript: nrf51dk_debug.sh
+egg.cflags: -DNRF51
+egg.deps: 
+    - hw/mcu/nordic/nrf51xxx
+egg.deps.BLE_DEVICE: 
+    - net/nimble/drivers/nrf51
