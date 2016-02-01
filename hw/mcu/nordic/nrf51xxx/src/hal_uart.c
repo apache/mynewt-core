@@ -71,7 +71,7 @@ hal_uart_tx_fill_buf(struct hal_uart *u)
 
     i = 0;
     data = u->u_tx_func(u->u_func_arg);
-    if (data < 0) {
+    if (data >= 0) {
         u->u_tx_buf = data;
         i = 1;
     }
