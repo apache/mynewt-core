@@ -177,6 +177,7 @@ context_switch:
         MOV     R6,R10
         MOV     R7,R11
         STMIA   R0!,{R4-R7}         /* Save Old context */
+        SUBS    R0,R0,#32
 
         STR     R0,[R1,#0]          /* Update stack pointer in current task */
         STR     R2,[R3]             /* g_current_task = highest ready */
