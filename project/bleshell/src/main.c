@@ -838,18 +838,18 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     switch (event) {
     case BLE_GAP_EVENT_CONN:
         bleshell_printf("connection complete; status=%d ", status);
-        bleshell_print_conn_desc(&ctxt->desc);
+        bleshell_print_conn_desc(ctxt->desc);
         bleshell_printf("\n");
 
         if (status == 0) {
-            bleshell_conn_add(&ctxt->desc);
+            bleshell_conn_add(ctxt->desc);
         } else {
-            if (ctxt->desc.conn_handle == BLE_HS_CONN_HANDLE_NONE) {
+            if (ctxt->desc->conn_handle == BLE_HS_CONN_HANDLE_NONE) {
                 if (status == BLE_HS_HCI_ERR(BLE_ERR_UNK_CONN_ID)) {
                     bleshell_printf("connection procedure cancelled.\n");
                 }
             } else {
-                conn_idx = bleshell_conn_find_idx(ctxt->desc.conn_handle);
+                conn_idx = bleshell_conn_find_idx(ctxt->desc->conn_handle);
                 if (conn_idx == -1) {
                     bleshell_printf("UNKNOWN CONNECTION\n");
                 } else {
@@ -862,7 +862,7 @@ bleshell_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 
     case BLE_GAP_EVENT_CONN_UPDATED:
         bleshell_printf("connection updated; status=%d ", status);
-        bleshell_print_conn_desc(&ctxt->desc);
+        bleshell_print_conn_desc(ctxt->desc);
         bleshell_printf("\n");
         break;
 
