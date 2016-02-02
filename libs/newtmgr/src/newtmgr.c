@@ -391,11 +391,14 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     uint32_t len;
     int rc;
 
-    rsp = os_msys_get_pkthdr(512, 0);
+    rsp = os_msys_get_pkthdr(512, OS_MBUF_USRHDR_LEN(req));
     if (!rsp) {
         rc = OS_EINVAL;
         goto err;
     }
+
+    /* Copy the request packet header into the response. */
+    memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
 
     off = 0;
     len = OS_MBUF_PKTHDR(req)->omp_len;
@@ -518,7 +521,7 @@ nmgr_task(void *arg)
 }
 
 int 
-nmgr_transport_init(struct nmgr_transport *nt, 
+nmgr_transport_init(struct nmgr_transport *nt,
         nmgr_transport_out_func_t output_func)
 {
     int rc;
@@ -533,6 +536,30 @@ nmgr_transport_init(struct nmgr_transport *nt,
     return (0);
 err:
     return (rc);
+}
+
+/**
+ * Transfers an incoming request to the newtmgr task.  The caller relinquishes
+ * ownership of the supplied mbuf upon calling this function, whether this
+ * function succeeds or fails.
+ *
+ * @param nt                    The transport that the request was received
+ *                                  over.
+ * @param req                   An mbuf containing the newtmgr request.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
+{
+    int rc;
+
+    rc = os_mqueue_put(&nt->nt_imq, &g_nmgr_evq, req);
+    if (rc != 0) {
+        os_mbuf_free_chain(req);
+    }
+
+    return rc;
 }
 
 static int 

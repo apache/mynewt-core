@@ -147,6 +147,22 @@ struct os_mqueue {
 #define OS_MBUF_DATA(__om, __type) \
      (__type) ((__om)->om_data)
 
+/**
+ * Access the "user header" in the head of an mbuf chain.
+ *
+ * @param om                    Pointer to the head of an mbuf chain.
+ */
+#define OS_MBUF_USRHDR(om)                              \
+    (void *)((uint8_t *)om + sizeof (struct os_mbuf) +  \
+             sizeof (struct os_mbuf_pkthdr))
+
+/**
+ * Retrieves the length of the user header in an mbuf.
+ *
+ * @param om                    Pointer to the mbuf to query.
+ */
+#define OS_MBUF_USRHDR_LEN(om) \
+    ((om)->om_pkthdr_len - sizeof (struct os_mbuf_pkthdr))
 
 /*
  * Called by OS_MBUF_LEADINGSPACE() macro

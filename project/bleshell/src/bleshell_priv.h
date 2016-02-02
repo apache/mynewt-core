@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "os/queue.h"
 
+#include "newtmgr/newtmgr.h"
 #include "host/ble_gatt.h"
 struct ble_gap_white_entry;
 struct ble_hs_adv_fields;
@@ -65,7 +66,10 @@ extern const uint16_t bleshell_appearance;
 extern const uint8_t bleshell_privacy_flag;
 extern uint8_t bleshell_reconnect_addr[6];
 extern uint8_t bleshell_pref_conn_params[8];
-uint8_t bleshell_gatt_service_changed[4];
+extern uint8_t bleshell_gatt_service_changed[4];
+
+extern struct nmgr_transport nm_ble_transport;
+extern uint16_t nm_attr_val_handle;
 
 void bleshell_printf(const char *fmt, ...);
 void print_addr(void *addr);
@@ -88,6 +92,11 @@ int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
 void periph_init(void);
+int nm_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+                  uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                  void *arg);
+int nm_rx_rsp(uint8_t *attr_val, uint16_t attr_len);
+void nm_init(void);
 void bleshell_lock(void);
 void bleshell_unlock(void);
 int bleshell_exchange_mtu(uint16_t conn_handle);

@@ -6,3 +6,4 @@ project.eggs:
     - libs/console/full
     - libs/shell
     - libs/baselibc
+    - libs/newtmgr

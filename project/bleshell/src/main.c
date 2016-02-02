@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -43,9 +43,13 @@
 /* Task 1 */
 #define HOST_TASK_PRIO          (1)
 
-#define SHELL_TASK_PRIO         (3) 
+#define SHELL_TASK_PRIO         (3)
 #define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(384))
-os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
+static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
+
+#define NMGR_TASK_PRIO          (4)
+#define NMGR_TASK_STACK_SIZE   (OS_STACK_ALIGN(384))
+static bssnz_t os_stack_t nmgr_stack[NMGR_TASK_STACK_SIZE];
 
 static struct os_mutex bleshell_mutex;
 
@@ -71,9 +75,18 @@ static uint8_t bleshell_addr[6] = {0x03, 0x02, 0x01, 0x50, 0x13, 0x00};
 
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
 
-struct os_mbuf_pool g_mbuf_pool; 
+struct os_mbuf_pool g_mbuf_pool;
 struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
+
+#define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
+#define DEFAULT_MBUF_MPOOL_NBUFS (10)
+
+uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
+    DEFAULT_MBUF_MPOOL_NBUFS];
+
+struct os_mbuf_pool default_mbuf_pool;
+struct os_mempool default_mbuf_mpool;
 
 /* BLESHELL variables */
 #define BLESHELL_STACK_SIZE             (128)
@@ -820,6 +833,10 @@ bleshell_on_notify(uint16_t conn_handle, uint16_t attr_handle,
     bleshell_print_bytes(attr_val, attr_len);
     bleshell_printf("\n");
 
+    if (attr_handle == nm_attr_val_handle) {
+        nm_rx_rsp(attr_val, attr_len);
+    }
+
     return 0;
 }
 
@@ -1185,9 +1202,9 @@ bleshell_l2cap_update(uint16_t conn_handle,
 }
 
 /**
- * BLE test task 
- * 
- * @param arg 
+ * BLE test task
+ *
+ * @param arg
  */
 static void
 bleshell_task_handler(void *arg)
@@ -1205,7 +1222,7 @@ bleshell_task_handler(void *arg)
     /* Init bleshell variables */
     g_bleshell_state = 0;
     g_next_os_time = os_time_get();
-    
+
     while (1) {
         ev = os_eventq_get(&g_bleshell_evq);
         switch (ev->ev_type) {
@@ -1223,11 +1240,11 @@ bleshell_task_handler(void *arg)
 
 /**
  * main
- *  
- * The main function for the project. This function initializes the os, calls 
- * init_tasks to initialize tasks (and possibly other objects), then starts the 
- * OS. We should not return from os start. 
- *  
+ *
+ * The main function for the project. This function initializes the os, calls
+ * init_tasks to initialize tasks (and possibly other objects), then starts the
+ * OS. We should not return from os start.
+ *
  * @return int NOTE: this function should never return!
  */
 int
@@ -1244,20 +1261,20 @@ main(void)
     rc = cputime_init(1000000);
     assert(rc == 0);
 
-    rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS, 
+    rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS,
             MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
 
-    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE, 
+    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE,
                            MBUF_NUM_MBUFS);
     assert(rc == 0);
 
     /* Dummy device address */
     memcpy(g_dev_addr, bleshell_addr, 6);
 
-    /* 
+    /*
      * Seed random number generator with least significant bytes of device
      * address.
-     */ 
+     */
     seed = 0;
     for (i = 0; i < 4; ++i) {
         seed |= g_dev_addr[i];
@@ -1296,6 +1313,18 @@ main(void)
                          "bleshell_dsc_pool");
     assert(rc == 0);
 
+    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
+            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data,
+            "default_mbuf_data");
+    assert(rc == 0);
+
+    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
+            DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
+    assert(rc == 0);
+
+    rc = os_msys_register(&default_mbuf_pool);
+    assert(rc == 0);
+
     os_task_init(&bleshell_task, "bleshell", bleshell_task_handler,
                  NULL, BLESHELL_TASK_PRIO, OS_WAIT_FOREVER,
                  bleshell_stack, BLESHELL_STACK_SIZE);
@@ -1317,6 +1346,9 @@ main(void)
     rc = cmd_init();
     assert(rc == 0);
 
+    nmgr_task_init(NMGR_TASK_PRIO, nmgr_stack, NMGR_TASK_STACK_SIZE);
+    nm_init();
+
     /* Initialize the preferred parameters. */
     htole16(bleshell_pref_conn_params + 0, BLE_GAP_INITIAL_CONN_ITVL_MIN);
     htole16(bleshell_pref_conn_params + 2, BLE_GAP_INITIAL_CONN_ITVL_MAX);
@@ -1334,4 +1366,3 @@ main(void)
 
     return 0;
 }
-
