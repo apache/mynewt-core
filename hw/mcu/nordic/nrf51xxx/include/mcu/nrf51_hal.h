@@ -43,6 +43,9 @@ struct nrf51_uart_cfg {
 };
 const struct nrf51_uart_cfg *bsp_uart_config(void);
 
+struct hal_flash;
+extern const struct hal_flash nrf51_flash_dev;
+
 #ifdef __cplusplus
 }
 #endif
