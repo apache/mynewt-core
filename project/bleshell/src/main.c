@@ -680,17 +680,17 @@ static int
 bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_chr *chr, void *arg)
 {
-    intptr_t *svc_start_handle;
+    intptr_t svc_start_handle;
 
     bleshell_lock();
 
-    svc_start_handle = arg;
+    svc_start_handle = (intptr_t)arg;
 
     if (error != NULL) {
         bleshell_print_error("ERROR DISCOVERING CHARACTERISTIC", conn_handle,
                              error);
     } else if (chr != NULL) {
-        bleshell_chr_add(conn_handle, *svc_start_handle, chr);
+        bleshell_chr_add(conn_handle, svc_start_handle, chr);
     } else {
         /* Service discovery complete. */
     }
@@ -702,20 +702,16 @@ bleshell_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
 
 static int
 bleshell_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
-                   uint16_t chr_val_handle, struct ble_gatt_dsc *dsc,
+                   uint16_t chr_def_handle, struct ble_gatt_dsc *dsc,
                    void *arg)
 {
-    intptr_t *chr_def_handle;
-
     bleshell_lock();
-
-    chr_def_handle = arg;
 
     if (error != NULL) {
         bleshell_print_error("ERROR DISCOVERING DESCRIPTOR", conn_handle,
                              error);
     } else if (dsc != NULL) {
-        bleshell_dsc_add(conn_handle, *chr_def_handle, dsc);
+        bleshell_dsc_add(conn_handle, chr_def_handle, dsc);
     } else {
         /* Descriptor discovery complete. */
     }
@@ -934,7 +930,7 @@ bleshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
 
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_all_chrs(conn_handle, start_handle, end_handle,
-                                 bleshell_on_disc_c, &svc_start_handle);
+                                 bleshell_on_disc_c, (void *)svc_start_handle);
     return rc;
 }
 
@@ -975,12 +971,10 @@ int
 bleshell_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
                        uint16_t chr_end_handle)
 {
-    intptr_t chr_def_handle_iptr;
     int rc;
 
-    chr_def_handle_iptr = chr_def_handle;
     rc = ble_gattc_disc_all_dscs(conn_handle, chr_def_handle, chr_end_handle,
-                                 bleshell_on_disc_d, &chr_def_handle_iptr);
+                                 bleshell_on_disc_d, NULL);
     return rc;
 }
 
