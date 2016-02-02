@@ -30,6 +30,7 @@
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
+#include "host/ble_hs_adv.h"
 #include "controller/ble_ll.h"
 
 /* Init all tasks */
@@ -203,10 +204,10 @@ prphtest_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     case BLE_GAP_EVENT_CONN:
         console_printf("connection event; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       ctxt->desc.conn_handle, status,
-                       ctxt->desc.peer_addr[0], ctxt->desc.peer_addr[1],
-                       ctxt->desc.peer_addr[2], ctxt->desc.peer_addr[3],
-                       ctxt->desc.peer_addr[4], ctxt->desc.peer_addr[5]);
+                       ctxt->desc->conn_handle, status,
+                       ctxt->desc->peer_addr[0], ctxt->desc->peer_addr[1],
+                       ctxt->desc->peer_addr[2], ctxt->desc->peer_addr[3],
+                       ctxt->desc->peer_addr[4], ctxt->desc->peer_addr[5]);
         break;
 
     default:
@@ -258,7 +259,7 @@ prphtest_task_handler(void *arg)
     assert(rc == 0);
 
     rc = ble_gap_conn_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
-                                NULL, 0, prphtest_on_connect, NULL);
+                                NULL, 0, NULL, prphtest_on_connect, NULL);
     assert(rc == 0);
 
     while (1) {

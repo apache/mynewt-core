@@ -187,13 +187,13 @@ centtest_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     case BLE_GAP_EVENT_CONN:
         console_printf("connection complete; handle=%d status=%d "
                        "peer_addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
-                       ctxt->desc.conn_handle, status,
-                       ctxt->desc.peer_addr[0], ctxt->desc.peer_addr[1],
-                       ctxt->desc.peer_addr[2], ctxt->desc.peer_addr[3],
-                       ctxt->desc.peer_addr[4], ctxt->desc.peer_addr[5]);
+                       ctxt->desc->conn_handle, status,
+                       ctxt->desc->peer_addr[0], ctxt->desc->peer_addr[1],
+                       ctxt->desc->peer_addr[2], ctxt->desc->peer_addr[3],
+                       ctxt->desc->peer_addr[4], ctxt->desc->peer_addr[5]);
 
         if (status == 0) {
-            ble_gattc_disc_all_svcs(ctxt->desc.conn_handle,
+            ble_gattc_disc_all_svcs(ctxt->desc->conn_handle,
                                     centtest_on_disc_s, NULL);
         }
 
@@ -225,9 +225,8 @@ centtest_task_handler(void *arg)
     g_centtest_state = 0;
     g_next_os_time = os_time_get();
     
-    //rc = ble_gap_conn_disc(20000, BLE_GAP_DISC_MODE_GEN);
     rc = ble_gap_conn_initiate(BLE_HCI_ADV_PEER_ADDR_PUBLIC,
-                               centtest_slv_addr,
+                               centtest_slv_addr, NULL,
                                centtest_on_connect, NULL);
     assert(rc == 0);
 
