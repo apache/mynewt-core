@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <stdint.h>
+#include <stddef.h>
 #include "mcu/nrf52_hal.h"
 
 static const struct nrf52_uart_cfg uart_cfg = {
@@ -23,7 +24,20 @@ static const struct nrf52_uart_cfg uart_cfg = {
     .suc_pin_cts = 7
 };
 
-const struct nrf52_uart_cfg *bsp_uart_config(void)
+const struct nrf52_uart_cfg *
+bsp_uart_config(void)
 {
     return &uart_cfg;
+}
+
+const struct hal_flash *
+bsp_flash_dev(uint8_t id)
+{
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+    return &nrf52k_flash_dev;
 }
