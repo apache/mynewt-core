@@ -1,0 +1,5 @@
+egg.name: "hw/mcu/atmel/samd21xx"
+egg.deps: 
+    - hw/hal 
+    - libs/cmsis-core
+    - compiler/arm-none-eabi-m4
