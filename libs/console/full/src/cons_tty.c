@@ -20,6 +20,8 @@
 #include "bsp/bsp.h"
 #include "console/console.h"
 
+int g_console_is_init;
+
 #define CONSOLE_TX_BUF_SZ	32	/* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ	128
 
@@ -274,6 +276,12 @@ console_rx_char(void *arg, uint8_t data)
     return 0;
 }
 
+int 
+console_is_init(void)
+{
+    return (g_console_is_init);
+}
+
 int
 console_init(console_rx_cb rx_cb)
 {
@@ -297,5 +305,8 @@ console_init(console_rx_cb rx_cb)
     if (rc) {
         return rc;
     }
+
+    g_console_is_init = 1;
+
     return 0;
 }

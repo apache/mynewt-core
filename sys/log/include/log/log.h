@@ -119,7 +119,7 @@ struct log *log_list_get_next(struct log *);
 
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, struct log_handler *);
-int log_append(struct log *, uint16_t, uint16_t, uint8_t *, uint16_t);
+int log_append(struct log *, uint16_t, uint16_t, void *, uint16_t);
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
 void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
@@ -131,9 +131,8 @@ int log_flush(struct log *log);
 
 
 
-/* CBMEM exports */
-
+/* Handler exports */
 int log_cbmem_handler_init(struct log_handler *, struct cbmem *);
-
+int log_console_handler_init(struct log_handler *);
 
 #endif /* __LOG_H__ */

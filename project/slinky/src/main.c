@@ -60,10 +60,8 @@ os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
-struct cbmem log_mem;
-struct log_handler log_mem_handler;
+struct log_handler log_console_handler;
 struct log my_log;
-uint8_t log_buf[12 * 1024];
 
 static volatile int g_task2_loops;
 
@@ -227,11 +225,11 @@ main(int argc, char **argv)
     rc = conf_register(&test_conf_handler);
     assert(rc == 0);
 
+
     log_init();
 
-    cbmem_init(&log_mem, log_buf, sizeof(log_buf));
-    log_cbmem_handler_init(&log_mem_handler, &log_mem);
-    log_register("log", &my_log, &log_mem_handler);
+    log_console_handler_init(&log_console_handler);
+    log_register("log", &my_log, &log_console_handler);
 
     LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bla");
     LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bab");

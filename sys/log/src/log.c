@@ -72,7 +72,7 @@ log_register(char *name, struct log *log, struct log_handler *lh)
 }
 
 int
-log_append(struct log *log, uint16_t module, uint16_t level, uint8_t *data, 
+log_append(struct log *log, uint16_t module, uint16_t level, void *data, 
         uint16_t len)
 {
     struct log_entry_hdr *ue;

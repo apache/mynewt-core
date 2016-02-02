@@ -21,6 +21,12 @@
 typedef void (*console_rx_cb)(int full_line);
 
 static int inline
+console_is_init(void)
+{
+    return 0;
+}
+
+static int inline
 console_init(console_rx_cb rxcb)
 {
     return 0;
