@@ -19,11 +19,11 @@
 extern char __HeapBase;
 extern char __HeapLimit;
 
+static char *brk = &__HeapBase;
+
 void *
 _sbrk(int incr)
 {
-    static char *brk = &__HeapBase;
-
     void *prev_brk;
 
     if (incr < 0) {
