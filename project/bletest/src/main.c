@@ -51,7 +51,7 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (40)
+#define MBUF_NUM_MBUFS      (8)
 #define MBUF_BUF_SIZE       \
     ((BLE_LL_CFG_ACL_DATA_PKT_LEN + sizeof(struct hci_data_hdr) + 3) & 0xFFFC)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
@@ -66,8 +66,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
@@ -94,7 +94,7 @@ int g_bletest_state;
 struct os_eventq g_bletest_evq;
 struct os_callout_func g_bletest_timer;
 struct os_task bletest_task;
-sec_bss_nz_core os_stack_t bletest_stack[BLETEST_STACK_SIZE];
+bssnz_t os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
 int g_bletest_start_update;
 uint32_t g_bletest_conn_upd_time;
@@ -387,7 +387,7 @@ bletest_execute(void)
             g_next_os_time += OS_TICKS_PER_SEC * 5;
         } else {
             if (g_next_os_time != 0xffffffff) {
-#if 1
+#if 0
                 if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
                     bletest_send_conn_update(1);
                     g_next_os_time = 0xffffffff;
