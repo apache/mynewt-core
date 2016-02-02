@@ -39,19 +39,17 @@ os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
 
 /* Task 2 */
-#define TASK2_PRIO (2) 
+#define TASK2_PRIO (2)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
-#define SHELL_TASK_PRIO (3) 
+#define SHELL_TASK_PRIO (3)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
-struct cbmem log_mem;
-struct ul_handler log_mem_handler;
-struct util_log my_log;
-uint8_t log_buf[12 * 1024];
+struct log_handler log_console_handler;
+struct log my_log;
 
 static volatile int g_task2_loops;
 
@@ -64,14 +62,14 @@ int g_led_pin;
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
 #define DEFAULT_MBUF_MPOOL_NBUFS (5)
 
-uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN * 
+uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
     DEFAULT_MBUF_MPOOL_NBUFS];
 
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
 
-void 
+void
 task1_handler(void *arg)
 {
     struct os_task *t;
@@ -97,7 +95,7 @@ task1_handler(void *arg)
     }
 }
 
-void 
+void
 task2_handler(void *arg)
 {
     struct os_task *t;
@@ -117,10 +115,10 @@ task2_handler(void *arg)
 
 /**
  * init_tasks
- *  
- * Called by main.c after os_init(). This function performs initializations 
- * that are required before tasks are running. 
- *  
+ *
+ * Called by main.c after os_init(). This function performs initializations
+ * that are required before tasks are running.
+ *
  * @return int 0 success; error otherwise.
  */
 int
@@ -129,10 +127,10 @@ init_tasks(void)
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
-    os_task_init(&task1, "task1", task1_handler, NULL, 
+    os_task_init(&task1, "task1", task1_handler, NULL,
             TASK1_PRIO, OS_WAIT_FOREVER, stack1, TASK1_STACK_SIZE);
 
-    os_task_init(&task2, "task2", task2_handler, NULL, 
+    os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, stack2, TASK2_STACK_SIZE);
 
     tasks_initialized = 1;
@@ -141,17 +139,16 @@ init_tasks(void)
 
 /**
  * main
- *  
- * The main function for the project. This function initializes the os, calls 
- * init_tasks to initialize tasks (and possibly other objects), then starts the 
- * OS. We should not return from os start. 
- *  
+ *
+ * The main function for the project. This function initializes the os, calls
+ * init_tasks to initialize tasks (and possibly other objects), then starts the
+ * OS. We should not return from os start.
+ *
  * @return int NOTE: this function should never return!
  */
 int
 main(int argc, char **argv)
 {
-    uint8_t entry[128];
     int rc;
 
 #ifdef ARCH_sim
@@ -160,25 +157,21 @@ main(int argc, char **argv)
 
     conf_init();
 
-    cbmem_init(&log_mem, log_buf, sizeof(log_buf));
-    util_log_cbmem_handler_init(&log_mem_handler, &log_mem);
-    util_log_register("log", &my_log, &log_mem_handler);
+    log_init();
+    log_console_handler_init(&log_console_handler);
+    log_register("log", &my_log, &log_console_handler);
 
-    memset(entry, 0xff, 128);
-    memcpy(entry + sizeof(struct ul_entry_hdr), "bla", sizeof("bla")-1);
-    util_log_append(&my_log, entry, sizeof("bla")-1);
-    memset(entry, 0xff, 128);
-    memcpy(entry + sizeof(struct ul_entry_hdr), "bab", sizeof("bab")-1);
-    util_log_append(&my_log, entry, sizeof("bab")-1);
+    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bla");
+    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bab");
 
     os_init();
 
-    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS, 
-            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data, 
+    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
+            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data,
             "default_mbuf_data");
     assert(rc == 0);
 
-    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool, 
+    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
             DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
     assert(rc == 0);
 
