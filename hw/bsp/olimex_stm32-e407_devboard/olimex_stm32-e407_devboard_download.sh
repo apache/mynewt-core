@@ -15,7 +15,7 @@ fi
 BASENAME=$1
 IS_BOOTLOADER=0
 BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
-VER=11.22.3333.0
+VER=11.22.33.44
 VER_FILE=version.txt # or somewhere else
 
 # Look for 'bootloader' from 2nd arg onwards

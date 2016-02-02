@@ -34,7 +34,6 @@ struct hal_uart {
     uint8_t u_open:1;
     uint8_t u_rx_stall:1;
     uint8_t u_tx_started:1;
-    uint8_t u_rx_buf;
     uint8_t u_tx_buf;
     hal_uart_rx_char u_rx_func;
     hal_uart_tx_char u_tx_func;
@@ -105,16 +104,20 @@ hal_uart_start_rx(int port)
     struct hal_uart *u;
     int sr;
     int rc;
+    uint32_t ch;
 
     u = &uart;
     if (u->u_rx_stall) {
         __HAL_DISABLE_INTERRUPTS(sr);
-        rc = u->u_rx_func(u->u_func_arg, u->u_rx_buf);
-        if (rc == 0) {
-            u->u_rx_stall = 0;
-            NRF_UART0->TASKS_STARTRX = 1;
+        while (NRF_UART0->EVENTS_RXDRDY) {
+            NRF_UART0->EVENTS_RXDRDY = 0;
+            ch = NRF_UART0->RXD;
+            rc = u->u_rx_func(u->u_func_arg, ch);
+            if (rc == 0) {
+                u->u_rx_stall = 0;
+                NRF_UART0->TASKS_STARTRX = 1;
+            }
         }
-
         __HAL_ENABLE_INTERRUPTS(sr);
     }
 }
@@ -153,6 +156,7 @@ uart_irq_handler(void)
 {
     struct hal_uart *u;
     int rc;
+    uint32_t ch;
 
     u = &uart;
     if (NRF_UART0->EVENTS_TXDRDY) {
@@ -170,9 +174,10 @@ uart_irq_handler(void)
             u->u_tx_started = 0;
         }
     }
-    if (NRF_UART0->EVENTS_RXDRDY) {
+    while (NRF_UART0->EVENTS_RXDRDY) {
         NRF_UART0->EVENTS_RXDRDY = 0;
-        rc = u->u_rx_func(u->u_func_arg, u->u_rx_buf);
+        ch = NRF_UART0->RXD;
+        rc = u->u_rx_func(u->u_func_arg, ch);
         if (rc < 0) {
             u->u_rx_stall = 1;
         } else {
