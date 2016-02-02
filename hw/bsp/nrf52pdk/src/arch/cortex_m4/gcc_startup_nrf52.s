@@ -54,11 +54,7 @@ expected to be copied into the application project folder prior to its use!
 
     .section .stack
     .align 3
-#ifdef __STACK_SIZE
-    .equ    Stack_Size, __STACK_SIZE
-#else
-    .equ    Stack_Size, 2048
-#endif
+    .equ    Stack_Size, 384
     .globl    __StackTop
     .globl    __StackLimit
 __StackLimit:
@@ -179,7 +175,7 @@ Reset_Handler:
     str    r0, [r2,r3]
     bgt    .LC1
 .LC0:
-    
+
     LDR     R0, =SystemInit
     BLX     R0
     LDR     R0, =_start
