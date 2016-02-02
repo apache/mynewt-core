@@ -47,11 +47,69 @@ struct log_handler {
 
 struct log_entry_hdr {
     int64_t ue_ts;
+    uint16_t ue_level;
+    uint16_t ue_module;
 }; 
+#define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
+
+#define LOG_LEVEL_DEBUG    (0x01)
+#define LOG_LEVEL_INFO     (0x02)
+#define LOG_LEVEL_WARN     (0x04)
+#define LOG_LEVEL_ERROR    (0x08)
+#define LOG_LEVEL_CRITICAL (0x10)
+/* Up to 7 custom log levels. */
+#define LOG_LEVEL_PERUSER  (0x12)
+
+/* Log module, eventually this can be a part of the filter. */
+#define LOG_MODULE_DEFAULT (0)
+#define LOG_MODULE_OS      (1) 
+#define LOG_MODULE_NEWTMGR (2)
+#define LOG_MODULE_PERUSER (64) 
+
+/* Compile in Log Debug by default */
+#ifndef LOG_LEVEL
+#define LOG_LEVEL LOG_LEVEL_DEBUG
+#endif 
+
+#if LOG_LEVEL <= LOG_LEVEL_DEBUG 
+#define LOG_DEBUG(__l, __mod, __msg, ...) log_printf(__l, __mod, \
+        LOG_LEVEL_DEBUG, __msg, ##__VA_ARGS__)
+#else
+#define LOG_DEBUG(__l, __mod, __msg, ...) 
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_INFO 
+#define LOG_INFO(__l, __mod, __msg, ...) log_printf(__l, __mod, \
+        LOG_LEVEL_INFO, __msg, ##__VA_ARGS__)
+#else
+#define LOG_INFO(__l, __mod, __msg, ...) 
+#endif 
+
+#if LOG_LEVEL <= LOG_LEVEL_INFO 
+#define LOG_WARN(__l, __mod, __msg, ...) log_printf(__l, __mod, \
+        LOG_LEVEL_WARN, __msg, ##__VA_ARGS__)
+#else
+#define LOG_WARN(__l, __mod, __msg, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_ERROR 
+#define LOG_ERROR(__l, __mod, __msg, ...) log_printf(__l, __mod, \
+        LOG_LEVEL_ERROR, __msg, ##__VA_ARGS__)
+#else
+#define LOG_ERROR(__l, __mod, __msg, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_CRITICAL
+#define LOG_CRITICAL(__l, __mod, __msg, ...) log_printf(__l, __mod, \
+        LOG_LEVEL_CRITICAL, __msg, ##__VA_ARGS__)
+#else
+#define LOG_CRITICAL(__l, __mod, __msg, ...)
+#endif
 
 struct log {
     char *l_name;
     struct log_handler *l_log;
+    uint16_t log_level;
     STAILQ_ENTRY(log) l_next;
 };
 
@@ -61,12 +119,16 @@ struct log *log_list_get_next(struct log *);
 
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, struct log_handler *);
-int log_append(struct log *log, uint8_t *data, uint16_t len);
+int log_append(struct log *, uint16_t, uint16_t, uint8_t *, uint16_t);
+
+#define LOG_PRINTF_MAX_ENTRY_LEN (128)
+void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off, 
         uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func, 
         void *arg);
 int log_flush(struct log *log);
+
 
 
 /* CBMEM exports */

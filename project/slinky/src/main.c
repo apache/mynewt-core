@@ -215,7 +215,6 @@ init_tasks(void)
 int
 main(int argc, char **argv)
 {
-    uint8_t entry[128];
     int rc;
     int cnt;
     struct nffs_area_desc descs[NFFS_AREA_MAX];
@@ -234,12 +233,8 @@ main(int argc, char **argv)
     log_cbmem_handler_init(&log_mem_handler, &log_mem);
     log_register("log", &my_log, &log_mem_handler);
 
-    memset(entry, 0xff, 128);
-    memcpy(entry + sizeof(struct log_entry_hdr), "bla", sizeof("bla")-1);
-    log_append(&my_log, entry, sizeof("bla")-1);
-    memset(entry, 0xff, 128);
-    memcpy(entry + sizeof(struct log_entry_hdr), "bab", sizeof("bab")-1);
-    log_append(&my_log, entry, sizeof("bab")-1);
+    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bla");
+    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bab");
 
     os_init();
 

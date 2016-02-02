@@ -23,6 +23,7 @@
 #include "log/log.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifdef SHELL_PRESENT
 #include <shell/shell.h>
@@ -71,15 +72,18 @@ log_register(char *name, struct log *log, struct log_handler *lh)
 }
 
 int
-log_append(struct log *log, uint8_t *data, uint16_t len)
+log_append(struct log *log, uint16_t module, uint16_t level, uint8_t *data, 
+        uint16_t len)
 {
     struct log_entry_hdr *ue;
     int rc;
 
     ue = (struct log_entry_hdr *) data;
     ue->ue_ts = (int64_t) os_time_get();
+    ue->ue_level = level;
+    ue->ue_module = module;
 
-    rc = log->l_log->log_append(log, data, len + sizeof(*ue));
+    rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
         goto err;
     }
@@ -87,6 +91,24 @@ log_append(struct log *log, uint8_t *data, uint16_t len)
     return (0);
 err:
     return (rc);
+}
+
+void 
+log_printf(struct log *log, uint16_t module, uint16_t level, char *msg,
+        ...)
+{
+    va_list args;
+    char buf[LOG_ENTRY_HDR_SIZE + LOG_PRINTF_MAX_ENTRY_LEN];
+    int len;
+
+    va_start(args, msg);
+    len = vsnprintf(&buf[LOG_ENTRY_HDR_SIZE], LOG_PRINTF_MAX_ENTRY_LEN, msg, 
+            args);
+    if (len >= LOG_PRINTF_MAX_ENTRY_LEN) {
+        len = LOG_PRINTF_MAX_ENTRY_LEN-1;
+    }
+
+    log_append(log, module, level, (uint8_t *) buf, len);
 }
 
 int 
