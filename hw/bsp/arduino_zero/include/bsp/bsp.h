@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#define LED_BLINK_PIN   (13)
+#define LED_BLINK_PIN   (17)
 #define CONSOLE_UART    (0)
 
 #ifdef __cplusplus

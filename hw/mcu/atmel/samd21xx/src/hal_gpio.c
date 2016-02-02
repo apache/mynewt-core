@@ -16,6 +16,8 @@
 
 #include "hal/hal_gpio.h"
 #include <assert.h>
+#include <mcu/compiler.h>
+#include "port.h"
 
  /* XXX: Notes
  * 4) The code probably does not handle "re-purposing" gpio very well. 
@@ -53,7 +55,7 @@
  */ 
 
 #define GPIO_PORT(pin)           (pin/32)
-#define GPIO_PIN(pin)            (pin & 32)
+#define GPIO_PIN(pin)            (pin % 32)
 
 #define GPIO_MAX_PORT   (1)
 
@@ -67,6 +69,8 @@ int valid_pins[GPIO_MAX_PORT + 1] =
 
 int gpio_init_out(int pin, int val)
 {
+    struct port_config cfg;
+    
     int port = GPIO_PORT(pin);
     int port_pin = GPIO_PIN(pin);
     
@@ -78,6 +82,18 @@ int gpio_init_out(int pin, int val)
         return -1;
     }
  
+    cfg.direction = PORT_PIN_DIR_OUTPUT_WTH_READBACK;
+    cfg.input_pull = SYSTEM_PINMUX_PIN_PULL_NONE;
+    cfg.powersave = false;
+    
+    port_pin_set_config(pin, &cfg);
+    
+    if(val) {
+        gpio_set(pin);
+    } else {
+        gpio_clear(pin);        
+    }
+        
     return 0;
 }
 
@@ -94,9 +110,9 @@ void gpio_set(int pin)
     int port_pin = GPIO_PIN(pin);
     
     assert(port <= GPIO_MAX_PORT);
-    assert((port_pin & valid_pins[port]) == 0);
-        
+    assert(((1 << port_pin) & valid_pins[port]) != 0);
     
+    port_pin_set_output_level(pin, true);            
 }
 
 /**
@@ -112,7 +128,9 @@ void gpio_clear(int pin)
     int port_pin = GPIO_PIN(pin);
     
     assert(port <= GPIO_MAX_PORT);
-    assert((port_pin & valid_pins[port]) == 0);    
+    assert(((1 << port_pin) & valid_pins[port]) != 0);   
+    
+    port_pin_set_output_level(pin, false);    
 }
 
 /**
@@ -126,12 +144,15 @@ void gpio_clear(int pin)
  */
 int gpio_read(int pin)
 {
+    int rc;
     int port = GPIO_PORT(pin);
     int port_pin = GPIO_PIN(pin);
     
     assert(port <= GPIO_MAX_PORT);
-    assert((port_pin & valid_pins[port]) == 0);    
-    return 0;
+    assert(((1 << port_pin) & valid_pins[port]) != 0);  
+    
+    rc = port_pin_get_input_level(pin);
+    return rc;
 }
 
 /**
