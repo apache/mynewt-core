@@ -207,14 +207,6 @@ NMI_Handler:
     B       .
     .size   NMI_Handler, . - NMI_Handler
 
-
-    .weak   HardFault_Handler
-    .type   HardFault_Handler, %function
-HardFault_Handler:
-    B       .
-    .size   HardFault_Handler, . - HardFault_Handler
-
-
     .weak   SVC_Handler
     .type   SVC_Handler, %function
 SVC_Handler:
@@ -235,9 +227,7 @@ SysTick_Handler:
     B       .
     .size   SysTick_Handler, . - SysTick_Handler
 
-
-/* IRQ Handlers */
-
+/* Default handler. This uses the vector in the relocated vector table */
     .globl  Default_Handler
     .type   Default_Handler, %function
 Default_Handler:    
@@ -250,11 +240,16 @@ Default_Handler:
     BX      R0
     .size   Default_Handler, . - Default_Handler
 
+/* 
+ * All of the following IRQ Handlers will point to the default handler unless
+ * they are defined elsewhere.
+ */
     .macro  IRQ handler
     .weak   \handler
     .set    \handler, Default_Handler
     .endm
 
+    IRQ  HardFault_Handler
     IRQ  POWER_CLOCK_IRQHandler
     IRQ  RADIO_IRQHandler
     IRQ  UART0_IRQHandler

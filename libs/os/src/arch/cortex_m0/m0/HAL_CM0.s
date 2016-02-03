@@ -231,24 +231,32 @@ os_default_irq_asm:
         MOV     R0,LR
         MOVS    R1,#4
         TST     R0,R1
-        MRS     R3,MSP
+        MRS     R12,MSP
         BEQ     using_msp_as_sp
-        MRS     R3,PSP
+        MRS     R12,PSP
 using_msp_as_sp:
-        PUSH    {R3-R7,LR}
-        MOV     R3,R8
-        MOV     R4,R9
-        MOV     R5,R10
-        MOV     R6,R11
-        PUSH    {R3-R6}
+        /*
+         * Push the "trap frame" structure onto stack by moving R8-R11 into 
+         * R0-R3 and then pushing R0-R3. LR gets pushed as well with LR 
+         * residing at higher memory, R8 at the lower memory address.
+         */
+        MOV     R0,R8
+        MOV     R1,R9
+        MOV     R2,R10
+        MOV     R3,R11
+        PUSH    {R0-R3, LR}
+        /* Now push r3 - r7. R3 is the lowest memory address. */
+        MOV     R3,R12
+        PUSH    {R3-R7}
         MOV     R0, SP
         BL      os_default_irq
-        POP     {R3-R6}
-        MOV     R8,R3
-        MOV     R9,R4
-        MOV     R10,R5
-        MOV     R11,R6
-        POP     {R3-R7,PC}                 /* Restore EXC_RETURN */
+        POP     {R3-R7}
+        POP     {R0-R3}
+        MOV     R8,R0
+        MOV     R9,R1
+        MOV     R10,R2
+        MOV     R11,R3
+        POP     {PC}                 /* Restore EXC_RETURN */
 
         .fnend
         .size   os_default_irq_asm, .-os_default_irq_asm
