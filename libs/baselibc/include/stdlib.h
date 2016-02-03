@@ -19,6 +19,9 @@ __extern int atoi(const char *);
 __extern long atol(const char *);
 __extern long long atoll(const char *);
 
+__extern double atof(const char *str);
+__extern double strtod(const char *nptr, char **endptr);
+
 __extern_inline long labs(long __n)
 {
 	return (__n < 0L) ? -__n : __n;
