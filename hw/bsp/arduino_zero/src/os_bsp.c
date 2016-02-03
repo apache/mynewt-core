@@ -13,8 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <sys/types.h>
+#include <bsp/cmsis_nvic.h>
+
 void *_sbrk(int incr);
 void _close(int fd);
+
+#define PEND_SV_PRIO    ((1 << __NVIC_PRIO_BITS) - 1)
+#define SYSTICK_PRIO    (PEND_SV_PRIO - 1)
+
+/**
+ * os systick init
+ *
+ * Initializes systick for the MCU
+ *
+ * @param os_tick_usecs The number of microseconds in an os time tick
+ */
+void
+os_bsp_systick_init(uint32_t os_tick_usecs)
+{
+    /* XXX */
+    uint32_t reload_val;
+
+    reload_val = (((uint64_t)SystemCoreClock * os_tick_usecs) / 1000000) - 1;
+
+    /* Set the system time ticker up */
+    SysTick->LOAD = reload_val;
+    SysTick->VAL = 0;
+    SysTick->CTRL = 0x0007;
+
+    /* Set the system tick priority */
+    NVIC_SetPriority(SysTick_IRQn, SYSTICK_PRIO);
+}
 
 void
 os_bsp_init(void)

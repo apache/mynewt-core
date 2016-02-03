@@ -43,7 +43,7 @@
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
-#include <mcucompiler.h>
+#include <mcu/compiler.h>
 #include <port.h>
 
 /**

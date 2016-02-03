@@ -20,9 +20,51 @@
 extern "C" {
 #endif
 
-#define LED_BLINK_PIN   (17)
-#define CONSOLE_UART    (0)
-
+    /* These defines map the stanard arduino pins to virtual IO pins
+     * in mynewt
+     * MCU */
+#define ARDUINO_ZERO_PIN_D0      (11)
+#define ARDUINO_ZERO_PIN_D1      (10)
+#define ARDUINO_ZERO_PIN_D2      (8)
+#define ARDUINO_ZERO_PIN_D3      (9)
+#define ARDUINO_ZERO_PIN_D4      (14)
+#define ARDUINO_ZERO_PIN_D5      (15)
+#define ARDUINO_ZERO_PIN_D6      (20)
+#define ARDUINO_ZERO_PIN_D7      (21)  
+#define ARDUINO_ZERO_PIN_D8      (6)
+#define ARDUINO_ZERO_PIN_D9      (7)
+#define ARDUINO_ZERO_PIN_D10     (18)
+#define ARDUINO_ZERO_PIN_D11     (16)
+#define ARDUINO_ZERO_PIN_D12     (19)
+#define ARDUINO_ZERO_PIN_D13     (17)
+        
+#define ARDUINO_ZERO_PIN_A0      (2)  
+#define ARDUINO_ZERO_PIN_A1      (40)
+#define ARDUINO_ZERO_PIN_A2      (41)
+#define ARDUINO_ZERO_PIN_A3      (4)
+#define ARDUINO_ZERO_PIN_A4      (5)
+#define ARDUINO_ZERO_PIN_A5      (34)
+#define ARDUINO_ZERO_PIN_AREF    (3)
+   
+#define ARDUINO_ZERO_PIN_I2C_SCL    (23)
+#define ARDUINO_ZERO_PIN_I2C_SDA    (22)
+    
+#define ARDUINO_ZERO_PIN_SPI_SCK    (43)
+#define ARDUINO_ZERO_PIN_SPI_MISO    (44)
+#define ARDUINO_ZERO_PIN_SPI_MOSI    (42)
+    
+    /* note this is also connected to ARDUINO_ZERO_PIN_D7.
+     * This pin is new in Arduino zero and expected to be a default
+     * chip select for the SPI bus on the first shield */
+#define ARDUINO_ZERO_PIN_ATN    (21)
+    
+#define ARDUINO_ZERO_PIN_UART_RX (ARDUINO_ZERO_PIN_D0)    
+#define ARDUINO_ZERO_PIN_UART_TX (ARDUINO_ZERO_PIN_D1)    
+    
+    
+#define LED_BLINK_PIN   (ARDUINO_ZERO_PIN_D13)
+#define CONSOLE_UART    (0)    
+    
 #ifdef __cplusplus
 }
 #endif
