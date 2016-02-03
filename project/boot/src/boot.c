@@ -24,7 +24,7 @@
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 
-#define NFFS_AREA_MAX	34
+#define NFFS_AREA_MAX	128
 #define SEC_CNT_MAX	8
 
 int
