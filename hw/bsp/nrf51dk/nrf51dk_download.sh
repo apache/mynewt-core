@@ -12,23 +12,61 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-FLASH_OFFSET=0x0
-FILE_NAME=$1.elf.bin
-JLINK_SCRIPT=.download.jlink
+IS_BOOTLOADER=0
+BASENAME=$1
+BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
+VER=11.22.33.0
+#JLINK_SCRIPT=.download.jlink
+GDB_CMD_FILE=.gdb_cmds
+
+# Look for 'bootloader' from 2nd arg onwards
+shift
+while [ $# -gt 0 ]; do
+    if [ $1 == "bootloader" ]; then
+	IS_BOOTLOADER=1
+    fi
+    shift
+done
+
+if [ $IS_BOOTLOADER -eq 1 ]; then
+    FLASH_OFFSET=0x0
+    FILE_NAME=$BASENAME.elf.bin
+else
+    FLASH_OFFSET=0x7000
+    FILE_NAME=$BASENAME.elf.img
+    echo "Version is >" $VER "<"
+    $BIN2IMG $BASENAME.elf.bin $FILE_NAME $VER
+    if [ "$?" -ne 0 ]; then
+	exit 1
+    fi
+fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-cat > $JLINK_SCRIPT <<EOF
-w 4001e504 1
-loadbin $FILE_NAME $FLASH_OFFSET
-q
-EOF
+# XXX for some reason JLinkExe overwrites flash at offset 0 when
+# downloading somewhere in the flash. So need to figure out how to tell it
+# not to do that, or report failure if gdb fails to write this file
+# 
+echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD -port 3333 -singlerun' & " > $GDB_CMD_FILE
+echo "target remote localhost:3333" >> $GDB_CMD_FILE
+echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
+echo "quit" >> $GDB_CMD_FILE
 
-msgs=`JLinkExe -device nRF51422_xxAC -speed 4000 -if SWD $JLINK_SCRIPT`
+msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE`
+
+rm $GDB_CMD_FILE
+
+#cat > $JLINK_SCRIPT <<EOF
+#w 4001e504 1
+#loadbin $FILE_NAME,$FLASH_OFFSET
+#q
+#EOF
+
+#msgs=`JLinkExe -device nRF51422_xxAC -speed 4000 -if SWD $JLINK_SCRIPT`
 
 # Echo output from script run, so newt can show it if things go wrong.
 echo $msgs
-rm $JLINK_SCRIPT
+#rm $JLINK_SCRIPT
 
 error=`echo $msgs | grep error`
 if [ -n "$error" ]; then

@@ -20,36 +20,31 @@
 #include "mcu/nrf51_hal.h"
 
 static struct flash_area bsp_flash_areas[] = {
-#if 0
     [FLASH_AREA_BOOTLOADER] = {
         .fa_flash_id = 0,       /* internal flash */
-        .fa_off = 0x08000000,   /* beginning */
-        .fa_size = (32 * 1024)
+        .fa_off = 0x00000000,   /* beginning */
+        .fa_size = (28 * 1024)
     },
-#endif
-    /* 2 * 16K and 1*64K sectors here */
     [FLASH_AREA_IMAGE_0] = {
         .fa_flash_id = 0,
-        .fa_off = 0x00000000,
-        .fa_size = (232 * 1024)
-    }
-#if 0
+        .fa_off = 0x00007000,
+        .fa_size = (112 * 1024)
+    },
     [FLASH_AREA_IMAGE_1] = {
         .fa_flash_id = 0,
-        .fa_off = 0x00042000,
-        .fa_size = (232 * 1024)
+        .fa_off = 0x00023000,
+        .fa_size = (112 * 1024)
     },
     [FLASH_AREA_IMAGE_SCRATCH] = {
         .fa_flash_id = 0,
-        .fa_off = 0x0007c000,
-        .fa_size = (4 * 1024)
+        .fa_off = 0x0003f000,
+        .fa_size = (1 * 1024)
     },
     [FLASH_AREA_NFFS] = {
         .fa_flash_id = 0,
-        .fa_off = 0x0007d000,
-        .fa_size = (12 * 1024)
+        .fa_off = 0x0003f400,
+        .fa_size = (3 * 1024)
     }
-#endif
 };
 
 void *_sbrk(int incr);
