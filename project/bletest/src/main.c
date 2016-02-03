@@ -66,9 +66,9 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
@@ -362,6 +362,9 @@ bletest_execute_initiator(void)
     if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
         handle = g_bletest_current_conns + 1;
         if (ble_ll_conn_find_active_conn(handle)) {
+            /* Set LED to slower blink rate */
+            g_bletest_led_rate = OS_TICKS_PER_SEC;
+
             /* Set next os time to start the connection update */
             g_next_os_time = 0;
 
@@ -509,6 +512,9 @@ bletest_execute_advertiser(void)
     if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
         handle = g_bletest_current_conns + 1;
         if (ble_ll_conn_find_active_conn(handle)) {
+            /* Set LED to slower blink rate */
+            g_bletest_led_rate = OS_TICKS_PER_SEC;
+
             /* advertising better be stopped! */
             assert(ble_ll_adv_enabled() == 0);
 
@@ -606,7 +612,7 @@ bletest_execute(void)
     /* Toggle LED at set rate */
     if ((int32_t)(os_time_get() - g_bletest_next_led_time) >= 0) {
         gpio_toggle(LED_BLINK_PIN);
-        g_bletest_next_led_time = g_bletest_led_rate;
+        g_bletest_next_led_time = os_time_get() + g_bletest_led_rate;
     }
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     bletest_execute_advertiser();
