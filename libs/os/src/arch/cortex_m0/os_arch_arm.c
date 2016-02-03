@@ -230,35 +230,6 @@ os_arch_os_init(void)
     return err;
 }
 
-/**
- * os systick init
- *
- * Initializes systick for the MCU
- *
- * @param os_tick_usecs The number of microseconds in an os time tick
- */
-static void
-os_systick_init(uint32_t os_tick_usecs)
-{
-    /* XXX */
-#if 0
-    uint32_t reload_val;
-
-    reload_val = (((uint64_t)SystemCoreClock * os_tick_usecs) / 1000000) - 1;
-
-    /* Set the system time ticker up */
-    SysTick->LOAD = reload_val;
-    SysTick->VAL = 0;
-    SysTick->CTRL = 0x0007;
-
-    /* Set the system tick priority */
-    NVIC_SetPriority(SysTick_IRQn, SYSTICK_PRIO);
-#else
-    system_os_tick_init(1024);
-#endif
-
-}
-
 uint32_t
 os_arch_start(void)
 {
@@ -272,7 +243,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_systick_init(1000000 / OS_TICKS_PER_SEC);
+    os_bsp_systick_init(OS_TICKS_PER_SEC);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;

@@ -67,7 +67,7 @@ void os_arch_init_task_stack(os_stack_t *sf);
 void os_default_irq_asm(void);
 
 /* External function prototypes supplied by BSP */
-void os_bsp_systick_init(uint32_t os_tick_usecs);
+void os_bsp_systick_init(uint32_t os_tick_per_sec);
 void os_bsp_init(void);
 void os_bsp_ctx_sw(void);
 
