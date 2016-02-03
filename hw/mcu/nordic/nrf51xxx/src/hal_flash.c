@@ -114,7 +114,8 @@ nrf51_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
         if (nrf51_flash_wait_ready()) {
             goto out;
         }
-        *(uint32_t *)address = *(uint32_t *)src;
+        memcpy(&val, src, sizeof(uint32_t));
+        *(uint32_t *)address = val;
         address += sizeof(uint32_t);
         src += sizeof(uint32_t);
         num_bytes -= sizeof(uint32_t);
