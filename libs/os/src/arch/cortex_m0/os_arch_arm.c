@@ -21,6 +21,13 @@
 
 /* XXX*/
 extern void system_os_tick_init(uint32_t os_ticks_per_sec);
+
+/*
+ * From HAL_CM0.s
+ */
+extern void SVC_Handler(void);
+extern void PendSV_Handler(void);
+extern void SysTick_Handler(void);
 /* XXX */
 
 /* Initial program status register */
@@ -193,11 +200,17 @@ os_arch_os_init(void)
             NVIC->IP[i] = 0xff;
         }
 
+        NVIC_SetVector(SVCall_IRQn, (uint32_t)SVC_Handler);
+        NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
+        NVIC_SetVector(SysTick_IRQn, (uint32_t)SysTick_Handler);
+
         /*
          * Install default interrupt handler, which'll print out system
          * state at the time of the interrupt, and few other regs which
          * should help in trying to figure out what went wrong.
          */
+        NVIC_SetVector(NonMaskableInt_IRQn, (uint32_t)os_default_irq_asm);
+        NVIC_SetVector(HardFault_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(-13, (uint32_t)os_default_irq_asm); /* Hardfault */
         for (i = 0; i < NVIC_NUM_VECTORS - NVIC_USER_IRQ_OFFSET; i++) {
             NVIC_SetVector(i, (uint32_t)os_default_irq_asm);

@@ -86,8 +86,8 @@ __HeapLimit:
 __isr_vector:
     .long    __StackTop                 /* Top of Stack */
     .long   Reset_Handler               /* Reset Handler */
-    .long   NMI_Handler                 /* NMI Handler */
-    .long   HardFault_Handler           /* Hard Fault Handler */
+    .long   _NMI_Handler                /* NMI Handler */
+    .long   _HardFault_Handler          /* Hard Fault Handler */
     .long   0                           /* Reserved */
     .long   0                           /* Reserved */
     .long   0                           /* Reserved */
@@ -95,39 +95,39 @@ __isr_vector:
     .long   0                           /* Reserved */
     .long   0                           /* Reserved */
     .long   0                           /* Reserved */
-    .long   SVC_Handler                 /* SVCall Handler */
+    .long   _SVC_Handler                /* SVCall Handler */
     .long   0                           /* Reserved */
     .long   0                           /* Reserved */
-    .long   PendSV_Handler              /* PendSV Handler */
-    .long   SysTick_Handler             /* SysTick Handler */
+    .long   _PendSV_Handler             /* PendSV Handler */
+    .long   _SysTick_Handler            /* SysTick Handler */
 
   /* External Interrupts */
-    .long   POWER_CLOCK_IRQHandler
-    .long   RADIO_IRQHandler
-    .long   UART0_IRQHandler
-    .long   SPI0_TWI0_IRQHandler
-    .long   SPI1_TWI1_IRQHandler
+    .long   _POWER_CLOCK_IRQHandler
+    .long   _RADIO_IRQHandler
+    .long   _UART0_IRQHandler
+    .long   _SPI0_TWI0_IRQHandler
+    .long   _SPI1_TWI1_IRQHandler
     .long   0                         /*Reserved */
-    .long   GPIOTE_IRQHandler
-    .long   ADC_IRQHandler
-    .long   TIMER0_IRQHandler
-    .long   TIMER1_IRQHandler
-    .long   TIMER2_IRQHandler
-    .long   RTC0_IRQHandler
-    .long   TEMP_IRQHandler
-    .long   RNG_IRQHandler
-    .long   ECB_IRQHandler
-    .long   CCM_AAR_IRQHandler
-    .long   WDT_IRQHandler
-    .long   RTC1_IRQHandler
-    .long   QDEC_IRQHandler
-    .long   LPCOMP_IRQHandler
-    .long   SWI0_IRQHandler
-    .long   SWI1_IRQHandler
-    .long   SWI2_IRQHandler
-    .long   SWI3_IRQHandler
-    .long   SWI4_IRQHandler
-    .long   SWI5_IRQHandler
+    .long   _GPIOTE_IRQHandler
+    .long   _ADC_IRQHandler
+    .long   _TIMER0_IRQHandler
+    .long   _TIMER1_IRQHandler
+    .long   _TIMER2_IRQHandler
+    .long   _RTC0_IRQHandler
+    .long   _TEMP_IRQHandler
+    .long   _RNG_IRQHandler
+    .long   _ECB_IRQHandler
+    .long   _CCM_AAR_IRQHandler
+    .long   _WDT_IRQHandler
+    .long   _RTC1_IRQHandler
+    .long   _QDEC_IRQHandler
+    .long   _LPCOMP_IRQHandler
+    .long   _SWI0_IRQHandler
+    .long   _SWI1_IRQHandler
+    .long   _SWI2_IRQHandler
+    .long   _SWI3_IRQHandler
+    .long   _SWI4_IRQHandler
+    .long   _SWI5_IRQHandler
     .long   0                         /*Reserved */
     .long   0                         /*Reserved */
     .long   0                         /*Reserved */
@@ -249,31 +249,35 @@ Default_Handler:
     .set    \handler, Default_Handler
     .endm
 
-    IRQ  HardFault_Handler
-    IRQ  POWER_CLOCK_IRQHandler
-    IRQ  RADIO_IRQHandler
-    IRQ  UART0_IRQHandler
-    IRQ  SPI0_TWI0_IRQHandler
-    IRQ  SPI1_TWI1_IRQHandler
-    IRQ  GPIOTE_IRQHandler
-    IRQ  ADC_IRQHandler
-    IRQ  TIMER0_IRQHandler
-    IRQ  TIMER1_IRQHandler
-    IRQ  TIMER2_IRQHandler
-    IRQ  RTC0_IRQHandler
-    IRQ  TEMP_IRQHandler
-    IRQ  RNG_IRQHandler
-    IRQ  ECB_IRQHandler
-    IRQ  CCM_AAR_IRQHandler
-    IRQ  WDT_IRQHandler
-    IRQ  RTC1_IRQHandler
-    IRQ  QDEC_IRQHandler
-    IRQ  LPCOMP_IRQHandler
-    IRQ  SWI0_IRQHandler
-    IRQ  SWI1_IRQHandler
-    IRQ  SWI2_IRQHandler
-    IRQ  SWI3_IRQHandler
-    IRQ  SWI4_IRQHandler
-    IRQ  SWI5_IRQHandler
+    IRQ  _NMI_Handler
+    IRQ  _HardFault_Handler
+    IRQ  _SVC_Handler
+    IRQ  _PendSV_Handler
+    IRQ  _SysTick_Handler
+    IRQ  _POWER_CLOCK_IRQHandler
+    IRQ  _RADIO_IRQHandler
+    IRQ  _UART0_IRQHandler
+    IRQ  _SPI0_TWI0_IRQHandler
+    IRQ  _SPI1_TWI1_IRQHandler
+    IRQ  _GPIOTE_IRQHandler
+    IRQ  _ADC_IRQHandler
+    IRQ  _TIMER0_IRQHandler
+    IRQ  _TIMER1_IRQHandler
+    IRQ  _TIMER2_IRQHandler
+    IRQ  _RTC0_IRQHandler
+    IRQ  _TEMP_IRQHandler
+    IRQ  _RNG_IRQHandler
+    IRQ  _ECB_IRQHandler
+    IRQ  _CCM_AAR_IRQHandler
+    IRQ  _WDT_IRQHandler
+    IRQ  _RTC1_IRQHandler
+    IRQ  _QDEC_IRQHandler
+    IRQ  _LPCOMP_IRQHandler
+    IRQ  _SWI0_IRQHandler
+    IRQ  _SWI1_IRQHandler
+    IRQ  _SWI2_IRQHandler
+    IRQ  _SWI3_IRQHandler
+    IRQ  _SWI4_IRQHandler
+    IRQ  _SWI5_IRQHandler
 
   .end
