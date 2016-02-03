@@ -67,7 +67,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
@@ -101,6 +102,9 @@ uint32_t g_bletest_conn_upd_time;
 uint8_t g_bletest_current_conns;
 uint8_t g_bletest_cur_peer_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_last_handle_used;
+uint8_t g_bletest_led_state;
+uint32_t g_bletest_led_rate;
+uint32_t g_bletest_next_led_time;
 
 #ifdef BLETEST_ADV_PKT_NUM
 void
@@ -291,7 +295,7 @@ bletest_init_scanner(void)
 }
 
 void
-bletest_execute(void)
+bletest_execute_scanner(void)
 {
     int rc;
 
@@ -346,7 +350,7 @@ bletest_init_initiator(void)
 }
 
 void
-bletest_execute(void)
+bletest_execute_initiator(void)
 {
     int rc;
     uint16_t handle;
@@ -492,8 +496,8 @@ bletest_execute(void)
     }
 }
 #else
-void
-bletest_execute(void)
+static void
+bletest_execute_advertiser(void)
 {
     int i,j;
     int rc;
@@ -590,8 +594,30 @@ bletest_execute(void)
     }
 }
 #endif
-
 #endif
+
+/**
+ * Main bletest function. Called by the task timer every 50 msecs.
+ * 
+ */
+void
+bletest_execute(void)
+{
+    /* Toggle LED at set rate */
+    if ((int32_t)(os_time_get() - g_bletest_next_led_time) >= 0) {
+        gpio_toggle(LED_BLINK_PIN);
+        g_bletest_next_led_time = g_bletest_led_rate;
+    }
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+    bletest_execute_advertiser();
+#endif
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
+    bletest_execute_scanner();
+#endif
+#if (BLETEST_CFG_ROLE == BLETEST_ROLE_INITIATOR)
+    bletest_execute_initiator();
+#endif
+}
 
 /**
  * Callback when BLE test timer expires. 
@@ -620,6 +646,9 @@ bletest_task_handler(void *arg)
     uint64_t event_mask;
     struct os_event *ev;
     struct os_callout_func *cf;
+
+    /* Set LED blink rate */
+    g_bletest_led_rate = OS_TICKS_PER_SEC / 20;
 
     /* Wait one second before starting test task */
     os_time_delay(OS_TICKS_PER_SEC);
