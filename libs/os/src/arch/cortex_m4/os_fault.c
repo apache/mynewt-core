@@ -53,7 +53,6 @@ struct exception_frame {
 
 struct trap_frame {
     struct exception_frame *ef;
-    uint32_t sp;
     uint32_t r4;
     uint32_t r5;
     uint32_t r6;
@@ -62,6 +61,7 @@ struct trap_frame {
     uint32_t r9;
     uint32_t r10;
     uint32_t r11;
+    uint32_t lr;    /* this LR holds EXC_RETURN */
 };
 
 void
