@@ -266,6 +266,10 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
 #ifdef PRINTF_LONG_SUPPORT
                 lng = 1;
 #endif
+                /* Ignore second long specifier. */
+                if (ch == 'l') {
+                    ch = *(fmt++);
+                }
             }
 
             switch (ch) {
