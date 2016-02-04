@@ -57,7 +57,7 @@ typedef void (*os_task_func_t)(void *);
 
 struct os_task {
     os_stack_t *t_stackptr;
-    os_stack_t *t_stackbase;
+    os_stack_t *t_stacktop;
     
     uint16_t t_stacksize;
     uint16_t t_flags;
