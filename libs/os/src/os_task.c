@@ -136,7 +136,6 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     struct os_task *next;
     os_stack_t *top;
     os_stack_t *bottom;
-    os_sr_t sr;
 
     if (prev != NULL) {
         next = STAILQ_NEXT(prev, t_os_task_list);
@@ -145,13 +144,12 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     }
 
     if (next == NULL) {
-        return (next);
+        return (NULL);
     }
 
     /* Otherwise, copy OS task information into the OTI structure, and 
      * return 1, which means continue
      */
-    OS_ENTER_CRITICAL(sr);
     oti->oti_prio = next->t_prio;
     oti->oti_taskid = next->t_taskid;
     oti->oti_state = next->t_state;
@@ -172,7 +170,6 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     oti->oti_last_checkin = next->t_sanity_check.sc_checkin_last;
     oti->oti_next_checkin = next->t_sanity_check.sc_checkin_last + 
         next->t_sanity_check.sc_checkin_itvl;
-    OS_EXIT_CRITICAL(sr);
     strncpy(oti->oti_name, next->t_name, sizeof(oti->oti_name));
 
     return (next);
