@@ -112,7 +112,7 @@ os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg,
     _clear_stack(stack_bottom, stack_size);
     t->t_stackptr = os_arch_task_stack_init(t, &stack_bottom[stack_size], 
             stack_size);
-    t->t_stackbase = stack_bottom;
+    t->t_stackbase = &stack_bottom[stack_size];
     t->t_stacksize = stack_size;
 
     /* insert this task into the task list */
@@ -153,7 +153,7 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     oti->oti_prio = next->t_prio;
     oti->oti_taskid = next->t_taskid;
     oti->oti_state = next->t_state;
-    oti->oti_stkusage = (uint16_t) (next->t_stackptr - next->t_stackbase);
+    oti->oti_stkusage = (uint16_t) (next->t_stackbase - next->t_stackptr);
     oti->oti_stksize = next->t_stacksize;
     oti->oti_cswcnt = next->t_ctx_sw_cnt;
     oti->oti_runtime = next->t_run_time;
