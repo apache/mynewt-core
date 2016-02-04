@@ -21,7 +21,7 @@
 #define _OS_ARCH_ARM_H 
 
 #include <stdint.h>
-#include "mcu/cortex_m0.h"
+#include <mcu/cortex_m0.h>
 
 struct os_task;
 

@@ -28,7 +28,7 @@
 #define NVIC_NUM_VECTORS      (16 + 29)   // CORE + MCU Peripherals
 #define NVIC_USER_IRQ_OFFSET  16
 
-#include "mcu/samd21.h"
+#include <mcu/cortex_m0.h>
 
 #ifdef __cplusplus
 extern "C" {

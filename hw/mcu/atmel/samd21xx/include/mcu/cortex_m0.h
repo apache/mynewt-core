@@ -17,6 +17,6 @@
 #ifndef __MCU_CORTEX_M0_H__
 #define __MCU_CORTEX_M0_H__
 
-#include "mcu/samd21.h"
+#include "../../src/sam0/utils/cmsis/samd21/include/samd21.h"
 
 #endif /* __MCU_CORTEX_M0_H__ */
