@@ -13,7 +13,7 @@ if [ $# -lt 1 ]; then
 fi
 
 BASENAME=$1
-IS_BOOTLOADER=0
+IS_BOOTLOADER=1
 BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
 VER=11.22.3333.0
 VER_FILE=version.txt # or somewhere else

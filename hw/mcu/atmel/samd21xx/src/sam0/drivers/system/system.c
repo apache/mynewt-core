@@ -96,16 +96,5 @@ void system_init(void)
 	/* Configure GCLK and clock sources according to conf_clocks.h */
 	system_clock_init();
 
-	/* Initialize board hardware */
-	system_board_init();
-
-	/* Initialize EVSYS hardware */
-	_system_events_init();
-
-	/* Initialize External hardware */
-	_system_extint_init();
-	
-	/* Initialize DIVAS hardware */
-	_system_divas_init();
 }
 
