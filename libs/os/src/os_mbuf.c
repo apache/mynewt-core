@@ -185,17 +185,19 @@ err:
 
 
 struct os_mbuf *
-os_msys_get_pkthdr(uint16_t dsize, uint16_t pkthdr_len)
+os_msys_get_pkthdr(uint16_t dsize, uint16_t user_hdr_len)
 {
+    uint16_t total_pkthdr_len;
     struct os_mbuf *m;
     struct os_mbuf_pool *pool;
 
-    pool = _os_msys_find_pool(dsize + pkthdr_len);
+    total_pkthdr_len =  user_hdr_len + sizeof(struct os_mbuf_pkthdr);
+    pool = _os_msys_find_pool(dsize + total_pkthdr_len);
     if (!pool) {
         goto err;
     }
     
-    m = os_mbuf_get_pkthdr(pool, pkthdr_len);
+    m = os_mbuf_get_pkthdr(pool, user_hdr_len);
     return (m);
 err:
     return (NULL);
@@ -257,15 +259,15 @@ err:
 
 /* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
 struct os_mbuf *
-os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t extra_pkthdr_len)
+os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t user_pkthdr_len)
 {
     struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
 
     om = os_mbuf_get(omp, 0);
     if (om) {
-        om->om_pkthdr_len = extra_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
-        om->om_data += extra_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
+        om->om_pkthdr_len = user_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
+        om->om_data += user_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
 
         pkthdr = OS_MBUF_PKTHDR(om);
         pkthdr->omp_len = 0;
