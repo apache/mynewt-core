@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -16,9 +16,9 @@
 
 #include <errno.h>
 
-extern char _user_heap_start;
-extern char _user_heap_end;
-static char *_brk = &_user_heap_start;
+extern char _heap;
+extern char _eheap;
+static char *_brk = &_heap;
 
 void *
 _sbrk(int incr)
@@ -30,7 +30,7 @@ _sbrk(int incr)
         prev_brk = (void *)-1;
     } else {
         /* Allocating memory from the heap. */
-        if (&_user_heap_end - _brk >= incr) {
+        if (&_eheap - _brk >= incr) {
             prev_brk = _brk;
             _brk += incr;
         } else {
