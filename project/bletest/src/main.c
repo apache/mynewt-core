@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Runtime Inc.
+ * Copyright (c) 2015, 2016 Runtime Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,15 @@
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_cputime.h"
+#include "hal/hal_flash.h"
 #include "console/console.h"
+#include "shell/shell.h"
+#include "stats/stats.h"
+#include "hal/flash_map.h"
+#include "fs/fs.h"
+#include "nffs/nffs.h"
+#include "newtmgr/newtmgr.h"
+#include "imgmgr/imgmgr.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -34,8 +42,23 @@
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
 
-/* Task 1 */
-#define HOST_TASK_PRIO      (1)
+/* Task priorities */
+/* NOTE: highest priority task (0) reserved for controller LL task */
+#define HOST_TASK_PRIO      (OS_TASK_PRI_HIGHEST + 1)
+#define BLETEST_TASK_PRIO   (HOST_TASK_PRIO + 1)
+#define SHELL_TASK_PRIO     (BLETEST_TASK_PRIO + 1)
+#define NEWTMGR_TASK_PRIO   (SHELL_TASK_PRIO + 1)
+
+/* Shell task stack */
+#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(256))
+os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
+
+/* Newt manager task stack */
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(448))
+os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
+
+/* Flash file system sector size */
+#define NFFS_AREA_MAX       (8)
 
 /* For LED toggling */
 int g_led_pin;
@@ -89,7 +112,6 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #undef BLETEST_ADV_PKT_NUM
 #define BLETEST_PKT_SIZE                (128)
 #define BLETEST_STACK_SIZE              (256)
-#define BLETEST_TASK_PRIO               (HOST_TASK_PRIO + 1)
 uint32_t g_next_os_time;
 int g_bletest_state;
 struct os_eventq g_bletest_evq;
@@ -779,7 +801,9 @@ main(void)
 {
     int i;
     int rc;
+    int cnt;
     uint32_t seed;
+    struct nffs_area_desc descs[NFFS_AREA_MAX];
 
     /* Initialize OS */
     os_init();
@@ -794,6 +818,9 @@ main(void)
 
     rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE, 
                            MBUF_NUM_MBUFS);
+    assert(rc == 0);
+
+    rc = os_msys_register(&g_mbuf_pool);
     assert(rc == 0);
 
     /* Dummy device address */
@@ -843,8 +870,34 @@ main(void)
     gpio_init_out(g_led_pin, 1);
 
     /* Init the console */
-    rc = console_init(NULL);
+    rc = console_init(shell_console_rx_cb);
     assert(rc == 0);
+
+    rc = hal_flash_init();
+    assert(rc == 0);
+
+    nffs_config.nc_num_inodes = 32;
+    nffs_config.nc_num_blocks = 64;
+    nffs_config.nc_num_files = 2;
+    nffs_config.nc_num_dirs = 2;
+    rc = nffs_init();
+    assert(rc == 0);
+
+    cnt = NFFS_AREA_MAX;
+    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
+    assert(rc == 0);
+    if (nffs_detect(descs) == FS_ECORRUPT) {
+        rc = nffs_format(descs);
+        assert(rc == 0);
+    }
+
+    shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
+
+    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
+    imgmgr_module_init();
+
+    /* Init statistics module */
+    stats_module_init();
 
     /* Init tasks */
     init_tasks();
