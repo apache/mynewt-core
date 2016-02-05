@@ -1,7 +1,0 @@
-project.name: centtest
-project.eggs: 
-    - libs/os 
-    - net/nimble/controller
-    - net/nimble/host
-    - libs/console/full
-    - libs/baselibc
