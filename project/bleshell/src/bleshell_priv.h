@@ -24,8 +24,8 @@
 #include "host/ble_gatt.h"
 struct ble_gap_white_entry;
 struct ble_hs_adv_fields;
-struct ble_gap_conn_upd_params;
-struct ble_gap_conn_crt_params;
+struct ble_gap_upd_params;
+struct ble_gap_crt_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
@@ -144,7 +144,7 @@ int bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
                        struct hci_adv_params *params);
 int bleshell_adv_stop(void);
 int bleshell_conn_initiate(int addr_type, uint8_t *peer_addr,
-                           struct ble_gap_conn_crt_params *params);
+                           struct ble_gap_crt_params *params);
 int bleshell_conn_cancel(void);
 int bleshell_term_conn(uint16_t conn_handle);
 int bleshell_wl_set(struct ble_gap_white_entry *white_list,
@@ -153,7 +153,7 @@ int bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
                   uint8_t filter_policy);
 int bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bleshell_update_conn(uint16_t conn_handle,
-                         struct ble_gap_conn_upd_params *params);
+                         struct ble_gap_upd_params *params);
 void bleshell_chrup(uint16_t attr_handle);
 int bleshell_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);

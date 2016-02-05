@@ -254,7 +254,7 @@ static struct kv_pair cmd_conn_addr_types[] = {
 static int
 cmd_conn(int argc, char **argv)
 {
-    struct ble_gap_conn_crt_params params;
+    struct ble_gap_crt_params params;
     uint8_t peer_addr[6];
     int addr_type;
     int rc;
@@ -1192,7 +1192,7 @@ cmd_term(int argc, char **argv)
 static int
 cmd_update(int argc, char **argv)
 {
-    struct ble_gap_conn_upd_params params;
+    struct ble_gap_upd_params params;
     uint16_t conn_handle;
     int rc;
 

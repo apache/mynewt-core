@@ -1100,7 +1100,7 @@ bleshell_adv_stop(void)
 {
     int rc;
 
-    rc = ble_gap_conn_adv_stop();
+    rc = ble_gap_adv_stop();
     return rc;
 }
 
@@ -1110,14 +1110,14 @@ bleshell_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
 {
     int rc;
 
-    rc = ble_gap_conn_adv_start(disc, conn, peer_addr, addr_type, params,
-                                bleshell_on_connect, NULL);
+    rc = ble_gap_adv_start(disc, conn, peer_addr, addr_type, params,
+                           bleshell_on_connect, NULL);
     return rc;
 }
 
 int
 bleshell_conn_initiate(int addr_type, uint8_t *peer_addr,
-                       struct ble_gap_conn_crt_params *params)
+                       struct ble_gap_crt_params *params)
 {
     int rc;
 
@@ -1131,7 +1131,7 @@ bleshell_conn_cancel(void)
 {
     int rc;
 
-    rc = ble_gap_conn_cancel();
+    rc = ble_gap_cancel();
     return rc;
 }
 
@@ -1140,7 +1140,7 @@ bleshell_term_conn(uint16_t conn_handle)
 {
     int rc;
 
-    rc = ble_gap_conn_terminate(conn_handle);
+    rc = ble_gap_terminate(conn_handle);
     return rc;
 }
 
@@ -1149,8 +1149,8 @@ bleshell_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
 {
     int rc;
 
-    rc = ble_gap_conn_wl_set(white_list, white_list_count, bleshell_on_wl_set,
-                             NULL);
+    rc = ble_gap_wl_set(white_list, white_list_count, bleshell_on_wl_set,
+                        NULL);
     return rc;
 }
 
@@ -1160,8 +1160,8 @@ bleshell_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
 {
     int rc;
 
-    rc = ble_gap_conn_disc(dur_ms, disc_mode, scan_type, filter_policy,
-                           bleshell_on_scan, NULL);
+    rc = ble_gap_disc(dur_ms, disc_mode, scan_type, filter_policy,
+                      bleshell_on_scan, NULL);
     return rc;
 }
 
@@ -1170,17 +1170,16 @@ bleshell_set_adv_data(struct ble_hs_adv_fields *adv_fields)
 {
     int rc;
 
-    rc = ble_gap_conn_set_adv_fields(adv_fields);
+    rc = ble_gap_adv_set_fields(adv_fields);
     return rc;
 }
 
 int
-bleshell_update_conn(uint16_t conn_handle,
-                     struct ble_gap_conn_upd_params *params)
+bleshell_update_conn(uint16_t conn_handle, struct ble_gap_upd_params *params)
 {
     int rc;
 
-    rc = ble_gap_conn_update_params(conn_handle, params);
+    rc = ble_gap_update_params(conn_handle, params);
     return rc;
 }
 
