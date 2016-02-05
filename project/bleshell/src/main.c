@@ -69,21 +69,12 @@ uint8_t g_host_adv_len;
 static uint8_t bleshell_addr[6] = {0x03, 0x02, 0x01, 0x50, 0x13, 0x00};
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (8)
-#define MBUF_BUF_SIZE       (256 + sizeof(struct hci_data_hdr))
-#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_PKT_OVERHEAD)
-
+#define MBUF_NUM_MBUFS      (10)
+#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
+#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
 
-struct os_mbuf_pool g_mbuf_pool;
-struct os_mempool g_mbuf_mempool;
-os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
-
-#define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
-#define DEFAULT_MBUF_MPOOL_NBUFS (10)
-
-uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
-    DEFAULT_MBUF_MPOOL_NBUFS];
+os_membuf_t default_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
 
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
@@ -1260,13 +1251,6 @@ main(void)
     rc = cputime_init(1000000);
     assert(rc == 0);
 
-    rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS,
-            MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
-
-    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE,
-                           MBUF_NUM_MBUFS);
-    assert(rc == 0);
-
     /* Dummy device address */
     memcpy(g_dev_addr, bleshell_addr, 6);
 
@@ -1312,13 +1296,13 @@ main(void)
                          "bleshell_dsc_pool");
     assert(rc == 0);
 
-    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
-            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data,
-            "default_mbuf_data");
+    rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS, 
+                         MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data, 
+                         "default_mbuf_data");
     assert(rc == 0);
 
     rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
-            DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
+                           MBUF_MEMBLOCK_SIZE, MBUF_NUM_MBUFS);
     assert(rc == 0);
 
     rc = os_msys_register(&default_mbuf_pool);
