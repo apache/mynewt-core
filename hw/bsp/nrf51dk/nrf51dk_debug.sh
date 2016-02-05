@@ -17,8 +17,11 @@ GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME
 
-echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD $JLINK_SCRIPT -port 3333 -singlerun' & " > $GDB_CMD_FILE
-echo "target remote localhost:3333" >> $GDB_CMD_FILE
+set -m
+JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD -port 3333 -singlerun &
+set +m
+
+echo "target remote localhost:3333" > $GDB_CMD_FILE
 
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
 

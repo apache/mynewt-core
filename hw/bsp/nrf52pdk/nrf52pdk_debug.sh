@@ -17,8 +17,12 @@ GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME
 
-echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device nRF52 -speed 4000 -if SWD $JLINK_SCRIPT -port 3333 -singlerun' & " > $GDB_CMD_FILE
-echo "target remote localhost:3333" >> $GDB_CMD_FILE
+# Monitor mode. Background process gets it's own process group.
+set -m
+JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun &
+set +m
+
+echo "target remote localhost:3333" > $GDB_CMD_FILE
 
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
 
