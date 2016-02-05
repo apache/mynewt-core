@@ -24,8 +24,6 @@ shift
 while [ $# -gt 0 ]; do
     if [ $1 = "bootloader" ]; then
 	IS_BOOTLOADER=1
-    else
-	exit 1
     fi
     shift
 done
