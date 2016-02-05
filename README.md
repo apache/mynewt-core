@@ -53,4 +53,4 @@ compatible with the Apache 2 license.  See the LICENSE file for more information
 # Contact 
 
 For any questions on the dev\_test repository, please contact the Mynewt 
-developer's list (stack-dev@googlegroups.com).  
+developer's list (dev@mynewt.incubator.apache.org).  
