@@ -145,6 +145,15 @@ os_msys_register(struct os_mbuf_pool *new_pool)
     return (0);
 }
 
+/**
+ * De-registers all mbuf pools from msys.
+ */
+void
+os_msys_reset(void)
+{
+    STAILQ_INIT(&g_msys_pool_list);
+}
+
 static struct os_mbuf_pool *
 _os_msys_find_pool(uint16_t dsize) 
 {

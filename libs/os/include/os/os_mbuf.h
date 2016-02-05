@@ -236,6 +236,9 @@ int os_msys_register(struct os_mbuf_pool *);
 /* Return a mbuf from the system pool, given an indicative mbuf size */
 struct os_mbuf *os_msys_get(uint16_t dsize, uint16_t leadingspace);
 
+/* De-registers all mbuf pools from msys. */
+void os_msys_reset(void);
+
 /* Return a packet header mbuf from the system pool */
 struct os_mbuf *os_msys_get_pkthdr(uint16_t dsize, uint16_t user_hdr_len);
 
