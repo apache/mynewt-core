@@ -21,7 +21,7 @@ VER_FILE=version.txt # or somewhere else
 # Look for 'bootloader' from 2nd arg onwards
 shift
 while [ $# -gt 0 ]; do
-    if [ $1 == "bootloader" ]; then
+    if [ $1 = "bootloader" ]; then
         IS_BOOTLOADER=1
     fi
     shift

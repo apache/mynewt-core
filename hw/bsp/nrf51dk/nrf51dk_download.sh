@@ -22,8 +22,10 @@ GDB_CMD_FILE=.gdb_cmds
 # Look for 'bootloader' from 2nd arg onwards
 shift
 while [ $# -gt 0 ]; do
-    if [ $1 == "bootloader" ]; then
+    if [ $1 = "bootloader" ]; then
 	IS_BOOTLOADER=1
+    else
+	exit 1
     fi
     shift
 done
@@ -52,7 +54,8 @@ echo "target remote localhost:3333" >> $GDB_CMD_FILE
 echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
 echo "quit" >> $GDB_CMD_FILE
 
-msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE`
+msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE 2>&1`
+echo $msgs > .gdb_out
 
 rm $GDB_CMD_FILE
 
@@ -79,6 +82,11 @@ if [ -n "$error" ]; then
 fi
 
 error=`echo $msgs | grep -i "unknown / supported"`
+if [ -n "$error" ]; then
+    exit 1
+fi
+
+error=`echo $msgs | grep -i "not found"`
 if [ -n "$error" ]; then
     exit 1
 fi

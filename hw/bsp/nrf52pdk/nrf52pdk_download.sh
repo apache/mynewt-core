@@ -24,7 +24,7 @@ loadbin $FILE_NAME $FLASH_OFFSET
 q
 EOF
 
-msgs=`JLinkExe -device nRF52 -speed 4000 -if SWD $JLINK_SCRIPT`
+msgs=`JLinkExe -device nRF52 -speed 4000 -if SWD $JLINK_SCRIPT 2>&1`
 
 # Echo output from script run, so newt can show it if things go wrong.
 echo $msgs
@@ -41,6 +41,11 @@ if [ -n "$error" ]; then
 fi
 
 error=`echo $msgs | grep -i "unknown / supported"`
+if [ -n "$error" ]; then
+    exit 1
+fi
+
+error=`echo $msgs | grep -i "not found"`
 if [ -n "$error" ]; then
     exit 1
 fi
