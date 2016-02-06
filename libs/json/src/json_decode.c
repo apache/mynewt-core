@@ -429,8 +429,12 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
                     }
                     break;
                 case t_real: {
+#ifdef FLOAT_SUPPORT
                         double tmp = atof(valbuf);
                         memcpy(lptr, &tmp, sizeof(double));
+#else
+                        return JSON_ERR_MISC;
+#endif
                     }
                     break;
                 case t_string:
@@ -586,6 +590,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             }
             break;
         case t_real:
+#ifdef FLOAT_SUPPORT
             n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
             valbuf[n] = '\0';
 
@@ -598,6 +603,9 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
                     c = jb->jb_read_next(jb);
                 }
             }
+#else
+            return JSON_ERR_MISC;
+#endif
             break;
         case t_boolean:
             n = jb->jb_readn(jb, valbuf, 5);
