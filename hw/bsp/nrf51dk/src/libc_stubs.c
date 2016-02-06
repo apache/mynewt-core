@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <hal/hal_system.h>
 
 void * _sbrk(int c);
