@@ -316,25 +316,25 @@ periph_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
         uuid16 = ble_uuid_128_to_16(ctxt->svc_reg.svc->uuid128);
         assert(uuid16 != 0);
         bletiny_printf("registered service 0x%04x with handle=%d\n",
-                        uuid16, ctxt->svc_reg.handle);
+                       uuid16, ctxt->svc_reg.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
         uuid16 = ble_uuid_128_to_16(ctxt->chr_reg.chr->uuid128);
         assert(uuid16 != 0);
         bletiny_printf("registering characteristic 0x%04x with def_handle=%d "
-                        "val_handle=%d\n",
-                        uuid16, ctxt->chr_reg.def_handle,
-                        ctxt->chr_reg.val_handle);
+                       "val_handle=%d\n",
+                       uuid16, ctxt->chr_reg.def_handle,
+                       ctxt->chr_reg.val_handle);
         break;
 
     case BLE_GATT_REGISTER_OP_DSC:
         uuid16 = ble_uuid_128_to_16(ctxt->dsc_reg.dsc->uuid128);
         assert(uuid16 != 0);
         bletiny_printf("registering descriptor 0x%04x with handle=%d "
-                        "chr_handle=%d\n",
-                        uuid16, ctxt->dsc_reg.dsc_handle,
-                        ctxt->dsc_reg.chr_def_handle);
+                       "chr_handle=%d\n",
+                       uuid16, ctxt->dsc_reg.dsc_handle,
+                       ctxt->dsc_reg.chr_def_handle);
         break;
 
     default:

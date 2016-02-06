@@ -44,7 +44,7 @@
 #define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(384))
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(128))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 static struct os_mutex bletiny_mutex;
@@ -79,9 +79,9 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_STACK_SIZE             (128)
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
-#define BLETINY_MAX_SVCS               32
-#define BLETINY_MAX_CHRS               64
-#define BLETINY_MAX_DSCS               64
+#define BLETINY_MAX_SVCS               1
+#define BLETINY_MAX_CHRS               1
+#define BLETINY_MAX_DSCS               1
 
 uint32_t g_next_os_time;
 int g_bletiny_state;
@@ -1306,6 +1306,10 @@ main(void)
 
     /* Initialize the BLE host. */
     ble_hs_cfg.max_connections = 1;
+    ble_hs_cfg.max_services = 4;
+    ble_hs_cfg.max_client_configs = 4;
+    ble_hs_cfg.max_gattc_procs = 2;
+
     rc = ble_hs_init(HOST_TASK_PRIO);
     assert(rc == 0);
 
