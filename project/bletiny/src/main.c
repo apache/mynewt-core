@@ -68,7 +68,7 @@ uint8_t g_host_adv_len;
 static uint8_t bletiny_addr[6] = {0x03, 0x02, 0x01, 0x50, 0x13, 0x00};
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (10)
+#define MBUF_NUM_MBUFS      (8)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -79,7 +79,7 @@ struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
 /* BLETINY variables */
-#define BLETINY_STACK_SIZE             (128)
+#define BLETINY_STACK_SIZE             (96)
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
 #define BLETINY_MAX_SVCS               1
@@ -346,7 +346,6 @@ bletiny_conn_delete_idx(int idx)
 {
     struct bletiny_conn *conn;
     struct bletiny_svc *svc;
-    int i;
 
     assert(idx >= 0 && idx < bletiny_num_conns);
 
@@ -357,9 +356,16 @@ bletiny_conn_delete_idx(int idx)
     }
 
     bletiny_num_conns--;
+
+    /* This '#if' is not strictly necessary.  It is here to prevent a spurious
+     * warning from being reported.
+     */
+#if BLETINY_MAX_CONNS > 1
+    int i;
     for (i = idx; i < bletiny_num_conns; i++) {
         bletiny_conns[i - 1] = bletiny_conns[i];
     }
+#endif
 }
 
 static struct bletiny_svc *
@@ -1311,9 +1317,12 @@ main(void)
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_connections = 1;
+    cfg.max_attrs = 32;
     cfg.max_services = 4;
     cfg.max_client_configs = 6;
     cfg.max_gattc_procs = 2;
+    cfg.max_l2cap_chans = 2;
+    cfg.max_l2cap_sig_procs = 2;
 
     rc = ble_hs_init(HOST_TASK_PRIO, &cfg);
     assert(rc == 0);
