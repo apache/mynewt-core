@@ -25,13 +25,14 @@
 #  include "usart_interrupt.h"
 
 #define UART_CNT    (SERCOM_INST_NUM)
+#define TX_BUFFER_SIZE  (8)
 
 struct hal_uart {
     struct usart_module instance;   /* must be at top */
     uint8_t u_open;
-    uint8_t u_rx_data;
+    uint8_t tx_on;
     int16_t rxdata;
-    int16_t txdata;    
+    uint8_t txdata[TX_BUFFER_SIZE];    
     hal_uart_rx_char u_rx_func;
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
@@ -39,21 +40,37 @@ struct hal_uart {
 };
 static struct hal_uart uarts[UART_CNT];
 
+static int fill_tx_buf(struct hal_uart *u) {
+    int i;
+    
+    for(i = 0; i < TX_BUFFER_SIZE; i++) {
+        int val;
+        val = u->u_tx_func(u->u_func_arg);
+        if(val < 0) {
+            break;            
+        }
+        u->txdata[i] = val;
+    }
+    return i;
+}
+
 static void 
 usart_callback_txdone(struct usart_module *const module) {
+    int sz;
     
     struct hal_uart *u = (struct hal_uart*) module;
     
     if(!u->u_open) {
         return;
     }
+    
+    sz = fill_tx_buf(u);
 
-    if(u->u_tx_func) {
-        u->txdata = u->u_tx_func(u->u_func_arg);    
-    }
-    if(u->txdata >= 0) {
-        usart_write_job(&u->instance, (uint16_t *) &u->txdata);
+    if(sz > 0) {
+        u->tx_on=1;
+        usart_write_buffer_job(&u->instance, u->txdata, sz);
     } else {
+        u->tx_on = 0;
         if(u->u_tx_done) {
             u->u_tx_done(u->u_func_arg);    
         }
@@ -112,10 +129,17 @@ hal_uart_start_tx(int port)
         return;
     }
     
+    if(u->tx_on) {
+        /* we are already transmitting */
+        return;
+    }
+     
     if(u->u_tx_func) {
-        u->txdata = u->u_tx_func(u->u_func_arg);    
-        if(u->txdata >= 0) {
-            usart_write_job(&u->instance, (uint16_t *) &u->txdata);
+        int sz;
+        sz = fill_tx_buf(u);        
+        if(sz > 0) {
+            u->tx_on=1;            
+            usart_write_buffer_job(&u->instance, u->txdata, sz);
         }
     }
 }
