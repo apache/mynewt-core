@@ -47,7 +47,7 @@ usart_callback_txdone(struct usart_module *const module) {
     if(!u->u_open) {
         return;
     }
-    
+
     if(u->u_tx_func) {
         u->txdata = u->u_tx_func(u->u_func_arg);    
     }
@@ -227,22 +227,23 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     config_usart.pinmux_pad2 = PINMUX_DEFAULT;
     config_usart.pinmux_pad3 = PINMUX_DEFAULT;
 
+    if(usart_init(pinst, BSP_SERCOM, &config_usart) != STATUS_OK) {
+        return -1;
+    }
+    
     /* register callbacks */
     usart_register_callback(pinst, usart_callback_txdone, 
                             USART_CALLBACK_BUFFER_TRANSMITTED);    
 
     usart_register_callback(pinst, usart_callback_rx, 
                             USART_CALLBACK_BUFFER_RECEIVED);         
-
-    if(usart_init(pinst, BSP_SERCOM, &config_usart) != STATUS_OK) {
-        return -1;
-    }
     
     usart_enable_callback(pinst, USART_CALLBACK_BUFFER_TRANSMITTED);
     usart_enable_callback(pinst, USART_CALLBACK_BUFFER_RECEIVED);
-    usart_enable(pinst); 
-        
+    usart_enable(pinst);         
     uarts[port].u_open = 1;
+
+    hal_uart_start_rx(port);
     
     return 0;
 }
