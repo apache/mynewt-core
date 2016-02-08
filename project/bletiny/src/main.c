@@ -1235,9 +1235,10 @@ bletiny_task_handler(void *arg)
 int
 main(void)
 {
-    int i;
-    int rc;
+    struct ble_hs_cfg cfg;
     uint32_t seed;
+    int rc;
+    int i;
 
     /* Initialize OS */
     os_init();
@@ -1308,12 +1309,13 @@ main(void)
                  bletiny_stack, BLETINY_STACK_SIZE);
 
     /* Initialize the BLE host. */
-    ble_hs_cfg.max_connections = 1;
-    ble_hs_cfg.max_services = 4;
-    ble_hs_cfg.max_client_configs = 4;
-    ble_hs_cfg.max_gattc_procs = 2;
+    cfg = ble_hs_cfg_dflt;
+    cfg.max_connections = 1;
+    cfg.max_services = 4;
+    cfg.max_client_configs = 6;
+    cfg.max_gattc_procs = 2;
 
-    rc = ble_hs_init(HOST_TASK_PRIO);
+    rc = ble_hs_init(HOST_TASK_PRIO, &cfg);
     assert(rc == 0);
 
     /* Initialize the BLE LL */
