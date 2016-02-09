@@ -18,6 +18,7 @@
 #
 
 project.name: bletiny
+project.identities: tiny
 project.eggs: 
     - libs/os 
     - net/nimble/controller

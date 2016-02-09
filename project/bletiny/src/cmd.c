@@ -31,7 +31,7 @@
 
 #include "bletiny_priv.h"
 
-#define CMD_BUF_SZ      1024
+#define CMD_BUF_SZ      256
 
 static struct shell_cmd cmd_b;
 
