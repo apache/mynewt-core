@@ -25,6 +25,9 @@
 
 int g_console_is_init;
 
+/** Indicates whether the previous line of output was completed. */
+int console_is_midline;
+
 #define CONSOLE_TX_BUF_SZ	32	/* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ	128
 
@@ -154,6 +157,9 @@ console_write(const char *str, int cnt)
             ct->ct_write_char('\r');
         }
         ct->ct_write_char(str[i]);
+    }
+    if (cnt > 0) {
+        console_is_midline = str[cnt - 1] != '\n';
     }
     hal_uart_start_tx(CONSOLE_UART);
 }

@@ -70,5 +70,7 @@ console_echo(int on)
 {
 }
 
+#define console_is_midline  (0)
+
 #endif /* __CONSOLE__ */
 

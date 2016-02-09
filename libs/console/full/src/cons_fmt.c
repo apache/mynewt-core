@@ -23,9 +23,6 @@
 
 #define CONS_OUTPUT_MAX_LINE	128
 
-/** Indicates whether the previous line of output was completed. */
-int console_is_midline;
-
 int
 console_vprintf(const char *fmt, va_list args)
 {
@@ -38,9 +35,6 @@ console_vprintf(const char *fmt, va_list args)
     }
     console_write(buf, len);
 
-    if (len > 0) {
-        console_is_midline = buf[len - 1] != '\n';
-    }
     return len;
 }
 
