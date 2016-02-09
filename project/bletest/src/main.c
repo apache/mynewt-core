@@ -779,7 +779,7 @@ init_tasks(void)
                  BLETEST_STACK_SIZE);
 
     /* Initialize host HCI */
-    rc = ble_hs_init(HOST_TASK_PRIO);
+    rc = ble_hs_init(HOST_TASK_PRIO, NULL);
     assert(rc == 0);
 
     /* Initialize the BLE LL */
