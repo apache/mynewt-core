@@ -44,5 +44,5 @@ else
 fi
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-openocd -f arduino_zero.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+openocd -f hw/bsp/arduino_zero/arduino_zero.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 
