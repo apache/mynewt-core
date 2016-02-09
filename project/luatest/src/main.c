@@ -36,6 +36,7 @@ int init_tasks(void);
 
 /* Shell */
 #define SHELL_TASK_PRIO      (8)
+#define SHELL_MAX_INPUT_LEN     (256)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
 static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
@@ -87,7 +88,8 @@ main(int argc, char **argv)
     os_init();
 
     /* Init tasks */
-    shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
+    shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
+                         SHELL_MAX_INPUT_LEN);
     console_init(shell_console_rx_cb);
 
     nffs_init();

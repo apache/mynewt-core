@@ -47,7 +47,8 @@
 #define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(128))
+#define SHELL_MAX_INPUT_LEN     (256)
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(96))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 static struct os_mutex bletiny_mutex;
@@ -79,7 +80,7 @@ struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
 /* BLETINY variables */
-#define BLETINY_STACK_SIZE             (96)
+#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(128))
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
 #define BLETINY_MAX_SVCS               1
@@ -1331,7 +1332,8 @@ main(void)
     /* Initialize the BLE LL */
     ble_ll_init();
 
-    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
+    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
+                         SHELL_MAX_INPUT_LEN);
     assert(rc == 0);
 
     /* Init the console */

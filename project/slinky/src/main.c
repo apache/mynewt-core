@@ -56,6 +56,7 @@ struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
 #define SHELL_TASK_PRIO (3)
+#define SHELL_MAX_INPUT_LEN     (256)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
@@ -265,7 +266,8 @@ main(int argc, char **argv)
         assert(rc == 0);
     }
 
-    shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE);
+    shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
+                    SHELL_MAX_INPUT_LEN);
 
     (void) console_init(shell_console_rx_cb);
 
