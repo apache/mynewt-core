@@ -1316,6 +1316,7 @@ main(void)
 
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
+    cfg.max_hci_bufs = 3;
     cfg.max_connections = 1;
     cfg.max_attrs = 32;
     cfg.max_services = 4;
