@@ -19,6 +19,7 @@
 #ifndef __LOG_H__ 
 #define __LOG_H__
 
+#include "log/ignore.h"
 #include "util/cbmem.h"
 
 #include <os/queue.h>
@@ -78,35 +79,35 @@ struct log_entry_hdr {
 #define LOG_DEBUG(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_DEBUG, __msg, ##__VA_ARGS__)
 #else
-#define LOG_DEBUG(__l, __mod, __msg, ...) 
+#define LOG_DEBUG(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
 #if LOG_LEVEL <= LOG_LEVEL_INFO 
 #define LOG_INFO(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_INFO, __msg, ##__VA_ARGS__)
 #else
-#define LOG_INFO(__l, __mod, __msg, ...) 
+#define LOG_INFO(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif 
 
 #if LOG_LEVEL <= LOG_LEVEL_INFO 
 #define LOG_WARN(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_WARN, __msg, ##__VA_ARGS__)
 #else
-#define LOG_WARN(__l, __mod, __msg, ...)
+#define LOG_WARN(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
 #if LOG_LEVEL <= LOG_LEVEL_ERROR 
 #define LOG_ERROR(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_ERROR, __msg, ##__VA_ARGS__)
 #else
-#define LOG_ERROR(__l, __mod, __msg, ...)
+#define LOG_ERROR(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
 #if LOG_LEVEL <= LOG_LEVEL_CRITICAL
 #define LOG_CRITICAL(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_CRITICAL, __msg, ##__VA_ARGS__)
 #else
-#define LOG_CRITICAL(__l, __mod, __msg, ...)
+#define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
 struct log {
