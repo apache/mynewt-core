@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 static shell_nlip_input_func_t g_shell_nlip_in_func;
 static void *g_shell_nlip_in_arg;
@@ -48,7 +49,8 @@ static struct os_event console_rdy_ev;
 
 static struct os_mutex g_shell_cmd_list_lock; 
 
-static char shell_line[1024];
+static char *shell_line;
+static int shell_line_capacity;
 static int shell_line_len;
 static char *argv[20];
 static uint8_t shell_full_line;
@@ -368,7 +370,7 @@ shell_read_console(void)
 
     while (1) {
         rc = console_read(shell_line + shell_line_len,
-                          sizeof(shell_line) - shell_line_len);
+                          shell_line_capacity - shell_line_len);
         if (rc < 0) {
             goto err;
         }
@@ -495,10 +497,22 @@ shell_help_cmd(int argc, char **argv)
 }
 
 int 
-shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
+shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
+                int max_input_length)
 {
     int rc;
-   
+
+    free(shell_line);
+
+    if (max_input_length > 0) {
+        shell_line = malloc(max_input_length);
+        if (shell_line == NULL) {
+            rc = ENOMEM;
+            goto err;
+        }
+    }
+    shell_line_capacity = max_input_length;
+
     rc = os_mutex_init(&g_shell_cmd_list_lock);
     if (rc != 0) {
         goto err;
@@ -534,6 +548,7 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
 
     return (0);
 err:
+    free(shell_line);
+    shell_line = NULL;
     return (rc);
 }
-

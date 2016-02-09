@@ -42,6 +42,7 @@ int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
 int shell_nlip_output(struct os_mbuf *m);
 
 void shell_console_rx_cb(int full_line);
-int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size);
+int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
+                    int max_input_length);
 
 #endif /* __SHELL_H__ */
