@@ -13,7 +13,9 @@ extern "C" {
 #endif
 
 #include "../../src/sam0/utils/cmsis/samd21/include/samd21.h"
-        
+    
+extern struct hal_flash samd21_flash_dev; 
+    
 #ifdef	__cplusplus
 }
 #endif

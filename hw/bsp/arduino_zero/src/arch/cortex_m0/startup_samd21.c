@@ -126,6 +126,9 @@ void I2S_Handler             ( void ) __attribute__ ((weak, alias("Dummy_Handler
 void AC1_Handler             ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
 #endif
 
+void Unhandled_Handler       ( void ) __attribute__ ((weak, alias("Dummy_Handler")));
+
+
 /* Exception Table */
 __attribute__ ((section(".vectors")))
 const DeviceVectors __isr_vector = {
@@ -136,16 +139,16 @@ const DeviceVectors __isr_vector = {
         (void*) Reset_Handler,
         (void*) NMI_Handler,
         (void*) HardFault_Handler,
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
         (void*) SVC_Handler,
-        (void*) (0UL), /* Reserved */
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
         (void*) PendSV_Handler,
         (void*) SysTick_Handler,
 
@@ -160,7 +163,7 @@ const DeviceVectors __isr_vector = {
 #ifdef ID_USB
         (void*) USB_Handler,            /*  7 Universal Serial Bus */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
         (void*) EVSYS_Handler,          /*  8 Event System Interface */
         (void*) SERCOM0_Handler,        /*  9 Serial Communication Interface 0 */
@@ -170,12 +173,12 @@ const DeviceVectors __isr_vector = {
 #ifdef ID_SERCOM4
         (void*) SERCOM4_Handler,        /* 13 Serial Communication Interface 4 */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_SERCOM5
         (void*) SERCOM5_Handler,        /* 14 Serial Communication Interface 5 */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
         (void*) TCC0_Handler,           /* 15 Timer Counter Control 0 */
         (void*) TCC1_Handler,           /* 16 Timer Counter Control 1 */
@@ -186,44 +189,44 @@ const DeviceVectors __isr_vector = {
 #ifdef ID_TC6
         (void*) TC6_Handler,            /* 21 Basic Timer Counter 3 */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_TC7
         (void*) TC7_Handler,            /* 22 Basic Timer Counter 4 */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_ADC
         (void*) ADC_Handler,            /* 23 Analog Digital Converter */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_AC
         (void*) AC_Handler,             /* 24 Analog Comparators 0 */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_DAC
         (void*) DAC_Handler,            /* 25 Digital Analog Converter */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_PTC
         (void*) PTC_Handler,            /* 26 Peripheral Touch Controller */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 #ifdef ID_I2S
         (void*) I2S_Handler,            /* 27 Inter-IC Sound Interface */
 #else
-        (void*) (0UL), /* Reserved */
+        (void*) Unhandled_Handler, /* Reserved */
 #endif
 /* FIX: there is no more element for SAMD21G18A (SAMW25) in DeviceVectors. */
 #ifndef __SAMD21G18A__
 #ifdef ID_AC1
         (void*) AC1_Handler             /* 28 Analog Comparators 1 */
 #else
-        (void*) (0UL)  /* Reserved */
+        (void*) Unhandled_Handler  /* Reserved */
 #endif
 #endif
 };

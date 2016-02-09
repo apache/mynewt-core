@@ -99,6 +99,7 @@ egg.cflags: -std=c99
             -I./sam0/drivers/system/power/power_sam_d_r
             -I./sam0/drivers/system/reset/reset_sam_d_r
             -I./sam0/drivers/system/interrupt/system_interrupt_samd21
-            -I./sam0/drivers//system/interrupt
+            -I./sam0/drivers/system/interrupt
+            -I./sam0/drivers/nvm
 
 

@@ -65,6 +65,7 @@ extern "C" {
 #define LED_BLINK_PIN   (ARDUINO_ZERO_PIN_D13)
 #define CONSOLE_UART    (2)    
     
+int bsp_imgr_current_slot(void);
 #ifdef __cplusplus
 }
 #endif

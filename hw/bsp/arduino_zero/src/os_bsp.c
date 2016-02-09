@@ -15,12 +15,48 @@
  */
 #include <sys/types.h>
 #include <bsp/cmsis_nvic.h>
+#include <hal/flash_map.h>
 
 void *_sbrk(int incr);
 void _close(int fd);
 
 #define PEND_SV_PRIO    ((1 << __NVIC_PRIO_BITS) - 1)
 #define SYSTICK_PRIO    (PEND_SV_PRIO - 1)
+
+
+static struct flash_area arduino_zero_flash_areas[] = {
+    [FLASH_AREA_BOOTLOADER] = {
+        .fa_flash_id = 0,       /* internal flash */
+        .fa_off = 0x00000000,   /* beginning */
+        .fa_size = (32 * 1024)
+    },
+    [FLASH_AREA_IMAGE_0] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x00008000,
+        .fa_size = (104 * 1024)
+    },
+    [FLASH_AREA_IMAGE_1] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x00022000,
+        .fa_size = (104 * 1024)
+    },
+    [FLASH_AREA_IMAGE_SCRATCH] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x0003c000,
+        .fa_size = (8 * 1024)
+    },
+    [FLASH_AREA_NFFS] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x0003e000,
+        .fa_size = (8 * 1024)
+    }
+};
+
+int
+bsp_imgr_current_slot(void)
+{
+    return FLASH_AREA_IMAGE_0;
+}
 
 /**
  * os systick init
@@ -54,4 +90,6 @@ os_bsp_init(void)
      */
     _sbrk(0);
     _close(0);
+    flash_area_init(arduino_zero_flash_areas,
+      sizeof(arduino_zero_flash_areas) / sizeof(arduino_zero_flash_areas[0]));    
 }
