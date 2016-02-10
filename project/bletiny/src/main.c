@@ -47,14 +47,11 @@
 #define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3)
-#define SHELL_MAX_INPUT_LEN     (128)
+#define SHELL_MAX_INPUT_LEN     (112)
 #define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(160))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 static struct os_mutex bletiny_mutex;
-
-/* For LED toggling */
-int g_led_pin;
 
 /* Our global device address (public) */
 uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
@@ -87,8 +84,6 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_MAX_CHRS               1
 #define BLETINY_MAX_DSCS               1
 
-uint32_t g_next_os_time;
-int g_bletiny_state;
 struct os_eventq g_bletiny_evq;
 struct os_task bletiny_task;
 bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
@@ -117,6 +112,15 @@ const uint8_t bletiny_privacy_flag = 0;
 uint8_t bletiny_reconnect_addr[6];
 uint8_t bletiny_pref_conn_params[8];
 uint8_t bletiny_gatt_service_changed[4];
+
+#define XSTR(s) STR(s)
+#define STR(s) #s
+
+#ifdef DEVICE_NAME
+#define BLETINY_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
+#else
+#define BLETINY_AUTO_DEVICE_NAME    NULL
+#endif
 
 void
 bletiny_lock(void)
@@ -653,6 +657,31 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
     return dsc;
 }
 
+static void
+bletiny_start_auto_advertise(void)
+{
+    struct ble_hs_adv_fields fields;
+    int rc;
+
+    if (BLETINY_AUTO_DEVICE_NAME != NULL) {
+        memset(&fields, 0, sizeof fields);
+
+        fields.name = (uint8_t *)BLETINY_AUTO_DEVICE_NAME;
+        fields.name_len = strlen(BLETINY_AUTO_DEVICE_NAME);
+        fields.name_is_complete = 1;
+        rc = bletiny_set_adv_data(&fields);
+        if (rc != 0) {
+            return;
+        }
+
+        rc = bletiny_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
+                               NULL, 0, NULL);
+        if (rc != 0) {
+            return;
+        }
+    }
+}
+
 static int
 bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
                 uint16_t mtu, void *arg)
@@ -843,7 +872,8 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 
     switch (event) {
     case BLE_GAP_EVENT_CONN:
-        bletiny_printf("connection complete; status=%d ", status);
+        bletiny_printf("connection %s; status=%d ",
+                       status == 0 ? "up" : "down", status);
         bletiny_print_conn_desc(ctxt->desc);
         bletiny_printf("\n");
 
@@ -861,6 +891,8 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                 } else {
                     bletiny_conn_delete_idx(conn_idx);
                 }
+
+                bletiny_start_auto_advertise();
             }
         }
 
@@ -1099,7 +1131,7 @@ bletiny_adv_stop(void)
 
 int
 bletiny_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
-                   struct hci_adv_params *params)
+                  struct hci_adv_params *params)
 {
     int rc;
 
@@ -1211,9 +1243,7 @@ bletiny_task_handler(void *arg)
     /* Initialize eventq */
     os_eventq_init(&g_bletiny_evq);
 
-    /* Init bletiny variables */
-    g_bletiny_state = 0;
-    g_next_os_time = os_time_get();
+    bletiny_start_auto_advertise();
 
     while (1) {
         ev = os_eventq_get(&g_bletiny_evq);
@@ -1268,10 +1298,6 @@ main(void)
     }
     srand(seed);
 
-    /* Set the led pin as an output */
-    g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
-
     bletiny_svc_mem = malloc(
         OS_MEMPOOL_BYTES(BLETINY_MAX_SVCS, sizeof (struct bletiny_svc)));
     assert(bletiny_svc_mem != NULL);
@@ -1323,7 +1349,7 @@ main(void)
     cfg.max_services = 4;
     cfg.max_client_configs = 6;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = 2;
+    cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 2;
 
     rc = ble_hs_init(HOST_TASK_PRIO, &cfg);
