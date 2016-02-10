@@ -24,12 +24,6 @@
 #include "host/ble_hs.h"
 #include "bleshell_priv.h"
 
-#define PERIPH_SVC1_UUID        0x1234
-#define PERIPH_SVC2_UUID        0x5678
-#define PERIPH_CHR1_UUID        0x1111
-#define PERIPH_CHR2_UUID        0x1112
-#define PERIPH_CHR3_UUID        0x5555
-
 #define PERIPH_SVC_NEWTMGR_UUID     0x7713
 #define PERIPH_CHR_NM_REQRSP_UUID   0x5562
 
@@ -39,18 +33,12 @@
                                  BLE_GATT_CHR_F_NOTIFY              |   \
                                  BLE_GATT_CHR_F_INDICATE)
 
-#define PERIPH_CHR_MAX_LEN  16
-
 #define PERIPH_SVC_ALERT_UUID               0x1811
 #define PERIPH_CHR_SUP_NEW_ALERT_CAT_UUID   0x2A47
 #define PERIPH_CHR_NEW_ALERT                0x2A46
 #define PERIPH_CHR_SUP_UNR_ALERT_CAT_UUID   0x2A48
 #define PERIPH_CHR_UNR_ALERT_STAT_UUID      0x2A45
 #define PERIPH_CHR_ALERT_NOT_CTRL_PT        0x2A44
-
-
-static bssnz_t uint8_t periph_chr_data[3][PERIPH_CHR_MAX_LEN];
-static bssnz_t uint16_t periph_chr_lens[3];
 
 static int
 periph_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
@@ -371,13 +359,6 @@ void
 periph_init(void)
 {
     int rc;
-
-    strcpy((char *)periph_chr_data[0], "hello0");
-    periph_chr_lens[0] = strlen((char *)periph_chr_data[0]);
-    strcpy((char *)periph_chr_data[1], "hello1");
-    periph_chr_lens[1] = strlen((char *)periph_chr_data[1]);
-    strcpy((char *)periph_chr_data[2], "hello2");
-    periph_chr_lens[2] = strlen((char *)periph_chr_data[2]);
 
     rc = ble_gatts_register_svcs(periph_svcs, periph_register_cb, NULL);
     assert(rc == 0);
