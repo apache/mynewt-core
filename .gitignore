@@ -3,6 +3,7 @@ bin
 obj
 tags
 .gdb_history
+.gdb_out
 *~
 .nest
 .DS_Store
