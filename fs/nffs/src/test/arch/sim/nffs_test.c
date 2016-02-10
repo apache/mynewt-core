@@ -702,10 +702,15 @@ TEST_CASE(nffs_test_unlink)
     struct nffs_file *nfs_file;
     uint8_t buf[64];
     uint32_t bytes_read;
+    int initial_num_blocks;
+    int initial_num_inodes;
     int rc;
 
     rc = nffs_format(nffs_area_descs);
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    initial_num_blocks = nffs_block_entry_pool.mp_num_free;
+    initial_num_inodes = nffs_inode_entry_pool.mp_num_free;
 
     nffs_test_util_create_file("/file0.txt", "0", 1);
 
@@ -738,13 +743,16 @@ TEST_CASE(nffs_test_unlink)
     rc = fs_open("/file0.txt", FS_ACCESS_READ, &file0);
     TEST_ASSERT(rc == FS_ENOENT);
 
-    /* Nested unlink. */
+    /* Ensure the file was fully removed from RAM. */
+    TEST_ASSERT(nffs_inode_entry_pool.mp_num_free == initial_num_inodes);
+    TEST_ASSERT(nffs_block_entry_pool.mp_num_free == initial_num_blocks);
+
+    /*** Nested unlink. */
     rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
     nffs_test_util_create_file("/mydir/file1.txt", "1", 2);
 
-    rc = fs_open("/mydir/file1.txt", FS_ACCESS_READ | FS_ACCESS_WRITE,
-                  &file1);
+    rc = fs_open("/mydir/file1.txt", FS_ACCESS_READ | FS_ACCESS_WRITE, &file1);
     TEST_ASSERT(rc == 0);
     nfs_file = (struct nffs_file *)file1;
     TEST_ASSERT(nfs_file->nf_inode_entry->nie_refcnt == 2);
@@ -780,6 +788,10 @@ TEST_CASE(nffs_test_unlink)
     } };
 
     nffs_test_assert_system(expected_system, nffs_area_descs);
+
+    /* Ensure the files and directories were fully removed from RAM. */
+    TEST_ASSERT(nffs_inode_entry_pool.mp_num_free == initial_num_inodes);
+    TEST_ASSERT(nffs_block_entry_pool.mp_num_free == initial_num_blocks);
 }
 
 TEST_CASE(nffs_test_rename)
