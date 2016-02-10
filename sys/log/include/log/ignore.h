@@ -1,3 +1,22 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #ifndef H_IGNORE_
 #define H_IGNORE_
 
@@ -28,7 +47,7 @@
 #define IGN_20(X, ...) ((void)(X));IGN_19(__VA_ARGS__)
 
 #define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, \
-                  _13, _14, _15, _16, _17, _18, _19, _20, NAME, ...) NAME 
+                  _13, _14, _15, _16, _17, _18, _19, _20, NAME, ...) NAME
 #define IGNORE(...) \
     GET_MACRO(__VA_ARGS__, IGN_20, IGN_19, IGN_18, IGN_17, IGN_16, IGN_15, \
               IGN_14, IGN_13, IGN_12, IGN_11, IGN_10, IGN_9, IGN_8, IGN_7, \
