@@ -63,13 +63,13 @@ the image.
 
 *** FLASH AREAS
 
-Bootutil uses the same concept of "flash areas" as the ffs file system.
+Bootutil uses the same concept of "flash areas" as the nffs file system.
 Briefly, an area is a region of disk with the following properties:
     (1) An area can be fully erased without affecting any other areas.
     (2) A write to one area does not restrict writes to other areas.
 
 The areas used for image data must not be used for anything else.  In
-particular, these areas must be kept separate from the ffs file system.
+particular, these areas must be kept separate from the nffs file system.
 
 
 *** IMAGE SLOTS
@@ -150,10 +150,10 @@ struct boot_status_entry {
 
 There is a separate boot status entry for each flash area used by the boot
 loader (i.e., each area in the two slots, plus one for the scratch area).  The
-entries are placed in the file in the same order as their corresponding flash
-areas.  Each entry indicates which image part is resident in the corresponding
-flash area.  If a flash area does not contain any image data, its corresponding
-entry will have a bse_image_num value of BOOT_IMAGE_NUM_NONE.
+entries are placed in the file in the same order as their corresponding areas
+in flash.  Each entry indicates which image part is resident in the
+corresponding flash area.  If a flash area does not contain any image data, its
+corresponding entry will have a bse_image_num value of BOOT_IMAGE_NUM_NONE.
 
 Consider the following example:
 
@@ -165,7 +165,7 @@ Five flash areas are dedicated to image data, as follows:
     Area 3: slot 1, 1/1
     Area 4: scratch
 
-The following array of boot status entries read from the status file:
+The following array of boot status entries is read from the status file:
 
     [0] = {
         .bse_image_num = 0,
@@ -197,21 +197,24 @@ This status file indicates the following image placement:
     Scratch area: empty
 
 Images don't have an instrinsic image number.  When a swap operation is
-started, the image initially in the primary slot is labelled image 0, while the
+started, the image initially in the primary slot is labelled image 0, and the
 image in the secondary slot is labelled image 1.  All swap operations end with
-image 1 in the primary slot, and image 0 in the secondary slot.  The status
-file is always deleted upon successful boot.
+image 1 in the primary slot, and image 0 in the secondary slot.
 
 The boot status header containing the image sizes is necessary so that bootutil
-can determine how many flash areas each image occupies.
+can determine how many flash areas each image occupies.  Without this
+information, bootutil would need to swap the full contents of the image slots,
+including useless data after the end of each image.
+
+The status file is always deleted upon successful boot.
 
 
 *** IMAGE SWAPPING
 
 If the boot vector indicates that the image in the secondary slot should be
 run, the boot loader needs to copy it to the primary slot.  The image currently
-in the primary slot also need to be retained so that it can be used in the
-future.  Furthermore, both images need to be recoverable if the boot loader
+in the primary slot also needs to be retained in flash so that it can be used
+later.  Furthermore, both images need to be recoverable if the boot loader
 resets in the middle of the process.  The two images are swapped according to
 the following procedure:
 
@@ -286,7 +289,7 @@ struct boot_req {
      * Array of area descriptors indicating the layout of internal flash; must
      * be terminated with a 0-length element.
      */
-    struct ffs_area_desc *br_area_descs;
+    struct nffs_area_desc *br_area_descs;
 
     /**
      * Array of indices of elements in the br_area_descs array; indicates which
@@ -328,23 +331,22 @@ struct boot_rsp {
 
 *** EXAMPLE USAGE
 
-This example uses the same flash layout as the boot status example.  Namely,
-each image slot consists of two flash areas.
+In this example, each image slot consists of three flash areas.
 
 /** Internal flash layout. */
-static struct ffs_area_desc boot_area_descs[] = {
+static struct nffs_area_desc boot_area_descs[] = {
     [0] =  { 0x08000000, 16 * 1024 },
     [1] =  { 0x08004000, 16 * 1024 },
     [2] =  { 0x08008000, 16 * 1024 },
     [3] =  { 0x0800c000, 16 * 1024 },
     [4] =  { 0x08010000, 64 * 1024 },
-    [5] =  { 0x08020000, 128 * 1024 }, /* Image data. */
-    [6] =  { 0x08040000, 128 * 1024 }, /* Image data. */
-    [7] =  { 0x08060000, 128 * 1024 }, /* Image data. */
-    [8] =  { 0x08080000, 128 * 1024 }, /* Image data. */
-    [9] =  { 0x080a0000, 128 * 1024 }, /* Image data. */
-    [10] = { 0x080c0000, 128 * 1024 }, /* Image data. */
-    [11] = { 0x080e0000, 128 * 1024 }, /* Image data. */
+    [5] =  { 0x08020000, 128 * 1024 }, /* Image data; 0,0. */
+    [6] =  { 0x08040000, 128 * 1024 }, /* Image data; 0,1. */
+    [7] =  { 0x08060000, 128 * 1024 }, /* Image data; 0,2. */
+    [8] =  { 0x08080000, 128 * 1024 }, /* Image data; 1,0. */
+    [9] =  { 0x080a0000, 128 * 1024 }, /* Image data; 1,1. */
+    [10] = { 0x080c0000, 128 * 1024 }, /* Image data; 1,2. */
+    [11] = { 0x080e0000, 128 * 1024 }, /* Image scratch area. */
     { 0, 0 },
 };
 
@@ -361,6 +363,7 @@ static uint8_t boot_slot_areas[] = {
 #define BOOT_NUM_IMG_AREAS \
     ((int)(sizeof boot_img_areas / sizeof boot_img_areas[0]))
 
+/** The scratch area to use during an image swap operation. */
 #define BOOT_AREA_IDX_SCRATCH 11
 
 int
@@ -387,5 +390,5 @@ main(void)
 
 
 *** DEPENDENCIES
-    * ffs (for the boot vector and boot status files).
+    * nffs (for the boot vector and boot status files).
     * os (for os_malloc() and os_free()).
