@@ -1,0 +1,15 @@
+name: mynewt_stm32f3
+url: https://github.com/runtimeinc/mynewt_stm32f3.git
+eggs:
+    hw/bsp/stm32f3discovery:
+        vers: 0.0.0
+        hash: 6cf9d06478bab361e01f5d0073cc31a8fa10df1b
+        deps:
+            - hw/mcu/stm/stm32f3xx@none#stable
+    hw/mcu/stm/stm32f3xx:
+        vers: 0.0.0
+        hash: 61befb321c93d3e914ea4f7cff75eb74a86a6d9d
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+            - compiler/arm-none-eabi-m4@none#stable

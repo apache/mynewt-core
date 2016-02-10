@@ -5,7 +5,7 @@ tags
 .gdb_history
 .gdb_out
 *~
-.nest
+.nest/nest.db
 .DS_Store
 *.swp
 *.swo
