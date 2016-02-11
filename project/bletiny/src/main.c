@@ -83,9 +83,9 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(200))
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
-#define BLETINY_MAX_SVCS               1
-#define BLETINY_MAX_CHRS               1
-#define BLETINY_MAX_DSCS               1
+#define BLETINY_MAX_SVCS               32
+#define BLETINY_MAX_CHRS               64
+#define BLETINY_MAX_DSCS               64
 
 struct os_eventq g_bletiny_evq;
 struct os_task bletiny_task;
@@ -148,7 +148,7 @@ bletiny_unlock(void)
 
 static void
 bletiny_print_error(char *msg, uint16_t conn_handle,
-                     struct ble_gatt_error *error)
+                    struct ble_gatt_error *error)
 {
     BLETINY_LOG(DEBUG, "%s: conn_handle=%d status=%d att_handle=%d\n",
                 msg, conn_handle, error->status, error->att_handle);
@@ -671,6 +671,7 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
 static void
 bletiny_start_auto_advertise(void)
 {
+#if 0
     struct ble_hs_adv_fields fields;
     int rc;
 
@@ -691,6 +692,7 @@ bletiny_start_auto_advertise(void)
             return;
         }
     }
+#endif
 }
 
 static int
@@ -979,7 +981,7 @@ bletiny_on_rx_rssi(struct ble_hci_ack *ack, void *unused)
 
     params.status = ack->bha_params[0];
     params.connection_handle = le16toh(ack->bha_params + 1);
-    params.rssi = ack->bha_params[2];
+    params.rssi = ack->bha_params[3];
 
     BLETINY_LOG(INFO, "rssi response received; status=%d conn=%d rssi=%d\n",
                 params.status, params.connection_handle, params.rssi);
@@ -1281,7 +1283,8 @@ bletiny_show_rssi(uint16_t conn_handle)
 {
     int rc;
 
-    rc = ble_hci_sched_enqueue(bletiny_tx_rssi_req, NULL);
+    rc = ble_hci_sched_enqueue(bletiny_tx_rssi_req,
+                               (void *)(intptr_t)conn_handle);
     if (rc != 0) {
         BLETINY_LOG(ERROR, "failure to enqueue rssi hci cmd; rc=%d\n", rc);
         return rc;
@@ -1414,7 +1417,7 @@ main(void)
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
-    cfg.max_connections = 1;
+    cfg.max_connections = BLETINY_MAX_CONNS;
     cfg.max_attrs = 32;
     cfg.max_services = 4;
     cfg.max_client_configs = 6;

@@ -33,7 +33,7 @@ struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
 
-#define BLETINY_MAX_CONNS              1
+#define BLETINY_MAX_CONNS              2
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
