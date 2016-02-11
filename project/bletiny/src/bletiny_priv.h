@@ -21,6 +21,7 @@
 #define H_BLETINY_PRIV_
 
 #include <inttypes.h>
+#include "log/log.h"
 #include "os/queue.h"
 
 #include "host/ble_gatt.h"
@@ -89,7 +90,8 @@ extern uint8_t bletiny_gatt_service_changed[4];
 extern struct nmgr_transport nm_ble_transport;
 extern uint16_t nm_attr_val_handle;
 
-void bletiny_printf(const char *fmt, ...);
+extern struct log bletiny_log;
+
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
 const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
@@ -159,5 +161,9 @@ int bletiny_update_conn(uint16_t conn_handle,
 void bletiny_chrup(uint16_t attr_handle);
 int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
+
+#define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
+#define BLETINY_LOG(lvl, ...) \
+    LOG_ ## lvl(&bletiny_log, BLETINY_LOG_MODULE, __VA_ARGS__)
 
 #endif

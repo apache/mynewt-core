@@ -33,27 +33,13 @@ static char *cmd_args[CMD_MAX_ARGS][2];
 static int cmd_num_args;
 
 void
-bletiny_printf(const char *fmt, ...)
-{
-    va_list args;
-
-    if (!console_is_midline) {
-        console_printf("(BLETINY) ");
-    }
-
-    va_start(args, fmt);
-    console_vprintf(fmt, args);
-    va_end(args);
-}
-
-void
 print_addr(void *addr)
 {
     uint8_t *u8p;
 
     u8p = addr;
-    bletiny_printf("%02x:%02x:%02x:%02x:%02x:%02x",
-                   u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+    BLETINY_LOG(DEBUG, "%02x:%02x:%02x:%02x:%02x:%02x",
+                u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
 void
@@ -64,24 +50,26 @@ print_uuid(void *uuid128)
 
     uuid16 = ble_uuid_128_to_16(uuid128);
     if (uuid16 != 0) {
-        bletiny_printf("0x%04x", uuid16);
+        BLETINY_LOG(DEBUG, "0x%04x", uuid16);
         return;
     }
 
     u8p = uuid128;
 
     /* 00001101-0000-1000-8000-00805f9b34fb */
-    bletiny_printf("%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13], u8p[12]);
-    bletiny_printf("%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
-    bletiny_printf("%02x%02x%02x%02x%02x%02x%02x%02x",
-                   u8p[7], u8p[6], u8p[5], u8p[4],
-                   u8p[3], u8p[2], u8p[1], u8p[0]);
+    BLETINY_LOG(DEBUG, "%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13],
+                u8p[12]);
+    BLETINY_LOG(DEBUG, "%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
+    BLETINY_LOG(DEBUG, "%02x%02x%02x%02x%02x%02x%02x%02x",
+                u8p[7], u8p[6], u8p[5], u8p[4],
+                u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
 int
 parse_err_too_few_args(char *cmd_name)
 {
-    bletiny_printf("Error: too few arguments for command \"%s\"\n", cmd_name);
+    BLETINY_LOG(DEBUG, "Error: too few arguments for command \"%s\"\n",
+                cmd_name);
     return -1;
 }
 
@@ -427,12 +415,12 @@ parse_arg_all(int argc, char **argv)
 
         if (key != NULL && val != NULL) {
             if (strlen(key) == 0) {
-                bletiny_printf("Error: invalid argument: %s\n", argv[i]);
+                BLETINY_LOG(DEBUG, "Error: invalid argument: %s\n", argv[i]);
                 return -1;
             }
 
             if (cmd_num_args >= CMD_MAX_ARGS) {
-                bletiny_printf("Error: too many arguments");
+                BLETINY_LOG(DEBUG, "Error: too many arguments");
                 return -1;
             }
 
