@@ -38,8 +38,8 @@ log_console_append(struct log *log, void *buf, int len)
     if (!console_is_midline) {
         hdr = (struct log_entry_hdr *) buf;
         console_printf("[ts=%lussb, mod=%u level=%u] ",
-                (unsigned long) hdr->ue_ts, hdr->ue_level,
-                hdr->ue_module);
+                (unsigned long) hdr->ue_ts, hdr->ue_module,
+                hdr->ue_level);
     }
 
     console_write((char *) buf + LOG_ENTRY_HDR_SIZE, len - LOG_ENTRY_HDR_SIZE);
