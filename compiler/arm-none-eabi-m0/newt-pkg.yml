@@ -17,12 +17,5 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
-    - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+pkg.name: compiler/arm-none-eabi-m0
+pkg.vers: 0.1

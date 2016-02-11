@@ -17,12 +17,14 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
+pkg.name: libs/newtmgr
+pkg.vers: 0.1
+pkg.deps:
     - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
+    - libs/json
     - libs/util
-    - libs/baselibc
+    - libs/testutil
+    - libs/shell
+
+pkg.identities:
+    - NEWTMGR 

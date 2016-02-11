@@ -17,12 +17,14 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
-    - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+pkg.name: "hw/bsp/nrf52pdk"
+pkg.linkerscript: "nrf52pdk.ld" 
+pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
+pkg.linkerscript.tiny.OVERWRITE: "tiny-nrf52pdk.ld"
+pkg.downloadscript: nrf52pdk_download.sh
+pkg.debugscript: nrf52pdk_debug.sh
+pkg.cflags: -DNRF52
+pkg.deps: 
+    - hw/mcu/nordic/nrf52xxx
+pkg.deps.BLE_DEVICE: 
+    - net/nimble/drivers/nrf52

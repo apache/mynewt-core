@@ -17,12 +17,14 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
+pkg.name: project/slinky
+pkg.vers: 0.1
+pkg.deps:
     - libs/os
-    - libs/elua/elua_base
-    - libs/shell
     - libs/console/full
-    - libs/util
-    - libs/baselibc
+    - libs/shell
+    - libs/newtmgr
+    - libs/imgmgr
+    - sys/config
+    - sys/log
+    - sys/stats

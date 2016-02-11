@@ -6,7 +6,7 @@
 #
 # You can write of a library which uses console_printf(), and builder of a
 # project can select which one they'll use.
-# For the library/egg, list in the egg.yml console as the required capability.
+# For the library/egg, list in the pkg.yml console as the required capability.
 # Project builder will then include either libs/console/full or
 # libs/console/stub as their choice.
 #

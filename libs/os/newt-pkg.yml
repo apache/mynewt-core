@@ -17,12 +17,17 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
-    - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+pkg.name: libs/os
+pkg.vers: 0.1 
+pkg.deps:
+    - libs/testutil
+pkg.req_caps:
+    - console
+
+pkg.deps.SHELL:
+    - libs/shell 
+pkg.cflags.SHELL: -DSHELL_PRESENT 
+pkg.reqs.SHELL:
+    - console
+# Satisfy capability dependencies for the self-contained test executable.
+pkg.deps.selftest: libs/console/stub

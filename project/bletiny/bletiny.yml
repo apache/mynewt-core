@@ -19,9 +19,9 @@
 
 project.name: bletiny
 project.identities: tiny
-project.eggs: 
-    - sys/log
+project.pkgs: 
     - libs/os 
+    - sys/log
     - net/nimble/controller
     - net/nimble/host
     - libs/console/full

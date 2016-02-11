@@ -17,12 +17,12 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
+pkg.name: project/boot
+pkg.vers: 0.1
+pkg.deps:
     - fs/nffs
     - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
+    - libs/bootutil
+    - libs/console/stub
     - libs/util
     - libs/baselibc

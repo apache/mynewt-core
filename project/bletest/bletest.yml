@@ -18,7 +18,7 @@
 #
 
 project.name: bletest
-project.eggs: 
+project.pkgs: 
     - net/nimble/controller
     - net/nimble/host
     - libs/os 

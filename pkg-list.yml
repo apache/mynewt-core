@@ -1,0 +1,300 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: larva
+url: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkgs:
+    sys/config:
+        vers: 0.1.0
+        hash: 8a2318901967e44df05e68d6f03eba91d8491e8a
+        deps:
+            - libs/os@none#stable
+            - libs/console/full@none#stable
+            - libs/shell@none#stable
+            - libs/newtmgr@none#stable
+            - libs/imgmgr@none#stable
+            - sys/config@none#stable
+            - sys/log@none#stable
+            - sys/stats@none#stable
+    sys/log:
+        vers: 0.1.0
+        hash: 2b358d4461786c92bf492807743ceee463d34fef
+        deps:
+            - libs/os@none#stable
+            - libs/util@none#stable
+            - libs/testutil@none#stable
+    project/bin2img:
+        vers: 0.1.0
+        hash: 25a2173d8a47cf031933e19e54bb165b5de3a04c
+        deps:
+            - libs/bootutil@none#stable
+            - libs/console/stub@none#stable
+    libs/imgmgr:
+        vers: 0.1.0
+        hash: 529d9416d46d4c907a6a7e0e4fde61754aff275e
+        deps:
+            - libs/newtmgr@none#stable
+            - libs/bootutil@none#stable
+    net/nimble/drivers/nrf51:
+        vers: 0.1.0
+        hash: 3f1b843ccf32a16519cf22b04c67fd38ffef86bc
+        deps:
+            - net/nimble@none#stable
+            - net/nimble/controller@none#stable
+        caps:
+            - ble_driver@none#stable
+    hw/mcu/stm/stm32f4xx:
+        vers: 0.0.0
+        hash: 3198e51a11fb5dce063d4f2edb07960a2f3e4080
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+            - compiler/arm-none-eabi-m4@none#stable
+    net/nimble/drivers/native:
+        vers: 0.1.0
+        hash: 6fca9ed4ea5ddb41058ab84885534b0ad784ad6f
+        deps:
+            - net/nimble/controller@none#stable
+        caps:
+            - ble_driver@none#stable
+    hw/mcu/nordic/nrf52xxx:
+        vers: 0.0.0
+        hash: 9c4508f4a14f03ca0103f53693e63956aa527b68
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+            - compiler/arm-none-eabi-m4@none#stable
+    net/nimble:
+        vers: 0.1.0
+        hash: 8977b8da604d9779d51baf4aacabef5af2771bf7
+        deps:
+            - libs/os@none#stable
+    hw/bsp/olimex_stm32-e407_devboard:
+        vers: 0.0.0
+        hash: c0b075092ddd4a817825ff54d3b75452e83c1ac1
+        deps:
+            - hw/mcu/stm/stm32f4xx@none#stable
+    net/nimble/host:
+        vers: 0.1.0
+        hash: ae4217ae2cace3764218f6f39e6e8bef0b904906
+        deps:
+            - sys/log@none#stable
+            - libs/os@none#stable
+            - libs/util@none#stable
+            - net/nimble@none#stable
+        req_caps:
+            - console@none#stable
+    hw/bsp/nrf52pdk:
+        vers: 0.0.0
+        hash: e06a3ecff9bd5a794845954fb4a79c0e3d963fac
+        deps:
+            - hw/mcu/nordic/nrf52xxx@none#stable
+    fs/fs:
+        vers: 0.0.0
+        hash: 812ea76c6de66c98e3bd73d29f797e330294d02a
+    hw/hal:
+        vers: 0.1.0
+        hash: 8501995490996dee7171e991b6711e8411415e79
+        deps:
+            - libs/os@none#stable
+    hw/bsp/nrf51dk:
+        vers: 0.0.0
+        hash: b9954eb4bc04b7ee99d30af9c13e94144b0061a5
+        deps:
+            - hw/mcu/nordic/nrf51xxx@none#stable
+    libs/shell:
+        vers: 0.1.0
+        hash: 0aee03f15814ac6778da70a9f7759bcc9e4eb284
+        deps:
+            - libs/os@none#stable
+            - libs/util@none#stable
+    libs/baselibc:
+        vers: 0.1.0
+        hash: 95bb9ca040a2dc5cd28a6b26438c829fca3ef3e8
+        req_caps:
+            - console@none#stable
+    fs/nffs:
+        vers: 0.1.0
+        hash: 7e65335843074284bbfa68696e1d1f1f67398c18
+        deps:
+            - fs/fs@none#stable
+            - libs/os@none#stable
+            - libs/testutil@none#stable
+            - hw/hal@none#stable
+    libs/testreport:
+        vers: 0.1.0
+        hash: abeb6678ec4ecaa37b7334e0b9afa3721b2a4a36
+        deps:
+            - fs/nffs@none#stable
+            - libs/testutil@none#stable
+    libs/cmsis-core:
+        vers: 0.1.0
+        hash: 0371a4236e4163f4a314250fb91bb17bd1b343f2
+    libs/newtmgr:
+        vers: 0.1.0
+        hash: a28559a275b64c3de7998436aa99fb89fa0d0214
+        deps:
+            - libs/os@none#stable
+            - libs/json@none#stable
+            - libs/util@none#stable
+            - libs/testutil@none#stable
+            - libs/shell@none#stable
+    hw/mcu/native:
+        vers: 0.0.0
+        hash: f25f5a78dd53a65b765a15044ed8c69b93f81f96
+        deps:
+            - hw/hal@none#stable
+            - compiler/sim@none#stable
+    project/boot:
+        vers: 0.1.0
+        hash: e79a208f48af8243c5255708258f1f906cdce2c8
+        deps:
+            - fs/nffs@none#stable
+            - libs/os@none#stable
+            - libs/bootutil@none#stable
+            - libs/console/stub@none#stable
+            - libs/util@none#stable
+            - libs/baselibc@none#stable
+    compiler/arm-none-eabi-m0:
+        vers: 0.1.0
+        hash: 802819c5bb95a23cf1b0b628f03d4e3994dbd1e1
+    libs/testutil:
+        vers: 0.1.0
+        hash: 082140bcbb2649afc546f4835395cd35d54212e5
+        deps:
+            - hw/hal@none#stable
+            - libs/os@none#stable
+    compiler/sim:
+        vers: 0.1.0
+        hash: 800fe0a056be68e33acad8cc65a121176aff5b07
+    libs/console/full:
+        vers: 0.1.0
+        hash: 7f986ef6a34daa205d0b8bc6b7a0227cabcdc502
+        deps:
+            - hw/hal@none#stable
+            - libs/os@none#stable
+        caps:
+            - console@none#stable
+    sys/config:
+        vers: 0.1.0
+        hash: 99b1f6f8a85c07fdff9e6cca9a90a0e6ffa29ab0
+        deps:
+            - libs/util@none#stable
+            - libs/testutil@none#stable
+    hw/bsp/native:
+        vers: 0.0.0
+        hash: df5cf1ea47a3f31cb7162af5504ff47ab29a3fb9
+        deps:
+            - hw/mcu/native@none#stable
+    libs/elua/elua_base:
+        vers: 0.1.0
+        hash: feb397aaa8c5c2d7d3612cb1123abb4bb3d2c4ca
+        deps:
+            - fs/fs@none#stable
+        req_caps:
+            - console@none#stable
+    net/nimble/controller:
+        vers: 0.1.0
+        hash: aba9d8e3368f5069e3631acd8071c6a938753748
+        deps:
+            - libs/os@none#stable
+            - net/nimble@none#stable
+    libs/console/stub:
+        vers: 0.1.0
+        hash: e9ba59892859b7034ee524716cb579ebe2472a37
+        caps:
+            - console@none#stable
+    libs/util:
+        vers: 0.1.0
+        hash: 8f2b8877f88cc5a1be96e697db6056c7112f4d4a
+        deps:
+            - hw/hal@none#stable
+            - libs/os@none#stable
+            - libs/testutil@none#stable
+    project/ffs2native:
+        vers: 0.0.0
+        hash: 4e9ae167613bdbfb5da33024ad4fc809e56b7c4b
+        deps:
+            - fs/nffs@none#stable
+            - libs/os@none#stable
+            - libs/console/full@none#stable
+            - hw/hal@none#stable
+    project/test:
+        vers: 0.1.0
+        hash: 84e713d1c5a7600a9520c87f56be9b44c05dffb8
+        deps:
+            - fs/nffs@none#stable
+            - libs/testutil@none#stable
+            - libs/os@none#stable
+            - libs/bootutil@none#stable
+            - libs/testreport@none#stable
+    hw/mcu/nordic/nrf51xxx:
+        vers: 0.0.0
+        hash: 91a32b70837bc8013523e7588e9a40d3d5b6f593
+        deps:
+            - hw/hal@none#stable
+            - libs/cmsis-core@none#stable
+            - compiler/arm-none-eabi-m0@none#stable
+    libs/json:
+        vers: 0.1.0
+        hash: 6d506e742a62a62d033551dc3da0367908dfc36f
+    net/nimble/drivers/nrf52:
+        vers: 0.1.0
+        hash: 54e483b13337054744f8cba57626ca66efc1e645
+        deps:
+            - net/nimble@none#stable
+            - net/nimble/controller@none#stable
+        caps:
+            - ble_driver@none#stable
+    compiler/arm-none-eabi-m4:
+        vers: 0.1.0
+        hash: 9885e21dadb7ad184079125f56d0523a4a2093f9
+    libs/os:
+        vers: 0.1.0
+        hash: 999a3419d9959d3c39b11dcc67d79c7888b4b765
+        deps:
+            - libs/testutil@none#stable
+        req_caps:
+            - console@none#stable
+    project/blinky:
+        vers: 0.1.0
+        hash: 9d94fa4ea2ad3bc8c9afd583968c202e24bfee53
+        deps:
+            - libs/os@none#stable
+            - libs/console/full@none#stable
+            - libs/shell@none#stable
+            - libs/newtmgr@none#stable
+            - sys/config@none#stable
+            - sys/log@none#stable
+            - sys/stats@none#stable
+    sys/stats:
+        vers: 0.1.0
+        hash: 91bc1ffe61f2f88127fd5a9af2df5a83cc6e47a0
+        deps:
+            - libs/os@none#stable
+            - libs/util@none#stable
+            - libs/testutil@none#stable
+    libs/bootutil:
+        vers: 0.1.0
+        hash: cf63c7b6e78fb1b7ff97f491aa7839d87ffa1f10
+        deps:
+            - fs/nffs@none#stable
+            - libs/os@none#stable
+            - libs/testutil@none#stable
+            - hw/hal@none#stable

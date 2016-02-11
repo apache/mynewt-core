@@ -19,7 +19,7 @@
 
 project.name: boot
 project.identities: bootloader
-project.eggs:
+project.pkgs:
     - libs/os
     - libs/bootutil
     - fs/nffs

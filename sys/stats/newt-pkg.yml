@@ -17,12 +17,15 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
+pkg.name: sys/stats
+pkg.vers: 0.1
+pkg.deps:
     - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
     - libs/util
-    - libs/baselibc
+    - libs/testutil
+pkg.deps.SHELL:
+    - libs/shell
+pkg.req_caps.SHELL:
+    - console
+pkg.cflags.SHELL: -DSHELL_PRESENT
+pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT 

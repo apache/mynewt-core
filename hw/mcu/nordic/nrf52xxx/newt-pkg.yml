@@ -17,12 +17,8 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
-    - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+pkg.name: "hw/mcu/nordic/nrf52xxx"
+pkg.deps: 
+    - hw/hal 
+    - libs/cmsis-core 
+    - compiler/arm-none-eabi-m4

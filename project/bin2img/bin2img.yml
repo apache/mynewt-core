@@ -18,7 +18,7 @@
 #
 
 project.name: bin2img
-project.eggs: 
+project.pkgs: 
     - libs/bootutil
     - libs/imgmgr
     - libs/console/stub

@@ -18,7 +18,7 @@
 #
 
 project.name: test
-project.eggs:
+project.pkgs:
     - fs/nffs
     - libs/testutil
     - libs/os

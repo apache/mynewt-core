@@ -17,12 +17,11 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
+pkg.name: fs/nffs
+pkg.vers: 0.1
+pkg.identities: NFFS
+pkg.deps:
+    - fs/fs
     - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+    - libs/testutil
+    - hw/hal

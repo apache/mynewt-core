@@ -17,12 +17,11 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
-    - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+pkg.name: "hw/bsp/olimex_stm32-e407_devboard"
+pkg.linkerscript: "olimex_stm32-e407_devboard.ld" 
+pkg.linkerscript.bootloader.OVERWRITE: "boot-olimex_stm32-e407_devboard.ld"
+pkg.downloadscript: "olimex_stm32-e407_devboard_download.sh"
+pkg.debugscript: "olimex_stm32-e407_devboard_debug.sh"
+pkg.cflags: -DSTM32F407xx
+pkg.deps: 
+    - hw/mcu/stm/stm32f4xx

@@ -18,7 +18,7 @@
 #
 
 project.name: blinky
-project.eggs:
+project.pkgs:
     - libs/console/full
     - libs/shell
     - libs/os

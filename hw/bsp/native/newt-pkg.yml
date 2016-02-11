@@ -17,12 +17,9 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
-    - fs/nffs
-    - libs/os
-    - libs/elua/elua_base
-    - libs/shell
-    - libs/console/full
-    - libs/util
-    - libs/baselibc
+pkg.name: "hw/bsp/native"
+pkg.deps: 
+    - hw/mcu/native
+pkg.deps.BLE_DEVICE:
+    - net/nimble/drivers/native
+pkg.debugscript: "native_debug.sh"
