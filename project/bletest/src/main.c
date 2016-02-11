@@ -80,7 +80,7 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (8)
+#define MBUF_NUM_MBUFS      (42)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -93,8 +93,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
@@ -110,11 +110,11 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
 #define BLETEST_CFG_MIN_CE_LEN          (6)    
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
-#define BLETEST_CFG_CONCURRENT_CONNS    (1)
+#define BLETEST_CFG_CONCURRENT_CONNS    (16)
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
-#define BLETEST_PKT_SIZE                (128)
+#define BLETEST_PKT_SIZE                (64)
 #define BLETEST_STACK_SIZE              (256)
 uint32_t g_next_os_time;
 int g_bletest_state;
@@ -378,6 +378,7 @@ bletest_init_initiator(void)
 void
 bletest_execute_initiator(void)
 {
+//    int i;
     int rc;
     uint16_t handle;
 
@@ -391,45 +392,43 @@ bletest_execute_initiator(void)
             /* Set LED to slower blink rate */
             g_bletest_led_rate = OS_TICKS_PER_SEC;
 
-            /* Set next os time to start the connection update */
-            g_next_os_time = 0;
-
             /* Ask for version information */
             rc = host_hci_cmd_rd_rem_version(handle);
-            assert(rc == 0);
             host_hci_outstanding_opcode = 0;
 
             /* Scanning better be stopped! */
             assert(ble_ll_scan_enabled() == 0);
 
             /* Add to current connections */
-            ++g_bletest_current_conns;
+            if (!rc) {
+                ++g_bletest_current_conns;
 
-            /* Move to next connection */
-            if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
-                /* restart initiating */
-                g_bletest_cur_peer_addr[5] += 1;
-                g_dev_addr[5] += 1;
-                bletest_init_initiator();
+                /* Move to next connection */
+                if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
+                    /* restart initiating */
+                    g_bletest_cur_peer_addr[5] += 1;
+                    g_dev_addr[5] += 1;
+                    bletest_init_initiator();
+                }
             }
         }
     } else {
-        /* Issue a connection parameter update to connection handle 1 */
-        if (g_next_os_time == 0) {
-            g_next_os_time = os_time_get();
-            g_next_os_time += OS_TICKS_PER_SEC * 5;
-        } else {
-            if (g_next_os_time != 0xffffffff) {
 #if 0
-                if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-                    bletest_send_conn_update(1);
-                    g_next_os_time = 0xffffffff;
-                }
-#else
-                g_next_os_time = 0xffffffff;
-#endif
+        if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+            for (i = 0; i < g_bletest_current_conns; ++i) {
+                if (ble_ll_conn_find_active_conn(i + 1)) {
+                    /* Ask for version information */
+                    host_hci_cmd_read_rssi(i+1);
+                    host_hci_outstanding_opcode = 0;
+
+                    #if 0
+                        bletest_send_conn_update(1);
+                    #endif
+                }   
             }
+            g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 5;
         }
+#endif
     }
 }
 #endif
@@ -547,12 +546,16 @@ bletest_execute_advertiser(void)
             /* Send the remote used features command */
             rc = host_hci_cmd_le_read_rem_used_feat(handle);
             host_hci_outstanding_opcode = 0;
-            assert(rc == 0);
+            if (rc) {
+                return;
+            }
 
-            /* Send the remote used features command */
+            /* Send the remote read version command */
             rc = host_hci_cmd_rd_rem_version(handle);
             host_hci_outstanding_opcode = 0;
-            assert(rc == 0);
+            if (rc) {
+                return;
+            }
 
             /* set conn update time */
             g_bletest_conn_upd_time = os_time_get() + (OS_TICKS_PER_SEC * 5);
@@ -569,7 +572,6 @@ bletest_execute_advertiser(void)
                 bletest_init_advertising();
                 rc = host_hci_cmd_le_set_adv_enable(1);
                 host_hci_outstanding_opcode = 0;
-                assert(rc == 0);
             }
         }
     }
@@ -619,10 +621,12 @@ bletest_execute_advertiser(void)
                         /* Increment last handle used */
                         ++g_last_handle_used;
                     }
+                } else {
+                    ++g_last_handle_used;
                 }
             }
         }
-        g_next_os_time += OS_TICKS_PER_SEC;
+        g_next_os_time = os_time_get() + OS_TICKS_PER_SEC;
     }
 }
 #endif
@@ -805,9 +809,11 @@ main(void)
 {
     int i;
     int rc;
-    int cnt;
     uint32_t seed;
+#if 0
+    int cnt;
     struct nffs_area_desc descs[NFFS_AREA_MAX];
+#endif
 
     /* Initialize OS */
     os_init();
@@ -877,6 +883,7 @@ main(void)
     rc = console_init(shell_console_rx_cb);
     assert(rc == 0);
 
+#if 0
     rc = hal_flash_init();
     assert(rc == 0);
 
@@ -894,12 +901,15 @@ main(void)
         rc = nffs_format(descs);
         assert(rc == 0);
     }
+#endif
 
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                          SHELL_MAX_INPUT_LEN);
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
+#if 0
     imgmgr_module_init();
+#endif
 
     /* Init statistics module */
     stats_module_init();
