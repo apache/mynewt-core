@@ -944,19 +944,22 @@ enum status_code nvm_get_fuses (
 		struct nvm_fusebits *fusebits)
 {
 	enum status_code error_code = STATUS_OK;
-	uint32_t raw_fusebits[2];
+        union {
+            uint32_t raw_fusebits[2];
+            uint16_t raw_fusebits_16[4];
+        } u;
 
 	/* Make sure the module is ready */
 	while (!nvm_is_ready()) {
 	}
 
 	/* Read the fuse settings in the user row, 64 bit */
-	((uint16_t*)&raw_fusebits)[0] = (uint16_t)NVM_MEMORY[NVMCTRL_USER / 2];
-	((uint16_t*)&raw_fusebits)[1] = (uint16_t)NVM_MEMORY[(NVMCTRL_USER / 2) + 1];
-	((uint16_t*)&raw_fusebits)[2] = (uint16_t)NVM_MEMORY[(NVMCTRL_USER / 2) + 2];
-	((uint16_t*)&raw_fusebits)[3] = (uint16_t)NVM_MEMORY[(NVMCTRL_USER / 2) + 3];
+	u.raw_fusebits_16[0] = (uint16_t)NVM_MEMORY[NVMCTRL_USER / 2];
+	u.raw_fusebits_16[1] = (uint16_t)NVM_MEMORY[(NVMCTRL_USER / 2) + 1];
+	u.raw_fusebits_16[2] = (uint16_t)NVM_MEMORY[(NVMCTRL_USER / 2) + 2];
+	u.raw_fusebits_16[3] = (uint16_t)NVM_MEMORY[(NVMCTRL_USER / 2) + 3];
 
-	_nvm_translate_raw_fusebits_to_struct(raw_fusebits, fusebits);
+	_nvm_translate_raw_fusebits_to_struct(u.raw_fusebits, fusebits);
 
 	return error_code;
 }

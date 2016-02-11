@@ -1,9 +1,9 @@
 egg.name: "hw/bsp/arduino_zero"
-egg.linkerscript: "samd21g18a_flash.ld"
-egg.linkerscript.bootloader.OVERWRITE: "boot-arduino_zero.ld"
+egg.linkerscript: "arduino_zero.ld"
+egg.linkerscript.bootloader.OVERWRITE: "arduino_zero_boot.ld"
 egg.downloadscript: "arduino_zero_download.sh"
 egg.debugscript: "arduino_zero_debug.sh"
-egg.cflags: -mthumb -D__SAMD21G18A__ -D__CORTEX_M0
+egg.cflags: -mthumb -D__SAMD21G18A__
 egg.deps: 
     - hw/mcu/atmel/samd21xx
     - libs/cmsis-core

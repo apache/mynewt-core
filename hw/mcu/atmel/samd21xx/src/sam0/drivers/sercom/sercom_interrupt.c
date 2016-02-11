@@ -44,6 +44,7 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #include "sercom_interrupt.h"
+#include "bsp/cmsis_nvic.h"
 
 void *_sercom_instances[SERCOM_INST_NUM];
 
@@ -65,30 +66,6 @@ static void _sercom_default_handler(
 	Assert(false);
 }
 
-/**
- * \internal
- * Saves the given callback handler.
- *
- * \param[in]  instance           Instance index.
- * \param[in]  interrupt_handler  Pointer to instance callback handler.
- */
-void _sercom_set_handler(
-		const uint8_t instance,
-		const sercom_handler_t interrupt_handler)
-{
-	/* Initialize handlers with default handler and device instances with 0 */
-	if (_handler_table_initialized == false) {
-		for (uint32_t i = 0; i < SERCOM_INST_NUM; i++) {
-			_sercom_interrupt_handlers[i] = &_sercom_default_handler;
-			_sercom_instances[i] = NULL;
-		}
-
-		_handler_table_initialized = true;
-	}
-
-	/* Save interrupt handler */
-	_sercom_interrupt_handlers[instance] = interrupt_handler;
-}
 
 
 /** \internal
@@ -139,3 +116,62 @@ enum system_interrupt_vector _sercom_get_interrupt_vector(
 
 /** Auto-generate a set of interrupt handlers for each SERCOM in the device */
 MREPEAT(SERCOM_INST_NUM, _SERCOM_INTERRUPT_HANDLER, ~)
+
+        
+        /**
+ * \internal
+ * Saves the given callback handler.
+ *
+ * \param[in]  instance           Instance index.
+ * \param[in]  interrupt_handler  Pointer to instance callback handler.
+ */
+void _sercom_set_handler(
+		const uint8_t instance,
+		const sercom_handler_t interrupt_handler)
+{
+    
+	/* Initialize handlers with default handler and device instances with 0 */
+	if (_handler_table_initialized == false) {
+		for (uint32_t i = 0; i < SERCOM_INST_NUM; i++) {
+			_sercom_interrupt_handlers[i] = &_sercom_default_handler;
+			_sercom_instances[i] = NULL;
+		}
+
+		_handler_table_initialized = true;
+	}
+
+	/* Save interrupt handler */
+	_sercom_interrupt_handlers[instance] = interrupt_handler;  
+        
+        /* install the interrupt handler in the proper spot in the 
+         * vector table. */
+        
+        /* specific to SAMD21G since we are trying to add interrupts here to
+         * the ram based NVIC controller */
+        switch(instance) {
+                case 0:
+                    NVIC_SetVector(SYSTEM_INTERRUPT_MODULE_SERCOM0, 
+                            (uint32_t) SERCOM0_Handler);
+                    break;
+                case 1:
+                    NVIC_SetVector(SYSTEM_INTERRUPT_MODULE_SERCOM1, 
+                            (uint32_t) SERCOM1_Handler);
+                    break;
+                case 2:
+                    NVIC_SetVector(SYSTEM_INTERRUPT_MODULE_SERCOM2, 
+                            (uint32_t) SERCOM2_Handler);
+                    break;                    
+                case 3:
+                    NVIC_SetVector(SYSTEM_INTERRUPT_MODULE_SERCOM3, 
+                            (uint32_t) SERCOM3_Handler);
+                    break;
+                case 4:
+                    NVIC_SetVector(SYSTEM_INTERRUPT_MODULE_SERCOM4, 
+                            (uint32_t) SERCOM4_Handler);
+                    break;
+                case 5:
+                    NVIC_SetVector(SYSTEM_INTERRUPT_MODULE_SERCOM5, 
+                            (uint32_t) SERCOM5_Handler);
+                    break;                                        
+        }
+}

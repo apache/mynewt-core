@@ -28,6 +28,12 @@
     #error "Macro __CORTEX_M not defined; must define cortex-m type!"
 #endif
 
+#if (__CORTEX_M == 0) 
+    #ifndef __VTOR_PRESENT
+        #error "Macro __VTOR_PRESENT is not defined and must be defined for cortex-M0"
+#endif
+#endif
+
 extern char __isr_vector[];
 extern char __vector_tbl_reloc__[];
 
@@ -52,7 +58,7 @@ NVIC_Relocate(void)
     }
 
     /* Set VTOR except for M0 */
-#if (__CORTEX_M == 0)
+#if ((__CORTEX_M == 0) && (__VTOR_PRESENT == 0))
 #else
     SCB->VTOR = (uint32_t)&__vector_tbl_reloc__;
 #endif
@@ -62,7 +68,7 @@ void
 NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
 {
     uint32_t *vectors;
-#if (__CORTEX_M == 0)
+#if ((__CORTEX_M == 0) && (__VTOR_PRESENT == 0))
     vectors = (uint32_t *)&__vector_tbl_reloc__;
 #else
     vectors = (uint32_t *)SCB->VTOR;

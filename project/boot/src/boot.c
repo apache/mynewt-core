@@ -23,6 +23,7 @@
 #include <hal/flash_map.h>
 #include <os/os.h>
 #include <hal/hal_system.h>
+#include <hal/hal_flash.h>
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
@@ -50,6 +51,9 @@ main(void)
 
     os_init();
 
+    rc = hal_flash_init();
+    assert(rc == 0);    
+    
     cnt = (NFFS_AREA_MAX / 2) - 3;
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, descs);
     img_starts[0] = 0;

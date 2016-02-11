@@ -13,7 +13,7 @@ if [ $# -lt 1 ]; then
 fi
 
 BASENAME=$1
-IS_BOOTLOADER=1
+IS_BOOTLOADER=0
 BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
 VER=11.22.3333.0
 VER_FILE=version.txt # or somewhere else
@@ -31,7 +31,7 @@ if [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x00000000
     FILE_NAME=$BASENAME.elf.bin
 else
-    FLASH_OFFSET=0x00002000
+    FLASH_OFFSET=0x00008000
     FILE_NAME=$BASENAME.elf.img
     if [ -f $VER_FILE ]; then
 	VER=`echo $VER_FILE`

@@ -596,11 +596,6 @@ boot_init_flash(void)
 {
     int rc;
 
-    rc = hal_flash_init();
-    if (rc != 0) {
-        return BOOT_EFLASH;
-    }
-
     rc = nffs_init();
     if (rc != 0) {
         return BOOT_EFILE;

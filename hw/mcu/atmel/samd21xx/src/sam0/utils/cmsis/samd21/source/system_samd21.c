@@ -47,7 +47,7 @@
 #include "samd21.h"
 #include <clock.h>
 #include <system.h>
-
+#include "bsp/cmsis_nvic.h"
 
 uint32_t SystemCoreClock;/*!< System Clock Frequency (Core Clock)*/
 
@@ -61,7 +61,17 @@ void SystemInit(void)
 {
     // Keep the default device state after reset
     system_init();
-    SystemCoreClock = system_cpu_clock_get_hz();
+    SystemCoreClock = system_cpu_clock_get_hz();    
+    
+    
+    /* NOTE TO DEVELOPERS.  If you are using samd21 peripherals, the 
+     * interrupt model in their code is different.  They assume that the 
+     * functions are pre-installed in the vector table at startup.  When
+     * we relocate the vector table, we overwrite all of their initializations
+     * and you need to manually set the vectors for the drivers you are 
+     * using. See  sam0/drivers/sercom/sercom_interrupt.c at the end
+     * for a simple example of how to do this */
+    NVIC_Relocate();    
     return;
 }
 
