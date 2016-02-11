@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -352,7 +352,7 @@ cmd_chrup(int argc, char **argv)
     }
 
     bletiny_chrup(attr_handle);
-    
+
     return 0;
 }
 
@@ -815,6 +815,25 @@ cmd_show_conn(int argc, char **argv)
 }
 
 static int
+cmd_show_rssi(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_show_rssi(conn_handle);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
 cmd_show_svc(int argc, char **argv)
 {
     struct bletiny_conn *conn;
@@ -844,6 +863,7 @@ static struct cmd_entry cmd_show_entries[] = {
     { "addr", cmd_show_addr },
     { "chr", cmd_show_chr },
     { "conn", cmd_show_conn },
+    { "rssi", cmd_show_rssi },
     { "svc", cmd_show_svc },
     { NULL, NULL }
 };

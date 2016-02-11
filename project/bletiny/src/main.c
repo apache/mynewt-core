@@ -41,6 +41,8 @@
 #include "host/ble_gatt.h"
 #include "controller/ble_ll.h"
 #include "../src/ble_hs_conn.h"
+#include "../src/ble_hci_ack.h"
+#include "../src/ble_hci_sched.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
@@ -964,6 +966,25 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     }
 }
 
+static void
+bletiny_on_rx_rssi(struct ble_hci_ack *ack, void *unused)
+{
+    struct hci_read_rssi_ack_params params;
+
+    if (ack->bha_params_len != BLE_HCI_READ_RSSI_ACK_PARAM_LEN) {
+        BLETINY_LOG(INFO, "invalid rssi response; len=%d\n",
+                    ack->bha_params_len);
+        return;
+    }
+
+    params.status = ack->bha_params[0];
+    params.connection_handle = le16toh(ack->bha_params + 1);
+    params.rssi = ack->bha_params[2];
+
+    BLETINY_LOG(INFO, "rssi response received; status=%d conn=%d rssi=%d\n",
+                params.status, params.connection_handle, params.rssi);
+}
+
 int
 bletiny_exchange_mtu(uint16_t conn_handle)
 {
@@ -1226,13 +1247,48 @@ bletiny_chrup(uint16_t attr_handle)
 
 int
 bletiny_l2cap_update(uint16_t conn_handle,
-                      struct ble_l2cap_sig_update_params *params)
+                     struct ble_l2cap_sig_update_params *params)
 {
     int rc;
 
     rc = ble_l2cap_sig_update(conn_handle, params, bletiny_on_l2cap_update,
                               NULL);
     return rc;
+}
+
+static int
+bletiny_tx_rssi_req(void *arg)
+{
+    intptr_t conn_handle;
+    int rc;
+
+    conn_handle = (intptr_t)arg;
+
+    ble_hci_ack_set_callback(bletiny_on_rx_rssi, NULL);
+
+    rc = host_hci_cmd_read_rssi(conn_handle);
+    if (rc != 0) {
+        ble_hci_ack_set_callback(NULL, NULL);
+        BLETINY_LOG(ERROR, "failure to send rssi hci cmd; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+int
+bletiny_show_rssi(uint16_t conn_handle)
+{
+    int rc;
+
+    rc = ble_hci_sched_enqueue(bletiny_tx_rssi_req, NULL);
+    if (rc != 0) {
+        BLETINY_LOG(ERROR, "failure to enqueue rssi hci cmd; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+
 }
 
 /**
