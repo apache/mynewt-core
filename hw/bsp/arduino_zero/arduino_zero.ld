@@ -49,7 +49,7 @@ SEARCH_DIR(.)
 /* Memory Spaces Definitions */
 MEMORY
 {
-  FLASH    (rx)  : ORIGIN = 0x00008000, LENGTH = 0x00040000
+  FLASH    (rx)  : ORIGIN = 0x00008000, LENGTH = 0x1a000
   RAM      (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00008000
 }
 
@@ -142,14 +142,14 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
-    .relocate : AT (_etext)
+    .relocate : 
     {
         . = ALIGN(4);
         _srelocate = .;
         *(.data .data.*);
         . = ALIGN(4);
         _erelocate = .;
-    } > RAM
+    } > RAM AT > FLASH
 
     /* .bss section which is used for uninitialized data */
     .bss (NOLOAD) :

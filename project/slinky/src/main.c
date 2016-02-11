@@ -44,24 +44,24 @@ int init_tasks(void);
 
 /* Task 1 */
 #define TASK1_PRIO (1)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(1024)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
 struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
 
 /* Task 2 */
 #define TASK2_PRIO (2)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
+#define TASK2_STACK_SIZE    OS_STACK_ALIGN(128)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
 #define SHELL_TASK_PRIO (3)
 #define SHELL_MAX_INPUT_LEN     (256)
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(384))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 #define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct log_handler log_console_handler;
