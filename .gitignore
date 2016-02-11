@@ -1,4 +1,5 @@
-.repo.db
+.app.db
+.app
 bin
 obj
 tags
