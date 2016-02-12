@@ -5,6 +5,7 @@ obj
 tags
 .gdb_history
 .gdb_out
+.gdb_cmds
 *~
 .DS_Store
 *.swp

@@ -18,7 +18,6 @@
 #
 
 project.name: bletiny
-project.identities: tiny
 project.pkgs: 
     - libs/os 
     - sys/log
