@@ -83,9 +83,15 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(200))
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
+#if NIMBLE_OPT_CENTRAL
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
 #define BLETINY_MAX_DSCS               64
+#else
+#define BLETINY_MAX_SVCS               1
+#define BLETINY_MAX_CHRS               1
+#define BLETINY_MAX_DSCS               1
+#endif
 
 struct os_eventq g_bletiny_evq;
 struct os_task bletiny_task;
@@ -94,13 +100,13 @@ bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 static struct log_handler bletiny_log_console_handler;
 struct log bletiny_log;
 
-struct bletiny_conn ble_shell_conns[BLETINY_MAX_CONNS];
+struct bletiny_conn ble_shell_conns[NIMBLE_OPT_MAX_CONNECTIONS];
 int bletiny_num_conns;
 
 void
 bletest_inc_adv_pkt_num(void) { }
 
-bssnz_t struct bletiny_conn bletiny_conns[BLETINY_MAX_CONNS];
+bssnz_t struct bletiny_conn bletiny_conns[NIMBLE_OPT_MAX_CONNECTIONS];
 int bletiny_num_conns;
 
 static void *bletiny_svc_mem;
@@ -339,7 +345,7 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
 {
     struct bletiny_conn *conn;
 
-    assert(bletiny_num_conns < BLETINY_MAX_CONNS);
+    assert(bletiny_num_conns < NIMBLE_OPT_MAX_CONNECTIONS);
 
     conn = bletiny_conns + bletiny_num_conns;
     bletiny_num_conns++;
@@ -371,7 +377,7 @@ bletiny_conn_delete_idx(int idx)
     /* This '#if' is not strictly necessary.  It is here to prevent a spurious
      * warning from being reported.
      */
-#if BLETINY_MAX_CONNS > 1
+#if NIMBLE_OPT_MAX_CONNECTIONS > 1
     int i;
     for (i = idx; i < bletiny_num_conns; i++) {
         bletiny_conns[i - 1] = bletiny_conns[i];
@@ -1415,7 +1421,6 @@ main(void)
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
-    cfg.max_connections = BLETINY_MAX_CONNS;
     cfg.max_attrs = 32;
     cfg.max_services = 4;
     cfg.max_client_configs = 6;

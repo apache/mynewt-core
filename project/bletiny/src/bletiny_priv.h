@@ -21,6 +21,7 @@
 #define H_BLETINY_PRIV_
 
 #include <inttypes.h>
+#include "nimble/nimble_opt.h"
 #include "log/log.h"
 #include "os/queue.h"
 
@@ -32,8 +33,6 @@ struct ble_gap_crt_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
-
-#define BLETINY_MAX_CONNS              2
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -77,7 +76,7 @@ struct bletiny_conn {
     struct bletiny_svc_list svcs;
 };
 
-extern struct bletiny_conn bletiny_conns[BLETINY_MAX_CONNS];
+extern struct bletiny_conn bletiny_conns[NIMBLE_OPT_MAX_CONNECTIONS];
 extern int bletiny_num_conns;
 
 extern const char *bletiny_device_name;
