@@ -1288,7 +1288,7 @@ bletiny_show_rssi(uint16_t conn_handle)
     int rc;
 
     rc = ble_hci_sched_enqueue(bletiny_tx_rssi_req,
-                               (void *)(intptr_t)conn_handle);
+                               (void *)(intptr_t)conn_handle, NULL);
     if (rc != 0) {
         BLETINY_LOG(ERROR, "failure to enqueue rssi hci cmd; rc=%d\n", rc);
         return rc;
