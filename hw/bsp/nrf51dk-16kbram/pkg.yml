@@ -17,13 +17,13 @@
 # under the License.
 #
 
-pkg.name: "hw/bsp/nrf52pdk"
-pkg.linkerscript: "nrf52pdk.ld" 
-pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
-pkg.downloadscript: nrf52pdk_download.sh
-pkg.debugscript: nrf52pdk_debug.sh
-pkg.cflags: -DNRF52
+pkg.name: "hw/bsp/nrf51dk-16kbram"
+pkg.linkerscript: "nrf51dk-16kbram.ld" 
+pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf51dk-16kbram.ld"
+pkg.downloadscript: nrf51dk-16kbram_download.sh
+pkg.debugscript: nrf51dk-16kbram_debug.sh
+pkg.cflags: -DNRF51
 pkg.deps: 
-    - hw/mcu/nordic/nrf52xxx
+    - hw/mcu/nordic/nrf51xxx
 pkg.deps.BLE_DEVICE: 
-    - net/nimble/drivers/nrf52
+    - net/nimble/drivers/nrf51

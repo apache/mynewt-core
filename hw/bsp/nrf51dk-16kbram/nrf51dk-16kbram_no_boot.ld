@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -38,15 +38,15 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x80000
-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x4000
+  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x40000
+  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
  * with other linker script that defines memory regions FLASH and RAM.
  * It references following symbols, which must be defined in code:
  *   Reset_Handler : Entry of reset handler
- *
+ * 
  * It defines following symbols, which code can use without definition:
  *   __exidx_start
  *   __exidx_end
@@ -104,7 +104,7 @@ SECTIONS
     } > FLASH
 
 
-    .ARM.extab :
+    .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
         . = ALIGN(4);
@@ -120,6 +120,7 @@ SECTIONS
 
     __etext = .;
 
+    /* Keep first in RAM, as well as in bootloader */
     .vector_relocation :
     {
         . = ALIGN(4);
@@ -127,7 +128,7 @@ SECTIONS
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
     } > RAM
-
+            
     .data : AT (__etext)
     {
         __data_start__ = .;
