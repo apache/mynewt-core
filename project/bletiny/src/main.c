@@ -41,7 +41,6 @@
 #include "host/ble_gatt.h"
 #include "controller/ble_ll.h"
 #include "../src/ble_hs_conn.h"
-#include "../src/ble_hci_ack.h"
 #include "../src/ble_hci_sched.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
@@ -1270,11 +1269,10 @@ bletiny_tx_rssi_req(void *arg)
 
     conn_handle = (intptr_t)arg;
 
-    ble_hci_ack_set_callback(bletiny_on_rx_rssi, NULL);
+    ble_hci_sched_set_ack_cb(bletiny_on_rx_rssi, NULL);
 
     rc = host_hci_cmd_read_rssi(conn_handle);
     if (rc != 0) {
-        ble_hci_ack_set_callback(NULL, NULL);
         BLETINY_LOG(ERROR, "failure to send rssi hci cmd; rc=%d\n", rc);
         return rc;
     }
