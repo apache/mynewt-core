@@ -55,6 +55,7 @@
 
 #include "os/os.h"
 
+#include <assert.h>
 #include <string.h>
 
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list = 
@@ -355,8 +356,12 @@ err:
 static inline void 
 _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
 {
+    assert(new_buf->om_len == 0);
+
     memcpy(&new_buf->om_databuf[0], &old_buf->om_databuf[0], 
            old_buf->om_pkthdr_len);
+    new_buf->om_pkthdr_len = old_buf->om_pkthdr_len;
+    new_buf->om_data = new_buf->om_databuf + old_buf->om_pkthdr_len;
 }
 
 /** 
@@ -970,13 +975,18 @@ os_mbuf_pullup(struct os_mbuf *om, uint16_t len)
         om = SLIST_NEXT(om, om_next);
         len -= om2->om_len;
     } else {
-        if (len > omp->omp_databuf_len - om->om_pkthdr_len)
+        if (len > omp->omp_databuf_len - om->om_pkthdr_len) {
             goto bad;
+        }
+
         om2 = os_mbuf_get(omp, 0);
-        if (om2 == NULL)
+        if (om2 == NULL) {
             goto bad;
-        if (OS_MBUF_IS_PKTHDR(om))
+        }
+
+        if (OS_MBUF_IS_PKTHDR(om)) {
             _os_mbuf_copypkthdr(om2, om);
+        }
     }
     space = OS_MBUF_TRAILINGSPACE(om2);
     do {
