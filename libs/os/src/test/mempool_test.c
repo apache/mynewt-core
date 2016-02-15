@@ -66,6 +66,7 @@ mempool_test(int num_blocks, int block_size)
     int cnt;
     int true_block_size;
     int mem_pool_size;
+    uint32_t test_block;
     uint8_t *tstptr;
     void **free_ptr;
     void *block;
@@ -190,6 +191,22 @@ mempool_test(int num_blocks, int block_size)
 
     TEST_ASSERT(os_memblock_get(NULL) == NULL,
                 "No error trying to get a block from NULL pool");
+
+    /* Attempt to free a block outside the range of the membuf */
+    test_block = g_TstMempool.mp_membuf_addr;
+    test_block -= 4;
+    rc = os_memblock_put(&g_TstMempool, (void *)test_block);
+    TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
+
+    test_block += (true_block_size * g_TstMempool.mp_num_blocks) + 100;
+    rc = os_memblock_put(&g_TstMempool, (void *)test_block);
+    TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
+
+    /* Attempt to free on bad boundary */
+    test_block = g_TstMempool.mp_membuf_addr;
+    test_block += (true_block_size / 2);
+    rc = os_memblock_put(&g_TstMempool, (void *)test_block);
+    TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
 }
 
 /**
