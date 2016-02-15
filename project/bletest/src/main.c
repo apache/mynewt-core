@@ -93,8 +93,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
@@ -104,7 +104,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_ITVL           (64)  /* in 1.25 msec increments */           
+#define BLETEST_CFG_CONN_ITVL           (128)  /* in 1.25 msec increments */           
 #define BLETEST_CFG_SLAVE_LATENCY       (0)
 #define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
@@ -114,7 +114,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
-#define BLETEST_PKT_SIZE                (64)
+#define BLETEST_PKT_SIZE                (251)
 #define BLETEST_STACK_SIZE              (256)
 uint32_t g_next_os_time;
 int g_bletest_state;
@@ -445,7 +445,8 @@ bletest_get_packet(void)
 
     om = NULL;
     if (g_mbuf_pool.omp_pool->mp_num_free >= 5) {
-        ble_get_packet(om);
+        om = os_msys_get_pkthdr(BLE_MBUF_PAYLOAD_SIZE, 
+                                sizeof(struct ble_mbuf_hdr));
     }
     return om;
 }
@@ -607,6 +608,7 @@ bletest_execute_advertiser(void)
                         htole16(om->om_data + 4, pktlen);
                         om->om_data[6] = 0;
                         om->om_data[7] = 0;
+                        om->om_len += 4;
 
                         /* Fill with incrementing pattern (starting from 1) */
                         for (j = 0; j < pktlen; ++j) {
@@ -614,7 +616,6 @@ bletest_execute_advertiser(void)
                         }
 
                         /* Add length */
-                        om->om_len += 4;
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
                         ble_hci_transport_host_acl_data_send(om);
 
