@@ -182,6 +182,7 @@ main(int argc, char **argv)
     tu_init();
 
     conf_init();
+    config_test_suite();
 
     return tu_any_failed;
 }
