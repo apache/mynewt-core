@@ -20,3 +20,6 @@
 pkg.name: libs/mbedtls
 pkg.vers: 0.0.1
 pkg.cflags: -DMBEDTLS_USER_CONFIG_FILE=\"mbedtls/config_mynewt.h\"
+pkg.deps:
+    - libs/testutil
+
