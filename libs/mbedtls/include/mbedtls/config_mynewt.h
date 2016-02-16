@@ -36,6 +36,10 @@
 #define MBEDTLS_NO_PLATFORM_ENTROPY
 #undef MBEDTLS_NET_C
 
+#ifndef TEST
+#undef MBEDTLS_SELF_TEST
+#endif
+
 /**
  * \name SECTION: Module configuration options
  *
