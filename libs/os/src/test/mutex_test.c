@@ -78,7 +78,6 @@ mutex_test_basic_handler(void *arg)
 
     /* Test some error cases */
     TEST_ASSERT(os_mutex_init(NULL)     == OS_INVALID_PARM);
-    TEST_ASSERT(os_mutex_delete(NULL)   == OS_INVALID_PARM);
     TEST_ASSERT(os_mutex_release(NULL)  == OS_INVALID_PARM);
     TEST_ASSERT(os_mutex_pend(NULL, 0)  == OS_INVALID_PARM);
 
@@ -190,7 +189,6 @@ mutex_test2_task14_handler(void *arg)
         }
 
         if (g_mutex_test == 4) {
-            os_mutex_delete(&g_mutex1);
             os_time_delay(150);
         }
 
