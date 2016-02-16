@@ -23,4 +23,5 @@ pkg.deps:
     - fs/nffs
     - libs/os 
     - libs/testutil
+    - libs/mbedtls
     - hw/hal

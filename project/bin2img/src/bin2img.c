@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -67,9 +67,6 @@ main(int argc, char **argv)
     uint8_t *buf;
     FILE *fpout;
     FILE *fpin;
-    int crc_field_off;
-    int crc_start;
-    int crc_len;
     int rc;
 
     if (argc < 4) {
@@ -133,12 +130,6 @@ main(int argc, char **argv)
     hdr.ih_hdr_size = sizeof hdr;
     hdr.ih_img_size = st.st_size;
     memcpy(buf, &hdr, sizeof hdr);
-
-    crc_field_off = offsetof(struct image_header, ih_crc32);
-    crc_start = crc_field_off + sizeof hdr.ih_crc32;
-    crc_len = sizeof hdr - crc_start + st.st_size;
-    hdr.ih_crc32 = crc32(0, buf + crc_start, crc_len);
-    memcpy(buf + crc_field_off, &hdr.ih_crc32, sizeof hdr.ih_crc32);
 
     rc = fwrite(buf, sizeof hdr + st.st_size, 1, fpout);
     if (rc != 1) {

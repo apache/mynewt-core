@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -632,6 +632,7 @@ int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
     struct boot_image_location image_addrs[BOOT_NUM_SLOTS];
+    void *tmpbuf;
     int slot;
     int rc;
     int i;
@@ -660,9 +661,9 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
                           boot_req->br_num_image_areas);
     if (rc == 0) {
         /* We are resuming an interrupted image copy. */
+        /* XXX if copy has not actually started yet, validate image */
         rc = boot_copy_image(boot_status.bs_img1_length,
                              boot_status.bs_img2_length);
-
         if (rc != 0) {
             /* We failed to put the images back together; there is really no
              * solution here.
@@ -700,6 +701,15 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
             /* No images present. */
             return BOOT_EBADIMAGE;
         }
+    }
+    tmpbuf = malloc(BOOT_TMPBUF_SZ);
+    if (!tmpbuf) {
+        return BOOT_ENOMEM;
+    }
+    if (bootutil_img_validate(&boot_img_hdrs[slot],
+        image_addrs[slot].bil_flash_id, image_addrs[slot].bil_address,
+        tmpbuf, BOOT_TMPBUF_SZ)) {
+        return BOOT_EBADIMAGE;
     }
 
     switch (slot) {

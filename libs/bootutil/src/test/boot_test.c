@@ -367,7 +367,6 @@ TEST_CASE(boot_test_nv_ns_10)
 
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
         .ih_flags = 0,
@@ -404,7 +403,6 @@ TEST_CASE(boot_test_nv_ns_01)
 
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 10 * 1024,
         .ih_flags = 0,
@@ -440,7 +438,6 @@ TEST_CASE(boot_test_nv_ns_11)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
         .ih_flags = 0,
@@ -449,7 +446,6 @@ TEST_CASE(boot_test_nv_ns_11)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
         .ih_flags = 0,
@@ -487,7 +483,6 @@ TEST_CASE(boot_test_vm_ns_10)
 
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
         .ih_flags = 0,
@@ -527,7 +522,6 @@ TEST_CASE(boot_test_vm_ns_01)
 
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 10 * 1024,
         .ih_flags = 0,
@@ -566,7 +560,6 @@ TEST_CASE(boot_test_vm_ns_11_a)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
         .ih_flags = 0,
@@ -575,7 +568,6 @@ TEST_CASE(boot_test_vm_ns_11_a)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
         .ih_flags = 0,
@@ -615,7 +607,6 @@ TEST_CASE(boot_test_vm_ns_11_b)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
         .ih_flags = 0,
@@ -624,7 +615,6 @@ TEST_CASE(boot_test_vm_ns_11_b)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
         .ih_flags = 0,
@@ -664,7 +654,6 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
         .ih_flags = 0,
@@ -673,7 +662,6 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 196 * 1024,
         .ih_flags = 0,
@@ -715,7 +703,6 @@ TEST_CASE(boot_test_nv_bs_10)
 
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
         .ih_flags = 0,
@@ -765,7 +752,6 @@ TEST_CASE(boot_test_nv_bs_11)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
         .ih_flags = 0,
@@ -774,7 +760,6 @@ TEST_CASE(boot_test_nv_bs_11)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 17 * 1024,
         .ih_flags = 0,
@@ -828,7 +813,6 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 150 * 1024,
         .ih_flags = 0,
@@ -837,7 +821,6 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 190 * 1024,
         .ih_flags = 0,
@@ -893,7 +876,6 @@ TEST_CASE(boot_test_vb_ns_11)
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
         .ih_flags = 0,
@@ -902,7 +884,6 @@ TEST_CASE(boot_test_vb_ns_11)
 
     struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
-        .ih_crc32 = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
         .ih_flags = 0,
