@@ -50,6 +50,11 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
          */
         mbedtls_sha256_init(&sha256_ctx);
         mbedtls_sha256_starts(&sha256_ctx, 0);
+
+        /*
+         * Hash is computed over image header and image itself. No TLV is
+         * included ATM.
+         */
         size = hdr->ih_img_size + hdr->ih_hdr_size;
         for (off = 0; off < size; off += blk_sz) {
             blk_sz = size - off;
@@ -64,6 +69,9 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
         }
         mbedtls_sha256_finish(&sha256_ctx, computed_hash);
 
+        /*
+         * Then find the hash TLV and this should match.
+         */
         size += hdr->ih_tlv_size;
         for (; off < size; off += sizeof(tlv) + tlv.it_len) {
             rc = hal_flash_read(flash_id, addr + off, &tlv, sizeof(tlv));
