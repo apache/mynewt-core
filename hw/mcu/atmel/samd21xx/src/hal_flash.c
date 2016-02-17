@@ -27,7 +27,16 @@
 
 
 #define SAMD21_FLASH_START_ADDR         (0x0)
-#define SAMD21_FLASH_PAGES_PER_SECTOR   (4)
+
+/* The samd all have 4 flash pages per row of flash.
+ * Each page is individually writeable. Each page is individually
+ * erasable */
+#define SAMD21_FLASH_PAGES_PER_ROW   (4)
+
+/* sectors for this flash are really small.  Use 4 pages per sector */
+#define SAMD21_FLASH_ROWS_PER_SECTOR   (4)
+
+#define SAMD21_FLASH_PAGES_PER_SECTOR   (SAMD21_FLASH_PAGES_PER_ROW*SAMD21_FLASH_ROWS_PER_SECTOR)
 
 static int samd21_flash_read(uint32_t address, void *dst, uint32_t num_bytes);
 static int samd21_flash_write(uint32_t address, const void *src,
@@ -149,9 +158,20 @@ samd21_flash_write(uint32_t address, const void *src, uint32_t len)
 static int
 samd21_flash_erase_sector(uint32_t sector_address)
 {
-    int rc = nvm_erase_row(sector_address);    
-    if(rc != STATUS_OK) {
-        return -1;
+    struct nvm_parameters params;    
+    int rc;
+    int i;
+
+    nvm_get_parameters(&params);    
+    
+    /* erase all rows in the sector */
+    for(i = 0; i < SAMD21_FLASH_ROWS_PER_SECTOR; i++) {
+        uint32_t row_address = sector_address + 
+                i*SAMD21_FLASH_PAGES_PER_ROW*params.page_size;
+        rc = nvm_erase_row(row_address);    
+        if(rc != STATUS_OK) {
+            return -1;
+        }
     }
     return 0;
 }
@@ -163,8 +183,7 @@ samd21_flash_sector_info(int idx, uint32_t *addr, uint32_t *sz)
     struct nvm_parameters params;
     int sector_size;
     int sector_cnt;
-    
-    
+        
     nvm_get_parameters(&params);
     sector_cnt = params.nvm_number_of_pages/SAMD21_FLASH_PAGES_PER_SECTOR;
     sector_size = params.page_size*SAMD21_FLASH_PAGES_PER_SECTOR;

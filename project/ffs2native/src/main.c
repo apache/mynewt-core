@@ -32,6 +32,7 @@
 #include "../src/nffs_priv.h"
 #include <os/queue.h>
 #include <fs/fs.h>
+#include <bsp/bsp.h>
 #include <nffs/nffs.h>
 #include <hal/hal_flash.h>
 #include <hal/flash_map.h>

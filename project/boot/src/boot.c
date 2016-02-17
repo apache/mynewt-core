@@ -22,21 +22,24 @@
 #include <inttypes.h>
 #include <hal/flash_map.h>
 #include <os/os.h>
+#include <bsp/bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 
-#define NFFS_AREA_MAX	128
-#define SEC_CNT_MAX	8
+/* we currently need extra nffs_area_descriptors for booting since the 
+ * boot code uses these to keep track of which block to write and copy.*/
+#define BOOT_AREA_DESC_MAX  (256)
+#define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX + NFFS_AREA_MAX)
 
 int
 main(void)
 {
-    struct nffs_area_desc descs[NFFS_AREA_MAX];
+    struct nffs_area_desc descs[AREA_DESC_MAX];
     /** Contains indices of the areas which can contain image data. */
-    uint8_t img_areas[NFFS_AREA_MAX];
+    uint8_t img_areas[AREA_DESC_MAX];
     /** Areas representing the beginning of image slots. */
     uint8_t img_starts[2];
     int cnt;
@@ -54,22 +57,24 @@ main(void)
     rc = hal_flash_init();
     assert(rc == 0);    
     
-    cnt = (NFFS_AREA_MAX / 2) - 3;
+    cnt = BOOT_AREA_DESC_MAX;
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, descs);
     img_starts[0] = 0;
     total = cnt;
 
-    cnt = (NFFS_AREA_MAX / 2) - 3;
+    cnt = BOOT_AREA_DESC_MAX - total;
+    assert(cnt >= 0);
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
     assert(rc == 0);
     img_starts[1] = total;
     total += cnt;
-
-    cnt = 1;
+    
+    cnt = BOOT_AREA_DESC_MAX - total;
+    assert(cnt >= 0);
     rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
     assert(rc == 0);
     req.br_scratch_area_idx = total;
-    total += 1;
+    total += cnt;
 
     req.br_num_image_areas = total;
 
@@ -77,9 +82,15 @@ main(void)
         img_areas[cnt] = cnt;
     }
 
-    cnt = 6;
+    cnt = BOOT_AREA_DESC_MAX - total;
+    
+    /* make sure we have enough left to initialize the NFFS with the 
+     * right number of maximum areas otherwise the file-system will not
+     * be readable */
+    assert(cnt >= NFFS_AREA_MAX);
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, &descs[total]);
     assert(rc == 0);
+    req.br_nffs_area_idx = total;
     total += cnt;
 
     nffs_config.nc_num_inodes = 50;

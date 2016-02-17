@@ -75,9 +75,6 @@ struct os_sem g_test_sem;
 /* For LED toggling */
 int g_led_pin;
 
-/* NFFS */
-#define NFFS_AREA_MAX           (16)
-
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
 #define DEFAULT_MBUF_MPOOL_NBUFS (10)
 

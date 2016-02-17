@@ -605,7 +605,7 @@ boot_init_flash(void)
      * detected, all subsequent file operations will fail, but the boot loader
      * should proceed anyway.
      */
-    nffs_detect(boot_req->br_area_descs);
+    nffs_detect(&boot_req->br_area_descs[boot_req->br_nffs_area_idx]);
 
     /* Create the boot directory if it doesn't already exist. */
     fs_mkdir("/boot");

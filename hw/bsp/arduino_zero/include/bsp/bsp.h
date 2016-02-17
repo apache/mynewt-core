@@ -65,6 +65,15 @@ extern "C" {
 #define LED_BLINK_PIN   (ARDUINO_ZERO_PIN_D13)
 #define CONSOLE_UART    (2)    
     
+    
+/* This defines the maximum NFFS areas (block) are in the BSPs NFS file 
+ * system space.  This in conjunction with flash map determines how 
+ * many NFS blocks there will be.  A minimum is the number of individually
+ * erasable sectors in the flash area and the maximum is this number. If
+ * your max is less than the number of sectors then the NFFS will combine
+ * multiple sectors into an NFFS area */
+#define NFFS_AREA_MAX    (8)
+    
 int bsp_imgr_current_slot(void);
 #ifdef __cplusplus
 }

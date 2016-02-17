@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include <os/os.h>
+#include <bsp/bsp.h>
 #include <hal/hal_flash.h>
 #include <console/console.h>
 #include <shell/shell.h>
@@ -39,9 +40,6 @@ int init_tasks(void);
 #define SHELL_MAX_INPUT_LEN     (256)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
 static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
-
-/* NFFS */
-#define NFFS_AREA_MAX		16
 
 static void
 create_script_file(void)
