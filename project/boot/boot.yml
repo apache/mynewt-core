@@ -26,3 +26,4 @@ project.pkgs:
     - libs/console/stub
     - libs/util
     - libs/baselibc
+    - libs/mbedtls

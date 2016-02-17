@@ -19,3 +19,4 @@
 
 pkg.name: libs/json 
 pkg.vers: 0.1
+pkg.cflags.float_user: -DFLOAT_SUPPORT

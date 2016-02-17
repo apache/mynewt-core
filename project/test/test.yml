@@ -26,6 +26,8 @@ project.pkgs:
     - libs/testreport
     - libs/console/full
     - libs/util
+    - libs/mbedtls
+    - sys/config
 
 project.identities:
     - test

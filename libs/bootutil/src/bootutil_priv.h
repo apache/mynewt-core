@@ -36,6 +36,8 @@ struct image_header;
 #define BOOT_PATH_TEST      "/boot/test"
 #define BOOT_PATH_STATUS    "/boot/status"
 
+#define BOOT_TMPBUF_SZ  256
+
 struct boot_status {
     uint32_t bs_img1_length;
     uint32_t bs_img2_length;
