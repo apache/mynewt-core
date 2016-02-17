@@ -86,12 +86,15 @@ ctest_get_call_state(void)
 TEST_CASE(config_empty_lookups)
 {
     int rc;
+    char name[80];
     char tmp[64], *str;
 
-    rc = conf_set_value("foo/bar", "tmp");
+    strcpy(name, "foo/bar");
+    rc = conf_set_value(name, "tmp");
     TEST_ASSERT(rc != 0);
 
-    str = conf_get_value("foo/bar", tmp, sizeof(tmp));
+    strcpy(name, "foo/bar");
+    str = conf_get_value(name, tmp, sizeof(tmp));
     TEST_ASSERT(str == NULL);
 }
 
@@ -105,23 +108,28 @@ TEST_CASE(config_test_insert)
 
 TEST_CASE(config_test_getset_unknown)
 {
+    char name[80];
     char tmp[64], *str;
     int rc;
 
-    rc = conf_set_value("foo/bar", "tmp");
+    strcpy(name, "foo/bar");
+    rc = conf_set_value(name, "tmp");
     TEST_ASSERT(rc != 0);
     TEST_ASSERT(ctest_get_call_state() == 0);
 
-    str = conf_get_value("foo/bar", tmp, sizeof(tmp));
+    strcpy(name, "foo/bar");
+    str = conf_get_value(name, tmp, sizeof(tmp));
     TEST_ASSERT(str == NULL);
     TEST_ASSERT(ctest_get_call_state() == 0);
 
-    rc = conf_set_value("myfoo/bar", "tmp");
+    strcpy(name, "myfoo/bar");
+    rc = conf_set_value(name, "tmp");
     TEST_ASSERT(rc == OS_ENOENT);
     TEST_ASSERT(test_set_called == 1);
     ctest_clear_call_state();
 
-    str = conf_get_value("myfoo/bar", tmp, sizeof(tmp));
+    strcpy(name, "myfoo/bar");
+    str = conf_get_value(name, tmp, sizeof(tmp));
     TEST_ASSERT(str == NULL);
     TEST_ASSERT(test_get_called == 1);
     ctest_clear_call_state();
@@ -129,16 +137,19 @@ TEST_CASE(config_test_getset_unknown)
 
 TEST_CASE(config_test_getset_int)
 {
+    char name[80];
     char tmp[64], *str;
     int rc;
 
-    rc = conf_set_value("myfoo/mybar", "42");
+    strcpy(name, "myfoo/mybar");
+    rc = conf_set_value(name, "42");
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(test_set_called == 1);
     TEST_ASSERT(val8 == 42);
     ctest_clear_call_state();
 
-    str = conf_get_value("myfoo/mybar", tmp, sizeof(tmp));
+    strcpy(name, "myfoo/mybar");
+    str = conf_get_value(name, tmp, sizeof(tmp));
     TEST_ASSERT(str);
     TEST_ASSERT(test_get_called == 1);
     TEST_ASSERT(!strcmp("42", tmp));
@@ -147,24 +158,27 @@ TEST_CASE(config_test_getset_int)
 
 TEST_CASE(config_test_commit)
 {
+    char name[80];
     int rc;
 
-    rc = conf_commit("bar");
-    TEST_ASSERT(rc == 0);
-    TEST_ASSERT(ctest_get_call_state());
+    strcpy(name, "bar");
+    rc = conf_commit(name);
+    TEST_ASSERT(rc);
+    TEST_ASSERT(ctest_get_call_state() == 0);
 
     rc = conf_commit(NULL);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(test_commit_called == 1);
     ctest_clear_call_state();
 
-    rc = conf_commit("myfoo");
+    strcpy(name, "myfoo");
+    rc = conf_commit(name);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(test_commit_called == 1);
     ctest_clear_call_state();
 }
 
-TEST_SUITE(config_test_suite)
+TEST_SUITE(config_test_all)
 {
     config_empty_lookups();
     config_test_insert();
@@ -182,7 +196,7 @@ main(int argc, char **argv)
     tu_init();
 
     conf_init();
-    config_test_suite();
+    config_test_all();
 
     return tu_any_failed;
 }
