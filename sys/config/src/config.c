@@ -85,15 +85,15 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
 {
     char *tok;
     char *tok_ptr;
+    char *sep = CONF_NAME_SEPARATOR;
     int i;
 
-    tok_ptr = NULL;
-    tok = strtok_r(name, CONF_NAME_SEPARATOR, &tok_ptr);
+    tok = strtok_r(name, sep, &tok_ptr);
 
     i = 0;
     while (tok) {
         name_argv[i++] = tok;
-        tok = strtok_r(NULL, CONF_NAME_SEPARATOR, &tok_ptr);
+        tok = strtok_r(NULL, sep, &tok_ptr);
     }
     *name_argc = i;
 
