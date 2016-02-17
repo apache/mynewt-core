@@ -99,9 +99,13 @@ struct stats_name_map STATS_NAME_MAP_NAME(__name)[] = {
 #endif /* STATS_NAME_ENABLE */
 
 int stats_module_init(void);
+void stats_module_reset(void);
 int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt, 
     struct stats_name_map *map, uint8_t map_cnt);
 int stats_register(char *name, struct stats_hdr *shdr);
+int stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
+                       struct stats_name_map *map, uint8_t map_cnt,
+                       char *name);
 
 typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *, 
         uint8_t *);

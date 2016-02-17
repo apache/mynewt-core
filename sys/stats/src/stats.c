@@ -133,6 +133,17 @@ err:
     return (rc);
 }
 
+/**
+ * Uninitializes all statistic sections.  This is likely only useful for unit
+ * tests that need to run in sequence.
+ */
+void
+stats_module_reset(void)
+{
+    stats_module_inited = 0;
+
+    STAILQ_INIT(&g_stats_registry);
+}
 
 int
 stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
@@ -209,4 +220,24 @@ err:
     return (rc);
 }
 
+/**
+ * Initializes and registers the specified statistics section.
+ */
+int
+stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
+                   struct stats_name_map *map, uint8_t map_cnt, char *name)
+{
+    int rc;
 
+    rc = stats_init(shdr, size, cnt, map, map_cnt);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = stats_register(name, shdr);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return rc;
+}
