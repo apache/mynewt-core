@@ -97,7 +97,12 @@ stats_module_init(void)
 {
     int rc;
 
-#ifdef SHELL_PRESENT 
+    if (stats_module_inited) {
+        return 0;
+    }
+    stats_module_inited = 1;
+
+#ifdef SHELL_PRESENT
     rc = stats_shell_register();
     if (rc != 0) {
         goto err;
