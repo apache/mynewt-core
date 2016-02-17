@@ -21,6 +21,8 @@
 
 #include <testutil/testutil.h>
 
+#include "mbedtls/mbedtls_test.h"
+
 #include "mbedtls/sha1.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha512.h"
@@ -188,7 +190,7 @@ TEST_CASE(xtea_test)
 }
 
 
-TEST_SUITE(mbedtls_test_suite)
+TEST_SUITE(mbedtls_test_all)
 {
     sha1_test();
     sha256_test();
@@ -217,7 +219,7 @@ main(int argc, char **argv)
     tu_config.tc_print_results = 1;
     tu_init();
 
-    mbedtls_test_suite();
+    mbedtls_test_all();
 
     return tu_any_failed;
 }
