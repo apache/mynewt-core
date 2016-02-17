@@ -90,5 +90,5 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
          */
         return -1;
     }
-    return 0; /* XXX add knob to prevent hashless images from booting */
+    return -1;
 }
