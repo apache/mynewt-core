@@ -51,7 +51,7 @@ STATS_SECT_DECL(__name) {                   \
 #define STATS_SECT_VAR(__var) \
     s##__var
 
-#define STATS_HDR(__varname) &(__varname).s_hdr
+#define STATS_HDR(__sectname) &(__sectname).s_hdr
 
 #define STATS_SIZE_16 (sizeof(uint16_t))
 #define STATS_SIZE_32 (sizeof(uint32_t))
@@ -62,31 +62,32 @@ STATS_SECT_DECL(__name) {                   \
 #define STATS_SECT_ENTRY32(__var) uint32_t STATS_SECT_VAR(__var);
 #define STATS_SECT_ENTRY64(__var) uint64_t STATS_SECT_VAR(__var);
 
-#define STATS_SIZE_INIT_PARMS(__varname, __size)                            \
+#define STATS_SIZE_INIT_PARMS(__sectvarname, __size)                        \
     (__size),                                                               \
-    ((sizeof (__varname)) - sizeof (struct stats_hdr)) / (__size)
+    ((sizeof (__sectvarname)) - sizeof (struct stats_hdr)) / (__size)
 
-#define STATS_INC(__varname, __var) \
-    ((__varname).STATS_SECT_VAR(__var)++)
+#define STATS_INC(__sectvarname, __var)        \
+    ((__sectvarname).STATS_SECT_VAR(__var)++)
 
-#define STATS_INCN(__varname, __var, __n) \
-    ((__varname).STATS_SECT_VAR(__var) += (__n))
+#define STATS_INCN(__sectvarname, __var, __n)  \
+    ((__sectvarname).STATS_SECT_VAR(__var) += (__n))
 
 #ifdef STATS_NAME_ENABLE
 
-#define STATS_NAME_MAP_NAME(__name) g_stats_map_ ## __name
+#define STATS_NAME_MAP_NAME(__sectname) g_stats_map_ ## __sectname
 
-#define STATS_NAME_START(__name)                      \
-struct stats_name_map STATS_NAME_MAP_NAME(__name)[] = {
+#define STATS_NAME_START(__sectname)                                        \
+struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
 
-#define STATS_NAME(__name, __entry)                   \
-    { &STATS_SECT_NAME(__name).(__entry), #__entry },
+#define STATS_NAME(__sectname, __entry)                                     \
+    { &((STATS_SECT_DECL(__sectname) *) NULL)->STATS_SECT_VAR(__entry),     \
+      #__entry },
 
-#define STATS_NAME_END(__name)                        \
+#define STATS_NAME_END(__sectname)                                          \
 };
 
-#define STATS_NAME_INIT_PARMS(__name)                                    \
-    &(STATS_NAME_MAP_NAME(__name)[0]),                                   \
+#define STATS_NAME_INIT_PARMS(__name)                                       \
+    &(STATS_NAME_MAP_NAME(__name)[0]),                                      \
     (sizeof(STATS_NAME_MAP_NAME(__name)) / sizeof(struct stats_name_map))
 
 #else /* STATS_NAME_ENABLE */
