@@ -39,22 +39,19 @@ struct stats_hdr {
     STAILQ_ENTRY(stats_hdr) s_next;
 };
 
+#define STATS_SECT_DECL(__name)             \
+    struct stats_ ## __name
 
-#define STATS_SECT_START(__name)           \
-struct stats_ ## __name {                  \
+#define STATS_SECT_START(__name)            \
+STATS_SECT_DECL(__name) {                   \
     struct stats_hdr s_hdr;
 
-
-#define STATS_SECT_END(__name)           \
-} g_stats_ ## __name;
-
-#define STATS_SECT_NAME(__name) \
-    g_stats_ ## __name
-
-#define STATS_HDR(__name) ((struct stats_hdr *) &STATS_SECT_NAME(__name))
+#define STATS_SECT_END };
 
 #define STATS_SECT_VAR(__var) \
-    s##__var 
+    s##__var
+
+#define STATS_HDR(__varname) &(__varname).s_hdr
 
 #define STATS_SIZE_16 (sizeof(uint16_t))
 #define STATS_SIZE_32 (sizeof(uint32_t))
@@ -65,16 +62,15 @@ struct stats_ ## __name {                  \
 #define STATS_SECT_ENTRY32(__var) uint32_t STATS_SECT_VAR(__var);
 #define STATS_SECT_ENTRY64(__var) uint64_t STATS_SECT_VAR(__var);
 
-#define STATS_SIZE_INIT_PARMS(__name, __size)                              \
-    __size,                                                                \
-    ((sizeof(STATS_SECT_NAME(__name)) - sizeof(struct stats_hdr)) / __size)
+#define STATS_SIZE_INIT_PARMS(__varname, __size)                            \
+    (__size),                                                               \
+    ((sizeof (__varname)) - sizeof (struct stats_hdr)) / (__size)
 
+#define STATS_INC(__varname, __var) \
+    ((__varname).STATS_SECT_VAR(__var)++)
 
-#define STATS_INC(__name, __var) \
-    (STATS_SECT_NAME(__name).STATS_SECT_VAR(__var)++)
-
-#define STATS_INCN(__name, __var, __n) \
-    (STATS_SECT_NAME(__name).STATS_SECT_VAR(__var) += (__n))
+#define STATS_INCN(__varname, __var, __n) \
+    ((__varname).STATS_SECT_VAR(__var) += (__n))
 
 #ifdef STATS_NAME_ENABLE
 
@@ -84,7 +80,7 @@ struct stats_ ## __name {                  \
 struct stats_name_map STATS_NAME_MAP_NAME(__name)[] = {
 
 #define STATS_NAME(__name, __entry)                   \
-    { &STATS_SECT_NAME(__name).STATS_SECT_VAR(__entry), #__entry },
+    { &STATS_SECT_NAME(__name).(__entry), #__entry },
 
 #define STATS_NAME_END(__name)                        \
 };

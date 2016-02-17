@@ -107,6 +107,27 @@ ble_att_clt_append_blob(struct ble_l2cap_chan *chan, struct os_mbuf *txom,
     return 0;
 }
 
+static int
+ble_att_clt_copy_attr_to_flatbuf(struct os_mbuf *om, void **out_attr_val,
+                                 uint16_t *out_attr_len)
+{
+    uint16_t attr_len;
+
+    /* Make sure the attribute value isn't too big. */
+    attr_len = OS_MBUF_PKTLEN(om);
+    if (attr_len > BLE_ATT_ATTR_MAX_LEN) {
+        *out_attr_len = 0;
+        *out_attr_val = NULL;
+        return BLE_HS_EBADDATA;
+    }
+
+    /* Copy the attribute data into the global ATT flat buffer. */
+    os_mbuf_copydata(om, 0, attr_len, ble_att_flat_buf);
+    *out_attr_val = ble_att_flat_buf;
+    *out_attr_len = attr_len;
+    return 0;
+}
+
 /*****************************************************************************
  * $error response                                                           *
  *****************************************************************************/
@@ -120,15 +141,13 @@ ble_att_clt_rx_error(uint16_t conn_handle, struct os_mbuf **om)
     struct ble_att_error_rsp rsp;
     int rc;
 
-    *om = os_mbuf_pullup(*om, BLE_ATT_ERROR_RSP_SZ);
-    if (*om == NULL) {
-        return BLE_HS_ENOMEM;
-    }
-
-    rc = ble_att_error_rsp_parse((*om)->om_data, (*om)->om_len, &rsp);
+    rc = ble_hs_misc_pullup_base(om, BLE_ATT_ERROR_RSP_SZ);
     if (rc != 0) {
         return rc;
     }
+
+    rc = ble_att_error_rsp_parse((*om)->om_data, (*om)->om_len, &rsp);
+    assert(rc == 0);
 
     ble_gattc_rx_err(conn_handle, &rsp);
 
@@ -193,10 +212,8 @@ ble_att_clt_rx_mtu(uint16_t conn_handle, struct os_mbuf **om)
 
     mtu = 0;
 
-    *om = os_mbuf_pullup(*om, BLE_ATT_MTU_CMD_SZ);
-    if (*om == NULL) {
-        rc = BLE_HS_ENOMEM;
-    } else {
+    rc = ble_hs_misc_pullup_base(om, BLE_ATT_MTU_CMD_SZ);
+    if (rc == 0) {
         rc = ble_att_mtu_cmd_parse((*om)->om_data, (*om)->om_len, &rsp);
         assert(rc == 0);
 
@@ -288,9 +305,8 @@ ble_att_clt_rx_find_info(uint16_t conn_handle, struct os_mbuf **om)
 
     rxom = NULL;
 
-    *om = os_mbuf_pullup(*om, BLE_ATT_FIND_INFO_RSP_BASE_SZ);
-    if (*om == NULL) {
-        rc = BLE_HS_ENOMEM;
+    rc = ble_hs_misc_pullup_base(om, BLE_ATT_FIND_INFO_RSP_BASE_SZ);
+    if (rc != 0) {
         goto done;
     }
 
@@ -299,13 +315,14 @@ ble_att_clt_rx_find_info(uint16_t conn_handle, struct os_mbuf **om)
 
     rc = ble_att_find_info_rsp_parse(rxom->om_data, rxom->om_len, &rsp);
     assert(rc == 0);
+
+    /* Strip the response base from the front of the mbuf. */
     os_mbuf_adj(rxom, BLE_ATT_FIND_INFO_RSP_BASE_SZ);
 
     idata.attr_handle = 0;
     while (OS_MBUF_PKTLEN(rxom) > 0) {
-        rxom = os_mbuf_pullup(rxom, 2);
-        if (rxom == NULL) {
-            rc = BLE_HS_EBADDATA;
+        rc = ble_hs_misc_pullup_base(&rxom, 2);
+        if (rc != 0) {
             goto done;
         }
 
@@ -314,9 +331,8 @@ ble_att_clt_rx_find_info(uint16_t conn_handle, struct os_mbuf **om)
 
         switch (rsp.bafp_format) {
         case BLE_ATT_FIND_INFO_RSP_FORMAT_16BIT:
-            rxom = os_mbuf_pullup(rxom, 2);
-            if (rxom == NULL) {
-                rc = BLE_HS_EBADDATA;
+            rc = ble_hs_misc_pullup_base(&rxom, 2);
+            if (rc != 0) {
                 goto done;
             }
             uuid16 = le16toh(rxom->om_data);
@@ -416,9 +432,12 @@ static int
 ble_att_clt_parse_find_type_value_hinfo(
     struct os_mbuf **om, struct ble_att_find_type_value_hinfo *hinfo)
 {
-    *om = os_mbuf_pullup(*om, BLE_ATT_FIND_TYPE_VALUE_HINFO_BASE_SZ);
-    if (*om == NULL) {
-        return BLE_HS_ENOMEM;
+    int rc;
+
+    rc = ble_hs_misc_pullup_base(om,
+                                     BLE_ATT_FIND_TYPE_VALUE_HINFO_BASE_SZ);
+    if (rc != 0) {
+        return rc;
     }
 
     hinfo->attr_handle = le16toh((*om)->om_data + 0);
@@ -527,13 +546,11 @@ static int
 ble_att_clt_parse_read_type_adata(struct os_mbuf **om, int data_len,
                                   struct ble_att_read_type_adata *adata)
 {
-    if (data_len <= BLE_ATT_READ_TYPE_ADATA_BASE_SZ) {
-        return BLE_HS_EMSGSIZE;
-    }
+    int rc;
 
-    *om = os_mbuf_pullup(*om, data_len);
-    if (*om == NULL) {
-        return BLE_HS_ENOMEM;
+    rc = ble_hs_misc_pullup_base(om, data_len);
+    if (rc != 0) {
+        return rc;
     }
 
     adata->att_handle = le16toh((*om)->om_data + 0);
@@ -557,16 +574,15 @@ ble_att_clt_rx_read_type(uint16_t conn_handle, struct os_mbuf **rxom)
     struct ble_att_read_type_rsp rsp;
     int rc;
 
-    *rxom = os_mbuf_pullup(*rxom, BLE_ATT_READ_TYPE_RSP_BASE_SZ);
-    if (*rxom == NULL) {
-        rc = BLE_HS_ENOMEM;
+    rc = ble_hs_misc_pullup_base(rxom, BLE_ATT_READ_TYPE_RSP_BASE_SZ);
+    if (rc != 0) {
         goto done;
     }
 
     rc = ble_att_read_type_rsp_parse((*rxom)->om_data, (*rxom)->om_len, &rsp);
     assert(rc == 0);
 
-    /* Strip the base from the front of the response. */
+    /* Strip the response base from the front of the mbuf. */
     os_mbuf_adj(*rxom, BLE_ATT_READ_TYPE_RSP_BASE_SZ);
 
     /* Parse the Attribute Data List field, passing each entry to the GATT. */
@@ -643,31 +659,19 @@ ble_att_clt_rx_read(uint16_t conn_handle, struct os_mbuf **rxom)
     return BLE_HS_ENOTSUP;
 #endif
 
+    uint16_t value_len;
     void *value;
-    int value_len;
     int rc;
-
-    value = NULL;
-    value_len = 0;
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Attribute Value field.  Strip the opcode from the response.
      */
     os_mbuf_adj(*rxom, BLE_ATT_READ_RSP_BASE_SZ);
 
-    /* Pass the Attribute Value field to the GATT. */
-    *rxom = os_mbuf_pullup(*rxom, OS_MBUF_PKTLEN(*rxom));
-    if (*rxom == NULL) {
-        rc = BLE_HS_EBADDATA;
-        goto done;
-    }
+    /* Copy the attribute data into the global ATT flat buffer. */
+    rc = ble_att_clt_copy_attr_to_flatbuf(*rxom, &value, &value_len);
 
-    value_len = (*rxom)->om_len;
-    value = (*rxom)->om_data;
-
-    rc = 0;
-
-done:
+    /* Pass the Attribute Value field to GATT. */
     ble_gattc_rx_read_rsp(conn_handle, rc, value, value_len);
     return rc;
 }
@@ -729,30 +733,18 @@ ble_att_clt_rx_read_blob(uint16_t conn_handle, struct os_mbuf **rxom)
     return BLE_HS_ENOTSUP;
 #endif
 
+    uint16_t value_len;
     void *value;
-    int value_len;
     int rc;
-
-    value = NULL;
-    value_len = 0;
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Attribute Value field.  Strip the opcode from the response.
      */
     os_mbuf_adj(*rxom, BLE_ATT_READ_BLOB_RSP_BASE_SZ);
 
-    *rxom = os_mbuf_pullup(*rxom, OS_MBUF_PKTLEN(*rxom));
-    if (*rxom == NULL) {
-        rc = BLE_HS_EBADDATA;
-        goto done;
-    }
+    /* Copy the attribute data into the global ATT flat buffer. */
+    rc = ble_att_clt_copy_attr_to_flatbuf(*rxom, &value, &value_len);
 
-    value_len = (*rxom)->om_len;
-    value = (*rxom)->om_data;
-
-    rc = 0;
-
-done:
     /* Pass the Attribute Value field to GATT. */
     ble_gattc_rx_read_blob_rsp(conn_handle, rc, value, value_len);
     return rc;
@@ -828,30 +820,18 @@ ble_att_clt_rx_read_mult(uint16_t conn_handle, struct os_mbuf **rxom)
     return BLE_HS_ENOTSUP;
 #endif
 
+    uint16_t value_len;
     void *value;
-    int value_len;
     int rc;
-
-    value = NULL;
-    value_len = 0;
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Attribute Value field.  Strip the opcode from the response.
      */
     os_mbuf_adj(*rxom, BLE_ATT_READ_MULT_RSP_BASE_SZ);
 
-    *rxom = os_mbuf_pullup(*rxom, OS_MBUF_PKTLEN(*rxom));
-    if (*rxom == NULL) {
-        rc = BLE_HS_EBADDATA;
-        goto done;
-    }
+    /* Copy the attribute data into the global ATT flat buffer. */
+    rc = ble_att_clt_copy_attr_to_flatbuf(*rxom, &value, &value_len);
 
-    value_len = (*rxom)->om_len;
-    value = (*rxom)->om_data;
-
-    rc = 0;
-
-done:
     /* Pass the Attribute Value field to GATT. */
     ble_gattc_rx_read_mult_rsp(conn_handle, rc, value, value_len);
     return rc;
@@ -921,13 +901,15 @@ ble_att_clt_parse_read_group_type_adata(
     struct os_mbuf **om, int data_len,
     struct ble_att_read_group_type_adata *adata)
 {
+    int rc;
+
     if (data_len < BLE_ATT_READ_GROUP_TYPE_ADATA_BASE_SZ + 1) {
         return BLE_HS_EMSGSIZE;
     }
 
-    *om = os_mbuf_pullup(*om, data_len);
-    if (*om == NULL) {
-        return BLE_HS_ENOMEM;
+    rc = ble_hs_misc_pullup_base(om, data_len);
+    if (rc != 0) {
+        return rc;
     }
 
     adata->att_handle = le16toh((*om)->om_data + 0);
@@ -952,9 +934,9 @@ ble_att_clt_rx_read_group_type(uint16_t conn_handle, struct os_mbuf **rxom)
     struct ble_att_read_group_type_rsp rsp;
     int rc;
 
-    *rxom = os_mbuf_pullup(*rxom, BLE_ATT_READ_GROUP_TYPE_RSP_BASE_SZ);
-    if (*rxom == NULL) {
-        rc = BLE_HS_ENOMEM;
+    rc = ble_hs_misc_pullup_base(rxom,
+                                     BLE_ATT_READ_GROUP_TYPE_RSP_BASE_SZ);
+    if (rc != 0) {
         goto done;
     }
 
@@ -968,7 +950,7 @@ ble_att_clt_rx_read_group_type(uint16_t conn_handle, struct os_mbuf **rxom)
     /* Parse the Attribute Data List field, passing each entry to GATT. */
     while (OS_MBUF_PKTLEN(*rxom) > 0) {
         rc = ble_att_clt_parse_read_group_type_adata(rxom, rsp.bagp_length,
-                                                    &adata);
+                                                     &adata);
         if (rc != 0) {
             goto done;
         }
@@ -1168,32 +1150,32 @@ ble_att_clt_rx_prep_write(uint16_t conn_handle, struct os_mbuf **rxom)
 #endif
 
     struct ble_att_prep_write_cmd rsp;
+    uint16_t value_len;
+    void *value;
     int rc;
 
-    if (OS_MBUF_PKTLEN(*rxom) < BLE_ATT_PREP_WRITE_CMD_BASE_SZ) {
-        rc = BLE_HS_EBADDATA;
-        goto err;
+    /* Initialize some values in case of early error. */
+    memset(&rsp, 0, sizeof rsp);
+    value = NULL;
+    value_len = 0;
+
+    rc = ble_hs_misc_pullup_base(rxom, BLE_ATT_PREP_WRITE_CMD_BASE_SZ);
+    if (rc != 0) {
+        goto done;
     }
 
-    *rxom = os_mbuf_pullup(*rxom, OS_MBUF_PKTLEN(*rxom));
-    if (*rxom == NULL) {
-        rc = BLE_HS_ENOMEM;
-        goto err;
-    }
-
-    rc = ble_att_prep_write_rsp_parse((*rxom)->om_data, (*rxom)->om_len,
-                                      &rsp);
+    rc = ble_att_prep_write_rsp_parse((*rxom)->om_data, (*rxom)->om_len, &rsp);
     assert(rc == 0);
 
     /* Strip the base from the front of the response. */
     os_mbuf_adj(*rxom, BLE_ATT_PREP_WRITE_CMD_BASE_SZ);
 
-    ble_gattc_rx_prep_write_rsp(conn_handle, 0, &rsp, (*rxom)->om_data,
-                                (*rxom)->om_len);
-    return 0;
+    /* Copy the attribute data into the global ATT flat buffer. */
+    rc = ble_att_clt_copy_attr_to_flatbuf(*rxom, &value, &value_len);
 
-err:
-    ble_gattc_rx_prep_write_rsp(conn_handle, rc, NULL, NULL, 0);
+done:
+    /* Notify GATT client that the full response has been parsed. */
+    ble_gattc_rx_prep_write_rsp(conn_handle, rc, &rsp, value, value_len);
     return rc;
 }
 
@@ -1256,10 +1238,8 @@ ble_att_clt_rx_exec_write(uint16_t conn_handle, struct os_mbuf **rxom)
 
     int rc;
 
-    *rxom = os_mbuf_pullup(*rxom, BLE_ATT_EXEC_WRITE_RSP_SZ);
-    if (*rxom == NULL) {
-        rc = BLE_HS_EBADDATA;
-    } else {
+    rc = ble_hs_misc_pullup_base(rxom, BLE_ATT_EXEC_WRITE_RSP_SZ);
+    if (rc == 0) {
         rc = ble_att_exec_write_rsp_parse((*rxom)->om_data, (*rxom)->om_len);
         assert(rc == 0);
     }

@@ -33,6 +33,7 @@
 #endif 
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
+static uint8_t log_inited;
 
 #ifdef SHELL_PRESENT
 struct shell_cmd g_shell_log_cmd;
@@ -42,6 +43,11 @@ int shell_log_dump_all_cmd(int, char **);
 int 
 log_init(void)
 {
+    if (log_inited) {
+        return (0);
+    }
+    log_inited = 1;
+
 #ifdef SHELL_PRESENT 
     shell_cmd_register(&g_shell_log_cmd, "log", shell_log_dump_all_cmd);
 #endif
