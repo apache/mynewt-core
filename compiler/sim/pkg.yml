@@ -17,4 +17,4 @@
 # under the License.
 #
 pkg.name: compiler/sim
-pkg.vers: 0.1
+pkg.vers: 0.8.0

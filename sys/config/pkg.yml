@@ -18,7 +18,7 @@
 #
 
 pkg.name: sys/config
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.deps:
     - libs/util
     - libs/testutil

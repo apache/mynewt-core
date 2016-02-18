@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/baselibc
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.req_caps:
     - console
 pkg.identities:

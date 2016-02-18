@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/hal
-pkg.vers: 0.1 
+pkg.vers: 0.8.0 
 pkg.deps: libs/os
 pkg.deps.NFFS:
     - fs/nffs

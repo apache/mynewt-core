@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/os
-pkg.vers: 0.1 
+pkg.vers: 0.8.0 
 pkg.deps:
     - libs/testutil
 pkg.req_caps:

@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/elua/elua_base
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.cflags: -DLUA_OPTIMIZE_MEMORY=2 -DLUA_CROSS_COMPILER -DLUA_USE_MKSTEMP -DLUA_NUMBER_INTEGRAL -DMYNEWT
 pkg.req_caps:
     - console
