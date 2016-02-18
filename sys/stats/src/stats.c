@@ -45,8 +45,8 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
 {
     char *name;
     char name_buf[12];
-    uint8_t *cur;
-    uint8_t *end;
+    uint16_t cur;
+    uint16_t end;
     int ent_n;
     int len;
     int rc;
@@ -54,8 +54,8 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
     int i;
 #endif
 
-    cur = (uint8_t *) hdr + sizeof(*hdr);
-    end = (uint8_t *) hdr + sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);
+    cur = sizeof(*hdr);
+    end = sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);
 
     while (cur < end) {
         /*
@@ -72,7 +72,7 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
         }
 #endif
         if (name == NULL) {
-            ent_n = (cur - ((uint8_t *) hdr + sizeof(*hdr))) / hdr->s_size;
+            ent_n = (cur - sizeof(*hdr)) / hdr->s_size;
             len = snprintf(name_buf, sizeof(name_buf), "s%d", ent_n);
             name_buf[len] = '\0';
             name = name_buf;

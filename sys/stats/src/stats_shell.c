@@ -36,17 +36,20 @@ struct shell_cmd shell_stats_cmd;
 
 static int 
 stats_shell_display_entry(struct stats_hdr *hdr, void *arg, char *name,
-        uint8_t *stat)
+        uint16_t stat_off)
 {
+    void *stat_val;
+
+    stat_val = (uint8_t *)hdr + stat_off;
     switch (hdr->s_size) {
         case sizeof(uint16_t):
-            console_printf("%s: %u\n", name, *(uint16_t *) stat);
+            console_printf("%s: %u\n", name, *(uint16_t *) stat_val);
             break;
         case sizeof(uint32_t):
-            console_printf("%s: %lu\n", name, *(unsigned long *) stat);
+            console_printf("%s: %lu\n", name, *(unsigned long *) stat_val);
             break;
         case sizeof(uint64_t):
-            console_printf("%s: %llu\n", name, *(uint64_t *) stat);
+            console_printf("%s: %llu\n", name, *(uint64_t *) stat_val);
             break;
         default:
             console_printf("Unknown stat size for %s %u\n", name, 

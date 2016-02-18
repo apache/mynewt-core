@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 struct stats_name_map {
-    void *snm_off;
+    uint16_t snm_off;
     char *snm_name;
 };
 
@@ -80,7 +80,7 @@ STATS_SECT_DECL(__name) {                   \
 struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
 
 #define STATS_NAME(__sectname, __entry)                                     \
-    { &((STATS_SECT_DECL(__sectname) *) NULL)->STATS_SECT_VAR(__entry),     \
+    { offsetof(STATS_SECT_DECL(__sectname), STATS_SECT_VAR(__entry)),       \
       #__entry },
 
 #define STATS_NAME_END(__sectname)                                          \
@@ -109,7 +109,7 @@ int stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
                        char *name);
 
 typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *, 
-        uint8_t *);
+        uint16_t);
 int stats_walk(struct stats_hdr *, stats_walk_func_t, void *);
 
 typedef int (*stats_group_walk_func_t)(struct stats_hdr *, void *);
