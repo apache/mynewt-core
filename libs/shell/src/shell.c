@@ -35,8 +35,9 @@ static void *g_shell_nlip_in_arg;
 
 static struct os_mqueue g_shell_nlip_mq;
 
-#define OS_EVENT_T_CONSOLE_RDY (OS_EVENT_T_PERUSER)
-#define SHELL_HELP_PER_LINE	6
+#define OS_EVENT_T_CONSOLE_RDY  (OS_EVENT_T_PERUSER)
+#define SHELL_HELP_PER_LINE     6
+#define SHELL_MAX_ARGS          20
 
 static struct shell_cmd g_shell_echo_cmd;
 static struct shell_cmd g_shell_help_cmd;
@@ -52,7 +53,7 @@ static struct os_mutex g_shell_cmd_list_lock;
 static char *shell_line;
 static int shell_line_capacity;
 static int shell_line_len;
-static char *argv[20];
+static char *argv[SHELL_MAX_ARGS];
 static uint8_t shell_full_line;
 
 static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list = 
@@ -170,11 +171,14 @@ shell_process_command(char *line, int len)
     tok_ptr = NULL;
     tok = strtok_r(line, " ", &tok_ptr);
     argc = 0;
-    while (tok != NULL) {
+    while (argc < SHELL_MAX_ARGS - 1 && tok != NULL) {
         argv[argc++] = tok;
 
         tok = strtok_r(NULL, " ", &tok_ptr);
     }
+
+    /* Terminate the argument list with a null pointer. */
+    argv[argc] = NULL;
 
     (void) shell_cmd(argv[0], argv, argc);
     
