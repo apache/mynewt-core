@@ -803,7 +803,8 @@ init_tasks(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    ble_ll_init();
+    rc = ble_ll_init();
+    assert(rc == 0);
 
     return 0;
 }
