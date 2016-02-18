@@ -16,12 +16,12 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-egg.name: "hw/bsp/arduino_zero"
-egg.linkerscript: "arduino_zero.ld"
-egg.linkerscript.bootloader.OVERWRITE: "arduino_zero_boot.ld"
-egg.downloadscript: "arduino_zero_download.sh"
-egg.debugscript: "arduino_zero_debug.sh"
-egg.cflags: -mthumb -D__SAMD21G18A__
-egg.deps: 
+pkg.name: "hw/bsp/arduino_zero"
+pkg.linkerscript: "arduino_zero.ld"
+pkg.linkerscript.bootloader.OVERWRITE: "arduino_zero_boot.ld"
+pkg.downloadscript: "arduino_zero_download.sh"
+pkg.debugscript: "arduino_zero_debug.sh"
+pkg.cflags: -mthumb -D__SAMD21G18A__
+pkg.deps: 
     - hw/mcu/atmel/samd21xx
     - libs/cmsis-core

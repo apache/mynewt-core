@@ -1,9 +1,9 @@
-egg.name: "hw/mcu/atmel/samd21xx"
-egg.deps: 
+pkg.name: "hw/mcu/atmel/samd21xx"
+pkg.deps: 
     - hw/hal 
     - libs/cmsis-core
     - compiler/arm-none-eabi-m4
-egg.cflags: -std=c99  
+pkg.cflags: -std=c99  
             -DWDT_CALLBACK_MODE=true 
             -DTC_CALLBACK_MODE=true 
             -DTC_ASYNC=true 
