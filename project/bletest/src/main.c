@@ -110,7 +110,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
 #define BLETEST_CFG_MIN_CE_LEN          (6)    
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
-#define BLETEST_CFG_CONCURRENT_CONNS    (16)
+#define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
@@ -378,9 +378,10 @@ bletest_init_initiator(void)
 void
 bletest_execute_initiator(void)
 {
-//    int i;
+    int i;
     int rc;
     uint16_t handle;
+    uint8_t new_chan_map[5];
 
     /* 
      * Determine if there is an active connection for the current handle
@@ -413,22 +414,33 @@ bletest_execute_initiator(void)
             }
         }
     } else {
-#if 0
         if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-            for (i = 0; i < g_bletest_current_conns; ++i) {
-                if (ble_ll_conn_find_active_conn(i + 1)) {
-                    /* Ask for version information */
-                    host_hci_cmd_read_rssi(i+1);
-                    host_hci_outstanding_opcode = 0;
-
-                    #if 0
-                        bletest_send_conn_update(1);
-                    #endif
-                }   
+            if ((g_bletest_state == 1) || (g_bletest_state == 3)) {
+                for (i = 0; i < g_bletest_current_conns; ++i) {
+                    if (ble_ll_conn_find_active_conn(i + 1)) {
+                        host_hci_cmd_le_rd_chanmap(i+1);
+                        host_hci_outstanding_opcode = 0;
+                    }   
+                }
+            } else if (g_bletest_state == 2) {
+                new_chan_map[0] = 0;
+                new_chan_map[1] = 0x3;
+                new_chan_map[2] = 0;
+                new_chan_map[3] = 0;
+                new_chan_map[4] = 0;
+                host_hci_cmd_le_set_host_chan_class(new_chan_map);
+                host_hci_outstanding_opcode = 0;
+            } else {
+                for (i = 0; i < g_bletest_current_conns; ++i) {
+                    if (ble_ll_conn_find_active_conn(i + 1)) {
+                        host_hci_cmd_read_rssi(i+1);
+                        host_hci_outstanding_opcode = 0;
+                    }   
+                }
             }
+            ++g_bletest_state;
             g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 5;
         }
-#endif
     }
 }
 #endif
