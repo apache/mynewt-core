@@ -57,7 +57,7 @@ shell_conf_command(int argc, char **argv)
         } else {
             val = "Done\n";
         }
-        console_printf(val);
+        console_printf("%s", val);
         return 0;
     }
     if (!val) {
