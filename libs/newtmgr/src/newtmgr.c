@@ -54,8 +54,8 @@ static struct nmgr_group nmgr_def_group;
 static const struct nmgr_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_ECHO] = {nmgr_def_echo, nmgr_def_echo},
     [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo},
-    [NMGR_ID_TASKSTAT] = {nmgr_def_taskstat_read, NULL},
-    [NMGR_ID_MPSTAT] = {nmgr_def_mpstat_read, NULL},
+    [NMGR_ID_TASKSTATS] = {nmgr_def_taskstat_read, NULL},
+    [NMGR_ID_MPSTATS] = {nmgr_def_mpstat_read, NULL},
 };
 
 /* JSON buffer for NMGR task

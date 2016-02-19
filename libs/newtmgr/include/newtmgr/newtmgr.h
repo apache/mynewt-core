@@ -55,8 +55,8 @@
  */
 #define NMGR_ID_ECHO	        0
 #define NMGR_ID_CONS_ECHO_CTRL  1
-#define NMGR_ID_TASKSTAT        2
-#define NMGR_ID_MPSTAT          3
+#define NMGR_ID_TASKSTATS       2
+#define NMGR_ID_MPSTATS         3
 
 struct nmgr_hdr {
     uint8_t nh_op;
