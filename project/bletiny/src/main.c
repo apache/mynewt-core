@@ -117,7 +117,7 @@ static struct os_mempool bletiny_chr_pool;
 static void *bletiny_dsc_mem;
 static struct os_mempool bletiny_dsc_pool;
 
-const char *bletiny_device_name = "runtime-1";
+const char *bletiny_device_name = "nimble-bletiny";
 const uint16_t bletiny_appearance = BSWAP16(BLE_GAP_APPEARANCE_GEN_COMPUTER);
 const uint8_t bletiny_privacy_flag = 0;
 uint8_t bletiny_reconnect_addr[6];
