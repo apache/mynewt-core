@@ -200,3 +200,16 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+This product bundles queue.h 8.5, which is available under the "3-clause BSD"
+license.  For details, see libs/os/include/os/queue.h.
+
+This product bundles baselibc, which is available under the "3-clause BSD"
+license.  For details, see libs/baselibc/.
+
+This product bundles eLua (git tag: git://github.com/elua/elua.git
+be3e050d382c03d253aca3bd4e27e3847d47feba), which is available under the
+MIT license.  For details, see libs/elua/elua_base/.
+
+This product bundles system_stm32f4xx.h 1.1.0, which is available under the
+MCD-ST Liberty SW License Agreement V2.  For details, see
+hw/mcu/stm/stm32f4xx/include/mcu/system_stm32f4xx.h.
