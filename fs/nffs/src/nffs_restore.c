@@ -809,7 +809,7 @@ nffs_restore_detect_one_area(uint8_t flash_id, uint32_t area_offset,
     rc = hal_flash_read(flash_id, area_offset, out_disk_area,
                         sizeof *out_disk_area);
     if (rc != 0) {
-        return FS_HW_ERROR;
+        return FS_EHW;
     }
 
     if (!nffs_area_magic_is_set(out_disk_area)) {

@@ -62,7 +62,7 @@ int fs_dirent_is_dir(const struct fs_dirent *);
  */
 #define FS_EOK                  0       /* OK */
 #define FS_ECORRUPT             1       /* Filesystem corrupt */
-#define FS_HW_ERROR             2       /* Error access storage medium */
+#define FS_EHW                  2       /* Error access storage medium */
 #define FS_ERANGE               3
 #define FS_EINVAL               4
 #define FS_ENOMEM               5       /* out of memory */

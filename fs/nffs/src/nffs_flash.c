@@ -57,7 +57,7 @@ nffs_flash_read(uint8_t area_idx, uint32_t area_offset, void *data,
     rc = hal_flash_read(area->na_flash_id, area->na_offset + area_offset, data,
                         len);
     if (rc != 0) {
-        return FS_HW_ERROR;
+        return FS_EHW;
     }
 
     return 0;
@@ -95,10 +95,10 @@ nffs_flash_write(uint8_t area_idx, uint32_t area_offset, const void *data,
         return FS_ERANGE;
     }
 
-    rc = hal_flash_write(area->na_flash_id, area->na_offset + area_offset, data,
-                         len);
+    rc = hal_flash_write(area->na_flash_id, area->na_offset + area_offset,
+                         data, len);
     if (rc != 0) {
-        return FS_HW_ERROR;
+        return FS_EHW;
     }
 
     area->na_cur = area_offset + len;
