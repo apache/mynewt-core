@@ -200,8 +200,16 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+This product bundles crc16, which is available under the "3-clause BSD"
+license.  For details, see fs/nffs/src/crc16.[ch].
+
 This product bundles queue.h 8.5, which is available under the "3-clause BSD"
 license.  For details, see libs/os/include/os/queue.h.
+
+This product partly derives from FreeBSD, which is available under the
+"3-clause BSD" license.  For details, see:
+    * libs/os/src/os_mbuf.c
+    * libs/util/src/base64.c
 
 This product bundles baselibc, which is available under the "3-clause BSD"
 license.  For details, see libs/baselibc/.
@@ -209,13 +217,79 @@ license.  For details, see libs/baselibc/.
 This product bundles tinyprintf, which is available under the "3-clause BSD"
 license.  For details, see libs/baselibc/tinyprintf.c.
 
+This product bundles microjson, which is available under the "3-clause BSD"
+license.  For details, see libs/json/.
+
+This product bundles and partly derives from parts of the Nordic nRF51 SDK,
+which are available under the Tcl/Tk license.  Relevant files are:
+    * hw/bsp/nrf51dk/boot-nrf51dk.ld
+    * hw/bsp/nrf51dk/nrf51dk.ld
+    * hw/bsp/nrf51dk/nrf51dk_no_boot.ld
+    * hw/bsp/nrf51dk-16kbram/boot-nrf51dk-16kbram.ld
+    * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram.ld
+    * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_no_boot.ld
+
+This product bundles and partly derives from parts of the Nordic nRF52 SDK,
+which are available under the Tcl/Tk license.  Relevant files are:
+    * hw/bsp/nrf52pdk/nrf52pdk.ld
+
+This product bundles Gary S. Brown's CRC32 implementation, which is available under the following license:
+    COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
+    code or tables extracted from it, as desired without restriction.
+
 This product bundles eLua (git tag: git://github.com/elua/elua.git
 be3e050d382c03d253aca3bd4e27e3847d47feba), which is available under the
 MIT license.  For details, see libs/elua/elua_base/.
 
-This product bundles STM32CubeF4 1.5, which is available under the "3-clause
-BSD" For details, see hw/mcu/stm/stm32f4xx/
+This product bundles parts of CMSIS-CORE, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * libs/cmsis-core/.
+    * libs/os/src/arch/cortex_m0/m0/HAL_CM0.s
+    * libs/os/src/arch/cortex_m0/m0/SVC_Table.s
+    * libs/os/src/arch/cortex_m4/m4/HAL_CM4.s
+    * libs/os/src/arch/cortex_m4/m4/SVC_Table.s
 
-This product bundles system_stm32f4xx.h 1.1.0, which is available under the
-MCD-ST Liberty SW License Agreement V2.  For details, see
-hw/mcu/stm/stm32f4xx/include/mcu/system_stm32f4xx.h.
+This product bundles additional files from CMSIS-CORE, but these files lack any
+licensing information.  The BSD license was subsequently added to these files
+in later releases.  These files are:
+    * libs/cmsis-core/src/cmsis_nvic.c
+    * hw/bsp/nrf51dk-16kbram/include/bsp/cmsis_nvic.h
+    * hw/bsp/nrf51dk/include/bsp/cmsis_nvic.h
+    * hw/bsp/nrf52pdk/include/bsp/cmsis_nvic.h
+    * hw/bsp/olimex_stm32-e407_devboard/include/bsp/cmsis_nvic.h
+
+This product bundles parts of STM32CubeF4 1.5, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash_ex.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_gpio.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_rcc.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_uart.c
+    * hw/mcu/stm/stm32f4xx/include/
+    * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/olimex_stm32-e407_devboard/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/olimex_stm32-e407_devboard/src/system_stm32f4xx.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash_ex.c
+    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_gpio.c
+
+This product bundles parts of mbed, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/nordic/nrf52xxx/include/mcu/compiler_abstraction.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/cortex_m4.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf51_to_nrf52.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52832_peripherals.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52_bitfields.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52_hal.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/system_nrf52.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/compiler_abstraction.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51422_peripherals.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51822_peripherals.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51_bitfields.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51_deprecated.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/system_nrf51.h
