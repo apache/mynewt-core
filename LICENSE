@@ -211,8 +211,10 @@ This product partly derives from FreeBSD, which is available under the
     * libs/os/src/os_mbuf.c
     * libs/util/src/base64.c
 
-This product bundles baselibc, which is available under the "3-clause BSD"
-license.  For details, see libs/baselibc/.
+This product bundles baselibc, which is partitioned under the following
+licenses:
+    * 3-clause BSD
+    * 4-clause BSD
 
 This product bundles tinyprintf, which is available under the "3-clause BSD"
 license.  For details, see libs/baselibc/tinyprintf.c.
