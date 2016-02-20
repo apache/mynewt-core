@@ -33,6 +33,7 @@
 
 /* BLE */
 #include "nimble/ble.h"
+#include "nimble/nimble_opt.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
@@ -83,7 +84,7 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(200))
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
-#if NIMBLE_OPT_CENTRAL
+#if NIMBLE_OPT_ROLE_CENTRAL
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
 #define BLETINY_MAX_DSCS               64
