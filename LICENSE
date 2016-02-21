@@ -211,19 +211,21 @@ This product partly derives from FreeBSD, which is available under the
     * libs/os/src/os_mbuf.c
     * libs/util/src/base64.c
 
-This product bundles baselibc, which is partitioned under the following
-licenses:
-    * 3-clause BSD
-    * 4-clause BSD
+This product bundles baselibc, which is available under the "3-clause BSD"
+license. Baselibc bundles tinyprintf and is based on klibc for details see:
+./libs/baselibc/LICENSE
 
 This product bundles tinyprintf, which is available under the "3-clause BSD"
 license.  For details, see libs/baselibc/tinyprintf.c.
+
+This product conatins code based on klibc, which is available under the MIT
+license.  For details, see ./libs/baselibc/LICENSE.
 
 This product bundles microjson, which is available under the "3-clause BSD"
 license.  For details, see libs/json/.
 
 This product bundles and partly derives from parts of the Nordic nRF51 SDK,
-which are available under the Tcl/Tk license.  Relevant files are:
+which are available under a BSD style license.  Relevant files are:
     * hw/bsp/nrf51dk/boot-nrf51dk.ld
     * hw/bsp/nrf51dk/nrf51dk.ld
     * hw/bsp/nrf51dk/nrf51dk_no_boot.ld
@@ -232,16 +234,22 @@ which are available under the Tcl/Tk license.  Relevant files are:
     * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_no_boot.ld
 
 This product bundles and partly derives from parts of the Nordic nRF52 SDK,
-which are available under the Tcl/Tk license.  Relevant files are:
+which are available under a BSD style license.  Relevant files are:
     * hw/bsp/nrf52pdk/nrf52pdk.ld
 
 This product bundles Gary S. Brown's CRC32 implementation, which is available under the following license:
     COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
     code or tables extracted from it, as desired without restriction.
 
-This product bundles eLua (git tag: git://github.com/elua/elua.git
-be3e050d382c03d253aca3bd4e27e3847d47feba), which is available under the
-MIT license.  For details, see libs/elua/elua_base/.
+This product bundles eLua, which is available under the MIT license.
+For details, see libs/elua/elua_base/.
+
+eLua bundles further items which are available under permissive Apache
+compatable licenses (BSD/MIT). For full details see:
+./libs/elua/elua_base/LICENSE
+
+This product bundles Lua-RPC library, which is available under a zlib license.
+for details see ./libs/elua/elua_base/LICENSE.luarpc
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
@@ -251,9 +259,9 @@ This product bundles parts of CMSIS-CORE, which is available under the
     * libs/os/src/arch/cortex_m4/m4/HAL_CM4.s
     * libs/os/src/arch/cortex_m4/m4/SVC_Table.s
 
-This product bundles additional files from CMSIS-CORE, but these files lack any
-licensing information.  The BSD license was subsequently added to these files
-in later releases.  These files are:
+This product bundles additional files from CMSIS-CORE, but these files are
+missing licensing information.  The BSD license was subsequently added to
+these files in later releases.  These files are:
     * libs/cmsis-core/src/cmsis_nvic.c
     * hw/bsp/nrf51dk-16kbram/include/bsp/cmsis_nvic.h
     * hw/bsp/nrf51dk/include/bsp/cmsis_nvic.h
