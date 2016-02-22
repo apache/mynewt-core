@@ -43,9 +43,8 @@ static int nmgr_def_console_echo(struct nmgr_jbuf *);
 
 /* Located in newtmgr_os.c */
 int nmgr_def_taskstat_read(struct nmgr_jbuf *);
-int nmgr_def_taskstat_write(struct nmgr_jbuf *);
 int nmgr_def_mpstat_read(struct nmgr_jbuf *);
-int nmgr_def_mpstat_write(struct nmgr_jbuf *);
+int nmgr_def_logs_read(struct nmgr_jbuf *);
 
 static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.

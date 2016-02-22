@@ -38,21 +38,33 @@ static uint8_t log_inited;
 #ifdef SHELL_PRESENT
 struct shell_cmd g_shell_log_cmd;
 int shell_log_dump_all_cmd(int, char **);
-#endif 
+#endif
 
-int 
+int
 log_init(void)
 {
+    int rc;
+
     if (log_inited) {
         return (0);
     }
     log_inited = 1;
 
-#ifdef SHELL_PRESENT 
+#ifdef SHELL_PRESENT
     shell_cmd_register(&g_shell_log_cmd, "log", shell_log_dump_all_cmd);
 #endif
 
+#ifdef NEWTMGR_PRESENT
+    rc = log_nmgr_register_group();
+    if (rc != 0) {
+        goto err;
+    }
+#endif /* NEWTMGR_PRESENT */
+
     return (0);
+
+err:
+    return (rc);
 }
 
 struct log *

@@ -25,6 +25,9 @@ pkg.deps:
     - libs/testutil
 pkg.deps.SHELL:
     - libs/shell
+pkg.deps.NEWTMGR:
+    - libs/newtmgr
 pkg.req_caps.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT
+pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
