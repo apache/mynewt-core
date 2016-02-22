@@ -1,4 +1,0 @@
-Long term:
-* ECC
-* Compression
-* Encryption
