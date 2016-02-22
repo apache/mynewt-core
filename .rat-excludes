@@ -4,7 +4,6 @@
 # Temporary user files.
 .gdb_history
 .gdb_out
-.gitignore
 tags
 
 # CRC16 - BSD License.
