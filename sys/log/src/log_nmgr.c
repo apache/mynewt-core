@@ -37,7 +37,8 @@ static int log_nmgr_read(struct nmgr_jbuf *njb);
 
 static struct nmgr_group log_nmgr_group;
 
-#define LOGS_NMGR_ID_READ (0)
+#define LOGS_NMGR_ID_READ  (0)
+#define LOGS_NMGR_OP_CLEAR (1)
 
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
