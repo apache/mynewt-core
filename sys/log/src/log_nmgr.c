@@ -44,6 +44,7 @@ static struct nmgr_group log_nmgr_group;
  */
 static struct nmgr_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_ID_READ] = {log_nmgr_read, log_nmgr_read},
+    [LOGS_NMGR_OP_CLEAR] = {NULL, NULL}, /* Stub */
 };
 
 static int
