@@ -1,0 +1,162 @@
+# Can't easily add license to rat-excludes file.
+.rat-excludes
+
+# Temporary user files.
+.gdb_history
+.gdb_out
+.gitignore
+.gitmodules
+tags
+
+# CRC16 - BSD License.
+crc16.*
+
+# Nordic nRF51 SDK - BSD License.
+boot-nrf51dk.ld
+nrf51dk.ld
+nrf51dk_no_boot.ld
+system_nrf51.c
+gcc_startup_nrf51.s
+boot-nrf51dk-16kbram.ld
+nrf51dk-16kbram.ld
+nrf51dk-16kbram_no_boot.ld
+nrf51.h
+nrf51422_peripherals.h
+nrf51822_peripherals.h
+nrf51_bitfields.h
+nrf51_deprecated.h
+system_nrf51.h
+
+# Nordic nRF52 SDK - BSD License.
+nrf52pdk.ld
+system_nrf52.c
+gcc_startup_nrf52.s
+nrf51_to_nrf52.h
+nrf52.h
+nrf52832_peripherals.h
+nrf52_bitfields.h
+system_nrf52.h
+
+# Nordic nRF51 SDK - BSD License.
+# Nordic nRF52 SDK - BSD License.
+compiler_abstraction.h
+nrf.h
+
+# STM32CubeF4  - BSD License.
+stm32f4xx_hal_conf.h
+system_stm32f4xx.c
+startup_STM32F40x.s
+stm32f407xx.h
+stm32f4xx.h
+stm32f4xx_hal.h
+stm32f4xx_hal_adc.h
+stm32f4xx_hal_adc_ex.h
+stm32f4xx_hal_can.h
+stm32f4xx_hal_cec.h
+stm32f4xx_hal_cortex.h
+stm32f4xx_hal_crc.h
+stm32f4xx_hal_cryp.h
+stm32f4xx_hal_cryp_ex.h
+stm32f4xx_hal_dac.h
+stm32f4xx_hal_dac_ex.h
+stm32f4xx_hal_dcmi.h
+stm32f4xx_hal_dcmi_ex.h
+stm32f4xx_hal_def.h
+stm32f4xx_hal_dma.h
+stm32f4xx_hal_dma2d.h
+stm32f4xx_hal_dma_ex.h
+stm32f4xx_hal_eth.h
+stm32f4xx_hal_flash.h
+stm32f4xx_hal_flash_ex.h
+stm32f4xx_hal_flash_ramfunc.h
+stm32f4xx_hal_fmpi2c.h
+stm32f4xx_hal_fmpi2c_ex.h
+stm32f4xx_hal_gpio.h
+stm32f4xx_hal_gpio_ex.h
+stm32f4xx_hal_hash.h
+stm32f4xx_hal_hash_ex.h
+stm32f4xx_hal_hcd.h
+stm32f4xx_hal_i2c.h
+stm32f4xx_hal_i2c_ex.h
+stm32f4xx_hal_i2s.h
+stm32f4xx_hal_i2s_ex.h
+stm32f4xx_hal_irda.h
+stm32f4xx_hal_iwdg.h
+stm32f4xx_hal_ltdc.h
+stm32f4xx_hal_nand.h
+stm32f4xx_hal_nor.h
+stm32f4xx_hal_pccard.h
+stm32f4xx_hal_pcd.h
+stm32f4xx_hal_pcd_ex.h
+stm32f4xx_hal_pwr.h
+stm32f4xx_hal_pwr_ex.h
+stm32f4xx_hal_qspi.h
+stm32f4xx_hal_rcc.h
+stm32f4xx_hal_rcc_ex.h
+stm32f4xx_hal_rng.h
+stm32f4xx_hal_rtc.h
+stm32f4xx_hal_rtc_ex.h
+stm32f4xx_hal_sai.h
+stm32f4xx_hal_sai_ex.h
+stm32f4xx_hal_sd.h
+stm32f4xx_hal_sdram.h
+stm32f4xx_hal_smartcard.h
+stm32f4xx_hal_spdifrx.h
+stm32f4xx_hal_spi.h
+stm32f4xx_hal_sram.h
+stm32f4xx_hal_tim.h
+stm32f4xx_hal_tim_ex.h
+stm32f4xx_hal_uart.h
+stm32f4xx_hal_usart.h
+stm32f4xx_hal_wwdg.h
+stm32f4xx_ll_fmc.h
+stm32f4xx_ll_fsmc.h
+stm32f4xx_ll_sdmmc.h
+stm32f4xx_ll_usb.h
+system_stm32f4xx.h
+stm32f4xx_hal_flash.c
+stm32f4xx_hal_flash_ex.c
+stm32f4xx_hal_gpio.c
+stm32f4xx_hal_rcc.c
+stm32f4xx_hal_uart.c
+
+# baselibc - BSD License.
+# tinyprintf - BSD License.
+# klibc - MIT License.
+baselibc
+
+# eLua - MUT License.
+elua
+
+# CMSIS-CORE - BSD License.
+core_ca9.h
+core_caFunc.h
+core_caInstr.h
+core_ca_mmu.h
+core_cm0.h
+core_cm0plus.h
+core_cm3.h
+core_cm4.h
+core_cm4_simd.h
+core_cmFunc.h
+core_cmInstr.h
+cmsis_nvic.c
+cmsis_nvic.h
+HAL_CM0.s
+HAL_CM4.s
+SVC_Table.s
+
+# microjson - BSD License.
+MSJSON_COPYING
+json_decode.c
+json_encode.c
+
+# queue.h - BSD License.
+queue.h
+
+# FreeBSD - BSD License.
+os_mbuf.c
+base64.c
+
+# crc32.c - Public domain.
+crc32.c
