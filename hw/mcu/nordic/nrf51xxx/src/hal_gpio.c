@@ -316,7 +316,7 @@ hal_gpio_set_nvic(IRQn_Type irqn)
  * @return int  0: no error; -1 otherwise. 
  */
 int
-gpio_init_in(int pin, gpio_pull_t pull)
+hal_gpio_init_in(int pin, gpio_pull_t pull)
 {
     uint32_t conf;
 
@@ -350,7 +350,7 @@ gpio_init_in(int pin, gpio_pull_t pull)
  * 
  * @return int  0: no error; -1 otherwise. 
  */
-int gpio_init_out(int pin, int val)
+int hal_gpio_init_out(int pin, int val)
 {
     if (val) {
         NRF_GPIO->OUTSET = GPIO_MASK(pin);
@@ -369,7 +369,7 @@ int gpio_init_out(int pin, int val)
  * 
  * @param pin 
  */
-void gpio_set(int pin)
+void hal_gpio_set(int pin)
 {
     NRF_GPIO->OUTSET = GPIO_MASK(pin);
 }
@@ -381,7 +381,7 @@ void gpio_set(int pin)
  * 
  * @param pin 
  */
-void gpio_clear(int pin)
+void hal_gpio_clear(int pin)
 {
     NRF_GPIO->OUTCLR = GPIO_MASK(pin);
 }
@@ -394,12 +394,12 @@ void gpio_clear(int pin)
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
-void gpio_write(int pin, int val)
+void hal_gpio_write(int pin, int val)
 {
     if (val) {
-        gpio_set(pin);
+        hal_gpio_set(pin);
     } else {
-        gpio_clear(pin);
+        hal_gpio_clear(pin);
     }
 }
 
@@ -412,7 +412,7 @@ void gpio_write(int pin, int val)
  * 
  * @return int 0: low, 1: high
  */
-int gpio_read(int pin)
+int hal_gpio_read(int pin)
 {
     return (NRF_GPIO->IN & GPIO_MASK(pin));
 }
@@ -424,12 +424,12 @@ int gpio_read(int pin)
  * 
  * @param pin Pin number to toggle
  */
-void gpio_toggle(int pin)
+void hal_gpio_toggle(int pin)
 {
-    if (gpio_read(pin)) {
-        gpio_clear(pin);
+    if (hal_gpio_read(pin)) {
+        hal_gpio_clear(pin);
     } else {
-        gpio_set(pin);
+        hal_gpio_set(pin);
     }
 }
 
@@ -447,8 +447,8 @@ void gpio_toggle(int pin)
  * @return int 
  */
 int
-gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-              gpio_irq_trig_t trig, gpio_pull_t pull)
+hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
+                  gpio_irq_trig_t trig, gpio_pull_t pull)
 {
 #if 0
     int rc;
@@ -525,7 +525,7 @@ gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
  * @param pin 
  */
 void
-gpio_irq_release(int pin)
+hal_gpio_irq_release(int pin)
 {
 #if 0
     int index;
@@ -555,7 +555,7 @@ gpio_irq_release(int pin)
  * @param pin 
  */
 void
-gpio_irq_enable(int pin)
+hal_gpio_irq_enable(int pin)
 {
 #if 0
     uint32_t ctx;
@@ -578,7 +578,7 @@ gpio_irq_enable(int pin)
  * @param pin 
  */
 void
-gpio_irq_disable(int pin)
+hal_gpio_irq_disable(int pin)
 {
 #if 0
     uint32_t ctx;

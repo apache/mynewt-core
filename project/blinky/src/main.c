@@ -80,7 +80,7 @@ task1_handler(void *arg)
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
+    hal_gpio_init_out(g_led_pin, 1);
 
     while (1) {
         t = os_sched_get_current_task();
@@ -92,7 +92,7 @@ task1_handler(void *arg)
         os_time_delay(1000);
 
         /* Toggle the LED */
-        gpio_toggle(g_led_pin);
+        hal_gpio_toggle(g_led_pin);
 
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);

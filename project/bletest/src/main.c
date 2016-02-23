@@ -654,7 +654,7 @@ bletest_execute(void)
 {
     /* Toggle LED at set rate */
     if ((int32_t)(os_time_get() - g_bletest_next_led_time) >= 0) {
-        gpio_toggle(LED_BLINK_PIN);
+        hal_gpio_toggle(LED_BLINK_PIN);
         g_bletest_next_led_time = os_time_get() + g_bletest_led_rate;
     }
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
@@ -891,7 +891,7 @@ main(void)
 
     /* Set the led pin as an output */
     g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
+    hal_gpio_init_out(g_led_pin, 1);
 
     /* Init the console */
     rc = console_init(shell_console_rx_cb);
