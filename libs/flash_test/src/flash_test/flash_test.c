@@ -118,6 +118,13 @@ flash_cli_cmd(int argc, char **argv)
             off += sec_cnt;
         }
         console_printf("Done!\n");
+    } else if ( !strcmp(argv[1], "?") || !strcmp(argv[1], "help"))
+    {
+        console_printf("Commands Available\n");
+        console_printf("flash -- dumps sector map \n");
+        console_printf("flash read <offset> <size> -- reads bytes from flash \n");
+        console_printf("flash write <offset>  <size>  -- writes incrementing data pattern 0-8 to flash \n");
+        console_printf("flash erase <offset> <size> -- erases flash \n");
     }
     return 0;
 err:
