@@ -23,9 +23,13 @@
 
 # Overview
 
-This is the main Apache Mynewt development repository.  It contains the major
-packages that make up the Apache Mynewt Operating System.  These packages are
-contained in the following directories: 
+This is the main Apache Mynewt development repository.  It contains the
+major packages that make up the Apache Mynewt Operating System.  For
+instructions on getting Apache Mynewt up and running, see the Getting
+Started page at: http://mynewt.apache.org/os/get_started/project1/
+
+The packages that make up Apache Mynewt are contained in the following
+directories:
 
 - libs: Contains the core of the RTOS (libs/os) and a number of helper 
 libraries for building applications.  Including a console (libs/console), 
