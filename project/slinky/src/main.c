@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
+#include <flash_test/flash_test.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -273,6 +274,8 @@ main(int argc, char **argv)
 
     stats_module_init();
 
+    flash_test_init();
+    
     rc = init_tasks();
     os_start();
 

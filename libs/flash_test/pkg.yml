@@ -23,6 +23,7 @@ pkg.deps:
     - libs/os
     - libs/util
     - hw/hal
+    - libs/baselibc
 pkg.reqs:
     - console
 pkg.identities:
