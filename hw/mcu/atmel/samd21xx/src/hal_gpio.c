@@ -67,7 +67,7 @@ int valid_pins[GPIO_MAX_PORT + 1] =
 };
 
 
-int gpio_init_out(int pin, int val)
+int hal_gpio_init_out(int pin, int val)
 {
     struct port_config cfg;
     
@@ -89,9 +89,9 @@ int gpio_init_out(int pin, int val)
     port_pin_set_config(pin, &cfg);
     
     if(val) {
-        gpio_set(pin);
+        hal_gpio_set(pin);
     } else {
-        gpio_clear(pin);        
+        hal_gpio_clear(pin);        
     }
         
     return 0;
@@ -104,7 +104,7 @@ int gpio_init_out(int pin, int val)
  * 
  * @param pin 
  */
-void gpio_set(int pin)
+void hal_gpio_set(int pin)
 {
     int port = GPIO_PORT(pin);
     int port_pin = GPIO_PIN(pin);
@@ -122,7 +122,7 @@ void gpio_set(int pin)
  * 
  * @param pin 
  */
-void gpio_clear(int pin)
+void hal_gpio_clear(int pin)
 {
     int port = GPIO_PORT(pin);
     int port_pin = GPIO_PIN(pin);
@@ -142,7 +142,7 @@ void gpio_clear(int pin)
  * 
  * @return int 0: low, 1: high
  */
-int gpio_read(int pin)
+int hal_gpio_read(int pin)
 {
     int rc;
     int port = GPIO_PORT(pin);
@@ -163,12 +163,12 @@ int gpio_read(int pin)
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
-void gpio_write(int pin, int val)
+void hal_gpio_write(int pin, int val)
 {
     if (val) {
-        gpio_set(pin);
+        hal_gpio_set(pin);
     } else {
-        gpio_clear(pin);
+        hal_gpio_clear(pin);
     }
 }
 
@@ -179,11 +179,11 @@ void gpio_write(int pin, int val)
  * 
  * @param pin Pin number to toggle
  */
-void gpio_toggle(int pin)
+void hal_gpio_toggle(int pin)
 {
-    if (gpio_read(pin)) {
-        gpio_clear(pin);
+    if (hal_gpio_read(pin)) {
+        hal_gpio_clear(pin);
     } else {
-        gpio_set(pin);
+        hal_gpio_set(pin);
     }
 }
