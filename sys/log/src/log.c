@@ -43,7 +43,9 @@ int shell_log_dump_all_cmd(int, char **);
 int
 log_init(void)
 {
+#ifdef NEWTMGR_PRESENT
     int rc;
+#endif
 
     if (log_inited) {
         return (0);
@@ -57,14 +59,11 @@ log_init(void)
 #ifdef NEWTMGR_PRESENT
     rc = log_nmgr_register_group();
     if (rc != 0) {
-        goto err;
+        return (rc);
     }
 #endif /* NEWTMGR_PRESENT */
 
     return (0);
-
-err:
-    return (rc);
 }
 
 struct log *
