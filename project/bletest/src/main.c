@@ -96,9 +96,11 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_RANDOM)
+#define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
-#define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
+#define BLETEST_CFG_ADV_ITVL            (600000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
@@ -110,6 +112,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
 #define BLETEST_CFG_MIN_CE_LEN          (6)    
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
+#define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
+#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_RANDOM)
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* BLETEST variables */
@@ -238,6 +242,7 @@ bletest_init_advertising(void)
 {
     int rc;
     uint8_t adv_len;
+    uint8_t rand_addr[BLE_DEV_ADDR_LEN];
     struct hci_adv_params adv;
 
     /* Just zero out advertising */
@@ -247,11 +252,14 @@ bletest_init_advertising(void)
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
     adv.adv_channel_map = 0x07;
     adv.adv_filter_policy = BLETEST_CFG_ADV_FILT_POLICY;
-    adv.own_addr_type = BLE_HCI_ADV_OWN_ADDR_PUBLIC;
-    adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
+    adv.own_addr_type = BLETEST_CFG_ADV_OWN_ADDR_TYPE;
+    adv.peer_addr_type = BLETEST_CFG_ADV_PEER_ADDR_TYPE;
     if ((adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) ||
         (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD)) {
         memcpy(adv.peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
+        if (adv.peer_addr_type == BLE_HCI_ADV_PEER_ADDR_RANDOM) {
+            adv.peer_addr[5] |= 0xc0;
+        }
         adv_len = 0;
     } else {
         adv_len = bletest_set_adv_data(&g_host_adv_data[0]);
@@ -273,6 +281,15 @@ bletest_init_advertising(void)
     rc = host_hci_cmd_le_set_adv_params(&adv);
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
+
+    /* If we are using a random address, we need to set it */
+    if (adv.own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+        memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
+        rand_addr[5] |= 0xc0;
+        rc = host_hci_cmd_le_set_rand_addr(rand_addr);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
+    }
 
     /* Set advertising data */
     if (adv_len != 0) {
@@ -348,6 +365,7 @@ void
 bletest_init_initiator(void)
 {
     int rc;
+    uint8_t rand_addr[BLE_DEV_ADDR_LEN];
     struct hci_create_conn cc;
     struct hci_create_conn *hcc;
 
@@ -360,15 +378,27 @@ bletest_init_initiator(void)
     hcc->supervision_timeout = BLETEST_CFG_CONN_SPVN_TMO;
     hcc->scan_itvl = BLETEST_CFG_SCAN_ITVL;
     hcc->scan_window = BLETEST_CFG_SCAN_WINDOW;
-    hcc->peer_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
+    hcc->peer_addr_type = BLETEST_CFG_CONN_PEER_ADDR_TYPE;
     memcpy(hcc->peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
-    hcc->own_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
+    if (hcc->peer_addr_type == BLE_HCI_CONN_PEER_ADDR_RANDOM) {
+        hcc->peer_addr[5] |= 0xc0;
+    }
+    hcc->own_addr_type = BLETEST_CFG_CONN_OWN_ADDR_TYPE;
     hcc->min_ce_len = BLETEST_CFG_MIN_CE_LEN;
     hcc->max_ce_len = BLETEST_CFG_MAX_CE_LEN;
 
     console_printf("Trying to connect to %x.%x.%x.%x.%x.%x\n",
                    hcc->peer_addr[0], hcc->peer_addr[1], hcc->peer_addr[2],
                    hcc->peer_addr[3], hcc->peer_addr[4], hcc->peer_addr[5]);
+
+    /* If we are using a random address, we need to set it */
+    if (hcc->own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+        memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
+        rand_addr[5] |= 0xc0;
+        rc = host_hci_cmd_le_set_rand_addr(rand_addr);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
+    }
 
     rc = host_hci_cmd_le_create_connection(hcc);
     assert(rc == 0);
