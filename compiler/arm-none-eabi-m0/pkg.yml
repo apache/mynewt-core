@@ -19,3 +19,12 @@
 
 pkg.name: compiler/arm-none-eabi-m0
 pkg.vers: 0.1
+pkg.description: Compiler definition for ARM Cortex-M0 gcc cross compiler.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - arm
+    - compiler
+    - cortex
+    - m0

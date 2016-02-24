@@ -16,5 +16,14 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
 pkg.name: compiler/sim
 pkg.vers: 0.1
+pkg.description: Compiler definition for native gcc compiler.
+pkg.author: sterling <sterling@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - sim
+    - compiler
+    - gcc

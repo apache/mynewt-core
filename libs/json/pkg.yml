@@ -19,4 +19,10 @@
 
 pkg.name: libs/json 
 pkg.vers: 0.1
+pkg.description: JSON encoding / decoding library.
+pkg.author: Sterling Hughes <sterling@apache.org>
+pkg.homepage: http://mynewt.apache.org/os/modules/json/json/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+
 pkg.cflags.float_user: -DFLOAT_SUPPORT

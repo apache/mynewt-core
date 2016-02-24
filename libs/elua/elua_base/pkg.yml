@@ -19,6 +19,17 @@
 
 pkg.name: libs/elua/elua_base
 pkg.vers: 0.1
+pkg.description: Lua interpreter for embedded systems.
+pkg.author: 
+    - Bogdan Marinescu
+    - Dado Sutter
+pkg.homepage: http://www.eluaproject.net/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - lua
+    - scripting
+    - interpreter
+
 pkg.cflags: -DLUA_OPTIMIZE_MEMORY=2 -DLUA_CROSS_COMPILER -DLUA_USE_MKSTEMP -DLUA_NUMBER_INTEGRAL -DMYNEWT
 pkg.req_caps:
     - console

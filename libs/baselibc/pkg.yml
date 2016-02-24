@@ -18,6 +18,13 @@
 #
 
 pkg.name: libs/baselibc
+pkg.description: Simple libc for embedded systems.
+pkg.author: Petteri Aimonen
+pkg.homepage: https://github.com/PetteriAimonen/Baselibc
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - libc
+
 pkg.vers: 0.1
 pkg.req_caps:
     - console

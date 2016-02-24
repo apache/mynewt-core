@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,13 +17,21 @@
 # under the License.
 #
 
-pkg.name: "hw/bsp/nrf52pdk"
-pkg.linkerscript: "nrf52pdk.ld" 
+pkg.name: hw/bsp/nrf52pdk
+pkg.description: BSP definition for the Nordic nRF52 Preview DK SoC.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - nrf52
+    - nrf52dk
+
+pkg.linkerscript: "nrf52pdk.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
 pkg.downloadscript: nrf52pdk_download.sh
 pkg.debugscript: nrf52pdk_debug.sh
 pkg.cflags: -DNRF52
-pkg.deps: 
+pkg.deps:
     - hw/mcu/nordic/nrf52xxx
-pkg.deps.BLE_DEVICE: 
+pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/nrf52

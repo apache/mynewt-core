@@ -18,6 +18,12 @@
 #
 
 pkg.name: hw/hal
+pkg.description: Hardware Abstraction Layer.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+
 pkg.vers: 0.1 
 pkg.deps: libs/os
 pkg.deps.NFFS:

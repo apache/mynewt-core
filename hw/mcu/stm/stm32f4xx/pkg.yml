@@ -17,7 +17,15 @@
 # under the License.
 #
 
-pkg.name: "hw/mcu/stm/stm32f4xx"
+pkg.name: hw/mcu/stm/stm32f4xx
+pkg.description: MCU definition for STM32F4 ARM Cortex-M4 chips.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - stm32
+    - stm32f4
+
 pkg.deps: 
     - hw/hal 
     - libs/cmsis-core 
