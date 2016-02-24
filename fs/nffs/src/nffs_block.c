@@ -209,6 +209,50 @@ nffs_block_delete_from_ram(struct nffs_hash_entry *block_entry)
 }
 
 /**
+ * Determines if a particular block can be found in RAM by following a chain of
+ * previous block pointers, starting with the specified hash entry.
+ *
+ * @param start                 The block entry at which to start the search.
+ * @param sought_id             The ID of the block to search for.
+ *
+ * @return                      0 if the sought after ID was found;
+ *                              FS_ENOENT if the ID was not found;
+ *                              Other FS code on error.
+ */
+int
+nffs_block_find_predecessor(struct nffs_hash_entry *start, uint32_t sought_id)
+{
+    struct nffs_hash_entry *entry;
+    struct nffs_disk_block disk_block;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    entry = start;
+    while (entry != NULL && entry->nhe_id != sought_id) {
+        nffs_flash_loc_expand(entry->nhe_flash_loc, &area_idx, &area_offset);
+        rc = nffs_block_read_disk(area_idx, area_offset, &disk_block);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (disk_block.ndb_prev_id == NFFS_ID_NONE) {
+            entry = NULL;
+        } else {
+            entry = nffs_hash_find(disk_block.ndb_prev_id);
+        }
+    }
+
+    if (entry == NULL) {
+        rc = FS_ENOENT;
+    } else {
+        rc = 0;
+    }
+
+    return rc;
+}
+
+/**
  * Constructs a full data block representation from the specified minimal
  * block entry.  However, the resultant block's pointers are set to null,
  * rather than populated via hash table lookups.  This behavior is useful when

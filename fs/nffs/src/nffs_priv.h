@@ -265,6 +265,8 @@ void nffs_block_delete_list_from_disk(const struct nffs_block *first,
                                       const struct nffs_block *last);
 void nffs_block_to_disk(const struct nffs_block *block,
                         struct nffs_disk_block *out_disk_block);
+int nffs_block_find_predecessor(struct nffs_hash_entry *start,
+                                uint32_t sought_id);
 int nffs_block_from_hash_entry_no_ptrs(struct nffs_block *out_block,
                                        struct nffs_hash_entry *entry);
 int nffs_block_from_hash_entry(struct nffs_block *out_block,
