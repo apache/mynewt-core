@@ -18,7 +18,7 @@
 #
 
 pkg.name: sys/config
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Configuration management for embedded systems.
 pkg.author: Marko Kiiskila <marko@apache.org>
 pkg.homepage:

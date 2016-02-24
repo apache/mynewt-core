@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/shell 
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Command processor for console-based applications.
 pkg.author: Sterling Hughes <sterling@apache.org>
 pkg.homepage: http://mynewt.apache.org/os/modules/shell/shell/

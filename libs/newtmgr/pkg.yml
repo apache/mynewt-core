@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/newtmgr
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Server-side newtmgr functionality.
 pkg.author: Sterling Hughes <sterling@apache.org>
 pkg.homepage:

@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/testreport
-pkg.vers: 0.1 
+pkg.vers: 0.8.0
 pkg.description: Library for recording unit test results to flash.
 pkg.author: Christopher Collins <ccollins@apache.org>
 pkg.homepage:

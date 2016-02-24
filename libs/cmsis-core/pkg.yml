@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/cmsis-core
-pkg.vers: 0.1 
+pkg.vers: 0.8.0
 pkg.description: CMSIS-CORE abstraction layer for Cortex-M processors.
 pkg.author: Keil
 pkg.homepage: http://www.keil.com/pack/doc/CMSIS/Core/html/index.html

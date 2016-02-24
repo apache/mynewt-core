@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/elua/elua_base
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Lua interpreter for embedded systems.
 pkg.author: 
     - Bogdan Marinescu

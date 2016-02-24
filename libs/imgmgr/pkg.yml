@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/imgmgr
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Library for image uploading.
 pkg.author: Marko Kiiskila <marko@runtime.io>
 pkg.homepage: http://mynewt.apache.org/os/modules/imgmgr/imgmgr/

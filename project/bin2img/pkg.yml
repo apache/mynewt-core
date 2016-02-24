@@ -18,7 +18,7 @@
 #
 
 pkg.name: project/bin2img
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Application for wrapping a binary image with a standard header and footer.
 pkg.author: Christopher Collins <ccollins@apache.org>
 pkg.homepage:

@@ -18,7 +18,7 @@
 #
 
 pkg.name: fs/fs
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: File system abstrction.
 pkg.author: Marko Kiiskila <marko@apache.org>
 pkg.homepage: http://mynewt.apache.org/os/modules/filesystem/

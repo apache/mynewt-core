@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/testutil
-pkg.vers: 0.1 
+pkg.vers: 0.8.0
 pkg.description: Support library for implementing unit tests.
 pkg.author: Christopher Collins <ccollins@apache.org>
 pkg.homepage: http://mynewt.apache.org/os/modules/testutil/testutil/

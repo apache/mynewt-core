@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/console/stub
-pkg.vers: 0.1 
+pkg.vers: 0.8.0
 pkg.description: Stub for text-based IO interface.
 pkg.author: Marko Kiiskila <marko@runtime.io>
 pkg.homepage: http://mynewt.apache.org/os/modules/console/console/

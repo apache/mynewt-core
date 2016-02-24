@@ -25,7 +25,7 @@ pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
 pkg.keywords:
     - libc
 
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.req_caps:
     - console
 pkg.identities:

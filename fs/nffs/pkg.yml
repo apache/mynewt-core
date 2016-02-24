@@ -18,7 +18,7 @@
 #
 
 pkg.name: fs/nffs
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Newtron Flash File System.
 pkg.author: Christopher Collins <ccollins@apache.org>
 pkg.homepage: http://mynewt.apache.org/os/modules/nffs/

@@ -18,7 +18,7 @@
 #
 
 pkg.name: project/blinky
-pkg.vers: 0.1
+pkg.vers: 0.8.0
 pkg.description: Basic example application which blinks an LED.
 pkg.author: Marko Kiiskila <marko@runtime.io>
 pkg.homepage: http://mynewt.apache.org/os/get_acclimated/project2/

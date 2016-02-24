@@ -24,7 +24,7 @@ pkg.homepage:
 pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
 pkg.keywords:
 
-pkg.vers: 0.1 
+pkg.vers: 0.8.0
 pkg.deps: libs/os
 pkg.deps.NFFS:
     - fs/nffs

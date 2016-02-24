@@ -18,7 +18,7 @@
 #
 
 pkg.name: libs/os
-pkg.vers: 0.1 
+pkg.vers: 0.8.0
 pkg.description: Mynewt operating system core.
 pkg.author: wes3 <will@runtime.io>
 pkg.homepage: http://mynewt.apache.org/os/core_os/mynewt_os/
