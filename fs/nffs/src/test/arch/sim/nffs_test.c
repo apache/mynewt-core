@@ -182,7 +182,10 @@ nffs_test_util_block_count(const char *filename)
 static void
 nffs_test_util_assert_block_count(const char *filename, int expected_count)
 {
-    TEST_ASSERT(nffs_test_util_block_count(filename) == expected_count);
+    int actual_count;
+
+    actual_count = nffs_test_util_block_count(filename);
+    TEST_ASSERT(actual_count == expected_count);
 }
 
 static void
@@ -2492,6 +2495,7 @@ int
 main(void)
 {
     tu_config.tc_print_results = 1;
+    tu_config.tc_system_assert = 1;
     tu_init();
 
     nffs_test_all();
