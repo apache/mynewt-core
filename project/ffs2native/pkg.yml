@@ -27,6 +27,6 @@ pkg.keywords:
 
 pkg.deps:
     - fs/nffs
-    - libs/os
-    - libs/console/full
     - hw/hal
+    - libs/console/full
+    - libs/os

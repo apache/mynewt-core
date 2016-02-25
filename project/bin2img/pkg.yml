@@ -28,3 +28,4 @@ pkg.keywords:
 pkg.deps:
     - libs/bootutil
     - libs/console/stub
+    - libs/imgmgr

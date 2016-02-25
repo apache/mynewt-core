@@ -17,8 +17,15 @@
 # under the License.
 #
 
-project.name: luatest
-project.pkgs:
+pkg.name: luatest
+pkg.vers: 0.8.0
+pkg.description: Simple project for testing Lua scripting.
+pkg.author: Marko Kiiskila <marko@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+
+pkg.deps:
     - fs/nffs
     - libs/os
     - libs/elua/elua_base

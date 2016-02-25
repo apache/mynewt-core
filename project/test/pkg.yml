@@ -27,7 +27,14 @@ pkg.keywords:
 
 pkg.deps:
     - fs/nffs
-    - libs/testutil
-    - libs/os
     - libs/bootutil
+    - libs/console/full
+    - libs/mbedtls
+    - libs/os
     - libs/testreport
+    - libs/testutil
+    - libs/util
+    - sys/config
+
+pkg.identities:
+    - test

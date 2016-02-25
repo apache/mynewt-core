@@ -28,8 +28,9 @@ pkg.keywords:
 
 pkg.deps:
     - fs/nffs
-    - libs/os
+    - libs/baselibc
     - libs/bootutil
     - libs/console/stub
+    - libs/mbedtls
+    - libs/os
     - libs/util
-    - libs/baselibc
