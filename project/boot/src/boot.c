@@ -25,6 +25,7 @@
 #include <bsp/bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
+#include <log/log.h>
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
@@ -97,6 +98,8 @@ main(void)
     nffs_config.nc_num_blocks = 50;
     nffs_config.nc_num_cache_blocks = 32;
 
+    log_init();
+    
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
 
