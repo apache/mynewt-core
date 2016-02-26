@@ -26,6 +26,7 @@ pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
 pkg.keywords:
     - loader
 
+pkg.identities: bootloader
 pkg.deps:
     - fs/nffs
     - libs/baselibc
