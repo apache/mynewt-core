@@ -215,7 +215,17 @@ nffs_inode_delete_blocks_from_ram(struct nffs_inode_entry *inode_entry)
 
     while (inode_entry->nie_last_block_entry != NULL) {
         rc = nffs_block_delete_from_ram(inode_entry->nie_last_block_entry);
-        if (rc != 0) {
+        if (rc == FS_ECORRUPT) {
+            /* The block references something that does not exist in RAM.  This
+             * is likely because the pointed-to object was in an area that has
+             * been garbage collected.  Terminate the delete procedure and
+             * report success.
+             */
+            /* XXX: This does not inspire confidence; the caller should somehow
+             * indicate that it expects this possibility.
+             */
+            inode_entry->nie_last_block_entry = NULL;
+        } else if (rc != 0) {
             return rc;
         }
     }
