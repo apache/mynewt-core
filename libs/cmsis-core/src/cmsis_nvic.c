@@ -30,7 +30,8 @@
 
 #if (__CORTEX_M == 0) 
     #ifndef __VTOR_PRESENT
-        #error "Macro __VTOR_PRESENT is not defined and must be defined for cortex-M0"
+    /* no VTOR is defined so we assume we can't relocate the vector table */
+    #define __VTOR_PRESENT  (0)
 #endif
 #endif
 
