@@ -27,6 +27,8 @@ SLIST_HEAD(, os_sanity_check) g_os_sanity_check_list =
 
 struct os_mutex g_os_sanity_check_mu; 
 
+int g_os_sanity_num_secs;
+
 struct os_task g_os_sanity_task;
 os_stack_t g_os_sanity_task_stack[OS_STACK_ALIGN(OS_SANITY_STACK_SIZE)];
 
@@ -198,7 +200,7 @@ os_sanity_task_loop(void *arg)
             assert(0);
         }
 
-        os_time_delay(OS_TICKS_PER_SEC); 
+        os_time_delay(g_os_sanity_num_secs); 
     }
 }
 
@@ -208,9 +210,11 @@ os_sanity_task_loop(void *arg)
  * @return 0 on success, error code on failure
  */
 int 
-os_sanity_task_init(void)
+os_sanity_task_init(int num_secs)
 {
     int rc;
+
+    g_os_sanity_num_secs = num_secs * OS_TICKS_PER_SEC;
 
     rc = os_mutex_init(&g_os_sanity_check_mu); 
     if (rc != 0) {

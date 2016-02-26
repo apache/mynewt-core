@@ -346,7 +346,7 @@ os_arch_os_init(void)
     TAILQ_INIT(&g_os_sleep_list);
 
     os_init_idle_task();
-    os_sanity_task_init();
+    os_sanity_task_init(1);
 
     os_bsp_init();
 
