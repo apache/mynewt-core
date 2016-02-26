@@ -35,3 +35,5 @@ pkg.deps:
     - sys/config
     - sys/log
     - sys/stats
+    - libs/baselibc
+    - libs/flash_test    
