@@ -394,6 +394,8 @@ int nffs_inode_from_entry(struct nffs_inode *out_inode,
                           struct nffs_inode_entry *entry);
 int nffs_inode_unlink_from_ram(struct nffs_inode *inode,
                                struct nffs_hash_entry **out_next);
+int nffs_inode_unlink_from_ram_corrupt_ok(struct nffs_inode *inode,
+                                          struct nffs_hash_entry **out_next);
 int nffs_inode_unlink(struct nffs_inode *inode);
 
 /* @misc */

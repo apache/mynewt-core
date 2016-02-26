@@ -37,7 +37,7 @@ uint8_t nffs_flash_buf[NFFS_FLASH_BUF_SZ];
  * @return                      0 on success;
  *                              FS_ERANGE on an attempt to read an invalid
  *                                  address range;
- *                              FS_HW_ERROR on flash error.
+ *                              FS_EHW on flash error.
  */
 int
 nffs_flash_read(uint8_t area_idx, uint32_t area_offset, void *data,

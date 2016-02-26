@@ -179,6 +179,8 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
     uint8_t from_area_idx;
     int rc;
 
+    memset(&last_block, 0, sizeof last_block);
+
     data = malloc(data_len);
     if (data == NULL) {
         rc = FS_ENOMEM;

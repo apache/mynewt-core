@@ -283,8 +283,13 @@ nffs_restore_sweep(void)
                         }
                     }
 
-                    /* Remove the inode and all its children from RAM. */
-                    rc = nffs_inode_unlink_from_ram(&inode, &next);
+                    /* Remove the inode and all its children from RAM.  We
+                     * expect some file system corruption; the children are
+                     * subject to garbage collection and may not exist in the
+                     * hash.  Remove what is actually present and ignore
+                     * corruption errors.
+                     */
+                    rc = nffs_inode_unlink_from_ram_corrupt_ok(&inode, &next);
                     if (rc != 0) {
                         return rc;
                     }

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -215,7 +215,13 @@ nffs_inode_delete_blocks_from_ram(struct nffs_inode_entry *inode_entry)
 
     while (inode_entry->nie_last_block_entry != NULL) {
         rc = nffs_block_delete_from_ram(inode_entry->nie_last_block_entry);
-        if (rc == FS_ECORRUPT) {
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
+    return 0;
+}
             /* The block references something that does not exist in RAM.  This
              * is likely because the pointed-to object was in an area that has
              * been garbage collected.  Terminate the delete procedure and
@@ -224,23 +230,32 @@ nffs_inode_delete_blocks_from_ram(struct nffs_inode_entry *inode_entry)
             /* XXX: This does not inspire confidence; the caller should somehow
              * indicate that it expects this possibility.
              */
-            inode_entry->nie_last_block_entry = NULL;
-        } else if (rc != 0) {
-            return rc;
-        }
-    }
 
-    return 0;
-}
-
+/**
+ * Deletes the specified inode entry from the RAM representation.
+ *
+ * @param inode_entry           The inode entry to delete.
+ * @param ignore_corruption     Whether to proceed, despite file system
+ *                                  corruption errors (0/1).  This should only
+ *                                  be used when the file system is in a known
+ *                                  bad state (e.g., during the sweep phase of
+ *                                  the restore process).  If corruption
+ *                                  detected and ignored, this function deletes
+ *                                  what it can and returns a success code.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
-nffs_inode_delete_from_ram(struct nffs_inode_entry *inode_entry)
+nffs_inode_delete_from_ram(struct nffs_inode_entry *inode_entry,
+                           int ignore_corruption)
 {
     int rc;
 
     if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
         rc = nffs_inode_delete_blocks_from_ram(inode_entry);
-        if (rc != 0) {
+        if (rc == FS_ECORRUPT && ignore_corruption) {
+            inode_entry->nie_last_block_entry = NULL;
+        } else if (rc != 0) {
             return rc;
         }
     }
@@ -267,6 +282,29 @@ nffs_inode_insert_unlink_list(struct nffs_inode_entry *inode_entry)
                       nhe_next);
 }
 
+static int
+nffs_inode_dec_refcnt_priv(struct nffs_inode_entry *inode_entry,
+                           int ignore_corruption)
+{
+    int rc;
+
+    assert(inode_entry->nie_refcnt > 0);
+
+    inode_entry->nie_refcnt--;
+    if (inode_entry->nie_refcnt == 0) {
+        if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
+            rc = nffs_inode_delete_from_ram(inode_entry, ignore_corruption);
+            if (rc != 0) {
+                return rc;
+            }
+        } else {
+            nffs_inode_insert_unlink_list(inode_entry);
+        }
+    }
+
+    return 0;
+}
+
 /**
  * Decrements the reference count of the specified inode entry.
  *
@@ -278,21 +316,8 @@ nffs_inode_dec_refcnt(struct nffs_inode_entry *inode_entry)
 {
     int rc;
 
-    assert(inode_entry->nie_refcnt > 0);
-
-    inode_entry->nie_refcnt--;
-    if (inode_entry->nie_refcnt == 0) {
-        if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
-            rc = nffs_inode_delete_from_ram(inode_entry);
-            if (rc != 0) {
-                return rc;
-            }
-        } else {
-            nffs_inode_insert_unlink_list(inode_entry);
-        }
-    }
-
-    return 0;
+    rc = nffs_inode_dec_refcnt_priv(inode_entry, 0);
+    return rc;
 }
 
 /**
@@ -312,7 +337,8 @@ nffs_inode_dec_refcnt(struct nffs_inode_entry *inode_entry)
  *                                  that should be processed.
  */
 static int
-nffs_inode_process_unlink_list(struct nffs_hash_entry **inout_next)
+nffs_inode_process_unlink_list(struct nffs_hash_entry **inout_next,
+                               int ignore_corruption)
 {
     struct nffs_inode_entry *inode_entry;
     struct nffs_inode_entry *child_next;
@@ -336,7 +362,7 @@ nffs_inode_process_unlink_list(struct nffs_hash_entry **inout_next)
                 *inout_next = &child_next->nie_hash_entry;
             }
 
-            rc = nffs_inode_dec_refcnt(child);
+            rc = nffs_inode_dec_refcnt_priv(child, ignore_corruption);
             if (rc != 0) {
                 return rc;
             }
@@ -861,9 +887,10 @@ nffs_inode_read(struct nffs_inode_entry *inode_entry, uint32_t offset,
     return 0;
 }
 
-int
-nffs_inode_unlink_from_ram(struct nffs_inode *inode,
-                           struct nffs_hash_entry **out_next)
+static int
+nffs_inode_unlink_from_ram_priv(struct nffs_inode *inode,
+                                int ignore_corruption,
+                                struct nffs_hash_entry **out_next)
 {
     int rc;
 
@@ -873,9 +900,10 @@ nffs_inode_unlink_from_ram(struct nffs_inode *inode,
 
     if (nffs_hash_id_is_dir(inode->ni_inode_entry->nie_hash_entry.nhe_id)) {
         nffs_inode_insert_unlink_list(inode->ni_inode_entry);
-        rc = nffs_inode_process_unlink_list(out_next);
+        rc = nffs_inode_process_unlink_list(out_next, ignore_corruption);
     } else {
-        rc = nffs_inode_dec_refcnt(inode->ni_inode_entry);
+        rc = nffs_inode_dec_refcnt_priv(inode->ni_inode_entry,
+                                        ignore_corruption);
     }
     if (rc != 0) {
         return rc;
@@ -883,6 +911,59 @@ nffs_inode_unlink_from_ram(struct nffs_inode *inode,
 
     return 0;
 }
+
+/**
+ * Unlinks the specified inode from the RAM representation.  If this procedure
+ * causes the inode's reference count to drop to zero, the inode is deleted
+ * from RAM.  This function does not write anything to disk.
+ *
+ * @param inode                 The inode to unlink.
+ * @param out_next              This parameter is only necessary if you are
+ *                                  calling this function during an iteration
+ *                                  of the entire hash table; pass null
+ *                                  otherwise.
+ *                              On output, this points to the next hash entry
+ *                                  that should be processed.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nffs_inode_unlink_from_ram(struct nffs_inode *inode,
+                           struct nffs_hash_entry **out_next)
+{
+    int rc;
+
+    rc = nffs_inode_unlink_from_ram_priv(inode, 0, out_next);
+    return rc;
+}
+
+/**
+ * Deletes the specified inode entry from the RAM representation.  If file
+ * system corruption is detected, this function completes as much of the unlink
+ * process as it cam and returns a success code.  This should only be used when
+ * the file system is in a known bad state (e.g., during the sweep phase of the
+ * restore process).
+ *
+ * @param inode_entry           The inode entry to delete.
+ * @param out_next              This parameter is only necessary if you are
+ *                                  calling this function during an iteration
+ *                                  of the entire hash table; pass null
+ *                                  otherwise.
+ *                              On output, this points to the next hash entry
+ *                                  that should be processed.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nffs_inode_unlink_from_ram_corrupt_ok(struct nffs_inode *inode,
+                                      struct nffs_hash_entry **out_next)
+{
+    int rc;
+
+    rc = nffs_inode_unlink_from_ram_priv(inode, 1, out_next);
+    return rc;
+}
+
 
 /**
  * Unlinks the file or directory represented by the specified inode.  If the
