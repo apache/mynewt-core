@@ -60,9 +60,6 @@ os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(448))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
-/* Flash file system sector size */
-#define NFFS_AREA_MAX       (8)
-
 /* Shell maximum input line length */
 #define SHELL_MAX_INPUT_LEN     (256)
 
