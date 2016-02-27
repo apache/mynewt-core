@@ -97,6 +97,33 @@ err:
 }
 
 /**
+ * Provide a "task checkin" for the sanity task.
+ *
+ * @param t The task to check in
+ *
+ * @return 0 on success, error code on failure
+ */
+int 
+os_sanity_task_checkin(struct os_task *t)
+{
+    int rc; 
+
+    if (t == NULL) {
+        t = os_sched_get_current_task();
+    }
+
+    rc = os_sanity_check_reset(&t->t_sanity_check);
+    if (rc != OS_OK) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+
+/**
  * Register a sanity check 
  *
  * @param sc The sanity check to register 

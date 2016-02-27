@@ -56,26 +56,6 @@ os_task_count(void)
     return (g_task_id);
 }
 
-int 
-os_task_sanity_checkin(struct os_task *t)
-{
-    int rc; 
-
-    if (t == NULL) {
-        t = os_sched_get_current_task();
-    }
-
-    rc = os_sanity_check_reset(&t->t_sanity_check);
-    if (rc != OS_OK) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
-
 
 int 
 os_task_init(struct os_task *t, char *name, os_task_func_t func, void *arg, 

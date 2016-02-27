@@ -39,6 +39,8 @@ struct os_sanity_check {
 }; 
 
 int os_sanity_task_init(int);
+struct os_task;
+int os_sanity_task_checkin(struct os_task *);
 
 int os_sanity_check_init(struct os_sanity_check *);
 int os_sanity_check_register(struct os_sanity_check *);

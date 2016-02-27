@@ -95,7 +95,6 @@ struct os_task {
 int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t,
         os_time_t, os_stack_t *, uint16_t);
 
-int os_task_sanity_checkin(struct os_task *);
 uint8_t os_task_count(void);
 
 struct os_task_info {
