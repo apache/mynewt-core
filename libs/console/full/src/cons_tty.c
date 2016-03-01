@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -31,6 +31,14 @@ int console_is_midline;
 #define CONSOLE_TX_BUF_SZ	32	/* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ	128
 
+
+#define CONSOLE_DEL		0x7f	/* del character */
+#define CONSOLE_ESC		0x1b	/* esc character */
+#define CONSOLE_LEFT		'D'     /* esc-[-D emitted when moving left */
+#define CONSOLE_UP		'A'     /* esc-[-A moving up */
+#define CONSOLE_RIGHT		'C'     /* esc-[-C moving right */
+#define CONSOLE_DOWN		'B'     /* esc-[-B moving down */
+
 #define CONSOLE_HEAD_INC(cr)	(((cr)->cr_head + 1) & ((cr)->cr_size - 1))
 #define CONSOLE_TAIL_INC(cr)	(((cr)->cr_tail + 1) & ((cr)->cr_size - 1))
 
@@ -52,6 +60,7 @@ struct console_tty {
     console_rx_cb ct_rx_cb;	/* callback that input is ready */
     console_write_char ct_write_char;
     uint8_t ct_echo_off:1;
+    uint8_t ct_esc_seq:2;
 } console_tty;
 
 static void
@@ -71,11 +80,14 @@ console_pull_char(struct console_ring *cr)
     return ch;
 }
 
-static void
+static int
 console_pull_char_head(struct console_ring *cr)
 {
     if (cr->cr_head != cr->cr_tail) {
         cr->cr_head = (cr->cr_head - 1) & (cr->cr_size - 1);
+        return 0;
+    } else {
+        return -1;
     }
 }
 
@@ -254,21 +266,63 @@ console_rx_char(void *arg, uint8_t data)
             ct->ct_rx_cb(1);
         }
         break;
+    case CONSOLE_ESC:
+        ct->ct_esc_seq = 1;
+        goto out;
+    case '[':
+        if (ct->ct_esc_seq == 1) {
+            ct->ct_esc_seq = 2;
+            goto out;
+        } else {
+            goto queue_char;
+        }
+        break;
+    case CONSOLE_LEFT:
+        if (ct->ct_esc_seq == 2) {
+            goto backspace;
+        } else {
+            goto queue_char;
+        }
+        break;
+    case CONSOLE_UP:
+    case CONSOLE_DOWN:
+        if (ct->ct_esc_seq == 2) {
+            /*
+             * Do nothing.
+             */
+            ct->ct_esc_seq = 0;
+            goto out;
+        }
+        goto queue_char;
+    case CONSOLE_RIGHT:
+        if (ct->ct_esc_seq == 2) {
+            data = ' '; /* add space */
+        }
+        goto queue_char;
     case '\b':
+    case CONSOLE_DEL:
+backspace:
         /*
          * backspace
          */
-        tx_buf[0] = '\b';
-        tx_buf[1] = ' ';
-        tx_buf[2] = '\b';
-        tx_space = 3;
-        console_pull_char_head(rx);
+        ct->ct_esc_seq = 0;
+        if (console_pull_char_head(rx) == 0) {
+            /*
+             * Only wipe out char if we can pull stuff off from head.
+             */
+            tx_buf[0] = '\b';
+            tx_buf[1] = ' ';
+            tx_buf[2] = '\b';
+            tx_space = 3;
+        } else {
+            goto out;
+        }
         break;
     default:
+queue_char:
         tx_buf[0] = data;
         tx_space = 1;
-        if (!ct->ct_echo_off) {
-        }
+        ct->ct_esc_seq = 0;
         console_add_char(rx, data);
         break;
     }
@@ -281,10 +335,11 @@ console_rx_char(void *arg, uint8_t data)
         }
         hal_uart_start_tx(CONSOLE_UART);
     }
+out:
     return 0;
 }
 
-int 
+int
 console_is_init(void)
 {
     return (g_console_is_init);
