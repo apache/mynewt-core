@@ -161,7 +161,7 @@ err:
     return (rc);
 }
 
-static int 
+static int
 shell_process_command(char *line, int len)
 {
     char *tok;
@@ -180,13 +180,14 @@ shell_process_command(char *line, int len)
     /* Terminate the argument list with a null pointer. */
     argv[argc] = NULL;
 
-    (void) shell_cmd(argv[0], argv, argc);
-    
+    if (argc) {
+        (void) shell_cmd(argv[0], argv, argc);
+    }
     return (0);
 }
 
 
-static int 
+static int
 shell_nlip_process(char *data, int len)
 {
     uint16_t copy_len;
@@ -367,7 +368,7 @@ err:
     return (rc);
 }
 
-static int 
+static int
 shell_read_console(void)
 {
     int rc;
@@ -386,7 +387,7 @@ shell_read_console(void)
             shell_line_len = 0;
             shell_full_line = 0;
             if (rc > 2) {
-                if (shell_line[0] == SHELL_NLIP_PKT_START1 && 
+                if (shell_line[0] == SHELL_NLIP_PKT_START1 &&
                         shell_line[1] == SHELL_NLIP_PKT_START2) {
                     if (g_nlip_mbuf) {
                         os_mbuf_free_chain(g_nlip_mbuf);
@@ -395,7 +396,7 @@ shell_read_console(void)
                     g_nlip_expected_len = 0;
 
                     rc = shell_nlip_process(&shell_line[2], rc-2);
-                } else if (shell_line[0] == SHELL_NLIP_DATA_START1 && 
+                } else if (shell_line[0] == SHELL_NLIP_DATA_START1 &&
                         shell_line[1] == SHELL_NLIP_DATA_START2) {
                     rc = shell_nlip_process(&shell_line[2], rc-2);
                 } else {
