@@ -26,7 +26,10 @@ pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
 pkg.keywords:
 
 pkg.deps:
+    - fs/nffs
+    - libs/baselibc
     - libs/console/full
+    - libs/flash_test    
     - libs/imgmgr
     - libs/newtmgr
     - libs/os
@@ -35,5 +38,3 @@ pkg.deps:
     - sys/config
     - sys/log
     - sys/stats
-    - libs/baselibc
-    - libs/flash_test    

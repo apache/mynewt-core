@@ -217,6 +217,8 @@ main(int argc, char **argv)
 {
     int rc;
     int cnt;
+
+    /* NFFS_AREA_MAX is defined in the BSP-specified bsp.h header file. */
     struct nffs_area_desc descs[NFFS_AREA_MAX];
 
 #ifdef ARCH_sim
@@ -253,13 +255,20 @@ main(int argc, char **argv)
     rc = hal_flash_init();
     assert(rc == 0);
 
+    /* Initialize nffs's internal state. */
     rc = nffs_init();
     assert(rc == 0);
 
+    /* Convert the set of flash blocks we intend to use for nffs into an array
+     * of nffs area descriptors.
+     */
     cnt = NFFS_AREA_MAX;
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
     assert(rc == 0);
+
+    /* Attempt to restore an existing nffs file system from flash. */
     if (nffs_detect(descs) == FS_ECORRUPT) {
+        /* No valid nffs instance detected; format a new one. */
         rc = nffs_format(descs);
         assert(rc == 0);
     }

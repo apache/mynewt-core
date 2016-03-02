@@ -407,6 +407,7 @@ int nffs_misc_validate_scratch(void);
 int nffs_misc_create_lost_found_dir(void);
 int nffs_misc_set_max_block_data_len(uint16_t min_data_len);
 int nffs_misc_reset(void);
+int nffs_misc_ready(void);
 
 /* @path */
 int nffs_path_parse_next(struct nffs_path_parser *parser);

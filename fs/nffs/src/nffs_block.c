@@ -53,7 +53,7 @@ nffs_block_entry_free(struct nffs_hash_entry *entry)
  * @param out_disk_block        On success, the block header is writteh here.
  *
  * @return                      0 on success;
- *                              FS_ERANGE on an attempt to read an invalid
+ *                              FS_EOFFSET on an attempt to read an invalid
  *                                  address range;
  *                              FS_EHW on flash error;
  *                              FS_EUNEXP if the specified disk location does
@@ -331,7 +331,7 @@ nffs_block_from_hash_entry_no_ptrs(struct nffs_block *out_block,
  * @return                      0 on success;
  *                              FS_ECORRUPT if one or more pointers could not
  *                                  be filled in due to file system corruption;
- *                              FS_ERANGE on an attempt to read an invalid
+ *                              FS_EOFFSET on an attempt to read an invalid
  *                                  address range;
  *                              FS_EHW on flash error;
  *                              FS_EUNEXP if the specified disk location does

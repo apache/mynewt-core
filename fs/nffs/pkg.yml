@@ -30,8 +30,8 @@ pkg.keywords:
 
 pkg.identities: NFFS
 pkg.deps:
-    - sys/log
     - fs/fs
+    - hw/hal
     - libs/os
     - libs/testutil
-    - hw/hal
+    - sys/log

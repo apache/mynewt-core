@@ -353,3 +353,15 @@ nffs_misc_reset(void)
 
     return 0;
 }
+
+/**
+ * Indicates whether a valid filesystem has been initialized, either via
+ * detection or formatting.
+ *
+ * @return                  1 if a file system is present; 0 otherwise.
+ */
+int
+nffs_misc_ready(void)
+{
+    return nffs_root_dir != NULL;
+}

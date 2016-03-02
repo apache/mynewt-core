@@ -758,7 +758,7 @@ nffs_inode_seek(struct nffs_inode_entry *inode_entry, uint32_t offset,
     }
 
     if (offset > cache_inode->nci_file_size) {
-        return FS_ERANGE;
+        return FS_EOFFSET;
     }
     if (offset == cache_inode->nci_file_size) {
         memset(&out_seek_info->nsi_last_block, 0,

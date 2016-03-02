@@ -840,7 +840,7 @@ nffs_restore_area_contents(int area_idx)
             break;
 
         case FS_EEMPTY:
-        case FS_ERANGE:
+        case FS_EOFFSET:
             /* End of disk encountered; area fully restored. */
             return 0;
 

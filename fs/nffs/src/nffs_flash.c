@@ -35,7 +35,7 @@ uint8_t nffs_flash_buf[NFFS_FLASH_BUF_SZ];
  * @param len                   The number of bytes to read.
  *
  * @return                      0 on success;
- *                              FS_ERANGE on an attempt to read an invalid
+ *                              FS_EOFFSET on an attempt to read an invalid
  *                                  address range;
  *                              FS_EHW on flash error.
  */
@@ -51,7 +51,7 @@ nffs_flash_read(uint8_t area_idx, uint32_t area_offset, void *data,
     area = nffs_areas + area_idx;
 
     if (area_offset + len > area->na_length) {
-        return FS_ERANGE;
+        return FS_EOFFSET;
     }
 
     rc = hal_flash_read(area->na_flash_id, area->na_offset + area_offset, data,
@@ -72,7 +72,7 @@ nffs_flash_read(uint8_t area_idx, uint32_t area_offset, void *data,
  * @param len                   The number of bytes to write.
  *
  * @return                      0 on success;
- *                              FS_ERANGE on an attempt to write to an
+ *                              FS_EOFFSET on an attempt to write to an
  *                                  invalid address range, or on an attempt to
  *                                  perform a non-strictly-sequential write;
  *                              FS_EFLASH_ERROR on flash error.
@@ -88,11 +88,11 @@ nffs_flash_write(uint8_t area_idx, uint32_t area_offset, const void *data,
     area = nffs_areas + area_idx;
 
     if (area_offset + len > area->na_length) {
-        return FS_ERANGE;
+        return FS_EOFFSET;
     }
 
     if (area_offset < area->na_cur) {
-        return FS_ERANGE;
+        return FS_EOFFSET;
     }
 
     rc = hal_flash_write(area->na_flash_id, area->na_offset + area_offset,
