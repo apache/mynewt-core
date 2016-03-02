@@ -31,8 +31,12 @@
 #include <shell/shell.h>
 #include <console/console.h>
 
+static int shell_stats_display(int argc, char **argv);
+static struct shell_cmd shell_stats_cmd = {
+    .sc_cmd = "stat",
+    .sc_cmd_func = shell_stats_display
+};
 uint8_t stats_shell_registered;
-struct shell_cmd shell_stats_cmd;
 
 static int 
 stats_shell_display_entry(struct stats_hdr *hdr, void *arg, char *name,
@@ -67,7 +71,7 @@ stats_shell_display_group(struct stats_hdr *hdr, void *arg)
     return (0);
 }
 
-static int 
+static int
 shell_stats_display(int argc, char **argv)
 {
     struct stats_hdr *hdr;
@@ -106,7 +110,7 @@ stats_shell_register(void)
 {
     if (!stats_shell_registered) {
         stats_shell_registered = 1;
-        shell_cmd_register(&shell_stats_cmd, "stat", shell_stats_display);
+        shell_cmd_register(&shell_stats_cmd);
     }
 
     return (0);

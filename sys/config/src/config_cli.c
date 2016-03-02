@@ -28,7 +28,12 @@
 #include <shell/shell.h>
 #include <console/console.h>
 
-static struct shell_cmd shell_conf_cmd;
+static int shell_conf_command(int argc, char **argv);
+
+static struct shell_cmd shell_conf_cmd = {
+    .sc_cmd = "config",
+    .sc_cmd_func = shell_conf_command
+};
 
 static int
 shell_conf_command(int argc, char **argv)
@@ -83,7 +88,7 @@ err:
 int
 conf_cli_register(void)
 {
-    return shell_cmd_register(&shell_conf_cmd, "config", shell_conf_command);
+    return shell_cmd_register(&shell_conf_cmd);
 }
 #endif
 

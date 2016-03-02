@@ -22,7 +22,8 @@
 #include "os/queue.h"
 
 #include "console/console.h"
-#include "shell/shell.h" 
+#include "shell/shell.h"
+#include "shell_priv.h"
 
 #include <string.h>
 

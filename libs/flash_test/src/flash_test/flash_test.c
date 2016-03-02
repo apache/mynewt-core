@@ -25,7 +25,11 @@
 #include <shell/shell.h>
 #include <stdio.h>
 
-static struct shell_cmd flash_cmd_struct;
+static int flash_cli_cmd(int argc, char **argv);
+static struct shell_cmd flash_cmd_struct = {
+    .sc_cmd = "flash",
+    .sc_cmd_func = flash_cli_cmd
+};
 
 static int
 flash_cli_cmd(int argc, char **argv)
@@ -144,6 +148,6 @@ err:
 
 int
 flash_test_init(void) {
-    shell_cmd_register(&flash_cmd_struct, "flash", flash_cli_cmd);
+    shell_cmd_register(&flash_cmd_struct);
     return 0;
 }

@@ -16,31 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __SHELL_H__
-#define __SHELL_H__
 
-#include <os/os.h>
+#ifndef __SHELL_PRIV_H_
+#define __SHELL_PRIV_H_
 
-typedef int (*shell_cmd_func_t)(int argc, char **argv);
-struct shell_cmd {
-    char *sc_cmd;
-    shell_cmd_func_t sc_cmd_func;
-    STAILQ_ENTRY(shell_cmd) sc_next;
-};
+int shell_os_tasks_display_cmd(int argc, char **argv);
+int shell_os_mpool_display_cmd(int argc, char **argv);
 
-int shell_cmd_register(struct shell_cmd *sc);
-
-#define SHELL_NLIP_PKT_START1 (6)
-#define SHELL_NLIP_PKT_START2 (9)
-#define SHELL_NLIP_DATA_START1 (4)
-#define SHELL_NLIP_DATA_START2 (20)
-
-typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
-int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
-int shell_nlip_output(struct os_mbuf *m);
-
-void shell_console_rx_cb(int full_line);
-int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
-                    int max_input_length);
-
-#endif /* __SHELL_H__ */
+#endif /* __SHELL_PRIV_H_ */

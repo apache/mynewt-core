@@ -22,7 +22,12 @@
 #ifdef MYNEWT
 
 #ifdef SHELL_PRESENT
-static struct shell_cmd lua_shell_cmd;
+static int lua_cmd(int argc, char **argv);
+
+static struct shell_cmd lua_shell_cmd = {
+    .sc_cmd = "lua",
+    .sc_cmd_func = lua_cmd
+};
 
 static int
 lua_cmd(int argc, char **argv)
@@ -36,7 +41,7 @@ int
 lua_init(void)
 {
 #ifdef SHELL_PRESENT
-    return shell_cmd_register(&lua_shell_cmd, "lua", lua_cmd);
+    return shell_cmd_register(&lua_shell_cmd);
 #else
     return 0;
 #endif

@@ -27,10 +27,27 @@
 
 #include "fs/fs.h"
 
-static struct shell_cmd fs_ls_struct;
-static struct shell_cmd fs_rm_struct;
-static struct shell_cmd fs_mkdir_struct;
-static struct shell_cmd fs_mv_struct;
+static int fs_ls_cmd(int argc, char **argv);
+static int fs_rm_cmd(int argc, char **argv);
+static int fs_mkdir_cmd(int argc, char **argv);
+static int fs_mv_cmd(int argc, char **argv);
+
+static struct shell_cmd fs_ls_struct = {
+    .sc_cmd = "ls",
+    .sc_cmd_func = fs_ls_cmd
+};
+static struct shell_cmd fs_rm_struct = {
+    .sc_cmd = "rm",
+    .sc_cmd_func = fs_rm_cmd
+};
+static struct shell_cmd fs_mkdir_struct = {
+    .sc_cmd = "mkdir",
+    .sc_cmd_func = fs_mkdir_cmd
+};
+static struct shell_cmd fs_mv_struct = {
+    .sc_cmd = "mv",
+    .sc_cmd_func = fs_mv_cmd
+};
 
 static void
 fs_ls_file(const char *name, struct fs_file *file)
@@ -166,9 +183,9 @@ out:
 void
 fs_cli_init(void)
 {
-    shell_cmd_register(&fs_ls_struct, "ls", fs_ls_cmd);
-    shell_cmd_register(&fs_rm_struct, "rm", fs_rm_cmd);
-    shell_cmd_register(&fs_mkdir_struct, "mkdir", fs_mkdir_cmd);
-    shell_cmd_register(&fs_mv_struct, "mv", fs_mv_cmd);
+    shell_cmd_register(&fs_ls_struct);
+    shell_cmd_register(&fs_rm_struct);
+    shell_cmd_register(&fs_mkdir_struct);
+    shell_cmd_register(&fs_mv_struct);
 }
 #endif /* SHELL_PRESENT */
