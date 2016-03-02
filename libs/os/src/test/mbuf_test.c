@@ -23,10 +23,14 @@
 
 #include <string.h>
 
-#define MBUF_TEST_POOL_BUF_SIZE (256)
-#define MBUF_TEST_POOL_BUF_COUNT (10)
+/* 
+ * NOTE: currently, the buffer size cannot be changed as some tests are
+ * hard-coded for this size.
+ */
+#define MBUF_TEST_POOL_BUF_SIZE     (256)
+#define MBUF_TEST_POOL_BUF_COUNT    (10)
 
-#define MBUF_TEST_DATA_LEN      (1024)
+#define MBUF_TEST_DATA_LEN          (1024)
 
 static os_membuf_t os_mbuf_membuf[OS_MEMPOOL_SIZE(MBUF_TEST_POOL_BUF_SIZE,
         MBUF_TEST_POOL_BUF_COUNT)];
@@ -105,6 +109,22 @@ TEST_CASE(os_mbuf_test_alloc)
     rc = os_mbuf_free(m);
     TEST_ASSERT_FATAL(rc == 0, "Error free'ing mbuf %d", rc);
 }
+
+TEST_CASE(os_mbuf_test_get_pkthdr)
+{
+    struct os_mbuf *m;
+ 
+    os_mbuf_test_setup();
+
+#if (MBUF_TEST_POOL_BUF_SIZE <= 256)
+    m = os_mbuf_get_pkthdr(&os_mbuf_pool, MBUF_TEST_POOL_BUF_SIZE - 1);
+    TEST_ASSERT_FATAL(m == NULL, "Error: should not have returned mbuf");
+#endif
+
+    m = os_mbuf_get(&os_mbuf_pool, MBUF_TEST_POOL_BUF_SIZE);
+    TEST_ASSERT_FATAL(m == NULL, "Error: should not have returned mbuf");
+}
+
 
 TEST_CASE(os_mbuf_test_dup)
 {
@@ -396,4 +416,5 @@ TEST_SUITE(os_mbuf_test_suite)
     os_mbuf_test_pullup();
     os_mbuf_test_extend();
     os_mbuf_test_adj();
+    os_mbuf_test_get_pkthdr();
 }
