@@ -28,10 +28,6 @@
 #define OS_TASK_PRI_HIGHEST (0)
 #define OS_TASK_PRI_LOWEST  (0xff)
 
-#ifndef OS_TASK_NAME_SIZE
-#define OS_TASK_NAME_SIZE (36) 
-#endif 
-
 /* 
  * Generic "object" structure. All objects that a task can wait on must
  * have a SLIST_HEAD(, os_task) head_name as the first element in the object 
@@ -50,9 +46,9 @@ typedef enum os_task_state {
 } os_task_state_t;
 
 /* Task flags */
-#define OS_TASK_FLAG_NO_TIMEOUT     (0x0001U)
-#define OS_TASK_FLAG_SEM_WAIT       (0x0002U)
-#define OS_TASK_FLAG_MUTEX_WAIT     (0x0004U)
+#define OS_TASK_FLAG_NO_TIMEOUT     (0x01U)
+#define OS_TASK_FLAG_SEM_WAIT       (0x02U)
+#define OS_TASK_FLAG_MUTEX_WAIT     (0x04U)
 
 typedef void (*os_task_func_t)(void *);
 
@@ -63,12 +59,12 @@ struct os_task {
     os_stack_t *t_stacktop;
     
     uint16_t t_stacksize;
-    uint16_t t_flags;
+    uint16_t t_pad;
 
     uint8_t t_taskid;
     uint8_t t_prio;
     uint8_t t_state;
-    uint8_t t_pad;
+    uint8_t t_flags;
 
     char *t_name;
     os_task_func_t t_func;
@@ -101,9 +97,7 @@ struct os_task_info {
     uint8_t oti_prio;
     uint8_t oti_taskid;
     uint8_t oti_state;
-    uint8_t oti_pad1;
-    uint8_t oti_pad2;
-    uint16_t oti_flags;
+    uint8_t oti_flags;
     uint16_t oti_stkusage;
     uint16_t oti_stksize;
     uint32_t oti_cswcnt;
