@@ -30,8 +30,6 @@ fi
 
 IS_BOOTLOADER=0
 BASENAME=$1
-BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
-VER=11.22.33.0
 #JLINK_SCRIPT=.download.jlink
 GDB_CMD_FILE=.gdb_cmds
 
@@ -49,16 +47,7 @@ if [ $IS_BOOTLOADER -eq 1 ]; then
     FILE_NAME=$BASENAME.elf.bin
 else
     FLASH_OFFSET=0x7000
-    ELF_FILE=$BASENAME.elf
-    BIN_FILE=$BASENAME.elf.bin
     FILE_NAME=$BASENAME.img
-    if [ \! -f $FILE_NAME -o $FILE_NAME -ot $ELF_FILE ]; then
-        echo "Version is >" $VER "<"
-        $BIN2IMG $BASENAME.elf.bin $FILE_NAME $VER
-        if [ "$?" -ne 0 ]; then
-	    exit 1
-	fi
-    fi
 fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
