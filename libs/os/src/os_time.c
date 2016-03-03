@@ -22,7 +22,7 @@
 
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
-os_time_t g_os_time = 0;
+os_time_t g_os_time;
 
 /*
  * Time-of-day collateral.
