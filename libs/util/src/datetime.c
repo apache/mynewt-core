@@ -221,6 +221,15 @@ parse_number(const char *str, int digits, int *val)
     return (end);
 }
 
+/*
+ * Parse the datetime string in RFC 3339 format. Some examples of valid
+ * datetime strings are:
+ * 2016-03-02T22:44:00                  UTC time (implicit)
+ * 2016-03-02T22:44:00Z                 UTC time (explicit)
+ * 2016-03-02T22:44:00-08:00            PST timezone
+ * 2016-03-02T22:44:00.1                fractional seconds
+ * 2016-03-02T22:44:00.101+05:30        fractional seconds with timezone
+ */
 int
 parse_datetime(const char *input, struct os_timeval *tv, struct os_timezone *tz)
 {
