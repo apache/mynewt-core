@@ -18,6 +18,7 @@
 #
 
 pkg.name: hw/bsp/native
+pkg.vers: 0.8.0
 pkg.description: BSP definition for native (amd64) applications.
 pkg.author: Christopher Collins <ccollins@apache.org>
 pkg.homepage:

@@ -18,6 +18,7 @@
 #
 
 pkg.name: hw/bsp/nrf51dk-16kbram
+pkg.vers: 0.8.0
 pkg.description: BSP definition for a Nordic nRF51 DK SoC with 16kB RAM.
 pkg.author: Christopher Collins <chris@apache.org>
 pkg.homepage:

@@ -18,6 +18,7 @@
 #
 
 pkg.name: hw/mcu/stm/stm32f4xx
+pkg.vers: 0.8.0
 pkg.description: MCU definition for STM32F4 ARM Cortex-M4 chips.
 pkg.author: wes3 <will@runtime.io>
 pkg.homepage:

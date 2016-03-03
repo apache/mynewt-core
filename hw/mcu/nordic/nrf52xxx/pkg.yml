@@ -18,6 +18,7 @@
 #
 
 pkg.name: hw/mcu/nordic/nrf52xxx
+pkg.vers: 0.8.0
 pkg.description: MCU definition for Nordic nRF52 ARM Cortex-M4 chips.
 pkg.author: wes3 <will@runtime.io>
 pkg.homepage:
