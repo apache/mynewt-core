@@ -20,7 +20,30 @@
 #include "os/os.h"
 #include "os/queue.h"
 
+#define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
+
 os_time_t g_os_time = 0;
+
+/*
+ * Time-of-day collateral.
+ */
+static struct {
+    os_time_t ostime;
+    struct os_timeval uptime;
+    struct os_timeval utctime;
+    struct os_timezone timezone;
+} basetod;
+
+static void
+os_deltatime(os_time_t delta, const struct os_timeval *base,
+    struct os_timeval *result)
+{
+    struct os_timeval tvdelta;
+
+    tvdelta.tv_sec = delta / OS_TICKS_PER_SEC;
+    tvdelta.tv_usec = (delta % OS_TICKS_PER_SEC) * OS_USEC_PER_TICK;
+    os_timeradd(base, &tvdelta, result);
+}
 
 os_time_t  
 os_time_get(void)
@@ -37,9 +60,21 @@ void
 os_time_tick(void)
 {
     os_sr_t sr;
+    os_time_t delta;
 
     OS_ENTER_CRITICAL(sr);
     ++g_os_time;
+
+    /*
+     * Update 'basetod' when the lowest 31 bits of 'g_os_time' are all zero,
+     * i.e. at 0x00000000 and 0x80000000.
+     */
+    if ((g_os_time << 1) == 0) {        /* XXX use __unlikely() here */
+        delta = g_os_time - basetod.ostime;
+        os_deltatime(delta, &basetod.uptime, &basetod.uptime);
+        os_deltatime(delta, &basetod.utctime, &basetod.utctime);
+        basetod.ostime = g_os_time;
+    }
     OS_EXIT_CRITICAL(sr);
 }
 
@@ -60,4 +95,49 @@ os_time_delay(int32_t osticks)
         OS_EXIT_CRITICAL(sr);
         os_sched(NULL, 0);
     }
+}
+
+int
+os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz)
+{
+    os_sr_t sr;
+    os_time_t delta;
+
+    OS_ENTER_CRITICAL(sr);
+    if (utctime != NULL) {
+        /*
+         * Update all time-of-day base values.
+         */
+        delta = os_time_get() - basetod.ostime;
+        os_deltatime(delta, &basetod.uptime, &basetod.uptime);
+        basetod.utctime = *utctime;
+        basetod.ostime += delta;
+    }
+
+    if (tz != NULL) {
+        basetod.timezone = *tz;
+    }
+    OS_EXIT_CRITICAL(sr);
+
+    return (0);
+}
+
+int
+os_gettimeofday(struct os_timeval *tv, struct os_timezone *tz)
+{
+    os_sr_t sr;
+    os_time_t delta;
+
+    OS_ENTER_CRITICAL(sr);
+    if (tv != NULL) {
+        delta = os_time_get() - basetod.ostime;
+        os_deltatime(delta, &basetod.utctime, tv);
+    }
+
+    if (tz != NULL) {
+        *tz = basetod.timezone;
+    }
+    OS_EXIT_CRITICAL(sr);
+
+    return (0);
 }
