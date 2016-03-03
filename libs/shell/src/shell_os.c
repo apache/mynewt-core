@@ -20,12 +20,15 @@
 #include "os/os.h"
 
 #include "os/queue.h"
+#include "os/os_time.h"
 
 #include "console/console.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
+#include <assert.h>
 #include <string.h>
+#include <util/datetime.h>
 
 int 
 shell_os_tasks_display_cmd(int argc, char **argv)
@@ -118,4 +121,36 @@ shell_os_mpool_display_cmd(int argc, char **argv)
     }
 
     return (0);
+}
+
+int
+shell_os_date_cmd(int argc, char **argv)
+{
+    struct os_timeval tv;
+    struct os_timezone tz;
+    char buf[DATETIME_BUFSIZE];
+    int rc;
+
+    argc--; argv++;     /* skip command name */
+
+    if (argc == 0) {
+        /* Display the current datetime */
+        rc = os_gettimeofday(&tv, &tz);
+        assert(rc == 0);
+        rc = format_datetime(&tv, &tz, buf, sizeof(buf));
+        assert(rc == 0);
+        console_printf("%s\n", buf);
+    } else if (argc == 1) {
+        /* Set the current datetime */
+        rc = parse_datetime(*argv, &tv, &tz);
+        if (rc == 0) {
+            rc = os_settimeofday(&tv, &tz);
+        } else {
+            console_printf("Invalid datetime\n");
+        }
+    } else {
+        rc = -1;
+    }
+
+    return (rc);
 }

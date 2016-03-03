@@ -22,5 +22,6 @@
 
 int shell_os_tasks_display_cmd(int argc, char **argv);
 int shell_os_mpool_display_cmd(int argc, char **argv);
+int shell_os_date_cmd(int argc, char **argv);
 
 #endif /* __SHELL_PRIV_H_ */

@@ -60,6 +60,10 @@ static struct shell_cmd g_shell_os_mpool_display_cmd = {
     .sc_cmd = "mempools",
     .sc_cmd_func = shell_os_mpool_display_cmd
 };
+static struct shell_cmd g_shell_os_date_cmd = {
+    .sc_cmd = "date",
+    .sc_cmd_func = shell_os_date_cmd
+};
 
 static struct os_task shell_task;
 static struct os_eventq shell_evq;
@@ -549,6 +553,11 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
     }
 
     rc = shell_cmd_register(&g_shell_os_mpool_display_cmd);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = shell_cmd_register(&g_shell_os_date_cmd);
     if (rc != 0) {
         goto err;
     }
