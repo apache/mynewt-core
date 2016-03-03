@@ -305,3 +305,4 @@ This product bundles parts of mbed, which is available under the
     * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51_bitfields.h
     * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51_deprecated.h
     * hw/mcu/nordic/nrf51xxx/include/mcu/system_nrf51.h
+
