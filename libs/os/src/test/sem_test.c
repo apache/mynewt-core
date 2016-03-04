@@ -126,7 +126,6 @@ sem_test_basic_handler(void *arg)
 
     /* Test some error cases */
     TEST_ASSERT(os_sem_init(NULL, 1)    == OS_INVALID_PARM);
-    TEST_ASSERT(os_sem_delete(NULL)     == OS_INVALID_PARM);
     TEST_ASSERT(os_sem_release(NULL)    == OS_INVALID_PARM);
     TEST_ASSERT(os_sem_pend(NULL, 1)    == OS_INVALID_PARM);
 
@@ -173,18 +172,6 @@ sem_test_basic_handler(void *arg)
     /* Check semaphore internals */
     TEST_ASSERT(sem->sem_tokens == 2 && SLIST_EMPTY(&sem->sem_head),
                 "Semaphore internals wrong after releasing semaphore\n"
-                "%s\n"
-                "Task: task=%p prio=%u\n", sem_test_sem_to_s(sem), t,
-                t->t_prio);
-
-    /* "Delete" it */
-    err = os_sem_delete(sem);
-    TEST_ASSERT(err == 0,
-                "Could not delete semaphore (err=%d)", err);
-
-    /* Check semaphore internals */
-    TEST_ASSERT(sem->sem_tokens == 0 && SLIST_EMPTY(&sem->sem_head),
-                "Semaphore internals wrong after deleting semaphore\n"
                 "%s\n"
                 "Task: task=%p prio=%u\n", sem_test_sem_to_s(sem), t,
                 t->t_prio);

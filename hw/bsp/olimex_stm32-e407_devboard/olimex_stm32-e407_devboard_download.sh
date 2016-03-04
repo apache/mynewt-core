@@ -30,8 +30,6 @@ fi
 
 BASENAME=$1
 IS_BOOTLOADER=0
-BIN2IMG=project/bin2img/bin/bin2img/bin2img.elf
-VER=11.22.33.44
 
 # Look for 'bootloader' from 2nd arg onwards
 shift
@@ -47,17 +45,7 @@ if [ $IS_BOOTLOADER -eq 1 ]; then
     FILE_NAME=$BASENAME.elf.bin
 else
     FLASH_OFFSET=0x08020000
-    ELF_FILE=$BASENAME.elf
-    BIN_FILE=$BASENAME.elf.bin
     FILE_NAME=$BASENAME.img
-    # If there is no image file, or it is older than bin file, run bin2img.
-    if [ ! -f $FILE_NAME -o $FILE_NAME -ot $ELF_FILE ]; then
-        echo "Version is >" $VER "<"
-        $BIN2IMG $BIN_FILE $FILE_NAME $VER
-        if [ "$?" -ne 0 ]; then
-	    exit 1
-	fi
-    fi
 fi
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 

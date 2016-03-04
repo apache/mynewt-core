@@ -29,3 +29,7 @@ tags
 .DS_Store
 *.swp
 *.swo
+
+# Prevent accidental checkins of personal targets.  If you need to commit a
+# target, specify the -f option for "git add".
+targets

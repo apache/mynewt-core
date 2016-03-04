@@ -33,7 +33,11 @@
 
 #define CMD_BUF_SZ      256
 
-static struct shell_cmd cmd_b;
+static int cmd_b_exec(int argc, char **argv);
+static struct shell_cmd cmd_b = {
+    .sc_cmd = "b",
+    .sc_cmd_func = cmd_b_exec
+};
 
 static bssnz_t uint8_t cmd_buf[CMD_BUF_SZ];
 
@@ -1466,7 +1470,7 @@ cmd_init(void)
 {
     int rc;
 
-    rc = shell_cmd_register(&cmd_b, "b", cmd_b_exec);
+    rc = shell_cmd_register(&cmd_b);
     if (rc != 0) {
         return rc;
     }

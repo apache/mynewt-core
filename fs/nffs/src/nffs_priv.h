@@ -21,6 +21,7 @@
 #define H_NFFS_PRIV_
 
 #include <inttypes.h>
+#include "log/log.h"
 #include "os/queue.h"
 #include "os/os_mempool.h"
 #include "nffs/nffs.h"
@@ -238,6 +239,8 @@ extern struct nffs_hash_list *nffs_hash;
 extern struct nffs_inode_entry *nffs_root_dir;
 extern struct nffs_inode_entry *nffs_lost_found_dir;
 
+extern struct log nffs_log;
+
 /* @area */
 int nffs_area_magic_is_set(const struct nffs_disk_area *disk_area);
 int nffs_area_is_scratch(const struct nffs_disk_area *disk_area);
@@ -262,6 +265,8 @@ void nffs_block_delete_list_from_disk(const struct nffs_block *first,
                                       const struct nffs_block *last);
 void nffs_block_to_disk(const struct nffs_block *block,
                         struct nffs_disk_block *out_disk_block);
+int nffs_block_find_predecessor(struct nffs_hash_entry *start,
+                                uint32_t sought_id);
 int nffs_block_from_hash_entry_no_ptrs(struct nffs_block *out_block,
                                        struct nffs_hash_entry *entry);
 int nffs_block_from_hash_entry(struct nffs_block *out_block,
@@ -389,6 +394,8 @@ int nffs_inode_from_entry(struct nffs_inode *out_inode,
                           struct nffs_inode_entry *entry);
 int nffs_inode_unlink_from_ram(struct nffs_inode *inode,
                                struct nffs_hash_entry **out_next);
+int nffs_inode_unlink_from_ram_corrupt_ok(struct nffs_inode *inode,
+                                          struct nffs_hash_entry **out_next);
 int nffs_inode_unlink(struct nffs_inode *inode);
 
 /* @misc */
@@ -400,6 +407,7 @@ int nffs_misc_validate_scratch(void);
 int nffs_misc_create_lost_found_dir(void);
 int nffs_misc_set_max_block_data_len(uint16_t min_data_len);
 int nffs_misc_reset(void);
+int nffs_misc_ready(void);
 
 /* @path */
 int nffs_path_parse_next(struct nffs_path_parser *parser);
@@ -426,5 +434,8 @@ int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
         SLIST_FOREACH((entry), &nffs_hash[i], nhe_next)
 
 #define NFFS_FLASH_LOC_NONE  nffs_flash_loc(NFFS_AREA_ID_NONE, 0)
+
+#define NFFS_LOG(lvl, ...) \
+    LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)
 
 #endif

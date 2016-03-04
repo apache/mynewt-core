@@ -49,7 +49,4 @@ os_error_t os_sem_release(struct os_sem *sem);
 /* Pend (wait) for a semaphore */
 os_error_t os_sem_pend(struct os_sem *sem, uint32_t timeout);
 
-/* Delete a semaphore */
-os_error_t os_sem_delete(struct os_sem *sem);
-
 #endif  /* _OS_MUTEX_H_ */

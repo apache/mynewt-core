@@ -53,6 +53,9 @@ struct nffs_inode_entry *nffs_lost_found_dir;
 
 static struct os_mutex nffs_mutex;
 
+static struct log_handler nffs_log_console_handler;
+struct log nffs_log;
+
 static int nffs_open(const char *path, uint8_t access_flags,
   struct fs_file **out_file);
 static int nffs_close(struct fs_file *fs_file);
@@ -143,7 +146,7 @@ nffs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 
     nffs_lock();
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         rc = FS_EUNINIT;
         goto done;
     }
@@ -254,8 +257,7 @@ nffs_file_len(const struct fs_file *fs_file, uint32_t *out_len)
 
 /**
  * Reads data from the specified file.  If more data is requested than remains
- * in the file, all available data is retrieved.  Note: this type of short read
- * results in a success return code.
+ * in the file, all available data is retrieved and a success code is returned.
  *
  * @param file              The file to read from.
  * @param len               The number of bytes to attempt to read.
@@ -296,7 +298,7 @@ nffs_write(struct fs_file *fs_file, const void *data, int len)
 
     nffs_lock();
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         rc = FS_EUNINIT;
         goto done;
     }
@@ -330,7 +332,7 @@ nffs_unlink(const char *path)
 
     nffs_lock();
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         rc = FS_EUNINIT;
         goto done;
     }
@@ -370,7 +372,7 @@ nffs_rename(const char *from, const char *to)
 
     nffs_lock();
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         rc = FS_EUNINIT;
         goto done;
     }
@@ -392,7 +394,7 @@ done:
  * directories must already exist.  The specified path must start with a '/'
  * character.
  *
- * @param path                  The directory to create.
+ * @param path                  The name of the directory to create.
  *
  * @return                      0 on success;
  *                              nonzero on failure.
@@ -404,7 +406,7 @@ nffs_mkdir(const char *path)
 
     nffs_lock();
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         rc = FS_EUNINIT;
         goto done;
     }
@@ -427,7 +429,7 @@ done:
  * Unlinking files from the directory while it is open may result in
  * unpredictable behavior.  New files can be created inside the directory.
  *
- * @param path                  The directory to open.
+ * @param path                  The name of the directory to open.
  * @param out_dir               On success, points to the directory handle.
  *
  * @return                      0 on success;
@@ -443,7 +445,7 @@ nffs_opendir(const char *path, struct fs_dir **out_fs_dir)
 
     nffs_lock();
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         rc = FS_EUNINIT;
         goto done;
     }
@@ -484,7 +486,7 @@ nffs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
 /**
  * Closes the specified directory handle.
  *
- * @param dir                   The directory to close.
+ * @param dir                   The name of the directory to close.
  *
  * @return                      0 on success; nonzero on failure.
  */
@@ -607,20 +609,8 @@ nffs_detect(const struct nffs_area_desc *area_descs)
 }
 
 /**
- * Indicates whether a valid filesystem has been initialized, either via
- * detection or formatting.
- *
- * @return                  1 if a file system is present; 0 otherwise.
- */
-int
-nffs_ready(void)
-{
-    return nffs_root_dir != NULL;
-}
-
-/**
- * Initializes the nffs memory and data structures.  This must be called before
- * any nffs operations are attempted.
+ * Initializes internal nffs memory and data structures.  This must be called
+ * before any nffs operations are attempted.
  *
  * @return                  0 on success; nonzero on error.
  */
@@ -684,6 +674,10 @@ nffs_init(void)
     if (nffs_dir_mem == NULL) {
         return FS_ENOMEM;
     }
+
+    log_init();
+    log_console_handler_init(&nffs_log_console_handler);
+    log_register("nffs", &nffs_log, &nffs_log_console_handler);
 
     rc = nffs_misc_reset();
     if (rc != 0) {

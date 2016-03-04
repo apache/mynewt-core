@@ -19,10 +19,19 @@
 
 pkg.name: project/boot
 pkg.vers: 0.8.0
+pkg.description: Boot loader application.
+pkg.author: Christopher Collins <chris@apache.org>
+pkg.homepage: http://mynewt.apache.org/os/modules/bootloader/bootloader/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - loader
+
+pkg.identities: bootloader
 pkg.deps:
     - fs/nffs
-    - libs/os
+    - libs/baselibc
     - libs/bootutil
     - libs/console/stub
+    - libs/mbedtls
+    - libs/os
     - libs/util
-    - libs/baselibc

@@ -52,7 +52,12 @@ nffs_block_entry_free(struct nffs_hash_entry *entry)
  * @param area_offset           The offset within the area to read from.
  * @param out_disk_block        On success, the block header is writteh here.
  *
- * @return                      0 on success; nonzero on failure.
+ * @return                      0 on success;
+ *                              FS_EOFFSET on an attempt to read an invalid
+ *                                  address range;
+ *                              FS_EHW on flash error;
+ *                              FS_EUNEXP if the specified disk location does
+ *                                  not contain a block.
  */
 int
 nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
@@ -61,7 +66,7 @@ nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
     int rc;
 
     rc = nffs_flash_read(area_idx, area_offset, out_disk_block,
-                        sizeof *out_disk_block);
+                         sizeof *out_disk_block);
     if (rc != 0) {
         return rc;
     }
@@ -132,26 +137,45 @@ nffs_block_from_disk_no_ptrs(struct nffs_block *out_block,
     out_block->nb_data_len = disk_block->ndb_data_len;
 }
 
+/**
+ * Constructs a block representation from a disk record.  If the disk block
+ * references other objects (inode or previous data block), the resulting block
+ * object is populated with pointers to the referenced objects.  If the any
+ * referenced objects are not present in the NFFS RAM representation, this
+ * indicates file system corruption.  In this case, the resulting block is
+ * populated with all valid references, and an FS_ECORRUPT code is returned.
+ *
+ * @param out_block             The resulting block is written here (regardless
+ *                                  of this function's return code).
+ * @param disk_block            The source disk record to convert.
+ *
+ * @return                      0 if the block was successfully constructed;
+ *                              FS_ECORRUPT if one or more pointers could not
+ *                                  be filled in due to file system corruption.
+ */
 static int
 nffs_block_from_disk(struct nffs_block *out_block,
-                     const struct nffs_disk_block *disk_block,
-                     uint8_t area_idx, uint32_t area_offset)
+                     const struct nffs_disk_block *disk_block)
 {
+    int rc;
+
+    rc = 0;
+
     nffs_block_from_disk_no_ptrs(out_block, disk_block);
 
     out_block->nb_inode_entry = nffs_hash_find_inode(disk_block->ndb_inode_id);
     if (out_block->nb_inode_entry == NULL) {
-        return FS_ECORRUPT;
+        rc = FS_ECORRUPT;
     }
 
     if (disk_block->ndb_prev_id != NFFS_ID_NONE) {
         out_block->nb_prev = nffs_hash_find_block(disk_block->ndb_prev_id);
         if (out_block->nb_prev == NULL) {
-            return FS_ECORRUPT;
+            rc = FS_ECORRUPT;
         }
     }
 
-    return 0;
+    return rc;
 }
 
 /**
@@ -189,23 +213,71 @@ nffs_block_to_disk(const struct nffs_block *block,
 int
 nffs_block_delete_from_ram(struct nffs_hash_entry *block_entry)
 {
+    struct nffs_inode_entry *inode_entry;
     struct nffs_block block;
     int rc;
 
     rc = nffs_block_from_hash_entry(&block, block_entry);
-    if (rc != 0) {
-        return rc;
+    if (rc == 0 || rc == FS_ECORRUPT) {
+        /* If file system corruption was detected, the resulting block is still
+         * valid and can be removed from RAM.
+         */
+        inode_entry = block.nb_inode_entry;
+        if (inode_entry != NULL &&
+            inode_entry->nie_last_block_entry == block_entry) {
+
+            inode_entry->nie_last_block_entry = block.nb_prev;
+        }
+
+        nffs_hash_remove(block_entry);
+        nffs_block_entry_free(block_entry);
     }
 
-    assert(block.nb_inode_entry != NULL);
-    if (block.nb_inode_entry->nie_last_block_entry == block_entry) {
-        block.nb_inode_entry->nie_last_block_entry = block.nb_prev;
+    return rc;
+}
+
+/**
+ * Determines if a particular block can be found in RAM by following a chain of
+ * previous block pointers, starting with the specified hash entry.
+ *
+ * @param start                 The block entry at which to start the search.
+ * @param sought_id             The ID of the block to search for.
+ *
+ * @return                      0 if the sought after ID was found;
+ *                              FS_ENOENT if the ID was not found;
+ *                              Other FS code on error.
+ */
+int
+nffs_block_find_predecessor(struct nffs_hash_entry *start, uint32_t sought_id)
+{
+    struct nffs_hash_entry *entry;
+    struct nffs_disk_block disk_block;
+    uint32_t area_offset;
+    uint8_t area_idx;
+    int rc;
+
+    entry = start;
+    while (entry != NULL && entry->nhe_id != sought_id) {
+        nffs_flash_loc_expand(entry->nhe_flash_loc, &area_idx, &area_offset);
+        rc = nffs_block_read_disk(area_idx, area_offset, &disk_block);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (disk_block.ndb_prev_id == NFFS_ID_NONE) {
+            entry = NULL;
+        } else {
+            entry = nffs_hash_find(disk_block.ndb_prev_id);
+        }
     }
 
-    nffs_hash_remove(block_entry);
-    nffs_block_entry_free(block_entry);
+    if (entry == NULL) {
+        rc = FS_ENOENT;
+    } else {
+        rc = 0;
+    }
 
-    return 0;
+    return rc;
 }
 
 /**
@@ -244,14 +316,26 @@ nffs_block_from_hash_entry_no_ptrs(struct nffs_block *out_block,
 }
 
 /**
- * Constructs a full data block representation from the specified minimal block
- * entry.  The resultant block's pointers are populated via hash table lookups.
+ * Constructs a block representation from a minimal block hash entry.  If the
+ * hash entry references other objects (inode or previous data block), the
+ * resulting block object is populated with pointers to the referenced objects.
+ * If the any referenced objects are not present in the NFFS RAM
+ * representation, this indicates file system corruption.  In this case, the
+ * resulting block is populated with all valid references, and an FS_ECORRUPT
+ * code is returned.
  *
  * @param out_block             On success, this gets populated with the data
  *                                  block information.
  * @param block_entry           The source block entry to convert.
  *
- * @return                      0 on success; nonzero on failure.
+ * @return                      0 on success;
+ *                              FS_ECORRUPT if one or more pointers could not
+ *                                  be filled in due to file system corruption;
+ *                              FS_EOFFSET on an attempt to read an invalid
+ *                                  address range;
+ *                              FS_EHW on flash error;
+ *                              FS_EUNEXP if the specified disk location does
+ *                                  not contain a block.
  */
 int
 nffs_block_from_hash_entry(struct nffs_block *out_block,
@@ -271,7 +355,7 @@ nffs_block_from_hash_entry(struct nffs_block *out_block,
     }
 
     out_block->nb_hash_entry = block_entry;
-    rc = nffs_block_from_disk(out_block, &disk_block, area_idx, area_offset);
+    rc = nffs_block_from_disk(out_block, &disk_block);
     if (rc != 0) {
         return rc;
     }

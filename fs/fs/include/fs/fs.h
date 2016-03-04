@@ -60,19 +60,19 @@ int fs_dirent_is_dir(const struct fs_dirent *);
 /*
  * File access return codes.
  */
-#define FS_EOK                  0       /* OK */
-#define FS_ECORRUPT             1       /* Filesystem corrupt */
-#define FS_HW_ERROR             2       /* Error access storage medium */
-#define FS_ERANGE               3
-#define FS_EINVAL               4
-#define FS_ENOMEM               5       /* out of memory */
-#define FS_ENOENT               6       /* no such file */
-#define FS_EEMPTY               7
-#define FS_EFULL                8
-#define FS_EUNEXP               9
-#define FS_EOS                  10
-#define FS_EEXIST               11
-#define FS_EACCESS              12
-#define FS_EUNINIT              13
+#define FS_EOK          0  /* Success */
+#define FS_ECORRUPT     1  /* File system corrupt */
+#define FS_EHW          2  /* Error accessing storage medium */
+#define FS_EOFFSET      3  /* Invalid offset */
+#define FS_EINVAL       4  /* Invalid argument */
+#define FS_ENOMEM       5  /* Insufficient memory */
+#define FS_ENOENT       6  /* No such file or directory */
+#define FS_EEMPTY       7  /* Specified region is empty (internal only) */
+#define FS_EFULL        8  /* Disk full */
+#define FS_EUNEXP       9  /* Disk contains unexpected metadata */
+#define FS_EOS          10  /* OS error */
+#define FS_EEXIST       11  /* File or directory already exists */
+#define FS_EACCESS      12  /* Operation prohibited by file open mode */
+#define FS_EUNINIT      13  /* File system not initialized */
 
 #endif

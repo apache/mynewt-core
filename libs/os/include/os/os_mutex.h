@@ -56,7 +56,4 @@ os_error_t os_mutex_release(struct os_mutex *mu);
 /* Pend (wait) for a mutex */
 os_error_t os_mutex_pend(struct os_mutex *mu, uint32_t timeout);
 
-/* Delete a mutex */
-os_error_t os_mutex_delete(struct os_mutex *mu);
-
 #endif  /* _OS_MUTEX_H_ */

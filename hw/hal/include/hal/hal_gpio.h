@@ -70,7 +70,7 @@ typedef void (*gpio_irq_handler_t)(void *arg);
  * 
  * @return int  0: no error; -1 otherwise. 
  */
-int gpio_init_in(int pin, gpio_pull_t pull);
+int hal_gpio_init_in(int pin, gpio_pull_t pull);
 
 /**
  * gpio init out 
@@ -83,7 +83,7 @@ int gpio_init_in(int pin, gpio_pull_t pull);
  * 
  * @return int  0: no error; -1 otherwise. 
  */
-int gpio_init_out(int pin, int val);
+int hal_gpio_init_out(int pin, int val);
 
 /**
  * gpio set 
@@ -92,7 +92,7 @@ int gpio_init_out(int pin, int val);
  * 
  * @param pin 
  */
-void gpio_set(int pin);
+void hal_gpio_set(int pin);
 
 /**
  * gpio clear
@@ -101,7 +101,7 @@ void gpio_set(int pin);
  * 
  * @param pin 
  */
-void gpio_clear(int pin);
+void hal_gpio_clear(int pin);
 
 /**
  * gpio write 
@@ -111,7 +111,7 @@ void gpio_clear(int pin);
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
-void gpio_write(int pin, int val);
+void hal_gpio_write(int pin, int val);
 
 /**
  * gpio read 
@@ -123,7 +123,7 @@ void gpio_write(int pin, int val);
  * 
  * @return int 0: low, 1: high
  */
-int gpio_read(int pin);
+int hal_gpio_read(int pin);
 
 /**
  * gpio toggle 
@@ -132,13 +132,13 @@ int gpio_read(int pin);
  * 
  * @param pin Pin number to toggle
  */
-void gpio_toggle(int pin);
+void hal_gpio_toggle(int pin);
 
-int gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-                  gpio_irq_trig_t trig, gpio_pull_t pull);
-void gpio_irq_release(int pin);
-void gpio_irq_enable(int pin);
-void gpio_irq_disable(int pin);
+int hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
+                      gpio_irq_trig_t trig, gpio_pull_t pull);
+void hal_gpio_irq_release(int pin);
+void hal_gpio_irq_enable(int pin);
+void hal_gpio_irq_disable(int pin);
 
 
 #endif /* H_HAL_GPIO_ */

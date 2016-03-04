@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __SHELL_H__ 
+#ifndef __SHELL_H__
 #define __SHELL_H__
 
 #include <os/os.h>
@@ -28,9 +28,7 @@ struct shell_cmd {
     STAILQ_ENTRY(shell_cmd) sc_next;
 };
 
-int shell_cmd_register(struct shell_cmd *sc, char *cmd, 
-        shell_cmd_func_t func);
-
+int shell_cmd_register(struct shell_cmd *sc);
 
 #define SHELL_NLIP_PKT_START1 (6)
 #define SHELL_NLIP_PKT_START2 (9)

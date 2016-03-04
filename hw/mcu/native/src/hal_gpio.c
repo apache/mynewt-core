@@ -32,7 +32,7 @@ static struct {
 } hal_gpio[HAL_GPIO_NUM_PINS];
 
 int
-gpio_init_in(int pin, gpio_pull_t pull)
+hal_gpio_init_in(int pin, gpio_pull_t pull)
 {
     if (pin >= HAL_GPIO_NUM_PINS) {
         return -1;
@@ -50,7 +50,7 @@ gpio_init_in(int pin, gpio_pull_t pull)
 }
 
 int
-gpio_init_out(int pin, int val)
+hal_gpio_init_out(int pin, int val)
 {
     if (pin >= HAL_GPIO_NUM_PINS) {
         return -1;
@@ -61,18 +61,18 @@ gpio_init_out(int pin, int val)
 }
 
 void
-gpio_set(int pin)
+hal_gpio_set(int pin)
 {
-    gpio_write(pin, 1);
+    hal_gpio_write(pin, 1);
 }
 
 void
-gpio_clear(int pin)
+hal_gpio_clear(int pin)
 {
-    gpio_write(pin, 0);
+    hal_gpio_write(pin, 0);
 }
 
-void gpio_write(int pin, int val)
+void hal_gpio_write(int pin, int val)
 {
     if (pin >= HAL_GPIO_NUM_PINS) {
         return;
@@ -84,7 +84,7 @@ void gpio_write(int pin, int val)
 }
 
 int
-gpio_read(int pin)
+hal_gpio_read(int pin)
 {
     if (pin >= HAL_GPIO_NUM_PINS) {
         return -1;
@@ -93,7 +93,7 @@ gpio_read(int pin)
 }
 
 void
-gpio_toggle(int pin)
+hal_gpio_toggle(int pin)
 {
-    gpio_write(pin, gpio_read(pin) != 1);
+    hal_gpio_write(pin, hal_gpio_read(pin) != 1);
 }

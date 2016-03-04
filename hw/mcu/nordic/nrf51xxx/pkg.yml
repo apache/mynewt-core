@@ -17,7 +17,15 @@
 # under the License.
 #
 
-pkg.name: "hw/mcu/nordic/nrf51xxx"
+pkg.name: hw/mcu/nordic/nrf51xxx
+pkg.vers: 0.8.0
+pkg.description: MCU definition for Nordic nRF51 ARM Cortex-M0 chips.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - nrf51
+
 pkg.deps: 
     - hw/hal 
     - libs/cmsis-core 

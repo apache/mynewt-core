@@ -47,23 +47,26 @@ static struct nmgr_handler shell_nmgr_group_handlers[] = {
 
 static int 
 stats_nmgr_walk_func(struct stats_hdr *hdr, void *arg, char *sname, 
-        uint8_t *stat)
+        uint16_t stat_off)
 {
     struct json_encoder *encoder;
     struct json_value jv;
+    void *stat_val;
     int rc;
+
+    stat_val = (uint8_t *)hdr + stat_off;
 
     encoder = (struct json_encoder *) arg;
 
     switch (hdr->s_size) {
         case sizeof(uint16_t):
-            JSON_VALUE_UINT(&jv, *(uint16_t *) stat);
+            JSON_VALUE_UINT(&jv, *(uint16_t *) stat_val);
             break;
         case sizeof(uint32_t): 
-            JSON_VALUE_UINT(&jv, *(uint32_t *) stat);
+            JSON_VALUE_UINT(&jv, *(uint32_t *) stat_val);
             break;
         case sizeof(uint64_t):
-            JSON_VALUE_UINT(&jv, *(uint64_t *) stat);
+            JSON_VALUE_UINT(&jv, *(uint64_t *) stat_val);
             break;
     }
 

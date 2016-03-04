@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
+#include <flash_test/flash_test.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -44,24 +45,24 @@ int init_tasks(void);
 
 /* Task 1 */
 #define TASK1_PRIO (1)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(1024)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
 struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
 
 /* Task 2 */
 #define TASK2_PRIO (2)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
+#define TASK2_STACK_SIZE    OS_STACK_ALIGN(128)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
 #define SHELL_TASK_PRIO (3)
 #define SHELL_MAX_INPUT_LEN     (256)
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(384))
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 #define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct log_handler log_console_handler;
@@ -74,9 +75,6 @@ struct os_sem g_test_sem;
 
 /* For LED toggling */
 int g_led_pin;
-
-/* NFFS */
-#define NFFS_AREA_MAX           (16)
 
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
 #define DEFAULT_MBUF_MPOOL_NBUFS (10)
@@ -143,7 +141,7 @@ task1_handler(void *arg)
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
+    hal_gpio_init_out(g_led_pin, 1);
 
     while (1) {
         t = os_sched_get_current_task();
@@ -155,7 +153,7 @@ task1_handler(void *arg)
         os_time_delay(1000);
 
         /* Toggle the LED */
-        gpio_toggle(g_led_pin);
+        hal_gpio_toggle(g_led_pin);
 
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
@@ -219,6 +217,8 @@ main(int argc, char **argv)
 {
     int rc;
     int cnt;
+
+    /* NFFS_AREA_MAX is defined in the BSP-specified bsp.h header file. */
     struct nffs_area_desc descs[NFFS_AREA_MAX];
 
 #ifdef ARCH_sim
@@ -255,13 +255,20 @@ main(int argc, char **argv)
     rc = hal_flash_init();
     assert(rc == 0);
 
+    /* Initialize nffs's internal state. */
     rc = nffs_init();
     assert(rc == 0);
 
+    /* Convert the set of flash blocks we intend to use for nffs into an array
+     * of nffs area descriptors.
+     */
     cnt = NFFS_AREA_MAX;
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
     assert(rc == 0);
+
+    /* Attempt to restore an existing nffs file system from flash. */
     if (nffs_detect(descs) == FS_ECORRUPT) {
+        /* No valid nffs instance detected; format a new one. */
         rc = nffs_format(descs);
         assert(rc == 0);
     }
@@ -276,6 +283,8 @@ main(int argc, char **argv)
 
     stats_module_init();
 
+    flash_test_init();
+    
     rc = init_tasks();
     os_start();
 

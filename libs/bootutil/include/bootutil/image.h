@@ -25,11 +25,18 @@
 #define IMAGE_MAGIC                 0x96f3b83c
 #define IMAGE_MAGIC_NONE            0xffffffff
 
+/*
+ * Image header flags.
+ */
 #define IMAGE_F_PIC                 0x00000001
-
-#define IMAGE_HEADER_CRC_OFFSET     4
+#define IMAGE_F_HAS_SHA256          0x00000002	/* Image contains hash TLV */
 
 #define IMAGE_HEADER_SIZE           32
+
+/*
+ * Image trailer TLV types.
+ */
+#define IMAGE_TLV_SHA256            1	/* SHA256 of image hdr and body */
 
 struct image_version {
     uint8_t iv_major;
@@ -41,15 +48,25 @@ struct image_version {
 /** Image header.  All fields are in little endian byte order. */
 struct image_header {
     uint32_t ih_magic;
-    uint32_t ih_crc32; /* Covers remainder of header and all of image body. */
+    uint32_t ih_tlv_size; /* Trailing TLVs */
     uint32_t ih_hdr_size;
     uint32_t ih_img_size; /* Does not include header. */
     uint32_t ih_flags;
     struct image_version ih_ver;
-    uint32_t _pad;
+    uint32_t _pad2;
+};
+
+/** Image trailer TLV format. All fields in little endian. */
+struct image_tlv {
+    uint8_t  it_type;
+    uint8_t  _pad;
+    uint16_t it_len;
 };
 
 _Static_assert(sizeof(struct image_header) == IMAGE_HEADER_SIZE,
                "struct image_header not required size");
+
+int bootutil_img_validate(struct image_header *hdr, uint8_t flash_id,
+  uint32_t addr, uint8_t *tmp_buf, uint32_t tmp_buf_sz);
 
 #endif

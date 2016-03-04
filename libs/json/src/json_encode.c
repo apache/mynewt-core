@@ -1,3 +1,22 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -16,7 +35,7 @@
     (__e)->je_write((__e)->je_arg, "]", sizeof("]")-1);
 
 
-int 
+int
 json_encode_object_start(struct json_encoder *encoder)
 {
     JSON_ENCODE_OBJECT_START(encoder);
@@ -25,7 +44,7 @@ json_encode_object_start(struct json_encoder *encoder)
     return (0);
 }
 
-static int 
+static int
 json_encode_value(struct json_encoder *encoder, struct json_value *jv)
 {
     int rc;
@@ -34,7 +53,7 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
 
     switch (jv->jv_type) {
         case JSON_VALUE_TYPE_BOOL:
-            len = sprintf(encoder->je_encode_buf, "%s", 
+            len = sprintf(encoder->je_encode_buf, "%s",
                     jv->jv_val.u > 0 ? "true" : "false");
             encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
             break;
@@ -44,7 +63,7 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
             encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
             break;
         case JSON_VALUE_TYPE_INT64:
-            len = sprintf(encoder->je_encode_buf, "%ld", 
+            len = sprintf(encoder->je_encode_buf, "%ld",
                     (long) jv->jv_val.u);
             encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
             break;
@@ -55,34 +74,34 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
                     case '"':
                     case '/':
                     case '\\':
-                        encoder->je_write(encoder->je_arg, "\\", 
+                        encoder->je_write(encoder->je_arg, "\\",
                                 sizeof("\\")-1);
-                        encoder->je_write(encoder->je_arg, 
+                        encoder->je_write(encoder->je_arg,
                                 (char *) &jv->jv_val.str[i], 1);
- 
+
                         break;
                     case '\t':
-                        encoder->je_write(encoder->je_arg, "\\t", 
+                        encoder->je_write(encoder->je_arg, "\\t",
                                 sizeof("\\t")-1);
                         break;
                     case '\r':
-                        encoder->je_write(encoder->je_arg, "\\r", 
+                        encoder->je_write(encoder->je_arg, "\\r",
                                 sizeof("\\r")-1);
                         break;
                     case '\n':
-                        encoder->je_write(encoder->je_arg, "\\n", 
+                        encoder->je_write(encoder->je_arg, "\\n",
                                 sizeof("\\n")-1);
                         break;
                     case '\f':
-                        encoder->je_write(encoder->je_arg, "\\f", 
+                        encoder->je_write(encoder->je_arg, "\\f",
                                 sizeof("\\f")-1);
                         break;
                     case '\b':
-                        encoder->je_write(encoder->je_arg, "\\b", 
+                        encoder->je_write(encoder->je_arg, "\\b",
                                 sizeof("\\b")-1);
                         break;
                    default:
-                        encoder->je_write(encoder->je_arg, 
+                        encoder->je_write(encoder->je_arg,
                                 (char *) &jv->jv_val.str[i], 1);
                         break;
                 }
@@ -106,8 +125,8 @@ json_encode_value(struct json_encoder *encoder, struct json_value *jv)
         case JSON_VALUE_TYPE_OBJECT:
             JSON_ENCODE_OBJECT_START(encoder);
             for (i = 0; i < jv->jv_len; i++) {
-                rc = json_encode_object_entry(encoder, 
-                        jv->jv_val.composite.keys[i], 
+                rc = json_encode_object_entry(encoder,
+                        jv->jv_val.composite.keys[i],
                         jv->jv_val.composite.values[i]);
                 if (rc != 0) {
                     goto err;
@@ -126,7 +145,7 @@ err:
     return (rc);
 }
 
-int 
+int
 json_encode_object_key(struct json_encoder *encoder, char *key)
 {
     if (encoder->je_has_objects) {
@@ -141,8 +160,8 @@ json_encode_object_key(struct json_encoder *encoder, char *key)
     return (0);
 }
 
-int 
-json_encode_object_entry(struct json_encoder *encoder, char *key, 
+int
+json_encode_object_entry(struct json_encoder *encoder, char *key,
         struct json_value *val)
 {
     int rc;
@@ -166,12 +185,56 @@ err:
     return (rc);
 }
 
-int 
+int
 json_encode_object_finish(struct json_encoder *encoder)
 {
     JSON_ENCODE_OBJECT_END(encoder);
     /* Useful in case of nested objects. */
     encoder->je_has_objects = 1;
+
+    return (0);
+}
+
+int
+json_encode_array_name(struct json_encoder *encoder, char *name)
+{
+    return json_encode_object_key(encoder, name);
+}
+
+int
+json_encode_array_start(struct json_encoder *encoder)
+{
+    JSON_ENCODE_ARRAY_START(encoder);
+    encoder->je_has_objects = 0;
+
+    return (0);
+}
+
+int
+json_encode_array_value(struct json_encoder *encoder, struct json_value *jv)
+{
+    int rc;
+
+    if (encoder->je_has_objects) {
+        encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+    }
+
+    rc = json_encode_value(encoder, jv);
+    if (rc != 0) {
+        goto err;
+    }
+    encoder->je_has_objects = 1;
+
+    return (0);
+err:
+    return (rc);
+}
+
+
+int
+json_encode_array_finish(struct json_encoder *encoder)
+{
+    JSON_ENCODE_ARRAY_END(encoder);
 
     return (0);
 }

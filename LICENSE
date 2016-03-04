@@ -208,8 +208,10 @@ license.  For details, see libs/os/include/os/queue.h.
 
 This product partly derives from FreeBSD, which is available under the
 "3-clause BSD" license.  For details, see:
+    * libs/os/include/os/os_time.h
     * libs/os/src/os_mbuf.c
     * libs/util/src/base64.c
+    * libs/util/src/datetime.c
 
 This product bundles baselibc, which is available under the "3-clause BSD"
 license. Baselibc bundles tinyprintf and is based on klibc for details see:

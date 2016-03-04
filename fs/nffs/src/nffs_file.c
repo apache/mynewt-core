@@ -272,7 +272,7 @@ nffs_file_seek(struct nffs_file *file, uint32_t offset)
     }
 
     if (offset > len) {
-        return FS_ERANGE;
+        return FS_EOFFSET;
     }
 
     file->nf_offset = offset;
@@ -299,7 +299,7 @@ nffs_file_read(struct nffs_file *file, uint32_t len, void *out_data,
     uint32_t bytes_read;
     int rc;
 
-    if (!nffs_ready()) {
+    if (!nffs_misc_ready()) {
         return FS_EUNINIT;
     }
 

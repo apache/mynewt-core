@@ -170,6 +170,7 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
     struct nffs_disk_block disk_block;
     struct nffs_hash_entry *entry;
     struct nffs_area *to_area;
+    struct nffs_block last_block;
     struct nffs_block block;
     uint32_t to_area_offset;
     uint32_t from_area_offset;
@@ -178,12 +179,16 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
     uint8_t from_area_idx;
     int rc;
 
+    memset(&last_block, 0, sizeof last_block);
+
     data = malloc(data_len);
     if (data == NULL) {
         rc = FS_ENOMEM;
         goto done;
     }
 
+    memset(&last_block, 0, sizeof(last_block));
+    
     to_area = nffs_areas + to_area_idx;
 
     entry = last_entry;
@@ -209,15 +214,25 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
                 *inout_next = SLIST_NEXT(entry, nhe_next);
             }
             nffs_block_delete_from_ram(entry);
+        } else {
+            last_block = block;
         }
         entry = block.nb_prev;
     }
+    
+    /* we had better have found the last block */
+    assert(last_block.nb_hash_entry);
 
+    /* The resulting block should inherit its ID from its last constituent
+     * block (this is the ID referenced by the parent inode and subsequent data
+     * block).  The previous ID gets inherited from the first constituent
+     * block.
+     */
     memset(&disk_block, 0, sizeof disk_block);
     disk_block.ndb_magic = NFFS_BLOCK_MAGIC;
-    disk_block.ndb_id = block.nb_hash_entry->nhe_id;
-    disk_block.ndb_seq = block.nb_seq + 1;
-    disk_block.ndb_inode_id = block.nb_inode_entry->nie_hash_entry.nhe_id;
+    disk_block.ndb_id = last_block.nb_hash_entry->nhe_id;
+    disk_block.ndb_seq = last_block.nb_seq + 1;
+    disk_block.ndb_inode_id = last_block.nb_inode_entry->nie_hash_entry.nhe_id;
     if (entry == NULL) {
         disk_block.ndb_prev_id = NFFS_ID_NONE;
     } else {
@@ -228,7 +243,7 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
 
     to_area_offset = to_area->na_cur;
     rc = nffs_flash_write(to_area_idx, to_area_offset,
-                         &disk_block, sizeof disk_block);
+                          &disk_block, sizeof disk_block);
     if (rc != 0) {
         goto done;
     }

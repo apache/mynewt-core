@@ -49,7 +49,7 @@ nffs_format_from_scratch_area(uint8_t area_idx, uint8_t area_id)
     } else {
         disk_area.nda_id = area_id;
         rc = nffs_flash_write(area_idx, NFFS_AREA_OFFSET_ID,
-                             &disk_area.nda_id, sizeof disk_area.nda_id);
+                              &disk_area.nda_id, sizeof disk_area.nda_id);
         if (rc != 0) {
             return rc;
         }
@@ -73,7 +73,7 @@ nffs_format_area(uint8_t area_idx, int is_scratch)
 
     rc = hal_flash_erase(area->na_flash_id, area->na_offset, area->na_length);
     if (rc != 0) {
-        return rc;
+        return FS_EHW;
     }
     area->na_cur = 0;
 

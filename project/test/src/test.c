@@ -22,6 +22,8 @@
 #include "nffs/nffs_test.h"
 #include "bootutil/bootutil_test.h"
 #include "testutil/testutil.h"
+#include "mbedtls/mbedtls_test.h"
+#include "config/config_test.h"
 
 extern int util_test_all(void);
 
@@ -35,6 +37,8 @@ main(void)
     nffs_test_all();
     boot_test_all();
     util_test_all();
+    mbedtls_test_all();
+    config_test_all();
 
     return 0;
 }

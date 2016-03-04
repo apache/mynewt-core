@@ -60,9 +60,6 @@ os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(448))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
-/* Flash file system sector size */
-#define NFFS_AREA_MAX       (8)
-
 /* Shell maximum input line length */
 #define SHELL_MAX_INPUT_LEN     (256)
 
@@ -93,28 +90,32 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_RANDOM)
+#define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
-#define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
-#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
+#define BLETEST_CFG_ADV_ITVL            (600000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_ITVL           (64)  /* in 1.25 msec increments */           
+#define BLETEST_CFG_CONN_ITVL           (128)  /* in 1.25 msec increments */           
 #define BLETEST_CFG_SLAVE_LATENCY       (0)
 #define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
 #define BLETEST_CFG_MIN_CE_LEN          (6)    
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
-#define BLETEST_CFG_CONCURRENT_CONNS    (16)
+#define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
+#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_RANDOM)
+#define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
-#define BLETEST_PKT_SIZE                (64)
+#define BLETEST_PKT_SIZE                (251)
 #define BLETEST_STACK_SIZE              (256)
 uint32_t g_next_os_time;
 int g_bletest_state;
@@ -238,6 +239,7 @@ bletest_init_advertising(void)
 {
     int rc;
     uint8_t adv_len;
+    uint8_t rand_addr[BLE_DEV_ADDR_LEN];
     struct hci_adv_params adv;
 
     /* Just zero out advertising */
@@ -247,11 +249,14 @@ bletest_init_advertising(void)
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
     adv.adv_channel_map = 0x07;
     adv.adv_filter_policy = BLETEST_CFG_ADV_FILT_POLICY;
-    adv.own_addr_type = BLE_HCI_ADV_OWN_ADDR_PUBLIC;
-    adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
+    adv.own_addr_type = BLETEST_CFG_ADV_OWN_ADDR_TYPE;
+    adv.peer_addr_type = BLETEST_CFG_ADV_PEER_ADDR_TYPE;
     if ((adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) ||
         (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD)) {
         memcpy(adv.peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
+        if (adv.peer_addr_type == BLE_HCI_ADV_PEER_ADDR_RANDOM) {
+            adv.peer_addr[5] |= 0xc0;
+        }
         adv_len = 0;
     } else {
         adv_len = bletest_set_adv_data(&g_host_adv_data[0]);
@@ -273,6 +278,15 @@ bletest_init_advertising(void)
     rc = host_hci_cmd_le_set_adv_params(&adv);
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
+
+    /* If we are using a random address, we need to set it */
+    if (adv.own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+        memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
+        rand_addr[5] |= 0xc0;
+        rc = host_hci_cmd_le_set_rand_addr(rand_addr);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
+    }
 
     /* Set advertising data */
     if (adv_len != 0) {
@@ -348,6 +362,7 @@ void
 bletest_init_initiator(void)
 {
     int rc;
+    uint8_t rand_addr[BLE_DEV_ADDR_LEN];
     struct hci_create_conn cc;
     struct hci_create_conn *hcc;
 
@@ -360,15 +375,27 @@ bletest_init_initiator(void)
     hcc->supervision_timeout = BLETEST_CFG_CONN_SPVN_TMO;
     hcc->scan_itvl = BLETEST_CFG_SCAN_ITVL;
     hcc->scan_window = BLETEST_CFG_SCAN_WINDOW;
-    hcc->peer_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
+    hcc->peer_addr_type = BLETEST_CFG_CONN_PEER_ADDR_TYPE;
     memcpy(hcc->peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
-    hcc->own_addr_type = BLE_HCI_CONN_PEER_ADDR_PUBLIC;
+    if (hcc->peer_addr_type == BLE_HCI_CONN_PEER_ADDR_RANDOM) {
+        hcc->peer_addr[5] |= 0xc0;
+    }
+    hcc->own_addr_type = BLETEST_CFG_CONN_OWN_ADDR_TYPE;
     hcc->min_ce_len = BLETEST_CFG_MIN_CE_LEN;
     hcc->max_ce_len = BLETEST_CFG_MAX_CE_LEN;
 
     console_printf("Trying to connect to %x.%x.%x.%x.%x.%x\n",
                    hcc->peer_addr[0], hcc->peer_addr[1], hcc->peer_addr[2],
                    hcc->peer_addr[3], hcc->peer_addr[4], hcc->peer_addr[5]);
+
+    /* If we are using a random address, we need to set it */
+    if (hcc->own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+        memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
+        rand_addr[5] |= 0xc0;
+        rc = host_hci_cmd_le_set_rand_addr(rand_addr);
+        assert(rc == 0);
+        host_hci_outstanding_opcode = 0;
+    }
 
     rc = host_hci_cmd_le_create_connection(hcc);
     assert(rc == 0);
@@ -378,9 +405,10 @@ bletest_init_initiator(void)
 void
 bletest_execute_initiator(void)
 {
-//    int i;
+    int i;
     int rc;
     uint16_t handle;
+    uint8_t new_chan_map[5];
 
     /* 
      * Determine if there is an active connection for the current handle
@@ -413,22 +441,33 @@ bletest_execute_initiator(void)
             }
         }
     } else {
-#if 0
         if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-            for (i = 0; i < g_bletest_current_conns; ++i) {
-                if (ble_ll_conn_find_active_conn(i + 1)) {
-                    /* Ask for version information */
-                    host_hci_cmd_read_rssi(i+1);
-                    host_hci_outstanding_opcode = 0;
-
-                    #if 0
-                        bletest_send_conn_update(1);
-                    #endif
-                }   
+            if ((g_bletest_state == 1) || (g_bletest_state == 3)) {
+                for (i = 0; i < g_bletest_current_conns; ++i) {
+                    if (ble_ll_conn_find_active_conn(i + 1)) {
+                        host_hci_cmd_le_rd_chanmap(i+1);
+                        host_hci_outstanding_opcode = 0;
+                    }   
+                }
+            } else if (g_bletest_state == 2) {
+                new_chan_map[0] = 0;
+                new_chan_map[1] = 0x3;
+                new_chan_map[2] = 0;
+                new_chan_map[3] = 0;
+                new_chan_map[4] = 0;
+                host_hci_cmd_le_set_host_chan_class(new_chan_map);
+                host_hci_outstanding_opcode = 0;
+            } else {
+                for (i = 0; i < g_bletest_current_conns; ++i) {
+                    if (ble_ll_conn_find_active_conn(i + 1)) {
+                        host_hci_cmd_read_rssi(i+1);
+                        host_hci_outstanding_opcode = 0;
+                    }   
+                }
             }
+            ++g_bletest_state;
             g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 5;
         }
-#endif
     }
 }
 #endif
@@ -445,7 +484,8 @@ bletest_get_packet(void)
 
     om = NULL;
     if (g_mbuf_pool.omp_pool->mp_num_free >= 5) {
-        ble_get_packet(om);
+        om = os_msys_get_pkthdr(BLE_MBUF_PAYLOAD_SIZE, 
+                                sizeof(struct ble_mbuf_hdr));
     }
     return om;
 }
@@ -607,6 +647,7 @@ bletest_execute_advertiser(void)
                         htole16(om->om_data + 4, pktlen);
                         om->om_data[6] = 0;
                         om->om_data[7] = 0;
+                        om->om_len += 4;
 
                         /* Fill with incrementing pattern (starting from 1) */
                         for (j = 0; j < pktlen; ++j) {
@@ -614,7 +655,6 @@ bletest_execute_advertiser(void)
                         }
 
                         /* Add length */
-                        om->om_len += 4;
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
                         ble_hci_transport_host_acl_data_send(om);
 
@@ -641,7 +681,7 @@ bletest_execute(void)
 {
     /* Toggle LED at set rate */
     if ((int32_t)(os_time_get() - g_bletest_next_led_time) >= 0) {
-        gpio_toggle(LED_BLINK_PIN);
+        hal_gpio_toggle(LED_BLINK_PIN);
         g_bletest_next_led_time = os_time_get() + g_bletest_led_rate;
     }
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
@@ -790,7 +830,8 @@ init_tasks(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    ble_ll_init();
+    rc = ble_ll_init();
+    assert(rc == 0);
 
     return 0;
 }
@@ -877,7 +918,7 @@ main(void)
 
     /* Set the led pin as an output */
     g_led_pin = LED_BLINK_PIN;
-    gpio_init_out(g_led_pin, 1);
+    hal_gpio_init_out(g_led_pin, 1);
 
     /* Init the console */
     rc = console_init(shell_console_rx_cb);

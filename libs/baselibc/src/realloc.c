@@ -40,7 +40,9 @@ void *realloc(void *ptr, size_t size)
 		oldsize = ah->a.size - sizeof(struct arena_header);
 
 		newptr = malloc(size);
-		memcpy(newptr, ptr, (size < oldsize) ? size : oldsize);
+                if(newptr) {
+                    memcpy(newptr, ptr, (size < oldsize) ? size : oldsize);
+                }
 		free(ptr);
 
 		return newptr;

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -35,7 +35,7 @@
 #define JSON_VALUE_TYPE_OBJECT (5)
 
 /**
- * For JSON decode, descriptions of the JSON values that 
+ * For JSON decode, descriptions of the JSON values that
  * need to be parsed.
  */
 struct json_value_desc {
@@ -46,7 +46,7 @@ struct json_value_desc {
     uint8_t jv_matched;
 };
 
-/** 
+/**
  * For encode.  The contents of a JSON value to encode.
  */
 struct json_value {
@@ -88,7 +88,7 @@ struct json_value {
     (__jv)->jv_val.u = (uint64_t) __v;
 
 /* Encoding functions */
-typedef int (*json_write_func_t)(void *buf, char *data, 
+typedef int (*json_write_func_t)(void *buf, char *data,
         int len);
 
 struct json_encoder {
@@ -103,22 +103,27 @@ struct json_encoder {
 
 int json_encode_object_start(struct json_encoder *);
 int json_encode_object_key(struct json_encoder *encoder, char *key);
-int json_encode_object_entry(struct json_encoder *, char *, 
+int json_encode_object_entry(struct json_encoder *, char *,
         struct json_value *);
 int json_encode_object_finish(struct json_encoder *);
 
+int json_encode_array_name(struct json_encoder *encoder, char *name);
+int json_encode_array_start(struct json_encoder *encoder);
+int json_encode_array_value(struct json_encoder *encoder, struct json_value *val);
+int json_encode_array_finish(struct json_encoder *encoder);
+
 /* Json parser definitions */
 typedef enum {
-    t_integer, 
-    t_uinteger, 
+    t_integer,
+    t_uinteger,
     t_real,
-    t_string, 
-    t_boolean, 
+    t_string,
+    t_boolean,
     t_character,
-    t_object, 
-    t_structobject, 
-    t_array, 
-    t_check, 
+    t_object,
+    t_structobject,
+    t_array,
+    t_check,
     t_ignore
 } json_type;
 

@@ -19,12 +19,22 @@
 
 pkg.name: project/slinky
 pkg.vers: 0.8.0
+pkg.description: Example application which uses a variety of mynewt features.
+pkg.author: Marko Kiiskila <marko@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+
 pkg.deps:
-    - libs/os
+    - fs/nffs
+    - libs/baselibc
     - libs/console/full
-    - libs/shell
-    - libs/newtmgr
+    - libs/flash_test    
     - libs/imgmgr
+    - libs/newtmgr
+    - libs/os
+    - libs/shell
+    - libs/util
     - sys/config
     - sys/log
     - sys/stats

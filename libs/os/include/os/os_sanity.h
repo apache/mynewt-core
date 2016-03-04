@@ -36,9 +36,16 @@ struct os_sanity_check {
 
     SLIST_ENTRY(os_sanity_check) sc_next;
 
-}; 
+};
 
-int os_sanity_task_init(void);
+#define OS_SANITY_CHECK_SETFUNC(__sc, __f, __arg, __itvl)  \
+    (__sc)->sc_func = (__f);                               \
+    (__sc)->sc_arg = (__arg);                              \
+    (__sc)->sc_checkin_itvl = (__itvl) * OS_TICKS_PER_SEC;
+
+int os_sanity_task_init(int);
+struct os_task;
+int os_sanity_task_checkin(struct os_task *);
 
 int os_sanity_check_init(struct os_sanity_check *);
 int os_sanity_check_register(struct os_sanity_check *);

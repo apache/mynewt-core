@@ -18,7 +18,13 @@
 #
 
 pkg.name: libs/os
-pkg.vers: 0.8.0 
+pkg.vers: 0.8.0
+pkg.description: Mynewt operating system core.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage: http://mynewt.apache.org/os/core_os/mynewt_os/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+
 pkg.deps:
     - libs/testutil
 pkg.req_caps:
@@ -29,5 +35,6 @@ pkg.deps.SHELL:
 pkg.cflags.SHELL: -DSHELL_PRESENT 
 pkg.reqs.SHELL:
     - console
+
 # Satisfy capability dependencies for the self-contained test executable.
 pkg.deps.selftest: libs/console/stub

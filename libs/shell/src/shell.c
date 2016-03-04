@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,7 +21,9 @@
 
 #include <console/console.h>
 
-#include <shell/shell.h>
+#include "shell/shell.h"
+#include "shell_priv.h"
+
 #include <os/endian.h>
 #include <util/base64.h>
 
@@ -35,13 +37,33 @@ static void *g_shell_nlip_in_arg;
 
 static struct os_mqueue g_shell_nlip_mq;
 
-#define OS_EVENT_T_CONSOLE_RDY (OS_EVENT_T_PERUSER)
-#define SHELL_HELP_PER_LINE	6
+#define OS_EVENT_T_CONSOLE_RDY  (OS_EVENT_T_PERUSER)
+#define SHELL_HELP_PER_LINE     6
+#define SHELL_MAX_ARGS          20
 
-static struct shell_cmd g_shell_echo_cmd;
-static struct shell_cmd g_shell_help_cmd;
-static struct shell_cmd g_shell_os_tasks_display_cmd;
-static struct shell_cmd g_shell_os_mpool_display_cmd;
+static int shell_echo_cmd(int argc, char **argv);
+static int shell_help_cmd(int argc, char **argv);
+
+static struct shell_cmd g_shell_echo_cmd = {
+    .sc_cmd = "echo",
+    .sc_cmd_func = shell_echo_cmd
+};
+static struct shell_cmd g_shell_help_cmd = {
+    .sc_cmd = "?",
+    .sc_cmd_func = shell_help_cmd
+};
+static struct shell_cmd g_shell_os_tasks_display_cmd = {
+    .sc_cmd = "tasks",
+    .sc_cmd_func = shell_os_tasks_display_cmd
+};
+static struct shell_cmd g_shell_os_mpool_display_cmd = {
+    .sc_cmd = "mempools",
+    .sc_cmd_func = shell_os_mpool_display_cmd
+};
+static struct shell_cmd g_shell_os_date_cmd = {
+    .sc_cmd = "date",
+    .sc_cmd_func = shell_os_date_cmd
+};
 
 static struct os_task shell_task;
 static struct os_eventq shell_evq;
@@ -52,7 +74,7 @@ static struct os_mutex g_shell_cmd_list_lock;
 static char *shell_line;
 static int shell_line_capacity;
 static int shell_line_len;
-static char *argv[20];
+static char *argv[SHELL_MAX_ARGS];
 static uint8_t shell_full_line;
 
 static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list = 
@@ -60,9 +82,6 @@ static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list =
 
 static struct os_mbuf *g_nlip_mbuf;
 static uint16_t g_nlip_expected_len;
-
-int shell_os_tasks_display_cmd(int argc, char **argv);
-int shell_os_mpool_display_cmd(int argc, char **argv);
 
 static int 
 shell_cmd_list_lock(void)
@@ -101,15 +120,11 @@ err:
 }
 
 int
-shell_cmd_register(struct shell_cmd *sc, char *cmd, shell_cmd_func_t func)
+shell_cmd_register(struct shell_cmd *sc)
 {
     int rc;
 
-    /* Create the command that is being registered. */
-    sc->sc_cmd = cmd;
-    sc->sc_cmd_func = func;
-    STAILQ_NEXT(sc, sc_next) = NULL;
-
+    /* Add the command that is being registered. */
     rc = shell_cmd_list_lock();
     if (rc != 0) {
         goto err;
@@ -160,7 +175,7 @@ err:
     return (rc);
 }
 
-static int 
+static int
 shell_process_command(char *line, int len)
 {
     char *tok;
@@ -170,19 +185,23 @@ shell_process_command(char *line, int len)
     tok_ptr = NULL;
     tok = strtok_r(line, " ", &tok_ptr);
     argc = 0;
-    while (tok != NULL) {
+    while (argc < SHELL_MAX_ARGS - 1 && tok != NULL) {
         argv[argc++] = tok;
 
         tok = strtok_r(NULL, " ", &tok_ptr);
     }
 
-    (void) shell_cmd(argv[0], argv, argc);
-    
+    /* Terminate the argument list with a null pointer. */
+    argv[argc] = NULL;
+
+    if (argc) {
+        (void) shell_cmd(argv[0], argv, argc);
+    }
     return (0);
 }
 
 
-static int 
+static int
 shell_nlip_process(char *data, int len)
 {
     uint16_t copy_len;
@@ -363,7 +382,7 @@ err:
     return (rc);
 }
 
-static int 
+static int
 shell_read_console(void)
 {
     int rc;
@@ -382,7 +401,7 @@ shell_read_console(void)
             shell_line_len = 0;
             shell_full_line = 0;
             if (rc > 2) {
-                if (shell_line[0] == SHELL_NLIP_PKT_START1 && 
+                if (shell_line[0] == SHELL_NLIP_PKT_START1 &&
                         shell_line[1] == SHELL_NLIP_PKT_START2) {
                     if (g_nlip_mbuf) {
                         os_mbuf_free_chain(g_nlip_mbuf);
@@ -391,7 +410,7 @@ shell_read_console(void)
                     g_nlip_expected_len = 0;
 
                     rc = shell_nlip_process(&shell_line[2], rc-2);
-                } else if (shell_line[0] == SHELL_NLIP_DATA_START1 && 
+                } else if (shell_line[0] == SHELL_NLIP_DATA_START1 &&
                         shell_line[1] == SHELL_NLIP_DATA_START2) {
                     rc = shell_nlip_process(&shell_line[2], rc-2);
                 } else {
@@ -518,24 +537,27 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
         goto err;
     }
 
-    rc = shell_cmd_register(&g_shell_echo_cmd, "echo", shell_echo_cmd);
+    rc = shell_cmd_register(&g_shell_echo_cmd);
     if (rc != 0) {
         goto err;
     }
 
-    rc = shell_cmd_register(&g_shell_help_cmd, "?", shell_help_cmd);
+    rc = shell_cmd_register(&g_shell_help_cmd);
     if (rc != 0) {
         goto err;
     }
 
-    rc = shell_cmd_register(&g_shell_os_tasks_display_cmd, "tasks", 
-            shell_os_tasks_display_cmd);
+    rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
     if (rc != 0) {
         goto err;
     }
 
-    rc = shell_cmd_register(&g_shell_os_mpool_display_cmd, "mempools",
-            shell_os_mpool_display_cmd);
+    rc = shell_cmd_register(&g_shell_os_mpool_display_cmd);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = shell_cmd_register(&g_shell_os_date_cmd);
     if (rc != 0) {
         goto err;
     }

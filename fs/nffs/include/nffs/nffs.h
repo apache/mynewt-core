@@ -57,7 +57,5 @@ struct nffs_area_desc {
 int nffs_init(void);
 int nffs_detect(const struct nffs_area_desc *area_descs);
 int nffs_format(const struct nffs_area_desc *area_descs);
-int nffs_ready(void);
-
 
 #endif

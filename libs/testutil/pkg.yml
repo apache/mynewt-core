@@ -18,7 +18,15 @@
 #
 
 pkg.name: libs/testutil
-pkg.vers: 0.8.0 
+pkg.vers: 0.8.0
+pkg.description: Support library for implementing unit tests.
+pkg.author: Christopher Collins <ccollins@apache.org>
+pkg.homepage: http://mynewt.apache.org/os/modules/testutil/testutil/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - unit
+    - test
+
 pkg.deps:
     - hw/hal
     - libs/os

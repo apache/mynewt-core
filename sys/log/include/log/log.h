@@ -70,6 +70,7 @@ struct log_entry_hdr {
 #define LOG_MODULE_NEWTMGR          (2)
 #define LOG_MODULE_NIMBLE_CTLR      (3)
 #define LOG_MODULE_NIMBLE_HOST      (4)
+#define LOG_MODULE_NFFS             (5)
 #define LOG_MODULE_PERUSER          (64)
 
 /* Compile in Log Debug by default */
@@ -140,5 +141,10 @@ int log_flush(struct log *log);
 /* Handler exports */
 int log_cbmem_handler_init(struct log_handler *, struct cbmem *);
 int log_console_handler_init(struct log_handler *);
+
+/* Private */
+#ifdef NEWTMGR_PRESENT
+int log_nmgr_register_group(void);
+#endif
 
 #endif /* __LOG_H__ */

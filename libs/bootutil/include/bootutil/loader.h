@@ -52,6 +52,9 @@ struct boot_req {
 
     /** The index of the area to use as the image scratch area. */
     uint8_t br_scratch_area_idx;
+    
+    /** the location of the nffs area index within the area descriptors above*/
+    uint8_t br_nffs_area_idx;
 };
 
 /**

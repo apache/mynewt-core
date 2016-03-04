@@ -19,9 +19,19 @@
 
 pkg.name: fs/nffs
 pkg.vers: 0.8.0
+pkg.description: Newtron Flash File System.
+pkg.author: Christopher Collins <ccollins@apache.org>
+pkg.homepage: http://mynewt.apache.org/os/modules/nffs/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - file
+    - filesystem
+    - ffs
+
 pkg.identities: NFFS
 pkg.deps:
     - fs/fs
+    - hw/hal
     - libs/os
     - libs/testutil
-    - hw/hal
+    - sys/log

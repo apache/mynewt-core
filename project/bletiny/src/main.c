@@ -22,6 +22,7 @@
 #include <errno.h>
 #include "bsp/bsp.h"
 #include "log/log.h"
+#include "stats/stats.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
@@ -32,6 +33,7 @@
 
 /* BLE */
 #include "nimble/ble.h"
+#include "nimble/nimble_opt.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
@@ -82,7 +84,7 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(200))
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
-#if NIMBLE_OPT_CENTRAL
+#if NIMBLE_OPT_ROLE_CENTRAL
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
 #define BLETINY_MAX_DSCS               64
@@ -1416,6 +1418,17 @@ main(void)
                  NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
                  bletiny_stack, BLETINY_STACK_SIZE);
 
+    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
+                         SHELL_MAX_INPUT_LEN);
+    assert(rc == 0);
+
+    /* Init the console */
+    rc = console_init(shell_console_rx_cb);
+    assert(rc == 0);
+
+    rc = stats_module_init();
+    assert(rc == 0);
+
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
@@ -1431,14 +1444,6 @@ main(void)
 
     /* Initialize the BLE LL */
     ble_ll_init();
-
-    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
-                         SHELL_MAX_INPUT_LEN);
-    assert(rc == 0);
-
-    /* Init the console */
-    rc = console_init(shell_console_rx_cb);
-    assert(rc == 0);
 
     rc = cmd_init();
     assert(rc == 0);

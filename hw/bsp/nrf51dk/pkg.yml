@@ -17,7 +17,16 @@
 # under the License.
 #
 
-pkg.name: "hw/bsp/nrf51dk"
+pkg.name: hw/bsp/nrf51dk
+pkg.vers: 0.8.0
+pkg.description: BSP definition for the Nordic nRF51 DK SoC.
+pkg.author: wes3 <will@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.keywords:
+    - nrf51
+    - nrf51dk
+
 pkg.linkerscript: "nrf51dk.ld" 
 pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf51dk.ld"
 pkg.downloadscript: nrf51dk_download.sh

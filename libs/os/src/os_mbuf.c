@@ -36,6 +36,7 @@
 
 #include "os/os.h"
 
+#include <assert.h>
 #include <string.h>
 
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list = 
@@ -157,8 +158,6 @@ _os_msys_find_pool(uint16_t dsize)
     return (pool);
 }
 
-
-
 struct os_mbuf *
 os_msys_get(uint16_t dsize, uint16_t leadingspace)
 {
@@ -175,7 +174,6 @@ os_msys_get(uint16_t dsize, uint16_t leadingspace)
 err:
     return (NULL);
 }
-
 
 struct os_mbuf *
 os_msys_get_pkthdr(uint16_t dsize, uint16_t user_hdr_len)
@@ -208,8 +206,8 @@ err:
  * @return 0 on success, error code on failure. 
  */
 int 
-os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp, uint16_t buf_len, 
-        uint16_t nbufs)
+os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp, 
+                  uint16_t buf_len, uint16_t nbufs)
 {
     omp->omp_databuf_len = buf_len - sizeof(struct os_mbuf);
     omp->omp_mbuf_count = nbufs;
@@ -233,6 +231,10 @@ os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
 {
     struct os_mbuf *om;
 
+    if (leadingspace > omp->omp_databuf_len) {
+        goto err;
+    }
+
     om = os_memblock_get(omp->omp_pool);
     if (!om) {
         goto err;
@@ -254,13 +256,20 @@ err:
 struct os_mbuf *
 os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t user_pkthdr_len)
 {
+    uint16_t pkthdr_len;
     struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
 
+    /* User packet header must fit inside mbuf */
+    pkthdr_len = user_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
+    if ((pkthdr_len > omp->omp_databuf_len) || (pkthdr_len > 255)) {
+        return NULL;
+    }
+
     om = os_mbuf_get(omp, 0);
     if (om) {
-        om->om_pkthdr_len = user_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
-        om->om_data += user_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
+        om->om_pkthdr_len = pkthdr_len;
+        om->om_data += pkthdr_len;
 
         pkthdr = OS_MBUF_PKTHDR(om);
         pkthdr->omp_len = 0;
@@ -336,8 +345,12 @@ err:
 static inline void 
 _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
 {
+    assert(new_buf->om_len == 0);
+
     memcpy(&new_buf->om_databuf[0], &old_buf->om_databuf[0], 
            old_buf->om_pkthdr_len);
+    new_buf->om_pkthdr_len = old_buf->om_pkthdr_len;
+    new_buf->om_data = new_buf->om_databuf + old_buf->om_pkthdr_len;
 }
 
 /** 
@@ -951,13 +964,18 @@ os_mbuf_pullup(struct os_mbuf *om, uint16_t len)
         om = SLIST_NEXT(om, om_next);
         len -= om2->om_len;
     } else {
-        if (len > omp->omp_databuf_len - om->om_pkthdr_len)
+        if (len > omp->omp_databuf_len - om->om_pkthdr_len) {
             goto bad;
+        }
+
         om2 = os_mbuf_get(omp, 0);
-        if (om2 == NULL)
+        if (om2 == NULL) {
             goto bad;
-        if (OS_MBUF_IS_PKTHDR(om))
+        }
+
+        if (OS_MBUF_IS_PKTHDR(om)) {
             _os_mbuf_copypkthdr(om2, om);
+        }
     }
     space = OS_MBUF_TRAILINGSPACE(om2);
     do {
