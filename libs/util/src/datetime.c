@@ -211,7 +211,7 @@ parse_number(const char *str, int digits, int *val)
     cp = str;
     end = str + digits;
     while (cp < end) {
-        if (!isdigit(*cp)) {
+        if (!isdigit((int) *cp)) {
             return (NULL);
         }
         *val *= 10;
@@ -277,7 +277,7 @@ parse_datetime(const char *input, struct os_timeval *tv, struct os_timezone *tz)
     /* parse fractional seconds if specified */
     if (*cp == '.') {
         ep = ++cp;
-        while (isdigit(*ep)) {
+        while (isdigit((int) *ep)) {
             ep++;
         }
         digits = ep - cp;
