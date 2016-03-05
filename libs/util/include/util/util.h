@@ -19,4 +19,6 @@
 #ifndef __UTIL_H__ 
 #define __UTIL_H__
 
+#define CTASSERT(x) typedef int __ctasssert ## __LINE__[(x) ? 1 : -1]
+
 #endif /* __UTIL_H__ */
