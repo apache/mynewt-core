@@ -31,18 +31,23 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <assert.h> 
+#include <util/util.h>
 
-/* XXX: 
- * Stack must be 16-byte aligned, any changes to this structure 
- * must keep that alignment.
- */
 struct stack_frame {
+    int sf_mainsp;              /* stack on which main() is executing */
     jmp_buf sf_jb;
     int sf_sigsblocked;
-    os_task_func_t sf_func; 
-    void *sf_arg;
-    int _pad[3];
+    struct os_task *sf_task;
 };
+
+/*
+ * Assert that 'sf_mainsp' and 'sf_jb' are at the specific offsets where
+ * os_arch_frame_init() expects them to be.
+ */
+CTASSERT(offsetof(struct stack_frame, sf_mainsp) == 0);
+CTASSERT(offsetof(struct stack_frame, sf_jb) == 4);
+
+extern void os_arch_frame_init(struct stack_frame *sf);
 
 #define CTX_SWITCH_ISR (1)
 #define CTX_SWITCH_TASK (2)
@@ -86,54 +91,43 @@ sigs_block(void)
     sigprocmask(SIG_BLOCK, &g_sigset, NULL);
 }
 
+/*
+ * Called from 'os_arch_frame_init()' when setjmp returns indirectly via
+ * longjmp. The return value of setjmp is passed to this function as 'rc'.
+ */
+void
+os_arch_task_start(struct stack_frame *sf, int rc)
+{
+    struct os_task *task;
+
+    task = sf->sf_task;
+
+    isr_state(&g_block_isr_off, NULL);
+
+    if (rc == CTX_SWITCH_ISR) {
+        sigs_unblock();
+    }
+
+    task->t_func(task->t_arg);
+
+    /* This should never return */ 
+    assert(0); 
+}
+
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size) 
 {
-    struct os_task *cur_t; 
     struct stack_frame *sf;
-    os_stack_t *s;
-    void *s_cur;
-    volatile int block_isr_off; 
-    int rc; 
 
-    s = (os_stack_t *) ((uint8_t *) stack_top - sizeof(*sf));
-    sf = (struct stack_frame *) s;
+    sf = (struct stack_frame *) ((uint8_t *) stack_top - sizeof(*sf));
     sf->sf_sigsblocked = 0;
-    sf->sf_func = t->t_func; 
-    sf->sf_arg = t->t_arg;
-
-    block_isr_off = g_block_isr_off;
-
-    /* Save the current stack pointer, and then trick setjmp() 
-     * to store the stackos stack pointer. 
-     */
-    asm("movl %%esp, %0" : "=r" (s_cur)); 
-    asm("movl %0,%%esp" : /* no output */ : "r" (s));
+    sf->sf_task = t;
 
     isr_state(&g_block_isr_on, NULL); 
+    os_arch_frame_init(sf);
+    isr_state(&g_block_isr_off, NULL);
 
-    rc = sim_setjmp(sf->sf_jb); 
-    if (rc != 0) { 
-        cur_t = os_sched_get_current_task();
-    
-        isr_state(&block_isr_off, NULL);
-
-        if (rc == CTX_SWITCH_ISR) {
-            sigs_unblock();
-        }
-
-        sf = (struct stack_frame *) cur_t->t_stackptr;
-        sf->sf_func(sf->sf_arg);
-
-        /* This should never return */ 
-        assert(0); 
-    } else {
-        /* restore current stack pointer */
-        isr_state(&g_block_isr_off, NULL);
-        asm("movl %0, %%esp" : /* no output */ : "r" (s_cur));
-    }
-
-    return (s);
+    return ((os_stack_t *)sf);
 }
 
 void
