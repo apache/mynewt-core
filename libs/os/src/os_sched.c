@@ -138,16 +138,15 @@ os_sched(struct os_task *next_t, int isr)
     }
 
     if (next_t != g_current_task) {
-        OS_EXIT_CRITICAL(sr);
         if (isr) {
             os_arch_ctx_sw_isr(next_t);
         } else {
             os_arch_ctx_sw(next_t);
         }
 
-    } else {
-        OS_EXIT_CRITICAL(sr);
     }
+
+    OS_EXIT_CRITICAL(sr);
 }
 
 /**
