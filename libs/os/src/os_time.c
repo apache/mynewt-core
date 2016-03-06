@@ -45,27 +45,6 @@ os_deltatime(os_time_t delta, const struct os_timeval *base,
     os_timeradd(base, &tvdelta, result);
 }
 
-/*
- * Time-of-day collateral.
- */
-static struct {
-    os_time_t ostime;
-    struct os_timeval uptime;
-    struct os_timeval utctime;
-    struct os_timezone timezone;
-} basetod;
-
-static void
-os_deltatime(os_time_t delta, const struct os_timeval *base,
-    struct os_timeval *result)
-{
-    struct os_timeval tvdelta;
-
-    tvdelta.tv_sec = delta / OS_TICKS_PER_SEC;
-    tvdelta.tv_usec = (delta % OS_TICKS_PER_SEC) * OS_USEC_PER_TICK;
-    os_timeradd(base, &tvdelta, result);
-}
-
 os_time_t  
 os_time_get(void)
 {
