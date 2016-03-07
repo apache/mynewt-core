@@ -40,15 +40,18 @@ _os_arch_frame_init:
      * ----------------
      * alignment padding    variable (0 to 12 bytes)
      * ----------------
-     * pointer to sf_jb     %esp
+     * savemask (0)         0x4(%esp)
+     * ----------------
+     * pointer to sf_jb     0x0(%esp)
      * ----------------
      */
     movl    %esi,%esp
-    subl    $0x4,%esp               /* make room for setjmp() argument */
+    subl    $0x8,%esp               /* make room for sigsetjmp() arguments */
     andl    $0xfffffff0,%esp        /* align %esp on 16-byte boundary */
     leal    0x4(%esi),%eax          /* %eax = &sf->sf_jb */
     movl    %eax,0x0(%esp)
-    call    __setjmp                /* _setjmp(sf->sf_jb) */
+    movl    $0, 0x4(%esp)
+    call    _sigsetjmp              /* _setjmp(sf->sf_jb, 0) */
     test    %eax,%eax
     jne     1f
     movl    0x0(%esi),%esp          /* switch back to the main() stack */

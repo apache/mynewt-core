@@ -35,7 +35,7 @@
 
 struct stack_frame {
     int sf_mainsp;              /* stack on which main() is executing */
-    jmp_buf sf_jb;
+    sigjmp_buf sf_jb;
     int sf_sigsblocked;
     struct os_task *sf_task;
 };
@@ -55,8 +55,8 @@ extern void os_arch_frame_init(struct stack_frame *sf);
 #define ISR_BLOCK_OFF (0) 
 #define ISR_BLOCK_ON (1)
 
-#define sim_setjmp(__jb) _setjmp(__jb)
-#define sim_longjmp(__jb, __ret) _longjmp(__jb, __ret) 
+#define sim_setjmp(__jb) sigsetjmp(__jb, 0)
+#define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret) 
 
 sigset_t g_sigset;  
 volatile int g_block_isr = ISR_BLOCK_OFF;
