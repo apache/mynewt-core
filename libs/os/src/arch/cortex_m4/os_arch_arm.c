@@ -96,20 +96,11 @@ timer_handler(void)
     os_time_tick();
     os_callout_tick();
     os_sched_os_timer_exp();
-    os_sched(NULL, 1);
+    os_sched(NULL);
 }
 
 void
 os_arch_ctx_sw(struct os_task *t)
-{
-    os_sched_ctx_sw_hook(t);
-
-    /* Set PendSV interrupt pending bit to force context switch */
-    SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
-}
-
-void
-os_arch_ctx_sw_isr(struct os_task *t)
 {
     os_sched_ctx_sw_hook(t);
 
@@ -349,3 +340,8 @@ os_arch_os_start(void)
     return err;
 }
 
+void
+os_arch_idle(void)
+{
+    return;
+}

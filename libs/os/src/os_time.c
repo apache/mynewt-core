@@ -93,7 +93,7 @@ os_time_delay(int32_t osticks)
         OS_ENTER_CRITICAL(sr);
         os_sched_sleep(os_sched_get_current_task(), (os_time_t)osticks);
         OS_EXIT_CRITICAL(sr);
-        os_sched(NULL, 0);
+        os_sched(NULL);
     }
 }
 

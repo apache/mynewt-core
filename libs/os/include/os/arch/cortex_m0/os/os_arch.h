@@ -58,7 +58,6 @@ typedef uint32_t os_stack_t;
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
 void timer_handler(void);
 void os_arch_ctx_sw(struct os_task *);
-void os_arch_ctx_sw_isr(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t);
 void os_arch_init(void);
@@ -68,6 +67,7 @@ os_error_t os_arch_os_start(void);
 void os_set_env(void);
 void os_arch_init_task_stack(os_stack_t *sf);
 void os_default_irq_asm(void);
+void os_arch_idle(void);
 
 /* External function prototypes supplied by BSP */
 void os_bsp_systick_init(uint32_t os_ticks_per_sec);

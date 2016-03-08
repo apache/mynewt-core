@@ -30,7 +30,7 @@ os_eventq_init(struct os_eventq *evq)
 }
 
 void
-os_eventq_put2(struct os_eventq *evq, struct os_event *ev, int isr)
+os_eventq_put(struct os_eventq *evq, struct os_event *ev)
 {
     int resched;
     os_sr_t sr;
@@ -58,14 +58,8 @@ os_eventq_put2(struct os_eventq *evq, struct os_event *ev, int isr)
     OS_EXIT_CRITICAL(sr);
 
     if (resched) {
-        os_sched(NULL, isr);
+        os_sched(NULL);
     }
-}
-
-void
-os_eventq_put(struct os_eventq *evq, struct os_event *ev)
-{
-    os_eventq_put2(evq, ev, 0);
 }
 
 struct os_event *
@@ -85,7 +79,7 @@ pull_one:
         os_sched_sleep(evq->evq_task, OS_TIMEOUT_NEVER);
         OS_EXIT_CRITICAL(sr);
 
-        os_sched(NULL, 0);
+        os_sched(NULL);
 
         OS_ENTER_CRITICAL(sr);
         evq->evq_task = NULL;

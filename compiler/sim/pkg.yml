@@ -29,15 +29,16 @@ pkg.keywords:
     - gcc
 
 compiler.path.cc: "/usr/local/bin/gcc-5" 
+compiler.path.as: "/usr/local/bin/gcc-5 -x assembler-with-cpp"
 compiler.path.archive: "ar"
 compiler.path.objdump: "gobjdump"
 compiler.path.objsize: "objsize"
 compiler.path.objcopy: "gobjcopy"
 
 compiler.flags.base: >
-    -m32 -Wall -Werror -ggdb -O0 -DMN_OSX
+    -m32 -Wall -Werror -ggdb -DMN_OSX
 
-compiler.flags.default: [compiler.flags.base]
-compiler.flags.debug: [compiler.flags.base, -ggdb -O0]
+compiler.flags.default: [compiler.flags.base, -O1]
+compiler.flags.debug: [compiler.flags.base, -O0]
 
 compiler.ld.mapfile: false
