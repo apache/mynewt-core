@@ -51,7 +51,7 @@ _os_arch_frame_init:
     leal    0x4(%esi),%eax          /* %eax = &sf->sf_jb */
     movl    %eax,0x0(%esp)
     movl    $0, 0x4(%esp)
-    call    _sigsetjmp              /* _setjmp(sf->sf_jb, 0) */
+    call    _sigsetjmp              /* sigsetjmp(sf->sf_jb, 0) */
     test    %eax,%eax
     jne     1f
     movl    0x0(%esi),%esp          /* switch back to the main() stack */
