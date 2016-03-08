@@ -125,7 +125,7 @@ os_callout_tick(void)
         OS_EXIT_CRITICAL(sr);
 
         if (c) {
-            os_eventq_put2(c->c_evq, &c->c_ev, 1);
+            os_eventq_put(c->c_evq, &c->c_ev);
         } else {
             break;
         }

@@ -122,7 +122,7 @@ os_mutex_release(struct os_mutex *mu)
 
     /* Re-schedule if needed */
     if (resched) {
-        os_sched(rdy, 0);
+        os_sched(rdy);
     }
 
     return OS_OK;
@@ -218,7 +218,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     os_sched_sleep(current, timeout);
     OS_EXIT_CRITICAL(sr);
 
-    os_sched(NULL, 0);
+    os_sched(NULL);
 
     OS_ENTER_CRITICAL(sr);
     current->t_flags &= ~OS_TASK_FLAG_MUTEX_WAIT;

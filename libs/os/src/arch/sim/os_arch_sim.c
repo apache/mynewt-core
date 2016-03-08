@@ -124,12 +124,6 @@ os_arch_ctx_sw(struct os_task *next_t)
     sim_longjmp(sf->sf_jb, 1);
 }
 
-void
-os_arch_ctx_sw_isr(struct os_task *next_t)
-{
-    os_arch_ctx_sw(next_t);
-}
-
 /*
  * Disable signals and enter a critical section.
  *
@@ -264,7 +258,7 @@ timer_handler(int sig)
     timersub(&time_now, &time_diff, &time_last);
 
     os_sched_os_timer_exp();
-    os_sched(NULL, 1); 
+    os_sched(NULL);
 }
 
 static void

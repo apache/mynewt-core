@@ -124,10 +124,9 @@ os_sched_set_current_task(struct os_task *t)
  * list) or will schedule next_t as the task to run.
  * 
  * @param next_t Task to run
- * @param isr    Flag denoting whether we are inside an isr (0:no, 1:yes).
  */
 void
-os_sched(struct os_task *next_t, int isr) 
+os_sched(struct os_task *next_t)
 {
     os_sr_t sr;
 
@@ -138,12 +137,7 @@ os_sched(struct os_task *next_t, int isr)
     }
 
     if (next_t != g_current_task) {
-        if (isr) {
-            os_arch_ctx_sw_isr(next_t);
-        } else {
-            os_arch_ctx_sw(next_t);
-        }
-
+        os_arch_ctx_sw(next_t);
     }
 
     OS_EXIT_CRITICAL(sr);
