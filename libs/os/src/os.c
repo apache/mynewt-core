@@ -37,6 +37,7 @@ os_idle_task(void *arg)
     /* For now, idle task simply increments a counter to show it is running. */
     while (1) {
         ++g_os_idle_ctr;
+        os_arch_idle();
     }
 }
 
