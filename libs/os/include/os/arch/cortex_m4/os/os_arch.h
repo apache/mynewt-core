@@ -68,6 +68,7 @@ os_error_t os_arch_os_start(void);
 void os_set_env(void);
 void os_arch_init_task_stack(os_stack_t *sf);
 void os_default_irq_asm(void);
+void os_arch_idle(void);
 
 /* External function prototypes supplied by BSP */
 void os_bsp_systick_init(uint32_t os_tick_per_sec);

@@ -349,3 +349,8 @@ os_arch_os_start(void)
     return err;
 }
 
+void
+os_arch_idle(void)
+{
+    return;
+}
