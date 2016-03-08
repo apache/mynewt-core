@@ -52,7 +52,6 @@ void _Die(char *file, int line);
 
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
 void os_arch_ctx_sw(struct os_task *);
-void os_arch_ctx_sw_isr(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t sr);
 os_error_t os_arch_os_init(void);

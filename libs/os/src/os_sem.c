@@ -106,7 +106,7 @@ os_sem_release(struct os_sem *sem)
 
     /* Re-schedule if needed */
     if (resched) {
-        os_sched(rdy, 0);
+        os_sched(rdy);
     }
 
     return OS_OK;
@@ -195,7 +195,7 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
     OS_EXIT_CRITICAL(sr);
 
     if (sched) {
-        os_sched(NULL, 0);
+        os_sched(NULL);
         /* Check if we timed out or got the semaphore */
         if (current->t_flags & OS_TASK_FLAG_SEM_WAIT) {
             OS_ENTER_CRITICAL(sr);

@@ -41,7 +41,6 @@ struct os_eventq {
 };
 
 void os_eventq_init(struct os_eventq *);
-void os_eventq_put2(struct os_eventq *, struct os_event *, int);
 void os_eventq_put(struct os_eventq *, struct os_event *);
 struct os_event *os_eventq_get(struct os_eventq *);
 void os_eventq_remove(struct os_eventq *, struct os_event *);
