@@ -19,12 +19,17 @@
 
 pkg.name: libs/flash_test
 pkg.vers: 0.8.0
+pkg.description: flash HAL tester
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.keywords:
+
 pkg.deps:
     - libs/os
     - libs/util
     - hw/hal
     - libs/baselibc
-pkg.reqs:
+pkg.req_apis:
     - console
-pkg.identities:
+pkg.features:
     - TEST

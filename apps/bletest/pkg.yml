@@ -17,12 +17,13 @@
 # under the License.
 #
 
-pkg.name: bletest
+pkg.name: apps/bletest
 pkg.vers: 0.8.0
 pkg.description: Test project for the nimble BLE controller.
 pkg.author: wes3 <will@runtime.io>
 pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.type: app
 pkg.keywords:
 
 pkg.deps: 

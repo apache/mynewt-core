@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -6,7 +5,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -16,22 +15,19 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-pkg.name: project/boot
+pkg.name: apps/luatest
 pkg.vers: 0.8.0
-pkg.description: Boot loader application.
-pkg.author: Christopher Collins <chris@apache.org>
-pkg.homepage: http://mynewt.apache.org/os/modules/bootloader/bootloader/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.description: Simple project for testing Lua scripting.
+pkg.author: Marko Kiiskila <marko@runtime.io>
+pkg.homepage:
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.type: app
 pkg.keywords:
-    - loader
 
-pkg.identities: bootloader
 pkg.deps:
-    - fs/nffs
-    - libs/baselibc
-    - libs/bootutil
-    - libs/console/stub
-    - libs/mbedtls
-    - libs/os
-    - libs/util
+     - fs/nffs
+     - libs/os
+     - libs/elua/elua_base
+     - libs/console/full
+     - libs/shell
+

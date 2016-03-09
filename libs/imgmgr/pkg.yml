@@ -22,7 +22,7 @@ pkg.vers: 0.8.0
 pkg.description: Library for image uploading.
 pkg.author: Marko Kiiskila <marko@runtime.io>
 pkg.homepage: http://mynewt.apache.org/os/modules/imgmgr/imgmgr/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
 pkg.keywords:
 
 pkg.deps:

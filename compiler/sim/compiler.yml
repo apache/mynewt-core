@@ -16,20 +16,17 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+compiler.path.cc: "/usr/local/bin/gcc-5" 
+compiler.path.as: "/usr/local/bin/gcc-5 -x assembler-with-cpp"
+compiler.path.archive: "ar"
+compiler.path.objdump: "gobjdump"
+compiler.path.objsize: "objsize"
+compiler.path.objcopy: "gobjcopy"
 
-pkg.name: project/blinky
-pkg.vers: 0.8.0
-pkg.description: Basic example application which blinks an LED.
-pkg.author: Marko Kiiskila <marko@runtime.io>
-pkg.homepage: http://mynewt.apache.org/os/get_acclimated/project2/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
-pkg.keywords:
+compiler.flags.base: >
+    -m32 -Wall -Werror -ggdb -DMN_OSX
 
-pkg.deps:
-    - libs/console/full
-    - libs/newtmgr
-    - libs/os
-    - libs/shell
-    - sys/config
-    - sys/log
-    - sys/stats
+compiler.flags.default: [compiler.flags.base, -O1]
+compiler.flags.debug: [compiler.flags.base, -O0]
+
+compiler.ld.mapfile: false

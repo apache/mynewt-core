@@ -38,14 +38,14 @@ pkgs:
     libs/console/stub:
         vers: 0.8.0
         hash: d41aedc5941495ca9320cc013f68ee73d4e349ab
-        caps:
+        apis:
             - console@none#stable
     libs/os:
         vers: 0.8.0
         hash: 999a3419d9959d3c39b11dcc67d79c7888b4b765
         deps:
             - libs/testutil@none#stable
-        req_caps:
+        req_apis:
             - console@none#stable
     project/blinky:
         vers: 0.8.0
@@ -74,7 +74,7 @@ pkgs:
         hash: 513cc71e129320e3e2d80a9cdfc748db6c83fbb4
         deps:
             - net/nimble/controller@none#stable
-        caps:
+        apis:
             - ble_driver@none#stable
     fs/fs:
         vers: 0.8.0
@@ -92,7 +92,7 @@ pkgs:
         hash: 0f4bff75e83236ad27c49ba9a161d50b76c648fb
         deps:
             - fs/fs@none#stable
-        req_caps:
+        req_apis:
             - console@none#stable
     libs/util:
         vers: 0.8.0
@@ -220,7 +220,7 @@ pkgs:
         deps:
             - net/nimble@none#stable
             - net/nimble/controller@none#stable
-        caps:
+        apis:
             - ble_driver@none#stable
     compiler/arm-none-eabi-m4:
         vers: 0.8.0
@@ -231,7 +231,7 @@ pkgs:
         deps:
             - hw/hal@none#stable
             - libs/os@none#stable
-        caps:
+        apis:
             - console@none#stable
     hw/mcu/stm/stm32f4xx:
         vers: 0.0.0
@@ -295,7 +295,7 @@ pkgs:
             - libs/os@none#stable
             - libs/util@none#stable
             - net/nimble@none#stable
-        req_caps:
+        req_apis:
             - console@none#stable
     libs/imgmgr:
         vers: 0.8.0
@@ -319,7 +319,7 @@ pkgs:
     libs/baselibc:
         vers: 0.8.0
         hash: bb46b003c472b16309bd9fbed81f5c4c62bd4aa5
-        req_caps:
+        req_apis:
             - console@none#stable
     net/nimble/drivers/nrf52:
         vers: 0.8.0
@@ -327,7 +327,7 @@ pkgs:
         deps:
             - net/nimble@none#stable
             - net/nimble/controller@none#stable
-        caps:
+        apis:
             - ble_driver@none#stable
     hw/mcu/nordic/nrf51xxx:
         vers: 0.0.0

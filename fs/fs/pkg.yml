@@ -22,7 +22,7 @@ pkg.vers: 0.8.0
 pkg.description: File system abstrction.
 pkg.author: Marko Kiiskila <marko@apache.org>
 pkg.homepage: http://mynewt.apache.org/os/modules/filesystem/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
 pkg.keywords:
     - file
     - filesystem
@@ -33,5 +33,5 @@ pkg.deps.SHELL:
 pkg.reqs.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT
-pkg.identities:
+pkg.features:
     - FS

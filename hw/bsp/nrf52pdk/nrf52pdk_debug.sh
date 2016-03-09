@@ -16,11 +16,12 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Called: $0 <binary> [identities...]
+# Called: $0 <bsp_directory_path> <binary> [features...]
+#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
 #  - binary is the path to prefix to target binary, .elf.bin appended to this
 #    name is the raw binary format of the binary.
-#  - identities is the project identities string. So you can have e.g. different
-#    flash offset for bootloader identity
+#  - features are the target features. So you can have e.g. different
+#    flash offset for bootloader 'feature'
 # 
 #
 if [ $# -lt 1 ]; then
@@ -28,7 +29,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-FILE_NAME=$1.elf
+FILE_NAME=$2.elf
 GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME

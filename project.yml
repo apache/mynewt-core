@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,19 +16,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: bletiny
-pkg.vers: 0.8.0
-pkg.description: Shell application exposing the nimble GAP and GATT.
-pkg.author: Christopher Collins <ccollins@apache.org>
-pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
-pkg.keywords:
 
-pkg.deps: 
-    - libs/os 
-    - sys/log
-    - net/nimble/controller
-    - net/nimble/host
-    - libs/console/full
-    - libs/shell
-    - libs/baselibc
+project.name: "apache-mynewt-core"
+
+repository.apache-mynewt-core:
+    type: github
+    vers: 0-latest
+    user: sterlinghughes
+    repo: incubator-mynewt-core

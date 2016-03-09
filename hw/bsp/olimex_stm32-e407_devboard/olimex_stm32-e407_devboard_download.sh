@@ -16,22 +16,25 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Called: $0 <binary> [identities...]
+# Called: $0 <bsp_directory_path> <binary> [features...]
+#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
 #  - binary is the path to prefix to target binary, .elf.bin appended to this
 #    name is the raw binary format of the binary.
-#  - identities is the project identities string. So you can have e.g. different
-#    flash offset for bootloader identity
+#  - features are the target features. So you can have e.g. different
+#    flash offset for bootloader 'feature'
 # 
 #
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     echo "Need binary to download"
     exit 1
 fi
 
-BASENAME=$1
+MYPATH=$1
+BASENAME=$2
 IS_BOOTLOADER=0
 
-# Look for 'bootloader' from 2nd arg onwards
+# Look for 'bootloader' from 3rd arg onwards
+shift
 shift
 while [ $# -gt 0 ]; do
     if [ $1 = "bootloader" ]; then
@@ -49,5 +52,5 @@ else
 fi
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s hw/bsp/olimex_stm32-e407_devboard -f f407.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $MYPATH -f f407.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 
