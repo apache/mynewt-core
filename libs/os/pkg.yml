@@ -27,6 +27,7 @@ pkg.keywords:
 
 pkg.deps:
     - libs/testutil
+    - libs/util
 pkg.req_caps:
     - console
 
