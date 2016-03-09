@@ -34,8 +34,6 @@ pkg.req_apis:
 pkg.deps.SHELL:
     - libs/shell 
 pkg.cflags.SHELL: -DSHELL_PRESENT 
-pkg.reqs.SHELL:
-    - console
 
 # Satisfy capability dependencies for the self-contained test executable.
 pkg.deps.selftest: libs/console/stub
