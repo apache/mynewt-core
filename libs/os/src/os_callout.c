@@ -19,6 +19,7 @@
 
 #include "os/os.h"
 
+#include <assert.h>
 #include <string.h>
 
 TAILQ_HEAD(, os_callout) g_callout_list =
@@ -130,4 +131,30 @@ os_callout_tick(void)
             break;
         }
     }
+}
+
+/*
+ * Returns the number of ticks to the first pending callout. If there are no
+ * pending callouts then return OS_TIMEOUT_NEVER instead.
+ */
+os_time_t
+os_callout_wakeup_ticks(os_time_t now)
+{
+    os_time_t rt;
+    struct os_callout *c;
+
+    OS_ASSERT_CRITICAL();
+
+    c = TAILQ_FIRST(&g_callout_list);
+    if (c != NULL) {
+        if (OS_TIME_TICK_GEQ(c->c_ticks, now)) {
+            rt = c->c_ticks - now;
+        } else {
+            rt = 0;     /* callout time is in the past */
+        }
+    } else {
+        rt = OS_TIMEOUT_NEVER;
+    }
+
+    return (rt);
 }

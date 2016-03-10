@@ -126,6 +126,15 @@ os_arch_restore_sr(os_sr_t isr_ctx)
     }
 }
 
+int
+os_arch_in_critical(void)
+{
+    uint32_t isr_ctx;
+
+    isr_ctx = __get_PRIMASK();
+    return (isr_ctx & 1);
+}
+
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {

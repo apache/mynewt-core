@@ -54,12 +54,14 @@ typedef uint32_t os_stack_t;
 #define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr()) 
 /* Exit a critical section, restore processor state and unblock interrupts */
 #define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
+#define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
 
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
 void timer_handler(void);
 void os_arch_ctx_sw(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t);
+int os_arch_in_critical(void);
 void os_arch_init(void);
 uint32_t os_arch_start(void);
 os_error_t os_arch_os_init(void);

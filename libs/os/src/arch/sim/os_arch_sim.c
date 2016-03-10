@@ -51,11 +51,8 @@ extern void os_arch_frame_init(struct stack_frame *sf);
 #define sim_setjmp(__jb) sigsetjmp(__jb, 0)
 #define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret) 
 
-#define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
-
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
-static int os_arch_in_critical(void);
 static sigset_t allsigs, nosigs;
 
 /*
@@ -158,7 +155,7 @@ os_arch_restore_sr(os_sr_t osr)
     assert(error == 0);
 }
 
-static int
+int
 os_arch_in_critical(void)
 {
     int error;
@@ -173,9 +170,46 @@ os_arch_in_critical(void)
 void
 os_arch_idle(void)
 {
-    assert(!os_arch_in_critical());
+    int rc;
+    os_sr_t sr;
+    os_time_t now, sticks, cticks, ticks;
+    struct itimerval it;
+
+    OS_ENTER_CRITICAL(sr);
+    assert(sr == 0);
+
+    now = os_time_get();
+    sticks = os_sched_wakeup_ticks(now);
+    cticks = os_callout_wakeup_ticks(now);
+    ticks = min(sticks, cticks);
+    if (ticks > OS_TICKS_PER_SEC) {
+        /*
+         * Wakeup at least once a second (XXX arbitrary).
+         */
+        ticks = OS_TICKS_PER_SEC;
+    }
+
+    if (ticks == 0) {
+        /*
+         * If the wakeup time is in the past then send a SIGALRM to ourselves
+         * rather than wait for the interval timer to fire.
+         */
+        rc = kill(getpid(), SIGALRM);
+    } else {
+        /*
+         * Set the timer to fire after 'ticks' worth of time has elapsed.
+         */
+        it.it_value.tv_sec = ticks / OS_TICKS_PER_SEC;
+        it.it_value.tv_usec = (ticks % OS_TICKS_PER_SEC) * OS_USEC_PER_TICK;
+        it.it_interval.tv_sec = 0;
+        it.it_interval.tv_usec = OS_USEC_PER_TICK;
+        rc = setitimer(ITIMER_REAL, &it, NULL);
+    }
+    assert(rc == 0);
 
     sigsuspend(&nosigs);        /* Wait for a signal to wake us up */
+
+    OS_EXIT_CRITICAL(sr);
 }
 
 static void timer_handler(int sig);
