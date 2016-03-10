@@ -1,9 +1,7 @@
-### Target: slinky_sim
+### Package: targets/unittest
 pkg.name: "targets/unittest"
 pkg.type: "target"
-pkg.vers: "0.8.0"
 pkg.description: "Used for unit tests by the \"newt test\" command."
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
-pkg.repository:
-pkg.keywords:
+pkg.repository: "local"
