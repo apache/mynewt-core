@@ -18,9 +18,3 @@
 #
 
 project.name: "apache-mynewt-core"
-
-repository.apache-mynewt-core:
-    type: github
-    vers: 0-latest
-    user: sterlinghughes
-    repo: incubator-mynewt-core
