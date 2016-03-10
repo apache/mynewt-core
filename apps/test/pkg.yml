@@ -26,6 +26,8 @@ pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
 pkg.type: app
 pkg.keywords:
 
+pkg.features:
+    - TEST
 pkg.deps:
     - fs/nffs
     - libs/bootutil
