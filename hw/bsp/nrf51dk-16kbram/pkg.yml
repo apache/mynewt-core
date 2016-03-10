@@ -28,6 +28,7 @@ pkg.keywords:
     - nrf51
     - nrf51dk
 
+pkg.arch: cortex_m0
 pkg.compiler: compiler/arm-none-eabi-m0
 pkg.linkerscript: "nrf51dk-16kbram.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf51dk-16kbram.ld"
