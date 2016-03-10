@@ -187,7 +187,7 @@ TEST_SUITE(config_test_all)
     config_test_commit();
 }
 
-#ifdef PKG_TEST
+#ifdef MYNEWT_SELFTEST
 
 int
 main(int argc, char **argv)

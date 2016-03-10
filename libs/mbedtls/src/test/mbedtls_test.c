@@ -212,7 +212,7 @@ TEST_SUITE(mbedtls_test_all)
     xtea_test();
 }
 
-#ifdef PKG_TEST
+#ifdef MYNEWT_SELFTEST
 int
 main(int argc, char **argv)
 {

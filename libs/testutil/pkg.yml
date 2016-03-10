@@ -30,3 +30,5 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - libs/os
+
+pkg.cflags.TEST: "-DMYNEWT_UNIT_TEST"

@@ -29,7 +29,7 @@ util_test_all(void)
     return tu_case_failed;
 }
 
-#ifdef PKG_TEST
+#ifdef MYNEWT_SELFTEST
 
 int
 main(int argc, char **argv)

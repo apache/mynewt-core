@@ -36,6 +36,3 @@ pkg.deps:
     - libs/testutil
     - libs/util
     - sys/config
-
-pkg.features:
-    - test

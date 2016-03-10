@@ -36,4 +36,4 @@ pkg.deps.SHELL:
 pkg.cflags.SHELL: -DSHELL_PRESENT 
 
 # Satisfy capability dependencies for the self-contained test executable.
-pkg.deps.selftest: libs/console/stub
+pkg.deps.SELFTEST: libs/console/stub

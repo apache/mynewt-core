@@ -2489,7 +2489,7 @@ nffs_test_all(void)
     return tu_any_failed;
 }
 
-#ifdef PKG_TEST
+#ifdef MYNEWT_SELFTEST
 
 int
 main(void)
