@@ -28,7 +28,7 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - libs/util
-pkg.apis:
+pkg.req_apis:
     - console
 pkg.features:
     - SHELL 

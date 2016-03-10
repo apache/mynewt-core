@@ -30,7 +30,7 @@ pkg.keywords:
 
 pkg.deps.SHELL:
     - libs/shell
-pkg.reqs.SHELL:
+pkg.req_apis.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT
 pkg.features:
