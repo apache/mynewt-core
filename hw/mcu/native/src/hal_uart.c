@@ -53,7 +53,7 @@ struct uart {
  * XXXX should try to use O_ASYNC/SIGIO for byte arrival notification,
  * so we wouldn't need an OS for pseudo ttys.
  */
-char *native_uart_log_file;
+char *native_uart_log_file = NULL;
 static int uart_log_fd = -1;
 
 static struct uart uarts[UART_CNT];
