@@ -16,6 +16,7 @@
 # under the License.
 #
 pkg.name: apps/bletiny
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Shell application exposing the nimble GAP and GATT.
 pkg.author: Christopher Collins <ccollins@apache.org>

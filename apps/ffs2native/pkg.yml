@@ -18,6 +18,7 @@
 #
 
 pkg.name: apps/ffs2native
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Support application for debugging the Newtron Flash File System.
 pkg.author: Christopher Collins <ccollins@apache.org>

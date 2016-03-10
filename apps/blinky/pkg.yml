@@ -18,6 +18,7 @@
 #
 
 pkg.name: apps/blinky
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Basic example application which blinks an LED.
 pkg.author: Marko Kiiskila <marko@runtime.io>

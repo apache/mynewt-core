@@ -16,6 +16,7 @@
 # under the License.
 #
 pkg.name: apps/luatest
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Simple project for testing Lua scripting.
 pkg.author: Marko Kiiskila <marko@runtime.io>

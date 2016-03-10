@@ -18,6 +18,7 @@
 #
 
 pkg.name: apps/test
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Automated test suite for mynewt core functionality.
 pkg.author: Christopher Collins <ccollins@apache.org>

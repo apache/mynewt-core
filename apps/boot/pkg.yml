@@ -18,6 +18,7 @@
 #
 
 pkg.name: apps/boot
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Boot loader application.
 pkg.author: Christopher Collins <chris@apache.org>

@@ -18,6 +18,7 @@
 #
 
 pkg.name: hw/bsp/nrf52pdk
+pkg.type: bsp
 pkg.vers: 0.8.0
 pkg.description: BSP definition for the Nordic nRF52 Preview DK SoC.
 pkg.author: wes3 <will@runtime.io>

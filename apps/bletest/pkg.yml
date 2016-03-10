@@ -18,6 +18,7 @@
 #
 
 pkg.name: apps/bletest
+pkg.type: app
 pkg.vers: 0.8.0
 pkg.description: Test project for the nimble BLE controller.
 pkg.author: wes3 <will@runtime.io>

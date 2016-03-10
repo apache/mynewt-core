@@ -18,6 +18,7 @@
 #
 
 pkg.name: compiler/arm-none-eabi-m0
+pkg.type: compiler
 pkg.vers: 0.8.0
 pkg.description: Compiler definition for ARM Cortex-M0 gcc cross compiler.
 pkg.author: wes3 <will@runtime.io>
