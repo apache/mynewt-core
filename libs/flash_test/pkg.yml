@@ -31,5 +31,3 @@ pkg.deps:
     - libs/baselibc
 pkg.req_apis:
     - console
-pkg.features:
-    - TEST
