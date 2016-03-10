@@ -1,3 +1,4 @@
 repo.name: apache-mynewt-core
 repo.versions:
-    "0-latest": "develop"
+    "0.0.0": "develop"
+    "0-latest": "0.0.0"
