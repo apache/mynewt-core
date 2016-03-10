@@ -1,0 +1,4 @@
+### Target: unittest
+target.arch: "sim"
+target.bsp: "hw/bsp/native"
+target.build_profile: "debug"
