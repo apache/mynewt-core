@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include "os/os.h"
 #include "hal/hal_flash.h"
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
@@ -29,6 +30,8 @@ int tu_first_idx;
 int
 tu_init(void)
 {
+    os_init();
+
     tu_any_failed = 0;
 
     return 0;

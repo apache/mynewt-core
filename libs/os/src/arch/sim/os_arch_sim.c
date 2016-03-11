@@ -310,6 +310,7 @@ os_arch_os_init(void)
 {
     g_current_task = NULL;
 
+    TAILQ_INIT(&g_os_task_list);
     TAILQ_INIT(&g_os_run_list);
     TAILQ_INIT(&g_os_sleep_list);
 
