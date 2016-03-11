@@ -111,6 +111,7 @@ tu_case_write_fail_buf(void)
 
     if (tu_config.tc_print_results) {
         printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
+        fflush(stdout);
     }
 
     if (tu_config.tc_case_fail_cb != NULL) {
@@ -145,6 +146,7 @@ tu_case_write_pass_buf(void)
         if (tu_case_buf_len > 0) {
             printf("%s", tu_case_buf);
         }
+        fflush(stdout);
     }
 
     tu_case_reported = 1;
