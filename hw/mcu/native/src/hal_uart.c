@@ -35,7 +35,7 @@
 #include <string.h>
 
 #define UART_MAX_BYTES_PER_POLL	64
-#define UART_POLLER_STACK_SZ	(1024)
+#define UART_POLLER_STACK_SZ	OS_STACK_ALIGN(1024)
 #define UART_POLLER_PRIO	0
 
 struct uart {
