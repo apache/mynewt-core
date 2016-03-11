@@ -20,8 +20,8 @@
 #ifndef TEST_JSON_H
 #define TEST_JSON_H
 
-void test_json_simple_encode(void);
-void test_json_simple_decode(void);
+TEST_CASE_DECL(test_json_simple_encode);
+TEST_CASE_DECL(test_json_simple_decode);
 
 #endif /* TEST_JSON_H */
 

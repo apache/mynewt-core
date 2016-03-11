@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include "test_json.h"
 #include <assert.h>
 #include <string.h>
 #include "testutil/testutil.h"
+#include "test_json.h"
 #include "json/json.h"
 
 static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\"}";
@@ -35,7 +35,7 @@ static int test_write(void *buf, char* data, int len) {
     return len;
 }
 
-void test_json_simple_encode(void) {
+TEST_CASE(test_json_simple_encode){
     struct json_encoder encoder;
     struct json_value value;
     int rc;
@@ -145,7 +145,7 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 }
 
 /* now test the decode on a string */
-void test_json_simple_decode(void) {
+TEST_CASE(test_json_simple_decode){
     struct test_jbuf tjb; 
     unsigned int uint_val;
     int int_val;
