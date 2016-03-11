@@ -138,7 +138,11 @@ os_arch_save_sr(void)
     error = sigprocmask(SIG_BLOCK, &allsigs, &omask);
     assert(error == 0);
 
-    return (omask == allsigs);
+    /*
+     * If any one of the signals in 'allsigs' is present in 'omask' then
+     * we are already inside a critical section.
+     */
+    return (sigismember(&omask, SIGALRM));
 }
 
 void
@@ -167,7 +171,11 @@ os_arch_in_critical(void)
     error = sigprocmask(SIG_SETMASK, NULL, &omask);
     assert(error == 0);
 
-    return (omask == allsigs);
+    /*
+     * If any one of the signals in 'allsigs' is present in 'omask' then
+     * we are already inside a critical section.
+     */
+    return (sigismember(&omask, SIGALRM));
 }
 
 void
@@ -205,9 +213,17 @@ signals_init(void)
         memset(&sa, 0, sizeof sa);
         sa.sa_handler = signals[i].handler;
         sa.sa_mask = allsigs;
+        sa.sa_flags = SA_RESTART;
         error = sigaction(signals[i].num, &sa, NULL);
         assert(error == 0);
     }
+
+    /*
+     * We use SIGALRM as a proxy for 'allsigs' to check if we are inside
+     * a critical section (for e.g. see os_arch_in_critical()). Make sure
+     * that SIGALRM is indeed present in 'allsigs'.
+     */
+    assert(sigismember(&allsigs, SIGALRM));
 }
 
 static void
@@ -297,6 +313,14 @@ os_arch_os_init(void)
     TAILQ_INIT(&g_os_run_list);
     TAILQ_INIT(&g_os_sleep_list);
 
+    /*
+     * Setup all interrupt handlers.
+     *
+     * This must be done early because task initialization uses critical
+     * sections which function correctly only when 'allsigs' is initialized.
+     */
+    signals_init();
+
     os_init_idle_task();
     os_sanity_task_init(1);
 
@@ -311,9 +335,6 @@ os_arch_os_start(void)
     struct stack_frame *sf; 
     struct os_task *t;
     os_sr_t sr;
-
-    /* Setup all interrupt handlers */
-    signals_init();
 
     /*
      * Disable interrupts before enabling any interrupt sources. Pending
