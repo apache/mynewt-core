@@ -56,7 +56,7 @@ hal_gpio_init_out(int pin, int val)
         return -1;
     }
     hal_gpio[pin].dir = OUTPUT;
-    hal_gpio[pin].val = (val != 0);
+    hal_gpio_write(pin,val);
     return 0;
 }
 
@@ -81,6 +81,8 @@ void hal_gpio_write(int pin, int val)
         return;
     }
     hal_gpio[pin].val = (val != 0);
+    printf("hal_gpio set pin %2d to %1d\r", pin, hal_gpio[pin].val); 
+    fflush(stdout);
 }
 
 int
