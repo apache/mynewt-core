@@ -23,13 +23,6 @@
 #include "testutil/testutil.h"
 #include "json/json.h"
 
-struct test_jbuf {
-    /* json_buffer must be first element in the structure */
-    struct json_buffer json_buf;
-    char * current_buf_ptr;
-    int string_left;
-};
-
 static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\"}";
 static char bigbuf[512];
 static int buf_index;
@@ -87,41 +80,68 @@ void test_json_simple_encode(void) {
 }
 
 
+/* a test structure to hold the json flat buffer and pass bytes
+ * to the decoder */
+struct test_jbuf {
+    /* json_buffer must be first element in the structure */
+    struct json_buffer json_buf;
+    char * start_buf;
+    char * end_buf;
+    int current_position;
+};
+
 
 static char 
 test_jbuf_read_next(struct json_buffer *jb) {
     char c;
-    struct test_jbuf  *ptest = (struct test_jbuf*) jb;    
+    struct test_jbuf  *ptjb = (struct test_jbuf*) jb;    
     
-    if(ptest->string_left) {
-        c = *ptest->current_buf_ptr;
-        ptest->current_buf_ptr++;
-        ptest->string_left--;
+    if((ptjb->start_buf + ptjb->current_position) <= ptjb->end_buf) {
+        c = *(ptjb->start_buf + ptjb->current_position);
+        ptjb->current_position++;
         return c;
     }
     return '\0';    
 }
+
+/* this goes backward in the buffer one character */
 static char 
 test_jbuf_read_prev(struct json_buffer *jb) {
     char c;
-    struct test_jbuf  *ptest = (struct test_jbuf*) jb;
-    ptest->current_buf_ptr--;
-    ptest->string_left++;    
-    c = *ptest->current_buf_ptr;
-    return c;
+    struct test_jbuf  *ptjb = (struct test_jbuf*) jb;
+    if(ptjb->current_position) {
+       ptjb->current_position--; 
+       c = *(ptjb->start_buf + ptjb->current_position);
+       return c;
+    }
+    
+    /* can't rewind */
+    return '\0';
+    
 }
 
 static int 
 test_jbuf_readn(struct json_buffer *jb, char *buf, int size) {
-    struct test_jbuf  *ptest = (struct test_jbuf*) jb;  
+    struct test_jbuf  *ptjb = (struct test_jbuf*) jb;    
     
-    if(ptest->string_left >= size) {
-        memcpy(buf, ptest->current_buf_ptr, size);
-        ptest->current_buf_ptr+= size;
-        ptest->string_left-= size;
+    if((ptjb->end_buf - (ptjb->start_buf + ptjb->current_position) + 1) >= size) {
+        memcpy(buf, ptjb->start_buf + ptjb->current_position, size);
+        ptjb->current_position += size;
         return 0;
     }
     return -1;
+}
+
+static void 
+test_buf_init(struct test_jbuf *ptjb, char *string) {
+    /* initialize the decode */
+    ptjb->json_buf.jb_read_next = test_jbuf_read_next;
+    ptjb->json_buf.jb_read_prev = test_jbuf_read_prev;
+    ptjb->json_buf.jb_readn = test_jbuf_readn;
+    ptjb->start_buf = string;
+    ptjb->end_buf = string + strlen(string);  
+    /* end buf points to the NULL */
+    ptjb->current_position = 0;
 }
 
 /* now test the decode on a string */
@@ -169,12 +189,7 @@ void test_json_simple_decode(void) {
             }
     };    
     
-    /* intialize the decode */
-    tjb.current_buf_ptr = output;
-    tjb.json_buf.jb_read_next = test_jbuf_read_next;
-    tjb.json_buf.jb_read_prev = test_jbuf_read_prev;
-    tjb.json_buf.jb_readn = test_jbuf_readn;
-    tjb.string_left = strlen(output) + 1; // for NULL 
+    test_buf_init(&tjb, output);
 
     rc = json_read_object(&tjb.json_buf, test_attr);
     TEST_ASSERT(rc==0);    
