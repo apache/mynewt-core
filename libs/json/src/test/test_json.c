@@ -20,9 +20,9 @@
 #include <test_json.h>
 
 
-TEST_SUITE(test_suite_json) {
-    test_encode_simple();
-    test_decode_simple();
+TEST_SUITE(test_json_suite) {
+    test_json_simple_encode();
+    test_json_simple_decode();
 }
 
 #ifdef MYNEWT_SELFTEST
@@ -33,7 +33,7 @@ main(int argc, char **argv)
     tu_config.tc_print_results = 1;
     tu_init();
 
-    test_suite_json();
+    test_json_suite();
 
     return tu_any_failed;
 }

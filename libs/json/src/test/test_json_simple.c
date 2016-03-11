@@ -37,13 +37,12 @@ static int buf_index;
 static int test_write(void *buf, char* data, int len) {
     int i;
     for(i = 0; i < len; i++) {
-        putchar(data[i]);
         bigbuf[buf_index++] = data[i];        
     }
     return len;
 }
 
-void test_encode_simple(void) {
+void test_json_simple_encode(void) {
     struct json_encoder encoder;
     struct json_value value;
     int rc;
@@ -126,7 +125,7 @@ test_jbuf_readn(struct json_buffer *jb, char *buf, int size) {
 }
 
 /* now test the decode on a string */
-void test_decode_simple(void) {
+void test_json_simple_decode(void) {
     struct test_jbuf tjb; 
     unsigned int uint_val;
     int int_val;
