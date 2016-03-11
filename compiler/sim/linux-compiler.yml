@@ -30,6 +30,7 @@ pkg.keywords:
 
 
 compiler.path.cc: "gcc"
+compiler.path.as: "gcc -x assembler-with-cpp"
 compiler.path.archive: "ar"
 compiler.path.objdump: "objdump"
 compiler.path.objsize: "size"
