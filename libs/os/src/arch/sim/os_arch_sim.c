@@ -181,8 +181,6 @@ os_arch_in_critical(void)
 void
 os_arch_idle(void)
 {
-    assert(!os_arch_in_critical());
-
     sigsuspend(&nosigs);        /* Wait for a signal to wake us up */
 }
 
