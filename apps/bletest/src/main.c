@@ -46,7 +46,7 @@
 #include "controller/ble_ll_adv.h"
 
 /* Task priorities */
-/* NOTE: highest priority task (0) reserved for controller LL task */
+#define BLE_LL_TASK_PRI     (OS_TASK_PRI_HIGHEST)
 #define HOST_TASK_PRIO      (OS_TASK_PRI_HIGHEST + 1)
 #define BLETEST_TASK_PRIO   (HOST_TASK_PRIO + 1)
 #define SHELL_TASK_PRIO     (BLETEST_TASK_PRIO + 1)
@@ -90,8 +90,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
@@ -833,7 +833,7 @@ init_tasks(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    rc = ble_ll_init();
+    rc = ble_ll_init(BLE_LL_TASK_PRI);
     assert(rc == 0);
 
     return 0;

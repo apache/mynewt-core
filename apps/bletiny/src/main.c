@@ -47,7 +47,8 @@
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
-/* Task 1 */
+/* Nimble task priorities */
+#define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
 #define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3)
@@ -1443,7 +1444,7 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    ble_ll_init();
+    ble_ll_init(BLE_LL_TASK_PRI);
 
     rc = cmd_init();
     assert(rc == 0);
