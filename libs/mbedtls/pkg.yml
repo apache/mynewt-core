@@ -19,8 +19,8 @@
 
 pkg.name: libs/mbedtls
 pkg.description: SSL / TLS library for embedded systems.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.author: "ARM"
+pkg.homepage: "https://tls.mbed.org/"
 pkg.keywords:
     - ssl
     - tls

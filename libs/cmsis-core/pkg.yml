@@ -19,8 +19,8 @@
 
 pkg.name: libs/cmsis-core
 pkg.description: CMSIS-CORE abstraction layer for Cortex-M processors.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.author: "Keil"
+pkg.homepage: "http://www.keil.com/pack/doc/CMSIS/Core/html/index.html"
 pkg.keywords:
     - cmsis
     - core
