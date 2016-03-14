@@ -35,9 +35,10 @@ major functional chunks, here are a few pointers:
 
 - libs: Contains the core of the RTOS ([libs/os](https://github.com/apache/incubator-mynewt-core/tree/master/libs/os) 
 and a number of helper libraries for building applications.  Including a 
-console (libs/console), 
-shell (libs/shell), and newtmgr, which supports software upgrade and 
-remote fetching of logs and statistics (libs/newtmgr).  
+console ([libs/console](https://github.com/apache/incubator-mynewt-core/tree/master/libs/console))), 
+shell ([libs/shell](https://github.com/apache/incubator-mynewt-core/tree/master/libs/shell))), and 
+[libs/newtmgr](https://github.com/apache/incubator-mynewt-core/tree/master/libs/newtmgr)), which 
+supports software upgrade and remote fetching of logs and statistics.
 
 - net: Contains the networking packages.  Right now, net/ contains
 the nimble package.  [Nimble](https://github.com/apache/incubator-mynewt-core/tree/master/net/nimble)
@@ -45,13 +46,16 @@ is a full Bluetooth host and controller implementation, that is written
 from the ground up for the Apache Mynewt Operating System.   
 
 - hw: Contains the HW specific support packages.  Board Support Packages 
-are located in hw/bsp, and the MCU specific definitions they rely on 
-are located in hw/mcu.  Finally, there is a HAL (Hardware Abstraction 
-Layer) stored in hw/hal, even though the implementation of various 
-HALs are stored in the MCU specific definitions.  
+are located in [hw/bsp](https://github.com/apache/incubator-mynewt-core/tree/master/hw/bsp), 
+and the MCU specific definitions they rely on are located in 
+[hw/mcu](https://github.com/apache/incubator-mynewt-core/tree/master/hw/mcu).  
+Finally, there is a HAL (Hardware Abstraction Layer) stored in 
+[hw/hal](https://github.com/apache/incubator-mynewt-core/tree/master/hw/hal), even 
+though the implementation of various HALs are stored in the MCU specific definitions.  
 
-- fs: Contains the FS package (fs/fs), which is the high-level Apache Mynewt 
-file system API.   A specific implementation of that FS, is NFFS (Newtron
+- fs: Contains the FS package ([fs/fs](https://github.com/apache/incubator-mynewt-core/tree/master/fs/fs))), 
+which is the high-level Apache Mynewt file system API.   A specific implementation of that FS, is 
+[NFFS](https://github.com/apache/incubator-mynewt-core/tree/master/fs/nffs) (Newtron
 File System.)  The Newtron file system is a FS that has been built from 
 the ground-up in Apache Mynewt, designed to be optimized for small 
 (64KB-32MB) flashes.
@@ -63,15 +67,30 @@ applications that show how to instantiate the Apache Mynewt system.  These
 sample applications are located in the ```apps/``` directory.  They 
 include: 
 
-* boot: Project to build the bootloader for test platforms. 
-* blinky: The minimal packages to build the OS, and blink a
-  LED!  
-* slinky: A slightly more complex project that includes the 
-  console and shell libraries. 
-* bletiny: A stripped down interface to the Apache Mynewt Bluetooth stack.
-* test: Test project which can be compiled either with the simulator, or 
-  on a per-architecture basis.  Test will run all the package's unit 
-  tests. 
+* [boot](https://github.com/apache/incubator-mynewt-core/tree/master/apps/boot): 
+  Project to build the bootloader for test platforms. 
+* [blinky](https://github.com/apache/incubator-mynewt-core/tree/master/apps/blinky): The 
+  minimal packages to build the OS, and blink a LED!  
+* [slinky](https://github.com/apache/incubator-mynewt-core/tree/master/apps/slinky): A 
+  slightly more complex project that includes the console and shell libraries. 
+* [bletiny](https://github.com/apache/incubator-mynewt-core/tree/master/apps/bletiny): A 
+  stripped down interface to the Apache Mynewt Bluetooth stack.
+* [test](https://github.com/apache/incubator-mynewt-core/tree/master/apps/test): Test 
+  project which can be compiled either with the simulator, or on a per-architecture basis.  
+  Test will run all the package's unit tests. 
+
+
+# Getting Help
+
+If you are having trouble using or contributing to Apache Mynewt, or just want to talk 
+to a human about what you're working on, you can contact us via the 
+[developers mailing list](mailto:dev@mynewt.incubator.apache.org).  
+
+Although not a formal channel, you can also find a number of core developers
+on the #mynewt channel on Freenode.
+
+Also, be sure to checkout the [Frequently Asked Questions](https://mynewt.apache.org/faq/answers)
+for some help troubleshooting first.
 
 # Contributing 
 
@@ -79,6 +98,9 @@ Anybody who works with Apache Mynewt can be a contributing member of the
 community that develops and deploys it.  The process of releasing an operating 
 system for microcontrollers is never done: and we welcome your contributions
 to that effort.
+
+More information can be found at the Community section of the Apache Mynewt 
+website, located [here](https://mynewt.apache.org/community).  
 
 ## Pull Requests
 
@@ -119,15 +141,6 @@ Pull requests to the apache-mynewt-site repository on Github are the best
 way to submit documentation.  For more information on contributing to the 
 documentation, the [FAQ](http://mynewt.apache.org/faq/answers/) has some 
 more information.
-
-## Getting Help
-
-If you are having trouble contributing to Apache Mynewt, or just want to talk 
-to a human about what you're working on, you can contact us via the 
-[developers mailing list](mailto:dev@mynewt.incubator.apache.org).  
-
-Although not a formal channel, you can also find a number of core developers
-on the #mynewt channel on Freenode.
 
 # License 
 
