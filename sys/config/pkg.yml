@@ -18,11 +18,9 @@
 #
 
 pkg.name: sys/config
-pkg.vers: 0.8.0
 pkg.description: Configuration management for embedded systems.
-pkg.author: Marko Kiiskila <marko@apache.org>
-pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:

@@ -19,12 +19,9 @@
 
 pkg.name: apps/blinky
 pkg.type: app
-pkg.vers: 0.8.0
 pkg.description: Basic example application which blinks an LED.
-pkg.author: Marko Kiiskila <marko@runtime.io>
-pkg.homepage: http://mynewt.apache.org/os/get_acclimated/project2/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
-pkg.type: app
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:

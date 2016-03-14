@@ -18,11 +18,9 @@
 #
 
 pkg.name: fs/fs
-pkg.vers: 0.8.0
 pkg.description: File system abstrction.
-pkg.author: Marko Kiiskila <marko@apache.org>
-pkg.homepage: http://mynewt.apache.org/os/modules/filesystem/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - file
     - filesystem
