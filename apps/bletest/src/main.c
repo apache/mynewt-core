@@ -111,7 +111,11 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
-#define BLETEST_CFG_CONCURRENT_CONNS    (16)
+#define BLETEST_CFG_CONCURRENT_CONNS    (1)
+
+/* Test configurations. One of these should be set to 1 */
+#define BLETEST_CONCURRENT_CONN_TEST    (1)
+#define BLETEST_THROUGHPUT_TEST         (0)
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
@@ -511,13 +515,17 @@ static void
 bletest_execute_advertiser(void)
 {
     int i;
+#if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
+#endif
     int rc;
-    //os_sr_t sr;
     uint16_t handle;
     uint16_t pktlen;
-    //uint16_t completed_pkts;
     struct os_mbuf *om;
+#if (BLETEST_THROUGHPUT_TEST == 1)
+    os_sr_t sr;
+    uint16_t completed_pkts;
+#endif
 
     /* See if we should start advertising again */
     if (g_bletest_current_conns < BLETEST_CFG_CONCURRENT_CONNS) {
@@ -526,7 +534,7 @@ bletest_execute_advertiser(void)
             /* Set LED to slower blink rate */
             g_bletest_led_rate = OS_TICKS_PER_SEC;
 
-#if 0
+#if (BLETEST_THROUGHPUT_TEST == 1)
             /* Set next os time to 10 seconds after 1st connection */
             if (g_next_os_time == 0) {
                 g_next_os_time = os_time_get() + (10 * OS_TICKS_PER_SEC);
@@ -577,6 +585,8 @@ bletest_execute_advertiser(void)
         }
     }
 #endif
+
+#if (BLETEST_CONCURRENT_CONN_TEST == 1)
     /* See if it is time to hand a data packet to the connection */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
         if (g_bletest_current_conns) {
@@ -622,8 +632,9 @@ bletest_execute_advertiser(void)
         }
         g_next_os_time = os_time_get() + OS_TICKS_PER_SEC/4;
     }
+#endif
 
-#if 0 /* XXX: throughput test */
+#if (BLETEST_THROUGHPUT_TEST == 1)
     /* Nothing to do if no connections */
     if (!g_bletest_current_conns) {
         return;
@@ -641,7 +652,7 @@ bletest_execute_advertiser(void)
         assert(g_bletest_outstanding_pkts >= completed_pkts);
         g_bletest_outstanding_pkts -= completed_pkts;
 
-        while (g_bletest_outstanding_pkts < 8) {
+        while (g_bletest_outstanding_pkts < 20) {
             om = bletest_get_packet();
             if (om) {
                 /* set payload length */
@@ -659,8 +670,8 @@ bletest_execute_advertiser(void)
                 om->om_len += 4;
 
                 /* Fill with incrementing pattern (starting from 1) */
-                for (j = 0; j < pktlen; ++j) {
-                    om->om_data[8 + j] = (uint8_t)(j + 1);
+                for (i = 0; i < pktlen; ++i) {
+                    om->om_data[8 + i] = (uint8_t)(i + 1);
                 }
 
                 /* Add length */
@@ -783,9 +794,8 @@ bletest_task_handler(void *arg)
     /* Wait some time before starting */
     os_time_delay(OS_TICKS_PER_SEC);
 
-    /* Init bletest variables */
+    /* Init state */
     g_bletest_state = 0;
-    g_next_os_time = os_time_get();
 
     /* Begin advertising if we are an advertiser */
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
@@ -833,7 +843,7 @@ init_tasks(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI);
+    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
     return 0;
