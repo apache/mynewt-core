@@ -18,29 +18,16 @@
 #
 
 pkg.name: compiler/arm-none-eabi-m4
+pkg.type: compiler
 pkg.vers: 0.8.0
 pkg.description: Compiler definition for ARM Cortex-M4 gcc cross compiler.
 pkg.author: sterling <sterling@runtime.io>
 pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.type: compiler
 pkg.keywords:
     - arm
     - compiler
     - cortex
     - m4
     - gcc
-
-compiler.path.cc: arm-none-eabi-gcc
-compiler.path.archive: arm-none-eabi-ar
-compiler.path.as: arm-none-eabi-gcc -x assembler-with-cpp
-compiler.path.objdump: arm-none-eabi-objdump
-compiler.path.objsize: arm-none-eabi-size
-compiler.path.objcopy: arm-none-eabi-objcopy
-
-compiler.flags.default: -mcpu=cortex-m4 -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions -fomit-frame-pointer
-compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
-compiler.flags.debug: [compiler.flags.default, -O1 -ggdb]
-
-compiler.ld.flags: -static -lgcc
-compiler.ld.resolve_circular_deps: true
-compiler.ld.mapfile: true

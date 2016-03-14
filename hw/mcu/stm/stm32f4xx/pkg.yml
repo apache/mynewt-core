@@ -22,7 +22,7 @@ pkg.vers: 0.8.0
 pkg.description: MCU definition for STM32F4 ARM Cortex-M4 chips.
 pkg.author: wes3 <will@runtime.io>
 pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
 pkg.keywords:
     - stm32
     - stm32f4

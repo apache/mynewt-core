@@ -22,11 +22,11 @@ pkg.vers: 0.8.0
 pkg.description: Simple libc for embedded systems.
 pkg.author: Petteri Aimonen
 pkg.homepage: https://github.com/PetteriAimonen/Baselibc
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
 pkg.keywords:
     - libc
 
-pkg.req_caps:
+pkg.req_apis:
     - console
-pkg.identities:
+pkg.features:
     - LIBC

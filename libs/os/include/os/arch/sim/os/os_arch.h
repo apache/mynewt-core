@@ -40,8 +40,20 @@ typedef unsigned int os_stack_t;
 #define OS_SANITY_STACK_SIZE (1024)
 #define OS_IDLE_STACK_SIZE (1024)
 
+/*
+ * The 'sim' architecture-specific code does not have as much control on
+ * stack usage as the real embedded architectures.
+ *
+ * For e.g. the space occupied by the signal handler frame on the task
+ * stack is entirely dependent on the host OS.
+ *
+ * Deal with this by scaling the stack size by a factor of 16. The scaling
+ * factor can be arbitrarily large because the stacks are allocated from
+ * BSS and thus don't add to either the executable size or resident
+ * memory.
+ */
 #define OS_STACK_ALIGN(__nmemb) \
-    (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
+    (OS_ALIGN(((__nmemb) * 16), OS_STACK_ALIGNMENT))
 
 /* Enter a critical section, save processor state, and block interrupts */
 #define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr())

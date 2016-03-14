@@ -153,7 +153,7 @@ extern jmp_buf tu_case_jb;
 #define TEST_PASS(...)                                                        \
     tu_case_pass_manual(__FILE__, __LINE__, __VA_ARGS__);
 
-#ifdef TEST
+#ifdef MYNEWT_UNIT_TEST
 #define ASSERT_IF_TEST(expr) assert(expr)
 #else
 #define ASSERT_IF_TEST(expr)

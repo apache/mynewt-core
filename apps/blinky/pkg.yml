@@ -17,24 +17,21 @@
 # under the License.
 #
 
-pkg.name: project/test
+pkg.name: apps/blinky
+pkg.type: app
 pkg.vers: 0.8.0
-pkg.description: Automated test suite for mynewt core functionality.
-pkg.author: Christopher Collins <ccollins@apache.org>
-pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.description: Basic example application which blinks an LED.
+pkg.author: Marko Kiiskila <marko@runtime.io>
+pkg.homepage: http://mynewt.apache.org/os/get_acclimated/project2/
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.type: app
 pkg.keywords:
 
 pkg.deps:
-    - fs/nffs
-    - libs/bootutil
     - libs/console/full
-    - libs/mbedtls
+    - libs/newtmgr
     - libs/os
-    - libs/testreport
-    - libs/testutil
-    - libs/util
+    - libs/shell
     - sys/config
-
-pkg.identities:
-    - test
+    - sys/log
+    - sys/stats

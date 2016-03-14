@@ -1,0 +1,3 @@
+### Target: targets/unittest
+target.bsp: "hw/bsp/native"
+target.build_profile: "debug"

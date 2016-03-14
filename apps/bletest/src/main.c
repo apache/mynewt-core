@@ -110,12 +110,12 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_MIN_CE_LEN          (6)    
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
-#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_RANDOM)
-#define BLETEST_CFG_CONCURRENT_CONNS    (1)
+#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
+#define BLETEST_CFG_CONCURRENT_CONNS    (16)
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
-#define BLETEST_PKT_SIZE                (251)
+#define BLETEST_PKT_SIZE                (247)
 #define BLETEST_STACK_SIZE              (256)
 uint32_t g_next_os_time;
 int g_bletest_state;
@@ -132,6 +132,23 @@ uint8_t g_last_handle_used;
 uint8_t g_bletest_led_state;
 uint32_t g_bletest_led_rate;
 uint32_t g_bletest_next_led_time;
+uint16_t g_bletest_handle;
+uint16_t g_bletest_completed_pkts;
+uint16_t g_bletest_outstanding_pkts;
+
+#if (BLETEST_THROUGHPUT_TEST == 1)
+void
+bletest_completed_pkt(uint16_t handle)
+{
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
+    if (handle == g_bletest_handle) {
+        ++g_bletest_completed_pkts;
+    }
+    OS_EXIT_CRITICAL(sr);
+}
+#endif
 
 #ifdef BLETEST_ADV_PKT_NUM
 void
@@ -490,87 +507,16 @@ bletest_get_packet(void)
     return om;
 }
 
-#if 0
-void
-bletest_execute(void)
-{
-    int rc;
-
-    int i;
-    uint16_t pktlen;
-    uint16_t handle;
-    struct os_mbuf *om;
-    struct ble_ll_conn_sm *connsm;
-
-    handle = 1;
-    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-        if (g_bletest_state == 0) {
-            rc = host_hci_cmd_le_set_adv_enable(1);
-            host_hci_outstanding_opcode = 0;
-            assert(rc == 0);
-            g_bletest_state = 1;
-        } else if (g_bletest_state == 1) {
-            /* See if handle 1 has been created. If so, send packets */
-            connsm = ble_ll_conn_find_active_conn(handle);
-            if (connsm) {
-                /* Set connection end time */
-                g_bletest_conn_end = os_time_get() + 
-                    (OS_TICKS_PER_SEC * (60 * 15));
-                g_bletest_state = 2;
-            }
-        } else if (g_bletest_state == 2) {
-            if ((int32_t)(os_time_get() - g_bletest_conn_end) >= 0) {
-                g_bletest_state = 3;
-                host_hci_cmd_disconnect(handle, BLE_ERR_REM_USER_CONN_TERM);
-            } else {
-                om = bletest_get_packet();
-                if (om) {
-                    /* set payload length */
-                    pktlen = BLETEST_PKT_SIZE;
-                    om->om_len = BLETEST_PKT_SIZE + 4;
-
-                    /* Put the HCI header in the mbuf */
-                    htole16(om->om_data, handle);
-                    htole16(om->om_data + 2, om->om_len);
-
-                    /* Place L2CAP header in packet */
-                    htole16(om->om_data + 4, pktlen);
-                    om->om_data[6] = 0;
-                    om->om_data[7] = 0;
-
-                    /* Fill with incrementing pattern (starting from 1) */
-                    for (i = 0; i < pktlen; ++i) {
-                        om->om_data[8 + i] = (uint8_t)(i + 1);
-                    }
-
-                    /* Add length */
-                    om->om_len += 4;
-                    OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                    ble_hci_transport_host_acl_data_send(om);
-                }
-                g_next_os_time += OS_TICKS_PER_SEC / 10;
-                return;
-            }
-        } else if (g_bletest_state == 3) {
-            /* We should be waiting for disconnect */
-            connsm = ble_ll_conn_find_active_conn(handle);
-            if (!connsm) {
-                /* Set to 0 if you want to restart advertising */
-                //g_bletest_state = 0;
-                g_bletest_state = 4;
-            }
-        }
-        g_next_os_time += OS_TICKS_PER_SEC;
-    }
-}
-#else
 static void
 bletest_execute_advertiser(void)
 {
-    int i,j;
+    int i;
+    int j;
     int rc;
+    //os_sr_t sr;
     uint16_t handle;
     uint16_t pktlen;
+    //uint16_t completed_pkts;
     struct os_mbuf *om;
 
     /* See if we should start advertising again */
@@ -579,6 +525,14 @@ bletest_execute_advertiser(void)
         if (ble_ll_conn_find_active_conn(handle)) {
             /* Set LED to slower blink rate */
             g_bletest_led_rate = OS_TICKS_PER_SEC;
+
+#if 0
+            /* Set next os time to 10 seconds after 1st connection */
+            if (g_next_os_time == 0) {
+                g_next_os_time = os_time_get() + (10 * OS_TICKS_PER_SEC);
+                g_bletest_handle = handle;
+            }
+#endif
 
             /* advertising better be stopped! */
             assert(ble_ll_adv_enabled() == 0);
@@ -666,11 +620,60 @@ bletest_execute_advertiser(void)
                 }
             }
         }
-        g_next_os_time = os_time_get() + OS_TICKS_PER_SEC;
+        g_next_os_time = os_time_get() + OS_TICKS_PER_SEC/4;
     }
+
+#if 0 /* XXX: throughput test */
+    /* Nothing to do if no connections */
+    if (!g_bletest_current_conns) {
+        return;
+    }
+
+    /* See if it is time to start throughput testing */
+    if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+
+        /* Keep window full */
+        OS_ENTER_CRITICAL(sr);
+        completed_pkts = g_bletest_completed_pkts;
+        g_bletest_completed_pkts = 0;
+        OS_EXIT_CRITICAL(sr);
+
+        assert(g_bletest_outstanding_pkts >= completed_pkts);
+        g_bletest_outstanding_pkts -= completed_pkts;
+
+        while (g_bletest_outstanding_pkts < 8) {
+            om = bletest_get_packet();
+            if (om) {
+                /* set payload length */
+                pktlen = BLETEST_PKT_SIZE;
+                om->om_len = BLETEST_PKT_SIZE + 4;
+
+                /* Put the HCI header in the mbuf */
+                htole16(om->om_data, g_bletest_handle);
+                htole16(om->om_data + 2, om->om_len);
+
+                /* Place L2CAP header in packet */
+                htole16(om->om_data + 4, pktlen);
+                om->om_data[6] = 0;
+                om->om_data[7] = 0;
+                om->om_len += 4;
+
+                /* Fill with incrementing pattern (starting from 1) */
+                for (j = 0; j < pktlen; ++j) {
+                    om->om_data[8 + j] = (uint8_t)(j + 1);
+                }
+
+                /* Add length */
+                OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
+                ble_hci_transport_host_acl_data_send(om);
+
+                ++g_bletest_outstanding_pkts;
+            }
+        }
+    }
+#endif /* XXX: throughput test */
 }
-#endif
-#endif
+#endif 
 
 /**
  * Main bletest function. Called by the task timer every 50 msecs.
@@ -706,8 +709,8 @@ bletest_timer_cb(void *arg)
     /* Call the bletest code */
     bletest_execute();
 
-    /* Re-start the timer (run every 50 msecs) */
-    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC / 20);
+    /* Re-start the timer (run every 10 msecs) */
+    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC / 100);
 }
 
 /**

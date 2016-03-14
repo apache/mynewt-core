@@ -18,27 +18,15 @@
 #
 
 pkg.name: compiler/sim
+pkg.type: compiler
 pkg.vers: 0.8.0
 pkg.description: Compiler definition for native gcc compiler.
 pkg.author: sterling <sterling@runtime.io>
 pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.type: compiler
 pkg.keywords:
     - sim
     - compiler
     - gcc
 
-compiler.path.cc: "/usr/local/bin/gcc-5" 
-compiler.path.as: "/usr/local/bin/gcc-5 -x assembler-with-cpp"
-compiler.path.archive: "ar"
-compiler.path.objdump: "gobjdump"
-compiler.path.objsize: "objsize"
-compiler.path.objcopy: "gobjcopy"
-
-compiler.flags.base: >
-    -m32 -Wall -Werror -ggdb -DMN_OSX
-
-compiler.flags.default: [compiler.flags.base, -O1]
-compiler.flags.debug: [compiler.flags.base, -O0]
-
-compiler.ld.mapfile: false

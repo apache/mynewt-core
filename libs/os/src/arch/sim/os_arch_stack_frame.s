@@ -1,12 +1,23 @@
+#if defined MN_LINUX
+#define sigsetjmp   __sigsetjmp
+#define CNAME(x)    x
+#elif defined MN_OSX
+#define sigsetjmp   sigsetjmp
+#define CNAME(x)    _ ## x
+#else
+#error "unsupported platform"
+#endif
+
     .text
     .code32
     .p2align 4, 0x90    /* align on 16-byte boundary and fill with NOPs */
 
+    .globl CNAME(os_arch_frame_init)
     .globl _os_arch_frame_init
     /*
      * void os_arch_frame_init(struct stack_frame *sf)
      */
-_os_arch_frame_init:
+CNAME(os_arch_frame_init):
     push    %ebp                    /* function prologue for backtrace */
     mov     %esp,%ebp
     push    %esi                    /* save %esi before using it as a tmpreg */
@@ -51,7 +62,7 @@ _os_arch_frame_init:
     leal    0x4(%esi),%eax          /* %eax = &sf->sf_jb */
     movl    %eax,0x0(%esp)
     movl    $0, 0x4(%esp)
-    call    _sigsetjmp              /* sigsetjmp(sf->sf_jb, 0) */
+    call    CNAME(sigsetjmp)        /* sigsetjmp(sf->sf_jb, 0) */
     test    %eax,%eax
     jne     1f
     movl    0x0(%esi),%esp          /* switch back to the main() stack */
@@ -65,7 +76,7 @@ _os_arch_frame_init:
     movl    %esp,%ebp               /* handcrafted prologue for backtrace */
     push    %eax                    /* rc */
     push    %esi                    /* sf */
-    call    _os_arch_task_start     /* os_arch_task_start(sf, rc) */
+    call    CNAME(os_arch_task_start) /* os_arch_task_start(sf, rc) */
     /* never returns */
 2:
     nop

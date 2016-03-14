@@ -18,15 +18,19 @@
 #
 
 pkg.name: hw/bsp/nrf52pdk
+pkg.type: bsp
 pkg.vers: 0.8.0
 pkg.description: BSP definition for the Nordic nRF52 Preview DK SoC.
 pkg.author: wes3 <will@runtime.io>
 pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.type: bsp
 pkg.keywords:
     - nrf52
     - nrf52dk
 
+pkg.arch: cortex_m4
+pkg.compiler: compiler/arm-none-eabi-m4
 pkg.linkerscript: "nrf52pdk.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
 pkg.downloadscript: nrf52pdk_download.sh
