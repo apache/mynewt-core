@@ -19,27 +19,30 @@
 #
 -->
 
-# Apache Mynewt Repository 
+# Apache Mynewt Core 
 
-# Overview
+## Overview
 
-This is the main Apache Mynewt development repository.  It contains the
-major packages that make up the Apache Mynewt Operating System.  For
-instructions on getting Apache Mynewt up and running, see the Getting
-Started page at: http://mynewt.apache.org/os/get_started/project1/
+This repository represents the core of the Apache Mynewt repository.
+It contains the major packages that make up the Apache Mynewt Operating 
+System.  For instructions on getting Apache Mynewt up & running, please 
+see our [Getting Started Guide.](http://mynewt.apache.org/os/get_started/project1/)
 
-The packages that make up Apache Mynewt are contained in the following
-directories:
+## Browsing 
 
-- libs: Contains the core of the RTOS (libs/os) and a number of helper 
-libraries for building applications.  Including a console (libs/console), 
+If you are browsing around the source tree, and want to see some of the 
+major functional chunks, here are a few pointers: 
+
+- libs: Contains the core of the RTOS ([libs/os](https://github.com/apache/incubator-mynewt-core/tree/master/libs/os) 
+and a number of helper libraries for building applications.  Including a 
+console (libs/console), 
 shell (libs/shell), and newtmgr, which supports software upgrade and 
 remote fetching of logs and statistics (libs/newtmgr).  
 
-- net: Contains the networking packages.  Right now, net/ just contains
-the nimble package.  Nimble is a full Bluetooth host and controller 
-implmentation, that is written from the ground up for the Apache Mynewt
-Operating System.   
+- net: Contains the networking packages.  Right now, net/ contains
+the nimble package.  [Nimble](https://github.com/apache/incubator-mynewt-core/tree/master/net/nimble)
+is a full Bluetooth host and controller implementation, that is written 
+from the ground up for the Apache Mynewt Operating System.   
 
 - hw: Contains the HW specific support packages.  Board Support Packages 
 are located in hw/bsp, and the MCU specific definitions they rely on 
@@ -53,20 +56,78 @@ File System.)  The Newtron file system is a FS that has been built from
 the ground-up in Apache Mynewt, designed to be optimized for small 
 (64KB-32MB) flashes.
 
-In addition to the package directories, there is a special type of package
-called a project, which defines an embedded build project (it has a 
-main() function.)  In the Apache Mynewt development repository there are a 
-set of standard projects, which can be used as examples to fasten your
-own project:
+## Sample Applications
+
+In addition to some of the core packages, there are also some sample 
+applications that show how to instantiate the Apache Mynewt system.  These
+sample applications are located in the ```apps/``` directory.  They 
+include: 
 
 * boot: Project to build the bootloader for test platforms. 
 * blinky: The minimal packages to build the OS, and blink a
   LED!  
 * slinky: A slightly more complex project that includes the 
-  console and shell libraries.  
+  console and shell libraries. 
+* bletiny: A stripped down interface to the Apache Mynewt Bluetooth stack.
 * test: Test project which can be compiled either with the simulator, or 
   on a per-architecture basis.  Test will run all the package's unit 
   tests. 
+
+# Contributing 
+
+Anybody who works with Apache Mynewt can be a contributing member of the 
+community that develops and deploys it.  The process of releasing an operating 
+system for microcontrollers is never done: and we welcome your contributions
+to that effort.
+
+## Pull Requests
+
+Apache Mynewt welcomes pull request via Github.  Discussions are done on Github,
+but depending on the topic, can also be relayed to the official Apache Mynewt
+developer mailing list dev@mynewt.incubator.apache.org.
+
+If you are suggesting a new feature, please email the developer list directly,
+with a description of the feature you are planning to work on.  
+
+We do not merge pull requests directly on Github, all PRs will be pulled and 
+pushed through http://git.apache.org/.
+
+## Filing Bugs
+
+Bugs can be filed on the 
+[Apache Mynewt Bug Tracker](https://issues.apache.org/jira/browse/MYNEWT).
+
+Where possible, please include a self-contained reproduction case!
+
+## Feature Requests
+
+Feature requests should also be filed on the 
+[Apache Mynewt Bug Tracker](https://issues.apache.org/jira/browse/MYNEWT).  
+Please introduce it as a ticket type "Wish." 
+
+## Writing Tests
+
+We love getting newt tests!  Apache Mynewt is a huge undertaking, and improving
+code coverage is a win for every Apache Mynewt user.  
+
+## Writing Documentation
+
+Contributing to documentation (in addition to writing tests), is a great way 
+to get involved with the Apache Mynewt project.
+
+Pull requests to the apache-mynewt-site repository on Github are the best 
+way to submit documentation.  For more information on contributing to the 
+documentation, the [FAQ](http://mynewt.apache.org/faq/answers/) has some 
+more information.
+
+## Getting Help
+
+If you are having trouble contributing to Apache Mynewt, or just want to talk 
+to a human about what you're working on, you can contact us via the 
+[developers mailing list](mailto:dev@mynewt.incubator.apache.org).  
+
+Although not a formal channel, you can also find a number of core developers
+on the #mynewt channel on Freenode.
 
 # License 
 
@@ -94,7 +155,3 @@ Regulations, Section 740.13) for both object code and source code.
 The following provides more details on the included cryptographic software: 
 https://tls.mbed.org/supported-ssl-ciphersuites.
 
-# Contact 
-
-For any questions on the larva repository, please contact the Apache Mynewt developer's 
-list (dev@mynewt.incubator.apache.org).  
