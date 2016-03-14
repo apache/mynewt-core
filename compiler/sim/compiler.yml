@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -16,17 +16,33 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-compiler.path.cc: "/usr/local/bin/gcc-5" 
-compiler.path.as: "/usr/local/bin/gcc-5 -x assembler-with-cpp"
-compiler.path.archive: "ar"
-compiler.path.objdump: "gobjdump"
-compiler.path.objsize: "objsize"
-compiler.path.objcopy: "gobjcopy"
 
+# Default.
+compiler.path.cc: "gcc"
+compiler.path.as: "gcc -x assembler-with-cpp"
+compiler.path.archive: "ar"
+compiler.path.objdump: "objdump"
+compiler.path.objsize: "size"
+compiler.path.objcopy: "objcopy"
 compiler.flags.base: >
-    -m32 -Wall -Werror -ggdb -DMN_OSX
+    -m32 -Wall -Werror -ggdb
+compiler.ld.resolve_circular_deps: true
 
 compiler.flags.default: [compiler.flags.base, -O1]
 compiler.flags.debug: [compiler.flags.base, -O0]
-
 compiler.ld.mapfile: false
+
+# Linux.
+compiler.flags.base.LINUX: >
+    -DMN_LINUX
+compiler.ld.flags.LINUX: -lutil
+
+# OS X.
+compiler.path.cc.DARWIN.OVERWRITE: "/usr/local/bin/gcc-5"
+compiler.path.as.DARWIN.OVERWRITE: "/usr/local/bin/gcc-5 -x assembler-with-cpp"
+compiler.path.objdump.DARWIN.OVERWRITE: "gobjdump"
+compiler.path.objsize.DARWIN.OVERWRITE: "objsize"
+compiler.path.objcopy.DARWIN.OVERWRITE: "gobjcopy"
+compiler.flags.base.DARWIN: >
+    -DMN_OSX
+compiler.ld.resolve_circular_deps.DARWIN.OVERWRITE: false
