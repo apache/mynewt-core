@@ -48,7 +48,7 @@ if [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x0
     FILE_NAME=$BASENAME.elf.bin
 else
-    FLASH_OFFSET=0x7000
+    FLASH_OFFSET=0x8000
     FILE_NAME=$BASENAME.img
 fi
 
