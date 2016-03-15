@@ -18,14 +18,12 @@
 #
 
 pkg.name: libs/console/full
-pkg.vers: 0.8.0
 pkg.description: Text-based IO interface.
-pkg.author: Marko Kiiskila <marko@runtime.io>
-pkg.homepage: http://mynewt.apache.org/os/modules/console/console/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
     - hw/hal
     - libs/os
-pkg.caps: console
+pkg.apis: console

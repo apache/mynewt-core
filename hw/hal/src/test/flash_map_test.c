@@ -153,7 +153,7 @@ TEST_SUITE(flash_map_test_suite)
     flash_map_test_case_2();
 }
 
-#ifdef PKG_TEST
+#ifdef MYNEWT_SELFTEST
 
 int
 main(int argc, char **argv)

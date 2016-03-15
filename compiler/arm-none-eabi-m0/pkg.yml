@@ -18,28 +18,12 @@
 #
 
 pkg.name: compiler/arm-none-eabi-m0
-pkg.vers: 0.8.0
+pkg.type: compiler
 pkg.description: Compiler definition for ARM Cortex-M0 gcc cross compiler.
-pkg.author: wes3 <will@runtime.io>
-pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-larva
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - arm
     - compiler
     - cortex
     - m0
-
-compiler.path.cc: arm-none-eabi-gcc
-compiler.path.archive: arm-none-eabi-ar
-compiler.path.as: arm-none-eabi-gcc -x assembler-with-cpp
-compiler.path.objdump: arm-none-eabi-objdump
-compiler.path.objsize: arm-none-eabi-size
-compiler.path.objcopy: arm-none-eabi-objcopy
-
-compiler.flags.default: -mcpu=cortex-m0 -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions -fomit-frame-pointer
-compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
-compiler.flags.debug: [compiler.flags.default, -O1 -ggdb]
-
-compiler.ld.flags: -static -lgcc
-compiler.ld.resolve_circular_deps: true
-compiler.ld.mapfile: true
