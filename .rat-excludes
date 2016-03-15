@@ -6,6 +6,11 @@
 .gdb_out
 tags
 
+# Non-source files
+RELEASE_NOTES.md
+repository.yml
+.gitignore
+
 # CRC16 - BSD License.
 crc16.*
 
