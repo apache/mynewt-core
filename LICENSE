@@ -255,7 +255,7 @@ for details see ./libs/elua/elua_base/LICENSE.luarpc
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * libs/cmsis-core/.
+    * libs/cmsis-core/
     * libs/os/src/arch/cortex_m0/m0/HAL_CM0.s
     * libs/os/src/arch/cortex_m0/m0/SVC_Table.s
     * libs/os/src/arch/cortex_m4/m4/HAL_CM4.s
