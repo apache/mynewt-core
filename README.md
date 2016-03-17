@@ -26,7 +26,18 @@
 This repository represents the core of the Apache Mynewt repository.
 It contains the major packages that make up the Apache Mynewt Operating 
 System.  For instructions on getting Apache Mynewt up & running, please 
-see our [Getting Started Guide.](http://mynewt.apache.org/os/get_started/project1/)
+see our [Getting Started Guide](http://mynewt.apache.org/os/get_started/introduction/).
+
+As Apache Mynewt Core is a collection of libraries, rather than a standalone
+application, it is not intended to be built by itself.  To run the unit tests
+for all the packages contained in Apache Mynewt Core, install the Apache Newt
+tool as documented in the
+[Getting Started Guide](http://mynewt.apache.org/os/get_started/introduction/)
+and run the following command from the core directory:
+
+```no-highlight
+    $ newt test all
+```
 
 ## Browsing 
 
