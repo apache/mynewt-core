@@ -26,14 +26,13 @@
 This repository represents the core of the Apache Mynewt repository.
 It contains the major packages that make up the Apache Mynewt Operating 
 System.  For instructions on getting Apache Mynewt up & running, please 
-see our [Getting Started Guide](http://mynewt.apache.org/os/get_started/introduction/).
+see our [Getting Started Guide](https://mynewt.apache.org/os/get_started/introduction/).
 
-As Apache Mynewt Core is a collection of libraries, rather than a standalone
-application, it is not intended to be built by itself.  To run the unit tests
-for all the packages contained in Apache Mynewt Core, install the Apache Newt
-tool as documented in the
-[Getting Started Guide](http://mynewt.apache.org/os/get_started/introduction/)
-and run the following command from the core directory:
+Apache Mynewt Core is not a standalone application, and it is not intended to
+be built by itself.  To run the unit tests for all the packages contained in
+Apache Mynewt Core, install the Apache Newt tool as documented in the [Getting
+Started Guide](https://mynewt.apache.org/os/get_started/introduction/#newt) and
+run the following command from the core directory:
 
 ```no-highlight
     $ newt test all
@@ -123,7 +122,7 @@ If you are suggesting a new feature, please email the developer list directly,
 with a description of the feature you are planning to work on.  
 
 We do not merge pull requests directly on Github, all PRs will be pulled and 
-pushed through http://git.apache.org/.
+pushed through https://git.apache.org/.
 
 ## Filing Bugs
 
@@ -150,7 +149,7 @@ to get involved with the Apache Mynewt project.
 
 Pull requests to the apache-mynewt-site repository on Github are the best 
 way to submit documentation.  For more information on contributing to the 
-documentation, the [FAQ](http://mynewt.apache.org/faq/answers/) has some 
+documentation, the [FAQ](https://mynewt.apache.org/faq/answers/) has some 
 more information.
 
 # License 
