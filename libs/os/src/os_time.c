@@ -17,8 +17,13 @@
  * under the License.
  */
 
+#include <util/util.h>
+#include <assert.h>
+
 #include "os/os.h"
 #include "os/queue.h"
+
+CTASSERT(sizeof(os_time_t) == 4);
 
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
@@ -51,31 +56,42 @@ os_time_get(void)
     return (g_os_time);
 }
 
-/**
- * Called for every single tick by the architecture specific functions.
- *
- * Increases the os_time by 1 tick. 
- */
-void
-os_time_tick(void)
+static void
+os_time_tick(int ticks)
 {
-    os_sr_t sr;
-    os_time_t delta;
+    os_time_t delta, prev_os_time;
 
-    OS_ENTER_CRITICAL(sr);
-    ++g_os_time;
+    assert(ticks >= 0);
+
+    OS_ASSERT_CRITICAL();
+    prev_os_time = g_os_time;
+    g_os_time += ticks;
 
     /*
-     * Update 'basetod' when the lowest 31 bits of 'g_os_time' are all zero,
-     * i.e. at 0x00000000 and 0x80000000.
+     * Update 'basetod' when 'g_os_time' crosses the 0x00000000 and
+     * 0x80000000 thresholds.
      */
-    if ((g_os_time << 1) == 0) {        /* XXX use __unlikely() here */
+    if ((prev_os_time ^ g_os_time) >> 31) {
         delta = g_os_time - basetod.ostime;
         os_deltatime(delta, &basetod.uptime, &basetod.uptime);
         os_deltatime(delta, &basetod.utctime, &basetod.utctime);
         basetod.ostime = g_os_time;
     }
-    OS_EXIT_CRITICAL(sr);
+}
+
+void
+os_time_advance(int ticks, bool resched)
+{
+    assert(ticks >= 0);
+
+    if (ticks > 0) {
+        os_time_tick(ticks);
+        os_callout_tick();
+        os_sched_os_timer_exp();
+        if (resched) {
+            os_sched(NULL);
+        }
+    }
 }
 
 /**

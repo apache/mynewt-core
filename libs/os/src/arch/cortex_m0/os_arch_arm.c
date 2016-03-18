@@ -104,10 +104,7 @@ uint32_t os_flags = OS_RUN_PRIV;
 void
 timer_handler(void)
 {
-    os_time_tick();
-    os_callout_tick();
-    os_sched_os_timer_exp();
-    os_sched(NULL);
+    os_time_advance(1, true);
 }
 
 void

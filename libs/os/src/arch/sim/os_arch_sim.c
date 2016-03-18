@@ -294,11 +294,6 @@ timer_handler(int sig)
     ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
     ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
 
-    while (--ticks >= 0) {
-        os_time_tick();
-        os_callout_tick();
-    }
-
     /*
      * Update 'time_last' but account for the remainder usecs that did not
      * contribute towards whole 'ticks'.
@@ -307,8 +302,7 @@ timer_handler(int sig)
     time_diff.tv_usec %= OS_USEC_PER_TICK;
     timersub(&time_now, &time_diff, &time_last);
 
-    os_sched_os_timer_exp();
-    os_sched(NULL);
+    os_time_advance(ticks, true);
 }
 
 static void
