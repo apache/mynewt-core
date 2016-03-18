@@ -98,6 +98,10 @@ extern jmp_buf tu_case_jb;
     static void                                                               \
     TEST_SUITE_##suite_name(void)
 
+/* for creating multiple files with test cases all belonging to the same
+ * suite */
+#define TEST_CASE_DECL(case_name)  int case_name(void);
+
 #define TEST_CASE(case_name)                                                  \
     static void TEST_CASE_##case_name(void);                                  \
                                                                               \
