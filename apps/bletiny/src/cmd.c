@@ -891,7 +891,7 @@ cmd_show(int argc, char **argv)
 
 #define CMD_ADV_DATA_MAX_UUIDS16                8
 #define CMD_ADV_DATA_MAX_UUIDS32                8
-#define CMD_ADV_DATA_MAX_UUIDS128               8
+#define CMD_ADV_DATA_MAX_UUIDS128               2
 #define CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS       8
 #define CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN    32
 #define CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN    32

@@ -189,8 +189,14 @@ struct json_attr_t {
 };
 
 struct json_buffer;
+
+/* when you implement a json buffer, you must implement these functions */
+
+/* returns the next character in the buffer or '\0'*/
 typedef char (*json_buffer_read_next_byte_t)(struct json_buffer *);
+/* returns the previous character in the buffer or '\0' */
 typedef char (*json_buffer_read_prev_byte_t)(struct json_buffer *);
+/* returns the number of characters read or zero */
 typedef int (*json_buffer_readn_t)(struct json_buffer *, char *buf, int n);
 
 struct json_buffer {
