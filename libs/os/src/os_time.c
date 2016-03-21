@@ -59,11 +59,12 @@ os_time_get(void)
 static void
 os_time_tick(int ticks)
 {
+    os_sr_t sr;
     os_time_t delta, prev_os_time;
 
     assert(ticks >= 0);
 
-    OS_ASSERT_CRITICAL();
+    OS_ENTER_CRITICAL(sr);
     prev_os_time = g_os_time;
     g_os_time += ticks;
 
@@ -77,6 +78,7 @@ os_time_tick(int ticks)
         os_deltatime(delta, &basetod.utctime, &basetod.utctime);
         basetod.ostime = g_os_time;
     }
+    OS_EXIT_CRITICAL(sr);
 }
 
 void
