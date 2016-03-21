@@ -78,6 +78,11 @@ int flash_area_write(const struct flash_area *, uint32_t off, void *src,
 int flash_area_erase(const struct flash_area *, uint32_t off, uint32_t len);
 
 /*
+ * Alignment restriction for flash writes.
+ */
+uint8_t flash_area_align(const struct flash_area *);
+
+/*
  * Given flash map index, return info about sectors within the area.
  */
 int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
