@@ -25,6 +25,20 @@
 TAILQ_HEAD(, os_callout) g_callout_list =
   TAILQ_HEAD_INITIALIZER(g_callout_list);
 
+static int callout_drift;
+
+void
+callout_drift_set(int drift)
+{
+    callout_drift = drift;
+}
+
+int
+callout_drift_get(void)
+{
+    return (callout_drift);
+}
+
 void
 os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)
 {
