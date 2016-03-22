@@ -23,7 +23,7 @@
 
 int hal_adc_init(int sysid) {
     int devid;
-    const struct hal_adc_s *padc;
+    struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
@@ -37,8 +37,8 @@ int hal_adc_init(int sysid) {
  * the  adc value read or negative on error, See 
  * hal_adc_get_resolution to check the range of the return value */
 int hal_adc_read(int sysid) {
-        int devid;
-    const struct hal_adc_s *padc;
+    int devid;
+    struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
@@ -53,7 +53,7 @@ int hal_adc_read(int sysid) {
  * the value 8. */
 int hal_adc_get_resolution(int sysid)  {
     int devid;
-    const struct hal_adc_s *padc;
+    struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
@@ -68,7 +68,7 @@ int hal_adc_get_resolution(int sysid)  {
  */
 int hal_adc_get_reference_voltage_mvolts(int sysid)  {
     int devid;
-    const struct hal_adc_s *padc;
+    struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
@@ -78,8 +78,7 @@ int hal_adc_get_reference_voltage_mvolts(int sysid)  {
 }
 
 /* returns the ADC read value converted to mvolts or negative on error */
-int hal_adc_read_mvolts(int sysid) {
-    int32_t val = hal_adc_read(sysid);
+int hal_adc_val_convert_to_mvolts(int sysid, int val) {
     int ret_val = -1;
     
     if(val >= 0)  {

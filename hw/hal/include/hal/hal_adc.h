@@ -45,8 +45,8 @@ int hal_adc_get_resolution(int sysid);
  */
 int hal_adc_get_reference_voltage_mvolts(int sysid);
 
-/* returns the ADC read value converted to mvolts or negative on error */
-int hal_adc_read_mvolts(int sysid);
+/* Converts and ADC value to millivolts  */
+int hal_adc_val_convert_to_mvolts(int sysid, int val);
 
 
 #endif /* HAL_ADC_H */

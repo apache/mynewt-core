@@ -42,6 +42,10 @@ int bsp_imgr_current_slot(void);
 
 #define NFFS_AREA_MAX    (8)
 
+/* channels 0 and 1 are random 
+ * channels 2,3,4 are min/mid/max constant */
+/* channel 5 is file from native_adc_0.bin */
+#define ADC_CHANNEL_MAX  (6)
 
 #ifdef __cplusplus
 }

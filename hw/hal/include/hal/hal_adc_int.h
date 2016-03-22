@@ -28,7 +28,7 @@ struct hal_adc_funcs_s {
 };
 
 struct hal_adc_s {
-    struct hal_adc_funcs_s  *driver_api;
+    const struct hal_adc_funcs_s  *driver_api;
 };
 
 /* NOTE: When using the hal_adc APIs, your BSP will need to implement
@@ -37,6 +37,6 @@ struct hal_adc_s {
 extern int 
 bsp_get_hal_adc_driver(int sysid,  
                        int *devid_out, 
-                       const struct hal_adc_s **padc_out);
+                       struct hal_adc_s **padc_out);
 
 #endif /* HAL_ADC_INT_H */
