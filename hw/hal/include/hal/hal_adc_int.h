@@ -20,11 +20,13 @@
 #ifndef HAL_ADC_INT_H
 #define HAL_ADC_INT_H
 
+struct hal_adc_s;
+
 struct hal_adc_funcs_s {
-    int (*hadc_read)(int devid);
-    int  (*hadc_get_resolution)(int devid);
-    int (*hadc_get_reference_mvolts)(int devid);
-    int  (*hadc_init)(int devid);
+    int (*hadc_read)                     (struct hal_adc_s *padc, int devid);
+    int  (*hadc_get_resolution)          (struct hal_adc_s *padc, int devid);
+    int (*hadc_get_reference_mvolts)     (struct hal_adc_s *padc, int devid);
+    int  (*hadc_init)                    (struct hal_adc_s *padc, int devid);
 };
 
 struct hal_adc_s {

@@ -21,13 +21,15 @@
 #include <hal/hal_adc.h>
 #include <hal/hal_adc_int.h>
 
-int hal_adc_init(int sysid) {
+int 
+hal_adc_init(int sysid) 
+{
     int devid;
     struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
-        return padc->driver_api->hadc_init(devid);
+        return padc->driver_api->hadc_init(padc, devid);
     }
     return rc;
 }
@@ -36,13 +38,15 @@ int hal_adc_init(int sysid) {
  * read the ADC corresponding to sysid in your system.  Returns
  * the  adc value read or negative on error, See 
  * hal_adc_get_resolution to check the range of the return value */
-int hal_adc_read(int sysid) {
+int 
+hal_adc_read(int sysid) 
+{
     int devid;
     struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
-        return padc->driver_api->hadc_read(devid);
+        return padc->driver_api->hadc_read(padc, devid);
     }
     return rc;
 }
@@ -51,13 +55,15 @@ int hal_adc_read(int sysid) {
  * For example if the system has an 8-bit ADC reporting 
  * values from 0= to 255 (2^8-1), this function would return
  * the value 8. */
-int hal_adc_get_resolution(int sysid)  {
+int 
+hal_adc_get_resolution(int sysid)  
+{
     int devid;
     struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
-        return padc->driver_api->hadc_get_resolution(devid);
+        return padc->driver_api->hadc_get_resolution(padc, devid);
     }
     return rc;
 }
@@ -66,19 +72,23 @@ int hal_adc_get_resolution(int sysid)  {
  * This API assumes the negative reference voltage is zero volt.
  * Returns negative on error.  
  */
-int hal_adc_get_reference_voltage_mvolts(int sysid)  {
+int 
+hal_adc_get_reference_voltage_mvolts(int sysid)  
+{
     int devid;
     struct hal_adc_s *padc;
     int rc = bsp_get_hal_adc_driver(sysid, &devid, &padc);
     
     if(0 == rc) {
-        return padc->driver_api->hadc_get_reference_mvolts(devid);
+        return padc->driver_api->hadc_get_reference_mvolts(padc, devid);
     }
     return rc;
 }
 
 /* returns the ADC read value converted to mvolts or negative on error */
-int hal_adc_val_convert_to_mvolts(int sysid, int val) {
+int 
+hal_adc_val_convert_to_mvolts(int sysid, int val) 
+{
     int ret_val = -1;
     
     if(val >= 0)  {
