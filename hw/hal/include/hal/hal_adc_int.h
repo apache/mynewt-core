@@ -16,39 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef HAL_ADC_INT_H
+#define HAL_ADC_INT_H
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
+struct hal_adc_funcs_s {
+    int (*hadc_read)(int devid);
+    int  (*hadc_get_resolution)(int devid);
+    int (*hadc_get_reference_mvolts)(int devid);
+    int  (*hadc_init)(int devid);
+};
 
-/* More convenient section placement macros. */
-#define bssnz_t
+struct hal_adc_s {
+    const struct hal_adc_funcs_s  *driver_api;
+};
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
+/* NOTE: When using the hal_adc APIs, your BSP will need to implement
+ * this function.  This function maps the system ID to a device ID
+ * and a driver interface for the underlying code to use. */
+extern int 
+bsp_get_hal_adc_driver(int sysid,  
+                       int *devid_out, 
+                       struct hal_adc_s **padc_out);
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
-
-int bsp_imgr_current_slot(void);
-
-#define NFFS_AREA_MAX    (8)
-
-/* channels 0 and 1 are random 
- * channels 2,3,4 are min/mid/max constant */
-/* channel 5 is file from native_adc_0.bin */
-#define ADC_CHANNEL_MAX  (6)
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __NATIVE_BSP_H */
+#endif /* HAL_ADC_INT_H */
