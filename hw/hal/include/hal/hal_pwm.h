@@ -22,9 +22,6 @@
 
 #include <inttypes.h>
 
-
-struct hal_pwm_s;
-
 /* This is an abstract hardware API to Pulse Width Modulators.
  * A Pulse width module produces an output pulse stream with 
  * a specified period, and duty cycle. */

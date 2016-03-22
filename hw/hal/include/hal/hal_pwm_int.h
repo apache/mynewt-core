@@ -26,12 +26,7 @@
  * you must provide.  Devid is the number space defined by a single instance
  * of your driver.  For example if you have a port with 8 PWMs, than you
  * might have 8 devids (0-7) for your device.  
- *
- * cookie is a arbitrary pointer that you add to your instance.  For example
- * if you have three PWM drivers each with 8 pins each with the same API,
- * you could store the state of a particular driver in cookie to reference
- * later when your driver is called . If not needed you can always set
- * this to NULL */
+ */
 
 struct hal_pwm_s;
 
