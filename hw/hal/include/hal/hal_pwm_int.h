@@ -16,36 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef HAL_PWM_INT_H
+#define HAL_PWM_INT_H
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
+#include <hal/hal_pwm.h>
+#include <inttypes.h>
 
-/* More convenient section placement macros. */
-#define bssnz_t
+/* when you are implementing a driver for the hal_pwm. This is the interface
+ * you must provide.  
+ */
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
+struct hal_pwm;
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
+struct hal_pwm_funcs 
+{
+    int (*hpwm_on)        (struct hal_pwm *ppwm);
+    int (*hpwm_off)       (struct hal_pwm *ppwm);
+    int (*hpwm_get_bits)  (struct hal_pwm *ppwm);
+    int (*hpwm_get_clk)   (struct hal_pwm *ppwm);
+    int (*hpwm_set_duty)  (struct hal_pwm *ppwm, uint8_t frac_duty);
+    int (*hpwm_set_wave)  (struct hal_pwm *ppwm, uint32_t period, uint32_t on);
+};
 
-int bsp_imgr_current_slot(void);
+struct hal_pwm 
+{
+    const struct hal_pwm_funcs *driver_api;
+};
 
-#define NFFS_AREA_MAX    (8)
+struct hal_pwm *
+bsp_get_hal_pwm_driver(enum system_device_id sysid);
 
-#define NUM_SYSTEM_PWM   (4)
+#endif /* HAL_PWM_INT_H */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __NATIVE_BSP_H */

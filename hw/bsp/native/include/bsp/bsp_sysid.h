@@ -34,7 +34,16 @@ enum system_device_id {
     NATIVE_A3,
     NATIVE_A4,
     NATIVE_A5,
+    NATIVE_BSP_PWM_0,
+    NATIVE_BSP_PWM_1,
+    NATIVE_BSP_PWM_2,
+    NATIVE_BSP_PWM_3,
+    NATIVE_BSP_PWM_4,
+    NATIVE_BSP_PWM_5,
+    NATIVE_BSP_PWM_6,
+    NATIVE_BSP_PWM_7,    
     /* TODO -- add other hals here */
+    
 };
 
 #ifdef __cplusplus

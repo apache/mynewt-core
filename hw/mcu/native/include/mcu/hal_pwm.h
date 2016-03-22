@@ -16,36 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
+
+#ifndef _NATIVE_HAL_PWM_H
+#define _NATIVE_HAL_PWM_H
+
+enum native_pwm_channel 
+{
+    NATIVE_MCU_PWM0 = 0,
+    NATIVE_MCU_PWM1,
+    NATIVE_MCU_PWM2,
+    NATIVE_MCU_PWM3,
+    NATIVE_MCU_PWM4,
+    NATIVE_MCU_PWM5,
+    NATIVE_MCU_PWM6,
+    NATIVE_MCU_PWM7,
+    NATIVE_MCU_PWM_MAX
+};
+ 
+/* to create a pwm driver */
+struct hal_pwm *
+native_pwm_create (enum native_pwm_channel);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
 
-/* More convenient section placement macros. */
-#define bssnz_t
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
-
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
-
-int bsp_imgr_current_slot(void);
-
-#define NFFS_AREA_MAX    (8)
-
-#define NUM_SYSTEM_PWM   (4)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __NATIVE_BSP_H */
+#endif /* _NATIVE_HAL_PWM_H */
+
