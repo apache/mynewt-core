@@ -114,8 +114,9 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* Test configurations. One of these should be set to 1 */
-#define BLETEST_CONCURRENT_CONN_TEST    (1)
-#define BLETEST_THROUGHPUT_TEST         (0)
+#if ((BLETEST_CONCURRENT_CONN_TEST == 0) && (BLETEST_THROUGHPUT_TEST == 0))
+    #error "Target must define at least one test type!"
+#endif
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
@@ -630,7 +631,7 @@ bletest_execute_advertiser(void)
                 }
             }
         }
-        g_next_os_time = os_time_get() + OS_TICKS_PER_SEC/4;
+        g_next_os_time = os_time_get() + OS_TICKS_PER_SEC;
     }
 #endif
 
@@ -786,8 +787,23 @@ bletest_task_handler(void *arg)
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
-    /* Turn on all events */
+    /* Read device address */
+    rc = host_hci_cmd_rd_bd_addr();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read version */
     rc = host_hci_cmd_rd_local_version();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read supported states */
+    rc = host_hci_cmd_le_read_supp_states();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read maximum data length */
+    rc = host_hci_cmd_le_read_max_datalen();
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
