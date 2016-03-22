@@ -154,7 +154,7 @@ TEST_CASE(test_json_simple_decode){
     char string2[16];
     int rc;
 
-    const struct json_attr_t test_attr[5] = {
+    const struct json_attr_t test_attr[6] = {
         [0] = {
             .attribute = "KeyBool",
             .type = t_boolean,
@@ -185,21 +185,24 @@ TEST_CASE(test_json_simple_decode){
             .type = t_string,
             .addr.string = string2,
             .nodefault = true,
-            .len = sizeof(string2)                    
-            }
-    };    
-    
+            .len = sizeof(string2)
+        },
+        [5] = {
+            .attribute = NULL
+        }
+    };
+
     test_buf_init(&tjb, output);
 
     rc = json_read_object(&tjb.json_buf, test_attr);
-    TEST_ASSERT(rc==0);    
+    TEST_ASSERT(rc==0);
     TEST_ASSERT(bool_val == 1);
     TEST_ASSERT(int_val ==  -1234);
     TEST_ASSERT(uint_val == 1353214);
-    
+
     rc = memcmp(string1, "foobar", strlen("foobar"));
-    TEST_ASSERT(rc==0);    
-   
+    TEST_ASSERT(rc==0);
+
     rc = memcmp(string2, "foobarlongstring", 10);
-    TEST_ASSERT(rc==0);            
+    TEST_ASSERT(rc==0);
 }
