@@ -21,4 +21,9 @@
 
 extern const struct hal_flash native_flash_dev;
 
+/* There is one PWM device with N channels */
+#define NUMDEVICE_PWMS (4)
+
+extern struct hal_pwm_s *pnative_pwm_dev;
+
 #endif /* H_NATIVE_BSP_ */

@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include "hal/hal_flash_int.h"
 #include "mcu/native_bsp.h"
+#include <bsp/bsp.h>
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
@@ -34,4 +35,18 @@ bsp_flash_dev(uint8_t id)
         return NULL;
     }
     return &native_flash_dev;
+}
+
+
+int
+bsp_get_hal_pwm_driver(int sysid,
+                       int *devid_out,
+                       struct hal_pwm_s **ppwm_out) {
+    
+    if (sysid < NUM_SYSTEM_PWM) {
+        *ppwm_out = pnative_pwm_dev;
+        *devid_out = sysid;
+        return 0;
+    }
+    return -1;
 }
