@@ -19,17 +19,15 @@
 #include <hal/flash_map.h>
 
 static struct flash_area bsp_flash_areas[] = {
-#if 0
     [FLASH_AREA_BOOTLOADER] = {
         .fa_flash_id = 0,       /* internal flash */
-        .fa_off = 0x08000000,   /* beginning */
+        .fa_off = 0x00000000,   /* beginning */
         .fa_size = (32 * 1024)
     },
-#endif
-    /* 2 * 16K and 1*64K sectors here */
+    /* 2*16K and 1*64K sectors here */
     [FLASH_AREA_IMAGE_0] = {
         .fa_flash_id = 0,
-        .fa_off = 0x00000000,
+        .fa_off = 0x00008000,
         .fa_size = (232 * 1024)
     },
     [FLASH_AREA_IMAGE_1] = {
