@@ -16,15 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef __SYS_CONFIG_FCB_H_
+#define __SYS_CONFIG_FCB_H_
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+#ifdef FCB_PRESENT
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+#include <fcb/fcb.h>
+#include "config/config.h"
 
-struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen);
+struct conf_file {
+    struct cf_storage cf_itf;
+    struct fcb cf_fcb;
+};
 
-#endif /* __CONFIG_PRIV_H_ */
+int conf_fcb_register(struct conf_fcb *fcb);
+
+#endif
+
+#endif /* __SYS_CONFIG_FCB_H_ */

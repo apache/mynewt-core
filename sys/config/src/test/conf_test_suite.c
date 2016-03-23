@@ -17,14 +17,23 @@
  * under the License.
  */
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+#include <os/os.h>
+#include <testutil/testutil.h>
+#include "config/config.h"
+#include "test/config_test.h"
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+#ifdef MYNEWT_SELFTEST
 
-struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen);
+int
+main(int argc, char **argv)
+{
+    tu_config.tc_print_results = 1;
+    tu_init();
 
-#endif /* __CONFIG_PRIV_H_ */
+    conf_init();
+    config_test_all();
+
+    return tu_any_failed;
+}
+
+#endif

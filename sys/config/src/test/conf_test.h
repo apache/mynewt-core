@@ -17,14 +17,9 @@
  * under the License.
  */
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+#ifndef _CONF_TEST_H_
+#define _CONF_TEST_H_
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+void config_test_all(void);
 
-struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen);
-
-#endif /* __CONFIG_PRIV_H_ */
+#endif /* _CONF_TEST_H_ */

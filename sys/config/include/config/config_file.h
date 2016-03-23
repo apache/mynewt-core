@@ -16,15 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef __SYS_CONFIG_FILE_H_
+#define __SYS_CONFIG_FILE_H_
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+#ifdef FS_PRESENT
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+#include <fs/fs.h>
+#include "config/config.h"
 
-struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen);
+struct conf_file {
+    struct conf_store cf_store;
+    const char *cf_name;
+};
 
-#endif /* __CONFIG_PRIV_H_ */
+int conf_file_register(struct conf_file *);
+
+#endif
+
+#endif /* __SYS_CONFIG_FILE_H_ */

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,13 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __UTIL_CONFIG_H_
-#define __UTIL_CONFIG_H_
+#ifndef __SYS_CONFIG_H_
+#define __SYS_CONFIG_H_
 
 #include <os/queue.h>
 #include <stdint.h>
 
 #define CONF_MAX_DIR_DEPTH	8	/* max depth of config tree */
+#define CONF_MAX_NAME_LEN	(8 * CONF_MAX_DIR_DEPTH)
+#define CONF_MAX_VAL_LEN	256
 #define CONF_NAME_SEPARATOR	"/"
 
 #define CONF_NMGR_OP		0
@@ -63,4 +65,22 @@ char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
 #define CONF_VALUE_SET(str, type, val)                                  \
     conf_value_from_str((str), (type), &(val), sizeof(val))
 
-#endif /* __UTIL_CONFIG_H_ */
+/*
+ * Persisting config.
+ */
+typedef void (*load_cb)(char *name, char *val, void *cb_arg);
+
+struct conf_store;
+struct conf_store_itf {
+    int (*csi_load)(struct conf_store *ci, load_cb cb, void *cb_arg);
+    int (*csi_save)(struct conf_store *ci, char *name, char *value);
+};
+
+struct conf_store {
+    SLIST_ENTRY(conf_store) cs_next;
+    const struct conf_store_itf *cs_itf;
+};
+
+void conf_src_register(struct conf_store *cs);
+
+#endif /* __SYS_CONFIG_H_ */

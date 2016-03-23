@@ -17,14 +17,22 @@
  * under the License.
  */
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+#ifdef FCB_PRESENT
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+#include "config/config.h"
+#include "config/config_fcb"
+#include "config_priv.h"
 
-struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen);
+int
+conf_fcb_register(struct conf_fcb *cf)
+{
+    int rc;
 
-#endif /* __CONFIG_PRIV_H_ */
+    rc = fcb_init(&cf->cf_fcb);
+    if (rc) {
+        return -1;
+    }
+    return conf_src_register(&cf->cf_itf);
+}
+
+#endif

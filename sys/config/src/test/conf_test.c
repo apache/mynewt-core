@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,13 +21,20 @@
 
 #include <os/os.h>
 #include <testutil/testutil.h>
-#include <config/config.h>
+#include <nffs/nffs.h>
+#include <fs/fs.h>
+#include <fs/fsutil.h>
+#include "config/config.h"
+#include "config/config_file.h"
+#include "test/config_test.h"
 
 static uint8_t val8;
 
 static int test_get_called;
 static int test_set_called;
 static int test_commit_called;
+
+extern SLIST_HEAD(, conf_store) conf_load_srcs; /* config_store.c */
 
 static char *
 ctest_handle_get(int argc, char **argv, char *val, int val_len_max)
@@ -178,6 +185,102 @@ TEST_CASE(config_test_commit)
     ctest_clear_call_state();
 }
 
+static const struct nffs_area_desc config_nffs[] = {
+    { 0x00000000, 16 * 1024 },
+    { 0x00004000, 16 * 1024 },
+    { 0x00008000, 16 * 1024 },
+    { 0x0000c000, 16 * 1024 },
+};
+
+static void config_setup_nffs(void)
+{
+    int rc;
+
+    rc = nffs_init();
+    TEST_ASSERT(rc == 0);
+    rc = nffs_format(config_nffs);
+    TEST_ASSERT(rc == 0);
+}
+
+static void config_wipe_srcs(void)
+{
+    SLIST_INIT(&conf_load_srcs);
+}
+
+TEST_CASE(config_test_empty_file)
+{
+    int rc;
+    struct conf_file cf_mfg;
+    struct conf_file cf_running;
+    const char cf_mfg_test[] = "";
+    const char cf_running_test[] = "\n\n";
+
+    config_wipe_srcs();
+
+    cf_mfg.cf_name = "/config/mfg";
+    cf_running.cf_name = "/config/running";
+
+    rc = conf_file_register(&cf_mfg);
+    TEST_ASSERT(rc == 0);
+    rc = conf_file_register(&cf_running);
+
+    /*
+     * No files
+     */
+    conf_load();
+
+    rc = fs_mkdir("/config");
+    TEST_ASSERT(rc == 0);
+
+    rc = fsutil_write_file("/config/mfg", cf_mfg_test, sizeof(cf_mfg_test));
+    TEST_ASSERT(rc == 0);
+
+    rc = fsutil_write_file("/config/running", cf_running_test,
+      sizeof(cf_running_test));
+    TEST_ASSERT(rc == 0);
+
+    conf_load();
+    config_wipe_srcs();
+    ctest_clear_call_state();
+}
+
+TEST_CASE(config_test_small_file)
+{
+    int rc;
+    struct conf_file cf_mfg;
+    struct conf_file cf_running;
+    const char cf_mfg_test[] = "{\"name\":\"myfoo/mybar\",\"val\":\"1\"}";
+    const char cf_running_test[] = "{\"name\":\"myfoo/mybar\",\"val\":\"8\"}";
+
+    config_wipe_srcs();
+
+    cf_mfg.cf_name = "/config/mfg";
+    cf_running.cf_name = "/config/running";
+
+    rc = conf_file_register(&cf_mfg);
+    TEST_ASSERT(rc == 0);
+    rc = conf_file_register(&cf_running);
+
+    rc = fsutil_write_file("/config/mfg", cf_mfg_test, sizeof(cf_mfg_test));
+    TEST_ASSERT(rc == 0);
+
+    conf_load();
+    TEST_ASSERT(test_set_called);
+    TEST_ASSERT(val8 == 1);
+
+    ctest_clear_call_state();
+
+    rc = fsutil_write_file("/config/running", cf_running_test,
+      sizeof(cf_running_test));
+    TEST_ASSERT(rc == 0);
+
+    conf_load();
+    TEST_ASSERT(test_set_called);
+    TEST_ASSERT(val8 == 8);
+
+    ctest_clear_call_state();
+}
+
 TEST_SUITE(config_test_all)
 {
     config_empty_lookups();
@@ -185,20 +288,9 @@ TEST_SUITE(config_test_all)
     config_test_getset_unknown();
     config_test_getset_int();
     config_test_commit();
+
+    config_setup_nffs();
+    config_test_empty_file();
+    config_test_small_file();
 }
 
-#ifdef MYNEWT_SELFTEST
-
-int
-main(int argc, char **argv)
-{
-    tu_config.tc_print_results = 1;
-    tu_init();
-
-    conf_init();
-    config_test_all();
-
-    return tu_any_failed;
-}
-
-#endif

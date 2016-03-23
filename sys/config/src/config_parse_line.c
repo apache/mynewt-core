@@ -17,14 +17,38 @@
  * under the License.
  */
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+#include "config/config.h"
+#include "config_priv.h"
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+#include <json/json.h>
 
-struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen);
+int
+conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
+  int vlen)
+{
+    const struct json_attr_t val_attr[3] = {
+        [0] = {
+            .attribute = "name",
+            .type = t_string,
+            .addr.string = name,
+            .len = nlen
+        },
+        [1] = {
+            .attribute = "val",
+            .type = t_string,
+            .addr.string = value,
+            .len = vlen
+        },
+        [2] = {
+            .attribute = NULL
+        }
+    };
+    int rc;
 
-#endif /* __CONFIG_PRIV_H_ */
+    rc = json_read_object(jb, val_attr);
+    if (rc) {
+        return rc;
+    }
+    return 0;
+}
+

@@ -34,3 +34,14 @@ pkg.cflags.SHELL: -DSHELL_PRESENT
 pkg.deps.NEWTMGR:
     - libs/newtmgr
 pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
+pkg.deps.FCB:
+    - sys/fcb
+pkg.cflags.FCB: -DFCB_PRESENT
+pkg.deps.FS:
+    - fs/fs
+    - libs/json
+pkg.cflags.FS: -DFS_PRESENT
+
+pkg.deps.TEST:
+    - fs/nffs
+    - sys/fcb
