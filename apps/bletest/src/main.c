@@ -792,6 +792,16 @@ bletest_task_handler(void *arg)
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
+    /* Read local features */
+    rc = host_hci_cmd_rd_local_feat();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read local commands */
+    rc = host_hci_cmd_rd_local_cmd();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
     /* Read version */
     rc = host_hci_cmd_rd_local_version();
     assert(rc == 0);
