@@ -30,8 +30,8 @@ fcb_init(struct fcb *fcb)
     int i;
     int max_align = 1;
     int align;
-    int oldest = -1, newest;
-    struct flash_area *oldest_fap, *newest_fap;
+    int oldest = -1, newest = -1;
+    struct flash_area *oldest_fap = NULL, *newest_fap = NULL;
     struct fcb_disk_area fda;
 
     if (!fcb->f_sectors || fcb->f_sector_cnt < 2) {
