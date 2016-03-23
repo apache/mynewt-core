@@ -38,6 +38,37 @@ run the following command from the core directory:
     $ newt test all
 ```
 
+## Features
+
+Apache Mynewt Core is an operating system that makes it easy to develop applications for microcontroller environments where power and cost are driving factors. Examples of such constrained devices are connected locks, lights, and wearables. 
+
+Some of the salient features of Mynewt Core are the following:
+
+* Multitasking, preemptive real-time operating system 
+* Several utilities such as a task watchdog, networking stack memory buffers and time management API
+* Support for ARM Cortex-M0, M3, M4 on several boards
+* Hardware Abstraction Layer unifying common MCU features (e.g. GPIOs, High Resolution Timers, PWM interfaces, UARTs, ADCs, etc.)
+* Board Support Infrastructure that allows porting to different microcontroller architectures
+* Image management and upgrade using the secure bootloader, and flash filesystem
+* System configuration that allows collection of logs and statistics for all packages (with filtering options) ranging from OS-level resources such as memory pools, priorities to interface level counters such as packet exchange and queues
+* Network protocol stacks
+    * First fully open-source BLE 4.2 stack with:
+        - Support for PDUs of up to 251 bytes for high throughput
+        - Support for all 4 roles to be run concurrently - Broadcaster, Observer, Peripheral, Central
+        - Random static addresses
+        - BLE stats and logs
+
+
+On the roadmap:
+
+* Tickless Idle Mode to place microcontrollers into deep power-saving state
+* Support for additional boards and microcontroller architectures
+* Enhancements to BLE 4.2 support:
+    - Security Manager Protocol
+    - LE Secure Connections
+    - Random addresses for link-layer security
+
+
 ## Browsing 
 
 If you are browsing around the source tree, and want to see some of the 
