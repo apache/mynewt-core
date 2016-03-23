@@ -114,8 +114,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* Test configurations. One of these should be set to 1 */
-#if ((BLETEST_CONCURRENT_CONN_TEST == 0) && (BLETEST_THROUGHPUT_TEST == 0))
-    #error "Target must define at least one test type!"
+#if !defined(BLETEST_CONCURRENT_CONN_TEST) && !defined(BLETEST_THROUGHPUT_TEST)
+    #define BLETEST_CONCURRENT_CONN_TEST    (1)
 #endif
 
 /* BLETEST variables */
