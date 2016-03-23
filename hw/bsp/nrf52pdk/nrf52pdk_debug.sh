@@ -36,7 +36,7 @@ echo "Debugging" $FILE_NAME
 
 # Monitor mode. Background process gets it's own process group.
 set -m
-JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun &
+JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE
