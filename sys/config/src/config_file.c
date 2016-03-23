@@ -75,55 +75,66 @@ conf_getnext_line(struct fs_file *file, char *buf, int blen, uint32_t *loc)
         return -1;
     }
     if (len == blen) {
-        rc--;
+        len--;
     }
     buf[len] = '\0';
 
-    end = strchr(buf, '}');
+    end = strchr(buf, '\n');
     if (end) {
-        *(end + 1) = '\0';
-        blen = end + 1 - buf;
-        *loc += blen;
-        return blen;
+        *end = '\0';
     } else {
-        *loc += blen;
-        return -1;
+        end = strchr(buf, '\0');
     }
-}
-
-static char
-conf_file_jb_read_next(struct json_buffer *jb)
-{
-    struct conf_file_jbuf *cfj = (struct conf_file_jbuf *)jb;
-
-    if (cfj->off >= cfj->len) {
-        return '\0';
-    }
-    return cfj->buf[cfj->off++];
-}
-
-static char
-conf_file_jb_read_prev(struct json_buffer *jb)
-{
-    struct conf_file_jbuf *cfj = (struct conf_file_jbuf *)jb;
-
-    if (cfj->off == 0) {
-        return '\0';
-    }
-    return cfj->buf[--cfj->off];
+    blen = end - buf;
+    *loc += (blen + 1);
+    return blen;
 }
 
 static int
-conf_file_jb_readn(struct json_buffer *jb, char *buf, int size)
+conf_file_line(char *buf, char **namep, char **valp)
 {
-    struct conf_file_jbuf *cfj = (struct conf_file_jbuf *)jb;
-    int len;
+    char *cp;
+    enum {
+        FIND_NAME,
+        FIND_NAME_END,
+        FIND_VAL,
+        FIND_VAL_END
+    } state = FIND_NAME;
 
-    len = cfj->len - cfj->off;
-    len = size > len ? len : size;
-
-    memcpy(buf, &cfj->buf[cfj->off], len);
-    return len;
+    for (cp = buf; *cp != '\0'; cp++) {
+        switch (state) {
+        case FIND_NAME:
+            if (!isspace(*cp)) {
+                *namep = cp;
+                state = FIND_NAME_END;
+            }
+            break;
+        case FIND_NAME_END:
+            if (*cp == '=') {
+                *cp = '\0';
+                state = FIND_VAL;
+            } else if (isspace(*cp)) {
+                *cp = '\0';
+            }
+            break;
+        case FIND_VAL:
+            if (!isspace(*cp)) {
+                *valp = cp;
+                state = FIND_VAL_END;
+            }
+            break;
+        case FIND_VAL_END:
+            if (isspace(*cp)) {
+                *cp = '\0';
+            }
+            break;
+        }
+    }
+    if (state == FIND_VAL_END) {
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 /*
@@ -136,10 +147,9 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
     struct conf_file *cf = (struct conf_file *)cs;
     struct fs_file *file;
     uint32_t loc;
-    struct conf_file_jbuf cfj;
     char tmpbuf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
-    char name_str[CONF_MAX_NAME_LEN];
-    char val_str[CONF_MAX_VAL_LEN];
+    char *name_str;
+    char *val_str;
     int rc;
 
     rc = fs_open(cf->cf_name, FS_ACCESS_READ, &file);
@@ -148,10 +158,6 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
     }
 
     loc = 0;
-    cfj.jb.jb_read_next = conf_file_jb_read_next;
-    cfj.jb.jb_read_prev = conf_file_jb_read_prev;
-    cfj.jb.jb_readn = conf_file_jb_readn;
-    cfj.buf = tmpbuf;
     while (1) {
         rc = conf_getnext_line(file, tmpbuf, sizeof(tmpbuf), &loc);
         if (loc == 0) {
@@ -160,10 +166,7 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
         if (rc < 0) {
             continue;
         }
-        cfj.off = 0;
-        cfj.len = rc;
-        rc = conf_parse_line(&cfj.jb, name_str, sizeof(name_str), val_str,
-          sizeof(val_str));
+        rc = conf_file_line(tmpbuf, &name_str, &val_str);
         if (rc != 0) {
             continue;
         }

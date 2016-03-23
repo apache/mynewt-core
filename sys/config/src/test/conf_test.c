@@ -249,8 +249,8 @@ TEST_CASE(config_test_small_file)
     int rc;
     struct conf_file cf_mfg;
     struct conf_file cf_running;
-    const char cf_mfg_test[] = "{\"name\":\"myfoo/mybar\",\"val\":\"1\"}";
-    const char cf_running_test[] = "{\"name\":\"myfoo/mybar\",\"val\":\"8\"}";
+    const char cf_mfg_test[] = "myfoo/mybar=1";
+    const char cf_running_test[] = " myfoo/mybar = 8 ";
 
     config_wipe_srcs();
 
@@ -281,6 +281,39 @@ TEST_CASE(config_test_small_file)
     ctest_clear_call_state();
 }
 
+TEST_CASE(config_test_multiple_in_file)
+{
+    int rc;
+    struct conf_file cf_mfg;
+    const char cf_mfg_test1[] =
+      "myfoo/mybar=1\n"
+      "myfoo/mybar=14";
+    const char cf_mfg_test2[] =
+      "myfoo/mybar=1\n"
+      "myfoo/mybar=15\n"
+      "\n";
+
+    config_wipe_srcs();
+
+    cf_mfg.cf_name = "/config/mfg";
+    rc = conf_file_register(&cf_mfg);
+    TEST_ASSERT(rc == 0);
+
+    rc = fsutil_write_file("/config/mfg", cf_mfg_test1, sizeof(cf_mfg_test1));
+    TEST_ASSERT(rc == 0);
+
+    conf_load();
+    TEST_ASSERT(test_set_called);
+    TEST_ASSERT(val8 == 14);
+
+    rc = fsutil_write_file("/config/mfg", cf_mfg_test2, sizeof(cf_mfg_test2));
+    TEST_ASSERT(rc == 0);
+
+    conf_load();
+    TEST_ASSERT(test_set_called);
+    TEST_ASSERT(val8 == 15);
+}
+
 TEST_SUITE(config_test_all)
 {
     config_empty_lookups();
@@ -292,5 +325,6 @@ TEST_SUITE(config_test_all)
     config_setup_nffs();
     config_test_empty_file();
     config_test_small_file();
+    config_test_multiple_in_file();
 }
 
