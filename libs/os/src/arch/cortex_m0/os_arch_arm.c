@@ -256,7 +256,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_bsp_systick_init(OS_TICKS_PER_SEC);
+    os_bsp_systick_init(OS_TICKS_PER_SEC, SYSTICK_PRIO);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;

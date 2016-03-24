@@ -10347,6 +10347,9 @@
 /* Register: TIMER_SHORTS */
 /* Description: Shortcut register */
 
+#define TIMER_SHORTS_COMPARE_CLEAR(ccreg)   (1UL << (ccreg))
+#define TIMER_SHORTS_COMPARE_STOP(ccreg)    (1UL << ((ccreg) + 8))
+
 /* Bit 13 : Shortcut between EVENTS_COMPARE[5] event and TASKS_STOP task */
 #define TIMER_SHORTS_COMPARE5_STOP_Pos (13UL) /*!< Position of COMPARE5_STOP field. */
 #define TIMER_SHORTS_COMPARE5_STOP_Msk (0x1UL << TIMER_SHORTS_COMPARE5_STOP_Pos) /*!< Bit mask of COMPARE5_STOP field. */
@@ -10421,6 +10424,7 @@
 
 /* Register: TIMER_INTENSET */
 /* Description: Enable interrupt */
+#define TIMER_COMPARE_INT_MASK(ccreg)   (1UL << ((ccreg) + 16))
 
 /* Bit 21 : Write '1' to Enable interrupt on EVENTS_COMPARE[5] event */
 #define TIMER_INTENSET_COMPARE5_Pos (21UL) /*!< Position of COMPARE5 field. */

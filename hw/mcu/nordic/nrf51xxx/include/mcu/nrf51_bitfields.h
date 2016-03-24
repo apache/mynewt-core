@@ -6133,6 +6133,9 @@
 /* Register: TIMER_SHORTS */
 /* Description: Shortcuts for Timer. */
 
+#define TIMER_SHORTS_COMPARE_CLEAR(ccreg)   (1UL << (ccreg))
+#define TIMER_SHORTS_COMPARE_STOP(ccreg)    (1UL << ((ccreg) + 8))
+
 /* Bit 11 : Shortcut between CC[3] event and the STOP task. */
 #define TIMER_SHORTS_COMPARE3_STOP_Pos (11UL) /*!< Position of COMPARE3_STOP field. */
 #define TIMER_SHORTS_COMPARE3_STOP_Msk (0x1UL << TIMER_SHORTS_COMPARE3_STOP_Pos) /*!< Bit mask of COMPARE3_STOP field. */

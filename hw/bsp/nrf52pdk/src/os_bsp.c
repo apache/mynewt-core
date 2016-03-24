@@ -16,6 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <os/os.h>
+#include <bsp/cmsis_nvic.h>
+#include <mcu/nrf52.h>
+#include <mcu/nrf52_bitfields.h>
+#include <util/util.h>
 #include <hal/flash_map.h>
 
 static struct flash_area bsp_flash_areas[] = {
@@ -77,4 +82,49 @@ os_bsp_init(void)
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+}
+
+#define CALLOUT_TIMER       NRF_TIMER1
+#define CALLOUT_IRQ         TIMER1_IRQn
+#define CALLOUT_CMPREG      0
+#define CALLOUT_PRESCALER   4   /* prescaler to generate 1MHz timer freq */
+
+static void
+nrf52_timer_handler(void)
+{
+    /* Clear interrupt */
+    CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG] = 0;
+
+    os_time_advance(1, true);
+}
+
+void
+os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio)
+{
+    uint32_t usecs_per_os_tick;
+
+    usecs_per_os_tick = 1000000 / os_ticks_per_sec;
+
+    /*
+     * Program CALLOUT_TIMER to operate at 1MHz and trigger an output
+     * compare interrupt at a rate of 'os_ticks_per_sec'.
+     */
+    CALLOUT_TIMER->TASKS_STOP = 1;
+    CALLOUT_TIMER->TASKS_CLEAR = 1;
+    CALLOUT_TIMER->MODE = TIMER_MODE_MODE_Timer;
+    CALLOUT_TIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    CALLOUT_TIMER->PRESCALER = CALLOUT_PRESCALER;
+
+    CALLOUT_TIMER->CC[CALLOUT_CMPREG] = usecs_per_os_tick;
+    CALLOUT_TIMER->INTENSET = TIMER_COMPARE_INT_MASK(CALLOUT_CMPREG);
+    CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG] = 0;
+
+    /* Enable shortcut to clear the timer on output compare */
+    CALLOUT_TIMER->SHORTS = TIMER_SHORTS_COMPARE_CLEAR(CALLOUT_CMPREG);
+
+    NVIC_SetPriority(CALLOUT_IRQ, prio);
+    NVIC_SetVector(CALLOUT_IRQ, (uint32_t)nrf52_timer_handler);
+    NVIC_EnableIRQ(CALLOUT_IRQ);
+
+    CALLOUT_TIMER->TASKS_START = 1;     /* start the callout timer */
 }

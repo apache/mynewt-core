@@ -22,8 +22,6 @@
 #include "mcu/nrf51_bitfields.h"
 #include "mcu/nrf51_hal.h"
 
-#define BSP_LOWEST_PRIO     ((1 << __NVIC_PRIO_BITS) - 1)
-
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
         .fa_flash_id = 0,       /* internal flash */
@@ -94,7 +92,7 @@ rtc0_timer_handler(void)
 }
 
 void
-os_bsp_systick_init(uint32_t os_ticks_per_sec)
+os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio)
 {
     uint32_t ctx;
     uint32_t mask;
@@ -130,7 +128,7 @@ os_bsp_systick_init(uint32_t os_ticks_per_sec)
     NRF_RTC0->TASKS_CLEAR = 1;
 
     /* Set isr in vector table and enable interrupt */
-    NVIC_SetPriority(RTC0_IRQn, BSP_LOWEST_PRIO - 1);
+    NVIC_SetPriority(RTC0_IRQn, prio);
     NVIC_SetVector(RTC0_IRQn, (uint32_t)rtc0_timer_handler);
     NVIC_EnableIRQ(RTC0_IRQn);
 
