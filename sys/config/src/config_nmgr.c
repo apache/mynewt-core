@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -43,7 +43,7 @@ static struct nmgr_group conf_nmgr_group = {
 static int
 conf_nmgr_read(struct nmgr_jbuf *njb)
 {
-    char tmp_str[max(CONF_MAX_DIR_DEPTH * 8, 16)];
+    char tmp_str[CONF_MAX_NAME_LEN];
     char *val_str;
     const struct json_attr_t attr[2] = {
         [0] = {
@@ -80,28 +80,12 @@ conf_nmgr_read(struct nmgr_jbuf *njb)
 static int
 conf_nmgr_write(struct nmgr_jbuf *njb)
 {
-    char name_str[CONF_MAX_DIR_DEPTH * 8];
-    char val_str[256];
-    struct json_attr_t attr[3] = {
-        [0] = {
-            .attribute = "name",
-            .type = t_string,
-            .addr.string = name_str,
-            .len = sizeof(name_str)
-        },
-        [1] = {
-            .attribute = "val",
-            .type = t_string,
-            .addr.string = val_str,
-            .len = sizeof(val_str)
-        },
-        [2] = {
-            .attribute = NULL
-        }
-    };
     int rc;
+    char name_str[CONF_MAX_NAME_LEN];
+    char val_str[CONF_MAX_VAL_LEN];
 
-    rc = json_read_object(&njb->njb_buf, attr);
+    rc = conf_parse_line(&njb->njb_buf, name_str, sizeof(name_str), val_str,
+      sizeof(val_str));
     if (rc) {
         return OS_EINVAL;
     }

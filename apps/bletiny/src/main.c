@@ -47,12 +47,13 @@
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
-/* Task 1 */
+/* Nimble task priorities */
+#define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
 #define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3)
 #define SHELL_MAX_INPUT_LEN     (64)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(216))
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(210))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 static struct os_mutex bletiny_mutex;
@@ -64,7 +65,6 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
 /* A buffer for host advertising data */
-uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 static uint8_t bletiny_addr[6] = {0x03, 0x02, 0x01, 0x50, 0x13, 0x00};
@@ -81,7 +81,7 @@ struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
 /* BLETINY variables */
-#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(200))
+#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(210))
 #define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
 
 #if NIMBLE_OPT_ROLE_CENTRAL
@@ -1443,7 +1443,8 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    ble_ll_init();
+    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
+    assert(rc == 0);
 
     rc = cmd_init();
     assert(rc == 0);

@@ -539,6 +539,10 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
     unsigned int count;
     uint8_t *udst;
 
+    if (!len) {
+        return 0;
+    }
+
     udst = dst;
 
     while (off > 0) {

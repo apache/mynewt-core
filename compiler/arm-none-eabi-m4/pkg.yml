@@ -19,12 +19,9 @@
 
 pkg.name: compiler/arm-none-eabi-m4
 pkg.type: compiler
-pkg.vers: 0.8.0
 pkg.description: Compiler definition for ARM Cortex-M4 gcc cross compiler.
-pkg.author: sterling <sterling@runtime.io>
-pkg.homepage:
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
-pkg.type: compiler
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - arm
     - compiler

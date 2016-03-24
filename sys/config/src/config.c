@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -46,18 +46,6 @@ int
 conf_register(struct conf_handler *handler)
 {
     SLIST_INSERT_HEAD(&conf_handlers, handler, ch_list);
-    return 0;
-}
-
-int
-conf_load(void)
-{
-    /*
-     * for every config source
-     *    load config
-     *    apply config
-     *    commit all
-     */
     return 0;
 }
 
@@ -247,3 +235,4 @@ conf_commit(char *name)
         return 0;
     }
 }
+

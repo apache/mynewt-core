@@ -23,7 +23,7 @@
 #include "bootutil/bootutil_test.h"
 #include "testutil/testutil.h"
 #include "mbedtls/mbedtls_test.h"
-#include "config/config_test.h"
+#include "config/../../src/test/config_test.h"
 
 extern int util_test_all(void);
 

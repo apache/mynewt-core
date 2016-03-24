@@ -201,10 +201,10 @@
    limitations under the License.
 
 This product bundles crc16, which is available under the "3-clause BSD"
-license.  For details, see fs/nffs/src/crc16.[ch].
+license.  For details, see fs/nffs/src/crc16.[ch]
 
 This product bundles queue.h 8.5, which is available under the "3-clause BSD"
-license.  For details, see libs/os/include/os/queue.h.
+license.  For details, see libs/os/include/os/queue.h
 
 This product partly derives from FreeBSD, which is available under the
 "3-clause BSD" license.  For details, see:
@@ -215,16 +215,16 @@ This product partly derives from FreeBSD, which is available under the
 
 This product bundles baselibc, which is available under the "3-clause BSD"
 license. Baselibc bundles tinyprintf and is based on klibc for details see:
-./libs/baselibc/LICENSE
+libs/baselibc/LICENSE
 
 This product bundles tinyprintf, which is available under the "3-clause BSD"
-license.  For details, see libs/baselibc/tinyprintf.c.
+license.  For details, see libs/baselibc/src/tinyprintf.c
 
 This product conatins code based on klibc, which is available under the MIT
-license.  For details, see ./libs/baselibc/LICENSE.
+license.  For details, see libs/baselibc/LICENSE
 
 This product bundles microjson, which is available under the "3-clause BSD"
-license.  For details, see libs/json/.
+license.  For details, see libs/json/
 
 This product bundles and partly derives from parts of the Nordic nRF51 SDK,
 which are available under a BSD style license.  Relevant files are:
@@ -244,18 +244,18 @@ This product bundles Gary S. Brown's CRC32 implementation, which is available un
     code or tables extracted from it, as desired without restriction.
 
 This product bundles eLua, which is available under the MIT license.
-For details, see libs/elua/elua_base/.
+For details, see libs/elua/elua_base/
 
 eLua bundles further items which are available under permissive Apache
 compatable licenses (BSD/MIT). For full details see:
-./libs/elua/elua_base/LICENSE
+libs/elua/elua_base/LICENSE
 
 This product bundles Lua-RPC library, which is available under a zlib license.
-for details see ./libs/elua/elua_base/LICENSE.luarpc
+for details see libs/elua/elua_base/LICENSE.luarpc
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * libs/cmsis-core/.
+    * libs/cmsis-core/
     * libs/os/src/arch/cortex_m0/m0/HAL_CM0.s
     * libs/os/src/arch/cortex_m0/m0/SVC_Table.s
     * libs/os/src/arch/cortex_m4/m4/HAL_CM4.s

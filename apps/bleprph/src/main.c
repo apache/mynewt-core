@@ -56,12 +56,13 @@ struct os_mempool bleprph_mbuf_mpool;
 static struct log_handler bleprph_log_console_handler;
 struct log bleprph_log;
 
-/** Priority of the nimble host task. */
-#define BLEPRPH_BLE_HS_PRIO          (1)
+/** Priority of the nimble host and controller tasks. */
+#define BLE_LL_TASK_PRI             (OS_TASK_PRI_HIGHEST)
+#define BLEPRPH_BLE_HS_PRIO         (1)
 
 /** bleprph task settings. */
-#define BLEPRPH_STACK_SIZE             (OS_STACK_ALIGN(200))
-#define BLEPRPH_TASK_PRIO              (BLEPRPH_BLE_HS_PRIO + 1)
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(200))
+#define BLEPRPH_TASK_PRIO           (BLEPRPH_BLE_HS_PRIO + 1)
 
 struct os_eventq bleprph_evq;
 struct os_task bleprph_task;
@@ -268,7 +269,7 @@ main(void)
                  bleprph_stack, BLEPRPH_STACK_SIZE);
 
     /* Initialize the BLE LL */
-    rc = ble_ll_init();
+    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
     /* Initialize the BLE host. */

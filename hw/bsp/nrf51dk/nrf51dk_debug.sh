@@ -35,7 +35,7 @@ GDB_CMD_FILE=.gdb_cmds
 echo "Debugging" $FILE_NAME
 
 set -m
-JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD -port 3333 -singlerun &
+JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE

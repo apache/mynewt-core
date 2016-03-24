@@ -21,6 +21,7 @@
 #include <string.h>
 #include "os/os.h"
 #include "nimble/ble.h"
+#include "nimble/nimble_opt.h"
 #include "nimble/hci_common.h"
 #include "nimble/hci_transport.h"
 #include "controller/ble_ll_adv.h"
@@ -31,8 +32,8 @@
 #include "ble_ll_conn_priv.h"
 
 /* LE event mask */
-uint8_t g_ble_ll_hci_le_event_mask[BLE_HCI_SET_LE_EVENT_MASK_LEN];
-uint8_t g_ble_ll_hci_event_mask[BLE_HCI_SET_EVENT_MASK_LEN];
+static uint8_t g_ble_ll_hci_le_event_mask[BLE_HCI_SET_LE_EVENT_MASK_LEN];
+static uint8_t g_ble_ll_hci_event_mask[BLE_HCI_SET_EVENT_MASK_LEN];
 
 /**
  * ll hci get num cmd pkts 
@@ -109,7 +110,7 @@ ble_ll_hci_rd_local_version(uint8_t *rspbuf, uint8_t *rsplen)
 
     hci_rev = 0;
     lmp_subver = 0;
-    mfrg = BLE_LL_MFRG_ID;
+    mfrg = NIMBLE_OPT_LL_MFRG_ID;
 
     /* Place the data packet length and number of packets in the buffer */
     rspbuf[0] = BLE_HCI_VER_BCS_4_2;
@@ -118,6 +119,66 @@ ble_ll_hci_rd_local_version(uint8_t *rspbuf, uint8_t *rsplen)
     htole16(rspbuf + 4, mfrg);
     htole16(rspbuf + 6, lmp_subver);
     *rsplen = BLE_HCI_RD_LOC_VER_INFO_RSPLEN;
+    return BLE_ERR_SUCCESS;
+}
+
+/**
+ * Reade local supported features
+ * 
+ * @param rspbuf 
+ * @param rsplen 
+ * 
+ * @return int 
+ */
+static int
+ble_ll_hci_rd_local_supp_feat(uint8_t *rspbuf, uint8_t *rsplen)
+{
+    /* 
+     * The only two bits we set here currently are:
+     *      BR/EDR not supported        (bit 5)
+     *      LE supported (controller)   (bit 6)
+     */ 
+    memset(rspbuf, 0, BLE_HCI_RD_LOC_SUPP_FEAT_RSPLEN);
+    rspbuf[4] = 0x60;
+    *rsplen = BLE_HCI_RD_LOC_SUPP_FEAT_RSPLEN;
+    return BLE_ERR_SUCCESS;
+}
+
+/**
+ * Read local supported commands
+ * 
+ * @param rspbuf 
+ * @param rsplen 
+ * 
+ * @return int 
+ */
+static int
+ble_ll_hci_rd_local_supp_cmd(uint8_t *rspbuf, uint8_t *rsplen)
+{
+    memset(rspbuf, 0, BLE_HCI_RD_LOC_SUPP_CMD_RSPLEN);
+    memcpy(rspbuf, g_ble_ll_supp_cmds, sizeof(g_ble_ll_supp_cmds));
+    *rsplen = BLE_HCI_RD_LOC_SUPP_CMD_RSPLEN;
+    return BLE_ERR_SUCCESS;
+}
+
+/**
+ * Called to read the public device address of the device
+ * 
+ * 
+ * @param rspbuf 
+ * @param rsplen 
+ * 
+ * @return int 
+ */
+static int
+ble_ll_hci_rd_bd_addr(uint8_t *rspbuf, uint8_t *rsplen)
+{    
+    /* 
+     * XXX: for now, assume we always have a public device address. If we
+     * dont, we should set this to zero
+     */ 
+    memcpy(rspbuf, g_dev_addr, BLE_DEV_ADDR_LEN);
+    *rsplen = BLE_DEV_ADDR_LEN;
     return BLE_ERR_SUCCESS;
 }
 
@@ -153,9 +214,30 @@ static int
 ble_ll_hci_le_read_bufsize(uint8_t *rspbuf, uint8_t *rsplen)
 {    
     /* Place the data packet length and number of packets in the buffer */
-    htole16(rspbuf, BLE_LL_CFG_ACL_DATA_PKT_LEN);
-    rspbuf[2] = BLE_LL_CFG_NUM_ACL_DATA_PKTS;
+    htole16(rspbuf, g_ble_ll_data.ll_acl_pkt_size);
+    rspbuf[2] = g_ble_ll_data.ll_num_acl_pkts;
     *rsplen = BLE_HCI_RD_BUF_SIZE_RSPLEN;
+    return BLE_ERR_SUCCESS;
+}
+
+/**
+ * HCI read maximum data length command. Returns the controllers max supported 
+ * rx/tx octets/times. 
+ * 
+ * @param rspbuf Pointer to response buffer
+ * @param rsplen Length of response buffer
+ * 
+ * @return int BLE error code
+ */
+static int
+ble_ll_hci_le_rd_max_data_len(uint8_t *rspbuf, uint8_t *rsplen)
+{    
+    /* Place the data packet length and number of packets in the buffer */
+    htole16(rspbuf, g_ble_ll_conn_params.supp_max_tx_octets);
+    htole16(rspbuf + 2, g_ble_ll_conn_params.supp_max_tx_time);
+    htole16(rspbuf + 4, g_ble_ll_conn_params.supp_max_rx_octets);
+    htole16(rspbuf + 6, g_ble_ll_conn_params.supp_max_rx_time);
+    *rsplen = BLE_HCI_RD_MAX_DATALEN_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
 
@@ -175,6 +257,27 @@ ble_ll_hci_le_read_local_features(uint8_t *rspbuf, uint8_t *rsplen)
     memset(rspbuf, 0, BLE_HCI_RD_LOC_SUPP_FEAT_RSPLEN);
     rspbuf[0] = ble_ll_read_supp_features();
     *rsplen = BLE_HCI_RD_LOC_SUPP_FEAT_RSPLEN;
+    return BLE_ERR_SUCCESS;
+}
+
+/**
+ * HCI read local supported states command. Returns the states 
+ * supported by the controller.
+ * 
+ * @param rspbuf Pointer to response buffer
+ * @param rsplen Length of response buffer
+ * 
+ * @return int BLE error code
+ */
+static int
+ble_ll_hci_le_read_supp_states(uint8_t *rspbuf, uint8_t *rsplen)
+{    
+    uint64_t supp_states;
+
+    /* Add list of supported states. */
+    supp_states = ble_ll_read_supp_states();
+    htole64(rspbuf, supp_states);
+    *rsplen = BLE_HCI_RD_SUPP_STATES_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
 
@@ -370,11 +473,17 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
     case BLE_HCI_OCF_LE_RD_REM_FEAT:
         rc = ble_ll_conn_hci_read_rem_features(cmdbuf);
         break;
+    case BLE_HCI_OCF_LE_RD_SUPP_STATES :
+        rc = ble_ll_hci_le_read_supp_states(rspbuf, rsplen);
+        break;
     case BLE_HCI_OCF_LE_REM_CONN_PARAM_NRR:
         rc = ble_ll_conn_hci_param_reply(cmdbuf, 0);
         break;
     case BLE_HCI_OCF_LE_REM_CONN_PARAM_RR:
         rc = ble_ll_conn_hci_param_reply(cmdbuf, 1);
+        break;
+    case BLE_HCI_OCF_LE_RD_MAX_DATA_LEN:
+        rc = ble_ll_hci_le_rd_max_data_len(rspbuf, rsplen);
         break;
     default:
         rc = BLE_ERR_UNKNOWN_HCI_CMD;
@@ -512,6 +621,21 @@ ble_ll_hci_info_params_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
             rc = ble_ll_hci_rd_local_version(rspbuf, rsplen);
         }
         break;
+    case BLE_HCI_OCF_IP_RD_LOC_SUPP_CMD:
+        if (len == 0) {
+            rc = ble_ll_hci_rd_local_supp_cmd(rspbuf, rsplen);
+        }
+        break;
+    case BLE_HCI_OCF_IP_RD_LOC_SUPP_FEAT:
+        if (len == 0) {
+            rc = ble_ll_hci_rd_local_supp_feat(rspbuf, rsplen);
+        }
+        break;
+    case BLE_HCI_OCF_IP_RD_BD_ADDR:
+        if (len == 0) {
+            rc = ble_ll_hci_rd_bd_addr(rspbuf, rsplen);
+        }
+        break;
     default:
         rc = BLE_ERR_UNKNOWN_HCI_CMD;
         break;
@@ -557,6 +681,11 @@ ble_ll_hci_status_params_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen
     return rc;
 }
 
+/**
+ * Called to process an HCI command from the host.
+ * 
+ * @param ev Pointer to os event containing a pointer to command buffer
+ */
 void
 ble_ll_hci_cmd_proc(struct os_event *ev)
 {
@@ -666,17 +795,6 @@ ble_hci_transport_host_acl_data_send(struct os_mbuf *om)
 {
     ble_ll_acl_data_in(om);
     return 0;
-}
-
-/**
- * Reset the LL HCI interface.
- * 
- */
-void
-ble_ll_hci_reset(void)
-{
-    /* Only need to call the init function again */
-    ble_ll_hci_init();
 }
 
 /**

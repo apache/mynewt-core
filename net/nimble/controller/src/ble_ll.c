@@ -24,6 +24,7 @@
 #include "stats/stats.h"
 #include "bsp/bsp.h"
 #include "nimble/ble.h"
+#include "nimble/nimble_opt.h"
 #include "nimble/hci_common.h"
 #include "controller/ble_phy.h"
 #include "controller/ble_ll.h"
@@ -44,20 +45,106 @@
  * 4) Should look into always disabled the wfr interrupt if we receive the
  * start of a frame. Need to look at the various states to see if this is the
  * right thing to do.
- * 
- * 5) Make sure there is no way we can start a wfr timer and then have
- * whatever event end and not stop the timer. We want to make sure the timer
- * cant fire off unless we are sure that it will fire off when the device is
- * in standby state. At least in standby we are sure no erroneous action will
- * be taken
  */
 
 /* Configuration for supported features */
-#define BLE_LL_CFG_FEAT_DATA_LEN_EXT
+#undef  BLE_LL_CFG_FEAT_LE_ENCRYPTION
 #define BLE_LL_CFG_FEAT_CONN_PARAM_REQ
-#undef BLE_LL_CFG_FEAT_LE_ENCRYPTION
-#undef BLE_LL_CFG_FEAT_EXT_REJECT_IND
+#undef  BLE_LL_CFG_FEAT_EXT_REJECT_IND
 #define BLE_LL_CFG_FEAT_SLAVE_INIT_FEAT_XCHG
+#undef  BLE_LL_CFG_FEAT_LE_PING
+#define BLE_LL_CFG_FEAT_DATA_LEN_EXT
+#undef  BLE_LL_CFG_FEAT_LL_PRIVACY
+#undef  BLE_LL_CFG_FEAT_EXT_SCAN_FILT
+
+/* Supported states */
+#define BLE_LL_S_NCA                    (0x00000000001)
+#define BLE_LL_S_SA                     (0x00000000002)
+#define BLE_LL_S_CA                     (0x00000000004)
+#define BLE_LL_S_HDCA                   (0x00000000008)
+#define BLE_LL_S_PS                     (0x00000000010)
+#define BLE_LL_S_AS                     (0x00000000020)
+#define BLE_LL_S_INIT                   (0x00000000040)
+#define BLE_LL_S_SLAVE                  (0x00000000080)
+#define BLE_LL_S_NCA_PS                 (0x00000000100)
+#define BLE_LL_S_SA_PS                  (0x00000000200)
+#define BLE_LL_S_CA_PS                  (0x00000000400)
+#define BLE_LL_S_HDCA_PS                (0x00000000800)
+#define BLE_LL_S_NCA_AS                 (0x00000001000)
+#define BLE_LL_S_SA_AS                  (0x00000002000)
+#define BLE_LL_S_CA_AS                  (0x00000004000)
+#define BLE_LL_S_HDCA_AS                (0x00000008000)
+#define BLE_LL_S_NCA_INIT               (0x00000010000)
+#define BLE_LL_S_SA_INIT                (0x00000020000)
+#define BLE_LL_S_NCA_MASTER             (0x00000040000)
+#define BLE_LL_S_SA_MASTER              (0x00000080000)
+#define BLE_LL_S_NCA_SLAVE              (0x00000100000)
+#define BLE_LL_S_SA_SLAVE               (0x00000200000)
+#define BLE_LL_S_PS_INIT                (0x00000400000)
+#define BLE_LL_S_AS_INIT                (0x00000800000)
+#define BLE_LL_S_PS_MASTER              (0x00001000000)
+#define BLE_LL_S_AS_MASTER              (0x00002000000)
+#define BLE_LL_S_PS_SLAVE               (0x00004000000)
+#define BLE_LL_S_AS_SLAVE               (0x00008000000)
+#define BLE_LL_S_INIT_MASTER            (0x00010000000)
+#define BLE_LL_S_LDCA                   (0x00020000000)
+#define BLE_LL_S_LDCA_PS                (0x00040000000)
+#define BLE_LL_S_LDCA_AS                (0x00080000000)
+#define BLE_LL_S_CA_INIT                (0x00100000000)
+#define BLE_LL_S_HDCA_INIT              (0x00200000000)
+#define BLE_LL_S_LDCA_INIT              (0x00400000000)
+#define BLE_LL_S_CA_MASTER              (0x00800000000)
+#define BLE_LL_S_HDCA_MASTER            (0x01000000000)
+#define BLE_LL_S_LDCA_MASTER            (0x02000000000)
+#define BLE_LL_S_CA_SLAVE               (0x04000000000)
+#define BLE_LL_S_HDCA_SLAVE             (0x08000000000)
+#define BLE_LL_S_LDCA_SLAVE             (0x10000000000)
+#define BLE_LL_S_INIT_SLAVE             (0x20000000000)
+
+#define BLE_LL_SUPPORTED_STATES             \
+(                                           \
+    BLE_LL_S_NCA                    |       \
+    BLE_LL_S_SA                     |       \
+    BLE_LL_S_CA                     |       \
+    BLE_LL_S_HDCA                   |       \
+    BLE_LL_S_PS                     |       \
+    BLE_LL_S_AS                     |       \
+    BLE_LL_S_INIT                   |       \
+    BLE_LL_S_SLAVE                  |       \
+    BLE_LL_S_NCA_PS                 |       \
+    BLE_LL_S_SA_PS                  |       \
+    BLE_LL_S_CA_PS                  |       \
+    BLE_LL_S_HDCA_PS                |       \
+    BLE_LL_S_NCA_AS                 |       \
+    BLE_LL_S_SA_AS                  |       \
+    BLE_LL_S_CA_AS                  |       \
+    BLE_LL_S_HDCA_AS                |       \
+    BLE_LL_S_NCA_INIT               |       \
+    BLE_LL_S_SA_INIT                |       \
+    BLE_LL_S_NCA_MASTER             |       \
+    BLE_LL_S_SA_MASTER              |       \
+    BLE_LL_S_NCA_SLAVE              |       \
+    BLE_LL_S_SA_SLAVE               |       \
+    BLE_LL_S_PS_INIT                |       \
+    BLE_LL_S_AS_INIT                |       \
+    BLE_LL_S_PS_MASTER              |       \
+    BLE_LL_S_AS_MASTER              |       \
+    BLE_LL_S_PS_SLAVE               |       \
+    BLE_LL_S_AS_SLAVE               |       \
+    BLE_LL_S_INIT_MASTER            |       \
+    BLE_LL_S_LDCA                   |       \
+    BLE_LL_S_LDCA_PS                |       \
+    BLE_LL_S_LDCA_AS                |       \
+    BLE_LL_S_CA_INIT                |       \
+    BLE_LL_S_HDCA_INIT              |       \
+    BLE_LL_S_LDCA_INIT              |       \
+    BLE_LL_S_CA_MASTER              |       \
+    BLE_LL_S_HDCA_MASTER            |       \
+    BLE_LL_S_LDCA_MASTER            |       \
+    BLE_LL_S_CA_SLAVE               |       \
+    BLE_LL_S_HDCA_SLAVE             |       \
+    BLE_LL_S_LDCA_SLAVE             |       \
+    BLE_LL_S_INIT_SLAVE)
 
 /* The global BLE LL data object */
 struct ble_ll_obj g_ble_ll_data;
@@ -98,7 +185,6 @@ STATS_NAME_START(ble_ll_stats)
 STATS_NAME_END(ble_ll_stats)
 
 /* The BLE LL task data structure */
-#define BLE_LL_TASK_PRI     (OS_TASK_PRI_HIGHEST)
 #define BLE_LL_STACK_SIZE   (64)
 struct os_task g_ble_ll_task;
 os_stack_t g_ble_ll_stack[BLE_LL_STACK_SIZE];
@@ -747,7 +833,7 @@ ble_ll_task(void *arg)
     ble_phy_init();
 
     /* Set output power to 1mW (0 dBm) */
-    ble_phy_txpwr_set(0);
+    ble_phy_txpwr_set(NIMBLE_OPT_LL_TX_PWR_DBM);
 
     /* Tell the host that we are ready to receive packets */
     ble_ll_hci_send_noop();
@@ -831,6 +917,17 @@ void
 ble_ll_event_send(struct os_event *ev)
 {
     os_eventq_put(&g_ble_ll_data.ll_evq, ev);
+}
+
+/**
+ * Returns the features supported by the link layer
+ *
+ * @return uint8_t bitmask of supported features.
+ */
+uint64_t
+ble_ll_read_supp_states(void)
+{
+    return BLE_LL_SUPPORTED_STATES;
 }
 
 /**
@@ -959,7 +1056,7 @@ ble_ll_reset(void)
  * @return int 
  */
 int
-ble_ll_init(void)
+ble_ll_init(uint8_t ll_task_prio, uint8_t num_acl_pkts, uint16_t acl_pkt_size)
 {
     int rc;
     uint8_t features;
@@ -967,6 +1064,10 @@ ble_ll_init(void)
 
     /* Get pointer to global data object */
     lldata = &g_ble_ll_data;
+
+    /* Set acl pkt size and number */
+    lldata->ll_num_acl_pkts = num_acl_pkts;
+    lldata->ll_acl_pkt_size = acl_pkt_size;
 
     /* Initialize eventq */
     os_eventq_init(&lldata->ll_evq);
@@ -1016,7 +1117,7 @@ ble_ll_init(void)
     lldata->ll_supp_features = features;
 
     /* Initialize the LL task */
-    os_task_init(&g_ble_ll_task, "ble_ll", ble_ll_task, NULL, BLE_LL_TASK_PRI, 
+    os_task_init(&g_ble_ll_task, "ble_ll", ble_ll_task, NULL, ll_task_prio, 
                  OS_WAIT_FOREVER, g_ble_ll_stack, BLE_LL_STACK_SIZE);
 
     rc = stats_init_and_reg(STATS_HDR(ble_ll_stats), 

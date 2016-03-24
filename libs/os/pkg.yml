@@ -18,11 +18,9 @@
 #
 
 pkg.name: libs/os
-pkg.vers: 0.8.0
 pkg.description: Mynewt operating system core.
-pkg.author: wes3 <will@runtime.io>
-pkg.homepage: http://mynewt.apache.org/os/core_os/mynewt_os/
-pkg.repository: https://git-wip-us.apache.org/repos/asf/incubator-mynewt-core
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:

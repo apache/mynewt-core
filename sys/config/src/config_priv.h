@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -22,5 +22,9 @@
 
 int conf_cli_register(void);
 int conf_nmgr_register(void);
+
+struct json_buffer;
+int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
+  int vlen);
 
 #endif /* __CONFIG_PRIV_H_ */
