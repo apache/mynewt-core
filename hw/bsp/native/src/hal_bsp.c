@@ -22,6 +22,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "hal/hal_flash_int.h"
+#include "hal/hal_adc_int.h"
 #include "mcu/native_bsp.h"
 
 const struct hal_flash *
@@ -35,3 +36,39 @@ bsp_flash_dev(uint8_t id)
     }
     return &native_flash_dev;
 }
+const struct hal_adc_device_s ADC0 = {
+    &random_adc_funcs,
+    0,
+};
+
+const struct hal_adc_device_s ADC1 = {
+    &random_adc_funcs,
+    1,
+};
+
+const struct hal_adc_device_s ADC2 = {
+    &mmm_adc_funcs,
+    0,
+};
+
+const struct hal_adc_device_s ADC3 = {
+    &mmm_adc_funcs,
+    1,
+};
+
+const struct hal_adc_device_s ADC4 = {
+    &mmm_adc_funcs,
+    2
+};
+
+const struct hal_adc_device_s ADC5 = {
+    &file_adc_funcs,
+    0,
+};
+
+const struct hal_adc_device_s *PADC0 = &ADC0;
+const struct hal_adc_device_s *PADC1 = &ADC1;
+const struct hal_adc_device_s *PADC2 = &ADC2;
+const struct hal_adc_device_s *PADC3 = &ADC3;
+const struct hal_adc_device_s *PADC4 = &ADC4;
+const struct hal_adc_device_s *PADC5 = &ADC5;
