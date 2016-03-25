@@ -925,7 +925,7 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
         BLETINY_LOG(INFO, "connection update request; status=%d ", status);
-        *ctxt->self_params = *ctxt->peer_params;
+        *ctxt->update.self_params = *ctxt->update.peer_params;
         break;
     }
 
