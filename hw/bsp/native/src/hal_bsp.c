@@ -23,6 +23,10 @@
 #include <inttypes.h>
 #include "hal/hal_flash_int.h"
 #include "mcu/native_bsp.h"
+#include "hal/hal_adc_int.h"
+#include "bsp/bsp_sysid.h"
+#include "mcu/mcu_hal.h"
+#include "mcu/mcu_devid.h"
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
@@ -34,4 +38,27 @@ bsp_flash_dev(uint8_t id)
         return NULL;
     }
     return &native_flash_dev;
+}
+
+
+/* This is the factory that creates adc devices for the application.
+ * Based on the system ID defined, this maps to a creation function for
+ * the specific underlying driver */
+extern struct hal_adc_device_s *
+bsp_get_hal_adc_device(enum SystemDeviceDescriptor sysid) {    
+    switch(sysid) {
+        case NATIVE_A0:
+            return native_adc_random_create(MCU_ADC_CHANNEL_0);
+        case NATIVE_A1:
+            return native_adc_random_create(MCU_ADC_CHANNEL_1);
+        case NATIVE_A2:
+            return native_adc_mmm_create(MCU_ADC_CHANNEL_2);
+        case NATIVE_A3:
+            return native_adc_mmm_create(MCU_ADC_CHANNEL_3);
+        case NATIVE_A4:
+            return native_adc_mmm_create(MCU_ADC_CHANNEL_4);
+        case NATIVE_A5:        
+            return native_adc_file_create(MCU_ADC_CHANNEL_5, "foo.txt");
+    }
+    return NULL;
 }

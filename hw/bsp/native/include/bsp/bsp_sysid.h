@@ -16,34 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
+#ifndef __BSP_SYSID_H
+#define __BSP_SYSID_H
+
+/* This file defines the system device descriptors for this BSP.
+ * System device descriptors are any HAL devies */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
-
-/* More convenient section placement macros. */
-#define bssnz_t
-
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
-
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
-
-int bsp_imgr_current_slot(void);
-
-#define NFFS_AREA_MAX    (8)
+/* this is a native build and these are just simulated */
+enum SystemDeviceDescriptor {
+    NATIVE_A0,
+    NATIVE_A1,
+    NATIVE_A2,
+    NATIVE_A3,
+    NATIVE_A4,
+    NATIVE_A5,
+    /* TODO -- add other hals here */
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __NATIVE_BSP_H */
+#endif  /* __BSP_SYSID_H */

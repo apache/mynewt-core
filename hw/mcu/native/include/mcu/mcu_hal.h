@@ -16,34 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
+
+/* This file defines the HAL implementations within this MCU */
+
+#ifndef MCU_HAL_H
+#define MCU_HAL_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
+#include <hal/hal_adc.h>
+#include <mcu/mcu_devid.h>
+    
+/* This creates a new ADC object for this ADC source */
+struct hal_adc_device_s * 
+native_adc_random_create(enum McuDeviceDescriptor devid);
 
-/* More convenient section placement macros. */
-#define bssnz_t
+/* This creates a new ADC object for this ADC source */
+struct hal_adc_device_s * 
+native_adc_mmm_create(enum McuDeviceDescriptor devid);
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
+/* This creates a new ADC object for this ADC source */
+struct hal_adc_device_s * 
+native_adc_file_create(enum McuDeviceDescriptor devid, char *fname);
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
-
-int bsp_imgr_current_slot(void);
-
-#define NFFS_AREA_MAX    (8)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __NATIVE_BSP_H */
+#endif /* MCU_HAL_H */
+
