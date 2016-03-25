@@ -18,6 +18,14 @@
 #
 
 pkg.name: sys/fcb
+pkg.description: Flash circular buffer.
+pkg.keywords:
+    - flash
+    - storage
+    - log
+
 pkg.deps:
     - libs/os
     - libs/testutil
+pkg.features:
+    - FCB
