@@ -21,7 +21,6 @@
 
 #include <string.h>
 #include <assert.h>
-#include <ctype.h>
 
 #include <os/os.h>
 #include <fs/fs.h>
@@ -31,10 +30,10 @@
 #include "config_priv.h"
 
 static int conf_file_load(struct conf_store *, load_cb cb, void *cb_arg);
-static int conf_file_save_start(struct conf_store *cs);
-static int conf_file_save(struct conf_store *cs, struct conf_handler *ch,
+static int conf_file_save_start(struct conf_store *);
+static int conf_file_save(struct conf_store *, struct conf_handler *ch,
   char *name, char *value);
-static int conf_file_save_end(struct conf_store *cs);
+static int conf_file_save_end(struct conf_store *);
 
 static struct conf_store_itf conf_file_itf = {
     .csi_load = conf_file_load,
@@ -104,53 +103,6 @@ conf_getnext_line(struct fs_file *file, char *buf, int blen, uint32_t *loc)
     return blen;
 }
 
-static int
-conf_file_line(char *buf, char **namep, char **valp)
-{
-    char *cp;
-    enum {
-        FIND_NAME,
-        FIND_NAME_END,
-        FIND_VAL,
-        FIND_VAL_END
-    } state = FIND_NAME;
-
-    for (cp = buf; *cp != '\0'; cp++) {
-        switch (state) {
-        case FIND_NAME:
-            if (!isspace(*cp)) {
-                *namep = cp;
-                state = FIND_NAME_END;
-            }
-            break;
-        case FIND_NAME_END:
-            if (*cp == '=') {
-                *cp = '\0';
-                state = FIND_VAL;
-            } else if (isspace(*cp)) {
-                *cp = '\0';
-            }
-            break;
-        case FIND_VAL:
-            if (!isspace(*cp)) {
-                *valp = cp;
-                state = FIND_VAL_END;
-            }
-            break;
-        case FIND_VAL_END:
-            if (isspace(*cp)) {
-                *cp = '\0';
-            }
-            break;
-        }
-    }
-    if (state == FIND_VAL_END) {
-        return 0;
-    } else {
-        return -1;
-    }
-}
-
 /*
  * Called to load configuration items. cb must be called for every configuration
  * item found.
@@ -180,7 +132,7 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
         if (rc < 0) {
             continue;
         }
-        rc = conf_file_line(tmpbuf, &name_str, &val_str);
+        rc = conf_line_parse(tmpbuf, &name_str, &val_str);
         if (rc != 0) {
             continue;
         }
@@ -231,22 +183,16 @@ conf_file_save(struct conf_store *cs, struct conf_handler *ch,
 {
     struct conf_file *cf = (struct conf_file *)cs;
     char tmpbuf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
-    int len;
     int off;
 
-    len = strlen(ch->ch_name);
-    memcpy(tmpbuf, ch->ch_name, len);
-    off = len;
-    tmpbuf[off++] = '/';
+    if (!name) {
+        return OS_INVALID_PARM;
+    }
 
-    len = strlen(name);
-    memcpy(tmpbuf + off, name, len);
-    off += len;
-    tmpbuf[off++] = '=';
-
-    len = strlen(value);
-    memcpy(tmpbuf + off, value, len);
-    off += len;
+    off = conf_line_make(tmpbuf, sizeof(tmpbuf), ch, name, value);
+    if (off < 0 || off + 2 > sizeof(tmpbuf)) {
+        return OS_INVALID_PARM;
+    }
     tmpbuf[off++] = '\n';
 
     if (fs_write(cf->cf_save_fp, tmpbuf, off)) {
@@ -273,6 +219,11 @@ conf_file_save_end(struct conf_store *cs)
     if (rc && rc != FS_ENOENT) {
         return OS_EINVAL;
     }
+
+    /*
+     * XXX at conf_file_load(), look for .tm2/.tmp if actual file does not
+     * exist.
+     */
     rc = fs_rename(name2, cf->cf_name);
     if (rc) {
         return OS_EINVAL;

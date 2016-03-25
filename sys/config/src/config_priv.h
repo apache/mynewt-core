@@ -24,8 +24,12 @@ int conf_cli_register(void);
 int conf_nmgr_register(void);
 
 struct json_buffer;
-int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
+int conf_json_line(struct json_buffer *jb, char *name, int nlen, char *value,
   int vlen);
+
+int conf_line_parse(char *buf, char **namep, char **valp);
+int conf_line_make(char *dst, int dlen, struct conf_handler *ch, char *name,
+  char *val);
 
 /*
  * API for config storage.

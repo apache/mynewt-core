@@ -24,7 +24,7 @@
 #include <json/json.h>
 
 int
-conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
+conf_json_line(struct json_buffer *jb, char *name, int nlen, char *value,
   int vlen)
 {
     const struct json_attr_t val_attr[3] = {
