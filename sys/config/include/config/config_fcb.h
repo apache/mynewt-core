@@ -24,8 +24,8 @@
 #include <fcb/fcb.h>
 #include "config/config.h"
 
-struct conf_file {
-    struct cf_storage cf_itf;
+struct conf_fcb {
+    struct conf_store cf_store;
     struct fcb cf_fcb;
 };
 
