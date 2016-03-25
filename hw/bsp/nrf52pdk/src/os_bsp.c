@@ -134,7 +134,7 @@ nrf52_timer_handler(void)
 
     OS_EXIT_CRITICAL(sr);
 
-    os_time_advance(ticks, true);
+    os_time_advance(ticks);
 }
 
 void

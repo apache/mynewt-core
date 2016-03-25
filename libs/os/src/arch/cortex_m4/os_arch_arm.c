@@ -93,7 +93,7 @@ uint32_t os_flags = OS_RUN_PRIV;
 void
 timer_handler(void)
 {
-    os_time_advance(1, true);
+    os_time_advance(1);
 }
 
 void

@@ -82,7 +82,7 @@ os_time_tick(int ticks)
 }
 
 void
-os_time_advance(int ticks, bool resched)
+os_time_advance(int ticks)
 {
     assert(ticks >= 0);
 
@@ -90,9 +90,7 @@ os_time_advance(int ticks, bool resched)
         os_time_tick(ticks);
         os_callout_tick();
         os_sched_os_timer_exp();
-        if (resched) {
-            os_sched(NULL);
-        }
+        os_sched(NULL);
     }
 }
 
