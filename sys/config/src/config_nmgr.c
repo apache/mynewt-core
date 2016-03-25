@@ -84,7 +84,7 @@ conf_nmgr_write(struct nmgr_jbuf *njb)
     char name_str[CONF_MAX_NAME_LEN];
     char val_str[CONF_MAX_VAL_LEN];
 
-    rc = conf_parse_line(&njb->njb_buf, name_str, sizeof(name_str), val_str,
+    rc = conf_json_line(&njb->njb_buf, name_str, sizeof(name_str), val_str,
       sizeof(val_str));
     if (rc) {
         return OS_EINVAL;
