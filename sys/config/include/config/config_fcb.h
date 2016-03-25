@@ -29,7 +29,8 @@ struct conf_file {
     struct fcb cf_fcb;
 };
 
-int conf_fcb_register(struct conf_fcb *fcb);
+int conf_fcb_src(struct conf_fcb *fcb);
+int conf_fcb_dst(struct conf_fcb *fcb);
 
 #endif
 

@@ -24,12 +24,15 @@
 #include <fs/fs.h>
 #include "config/config.h"
 
+#define CONF_FILE_NAME_MAX	32	/* max length for config filename */
 struct conf_file {
     struct conf_store cf_store;
     const char *cf_name;
+    struct fs_file *cf_save_fp;
 };
 
-int conf_file_register(struct conf_file *);
+int conf_file_src(struct conf_file *);  /* register file to be source of cfg */
+int conf_file_dst(struct conf_file *);  /* cfg saves go to a file */
 
 #endif
 

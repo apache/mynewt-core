@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifdef NEWTMGR_PRESENT
 
 #include "config/config.h"
 #include "config_priv.h"
@@ -52,3 +53,4 @@ conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
     return 0;
 }
 
+#endif

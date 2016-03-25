@@ -47,12 +47,21 @@ struct conf_handler {
     char *ch_name;
     char *(*ch_get)(int argc, char **argv, char *val, int val_len_max);
     int (*ch_set)(int argc, char **argv, char *val);
-    int (*ch_commit)();
+    int (*ch_commit)(void);
+    int (*ch_export)(void (*export_func)(struct conf_handler *ch,
+        char *name, char *val));
 };
 
 int conf_init(void);
 int conf_register(struct conf_handler *);
 int conf_load(void);
+
+int conf_save(void);
+/*
+  XXXX for later
+  int conf_save_lib(char *name);
+  int conf_save_var(char *name, char *var);
+*/
 
 int conf_set_value(char *name, char *val_str);
 char *conf_get_value(char *name, char *buf, int buf_len);
@@ -66,21 +75,15 @@ char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
     conf_value_from_str((str), (type), &(val), sizeof(val))
 
 /*
- * Persisting config.
+ * Config storage
  */
-typedef void (*load_cb)(char *name, char *val, void *cb_arg);
-
-struct conf_store;
-struct conf_store_itf {
-    int (*csi_load)(struct conf_store *ci, load_cb cb, void *cb_arg);
-    int (*csi_save)(struct conf_store *ci, char *name, char *value);
-};
-
+struct conf_store_itf;
 struct conf_store {
     SLIST_ENTRY(conf_store) cs_next;
     const struct conf_store_itf *cs_itf;
 };
 
 void conf_src_register(struct conf_store *cs);
+void conf_dst_register(struct conf_store *cs);
 
 #endif /* __SYS_CONFIG_H_ */

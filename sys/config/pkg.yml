@@ -33,13 +33,13 @@ pkg.req_apis.SHELL:
 pkg.cflags.SHELL: -DSHELL_PRESENT
 pkg.deps.NEWTMGR:
     - libs/newtmgr
+    - libs/json
 pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
 pkg.deps.FCB:
     - sys/fcb
 pkg.cflags.FCB: -DFCB_PRESENT
 pkg.deps.FS:
     - fs/fs
-    - libs/json
 pkg.cflags.FS: -DFS_PRESENT
 
 pkg.deps.TEST:

@@ -27,4 +27,22 @@ struct json_buffer;
 int conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
   int vlen);
 
+/*
+ * API for config storage.
+ */
+typedef void (*load_cb)(char *name, char *val, void *cb_arg);
+struct conf_store_itf {
+    int (*csi_load)(struct conf_store *cs, load_cb cb, void *cb_arg);
+    int (*csi_save_start)(struct conf_store *cs);
+    int (*csi_save)(struct conf_store *cs, struct conf_handler *ch, char *name,
+      char *value);
+    int (*csi_save_end)(struct conf_store *cs);
+};
+
+SLIST_HEAD(conf_store_head, conf_store);
+extern struct conf_store_head conf_load_srcs;
+SLIST_HEAD(conf_handler_head, conf_handler);
+extern struct conf_handler_head conf_handlers;
+extern struct conf_store *conf_save_dst;
+
 #endif /* __CONFIG_PRIV_H_ */

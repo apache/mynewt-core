@@ -20,41 +20,55 @@
 #ifdef FS_PRESENT
 
 #include <string.h>
+#include <assert.h>
+#include <ctype.h>
 
+#include <os/os.h>
 #include <fs/fs.h>
-#include <json/json.h>
 
 #include "config/config.h"
 #include "config/config_file.h"
 #include "config_priv.h"
 
 static int conf_file_load(struct conf_store *, load_cb cb, void *cb_arg);
-static int conf_file_save(struct conf_store *, char *name, char *value);
+static int conf_file_save_start(struct conf_store *cs);
+static int conf_file_save(struct conf_store *cs, struct conf_handler *ch,
+  char *name, char *value);
+static int conf_file_save_end(struct conf_store *cs);
 
 static struct conf_store_itf conf_file_itf = {
     .csi_load = conf_file_load,
-    .csi_save = conf_file_save
-};
-
-struct conf_file_jbuf {
-    struct json_buffer jb;
-    int off;
-    int len;
-    char *buf;
+    .csi_save_start = conf_file_save_start,
+    .csi_save = conf_file_save,
+    .csi_save_end = conf_file_save_end
 };
 
 /*
  * Register a file to be a source of configuration.
  */
 int
-conf_file_register(struct conf_file *cf)
+conf_file_src(struct conf_file *cf)
 {
     if (!cf->cf_name) {
-        return -1;
+        return OS_INVALID_PARM;
     }
+    cf->cf_save_fp = NULL;
     cf->cf_store.cs_itf = &conf_file_itf;
     conf_src_register(&cf->cf_store);
-    return 0;
+
+    return OS_OK;
+}
+
+int
+conf_file_dst(struct conf_file *cf)
+{
+    if (!cf->cf_name) {
+        return OS_INVALID_PARM;
+    }
+    cf->cf_store.cs_itf = &conf_file_itf;
+    conf_dst_register(&cf->cf_store);
+
+    return OS_OK;
 }
 
 int
@@ -154,7 +168,7 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
 
     rc = fs_open(cf->cf_name, FS_ACCESS_READ, &file);
     if (rc != FS_EOK) {
-        return -1;
+        return OS_EINVAL;
     }
 
     loc = 0;
@@ -173,17 +187,99 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
         cb(name_str, val_str, cb_arg);
     }
     fs_close(file);
-    return rc;
+    return OS_OK;
+}
+
+static void
+conf_tmpfile(char *dst, const char *src, char *pfx)
+{
+    int len;
+    int pfx_len;
+
+    len = strlen(src);
+    pfx_len = strlen(pfx);
+    if (len + pfx_len >= CONF_FILE_NAME_MAX) {
+        len = CONF_FILE_NAME_MAX - pfx_len - 1;
+    }
+    memcpy(dst, src, len);
+    memcpy(dst + len, pfx, pfx_len);
+    dst[len + pfx_len] = '\0';
 }
 
 /*
- * Called to save a configuration item. Needs to override previous value for
- * variable identified by 'name'.
+ * Called to save configuration.
  */
 static int
-conf_file_save(struct conf_store *cs, char *name, char *value)
+conf_file_save_start(struct conf_store *cs)
 {
-    return -1;
+    struct conf_file *cf = (struct conf_file *)cs;
+    char name[CONF_FILE_NAME_MAX];
+
+    assert(cf->cf_save_fp == NULL);
+    conf_tmpfile(name, cf->cf_name, ".tmp");
+
+    if (fs_open(name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &cf->cf_save_fp)) {
+        return OS_EINVAL;
+    }
+
+    return OS_OK;
+}
+
+static int
+conf_file_save(struct conf_store *cs, struct conf_handler *ch,
+  char *name, char *value)
+{
+    struct conf_file *cf = (struct conf_file *)cs;
+    char tmpbuf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
+    int len;
+    int off;
+
+    len = strlen(ch->ch_name);
+    memcpy(tmpbuf, ch->ch_name, len);
+    off = len;
+    tmpbuf[off++] = '/';
+
+    len = strlen(name);
+    memcpy(tmpbuf + off, name, len);
+    off += len;
+    tmpbuf[off++] = '=';
+
+    len = strlen(value);
+    memcpy(tmpbuf + off, value, len);
+    off += len;
+    tmpbuf[off++] = '\n';
+
+    if (fs_write(cf->cf_save_fp, tmpbuf, off)) {
+        return OS_EINVAL;
+    }
+    return OS_OK;
+}
+
+static int
+conf_file_save_end(struct conf_store *cs)
+{
+    struct conf_file *cf = (struct conf_file *)cs;
+    char name1[64];
+    char name2[64];
+    int rc;
+
+    fs_close(cf->cf_save_fp);
+    cf->cf_save_fp = NULL;
+
+    conf_tmpfile(name1, cf->cf_name, ".tm2");
+    conf_tmpfile(name2, cf->cf_name, ".tmp");
+
+    rc = fs_rename(cf->cf_name, name1);
+    if (rc && rc != FS_ENOENT) {
+        return OS_EINVAL;
+    }
+    rc = fs_rename(name2, cf->cf_name);
+    if (rc) {
+        return OS_EINVAL;
+    }
+
+    fs_unlink(name1);
+    return OS_OK;
 }
 
 #endif
