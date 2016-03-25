@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <assert.h>
+
 #include <os/os.h>
 #include <bsp/cmsis_nvic.h>
 #include <mcu/nrf52.h>
@@ -84,24 +86,62 @@ os_bsp_init(void)
 
 #define CALLOUT_TIMER       NRF_TIMER1
 #define CALLOUT_IRQ         TIMER1_IRQn
-#define CALLOUT_CMPREG      0
+#define CALLOUT_CMPREG      0   /* generate timer interrupt */
+#define CALLOUT_COUNTER     1   /* capture current timer value */
 #define CALLOUT_PRESCALER   4   /* prescaler to generate 1MHz timer freq */
+#define TIMER_GEQ(__t1, __t2)   ((int32_t)((__t1) - (__t2)) >= 0)
+
+static int timer_ticks_per_ostick;
+static uint32_t lastocmp;
+
+static inline uint32_t
+nrf52_callout_counter(void)
+{
+    /*
+     * Capture the current timer value and return it.
+     */
+    CALLOUT_TIMER->TASKS_CAPTURE[CALLOUT_COUNTER] = 1;
+    return (CALLOUT_TIMER->CC[CALLOUT_COUNTER]);
+}
 
 static void
 nrf52_timer_handler(void)
 {
+    int ticks;
+    os_sr_t sr;
+    uint32_t counter, ocmp;
+
+    assert(CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG]);
+
+    OS_ENTER_CRITICAL(sr);
+
     /* Clear interrupt */
     CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG] = 0;
 
-    os_time_advance(1, true);
+    /* Capture the timer value */
+    counter = nrf52_callout_counter();
+
+    /* Calculate elapsed ticks */
+    ticks = (counter - lastocmp) / timer_ticks_per_ostick;
+    lastocmp += ticks * timer_ticks_per_ostick;
+
+    ocmp = lastocmp;
+    do {
+        ocmp += timer_ticks_per_ostick;
+        CALLOUT_TIMER->CC[CALLOUT_CMPREG] = ocmp;
+        counter = nrf52_callout_counter();
+    } while (TIMER_GEQ(counter, ocmp));
+
+    OS_EXIT_CRITICAL(sr);
+
+    os_time_advance(ticks, true);
 }
 
 void
 os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio)
 {
-    uint32_t usecs_per_os_tick;
-
-    usecs_per_os_tick = 1000000 / os_ticks_per_sec;
+    lastocmp = 0;
+    timer_ticks_per_ostick = 1000000 / os_ticks_per_sec;
 
     /*
      * Program CALLOUT_TIMER to operate at 1MHz and trigger an output
@@ -113,12 +153,9 @@ os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio)
     CALLOUT_TIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
     CALLOUT_TIMER->PRESCALER = CALLOUT_PRESCALER;
 
-    CALLOUT_TIMER->CC[CALLOUT_CMPREG] = usecs_per_os_tick;
+    CALLOUT_TIMER->CC[CALLOUT_CMPREG] = timer_ticks_per_ostick;
     CALLOUT_TIMER->INTENSET = TIMER_COMPARE_INT_MASK(CALLOUT_CMPREG);
     CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG] = 0;
-
-    /* Enable shortcut to clear the timer on output compare */
-    CALLOUT_TIMER->SHORTS = TIMER_SHORTS_COMPARE_CLEAR(CALLOUT_CMPREG);
 
     NVIC_SetPriority(CALLOUT_IRQ, prio);
     NVIC_SetVector(CALLOUT_IRQ, (uint32_t)nrf52_timer_handler);
