@@ -1165,6 +1165,9 @@ cmd_set(int argc, char **argv)
     rc = parse_arg_mac("addr", addr);
     if (rc == 0) {
         good = 1;
+        /* XXX: There are a lot of problems with this.  This command probably
+         * needs to be removed.
+         */
         memcpy(g_dev_addr, addr, 6);
     } else if (rc != ENOENT) {
         return rc;
