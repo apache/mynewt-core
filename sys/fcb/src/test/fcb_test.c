@@ -38,6 +38,16 @@ static struct flash_area test_fcb_area[] = {
         .fa_flash_id = 0,
         .fa_off = 0x4000,
         .fa_size = 0x4000
+    },
+    [2] = {
+        .fa_flash_id = 0,
+        .fa_off = 0x8000,
+        .fa_size = 0x4000
+    },
+    [3] = {
+        .fa_flash_id = 0,
+        .fa_off = 0xc000,
+        .fa_size = 0x4000
     }
 };
 
@@ -234,19 +244,17 @@ TEST_CASE(fcb_test_append_too_big)
 }
 
 struct append_arg {
-    int elem_cnts[2];
+    int *elem_cnts;
 };
 
 static int
-fcb_test_append_fill_walk_cb(struct fcb_entry *loc, void *arg)
+fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg)
 {
     struct append_arg *aa = (struct append_arg *)arg;
+    int idx;
 
-    if (loc->fe_area == &test_fcb_area[0]) {
-        aa->elem_cnts[0]++;
-    } else if (loc->fe_area == &test_fcb_area[1]) {
-        aa->elem_cnts[1]++;
-    }
+    idx = loc->fe_area - &test_fcb_area[0];
+    aa->elem_cnts[idx]++;
     return 0;
 }
 
@@ -258,8 +266,14 @@ TEST_CASE(fcb_test_append_fill)
     struct fcb_entry loc;
     uint8_t test_data[128];
     int elem_cnts[2] = {0, 0};
-    struct append_arg aa_together;
-    struct append_arg aa_separate;
+    int aa_together_cnts[2];
+    struct append_arg aa_together = {
+        .elem_cnts = aa_together_cnts
+    };
+    int aa_separate_cnts[2];
+    struct append_arg aa_separate = {
+        .elem_cnts = aa_separate_cnts
+    };
 
     fcb_test_wipe();
     fcb = &test_fcb;
@@ -297,17 +311,17 @@ TEST_CASE(fcb_test_append_fill)
     TEST_ASSERT(elem_cnts[0] > 0);
     TEST_ASSERT(elem_cnts[0] == elem_cnts[1]);
 
-    memset(&aa_together, 0, sizeof(aa_together));
-    rc = fcb_walk(fcb, NULL, fcb_test_append_fill_walk_cb, &aa_together);
+    memset(&aa_together_cnts, 0, sizeof(aa_together_cnts));
+    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_together);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_together.elem_cnts[0] == elem_cnts[0]);
     TEST_ASSERT(aa_together.elem_cnts[1] == elem_cnts[1]);
 
-    memset(&aa_separate, 0, sizeof(aa_separate));
-    rc = fcb_walk(fcb, &test_fcb_area[0], fcb_test_append_fill_walk_cb,
+    memset(&aa_separate_cnts, 0, sizeof(aa_separate_cnts));
+    rc = fcb_walk(fcb, &test_fcb_area[0], fcb_test_cnt_elems_cb,
       &aa_separate);
     TEST_ASSERT(rc == 0);
-    rc = fcb_walk(fcb, &test_fcb_area[1], fcb_test_append_fill_walk_cb,
+    rc = fcb_walk(fcb, &test_fcb_area[1], fcb_test_cnt_elems_cb,
       &aa_separate);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_separate.elem_cnts[0] == elem_cnts[0]);
@@ -449,7 +463,10 @@ TEST_CASE(fcb_test_rotate)
     struct fcb_entry loc;
     uint8_t test_data[128];
     int elem_cnts[2] = {0, 0};
-    struct append_arg aa_arg;
+    int cnts[2];
+    struct append_arg aa_arg = {
+        .elem_cnts = cnts
+    };
 
     fcb_test_wipe();
     fcb = &test_fcb;
@@ -495,8 +512,8 @@ TEST_CASE(fcb_test_rotate)
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(fcb->f_active_id == old_id); /* no new area created */
 
-    memset(&aa_arg, 0, sizeof(aa_arg));
-    rc = fcb_walk(fcb, NULL, fcb_test_append_fill_walk_cb, &aa_arg);
+    memset(cnts, 0, sizeof(cnts));
+    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_arg);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_arg.elem_cnts[0] == elem_cnts[0] ||
       aa_arg.elem_cnts[1] == elem_cnts[1]);
@@ -520,11 +537,102 @@ TEST_CASE(fcb_test_rotate)
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(fcb->f_active_id == old_id);
 
-    memset(&aa_arg, 0, sizeof(aa_arg));
-    rc = fcb_walk(fcb, NULL, fcb_test_append_fill_walk_cb, &aa_arg);
+    memset(cnts, 0, sizeof(cnts));
+    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_arg);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_arg.elem_cnts[0] == 1 || aa_arg.elem_cnts[1] == 1);
     TEST_ASSERT(aa_arg.elem_cnts[0] == 0 || aa_arg.elem_cnts[1] == 0);
+}
+
+TEST_CASE(fcb_test_multiple_scratch)
+{
+    struct fcb *fcb;
+    int rc;
+    struct fcb_entry loc;
+    uint8_t test_data[128];
+    int elem_cnts[4];
+    int idx;
+    int cnts[4];
+    struct append_arg aa_arg = {
+        .elem_cnts = cnts
+    };
+
+    fcb_test_wipe();
+    fcb = &test_fcb;
+    memset(fcb, 0, sizeof(*fcb));
+    fcb->f_sector_cnt = 4;
+    fcb->f_scratch_cnt = 1;
+    fcb->f_sectors = test_fcb_area;
+
+    rc = fcb_init(fcb);
+    TEST_ASSERT(rc == 0);
+
+    /*
+     * Now fill up everything. We should be able to get 3 of the sectors
+     * full.
+     */
+    memset(elem_cnts, 0, sizeof(elem_cnts));
+    while (1) {
+        rc = fcb_append(fcb, sizeof(test_data), &loc);
+        if (rc == FCB_ERR_NOSPACE) {
+            break;
+        }
+        idx = loc.fe_area - &test_fcb_area[0];
+        elem_cnts[idx]++;
+
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+          sizeof(test_data));
+        TEST_ASSERT(rc == 0);
+
+        rc = fcb_append_finish(fcb, &loc);
+        TEST_ASSERT(rc == 0);
+    }
+
+    TEST_ASSERT(elem_cnts[0] > 0);
+    TEST_ASSERT(elem_cnts[0] == elem_cnts[1] && elem_cnts[0] == elem_cnts[2]);
+    TEST_ASSERT(elem_cnts[3] == 0);
+
+    /*
+     * Ask to use scratch block, then fill it up.
+     */
+    rc = fcb_append_to_scratch(fcb);
+    TEST_ASSERT(rc == 0);
+
+    while (1) {
+        rc = fcb_append(fcb, sizeof(test_data), &loc);
+        if (rc == FCB_ERR_NOSPACE) {
+            break;
+        }
+        idx = loc.fe_area - &test_fcb_area[0];
+        elem_cnts[idx]++;
+
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+          sizeof(test_data));
+        TEST_ASSERT(rc == 0);
+
+        rc = fcb_append_finish(fcb, &loc);
+        TEST_ASSERT(rc == 0);
+    }
+    TEST_ASSERT(elem_cnts[3] == elem_cnts[0]);
+
+    /*
+     * Rotate
+     */
+    rc = fcb_rotate(fcb);
+    TEST_ASSERT(rc == 0);
+
+    memset(&cnts, 0, sizeof(cnts));
+    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_arg);
+    TEST_ASSERT(rc == 0);
+
+    TEST_ASSERT(cnts[0] == 0);
+    TEST_ASSERT(cnts[1] > 0);
+    TEST_ASSERT(cnts[1] == cnts[2] && cnts[1] == cnts[3]);
+
+    rc = fcb_append_to_scratch(fcb);
+    TEST_ASSERT(rc == 0);
+    rc = fcb_append_to_scratch(fcb);
+    TEST_ASSERT(rc != 0);
 }
 
 TEST_SUITE(fcb_test_all)
@@ -544,6 +652,8 @@ TEST_SUITE(fcb_test_all)
     fcb_test_reset();
 
     fcb_test_rotate();
+
+    fcb_test_multiple_scratch();
 }
 
 #ifdef MYNEWT_SELFTEST

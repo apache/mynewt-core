@@ -46,8 +46,9 @@ struct fcb {
     /* Caller of fcb_init fills this in */
     uint32_t f_magic;		/* As placed on the disk */
     uint8_t f_version;  	/* Current version number of the data */
+    uint8_t f_sector_cnt;	/* Number of elements in sector array */
+    uint8_t f_scratch_cnt;	/* How many sectors should be kept empty */
     struct flash_area *f_sectors; /* Array of sectors, must be contiguous */
-    int f_sector_cnt;		/* Number of elements in aforementioned array */
 
     /* Flash circular buffer internal state */
     struct os_mutex f_mtx;	/* Locking for accessing the FCB data */
@@ -91,6 +92,11 @@ typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
 int fcb_walk(struct fcb *, struct flash_area *, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *, struct fcb_entry *loc);
 
+/*
+ * Erases the data from oldest sector.
+ */
 int fcb_rotate(struct fcb *);
+
+int fcb_append_to_scratch(struct fcb *);
 
 #endif /* __SYS_FLASHVAR_H_ */
