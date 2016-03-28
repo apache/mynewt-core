@@ -21,4 +21,22 @@
 
 extern const struct hal_flash native_flash_dev;
 
+
+/* These are defined for testing in native */
+
+/* all ADCS below have a reference voltage of 5 V */
+
+/* This ADC had two channels (0-1) that return 8-bit 
+ * random numbers */
+extern struct hal_adc_s *pnative_random_adc;
+
+/* This ADC has three 12-bit channels (0-2) that return, min,
+ * mid, max, respectively  */
+extern struct hal_adc_s *pnative_min_mid_max_adc;
+
+/* this ADC has one channel (0) that reads bytes from 
+ * a file and returns 8-bit ADC values .  When the file
+ * ends, the reads will return -1  */
+extern struct hal_adc_s *pnative_file_adc;
+
 #endif /* H_NATIVE_BSP_ */

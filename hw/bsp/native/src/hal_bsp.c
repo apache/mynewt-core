@@ -35,3 +35,29 @@ bsp_flash_dev(uint8_t id)
     }
     return &native_flash_dev;
 }
+
+/* This BSP will use all the ADCs provided by the native MCU implementation */
+extern int 
+bsp_get_hal_adc_driver(int sysid,  
+                       int *devid_out, 
+                       struct hal_adc_s **padc_out) 
+{
+    switch(sysid) {
+        case 0:
+        case 1:
+            *devid_out = sysid;
+            *padc_out = pnative_random_adc;
+            return 0;
+        case 2:
+        case 3:
+        case 4:
+            *devid_out = (sysid - 2);
+            *padc_out = pnative_min_mid_max_adc;
+            return 0;
+        case 5:
+            *devid_out = (sysid - 5);
+            *padc_out = pnative_file_adc;            
+            return 0;
+    }
+    return -1;
+}
