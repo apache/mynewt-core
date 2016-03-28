@@ -24,22 +24,39 @@
 #include <nffs/nffs.h>
 #include <fs/fs.h>
 #include <fs/fsutil.h>
+#include <fcb/fcb.h>
 #include "config/config.h"
 #include "config/config_file.h"
+#include "config/config_fcb.h"
 #include "test/config_test.h"
 #include "config/../../src/config_priv.h"
 
 static uint8_t val8;
+int c2_var_count = 1;
+static char val_string[64][CONF_MAX_VAL_LEN];
+
+static uint32_t val32;
 
 static int test_get_called;
 static int test_set_called;
 static int test_commit_called;
+static int test_export_block;
 
 static char *ctest_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int ctest_handle_set(int argc, char **argv, char *val);
 static int ctest_handle_commit(void);
 static int ctest_handle_export(void (*cb)(struct conf_handler *, char *name,
+    char *value));
+static char *c2_handle_get(int argc, char **argv, char *val,
+  int val_len_max);
+static int c2_handle_set(int argc, char **argv, char *val);
+static int c2_handle_export(void (*cb)(struct conf_handler *, char *name,
+    char *value));
+static char *c3_handle_get(int argc, char **argv, char *val,
+  int val_len_max);
+static int c3_handle_set(int argc, char **argv, char *val);
+static int c3_handle_export(void (*cb)(struct conf_handler *, char *name,
     char *value));
 
 struct conf_handler config_test_handler = {
@@ -88,8 +105,132 @@ ctest_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
 {
     char value[32];
 
+    if (test_export_block) {
+        return 0;
+    }
     conf_str_from_value(CONF_INT8, &val8, value, sizeof(value));
     cb(&config_test_handler, "mybar", value);
+
+    return 0;
+}
+
+struct conf_handler c2_test_handler = {
+    .ch_name = "2nd",
+    .ch_get = c2_handle_get,
+    .ch_set = c2_handle_set,
+    .ch_commit = NULL,
+    .ch_export = c2_handle_export
+};
+
+char *
+c2_var_find(char *name)
+{
+    int idx = 0;
+    int len;
+    char *eptr;
+
+    len = strlen(name);
+    TEST_ASSERT(!strncmp(name, "string", 6));
+    TEST_ASSERT(len > 6);
+
+    idx = strtoul(&name[6], &eptr, 10);
+    TEST_ASSERT(*eptr == '\0');
+    TEST_ASSERT(idx < c2_var_count);
+    return val_string[idx];
+}
+
+static char *
+c2_handle_get(int argc, char **argv, char *val, int val_len_max)
+{
+    int len;
+    char *valptr;
+
+    if (argc == 1) {
+        valptr = c2_var_find(argv[0]);
+        if (!valptr) {
+            return NULL;
+        }
+        len = strlen(val_string[0]);
+        if (len > val_len_max) {
+            len = val_len_max;
+        }
+        strncpy(val, valptr, len);
+    }
+    return NULL;
+}
+
+static int
+c2_handle_set(int argc, char **argv, char *val)
+{
+    char *valptr;
+
+    if (argc == 1) {
+        valptr = c2_var_find(argv[0]);
+        if (!valptr) {
+            return OS_ENOENT;
+        }
+        if (val) {
+            strncpy(valptr, val, sizeof(val_string[0]));
+        } else {
+            memset(valptr, 0, sizeof(val_string[0]));
+        }
+        return 0;
+    }
+    return OS_ENOENT;
+}
+
+static int
+c2_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
+{
+    int i;
+    char name[32];
+
+    for (i = 0; i < c2_var_count; i++) {
+        snprintf(name, sizeof(name), "string%d", i);
+        cb(&c2_test_handler, name, val_string[i]);
+    }
+    return 0;
+}
+
+struct conf_handler c3_test_handler = {
+    .ch_name = "3",
+    .ch_get = c3_handle_get,
+    .ch_set = c3_handle_set,
+    .ch_commit = NULL,
+    .ch_export = c3_handle_export
+};
+
+static char *
+c3_handle_get(int argc, char **argv, char *val, int val_len_max)
+{
+    if (argc == 1 && !strcmp(argv[0], "v")) {
+        return conf_str_from_value(CONF_INT32, &val32, val, val_len_max);
+    }
+    return NULL;
+}
+
+static int
+c3_handle_set(int argc, char **argv, char *val)
+{
+    uint32_t newval;
+    int rc;
+
+    if (argc == 1 && !strcmp(argv[0], "v")) {
+        rc = CONF_VALUE_SET(val, CONF_INT32, newval);
+        TEST_ASSERT(rc == 0);
+        val32 = newval;
+        return 0;
+    }
+    return OS_ENOENT;
+}
+
+static int
+c3_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
+{
+    char value[32];
+
+    conf_str_from_value(CONF_INT32, &val32, value, sizeof(value));
+    cb(&c3_test_handler, "v", value);
 
     return 0;
 }
@@ -128,6 +269,14 @@ TEST_CASE(config_test_insert)
     int rc;
 
     rc = conf_register(&config_test_handler);
+    TEST_ASSERT(rc == 0);
+}
+
+TEST_CASE(config_test_insert2)
+{
+    int rc;
+
+    rc = conf_register(&c2_test_handler);
     TEST_ASSERT(rc == 0);
 }
 
@@ -225,6 +374,15 @@ static void config_wipe_srcs(void)
 {
     SLIST_INIT(&conf_load_srcs);
     conf_save_dst = NULL;
+}
+
+static void config_wipe_fcb(struct flash_area *fa, int cnt)
+{
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        flash_area_erase(&fa[i], 0, fa[i].fa_size);
+    }
 }
 
 TEST_CASE(config_test_empty_file)
@@ -399,6 +557,193 @@ TEST_CASE(config_test_save_in_file)
     TEST_ASSERT(rc == 0);
 }
 
+struct flash_area fcb_areas[] = {
+    [0] = {
+        .fa_off = 0x00000000,
+        .fa_size = 16 * 1024
+    },
+    [1] = {
+        .fa_off = 0x00004000,
+        .fa_size = 16 * 1024
+    },
+    [2] = {
+        .fa_off = 0x00008000,
+        .fa_size = 16 * 1024
+    },
+    [3] = {
+        .fa_off = 0x0000c000,
+        .fa_size = 16 * 1024
+    }
+};
+
+TEST_CASE(config_test_empty_fcb)
+{
+    int rc;
+    struct conf_fcb cf;
+
+    config_wipe_srcs();
+    config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
+
+    cf.cf_fcb.f_magic = 0x31313131;
+    cf.cf_fcb.f_version = 1;
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    /*
+     * No values
+     */
+    conf_load();
+
+    config_wipe_srcs();
+    ctest_clear_call_state();
+}
+
+TEST_CASE(config_test_save_1_fcb)
+{
+    int rc;
+    struct conf_fcb cf;
+
+    config_wipe_srcs();
+
+    cf.cf_fcb.f_magic = 0x31313131;
+    cf.cf_fcb.f_version = 1;
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_fcb_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    val8 = 33;
+    rc = conf_save();
+    TEST_ASSERT(rc == 0);
+
+    val8 = 0;
+
+    rc = conf_load();
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(val8 == 33);
+}
+
+static void config_test_fill_area(char test_value[64][CONF_MAX_VAL_LEN],
+  int iteration)
+{
+      int i, j;
+
+      for (j = 0; j < 64; j++) {
+          for (i = 0; i < CONF_MAX_VAL_LEN; i++) {
+              test_value[j][i] = ((j * 2) + i + iteration) % 10 + '0';
+          }
+          test_value[j][sizeof(test_value[j]) - 1] = '\0';
+      }
+}
+
+TEST_CASE(config_test_save_2_fcb)
+{
+    int rc;
+    struct conf_fcb cf;
+    char test_value[64][CONF_MAX_VAL_LEN];
+    int i;
+
+    config_wipe_srcs();
+
+    cf.cf_fcb.f_magic = 0x31313131;
+    cf.cf_fcb.f_version = 1;
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_fcb_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    config_test_fill_area(test_value, 0);
+    memcpy(val_string, test_value, sizeof(val_string));
+
+    val8 = 42;
+    rc = conf_save();
+    TEST_ASSERT(rc == 0);
+
+    val8 = 0;
+    memset(val_string[0], 0, sizeof(val_string[0]));
+    rc = conf_load();
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(val8 == 42);
+    TEST_ASSERT(!strcmp(val_string[0], test_value[0]));
+    test_export_block = 1;
+
+    /*
+     * Now add the number of settings to max. Keep adjusting the test_data,
+     * check that rollover happens when it's supposed to.
+     */
+    c2_var_count = 64;
+
+    for (i = 0; i < 32; i++) {
+        config_test_fill_area(test_value, i);
+        memcpy(val_string, test_value, sizeof(val_string));
+
+        rc = conf_save();
+        TEST_ASSERT(rc == 0);
+
+        memset(val_string, 0, sizeof(val_string));
+
+        val8 = 0;
+        rc = conf_load();
+        TEST_ASSERT(rc == 0);
+        TEST_ASSERT(!memcmp(val_string, test_value, sizeof(val_string)));
+        TEST_ASSERT(val8 == 42);
+    }
+    c2_var_count = 0;
+}
+
+TEST_CASE(config_test_insert3)
+{
+    int rc;
+
+    rc = conf_register(&c3_test_handler);
+    TEST_ASSERT(rc == 0);
+}
+
+TEST_CASE(config_test_save_3_fcb)
+{
+    int rc;
+    struct conf_fcb cf;
+    int i;
+
+    config_wipe_srcs();
+    config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
+
+    cf.cf_fcb.f_magic = 0x31313131;
+    cf.cf_fcb.f_version = 1;
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_fcb_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    for (i = 0; i < 8192; i++) {
+        val32 = i;
+
+        rc = conf_save();
+        TEST_ASSERT(rc == 0);
+
+        val32 = 0;
+
+        rc = conf_load();
+        TEST_ASSERT(rc == 0);
+        TEST_ASSERT(val32 == i);
+    }
+}
+
 TEST_SUITE(config_test_all)
 {
     config_empty_lookups();
@@ -413,5 +758,15 @@ TEST_SUITE(config_test_all)
     config_test_multiple_in_file();
 
     config_test_save_in_file();
+
+    config_test_empty_fcb();
+    config_test_save_1_fcb();
+
+    config_test_insert2();
+
+    config_test_save_2_fcb();
+
+    config_test_insert3();
+    config_test_save_3_fcb();
 }
 
