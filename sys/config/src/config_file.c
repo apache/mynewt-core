@@ -51,7 +51,6 @@ conf_file_src(struct conf_file *cf)
     if (!cf->cf_name) {
         return OS_INVALID_PARM;
     }
-    cf->cf_save_fp = NULL;
     cf->cf_store.cs_itf = &conf_file_itf;
     conf_src_register(&cf->cf_store);
 
@@ -64,6 +63,7 @@ conf_file_dst(struct conf_file *cf)
     if (!cf->cf_name) {
         return OS_INVALID_PARM;
     }
+    cf->cf_save_fp = NULL;
     cf->cf_store.cs_itf = &conf_file_itf;
     conf_dst_register(&cf->cf_store);
 
@@ -182,20 +182,20 @@ conf_file_save(struct conf_store *cs, struct conf_handler *ch,
   char *name, char *value)
 {
     struct conf_file *cf = (struct conf_file *)cs;
-    char tmpbuf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
-    int off;
+    char buf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
+    int len;
 
     if (!name) {
         return OS_INVALID_PARM;
     }
 
-    off = conf_line_make(tmpbuf, sizeof(tmpbuf), ch, name, value);
-    if (off < 0 || off + 2 > sizeof(tmpbuf)) {
+    len = conf_line_make(buf, sizeof(buf), ch, name, value);
+    if (len < 0 || len + 2 > sizeof(buf)) {
         return OS_INVALID_PARM;
     }
-    tmpbuf[off++] = '\n';
+    buf[len++] = '\n';
 
-    if (fs_write(cf->cf_save_fp, tmpbuf, off)) {
+    if (fs_write(cf->cf_save_fp, buf, len)) {
         return OS_EINVAL;
     }
     return OS_OK;
