@@ -19,12 +19,11 @@
 #ifndef __SYS_CONFIG_FILE_H_
 #define __SYS_CONFIG_FILE_H_
 
-#ifdef FS_PRESENT
-
-#include <fs/fs.h>
 #include "config/config.h"
 
 #define CONF_FILE_NAME_MAX	32	/* max length for config filename */
+
+struct fs_file;
 struct conf_file {
     struct conf_store cf_store;
     const char *cf_name;
@@ -33,7 +32,5 @@ struct conf_file {
 
 int conf_file_src(struct conf_file *);  /* register file to be source of cfg */
 int conf_file_dst(struct conf_file *);  /* cfg saves go to a file */
-
-#endif
 
 #endif /* __SYS_CONFIG_FILE_H_ */

@@ -19,9 +19,6 @@
 #ifndef __SYS_CONFIG_FCB_H_
 #define __SYS_CONFIG_FCB_H_
 
-#ifdef FCB_PRESENT
-
-#include <fcb/fcb.h>
 #include "config/config.h"
 
 struct conf_fcb {
@@ -31,7 +28,5 @@ struct conf_fcb {
 
 int conf_fcb_src(struct conf_fcb *fcb);
 int conf_fcb_dst(struct conf_fcb *fcb);
-
-#endif
 
 #endif /* __SYS_CONFIG_FCB_H_ */
