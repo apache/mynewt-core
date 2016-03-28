@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /* this is a native build and these are just simulated */
-enum SystemDeviceDescriptor {
+enum system_device_id {
     NATIVE_A0,
     NATIVE_A1,
     NATIVE_A2,

@@ -24,14 +24,14 @@
 #include <bsp/bsp_sysid.h>
 
 
-struct hal_adc_device_s;
+struct hal_adc;
 
 /* These functions make up the driver API for ADC devices.  All 
  * ADC devices with Mynewt support implement this interface */
-struct hal_adc_funcs_s {
-    int (*hadc_read)                   (struct hal_adc_device_s *padc);
-    int (*hadc_get_resolution)         (struct hal_adc_device_s *padc);
-    int (*hadc_get_reference_mvolts)   (struct hal_adc_device_s *padc);    
+struct hal_adc_funcs {
+    int (*hadc_read)            (struct hal_adc *padc);
+    int (*hadc_get_bits)         (struct hal_adc *padc);
+    int (*hadc_get_ref_mv)       (struct hal_adc *padc);    
 };
 
 /* This is the internal device representation for a hal_adc device.
@@ -43,20 +43,20 @@ struct hal_adc_funcs_s {
  * For example, if you are creating a adc driver you can use
  * 
  * struct my_adc_driver {
- *     struct hal_adc_device_s parent;
- *     int                     my_stuff 1;
- *     char                   *mybuff;
+ *     struct hal_adc_s parent;
+ *     int              my_stuff 1;
+ *     char            *mybuff;
  * };
  * 
  * See the native MCU and BSP for examples 
  */
-struct hal_adc_device_s {
-    const struct hal_adc_funcs_s  *driver_api;
+struct hal_adc {
+    const struct hal_adc_funcs  *driver_api;
 };
 
 /* The  BSP must implement this factory to get devices for the 
  * application.  */
-extern struct hal_adc_device_s *
-bsp_get_hal_adc_device(enum SystemDeviceDescriptor);
+extern struct hal_adc *
+bsp_get_hal_adc(enum system_device_id sysid);
 
 #endif /* HAL_ADC_INT_H */ 

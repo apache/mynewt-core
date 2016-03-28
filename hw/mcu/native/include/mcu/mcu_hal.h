@@ -27,20 +27,30 @@ extern "C" {
 #endif
 
 #include <hal/hal_adc.h>
-#include <mcu/mcu_devid.h>
     
-/* This creates a new ADC object for this ADC source */
-struct hal_adc_device_s * 
-native_adc_random_create(enum McuDeviceDescriptor devid);
+/* this is a native build and these pins are not real.  They are used only
+ * for simulated HAL devices */
+    
+enum native_adc_channel {
+    MCU_ADC_CHANNEL_0   = 0,
+    MCU_ADC_CHANNEL_1   = 1,
+    MCU_ADC_CHANNEL_2   = 2,
+    MCU_ADC_CHANNEL_3   = 3,
+    MCU_ADC_CHANNEL_4   = 4,
+    MCU_ADC_CHANNEL_5   = 5,
+};
 
 /* This creates a new ADC object for this ADC source */
-struct hal_adc_device_s * 
-native_adc_mmm_create(enum McuDeviceDescriptor devid);
+struct hal_adc * 
+native_adc_random_create(enum native_adc_channel chan);
 
 /* This creates a new ADC object for this ADC source */
-struct hal_adc_device_s * 
-native_adc_file_create(enum McuDeviceDescriptor devid, char *fname);
+struct hal_adc * 
+native_adc_mmm_create(enum native_adc_channel chan );
 
+/* This creates a new ADC object for this ADC source */
+struct hal_adc * 
+native_adc_file_create(enum native_adc_channel chan, const char *fname);
 
 #ifdef __cplusplus
 }
