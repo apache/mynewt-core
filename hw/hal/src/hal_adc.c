@@ -20,54 +20,54 @@
 #include <hal/hal_adc.h>
 #include <hal/hal_adc_int.h>
 
-struct hal_adc_device_s *
-hal_adc_init(enum SystemDeviceDescriptor pin) 
+struct hal_adc *
+hal_adc_init(enum system_device_id pin) 
 {
-    return bsp_get_hal_adc_device(pin);
+    return bsp_get_hal_adc(pin);
 }
 
 int 
-hal_adc_read(struct hal_adc_device_s *padc) 
+hal_adc_read(struct hal_adc *padc) 
 {
-    if(padc && padc->driver_api && padc->driver_api->hadc_read) {
+    if (padc && padc->driver_api && padc->driver_api->hadc_read) {
         return padc->driver_api->hadc_read(padc);
     }
     return -1;
 }
 
 int 
-hal_adc_get_resolution(struct hal_adc_device_s *padc) 
+hal_adc_get_bits(struct hal_adc *padc) 
 {
-    if(padc && padc->driver_api && padc->driver_api->hadc_get_resolution) {
-        return padc->driver_api->hadc_get_resolution(padc);
+    if (padc && padc->driver_api && padc->driver_api->hadc_get_bits) {
+        return padc->driver_api->hadc_get_bits(padc);
     }
     return -1;
 }
 
 int 
-hal_adc_get_reference_voltage_mvolts(struct hal_adc_device_s *padc) 
+hal_adc_get_ref_mv(struct hal_adc *padc) 
 {
-    if(padc && padc->driver_api && padc->driver_api->hadc_get_reference_mvolts) {
-        return padc->driver_api->hadc_get_reference_mvolts(padc);
+    if (padc && padc->driver_api && padc->driver_api->hadc_get_ref_mv) {
+        return padc->driver_api->hadc_get_ref_mv(padc);
     }
     return -1;
 }
 
 /* returns the ADC read value converted to mvolts or negative on error */
 int 
-hal_adc_val_convert_to_mvolts(struct hal_adc_device_s *padc, int val) 
+hal_adc_to_mv(struct hal_adc *padc, int val) 
 {
     int ret_val = -1;
     
-    if(val >= 0)  {
+    if (val >= 0)  {
         int ref;
-        ref = hal_adc_get_reference_voltage_mvolts(padc);   
-        if(ref > 0) {
+        ref = hal_adc_get_ref_mv(padc);   
+        if (ref > 0) {
             val *= ref;
-            ref = hal_adc_get_resolution(padc);            
+            ref = hal_adc_get_bits(padc);            
             /* doubt there will be many 1 bit ADC, but this will
              * adjust if its two bits or more */
-            if( ref > 1) {
+            if ( ref > 1) {
                 /* round */
                 val += (1 << (ref - 2));
                 ret_val = (val >> ref);                
