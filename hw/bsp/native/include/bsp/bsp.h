@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+#include <mcu/native_bsp.h>
+    
 /* Define special stackos sections */
 #define sec_data_core
 #define sec_bss_core
@@ -41,7 +43,17 @@ extern "C" {
 int bsp_imgr_current_slot(void);
 
 #define NFFS_AREA_MAX    (8)
-
+ 
+/* this is a native build anjd these are just simulated */
+enum BspPinDescriptor {
+    NATIVE_PIN_A0 = MCU_PIN_0,
+    NATIVE_PIN_A1 = MCU_PIN_1,
+    NATIVE_PIN_A2 = MCU_PIN_2,
+    NATIVE_PIN_A3 = MCU_PIN_3,
+    NATIVE_PIN_A4 = MCU_PIN_4,
+    NATIVE_PIN_A5 = MCU_PIN_5,
+    /* TODO */
+};
 
 #ifdef __cplusplus
 }
