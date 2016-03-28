@@ -16,9 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef H_NATIVE_BSP_
-#define H_NATIVE_BSP_
 
-extern const struct hal_flash native_flash_dev;
+#ifndef NATIVE_BSP_SYSID_H
+#define NATIVE_BSP_SYSID_H
 
-#endif /* H_NATIVE_BSP_ */
+enum system_device_id 
+{
+    NATIVE_BSP_PWM_0,
+    NATIVE_BSP_PWM_1,
+    NATIVE_BSP_PWM_2,
+    NATIVE_BSP_PWM_3,
+    NATIVE_BSP_PWM_4,
+    NATIVE_BSP_PWM_5,
+    NATIVE_BSP_PWM_6,
+    NATIVE_BSP_PWM_7,
+};
+
+#endif /* NATIVE_BSP_SYSID_H */
+

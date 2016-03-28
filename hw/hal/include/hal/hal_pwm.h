@@ -17,42 +17,43 @@
  * under the License.
  */
 
-#ifndef HAL_PWM_H
-#define HAL_PWM_H
+#ifndef _HAL_HAL_PWM_H
+#define _HAL_HAL_PWM_H
 
 #include <inttypes.h>
+#include <bsp/bsp_sysid.h>
 
 /* This is an abstract hardware API to Pulse Width Modulators.
  * A Pulse width module produces an output pulse stream with 
  * a specified period, and duty cycle. */
+struct hal_pwm;
 
 /* Initialize a new PWM device with the given system id.
- * Returns -1 on error, 0 on success*/
-int
-hal_pwm_init(int sysid);
+ * Returns negative on error, 0 on success*/
+struct hal_pwm*
+hal_pwm_init(enum system_device_id sysid);
 
-/* sets the period of the PWM corresponding to sysid. The 
+/* sets the period of the PWM *ppwm. The 
  * period is specified as micro_seconds.
- * Returns -1 on error, 0 on success  
+ * Returns negative on error, 0 on success  
  */
 int
-hal_pwm_period_usec_set(int sysid, uint32_t period_usec);
+hal_pwm_period_usec_set(struct hal_pwm *ppwm, uint32_t period_usec);
 
-/* set the on duration of the PWM corresponding to sysid.
+/* set the on duration of the PWM *ppwm.
  * The on duration must be less than or equal to the
- * period.  * Returns -1 on error, 0 on success
+ * period. Returns negative on error, 0 on success
  */
 int
-hal_pwm_on_usec_set(int sysid, uint32_t on_usec);
+hal_pwm_on_usec_set(struct hal_pwm *ppwm, uint32_t on_usec);
 
-/* enables the PWM corresponding to sysid.*/
+/* enables the PWM corresponding to PWM *ppwm.*/
 int
-hal_pwm_on(int sysid);
+hal_pwm_on(struct hal_pwm *ppwm);
 
-/* disables the PWM corresponding to sysid.*/
+/* disables the PWM corresponding to PWM *ppwm.*/
 int
-hal_pwm_off(int sysid);
+hal_pwm_off(struct hal_pwm *ppwm);
 
-
-#endif /* HAL_PWM_H */
+#endif /* _HAL_HAL_PWM_H */
 

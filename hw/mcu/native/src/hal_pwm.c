@@ -18,106 +18,117 @@
  */
 
 #include <inttypes.h>
+#include <stdlib.h>
+#include <hal/hal_pwm.h>
 #include <hal/hal_pwm_int.h>
-#include <mcu/native_bsp.h>
+#include <mcu/hal_pwm.h>
 #include <console/console.h>
 
-struct native_pwm_drv_s {
-    struct hal_pwm_s driver;        // Must be first      
-    uint32_t         on_usec[NUMDEVICE_PWMS];
-    uint32_t         period_usec[NUMDEVICE_PWMS];
-    int              status[NUMDEVICE_PWMS];
+struct native_pwm_drv {
+    struct hal_pwm   driver;    
+    uint32_t         on_usec;
+    uint32_t         period_usec;
+    uint16_t         channel;
+    uint16_t         status;
 };
 
-#define CHECK_DEVID       do {                                   \
-                            if(devid >= NUMDEVICE_PWMS) {        \
-                               return -1;                        \
-                            }                                    \
-                          } while(0);
-
-
-int 
-native_pwm_init (struct hal_pwm_s *pinst, int devid) 
-{
-    struct native_pwm_drv_s *pdrv = (struct native_pwm_drv_s*) pinst;
-    
-    CHECK_DEVID;
-    
-    pdrv->period_usec[devid] = 1000000;
-    pdrv->on_usec[devid] = 500000;  
-    pdrv->status[devid] = 0;
-    return 0;
-}
-
-int 
-native_pwm_on(struct hal_pwm_s *pinst, int devid) 
-{
-    struct native_pwm_drv_s *pdrv = (struct native_pwm_drv_s*) pinst;
-    
-    CHECK_DEVID;
-    pdrv->status[devid] = 1;
-    console_printf("\nDevice %p %d started with period=%u on=%u\n", 
-            pinst, devid, pdrv->period_usec[devid], pdrv->on_usec[devid]);
-    return 0;
-}
-
-int 
-native_pwm_off(struct hal_pwm_s *pinst, int devid)
-{
-    struct native_pwm_drv_s *pdrv = (struct native_pwm_drv_s*) pinst;
-    
-    CHECK_DEVID; 
-    
-    if(pdrv->status[devid]) {
-        pdrv->status[devid] = 0;    
-        console_printf("Device %p %d stopped with period=%u on=%u\n", 
-                pinst, devid, pdrv->period_usec[devid], pdrv->on_usec[devid]);    
-    }
-    return 0;
-}
-
-int 
-native_pwm_period_usec(struct hal_pwm_s *pinst, int devid, uint32_t period_usec)
-{
-    struct native_pwm_drv_s *pdrv = (struct native_pwm_drv_s*) pinst;
-    CHECK_DEVID; 
-    
-    if(period_usec < pdrv->on_usec[devid]) {
-        return -1;
-    }
-    
-    pdrv->period_usec[devid] = period_usec;
-    return 0;
-}
-
-int native_pwm_on_usec(struct hal_pwm_s *pinst, int devid, uint32_t on_usec) 
-{
-    struct native_pwm_drv_s *pdrv = (struct native_pwm_drv_s*) pinst;
-    CHECK_DEVID;
-    
-    if(on_usec > pdrv->period_usec[devid]) {
-        return -1;
-    }
-    
-    pdrv->on_usec[devid] = on_usec;    
-    return 0;
-}
+static int native_pwm_off(struct hal_pwm *ppwm);
+static int native_pwm_on(struct hal_pwm *ppwm);
+static int native_pwm_period_usec(struct hal_pwm *ppwm, uint32_t period_usec);
+static int native_pwm_on_usec(struct hal_pwm *ppwm, uint32_t on_usec);
 
 /* the function API for the driver  */
-static const struct hal_pwm_funcs_s  native_pwm_funcs = 
+static const struct hal_pwm_funcs  native_pwm_funcs = 
 {
     .hpwm_on_usec = &native_pwm_on_usec,
-    .hpwm_init = &native_pwm_init,
     .hpwm_off = &native_pwm_off,
     .hpwm_on = &native_pwm_on,
     .hpwm_period_usec = &native_pwm_period_usec,
 };
 
-/* The internal driver structure */
-static struct native_pwm_drv_s gstate = 
+struct hal_pwm *
+native_pwm_create (enum native_pwm_channel chan)
 {
-    .driver.driver_api = &native_pwm_funcs,
-};
+    struct native_pwm_drv *ppwm;
+    
+    if(chan >= NATIVE_MCU_PWM_MAX) 
+    {
+        return NULL;
+    }
+    
+    ppwm = malloc(sizeof(struct native_pwm_drv));
+    
+    if(ppwm) 
+    {
+        ppwm->driver.driver_api =  &native_pwm_funcs;
+        ppwm->period_usec = 0xffffffff;
+        ppwm->on_usec = 0;  
+        ppwm->status = 0;
+        ppwm->channel = chan;
+    }
+    return &ppwm->driver;
+}
 
-/* External reference for the driver to give outside the MCU */
-struct hal_pwm_s * pnative_pwm_dev = &gstate.driver;
+int 
+native_pwm_on(struct hal_pwm *ppwm) 
+{
+    struct native_pwm_drv *pn = (struct native_pwm_drv *) ppwm;
+    if(pn) 
+    {
+        console_printf("Device %p %d started with period=%u on=%u\n", 
+                pn, pn->channel, pn->period_usec, pn->on_usec);
+        return 0;
+    }
+    return -1;
+}
+
+int 
+native_pwm_off(struct hal_pwm *ppwm)
+{
+    struct native_pwm_drv *pn = (struct native_pwm_drv *) ppwm;
+ 
+    if(pn) 
+    {
+        console_printf("Device %p %d stopped with period=%u on=%u\n", 
+                pn, pn->channel, pn->period_usec, pn->on_usec);    
+        return 0;
+    }
+
+    return -1;
+}
+
+int 
+native_pwm_period_usec(struct hal_pwm *ppwm, uint32_t period_usec)
+{
+    struct native_pwm_drv *pn = (struct native_pwm_drv *) ppwm;
+ 
+    if(pn) 
+    {    
+        if(period_usec < pn->on_usec) 
+        {
+            return -1;
+        }
+        pn->period_usec = period_usec;
+        return 0;
+    }
+    return -2;
+}
+
+int 
+native_pwm_on_usec(struct hal_pwm *ppwm, uint32_t on_usec) 
+{
+    struct native_pwm_drv *pn = (struct native_pwm_drv *) ppwm;
+ 
+    if(pn) 
+    {        
+        if(on_usec > pn->period_usec) 
+        {
+            return -1;
+        }
+    
+        pn->on_usec = on_usec;    
+        return 0;
+    }
+    return -2;
+}
+

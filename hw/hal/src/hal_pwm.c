@@ -16,71 +16,52 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#include <bsp/bsp_sysid.h>
 #include <hal/hal_pwm.h>
 #include <hal/hal_pwm_int.h>
 
-int
-hal_pwm_init(int sysid) 
+struct hal_pwm *
+hal_pwm_init(enum system_device_id sysid) 
 {
-    int devid;
-    struct hal_pwm_s *ppwm;
-    int rc = bsp_get_hal_pwm_driver(sysid, &devid, &ppwm);
-    
-    if(0 == rc) {
-        return ppwm->driver_api->hpwm_init(ppwm, devid);
+    return bsp_get_hal_pwm_driver(sysid);
+}
+
+int
+hal_pwm_period_usec_set(struct hal_pwm *ppwm, uint32_t period_usec) 
+{
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_period_usec ) 
+    {
+        return ppwm->driver_api->hpwm_period_usec(ppwm, period_usec);
     }
-    return rc;    
+    return -1;
 }
 
 int
-hal_pwm_period_usec_set(int sysid, uint32_t period_usec) 
+hal_pwm_on_usec_set(struct hal_pwm *ppwm, uint32_t on_usec)
 {
-    int devid;
-    struct hal_pwm_s *ppwm;
-    int rc = bsp_get_hal_pwm_driver(sysid, &devid, &ppwm);
-    
-    if(0 == rc) {
-        return ppwm->driver_api->hpwm_period_usec(ppwm, devid, period_usec);
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_on_usec ) 
+    {
+        return ppwm->driver_api->hpwm_on_usec(ppwm, on_usec);
     }
-    return rc;    
+    return -1;    
 }
 
 int
-hal_pwm_on_usec_set(int sysid, uint32_t on_usec)
+hal_pwm_on(struct hal_pwm *ppwm) 
 {
-    int devid;
-    struct hal_pwm_s *ppwm;
-    int rc = bsp_get_hal_pwm_driver(sysid, &devid, &ppwm);
-    
-    if(0 == rc) {
-        return ppwm->driver_api->hpwm_on_usec(ppwm, devid, on_usec);
-    }  
-    return rc;    
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_on ) 
+    {
+        return ppwm->driver_api->hpwm_on(ppwm);
+    }
+    return -1;  
 }
 
 int
-hal_pwm_on(int sysid) 
+hal_pwm_off(struct hal_pwm *ppwm) 
 {
-    int devid;
-    struct hal_pwm_s *ppwm;
-    int rc = bsp_get_hal_pwm_driver(sysid, &devid, &ppwm);
-    
-    if(0 == rc) {
-        return ppwm->driver_api->hpwm_on(ppwm, devid);
-    } 
-    return rc;
-}
-
-int
-hal_pwm_off(int sysid) 
-{
-    int devid;
-    struct hal_pwm_s *ppwm;
-    int rc = bsp_get_hal_pwm_driver(sysid, &devid, &ppwm);
-    
-    if(0 == rc) {
-        return ppwm->driver_api->hpwm_off(ppwm, devid);
-    }  
-    return rc;
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_off ) 
+    {
+        return ppwm->driver_api->hpwm_off(ppwm);
+    }
+    return -1;      
 }

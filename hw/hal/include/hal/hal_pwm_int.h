@@ -20,32 +20,30 @@
 #ifndef HAL_PWM_INT_H
 #define HAL_PWM_INT_H
 
+#include <hal/hal_pwm.h>
 #include <inttypes.h>
 
 /* when you are implementing a driver for the hal_pwm. This is the interface
- * you must provide.  Devid is the number space defined by a single instance
- * of your driver.  For example if you have a port with 8 PWMs, than you
- * might have 8 devids (0-7) for your device.  
+ * you must provide.  
  */
 
-struct hal_pwm_s;
+struct hal_pwm;
 
-struct hal_pwm_funcs_s {
-    int (*hpwm_init)        (struct hal_pwm_s *inst, int devid);
-    int (*hpwm_on)          (struct hal_pwm_s *inst, int devid);
-    int (*hpwm_off)         (struct hal_pwm_s *inst, int devid);
-    int (*hpwm_period_usec) (struct hal_pwm_s *inst, int devid,uint32_t period_usec);
-    int (*hpwm_on_usec)     (struct hal_pwm_s *inst, int devid, uint32_t on_usec);
+struct hal_pwm_funcs 
+{
+    int (*hpwm_on)          (struct hal_pwm *ppwm);
+    int (*hpwm_off)         (struct hal_pwm *ppwm);
+    int (*hpwm_period_usec) (struct hal_pwm *ppwm, uint32_t period_usec);
+    int (*hpwm_on_usec)     (struct hal_pwm *ppwm, uint32_t on_usec);
 };
 
-struct hal_pwm_s {
-    const struct hal_pwm_funcs_s *driver_api;
+struct hal_pwm 
+{
+    const struct hal_pwm_funcs *driver_api;
 };
 
-extern int
-bsp_get_hal_pwm_driver(int sysid,
-                       int *devid_out,
-                       struct hal_pwm_s **ppwm_out);
+struct hal_pwm *
+bsp_get_hal_pwm_driver(enum system_device_id sysid);
 
 #endif /* HAL_PWM_INT_H */
 

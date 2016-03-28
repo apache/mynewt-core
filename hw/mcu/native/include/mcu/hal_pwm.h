@@ -16,9 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef H_NATIVE_BSP_
-#define H_NATIVE_BSP_
 
-extern const struct hal_flash native_flash_dev;
+#ifndef _NATIVE_HAL_PWM_H
+#define _NATIVE_HAL_PWM_H
 
-#endif /* H_NATIVE_BSP_ */
+enum native_pwm_channel 
+{
+    NATIVE_MCU_PWM0 = 0,
+    NATIVE_MCU_PWM1,
+    NATIVE_MCU_PWM2,
+    NATIVE_MCU_PWM3,
+    NATIVE_MCU_PWM4,
+    NATIVE_MCU_PWM5,
+    NATIVE_MCU_PWM6,
+    NATIVE_MCU_PWM7,
+    NATIVE_MCU_PWM_MAX
+};
+ 
+/* to create a pwm driver */
+struct hal_pwm *
+native_pwm_create (enum native_pwm_channel);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _NATIVE_HAL_PWM_H */
+
