@@ -847,6 +847,11 @@ bletest_task_handler(void *arg)
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 
+    /* Get a random number */
+    rc = host_hci_cmd_le_rand();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
     /* Wait some time before starting */
     os_time_delay(OS_TICKS_PER_SEC);
 
