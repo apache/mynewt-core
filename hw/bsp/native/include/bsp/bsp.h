@@ -43,6 +43,17 @@ int bsp_imgr_current_slot(void);
 #define NFFS_AREA_MAX    (8)
 
 
+
+/* normally you would name these after the stuff you are connecting to */
+struct hal_adc_device_s;
+extern const struct hal_adc_device_s *PADC0;
+extern const struct hal_adc_device_s *PADC1;
+extern const struct hal_adc_device_s *PADC2;
+extern const struct hal_adc_device_s *PADC3;
+extern const struct hal_adc_device_s *PADC4;
+extern const struct hal_adc_device_s *PADC5;
+
+
 #ifdef __cplusplus
 }
 #endif
