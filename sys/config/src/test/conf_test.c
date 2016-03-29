@@ -722,7 +722,7 @@ TEST_CASE(config_test_save_3_fcb)
     rc = conf_fcb_dst(&cf);
     TEST_ASSERT(rc == 0);
 
-    for (i = 0; i < 8192; i++) {
+    for (i = 0; i < 4096; i++) {
         val32 = i;
 
         rc = conf_save();
