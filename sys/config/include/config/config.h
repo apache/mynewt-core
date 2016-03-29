@@ -83,7 +83,4 @@ struct conf_store {
     const struct conf_store_itf *cs_itf;
 };
 
-void conf_src_register(struct conf_store *cs);
-void conf_dst_register(struct conf_store *cs);
-
 #endif /* __SYS_CONFIG_H_ */
