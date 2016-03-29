@@ -55,10 +55,25 @@ conf_fcb_src(struct conf_fcb *cf)
     cf->cf_fcb.f_magic = CONF_FCB_MAGIC;
     cf->cf_fcb.f_version = CONF_FCB_VERS;
     cf->cf_fcb.f_scratch_cnt = 1;
-    rc = fcb_init(&cf->cf_fcb);
-    if (rc) {
-        return OS_INVALID_PARM;
+
+    while (1) {
+        rc = fcb_init(&cf->cf_fcb);
+        if (rc) {
+            return OS_INVALID_PARM;
+        }
+
+        /*
+         * Check if system was reset in middle of emptying a sector. This
+         * situation is recognized by checking if the scratch block is missing.
+         */
+        if (fcb_free_sector_cnt(&cf->cf_fcb) < 1) {
+            flash_area_erase(cf->cf_fcb.f_active.fe_area, 0,
+              cf->cf_fcb.f_active.fe_area->fa_size);
+        } else {
+            break;
+        }
     }
+
     cf->cf_store.cs_itf = &conf_fcb_itf;
     conf_src_register(&cf->cf_store);
 

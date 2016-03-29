@@ -584,8 +584,6 @@ TEST_CASE(config_test_empty_fcb)
     config_wipe_srcs();
     config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
 
-    cf.cf_fcb.f_magic = 0x31313131;
-    cf.cf_fcb.f_version = 1;
     cf.cf_fcb.f_sectors = fcb_areas;
     cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
 
@@ -608,8 +606,6 @@ TEST_CASE(config_test_save_1_fcb)
 
     config_wipe_srcs();
 
-    cf.cf_fcb.f_magic = 0x31313131;
-    cf.cf_fcb.f_version = 1;
     cf.cf_fcb.f_sectors = fcb_areas;
     cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
 
@@ -652,8 +648,6 @@ TEST_CASE(config_test_save_2_fcb)
 
     config_wipe_srcs();
 
-    cf.cf_fcb.f_magic = 0x31313131;
-    cf.cf_fcb.f_version = 1;
     cf.cf_fcb.f_sectors = fcb_areas;
     cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
 
@@ -719,10 +713,8 @@ TEST_CASE(config_test_save_3_fcb)
     config_wipe_srcs();
     config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
 
-    cf.cf_fcb.f_magic = 0x31313131;
-    cf.cf_fcb.f_version = 1;
     cf.cf_fcb.f_sectors = fcb_areas;
-    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    cf.cf_fcb.f_sector_cnt = 4;
 
     rc = conf_fcb_src(&cf);
     TEST_ASSERT(rc == 0);
@@ -742,6 +734,73 @@ TEST_CASE(config_test_save_3_fcb)
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(val32 == i);
     }
+}
+
+TEST_CASE(config_test_compress_reset)
+{
+    int rc;
+    struct conf_fcb cf;
+    struct flash_area *fa;
+    char test_value[64][CONF_MAX_VAL_LEN];
+    int elems[4];
+    int i;
+
+    config_wipe_srcs();
+    config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
+
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_fcb_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    c2_var_count = 1;
+    memset(elems, 0, sizeof(elems));
+
+    for (i = 0; ; i++) {
+        config_test_fill_area(test_value, i);
+        memcpy(val_string, test_value, sizeof(val_string));
+
+        rc = conf_save();
+        TEST_ASSERT(rc == 0);
+
+        if (cf.cf_fcb.f_active.fe_area == &fcb_areas[2]) {
+            /*
+             * Started using space just before scratch.
+             */
+            break;
+        }
+        memset(val_string, 0, sizeof(val_string));
+
+        rc = conf_load();
+        TEST_ASSERT(rc == 0);
+        TEST_ASSERT(!memcmp(val_string, test_value, CONF_MAX_VAL_LEN));
+    }
+
+    fa = cf.cf_fcb.f_active.fe_area;
+    rc = fcb_append_to_scratch(&cf.cf_fcb);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(fcb_free_sector_cnt(&cf.cf_fcb) == 0);
+    TEST_ASSERT(fa != cf.cf_fcb.f_active.fe_area);
+
+    config_wipe_srcs();
+
+    memset(&cf, 0, sizeof(cf));
+
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_fcb_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    TEST_ASSERT(fcb_free_sector_cnt(&cf.cf_fcb) == 1);
+    TEST_ASSERT(fa == cf.cf_fcb.f_active.fe_area);
 }
 
 TEST_SUITE(config_test_all)
@@ -768,5 +827,7 @@ TEST_SUITE(config_test_all)
 
     config_test_insert3();
     config_test_save_3_fcb();
+
+    config_test_compress_reset();
 }
 
