@@ -145,6 +145,7 @@ conf_fcb_var_read(struct fcb_entry *loc, char *buf, char **name, char **val)
     if (rc) {
         return rc;
     }
+    buf[loc->fe_data_len] = '\0';
     rc = conf_line_parse(buf, name, val);
     return rc;
 }
