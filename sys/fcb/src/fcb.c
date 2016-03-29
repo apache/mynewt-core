@@ -56,8 +56,10 @@ fcb_init(struct fcb *fcb)
         }
         if (FCB_ID_GT(fda.fd_id, newest)) {
             newest = fda.fd_id;
+            newest_fap = fap;
         } else if (FCB_ID_GT(oldest, fda.fd_id)) {
             oldest = fda.fd_id;
+            oldest_fap = fap;
         }
     }
     if (oldest < 0) {
@@ -85,6 +87,22 @@ fcb_init(struct fcb *fcb)
     }
     os_mutex_init(&fcb->f_mtx);
     return FCB_OK;
+}
+
+int
+fcb_free_sector_cnt(struct fcb *fcb)
+{
+    int i;
+    struct flash_area *fa;
+
+    fa = fcb->f_active.fe_area;
+    for (i = 0; i < fcb->f_sector_cnt; i++) {
+        fa = fcb_getnext_area(fcb, fa);
+        if (fa == fcb->f_oldest) {
+            break;
+        }
+    }
+    return i;
 }
 
 /*
