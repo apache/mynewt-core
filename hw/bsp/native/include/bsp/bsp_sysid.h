@@ -16,37 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef NATIVE_BSP_SYSID_H
+#define NATIVE_BSP_SYSID_H
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
+enum system_device_id 
+{
+    NATIVE_BSP_PWM_0,
+    NATIVE_BSP_PWM_1,
+    NATIVE_BSP_PWM_2,
+    NATIVE_BSP_PWM_3,
+    NATIVE_BSP_PWM_4,
+    NATIVE_BSP_PWM_5,
+    NATIVE_BSP_PWM_6,
+    NATIVE_BSP_PWM_7,
+};
 
-/* More convenient section placement macros. */
-#define bssnz_t
+#endif /* NATIVE_BSP_SYSID_H */
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
-
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
-
-int bsp_imgr_current_slot(void);
-
-#define NFFS_AREA_MAX    (8)
-
-
-#define NUM_SYSTEM_PWM   (4)
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __NATIVE_BSP_H */

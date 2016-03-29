@@ -23,6 +23,9 @@
 #include <inttypes.h>
 #include "hal/hal_flash_int.h"
 #include "mcu/native_bsp.h"
+#include <bsp/bsp.h>
+#include <bsp/bsp_sysid.h>
+#include <mcu/hal_pwm.h>
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
@@ -34,4 +37,32 @@ bsp_flash_dev(uint8_t id)
         return NULL;
     }
     return &native_flash_dev;
+}
+
+
+struct hal_pwm *
+bsp_get_hal_pwm_driver(enum system_device_id sysid) 
+{
+    switch(sysid) 
+    {
+        case NATIVE_BSP_PWM_0:
+            return native_pwm_create (NATIVE_MCU_PWM0);
+        case NATIVE_BSP_PWM_1:
+            return native_pwm_create (NATIVE_MCU_PWM1);
+        case NATIVE_BSP_PWM_2:
+            return native_pwm_create (NATIVE_MCU_PWM2);
+        case NATIVE_BSP_PWM_3:
+            return native_pwm_create (NATIVE_MCU_PWM3);
+        case NATIVE_BSP_PWM_4:
+            return native_pwm_create (NATIVE_MCU_PWM4);
+        case NATIVE_BSP_PWM_5:
+            return native_pwm_create (NATIVE_MCU_PWM5);
+        case NATIVE_BSP_PWM_6:
+            return native_pwm_create (NATIVE_MCU_PWM6);
+        case NATIVE_BSP_PWM_7:
+            return native_pwm_create (NATIVE_MCU_PWM7);
+        default:
+            break;
+    }
+    return NULL;
 }
