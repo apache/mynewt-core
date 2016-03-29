@@ -97,6 +97,14 @@ int fcb_getnext(struct fcb *, struct fcb_entry *loc);
  */
 int fcb_rotate(struct fcb *);
 
+/*
+ * Start using the scratch block.
+ */
 int fcb_append_to_scratch(struct fcb *);
+
+/*
+ * How many sectors are unused.
+ */
+int fcb_free_sector_cnt(struct fcb *fcb);
 
 #endif /* __SYS_FLASHVAR_H_ */
