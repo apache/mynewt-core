@@ -412,17 +412,69 @@ nffs_inode_delete_from_disk(struct nffs_inode *inode)
     return 0;
 }
 
+/**
+ * Determines if an inode is an ancestor of another.
+ *
+ * NOTE: If the two inodes are equal, a positive result is indicated.
+ *
+ * @param anc                   The potential ancestor.
+ * @param des                   The potential descendent.
+ * @param out_is_ancestor       On success, the result gets written here
+ *                                  (1 if an ancestor relationship is
+ *                                  detected).
+ *
+ * @return                      0 on success; FS_E[...] on error.
+ */
+static int
+nffs_inode_is_ancestor(struct nffs_inode_entry *anc,
+                       struct nffs_inode_entry *des,
+                       int *out_is_ancestor)
+{
+    struct nffs_inode_entry *cur;
+    struct nffs_inode inode;
+    int rc;
+
+    /* Only directories can be ancestors. */
+    if (!nffs_hash_id_is_dir(anc->nie_hash_entry.nhe_id)) {
+        *out_is_ancestor = 0;
+        return 0;
+    }
+
+    /* Trace des's heritage until we hit anc or there are no more parents. */
+    cur = des;
+    while (cur != NULL && cur != anc) {
+        rc = nffs_inode_from_entry(&inode, cur);
+        if (rc != 0) {
+            return rc;
+        }
+        cur = inode.ni_parent;
+    }
+
+    *out_is_ancestor = cur == anc;
+    return 0;
+}
+
 int
 nffs_inode_rename(struct nffs_inode_entry *inode_entry,
-                 struct nffs_inode_entry *new_parent,
-                 const char *new_filename)
+                  struct nffs_inode_entry *new_parent,
+                  const char *new_filename)
 {
     struct nffs_disk_inode disk_inode;
     struct nffs_inode inode;
     uint32_t area_offset;
     uint8_t area_idx;
     int filename_len;
+    int ancestor;
     int rc;
+
+    /* Don't allow a directory to be moved into a descendent directory. */
+    rc = nffs_inode_is_ancestor(inode_entry, new_parent, &ancestor);
+    if (rc != 0) {
+        return rc;
+    }
+    if (ancestor) {
+        return FS_EINVAL;
+    }
 
     rc = nffs_inode_from_entry(&inode, inode_entry);
     if (rc != 0) {
