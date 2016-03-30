@@ -445,6 +445,7 @@ nffs_inode_is_ancestor(struct nffs_inode_entry *anc,
     while (cur != NULL && cur != anc) {
         rc = nffs_inode_from_entry(&inode, cur);
         if (rc != 0) {
+            *out_is_ancestor = 0;
             return rc;
         }
         cur = inode.ni_parent;
