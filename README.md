@@ -19,7 +19,7 @@
 #
 -->
 
-![Alt text](http://mynewt.apache.org/img/logo.svg "Apache Mynewt")
+![Alt text](http://mynewt.apache.org/img/logo.svg =250 "Apache Mynewt")
 
 ## Overview
 
