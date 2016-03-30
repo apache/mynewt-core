@@ -16,38 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __BSP_SYSID_H
-#define __BSP_SYSID_H
 
-/* This file defines the system device descriptors for this BSP.
- * System device descriptors are any HAL devies */
+#ifndef HAL_PWM_INT_H
+#define HAL_PWM_INT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <hal/hal_pwm.h>
+#include <inttypes.h>
 
-/* this is a native build and these are just simulated */
-enum system_device_id {
-    NATIVE_A0,
-    NATIVE_A1,
-    NATIVE_A2,
-    NATIVE_A3,
-    NATIVE_A4,
-    NATIVE_A5,
-    NATIVE_BSP_PWM_0,
-    NATIVE_BSP_PWM_1,
-    NATIVE_BSP_PWM_2,
-    NATIVE_BSP_PWM_3,
-    NATIVE_BSP_PWM_4,
-    NATIVE_BSP_PWM_5,
-    NATIVE_BSP_PWM_6,
-    NATIVE_BSP_PWM_7,    
-    /* TODO -- add other hals here */
-    
+/* when you are implementing a driver for the hal_pwm. This is the interface
+ * you must provide.  
+ */
+
+struct hal_pwm;
+
+struct hal_pwm_funcs 
+{
+    int (*hpwm_on)        (struct hal_pwm *ppwm);
+    int (*hpwm_off)       (struct hal_pwm *ppwm);
+    int (*hpwm_get_bits)  (struct hal_pwm *ppwm);
+    int (*hpwm_get_clk)   (struct hal_pwm *ppwm);
+    int (*hpwm_set_duty)  (struct hal_pwm *ppwm, uint8_t frac_duty);
+    int (*hpwm_set_wave)  (struct hal_pwm *ppwm, uint32_t period, uint32_t on);
 };
 
-#ifdef __cplusplus
-}
-#endif
+struct hal_pwm 
+{
+    const struct hal_pwm_funcs *driver_api;
+};
 
-#endif  /* __BSP_SYSID_H */
+struct hal_pwm *
+bsp_get_hal_pwm_driver(enum system_device_id sysid);
+
+#endif /* HAL_PWM_INT_H */
+

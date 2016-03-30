@@ -16,38 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __BSP_SYSID_H
-#define __BSP_SYSID_H
 
-/* This file defines the system device descriptors for this BSP.
- * System device descriptors are any HAL devies */
+#ifndef _NATIVE_HAL_PWM_H
+#define _NATIVE_HAL_PWM_H
+
+enum native_pwm_channel 
+{
+    NATIVE_MCU_PWM0 = 0,
+    NATIVE_MCU_PWM1,
+    NATIVE_MCU_PWM2,
+    NATIVE_MCU_PWM3,
+    NATIVE_MCU_PWM4,
+    NATIVE_MCU_PWM5,
+    NATIVE_MCU_PWM6,
+    NATIVE_MCU_PWM7,
+    NATIVE_MCU_PWM_MAX
+};
+ 
+/* to create a pwm driver */
+struct hal_pwm *
+native_pwm_create (enum native_pwm_channel);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* this is a native build and these are just simulated */
-enum system_device_id {
-    NATIVE_A0,
-    NATIVE_A1,
-    NATIVE_A2,
-    NATIVE_A3,
-    NATIVE_A4,
-    NATIVE_A5,
-    NATIVE_BSP_PWM_0,
-    NATIVE_BSP_PWM_1,
-    NATIVE_BSP_PWM_2,
-    NATIVE_BSP_PWM_3,
-    NATIVE_BSP_PWM_4,
-    NATIVE_BSP_PWM_5,
-    NATIVE_BSP_PWM_6,
-    NATIVE_BSP_PWM_7,    
-    /* TODO -- add other hals here */
-    
-};
+
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __BSP_SYSID_H */
+#endif /* _NATIVE_HAL_PWM_H */
+
