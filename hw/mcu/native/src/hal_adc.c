@@ -16,13 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdint.h>
-#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <inttypes.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <hal/hal_adc.h>
 #include <hal/hal_adc_int.h>
 #include <mcu/mcu_hal.h>
+#if 1
+
 
 /* forwards for the const structure below */
 static int native_adc_rand_read(struct hal_adc *padc);
@@ -172,7 +174,7 @@ const struct hal_adc_funcs file_adc_funcs = {
 /* This driver needs to keep a bit of state */
 struct file_adc_device {
     struct hal_adc  parent;
-    FILE           *native_fs;
+    int             native_fs;
 };
 
 struct hal_adc*
@@ -184,8 +186,8 @@ native_adc_file_create(enum native_adc_channel chan, const char *fname)
         
         if (padc) {
             padc->parent.driver_api = &file_adc_funcs;
-            padc->native_fs = fopen(fname, "r");
-            if (padc->native_fs <= 0) {
+            padc->native_fs = open(fname, O_RDONLY);
+            if (padc->native_fs < 0) {
                 free(padc);
                 padc = NULL;
             }
@@ -215,20 +217,23 @@ native_adc_file_get_refmv(struct hal_adc *padc)
 static int 
 native_adc_file_read(struct hal_adc *padc) 
 {
-    int val, rc;    
+    uint8_t val;
+    int rc;    
     struct file_adc_device *pfileadc = (struct file_adc_device*) padc;
     
     if ( padc && (padc->driver_api == &file_adc_funcs) && 
          (pfileadc->native_fs > 0) ){
         
-        rc = fread( &val, 1, 1, pfileadc->native_fs);
+        rc = read(pfileadc->native_fs,  &val, 1);
 
         if (rc == 1) {
-            return (int) (val & 0xff);
+            return (int) val;
         } else {
-            fclose(pfileadc->native_fs);
+            close(pfileadc->native_fs);
         }      
     }
     
     return -1;    
 }
+
+#endif
