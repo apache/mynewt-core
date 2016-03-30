@@ -19,7 +19,7 @@
 #
 -->
 
-# Apache Mynewt Core 
+![Alt text](http://mynewt.apache.org/img/logo.svg "Apache Mynewt")
 
 ## Overview
 
