@@ -59,12 +59,6 @@ console_printf(const char *fmt, ...)
 {
 }
 
-static int inline
-console_vprintf(const char *fmt, va_list args)
-{
-    return 0;
-}
-
 static void inline
 console_echo(int on)
 {

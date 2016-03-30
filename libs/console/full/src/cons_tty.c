@@ -157,13 +157,12 @@ console_echo(int on)
     ct->ct_echo_off = !on;
 }
 
-void
-console_write(const char *str, int cnt)
+size_t
+console_file_write(void *arg, const char *str, size_t cnt)
 {
     struct console_tty *ct = &console_tty;
     int i;
 
-    i = 0;
     for (i = 0; i < cnt; i++) {
         if (str[i] == '\n') {
             ct->ct_write_char('\r');
@@ -174,6 +173,13 @@ console_write(const char *str, int cnt)
         console_is_midline = str[cnt - 1] != '\n';
     }
     hal_uart_start_tx(CONSOLE_UART);
+    return cnt;
+}
+
+void
+console_write(const char *str, int cnt)
+{
+    console_file_write(NULL, str, cnt);
 }
 
 int
