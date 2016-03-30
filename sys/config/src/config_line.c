@@ -38,7 +38,7 @@ conf_line_parse(char *buf, char **namep, char **valp)
     for (cp = buf; *cp != '\0'; cp++) {
         switch (state) {
         case FIND_NAME:
-            if (!isspace(*cp)) {
+            if (!isspace((unsigned char)*cp)) {
                 *namep = cp;
                 state = FIND_NAME_END;
             }
@@ -47,18 +47,18 @@ conf_line_parse(char *buf, char **namep, char **valp)
             if (*cp == '=') {
                 *cp = '\0';
                 state = FIND_VAL;
-            } else if (isspace(*cp)) {
+            } else if (isspace((unsigned char)*cp)) {
                 *cp = '\0';
             }
             break;
         case FIND_VAL:
-            if (!isspace(*cp)) {
+            if (!isspace((unsigned char)*cp)) {
                 *valp = cp;
                 state = FIND_VAL_END;
             }
             break;
         case FIND_VAL_END:
-            if (isspace(*cp)) {
+            if (isspace((unsigned char)*cp)) {
                 *cp = '\0';
             }
             break;
