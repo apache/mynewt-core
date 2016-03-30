@@ -19,24 +19,58 @@
 #
 -->
 
-# Apache Mynewt Core 
+<img src="http://mynewt.apache.org/img/logo.svg" width="250" alt="Apache Mynewt">
 
 ## Overview
 
-This repository represents the core of the Apache Mynewt repository.
-It contains the major packages that make up the Apache Mynewt Operating 
-System.  For instructions on getting Apache Mynewt up & running, please 
-see our [Getting Started Guide](https://mynewt.apache.org/os/get_started/introduction/).
+Apache Mynewt is an open-source operating system for tiny embedded devices.  
+It's goal is to make it easy to develop applications for microcontroller 
+environments, where power and cost are driving factors.
 
-Apache Mynewt Core is not a standalone application, and it is not intended to
-be built by itself.  To run the unit tests for all the packages contained in
-Apache Mynewt Core, install the Apache Newt tool as documented in the [Getting
-Started Guide](https://mynewt.apache.org/os/get_started/introduction/#newt) and
-run the following command from the core directory:
+It currently supports the following hardware platforms: 
+    
+* Arduino Zero and Zero Pro
+* Nordic NRF51 and NRF52
+* Rigado BMD-300
+* STM32F3 and STMF32F4 
+* Native (simulated)
 
-```no-highlight
-    $ newt test all
-```
+Mynewt uses the [Newt](https://www.github.com/apache/incubator-mynewt-newt) 
+build and package management system, which allows you to compose your OS, and 
+only choose the components you need.  
+
+This repository contains the core packages of the Apache Mynewt OS, including:
+
+* A Pre-emptive, Real Time OS Kernel
+* A open-source Bluetooth 4.2 stack (both Host & Controller), that completely replaces
+the proprietary SoftDevice on Nordic chipsets.
+    - Support for 251 byte packet size
+    - Support for all 4 roles concurrently - Broadcaster, Observer, Peripheral and Central
+    - Support for up to 32 simultaeneous connections. 
+* A flash filesystem, NFFS, which is designed for tiny (128KB->16MB) flashes.
+* Bootloader support
+* Remote Software Upgrade
+* HAL and BSP infrastructure designed to abstract microcontroller specifics
+* Shell and Console support
+* Statistics and Logging Infrastructure 
+
+For more information on the Mynewt OS, please visit our website [here](https://mynewt.apache.org/).  
+If you'd like to get started, visit the [Getting Started Guide](https://mynewt.apache.org/os/get_started/introduction/).
+
+## Roadmap
+
+Mynewt is being actively developed.  Some of the features we're currently working on:
+
+* Deep sleep: Mynewt OS will coordinate peripherals and processor to put the processor 
+  to sleep when all tasks are idle.
+* Support for different boards and microcontroller architectures, we're working on:
+    - ESP8266 
+    - Arduino Uno
+    - Arduino Mega
+* Enhancements to BLE 4.2 support:
+    - Security Manager Protocol
+    - LE Secure Connections
+    - Random addresses for link-layer security
 
 ## Browsing 
 
