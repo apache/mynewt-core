@@ -90,8 +90,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
@@ -112,6 +112,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
+#define BLETEST_CFG_SUGG_DEF_TXOCTETS   (251)
+#define BLETEST_CFG_SUGG_DEF_TXTIME     BLE_TX_DUR_USECS_M(BLETEST_CFG_SUGG_DEF_TXOCTETS)
 
 /* Test configurations. One of these should be set to 1 */
 #if !defined(BLETEST_CONCURRENT_CONN_TEST) && !defined(BLETEST_THROUGHPUT_TEST)
@@ -468,6 +470,9 @@ bletest_execute_initiator(void)
 
             /* Ask for version information */
             rc = host_hci_cmd_rd_rem_version(handle);
+            host_hci_outstanding_opcode = 0;
+
+            rc = host_hci_cmd_le_read_rem_used_feat(handle);
             host_hci_outstanding_opcode = 0;
 
             /* Scanning better be stopped! */
@@ -840,6 +845,30 @@ bletest_task_handler(void *arg)
     rc = host_hci_cmd_le_read_max_datalen();
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
+
+    /* Read suggested data length */
+    rc = host_hci_cmd_le_read_sugg_datalen();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* write suggested default data length */
+    rc = host_hci_cmd_le_write_sugg_datalen(BLETEST_CFG_SUGG_DEF_TXOCTETS,
+                                            BLETEST_CFG_SUGG_DEF_TXTIME);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read suggested data length */
+    rc = host_hci_cmd_le_read_sugg_datalen();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Set data length (note: we know there is no connection; just a test) */
+    rc = host_hci_cmd_le_set_datalen(0x1234,
+                                     BLETEST_CFG_SUGG_DEF_TXOCTETS,
+                                     BLETEST_CFG_SUGG_DEF_TXTIME);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
 
     /* Encrypt a block */
     rc = host_hci_cmd_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key, 
