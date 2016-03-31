@@ -35,5 +35,6 @@ pkg.debugscript: bmd300eval_debug.sh
 pkg.cflags: -DNRF52
 pkg.deps:
     - hw/mcu/nordic/nrf52xxx
+    - libs/baselibc
 pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/nrf52

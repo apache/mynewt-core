@@ -29,7 +29,6 @@ pkg.deps:
     - net/nimble/host
     - libs/os 
     - libs/console/full
-    - libs/baselibc
     - libs/shell
     - libs/imgmgr
     - libs/newtmgr

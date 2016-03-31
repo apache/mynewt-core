@@ -35,5 +35,6 @@ pkg.debugscript: nrf51dk-16kbram_debug.sh
 pkg.cflags: -DNRF51
 pkg.deps:
     - hw/mcu/nordic/nrf51xxx
+    - libs/baselibc
 pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/nrf51
