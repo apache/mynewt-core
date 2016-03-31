@@ -29,6 +29,8 @@
 #include <bsp/bsp.h>
 #include <bsp/bsp_sysid.h>
 #include <mcu/hal_pwm.h>
+#include <mcu/hal_dac.h>
+
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
@@ -93,4 +95,24 @@ bsp_get_hal_pwm_driver(enum system_device_id sysid)
             break;
     }
     return NULL;
+}
+
+
+struct hal_dac *
+bsp_get_hal_dac(enum system_device_id sysid) 
+{
+    switch(sysid) 
+    {
+        case NATIVE_BSP_DAC_0:
+            return native_dac_create(NATIVE_MCU_DAC0);
+        case NATIVE_BSP_DAC_1:
+            return native_dac_create(NATIVE_MCU_DAC1);
+        case NATIVE_BSP_DAC_2:
+            return native_dac_create(NATIVE_MCU_DAC2);
+        case NATIVE_BSP_DAC_3:
+            return native_dac_create(NATIVE_MCU_DAC3);
+        default:
+            break;
+    }
+    return NULL;   
 }

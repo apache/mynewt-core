@@ -16,33 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_SYSID_H
-#define __NATIVE_BSP_SYSID_H
 
-/* This file defines the system device descriptors for this BSP.
- * System device descriptors are any HAL devies */
+#ifndef _NATIVE_HAL_DAC_H
+#define _NATIVE_HAL_DAC_H
 
-/* this is a native build and these are just simulated */
-enum system_device_id {
-    NATIVE_A0,
-    NATIVE_A1,
-    NATIVE_A2,
-    NATIVE_A3,
-    NATIVE_A4,
-    NATIVE_A5,
-    NATIVE_BSP_PWM_0,
-    NATIVE_BSP_PWM_1,
-    NATIVE_BSP_PWM_2,
-    NATIVE_BSP_PWM_3,
-    NATIVE_BSP_PWM_4,
-    NATIVE_BSP_PWM_5,
-    NATIVE_BSP_PWM_6,
-    NATIVE_BSP_PWM_7, 
-    NATIVE_BSP_DAC_0,
-    NATIVE_BSP_DAC_1,
-    NATIVE_BSP_DAC_2,
-    NATIVE_BSP_DAC_3,
-    /* TODO -- add other hals here */    
+enum native_dac_channel 
+{
+    NATIVE_MCU_DAC0 = 0,
+    NATIVE_MCU_DAC1,
+    NATIVE_MCU_DAC2,
+    NATIVE_MCU_DAC3,
 };
+ 
+/* to create a native dac driver */
+struct hal_dac *
+native_dac_create (enum native_dac_channel);
 
-#endif  /* __NATIVE_BSP_SYSID_H */
+#endif /* _NATIVE_HAL_PWM_H */
+
