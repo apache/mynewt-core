@@ -1405,12 +1405,12 @@ cmd_write(int argc, char **argv)
             return EINVAL;
         }
         rc = bletiny_write_long(conn_handle, attrs[0].handle,
-                                 attrs[0].value, attrs[0].value_len);
+                                attrs[0].value, attrs[0].value_len);
     } else if (num_attrs > 1) {
         rc = bletiny_write_reliable(conn_handle, attrs, num_attrs);
     } else if (num_attrs == 1) {
         rc = bletiny_write(conn_handle, attrs[0].handle,
-                            attrs[0].value, attrs[0].value_len);
+                           attrs[0].value, attrs[0].value_len);
     } else {
         return EINVAL;
     }
