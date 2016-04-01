@@ -154,7 +154,7 @@ TEST_CASE(test_json_simple_decode){
     char string2[16];
     int rc;
 
-    const struct json_attr_t test_attr[5] = {
+    const struct json_attr_t test_attr[6] = {
         [0] = {
             .attribute = "KeyBool",
             .type = t_boolean,
