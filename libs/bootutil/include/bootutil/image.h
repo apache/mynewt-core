@@ -29,7 +29,8 @@
  * Image header flags.
  */
 #define IMAGE_F_PIC                 0x00000001
-#define IMAGE_F_HAS_SHA256          0x00000002	/* Image contains hash TLV */
+#define IMAGE_F_SHA256              0x00000002	/* Image contains hash TLV */
+#define IMAGE_F_PKCS15_RSA2048_SHA256   0x00000004 /* PKCS15 w/RSA and SHA */
 
 #define IMAGE_HEADER_SIZE           32
 
@@ -37,6 +38,7 @@
  * Image trailer TLV types.
  */
 #define IMAGE_TLV_SHA256            1	/* SHA256 of image hdr and body */
+#define IMAGE_TLV_RSA2048           2	/* RSA2048 of hash output */
 
 struct image_version {
     uint8_t iv_major;
