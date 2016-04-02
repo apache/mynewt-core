@@ -415,7 +415,7 @@ TEST_CASE(boot_test_nv_ns_10)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
     };
 
@@ -453,7 +453,7 @@ TEST_CASE(boot_test_nv_ns_01)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 10 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -490,7 +490,7 @@ TEST_CASE(boot_test_nv_ns_11)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 5, 21, 432 },
     };
 
@@ -499,7 +499,7 @@ TEST_CASE(boot_test_nv_ns_11)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -539,7 +539,7 @@ TEST_CASE(boot_test_vm_ns_10)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
     };
 
@@ -580,7 +580,7 @@ TEST_CASE(boot_test_vm_ns_01)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 10 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -620,7 +620,7 @@ TEST_CASE(boot_test_vm_ns_11_a)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 5, 21, 432 },
     };
 
@@ -629,7 +629,7 @@ TEST_CASE(boot_test_vm_ns_11_a)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -671,7 +671,7 @@ TEST_CASE(boot_test_vm_ns_11_b)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 5, 21, 432 },
     };
 
@@ -680,7 +680,7 @@ TEST_CASE(boot_test_vm_ns_11_b)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -722,7 +722,7 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 5, 21, 432 },
     };
 
@@ -731,7 +731,7 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 196 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -775,7 +775,7 @@ TEST_CASE(boot_test_nv_bs_10)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
     };
 
@@ -826,7 +826,7 @@ TEST_CASE(boot_test_nv_bs_11)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
     };
 
@@ -835,7 +835,7 @@ TEST_CASE(boot_test_nv_bs_11)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 17 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 1, 5, 5 },
     };
 
@@ -891,7 +891,7 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 150 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 5, 21, 432 },
     };
 
@@ -900,7 +900,7 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 190 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -958,7 +958,7 @@ TEST_CASE(boot_test_vb_ns_11)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 5, 21, 432 },
     };
 
@@ -967,7 +967,7 @@ TEST_CASE(boot_test_vb_ns_11)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 32 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 1, 2, 3, 432 },
     };
 
@@ -1091,7 +1091,7 @@ TEST_CASE(boot_test_invalid_hash)
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
-        .ih_flags = IMAGE_F_HAS_SHA256,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
     };
 
