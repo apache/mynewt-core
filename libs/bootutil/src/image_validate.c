@@ -29,13 +29,23 @@
 #include <mbedtls/rsa.h>
 #include <mbedtls/asn1.h>
 
+
 #ifdef IMAGE_SIGNATURES
 /*
  * XXX how to include public key in the build in a sane fashion? XXX
  */
 #include "../../../image_sign_pub.c"
-#define bootutil_key image_sign_pub_der2
-#define bootutil_key_len image_sign_pub_der2_len
+struct bootutil_key {
+    const uint8_t *key;
+    const unsigned int *len;
+};
+
+struct bootutil_key bootutil_keys[] = {
+    [0] = {
+        .key = image_sign_pub_der2,
+        .len = &image_sign_pub_der2_len
+    }
+};
 
 static const uint8_t sha256_oid[] = {
     0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86,
@@ -169,7 +179,8 @@ bootutil_cmp_rsasig(mbedtls_rsa_context *ctx, uint8_t *hash, uint32_t hlen,
 }
 
 static int
-bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen)
+bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
+  uint8_t key_id)
 {
     mbedtls_rsa_context ctx;
     int rc;
@@ -178,8 +189,8 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen)
 
     mbedtls_rsa_init(&ctx, 0, 0);
 
-    cp = (uint8_t *)bootutil_key;
-    end = cp + bootutil_key_len;
+    cp = (uint8_t *)bootutil_keys[key_id].key;
+    end = cp + *bootutil_keys[key_id].len;
 
     rc = bootutil_parse_rsakey(&ctx, &cp, end);
     if (rc || slen != ctx.len) {
@@ -281,7 +292,11 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
         if (rc) {
             return -1;
         }
-        rc = bootutil_verify_sig(hash, sizeof(hash), buf, 256);
+
+        if (hdr->ih_key_id > sizeof(bootutil_keys) / sizeof(bootutil_keys[0])) {
+            return -1;
+        }
+        rc = bootutil_verify_sig(hash, sizeof(hash), buf, 256, hdr->ih_key_id);
         if (rc) {
             return -1;
         }

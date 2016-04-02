@@ -50,12 +50,15 @@ struct image_version {
 /** Image header.  All fields are in little endian byte order. */
 struct image_header {
     uint32_t ih_magic;
-    uint32_t ih_tlv_size; /* Trailing TLVs */
-    uint32_t ih_hdr_size;
+    uint16_t ih_tlv_size; /* Trailing TLVs */
+    uint8_t  ih_key_id;
+    uint8_t  _pad1;
+    uint16_t ih_hdr_size;
+    uint16_t _pad2;
     uint32_t ih_img_size; /* Does not include header. */
     uint32_t ih_flags;
     struct image_version ih_ver;
-    uint32_t _pad2;
+    uint32_t _pad3;
 };
 
 /** Image trailer TLV format. All fields in little endian. */
