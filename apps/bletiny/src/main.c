@@ -42,6 +42,10 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "controller/ble_ll.h"
+
+/* XXX: An app should not include private headers from a library.  The bletiny
+ * app uses some of nimble's internal details for logging.
+ */
 #include "../src/ble_hs_conn.h"
 #include "../src/ble_hci_sched.h"
 
