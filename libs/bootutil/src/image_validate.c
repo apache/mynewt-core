@@ -24,29 +24,15 @@
 #include <hal/hal_flash.h>
 
 #include <bootutil/image.h>
+#ifdef IMAGE_SIGNATURES
+#include <bootutil/sign_key.h>
+#endif
 
 #include <mbedtls/sha256.h>
 #include <mbedtls/rsa.h>
 #include <mbedtls/asn1.h>
 
-
 #ifdef IMAGE_SIGNATURES
-/*
- * XXX how to include public key in the build in a sane fashion? XXX
- */
-#include "../../../image_sign_pub.c"
-struct bootutil_key {
-    const uint8_t *key;
-    const unsigned int *len;
-};
-
-struct bootutil_key bootutil_keys[] = {
-    [0] = {
-        .key = image_sign_pub_der2,
-        .len = &image_sign_pub_der2_len
-    }
-};
-
 static const uint8_t sha256_oid[] = {
     0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86,
     0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05,
@@ -292,7 +278,7 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
             return -1;
         }
 
-        if (hdr->ih_key_id > sizeof(bootutil_keys) / sizeof(bootutil_keys[0])) {
+        if (hdr->ih_key_id >= bootutil_key_cnt) {
             return -1;
         }
         rc = bootutil_verify_sig(hash, sizeof(hash), buf, 256, hdr->ih_key_id);

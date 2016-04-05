@@ -31,3 +31,5 @@ pkg.deps:
     - libs/testutil
     - libs/mbedtls
     - hw/hal
+
+pkg.cflags.IMAGE_KEYS: -DIMAGE_SIGNATURES
