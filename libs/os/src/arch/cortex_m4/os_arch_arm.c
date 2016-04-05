@@ -324,14 +324,7 @@ os_arch_os_start(void)
 }
 
 void
-os_arch_idle(void)
+os_arch_idle(os_time_t ticks)
 {
-    os_sr_t sr;
-
-    OS_ENTER_CRITICAL(sr);
-    __DSB();
-    __WFI();
-    OS_EXIT_CRITICAL(sr);
-
-    return;
+    os_bsp_idle(ticks);
 }

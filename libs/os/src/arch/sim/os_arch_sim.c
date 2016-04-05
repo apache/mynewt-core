@@ -54,6 +54,7 @@ extern void os_arch_frame_init(struct stack_frame *sf);
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
 static sigset_t allsigs, nosigs;
+static void timer_handler(int sig);
 
 /*
  * Called from 'os_arch_frame_init()' when setjmp returns indirectly via
@@ -176,51 +177,46 @@ os_arch_in_critical(void)
 }
 
 void
-os_arch_idle(void)
+os_arch_idle(os_time_t ticks)
 {
     int rc;
-    os_sr_t sr;
-    os_time_t now, sticks, cticks, ticks;
     struct itimerval it;
 
-    OS_ENTER_CRITICAL(sr);
-    assert(sr == 0);
+    OS_ASSERT_CRITICAL();
 
-    now = os_time_get();
-    sticks = os_sched_wakeup_ticks(now);
-    cticks = os_callout_wakeup_ticks(now);
-    ticks = min(sticks, cticks);
-    if (ticks > OS_TICKS_PER_SEC) {
+    if (ticks > 0) {
         /*
-         * Wakeup at least once a second (XXX arbitrary).
-         */
-        ticks = OS_TICKS_PER_SEC;
-    }
-
-    if (ticks == 0) {
-        /*
-         * If the wakeup time is in the past then send a SIGALRM to ourselves
-         * rather than wait for the interval timer to fire.
-         */
-        rc = kill(getpid(), SIGALRM);
-    } else {
-        /*
-         * Set the timer to fire after 'ticks' worth of time has elapsed.
+         * Enter tickless regime and set the timer to fire after 'ticks'
+         * worth of time has elapsed.
          */
         it.it_value.tv_sec = ticks / OS_TICKS_PER_SEC;
         it.it_value.tv_usec = (ticks % OS_TICKS_PER_SEC) * OS_USEC_PER_TICK;
         it.it_interval.tv_sec = 0;
         it.it_interval.tv_usec = OS_USEC_PER_TICK;
         rc = setitimer(ITIMER_REAL, &it, NULL);
+        assert(rc == 0);
     }
-    assert(rc == 0);
 
     sigsuspend(&nosigs);        /* Wait for a signal to wake us up */
 
-    OS_EXIT_CRITICAL(sr);
-}
+    if (ticks > 0) {
+        /*
+         * Update OS time before anything else when coming out of
+         * the tickless regime.
+         */
+        timer_handler(SIGALRM);
 
-static void timer_handler(int sig);
+        /*
+         * Enable the periodic timer interrupt.
+         */
+        it.it_value.tv_sec = 0;
+        it.it_value.tv_usec = OS_USEC_PER_TICK;
+        it.it_interval.tv_sec = 0;
+        it.it_interval.tv_usec = OS_USEC_PER_TICK;
+        rc = setitimer(ITIMER_REAL, &it, NULL);
+        assert(rc == 0);
+    }
+}
 
 static struct {
     int num;

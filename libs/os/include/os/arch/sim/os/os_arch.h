@@ -71,7 +71,7 @@ int os_arch_in_critical(void);
 os_error_t os_arch_os_init(void);
 void os_arch_os_stop(void);
 os_error_t os_arch_os_start(void);
-void os_arch_idle(void);
+void os_arch_idle(os_time_t ticks);
 
 void os_bsp_init(void);
 
