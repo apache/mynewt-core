@@ -38,8 +38,8 @@ print_addr(void *addr)
     uint8_t *u8p;
 
     u8p = addr;
-    BLETINY_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
-                u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+    console_printf("%02x:%02x:%02x:%02x:%02x:%02x",
+                   u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
 void
@@ -50,26 +50,25 @@ print_uuid(void *uuid128)
 
     uuid16 = ble_uuid_128_to_16(uuid128);
     if (uuid16 != 0) {
-        BLETINY_LOG(INFO, "0x%04x", uuid16);
+        console_printf("0x%04x", uuid16);
         return;
     }
 
     u8p = uuid128;
 
     /* 00001101-0000-1000-8000-00805f9b34fb */
-    BLETINY_LOG(INFO, "%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13],
-                u8p[12]);
-    BLETINY_LOG(INFO, "%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
-    BLETINY_LOG(INFO, "%02x%02x%02x%02x%02x%02x%02x%02x",
-                u8p[7], u8p[6], u8p[5], u8p[4],
-                u8p[3], u8p[2], u8p[1], u8p[0]);
+    console_printf("%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13], u8p[12]);
+    console_printf("%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
+    console_printf("%02x%02x%02x%02x%02x%02x%02x%02x",
+                   u8p[7], u8p[6], u8p[5], u8p[4],
+                   u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
 int
 parse_err_too_few_args(char *cmd_name)
 {
-    BLETINY_LOG(ERROR, "Error: too few arguments for command \"%s\"\n",
-                cmd_name);
+    console_printf("Error: too few arguments for command \"%s\"\n",
+                   cmd_name);
     return -1;
 }
 
@@ -373,12 +372,12 @@ parse_arg_all(int argc, char **argv)
 
         if (key != NULL && val != NULL) {
             if (strlen(key) == 0) {
-                BLETINY_LOG(ERROR, "Error: invalid argument: %s\n", argv[i]);
+                console_printf("Error: invalid argument: %s\n", argv[i]);
                 return -1;
             }
 
             if (cmd_num_args >= CMD_MAX_ARGS) {
-                BLETINY_LOG(ERROR, "Error: too many arguments");
+                console_printf("Error: too many arguments");
                 return -1;
             }
 

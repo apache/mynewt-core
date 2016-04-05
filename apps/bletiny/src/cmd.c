@@ -57,8 +57,7 @@ cmd_exec(const struct cmd_entry *cmds, int argc, char **argv)
 
     cmd = parse_cmd_find(cmds, argv[1]);
     if (cmd == NULL) {
-        BLETINY_LOG(ERROR, "Error: unknown %s command: %s\n",
-                    argv[0], argv[1]);
+        console_printf("Error: unknown %s command: %s\n", argv[0], argv[1]);
         return -1;
     }
 
@@ -73,9 +72,9 @@ cmd_exec(const struct cmd_entry *cmds, int argc, char **argv)
 static void
 cmd_print_dsc(struct bletiny_dsc *dsc)
 {
-    BLETINY_LOG(INFO, "            dsc_handle=%d uuid=", dsc->dsc.handle);
+    console_printf("            dsc_handle=%d uuid=", dsc->dsc.handle);
     print_uuid(dsc->dsc.uuid128);
-    BLETINY_LOG(INFO, "\n");
+    console_printf("\n");
 }
 
 static void
@@ -83,11 +82,11 @@ cmd_print_chr(struct bletiny_chr *chr)
 {
     struct bletiny_dsc *dsc;
 
-    BLETINY_LOG(INFO, "        def_handle=%d val_handle=%d properties=0x%02x "
-                      "uuid=", chr->chr.decl_handle, chr->chr.value_handle,
-                chr->chr.properties);
+    console_printf("        def_handle=%d val_handle=%d properties=0x%02x "
+                   "uuid=", chr->chr.decl_handle, chr->chr.value_handle,
+                   chr->chr.properties);
     print_uuid(chr->chr.uuid128);
-    BLETINY_LOG(INFO, "\n");
+    console_printf("\n");
 
     SLIST_FOREACH(dsc, &chr->dscs, next) {
         cmd_print_dsc(dsc);
@@ -99,10 +98,10 @@ cmd_print_svc(struct bletiny_svc *svc, int print_chrs)
 {
     struct bletiny_chr *chr;
 
-    BLETINY_LOG(INFO, "    start=%d end=%d uuid=", svc->svc.start_handle,
-                svc->svc.end_handle);
+    console_printf("    start=%d end=%d uuid=", svc->svc.start_handle,
+                   svc->svc.end_handle);
     print_uuid(svc->svc.uuid128);
-    BLETINY_LOG(INFO, "\n");
+    console_printf("\n");
 
     if (print_chrs) {
         SLIST_FOREACH(chr, &svc->chrs, next) {
@@ -188,7 +187,7 @@ cmd_adv(int argc, char **argv)
     if (argc > 1 && strcmp(argv[1], "stop") == 0) {
         rc = bletiny_adv_stop();
         if (rc != 0) {
-            BLETINY_LOG(INFO, "advertise stop fail: %d\n", rc);
+            console_printf("advertise stop fail: %d\n", rc);
             return rc;
         }
 
@@ -197,13 +196,13 @@ cmd_adv(int argc, char **argv)
 
     conn = parse_arg_kv("conn", cmd_adv_conn_modes);
     if (conn == -1) {
-        BLETINY_LOG(ERROR, "invalid 'conn' parameter\n");
+        console_printf("invalid 'conn' parameter\n");
         return -1;
     }
 
     disc = parse_arg_kv("disc", cmd_adv_disc_modes);
     if (disc == -1) {
-        BLETINY_LOG(ERROR, "missing 'disc' parameter\n");
+        console_printf("missing 'disc' parameter\n");
         return -1;
     }
 
@@ -238,7 +237,7 @@ cmd_adv(int argc, char **argv)
 
     rc = bletiny_adv_start(disc, conn, peer_addr, addr_type, &params);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "advertise fail: %d\n", rc);
+        console_printf("advertise fail: %d\n", rc);
         return rc;
     }
 
@@ -269,7 +268,7 @@ cmd_conn(int argc, char **argv)
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
         rc = bletiny_conn_cancel();
         if (rc != 0) {
-            BLETINY_LOG(INFO, "connection cancel fail: %d\n", rc);
+            console_printf("connection cancel fail: %d\n", rc);
             return rc;
         }
 
@@ -388,7 +387,7 @@ cmd_disc_chr(int argc, char **argv)
         return rc;
     }
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error discovering characteristics; rc=%d\n", rc);
+        console_printf("error discovering characteristics; rc=%d\n", rc);
         return rc;
     }
 
@@ -410,7 +409,7 @@ cmd_disc_dsc(int argc, char **argv)
 
     rc = bletiny_disc_all_dscs(conn_handle, start_handle, end_handle);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error discovering descriptors; rc=%d\n", rc);
+        console_printf("error discovering descriptors; rc=%d\n", rc);
         return rc;
     }
 
@@ -439,7 +438,7 @@ cmd_disc_svc(int argc, char **argv)
     }
 
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error discovering services; rc=%d\n", rc);
+        console_printf("error discovering services; rc=%d\n", rc);
         return rc;
     }
 
@@ -485,7 +484,7 @@ cmd_find_inc_svcs(int argc, char **argv)
 
     rc = bletiny_find_inc_svcs(conn_handle, start_handle, end_handle);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error finding included services; rc=%d\n", rc);
+        console_printf("error finding included services; rc=%d\n", rc);
         return rc;
     }
 
@@ -550,7 +549,7 @@ cmd_l2cap_update(int argc, char **argv)
 
     rc = bletiny_l2cap_update(conn_handle, &params);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error txing l2cap update; rc=%d\n", rc);
+        console_printf("error txing l2cap update; rc=%d\n", rc);
         return rc;
     }
 
@@ -592,7 +591,7 @@ cmd_mtu(int argc, char **argv)
 
     rc = bletiny_exchange_mtu(conn_handle);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error exchanging mtu; rc=%d\n", rc);
+        console_printf("error exchanging mtu; rc=%d\n", rc);
         return rc;
     }
 
@@ -684,7 +683,7 @@ cmd_read(int argc, char **argv)
     }
 
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error reading characteristic; rc=%d\n", rc);
+        console_printf("error reading characteristic; rc=%d\n", rc);
         return rc;
     }
 
@@ -746,7 +745,7 @@ cmd_scan(int argc, char **argv)
 
     rc = bletiny_scan(dur, disc, type, filt);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error scanning; rc=%d\n", rc);
+        console_printf("error scanning; rc=%d\n", rc);
         return rc;
     }
 
@@ -762,9 +761,8 @@ cmd_show_addr(int argc, char **argv)
 {
     bletiny_lock();
 
-    BLETINY_LOG(INFO, "myaddr=");
     print_addr(g_dev_addr);
-    BLETINY_LOG(INFO, "\n");
+    console_printf("\n");
 
     bletiny_unlock();
 
@@ -783,9 +781,9 @@ cmd_show_chr(int argc, char **argv)
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
-        BLETINY_LOG(INFO, "CONNECTION: handle=%d addr=", conn->handle);
+        console_printf("CONNECTION: handle=%d addr=", conn->handle);
         print_addr(conn->addr);
-        BLETINY_LOG(INFO, "\n");
+        console_printf("\n");
 
         SLIST_FOREACH(svc, &conn->svcs, next) {
             cmd_print_svc(svc, 1);
@@ -808,9 +806,9 @@ cmd_show_conn(int argc, char **argv)
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
-        BLETINY_LOG(INFO, "handle=%d addr=", conn->handle);
+        console_printf("handle=%d addr=", conn->handle);
         print_addr(conn->addr);
-        BLETINY_LOG(INFO, " addr_type=%d\n", conn->addr_type);
+        console_printf(" addr_type=%d\n", conn->addr_type);
     }
 
     bletiny_unlock();
@@ -849,9 +847,9 @@ cmd_show_svc(int argc, char **argv)
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
-        BLETINY_LOG(INFO, "CONNECTION: handle=%d addr=", conn->handle);
+        console_printf("CONNECTION: handle=%d addr=", conn->handle);
         print_addr(conn->addr);
-        BLETINY_LOG(INFO, "\n");
+        console_printf("\n");
 
         SLIST_FOREACH(svc, &conn->svcs, next) {
             cmd_print_svc(svc, 0);
@@ -1140,7 +1138,7 @@ cmd_set_adv_data(void)
 
     rc = bletiny_set_adv_data(&adv_fields);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error setting advertisement data; rc=%d\n", rc);
+        console_printf("error setting advertisement data; rc=%d\n", rc);
         return rc;
     }
 
@@ -1184,7 +1182,7 @@ cmd_set(int argc, char **argv)
     }
 
     if (!good) {
-        BLETINY_LOG(ERROR, "Error: no valid settings specified\n");
+        console_printf("Error: no valid settings specified\n");
         return -1;
     }
 
@@ -1208,7 +1206,7 @@ cmd_term(int argc, char **argv)
 
     rc = bletiny_term_conn(conn_handle);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error terminating connection; rc=%d\n", rc);
+        console_printf("error terminating connection; rc=%d\n", rc);
         return rc;
     }
 
@@ -1265,7 +1263,7 @@ cmd_update(int argc, char **argv)
 
     rc = bletiny_update_conn(conn_handle, &params);
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error updating connection; rc=%d\n", rc);
+        console_printf("error updating connection; rc=%d\n", rc);
         return rc;
     }
 
@@ -1416,7 +1414,7 @@ cmd_write(int argc, char **argv)
     }
 
     if (rc != 0) {
-        BLETINY_LOG(INFO, "error writing characteristic; rc=%d\n", rc);
+        console_printf("error writing characteristic; rc=%d\n", rc);
         return rc;
     }
 
@@ -1458,7 +1456,7 @@ cmd_b_exec(int argc, char **argv)
 
     rc = cmd_exec(cmd_b_entries, argc, argv);
     if (rc != 0) {
-        BLETINY_LOG(ERROR, "error\n");
+        console_printf("error; rc=%d\n", rc);
         goto done;
     }
 
