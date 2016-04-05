@@ -30,11 +30,15 @@ pkg.deps:
     - sys/stats
     - libs/os
     - libs/util
+    - libs/mbedtls
     - net/nimble
+
 pkg.req_apis:
     - console
 
 # Satisfy capability dependencies for the self-contained test executable.
 pkg.deps.SELFTEST: libs/console/stub
-pkg.cflags.SELFTEST: -DPHONY_TRANSPORT
+pkg.cflags.SELFTEST:
+    - -DPHONY_TRANSPORT=1
+    - -DNIMBLE_OPT_SM=1
 pkg.cflags.TEST: -DBLE_HS_DEBUG

@@ -26,9 +26,8 @@ pkg.keywords:
 
 pkg.deps:
     - fs/nffs
-    - libs/baselibc
     - libs/console/full
-    - libs/flash_test    
+    - libs/flash_test
     - libs/imgmgr
     - libs/newtmgr
     - libs/os

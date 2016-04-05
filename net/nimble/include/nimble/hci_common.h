@@ -177,9 +177,11 @@
 
 /* --- LE set advertising data (OCF 0x0008) */
 #define BLE_HCI_MAX_ADV_DATA_LEN            (31)
+#define BLE_HCI_SET_ADV_DATA_LEN            (32)
 
 /* --- LE set scan response data (OCF 0x0009) */
 #define BLE_HCI_MAX_SCAN_RSP_DATA_LEN       (31)
+#define BLE_HCI_SET_SCAN_RSP_DATA_LEN       (32)
 
 /* --- LE set advertising enable (OCF 0x000a) */
 #define BLE_HCI_SET_ADV_ENABLE_LEN          (1)
@@ -295,6 +297,19 @@
 /* --- LE read remote features (OCF 0x0016) */
 #define BLE_HCI_CONN_RD_REM_FEAT_LEN        (2)
 
+/* --- LE encrypt (OCF 0x0017) */
+#define BLE_HCI_LE_ENCRYPT_LEN              (32)
+
+/* --- LE rand (OCF 0x0018) */
+#define BLE_HCI_LE_RAND_LEN                 (8)
+
+/* --- LE start encryption (OCF 0x0019) */
+#define BLE_HCI_LE_START_ENCRYPT_LEN        (28)
+
+/* ---  LE long term key request reply command (OCF 0x001a) */
+#define BLE_HCI_LT_KEY_REQ_REPLY_LEN        (18)
+#define BLE_HCI_LT_KEY_REQ_REPLY_ACK_PARAM_LEN (3) /* Includes status byte. */
+
 /* --- LE read supported states (OCF 0x001C) --- */
 #define BLE_HCI_RD_SUPP_STATES_RSPLEN       (8)
 
@@ -303,6 +318,15 @@
 
 /* --- LE remote connection parameter request negative reply (OCF 0x0021) */
 #define BLE_HCI_CONN_PARAM_NEG_REPLY_LEN    (3)
+
+/* --- LE set data length (OCF 0x0022) */
+#define BLE_HCI_SET_DATALEN_LEN             (6)
+
+/* --- LE read suggested default data length (OCF 0x0024) */
+#define BLE_HCI_RD_SUGG_DATALEN_RSPLEN      (4)
+
+/* --- LE write suggested default data length (OCF 0x0024) */
+#define BLE_HCI_WR_SUGG_DATALEN_LEN         (4)
 
 /* --- LE read maximum data length (OCF 0x002F) */
 #define BLE_HCI_RD_MAX_DATALEN_RSPLEN       (8)
@@ -406,6 +430,9 @@
 /* Event disconnect complete */
 #define BLE_HCI_EVENT_DISCONN_COMPLETE_LEN  (4)
 
+/* Event encryption change (code=0x08) */
+#define BLE_HCI_EVENT_ENCRYPT_CHG_LEN       (4)
+
 /* Event command complete */
 #define BLE_HCI_EVENT_CMD_COMPLETE_HDR_LEN  (5)
 #define BLE_HCI_EVENT_CMD_COMPLETE_MIN_LEN  (6)
@@ -442,6 +469,9 @@
 
 /* LE connection update complete event (sub event 0x03) */
 #define BLE_HCI_LE_CONN_UPD_LEN             (10)
+
+/* LE long term key request event (sub event 0x05) */
+#define BLE_HCI_LE_LT_KEY_REQ_LEN           (13)
 
 /* LE connection update complete event (sub event 0x03) */
 #define BLE_HCI_LE_RD_REM_USED_FEAT_LEN     (12)
@@ -498,7 +528,7 @@ struct hci_adv_params
     uint8_t peer_addr[BLE_DEV_ADDR_LEN];
 };
 
-/* LE create connection command */
+/* LE create connection command (ocf=0x000d). */
 struct hci_create_conn
 {
     uint16_t scan_itvl;
@@ -515,7 +545,7 @@ struct hci_create_conn
     uint16_t max_ce_len;
 };
 
-/* LE connection update command */
+/* LE connection update command (ocf=0x0013). */
 struct hci_conn_update
 {
     uint16_t handle;
@@ -525,6 +555,22 @@ struct hci_conn_update
     uint16_t supervision_timeout;
     uint16_t min_ce_len;
     uint16_t max_ce_len;
+};
+
+/* LE start encryption command (ocf=0x0019) (note: fields out of order). */
+struct hci_start_encrypt
+{
+    uint16_t connection_handle;
+    uint16_t encrypted_diversifier;
+    uint64_t random_number;
+    uint8_t long_term_key[16];
+};
+
+/* LE long term key request reply command (ocf=0x001a). */
+struct hci_lt_key_req_reply
+{
+    uint16_t conn_handle;
+    uint8_t long_term_key[16];
 };
 
 /* LE Remote connection parameter request reply command */
@@ -544,6 +590,14 @@ struct hci_conn_param_neg_reply
 {
     uint16_t handle;
     uint8_t reason;
+};
+
+/* Encryption change event (code=0x08) (note: fields out of order) */
+struct hci_encrypt_change
+{
+    uint8_t status;
+    uint8_t encryption_enabled;
+    uint16_t connection_handle;
 };
 
 /* Connection complete LE meta subevent */
@@ -581,6 +635,15 @@ struct hci_le_conn_param_req
     uint16_t itvl_max;
     uint16_t latency;
     uint16_t timeout;
+};
+
+/* LE long term key request event (note: fields out of order). */
+struct hci_le_lt_key_req
+{
+    uint64_t random_number;
+    uint16_t connection_handle;
+    uint16_t encrypted_diversifier;
+    uint8_t subevent_code;
 };
 
 /* Disconnection complete event (note: fields out of order). */

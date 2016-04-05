@@ -32,8 +32,6 @@ tu_init(void)
 {
     os_init();
 
-    tu_any_failed = 0;
-
     return 0;
 }
 

@@ -25,8 +25,8 @@
 #include "config/config.h"
 #include "config_priv.h"
 
-SLIST_HEAD(, conf_store) conf_load_srcs =
-    SLIST_HEAD_INITIALIZER(&conf_load_srcs);
+struct conf_store_head conf_load_srcs = SLIST_HEAD_INITIALIZER(&conf_load_srcs);
+struct conf_store *conf_save_dst;
 
 void
 conf_src_register(struct conf_store *cs)
@@ -42,6 +42,12 @@ conf_src_register(struct conf_store *cs)
     } else {
         SLIST_INSERT_AFTER(prev, cs, cs_next);
     }
+}
+
+void
+conf_dst_register(struct conf_store *cs)
+{
+    conf_save_dst = cs;
 }
 
 static void
@@ -65,6 +71,45 @@ conf_load(void)
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
         cs->cs_itf->csi_load(cs, conf_load_cb, NULL);
     }
-    return 0;
+    return conf_commit(NULL);
 }
 
+static void
+conf_store_one(struct conf_handler *ch, char *name, char *value)
+{
+    struct conf_store *cs;
+
+    cs = conf_save_dst;
+    if (!cs) {
+        return;
+    }
+    cs->cs_itf->csi_save(cs, ch, name, value);
+}
+
+int
+conf_save(void)
+{
+    struct conf_store *cs;
+    struct conf_handler *ch;
+    int rc;
+    int rc2;
+
+    cs = conf_save_dst;
+    if (!cs) {
+        return OS_ENOENT;
+    }
+
+    cs->cs_itf->csi_save_start(cs);
+    rc = 0;
+    SLIST_FOREACH(ch, &conf_handlers, ch_list) {
+        if (ch->ch_export) {
+            rc2 = ch->ch_export(conf_store_one);
+            if (!rc) {
+                rc = rc2;
+            }
+        }
+    }
+    cs->cs_itf->csi_save_end(cs);
+
+    return rc;
+}

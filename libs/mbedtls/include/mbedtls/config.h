@@ -297,7 +297,7 @@
  *
  * Uncomment this macro to store the AES tables in ROM.
  */
-//#define MBEDTLS_AES_ROM_TABLES
+#define MBEDTLS_AES_ROM_TABLES
 
 /**
  * \def MBEDTLS_CAMELLIA_SMALL_MEMORY
@@ -1617,6 +1617,18 @@
  * Uncomment to enable generic cipher wrappers.
  */
 #define MBEDTLS_CIPHER_C
+
+/**
+ * \def MBEDTLS_CMAC_C
+ *
+ * Enable the CMAC mode for 128-bit block cipher.
+ *
+ * Module:  library/cmac.c
+ *
+ * Requires: MBEDTLS_AES_C or MBEDTLS_CAMELLIA_C
+ *
+ */
+#define MBEDTLS_CMAC_C
 
 /**
  * \def MBEDTLS_CTR_DRBG_C

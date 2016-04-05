@@ -22,15 +22,48 @@
 #include "fcb_priv.h"
 
 static struct flash_area *
-fcb_new_area(struct fcb *fcb)
+fcb_new_area(struct fcb *fcb, int cnt)
 {
     struct flash_area *fa;
+    struct flash_area *rfa;
+    int i;
 
-    fa = fcb_getnext_area(fcb, fcb->f_active.fe_area);
-    if (fa == fcb->f_oldest) {
-        return NULL;
+    rfa = NULL;
+    i = 0;
+    fa = fcb->f_active.fe_area;
+    do {
+        fa = fcb_getnext_area(fcb, fa);
+        if (!rfa) {
+            rfa = fa;
+        }
+        if (fa == fcb->f_oldest) {
+            return NULL;
+        }
+    } while (i++ < cnt);
+    return rfa;
+}
+
+/*
+ * Take one of the scratch blocks into use, if at all possible.
+ */
+int
+fcb_append_to_scratch(struct fcb *fcb)
+{
+    struct flash_area *fa;
+    int rc;
+
+    fa = fcb_new_area(fcb, 0);
+    if (!fa) {
+        return FCB_ERR_NOSPACE;
     }
-    return fa;
+    rc = fcb_sector_hdr_init(fcb, fa, fcb->f_active_id + 1);
+    if (rc) {
+        return rc;
+    }
+    fcb->f_active.fe_area = fa;
+    fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
+    fcb->f_active_id++;
+    return FCB_OK;
 }
 
 int
@@ -55,7 +88,7 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
     }
     active = &fcb->f_active;
     if (active->fe_elem_off + len + cnt > active->fe_area->fa_size) {
-        fa = fcb_new_area(fcb);
+        fa = fcb_new_area(fcb, fcb->f_scratch_cnt);
         if (!fa || (fa->fa_size <
             sizeof(struct fcb_disk_area) + len + cnt)) {
             return FCB_ERR_NOSPACE;

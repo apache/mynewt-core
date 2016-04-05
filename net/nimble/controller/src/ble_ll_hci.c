@@ -24,6 +24,7 @@
 #include "nimble/nimble_opt.h"
 #include "nimble/hci_common.h"
 #include "nimble/hci_transport.h"
+#include "controller/ble_hw.h"
 #include "controller/ble_ll_adv.h"
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll.h"
@@ -40,9 +41,8 @@ static uint8_t g_ble_ll_hci_event_mask[BLE_HCI_SET_EVENT_MASK_LEN];
  *  
  * Returns the number of command packets that the host is allowed to send 
  * to the controller. 
- *  
- *  
- * wOPCODE = opcode;@return uint8_t 
+ * 
+ * @return uint8_t 
  */
 static uint8_t
 ble_ll_hci_get_num_cmd_pkts(void)
@@ -101,6 +101,65 @@ ble_ll_hci_send_noop(void)
     return rc;
 }
 
+#if defined(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
+/**
+ * LE encrypt command
+ * 
+ * @param cmdbuf 
+ * @param rspbuf 
+ * @param rsplen 
+ * 
+ * @return int 
+ */
+static int
+ble_ll_hci_le_encrypt(uint8_t *cmdbuf, uint8_t *rspbuf, uint8_t *rsplen)
+{
+    int rc;
+    struct ble_encryption_block ecb;
+
+    /* Call the link layer to encrypt the data */
+    swap_buf(ecb.key, cmdbuf, BLE_ENC_BLOCK_SIZE);
+    swap_buf(ecb.plain_text, cmdbuf + BLE_ENC_BLOCK_SIZE, BLE_ENC_BLOCK_SIZE);
+    rc = ble_hw_encrypt_block(&ecb);
+    if (!rc) {
+        swap_buf(rspbuf, ecb.cipher_text, BLE_ENC_BLOCK_SIZE);
+        *rsplen = BLE_ENC_BLOCK_SIZE;
+        rc = BLE_ERR_SUCCESS;
+    } else {
+        *rsplen = 0;
+        rc = BLE_ERR_CTLR_BUSY;
+    }
+    return rc;
+}
+#endif
+
+/**
+ * LE rand command
+ * 
+ * @param cmdbuf 
+ * @param rspbuf 
+ * @param rsplen 
+ * 
+ * @return int 
+ */
+static int
+ble_ll_hci_le_rand(uint8_t *rspbuf, uint8_t *rsplen)
+{
+    int rc;
+
+    rc = ble_ll_rand_data_get(rspbuf, BLE_HCI_LE_RAND_LEN);
+    *rsplen = BLE_HCI_LE_RAND_LEN;
+    return rc;
+}
+
+/**
+ * Read local version
+ * 
+ * @param rspbuf 
+ * @param rsplen 
+ * 
+ * @return int 
+ */
 static int
 ble_ll_hci_rd_local_version(uint8_t *rspbuf, uint8_t *rsplen)
 {    
@@ -123,7 +182,7 @@ ble_ll_hci_rd_local_version(uint8_t *rspbuf, uint8_t *rsplen)
 }
 
 /**
- * Reade local supported features
+ * Read local supported features
  * 
  * @param rspbuf 
  * @param rsplen 
@@ -220,6 +279,60 @@ ble_ll_hci_le_read_bufsize(uint8_t *rspbuf, uint8_t *rsplen)
     return BLE_ERR_SUCCESS;
 }
 
+#ifdef BLE_LL_CFG_FEAT_DATA_LEN_EXT
+/**
+ * HCI write suggested default data length command. Returns the controllers 
+ * initial max tx octet/time. 
+ * 
+ * @param rspbuf Pointer to response buffer
+ * @param rsplen Length of response buffer
+ * 
+ * @return int BLE error code
+ */
+static int
+ble_ll_hci_le_wr_sugg_data_len(uint8_t *cmdbuf)
+{    
+    int rc;
+    uint16_t tx_oct;
+    uint16_t tx_time;
+
+    /* Get suggested octets and time */
+    tx_oct = le16toh(cmdbuf);
+    tx_time = le16toh(cmdbuf + 2);
+
+    /* If valid, write into suggested and change connection initial times */
+    if (ble_ll_chk_txrx_octets(tx_oct) && ble_ll_chk_txrx_time(tx_time)) {
+        g_ble_ll_conn_params.sugg_tx_octets = (uint8_t)tx_oct;
+        g_ble_ll_conn_params.sugg_tx_time = tx_time;
+        g_ble_ll_conn_params.conn_init_max_tx_octets = tx_oct;
+        g_ble_ll_conn_params.conn_init_max_tx_time = tx_time;
+        rc = BLE_ERR_SUCCESS;
+    } else {
+        rc = BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+    return rc;
+}
+
+/**
+ * HCI read suggested default data length command. Returns the controllers 
+ * initial max tx octet/time. 
+ * 
+ * @param rspbuf Pointer to response buffer
+ * @param rsplen Length of response buffer
+ * 
+ * @return int BLE error code
+ */
+static int
+ble_ll_hci_le_rd_sugg_data_len(uint8_t *rspbuf, uint8_t *rsplen)
+{    
+    /* Place the data packet length and number of packets in the buffer */
+    htole16(rspbuf, g_ble_ll_conn_params.sugg_tx_octets);
+    htole16(rspbuf + 2, g_ble_ll_conn_params.sugg_tx_time);
+    *rsplen = BLE_HCI_RD_SUGG_DATALEN_RSPLEN;
+    return BLE_ERR_SUCCESS;
+}
+
 /**
  * HCI read maximum data length command. Returns the controllers max supported 
  * rx/tx octets/times. 
@@ -240,6 +353,7 @@ ble_ll_hci_le_rd_max_data_len(uint8_t *rspbuf, uint8_t *rsplen)
     *rsplen = BLE_HCI_RD_MAX_DATALEN_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
+#endif
 
 /**
  * HCI read local supported features command. Returns the features 
@@ -312,18 +426,19 @@ ble_ll_hci_is_le_event_enabled(int subev)
 /**
  * Checks to see if an event has been disabled by the host. 
  * 
- * @param bitpos This is the bit position of the event. Note that this can 
- * be a value from 0 to 63, inclusive. 
+ * @param evcode This is the event code for the event (0 - 63).
  * 
  * @return uint8_t 0: event is not enabled; otherwise event is enabled.
  */
 uint8_t
-ble_ll_hci_is_event_enabled(int bitpos)
+ble_ll_hci_is_event_enabled(int evcode)
 {
     uint8_t enabled;
     uint8_t bytenum;
     uint8_t bitmask;
+    int bitpos;
 
+    bitpos = evcode - 1;
     bytenum = bitpos / 8;
     bitmask = 1 << (bitpos & 0x7);
     enabled = g_ble_ll_hci_event_mask[bytenum] & bitmask;
@@ -348,6 +463,9 @@ ble_ll_hci_le_cmd_send_cmd_status(uint16_t ocf)
     case BLE_HCI_OCF_LE_RD_REM_FEAT:
     case BLE_HCI_OCF_LE_CREATE_CONN:
     case BLE_HCI_OCF_LE_CONN_UPDATE:
+    case BLE_HCI_OCF_LE_START_ENCRYPT:
+    case BLE_HCI_OCF_LE_RD_P256_PUBKEY:
+    case BLE_HCI_OCF_LE_GEN_DHKEY:
         rc = 1;
         break;
     default:
@@ -473,6 +591,14 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
     case BLE_HCI_OCF_LE_RD_REM_FEAT:
         rc = ble_ll_conn_hci_read_rem_features(cmdbuf);
         break;
+#if defined(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
+    case BLE_HCI_OCF_LE_ENCRYPT:
+        rc = ble_ll_hci_le_encrypt(cmdbuf, rspbuf, rsplen);
+        break;
+#endif
+    case BLE_HCI_OCF_LE_RAND:
+        rc = ble_ll_hci_le_rand(rspbuf, rsplen);
+        break;
     case BLE_HCI_OCF_LE_RD_SUPP_STATES :
         rc = ble_ll_hci_le_read_supp_states(rspbuf, rsplen);
         break;
@@ -482,9 +608,20 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
     case BLE_HCI_OCF_LE_REM_CONN_PARAM_RR:
         rc = ble_ll_conn_hci_param_reply(cmdbuf, 1);
         break;
+#ifdef BLE_LL_CFG_FEAT_DATA_LEN_EXT
+    case BLE_HCI_OCF_LE_SET_DATA_LEN:
+        rc = ble_ll_conn_hci_set_data_len(cmdbuf, rspbuf, rsplen);
+        break;
+    case BLE_HCI_OCF_LE_RD_SUGG_DEF_DATA_LEN:
+        rc = ble_ll_hci_le_rd_sugg_data_len(rspbuf, rsplen);
+        break;
+    case BLE_HCI_OCF_LE_WR_SUGG_DEF_DATA_LEN:
+        rc = ble_ll_hci_le_wr_sugg_data_len(cmdbuf);
+        break;
     case BLE_HCI_OCF_LE_RD_MAX_DATA_LEN:
         rc = ble_ll_hci_le_rd_max_data_len(rspbuf, rsplen);
         break;
+#endif
     default:
         rc = BLE_ERR_UNKNOWN_HCI_CMD;
         break;

@@ -28,7 +28,7 @@ pkg.keywords:
 
 pkg.arch: sim
 pkg.compiler: compiler/sim
-pkg.deps: 
+pkg.deps:
     - hw/mcu/native
 pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/native

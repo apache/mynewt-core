@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <string.h>
 #include <errno.h>
 #include "os/os.h"
@@ -39,11 +38,11 @@ ble_hs_conn_lock(void)
 
     owner = ble_hs_conn_mutex.mu_owner;
     if (owner != NULL) {
-        assert(owner != os_sched_get_current_task());
+        BLE_HS_DBG_ASSERT_EVAL(owner != os_sched_get_current_task());
     }
 
     rc = os_mutex_pend(&ble_hs_conn_mutex, 0xffffffff);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
+    BLE_HS_DBG_ASSERT_EVAL(rc == 0 || rc == OS_NOT_STARTED);
 }
 
 void
@@ -52,7 +51,7 @@ ble_hs_conn_unlock(void)
     int rc;
 
     rc = os_mutex_release(&ble_hs_conn_mutex);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
+    BLE_HS_DBG_ASSERT_EVAL(rc == 0 || rc == OS_NOT_STARTED);
 }
 
 int
@@ -176,6 +175,7 @@ ble_hs_conn_alloc(void)
         goto err;
     }
 
+#if NIMBLE_OPT_SM
     chan = ble_l2cap_sm_create_chan();
     if (chan == NULL) {
         goto err;
@@ -184,6 +184,7 @@ ble_hs_conn_alloc(void)
     if (rc != 0) {
         goto err;
     }
+#endif
 
     rc = ble_gatts_conn_init(&conn->bhc_gatt_svr);
     if (rc != 0) {
@@ -239,7 +240,7 @@ ble_hs_conn_free(struct ble_hs_conn *conn)
     }
 
     rc = os_memblock_put(&ble_hs_conn_pool, conn);
-    assert(rc == 0);
+    BLE_HS_DBG_ASSERT_EVAL(rc == 0);
 
     STATS_INC(ble_hs_stats, conn_delete);
 }
@@ -256,7 +257,7 @@ ble_hs_conn_insert(struct ble_hs_conn *conn)
 
     ble_hs_conn_lock();
 
-    assert(ble_hs_conn_find(conn->bhc_handle) == NULL);
+    BLE_HS_DBG_ASSERT_EVAL(ble_hs_conn_find(conn->bhc_handle) == NULL);
     SLIST_INSERT_HEAD(&ble_hs_conns, conn, bhc_next);
 
     ble_hs_conn_unlock();

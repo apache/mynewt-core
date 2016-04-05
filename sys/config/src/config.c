@@ -25,8 +25,7 @@
 #include "config/config.h"
 #include "config_priv.h"
 
-static SLIST_HEAD(, conf_handler) conf_handlers =
-    SLIST_HEAD_INITIALIZER(&conf_handlers);
+struct conf_handler_head conf_handlers = SLIST_HEAD_INITIALIZER(&conf_handlers);
 
 int
 conf_init(void)
@@ -212,6 +211,7 @@ conf_commit(char *name)
     char *name_argv[CONF_MAX_DIR_DEPTH];
     struct conf_handler *ch;
     int rc;
+    int rc2;
 
     if (name) {
         ch = conf_parse_and_lookup(name, &name_argc, name_argv);
@@ -224,15 +224,15 @@ conf_commit(char *name)
             return 0;
         }
     } else {
+        rc = 0;
         SLIST_FOREACH(ch, &conf_handlers, ch_list) {
             if (ch->ch_commit) {
-                rc = ch->ch_commit();
-                if (rc) {
-                    return rc;
+                rc2 = ch->ch_commit();
+                if (!rc) {
+                    rc = rc2;
                 }
             }
         }
-        return 0;
+        return rc;
     }
 }
-

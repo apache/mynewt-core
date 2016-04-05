@@ -23,26 +23,40 @@
 
 #define CONS_OUTPUT_MAX_LINE	128
 
-int
-console_vprintf(const char *fmt, va_list args)
-{
-    char buf[CONS_OUTPUT_MAX_LINE];
-    int len;
+#ifdef BASELIBC_PRESENT
+size_t console_file_write(FILE *p, const char *str, size_t cnt);
 
-    len = vsnprintf(buf, sizeof(buf), fmt, args);
-    if (len >= sizeof(buf)) {
-        len = sizeof(buf) - 1;
-    }
-    console_write(buf, len);
+static const struct File_methods console_file_ops = {
+    .write = console_file_write,
+    .read = NULL
+};
 
-    return len;
-}
+static const FILE console_file = {
+    .vmt = &console_file_ops
+};
 
 void
 console_printf(const char *fmt, ...)
 {
     va_list args;
-    char buf[24];
+
+    /* Prefix each line with a timestamp. */
+    if (!console_is_midline) {
+        fprintf((FILE *)&console_file, "%lu:", (unsigned long)os_time_get());
+    }
+
+    va_start(args, fmt);
+    vfprintf((FILE *)&console_file, fmt, args);
+    va_end(args);
+}
+
+#else
+
+void
+console_printf(const char *fmt, ...)
+{
+    va_list args;
+    char buf[CONS_OUTPUT_MAX_LINE];
     int len;
 
     /* Prefix each line with a timestamp. */
@@ -52,6 +66,11 @@ console_printf(const char *fmt, ...)
     }
 
     va_start(args, fmt);
-    len = console_vprintf(fmt, args);
+    len = vsnprintf(buf, sizeof(buf), fmt, args);
+    if (len >= sizeof(buf)) {
+        len = sizeof(buf) - 1;
+    }
+    console_write(buf, len);
     va_end(args);
 }
+#endif

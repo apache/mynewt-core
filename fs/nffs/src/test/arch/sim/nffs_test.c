@@ -827,6 +827,9 @@ TEST_CASE(nffs_test_rename)
     rc = fs_mkdir("/mydir");
     TEST_ASSERT(rc == 0);
 
+    rc = fs_mkdir("/mydir/leafdir");
+    TEST_ASSERT(rc == 0);
+
     rc = fs_rename("/myfile2.txt", "/mydir/myfile2.txt");
     TEST_ASSERT(rc == 0);
 
@@ -835,6 +838,10 @@ TEST_CASE(nffs_test_rename)
 
     /*** Rename directory. */
     rc = fs_rename("/mydir", "badname");
+    TEST_ASSERT(rc == FS_EINVAL);
+
+    /* Don't allow a directory to be moved into a descendent directory. */
+    rc = fs_rename("/mydir", "/mydir/leafdir/a");
     TEST_ASSERT(rc == FS_EINVAL);
 
     rc = fs_rename("/mydir", "/mydir2");
@@ -851,6 +858,9 @@ TEST_CASE(nffs_test_rename)
                 .filename = "mydir2",
                 .is_dir = 1,
                 .children = (struct nffs_test_file_desc[]) { {
+                    .filename = "leafdir",
+                    .is_dir = 1,
+                }, {
                     .filename = "myfile2.txt",
                     .contents = "contents",
                     .contents_len = 9,

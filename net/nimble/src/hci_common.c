@@ -36,8 +36,8 @@ const uint8_t g_ble_hci_le_cmd_len[BLE_HCI_NUM_LE_CMDS] =
     BLE_DEV_ADDR_LEN,                   /* 0x0005: set random address */
     BLE_HCI_SET_ADV_PARAM_LEN,          /* 0x0006: set advertising parameters */
     0,                                  /* 0x0007: read adv chan tx power */
-    0xFF,                               /* 0x0008: set advertising data */
-    0xFF,                               /* 0x0009: set scan rsp data */
+    BLE_HCI_SET_ADV_DATA_LEN,           /* 0x0008: set advertising data */
+    BLE_HCI_SET_SCAN_RSP_DATA_LEN,      /* 0x0009: set scan rsp data */
     BLE_HCI_SET_ADV_ENABLE_LEN,         /* 0x000A: set advertising enable */
     BLE_HCI_SET_SCAN_PARAM_LEN,         /* 0x000B: set scan parameters */
     BLE_HCI_SET_SCAN_ENABLE_LEN,        /* 0x000C: set scan enable */
@@ -51,8 +51,8 @@ const uint8_t g_ble_hci_le_cmd_len[BLE_HCI_NUM_LE_CMDS] =
     BLE_HCI_SET_HOST_CHAN_CLASS_LEN,    /* 0x0014: set host chan class */
     sizeof(uint16_t),                   /* 0x0015: read channel map */
     BLE_HCI_CONN_RD_REM_FEAT_LEN,       /* 0x0016: read remote features */
-    0xFF,
-    0xFF,
+    BLE_HCI_LE_ENCRYPT_LEN,             /* 0x0017: encrypt */
+    0,                                  /* 0x0018: rand */
     0xFF,
     0xFF,
     0xFF,
@@ -62,9 +62,9 @@ const uint8_t g_ble_hci_le_cmd_len[BLE_HCI_NUM_LE_CMDS] =
     0xFF,
     BLE_HCI_CONN_PARAM_REPLY_LEN,       /* 0x0020: conn param reply */
     BLE_HCI_CONN_PARAM_NEG_REPLY_LEN,   /* 0x0021: conn param neg reply */
-    0xFF,
-    0xFF,
-    0xFF,
+    BLE_HCI_SET_DATALEN_LEN,            /* 0x0022: set data length */
+    0,                                  /* 0x0023: read sugg data len */
+    BLE_HCI_WR_SUGG_DATALEN_LEN,        /* 0x0024: write suggested data len */
     0xFF,
     0xFF,
     0xFF,

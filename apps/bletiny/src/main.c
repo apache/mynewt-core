@@ -42,6 +42,10 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "controller/ble_ll.h"
+
+/* XXX: An app should not include private headers from a library.  The bletiny
+ * app uses some of nimble's internal details for logging.
+ */
 #include "../src/ble_hs_conn.h"
 #include "../src/ble_hci_sched.h"
 
@@ -67,7 +71,8 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 /* A buffer for host advertising data */
 uint8_t g_host_adv_len;
 
-static uint8_t bletiny_addr[6] = {0x03, 0x02, 0x01, 0x50, 0x13, 0x00};
+/** Our public address.  Note: this is in reverse byte order. */
+static uint8_t bletiny_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Create a mbuf pool of BLE mbufs */
 #define MBUF_NUM_MBUFS      (7)
@@ -925,7 +930,7 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
 
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
         BLETINY_LOG(INFO, "connection update request; status=%d ", status);
-        *ctxt->self_params = *ctxt->peer_params;
+        *ctxt->update.self_params = *ctxt->update.peer_params;
         break;
     }
 

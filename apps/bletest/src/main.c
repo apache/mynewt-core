@@ -77,7 +77,7 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (42)
+#define MBUF_NUM_MBUFS      (32)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -90,8 +90,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_ADVERTISER         (0)
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
@@ -112,6 +112,9 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
+#define BLETEST_CFG_SUGG_DEF_TXOCTETS   (251)
+#define BLETEST_CFG_SUGG_DEF_TXTIME     \
+    BLE_TX_DUR_USECS_M(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4)
 
 /* Test configurations. One of these should be set to 1 */
 #if !defined(BLETEST_CONCURRENT_CONN_TEST) && !defined(BLETEST_THROUGHPUT_TEST)
@@ -140,6 +143,30 @@ uint32_t g_bletest_next_led_time;
 uint16_t g_bletest_handle;
 uint16_t g_bletest_completed_pkts;
 uint16_t g_bletest_outstanding_pkts;
+
+/* --- For LE encryption testing --- */
+/* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
+const uint8_t g_ble_ll_encrypt_test_key[16] = 
+{
+    0x4c, 0x68, 0x38, 0x41, 0x39, 0xf5, 0x74, 0xd8,
+    0x36, 0xbc, 0xf3, 0x4e, 0x9d, 0xfb, 0x01, 0xbf
+};
+
+/* Plaint text: 0x0213243546576879acbdcedfe0f10213 */
+const uint8_t g_ble_ll_encrypt_test_plain_text[16] = 
+{
+    0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, 
+    0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, 0x02, 0x13
+};
+
+/* Encrypted data: 0x99ad1b5226a37e3e058e3b8e27c2c666 */
+const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] = 
+{
+    0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e, 
+    0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66
+};
+
+uint8_t g_ble_ll_encrypted_data[16];
 
 #if (BLETEST_THROUGHPUT_TEST == 1)
 void
@@ -444,6 +471,9 @@ bletest_execute_initiator(void)
 
             /* Ask for version information */
             rc = host_hci_cmd_rd_rem_version(handle);
+            host_hci_outstanding_opcode = 0;
+
+            rc = host_hci_cmd_le_read_rem_used_feat(handle);
             host_hci_outstanding_opcode = 0;
 
             /* Scanning better be stopped! */
@@ -814,6 +844,41 @@ bletest_task_handler(void *arg)
 
     /* Read maximum data length */
     rc = host_hci_cmd_le_read_max_datalen();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read suggested data length */
+    rc = host_hci_cmd_le_read_sugg_datalen();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* write suggested default data length */
+    rc = host_hci_cmd_le_write_sugg_datalen(BLETEST_CFG_SUGG_DEF_TXOCTETS,
+                                            BLETEST_CFG_SUGG_DEF_TXTIME);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Read suggested data length */
+    rc = host_hci_cmd_le_read_sugg_datalen();
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Set data length (note: we know there is no connection; just a test) */
+    rc = host_hci_cmd_le_set_datalen(0x1234,
+                                     BLETEST_CFG_SUGG_DEF_TXOCTETS,
+                                     BLETEST_CFG_SUGG_DEF_TXTIME);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+
+    /* Encrypt a block */
+    rc = host_hci_cmd_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key, 
+                                 (uint8_t *)g_ble_ll_encrypt_test_plain_text);
+    assert(rc == 0);
+    host_hci_outstanding_opcode = 0;
+
+    /* Get a random number */
+    rc = host_hci_cmd_le_rand();
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 

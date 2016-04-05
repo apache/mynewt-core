@@ -32,7 +32,6 @@ void console_echo(int on);
 
 void console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
-int console_vprintf(const char *fmt, va_list args);
 
 extern int console_is_midline;
 

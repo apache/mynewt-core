@@ -63,12 +63,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 
 struct param {
-    int width; /**< field width */
+    unsigned char width; /**< field width */
     char lz;            /**< Leading zeros */
-    char sign;          /**<  The sign to display (if any) */
-    char alt;           /**< alternate form */
+    char sign:1;        /**<  The sign to display (if any) */
+    char alt:1;         /**< alternate form */
+    char uc:1;          /**<  Upper case (for base16 only) */
     char base;  /**<  number base (e.g.: 8, 10, 16) */
-    char uc;            /**<  Upper case (for base16 only) */
     char *bf;           /**<  Buffer to output */
 };
 
@@ -97,7 +97,7 @@ static void li2a(long num, struct param *p)
 {
     if (num < 0) {
         num = -num;
-        p->sign = '-';
+        p->sign = 1;
     }
     uli2a(num, p);
 }
@@ -126,7 +126,7 @@ static void i2a(int num, struct param *p)
 {
     if (num < 0) {
         num = -num;
-        p->sign = '-';
+        p->sign = 1;
     }
     ui2a(num, p);
 }
@@ -143,7 +143,7 @@ static int a2d(char ch)
         return -1;
 }
 
-static char a2i(char ch, const char **src, int base, int *nump)
+static char a2i(char ch, const char **src, int base, unsigned char *nump)
 {
     const char *p = *src;
     int num = 0;
@@ -192,7 +192,7 @@ static unsigned putchw(FILE *putp, struct param *p)
 
     /* print sign */
     if (p->sign)
-        written += putf(putp, p->sign);
+        written += putf(putp, '-');
 
     /* Alternate */
     if (p->alt && p->base == 16) {

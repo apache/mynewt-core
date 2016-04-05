@@ -24,6 +24,7 @@
 #include <hal/hal_flash_int.h>
 #include <shell/shell.h>
 #include <stdio.h>
+#include <string.h>
 
 static int flash_cli_cmd(int argc, char **argv);
 static struct shell_cmd flash_cmd_struct = {

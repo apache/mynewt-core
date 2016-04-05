@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,38 +17,20 @@
  * under the License.
  */
 
-#include "config/config.h"
-#include "config_priv.h"
+#ifndef _NATIVE_HAL_DAC_H
+#define _NATIVE_HAL_DAC_H
 
-#include <json/json.h>
-
-int
-conf_parse_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen)
+enum native_dac_channel 
 {
-    const struct json_attr_t val_attr[3] = {
-        [0] = {
-            .attribute = "name",
-            .type = t_string,
-            .addr.string = name,
-            .len = nlen
-        },
-        [1] = {
-            .attribute = "val",
-            .type = t_string,
-            .addr.string = value,
-            .len = vlen
-        },
-        [2] = {
-            .attribute = NULL
-        }
-    };
-    int rc;
+    NATIVE_MCU_DAC0 = 0,
+    NATIVE_MCU_DAC1,
+    NATIVE_MCU_DAC2,
+    NATIVE_MCU_DAC3,
+};
+ 
+/* to create a native dac driver */
+struct hal_dac *
+native_dac_create (enum native_dac_channel);
 
-    rc = json_read_object(jb, val_attr);
-    if (rc) {
-        return rc;
-    }
-    return 0;
-}
+#endif /* _NATIVE_HAL_PWM_H */
 

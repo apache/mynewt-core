@@ -201,42 +201,6 @@ parse_arg_kv(char *name, struct kv_pair *kvs)
 }
 
 static int
-parse_arg_byte_stream_no_delim(char *sval, int max_len, uint8_t *dst,
-                               int *out_len)
-{
-    unsigned long ul;
-    char *endptr;
-    char buf[3];
-    int i;
-
-    buf[2] = '\0';
-    i = 0;
-    while (1) {
-        if (sval[i * 2] == '\0') {
-            *out_len = i;
-            return 0;
-        }
-
-        if (i >= max_len) {
-            return EINVAL;
-        }
-
-        buf[0] = sval[i * 2 + 0];
-        buf[1] = sval[i * 2 + 1];
-
-        ul = strtoul(buf, &endptr, 16);
-        if (*sval == '\0' || *endptr != '\0') {
-            return EINVAL;
-        }
-
-        assert(ul <= UINT8_MAX);
-        dst[i] = ul;
-
-        i++;
-    }
-}
-
-static int
 parse_arg_byte_stream_delim(char *sval, char *delims, int max_len,
                             uint8_t *dst, int *out_len)
 {
@@ -271,7 +235,6 @@ parse_arg_byte_stream_delim(char *sval, char *delims, int max_len,
 int
 parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
 {
-    int total_len;
     char *sval;
 
     sval = parse_arg_find(name);
@@ -279,12 +242,7 @@ parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
         return ENOENT;
     }
 
-    total_len = strlen(sval);
-    if (strcspn(sval, ":-") == total_len) {
-        return parse_arg_byte_stream_no_delim(sval, max_len, dst, out_len);
-    } else {
-        return parse_arg_byte_stream_delim(sval, ":-", max_len, dst, out_len);
-    }
+    return parse_arg_byte_stream_delim(sval, ":-", max_len, dst, out_len);
 }
 
 int

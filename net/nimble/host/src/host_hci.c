@@ -17,7 +17,6 @@
  * under the License.
  */
 #include <stdint.h>
-#include <assert.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
@@ -32,21 +31,21 @@
 _Static_assert(sizeof (struct hci_data_hdr) == BLE_HCI_DATA_HDR_SZ,
                "struct hci_data_hdr must be 4 bytes");
 
-static int host_hci_rx_disconn_complete(uint8_t event_code, uint8_t *data,
-                                        int len);
-static int host_hci_rx_cmd_complete(uint8_t event_code, uint8_t *data,
-                                    int len);
-static int host_hci_rx_cmd_status(uint8_t event_code, uint8_t *data, int len);
-static int host_hci_rx_num_completed_pkts(uint8_t event_code, uint8_t *data,
-                                          int len);
-static int host_hci_rx_le_meta(uint8_t event_code, uint8_t *data, int len);
-static int host_hci_rx_le_conn_complete(uint8_t subevent, uint8_t *data,
-                                        int len);
-static int host_hci_rx_le_adv_rpt(uint8_t subevent, uint8_t *data, int len);
-static int host_hci_rx_le_conn_upd_complete(uint8_t subevent, uint8_t *data,
-                                            int len);
-static int host_hci_rx_le_conn_parm_req(uint8_t subevent, uint8_t *data,
-                                        int len);
+typedef int host_hci_event_fn(uint8_t event_code, uint8_t *data, int len);
+static host_hci_event_fn host_hci_rx_disconn_complete;
+static host_hci_event_fn host_hci_rx_encrypt_change;
+static host_hci_event_fn host_hci_rx_cmd_complete;
+static host_hci_event_fn host_hci_rx_cmd_status;
+static host_hci_event_fn host_hci_rx_num_completed_pkts;
+static host_hci_event_fn host_hci_rx_le_meta;
+
+typedef int host_hci_le_event_fn(uint8_t subevent, uint8_t *data, int len);
+static host_hci_le_event_fn host_hci_rx_le_conn_complete;
+static host_hci_le_event_fn host_hci_rx_le_adv_rpt;
+static host_hci_le_event_fn host_hci_rx_le_conn_upd_complete;
+static host_hci_le_event_fn host_hci_rx_le_lt_key_req;
+static host_hci_le_event_fn host_hci_rx_le_conn_parm_req;
+
 static uint16_t host_hci_buffer_sz;
 static uint8_t host_hci_max_pkts;
 
@@ -67,7 +66,6 @@ uint16_t host_hci_outstanding_opcode;
 static struct os_callout_func host_hci_timer;
 
 /** Dispatch table for incoming HCI events.  Sorted by event code field. */
-typedef int host_hci_event_fn(uint8_t event_code, uint8_t *data, int len);
 struct host_hci_event_dispatch_entry {
     uint8_t hed_event_code;
     host_hci_event_fn *hed_fn;
@@ -75,6 +73,7 @@ struct host_hci_event_dispatch_entry {
 
 static const struct host_hci_event_dispatch_entry host_hci_event_dispatch[] = {
     { BLE_HCI_EVCODE_DISCONN_CMP, host_hci_rx_disconn_complete },
+    { BLE_HCI_EVCODE_ENCRYPT_CHG, host_hci_rx_encrypt_change },
     { BLE_HCI_EVCODE_COMMAND_COMPLETE, host_hci_rx_cmd_complete },
     { BLE_HCI_EVCODE_COMMAND_STATUS, host_hci_rx_cmd_status },
     { BLE_HCI_EVCODE_NUM_COMP_PKTS, host_hci_rx_num_completed_pkts },
@@ -85,7 +84,6 @@ static const struct host_hci_event_dispatch_entry host_hci_event_dispatch[] = {
     (sizeof host_hci_event_dispatch / sizeof host_hci_event_dispatch[0])
 
 /** Dispatch table for incoming LE meta events.  Sorted by subevent field. */
-typedef int host_hci_le_event_fn(uint8_t subevent, uint8_t *data, int len);
 struct host_hci_le_event_dispatch_entry {
     uint8_t hmd_subevent;
     host_hci_le_event_fn *hmd_fn;
@@ -96,6 +94,7 @@ static const struct host_hci_le_event_dispatch_entry
     { BLE_HCI_LE_SUBEV_CONN_COMPLETE, host_hci_rx_le_conn_complete },
     { BLE_HCI_LE_SUBEV_ADV_RPT, host_hci_rx_le_adv_rpt },
     { BLE_HCI_LE_SUBEV_CONN_UPD_COMPLETE, host_hci_rx_le_conn_upd_complete },
+    { BLE_HCI_LE_SUBEV_LT_KEY_REQ, host_hci_rx_le_lt_key_req },
     { BLE_HCI_LE_SUBEV_REM_CONN_PARM_REQ, host_hci_rx_le_conn_parm_req },
 };
 
@@ -141,7 +140,7 @@ host_hci_timer_set(void)
 
     rc = os_callout_reset(&host_hci_timer.cf_c,
                           HOST_HCI_TIMEOUT * OS_TICKS_PER_SEC / 1000);
-    assert(rc == 0);
+    BLE_HS_DBG_ASSERT_EVAL(rc == 0);
 }
 
 static void
@@ -155,7 +154,7 @@ host_hci_timer_exp(void *arg)
 {
     struct ble_hci_ack ack;
 
-    assert(host_hci_outstanding_opcode != 0);
+    BLE_HS_DBG_ASSERT(host_hci_outstanding_opcode != 0);
 
     ack.bha_opcode = host_hci_outstanding_opcode;
     ack.bha_status = BLE_HS_ETIMEOUT;
@@ -181,6 +180,24 @@ host_hci_rx_disconn_complete(uint8_t event_code, uint8_t *data, int len)
     evt.reason = data[5];
 
     ble_gap_rx_disconn_complete(&evt);
+
+    return 0;
+}
+
+static int
+host_hci_rx_encrypt_change(uint8_t event_code, uint8_t *data, int len)
+{
+    struct hci_encrypt_change evt;
+
+    if (len < BLE_HCI_EVENT_ENCRYPT_CHG_LEN) {
+        return BLE_HS_ECONTROLLER;
+    }
+
+    evt.status = data[2];
+    evt.connection_handle = le16toh(data + 3);
+    evt.encryption_enabled = data[5];
+
+    ble_l2cap_sm_rx_encryption_change(&evt);
 
     return 0;
 }
@@ -500,6 +517,25 @@ host_hci_rx_le_conn_upd_complete(uint8_t subevent, uint8_t *data, int len)
 }
 
 static int
+host_hci_rx_le_lt_key_req(uint8_t subevent, uint8_t *data, int len)
+{
+    struct hci_le_lt_key_req evt;
+
+    if (len < BLE_HCI_LE_LT_KEY_REQ_LEN) {
+        return BLE_HS_ECONTROLLER;
+    }
+
+    evt.subevent_code = data[0];
+    evt.connection_handle = le16toh(data + 1);
+    evt.random_number = le64toh(data + 3);
+    evt.encrypted_diversifier = le16toh(data + 11);
+
+    ble_l2cap_sm_rx_lt_key_req(&evt);
+
+    return 0;
+}
+
+static int
 host_hci_rx_le_conn_parm_req(uint8_t subevent, uint8_t *data, int len)
 {
     struct hci_le_conn_param_req evt;
@@ -592,11 +628,11 @@ host_hci_os_event_proc(struct os_event *ev)
 
     /* Free the command buffer */
     err = os_memblock_put(&g_hci_cmd_pool, ev->ev_arg);
-    assert(err == OS_OK);
+    BLE_HS_DBG_ASSERT_EVAL(err == OS_OK);
 
     /* Free the event */
     err = os_memblock_put(&g_hci_os_event_pool, ev);
-    assert(err == OS_OK);
+    BLE_HS_DBG_ASSERT_EVAL(err == OS_OK);
 
     return rc;
 }
@@ -608,13 +644,13 @@ ble_hci_transport_ctlr_event_send(uint8_t *hci_ev)
     os_error_t err;
     struct os_event *ev;
 
-    assert(hci_ev != NULL);
+    BLE_HS_DBG_ASSERT(hci_ev != NULL);
 
     /* Get an event structure off the queue */
     ev = (struct os_event *)os_memblock_get(&g_hci_os_event_pool);
     if (!ev) {
         err = os_memblock_put(&g_hci_cmd_pool, hci_ev);
-        assert(err == OS_OK);
+        BLE_HS_DBG_ASSERT_EVAL(err == OS_OK);
         return -1;
     }
 
@@ -673,6 +709,7 @@ host_hci_data_rx(struct os_mbuf *om)
                    BLE_HCI_DATA_PB(hci_hdr.hdh_handle_pb_bc), 
                    hci_hdr.hdh_len);
         ble_hs_misc_log_mbuf(om);
+        BLE_HS_LOG(DEBUG, "\n");
 #endif
 
         if (hci_hdr.hdh_len != OS_MBUF_PKTHDR(om)->omp_len) {
@@ -697,8 +734,8 @@ host_hci_data_rx(struct os_mbuf *om)
     os_mbuf_free_chain(om);
 
     if (rc == 0) {
-        assert(rx_cb != NULL);
-        assert(rx_buf != NULL);
+        BLE_HS_DBG_ASSERT(rx_cb != NULL);
+        BLE_HS_DBG_ASSERT(rx_buf != NULL);
         rc = rx_cb(handle, &rx_buf);
         os_mbuf_free_chain(rx_buf);
     } else if (rc == BLE_HS_EAGAIN) {
@@ -712,9 +749,9 @@ host_hci_data_rx(struct os_mbuf *om)
 uint16_t
 host_hci_handle_pb_bc_join(uint16_t handle, uint8_t pb, uint8_t bc)
 {
-    assert(handle <= 0x0fff);
-    assert(pb <= 0x03);
-    assert(bc <= 0x03);
+    BLE_HS_DBG_ASSERT(handle <= 0x0fff);
+    BLE_HS_DBG_ASSERT(pb <= 0x03);
+    BLE_HS_DBG_ASSERT(bc <= 0x03);
 
     return (handle  << 0)   |
            (pb      << 12)  |
@@ -762,6 +799,7 @@ host_hci_data_tx(struct ble_hs_conn *connection, struct os_mbuf *om)
 
     BLE_HS_LOG(DEBUG, "host_hci_data_tx(): ");
     ble_hs_misc_log_mbuf(om);
+    BLE_HS_LOG(DEBUG, "\n");
 
     rc = ble_hs_tx_data(om);
     if (rc != 0) {

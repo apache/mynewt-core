@@ -28,7 +28,6 @@ pkg.keywords:
 pkg.features: bootloader
 pkg.deps:
     - fs/nffs
-    - libs/baselibc
     - libs/bootutil
     - libs/console/stub
     - libs/mbedtls

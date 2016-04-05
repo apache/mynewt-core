@@ -274,7 +274,7 @@ ble_ll_disconn_comp_event_send(struct ble_ll_conn_sm *connsm, uint8_t reason)
 {
     uint8_t *evbuf;
 
-    if (ble_ll_hci_is_event_enabled(BLE_HCI_EVCODE_DISCONN_CMP - 1)) {
+    if (ble_ll_hci_is_event_enabled(BLE_HCI_EVCODE_DISCONN_CMP)) {
         evbuf = os_memblock_get(&g_hci_cmd_pool);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_DISCONN_CMP;
@@ -459,7 +459,7 @@ ble_ll_conn_hci_read_rem_features(uint8_t *cmdbuf)
     /* See if we support this feature */
     if (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) {
         if ((ble_ll_read_supp_features() & BLE_LL_FEAT_SLAVE_INIT) == 0) {
-            return BLE_ERR_UNSUPP_FEATURE;
+            return BLE_ERR_UNKNOWN_HCI_CMD;
         }
     }
 
@@ -504,7 +504,7 @@ ble_ll_conn_hci_update(uint8_t *cmdbuf)
     /* See if we support this feature */
     if ((ble_ll_read_supp_features() & BLE_LL_FEAT_CONN_PARM_REQ) == 0) {
         if (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) {
-            return BLE_ERR_UNSUPP_FEATURE;
+            return BLE_ERR_UNKNOWN_HCI_CMD;
         } 
         ctrl_proc = BLE_LL_CTRL_PROC_CONN_UPDATE;
     } else {
@@ -580,7 +580,7 @@ ble_ll_conn_hci_param_reply(uint8_t *cmdbuf, int positive_reply)
 
     /* See if we support this feature */
     if ((ble_ll_read_supp_features() & BLE_LL_FEAT_CONN_PARM_REQ) == 0) {
-        return BLE_ERR_UNSUPP_FEATURE;
+        return BLE_ERR_UNKNOWN_HCI_CMD;
     }
 
     /* If no connection handle exit with error */
@@ -697,7 +697,7 @@ ble_ll_conn_hci_disconnect_cmd(uint8_t *cmdbuf)
         case BLE_ERR_REM_USER_CONN_TERM:
         case BLE_ERR_RD_CONN_TERM_RESRCS:
         case BLE_ERR_RD_CONN_TERM_PWROFF:
-        case BLE_ERR_UNSUPP_FEATURE:
+        case BLE_ERR_UNSUPP_REM_FEATURE:
         case BLE_ERR_UNIT_KEY_PAIRING:
         case BLE_ERR_CONN_PARMS:
             connsm = ble_ll_conn_find_active_conn(handle);
@@ -869,4 +869,45 @@ ble_ll_conn_hci_set_chan_class(uint8_t *cmdbuf)
     ble_ll_conn_set_global_chanmap(num_used_chans, cmdbuf);
     return rc;
 }
+
+#ifdef BLE_LL_CFG_FEAT_DATA_LEN_EXT
+int
+ble_ll_conn_hci_set_data_len(uint8_t *cmdbuf, uint8_t *rspbuf, uint8_t *rsplen)
+{
+    int rc;
+    uint16_t handle;
+    uint16_t txoctets;
+    uint16_t txtime;
+    struct ble_ll_conn_sm *connsm;
+
+    /* Find connection */
+    handle = le16toh(cmdbuf);
+    connsm = ble_ll_conn_find_active_conn(handle);
+    if (!connsm) {
+        rc = BLE_ERR_UNK_CONN_ID;
+    } else {
+        txoctets = le16toh(cmdbuf + 2);
+        txtime = le16toh(cmdbuf + 4);
+
+        /* Make sure it is valid */
+        if (!ble_ll_chk_txrx_octets(txoctets) || 
+            !ble_ll_chk_txrx_time(txtime)) {
+            rc = BLE_ERR_INV_HCI_CMD_PARMS;
+        } else {
+            rc = BLE_ERR_SUCCESS;
+        }
+
+        /* XXX: should I check against max supported? I think so */
+
+        /* 
+         * XXX: For now; we will simply ignore what the host asks as we are
+         * allowed to do so by the spec. 
+         */ 
+    }
+
+    htole16(rspbuf, handle);
+    *rsplen = sizeof(uint16_t);
+    return rc;
+}
+#endif
 

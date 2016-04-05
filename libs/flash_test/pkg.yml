@@ -26,6 +26,5 @@ pkg.deps:
     - libs/os
     - libs/util
     - hw/hal
-    - libs/baselibc
 pkg.req_apis:
     - console

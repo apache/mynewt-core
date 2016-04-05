@@ -52,6 +52,12 @@
 #define NIMBLE_OPT_WHITELIST                    1
 #endif
 
+/** HOST / CONTROLLER: Security manager.  Disabled by default. */
+
+#ifndef NIMBLE_OPT_SM
+#define NIMBLE_OPT_SM                           0
+#endif
+
 
 /** HOST: Supported GATT procedures.  By default, all are enabled. */
 
@@ -256,20 +262,25 @@
  * size of the PDU's that will be sent and/or received in a connection. 
  */
 #ifndef NIMBLE_OPT_LL_SUPP_MAX_RX_BYTES
-#define NIMBLE_OPT_LL_SUPP_MAX_RX_BYTES        (251)
+#define NIMBLE_OPT_LL_SUPP_MAX_RX_BYTES         (251)
 #endif
 
 #ifndef NIMBLE_OPT_LL_SUPP_MAX_TX_BYTES
-#define NIMBLE_OPT_LL_SUPP_MAX_TX_BYTES        (251)
+#define NIMBLE_OPT_LL_SUPP_MAX_TX_BYTES         (251)
 #endif
 
 #ifndef NIMBLE_OPT_LL_CONN_INIT_MAX_TX_BYTES
-#define NIMBLE_OPT_LL_CONN_INIT_MAX_TX_BYTES   (251)
+#define NIMBLE_OPT_LL_CONN_INIT_MAX_TX_BYTES    (27)
 #endif
 
 /* The number of slots that will be allocated to each connection */
 #ifndef NIMBLE_OPT_LL_CONN_INIT_SLOTS
-#define NIMBLE_OPT_LL_CONN_INIT_SLOTS          (2)
+#define NIMBLE_OPT_LL_CONN_INIT_SLOTS           (2)
+#endif
+
+/* The number of random bytes to store */
+#ifndef NIMBLE_OPT_LL_RNG_BUFSIZE
+#define NIMBLE_OPT_LL_RNG_BUFSIZE               (32)
 #endif
 
 /* Include automatically-generated settings. */

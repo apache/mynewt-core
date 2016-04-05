@@ -19,18 +19,14 @@
 #ifndef __SYS_CONFIG_FCB_H_
 #define __SYS_CONFIG_FCB_H_
 
-#ifdef FCB_PRESENT
-
-#include <fcb/fcb.h>
 #include "config/config.h"
 
-struct conf_file {
-    struct cf_storage cf_itf;
+struct conf_fcb {
+    struct conf_store cf_store;
     struct fcb cf_fcb;
 };
 
-int conf_fcb_register(struct conf_fcb *fcb);
-
-#endif
+int conf_fcb_src(struct conf_fcb *fcb);
+int conf_fcb_dst(struct conf_fcb *fcb);
 
 #endif /* __SYS_CONFIG_FCB_H_ */

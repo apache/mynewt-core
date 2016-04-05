@@ -42,7 +42,6 @@ int bsp_imgr_current_slot(void);
 
 #define NFFS_AREA_MAX    (8)
 
-
 #ifdef __cplusplus
 }
 #endif

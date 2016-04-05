@@ -51,7 +51,7 @@ host_hci_cmd_send(uint8_t ogf, uint8_t ocf, uint8_t len, void *cmddata)
     uint16_t opcode;
 
     /* Don't allow multiple commands "in flight." */
-    assert(host_hci_outstanding_opcode == 0);
+    BLE_HS_DBG_ASSERT(host_hci_outstanding_opcode == 0);
 
     rc = -1;
     cmd = os_memblock_get(&g_hci_cmd_pool);
@@ -120,7 +120,7 @@ host_hci_cmd_le_set_adv_params(struct hci_adv_params *adv)
     uint16_t itvl;
     uint8_t cmd[BLE_HCI_SET_ADV_PARAM_LEN];
 
-    assert(adv != NULL);
+    BLE_HS_DBG_ASSERT(adv != NULL);
 
     /* Make sure parameters are valid */
     rc = -1;
@@ -166,20 +166,33 @@ host_hci_cmd_le_set_adv_params(struct hci_adv_params *adv)
     return rc;
 }
 
+/**
+ * Set advertising data
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0008
+ * 
+ * @param data 
+ * @param len 
+ * 
+ * @return int 
+ */
 int
 host_hci_cmd_le_set_adv_data(uint8_t *data, uint8_t len)
 {
     int rc;
-    uint8_t cmd[BLE_HCI_MAX_ADV_DATA_LEN + 1];
+    uint8_t cmd[BLE_HCI_SET_ADV_DATA_LEN];
 
     /* Check for valid parameters */
     if (((data == NULL) && (len != 0)) || (len > BLE_HCI_MAX_ADV_DATA_LEN)) {
         return BLE_ERR_INV_HCI_CMD_PARMS;
     }
 
+    memset(cmd, 0, BLE_HCI_SET_ADV_DATA_LEN);
     cmd[0] = len;
     memcpy(cmd + 1, data, len);
-    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_SET_ADV_DATA, len + 1, cmd);
+    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_SET_ADV_DATA, 
+                              BLE_HCI_SET_ADV_DATA_LEN, cmd);
 
     return rc;
 }
@@ -188,7 +201,7 @@ int
 host_hci_cmd_le_set_scan_rsp_data(uint8_t *data, uint8_t len)
 {
     int rc;
-    uint8_t cmd[BLE_HCI_MAX_SCAN_RSP_DATA_LEN + 1];
+    uint8_t cmd[BLE_HCI_SET_SCAN_RSP_DATA_LEN];
 
     /* Check for valid parameters */
     if (((data == NULL) && (len != 0)) ||
@@ -196,9 +209,11 @@ host_hci_cmd_le_set_scan_rsp_data(uint8_t *data, uint8_t len)
         return BLE_ERR_INV_HCI_CMD_PARMS;
     }
 
+    memset(cmd, 0, BLE_HCI_SET_SCAN_RSP_DATA_LEN);
     cmd[0] = len;
     memcpy(cmd + 1, data, len);
-    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_SET_SCAN_RSP_DATA, len + 1, cmd);
+    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_SET_SCAN_RSP_DATA, 
+                              BLE_HCI_SET_SCAN_RSP_DATA_LEN, cmd);
 
     return rc;
 }
@@ -321,6 +336,14 @@ host_hci_cmd_le_set_event_mask(uint64_t event_mask)
     return rc;
 }
 
+/**
+ * LE Read buffer size
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0002 
+ * 
+ * @return int 
+ */
 int
 host_hci_cmd_le_read_buffer_size(void)
 {
@@ -356,6 +379,63 @@ int
 host_hci_cmd_le_read_max_datalen(void)
 {
     return host_hci_le_cmd_send(BLE_HCI_OCF_LE_RD_MAX_DATA_LEN, 0, NULL);
+}
+
+/**
+ * Set data length command
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0022
+ * 
+ * @return int 
+ */
+int 
+host_hci_cmd_le_set_datalen(uint16_t handle, uint16_t txoctets, uint16_t txtime)
+{
+    int rc;
+    uint8_t cmd[BLE_HCI_SET_DATALEN_LEN];
+
+    htole16(cmd, handle);
+    htole16(cmd + 2, txoctets);
+    htole16(cmd + 4, txtime);
+    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_SET_DATA_LEN, 
+                              BLE_HCI_SET_DATALEN_LEN, cmd);
+    return rc;
+}
+
+/**
+ * Read suggested default data length
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0023
+ * 
+ * @return int 
+ */
+int 
+host_hci_cmd_le_read_sugg_datalen(void)
+{
+    return host_hci_le_cmd_send(BLE_HCI_OCF_LE_RD_SUGG_DEF_DATA_LEN, 0, NULL);
+}
+
+/**
+ * write suggested default data length
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0024
+ * 
+ * @return int 
+ */
+int 
+host_hci_cmd_le_write_sugg_datalen(uint16_t txoctets, uint16_t txtime)
+{
+    int rc;
+    uint8_t cmd[BLE_HCI_WR_SUGG_DATALEN_LEN];
+
+    htole16(cmd, txoctets);
+    htole16(cmd + 2, txtime);
+    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_WR_SUGG_DEF_DATA_LEN, 
+                              BLE_HCI_WR_SUGG_DATALEN_LEN, cmd);
+    return rc;
 }
 
 /**
@@ -662,6 +742,20 @@ host_hci_cmd_le_conn_update(struct hci_conn_update *hcu)
 }
 
 int
+host_hci_cmd_le_lt_key_req_reply(struct hci_lt_key_req_reply *hkr)
+{
+    uint8_t cmd[BLE_HCI_LT_KEY_REQ_REPLY_LEN];
+    int rc;
+
+    htole16(cmd + 0, hkr->conn_handle);
+    swap_buf(cmd + 2, hkr->long_term_key, sizeof hkr->long_term_key);
+
+    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_LT_KEY_REQ_REPLY,
+                              sizeof cmd, cmd);
+    return rc;
+}
+
+int
 host_hci_cmd_le_conn_param_reply(struct hci_conn_param_reply *hcr)
 {
     uint8_t cmd[BLE_HCI_CONN_PARAM_REPLY_LEN];
@@ -728,6 +822,65 @@ host_hci_cmd_le_set_host_chan_class(uint8_t *chanmap)
     rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_SET_HOST_CHAN_CLASS,
                               BLE_HCI_SET_HOST_CHAN_CLASS_LEN, chanmap);
     return rc;
+}
+
+/**
+ * Encrypt a block.
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0017 
+ *  
+ * @param key 
+ * @param pt 
+ * 
+ * @return int 
+ */
+int
+host_hci_cmd_le_encrypt(uint8_t *key, uint8_t *pt)
+{
+    int rc;
+    uint8_t cmd[BLE_HCI_LE_ENCRYPT_LEN];
+
+    swap_buf(cmd, key, BLE_ENC_BLOCK_SIZE);
+    swap_buf(cmd + BLE_ENC_BLOCK_SIZE, pt, BLE_ENC_BLOCK_SIZE);
+    rc = host_hci_le_cmd_send(BLE_HCI_OCF_LE_ENCRYPT, BLE_HCI_LE_ENCRYPT_LEN, 
+                              cmd);
+    return rc;
+}
+
+/**
+ * Get random data
+ *  
+ * OGF = 0x08 (LE) 
+ * OCF = 0x0018
+ *  
+ * @return int 
+ */
+int
+host_hci_cmd_le_rand(void)
+{
+    return host_hci_le_cmd_send(BLE_HCI_OCF_LE_RAND, 0, NULL);
+}
+
+/**
+ * Enables encryption on a connection.
+ *
+ * OGF = 0x08 (LE)
+ * OCF = 0x0019
+ *
+ * @return int
+ */
+int
+host_hci_cmd_le_start_encrypt(struct hci_start_encrypt *cmd)
+{
+    uint8_t buf[BLE_HCI_LE_START_ENCRYPT_LEN];
+
+    htole16(buf + 0, cmd->connection_handle);
+    htole64(buf + 2, cmd->random_number);
+    htole16(buf + 10, cmd->encrypted_diversifier);
+    swap_buf(buf + 12, cmd->long_term_key, 16);
+
+    return host_hci_le_cmd_send(BLE_HCI_OCF_LE_START_ENCRYPT, sizeof buf, buf);
 }
 
 /**

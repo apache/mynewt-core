@@ -98,6 +98,7 @@ struct hci_adv_params;
 #define BLE_GAP_EVENT_ADV                   8
 #define BLE_GAP_EVENT_ADV_STOP              9
 #define BLE_GAP_EVENT_ADV_FINISHED          10
+#define BLE_GAP_EVENT_SECURITY              11
 
 struct ble_gap_conn_desc {
     uint8_t peer_addr[6];
@@ -128,10 +129,23 @@ struct ble_gap_upd_params {
     uint16_t max_ce_len;
 };
 
+struct ble_gap_sec_params {
+    uint8_t pair_alg;
+    unsigned enc_enabled:1;
+    unsigned auth_enabled:1;
+};
+
 struct ble_gap_conn_ctxt {
     struct ble_gap_conn_desc *desc;
-    struct ble_gap_upd_params *peer_params;
-    struct ble_gap_upd_params *self_params;
+
+    union {
+        struct {
+            struct ble_gap_upd_params *self_params;
+            struct ble_gap_upd_params *peer_params;
+        } update;
+
+        struct ble_gap_sec_params *sec_params;
+    };
 };
 
 typedef int ble_gap_conn_fn(int event, int status,
@@ -184,5 +198,6 @@ int ble_gap_wl_set(struct ble_gap_white_entry *white_list,
                    uint8_t white_list_count, ble_gap_wl_fn *cb, void *cb_arg);
 int ble_gap_update_params(uint16_t conn_handle,
                           struct ble_gap_upd_params *params);
+int ble_gap_security_initiate(uint16_t conn_handle);
 
 #endif

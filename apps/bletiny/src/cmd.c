@@ -1165,6 +1165,9 @@ cmd_set(int argc, char **argv)
     rc = parse_arg_mac("addr", addr);
     if (rc == 0) {
         good = 1;
+        /* XXX: There are a lot of problems with this.  This command probably
+         * needs to be removed.
+         */
         memcpy(g_dev_addr, addr, 6);
     } else if (rc != ENOENT) {
         return rc;
@@ -1402,12 +1405,12 @@ cmd_write(int argc, char **argv)
             return EINVAL;
         }
         rc = bletiny_write_long(conn_handle, attrs[0].handle,
-                                 attrs[0].value, attrs[0].value_len);
+                                attrs[0].value, attrs[0].value_len);
     } else if (num_attrs > 1) {
         rc = bletiny_write_reliable(conn_handle, attrs, num_attrs);
     } else if (num_attrs == 1) {
         rc = bletiny_write(conn_handle, attrs[0].handle,
-                            attrs[0].value, attrs[0].value_len);
+                           attrs[0].value, attrs[0].value_len);
     } else {
         return EINVAL;
     }
