@@ -28,6 +28,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_hs_adv.h"
 #include "../src/ble_l2cap_priv.h"
+#include "../src/ble_hs_priv.h"
 
 #include "bletiny_priv.h"
 
@@ -1208,6 +1209,7 @@ cmd_set(int argc, char **argv)
          * needs to be removed.
          */
         memcpy(g_dev_addr, addr, 6);
+        memcpy(ble_hs_our_dev.public_addr, addr, 6);
     } else if (rc != ENOENT) {
         return rc;
     }
