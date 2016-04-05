@@ -60,24 +60,24 @@ Once this is done, bootloader will expect keys to be filled in
 ## Sample pkg.yml
 This gets bootutil to turn on image signature validation.
 
-pkg.name: libs/mykeys
-pkg.deps:
-    - libs/bootutil
-pkg.features.bootloader:
-    - IMAGE_KEYS
+    pkg.name: libs/mykeys
+    pkg.deps:
+        - libs/bootutil
+    pkg.features.bootloader:
+        - IMAGE_KEYS
 
 ## Sample source file
 This exports the keys.
 
-#include <bootutil/sign_key.h>
+    #include <bootutil/sign_key.h>
 
-#include "image_sign_pub.c"
+    #include "image_sign_pub.c"
 
-const struct bootutil_key bootutil_keys[] = {
-    [0] = {
-        .key = image_sign_pub_der2,
-        .len = &image_sign_pub_der2_len,
-    }
-};
+    const struct bootutil_key bootutil_keys[] = {
+        [0] = {
+            .key = image_sign_pub_der2,
+            .len = &image_sign_pub_der2_len,
+        }
+    };
 
-const int bootutil_key_cnt = sizeof(bootutil_keys) / sizeof(bootutil_keys[0]);
+    const int bootutil_key_cnt = sizeof(bootutil_keys) / sizeof(bootutil_keys[0]);
