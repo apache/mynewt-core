@@ -161,6 +161,7 @@ void bletiny_chrup(uint16_t attr_handle);
 int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
 int bletiny_show_rssi(uint16_t conn_handle);
+int bletiny_sec_start(uint16_t conn_handle);
 
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \

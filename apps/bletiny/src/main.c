@@ -188,6 +188,13 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 }
 
 static void
+bletiny_print_sec_params(struct ble_gap_sec_params *sec_params)
+{
+    console_printf("pair_alg=%d enc_enabled=%d\n", sec_params->pair_alg,
+                   sec_params->enc_enabled);
+}
+
+static void
 bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 {
     uint32_t u32;
@@ -882,7 +889,7 @@ bletiny_on_notify(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
-                    void *arg)
+                   void *arg)
 {
     int conn_idx;
 
@@ -925,6 +932,11 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
         console_printf("connection update request; status=%d ", status);
         *ctxt->update.self_params = *ctxt->update.peer_params;
+        break;
+
+    case BLE_GAP_EVENT_SECURITY:
+        console_printf("security event; status=%d ", status);
+        bletiny_print_sec_params(ctxt->sec_params);
         break;
     }
 
@@ -1295,6 +1307,15 @@ bletiny_show_rssi(uint16_t conn_handle)
 
     return 0;
 
+}
+
+int
+bletiny_sec_start(uint16_t conn_handle)
+{
+    int rc;
+
+    rc = ble_gap_security_initiate(conn_handle);
+    return rc;
 }
 
 /**

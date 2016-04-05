@@ -884,6 +884,47 @@ cmd_show(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $sec                                                                      *
+ *****************************************************************************/
+
+static int
+cmd_sec_start(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_sec_start(conn_handle);
+    if (rc != 0) {
+        console_printf("error starting security; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static struct cmd_entry cmd_sec_entries[] = {
+    { "start", cmd_sec_start },
+};
+
+static int
+cmd_sec(int argc, char **argv)
+{
+    int rc;
+
+    rc = cmd_exec(cmd_sec_entries, argc, argv);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/*****************************************************************************
  * $set                                                                      *
  *****************************************************************************/
 
@@ -1436,6 +1477,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "read",       cmd_read },
     { "scan",       cmd_scan },
     { "show",       cmd_show },
+    { "sec",        cmd_sec },
     { "set",        cmd_set },
     { "term",       cmd_term },
     { "update",     cmd_update },
