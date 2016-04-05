@@ -227,11 +227,10 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
     if ((hdr->ih_flags & IMAGE_F_PKCS15_RSA2048_SHA256) == 0) {
         return -1;
     }
-#else
+#endif
     if ((hdr->ih_flags & IMAGE_F_SHA256) == 0) {
         return -1;
     }
-#endif
 
     rc = bootutil_img_hash(hdr, flash_id, addr, tmp_buf, tmp_buf_sz, hash);
     if (rc) {
