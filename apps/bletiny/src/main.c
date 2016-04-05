@@ -1312,6 +1312,10 @@ bletiny_show_rssi(uint16_t conn_handle)
 int
 bletiny_sec_start(uint16_t conn_handle)
 {
+#if !NIMBLE_OPT_SM
+    return BLE_HS_ENOTSUP;
+#endif
+
     int rc;
 
     rc = ble_gap_security_initiate(conn_handle);
