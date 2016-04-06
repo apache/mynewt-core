@@ -25,7 +25,102 @@
 #include <mcu/nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>
 
-#define NRF51_RTC_FREQ  32768
+#define OS_TICK_CMPREG  0
+#define RTC_FREQ        32768
+
+static uint32_t lastocmp;
+static uint32_t timer_ticks_per_ostick;
+static uint32_t max_idle_ticks;
+
+/*
+ * Implement (x - y) where the range of both 'x' and 'y' is limited to 24-bits.
+ *
+ * For example:
+ *
+ * sub24(0, 0xffffff) = 1
+ * sub24(0xffffff, 0xfffffe) = 1
+ * sub24(0xffffff, 0) = -1
+ * sub24(0x7fffff, 0) = 8388607
+ * sub24(0x800000, 0) = -8388608
+ */
+static inline int
+sub24(uint32_t x, uint32_t y)
+{
+    int result;
+
+    assert(x <= 0xffffff);
+    assert(y <= 0xffffff);
+
+    result = x - y;
+    if (result & 0x800000) {
+        return (result | 0xff800000);
+    } else {
+        return (result & 0x007fffff);
+    }
+}
+
+static inline uint32_t
+nrf51_os_tick_counter(void)
+{
+    return (NRF_RTC0->COUNTER);
+}
+
+static inline void
+nrf51_os_tick_set_ocmp(uint32_t ocmp)
+{
+    int delta;
+    uint32_t counter;
+
+    OS_ASSERT_CRITICAL();
+    while (1) {
+        ocmp &= 0xffffff;
+        NRF_RTC0->CC[OS_TICK_CMPREG] = ocmp;
+        counter = nrf51_os_tick_counter();
+        /*
+         * From section 19.1.7 "Compare Feature" nRF51 Reference Manual 3.0:
+         *
+         * - If Counter is 'N' writing (N) or (N + 1) to CC register
+         *   may not trigger a compare event.
+         *
+         * - If Counter is 'N' writing (N + 2) to CC register is guaranteed
+         *   to trigger a compare event at 'N + 2'.
+         */
+        delta = sub24(ocmp, counter);
+        if (delta > 2) {
+            break;
+        }
+        ocmp += timer_ticks_per_ostick;
+    }
+}
+
+static void
+rtc0_timer_handler(void)
+{
+    int ticks, delta;
+    os_sr_t sr;
+    uint32_t counter;
+
+    OS_ENTER_CRITICAL(sr);
+
+    /*
+     * Calculate elapsed ticks and advance OS time.
+     */
+    counter = nrf51_os_tick_counter();
+    delta = sub24(counter, lastocmp);
+    ticks = delta / timer_ticks_per_ostick;
+    os_time_advance(ticks);
+
+    /* Clear timer interrupt */
+    NRF_RTC0->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
+
+    /* Update the time associated with the most recent tick */
+    lastocmp = (lastocmp + ticks * timer_ticks_per_ostick) & 0xffffff;
+
+    /* Update the output compare to interrupt at the next tick */
+    nrf51_os_tick_set_ocmp(lastocmp + timer_ticks_per_ostick);
+
+    OS_EXIT_CRITICAL(sr);
+}
 
 void
 os_tick_idle(os_time_t ticks)
@@ -35,24 +130,23 @@ os_tick_idle(os_time_t ticks)
     __WFI();
 }
 
-extern void timer_handler(void);
-static void
-rtc0_timer_handler(void)
-{
-    if (NRF_RTC0->EVENTS_TICK) {
-        NRF_RTC0->EVENTS_TICK = 0;
-        timer_handler();
-    }
-}
-
 void
 os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
     uint32_t ctx;
     uint32_t mask;
-    uint32_t pre_scaler;
 
-    assert(NRF51_RTC_FREQ % os_ticks_per_sec == 0);
+    assert(RTC_FREQ % os_ticks_per_sec == 0);
+
+    lastocmp = 0;
+    timer_ticks_per_ostick = RTC_FREQ / os_ticks_per_sec;
+
+    /*
+     * The maximum number of OS ticks allowed to elapse during idle is
+     * limited to 1/4th the number of timer ticks before the 24-bit counter
+     * rolls over.
+     */
+    max_idle_ticks = (1UL << 22) / timer_ticks_per_ostick;
 
     /* Turn on the LFCLK */
     NRF_CLOCK->XTALFREQ = CLOCK_XTALFREQ_XTALFREQ_16MHz;
@@ -71,24 +165,28 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
         }
     }
 
-    /* Is this exact frequency obtainable? */
-    pre_scaler = (NRF51_RTC_FREQ / os_ticks_per_sec) - 1;
-
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
-
-    NRF_RTC0->TASKS_STOP = 1;
-    NRF_RTC0->EVENTS_TICK = 0;
-    NRF_RTC0->PRESCALER = pre_scaler;
-    NRF_RTC0->INTENCLR = 0xffffffff;
-    NRF_RTC0->TASKS_CLEAR = 1;
 
     /* Set isr in vector table and enable interrupt */
     NVIC_SetPriority(RTC0_IRQn, prio);
     NVIC_SetVector(RTC0_IRQn, (uint32_t)rtc0_timer_handler);
     NVIC_EnableIRQ(RTC0_IRQn);
 
-    NRF_RTC0->INTENSET = RTC_INTENSET_TICK_Msk;
+    /*
+     * Program the OS_TICK_TIMER to operate at 32KHz and trigger an output
+     * compare interrupt at a rate of 'os_ticks_per_sec'.
+     */
+    NRF_RTC0->TASKS_STOP = 1;
+    NRF_RTC0->TASKS_CLEAR = 1;
+
+    NRF_RTC0->EVTENCLR = 0xffffffff;
+    NRF_RTC0->INTENCLR = 0xffffffff;
+    NRF_RTC0->INTENSET = RTC_COMPARE_INT_MASK(OS_TICK_CMPREG);
+
+    NRF_RTC0->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
+    NRF_RTC0->CC[OS_TICK_CMPREG] = timer_ticks_per_ostick;
+
     NRF_RTC0->TASKS_START = 1;
 
     __HAL_ENABLE_INTERRUPTS(ctx);
