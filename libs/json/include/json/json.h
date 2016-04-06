@@ -94,7 +94,7 @@ typedef int (*json_write_func_t)(void *buf, char *data,
 struct json_encoder {
     json_write_func_t je_write;
     void *je_arg;
-    int je_has_objects:1;
+    int je_wr_commas:1;
     char je_encode_buf[64];
 };
 

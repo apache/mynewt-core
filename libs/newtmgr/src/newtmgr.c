@@ -355,7 +355,7 @@ nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m,
     njb->njb_off = off;
     njb->njb_end = off + len;
     njb->njb_in_m = m;
-    njb->njb_enc.je_has_objects = 0;
+    njb->njb_enc.je_wr_commas = 0;
 
     return (0);
 }
