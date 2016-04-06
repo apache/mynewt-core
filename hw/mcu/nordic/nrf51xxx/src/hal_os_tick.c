@@ -25,6 +25,8 @@
 #include <mcu/nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>
 
+#define NRF51_RTC_FREQ  32768
+
 void
 os_tick_idle(os_time_t ticks)
 {
@@ -50,6 +52,8 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     uint32_t mask;
     uint32_t pre_scaler;
 
+    assert(NRF51_RTC_FREQ % os_ticks_per_sec == 0);
+
     /* Turn on the LFCLK */
     NRF_CLOCK->XTALFREQ = CLOCK_XTALFREQ_XTALFREQ_16MHz;
     NRF_CLOCK->TASKS_LFCLKSTOP = 1;
@@ -68,7 +72,7 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     }
 
     /* Is this exact frequency obtainable? */
-    pre_scaler = (32768 / os_ticks_per_sec) - 1;
+    pre_scaler = (NRF51_RTC_FREQ / os_ticks_per_sec) - 1;
 
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
