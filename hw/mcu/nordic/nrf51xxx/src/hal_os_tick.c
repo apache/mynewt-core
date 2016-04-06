@@ -30,7 +30,7 @@
 
 static uint32_t lastocmp;
 static uint32_t timer_ticks_per_ostick;
-static uint32_t max_idle_ticks;
+static uint32_t nrf51_max_idle_ticks;
 
 /*
  * Implement (x - y) where the range of both 'x' and 'y' is limited to 24-bits.
@@ -125,9 +125,31 @@ rtc0_timer_handler(void)
 void
 os_tick_idle(os_time_t ticks)
 {
+    uint32_t ocmp;
+
     OS_ASSERT_CRITICAL();
+
+    if (ticks > 0) {
+        /*
+         * Enter tickless regime during long idle durations.
+         */
+        if (ticks > nrf51_max_idle_ticks) {
+            ticks = nrf51_max_idle_ticks;
+        }
+        ocmp = lastocmp + ticks * timer_ticks_per_ostick;
+        nrf51_os_tick_set_ocmp(ocmp);
+    }
+
     __DSB();
     __WFI();
+
+    if (ticks > 0) {
+        /*
+         * Update OS time before anything else when coming out of
+         * the tickless regime.
+         */
+        rtc0_timer_handler();
+    }
 }
 
 void
@@ -146,7 +168,7 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
      * limited to 1/4th the number of timer ticks before the 24-bit counter
      * rolls over.
      */
-    max_idle_ticks = (1UL << 22) / timer_ticks_per_ostick;
+    nrf51_max_idle_ticks = (1UL << 22) / timer_ticks_per_ostick;
 
     /* Turn on the LFCLK */
     NRF_CLOCK->XTALFREQ = CLOCK_XTALFREQ_XTALFREQ_16MHz;
