@@ -121,7 +121,7 @@ log_nmgr_read(struct nmgr_jbuf *njb)
             continue;
         }
 
-        rc = log_walk(log, log_nmgr_add_entry, NULL);
+        rc = log_walk(log, log_nmgr_add_entry, encoder);
         if (rc != 0) {
             goto err;
         }
