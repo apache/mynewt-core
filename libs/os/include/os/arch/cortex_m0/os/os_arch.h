@@ -29,9 +29,6 @@ struct os_task;
 #define OS_RUN_PRIV         (0)
 #define OS_RUN_UNPRIV       (1)
 
-/* Time tick in miliseconds that the OS runs */
-#define OS_TICKS_PER_SEC    (1000)
-
 /* CPU status register */
 typedef uint32_t os_sr_t;
 /* Stack type, aligned to a 32-bit word. */

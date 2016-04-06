@@ -22,4 +22,6 @@
 
 #include "mcu/nrf51.h"
 
+#define OS_TICKS_PER_SEC    (1024)
+
 #endif /* __MCU_CORTEX_M0_H__ */

@@ -20,10 +20,9 @@
 #ifndef _OS_ARCH_SIM_H
 #define _OS_ARCH_SIM_H
 
-struct os_task;
+#include <mcu/mcu_sim.h>
 
-/* Time tick in miliseconds that the OS runs */
-#define OS_TICKS_PER_SEC (1000)
+struct os_task;
 
 /* CPU status register */
 typedef unsigned int os_sr_t;
