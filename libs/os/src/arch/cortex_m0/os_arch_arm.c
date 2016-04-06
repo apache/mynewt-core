@@ -22,9 +22,6 @@
 
 #include <bsp/cmsis_nvic.h>
 
-/* XXX*/
-extern void system_os_tick_init(uint32_t os_ticks_per_sec);
-
 /*
  * From HAL_CM0.s
  */
