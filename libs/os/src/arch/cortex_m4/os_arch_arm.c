@@ -19,7 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
-
+#include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 
 /* Initial program status register */
@@ -246,7 +246,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_bsp_systick_init(OS_TICKS_PER_SEC, SYSTICK_PRIO);
+    os_tick_init(OS_TICKS_PER_SEC, SYSTICK_PRIO);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
@@ -321,10 +321,4 @@ os_arch_os_start(void)
     }
 
     return err;
-}
-
-void
-os_arch_idle(os_time_t ticks)
-{
-    os_bsp_idle(ticks);
 }

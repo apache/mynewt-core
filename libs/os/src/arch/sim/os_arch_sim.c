@@ -177,7 +177,7 @@ os_arch_in_critical(void)
 }
 
 void
-os_arch_idle(os_time_t ticks)
+os_tick_idle(os_time_t ticks)
 {
     int rc;
     struct itimerval it;

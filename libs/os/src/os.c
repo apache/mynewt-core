@@ -20,6 +20,8 @@
 #include "os/os.h"
 #include "os/queue.h"
 
+#include "hal/hal_os_tick.h"
+
 #include <assert.h> 
 
 struct os_task g_idle_task; 
@@ -59,7 +61,7 @@ os_idle_task(void *arg)
         } else {
             /* NOTHING */
         }
-        os_arch_idle(iticks);
+        os_tick_idle(iticks);
         OS_EXIT_CRITICAL(sr);
     }
 }
