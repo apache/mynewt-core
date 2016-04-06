@@ -37,9 +37,7 @@ struct native_pwm_drv {
 };
 
 static int native_pwm_off(struct hal_pwm *ppwm);
-static int native_pwm_on(struct hal_pwm *ppwm);
-static int native_pwm_set_wave(struct hal_pwm *ppwm, uint32_t period, uint32_t on);
-static int native_pwm_set_duty(struct hal_pwm *ppwm, uint8_t frac_duty);
+static int native_pwm_enable_duty(struct hal_pwm *ppwm, uint16_t frac_duty);
 static int native_pwm_get_bits(struct hal_pwm *ppwm);
 static int native_pwm_get_clock(struct hal_pwm *ppwm);
 
@@ -48,10 +46,8 @@ static const struct hal_pwm_funcs  native_pwm_funcs =
 {
     .hpwm_get_bits = &native_pwm_get_bits,
     .hpwm_get_clk = &native_pwm_get_clock,
-    .hpwm_off = &native_pwm_off,
-    .hpwm_on = &native_pwm_on,
-    .hpwm_set_duty = &native_pwm_set_duty,
-    .hpwm_set_wave = &native_pwm_set_wave,
+    .hpwm_disable = &native_pwm_off,
+    .hpwm_ena_duty = &native_pwm_enable_duty,
 };
 
 struct hal_pwm *
@@ -122,36 +118,16 @@ static int native_pwm_get_clock(struct hal_pwm *ppwm) {
 }
 
 int 
-native_pwm_set_duty(struct hal_pwm *ppwm, uint8_t fraction)
+native_pwm_enable_duty(struct hal_pwm *ppwm, uint16_t fraction)
 {
     struct native_pwm_drv *pn = (struct native_pwm_drv *) ppwm;
  
     if(pn) 
     {    
-        pn->period_ticks = 255;
+        pn->period_ticks = 65535;
         pn->on_ticks = fraction;
         return 0;
     }
     return -2;
-}
-
-int 
-native_pwm_set_wave(struct hal_pwm *ppwm, uint32_t period, uint32_t on)
-{
-    struct native_pwm_drv *pn = (struct native_pwm_drv *) ppwm;
- 
-    if(pn) 
-    {    
-        if(period > ((1 << NATIVE_PWM_BITS) - 1)) {
-            return -2;
-        }
-        if(on > ((1 << NATIVE_PWM_BITS) - 1)) {
-            return -3;
-        }
-        pn->period_ticks = period;
-        pn->on_ticks = on;
-        return 0;
-    }
-    return -4;
 }
 

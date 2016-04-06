@@ -26,40 +26,31 @@ hal_pwm_init(enum system_device_id sysid)
     return bsp_get_hal_pwm_driver(sysid);
 }
 
-int
-hal_pwm_on(struct hal_pwm *ppwm) 
-{
-    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_on ) 
-    {
-        return ppwm->driver_api->hpwm_on(ppwm);
-    }
-    return -1;  
-}
 
 int
-hal_pwm_off(struct hal_pwm *ppwm) 
+hal_pwm_disable(struct hal_pwm *ppwm) 
 {
-    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_off ) 
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_disable ) 
     {
-        return ppwm->driver_api->hpwm_off(ppwm);
+        return ppwm->driver_api->hpwm_disable(ppwm);
     }
     return -1;      
 }
 
 int
-hal_pwm_set_duty_cycle(struct hal_pwm *ppwm, uint8_t fraction) {
-    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_set_duty ) 
+hal_pwm_enable_duty_cycle(struct hal_pwm *ppwm, uint16_t fraction) {
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_ena_duty ) 
     {
-        return ppwm->driver_api->hpwm_set_duty(ppwm, fraction);
+        return ppwm->driver_api->hpwm_ena_duty(ppwm, fraction);
     }
     return -1;      
 }
 
 int
-hal_pwm_set_waveform(struct hal_pwm *ppwm, uint32_t period_clocks, uint32_t on_clocks) {
-    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_set_wave ) 
+hal_pwm_set_frequency(struct hal_pwm *ppwm, uint32_t freq_hz) {
+    if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_set_freq) 
     {
-        return ppwm->driver_api->hpwm_set_wave(ppwm, period_clocks, on_clocks);
+        return ppwm->driver_api->hpwm_set_freq(ppwm, freq_hz);
     }
     return -1;       
 }
@@ -73,8 +64,6 @@ hal_pwm_get_clock_freq(struct hal_pwm *ppwm) {
     return -1;     
 }
 
-/* gets the resolution of the PWM in bits.  An N-bit PWM can have 
- * period and on values between 0 and 2^bits - 1 */
 int
 hal_pwm_get_resolution_bits(struct hal_pwm *ppwm) {
     if (ppwm && ppwm->driver_api && ppwm->driver_api->hpwm_get_bits ) 

@@ -31,12 +31,14 @@ struct hal_pwm;
 
 struct hal_pwm_funcs 
 {
-    int (*hpwm_on)        (struct hal_pwm *ppwm);
-    int (*hpwm_off)       (struct hal_pwm *ppwm);
-    int (*hpwm_get_bits)  (struct hal_pwm *ppwm);
-    int (*hpwm_get_clk)   (struct hal_pwm *ppwm);
-    int (*hpwm_set_duty)  (struct hal_pwm *ppwm, uint8_t frac_duty);
-    int (*hpwm_set_wave)  (struct hal_pwm *ppwm, uint32_t period, uint32_t on);
+
+    /* the low level hal API */
+    int     (*hpwm_get_bits)        (struct hal_pwm *ppwm);
+    int     (*hpwm_get_clk)         (struct hal_pwm *ppwm);
+    int     (*hpwm_disable)         (struct hal_pwm *ppwm);
+    int     (*hpwm_ena_duty)  (struct hal_pwm *ppwm, uint16_t frac_duty);
+    int     (*hpwm_set_freq)  (struct hal_pwm *ppwm, uint32_t freq_hz);
+    
 };
 
 struct hal_pwm 

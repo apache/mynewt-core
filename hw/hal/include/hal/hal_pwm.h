@@ -29,58 +29,42 @@
 struct hal_pwm;
 
 /* Initialize a new PWM device with the given system id.
- * Returns negative on error, 0 on success*/
+ * Returns negative on error, 0 on success. */
 struct hal_pwm*
 hal_pwm_init(enum system_device_id sysid);
-
-/* enables the PWM corresponding to PWM *ppwm.*/
-int
-hal_pwm_on(struct hal_pwm *ppwm);
-
-/* disables the PWM corresponding to PWM *ppwm.*/
-int
-hal_pwm_off(struct hal_pwm *ppwm);
-
-/* There are two APIs for setting the PWM waveform.  You can use one 
- *  or both in your programs, but only the last one called will apply
- *
- * hal_pwm_set_duty_cycle -- sets the PWM waveform for a specific duty cycle
- *          It uses a 255 clock period and sets the on and off time 
- *          according to the argument
- * 
- * hal_pwm_set_waveform -- sets the PWM waveform for a specific on time
- *          and period specified in PWM clocks.  its intended for more
- *          fine-grained control of the PWM waveform.  
- *
- */
-
-/* sets the duty cycle of the PWM output. This duty cycle is 
- * a fractional duty cycle where 0 == off, 255 = on, and 
- * any value in between is on for fraction clocks and off
- * for 255-fraction clocks. 
- * When you are looking for more fine-grained control over
- * the PWM, use the API set_waveform below.
- */
-int
-hal_pwm_set_duty_cycle(struct hal_pwm *ppwm, uint8_t fraction);
-
-
-/* Sets the pwm waveform period and on-time in units of the PWM clock 
-  (see below).  Period_clocks and on_clocks cannot exceed the 
- * 2^N-1 where N is the resolution of the PWM channel  */
-int
-hal_pwm_set_waveform(struct hal_pwm *ppwm, uint32_t period_clocks, uint32_t on_clocks);
-
 
 /* gets the underlying clock driving the PWM output. Return value
  * is in Hz. Returns negative on error */
 int 
-hal_pwm_get_clock_freq(struct hal_pwm *ppwm);
+hal_pwm_get_source_clock_freq(struct hal_pwm *ppwm);
 
 /* gets the resolution of the PWM in bits.  An N-bit PWM can have 
- * period and on values between 0 and 2^bits - 1. Returns negative on error  */
+ * on values between 0 and 2^bits - 1. Returns negative on error  */
 int
 hal_pwm_get_resolution_bits(struct hal_pwm *ppwm);
+
+/* turns off the PWM channel */
+int
+hal_pwm_disable(struct hal_pwm *ppwm);
+
+/* enables the PWM with duty cycle specified. This duty cycle is 
+ * a fractional duty cycle where 0 == off, 65535=on, and 
+ * any value in between is on for fraction clocks and off
+ * for 65535-fraction clocks.  
+ */
+int
+hal_pwm_enable_duty_cycle(struct hal_pwm *ppwm, uint16_t fraction);
+
+/* 
+ * This frequency must be between 1/2 the clock frequency and 
+ * the clock divided by the resolution. NOTE: This may affect
+ * other PWM channels.
+ */
+int
+hal_pwm_set_frequency(struct hal_pwm *ppwm, uint32_t freq_hz);
+
+/* NOTE: If you know the resolution and clock frequency, you can
+ * compute the period of the PWM Its 2^resolution/clock_freq */
 
 
 #endif /* _HAL_HAL_PWM_H */
