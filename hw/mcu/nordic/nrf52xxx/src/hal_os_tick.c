@@ -22,11 +22,11 @@
 #include <mcu/nrf52_bitfields.h>
 #include <bsp/cmsis_nvic.h>
 
-#define CALLOUT_TIMER       NRF_TIMER1
-#define CALLOUT_IRQ         TIMER1_IRQn
-#define CALLOUT_CMPREG      0   /* generate timer interrupt */
-#define CALLOUT_COUNTER     1   /* capture current timer value */
-#define CALLOUT_PRESCALER   4   /* prescaler to generate 1MHz timer freq */
+#define OS_TICK_TIMER       NRF_TIMER1
+#define OS_TICK_IRQ         TIMER1_IRQn
+#define OS_TICK_CMPREG      0   /* generate timer interrupt */
+#define OS_TICK_COUNTER     1   /* capture current timer value */
+#define OS_TICK_PRESCALER   4   /* prescaler to generate 1MHz timer freq */
 #define TIMER_LT(__t1, __t2)    ((int32_t)((__t1) - (__t2)) < 0)
 
 static int timer_ticks_per_ostick;
@@ -34,7 +34,7 @@ static os_time_t nrf52_max_idle_ticks;
 static uint32_t lastocmp;
 
 static inline uint32_t
-nrf52_callout_counter(void)
+nrf52_os_tick_counter(void)
 {
     /*
      * Make sure we are not interrupted between invoking the capture task
@@ -45,19 +45,19 @@ nrf52_callout_counter(void)
     /*
      * Capture the current timer value and return it.
      */
-    CALLOUT_TIMER->TASKS_CAPTURE[CALLOUT_COUNTER] = 1;
-    return (CALLOUT_TIMER->CC[CALLOUT_COUNTER]);
+    OS_TICK_TIMER->TASKS_CAPTURE[OS_TICK_COUNTER] = 1;
+    return (OS_TICK_TIMER->CC[OS_TICK_COUNTER]);
 }
 
 static inline void
-nrf52_callout_set_ocmp(uint32_t ocmp)
+nrf52_os_tick_set_ocmp(uint32_t ocmp)
 {
     uint32_t counter;
 
     OS_ASSERT_CRITICAL();
     while (1) {
-        CALLOUT_TIMER->CC[CALLOUT_CMPREG] = ocmp;
-        counter = nrf52_callout_counter();
+        OS_TICK_TIMER->CC[OS_TICK_CMPREG] = ocmp;
+        counter = nrf52_os_tick_counter();
         if (TIMER_LT(counter, ocmp)) {
             break;
         }
@@ -77,18 +77,18 @@ nrf52_timer_handler(void)
     /*
      * Calculate elapsed ticks and advance OS time.
      */
-    counter = nrf52_callout_counter();
+    counter = nrf52_os_tick_counter();
     ticks = (counter - lastocmp) / timer_ticks_per_ostick;
     os_time_advance(ticks);
 
     /* Clear timer interrupt */
-    CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG] = 0;
+    OS_TICK_TIMER->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
 
     /* Update the time associated with the most recent tick */
     lastocmp += ticks * timer_ticks_per_ostick;
 
     /* Update the output compare to interrupt at the next tick */
-    nrf52_callout_set_ocmp(lastocmp + timer_ticks_per_ostick);
+    nrf52_os_tick_set_ocmp(lastocmp + timer_ticks_per_ostick);
 
     OS_EXIT_CRITICAL(sr);
 }
@@ -108,7 +108,7 @@ os_tick_idle(os_time_t ticks)
             ticks = nrf52_max_idle_ticks;
         }
         ocmp = lastocmp + ticks * timer_ticks_per_ostick;
-        nrf52_callout_set_ocmp(ocmp);
+        nrf52_os_tick_set_ocmp(ocmp);
     }
 
     __DSB();
@@ -131,28 +131,28 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 
     /*
      * The maximum number of timer ticks allowed to elapse during idle is
-     * limited to 1/4th the number of timer ticks before the counter rolls
-     * over.
+     * limited to 1/4th the number of timer ticks before the 32-bit counter
+     * rolls over.
      */
     nrf52_max_idle_ticks = (1UL << 30) / timer_ticks_per_ostick;
 
     /*
-     * Program CALLOUT_TIMER to operate at 1MHz and trigger an output
+     * Program OS_TICK_TIMER to operate at 1MHz and trigger an output
      * compare interrupt at a rate of 'os_ticks_per_sec'.
      */
-    CALLOUT_TIMER->TASKS_STOP = 1;
-    CALLOUT_TIMER->TASKS_CLEAR = 1;
-    CALLOUT_TIMER->MODE = TIMER_MODE_MODE_Timer;
-    CALLOUT_TIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
-    CALLOUT_TIMER->PRESCALER = CALLOUT_PRESCALER;
+    OS_TICK_TIMER->TASKS_STOP = 1;
+    OS_TICK_TIMER->TASKS_CLEAR = 1;
+    OS_TICK_TIMER->MODE = TIMER_MODE_MODE_Timer;
+    OS_TICK_TIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    OS_TICK_TIMER->PRESCALER = OS_TICK_PRESCALER;
 
-    CALLOUT_TIMER->CC[CALLOUT_CMPREG] = timer_ticks_per_ostick;
-    CALLOUT_TIMER->INTENSET = TIMER_COMPARE_INT_MASK(CALLOUT_CMPREG);
-    CALLOUT_TIMER->EVENTS_COMPARE[CALLOUT_CMPREG] = 0;
+    OS_TICK_TIMER->CC[OS_TICK_CMPREG] = timer_ticks_per_ostick;
+    OS_TICK_TIMER->INTENSET = TIMER_COMPARE_INT_MASK(OS_TICK_CMPREG);
+    OS_TICK_TIMER->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
 
-    NVIC_SetPriority(CALLOUT_IRQ, prio);
-    NVIC_SetVector(CALLOUT_IRQ, (uint32_t)nrf52_timer_handler);
-    NVIC_EnableIRQ(CALLOUT_IRQ);
+    NVIC_SetPriority(OS_TICK_IRQ, prio);
+    NVIC_SetVector(OS_TICK_IRQ, (uint32_t)nrf52_timer_handler);
+    NVIC_EnableIRQ(OS_TICK_IRQ);
 
-    CALLOUT_TIMER->TASKS_START = 1;     /* start the callout timer */
+    OS_TICK_TIMER->TASKS_START = 1;     /* start the os tick timer */
 }
