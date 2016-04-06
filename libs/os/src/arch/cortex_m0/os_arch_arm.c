@@ -19,7 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
-
+#include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 
 /*
@@ -38,7 +38,7 @@ extern void SysTick_Handler(void);
  * higher priority exception will interrupt a lower priority exception.
  */
 #define PEND_SV_PRIO    ((1 << __NVIC_PRIO_BITS) - 1)
-#define SYSTICK_PRIO    (PEND_SV_PRIO - 1)
+#define OS_TICK_PRIO    (PEND_SV_PRIO - 1)
 
 /* Make the SVC instruction highest priority */
 #define SVC_PRIO        (1)
@@ -253,7 +253,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_bsp_systick_init(OS_TICKS_PER_SEC, SYSTICK_PRIO);
+    os_tick_init(OS_TICKS_PER_SEC, OS_TICK_PRIO);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
