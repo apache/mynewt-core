@@ -38,6 +38,9 @@
 int
 json_encode_object_start(struct json_encoder *encoder)
 {
+    if (encoder->je_has_objects) {
+        encoder->je_write(encoder->je_arg, ",", sizeof(",")-1);
+    }
     JSON_ENCODE_OBJECT_START(encoder);
     encoder->je_has_objects = 0;
 
