@@ -17,11 +17,33 @@
  * under the License.
  */
 
-#ifndef __MCU_CORTEX_M4_H__
-#define __MCU_CORTEX_M4_H__
+#include <assert.h>
+#include <os/os.h>
+#include <hal/hal_os_tick.h>
 
-#include "mcu/stm32f4xx.h"
+/*
+ * XXX implement tickless mode.
+ */
+void
+os_tick_idle(os_time_t ticks)
+{
+    OS_ASSERT_CRITICAL();
+    __DSB();
+    __WFI();
+}
 
-#define OS_TICKS_PER_SEC    (1000)
+void
+os_tick_init(uint32_t os_ticks_per_sec, int prio)
+{
+    uint32_t reload_val;
 
-#endif /* __MCU_CORTEX_M4_H__ */
+    reload_val = ((uint64_t)SystemCoreClock / os_ticks_per_sec) - 1;
+
+    /* Set the system time ticker up */
+    SysTick->LOAD = reload_val;
+    SysTick->VAL = 0;
+    SysTick->CTRL = 0x0007;
+
+    /* Set the system tick priority */
+    NVIC_SetPriority(SysTick_IRQn, prio);
+}
