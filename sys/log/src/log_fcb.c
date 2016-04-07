@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifdef FCB_PRESENT
 #include <string.h>
 
 #include <os/os.h>
@@ -125,3 +126,4 @@ log_fcb_handler_init(struct log_handler *handler, struct fcb *fcb)
 
     return 0;
 }
+#endif
