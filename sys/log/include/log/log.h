@@ -141,6 +141,8 @@ int log_flush(struct log *log);
 /* Handler exports */
 int log_cbmem_handler_init(struct log_handler *, struct cbmem *);
 int log_console_handler_init(struct log_handler *);
+struct fcb;
+int log_fcb_handler_init(struct log_handler *handler, struct fcb *fcb);
 
 /* Private */
 #ifdef NEWTMGR_PRESENT
