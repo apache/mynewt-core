@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <util/util.h>
 #include <hal/flash_map.h>
 
 static struct flash_area bsp_flash_areas[] = {
