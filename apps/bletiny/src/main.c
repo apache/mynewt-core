@@ -952,12 +952,6 @@ bletiny_on_l2cap_update(int status, void *arg)
 }
 
 static void
-bletiny_on_wl_set(int status, void *arg)
-{
-    console_printf("white list set status=%d\n", status);
-}
-
-static void
 bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
                  void *arg)
 {
@@ -1223,8 +1217,7 @@ bletiny_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
 {
     int rc;
 
-    rc = ble_gap_wl_set(white_list, white_list_count, bletiny_on_wl_set,
-                        NULL);
+    rc = ble_gap_wl_set(white_list, white_list_count);
     return rc;
 }
 
