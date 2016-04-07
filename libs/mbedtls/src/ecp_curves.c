@@ -771,6 +771,26 @@ int mbedtls_ecp_group_load( mbedtls_ecp_group *grp, mbedtls_ecp_group_id id )
     }
 }
 
+#if defined(MBEDTLS_ECP_DP_SECP224R1_ENABLED)
+int mbedtls_ecp_group_load_secp224r1( mbedtls_ecp_group *grp )
+{
+    mbedtls_ecp_group_free( grp );
+    grp->id = MBEDTLS_ECP_DP_SECP224R1;
+    NIST_MODP( p224 );
+    return( LOAD_GROUP( secp224r1 ) );
+}
+#endif
+
+#if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
+int mbedtls_ecp_group_load_secp256r1( mbedtls_ecp_group *grp )
+{
+    mbedtls_ecp_group_free( grp );
+    grp->id = MBEDTLS_ECP_DP_SECP256R1;
+    NIST_MODP( p256 );
+    return( LOAD_GROUP( secp256r1 ) );
+}
+#endif
+
 #if defined(MBEDTLS_ECP_NIST_OPTIM)
 /*
  * Fast reduction modulo the primes used by the NIST curves.

@@ -463,6 +463,9 @@ int mbedtls_ecp_tls_write_point( const mbedtls_ecp_group *grp, const mbedtls_ecp
  */
 int mbedtls_ecp_group_load( mbedtls_ecp_group *grp, mbedtls_ecp_group_id index );
 
+int mbedtls_ecp_group_load_secp224r1( mbedtls_ecp_group *grp );
+int mbedtls_ecp_group_load_secp256r1( mbedtls_ecp_group *grp );
+
 /**
  * \brief           Set a group from a TLS ECParameters record
  *
