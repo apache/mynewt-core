@@ -34,7 +34,7 @@
  */
 
 static int log_nmgr_read(struct nmgr_jbuf *njb);
-
+static int log_nmgr_clear(struct nmgr_jbuf *njb);
 static struct nmgr_group log_nmgr_group;
 
 #define LOGS_NMGR_ID_READ  (0)
@@ -45,7 +45,7 @@ static struct nmgr_group log_nmgr_group;
  */
 static struct nmgr_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_ID_READ] = {log_nmgr_read, log_nmgr_read},
-    [LOGS_NMGR_OP_CLEAR] = {NULL, NULL}, /* Stub */
+    [LOGS_NMGR_OP_CLEAR] = {log_nmgr_clear, log_nmgr_clear}
 };
 
 static int
@@ -134,6 +134,41 @@ log_nmgr_read(struct nmgr_jbuf *njb)
 err:
     nmgr_jbuf_setoerr(njb, rc);
     return (0);
+}
+
+static int
+log_nmgr_clear(struct nmgr_jbuf *njb)
+{
+    struct log *log;
+    int rc;
+    struct json_encoder *encoder;
+
+    log = NULL;
+    while (1) {
+        log = log_list_get_next(log);
+        if (log == NULL) {
+            break;
+        }
+
+        if (log->l_log->log_type == LOG_TYPE_STREAM) {
+            continue;
+        }
+
+        rc = log_flush(log);
+        if (rc != 0) {
+            goto err;
+        }
+    }
+
+    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+
+    json_encode_object_start(encoder);
+    json_encode_object_finish(encoder);
+
+    return 0;
+err:
+    nmgr_jbuf_setoerr(njb, rc);
+    return (rc);
 }
 
 /**
