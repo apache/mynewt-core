@@ -32,7 +32,13 @@ pkg.deps.SHELL:
     - libs/shell
 pkg.deps.NEWTMGR:
     - libs/newtmgr
+pkg.deps.FCB:
+    - hw/hal
+    - sys/fcb
+pkg.deps.TEST:
+    - sys/fcb
 pkg.req_apis.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT
 pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
+pkg.cflags.FCB: -DFCB_PRESENT

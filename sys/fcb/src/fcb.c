@@ -105,6 +105,13 @@ fcb_free_sector_cnt(struct fcb *fcb)
     return i;
 }
 
+int
+fcb_is_empty(struct fcb *fcb)
+{
+    return (fcb->f_active.fe_area == fcb->f_oldest &&
+      fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
+}
+
 /*
  * Length of an element is encoded in 1 or 2 bytes.
  * 1 byte for lengths < 128 bytes, and 2 bytes for < 16384.

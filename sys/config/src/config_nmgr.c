@@ -94,6 +94,11 @@ conf_nmgr_write(struct nmgr_jbuf *njb)
     if (rc) {
         return OS_EINVAL;
     }
+
+    rc = conf_commit(NULL);
+    if (rc) {
+        return OS_EINVAL;
+    }
     return 0;
 }
 

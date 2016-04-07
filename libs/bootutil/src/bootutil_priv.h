@@ -71,5 +71,8 @@ int boot_write_status(const struct boot_status *status,
                       int num_areas);
 void boot_clear_status(void);
 
+int bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
+    uint8_t key_id);
+
 #endif
 

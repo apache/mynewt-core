@@ -107,4 +107,9 @@ int fcb_append_to_scratch(struct fcb *);
  */
 int fcb_free_sector_cnt(struct fcb *fcb);
 
+/*
+ * Whether FCB has any data.
+ */
+int fcb_is_empty(struct fcb *fcb);
+
 #endif /* __SYS_FLASHVAR_H_ */
