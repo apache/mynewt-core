@@ -53,6 +53,7 @@ extern void os_arch_frame_init(struct stack_frame *sf);
 
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
+static pid_t mypid;
 static sigset_t allsigs, nosigs;
 static void timer_handler(int sig);
 
@@ -96,14 +97,32 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 }
 
 void
-os_arch_ctx_sw(struct os_task *next_t)  
+os_arch_ctx_sw(struct os_task *next_t)
 {
-    struct os_task *t;
+    /*
+     * gdb will stop execution of the program on most signals (e.g. SIGUSR1)
+     * whereas it passes SIGURG to the process without any special settings.
+     */
+    kill(mypid, SIGURG);
+}
+
+static void
+ctxsw_handler(int sig)
+{
+    struct os_task *t, *next_t;
     struct stack_frame *sf; 
     int rc;
 
     OS_ASSERT_CRITICAL();
     t = os_sched_get_current_task();
+    next_t = os_sched_next_task();
+    if (t == next_t) {
+        /*
+         * Context switch not needed - just return.
+         */
+        return;
+    }
+
     if (t) {
         sf = (struct stack_frame *) t->t_stackptr;
 
@@ -223,6 +242,7 @@ static struct {
     void (*handler)(int sig);
 } signals[] = {
     { SIGALRM, timer_handler },
+    { SIGURG, ctxsw_handler },
 };
 
 #define NUMSIGS     (sizeof(signals)/sizeof(signals[0]))
@@ -332,6 +352,7 @@ stop_timer(void)
 os_error_t 
 os_arch_os_init(void)
 {
+    mypid = getpid();
     g_current_task = NULL;
 
     TAILQ_INIT(&g_os_task_list);
