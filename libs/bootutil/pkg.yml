@@ -32,4 +32,5 @@ pkg.deps:
     - libs/mbedtls
     - hw/hal
 
-pkg.cflags.IMAGE_KEYS: -DIMAGE_SIGNATURES
+pkg.cflags.IMAGE_KEYS_RSA: -DIMAGE_SIGNATURES_RSA
+pkg.cflags.IMAGE_KEYS_EC: -DIMAGE_SIGNATURES_EC
