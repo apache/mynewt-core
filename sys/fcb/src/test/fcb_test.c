@@ -95,7 +95,6 @@ TEST_CASE(fcb_test_init)
     TEST_ASSERT(rc == FCB_ERR_ARGS);
 
     fcb->f_sectors = test_fcb_area;
-    fcb->f_sector_cnt = 1;
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == FCB_ERR_ARGS);
