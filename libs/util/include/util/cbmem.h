@@ -24,7 +24,7 @@
 struct cbmem_entry_hdr {
     uint16_t ceh_len;
     uint16_t ceh_flags;
-};
+} __attribute__((packed));
 
 struct cbmem {
     struct os_mutex c_lock;
