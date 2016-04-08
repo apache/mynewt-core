@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -46,6 +46,7 @@ int init_tasks(void);
 /* Task 1 */
 #define TASK1_PRIO (1)
 #define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
+#define MAX_CBMEM_BUF 600
 struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
@@ -65,7 +66,7 @@ os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
-struct log_handler log_console_handler;
+struct log_handler log_cbmem_handler;
 struct log my_log;
 
 static volatile int g_task2_loops;
@@ -102,6 +103,8 @@ static struct conf_handler test_conf_handler = {
 static uint8_t test8;
 static uint8_t test8_shadow;
 static char test_str[32];
+static uint32_t cbmem_buf[MAX_CBMEM_BUF];
+struct cbmem cbmem;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -153,6 +156,7 @@ void
 task1_handler(void *arg)
 {
     struct os_task *t;
+    int prev_pin_state, curr_pin_state;
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
@@ -168,7 +172,10 @@ task1_handler(void *arg)
         os_time_delay(1000);
 
         /* Toggle the LED */
-        hal_gpio_toggle(g_led_pin);
+        prev_pin_state = hal_gpio_read(g_led_pin);
+        curr_pin_state = hal_gpio_toggle(g_led_pin);
+        LOG_INFO(&my_log, LOG_MODULE_DEFAULT, "GPIO toggle from %u to %u",
+            prev_pin_state, curr_pin_state);
 
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
@@ -246,21 +253,21 @@ main(int argc, char **argv)
 
 
     log_init();
-
-    log_console_handler_init(&log_console_handler);
-    log_register("log", &my_log, &log_console_handler);
+    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
+    log_cbmem_handler_init(&log_cbmem_handler, &cbmem);
+    log_register("log", &my_log, &log_cbmem_handler);
 
     LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bla");
     LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bab");
 
     os_init();
 
-    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS, 
-            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data, 
+    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
+            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data,
             "default_mbuf_data");
     assert(rc == 0);
 
-    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool, 
+    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
             DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
     assert(rc == 0);
 
@@ -299,7 +306,7 @@ main(int argc, char **argv)
     stats_module_init();
 
     flash_test_init();
-    
+
     rc = init_tasks();
     os_start();
 

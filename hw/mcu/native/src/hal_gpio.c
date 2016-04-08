@@ -81,7 +81,7 @@ void hal_gpio_write(int pin, int val)
         return;
     }
     hal_gpio[pin].val = (val != 0);
-    printf("hal_gpio set pin %2d to %1d\r", pin, hal_gpio[pin].val); 
+    printf("hal_gpio set pin %2d to %1d\r", pin, hal_gpio[pin].val);
     fflush(stdout);
 }
 
@@ -94,8 +94,10 @@ hal_gpio_read(int pin)
     return hal_gpio[pin].val;
 }
 
-void
+int
 hal_gpio_toggle(int pin)
 {
-    hal_gpio_write(pin, hal_gpio_read(pin) != 1);
+    int pin_state = (hal_gpio_read(pin) != 1);
+    hal_gpio_write(pin, pin_state);
+    return pin_state;
 }

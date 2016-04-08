@@ -44,7 +44,7 @@ enum gpio_pull
 typedef enum gpio_pull gpio_pull_t;
 
 /*
- * IRQ trigger type. 
+ * IRQ trigger type.
  */
 enum gpio_irq_trigger
 {
@@ -61,78 +61,80 @@ typedef enum gpio_irq_trigger gpio_irq_trig_t;
 typedef void (*gpio_irq_handler_t)(void *arg);
 
 /**
- * gpio init in 
- *  
- * Initializes the specified pin as an input 
- * 
+ * gpio init in
+ *
+ * Initializes the specified pin as an input
+ *
  * @param pin   Pin number to set as input
  * @param pull  pull type
- * 
- * @return int  0: no error; -1 otherwise. 
+ *
+ * @return int  0: no error; -1 otherwise.
  */
 int hal_gpio_init_in(int pin, gpio_pull_t pull);
 
 /**
- * gpio init out 
- *  
- * Initialize the specified pin as an output, setting the pin to the specified 
- * value. 
- * 
+ * gpio init out
+ *
+ * Initialize the specified pin as an output, setting the pin to the specified
+ * value.
+ *
  * @param pin Pin number to set as output
  * @param val Value to set pin
- * 
- * @return int  0: no error; -1 otherwise. 
+ *
+ * @return int  0: no error; -1 otherwise.
  */
 int hal_gpio_init_out(int pin, int val);
 
 /**
- * gpio set 
- *  
- * Sets specified pin to 1 (high) 
- * 
- * @param pin 
+ * gpio set
+ *
+ * Sets specified pin to 1 (high)
+ *
+ * @param pin
  */
 void hal_gpio_set(int pin);
 
 /**
  * gpio clear
- *  
- * Sets specified pin to 0 (low). 
- * 
- * @param pin 
+ *
+ * Sets specified pin to 0 (low).
+ *
+ * @param pin
  */
 void hal_gpio_clear(int pin);
 
 /**
- * gpio write 
- *  
+ * gpio write
+ *
  * Write a value (either high or low) to the specified pin.
- * 
+ *
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
 void hal_gpio_write(int pin, int val);
 
 /**
- * gpio read 
- *  
- * Reads the specified pin. 
- *  
- *  
+ * gpio read
+ *
+ * Reads the specified pin.
+ *
+ *
  * @param pin Pin number to read
- * 
+ *
  * @return int 0: low, 1: high
  */
 int hal_gpio_read(int pin);
 
 /**
- * gpio toggle 
- *  
+ * gpio toggle
+ *
  * Toggles the specified pin
- * 
+ *
  * @param pin Pin number to toggle
+ *
+ * @return current gpio state int 0: low, 1: high
  */
-void hal_gpio_toggle(int pin);
+int hal_gpio_toggle(int pin);
 
 int hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
                       gpio_irq_trig_t trig, gpio_pull_t pull);
