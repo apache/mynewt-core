@@ -34,7 +34,7 @@ fcb_walk(struct fcb *fcb, struct flash_area *fap, fcb_walk_cb cb, void *cb_arg)
     loc.fe_elem_off = 0;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
-    if (rc != OS_NOT_STARTED) {
+    if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
     while ((rc = fcb_getnext_nolock(fcb, &loc)) != FCB_ERR_NOVAR) {

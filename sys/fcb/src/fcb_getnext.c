@@ -122,7 +122,7 @@ fcb_getnext(struct fcb *fcb, struct fcb_entry *loc)
     int rc;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
-    if (rc != OS_NOT_STARTED) {
+    if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
     rc = fcb_getnext_nolock(fcb, loc);

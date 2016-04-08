@@ -27,7 +27,7 @@ fcb_rotate(struct fcb *fcb)
     int rc = 0;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
-    if (rc != OS_NOT_STARTED) {
+    if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
 
