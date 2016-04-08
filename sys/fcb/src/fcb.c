@@ -34,7 +34,7 @@ fcb_init(struct fcb *fcb)
     struct flash_area *oldest_fap = NULL, *newest_fap = NULL;
     struct fcb_disk_area fda;
 
-    if (!fcb->f_sectors || fcb->f_sector_cnt - fcb->f_scratch_cnt < 2) {
+    if (!fcb->f_sectors || fcb->f_sector_cnt - fcb->f_scratch_cnt < 1) {
         return FCB_ERR_ARGS;
     }
 
