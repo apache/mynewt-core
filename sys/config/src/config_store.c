@@ -74,16 +74,29 @@ conf_load(void)
     return conf_commit(NULL);
 }
 
-static void
-conf_store_one(struct conf_handler *ch, char *name, char *value)
+/*
+ * Append a sigle value to persisted config.
+ */
+int
+conf_save_one(struct conf_handler *ch, char *name, char *value)
 {
     struct conf_store *cs;
 
     cs = conf_save_dst;
     if (!cs) {
-        return;
+        return OS_ENOENT;
     }
-    cs->cs_itf->csi_save(cs, ch, name, value);
+    return cs->cs_itf->csi_save(cs, ch, name, value);
+}
+
+/*
+ * Walk through all registered subsystems, and ask them to export their
+ * config variables. Persist these settings.
+ */
+static void
+conf_store_one(struct conf_handler *ch, char *name, char *value)
+{
+    conf_save_one(ch, name, value);
 }
 
 int

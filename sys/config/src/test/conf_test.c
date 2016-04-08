@@ -557,6 +557,40 @@ TEST_CASE(config_test_save_in_file)
     TEST_ASSERT(rc == 0);
 }
 
+TEST_CASE(config_test_save_one_file)
+{
+    int rc;
+    struct conf_file cf;
+
+    config_wipe_srcs();
+    rc = fs_mkdir("/config");
+    TEST_ASSERT(rc == 0 || rc == FS_EEXIST);
+
+    cf.cf_name = "/config/blah";
+    rc = conf_file_src(&cf);
+    TEST_ASSERT(rc == 0);
+    rc = conf_file_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    val8 = 33;
+    rc = conf_save();
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_save_one(&config_test_handler, "mybar", "42");
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_load();
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(val8 == 42);
+
+    rc = conf_save_one(&config_test_handler, "mybar", "44");
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_load();
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(val8 == 44);
+}
+
 struct flash_area fcb_areas[] = {
     [0] = {
         .fa_off = 0x00000000,
@@ -801,16 +835,60 @@ TEST_CASE(config_test_compress_reset)
 
     TEST_ASSERT(fcb_free_sector_cnt(&cf.cf_fcb) == 1);
     TEST_ASSERT(fa == cf.cf_fcb.f_active.fe_area);
+
+    c2_var_count = 0;
+}
+
+TEST_CASE(config_test_save_one_fcb)
+{
+    int rc;
+    struct conf_fcb cf;
+
+    config_wipe_srcs();
+    config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
+
+    cf.cf_fcb.f_sectors = fcb_areas;
+    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+
+    rc = conf_fcb_src(&cf);
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_fcb_dst(&cf);
+    TEST_ASSERT(rc == 0);
+
+    val8 = 33;
+    rc = conf_save();
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_save_one(&config_test_handler, "mybar", "42");
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_load();
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(val8 == 42);
+
+    rc = conf_save_one(&config_test_handler, "mybar", "44");
+    TEST_ASSERT(rc == 0);
+
+    rc = conf_load();
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(val8 == 44);
 }
 
 TEST_SUITE(config_test_all)
 {
+    /*
+     * Config tests.
+     */
     config_empty_lookups();
     config_test_insert();
     config_test_getset_unknown();
     config_test_getset_int();
     config_test_commit();
 
+    /*
+     * NFFS as backing storage.
+     */
     config_setup_nffs();
     config_test_empty_file();
     config_test_small_file();
@@ -818,6 +896,11 @@ TEST_SUITE(config_test_all)
 
     config_test_save_in_file();
 
+    config_test_save_one_file();
+
+    /*
+     * FCB as backing storage.
+     */
     config_test_empty_fcb();
     config_test_save_1_fcb();
 
@@ -829,5 +912,7 @@ TEST_SUITE(config_test_all)
     config_test_save_3_fcb();
 
     config_test_compress_reset();
+
+    config_test_save_one_fcb();
 }
 

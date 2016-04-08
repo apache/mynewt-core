@@ -182,8 +182,10 @@ conf_file_save(struct conf_store *cs, struct conf_handler *ch,
   char *name, char *value)
 {
     struct conf_file *cf = (struct conf_file *)cs;
+    struct fs_file *file;
     char buf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
     int len;
+    int rc;
 
     if (!name) {
         return OS_INVALID_PARM;
@@ -195,10 +197,25 @@ conf_file_save(struct conf_store *cs, struct conf_handler *ch,
     }
     buf[len++] = '\n';
 
-    if (fs_write(cf->cf_save_fp, buf, len)) {
-        return OS_EINVAL;
+    if (cf->cf_save_fp) {
+        file = cf->cf_save_fp;
+    } else {
+        /*
+         * Open the file to add this one value.
+         */
+        if (fs_open(cf->cf_name, FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file)) {
+            return OS_EINVAL;
+        }
     }
-    return OS_OK;
+    if (fs_write(file, buf, len)) {
+        rc = OS_EINVAL;
+    } else {
+        rc = 0;
+    }
+    if (!cf->cf_save_fp) {
+        fs_close(file);
+    }
+    return rc;
 }
 
 static int

@@ -57,6 +57,8 @@ int conf_register(struct conf_handler *);
 int conf_load(void);
 
 int conf_save(void);
+int conf_save_one(struct conf_handler *, char *name, char *var);
+
 /*
   XXXX for later
   int conf_save_lib(char *name);
