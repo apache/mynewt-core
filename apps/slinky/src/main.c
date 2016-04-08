@@ -88,12 +88,15 @@ struct os_mempool default_mbuf_mpool;
 static char *test_conf_get(int argc, char **argv, char *val, int max_len);
 static int test_conf_set(int argc, char **argv, char *val);
 static int test_conf_commit(void);
+static int test_conf_export(void (*export_func)(struct conf_handler *ch,
+        char *name, char *val));
 
 static struct conf_handler test_conf_handler = {
     .ch_name = "test",
     .ch_get = test_conf_get,
     .ch_set = test_conf_set,
-    .ch_commit = test_conf_commit
+    .ch_commit = test_conf_commit,
+    .ch_export = test_conf_export
 };
 
 static uint8_t test8;
@@ -131,6 +134,18 @@ test_conf_commit(void)
 {
     test8 = test8_shadow;
 
+    return 0;
+}
+
+static int
+test_conf_export(void (*func)(struct conf_handler *ch,
+        char *name, char *val))
+{
+    char buf[4];
+
+    conf_str_from_value(CONF_INT8, &test8, buf, sizeof(buf));
+    func(&test_conf_handler, "8", buf);
+    func(&test_conf_handler, "str", test_str);
     return 0;
 }
 
