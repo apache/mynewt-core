@@ -36,20 +36,36 @@ static struct shell_cmd shell_conf_cmd = {
 };
 
 static void
-conf_dump_one(struct conf_handler *ch, char *name, char *val)
+conf_running_one(struct conf_handler *ch, char *name, char *val)
 {
     console_printf("%s/%s = %s\n", ch->ch_name, name, val ? val : "<del>");
 }
 
 static void
-conf_dump(void)
+conf_dump_running(void)
 {
     struct conf_handler *ch;
 
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
         if (ch->ch_export) {
-            ch->ch_export(conf_dump_one);
+            ch->ch_export(conf_running_one);
         }
+    }
+}
+
+static void
+conf_saved_one(char *name, char *val, void *cb_arg)
+{
+    console_printf("%s = %s\n", name, val ? val : "<del>");
+}
+
+static void
+conf_dump_saved(void)
+{
+    struct conf_store *cs;
+
+    SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
+        cs->cs_itf->csi_load(cs, conf_saved_one, NULL);
     }
 }
 
@@ -82,11 +98,16 @@ shell_conf_command(int argc, char **argv)
         }
         console_printf("%s", val);
         return 0;
-    }
-    if (!strcmp(name, "dump")) {
+    } else if (!strcmp(name, "dump")) {
         if (!val || !strcmp(val, "running")) {
-            conf_dump();
+            conf_dump_running();
         }
+        if (val && !strcmp(val, "saved")) {
+            conf_dump_saved();
+        }
+        return 0;
+    } else if (!strcmp(name, "save")) {
+        conf_save();
         return 0;
     }
     if (!val) {
