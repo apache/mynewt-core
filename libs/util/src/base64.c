@@ -166,3 +166,16 @@ base64_decode(const char *str, void *data)
     }
     return q - (unsigned char *) data;
 }
+
+
+int
+base64_decode_len(const char *str)
+{
+    int len;
+
+    len = strlen(str);
+    while (len && str[len - 1] == '=') {
+        len--;
+    }
+    return len * 3 / 4;
+}

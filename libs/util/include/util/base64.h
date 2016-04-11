@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,14 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __UTIL_BASE64_H 
-#define __UTIL_BASE64_H 
+#ifndef __UTIL_BASE64_H
+#define __UTIL_BASE64_H
 
 #include <stdint.h>
+#include <string.h>
 
 int base64_encode(const void *, int, char *, uint8_t);
 int base64_decode(const char *, void *buf);
 int base64_pad(char *, int);
+int base64_decode_len(const char *str);
 
 #define BASE64_ENCODE_SIZE(__size) (((__size) * (4 / 3)) + 4)
 
