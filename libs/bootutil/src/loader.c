@@ -587,33 +587,6 @@ boot_build_status(void)
 }
 
 /**
- * Initializes the flash driver and file system for use by the boot loader.
- *
- * @return                      0 on success; nonzero on failure.
- */
-static int
-boot_init_flash(void)
-{
-    int rc;
-
-    rc = nffs_init();
-    if (rc != 0) {
-        return BOOT_EFILE;
-    }
-
-    /* Look for an nffs file system in internal flash.  If no file system gets
-     * detected, all subsequent file operations will fail, but the boot loader
-     * should proceed anyway.
-     */
-    nffs_detect(&boot_req->br_area_descs[boot_req->br_nffs_area_idx]);
-
-    /* Create the boot directory if it doesn't already exist. */
-    fs_mkdir("/boot");
-
-    return 0;
-}
-
-/**
  * Prepares the booting process.  Based on the information provided in the
  * request object, this function moves images around in flash as appropriate,
  * and tells you what address to boot from.
@@ -637,11 +610,8 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
      */
     boot_req = req;
 
-    /* Initialize the flash hardware and the file system. */
-    rc = boot_init_flash();
-    if (rc != 0) {
-        return rc;
-    }
+    /* Create the boot directory if it doesn't already exist. */
+    fs_mkdir("/boot");
 
     /* Read the boot status to determine if an image copy operation was
      * interrupted (i.e., the system was reset before the boot loader could
