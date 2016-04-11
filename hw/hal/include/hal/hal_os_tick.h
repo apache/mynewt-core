@@ -16,14 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __MCU_SIM_H__
-#define __MCU_SIM_H__
+#ifndef _HAL_OS_TICK_H_
+#define _HAL_OS_TICK_H_
 
-#define OS_TICKS_PER_SEC    (1000)
+#include <os/os_time.h>
 
-extern char *native_flash_file;
-extern char *native_uart_log_file;
+/*
+ * Set up the periodic timer to interrupt at a frequency of 'os_ticks_per_sec'.
+ * 'prio' is the cpu-specific priority of the periodic timer interrupt.
+ */
+void os_tick_init(uint32_t os_ticks_per_sec, int prio);
 
-void mcu_sim_parse_args(int argc, char **argv);
+/*
+ * Halt CPU for up to 'n' ticks.
+ */
+void os_tick_idle(os_time_t n);
 
-#endif /* __MCU_SIM_H__ */
+#endif

@@ -266,6 +266,29 @@ os_sched_os_timer_exp(void)
     OS_EXIT_CRITICAL(sr); 
 }
 
+/*
+ * Return the number of ticks until the first sleep timer expires.If there are
+ * no such tasks then return OS_TIMEOUT_NEVER instead.
+ */
+os_time_t
+os_sched_wakeup_ticks(os_time_t now)
+{
+    os_time_t rt;
+    struct os_task *t;
+
+    OS_ASSERT_CRITICAL();
+
+    t = TAILQ_FIRST(&g_os_sleep_list);
+    if (t == NULL || (t->t_flags & OS_TASK_FLAG_NO_TIMEOUT)) {
+        rt = OS_TIMEOUT_NEVER;
+    } else if (OS_TIME_TICK_GEQ(t->t_next_wakeup, now)) {
+        rt = t->t_next_wakeup - now;   
+    } else {
+        rt = 0;     /* wakeup time was in the past */
+    }
+    return (rt);
+}
+
 /**
  * os sched next task 
  *  

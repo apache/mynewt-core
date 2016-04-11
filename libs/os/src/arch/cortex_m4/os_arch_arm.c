@@ -19,7 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
-
+#include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 
 /* Initial program status register */
@@ -30,7 +30,7 @@
  * higher priority exception will interrupt a lower priority exception.
  */
 #define PEND_SV_PRIO    ((1 << __NVIC_PRIO_BITS) - 1)
-#define SYSTICK_PRIO    (PEND_SV_PRIO - 1)
+#define OS_TICK_PRIO    (PEND_SV_PRIO - 1)
 
 /* Make the SVC instruction highest priority */
 #define SVC_PRIO        (1)
@@ -93,10 +93,7 @@ uint32_t os_flags = OS_RUN_PRIV;
 void
 timer_handler(void)
 {
-    os_time_tick();
-    os_callout_tick();
-    os_sched_os_timer_exp();
-    os_sched(NULL);
+    os_time_advance(1);
 }
 
 void
@@ -124,6 +121,15 @@ os_arch_restore_sr(os_sr_t isr_ctx)
     if (!isr_ctx) {
         __enable_irq();
     }
+}
+
+int
+os_arch_in_critical(void)
+{
+    uint32_t isr_ctx;
+
+    isr_ctx = __get_PRIMASK();
+    return (isr_ctx & 1);
 }
 
 os_stack_t *
@@ -227,29 +233,6 @@ os_arch_os_init(void)
     return err;
 }
 
-/**
- * os systick init
- *
- * Initializes systick for the MCU
- *
- * @param os_tick_usecs The number of microseconds in an os time tick
- */
-static void
-os_systick_init(uint32_t os_tick_usecs)
-{
-    uint32_t reload_val;
-
-    reload_val = (((uint64_t)SystemCoreClock * os_tick_usecs) / 1000000) - 1;
-
-    /* Set the system time ticker up */
-    SysTick->LOAD = reload_val;
-    SysTick->VAL = 0;
-    SysTick->CTRL = 0x0007;
-
-    /* Set the system tick priority */
-    NVIC_SetPriority(SysTick_IRQn, SYSTICK_PRIO);
-}
-
 uint32_t
 os_arch_start(void)
 {
@@ -263,7 +246,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_systick_init(1000000 / OS_TICKS_PER_SEC);
+    os_tick_init(OS_TICKS_PER_SEC, OS_TICK_PRIO);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
@@ -338,10 +321,4 @@ os_arch_os_start(void)
     }
 
     return err;
-}
-
-void
-os_arch_idle(void)
-{
-    return;
 }

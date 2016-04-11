@@ -22,4 +22,6 @@
 
 #include "mcu/stm32f4xx.h"
 
+#define OS_TICKS_PER_SEC    (1000)
+
 #endif /* __MCU_CORTEX_M4_H__ */

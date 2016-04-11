@@ -5432,6 +5432,8 @@
 /* Register: RTC_INTENSET */
 /* Description: Interrupt enable set register. */
 
+#define RTC_COMPARE_INT_MASK(ccreg) (1UL << ((ccreg) + 16))
+
 /* Bit 19 : Enable interrupt on COMPARE[3] event. */
 #define RTC_INTENSET_COMPARE3_Pos (19UL) /*!< Position of COMPARE3 field. */
 #define RTC_INTENSET_COMPARE3_Msk (0x1UL << RTC_INTENSET_COMPARE3_Pos) /*!< Bit mask of COMPARE3 field. */
@@ -6132,6 +6134,9 @@
 
 /* Register: TIMER_SHORTS */
 /* Description: Shortcuts for Timer. */
+
+#define TIMER_SHORTS_COMPARE_CLEAR(ccreg)   (1UL << (ccreg))
+#define TIMER_SHORTS_COMPARE_STOP(ccreg)    (1UL << ((ccreg) + 8))
 
 /* Bit 11 : Shortcut between CC[3] event and the STOP task. */
 #define TIMER_SHORTS_COMPARE3_STOP_Pos (11UL) /*!< Position of COMPARE3_STOP field. */

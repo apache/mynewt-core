@@ -29,9 +29,6 @@ struct os_task;
 #define OS_RUN_PRIV         (0)
 #define OS_RUN_UNPRIV       (1)
 
-/* Time tick in miliseconds that the OS runs */
-#define OS_TICKS_PER_SEC    (1000)
-
 /* CPU status register */
 typedef uint32_t os_sr_t;
 /* Stack type, aligned to a 32-bit word. */
@@ -45,7 +42,7 @@ typedef uint32_t os_stack_t;
  * Stack sizes for common OS tasks
  */
 #define OS_SANITY_STACK_SIZE (64)
-#define OS_IDLE_STACK_SIZE (32)
+#define OS_IDLE_STACK_SIZE (64)
 
 #define OS_STACK_ALIGN(__nmemb) \
     (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
@@ -54,12 +51,14 @@ typedef uint32_t os_stack_t;
 #define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr()) 
 /* Exit a critical section, restore processor state and unblock interrupts */
 #define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
+#define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
 
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
 void timer_handler(void);
 void os_arch_ctx_sw(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t);
+int os_arch_in_critical(void);
 void os_arch_init(void);
 uint32_t os_arch_start(void);
 os_error_t os_arch_os_init(void);
@@ -67,10 +66,9 @@ os_error_t os_arch_os_start(void);
 void os_set_env(void);
 void os_arch_init_task_stack(os_stack_t *sf);
 void os_default_irq_asm(void);
-void os_arch_idle(void);
 
 /* External function prototypes supplied by BSP */
-void os_bsp_systick_init(uint32_t os_ticks_per_sec);
+void os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio);
 void os_bsp_init(void);
 void os_bsp_ctx_sw(void);
 

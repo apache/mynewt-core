@@ -16,14 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __MCU_SIM_H__
-#define __MCU_SIM_H__
 
-#define OS_TICKS_PER_SEC    (1000)
+#include <assert.h>
+#include <os/os.h>
+#include <hal/hal_os_tick.h>
 
-extern char *native_flash_file;
-extern char *native_uart_log_file;
+/*
+ * XXX implement tickless mode.
+ */
+void
+os_tick_idle(os_time_t ticks)
+{
+    OS_ASSERT_CRITICAL();
+    __DSB();
+    __WFI();
+}
 
-void mcu_sim_parse_args(int argc, char **argv);
+void
+os_tick_init(uint32_t os_ticks_per_sec, int prio)
+{
+    uint32_t reload_val;
 
-#endif /* __MCU_SIM_H__ */
+    reload_val = ((uint64_t)SystemCoreClock / os_ticks_per_sec) - 1;
+
+    /* Set the system time ticker up */
+    SysTick->LOAD = reload_val;
+    SysTick->VAL = 0;
+    SysTick->CTRL = 0x0007;
+
+    /* Set the system tick priority */
+    NVIC_SetPriority(SysTick_IRQn, prio);
+}

@@ -51,12 +51,11 @@ extern void os_arch_frame_init(struct stack_frame *sf);
 #define sim_setjmp(__jb) sigsetjmp(__jb, 0)
 #define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret) 
 
-#define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
-
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
-static int os_arch_in_critical(void);
+static pid_t mypid;
 static sigset_t allsigs, nosigs;
+static void timer_handler(int sig);
 
 /*
  * Called from 'os_arch_frame_init()' when setjmp returns indirectly via
@@ -98,14 +97,32 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 }
 
 void
-os_arch_ctx_sw(struct os_task *next_t)  
+os_arch_ctx_sw(struct os_task *next_t)
 {
-    struct os_task *t;
+    /*
+     * gdb will stop execution of the program on most signals (e.g. SIGUSR1)
+     * whereas it passes SIGURG to the process without any special settings.
+     */
+    kill(mypid, SIGURG);
+}
+
+static void
+ctxsw_handler(int sig)
+{
+    struct os_task *t, *next_t;
     struct stack_frame *sf; 
     int rc;
 
     OS_ASSERT_CRITICAL();
     t = os_sched_get_current_task();
+    next_t = os_sched_next_task();
+    if (t == next_t) {
+        /*
+         * Context switch not needed - just return.
+         */
+        return;
+    }
+
     if (t) {
         sf = (struct stack_frame *) t->t_stackptr;
 
@@ -162,7 +179,7 @@ os_arch_restore_sr(os_sr_t osr)
     assert(error == 0);
 }
 
-static int
+int
 os_arch_in_critical(void)
 {
     int error;
@@ -179,18 +196,53 @@ os_arch_in_critical(void)
 }
 
 void
-os_arch_idle(void)
+os_tick_idle(os_time_t ticks)
 {
-    sigsuspend(&nosigs);        /* Wait for a signal to wake us up */
-}
+    int rc;
+    struct itimerval it;
 
-static void timer_handler(int sig);
+    OS_ASSERT_CRITICAL();
+
+    if (ticks > 0) {
+        /*
+         * Enter tickless regime and set the timer to fire after 'ticks'
+         * worth of time has elapsed.
+         */
+        it.it_value.tv_sec = ticks / OS_TICKS_PER_SEC;
+        it.it_value.tv_usec = (ticks % OS_TICKS_PER_SEC) * OS_USEC_PER_TICK;
+        it.it_interval.tv_sec = 0;
+        it.it_interval.tv_usec = OS_USEC_PER_TICK;
+        rc = setitimer(ITIMER_REAL, &it, NULL);
+        assert(rc == 0);
+    }
+
+    sigsuspend(&nosigs);        /* Wait for a signal to wake us up */
+
+    if (ticks > 0) {
+        /*
+         * Update OS time before anything else when coming out of
+         * the tickless regime.
+         */
+        timer_handler(SIGALRM);
+
+        /*
+         * Enable the periodic timer interrupt.
+         */
+        it.it_value.tv_sec = 0;
+        it.it_value.tv_usec = OS_USEC_PER_TICK;
+        it.it_interval.tv_sec = 0;
+        it.it_interval.tv_usec = OS_USEC_PER_TICK;
+        rc = setitimer(ITIMER_REAL, &it, NULL);
+        assert(rc == 0);
+    }
+}
 
 static struct {
     int num;
     void (*handler)(int sig);
 } signals[] = {
     { SIGALRM, timer_handler },
+    { SIGURG, ctxsw_handler },
 };
 
 #define NUMSIGS     (sizeof(signals)/sizeof(signals[0]))
@@ -258,11 +310,6 @@ timer_handler(int sig)
     ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
     ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
 
-    while (--ticks >= 0) {
-        os_time_tick();
-        os_callout_tick();
-    }
-
     /*
      * Update 'time_last' but account for the remainder usecs that did not
      * contribute towards whole 'ticks'.
@@ -271,8 +318,7 @@ timer_handler(int sig)
     time_diff.tv_usec %= OS_USEC_PER_TICK;
     timersub(&time_now, &time_diff, &time_last);
 
-    os_sched_os_timer_exp();
-    os_sched(NULL);
+    os_time_advance(ticks);
 }
 
 static void
@@ -306,6 +352,7 @@ stop_timer(void)
 os_error_t 
 os_arch_os_init(void)
 {
+    mypid = getpid();
     g_current_task = NULL;
 
     TAILQ_INIT(&g_os_task_list);

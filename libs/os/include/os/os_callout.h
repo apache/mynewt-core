@@ -44,6 +44,7 @@ void os_callout_func_init(struct os_callout_func *cf, struct os_eventq *evq,
 void os_callout_stop(struct os_callout *);
 int os_callout_reset(struct os_callout *, int32_t);
 void os_callout_tick(void);
+os_time_t os_callout_wakeup_ticks(os_time_t now);
 
 static inline int
 os_callout_queued(struct os_callout *c)

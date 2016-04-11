@@ -19,11 +19,8 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
-
+#include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
-
-/* XXX*/
-extern void system_os_tick_init(uint32_t os_ticks_per_sec);
 
 /*
  * From HAL_CM0.s
@@ -41,7 +38,7 @@ extern void SysTick_Handler(void);
  * higher priority exception will interrupt a lower priority exception.
  */
 #define PEND_SV_PRIO    ((1 << __NVIC_PRIO_BITS) - 1)
-#define SYSTICK_PRIO    (PEND_SV_PRIO - 1)
+#define OS_TICK_PRIO    (PEND_SV_PRIO - 1)
 
 /* Make the SVC instruction highest priority */
 #define SVC_PRIO        (1)
@@ -104,10 +101,7 @@ uint32_t os_flags = OS_RUN_PRIV;
 void
 timer_handler(void)
 {
-    os_time_tick();
-    os_callout_tick();
-    os_sched_os_timer_exp();
-    os_sched(NULL);
+    os_time_advance(1);
 }
 
 void
@@ -135,6 +129,15 @@ os_arch_restore_sr(os_sr_t isr_ctx)
     if (!isr_ctx) {
         __enable_irq();
     }
+}
+
+int
+os_arch_in_critical(void)
+{
+    uint32_t isr_ctx;
+
+    isr_ctx = __get_PRIMASK();
+    return (isr_ctx & 1);
 }
 
 os_stack_t *
@@ -250,7 +253,7 @@ os_arch_start(void)
     __set_PSP((uint32_t)t->t_stackptr + offsetof(struct stack_frame, r0));
 
     /* Intitialize and start system clock timer */
-    os_bsp_systick_init(OS_TICKS_PER_SEC);
+    os_tick_init(OS_TICKS_PER_SEC, OS_TICK_PRIO);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
@@ -325,10 +328,4 @@ os_arch_os_start(void)
     }
 
     return err;
-}
-
-void
-os_arch_idle(void)
-{
-    return;
 }

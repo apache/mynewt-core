@@ -20,6 +20,8 @@
 #include "os/os.h"
 #include "os/queue.h"
 
+#include "hal/hal_os_tick.h"
+
 #include <assert.h> 
 
 struct os_task g_idle_task; 
@@ -30,14 +32,37 @@ uint32_t g_os_idle_ctr;
  */
 int g_os_started; 
 
+#ifdef ARCH_sim
+#define MIN_IDLE_TICKS  1
+#else
+#define MIN_IDLE_TICKS  (100 * OS_TICKS_PER_SEC / 1000) /* 100 msec */
+#endif
+#define MAX_IDLE_TICKS  (600 * OS_TICKS_PER_SEC)        /* 10 minutes */
 
 void
 os_idle_task(void *arg)
 {
+    os_sr_t sr;
+    os_time_t now;
+    os_time_t iticks, sticks, cticks;
+
     /* For now, idle task simply increments a counter to show it is running. */
     while (1) {
         ++g_os_idle_ctr;
-        os_arch_idle();
+        OS_ENTER_CRITICAL(sr);
+        now = os_time_get();
+        sticks = os_sched_wakeup_ticks(now);
+        cticks = os_callout_wakeup_ticks(now);
+        iticks = min(sticks, cticks);
+        if (iticks < MIN_IDLE_TICKS) {
+            iticks = 0;
+        } else if (iticks > MAX_IDLE_TICKS) {
+            iticks = MAX_IDLE_TICKS;
+        } else {
+            /* NOTHING */
+        }
+        os_tick_idle(iticks);
+        OS_EXIT_CRITICAL(sr);
     }
 }
 
