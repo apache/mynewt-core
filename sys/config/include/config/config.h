@@ -71,8 +71,11 @@ int conf_commit(char *name);
 
 int conf_value_from_str(char *val_str, enum conf_type type, void *vp,
   int maxlen);
+int conf_bytes_from_str(char *val_str, void *vp, int *len);
 char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
   int buf_len);
+char *conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
+
 #define CONF_VALUE_SET(str, type, val)                                  \
     conf_value_from_str((str), (type), &(val), sizeof(val))
 

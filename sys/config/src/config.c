@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include <os/os.h>
+#include <util/base64.h>
 
 #include "config/config.h"
 #include "config_priv.h"
@@ -142,6 +143,22 @@ err:
     return OS_INVALID_PARM;
 }
 
+int
+conf_bytes_from_str(char *val_str, void *vp, int *len)
+{
+    int tmp;
+
+    if (base64_decode_len(val_str) > *len) {
+        return OS_INVALID_PARM;
+    }
+    tmp = base64_decode(val_str, vp);
+    if (tmp < 0) {
+        return OS_INVALID_PARM;
+    }
+    *len = tmp;
+    return 0;
+}
+
 char *
 conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
 {
@@ -166,6 +183,16 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
     default:
         return NULL;
     }
+}
+
+char *
+conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len)
+{
+    if (BASE64_ENCODE_SIZE(vp_len) > buf_len) {
+        return NULL;
+    }
+    base64_encode(vp, vp_len, buf, 1);
+    return buf;
 }
 
 int

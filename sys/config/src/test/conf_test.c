@@ -330,6 +330,36 @@ TEST_CASE(config_test_getset_int)
     ctest_clear_call_state();
 }
 
+TEST_CASE(config_test_getset_bytes)
+{
+    char orig[32];
+    char bytes[32];
+    char str[48];
+    char *ret;
+    int j, i;
+    int tmp;
+    int rc;
+
+    for (j = 1; j < sizeof(orig); j++) {
+        for (i = 0; i < j; i++) {
+            orig[i] = i + j + 1;
+        }
+        ret = conf_str_from_bytes(orig, j, str, sizeof(str));
+        TEST_ASSERT(ret);
+        tmp = strlen(str);
+        TEST_ASSERT(tmp < sizeof(str));
+
+        memset(bytes, 0, sizeof(bytes));
+        tmp = sizeof(bytes);
+
+        tmp = sizeof(bytes);
+        rc = conf_bytes_from_str(str, bytes, &tmp);
+        TEST_ASSERT(rc == 0);
+        TEST_ASSERT(tmp == j);
+        TEST_ASSERT(!memcmp(orig, bytes, j));
+    }
+}
+
 TEST_CASE(config_test_commit)
 {
     char name[80];
@@ -884,6 +914,8 @@ TEST_SUITE(config_test_all)
     config_test_insert();
     config_test_getset_unknown();
     config_test_getset_int();
+    config_test_getset_bytes();
+
     config_test_commit();
 
     /*
