@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,7 +20,7 @@
 #ifndef _NEWTMGR_H_
 #define _NEWTMGR_H_
 
-#include <json/json.h> 
+#include <json/json.h>
 #include <inttypes.h>
 #include <os/os.h>
 
@@ -40,24 +40,25 @@
 #define NMGR_OP_WRITE_RSP       (3)
 
 
-/** 
+/**
  * Newtmgr JSON error codes
  */
 #define NMGR_ERR_EOK      (0)
 #define NMGR_ERR_EUNKNOWN (1)
 #define NMGR_ERR_ENOMEM   (2)
 #define NMGR_ERR_EINVAL   (3)
-#define NMGR_ERR_ETIMEOUT (4) 
+#define NMGR_ERR_ETIMEOUT (4)
 #define NMGR_ERR_EPERUSER (256)
 
 
 /*
  * Id's for default group commands
  */
-#define NMGR_ID_ECHO	        0
+#define NMGR_ID_ECHO	          0
 #define NMGR_ID_CONS_ECHO_CTRL  1
 #define NMGR_ID_TASKSTATS       2
 #define NMGR_ID_MPSTATS         3
+#define NMGR_ID_DATETIME_STR    4
 
 struct nmgr_hdr {
     uint8_t nh_op;

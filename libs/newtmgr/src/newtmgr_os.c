@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -23,10 +23,11 @@
 #include <assert.h>
 
 #include <newtmgr/newtmgr.h>
+#include <util/datetime.h>
 
 #include <string.h>
 
-int 
+int
 nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
 {
     struct os_task *prev_task;
@@ -76,13 +77,13 @@ nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
     return (0);
 }
 
-int 
+int
 nmgr_def_taskstat_write(struct nmgr_jbuf *njb)
 {
     return (OS_EINVAL);
 }
 
-int 
+int
 nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
 {
     struct os_mempool *prev_mp;
@@ -121,8 +122,88 @@ nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
     return (0);
 }
 
-int 
+int
 nmgr_def_mpstat_write(struct nmgr_jbuf *njb)
 {
     return (OS_EINVAL);
+}
+
+int
+nmgr_datetime_get(struct nmgr_jbuf *njb)
+{
+    struct os_timeval tv;
+    struct os_timezone tz;
+    char buf[DATETIME_BUFSIZE];
+    struct json_value jv;
+    int rc;
+
+    json_encode_object_start(&njb->njb_enc);
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+
+    /* Display the current datetime */
+    rc = os_gettimeofday(&tv, &tz);
+    assert(rc == 0);
+    rc = format_datetime(&tv, &tz, buf, DATETIME_BUFSIZE);
+    if (rc) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    JSON_VALUE_STRING(&jv, buf)
+    json_encode_object_entry(&njb->njb_enc, "datetime", &jv);
+    json_encode_object_finish(&njb->njb_enc);
+
+    return OS_OK;
+err:
+    return (rc);
+}
+
+int
+nmgr_datetime_set(struct nmgr_jbuf *njb)
+{
+    struct os_timeval tv;
+    struct os_timezone tz;
+    struct json_value jv;
+    char buf[DATETIME_BUFSIZE];
+    int rc = OS_OK;
+    const struct json_attr_t datetime_write_attr[2] = {
+        [0] = {
+            .attribute = "datetime",
+            .type = t_string,
+            .addr.string = buf,
+            .len = sizeof(buf),
+        },
+        [1] = {
+            .attribute = "rc",
+            .type = t_uinteger,
+
+        }
+    };
+
+    rc = json_read_object(&njb->njb_buf, datetime_write_attr);
+    if (rc) {
+        rc = OS_EINVAL;
+        goto out;
+    }
+
+    /* Set the current datetime */
+    rc = parse_datetime(buf, &tv, &tz);
+    if (!rc) {
+        rc = os_settimeofday(&tv, &tz);
+        if (rc) {
+          rc = OS_EINVAL;
+          goto out;
+        }
+    } else {
+        rc = OS_EINVAL;
+        goto out;
+    }
+
+out:
+    json_encode_object_start(&njb->njb_enc);
+    JSON_VALUE_INT(&jv, rc);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    json_encode_object_finish(&njb->njb_enc);
+    return OS_OK;
 }
