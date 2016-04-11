@@ -109,6 +109,10 @@ main(void)
          */
         nffs_detect(nffs_descs);
     }
+
+    /* Create the boot directory if it doesn't already exist. */
+    fs_mkdir("/boot");
+
     log_init();
 
     rc = boot_go(&req, &rsp);

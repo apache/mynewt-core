@@ -610,9 +610,6 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
      */
     boot_req = req;
 
-    /* Create the boot directory if it doesn't already exist. */
-    fs_mkdir("/boot");
-
     /* Read the boot status to determine if an image copy operation was
      * interrupted (i.e., the system was reset before the boot loader could
      * finish its task last time).
