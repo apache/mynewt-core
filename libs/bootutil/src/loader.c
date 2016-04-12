@@ -694,7 +694,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     rsp->br_image_addr = image_addrs[0].bil_address;
 
     /* After successful boot, there should not be a status file. */
-    fs_unlink(BOOT_PATH_STATUS);
+    boot_clear_status();
 
     /* If an image is being tested, it should only be booted into once. */
     boot_vect_delete_test();
