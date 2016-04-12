@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -82,7 +82,7 @@ uint8_t g_host_adv_len;
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
 
-struct os_mbuf_pool g_mbuf_pool; 
+struct os_mbuf_pool g_mbuf_pool;
 struct os_mempool g_mbuf_mempool;
 os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
@@ -103,11 +103,11 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_ITVL           (128)  /* in 1.25 msec increments */           
+#define BLETEST_CFG_CONN_ITVL           (128)  /* in 1.25 msec increments */
 #define BLETEST_CFG_SLAVE_LATENCY       (0)
 #define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
-#define BLETEST_CFG_MIN_CE_LEN          (6)    
+#define BLETEST_CFG_MIN_CE_LEN          (6)
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
@@ -146,23 +146,23 @@ uint16_t g_bletest_outstanding_pkts;
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
-const uint8_t g_ble_ll_encrypt_test_key[16] = 
+const uint8_t g_ble_ll_encrypt_test_key[16] =
 {
     0x4c, 0x68, 0x38, 0x41, 0x39, 0xf5, 0x74, 0xd8,
     0x36, 0xbc, 0xf3, 0x4e, 0x9d, 0xfb, 0x01, 0xbf
 };
 
 /* Plaint text: 0x0213243546576879acbdcedfe0f10213 */
-const uint8_t g_ble_ll_encrypt_test_plain_text[16] = 
+const uint8_t g_ble_ll_encrypt_test_plain_text[16] =
 {
-    0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, 
+    0x02, 0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79,
     0xac, 0xbd, 0xce, 0xdf, 0xe0, 0xf1, 0x02, 0x13
 };
 
 /* Encrypted data: 0x99ad1b5226a37e3e058e3b8e27c2c666 */
-const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] = 
+const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] =
 {
-    0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e, 
+    0x99, 0xad, 0x1b, 0x52, 0x26, 0xa3, 0x7e, 0x3e,
     0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66
 };
 
@@ -219,7 +219,7 @@ bletest_send_conn_update(uint16_t handle)
     struct hci_conn_update hcu;
 
     hcu.conn_latency = 4;
-    hcu.supervision_timeout = 2000; 
+    hcu.supervision_timeout = 2000;
     hcu.conn_itvl_min = 1000;
     hcu.conn_itvl_max = 1000;
     hcu.handle = handle;
@@ -459,7 +459,7 @@ bletest_execute_initiator(void)
     uint16_t handle;
     uint8_t new_chan_map[5];
 
-    /* 
+    /*
      * Determine if there is an active connection for the current handle
      * we are trying to create. If so, start looking for the next one
      */
@@ -499,7 +499,7 @@ bletest_execute_initiator(void)
                     if (ble_ll_conn_find_active_conn(i + 1)) {
                         host_hci_cmd_le_rd_chanmap(i+1);
                         host_hci_outstanding_opcode = 0;
-                    }   
+                    }
                 }
             } else if (g_bletest_state == 2) {
                 new_chan_map[0] = 0;
@@ -514,7 +514,7 @@ bletest_execute_initiator(void)
                     if (ble_ll_conn_find_active_conn(i + 1)) {
                         host_hci_cmd_read_rssi(i+1);
                         host_hci_outstanding_opcode = 0;
-                    }   
+                    }
                 }
             }
             ++g_bletest_state;
@@ -525,10 +525,10 @@ bletest_execute_initiator(void)
 #endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-/* 
+/*
  * Test wrapper to get packets. Only get a packet if we have more than half
  * left
- */ 
+ */
 static struct os_mbuf *
 bletest_get_packet(void)
 {
@@ -536,7 +536,7 @@ bletest_get_packet(void)
 
     om = NULL;
     if (g_mbuf_pool.omp_pool->mp_num_free >= 5) {
-        om = os_msys_get_pkthdr(BLE_MBUF_PAYLOAD_SIZE, 
+        om = os_msys_get_pkthdr(BLE_MBUF_PAYLOAD_SIZE,
                                 sizeof(struct ble_mbuf_hdr));
     }
     return om;
@@ -622,7 +622,7 @@ bletest_execute_advertiser(void)
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
         if (g_bletest_current_conns) {
             for (i = 0; i < g_bletest_current_conns; ++i) {
-                if ((g_last_handle_used == 0) || 
+                if ((g_last_handle_used == 0) ||
                     (g_last_handle_used > g_bletest_current_conns)) {
                     g_last_handle_used = 1;
                 }
@@ -715,11 +715,11 @@ bletest_execute_advertiser(void)
     }
 #endif /* XXX: throughput test */
 }
-#endif 
+#endif
 
 /**
  * Main bletest function. Called by the task timer every 50 msecs.
- * 
+ *
  */
 void
 bletest_execute(void)
@@ -741,9 +741,9 @@ bletest_execute(void)
 }
 
 /**
- * Callback when BLE test timer expires. 
- * 
- * @param arg 
+ * Callback when BLE test timer expires.
+ *
+ * @param arg
  */
 void
 bletest_timer_cb(void *arg)
@@ -756,9 +756,9 @@ bletest_timer_cb(void *arg)
 }
 
 /**
- * BLE test task 
- * 
- * @param arg 
+ * BLE test task
+ *
+ * @param arg
  */
 void
 bletest_task_handler(void *arg)
@@ -872,7 +872,7 @@ bletest_task_handler(void *arg)
 
 
     /* Encrypt a block */
-    rc = host_hci_cmd_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key, 
+    rc = host_hci_cmd_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key,
                                  (uint8_t *)g_ble_ll_encrypt_test_plain_text);
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
@@ -914,10 +914,10 @@ bletest_task_handler(void *arg)
 
 /**
  * init_tasks
- *  
- * Called by main.c after os_init(). This function performs initializations 
- * that are required before tasks are running. 
- *  
+ *
+ * Called by main.c after os_init(). This function performs initializations
+ * that are required before tasks are running.
+ *
  * @return int 0 success; error otherwise.
  */
 static int
@@ -925,8 +925,8 @@ init_tasks(void)
 {
     int rc;
 
-    os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL, 
-                 BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack, 
+    os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL,
+                 BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack,
                  BLETEST_STACK_SIZE);
 
     /* Initialize host HCI */
@@ -942,11 +942,11 @@ init_tasks(void)
 
 /**
  * main
- *  
- * The main function for the project. This function initializes the os, calls 
- * init_tasks to initialize tasks (and possibly other objects), then starts the 
- * OS. We should not return from os start. 
- *  
+ *
+ * The main function for the project. This function initializes the os, calls
+ * init_tasks to initialize tasks (and possibly other objects), then starts the
+ * OS. We should not return from os start.
+ *
  * @return int NOTE: this function should never return!
  */
 int
@@ -967,11 +967,11 @@ main(void)
     rc = cputime_init(1000000);
     assert(rc == 0);
 
-    rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS, 
+    rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS,
             MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
     assert(rc == 0);
 
-    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE, 
+    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE,
                            MBUF_NUM_MBUFS);
     assert(rc == 0);
 
@@ -1009,10 +1009,10 @@ main(void)
     g_bletest_cur_peer_addr[5] = 0x08;
 #endif
 
-    /* 
+    /*
      * Seed random number generator with least significant bytes of device
      * address.
-     */ 
+     */
     seed = 0;
     for (i = 0; i < 4; ++i) {
         seed |= g_dev_addr[i];
