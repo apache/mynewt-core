@@ -51,6 +51,17 @@ struct boot_status_entry {
     uint8_t bse_part_num;
 };
 
+/**
+ * The boot status header read from the file system, or generated if not
+ * present on disk.  The boot status indicates the state of the image slots in
+ * case the system was restarted while images were being moved in flash.
+ */
+struct boot_state {
+	struct boot_status status;
+	/** The entries associated with the boot status header. */
+	struct boot_status_entry entries[0];
+};
+
 struct boot_image_location {
     uint8_t bil_flash_id;
     uint32_t bil_address;
@@ -63,12 +74,8 @@ int boot_vect_delete_main(void);
 void boot_read_image_headers(struct image_header *out_headers,
                              const struct boot_image_location *addresses,
                              int num_addresses);
-int boot_read_status(struct boot_status *out_status,
-                     struct boot_status_entry *out_entries,
-                     int num_areas);
-int boot_write_status(const struct boot_status *status,
-                      const struct boot_status_entry *entries,
-                      int num_areas);
+int boot_read_status(struct boot_state *out_state, int num_areas);
+int boot_write_status(const struct boot_state *state, int num_areas);
 void boot_clear_status(void);
 
 int bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,

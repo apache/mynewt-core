@@ -167,9 +167,7 @@ boot_read_image_headers(struct image_header *out_headers,
  * @return                      0 on success; nonzero on failure.
  */
 int
-boot_read_status(struct boot_status *out_status,
-                 struct boot_status_entry *out_entries,
-                 int num_areas)
+boot_read_status(struct boot_state *out_state, int num_areas)
 {
     struct fs_file *file;
     uint32_t bytes_read;
@@ -182,35 +180,28 @@ boot_read_status(struct boot_status *out_status,
         goto done;
     }
 
-    rc = fs_read(file, sizeof *out_status, out_status, &bytes_read);
-    if (rc != 0 || bytes_read != sizeof *out_status) {
+    rc = fs_read(file, sizeof *out_state, out_state, &bytes_read);
+    if (rc != 0 || bytes_read != sizeof *out_state) {
         rc = BOOT_EBADSTATUS;
         goto done;
     }
 
-    rc = fs_read(file, num_areas * sizeof *out_entries, out_entries,
-                   &bytes_read);
-    if (rc != 0 || bytes_read != num_areas * sizeof *out_entries) {
-        rc = BOOT_EBADSTATUS;
-        goto done;
+    if (out_state->status.bs_img1_length == 0xffffffff) {
+        out_state->status.bs_img1_length = 0;
     }
-
-    if (out_status->bs_img1_length == 0xffffffff) {
-        out_status->bs_img1_length = 0;
-    }
-    if (out_status->bs_img2_length == 0xffffffff) {
-        out_status->bs_img2_length = 0;
+    if (out_state->status.bs_img2_length == 0xffffffff) {
+        out_state->status.bs_img2_length = 0;
     }
 
     for (i = 0; i < num_areas; i++) {
-        if (out_entries[i].bse_image_num == 0 &&
-            out_status->bs_img1_length == 0) {
+        if (out_state->entries[i].bse_image_num == 0 &&
+            out_state->status.bs_img1_length == 0) {
 
             rc = BOOT_EBADSTATUS;
             goto done;
         }
-        if (out_entries[i].bse_image_num == 1 &&
-            out_status->bs_img2_length == 0) {
+        if (out_state->entries[i].bse_image_num == 1 &&
+            out_state->status.bs_img2_length == 0) {
 
             rc = BOOT_EBADSTATUS;
             goto done;
@@ -237,9 +228,7 @@ done:
  * @return                      0 on success; nonzero on failure.
  */
 int
-boot_write_status(const struct boot_status *status,
-                  const struct boot_status_entry *entries,
-                  int num_areas)
+boot_write_status(const struct boot_state *state, int num_areas)
 {
     struct fs_file *file;
     int rc;
@@ -250,18 +239,11 @@ boot_write_status(const struct boot_status *status,
         goto done;
     }
 
-    rc = fs_write(file, status, sizeof *status);
+    rc = fs_write(file, state, sizeof *state);
     if (rc != 0) {
         rc = BOOT_EFILE;
         goto done;
     }
-
-    rc = fs_write(file, entries, num_areas * sizeof *entries);
-    if (rc != 0) {
-        rc = BOOT_EFILE;
-        goto done;
-    }
-
     rc = 0;
 
 done:
