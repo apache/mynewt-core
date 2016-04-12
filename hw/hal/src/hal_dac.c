@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <inttypes.h>
 #include <hal/hal_dac.h>
 #include <hal/hal_dac_int.h>
 
@@ -85,4 +84,13 @@ hal_dac_to_val(struct hal_dac *pdac, int mvolts)
         }
     }
     return rc;
+}
+
+int 
+hal_dac_disable(struct hal_dac *pdac) 
+{
+    if (pdac && pdac->driver_api && pdac->driver_api->hdac_disable) {
+        return pdac->driver_api->hdac_disable(pdac);
+    }
+    return -1;
 }

@@ -40,38 +40,44 @@ struct hal_dac *
 hal_dac_init(enum system_device_id sysid);
 
 /*
- * write the DAC corresponding to sysid in your system.  
- * Return 0 on success negative on failures. If you 
- * write a value larger than the DAC size, it will 
- * get truncated to the maximum DAC value but the write
- * will succeed.
+ * write the DAC corresponding to sysid in your system
+ * and enables the DAC.  Return 0 on success negative on failures. If you 
+ * write a value larger than the DAC size, it will get truncated to the 
+ * maximum DAC value but the write will succeed.
  */
 int 
 hal_dac_write(struct hal_dac *pdac, int val);
 
-/* gets the current value that is output on the DAC .
+/* 
+ * Gets the current value that is output on the DAC .
  * Return the current value on success negative on failures.
  */
 int 
 hal_dac_get_current(struct hal_dac *pdac);
 
-/* returns the number of bit of resolution in this DAC.  
+/* 
+ * Returns the number of bit of resolution in this DAC.  
  * For example if the system has an 8-bit DAC reporting 
  * values from 0= to 255 (2^8-1), this function would return
  * the value 8. returns negative or zero on error */
 int 
 hal_dac_get_bits(struct hal_dac *pdac);
 
-/* Returns the positive reference voltage for a maximum DAC reading.
+/* 
+ * Returns the positive reference voltage for a maximum DAC reading.
  * This API assumes the negative reference voltage is zero volt.
  * Returns negative or zero on error.  
  */
 int 
 hal_dac_get_ref_mv(struct hal_dac *pdac);
 
+/* turns the DAC off.  Re-enable with hal_dac_write */
+int
+hal_dac_disable(struct hal_dac *pdac);
+
+
 /* Converts a value in millivolts to a DAC value for this DAC */
 int 
 hal_dac_to_val(struct hal_dac *pdac, int mvolts);
-
 
 #endif /* HAL_DAC_H */  

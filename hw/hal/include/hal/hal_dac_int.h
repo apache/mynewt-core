@@ -20,7 +20,6 @@
 #ifndef HAL_DAC_INT_H
 #define HAL_DAC_INT_H
 
-#include <inttypes.h>
 #include <bsp/bsp_sysid.h>
 
 
@@ -28,9 +27,11 @@ struct hal_dac;
 
 /* These functions make up the driver API for DAC devices.  All 
  * DAC devices with Mynewt support implement this interface */
-struct hal_dac_funcs {
+struct hal_dac_funcs 
+{
     int (*hdac_write)            (struct hal_dac *pdac, int val);
     int (*hdac_current)          (struct hal_dac *pdac);
+    int (*hdac_disable)          (struct hal_dac *pdac);
     int (*hdac_get_bits)         (struct hal_dac *pdac);
     int (*hdac_get_ref_mv)       (struct hal_dac *pdac);    
 };
@@ -51,7 +52,8 @@ struct hal_dac_funcs {
  * 
  * See the native MCU and BSP for examples 
  */
-struct hal_dac {
+struct hal_dac 
+{
     const struct hal_dac_funcs  *driver_api;
 };
 
