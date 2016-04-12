@@ -46,4 +46,10 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 
     /* Set the system tick priority */
     NVIC_SetPriority(SysTick_IRQn, prio);
+
+    /*
+     * Keep clocking debug even when CPU is sleeping, stopped or in standby.
+     */
+    DBGMCU->CR |= (DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP |
+      DBGMCU_CR_DBG_STANDBY);
 }
