@@ -112,6 +112,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
+#define BLETEST_CFG_RAND_PKT_SIZE       (1)
 #define BLETEST_CFG_SUGG_DEF_TXOCTETS   (251)
 #define BLETEST_CFG_SUGG_DEF_TXTIME     \
     BLE_TX_DUR_USECS_M(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4)
@@ -123,6 +124,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* BLETEST variables */
 #undef BLETEST_ADV_PKT_NUM
+#define BLETEST_MAX_PKT_SIZE            (247)
 #define BLETEST_PKT_SIZE                (247)
 #define BLETEST_STACK_SIZE              (256)
 uint32_t g_next_os_time;
@@ -473,6 +475,7 @@ bletest_execute_initiator(void)
             rc = host_hci_cmd_rd_rem_version(handle);
             host_hci_outstanding_opcode = 0;
 
+            /* Ask for remote used features */
             rc = host_hci_cmd_le_read_rem_used_feat(handle);
             host_hci_outstanding_opcode = 0;
 
@@ -631,8 +634,14 @@ bletest_execute_advertiser(void)
                     om = bletest_get_packet();
                     if (om) {
                         /* set payload length */
+#if (BLETEST_CFG_RAND_PKT_SIZE == 1)
+                        pktlen = rand() % (BLETEST_MAX_PKT_SIZE + 1);
+#else
                         pktlen = BLETEST_PKT_SIZE;
-                        om->om_len = BLETEST_PKT_SIZE + 4;
+
+#endif
+                        /* Add header to length */
+                        om->om_len = pktlen + 4;
 
                         /* Put the HCI header in the mbuf */
                         htole16(om->om_data, handle);
@@ -1070,4 +1079,3 @@ main(void)
 
     return rc;
 }
-
