@@ -26,6 +26,7 @@
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
 #include <log/log.h>
+#include "fs/fs.h"
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
