@@ -47,7 +47,6 @@
  * app uses some of nimble's internal details for logging.
  */
 #include "../src/ble_hs_conn.h"
-#include "../src/ble_hci_sched.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
@@ -978,6 +977,7 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     }
 }
 
+#if 0
 static void
 bletiny_on_rx_rssi(struct ble_hci_ack *ack, void *unused)
 {
@@ -996,6 +996,7 @@ bletiny_on_rx_rssi(struct ble_hci_ack *ack, void *unused)
     console_printf("rssi response received; status=%d conn=%d rssi=%d\n",
                    params.status, params.connection_handle, params.rssi);
 }
+#endif
 
 int
 bletiny_exchange_mtu(uint16_t conn_handle)
@@ -1267,6 +1268,7 @@ bletiny_l2cap_update(uint16_t conn_handle,
     return rc;
 }
 
+#if 0
 static int
 bletiny_tx_rssi_req(void *arg)
 {
@@ -1285,10 +1287,12 @@ bletiny_tx_rssi_req(void *arg)
 
     return 0;
 }
+#endif
 
 int
 bletiny_show_rssi(uint16_t conn_handle)
 {
+#if 0
     int rc;
 
     rc = ble_hci_sched_enqueue(bletiny_tx_rssi_req,
@@ -1298,8 +1302,8 @@ bletiny_show_rssi(uint16_t conn_handle)
         return rc;
     }
 
+#endif
     return 0;
-
 }
 
 int
