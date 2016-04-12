@@ -257,9 +257,6 @@ main(int argc, char **argv)
     log_cbmem_handler_init(&log_cbmem_handler, &cbmem);
     log_register("log", &my_log, &log_cbmem_handler);
 
-    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bla");
-    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bab");
-
     os_init();
 
     rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
