@@ -72,6 +72,7 @@ uart_irq_handler(int num)
     struct hal_uart *u;
     USART_TypeDef *regs;
     uint32_t isr;
+    uint32_t cr1;
     int data;
     int rc;
 
@@ -90,22 +91,26 @@ uart_irq_handler(int num)
             u->u_rx_stall = 1;
         }
     }
-    if (isr & USART_SR_TXE) {
-        data = u->u_tx_func(u->u_func_arg);
-        if (data < 0) {
-            regs->CR1 &= ~USART_CR1_TXEIE;
-            regs->CR1 |= USART_CR1_TCIE;
-            u->u_tx_end = 1;
-        } else {
-            regs->DR = data;
+    if (isr & (USART_SR_TXE | USART_SR_TC)) {
+        cr1 = regs->CR1;
+        if (isr & USART_SR_TXE) {
+            data = u->u_tx_func(u->u_func_arg);
+            if (data < 0) {
+                cr1 &= ~USART_CR1_TXEIE;
+                cr1 |= USART_CR1_TCIE;
+                u->u_tx_end = 1;
+            } else {
+                regs->DR = data;
+            }
         }
-    }
-    if (u->u_tx_end == 1 && isr & USART_SR_TC) {
-        if (u->u_tx_done) {
-            u->u_tx_done(u->u_func_arg);
+        if (u->u_tx_end == 1 && isr & USART_SR_TC) {
+            if (u->u_tx_done) {
+                u->u_tx_done(u->u_func_arg);
+            }
+            u->u_tx_end = 0;
+            cr1 &= ~USART_CR1_TCIE;
         }
-        u->u_tx_end = 0;
-        regs->CR1 &= ~USART_CR1_TCIE;
+        regs->CR1 = cr1;
     }
 }
 
