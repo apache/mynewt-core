@@ -40,7 +40,7 @@ int
 main(void)
 {
     struct nffs_area_desc nffs_descs[NFFS_AREA_MAX + 1];
-    struct nffs_area_desc descs[AREA_DESC_MAX];
+    struct flash_area descs[AREA_DESC_MAX];
     /** Contains indices of the areas which can contain image data. */
     uint8_t img_areas[AREA_DESC_MAX];
     /** Areas representing the beginning of image slots. */
@@ -61,20 +61,20 @@ main(void)
     assert(rc == 0);
 
     cnt = BOOT_AREA_DESC_MAX;
-    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_0, &cnt, descs);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
     img_starts[0] = 0;
     total = cnt;
 
     cnt = BOOT_AREA_DESC_MAX - total;
     assert(cnt >= 0);
-    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
     assert(rc == 0);
     img_starts[1] = total;
     total += cnt;
 
     cnt = BOOT_AREA_DESC_MAX - total;
     assert(cnt >= 0);
-    rc = flash_area_to_nffs_desc(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
     assert(rc == 0);
     req.br_scratch_area_idx = total;
     total += cnt;

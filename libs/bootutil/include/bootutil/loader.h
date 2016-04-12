@@ -21,7 +21,6 @@
 #define H_LOADER_
 
 #include <inttypes.h>
-struct nffs_area_desc;
 struct image_header;
 
 /** A request object instructing the boot loader how to proceed. */
@@ -30,7 +29,7 @@ struct boot_req {
      * Array of area descriptors indicating the layout of flash(es); must
      * be terminated with a 0-length element.
      */
-    struct nffs_area_desc *br_area_descs;
+    struct flash_area *br_area_descs;
 
     /**
      * Array of indices of elements in the br_area_descs array; indicates which
@@ -52,9 +51,6 @@ struct boot_req {
 
     /** The index of the area to use as the image scratch area. */
     uint8_t br_scratch_area_idx;
-    
-    /** the location of the nffs area index within the area descriptors above*/
-    uint8_t br_nffs_area_idx;
 };
 
 /**

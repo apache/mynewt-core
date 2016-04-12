@@ -21,10 +21,9 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include <string.h>
-#include "hal/hal_flash.h"
+#include <hal/hal_flash.h>
+#include <hal/flash_map.h>
 #include "os/os_malloc.h"
-#include "nffs/nffs.h"
-#include "fs/fs.h"
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
@@ -50,15 +49,15 @@ static struct boot_state *boot;
 static void
 boot_slot_addr(int slot_num, uint8_t *flash_id, uint32_t *address)
 {
-    const struct nffs_area_desc *area_desc;
+    const struct flash_area *area_desc;
     uint8_t area_idx;
 
     assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
     area_idx = boot_req->br_slot_areas[slot_num];
     area_desc = boot_req->br_area_descs + area_idx;
-    *flash_id = area_desc->nad_flash_id;
-    *address = area_desc->nad_offset;
+    *flash_id = area_desc->fa_flash_id;
+    *address = area_desc->fa_off;
 }
 
 /**
@@ -157,10 +156,10 @@ boot_slot_to_area_idx(int slot_num)
 
     assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
 
-    for (i = 0; boot_req->br_area_descs[i].nad_length != 0; i++) {
+    for (i = 0; boot_req->br_area_descs[i].fa_size != 0; i++) {
         boot_slot_addr(slot_num, &flash_id, &address);
-        if (boot_req->br_area_descs[i].nad_offset == address &&
-          boot_req->br_area_descs[i].nad_flash_id == flash_id) {
+        if (boot_req->br_area_descs[i].fa_off == address &&
+          boot_req->br_area_descs[i].fa_flash_id == flash_id) {
 
             return i;
         }
@@ -195,12 +194,12 @@ boot_find_image_area_idx(int area_idx)
 static int
 boot_erase_area(int area_idx)
 {
-    const struct nffs_area_desc *area_desc;
+    const struct flash_area *area_desc;
     int rc;
 
     area_desc = boot_req->br_area_descs + area_idx;
-    rc = hal_flash_erase(area_desc->nad_flash_id, area_desc->nad_offset,
-                         area_desc->nad_length);
+    rc = hal_flash_erase(area_desc->fa_flash_id, area_desc->fa_off,
+                         area_desc->fa_size);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -220,8 +219,8 @@ boot_erase_area(int area_idx)
 static int
 boot_copy_area(int from_area_idx, int to_area_idx)
 {
-    const struct nffs_area_desc *from_area_desc;
-    const struct nffs_area_desc *to_area_desc;
+    const struct flash_area *from_area_desc;
+    const struct flash_area *to_area_desc;
     uint32_t from_addr;
     uint32_t to_addr;
     uint32_t off;
@@ -233,25 +232,25 @@ boot_copy_area(int from_area_idx, int to_area_idx)
     from_area_desc = boot_req->br_area_descs + from_area_idx;
     to_area_desc = boot_req->br_area_descs + to_area_idx;
 
-    assert(to_area_desc->nad_length >= from_area_desc->nad_length);
+    assert(to_area_desc->fa_size >= from_area_desc->fa_size);
 
     off = 0;
-    while (off < from_area_desc->nad_length) {
-        if (from_area_desc->nad_length - off > sizeof buf) {
+    while (off < from_area_desc->fa_size) {
+        if (from_area_desc->fa_size - off > sizeof buf) {
             chunk_sz = sizeof buf;
         } else {
-            chunk_sz = from_area_desc->nad_length - off;
+            chunk_sz = from_area_desc->fa_size - off;
         }
 
-        from_addr = from_area_desc->nad_offset + off;
-        rc = hal_flash_read(from_area_desc->nad_flash_id, from_addr, buf,
+        from_addr = from_area_desc->fa_off + off;
+        rc = hal_flash_read(from_area_desc->fa_flash_id, from_addr, buf,
                             chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
-        to_addr = to_area_desc->nad_offset + off;
-        rc = hal_flash_write(to_area_desc->nad_flash_id, to_addr, buf,
+        to_addr = to_area_desc->fa_off + off;
+        rc = hal_flash_write(to_area_desc->fa_flash_id, to_addr, buf,
                              chunk_sz);
         if (rc != 0) {
             return rc;
@@ -418,7 +417,7 @@ boot_swap_areas(int area_idx_1, int img_num_1, uint8_t part_num_1,
 static int
 boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
 {
-    const struct nffs_area_desc *area_desc;
+    const struct flash_area *area_desc;
     uint32_t off;
     int dst_image_area_idx;
     int src_area_idx;
@@ -467,7 +466,7 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
         }
 
         area_desc = boot_req->br_area_descs + dst_area_idx;
-        off += area_desc->nad_length;
+        off += area_desc->fa_size;
 
         part_num++;
     }
@@ -516,8 +515,8 @@ boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
 
     for (i = 0; i < boot_req->br_num_image_areas; i++) {
         area_idx = boot_req->br_image_areas[i];
-        if (boot_req->br_area_descs[area_idx].nad_offset == addr &&
-            boot_req->br_area_descs[area_idx].nad_flash_id == flash_id) {
+        if (boot_req->br_area_descs[area_idx].fa_off == addr &&
+            boot_req->br_area_descs[area_idx].fa_flash_id == flash_id) {
             break;
         }
     }
@@ -531,7 +530,7 @@ boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
         boot->entries[i].bse_image_num = image_num;
         boot->entries[i].bse_part_num = part_num;
 
-        offset += boot_req->br_area_descs[area_idx].nad_length;
+        offset += boot_req->br_area_descs[area_idx].fa_size;
         part_num++;
         i++;
         area_idx++;
