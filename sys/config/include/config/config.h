@@ -57,7 +57,7 @@ int conf_register(struct conf_handler *);
 int conf_load(void);
 
 int conf_save(void);
-int conf_save_one(struct conf_handler *, char *name, char *var);
+int conf_save_one(const struct conf_handler *, const char *name, char *var);
 
 /*
   XXXX for later
@@ -74,6 +74,7 @@ int conf_value_from_str(char *val_str, enum conf_type type, void *vp,
 int conf_bytes_from_str(char *val_str, void *vp, int *len);
 char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
   int buf_len);
+#define CONF_STR_FROM_BYTES_LEN(len) (((len) * 4 / 3) + 4)
 char *conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
 
 #define CONF_VALUE_SET(str, type, val)                                  \

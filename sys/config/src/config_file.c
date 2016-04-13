@@ -31,8 +31,8 @@
 
 static int conf_file_load(struct conf_store *, load_cb cb, void *cb_arg);
 static int conf_file_save_start(struct conf_store *);
-static int conf_file_save(struct conf_store *, struct conf_handler *ch,
-  char *name, char *value);
+static int conf_file_save(struct conf_store *, const struct conf_handler *ch,
+  const char *name, const char *value);
 static int conf_file_save_end(struct conf_store *);
 
 static struct conf_store_itf conf_file_itf = {
@@ -178,8 +178,8 @@ conf_file_save_start(struct conf_store *cs)
 }
 
 static int
-conf_file_save(struct conf_store *cs, struct conf_handler *ch,
-  char *name, char *value)
+conf_file_save(struct conf_store *cs, const struct conf_handler *ch,
+  const char *name, const char *value)
 {
     struct conf_file *cf = (struct conf_file *)cs;
     struct fs_file *file;

@@ -36,8 +36,8 @@ struct conf_fcb_load_cb_arg {
 
 static int conf_fcb_load(struct conf_store *, load_cb cb, void *cb_arg);
 static int conf_fcb_save_start(struct conf_store *);
-static int conf_fcb_save(struct conf_store *, struct conf_handler *,
-  char *name, char *value);
+static int conf_fcb_save(struct conf_store *, const struct conf_handler *,
+  const char *name, const char *value);
 static int conf_fcb_save_end(struct conf_store *);
 
 static struct conf_store_itf conf_fcb_itf = {
@@ -251,8 +251,8 @@ conf_fcb_append(struct conf_fcb *cf, char *buf, int len)
 }
 
 static int
-conf_fcb_save(struct conf_store *cs, struct conf_handler *ch,
-  char *name, char *value)
+conf_fcb_save(struct conf_store *cs, const struct conf_handler *ch,
+  const char *name, const char *value)
 {
     struct conf_fcb *cf = (struct conf_fcb *)cs;
     char buf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];

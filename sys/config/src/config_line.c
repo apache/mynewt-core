@@ -72,8 +72,8 @@ conf_line_parse(char *buf, char **namep, char **valp)
 }
 
 int
-conf_line_make(char *dst, int dlen, struct conf_handler *ch, char *name,
-  char *value)
+conf_line_make(char *dst, int dlen, const struct conf_handler *ch,
+  const char *name, const char *value)
 {
     int clen;
     int nlen;
