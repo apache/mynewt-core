@@ -26,15 +26,24 @@
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
 #include <log/log.h>
+#include <config/config.h>
+#include <config/config_file.h>
 #include "fs/fs.h"
 #include "nffs/nffs.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
+#include "bootutil/bootutil_misc.h"
 
 /* we currently need extra nffs_area_descriptors for booting since the
  * boot code uses these to keep track of which block to write and copy.*/
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
+
+#define MY_CONFIG_FILE "/cfg/run"
+
+static struct conf_file my_conf = {
+    .cf_name = MY_CONFIG_FILE
+};
 
 int
 main(void)
@@ -94,15 +103,10 @@ main(void)
     rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, nffs_descs);
     assert(rc == 0);
 
-    nffs_config.nc_num_inodes = 50;
-    nffs_config.nc_num_blocks = 50;
-    nffs_config.nc_num_cache_blocks = 32;
-
     /*
      * Initializes the flash driver and file system for use by the boot loader.
      */
     rc = nffs_init();
-
     if (rc == 0) {
         /* Look for an nffs file system in internal flash.  If no file
          * system gets detected, all subsequent file operations will fail,
@@ -111,10 +115,14 @@ main(void)
         nffs_detect(nffs_descs);
     }
 
-    /* Create the boot directory if it doesn't already exist. */
-    fs_mkdir("/boot");
-
     log_init();
+    conf_init();
+
+    rc = conf_file_src(&my_conf);
+    assert(rc == 0);
+    rc = conf_file_dst(&my_conf);
+    assert(rc == 0);
+    bootutil_cfg_register();
 
     rc = boot_go(&req, &rsp);
     assert(rc == 0);

@@ -25,10 +25,12 @@
 #include <log/log.h>
 #include <stats/stats.h>
 #include <config/config.h>
+#include <config/config_file.h>
 #include <hal/flash_map.h>
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <newtmgr/newtmgr.h>
+#include <bootutil/bootutil_misc.h>
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
@@ -76,6 +78,14 @@ struct os_sem g_test_sem;
 
 /* For LED toggling */
 int g_led_pin;
+
+/* configuration file */
+#define MY_CONFIG_DIR  "/cfg"
+#define MY_CONFIG_FILE "/cfg/run"
+
+static struct conf_file my_conf = {
+    .cf_name = MY_CONFIG_FILE
+};
 
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
 #define DEFAULT_MBUF_MPOOL_NBUFS (10)
@@ -251,7 +261,6 @@ main(int argc, char **argv)
     rc = conf_register(&test_conf_handler);
     assert(rc == 0);
 
-
     log_init();
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_cbmem_handler_init(&log_cbmem_handler, &cbmem);
@@ -292,6 +301,12 @@ main(int argc, char **argv)
         assert(rc == 0);
     }
 
+    fs_mkdir(MY_CONFIG_DIR);
+    rc = conf_file_src(&my_conf);
+    assert(rc == 0);
+    rc = conf_file_dst(&my_conf);
+    assert(rc == 0);
+
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                     SHELL_MAX_INPUT_LEN);
 
@@ -299,10 +314,13 @@ main(int argc, char **argv)
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
     imgmgr_module_init();
+    bootutil_cfg_register();
 
     stats_module_init();
 
     flash_test_init();
+
+    conf_load();
 
     rc = init_tasks();
     os_start();

@@ -67,15 +67,14 @@ struct boot_image_location {
     uint32_t bil_address;
 };
 
-int boot_vect_read_test(struct image_version *out_ver);
-int boot_vect_read_main(struct image_version *out_ver);
-int boot_vect_delete_test(void);
-int boot_vect_delete_main(void);
+extern struct boot_state *boot_st;
+extern int boot_st_sz;
+
 void boot_read_image_headers(struct image_header *out_headers,
                              const struct boot_image_location *addresses,
                              int num_addresses);
-int boot_read_status(struct boot_state *out_state, int num_areas);
-int boot_write_status(const struct boot_state *state, int num_areas);
+int boot_read_status(void);
+int boot_write_status(void);
 void boot_clear_status(void);
 
 int bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,

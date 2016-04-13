@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -19,24 +19,64 @@
 
 #include <string.h>
 #include <inttypes.h>
-#include "hal/hal_flash.h"
-#include "fs/fs.h"
-#include "fs/fsutil.h"
-#include "bootutil/crc32.h"
+#include <hal/hal_flash.h>
+#include <config/config.h>
+#include <os/os.h>
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
 
-static int
-boot_vect_read_one(struct image_version *ver, const char *path)
-{
-    uint32_t bytes_read;
-    int rc;
+static int boot_conf_set(int argc, char **argv, char *val);
 
-    rc = fsutil_read_file(path, 0, sizeof *ver, ver, &bytes_read);
-    if (rc != 0 || bytes_read != sizeof *ver) {
+static struct image_version boot_main;
+static struct image_version boot_test;
+static uint8_t boot_st_loaded;
+
+static struct conf_handler boot_conf_handler = {
+    .ch_name = "boot",
+    .ch_get = NULL,
+    .ch_set = boot_conf_set,
+    .ch_commit = NULL,
+    .ch_export = NULL,
+};
+
+static int
+boot_conf_set(int argc, char **argv, char *val)
+{
+    int rc;
+    int len;
+
+    if (argc == 1) {
+        if (!strcmp(argv[0], "main")) {
+            len = sizeof(boot_main);
+            rc = conf_bytes_from_str(val, &boot_main, &len);
+        } else if (!strcmp(argv[0], "test")) {
+            len = sizeof(boot_test);
+            rc = conf_bytes_from_str(val, &boot_test, &len);
+        } else if (!strcmp(argv[0], "status")) {
+            len = boot_st_sz;
+            rc = conf_bytes_from_str(val, boot_st, &len);
+            if (rc == 0 && len > 0) {
+                boot_st_loaded = 1;
+            } else {
+                boot_st_loaded = 0;
+            }
+        } else {
+            rc = OS_ENOENT;
+        }
+    } else {
+        rc = OS_ENOENT;
+    }
+    return rc;
+}
+
+static int
+boot_vect_read_one(struct image_version *dst, struct image_version *src)
+{
+    if (src->iv_major == 0 && src->iv_minor == 0 &&
+      src->iv_revision == 0 && src->iv_build_num == 0) {
         return BOOT_EBADVECT;
     }
-
+    memcpy(dst, src, sizeof(*dst));
     return 0;
 }
 
@@ -51,10 +91,7 @@ boot_vect_read_one(struct image_version *ver, const char *path)
 int
 boot_vect_read_test(struct image_version *out_ver)
 {
-    int rc;
-
-    rc = boot_vect_read_one(out_ver, BOOT_PATH_TEST);
-    return rc;
+    return boot_vect_read_one(out_ver, &boot_test);
 }
 
 /**
@@ -67,24 +104,41 @@ boot_vect_read_test(struct image_version *out_ver)
 int
 boot_vect_read_main(struct image_version *out_ver)
 {
-    int rc;
+    return boot_vect_read_one(out_ver, &boot_main);
+}
 
-    rc = boot_vect_read_one(out_ver, BOOT_PATH_MAIN);
-    return rc;
+int
+boot_vect_write_one(const char *name, struct image_version *ver)
+{
+    char str[CONF_STR_FROM_BYTES_LEN(sizeof(struct image_version))];
+    char *to_store;
+
+    if (!ver) {
+        to_store = NULL;
+    } else {
+        if (!conf_str_from_bytes(ver, sizeof(*ver), str, sizeof(str))) {
+            return -1;
+        }
+        to_store = str;
+    }
+    return conf_save_one(&boot_conf_handler, name, to_store);
 }
 
 /**
- * Deletes the test image version number from the boot vector.
+ * Write the test image version number from the boot vector.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_delete_test(void)
+boot_vect_write_test(struct image_version *ver)
 {
-    int rc;
-
-    rc = fs_unlink(BOOT_PATH_TEST);
-    return rc;
+    if (!ver) {
+        memset(&boot_test, 0, sizeof(boot_test));
+        return boot_vect_write_one("test", NULL);
+    } else {
+        memcpy(&boot_test, ver, sizeof(boot_test));
+        return boot_vect_write_one("test", &boot_test);
+    }
 }
 
 /**
@@ -93,12 +147,15 @@ boot_vect_delete_test(void)
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_delete_main(void)
+boot_vect_write_main(struct image_version *ver)
 {
-    int rc;
-
-    rc = fs_unlink(BOOT_PATH_MAIN);
-    return rc;
+    if (!ver) {
+        memset(&boot_main, 0, sizeof(boot_main));
+        return boot_vect_write_one("main", NULL);
+    } else {
+        memcpy(&boot_main, ver, sizeof(boot_main));
+        return boot_vect_write_one("main", &boot_main);
+    }
 }
 
 static int
@@ -151,68 +208,18 @@ boot_read_image_headers(struct image_header *out_headers,
     }
 }
 
-/**
- * Reads the boot status from the flash file system.  The boot status contains
- * the current state of an interrupted image copy operation.  If the boot
- * status is not present in the file system, the implication is that there is
- * no copy operation in progress.
- *
- * @param out_status            On success, the boot status gets written here.
- * @param out_entries           On success, the array of boot entries gets
- *                                  written here.
- * @param num_areas             The number of flash areas capable of storing
- *                                  image data.  This is equal to the length of
- *                                  the out_entries array.
- *
- * @return                      0 on success; nonzero on failure.
- */
-int
-boot_read_status(struct boot_state *out_state, int num_areas)
+void
+bootutil_cfg_register(void)
 {
-    struct fs_file *file;
-    uint32_t bytes_read;
-    int rc;
-    int i;
+    conf_register(&boot_conf_handler);
+}
 
-    rc = fs_open(BOOT_PATH_STATUS, FS_ACCESS_READ, &file);
-    if (rc != 0) {
-        rc = BOOT_EBADSTATUS;
-        goto done;
-    }
+int
+boot_read_status(void)
+{
+    conf_load();
 
-    rc = fs_read(file, sizeof *out_state, out_state, &bytes_read);
-    if (rc != 0 || bytes_read != sizeof *out_state) {
-        rc = BOOT_EBADSTATUS;
-        goto done;
-    }
-
-    if (out_state->status.bs_img1_length == 0xffffffff) {
-        out_state->status.bs_img1_length = 0;
-    }
-    if (out_state->status.bs_img2_length == 0xffffffff) {
-        out_state->status.bs_img2_length = 0;
-    }
-
-    for (i = 0; i < num_areas; i++) {
-        if (out_state->entries[i].bse_image_num == 0 &&
-            out_state->status.bs_img1_length == 0) {
-
-            rc = BOOT_EBADSTATUS;
-            goto done;
-        }
-        if (out_state->entries[i].bse_image_num == 1 &&
-            out_state->status.bs_img2_length == 0) {
-
-            rc = BOOT_EBADSTATUS;
-            goto done;
-        }
-    }
-
-    rc = 0;
-
-done:
-    fs_close(file);
-    return rc;
+    return boot_st_loaded == 1;
 }
 
 /**
@@ -228,26 +235,28 @@ done:
  * @return                      0 on success; nonzero on failure.
  */
 int
-boot_write_status(const struct boot_state *state, int num_areas)
+boot_write_status(void)
 {
-    struct fs_file *file;
-    int rc;
+    char *val_str;
+    char *rstr;
+    int rc = 0;
+    int len;
 
-    rc = fs_open(BOOT_PATH_STATUS, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &file);
-    if (rc != 0) {
-        rc = BOOT_EFILE;
-        goto done;
+    len = CONF_STR_FROM_BYTES_LEN(boot_st_sz);
+    val_str = malloc(len);
+    if (!val_str) {
+        return BOOT_ENOMEM;
     }
-
-    rc = fs_write(file, state, sizeof *state);
-    if (rc != 0) {
+    rstr = conf_str_from_bytes(boot_st, boot_st_sz, val_str, len);
+    if (!rstr) {
         rc = BOOT_EFILE;
-        goto done;
+    } else {
+        if (conf_save_one(&boot_conf_handler, "status", val_str)) {
+            rc = BOOT_EFLASH;
+        }
     }
-    rc = 0;
+    free(val_str);
 
-done:
-    fs_close(file);
     return rc;
 }
 
@@ -260,5 +269,5 @@ done:
 void
 boot_clear_status(void)
 {
-    fs_unlink(BOOT_PATH_STATUS);
+    conf_save_one(&boot_conf_handler, "status", NULL);
 }

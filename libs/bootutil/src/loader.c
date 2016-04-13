@@ -23,9 +23,10 @@
 #include <string.h>
 #include <hal/hal_flash.h>
 #include <hal/flash_map.h>
-#include "os/os_malloc.h"
+#include <os/os_malloc.h>
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
+#include "bootutil/bootutil_misc.h"
 #include "bootutil_priv.h"
 
 /** Number of image slots in flash; currently limited to two. */
@@ -37,7 +38,8 @@ static const struct boot_req *boot_req;
 /** Image headers read from flash. */
 struct image_header boot_img_hdrs[2];
 
-static struct boot_state *boot;
+struct boot_state *boot_st;
+int boot_st_sz;
 
 /**
  * Calculates the flash offset of the specified image slot.
@@ -101,7 +103,7 @@ boot_select_image_slot(void)
     if (rc == 0) {
         slot = boot_find_image_slot(&ver);
         if (slot == -1) {
-            boot_vect_delete_test();
+            boot_vect_write_test(NULL);
         } else {
             return slot;
         }
@@ -111,7 +113,7 @@ boot_select_image_slot(void)
     if (rc == 0) {
         slot = boot_find_image_slot(&ver);
         if (slot == -1) {
-            boot_vect_delete_main();
+            boot_vect_write_main(NULL);
         } else {
             return slot;
         }
@@ -137,8 +139,8 @@ boot_find_image_part(int image_num, int part_num)
     int i;
 
     for (i = 0; i < boot_req->br_num_image_areas; i++) {
-        if (boot->entries[i].bse_image_num == image_num &&
-            boot->entries[i].bse_part_num == part_num) {
+        if (boot_st->entries[i].bse_image_num == image_num &&
+            boot_st->entries[i].bse_part_num == part_num) {
 
             return boot_req->br_image_areas[i];
         }
@@ -301,11 +303,11 @@ boot_move_area(int from_area_idx, int to_area_idx,
         return rc;
     }
 
-    boot->entries[src_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot->entries[src_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    boot->entries[dst_image_idx].bse_image_num = img_num;
-    boot->entries[dst_image_idx].bse_part_num = part_num;
-    rc = boot_write_status(boot, boot_req->br_num_image_areas);
+    boot_st->entries[src_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_st->entries[src_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    boot_st->entries[dst_image_idx].bse_image_num = img_num;
+    boot_st->entries[dst_image_idx].bse_part_num = part_num;
+    rc = boot_write_status();
     if (rc != 0) {
         return rc;
     }
@@ -366,11 +368,11 @@ boot_swap_areas(int area_idx_1, int img_num_1, uint8_t part_num_1,
         return rc;
     }
 
-    boot->entries[scratch_image_idx] = boot->entries[image_idx_2];
-    boot->entries[image_idx_2].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot->entries[image_idx_2].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    boot_st->entries[scratch_image_idx] = boot_st->entries[image_idx_2];
+    boot_st->entries[image_idx_2].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_st->entries[image_idx_2].bse_part_num = BOOT_IMAGE_NUM_NONE;
 
-    rc = boot_write_status(boot, boot_req->br_num_image_areas);
+    rc = boot_write_status();
     if (rc != 0) {
         return rc;
     }
@@ -385,10 +387,10 @@ boot_swap_areas(int area_idx_1, int img_num_1, uint8_t part_num_1,
         return rc;
     }
 
-    boot->entries[image_idx_2] = boot->entries[image_idx_1];
-    boot->entries[image_idx_1].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot->entries[image_idx_1].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    rc = boot_write_status(boot, boot_req->br_num_image_areas);
+    boot_st->entries[image_idx_2] = boot_st->entries[image_idx_1];
+    boot_st->entries[image_idx_1].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_st->entries[image_idx_1].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    rc = boot_write_status();
     if (rc != 0) {
         return rc;
     }
@@ -403,10 +405,10 @@ boot_swap_areas(int area_idx_1, int img_num_1, uint8_t part_num_1,
         return rc;
     }
 
-    boot->entries[image_idx_1] = boot->entries[scratch_image_idx];
-    boot->entries[scratch_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot->entries[scratch_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    rc = boot_write_status(boot, boot_req->br_num_image_areas);
+    boot_st->entries[image_idx_1] = boot_st->entries[scratch_image_idx];
+    boot_st->entries[scratch_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
+    boot_st->entries[scratch_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
+    rc = boot_write_status();
     if (rc != 0) {
         return rc;
     }
@@ -445,7 +447,7 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
             /* Determine what is currently in the destination area. */
             dst_image_area_idx = boot_find_image_area_idx(dst_area_idx);
 
-            if (boot->entries[dst_image_area_idx].bse_image_num ==
+            if (boot_st->entries[dst_image_area_idx].bse_image_num ==
                 BOOT_IMAGE_NUM_NONE) {
 
                 /* The destination doesn't contain anything useful; we don't
@@ -526,9 +528,9 @@ boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
     offset = 0;
     part_num = 0;
     while (offset < length) {
-        assert(boot->entries[i].bse_image_num == 0xff);
-        boot->entries[i].bse_image_num = image_num;
-        boot->entries[i].bse_part_num = part_num;
+        assert(boot_st->entries[i].bse_image_num == 0xff);
+        boot_st->entries[i].bse_image_num = image_num;
+        boot_st->entries[i].bse_part_num = part_num;
 
         offset += boot_req->br_area_descs[area_idx].fa_size;
         part_num++;
@@ -552,25 +554,25 @@ boot_build_status(void)
     uint32_t address;
     uint32_t len;
 
-    memset(boot->entries, 0xff,
-           boot_req->br_num_image_areas * sizeof boot->entries[0]);
+    memset(boot_st->entries, 0xff,
+           boot_req->br_num_image_areas * sizeof boot_st->entries[0]);
 
     if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
-        len = boot_img_hdrs[0].ih_img_size + boot_img_hdrs[0].ih_tlv_size;
-        boot_status.bs_img1_length = len;
+        boot_st->status.bs_img1_length =
+	    boot_img_hdrs[0].ih_img_size + boot_img_hdrs[0].ih_tlv_size;
         boot_slot_addr(0, &flash_id, &address);
         boot_build_status_one(0, flash_id, address, len);
     } else {
-        boot->status.bs_img1_length = 0;
+        boot_st->status.bs_img1_length = 0;
     }
 
     if (boot_img_hdrs[1].ih_magic == IMAGE_MAGIC) {
-        len = boot_img_hdrs[1].ih_img_size + boot_img_hdrs[1].ih_tlv_size;
-        boot_status.bs_img2_length = len;
+        boot_st->status.bs_img2_length =
+	    boot_img_hdrs[1].ih_img_size + boot_img_hdrs[1].ih_tlv_size;
         boot_slot_addr(1, &flash_id, &address);
         boot_build_status_one(1, flash_id, address, len);
     } else {
-        boot->status.bs_img2_length = 0;
+        boot_st->status.bs_img2_length = 0;
     }
 }
 
@@ -602,17 +604,18 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
      * interrupted (i.e., the system was reset before the boot loader could
      * finish its task last time).
      */
-    boot = malloc(sizeof(struct boot_state) +
-	req->br_num_image_areas * sizeof boot->entries[0]);
-    if (boot == NULL) {
+    boot_st_sz = sizeof(struct boot_state) +
+	req->br_num_image_areas * sizeof boot_st->entries[0];
+    boot_st = malloc(boot_st_sz);
+    if (boot_st == NULL) {
         return BOOT_ENOMEM;
     }
-    rc = boot_read_status(boot, boot_req->br_num_image_areas);
-    if (rc == 0) {
+
+    if (boot_read_status()) {
         /* We are resuming an interrupted image copy. */
         /* XXX if copy has not actually started yet, validate image */
-        rc = boot_copy_image(boot->status.bs_img1_length,
-                             boot->status.bs_img2_length);
+        rc = boot_copy_image(boot_st->status.bs_img1_length,
+                             boot_st->status.bs_img2_length);
         if (rc != 0) {
             /* We failed to put the images back together; there is really no
              * solution here.
@@ -670,8 +673,8 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         /* The user wants to run the image in the secondary slot.  The contents
          * of this slot need to moved to the primary slot.
          */
-        rc = boot_copy_image(boot->status.bs_img1_length,
-                             boot->status.bs_img2_length);
+        rc = boot_copy_image(boot_st->status.bs_img1_length,
+                             boot_st->status.bs_img2_length);
 
         if (rc != 0) {
             /* We failed to put the images back together; there is really no
@@ -696,7 +699,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     boot_clear_status();
 
     /* If an image is being tested, it should only be booted into once. */
-    boot_vect_delete_test();
+    boot_vect_write_test(NULL);
 
     return 0;
 }

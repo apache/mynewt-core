@@ -44,13 +44,13 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_UPLOAD] = {
         .nh_read = imgr_noop,
         .nh_write = imgr_upload
-    }
-#ifdef FS_PRESENT
-    ,
+    },
     [IMGMGR_NMGR_OP_BOOT] = {
         .nh_read = imgr_boot_read,
         .nh_write = imgr_boot_write
-    },
+    }
+#ifdef FS_PRESENT
+    ,
     [IMGMGR_NMGR_OP_FILE] = {
         .nh_read = imgr_file_download,
         .nh_write = imgr_file_upload
