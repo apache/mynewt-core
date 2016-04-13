@@ -51,9 +51,10 @@ struct log_handler {
 
 struct log_entry_hdr {
     int64_t ue_ts;
-    uint16_t ue_level;
     uint16_t ue_module;
-};
+    uint8_t ue_index;
+    uint8_t ue_level;
+}__attribute__((__packed__));
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
 
 #define LOG_LEVEL_DEBUG    (0x01)
@@ -72,6 +73,9 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
 #define LOG_MODULE_PERUSER          (64)
+
+/* UTC Timestamnp for Jan 2016 00:00:00 */
+#define UTC01_01_2016    1451606400
 
 /* Compile in Log Debug by default */
 #ifndef LOG_LEVEL
@@ -116,7 +120,7 @@ struct log_entry_hdr {
 struct log {
     char *l_name;
     struct log_handler *l_log;
-    uint16_t log_level;
+    uint8_t l_index;
     STAILQ_ENTRY(log) l_next;
 };
 
