@@ -103,15 +103,15 @@ static void li2a(long num, struct param *p)
 }
 #endif
 
-static void ui2a(unsigned int num, struct param *p)
+static void ui2a(unsigned long long int num, struct param *p)
 {
     int n = 0;
-    unsigned int d = 1;
+    unsigned long long int d = 1;
     char *bf = p->bf;
     while (num / d >= p->base)
         d *= p->base;
     while (d != 0) {
-        int dgt = num / d;
+        unsigned long long  dgt = num / d;
         num %= d;
         d /= p->base;
         if (n || dgt > 0 || d == 0) {
@@ -122,7 +122,7 @@ static void ui2a(unsigned int num, struct param *p)
     *bf = 0;
 }
 
-static void i2a(int num, struct param *p)
+static void i2a(long long int num, struct param *p)
 {
     if (num < 0) {
         num = -num;
@@ -282,7 +282,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                     uli2a(va_arg(va, unsigned long int), &p);
                 else
 #endif
-                    ui2a(va_arg(va, unsigned int), &p);
+                    ui2a(va_arg(va, unsigned long long int), &p);
                 written += putchw(putp, &p);
                 break;
             case 'd':
@@ -293,7 +293,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                     li2a(va_arg(va, unsigned long int), &p);
                 else
 #endif
-                    i2a(va_arg(va, int), &p);
+                    i2a(va_arg(va, long long int), &p);
                 written += putchw(putp, &p);
                 break;
             case 'x':
@@ -305,12 +305,12 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                     uli2a(va_arg(va, unsigned long int), &p);
                 else
 #endif
-                    ui2a(va_arg(va, unsigned int), &p);
+                    ui2a(va_arg(va, unsigned long long int), &p);
                 written += putchw(putp, &p);
                 break;
             case 'o':
                 p.base = 8;
-                ui2a(va_arg(va, unsigned int), &p);
+                ui2a(va_arg(va, unsigned long long int), &p);
                 written += putchw(putp, &p);
                 break;
             case 'c':
