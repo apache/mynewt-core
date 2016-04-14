@@ -39,7 +39,7 @@
 int
 main(void)
 {
-    struct nffs_area_desc nffs_descs[NFFS_AREA_MAX];
+    struct nffs_area_desc nffs_descs[NFFS_AREA_MAX + 1];
     struct nffs_area_desc descs[AREA_DESC_MAX];
     /** Contains indices of the areas which can contain image data. */
     uint8_t img_areas[AREA_DESC_MAX];
