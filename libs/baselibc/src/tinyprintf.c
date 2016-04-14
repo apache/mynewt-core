@@ -186,33 +186,33 @@ static unsigned putchw(FILE *putp, struct param *p)
 }
 
 static unsigned long long
-intarg(int lng, int sign, va_list va)
+intarg(int lng, int sign, va_list *va)
 {
     unsigned long long val;
 
     switch (lng) {
     case 0:
         if (sign) {
-            val = va_arg(va, int);
+            val = va_arg(*va, int);
         } else {
-            val = va_arg(va, unsigned int);
+            val = va_arg(*va, unsigned int);
         }
         break;
 
     case 1:
         if (sign) {
-            val = va_arg(va, long);
+            val = va_arg(*va, long);
         } else {
-            val = va_arg(va, unsigned long);
+            val = va_arg(*va, unsigned long);
         }
         break;
 
     case 2:
     default:
         if (sign) {
-            val = va_arg(va, long long);
+            val = va_arg(*va, long long);
         } else {
-            val = va_arg(va, unsigned long long);
+            val = va_arg(*va, unsigned long long);
         }
         break;
     }
@@ -274,25 +274,25 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 goto abort;
             case 'u':
                 p.base = 10;
-                ui2a(intarg(lng, 0, va), &p);
+                ui2a(intarg(lng, 0, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'd':
             case 'i':
                 p.base = 10;
-                i2a(intarg(lng, 1, va), &p);
+                i2a(intarg(lng, 1, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'x':
             case 'X':
                 p.base = 16;
                 p.uc = (ch == 'X');
-                i2a(intarg(lng, 0, va), &p);
+                ui2a(intarg(lng, 0, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'o':
                 p.base = 8;
-                i2a(intarg(lng, 0, va), &p);
+                ui2a(intarg(lng, 0, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'c':
