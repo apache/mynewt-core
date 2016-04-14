@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -18,6 +18,7 @@
  */
 
 #include <os/os.h>
+#include "os/os_time.h"
 
 #include <string.h>
 
@@ -83,7 +84,7 @@ log_list_get_next(struct log *log)
     return (next);
 }
 
-int 
+int
 log_register(char *name, struct log *log, struct log_handler *lh)
 {
     log->l_name = name;
@@ -95,16 +96,27 @@ log_register(char *name, struct log *log, struct log_handler *lh)
 }
 
 int
-log_append(struct log *log, uint16_t module, uint16_t level, void *data, 
+log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         uint16_t len)
 {
     struct log_entry_hdr *ue;
     int rc;
+    struct os_timeval tv;
+
+    log->l_index++;
 
     ue = (struct log_entry_hdr *) data;
-    ue->ue_ts = (int64_t) os_time_get();
+
+    /* Try to get UTC Time */
+    rc = os_gettimeofday(&tv, NULL);
+    if (rc || tv.tv_sec < UTC01_01_2016) {
+        ue->ue_ts = os_get_uptime_usec();
+    } else {
+        ue->ue_ts = tv.tv_sec * 1000000 + tv.tv_usec;
+    }
     ue->ue_level = level;
     ue->ue_module = module;
+    ue->ue_index = log->l_index;
 
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
@@ -116,7 +128,7 @@ err:
     return (rc);
 }
 
-void 
+void
 log_printf(struct log *log, uint16_t module, uint16_t level, char *msg,
         ...)
 {
@@ -125,7 +137,7 @@ log_printf(struct log *log, uint16_t module, uint16_t level, char *msg,
     int len;
 
     va_start(args, msg);
-    len = vsnprintf(&buf[LOG_ENTRY_HDR_SIZE], LOG_PRINTF_MAX_ENTRY_LEN, msg, 
+    len = vsnprintf(&buf[LOG_ENTRY_HDR_SIZE], LOG_PRINTF_MAX_ENTRY_LEN, msg,
             args);
     if (len >= LOG_PRINTF_MAX_ENTRY_LEN) {
         len = LOG_PRINTF_MAX_ENTRY_LEN-1;
@@ -134,7 +146,7 @@ log_printf(struct log *log, uint16_t module, uint16_t level, char *msg,
     log_append(log, module, level, (uint8_t *) buf, len);
 }
 
-int 
+int
 log_walk(struct log *log, log_walk_func_t walk_func, void *arg)
 {
     int rc;
@@ -149,8 +161,8 @@ err:
     return (rc);
 }
 
-int 
-log_read(struct log *log, void *dptr, void *buf, uint16_t off, 
+int
+log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len)
 {
     int rc;
@@ -160,7 +172,7 @@ log_read(struct log *log, void *dptr, void *buf, uint16_t off,
     return (rc);
 }
 
-int 
+int
 log_flush(struct log *log)
 {
     int rc;
@@ -168,7 +180,9 @@ log_flush(struct log *log)
     rc = log->l_log->log_flush(log);
     if (rc != 0) {
         goto err;
-    } 
+    }
+
+    log->l_index = 0;
 
     return (0);
 err:

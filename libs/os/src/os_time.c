@@ -50,7 +50,7 @@ os_deltatime(os_time_t delta, const struct os_timeval *base,
     os_timeradd(base, &tvdelta, result);
 }
 
-os_time_t  
+os_time_t
 os_time_get(void)
 {
     return (g_os_time);
@@ -95,9 +95,9 @@ os_time_advance(int ticks)
 }
 
 /**
- * Puts the current task to sleep for the specified number of os ticks. There 
- * is no delay if ticks is <= 0. 
- * 
+ * Puts the current task to sleep for the specified number of os ticks. There
+ * is no delay if ticks is <= 0.
+ *
  * @param osticks Number of ticks to delay (<= 0 means no delay).
  */
 void
@@ -156,4 +156,24 @@ os_gettimeofday(struct os_timeval *tv, struct os_timezone *tz)
     OS_EXIT_CRITICAL(sr);
 
     return (0);
+}
+
+int64_t
+os_get_uptime_usec(void) 
+{
+  struct os_timeval tv;
+  os_time_t delta;
+  os_sr_t sr;
+  os_time_t ostime;
+
+
+  OS_ENTER_CRITICAL(sr);
+  tv = basetod.uptime;
+  ostime = basetod.ostime;
+  delta = os_time_get() - ostime;
+  OS_EXIT_CRITICAL(sr);
+
+  os_deltatime(delta, &tv, &tv);
+
+  return(tv.tv_sec * 1000000 + tv.tv_usec);
 }
