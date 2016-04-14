@@ -72,37 +72,6 @@ struct param {
     char *bf;           /**<  Buffer to output */
 };
 
-#ifdef PRINTF_LONG_SUPPORT
-
-static void uli2a(unsigned long int num, struct param *p)
-{
-    int n = 0;
-    unsigned long int d = 1;
-    char *bf = p->bf;
-    while (num / d >= p->base)
-        d *= p->base;
-    while (d != 0) {
-        int dgt = num / d;
-        num %= d;
-        d /= p->base;
-        if (n || dgt > 0 || d == 0) {
-            *bf++ = dgt + (dgt < 10 ? '0' : (p->uc ? 'A' : 'a') - 10);
-            ++n;
-        }
-    }
-    *bf = 0;
-}
-
-static void li2a(long num, struct param *p)
-{
-    if (num < 0) {
-        num = -num;
-        p->sign = 1;
-    }
-    uli2a(num, p);
-}
-#endif
-
 static void ui2a(unsigned long long int num, struct param *p)
 {
     int n = 0;
@@ -216,18 +185,50 @@ static unsigned putchw(FILE *putp, struct param *p)
     return written;
 }
 
+static unsigned long long
+intarg(int lng, int sign, va_list va)
+{
+    unsigned long long val;
+
+    switch (lng) {
+    case 0:
+        if (sign) {
+            val = va_arg(va, int);
+        } else {
+            val = va_arg(va, unsigned int);
+        }
+        break;
+
+    case 1:
+        if (sign) {
+            val = va_arg(va, long);
+        } else {
+            val = va_arg(va, unsigned long);
+        }
+        break;
+
+    case 2:
+    default:
+        if (sign) {
+            val = va_arg(va, long long);
+        } else {
+            val = va_arg(va, unsigned long long);
+        }
+        break;
+    }
+
+    return val;
+}
+
 size_t tfp_format(FILE *putp, const char *fmt, va_list va)
 {
     size_t written = 0;
     struct param p;
-#ifdef PRINTF_LONG_SUPPORT
     char bf[23];
-#else
-    char bf[12];
-#endif
-    p.bf = bf;
-
     char ch;
+    char lng = 0;
+
+    p.bf = bf;
 
     while ((ch = *(fmt++))) {
         if (ch != '%') {
@@ -238,9 +239,6 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             p.alt = 0;
             p.width = 0;
             p.sign = 0;
-#ifdef PRINTF_LONG_SUPPORT
-            char lng = 0;
-#endif
 
             /* Flags */
             while ((ch = *(fmt++))) {
@@ -263,12 +261,11 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             }
             if (ch == 'l') {
                 ch = *(fmt++);
-#ifdef PRINTF_LONG_SUPPORT
                 lng = 1;
-#endif
-                /* Ignore second long specifier. */
+
                 if (ch == 'l') {
                     ch = *(fmt++);
+                    lng = 2;
                 }
             }
 
@@ -277,40 +274,25 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 goto abort;
             case 'u':
                 p.base = 10;
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    uli2a(va_arg(va, unsigned long int), &p);
-                else
-#endif
-                    ui2a(va_arg(va, unsigned long long int), &p);
+                ui2a(intarg(lng, 0, va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'd':
             case 'i':
                 p.base = 10;
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    li2a(va_arg(va, unsigned long int), &p);
-                else
-#endif
-                    i2a(va_arg(va, long long int), &p);
+                i2a(intarg(lng, 1, va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'x':
             case 'X':
                 p.base = 16;
                 p.uc = (ch == 'X');
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    uli2a(va_arg(va, unsigned long int), &p);
-                else
-#endif
-                    ui2a(va_arg(va, unsigned long long int), &p);
+                i2a(intarg(lng, 0, va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'o':
                 p.base = 8;
-                ui2a(va_arg(va, unsigned long long int), &p);
+                i2a(intarg(lng, 0, va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'c':
