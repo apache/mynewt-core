@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -24,8 +24,8 @@
 #include "log/log.h"
 
 
-static int 
-log_cbmem_append(struct log *log, void *buf, int len) 
+static int
+log_cbmem_append(struct log *log, void *buf, int len)
 {
     struct cbmem *cbmem;
     int rc;
@@ -42,9 +42,9 @@ err:
     return (rc);
 }
 
-static int 
-log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset, 
-        uint16_t len) 
+static int
+log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+        uint16_t len)
 {
     struct cbmem *cbmem;
     struct cbmem_entry_hdr *hdr;
@@ -58,7 +58,7 @@ log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
     return (rc);
 }
 
-static int 
+static int
 log_cbmem_walk(struct log *log, log_walk_func_t walk_func, void *arg)
 {
     struct cbmem *cbmem;
@@ -72,7 +72,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     if (rc != 0) {
         goto err;
     }
-    
+
     cbmem_iter_start(cbmem, &iter);
     while (1) {
         hdr = cbmem_iter_next(cbmem, &iter);
@@ -80,7 +80,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func, void *arg)
             break;
         }
 
-        rc = walk_func(log, arg, (void *) hdr, hdr->ceh_len);
+        rc = walk_func(log, arg, (void *)hdr, hdr->ceh_len);
         if (rc == 1) {
             break;
         }
@@ -96,14 +96,14 @@ err:
     return (rc);
 }
 
-static int 
+static int
 log_cbmem_flush(struct log *log)
 {
     struct cbmem *cbmem;
     int rc;
 
     cbmem = (struct cbmem *) log->l_log->log_arg;
-    
+
     rc = cbmem_flush(cbmem);
     if (rc != 0) {
         goto err;
@@ -114,7 +114,7 @@ err:
     return (rc);
 }
 
-int 
+int
 log_cbmem_handler_init(struct log_handler *handler, struct cbmem *cbmem)
 {
     handler->log_type = LOG_TYPE_MEMORY;
@@ -126,4 +126,3 @@ log_cbmem_handler_init(struct log_handler *handler, struct cbmem *cbmem)
 
     return (0);
 }
-

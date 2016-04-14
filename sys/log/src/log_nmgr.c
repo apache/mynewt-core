@@ -76,13 +76,25 @@ log_nmgr_add_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     json_encode_object_start(encoder);
 
     JSON_VALUE_STRINGN(&jv, data, rc);
-    rc = json_encode_object_entry(encoder, "log", &jv);
+    rc = json_encode_object_entry(encoder, "msg", &jv);
     if (rc != 0) {
         goto err;
     }
 
-    JSON_VALUE_UINT(&jv, *(uint64_t *) &ueh.ue_ts);
+    JSON_VALUE_INT(&jv, ueh.ue_ts);
     rc = json_encode_object_entry(encoder, "ts", &jv);
+    if (rc != 0) {
+        goto err;
+    }
+
+    JSON_VALUE_UINT(&jv, ueh.ue_level);
+    rc = json_encode_object_entry(encoder, "level", &jv);
+    if (rc != 0) {
+        goto err;
+    }
+
+    JSON_VALUE_UINT(&jv, ueh.ue_index);
+    rc = json_encode_object_entry(encoder, "index", &jv);
     if (rc != 0) {
         goto err;
     }
@@ -121,10 +133,23 @@ log_nmgr_read(struct nmgr_jbuf *njb)
             continue;
         }
 
+        json_encode_object_start(encoder);
+        JSON_VALUE_STRING(&jv, log->l_name);
+        json_encode_object_entry(encoder, "name", &jv);
+
+        JSON_VALUE_INT(&jv, log->l_log->log_type);
+        json_encode_object_entry(encoder, "type", &jv);
+
+        json_encode_array_name(encoder, "entries");
+        json_encode_array_start(encoder);
+
         rc = log_walk(log, log_nmgr_add_entry, encoder);
         if (rc != 0) {
             goto err;
         }
+
+        json_encode_array_finish(encoder);
+        json_encode_object_finish(encoder);
     }
 
     json_encode_array_finish(encoder);
