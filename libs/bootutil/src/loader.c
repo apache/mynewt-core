@@ -563,24 +563,25 @@ boot_build_status(void)
 {
     uint8_t flash_id;
     uint32_t address;
+    uint32_t len;
 
     memset(boot_status_entries, 0xff,
            boot_req->br_num_image_areas * sizeof *boot_status_entries);
 
     if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
-        boot_status.bs_img1_length = boot_img_hdrs[0].ih_img_size;
+        len = boot_img_hdrs[0].ih_img_size + boot_img_hdrs[0].ih_tlv_size;
+        boot_status.bs_img1_length = len;
         boot_slot_addr(0, &flash_id, &address);
-        boot_build_status_one(0, flash_id, address,
-                              boot_img_hdrs[0].ih_img_size);
+        boot_build_status_one(0, flash_id, address, len);
     } else {
         boot_status.bs_img1_length = 0;
     }
 
     if (boot_img_hdrs[1].ih_magic == IMAGE_MAGIC) {
-        boot_status.bs_img2_length = boot_img_hdrs[1].ih_img_size;
+        len = boot_img_hdrs[1].ih_img_size + boot_img_hdrs[1].ih_tlv_size;
+        boot_status.bs_img2_length = len;
         boot_slot_addr(1, &flash_id, &address);
-        boot_build_status_one(1, flash_id, address,
-                              boot_img_hdrs[1].ih_img_size);
+        boot_build_status_one(1, flash_id, address, len);
     } else {
         boot_status.bs_img2_length = 0;
     }
