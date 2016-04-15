@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2015, Nordic Semiconductor ASA
 All rights reserved.
 
@@ -28,8 +28,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* 
-NOTE: Template files (including this one) are application specific and therefore 
+/*
+NOTE: Template files (including this one) are application specific and therefore
 expected to be copied into the application project folder prior to its use!
 */
 
@@ -38,7 +38,7 @@ expected to be copied into the application project folder prior to its use!
 
     .section .stack
     .align 3
-    .equ    Stack_Size, 384
+    .equ    Stack_Size, 432
     .globl    __StackTop
     .globl    __StackLimit
 __StackLimit:
@@ -63,7 +63,7 @@ __HeapBase:
     .size __HeapBase, . - __HeapBase
 __HeapLimit:
     .size __HeapLimit, . - __HeapLimit
-    
+
     .section .isr_vector
     .align 2
     .globl __isr_vector
@@ -140,7 +140,7 @@ Reset_Handler:
 
 
 /*     Loop to copy data from read only memory to RAM. The ranges
- *      of copy from/to are specified by following symbols evaluated in 
+ *      of copy from/to are specified by following symbols evaluated in
  *      linker script.
  *      __etext: End of code section, i.e., begin of data sections to copy from.
  *      __data_start__/__data_end__: RAM address range that data should be

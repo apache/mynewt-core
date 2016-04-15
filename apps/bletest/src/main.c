@@ -77,7 +77,7 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (32)
+#define MBUF_NUM_MBUFS      (16)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -145,6 +145,7 @@ uint32_t g_bletest_next_led_time;
 uint16_t g_bletest_handle;
 uint16_t g_bletest_completed_pkts;
 uint16_t g_bletest_outstanding_pkts;
+uint16_t g_bletest_ltk_reply_handle;
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -168,7 +169,20 @@ const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] =
     0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66
 };
 
-uint8_t g_ble_ll_encrypted_data[16];
+#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+/* LTK 0x4C68384139F574D836BCF34E9DFB01BF */
+const uint8_t g_bletest_LTK[16] =
+{
+    0x4C,0x68,0x38,0x41,0x39,0xF5,0x74,0xD8,
+    0x36,0xBC,0xF3,0x4E,0x9D,0xFB,0x01,0xBF
+};
+uint16_t g_bletest_EDIV = 0x2474;
+uint64_t g_bletest_RAND = 0xABCDEF1234567890;
+uint64_t g_bletest_SKDm = 0xACBDCEDFE0F10213;
+uint64_t g_bletest_SKDs = 0x0213243546576879;
+uint32_t g_bletest_IVm = 0xBADCAB24;
+uint32_t g_bletest_IVs = 0xDEAFBABE;
+#endif
 
 #if (BLETEST_THROUGHPUT_TEST == 1)
 void
@@ -232,6 +246,32 @@ bletest_send_conn_update(uint16_t handle)
     assert(rc == 0);
     host_hci_outstanding_opcode = 0;
 }
+
+#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+void
+bletest_ltk_req_reply(uint16_t handle)
+{
+    g_bletest_ltk_reply_handle = handle;
+}
+
+void
+bletest_send_ltk_req_neg_reply(uint16_t handle)
+{
+    host_hci_cmd_le_lt_key_req_neg_reply(handle);
+    host_hci_outstanding_opcode = 0;
+}
+
+void
+bletest_send_ltk_req_reply(uint16_t handle)
+{
+    struct hci_lt_key_req_reply hkr;
+
+    hkr.conn_handle = handle;
+    swap_buf(hkr.long_term_key, (uint8_t *)g_bletest_LTK, 16);
+    host_hci_cmd_le_lt_key_req_reply(&hkr);
+    host_hci_outstanding_opcode = 0;
+}
+#endif
 
 /**
  * Sets the advertising data to be sent in advertising pdu's which contain
@@ -508,10 +548,25 @@ bletest_execute_initiator(void)
                 new_chan_map[0] = 0;
                 new_chan_map[1] = 0x3;
                 new_chan_map[2] = 0;
-                new_chan_map[3] = 0;
+                new_chan_map[3] = 0x1F;
                 new_chan_map[4] = 0;
                 host_hci_cmd_le_set_host_chan_class(new_chan_map);
                 host_hci_outstanding_opcode = 0;
+            } else if (g_bletest_state == 4) {
+#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+                struct hci_start_encrypt hsle;
+                for (i = 0; i < g_bletest_current_conns; ++i) {
+                    if (ble_ll_conn_find_active_conn(i + 1)) {
+                        hsle.connection_handle = i + 1;
+                        hsle.encrypted_diversifier = g_bletest_EDIV;
+                        hsle.random_number = g_bletest_RAND;
+                        swap_buf(hsle.long_term_key, (uint8_t *)g_bletest_LTK,
+                                 16);
+                        host_hci_cmd_le_start_encrypt(&hsle);
+                        host_hci_outstanding_opcode = 0;
+                    }
+                }
+#endif
             } else {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -520,8 +575,11 @@ bletest_execute_initiator(void)
                     }
                 }
             }
-            ++g_bletest_state;
-            g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 5;
+            if (g_bletest_state < 5) {
+                ++g_bletest_state;
+            } else {
+            }
+            g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 3;
         }
     }
 }
@@ -623,6 +681,14 @@ bletest_execute_advertiser(void)
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     /* See if it is time to hand a data packet to the connection */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
+#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+        /* Do we need to send a LTK reply? */
+        if (g_bletest_ltk_reply_handle) {
+            //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
+            bletest_send_ltk_req_reply(g_bletest_ltk_reply_handle);
+            g_bletest_ltk_reply_handle = 0;
+        }
+#endif
         if (g_bletest_current_conns) {
             for (i = 0; i < g_bletest_current_conns; ++i) {
                 if ((g_last_handle_used == 0) ||

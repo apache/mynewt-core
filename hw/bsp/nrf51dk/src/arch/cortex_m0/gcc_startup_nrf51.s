@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2015, Nordic Semiconductor ASA
 All rights reserved.
 
@@ -28,8 +28,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* 
-NOTE: Template files (including this one) are application specific and therefore 
+/*
+NOTE: Template files (including this one) are application specific and therefore
 expected to be copied into the application project folder prior to its use!
 */
 
@@ -38,7 +38,7 @@ expected to be copied into the application project folder prior to its use!
 
     .section .stack
     .align 3
-    .equ    Stack_Size, 384
+    .equ    Stack_Size, 432
     .globl    __StackTop
     .globl    __StackLimit
 __StackLimit:
@@ -63,7 +63,7 @@ __HeapBase:
     .size __HeapBase, . - __HeapBase
 __HeapLimit:
     .size __HeapLimit, . - __HeapLimit
-    
+
     .section .isr_vector
     .align 2
     .globl __isr_vector
@@ -125,7 +125,7 @@ __isr_vector:
 
     .equ    NRF_POWER_RAMON_ADDRESS,             0x40000524
     .equ    NRF_POWER_RAMONB_ADDRESS,            0x40000554
-    .equ    NRF_POWER_RAMONx_RAMxON_ONMODE_Msk,  0x3  
+    .equ    NRF_POWER_RAMONx_RAMxON_ONMODE_Msk,  0x3
 
     .text
     .thumb
@@ -138,7 +138,7 @@ Reset_Handler:
 
 /* Make sure ALL RAM banks are powered on */
     MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
-    
+
     LDR     R0, =NRF_POWER_RAMON_ADDRESS
     LDR     R2, [R0]
     ORRS    R2, R1
@@ -150,7 +150,7 @@ Reset_Handler:
     STR     R2, [R0]
 
 /*     Loop to copy data from read only memory to RAM. The ranges
- *      of copy from/to are specified by following symbols evaluated in 
+ *      of copy from/to are specified by following symbols evaluated in
  *      linker script.
  *      __etext: End of code section, i.e., begin of data sections to copy from.
  *      __data_start__/__data_end__: RAM address range that data should be
@@ -169,7 +169,7 @@ Reset_Handler:
     str    r0, [r2,r3]
     bgt    .LC1
 .LC0:
-    
+
     LDR     R0, =SystemInit
     BLX     R0
     LDR     R0, =_start
@@ -214,7 +214,7 @@ SysTick_Handler:
 /* Default handler. This uses the vector in the relocated vector table */
     .globl  Default_Handler
     .type   Default_Handler, %function
-Default_Handler:    
+Default_Handler:
     LDR     R2, =__vector_tbl_reloc__
     MRS     R0, PSR
     MOVS    R1, #0x3F
@@ -224,7 +224,7 @@ Default_Handler:
     BX      R0
     .size   Default_Handler, . - Default_Handler
 
-/* 
+/*
  * All of the following IRQ Handlers will point to the default handler unless
  * they are defined elsewhere.
  */
