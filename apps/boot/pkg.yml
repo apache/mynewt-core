@@ -34,3 +34,4 @@ pkg.deps:
     - libs/mbedtls
     - libs/os
     - libs/util
+pkg.cflags: -DLOG_LEVEL=255
