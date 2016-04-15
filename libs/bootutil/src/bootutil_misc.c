@@ -29,7 +29,7 @@ static int boot_conf_set(int argc, char **argv, char *val);
 
 static struct image_version boot_main;
 static struct image_version boot_test;
-static uint8_t boot_st_loaded;
+static struct boot_status boot_saved;
 
 static struct conf_handler boot_conf_handler = {
     .ch_name = "boot",
@@ -48,18 +48,32 @@ boot_conf_set(int argc, char **argv, char *val)
     if (argc == 1) {
         if (!strcmp(argv[0], "main")) {
             len = sizeof(boot_main);
-            rc = conf_bytes_from_str(val, &boot_main, &len);
+            if (val) {
+                rc = conf_bytes_from_str(val, &boot_main, &len);
+            } else {
+                memset(&boot_main, 0, len);
+                rc = 0;
+            }
         } else if (!strcmp(argv[0], "test")) {
             len = sizeof(boot_test);
-            rc = conf_bytes_from_str(val, &boot_test, &len);
-        } else if (!strcmp(argv[0], "status")) {
-            len = boot_st_sz;
-            rc = conf_bytes_from_str(val, boot_st, &len);
-            if (rc == 0 && len > 0) {
-                boot_st_loaded = 1;
+            if (val) {
+                rc = conf_bytes_from_str(val, &boot_test, &len);
             } else {
-                boot_st_loaded = 0;
+                memset(&boot_test, 0, len);
+                rc = 0;
             }
+        } else if (!strcmp(argv[0], "status")) {
+            if (!val) {
+                boot_saved.state = 0;
+                rc = 0;
+            } else {
+                rc = conf_value_from_str(val, CONF_INT32,
+                  &boot_saved.state, sizeof(boot_saved.state));
+            }
+        } else if (!strcmp(argv[0], "len")) {
+            conf_value_from_str(val, CONF_INT32, &boot_saved.length,
+              sizeof(boot_saved.length));
+            rc = 0;
         } else {
             rc = OS_ENOENT;
         }
@@ -107,7 +121,7 @@ boot_vect_read_main(struct image_version *out_ver)
     return boot_vect_read_one(out_ver, &boot_main);
 }
 
-int
+static int
 boot_vect_write_one(const char *name, struct image_version *ver)
 {
     char str[CONF_STR_FROM_BYTES_LEN(sizeof(struct image_version))];
@@ -215,11 +229,12 @@ bootutil_cfg_register(void)
 }
 
 int
-boot_read_status(void)
+boot_read_status(struct boot_status *bs)
 {
     conf_load();
 
-    return boot_st_loaded == 1;
+    *bs = boot_saved;
+    return (boot_saved.state != 0);
 }
 
 /**
@@ -235,29 +250,18 @@ boot_read_status(void)
  * @return                      0 on success; nonzero on failure.
  */
 int
-boot_write_status(void)
+boot_write_status(struct boot_status *bs)
 {
-    char *val_str;
-    char *rstr;
-    int rc = 0;
-    int len;
+    char str[12];
+    int rc;
 
-    len = CONF_STR_FROM_BYTES_LEN(boot_st_sz);
-    val_str = malloc(len);
-    if (!val_str) {
-        return BOOT_ENOMEM;
+    rc = conf_save_one(&boot_conf_handler, "status",
+      conf_str_from_value(CONF_INT32, &bs->state, str, sizeof(str)));
+    if (rc) {
+        return rc;
     }
-    rstr = conf_str_from_bytes(boot_st, boot_st_sz, val_str, len);
-    if (!rstr) {
-        rc = BOOT_EFILE;
-    } else {
-        if (conf_save_one(&boot_conf_handler, "status", val_str)) {
-            rc = BOOT_EFLASH;
-        }
-    }
-    free(val_str);
-
-    return rc;
+    return conf_save_one(&boot_conf_handler, "len",
+      conf_str_from_value(CONF_INT32, &bs->length, str, sizeof(str)));
 }
 
 /**

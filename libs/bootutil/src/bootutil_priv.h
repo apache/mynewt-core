@@ -39,16 +39,8 @@ struct image_header;
 #define BOOT_TMPBUF_SZ  256
 
 struct boot_status {
-    uint32_t bs_img1_length;
-    uint32_t bs_img2_length;
-    /* Followed by sequence of boot status entries; file size indicates number
-     * of entries.
-     */
-};
-
-struct boot_status_entry {
-    uint8_t bse_image_num;
-    uint8_t bse_part_num;
+    uint32_t length;
+    uint32_t state;
 };
 
 /**
@@ -56,25 +48,17 @@ struct boot_status_entry {
  * present on disk.  The boot status indicates the state of the image slots in
  * case the system was restarted while images were being moved in flash.
  */
-struct boot_state {
-	struct boot_status status;
-	/** The entries associated with the boot status header. */
-	struct boot_status_entry entries[0];
-};
 
 struct boot_image_location {
     uint8_t bil_flash_id;
     uint32_t bil_address;
 };
 
-extern struct boot_state *boot_st;
-extern int boot_st_sz;
-
 void boot_read_image_headers(struct image_header *out_headers,
                              const struct boot_image_location *addresses,
                              int num_addresses);
-int boot_read_status(void);
-int boot_write_status(void);
+int boot_read_status(struct boot_status *);
+int boot_write_status(struct boot_status *);
 void boot_clear_status(void);
 
 int bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,

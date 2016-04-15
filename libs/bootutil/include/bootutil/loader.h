@@ -33,14 +33,8 @@ struct boot_req {
 
     /**
      * Array of indices of elements in the br_area_descs array; indicates which
-     * areas hold image data.
-     */
-    uint8_t *br_image_areas;
-
-    /**
-     * Array of indices of elements in the br_area_descs array; indicates which
-     * areas represent the beginning of an image slot.  This should be a subset
-     * of the br_image_areas array.
+     * areas represent the beginning of an image slot.  These are indices
+     * to br_area_descs array.
      */
     uint8_t *br_slot_areas;
 
@@ -49,7 +43,8 @@ struct boot_req {
      */
     uint8_t br_num_image_areas;
 
-    /** The index of the area to use as the image scratch area. */
+    /** The area to use as the image scratch area, index is
+	index to br_area_descs array, of the  */
     uint8_t br_scratch_area_idx;
 };
 

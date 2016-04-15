@@ -50,8 +50,6 @@ main(void)
 {
     struct nffs_area_desc nffs_descs[NFFS_AREA_MAX + 1];
     struct flash_area descs[AREA_DESC_MAX];
-    /** Contains indices of the areas which can contain image data. */
-    uint8_t img_areas[AREA_DESC_MAX];
     /** Areas representing the beginning of image slots. */
     uint8_t img_starts[2];
     int cnt;
@@ -60,7 +58,6 @@ main(void)
     int rc;
     struct boot_req req = {
         .br_area_descs = descs,
-        .br_image_areas = img_areas,
         .br_slot_areas = img_starts,
     };
 
@@ -90,10 +87,6 @@ main(void)
 
     req.br_num_image_areas = total;
 
-    for (cnt = 0; cnt < total; cnt++) {
-        img_areas[cnt] = cnt;
-    }
-
     /*
      * Make sure we have enough left to initialize the NFFS with the
      * right number of maximum areas otherwise the file-system will not
@@ -115,7 +108,6 @@ main(void)
         nffs_detect(nffs_descs);
     }
 
-    log_init();
     conf_init();
 
     rc = conf_file_src(&my_conf);

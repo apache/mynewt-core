@@ -21,8 +21,8 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include <string.h>
-#include <hal/hal_flash.h>
 #include <hal/flash_map.h>
+#include <hal/hal_flash.h>
 #include <os/os_malloc.h>
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
@@ -38,8 +38,11 @@ static const struct boot_req *boot_req;
 /** Image headers read from flash. */
 struct image_header boot_img_hdrs[2];
 
-struct boot_state *boot_st;
-int boot_st_sz;
+static struct boot_status boot_state;
+
+#define BOOT_PERSIST(idx, st) (((idx) << 8) | (0xff & (st)))
+#define BOOT_PERSIST_IDX(st) (((st) >> 8) & 0xffffff)
+#define BOOT_PERSIST_ST(st) ((st) & 0xff)
 
 /**
  * Calculates the flash offset of the specified image slot.
@@ -122,90 +125,48 @@ boot_select_image_slot(void)
     return -1;
 }
 
-/**
- * Searches the current boot status for the specified image-num,part-num pair.
+/*
+ * How many sectors starting from sector[idx] can fit inside scratch.
  *
- * @param image_num             The image number to search for.
- * @param part_num              The part number of the specified image to
- *                                  search for.
- *
- * @return                      The area index containing the specified image
- *                              part number;
- *                              -1 if the part number is not present in flash.
  */
-static int
-boot_find_image_part(int image_num, int part_num)
+static uint32_t
+boot_copy_sz(int idx, int max_idx, int *cnt)
 {
     int i;
+    uint32_t sz;
+    static uint32_t scratch_sz = 0;
 
-    for (i = 0; i < boot_req->br_num_image_areas; i++) {
-        if (boot_st->entries[i].bse_image_num == image_num &&
-            boot_st->entries[i].bse_part_num == part_num) {
-
-            return boot_req->br_image_areas[i];
+    if (!scratch_sz) {
+        for (i = boot_req->br_scratch_area_idx;
+             i < boot_req->br_num_image_areas;
+             i++) {
+            scratch_sz += boot_req->br_area_descs[i].fa_size;
         }
     }
-
-    return -1;
-}
-
-static int
-boot_slot_to_area_idx(int slot_num)
-{
-    int i;
-    uint8_t flash_id;
-    uint32_t address;
-
-    assert(slot_num >= 0 && slot_num < BOOT_NUM_SLOTS);
-
-    for (i = 0; boot_req->br_area_descs[i].fa_size != 0; i++) {
-        boot_slot_addr(slot_num, &flash_id, &address);
-        if (boot_req->br_area_descs[i].fa_off == address &&
-          boot_req->br_area_descs[i].fa_flash_id == flash_id) {
-
-            return i;
+    sz = 0;
+    *cnt = 0;
+    for (i = idx; i < max_idx; i++) {
+        if (sz + boot_req->br_area_descs[i].fa_size > scratch_sz) {
+            break;
         }
+        sz += boot_req->br_area_descs[i].fa_size;
+        *cnt = *cnt + 1;
     }
-
-    return -1;
+    return sz;
 }
 
-/**
- * Locates the specified area index within the array of image areas.
- *
- * @param area_idx              The area index to search for.
- *
- * @return                      The index of the element in the image area
- *                              array.  that contains the sought after area
- *                              index; -1 if the area index is not present.
- */
-static int
-boot_find_image_area_idx(int area_idx)
-{
-    int i;
-
-    for (i = 0; i < boot_req->br_num_image_areas; i++) {
-        if (boot_req->br_image_areas[i] == area_idx) {
-            return i;
-        }
-    }
-
-    return -1;
-}
 
 static int
-boot_erase_area(int area_idx)
+boot_erase_area(int area_idx, uint32_t sz)
 {
     const struct flash_area *area_desc;
     int rc;
 
     area_desc = boot_req->br_area_descs + area_idx;
-    rc = hal_flash_erase(area_desc->fa_flash_id, area_desc->fa_off,
-                         area_desc->fa_size);
+    rc = hal_flash_erase(area_desc->fa_flash_id, area_desc->fa_off, sz);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
-
     return 0;
 }
 
@@ -215,11 +176,12 @@ boot_erase_area(int area_idx)
  *
  * @param from_area_idx       The index of the source area.
  * @param to_area_idx         The index of the destination area.
+ * @param sz                  The number of bytes to move.
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_copy_area(int from_area_idx, int to_area_idx)
+boot_copy_area(int from_area_idx, int to_area_idx, uint32_t sz)
 {
     const struct flash_area *from_area_desc;
     const struct flash_area *to_area_desc;
@@ -237,11 +199,11 @@ boot_copy_area(int from_area_idx, int to_area_idx)
     assert(to_area_desc->fa_size >= from_area_desc->fa_size);
 
     off = 0;
-    while (off < from_area_desc->fa_size) {
-        if (from_area_desc->fa_size - off > sizeof buf) {
+    while (off < sz) {
+        if (sz - off > sizeof buf) {
             chunk_sz = sizeof buf;
         } else {
-            chunk_sz = from_area_desc->fa_size - off;
+            chunk_sz = sz - off;
         }
 
         from_addr = from_area_desc->fa_off + off;
@@ -267,212 +229,82 @@ boot_copy_area(int from_area_idx, int to_area_idx)
 /**
  * Swaps the contents of two flash areas.
  *
- * @param area_idx_1            The index of one area to swap.  This area
- *                                  must be part of the first image slot.
- * @param part_num_1            The image part number stored in the first
- *                                  area.
- * @param area_idx_2            The index of the other area to swap.  This
- *                                  area must be part of the second image
- *                                  slot.
- * @param part_num_2            The image part number stored in the second
- *                                  area.
- *
- * @return                      0 on success; nonzero on failure.
- */
-static int
-boot_move_area(int from_area_idx, int to_area_idx,
-                 int img_num, uint8_t part_num)
-{
-    int src_image_idx;
-    int dst_image_idx;
-    int rc;
-
-    src_image_idx = boot_find_image_area_idx(from_area_idx);
-    assert(src_image_idx != -1);
-
-    dst_image_idx = boot_find_image_area_idx(to_area_idx);
-    assert(dst_image_idx != -1);
-
-    rc = boot_erase_area(to_area_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_copy_area(from_area_idx, to_area_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    boot_st->entries[src_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot_st->entries[src_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    boot_st->entries[dst_image_idx].bse_image_num = img_num;
-    boot_st->entries[dst_image_idx].bse_part_num = part_num;
-    rc = boot_write_status();
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_erase_area(from_area_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-/**
- * Swaps the contents of two flash areas.
- *
  * @param area_idx_1          The index of one area to swap.  This area
  *                                  must be part of the first image slot.
- * @param part_num_1            The image part number stored in the first
- *                                  area.
  * @param area_idx_2          The index of the other area to swap.  This
  *                                  area must be part of the second image
  *                                  slot.
- * @param part_num_2            The image part number stored in the second
- *                                  area.
- *
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_swap_areas(int area_idx_1, int img_num_1, uint8_t part_num_1,
-                  int area_idx_2, int img_num_2, uint8_t part_num_2)
+boot_swap_areas(int idx, uint32_t sz)
 {
-    int scratch_image_idx;
-    int image_idx_1;
-    int image_idx_2;
+    int area_idx_1;
+    int area_idx_2;
     int rc;
+    int state;
 
+    area_idx_1 = boot_req->br_slot_areas[0] + idx;
+    area_idx_2 = boot_req->br_slot_areas[1] + idx;
     assert(area_idx_1 != area_idx_2);
     assert(area_idx_1 != boot_req->br_scratch_area_idx);
     assert(area_idx_2 != boot_req->br_scratch_area_idx);
 
-    image_idx_1 = boot_find_image_area_idx(area_idx_1);
-    assert(image_idx_1 != -1);
-
-    image_idx_2 = boot_find_image_area_idx(area_idx_2);
-    assert(image_idx_2 != -1);
-
-    scratch_image_idx =
-        boot_find_image_area_idx(boot_req->br_scratch_area_idx);
-    assert(scratch_image_idx != -1);
-
-    rc = boot_erase_area(boot_req->br_scratch_area_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_copy_area(area_idx_2, boot_req->br_scratch_area_idx);
-    if (rc != 0) {
-        return rc;
-    }
-
-    boot_st->entries[scratch_image_idx] = boot_st->entries[image_idx_2];
-    boot_st->entries[image_idx_2].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot_st->entries[image_idx_2].bse_part_num = BOOT_IMAGE_NUM_NONE;
-
-    rc = boot_write_status();
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_erase_area(area_idx_2);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_copy_area(area_idx_1, area_idx_2);
-    if (rc != 0) {
-        return rc;
-    }
-
-    boot_st->entries[image_idx_2] = boot_st->entries[image_idx_1];
-    boot_st->entries[image_idx_1].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot_st->entries[image_idx_1].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    rc = boot_write_status();
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_erase_area(area_idx_1);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_copy_area(boot_req->br_scratch_area_idx, area_idx_1);
-    if (rc != 0) {
-        return rc;
-    }
-
-    boot_st->entries[image_idx_1] = boot_st->entries[scratch_image_idx];
-    boot_st->entries[scratch_image_idx].bse_image_num = BOOT_IMAGE_NUM_NONE;
-    boot_st->entries[scratch_image_idx].bse_part_num = BOOT_IMAGE_NUM_NONE;
-    rc = boot_write_status();
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-static int
-boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
-{
-    const struct flash_area *area_desc;
-    uint32_t off;
-    int dst_image_area_idx;
-    int src_area_idx;
-    int dst_area_idx;
-    int src_img_num;
-    int dst_img_num;
-    int part_num;
-    int rc;
-
-    part_num = 0;
-    off = 0;
-    while (off < img_length) {
-        /* Determine which area contains the current part of the image that
-         * we want to boot.
-         */
-        src_area_idx = boot_find_image_part(img_num, part_num);
-        if (src_area_idx == -1) {
-            return BOOT_EBADIMAGE;
+    state = BOOT_PERSIST_ST(boot_state.state);
+    if (state == 0) {
+        rc = boot_erase_area(boot_req->br_scratch_area_idx, sz);
+        if (rc != 0) {
+            return rc;
         }
 
-        /* Determine which area we want to copy the source to. */
-        dst_area_idx = start_area_idx + part_num;
-
-        if (src_area_idx != dst_area_idx) {
-            /* Determine what is currently in the destination area. */
-            dst_image_area_idx = boot_find_image_area_idx(dst_area_idx);
-
-            if (boot_st->entries[dst_image_area_idx].bse_image_num ==
-                BOOT_IMAGE_NUM_NONE) {
-
-                /* The destination doesn't contain anything useful; we don't
-                 * need to back up its contents.
-                 */
-                rc = boot_move_area(src_area_idx, dst_area_idx,
-                                    img_num, part_num);
-            } else {
-                /* Swap the two areas. */
-                src_img_num = img_num ^ 1;
-                dst_img_num = img_num;
-                rc = boot_swap_areas(src_area_idx, src_img_num, part_num,
-                                     dst_area_idx, dst_img_num, part_num);
-            }
-            if (rc != 0) {
-                return rc;
-            }
+        rc = boot_copy_area(area_idx_2, boot_req->br_scratch_area_idx, sz);
+        if (rc != 0) {
+            return rc;
         }
 
-        area_desc = boot_req->br_area_descs + dst_area_idx;
-        off += area_desc->fa_size;
-
-        part_num++;
+        boot_state.state = BOOT_PERSIST(idx, 1);
+        rc = boot_write_status(&boot_state);
+        if (rc != 0) {
+            return rc;
+        }
+        state = 1;
     }
+    if (state == 1) {
+        rc = boot_erase_area(area_idx_2, sz);
+        if (rc != 0) {
+            return rc;
+        }
 
+        rc = boot_copy_area(area_idx_1, area_idx_2, sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        boot_state.state = BOOT_PERSIST(idx, 2);
+        rc = boot_write_status(&boot_state);
+        if (rc != 0) {
+            return rc;
+        }
+        state = 2;
+    }
+    if (state == 2) {
+        rc = boot_erase_area(area_idx_1, sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = boot_copy_area(boot_req->br_scratch_area_idx, area_idx_1, sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        boot_state.state = BOOT_PERSIST(idx + 1, 0);
+        rc = boot_write_status(&boot_state);
+        if (rc != 0) {
+            return rc;
+        }
+        state = 3;
+    }
     return 0;
 }
 
@@ -486,59 +318,25 @@ boot_fill_slot(int img_num, uint32_t img_length, int start_area_idx)
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_copy_image(uint32_t img1_length, uint32_t img2_length)
+boot_copy_image(void)
 {
-    int rc;
-
-    rc = boot_fill_slot(1, img2_length, boot_slot_to_area_idx(0));
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = boot_fill_slot(0, img1_length, boot_slot_to_area_idx(1));
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-/**
- * Builds a single default boot status for the specified image slot.
- */
-static void
-boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
-                      uint32_t length)
-{
-    uint32_t offset;
-    int area_idx = 0;
-    int part_num;
+    uint32_t off;
+    uint32_t sz;
     int i;
+    int cnt;
+    int rc;
+    int state_idx;
 
-    for (i = 0; i < boot_req->br_num_image_areas; i++) {
-        area_idx = boot_req->br_image_areas[i];
-        if (boot_req->br_area_descs[area_idx].fa_off == addr &&
-            boot_req->br_area_descs[area_idx].fa_flash_id == flash_id) {
-            break;
+    state_idx = BOOT_PERSIST_IDX(boot_state.state);
+    for (off = 0, i = 0; off < boot_state.length; off += sz, i += cnt) {
+        sz = boot_copy_sz(i, boot_req->br_slot_areas[1], &cnt);
+        if (i >= state_idx) {
+            rc = boot_swap_areas(i, sz);
+            assert(rc == 0);
         }
     }
 
-    assert(i < boot_req->br_num_image_areas);
-
-    offset = 0;
-    part_num = 0;
-    while (offset < length) {
-        assert(boot_st->entries[i].bse_image_num == 0xff);
-        boot_st->entries[i].bse_image_num = image_num;
-        boot_st->entries[i].bse_part_num = part_num;
-
-        offset += boot_req->br_area_descs[area_idx].fa_size;
-        part_num++;
-        i++;
-        area_idx++;
-    }
-
-    assert(i <= boot_req->br_num_image_areas);
+    return 0;
 }
 
 /**
@@ -550,30 +348,27 @@ boot_build_status_one(int image_num, uint8_t flash_id, uint32_t addr,
 static void
 boot_build_status(void)
 {
-    uint8_t flash_id;
-    uint32_t address;
-    uint32_t len;
-
-    memset(boot_st->entries, 0xff,
-           boot_req->br_num_image_areas * sizeof boot_st->entries[0]);
+    uint32_t len1;
+    uint32_t len2;
 
     if (boot_img_hdrs[0].ih_magic == IMAGE_MAGIC) {
-        boot_st->status.bs_img1_length =
-	    boot_img_hdrs[0].ih_img_size + boot_img_hdrs[0].ih_tlv_size;
-        boot_slot_addr(0, &flash_id, &address);
-        boot_build_status_one(0, flash_id, address, len);
+        len1 = boot_img_hdrs[0].ih_hdr_size + boot_img_hdrs[0].ih_img_size +
+          boot_img_hdrs[0].ih_tlv_size;
     } else {
-        boot_st->status.bs_img1_length = 0;
+        len1 = 0;
     }
 
     if (boot_img_hdrs[1].ih_magic == IMAGE_MAGIC) {
-        boot_st->status.bs_img2_length =
-	    boot_img_hdrs[1].ih_img_size + boot_img_hdrs[1].ih_tlv_size;
-        boot_slot_addr(1, &flash_id, &address);
-        boot_build_status_one(1, flash_id, address, len);
+        len2 = boot_img_hdrs[1].ih_hdr_size + boot_img_hdrs[1].ih_img_size +
+          boot_img_hdrs[0].ih_tlv_size;
     } else {
-        boot_st->status.bs_img2_length = 0;
+        len2 = 0;
     }
+    boot_state.length = len1;
+    if (len1 < len2) {
+        boot_state.length = len2;
+    }
+    boot_state.state = 0;
 }
 
 /**
@@ -604,18 +399,10 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
      * interrupted (i.e., the system was reset before the boot loader could
      * finish its task last time).
      */
-    boot_st_sz = sizeof(struct boot_state) +
-	req->br_num_image_areas * sizeof boot_st->entries[0];
-    boot_st = malloc(boot_st_sz);
-    if (boot_st == NULL) {
-        return BOOT_ENOMEM;
-    }
-
-    if (boot_read_status()) {
+    if (boot_read_status(&boot_state)) {
         /* We are resuming an interrupted image copy. */
         /* XXX if copy has not actually started yet, validate image */
-        rc = boot_copy_image(boot_st->status.bs_img1_length,
-                             boot_st->status.bs_img2_length);
+        rc = boot_copy_image();
         if (rc != 0) {
             /* We failed to put the images back together; there is really no
              * solution here.
@@ -673,9 +460,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
         /* The user wants to run the image in the secondary slot.  The contents
          * of this slot need to moved to the primary slot.
          */
-        rc = boot_copy_image(boot_st->status.bs_img1_length,
-                             boot_st->status.bs_img2_length);
-
+        rc = boot_copy_image();
         if (rc != 0) {
             /* We failed to put the images back together; there is really no
              * solution here.
