@@ -75,7 +75,7 @@ conf_load(void)
 }
 
 /*
- * Append a sigle value to persisted config.
+ * Append a single value to persisted config.
  */
 int
 conf_save_one(const struct conf_handler *ch, const char *name, char *value)
