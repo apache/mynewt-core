@@ -251,7 +251,7 @@ main(int argc, char **argv)
     int cnt;
 
     /* NFFS_AREA_MAX is defined in the BSP-specified bsp.h header file. */
-    struct nffs_area_desc descs[NFFS_AREA_MAX];
+    struct nffs_area_desc descs[NFFS_AREA_MAX + 1];
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
