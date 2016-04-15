@@ -106,13 +106,20 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
     int32_t val;
     char *eptr;
 
+    if (!val_str) {
+        goto err;
+    }
     switch (type) {
     case CONF_INT8:
     case CONF_INT16:
     case CONF_INT32:
-        val = strtol(val_str, &eptr, 0);
-        if (*eptr != '\0') {
-            goto err;
+        if (val_str) {
+            val = strtol(val_str, &eptr, 0);
+            if (*eptr != '\0') {
+                goto err;
+            }
+        } else {
+            val = 0;
         }
         if (type == CONF_INT8) {
             if (val < INT8_MIN || val > UINT8_MAX) {
