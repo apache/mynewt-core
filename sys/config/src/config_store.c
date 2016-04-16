@@ -25,6 +25,12 @@
 #include "config/config.h"
 #include "config_priv.h"
 
+struct conf_dup_check_arg {
+    const char *name;
+    const char *val;
+    int is_dup;
+};
+
 struct conf_store_head conf_load_srcs = SLIST_HEAD_INITIALIZER(&conf_load_srcs);
 struct conf_store *conf_save_dst;
 
@@ -74,17 +80,64 @@ conf_load(void)
     return conf_commit(NULL);
 }
 
+static void
+conf_dup_check_cb(char *name, char *val, void *cb_arg)
+{
+    struct conf_dup_check_arg *cdca = (struct conf_dup_check_arg *)cb_arg;
+
+    if (strcmp(name, cdca->name)) {
+        return;
+    }
+    if (!val) {
+        if (!cdca->val) {
+            cdca->is_dup = 1;
+        } else {
+            cdca->is_dup = 0;
+        }
+    } else {
+        if (cdca->val && !strcmp(val, cdca->val)) {
+            cdca->is_dup = 1;
+        } else {
+            cdca->is_dup = 0;
+        }
+    }
+}
+
 /*
- * Append a single value to persisted config.
+ * Append a single value to persisted config. Don't store duplicate value.
  */
 int
 conf_save_one(const struct conf_handler *ch, const char *name, char *value)
 {
     struct conf_store *cs;
+    struct conf_dup_check_arg cdca;
+    char name_str[CONF_MAX_NAME_LEN];
+    int clen, nlen;
 
     cs = conf_save_dst;
     if (!cs) {
         return OS_ENOENT;
+    }
+
+    /*
+     * Check if we're writing the same value again.
+     */
+    clen = strlen(ch->ch_name);
+    nlen = strlen(name);
+    if (clen + nlen + 1 > sizeof(name_str)) {
+        return OS_INVALID_PARM;
+    }
+    memcpy(name_str, ch->ch_name, clen);
+    name_str[clen++] = '/';
+    memcpy(name_str + clen, name, nlen);
+    name_str[clen + nlen] = '\0';
+
+    cdca.name = name_str;
+    cdca.val = value;
+    cdca.is_dup = 0;
+    cs->cs_itf->csi_load(cs, conf_dup_check_cb, &cdca);
+    if (cdca.is_dup == 1) {
+        return 0;
     }
     return cs->cs_itf->csi_save(cs, ch, name, value);
 }
