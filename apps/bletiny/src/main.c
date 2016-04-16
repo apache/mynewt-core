@@ -47,16 +47,16 @@
  * app uses some of nimble's internal details for logging.
  */
 #include "../src/ble_hs_conn.h"
+#include "../src/ble_hci_util.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
 /* Nimble task priorities */
 #define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
-#define HOST_TASK_PRIO          (1)
 
 #define SHELL_TASK_PRIO         (3)
 #define SHELL_MAX_INPUT_LEN     (64)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(210))
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(288))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 static struct os_mutex bletiny_mutex;
@@ -85,8 +85,8 @@ struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
 /* BLETINY variables */
-#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(210))
-#define BLETINY_TASK_PRIO              (HOST_TASK_PRIO + 1)
+#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(288))
+#define BLETINY_TASK_PRIO              1
 
 #if NIMBLE_OPT_ROLE_CENTRAL
 #define BLETINY_MAX_SVCS               32
@@ -98,7 +98,7 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_MAX_DSCS               1
 #endif
 
-struct os_eventq g_bletiny_evq;
+struct os_eventq bletiny_evq;
 struct os_task bletiny_task;
 bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 
@@ -136,7 +136,7 @@ uint8_t bletiny_gatt_service_changed[4];
 #ifdef DEVICE_NAME
 #define BLETINY_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
 #else
-#define BLETINY_AUTO_DEVICE_NAME    NULL
+#define BLETINY_AUTO_DEVICE_NAME    ""
 #endif
 
 void
@@ -684,11 +684,10 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
 static void
 bletiny_start_auto_advertise(void)
 {
-#if 0
     struct ble_hs_adv_fields fields;
     int rc;
 
-    if (BLETINY_AUTO_DEVICE_NAME != NULL) {
+    if (BLETINY_AUTO_DEVICE_NAME[0] != '\0') {
         memset(&fields, 0, sizeof fields);
 
         fields.name = (uint8_t *)BLETINY_AUTO_DEVICE_NAME;
@@ -705,7 +704,6 @@ bletiny_start_auto_advertise(void)
             return;
         }
     }
-#endif
 }
 
 static int
@@ -802,32 +800,6 @@ bletiny_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
     }
 
     return 0;
-}
-
-static int
-bletiny_on_read_mult(uint16_t conn_handle, struct ble_gatt_error *error,
-                      uint16_t *attr_handles, uint8_t num_attr_handles,
-                      uint8_t *attr_data, uint16_t attr_data_len, void *arg)
-{
-    int i;
-
-    if (error != NULL) {
-        bletiny_print_error("ERROR READING CHARACTERISTICS", conn_handle,
-                             error);
-    } else {
-        console_printf("multiple characteristic read complete; conn_handle=%d "
-                       "attr_handles=", conn_handle);
-        for (i = 0; i < num_attr_handles; i++) {
-            console_printf("%s%d", i != 0 ? "," : "", attr_handles[i]);
-        }
-
-        console_printf(" len=%d value=", attr_data_len);
-        bletiny_print_bytes(attr_data, attr_data_len);
-        console_printf("\n");
-    }
-
-    return 0;
-
 }
 
 static int
@@ -977,27 +949,6 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     }
 }
 
-#if 0
-static void
-bletiny_on_rx_rssi(struct ble_hci_ack *ack, void *unused)
-{
-    struct hci_read_rssi_ack_params params;
-
-    if (ack->bha_params_len != BLE_HCI_READ_RSSI_ACK_PARAM_LEN) {
-        console_printf("invalid rssi response; len=%d\n",
-                       ack->bha_params_len);
-        return;
-    }
-
-    params.status = ack->bha_params[0];
-    params.connection_handle = le16toh(ack->bha_params + 1);
-    params.rssi = ack->bha_params[3];
-
-    console_printf("rssi response received; status=%d conn=%d rssi=%d\n",
-                   params.status, params.connection_handle, params.rssi);
-}
-#endif
-
 int
 bletiny_exchange_mtu(uint16_t conn_handle)
 {
@@ -1111,7 +1062,7 @@ bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
     int rc;
 
     rc = ble_gattc_read_mult(conn_handle, attr_handles, num_attr_handles,
-                             bletiny_on_read_mult, NULL);
+                             bletiny_on_read, NULL);
     return rc;
 }
 
@@ -1137,8 +1088,8 @@ bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle, void *value,
 {
     int rc;
 
-    rc = ble_gattc_write_no_rsp(conn_handle, attr_handle, value, value_len,
-                                bletiny_on_write, NULL);
+    rc = ble_gattc_write_no_rsp(conn_handle, attr_handle, value, value_len);
+
     return rc;
 }
 
@@ -1268,41 +1219,20 @@ bletiny_l2cap_update(uint16_t conn_handle,
     return rc;
 }
 
-#if 0
-static int
-bletiny_tx_rssi_req(void *arg)
-{
-    intptr_t conn_handle;
-    int rc;
-
-    conn_handle = (intptr_t)arg;
-
-    ble_hci_sched_set_ack_cb(bletiny_on_rx_rssi, NULL);
-
-    rc = host_hci_cmd_read_rssi(conn_handle);
-    if (rc != 0) {
-        console_printf("failure to send rssi hci cmd; rc=%d\n", rc);
-        return rc;
-    }
-
-    return 0;
-}
-#endif
-
 int
 bletiny_show_rssi(uint16_t conn_handle)
 {
-#if 0
+    int8_t rssi;
     int rc;
 
-    rc = ble_hci_sched_enqueue(bletiny_tx_rssi_req,
-                               (void *)(intptr_t)conn_handle, NULL);
+    rc = ble_hci_util_read_rssi(conn_handle, &rssi);
     if (rc != 0) {
-        console_printf("failure to enqueue rssi hci cmd; rc=%d\n", rc);
+        console_printf("failure to read rssi; rc=%d\n", rc);
         return rc;
     }
 
-#endif
+    console_printf("rssi=%d\n", rssi);
+
     return 0;
 }
 
@@ -1327,20 +1257,21 @@ bletiny_sec_start(uint16_t conn_handle)
 static void
 bletiny_task_handler(void *arg)
 {
-    struct os_event *ev;
     struct os_callout_func *cf;
+    struct os_event *ev;
+    int rc;
+
+    rc = ble_hs_start();
+    assert(rc == 0);
 
     periph_init();
 
     ble_att_set_notify_cb(bletiny_on_notify, NULL);
 
-    /* Initialize eventq */
-    os_eventq_init(&g_bletiny_evq);
-
     bletiny_start_auto_advertise();
 
     while (1) {
-        ev = os_eventq_get(&g_bletiny_evq);
+        ev = os_eventq_get(&bletiny_evq);
         switch (ev->ev_type) {
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
@@ -1435,6 +1366,7 @@ main(void)
     log_console_handler_init(&bletiny_log_console_handler);
     log_register("bletiny", &bletiny_log, &bletiny_log_console_handler);
 
+    os_eventq_init(&bletiny_evq);
     os_task_init(&bletiny_task, "bletiny", bletiny_task_handler,
                  NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
                  bletiny_stack, BLETINY_STACK_SIZE);
@@ -1460,7 +1392,7 @@ main(void)
     cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 2;
 
-    rc = ble_hs_init(HOST_TASK_PRIO, &cfg);
+    rc = ble_hs_init(&bletiny_evq, &cfg);
     assert(rc == 0);
 
     /* Initialize the BLE LL */

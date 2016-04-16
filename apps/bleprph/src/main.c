@@ -191,9 +191,6 @@ bleprph_task_handler(void *unused)
      */
     gatt_svr_init();
 
-    /* Initialize eventq */
-    os_eventq_init(&bleprph_evq);
-
     /* Begin advertising. */
     bleprph_advertise();
 
@@ -283,7 +280,10 @@ main(void)
     cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 2;
 
-    rc = ble_hs_init(BLEPRPH_BLE_HS_PRIO, &cfg);
+    /* Initialize eventq */
+    os_eventq_init(&bleprph_evq);
+
+    rc = ble_hs_init(&bleprph_evq, &cfg);
     assert(rc == 0);
 
     /* Initialize the console (for log output). */
