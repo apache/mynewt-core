@@ -100,6 +100,7 @@ conf_line_make(char *dst, int dlen, const struct conf_handler *ch,
 
     memcpy(dst + off, value, vlen);
     off += vlen;
+    dst[off] = '\0';
 
     return off;
 }
