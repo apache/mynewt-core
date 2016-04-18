@@ -958,6 +958,7 @@ nffs_restore_corrupt_scratch(void)
     return 0;
 }
 
+#ifdef notnow
 static void
 nffs_log_contents(void)
 {
@@ -1012,6 +1013,7 @@ nffs_log_contents(void)
         }
     }
 }
+#endif
 
 /**
  * Searches for a valid nffs file system among the specified areas.  This
@@ -1146,9 +1148,10 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
         goto err;
     }
 
+#ifdef notnow
     NFFS_LOG(DEBUG, "CONTENTS\n");
     nffs_log_contents();
-
+#endif
     return 0;
 
 err:
