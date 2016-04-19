@@ -431,8 +431,8 @@ int nffs_restore_full(const struct nffs_area_desc *area_descs);
 int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
 
 
-#define NFFS_HASH_FOREACH(entry, i)                                      \
-    for ((i) = 0; (i) < NFFS_HASH_SIZE; (i)++)                 \
+#define NFFS_HASH_FOREACH(entry, i)                                     \
+    for ((i) = 0; (i) < NFFS_HASH_SIZE; (i)++)                          \
         SLIST_FOREACH((entry), &nffs_hash[i], nhe_next)
 
 #define NFFS_FLASH_LOC_NONE  nffs_flash_loc(NFFS_AREA_ID_NONE, 0)
