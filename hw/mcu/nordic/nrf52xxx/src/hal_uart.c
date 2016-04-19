@@ -210,6 +210,8 @@ hal_uart_baudrate(int baudrate)
         return UARTE_BAUDRATE_BAUDRATE_Baud460800;
     case 921600:
         return UARTE_BAUDRATE_BAUDRATE_Baud921600;
+    case 1000000:
+        return UARTE_BAUDRATE_BAUDRATE_Baud1M;
     default:
         return 0;
     }
