@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -30,7 +30,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <sys/time.h>
-#include <assert.h> 
+#include <assert.h>
 #include <util/util.h>
 
 struct stack_frame {
@@ -49,7 +49,7 @@ CTASSERT(offsetof(struct stack_frame, sf_jb) == 4);
 extern void os_arch_frame_init(struct stack_frame *sf);
 
 #define sim_setjmp(__jb) sigsetjmp(__jb, 0)
-#define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret) 
+#define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret)
 
 #define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
 
@@ -79,12 +79,12 @@ os_arch_task_start(struct stack_frame *sf, int rc)
     task = sf->sf_task;
     task->t_func(task->t_arg);
 
-    /* This should never return */ 
-    assert(0); 
+    /* This should never return */
+    assert(0);
 }
 
 os_stack_t *
-os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size) 
+os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
     struct stack_frame *sf;
 
@@ -146,7 +146,7 @@ ctxsw_handler(int sig)
  *
  * Returns 1 if signals were already blocked and 0 otherwise.
  */
-os_sr_t 
+os_sr_t
 os_arch_save_sr(void)
 {
     int error;
@@ -293,11 +293,11 @@ signals_cleanup(void)
 static void
 timer_handler(int sig)
 {
-    struct timeval time_now, time_diff; 
+    struct timeval time_now, time_diff;
     int ticks;
 
     static struct timeval time_last;
-    static int time_inited; 
+    static int time_inited;
 
     if (!time_inited) {
         gettimeofday(&time_last, NULL);
@@ -305,26 +305,33 @@ timer_handler(int sig)
     }
 
     gettimeofday(&time_now, NULL);
-    timersub(&time_now, &time_last, &time_diff);
+    if (timercmp(&time_now, &time_last, <)) {
+        /*
+         * System time going backwards.
+         */
+        time_last = time_now;
+    } else {
+        timersub(&time_now, &time_last, &time_diff);
 
-    ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
-    ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
+        ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
+        ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
 
-    /*
-     * Update 'time_last' but account for the remainder usecs that did not
-     * contribute towards whole 'ticks'.
-     */
-    time_diff.tv_sec = 0;
-    time_diff.tv_usec %= OS_USEC_PER_TICK;
-    timersub(&time_now, &time_diff, &time_last);
+        /*
+         * Update 'time_last' but account for the remainder usecs that did not
+         * contribute towards whole 'ticks'.
+         */
+        time_diff.tv_sec = 0;
+        time_diff.tv_usec %= OS_USEC_PER_TICK;
+        timersub(&time_now, &time_diff, &time_last);
 
-    os_time_advance(ticks);
+        os_time_advance(ticks);
+    }
 }
 
 static void
 start_timer(void)
 {
-    struct itimerval it; 
+    struct itimerval it;
     int rc;
 
     memset(&it, 0, sizeof(it));
@@ -349,7 +356,7 @@ stop_timer(void)
     assert(rc == 0);
 }
 
-os_error_t 
+os_error_t
 os_arch_os_init(void)
 {
     mypid = getpid();
@@ -378,7 +385,7 @@ os_arch_os_init(void)
 os_error_t
 os_arch_os_start(void)
 {
-    struct stack_frame *sf; 
+    struct stack_frame *sf;
     struct os_task *t;
     os_sr_t sr;
 
@@ -395,7 +402,7 @@ os_arch_os_start(void)
     t = os_sched_next_task();
     os_sched_set_current_task(t);
 
-    g_os_started = 1; 
+    g_os_started = 1;
 
     sf = (struct stack_frame *) t->t_stackptr;
     sim_longjmp(sf->sf_jb, 1);
