@@ -24,6 +24,13 @@
 #include "nffs_priv.h"
 #include "nffs/nffs.h"
 
+/**
+ * Keeps track of the number of garbage collections performed.  The exact
+ * number is not important, but it is useful to compare against an older copy
+ * to determine if garbage collection occurred.
+ */
+unsigned int nffs_gc_count;
+
 static int
 nffs_gc_copy_object(struct nffs_hash_entry *entry, uint16_t object_size,
                     uint8_t to_area_idx)
@@ -420,6 +427,18 @@ nffs_gc_inode_blocks(struct nffs_inode_entry *inode_entry,
  *      number is incremented prior to rewriting the header.  This area is now
  *      the new scratch sector.
  *
+ * NOTE:
+ *     Garbage collection invalidates all cached data blocks.  Whenever this
+ *     function is called, all existing nffs_cache_block pointers are rendered
+ *     invalid.  If you maintain any such pointers, you need to reset them
+ *     after calling this function.  Cached inodes are not invalidated by
+ *     garbage collection.
+ *
+ *     If a parent function potentially calls this function, the caller of the
+ *     parent function needs to explicitly check if garbage collection
+ *     occurred.  This is done by inspecting the nffs_gc_count variable before
+ *     and after calling the function.
+ *
  * @param out_area_idx      On success, the ID of the cleaned up area gets
  *                              written here.  Pass null if you do not need
  *                              this information.
@@ -501,6 +520,21 @@ nffs_gc(uint8_t *out_area_idx)
     }
 
     nffs_scratch_area_idx = from_area_idx;
+
+    /* Garbage collection renders the cache invalid:
+     *     o All cached blocks are now invalid; drop them.
+     *     o Flash locations of inodes may have changed; the cached inodes need
+     *       updated to reflect this.
+     */
+    rc = nffs_cache_inode_refresh();
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Increment the garbage collection counter so that client code knows to
+     * reset its pointers to cached objects.
+     */
+    nffs_gc_count++;
 
     return 0;
 }

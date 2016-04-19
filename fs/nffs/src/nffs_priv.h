@@ -231,6 +231,7 @@ extern struct nffs_area *nffs_areas;
 extern uint8_t nffs_num_areas;
 extern uint8_t nffs_scratch_area_idx;
 extern uint16_t nffs_block_max_data_sz;
+extern unsigned int nffs_gc_count;
 
 #define NFFS_FLASH_BUF_SZ        256
 extern uint8_t nffs_flash_buf[NFFS_FLASH_BUF_SZ];
@@ -278,6 +279,7 @@ int nffs_block_read_data(const struct nffs_block *block, uint16_t offset,
 void nffs_cache_inode_delete(const struct nffs_inode_entry *inode_entry);
 int nffs_cache_inode_ensure(struct nffs_cache_inode **out_entry,
                             struct nffs_inode_entry *inode_entry);
+int nffs_cache_inode_refresh(void);
 void nffs_cache_inode_range(const struct nffs_cache_inode *cache_inode,
                             uint32_t *out_start, uint32_t *out_end);
 int nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t to,
