@@ -363,6 +363,7 @@ timer_handler(int sig)
         time_diff.tv_sec = 0;
         time_diff.tv_usec %= OS_USEC_PER_TICK;
         timersub(&time_now, &time_diff, &time_last);
+
         os_time_advance(ticks);
     }
 }
