@@ -26,7 +26,7 @@ TAILQ_HEAD(nffs_cache_inode_list, nffs_cache_inode);
 static struct nffs_cache_inode_list nffs_cache_inode_list =
     TAILQ_HEAD_INITIALIZER(nffs_cache_inode_list);
 
-static void nffs_cache_collect_blocks(void);
+static void nffs_cache_reclaim_blocks(void);
 
 static struct nffs_cache_block *
 nffs_cache_block_alloc(void)
@@ -56,7 +56,7 @@ nffs_cache_block_acquire(void)
 
     cache_block = nffs_cache_block_alloc();
     if (cache_block == NULL) {
-        nffs_cache_collect_blocks();
+        nffs_cache_reclaim_blocks();
         cache_block = nffs_cache_block_alloc();
     }
 
@@ -91,8 +91,7 @@ nffs_cache_inode_alloc(void)
     entry = os_memblock_get(&nffs_cache_inode_pool);
     if (entry != NULL) {
         memset(entry, 0, sizeof *entry);
-        entry->nci_block_list = (struct nffs_cache_block_list)
-            TAILQ_HEAD_INITIALIZER(entry->nci_block_list);
+        TAILQ_INIT(&entry->nci_block_list);
     }
 
     return entry;
@@ -216,7 +215,7 @@ nffs_cache_inode_range(const struct nffs_cache_inode *cache_inode,
 }
 
 static void
-nffs_cache_collect_blocks(void)
+nffs_cache_reclaim_blocks(void)
 {
     struct nffs_cache_inode *cache_inode;
 
@@ -276,6 +275,73 @@ done:
         *out_cache_inode = NULL;
     }
     return rc;
+}
+
+/**
+ * Recaches all cached inodes.  All cached blocks are deleted from the cache
+ * during this operation.  This function should be called after garbage
+ * collection occurs to ensure the cache is consistent.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+nffs_cache_inode_refresh(void)
+{
+    struct nffs_cache_inode *cache_inode;
+    struct nffs_inode_entry *inode_entry;
+    int rc;
+
+    TAILQ_FOREACH(cache_inode, &nffs_cache_inode_list, nci_link) {
+        /* Clear entire block list. */
+        nffs_cache_inode_free_blocks(cache_inode);
+
+        inode_entry = cache_inode->nci_inode.ni_inode_entry;
+        rc = nffs_inode_from_entry(&cache_inode->nci_inode, inode_entry);
+        if (rc != 0) {
+            return rc;
+        }
+
+        /* File size remains valid. */
+    }
+
+    return 0;
+}
+
+static void
+nffs_cache_log_block(struct nffs_cache_inode *cache_inode,
+                     struct nffs_cache_block *cache_block)
+{
+    NFFS_LOG(DEBUG, "id=%u inode=%u flash_off=0x%08x "
+                    "file_off=%u len=%d (entry=%p)\n",
+             cache_block->ncb_block.nb_hash_entry->nhe_id,
+             cache_inode->nci_inode.ni_inode_entry->nie_hash_entry.nhe_id,
+             cache_block->ncb_block.nb_hash_entry->nhe_flash_loc,
+             cache_block->ncb_file_offset,
+             cache_block->ncb_block.nb_data_len,
+             cache_block->ncb_block.nb_hash_entry);
+}
+
+static void
+nffs_cache_log_insert_block(struct nffs_cache_inode *cache_inode,
+                            struct nffs_cache_block *cache_block,
+                            int tail)
+{
+    NFFS_LOG(DEBUG, "caching block (%s): ", tail ? "tail" : "head");
+    nffs_cache_log_block(cache_inode, cache_block);
+}
+
+void
+nffs_cache_insert_block(struct nffs_cache_inode *cache_inode,
+                        struct nffs_cache_block *cache_block,
+                        int tail)
+{
+    if (tail) {
+        TAILQ_INSERT_TAIL(&cache_inode->nci_block_list, cache_block, ncb_link);
+    } else {
+        TAILQ_INSERT_HEAD(&cache_inode->nci_block_list, cache_block, ncb_link);
+    }
+
+    nffs_cache_log_insert_block(cache_inode, cache_block, tail);
 }
 
 /**
@@ -364,8 +430,7 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
                 return rc;
             }
 
-            TAILQ_INSERT_HEAD(&cache_inode->nci_block_list, cache_block,
-                              ncb_link);
+            nffs_cache_insert_block(cache_inode, cache_block, 0);
         }
 
         /* Calculate the file offset of the start of this block.  This is used
@@ -406,12 +471,10 @@ nffs_cache_seek(struct nffs_cache_inode *cache_inode, uint32_t seek_offset,
                 if (last_cached_entry != NULL &&
                     last_cached_entry == pred_entry) {
 
-                    TAILQ_INSERT_TAIL(&cache_inode->nci_block_list,
-                                      cache_block, ncb_link);
+                    nffs_cache_insert_block(cache_inode, cache_block, 1);
                 } else {
                     nffs_cache_inode_free_blocks(cache_inode);
-                    TAILQ_INSERT_HEAD(&cache_inode->nci_block_list,
-                                      cache_block, ncb_link);
+                    nffs_cache_insert_block(cache_inode, cache_block, 0);
                 }
             }
 

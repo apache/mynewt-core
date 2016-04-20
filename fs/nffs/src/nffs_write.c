@@ -210,7 +210,7 @@ nffs_write_over_block(struct nffs_hash_entry *entry, uint16_t left_copy_len,
  */
 static int
 nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
-                 uint16_t len)
+                  uint16_t len)
 {
     struct nffs_inode_entry *inode_entry;
     struct nffs_hash_entry *entry;
@@ -271,10 +271,12 @@ nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
  * @return                      0 on success; nonzero on failure.
  */
 static int
-nffs_write_chunk(struct nffs_cache_inode *cache_inode, uint32_t file_offset,
-                const void *data, uint16_t data_len)
+nffs_write_chunk(struct nffs_inode_entry *inode_entry, uint32_t file_offset,
+                 const void *data, uint16_t data_len)
 {
+    struct nffs_cache_inode *cache_inode;
     struct nffs_cache_block *cache_block;
+    unsigned int gc_count;
     uint32_t append_len;
     uint32_t data_offset;
     uint32_t block_end;
@@ -284,6 +286,11 @@ nffs_write_chunk(struct nffs_cache_inode *cache_inode, uint32_t file_offset,
     int rc;
 
     assert(data_len <= nffs_block_max_data_sz);
+
+    rc = nffs_cache_inode_ensure(&cache_inode, inode_entry);
+    if (rc != 0) {
+        return rc;
+    }
 
     /** Handle the simple append case first. */
     if (file_offset == cache_inode->nci_file_size) {
@@ -324,6 +331,12 @@ nffs_write_chunk(struct nffs_cache_inode *cache_inode, uint32_t file_offset,
             chunk_sz += (int)(dst_off - block_end);
         }
 
+        /* Remember the current garbage collection count.  If the count
+         * increases during the write, then the block cache has been
+         * invalidated and we need to reset our pointers.
+         */
+        gc_count = nffs_gc_count;
+
         data_offset = cache_block->ncb_file_offset + chunk_off - file_offset;
         rc = nffs_write_over_block(cache_block->ncb_block.nb_hash_entry,
                                    chunk_off, data + data_offset, chunk_sz);
@@ -332,7 +345,16 @@ nffs_write_chunk(struct nffs_cache_inode *cache_inode, uint32_t file_offset,
         }
 
         dst_off -= chunk_sz;
-        cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list, ncb_link);
+
+        if (gc_count != nffs_gc_count) {
+            /* Garbage collection occurred; the current cached block pointer is
+             * invalid, so reset it.  The cached inode is still valid.
+             */
+            cache_block = NULL;
+        } else {
+            cache_block = TAILQ_PREV(cache_block, nffs_cache_block_list,
+                                     ncb_link);
+        }
     } while (data_offset > 0);
 
     cache_inode->nci_file_size += append_len;
@@ -385,7 +407,7 @@ nffs_write_to_file(struct nffs_file *file, const void *data, int len)
             chunk_size = len;
         }
 
-        rc = nffs_write_chunk(cache_inode, file->nf_offset, data_ptr,
+        rc = nffs_write_chunk(file->nf_inode_entry, file->nf_offset, data_ptr,
                               chunk_size);
         if (rc != 0) {
             return rc;

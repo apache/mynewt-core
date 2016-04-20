@@ -218,6 +218,76 @@ nffs_restore_inode_from_dummy_entry(struct nffs_inode *out_inode,
     out_inode->ni_inode_entry = inode_entry;
 }
 
+static int
+nffs_restore_find_file_end_block(struct nffs_hash_entry *block_entry)
+{
+    struct nffs_inode_entry *inode_entry;
+    struct nffs_block block;
+    int rc;
+
+    rc = nffs_block_from_hash_entry(&block, block_entry);
+    assert(rc == 0);
+
+    inode_entry = block.nb_inode_entry;
+
+    /* Make sure the parent inode (file) points to the latest data block
+     * restored so far.
+     *
+     * XXX: This is an O(n) operation (n = # of blocks in the file), and is
+     * horribly inefficient for large files.  MYNEWT-161 has been opened to
+     * address this.
+     */
+    if (inode_entry->nie_last_block_entry == NULL) {
+        /* This is the first data block restored for this file. */
+        inode_entry->nie_last_block_entry = block_entry;
+        NFFS_LOG(DEBUG, "setting last block: %u\n", block_entry->nhe_id);
+    } else {
+        /* Determine if this this data block comes after our current idea of
+         * the file's last data block.
+         */
+
+        rc = nffs_block_find_predecessor(
+            block_entry, inode_entry->nie_last_block_entry->nhe_id);
+        switch (rc) {
+        case 0:
+            /* The currently-last block is a predecessor of the new block; the
+             * new block comes later.
+             */
+            NFFS_LOG(DEBUG, "replacing last block: %u --> %u\n",
+                     inode_entry->nie_last_block_entry->nhe_id,
+                     block_entry->nhe_id);
+            inode_entry->nie_last_block_entry = block_entry;
+            break;
+
+        case FS_ENOENT:
+            break;
+
+        default:
+            return rc;
+        }
+    }
+
+    return 0;
+}
+
+
+static int
+nffs_restore_find_file_ends(void)
+{
+    struct nffs_hash_entry *block_entry;
+    int rc;
+    int i;
+
+    NFFS_HASH_FOREACH(block_entry, i) {
+        if (!nffs_hash_id_is_inode(block_entry->nhe_id)) {
+            rc = nffs_restore_find_file_end_block(block_entry);
+            assert(rc == 0);
+        }
+    }
+
+    return 0;
+}
+
 /**
  * Performs a sweep of the RAM representation at the end of a successful
  * restore.  The sweep phase performs the following actions of each inode in
@@ -483,13 +553,13 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
     }
 
     if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
-        NFFS_LOG(DEBUG, "restoring file; id=%d\n",
+        NFFS_LOG(DEBUG, "restoring file; id=0x%08x\n",
                  inode_entry->nie_hash_entry.nhe_id);
         if (inode_entry->nie_hash_entry.nhe_id >= nffs_hash_next_file_id) {
             nffs_hash_next_file_id = inode_entry->nie_hash_entry.nhe_id + 1;
         }
     } else {
-        NFFS_LOG(DEBUG, "restoring dir; id=%d\n",
+        NFFS_LOG(DEBUG, "restoring dir; id=0x%08x\n",
                  inode_entry->nie_hash_entry.nhe_id);
         if (inode_entry->nie_hash_entry.nhe_id >= nffs_hash_next_dir_id) {
             nffs_hash_next_dir_id = inode_entry->nie_hash_entry.nhe_id + 1;
@@ -619,7 +689,7 @@ nffs_restore_block(const struct nffs_disk_block *disk_block, uint8_t area_idx,
         nffs_restore_largest_block_data_len = disk_block->ndb_data_len;
     }
 
-    NFFS_LOG(DEBUG, "restoring block; id=%u seq=%u inode_id=%u prev_id=%u "
+    NFFS_LOG(DEBUG, "restoring block; id=0x%08x seq=%u inode_id=%u prev_id=%u "
              "data_len=%u\n", disk_block->ndb_id, disk_block->ndb_seq,
              disk_block->ndb_inode_id, disk_block->ndb_prev_id,
              disk_block->ndb_data_len);
@@ -632,59 +702,6 @@ nffs_restore_block(const struct nffs_disk_block *disk_block, uint8_t area_idx,
         }
     }
 
-    /* Make sure the parent inode (file) points to the latest data block
-     * restored so far.
-     *
-     * XXX: This is an O(n) operation (n = # of blocks in the file), and is
-     * horribly inefficient for large files.  MYNEWT-161 has been opened to
-     * address this.
-     */
-    if (inode_entry->nie_last_block_entry == NULL) {
-        /* This is the first data block restored for this file. */
-        inode_entry->nie_last_block_entry = entry;
-        NFFS_LOG(DEBUG, "setting last block: %u\n", entry->nhe_id);
-    } else {
-        /* Determine if this this data block comes after our current idea of
-         * the file's last data block.
-         */
-
-        rc = nffs_block_find_predecessor(
-            entry, inode_entry->nie_last_block_entry->nhe_id);
-        switch (rc) {
-        case 0:
-            /* The currently-last block is a predecessor of the new block; the
-             * new block comes later.
-             */
-            NFFS_LOG(DEBUG, "replacing last block: %u --> %u\n",
-                     inode_entry->nie_last_block_entry->nhe_id,
-                     entry->nhe_id);
-            inode_entry->nie_last_block_entry = entry;
-            break;
-
-        case FS_ENOENT:
-            /* The currently-last block is not a known predecessor of the new
-             * block.  There are two possibilities:
-             *     (1) The new block comes before the currently-last block.
-             *     (2) The new block comes later, but the two blocks are not
-             *         chained in RAM yet because an intervening block has yet
-             *         to be restored.
-             * If we can find the new block by searching backwards from the
-             * currently-last black, then (1) is true.  Otherwise, (2) is true.
-             */
-            rc = nffs_block_find_predecessor(
-                inode_entry->nie_last_block_entry, entry->nhe_id);
-            if (rc == FS_ENOENT) {
-                inode_entry->nie_last_block_entry = entry;
-                NFFS_LOG(DEBUG, "replacing last block: %u --> %u\n",
-                         inode_entry->nie_last_block_entry->nhe_id,
-                         entry->nhe_id);
-            }
-            break;
-
-        default:
-            return rc;
-        }
-    }
 
     return 0;
 
@@ -958,10 +975,13 @@ nffs_restore_corrupt_scratch(void)
     return 0;
 }
 
-#ifdef notnow
 static void
 nffs_log_contents(void)
 {
+#if LOG_LEVEL > LOG_LEVEL_DEBUG
+    return;
+#endif
+
     struct nffs_inode_entry *inode_entry;
     struct nffs_hash_entry *entry;
     struct nffs_block block;
@@ -1013,7 +1033,6 @@ nffs_log_contents(void)
         }
     }
 }
-#endif
 
 /**
  * Searches for a valid nffs file system among the specified areas.  This
@@ -1135,6 +1154,9 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
         goto err;
     }
 
+    /* Find the last block in each file inode. */
+    nffs_restore_find_file_ends();
+
     /* Delete from RAM any objects that were invalidated when subsequent areas
      * were restored.
      */
@@ -1148,10 +1170,9 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
         goto err;
     }
 
-#ifdef notnow
     NFFS_LOG(DEBUG, "CONTENTS\n");
     nffs_log_contents();
-#endif
+
     return 0;
 
 err:
