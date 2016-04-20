@@ -19,7 +19,7 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00008000, LENGTH = 0x3a000
+  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x80000
   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x10000
 }
 
@@ -54,11 +54,6 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-    .imghdr (NOLOAD):
-    {
-        . = . + 0x20;
-    } > FLASH
-
     .text :
     {
         __isr_vector_start = .;
@@ -153,7 +148,7 @@ SECTIONS
      *    2. You cannot use it as source memory for EasyDMA.
      *
      * This section exists because of a hardware defect; see errata 33 and 34
-     * in nrf52 errata sheet.
+     * in STM32F40x errata sheet.
      */
     .bssnz :
     {
