@@ -46,8 +46,8 @@
 /* XXX: An app should not include private headers from a library.  The bletiny
  * app uses some of nimble's internal details for logging.
  */
-#include "../src/ble_hs_conn.h"
-#include "../src/ble_hci_util.h"
+#include "../src/ble_hs_conn_priv.h"
+#include "../src/ble_hci_util_priv.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
