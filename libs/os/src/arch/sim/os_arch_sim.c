@@ -57,6 +57,9 @@ static pid_t mypid;
 static sigset_t allsigs, nosigs;
 static void timer_handler(int sig);
 
+static bool suspended;      /* process is blocked in sigsuspend() */
+static sigset_t suspsigs;   /* signals delivered in sigsuspend() */
+
 /*
  * Called from 'os_arch_frame_init()' when setjmp returns indirectly via
  * longjmp. The return value of setjmp is passed to this function as 'rc'.
@@ -114,6 +117,17 @@ ctxsw_handler(int sig)
     int rc;
 
     OS_ASSERT_CRITICAL();
+
+    /*
+     * Just record that this handler was called when the process was blocked.
+     * The handler will be called after sigsuspend() returns in the correct
+     * order.
+     */
+    if (suspended) {
+        sigaddset(&suspsigs, sig);
+        return;
+    }
+
     t = os_sched_get_current_task();
     next_t = os_sched_next_task();
     if (t == next_t) {
@@ -195,11 +209,22 @@ os_arch_in_critical(void)
     return (sigismember(&omask, SIGALRM));
 }
 
+static struct {
+    int num;
+    void (*handler)(int sig);
+} signals[] = {
+    { SIGALRM, timer_handler },
+    { SIGURG, ctxsw_handler },
+};
+
+#define NUMSIGS     (sizeof(signals)/sizeof(signals[0]))
+
 void
 os_tick_idle(os_time_t ticks)
 {
-    int rc;
+    int i, rc, sig;
     struct itimerval it;
+    void (*handler)(int sig);
 
     OS_ASSERT_CRITICAL();
 
@@ -216,15 +241,28 @@ os_tick_idle(os_time_t ticks)
         assert(rc == 0);
     }
 
+    suspended = true;
+    sigemptyset(&suspsigs);
     sigsuspend(&nosigs);        /* Wait for a signal to wake us up */
+    suspended = false;
+
+    /*
+     * Call handlers for signals delivered to the process during sigsuspend().
+     * The SIGALRM handler is called before any other handlers to ensure that
+     * OS time is always correct.
+     */
+    if (sigismember(&suspsigs, SIGALRM)) {
+        timer_handler(SIGALRM);
+    }
+    for (i = 0; i < NUMSIGS; i++) {
+        sig = signals[i].num;
+        handler = signals[i].handler;
+        if (sig != SIGALRM && sigismember(&suspsigs, sig)) {
+            handler(sig);
+        }
+    }
 
     if (ticks > 0) {
-        /*
-         * Update OS time before anything else when coming out of
-         * the tickless regime.
-         */
-        timer_handler(SIGALRM);
-
         /*
          * Enable the periodic timer interrupt.
          */
@@ -236,16 +274,6 @@ os_tick_idle(os_time_t ticks)
         assert(rc == 0);
     }
 }
-
-static struct {
-    int num;
-    void (*handler)(int sig);
-} signals[] = {
-    { SIGALRM, timer_handler },
-    { SIGURG, ctxsw_handler },
-};
-
-#define NUMSIGS     (sizeof(signals)/sizeof(signals[0]))
 
 static void
 signals_init(void)
@@ -299,24 +327,43 @@ timer_handler(int sig)
     static struct timeval time_last;
     static int time_inited; 
 
+    OS_ASSERT_CRITICAL();
+
+    /*
+     * Just record that this handler was called when the process was blocked.
+     * The handler will be called after sigsuspend() returns in the proper
+     * order.
+     */
+    if (suspended) {
+        sigaddset(&suspsigs, sig);
+        return;
+    }
+
     if (!time_inited) {
         gettimeofday(&time_last, NULL);
         time_inited = 1;
     }
 
     gettimeofday(&time_now, NULL);
-    timersub(&time_now, &time_last, &time_diff);
 
-    ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
-    ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
-
-    /*
-     * Update 'time_last' but account for the remainder usecs that did not
-     * contribute towards whole 'ticks'.
-     */
-    time_diff.tv_sec = 0;
-    time_diff.tv_usec %= OS_USEC_PER_TICK;
-    timersub(&time_now, &time_diff, &time_last);
+    if (timercmp(&time_now, &time_last, >)) {
+        timersub(&time_now, &time_last, &time_diff);
+        ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
+        ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
+        /*
+         * Update 'time_last' but account for the remainder usecs that did not
+         * contribute towards whole 'ticks'.
+         */
+        time_diff.tv_sec = 0;
+        time_diff.tv_usec %= OS_USEC_PER_TICK;
+        timersub(&time_now, &time_diff, &time_last);
+    } else {
+        /*
+         * XXX time went backwards so just start afresh.
+         */
+        time_last = time_now;
+        ticks = 0;
+    }
 
     os_time_advance(ticks);
 }
