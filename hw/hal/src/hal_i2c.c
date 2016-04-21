@@ -57,7 +57,7 @@ hal_i2c_master_probe(struct hal_i2c *pi2c, uint8_t address)
 }
 
 int
-hal_i2c_master_start(struct hal_i2c *pi2c)
+hal_i2c_master_begin(struct hal_i2c *pi2c)
 {
     if (pi2c && pi2c->driver_api && pi2c->driver_api->hi2cm_start )
     {
@@ -66,9 +66,8 @@ hal_i2c_master_start(struct hal_i2c *pi2c)
     return -1;
 }
 
-
 int
-hal_i2c_master_stop(struct hal_i2c *pi2c)
+hal_i2c_master_end(struct hal_i2c *pi2c)
 {
     if (pi2c && pi2c->driver_api && pi2c->driver_api->hi2cm_stop )
     {
