@@ -200,6 +200,23 @@ SysTick_Handler:
         .fnend
         .size   SysTick_Handler, .-SysTick_Handler
 
+/* divide-by-zero */
+        .thumb_func
+	.type __aeabi_idiv0, %function
+	.global __aeabi_idiv0
+	.global __aeabi_ldiv0
+__aeabi_idiv0:
+__aeabi_ldiv0:
+        .fnstart
+        .cantunwind
+	push {r0,r1,r5}
+	ldr r0, =file_name
+	ldr r1, =__LINE__
+	ldr r5, =__assert_func
+	bx r5
+        .fnend
+        .size   __aeabi_idiv0, .-__aeabi_idiv0
+
 /*-------------------------- Defalt IRQ --------------------------------*/
         .thumb_func
         .type   os_default_irq_asm, %function
@@ -251,6 +268,9 @@ using_msp_as_sp:
         .section ".data"
         .global __aeabi_unwind_cpp_pr0
 __aeabi_unwind_cpp_pr0:
+	.section ".rodata"
+file_name:
+	.asciz __FILE__
         .end
 
 /*----------------------------------------------------------------------------
