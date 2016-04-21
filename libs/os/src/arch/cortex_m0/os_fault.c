@@ -81,7 +81,7 @@ os_default_irq(struct trap_frame *tf)
       tf->r8, tf->r9, tf->r10, tf->r11);
     console_printf("r12:0x%08lx  lr:0x%08lx  pc:0x%08lx psr:0x%08lx\n",
       tf->ef->r12, tf->ef->lr, tf->ef->pc, tf->ef->psr);
-    console_printf("ICSR:0x%08lx ",SCB->ICSR);
+    console_printf("ICSR:0x%08lx\n", SCB->ICSR);
     system_reset();
 }
 
