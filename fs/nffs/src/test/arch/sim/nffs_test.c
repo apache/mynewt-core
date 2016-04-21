@@ -536,6 +536,7 @@ nffs_test_assert_system_once(const struct nffs_test_file_desc *root_dir)
 {
     struct nffs_inode_entry *inode_entry;
     struct nffs_hash_entry *entry;
+    struct nffs_hash_entry *next;
     int i;
 
     nffs_test_num_touched_entries = 0;
@@ -543,7 +544,7 @@ nffs_test_assert_system_once(const struct nffs_test_file_desc *root_dir)
     nffs_test_assert_branch_touched(nffs_root_dir);
 
     /* Ensure no orphaned inodes or blocks. */
-    NFFS_HASH_FOREACH(entry, i) {
+    NFFS_HASH_FOREACH(entry, i, next) {
         TEST_ASSERT(entry->nhe_flash_loc != NFFS_FLASH_LOC_NONE);
         if (nffs_hash_id_is_inode(entry->nhe_id)) {
             inode_entry = (void *)entry;
@@ -931,8 +932,10 @@ TEST_CASE(nffs_test_truncate)
 TEST_CASE(nffs_test_append)
 {
     struct fs_file *file;
+    uint32_t len;
+    char c;
     int rc;
-
+    int i;
 
     rc = nffs_format(nffs_area_descs);
     TEST_ASSERT(rc == 0);
@@ -978,6 +981,48 @@ TEST_CASE(nffs_test_append)
     nffs_test_util_assert_contents("/myfile.txt",
                                   "abcdefghijklmnopqrstuvwx", 24);
 
+    rc = fs_mkdir("/mydir");
+    TEST_ASSERT_FATAL(rc == 0);
+    rc = fs_open("/mydir/gaga.txt", FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    /*** Repeated appends to a large file. */
+    for (i = 0; i < 1000; i++) {
+        rc = fs_filelen(file, &len);
+        TEST_ASSERT_FATAL(rc == 0);
+        TEST_ASSERT(len == i);
+
+        c = '0' + i % 10;
+        rc = fs_write(file, &c, 1);
+        TEST_ASSERT_FATAL(rc == 0);
+    }
+
+    rc = fs_close(file);
+    TEST_ASSERT(rc == 0);
+
+    nffs_test_util_assert_contents("/mydir/gaga.txt",
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789"
+        "01234567890123456789012345678901234567890123456789",
+        1000);
+
     struct nffs_test_file_desc *expected_system =
         (struct nffs_test_file_desc[]) { {
             .filename = "",
@@ -986,6 +1031,37 @@ TEST_CASE(nffs_test_append)
                 .filename = "myfile.txt",
                 .contents = "abcdefghijklmnopqrstuvwx",
                 .contents_len = 24,
+            }, {
+                .filename = "mydir",
+                .is_dir = 1,
+                .children = (struct nffs_test_file_desc[]) { {
+                    .filename = "gaga.txt",
+                    .contents =
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    "01234567890123456789012345678901234567890123456789"
+    ,
+                    .contents_len = 1000,
+                }, {
+                    .filename = NULL,
+                } },
             }, {
                 .filename = NULL,
             } },
@@ -2491,6 +2567,9 @@ TEST_SUITE(gen_32_1024)
 int
 nffs_test_all(void)
 {
+    nffs_config.nc_num_inodes = 1024 * 8;
+    nffs_config.nc_num_blocks = 1024 * 20;
+
     gen_1_1();
     gen_4_32();
     gen_32_1024();
