@@ -102,7 +102,7 @@ console_queue_char(char ch)
         /* TX needs to drain */
         hal_uart_start_tx(CONSOLE_UART);
         OS_EXIT_CRITICAL(sr);
-	if (g_os_started) {
+	if (os_started()) {
             os_time_delay(1);
 	}
         OS_ENTER_CRITICAL(sr);
