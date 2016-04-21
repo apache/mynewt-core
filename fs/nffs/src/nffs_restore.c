@@ -275,10 +275,11 @@ static int
 nffs_restore_find_file_ends(void)
 {
     struct nffs_hash_entry *block_entry;
+    struct nffs_hash_entry *next;
     int rc;
     int i;
 
-    NFFS_HASH_FOREACH(block_entry, i) {
+    NFFS_HASH_FOREACH(block_entry, i, next) {
         if (!nffs_hash_id_is_inode(block_entry->nhe_id)) {
             rc = nffs_restore_find_file_end_block(block_entry);
             assert(rc == 0);
@@ -984,12 +985,13 @@ nffs_log_contents(void)
 
     struct nffs_inode_entry *inode_entry;
     struct nffs_hash_entry *entry;
+    struct nffs_hash_entry *next;
     struct nffs_block block;
     struct nffs_inode inode;
     int rc;
     int i;
 
-    NFFS_HASH_FOREACH(entry, i) {
+    NFFS_HASH_FOREACH(entry, i, next) {
         if (nffs_hash_id_is_block(entry->nhe_id)) {
             rc = nffs_block_from_hash_entry(&block, entry);
             assert(rc == 0);
