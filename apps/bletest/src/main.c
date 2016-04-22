@@ -45,6 +45,13 @@
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
 
+/* XXX: An app should not include private headers from a library.  The bletest
+ * app uses some of nimble's internal details for logging.
+ */
+#include "../src/ble_hci_util_priv.h"
+#include "../src/ble_hs_priv.h"
+#include "bletest_priv.h"
+
 /* Task priorities */
 #define BLE_LL_TASK_PRI     (OS_TASK_PRI_HIGHEST)
 #define HOST_TASK_PRIO      (OS_TASK_PRI_HIGHEST + 1)
@@ -221,51 +228,9 @@ bletest_inc_adv_pkt_num(void)
             }
         }
 
-        rc = host_hci_cmd_le_set_adv_data(g_host_adv_data, g_host_adv_len);
+        rc = bletest_hci_le_set_adv_data(g_host_adv_data, g_host_adv_len);
         assert(rc == 0);
     }
-}
-#endif
-
-void
-bletest_send_conn_update(uint16_t handle)
-{
-    int rc;
-    struct hci_conn_update hcu;
-
-    hcu.conn_latency = 4;
-    hcu.supervision_timeout = 2000;
-    hcu.conn_itvl_min = 1000;
-    hcu.conn_itvl_max = 1000;
-    hcu.handle = handle;
-    hcu.min_ce_len = 4;
-    hcu.max_ce_len = 4;
-
-    rc = host_hci_cmd_le_conn_update(&hcu);
-    assert(rc == 0);
-}
-
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
-void
-bletest_ltk_req_reply(uint16_t handle)
-{
-    g_bletest_ltk_reply_handle = handle;
-}
-
-void
-bletest_send_ltk_req_neg_reply(uint16_t handle)
-{
-    host_hci_cmd_le_lt_key_req_neg_reply(handle);
-}
-
-void
-bletest_send_ltk_req_reply(uint16_t handle)
-{
-    struct hci_lt_key_req_reply hkr;
-
-    hkr.conn_handle = handle;
-    swap_buf(hkr.long_term_key, (uint8_t *)g_bletest_LTK, 16);
-    host_hci_cmd_le_lt_key_req_reply(&hkr);
 }
 #endif
 
@@ -362,24 +327,24 @@ bletest_init_advertising(void)
     }
 
     /* Set the advertising parameters */
-    rc = host_hci_cmd_le_set_adv_params(&adv);
+    rc = bletest_hci_le_set_adv_params(&adv);
     assert(rc == 0);
 
     /* If we are using a random address, we need to set it */
     if (adv.own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
         memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
         rand_addr[5] |= 0xc0;
-        rc = host_hci_cmd_le_set_rand_addr(rand_addr);
+        rc = bletest_hci_le_set_rand_addr(rand_addr);
         assert(rc == 0);
     }
 
     /* Set advertising data */
     if (adv_len != 0) {
-        rc = host_hci_cmd_le_set_adv_data(&g_host_adv_data[0], adv_len);
+        rc = bletest_hci_le_set_adv_data(&g_host_adv_data[0], adv_len);
         assert(rc == 0);
 
         /* Set scan response data */
-        rc = host_hci_cmd_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
+        rc = bletest_hci_le_set_scan_rsp_data(&g_host_adv_data[0], adv_len);
         assert(rc == 0);
     }
 }
@@ -394,11 +359,11 @@ bletest_init_scanner(void)
     uint8_t filter_policy;
 
     /* Set scanning parameters */
-    rc = host_hci_cmd_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
-                                         BLETEST_CFG_SCAN_ITVL,
-                                         BLETEST_CFG_SCAN_WINDOW,
-                                         BLE_HCI_ADV_OWN_ADDR_PUBLIC,
-                                         BLETEST_CFG_SCAN_FILT_POLICY);
+    rc = bletest_hci_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
+                                        BLETEST_CFG_SCAN_ITVL,
+                                        BLETEST_CFG_SCAN_WINDOW,
+                                        BLE_HCI_ADV_OWN_ADDR_PUBLIC,
+                                        BLETEST_CFG_SCAN_FILT_POLICY);
     assert(rc == 0);
 
     filter_policy = BLETEST_CFG_SCAN_FILT_POLICY;
@@ -410,7 +375,7 @@ bletest_init_scanner(void)
         dev_addr[3] = 0x88;
         dev_addr[4] = 0x88;
         dev_addr[5] = 0x08;
-        rc = host_hci_cmd_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
+        rc = bletest_hci_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
         assert(rc == 0);
     }
 }
@@ -423,11 +388,11 @@ bletest_execute_scanner(void)
     /* Enable scanning */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
         if (g_bletest_state) {
-            rc = host_hci_cmd_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
+            rc = bletest_hci_le_set_scan_enable(0, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
             g_bletest_state = 0;
         } else {
-            rc = host_hci_cmd_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
+            rc = bletest_hci_le_set_scan_enable(1, BLETEST_CFG_FILT_DUP_ADV);
             assert(rc == 0);
             g_bletest_state = 1;
         }
@@ -471,11 +436,11 @@ bletest_init_initiator(void)
     if (hcc->own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
         memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
         rand_addr[5] |= 0xc0;
-        rc = host_hci_cmd_le_set_rand_addr(rand_addr);
+        rc = bletest_hci_le_set_rand_addr(rand_addr);
         assert(rc == 0);
     }
 
-    rc = host_hci_cmd_le_create_connection(hcc);
+    rc = bletest_hci_le_create_connection(hcc);
     assert(rc == 0);
 }
 
@@ -484,6 +449,7 @@ bletest_execute_initiator(void)
 {
     int i;
     int rc;
+    int8_t rssi;
     uint16_t handle;
     uint8_t new_chan_map[5];
 
@@ -498,10 +464,10 @@ bletest_execute_initiator(void)
             g_bletest_led_rate = OS_TICKS_PER_SEC;
 
             /* Ask for version information */
-            rc = host_hci_cmd_rd_rem_version(handle);
+            rc = bletest_hci_rd_rem_version(handle);
 
             /* Ask for remote used features */
-            rc = host_hci_cmd_le_read_rem_used_feat(handle);
+            rc = bletest_hci_le_read_rem_used_feat(handle);
 
             /* Scanning better be stopped! */
             assert(ble_ll_scan_enabled() == 0);
@@ -524,7 +490,7 @@ bletest_execute_initiator(void)
             if ((g_bletest_state == 1) || (g_bletest_state == 3)) {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
-                        host_hci_cmd_le_rd_chanmap(i+1);
+                        bletest_hci_le_rd_chanmap(i+1);
                     }
                 }
             } else if (g_bletest_state == 2) {
@@ -533,7 +499,7 @@ bletest_execute_initiator(void)
                 new_chan_map[2] = 0;
                 new_chan_map[3] = 0x1F;
                 new_chan_map[4] = 0;
-                host_hci_cmd_le_set_host_chan_class(new_chan_map);
+                bletest_hci_le_set_host_chan_class(new_chan_map);
             } else if (g_bletest_state == 4) {
 #ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
                 struct hci_start_encrypt hsle;
@@ -544,20 +510,19 @@ bletest_execute_initiator(void)
                         hsle.random_number = g_bletest_RAND;
                         swap_buf(hsle.long_term_key, (uint8_t *)g_bletest_LTK,
                                  16);
-                        host_hci_cmd_le_start_encrypt(&hsle);
+                        bletest_hci_le_start_encrypt(&hsle);
                     }
                 }
 #endif
             } else {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
-                        host_hci_cmd_read_rssi(i+1);
+                        ble_hci_util_read_rssi(i+1, &rssi);
                     }
                 }
             }
             if (g_bletest_state < 5) {
                 ++g_bletest_state;
-            } else {
             }
             g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 3;
         }
@@ -618,13 +583,13 @@ bletest_execute_advertiser(void)
             assert(ble_ll_adv_enabled() == 0);
 
             /* Send the remote used features command */
-            rc = host_hci_cmd_le_read_rem_used_feat(handle);
+            rc = bletest_hci_le_read_rem_used_feat(handle);
             if (rc) {
                 return;
             }
 
             /* Send the remote read version command */
-            rc = host_hci_cmd_rd_rem_version(handle);
+            rc = bletest_hci_rd_rem_version(handle);
             if (rc) {
                 return;
             }
@@ -642,7 +607,7 @@ bletest_execute_advertiser(void)
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
                 bletest_init_advertising();
-                rc = host_hci_cmd_le_set_adv_enable(1);
+                rc = bletest_hci_le_set_adv_enable(1);
             }
         }
     }
@@ -816,6 +781,7 @@ void
 bletest_task_handler(void *arg)
 {
     int rc;
+    uint64_t rand64;
     uint64_t event_mask;
     struct os_event *ev;
     struct os_callout_func *cf;
@@ -826,16 +792,12 @@ bletest_task_handler(void *arg)
     /* Wait one second before starting test task */
     os_time_delay(OS_TICKS_PER_SEC);
 
-    /* Initialize eventq */
-    os_eventq_init(&g_bletest_evq);
-
     /* Initialize the host timer */
     os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
                          NULL);
 
     /* Send the reset command first */
-    rc = host_hci_cmd_send(BLE_HCI_OGF_CTLR_BASEBAND, BLE_HCI_OCF_CB_RESET,
-                           0, NULL);
+    rc = bletest_hci_reset_ctlr();
     assert(rc == 0);
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
@@ -858,65 +820,65 @@ bletest_task_handler(void *arg)
 
     /* Set the event mask we want to display */
     event_mask = 0x7FF;
-    rc = host_hci_cmd_le_set_event_mask(event_mask);
+    rc = bletest_hci_le_set_event_mask(event_mask);
     assert(rc == 0);
 
     /* Turn on all events */
     event_mask = 0xffffffffffffffff;
-    rc = host_hci_cmd_set_event_mask(event_mask);
+    rc = bletest_hci_set_event_mask(event_mask);
     assert(rc == 0);
 
     /* Read device address */
-    rc = host_hci_cmd_rd_bd_addr();
+    rc = bletest_hci_rd_bd_addr();
     assert(rc == 0);
 
     /* Read local features */
-    rc = host_hci_cmd_rd_local_feat();
+    rc = bletest_hci_rd_local_feat();
     assert(rc == 0);
 
     /* Read local commands */
-    rc = host_hci_cmd_rd_local_cmd();
+    rc = bletest_hci_rd_local_supp_cmd();
     assert(rc == 0);
 
     /* Read version */
-    rc = host_hci_cmd_rd_local_version();
+    rc = bletest_hci_rd_local_version();
     assert(rc == 0);
 
     /* Read supported states */
-    rc = host_hci_cmd_le_read_supp_states();
+    rc = bletest_hci_le_read_supp_states();
     assert(rc == 0);
 
     /* Read maximum data length */
-    rc = host_hci_cmd_le_read_max_datalen();
+    rc = bletest_hci_le_rd_max_datalen();
     assert(rc == 0);
 
     /* Read suggested data length */
-    rc = host_hci_cmd_le_read_sugg_datalen();
+    rc = bletest_hci_le_rd_sugg_datalen();
     assert(rc == 0);
 
     /* write suggested default data length */
-    rc = host_hci_cmd_le_write_sugg_datalen(BLETEST_CFG_SUGG_DEF_TXOCTETS,
-                                            BLETEST_CFG_SUGG_DEF_TXTIME);
+    rc = bletest_hci_le_write_sugg_datalen(BLETEST_CFG_SUGG_DEF_TXOCTETS,
+                                           BLETEST_CFG_SUGG_DEF_TXTIME);
     assert(rc == 0);
 
     /* Read suggested data length */
-    rc = host_hci_cmd_le_read_sugg_datalen();
+    rc = bletest_hci_le_rd_sugg_datalen();
     assert(rc == 0);
 
     /* Set data length (note: we know there is no connection; just a test) */
-    rc = host_hci_cmd_le_set_datalen(0x1234,
-                                     BLETEST_CFG_SUGG_DEF_TXOCTETS,
-                                     BLETEST_CFG_SUGG_DEF_TXTIME);
-    assert(rc == 0);
-
+    rc = bletest_hci_le_set_datalen(0x1234, BLETEST_CFG_SUGG_DEF_TXOCTETS,
+                                    BLETEST_CFG_SUGG_DEF_TXTIME);
+    assert(rc != 0);
 
     /* Encrypt a block */
-    rc = host_hci_cmd_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key,
-                                 (uint8_t *)g_ble_ll_encrypt_test_plain_text);
+#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+    rc = bletest_hci_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key,
+                                (uint8_t *)g_ble_ll_encrypt_test_plain_text);
     assert(rc == 0);
+#endif
 
     /* Get a random number */
-    rc = host_hci_cmd_le_rand();
+    rc = ble_hci_util_rand(&rand64, 8);
     assert(rc == 0);
 
     /* Wait some time before starting */
@@ -927,7 +889,7 @@ bletest_task_handler(void *arg)
 
     /* Begin advertising if we are an advertiser */
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-    rc = host_hci_cmd_le_set_adv_enable(1);
+    rc = bletest_hci_le_set_adv_enable(1);
     assert(rc == 0);
 #endif
 
@@ -1071,6 +1033,9 @@ main(void)
     /* Init statistics module */
     rc = stats_module_init();
     assert(rc == 0);
+
+    /* Initialize eventq for bletest task */
+    os_eventq_init(&g_bletest_evq);
 
     /* Initialize the BLE LL */
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
