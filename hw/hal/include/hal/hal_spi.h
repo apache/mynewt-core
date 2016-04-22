@@ -64,11 +64,15 @@ struct hal_spi_settings {
 struct hal_spi *
 hal_spi_init(enum system_device_id sysid);
 
-/* configure the spi */
+/* configure the spi., Reutrns 0 on success, negative on error */
 int 
 hal_spi_config(struct hal_spi *pspi, struct hal_spi_settings *psettings);
 
-/* do a blocking master spi transfer */
+/* Do a blocking master spi transfer of one SPI data word. 
+ * The data to send is an 8 or 9-bit pattern (depending on configuration) 
+ * stored in <tx>.  NOTE: This does not send multiple bytes. The argument is 
+ * a 16-bit number to allow up to 9-bit SPI data words.
+ * Returns the data received from the remote device or negative on error. */
 int 
 hal_spi_master_transfer(struct hal_spi *psdi, uint16_t tx);
 
