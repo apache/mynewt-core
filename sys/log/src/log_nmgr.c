@@ -268,8 +268,8 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
     json_encode_object_start(encoder);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
     json_encode_object_entry(encoder, "rc", &jv);
-    json_encode_array_name(encoder, "log_module_map");
-    json_encode_array_start(encoder);
+    json_encode_object_key(encoder, "module_map");
+    json_encode_object_start(encoder);
 
     while (module < LOG_MODULE_MAX) {
         str = LOG_MODULE_STR(module);
@@ -278,19 +278,14 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
             continue;
         }
 
-        json_encode_object_start(encoder);
-
-        JSON_VALUE_STRING(&jv, LOG_MODULE_STR(module));
-        json_encode_object_entry(encoder, "module_name", &jv);
-
         JSON_VALUE_UINT(&jv, module);
-        json_encode_object_entry(encoder, "module", &jv);
+        json_encode_object_entry(encoder, str, &jv);
 
-        json_encode_object_finish(encoder);
         module++;
     }
 
-    json_encode_array_finish(encoder);
+
+    json_encode_object_finish(encoder);
     json_encode_object_finish(encoder);
 
     return (0);
@@ -309,8 +304,8 @@ log_nmgr_level_list(struct nmgr_jbuf *njb)
     json_encode_object_start(encoder);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
     json_encode_object_entry(encoder, "rc", &jv);
-    json_encode_array_name(encoder, "log_level_map");
-    json_encode_array_start(encoder);
+    json_encode_object_key(encoder, "level_map");
+    json_encode_object_start(encoder);
 
     while (level < LOG_LEVEL_MAX) {
         str = LOG_LEVEL_STR(level);
@@ -318,18 +313,14 @@ log_nmgr_level_list(struct nmgr_jbuf *njb)
             level++;
             continue;
         }
-        json_encode_object_start(encoder);
-        JSON_VALUE_STRING(&jv, str);
-        json_encode_object_entry(encoder, "level_name", &jv);
 
         JSON_VALUE_UINT(&jv, level);
-        json_encode_object_entry(encoder, "level", &jv);
+        json_encode_object_entry(encoder, str, &jv);
 
-        json_encode_object_finish(encoder);
         level++;
     }
 
-    json_encode_array_finish(encoder);
+    json_encode_object_finish(encoder);
     json_encode_object_finish(encoder);
 
     return (0);

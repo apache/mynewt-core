@@ -63,7 +63,6 @@ struct log_entry_hdr {
 #define LOG_LEVEL_ERROR    (3)
 #define LOG_LEVEL_CRITICAL (4)
 /* Up to 7 custom log levels. */
-#define LOG_LEVEL_PERUSER  (64)
 #define LOG_LEVEL_MAX      (255)
 
 #define LOG_LEVEL_STR(level) \
@@ -72,8 +71,7 @@ struct log_entry_hdr {
     (LOG_LEVEL_WARN     == level ? "WARN"     :\
     (LOG_LEVEL_ERROR    == level ? "ERROR"    :\
     (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
-    (LOG_LEVEL_PERUSER  == level ? "PERUSER"  :\
-     "UNKNOWN"))))))
+     "UNKNOWN")))))
 
 /* Log module, eventually this can be a part of the filter. */
 #define LOG_MODULE_DEFAULT          (0)
@@ -82,7 +80,6 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_CTLR      (3)
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
-#define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
 #define LOG_MODULE_STR(module) \
@@ -92,8 +89,7 @@ struct log_entry_hdr {
     (LOG_MODULE_NIMBLE_CTLR == module ? "NIMBLE_CTLR" :\
     (LOG_MODULE_NIMBLE_HOST == module ? "NIMBLE_HOST" :\
     (LOG_MODULE_NFFS        == module ? "NFFS"        :\
-    (LOG_MODULE_PERUSER     == module ? "PERUSER"     :\
-     "UNKNOWN")))))))
+     "UNKNOWN"))))))
 
 /* UTC Timestamnp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
