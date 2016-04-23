@@ -75,9 +75,8 @@ nffs_file_new(struct nffs_inode_entry *parent, const char *filename,
     uint8_t area_idx;
     int rc;
 
-    inode_entry = nffs_inode_entry_alloc();
-    if (inode_entry == NULL) {
-        rc = FS_ENOMEM;
+    rc = nffs_inode_entry_reserve(&inode_entry);
+    if (rc != 0) {
         goto err;
     }
 

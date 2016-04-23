@@ -59,6 +59,31 @@ nffs_inode_entry_free(struct nffs_inode_entry *inode_entry)
     }
 }
 
+/**
+ * Allocates a inode entry.  If allocation fails due to memory exhaustion,
+ * garbage collection is performed and the allocation is retried.  This
+ * process is repeated until allocation is successful or all areas have been
+ * garbage collected.
+ *
+ * @param out_inode_entry           On success, the address of the allocated
+ *                                      inode gets written here.
+ *
+ * @return                          0 on successful allocation;
+ *                                  FS_ENOMEM on memory exhaustion;
+ *                                  other nonzero on garbage collection error.
+ */
+int
+nffs_inode_entry_reserve(struct nffs_inode_entry **out_inode_entry)
+{
+    int rc;
+
+    do {
+        *out_inode_entry = nffs_inode_entry_alloc();
+    } while (nffs_misc_gc_if_oom(*out_inode_entry, &rc));
+
+    return rc;
+}
+
 uint32_t
 nffs_inode_disk_size(const struct nffs_inode *inode)
 {

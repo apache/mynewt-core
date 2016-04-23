@@ -219,7 +219,7 @@ nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
     uint8_t area_idx;
     int rc;
 
-    entry = nffs_block_entry_alloc();
+    rc = nffs_block_entry_reserve(&entry);
     if (entry == NULL) {
         return FS_ENOMEM;
     }

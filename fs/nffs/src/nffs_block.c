@@ -39,10 +39,35 @@ nffs_block_entry_alloc(void)
 }
 
 void
-nffs_block_entry_free(struct nffs_hash_entry *entry)
+nffs_block_entry_free(struct nffs_hash_entry *block_entry)
 {
-    assert(nffs_hash_id_is_block(entry->nhe_id));
-    os_memblock_put(&nffs_block_entry_pool, entry);
+    assert(nffs_hash_id_is_block(block_entry->nhe_id));
+    os_memblock_put(&nffs_block_entry_pool, block_entry);
+}
+
+/**
+ * Allocates a block entry.  If allocation fails due to memory exhaustion,
+ * garbage collection is performed and the allocation is retried.  This
+ * process is repeated until allocation is successful or all areas have been
+ * garbage collected.
+ *
+ * @param out_block_entry           On success, the address of the allocated
+ *                                      block gets written here.
+ *
+ * @return                          0 on successful allocation;
+ *                                  FS_ENOMEM on memory exhaustion;
+ *                                  other nonzero on garbage collection error.
+ */
+int
+nffs_block_entry_reserve(struct nffs_hash_entry **out_block_entry)
+{
+    int rc;
+
+    do {
+        *out_block_entry = nffs_block_entry_alloc();
+    } while (nffs_misc_gc_if_oom(*out_block_entry, &rc));
+
+    return rc;
 }
 
 /**

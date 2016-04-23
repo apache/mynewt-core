@@ -254,6 +254,7 @@ int nffs_area_find_corrupt_scratch(uint16_t *out_good_idx,
 /* @block */
 struct nffs_hash_entry *nffs_block_entry_alloc(void);
 void nffs_block_entry_free(struct nffs_hash_entry *entry);
+int nffs_block_entry_reserve(struct nffs_hash_entry **out_block_entry);
 int nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
                          struct nffs_disk_block *out_disk_block);
 int nffs_block_write_disk(const struct nffs_disk_block *disk_block,
@@ -355,6 +356,7 @@ int nffs_hash_init(void);
 /* @inode */
 struct nffs_inode_entry *nffs_inode_entry_alloc(void);
 void nffs_inode_entry_free(struct nffs_inode_entry *inode_entry);
+int nffs_inode_entry_reserve(struct nffs_inode_entry **out_inode_entry);
 int nffs_inode_calc_data_length(struct nffs_inode_entry *inode_entry,
                                 uint32_t *out_len);
 int nffs_inode_data_len(struct nffs_inode_entry *inode_entry,
@@ -401,6 +403,7 @@ int nffs_inode_unlink_from_ram_corrupt_ok(struct nffs_inode *inode,
 int nffs_inode_unlink(struct nffs_inode *inode);
 
 /* @misc */
+int nffs_misc_gc_if_oom(void *resource, int *out_rc);
 int nffs_misc_reserve_space(uint16_t space,
                             uint8_t *out_area_idx, uint32_t *out_area_offset);
 int nffs_misc_set_num_areas(uint8_t num_areas);
