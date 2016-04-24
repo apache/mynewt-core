@@ -5,6 +5,40 @@ all subprojects of Apache Mynewt.  This covers C and Assembly coding
 conventions, *only*.  Other languages (such as Go), have their own 
 coding conventions.
 
+## Headers
+
+* All files that are newly written, should have the Apache License clause
+at the top of them.
+
+* For files that are copied from another source, but contain an Apache 
+compatible license, the original license header shall be maintained.
+
+* For more information on applying the Apache license, the definitive 
+source is here: http://www.apache.org/dev/apply-license.html
+
+* The Apache License clause for the top of files is as follows:
+
+```no-highlight
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+```
+
 ## Whitespace and Braces
 
 * Code must be indented to 4 spaces, tabs should not be used.
@@ -24,7 +58,7 @@ code blocks, i.e., do:
     }
 ```
 
-not: 
+Not: 
 
 ```
     if (x) 
@@ -45,7 +79,7 @@ not:
     }
 ```
 
-Bad:
+Not:
 
 ```
     for (i = 0; i < 10; i++) 
@@ -81,14 +115,19 @@ not:
 * When you have to wrap a long statement, put the operator at the end of the 
   line.  i.e.:
 
+```
     if (x &&
         y == 10 &&
         b)
-  Not:
+```
 
+Not:
+
+```
     if (x
         && y == 10
         && b)
+```
 
 ## Comments
 
@@ -97,12 +136,16 @@ not:
 * When using a single line comment, put it above the line of code that you 
 intend to comment, i.e., do:
 
+```
     /* check variable */
     if (a) {
+```
 
-and not: 
+Not:
 
+```
     if (a) { /* check variable */
+```
 
 
 * All public APIs should be commented with Doxygen style comments describing 
@@ -112,34 +155,11 @@ purpose, parameters and return values.  Private APIs need not be documented.
 ## Header files
 
 * Header files must contain the following structure:
-    * Apache License
+    * Apache License (see above)
     * ```#ifdef``` aliasing, to prevent multiple includes
     * ```#include``` directives for other required header files
     * ```#ifdef __cplusplus``` wrappers to maintain C++ friendly APIs
     * Contents of the header file
-
-* The Apache License clause is as follows:
-
-```no-highlight
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- * 
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-```
 
 * ```#ifdef``` aliasing, shall be in the following format, where
 the package name is "os" and the file name is "callout.h": 
@@ -174,7 +194,7 @@ followed by the '_' character, i.e.:
     os_callout_init(&c)
 ```
 
-not:
+Not:
 
 ```
     callout_init(c)
@@ -188,7 +208,7 @@ not:
     rc = function(a)
 ```
 
-not: 
+Not: 
 
 ```
     rc = function (a)
@@ -201,7 +221,7 @@ not:
     rc = function(a, b)
 ```
 
-not: 
+Not: 
 
 ```
     rc = function(a,b)
@@ -215,7 +235,7 @@ not:
     {
 ```
 
-not: 
+Not: 
 
 ```
     static void *function(int var1, int var2)
