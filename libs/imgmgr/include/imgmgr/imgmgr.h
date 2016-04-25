@@ -54,4 +54,9 @@ int imgr_ver_str(struct image_version *ver, char *dst);
  */
 int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash);
 
+/*
+ * Returns version number of current image (if available).
+ */
+int imgr_my_version(struct image_version *ver);
+
 #endif /* _IMGMGR_H */

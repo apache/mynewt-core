@@ -171,6 +171,12 @@ end:
     return rc;
 }
 
+int
+imgr_my_version(struct image_version *ver)
+{
+    return imgr_read_info(bsp_imgr_current_slot(), ver, NULL);
+}
+
 /*
  * Finds image given version number. Returns the slot number image is in,
  * or -1 if not found.

@@ -30,6 +30,7 @@
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <newtmgr/newtmgr.h>
+#include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
@@ -260,6 +261,7 @@ main(int argc, char **argv)
 {
     int rc;
     int cnt;
+    struct image_version ver;
 
     /* NFFS_AREA_MAX is defined in the BSP-specified bsp.h header file. */
     struct nffs_area_desc descs[NFFS_AREA_MAX + 1];
@@ -340,6 +342,15 @@ main(int argc, char **argv)
     conf_load();
 
     rc = init_tasks();
+
+    rc = imgr_my_version(&ver);
+    if (rc == 0) {
+        console_printf("\nSlinky %u.%u.%u.%u\n",
+          ver.iv_major, ver.iv_minor, ver.iv_revision,
+          (unsigned int)ver.iv_build_num);
+    } else {
+        console_printf("\nSlinky\n");
+    }
     os_start();
 
     /* os start should never return. If it does, this should be an error */
