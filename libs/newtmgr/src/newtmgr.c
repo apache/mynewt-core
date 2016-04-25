@@ -21,12 +21,13 @@
 #include <os/endian.h>
 
 #include <assert.h>
+#include <string.h>
 
 #include <shell/shell.h>
 #include <console/console.h>
 #include <newtmgr/newtmgr.h>
 
-#include <string.h>
+#include "newtmgr_priv.h"
 
 struct nmgr_transport g_nmgr_shell_transport;
 
@@ -41,13 +42,6 @@ STAILQ_HEAD(, nmgr_group) g_nmgr_group_list =
 static int nmgr_def_echo(struct nmgr_jbuf *);
 static int nmgr_def_console_echo(struct nmgr_jbuf *);
 
-/* Located in newtmgr_os.c */
-int nmgr_def_taskstat_read(struct nmgr_jbuf *);
-int nmgr_def_mpstat_read(struct nmgr_jbuf *);
-int nmgr_def_logs_read(struct nmgr_jbuf *);
-int nmgr_datetime_get(struct nmgr_jbuf *njb);
-int nmgr_datetime_set(struct nmgr_jbuf *njb);
-
 static struct nmgr_group nmgr_def_group;
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
@@ -58,6 +52,7 @@ static const struct nmgr_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_TASKSTATS] = {nmgr_def_taskstat_read, NULL},
     [NMGR_ID_MPSTATS] = {nmgr_def_mpstat_read, NULL},
     [NMGR_ID_DATETIME_STR] = {nmgr_datetime_get, nmgr_datetime_set},
+    [NMGR_ID_RESET] = {NULL, nmgr_reset},
 };
 
 /* JSON buffer for NMGR task
@@ -512,6 +507,7 @@ nmgr_task(void *arg)
 {
     struct nmgr_transport *nt;
     struct os_event *ev;
+    struct os_callout_func *ocf;
 
     nmgr_jbuf_init(&nmgr_task_jbuf);
 
@@ -522,6 +518,10 @@ nmgr_task(void *arg)
                 nt = (struct nmgr_transport *) ev->ev_arg;
                 nmgr_process(nt);
                 break;
+	    case OS_EVENT_T_TIMER:
+		ocf = (struct os_callout_func *)ev;
+		ocf->cf_func(ocf->cf_arg);
+		break;
         }
     }
 }
