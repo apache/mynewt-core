@@ -37,6 +37,7 @@ static int log_nmgr_read(struct nmgr_jbuf *njb);
 static int log_nmgr_clear(struct nmgr_jbuf *njb);
 static int log_nmgr_module_list(struct nmgr_jbuf *njb);
 static int log_nmgr_level_list(struct nmgr_jbuf *njb);
+static int log_nmgr_logs_list(struct nmgr_jbuf *njb);
 static struct nmgr_group log_nmgr_group;
 
 #define LOGS_NMGR_OP_READ         (0)
@@ -44,6 +45,7 @@ static struct nmgr_group log_nmgr_group;
 #define LOGS_NMGR_OP_APPEND       (2)
 #define LOGS_NMGR_OP_MODULE_LIST  (3)
 #define LOGS_NMGR_OP_LEVEL_LIST   (4)
+#define LOGS_NMGR_OP_LOGS_LIST    (5)
 
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
@@ -52,7 +54,8 @@ static struct nmgr_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_READ] = {log_nmgr_read, log_nmgr_read},
     [LOGS_NMGR_OP_CLEAR] = {log_nmgr_clear, log_nmgr_clear},
     [LOGS_NMGR_OP_MODULE_LIST] = {log_nmgr_module_list, NULL},
-    [LOGS_NMGR_OP_LEVEL_LIST] = {log_nmgr_level_list, NULL}
+    [LOGS_NMGR_OP_LEVEL_LIST] = {log_nmgr_level_list, NULL},
+    [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL}
 };
 
 struct encode_off {
@@ -286,6 +289,42 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
 
 
     json_encode_object_finish(encoder);
+    json_encode_object_finish(encoder);
+
+    return (0);
+}
+
+static int
+log_nmgr_logs_list(struct nmgr_jbuf *njb)
+{
+    struct json_value jv;
+    struct json_encoder *encoder;
+    struct log *log;
+
+    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+
+    json_encode_object_start(encoder);
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(encoder, "rc", &jv);
+    json_encode_array_name(encoder, "log_list");
+    json_encode_array_start(encoder);
+
+    log = NULL;
+    while (1) {
+        log = log_list_get_next(log);
+        if (!log) {
+            break;
+        }
+
+        if (log->l_log->log_type == LOG_TYPE_STREAM) {
+            continue;
+        }
+
+        JSON_VALUE_STRING(&jv, log->l_name);
+        json_encode_array_value(encoder, &jv);
+    }
+
+    json_encode_array_finish(encoder);
     json_encode_object_finish(encoder);
 
     return (0);
