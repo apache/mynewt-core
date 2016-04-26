@@ -58,7 +58,7 @@ static struct nmgr_handler log_nmgr_group_handlers[] = {
 struct encode_off {
     struct json_encoder *eo_encoder;
     int64_t eo_ts;
-    uint32_t eo_index;
+    uint8_t eo_index;
 };
 
 static int

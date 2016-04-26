@@ -323,7 +323,7 @@ nmgr_jbuf_write(void *arg, char *data, int len)
 
     rc = nmgr_rsp_extend(njb->njb_hdr, njb->njb_out_m, data, len);
     if (rc != 0) {
-        //assert(0);
+        /*VVV: assert(0);*/
         goto err;
     }
 
