@@ -152,10 +152,10 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
             if (lptr != NULL) {
                 switch (cursor->type) {
                 case t_integer:
-                    memcpy(lptr, &cursor->dflt.integer, sizeof(int));
+                    memcpy(lptr, &cursor->dflt.integer, sizeof(long long int));
                     break;
                 case t_uinteger:
-                    memcpy(lptr, &cursor->dflt.uinteger, sizeof(unsigned int));
+                    memcpy(lptr, &cursor->dflt.uinteger, sizeof(long long unsigned int));
                     break;
                 case t_real:
                     memcpy(lptr, &cursor->dflt.real, sizeof(double));
@@ -396,19 +396,21 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
                 }
                 return JSON_ERR_BADENUM;
               foundit:
-                (void)snprintf(valbuf, sizeof(valbuf), "%d", mp->value);
+                (void)snprintf(valbuf, sizeof(valbuf), "%lld", mp->value);
             }
             lptr = json_target_address(cursor, parent, offset);
             if (lptr != NULL) {
                 switch (cursor->type) {
                 case t_integer: {
-                        int tmp = atoi(valbuf);
-                        memcpy(lptr, &tmp, sizeof(int));
+                        long long int tmp =
+                            (long long int)strtoll(valbuf, NULL, 10);
+                        memcpy(lptr, &tmp, sizeof(long long int));
                     }
                     break;
                 case t_uinteger: {
-                        unsigned int tmp = (unsigned int)atoi(valbuf);
-                        memcpy(lptr, &tmp, sizeof(unsigned int));
+                        long long unsigned int tmp =
+                            (long long unsigned int)strtoull(valbuf, NULL, 10);
+                        memcpy(lptr, &tmp, sizeof(long long unsigned int));
                     }
                     break;
                 case t_real: {
@@ -548,7 +550,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
             valbuf[n] = '\0';
 
-            arr->arr.integers.store[offset] = (int)strtol(valbuf, &ep, 0);
+            arr->arr.integers.store[offset] = (long long int)strtoll(valbuf, &ep, 0);
             if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
@@ -562,7 +564,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
             valbuf[n] = '\0';
 
-            arr->arr.uintegers.store[offset] = (unsigned int)strtoul(valbuf, &ep, 0);
+            arr->arr.uintegers.store[offset] = (long long unsigned int)strtoull(valbuf, &ep, 0);
             if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {

@@ -128,8 +128,8 @@ typedef enum {
 } json_type;
 
 struct json_enum_t {
-    char        *name;
-    int                value;
+    char *name;
+    long long int value;
 };
 
 struct json_array_t {
@@ -146,10 +146,10 @@ struct json_array_t {
             int storelen;
         } strings;
         struct {
-            int *store;
+            long long int *store;
         } integers;
         struct {
-            unsigned int *store;
+            long long unsigned int *store;
         } uintegers;
         struct {
             double *store;
