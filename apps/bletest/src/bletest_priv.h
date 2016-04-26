@@ -24,8 +24,8 @@ void bletest_send_conn_update(uint16_t handle);
 
 #ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
 void bletest_ltk_req_reply(uint16_t handle);
-void bletest_send_ltk_req_neg_reply(uint16_t handle);
-void bletest_send_ltk_req_reply(uint16_t handle);
+int bletest_send_ltk_req_neg_reply(uint16_t handle);
+int bletest_send_ltk_req_reply(uint16_t handle);
 int bletest_hci_le_start_encrypt(struct hci_start_encrypt *cmd);
 int bletest_hci_le_encrypt(uint8_t *key, uint8_t *pt);
 #endif

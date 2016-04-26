@@ -41,6 +41,8 @@
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
+extern uint16_t g_bletest_ltk_reply_handle;
+
 void
 bletest_send_conn_update(uint16_t handle)
 {
@@ -66,20 +68,58 @@ bletest_ltk_req_reply(uint16_t handle)
     g_bletest_ltk_reply_handle = handle;
 }
 
-void
+int
 bletest_send_ltk_req_neg_reply(uint16_t handle)
 {
-    host_hci_cmd_le_lt_key_req_neg_reply(handle);
+    int rc;
+    uint8_t *dst;
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + sizeof(uint16_t)];
+    uint16_t ack_conn_handle;
+    uint8_t rsplen;
+
+    dst = buf;
+    host_hci_write_hdr(BLE_HCI_OGF_LE, BLE_HCI_OCF_LE_LT_KEY_REQ_NEG_REPLY,
+                       sizeof(uint16_t), dst);
+    dst += BLE_HCI_CMD_HDR_LEN;
+
+    htole16(dst, handle);
+    rc = ble_hci_cmd_tx(buf, &ack_conn_handle, 2, &rsplen);
+    if (rc == 0) {
+        if (rsplen != 2) {
+            rc = -1;
+        }
+    }
+
+    return rc;
 }
 
-void
+int
 bletest_send_ltk_req_reply(uint16_t handle)
 {
     struct hci_lt_key_req_reply hkr;
+    uint16_t ack_conn_handle;
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_LT_KEY_REQ_REPLY_LEN];
+    uint8_t ack_params_len;
+    int rc;
 
     hkr.conn_handle = handle;
     swap_buf(hkr.long_term_key, (uint8_t *)g_bletest_LTK, 16);
-    host_hci_cmd_le_lt_key_req_reply(&hkr);
+
+    host_hci_cmd_build_le_lt_key_req_reply(&hkr, buf, sizeof buf);
+    rc = ble_hci_cmd_tx(buf, &ack_conn_handle, sizeof ack_conn_handle,
+                        &ack_params_len);
+    if (rc != 0) {
+        return rc;
+    }
+    if (ack_params_len != BLE_HCI_LT_KEY_REQ_REPLY_ACK_PARAM_LEN - 1) {
+        return -1;
+    }
+
+    ack_conn_handle = TOFROMLE16(ack_conn_handle);
+    if (ack_conn_handle != handle) {
+        return -1;
+    }
+    return 0;
 }
 #endif
 

@@ -514,6 +514,20 @@ bletest_execute_initiator(void)
                     }
                 }
 #endif
+            } else if (g_bletest_state == 8) {
+#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+                struct hci_start_encrypt hsle;
+                for (i = 0; i < g_bletest_current_conns; ++i) {
+                    if (ble_ll_conn_find_active_conn(i + 1)) {
+                        hsle.connection_handle = i + 1;
+                        hsle.encrypted_diversifier = g_bletest_EDIV;
+                        hsle.random_number = ~g_bletest_RAND;
+                        swap_buf(hsle.long_term_key, (uint8_t *)g_bletest_LTK,
+                                 16);
+                        bletest_hci_le_start_encrypt(&hsle);
+                    }
+                }
+#endif
             } else {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -521,8 +535,10 @@ bletest_execute_initiator(void)
                     }
                 }
             }
-            if (g_bletest_state < 5) {
-                ++g_bletest_state;
+
+            ++g_bletest_state;
+            if (g_bletest_state > 9) {
+                g_bletest_state = 9;
             }
             g_next_os_time = os_time_get() + OS_TICKS_PER_SEC * 3;
         }
