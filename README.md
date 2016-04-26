@@ -72,7 +72,6 @@ Mynewt is being actively developed.  Some of the features we're currently workin
     - LE Secure Connections
     - Random addresses for link-layer security
 
-
 ## Browsing 
 
 If you are browsing around the source tree, and want to see some of the 
