@@ -80,9 +80,9 @@ log_nmgr_add_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     }
 
     /* Matching timestamps and indices for sending a log entry */
-    if (ueh.ue_ts < encode_off->eo_ts   ||
+    if (ueh.ue_ts <= encode_off->eo_ts  ||
         (ueh.ue_ts == encode_off->eo_ts &&
-         ueh.ue_index < encode_off->eo_index)) {
+         ueh.ue_index <= encode_off->eo_index)) {
         goto err;
     }
 
