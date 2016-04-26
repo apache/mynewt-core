@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -128,6 +128,37 @@ uart_log_data(struct uart *u, int istx, uint8_t data)
     }
 }
 
+static int
+uart_transmit_char(struct uart *uart)
+{
+    int sr;
+    int rc;
+    char ch;
+
+    OS_ENTER_CRITICAL(sr);
+    rc = uart->u_tx_func(uart->u_func_arg);
+    if (rc < 0) {
+        /*
+         * No more data to send.
+         */
+        uart->u_tx_run = 0;
+        if (uart->u_tx_done) {
+            uart->u_tx_done(uart->u_func_arg);
+        }
+        OS_EXIT_CRITICAL(sr);
+        return 0;
+    }
+    uart_log_data(uart, 1, ch);
+    OS_EXIT_CRITICAL(sr);
+    ch = rc;
+    rc = write(uart->u_fd, &ch, 1);
+    if (rc <= 0) {
+        /* XXX EOF/error, what now? */
+        return -1;
+    }
+    return 0;
+}
+
 static void
 uart_poller(void *arg)
 {
@@ -147,28 +178,7 @@ uart_poller(void *arg)
 
             for (bytes = 0; bytes < UART_MAX_BYTES_PER_POLL; bytes++) {
                 if (uart->u_tx_run) {
-                    OS_ENTER_CRITICAL(sr);
-                    rc = uart->u_tx_func(uart->u_func_arg);
-                    if (rc < 0) {
-                        /*
-                         * No more data to send.
-                         */
-                        uart->u_tx_run = 0;
-                        if (uart->u_tx_done) {
-                            uart->u_tx_done(uart->u_func_arg);
-                        }
-                        OS_EXIT_CRITICAL(sr);
-                        break;
-                    }
-                    uart_log_data(uart, 1, ch);
-                    OS_EXIT_CRITICAL(sr);
-                    ch = rc;
-                    rc = write(uart->u_fd, &ch, 1);
-                    if (rc <= 0) {
-                        /* XXX EOF/error, what now? */
-                        assert(0);
-                        break;
-                    }
+                    uart_transmit_char(uart);
                 }
             }
             for (bytes = 0; bytes < UART_MAX_BYTES_PER_POLL; bytes++) {
@@ -279,6 +289,12 @@ hal_uart_start_tx(int port)
     }
     OS_ENTER_CRITICAL(sr);
     uarts[port].u_tx_run = 1;
+    if (!os_started()) {
+        /*
+         * XXX this is a hack.
+         */
+        uart_transmit_char(&uarts[port]);
+    }
     OS_EXIT_CRITICAL(sr);
 }
 
