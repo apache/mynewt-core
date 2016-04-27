@@ -40,6 +40,8 @@ static int log_nmgr_level_list(struct nmgr_jbuf *njb);
 static int log_nmgr_logs_list(struct nmgr_jbuf *njb);
 static struct nmgr_group log_nmgr_group;
 
+
+/* Newtmgr Log opcodes */
 #define LOGS_NMGR_OP_READ         (0)
 #define LOGS_NMGR_OP_CLEAR        (1)
 #define LOGS_NMGR_OP_APPEND       (2)
@@ -64,15 +66,20 @@ struct encode_off {
     uint8_t eo_index;
 };
 
+/**
+ * Log encode entry
+ * @param log structure, arg:struct passed locally, dataptr, len
+ * @return 0 on success; non-zero on failure
+ */
 static int
-log_nmgr_add_entry(struct log *log, void *arg, void *dptr, uint16_t len)
+log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
 {
     struct encode_off *encode_off = (struct encode_off *)arg;
     struct log_entry_hdr ueh;
     char data[128];
     int dlen;
     struct json_value jv;
-    int rc = 0;
+    int rc;
 
     rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
@@ -98,30 +105,33 @@ log_nmgr_add_entry(struct log *log, void *arg, void *dptr, uint16_t len)
 
     JSON_VALUE_STRINGN(&jv, data, rc);
     rc = json_encode_object_entry(encode_off->eo_encoder, "msg", &jv);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
     JSON_VALUE_INT(&jv, ueh.ue_ts);
     rc = json_encode_object_entry(encode_off->eo_encoder, "ts", &jv);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
     JSON_VALUE_UINT(&jv, ueh.ue_level);
     rc = json_encode_object_entry(encode_off->eo_encoder, "level", &jv);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
     JSON_VALUE_UINT(&jv, ueh.ue_index);
     rc = json_encode_object_entry(encode_off->eo_encoder, "index", &jv);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
     JSON_VALUE_UINT(&jv, ueh.ue_module);
-    json_encode_object_entry(encode_off->eo_encoder, "module", &jv);
+    rc = json_encode_object_entry(encode_off->eo_encoder, "module", &jv);
+    if (rc) {
+        goto err;
+    }
 
     json_encode_object_finish(encode_off->eo_encoder);
     return (0);
@@ -129,11 +139,16 @@ err:
     return (rc);
 }
 
+/**
+ * Log encode entries
+ * @param log structure, the encoder, timestamp, index
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_encode_entries (struct log *log, struct json_encoder *encoder,
                     int64_t ts, uint32_t index)
 {
-    int rc = 0;
+    int rc;
     struct encode_off encode_off;
 
     json_encode_array_name(encoder, "entries");
@@ -143,17 +158,23 @@ log_encode_entries (struct log *log, struct json_encoder *encoder,
     encode_off.eo_index    = index;
     encode_off.eo_ts       = ts;
 
-    rc = log_walk(log, log_nmgr_add_entry, &encode_off);
+    rc = log_walk(log, log_nmgr_encode_entry, &encode_off);
 
     return rc;
 }
 
+/**
+ * Log encode function
+ * @param log structure, the encoder, json_value,
+ *        timestamp, index
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_encode(struct log *log, struct json_encoder *encoder,
            struct json_value *jv, int64_t ts, uint32_t index)
 {
+    int rc;
 
-    int rc = 0;
     json_encode_object_start(encoder);
     JSON_VALUE_STRING(jv, log->l_name);
     json_encode_object_entry(encoder, "name", jv);
@@ -168,16 +189,21 @@ log_encode(struct log *log, struct json_encoder *encoder,
     return rc;
 }
 
+/**
+ * Newtmgr Log read handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_nmgr_read(struct nmgr_jbuf *njb)
 {
     struct log *log;
-    int rc = 0;
+    int rc;
     struct json_value jv;
     struct json_encoder *encoder;
     char name[LOG_NAME_MAX_LEN] = {0};
-    uint16_t name_len = 0;
-    int64_t ts = 0;
+    int name_len;
+    int64_t ts;
     uint64_t index;
 
     const struct json_attr_t attr[4] = {
@@ -257,13 +283,17 @@ err:
     return (rc);
 }
 
-
+/**
+ * Newtmgr Module list handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_nmgr_module_list(struct nmgr_jbuf *njb)
 {
     struct json_value jv;
     struct json_encoder *encoder;
-    uint16_t module = LOG_MODULE_DEFAULT;
+    int module;
     char *str;
 
     encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
@@ -274,6 +304,7 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
     json_encode_object_key(encoder, "module_map");
     json_encode_object_start(encoder);
 
+    module = LOG_MODULE_DEFAULT;
     while (module < LOG_MODULE_MAX) {
         str = LOG_MODULE_STR(module);
         if (!strcmp(str, "UNKNOWN")) {
@@ -294,6 +325,11 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
     return (0);
 }
 
+/**
+ * Newtmgr Log list handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_nmgr_logs_list(struct nmgr_jbuf *njb)
 {
@@ -330,12 +366,17 @@ log_nmgr_logs_list(struct nmgr_jbuf *njb)
     return (0);
 }
 
+/**
+ * Newtmgr Log Level list handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_nmgr_level_list(struct nmgr_jbuf *njb)
 {
     struct json_value jv;
     struct json_encoder *encoder;
-    uint8_t level = LOG_LEVEL_DEBUG;
+    int level;
     char *str;
 
     encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
@@ -346,6 +387,7 @@ log_nmgr_level_list(struct nmgr_jbuf *njb)
     json_encode_object_key(encoder, "level_map");
     json_encode_object_start(encoder);
 
+    level = LOG_LEVEL_DEBUG;
     while (level < LOG_LEVEL_MAX) {
         str = LOG_LEVEL_STR(level);
         if (!strcmp(str, "UNKNOWN")) {
@@ -365,6 +407,11 @@ log_nmgr_level_list(struct nmgr_jbuf *njb)
     return (0);
 }
 
+/**
+ * Newtmgr log clear handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
 static int
 log_nmgr_clear(struct nmgr_jbuf *njb)
 {
@@ -384,7 +431,7 @@ log_nmgr_clear(struct nmgr_jbuf *njb)
         }
 
         rc = log_flush(log);
-        if (rc != 0) {
+        if (rc) {
             goto err;
         }
     }
@@ -402,6 +449,7 @@ err:
 
 /**
  * Register nmgr group handlers.
+ * @return 0 on success; non-zero on failure
  */
 int
 log_nmgr_register_group(void)
@@ -412,7 +460,7 @@ log_nmgr_register_group(void)
     log_nmgr_group.ng_group_id = NMGR_GROUP_ID_LOGS;
 
     rc = nmgr_group_register(&log_nmgr_group);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
@@ -420,6 +468,5 @@ log_nmgr_register_group(void)
 err:
     return (rc);
 }
-
 
 #endif /* NEWTMGR_PRESENT */
