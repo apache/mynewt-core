@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
@@ -28,18 +29,15 @@
 /* Maximum timer frequency */
 #define NRF51_MAX_TIMER_FREQ    (16000000)
 
-/* 
- * Use these defines to select a timer and the compare channels. The reason
- * channel 2 is left open for TIMER0 is that there are pre-programmed PPI
- * channels that use timer 0 channel 2 for certain events. For example, the
- * radio has RADIO->EVENTS_END tied to capture channel 2. This can be
- * used to capture rx/tx end times.
- */
+#undef HAL_CPUTIME_USE_OVERFLOW
 
+/* The RF peripheral uses CC registers 0 and 1 for RF events. */
 #define CPUTIMER                NRF_TIMER0
 #define CPUTIMER_IRQ            (TIMER0_IRQn)
-#define CPUTIMER_CC_CNTR        (0)
-#define CPUTIMER_CC_OVERFLOW    (1)
+#define CPUTIMER_CC_CNTR        (2)
+#ifdef HAL_CPUTIME_USE_OVERFLOW
+#define CPUTIMER_CC_OVERFLOW    (2)
+#endif
 #define CPUTIMER_CC_INT         (3)
 
 /* Interrupt mask for interrupt enable/clear */
@@ -73,12 +71,12 @@ cputime_disable_ocmp(void)
 }
 
 /**
- * cputime set ocmp 
- *  
- * Set the OCMP used by the cputime module to the desired cputime. 
- *  
- * NOTE: Must be called with interrupts disabled. 
- * 
+ * cputime set ocmp
+ *
+ * Set the OCMP used by the cputime module to the desired cputime.
+ *
+ * NOTE: Must be called with interrupts disabled.
+ *
  * @param timer Pointer to timer.
  */
 static void
@@ -103,12 +101,12 @@ cputime_set_ocmp(struct cpu_timer *timer)
 }
 
 /**
- * cputime chk expiration 
- *  
- * Iterates through the cputimer queue to determine if any timers have expired. 
- * If the timer has expired the timer is removed from the queue and the timer 
- * callback function is executed. 
- * 
+ * cputime chk expiration
+ *
+ * Iterates through the cputimer queue to determine if any timers have expired.
+ * If the timer has expired the timer is removed from the queue and the timer
+ * callback function is executed.
+ *
  */
 static void
 cputime_chk_expiration(void)
@@ -138,37 +136,38 @@ cputime_chk_expiration(void)
 }
 
 /**
- * cputime isr 
- *  
- * This is the global timer interrupt routine. 
- * 
+ * cputime isr
+ *
+ * This is the global timer interrupt routine.
+ *
  */
 static void
 cputime_isr(void)
 {
     uint32_t compare;
+#ifdef HAL_CPUTIME_USE_OVERFLOW
     uint32_t overflow;
+#endif
 
     /* Check interrupt source. If set, clear them */
     compare = CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_INT];
     if (compare) {
         CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_INT] = 0;
     }
+
+#ifdef HAL_CPUTIME_USE_OVERFLOW
     overflow = CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW];
     if (overflow) {
         CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW] = 0;
+        ++g_cputime.uif_ints;
+        ++g_cputime.cputime_high;
     }
+#endif
 
     /* Count # of interrupts */
     ++g_cputime.timer_isrs;
 
-    /* If overflow, increment high word of cpu time */
-    if (overflow) {
-        ++g_cputime.uif_ints;
-        ++g_cputime.cputime_high;
-    }
-
-    /* 
+    /*
      * NOTE: we dont check the 'compare' variable here due to how the timer
      * is implemented on this chip. There is no way to force an output
      * compare, so if we are late setting the output compare (i.e. the timer
@@ -187,14 +186,14 @@ cputime_isr(void)
 }
 
 /**
- * cputime init 
- *  
- * Initialize the cputime module. This must be called after os_init is called 
- * and before any other timer API are used. This should be called only once 
- * and should be called before the hardware timer is used. 
- * 
+ * cputime init
+ *
+ * Initialize the cputime module. This must be called after os_init is called
+ * and before any other timer API are used. This should be called only once
+ * and should be called before the hardware timer is used.
+ *
  * @param clock_freq The desired cputime frequency, in hertz (Hz).
- * 
+ *
  * @return int 0 on success; -1 on error.
  */
 int
@@ -221,7 +220,7 @@ cputime_init(uint32_t clock_freq)
         return -1;
     }
 
-    /* 
+    /*
      * Pre-scaler is 4 bits and is a 2^n, so the only possible values that
      * work are 1, 2, 4, 8 and 16, which gives a valid pre-scaler of 0, 1, 2,
      * 3 or 4.
@@ -276,9 +275,11 @@ cputime_init(uint32_t clock_freq)
     CPUTIMER->TASKS_START = 1;
 
     /*  Use an output compare to generate an overflow */
+#ifdef HAL_CPUTIME_USE_OVERFLOW
     CPUTIMER->CC[CPUTIMER_CC_OVERFLOW] = 0;
     CPUTIMER->EVENTS_COMPARE[CPUTIMER_CC_OVERFLOW] = 0;
     CPUTIMER->INTENSET = CPUTIMER_INT_MASK(CPUTIMER_CC_OVERFLOW);
+#endif
 
     /* Set isr in vector table and enable interrupt */
     NVIC_SetVector(CPUTIMER_IRQ, (uint32_t)cputime_isr);
@@ -291,12 +292,13 @@ cputime_init(uint32_t clock_freq)
 
 /**
  * cputime get64
- *  
- * Returns cputime as a 64-bit number. 
- * 
+ *
+ * Returns cputime as a 64-bit number.
+ *
  * @return uint64_t The 64-bit representation of cputime.
  */
-uint64_t 
+#ifdef HAL_CPUTIME_USE_OVERFLOW
+uint64_t
 cputime_get64(void)
 {
     uint32_t ctx;
@@ -317,12 +319,13 @@ cputime_get64(void)
 
     return cpu_time;
 }
+#endif
 
 /**
- * cputime get32 
- *  
- * Returns the low 32 bits of cputime. 
- * 
+ * cputime get32
+ *
+ * Returns the low 32 bits of cputime.
+ *
  * @return uint32_t The lower 32 bits of cputime
  */
 uint32_t
@@ -338,15 +341,15 @@ cputime_get32(void)
 }
 
 /**
- * cputime nsecs to ticks 
- *  
- * Converts the given number of nanoseconds into cputime ticks. 
- * 
+ * cputime nsecs to ticks
+ *
+ * Converts the given number of nanoseconds into cputime ticks.
+ *
  * @param usecs The number of nanoseconds to convert to ticks
- * 
+ *
  * @return uint32_t The number of ticks corresponding to 'nsecs'
  */
-uint32_t 
+uint32_t
 cputime_nsecs_to_ticks(uint32_t nsecs)
 {
     uint32_t ticks;
@@ -357,34 +360,34 @@ cputime_nsecs_to_ticks(uint32_t nsecs)
 
 /**
  * cputime ticks to nsecs
- *  
- * Convert the given number of ticks into nanoseconds. 
- * 
+ *
+ * Convert the given number of ticks into nanoseconds.
+ *
  * @param ticks The number of ticks to convert to nanoseconds.
- * 
+ *
  * @return uint32_t The number of nanoseconds corresponding to 'ticks'
  */
-uint32_t 
+uint32_t
 cputime_ticks_to_nsecs(uint32_t ticks)
 {
     uint32_t nsecs;
 
-    nsecs = ((ticks * 1000) + (g_cputime.ticks_per_usec - 1)) / 
+    nsecs = ((ticks * 1000) + (g_cputime.ticks_per_usec - 1)) /
             g_cputime.ticks_per_usec;
 
     return nsecs;
 }
 
 /**
- * cputime usecs to ticks 
- *  
- * Converts the given number of microseconds into cputime ticks. 
- * 
+ * cputime usecs to ticks
+ *
+ * Converts the given number of microseconds into cputime ticks.
+ *
  * @param usecs The number of microseconds to convert to ticks
- * 
+ *
  * @return uint32_t The number of ticks corresponding to 'usecs'
  */
-uint32_t 
+uint32_t
 cputime_usecs_to_ticks(uint32_t usecs)
 {
     uint32_t ticks;
@@ -395,14 +398,14 @@ cputime_usecs_to_ticks(uint32_t usecs)
 
 /**
  * cputime ticks to usecs
- *  
- * Convert the given number of ticks into microseconds. 
- * 
+ *
+ * Convert the given number of ticks into microseconds.
+ *
  * @param ticks The number of ticks to convert to microseconds.
- * 
+ *
  * @return uint32_t The number of microseconds corresponding to 'ticks'
  */
-uint32_t 
+uint32_t
 cputime_ticks_to_usecs(uint32_t ticks)
 {
     uint32_t us;
@@ -413,12 +416,12 @@ cputime_ticks_to_usecs(uint32_t ticks)
 
 /**
  * cputime delay ticks
- *  
- * Wait until the number of ticks has elapsed. This is a blocking delay. 
- * 
+ *
+ * Wait until the number of ticks has elapsed. This is a blocking delay.
+ *
  * @param ticks The number of ticks to wait.
  */
-void 
+void
 cputime_delay_ticks(uint32_t ticks)
 {
     uint32_t until;
@@ -430,13 +433,13 @@ cputime_delay_ticks(uint32_t ticks)
 }
 
 /**
- * cputime delay nsecs 
- *  
- * Wait until 'nsecs' nanoseconds has elapsed. This is a blocking delay. 
- *  
+ * cputime delay nsecs
+ *
+ * Wait until 'nsecs' nanoseconds has elapsed. This is a blocking delay.
+ *
  * @param nsecs The number of nanoseconds to wait.
  */
-void 
+void
 cputime_delay_nsecs(uint32_t nsecs)
 {
     uint32_t ticks;
@@ -446,13 +449,13 @@ cputime_delay_nsecs(uint32_t nsecs)
 }
 
 /**
- * cputime delay usecs 
- *  
- * Wait until 'usecs' microseconds has elapsed. This is a blocking delay. 
- *  
+ * cputime delay usecs
+ *
+ * Wait until 'usecs' microseconds has elapsed. This is a blocking delay.
+ *
  * @param usecs The number of usecs to wait.
  */
-void 
+void
 cputime_delay_usecs(uint32_t usecs)
 {
     uint32_t ticks;
@@ -463,13 +466,13 @@ cputime_delay_usecs(uint32_t usecs)
 
 /**
  * cputime timer init
- * 
- * 
+ *
+ *
  * @param timer The timer to initialize. Cannot be NULL.
  * @param fp    The timer callback function. Cannot be NULL.
- * @param arg   Pointer to data object to pass to timer. 
+ * @param arg   Pointer to data object to pass to timer.
  */
-void 
+void
 cputime_timer_init(struct cpu_timer *timer, cputimer_func fp, void *arg)
 {
     assert(timer != NULL);
@@ -481,16 +484,16 @@ cputime_timer_init(struct cpu_timer *timer, cputimer_func fp, void *arg)
 }
 
 /**
- * cputime timer start 
- *  
- * Start a cputimer that will expire at 'cputime'. If cputime has already 
- * passed, the timer callback will still be called (at interrupt context). 
- * Cannot be called when the timer has already started. 
- * 
+ * cputime timer start
+ *
+ * Start a cputimer that will expire at 'cputime'. If cputime has already
+ * passed, the timer callback will still be called (at interrupt context).
+ * Cannot be called when the timer has already started.
+ *
  * @param timer     Pointer to timer to start. Cannot be NULL.
  * @param cputime   The cputime at which the timer should expire.
  */
-void 
+void
 cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
 {
     struct cpu_timer *entry;
@@ -508,7 +511,7 @@ cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
     } else {
         TAILQ_FOREACH(entry, &g_cputimer_q, link) {
             if ((int32_t)(timer->cputime - entry->cputime) < 0) {
-                TAILQ_INSERT_BEFORE(entry, timer, link);   
+                TAILQ_INSERT_BEFORE(entry, timer, link);
                 break;
             }
         }
@@ -526,15 +529,15 @@ cputime_timer_start(struct cpu_timer *timer, uint32_t cputime)
 }
 
 /**
- * cputimer timer relative 
- *  
- * Sets a cpu timer that will expire 'usecs' microseconds from the current 
- * cputime. 
- * 
+ * cputimer timer relative
+ *
+ * Sets a cpu timer that will expire 'usecs' microseconds from the current
+ * cputime.
+ *
  * @param timer Pointer to timer. Cannot be NULL.
  * @param usecs The number of usecs from now at which the timer will expire.
  */
-void 
+void
 cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs)
 {
     uint32_t cputime;
@@ -546,15 +549,15 @@ cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs)
 }
 
 /**
- * cputime timer stop 
- *  
- * Stops a cputimer from running. The timer is removed from the timer queue 
- * and interrupts are disabled if no timers are left on the queue. Can be 
- * called even if timer is not running. 
- * 
+ * cputime timer stop
+ *
+ * Stops a cputimer from running. The timer is removed from the timer queue
+ * and interrupts are disabled if no timers are left on the queue. Can be
+ * called even if timer is not running.
+ *
  * @param timer Pointer to cputimer to stop. Cannot be NULL.
  */
-void 
+void
 cputime_timer_stop(struct cpu_timer *timer)
 {
     int reset_ocmp;

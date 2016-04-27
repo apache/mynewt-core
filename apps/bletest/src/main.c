@@ -356,27 +356,30 @@ bletest_init_scanner(void)
 {
     int rc;
     uint8_t dev_addr[BLE_DEV_ADDR_LEN];
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_SET_SCAN_PARAM_LEN];
     uint8_t filter_policy;
 
-    /* Set scanning parameters */
-    rc = bletest_hci_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
-                                        BLETEST_CFG_SCAN_ITVL,
-                                        BLETEST_CFG_SCAN_WINDOW,
-                                        BLE_HCI_ADV_OWN_ADDR_PUBLIC,
-                                        BLETEST_CFG_SCAN_FILT_POLICY);
+    rc = host_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
+                                               BLETEST_CFG_SCAN_ITVL,
+                                               BLETEST_CFG_SCAN_WINDOW,
+                                               BLE_HCI_ADV_OWN_ADDR_PUBLIC,
+                                               BLETEST_CFG_SCAN_FILT_POLICY,
+                                               buf, sizeof buf);
     assert(rc == 0);
-
-    filter_policy = BLETEST_CFG_SCAN_FILT_POLICY;
-    if (filter_policy & 1) {
-        /* Add some whitelist addresses */
-        dev_addr[0] = 0x00;
-        dev_addr[1] = 0x00;
-        dev_addr[2] = 0x00;
-        dev_addr[3] = 0x88;
-        dev_addr[4] = 0x88;
-        dev_addr[5] = 0x08;
-        rc = bletest_hci_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
-        assert(rc == 0);
+    rc = ble_hci_cmd_tx_empty_ack(buf);
+    if (rc == 0) {
+        filter_policy = BLETEST_CFG_SCAN_FILT_POLICY;
+        if (filter_policy & 1) {
+            /* Add some whitelist addresses */
+            dev_addr[0] = 0x00;
+            dev_addr[1] = 0x00;
+            dev_addr[2] = 0x00;
+            dev_addr[3] = 0x88;
+            dev_addr[4] = 0x88;
+            dev_addr[5] = 0x08;
+            rc = bletest_hci_le_add_to_whitelist(dev_addr, BLE_ADDR_TYPE_PUBLIC);
+            assert(rc == 0);
+        }
     }
 }
 
