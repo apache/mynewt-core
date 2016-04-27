@@ -32,6 +32,14 @@ system_nrf51.h
 
 # Nordic nRF52 SDK - BSD License.
 nrf52pdk.ld
+boot-nrf52pdk.ld
+nrf52pdk_no_boot.ld
+nrf52dk.ld
+boot-nrf52dk.ld
+nrf52dk_no_boot.ld
+bmd300eval.ld
+boot-bmd300eval.ld
+bmd300eval_no_boot.ld
 system_nrf52.c
 gcc_startup_nrf52.s
 nrf51_to_nrf52.h
