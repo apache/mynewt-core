@@ -79,6 +79,16 @@ struct os_sem g_test_sem;
 /* For LED toggling */
 int g_led_pin;
 
+STATS_SECT_START(gpio_stats)
+STATS_SECT_ENTRY(toggles)
+STATS_SECT_END
+
+STATS_SECT_DECL(gpio_stats) g_stats_gpio_toggle;
+
+STATS_NAME_START(gpio_stats)
+STATS_NAME(gpio_stats, toggles)
+STATS_NAME_END(gpio_stats)
+
 /* configuration file */
 #define MY_CONFIG_DIR  "/cfg"
 #define MY_CONFIG_FILE "/cfg/run"
@@ -186,6 +196,7 @@ task1_handler(void *arg)
         curr_pin_state = hal_gpio_toggle(g_led_pin);
         LOG_INFO(&my_log, LOG_MODULE_DEFAULT, "GPIO toggle from %u to %u",
             prev_pin_state, curr_pin_state);
+        STATS_INC(g_stats_gpio_toggle, toggles);
 
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
@@ -317,6 +328,12 @@ main(int argc, char **argv)
     bootutil_cfg_register();
 
     stats_module_init();
+
+    stats_init(STATS_HDR(g_stats_gpio_toggle),
+               STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),
+               STATS_NAME_INIT_PARMS(gpio_stats));
+
+    stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
     flash_test_init();
 
