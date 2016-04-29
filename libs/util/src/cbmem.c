@@ -166,6 +166,10 @@ cbmem_iter_next(struct cbmem *cbmem, struct cbmem_iter *iter)
         }
     } else {
         hdr = iter->ci_cur;
+        if (!iter->ci_cur) {
+            goto err;
+        }
+
         if (hdr == CBMEM_ENTRY_NEXT(iter->ci_end)) {
             hdr = NULL;
         } else {
@@ -173,6 +177,7 @@ cbmem_iter_next(struct cbmem *cbmem, struct cbmem_iter *iter)
         }
     }
 
+err:
     return (hdr);
 }
 
