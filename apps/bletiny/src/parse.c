@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -152,6 +152,18 @@ parse_arg_long(char *name, int *out_status)
     return parse_arg_long_bounds(name, LONG_MIN, LONG_MAX, out_status);
 }
 
+uint8_t
+parse_arg_bool(char *name, int *out_status)
+{
+    return parse_arg_long_bounds(name, 0, 1, out_status);
+}
+
+uint8_t
+parse_arg_uint8(char *name, int *out_status)
+{
+    return parse_arg_long_bounds(name, 0, UINT8_MAX, out_status);
+}
+
 uint16_t
 parse_arg_uint16(char *name, int *out_status)
 {
@@ -161,6 +173,7 @@ parse_arg_uint16(char *name, int *out_status)
 uint32_t
 parse_arg_uint32(char *name, int *out_status)
 {
+    /* this currently doesn't work as longs are 32-bits as well */
     return parse_arg_long_bounds(name, 0, UINT32_MAX, out_status);
 }
 
@@ -250,7 +263,7 @@ parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len)
     int actual_len;
     int rc;
 
-    rc = parse_arg_byte_stream(name, 6, dst, &actual_len);
+    rc = parse_arg_byte_stream(name, len, dst, &actual_len);
     if (rc != 0) {
         return rc;
     }
@@ -389,4 +402,3 @@ parse_arg_all(int argc, char **argv)
 
     return 0;
 }
-

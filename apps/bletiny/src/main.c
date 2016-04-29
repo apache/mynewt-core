@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -55,7 +55,7 @@
 #define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
 
 #define SHELL_TASK_PRIO         (3)
-#define SHELL_MAX_INPUT_LEN     (64)
+#define SHELL_MAX_INPUT_LEN     (128)
 #define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(288))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
@@ -189,8 +189,10 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 bletiny_print_sec_params(struct ble_gap_sec_params *sec_params)
 {
-    console_printf("pair_alg=%d enc_enabled=%d\n", sec_params->pair_alg,
-                   sec_params->enc_enabled);
+    console_printf("pair_alg=%d enc_enabled=%d authenticated=%d\n",
+                   sec_params->pair_alg,
+                   sec_params->enc_enabled,
+                   sec_params->authenticated);
 }
 
 static void
@@ -1350,8 +1352,8 @@ main(void)
                          "bletiny_dsc_pool");
     assert(rc == 0);
 
-    rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS, 
-                         MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data, 
+    rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS,
+                         MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data,
                          "default_mbuf_data");
     assert(rc == 0);
 
