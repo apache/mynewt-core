@@ -25,11 +25,18 @@
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
 
+#ifdef USE_STATUS_FILE
+#include <fs/fs.h>
+#include <fs/fsutil.h>
+#endif
+
 static int boot_conf_set(int argc, char **argv, char *val);
 
 static struct image_version boot_main;
 static struct image_version boot_test;
+#ifndef USE_STATUS_FILE
 static struct boot_status boot_saved;
+#endif
 
 static struct conf_handler boot_conf_handler = {
     .ch_name = "boot",
@@ -62,6 +69,7 @@ boot_conf_set(int argc, char **argv, char *val)
                 memset(&boot_test, 0, len);
                 rc = 0;
             }
+#ifndef USE_STATUS_FILE
         } else if (!strcmp(argv[0], "status")) {
             if (!val) {
                 boot_saved.state = 0;
@@ -74,6 +82,7 @@ boot_conf_set(int argc, char **argv, char *val)
             conf_value_from_str(val, CONF_INT32, &boot_saved.length,
               sizeof(boot_saved.length));
             rc = 0;
+#endif
         } else {
             rc = OS_ENOENT;
         }
@@ -228,6 +237,7 @@ bootutil_cfg_register(void)
     conf_register(&boot_conf_handler);
 }
 
+#ifndef USE_STATUS_FILE
 int
 boot_read_status(struct boot_status *bs)
 {
@@ -242,10 +252,6 @@ boot_read_status(struct boot_status *bs)
  * contains the current state of an in-progress image copy operation.
  *
  * @param status                The boot status base to write.
- * @param entries               The array of boot status entries to write.
- * @param num_areas             The number of flash areas capable of storing
- *                                  image data.  This is equal to the length of
- *                                  the entries array.
  *
  * @return                      0 on success; nonzero on failure.
  */
@@ -275,3 +281,49 @@ boot_clear_status(void)
 {
     conf_save_one(&boot_conf_handler, "status", NULL);
 }
+
+#else
+
+/**
+ * Reads the boot status from the flash file system.  The boot status contains
+ * the current state of an interrupted image copy operation.  If the boot
+ * status is not present in the file system, the implication is that there is
+ * no copy operation in progress.
+ */
+int
+boot_read_status(struct boot_status *bs)
+{
+    int rc;
+    uint32_t bytes_read;
+
+    conf_load();
+
+    rc = fsutil_read_file(BOOT_PATH_STATUS, 0, sizeof(*bs),
+      bs, &bytes_read);
+    if (rc || bytes_read != sizeof(*bs)) {
+        return BOOT_EBADSTATUS;
+    }
+    return rc;
+}
+
+int
+boot_write_status(struct boot_status *bs)
+{
+    int rc;
+
+    /*
+     * XXX point of failure.
+     */
+    rc = fsutil_write_file(BOOT_PATH_STATUS, bs, sizeof(*bs));
+    if (rc) {
+        rc = BOOT_EFILE;
+    }
+    return rc;
+}
+
+void
+boot_clear_status(void)
+{
+    fs_unlink(BOOT_PATH_STATUS);
+}
+#endif
