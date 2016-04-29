@@ -337,15 +337,16 @@ imgr_upload(struct nmgr_jbuf *njb)
 
     rc = json_read_object(&njb->njb_buf, off_attr);
     if (rc || off == UINT_MAX) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
     len = strlen(img_data);
-    if (!len) {
-        return OS_EINVAL;
-    }
-    len = base64_decode(img_data, img_data);
-    if (len < 0) {
-        return OS_EINVAL;
+    if (len) {
+        len = base64_decode(img_data, img_data);
+        if (len < 0) {
+            rc = NMGR_ERR_EINVAL;
+            goto err;
+        }
     }
 
     if (off == 0) {
@@ -353,9 +354,14 @@ imgr_upload(struct nmgr_jbuf *njb)
             /*
              * Image header is the first thing in the image.
              */
-            return OS_EINVAL;
+            rc = NMGR_ERR_EINVAL;
+            goto err;
         }
         hdr = (struct image_header *)img_data;
+        if (hdr->ih_magic != IMAGE_MAGIC) {
+            rc = NMGR_ERR_EINVAL;
+            goto err;
+        }
 
         /*
          * New upload.
@@ -402,8 +408,15 @@ imgr_upload(struct nmgr_jbuf *njb)
             best = i;
         }
         if (best >= 0) {
+            if (imgr_state.upload.fa) {
+                flash_area_close(imgr_state.upload.fa);
+                imgr_state.upload.fa = NULL;
+            }
             rc = flash_area_open(best, &imgr_state.upload.fa);
-            assert(rc == 0);
+            if (rc) {
+                rc = NMGR_ERR_EINVAL;
+                goto err;
+            }
             /*
              * XXXX only erase if needed.
              */
@@ -413,24 +426,32 @@ imgr_upload(struct nmgr_jbuf *njb)
             /*
              * No slot where to upload!
              */
-            return OS_EINVAL;
+            rc = NMGR_ERR_ENOMEM;
+            goto err;
         }
     } else if (off != imgr_state.upload.off) {
         /*
          * Invalid offset. Drop the data, and respond with the offset we're
          * expecting data for.
          */
-        rc = 0;
         goto out;
     }
 
-    if (len && imgr_state.upload.fa) {
+    if (!imgr_state.upload.fa) {
+        rc = NMGR_ERR_EINVAL;
+        goto err;
+    }
+    if (len) {
         rc = flash_area_write(imgr_state.upload.fa, imgr_state.upload.off,
           img_data, len);
-        assert(rc == 0);
+        if (rc) {
+            rc = NMGR_ERR_EINVAL;
+            goto err_close;
+        }
         imgr_state.upload.off += len;
         if (imgr_state.upload.size == imgr_state.upload.off) {
             /* Done */
+            flash_area_close(imgr_state.upload.fa);
             imgr_state.upload.fa = NULL;
         }
     }
@@ -439,10 +460,20 @@ out:
 
     json_encode_object_start(enc);
 
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(enc, "rc", &jv);
+
     JSON_VALUE_UINT(&jv, imgr_state.upload.off);
     json_encode_object_entry(enc, "off", &jv);
+
     json_encode_object_finish(enc);
 
+    return 0;
+err_close:
+    flash_area_close(imgr_state.upload.fa);
+    imgr_state.upload.fa = NULL;
+err:
+    nmgr_jbuf_setoerr(njb, rc);
     return 0;
 }
 

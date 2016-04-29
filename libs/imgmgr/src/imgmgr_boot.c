@@ -66,6 +66,7 @@ imgr_boot_read(struct nmgr_jbuf *njb)
     int rc;
     struct json_encoder *enc;
     struct image_version ver;
+    struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
 
     enc = &njb->njb_enc;
@@ -86,6 +87,9 @@ imgr_boot_read(struct nmgr_jbuf *njb)
     if (!rc) {
         imgr_ver_jsonstr(enc, "active", &ver);
     }
+
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(enc, "rc", &jv);
 
     json_encode_object_finish(enc);
 
@@ -108,28 +112,48 @@ imgr_boot_write(struct nmgr_jbuf *njb)
             .attribute = NULL
         }
     };
+    struct json_encoder *enc;
+    struct json_value jv;
     int rc;
     struct image_version ver;
 
     rc = json_read_object(&njb->njb_buf, boot_write_attr);
     if (rc) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
 
     rc = imgr_ver_parse(boot_write_attr[0].addr.string, &ver);
     if (rc) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
 
     rc = imgr_find_by_ver(&ver, hash);
     if (rc < 0) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
     rc = boot_vect_write_test(&ver);
     if (rc) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
-    return rc;
+
+    enc = &njb->njb_enc;
+
+    json_encode_object_start(enc);
+
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(enc, "rc", &jv);
+
+    json_encode_object_finish(enc);
+
+    return 0;
+
+err:
+    nmgr_jbuf_setoerr(njb, rc);
+    return 0;
 }
 
 int
@@ -138,6 +162,7 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
     int rc;
     struct json_encoder *enc;
     struct image_version ver;
+    struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
 
     enc = &njb->njb_enc;
@@ -165,6 +190,9 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
         imgr_hash_jsonstr(enc, "active", hash);
     }
 
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(enc, "rc", &jv);
+
     json_encode_object_finish(enc);
 
     return 0;
@@ -186,12 +214,15 @@ imgr_boot2_write(struct nmgr_jbuf *njb)
             .attribute = NULL
         }
     };
+    struct json_encoder *enc;
+    struct json_value jv;
     int rc;
     struct image_version ver;
 
     rc = json_read_object(&njb->njb_buf, boot_write_attr);
     if (rc) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
 
     base64_decode(hash_str, hash);
@@ -199,10 +230,27 @@ imgr_boot2_write(struct nmgr_jbuf *njb)
     if (rc >= 0) {
         rc = boot_vect_write_test(&ver);
         if (rc) {
-            return OS_EINVAL;
+            rc = NMGR_ERR_EUNKNOWN;
+            goto err;
         }
     } else {
-        rc = OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
-    return rc;
+
+    enc = &njb->njb_enc;
+
+    json_encode_object_start(enc);
+
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+
+    json_encode_object_finish(enc);
+
+    return 0;
+
+err:
+    nmgr_jbuf_setoerr(njb, rc);
+
+    return 0;
 }
