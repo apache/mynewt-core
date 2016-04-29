@@ -499,7 +499,7 @@ shell_help_cmd(int argc, char **argv)
     }
 
     STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
-        console_printf("%s \t", sc->sc_cmd);
+        console_printf("%9s ", sc->sc_cmd);
         if (i++ % SHELL_HELP_PER_LINE == SHELL_HELP_PER_LINE - 1) {
             console_printf("\n");
         }
