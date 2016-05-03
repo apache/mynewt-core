@@ -435,6 +435,7 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         rsp_hdr->nh_op = (hdr.nh_op == NMGR_OP_READ) ? NMGR_OP_READ_RSP :
             NMGR_OP_WRITE_RSP;
         rsp_hdr->nh_group = hdr.nh_group;
+        rsp_hdr->nh_seq = hdr.nh_seq;
         rsp_hdr->nh_id = hdr.nh_id;
 
         /*

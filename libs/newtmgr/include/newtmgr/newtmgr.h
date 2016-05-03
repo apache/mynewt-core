@@ -62,11 +62,12 @@
 #define NMGR_ID_RESET           5
 
 struct nmgr_hdr {
-    uint8_t nh_op;
-    uint8_t nh_flags;
-    uint16_t nh_len;
-    uint16_t nh_group;
-    uint16_t nh_id;
+    uint8_t  nh_op;             /* NMGR_OP_XXX */
+    uint8_t  nh_flags;
+    uint16_t nh_len;            /* length of the payload */
+    uint16_t nh_group;          /* NMGR_GROUP_XXX */
+    uint8_t  nh_seq;            /* sequence number */
+    uint8_t  nh_id;             /* message ID within group */
 };
 
 struct nmgr_jbuf {
