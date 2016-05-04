@@ -301,9 +301,10 @@ boot_read_status(struct boot_status *bs)
     rc = fsutil_read_file(BOOT_PATH_STATUS, 0, sizeof(*bs),
       bs, &bytes_read);
     if (rc || bytes_read != sizeof(*bs)) {
-        return BOOT_EBADSTATUS;
+        memset(bs, 0, sizeof(*bs));
+        return 0;
     }
-    return rc;
+    return 1;
 }
 
 int
