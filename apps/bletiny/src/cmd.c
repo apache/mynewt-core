@@ -1507,56 +1507,61 @@ cmd_write(int argc, char **argv)
     return 0;
 }
 
+
 /*****************************************************************************
  * $passkey                                                                  *
  *****************************************************************************/
 
- static int
- cmd_passkey(int argc, char **argv)
- {
-     uint16_t conn_handle;
-     struct passkey_action pk;
-     int rc;
+static int
+cmd_passkey(int argc, char **argv)
+{
+#if !NIMBLE_OPT_SM
+    return BLE_HS_ENOTSUP;
+#endif
 
-     conn_handle = parse_arg_uint16("conn", &rc);
-     if (rc != 0) {
-         return rc;
-     }
+    uint16_t conn_handle;
+    struct passkey_action pk;
+    int rc;
 
-     pk.action = parse_arg_uint16("action", &rc);
-     if (rc != 0) {
-         return rc;
-     }
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
 
-     switch(pk.action) {
-         case PKACT_INPUT:
-         case PKACK_GEN_DISP:
-            /* passkey is 6 digit number */
-            pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
+    pk.action = parse_arg_uint16("action", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch(pk.action) {
+        case PKACT_INPUT:
+        case PKACK_GEN_DISP:
+           /* passkey is 6 digit number */
+           pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
+           if (rc != 0) {
+               return rc;
+           }
+           break;
+
+        case PKACT_OOB:
+            rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
             if (rc != 0) {
                 return rc;
             }
             break;
+       default:
+         console_printf("invalid passkey action action=%d\n", pk.action);
+         return EINVAL;
+    }
 
-         case PKACT_OOB:
-             rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
-             if (rc != 0) {
-                 return rc;
-             }
-             break;
-        default:
-          console_printf("invalid passkey action action=%d\n", pk.action);
-          return EINVAL;
-     }
+    rc = ble_l2cap_sm_set_tk(conn_handle, &pk);
+    if (rc != 0) {
+        console_printf("error providing passkey; rc=%d\n", rc);
+        return rc;
+    }
 
-     rc = ble_l2cap_sm_set_tk(conn_handle, &pk);
-     if (rc != 0) {
-         console_printf("error providing passkey; rc=%d\n", rc);
-         return rc;
-     }
-
-     return 0;
- }
+    return 0;
+}
 
 /*****************************************************************************
  * $init                                                                     *
