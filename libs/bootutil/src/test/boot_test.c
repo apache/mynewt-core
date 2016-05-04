@@ -389,6 +389,9 @@ boot_test_util_verify_status_clear(void)
     }
     TEST_ASSERT(empty == 1);
     free(haystack);
+
+    rc = fs_open(BOOT_PATH_STATUS, FS_ACCESS_READ, &file);
+    TEST_ASSERT(rc == FS_ENOENT);
 }
 
 static void
