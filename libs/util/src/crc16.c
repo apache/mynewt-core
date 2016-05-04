@@ -26,7 +26,7 @@
  */
 
 #include <inttypes.h>
-#include "crc16.h"
+#include "util/crc16.h"
 
 /* CRC16 implementation acording to CCITT standards */
 
