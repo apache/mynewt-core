@@ -413,7 +413,6 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 
         hdr.nh_len = ntohs(hdr.nh_len);
         hdr.nh_group = ntohs(hdr.nh_group);
-        hdr.nh_id = ntohs(hdr.nh_id);
 
         handler = nmgr_find_handler(hdr.nh_group, hdr.nh_id);
         if (!handler) {
