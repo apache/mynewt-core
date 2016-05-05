@@ -129,7 +129,7 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
             /* Reset the items that already have an evq task set
              */
             for (j = 0; j < i; j++) {
-                evq[i]->evq_task = NULL;
+                evq[j]->evq_task = NULL;
             }
 
             OS_EXIT_CRITICAL(sr);
