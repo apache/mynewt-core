@@ -1534,8 +1534,8 @@ cmd_passkey(int argc, char **argv)
     }
 
     switch(pk.action) {
-        case PKACT_INPUT:
-        case PKACK_GEN_DISP:
+        case BLE_GAP_PKACT_INPUT:
+        case BLE_GAP_PKACT_DISP:
            /* passkey is 6 digit number */
            pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
            if (rc != 0) {
@@ -1543,7 +1543,7 @@ cmd_passkey(int argc, char **argv)
            }
            break;
 
-        case PKACT_OOB:
+        case BLE_GAP_PKACT_OOB:
             rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
             if (rc != 0) {
                 return rc;
