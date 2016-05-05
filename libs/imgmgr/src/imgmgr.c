@@ -145,10 +145,9 @@ imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash)
     while (data_off + sizeof(*tlv) <= data_end) {
         rc2 = flash_area_read(fa, data_off, tlv, sizeof(*tlv));
         if (rc2) {
-            break;
+            goto end;
         }
         if (tlv->it_type == 0xff && tlv->it_len == 0xffff) {
-            rc = 1;
             break;
         }
         if (tlv->it_type != IMAGE_TLV_SHA256 ||
@@ -158,14 +157,18 @@ imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash)
         }
         data_off += sizeof(*tlv);
         if (hash) {
+            if (data_off + IMGMGR_HASH_LEN > data_end) {
+                goto end;
+            }
             rc2 = flash_area_read(fa, data_off, hash, IMGMGR_HASH_LEN);
             if (rc2) {
-                break;
+                goto end;
             }
         }
         rc = 0;
-        break;
+        goto end;
     }
+    rc = 1;
 end:
     flash_area_close(fa);
     return rc;
