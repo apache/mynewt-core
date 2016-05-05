@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -99,6 +99,8 @@ struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
 char *parse_arg_find(char *key);
 long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
 long parse_arg_long(char *name, int *staus);
+uint8_t parse_arg_bool(char *name, int *status);
+uint8_t parse_arg_uint8(char *name, int *status);
 uint16_t parse_arg_uint16(char *name, int *status);
 uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);

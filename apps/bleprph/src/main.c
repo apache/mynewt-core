@@ -61,7 +61,7 @@ struct log bleprph_log;
 #define BLEPRPH_BLE_HS_PRIO         (1)
 
 /** bleprph task settings. */
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(200))
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(288))
 #define BLEPRPH_TASK_PRIO           (BLEPRPH_BLE_HS_PRIO + 1)
 
 struct os_eventq bleprph_evq;

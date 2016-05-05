@@ -103,7 +103,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
-#define BLETEST_CFG_ADV_ITVL            (600000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
@@ -247,14 +247,22 @@ bletest_set_adv_data(uint8_t *dptr)
     uint8_t len;
 
     /* Place flags in first */
-    dptr[0] = 2;
+    dptr[0] = 0x02;
     dptr[1] = 0x01;     /* Flags identifier */
     dptr[2] = 0x06;
     dptr += 3;
     len = 3;
 
+    /*  Add HID service */
+    dptr[0] = 0x03;
+    dptr[1] = 0x03;
+    dptr[2] = 0x12;
+    dptr[3] = 0x18;
+    dptr += 4;
+    len += 4;
+
     /* Add local name */
-    dptr[0] = 15;   /* Length of this data, not including the length */
+    dptr[0] = 12;   /* Length of this data, not including the length */
     dptr[1] = 0x09;
     dptr[2] = 'r';
     dptr[3] = 'u';
@@ -266,12 +274,9 @@ bletest_set_adv_data(uint8_t *dptr)
     dptr[9] = '-';
     dptr[10] = '0';
     dptr[11] = '0';
-    dptr[12] = '0';
-    dptr[13] = '0';
-    dptr[14] = '0';
-    dptr[15] = '0';
-    dptr += 16;
-    len += 16;
+    dptr[12] = '7';
+    dptr += 13;
+    len += 13;
 
     /* Add local device address */
     dptr[0] = 0x08;

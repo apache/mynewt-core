@@ -838,6 +838,7 @@ ble_gap_rx_conn_complete(struct hci_le_conn_complete *evt)
 
     conn->bhc_handle = evt->connection_handle;
     memcpy(conn->bhc_addr, evt->peer_addr, sizeof conn->bhc_addr);
+    conn->bhc_addr_type = evt->peer_addr_type;
     conn->bhc_itvl = evt->conn_itvl;
     conn->bhc_latency = evt->conn_latency;
     conn->bhc_supervision_timeout = evt->supervision_timeout;
@@ -2005,6 +2006,39 @@ ble_gap_security_initiate(uint16_t conn_handle)
     return rc;
 }
 #endif
+
+void
+ble_gap_passkey_event(uint16_t conn_handle, int status,
+                      uint8_t passkey_action)
+{
+    struct ble_gap_conn_ctxt ctxt;
+    struct ble_gap_snapshot snap;
+    struct ble_hs_conn *conn;
+    struct ble_gap_passkey_action act;
+
+    ble_hs_lock();
+
+    conn = ble_hs_conn_find(conn_handle);
+    if (conn != NULL) {
+        ble_gap_conn_to_snapshot(conn, &snap);
+    }
+
+    ble_hs_unlock();
+
+    if (conn == NULL) {
+        /* No longer connected. */
+        return;
+    }
+
+    BLE_HS_LOG(DEBUG, "send passkey action request %d\n", passkey_action);
+
+    memset(&ctxt, 0, sizeof ctxt);
+    act.action = passkey_action;
+    ctxt.desc = &snap.desc;
+    ctxt.passkey_action = &act;
+    ble_gap_call_conn_cb(BLE_GAP_EVENT_PASSKEY_ACTION, status, &ctxt,
+                         snap.cb, snap.cb_arg);
+}
 
 void
 ble_gap_security_event(uint16_t conn_handle, int status,

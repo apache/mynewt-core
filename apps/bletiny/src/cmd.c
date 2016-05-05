@@ -1184,6 +1184,44 @@ cmd_set_adv_data(void)
         return rc;
     }
 
+
+    return 0;
+}
+
+static int
+cmd_set_sm_data(void) {
+    int rc;
+    uint8_t tmp;
+    int good = 0;
+
+    tmp = parse_arg_bool("oob_flag", &rc);
+    if(rc == 0) {
+        ble_hs_cfg.sm_oob_data_flag = tmp;
+        good++;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_bool("mitm_flag", &rc);
+    if(rc == 0) {
+        good++;
+        ble_hs_cfg.sm_mitm = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp  = parse_arg_uint8("io_capabilities", &rc);
+    if(rc == 0) {
+        good++;
+        ble_hs_cfg.sm_io_cap = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    if (0 == good) {
+        console_printf("Error: no valid settings specified\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -1197,6 +1235,11 @@ cmd_set(int argc, char **argv)
 
     if (argc > 1 && strcmp(argv[1], "adv_data") == 0) {
         rc = cmd_set_adv_data();
+        return rc;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "sm_data") == 0) {
+        rc = cmd_set_sm_data();
         return rc;
     }
 
@@ -1464,6 +1507,62 @@ cmd_write(int argc, char **argv)
     return 0;
 }
 
+
+/*****************************************************************************
+ * $passkey                                                                  *
+ *****************************************************************************/
+
+static int
+cmd_passkey(int argc, char **argv)
+{
+#if !NIMBLE_OPT_SM
+    return BLE_HS_ENOTSUP;
+#endif
+
+    uint16_t conn_handle;
+    struct passkey_action pk;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    pk.action = parse_arg_uint16("action", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch(pk.action) {
+        case BLE_GAP_PKACT_INPUT:
+        case BLE_GAP_PKACT_DISP:
+           /* passkey is 6 digit number */
+           pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
+           if (rc != 0) {
+               return rc;
+           }
+           break;
+
+        case BLE_GAP_PKACT_OOB:
+            rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
+            if (rc != 0) {
+                return rc;
+            }
+            break;
+       default:
+         console_printf("invalid passkey action action=%d\n", pk.action);
+         return EINVAL;
+    }
+
+    rc = ble_l2cap_sm_set_tk(conn_handle, &pk);
+    if (rc != 0) {
+        console_printf("error providing passkey; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
 /*****************************************************************************
  * $init                                                                     *
  *****************************************************************************/
@@ -1476,6 +1575,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "find",       cmd_find },
     { "l2cap",      cmd_l2cap },
     { "mtu",        cmd_mtu },
+    { "passkey",    cmd_passkey },
     { "read",       cmd_read },
     { "scan",       cmd_scan },
     { "show",       cmd_show },
