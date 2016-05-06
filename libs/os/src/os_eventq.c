@@ -137,6 +137,8 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
     int i, j;
     os_sr_t sr;
 
+    ev = NULL;
+
     OS_ENTER_CRITICAL(sr);
     cur_t = os_sched_get_current_task();
 
