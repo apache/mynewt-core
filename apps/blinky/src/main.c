@@ -161,13 +161,6 @@ main(int argc, char **argv)
 
     conf_init();
 
-    log_init();
-    log_console_handler_init(&log_console_handler);
-    log_register("log", &my_log, &log_console_handler);
-
-    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bla");
-    LOG_DEBUG(&my_log, LOG_MODULE_DEFAULT, "bab");
-
     os_init();
 
     rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,

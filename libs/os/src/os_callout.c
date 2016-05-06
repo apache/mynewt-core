@@ -25,8 +25,8 @@
 TAILQ_HEAD(, os_callout) g_callout_list =
   TAILQ_HEAD_INITIALIZER(g_callout_list);
 
-void
-os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)
+static void
+_os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)
 {
     memset(c, 0, sizeof(*c));
     c->c_ev.ev_type = OS_EVENT_T_TIMER;
@@ -34,11 +34,28 @@ os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)
     c->c_evq = evq;
 }
 
+/**
+ * Initialize a callout.  
+ *
+ * Callouts are used to schedule events in the future onto a task's event 
+ * queue.  Callout timers are scheduled using the os_callout_reset() 
+ * function.  When the timer expires, an event is posted to the event 
+ * queue specified in os_callout_func_init().  The event argument given here
+ * is posted in the ev_arg field of that event.
+ *
+ * @param c The callout to initialize
+ * @param evq The event queue to post an OS_EVENT_T_TIMER event to
+ * @param timo_func The function to call on this callout for the host task
+ *                  used to provide multiple timer events to a task
+ *                  (this can be NULL.)
+ * @param ev_arg The argument to provide to the event when posting the 
+ *               timer.
+ */
 void
 os_callout_func_init(struct os_callout_func *cf, struct os_eventq *evq,
   os_callout_func_t timo_func, void *ev_arg)
 {
-    os_callout_init(&cf->cf_c, evq, ev_arg);
+    _os_callout_init(&cf->cf_c, evq, ev_arg);
     cf->cf_func = timo_func;
 }
 

@@ -1278,7 +1278,7 @@ bletiny_task_handler(void *arg)
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
             assert(cf->cf_func);
-            cf->cf_func(cf->cf_arg);
+            cf->cf_func(CF_ARG(cf));
             break;
         default:
             assert(0);

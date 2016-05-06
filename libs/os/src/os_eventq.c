@@ -22,6 +22,11 @@
 
 #include <string.h>
 
+/**
+ * Initialize the event queue
+ *
+ * @param evq The event queue to initialize
+ */
 void
 os_eventq_init(struct os_eventq *evq)
 {
@@ -29,6 +34,12 @@ os_eventq_init(struct os_eventq *evq)
     STAILQ_INIT(&evq->evq_list);
 }
 
+/**
+ * Put an event on the event queue.
+ *
+ * @param evq The event queue to put an event on 
+ * @param ev The event to put on the queue
+ */
 void
 os_eventq_put(struct os_eventq *evq, struct os_event *ev)
 {
@@ -70,6 +81,14 @@ os_eventq_put(struct os_eventq *evq, struct os_event *ev)
     }
 }
 
+/**
+ * Pull a single item from an event queue.  This function blocks until there 
+ * is an item on the event queue to read.
+ *
+ * @param evq The event queue to pull an event from
+ *
+ * @return The event from the queue
+ */
 struct os_event *
 os_eventq_get(struct os_eventq *evq)
 {
@@ -165,7 +184,12 @@ has_event:
     return (ev);
 }
 
-
+/**
+ * Remove an event from the queue.
+ *
+ * @param evq The event queue to remove the event from
+ * @param ev  The event to remove from the queue
+ */
 void
 os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
 {
