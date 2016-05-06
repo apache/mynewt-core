@@ -176,7 +176,7 @@ const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] =
     0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66
 };
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
 /* LTK 0x4C68384139F574D836BCF34E9DFB01BF */
 const uint8_t g_bletest_LTK[16] =
 {
@@ -509,7 +509,7 @@ bletest_execute_initiator(void)
                 new_chan_map[4] = 0;
                 bletest_hci_le_set_host_chan_class(new_chan_map);
             } else if (g_bletest_state == 4) {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
                 struct hci_start_encrypt hsle;
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -523,7 +523,7 @@ bletest_execute_initiator(void)
                 }
 #endif
             } else if (g_bletest_state == 8) {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
                 struct hci_start_encrypt hsle;
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -647,7 +647,7 @@ bletest_execute_advertiser(void)
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     /* See if it is time to hand a data packet to the connection */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
         /* Do we need to send a LTK reply? */
         if (g_bletest_ltk_reply_handle) {
             //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
@@ -876,6 +876,7 @@ bletest_task_handler(void *arg)
     rc = bletest_hci_le_rd_max_datalen();
     assert(rc == 0);
 
+#if (BLE_LL_CFG_FEAT_DATA_LEN_EXT == 1)
     /* Read suggested data length */
     rc = bletest_hci_le_rd_sugg_datalen();
     assert(rc == 0);
@@ -893,9 +894,10 @@ bletest_task_handler(void *arg)
     rc = bletest_hci_le_set_datalen(0x1234, BLETEST_CFG_SUGG_DEF_TXOCTETS,
                                     BLETEST_CFG_SUGG_DEF_TXTIME);
     assert(rc != 0);
+#endif
 
     /* Encrypt a block */
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     rc = bletest_hci_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key,
                                 (uint8_t *)g_ble_ll_encrypt_test_plain_text);
     assert(rc == 0);
