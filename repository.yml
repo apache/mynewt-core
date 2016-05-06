@@ -21,6 +21,7 @@ repo.name: apache-mynewt-core
 repo.versions:
     "0.0.0": "develop"
     "0.7.9": "mynewt_0_8_0_b2_tag"
-    "0-latest": "0.7.9"
+    "0.8.0": "mynewt_0_8_0_tag"
+    "0-latest": "0.8.0"
     "0-dev": "0.0.0"
-    "0.8-latest": "0.7.9"
+    "0.8-latest": "0.8.0"
