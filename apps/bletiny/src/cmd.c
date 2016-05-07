@@ -760,12 +760,8 @@ cmd_scan(int argc, char **argv)
 static int
 cmd_show_addr(int argc, char **argv)
 {
-    bletiny_lock();
-
     print_addr(g_dev_addr);
     console_printf("\n");
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -776,8 +772,6 @@ cmd_show_chr(int argc, char **argv)
     struct bletiny_conn *conn;
     struct bletiny_svc *svc;
     int i;
-
-    bletiny_lock();
 
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
@@ -791,8 +785,6 @@ cmd_show_chr(int argc, char **argv)
         }
     }
 
-    bletiny_unlock();
-
     return 0;
 }
 
@@ -802,8 +794,6 @@ cmd_show_conn(int argc, char **argv)
     struct bletiny_conn *conn;
     int i;
 
-    bletiny_lock();
-
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
@@ -811,8 +801,6 @@ cmd_show_conn(int argc, char **argv)
         print_addr(conn->addr);
         console_printf(" addr_type=%d\n", conn->addr_type);
     }
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -843,8 +831,6 @@ cmd_show_svc(int argc, char **argv)
     struct bletiny_svc *svc;
     int i;
 
-    bletiny_lock();
-
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
@@ -856,8 +842,6 @@ cmd_show_svc(int argc, char **argv)
             cmd_print_svc(svc, 0);
         }
     }
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -908,8 +892,70 @@ cmd_sec_start(int argc, char **argv)
     return 0;
 }
 
+static int
+cmd_sec_restart(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    uint16_t ediv;
+    uint64_t rand_val;
+    uint8_t ltk[16];
+    int rc;
+    int auth;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    ediv = parse_arg_uint16("ediv", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rand_val = parse_arg_uint64("rand", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    auth = parse_arg_bool("auth", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream_exact_length("ltk", ltk, 16);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_sec_restart( conn_handle, ltk, ediv, rand_val, auth);
+
+    if (rc != 0) {
+        console_printf("error starting encryption; rc=%d\n", rc);
+        return rc;
+    }
+
+    return -1;
+}
+
+static int
+cmd_sec_ltk(int argc, char **argv)
+{
+    /* TODO */
+    return -1;
+}
+
+static int
+cmd_sec_request(int argc, char **argv)
+{
+    /* TODO */
+    return -1;
+}
+
 static struct cmd_entry cmd_sec_entries[] = {
     { "start", cmd_sec_start },
+    { "restart", cmd_sec_restart },
+    { "ltk", cmd_sec_ltk },
+    { "request", cmd_sec_request }
 };
 
 static int
@@ -1189,13 +1235,16 @@ cmd_set_adv_data(void)
 }
 
 static int
-cmd_set_sm_data(void) {
-    int rc;
+cmd_set_sm_data(void)
+{
     uint8_t tmp;
-    int good = 0;
+    int good;
+    int rc;
+
+    good = 0;
 
     tmp = parse_arg_bool("oob_flag", &rc);
-    if(rc == 0) {
+    if (rc == 0) {
         ble_hs_cfg.sm_oob_data_flag = tmp;
         good++;
     } else if (rc != ENOENT) {
@@ -1203,25 +1252,50 @@ cmd_set_sm_data(void) {
     }
 
     tmp = parse_arg_bool("mitm_flag", &rc);
-    if(rc == 0) {
+    if (rc == 0) {
         good++;
         ble_hs_cfg.sm_mitm = tmp;
     } else if (rc != ENOENT) {
         return rc;
     }
 
-    tmp  = parse_arg_uint8("io_capabilities", &rc);
-    if(rc == 0) {
+    tmp = parse_arg_uint8("io_capabilities", &rc);
+    if (rc == 0) {
         good++;
         ble_hs_cfg.sm_io_cap = tmp;
     } else if (rc != ENOENT) {
         return rc;
     }
 
-    if (0 == good) {
+    tmp = parse_arg_uint8("our_key_dist", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_our_key_dist = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_uint8("their_key_dist", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_their_key_dist = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_bool("bonding", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_bonding = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    if (!good) {
         console_printf("Error: no valid settings specified\n");
         return -1;
     }
+
     return 0;
 }
 

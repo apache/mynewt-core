@@ -121,6 +121,21 @@ parse_arg_find(char *key)
     return NULL;
 }
 
+/**
+ * Determines which number base to use when parsing the specified numeric
+ * string.  This just avoids base '0' so that numbers don't get interpreted as
+ * octal.
+ */
+static int
+parse_arg_long_base(char *sval)
+{
+    if (sval[0] == '0' && sval[1] == 'x') {
+        return 0;
+    } else {
+        return 10;
+    }
+}
+
 long
 parse_arg_long_bounds(char *name, long min, long max, int *out_status)
 {
@@ -134,7 +149,32 @@ parse_arg_long_bounds(char *name, long min, long max, int *out_status)
         return 0;
     }
 
-    lval = strtol(sval, &endptr, 0);
+    lval = strtol(sval, &endptr, parse_arg_long_base(sval));
+    if (sval[0] != '\0' && *endptr == '\0' &&
+        lval >= min && lval <= max) {
+
+        *out_status = 0;
+        return lval;
+    }
+
+    *out_status = EINVAL;
+    return 0;
+}
+
+uint64_t
+parse_arg_uint64_bounds(char *name, uint64_t min, uint64_t max, int *out_status)
+{
+    char *endptr;
+    char *sval;
+    uint64_t lval;
+
+    sval = parse_arg_find(name);
+    if (sval == NULL) {
+        *out_status = ENOENT;
+        return 0;
+    }
+
+    lval = strtoull(sval, &endptr, parse_arg_long_base(sval));
     if (sval[0] != '\0' && *endptr == '\0' &&
         lval >= min && lval <= max) {
 
@@ -173,8 +213,13 @@ parse_arg_uint16(char *name, int *out_status)
 uint32_t
 parse_arg_uint32(char *name, int *out_status)
 {
-    /* this currently doesn't work as longs are 32-bits as well */
-    return parse_arg_long_bounds(name, 0, UINT32_MAX, out_status);
+    return parse_arg_uint64_bounds(name, 0, UINT32_MAX, out_status);
+}
+
+uint64_t
+parse_arg_uint64(char *name, int *out_status)
+{
+    return parse_arg_uint64_bounds(name, 0, UINT64_MAX, out_status);
 }
 
 uint16_t
