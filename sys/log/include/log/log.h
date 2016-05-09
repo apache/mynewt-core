@@ -24,6 +24,12 @@
 
 #include <os/queue.h>
 
+/* Global log info */
+struct log_info {
+    int64_t li_timestamp;
+    uint8_t li_index;
+}g_log_info;
+
 struct log;
 
 typedef int (*log_walk_func_t)(struct log *, void *arg, void *offset,
@@ -139,7 +145,6 @@ struct log_entry_hdr {
 struct log {
     char *l_name;
     struct log_handler *l_log;
-    uint8_t l_index;
     STAILQ_ENTRY(log) l_next;
 };
 
