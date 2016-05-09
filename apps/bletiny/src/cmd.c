@@ -1023,7 +1023,7 @@ cmd_sec_restart(int argc, char **argv)
         return rc;
     }
 
-    return -1;
+    return 0;
 }
 
 static int
