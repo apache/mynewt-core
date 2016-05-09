@@ -520,7 +520,7 @@ nmgr_task(void *arg)
                 break;
 	    case OS_EVENT_T_TIMER:
 		ocf = (struct os_callout_func *)ev;
-		ocf->cf_func(ocf->cf_arg);
+		ocf->cf_func(CF_ARG(ocf));
 		break;
         }
     }
