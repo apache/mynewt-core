@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,10 +17,15 @@
  * under the License.
  */
 
-#ifndef H_HAL_FLASH_INT
-#define H_HAL_FLASH_INT
+#ifndef H_HAL_FLASH_INT_
+#define H_HAL_FLASH_INT_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <inttypes.h>
+
 /*
  * API that flash driver has to implement.
  */
@@ -48,4 +53,9 @@ uint32_t hal_flash_sector_size(const struct hal_flash *hf, int sec_idx);
 /* External function prototype supplied by BSP */
 const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 
-#endif /* H_HAL_FLASH_INT */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* H_HAL_FLASH_INT_ */

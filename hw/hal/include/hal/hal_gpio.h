@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,12 +20,15 @@
 #ifndef H_HAL_GPIO_
 #define H_HAL_GPIO_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * The "mode" of the gpio. The gpio is either an input, output, or it is
  * "not connected" (the pin specified is not functioning as a gpio)
  */
-enum gpio_mode_e
-{
+enum gpio_mode_e {
     GPIO_MODE_NC = -1,
     GPIO_MODE_IN = 0,
     GPIO_MODE_OUT = 1
@@ -35,8 +38,7 @@ typedef enum gpio_mode_e gpio_mode_t;
 /*
  * The "pull" of the gpio. This is either an input or an output.
  */
-enum gpio_pull
-{
+enum gpio_pull {
     GPIO_PULL_NONE = 0,     /* pull-up/down not enabled */
     GPIO_PULL_UP = 1,       /* pull-up enabled */
     GPIO_PULL_DOWN = 2      /* pull-down enabled */
@@ -46,8 +48,7 @@ typedef enum gpio_pull gpio_pull_t;
 /*
  * IRQ trigger type.
  */
-enum gpio_irq_trigger
-{
+enum gpio_irq_trigger {
     GPIO_TRIG_NONE = 0,
     GPIO_TRIG_RISING = 1,   /* IRQ occurs on rising edge */
     GPIO_TRIG_FALLING = 2,  /* IRQ occurs on falling edge */
@@ -142,5 +143,9 @@ void hal_gpio_irq_release(int pin);
 void hal_gpio_irq_enable(int pin);
 void hal_gpio_irq_disable(int pin);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* H_HAL_GPIO_ */

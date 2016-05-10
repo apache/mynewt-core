@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,6 +20,10 @@
 #ifndef H_HAL_FLASH_
 #define H_HAL_FLASH_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
@@ -31,5 +35,9 @@ int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
 uint8_t hal_flash_align(uint8_t flash_id);
 int hal_flash_init(void);
 
+
+#ifdef __cplusplus
+}
 #endif
 
+#endif /* H_HAL_FLASH_ */

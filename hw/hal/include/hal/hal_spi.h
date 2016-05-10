@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -18,8 +18,8 @@
  */
 
 
-#ifndef HAL_SPI_H
-#define HAL_SPI_H
+#ifndef H_HAL_SPI_
+#define H_HAL_SPI_
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +29,7 @@ extern "C" {
 #include <bsp/bsp_sysid.h>
 
 struct hal_spi;
-   
+
 enum hal_spi_data_mode{
     HAL_SPI_MODE0,
     HAL_SPI_MODE1,
@@ -59,21 +59,23 @@ struct hal_spi_settings {
 };
 
 /* initialize the SPI on the corresponding BSP device. Returns a pointer
- * to the SPI object to use for the methods below. Returns NULL on 
- * error */
+ * to the SPI object to use for the methods below. Returns NULL on
+ * error
+ */
 struct hal_spi *
 hal_spi_init(enum system_device_id sysid);
 
 /* configure the spi., Reutrns 0 on success, negative on error */
-int 
+int
 hal_spi_config(struct hal_spi *pspi, struct hal_spi_settings *psettings);
 
-/* Do a blocking master spi transfer of one SPI data word. 
- * The data to send is an 8 or 9-bit pattern (depending on configuration) 
- * stored in <tx>.  NOTE: This does not send multiple bytes. The argument is 
+/* Do a blocking master spi transfer of one SPI data word.
+ * The data to send is an 8 or 9-bit pattern (depending on configuration)
+ * stored in <tx>.  NOTE: This does not send multiple bytes. The argument is
  * a 16-bit number to allow up to 9-bit SPI data words.
- * Returns the data received from the remote device or negative on error. */
-int 
+ * Returns the data received from the remote device or negative on error.
+ */
+int
 hal_spi_master_transfer(struct hal_spi *psdi, uint16_t tx);
 
 
@@ -81,5 +83,4 @@ hal_spi_master_transfer(struct hal_spi *psdi, uint16_t tx);
 }
 #endif
 
-#endif /* HAL_SPI_H */
-
+#endif /* H_HAL_SPI_ */
