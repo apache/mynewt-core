@@ -186,11 +186,6 @@ bleprph_task_handler(void *unused)
     struct os_event *ev;
     struct os_callout_func *cf;
 
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    gatt_svr_init();
-
     /* Begin advertising. */
     bleprph_advertise();
 
@@ -289,6 +284,11 @@ main(void)
     /* Initialize the console (for log output). */
     rc = console_init(NULL);
     assert(rc == 0);
+
+    /* Register GATT attributes (services, characteristics, and
+     * descriptors).
+     */
+    gatt_svr_init();
 
     /* Start the OS */
     os_start();

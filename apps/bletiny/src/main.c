@@ -1380,8 +1380,6 @@ bletiny_task_handler(void *arg)
     rc = ble_hs_start();
     assert(rc == 0);
 
-    periph_init();
-
     ble_att_set_notify_cb(bletiny_on_notify, NULL);
 
     bletiny_start_auto_advertise();
@@ -1523,6 +1521,8 @@ main(void)
     htole16(bletiny_pref_conn_params + 2, BLE_GAP_INITIAL_CONN_ITVL_MAX);
     htole16(bletiny_pref_conn_params + 4, 0);
     htole16(bletiny_pref_conn_params + 6, BSWAP16(0x100));
+
+    periph_init();
 
     /* Start the OS */
     os_start();
