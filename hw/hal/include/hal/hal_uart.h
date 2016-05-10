@@ -102,4 +102,9 @@ void hal_uart_start_rx(int uart);
  */
 void hal_uart_blocking_tx(int uart, uint8_t byte);
 
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif /* H_HAL_UART_H_ */
