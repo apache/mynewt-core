@@ -420,7 +420,7 @@ bletiny_conn_delete_idx(int idx)
      */
 #if NIMBLE_OPT_MAX_CONNECTIONS > 1
     int i;
-    for (i = idx; i < bletiny_num_conns; i++) {
+    for (i = idx + 1; i < bletiny_num_conns; i++) {
         bletiny_conns[i - 1] = bletiny_conns[i];
     }
 #endif
