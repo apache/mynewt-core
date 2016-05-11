@@ -413,8 +413,6 @@ bletiny_conn_delete_idx(int idx)
         os_memblock_put(&bletiny_svc_pool, svc);
     }
 
-    bletiny_num_conns--;
-
     /* This '#if' is not strictly necessary.  It is here to prevent a spurious
      * warning from being reported.
      */
@@ -424,6 +422,8 @@ bletiny_conn_delete_idx(int idx)
         bletiny_conns[i - 1] = bletiny_conns[i];
     }
 #endif
+
+    bletiny_num_conns--;
 }
 
 static struct bletiny_svc *
