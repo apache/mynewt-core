@@ -20,14 +20,14 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x40000
-  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
+  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x4000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
  * with other linker script that defines memory regions FLASH and RAM.
  * It references following symbols, which must be defined in code:
  *   Reset_Handler : Entry of reset handler
- * 
+ *
  * It defines following symbols, which code can use without definition:
  *   __exidx_start
  *   __exidx_end
@@ -85,7 +85,7 @@ SECTIONS
     } > FLASH
 
 
-    .ARM.extab : 
+    .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
         . = ALIGN(4);
@@ -109,7 +109,7 @@ SECTIONS
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
     } > RAM
-            
+
     .data : AT (__etext)
     {
         __data_start__ = .;
