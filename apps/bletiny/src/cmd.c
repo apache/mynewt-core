@@ -1703,7 +1703,7 @@ cmd_passkey(int argc, char **argv)
 #endif
 
     uint16_t conn_handle;
-    struct passkey_action pk;
+    struct ble_l2cap_sm_passkey pk;
     int rc;
 
     conn_handle = parse_arg_uint16("conn", &rc);
