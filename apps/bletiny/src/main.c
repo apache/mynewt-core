@@ -42,6 +42,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
+#include "host/ble_keycache.h"
 #include "controller/ble_ll.h"
 
 /* XXX: An app should not include private headers from a library.  The bletiny
@@ -651,6 +652,31 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
     return dsc;
 }
 
+static void
+bletiny_start_auto_advertise(void)
+{
+    struct ble_hs_adv_fields fields;
+    int rc;
+
+    if (BLETINY_AUTO_DEVICE_NAME[0] != '\0') {
+        memset(&fields, 0, sizeof fields);
+
+        fields.name = (uint8_t *)BLETINY_AUTO_DEVICE_NAME;
+        fields.name_len = strlen(BLETINY_AUTO_DEVICE_NAME);
+        fields.name_is_complete = 1;
+        rc = bletiny_set_adv_data(&fields);
+        if (rc != 0) {
+            return;
+        }
+
+        rc = bletiny_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
+                               0, 0, NULL);
+        if (rc != 0) {
+            return;
+        }
+    }
+}
+
 static int
 bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
                uint16_t mtu, void *arg)
@@ -842,7 +868,37 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         print_bytes(ctxt->notify.attr_data, ctxt->notify.attr_len);
         console_printf("\n");
         return 0;
+    case BLE_GAP_EVENT_LTK_REQUEST:
+    {
+        struct ble_gap_key_parms  kp;
+        console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
+                       ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
+        if ((ble_keycache_find(ctxt->desc->peer_addr_type,
+                                    ctxt->desc->peer_addr, &kp) == 0) &&
+            (kp.ltk_valid) && (kp.ediv_rand_valid)) {
+                console_printf("ltk=");
+                bletiny_print_bytes(kp.ltk, sizeof(kp.ltk));
+                console_printf("\n");
+        } else {
+            console_printf("no matching ltk\n");
+        }
+        return 0;
+    }
+    case BLE_GAP_EVENT_KEY_EXCHANGE:
+        rc = 0;
+        console_printf("key exchange event; status=%d ", status);
+        bletiny_print_key_exchange_parms(ctxt->key_params);
 
+        if(ctxt->key_params->addr_valid)
+        {
+            rc = ble_keycache_add(ctxt->key_params->addr_type,
+                                    ctxt->key_params->addr,
+                                    ctxt->key_params);
+            if (rc != 0) {
+                console_printf("error persisting keys; status=%d\n", rc);
+            }
+        }
+        return rc;
     default:
         return 0;
     }
@@ -1057,12 +1113,13 @@ bletiny_adv_stop(void)
 }
 
 int
-bletiny_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
-                  struct hci_adv_params *params)
+bletiny_adv_start(int disc, int conn,
+                uint8_t *peer_addr, uint8_t peer_addr_type,
+                struct ble_gap_adv_params *params)
 {
     int rc;
 
-    rc = ble_gap_adv_start(disc, conn, peer_addr, addr_type, params,
+    rc = ble_gap_adv_start(disc, conn, peer_addr, peer_addr_type, params,
                            bletiny_gap_event, NULL);
     return rc;
 }
@@ -1107,11 +1164,11 @@ bletiny_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
 
 int
 bletiny_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
-              uint8_t filter_policy)
+              uint8_t filter_policy, uint8_t addr_mode)
 {
     int rc;
 
-    rc = ble_gap_disc(dur_ms, disc_mode, scan_type, filter_policy,
+    rc = ble_gap_disc(dur_ms, disc_mode, scan_type, filter_policy, addr_mode,
                       bletiny_on_scan, NULL);
     return rc;
 }
@@ -1325,6 +1382,10 @@ main(void)
 
     /* Initialize the BLE LL */
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
+    assert(rc == 0);
+
+    /* initialize the keycache to store private keys  */
+    rc = ble_keycache_init(4);
     assert(rc == 0);
 
     rc = cmd_init();
