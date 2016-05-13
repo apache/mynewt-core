@@ -45,6 +45,8 @@
 #include <string.h>
 #include <json/json.h>
 #include <flash_test/flash_test.h>
+#include <reboot/log_reboot.h>
+#include <os/os_time.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -389,8 +391,12 @@ main(int argc, char **argv)
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
     flash_test_init();
+    
+    reboot_init_handler(LOG_TYPE_STORAGE);
 
     conf_load();
+
+    log_reboot(HARD_REBOOT);
 
     rc = init_tasks();
 
@@ -402,6 +408,7 @@ main(int argc, char **argv)
     } else {
         console_printf("\nSlinky\n");
     }
+
     os_start();
 
     /* os start should never return. If it does, this should be an error */

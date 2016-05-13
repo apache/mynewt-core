@@ -28,17 +28,28 @@
 
 struct conf_handler_head conf_handlers = SLIST_HEAD_INITIALIZER(&conf_handlers);
 
+static uint8_t conf_cmd_inited;
+
 int
 conf_init(void)
 {
-    int rc = 0;
+    int rc;
 
+    rc = 0;
+    if (conf_cmd_inited) {
+        goto done;
+    }
 #ifdef SHELL_PRESENT
     rc = conf_cli_register();
 #endif
 #ifdef NEWTMGR_PRESENT
     rc = conf_nmgr_register();
 #endif
+    if (!rc) {
+        conf_cmd_inited = 1;
+    }
+
+done:
     return rc;
 }
 

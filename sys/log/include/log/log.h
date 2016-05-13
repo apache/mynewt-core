@@ -86,6 +86,7 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_CTLR      (3)
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
+#define LOG_MODULE_REBOOT           (6)
 #define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
@@ -96,7 +97,8 @@ struct log_entry_hdr {
     (LOG_MODULE_NIMBLE_CTLR == module ? "NIMBLE_CTLR" :\
     (LOG_MODULE_NIMBLE_HOST == module ? "NIMBLE_HOST" :\
     (LOG_MODULE_NFFS        == module ? "NFFS"        :\
-     "UNKNOWN"))))))
+    (LOG_MODULE_REBOOT      == module ? "REBOOT"      :\
+     "UNKNOWN")))))))
 
 /* UTC Timestamnp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
