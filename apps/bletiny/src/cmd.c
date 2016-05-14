@@ -27,6 +27,7 @@
 #include "nimble/hci_common.h"
 #include "host/ble_gap.h"
 #include "host/ble_hs_adv.h"
+#include "host/ble_eddystone.h"
 #include "../src/ble_l2cap_priv.h"
 #include "../src/ble_hs_priv.h"
 
@@ -131,6 +132,94 @@ cmd_parse_conn_start_end(uint16_t *out_conn, uint16_t *out_start,
     if (rc != 0) {
         return rc;
     }
+
+    return 0;
+}
+
+static int
+cmd_parse_eddystone_url(char *full_url, uint8_t *out_scheme, char *out_body,
+                        uint8_t *out_body_len, uint8_t *out_suffix)
+{
+    static const struct {
+        char *s;
+        uint8_t scheme;
+    } schemes[] = {
+        { "http://www.", BLE_EDDYSTONE_URL_SCHEME_HTTP_WWW },
+        { "https://www.", BLE_EDDYSTONE_URL_SCHEME_HTTPS_WWW },
+        { "http://", BLE_EDDYSTONE_URL_SCHEME_HTTP },
+        { "https://", BLE_EDDYSTONE_URL_SCHEME_HTTPS },
+    };
+
+    static const struct {
+        char *s;
+        uint8_t code;
+    } suffixes[] = {
+        { ".com/", BLE_EDDYSTONE_URL_SUFFIX_COM_SLASH },
+        { ".org/", BLE_EDDYSTONE_URL_SUFFIX_ORG_SLASH },
+        { ".edu/", BLE_EDDYSTONE_URL_SUFFIX_EDU_SLASH },
+        { ".net/", BLE_EDDYSTONE_URL_SUFFIX_NET_SLASH },
+        { ".info/", BLE_EDDYSTONE_URL_SUFFIX_INFO_SLASH },
+        { ".biz/", BLE_EDDYSTONE_URL_SUFFIX_BIZ_SLASH },
+        { ".gov/", BLE_EDDYSTONE_URL_SUFFIX_GOV_SLASH },
+        { ".com", BLE_EDDYSTONE_URL_SUFFIX_COM },
+        { ".org", BLE_EDDYSTONE_URL_SUFFIX_ORG },
+        { ".edu", BLE_EDDYSTONE_URL_SUFFIX_EDU },
+        { ".net", BLE_EDDYSTONE_URL_SUFFIX_NET },
+        { ".info", BLE_EDDYSTONE_URL_SUFFIX_INFO },
+        { ".biz", BLE_EDDYSTONE_URL_SUFFIX_BIZ },
+        { ".gov", BLE_EDDYSTONE_URL_SUFFIX_GOV },
+    };
+
+    char *prefix;
+    char *suffix;
+    int full_url_len;
+    int prefix_len;
+    int suffix_len;
+    int suffix_idx;
+    int rc;
+    int i;
+
+    full_url_len = strlen(full_url);
+
+    rc = BLE_HS_EINVAL;
+    for (i = 0; i < sizeof schemes / sizeof schemes[0]; i++) {
+        prefix = schemes[i].s;
+        prefix_len = strlen(schemes[i].s);
+
+        if (full_url_len >= prefix_len &&
+            memcmp(full_url, prefix, prefix_len) == 0) {
+
+            *out_scheme = i;
+            rc = 0;
+            break;
+        }
+    }
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = BLE_HS_EINVAL;
+    for (i = 0; i < sizeof suffixes / sizeof suffixes[0]; i++) {
+        suffix = suffixes[i].s;
+        suffix_len = strlen(suffixes[i].s);
+
+        suffix_idx = full_url_len - suffix_len;
+        if (suffix_idx >= prefix_len &&
+            memcmp(full_url + suffix_idx, suffix, suffix_len) == 0) {
+
+            *out_suffix = i;
+            rc = 0;
+            break;
+        }
+    }
+    if (rc != 0) {
+        *out_suffix = BLE_EDDYSTONE_URL_SUFFIX_NONE;
+        *out_body_len = full_url_len - prefix_len;
+    } else {
+        *out_body_len = full_url_len - prefix_len - suffix_len;
+    }
+
+    memcpy(out_body, full_url + prefix_len, *out_body_len);
 
     return 0;
 }
@@ -760,12 +849,8 @@ cmd_scan(int argc, char **argv)
 static int
 cmd_show_addr(int argc, char **argv)
 {
-    bletiny_lock();
-
     print_addr(g_dev_addr);
     console_printf("\n");
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -776,8 +861,6 @@ cmd_show_chr(int argc, char **argv)
     struct bletiny_conn *conn;
     struct bletiny_svc *svc;
     int i;
-
-    bletiny_lock();
 
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
@@ -791,8 +874,6 @@ cmd_show_chr(int argc, char **argv)
         }
     }
 
-    bletiny_unlock();
-
     return 0;
 }
 
@@ -802,8 +883,6 @@ cmd_show_conn(int argc, char **argv)
     struct bletiny_conn *conn;
     int i;
 
-    bletiny_lock();
-
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
@@ -811,8 +890,6 @@ cmd_show_conn(int argc, char **argv)
         print_addr(conn->addr);
         console_printf(" addr_type=%d\n", conn->addr_type);
     }
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -843,8 +920,6 @@ cmd_show_svc(int argc, char **argv)
     struct bletiny_svc *svc;
     int i;
 
-    bletiny_lock();
-
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
@@ -856,8 +931,6 @@ cmd_show_svc(int argc, char **argv)
             cmd_print_svc(svc, 0);
         }
     }
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -908,8 +981,70 @@ cmd_sec_start(int argc, char **argv)
     return 0;
 }
 
+static int
+cmd_sec_restart(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    uint16_t ediv;
+    uint64_t rand_val;
+    uint8_t ltk[16];
+    int rc;
+    int auth;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    ediv = parse_arg_uint16("ediv", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rand_val = parse_arg_uint64("rand", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    auth = parse_arg_bool("auth", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = parse_arg_byte_stream_exact_length("ltk", ltk, 16);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_sec_restart( conn_handle, ltk, ediv, rand_val, auth);
+
+    if (rc != 0) {
+        console_printf("error starting encryption; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+cmd_sec_ltk(int argc, char **argv)
+{
+    /* TODO */
+    return -1;
+}
+
+static int
+cmd_sec_request(int argc, char **argv)
+{
+    /* TODO */
+    return -1;
+}
+
 static struct cmd_entry cmd_sec_entries[] = {
     { "start", cmd_sec_start },
+    { "restart", cmd_sec_restart },
+    { "ltk", cmd_sec_ltk },
+    { "request", cmd_sec_request }
 };
 
 static int
@@ -964,6 +1099,11 @@ cmd_set_adv_data(void)
     uint16_t uuid16;
     uint8_t uuid128[16];
     uint8_t public_tgt_addr[BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN];
+    uint8_t eddystone_url_body_len;
+    uint8_t eddystone_url_suffix;
+    uint8_t eddystone_url_scheme;
+    char eddystone_url_body[BLE_EDDYSTONE_URL_MAX_LEN];
+    char *eddystone_url_full;
     int svc_data_uuid16_len;
     int svc_data_uuid32_len;
     int svc_data_uuid128_len;
@@ -1178,10 +1318,91 @@ cmd_set_adv_data(void)
         return rc;
     }
 
-    rc = bletiny_set_adv_data(&adv_fields);
+    eddystone_url_full = parse_arg_find("eddystone_url");
+    if (eddystone_url_full != NULL) {
+        rc = cmd_parse_eddystone_url(eddystone_url_full, &eddystone_url_scheme,
+                                     eddystone_url_body,
+                                     &eddystone_url_body_len,
+                                     &eddystone_url_suffix);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = ble_eddystone_set_adv_data_url(&adv_fields, eddystone_url_scheme,
+                                            eddystone_url_body,
+                                            eddystone_url_body_len,
+                                            eddystone_url_suffix);
+    } else {
+        rc = bletiny_set_adv_data(&adv_fields);
+    }
     if (rc != 0) {
         console_printf("error setting advertisement data; rc=%d\n", rc);
         return rc;
+    }
+
+    return 0;
+}
+
+static int
+cmd_set_sm_data(void)
+{
+    uint8_t tmp;
+    int good;
+    int rc;
+
+    good = 0;
+
+    tmp = parse_arg_bool("oob_flag", &rc);
+    if (rc == 0) {
+        ble_hs_cfg.sm_oob_data_flag = tmp;
+        good++;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_bool("mitm_flag", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_mitm = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_uint8("io_capabilities", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_io_cap = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_uint8("our_key_dist", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_our_key_dist = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_uint8("their_key_dist", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_their_key_dist = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    tmp = parse_arg_bool("bonding", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_bonding = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
+    if (!good) {
+        console_printf("Error: no valid settings specified\n");
+        return -1;
     }
 
     return 0;
@@ -1197,6 +1418,11 @@ cmd_set(int argc, char **argv)
 
     if (argc > 1 && strcmp(argv[1], "adv_data") == 0) {
         rc = cmd_set_adv_data();
+        return rc;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "sm_data") == 0) {
+        rc = cmd_set_sm_data();
         return rc;
     }
 
@@ -1464,6 +1690,62 @@ cmd_write(int argc, char **argv)
     return 0;
 }
 
+
+/*****************************************************************************
+ * $passkey                                                                  *
+ *****************************************************************************/
+
+static int
+cmd_passkey(int argc, char **argv)
+{
+#if !NIMBLE_OPT_SM
+    return BLE_HS_ENOTSUP;
+#endif
+
+    uint16_t conn_handle;
+    struct ble_l2cap_sm_passkey pk;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    pk.action = parse_arg_uint16("action", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch(pk.action) {
+        case BLE_GAP_PKACT_INPUT:
+        case BLE_GAP_PKACT_DISP:
+           /* passkey is 6 digit number */
+           pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
+           if (rc != 0) {
+               return rc;
+           }
+           break;
+
+        case BLE_GAP_PKACT_OOB:
+            rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
+            if (rc != 0) {
+                return rc;
+            }
+            break;
+       default:
+         console_printf("invalid passkey action action=%d\n", pk.action);
+         return EINVAL;
+    }
+
+    rc = ble_l2cap_sm_set_tk(conn_handle, &pk);
+    if (rc != 0) {
+        console_printf("error providing passkey; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
 /*****************************************************************************
  * $init                                                                     *
  *****************************************************************************/
@@ -1476,6 +1758,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "find",       cmd_find },
     { "l2cap",      cmd_l2cap },
     { "mtu",        cmd_mtu },
+    { "passkey",    cmd_passkey },
     { "read",       cmd_read },
     { "scan",       cmd_scan },
     { "show",       cmd_show },

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -33,12 +33,14 @@ struct os_callout {
 typedef void (*os_callout_func_t)(void *);
 
 struct os_callout_func {
+    /* Must be the first element in the structure for casting
+     * purposes.
+     */
     struct os_callout cf_c;
     os_callout_func_t cf_func;
-    void *cf_arg;
 };
+#define CF_ARG(__cf) ((__cf)->cf_c.c_ev.ev_arg)
 
-void os_callout_init(struct os_callout *, struct os_eventq *, void *);
 void os_callout_func_init(struct os_callout_func *cf, struct os_eventq *evq,
   os_callout_func_t timo_func, void *ev_arg);
 void os_callout_stop(struct os_callout *);
@@ -51,6 +53,7 @@ os_callout_queued(struct os_callout *c)
 {
     return c->c_next.tqe_prev != NULL;
 }
+
 #endif /* _OS_CALLOUT_H */
 
 

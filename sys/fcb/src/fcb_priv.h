@@ -54,16 +54,4 @@ int fcb_sector_hdr_init(struct fcb *, struct flash_area *fap, uint16_t id);
 int fcb_sector_hdr_read(struct fcb *, struct flash_area *fap,
   struct fcb_disk_area *fdap);
 
-#define crc8_init() 0
-static inline uint8_t
-crc8_calc(uint8_t val, void *bv, int cnt)
-{
-    int i;
-
-    for (i = 0; i < cnt; i++) {
-        val += ((uint8_t *)bv)[i];
-    }
-    return val;
-}
-
 #endif

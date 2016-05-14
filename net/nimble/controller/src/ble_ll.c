@@ -176,7 +176,7 @@ STATS_NAME_START(ble_ll_stats)
 STATS_NAME_END(ble_ll_stats)
 
 /* The BLE LL task data structure */
-#define BLE_LL_STACK_SIZE   (64)
+#define BLE_LL_STACK_SIZE   (80)
 struct os_task g_ble_ll_task;
 os_stack_t g_ble_ll_stack[BLE_LL_STACK_SIZE];
 
@@ -406,7 +406,8 @@ ble_ll_wfr_timer_exp(void *arg)
     rx_start = ble_phy_rx_started();
     lls = g_ble_ll_data.ll_state;
 
-    ble_ll_log(BLE_LL_LOG_ID_WFR_EXP, lls, 0, (uint32_t)rx_start);
+    ble_ll_log(BLE_LL_LOG_ID_WFR_EXP, lls, ble_phy_xcvr_state_get(),
+               (uint32_t)rx_start);
 
     /* If we have started a reception, there is nothing to do here */
     if (!rx_start) {
@@ -1119,23 +1120,23 @@ ble_ll_init(uint8_t ll_task_prio, uint8_t num_acl_pkts, uint16_t acl_pkt_size)
     /* Initialize the connection module */
     ble_ll_conn_module_init();
 
-    /* Set the supported features */
-    features = 0;
-#ifdef BLE_LL_CFG_FEAT_DATA_LEN_EXT
+    /* Set the supported features. NOTE: we always support extended reject. */
+    features = BLE_LL_FEAT_EXTENDED_REJ;
+
+#if (BLE_LL_CFG_FEAT_DATA_LEN_EXT == 1)
     features |= BLE_LL_FEAT_DATA_LEN_EXT;
 #endif
-#ifdef BLE_LL_CFG_FEAT_CONN_PARAM_REQ
+#if (BLE_LL_CFG_FEAT_CONN_PARAM_REQ == 1)
     features |= BLE_LL_FEAT_CONN_PARM_REQ;
 #endif
-#ifdef BLE_LL_CFG_FEAT_EXT_REJECT_IND
-    features |= BLE_LL_FEAT_EXTENDED_REJ;
-#endif
-#ifdef BLE_LL_CFG_FEAT_SLAVE_INIT_FEAT_XCHG
+#if (BLE_LL_CFG_FEAT_SLAVE_INIT_FEAT_XCHG == 1)
     features |= BLE_LL_FEAT_SLAVE_INIT;
 #endif
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     features |= BLE_LL_FEAT_LE_ENCRYPTION;
 #endif
+
+    /* Initialize random number generation */
     ble_ll_rand_init();
 
     lldata->ll_supp_features = features;

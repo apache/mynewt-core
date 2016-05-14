@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -86,6 +86,32 @@ struct ble_hs_conn;
 #define BLE_L2CAP_SM_PAIR_ALG_PASSKEY       1
 #define BLE_L2CAP_SM_PAIR_ALG_OOB           2
 
+#define BLE_L2CAP_SM_PAIR_KEY_DIST_ENC      0x01
+#define BLE_L2CAP_SM_PAIR_KEY_DIST_ID       0x02
+#define BLE_L2CAP_SM_PAIR_KEY_DIST_SIGN     0x04
+#define BLE_L2CAP_SM_PAIR_KEY_DIST_LINK     0x08
+#define BLE_L2CAP_SM_PAIR_KEY_DIST_RESERVED 0xf0
+
+#define BLE_L2CAP_SM_IO_CAP_DISP_ONLY       0x00
+#define BLE_L2CAP_SM_IO_CAP_DISP_YES_NO     0x01
+#define BLE_L2CAP_SM_IO_CAP_KEYBOARD_ONLY   0x02
+#define BLE_L2CAP_SM_IO_CAP_NO_IO           0x03
+#define BLE_L2CAP_SM_IO_CAP_KEYBOARD_DISP   0x04
+#define BLE_L2CAP_SM_IO_CAP_RESERVED        0x05
+
+#define BLE_L2CAP_SM_PAIR_OOB_NO            0x00
+#define BLE_L2CAP_SM_PAIR_OOB_YES           0x01
+#define BLE_L2CAP_SM_PAIR_OOB_RESERVED      0x02
+
+#define BLE_L2CAP_SM_PAIR_AUTHREQ_BOND      0x01
+#define BLE_L2CAP_SM_PAIR_AUTHREQ_MITM      0x04
+#define BLE_L2CAP_SM_PAIR_AUTHREQ_SC        0x08
+#define BLE_L2CAP_SM_PAIR_AUTHREQ_KEYPRESS  0x10
+#define BLE_L2CAP_SM_PAIR_AUTHREQ_RESERVED  0xe2
+
+#define BLE_L2CAP_SM_PAIR_KEY_SZ_MIN        7
+#define BLE_L2CAP_SM_PAIR_KEY_SZ_MAX        16
+
 typedef void ble_l2cap_sig_update_fn(int status, void *arg);
 
 struct ble_l2cap_sig_update_params {
@@ -99,8 +125,24 @@ int ble_l2cap_sig_update(uint16_t conn_handle,
                          struct ble_l2cap_sig_update_params *params,
                          ble_l2cap_sig_update_fn *cb, void *cb_arg);
 
+/* Strucure to pass the passkey info back to the l2cap */
+struct ble_l2cap_sm_passkey
+{
+    uint8_t action;
+    union
+    {
+        uint32_t passkey;
+        uint8_t  oob[16];
+    };
+};
 
-int ble_l2cap_sm_set_tk(uint16_t conn_handle, uint8_t *tk);
+/* If the application gets a passkey action, it must peform the action
+ * and then call this function to notify the host that the action is
+ * complete
+ */
+int ble_l2cap_sm_set_tk(uint16_t conn_handle,
+                        struct ble_l2cap_sm_passkey *pkey);
+
 void ble_l2cap_sm_connection_broken(uint16_t conn_handle);
 
 #endif

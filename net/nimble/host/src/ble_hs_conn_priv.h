@@ -31,6 +31,7 @@ typedef uint8_t ble_hs_conn_flags_t;
 
 #define BLE_HS_CONN_F_MASTER        0x01
 #define BLE_HS_CONN_F_UPDATE        0x02
+#define BLE_HS_CONN_F_INDICATE_TXED 0x04
 
 struct ble_hs_conn {
     SLIST_ENTRY(ble_hs_conn) bhc_next;
@@ -51,7 +52,7 @@ struct ble_hs_conn {
     struct ble_att_svr_conn bhc_att_svr;
     struct ble_gatts_conn bhc_gatt_svr;
 
-    struct ble_gap_sec_params bhc_sec_params;
+    struct ble_gap_sec_state bhc_sec_state;
 
     ble_gap_conn_fn *bhc_cb;
     void *bhc_cb_arg;

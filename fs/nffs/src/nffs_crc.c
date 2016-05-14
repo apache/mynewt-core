@@ -17,9 +17,7 @@
  * under the License.
  */
 
-
 #include "nffs_priv.h"
-#include "crc16.h"
 
 int
 nffs_crc_flash(uint16_t initial_crc, uint8_t area_idx, uint32_t area_offset,

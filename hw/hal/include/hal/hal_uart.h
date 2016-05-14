@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,8 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #ifndef H_HAL_UART_H_
 #define H_HAL_UART_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <inttypes.h>
 
@@ -96,5 +101,10 @@ void hal_uart_start_rx(int uart);
  * Must be called with interrupts disabled.
  */
 void hal_uart_blocking_tx(int uart, uint8_t byte);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* H_HAL_UART_H_ */

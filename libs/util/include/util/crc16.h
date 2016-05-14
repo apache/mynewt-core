@@ -30,6 +30,7 @@
 
 #include <inttypes.h>
 
+#define CRC16_INITIAL_CRC       0       /* what to seed crc16 with */
 unsigned short crc16_ccitt(uint16_t initial_crc, const void *buf, int len);
 
 #endif /* _CRC16_H_ */

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -74,11 +74,16 @@ void ble_gap_rx_update_complete(struct hci_le_conn_upd_complete *evt);
 void ble_gap_rx_param_req(struct hci_le_conn_param_req *evt);
 int ble_gap_rx_l2cap_update_req(uint16_t conn_handle,
                                 struct ble_gap_upd_params *params);
-void ble_gap_security_event(uint16_t conn_handle, int status, 
-                            struct ble_gap_sec_params *sec_params);
+void ble_gap_security_event(uint16_t conn_handle, int status,
+                            struct ble_gap_sec_state *sec_state);
+void ble_gap_passkey_event(uint16_t conn_handle, int status,
+                           uint8_t passkey_action);
+void ble_gap_key_exchange_event(uint16_t conn_handle,
+                           struct ble_gap_key_parms *key_params);
+int ble_gap_ltk_event(uint16_t conn_handle,
+                      struct ble_gap_ltk_params *ltk_params);
 int ble_gap_master_in_progress(void);
 int ble_gap_slave_in_progress(void);
-int ble_gap_update_in_progress(uint16_t conn_handle);
 
 void ble_gap_heartbeat(void);
 

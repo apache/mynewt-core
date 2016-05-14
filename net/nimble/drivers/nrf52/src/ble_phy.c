@@ -77,7 +77,7 @@ struct ble_phy_obj g_ble_phy_data;
 /* Global transmit/receive buffer */
 static uint32_t g_ble_phy_txrx_buf[(BLE_PHY_MAX_PDU_LEN + 3) / 4];
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
 static uint32_t g_ble_phy_enc_buf[(BLE_PHY_MAX_PDU_LEN + 3) / 4];
 #endif
 
@@ -146,7 +146,7 @@ STATS_NAME_END(ble_phy_stats)
  *  bit in the NVIC just to be sure when we disable the PHY.
  */
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
 
 /*
  * Per nordic, the number of bytes needed for scratch is 16 + MAX_PKT_SIZE.
@@ -230,7 +230,7 @@ nrf_wait_disabled(void)
 static void
 ble_phy_rx_xcvr_setup(void)
 {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     if (g_ble_phy_data.phy_encrypted) {
         NRF_RADIO->PACKETPTR = (uint32_t)&g_ble_phy_enc_buf[0];
         NRF_CCM->INPTR = (uint32_t)&g_ble_phy_enc_buf[0];
@@ -280,6 +280,7 @@ static void
 ble_phy_tx_end_isr(void)
 {
     uint8_t transition;
+    uint8_t txlen;
     uint32_t wfr_time;
 
     /* Better be in TX state! */
@@ -295,7 +296,7 @@ ble_phy_tx_end_isr(void)
     NRF_RADIO->EVENTS_END = 0;
     wfr_time = NRF_RADIO->SHORTS;
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     /*
      * XXX: not sure what to do. We had a HW error during transmission.
      * For now I just count a stat but continue on like all is good.
@@ -323,8 +324,12 @@ ble_phy_tx_end_isr(void)
          * Enable the wait for response timer. Note that cc #1 on
          * timer 0 contains the transmit start time
          */
+        txlen = g_ble_phy_data.phy_tx_pyld_len;
+        if (txlen && g_ble_phy_data.phy_encrypted) {
+            txlen += BLE_LL_DATA_MIC_LEN;
+        }
         wfr_time = NRF_TIMER0->CC[1] - BLE_TX_LEN_USECS_M(NRF_RX_START_OFFSET);
-        wfr_time += BLE_TX_DUR_USECS_M(g_ble_phy_data.phy_tx_pyld_len);
+        wfr_time += BLE_TX_DUR_USECS_M(txlen);
         wfr_time += cputime_usecs_to_ticks(BLE_LL_WFR_USECS);
         ble_ll_wfr_enable(wfr_time);
     } else {
@@ -369,7 +374,7 @@ ble_phy_rx_end_isr(void)
     } else {
         STATS_INC(ble_phy_stats, rx_valid);
         ble_hdr->rxinfo.flags |= BLE_MBUF_HDR_F_CRC_OK;
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
         if (g_ble_phy_data.phy_encrypted) {
             /* Only set MIC failure flag if frame is not zero length */
             if ((dptr[1] != 0) && (NRF_CCM->MICSTATUS == 0)) {
@@ -568,7 +573,7 @@ ble_phy_init(void)
     /* Captures tx/rx start in timer0 capture 1 */
     NRF_PPI->CHENSET = PPI_CHEN_CH26_Msk;
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     NRF_CCM->INTENCLR = 0xffffffff;
     NRF_CCM->SHORTS = CCM_SHORTS_ENDKSGEN_CRYPT_Msk;
     NRF_CCM->ENABLE = CCM_ENABLE_ENABLE_Enabled;
@@ -637,7 +642,7 @@ ble_phy_rx(void)
     return 0;
 }
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
 /**
  * Called to enable encryption at the PHY. Note that this state will persist
  * in the PHY; in other words, if you call this function you have to call
@@ -770,7 +775,7 @@ ble_phy_tx(struct os_mbuf *txpdu, uint8_t end_trans)
     ble_hdr = BLE_MBUF_HDR_PTR(txpdu);
     payload_len = ble_hdr->txinfo.pyld_len;
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     if (g_ble_phy_data.phy_encrypted) {
         dptr = (uint8_t *)&g_ble_phy_enc_buf[0];
         NRF_CCM->SHORTS = 1;
@@ -1015,4 +1020,30 @@ int
 ble_phy_rx_started(void)
 {
     return g_ble_phy_data.phy_rx_started;
+}
+
+/**
+ * Return the transceiver state
+ *
+ * @return int transceiver state.
+ */
+uint8_t
+ble_phy_xcvr_state_get(void)
+{
+    uint32_t state;
+    state = NRF_RADIO->STATE;
+    return (uint8_t)state;
+}
+
+/**
+ * Called to return the maximum data pdu payload length supported by the
+ * phy. For this chip, if encryption is enabled, the maximum payload is 27
+ * bytes.
+ *
+ * @return uint8_t Maximum data channel PDU payload size supported
+ */
+uint8_t
+ble_phy_max_data_pdu_pyld(void)
+{
+    return BLE_LL_DATA_PDU_MAX_PYLD;
 }

@@ -48,6 +48,8 @@ void host_hci_cmd_build_le_set_event_mask(uint64_t event_mask,
 void host_hci_cmd_build_le_read_buffer_size(uint8_t *dst, int dst_len);
 int host_hci_cmd_le_read_buffer_size(void);
 void host_hci_cmd_build_le_read_loc_supp_feat(uint8_t *dst, uint8_t dst_len);
+void host_hci_cmd_build_le_set_rand_addr(uint8_t *addr, uint8_t *dst,
+                                         int dst_len);
 void host_hci_cmd_build_le_set_adv_enable(uint8_t enable, uint8_t *dst,
                                           int dst_len);
 int host_hci_cmd_le_set_adv_enable(uint8_t enable);
@@ -78,7 +80,8 @@ int host_hci_cmd_build_le_conn_update(struct hci_conn_update *hcu,
 int host_hci_cmd_le_conn_update(struct hci_conn_update *hcu);
 void host_hci_cmd_build_le_lt_key_req_reply(struct hci_lt_key_req_reply *hkr,
                                             uint8_t *dst, int dst_len);
-int host_hci_cmd_le_lt_key_req_neg_reply(uint16_t handle);
+void host_hci_cmd_build_le_lt_key_req_neg_reply(uint16_t conn_handle,
+                                                uint8_t *dst, int dst_len);
 void host_hci_cmd_build_le_conn_param_reply(struct hci_conn_param_reply *hcr,
                                             uint8_t *dst, int dst_len);
 int host_hci_cmd_le_conn_param_reply(struct hci_conn_param_reply *hcr);

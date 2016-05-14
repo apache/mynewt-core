@@ -26,6 +26,7 @@
 
 #include <os/endian.h>
 #include <util/base64.h>
+#include <util/crc16.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -206,6 +207,8 @@ shell_nlip_process(char *data, int len)
 {
     uint16_t copy_len;
     int rc;
+    struct os_mbuf *m;
+    uint16_t crc;
 
     rc = base64_decode(data, data);
     if (rc < 0) {
@@ -233,7 +236,7 @@ shell_nlip_process(char *data, int len)
     copy_len = min(g_nlip_expected_len - OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len,
             len);
 
-    rc = os_mbuf_copyinto(g_nlip_mbuf, OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len, 
+    rc = os_mbuf_copyinto(g_nlip_mbuf, OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len,
             data, copy_len);
     if (rc != 0) {
         goto err;
@@ -241,7 +244,16 @@ shell_nlip_process(char *data, int len)
 
     if (OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len == g_nlip_expected_len) {
         if (g_shell_nlip_in_func) {
-            g_shell_nlip_in_func(g_nlip_mbuf, g_shell_nlip_in_arg);
+            crc = CRC16_INITIAL_CRC;
+            for (m = g_nlip_mbuf; m; m = SLIST_NEXT(m, om_next)) {
+                crc = crc16_ccitt(crc, m->om_data, m->om_len);
+            }
+            if (crc == 0 && g_nlip_expected_len >= sizeof(crc)) {
+                os_mbuf_adj(g_nlip_mbuf, -sizeof(crc));
+                g_shell_nlip_in_func(g_nlip_mbuf, g_shell_nlip_in_arg);
+            } else {
+                os_mbuf_free_chain(g_nlip_mbuf);
+            }
         } else {
             os_mbuf_free_chain(g_nlip_mbuf);
         }
@@ -254,7 +266,7 @@ err:
     return (rc);
 }
 
-static int 
+static int
 shell_nlip_mtx(struct os_mbuf *m)
 {
 #define SHELL_NLIP_MTX_BUF_SIZE (12)
@@ -265,11 +277,14 @@ shell_nlip_mtx(struct os_mbuf *m)
     uint16_t totlen;
     uint16_t dlen;
     uint16_t off;
+    uint16_t crc;
     int rb_off;
     int elen;
     uint16_t nwritten;
     uint16_t linelen;
     int rc;
+    struct os_mbuf *tmp;
+    void *ptr;
 
     /* Convert the mbuf into a packet.
      *
@@ -277,12 +292,25 @@ shell_nlip_mtx(struct os_mbuf *m)
      * base64 encode:
      *  - total packet length (uint16_t)
      *  - data
+     *  - crc
      * base64 encoded data must be less than 122 bytes per line to
      * avoid overflows and adhere to convention.
      *
      * continuation packets are preceded by 04 20 until the entire
      * buffer has been sent.
      */
+    crc = CRC16_INITIAL_CRC;
+    for (tmp = m; tmp; tmp = SLIST_NEXT(tmp, om_next)) {
+        crc = crc16_ccitt(crc, tmp->om_data, tmp->om_len);
+    }
+    crc = htons(crc);
+    ptr = os_mbuf_extend(m, sizeof(crc));
+    if (!ptr) {
+        rc = -1;
+        goto err;
+    }
+    memcpy(ptr, &crc, sizeof(crc));
+
     totlen = OS_MBUF_PKTHDR(m)->omp_len;
     nwritten = 0;
     off = 0;
@@ -290,7 +318,7 @@ shell_nlip_mtx(struct os_mbuf *m)
     /* Start a packet */
     console_write(pkt_seq, sizeof(pkt_seq));
 
-    linelen = 0; 
+    linelen = 0;
 
     rb_off = 2;
     dlen = htons(totlen);
@@ -305,11 +333,11 @@ shell_nlip_mtx(struct os_mbuf *m)
         }
         off += dlen;
 
-        /* If the next packet will overwhelm the line length, truncate 
+        /* If the next packet will overwhelm the line length, truncate
          * this line.
          */
-        if (linelen + 
-                BASE64_ENCODE_SIZE(min(SHELL_NLIP_MTX_BUF_SIZE - rb_off, 
+        if (linelen +
+                BASE64_ENCODE_SIZE(min(SHELL_NLIP_MTX_BUF_SIZE - rb_off,
                         totlen - dlen)) >= 120) {
             elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 1);
             console_write(encodebuf, elen);
@@ -330,7 +358,7 @@ shell_nlip_mtx(struct os_mbuf *m)
 
     elen = base64_pad(encodebuf, linelen);
     console_write(encodebuf, elen);
-    
+
     console_write("\n", 1);
 
     return (0);
@@ -343,7 +371,7 @@ shell_nlip_mqueue_process(void)
 {
     struct os_mbuf *m;
 
-    /* Copy data out of the mbuf 12 bytes at a time and write it to 
+    /* Copy data out of the mbuf 12 bytes at a time and write it to
      * the console.
      */
     while (1) {
@@ -499,7 +527,7 @@ shell_help_cmd(int argc, char **argv)
     }
 
     STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
-        console_printf("%s \t", sc->sc_cmd);
+        console_printf("%9s ", sc->sc_cmd);
         if (i++ % SHELL_HELP_PER_LINE == SHELL_HELP_PER_LINE - 1) {
             console_printf("\n");
         }

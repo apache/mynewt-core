@@ -61,7 +61,7 @@ struct log bleprph_log;
 #define BLEPRPH_BLE_HS_PRIO         (1)
 
 /** bleprph task settings. */
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(200))
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(288))
 #define BLEPRPH_TASK_PRIO           (BLEPRPH_BLE_HS_PRIO + 1)
 
 struct os_eventq bleprph_evq;
@@ -186,11 +186,6 @@ bleprph_task_handler(void *unused)
     struct os_event *ev;
     struct os_callout_func *cf;
 
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    gatt_svr_init();
-
     /* Begin advertising. */
     bleprph_advertise();
 
@@ -200,7 +195,7 @@ bleprph_task_handler(void *unused)
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
             assert(cf->cf_func);
-            cf->cf_func(cf->cf_arg);
+            cf->cf_func(CF_ARG(cf));
             break;
         default:
             assert(0);
@@ -289,6 +284,11 @@ main(void)
     /* Initialize the console (for log output). */
     rc = console_init(NULL);
     assert(rc == 0);
+
+    /* Register GATT attributes (services, characteristics, and
+     * descriptors).
+     */
+    gatt_svr_init();
 
     /* Start the OS */
     os_start();

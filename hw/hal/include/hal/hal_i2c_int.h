@@ -18,8 +18,8 @@
  */
 
 
-#ifndef HAL_I2C_INT_H
-#define HAL_I2C_INT_H
+#ifndef H_HAL_I2C_INT_
+#define H_HAL_I2C_INT_
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,8 +38,7 @@ struct hal_i2c_funcs {
     int (*hi2cm_stop)       (struct hal_i2c *pi2c);
 };
 
-struct hal_i2c
-{
+struct hal_i2c {
     const struct hal_i2c_funcs *driver_api;
 };
 
@@ -50,5 +49,5 @@ bsp_get_hal_i2c_driver(enum system_device_id sysid);
 }
 #endif
 
-#endif /* HAL_I2C_INT_H */
+#endif /* H_HAL_I2C_INT_ */
 

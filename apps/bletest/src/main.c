@@ -103,7 +103,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
 #define BLETEST_CFG_FILT_DUP_ADV        (0)
-#define BLETEST_CFG_ADV_ITVL            (600000 / BLE_HCI_ADV_ITVL)
+#define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
@@ -176,7 +176,7 @@ const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] =
     0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66
 };
 
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
 /* LTK 0x4C68384139F574D836BCF34E9DFB01BF */
 const uint8_t g_bletest_LTK[16] =
 {
@@ -247,14 +247,22 @@ bletest_set_adv_data(uint8_t *dptr)
     uint8_t len;
 
     /* Place flags in first */
-    dptr[0] = 2;
+    dptr[0] = 0x02;
     dptr[1] = 0x01;     /* Flags identifier */
     dptr[2] = 0x06;
     dptr += 3;
     len = 3;
 
+    /*  Add HID service */
+    dptr[0] = 0x03;
+    dptr[1] = 0x03;
+    dptr[2] = 0x12;
+    dptr[3] = 0x18;
+    dptr += 4;
+    len += 4;
+
     /* Add local name */
-    dptr[0] = 15;   /* Length of this data, not including the length */
+    dptr[0] = 12;   /* Length of this data, not including the length */
     dptr[1] = 0x09;
     dptr[2] = 'r';
     dptr[3] = 'u';
@@ -266,12 +274,9 @@ bletest_set_adv_data(uint8_t *dptr)
     dptr[9] = '-';
     dptr[10] = '0';
     dptr[11] = '0';
-    dptr[12] = '0';
-    dptr[13] = '0';
-    dptr[14] = '0';
-    dptr[15] = '0';
-    dptr += 16;
-    len += 16;
+    dptr[12] = '7';
+    dptr += 13;
+    len += 13;
 
     /* Add local device address */
     dptr[0] = 0x08;
@@ -504,7 +509,7 @@ bletest_execute_initiator(void)
                 new_chan_map[4] = 0;
                 bletest_hci_le_set_host_chan_class(new_chan_map);
             } else if (g_bletest_state == 4) {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
                 struct hci_start_encrypt hsle;
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -518,7 +523,7 @@ bletest_execute_initiator(void)
                 }
 #endif
             } else if (g_bletest_state == 8) {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
                 struct hci_start_encrypt hsle;
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -642,7 +647,7 @@ bletest_execute_advertiser(void)
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     /* See if it is time to hand a data packet to the connection */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
         /* Do we need to send a LTK reply? */
         if (g_bletest_ltk_reply_handle) {
             //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
@@ -871,6 +876,7 @@ bletest_task_handler(void *arg)
     rc = bletest_hci_le_rd_max_datalen();
     assert(rc == 0);
 
+#if (BLE_LL_CFG_FEAT_DATA_LEN_EXT == 1)
     /* Read suggested data length */
     rc = bletest_hci_le_rd_sugg_datalen();
     assert(rc == 0);
@@ -888,9 +894,10 @@ bletest_task_handler(void *arg)
     rc = bletest_hci_le_set_datalen(0x1234, BLETEST_CFG_SUGG_DEF_TXOCTETS,
                                     BLETEST_CFG_SUGG_DEF_TXTIME);
     assert(rc != 0);
+#endif
 
     /* Encrypt a block */
-#ifdef BLE_LL_CFG_FEAT_LE_ENCRYPTION
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     rc = bletest_hci_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key,
                                 (uint8_t *)g_ble_ll_encrypt_test_plain_text);
     assert(rc == 0);
@@ -920,7 +927,7 @@ bletest_task_handler(void *arg)
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
             assert(cf->cf_func);
-            cf->cf_func(cf->cf_arg);
+            cf->cf_func(CF_ARG(cf));
             break;
         default:
             assert(0);

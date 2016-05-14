@@ -32,9 +32,7 @@ struct image_header;
 
 #define BOOT_IMAGE_NUM_NONE     0xff
 
-#define BOOT_PATH_MAIN      "/boot/main"
-#define BOOT_PATH_TEST      "/boot/test"
-#define BOOT_PATH_STATUS    "/boot/status"
+#define BOOT_PATH_STATUS    "/cfg/bst"
 
 #define BOOT_TMPBUF_SZ  256
 

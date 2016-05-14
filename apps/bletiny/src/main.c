@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -55,11 +55,9 @@
 #define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
 
 #define SHELL_TASK_PRIO         (3)
-#define SHELL_MAX_INPUT_LEN     (64)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(288))
+#define SHELL_MAX_INPUT_LEN     (128)
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(312))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
-
-static struct os_mutex bletiny_mutex;
 
 /* Our global device address (public) */
 uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
@@ -98,6 +96,8 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_MAX_DSCS               1
 #endif
 
+#define BLETINY_MAX_LTKS                4
+
 struct os_eventq bletiny_evq;
 struct os_task bletiny_task;
 bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
@@ -130,6 +130,9 @@ uint8_t bletiny_reconnect_addr[6];
 uint8_t bletiny_pref_conn_params[8];
 uint8_t bletiny_gatt_service_changed[4];
 
+struct ble_gap_ltk_params bletiny_ltks[BLETINY_MAX_LTKS];
+int bletiny_num_ltks;
+
 #define XSTR(s) STR(s)
 #define STR(s) #s
 
@@ -138,24 +141,6 @@ uint8_t bletiny_gatt_service_changed[4];
 #else
 #define BLETINY_AUTO_DEVICE_NAME    ""
 #endif
-
-void
-bletiny_lock(void)
-{
-    int rc;
-
-    rc = os_mutex_pend(&bletiny_mutex, 0xffffffff);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
-}
-
-void
-bletiny_unlock(void)
-{
-    int rc;
-
-    rc = os_mutex_release(&bletiny_mutex);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
-}
 
 static void
 bletiny_print_error(char *msg, uint16_t conn_handle,
@@ -181,16 +166,60 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
     console_printf("handle=%d peer_addr_type=%d peer_addr=",
                    desc->conn_handle, desc->peer_addr_type);
     bletiny_print_bytes(desc->peer_addr, 6);
-    console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d",
+    console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+                   "pair_alg=%d enc_enabled=%d authenticated=%d",
                    desc->conn_itvl, desc->conn_latency,
-                   desc->supervision_timeout);
+                   desc->supervision_timeout,
+                   desc->sec_state.pair_alg,
+                   desc->sec_state.enc_enabled,
+                   desc->sec_state.authenticated);
 }
 
 static void
-bletiny_print_sec_params(struct ble_gap_sec_params *sec_params)
+bletiny_print_passkey_action_parms(struct ble_gap_passkey_action *pkact)
 {
-    console_printf("pair_alg=%d enc_enabled=%d\n", sec_params->pair_alg,
-                   sec_params->enc_enabled);
+    console_printf("passkey Action Request %d\n", pkact->action);
+}
+
+static void
+bletiny_print_key_exchange_parms(struct ble_gap_key_parms *key_params)
+{
+    if (key_params->is_ours) {
+        console_printf("Our Keys Sent to Peer\n");
+    } else {
+        console_printf("Keys Received from Peer\n");
+    }
+
+    if (key_params->ltk_valid) {
+        console_printf("LTK=");
+        bletiny_print_bytes(key_params->ltk, 16);
+        console_printf("\n");
+    }
+
+    if (key_params->ediv_rand_valid) {
+        console_printf("EDIV=%u, rand=%llu ",
+                        key_params->ediv,
+                        key_params->rand_val);
+        console_printf("\n");
+    }
+
+    if (key_params->addr_valid) {
+        console_printf("Addr Type=%u -- ", key_params->addr_type);
+        bletiny_print_bytes(key_params->addr, 6);
+        console_printf("\n");
+    }
+
+    if (key_params->irk_valid) {
+        console_printf("IRK=");
+        bletiny_print_bytes(key_params->irk, 16);
+        console_printf("\n");
+    }
+
+    if (key_params->csrk_valid) {
+        console_printf("CSRK=");
+        bletiny_print_bytes(key_params->csrk, 16);
+        console_printf("\n");
+    }
 }
 
 static void
@@ -384,17 +413,17 @@ bletiny_conn_delete_idx(int idx)
         os_memblock_put(&bletiny_svc_pool, svc);
     }
 
-    bletiny_num_conns--;
-
     /* This '#if' is not strictly necessary.  It is here to prevent a spurious
      * warning from being reported.
      */
 #if NIMBLE_OPT_MAX_CONNECTIONS > 1
     int i;
-    for (i = idx; i < bletiny_num_conns; i++) {
+    for (i = idx + 1; i < bletiny_num_conns; i++) {
         bletiny_conns[i - 1] = bletiny_conns[i];
     }
 #endif
+
+    bletiny_num_conns--;
 }
 
 static struct bletiny_svc *
@@ -724,8 +753,6 @@ static int
 bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_service *service, void *arg)
 {
-    bletiny_lock();
-
     if (error != NULL) {
         bletiny_print_error("ERROR DISCOVERING SERVICE", conn_handle, error);
     } else if (service != NULL) {
@@ -733,8 +760,6 @@ bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
     } else {
         console_printf("service discovery successful\n");
     }
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -751,9 +776,7 @@ bletiny_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
         bletiny_print_error("ERROR DISCOVERING CHARACTERISTIC", conn_handle,
                              error);
     } else if (chr != NULL) {
-        bletiny_lock();
         bletiny_chr_add(conn_handle, svc_start_handle, chr);
-        bletiny_unlock();
     } else {
         console_printf("characteristic discovery successful\n");
     }
@@ -766,8 +789,6 @@ bletiny_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
                    uint16_t chr_def_handle, struct ble_gatt_dsc *dsc,
                    void *arg)
 {
-    bletiny_lock();
-
     if (error != NULL) {
         bletiny_print_error("ERROR DISCOVERING DESCRIPTOR", conn_handle,
                              error);
@@ -776,8 +797,6 @@ bletiny_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
     } else {
         console_printf("descriptor discovery successful\n");
     }
-
-    bletiny_unlock();
 
     return 0;
 }
@@ -847,7 +866,7 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
 
 static int
 bletiny_on_notify(uint16_t conn_handle, uint16_t attr_handle,
-                   uint8_t *attr_val, uint16_t attr_len, void *arg)
+                  uint8_t *attr_val, uint16_t attr_len, void *arg)
 {
     console_printf("received notification from conn_handle=%d attr=%d "
                    "len=%d value=", conn_handle, attr_handle, attr_len);
@@ -859,12 +878,56 @@ bletiny_on_notify(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 static int
+bletiny_ltk_lookup(struct ble_gap_ltk_params *ltk_params)
+{
+    struct ble_gap_ltk_params *ltk;
+    int i;
+
+    for (i = 0; i < bletiny_num_ltks; i++) {
+        ltk = bletiny_ltks + i;
+
+        if (ltk->ediv == ltk_params->ediv &&
+            ltk->rand_num == ltk_params->rand_num) {
+
+            memcpy(ltk_params->ltk, ltk->ltk, sizeof ltk_params->ltk);
+            ltk_params->authenticated = ltk->authenticated;
+
+            return 0;
+        }
+    }
+
+    return BLE_HS_ENOENT;
+}
+
+static int
+bletiny_ltk_add(uint16_t ediv, uint64_t rand_num, uint8_t *key,
+                int authenticated)
+{
+    struct ble_gap_ltk_params *ltk;
+
+    if (bletiny_num_ltks >= BLETINY_MAX_LTKS) {
+        return BLE_HS_ENOMEM;
+    }
+
+    ltk = bletiny_ltks + bletiny_num_ltks;
+    bletiny_num_ltks++;
+
+    ltk->ediv = ediv;
+    ltk->rand_num = rand_num;
+    memcpy(ltk->ltk, key, sizeof ltk->ltk);
+    ltk->authenticated = authenticated;
+
+    return 0;
+}
+
+/* XXX: LTK clear. */
+
+static int
 bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                    void *arg)
 {
     int conn_idx;
-
-    bletiny_lock();
+    int rc;
 
     switch (event) {
     case BLE_GAP_EVENT_CONN:
@@ -891,29 +954,65 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                 bletiny_start_auto_advertise();
             }
         }
-
-        break;
+        return 0;
 
     case BLE_GAP_EVENT_CONN_UPDATED:
         console_printf("connection updated; status=%d ", status);
         bletiny_print_conn_desc(ctxt->desc);
         console_printf("\n");
-        break;
+        return 0;
 
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
         console_printf("connection update request; status=%d ", status);
         *ctxt->update.self_params = *ctxt->update.peer_params;
-        break;
+        return 0;
 
     case BLE_GAP_EVENT_SECURITY:
         console_printf("security event; status=%d ", status);
-        bletiny_print_sec_params(ctxt->sec_params);
-        break;
+        bletiny_print_conn_desc(ctxt->desc);
+        console_printf("\n");
+        return 0;
+
+    case BLE_GAP_EVENT_PASSKEY_ACTION:
+        console_printf("passkey action event; status=%d ", status);
+        bletiny_print_passkey_action_parms(ctxt->passkey_action);
+        return 0;
+
+    case BLE_GAP_EVENT_LTK_REQUEST:
+        console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
+                       ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
+        rc = bletiny_ltk_lookup(ctxt->ltk_params);
+        if (rc == 0) {
+            console_printf("ltk=");
+            bletiny_print_bytes(ctxt->ltk_params->ltk,
+                                sizeof ctxt->ltk_params->ltk);
+            console_printf("\n");
+        } else {
+            console_printf("no matching ltk\n");
+        }
+        return rc;
+
+    case BLE_GAP_EVENT_KEY_EXCHANGE:
+        console_printf("key exchange event; status=%d ", status);
+        bletiny_print_key_exchange_parms(ctxt->key_params);
+
+        if (ctxt->key_params->is_ours   &&
+            ctxt->key_params->ltk_valid &&
+            ctxt->key_params->ediv_rand_valid) {
+
+            rc = bletiny_ltk_add(ctxt->key_params->ediv,
+                                 ctxt->key_params->rand_val,
+                                 ctxt->key_params->ltk,
+                                 ctxt->desc->sec_state.authenticated);
+            if (rc != 0) {
+                console_printf("error persisting LTK; status=%d\n", rc);
+            }
+        }
+        return 0;
+
+    default:
+        return 0;
     }
-
-    bletiny_unlock();
-
-    return 0;
 }
 
 static void
@@ -1249,6 +1348,23 @@ bletiny_sec_start(uint16_t conn_handle)
     return rc;
 }
 
+int
+bletiny_sec_restart(uint16_t conn_handle,
+                    uint8_t *ltk,
+                    uint16_t ediv,
+                    uint64_t rand_val,
+                    int auth)
+{
+    #if !NIMBLE_OPT_SM
+        return BLE_HS_ENOTSUP;
+    #endif
+
+    int rc;
+
+    rc = ble_gap_encryption_initiate(conn_handle, ltk, ediv, rand_val, auth);
+    return rc;
+}
+
 /**
  * BLE test task
  *
@@ -1264,8 +1380,6 @@ bletiny_task_handler(void *arg)
     rc = ble_hs_start();
     assert(rc == 0);
 
-    periph_init();
-
     ble_att_set_notify_cb(bletiny_on_notify, NULL);
 
     bletiny_start_auto_advertise();
@@ -1276,7 +1390,7 @@ bletiny_task_handler(void *arg)
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
             assert(cf->cf_func);
-            cf->cf_func(cf->cf_arg);
+            cf->cf_func(CF_ARG(cf));
             break;
         default:
             assert(0);
@@ -1350,8 +1464,8 @@ main(void)
                          "bletiny_dsc_pool");
     assert(rc == 0);
 
-    rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS, 
-                         MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data, 
+    rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS,
+                         MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data,
                          "default_mbuf_data");
     assert(rc == 0);
 
@@ -1408,8 +1522,7 @@ main(void)
     htole16(bletiny_pref_conn_params + 4, 0);
     htole16(bletiny_pref_conn_params + 6, BSWAP16(0x100));
 
-    rc = os_mutex_init(&bletiny_mutex);
-    assert(rc == 0);
+    periph_init();
 
     /* Start the OS */
     os_start();

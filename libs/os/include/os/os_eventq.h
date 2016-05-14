@@ -21,6 +21,7 @@
 #define _OS_EVENTQ_H
 
 #include <inttypes.h>
+#include <os/os_time.h>
 
 struct os_event {
     uint8_t ev_queued;
@@ -43,6 +44,7 @@ struct os_eventq {
 void os_eventq_init(struct os_eventq *);
 void os_eventq_put(struct os_eventq *, struct os_event *);
 struct os_event *os_eventq_get(struct os_eventq *);
+struct os_event *os_eventq_poll(struct os_eventq **, int, os_time_t);
 void os_eventq_remove(struct os_eventq *, struct os_event *);
 
 #endif /* _OS_EVENTQ_H */
