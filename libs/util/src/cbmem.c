@@ -160,7 +160,7 @@ cbmem_iter_next(struct cbmem *cbmem, struct cbmem_iter *iter)
         hdr = iter->ci_cur;
         iter->ci_cur = CBMEM_ENTRY_NEXT(iter->ci_cur);
 
-        if ((uint8_t *) iter->ci_cur == cbmem->c_buf_cur_end) {
+        if ((uint8_t *) iter->ci_cur >= cbmem->c_buf_cur_end) {
             iter->ci_cur = (struct cbmem_entry_hdr *) cbmem->c_buf;
             iter->ci_start = (struct cbmem_entry_hdr *) cbmem->c_buf;
         }
