@@ -29,7 +29,7 @@ environments, where power and cost are driving factors.
 
 It currently supports the following hardware platforms: 
     
-* Arduino Zero and Zero Pro
+* Arduino Zero, Zero Pro and M0 Pro
 * Nordic NRF51 and NRF52
 * Rigado BMD-300
 * STM32F3 and STMF32F4 
