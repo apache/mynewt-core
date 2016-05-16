@@ -89,7 +89,7 @@ err:
 static int
 nmgr_def_console_echo(struct nmgr_jbuf *njb)
 {
-    int echo_on = 1;
+    long long int echo_on = 1;
     int rc;
     struct json_attr_t attrs[3] = {
         [0] = {

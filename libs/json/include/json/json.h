@@ -166,8 +166,8 @@ struct json_attr_t {
     char *attribute;
     json_type type;
     union {
-        int *integer;
-        unsigned int *uinteger;
+        long long int *integer;
+        long long unsigned int *uinteger;
         double *real;
         char *string;
         bool *boolean;
@@ -176,8 +176,8 @@ struct json_attr_t {
         size_t offset;
     } addr;
     union {
-        int integer;
-        unsigned int uinteger;
+        long long int integer;
+        long long unsigned int uinteger;
         double real;
         bool boolean;
         char character;

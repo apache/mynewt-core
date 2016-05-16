@@ -38,7 +38,7 @@
 int
 imgr_file_download(struct nmgr_jbuf *njb)
 {
-    unsigned int off;
+    long long unsigned int off;
     char tmp_str[IMGMGR_NMGR_MAX_NAME + 1];
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     const struct json_attr_t dload_attr[3] = {
@@ -109,8 +109,8 @@ imgr_file_upload(struct nmgr_jbuf *njb)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     char file_name[IMGMGR_NMGR_MAX_NAME + 1];
-    unsigned int off = UINT_MAX;
-    unsigned int size = UINT_MAX;
+    long long unsigned int off = UINT_MAX;
+    long long unsigned int size = UINT_MAX;
     const struct json_attr_t off_attr[5] = {
         [0] = {
             .attribute = "off",
