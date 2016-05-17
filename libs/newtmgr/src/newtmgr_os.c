@@ -230,5 +230,7 @@ nmgr_reset(struct nmgr_jbuf *njb)
     json_encode_object_start(&njb->njb_enc);
     json_encode_object_finish(&njb->njb_enc);
 
+    nmgr_jbuf_setoerr(njb, 0);
+
     return OS_OK;
 }
