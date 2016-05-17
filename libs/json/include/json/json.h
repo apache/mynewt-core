@@ -35,18 +35,6 @@
 #define JSON_VALUE_TYPE_OBJECT (5)
 
 /**
- * For JSON decode, descriptions of the JSON values that
- * need to be parsed.
- */
-struct json_value_desc {
-    char *jv_name;
-    void *jv_ptr;
-    uint16_t jv_len;
-    uint8_t jv_type;
-    uint8_t jv_matched;
-};
-
-/**
  * For encode.  The contents of a JSON value to encode.
  */
 struct json_value {
