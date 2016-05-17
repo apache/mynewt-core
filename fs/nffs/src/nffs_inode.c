@@ -24,7 +24,6 @@
 #include "os/os_mempool.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
-#include "crc16.h"
 
 /* Partition the flash buffer into two equal halves; used for filename
  * comparisons.

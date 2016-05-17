@@ -35,18 +35,6 @@
 #define JSON_VALUE_TYPE_OBJECT (5)
 
 /**
- * For JSON decode, descriptions of the JSON values that
- * need to be parsed.
- */
-struct json_value_desc {
-    char *jv_name;
-    void *jv_ptr;
-    uint16_t jv_len;
-    uint8_t jv_type;
-    uint8_t jv_matched;
-};
-
-/**
  * For encode.  The contents of a JSON value to encode.
  */
 struct json_value {
@@ -128,8 +116,8 @@ typedef enum {
 } json_type;
 
 struct json_enum_t {
-    char        *name;
-    int                value;
+    char *name;
+    long long int value;
 };
 
 struct json_array_t {
@@ -146,10 +134,10 @@ struct json_array_t {
             int storelen;
         } strings;
         struct {
-            int *store;
+            long long int *store;
         } integers;
         struct {
-            unsigned int *store;
+            long long unsigned int *store;
         } uintegers;
         struct {
             double *store;
@@ -166,8 +154,8 @@ struct json_attr_t {
     char *attribute;
     json_type type;
     union {
-        int *integer;
-        unsigned int *uinteger;
+        long long int *integer;
+        long long unsigned int *uinteger;
         double *real;
         char *string;
         bool *boolean;
@@ -176,8 +164,8 @@ struct json_attr_t {
         size_t offset;
     } addr;
     union {
-        int integer;
-        unsigned int uinteger;
+        long long int integer;
+        long long unsigned int uinteger;
         double real;
         bool boolean;
         char character;

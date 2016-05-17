@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -19,6 +19,10 @@
 
 #ifndef H_UTIL_FLASH_MAP_
 #define H_UTIL_FLASH_MAP_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  *
@@ -92,5 +96,9 @@ int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
  */
 struct nffs_area_desc;
 int flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* H_UTIL_FLASH_MAP_ */

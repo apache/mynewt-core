@@ -214,27 +214,90 @@ ble_att_svr_pullup_req_base(struct os_mbuf **om, int base_len,
 }
 
 static int
-ble_att_svr_read(uint16_t conn_handle, struct ble_att_svr_entry *entry,
-                 struct ble_att_svr_access_ctxt *ctxt, uint8_t *out_att_err)
+ble_att_svr_get_sec_state(uint16_t conn_handle,
+                          struct ble_gap_sec_state *out_sec_state)
+{
+    struct ble_hs_conn *conn;
+
+    ble_hs_lock();
+    conn = ble_hs_conn_find(conn_handle);
+    if (conn != NULL) {
+        *out_sec_state = conn->bhc_sec_state;
+    }
+    ble_hs_unlock();
+
+    if (conn == NULL) {
+        return BLE_HS_ENOTCONN;
+    } else {
+        return 0;
+    }
+}
+
+static int
+ble_att_svr_check_security(uint16_t conn_handle,
+                           struct ble_att_svr_entry *entry,
+                           uint8_t *out_att_err)
+{
+    struct ble_gap_sec_state sec_state;
+    int rc;
+
+    if (!(entry->ha_flags & (HA_FLAG_ENC_REQ |
+                             HA_FLAG_AUTHENTICATION_REQ |
+                             HA_FLAG_AUTHORIZATION_REQ))) {
+
+        return 0;
+    }
+
+    rc = ble_att_svr_get_sec_state(conn_handle, &sec_state);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (entry->ha_flags & HA_FLAG_ENC_REQ && !sec_state.enc_enabled) {
+        /* XXX: Check security database; if required key present, respond with
+         * insufficient encryption error code.
+         */
+        *out_att_err = BLE_ATT_ERR_INSUFFICIENT_AUTHENT;
+        return BLE_HS_ATT_ERR(*out_att_err);
+    }
+
+    if (entry->ha_flags & HA_FLAG_AUTHENTICATION_REQ &&
+        !sec_state.authenticated) {
+
+        *out_att_err = BLE_ATT_ERR_INSUFFICIENT_AUTHENT;
+        return BLE_HS_ATT_ERR(*out_att_err);
+    }
+
+    if (entry->ha_flags & HA_FLAG_AUTHORIZATION_REQ) {
+        /* XXX: Prompt user for authorization. */
+    }
+
+    return 0;
+}
+
+static int
+ble_att_svr_read(uint16_t conn_handle,
+                 struct ble_att_svr_entry *entry,
+                 struct ble_att_svr_access_ctxt *ctxt,
+                 uint8_t *out_att_err)
 {
     uint8_t att_err;
     int rc;
 
-    if (conn_handle != BLE_HS_CONN_HANDLE_NONE &&
-        !(entry->ha_flags & HA_FLAG_PERM_READ)) {
+    att_err = 0;    /* Silence gcc warning. */
 
-        att_err = BLE_ATT_ERR_READ_NOT_PERMITTED;
-        rc = BLE_HS_ENOTSUP;
-        goto err;
+    if (conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+        if (!(entry->ha_flags & HA_FLAG_PERM_READ)) {
+            att_err = BLE_ATT_ERR_READ_NOT_PERMITTED;
+            rc = BLE_HS_ENOTSUP;
+            goto err;
+        }
+
+        rc = ble_att_svr_check_security(conn_handle, entry, &att_err);
+        if (rc != 0) {
+            goto err;
+        }
     }
-
-    if (entry->ha_cb == NULL) {
-        att_err = BLE_ATT_ERR_UNLIKELY;
-        rc = BLE_HS_ENOTSUP;
-        goto err;
-    }
-
-    /* XXX: Check security. */
 
     BLE_HS_DBG_ASSERT(entry->ha_cb != NULL);
     rc = entry->ha_cb(conn_handle, entry->ha_handle_id,
@@ -265,7 +328,9 @@ ble_att_svr_read_handle(uint16_t conn_handle, uint16_t attr_handle,
 
     entry = ble_att_svr_find_by_handle(attr_handle);
     if (entry == NULL) {
-        *out_att_err = BLE_ATT_ERR_INVALID_HANDLE;
+        if (out_att_err != NULL) {
+            *out_att_err = BLE_ATT_ERR_INVALID_HANDLE;
+        }
         return BLE_HS_ENOENT;
     }
 
@@ -2147,12 +2212,12 @@ ble_att_svr_prep_find_prev(struct ble_att_svr_conn *basc, uint16_t handle,
 }
 
 void
-ble_att_svr_prep_clear(struct ble_att_svr_conn *basc)
+ble_att_svr_prep_clear(struct ble_att_prep_entry_list *prep_list)
 {
     struct ble_att_prep_entry *entry;
 
-    while ((entry = SLIST_FIRST(&basc->basc_prep_list)) != NULL) {
-        SLIST_REMOVE_HEAD(&basc->basc_prep_list, bape_next);
+    while ((entry = SLIST_FIRST(prep_list)) != NULL) {
+        SLIST_REMOVE_HEAD(prep_list, bape_next);
         ble_att_svr_prep_free(entry);
     }
 }
@@ -2161,14 +2226,15 @@ ble_att_svr_prep_clear(struct ble_att_svr_conn *basc)
  * @return                      0 on success; ATT error code on failure.
  */
 static int
-ble_att_svr_prep_validate(struct ble_att_svr_conn *basc, uint16_t *err_handle)
+ble_att_svr_prep_validate(struct ble_att_prep_entry_list *prep_list,
+                          uint16_t *err_handle)
 {
     struct ble_att_prep_entry *entry;
     struct ble_att_prep_entry *prev;
     int cur_len;
 
     prev = NULL;
-    SLIST_FOREACH(entry, &basc->basc_prep_list, bape_next) {
+    SLIST_FOREACH(entry, prep_list, bape_next) {
         if (prev == NULL || prev->bape_handle != entry->bape_handle) {
             /* Ensure attribute write starts at offset 0. */
             if (entry->bape_offset != 0) {
@@ -2201,7 +2267,9 @@ ble_att_svr_prep_validate(struct ble_att_svr_conn *basc, uint16_t *err_handle)
  * @return                      0 on success; ATT error code on failure.
  */
 static int
-ble_att_svr_prep_write(struct ble_hs_conn *conn, uint16_t *err_handle)
+ble_att_svr_prep_write(uint16_t conn_handle,
+                       struct ble_att_prep_entry_list *prep_list,
+                       uint16_t *err_handle)
 {
     struct ble_att_svr_access_ctxt ctxt;
     struct ble_att_prep_entry *entry;
@@ -2215,7 +2283,7 @@ ble_att_svr_prep_write(struct ble_hs_conn *conn, uint16_t *err_handle)
     *err_handle = 0; /* Silence unnecessary warning. */
 
     /* First, validate the contents of the prepare queue. */
-    rc = ble_att_svr_prep_validate(&conn->bhc_att_svr, err_handle);
+    rc = ble_att_svr_prep_validate(prep_list, err_handle);
     if (rc != 0) {
         return rc;
     }
@@ -2224,7 +2292,7 @@ ble_att_svr_prep_write(struct ble_hs_conn *conn, uint16_t *err_handle)
 
     /* Contents are valid; perform the writes. */
     buf_off = 0;
-    entry = SLIST_FIRST(&conn->bhc_att_svr.basc_prep_list);
+    entry = SLIST_FIRST(prep_list);
     while (entry != NULL) {
         next = SLIST_NEXT(entry, bape_next);
 
@@ -2244,7 +2312,7 @@ ble_att_svr_prep_write(struct ble_hs_conn *conn, uint16_t *err_handle)
 
             ctxt.attr_data = flat_buf;
             ctxt.data_len = buf_off;
-            rc = ble_att_svr_write(conn->bhc_handle, attr, &ctxt, &att_err);
+            rc = ble_att_svr_write(conn_handle, attr, &ctxt, &att_err);
             if (rc != 0) {
                 *err_handle = entry->bape_handle;
                 return att_err;
@@ -2441,6 +2509,7 @@ ble_att_svr_rx_exec_write(uint16_t conn_handle, struct os_mbuf **rxom)
     return BLE_HS_ENOTSUP;
 #endif
 
+    struct ble_att_prep_entry_list prep_list;
     struct ble_att_exec_write_req req;
     struct ble_hs_conn *conn;
     struct os_mbuf *txom;
@@ -2475,18 +2544,29 @@ done:
         if (conn == NULL) {
             rc = BLE_HS_ENOTCONN;
         } else {
+            /* Extract the list of prepared writes from the connection so
+             * that they can be processed after the mutex is unlocked.  They
+             * aren't processed now because attribute writes involve executing
+             * an application callback.
+             */
+            prep_list = conn->bhc_att_svr.basc_prep_list;
+            SLIST_INIT(&conn->bhc_att_svr.basc_prep_list);
+        }
+        ble_hs_unlock();
+
+        if (conn != NULL) {
             if (req.baeq_flags & BLE_ATT_EXEC_WRITE_F_CONFIRM) {
                 /* Perform attribute writes. */
-                att_err = ble_att_svr_prep_write(conn, &err_handle);
+                att_err = ble_att_svr_prep_write(conn_handle, &prep_list,
+                                                 &err_handle);
                 if (att_err != 0) {
                     rc = BLE_HS_EAPP;
                 }
             }
 
-            /* Erase all prep entries. */
-            ble_att_svr_prep_clear(&conn->bhc_att_svr);
+            /* Free the prep entries. */
+            ble_att_svr_prep_clear(&prep_list);
         }
-        ble_hs_unlock();
     }
 
     rc = ble_att_svr_tx_rsp(conn_handle, rc, txom, BLE_ATT_OP_EXEC_WRITE_REQ,

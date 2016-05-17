@@ -23,7 +23,6 @@
 #include "testutil/testutil.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
-#include "crc16.h"
 
 struct nffs_hash_entry *
 nffs_block_entry_alloc(void)

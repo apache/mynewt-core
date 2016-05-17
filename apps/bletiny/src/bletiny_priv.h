@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -98,10 +98,15 @@ const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
 char *parse_arg_find(char *key);
 long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
+uint64_t parse_arg_uint64_bounds(char *name, uint64_t min,
+                                 uint64_t max, int *out_status);
 long parse_arg_long(char *name, int *staus);
+uint8_t parse_arg_bool(char *name, int *status);
+uint8_t parse_arg_uint8(char *name, int *status);
 uint16_t parse_arg_uint16(char *name, int *status);
 uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);
+uint64_t parse_arg_uint64(char *name, int *out_status);
 int parse_arg_kv(char *name, struct kv_pair *kvs);
 int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
@@ -162,6 +167,8 @@ int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
 int bletiny_show_rssi(uint16_t conn_handle);
 int bletiny_sec_start(uint16_t conn_handle);
+int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
+                        uint64_t rand_val, int auth);
 
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \

@@ -147,8 +147,8 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 /* now test the decode on a string */
 TEST_CASE(test_json_simple_decode){
     struct test_jbuf tjb; 
-    unsigned int uint_val;
-    int int_val;
+    long long unsigned int uint_val;
+    long long int int_val;
     bool bool_val;
     char string1[16];
     char string2[16];

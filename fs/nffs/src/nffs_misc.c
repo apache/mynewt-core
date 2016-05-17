@@ -21,7 +21,6 @@
 #include "os/os_malloc.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
-#include "crc16.h"
 
 /**
  * Determines if the file system contains a valid root directory.  For the root

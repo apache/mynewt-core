@@ -150,8 +150,8 @@ static int
 imgr_upload(struct nmgr_jbuf *njb)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
-    unsigned int off = UINT_MAX;
-    unsigned int size = UINT_MAX;
+    long long unsigned int off = UINT_MAX;
+    long long unsigned int size = UINT_MAX;
     const struct json_attr_t off_attr[4] = {
         [0] = {
             .attribute = "off",

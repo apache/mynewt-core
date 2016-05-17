@@ -21,11 +21,16 @@
 #include <os/endian.h>
 
 #include <assert.h>
+#include <string.h>
+
+#include <hal/hal_system.h>
 
 #include <newtmgr/newtmgr.h>
 #include <util/datetime.h>
 
-#include <string.h>
+#include "newtmgr_priv.h"
+
+static struct os_callout_func nmgr_reset_callout;
 
 int
 nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
@@ -205,5 +210,25 @@ out:
     JSON_VALUE_INT(&jv, rc);
     json_encode_object_entry(&njb->njb_enc, "rc", &jv);
     json_encode_object_finish(&njb->njb_enc);
+    return OS_OK;
+}
+
+static void
+nmgr_reset_tmo(void *arg)
+{
+    system_reset();
+}
+
+int
+nmgr_reset(struct nmgr_jbuf *njb)
+{
+    if (nmgr_reset_callout.cf_func == NULL) {
+        os_callout_func_init(&nmgr_reset_callout, &g_nmgr_evq,
+          nmgr_reset_tmo, NULL);
+    }
+    os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
+    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_finish(&njb->njb_enc);
+
     return OS_OK;
 }

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,8 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef _HAL_OS_TICK_H_
-#define _HAL_OS_TICK_H_
+#ifndef H_HAL_OS_TICK_
+#define H_HAL_OS_TICK_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <os/os_time.h>
 
@@ -32,4 +36,9 @@ void os_tick_init(uint32_t os_ticks_per_sec, int prio);
  */
 void os_tick_idle(os_time_t n);
 
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* H_HAL_OS_TICK_ */

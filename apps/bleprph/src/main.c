@@ -43,7 +43,7 @@
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
 /** Mbuf settings. */
-#define MBUF_NUM_MBUFS      (8)
+#define MBUF_NUM_MBUFS      (12)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -61,7 +61,7 @@ struct log bleprph_log;
 #define BLEPRPH_BLE_HS_PRIO         (1)
 
 /** bleprph task settings. */
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(200))
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
 #define BLEPRPH_TASK_PRIO           (BLEPRPH_BLE_HS_PRIO + 1)
 
 struct os_eventq bleprph_evq;
@@ -185,11 +185,10 @@ bleprph_task_handler(void *unused)
 {
     struct os_event *ev;
     struct os_callout_func *cf;
+    int rc;
 
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    gatt_svr_init();
+    rc = ble_hs_start();
+    assert(rc == 0);
 
     /* Begin advertising. */
     bleprph_advertise();
@@ -200,7 +199,7 @@ bleprph_task_handler(void *unused)
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
             assert(cf->cf_func);
-            cf->cf_func(cf->cf_arg);
+            cf->cf_func(CF_ARG(cf));
             break;
         default:
             assert(0);
@@ -289,6 +288,11 @@ main(void)
     /* Initialize the console (for log output). */
     rc = console_init(NULL);
     assert(rc == 0);
+
+    /* Register GATT attributes (services, characteristics, and
+     * descriptors).
+     */
+    gatt_svr_init();
 
     /* Start the OS */
     os_start();

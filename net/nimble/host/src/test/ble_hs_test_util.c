@@ -23,6 +23,7 @@
 #include "testutil/testutil.h"
 #include "nimble/ble.h"
 #include "nimble/hci_common.h"
+#include "nimble/hci_transport.h"
 #include "host/host_hci.h"
 #include "ble_hs_test_util.h"
 
@@ -43,14 +44,86 @@ os_membuf_t ble_hs_test_util_mbuf_mpool_data[BLE_HS_TEST_UTIL_MEMPOOL_SIZE];
 struct os_mbuf_pool ble_hs_test_util_mbuf_pool;
 struct os_mempool ble_hs_test_util_mbuf_mpool;
 
-struct os_mbuf *ble_hs_test_util_prev_tx;
+static STAILQ_HEAD(, os_mbuf_pkthdr) ble_hs_test_util_prev_tx_queue;
+struct os_mbuf *ble_hs_test_util_prev_tx_cur;
 
-#define BLE_HS_TEST_UTIL_MAX_PREV_HCI_TXES      64
+#define BLE_HS_TEST_UTIL_PREV_HCI_TX_CNT      64
 static uint8_t
-ble_hs_test_util_prev_hci_tx[BLE_HS_TEST_UTIL_MAX_PREV_HCI_TXES][260];
+ble_hs_test_util_prev_hci_tx[BLE_HS_TEST_UTIL_PREV_HCI_TX_CNT][260];
 int ble_hs_test_util_num_prev_hci_txes;
 
 uint8_t ble_hs_test_util_cur_hci_tx[260];
+
+void
+ble_hs_test_util_prev_tx_enqueue(struct os_mbuf *om)
+{
+    struct os_mbuf_pkthdr *omp;
+
+    assert(OS_MBUF_IS_PKTHDR(om));
+
+    omp = OS_MBUF_PKTHDR(om);
+    if (STAILQ_EMPTY(&ble_hs_test_util_prev_tx_queue)) {
+        STAILQ_INSERT_HEAD(&ble_hs_test_util_prev_tx_queue, omp, omp_next);
+    } else {
+        STAILQ_INSERT_TAIL(&ble_hs_test_util_prev_tx_queue, omp, omp_next);
+    }
+}
+
+struct os_mbuf *
+ble_hs_test_util_prev_tx_dequeue(void)
+{
+    struct os_mbuf_pkthdr *omp;
+
+    os_mbuf_free_chain(ble_hs_test_util_prev_tx_cur);
+
+    omp = STAILQ_LAST(&ble_hs_test_util_prev_tx_queue, os_mbuf_pkthdr,
+                      omp_next);
+    if (omp != NULL) {
+        STAILQ_REMOVE(&ble_hs_test_util_prev_tx_queue, omp, os_mbuf_pkthdr,
+                      omp_next);
+        ble_hs_test_util_prev_tx_cur = OS_MBUF_PKTHDR_TO_MBUF(omp);
+    } else {
+        ble_hs_test_util_prev_tx_cur = NULL;
+    }
+    return ble_hs_test_util_prev_tx_cur;
+}
+
+struct os_mbuf *
+ble_hs_test_util_prev_tx_dequeue_pullup(void)
+{
+    struct os_mbuf *om;
+
+    om = ble_hs_test_util_prev_tx_dequeue();
+    if (om != NULL) {
+        om = os_mbuf_pullup(om, OS_MBUF_PKTLEN(om));
+        TEST_ASSERT_FATAL(om != NULL);
+        ble_hs_test_util_prev_tx_cur = om;
+    }
+
+    return om;
+}
+
+int
+ble_hs_test_util_prev_tx_queue_sz(void)
+{
+    struct os_mbuf_pkthdr *omp;
+    int cnt;
+
+    cnt = 0;
+    STAILQ_FOREACH(omp, &ble_hs_test_util_prev_tx_queue, omp_next) {
+        cnt++;
+    }
+
+    return cnt;
+}
+
+void
+ble_hs_test_util_prev_tx_queue_clear(void)
+{
+    while (!STAILQ_EMPTY(&ble_hs_test_util_prev_tx_queue)) {
+        ble_hs_test_util_prev_tx_dequeue();
+    }
+}
 
 void *
 ble_hs_test_util_get_first_hci_tx(void)
@@ -92,7 +165,7 @@ void
 ble_hs_test_util_enqueue_hci_tx(void *cmd)
 {
     TEST_ASSERT_FATAL(ble_hs_test_util_num_prev_hci_txes <
-                      BLE_HS_TEST_UTIL_MAX_PREV_HCI_TXES);
+                      BLE_HS_TEST_UTIL_PREV_HCI_TX_CNT);
     memcpy(ble_hs_test_util_prev_hci_tx + ble_hs_test_util_num_prev_hci_txes,
            cmd, 260);
 
@@ -103,6 +176,29 @@ void
 ble_hs_test_util_prev_hci_tx_clear(void)
 {
     ble_hs_test_util_num_prev_hci_txes = 0;
+}
+
+static void
+ble_hs_test_util_rx_hci_evt(uint8_t *evt)
+{
+    uint8_t *evbuf;
+    int totlen;
+    int rc;
+
+    totlen = BLE_HCI_EVENT_HDR_LEN + evt[1];
+    TEST_ASSERT_FATAL(totlen <= UINT8_MAX + BLE_HCI_EVENT_HDR_LEN);
+
+    if (os_started()) {
+        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        TEST_ASSERT_FATAL(evbuf != NULL);
+
+        memcpy(evbuf, evt, totlen);
+        rc = ble_hci_transport_ctlr_event_send(evbuf);
+    } else {
+        rc = host_hci_event_rx(evt);
+    }
+
+    TEST_ASSERT_FATAL(rc == 0);
 }
 
 void
@@ -211,12 +307,11 @@ ble_hs_test_util_set_ack_seq(struct ble_hs_test_util_phony_ack *acks)
     ble_hci_set_phony_ack_cb(ble_hs_test_util_phony_ack_cb);
 }
 
-struct ble_hs_conn *
+void
 ble_hs_test_util_create_conn(uint16_t handle, uint8_t *addr,
                              ble_gap_conn_fn *cb, void *cb_arg)
 {
     struct hci_le_conn_complete evt;
-    struct ble_hs_conn *conn;
     int rc;
 
     ble_hs_test_util_set_ack(
@@ -237,12 +332,7 @@ ble_hs_test_util_create_conn(uint16_t handle, uint8_t *addr,
     rc = ble_gap_rx_conn_complete(&evt);
     TEST_ASSERT(rc == 0);
 
-    conn = ble_hs_conn_find(handle);
-    TEST_ASSERT_FATAL(conn != NULL);
-
     ble_hs_test_util_prev_hci_tx_clear();
-
-    return conn;
 }
 
 int
@@ -446,7 +536,7 @@ ble_hs_test_util_security_initiate(uint16_t conn_handle, uint8_t hci_status)
 }
 
 int
-ble_hs_test_util_l2cap_rx_first_frag(struct ble_hs_conn *conn, uint16_t cid,
+ble_hs_test_util_l2cap_rx_first_frag(uint16_t conn_handle, uint16_t cid,
                                      struct hci_data_hdr *hci_hdr,
                                      struct os_mbuf *om)
 {
@@ -455,24 +545,35 @@ ble_hs_test_util_l2cap_rx_first_frag(struct ble_hs_conn *conn, uint16_t cid,
     om = ble_l2cap_prepend_hdr(om, cid, OS_MBUF_PKTLEN(om));
     TEST_ASSERT_FATAL(om != NULL);
 
-    rc = ble_hs_test_util_l2cap_rx(conn, hci_hdr, om);
+    rc = ble_hs_test_util_l2cap_rx(conn_handle, hci_hdr, om);
     return rc;
 }
 
 int
-ble_hs_test_util_l2cap_rx(struct ble_hs_conn *conn,
+ble_hs_test_util_l2cap_rx(uint16_t conn_handle,
                           struct hci_data_hdr *hci_hdr,
                           struct os_mbuf *om)
 {
+    struct ble_hs_conn *conn;
     ble_l2cap_rx_fn *rx_cb;
     struct os_mbuf *rx_buf;
     int rc;
 
-    rc = ble_l2cap_rx(conn, hci_hdr, om, &rx_cb, &rx_buf);
-    if (rc == 0) {
+    ble_hs_lock();
+
+    conn = ble_hs_conn_find(conn_handle);
+    if (conn != NULL) {
+        rc = ble_l2cap_rx(conn, hci_hdr, om, &rx_cb, &rx_buf);
+    }
+
+    ble_hs_unlock();
+
+    if (conn == NULL) {
+        rc = BLE_HS_ENOTCONN;
+    } else if (rc == 0) {
         TEST_ASSERT_FATAL(rx_cb != NULL);
         TEST_ASSERT_FATAL(rx_buf != NULL);
-        rc = rx_cb(conn->bhc_handle, &rx_buf);
+        rc = rx_cb(conn_handle, &rx_buf);
         os_mbuf_free_chain(rx_buf);
     } else if (rc == BLE_HS_EAGAIN) {
         /* More fragments on the way. */
@@ -483,8 +584,7 @@ ble_hs_test_util_l2cap_rx(struct ble_hs_conn *conn,
 }
 
 int
-ble_hs_test_util_l2cap_rx_payload_flat(struct ble_hs_conn *conn,
-                                       struct ble_l2cap_chan *chan,
+ble_hs_test_util_l2cap_rx_payload_flat(uint16_t conn_handle, uint16_t cid,
                                        const void *data, int len)
 {
     struct hci_data_hdr hci_hdr;
@@ -498,21 +598,19 @@ ble_hs_test_util_l2cap_rx_payload_flat(struct ble_hs_conn *conn,
     TEST_ASSERT_FATAL(rc == 0);
 
     hci_hdr.hdh_handle_pb_bc =
-        host_hci_handle_pb_bc_join(conn->bhc_handle,
+        host_hci_handle_pb_bc_join(conn_handle,
                                    BLE_HCI_PB_FIRST_FLUSH, 0);
     hci_hdr.hdh_len = OS_MBUF_PKTHDR(om)->omp_len;
 
-    rc = ble_hs_test_util_l2cap_rx_first_frag(conn, chan->blc_cid, &hci_hdr,
-                                              om);
+    rc = ble_hs_test_util_l2cap_rx_first_frag(conn_handle, cid, &hci_hdr, om);
     return rc;
 }
 
 void
-ble_hs_test_util_rx_att_err_rsp(struct ble_hs_conn *conn, uint8_t req_op,
+ble_hs_test_util_rx_att_err_rsp(uint16_t conn_handle, uint8_t req_op,
                                 uint8_t error_code, uint16_t err_handle)
 {
     struct ble_att_error_rsp rsp;
-    struct ble_l2cap_chan *chan;
     uint8_t buf[BLE_ATT_ERROR_RSP_SZ];
     int rc;
 
@@ -522,10 +620,8 @@ ble_hs_test_util_rx_att_err_rsp(struct ble_hs_conn *conn, uint8_t req_op,
 
     ble_att_error_rsp_write(buf, sizeof buf, &rsp);
 
-    chan = ble_hs_conn_chan_find(conn, BLE_L2CAP_CID_ATT);
-    TEST_ASSERT_FATAL(chan != NULL);
-
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
 }
 
@@ -573,7 +669,6 @@ ble_hs_test_util_rx_num_completed_pkts_event(
     uint8_t buf[1024];
     int num_entries;
     int off;
-    int rc;
     int i;
 
     /* Count number of entries. */
@@ -598,8 +693,21 @@ ble_hs_test_util_rx_num_completed_pkts_event(
 
     buf[1] = off - 2;
 
-    rc = host_hci_event_rx(buf);
-    TEST_ASSERT(rc == 0);
+    ble_hs_test_util_rx_hci_evt(buf);
+}
+
+void
+ble_hs_test_util_rx_disconn_complete_event(struct hci_disconn_complete *evt)
+{
+    uint8_t buf[BLE_HCI_EVENT_HDR_LEN + BLE_HCI_EVENT_DISCONN_COMPLETE_LEN];
+
+    buf[0] = BLE_HCI_EVCODE_DISCONN_CMP;
+    buf[1] = BLE_HCI_EVENT_DISCONN_COMPLETE_LEN;
+    buf[2] = evt->status;
+    htole16(buf + 3, evt->connection_handle);
+    buf[5] = evt->reason;
+
+    ble_hs_test_util_rx_hci_evt(buf);
 }
 
 uint8_t *
@@ -644,6 +752,8 @@ ble_hs_test_util_init(void)
     tu_init();
 
     os_eventq_init(&ble_hs_test_util_evq);
+    STAILQ_INIT(&ble_hs_test_util_prev_tx_queue);
+    ble_hs_test_util_prev_tx_cur = NULL;
 
     os_msys_reset();
     stats_module_reset();
@@ -674,6 +784,5 @@ ble_hs_test_util_init(void)
     /* Don't limit a connection's ability to transmit; simplify tests. */
     ble_hs_cfg.max_outstanding_pkts_per_conn = 0;
 
-    ble_hs_test_util_prev_tx = NULL;
     ble_hs_test_util_prev_hci_tx_clear();
 }

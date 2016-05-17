@@ -21,7 +21,6 @@
 #include "testutil/testutil.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
-#include "crc16.h"
 
 static int
 nffs_write_fill_crc16_overwrite(struct nffs_disk_block *disk_block,

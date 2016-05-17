@@ -41,29 +41,39 @@ static uint16_t ble_att_svr_test_n_attr_handle;
 static uint8_t ble_att_svr_test_attr_n[1024];
 static int ble_att_svr_test_attr_n_len;
 
-static void
-ble_att_svr_test_misc_init(struct ble_hs_conn **conn,
-                           struct ble_l2cap_chan **att_chan, uint16_t mtu)
+/**
+ * @return                      The handle of the new test connection.
+ */
+static uint16_t
+ble_att_svr_test_misc_init(uint16_t mtu)
 {
+    struct ble_l2cap_chan *chan;
+    struct ble_hs_conn *conn;
+    int rc;
+
     ble_hs_test_util_init();
 
     ble_hs_test_util_create_conn(2, ((uint8_t[]){2,3,4,5,6,7,8,9}),
                                  NULL, NULL);
-    *conn = ble_hs_conn_find(2);
-    TEST_ASSERT_FATAL(*conn != NULL);
 
-    *att_chan = ble_hs_conn_chan_find(*conn, BLE_L2CAP_CID_ATT);
-    TEST_ASSERT_FATAL(*att_chan != NULL);
+    ble_hs_lock();
+
+    rc = ble_hs_misc_conn_chan_find(2, BLE_L2CAP_CID_ATT, &conn, &chan);
+    TEST_ASSERT_FATAL(rc == 0);
 
     if (mtu != 0) {
-        (*att_chan)->blc_my_mtu = mtu;
-        (*att_chan)->blc_peer_mtu = mtu;
-        (*att_chan)->blc_flags |= BLE_L2CAP_CHAN_F_TXED_MTU;
+        chan->blc_my_mtu = mtu;
+        chan->blc_peer_mtu = mtu;
+        chan->blc_flags |= BLE_L2CAP_CHAN_F_TXED_MTU;
     }
+
+    ble_hs_unlock();
 
     ble_att_svr_test_attr_r_1_len = 0;
     ble_att_svr_test_attr_r_2_len = 0;
     ble_att_svr_test_attr_w_1_len = 0;
+
+    return 2;
 }
 
 static int
@@ -297,17 +307,19 @@ ble_att_svr_test_misc_verify_w_2(void *data, int data_len)
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_err_rsp(struct ble_l2cap_chan *chan,
-                                        uint8_t req_op, uint16_t handle,
+ble_att_svr_test_misc_verify_tx_err_rsp(uint8_t req_op, uint16_t handle,
                                         uint8_t error_code)
 {
     struct ble_att_error_rsp rsp;
+    struct os_mbuf *om;
     uint8_t buf[BLE_ATT_ERROR_RSP_SZ];
     int rc;
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0, sizeof buf, buf);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, sizeof buf, buf);
     TEST_ASSERT(rc == 0);
 
     ble_att_error_rsp_parse(buf, sizeof buf, &rsp);
@@ -315,68 +327,62 @@ ble_att_svr_test_misc_verify_tx_err_rsp(struct ble_l2cap_chan *chan,
     TEST_ASSERT(rsp.baep_req_op == req_op);
     TEST_ASSERT(rsp.baep_handle == handle);
     TEST_ASSERT(rsp.baep_error_code == error_code);
-
-    /* Remove the error response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx, BLE_ATT_ERROR_RSP_SZ);
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_read_rsp(struct ble_l2cap_chan *chan,
-                                         uint8_t *attr_data, int attr_len)
+ble_att_svr_test_misc_verify_tx_read_rsp(uint8_t *attr_data, int attr_len)
 {
+    struct os_mbuf *om;
     uint8_t u8;
     int rc;
     int i;
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0, 1, &u8);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, 1, &u8);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(u8 == BLE_ATT_OP_READ_RSP);
 
     for (i = 0; i < attr_len; i++) {
-        rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, i + 1, 1, &u8);
+        rc = os_mbuf_copydata(om, i + 1, 1, &u8);
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(u8 == attr_data[i]);
     }
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, i + 1, 1, &u8);
+    rc = os_mbuf_copydata(om, i + 1, 1, &u8);
     TEST_ASSERT(rc != 0);
-
-    /* Remove the read response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx, attr_len + 1);
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_read_blob_rsp(struct ble_l2cap_chan *chan,
-                                              uint8_t *attr_data, int attr_len)
+ble_att_svr_test_misc_verify_tx_read_blob_rsp(uint8_t *attr_data, int attr_len)
 {
+    struct os_mbuf *om;
     uint8_t u8;
     int rc;
     int i;
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0, 1, &u8);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, 1, &u8);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(u8 == BLE_ATT_OP_READ_BLOB_RSP);
 
     for (i = 0; i < attr_len; i++) {
-        rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, i + 1, 1, &u8);
+        rc = os_mbuf_copydata(om, i + 1, 1, &u8);
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(u8 == attr_data[i]);
     }
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, i + 1, 1, &u8);
+    rc = os_mbuf_copydata(om, i + 1, 1, &u8);
     TEST_ASSERT(rc != 0);
-
-    /* Remove the read response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx, attr_len + 1);
 }
 
 static void
-ble_att_svr_test_misc_rx_read_mult_req(struct ble_hs_conn *conn,
-                                       struct ble_l2cap_chan *chan,
+ble_att_svr_test_misc_rx_read_mult_req(uint16_t conn_handle,
                                        uint16_t *handles, int num_handles,
                                        int success)
 {
@@ -393,7 +399,8 @@ ble_att_svr_test_misc_rx_read_mult_req(struct ble_hs_conn *conn,
         off += 2;
     }
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, off);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, off);
     if (success) {
         TEST_ASSERT(rc == 0);
     } else {
@@ -402,10 +409,13 @@ ble_att_svr_test_misc_rx_read_mult_req(struct ble_hs_conn *conn,
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_read_mult_rsp(struct ble_l2cap_chan *chan,
+ble_att_svr_test_misc_verify_tx_read_mult_rsp(uint16_t conn_handle,
                                               struct ble_gatt_attr *attrs,
                                               int num_attrs)
 {
+    struct ble_l2cap_chan *chan;
+    struct os_mbuf *om;
+    uint16_t mtu;
     uint8_t *attr_value;
     uint8_t u8;
     int rc;
@@ -415,19 +425,27 @@ ble_att_svr_test_misc_verify_tx_read_mult_rsp(struct ble_l2cap_chan *chan,
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0, 1, &u8);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, 1, &u8);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(u8 == BLE_ATT_OP_READ_MULT_RSP);
+
+    ble_hs_lock();
+
+    rc = ble_hs_misc_conn_chan_find(conn_handle, BLE_L2CAP_CID_ATT,
+                                    NULL, &chan);
+    TEST_ASSERT_FATAL(rc == 0);
+    mtu = ble_l2cap_chan_mtu(chan);
+
+    ble_hs_unlock();
 
     off = 1;
     for (i = 0; i < num_attrs; i++) {
         attr_value = attrs[i].value;
 
-        for (ii = 0;
-             ii < attrs[i].value_len && off < ble_l2cap_chan_mtu(chan);
-             ii++) {
-
-            rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 1, &u8);
+        for (ii = 0; ii < attrs[i].value_len && off < mtu; ii++) {
+            rc = os_mbuf_copydata(om, off, 1, &u8);
             TEST_ASSERT(rc == 0);
             TEST_ASSERT(u8 == attr_value[ii]);
 
@@ -435,13 +453,12 @@ ble_att_svr_test_misc_verify_tx_read_mult_rsp(struct ble_l2cap_chan *chan,
         }
     }
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 1, &u8);
+    rc = os_mbuf_copydata(om, off, 1, &u8);
     TEST_ASSERT(rc != 0);
 }
 
 static void
-ble_att_svr_test_misc_verify_all_read_mult(struct ble_hs_conn *conn,
-                                           struct ble_l2cap_chan *chan,
+ble_att_svr_test_misc_verify_all_read_mult(uint16_t conn_handle,
                                            struct ble_gatt_attr *attrs,
                                            int num_attrs)
 {
@@ -454,47 +471,53 @@ ble_att_svr_test_misc_verify_all_read_mult(struct ble_hs_conn *conn,
         handles[i] = attrs[i].handle;
     }
 
-    ble_att_svr_test_misc_rx_read_mult_req(conn, chan, handles, num_attrs, 1);
-    ble_att_svr_test_misc_verify_tx_read_mult_rsp(chan, attrs, num_attrs);
+    ble_att_svr_test_misc_rx_read_mult_req(conn_handle, handles, num_attrs, 1);
+    ble_att_svr_test_misc_verify_tx_read_mult_rsp(conn_handle,
+                                                  attrs, num_attrs);
 }
 
 
 static void
-ble_att_svr_test_misc_verify_tx_write_rsp(struct ble_l2cap_chan *chan)
+ble_att_svr_test_misc_verify_tx_write_rsp(void)
 {
+    struct os_mbuf *om;
     uint8_t u8;
     int rc;
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0, 1, &u8);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, 1, &u8);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(u8 == BLE_ATT_OP_WRITE_RSP);
-
-    /* Remove the write response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx,
-                BLE_ATT_WRITE_RSP_SZ);
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_mtu_rsp(struct ble_l2cap_chan *chan)
+ble_att_svr_test_misc_verify_tx_mtu_rsp(uint16_t conn_handle)
 {
     struct ble_att_mtu_cmd rsp;
+    struct ble_l2cap_chan *chan;
+    struct ble_hs_conn *conn;
+    struct os_mbuf *om;
     uint8_t buf[BLE_ATT_MTU_CMD_SZ];
     int rc;
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0, sizeof buf, buf);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, sizeof buf, buf);
     TEST_ASSERT(rc == 0);
 
     ble_att_mtu_cmd_parse(buf, sizeof buf, &rsp);
 
+    ble_hs_lock();
+    rc = ble_hs_misc_conn_chan_find(conn_handle, BLE_L2CAP_CID_ATT,
+                                    &conn, &chan);
+    TEST_ASSERT_FATAL(rc == 0);
     TEST_ASSERT(rsp.bamc_mtu == chan->blc_my_mtu);
-
-    /* Remove the write response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx,
-                BLE_ATT_MTU_CMD_SZ);
+    ble_hs_unlock();
 }
 
 struct ble_att_svr_test_info_entry {
@@ -505,11 +528,11 @@ struct ble_att_svr_test_info_entry {
 
 static void
 ble_att_svr_test_misc_verify_tx_find_info_rsp(
-    struct ble_l2cap_chan *chan,
     struct ble_att_svr_test_info_entry *entries)
 {
     struct ble_att_svr_test_info_entry *entry;
     struct ble_att_find_info_rsp rsp;
+    struct os_mbuf *om;
     uint16_t handle;
     uint16_t uuid16;
     uint8_t buf[BLE_ATT_FIND_INFO_RSP_BASE_SZ];
@@ -521,14 +544,16 @@ ble_att_svr_test_misc_verify_tx_find_info_rsp(
 
     off = 0;
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, sizeof buf, buf);
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
+
+    rc = os_mbuf_copydata(om, off, sizeof buf, buf);
     TEST_ASSERT(rc == 0);
     off += sizeof buf;
 
     ble_att_find_info_rsp_parse(buf, sizeof buf, &rsp);
 
     for (entry = entries; entry->handle != 0; entry++) {
-        rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 2, &handle);
+        rc = os_mbuf_copydata(om, off, 2, &handle);
         TEST_ASSERT(rc == 0);
         off += 2;
 
@@ -538,7 +563,7 @@ ble_att_svr_test_misc_verify_tx_find_info_rsp(
         if (entry->uuid16 != 0) {
             TEST_ASSERT(rsp.bafp_format ==
                         BLE_ATT_FIND_INFO_RSP_FORMAT_16BIT);
-            rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 2, &uuid16);
+            rc = os_mbuf_copydata(om, off, 2, &uuid16);
             TEST_ASSERT(rc == 0);
             off += 2;
 
@@ -547,7 +572,7 @@ ble_att_svr_test_misc_verify_tx_find_info_rsp(
         } else {
             TEST_ASSERT(rsp.bafp_format ==
                         BLE_ATT_FIND_INFO_RSP_FORMAT_128BIT);
-            rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 16, uuid128);
+            rc = os_mbuf_copydata(om, off, 16, uuid128);
             TEST_ASSERT(rc == 0);
             off += 16;
 
@@ -556,10 +581,7 @@ ble_att_svr_test_misc_verify_tx_find_info_rsp(
     }
 
     /* Ensure there is no extra data in the response. */
-    TEST_ASSERT(off == OS_MBUF_PKTHDR(ble_hs_test_util_prev_tx)->omp_len);
-
-    /* Remove the response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx, off);
+    TEST_ASSERT(off == OS_MBUF_PKTHDR(om)->omp_len);
 }
 
 struct ble_att_svr_test_type_value_entry {
@@ -569,10 +591,10 @@ struct ble_att_svr_test_type_value_entry {
 
 static void
 ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
-    struct ble_l2cap_chan *chan,
     struct ble_att_svr_test_type_value_entry *entries)
 {
     struct ble_att_svr_test_type_value_entry *entry;
+    struct os_mbuf *om;
     uint16_t u16;
     uint8_t op;
     int off;
@@ -582,20 +604,22 @@ ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
 
     off = 0;
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 1, &op);
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
+
+    rc = os_mbuf_copydata(om, off, 1, &op);
     TEST_ASSERT(rc == 0);
     off += 1;
 
     TEST_ASSERT(op == BLE_ATT_OP_FIND_TYPE_VALUE_RSP);
 
     for (entry = entries; entry->first != 0; entry++) {
-        rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 2, &u16);
+        rc = os_mbuf_copydata(om, off, 2, &u16);
         TEST_ASSERT(rc == 0);
         htole16(&u16, u16);
         TEST_ASSERT(u16 == entry->first);
         off += 2;
 
-        rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, off, 2, &u16);
+        rc = os_mbuf_copydata(om, off, 2, &u16);
         TEST_ASSERT(rc == 0);
         htole16(&u16, u16);
         TEST_ASSERT(u16 == entry->last);
@@ -603,10 +627,7 @@ ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
     }
 
     /* Ensure there is no extra data in the response. */
-    TEST_ASSERT(off == OS_MBUF_PKTHDR(ble_hs_test_util_prev_tx)->omp_len);
-
-    /* Remove the response from the buffer. */
-    os_mbuf_adj(ble_hs_test_util_prev_tx, off);
+    TEST_ASSERT(off == OS_MBUF_PKTHDR(om)->omp_len);
 }
 
 struct ble_att_svr_test_group_type_entry {
@@ -619,7 +640,6 @@ struct ble_att_svr_test_group_type_entry {
 /** Returns the number of entries successfully verified. */
 static void
 ble_att_svr_test_misc_verify_tx_read_group_type_rsp(
-    struct ble_l2cap_chan *chan,
     struct ble_att_svr_test_group_type_entry *entries)
 {
     struct ble_att_svr_test_group_type_entry *entry;
@@ -632,9 +652,7 @@ ble_att_svr_test_misc_verify_tx_read_group_type_rsp(
 
     ble_hs_test_util_tx_all();
 
-    om = os_mbuf_pullup(ble_hs_test_util_prev_tx,
-                        BLE_ATT_READ_GROUP_TYPE_RSP_BASE_SZ);
-    TEST_ASSERT_FATAL(om != NULL);
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
 
     ble_att_read_group_type_rsp_parse(om->om_data, om->om_len, &rsp);
 
@@ -691,7 +709,6 @@ struct ble_att_svr_test_type_entry {
 /** Returns the number of entries successfully verified. */
 static void
 ble_att_svr_test_misc_verify_tx_read_type_rsp(
-    struct ble_l2cap_chan *chan,
     struct ble_att_svr_test_type_entry *entries)
 {
     struct ble_att_svr_test_type_entry *entry;
@@ -704,9 +721,7 @@ ble_att_svr_test_misc_verify_tx_read_type_rsp(
 
     ble_hs_test_util_tx_all();
 
-    om = os_mbuf_pullup(ble_hs_test_util_prev_tx,
-                        BLE_ATT_READ_TYPE_RSP_BASE_SZ);
-    TEST_ASSERT_FATAL(om != NULL);
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
 
     ble_att_read_type_rsp_parse(om->om_data, om->om_len, &rsp);
 
@@ -732,19 +747,20 @@ ble_att_svr_test_misc_verify_tx_read_type_rsp(
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_prep_write_rsp(struct ble_l2cap_chan *chan,
-                                               uint16_t attr_handle,
+ble_att_svr_test_misc_verify_tx_prep_write_rsp(uint16_t attr_handle,
                                                uint16_t offset,
                                                void *data, int data_len)
 {
     struct ble_att_prep_write_cmd rsp;
+    struct os_mbuf *om;
     uint8_t buf[1024];
     int rc;
 
     ble_hs_test_util_tx_all();
 
-    rc = os_mbuf_copydata(ble_hs_test_util_prev_tx, 0,
-                          OS_MBUF_PKTLEN(ble_hs_test_util_prev_tx), buf);
+    om = ble_hs_test_util_prev_tx_dequeue();
+
+    rc = os_mbuf_copydata(om, 0, OS_MBUF_PKTLEN(om), buf);
     TEST_ASSERT_FATAL(rc == 0);
 
     ble_att_prep_write_rsp_parse(buf, sizeof buf, &rsp);
@@ -754,20 +770,18 @@ ble_att_svr_test_misc_verify_tx_prep_write_rsp(struct ble_l2cap_chan *chan,
     TEST_ASSERT(memcmp(buf + BLE_ATT_PREP_WRITE_CMD_BASE_SZ, data,
                        data_len) == 0);
 
-    TEST_ASSERT(OS_MBUF_PKTLEN(ble_hs_test_util_prev_tx) ==
+    TEST_ASSERT(OS_MBUF_PKTLEN(om) ==
                 BLE_ATT_PREP_WRITE_CMD_BASE_SZ + data_len);
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_exec_write_rsp(struct ble_l2cap_chan *chan)
+ble_att_svr_test_misc_verify_tx_exec_write_rsp(void)
 {
     struct os_mbuf *om;
 
     ble_hs_test_util_tx_all();
 
-    om = os_mbuf_pullup(ble_hs_test_util_prev_tx, BLE_ATT_EXEC_WRITE_RSP_SZ);
-    TEST_ASSERT_FATAL(om != NULL);
-
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
     ble_att_exec_write_rsp_parse(om->om_data, om->om_len);
 }
 
@@ -778,29 +792,32 @@ ble_att_svr_test_misc_mtu_exchange(uint16_t my_mtu, uint16_t peer_sent,
     struct ble_att_mtu_cmd req;
     struct ble_l2cap_chan *chan;
     struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint8_t buf[BLE_ATT_MTU_CMD_SZ];
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
-
-    chan->blc_my_mtu = my_mtu;
+    conn_handle = ble_att_svr_test_misc_init(my_mtu);
 
     req.bamc_mtu = peer_sent;
     ble_att_mtu_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
 
+    ble_att_svr_test_misc_verify_tx_mtu_rsp(conn_handle);
+
+    ble_hs_lock();
+    rc = ble_hs_misc_conn_chan_find(conn_handle, BLE_L2CAP_CID_ATT,
+                                    &conn, &chan);
+    TEST_ASSERT_FATAL(rc == 0);
     TEST_ASSERT(chan->blc_peer_mtu == peer_actual);
-
-    ble_att_svr_test_misc_verify_tx_mtu_rsp(chan);
-
     TEST_ASSERT(ble_l2cap_chan_mtu(chan) == chan_mtu);
+    ble_hs_unlock();
 }
 
 static void
-ble_att_svr_test_misc_prep_write(struct ble_hs_conn *conn,
-                                 struct ble_l2cap_chan *chan, uint16_t handle,
+ble_att_svr_test_misc_prep_write(uint16_t conn_handle, uint16_t attr_handle,
                                  uint16_t offset, void *data,
                                  int data_len, uint8_t error_code)
 {
@@ -808,28 +825,27 @@ ble_att_svr_test_misc_prep_write(struct ble_hs_conn *conn,
     uint8_t buf[1024];
     int rc;
 
-    prep_req.bapc_handle = handle;
+    prep_req.bapc_handle = attr_handle;
     prep_req.bapc_offset = offset;
     ble_att_prep_write_req_write(buf, sizeof buf, &prep_req);
     memcpy(buf + BLE_ATT_PREP_WRITE_CMD_BASE_SZ, data, data_len);
     rc = ble_hs_test_util_l2cap_rx_payload_flat(
-        conn, chan, buf, BLE_ATT_PREP_WRITE_CMD_BASE_SZ + data_len);
+        conn_handle, BLE_L2CAP_CID_ATT, buf,
+        BLE_ATT_PREP_WRITE_CMD_BASE_SZ + data_len);
 
     if (error_code == 0) {
         TEST_ASSERT(rc == 0);
-        ble_att_svr_test_misc_verify_tx_prep_write_rsp(chan, handle, offset,
+        ble_att_svr_test_misc_verify_tx_prep_write_rsp(attr_handle, offset,
                                                        data, data_len);
     } else {
         TEST_ASSERT(rc != 0);
-        ble_att_svr_test_misc_verify_tx_err_rsp(chan,
-                                                BLE_ATT_OP_PREP_WRITE_REQ,
-                                                handle, error_code);
+        ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_PREP_WRITE_REQ,
+                                                attr_handle, error_code);
     }
 }
 
 static void
-ble_att_svr_test_misc_exec_write(struct ble_hs_conn *conn,
-                                 struct ble_l2cap_chan *chan, uint8_t flags,
+ble_att_svr_test_misc_exec_write(uint16_t conn_handle, uint8_t flags,
                                  uint8_t error_code, uint16_t error_handle)
 {
     struct ble_att_exec_write_req exec_req;
@@ -838,24 +854,22 @@ ble_att_svr_test_misc_exec_write(struct ble_hs_conn *conn,
 
     exec_req.baeq_flags = flags;
     ble_att_exec_write_req_write(buf, sizeof buf, &exec_req);
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf,
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf,
                                                 BLE_ATT_EXEC_WRITE_REQ_SZ);
 
     if (error_code == 0) {
         TEST_ASSERT(rc == 0);
-        ble_att_svr_test_misc_verify_tx_exec_write_rsp(chan);
+        ble_att_svr_test_misc_verify_tx_exec_write_rsp();
     } else {
         TEST_ASSERT(rc != 0);
-        ble_att_svr_test_misc_verify_tx_err_rsp(chan,
-                                                BLE_ATT_OP_EXEC_WRITE_REQ,
+        ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_EXEC_WRITE_REQ,
                                                 error_handle, error_code);
     }
 }
 
 static void
-ble_att_svr_test_misc_rx_notify(struct ble_hs_conn *conn,
-                                struct ble_l2cap_chan *chan,
-                                uint16_t attr_handle,
+ble_att_svr_test_misc_rx_notify(uint16_t conn_handle, uint16_t attr_handle,
                                 void *attr_val, int attr_len, int good)
 {
     struct ble_att_notify_req req;
@@ -870,7 +884,8 @@ ble_att_svr_test_misc_rx_notify(struct ble_hs_conn *conn,
     memcpy(buf + off, attr_val, attr_len);
     off += attr_len;
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, off);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, off);
     if (good) {
         TEST_ASSERT(rc == 0);
     } else {
@@ -899,9 +914,7 @@ ble_att_svr_test_misc_notify_cb(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 static void
-ble_att_svr_test_misc_verify_notify(struct ble_hs_conn *conn,
-                                    struct ble_l2cap_chan *chan,
-                                    uint16_t attr_handle,
+ble_att_svr_test_misc_verify_notify(uint16_t conn_handle, uint16_t attr_handle,
                                     void *attr_val, int attr_len, int good)
 {
     ble_att_svr_test_misc_notify_cb_arg = 0;
@@ -912,11 +925,11 @@ ble_att_svr_test_misc_verify_notify(struct ble_hs_conn *conn,
     ble_att_svr_test_n_attr_handle = 0;
     ble_att_svr_test_attr_n_len = 0;
 
-    ble_att_svr_test_misc_rx_notify(conn, chan, attr_handle, attr_val,
+    ble_att_svr_test_misc_rx_notify(conn_handle, attr_handle, attr_val,
                                     attr_len, good);
 
     if (good) {
-        TEST_ASSERT(ble_att_svr_test_n_conn_handle == conn->bhc_handle);
+        TEST_ASSERT(ble_att_svr_test_n_conn_handle == conn_handle);
         TEST_ASSERT(ble_att_svr_test_n_attr_handle == attr_handle);
         TEST_ASSERT(ble_att_svr_test_attr_n_len == attr_len);
         TEST_ASSERT(memcmp(ble_att_svr_test_attr_n, attr_val, attr_len) == 0);
@@ -928,22 +941,19 @@ ble_att_svr_test_misc_verify_notify(struct ble_hs_conn *conn,
 }
 
 static void
-ble_att_svr_test_misc_verify_tx_indicate_rsp(struct ble_l2cap_chan *chan)
+ble_att_svr_test_misc_verify_tx_indicate_rsp(void)
 {
     struct os_mbuf *om;
 
     ble_hs_test_util_tx_all();
 
-    om = os_mbuf_pullup(ble_hs_test_util_prev_tx, BLE_ATT_INDICATE_RSP_SZ);
-    TEST_ASSERT_FATAL(om != NULL);
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
 
     ble_att_indicate_rsp_parse(om->om_data, om->om_len);
 }
 
 static void
-ble_att_svr_test_misc_rx_indicate(struct ble_hs_conn *conn,
-                                  struct ble_l2cap_chan *chan,
-                                  uint16_t attr_handle,
+ble_att_svr_test_misc_rx_indicate(uint16_t conn_handle, uint16_t attr_handle,
                                   void *attr_val, int attr_len, int good)
 {
     struct ble_att_indicate_req req;
@@ -958,7 +968,8 @@ ble_att_svr_test_misc_rx_indicate(struct ble_hs_conn *conn,
     memcpy(buf + off, attr_val, attr_len);
     off += attr_len;
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, off);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, off);
     if (good) {
         TEST_ASSERT(rc == 0);
     } else {
@@ -967,8 +978,7 @@ ble_att_svr_test_misc_rx_indicate(struct ble_hs_conn *conn,
 }
 
 static void
-ble_att_svr_test_misc_verify_indicate(struct ble_hs_conn *conn,
-                                      struct ble_l2cap_chan *chan,
+ble_att_svr_test_misc_verify_indicate(uint16_t conn_handle,
                                       uint16_t attr_handle,
                                       void *attr_val, int attr_len, int good)
 {
@@ -980,21 +990,22 @@ ble_att_svr_test_misc_verify_indicate(struct ble_hs_conn *conn,
     ble_att_svr_test_n_attr_handle = 0;
     ble_att_svr_test_attr_n_len = 0;
 
-    ble_att_svr_test_misc_rx_indicate(conn, chan, attr_handle, attr_val,
+    ble_att_svr_test_misc_rx_indicate(conn_handle, attr_handle, attr_val,
                                       attr_len, good);
 
     if (good) {
-        TEST_ASSERT(ble_att_svr_test_n_conn_handle == conn->bhc_handle);
+        TEST_ASSERT(ble_att_svr_test_n_conn_handle == conn_handle);
         TEST_ASSERT(ble_att_svr_test_n_attr_handle == attr_handle);
         TEST_ASSERT(ble_att_svr_test_attr_n_len == attr_len);
         TEST_ASSERT(memcmp(ble_att_svr_test_attr_n, attr_val, attr_len) == 0);
+        ble_att_svr_test_misc_verify_tx_indicate_rsp();
     } else {
         TEST_ASSERT(ble_att_svr_test_n_conn_handle == 0xffff);
         TEST_ASSERT(ble_att_svr_test_n_attr_handle == 0);
         TEST_ASSERT(ble_att_svr_test_attr_n_len == 0);
+        ble_hs_test_util_tx_all();
+        TEST_ASSERT(ble_hs_test_util_prev_tx_queue_sz() == 0);
     }
-
-    ble_att_svr_test_misc_verify_tx_indicate_rsp(chan);
 }
 
 TEST_CASE(ble_att_svr_test_mtu)
@@ -1016,21 +1027,21 @@ TEST_CASE(ble_att_svr_test_mtu)
 TEST_CASE(ble_att_svr_test_read)
 {
     struct ble_att_read_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint8_t buf[BLE_ATT_READ_REQ_SZ];
     uint8_t uuid[16] = {0};
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
+    conn_handle = ble_att_svr_test_misc_init(0);
 
     /*** Nonexistent attribute. */
     req.barq_handle = 0;
     ble_att_read_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
-    ble_att_svr_test_misc_verify_tx_err_rsp(chan, BLE_ATT_OP_READ_REQ, 0,
+    ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_READ_REQ, 0,
                                             BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Successful read. */
@@ -1042,10 +1053,11 @@ TEST_CASE(ble_att_svr_test_read)
 
     ble_att_read_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
     ble_att_svr_test_misc_verify_tx_read_rsp(
-        chan, ble_att_svr_test_attr_r_1, ble_att_svr_test_attr_r_1_len);
+        ble_att_svr_test_attr_r_1, ble_att_svr_test_attr_r_1_len);
 
     /*** Partial read. */
     ble_att_svr_test_attr_r_1 =
@@ -1055,31 +1067,32 @@ TEST_CASE(ble_att_svr_test_read)
 
     ble_att_read_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_rsp(chan, ble_att_svr_test_attr_r_1,
+    ble_att_svr_test_misc_verify_tx_read_rsp(ble_att_svr_test_attr_r_1,
                                              BLE_ATT_MTU_DFLT - 1);
 }
 
 TEST_CASE(ble_att_svr_test_read_blob)
 {
     struct ble_att_read_blob_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint8_t buf[BLE_ATT_READ_BLOB_REQ_SZ];
     uint8_t uuid[16] = {0};
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
+    conn_handle = ble_att_svr_test_misc_init(0);
 
     /*** Nonexistent attribute. */
     req.babq_handle = 0;
     req.babq_offset = 0;
     ble_att_read_blob_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
-    ble_att_svr_test_misc_verify_tx_err_rsp(chan, BLE_ATT_OP_READ_BLOB_REQ, 0,
+    ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_READ_BLOB_REQ, 0,
                                             BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Short read failure. */
@@ -1093,9 +1106,10 @@ TEST_CASE(ble_att_svr_test_read_blob)
 
     ble_att_read_blob_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
-    ble_att_svr_test_misc_verify_tx_err_rsp(chan, BLE_ATT_OP_READ_BLOB_REQ,
+    ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_READ_BLOB_REQ,
                                             req.babq_handle,
                                             BLE_ATT_ERR_ATTR_NOT_LONG);
 
@@ -1104,42 +1118,42 @@ TEST_CASE(ble_att_svr_test_read_blob)
 
     ble_att_read_blob_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_blob_rsp(chan,
-                                                  ble_att_svr_test_attr_r_1,
+    ble_att_svr_test_misc_verify_tx_read_blob_rsp(ble_att_svr_test_attr_r_1,
                                                   BLE_ATT_MTU_DFLT - 1);
 
     /*** Read remainder of attribute. */
     req.babq_offset = BLE_ATT_MTU_DFLT - 1;
     ble_att_read_blob_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
     ble_att_svr_test_misc_verify_tx_read_blob_rsp(
-        chan, ble_att_svr_test_attr_r_1 + BLE_ATT_MTU_DFLT - 1,
+        ble_att_svr_test_attr_r_1 + BLE_ATT_MTU_DFLT - 1,
         40 - (BLE_ATT_MTU_DFLT - 1));
 
     /*** Zero-length read. */
     req.babq_offset = ble_att_svr_test_attr_r_1_len;
     ble_att_read_blob_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_blob_rsp(chan,
-                                                  ble_att_svr_test_attr_r_1,
+    ble_att_svr_test_misc_verify_tx_read_blob_rsp(ble_att_svr_test_attr_r_1,
                                                   0);
 }
 
 TEST_CASE(ble_att_svr_test_read_mult)
 {
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
     struct ble_gatt_attr attr1;
     struct ble_gatt_attr attr2;
+    uint16_t conn_handle;
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
+    conn_handle = ble_att_svr_test_misc_init(0);
 
     attr1.value = (uint8_t[]){ 1, 2, 3, 4 };
     attr1.value_len = 4;
@@ -1161,25 +1175,25 @@ TEST_CASE(ble_att_svr_test_read_mult)
 
     /*** Single nonexistent attribute. */
     ble_att_svr_test_misc_rx_read_mult_req(
-        conn, chan, ((uint16_t[]){ 100 }), 1, 0);
-    ble_att_svr_test_misc_verify_tx_err_rsp(chan, BLE_ATT_OP_READ_MULT_REQ,
+        conn_handle, ((uint16_t[]){ 100 }), 1, 0);
+    ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_READ_MULT_REQ,
                                             100, BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Single attribute. */
-    ble_att_svr_test_misc_verify_all_read_mult(conn, chan, &attr1, 1);
+    ble_att_svr_test_misc_verify_all_read_mult(conn_handle, &attr1, 1);
 
     /*** Two attributes. */
     ble_att_svr_test_misc_verify_all_read_mult(
-        conn, chan, ((struct ble_gatt_attr[]) { attr1, attr2 }), 2);
+        conn_handle, ((struct ble_gatt_attr[]) { attr1, attr2 }), 2);
 
     /*** Reverse order. */
     ble_att_svr_test_misc_verify_all_read_mult(
-        conn, chan, ((struct ble_gatt_attr[]) { attr2, attr1 }), 2);
+        conn_handle, ((struct ble_gatt_attr[]) { attr2, attr1 }), 2);
 
     /*** Second attribute nonexistent; verify only error txed. */
     ble_att_svr_test_misc_rx_read_mult_req(
-        conn, chan, ((uint16_t[]){ attr1.handle, 100 }), 2, 0);
-    ble_att_svr_test_misc_verify_tx_err_rsp(chan, BLE_ATT_OP_READ_MULT_REQ,
+        conn_handle, ((uint16_t[]){ attr1.handle, 100 }), 2, 0);
+    ble_att_svr_test_misc_verify_tx_err_rsp(BLE_ATT_OP_READ_MULT_REQ,
                                             100, BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Response too long; verify only MTU bytes sent. */
@@ -1196,29 +1210,29 @@ TEST_CASE(ble_att_svr_test_read_mult)
     ble_att_svr_test_attr_r_2_len = attr2.value_len;
 
     ble_att_svr_test_misc_verify_all_read_mult(
-        conn, chan, ((struct ble_gatt_attr[]) { attr1, attr2 }), 2);
+        conn_handle, ((struct ble_gatt_attr[]) { attr1, attr2 }), 2);
 }
 
 TEST_CASE(ble_att_svr_test_write)
 {
     struct ble_att_write_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint8_t buf[BLE_ATT_WRITE_REQ_BASE_SZ + 8];
     uint8_t uuid[16] = {0};
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
+    conn_handle = ble_att_svr_test_misc_init(0);
 
     /*** Nonexistent attribute. */
     req.bawq_handle = 0;
     ble_att_write_req_write(buf, sizeof buf, &req);
     memcpy(buf + BLE_ATT_READ_REQ_SZ, ((uint8_t[]){0,1,2,3,4,5,6,7}), 8);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_WRITE_REQ, 0, BLE_ATT_ERR_INVALID_HANDLE);
+        BLE_ATT_OP_WRITE_REQ, 0, BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Successful write. */
     rc = ble_att_svr_register(uuid, HA_FLAG_PERM_RW, &req.bawq_handle,
@@ -1229,16 +1243,16 @@ TEST_CASE(ble_att_svr_test_write)
     memcpy(buf + BLE_ATT_WRITE_REQ_BASE_SZ,
            ((uint8_t[]){0,1,2,3,4,5,6,7}), 8);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_write_rsp(chan);
+    ble_att_svr_test_misc_verify_tx_write_rsp();
 }
 
 TEST_CASE(ble_att_svr_test_find_info)
 {
     struct ble_att_find_info_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint16_t handle1;
     uint16_t handle2;
     uint16_t handle3;
@@ -1251,7 +1265,7 @@ TEST_CASE(ble_att_svr_test_find_info)
     };
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 128);
+    conn_handle = ble_att_svr_test_misc_init(128);
 
     /*** Start handle of 0. */
     req.bafq_start_handle = 0;
@@ -1259,10 +1273,11 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_INFO_REQ, 0, BLE_ATT_ERR_INVALID_HANDLE);
+        BLE_ATT_OP_FIND_INFO_REQ, 0, BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Start handle > end handle. */
     req.bafq_start_handle = 101;
@@ -1270,10 +1285,11 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_INFO_REQ, 101, BLE_ATT_ERR_INVALID_HANDLE);
+        BLE_ATT_OP_FIND_INFO_REQ, 101, BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** No attributes. */
     req.bafq_start_handle = 200;
@@ -1281,10 +1297,11 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_INFO_REQ, 200, BLE_ATT_ERR_ATTR_NOT_FOUND);
+        BLE_ATT_OP_FIND_INFO_REQ, 200, BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** Range too late. */
     rc = ble_att_svr_register(uuid1, HA_FLAG_PERM_RW, &handle1,
@@ -1296,10 +1313,11 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_INFO_REQ, 200, BLE_ATT_ERR_ATTR_NOT_FOUND);
+        BLE_ATT_OP_FIND_INFO_REQ, 200, BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** One 128-bit entry. */
     req.bafq_start_handle = handle1;
@@ -1307,9 +1325,10 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_info_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_info_rsp(
         ((struct ble_att_svr_test_info_entry[]) { {
             .handle = handle1,
             .uuid128 = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
@@ -1327,9 +1346,10 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_info_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_info_rsp(
         ((struct ble_att_svr_test_info_entry[]) { {
             .handle = handle1,
             .uuid128 = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
@@ -1350,9 +1370,10 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_info_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_info_rsp(
         ((struct ble_att_svr_test_info_entry[]) { {
             .handle = handle1,
             .uuid128 = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
@@ -1369,9 +1390,10 @@ TEST_CASE(ble_att_svr_test_find_info)
 
     ble_att_find_info_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_info_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_info_rsp(
         ((struct ble_att_svr_test_info_entry[]) { {
             .handle = handle3,
             .uuid16 = 0x000f,
@@ -1383,9 +1405,8 @@ TEST_CASE(ble_att_svr_test_find_info)
 TEST_CASE(ble_att_svr_test_find_type_value)
 {
     struct ble_att_find_type_value_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
     uint8_t buf[BLE_ATT_FIND_TYPE_VALUE_REQ_BASE_SZ + 2];
+    uint16_t conn_handle;
     uint16_t handle1;
     uint16_t handle2;
     uint16_t handle3;
@@ -1402,7 +1423,7 @@ TEST_CASE(ble_att_svr_test_find_type_value)
     };
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 128);
+    conn_handle = ble_att_svr_test_misc_init(128);
 
     /* One-time write of the attribute value at the end of the request. */
     ble_att_svr_test_attr_r_1 = (uint8_t[]){0x99, 0x99};
@@ -1418,10 +1439,11 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 0,
+        BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 0,
         BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Start handle > end handle. */
@@ -1430,10 +1452,11 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 101,
+        BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 101,
         BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** No attributes. */
@@ -1442,10 +1465,11 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 200,
+        BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 200,
         BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** Range too late. */
@@ -1458,10 +1482,11 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 200,
+        BLE_ATT_OP_FIND_TYPE_VALUE_REQ, 200,
         BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** One entry, one attribute. */
@@ -1470,9 +1495,10 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
         ((struct ble_att_svr_test_type_value_entry[]) { {
             .first = handle1,
             .last = handle1,
@@ -1490,9 +1516,10 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
         ((struct ble_att_svr_test_type_value_entry[]) { {
             .first = handle1,
             .last = handle2,
@@ -1514,9 +1541,10 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
         ((struct ble_att_svr_test_type_value_entry[]) { {
             .first = handle1,
             .last = handle2,
@@ -1536,9 +1564,10 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
         ((struct ble_att_svr_test_type_value_entry[]) { {
             .first = handle1,
             .last = handle2,
@@ -1558,9 +1587,10 @@ TEST_CASE(ble_att_svr_test_find_type_value)
 
     ble_att_find_type_value_req_write(buf, sizeof buf, &req);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_find_type_value_rsp(
         ((struct ble_att_svr_test_type_value_entry[]) { {
             .first = handle1,
             .last = handle2,
@@ -1576,12 +1606,11 @@ static void
 ble_att_svr_test_misc_read_type(uint16_t mtu)
 {
     struct ble_att_read_type_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint8_t buf[BLE_ATT_READ_TYPE_REQ_SZ_16];
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, mtu);
+    conn_handle = ble_att_svr_test_misc_init(mtu);
 
     /*** Start handle of 0. */
     req.batq_start_handle = 0;
@@ -1591,10 +1620,11 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_TYPE_REQ, 0,
+        BLE_ATT_OP_READ_TYPE_REQ, 0,
         BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Start handle > end handle. */
@@ -1605,10 +1635,11 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_TYPE_REQ, 101,
+        BLE_ATT_OP_READ_TYPE_REQ, 101,
         BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** No attributes. */
@@ -1619,10 +1650,11 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_TYPE_REQ, 1,
+        BLE_ATT_OP_READ_TYPE_REQ, 1,
         BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** Range too late. */
@@ -1634,10 +1666,11 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_TYPE_REQ, 200,
+        BLE_ATT_OP_READ_TYPE_REQ, 200,
         BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** One characteristic from one service. */
@@ -1648,9 +1681,10 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_CHARACTERISTIC);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_type_rsp(
         ((struct ble_att_svr_test_type_entry[]) { {
             .handle = 2,
             .value = (uint8_t[]){ 0x01, 0x11 },
@@ -1667,9 +1701,10 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_CHARACTERISTIC);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_type_rsp(
         ((struct ble_att_svr_test_type_entry[]) { {
             .handle = 2,
             .value = (uint8_t[]){ 0x01, 0x11 },
@@ -1690,9 +1725,10 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_CHARACTERISTIC);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_type_rsp(
         ((struct ble_att_svr_test_type_entry[]) { {
             .handle = 12,
             .value = (uint8_t[]){ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
@@ -1708,9 +1744,10 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_CHARACTERISTIC);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_type_rsp(
         ((struct ble_att_svr_test_type_entry[]) { {
             .handle = 14,
             .value = (uint8_t[]){ 0x55, 0x55 },
@@ -1726,9 +1763,10 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_CHARACTERISTIC);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_type_rsp(
         ((struct ble_att_svr_test_type_entry[]) { {
             .handle = 16,
             .value = (uint8_t[]){ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 },
@@ -1745,9 +1783,10 @@ ble_att_svr_test_misc_read_type(uint16_t mtu)
     htole16(buf + BLE_ATT_READ_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_CHARACTERISTIC);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_type_rsp(
         ((struct ble_att_svr_test_type_entry[]) { {
             .handle = 18,
             .value = (uint8_t[]){ 0x66, 0x66 },
@@ -1778,12 +1817,11 @@ TEST_CASE(ble_att_svr_test_read_type)
 TEST_CASE(ble_att_svr_test_read_group_type)
 {
     struct ble_att_read_group_type_req req;
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     uint8_t buf[BLE_ATT_READ_GROUP_TYPE_REQ_SZ_16];
     int rc;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 128);
+    conn_handle = ble_att_svr_test_misc_init(128);
 
     /*** Start handle of 0. */
     req.bagq_start_handle = 0;
@@ -1793,10 +1831,11 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat( conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_GROUP_TYPE_REQ, 0,
+        BLE_ATT_OP_READ_GROUP_TYPE_REQ, 0,
         BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Start handle > end handle. */
@@ -1807,10 +1846,11 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_GROUP_TYPE_REQ, 101,
+        BLE_ATT_OP_READ_GROUP_TYPE_REQ, 101,
         BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Invalid group UUID (0x1234). */
@@ -1820,10 +1860,11 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     ble_att_read_group_type_req_write(buf, sizeof buf, &req);
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ, 0x1234);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_GROUP_TYPE_REQ, 110,
+        BLE_ATT_OP_READ_GROUP_TYPE_REQ, 110,
         BLE_ATT_ERR_UNSUPPORTED_GROUP);
 
     /*** No attributes. */
@@ -1834,10 +1875,11 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_GROUP_TYPE_REQ, 1,
+        BLE_ATT_OP_READ_GROUP_TYPE_REQ, 1,
         BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** Range too late. */
@@ -1849,10 +1891,11 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc != 0);
     ble_att_svr_test_misc_verify_tx_err_rsp(
-        chan, BLE_ATT_OP_READ_GROUP_TYPE_REQ, 200,
+        BLE_ATT_OP_READ_GROUP_TYPE_REQ, 200,
         BLE_ATT_ERR_ATTR_NOT_FOUND);
 
     /*** One 16-bit UUID service. */
@@ -1863,9 +1906,10 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(
         ((struct ble_att_svr_test_group_type_entry[]) { {
             .start_handle = 1,
             .end_handle = 5,
@@ -1882,9 +1926,10 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(
         ((struct ble_att_svr_test_group_type_entry[]) { {
             .start_handle = 1,
             .end_handle = 5,
@@ -1905,9 +1950,10 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(
         ((struct ble_att_svr_test_group_type_entry[]) { {
             .start_handle = 1,
             .end_handle = 5,
@@ -1928,9 +1974,10 @@ TEST_CASE(ble_att_svr_test_read_group_type)
     htole16(buf + BLE_ATT_READ_GROUP_TYPE_REQ_BASE_SZ,
             BLE_ATT_UUID_PRIMARY_SERVICE);
 
-    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn, chan, buf, sizeof buf);
+    rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
+                                                buf, sizeof buf);
     TEST_ASSERT(rc == 0);
-    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(chan,
+    ble_att_svr_test_misc_verify_tx_read_group_type_rsp(
         ((struct ble_att_svr_test_group_type_entry[]) { {
             .start_handle = 11,
             .end_handle = 19,
@@ -1942,13 +1989,12 @@ TEST_CASE(ble_att_svr_test_read_group_type)
 
 TEST_CASE(ble_att_svr_test_prep_write)
 {
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
     int i;
 
     static uint8_t data[1024];
 
-    ble_att_svr_test_misc_init(&conn, &chan, 200);
+    conn_handle = ble_att_svr_test_misc_init(200);
 
     /* Initialize some attribute data. */
     for (i = 0; i < sizeof data; i++) {
@@ -1962,89 +2008,89 @@ TEST_CASE(ble_att_svr_test_prep_write)
                                           ble_att_svr_test_misc_attr_fn_w_2);
 
     /*** Empty write succeeds. */
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      0, 0);
 
     /*** Empty cancel succeeds. */
-    ble_att_svr_test_misc_exec_write(conn, chan, 0, 0, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, 0, 0, 0);
 
     /*** Failure for prep write to nonexistent attribute. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 53525, 0, data, 10,
+    ble_att_svr_test_misc_prep_write(conn_handle, 53525, 0, data, 10,
                                      BLE_ATT_ERR_INVALID_HANDLE);
 
     /*** Failure for write starting at nonzero offset. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 1, data, 10, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 1, data, 10, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      BLE_ATT_ERR_INVALID_OFFSET, 1);
     ble_att_svr_test_misc_verify_w_1(NULL, 0);
 
     /*** Success for clear starting at nonzero offset. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 1, data, 10, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, 0, 0, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 1, data, 10, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, 0, 0, 0);
     ble_att_svr_test_misc_verify_w_1(NULL, 0);
 
     /*** Failure for write with gap. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 10, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 11, data, 10, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 10, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 11, data, 10, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      BLE_ATT_ERR_INVALID_OFFSET, 1);
     ble_att_svr_test_misc_verify_w_1(NULL, 0);
 
     /*** Success for clear with gap. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 10, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 11, data, 10, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, 0, 0, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 10, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 11, data, 10, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, 0, 0, 0);
     ble_att_svr_test_misc_verify_w_1(NULL, 0);
 
     /*** Failure for overlong write. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 200, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 200, data + 200, 200, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 400, data + 400, 200, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 200, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 200, data + 200, 200, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 400, data + 400, 200, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN, 1);
     ble_att_svr_test_misc_verify_w_1(NULL, 0);
 
     /*** Successful two part write. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 20, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 20, data + 20, 20, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 20, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 20, data + 20, 20, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      0, 0);
     ble_att_svr_test_misc_verify_w_1(data, 40);
 
     /*** Successful three part write. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 35, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 35, data + 35, 43, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 78, data + 78, 1, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 35, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 35, data + 35, 43, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 78, data + 78, 1, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      0, 0);
     ble_att_svr_test_misc_verify_w_1(data, 79);
 
     /*** Successful two part write to two attributes. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 7, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 7, data + 7, 10, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 2, 0, data, 20, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 2, 20, data + 20, 10, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 7, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 7, data + 7, 10, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 2, 0, data, 20, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 2, 20, data + 20, 10, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      0, 0);
     ble_att_svr_test_misc_verify_w_1(data, 17);
     ble_att_svr_test_misc_verify_w_2(data, 30);
 
     /*** Fail write to second attribute; ensure first write doesn't occur. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 5, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 5, data + 5, 2, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 2, 0, data, 11, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 2, 12, data + 11, 19, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 5, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 5, data + 5, 2, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 2, 0, data, 11, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 2, 12, data + 11, 19, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      BLE_ATT_ERR_INVALID_OFFSET, 2);
     ble_att_svr_test_misc_verify_w_1(data, 17);
     ble_att_svr_test_misc_verify_w_2(data, 30);
 
     /*** Successful out of order write to two attributes. */
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 0, data, 9, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 2, 0, data, 18, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 1, 9, data + 9, 3, 0);
-    ble_att_svr_test_misc_prep_write(conn, chan, 2, 18, data + 18, 43, 0);
-    ble_att_svr_test_misc_exec_write(conn, chan, BLE_ATT_EXEC_WRITE_F_CONFIRM,
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 0, data, 9, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 2, 0, data, 18, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 1, 9, data + 9, 3, 0);
+    ble_att_svr_test_misc_prep_write(conn_handle, 2, 18, data + 18, 43, 0);
+    ble_att_svr_test_misc_exec_write(conn_handle, BLE_ATT_EXEC_WRITE_F_CONFIRM,
                                      0, 0);
     ble_att_svr_test_misc_verify_w_1(data, 12);
     ble_att_svr_test_misc_verify_w_2(data, 61);
@@ -2052,47 +2098,45 @@ TEST_CASE(ble_att_svr_test_prep_write)
 
 TEST_CASE(ble_att_svr_test_notify)
 {
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
+    conn_handle = ble_att_svr_test_misc_init(0);
 
     /*** Successful notifies; verify callback is executed. */
     /* 3-length attribute. */
-    ble_att_svr_test_misc_verify_notify(conn, chan, 10,
+    ble_att_svr_test_misc_verify_notify(conn_handle, 10,
                                         (uint8_t[]) { 1, 2, 3 }, 3, 1);
     /* 1-length attribute. */
-    ble_att_svr_test_misc_verify_notify(conn, chan, 1,
+    ble_att_svr_test_misc_verify_notify(conn_handle, 1,
                                         (uint8_t[]) { 0xff }, 1, 1);
     /* 0-length attribute. */
-    ble_att_svr_test_misc_verify_notify(conn, chan, 43, NULL, 0, 1);
+    ble_att_svr_test_misc_verify_notify(conn_handle, 43, NULL, 0, 1);
 
     /*** Bad notifies; verify callback is not executed. */
     /* Attribute handle of 0. */
-    ble_att_svr_test_misc_verify_notify(conn, chan, 0,
+    ble_att_svr_test_misc_verify_notify(conn_handle, 0,
                                         (uint8_t[]) { 1, 2, 3 }, 3, 0);
 }
 
 TEST_CASE(ble_att_svr_test_indicate)
 {
-    struct ble_l2cap_chan *chan;
-    struct ble_hs_conn *conn;
+    uint16_t conn_handle;
 
-    ble_att_svr_test_misc_init(&conn, &chan, 0);
+    conn_handle = ble_att_svr_test_misc_init(0);
 
     /*** Successful indicates; verify callback is executed. */
     /* 3-length attribute. */
-    ble_att_svr_test_misc_verify_indicate(conn, chan, 10,
+    ble_att_svr_test_misc_verify_indicate(conn_handle, 10,
                                           (uint8_t[]) { 1, 2, 3 }, 3, 1);
     /* 1-length attribute. */
-    ble_att_svr_test_misc_verify_indicate(conn, chan, 1,
+    ble_att_svr_test_misc_verify_indicate(conn_handle, 1,
                                           (uint8_t[]) { 0xff }, 1, 1);
     /* 0-length attribute. */
-    ble_att_svr_test_misc_verify_indicate(conn, chan, 43, NULL, 0, 1);
+    ble_att_svr_test_misc_verify_indicate(conn_handle, 43, NULL, 0, 1);
 
     /*** Bad indicates; verify callback is not executed. */
     /* Attribute handle of 0. */
-    ble_att_svr_test_misc_verify_indicate(conn, chan, 0,
+    ble_att_svr_test_misc_verify_indicate(conn_handle, 0,
                                           (uint8_t[]) { 1, 2, 3 }, 3, 0);
 }
 

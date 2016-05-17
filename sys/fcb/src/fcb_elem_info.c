@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <util/crc8.h>
+
 #include "fcb/fcb.h"
 #include "fcb_priv.h"
 

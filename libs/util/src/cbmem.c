@@ -92,7 +92,7 @@ cbmem_append(struct cbmem *cbmem, void *data, uint16_t len)
     } else {
         dst = (struct cbmem_entry_hdr *) cbmem->c_buf;
     }
-    end = (uint8_t *) dst + len;
+    end = (uint8_t *) dst + len + sizeof(*dst);
 
     /* If this item would take us past the end of this buffer, then adjust 
      * the item to the beginning of the buffer.
@@ -100,7 +100,7 @@ cbmem_append(struct cbmem *cbmem, void *data, uint16_t len)
     if (end > cbmem->c_buf_end) {
         cbmem->c_buf_cur_end = (uint8_t *) dst;
         dst = (struct cbmem_entry_hdr *) cbmem->c_buf;
-        end = (uint8_t *) dst + len;
+        end = (uint8_t *) dst + len + sizeof(*dst);
         if ((uint8_t *) cbmem->c_entry_start >= cbmem->c_buf_cur_end) {
             cbmem->c_entry_start = (struct cbmem_entry_hdr *) cbmem->c_buf;
         }
@@ -160,12 +160,16 @@ cbmem_iter_next(struct cbmem *cbmem, struct cbmem_iter *iter)
         hdr = iter->ci_cur;
         iter->ci_cur = CBMEM_ENTRY_NEXT(iter->ci_cur);
 
-        if ((uint8_t *) iter->ci_cur == cbmem->c_buf_cur_end) {
+        if ((uint8_t *) iter->ci_cur >= cbmem->c_buf_cur_end) {
             iter->ci_cur = (struct cbmem_entry_hdr *) cbmem->c_buf;
             iter->ci_start = (struct cbmem_entry_hdr *) cbmem->c_buf;
         }
     } else {
         hdr = iter->ci_cur;
+        if (!iter->ci_cur) {
+            goto err;
+        }
+
         if (hdr == CBMEM_ENTRY_NEXT(iter->ci_end)) {
             hdr = NULL;
         } else {
@@ -173,6 +177,7 @@ cbmem_iter_next(struct cbmem *cbmem, struct cbmem_iter *iter)
         }
     }
 
+err:
     return (hdr);
 }
 

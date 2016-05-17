@@ -241,6 +241,7 @@ err:
 int
 json_encode_array_finish(struct json_encoder *encoder)
 {
+    encoder->je_wr_commas = 1;
     JSON_ENCODE_ARRAY_END(encoder);
 
     return (0);

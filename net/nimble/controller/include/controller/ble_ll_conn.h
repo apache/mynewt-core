@@ -53,7 +53,7 @@
 /* Definition for RSSI when the RSSI is unknown */
 #define BLE_LL_CONN_UNKNOWN_RSSI        (127)
 
-#if defined(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
 /*
  * Encryption states for a connection
  *
@@ -109,7 +109,7 @@ union ble_ll_conn_sm_flags {
         uint32_t conn_req_txd:1;
         uint32_t send_ltk_req:1;
         uint32_t encrypted:1;
-        uint32_t encrypt_chg_sent;
+        uint32_t encrypt_chg_sent:1;
     } cfbit;
     uint32_t conn_flags;
 } __attribute__((packed));
@@ -235,7 +235,7 @@ struct ble_ll_conn_sm
      * allocate these from a pool? Not sure what to do. For now, I just use
      * a large chunk of memory per connection.
      */
-#if defined(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     struct ble_ll_conn_enc_data enc_data;
 #endif
     /*
