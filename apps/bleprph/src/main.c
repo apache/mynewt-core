@@ -185,6 +185,10 @@ bleprph_task_handler(void *unused)
 {
     struct os_event *ev;
     struct os_callout_func *cf;
+    int rc;
+
+    rc = ble_hs_start();
+    assert(rc == 0);
 
     /* Begin advertising. */
     bleprph_advertise();
