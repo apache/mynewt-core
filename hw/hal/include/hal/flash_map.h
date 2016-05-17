@@ -58,6 +58,7 @@ struct flash_area {
 #define FLASH_AREA_IMAGE_1              2
 #define FLASH_AREA_IMAGE_SCRATCH        3
 #define FLASH_AREA_NFFS                 4
+#define FLASH_AREA_CORE                 2
 
 /*
  * Initializes flash map. Memory will be referenced by flash_map code
