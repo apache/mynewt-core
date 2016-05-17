@@ -38,7 +38,7 @@
 int
 imgr_file_download(struct nmgr_jbuf *njb)
 {
-    long long unsigned int off;
+    long long unsigned int off = UINT_MAX;
     char tmp_str[IMGMGR_NMGR_MAX_NAME + 1];
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     const struct json_attr_t dload_attr[3] = {
