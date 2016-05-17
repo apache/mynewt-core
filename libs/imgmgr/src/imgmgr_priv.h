@@ -25,7 +25,6 @@
 #define IMGMGR_MAX_IMGS		2
 
 #define IMGMGR_HASH_STR		48
-#define IMGMGR_HASH_LEN		32
 
 /*
  * When accompanied by image, it's this structure followed by data.
@@ -102,8 +101,10 @@ int imgr_boot2_read(struct nmgr_jbuf *);
 int imgr_boot2_write(struct nmgr_jbuf *);
 int imgr_file_upload(struct nmgr_jbuf *);
 int imgr_file_download(struct nmgr_jbuf *);
+int imgr_core_list(struct nmgr_jbuf *);
+int imgr_core_load(struct nmgr_jbuf *);
+int imgr_core_erase(struct nmgr_jbuf *);
 
-int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
 

@@ -66,8 +66,25 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_BOOT2] = {
         .nh_read = imgr_boot2_read,
         .nh_write = imgr_boot2_write
+    },
+    [IMGMGR_NMGR_OP_CORELIST] = {
+#ifdef COREDUMP_PRESENT
+        .nh_read = imgr_core_list,
+        .nh_write = imgr_noop,
+#else
+        .nh_read = imgr_noop,
+        .nh_write = imgr_noop
+#endif
+    },
+    [IMGMGR_NMGR_OP_CORELOAD] = {
+#ifdef COREDUMP_PRESENT
+        .nh_read = imgr_core_load,
+        .nh_write = imgr_core_erase,
+#else
+        .nh_read = imgr_noop,
+        .nh_write = imgr_noop
+#endif
     }
-
 };
 
 static struct nmgr_group imgr_nmgr_group = {

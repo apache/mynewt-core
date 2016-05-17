@@ -30,3 +30,7 @@ pkg.deps:
 pkg.deps.FS:
     - fs/fs
 pkg.cflags.FS: -DFS_PRESENT
+
+pkg.deps.COREDUMP:
+    - sys/coredump
+pkg.cflags.COREDUMP: -DCOREDUMP_PRESENT
