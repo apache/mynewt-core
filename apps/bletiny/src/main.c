@@ -103,12 +103,6 @@ bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 static struct log_handler bletiny_log_console_handler;
 struct log bletiny_log;
 
-struct bletiny_conn ble_shell_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
-int bletiny_num_conns;
-
-void
-bletest_inc_adv_pkt_num(void) { }
-
 bssnz_t struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
 int bletiny_num_conns;
 
@@ -141,6 +135,10 @@ static void
 bletiny_print_error(char *msg, uint16_t conn_handle,
                     struct ble_gatt_error *error)
 {
+    if (msg == NULL) {
+        msg = "ERROR";
+    }
+
     console_printf("%s: conn_handle=%d status=%d att_handle=%d\n",
                    msg, conn_handle, error->status, error->att_handle);
 }
@@ -180,9 +178,9 @@ static void
 bletiny_print_key_exchange_parms(struct ble_gap_key_parms *key_params)
 {
     if (key_params->is_ours) {
-        console_printf("Our Keys Sent to Peer\n");
+        console_printf("keys; us --> peer\n");
     } else {
-        console_printf("Keys Received from Peer\n");
+        console_printf("keys; peer --> us\n");
     }
 
     if (key_params->ltk_valid) {
@@ -488,8 +486,9 @@ bletiny_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
 
     conn = bletiny_conn_find(conn_handle);
     if (conn == NULL) {
-        console_printf("RECEIVED SERVICE FOR UNKNOWN CONNECTION; HANDLE=%d\n",
-                       conn_handle);
+        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+                           "HANDLE=%d\n",
+                    conn_handle);
         return NULL;
     }
 
@@ -501,7 +500,7 @@ bletiny_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
 
     svc = os_memblock_get(&bletiny_svc_pool);
     if (svc == NULL) {
-        console_printf("OOM WHILE DISCOVERING SERVICE\n");
+        BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING SERVICE\n");
         return NULL;
     }
     memset(svc, 0, sizeof *svc);
@@ -572,15 +571,16 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     conn = bletiny_conn_find(conn_handle);
     if (conn == NULL) {
-        console_printf("RECEIVED SERVICE FOR UNKNOWN CONNECTION; HANDLE=%d\n",
-                       conn_handle);
+        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+                           "HANDLE=%d\n",
+                    conn_handle);
         return NULL;
     }
 
     svc = bletiny_svc_find(conn, svc_start_handle, NULL);
     if (svc == NULL) {
-        console_printf("CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
-                       conn_handle);
+        BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
+                    conn_handle);
         return NULL;
     }
 
@@ -592,7 +592,7 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     chr = os_memblock_get(&bletiny_chr_pool);
     if (chr == NULL) {
-        console_printf("OOM WHILE DISCOVERING CHARACTERISTIC\n");
+        BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING CHARACTERISTIC\n");
         return NULL;
     }
     memset(chr, 0, sizeof *chr);
@@ -662,22 +662,24 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
 
     conn = bletiny_conn_find(conn_handle);
     if (conn == NULL) {
-        console_printf("RECEIVED SERVICE FOR UNKNOWN CONNECTION; HANDLE=%d\n",
-                       conn_handle);
+        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+                           "HANDLE=%d\n",
+                    conn_handle);
         return NULL;
     }
 
     svc = bletiny_svc_find_range(conn, chr_def_handle);
     if (svc == NULL) {
-        console_printf("CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
-                       conn_handle);
+        BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
+                    conn_handle);
         return NULL;
     }
 
     chr = bletiny_chr_find(svc, chr_def_handle, NULL);
     if (chr == NULL) {
-        console_printf("CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
-                       "HANDLE=%d\n", conn_handle);
+        BLETINY_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
+                           "HANDLE=%d\n",
+                    conn_handle);
         return NULL;
     }
 
@@ -705,37 +707,12 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
     return dsc;
 }
 
-static void
-bletiny_start_auto_advertise(void)
-{
-    struct ble_hs_adv_fields fields;
-    int rc;
-
-    if (BLETINY_AUTO_DEVICE_NAME[0] != '\0') {
-        memset(&fields, 0, sizeof fields);
-
-        fields.name = (uint8_t *)BLETINY_AUTO_DEVICE_NAME;
-        fields.name_len = strlen(BLETINY_AUTO_DEVICE_NAME);
-        fields.name_is_complete = 1;
-        rc = bletiny_set_adv_data(&fields);
-        if (rc != 0) {
-            return;
-        }
-
-        rc = bletiny_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
-                               NULL, 0, NULL);
-        if (rc != 0) {
-            return;
-        }
-    }
-}
-
 static int
 bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
-                uint16_t mtu, void *arg)
+               uint16_t mtu, void *arg)
 {
     if (error != NULL) {
-        bletiny_print_error("ERROR EXCHANGING MTU", conn_handle, error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else {
         console_printf("mtu exchange complete: conn_handle=%d mtu=%d\n",
                        conn_handle, mtu);
@@ -749,7 +726,7 @@ bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
                    struct ble_gatt_service *service, void *arg)
 {
     if (error != NULL) {
-        bletiny_print_error("ERROR DISCOVERING SERVICE", conn_handle, error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else if (service != NULL) {
         bletiny_svc_add(conn_handle, service);
     } else {
@@ -768,8 +745,7 @@ bletiny_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
     svc_start_handle = (intptr_t)arg;
 
     if (error != NULL) {
-        bletiny_print_error("ERROR DISCOVERING CHARACTERISTIC", conn_handle,
-                             error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else if (chr != NULL) {
         bletiny_chr_add(conn_handle, svc_start_handle, chr);
     } else {
@@ -785,8 +761,7 @@ bletiny_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
                    void *arg)
 {
     if (error != NULL) {
-        bletiny_print_error("ERROR DISCOVERING DESCRIPTOR", conn_handle,
-                             error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else if (dsc != NULL) {
         bletiny_dsc_add(conn_handle, chr_def_handle, dsc);
     } else {
@@ -801,8 +776,7 @@ bletiny_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
                  struct ble_gatt_attr *attr, void *arg)
 {
     if (error != NULL) {
-        bletiny_print_error("ERROR READING CHARACTERISTIC", conn_handle,
-                             error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else if (attr != NULL) {
         console_printf("characteristic read; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
@@ -821,8 +795,7 @@ bletiny_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
                   struct ble_gatt_attr *attr, void *arg)
 {
     if (error != NULL) {
-        bletiny_print_error("ERROR WRITING CHARACTERISTIC", conn_handle,
-                             error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else {
         console_printf("characteristic write complete; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
@@ -842,8 +815,7 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
     int i;
 
     if (error != NULL) {
-        bletiny_print_error("ERROR WRITING CHARACTERISTICS RELIABLY",
-                             conn_handle, error);
+        bletiny_print_error(NULL, conn_handle, error);
     } else {
         console_printf("characteristic write reliable complete; "
                        "conn_handle=%d", conn_handle);
@@ -874,7 +846,7 @@ bletiny_on_notify(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
-                   void *arg)
+                  void *arg)
 {
     int authenticated;
     int conn_idx;
@@ -896,13 +868,9 @@ bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                 }
             } else {
                 conn_idx = bletiny_conn_find_idx(ctxt->desc->conn_handle);
-                if (conn_idx == -1) {
-                    console_printf("UNKNOWN CONNECTION\n");
-                } else {
+                if (conn_idx != -1) {
                     bletiny_conn_delete_idx(conn_idx);
                 }
-
-                bletiny_start_auto_advertise();
             }
         }
         return 0;
@@ -1290,23 +1258,6 @@ bletiny_l2cap_update(uint16_t conn_handle,
 }
 
 int
-bletiny_show_rssi(uint16_t conn_handle)
-{
-    int8_t rssi;
-    int rc;
-
-    rc = ble_hci_util_read_rssi(conn_handle, &rssi);
-    if (rc != 0) {
-        console_printf("failure to read rssi; rc=%d\n", rc);
-        return rc;
-    }
-
-    console_printf("rssi=%d\n", rssi);
-
-    return 0;
-}
-
-int
 bletiny_sec_start(uint16_t conn_handle)
 {
 #if !NIMBLE_OPT(SM)
@@ -1352,8 +1303,6 @@ bletiny_task_handler(void *arg)
     assert(rc == 0);
 
     ble_att_set_notify_cb(bletiny_on_notify, NULL);
-
-    bletiny_start_auto_advertise();
 
     while (1) {
         ev = os_eventq_get(&bletiny_evq);

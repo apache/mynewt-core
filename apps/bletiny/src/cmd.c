@@ -96,7 +96,7 @@ cmd_print_chr(struct bletiny_chr *chr)
 }
 
 static void
-cmd_print_svc(struct bletiny_svc *svc, int print_chrs)
+cmd_print_svc(struct bletiny_svc *svc)
 {
     struct bletiny_chr *chr;
 
@@ -105,10 +105,8 @@ cmd_print_svc(struct bletiny_svc *svc, int print_chrs)
     print_uuid(svc->svc.uuid128);
     console_printf("\n");
 
-    if (print_chrs) {
-        SLIST_FOREACH(chr, &svc->chrs, next) {
-            cmd_print_chr(chr);
-        }
+    SLIST_FOREACH(chr, &svc->chrs, next) {
+        cmd_print_chr(chr);
     }
 }
 
@@ -870,7 +868,7 @@ cmd_show_chr(int argc, char **argv)
         console_printf("\n");
 
         SLIST_FOREACH(svc, &conn->svcs, next) {
-            cmd_print_svc(svc, 1);
+            cmd_print_svc(svc);
         }
     }
 
@@ -894,53 +892,10 @@ cmd_show_conn(int argc, char **argv)
     return 0;
 }
 
-static int
-cmd_show_rssi(int argc, char **argv)
-{
-    uint16_t conn_handle;
-    int rc;
-
-    conn_handle = parse_arg_uint16("conn", &rc);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = bletiny_show_rssi(conn_handle);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-static int
-cmd_show_svc(int argc, char **argv)
-{
-    struct bletiny_conn *conn;
-    struct bletiny_svc *svc;
-    int i;
-
-    for (i = 0; i < bletiny_num_conns; i++) {
-        conn = bletiny_conns + i;
-
-        console_printf("CONNECTION: handle=%d addr=", conn->handle);
-        print_addr(conn->addr);
-        console_printf("\n");
-
-        SLIST_FOREACH(svc, &conn->svcs, next) {
-            cmd_print_svc(svc, 0);
-        }
-    }
-
-    return 0;
-}
-
 static struct cmd_entry cmd_show_entries[] = {
     { "addr", cmd_show_addr },
     { "chr", cmd_show_chr },
     { "conn", cmd_show_conn },
-    { "rssi", cmd_show_rssi },
-    { "svc", cmd_show_svc },
     { NULL, NULL }
 };
 

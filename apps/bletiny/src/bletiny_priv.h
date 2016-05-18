@@ -164,7 +164,6 @@ int bletiny_update_conn(uint16_t conn_handle,
 void bletiny_chrup(uint16_t attr_handle);
 int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
-int bletiny_show_rssi(uint16_t conn_handle);
 int bletiny_sec_start(uint16_t conn_handle);
 int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
                         uint64_t rand_val, int auth);
