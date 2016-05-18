@@ -25,13 +25,6 @@
 #include "host/ble_hs.h"
 #include "bleprph.h"
 
-#define GATT_SVR_SVC_ALERT_UUID               0x1811
-#define GATT_SVR_CHR_SUP_NEW_ALERT_CAT_UUID   0x2A47
-#define GATT_SVR_CHR_NEW_ALERT                0x2A46
-#define GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID   0x2A48
-#define GATT_SVR_CHR_UNR_ALERT_STAT_UUID      0x2A45
-#define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
-
 /**
  * The vendor specific "bleprph" service consists of two characteristics:
  *     o "read": a single-byte characteristic that can only be read of an
@@ -41,19 +34,19 @@
  */
 
 /* 59462f12-9543-9999-12c8-58b459a2712d */
-static const uint8_t gatt_svr_svc_bleprph[16] = {
+const uint8_t gatt_svr_svc_bleprph[16] = {
     0x2d, 0x71, 0xa2, 0x59, 0xb4, 0x58, 0xc8, 0x12,
     0x99, 0x99, 0x43, 0x95, 0x12, 0x2f, 0x46, 0x59
 };
 
 /* 5c3a659e-897e-45e1-b016-007107c96df6 */
-static const uint8_t gatt_svr_chr_bleprph_read[16] = {
+const uint8_t gatt_svr_chr_bleprph_read[16] = {
     0xf6, 0x6d, 0xc9, 0x07, 0x71, 0x00, 0x16, 0xb0,
     0xe1, 0x45, 0x7e, 0x89, 0x9e, 0x65, 0x3a, 0x5c
 };
 
 /* 5c3a659e-897e-45e1-b016-007107c96df7 */
-static const uint8_t gatt_svr_chr_bleprph_write[16] = {
+const uint8_t gatt_svr_chr_bleprph_write[16] = {
     0xf7, 0x6d, 0xc9, 0x07, 0x71, 0x00, 0x16, 0xb0,
     0xe1, 0x45, 0x7e, 0x89, 0x9e, 0x65, 0x3a, 0x5c
 };

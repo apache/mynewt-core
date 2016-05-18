@@ -85,7 +85,7 @@ uint8_t bleprph_pref_conn_params[8];
 uint8_t bleprph_gatt_service_changed[4];
 
 static int bleprph_gap_event(int event, int status,
-                              struct ble_gap_conn_ctxt *ctxt, void *arg);
+                             struct ble_gap_conn_ctxt *ctxt, void *arg);
 
 /**
  * Utility function to log an array of bytes.
@@ -130,11 +130,25 @@ bleprph_advertise(void)
     struct ble_hs_adv_fields fields;
     int rc;
 
-    /* Set the advertisement data included in our advertisements. */
+    /**
+     *  Set the advertisement data included in our advertisements:
+     *     o Advertising tx power.
+     *     o Device name.
+     *     o 16-bit service UUIDs (alert notifications).
+     */
+
     memset(&fields, 0, sizeof fields);
+
+    fields.tx_pwr_lvl_is_present = 1;
+
     fields.name = (uint8_t *)bleprph_device_name;
     fields.name_len = strlen(bleprph_device_name);
     fields.name_is_complete = 1;
+
+    fields.uuids16 = (uint16_t[]){ GATT_SVR_SVC_ALERT_UUID };
+    fields.num_uuids16 = 1;
+    fields.uuids16_is_complete = 1;
+
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
