@@ -96,6 +96,7 @@ extern struct log bletiny_log;
 
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
+void print_bytes(uint8_t *bytes, int len);
 const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
                                        char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
@@ -111,6 +112,7 @@ uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);
 uint64_t parse_arg_uint64(char *name, int *out_status);
 int parse_arg_kv(char *name, struct kv_pair *kvs);
+int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val);
 int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);

@@ -214,16 +214,36 @@ parse_arg_kv(char *name, struct kv_pair *kvs)
 
     sval = parse_arg_find(name);
     if (sval == NULL) {
-        return ENOENT;
+        return -1;
     }
 
     kv = parse_kv_find(kvs, sval);
     if (kv == NULL) {
-        return EINVAL;
+        return -2;
     }
 
     return kv->val;
 }
+
+int
+parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val)
+{
+    struct kv_pair *kv;
+    char *sval;
+
+    sval = parse_arg_find(name);
+    if (sval == NULL) {
+        return def_val;
+    }
+
+    kv = parse_kv_find(kvs, sval);
+    if (kv == NULL) {
+        return -1;
+    }
+
+    return kv->val;
+}
+
 
 static int
 parse_arg_byte_stream_delim(char *sval, char *delims, int max_len,

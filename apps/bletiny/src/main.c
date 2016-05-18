@@ -42,7 +42,6 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
-#include "host/ble_keycache.h"
 #include "controller/ble_ll.h"
 
 /* XXX: An app should not include private headers from a library.  The bletiny
@@ -146,11 +145,19 @@ bletiny_print_error(char *msg, uint16_t conn_handle,
 }
 
 static void
+bletiny_print_mac(uint8_t *mac) {
+    int i;
+    for (i = 5; i >= 0; i--) {
+        console_printf("%s0x%02x", i != 5 ? ":" : "", mac[i]);
+    }
+}
+
+static void
 bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     console_printf("handle=%d peer_addr_type=%d peer_addr=",
                    desc->conn_handle, desc->peer_addr_type);
-    print_bytes(desc->peer_addr, 6);
+    bletiny_print_mac(desc->peer_addr);
     console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                    "pair_alg=%d enc_enabled=%d authenticated=%d",
                    desc->conn_itvl, desc->conn_latency,
@@ -158,6 +165,15 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
                    desc->sec_state.pair_alg,
                    desc->sec_state.enc_enabled,
                    desc->sec_state.authenticated);
+}
+
+static void
+bletiny_print_enh_conn_info(struct ble_gap_enhanced_conn *penh)
+{
+    console_printf(" local_rpa ");
+    bletiny_print_mac(penh->local_rpa);
+    console_printf(" peer_rpa ");
+    bletiny_print_mac(penh->peer_rpa);
 }
 
 static void
@@ -257,7 +273,7 @@ bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 
     if (fields->le_addr != NULL) {
         console_printf("    le_addr=");
-        print_bytes(fields->le_addr, BLE_HS_ADV_LE_ADDR_LEN);
+        bletiny_print_mac(fields->le_addr);
         console_printf("\n");
     }
 
@@ -652,31 +668,6 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
     return dsc;
 }
 
-static void
-bletiny_start_auto_advertise(void)
-{
-    struct ble_hs_adv_fields fields;
-    int rc;
-
-    if (BLETINY_AUTO_DEVICE_NAME[0] != '\0') {
-        memset(&fields, 0, sizeof fields);
-
-        fields.name = (uint8_t *)BLETINY_AUTO_DEVICE_NAME;
-        fields.name_len = strlen(BLETINY_AUTO_DEVICE_NAME);
-        fields.name_is_complete = 1;
-        rc = bletiny_set_adv_data(&fields);
-        if (rc != 0) {
-            return;
-        }
-
-        rc = bletiny_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
-                               0, 0, NULL);
-        if (rc != 0) {
-            return;
-        }
-    }
-}
-
 static int
 bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
                uint16_t mtu, void *arg)
@@ -812,6 +803,10 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
                        ctxt->connect.status == 0 ? "established" : "failed",
                        ctxt->connect.status);
         bletiny_print_conn_desc(ctxt->desc);
+
+        if (ctxt->connect.status  == 0) {
+            bletiny_print_enh_conn_info(ctxt->connect.enhanced_conn);
+        }
         console_printf("\n");
 
         if (ctxt->connect.status == 0) {
@@ -868,37 +863,6 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         print_bytes(ctxt->notify.attr_data, ctxt->notify.attr_len);
         console_printf("\n");
         return 0;
-    case BLE_GAP_EVENT_LTK_REQUEST:
-    {
-        struct ble_gap_key_parms  kp;
-        console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
-                       ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
-        if ((ble_keycache_find(ctxt->desc->peer_addr_type,
-                                    ctxt->desc->peer_addr, &kp) == 0) &&
-            (kp.ltk_valid) && (kp.ediv_rand_valid)) {
-                console_printf("ltk=");
-                bletiny_print_bytes(kp.ltk, sizeof(kp.ltk));
-                console_printf("\n");
-        } else {
-            console_printf("no matching ltk\n");
-        }
-        return 0;
-    }
-    case BLE_GAP_EVENT_KEY_EXCHANGE:
-        rc = 0;
-        console_printf("key exchange event; status=%d ", status);
-        bletiny_print_key_exchange_parms(ctxt->key_params);
-
-        if(ctxt->key_params->addr_valid)
-        {
-            rc = ble_keycache_add(ctxt->key_params->addr_type,
-                                    ctxt->key_params->addr,
-                                    ctxt->key_params);
-            if (rc != 0) {
-                console_printf("error persisting keys; status=%d\n", rc);
-            }
-        }
-        return rc;
     default:
         return 0;
     }
@@ -918,7 +882,7 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     case BLE_GAP_EVENT_DISC_SUCCESS:
         console_printf("received advertisement; event_type=%d addr_type=%d "
                        "addr=", desc->event_type, desc->addr_type);
-        print_bytes(desc->addr, 6);
+        bletiny_print_mac(desc->addr);
         console_printf(" length_data=%d rssi=%d data=", desc->length_data,
                        desc->rssi);
         print_bytes(desc->data, desc->length_data);
@@ -1130,8 +1094,8 @@ bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
 {
     int rc;
 
-    rc = ble_gap_conn_initiate(addr_type, peer_addr, NULL, bletiny_gap_event,
-                               params);
+    rc = ble_gap_conn_initiate(addr_type, peer_addr, params, bletiny_gap_event,
+                               NULL);
     return rc;
 }
 
@@ -1382,10 +1346,6 @@ main(void)
 
     /* Initialize the BLE LL */
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
-    assert(rc == 0);
-
-    /* initialize the keycache to store private keys  */
-    rc = ble_keycache_init(4);
     assert(rc == 0);
 
     rc = cmd_init();
