@@ -55,7 +55,7 @@
 #define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
 
 #define SHELL_TASK_PRIO         (3)
-#define SHELL_MAX_INPUT_LEN     (128)
+#define SHELL_MAX_INPUT_LEN     (256)
 #define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(312))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
