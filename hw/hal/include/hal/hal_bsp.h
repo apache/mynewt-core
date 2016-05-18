@@ -32,7 +32,7 @@ const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 
 int bsp_imgr_current_slot(void);
 
-void os_bsp_init(void);
+void bsp_init(void);
 
 void *_sbrk(int incr);
 
