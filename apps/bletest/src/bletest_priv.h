@@ -58,5 +58,9 @@ int bletest_hci_le_create_connection(struct hci_create_conn *hcc);
 int bletest_hci_le_set_scan_params(uint8_t scan_type, uint16_t scan_itvl,
                                    uint16_t scan_window, uint8_t own_addr_type,
                                    uint8_t filter_policy);
+int bletest_hci_le_add_resolv_list(uint8_t *local_irk, uint8_t *peer_irk,
+                                   uint8_t *peer_ident_addr, uint8_t addr_type);
+int bletest_hci_le_enable_resolv_list(uint8_t enable);
+
 
 #endif  /* H_BLETEST_PRIV_*/
