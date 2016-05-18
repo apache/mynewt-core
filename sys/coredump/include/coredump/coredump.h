@@ -20,6 +20,10 @@
 #ifndef __COREDUMP_H__
 #define __COREDUMP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 #define COREDUMP_MAGIC              0x690c47c3
@@ -47,5 +51,9 @@ struct coredump_header {
 };
 
 void dump_core(void *regs, int regs_sz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
