@@ -24,6 +24,11 @@
 
 void gatt_svr_init(void);
 
+int keystore_lookup(uint16_t ediv, uint64_t rand_num,
+                    void *out_ltk, int *out_authenticated);
+int keystore_add(uint16_t ediv, uint64_t rand_num, uint8_t *key,
+                 int authenticated);
+
 extern struct log bleprph_log;
 
 extern const char *bleprph_device_name;
