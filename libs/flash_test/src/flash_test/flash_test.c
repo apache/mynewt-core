@@ -16,10 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#include <inttypes.h>
 #include <os/os.h>
 #include <console/console.h>
 #include <flash_test/flash_test.h>
+#include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
 #include <shell/shell.h>

@@ -20,6 +20,8 @@
 #include "os/os.h"
 #include "os_priv.h"
 
+#include <hal/hal_bsp.h>
+
 #ifdef __APPLE__
 #define _XOPEN_SOURCE
 #endif

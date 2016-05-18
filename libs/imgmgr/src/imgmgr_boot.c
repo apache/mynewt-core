@@ -31,7 +31,7 @@
 #include <fs/fsutil.h>
 #include <json/json.h>
 #include <util/base64.h>
-#include <bsp/bsp.h>
+#include <hal/hal_bsp.h>
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"

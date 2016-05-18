@@ -17,11 +17,11 @@
  * under the License.
  */
 #include <os/endian.h>
-#include <bsp/bsp.h>
 
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
+#include <hal/hal_bsp.h>
 #include <hal/flash_map.h>
 #include <newtmgr/newtmgr.h>
 #include <json/json.h>

@@ -38,8 +38,6 @@ extern "C" {
 /* UART info */
 #define CONSOLE_UART    0
 
-int bsp_imgr_current_slot(void);
-
 #define NFFS_AREA_MAX    (8)
 
 #ifdef __cplusplus

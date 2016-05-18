@@ -16,8 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <bsp/bsp.h>
-
+#include <hal/hal_bsp.h>
 #include <hal/flash_map.h>
 #include <bootutil/image.h>
 #include <imgmgr/imgmgr.h>

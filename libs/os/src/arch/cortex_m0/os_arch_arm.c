@@ -19,6 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
+#include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 

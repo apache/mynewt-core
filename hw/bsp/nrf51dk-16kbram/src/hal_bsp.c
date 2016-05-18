@@ -19,7 +19,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "mcu/nrf51_hal.h"
+#include <hal/hal_bsp.h>
+#include <mcu/nrf51_hal.h>
 
 static const struct nrf51_uart_cfg uart_cfg = {
     .suc_pin_tx = 9,

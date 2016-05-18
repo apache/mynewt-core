@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_flash_int.h"
 #include "mcu/stm32f407xx.h"

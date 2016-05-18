@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,32 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NATIVE_BSP_H
-#define __NATIVE_BSP_H
+
+#ifndef __HAL_BSP_H_
+#define __HAL_BSP_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Define special stackos sections */
-#define sec_data_core
-#define sec_bss_core
-#define sec_bss_nz_core
+#include <inttypes.h>
 
-/* More convenient section placement macros. */
-#define bssnz_t
+/* External function prototypes supplied by BSP */
+struct hal_flash;
+const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 
-/* LED pins */
-#define LED_BLINK_PIN   (0x1)
+int bsp_imgr_current_slot(void);
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
+void os_bsp_init(void);
 
-#define NFFS_AREA_MAX    (8)
+void *_sbrk(int incr);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __NATIVE_BSP_H */
+#endif
