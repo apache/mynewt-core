@@ -29,28 +29,19 @@
 #include <config/config.h>
 #include <config/config_file.h>
 #include <reboot/log_reboot.h>
+#include <bsp/bsp.h>
+#include <assert.h>
 #ifdef SHELL_PRESENT
 #include <shell/shell.h>
 #endif
 
-#define MAX_CBMEM_BUF 300
-
-static struct flash_area fcb_areas[] = {
-    [0] = {
-        .fa_off = 0x00018000,
-        .fa_size = (2 * 1024)
-    }
-};
-
 static struct log_handler reboot_log_handler;
 static struct fcb log_fcb;
 static struct log reboot_log;
-static struct cbmem reboot_cbmem;
-static uint32_t reboot_cbmem_buf[MAX_CBMEM_BUF];
 static uint16_t reboot_cnt;
 static uint16_t soft_reboot;
-static char reboot_cnt_str[32];
-static char soft_reboot_str[32];
+static char reboot_cnt_str[12];
+static char soft_reboot_str[12];
 static char *reboot_cnt_get(int argc, char **argv, char *buf, int max_len);
 static int reboot_cnt_set(int argc, char **argv, char *val);
 
@@ -74,8 +65,8 @@ reboot_init_handler(int log_type)
 
     switch (log_type) {
         case LOG_TYPE_STORAGE:
-            log_fcb.f_sectors = fcb_areas;
-            log_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+            log_fcb.f_sectors = (struct flash_area *)os_flash_addr_syslog();
+            log_fcb.f_sector_cnt = 1;
             log_fcb.f_magic = 0x7EADBADF;
             log_fcb.f_version = 0;
             rc = fcb_init(&log_fcb);
@@ -86,10 +77,8 @@ reboot_init_handler(int log_type)
             (void) console_init(NULL);
 
             break;
-       case LOG_TYPE_MEMORY:
        default:
-            cbmem_init(&reboot_cbmem, reboot_cbmem_buf, MAX_CBMEM_BUF);
-            log_cbmem_handler_init(&reboot_log_handler, &reboot_cbmem);
+            assert(0);
     }
 
     imgmgr_module_init();
@@ -107,24 +96,28 @@ log_reboot(int reason)
     rc = 0;
 
     reboot_cnt++;
+    /* If the reboot count is equal to soft_reboot */
+    if (soft_reboot == (reboot_cnt - 1)) {
+        /* Save the reboot cnt */
+        rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
+                           conf_str_from_value(CONF_INT16, &reboot_cnt,
+                                               str, sizeof(str)));
+        return (rc);
+    }
 
-    if (reason != SOFT_REBOOT) {
-        /* If number of reboots are not equal to soft reboots */
-        if ((reboot_cnt - 1) != soft_reboot) {
-            reason = HARD_REBOOT;
-        } else {
-            /* If the count is equal */
-            goto err;
-        }
-    } else {
+    if (reason == SOFT_REBOOT) {
         /*
          * Save reboot count as soft reboot cnt if the reason is
-         * a hard reboot
+         * a soft reboot
          */
         rc = conf_save_one(&reboot_conf_handler, "soft_reboot",
                            conf_str_from_value(CONF_INT16, &reboot_cnt,
                                                str, sizeof(str)));
+        if (rc) {
+            goto err;
+        }
     }
+
 
     imgr_my_version(&ver);
 
