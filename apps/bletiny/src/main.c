@@ -96,8 +96,6 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_MAX_DSCS               1
 #endif
 
-#define BLETINY_MAX_LTKS                4
-
 struct os_eventq bletiny_evq;
 struct os_task bletiny_task;
 bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
@@ -129,9 +127,6 @@ const uint8_t bletiny_privacy_flag = 0;
 uint8_t bletiny_reconnect_addr[6];
 uint8_t bletiny_pref_conn_params[8];
 uint8_t bletiny_gatt_service_changed[4];
-
-struct ble_gap_ltk_params bletiny_ltks[BLETINY_MAX_LTKS];
-int bletiny_num_ltks;
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -878,54 +873,10 @@ bletiny_on_notify(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 static int
-bletiny_ltk_lookup(struct ble_gap_ltk_params *ltk_params)
-{
-    struct ble_gap_ltk_params *ltk;
-    int i;
-
-    for (i = 0; i < bletiny_num_ltks; i++) {
-        ltk = bletiny_ltks + i;
-
-        if (ltk->ediv == ltk_params->ediv &&
-            ltk->rand_num == ltk_params->rand_num) {
-
-            memcpy(ltk_params->ltk, ltk->ltk, sizeof ltk_params->ltk);
-            ltk_params->authenticated = ltk->authenticated;
-
-            return 0;
-        }
-    }
-
-    return BLE_HS_ENOENT;
-}
-
-static int
-bletiny_ltk_add(uint16_t ediv, uint64_t rand_num, uint8_t *key,
-                int authenticated)
-{
-    struct ble_gap_ltk_params *ltk;
-
-    if (bletiny_num_ltks >= BLETINY_MAX_LTKS) {
-        return BLE_HS_ENOMEM;
-    }
-
-    ltk = bletiny_ltks + bletiny_num_ltks;
-    bletiny_num_ltks++;
-
-    ltk->ediv = ediv;
-    ltk->rand_num = rand_num;
-    memcpy(ltk->ltk, key, sizeof ltk->ltk);
-    ltk->authenticated = authenticated;
-
-    return 0;
-}
-
-/* XXX: LTK clear. */
-
-static int
-bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
+bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                    void *arg)
 {
+    int authenticated;
     int conn_idx;
     int rc;
 
@@ -967,22 +918,23 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         *ctxt->update.self_params = *ctxt->update.peer_params;
         return 0;
 
-    case BLE_GAP_EVENT_SECURITY:
-        console_printf("security event; status=%d ", status);
-        bletiny_print_conn_desc(ctxt->desc);
-        console_printf("\n");
-        return 0;
-
-    case BLE_GAP_EVENT_PASSKEY_ACTION:
-        console_printf("passkey action event; status=%d ", status);
-        bletiny_print_passkey_action_parms(ctxt->passkey_action);
-        return 0;
-
     case BLE_GAP_EVENT_LTK_REQUEST:
+        /* An encryption procedure (bonding) is being attempted.  The nimble
+         * stack is asking us to look in our key database for a long-term key
+         * corresponding to the specified ediv and random number.
+         */
         console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
                        ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
-        rc = bletiny_ltk_lookup(ctxt->ltk_params);
+
+        /* Perform a key lookup and populate the context object with the
+         * result.  The nimble stack will use this key if this function returns
+         * success.
+         */
+        rc = keystore_lookup(ctxt->ltk_params->ediv,
+                             ctxt->ltk_params->rand_num, ctxt->ltk_params->ltk,
+                             &authenticated);
         if (rc == 0) {
+            ctxt->ltk_params->authenticated = authenticated;
             console_printf("ltk=");
             bletiny_print_bytes(ctxt->ltk_params->ltk,
                                 sizeof ctxt->ltk_params->ltk);
@@ -990,24 +942,43 @@ bletiny_on_connect(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         } else {
             console_printf("no matching ltk\n");
         }
+
+        /* Indicate whether we were able to find an appropriate key. */
         return rc;
 
     case BLE_GAP_EVENT_KEY_EXCHANGE:
         console_printf("key exchange event; status=%d ", status);
         bletiny_print_key_exchange_parms(ctxt->key_params);
 
+        /* The central is sending us key information or vice-versa.  If the
+         * central is doing the sending, save the long-term key in the in-RAM
+         * database.  This permits bonding to occur on subsequent connections
+         * with this peer (as long as bletiny isn't restarted!).
+         */
+
         if (ctxt->key_params->is_ours   &&
             ctxt->key_params->ltk_valid &&
             ctxt->key_params->ediv_rand_valid) {
 
-            rc = bletiny_ltk_add(ctxt->key_params->ediv,
-                                 ctxt->key_params->rand_val,
-                                 ctxt->key_params->ltk,
-                                 ctxt->desc->sec_state.authenticated);
+            rc = keystore_add(ctxt->key_params->ediv,
+                              ctxt->key_params->rand_val,
+                              ctxt->key_params->ltk,
+                              ctxt->desc->sec_state.authenticated);
             if (rc != 0) {
                 console_printf("error persisting LTK; status=%d\n", rc);
             }
         }
+        return 0;
+
+    case BLE_GAP_EVENT_PASSKEY_ACTION:
+        console_printf("passkey action event; status=%d ", status);
+        bletiny_print_passkey_action_parms(ctxt->passkey_action);
+        return 0;
+
+    case BLE_GAP_EVENT_SECURITY:
+        console_printf("security event; status=%d ", status);
+        bletiny_print_conn_desc(ctxt->desc);
+        console_printf("\n");
         return 0;
 
     default:
@@ -1230,7 +1201,7 @@ bletiny_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
     int rc;
 
     rc = ble_gap_adv_start(disc, conn, peer_addr, addr_type, params,
-                           bletiny_on_connect, NULL);
+                           bletiny_gap_event, NULL);
     return rc;
 }
 
@@ -1240,7 +1211,7 @@ bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
 {
     int rc;
 
-    rc = ble_gap_conn_initiate(addr_type, peer_addr, NULL, bletiny_on_connect,
+    rc = ble_gap_conn_initiate(addr_type, peer_addr, NULL, bletiny_gap_event,
                                params);
     return rc;
 }
@@ -1499,11 +1470,11 @@ main(void)
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
-    cfg.max_attrs = 32;
-    cfg.max_services = 4;
-    cfg.max_client_configs = 6;
+    cfg.max_attrs = 36;
+    cfg.max_services = 5;
+    cfg.max_client_configs = (NIMBLE_OPT(MAX_CONNECTIONS) + 1) * 3;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = 3;
+    cfg.max_l2cap_chans = NIMBLE_OPT(MAX_CONNECTIONS) * 3;
     cfg.max_l2cap_sig_procs = 2;
 
     rc = ble_hs_init(&bletiny_evq, &cfg);
@@ -1522,7 +1493,7 @@ main(void)
     htole16(bletiny_pref_conn_params + 4, 0);
     htole16(bletiny_pref_conn_params + 6, BSWAP16(0x100));
 
-    periph_init();
+    gatt_svr_init();
 
     /* Start the OS */
     os_start();
