@@ -145,8 +145,8 @@ err:
  * @return 0 on success; non-zero on failure
  */
 static int
-log_encode_entries (struct log *log, struct json_encoder *encoder,
-                    int64_t ts, uint32_t index)
+log_encode_entries(struct log *log, struct json_encoder *encoder,
+                   int64_t ts, uint32_t index)
 {
     int rc;
     struct encode_off encode_off;
