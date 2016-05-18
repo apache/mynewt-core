@@ -1698,7 +1698,7 @@ cmd_write(int argc, char **argv)
 static int
 cmd_passkey(int argc, char **argv)
 {
-#if !NIMBLE_OPT_SM
+#if !NIMBLE_OPT(SM)
     return BLE_HS_ENOTSUP;
 #endif
 

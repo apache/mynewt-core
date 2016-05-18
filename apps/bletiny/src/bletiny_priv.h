@@ -76,7 +76,7 @@ struct bletiny_conn {
     struct bletiny_svc_list svcs;
 };
 
-extern struct bletiny_conn bletiny_conns[NIMBLE_OPT_MAX_CONNECTIONS];
+extern struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
 extern int bletiny_num_conns;
 
 extern const char *bletiny_device_name;

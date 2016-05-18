@@ -86,7 +86,7 @@ struct os_mempool default_mbuf_mpool;
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(288))
 #define BLETINY_TASK_PRIO              1
 
-#if NIMBLE_OPT_ROLE_CENTRAL
+#if NIMBLE_OPT(ROLE_CENTRAL)
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
 #define BLETINY_MAX_DSCS               64
@@ -105,13 +105,13 @@ bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 static struct log_handler bletiny_log_console_handler;
 struct log bletiny_log;
 
-struct bletiny_conn ble_shell_conns[NIMBLE_OPT_MAX_CONNECTIONS];
+struct bletiny_conn ble_shell_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
 int bletiny_num_conns;
 
 void
 bletest_inc_adv_pkt_num(void) { }
 
-bssnz_t struct bletiny_conn bletiny_conns[NIMBLE_OPT_MAX_CONNECTIONS];
+bssnz_t struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
 int bletiny_num_conns;
 
 static void *bletiny_svc_mem;
@@ -386,7 +386,7 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
 {
     struct bletiny_conn *conn;
 
-    assert(bletiny_num_conns < NIMBLE_OPT_MAX_CONNECTIONS);
+    assert(bletiny_num_conns < NIMBLE_OPT(MAX_CONNECTIONS));
 
     conn = bletiny_conns + bletiny_num_conns;
     bletiny_num_conns++;
@@ -416,7 +416,7 @@ bletiny_conn_delete_idx(int idx)
     /* This '#if' is not strictly necessary.  It is here to prevent a spurious
      * warning from being reported.
      */
-#if NIMBLE_OPT_MAX_CONNECTIONS > 1
+#if NIMBLE_OPT(MAX_CONNECTIONS) > 1
     int i;
     for (i = idx + 1; i < bletiny_num_conns; i++) {
         bletiny_conns[i - 1] = bletiny_conns[i];
@@ -1338,7 +1338,7 @@ bletiny_show_rssi(uint16_t conn_handle)
 int
 bletiny_sec_start(uint16_t conn_handle)
 {
-#if !NIMBLE_OPT_SM
+#if !NIMBLE_OPT(SM)
     return BLE_HS_ENOTSUP;
 #endif
 
@@ -1355,9 +1355,9 @@ bletiny_sec_restart(uint16_t conn_handle,
                     uint64_t rand_val,
                     int auth)
 {
-    #if !NIMBLE_OPT_SM
-        return BLE_HS_ENOTSUP;
-    #endif
+#if !NIMBLE_OPT(SM)
+    return BLE_HS_ENOTSUP;
+#endif
 
     int rc;
 
