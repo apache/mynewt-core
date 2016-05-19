@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <limits.h>
 #include <hal/hal_bsp.h>
 #include <hal/flash_map.h>
 #include <bootutil/image.h>
@@ -33,8 +34,6 @@ dump_core_tlv(const struct flash_area *fa, uint32_t *off,
     *off += tlv->ct_len;
 }
 
-extern char *__vector_tbl_reloc__, *__StackTop;
-
 void
 dump_core(void *regs, int regs_sz)
 {
@@ -42,8 +41,11 @@ dump_core(void *regs, int regs_sz)
     struct coredump_tlv tlv;
     const struct flash_area *fa;
     struct image_version ver;
+    const struct bsp_mem_dump *mem, *cur;
+    int area_cnt, i;
     uint8_t hash[IMGMGR_HASH_LEN];
     uint32_t off;
+    uint32_t area_off, area_end;
 
     if (flash_area_open(FLASH_AREA_CORE, &fa)) {
         return;
@@ -81,11 +83,23 @@ dump_core(void *regs, int regs_sz)
         dump_core_tlv(fa, &off, &tlv, hash);
     }
 
-    tlv.ct_type = COREDUMP_TLV_MEM;
-    tlv.ct_len = (uint32_t)&__StackTop - (uint32_t)&__vector_tbl_reloc__;
-    tlv.ct_off = (uint32_t)&__vector_tbl_reloc__;
-    dump_core_tlv(fa, &off, &tlv, &__vector_tbl_reloc__);
-
+    mem = bsp_core_dump(&area_cnt);
+    for (i = 0; i < area_cnt; i++) {
+        cur = &mem[i];
+        area_off = (uint32_t)cur->bmd_start;
+        area_end = area_off + cur->bmd_size;
+        while (area_off < area_end) {
+            tlv.ct_type = COREDUMP_TLV_MEM;
+            if (cur->bmd_size > USHRT_MAX) {
+                tlv.ct_len = SHRT_MAX + 1;
+            } else {
+                tlv.ct_len = cur->bmd_size;
+            }
+            tlv.ct_off = area_off;
+            dump_core_tlv(fa, &off, &tlv, (void *)area_off);
+            area_off += tlv.ct_len;
+        }
+    }
     hdr.ch_magic = COREDUMP_MAGIC;
     hdr.ch_size = off;
 
