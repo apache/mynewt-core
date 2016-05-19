@@ -199,7 +199,8 @@ os_arch_os_init(void)
          * state at the time of the interrupt, and few other regs which
          * should help in trying to figure out what went wrong.
          */
-        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm); /* Hardfault */
+        NVIC_SetVector(NonMaskableInt_IRQn, (uint32_t)os_default_irq_asm);
+        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(MemoryManagement_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(BusFault_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(UsageFault_IRQn, (uint32_t)os_default_irq_asm);
