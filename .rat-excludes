@@ -29,6 +29,8 @@ nrf51822_peripherals.h
 nrf51_bitfields.h
 nrf51_deprecated.h
 system_nrf51.h
+boot-nrf51-arduino_101.ld
+nrf51-arduino_101.ld
 
 # Nordic nRF52 SDK - BSD License.
 nrf52pdk.ld

@@ -234,6 +234,8 @@ which are available under a BSD style license.  Relevant files are:
     * hw/bsp/nrf51dk-16kbram/boot-nrf51dk-16kbram.ld
     * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram.ld
     * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_no_boot.ld
+    * hw/bsp/nrf51-arduino_101/boot-nrf51-arduino_101.ld
+    * hw/bsp/nrf51-arduino_101/nrf51-arduino_101.ld
 
 This product bundles and partly derives from parts of the Nordic nRF52 SDK,
 which are available under a BSD style license.  Relevant files are:
