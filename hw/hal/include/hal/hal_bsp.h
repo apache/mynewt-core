@@ -26,15 +26,34 @@ extern "C" {
 
 #include <inttypes.h>
 
-/* External function prototypes supplied by BSP */
+/*
+ * Initializes BSP; registers flash_map with the system.
+ */
+void bsp_init(void);
+
+/*
+ * Return pointer to flash device structure, given BSP specific
+ * flash id.
+ */
 struct hal_flash;
 const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 
+/*
+ * Returns which flash map slot the currently running image is at.
+ */
 int bsp_imgr_current_slot(void);
 
-void bsp_init(void);
-
+/*
+ * Grows heap by given amount. XXX giving space back not implemented.
+ */
 void *_sbrk(int incr);
+
+struct bsp_mem_dump {
+    void *bmd_start;
+    uint32_t bmd_size;
+};
+
+const struct bsp_mem_dump *bsp_core_dump(int *area_cnt);
 
 #ifdef __cplusplus
 }

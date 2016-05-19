@@ -178,6 +178,9 @@ SECTIONS
     /* Heap starts after BSS */
     __HeapBase = .;
 
+    _ram_start = ORIGIN(RAM);
+    _code_ram_start = ORIGIN(CODE_RAM);
+
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
      * values to stack symbols later */

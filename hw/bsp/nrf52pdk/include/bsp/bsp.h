@@ -20,6 +20,8 @@
 #ifndef H_BSP_H
 #define H_BSP_H
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +33,12 @@ extern "C" {
 
 /* More convenient section placement macros. */
 #define bssnz_t         sec_bss_nz_core
+
+extern uint8_t _ram_start;
+extern uint8_t _code_ram_start;
+
+#define RAM_SIZE        0x8000
+#define CODE_RAM_SIZE   0x8000
 
 /* LED pins */
 #define LED_BLINK_PIN   (17)
