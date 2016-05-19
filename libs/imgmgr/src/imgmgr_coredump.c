@@ -64,7 +64,7 @@ imgr_core_list(struct nmgr_jbuf *njb)
 int
 imgr_core_load(struct nmgr_jbuf *njb)
 {
-    unsigned int off = UINT_MAX;
+    unsigned long long off = UINT_MAX;
     const struct json_attr_t dload_attr[2] = {
         [0] = {
             .attribute = "off",
