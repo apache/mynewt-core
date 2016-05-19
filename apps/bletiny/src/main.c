@@ -72,7 +72,7 @@ uint8_t g_host_adv_len;
 static uint8_t bletiny_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (7)
+#define MBUF_NUM_MBUFS      (12)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -264,7 +264,7 @@ bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
     if (fields->name != NULL) {
         console_printf("    name(%scomplete)=",
                        fields->name_is_complete ? "" : "in");
-        console_printf("%*s\n", fields->name_len, fields->name);
+        console_write((char *)fields->name, fields->name_len);
     }
 
     if (fields->tx_pwr_lvl_is_present) {
