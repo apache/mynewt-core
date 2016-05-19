@@ -92,15 +92,18 @@ log_reboot(int reason)
     int rc;
     char str[12] = {0};
     struct image_version ver;
+    int16_t reboot_tmp_cnt;
 
     rc = 0;
 
-    reboot_cnt++;
+    reboot_tmp_cnt = reboot_cnt;
+
     /* If the reboot count is equal to soft_reboot */
-    if (soft_reboot == (reboot_cnt - 1)) {
+    if (soft_reboot == reboot_cnt) {
+        reboot_tmp_cnt = reboot_cnt + 1;
         /* Save the reboot cnt */
         rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
-                           conf_str_from_value(CONF_INT16, &reboot_cnt,
+                           conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                                str, sizeof(str)));
         return (rc);
     }
@@ -110,8 +113,9 @@ log_reboot(int reason)
          * Save reboot count as soft reboot cnt if the reason is
          * a soft reboot
          */
+        reboot_tmp_cnt = reboot_cnt + 1;
         rc = conf_save_one(&reboot_conf_handler, "soft_reboot",
-                           conf_str_from_value(CONF_INT16, &reboot_cnt,
+                           conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                                str, sizeof(str)));
         if (rc) {
             goto err;
@@ -123,7 +127,7 @@ log_reboot(int reason)
 
     /* Save the reboot cnt */
     rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
-                       conf_str_from_value(CONF_INT16, &reboot_cnt,
+                       conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                            str, sizeof(str)));
     if (rc) {
         goto err;
@@ -131,7 +135,7 @@ log_reboot(int reason)
 
     /* Log a reboot */
     LOG_CRITICAL(&reboot_log, LOG_MODULE_REBOOT, "rsn:%s, cnt:%u,"
-                 " img:%u.%u.%u.%u", REBOOT_REASON_STR(reason), reboot_cnt,
+                 " img:%u.%u.%u.%u", REBOOT_REASON_STR(reason), reboot_tmp_cnt,
                  ver.iv_major, ver.iv_minor, ver.iv_revision,
                  (unsigned int)ver.iv_build_num);
 err:
