@@ -86,6 +86,7 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_CTLR      (3)
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
+#define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
 #define LOG_MODULE_STR(module) \
