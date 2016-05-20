@@ -24,6 +24,9 @@
 #include "json/json.h"
 
 static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\",\"KeyIntArr\": [153,2532,-322]}";
+
+static char *output1 ="{\"KeyBoolArr\": [true, false], \"KeyUintArr\": [0, 65535, 4294967295, 8589934590, 3451257]}";
+
 static char bigbuf[512];
 static int buf_index;
 
@@ -171,7 +174,8 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 
 /* now test the decode on a string */
 TEST_CASE(test_json_simple_decode){
-    struct test_jbuf tjb; 
+    struct test_jbuf tjb;
+    struct test_jbuf tjb1;
     long long unsigned int uint_val;
     long long int int_val;
     bool bool_val;
@@ -179,8 +183,14 @@ TEST_CASE(test_json_simple_decode){
     char string2[16];
     long long int intarr[8];
     int rc;
+    int rc1;
     int array_count;
 
+    bool boolarr[2];
+    unsigned long long uintarr[5];
+    int array_count1;
+    int array_count1u;
+    
     struct json_attr_t test_attr[7] = {
         [0] = {
             .attribute = "KeyBool",
@@ -249,4 +259,48 @@ TEST_CASE(test_json_simple_decode){
     TEST_ASSERT(intarr[0] == 153);
     TEST_ASSERT(intarr[1] == 2532);
     TEST_ASSERT(intarr[2] == -322);
+    
+   /*testing for the boolean*/
+   struct json_attr_t test_attr1[2] = {
+       [0] = {
+           .attribute = "KeyBoolArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_boolean,
+               .arr.booleans.store = boolarr,
+               .maxlen = sizeof boolarr / sizeof boolarr[0],
+               .count =&array_count1,
+           },
+           .nodefault = true,
+           .len = sizeof( boolarr),
+       },
+       
+       [1] = {
+           .attribute = "KeyUintArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_uinteger,
+               .arr.uintegers.store = uintarr,
+               .maxlen = sizeof uintarr / sizeof uintarr[0],
+               .count =&array_count1u,
+           },
+           .nodefault = true,
+           .len = sizeof( uintarr),
+       }  
+   };
+   
+   test_buf_init(&tjb1, output1);
+   
+   rc1 = json_read_object(&tjb1.json_buf, test_attr1);
+   TEST_ASSERT(rc1==0);
+   
+   TEST_ASSERT(boolarr[0] == true);
+   TEST_ASSERT(boolarr[1] == false);
+   
+   TEST_ASSERT(uintarr[0] == 0);
+   TEST_ASSERT(uintarr[1] == 65535);
+   TEST_ASSERT(uintarr[2] == 4294967295);
+   TEST_ASSERT(uintarr[3] == 8589934590);
+   TEST_ASSERT(uintarr[4] ==  3451257);
+
 }
