@@ -169,44 +169,14 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 }
 
 static void
-bletiny_print_key_exchange_parms(struct ble_gap_key_parms *key_params)
+bletiny_print_key_exchange_parms(uint16_t ediv, uint64_t rand_num, void *ltk,
+                                 int authenticated)
 {
-    if (key_params->is_ours) {
-        console_printf("keys; us --> peer\n");
-    } else {
-        console_printf("keys; peer --> us\n");
-    }
-
-    if (key_params->ltk_valid) {
-        console_printf("LTK=");
-        bletiny_print_bytes(key_params->ltk, 16);
-        console_printf("\n");
-    }
-
-    if (key_params->ediv_rand_valid) {
-        console_printf("EDIV=%u, rand=%llu ",
-                        key_params->ediv,
-                        key_params->rand_val);
-        console_printf("\n");
-    }
-
-    if (key_params->addr_valid) {
-        console_printf("Addr Type=%u -- ", key_params->addr_type);
-        bletiny_print_bytes(key_params->addr, 6);
-        console_printf("\n");
-    }
-
-    if (key_params->irk_valid) {
-        console_printf("IRK=");
-        bletiny_print_bytes(key_params->irk, 16);
-        console_printf("\n");
-    }
-
-    if (key_params->csrk_valid) {
-        console_printf("CSRK=");
-        bletiny_print_bytes(key_params->csrk, 16);
-        console_printf("\n");
-    }
+    console_printf("ediv=%u rand=%llu authenticated=%d ", ediv, rand_num,
+                   authenticated);
+    console_printf("ltk=");
+    bletiny_print_bytes(ltk, 16);
+    console_printf("\n");
 }
 
 static void
@@ -828,9 +798,7 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
 static int
 bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 {
-    int authenticated;
     int conn_idx;
-    int rc;
 
     switch (event) {
     case BLE_GAP_EVENT_CONNECT:
@@ -873,58 +841,6 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
             *ctxt->conn_update_req.peer_params;
         return 0;
 
-    case BLE_GAP_EVENT_LTK_REQUEST:
-        /* An encryption procedure (bonding) is being attempted.  The nimble
-         * stack is asking us to look in our key database for a long-term key
-         * corresponding to the specified ediv and random number.
-         */
-        console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
-                       ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
-
-        /* Perform a key lookup and populate the context object with the
-         * result.  The nimble stack will use this key if this function returns
-         * success.
-         */
-        rc = keystore_lookup(ctxt->ltk_params->ediv,
-                             ctxt->ltk_params->rand_num, ctxt->ltk_params->ltk,
-                             &authenticated);
-        if (rc == 0) {
-            ctxt->ltk_params->authenticated = authenticated;
-            console_printf("ltk=");
-            bletiny_print_bytes(ctxt->ltk_params->ltk,
-                                sizeof ctxt->ltk_params->ltk);
-            console_printf("\n");
-        } else {
-            console_printf("no matching ltk\n");
-        }
-
-        /* Indicate whether we were able to find an appropriate key. */
-        return rc;
-
-    case BLE_GAP_EVENT_KEY_EXCHANGE:
-        console_printf("key exchange event; ");
-        bletiny_print_key_exchange_parms(ctxt->key_params);
-
-        /* The central is sending us key information or vice-versa.  If the
-         * central is doing the sending, save the long-term key in the in-RAM
-         * database.  This permits bonding to occur on subsequent connections
-         * with this peer (as long as bletiny isn't restarted!).
-         */
-
-        if (ctxt->key_params->is_ours   &&
-            ctxt->key_params->ltk_valid &&
-            ctxt->key_params->ediv_rand_valid) {
-
-            rc = keystore_add(ctxt->key_params->ediv,
-                              ctxt->key_params->rand_val,
-                              ctxt->key_params->ltk,
-                              ctxt->desc->sec_state.authenticated);
-            if (rc != 0) {
-                console_printf("error persisting LTK; status=%d\n", rc);
-            }
-        }
-        return 0;
-
     case BLE_GAP_EVENT_PASSKEY_ACTION:
         console_printf("passkey action event; action=%d\n",
                        ctxt->passkey_action.action);
@@ -952,6 +868,76 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     }
 }
 
+static int
+bletiny_store_read(int obj_type, union ble_store_key *key,
+                   union ble_store_value *dst)
+{
+    int authenticated;
+    int rc;
+
+    switch (obj_type) {
+    case BLE_STORE_OBJ_TYPE_OUR_LTK:
+        /* An encryption procedure (bonding) is being attempted.  The nimble
+         * stack is asking us to look in our key database for a long-term key
+         * corresponding to the specified ediv and random number.
+         */
+        console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
+                       key->ltk.ediv, key->ltk.rand_num);
+
+        /* Perform a key lookup and populate the context object with the
+         * result.  The nimble stack will use this key if this function returns
+         * success.
+         */
+        rc = keystore_lookup(key->ltk.ediv, key->ltk.rand_num,
+                             dst->ltk.key, &authenticated);
+        if (rc == 0) {
+            dst->ltk.authenticated = authenticated;
+            console_printf("ltk=");
+            bletiny_print_bytes(dst->ltk.key, sizeof dst->ltk.key);
+            console_printf(" authenticated=%d\n", authenticated);
+        } else {
+            console_printf("no matching ltk\n");
+        }
+
+        /* Indicate whether we were able to find an appropriate key. */
+        if (rc != 0) {
+            return rc;
+        }
+
+        return 0;
+
+    default:
+        return BLE_HS_ENOTSUP;
+    }
+}
+
+static int
+bletiny_store_write(int obj_type, union ble_store_key *key,
+                    union ble_store_value *val)
+{
+    int rc;
+
+    switch (obj_type) {
+    case BLE_STORE_OBJ_TYPE_OUR_LTK:
+        /* The central is sending us key information.  Save the long-term key
+         * in the in-RAM database.  This permits bonding to occur on subsequent
+         * connections with this peer (as long as bletiny isn't restarted!).
+         */
+        console_printf("persisting our ltk; ");
+        bletiny_print_key_exchange_parms(key->ltk.ediv, key->ltk.rand_num,
+                                         val->ltk.key, val->ltk.authenticated);
+        rc = keystore_add(key->ltk.ediv, key->ltk.rand_num,
+                          val->ltk.key, val->ltk.authenticated);
+        if (rc != 0) {
+            console_printf("error persisting ltk; status=%d\n", rc);
+        }
+        return rc;
+
+    default:
+        return BLE_HS_ENOTSUP;
+    }
+}
+
 static void
 bletiny_on_l2cap_update(int status, void *arg)
 {
@@ -960,7 +946,7 @@ bletiny_on_l2cap_update(int status, void *arg)
 
 static void
 bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
-                 void *arg)
+                void *arg)
 {
     switch (event) {
     case BLE_GAP_EVENT_DISC_SUCCESS:
@@ -1421,6 +1407,8 @@ main(void)
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = NIMBLE_OPT(MAX_CONNECTIONS) * 3;
     cfg.max_l2cap_sig_procs = 2;
+    cfg.store_read_cb = bletiny_store_read;
+    cfg.store_write_cb = bletiny_store_write;
 
     rc = ble_hs_init(&bletiny_evq, &cfg);
     assert(rc == 0);

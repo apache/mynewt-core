@@ -182,9 +182,6 @@ bleprph_advertise(void)
 static int
 bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 {
-    int authenticated;
-    int rc;
-
     switch (event) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
@@ -217,54 +214,6 @@ bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         BLEPRPH_LOG(INFO, "\n");
         return 0;
 
-    case BLE_GAP_EVENT_LTK_REQUEST:
-        /* An encryption procedure (bonding) is being attempted.  The nimble
-         * stack is asking us to look in our key database for a long-term key
-         * corresponding to the specified ediv and random number.
-         */
-        BLEPRPH_LOG(INFO, "looking up ltk with ediv=0x%02x rand=0x%llx\n",
-                    ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
-
-        /* Perform a key lookup and populate the context object with the
-         * result.  The nimble stack will use this key if this function returns
-         * success.
-         */
-        rc = keystore_lookup(ctxt->ltk_params->ediv,
-                             ctxt->ltk_params->rand_num, ctxt->ltk_params->ltk,
-                             &authenticated);
-        if (rc == 0) {
-            ctxt->ltk_params->authenticated = authenticated;
-            BLEPRPH_LOG(INFO, "ltk=");
-            bleprph_print_bytes(ctxt->ltk_params->ltk,
-                                sizeof ctxt->ltk_params->ltk);
-            BLEPRPH_LOG(INFO, " authenticated=%d\n", authenticated);
-        } else {
-            BLEPRPH_LOG(INFO, "no matching ltk\n");
-        }
-
-        /* Indicate whether we were able to find an appropriate key. */
-        return rc;
-
-    case BLE_GAP_EVENT_KEY_EXCHANGE:
-        /* The central is sending us key information or vice-versa.  If the
-         * central is doing the sending, save the long-term key in the in-RAM
-         * database.  This permits bonding to occur on subsequent connections
-         * with this peer (as long as bleprph isn't restarted!).
-         */
-        if (ctxt->key_params->is_ours   &&
-            ctxt->key_params->ltk_valid &&
-            ctxt->key_params->ediv_rand_valid) {
-
-            rc = keystore_add(ctxt->key_params->ediv,
-                              ctxt->key_params->rand_val,
-                              ctxt->key_params->ltk,
-                              ctxt->desc->sec_state.authenticated);
-            if (rc != 0) {
-                BLEPRPH_LOG(INFO, "error persisting LTK; status=%d\n", rc);
-            }
-        }
-        return 0;
-
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
         BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
@@ -275,6 +224,74 @@ bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     }
 
     return 0;
+}
+
+static int
+bleprph_store_read(int obj_type, union ble_store_key *key,
+                   union ble_store_value *dst)
+{
+    int authenticated;
+    int rc;
+
+    switch (obj_type) {
+    case BLE_STORE_OBJ_TYPE_OUR_LTK:
+        /* An encryption procedure (bonding) is being attempted.  The nimble
+         * stack is asking us to look in our key database for a long-term key
+         * corresponding to the specified ediv and random number.
+         */
+        BLEPRPH_LOG(INFO, "looking up ltk with ediv=0x%02x rand=0x%llx\n",
+                    key->ltk.ediv, key->ltk.rand_num);
+
+        /* Perform a key lookup and populate the context object with the
+         * result.  The nimble stack will use this key if this function returns
+         * success.
+         */
+        rc = keystore_lookup(key->ltk.ediv, key->ltk.rand_num,
+                             dst->ltk.key, &authenticated);
+        if (rc == 0) {
+            dst->ltk.authenticated = authenticated;
+            BLEPRPH_LOG(INFO, "ltk=");
+            bleprph_print_bytes(dst->ltk.key, sizeof dst->ltk.key);
+            BLEPRPH_LOG(INFO, " authenticated=%d\n", authenticated);
+        } else {
+            BLEPRPH_LOG(INFO, "no matching ltk\n");
+        }
+
+        /* Indicate whether we were able to find an appropriate key. */
+        if (rc != 0) {
+            return rc;
+        }
+
+        return 0;
+
+    default:
+        return BLE_HS_ENOTSUP;
+    }
+}
+
+static int
+bleprph_store_write(int obj_type, union ble_store_key *key,
+                    union ble_store_value *dst)
+{
+    int rc;
+
+    switch (obj_type) {
+    case BLE_STORE_OBJ_TYPE_OUR_LTK:
+        /* The central is sending us key information.
+         * Save the long-term key in the in-RAM database.  This permits bonding
+         * to occur on subsequent connections with this peer (as long as
+         * bleprph isn't restarted!).
+         */
+        rc = keystore_add(key->ltk.ediv, key->ltk.rand_num,
+                          dst->ltk.key, dst->ltk.authenticated);
+        if (rc != 0) {
+            BLEPRPH_LOG(INFO, "error persisting LTK; status=%d\n", rc);
+        }
+        return rc;
+
+    default:
+        return BLE_HS_ENOTSUP;
+    }
 }
 
 /**
@@ -381,6 +398,8 @@ main(void)
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_L2CAP_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_L2CAP_SM_PAIR_KEY_DIST_ENC;
+    cfg.store_read_cb = bleprph_store_read;
+    cfg.store_write_cb = bleprph_store_write;
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);
