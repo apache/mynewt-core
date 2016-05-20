@@ -832,19 +832,6 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_notify(uint16_t conn_handle, uint16_t attr_handle,
-                  uint8_t *attr_val, uint16_t attr_len, void *arg)
-{
-    console_printf("received notification from conn_handle=%d attr=%d "
-                   "len=%d value=", conn_handle, attr_handle, attr_len);
-
-    bletiny_print_bytes(attr_val, attr_len);
-    console_printf("\n");
-
-    return 0;
-}
-
-static int
 bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
                   void *arg)
 {
@@ -946,6 +933,18 @@ bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     case BLE_GAP_EVENT_SECURITY:
         console_printf("security event; status=%d ", status);
         bletiny_print_conn_desc(ctxt->desc);
+        console_printf("\n");
+        return 0;
+
+    case BLE_GAP_EVENT_NOTIFY:
+        console_printf("notification event; attr_handle=%d indication=%d "
+                       "len=%d data=",
+                       ctxt->notify_params->attr_handle,
+                       ctxt->notify_params->indication,
+                       ctxt->notify_params->attr_len);
+
+        bletiny_print_bytes(ctxt->notify_params->attr_data,
+                            ctxt->notify_params->attr_len);
         console_printf("\n");
         return 0;
 
@@ -1301,8 +1300,6 @@ bletiny_task_handler(void *arg)
 
     rc = ble_hs_start();
     assert(rc == 0);
-
-    ble_att_set_notify_cb(bletiny_on_notify, NULL);
 
     while (1) {
         ev = os_eventq_get(&bletiny_evq);
