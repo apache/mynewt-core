@@ -508,6 +508,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
         goto breakout;
     }
 
+    jb->jb_read_prev(jb);
     for (offset = 0; offset < arr->maxlen; offset++) {
         char *ep = NULL;
         switch (arr->element_type) {
@@ -554,10 +555,11 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
-                count = ep - valbuf;
+                count = n - (ep - valbuf);
                 while (count-- > 0) {
-                    c = jb->jb_read_next(jb);
+                    jb->jb_read_prev(jb);
                 }
+                c = jb->jb_read_next(jb);
             }
             break;
         case t_uinteger:
@@ -623,9 +625,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
         }
         if (c == ']') {
             goto breakout;
-        } else if (c == ',') {
-            c = jb->jb_read_next(jb);
-        } else {
+        } else if (c != ',') {
             return JSON_ERR_BADSUBTRAIL;
         }
     }

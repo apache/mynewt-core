@@ -48,7 +48,7 @@
 #include "nimble/nimble_opt.h"
 #include "ble_hs_priv.h"
 
-#if NIMBLE_OPT_SM
+#if NIMBLE_OPT(SM)
 
 #define BLE_L2CAP_SM_PROC_STATE_NONE            ((uint8_t)-1)
 
@@ -235,6 +235,18 @@ ble_l2cap_sm_dbg_assert_no_cycles(void)
 {
 #if BLE_HS_DEBUG
     ble_l2cap_sm_dbg_num_procs();
+#endif
+}
+
+static void
+ble_l2cap_sm_dbg_assert_not_inserted(struct ble_l2cap_sm_proc *proc)
+{
+#if BLE_HS_DEBUG
+    struct ble_l2cap_sm_proc *cur;
+
+    STAILQ_FOREACH(cur, &ble_l2cap_sm_procs, next) {
+        BLE_HS_DBG_ASSERT(cur != proc);
+    }
 #endif
 }
 
@@ -432,6 +444,8 @@ ble_l2cap_sm_proc_free(struct ble_l2cap_sm_proc *proc)
     int rc;
 
     if (proc != NULL) {
+        ble_l2cap_sm_dbg_assert_not_inserted(proc);
+
         rc = os_memblock_put(&ble_l2cap_sm_proc_pool, proc);
         BLE_HS_DBG_ASSERT_EVAL(rc == 0);
     }
@@ -586,7 +600,7 @@ ble_l2cap_sm_extract_expired(struct ble_l2cap_sm_proc_list *dst_list)
             } else {
                 STAILQ_REMOVE_AFTER(&ble_l2cap_sm_procs, prev, next);
             }
-            STAILQ_INSERT_TAIL(dst_list, proc, next);
+            STAILQ_INSERT_HEAD(dst_list, proc, next);
         }
 
         prev = proc;
@@ -1819,13 +1833,10 @@ ble_l2cap_sm_rx_lt_key_req(struct hci_le_lt_key_req *evt)
          */
         bonding = 0;
         rc = ble_l2cap_sm_lt_key_req_stk_handle(proc, evt);
-        if (rc != 0) {
-            ble_l2cap_sm_proc_remove(proc, prev);
-        }
     } else {
         /* The request is unexpected.  Quietly ignore it. */
         bonding = 0;
-        proc = NULL;
+        rc = 0;
     }
 
     if (proc != NULL) {
@@ -1840,11 +1851,9 @@ ble_l2cap_sm_rx_lt_key_req(struct hci_le_lt_key_req *evt)
         } else {
             rc = ble_l2cap_sm_lt_key_req_ltk_handle(evt);
         }
-    } else if (proc != NULL) {
+    } else if (rc != 0) {
         ble_l2cap_sm_gap_event(proc, rc, 0);
         ble_l2cap_sm_proc_free(proc);
-    } else {
-        rc = BLE_HS_ENOENT;
     }
 
     return rc;

@@ -50,9 +50,6 @@ struct hal_flash {
  */
 uint32_t hal_flash_sector_size(const struct hal_flash *hf, int sec_idx);
 
-/* External function prototype supplied by BSP */
-const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
-
 
 #ifdef __cplusplus
 }

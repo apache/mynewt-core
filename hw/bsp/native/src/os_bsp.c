@@ -64,9 +64,8 @@ bsp_imgr_current_slot(void)
 }
 
 void
-os_bsp_init(void)
+bsp_init(void)
 {
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
-
 }

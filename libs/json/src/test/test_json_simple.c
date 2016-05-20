@@ -23,7 +23,10 @@
 #include "test_json.h"
 #include "json/json.h"
 
-static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\"}";
+static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\",\"KeyIntArr\": [153,2532,-322]}";
+
+static char *output1 ="{\"KeyBoolArr\": [true, false], \"KeyUintArr\": [0, 65535, 4294967295, 8589934590, 3451257]}";
+
 static char bigbuf[512];
 static int buf_index;
 
@@ -70,7 +73,28 @@ TEST_CASE(test_json_simple_encode){
     JSON_VALUE_STRINGN(&value, "foobarlongstring", 10);
     rc = json_encode_object_entry(&encoder, "KeyStringN", &value);
     TEST_ASSERT(rc == 0);  
-    
+
+    rc = json_encode_array_name(&encoder, "KeyIntArr");
+    TEST_ASSERT(rc == 0);
+
+    rc = json_encode_array_start(&encoder);
+    TEST_ASSERT(rc == 0);
+
+    JSON_VALUE_INT(&value, 153);
+    rc = json_encode_array_value(&encoder, &value);
+    TEST_ASSERT(rc == 0);
+
+    JSON_VALUE_INT(&value, 2532);
+    rc = json_encode_array_value(&encoder, &value);
+    TEST_ASSERT(rc == 0);
+
+    JSON_VALUE_INT(&value, -322);
+    rc = json_encode_array_value(&encoder, &value);
+    TEST_ASSERT(rc == 0);
+
+    rc = json_encode_array_finish(&encoder);
+    TEST_ASSERT(rc == 0);
+
     rc = json_encode_object_finish(&encoder);    
     TEST_ASSERT(rc == 0);
     
@@ -123,13 +147,17 @@ test_jbuf_read_prev(struct json_buffer *jb) {
 static int 
 test_jbuf_readn(struct json_buffer *jb, char *buf, int size) {
     struct test_jbuf  *ptjb = (struct test_jbuf*) jb;    
-    
-    if((ptjb->end_buf - (ptjb->start_buf + ptjb->current_position) + 1) >= size) {
-        memcpy(buf, ptjb->start_buf + ptjb->current_position, size);
-        ptjb->current_position += size;
-        return 0;
+
+    int remlen;
+
+    remlen = ptjb->end_buf - (ptjb->start_buf + ptjb->current_position);
+    if (size > remlen) {
+        size = remlen;
     }
-    return -1;
+
+    memcpy(buf, ptjb->start_buf + ptjb->current_position, size);
+    ptjb->current_position += size;
+    return size;
 }
 
 static void 
@@ -146,15 +174,24 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 
 /* now test the decode on a string */
 TEST_CASE(test_json_simple_decode){
-    struct test_jbuf tjb; 
+    struct test_jbuf tjb;
+    struct test_jbuf tjb1;
     long long unsigned int uint_val;
     long long int int_val;
     bool bool_val;
     char string1[16];
     char string2[16];
+    long long int intarr[8];
     int rc;
+    int rc1;
+    int array_count;
 
-    const struct json_attr_t test_attr[6] = {
+    bool boolarr[2];
+    unsigned long long uintarr[5];
+    int array_count1;
+    int array_count1u;
+    
+    struct json_attr_t test_attr[7] = {
         [0] = {
             .attribute = "KeyBool",
             .type = t_boolean,
@@ -188,6 +225,18 @@ TEST_CASE(test_json_simple_decode){
             .len = sizeof(string2)
         },
         [5] = {
+            .attribute = "KeyIntArr",
+            .type = t_array,
+            .addr.array = {
+                .element_type = t_integer,
+                .arr.integers.store = intarr,
+                .maxlen = sizeof intarr / sizeof intarr[0],
+                .count = &array_count,
+            },
+            .nodefault = true,
+            .len = sizeof(intarr)
+        },
+        [6] = {
             .attribute = NULL
         }
     };
@@ -205,4 +254,53 @@ TEST_CASE(test_json_simple_decode){
 
     rc = memcmp(string2, "foobarlongstring", 10);
     TEST_ASSERT(rc==0);
+
+    TEST_ASSERT(array_count == 3);
+    TEST_ASSERT(intarr[0] == 153);
+    TEST_ASSERT(intarr[1] == 2532);
+    TEST_ASSERT(intarr[2] == -322);
+    
+   /*testing for the boolean*/
+   struct json_attr_t test_attr1[2] = {
+       [0] = {
+           .attribute = "KeyBoolArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_boolean,
+               .arr.booleans.store = boolarr,
+               .maxlen = sizeof boolarr / sizeof boolarr[0],
+               .count =&array_count1,
+           },
+           .nodefault = true,
+           .len = sizeof( boolarr),
+       },
+       
+       [1] = {
+           .attribute = "KeyUintArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_uinteger,
+               .arr.uintegers.store = uintarr,
+               .maxlen = sizeof uintarr / sizeof uintarr[0],
+               .count =&array_count1u,
+           },
+           .nodefault = true,
+           .len = sizeof( uintarr),
+       }  
+   };
+   
+   test_buf_init(&tjb1, output1);
+   
+   rc1 = json_read_object(&tjb1.json_buf, test_attr1);
+   TEST_ASSERT(rc1==0);
+   
+   TEST_ASSERT(boolarr[0] == true);
+   TEST_ASSERT(boolarr[1] == false);
+   
+   TEST_ASSERT(uintarr[0] == 0);
+   TEST_ASSERT(uintarr[1] == 65535);
+   TEST_ASSERT(uintarr[2] == 4294967295);
+   TEST_ASSERT(uintarr[3] == 8589934590);
+   TEST_ASSERT(uintarr[4] ==  3451257);
+
 }
