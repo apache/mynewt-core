@@ -31,6 +31,9 @@ extern "C" {
 /* More convenient section placement macros. */
 #define bssnz_t
 
+extern uint8_t _ram_start;
+#define RAM_SIZE        0x4000
+
 /* LED pins */
 #define LED_BLINK_PIN   (21)
 
