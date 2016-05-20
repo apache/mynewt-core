@@ -84,8 +84,8 @@ uint8_t bleprph_reconnect_addr[6];
 uint8_t bleprph_pref_conn_params[8];
 uint8_t bleprph_gatt_service_changed[4];
 
-static int bleprph_gap_event(int event, int status,
-                             struct ble_gap_conn_ctxt *ctxt, void *arg);
+static int bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt,
+                             void *arg);
 
 /**
  * Utility function to log an array of bytes.
@@ -170,8 +170,6 @@ bleprph_advertise(void)
  * bleprph uses the same callback for all connections.
  *
  * @param event                 The type of event being signalled.
- * @param status                The error code associated with the event
- *                                  (0 = success).
  * @param ctxt                  Various information pertaining to the event.
  * @param arg                   Application-specified argument; unuesd by
  *                                  bleprph.
@@ -182,31 +180,39 @@ bleprph_advertise(void)
  *                                  particular GAP event being signalled.
  */
 static int
-bleprph_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
-                  void *arg)
+bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 {
     int authenticated;
     int rc;
 
     switch (event) {
-    case BLE_GAP_EVENT_CONN:
-        /* A new connection has been established or an existing one has been
-         * terminated.
-         */
+    case BLE_GAP_EVENT_CONNECT:
+        /* A new connection was established or a connection attempt failed. */
         BLEPRPH_LOG(INFO, "connection %s; status=%d ",
-                    status == 0 ? "up" : "down", status);
+                       ctxt->connect.status == 0 ? "established" : "failed",
+                       ctxt->connect.status);
         bleprph_print_conn_desc(ctxt->desc);
         BLEPRPH_LOG(INFO, "\n");
 
-        if (status != 0) {
-            /* Connection terminated; resume advertising. */
+        if (ctxt->connect.status != 0) {
+            /* Connection failed; resume advertising. */
             bleprph_advertise();
         }
         return 0;
 
-    case BLE_GAP_EVENT_CONN_UPDATED:
+    case BLE_GAP_EVENT_DISCONNECT:
+        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", ctxt->disconnect.reason);
+        bleprph_print_conn_desc(ctxt->desc);
+        BLEPRPH_LOG(INFO, "\n");
+
+        /* Connection terminated; resume advertising. */
+        bleprph_advertise();
+        return 0;
+
+    case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        BLEPRPH_LOG(INFO, "connection updated; status=%d ", status);
+        BLEPRPH_LOG(INFO, "connection updated; status=%d ",
+                    ctxt->conn_update.status);
         bleprph_print_conn_desc(ctxt->desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
@@ -259,9 +265,10 @@ bleprph_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         }
         return 0;
 
-    case BLE_GAP_EVENT_SECURITY:
+    case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        BLEPRPH_LOG(INFO, "security event; status=%d ", status);
+        BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
+                    ctxt->enc_change.status);
         bleprph_print_conn_desc(ctxt->desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;

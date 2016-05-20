@@ -169,12 +169,6 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 }
 
 static void
-bletiny_print_passkey_action_parms(struct ble_gap_passkey_action *pkact)
-{
-    console_printf("passkey Action Request %d\n", pkact->action);
-}
-
-static void
 bletiny_print_key_exchange_parms(struct ble_gap_key_parms *key_params)
 {
     if (key_params->is_ours) {
@@ -832,45 +826,51 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
-                  void *arg)
+bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 {
     int authenticated;
     int conn_idx;
     int rc;
 
     switch (event) {
-    case BLE_GAP_EVENT_CONN:
+    case BLE_GAP_EVENT_CONNECT:
         console_printf("connection %s; status=%d ",
-                       status == 0 ? "up" : "down", status);
+                       ctxt->connect.status == 0 ? "established" : "failed",
+                       ctxt->connect.status);
         bletiny_print_conn_desc(ctxt->desc);
         console_printf("\n");
 
-        if (status == 0) {
+        if (ctxt->connect.status == 0) {
             bletiny_conn_add(ctxt->desc);
-        } else {
-            if (ctxt->desc->conn_handle == BLE_HS_CONN_HANDLE_NONE) {
-                if (status == BLE_HS_HCI_ERR(BLE_ERR_UNK_CONN_ID)) {
-                    console_printf("connection procedure cancelled.\n");
-                }
-            } else {
-                conn_idx = bletiny_conn_find_idx(ctxt->desc->conn_handle);
-                if (conn_idx != -1) {
-                    bletiny_conn_delete_idx(conn_idx);
-                }
-            }
         }
         return 0;
 
-    case BLE_GAP_EVENT_CONN_UPDATED:
-        console_printf("connection updated; status=%d ", status);
+    case BLE_GAP_EVENT_DISCONNECT:
+        console_printf("disconnect; reason=%d ", ctxt->disconnect.reason);
+        bletiny_print_conn_desc(ctxt->desc);
+        console_printf("\n");
+
+        conn_idx = bletiny_conn_find_idx(ctxt->desc->conn_handle);
+        if (conn_idx != -1) {
+            bletiny_conn_delete_idx(conn_idx);
+        }
+        return 0;
+
+    case BLE_GAP_EVENT_CONN_CANCEL:
+        console_printf("connection procedure cancelled.\n");
+        return 0;
+
+    case BLE_GAP_EVENT_CONN_UPDATE:
+        console_printf("connection updated; status=%d ",
+                       ctxt->conn_update.status);
         bletiny_print_conn_desc(ctxt->desc);
         console_printf("\n");
         return 0;
 
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
-        console_printf("connection update request; status=%d ", status);
-        *ctxt->update.self_params = *ctxt->update.peer_params;
+        console_printf("connection update request\n");
+        *ctxt->conn_update_req.self_params =
+            *ctxt->conn_update_req.peer_params;
         return 0;
 
     case BLE_GAP_EVENT_LTK_REQUEST:
@@ -902,7 +902,7 @@ bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         return rc;
 
     case BLE_GAP_EVENT_KEY_EXCHANGE:
-        console_printf("key exchange event; status=%d ", status);
+        console_printf("key exchange event; ");
         bletiny_print_key_exchange_parms(ctxt->key_params);
 
         /* The central is sending us key information or vice-versa.  If the
@@ -926,12 +926,13 @@ bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
         return 0;
 
     case BLE_GAP_EVENT_PASSKEY_ACTION:
-        console_printf("passkey action event; status=%d ", status);
-        bletiny_print_passkey_action_parms(ctxt->passkey_action);
+        console_printf("passkey action event; action=%d\n",
+                       ctxt->passkey_action.action);
         return 0;
 
-    case BLE_GAP_EVENT_SECURITY:
-        console_printf("security event; status=%d ", status);
+    case BLE_GAP_EVENT_ENC_CHANGE:
+        console_printf("encryption change event; status=%d ",
+                       ctxt->enc_change.status);
         bletiny_print_conn_desc(ctxt->desc);
         console_printf("\n");
         return 0;
@@ -939,12 +940,10 @@ bletiny_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
     case BLE_GAP_EVENT_NOTIFY:
         console_printf("notification event; attr_handle=%d indication=%d "
                        "len=%d data=",
-                       ctxt->notify_params->attr_handle,
-                       ctxt->notify_params->indication,
-                       ctxt->notify_params->attr_len);
+                       ctxt->notify.attr_handle, ctxt->notify.indication,
+                       ctxt->notify.attr_len);
 
-        bletiny_print_bytes(ctxt->notify_params->attr_data,
-                            ctxt->notify_params->attr_len);
+        bletiny_print_bytes(ctxt->notify.attr_data, ctxt->notify.attr_len);
         console_printf("\n");
         return 0;
 
@@ -976,7 +975,7 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
         console_printf("\n");
         break;
 
-    case BLE_GAP_EVENT_DISC_FINISHED:
+    case BLE_GAP_EVENT_DISC_COMPLETE:
         console_printf("scanning finished; status=%d\n", status);
         break;
 
