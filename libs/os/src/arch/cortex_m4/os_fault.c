@@ -147,8 +147,7 @@ os_default_irq(struct trap_frame *tf)
 
 #ifdef COREDUMP_PRESENT
     trap_to_coredump(tf, &regs);
-    dump_core(&regs, sizeof(regs));
+    coredump_dump(&regs, sizeof(regs));
 #endif
-
     system_reset();
 }

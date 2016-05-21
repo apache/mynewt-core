@@ -23,6 +23,8 @@
 #include <imgmgr/imgmgr.h>
 #include <coredump/coredump.h>
 
+uint8_t coredump_disabled;
+
 static void
 dump_core_tlv(const struct flash_area *fa, uint32_t *off,
   struct coredump_tlv *tlv, void *data)
@@ -35,7 +37,7 @@ dump_core_tlv(const struct flash_area *fa, uint32_t *off,
 }
 
 void
-dump_core(void *regs, int regs_sz)
+coredump_dump(void *regs, int regs_sz)
 {
     struct coredump_header hdr;
     struct coredump_tlv tlv;
@@ -47,6 +49,9 @@ dump_core(void *regs, int regs_sz)
     uint32_t off;
     uint32_t area_off, area_end;
 
+    if (coredump_disabled) {
+        return;
+    }
     if (flash_area_open(FLASH_AREA_CORE, &fa)) {
         return;
     }

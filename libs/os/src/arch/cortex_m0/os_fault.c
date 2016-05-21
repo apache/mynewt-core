@@ -143,7 +143,7 @@ os_default_irq(struct trap_frame *tf)
     console_printf("ICSR:0x%08lx\n", SCB->ICSR);
 #ifdef COREDUMP_PRESENT
     trap_to_coredump(tf, &regs);
-    dump_core(&regs, sizeof(regs));
+    coredump_dump(&regs, sizeof(regs));
 #endif
     system_reset();
 }

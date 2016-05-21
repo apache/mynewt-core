@@ -50,7 +50,12 @@ struct coredump_header {
     uint32_t ch_size;                   /* Size of everything */
 };
 
-void dump_core(void *regs, int regs_sz);
+void coredump_dump(void *regs, int regs_sz);
+
+/*
+ * Set this to non-zero to prevent coredump from taking place.
+ */
+extern uint8_t coredump_disabled;
 
 #ifdef __cplusplus
 }
