@@ -53,8 +53,8 @@ static int keystore_num_entries;
  * @return                      0 if a key was found; else BLE_HS_ENOENT.
  */
 int
-keystore_lookup(uint16_t ediv, uint64_t rand_num,
-                void *out_ltk, int *out_authenticated)
+keystore_lookup(struct ble_store_key_ltk *store_key, uint8_t *out_ltk,
+                int *out_authenticated)
 {
     struct keystore_entry *entry;
     int i;
@@ -62,7 +62,9 @@ keystore_lookup(uint16_t ediv, uint64_t rand_num,
     for (i = 0; i < keystore_num_entries; i++) {
         entry = keystore_entries + i;
 
-        if (entry->ediv == ediv && entry->rand_num == rand_num) {
+        if (entry->ediv == store_key->ediv &&
+            entry->rand_num == store_key->rand_num) {
+
             memcpy(out_ltk, entry->ltk, sizeof entry->ltk);
             *out_authenticated = entry->authenticated;
 
@@ -80,7 +82,7 @@ keystore_lookup(uint16_t ediv, uint64_t rand_num,
  *                                  full.
  */
 int
-keystore_add(uint16_t ediv, uint64_t rand_num, uint8_t *ltk, int authenticated)
+keystore_add(struct ble_store_value_ltk *store_value)
 {
     struct keystore_entry *entry;
 
@@ -91,10 +93,10 @@ keystore_add(uint16_t ediv, uint64_t rand_num, uint8_t *ltk, int authenticated)
     entry = keystore_entries + keystore_num_entries;
     keystore_num_entries++;
 
-    entry->ediv = ediv;
-    entry->rand_num = rand_num;
-    memcpy(entry->ltk, ltk, sizeof entry->ltk);
-    entry->authenticated = authenticated;
+    entry->ediv = store_value->ediv;
+    entry->rand_num = store_value->rand_num;
+    memcpy(entry->ltk, store_value->key, sizeof entry->ltk);
+    entry->authenticated = store_value->authenticated;
 
     return 0;
 }

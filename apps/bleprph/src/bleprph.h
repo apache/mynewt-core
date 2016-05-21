@@ -52,9 +52,8 @@ extern const uint8_t gatt_svr_chr_bleprph_write[16];
 void gatt_svr_init(void);
 
 /** Keystore. */
-int keystore_lookup(uint16_t ediv, uint64_t rand_num,
-                    void *out_ltk, int *out_authenticated);
-int keystore_add(uint16_t ediv, uint64_t rand_num, uint8_t *key,
-                 int authenticated);
+int keystore_lookup(struct ble_store_key_ltk *store_key, uint8_t *out_ltk,
+                    int *out_authenticated);
+int keystore_add(struct ble_store_value_ltk *store_value);
 
 #endif

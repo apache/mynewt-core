@@ -246,8 +246,7 @@ bleprph_store_read(int obj_type, union ble_store_key *key,
          * result.  The nimble stack will use this key if this function returns
          * success.
          */
-        rc = keystore_lookup(key->ltk.ediv, key->ltk.rand_num,
-                             dst->ltk.key, &authenticated);
+        rc = keystore_lookup(&key->ltk, dst->ltk.key, &authenticated);
         if (rc == 0) {
             dst->ltk.authenticated = authenticated;
             BLEPRPH_LOG(INFO, "ltk=");
@@ -269,9 +268,18 @@ bleprph_store_read(int obj_type, union ble_store_key *key,
     }
 }
 
+static void
+bleprph_print_key_exchange_parms(struct ble_store_value_ltk *ltk)
+{
+    BLEPRPH_LOG(INFO, "ediv=%u rand=%llu authenticated=%d ", ltk->ediv,
+                   ltk->rand_num, ltk->authenticated);
+    BLEPRPH_LOG(INFO, "ltk=");
+    bleprph_print_bytes(ltk->key, 16);
+    BLEPRPH_LOG(INFO, "\n");
+}
+
 static int
-bleprph_store_write(int obj_type, union ble_store_key *key,
-                    union ble_store_value *dst)
+bleprph_store_write(int obj_type, union ble_store_value *val)
 {
     int rc;
 
@@ -282,8 +290,9 @@ bleprph_store_write(int obj_type, union ble_store_key *key,
          * to occur on subsequent connections with this peer (as long as
          * bleprph isn't restarted!).
          */
-        rc = keystore_add(key->ltk.ediv, key->ltk.rand_num,
-                          dst->ltk.key, dst->ltk.authenticated);
+        BLEPRPH_LOG(INFO, "persisting our ltk; ");
+        bleprph_print_key_exchange_parms(&val->ltk);
+        rc = keystore_add(&val->ltk);
         if (rc != 0) {
             BLEPRPH_LOG(INFO, "error persisting LTK; status=%d\n", rc);
         }

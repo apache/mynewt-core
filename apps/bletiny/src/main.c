@@ -41,6 +41,7 @@
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
+#include "host/ble_store.h"
 #include "controller/ble_ll.h"
 
 /* XXX: An app should not include private headers from a library.  The bletiny
@@ -169,13 +170,12 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 }
 
 static void
-bletiny_print_key_exchange_parms(uint16_t ediv, uint64_t rand_num, void *ltk,
-                                 int authenticated)
+bletiny_print_key_exchange_parms(struct ble_store_value_ltk *ltk)
 {
-    console_printf("ediv=%u rand=%llu authenticated=%d ", ediv, rand_num,
-                   authenticated);
+    console_printf("ediv=%u rand=%llu authenticated=%d ", ltk->ediv,
+                   ltk->rand_num, ltk->authenticated);
     console_printf("ltk=");
-    bletiny_print_bytes(ltk, 16);
+    bletiny_print_bytes(ltk->key, 16);
     console_printf("\n");
 }
 
@@ -888,8 +888,7 @@ bletiny_store_read(int obj_type, union ble_store_key *key,
          * result.  The nimble stack will use this key if this function returns
          * success.
          */
-        rc = keystore_lookup(key->ltk.ediv, key->ltk.rand_num,
-                             dst->ltk.key, &authenticated);
+        rc = keystore_lookup(&key->ltk, dst->ltk.key, &authenticated);
         if (rc == 0) {
             dst->ltk.authenticated = authenticated;
             console_printf("ltk=");
@@ -912,8 +911,7 @@ bletiny_store_read(int obj_type, union ble_store_key *key,
 }
 
 static int
-bletiny_store_write(int obj_type, union ble_store_key *key,
-                    union ble_store_value *val)
+bletiny_store_write(int obj_type, union ble_store_value *val)
 {
     int rc;
 
@@ -924,10 +922,8 @@ bletiny_store_write(int obj_type, union ble_store_key *key,
          * connections with this peer (as long as bletiny isn't restarted!).
          */
         console_printf("persisting our ltk; ");
-        bletiny_print_key_exchange_parms(key->ltk.ediv, key->ltk.rand_num,
-                                         val->ltk.key, val->ltk.authenticated);
-        rc = keystore_add(key->ltk.ediv, key->ltk.rand_num,
-                          val->ltk.key, val->ltk.authenticated);
+        bletiny_print_key_exchange_parms(&val->ltk);
+        rc = keystore_add(&val->ltk);
         if (rc != 0) {
             console_printf("error persisting ltk; status=%d\n", rc);
         }
