@@ -172,7 +172,16 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 
 /* now test the decode on a string */
 TEST_CASE(test_json_simple_decode){
-    struct test_jbuf tjb; 
+ /*working with structures of arrrays. declearing variable*/    
+    struct test_structarr {
+        bool bool_val2;
+        long long int int_val2;
+        char stringstruct2 [16];
+    };
+    
+    struct test_jbuf tjb;
+    struct test_structarr studarr[3];
+    struct test_jbuf tjb2; 
     long long unsigned int uint_val;
     long long int int_val;
     bool bool_val;
@@ -180,24 +189,10 @@ TEST_CASE(test_json_simple_decode){
     char string2[16];
     long long int intarr[8];
     int rc;
-    int array_count;
-    
-    /*working with structures of arrrays. declearing variable*/
-    
-    struct test_structarr {
-        
-        bool bool_val2;
-        long long int int_val2;
-        char stringstruct2 [16];
-        
-    };
-    
-    struct test_structarr studarr[3];
-     struct test_jbuf tjb2; 
+    int array_count;   
     int array_count2;
     int rc2;
     char base;
-    
 
     struct json_attr_t test_attr[7] = {
         [0] = {
