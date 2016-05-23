@@ -24,6 +24,7 @@
 #include "json/json.h"
 
 static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\",\"KeyIntArr\": [153,2532,-322]}";
+static char *output2 = "{\"KeySructArr\" : [{true, 2003, 'foobar'},{false, 2035, 'foobarst'}]}";
 static char bigbuf[512];
 static int buf_index;
 
@@ -171,7 +172,16 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 
 /* now test the decode on a string */
 TEST_CASE(test_json_simple_decode){
-    struct test_jbuf tjb; 
+ /*working with structures of arrrays. declearing variable*/    
+    struct test_structarr {
+        bool bool_val2;
+        long long int int_val2;
+        char stringstruct2 [16];
+    };
+    
+    struct test_jbuf tjb;
+    struct test_structarr studarr[3];
+    struct test_jbuf tjb2; 
     long long unsigned int uint_val;
     long long int int_val;
     bool bool_val;
@@ -179,7 +189,10 @@ TEST_CASE(test_json_simple_decode){
     char string2[16];
     long long int intarr[8];
     int rc;
-    int array_count;
+    int array_count;   
+    int array_count2;
+    int rc2;
+    char base;
 
     struct json_attr_t test_attr[7] = {
         [0] = {
@@ -249,4 +262,63 @@ TEST_CASE(test_json_simple_decode){
     TEST_ASSERT(intarr[0] == 153);
     TEST_ASSERT(intarr[1] == 2532);
     TEST_ASSERT(intarr[2] == -322);
+    
+    /*working with struct of arrays . declearing sub_arr*/
+    struct json_attr_t sub_test_attr2[3] = {
+       [0] = {
+            .attribute = "KeyBool",
+            .type = t_boolean,
+            .addr.boolean = &studarr->bool_val2,
+            .nodefault = true
+       },
+       
+        [1] = {
+            .attribute = "KeyInt",
+            .type = t_integer,
+            .addr.integer = &studarr->int_val2,
+            .nodefault = true
+        },
+        
+        [2] = {
+            .attribute = "KeyString",
+            .type = t_string,
+            .addr.string = studarr->stringstruct2,
+            .nodefault = true,
+            .len = sizeof(studarr->stringstruct2)
+        },
+     };
+    
+    /*second attr to initiaze the struct*/
+     struct json_attr_t test_attr2[1] = {
+        [0] = {
+             .attribute = "KeyStructArr",
+            .type = t_array,
+            .addr.array = {
+                .element_type = t_structobject,
+                .arr.objects.subtype = sub_test_attr2,
+                .arr.objects.base = &base,
+                .arr.objects.stride = sizeof(studarr),
+                .maxlen = sizeof studarr / sizeof studarr[0],
+                .count = &array_count2,
+            },
+            .nodefault = true,
+            .len = sizeof(studarr)
+        },
+    };  
+    
+    
+    test_buf_init(&tjb2, output2);
+    rc2 = json_read_object(&tjb2.json_buf, test_attr2);
+    TEST_ASSERT(rc2==0);
+    TEST_ASSERT(studarr[0].bool_val2 == true);
+    TEST_ASSERT(studarr[0].int_val2 ==  2003);
+    rc2 = memcmp(studarr[0].stringstruct2 ,"foobar", strlen("foobar"));
+    TEST_ASSERT(rc2 == 0);
+    
+    TEST_ASSERT(studarr[1].bool_val2 == false);
+    TEST_ASSERT(studarr[1].int_val2 ==  2035);
+    rc2 = memcmp(studarr[1].stringstruct2 ,"foobarst", strlen("foobarst"));
+    TEST_ASSERT(rc2 == 0);
+    
+    
 }
