@@ -191,6 +191,9 @@ SECTIONS
     __HeapBase = .;
     __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
+    _ram_start = ORIGIN(RAM);
+    _ccram_start = ORIGIN(CCRAM);
+
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
      * values to stack symbols later */

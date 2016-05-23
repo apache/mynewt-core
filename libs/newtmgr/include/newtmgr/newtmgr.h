@@ -48,6 +48,7 @@
 #define NMGR_ERR_ENOMEM   (2)
 #define NMGR_ERR_EINVAL   (3)
 #define NMGR_ERR_ETIMEOUT (4)
+#define NMGR_ERR_ENOENT   (5)
 #define NMGR_ERR_EPERUSER (256)
 
 

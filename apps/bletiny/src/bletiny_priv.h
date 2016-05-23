@@ -33,6 +33,8 @@ struct ble_gap_crt_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
+struct ble_store_key_ltk;
+struct ble_store_value_ltk;
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -76,7 +78,7 @@ struct bletiny_conn {
     struct bletiny_svc_list svcs;
 };
 
-extern struct bletiny_conn bletiny_conns[NIMBLE_OPT_MAX_CONNECTIONS];
+extern struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
 extern int bletiny_num_conns;
 
 extern const char *bletiny_device_name;
@@ -115,7 +117,6 @@ int parse_arg_uuid(char *name, uint8_t *dst_uuid128);
 int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
-void periph_init(void);
 int nm_chr_access(uint16_t conn_handle, uint16_t attr_handle,
                   uint8_t op, union ble_gatt_access_ctxt *ctxt,
                   void *arg);
@@ -165,7 +166,6 @@ int bletiny_update_conn(uint16_t conn_handle,
 void bletiny_chrup(uint16_t attr_handle);
 int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
-int bletiny_show_rssi(uint16_t conn_handle);
 int bletiny_sec_start(uint16_t conn_handle);
 int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
                         uint64_t rand_val, int auth);
@@ -173,5 +173,23 @@ int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
     LOG_ ## lvl(&bletiny_log, BLETINY_LOG_MODULE, __VA_ARGS__)
+
+/** GATT server. */
+#define GATT_SVR_SVC_ALERT_UUID               0x1811
+#define GATT_SVR_CHR_SUP_NEW_ALERT_CAT_UUID   0x2A47
+#define GATT_SVR_CHR_NEW_ALERT                0x2A46
+#define GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID   0x2A48
+#define GATT_SVR_CHR_UNR_ALERT_STAT_UUID      0x2A45
+#define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
+extern const uint8_t gatt_svr_svc_bleprph[16];
+extern const uint8_t gatt_svr_chr_bleprph_read[16];
+extern const uint8_t gatt_svr_chr_bleprph_write[16];
+
+void gatt_svr_init(void);
+
+/** Keystore. */
+int keystore_lookup(struct ble_store_key_ltk *store_key, uint8_t *out_ltk,
+                    int *out_authenticated);
+int keystore_add(struct ble_store_value_ltk *store_value);
 
 #endif

@@ -91,6 +91,8 @@ typedef uint8_t ble_gatts_conn_flags;
 struct ble_gatts_conn {
     struct ble_gatts_clt_cfg *clt_cfgs;
     int num_clt_cfgs;
+
+    uint16_t indicate_val_handle;
 };
 
 /*** @client. */
@@ -136,13 +138,15 @@ int ble_gattc_init(void);
 /*** @server. */
 #define BLE_GATTS_CLT_CFG_F_NOTIFY              0x0001
 #define BLE_GATTS_CLT_CFG_F_INDICATE            0x0002
-#define BLE_GATTS_CLT_CFG_F_UPDATED             0x0080 /* Internal only. */
+#define BLE_GATTS_CLT_CFG_F_INDICATE_PENDING    0x0080 /* Internal only. */
 #define BLE_GATTS_CLT_CFG_F_RESERVED            0xfffc
 
 #define BLE_GATTS_INC_SVC_LEN_NO_UUID           4
 #define BLE_GATTS_INC_SVC_LEN_UUID              6
 
-void ble_gatts_send_updates_for_conn(uint16_t conn_handle);
+int ble_gatts_rx_indicate_ack(uint16_t conn_handle, uint16_t chr_val_handle);
+int ble_gatts_send_next_indicate(uint16_t conn_handle);
+void ble_gatts_bonding_restored(uint16_t conn_handle);
 
 /*** @misc. */
 void ble_gatts_conn_deinit(struct ble_gatts_conn *gatts_conn);

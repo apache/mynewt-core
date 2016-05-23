@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_flash_int.h"
 #include "mcu/stm32f407xx.h"
@@ -38,6 +39,17 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
     }
 };
 
+static const struct bsp_mem_dump dump_cfg[] = {
+    [0] = {
+        .bmd_start = &_ram_start,
+        .bmd_size = RAM_SIZE
+    },
+    [1] = {
+        .bmd_start = &_ccram_start,
+        .bmd_size = CCRAM_SIZE
+    }
+};
+
 const struct stm32f4_uart_cfg *
 bsp_uart_config(int port)
 {
@@ -55,4 +67,11 @@ bsp_flash_dev(uint8_t id)
         return NULL;
     }
     return &stm32f4_flash_dev;
+}
+
+const struct bsp_mem_dump *
+bsp_core_dump(int *area_cnt)
+{
+    *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
+    return dump_cfg;
 }

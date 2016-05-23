@@ -34,7 +34,7 @@ static os_membuf_t *ble_hs_conn_elem_mem;
 int
 ble_hs_conn_can_alloc(void)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return 0;
 #endif
 
@@ -46,7 +46,7 @@ ble_hs_conn_can_alloc(void)
 struct ble_l2cap_chan *
 ble_hs_conn_chan_find(struct ble_hs_conn *conn, uint16_t cid)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return NULL;
 #endif
 
@@ -67,7 +67,7 @@ ble_hs_conn_chan_find(struct ble_hs_conn *conn, uint16_t cid)
 int
 ble_hs_conn_chan_insert(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return BLE_HS_ENOTSUP;
 #endif
 
@@ -98,7 +98,7 @@ ble_hs_conn_chan_insert(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 struct ble_hs_conn *
 ble_hs_conn_alloc(void)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return NULL;
 #endif
 
@@ -135,7 +135,7 @@ ble_hs_conn_alloc(void)
     /* XXX: We should create the SM channel even if not configured.  We need it
      * to reject SM messages.
      */
-#if NIMBLE_OPT_SM
+#if NIMBLE_OPT(SM)
     chan = ble_l2cap_sm_create_chan();
     if (chan == NULL) {
         goto err;
@@ -174,7 +174,7 @@ ble_hs_conn_delete_chan(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 void
 ble_hs_conn_free(struct ble_hs_conn *conn)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return;
 #endif
 
@@ -202,7 +202,7 @@ ble_hs_conn_free(struct ble_hs_conn *conn)
 void
 ble_hs_conn_insert(struct ble_hs_conn *conn)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return;
 #endif
 
@@ -215,7 +215,7 @@ ble_hs_conn_insert(struct ble_hs_conn *conn)
 void
 ble_hs_conn_remove(struct ble_hs_conn *conn)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return;
 #endif
 
@@ -227,7 +227,7 @@ ble_hs_conn_remove(struct ble_hs_conn *conn)
 struct ble_hs_conn *
 ble_hs_conn_find(uint16_t conn_handle)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return NULL;
 #endif
 
@@ -244,10 +244,56 @@ ble_hs_conn_find(uint16_t conn_handle)
     return NULL;
 }
 
+struct ble_hs_conn *
+ble_hs_conn_find_by_addr(uint8_t addr_type, uint8_t *addr)
+{
+#if !NIMBLE_OPT(CONNECT)
+    return NULL;
+#endif
+
+    struct ble_hs_conn *conn;
+
+    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+
+    SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
+        if (conn->bhc_addr_type == addr_type &&
+            memcmp(conn->bhc_addr, addr, 6) == 0) {
+
+            return conn;
+        }
+    }
+
+    return NULL;
+}
+
+struct ble_hs_conn *
+ble_hs_conn_find_by_idx(int idx)
+{
+#if !NIMBLE_OPT(CONNECT)
+    return NULL;
+#endif
+
+    struct ble_hs_conn *conn;
+    int i;
+
+    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+
+    i = 0;
+    SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
+        if (i == idx) {
+            return conn;
+        }
+
+        i++;
+    }
+
+    return NULL;
+}
+
 int
 ble_hs_conn_exists(uint16_t conn_handle)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return 0;
 #endif
     return ble_hs_conn_find(conn_handle) != NULL;
@@ -259,7 +305,7 @@ ble_hs_conn_exists(uint16_t conn_handle)
 struct ble_hs_conn *
 ble_hs_conn_first(void)
 {
-#if !NIMBLE_OPT_CONNECT
+#if !NIMBLE_OPT(CONNECT)
     return NULL;
 #endif
 
