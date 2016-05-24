@@ -30,7 +30,7 @@ int console_is_midline;
 
 #define CONSOLE_TX_BUF_SZ	32	/* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ	128
-
+#define CONSOLE_RX_CHUNK	16
 
 #define CONSOLE_DEL		0x7f	/* del character */
 #define CONSOLE_ESC		0x1b	/* esc character */
@@ -198,6 +198,15 @@ console_read(char *str, int cnt)
         if (cr->cr_head == cr->cr_tail) {
             break;
         }
+
+	if ((i & (CONSOLE_RX_CHUNK - 1)) == (CONSOLE_RX_CHUNK - 1)) {
+		/*
+		 * Make a break from blocking interrupts during the copy.
+		 */
+		OS_EXIT_CRITICAL(sr);
+		OS_ENTER_CRITICAL(sr);
+	}
+
         ch = console_pull_char(cr);
         if (ch == '\n') {
             *str = '\0';
