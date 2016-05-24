@@ -27,8 +27,6 @@
 #include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
-#include <fs/fs.h>
-#include <fs/fsutil.h>
 #include <json/json.h>
 #include <util/base64.h>
 #include <hal/hal_bsp.h>

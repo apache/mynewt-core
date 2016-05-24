@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifdef FS_PRESENT
 #include <os/os.h>
 #include <os/endian.h>
 
@@ -34,7 +35,6 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-#ifdef FS_PRESENT
 int
 imgr_file_download(struct nmgr_jbuf *njb)
 {
@@ -234,5 +234,4 @@ err:
     nmgr_jbuf_setoerr(njb, rc);
     return 0;
 }
-
 #endif
