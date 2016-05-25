@@ -33,8 +33,8 @@ struct ble_gap_crt_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
-struct ble_store_key_ltk;
-struct ble_store_value_ltk;
+union ble_store_value;
+union ble_store_key;
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -187,9 +187,12 @@ extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
 void gatt_svr_init(void);
 
-/** Keystore. */
-int keystore_lookup(struct ble_store_key_ltk *store_key, uint8_t *out_ltk,
-                    int *out_authenticated);
-int keystore_add(struct ble_store_value_ltk *store_value);
+/** Store. */
+int store_read(int obj_type, union ble_store_key *key,
+               union ble_store_value *dst);
+int store_write(int obj_type, union ble_store_value *val);
+
+/** Misc. */
+void print_bytes(uint8_t *bytes, int len);
 
 #endif

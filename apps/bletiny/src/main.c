@@ -145,21 +145,11 @@ bletiny_print_error(char *msg, uint16_t conn_handle,
 }
 
 static void
-bletiny_print_bytes(uint8_t *bytes, int len)
-{
-    int i;
-
-    for (i = 0; i < len; i++) {
-        console_printf("%s0x%02x", i != 0 ? ":" : "", bytes[i]);
-    }
-}
-
-static void
 bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     console_printf("handle=%d peer_addr_type=%d peer_addr=",
                    desc->conn_handle, desc->peer_addr_type);
-    bletiny_print_bytes(desc->peer_addr, 6);
+    print_bytes(desc->peer_addr, 6);
     console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                    "pair_alg=%d enc_enabled=%d authenticated=%d",
                    desc->conn_itvl, desc->conn_latency,
@@ -167,16 +157,6 @@ bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
                    desc->sec_state.pair_alg,
                    desc->sec_state.enc_enabled,
                    desc->sec_state.authenticated);
-}
-
-static void
-bletiny_print_key_exchange_parms(struct ble_store_value_ltk *ltk)
-{
-    console_printf("ediv=%u rand=%llu authenticated=%d ", ltk->ediv,
-                   ltk->rand_num, ltk->authenticated);
-    console_printf("ltk=");
-    bletiny_print_bytes(ltk->key, 16);
-    console_printf("\n");
 }
 
 static void
@@ -237,21 +217,21 @@ bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 
     if (fields->device_class != NULL) {
         console_printf("    device_class=");
-        bletiny_print_bytes(fields->device_class,
+        print_bytes(fields->device_class,
                             BLE_HS_ADV_DEVICE_CLASS_LEN);
         console_printf("\n");
     }
 
     if (fields->slave_itvl_range != NULL) {
         console_printf("    slave_itvl_range=");
-        bletiny_print_bytes(fields->slave_itvl_range,
+        print_bytes(fields->slave_itvl_range,
                             BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
         console_printf("\n");
     }
 
     if (fields->svc_data_uuid16 != NULL) {
         console_printf("    svc_data_uuid16=");
-        bletiny_print_bytes(fields->svc_data_uuid16,
+        print_bytes(fields->svc_data_uuid16,
                             fields->svc_data_uuid16_len);
         console_printf("\n");
     }
@@ -276,7 +256,7 @@ bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 
     if (fields->le_addr != NULL) {
         console_printf("    le_addr=");
-        bletiny_print_bytes(fields->le_addr, BLE_HS_ADV_LE_ADDR_LEN);
+        print_bytes(fields->le_addr, BLE_HS_ADV_LE_ADDR_LEN);
         console_printf("\n");
     }
 
@@ -286,27 +266,27 @@ bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 
     if (fields->svc_data_uuid32 != NULL) {
         console_printf("    svc_data_uuid32=");
-        bletiny_print_bytes(fields->svc_data_uuid32,
+        print_bytes(fields->svc_data_uuid32,
                              fields->svc_data_uuid32_len);
         console_printf("\n");
     }
 
     if (fields->svc_data_uuid128 != NULL) {
         console_printf("    svc_data_uuid128=");
-        bletiny_print_bytes(fields->svc_data_uuid128,
+        print_bytes(fields->svc_data_uuid128,
                             fields->svc_data_uuid128_len);
         console_printf("\n");
     }
 
     if (fields->uri != NULL) {
         console_printf("    uri=");
-        bletiny_print_bytes(fields->uri, fields->uri_len);
+        print_bytes(fields->uri, fields->uri_len);
         console_printf("\n");
     }
 
     if (fields->mfg_data != NULL) {
         console_printf("    mfg_data=");
-        bletiny_print_bytes(fields->mfg_data, fields->mfg_data_len);
+        print_bytes(fields->mfg_data, fields->mfg_data_len);
         console_printf("\n");
     }
 }
@@ -745,7 +725,7 @@ bletiny_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
         console_printf("characteristic read; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
                        attr->handle, attr->value_len);
-        bletiny_print_bytes(attr->value, attr->value_len);
+        print_bytes(attr->value, attr->value_len);
         console_printf("\n");
     } else {
         console_printf("characteristic read complete\n");
@@ -764,7 +744,7 @@ bletiny_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
         console_printf("characteristic write complete; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
                        attr->handle, attr->value_len);
-        bletiny_print_bytes(attr->value, attr->value_len);
+        print_bytes(attr->value, attr->value_len);
         console_printf("\n");
     }
 
@@ -787,7 +767,7 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
         for (i = 0; i < num_attrs; i++) {
             console_printf(" attr_handle=%d len=%d value=", attrs[i].handle,
                            attrs[i].value_len);
-            bletiny_print_bytes(attrs[i].value, attrs[i].value_len);
+            print_bytes(attrs[i].value, attrs[i].value_len);
         }
         console_printf("\n");
     }
@@ -859,78 +839,12 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
                        ctxt->notify.attr_handle, ctxt->notify.indication,
                        ctxt->notify.attr_len);
 
-        bletiny_print_bytes(ctxt->notify.attr_data, ctxt->notify.attr_len);
+        print_bytes(ctxt->notify.attr_data, ctxt->notify.attr_len);
         console_printf("\n");
         return 0;
 
     default:
         return 0;
-    }
-}
-
-static int
-bletiny_store_read(int obj_type, union ble_store_key *key,
-                   union ble_store_value *dst)
-{
-    int authenticated;
-    int rc;
-
-    switch (obj_type) {
-    case BLE_STORE_OBJ_TYPE_OUR_LTK:
-        /* An encryption procedure (bonding) is being attempted.  The nimble
-         * stack is asking us to look in our key database for a long-term key
-         * corresponding to the specified ediv and random number.
-         */
-        console_printf("looking up ltk with ediv=0x%02x rand=0x%llx\n",
-                       key->ltk.ediv, key->ltk.rand_num);
-
-        /* Perform a key lookup and populate the context object with the
-         * result.  The nimble stack will use this key if this function returns
-         * success.
-         */
-        rc = keystore_lookup(&key->ltk, dst->ltk.key, &authenticated);
-        if (rc == 0) {
-            dst->ltk.authenticated = authenticated;
-            console_printf("ltk=");
-            bletiny_print_bytes(dst->ltk.key, sizeof dst->ltk.key);
-            console_printf(" authenticated=%d\n", authenticated);
-        } else {
-            console_printf("no matching ltk\n");
-        }
-
-        /* Indicate whether we were able to find an appropriate key. */
-        if (rc != 0) {
-            return rc;
-        }
-
-        return 0;
-
-    default:
-        return BLE_HS_ENOTSUP;
-    }
-}
-
-static int
-bletiny_store_write(int obj_type, union ble_store_value *val)
-{
-    int rc;
-
-    switch (obj_type) {
-    case BLE_STORE_OBJ_TYPE_OUR_LTK:
-        /* The central is sending us key information.  Save the long-term key
-         * in the in-RAM database.  This permits bonding to occur on subsequent
-         * connections with this peer (as long as bletiny isn't restarted!).
-         */
-        console_printf("persisting our ltk; ");
-        bletiny_print_key_exchange_parms(&val->ltk);
-        rc = keystore_add(&val->ltk);
-        if (rc != 0) {
-            console_printf("error persisting ltk; status=%d\n", rc);
-        }
-        return rc;
-
-    default:
-        return BLE_HS_ENOTSUP;
     }
 }
 
@@ -948,10 +862,10 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     case BLE_GAP_EVENT_DISC_SUCCESS:
         console_printf("received advertisement; event_type=%d addr_type=%d "
                        "addr=", desc->event_type, desc->addr_type);
-        bletiny_print_bytes(desc->addr, 6);
+        print_bytes(desc->addr, 6);
         console_printf(" length_data=%d rssi=%d data=", desc->length_data,
                        desc->rssi);
-        bletiny_print_bytes(desc->data, desc->length_data);
+        print_bytes(desc->data, desc->length_data);
         console_printf(" fields:\n");
         bletiny_print_adv_fields(desc->fields);
         console_printf("\n");
@@ -1403,8 +1317,8 @@ main(void)
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = NIMBLE_OPT(MAX_CONNECTIONS) * 3;
     cfg.max_l2cap_sig_procs = 2;
-    cfg.store_read_cb = bletiny_store_read;
-    cfg.store_write_cb = bletiny_store_write;
+    cfg.store_read_cb = store_read;
+    cfg.store_write_cb = store_write;
 
     rc = ble_hs_init(&bletiny_evq, &cfg);
     assert(rc == 0);
