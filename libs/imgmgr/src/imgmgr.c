@@ -397,18 +397,12 @@ imgr_upload(struct nmgr_jbuf *njb)
                      * Not active slot, but image is ok. Use it if there are
                      * no better candidates.
                      */
-                    /*
-                     * XXX reject if trying to upload image which is present
-                     * already.
-                     */
                     best = i;
                 }
                 continue;
             }
-            break;
-        }
-        if (i <= FLASH_AREA_IMAGE_1) {
             best = i;
+            break;
         }
         if (best >= 0) {
             if (imgr_state.upload.fa) {
