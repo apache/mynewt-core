@@ -34,19 +34,19 @@
 
 #include "bleprph.h"
 
-#define STORE_MAX_OUR_LTKS   4
+#define STORE_MAX_SLV_LTKS   4
 
-static struct ble_store_value_ltk store_our_ltks[STORE_MAX_OUR_LTKS];
-static int store_num_our_ltks;
+static struct ble_store_value_ltk store_slv_ltks[STORE_MAX_SLV_LTKS];
+static int store_num_slv_ltks;
 
 static int
-store_find_our_ltk(struct ble_store_key_ltk *key_ltk)
+store_find_slv_ltk(struct ble_store_key_ltk *key_ltk)
 {
     struct ble_store_value_ltk *cur;
     int i;
 
-    for (i = 0; i < store_num_our_ltks; i++) {
-        cur = store_our_ltks + i;
+    for (i = 0; i < store_num_slv_ltks; i++) {
+        cur = store_slv_ltks + i;
 
         if (cur->ediv == key_ltk->ediv &&
             cur->rand_num == key_ltk->rand_num) {
@@ -79,7 +79,7 @@ store_read(int obj_type, union ble_store_key *key, union ble_store_value *dst)
     int idx;
 
     switch (obj_type) {
-    case BLE_STORE_OBJ_TYPE_OUR_LTK:
+    case BLE_STORE_OBJ_TYPE_MST_LTK:
         /* An encryption procedure (bonding) is being attempted.  The nimble
          * stack is asking us to look in our key database for a long-term key
          * corresponding to the specified ediv and random number.
@@ -91,11 +91,11 @@ store_read(int obj_type, union ble_store_key *key, union ble_store_value *dst)
          * result.  The nimble stack will use this key if this function returns
          * success.
          */
-        idx = store_find_our_ltk(&key->ltk);
+        idx = store_find_slv_ltk(&key->ltk);
         if (idx == -1) {
             return BLE_HS_ENOENT;
         }
-        dst->ltk = store_our_ltks[idx];
+        dst->ltk = store_slv_ltks[idx];
         return 0;
 
     default:
@@ -116,23 +116,23 @@ store_write(int obj_type, union ble_store_value *val)
     int idx;
 
     switch (obj_type) {
-    case BLE_STORE_OBJ_TYPE_OUR_LTK:
-        BLEPRPH_LOG(INFO, "persisting our ltk; ");
+    case BLE_STORE_OBJ_TYPE_MST_LTK:
+        BLEPRPH_LOG(INFO, "persisting slv ltk; ");
         store_print_ltk(&val->ltk);
 
         ble_store_key_from_value_ltk(&key_ltk, &val->ltk);
-        idx = store_find_our_ltk(&key_ltk);
+        idx = store_find_slv_ltk(&key_ltk);
         if (idx == -1) {
-            if (store_num_our_ltks >= STORE_MAX_OUR_LTKS) {
+            if (store_num_slv_ltks >= STORE_MAX_SLV_LTKS) {
                 BLEPRPH_LOG(INFO, "error persisting LTK; too many entries\n");
                 return BLE_HS_ENOMEM;
             }
 
-            idx = store_num_our_ltks;
-            store_num_our_ltks++;
+            idx = store_num_slv_ltks;
+            store_num_slv_ltks++;
         }
 
-        store_our_ltks[idx] = val->ltk;
+        store_slv_ltks[idx] = val->ltk;
         return 0;
 
     default:
