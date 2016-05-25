@@ -39,7 +39,7 @@ typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
 int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
 int shell_nlip_output(struct os_mbuf *m);
 
-void shell_console_rx_cb(int full_line);
+void shell_console_rx_cb(void);
 int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
                     int max_input_length);
 
