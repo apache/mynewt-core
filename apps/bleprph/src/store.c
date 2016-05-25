@@ -36,72 +36,89 @@
 #include "bleprph.h"
 
 #define STORE_MAX_SLV_LTKS   4
+#define STORE_MAX_MST_LTKS   4
 #define STORE_MAX_CCCDS      16
 
-static struct ble_store_value_ltk store_slv_ltks[STORE_MAX_SLV_LTKS];
-static int store_num_slv_ltks;
+static struct ble_store_value_sec store_slv_secs[STORE_MAX_SLV_LTKS];
+static int store_num_slv_secs;
+
+static struct ble_store_value_sec store_mst_secs[STORE_MAX_MST_LTKS];
+static int store_num_mst_secs;
 
 static struct ble_store_value_cccd store_cccds[STORE_MAX_CCCDS];
 static int store_num_cccds;
 
 /*****************************************************************************
- * $ltk                                                                      *
+ * $sec                                                                      *
  *****************************************************************************/
 
 static void
-store_print_value_ltk(struct ble_store_value_ltk *ltk)
+store_print_value_sec(struct ble_store_value_sec *sec)
 {
-    BLEPRPH_LOG(INFO, "ediv=%u rand=%llu authenticated=%d ", ltk->ediv,
-                   ltk->rand_num, ltk->authenticated);
-    BLEPRPH_LOG(INFO, "ltk=");
-    print_bytes(ltk->key, 16);
+    if (sec->ltk_present) {
+        BLEPRPH_LOG(INFO, "ediv=%u rand=%llu authenticated=%d ltk=",
+                       sec->ediv, sec->rand_num, sec->authenticated);
+        print_bytes(sec->ltk, 16);
+        BLEPRPH_LOG(INFO, " ");
+    }
+    if (sec->irk_present) {
+        BLEPRPH_LOG(INFO, "irk=");
+        print_bytes(sec->irk, 16);
+        BLEPRPH_LOG(INFO, " ");
+    }
+    if (sec->csrk_present) {
+        BLEPRPH_LOG(INFO, "csrk=");
+        print_bytes(sec->csrk, 16);
+        BLEPRPH_LOG(INFO, " ");
+    }
+
     BLEPRPH_LOG(INFO, "\n");
 }
 
 static void
-store_print_key_ltk(struct ble_store_key_ltk *key_ltk)
+store_print_key_sec(struct ble_store_key_sec *key_sec)
 {
-    if (key_ltk->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
+    if (key_sec->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
         BLEPRPH_LOG(INFO, "peer_addr_type=%d peer_addr=",
-                       key_ltk->peer_addr_type);
-        print_bytes(key_ltk->peer_addr, 6);
+                       key_sec->peer_addr_type);
+        print_bytes(key_sec->peer_addr, 6);
         BLEPRPH_LOG(INFO, " ");
     }
-    if (key_ltk->ediv_present) {
-        BLEPRPH_LOG(INFO, "ediv=0x%02x ", key_ltk->ediv);
-    }
-    if (key_ltk->rand_num_present) {
-        BLEPRPH_LOG(INFO, "rand=0x%llx ", key_ltk->rand_num);
+    if (key_sec->ediv_rand_present) {
+        BLEPRPH_LOG(INFO, "ediv=0x%02x rand=0x%llx ",
+                       key_sec->ediv, key_sec->rand_num);
     }
 }
 
 static int
-store_find_ltk(struct ble_store_key_ltk *key_ltk,
-               struct ble_store_value_ltk *value_ltks, int num_value_ltks)
+store_find_sec(struct ble_store_key_sec *key_sec,
+               struct ble_store_value_sec *value_secs, int num_value_secs)
 {
-    struct ble_store_value_ltk *cur;
+    struct ble_store_value_sec *cur;
     int i;
 
-    for (i = 0; i < num_value_ltks; i++) {
-        cur = value_ltks + i;
+    for (i = 0; i < num_value_secs; i++) {
+        cur = value_secs + i;
 
-        if (key_ltk->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
-            if (cur->peer_addr_type != key_ltk->peer_addr_type) {
+        if (key_sec->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
+            if (cur->peer_addr_type != key_sec->peer_addr_type) {
                 continue;
             }
 
-            if (memcmp(cur->peer_addr, key_ltk->peer_addr,
+            if (memcmp(cur->peer_addr, key_sec->peer_addr,
                        sizeof cur->peer_addr) != 0) {
                 continue;
             }
         }
 
-        if (key_ltk->ediv_present && cur->ediv != key_ltk->ediv) {
-            continue;
-        }
+        if (key_sec->ediv_rand_present) {
+            if (cur->ediv != key_sec->ediv) {
+                continue;
+            }
 
-        if (key_ltk->rand_num_present && cur->rand_num != key_ltk->rand_num) {
-            continue;
+            if (cur->rand_num != key_sec->rand_num) {
+                continue;
+            }
         }
 
         return i;
@@ -111,43 +128,84 @@ store_find_ltk(struct ble_store_key_ltk *key_ltk,
 }
 
 static int
-store_read_slv_ltk(struct ble_store_key_ltk *key_ltk,
-                   struct ble_store_value_ltk *value_ltk)
+store_read_slv_sec(struct ble_store_key_sec *key_sec,
+                   struct ble_store_value_sec *value_sec)
 {
     int idx;
 
-    idx = store_find_ltk(key_ltk, store_slv_ltks, store_num_slv_ltks);
+    idx = store_find_sec(key_sec, store_slv_secs, store_num_slv_secs);
     if (idx == -1) {
         return BLE_HS_ENOENT;
     }
 
-    *value_ltk = store_slv_ltks[idx];
+    *value_sec = store_slv_secs[idx];
     return 0;
 }
 
 static int
-store_write_slv_ltk(struct ble_store_value_ltk *value_ltk)
+store_write_slv_sec(struct ble_store_value_sec *value_sec)
 {
-    struct ble_store_key_ltk key_ltk;
+    struct ble_store_key_sec key_sec;
     int idx;
 
-    BLEPRPH_LOG(INFO, "persisting slv ltk; ");
-    store_print_value_ltk(value_ltk);
+    BLEPRPH_LOG(INFO, "persisting slv sec; ");
+    store_print_value_sec(value_sec);
 
-    ble_store_key_from_value_ltk(&key_ltk, value_ltk);
-    idx = store_find_ltk(&key_ltk, store_slv_ltks, store_num_slv_ltks);
+    ble_store_key_from_value_sec(&key_sec, value_sec);
+    idx = store_find_sec(&key_sec, store_slv_secs, store_num_slv_secs);
     if (idx == -1) {
-        if (store_num_slv_ltks >= STORE_MAX_SLV_LTKS) {
-            BLEPRPH_LOG(INFO, "error persisting slv ltk; too many entries "
-                              "(%d)\n", store_num_slv_ltks);
+        if (store_num_slv_secs >= STORE_MAX_SLV_LTKS) {
+            BLEPRPH_LOG(INFO, "error persisting slv sec; too many entries "
+                              "(%d)\n", store_num_slv_secs);
             return BLE_HS_ENOMEM;
         }
 
-        idx = store_num_slv_ltks;
-        store_num_slv_ltks++;
+        idx = store_num_slv_secs;
+        store_num_slv_secs++;
     }
 
-    store_slv_ltks[idx] = *value_ltk;
+    store_slv_secs[idx] = *value_sec;
+    return 0;
+}
+
+static int
+store_read_mst_sec(struct ble_store_key_sec *key_sec,
+                   struct ble_store_value_sec *value_sec)
+{
+    int idx;
+
+    idx = store_find_sec(key_sec, store_mst_secs, store_num_mst_secs);
+    if (idx == -1) {
+        return BLE_HS_ENOENT;
+    }
+
+    *value_sec = store_mst_secs[idx];
+    return 0;
+}
+
+static int
+store_write_mst_sec(struct ble_store_value_sec *value_sec)
+{
+    struct ble_store_key_sec key_sec;
+    int idx;
+
+    BLEPRPH_LOG(INFO, "persisting mst sec; ");
+    store_print_value_sec(value_sec);
+
+    ble_store_key_from_value_sec(&key_sec, value_sec);
+    idx = store_find_sec(&key_sec, store_mst_secs, store_num_mst_secs);
+    if (idx == -1) {
+        if (store_num_mst_secs >= STORE_MAX_MST_LTKS) {
+            BLEPRPH_LOG(INFO, "error persisting mst sec; too many entries "
+                           "(%d)\n", store_num_mst_secs);
+            return BLE_HS_ENOMEM;
+        }
+
+        idx = store_num_mst_secs;
+        store_num_mst_secs++;
+    }
+
+    store_mst_secs[idx] = *value_sec;
     return 0;
 }
 
@@ -219,7 +277,7 @@ store_write_cccd(struct ble_store_value_cccd *value_cccd)
     if (idx == -1) {
         if (store_num_cccds >= STORE_MAX_SLV_LTKS) {
             BLEPRPH_LOG(INFO, "error persisting cccd; too many entries (%d)\n",
-                           store_num_cccds);
+                        store_num_cccds);
             return BLE_HS_ENOMEM;
         }
 
@@ -247,7 +305,7 @@ store_read(int obj_type, union ble_store_key *key,
     int rc;
 
     switch (obj_type) {
-    case BLE_STORE_OBJ_TYPE_SLV_LTK:
+    case BLE_STORE_OBJ_TYPE_MST_SEC:
         /* An encryption procedure (bonding) is being attempted.  The nimble
          * stack is asking us to look in our key database for a long-term key
          * corresponding to the specified ediv and random number.
@@ -256,10 +314,17 @@ store_read(int obj_type, union ble_store_key *key,
          * result.  The nimble stack will use this key if this function returns
          * success.
          */
-        BLEPRPH_LOG(INFO, "looking up slv ltk; ");
-        store_print_key_ltk(&key->ltk);
+        BLEPRPH_LOG(INFO, "looking up mst sec; ");
+        store_print_key_sec(&key->sec);
         BLEPRPH_LOG(INFO, "\n");
-        rc = store_read_slv_ltk(&key->ltk, &value->ltk);
+        rc = store_read_mst_sec(&key->sec, &value->sec);
+        return rc;
+
+    case BLE_STORE_OBJ_TYPE_SLV_SEC:
+        BLEPRPH_LOG(INFO, "looking up slv sec; ");
+        store_print_key_sec(&key->sec);
+        BLEPRPH_LOG(INFO, "\n");
+        rc = store_read_slv_sec(&key->sec, &value->sec);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_CCCD:
@@ -283,8 +348,12 @@ store_write(int obj_type, union ble_store_value *val)
     int rc;
 
     switch (obj_type) {
-    case BLE_STORE_OBJ_TYPE_SLV_LTK:
-        rc = store_write_slv_ltk(&val->ltk);
+    case BLE_STORE_OBJ_TYPE_MST_SEC:
+        rc = store_write_mst_sec(&val->sec);
+        return rc;
+
+    case BLE_STORE_OBJ_TYPE_SLV_SEC:
+        rc = store_write_slv_sec(&val->sec);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_CCCD:
