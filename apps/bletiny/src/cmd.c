@@ -31,7 +31,7 @@
 #include "../src/ble_l2cap_priv.h"
 #include "../src/ble_hs_priv.h"
 
-#include "bletiny_priv.h"
+#include "bletiny.h"
 
 #define CMD_BUF_SZ      256
 

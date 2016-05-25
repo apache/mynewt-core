@@ -33,7 +33,7 @@
 #include "console/console.h"
 #include "host/ble_hs.h"
 
-#include "bletiny_priv.h"
+#include "bletiny.h"
 
 #define STORE_MAX_OUR_LTKS   4
 

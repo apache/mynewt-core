@@ -29,7 +29,7 @@
 #include "hal/hal_cputime.h"
 #include "console/console.h"
 #include "shell/shell.h"
-#include "bletiny_priv.h"
+#include "bletiny.h"
 
 /* BLE */
 #include "nimble/ble.h"
