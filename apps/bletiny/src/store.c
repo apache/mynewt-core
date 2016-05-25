@@ -53,7 +53,7 @@ static int store_num_cccds;
  *****************************************************************************/
 
 static void
-store_print_ltk(struct ble_store_value_ltk *ltk)
+store_print_value_ltk(struct ble_store_value_ltk *ltk)
 {
     console_printf("ediv=%u rand=%llu authenticated=%d ", ltk->ediv,
                    ltk->rand_num, ltk->authenticated);
@@ -62,20 +62,53 @@ store_print_ltk(struct ble_store_value_ltk *ltk)
     console_printf("\n");
 }
 
+static void
+store_print_key_ltk(struct ble_store_key_ltk *key_ltk)
+{
+    if (key_ltk->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
+        console_printf("peer_addr_type=%d peer_addr=",
+                       key_ltk->peer_addr_type);
+        print_bytes(key_ltk->peer_addr, 6);
+        console_printf(" ");
+    }
+    if (key_ltk->ediv_present) {
+        console_printf("ediv=0x%02x ", key_ltk->ediv);
+    }
+    if (key_ltk->rand_num_present) {
+        console_printf("rand=0x%llx ", key_ltk->rand_num);
+    }
+}
+
 static int
-store_find_slv_ltk(struct ble_store_key_ltk *key_ltk)
+store_find_ltk(struct ble_store_key_ltk *key_ltk,
+               struct ble_store_value_ltk *value_ltks, int num_value_ltks)
 {
     struct ble_store_value_ltk *cur;
     int i;
 
-    for (i = 0; i < store_num_slv_ltks; i++) {
-        cur = store_slv_ltks + i;
+    for (i = 0; i < num_value_ltks; i++) {
+        cur = value_ltks + i;
 
-        if (cur->ediv == key_ltk->ediv &&
-            cur->rand_num == key_ltk->rand_num) {
+        if (key_ltk->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
+            if (cur->peer_addr_type != key_ltk->peer_addr_type) {
+                continue;
+            }
 
-            return i;
+            if (memcmp(cur->peer_addr, key_ltk->peer_addr,
+                       sizeof cur->peer_addr) != 0) {
+                continue;
+            }
         }
+
+        if (key_ltk->ediv_present && cur->ediv != key_ltk->ediv) {
+            continue;
+        }
+
+        if (key_ltk->rand_num_present && cur->rand_num != key_ltk->rand_num) {
+            continue;
+        }
+
+        return i;
     }
 
     return -1;
@@ -87,7 +120,7 @@ store_read_slv_ltk(struct ble_store_key_ltk *key_ltk,
 {
     int idx;
 
-    idx = store_find_slv_ltk(key_ltk);
+    idx = store_find_ltk(key_ltk, store_slv_ltks, store_num_slv_ltks);
     if (idx == -1) {
         return BLE_HS_ENOENT;
     }
@@ -103,10 +136,10 @@ store_write_slv_ltk(struct ble_store_value_ltk *value_ltk)
     int idx;
 
     console_printf("persisting slv ltk; ");
-    store_print_ltk(value_ltk);
+    store_print_value_ltk(value_ltk);
 
     ble_store_key_from_value_ltk(&key_ltk, value_ltk);
-    idx = store_find_slv_ltk(&key_ltk);
+    idx = store_find_ltk(&key_ltk, store_slv_ltks, store_num_slv_ltks);
     if (idx == -1) {
         if (store_num_slv_ltks >= STORE_MAX_SLV_LTKS) {
             console_printf("error persisting slv ltk; too many entries (%d)\n",
@@ -123,31 +156,12 @@ store_write_slv_ltk(struct ble_store_value_ltk *value_ltk)
 }
 
 static int
-store_find_mst_ltk(struct ble_store_key_ltk *key_ltk)
-{
-    struct ble_store_value_ltk *cur;
-    int i;
-
-    for (i = 0; i < store_num_mst_ltks; i++) {
-        cur = store_mst_ltks + i;
-
-        if (cur->ediv == key_ltk->ediv &&
-            cur->rand_num == key_ltk->rand_num) {
-
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-static int
 store_read_mst_ltk(struct ble_store_key_ltk *key_ltk,
-                    struct ble_store_value_ltk *value_ltk)
+                   struct ble_store_value_ltk *value_ltk)
 {
     int idx;
 
-    idx = store_find_mst_ltk(key_ltk);
+    idx = store_find_ltk(key_ltk, store_mst_ltks, store_num_mst_ltks);
     if (idx == -1) {
         return BLE_HS_ENOENT;
     }
@@ -163,10 +177,10 @@ store_write_mst_ltk(struct ble_store_value_ltk *value_ltk)
     int idx;
 
     console_printf("persisting mst ltk; ");
-    store_print_ltk(value_ltk);
+    store_print_value_ltk(value_ltk);
 
     ble_store_key_from_value_ltk(&key_ltk, value_ltk);
-    idx = store_find_mst_ltk(&key_ltk);
+    idx = store_find_ltk(&key_ltk, store_mst_ltks, store_num_mst_ltks);
     if (idx == -1) {
         if (store_num_mst_ltks >= STORE_MAX_MST_LTKS) {
             console_printf("error persisting mst ltk; too many entries "
@@ -287,15 +301,17 @@ store_read(int obj_type, union ble_store_key *key,
          * result.  The nimble stack will use this key if this function returns
          * success.
          */
-        console_printf("looking up slv ltk with ediv=0x%02x rand=0x%llx\n",
-                       key->ltk.ediv, key->ltk.rand_num);
-        rc = store_read_slv_ltk(&key->ltk, &value->ltk);
+        console_printf("looking up mst ltk; ");
+        store_print_key_ltk(&key->ltk);
+        console_printf("\n");
+        rc = store_read_mst_ltk(&key->ltk, &value->ltk);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_SLV_LTK:
-        console_printf("looking up mst ltk with ediv=0x%02x rand=0x%llx\n",
-                       key->ltk.ediv, key->ltk.rand_num);
-        rc = store_read_mst_ltk(&key->ltk, &value->ltk);
+        console_printf("looking up slv ltk; ");
+        store_print_key_ltk(&key->ltk);
+        console_printf("\n");
+        rc = store_read_slv_ltk(&key->ltk, &value->ltk);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_CCCD:
@@ -320,11 +336,11 @@ store_write(int obj_type, union ble_store_value *val)
 
     switch (obj_type) {
     case BLE_STORE_OBJ_TYPE_MST_LTK:
-        rc = store_write_slv_ltk(&val->ltk);
+        rc = store_write_mst_ltk(&val->ltk);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_SLV_LTK:
-        rc = store_write_mst_ltk(&val->ltk);
+        rc = store_write_slv_ltk(&val->ltk);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_CCCD:
