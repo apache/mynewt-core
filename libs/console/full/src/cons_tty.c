@@ -185,7 +185,7 @@ console_write(const char *str, int cnt)
 }
 
 int
-console_read(char *str, int cnt)
+console_read(char *str, int cnt, int *newline)
 {
     struct console_tty *ct = &console_tty;
     struct console_ring *cr = &ct->ct_rx;
@@ -193,6 +193,7 @@ console_read(char *str, int cnt)
     int i;
     uint8_t ch;
 
+    *newline = 0;
     OS_ENTER_CRITICAL(sr);
     for (i = 0; i < cnt; i++) {
         if (cr->cr_head == cr->cr_tail) {
@@ -210,12 +211,13 @@ console_read(char *str, int cnt)
         ch = console_pull_char(cr);
         if (ch == '\n') {
             *str = '\0';
+            *newline = 1;
             break;
         }
         *str++ = ch;
     }
     OS_EXIT_CRITICAL(sr);
-    if (i >= 0) {
+    if (i > 0 || *newline) {
         hal_uart_start_rx(CONSOLE_UART);
     }
     return i;
@@ -263,7 +265,7 @@ console_rx_char(void *arg, uint8_t data)
          * RX queue full. Reader must drain this.
          */
         if (ct->ct_rx_cb) {
-            ct->ct_rx_cb(0);
+            ct->ct_rx_cb();
         }
         return -1;
     }
@@ -280,7 +282,7 @@ console_rx_char(void *arg, uint8_t data)
         tx_space = 2;
         console_add_char(rx, '\n');
         if (ct->ct_rx_cb) {
-            ct->ct_rx_cb(1);
+            ct->ct_rx_cb();
         }
         break;
     case CONSOLE_ESC:
