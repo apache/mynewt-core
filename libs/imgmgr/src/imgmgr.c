@@ -381,8 +381,13 @@ imgr_upload(struct nmgr_jbuf *njb)
             }
             if (rc == 0) {
                 if (!memcmp(&ver, &hdr->ih_ver, sizeof(ver))) {
-                    best = -1;
-                    break;
+                    if (active == i) {
+                        rc = NMGR_ERR_EINVAL;
+                        goto err;
+                    } else {
+                        best = i;
+                        break;
+                    }
                 }
                 /*
                  * Image in slot is ok.
