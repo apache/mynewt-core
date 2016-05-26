@@ -56,6 +56,8 @@ static void
 setup_for_nffs(void)
 {
     struct nffs_area_desc nffs_descs[NFFS_AREA_MAX + 1];
+    int cnt;
+    int rc;
 
     /*
      * Make sure we have enough left to initialize the NFFS with the
