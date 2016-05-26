@@ -10,7 +10,7 @@ tu_parse_args(int argc, char **argv)
 
     while ((ch = getopt(argc, argv, "s")) != -1) {
         switch (ch) {
-        case 'd':
+        case 's':
             tu_config.tc_system_assert = 1;
             break;
 
