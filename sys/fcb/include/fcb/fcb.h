@@ -56,7 +56,6 @@ struct fcb {
     struct fcb_entry f_active;
     uint16_t f_active_id;
     uint8_t f_align;		/* writes to flash have to aligned to this */
-    void *f_arg;
 };
 
 /*

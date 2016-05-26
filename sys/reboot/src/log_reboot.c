@@ -119,16 +119,6 @@ log_reboot(int reason)
 
     reboot_tmp_cnt = reboot_cnt;
 
-    /* If the reboot count is equal to soft_reboot */
-    if (soft_reboot == reboot_cnt) {
-        reboot_tmp_cnt = reboot_cnt + 1;
-        /* Save the reboot cnt */
-        rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
-                           conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
-                                               str, sizeof(str)));
-        goto err;
-    }
-
     if (reason == SOFT_REBOOT) {
         /*
          * Save reboot count as soft reboot cnt if the reason is
@@ -141,10 +131,18 @@ log_reboot(int reason)
         if (rc) {
             goto err;
         }
+    } else if (reason == HARD_REBOOT) {
+        rc = conf_save_one(&reboot_conf_handler, "soft_reboot", "0");
+        if (rc) {
+            goto err;
+        }
+        if (soft_reboot) {
+            goto err;
+        } else {
+            reboot_cnt++;
+            reboot_tmp_cnt = reboot_cnt;
+        }
     }
-
-
-    imgr_my_version(&ver);
 
     /* Save the reboot cnt */
     rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
@@ -153,6 +151,8 @@ log_reboot(int reason)
     if (rc) {
         goto err;
     }
+
+    imgr_my_version(&ver);
 
     /* Log a reboot */
     LOG_CRITICAL(&reboot_log, LOG_MODULE_REBOOT, "rsn:%s, cnt:%u,"
