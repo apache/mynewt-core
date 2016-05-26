@@ -39,7 +39,6 @@ extern "C" {
 #define CONSOLE_UART	0
 
 int bsp_imgr_current_slot(void);
-void *os_flash_addr_syslog(void);
 
 #define NFFS_AREA_MAX    (8)
 

@@ -56,6 +56,7 @@ struct fcb {
     struct fcb_entry f_active;
     uint16_t f_active_id;
     uint8_t f_align;		/* writes to flash have to aligned to this */
+    void *f_arg;
 };
 
 /*
@@ -112,5 +113,8 @@ int fcb_free_sector_cnt(struct fcb *fcb);
  * Whether FCB has any data.
  */
 int fcb_is_empty(struct fcb *fcb);
+
+uint32_t
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries);
 
 #endif /* __SYS_FLASHVAR_H_ */

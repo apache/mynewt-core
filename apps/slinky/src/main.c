@@ -392,7 +392,7 @@ main(int argc, char **argv)
 
     flash_test_init();
     
-    reboot_init_handler(LOG_TYPE_STORAGE);
+    reboot_init_handler(LOG_TYPE_STORAGE, 10);
 
     conf_load();
 

@@ -41,6 +41,11 @@ typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, void *arg);
 typedef int (*lh_flush_func_t)(struct log *);
+/*
+ * This function pointer points to a function that restores the numebr
+ * of entries that are specified while erasing
+ */
+typedef int (*lh_rtr_erase_func_t)(struct log *, void *arg);
 
 #define LOG_TYPE_STREAM  (0)
 #define LOG_TYPE_MEMORY  (1)
@@ -52,6 +57,7 @@ struct log_handler {
     lh_append_func_t log_append;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
+    lh_rtr_erase_func_t log_rtr_erase;
     void *log_arg;
 };
 
@@ -69,7 +75,7 @@ struct log_entry_hdr {
 #define LOG_LEVEL_ERROR    (3)
 #define LOG_LEVEL_CRITICAL (4)
 /* Up to 7 custom log levels. */
-#define LOG_LEVEL_MAX      (255)
+#define LOG_LEVEL_MAX      (UINT8_MAX)
 
 #define LOG_LEVEL_STR(level) \
     (LOG_LEVEL_DEBUG    == level ? "DEBUG"    :\
@@ -166,6 +172,7 @@ int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
 int log_walk(struct log *log, log_walk_func_t walk_func,
         void *arg);
 int log_flush(struct log *log);
+int log_rtr_erase(struct log *log, void *arg);
 
 
 
@@ -173,7 +180,8 @@ int log_flush(struct log *log);
 int log_cbmem_handler_init(struct log_handler *, struct cbmem *);
 int log_console_handler_init(struct log_handler *);
 struct fcb;
-int log_fcb_handler_init(struct log_handler *handler, struct fcb *fcb);
+int log_fcb_handler_init(struct log_handler *, struct fcb *,
+                         uint8_t entries);
 
 /* Private */
 #ifdef NEWTMGR_PRESENT

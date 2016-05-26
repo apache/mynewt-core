@@ -19,7 +19,6 @@
 
 #include <os/os.h>
 #include <fcb/fcb.h>
-#include <util/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
 #include <bootutil/image.h>
@@ -31,12 +30,13 @@
 #include <reboot/log_reboot.h>
 #include <bsp/bsp.h>
 #include <assert.h>
+
 #ifdef SHELL_PRESENT
 #include <shell/shell.h>
 #endif
 
 static struct log_handler reboot_log_handler;
-static struct fcb log_fcb;
+static struct fcb fcb;
 static struct log reboot_log;
 static uint16_t reboot_cnt;
 static uint16_t soft_reboot;
@@ -44,6 +44,7 @@ static char reboot_cnt_str[12];
 static char soft_reboot_str[12];
 static char *reboot_cnt_get(int argc, char **argv, char *buf, int max_len);
 static int reboot_cnt_set(int argc, char **argv, char *val);
+static struct flash_area sector;
 
 struct conf_handler reboot_conf_handler = {
     .ch_name = "reboot",
@@ -55,22 +56,36 @@ struct conf_handler reboot_conf_handler = {
 
 /**
  * Reboot log initilization
+ * @param type of log(console or storage); number of entries to restore
+ * @return 0 on success; non-zero on failure
  */
 int
-reboot_init_handler(int log_type)
+reboot_init_handler(int log_type, uint8_t entries)
 {
     int rc;
+    const struct flash_area *ptr;
 
     conf_register(&reboot_conf_handler);
 
     switch (log_type) {
         case LOG_TYPE_STORAGE:
-            log_fcb.f_sectors = (struct flash_area *)os_flash_addr_syslog();
-            log_fcb.f_sector_cnt = 1;
-            log_fcb.f_magic = 0x7EADBADF;
-            log_fcb.f_version = 0;
-            rc = fcb_init(&log_fcb);
-            rc = log_fcb_handler_init(&reboot_log_handler, &log_fcb);
+            if (flash_area_open(FLASH_AREA_REBOOT_LOG, &ptr)) {
+                goto err;
+            }
+            sector = *ptr;
+            fcb.f_sectors = &sector;
+            fcb.f_sector_cnt = 1;
+            fcb.f_magic = 0x7EADBADF;
+            fcb.f_version = 0;
+
+            rc = fcb_init(&fcb);
+            if (rc) {
+                goto err;
+            }
+            rc = log_fcb_handler_init(&reboot_log_handler, &fcb, entries);
+            if (rc) {
+                goto err;
+            }
 
             break;
        case LOG_TYPE_STREAM:
@@ -83,9 +98,15 @@ reboot_init_handler(int log_type)
 
     imgmgr_module_init();
     rc = log_register("reboot_log", &reboot_log, &reboot_log_handler);
+err:
     return (rc);
 }
 
+/**
+ * Logs reboot with the specified reason
+ * @param reason for reboot
+ * @return 0 on success; non-zero on failure
+ */
 int
 log_reboot(int reason)
 {
@@ -105,7 +126,7 @@ log_reboot(int reason)
         rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
                            conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                                str, sizeof(str)));
-        return (rc);
+        goto err;
     }
 
     if (reason == SOFT_REBOOT) {

@@ -25,7 +25,7 @@ static struct flash_area bsp_flash_areas[] = {
         .fa_off = 0x00000000,   /* beginning */
         .fa_size = (32 * 1024)
     },
-    [FLASH_AREA_SYS_LOG] = {
+    [FLASH_AREA_REBOOT_LOG] = {
         .fa_flash_id = 0,
         .fa_off = 0x00010000,
         .fa_size = (16 * 1024)
@@ -72,9 +72,4 @@ bsp_init(void)
 {
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
-}
-
-void *
-os_flash_addr_syslog(void) {
-    return &bsp_flash_areas[FLASH_AREA_SYS_LOG];
 }
