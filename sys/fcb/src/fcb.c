@@ -21,6 +21,7 @@
 
 #include "fcb/fcb.h"
 #include "fcb_priv.h"
+#include "string.h"
 
 int
 fcb_init(struct fcb *fcb)
@@ -199,30 +200,31 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
     return 1;
 }
 
-uint32_t
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries)
+int
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off)
 {
     struct fcb_entry loc;
     uint32_t curr_off;
-    uint32_t last_n_off;
     int i;
 
     i = 0;
+    memset(&loc, 0, sizeof(loc));
     while (fcb_getnext(fcb, &loc) == 0) {
         if (i == 0) {
             /* Start from the beginning of fcb entries */
             curr_off = loc.fe_elem_off;
-            last_n_off = curr_off;
+            *last_n_off = curr_off;
         }
         /* length + crc length in flash + data length in flash */
-        curr_off += fcb_len_in_flash(fcb, sizeof(loc.fe_data_len)) + fcb_len_in_flash(fcb, 1) +
+        curr_off += fcb_len_in_flash(fcb, sizeof(loc.fe_data_len)) +
+                    fcb_len_in_flash(fcb, FCB_CRC_SZ) +
                     fcb_len_in_flash(fcb, loc.fe_data_len);
         /* Update last_n_off after n entries and keep updating */
         if (i >= entries) {
-            last_n_off = curr_off;
+            *last_n_off = curr_off;
         }
         i++;
     }
 
-    return last_n_off;
+    return 0;
 }

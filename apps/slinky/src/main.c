@@ -391,7 +391,7 @@ main(int argc, char **argv)
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
     flash_test_init();
-    
+
     reboot_init_handler(LOG_TYPE_STORAGE, 10);
 
     conf_load();

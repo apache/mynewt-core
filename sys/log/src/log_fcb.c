@@ -146,8 +146,8 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     char data[LOG_PRINTF_MAX_ENTRY_LEN + sizeof(ueh)];
     int dlen;
     int rc;
-
-    dst_fcb = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
+    struct fcb *fcb_tmp;
+    uint8_t entries_tmp;
 
     rc = log_fcb_read(log, entry, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
@@ -162,7 +162,22 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     }
     data[rc] = 0;
 
+    /* Changing the fcb to be logged to be dst fcb */
+    fcb_tmp = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
+
+    entries_tmp = ((struct fcb_log *)log->l_log->log_arg)->fl_entries;
+
+    rc = log_fcb_handler_init(log->l_log, dst_fcb, 0);
+    if (rc) {
+        goto err;
+    }
+
     rc = log_fcb_append(log, data, dlen);
+    if (rc) {
+        goto err;
+    }
+
+    rc = log_fcb_handler_init(log->l_log, fcb_tmp, entries_tmp);
     if (rc) {
         goto err;
     }
@@ -217,6 +232,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     int rc;
 
     rc = 0;
+    offset = 0;;
     if (!log) {
         rc = -1;
         goto err;
@@ -242,10 +258,8 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     }
 
     /* Calculate offset of n-th last entry */
-    offset = fcb_offset_last_n(fcb, fcb_log->fl_entries);
-
-    rc = log_fcb_handler_init(log->l_log, &fcb_scratch, 0);
-    if (rc) {
+    rc = fcb_offset_last_n(fcb, fcb_log->fl_entries, &offset);
+    if (rc){
         goto err;
     }
 
@@ -259,6 +273,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     if (rc) {
         goto err;
     }
+
     /* Copy back from scratch */
     rc = log_fcb_copy(log, &fcb_scratch, fcb, 0);
 

@@ -65,7 +65,7 @@ reboot_init_handler(int log_type, uint8_t entries)
     int rc;
     const struct flash_area *ptr;
 
-    conf_register(&reboot_conf_handler);
+    rc = conf_register(&reboot_conf_handler);
 
     switch (log_type) {
         case LOG_TYPE_STORAGE:
@@ -137,6 +137,7 @@ log_reboot(int reason)
             goto err;
         }
         if (soft_reboot) {
+            /* No need to log as it's not a hard reboot */
             goto err;
         } else {
             reboot_cnt++;

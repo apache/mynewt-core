@@ -113,7 +113,7 @@ int fcb_free_sector_cnt(struct fcb *fcb);
  */
 int fcb_is_empty(struct fcb *fcb);
 
-uint32_t
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries);
+int
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *offset);
 
 #endif /* __SYS_FLASHVAR_H_ */
