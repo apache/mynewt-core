@@ -26,6 +26,9 @@
 static char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\",\"KeyIntArr\": [153,2532,-322]}";
 
 static char *output1 ="{\"KeyBoolArr\": [true, false], \"KeyUintArr\": [0, 65535, 4294967295, 8589934590, 3451257]}";
+static char *outputboolspace = "{\"KeyBoolArr\": [    true    ,    false,true         ]}";
+static char *outputboolempty = "{\"KeyBoolArr\": , \"KeyBoolArr\": [  ]}";
+/*static char *outputbooldiff = "{\"KeyBoolArr\": [false, 1, 20]}";*/
 
 static char bigbuf[512];
 static int buf_index;
@@ -176,6 +179,9 @@ test_buf_init(struct test_jbuf *ptjb, char *string) {
 TEST_CASE(test_json_simple_decode){
     struct test_jbuf tjb;
     struct test_jbuf tjb1;
+    struct test_jbuf tjbboolspacearr;
+    struct test_jbuf tjbboolemptyarr;
+    /*struct test_jbuf tjbbooldiffarr;*/
     long long unsigned int uint_val;
     long long int int_val;
     bool bool_val;
@@ -184,13 +190,18 @@ TEST_CASE(test_json_simple_decode){
     long long int intarr[8];
     int rc;
     int rc1;
+    int rcbsa;
     int array_count;
+    int array_countemp;
 
     bool boolarr[2];
     unsigned long long uintarr[5];
     int array_count1;
     int array_count1u;
-
+    bool boolspacearr[3];
+    bool boolemptyarr[2];
+    /*bool booldiffarr[3];*/
+    
     struct json_attr_t test_attr[7] = {
         [0] = {
             .attribute = "KeyBool",
@@ -240,6 +251,8 @@ TEST_CASE(test_json_simple_decode){
             .attribute = NULL
         }
     };
+    
+    
 
     test_buf_init(&tjb, output);
 
@@ -288,7 +301,7 @@ TEST_CASE(test_json_simple_decode){
            .len = sizeof( uintarr),
        }
    };
-
+   
    test_buf_init(&tjb1, output1);
 
    rc1 = json_read_object(&tjb1.json_buf, test_attr1);
@@ -303,4 +316,77 @@ TEST_CASE(test_json_simple_decode){
    TEST_ASSERT(uintarr[3] == 8589934590);
    TEST_ASSERT(uintarr[4] ==  3451257);
 
+    /*testing arrays with empty spaces within the elements*/
+    struct json_attr_t test_boolspacearr[2] = {
+       [0] = {    
+           .attribute = "KeyBoolArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_boolean,
+               .arr.booleans.store = boolspacearr,
+               .maxlen = sizeof boolspacearr / sizeof boolspacearr[0],
+               .count =&array_count1,
+           },
+           .nodefault = true,
+           .len = sizeof( boolspacearr),
+       }
+           
+    };
+    
+    test_buf_init(&tjbboolspacearr, outputboolspace);
+
+    rcbsa = json_read_object(&tjbboolspacearr.json_buf, test_boolspacearr);
+    TEST_ASSERT(rcbsa == 0);
+
+    TEST_ASSERT(boolspacearr[0] == true);
+    TEST_ASSERT(boolspacearr[1] == false);
+    TEST_ASSERT(boolspacearr[2] == true);
+    
+    /*Testing arrays of bool with different value type
+    struct json_attr_t test_booldiffarr[2] = {
+       [0] = {    
+           .attribute = "KeyBoolArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_boolean,
+               .arr.booleans.store = booldiffarr,
+               .maxlen = sizeof booldiffarr / sizeof booldiffarr[0],
+               .count =&array_count1,
+           },
+           .nodefault = true,
+           .len = sizeof( booldiffarr),
+       }
+           
+    };
+    
+    test_buf_init(&tjbbooldiffarr, outputbooldiff);
+
+    rc1 = json_read_object(&tjbbooldiffarr.json_buf, test_booldiffarr);
+    TEST_ASSERT(rcbsa == 0);
+    
+    TEST_ASSERT(booldiffarr[0] == false);
+    TEST_ASSERT(booldiffarr[1] == 1);
+    TEST_ASSERT(booldiffarr[2] == 20);
+  */
+    /*testing array with empty value*/
+    struct json_attr_t test_boolemptyarr[2] = {
+        [0] = {
+            .attribute = "KeyBoolArr",
+           .type = t_array,
+           .addr.array = {
+               .element_type = t_boolean,
+               .arr.booleans.store = boolemptyarr,
+               .maxlen = sizeof boolemptyarr / sizeof boolemptyarr[0],
+               .count =&array_countemp,
+           },
+           .nodefault = true,
+           .len = sizeof( boolemptyarr),
+        }
+    };
+   
+   test_buf_init(&tjbboolemptyarr, outputboolempty);
+
+    rcbsa = json_read_object(&tjbboolemptyarr.json_buf, test_boolemptyarr);
+    TEST_ASSERT(rcbsa == 6); 
+    
 }
