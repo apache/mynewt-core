@@ -316,8 +316,8 @@ main(void)
     cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 1;
     cfg.sm_bonding = 1;
-    cfg.sm_our_key_dist = BLE_L2CAP_SM_PAIR_KEY_DIST_ENC;
-    cfg.sm_their_key_dist = BLE_L2CAP_SM_PAIR_KEY_DIST_ENC;
+    cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.store_read_cb = store_read;
     cfg.store_write_cb = store_write;
 

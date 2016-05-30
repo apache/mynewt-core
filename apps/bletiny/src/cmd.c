@@ -1926,7 +1926,7 @@ cmd_passkey(int argc, char **argv)
 #endif
 
     uint16_t conn_handle;
-    struct ble_l2cap_sm_passkey pk;
+    struct ble_sm_passkey pk;
     int rc;
 
     conn_handle = parse_arg_uint16("conn", &rc);
@@ -1960,7 +1960,7 @@ cmd_passkey(int argc, char **argv)
          return EINVAL;
     }
 
-    rc = ble_l2cap_sm_set_tk(conn_handle, &pk);
+    rc = ble_sm_set_tk(conn_handle, &pk);
     if (rc != 0) {
         console_printf("error providing passkey; rc=%d\n", rc);
         return rc;
