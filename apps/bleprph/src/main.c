@@ -38,6 +38,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_l2cap.h"
+#include "host/ble_sm.h"
 #include "controller/ble_ll.h"
 
 #include "bleprph.h"
