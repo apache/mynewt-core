@@ -1383,6 +1383,14 @@ cmd_set_sm_data(void)
         return rc;
     }
 
+    tmp = parse_arg_bool("sc", &rc);
+    if (rc == 0) {
+        good++;
+        ble_hs_cfg.sm_sc = tmp;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
     if (!good) {
         console_printf("Error: no valid settings specified\n");
         return -1;
