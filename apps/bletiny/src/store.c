@@ -95,7 +95,10 @@ store_find_sec(struct ble_store_key_sec *key_sec,
                struct ble_store_value_sec *value_secs, int num_value_secs)
 {
     struct ble_store_value_sec *cur;
+    int skipped;
     int i;
+
+    skipped = 0;
 
     for (i = 0; i < num_value_secs; i++) {
         cur = value_secs + i;
@@ -119,6 +122,11 @@ store_find_sec(struct ble_store_key_sec *key_sec,
             if (cur->rand_num != key_sec->rand_num) {
                 continue;
             }
+        }
+
+        if (key_sec->idx > skipped) {
+            skipped++;
+            continue;
         }
 
         return i;
