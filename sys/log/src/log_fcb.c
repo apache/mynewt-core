@@ -72,7 +72,7 @@ log_fcb_append(struct log *log, void *buf, int len)
     rc = fcb_append_finish(fcb, &loc);
 
 err:
-    return rc;
+    return (rc);
 }
 
 static int
@@ -102,17 +102,18 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     struct fcb_entry loc;
     int rc;
 
+    rc = 0;
     fcb = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
 
     memset(&loc, 0, sizeof(loc));
 
     while (fcb_getnext(fcb, &loc) == 0) {
         rc = walk_func(log, arg, (void *) &loc, loc.fe_data_len);
-        if (rc == 1) {
+        if (rc) {
             break;
         }
     }
-    return 0;
+    return (rc);
 }
 
 static int
@@ -130,7 +131,7 @@ log_fcb_flush(struct log *log)
             break;
         }
     }
-    return rc;
+    return (rc);
 }
 
 /**
@@ -278,7 +279,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     rc = log_fcb_copy(log, &fcb_scratch, fcb, 0);
 
 err:
-    return rc;
+    return (rc);
 }
 
 int

@@ -102,13 +102,9 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     struct log_entry_hdr *ue;
     int rc;
     struct os_timeval tv;
+    int64_t prev_ts;
 
     ue = (struct log_entry_hdr *) data;
-
-    /* Resetting index every millisecond */
-    if (g_log_info.li_timestamp > ue->ue_ts + 1000) {
-        g_log_info.li_index = 0;
-    }
 
     g_log_info.li_index++;
 
@@ -120,6 +116,7 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         ue->ue_ts = tv.tv_sec * 1000000 + tv.tv_usec;
     }
 
+    prev_ts = g_log_info.li_timestamp;
     g_log_info.li_timestamp = ue->ue_ts;
     ue->ue_level = level;
     ue->ue_module = module;
@@ -128,6 +125,11 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
         goto err;
+    }
+
+    /* Resetting index every millisecond */
+    if (g_log_info.li_timestamp > 1000 + prev_ts) {
+        g_log_info.li_index = 0;
     }
 
     return (0);

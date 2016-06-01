@@ -24,6 +24,14 @@
 #include <inttypes.h>
 #include <os/os.h>
 
+/* MTU for newtmgr responses */
+#define NMGR_MAX_MTU 1024
+
+#ifndef STR
+/* Stringification of constants */
+#define STR(x) #x
+#endif
+
 /* First 64 groups are reserved for system level newtmgr commands.
  * Per-user commands are then defined after group 64.
  */

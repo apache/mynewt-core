@@ -64,6 +64,7 @@ struct encode_off {
     struct json_encoder *eo_encoder;
     int64_t eo_ts;
     uint8_t eo_index;
+    uint32_t rsp_len;
 };
 
 /**
@@ -80,11 +81,14 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     int dlen;
     struct json_value jv;
     int rc;
+    int rsp_len;
 
     rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
+        rc = OS_ENOENT;
         goto err;
     }
+    rc = OS_OK;
 
     /* Matching timestamps and indices for sending a log entry */
     if (ueh.ue_ts < encode_off->eo_ts   ||
@@ -97,9 +101,25 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
 
     rc = log_read(log, dptr, data, sizeof(ueh), dlen);
     if (rc < 0) {
+        rc = OS_ENOENT;
         goto err;
     }
     data[rc] = 0;
+
+    rsp_len = encode_off->rsp_len;
+    /* Calculating entry len */
+    rsp_len += strlen(data);
+
+    /* Pre calculating MAX length of the json string */
+    rsp_len += (sizeof(STR(INT64_MAX))  + sizeof("{,ts:")    +
+                sizeof(STR(UINT8_MAX))  + sizeof(",level:")  +
+                sizeof(STR(UINT32_MAX)) + sizeof(",index:")  +
+                sizeof(STR(UINT16_MAX)) + sizeof(",module:}"));
+
+    if (rsp_len > NMGR_MAX_MTU) {
+        rc = OS_ENOMEM;
+        goto err;
+    }
 
     json_encode_object_start(encode_off->eo_encoder);
 
@@ -134,6 +154,8 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     }
 
     json_encode_object_finish(encode_off->eo_encoder);
+    encode_off->rsp_len += rsp_len;
+
     return (0);
 err:
     return (rc);
@@ -150,16 +172,33 @@ log_encode_entries(struct log *log, struct json_encoder *encoder,
 {
     int rc;
     struct encode_off encode_off;
+    int rsp_len;
+
+    memset(&encode_off, 0, sizeof(encode_off));
+    /* Already encoded json string */
+    rsp_len = strlen(encoder->je_encode_buf);
+    /* Pre calculating json length */
+    rsp_len += (sizeof("entries") + 3);
+    rsp_len += encode_off.rsp_len;
+
+    if (rsp_len > NMGR_MAX_MTU) {
+        rc = OS_ENOMEM;
+        goto err;
+    }
 
     json_encode_array_name(encoder, "entries");
     json_encode_array_start(encoder);
 
-    encode_off.eo_encoder = encoder;
+    encode_off.eo_encoder  = encoder;
     encode_off.eo_index    = index;
     encode_off.eo_ts       = ts;
 
-    rc = log_walk(log, log_nmgr_encode_entry, &encode_off);
+    encode_off.rsp_len = rsp_len;
 
+    rc = log_walk(log, log_nmgr_encode_entry, &encode_off);
+    json_encode_array_finish(encoder);
+
+err:
     return rc;
 }
 
@@ -183,7 +222,6 @@ log_encode(struct log *log, struct json_encoder *encoder,
     json_encode_object_entry(encoder, "type", jv);
 
     rc = log_encode_entries(log, encoder, ts, index);
-    json_encode_array_finish(encoder);
     json_encode_object_finish(encoder);
 
     return rc;
@@ -273,9 +311,8 @@ log_nmgr_read(struct nmgr_jbuf *njb)
         rc = OS_EINVAL;
     }
 
-    json_encode_array_finish(encoder);
-
 err:
+    json_encode_array_finish(encoder);
     JSON_VALUE_INT(&jv, rc);
     json_encode_object_entry(encoder, "rc", &jv);
     json_encode_object_finish(encoder);

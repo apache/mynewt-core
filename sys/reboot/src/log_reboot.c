@@ -125,17 +125,11 @@ log_reboot(int reason)
          * a soft reboot
          */
         reboot_tmp_cnt = reboot_cnt + 1;
-        rc = conf_save_one(&reboot_conf_handler, "soft_reboot",
-                           conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
-                                               str, sizeof(str)));
-        if (rc) {
-            goto err;
-        }
+        conf_save_one(&reboot_conf_handler, "soft_reboot",
+                      conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
+                                          str, sizeof(str)));
     } else if (reason == HARD_REBOOT) {
-        rc = conf_save_one(&reboot_conf_handler, "soft_reboot", "0");
-        if (rc) {
-            goto err;
-        }
+        conf_save_one(&reboot_conf_handler, "soft_reboot", "0");
         if (soft_reboot) {
             /* No need to log as it's not a hard reboot */
             goto err;
@@ -145,13 +139,14 @@ log_reboot(int reason)
         }
     }
 
-    /* Save the reboot cnt */
+    /*
+     * Only care for this return code as it will tell whether the config is
+     * full, the caller of the function might not care about the return code
+     * Saving the reboot cnt
+     */
     rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
                        conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                            str, sizeof(str)));
-    if (rc) {
-        goto err;
-    }
 
     imgr_my_version(&ver);
 
