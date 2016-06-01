@@ -85,7 +85,7 @@ struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
 /* BLETINY variables */
-#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(288))
+#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(512))
 #define BLETINY_TASK_PRIO              1
 
 #if NIMBLE_OPT(ROLE_CENTRAL)
