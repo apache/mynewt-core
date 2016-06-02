@@ -1936,6 +1936,7 @@ cmd_passkey(int argc, char **argv)
 
     uint16_t conn_handle;
     struct ble_sm_passkey pk;
+    char *yesno;
     int rc;
 
     conn_handle = parse_arg_uint16("conn", &rc);
@@ -1948,7 +1949,7 @@ cmd_passkey(int argc, char **argv)
         return rc;
     }
 
-    switch(pk.action) {
+    switch (pk.action) {
         case BLE_SM_PKACT_INPUT:
         case BLE_SM_PKACT_DISP:
            /* passkey is 6 digit number */
@@ -1964,6 +1965,28 @@ cmd_passkey(int argc, char **argv)
                 return rc;
             }
             break;
+
+        case BLE_SM_PKACT_NUMCMP:
+            yesno = parse_arg_find("yesno");
+            if (yesno == NULL) {
+                return EINVAL;
+            }
+
+            switch (yesno[0]) {
+            case 'y':
+            case 'Y':
+                pk.numcmp_accept = 1;
+                break;
+            case 'n':
+            case 'N':
+                pk.numcmp_accept = 0;
+                break;
+
+            default:
+                return EINVAL;
+            }
+            break;
+
        default:
          console_printf("invalid passkey action action=%d\n", pk.action);
          return EINVAL;

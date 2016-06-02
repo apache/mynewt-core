@@ -43,6 +43,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
+#include "host/ble_sm.h"
 #include "controller/ble_ll.h"
 
 /* XXX: An app should not include private headers from a library.  The bletiny
@@ -854,8 +855,13 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_PASSKEY_ACTION:
-        console_printf("passkey action event; action=%d\n",
+        console_printf("passkey action event; action=%d",
                        ctxt->passkey_action.action);
+        if (ctxt->passkey_action.action == BLE_SM_PKACT_NUMCMP) {
+            console_printf(" numcmp=%lu",
+                           (unsigned long)ctxt->passkey_action.numcmp);
+        }
+        console_printf("\n");
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
