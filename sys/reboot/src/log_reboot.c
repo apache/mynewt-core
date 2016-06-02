@@ -114,8 +114,12 @@ log_reboot(int reason)
     char str[12] = {0};
     struct image_version ver;
     int16_t reboot_tmp_cnt;
+    const struct flash_area *ptr;
 
     rc = 0;
+    if (flash_area_open(FLASH_AREA_REBOOT_LOG, &ptr)) {
+        goto err;
+    }
 
     reboot_tmp_cnt = reboot_cnt;
 
