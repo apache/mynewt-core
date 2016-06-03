@@ -99,23 +99,24 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_INITIATOR          (2)
 
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 
 /* Advertiser config */
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PRIV_PUB)
 #define BLETEST_CFG_ADV_PEER_ADDR_TYPE  (BLE_HCI_ADV_PEER_ADDR_PUBLIC)
-#define BLETEST_CFG_FILT_DUP_ADV        (1)
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
+#define BLETEST_CFG_ADV_ADDR_RES_EN     (1)
 
 /* Scan config */
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
-#define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
-#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
+#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
+#define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PRIV_PUB)
+#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
+#define BLETEST_CFG_FILT_DUP_ADV        (1)
 
 /* Connection config */
 #define BLETEST_CFG_CONN_ITVL           (128)  /* in 1.25 msec increments */
@@ -125,7 +126,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_MIN_CE_LEN          (6)
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC_IDENT)
-#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
+#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PRIV_PUB)
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* Test packet config */
@@ -343,6 +344,9 @@ bletest_init_advertising(void)
     adv.adv_type = BLETEST_CFG_ADV_TYPE;
     adv.adv_channel_map = 0x07;
     adv.adv_filter_policy = BLETEST_CFG_ADV_FILT_POLICY;
+    if ((adv.adv_filter_policy & 1) || (BLETEST_CFG_ADV_ADDR_RES_EN == 1)) {
+        set_peer_addr = 1;
+    }
     adv.peer_addr_type = BLETEST_CFG_ADV_PEER_ADDR_TYPE;
     if ((adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) ||
         (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD)) {
@@ -380,7 +384,8 @@ bletest_init_advertising(void)
     assert(rc == 0);
 
 #if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
-    if (adv.own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+    if ((adv.own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM) ||
+        (BLETEST_CFG_ADV_ADDR_RES_EN == 1)) {
         rc = bletest_hci_le_add_resolv_list(g_bletest_adv_irk,
                                             g_bletest_init_irk,
                                             adv.peer_addr,
@@ -410,7 +415,6 @@ bletest_init_scanner(void)
 {
     int rc;
     uint8_t own_addr_type;
-    uint8_t dev_addr[BLE_DEV_ADDR_LEN];
     uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_SET_SCAN_PARAM_LEN];
     uint8_t add_whitelist;
 
@@ -435,19 +439,11 @@ bletest_init_scanner(void)
 
             rc = bletest_hci_le_enable_resolv_list(1);
             assert(rc == 0);
-
-            add_whitelist = 0;
         }
 #endif
         if (add_whitelist & 1) {
-            /* Add peer to whitelist */
-            dev_addr[0] = 0x00;
-            dev_addr[1] = 0x00;
-            dev_addr[2] = 0x00;
-            dev_addr[3] = 0x88;
-            dev_addr[4] = 0x88;
-            dev_addr[5] = 0x08;
-            rc = bletest_hci_le_add_to_whitelist(dev_addr,BLE_ADDR_TYPE_PUBLIC);
+            rc = bletest_hci_le_add_to_whitelist(g_bletest_cur_peer_addr,
+                                                 BLE_ADDR_TYPE_PUBLIC);
             assert(rc == 0);
         }
     }
