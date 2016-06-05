@@ -34,6 +34,7 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
+#include "nimble/hci_transport.h"
 #include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
@@ -122,6 +123,16 @@ const uint8_t bletiny_privacy_flag = 0;
 uint8_t bletiny_reconnect_addr[6];
 uint8_t bletiny_pref_conn_params[8];
 uint8_t bletiny_gatt_service_changed[4];
+
+static struct os_callout_func bletiny_tx_timer;
+struct bletiny_tx_data_s
+{
+    uint16_t tx_num;
+    uint16_t tx_rate;
+    uint16_t tx_handle;
+    uint16_t tx_len;
+};
+static struct bletiny_tx_data_s bletiny_tx_data;
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -901,6 +912,62 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     }
 }
 
+static void
+bletiny_tx_timer_cb(void *arg)
+{
+    int i;
+    uint8_t len;
+    int32_t timeout;
+    uint8_t *dptr;
+    struct os_mbuf *om;
+
+    if ((bletiny_tx_data.tx_num == 0) || (bletiny_tx_data.tx_len == 0)) {
+        return;
+    }
+
+    len = bletiny_tx_data.tx_len;
+    om = NULL;
+    if (default_mbuf_mpool.mp_num_free >= 4) {
+        om = os_msys_get_pkthdr(len + 4, sizeof(struct ble_mbuf_hdr));
+    }
+
+    if (om) {
+        /* Put the HCI header in the mbuf */
+        om->om_len = len + 4;
+        htole16(om->om_data, bletiny_tx_data.tx_handle);
+        htole16(om->om_data + 2, len);
+        dptr = om->om_data + 4;
+
+        /*
+         * NOTE: first byte gets 0xff so not confused with l2cap channel.
+         * The rest of the data gets filled with incrementing pattern starting
+         * from 0.
+         */
+        htole16(dptr, len - 4);
+        dptr[2] = 0xff;
+        dptr[3] = 0xff;
+        dptr += 4;
+        len -= 4;
+
+        for (i = 0; i < len; ++i) {
+            *dptr = i;
+            ++dptr;
+        }
+
+        /* Set packet header length */
+        OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
+        ble_hci_transport_host_acl_data_send(om);
+
+        --bletiny_tx_data.tx_num;
+    }
+
+    if (bletiny_tx_data.tx_num) {
+        timeout = (int32_t)bletiny_tx_data.tx_rate;
+        timeout = (timeout * OS_TICKS_PER_SEC) / 1000;
+        os_callout_reset(&bletiny_tx_timer.cf_c, timeout);
+    }
+}
+
 int
 bletiny_exchange_mtu(uint16_t conn_handle)
 {
@@ -1203,6 +1270,45 @@ bletiny_sec_restart(uint16_t conn_handle,
 }
 
 /**
+ * Called to start transmitting 'num' packets at rate 'rate' of size 'size'
+ * to connection handle 'handle'
+ *
+ * @param handle
+ * @param len
+ * @param rate
+ * @param num
+ *
+ * @return int
+ */
+int
+bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
+{
+    /* Cannot be currently in a session */
+    if (num == 0) {
+        return 0;
+    }
+
+    /* Do not allow start if already in progress */
+    if (bletiny_tx_data.tx_num != 0) {
+        return -1;
+    }
+
+    /* XXX: for now, must have contiguous mbuf space */
+    if ((len + 4) > MBUF_BUF_SIZE) {
+        return -2;
+    }
+
+    bletiny_tx_data.tx_num = num;
+    bletiny_tx_data.tx_rate = rate;
+    bletiny_tx_data.tx_len = len;
+    bletiny_tx_data.tx_handle = handle;
+
+    os_callout_reset(&bletiny_tx_timer.cf_c, 0);
+
+    return 0;
+}
+
+/**
  * BLE test task
  *
  * @param arg
@@ -1358,6 +1464,9 @@ main(void)
     htole16(bletiny_pref_conn_params + 6, BSWAP16(0x100));
 
     gatt_svr_init();
+
+    os_callout_func_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
+                         NULL);
 
     /* Start the OS */
     os_start();

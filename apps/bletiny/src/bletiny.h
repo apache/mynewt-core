@@ -152,7 +152,7 @@ int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
                         void *value, uint16_t value_len);
 int bletiny_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
                             int num_attrs);
-int bletiny_adv_start(int disc, int conn, 
+int bletiny_adv_start(int disc, int conn,
                      uint8_t *peer_addr, uint8_t peer_addr_type,
                      struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
@@ -173,6 +173,9 @@ int bletiny_l2cap_update(uint16_t conn_handle,
 int bletiny_sec_start(uint16_t conn_handle);
 int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
                         uint64_t rand_val, int auth);
+int bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
+                     uint16_t num);
+
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
     LOG_ ## lvl(&bletiny_log, BLETINY_LOG_MODULE, __VA_ARGS__)

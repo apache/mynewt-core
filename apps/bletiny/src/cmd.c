@@ -868,7 +868,7 @@ cmd_scan(int argc, char **argv)
         return EINVAL;
     }
 
-    addr_mode = parse_arg_kv_default("addr_mode", 
+    addr_mode = parse_arg_kv_default("addr_mode",
                                     cmd_scan_addr_types, BLE_ADDR_TYPE_PUBLIC);
     if (addr_mode == -1) {
         return EINVAL;
@@ -1970,6 +1970,49 @@ cmd_passkey(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $tx                                                                     *
+ *                                                                         *
+ * Command to transmit 'num' packets of size 'len' at rate 'r' to
+ * handle 'h' Note that length must be <= 251. The rate is in msecs.
+ *
+ *****************************************************************************/
+static int
+cmd_tx(int argc, char **argv)
+{
+    int rc;
+    uint16_t rate;
+    uint16_t len;
+    uint16_t handle;
+    uint16_t num;
+
+    rate = parse_arg_uint16("r", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    len = parse_arg_uint16("l", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+    if ((len > 251) || (len < 4)) {
+        console_printf("error: len must be between 4 and 251, inclusive");
+    }
+
+    num = parse_arg_uint16("n", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    handle = parse_arg_uint16("h", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_tx_start(handle, len, rate, num);
+    return rc;
+}
+
+/*****************************************************************************
  * $init                                                                     *
  *****************************************************************************/
 
@@ -1990,6 +2033,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "store",      cmd_keystore },
     { "term",       cmd_term },
     { "update",     cmd_update },
+    { "tx",         cmd_tx },
     { "wl",         cmd_wl },
     { "write",      cmd_write },
     { NULL, NULL }
