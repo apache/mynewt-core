@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -29,6 +29,7 @@
 
 #include <inttypes.h>
 #include <string.h>
+#include <assert.h>
 
 #include "console/console.h"
 #include "host/ble_hs.h"
@@ -88,6 +89,34 @@ store_print_key_sec(struct ble_store_key_sec *key_sec)
         console_printf("ediv=0x%02x rand=0x%llx ",
                        key_sec->ediv, key_sec->rand_num);
     }
+}
+
+static void
+store_log_sec_lookup(int obj_type, struct ble_store_key_sec *key_sec)
+{
+    char *obj_name;
+
+    if (key_sec->peer_addr_type == BLE_STORE_ADDR_TYPE_NONE &&
+       !key_sec->ediv_rand_present) {
+
+        return;
+    }
+
+    switch (obj_type) {
+    case BLE_STORE_OBJ_TYPE_MST_SEC:
+        obj_name = "mst sec";
+        break;
+    case BLE_STORE_OBJ_TYPE_SLV_SEC:
+        obj_name = "slv sec";
+        break;
+    default:
+        assert(0);
+        return;
+    }
+
+    console_printf("looking up %s; ", obj_name);
+    store_print_key_sec(key_sec);
+    console_printf("\n");
 }
 
 static int
@@ -322,16 +351,12 @@ store_read(int obj_type, union ble_store_key *key,
          * result.  The nimble stack will use this key if this function returns
          * success.
          */
-        console_printf("looking up mst sec; ");
-        store_print_key_sec(&key->sec);
-        console_printf("\n");
+        store_log_sec_lookup(BLE_STORE_OBJ_TYPE_MST_SEC, &key->sec);
         rc = store_read_mst_sec(&key->sec, &value->sec);
         return rc;
 
     case BLE_STORE_OBJ_TYPE_SLV_SEC:
-        console_printf("looking up slv sec; ");
-        store_print_key_sec(&key->sec);
-        console_printf("\n");
+        store_log_sec_lookup(BLE_STORE_OBJ_TYPE_SLV_SEC, &key->sec);
         rc = store_read_slv_sec(&key->sec, &value->sec);
         return rc;
 
