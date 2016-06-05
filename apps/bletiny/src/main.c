@@ -134,6 +134,7 @@ struct bletiny_tx_data_s
     uint16_t tx_len;
 };
 static struct bletiny_tx_data_s bletiny_tx_data;
+int bletiny_full_disc_prev_chr_def;
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -347,51 +348,6 @@ bletiny_conn_find(uint16_t handle)
     }
 }
 
-static struct bletiny_conn *
-bletiny_conn_add(struct ble_gap_conn_desc *desc)
-{
-    struct bletiny_conn *conn;
-
-    assert(bletiny_num_conns < NIMBLE_OPT(MAX_CONNECTIONS));
-
-    conn = bletiny_conns + bletiny_num_conns;
-    bletiny_num_conns++;
-
-    conn->handle = desc->conn_handle;
-    conn->addr_type = desc->peer_addr_type;
-    memcpy(conn->addr, desc->peer_addr, 6);
-    SLIST_INIT(&conn->svcs);
-
-    return conn;
-}
-
-static void
-bletiny_conn_delete_idx(int idx)
-{
-    struct bletiny_conn *conn;
-    struct bletiny_svc *svc;
-
-    assert(idx >= 0 && idx < bletiny_num_conns);
-
-    conn = bletiny_conns + idx;
-    while ((svc = SLIST_FIRST(&conn->svcs)) != NULL) {
-        SLIST_REMOVE_HEAD(&conn->svcs, next);
-        os_memblock_put(&bletiny_svc_pool, svc);
-    }
-
-    /* This '#if' is not strictly necessary.  It is here to prevent a spurious
-     * warning from being reported.
-     */
-#if NIMBLE_OPT(MAX_CONNECTIONS) > 1
-    int i;
-    for (i = idx + 1; i < bletiny_num_conns; i++) {
-        bletiny_conns[i - 1] = bletiny_conns[i];
-    }
-#endif
-
-    bletiny_num_conns--;
-}
-
 static struct bletiny_svc *
 bletiny_svc_find_prev(struct bletiny_conn *conn, uint16_t svc_start_handle)
 {
@@ -448,6 +404,32 @@ bletiny_svc_find_range(struct bletiny_conn *conn, uint16_t attr_handle)
     }
 
     return NULL;
+}
+
+static void
+bletiny_chr_delete(struct bletiny_chr *chr)
+{
+    struct bletiny_dsc *dsc;
+
+    while ((dsc = SLIST_FIRST(&chr->dscs)) != NULL) {
+        SLIST_REMOVE_HEAD(&chr->dscs, next);
+        os_memblock_put(&bletiny_dsc_pool, dsc);
+    }
+
+    os_memblock_put(&bletiny_chr_pool, chr);
+}
+
+static void
+bletiny_svc_delete(struct bletiny_svc *svc)
+{
+    struct bletiny_chr *chr;
+
+    while ((chr = SLIST_FIRST(&svc->chrs)) != NULL) {
+        SLIST_REMOVE_HEAD(&svc->chrs, next);
+        bletiny_chr_delete(chr);
+    }
+
+    os_memblock_put(&bletiny_svc_pool, svc);
 }
 
 static struct bletiny_svc *
@@ -680,6 +662,51 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
     return dsc;
 }
 
+static struct bletiny_conn *
+bletiny_conn_add(struct ble_gap_conn_desc *desc)
+{
+    struct bletiny_conn *conn;
+
+    assert(bletiny_num_conns < NIMBLE_OPT(MAX_CONNECTIONS));
+
+    conn = bletiny_conns + bletiny_num_conns;
+    bletiny_num_conns++;
+
+    conn->handle = desc->conn_handle;
+    conn->addr_type = desc->peer_addr_type;
+    memcpy(conn->addr, desc->peer_addr, 6);
+    SLIST_INIT(&conn->svcs);
+
+    return conn;
+}
+
+static void
+bletiny_conn_delete_idx(int idx)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_svc *svc;
+
+    assert(idx >= 0 && idx < bletiny_num_conns);
+
+    conn = bletiny_conns + idx;
+    while ((svc = SLIST_FIRST(&conn->svcs)) != NULL) {
+        SLIST_REMOVE_HEAD(&conn->svcs, next);
+        bletiny_svc_delete(svc);
+    }
+
+    /* This '#if' is not strictly necessary.  It is here to prevent a spurious
+     * warning from being reported.
+     */
+#if NIMBLE_OPT(MAX_CONNECTIONS) > 1
+    int i;
+    for (i = idx + 1; i < bletiny_num_conns; i++) {
+        bletiny_conns[i - 1] = bletiny_conns[i];
+    }
+#endif
+
+    bletiny_num_conns--;
+}
+
 static int
 bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
                uint16_t mtu, void *arg)
@@ -694,9 +721,95 @@ bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
     return 0;
 }
 
+static void
+bletiny_full_disc_complete(int rc)
+{
+    console_printf("full discovery complete; rc=%d\n", rc);
+    bletiny_full_disc_prev_chr_def = 0;
+}
+
+static void
+bletiny_disc_full_dscs(uint16_t conn_handle)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_chr *next_chr;
+    struct bletiny_chr *chr;
+    struct bletiny_svc *svc;
+    uint16_t end_handle;
+    int rc;
+
+    conn = bletiny_conn_find(conn_handle);
+    if (conn == NULL) {
+        BLETINY_LOG(DEBUG, "Failed to discover descriptors for conn=%d; "
+                           "not connected\n", conn_handle);
+        bletiny_full_disc_complete(BLE_HS_ENOTCONN);
+        return;
+    }
+
+    SLIST_FOREACH(svc, &conn->svcs, next) {
+        SLIST_FOREACH(chr, &svc->chrs, next) {
+            if (SLIST_EMPTY(&chr->dscs)) {
+                next_chr = SLIST_NEXT(chr, next);
+                if (next_chr != NULL) {
+                    end_handle = next_chr->chr.decl_handle - 1;
+                } else {
+                    end_handle = svc->svc.end_handle;
+                }
+
+                if (end_handle > chr->chr.value_handle &&
+                    bletiny_full_disc_prev_chr_def <= chr->chr.decl_handle) {
+
+                    rc = bletiny_disc_all_dscs(conn_handle,
+                                               chr->chr.decl_handle,
+                                               end_handle);
+                    if (rc != 0) {
+                        bletiny_full_disc_complete(rc);
+                    }
+
+                    bletiny_full_disc_prev_chr_def = chr->chr.value_handle;
+                    return;
+                }
+            }
+        }
+    }
+
+    /* All descriptors discovered. */
+    bletiny_full_disc_complete(0);
+}
+
+static void
+bletiny_disc_full_chrs(uint16_t conn_handle)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_svc *svc;
+    int rc;
+
+    conn = bletiny_conn_find(conn_handle);
+    if (conn == NULL) {
+        BLETINY_LOG(DEBUG, "Failed to discover characteristics for conn=%d; "
+                           "not connected\n", conn_handle);
+        bletiny_full_disc_complete(BLE_HS_ENOTCONN);
+        return;
+    }
+
+    SLIST_FOREACH(svc, &conn->svcs, next) {
+        if (SLIST_EMPTY(&svc->chrs)) {
+            rc = bletiny_disc_all_chrs(conn_handle, svc->svc.start_handle,
+                                       svc->svc.end_handle);
+            if (rc != 0) {
+                bletiny_full_disc_complete(rc);
+            }
+            return;
+        }
+    }
+
+    /* All characteristics discovered. */
+    bletiny_disc_full_dscs(conn_handle);
+}
+
 static int
 bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
-                   struct ble_gatt_service *service, void *arg)
+                  struct ble_gatt_service *service, void *arg)
 {
     if (error != NULL) {
         bletiny_print_error(NULL, conn_handle, error);
@@ -704,6 +817,9 @@ bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
         bletiny_svc_add(conn_handle, service);
     } else {
         console_printf("service discovery successful\n");
+        if (bletiny_full_disc_prev_chr_def > 0) {
+            bletiny_disc_full_chrs(conn_handle);
+        }
     }
 
     return 0;
@@ -711,7 +827,7 @@ bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
 
 static int
 bletiny_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
-                   struct ble_gatt_chr *chr, void *arg)
+                  struct ble_gatt_chr *chr, void *arg)
 {
     intptr_t svc_start_handle;
 
@@ -723,6 +839,9 @@ bletiny_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
         bletiny_chr_add(conn_handle, svc_start_handle, chr);
     } else {
         console_printf("characteristic discovery successful\n");
+        if (bletiny_full_disc_prev_chr_def > 0) {
+            bletiny_disc_full_chrs(conn_handle);
+        }
     }
 
     return 0;
@@ -739,6 +858,9 @@ bletiny_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
         bletiny_dsc_add(conn_handle, chr_def_handle, dsc);
     } else {
         console_printf("descriptor discovery successful\n");
+        if (bletiny_full_disc_prev_chr_def > 0) {
+            bletiny_disc_full_dscs(conn_handle);
+        }
     }
 
     return 0;
@@ -985,7 +1107,7 @@ bletiny_exchange_mtu(uint16_t conn_handle)
 
 int
 bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
-                       uint16_t end_handle)
+                      uint16_t end_handle)
 {
     intptr_t svc_start_handle;
     int rc;
@@ -1031,13 +1153,36 @@ bletiny_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
 
 int
 bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
-                       uint16_t chr_end_handle)
+                      uint16_t chr_end_handle)
 {
     int rc;
 
     rc = ble_gattc_disc_all_dscs(conn_handle, chr_def_handle, chr_end_handle,
                                  bletiny_on_disc_d, NULL);
     return rc;
+}
+
+int
+bletiny_disc_full(uint16_t conn_handle)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_svc *svc;
+
+    /* Undiscover everything first. */
+    conn = bletiny_conn_find(conn_handle);
+    if (conn == NULL) {
+        return BLE_HS_ENOTCONN;
+    }
+
+    while ((svc = SLIST_FIRST(&conn->svcs)) != NULL) {
+        SLIST_REMOVE_HEAD(&conn->svcs, next);
+        bletiny_svc_delete(svc);
+    }
+
+    bletiny_full_disc_prev_chr_def = 1;
+    bletiny_disc_svcs(conn_handle);
+
+    return 0;
 }
 
 int

@@ -562,10 +562,31 @@ cmd_disc_svc(int argc, char **argv)
     return 0;
 }
 
+static int
+cmd_disc_full(int argc, char **argv)
+{
+    int conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_disc_full(conn_handle);
+    if (rc != 0) {
+        console_printf("error discovering all; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
 static struct cmd_entry cmd_disc_entries[] = {
     { "chr", cmd_disc_chr },
     { "dsc", cmd_disc_dsc },
     { "svc", cmd_disc_svc },
+    { "full", cmd_disc_full },
     { NULL, NULL }
 };
 
