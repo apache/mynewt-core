@@ -59,7 +59,7 @@
 
 #define SHELL_TASK_PRIO         (3)
 #define SHELL_MAX_INPUT_LEN     (256)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(312))
+#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(512))
 static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 /* Our global device address (public) */
@@ -1414,7 +1414,32 @@ bletiny_sec_restart(uint16_t conn_handle,
     return BLE_HS_ENOTSUP;
 #endif
 
+    struct ble_store_value_sec value_sec;
+    struct ble_store_key_sec key_sec;
+    struct ble_gap_conn_desc desc;
     int rc;
+
+    if (ltk == NULL) {
+        /* The user is requesting a store lookup. */
+        rc = ble_gap_find_conn(conn_handle, &desc);
+        if (rc != 0) {
+            return rc;
+        }
+
+        memset(&key_sec, 0, sizeof key_sec);
+        key_sec.peer_addr_type = desc.peer_addr_type;
+        memcpy(key_sec.peer_addr, desc.peer_addr, 6);
+
+        rc = ble_store_read_mst_sec(&key_sec, &value_sec);
+        if (rc != 0) {
+            return rc;
+        }
+
+        ltk = value_sec.ltk;
+        ediv = value_sec.ediv;
+        rand_val = value_sec.rand_num;
+        auth = value_sec.authenticated;
+    }
 
     rc = ble_gap_encryption_initiate(conn_handle, ltk, ediv, rand_val, auth);
     return rc;

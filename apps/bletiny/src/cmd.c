@@ -1017,26 +1017,26 @@ cmd_sec_restart(int argc, char **argv)
     }
 
     ediv = parse_arg_uint16("ediv", &rc);
-    if (rc != 0) {
-        return rc;
-    }
+    if (rc == ENOENT) {
+        rc = bletiny_sec_restart(conn_handle, NULL, 0, 0, 0);
+    } else {
+        rand_val = parse_arg_uint64("rand", &rc);
+        if (rc != 0) {
+            return rc;
+        }
 
-    rand_val = parse_arg_uint64("rand", &rc);
-    if (rc != 0) {
-        return rc;
-    }
+        auth = parse_arg_bool("auth", &rc);
+        if (rc != 0) {
+            return rc;
+        }
 
-    auth = parse_arg_bool("auth", &rc);
-    if (rc != 0) {
-        return rc;
-    }
+        rc = parse_arg_byte_stream_exact_length("ltk", ltk, 16);
+        if (rc != 0) {
+            return rc;
+        }
 
-    rc = parse_arg_byte_stream_exact_length("ltk", ltk, 16);
-    if (rc != 0) {
-        return rc;
+        rc = bletiny_sec_restart(conn_handle, ltk, ediv, rand_val, auth);
     }
-
-    rc = bletiny_sec_restart( conn_handle, ltk, ediv, rand_val, auth);
 
     if (rc != 0) {
         console_printf("error starting encryption; rc=%d\n", rc);
