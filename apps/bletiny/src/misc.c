@@ -66,3 +66,28 @@ print_uuid(void *uuid128)
                    u8p[7], u8p[6], u8p[5], u8p[4],
                    u8p[3], u8p[2], u8p[1], u8p[0]);
 }
+
+int
+svc_is_empty(struct bletiny_svc *svc)
+{
+    return svc->svc.end_handle < svc->svc.start_handle;
+}
+
+uint16_t
+chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr)
+{
+    struct bletiny_chr *next_chr;
+
+    next_chr = SLIST_NEXT(chr, next);
+    if (next_chr != NULL) {
+        return next_chr->chr.decl_handle - 1;
+    } else {
+        return svc->svc.end_handle;
+    }
+}
+
+int
+chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr)
+{
+    return chr_end_handle(svc, chr) <= chr->chr.value_handle;
+}

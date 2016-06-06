@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -732,10 +733,8 @@ static void
 bletiny_disc_full_dscs(uint16_t conn_handle)
 {
     struct bletiny_conn *conn;
-    struct bletiny_chr *next_chr;
     struct bletiny_chr *chr;
     struct bletiny_svc *svc;
-    uint16_t end_handle;
     int rc;
 
     conn = bletiny_conn_find(conn_handle);
@@ -748,27 +747,19 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
         SLIST_FOREACH(chr, &svc->chrs, next) {
-            if (SLIST_EMPTY(&chr->dscs)) {
-                next_chr = SLIST_NEXT(chr, next);
-                if (next_chr != NULL) {
-                    end_handle = next_chr->chr.decl_handle - 1;
-                } else {
-                    end_handle = svc->svc.end_handle;
+            if (!chr_is_empty(svc, chr) &&
+                SLIST_EMPTY(&chr->dscs) &&
+                bletiny_full_disc_prev_chr_def <= chr->chr.decl_handle) {
+
+                rc = bletiny_disc_all_dscs(conn_handle,
+                                           chr->chr.decl_handle,
+                                           chr_end_handle(svc, chr));
+                if (rc != 0) {
+                    bletiny_full_disc_complete(rc);
                 }
 
-                if (end_handle > chr->chr.value_handle &&
-                    bletiny_full_disc_prev_chr_def <= chr->chr.decl_handle) {
-
-                    rc = bletiny_disc_all_dscs(conn_handle,
-                                               chr->chr.decl_handle,
-                                               end_handle);
-                    if (rc != 0) {
-                        bletiny_full_disc_complete(rc);
-                    }
-
-                    bletiny_full_disc_prev_chr_def = chr->chr.value_handle;
-                    return;
-                }
+                bletiny_full_disc_prev_chr_def = chr->chr.value_handle;
+                return;
             }
         }
     }
@@ -793,7 +784,7 @@ bletiny_disc_full_chrs(uint16_t conn_handle)
     }
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
-        if (SLIST_EMPTY(&svc->chrs)) {
+        if (!svc_is_empty(svc) && SLIST_EMPTY(&svc->chrs)) {
             rc = bletiny_disc_all_chrs(conn_handle, svc->svc.start_handle,
                                        svc->svc.end_handle);
             if (rc != 0) {

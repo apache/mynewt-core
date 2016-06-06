@@ -201,5 +201,8 @@ int store_write(int obj_type, union ble_store_value *val);
 
 /** Misc. */
 void print_bytes(uint8_t *bytes, int len);
+int svc_is_empty(struct bletiny_svc *svc);
+uint16_t chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr);
+int chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr);
 
 #endif
