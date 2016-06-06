@@ -31,6 +31,3 @@ pkg.deps:
     - libs/shell
 
 pkg.cflags:
-    # Reduce the log level from DEBUG to INFO.  This is necessary to fit
-    # bletiny on the nRF51dk.
-    - "-DLOG_LEVEL=1"
