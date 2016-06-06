@@ -141,6 +141,10 @@ imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash)
     data_off = hdr->ih_hdr_size + hdr->ih_img_size;
     data_end = data_off + hdr->ih_tlv_size;
 
+    if (data_end > fa->fa_size) {
+        rc = 1;
+        goto end;
+    }
     tlv = (struct image_tlv *)data;
     while (data_off + sizeof(*tlv) <= data_end) {
         rc2 = flash_area_read(fa, data_off, tlv, sizeof(*tlv));
@@ -416,6 +420,10 @@ imgr_upload(struct nmgr_jbuf *njb)
             }
             rc = flash_area_open(best, &imgr_state.upload.fa);
             if (rc) {
+                rc = NMGR_ERR_EINVAL;
+                goto err;
+            }
+	    if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
                 rc = NMGR_ERR_EINVAL;
                 goto err;
             }

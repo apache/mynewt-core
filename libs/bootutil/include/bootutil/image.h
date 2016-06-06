@@ -49,6 +49,9 @@ struct image_version {
     uint32_t iv_build_num;
 };
 
+#define IMAGE_SIZE(hdr)                                                 \
+    ((hdr)->ih_tlv_size + (hdr)->ih_hdr_size + (hdr)->ih_img_size)
+
 /** Image header.  All fields are in little endian byte order. */
 struct image_header {
     uint32_t ih_magic;
