@@ -970,7 +970,7 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     case BLE_GAP_EVENT_PASSKEY_ACTION:
         console_printf("passkey action event; action=%d",
                        ctxt->passkey_action.action);
-        if (ctxt->passkey_action.action == BLE_SM_PKACT_NUMCMP) {
+        if (ctxt->passkey_action.action == BLE_SM_IOACT_NUMCMP) {
             console_printf(" numcmp=%lu",
                            (unsigned long)ctxt->passkey_action.numcmp);
         }

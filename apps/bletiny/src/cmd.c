@@ -1950,7 +1950,7 @@ cmd_passkey(int argc, char **argv)
 #endif
 
     uint16_t conn_handle;
-    struct ble_sm_passkey pk;
+    struct ble_sm_io pk;
     char *yesno;
     int rc;
 
@@ -1965,8 +1965,8 @@ cmd_passkey(int argc, char **argv)
     }
 
     switch (pk.action) {
-        case BLE_SM_PKACT_INPUT:
-        case BLE_SM_PKACT_DISP:
+        case BLE_SM_IOACT_INPUT:
+        case BLE_SM_IOACT_DISP:
            /* passkey is 6 digit number */
            pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
            if (rc != 0) {
@@ -1974,14 +1974,14 @@ cmd_passkey(int argc, char **argv)
            }
            break;
 
-        case BLE_SM_PKACT_OOB:
+        case BLE_SM_IOACT_OOB:
             rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
             if (rc != 0) {
                 return rc;
             }
             break;
 
-        case BLE_SM_PKACT_NUMCMP:
+        case BLE_SM_IOACT_NUMCMP:
             yesno = parse_arg_find("yesno");
             if (yesno == NULL) {
                 return EINVAL;
@@ -2007,7 +2007,7 @@ cmd_passkey(int argc, char **argv)
          return EINVAL;
     }
 
-    rc = ble_sm_set_tk(conn_handle, &pk);
+    rc = ble_sm_inject_io(conn_handle, &pk);
     if (rc != 0) {
         console_printf("error providing passkey; rc=%d\n", rc);
         return rc;
