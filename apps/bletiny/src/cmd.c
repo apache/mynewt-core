@@ -1714,20 +1714,17 @@ cmd_write(int argc, char **argv)
 /*****************************************************************************
  * store                                                                     *
  *****************************************************************************/
-#define BLETINY_CMD_KEYSTORE_ENTRY_TYPE_MST_SEC 0
-#define BLETINY_CMD_KEYSTORE_ENTRY_TYPE_SLV_SEC 1
-#define BLETINY_CMD_KEYSTORE_ENTRY_TYPE_CCCD_SEC 2
 
 static struct kv_pair cmd_keystore_entry_type[] = {
-    { "msec",         BLE_STORE_OBJ_TYPE_MST_SEC },
-    { "ssec",         BLE_STORE_OBJ_TYPE_SLV_SEC },
-    { "cccd",         BLE_STORE_OBJ_TYPE_CCCD },
+    { "msec",       BLE_STORE_OBJ_TYPE_MST_SEC },
+    { "ssec",       BLE_STORE_OBJ_TYPE_SLV_SEC },
+    { "cccd",       BLE_STORE_OBJ_TYPE_CCCD },
     { NULL }
 };
 
 static struct kv_pair cmd_keystore_addr_type[] = {
-    { "public",         BLE_ADDR_TYPE_PUBLIC },
-    { "random",         BLE_ADDR_TYPE_RANDOM },
+    { "public",     BLE_ADDR_TYPE_PUBLIC },
+    { "random",     BLE_ADDR_TYPE_RANDOM },
     { NULL }
 };
 
@@ -1735,41 +1732,38 @@ static int
 cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
                            int *obj_type)
 {
-    int type;
     int rc;
 
     memset(out, 0, sizeof(*out));
-    type = parse_arg_kv("type", cmd_keystore_entry_type);
-    *obj_type = type;
+    *obj_type = parse_arg_kv("type", cmd_keystore_entry_type);
 
-    switch (type) {
-        case BLE_STORE_OBJ_TYPE_MST_SEC:
-        case BLE_STORE_OBJ_TYPE_SLV_SEC:
-            /* try to parse by address and type */
-                out->sec.peer_addr_type =
-                        parse_arg_kv("addr_type", cmd_keystore_addr_type);
-                rc = parse_arg_mac("addr", out->sec.peer_addr);
+    switch (*obj_type) {
+    case BLE_STORE_OBJ_TYPE_MST_SEC:
+    case BLE_STORE_OBJ_TYPE_SLV_SEC:
+        rc = parse_arg_kv("addr_type", cmd_keystore_addr_type);
+        if (rc < 0) {
+            return EINVAL;
+        }
 
-                if (rc || out->sec.peer_addr_type < 0) {
+        rc = parse_arg_mac("addr", out->sec.peer_addr);
+        if (rc != 0) {
+            return rc;
+        }
 
-                    out->sec.peer_addr_type = BLE_STORE_ADDR_TYPE_NONE;
+        out->sec.ediv = parse_arg_uint16("ediv", &rc);
+        if (rc != 0) {
+            return rc;
+        }
 
-                    out->sec.ediv = parse_arg_uint16("ediv", &rc);
-                    if (rc != 0) {
-                        return rc;
-                    }
+        out->sec.rand_num = parse_arg_uint64("rand", &rc);
+        if (rc != 0) {
+            return rc;
+        }
+        return 0;
 
-                    out->sec.rand_num = parse_arg_uint64("rand", &rc);
-                    if (rc != 0) {
-                        return rc;
-                    }
-                }
-
-                break;
-        default:
-            return -1;
+    default:
+        return -1;
     }
-    return 0;
 }
 
 static int
