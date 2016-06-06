@@ -98,9 +98,9 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
 
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 
 /* Advertiser config */
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PRIV_PUB)
@@ -113,8 +113,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 /* Scan config */
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
-#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_ACTIVE)
-#define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PRIV_PUB)
+#define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
+#define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
 #define BLETEST_CFG_FILT_DUP_ADV        (1)
 
@@ -125,8 +125,8 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
 #define BLETEST_CFG_MIN_CE_LEN          (6)
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
-#define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC_IDENT)
-#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PRIV_PUB)
+#define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
+#define BLETEST_CFG_CONN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
 #define BLETEST_CFG_CONCURRENT_CONNS    (1)
 
 /* Test packet config */
@@ -443,7 +443,7 @@ bletest_init_scanner(void)
 #endif
         if (add_whitelist & 1) {
             rc = bletest_hci_le_add_to_whitelist(g_bletest_cur_peer_addr,
-                                                 BLE_ADDR_TYPE_PUBLIC);
+                                                 BLE_ADDR_TYPE_RANDOM);
             assert(rc == 0);
         }
     }
