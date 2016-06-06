@@ -86,7 +86,7 @@ cmd_print_chr(struct bletiny_chr *chr)
     struct bletiny_dsc *dsc;
 
     console_printf("        def_handle=%d val_handle=%d properties=0x%02x "
-                   "uuid=", chr->chr.decl_handle, chr->chr.value_handle,
+                   "uuid=", chr->chr.def_handle, chr->chr.val_handle,
                    chr->chr.properties);
     print_uuid(chr->chr.uuid128);
     console_printf("\n");

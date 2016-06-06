@@ -80,7 +80,7 @@ chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr)
 
     next_chr = SLIST_NEXT(chr, next);
     if (next_chr != NULL) {
-        return next_chr->chr.decl_handle - 1;
+        return next_chr->chr.def_handle - 1;
     } else {
         return svc->svc.end_handle;
     }
@@ -89,5 +89,5 @@ chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr)
 int
 chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr)
 {
-    return chr_end_handle(svc, chr) <= chr->chr.value_handle;
+    return chr_end_handle(svc, chr) <= chr->chr.val_handle;
 }

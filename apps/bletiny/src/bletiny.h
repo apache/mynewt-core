@@ -64,7 +64,7 @@ SLIST_HEAD(bletiny_chr_list, bletiny_chr);
 
 struct bletiny_svc {
     SLIST_ENTRY(bletiny_svc) next;
-    struct ble_gatt_service svc;
+    struct ble_gatt_svc svc;
 
     struct bletiny_chr_list chrs;
 };

@@ -434,7 +434,7 @@ bletiny_svc_delete(struct bletiny_svc *svc)
 }
 
 static struct bletiny_svc *
-bletiny_svc_add(uint16_t conn_handle, struct ble_gatt_service *gatt_svc)
+bletiny_svc_add(uint16_t conn_handle, struct ble_gatt_svc *gatt_svc)
 {
     struct bletiny_conn *conn;
     struct bletiny_svc *prev;
@@ -481,7 +481,7 @@ bletiny_chr_find_prev(struct bletiny_svc *svc, uint16_t chr_def_handle)
 
     prev = NULL;
     SLIST_FOREACH(chr, &svc->chrs, next) {
-        if (chr->chr.decl_handle >= chr_def_handle) {
+        if (chr->chr.def_handle >= chr_def_handle) {
             break;
         }
 
@@ -505,7 +505,7 @@ bletiny_chr_find(struct bletiny_svc *svc, uint16_t chr_def_handle,
         chr = SLIST_NEXT(prev, next);
     }
 
-    if (chr != NULL && chr->chr.decl_handle != chr_def_handle) {
+    if (chr != NULL && chr->chr.def_handle != chr_def_handle) {
         chr = NULL;
     }
 
@@ -540,7 +540,7 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
         return NULL;
     }
 
-    chr = bletiny_chr_find(svc, gatt_chr->decl_handle, &prev);
+    chr = bletiny_chr_find(svc, gatt_chr->def_handle, &prev);
     if (chr != NULL) {
         /* Characteristic already discovered. */
         return chr;
@@ -749,16 +749,16 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
         SLIST_FOREACH(chr, &svc->chrs, next) {
             if (!chr_is_empty(svc, chr) &&
                 SLIST_EMPTY(&chr->dscs) &&
-                bletiny_full_disc_prev_chr_def <= chr->chr.decl_handle) {
+                bletiny_full_disc_prev_chr_def <= chr->chr.def_handle) {
 
                 rc = bletiny_disc_all_dscs(conn_handle,
-                                           chr->chr.decl_handle,
+                                           chr->chr.def_handle,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
                     bletiny_full_disc_complete(rc);
                 }
 
-                bletiny_full_disc_prev_chr_def = chr->chr.value_handle;
+                bletiny_full_disc_prev_chr_def = chr->chr.val_handle;
                 return;
             }
         }
@@ -800,7 +800,7 @@ bletiny_disc_full_chrs(uint16_t conn_handle)
 
 static int
 bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
-                  struct ble_gatt_service *service, void *arg)
+                  struct ble_gatt_svc *service, void *arg)
 {
     if (error != NULL) {
         bletiny_print_error(NULL, conn_handle, error);
