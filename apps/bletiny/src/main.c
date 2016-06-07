@@ -52,6 +52,7 @@
  */
 #include "../src/ble_hs_conn_priv.h"
 #include "../src/ble_hci_util_priv.h"
+#include "../src/ble_hs_atomic_priv.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
@@ -1417,6 +1418,7 @@ bletiny_sec_restart(uint16_t conn_handle,
     struct ble_store_value_sec value_sec;
     struct ble_store_key_sec key_sec;
     struct ble_gap_conn_desc desc;
+    ble_hs_conn_flags_t conn_flags;
     int rc;
 
     if (ltk == NULL) {
@@ -1430,7 +1432,15 @@ bletiny_sec_restart(uint16_t conn_handle,
         key_sec.peer_addr_type = desc.peer_addr_type;
         memcpy(key_sec.peer_addr, desc.peer_addr, 6);
 
-        rc = ble_store_read_mst_sec(&key_sec, &value_sec);
+        rc = ble_hs_atomic_conn_flags(conn_handle, &conn_flags);
+        if (rc != 0) {
+            return rc;
+        }
+        if (conn_flags & BLE_HS_CONN_F_MASTER) {
+            rc = ble_store_read_mst_sec(&key_sec, &value_sec);
+        } else {
+            rc = ble_store_read_slv_sec(&key_sec, &value_sec);
+        }
         if (rc != 0) {
             return rc;
         }
