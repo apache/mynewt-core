@@ -297,20 +297,17 @@ cmd_adv(int argc, char **argv)
         return -1;
     }
 
-    if (conn == BLE_GAP_CONN_MODE_DIR) {
-        addr_type = parse_arg_kv_default
-                ("peer_addr_type", cmd_adv_addr_types, BLE_ADDR_TYPE_PUBLIC);
-        if (addr_type == -1) {
-            return -1;
-        }
+    addr_type = parse_arg_kv_default
+            ("peer_addr_type", cmd_adv_addr_types, BLE_ADDR_TYPE_PUBLIC);
+    if (addr_type == -1) {
+        return -1;
+    }
 
-        rc = parse_arg_mac("addr", peer_addr);
-        if (rc != 0) {
-            return rc;
-        }
-    } else {
-        addr_type = BLE_ADDR_TYPE_PUBLIC;
+    rc = parse_arg_mac("peer_addr", peer_addr);
+    if (rc == ENOENT) {
         memset(peer_addr, 0, sizeof peer_addr);
+    } else if (rc != 0) {
+        return rc;
     }
 
     peer_addr_type = addr_type;
