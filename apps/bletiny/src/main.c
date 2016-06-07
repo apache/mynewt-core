@@ -1371,6 +1371,15 @@ bletiny_chrup(uint16_t attr_handle)
 }
 
 int
+bletiny_datalen(uint16_t conn_handle, uint16_t tx_octets, uint16_t tx_time)
+{
+    int rc;
+
+    rc = ble_hci_util_set_data_len(conn_handle, tx_octets, tx_time);
+    return rc;
+}
+
+int
 bletiny_l2cap_update(uint16_t conn_handle,
                      struct ble_l2cap_sig_update_params *params)
 {

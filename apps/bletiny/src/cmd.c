@@ -454,7 +454,7 @@ cmd_conn(int argc, char **argv)
 }
 
 /*****************************************************************************
- * $connect                                                                  *
+ * $chrup                                                                    *
  *****************************************************************************/
 
 static int
@@ -469,6 +469,42 @@ cmd_chrup(int argc, char **argv)
     }
 
     bletiny_chrup(attr_handle);
+
+    return 0;
+}
+
+/*****************************************************************************
+ * $datalen                                                                  *
+ *****************************************************************************/
+
+static int
+cmd_datalen(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    uint16_t tx_octets;
+    uint16_t tx_time;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    tx_octets = parse_arg_long("octets", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    tx_time = parse_arg_long("time", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_datalen(conn_handle, tx_octets, tx_time);
+    if (rc != 0) {
+        console_printf("error setting data length; rc=%d\n", rc);
+        return rc;
+    }
 
     return 0;
 }
@@ -2064,6 +2100,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "adv",        cmd_adv },
     { "conn",       cmd_conn },
     { "chrup",      cmd_chrup },
+    { "datalen",    cmd_datalen },
     { "disc",       cmd_disc },
     { "find",       cmd_find },
     { "l2cap",      cmd_l2cap },

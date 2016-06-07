@@ -169,6 +169,8 @@ int bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bletiny_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);
 void bletiny_chrup(uint16_t attr_handle);
+int bletiny_datalen(uint16_t conn_handle, uint16_t tx_octets,
+                    uint16_t tx_time);
 int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
 int bletiny_sec_start(uint16_t conn_handle);
