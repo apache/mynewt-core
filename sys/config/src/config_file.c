@@ -222,8 +222,8 @@ static int
 conf_file_save_end(struct conf_store *cs)
 {
     struct conf_file *cf = (struct conf_file *)cs;
-    char name1[64];
-    char name2[64];
+    char name1[CONF_FILE_NAME_MAX];
+    char name2[CONF_FILE_NAME_MAX];
     int rc;
 
     fs_close(cf->cf_save_fp);
