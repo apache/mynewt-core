@@ -104,7 +104,7 @@ bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
                 desc->conn_itvl,
                 desc->conn_latency,
                 desc->supervision_timeout,
-                desc->sec_state.enc_enabled,
+                desc->sec_state.encrypted,
                 desc->sec_state.authenticated);
 }
 
