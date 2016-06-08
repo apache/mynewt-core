@@ -32,6 +32,7 @@
 #define NMGR_GROUP_ID_STATS     (2)
 #define NMGR_GROUP_ID_CONFIG    (3)
 #define NMGR_GROUP_ID_LOGS      (4)
+#define NMGR_GROUP_ID_CRASH     (5)
 #define NMGR_GROUP_ID_PERUSER   (64)
 
 #define NMGR_OP_READ            (0)
