@@ -96,11 +96,11 @@ chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr)
 void
 print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    console_printf("handle=%d peer_effective_addr_type=%d "
-                   "peer_effective_addr=",
-                   desc->conn_handle, desc->peer_effective_addr_type);
-    print_addr(desc->peer_effective_addr);
-    console_printf(" peer_identity_addr_type=%d peer_identity_addr=",
+    console_printf("handle=%d peer_ota_addr_type=%d "
+                   "peer_ota_addr=",
+                   desc->conn_handle, desc->peer_ota_addr_type);
+    print_addr(desc->peer_ota_addr);
+    console_printf(" peer_id_addr_type=%d peer_id_addr=",
                    desc->peer_id_addr_type);
     print_addr(desc->peer_id_addr);
     console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
