@@ -19,6 +19,7 @@
 
 #include "console/console.h"
 #include "host/ble_uuid.h"
+#include "host/ble_gap.h"
 
 #include "bletiny.h"
 
@@ -90,4 +91,24 @@ int
 chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr)
 {
     return chr_end_handle(svc, chr) <= chr->chr.val_handle;
+}
+
+void
+print_conn_desc(struct ble_gap_conn_desc *desc)
+{
+    console_printf("handle=%d peer_effective_addr_type=%d "
+                   "peer_effective_addr=",
+                   desc->conn_handle, desc->peer_effective_addr_type);
+    print_addr(desc->peer_effective_addr);
+    console_printf(" peer_identity_addr_type=%d peer_identity_addr=",
+                   desc->peer_id_addr_type);
+    print_addr(desc->peer_id_addr);
+    console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+                   "pair_alg=%d enc_enabled=%d authenticated=%d bonded=%d\n",
+                   desc->conn_itvl, desc->conn_latency,
+                   desc->supervision_timeout,
+                   desc->sec_state.pair_alg,
+                   desc->sec_state.enc_enabled,
+                   desc->sec_state.authenticated,
+                   desc->sec_state.bonded);
 }

@@ -160,38 +160,6 @@ bletiny_print_error(char *msg, uint16_t conn_handle,
 }
 
 static void
-bletiny_print_mac(uint8_t *mac) {
-    int i;
-    for (i = 5; i >= 0; i--) {
-        console_printf("%s0x%02x", i != 5 ? ":" : "", mac[i]);
-    }
-}
-
-static void
-bletiny_print_conn_desc(struct ble_gap_conn_desc *desc)
-{
-    console_printf("handle=%d peer_addr_type=%d peer_addr=",
-                   desc->conn_handle, desc->peer_addr_type);
-    bletiny_print_mac(desc->peer_addr);
-    console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                   "pair_alg=%d enc_enabled=%d authenticated=%d",
-                   desc->conn_itvl, desc->conn_latency,
-                   desc->supervision_timeout,
-                   desc->sec_state.pair_alg,
-                   desc->sec_state.enc_enabled,
-                   desc->sec_state.authenticated);
-}
-
-static void
-bletiny_print_enh_conn_info(struct ble_gap_enhanced_conn *penh)
-{
-    console_printf(" local_rpa ");
-    bletiny_print_mac(penh->local_rpa);
-    console_printf(" peer_rpa ");
-    bletiny_print_mac(penh->peer_rpa);
-}
-
-static void
 bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 {
     uint32_t u32;
@@ -288,7 +256,7 @@ bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
 
     if (fields->le_addr != NULL) {
         console_printf("    le_addr=");
-        bletiny_print_mac(fields->le_addr);
+        print_addr(fields->le_addr);
         console_printf("\n");
     }
 
@@ -675,8 +643,6 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
     bletiny_num_conns++;
 
     conn->handle = desc->conn_handle;
-    conn->addr_type = desc->peer_addr_type;
-    memcpy(conn->addr, desc->peer_addr, 6);
     SLIST_INIT(&conn->svcs);
 
     return conn;
@@ -925,15 +891,11 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 
     switch (event) {
     case BLE_GAP_EVENT_CONNECT:
+        
         console_printf("connection %s; status=%d ",
                        ctxt->connect.status == 0 ? "established" : "failed",
                        ctxt->connect.status);
-        bletiny_print_conn_desc(ctxt->desc);
-
-        if (ctxt->connect.status  == 0) {
-            bletiny_print_enh_conn_info(ctxt->connect.enhanced_conn);
-        }
-        console_printf("\n");
+        print_conn_desc(ctxt->desc);
 
         if (ctxt->connect.status == 0) {
             bletiny_conn_add(ctxt->desc);
@@ -942,7 +904,7 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 
     case BLE_GAP_EVENT_DISCONNECT:
         console_printf("disconnect; reason=%d ", ctxt->disconnect.reason);
-        bletiny_print_conn_desc(ctxt->desc);
+        print_conn_desc(ctxt->desc);
         console_printf("\n");
 
         conn_idx = bletiny_conn_find_idx(ctxt->desc->conn_handle);
@@ -958,7 +920,7 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     case BLE_GAP_EVENT_CONN_UPDATE:
         console_printf("connection updated; status=%d ",
                        ctxt->conn_update.status);
-        bletiny_print_conn_desc(ctxt->desc);
+        print_conn_desc(ctxt->desc);
         console_printf("\n");
         return 0;
 
@@ -981,7 +943,7 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     case BLE_GAP_EVENT_ENC_CHANGE:
         console_printf("encryption change event; status=%d ",
                        ctxt->enc_change.status);
-        bletiny_print_conn_desc(ctxt->desc);
+        print_conn_desc(ctxt->desc);
         console_printf("\n");
         return 0;
 
@@ -1013,7 +975,7 @@ bletiny_on_scan(int event, int status, struct ble_gap_disc_desc *desc,
     case BLE_GAP_EVENT_DISC_SUCCESS:
         console_printf("received advertisement; event_type=%d addr_type=%d "
                        "addr=", desc->event_type, desc->addr_type);
-        bletiny_print_mac(desc->addr);
+        print_addr(desc->addr);
         console_printf(" length_data=%d rssi=%d data=", desc->length_data,
                        desc->rssi);
         print_bytes(desc->data, desc->length_data);
@@ -1429,8 +1391,8 @@ bletiny_sec_restart(uint16_t conn_handle,
         }
 
         memset(&key_sec, 0, sizeof key_sec);
-        key_sec.peer_addr_type = desc.peer_addr_type;
-        memcpy(key_sec.peer_addr, desc.peer_addr, 6);
+        key_sec.peer_addr_type = desc.peer_id_addr_type;
+        memcpy(key_sec.peer_addr, desc.peer_id_addr, 6);
 
         rc = ble_hs_atomic_conn_flags(conn_handle, &conn_flags);
         if (rc != 0) {

@@ -945,7 +945,13 @@ cmd_scan(int argc, char **argv)
 static int
 cmd_show_addr(int argc, char **argv)
 {
-    print_addr(g_dev_addr);
+    uint8_t *id_addr;
+    uint8_t id_addr_type;
+
+    id_addr = bls_hs_priv_get_local_identity_addr(&id_addr_type);
+
+    console_printf("id_addr_type=%d id_addr=", id_addr_type);
+    print_addr(id_addr);
     console_printf("\n");
 
     return 0;
@@ -961,9 +967,7 @@ cmd_show_chr(int argc, char **argv)
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
-        console_printf("CONNECTION: handle=%d addr=", conn->handle);
-        print_addr(conn->addr);
-        console_printf("\n");
+        console_printf("CONNECTION: handle=%d\n", conn->handle);
 
         SLIST_FOREACH(svc, &conn->svcs, next) {
             cmd_print_svc(svc);
@@ -976,15 +980,18 @@ cmd_show_chr(int argc, char **argv)
 static int
 cmd_show_conn(int argc, char **argv)
 {
+    struct ble_gap_conn_desc conn_desc;
     struct bletiny_conn *conn;
+    int rc;
     int i;
 
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
-        console_printf("handle=%d addr=", conn->handle);
-        print_addr(conn->addr);
-        console_printf(" addr_type=%d\n", conn->addr_type);
+        rc = ble_gap_find_conn(conn->handle, &conn_desc);
+        if (rc == 0) {
+            print_conn_desc(&conn_desc);
+        }
     }
 
     return 0;

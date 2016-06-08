@@ -36,6 +36,7 @@ struct ble_l2cap_sig_update_params;
 union ble_store_value;
 union ble_store_key;
 struct ble_gap_adv_params;
+struct ble_gap_conn_desc;
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -73,9 +74,6 @@ SLIST_HEAD(bletiny_svc_list, bletiny_svc);
 
 struct bletiny_conn {
     uint16_t handle;
-    uint8_t addr_type;
-    uint8_t addr[6];
-
     struct bletiny_svc_list svcs;
 };
 
@@ -206,5 +204,6 @@ void print_bytes(uint8_t *bytes, int len);
 int svc_is_empty(struct bletiny_svc *svc);
 uint16_t chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr);
 int chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr);
+void print_conn_desc(struct ble_gap_conn_desc *desc);
 
 #endif
