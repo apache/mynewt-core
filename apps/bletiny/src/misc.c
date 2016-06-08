@@ -96,9 +96,11 @@ chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr)
 void
 print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    console_printf("handle=%d peer_ota_addr_type=%d "
-                   "peer_ota_addr=",
-                   desc->conn_handle, desc->peer_ota_addr_type);
+    console_printf("handle=%d our_ota_addr_type=%d our_ota_addr=",
+                   desc->conn_handle, desc->our_ota_addr_type);
+    print_addr(desc->our_ota_addr);
+    console_printf(" peer_ota_addr_type=%d peer_ota_addr=",
+                   desc->peer_ota_addr_type);
     print_addr(desc->peer_ota_addr);
     console_printf(" peer_id_addr_type=%d peer_id_addr=",
                    desc->peer_id_addr_type);
