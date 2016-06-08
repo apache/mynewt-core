@@ -106,10 +106,9 @@ print_conn_desc(struct ble_gap_conn_desc *desc)
                    desc->peer_id_addr_type);
     print_addr(desc->peer_id_addr);
     console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                   "pair_alg=%d enc_enabled=%d authenticated=%d bonded=%d\n",
+                   "enc_enabled=%d authenticated=%d bonded=%d\n",
                    desc->conn_itvl, desc->conn_latency,
                    desc->supervision_timeout,
-                   desc->sec_state.pair_alg,
                    desc->sec_state.enc_enabled,
                    desc->sec_state.authenticated,
                    desc->sec_state.bonded);
