@@ -25,23 +25,42 @@
 # 
 #
 if [ $# -lt 1 ]; then
-    echo "Need binary to download"
+    echo "Need binary to debug"
     exit 1
 fi
 
+USE_OPENOCD=0
 MY_PATH=$1
 FILE_NAME=$2.elf
 GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME
 
-#
-# Block Ctrl-C from getting passed to openocd.
-# Exit openocd when gdb detaches.
-#
-set -m
-openocd -s $MY_PATH -f arduino_primo.cfg -c "gdb_port 3333; telnet_port 4444; nrf52.cpu configure -event gdb-detach {shutdown}" -c init -c "reset halt" &
-set +m
+# Look for 'openocd_debug' from 3rd arg onwards
+shift
+shift
+while [ $# -gt 0 ]; do
+    if [ $1 = "openocd_debug" ]; then
+        USE_OPENOCD=1
+    fi
+    shift
+done
+
+if [ $USE_OPENOCD -eq 1 ]; then
+    #
+    # Block Ctrl-C from getting passed to openocd.
+    # Exit openocd when gdb detaches.
+    #
+    set -m
+    openocd -s $MY_PATH -f arduino_primo.cfg -c "gdb_port 3333; telnet_port 4444; nrf52.cpu configure -event gdb-detach {shutdown}" -c init -c "halt" &
+    set +m
+else
+    #
+    # Block Ctrl-C from getting passed to JLinkGDBServer
+    set -m
+    JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
+    set +m
+fi
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
