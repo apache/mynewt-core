@@ -30,7 +30,7 @@ static struct flash_area sector;
 struct fcb_log {
     uint8_t fl_entries;
     struct fcb *fl_fcb;
-}fcb_log;
+} fcb_log;
 
 static int
 log_fcb_append(struct log *log, void *buf, int len)
@@ -53,9 +53,12 @@ log_fcb_append(struct log *log, void *buf, int len)
             goto err;
         }
 
-        rc = log->l_log->log_rtr_erase(log, fcb_log);
-        if (rc) {
-            goto err;
+        if (log->l_log->log_rtr_erase && fcb_log->fl_entries) {
+            rc = log->l_log->log_rtr_erase(log, fcb_log);
+            if (rc) {
+                goto err;
+            }
+            continue;
         }
 
         rc = fcb_rotate(fcb);
@@ -119,19 +122,9 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
 static int
 log_fcb_flush(struct log *log)
 {
-    struct fcb *fcb;
-    int rc;
 
-    fcb = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
-    rc = 0;
+    return fcb_clear(((struct fcb_log *)log->l_log->log_arg)->fl_fcb);
 
-    while (!fcb_is_empty(fcb)) {
-        rc = fcb_rotate(fcb);
-        if (rc) {
-            break;
-        }
-    }
-    return (rc);
 }
 
 /**
@@ -161,7 +154,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     if (rc < 0) {
         goto err;
     }
-    data[rc] = 0;
+    data[rc] = '\0';
 
     /* Changing the fcb to be logged to be dst fcb */
     fcb_tmp = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
@@ -201,8 +194,7 @@ log_fcb_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
 
     rc = 0;
 
-    entry.fe_area = NULL;
-    entry.fe_elem_off = 0;
+    memset(&entry, 0, sizeof(entry));
     while (!fcb_getnext(src_fcb, &entry)) {
         if (entry.fe_elem_off < offset) {
             continue;
@@ -233,7 +225,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     int rc;
 
     rc = 0;
-    offset = 0;;
+    offset = 0;
     if (!log) {
         rc = -1;
         goto err;
@@ -258,9 +250,14 @@ log_fcb_rtr_erase(struct log *log, void *arg)
         goto err;
     }
 
+    rc = fcb_clear(&fcb_scratch);
+    if (rc) {
+        goto err;
+    }
+
     /* Calculate offset of n-th last entry */
     rc = fcb_offset_last_n(fcb, fcb_log->fl_entries, &offset);
-    if (rc){
+    if (rc) {
         goto err;
     }
 
@@ -269,6 +266,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     if (rc) {
         goto err;
     }
+
     /* Flush log */
     rc = log_fcb_flush(log);
     if (rc) {

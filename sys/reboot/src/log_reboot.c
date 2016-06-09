@@ -86,17 +86,17 @@ reboot_init_handler(int log_type, uint8_t entries)
             if (rc) {
                 goto err;
             }
-
             break;
        case LOG_TYPE_STREAM:
-            (void) console_init(NULL);
-
+            rc = log_console_handler_init(&reboot_log_handler);
+            if (rc) {
+                goto err;
+            }
             break;
        default:
             assert(0);
     }
 
-    imgmgr_module_init();
     rc = log_register("reboot_log", &reboot_log, &reboot_log_handler);
 err:
     return (rc);
