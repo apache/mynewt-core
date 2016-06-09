@@ -63,7 +63,6 @@ conf_file_dst(struct conf_file *cf)
     if (!cf->cf_name) {
         return OS_INVALID_PARM;
     }
-    cf->cf_save_fp = NULL;
     cf->cf_store.cs_itf = &conf_file_itf;
     conf_dst_register(&cf->cf_store);
 
@@ -117,6 +116,7 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
     char *name_str;
     char *val_str;
     int rc;
+    int lines;
 
     rc = fs_open(cf->cf_name, FS_ACCESS_READ, &file);
     if (rc != FS_EOK) {
@@ -124,6 +124,7 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
     }
 
     loc = 0;
+    lines = 0;
     while (1) {
         rc = conf_getnext_line(file, tmpbuf, sizeof(tmpbuf), &loc);
         if (loc == 0) {
@@ -136,9 +137,11 @@ conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
         if (rc != 0) {
             continue;
         }
+        lines++;
         cb(name_str, val_str, cb_arg);
     }
     fs_close(file);
+    cf->cf_lines = lines;
     return OS_OK;
 }
 
@@ -159,21 +162,88 @@ conf_tmpfile(char *dst, const char *src, char *pfx)
 }
 
 /*
+ * Try to compress configuration file by keeping unique names only.
+ */
+void
+conf_file_compress(struct conf_file *cf)
+{
+    int rc;
+    struct fs_file *rf;
+    struct fs_file *wf;
+    char tmp_file[CONF_FILE_NAME_MAX];
+    char buf1[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
+    char buf2[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
+    uint32_t loc1, loc2;
+    char *name1, *val1;
+    char *name2, *val2;
+    int copy;
+    int len, len2;
+    int lines;
+
+    if (fs_open(cf->cf_name, FS_ACCESS_READ, &rf) != FS_EOK) {
+        return;
+    }
+    conf_tmpfile(tmp_file, cf->cf_name, ".cmp");
+    if (fs_open(tmp_file, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &wf)) {
+        fs_close(rf);
+        return;
+    }
+
+    loc1 = 0;
+    lines = 0;
+    while (1) {
+        len = conf_getnext_line(rf, buf1, sizeof(buf1), &loc1);
+        if (loc1 == 0 || len < 0) {
+            break;
+        }
+        rc = conf_line_parse(buf1, &name1, &val1);
+        if (rc) {
+            continue;
+        }
+        loc2 = loc1;
+        copy = 1;
+        while ((len2 = conf_getnext_line(rf, buf2, sizeof(buf2), &loc2)) > 0) {
+            rc = conf_line_parse(buf2, &name2, &val2);
+            if (rc) {
+                continue;
+            }
+            if (!strcmp(name1, name2)) {
+                copy = 0;
+                break;
+            }
+        }
+        if (!copy) {
+            continue;
+        }
+
+        /*
+         * Can't find one. Must copy.
+         */
+        len = conf_line_make(buf2, sizeof(buf2), name1, val1);
+        if (len < 0 || len + 2 > sizeof(buf2)) {
+            continue;
+        }
+        buf2[len++] = '\n';
+        fs_write(wf, buf2, len);
+	lines++;
+    }
+    fs_close(wf);
+    fs_close(rf);
+    fs_unlink(cf->cf_name);
+    fs_rename(tmp_file, cf->cf_name);
+    cf->cf_lines = lines;
+    /*
+     * XXX at conf_file_load(), look for .cmp if actual file does not
+     * exist.
+     */
+}
+
+/*
  * Called to save configuration.
  */
 static int
 conf_file_save_start(struct conf_store *cs)
 {
-    struct conf_file *cf = (struct conf_file *)cs;
-    char name[CONF_FILE_NAME_MAX];
-
-    assert(cf->cf_save_fp == NULL);
-    conf_tmpfile(name, cf->cf_name, ".tmp");
-
-    if (fs_open(name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &cf->cf_save_fp)) {
-        return OS_EINVAL;
-    }
-
     return OS_OK;
 }
 
@@ -190,56 +260,37 @@ conf_file_save(struct conf_store *cs, const char *name, const char *value)
         return OS_INVALID_PARM;
     }
 
+    if (cf->cf_maxlines && (cf->cf_lines + 1 >= cf->cf_maxlines)) {
+        /*
+         * Compress before config file size exceeds the max number of lines.
+         */
+        conf_file_compress(cf);
+    }
     len = conf_line_make(buf, sizeof(buf), name, value);
     if (len < 0 || len + 2 > sizeof(buf)) {
         return OS_INVALID_PARM;
     }
     buf[len++] = '\n';
 
-    if (cf->cf_save_fp) {
-        file = cf->cf_save_fp;
-    } else {
-        /*
-         * Open the file to add this one value.
-         */
-        if (fs_open(cf->cf_name, FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file)) {
-            return OS_EINVAL;
-        }
+    /*
+     * Open the file to add this one value.
+     */
+    if (fs_open(cf->cf_name, FS_ACCESS_WRITE | FS_ACCESS_APPEND, &file)) {
+        return OS_EINVAL;
     }
     if (fs_write(file, buf, len)) {
         rc = OS_EINVAL;
     } else {
         rc = 0;
+        cf->cf_lines++;
     }
-    if (!cf->cf_save_fp) {
-        fs_close(file);
-    }
+    fs_close(file);
     return rc;
 }
 
 static int
 conf_file_save_end(struct conf_store *cs)
 {
-    struct conf_file *cf = (struct conf_file *)cs;
-    char tmp_name[CONF_FILE_NAME_MAX];
-    int rc;
-
-    fs_close(cf->cf_save_fp);
-    cf->cf_save_fp = NULL;
-
-    fs_unlink(cf->cf_name);
-
-    conf_tmpfile(tmp_name, cf->cf_name, ".tmp");
-
-    rc = fs_rename(tmp_name, cf->cf_name);
-    if (rc && rc != FS_ENOENT) {
-        return OS_EINVAL;
-    }
-
-    /*
-     * XXX at conf_file_load(), look for .tmp if actual file does not
-     * exist.
-     */
     return OS_OK;
 }
 
