@@ -89,7 +89,7 @@ conf_dup_check_cb(char *name, char *val, void *cb_arg)
         return;
     }
     if (!val) {
-        if (!cdca->val) {
+        if (!cdca->val || cdca->val[0] == '\0') {
             cdca->is_dup = 1;
         } else {
             cdca->is_dup = 0;
