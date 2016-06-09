@@ -129,11 +129,11 @@ log_reboot(int reason)
          * a soft reboot
          */
         reboot_tmp_cnt = reboot_cnt + 1;
-        conf_save_one(&reboot_conf_handler, "soft_reboot",
+        conf_save_one("reboot/soft_reboot",
                       conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                           str, sizeof(str)));
     } else if (reason == HARD_REBOOT) {
-        conf_save_one(&reboot_conf_handler, "soft_reboot", "0");
+        conf_save_one("reboot/soft_reboot", "0");
         if (soft_reboot) {
             /* No need to log as it's not a hard reboot */
             goto err;
@@ -148,7 +148,7 @@ log_reboot(int reason)
      * full, the caller of the function might not care about the return code
      * Saving the reboot cnt
      */
-    rc = conf_save_one(&reboot_conf_handler, "reboot_cnt",
+    rc = conf_save_one("reboot/reboot_cnt",
                        conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                            str, sizeof(str)));
 

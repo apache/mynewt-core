@@ -31,8 +31,8 @@
 
 static int conf_file_load(struct conf_store *, load_cb cb, void *cb_arg);
 static int conf_file_save_start(struct conf_store *);
-static int conf_file_save(struct conf_store *, const struct conf_handler *ch,
-  const char *name, const char *value);
+static int conf_file_save(struct conf_store *, const char *name,
+  const char *value);
 static int conf_file_save_end(struct conf_store *);
 
 static struct conf_store_itf conf_file_itf = {
@@ -178,8 +178,7 @@ conf_file_save_start(struct conf_store *cs)
 }
 
 static int
-conf_file_save(struct conf_store *cs, const struct conf_handler *ch,
-  const char *name, const char *value)
+conf_file_save(struct conf_store *cs, const char *name, const char *value)
 {
     struct conf_file *cf = (struct conf_file *)cs;
     struct fs_file *file;
@@ -191,7 +190,7 @@ conf_file_save(struct conf_store *cs, const struct conf_handler *ch,
         return OS_INVALID_PARM;
     }
 
-    len = conf_line_make(buf, sizeof(buf), ch, name, value);
+    len = conf_line_make(buf, sizeof(buf), name, value);
     if (len < 0 || len + 2 > sizeof(buf)) {
         return OS_INVALID_PARM;
     }
@@ -222,31 +221,25 @@ static int
 conf_file_save_end(struct conf_store *cs)
 {
     struct conf_file *cf = (struct conf_file *)cs;
-    char name1[CONF_FILE_NAME_MAX];
-    char name2[CONF_FILE_NAME_MAX];
+    char tmp_name[CONF_FILE_NAME_MAX];
     int rc;
 
     fs_close(cf->cf_save_fp);
     cf->cf_save_fp = NULL;
 
-    conf_tmpfile(name1, cf->cf_name, ".tm2");
-    conf_tmpfile(name2, cf->cf_name, ".tmp");
+    fs_unlink(cf->cf_name);
 
-    rc = fs_rename(cf->cf_name, name1);
+    conf_tmpfile(tmp_name, cf->cf_name, ".tmp");
+
+    rc = fs_rename(tmp_name, cf->cf_name);
     if (rc && rc != FS_ENOENT) {
         return OS_EINVAL;
     }
 
     /*
-     * XXX at conf_file_load(), look for .tm2/.tmp if actual file does not
+     * XXX at conf_file_load(), look for .tmp if actual file does not
      * exist.
      */
-    rc = fs_rename(name2, cf->cf_name);
-    if (rc) {
-        return OS_EINVAL;
-    }
-
-    fs_unlink(name1);
     return OS_OK;
 }
 
