@@ -104,9 +104,11 @@ STATS_NAME_END(gpio_stats)
 /* configuration file */
 #define MY_CONFIG_DIR  "/cfg"
 #define MY_CONFIG_FILE "/cfg/run"
+#define MY_CONFIG_MAX_LINES  32
 
 static struct conf_file my_conf = {
-    .cf_name = MY_CONFIG_FILE
+    .cf_name = MY_CONFIG_FILE,
+    .cf_maxlines = MY_CONFIG_MAX_LINES
 };
 #elif FCB_PRESENT
 struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
