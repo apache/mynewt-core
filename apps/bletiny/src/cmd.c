@@ -1822,6 +1822,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
             rc = parse_arg_byte_stream_exact_length("ltk", out->sec.ltk, 16);
             if (rc == 0) {
                 out->sec.ltk_present = 1;
+                swap_in_place(out->sec.ltk, 16);
                 valcnt++;
             } else if (rc != ENOENT) {
                 return rc;
@@ -1829,6 +1830,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
             rc = parse_arg_byte_stream_exact_length("irk", out->sec.irk, 16);
             if (rc == 0) {
                 out->sec.irk_present = 1;
+                swap_in_place(out->sec.irk, 16);
                 valcnt++;
             } else if (rc != ENOENT) {
                 return rc;
@@ -1836,6 +1838,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
             rc = parse_arg_byte_stream_exact_length("csrk", out->sec.csrk, 16);
             if (rc == 0) {
                 out->sec.csrk_present = 1;
+                swap_in_place(out->sec.csrk, 16);
                 valcnt++;
             } else if (rc != ENOENT) {
                 return rc;
