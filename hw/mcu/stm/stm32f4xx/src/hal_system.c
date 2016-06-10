@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -24,7 +24,7 @@ void
 system_reset(void)
 {
     while (1) {
-        if (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) {
+        if (system_debugger_connected()) {
             /*
              * If debugger is attached, breakpoint here.
              */
@@ -32,6 +32,12 @@ system_reset(void)
         }
         NVIC_SystemReset();
     }
+}
+
+int
+system_debugger_connected(void)
+{
+    return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
 }
 
 uint32_t
