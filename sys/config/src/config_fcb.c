@@ -35,16 +35,12 @@ struct conf_fcb_load_cb_arg {
 };
 
 static int conf_fcb_load(struct conf_store *, load_cb cb, void *cb_arg);
-static int conf_fcb_save_start(struct conf_store *);
 static int conf_fcb_save(struct conf_store *, const char *name,
   const char *value);
-static int conf_fcb_save_end(struct conf_store *);
 
 static struct conf_store_itf conf_fcb_itf = {
     .csi_load = conf_fcb_load,
-    .csi_save_start = conf_fcb_save_start,
     .csi_save = conf_fcb_save,
-    .csi_save_end = conf_fcb_save_end
 };
 
 int
@@ -220,12 +216,6 @@ conf_fcb_compress(struct conf_fcb *cf)
 }
 
 static int
-conf_fcb_save_start(struct conf_store *cs)
-{
-    return 0;
-}
-
-static int
 conf_fcb_append(struct conf_fcb *cf, char *buf, int len)
 {
     int rc;
@@ -266,12 +256,6 @@ conf_fcb_save(struct conf_store *cs, const char *name, const char *value)
         return OS_INVALID_PARM;
     }
     return conf_fcb_append(cf, buf, len);
-}
-
-static int
-conf_fcb_save_end(struct conf_store *cs)
-{
-    return OS_EINVAL;
 }
 
 #endif
