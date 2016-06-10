@@ -905,7 +905,6 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         console_printf("disconnect; reason=%d ", ctxt->disconnect.reason);
         print_conn_desc(ctxt->desc);
-        console_printf("\n");
 
         conn_idx = bletiny_conn_find_idx(ctxt->desc->conn_handle);
         if (conn_idx != -1) {
@@ -921,7 +920,6 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         console_printf("connection updated; status=%d ",
                        ctxt->conn_update.status);
         print_conn_desc(ctxt->desc);
-        console_printf("\n");
         return 0;
 
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
@@ -944,7 +942,6 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         console_printf("encryption change event; status=%d ",
                        ctxt->enc_change.status);
         print_conn_desc(ctxt->desc);
-        console_printf("\n");
         return 0;
 
     case BLE_GAP_EVENT_NOTIFY:
