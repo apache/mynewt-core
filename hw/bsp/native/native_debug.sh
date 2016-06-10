@@ -28,8 +28,9 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
+GDB_SCRIPT_PATH=$1/sim.gdb
 FILE_NAME=$2.elf
 
 echo "Debugging" $FILE_NAME
 
-gdb $FILE_NAME
+gdb -x $GDB_SCRIPT_PATH $FILE_NAME
