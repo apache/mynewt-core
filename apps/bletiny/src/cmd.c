@@ -388,7 +388,12 @@ cmd_conn(int argc, char **argv)
     }
 
     if (addr_type != BLE_GAP_ADDR_TYPE_WL) {
-        rc = parse_arg_mac("addr", peer_addr);
+        rc = parse_arg_mac("peer_addr", peer_addr);
+        if (rc == ENOENT) {
+            /* Allow "addr" for backwards compatibility. */
+            rc = parse_arg_mac("addr", peer_addr);
+        }
+
         if (rc != 0) {
             return rc;
         }

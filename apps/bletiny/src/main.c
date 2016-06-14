@@ -1359,7 +1359,7 @@ bletiny_sec_pair(uint16_t conn_handle)
 
     int rc;
 
-    rc = ble_sm_pair_initiate(conn_handle);
+    rc = ble_gap_pair_initiate(conn_handle);
     return rc;
 }
 
