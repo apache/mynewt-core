@@ -1756,8 +1756,8 @@ cmd_write(int argc, char **argv)
  *****************************************************************************/
 
 static struct kv_pair cmd_keystore_entry_type[] = {
-    { "msec",       BLE_STORE_OBJ_TYPE_MST_SEC },
-    { "ssec",       BLE_STORE_OBJ_TYPE_SLV_SEC },
+    { "msec",       BLE_STORE_OBJ_TYPE_PEER_SEC },
+    { "ssec",       BLE_STORE_OBJ_TYPE_OUR_SEC },
     { "cccd",       BLE_STORE_OBJ_TYPE_CCCD },
     { NULL }
 };
@@ -1778,8 +1778,8 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
     *obj_type = parse_arg_kv("type", cmd_keystore_entry_type);
 
     switch (*obj_type) {
-    case BLE_STORE_OBJ_TYPE_MST_SEC:
-    case BLE_STORE_OBJ_TYPE_SLV_SEC:
+    case BLE_STORE_OBJ_TYPE_PEER_SEC:
+    case BLE_STORE_OBJ_TYPE_OUR_SEC:
         rc = parse_arg_kv("addr_type", cmd_keystore_addr_type);
         if (rc < 0) {
             return EINVAL;
@@ -1817,8 +1817,8 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
     memset(out, 0, sizeof(*out));
 
     switch (obj_type) {
-        case BLE_STORE_OBJ_TYPE_MST_SEC:
-        case BLE_STORE_OBJ_TYPE_SLV_SEC:
+        case BLE_STORE_OBJ_TYPE_PEER_SEC:
+        case BLE_STORE_OBJ_TYPE_OUR_SEC:
             rc = parse_arg_byte_stream_exact_length("ltk", out->sec.ltk, 16);
             if (rc == 0) {
                 out->sec.ltk_present = 1;
@@ -1877,11 +1877,11 @@ cmd_keystore_add(int argc, char **argv)
     }
 
     switch(obj_type) {
-        case BLE_STORE_OBJ_TYPE_MST_SEC:
-            rc = ble_store_write_mst_sec(&value.sec);
+        case BLE_STORE_OBJ_TYPE_PEER_SEC:
+            rc = ble_store_write_peer_sec(&value.sec);
             break;
-        case BLE_STORE_OBJ_TYPE_SLV_SEC:
-            rc = ble_store_write_slv_sec(&value.sec);
+        case BLE_STORE_OBJ_TYPE_OUR_SEC:
+            rc = ble_store_write_our_sec(&value.sec);
             break;
         case BLE_STORE_OBJ_TYPE_CCCD:
             rc = ble_store_write_cccd(&value.cccd);
@@ -1914,8 +1914,8 @@ cmd_keystore_iterator(int obj_type,
                       void *cookie) {
 
     switch (obj_type) {
-        case BLE_STORE_OBJ_TYPE_MST_SEC:
-        case BLE_STORE_OBJ_TYPE_SLV_SEC:
+        case BLE_STORE_OBJ_TYPE_PEER_SEC:
+        case BLE_STORE_OBJ_TYPE_OUR_SEC:
             console_printf("Key: ");
             if (val->sec.peer_addr_type == BLE_STORE_ADDR_TYPE_NONE) {
                 console_printf("ediv=%u ", val->sec.ediv);

@@ -1396,9 +1396,9 @@ bletiny_sec_restart(uint16_t conn_handle,
             return rc;
         }
         if (conn_flags & BLE_HS_CONN_F_MASTER) {
-            rc = ble_store_read_mst_sec(&key_sec, &value_sec);
+            rc = ble_store_read_peer_sec(&key_sec, &value_sec);
         } else {
-            rc = ble_store_read_slv_sec(&key_sec, &value_sec);
+            rc = ble_store_read_our_sec(&key_sec, &value_sec);
         }
         if (rc != 0) {
             return rc;
