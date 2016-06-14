@@ -1022,6 +1022,26 @@ cmd_show(int argc, char **argv)
  *****************************************************************************/
 
 static int
+cmd_sec_pair(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_sec_pair(conn_handle);
+    if (rc != 0) {
+        console_printf("error initiating pairing; rc=%d\n", rc);
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
 cmd_sec_start(int argc, char **argv)
 {
     uint16_t conn_handle;
@@ -1042,7 +1062,7 @@ cmd_sec_start(int argc, char **argv)
 }
 
 static int
-cmd_sec_restart(int argc, char **argv)
+cmd_sec_enc(int argc, char **argv)
 {
     uint16_t conn_handle;
     uint16_t ediv;
@@ -1079,7 +1099,7 @@ cmd_sec_restart(int argc, char **argv)
     }
 
     if (rc != 0) {
-        console_printf("error starting encryption; rc=%d\n", rc);
+        console_printf("error initiating encryption; rc=%d\n", rc);
         return rc;
     }
 
@@ -1087,8 +1107,9 @@ cmd_sec_restart(int argc, char **argv)
 }
 
 static struct cmd_entry cmd_sec_entries[] = {
+    { "pair", cmd_sec_pair },
     { "start", cmd_sec_start },
-    { "restart", cmd_sec_restart },
+    { "enc", cmd_sec_enc },
 };
 
 static int

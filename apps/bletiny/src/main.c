@@ -1351,6 +1351,19 @@ bletiny_l2cap_update(uint16_t conn_handle,
 }
 
 int
+bletiny_sec_pair(uint16_t conn_handle)
+{
+#if !NIMBLE_OPT(SM)
+    return BLE_HS_ENOTSUP;
+#endif
+
+    int rc;
+
+    rc = ble_sm_pair_initiate(conn_handle);
+    return rc;
+}
+
+int
 bletiny_sec_start(uint16_t conn_handle)
 {
 #if !NIMBLE_OPT(SM)

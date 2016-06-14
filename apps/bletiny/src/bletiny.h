@@ -172,6 +172,7 @@ int bletiny_datalen(uint16_t conn_handle, uint16_t tx_octets,
 int bletiny_l2cap_update(uint16_t conn_handle,
                           struct ble_l2cap_sig_update_params *params);
 int bletiny_sec_start(uint16_t conn_handle);
+int bletiny_sec_pair(uint16_t conn_handle);
 int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
                         uint64_t rand_val, int auth);
 int bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
