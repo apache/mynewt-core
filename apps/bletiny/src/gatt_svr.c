@@ -23,7 +23,7 @@
 #include "bsp/bsp.h"
 #include "console/console.h"
 #include "host/ble_hs.h"
-#include "bleprph.h"
+#include "bletiny_priv.h"
 
 /**
  * The vendor specific "bleprph" service consists of two characteristics:
@@ -202,35 +202,35 @@ gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
     switch (uuid16) {
     case BLE_GAP_CHR_UUID16_DEVICE_NAME:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr_access.data = (void *)bleprph_device_name;
-        ctxt->chr_access.len = strlen(bleprph_device_name);
+        ctxt->chr_access.data = (void *)bletiny_device_name;
+        ctxt->chr_access.len = strlen(bletiny_device_name);
         break;
 
     case BLE_GAP_CHR_UUID16_APPEARANCE:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr_access.data = (void *)&bleprph_appearance;
-        ctxt->chr_access.len = sizeof bleprph_appearance;
+        ctxt->chr_access.data = (void *)&bletiny_appearance;
+        ctxt->chr_access.len = sizeof bletiny_appearance;
         break;
 
     case BLE_GAP_CHR_UUID16_PERIPH_PRIV_FLAG:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr_access.data = (void *)&bleprph_privacy_flag;
-        ctxt->chr_access.len = sizeof bleprph_privacy_flag;
+        ctxt->chr_access.data = (void *)&bletiny_privacy_flag;
+        ctxt->chr_access.len = sizeof bletiny_privacy_flag;
         break;
 
     case BLE_GAP_CHR_UUID16_RECONNECT_ADDR:
         assert(op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-        if (ctxt->chr_access.len != sizeof bleprph_reconnect_addr) {
+        if (ctxt->chr_access.len != sizeof bletiny_reconnect_addr) {
             return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
         }
-        memcpy(bleprph_reconnect_addr, ctxt->chr_access.data,
-               sizeof bleprph_reconnect_addr);
+        memcpy(bletiny_reconnect_addr, ctxt->chr_access.data,
+               sizeof bletiny_reconnect_addr);
         break;
 
     case BLE_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr_access.data = (void *)&bleprph_pref_conn_params;
-        ctxt->chr_access.len = sizeof bleprph_pref_conn_params;
+        ctxt->chr_access.data = (void *)&bletiny_pref_conn_params;
+        ctxt->chr_access.len = sizeof bletiny_pref_conn_params;
         break;
 
     default:
@@ -253,14 +253,14 @@ gatt_svr_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
     switch (uuid16) {
     case BLE_GATT_CHR_SERVICE_CHANGED_UUID16:
         if (op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            if (ctxt->chr_access.len != sizeof bleprph_gatt_service_changed) {
+            if (ctxt->chr_access.len != sizeof bletiny_gatt_service_changed) {
                 return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             }
-            memcpy(bleprph_gatt_service_changed, ctxt->chr_access.data,
-                   sizeof bleprph_gatt_service_changed);
+            memcpy(bletiny_gatt_service_changed, ctxt->chr_access.data,
+                   sizeof bletiny_gatt_service_changed);
         } else if (op == BLE_GATT_ACCESS_OP_READ_CHR) {
-            ctxt->chr_access.data = (void *)&bleprph_gatt_service_changed;
-            ctxt->chr_access.len = sizeof bleprph_gatt_service_changed;
+            ctxt->chr_access.data = (void *)&bletiny_gatt_service_changed;
+            ctxt->chr_access.len = sizeof bletiny_gatt_service_changed;
         }
         break;
 
@@ -392,7 +392,7 @@ gatt_svr_chr_access_bleprph(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 static char *
-gatt_svr_uuid128_to_s(void *uuid128, char *dst)
+gatt_svr_uuid_to_s(void *uuid128, char *dst)
 {
     uint16_t uuid16;
     uint8_t *u8p;
@@ -420,23 +420,23 @@ gatt_svr_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
 
     switch (op) {
     case BLE_GATT_REGISTER_OP_SVC:
-        BLEPRPH_LOG(DEBUG, "registered service %s with handle=%d\n",
-                    gatt_svr_uuid128_to_s(ctxt->svc_reg.svc->uuid128, buf),
+        BLETINY_LOG(DEBUG, "registered service %s with handle=%d\n",
+                    gatt_svr_uuid_to_s(ctxt->svc_reg.svc->uuid128, buf),
                     ctxt->svc_reg.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
-        BLEPRPH_LOG(DEBUG, "registering characteristic %s with "
+        BLETINY_LOG(DEBUG, "registering characteristic %s with "
                            "def_handle=%d val_handle=%d\n",
-                    gatt_svr_uuid128_to_s(ctxt->chr_reg.chr->uuid128, buf),
+                    gatt_svr_uuid_to_s(ctxt->chr_reg.chr->uuid128, buf),
                     ctxt->chr_reg.def_handle,
                     ctxt->chr_reg.val_handle);
         break;
 
     case BLE_GATT_REGISTER_OP_DSC:
-        BLEPRPH_LOG(DEBUG, "registering descriptor %s with handle=%d "
+        BLETINY_LOG(DEBUG, "registering descriptor %s with handle=%d "
                            "chr_handle=%d\n",
-                    gatt_svr_uuid128_to_s(ctxt->dsc_reg.dsc->uuid128, buf),
+                    gatt_svr_uuid_to_s(ctxt->dsc_reg.dsc->uuid128, buf),
                     ctxt->dsc_reg.dsc_handle,
                     ctxt->dsc_reg.chr_def_handle);
         break;
