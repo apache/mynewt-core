@@ -30,6 +30,7 @@ pkg.deps:
     - libs/util
     - libs/testutil
     - sys/fcb
+    - sys/log
     - libs/imgmgr
 pkg.req_apis:
     - console
