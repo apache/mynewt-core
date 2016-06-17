@@ -25,9 +25,6 @@ pkg.keywords:
     - boot
     - bootloader
 
-pkg.features:
-    - BOOT_SERIAL
-
 pkg.deps:
     - hw/hal
     - libs/os
