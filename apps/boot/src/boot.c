@@ -36,6 +36,10 @@
 #else
 #error "Need NFFS or FCB for config storage"
 #endif
+#ifdef BOOT_SERIAL
+#include <hal/hal_gpio.h>
+#include <boot_serial/boot_serial.h>
+#endif
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "bootutil/bootutil_misc.h"
@@ -44,6 +48,15 @@
  * boot code uses these to keep track of which block to write and copy.*/
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
+
+#ifdef BOOT_SERIAL
+#define BOOT_SER_PRIO_TASK          1
+#define BOOT_SER_STACK_SZ           512
+#define BOOT_SER_CONS_INPUT         128
+
+static struct os_task boot_ser_task;
+static os_stack_t boot_ser_stack[BOOT_SER_STACK_SZ];
+#endif
 
 #ifdef NFFS_PRESENT
 #define MY_CONFIG_FILE "/cfg/run"
@@ -163,6 +176,19 @@ main(void)
 #endif
     bootutil_cfg_register();
 
+#ifdef BOOT_SERIAL
+    /*
+     * Configure a GPIO as input, and compare it against expected value.
+     * If it matches, await for download commands from serial.
+     */
+    hal_gpio_init_in(BOOT_SERIAL_DETECT_PIN, BOOT_SERIAL_DETECT_PIN_CFG);
+    if (hal_gpio_read(BOOT_SERIAL_DETECT_PIN) == BOOT_SERIAL_DETECT_PIN_VAL) {
+        rc = boot_serial_task_init(&boot_ser_task, BOOT_SER_PRIO_TASK,
+          boot_ser_stack, BOOT_SER_STACK_SZ, BOOT_SER_CONS_INPUT);
+        assert(rc == 0);
+        os_start();
+    }
+#endif
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
 
