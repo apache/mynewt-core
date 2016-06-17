@@ -64,7 +64,7 @@ This gets bootutil to turn on image signature validation.
     pkg.deps:
         - libs/bootutil
     pkg.features.bootloader:
-        - IMAGE_KEYS
+        - IMAGE_KEYS_RSA
 
 ## Sample source file
 This exports the keys.
