@@ -38,6 +38,23 @@ struct cpu_timer {
     TAILQ_ENTRY(cpu_timer) link;
 };
 
+/* CPUTIME data. */
+struct cputime_data
+{
+    uint32_t ticks_per_usec;    /* number of ticks per usec */
+    uint32_t cputime_high;      /* high word of 64-bit cpu time */
+    uint32_t timer_isrs;        /* Number of timer interrupts */
+    uint32_t ocmp_ints;         /* Number of ocmp interrupts */
+    uint32_t uif_ints;          /* Number of overflow interrupts */
+};
+extern struct cputime_data g_cputime;
+
+/* Helpful macros to compare cputimes */
+#define CPUTIME_LT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) < 0)
+#define CPUTIME_GT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) > 0)
+#define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
+#define CPUTIME_LEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) <= 0)
+
 /**
  * cputime init
  *
@@ -183,11 +200,16 @@ void cputime_timer_relative(struct cpu_timer *timer, uint32_t usecs);
  */
 void cputime_timer_stop(struct cpu_timer *timer);
 
-#define CPUTIME_LT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) < 0)
-#define CPUTIME_GT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) > 0)
-#define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
-#define CPUTIME_LEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) <= 0)
+/*
+ * Used between MCU specific files and generic HAL. Not intended as an API
+ * to be called by the user.
+ */
+void cputime_chk_expiration(void);
 
+/*--- HW specific API. These are not intended to be called by user  ---*/
+void cputime_disable_ocmp(void);
+void cputime_set_ocmp(struct cpu_timer *timer);
+int cputime_hw_init(uint32_t clock_freq);
 
 #ifdef __cplusplus
 }
