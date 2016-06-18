@@ -953,7 +953,7 @@ cmd_show_addr(int argc, char **argv)
     uint8_t *id_addr;
     uint8_t id_addr_type;
 
-    id_addr = bls_hs_priv_get_local_identity_addr(&id_addr_type);
+    id_addr = ble_hs_pvcy_our_id_addr(&id_addr_type);
 
     console_printf("id_addr_type=%d id_addr=", id_addr_type);
     print_addr(id_addr);
@@ -1532,7 +1532,7 @@ cmd_set(int argc, char **argv)
     rc = parse_arg_byte_stream_exact_length("irk", irk, 16);
     if (rc == 0) {
         good = 1;
-        ble_hs_priv_update_irk(irk);
+        ble_hs_pvcy_set_our_irk(irk);
     } else if (rc != ENOENT) {
         return rc;
     }
