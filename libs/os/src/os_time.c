@@ -211,3 +211,34 @@ os_get_uptime_usec(void)
 
   return(tv.tv_sec * 1000000 + tv.tv_usec);
 }
+
+/**
+ * Converts milliseconds to OS ticks.
+ *
+ * @param ms                    The milliseconds input.
+ * @param out_ticks             The OS ticks output.
+ *
+ * @return                      0 on success; OS_EINVAL if the result is too
+ *                                  large to fit in a uint32_t.
+ */
+int
+os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks)
+{
+    uint64_t ticks;
+
+#if OS_TICKS_PER_SEC == 1000
+    *out_ticks = ms;
+    return 0;
+#endif
+
+    _Static_assert(OS_TICKS_PER_SEC <= UINT32_MAX,
+                   "OS_TICKS_PER_SEC must be <= UINT32_MAX");
+
+    ticks = (uint64_t)ms * OS_TICKS_PER_SEC / 1000;
+    if (ticks > UINT32_MAX) {
+        return OS_EINVAL;
+    }
+
+    *out_ticks = ticks;
+    return 0;
+}
