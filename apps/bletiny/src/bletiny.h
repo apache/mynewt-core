@@ -163,6 +163,7 @@ int bletiny_wl_set(struct ble_gap_white_entry *white_list,
                     int white_list_count);
 int bletiny_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
                   uint8_t filter_policy, uint8_t our_addr_mode);
+int bletiny_scan_cancel(void);
 int bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bletiny_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);

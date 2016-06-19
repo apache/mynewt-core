@@ -1297,12 +1297,21 @@ bletiny_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
 
 int
 bletiny_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
-              uint8_t filter_policy, uint8_t addr_mode)
+             uint8_t filter_policy, uint8_t addr_mode)
 {
     int rc;
 
     rc = ble_gap_disc(dur_ms, disc_mode, scan_type, filter_policy, addr_mode,
                       bletiny_on_scan, NULL);
+    return rc;
+}
+
+int
+bletiny_scan_cancel(void)
+{
+    int rc;
+
+    rc = ble_gap_disc_cancel();
     return rc;
 }
 

@@ -908,6 +908,16 @@ cmd_scan(int argc, char **argv)
     int rc;
     int addr_mode;
 
+    if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
+        rc = bletiny_scan_cancel();
+        if (rc != 0) {
+            console_printf("connection cancel fail: %d\n", rc);
+            return rc;
+        }
+
+        return 0;
+    }
+
     dur = parse_arg_uint16("dur", &rc);
     if (rc != 0) {
         return rc;
