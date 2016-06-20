@@ -31,3 +31,13 @@ print_bytes(uint8_t *bytes, int len)
         BLEPRPH_LOG(INFO, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
     }
 }
+
+void
+print_addr(void *addr)
+{
+    uint8_t *u8p;
+
+    u8p = addr;
+    BLEPRPH_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
+                u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+}

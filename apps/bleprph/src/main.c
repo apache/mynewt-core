@@ -95,17 +95,25 @@ static int bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt,
 static void
 bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    BLEPRPH_LOG(INFO, "handle=%d peer_addr_type=%d peer_addr=",
-                desc->conn_handle,
-                desc->peer_addr_type);
-    print_bytes(desc->peer_addr, 6);
+    BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+                desc->conn_handle, desc->our_ota_addr_type);
+    print_addr(desc->our_ota_addr);
+    BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
+                desc->our_id_addr_type);
+    print_addr(desc->our_id_addr);
+    BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+                desc->peer_ota_addr_type);
+    print_addr(desc->peer_ota_addr);
+    BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
+                desc->peer_id_addr_type);
+    print_addr(desc->peer_id_addr);
     BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                      "encrypted=%d authenticated=%d",
-                desc->conn_itvl,
-                desc->conn_latency,
+                "encrypted=%d authenticated=%d bonded=%d\n",
+                desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
                 desc->sec_state.encrypted,
-                desc->sec_state.authenticated);
+                desc->sec_state.authenticated,
+                desc->sec_state.bonded);
 }
 
 /**
