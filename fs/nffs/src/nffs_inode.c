@@ -99,8 +99,8 @@ nffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
                          sizeof *out_disk_inode);
     if (rc != 0) {
         return rc;
-    }
-    if (out_disk_inode->ndi_magic != NFFS_INODE_MAGIC) {
+	}
+	if (!nffs_hash_id_is_inode(out_disk_inode->ndi_id)) {
         return FS_EUNEXP;
     }
 
@@ -421,7 +421,6 @@ nffs_inode_delete_from_disk(struct nffs_inode *inode)
 
     inode->ni_seq++;
 
-    disk_inode.ndi_magic = NFFS_INODE_MAGIC;
     disk_inode.ndi_id = inode->ni_inode_entry->nie_hash_entry.nhe_id;
     disk_inode.ndi_seq = inode->ni_seq;
     disk_inode.ndi_parent_id = NFFS_ID_NONE;
@@ -541,7 +540,6 @@ nffs_inode_rename(struct nffs_inode_entry *inode_entry,
         return rc;
     }
 
-    disk_inode.ndi_magic = NFFS_INODE_MAGIC;
     disk_inode.ndi_id = inode_entry->nie_hash_entry.nhe_id;
     disk_inode.ndi_seq = inode.ni_seq + 1;
     disk_inode.ndi_parent_id = nffs_inode_parent_id(&inode);

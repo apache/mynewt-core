@@ -434,7 +434,7 @@ nffs_test_assert_branch_touched(struct nffs_inode_entry *inode_entry)
             break;
         }
     }
-    TEST_ASSERT(i < nffs_test_num_touched_entries);
+	TEST_ASSERT(i < nffs_test_num_touched_entries);
     nffs_test_touched_entries[i] = NULL;
 
     if (nffs_hash_id_is_dir(inode_entry->nie_hash_entry.nhe_id)) {
@@ -1984,6 +1984,9 @@ TEST_CASE(nffs_test_incomplete_block)
     nffs_flash_loc_expand(block.nb_hash_entry->nhe_flash_loc, &area_idx,
                          &area_offset);
     flash_offset = nffs_areas[area_idx].na_offset + area_offset;
+	/*
+	 * Overwrite block data - the CRC check should pick this up
+	 */
     rc = flash_native_memset(
             flash_offset + sizeof (struct nffs_disk_block) + 2, 0xff, 2);
     TEST_ASSERT(rc == 0);
@@ -2034,7 +2037,9 @@ TEST_CASE(nffs_test_corrupt_block)
     uint32_t flash_offset;
     uint32_t area_offset;
     uint8_t area_idx;
+	uint8_t off;	/* offset to corrupt */
     int rc;
+	struct nffs_disk_block ndb;
 
     /*** Setup. */
     rc = nffs_format(nffs_area_descs);
@@ -2062,7 +2067,13 @@ TEST_CASE(nffs_test_corrupt_block)
     nffs_flash_loc_expand(block.nb_hash_entry->nhe_flash_loc, &area_idx,
                          &area_offset);
     flash_offset = nffs_areas[area_idx].na_offset + area_offset;
-    rc = flash_native_memset(flash_offset, 0x43, 4);
+
+	/*
+	 * Overwriting the reserved8 field should invalidate the CRC
+	 */
+	off = (char*)&ndb.reserved16 - (char*)&ndb;
+    rc = flash_native_memset(flash_offset + off, 0x43, 1);
+
     TEST_ASSERT(rc == 0);
 
     /* Write a fourth file. This file should get restored even though the
@@ -2205,7 +2216,8 @@ TEST_CASE(nffs_test_lost_found)
     uint32_t area_offset;
     uint8_t area_idx;
     int rc;
-
+	struct nffs_disk_inode ndi;
+	uint8_t off;	/* calculated offset for memset */
 
     /*** Setup. */
     rc = nffs_format(nffs_area_descs);
@@ -2229,7 +2241,11 @@ TEST_CASE(nffs_test_lost_found)
     nffs_flash_loc_expand(inode_entry->nie_hash_entry.nhe_flash_loc,
                          &area_idx, &area_offset);
     flash_offset = nffs_areas[area_idx].na_offset + area_offset;
-    rc = flash_native_memset(flash_offset + 10, 0xff, 1);
+	/*
+	 * Overwrite the sequence number - should be detected as CRC corruption
+	 */
+	off = (char*)&ndi.ndi_seq - (char*)&ndi;
+    rc = flash_native_memset(flash_offset + off, 0xff, 1);
     TEST_ASSERT(rc == 0);
 
     /* Clear cached data and restore from flash (i.e, simulate a reboot). */

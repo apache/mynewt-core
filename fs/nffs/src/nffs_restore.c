@@ -740,7 +740,6 @@ nffs_restore_object(const struct nffs_disk_object *disk_object)
         break;
 
     default:
-        assert(0);
         rc = FS_EINVAL;
         break;
     }
@@ -762,39 +761,27 @@ static int
 nffs_restore_disk_object(int area_idx, uint32_t area_offset,
                          struct nffs_disk_object *out_disk_object)
 {
-    uint32_t magic;
     int rc;
 
-    rc = nffs_flash_read(area_idx, area_offset, &magic, sizeof magic);
+    rc = nffs_flash_read(area_idx, area_offset,
+						 &out_disk_object->ndo_un_obj,
+						 sizeof(out_disk_object->ndo_un_obj));
     if (rc != 0) {
         return rc;
     }
 
-    switch (magic) {
-    case NFFS_INODE_MAGIC:
+	if (nffs_hash_id_is_inode(out_disk_object->ndo_disk_inode.ndi_id)) {
         out_disk_object->ndo_type = NFFS_OBJECT_TYPE_INODE;
-        rc = nffs_inode_read_disk(area_idx, area_offset,
-                                 &out_disk_object->ndo_disk_inode);
-        break;
 
-    case NFFS_BLOCK_MAGIC:
+	} else if (nffs_hash_id_is_block(out_disk_object->ndo_disk_block.ndb_id)) {
         out_disk_object->ndo_type = NFFS_OBJECT_TYPE_BLOCK;
-        rc = nffs_block_read_disk(area_idx, area_offset,
-                                 &out_disk_object->ndo_disk_block);
-        break;
 
-    case 0xffffffff:
-        rc = FS_EEMPTY;
-        break;
+	} else if (out_disk_object->ndo_disk_block.ndb_id == NFFS_ID_NONE) {
+        return FS_EEMPTY;
 
-    default:
-        rc = FS_ECORRUPT;
-        break;
-    }
-
-    if (rc != 0) {
-        return rc;
-    }
+	} else {
+		return FS_ECORRUPT;
+	}
 
     out_disk_object->ndo_area_idx = area_idx;
     out_disk_object->ndo_offset = area_offset;
@@ -894,6 +881,10 @@ nffs_restore_detect_one_area(uint8_t flash_id, uint32_t area_offset,
 
     if (!nffs_area_magic_is_set(out_disk_area)) {
         return FS_ECORRUPT;
+    }
+
+    if (!nffs_area_is_current_version(out_disk_area)) {
+        return FS_EUNEXP;
     }
 
     return 0;

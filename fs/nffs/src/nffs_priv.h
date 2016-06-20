@@ -48,7 +48,9 @@
 #define NFFS_INODE_MAGIC             0x925f8bc0
 
 #define NFFS_AREA_ID_NONE            0xff
-#define NFFS_AREA_VER                0
+#define NFFS_AREA_VER_0				 0
+#define NFFS_AREA_VER_1              1
+#define NFFS_AREA_VER                NFFS_AREA_VER_1
 #define NFFS_AREA_OFFSET_ID          23
 
 #define NFFS_SHORT_FILENAME_LEN      3
@@ -66,7 +68,7 @@ struct nffs_disk_area {
 };
 
 /** On-disk representation of an inode (file or directory). */
-struct nffs_disk_inode {
+struct nffs_disk_inodeV0 {
     uint32_t ndi_magic;         /* NFFS_INODE_MAGIC */
     uint32_t ndi_id;            /* Unique object ID. */
     uint32_t ndi_seq;           /* Sequence number; greater supersedes
@@ -78,10 +80,10 @@ struct nffs_disk_inode {
     /* Followed by filename. */
 };
 
-#define NFFS_DISK_INODE_OFFSET_CRC  18
+#define NFFS_DISK_INODEV0_OFFSET_CRC  18
 
 /** On-disk representation of a data block. */
-struct nffs_disk_block {
+struct nffs_disk_blockV0 {
     uint32_t ndb_magic;     /* NFFS_BLOCK_MAGIC */
     uint32_t ndb_id;        /* Unique object ID. */
     uint32_t ndb_seq;       /* Sequence number; greater supersedes lesser. */
@@ -93,7 +95,38 @@ struct nffs_disk_block {
     /* Followed by 'ndb_data_len' bytes of data. */
 };
 
-#define NFFS_DISK_BLOCK_OFFSET_CRC  20
+#define NFFS_DISK_BLOCKV0_OFFSET_CRC  22
+
+/** On-disk representation of an inode (file or directory). */
+struct nffs_disk_inode {
+    uint32_t ndi_id;            /* Unique object ID. */
+    uint32_t ndi_parent_id;     /* Object ID of parent directory inode. */
+    uint32_t ndi_lastblock_id;     /* Object ID of parent directory inode. */
+    uint16_t ndi_seq;           /* Sequence number; greater supersedes
+                                   lesser. */
+	uint16_t reserved16;
+    uint8_t reserved8;
+    uint8_t ndi_filename_len;   /* Length of filename, in bytes. */
+    uint16_t ndi_crc16;         /* Covers rest of header and filename. */
+    /* Followed by filename. */
+};
+
+#define NFFS_DISK_INODE_OFFSET_CRC  18
+
+/** On-disk representation of a data block. */
+struct nffs_disk_block {
+    uint32_t ndb_id;        /* Unique object ID. */
+    uint32_t ndb_inode_id;  /* Object ID of owning inode. */
+    uint32_t ndb_prev_id;   /* Object ID of previous block in file;
+                               NFFS_ID_NONE if this is the first block. */
+    uint16_t ndb_seq;       /* Sequence number; greater supersedes lesser. */
+    uint16_t reserved16;
+    uint16_t ndb_data_len;  /* Length of data contents, in bytes. */
+    uint16_t ndb_crc16;     /* Covers rest of header and data. */
+    /* Followed by 'ndb_data_len' bytes of data. */
+};
+
+#define NFFS_DISK_BLOCK_OFFSET_CRC  18
 
 /**
  * What gets stored in the hash table.  Each entry represents a data block or
@@ -163,8 +196,11 @@ struct nffs_disk_object {
     union {
         struct nffs_disk_inode ndo_disk_inode;
         struct nffs_disk_block ndo_disk_block;
-    };
+    } ndo_un_obj;
 };
+
+#define ndo_disk_inode	ndo_un_obj.ndo_disk_inode
+#define ndo_disk_block	ndo_un_obj.ndo_disk_block
 
 struct nffs_seek_info {
     struct nffs_block nsi_last_block;
@@ -246,6 +282,7 @@ extern struct log nffs_log;
 /* @area */
 int nffs_area_magic_is_set(const struct nffs_disk_area *disk_area);
 int nffs_area_is_scratch(const struct nffs_disk_area *disk_area);
+int nffs_area_is_current_version(const struct nffs_disk_area *disk_area);
 void nffs_area_to_disk(const struct nffs_area *area,
                        struct nffs_disk_area *out_disk_area);
 uint32_t nffs_area_free_space(const struct nffs_area *area);
@@ -443,7 +480,13 @@ int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
 
 #define NFFS_FLASH_LOC_NONE  nffs_flash_loc(NFFS_AREA_ID_NONE, 0)
 
+#ifdef NFFS_DEBUG
+#include <stdio.h>
+#define NFFS_LOG(lvl, ...) \
+  	printf(__VA_ARGS__)
+#else
 #define NFFS_LOG(lvl, ...) \
     LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)
+#endif
 
 #endif

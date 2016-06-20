@@ -87,7 +87,6 @@ nffs_file_new(struct nffs_inode_entry *parent, const char *filename,
     }
 
     memset(&disk_inode, 0xff, sizeof disk_inode);
-    disk_inode.ndi_magic = NFFS_INODE_MAGIC;
     if (is_dir) {
         disk_inode.ndi_id = nffs_hash_next_dir_id++;
     } else {
@@ -99,6 +98,7 @@ nffs_file_new(struct nffs_inode_entry *parent, const char *filename,
     } else {
         disk_inode.ndi_parent_id = parent->nie_hash_entry.nhe_id;
     }
+	disk_inode.ndi_lastblock_id = 0; /* will be NFFS_ID_NONE when implemented */
     disk_inode.ndi_filename_len = filename_len;
     nffs_crc_disk_inode_fill(&disk_inode, filename);
 

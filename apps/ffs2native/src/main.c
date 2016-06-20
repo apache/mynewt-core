@@ -40,8 +40,18 @@
 #include <mcu/mcu_sim.h>
 #endif
 
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+
+static struct log_handler nffs_log_console_handler;
+struct log nffs_log;
 static const char *copy_in_dir;
 static const char *progname;
+
+char *file_flash_area;
+int file_scratch_idx;
 
 #define MAX_AREAS	16
 static struct nffs_area_desc area_descs[MAX_AREAS];
@@ -79,6 +89,13 @@ print_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
     int rc;
 
     rc = nffs_inode_from_entry(&inode, inode_entry);
+	/*
+	 * Dummy inode
+	 */
+	if (rc == FS_ENOENT) {
+		printf("    DUMMY %d\n", rc);
+		return;
+	}
     assert(rc == 0);
 
     nffs_flash_loc_expand(inode_entry->nie_hash_entry.nhe_flash_loc,
@@ -109,64 +126,66 @@ process_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 }
 
 static int
-print_nffs_inode(int idx, uint32_t off)
+print_nffs_inode(struct nffs_disk_inode *ndi, int idx, uint32_t off)
 {
-    struct nffs_disk_inode ndi;
     char filename[128];
     int len;
-    int rc;
-
-    rc = nffs_flash_read(idx, off, &ndi, sizeof(ndi));
-    assert(rc == 0);
+	int rc;
 
     memset(filename, 0, sizeof(filename));
-    len = min(sizeof(filename) - 1, ndi.ndi_filename_len);
-    rc = nffs_flash_read(idx, off + sizeof(ndi), filename, len);
-    printf("      %x-%d inode %d/%d %s\n",
-      off, ndi.ndi_filename_len, ndi.ndi_id, ndi.ndi_seq, filename);
-    return sizeof(ndi) + ndi.ndi_filename_len;
+    len = min(sizeof(filename) - 1, ndi->ndi_filename_len);
+    rc = nffs_flash_read(idx, off + sizeof(struct nffs_disk_inode),
+						 filename, len);
+    printf("      %x-%d inode %d/%d",
+      off, ndi->ndi_filename_len, ndi->ndi_id, ndi->ndi_seq);
+	if (rc == 0)
+		printf(" %s\n", filename);
+	else
+		printf("\n");
+    return (sizeof(struct nffs_disk_inode) + ndi->ndi_filename_len);
 }
 
 static int
-print_nffs_block(int idx, uint32_t off)
+print_nffs_block(struct nffs_disk_block *ndb, int idx, uint32_t off)
 {
-    struct nffs_disk_block ndb;
-    int rc;
-
-    rc = nffs_flash_read(idx, off, &ndb, sizeof(ndb));
-    assert(rc == 0);
-
     printf("      %x-%d block %u/%u belongs to %u\n",
-      off, ndb.ndb_data_len, ndb.ndb_id, ndb.ndb_seq, ndb.ndb_inode_id);
-    return sizeof(ndb) + ndb.ndb_data_len;
+      off, ndb->ndb_data_len, ndb->ndb_id, ndb->ndb_seq, ndb->ndb_inode_id);
+    return sizeof(struct nffs_disk_block) + ndb->ndb_data_len;
 }
 
 static int
 print_nffs_object(int idx, uint32_t off)
 {
-    uint32_t magic;
+	struct nffs_disk_object dobj;
     int rc;
 
-    rc = nffs_flash_read(idx, off, &magic, sizeof(magic));
+    rc = nffs_flash_read(idx, off, &dobj.ndo_un_obj, sizeof(dobj.ndo_un_obj));
     assert(rc == 0);
 
-    switch (magic) {
-    case NFFS_INODE_MAGIC:
-        return print_nffs_inode(idx, off);
+	if (nffs_hash_id_is_inode(dobj.ndo_disk_inode.ndi_id)) {
+        return print_nffs_inode(&dobj.ndo_disk_inode, idx, off);
 
-    case NFFS_BLOCK_MAGIC:
-        return print_nffs_block(idx, off);
-        break;
+	} else if (nffs_hash_id_is_block(dobj.ndo_disk_inode.ndi_id)) {
+        return print_nffs_block(&dobj.ndo_disk_block, idx, off);
 
-    case 0xffffffff:
-        assert(0);
+	} else if (dobj.ndo_disk_inode.ndi_id == NFFS_ID_NONE) {
+		assert(0);
         return 0;
 
-    default:
+	} else {
         printf("      %x Corruption\n", off);
-        return 1;
-    }
+		return 1;
+	}
 }
+
+static void
+print_nffs_darea(struct nffs_disk_area *darea)
+{
+	printf("\tdarea: len %d ver %d gc_seq %d id %x\n",
+		   darea->nda_length, darea->nda_ver,
+		   darea->nda_gc_seq, darea->nda_id);
+}
+
 
 static void
 print_nffs_area(int idx)
@@ -179,8 +198,16 @@ print_nffs_area(int idx)
     area = &nffs_areas[idx];
     rc = nffs_flash_read(idx, 0, &darea, sizeof(darea));
     assert(rc == 0);
+	print_nffs_darea(&darea);
     if (!nffs_area_magic_is_set(&darea)) {
         printf("Area header corrupt!\n");
+        return;
+    }
+	/*
+	 * XXX Enhance to print but not restore unsupported formats
+	 */
+    if (!nffs_area_is_current_version(&darea)) {
+        printf("Area format is not supported!\n");
         return;
     }
     off = sizeof (struct nffs_disk_area);
@@ -295,14 +322,137 @@ copy_in_directory(const char *src, const char *dst)
     closedir(dr);
 }
 
+static int
+file_flash_read(uint32_t addr, void *dst, int byte_cnt)
+{
+	memcpy(dst, (void*)file_flash_area + addr, byte_cnt);
+	return 0;
+}
+
+static int
+print_flash_inode(struct nffs_area_desc *area, uint32_t off)
+{
+    struct nffs_disk_inode ndi;
+    char filename[128];
+    int len;
+    int rc;
+
+    rc = file_flash_read(area->nad_offset + off, &ndi, sizeof(ndi));
+    assert(rc == 0);
+
+    memset(filename, 0, sizeof(filename));
+    len = min(sizeof(filename) - 1, ndi.ndi_filename_len);
+    rc = file_flash_read(area->nad_offset + off + sizeof(ndi), filename, len);
+
+	printf("  off %x flen %d %s id %x seq %d prnt %x lstb %x %s\n",
+		   off, ndi.ndi_filename_len,
+		   (nffs_hash_id_is_file(ndi.ndi_id) ? "File" :
+			(nffs_hash_id_is_dir(ndi.ndi_id) ? "Dir" : "???")),
+		   ndi.ndi_id, ndi.ndi_seq, ndi.ndi_parent_id,
+		   ndi.ndi_lastblock_id, filename);
+    return sizeof(ndi) + ndi.ndi_filename_len;
+}
+
+static int
+print_flash_block(struct nffs_area_desc *area, uint32_t off)
+{
+    struct nffs_disk_block ndb;
+    int rc;
+
+	rc = file_flash_read(area->nad_offset + off, &ndb, sizeof(ndb));
+    assert(rc == 0);
+
+    printf("  off %x len %d Block id %x seq %d prev %x own ino %x\n",
+		   off, ndb.ndb_data_len, ndb.ndb_id, ndb.ndb_seq,
+		   ndb.ndb_prev_id, ndb.ndb_inode_id);
+    return sizeof(ndb) + ndb.ndb_data_len;
+}
+
+static int
+print_flash_object(struct nffs_area_desc *area, uint32_t off)
+{
+    uint32_t magic;
+
+	file_flash_read(area->nad_offset + off, &magic, sizeof(magic));
+    switch (magic) {
+    case NFFS_INODE_MAGIC:
+        return print_flash_inode(area, off);
+
+    case NFFS_BLOCK_MAGIC:
+        return print_flash_block(area, off);
+        break;
+
+    case 0xffffffff:
+    default:
+        return 1;
+    }
+}
+
+void
+print_file_areas()
+{
+    struct nffs_area_desc *area;
+    int off;
+    int i;
+
+    for (i = 0; i < nffs_num_areas; i++) {
+		area = &area_descs[i];
+        printf("%d: id:%d 0x%x - 0x%x %s\n",
+			   i, area->nad_flash_id, area->nad_offset,
+			   area->nad_offset + area->nad_length,
+			   (i == file_scratch_idx ? "(scratch)" : ""));
+		off = sizeof (struct nffs_disk_area);
+		while (off < area->nad_length) {
+			off += print_flash_object(area, off);
+		}
+    }
+}
+
+int
+file_area_init(char *flash_area, size_t size)
+{
+	char *daptr;		/* Disk Area Pointer */
+	char *eoda;			/* End Of Disk Area */
+	struct nffs_disk_area *nda;
+	int nad_cnt = 0;	/* Nffs Area Descriptor count */
+
+	daptr = flash_area;
+	eoda = flash_area + size;
+	while (daptr < eoda) {
+		if (nffs_area_magic_is_set((struct nffs_disk_area*)daptr)) {
+			nda = (struct nffs_disk_area*)daptr;
+			area_descs[nad_cnt].nad_offset = (daptr - flash_area);
+			area_descs[nad_cnt].nad_length = nda->nda_length;
+			area_descs[nad_cnt].nad_flash_id = nda->nda_id;
+			if (nda->nda_id == 0xff)
+				file_scratch_idx = nad_cnt;
+			printf("area %d: off %d len %d flshid %x gc-seq %d id %x ver %d %s\n",
+				   nad_cnt,
+				   area_descs[nad_cnt].nad_offset,
+				   area_descs[nad_cnt].nad_length,
+				   area_descs[nad_cnt].nad_flash_id,
+				   nda->nda_gc_seq, nda->nda_id, nda->nda_ver,
+				   nda->nda_id == 0xff ? "(scratch)" : "");
+
+			nad_cnt++;
+			daptr = daptr + nda->nda_length;
+		} else {
+			daptr++;
+		}
+	}
+	nffs_num_areas = nad_cnt;
+	return 0;
+}
+
 static void
 usage(int rc)
 {
-    printf("%s [-c]|[-d dir][-f flash_file]\n", progname);
+    printf("%s [-c]|[-d dir][-s][-f flash_file]\n", progname);
     printf("  Tool for operating on simulator flash image file\n");
     printf("   -c: ...\n");
     printf("   -d: use dir as root for NFFS portion and create flash image\n");
     printf("   -f: flash_file is the name of the flash image file\n");
+    printf("   -s: use flash area layout in flash image file\n");
     exit(rc);
 }
 
@@ -310,13 +460,16 @@ int
 main(int argc, char **argv)
 {
     FILE *fp;
+	int fd;
     int rc;
     int ch;
     int cnt;
+	struct stat st;
+	int standalone = 0;
 
     progname = argv[0];
 
-    while ((ch = getopt(argc, argv, "c:d:f:")) != -1) {
+    while ((ch = getopt(argc, argv, "c:d:f:s")) != -1) {
         switch (ch) {
         case 'c':
             fp = fopen(optarg, "rb");
@@ -327,6 +480,9 @@ main(int argc, char **argv)
         case 'd':
             copy_in_dir = optarg;
             break;
+		case 's':
+			standalone++;
+			break;
         case 'f':
             native_flash_file = optarg;
             break;
@@ -337,14 +493,36 @@ main(int argc, char **argv)
     }
 
     os_init();
-    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, area_descs);
-    assert(rc == 0);
+	if (standalone == 0) {
+		rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, area_descs);
+		assert(rc == 0);
+	}
 
     rc = hal_flash_init();
     assert(rc == 0);
 
     rc = nffs_init();
     assert(rc == 0);
+
+	log_init();
+	log_console_handler_init(&nffs_log_console_handler);
+	log_register("nffs-log", &nffs_log, &nffs_log_console_handler);
+
+	if (standalone) {
+		fd = open(native_flash_file, O_RDWR);
+		if ((rc = fstat(fd, &st)))
+			perror("fstat failed");
+		if ((file_flash_area = mmap(0, (size_t)8192, PROT_READ,
+							   MAP_FILE|MAP_SHARED, fd, 0)) == MAP_FAILED) {
+			perror("%s mmap failed");
+		}
+
+		rc = file_area_init(file_flash_area, st.st_size);
+
+		print_file_areas();
+
+		return 0;
+	}
 
     if (copy_in_dir) {
         /*

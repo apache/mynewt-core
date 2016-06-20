@@ -47,6 +47,12 @@ nffs_area_is_scratch(const struct nffs_disk_area *disk_area)
            disk_area->nda_id == NFFS_AREA_ID_NONE;
 }
 
+int
+nffs_area_is_current_version(const struct nffs_disk_area *disk_area)
+{
+    return disk_area->nda_ver == NFFS_AREA_VER;
+}
+
 void
 nffs_area_to_disk(const struct nffs_area *area,
                   struct nffs_disk_area *out_disk_area)

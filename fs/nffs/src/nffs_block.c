@@ -94,7 +94,7 @@ nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
     if (rc != 0) {
         return rc;
     }
-    if (out_disk_block->ndb_magic != NFFS_BLOCK_MAGIC) {
+    if (!nffs_hash_id_is_block(out_disk_block->ndb_id)) {
         return FS_EUNEXP;
     }
 
@@ -214,7 +214,6 @@ nffs_block_to_disk(const struct nffs_block *block,
 {
     assert(block->nb_inode_entry != NULL);
 
-    out_disk_block->ndb_magic = NFFS_BLOCK_MAGIC;
     out_disk_block->ndb_id = block->nb_hash_entry->nhe_id;
     out_disk_block->ndb_seq = block->nb_seq;
     out_disk_block->ndb_inode_id =
