@@ -1221,6 +1221,14 @@ cmd_set_adv_data(void)
 
     memset(&adv_fields, 0, sizeof adv_fields);
 
+    tmp = parse_arg_long_bounds("flags", 0, UINT8_MAX, &rc);
+    if (rc == 0) {
+        adv_fields.flags = tmp;
+        adv_fields.flags_is_present = 1;
+    } else if (rc != ENOENT) {
+        return rc;
+    }
+
     while (1) {
         uuid16 = parse_arg_uint16("uuid16", &rc);
         if (rc == 0) {
@@ -1301,7 +1309,7 @@ cmd_set_adv_data(void)
         adv_fields.name_len = strlen((char *)adv_fields.name);
     }
 
-    tmp = parse_arg_long_bounds("tx_pwr_lvl", 0, 0xff, &rc);
+    tmp = parse_arg_long_bounds("tx_pwr_lvl", INT8_MIN, INT8_MAX, &rc);
     if (rc == 0) {
         adv_fields.tx_pwr_lvl = tmp;
         adv_fields.tx_pwr_lvl_is_present = 1;
