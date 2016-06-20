@@ -129,6 +129,7 @@ bleprph_advertise(void)
 
     /**
      *  Set the advertisement data included in our advertisements:
+     *     o Flags (indicates advertisement type and other general info).
      *     o Advertising tx power.
      *     o Device name.
      *     o 16-bit service UUIDs (alert notifications).
@@ -136,7 +137,18 @@ bleprph_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
+    /* Indicate that the flags field should be included; specify a value of 0
+     * to instruct the stack to fill the value in for us.
+     */
+    fields.flags_is_present = 1;
+    fields.flags = 0;
+
+    /* Indicate that the TX power level field should be included; have the
+     * stack fill this one automatically as well.  This is done by assiging the
+     * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
+     */
     fields.tx_pwr_lvl_is_present = 1;
+    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
     fields.name = (uint8_t *)bleprph_device_name;
     fields.name_len = strlen(bleprph_device_name);
