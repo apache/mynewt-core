@@ -26,5 +26,7 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
+    - libs/bootutil
+    - libs/imgmgr
 pkg.features:
     - COREDUMP
