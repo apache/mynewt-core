@@ -1246,13 +1246,13 @@ bletiny_adv_stop(void)
 }
 
 int
-bletiny_adv_start(int disc, int conn,
-                uint8_t *peer_addr, uint8_t peer_addr_type,
-                struct ble_gap_adv_params *params)
+bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
+                  const uint8_t *peer_addr,
+                  const struct ble_gap_adv_params *params)
 {
     int rc;
 
-    rc = ble_gap_adv_start(disc, conn, peer_addr, peer_addr_type, params,
+    rc = ble_gap_adv_start(own_addr_type, peer_addr_type, peer_addr, params,
                            bletiny_gap_event, NULL);
     return rc;
 }

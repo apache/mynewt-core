@@ -129,6 +129,24 @@ parse_arg_long_bounds(char *name, long min, long max, int *out_status)
     return 0;
 }
 
+long
+parse_arg_long_bounds_default(char *name, long min, long max,
+                              long dflt, int *out_status)
+{
+    long val;
+    int rc;
+
+    val = parse_arg_long_bounds(name, min, max, &rc);
+    if (rc == ENOENT) {
+        rc = 0;
+        val = dflt;
+    }
+
+    *out_status = rc;
+
+    return val;
+}
+
 uint64_t
 parse_arg_uint64_bounds(char *name, uint64_t min, uint64_t max, int *out_status)
 {
@@ -207,41 +225,42 @@ parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status)
 }
 
 int
-parse_arg_kv(char *name, struct kv_pair *kvs)
+parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status)
 {
     struct kv_pair *kv;
     char *sval;
 
     sval = parse_arg_find(name);
     if (sval == NULL) {
+        *out_status = ENOENT;
         return -1;
     }
 
     kv = parse_kv_find(kvs, sval);
     if (kv == NULL) {
-        return -2;
+        *out_status = EINVAL;
+        return -1;
     }
 
     return kv->val;
 }
 
 int
-parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val)
+parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val,
+                     int *out_status)
 {
-    struct kv_pair *kv;
-    char *sval;
+    int val;
+    int rc;
 
-    sval = parse_arg_find(name);
-    if (sval == NULL) {
-        return def_val;
+    val = parse_arg_kv(name, kvs, &rc);
+    if (rc == ENOENT) {
+        rc = 0;
+        val = def_val;
     }
 
-    kv = parse_kv_find(kvs, sval);
-    if (kv == NULL) {
-        return -1;
-    }
+    *out_status = rc;
 
-    return kv->val;
+    return val;
 }
 
 
