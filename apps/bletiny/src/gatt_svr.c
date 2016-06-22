@@ -429,24 +429,24 @@ gatt_svr_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
     switch (op) {
     case BLE_GATT_REGISTER_OP_SVC:
         BLETINY_LOG(DEBUG, "registered service %s with handle=%d\n",
-                    gatt_svr_uuid_to_s(ctxt->svc_reg.svc->uuid128, buf),
-                    ctxt->svc_reg.handle);
+                    gatt_svr_uuid_to_s(ctxt->svc.svc_def->uuid128, buf),
+                    ctxt->svc.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
         BLETINY_LOG(DEBUG, "registering characteristic %s with "
                            "def_handle=%d val_handle=%d\n",
-                    gatt_svr_uuid_to_s(ctxt->chr_reg.chr->uuid128, buf),
-                    ctxt->chr_reg.def_handle,
-                    ctxt->chr_reg.val_handle);
+                    gatt_svr_uuid_to_s(ctxt->chr.chr_def->uuid128, buf),
+                    ctxt->chr.def_handle,
+                    ctxt->chr.val_handle);
         break;
 
     case BLE_GATT_REGISTER_OP_DSC:
         BLETINY_LOG(DEBUG, "registering descriptor %s with handle=%d "
                            "chr_handle=%d\n",
-                    gatt_svr_uuid_to_s(ctxt->dsc_reg.dsc->uuid128, buf),
-                    ctxt->dsc_reg.dsc_handle,
-                    ctxt->dsc_reg.chr_def_handle);
+                    gatt_svr_uuid_to_s(ctxt->dsc.dsc_def->uuid128, buf),
+                    ctxt->dsc.dsc_handle,
+                    ctxt->dsc.chr_def_handle);
         break;
 
     default:
