@@ -1273,7 +1273,7 @@ bletiny_conn_cancel(void)
 {
     int rc;
 
-    rc = ble_gap_cancel();
+    rc = ble_gap_conn_cancel();
     return rc;
 }
 
