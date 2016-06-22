@@ -29,7 +29,7 @@
 struct ble_gap_white_entry;
 struct ble_hs_adv_fields;
 struct ble_gap_upd_params;
-struct ble_gap_crt_params;
+struct ble_gap_conn_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
@@ -156,7 +156,7 @@ int bletiny_adv_start(int disc, int conn,
                      struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
 int bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
-                           struct ble_gap_crt_params *params);
+                           struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle);
 int bletiny_wl_set(struct ble_gap_white_entry *white_list,
