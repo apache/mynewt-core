@@ -1258,13 +1258,13 @@ bletiny_adv_start(int disc, int conn,
 }
 
 int
-bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
-                       struct ble_gap_conn_params *params)
+bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
+                      uint8_t *peer_addr, struct ble_gap_conn_params *params)
 {
     int rc;
 
-    rc = ble_gap_conn_initiate(addr_type, peer_addr, params, bletiny_gap_event,
-                               NULL);
+    rc = ble_gap_connect(own_addr_type, peer_addr_type, peer_addr, params,
+                         bletiny_gap_event, NULL);
     return rc;
 }
 

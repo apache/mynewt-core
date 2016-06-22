@@ -155,8 +155,9 @@ int bletiny_adv_start(int disc, int conn,
                      uint8_t *peer_addr, uint8_t peer_addr_type,
                      struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
-int bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
-                           struct ble_gap_conn_params *params);
+int bletiny_conn_initiate(uint8_t own_addr_type,
+                          uint8_t peer_addr_type, uint8_t *peer_addr,
+                          struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle);
 int bletiny_wl_set(struct ble_gap_white_entry *white_list,

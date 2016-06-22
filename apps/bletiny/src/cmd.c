@@ -369,7 +369,8 @@ cmd_conn(int argc, char **argv)
 {
     struct ble_gap_conn_params params;
     uint8_t peer_addr[6];
-    int addr_type;
+    int peer_addr_type;
+    int own_addr_type;
     int rc;
 
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
@@ -382,12 +383,12 @@ cmd_conn(int argc, char **argv)
         return 0;
     }
 
-    addr_type = parse_arg_kv("peer_addr_type", cmd_conn_peer_addr_types);
-    if (addr_type == -1) {
+    peer_addr_type = parse_arg_kv("peer_addr_type", cmd_conn_peer_addr_types);
+    if (peer_addr_type == -1) {
         return -1;
     }
 
-    if (addr_type != BLE_GAP_ADDR_TYPE_WL) {
+    if (peer_addr_type != BLE_GAP_ADDR_TYPE_WL) {
         rc = parse_arg_mac("peer_addr", peer_addr);
         if (rc == ENOENT) {
             /* Allow "addr" for backwards compatibility. */
@@ -401,12 +402,12 @@ cmd_conn(int argc, char **argv)
         memset(peer_addr, 0, sizeof peer_addr);
     }
 
-    rc = parse_arg_kv_default("own_addr_type",
-                        cmd_conn_own_addr_types, BLE_ADDR_TYPE_PUBLIC);
-    if (rc < 0) {
+    own_addr_type = parse_arg_kv_default("own_addr_type",
+                                         cmd_conn_own_addr_types,
+                                         BLE_ADDR_TYPE_PUBLIC);
+    if (own_addr_type < 0) {
         return rc;
     }
-    params.our_addr_type = rc;
 
     params.scan_itvl = parse_arg_uint16_dflt("scan_itvl", 0x0010, &rc);
     if (rc != 0) {
@@ -450,7 +451,8 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_conn_initiate(addr_type, peer_addr, &params);
+    rc = bletiny_conn_initiate(own_addr_type, peer_addr_type, peer_addr,
+                               &params);
     if (rc != 0) {
         return rc;
     }
