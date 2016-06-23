@@ -891,7 +891,6 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 
     switch (event) {
     case BLE_GAP_EVENT_CONNECT:
-        
         console_printf("connection %s; status=%d ",
                        ctxt->connect.status == 0 ? "established" : "failed",
                        ctxt->connect.status);
@@ -910,6 +909,10 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         if (conn_idx != -1) {
             bletiny_conn_delete_idx(conn_idx);
         }
+        return 0;
+
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        console_printf("advertising complete.\n");
         return 0;
 
     case BLE_GAP_EVENT_CONN_CANCEL:
@@ -953,6 +956,7 @@ bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
         print_bytes(ctxt->notify.attr_data, ctxt->notify.attr_len);
         console_printf("\n");
         return 0;
+
     default:
         return 0;
     }
@@ -1247,13 +1251,13 @@ bletiny_adv_stop(void)
 
 int
 bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
-                  const uint8_t *peer_addr,
+                  const uint8_t *peer_addr, int32_t duration_ms,
                   const struct ble_gap_adv_params *params)
 {
     int rc;
 
-    rc = ble_gap_adv_start(own_addr_type, peer_addr_type, peer_addr, params,
-                           bletiny_gap_event, NULL);
+    rc = ble_gap_adv_start(own_addr_type, peer_addr_type, peer_addr,
+                           duration_ms, params, bletiny_gap_event, NULL);
     return rc;
 }
 

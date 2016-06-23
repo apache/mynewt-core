@@ -155,7 +155,7 @@ int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
 int bletiny_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
                             int num_attrs);
 int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
-                      const uint8_t *peer_addr,
+                      const uint8_t *peer_addr, int32_t duration_ms,
                       const struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
 int bletiny_conn_initiate(uint8_t own_addr_type,

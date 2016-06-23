@@ -260,6 +260,7 @@ static int
 cmd_adv(int argc, char **argv)
 {
     struct ble_gap_adv_params params;
+    int32_t duration_ms;
     uint8_t peer_addr_type;
     uint8_t own_addr_type;
     uint8_t peer_addr[8];
@@ -332,7 +333,19 @@ cmd_adv(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_adv_start(own_addr_type, peer_addr_type, peer_addr, &params);
+    params.high_duty_cycle = parse_arg_long_bounds_default("hd", 0, 1, 0, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX,
+                                                BLE_HS_FOREVER, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_adv_start(own_addr_type, peer_addr_type, peer_addr,
+                           duration_ms, &params);
     if (rc != 0) {
         console_printf("advertise fail: %d\n", rc);
         return rc;
