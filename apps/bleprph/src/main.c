@@ -169,8 +169,8 @@ bleprph_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, &adv_params,
-                           bleprph_gap_event, NULL);
+    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+                           &adv_params, bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
