@@ -242,6 +242,7 @@ parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status)
         return -1;
     }
 
+    *out_status = 0;
     return kv->val;
 }
 

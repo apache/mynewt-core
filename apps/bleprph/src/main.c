@@ -124,6 +124,7 @@ bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 bleprph_advertise(void)
 {
+    struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     int rc;
 
@@ -165,8 +166,11 @@ bleprph_advertise(void)
     }
 
     /* Begin advertising. */
-    rc = ble_gap_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
-                           NULL, 0, NULL, bleprph_gap_event, NULL);
+    memset(&adv_params, 0, sizeof adv_params);
+    adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, &adv_params,
+                           bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
