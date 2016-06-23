@@ -48,12 +48,21 @@ int bsp_imgr_current_slot(void);
  */
 void *_sbrk(int incr);
 
+/*
+ * Report which memory areas should be included inside a coredump.
+ */
 struct bsp_mem_dump {
     void *bmd_start;
     uint32_t bmd_size;
 };
 
 const struct bsp_mem_dump *bsp_core_dump(int *area_cnt);
+
+/*
+ * Get unique HW identifier/serial number for platform.
+ * Returns the number of bytes filled in.
+ */
+int bsp_hw_id(uint8_t *id, int max_len);
 
 #ifdef __cplusplus
 }
