@@ -32,6 +32,12 @@ static uint32_t g_native_cputime_cputicks_per_ostick;
 static uint64_t g_native_cputime;
 static uint32_t g_native_cputime_last_ostime;
 
+void
+cputime_disable_ocmp(void)
+{
+    os_callout_stop(&g_native_cputimer.cf_c);
+}
+
 /**
  * Convert cpu time ticks to os ticks.
  *
