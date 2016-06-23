@@ -942,7 +942,7 @@ static struct kv_pair cmd_scan_addr_types[] = {
 static int
 cmd_scan(int argc, char **argv)
 {
-    uint32_t dur;
+    int32_t dur;
     int disc;
     int type;
     int filt;
@@ -959,7 +959,8 @@ cmd_scan(int argc, char **argv)
         return 0;
     }
 
-    dur = parse_arg_uint16("dur", &rc);
+    dur = parse_arg_long_bounds_default("dur", 1, INT32_MAX, BLE_HS_FOREVER,
+                                        &rc);
     if (rc != 0) {
         return rc;
     }
