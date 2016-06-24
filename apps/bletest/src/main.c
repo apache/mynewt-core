@@ -21,6 +21,7 @@
 #include <string.h>
 #include "os/os.h"
 #include "bsp/bsp.h"
+#include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_cputime.h"
 #include "hal/hal_flash.h"
@@ -164,6 +165,7 @@ uint16_t g_bletest_handle;
 uint16_t g_bletest_completed_pkts;
 uint16_t g_bletest_outstanding_pkts;
 uint16_t g_bletest_ltk_reply_handle;
+uint32_t g_bletest_hw_id[4];
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -916,6 +918,12 @@ bletest_task_handler(void *arg)
     console_printf("Starting BLE test task as initiator\n");
     bletest_init_initiator();
 #endif
+
+    /* Read unique HW id */
+    rc = bsp_hw_id((void *)&g_bletest_hw_id[0], sizeof(g_bletest_hw_id));
+    assert(rc == 16);
+    console_printf("HW id=%04lx%04lx%04lx%04lx\n", g_bletest_hw_id[0],
+                   g_bletest_hw_id[1], g_bletest_hw_id[2], g_bletest_hw_id[3]);
 
     /* Set the event mask we want to display */
     event_mask = 0x7FF;
