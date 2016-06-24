@@ -885,7 +885,7 @@ bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
+bletiny_gap_event(int event, struct ble_gap_event_ctxt *ctxt, void *arg)
 {
     int conn_idx;
 

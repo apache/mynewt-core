@@ -86,7 +86,7 @@ uint8_t bleprph_reconnect_addr[6];
 uint8_t bleprph_pref_conn_params[8];
 uint8_t bleprph_gatt_service_changed[4];
 
-static int bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt,
+static int bleprph_gap_event(int event, struct ble_gap_event_ctxt *ctxt,
                              void *arg);
 
 /**
@@ -193,7 +193,7 @@ bleprph_advertise(void)
  *                                  particular GAP event being signalled.
  */
 static int
-bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
+bleprph_gap_event(int event, struct ble_gap_event_ctxt *ctxt, void *arg)
 {
     switch (event) {
     case BLE_GAP_EVENT_CONNECT:
