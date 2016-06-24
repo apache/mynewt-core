@@ -911,18 +911,6 @@ cmd_rssi(int argc, char **argv)
  * $scan                                                                     *
  *****************************************************************************/
 
-static struct kv_pair cmd_scan_disc_modes[] = {
-    { "ltd", BLE_GAP_DISC_MODE_LTD },
-    { "gen", BLE_GAP_DISC_MODE_GEN },
-    { NULL }
-};
-
-static struct kv_pair cmd_scan_types[] = {
-    { "passive", BLE_HCI_SCAN_TYPE_PASSIVE },
-    { "active", BLE_HCI_SCAN_TYPE_ACTIVE },
-    { NULL }
-};
-
 static struct kv_pair cmd_scan_filt_policies[] = {
     { "no_wl", BLE_HCI_SCAN_FILT_NO_WL },
     { "use_wl", BLE_HCI_SCAN_FILT_USE_WL },
@@ -942,12 +930,10 @@ static struct kv_pair cmd_scan_addr_types[] = {
 static int
 cmd_scan(int argc, char **argv)
 {
-    int32_t dur;
-    int disc;
-    int type;
-    int filt;
+    struct ble_gap_disc_params params;
+    int32_t duration_ms;
+    uint8_t own_addr_type;
     int rc;
-    int addr_mode;
 
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
         rc = bletiny_scan_cancel();
@@ -959,37 +945,50 @@ cmd_scan(int argc, char **argv)
         return 0;
     }
 
-    dur = parse_arg_long_bounds_default("dur", 1, INT32_MAX, BLE_HS_FOREVER,
-                                        &rc);
+    duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX,
+                                                BLE_HS_FOREVER, &rc);
     if (rc != 0) {
         return rc;
     }
 
-    disc = parse_arg_kv_default("disc", cmd_scan_disc_modes,
-                                BLE_GAP_DISC_MODE_GEN, &rc);
+    params.limited = parse_arg_bool_default("ltd", 0, &rc);
     if (rc != 0) {
         return rc;
     }
 
-    type = parse_arg_kv_default("type", cmd_scan_types,
-                                BLE_HCI_SCAN_TYPE_ACTIVE, &rc);
+    params.passive = parse_arg_bool_default("passive", 0, &rc);
     if (rc != 0) {
         return rc;
     }
 
-    filt = parse_arg_kv_default("filt", cmd_scan_filt_policies,
-                                BLE_HCI_SCAN_FILT_NO_WL, &rc);
+    params.itvl = parse_arg_uint16_dflt("itvl", 0, &rc);
     if (rc != 0) {
         return rc;
     }
 
-    addr_mode = parse_arg_kv_default("addr_mode", cmd_scan_addr_types,
-                                     BLE_ADDR_TYPE_PUBLIC, &rc);
+    params.window = parse_arg_uint16_dflt("window", 0, &rc);
     if (rc != 0) {
         return rc;
     }
 
-    rc = bletiny_scan(dur, disc, type, filt, addr_mode);
+    params.filter_policy = parse_arg_kv_default(
+        "filt", cmd_scan_filt_policies, BLE_HCI_SCAN_FILT_NO_WL, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    params.filter_duplicates = parse_arg_bool_default("nodups", 0, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    own_addr_type = parse_arg_kv_default("own_addr_type", cmd_scan_addr_types,
+                                         BLE_ADDR_TYPE_PUBLIC, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_scan(own_addr_type, duration_ms, &params);
     if (rc != 0) {
         console_printf("error scanning; rc=%d\n", rc);
         return rc;

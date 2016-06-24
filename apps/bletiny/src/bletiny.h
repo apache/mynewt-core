@@ -37,6 +37,7 @@ union ble_store_value;
 union ble_store_key;
 struct ble_gap_adv_params;
 struct ble_gap_conn_desc;
+struct ble_gap_disc_params;
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -106,6 +107,7 @@ uint64_t parse_arg_uint64_bounds(char *name, uint64_t min,
                                  uint64_t max, int *out_status);
 long parse_arg_long(char *name, int *staus);
 uint8_t parse_arg_bool(char *name, int *status);
+uint8_t parse_arg_bool_default(char *name, uint8_t dflt, int *out_status);
 uint8_t parse_arg_uint8(char *name, int *status);
 uint16_t parse_arg_uint16(char *name, int *status);
 uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
@@ -165,8 +167,8 @@ int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle);
 int bletiny_wl_set(struct ble_gap_white_entry *white_list,
                     int white_list_count);
-int bletiny_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
-                  uint8_t filter_policy, uint8_t our_addr_mode);
+int bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,
+                 const struct ble_gap_disc_params *disc_params);
 int bletiny_scan_cancel(void);
 int bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bletiny_update_conn(uint16_t conn_handle,

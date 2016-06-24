@@ -185,6 +185,12 @@ parse_arg_bool(char *name, int *out_status)
 }
 
 uint8_t
+parse_arg_bool_default(char *name, uint8_t dflt, int *out_status)
+{
+    return parse_arg_long_bounds_default(name, 0, 1, dflt, out_status);
+}
+
+uint8_t
 parse_arg_uint8(char *name, int *out_status)
 {
     return parse_arg_long_bounds(name, 0, UINT8_MAX, out_status);
