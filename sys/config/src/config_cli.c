@@ -74,7 +74,7 @@ shell_conf_command(int argc, char **argv)
 {
     char *name = NULL;
     char *val = NULL;
-    char tmp_buf[16];
+    char tmp_buf[CONF_MAX_VAL_LEN + 1];
     int rc;
 
     switch (argc) {
