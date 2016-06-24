@@ -1408,7 +1408,7 @@ bletiny_sec_restart(uint16_t conn_handle,
 
     if (ltk == NULL) {
         /* The user is requesting a store lookup. */
-        rc = ble_gap_find_conn(conn_handle, &desc);
+        rc = ble_gap_conn_find(conn_handle, &desc);
         if (rc != 0) {
             return rc;
         }

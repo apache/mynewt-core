@@ -1047,7 +1047,7 @@ cmd_show_conn(int argc, char **argv)
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
 
-        rc = ble_gap_find_conn(conn->handle, &conn_desc);
+        rc = ble_gap_conn_find(conn->handle, &conn_desc);
         if (rc == 0) {
             print_conn_desc(&conn_desc);
         }
