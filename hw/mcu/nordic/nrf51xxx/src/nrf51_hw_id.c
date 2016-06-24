@@ -42,7 +42,7 @@ bsp_hw_id(uint8_t *id, int max_len)
     len = cnt;
 
     cnt = min(sizeof(NRF_FICR->DEVICEADDR), max_len - len);
-    memcpy(id + len, (void *)NRF_FICR->DEVICEID, cnt);
+    memcpy(id + len, (void *)NRF_FICR->DEVICEADDR, cnt);
 
     return len + cnt;
 }
