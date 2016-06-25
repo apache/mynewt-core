@@ -178,15 +178,15 @@ gatt_svr_chr_write(uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                    uint16_t *len)
 {
     assert(op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-    if (ctxt->chr.write.len < min_len ||
-        ctxt->chr.write.len > max_len) {
+    if (ctxt->att->write.len < min_len ||
+        ctxt->att->write.len > max_len) {
 
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
 
-    memcpy(dst, ctxt->chr.write.data, ctxt->chr.write.len);
+    memcpy(dst, ctxt->att->write.data, ctxt->att->write.len);
     if (len != NULL) {
-        *len = ctxt->chr.write.len;
+        *len = ctxt->att->write.len;
     }
 
     return 0;
@@ -198,41 +198,41 @@ gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
 {
     uint16_t uuid16;
 
-    uuid16 = ble_uuid_128_to_16(ctxt->chr.def->uuid128);
+    uuid16 = ble_uuid_128_to_16(ctxt->chr->uuid128);
     assert(uuid16 != 0);
 
     switch (uuid16) {
     case BLE_GAP_CHR_UUID16_DEVICE_NAME:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr.read.data = bletiny_device_name;
-        ctxt->chr.read.len = strlen(bletiny_device_name);
+        ctxt->att->read.data = bletiny_device_name;
+        ctxt->att->read.len = strlen(bletiny_device_name);
         break;
 
     case BLE_GAP_CHR_UUID16_APPEARANCE:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr.read.data = &bletiny_appearance;
-        ctxt->chr.read.len = sizeof bletiny_appearance;
+        ctxt->att->read.data = &bletiny_appearance;
+        ctxt->att->read.len = sizeof bletiny_appearance;
         break;
 
     case BLE_GAP_CHR_UUID16_PERIPH_PRIV_FLAG:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr.read.data = &bletiny_privacy_flag;
-        ctxt->chr.read.len = sizeof bletiny_privacy_flag;
+        ctxt->att->read.data = &bletiny_privacy_flag;
+        ctxt->att->read.len = sizeof bletiny_privacy_flag;
         break;
 
     case BLE_GAP_CHR_UUID16_RECONNECT_ADDR:
         assert(op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-        if (ctxt->chr.write.len != sizeof bletiny_reconnect_addr) {
+        if (ctxt->att->write.len != sizeof bletiny_reconnect_addr) {
             return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
         }
-        memcpy(bletiny_reconnect_addr, ctxt->chr.write.data,
+        memcpy(bletiny_reconnect_addr, ctxt->att->write.data,
                sizeof bletiny_reconnect_addr);
         break;
 
     case BLE_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr.read.data = &bletiny_pref_conn_params;
-        ctxt->chr.read.len = sizeof bletiny_pref_conn_params;
+        ctxt->att->read.data = &bletiny_pref_conn_params;
+        ctxt->att->read.len = sizeof bletiny_pref_conn_params;
         break;
 
     default:
@@ -249,20 +249,20 @@ gatt_svr_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
 {
     uint16_t uuid16;
 
-    uuid16 = ble_uuid_128_to_16(ctxt->chr.def->uuid128);
+    uuid16 = ble_uuid_128_to_16(ctxt->chr->uuid128);
     assert(uuid16 != 0);
 
     switch (uuid16) {
     case BLE_GATT_CHR_SERVICE_CHANGED_UUID16:
         if (op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            if (ctxt->chr.write.len != sizeof bletiny_gatt_service_changed) {
+            if (ctxt->att->write.len != sizeof bletiny_gatt_service_changed) {
                 return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             }
-            memcpy(bletiny_gatt_service_changed, ctxt->chr.write.data,
+            memcpy(bletiny_gatt_service_changed, ctxt->att->write.data,
                    sizeof bletiny_gatt_service_changed);
         } else if (op == BLE_GATT_ACCESS_OP_READ_CHR) {
-            ctxt->chr.read.data = &bletiny_gatt_service_changed;
-            ctxt->chr.read.len = sizeof bletiny_gatt_service_changed;
+            ctxt->att->read.data = &bletiny_gatt_service_changed;
+            ctxt->att->read.len = sizeof bletiny_gatt_service_changed;
         }
         break;
 
@@ -291,14 +291,14 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
     uint16_t uuid16;
     int rc;
 
-    uuid16 = ble_uuid_128_to_16(ctxt->chr.def->uuid128);
+    uuid16 = ble_uuid_128_to_16(ctxt->chr->uuid128);
     assert(uuid16 != 0);
 
     switch (uuid16) {
     case GATT_SVR_CHR_SUP_NEW_ALERT_CAT_UUID:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr.read.data = &gatt_svr_new_alert_cat;
-        ctxt->chr.read.len = sizeof gatt_svr_new_alert_cat;
+        ctxt->att->read.data = &gatt_svr_new_alert_cat;
+        ctxt->att->read.len = sizeof gatt_svr_new_alert_cat;
         return 0;
 
     case GATT_SVR_CHR_NEW_ALERT:
@@ -308,15 +308,15 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
                                     &gatt_svr_new_alert_val_len);
             return rc;
         } else if (op == BLE_GATT_ACCESS_OP_READ_CHR) {
-            ctxt->chr.read.data = (void *)&gatt_svr_new_alert_val;
-            ctxt->chr.read.len = sizeof gatt_svr_new_alert_val;
+            ctxt->att->read.data = (void *)&gatt_svr_new_alert_val;
+            ctxt->att->read.len = sizeof gatt_svr_new_alert_val;
             return 0;
         }
 
     case GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID:
         assert(op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->chr.read.data = &gatt_svr_unr_alert_cat;
-        ctxt->chr.read.len = sizeof gatt_svr_unr_alert_cat;
+        ctxt->att->read.data = &gatt_svr_unr_alert_cat;
+        ctxt->att->read.len = sizeof gatt_svr_unr_alert_cat;
         return 0;
 
     case GATT_SVR_CHR_UNR_ALERT_STAT_UUID:
@@ -324,8 +324,8 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
             rc = gatt_svr_chr_write(op, ctxt, 2, 2, &gatt_svr_unr_alert_stat,
                                     NULL);
         } else {
-            ctxt->chr.read.data = &gatt_svr_unr_alert_stat;
-            ctxt->chr.read.len = sizeof gatt_svr_unr_alert_stat;
+            ctxt->att->read.data = &gatt_svr_unr_alert_stat;
+            ctxt->att->read.len = sizeof gatt_svr_unr_alert_stat;
             rc = 0;
         }
         return rc;
@@ -347,14 +347,14 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
-                            uint8_t op, struct ble_gatt_access_ctxt *ctxt,
-                            void *arg)
+                             uint8_t op, struct ble_gatt_access_ctxt *ctxt,
+                             void *arg)
 {
     const void *uuid128;
     int rand_num;
     int rc;
 
-    uuid128 = ctxt->chr.def->uuid128;
+    uuid128 = ctxt->chr->uuid128;
 
     /* Determine which characteristic is being accessed by examining its
      * 128-bit UUID.
@@ -367,16 +367,16 @@ gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
          * to hold the response data.
          */
         rand_num = rand();
-        memcpy(ctxt->chr.read.buf, &rand_num, sizeof rand_num);
-        ctxt->chr.read.len = sizeof rand_num;
+        memcpy(ctxt->att->read.buf, &rand_num, sizeof rand_num);
+        ctxt->att->read.len = sizeof rand_num;
         return 0;
     }
 
     if (memcmp(uuid128, gatt_svr_chr_sec_test_static_uuid, 16) == 0) {
         switch (op) {
         case BLE_GATT_ACCESS_OP_READ_CHR:
-            ctxt->chr.read.data = &gatt_svr_sec_test_static_val;
-            ctxt->chr.read.len = sizeof gatt_svr_sec_test_static_val;
+            ctxt->att->read.data = &gatt_svr_sec_test_static_val;
+            ctxt->att->read.len = sizeof gatt_svr_sec_test_static_val;
             return 0;
 
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
