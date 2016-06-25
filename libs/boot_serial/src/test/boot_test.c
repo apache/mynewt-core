@@ -26,8 +26,6 @@
 #include <util/base64.h>
 #include <util/crc16.h>
 #include <testutil/testutil.h>
-#include <newtmgr/newtmgr.h>
-#include <imgmgr/imgmgr.h>
 #include <hal/hal_flash.h>
 #include <hal/flash_map.h>
 
@@ -101,7 +99,7 @@ TEST_CASE(boot_serial_empty_img_msg)
     hdr = (struct nmgr_hdr *)buf;
     memset(hdr, 0, sizeof(*hdr));
     hdr->nh_op = NMGR_OP_WRITE;
-    hdr->nh_group = NMGR_GROUP_ID_IMAGE;
+    hdr->nh_group = htons(NMGR_GROUP_ID_IMAGE);
     hdr->nh_id = IMGMGR_NMGR_OP_UPLOAD;
     hdr->nh_len = htons(2);
     strcpy((char *)(hdr + 1), "{}");
@@ -126,7 +124,7 @@ TEST_CASE(boot_serial_img_msg)
     hdr = (struct nmgr_hdr *)buf;
     memset(hdr, 0, sizeof(*hdr));
     hdr->nh_op = NMGR_OP_WRITE;
-    hdr->nh_group = NMGR_GROUP_ID_IMAGE;
+    hdr->nh_group = htons(NMGR_GROUP_ID_IMAGE);
     hdr->nh_id = IMGMGR_NMGR_OP_UPLOAD;
 
     len = sprintf((char *)(hdr + 1), "{\"off\":0,\"len\":16,\"data\":\"%s\"}",
@@ -171,7 +169,7 @@ TEST_CASE(boot_serial_upload_bigger_image)
         hdr = (struct nmgr_hdr *)buf;
         memset(hdr, 0, sizeof(*hdr));
         hdr->nh_op = NMGR_OP_WRITE;
-        hdr->nh_group = NMGR_GROUP_ID_IMAGE;
+        hdr->nh_group = htons(NMGR_GROUP_ID_IMAGE);
         hdr->nh_id = IMGMGR_NMGR_OP_UPLOAD;
 
         if (off) {

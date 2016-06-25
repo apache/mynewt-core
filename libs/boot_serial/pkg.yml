@@ -29,6 +29,7 @@ pkg.deps:
     - hw/hal
     - libs/os
     - libs/testutil
+    - libs/bootutil
     - libs/util
 pkg.req_apis:
     - console
