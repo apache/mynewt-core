@@ -922,8 +922,11 @@ bletest_task_handler(void *arg)
     /* Read unique HW id */
     rc = bsp_hw_id((void *)&g_bletest_hw_id[0], sizeof(g_bletest_hw_id));
     assert(rc == 16);
-    console_printf("HW id=%04lx%04lx%04lx%04lx\n", g_bletest_hw_id[0],
-                   g_bletest_hw_id[1], g_bletest_hw_id[2], g_bletest_hw_id[3]);
+    console_printf("HW id=%04x%04x%04x%04x\n",
+                   (unsigned int)g_bletest_hw_id[0],
+                   (unsigned int)g_bletest_hw_id[1],
+                   (unsigned int)g_bletest_hw_id[2],
+                   (unsigned int)g_bletest_hw_id[3]);
 
     /* Set the event mask we want to display */
     event_mask = 0x7FF;
