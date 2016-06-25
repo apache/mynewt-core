@@ -124,7 +124,7 @@ int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
 int nm_chr_access(uint16_t conn_handle, uint16_t attr_handle,
-                  uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                  uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                   void *arg);
 int nm_rx_rsp(uint8_t *attr_val, uint16_t attr_len);
 void nm_init(void);

@@ -56,18 +56,18 @@ static uint8_t gatt_svr_sec_test_static_val;
 
 static int
 gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-                        union ble_gatt_access_ctxt *ctxt, void *arg);
+                        struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int
 gatt_svr_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-                         union ble_gatt_access_ctxt *ctxt, void *arg);
+                         struct ble_gatt_access_ctxt *ctxt, void *arg);
 static int
 gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
-                          uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                          uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                           void *arg);
 
 static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
-                                uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                                uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                                 void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
@@ -173,7 +173,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
 };
 
 static int
-gatt_svr_chr_write(uint8_t op, union ble_gatt_access_ctxt *ctxt,
+gatt_svr_chr_write(uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                    uint16_t min_len, uint16_t max_len, void *dst,
                    uint16_t *len)
 {
@@ -194,7 +194,7 @@ gatt_svr_chr_write(uint8_t op, union ble_gatt_access_ctxt *ctxt,
 
 static int
 gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-                        union ble_gatt_access_ctxt *ctxt, void *arg)
+                        struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     uint16_t uuid16;
 
@@ -245,7 +245,7 @@ gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
 
 static int
 gatt_svr_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle, uint8_t op,
-                         union ble_gatt_access_ctxt *ctxt, void *arg)
+                         struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     uint16_t uuid16;
 
@@ -285,7 +285,7 @@ static uint16_t gatt_svr_alert_not_ctrl_pt;
 
 static int
 gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
-                          uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                          uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                           void *arg)
 {
     uint16_t uuid16;
@@ -347,7 +347,7 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
-                            uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                            uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                             void *arg)
 {
     const void *uuid128;
