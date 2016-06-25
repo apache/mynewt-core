@@ -149,7 +149,7 @@ int bletiny_full_disc_prev_chr_def;
 
 static void
 bletiny_print_error(char *msg, uint16_t conn_handle,
-                    struct ble_gatt_error *error)
+                    const struct ble_gatt_error *error)
 {
     if (msg == NULL) {
         msg = "ERROR";
@@ -160,7 +160,7 @@ bletiny_print_error(char *msg, uint16_t conn_handle,
 }
 
 static void
-bletiny_print_adv_fields(struct ble_hs_adv_fields *fields)
+bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint32_t u32;
     uint16_t u16;
@@ -338,7 +338,7 @@ bletiny_svc_find_prev(struct bletiny_conn *conn, uint16_t svc_start_handle)
 
 static struct bletiny_svc *
 bletiny_svc_find(struct bletiny_conn *conn, uint16_t svc_start_handle,
-                  struct bletiny_svc **out_prev)
+                 struct bletiny_svc **out_prev)
 {
     struct bletiny_svc *prev;
     struct bletiny_svc *svc;
@@ -403,7 +403,7 @@ bletiny_svc_delete(struct bletiny_svc *svc)
 }
 
 static struct bletiny_svc *
-bletiny_svc_add(uint16_t conn_handle, struct ble_gatt_svc *gatt_svc)
+bletiny_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 {
     struct bletiny_conn *conn;
     struct bletiny_svc *prev;
@@ -443,7 +443,7 @@ bletiny_svc_add(uint16_t conn_handle, struct ble_gatt_svc *gatt_svc)
 }
 
 static struct bletiny_chr *
-bletiny_chr_find_prev(struct bletiny_svc *svc, uint16_t chr_def_handle)
+bletiny_chr_find_prev(const struct bletiny_svc *svc, uint16_t chr_def_handle)
 {
     struct bletiny_chr *prev;
     struct bletiny_chr *chr;
@@ -461,8 +461,8 @@ bletiny_chr_find_prev(struct bletiny_svc *svc, uint16_t chr_def_handle)
 }
 
 static struct bletiny_chr *
-bletiny_chr_find(struct bletiny_svc *svc, uint16_t chr_def_handle,
-                  struct bletiny_chr **out_prev)
+bletiny_chr_find(const struct bletiny_svc *svc, uint16_t chr_def_handle,
+                 struct bletiny_chr **out_prev)
 {
     struct bletiny_chr *prev;
     struct bletiny_chr *chr;
@@ -487,7 +487,7 @@ bletiny_chr_find(struct bletiny_svc *svc, uint16_t chr_def_handle,
 
 static struct bletiny_chr *
 bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
-                 struct ble_gatt_chr *gatt_chr)
+                const struct ble_gatt_chr *gatt_chr)
 {
     struct bletiny_conn *conn;
     struct bletiny_chr *prev;
@@ -534,7 +534,7 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 }
 
 static struct bletiny_dsc *
-bletiny_dsc_find_prev(struct bletiny_chr *chr, uint16_t dsc_handle)
+bletiny_dsc_find_prev(const struct bletiny_chr *chr, uint16_t dsc_handle)
 {
     struct bletiny_dsc *prev;
     struct bletiny_dsc *dsc;
@@ -552,8 +552,8 @@ bletiny_dsc_find_prev(struct bletiny_chr *chr, uint16_t dsc_handle)
 }
 
 static struct bletiny_dsc *
-bletiny_dsc_find(struct bletiny_chr *chr, uint16_t dsc_handle,
-                  struct bletiny_dsc **out_prev)
+bletiny_dsc_find(const struct bletiny_chr *chr, uint16_t dsc_handle,
+                 struct bletiny_dsc **out_prev)
 {
     struct bletiny_dsc *prev;
     struct bletiny_dsc *dsc;
@@ -577,7 +577,7 @@ bletiny_dsc_find(struct bletiny_chr *chr, uint16_t dsc_handle,
 
 static struct bletiny_dsc *
 bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
-                 struct ble_gatt_dsc *gatt_dsc)
+                const struct ble_gatt_dsc *gatt_dsc)
 {
     struct bletiny_conn *conn;
     struct bletiny_dsc *prev;
@@ -676,7 +676,7 @@ bletiny_conn_delete_idx(int idx)
 }
 
 static int
-bletiny_on_mtu(uint16_t conn_handle, struct ble_gatt_error *error,
+bletiny_on_mtu(uint16_t conn_handle, const struct ble_gatt_error *error,
                uint16_t mtu, void *arg)
 {
     if (error != NULL) {
@@ -766,8 +766,8 @@ bletiny_disc_full_chrs(uint16_t conn_handle)
 }
 
 static int
-bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
-                  struct ble_gatt_svc *service, void *arg)
+bletiny_on_disc_s(uint16_t conn_handle, const struct ble_gatt_error *error,
+                  const struct ble_gatt_svc *service, void *arg)
 {
     if (error != NULL) {
         bletiny_print_error(NULL, conn_handle, error);
@@ -784,8 +784,8 @@ bletiny_on_disc_s(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
-                  struct ble_gatt_chr *chr, void *arg)
+bletiny_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
+                  const struct ble_gatt_chr *chr, void *arg)
 {
     intptr_t svc_start_handle;
 
@@ -806,9 +806,9 @@ bletiny_on_disc_c(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
-                   uint16_t chr_def_handle, struct ble_gatt_dsc *dsc,
-                   void *arg)
+bletiny_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
+                  uint16_t chr_def_handle, const struct ble_gatt_dsc *dsc,
+                  void *arg)
 {
     if (error != NULL) {
         bletiny_print_error(NULL, conn_handle, error);
@@ -825,8 +825,8 @@ bletiny_on_disc_d(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
-                 struct ble_gatt_attr *attr, void *arg)
+bletiny_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
+                const struct ble_gatt_attr *attr, void *arg)
 {
     if (error != NULL) {
         bletiny_print_error(NULL, conn_handle, error);
@@ -844,8 +844,8 @@ bletiny_on_read(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
-                  struct ble_gatt_attr *attr, void *arg)
+bletiny_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
+                  const struct ble_gatt_attr *attr, void *arg)
 {
     if (error != NULL) {
         bletiny_print_error(NULL, conn_handle, error);
@@ -861,9 +861,10 @@ bletiny_on_write(uint16_t conn_handle, struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_write_reliable(uint16_t conn_handle, struct ble_gatt_error *error,
-                           struct ble_gatt_attr *attrs, uint8_t num_attrs,
-                           void *arg)
+bletiny_on_write_reliable(uint16_t conn_handle,
+                          const struct ble_gatt_error *error,
+                          const struct ble_gatt_attr *attrs, uint8_t num_attrs,
+                          void *arg)
 {
     int i;
 
@@ -1192,8 +1193,8 @@ bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
 }
 
 int
-bletiny_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
-               uint16_t value_len)
+bletiny_write(uint16_t conn_handle, uint16_t attr_handle, const void *value,
+              uint16_t value_len)
 {
     int rc;
 
@@ -1208,8 +1209,8 @@ bletiny_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
 }
 
 int
-bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                      uint16_t value_len)
+bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
+                     const void *value, uint16_t value_len)
 {
     int rc;
 
@@ -1219,8 +1220,8 @@ bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle, void *value,
 }
 
 int
-bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                    uint16_t value_len)
+bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
+                   const void *value, uint16_t value_len)
 {
     int rc;
 
@@ -1230,8 +1231,9 @@ bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle, void *value,
 }
 
 int
-bletiny_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
-                        int num_attrs)
+bletiny_write_reliable(uint16_t conn_handle,
+                       const struct ble_gatt_attr *attrs,
+                       int num_attrs)
 {
     int rc;
 

@@ -1815,7 +1815,7 @@ cmd_write(int argc, char **argv)
             return EINVAL;
         }
         rc = bletiny_write_no_rsp(conn_handle, attrs[0].handle,
-                                   attrs[0].value, attrs[0].value_len);
+                                  attrs[0].value, attrs[0].value_len);
     } else if (is_long) {
         if (num_attrs != 1) {
             return EINVAL;

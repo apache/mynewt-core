@@ -23,7 +23,7 @@
  * Utility function to log an array of bytes.
  */
 void
-print_bytes(uint8_t *bytes, int len)
+print_bytes(const uint8_t *bytes, int len)
 {
     int i;
 
@@ -33,9 +33,9 @@ print_bytes(uint8_t *bytes, int len)
 }
 
 void
-print_addr(void *addr)
+print_addr(const void *addr)
 {
-    uint8_t *u8p;
+    const uint8_t *u8p;
 
     u8p = addr;
     BLEPRPH_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",

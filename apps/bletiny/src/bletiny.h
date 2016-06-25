@@ -93,9 +93,6 @@ extern uint16_t nm_attr_val_handle;
 
 extern struct log bletiny_log;
 
-void print_addr(void *addr);
-void print_uuid(void *uuid128);
-void print_bytes(uint8_t *bytes, int len);
 const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
                                        char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
@@ -148,14 +145,14 @@ int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                           uint16_t end_handle, uint8_t *uuid128);
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                        int num_attr_handles);
-int bletiny_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                   uint16_t value_len);
+int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
+                  const void *value, uint16_t value_len);
 int bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
-                          void *value, uint16_t value_len);
+                         const void *value, uint16_t value_len);
 int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                        void *value, uint16_t value_len);
-int bletiny_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
-                            int num_attrs);
+                       const void *value, uint16_t value_len);
+int bletiny_write_reliable(uint16_t conn_handle,
+                           const struct ble_gatt_attr *attrs, int num_attrs);
 int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
                       const uint8_t *peer_addr, int32_t duration_ms,
                       const struct ble_gap_adv_params *params);
@@ -209,10 +206,13 @@ int store_read(int obj_type, union ble_store_key *key,
 int store_write(int obj_type, union ble_store_value *val);
 
 /** Misc. */
-void print_bytes(uint8_t *bytes, int len);
-int svc_is_empty(struct bletiny_svc *svc);
-uint16_t chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr);
-int chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr);
-void print_conn_desc(struct ble_gap_conn_desc *desc);
+void print_bytes(const uint8_t *bytes, int len);
+void print_addr(const void *addr);
+void print_uuid(const void *uuid128);
+int svc_is_empty(const struct bletiny_svc *svc);
+uint16_t chr_end_handle(const struct bletiny_svc *svc,
+                        const struct bletiny_chr *chr);
+int chr_is_empty(const struct bletiny_svc *svc, const struct bletiny_chr *chr);
+void print_conn_desc(const struct ble_gap_conn_desc *desc);
 
 #endif
