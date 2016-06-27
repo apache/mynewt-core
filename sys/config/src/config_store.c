@@ -159,7 +159,7 @@ conf_save(void)
     rc = 0;
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
         if (ch->ch_export) {
-            rc2 = ch->ch_export(conf_store_one);
+            rc2 = ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
             if (!rc) {
                 rc = rc2;
             }

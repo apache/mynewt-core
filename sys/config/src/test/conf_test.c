@@ -46,15 +46,18 @@ static char *ctest_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int ctest_handle_set(int argc, char **argv, char *val);
 static int ctest_handle_commit(void);
-static int ctest_handle_export(void (*cb)(char *name, char *value));
+static int ctest_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt);
 static char *c2_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int c2_handle_set(int argc, char **argv, char *val);
-static int c2_handle_export(void (*cb)(char *name, char *value));
+static int c2_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt);
 static char *c3_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int c3_handle_set(int argc, char **argv, char *val);
-static int c3_handle_export(void (*cb)(char *name, char *value));
+static int c3_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt);
 
 struct conf_handler config_test_handler = {
     .ch_name = "myfoo",
@@ -98,7 +101,8 @@ ctest_handle_commit(void)
 }
 
 static int
-ctest_handle_export(void (*cb)(char *name, char *value))
+ctest_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt)
 {
     char value[32];
 
@@ -177,7 +181,8 @@ c2_handle_set(int argc, char **argv, char *val)
 }
 
 static int
-c2_handle_export(void (*cb)(char *name, char *value))
+c2_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt)
 {
     int i;
     char name[32];
@@ -222,7 +227,8 @@ c3_handle_set(int argc, char **argv, char *val)
 }
 
 static int
-c3_handle_export(void (*cb)(char *name, char *value))
+c3_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt)
 {
     char value[32];
 

@@ -42,13 +42,19 @@ enum conf_type {
     CONF_DOUBLE
 } __attribute__((__packed__));
 
+enum conf_export_tgt {
+    CONF_EXPORT_PERSIST,        /* Value is to be persisted. */
+    CONF_EXPORT_SHOW            /* Value is to be displayed. */
+};
+
 struct conf_handler {
     SLIST_ENTRY(conf_handler) ch_list;
     char *ch_name;
     char *(*ch_get)(int argc, char **argv, char *val, int val_len_max);
     int (*ch_set)(int argc, char **argv, char *val);
     int (*ch_commit)(void);
-    int (*ch_export)(void (*export_func)(char *name, char *val));
+    int (*ch_export)(void (*export_func)(char *name, char *val),
+      enum conf_export_tgt tgt);
 };
 
 int conf_init(void);

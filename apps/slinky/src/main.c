@@ -131,7 +131,8 @@ struct os_mempool default_mbuf_mpool;
 static char *test_conf_get(int argc, char **argv, char *val, int max_len);
 static int test_conf_set(int argc, char **argv, char *val);
 static int test_conf_commit(void);
-static int test_conf_export(void (*export_func)(char *name, char *val));
+static int test_conf_export(void (*export_func)(char *name, char *val),
+  enum conf_export_tgt tgt);
 
 static struct conf_handler test_conf_handler = {
     .ch_name = "test",
@@ -182,7 +183,7 @@ test_conf_commit(void)
 }
 
 static int
-test_conf_export(void (*func)(char *name, char *val))
+test_conf_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
 {
     char buf[4];
 
