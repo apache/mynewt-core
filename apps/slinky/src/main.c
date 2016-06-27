@@ -47,6 +47,7 @@
 #include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
+#include <id/id.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -373,6 +374,8 @@ main(int argc, char **argv)
 #elif FCB_PRESENT
     setup_for_fcb();
 #endif
+
+    id_init();
 
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                     SHELL_MAX_INPUT_LEN);
