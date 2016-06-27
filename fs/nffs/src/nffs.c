@@ -35,6 +35,10 @@ uint8_t nffs_scratch_area_idx;
 uint16_t nffs_block_max_data_sz;
 struct nffs_area_desc *nffs_current_area_descs;
 
+uint32_t nffs_hashcnt_ins;
+uint32_t nffs_hashcnt_rm;
+uint32_t nffs_object_count;
+
 struct os_mempool nffs_file_pool;
 struct os_mempool nffs_dir_pool;
 struct os_mempool nffs_inode_entry_pool;

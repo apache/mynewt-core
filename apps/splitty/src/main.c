@@ -27,7 +27,7 @@
 #include <config/config.h>
 #include <hal/flash_map.h>
 #include <hal/hal_system.h>
-#if defined SPLIT_LOADER || defined SPLIT_APPLICATION
+#if defined SPLIT_APPLICATION
 #include <split/split.h>
 #endif
 #ifdef NFFS_PRESENT
@@ -47,7 +47,6 @@
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
-#include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
@@ -128,70 +127,8 @@ static uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
 static struct os_mbuf_pool default_mbuf_pool;
 static struct os_mempool default_mbuf_mpool;
 
-static char *test_conf_get(int argc, char **argv, char *val, int max_len);
-static int test_conf_set(int argc, char **argv, char *val);
-static int test_conf_commit(void);
-static int test_conf_export(void (*export_func)(char *name, char *val),
-  enum conf_export_tgt tgt);
-
-static struct conf_handler test_conf_handler = {
-    .ch_name = "test",
-    .ch_get = test_conf_get,
-    .ch_set = test_conf_set,
-    .ch_commit = test_conf_commit,
-    .ch_export = test_conf_export
-};
-
-static uint8_t test8;
-static uint8_t test8_shadow;
-static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
-
-static char *
-test_conf_get(int argc, char **argv, char *buf, int max_len)
-{
-    if (argc == 1) {
-        if (!strcmp(argv[0], "8")) {
-            return conf_str_from_value(CONF_INT8, &test8, buf, max_len);
-        } else if (!strcmp(argv[0], "str")) {
-            return test_str;
-        }
-    }
-    return NULL;
-}
-
-static int
-test_conf_set(int argc, char **argv, char *val)
-{
-    if (argc == 1) {
-        if (!strcmp(argv[0], "8")) {
-            return CONF_VALUE_SET(val, CONF_INT8, test8_shadow);
-        } else if (!strcmp(argv[0], "str")) {
-            return CONF_VALUE_SET(val, CONF_STRING, test_str);
-        }
-    }
-    return OS_ENOENT;
-}
-
-static int
-test_conf_commit(void)
-{
-    test8 = test8_shadow;
-
-    return 0;
-}
-
-static int
-test_conf_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
-{
-    char buf[4];
-
-    conf_str_from_value(CONF_INT8, &test8, buf, sizeof(buf));
-    func("test/8", buf);
-    func("test/str", test_str);
-    return 0;
-}
 
 void
 task1_handler(void *arg)
@@ -205,11 +142,11 @@ task1_handler(void *arg)
     hal_gpio_init_out(g_led_pin, 1);
 
     if (imgr_my_version(&ver) == 0) {
-        console_printf("\nSlinky %u.%u.%u.%u\n",
+        console_printf("\nSplitty %u.%u.%u.%u\n",
           ver.iv_major, ver.iv_minor, ver.iv_revision,
           (unsigned int)ver.iv_build_num);
     } else {
-        console_printf("\nSlinky\n");
+        console_printf("\nSplitty\n");
     }
 
     while (1) {
@@ -219,7 +156,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         /* Wait one second */
-        os_time_delay(OS_TICKS_PER_SEC);
+        os_time_delay(OS_TICKS_PER_SEC/4);
 
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
@@ -367,8 +304,6 @@ main(int argc, char **argv)
 #endif
 
     conf_init();
-    rc = conf_register(&test_conf_handler);
-    assert(rc == 0);
 
     log_init();
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
@@ -420,27 +355,15 @@ main(int argc, char **argv)
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
-    flash_test_init();
-
     reboot_init_handler(LOG_TYPE_STORAGE, 10);
 
-#if defined SPLIT_LOADER || defined SPLIT_APPLICATION
+#if defined SPLIT_APPLICATION
     split_app_init();
 #endif
 
     conf_load();
 
     log_reboot(HARD_REBOOT);
-
-#ifdef SPLIT_LOADER
-    {
-        void *entry;
-        rc = split_app_go(&entry, true);
-        if(rc == 0) {
-            system_start(entry);
-        }
-    }
-#endif
 
     rc = init_tasks();
 

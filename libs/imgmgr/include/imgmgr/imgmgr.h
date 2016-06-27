@@ -52,7 +52,7 @@ int imgr_ver_str(struct image_version *ver, char *dst);
 /*
  * Given flash_map slot id, read in image_version and/or image hash.
  */
-int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash);
+int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32_t *flags);
 
 /*
  * Returns version number of current image (if available).

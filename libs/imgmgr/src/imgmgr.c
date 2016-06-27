@@ -106,7 +106,7 @@ struct imgr_state imgr_state;
  * Returns 2 if slot is empty. XXXX not there yet
  */
 int
-imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash)
+imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32_t *flags)
 {
     struct image_header *hdr;
     struct image_tlv *tlv;
@@ -136,6 +136,9 @@ imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash)
         goto end;
     }
 
+    if(flags) {
+        *flags = hdr->ih_flags;
+    }
     /*
      * Build ID is in a TLV after the image.
      */
@@ -182,7 +185,7 @@ end:
 int
 imgr_my_version(struct image_version *ver)
 {
-    return imgr_read_info(bsp_imgr_current_slot(), ver, NULL);
+    return imgr_read_info(bsp_imgr_current_slot(), ver, NULL, NULL);
 }
 
 /*
@@ -196,7 +199,7 @@ imgr_find_by_ver(struct image_version *find, uint8_t *hash)
     struct image_version ver;
 
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        if (imgr_read_info(i, &ver, hash) != 0) {
+        if (imgr_read_info(i, &ver, hash, NULL) != 0) {
             continue;
         }
         if (!memcmp(find, &ver, sizeof(ver))) {
@@ -217,7 +220,7 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
     uint8_t hash[IMGMGR_HASH_LEN];
 
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        if (imgr_read_info(i, ver, hash) != 0) {
+        if (imgr_read_info(i, ver, hash, NULL) != 0) {
             continue;
         }
         if (!memcmp(hash, find, IMGMGR_HASH_LEN)) {
@@ -242,7 +245,7 @@ imgr_list(struct nmgr_jbuf *njb)
     int cnt = 0;
 
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        rc = imgr_read_info(i, &ver, NULL);
+        rc = imgr_read_info(i, &ver, NULL, NULL);
         if (rc != 0) {
             continue;
         }
@@ -270,9 +273,10 @@ imgr_list2(struct nmgr_jbuf *njb)
     struct json_encoder *enc;
     int i;
     int rc;
+    uint32_t flags;
     struct image_version ver;
     uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
-    struct json_value jv_ver;
+    struct json_value jv;
     char vers_str[IMGMGR_NMGR_MAX_VER];
     char hash_str[IMGMGR_HASH_STR + 1];
     int ver_len;
@@ -283,16 +287,26 @@ imgr_list2(struct nmgr_jbuf *njb)
     json_encode_array_name(enc, "images");
     json_encode_array_start(enc);
     for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        rc = imgr_read_info(i, &ver, hash);
+        rc = imgr_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
             continue;
         }
-        ver_len = imgr_ver_str(&ver, vers_str);
-        base64_encode(hash, IMGMGR_HASH_LEN, hash_str, 1);
-        JSON_VALUE_STRINGN(&jv_ver, vers_str, ver_len);
-
         json_encode_object_start(enc);
-        json_encode_object_entry(enc, hash_str, &jv_ver);
+
+        JSON_VALUE_INT(&jv, i);
+        json_encode_object_entry(enc, "slot", &jv);
+
+        ver_len = imgr_ver_str(&ver, vers_str);
+        JSON_VALUE_STRINGN(&jv, vers_str, ver_len);
+        json_encode_object_entry(enc, "version", &jv);
+
+        base64_encode(hash, IMGMGR_HASH_LEN, hash_str, 1);
+        JSON_VALUE_STRING(&jv, hash_str);
+        json_encode_object_entry(enc, "hash", &jv);
+
+        JSON_VALUE_BOOL(&jv, !(flags & IMAGE_F_NON_BOOTABLE));
+        json_encode_object_entry(enc, "bootable", &jv);
+
         json_encode_object_finish(enc);
     }
     json_encode_array_finish(enc);
@@ -380,20 +394,11 @@ imgr_upload(struct nmgr_jbuf *njb)
         best = -1;
 
         for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-            rc = imgr_read_info(i, &ver, NULL);
+            rc = imgr_read_info(i, &ver, NULL, NULL);
             if (rc < 0) {
                 continue;
             }
             if (rc == 0) {
-                if (!memcmp(&ver, &hdr->ih_ver, sizeof(ver))) {
-                    if (active == i) {
-                        rc = NMGR_ERR_EINVAL;
-                        goto err;
-                    } else {
-                        best = i;
-                        break;
-                    }
-                }
                 /*
                  * Image in slot is ok.
                  */

@@ -28,13 +28,11 @@
 #define BOOT_EBADVECT   4
 #define BOOT_EBADSTATUS 5
 #define BOOT_ENOMEM     6
+#define BOOT_EBADARGS   7
 
 #define BOOT_TMPBUF_SZ  256
 
-struct boot_image_location {
-    uint8_t bil_flash_id;
-    uint32_t bil_address;
-};
+
 
 /*
  * Maintain state of copy progress.

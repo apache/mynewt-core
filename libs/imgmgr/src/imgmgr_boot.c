@@ -74,7 +74,7 @@ imgr_boot_read(struct nmgr_jbuf *njb)
 
     rc = boot_vect_read_test(&slot);
     if (!rc) {
-        rc = imgr_read_info(slot, &ver, hash);
+        rc = imgr_read_info(slot, &ver, hash, NULL);
         if (!rc) {
             imgr_ver_jsonstr(enc, "test", &ver);
         }
@@ -82,13 +82,13 @@ imgr_boot_read(struct nmgr_jbuf *njb)
 
     rc = boot_vect_read_main(&slot);
     if (!rc) {
-        rc = imgr_read_info(slot, &ver, hash);
+        rc = imgr_read_info(slot, &ver, hash, NULL);
         if (!rc) {
             imgr_ver_jsonstr(enc, "main", &ver);
         }
     }
 
-    rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash);
+    rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash, NULL);
     if (!rc) {
         imgr_ver_jsonstr(enc, "active", &ver);
     }
@@ -176,7 +176,7 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
 
     rc = boot_vect_read_test(&slot);
     if (!rc) {
-        rc = imgr_read_info(slot, &ver, hash);
+        rc = imgr_read_info(slot, &ver, hash, NULL);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "test", hash);
         }
@@ -184,13 +184,13 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
 
     rc = boot_vect_read_main(&slot);
     if (!rc) {
-        rc = imgr_read_info(slot, &ver, hash);
+        rc = imgr_read_info(slot, &ver, hash, NULL);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "main", hash);
         }
     }
 
-    rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash);
+    rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash, NULL);
     if (!rc) {
         imgr_hash_jsonstr(enc, "active", hash);
     }

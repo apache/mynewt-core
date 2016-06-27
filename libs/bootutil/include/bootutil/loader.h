@@ -67,6 +67,14 @@ struct boot_rsp {
     uint32_t br_image_addr;
 };
 
-int boot_go(const struct boot_req *req, struct boot_rsp *rsp);
+/* you must have pre-allocated all the entries within this structure */
+int
+boot_build_request(struct boot_req *preq, int area_descriptor_max);
+
+int
+boot_go(const struct boot_req *req, struct boot_rsp *rsp);
+
+int
+split_go(int loader_slot, int split_slot, void **entry);
 
 #endif

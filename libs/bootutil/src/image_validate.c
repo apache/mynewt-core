@@ -38,7 +38,7 @@
  */
 static int
 bootutil_img_hash(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
-  uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *hash_result)
+  uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *hash_result, uint8_t *seed, int seed_len)
 {
     mbedtls_sha256_context sha256_ctx;
     uint32_t blk_sz;
@@ -48,6 +48,12 @@ bootutil_img_hash(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
 
     mbedtls_sha256_init(&sha256_ctx);
     mbedtls_sha256_starts(&sha256_ctx, 0);
+
+    /* in some cases (split image) the hash is seeded with data from
+     * the loader image */
+    if(seed && (seed_len > 0)) {
+        mbedtls_sha256_update(&sha256_ctx, seed, seed_len);
+    }
 
     size = hdr->ih_img_size + hdr->ih_hdr_size;
 
@@ -78,7 +84,7 @@ bootutil_img_hash(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
  */
 int
 bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
-  uint8_t *tmp_buf, uint32_t tmp_buf_sz)
+  uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *seed, int seed_len, uint8_t *out_hash)
 {
     uint32_t off;
     uint32_t size;
@@ -106,9 +112,13 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
         return -1;
     }
 
-    rc = bootutil_img_hash(hdr, flash_id, addr, tmp_buf, tmp_buf_sz, hash);
+    rc = bootutil_img_hash(hdr, flash_id, addr, tmp_buf, tmp_buf_sz, hash, seed, seed_len);
     if (rc) {
         return rc;
+    }
+
+    if(out_hash) {
+        memcpy(out_hash, hash, 32);
     }
 
     /*

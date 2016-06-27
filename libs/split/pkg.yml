@@ -17,34 +17,14 @@
 # under the License.
 #
 
-pkg.name: apps/slinky
-pkg.type: app
-pkg.description: Example application which uses a variety of mynewt features.
+pkg.name: libs/split
+pkg.description: The split image library helps manage and configure split image operation
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - split
 
-pkg.deps:
-    - fs/nffs
-    - libs/console/full
-    - libs/flash_test
-    - libs/imgmgr
-    - libs/newtmgr
-    - libs/os
+
+pkg.deps: 
     - libs/bootutil
-    - libs/shell
-    - libs/util
-    - libs/split
-    - sys/config
-    - sys/id
-    - sys/log
-    - sys/stats
 
-pkg.cflags:
-    - "-DSTATS_NAME_ENABLE=1"
-
-pkg.cflags.NFFS:
-    - "-DNFFS_PRESENT"
-
-pkg.cflags.FCB:
-    - "-DFCB_PRESENT"
