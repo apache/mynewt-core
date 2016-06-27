@@ -24,7 +24,7 @@
 #include "os/os_eventq.h"
 
 #define MY_STACK_SIZE        (5120)
-
+#define POLL_STACK_SIZE        (4096)
 /*Task 1 sending task*/
 /* Define task stack and task object */
 #define SEND_TASK_PRIO        (1)
@@ -47,6 +47,21 @@ struct os_event m_event[SIZE_MULTI_EVENT];
 
 /* Setting the event to send and receive multiple data */
 uint8_t my_event_type = 1;
+
+/* Setting up data for the poll*/
+/* Define the task stack for the eventq_task_poll_send*/
+#define SEND_TASK_POLL_PRIO        (3)
+struct os_task eventq_task_poll_s;
+os_stack_t eventq_task_stack_poll_s[POLL_STACK_SIZE];
+
+/* Define the task stack for the eventq_task_poll_receive*/
+#define RECEIVE_TASK_POLL_PRIO     (4)
+struct os_task eventq_task_poll_r;
+os_stack_t eventq_task_stack_poll_r[POLL_STACK_SIZE ];
+
+struct os_eventq *poll_eventq[POLL_STACK_SIZE];
+struct os_eventq p_event[POLL_STACK_SIZE];
+struct os_event poll_event[POLL_STACK_SIZE];
 
 /* This is the task function  to send data */
 void
@@ -95,6 +110,49 @@ eventq_task_receive(void *arg)
     os_test_restart();
 }
 
+void
+eventq_task_poll_send(void *arg){
+    int i;
+
+    /* Assigning the *poll_eventq[] */
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        poll_eventq[i] = &p_event[i];
+    }
+
+    /* Initializing the *poll_eventq */
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        os_eventq_init(poll_eventq[i]);
+    }
+
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        poll_event[i].ev_type = i + 10;
+        poll_event[i].ev_arg = NULL;
+
+        /* Put and send */
+        os_eventq_put(poll_eventq[i], &poll_event[i]);
+        os_time_delay(OS_TICKS_PER_SEC / 2);
+    }
+
+    /* This task sleeps until the receive task completes the test. */
+    os_time_delay(1000000);
+}
+
+void
+eventq_task_poll_receive(void *arg){
+    struct os_event *event;
+    int i;
+
+    /* Recieving using the os_eventq_poll*/
+    for (i = 0; i < SIZE_MULTI_EVENT; i++) {
+        event = os_eventq_poll(poll_eventq, SIZE_MULTI_EVENT, OS_WAIT_FOREVER);
+        TEST_ASSERT(event->ev_type == i +10);
+    }
+
+    /* Finishes the test when OS has been started */
+    os_test_restart();
+
+}
+
 TEST_CASE(event_test_sr)
 {
     int i;
@@ -121,7 +179,26 @@ TEST_CASE(event_test_sr)
 
 }
 
+TEST_CASE(event_test_poll_sr)
+{
+    /* Initializing the OS */
+    os_init();
+    /* Initialize the task */
+    os_task_init(&eventq_task_poll_s, "eventq_task_poll_s", eventq_task_poll_send, NULL,
+        SEND_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_s, POLL_STACK_SIZE);
+
+    /* Receive events and check whether the eevnts are correctly received */
+    os_task_init(&eventq_task_poll_r, "eventq_task_r", eventq_task_poll_receive, NULL,
+        RECEIVE_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_r,
+        POLL_STACK_SIZE);
+
+    /* Does not return until OS_restart is called */
+    os_start();
+
+}
+
 TEST_SUITE(os_eventq_test_suite)
 {
     event_test_sr();
+    event_test_poll_sr();
 }
