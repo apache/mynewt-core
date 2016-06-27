@@ -62,6 +62,7 @@ const struct bsp_mem_dump *bsp_core_dump(int *area_cnt);
  * Get unique HW identifier/serial number for platform.
  * Returns the number of bytes filled in.
  */
+#define BSP_MAX_ID_LEN  32
 int bsp_hw_id(uint8_t *id, int max_len);
 
 #ifdef __cplusplus
