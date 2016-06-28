@@ -72,7 +72,7 @@ nffs_dir_open(const char *path, struct nffs_dir **out_dir)
     }
 
     dir->nd_parent_inode_entry = parent_inode_entry;
-    dir->nd_parent_inode_entry->nie_refcnt++;
+    nffs_inode_inc_refcnt(dir->nd_parent_inode_entry);
     memset(&dir->nd_dirent, 0, sizeof dir->nd_dirent);
 
     *out_dir = dir;
@@ -103,7 +103,7 @@ nffs_dir_read(struct nffs_dir *dir, struct nffs_dirent **out_dirent)
         return FS_ENOENT;
     }
 
-    child->nie_refcnt++;
+    nffs_inode_inc_refcnt(child);
     *out_dirent = &dir->nd_dirent;
 
     return 0;

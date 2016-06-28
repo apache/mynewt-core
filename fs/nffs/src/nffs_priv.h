@@ -39,6 +39,7 @@
 
 #define NFFS_ID_ROOT_DIR             0
 #define NFFS_ID_NONE                 0xffffffff
+#define NFFS_HASH_ENTRY_NONE         0xffffffff
 
 #define NFFS_AREA_MAGIC0             0xb98a31e2
 #define NFFS_AREA_MAGIC1             0x7fb0428c
@@ -48,7 +49,7 @@
 #define NFFS_INODE_MAGIC             0x925f8bc0
 
 #define NFFS_AREA_ID_NONE            0xff
-#define NFFS_AREA_VER_0				 0
+#define NFFS_AREA_VER_0                 0
 #define NFFS_AREA_VER_1              1
 #define NFFS_AREA_VER                NFFS_AREA_VER_1
 #define NFFS_AREA_OFFSET_ID          23
@@ -68,44 +69,14 @@ struct nffs_disk_area {
 };
 
 /** On-disk representation of an inode (file or directory). */
-struct nffs_disk_inodeV0 {
-    uint32_t ndi_magic;         /* NFFS_INODE_MAGIC */
-    uint32_t ndi_id;            /* Unique object ID. */
-    uint32_t ndi_seq;           /* Sequence number; greater supersedes
-                                   lesser. */
-    uint32_t ndi_parent_id;     /* Object ID of parent directory inode. */
-    uint8_t reserved8;
-    uint8_t ndi_filename_len;   /* Length of filename, in bytes. */
-    uint16_t ndi_crc16;         /* Covers rest of header and filename. */
-    /* Followed by filename. */
-};
-
-#define NFFS_DISK_INODEV0_OFFSET_CRC  18
-
-/** On-disk representation of a data block. */
-struct nffs_disk_blockV0 {
-    uint32_t ndb_magic;     /* NFFS_BLOCK_MAGIC */
-    uint32_t ndb_id;        /* Unique object ID. */
-    uint32_t ndb_seq;       /* Sequence number; greater supersedes lesser. */
-    uint32_t ndb_inode_id;  /* Object ID of owning inode. */
-    uint32_t ndb_prev_id;   /* Object ID of previous block in file;
-                               NFFS_ID_NONE if this is the first block. */
-    uint16_t ndb_data_len;  /* Length of data contents, in bytes. */
-    uint16_t ndb_crc16;     /* Covers rest of header and data. */
-    /* Followed by 'ndb_data_len' bytes of data. */
-};
-
-#define NFFS_DISK_BLOCKV0_OFFSET_CRC  22
-
-/** On-disk representation of an inode (file or directory). */
 struct nffs_disk_inode {
     uint32_t ndi_id;            /* Unique object ID. */
     uint32_t ndi_parent_id;     /* Object ID of parent directory inode. */
     uint32_t ndi_lastblock_id;     /* Object ID of parent directory inode. */
     uint16_t ndi_seq;           /* Sequence number; greater supersedes
                                    lesser. */
-	uint16_t reserved16;
-    uint8_t reserved8;
+    uint16_t reserved16;
+    uint8_t ndi_flags;            /* flags */
     uint8_t ndi_filename_len;   /* Length of filename, in bytes. */
     uint16_t ndi_crc16;         /* Covers rest of header and filename. */
     /* Followed by filename. */
@@ -149,9 +120,25 @@ struct nffs_inode_entry {
     union {
         struct nffs_inode_list nie_child_list;           /* If directory */
         struct nffs_hash_entry *nie_last_block_entry;    /* If file */
+        uint32_t nie_lastblock_id;
     };
     uint8_t nie_refcnt;
+    uint8_t nie_flags;
+    uint16_t reserved16;
 };
+
+#define    NFFS_INODE_FLAG_FREE        0x00
+#define    NFFS_INODE_FLAG_DUMMY       0x01    /* inode is a dummy */
+#define    NFFS_INODE_FLAG_DUMMYPARENT 0x02    /* parent not in cache */
+#define    NFFS_INODE_FLAG_DUMMYLSTBLK 0x04    /* lastblock not in cache */
+#define    NFFS_INODE_FLAG_DUMMYINOBLK 0x08    /* dummy inode for blk */
+#define    NFFS_INODE_FLAG_OBSOLETE    0x10    /* always replace if same ID */
+#define    NFFS_INODE_FLAG_INTREE      0x20    /* in directory structure */
+#define    NFFS_INODE_FLAG_INHASH      0x40    /* in hash table */
+#define    NFFS_INODE_FLAG_DELETED     0x80    /* inode deleted */
+
+#define nie_id            nie_hash_entry.nhe_id
+#define nie_flash_loc    nie_hash_entry.nhe_flash_loc
 
 /** Full inode representation; not stored permanently RAM. */
 struct nffs_inode {
@@ -199,8 +186,8 @@ struct nffs_disk_object {
     } ndo_un_obj;
 };
 
-#define ndo_disk_inode	ndo_un_obj.ndo_disk_inode
-#define ndo_disk_block	ndo_un_obj.ndo_disk_block
+#define ndo_disk_inode    ndo_un_obj.ndo_disk_inode
+#define ndo_disk_block    ndo_un_obj.ndo_disk_block
 
 struct nffs_seek_info {
     struct nffs_block nsi_last_block;
@@ -269,6 +256,7 @@ extern uint8_t nffs_num_areas;
 extern uint8_t nffs_scratch_area_idx;
 extern uint16_t nffs_block_max_data_sz;
 extern unsigned int nffs_gc_count;
+extern struct nffs_area_desc *nffs_current_area_descs;
 
 #define NFFS_FLASH_BUF_SZ        256
 extern uint8_t nffs_flash_buf[NFFS_FLASH_BUF_SZ];
@@ -313,6 +301,7 @@ int nffs_block_from_hash_entry(struct nffs_block *out_block,
                                struct nffs_hash_entry *entry);
 int nffs_block_read_data(const struct nffs_block *block, uint16_t offset,
                          uint16_t length, void *dst);
+int nffs_block_is_dummy(struct nffs_hash_entry *entry);
 
 /* @cache */
 void nffs_cache_inode_delete(const struct nffs_inode_entry *inode_entry);
@@ -390,6 +379,8 @@ struct nffs_hash_entry *nffs_hash_find_block(uint32_t id);
 void nffs_hash_insert(struct nffs_hash_entry *entry);
 void nffs_hash_remove(struct nffs_hash_entry *entry);
 int nffs_hash_init(void);
+int nffs_hash_entry_is_dummy(struct nffs_hash_entry *he);
+int nffs_hash_id_is_dummy(uint32_t id);
 
 /* @inode */
 struct nffs_inode_entry *nffs_inode_entry_alloc(void);
@@ -407,6 +398,7 @@ int nffs_inode_entry_from_disk(struct nffs_inode_entry *out_inode,
 int nffs_inode_rename(struct nffs_inode_entry *inode_entry,
                       struct nffs_inode_entry *new_parent,
                       const char *new_filename);
+int nffs_inode_update(struct nffs_inode_entry *inode_entry);
 void nffs_inode_insert_block(struct nffs_inode *inode,
                              struct nffs_block *block);
 int nffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
@@ -414,6 +406,7 @@ int nffs_inode_read_disk(uint8_t area_idx, uint32_t offset,
 int nffs_inode_write_disk(const struct nffs_disk_inode *disk_inode,
                           const char *filename, uint8_t area_idx,
                           uint32_t offset);
+int nffs_inode_inc_refcnt(struct nffs_inode_entry *inode_entry);
 int nffs_inode_dec_refcnt(struct nffs_inode_entry *inode_entry);
 int nffs_inode_add_child(struct nffs_inode_entry *parent,
                          struct nffs_inode_entry *child);
@@ -439,6 +432,11 @@ int nffs_inode_unlink_from_ram(struct nffs_inode *inode,
 int nffs_inode_unlink_from_ram_corrupt_ok(struct nffs_inode *inode,
                                           struct nffs_hash_entry **out_next);
 int nffs_inode_unlink(struct nffs_inode *inode);
+int nffs_inode_is_dummy(struct nffs_inode_entry *inode_entry);
+int nffs_inode_is_deleted(struct nffs_inode_entry *inode_entry);
+int nffs_inode_setflags(struct nffs_inode_entry *entry, uint8_t flag);
+int nffs_inode_unsetflags(struct nffs_inode_entry *entry, uint8_t flag);
+int nffs_inode_getflags(struct nffs_inode_entry *entry, uint8_t flag);
 
 /* @misc */
 int nffs_misc_gc_if_oom(void *resource, int *out_rc);
@@ -483,7 +481,7 @@ int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
 #ifdef NFFS_DEBUG
 #include <stdio.h>
 #define NFFS_LOG(lvl, ...) \
-  	printf(__VA_ARGS__)
+      printf(__VA_ARGS__)
 #else
 #define NFFS_LOG(lvl, ...) \
     LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)
