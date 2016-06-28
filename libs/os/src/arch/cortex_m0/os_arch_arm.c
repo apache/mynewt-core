@@ -19,6 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
+#include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 
@@ -214,7 +215,7 @@ os_arch_os_init(void)
         }
 
         /* Call bsp related OS initializations */
-        os_bsp_init();
+        bsp_init();
 
         /* Set the PendSV interrupt exception priority to the lowest priority */
         NVIC_SetPriority(PendSV_IRQn, PEND_SV_PRIO);

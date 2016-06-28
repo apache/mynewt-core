@@ -18,8 +18,8 @@
  */
 
 #include <hal/hal_system.h>
+#include <hal/hal_bsp.h>
 
-void * _sbrk(int c);
 int _close(int fd);
 int _fstat(int fd, void *s);
 void _exit(int s);

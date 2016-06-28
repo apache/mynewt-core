@@ -33,5 +33,9 @@ pkg.deps.SHELL:
     - libs/shell 
 pkg.cflags.SHELL: -DSHELL_PRESENT 
 
+pkg.deps.COREDUMP:
+    - sys/coredump
+pkg.cflags.COREDUMP: -DCOREDUMP_PRESENT
+
 # Satisfy capability dependencies for the self-contained test executable.
 pkg.deps.SELFTEST: libs/console/stub

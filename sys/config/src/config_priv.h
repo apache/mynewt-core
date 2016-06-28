@@ -28,8 +28,8 @@ int conf_json_line(struct json_buffer *jb, char *name, int nlen, char *value,
   int vlen);
 
 int conf_line_parse(char *buf, char **namep, char **valp);
-int conf_line_make(char *dst, int dlen, const struct conf_handler *ch,
-  const char *name, const char *val);
+int conf_line_make(char *dst, int dlen, const char *name, const char *val);
+int conf_line_make2(char *dst, int dlen, const char *name, const char *value);
 
 /*
  * API for config storage.
@@ -38,8 +38,7 @@ typedef void (*load_cb)(char *name, char *val, void *cb_arg);
 struct conf_store_itf {
     int (*csi_load)(struct conf_store *cs, load_cb cb, void *cb_arg);
     int (*csi_save_start)(struct conf_store *cs);
-    int (*csi_save)(struct conf_store *cs, const struct conf_handler *ch,
-      const char *name, const char *value);
+    int (*csi_save)(struct conf_store *cs, const char *name, const char *value);
     int (*csi_save_end)(struct conf_store *cs);
 };
 

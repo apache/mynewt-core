@@ -100,8 +100,7 @@ ble_att_clt_copy_attr_to_flatbuf(struct os_mbuf *om, void **out_attr_val,
 }
 
 static int
-ble_att_clt_tx_req_flags(uint16_t conn_handle, struct os_mbuf *txom,
-                         ble_hs_conn_flags_t flags_on_success)
+ble_att_clt_tx_req(uint16_t conn_handle, struct os_mbuf *txom)
 {
     struct ble_l2cap_chan *chan;
     struct ble_hs_conn *conn;
@@ -129,24 +128,11 @@ ble_att_clt_tx_req_flags(uint16_t conn_handle, struct os_mbuf *txom,
 
         rc = ble_l2cap_tx(conn, chan, txom);
         txom = NULL;
-
-        if (rc == 0) {
-            conn->bhc_flags |= flags_on_success;
-        }
     }
 
     ble_hs_unlock();
 
     os_mbuf_free_chain(txom);
-    return rc;
-}
-
-static int
-ble_att_clt_tx_req(uint16_t conn_handle, struct os_mbuf *txom)
-{
-    int rc;
-
-    rc = ble_att_clt_tx_req_flags(conn_handle, txom, 0);
     return rc;
 }
 
@@ -166,6 +152,8 @@ ble_att_clt_rx_error(uint16_t conn_handle, struct os_mbuf **om)
     }
 
     ble_att_error_rsp_parse((*om)->om_data, (*om)->om_len, &rsp);
+    BLE_ATT_LOG_CMD(0, "error rsp", conn_handle, ble_att_error_rsp_log, &rsp);
+
     ble_gattc_rx_err(conn_handle, &rsp);
 
     return 0;
@@ -209,6 +197,8 @@ ble_att_clt_tx_mtu(uint16_t conn_handle, struct ble_att_mtu_cmd *req)
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "mtu req", conn_handle, ble_att_mtu_cmd_log, req);
+
     if (req->bamc_mtu < BLE_ATT_MTU_DFLT) {
         return BLE_HS_EINVAL;
     }
@@ -238,7 +228,7 @@ ble_att_clt_tx_mtu(uint16_t conn_handle, struct ble_att_mtu_cmd *req)
 int
 ble_att_clt_rx_mtu(uint16_t conn_handle, struct os_mbuf **om)
 {
-    struct ble_att_mtu_cmd rsp;
+    struct ble_att_mtu_cmd cmd;
     struct ble_l2cap_chan *chan;
     uint16_t mtu;
     int rc;
@@ -247,13 +237,14 @@ ble_att_clt_rx_mtu(uint16_t conn_handle, struct os_mbuf **om)
 
     rc = ble_hs_misc_pullup_base(om, BLE_ATT_MTU_CMD_SZ);
     if (rc == 0) {
-        ble_att_mtu_cmd_parse((*om)->om_data, (*om)->om_len, &rsp);
+        ble_att_mtu_cmd_parse((*om)->om_data, (*om)->om_len, &cmd);
+        BLE_ATT_LOG_CMD(0, "mtu rsp", conn_handle, ble_att_mtu_cmd_log, &cmd);
 
         ble_hs_lock();
 
         rc = ble_att_conn_chan_find(conn_handle, NULL, &chan);
         if (rc == 0) {
-            ble_att_set_peer_mtu(chan, rsp.bamc_mtu);
+            ble_att_set_peer_mtu(chan, cmd.bamc_mtu);
             mtu = ble_l2cap_chan_mtu(chan);
         }
 
@@ -296,6 +287,9 @@ ble_att_clt_tx_find_info(uint16_t conn_handle,
 
     struct os_mbuf *txom;
     int rc;
+
+    BLE_ATT_LOG_CMD(1, "find info req", conn_handle,
+                    ble_att_find_info_req_log, req);
 
     if (req->bafq_start_handle == 0 ||
         req->bafq_start_handle > req->bafq_end_handle) {
@@ -386,6 +380,8 @@ ble_att_clt_rx_find_info(uint16_t conn_handle, struct os_mbuf **om)
     }
 
     ble_att_find_info_rsp_parse((*om)->om_data, (*om)->om_len, &rsp);
+    BLE_ATT_LOG_CMD(0, "find info rsp", conn_handle, ble_att_find_info_rsp_log,
+                    &rsp);
 
     /* Strip the response base from the front of the mbuf. */
     os_mbuf_adj((*om), BLE_ATT_FIND_INFO_RSP_BASE_SZ);
@@ -445,6 +441,9 @@ ble_att_clt_tx_find_type_value(uint16_t conn_handle,
     return BLE_HS_ENOTSUP;
 #endif
 
+    BLE_ATT_LOG_CMD(1, "find type value req", conn_handle,
+                    ble_att_find_type_value_req_log, req);
+
     struct os_mbuf *txom;
     int rc;
 
@@ -494,6 +493,8 @@ ble_att_clt_rx_find_type_value(uint16_t conn_handle, struct os_mbuf **rxom)
 
     struct ble_att_find_type_value_hinfo hinfo;
     int rc;
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "find type value rsp", conn_handle);
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Handles-Information-List field.  Strip the opcode from the
@@ -567,6 +568,9 @@ ble_att_clt_tx_read_type(uint16_t conn_handle,
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "read type req", conn_handle,
+                    ble_att_read_type_req_log, req);
+
     if (req->batq_start_handle == 0 ||
         req->batq_start_handle > req->batq_end_handle) {
 
@@ -621,6 +625,8 @@ ble_att_clt_rx_read_type(uint16_t conn_handle, struct os_mbuf **rxom)
     }
 
     ble_att_read_type_rsp_parse((*rxom)->om_data, (*rxom)->om_len, &rsp);
+    BLE_ATT_LOG_CMD(0, "read type rsp", conn_handle, ble_att_read_type_rsp_log,
+                    &rsp);
 
     /* Strip the response base from the front of the mbuf. */
     os_mbuf_adj(*rxom, BLE_ATT_READ_TYPE_RSP_BASE_SZ);
@@ -683,6 +689,9 @@ ble_att_clt_tx_read(uint16_t conn_handle, struct ble_att_read_req *req)
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "read req", conn_handle,
+                    ble_att_read_req_log, req);
+
     if (req->barq_handle == 0) {
         return BLE_HS_EINVAL;
     }
@@ -710,6 +719,8 @@ ble_att_clt_rx_read(uint16_t conn_handle, struct os_mbuf **rxom)
     uint16_t value_len;
     void *value;
     int rc;
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "read rsp", conn_handle);
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Attribute Value field.  Strip the opcode from the response.
@@ -765,6 +776,9 @@ ble_att_clt_tx_read_blob(uint16_t conn_handle,
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "read blob req", conn_handle,
+                    ble_att_read_blob_req_log, req);
+
     if (req->babq_handle == 0) {
         return BLE_HS_EINVAL;
     }
@@ -792,6 +806,8 @@ ble_att_clt_rx_read_blob(uint16_t conn_handle, struct os_mbuf **rxom)
     uint16_t value_len;
     void *value;
     int rc;
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "read blob rsp", conn_handle);
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Attribute Value field.  Strip the opcode from the response.
@@ -861,6 +877,8 @@ ble_att_clt_tx_read_mult(uint16_t conn_handle, uint16_t *att_handles,
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_EMPTY_CMD(1, "reqd mult req", conn_handle);
+
     if (num_att_handles < 1) {
         return BLE_HS_EINVAL;
     }
@@ -888,6 +906,8 @@ ble_att_clt_rx_read_mult(uint16_t conn_handle, struct os_mbuf **rxom)
     uint16_t value_len;
     void *value;
     int rc;
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "read mult rsp", conn_handle);
 
     /* Reponse consists of a one-byte opcode (already verified) and a variable
      * length Attribute Value field.  Strip the opcode from the response.
@@ -951,6 +971,9 @@ ble_att_clt_tx_read_group_type(uint16_t conn_handle,
 
     txom = NULL;
 
+    BLE_ATT_LOG_CMD(1, "read group type req", conn_handle,
+                    ble_att_read_group_type_req_log, req);
+
     if (req->bagq_start_handle == 0 ||
         req->bagq_start_handle > req->bagq_end_handle) {
 
@@ -1011,6 +1034,8 @@ ble_att_clt_rx_read_group_type(uint16_t conn_handle, struct os_mbuf **rxom)
     }
 
     ble_att_read_group_type_rsp_parse((*rxom)->om_data, (*rxom)->om_len, &rsp);
+    BLE_ATT_LOG_CMD(0, "read group type rsp", conn_handle,
+                    ble_att_read_group_type_rsp_log, &rsp);
 
     /* Strip the base from the front of the response. */
     os_mbuf_adj(*rxom, BLE_ATT_READ_GROUP_TYPE_RSP_BASE_SZ);
@@ -1107,6 +1132,8 @@ ble_att_clt_tx_write_req(uint16_t conn_handle, struct ble_att_write_req *req,
 
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "write req", conn_handle, ble_att_write_cmd_log, req);
+
     rc = ble_att_clt_tx_write_req_or_cmd(conn_handle, req, value, value_len,
                                          1);
     return rc;
@@ -1123,6 +1150,8 @@ ble_att_clt_tx_write_cmd(uint16_t conn_handle,
 
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "write cmd", conn_handle, ble_att_write_cmd_log, req);
+
     rc = ble_att_clt_tx_write_req_or_cmd(conn_handle, req, value, value_len,
                                          0);
     return rc;
@@ -1134,6 +1163,8 @@ ble_att_clt_rx_write(uint16_t conn_handle, struct os_mbuf **rxom)
 #if !NIMBLE_OPT(ATT_CLT_WRITE)
     return BLE_HS_ENOTSUP;
 #endif
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "write rsp", conn_handle);
 
     /* No payload. */
     ble_gattc_rx_write_rsp(conn_handle);
@@ -1189,6 +1220,9 @@ ble_att_clt_tx_prep_write(uint16_t conn_handle,
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "prep write req", conn_handle,
+                    ble_att_prep_write_cmd_log, req);
+
     if (req->bapc_handle == 0) {
         return BLE_HS_EINVAL;
     }
@@ -1240,6 +1274,8 @@ ble_att_clt_rx_prep_write(uint16_t conn_handle, struct os_mbuf **rxom)
     }
 
     ble_att_prep_write_rsp_parse((*rxom)->om_data, (*rxom)->om_len, &rsp);
+    BLE_ATT_LOG_CMD(0, "prep write rsp", conn_handle,
+                    ble_att_prep_write_cmd_log, &rsp);
 
     /* Strip the base from the front of the response. */
     os_mbuf_adj(*rxom, BLE_ATT_PREP_WRITE_CMD_BASE_SZ);
@@ -1294,6 +1330,9 @@ ble_att_clt_tx_exec_write(uint16_t conn_handle,
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "exec write req", conn_handle,
+                    ble_att_exec_write_req_log, req);
+
     if ((req->baeq_flags & BLE_ATT_EXEC_WRITE_F_RESERVED) != 0) {
         return BLE_HS_EINVAL;
     }
@@ -1319,6 +1358,8 @@ ble_att_clt_rx_exec_write(uint16_t conn_handle, struct os_mbuf **rxom)
 #endif
 
     int rc;
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "exec write rsp", conn_handle);
 
     rc = ble_hs_misc_pullup_base(rxom, BLE_ATT_EXEC_WRITE_RSP_SZ);
     if (rc == 0) {
@@ -1376,6 +1417,8 @@ ble_att_clt_tx_notify(uint16_t conn_handle, struct ble_att_notify_req *req,
 
     struct os_mbuf *txom;
     int rc;
+
+    BLE_ATT_LOG_CMD(1, "notify req", conn_handle, ble_att_notify_req_log, req);
 
     if (req->banq_handle == 0) {
         return BLE_HS_EINVAL;
@@ -1444,6 +1487,9 @@ ble_att_clt_tx_indicate(uint16_t conn_handle,
     struct os_mbuf *txom;
     int rc;
 
+    BLE_ATT_LOG_CMD(1, "indicate req", conn_handle, ble_att_indicate_req_log,
+                    req);
+
     if (req->baiq_handle == 0) {
         return BLE_HS_EINVAL;
     }
@@ -1454,8 +1500,7 @@ ble_att_clt_tx_indicate(uint16_t conn_handle,
         return rc;
     }
 
-    rc = ble_att_clt_tx_req_flags(conn_handle, txom,
-                                  BLE_HS_CONN_F_INDICATE_TXED);
+    rc = ble_att_clt_tx_req(conn_handle, txom);
     if (rc != 0) {
         return rc;
     }
@@ -1469,6 +1514,8 @@ ble_att_clt_rx_indicate(uint16_t conn_handle, struct os_mbuf **rxom)
 #if !NIMBLE_OPT(ATT_CLT_INDICATE)
     return BLE_HS_ENOTSUP;
 #endif
+
+    BLE_ATT_LOG_EMPTY_CMD(0, "indicate rsp", conn_handle);
 
     /* No payload. */
     ble_gattc_rx_indicate_rsp(conn_handle);

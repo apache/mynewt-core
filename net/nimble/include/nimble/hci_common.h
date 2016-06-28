@@ -119,7 +119,7 @@
 #define BLE_HCI_OCF_LE_RD_PEER_RESOLV_ADDR  (0x002B)
 #define BLE_HCI_OCF_LE_RD_LOCAL_RESOLV_ADDR (0x002C)
 #define BLE_HCI_OCF_LE_SET_ADDR_RES_EN      (0x002D)
-#define BLE_HCI_OCF_LE_SET_RESOLV_PRIV_ADDR (0x002E)
+#define BLE_HCI_OCF_LE_SET_RPA_TMO          (0x002E)
 #define BLE_HCI_OCF_LE_RD_MAX_DATA_LEN      (0x002F)
 
 /* Command Specific Definitions */
@@ -148,8 +148,8 @@
 /* --- LE read local supported features (OCF 0x0003) --- */
 #define BLE_HCI_RD_LOC_SUPP_FEAT_RSPLEN     (8)
 
-/* --- LE set random address (OCF 0x0005) --- */
-#define BLE_HCI_LE_SET_RAND_ADDR_LEN           (6)
+/* --- LE set random address (OCF 0x0005) */
+#define BLE_HCI_SET_RAND_ADDR_LEN           (6)
 
 /* --- LE set advertising parameters (OCF 0x0006) */
 #define BLE_HCI_SET_ADV_PARAM_LEN           (15)
@@ -355,6 +355,12 @@
 /* --- LE read peer resolvable address (OCF 0x002C) */
 #define BLE_HCI_RD_LOC_RESOLV_ADDR_LEN      (7)
 
+/* --- LE set address resolution enable (OCF 0x002D) */
+#define BLE_HCI_SET_ADDR_RESOL_ENA_LEN      (1)
+
+/* --- LE set resolvable private address timeout (OCF 0x002E) */
+#define BLE_HCI_SET_RESOLV_PRIV_ADDR_TO_LEN (2)
+
 /* --- LE read maximum data length (OCF 0x002F) */
 #define BLE_HCI_RD_MAX_DATALEN_RSPLEN       (8)
 
@@ -492,6 +498,7 @@
 
 /* LE advertising report event. (sub event 0x02) */
 #define BLE_HCI_LE_ADV_RPT_MIN_LEN          (12)
+#define BLE_HCI_LE_ADV_DIRECT_RPT_LEN       (18)
 #define BLE_HCI_LE_ADV_RPT_NUM_RPTS_MIN     (1)
 #define BLE_HCI_LE_ADV_RPT_NUM_RPTS_MAX     (0x19)
 
@@ -531,6 +538,9 @@
 #define BLE_LMP_VER_BCS_4_1                 (7)
 #define BLE_LMP_VER_BCS_4_2                 (8)
 
+/* Sub-event 0x0A: enhanced connection complete */
+#define BLE_HCI_LE_ENH_CONN_COMPLETE_LEN    (31)
+
 /*--- Shared data structures ---*/
 /* Read local version information (OGF=0x0004, OCF=0x0001) */
 struct hci_loc_ver_info
@@ -541,6 +551,12 @@ struct hci_loc_ver_info
    uint8_t lmp_pal_version;
    uint16_t mfrg_name;
    uint8_t lmp_pal_subversion;
+};
+
+/* set random address command (ocf = 0x0005) */
+struct hci_rand_addr
+{
+    uint8_t addr[6];
 };
 
 /* set advertising parameters command (ocf = 0x0006) */
@@ -641,6 +657,8 @@ struct hci_le_conn_complete
     uint16_t conn_latency;
     uint16_t supervision_timeout;
     uint8_t master_clk_acc;
+    uint8_t local_rpa[BLE_DEV_ADDR_LEN];
+    uint8_t peer_rpa[BLE_DEV_ADDR_LEN];
 };
 
 /* Connection update complete LE meta subevent */
@@ -705,6 +723,13 @@ struct hci_data_hdr
 #define BLE_HCI_PB_MIDDLE                   1
 #define BLE_HCI_PB_FIRST_FLUSH              2
 #define BLE_HCI_PB_FULL                     3
+
+struct hci_add_dev_to_resolving_list {
+    uint8_t addr_type;
+    uint8_t addr[6];
+    uint8_t local_irk[16];
+    uint8_t peer_irk[16];
+};
 
 /* External data structures */
 extern const uint8_t g_ble_hci_le_cmd_len[BLE_HCI_NUM_LE_CMDS];

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -37,7 +37,6 @@
 #endif
 
 static struct log_handler ble_hs_log_console_handler;
-struct ble_hs_dev ble_hs_our_dev;
 struct log ble_hs_log;
 
 #define HCI_CMD_BUF_SIZE    (260)       /* XXX: temporary, Fix later */
@@ -199,7 +198,7 @@ ble_hs_heartbeat(void *unused)
     ble_gattc_heartbeat();
     ble_gap_heartbeat();
     ble_l2cap_sig_heartbeat();
-    ble_l2cap_sm_heartbeat();
+    ble_sm_heartbeat();
 
     ble_hs_heartbeat_timer_reset();
 }

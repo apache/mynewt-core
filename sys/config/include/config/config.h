@@ -48,8 +48,7 @@ struct conf_handler {
     char *(*ch_get)(int argc, char **argv, char *val, int val_len_max);
     int (*ch_set)(int argc, char **argv, char *val);
     int (*ch_commit)(void);
-    int (*ch_export)(void (*export_func)(struct conf_handler *ch,
-        char *name, char *val));
+    int (*ch_export)(void (*export_func)(char *name, char *val));
 };
 
 int conf_init(void);
@@ -57,7 +56,7 @@ int conf_register(struct conf_handler *);
 int conf_load(void);
 
 int conf_save(void);
-int conf_save_one(const struct conf_handler *, const char *name, char *var);
+int conf_save_one(const char *name, char *var);
 
 /*
   XXXX for later

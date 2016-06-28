@@ -195,7 +195,7 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
     }
 
     memset(&last_block, 0, sizeof(last_block));
-    
+
     to_area = nffs_areas + to_area_idx;
 
     entry = last_entry;
@@ -226,7 +226,7 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
         }
         entry = block.nb_prev;
     }
-    
+
     /* we had better have found the last block */
     assert(last_block.nb_hash_entry);
 
@@ -236,7 +236,6 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
      * block.
      */
     memset(&disk_block, 0, sizeof disk_block);
-    disk_block.ndb_magic = NFFS_BLOCK_MAGIC;
     disk_block.ndb_id = last_block.nb_hash_entry->nhe_id;
     disk_block.ndb_seq = last_block.nb_seq + 1;
     disk_block.ndb_inode_id = last_block.nb_inode_entry->nie_hash_entry.nhe_id;

@@ -26,6 +26,11 @@ pkg.keywords:
 pkg.deps:
     - libs/newtmgr
     - libs/bootutil
+    - libs/util
 pkg.deps.FS:
     - fs/fs
 pkg.cflags.FS: -DFS_PRESENT
+
+pkg.deps.COREDUMP:
+    - sys/coredump
+pkg.cflags.COREDUMP: -DCOREDUMP_PRESENT

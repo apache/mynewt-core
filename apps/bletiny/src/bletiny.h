@@ -33,6 +33,9 @@ struct ble_gap_crt_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
+union ble_store_value;
+union ble_store_key;
+struct ble_gap_adv_params;
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -61,7 +64,7 @@ SLIST_HEAD(bletiny_chr_list, bletiny_chr);
 
 struct bletiny_svc {
     SLIST_ENTRY(bletiny_svc) next;
-    struct ble_gatt_service svc;
+    struct ble_gatt_svc svc;
 
     struct bletiny_chr_list chrs;
 };
@@ -93,6 +96,7 @@ extern struct log bletiny_log;
 
 void print_addr(void *addr);
 void print_uuid(void *uuid128);
+void print_bytes(uint8_t *bytes, int len);
 const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
                                        char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
@@ -108,6 +112,7 @@ uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);
 uint64_t parse_arg_uint64(char *name, int *out_status);
 int parse_arg_kv(char *name, struct kv_pair *kvs);
+int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val);
 int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);
@@ -131,6 +136,7 @@ int bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                                uint16_t end_handle, uint8_t *uuid128);
 int bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
                            uint16_t chr_end_handle);
+int bletiny_disc_full(uint16_t conn_handle);
 int bletiny_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bletiny_read(uint16_t conn_handle, uint16_t attr_handle);
@@ -147,8 +153,9 @@ int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
                         void *value, uint16_t value_len);
 int bletiny_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
                             int num_attrs);
-int bletiny_adv_start(int disc, int conn, uint8_t *peer_addr, int addr_type,
-                       struct hci_adv_params *params);
+int bletiny_adv_start(int disc, int conn,
+                     uint8_t *peer_addr, uint8_t peer_addr_type,
+                     struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
 int bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
                            struct ble_gap_crt_params *params);
@@ -157,7 +164,7 @@ int bletiny_term_conn(uint16_t conn_handle);
 int bletiny_wl_set(struct ble_gap_white_entry *white_list,
                     int white_list_count);
 int bletiny_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
-                  uint8_t filter_policy);
+                  uint8_t filter_policy, uint8_t our_addr_mode);
 int bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bletiny_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);
@@ -167,6 +174,8 @@ int bletiny_l2cap_update(uint16_t conn_handle,
 int bletiny_sec_start(uint16_t conn_handle);
 int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
                         uint64_t rand_val, int auth);
+int bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
+                     uint16_t num);
 
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
@@ -185,10 +194,15 @@ extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
 void gatt_svr_init(void);
 
-/** Keystore. */
-int keystore_lookup(uint16_t ediv, uint64_t rand_num,
-                    void *out_ltk, int *out_authenticated);
-int keystore_add(uint16_t ediv, uint64_t rand_num, uint8_t *key,
-                 int authenticated);
+/** Store. */
+int store_read(int obj_type, union ble_store_key *key,
+               union ble_store_value *dst);
+int store_write(int obj_type, union ble_store_value *val);
+
+/** Misc. */
+void print_bytes(uint8_t *bytes, int len);
+int svc_is_empty(struct bletiny_svc *svc);
+uint16_t chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr);
+int chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr);
 
 #endif

@@ -29,7 +29,7 @@
 
 /** Use lots of small mbufs to ensure correct mbuf usage. */
 #define BLE_HS_TEST_UTIL_NUM_MBUFS      (100)
-#define BLE_HS_TEST_UTIL_BUF_SIZE       OS_ALIGN(32, 4)
+#define BLE_HS_TEST_UTIL_BUF_SIZE       OS_ALIGN(100, 4)
 #define BLE_HS_TEST_UTIL_MEMBLOCK_SIZE  \
     (BLE_HS_TEST_UTIL_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define BLE_HS_TEST_UTIL_MEMPOOL_SIZE   \
@@ -76,11 +76,9 @@ ble_hs_test_util_prev_tx_dequeue(void)
 
     os_mbuf_free_chain(ble_hs_test_util_prev_tx_cur);
 
-    omp = STAILQ_LAST(&ble_hs_test_util_prev_tx_queue, os_mbuf_pkthdr,
-                      omp_next);
+    omp = STAILQ_FIRST(&ble_hs_test_util_prev_tx_queue);
     if (omp != NULL) {
-        STAILQ_REMOVE(&ble_hs_test_util_prev_tx_queue, omp, os_mbuf_pkthdr,
-                      omp_next);
+        STAILQ_REMOVE_HEAD(&ble_hs_test_util_prev_tx_queue, omp_next);
         ble_hs_test_util_prev_tx_cur = OS_MBUF_PKTHDR_TO_MBUF(omp);
     } else {
         ble_hs_test_util_prev_tx_cur = NULL;
@@ -120,6 +118,7 @@ ble_hs_test_util_prev_tx_queue_sz(void)
 void
 ble_hs_test_util_prev_tx_queue_clear(void)
 {
+    ble_hs_test_util_tx_all();
     while (!STAILQ_EMPTY(&ble_hs_test_util_prev_tx_queue)) {
         ble_hs_test_util_prev_tx_dequeue();
     }
@@ -309,7 +308,7 @@ ble_hs_test_util_set_ack_seq(struct ble_hs_test_util_phony_ack *acks)
 
 void
 ble_hs_test_util_create_conn(uint16_t handle, uint8_t *addr,
-                             ble_gap_conn_fn *cb, void *cb_arg)
+                             ble_gap_event_fn *cb, void *cb_arg)
 {
     struct hci_le_conn_complete evt;
     int rc;
@@ -338,7 +337,7 @@ ble_hs_test_util_create_conn(uint16_t handle, uint8_t *addr,
 int
 ble_hs_test_util_conn_initiate(int addr_type, uint8_t *addr,
                                struct ble_gap_crt_params *params,
-                               ble_gap_conn_fn *cb, void *cb_arg,
+                               ble_gap_event_fn *cb, void *cb_arg,
                                uint8_t ack_status)
 {
     int rc;
@@ -379,6 +378,22 @@ ble_hs_test_util_conn_terminate(uint16_t conn_handle, uint8_t hci_status)
     return rc;
 }
 
+void
+ble_hs_test_util_conn_disconnect(uint16_t conn_handle)
+{
+    struct hci_disconn_complete evt;
+    int rc;
+
+    rc = ble_hs_test_util_conn_terminate(conn_handle, 0);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    /* Receive disconnection complete event. */
+    evt.connection_handle = conn_handle;
+    evt.status = 0;
+    evt.reason = BLE_ERR_CONN_TERM_LOCAL;
+    ble_gap_rx_disconn_complete(&evt);
+}
+
 int
 ble_hs_test_util_disc(uint32_t duration_ms, uint8_t discovery_mode,
                       uint8_t scan_type, uint8_t filter_policy,
@@ -400,7 +415,8 @@ ble_hs_test_util_disc(uint32_t duration_ms, uint8_t discovery_mode,
         { 0 }
     }));
 
-    rc = ble_gap_disc(duration_ms, discovery_mode, scan_type, filter_policy,
+    rc = ble_gap_disc(duration_ms, discovery_mode, scan_type, filter_policy, 
+                      BLE_ADDR_TYPE_PUBLIC,
                       cb, cb_arg);
     return rc;
 }
@@ -409,8 +425,8 @@ int
 ble_hs_test_util_adv_start(uint8_t discoverable_mode,
                            uint8_t connectable_mode,
                            uint8_t *peer_addr, uint8_t peer_addr_type,
-                           struct hci_adv_params *adv_params,
-                           ble_gap_conn_fn *cb, void *cb_arg,
+                           struct ble_gap_adv_params *adv_params,
+                           ble_gap_event_fn *cb, void *cb_arg,
                            int fail_idx, uint8_t fail_status)
 {
     struct ble_hs_test_util_phony_ack acks[6];
@@ -456,8 +472,10 @@ ble_hs_test_util_adv_start(uint8_t discoverable_mode,
     memset(acks + i, 0, sizeof acks[i]);
 
     ble_hs_test_util_set_ack_seq(acks);
-    rc = ble_gap_adv_start(discoverable_mode, connectable_mode, peer_addr,
-                           peer_addr_type, adv_params, cb, cb_arg);
+    
+    rc = ble_gap_adv_start(discoverable_mode, connectable_mode, 
+                        peer_addr, peer_addr_type,
+                        adv_params, cb, cb_arg);
 
     return rc;
 }
@@ -656,7 +674,22 @@ ble_hs_test_util_set_startup_acks(void)
             .evt_params = { 0 },
             .evt_params_len = 8,
         },
-
+        {
+            .opcode = host_hci_opcode_join(BLE_HCI_OGF_LE,
+                                           BLE_HCI_OCF_LE_SET_ADDR_RES_EN),
+        },
+        {
+            .opcode = host_hci_opcode_join(BLE_HCI_OGF_LE,
+                                           BLE_HCI_OCF_LE_CLR_RESOLV_LIST),
+        },
+        {
+            .opcode = host_hci_opcode_join(BLE_HCI_OGF_LE,
+                                           BLE_HCI_OCF_LE_SET_ADDR_RES_EN),
+        },
+        {
+            .opcode = host_hci_opcode_join(BLE_HCI_OGF_LE,
+                                           BLE_HCI_OCF_LE_ADD_RESOLV_LIST),
+        },
         { 0 }
     }));
 }
@@ -740,8 +773,9 @@ ble_hs_test_util_tx_all(void)
 void
 ble_hs_test_util_set_public_addr(uint8_t *addr)
 {
-    memcpy(ble_hs_our_dev.public_addr, addr, 6);
+    ble_hs_priv_update_identity(addr);
 }
+
 
 void
 ble_hs_test_util_init(void)

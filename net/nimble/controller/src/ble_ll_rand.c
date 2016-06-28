@@ -31,7 +31,7 @@ struct ble_ll_rnum_data
 {
     uint8_t *rnd_in;
     uint8_t *rnd_out;
-    uint8_t rnd_size;
+    volatile uint8_t rnd_size;
 };
 
 struct ble_ll_rnum_data g_ble_ll_rnum_data;
@@ -100,6 +100,32 @@ ble_ll_rand_data_get(uint8_t *buf, uint8_t len)
     }
 
     return BLE_ERR_SUCCESS;
+}
+
+/**
+ * Called to obtain a "prand" as defined in core V4.2 Vol 6 Part B 1.3.2.2
+ *
+ * @param prand
+ */
+void
+ble_ll_rand_prand_get(uint8_t *prand)
+{
+    uint16_t sum;
+
+    while (1) {
+        /* Get 24 bits of random data */
+        ble_ll_rand_data_get(prand, 3);
+
+        /* Prand cannot be all zeros or 1's. */
+        sum = prand[0] + prand[1] + prand[2];
+        if ((sum != 0) && (sum != (3 * 0xff))) {
+            break;
+        }
+    }
+
+    /* Upper two bits must be 01 */
+    prand[2] &= ~0xc0;
+    prand[2] |= 0x40;
 }
 
 /**

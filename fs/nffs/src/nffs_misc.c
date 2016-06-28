@@ -48,7 +48,10 @@ nffs_misc_validate_root_dir(void)
     }
 
     rc = nffs_inode_from_entry(&inode, nffs_root_dir);
-    if (rc != 0) {
+    /*
+     * nffs_root_dir is automatically flagged a "dummy" inode but it's special
+     */
+    if (rc != 0 && rc != FS_ENOENT) {
         return rc;
     }
 

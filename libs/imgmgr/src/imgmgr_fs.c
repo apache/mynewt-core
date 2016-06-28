@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifdef FS_PRESENT
 #include <os/os.h>
 #include <os/endian.h>
 
@@ -34,11 +35,10 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-#ifdef FS_PRESENT
 int
 imgr_file_download(struct nmgr_jbuf *njb)
 {
-    long long unsigned int off;
+    long long unsigned int off = UINT_MAX;
     char tmp_str[IMGMGR_NMGR_MAX_NAME + 1];
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     const struct json_attr_t dload_attr[3] = {
@@ -62,21 +62,25 @@ imgr_file_download(struct nmgr_jbuf *njb)
 
     rc = json_read_object(&njb->njb_buf, dload_attr);
     if (rc || off == UINT_MAX) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
 
     rc = fs_open(tmp_str, FS_ACCESS_READ, &file);
     if (rc || !file) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_ENOMEM;
+        goto err;
     }
 
     rc = fs_seek(file, off);
     if (rc) {
-        goto err;
+        rc = NMGR_ERR_EUNKNOWN;
+        goto err_close;
     }
     rc = fs_read(file, 32, tmp_str, &out_len);
     if (rc) {
-        goto err;
+        rc = NMGR_ERR_EUNKNOWN;
+        goto err_close;
     }
 
     out_len = base64_encode(tmp_str, out_len, img_data, 1);
@@ -96,12 +100,18 @@ imgr_file_download(struct nmgr_jbuf *njb)
     }
     fs_close(file);
 
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+
     json_encode_object_finish(enc);
 
     return 0;
-err:
+
+err_close:
     fs_close(file);
-    return OS_EINVAL;
+err:
+    nmgr_jbuf_setoerr(njb, rc);
+    return 0;
 }
 
 int
@@ -144,13 +154,15 @@ imgr_file_upload(struct nmgr_jbuf *njb)
 
     rc = json_read_object(&njb->njb_buf, off_attr);
     if (rc || off == UINT_MAX) {
-        return OS_EINVAL;
+        rc = NMGR_ERR_EINVAL;
+        goto err;
     }
     len = strlen(img_data);
     if (len) {
         len = base64_decode(img_data, img_data);
         if (len < 0) {
-            return OS_EINVAL;
+            rc = NMGR_ERR_EINVAL;
+            goto err;
         }
     }
 
@@ -162,30 +174,36 @@ imgr_file_upload(struct nmgr_jbuf *njb)
         imgr_state.upload.size = size;
 
         if (!strlen(file_name)) {
-            return OS_EINVAL;
+            rc = NMGR_ERR_EINVAL;
+            goto err;
+        }
+        if (imgr_state.upload.file) {
+            fs_close(imgr_state.upload.file);
+            imgr_state.upload.file = NULL;
         }
         rc = fs_open(file_name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE,
           &imgr_state.upload.file);
         if (rc) {
-            return OS_EINVAL;
+            rc = NMGR_ERR_EINVAL;
+            goto err;
         }
     } else if (off != imgr_state.upload.off) {
         /*
          * Invalid offset. Drop the data, and respond with the offset we're
          * expecting data for.
          */
-        rc = 0;
         goto out;
     }
 
-    if (len && imgr_state.upload.file) {
+    if (!imgr_state.upload.file) {
+        rc = NMGR_ERR_EINVAL;
+        goto err;
+    }
+    if (len) {
         rc = fs_write(imgr_state.upload.file, img_data, len);
         if (rc) {
-            /*
-            fs_close(imgr_state.upload.file);
-            */
-            imgr_state.upload.file = NULL;
-            return OS_EINVAL;
+            rc = NMGR_ERR_EINVAL;
+            goto err_close;
         }
         imgr_state.upload.off += len;
         if (imgr_state.upload.size == imgr_state.upload.off) {
@@ -199,11 +217,21 @@ out:
 
     json_encode_object_start(enc);
 
+    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+
     JSON_VALUE_UINT(&jv, imgr_state.upload.off);
     json_encode_object_entry(enc, "off", &jv);
+
     json_encode_object_finish(enc);
 
     return 0;
-}
 
+err_close:
+    fs_close(imgr_state.upload.file);
+    imgr_state.upload.file = NULL;
+err:
+    nmgr_jbuf_setoerr(njb, rc);
+    return 0;
+}
 #endif
