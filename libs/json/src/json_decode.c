@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <json/json.h>
+#include <assert.h>
 
-/** 
- * This file is based upon microjson, from Eric S Raymond. 
+#include "json/json.h"
+
+/**
+ * This file is based upon microjson, from Eric S Raymond.
  *
- * License information for MicroJSON is in the package file MSJSON_COPYING, 
- * it is BSD licensed source code. 
+ * License information for MicroJSON is in the package file MSJSON_COPYING,
+ * it is BSD licensed source code.
  */
 
 
@@ -78,8 +80,31 @@ PERMISSIONS
 #include <errno.h>
 #include <math.h>        /* for HUGE_VAL */
 
+static void
+json_skip_ws(struct json_buffer *jb)
+{
+    char c;
+
+    do {
+        c = jb->jb_read_next(jb);
+    } while (isspace(c));
+
+    jb->jb_read_prev(jb);
+}
+
+static char
+json_peek(struct json_buffer *jb)
+{
+    char c;
+
+    jb->jb_read_next(jb);
+    c = jb->jb_read_prev(jb);
+
+    return c;
+}
+
 static char *
-json_target_address(const struct json_attr_t *cursor, 
+json_target_address(const struct json_attr_t *cursor,
         const struct json_array_t *parent, int offset)
 {
     char *targetaddr = NULL;
@@ -120,19 +145,21 @@ json_target_address(const struct json_attr_t *cursor,
     return targetaddr;
 }
 
-static int 
-json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attrs, 
-        const struct json_array_t *parent, int offset)
+static int
+json_internal_read_object(struct json_buffer *jb,
+                          const struct json_attr_t *attrs,
+                          const struct json_array_t *parent,
+                          int offset)
 {
     char c;
-    enum { 
+    enum {
         init, await_attr, in_attr, await_value, in_val_string,
         in_escape, in_val_token, post_val, post_array
     } state = 0;
     char attrbuf[JSON_ATTR_MAX + 1], *pattr = NULL;
     char valbuf[JSON_VAL_MAX + 1], *pval = NULL;
     bool value_quoted = false;
-    char uescape[5];                /* enough space for 4 hex digits and a NUL */
+    char uescape[5];    /* enough space for 4 hex digits and '\0' */
     const struct json_attr_t *cursor;
     int substatus, n, maxlen = 0;
     unsigned int u;
@@ -155,7 +182,8 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
                     memcpy(lptr, &cursor->dflt.integer, sizeof(long long int));
                     break;
                 case t_uinteger:
-                    memcpy(lptr, &cursor->dflt.uinteger, sizeof(long long unsigned int));
+                    memcpy(lptr, &cursor->dflt.uinteger,
+                           sizeof(long long unsigned int));
                     break;
                 case t_real:
                     memcpy(lptr, &cursor->dflt.real, sizeof(double));
@@ -365,7 +393,8 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
                     if (decimal && seeking == t_real) {
                         break;
                     }
-                    if (!decimal && (seeking == t_integer || seeking == t_uinteger)) {
+                    if (!decimal && (seeking == t_integer ||
+                                     seeking == t_uinteger)) {
                         break;
                     }
                 }
@@ -379,7 +408,7 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
             }
             if (value_quoted
                 && (cursor->type != t_string && cursor->type != t_character
-                    && cursor->type != t_check && cursor->type != t_ignore 
+                    && cursor->type != t_check && cursor->type != t_ignore
                     && cursor->map == 0)) {
                 return JSON_ERR_QNONSTRING;
             }
@@ -480,7 +509,7 @@ json_internal_read_object(struct json_buffer *jb, const struct json_attr_t *attr
     return 0;
 }
 
-int 
+int
 json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
 {
     char valbuf[64];
@@ -489,40 +518,34 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
     char *tp;
     int n, count;
 
-    for (c = jb->jb_read_next(jb); isspace((unsigned char)c);
-         c = jb->jb_read_next(jb)) {
-    }
+    json_skip_ws(jb);
 
-    if (c != '[') {
+    if (jb->jb_read_next(jb) != '[') {
         return JSON_ERR_ARRAYSTART;
-    } 
+    }
 
     tp = arr->arr.strings.store;
     arrcount = 0;
 
-    for (c = jb->jb_read_next(jb); isspace((unsigned char)c);
-         c = jb->jb_read_next(jb)) {
-    }
+    json_skip_ws(jb);
 
-    if (c == ']') {
+    if (json_peek(jb) == ']') {
         goto breakout;
     }
 
     for (offset = 0; offset < arr->maxlen; offset++) {
+        json_skip_ws(jb);
+
         char *ep = NULL;
         switch (arr->element_type) {
         case t_string:
-            if (isspace((unsigned char) c)) {
-                c = jb->jb_read_next(jb);
-            }
-            if (c != '"') {
+            if (jb->jb_read_next(jb) != '"') {
                 return JSON_ERR_BADSTRING;
-            } else {
-                c = jb->jb_read_next(jb);
             }
             arr->arr.strings.ptrs[offset] = tp;
             for (; tp - arr->arr.strings.store < arr->arr.strings.storelen;
                  tp++) {
+                c = jb->jb_read_next(jb);
                 if (c == '"') {
                     c = jb->jb_read_next(jb);
                     *tp++ = '\0';
@@ -550,13 +573,13 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
             valbuf[n] = '\0';
 
-            arr->arr.integers.store[offset] = (long long int)strtoll(valbuf, &ep, 0);
+            arr->arr.integers.store[offset] = strtoll(valbuf, &ep, 0);
             if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
-                count = ep - valbuf;
+                count = n - (ep - valbuf);
                 while (count-- > 0) {
-                    c = jb->jb_read_next(jb);
+                    jb->jb_read_prev(jb);
                 }
             }
             break;
@@ -564,13 +587,13 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             n = jb->jb_readn(jb, valbuf, sizeof(valbuf)-1);
             valbuf[n] = '\0';
 
-            arr->arr.uintegers.store[offset] = (long long unsigned int)strtoull(valbuf, &ep, 0);
+            arr->arr.uintegers.store[offset] = strtoull(valbuf, &ep, 0);
             if (ep == valbuf) {
                 return JSON_ERR_BADNUM;
             } else {
-                count = ep - valbuf;
+                count = n - (ep - valbuf);
                 while (count-- > 0) {
-                    c = jb->jb_read_next(jb);
+                    jb->jb_read_prev(jb);
                 }
             }
             break;
@@ -598,17 +621,17 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
 
             if (strncmp(valbuf, "true", 4) == 0) {
                 arr->arr.booleans.store[offset] = true;
-                count = 4;
-                while (count-- > 0) {
-                    c = jb->jb_read_next(jb);
-                }
-            }
-            else if (strncmp(valbuf, "false", 5) == 0) {
+                count = n - 4;
+            } else if (strncmp(valbuf, "false", 5) == 0) {
                 arr->arr.booleans.store[offset] = false;
-                count = 5;
-                while (count-- > 0) {
-                    c = jb->jb_read_next(jb);
-                }
+                count = n - 5;
+            } else {
+                return JSON_ERR_MISC;
+            }
+
+            assert(count >= 0);
+            while (count-- > 0) {
+                jb->jb_read_prev(jb);
             }
             break;
         case t_character:
@@ -618,14 +641,12 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
             return JSON_ERR_SUBTYPE;
         }
         arrcount++;
-        if (isspace((unsigned char) c)) {
-            c = jb->jb_read_next(jb);
-        }
+        json_skip_ws(jb);
+
+        c = jb->jb_read_next(jb);
         if (c == ']') {
             goto breakout;
-        } else if (c == ',') {
-            c = jb->jb_read_next(jb);
-        } else {
+        } else if (c != ',') {
             return JSON_ERR_BADSUBTRAIL;
         }
     }
@@ -637,7 +658,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
     return 0;
 }
 
-int 
+int
 json_read_object(struct json_buffer *jb, const struct json_attr_t *attrs)
 {
     int st;

@@ -17,6 +17,7 @@
  * under the License.
  */
 #include <hal/flash_map.h>
+#include <hal/hal_bsp.h>
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -46,7 +47,6 @@ static struct flash_area bsp_flash_areas[] = {
     }
 };
 
-void *_sbrk(int incr);
 void _close(int fd);
 
 /*
@@ -64,7 +64,7 @@ bsp_imgr_current_slot(void)
 }
 
 void
-os_bsp_init(void)
+bsp_init(void)
 {
     /*
      * XXX this reference is here to keep this function in.

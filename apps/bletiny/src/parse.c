@@ -25,44 +25,12 @@
 #include <assert.h>
 #include "console/console.h"
 #include "host/ble_uuid.h"
-#include "bletiny_priv.h"
+#include "bletiny.h"
 
 #define CMD_MAX_ARGS        16
 
 static char *cmd_args[CMD_MAX_ARGS][2];
 static int cmd_num_args;
-
-void
-print_addr(void *addr)
-{
-    uint8_t *u8p;
-
-    u8p = addr;
-    console_printf("%02x:%02x:%02x:%02x:%02x:%02x",
-                   u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
-}
-
-void
-print_uuid(void *uuid128)
-{
-    uint16_t uuid16;
-    uint8_t *u8p;
-
-    uuid16 = ble_uuid_128_to_16(uuid128);
-    if (uuid16 != 0) {
-        console_printf("0x%04x", uuid16);
-        return;
-    }
-
-    u8p = uuid128;
-
-    /* 00001101-0000-1000-8000-00805f9b34fb */
-    console_printf("%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13], u8p[12]);
-    console_printf("%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
-    console_printf("%02x%02x%02x%02x%02x%02x%02x%02x",
-                   u8p[7], u8p[6], u8p[5], u8p[4],
-                   u8p[3], u8p[2], u8p[1], u8p[0]);
-}
 
 int
 parse_err_too_few_args(char *cmd_name)
@@ -246,16 +214,36 @@ parse_arg_kv(char *name, struct kv_pair *kvs)
 
     sval = parse_arg_find(name);
     if (sval == NULL) {
-        return ENOENT;
+        return -1;
     }
 
     kv = parse_kv_find(kvs, sval);
     if (kv == NULL) {
-        return EINVAL;
+        return -2;
     }
 
     return kv->val;
 }
+
+int
+parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val)
+{
+    struct kv_pair *kv;
+    char *sval;
+
+    sval = parse_arg_find(name);
+    if (sval == NULL) {
+        return def_val;
+    }
+
+    kv = parse_kv_find(kvs, sval);
+    if (kv == NULL) {
+        return -1;
+    }
+
+    return kv->val;
+}
+
 
 static int
 parse_arg_byte_stream_delim(char *sval, char *delims, int max_len,

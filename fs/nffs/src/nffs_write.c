@@ -225,7 +225,6 @@ nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
 
     inode_entry = cache_inode->nci_inode.ni_inode_entry;
 
-    disk_block.ndb_magic = NFFS_BLOCK_MAGIC;
     disk_block.ndb_id = nffs_hash_next_block_id++;
     disk_block.ndb_seq = 0;
     disk_block.ndb_inode_id = inode_entry->nie_hash_entry.nhe_id;
@@ -247,6 +246,18 @@ nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
     nffs_hash_insert(entry);
 
     inode_entry->nie_last_block_entry = entry;
+
+    /*
+     * When a new block is appended to a file, the inode must be written
+     * out to flash so the last block id is is stored persistently.
+     * Need to be written atomically with writing the block out so filesystem
+     * remains consistent. nffs_lock is held in nffs_write().
+     * The inode will not be updated if it's been unlinked on disk and this
+     * is signaled by setting the hash entry's flash location to NONE
+     */
+    if (inode_entry->nie_hash_entry.nhe_flash_loc != NFFS_FLASH_LOC_NONE) {
+        rc = nffs_inode_update(inode_entry);
+    }
 
     /* Update cached inode with the new file size. */
     cache_inode->nci_file_size += len;

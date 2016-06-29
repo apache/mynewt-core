@@ -23,7 +23,7 @@
 #include "bsp/bsp.h"
 #include "console/console.h"
 #include "host/ble_hs.h"
-#include "bletiny_priv.h"
+#include "bletiny.h"
 
 /**
  * The vendor specific "bleprph" service consists of two characteristics:

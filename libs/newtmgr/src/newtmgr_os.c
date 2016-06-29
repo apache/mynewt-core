@@ -27,6 +27,7 @@
 
 #include <newtmgr/newtmgr.h>
 #include <util/datetime.h>
+#include <reboot/log_reboot.h>
 
 #include "newtmgr_priv.h"
 
@@ -226,9 +227,12 @@ nmgr_reset(struct nmgr_jbuf *njb)
         os_callout_func_init(&nmgr_reset_callout, &g_nmgr_evq,
           nmgr_reset_tmo, NULL);
     }
+    log_reboot(SOFT_REBOOT);
     os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
     json_encode_object_start(&njb->njb_enc);
     json_encode_object_finish(&njb->njb_enc);
+
+    nmgr_jbuf_setoerr(njb, 0);
 
     return OS_OK;
 }

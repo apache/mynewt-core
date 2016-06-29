@@ -98,6 +98,10 @@ nffs_path_find_child(struct nffs_inode_entry *parent,
     return FS_ENOENT;
 }
 
+/*
+ * Return the inode and optionally it's parent associated with the input path
+ * nffs_path_parser struct used to track location in hierarchy
+ */
 int
 nffs_path_find(struct nffs_path_parser *parser,
                struct nffs_inode_entry **out_inode_entry,
@@ -267,6 +271,15 @@ nffs_path_rename(const char *from, const char *to)
         rc = nffs_inode_from_entry(&inode, to_inode_entry);
         if (rc != 0) {
             return rc;
+        }
+
+        /*
+         * Don't allow renames if the inode has been deleted
+         * Side-effect is that we've restored the inode as needed.
+         */
+        if (nffs_inode_is_deleted(from_inode_entry)) {
+            assert(0);
+            return FS_ENOENT;
         }
 
         rc = nffs_inode_unlink(&inode);

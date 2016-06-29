@@ -34,6 +34,10 @@ void system_reset(void) __attribute((noreturn));
  */
 void system_start(void *img_start) __attribute((noreturn));
 
+/*
+ * Returns non-zero if there is a HW debugger attached.
+ */
+int system_debugger_connected(void);
 
 #ifdef __cplusplus
 }

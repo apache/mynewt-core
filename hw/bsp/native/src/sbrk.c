@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <hal/hal_bsp.h>
+
 extern int getpagesize(void);
 
 static void *cont;

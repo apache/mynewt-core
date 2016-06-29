@@ -24,6 +24,14 @@
 #include <inttypes.h>
 #include <os/os.h>
 
+/* MTU for newtmgr responses */
+#define NMGR_MAX_MTU 1024
+
+#ifndef STR
+/* Stringification of constants */
+#define STR(x) #x
+#endif
+
 /* First 64 groups are reserved for system level newtmgr commands.
  * Per-user commands are then defined after group 64.
  */
@@ -32,6 +40,7 @@
 #define NMGR_GROUP_ID_STATS     (2)
 #define NMGR_GROUP_ID_CONFIG    (3)
 #define NMGR_GROUP_ID_LOGS      (4)
+#define NMGR_GROUP_ID_CRASH     (5)
 #define NMGR_GROUP_ID_PERUSER   (64)
 
 #define NMGR_OP_READ            (0)
@@ -48,6 +57,7 @@
 #define NMGR_ERR_ENOMEM   (2)
 #define NMGR_ERR_EINVAL   (3)
 #define NMGR_ERR_ETIMEOUT (4)
+#define NMGR_ERR_ENOENT   (5)
 #define NMGR_ERR_EPERUSER (256)
 
 

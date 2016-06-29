@@ -21,6 +21,7 @@
 
 #include "fcb/fcb.h"
 #include "fcb_priv.h"
+#include "string.h"
 
 int
 fcb_init(struct fcb *fcb)
@@ -112,7 +113,7 @@ fcb_is_empty(struct fcb *fcb)
       fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
 }
 
-/*
+/**
  * Length of an element is encoded in 1 or 2 bytes.
  * 1 byte for lengths < 128 bytes, and 2 bytes for < 16384.
  */
@@ -149,7 +150,7 @@ fcb_get_len(uint8_t *buf, uint16_t *len)
     return rc;
 }
 
-/*
+/**
  * Initialize erased sector for use.
  */
 int
@@ -170,7 +171,7 @@ fcb_sector_hdr_init(struct fcb *fcb, struct flash_area *fap, uint16_t id)
     return 0;
 }
 
-/*
+/**
  * Checks whether FCB sector contains data or not.
  * Returns <0 in error.
  * Returns 0 if sector is unused;
@@ -197,4 +198,57 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
         return FCB_ERR_MAGIC;
     }
     return 1;
+}
+
+/**
+ * Finds n-th element offset
+ * @param0 ptr to fcb
+ * @param1 n number of entries to calculate offset before
+ * @param2 ptr to the offset before to be returned
+ * @return 0 on success; non-zero on failure
+ */
+int
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off)
+{
+    struct fcb_entry loc;
+    struct fcb_entry start;
+    int i;
+
+    i = 0;
+    memset(&loc, 0, sizeof(loc));
+    while (!fcb_getnext(fcb, &loc)) {
+        if (i == 0) {
+            /* Start from the beginning of fcb entries */
+            *last_n_off = loc.fe_elem_off;
+            start = loc;
+        }
+        /* Update last_n_off after n entries and keep updating */
+        if (i >= (entries - 1)) {
+            fcb_getnext(fcb, &start);
+            *last_n_off = start.fe_elem_off;
+        }
+        i++;
+    }
+
+    return 0;
+}
+
+/**
+ * Clear fcb
+ * @param fcb
+ * @return 0 on success; non-zero on failure
+ */
+int
+fcb_clear(struct fcb *fcb)
+{
+    int rc;
+
+    rc = 0;
+    while (!fcb_is_empty(fcb)) {
+        rc = fcb_rotate(fcb);
+        if (rc) {
+            break;
+        }
+    }
+    return rc;
 }

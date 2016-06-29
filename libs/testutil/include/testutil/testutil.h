@@ -57,9 +57,9 @@ extern const char *tu_suite_name;
 extern const char *tu_case_name;
 extern int tu_first_idx;
 
+int tu_parse_args(int argc, char **argv);
 int tu_init(void);
 void tu_restart(void);
-
 
 /*****************************************************************************
  * Private declarations                                                      *

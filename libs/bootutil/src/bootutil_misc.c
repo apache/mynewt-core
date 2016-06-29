@@ -144,7 +144,7 @@ boot_vect_write_one(const char *name, struct image_version *ver)
         }
         to_store = str;
     }
-    return conf_save_one(&boot_conf_handler, name, to_store);
+    return conf_save_one(name, to_store);
 }
 
 /**
@@ -157,10 +157,10 @@ boot_vect_write_test(struct image_version *ver)
 {
     if (!ver) {
         memset(&boot_test, 0, sizeof(boot_test));
-        return boot_vect_write_one("test", NULL);
+        return boot_vect_write_one("boot/test", NULL);
     } else {
         memcpy(&boot_test, ver, sizeof(boot_test));
-        return boot_vect_write_one("test", &boot_test);
+        return boot_vect_write_one("boot/test", &boot_test);
     }
 }
 
@@ -174,10 +174,10 @@ boot_vect_write_main(struct image_version *ver)
 {
     if (!ver) {
         memset(&boot_main, 0, sizeof(boot_main));
-        return boot_vect_write_one("main", NULL);
+        return boot_vect_write_one("boot/main", NULL);
     } else {
         memcpy(&boot_main, ver, sizeof(boot_main));
-        return boot_vect_write_one("main", &boot_main);
+        return boot_vect_write_one("boot/main", &boot_main);
     }
 }
 
@@ -261,12 +261,12 @@ boot_write_status(struct boot_status *bs)
     char str[12];
     int rc;
 
-    rc = conf_save_one(&boot_conf_handler, "status",
+    rc = conf_save_one("boot/status",
       conf_str_from_value(CONF_INT32, &bs->state, str, sizeof(str)));
     if (rc) {
         return rc;
     }
-    return conf_save_one(&boot_conf_handler, "len",
+    return conf_save_one("boot/len",
       conf_str_from_value(CONF_INT32, &bs->length, str, sizeof(str)));
 }
 
@@ -279,7 +279,7 @@ boot_write_status(struct boot_status *bs)
 void
 boot_clear_status(void)
 {
-    conf_save_one(&boot_conf_handler, "status", NULL);
+    conf_save_one("boot/status", NULL);
 }
 
 #else

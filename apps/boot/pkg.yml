@@ -35,3 +35,9 @@ pkg.deps:
     - libs/os
     - libs/util
 pkg.cflags: -DLOG_LEVEL=255
+
+pkg.cflags.NFFS:
+    - "-DNFFS_PRESENT"
+
+pkg.cflags.FCB:
+    - "-DFCB_PRESENT"
