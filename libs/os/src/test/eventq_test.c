@@ -184,12 +184,13 @@ TEST_CASE(event_test_poll_sr)
     /* Initializing the OS */
     os_init();
     /* Initialize the task */
-    os_task_init(&eventq_task_poll_s, "eventq_task_poll_s", eventq_task_poll_send, NULL,
-        SEND_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_s, POLL_STACK_SIZE);
+    os_task_init(&eventq_task_poll_s, "eventq_task_poll_s", eventq_task_poll_send,
+        NULL, SEND_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_s, 
+        POLL_STACK_SIZE);
 
     /* Receive events and check whether the eevnts are correctly received */
-    os_task_init(&eventq_task_poll_r, "eventq_task_r", eventq_task_poll_receive, NULL,
-        RECEIVE_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_r,
+    os_task_init(&eventq_task_poll_r, "eventq_task_r", eventq_task_poll_receive,
+        NULL, RECEIVE_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_r,
         POLL_STACK_SIZE);
 
     /* Does not return until OS_restart is called */
