@@ -179,6 +179,15 @@ console_file_write(void *arg, const char *str, size_t cnt)
 }
 
 void
+console_print_prompt()
+{
+    struct console_tty *ct = &console_tty;
+    ct->ct_write_char('>');
+    ct->ct_write_char(' ');
+    hal_uart_start_tx(CONSOLE_UART);
+}
+
+void
 console_write(const char *str, int cnt)
 {
     console_file_write(NULL, str, cnt);
@@ -378,6 +387,6 @@ console_init(console_rx_cb rx_cb)
     }
 
     g_console_is_init = 1;
-
+    console_print_prompt();
     return 0;
 }

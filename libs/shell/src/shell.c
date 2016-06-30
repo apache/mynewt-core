@@ -169,10 +169,12 @@ shell_cmd(char *cmd, char **argv, int argc)
         sc->sc_cmd_func(argc, argv);
     } else {
         console_printf("Unknown command %s\n", cmd);
+        
     }
-
+    console_print_prompt();
     return (0);
 err:
+    console_print_prompt();
     return (rc);
 }
 
@@ -360,6 +362,7 @@ shell_nlip_mtx(struct os_mbuf *m)
     console_write(encodebuf, elen);
 
     console_write("\n", 1);
+    console_print_prompt();
 
     return (0);
 err:
@@ -510,7 +513,7 @@ shell_echo_cmd(int argc, char **argv)
         console_write(" ", sizeof(" ")-1);
     }
     console_write("\n", sizeof("\n")-1);
-
+    console_print_prompt();
     return (0);
 }
 
@@ -595,7 +598,6 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
     if (rc != 0) {
         goto err;
     }
-
     return (0);
 err:
     free(shell_line);
