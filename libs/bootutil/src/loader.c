@@ -284,10 +284,7 @@ boot_swap_areas(int idx, uint32_t sz)
         }
 
         boot_state.state = BOOT_PERSIST(idx, 1);
-        rc = boot_write_status(&boot_state);
-        if (rc != 0) {
-            return rc;
-        }
+        (void)boot_write_status(&boot_state);
         state = 1;
     }
     if (state == 1) {
@@ -302,10 +299,7 @@ boot_swap_areas(int idx, uint32_t sz)
         }
 
         boot_state.state = BOOT_PERSIST(idx, 2);
-        rc = boot_write_status(&boot_state);
-        if (rc != 0) {
-            return rc;
-        }
+        (void)boot_write_status(&boot_state);
         state = 2;
     }
     if (state == 2) {
@@ -320,10 +314,7 @@ boot_swap_areas(int idx, uint32_t sz)
         }
 
         boot_state.state = BOOT_PERSIST(idx + 1, 0);
-        rc = boot_write_status(&boot_state);
-        if (rc != 0) {
-            return rc;
-        }
+        (void)boot_write_status(&boot_state);
         state = 3;
     }
     return 0;
