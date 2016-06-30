@@ -77,7 +77,7 @@ os_stack_t stack2[TASK2_STACK_SIZE];
 os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
 #define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(896))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct log_handler log_cbmem_handler;
