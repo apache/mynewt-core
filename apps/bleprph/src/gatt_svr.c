@@ -442,11 +442,9 @@ gatt_svr_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
         break;
 
     case BLE_GATT_REGISTER_OP_DSC:
-        BLEPRPH_LOG(DEBUG, "registering descriptor %s with handle=%d "
-                           "chr_handle=%d\n",
+        BLEPRPH_LOG(DEBUG, "registering descriptor %s with handle=%d\n",
                     gatt_svr_uuid_to_s(ctxt->dsc.dsc_def->uuid128, buf),
-                    ctxt->dsc.dsc_handle,
-                    ctxt->dsc.chr_def_handle);
+                    ctxt->dsc.handle);
         break;
 
     default:
