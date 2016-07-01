@@ -43,12 +43,7 @@
 /* Interrupt mask for interrupt enable/clear */
 #define CPUTIMER_INT_MASK(x)    ((1 << (uint32_t)(x)) << 16)
 
-/* XXX:
- *  - Must determine how to set priority of cpu timer interrupt
- *  - Determine if we should use a mutex as opposed to disabling interrupts
- *  - Should I use macro for compare channel?
- *  - Sync to OSTIME.
- */
+/* Disable output compare used for cputimer */
 void
 cputime_disable_ocmp(void)
 {
@@ -151,6 +146,12 @@ cputime_hw_init(uint32_t clock_freq)
     uint32_t ctx;
     uint32_t max_freq;
     uint32_t pre_scaler;
+
+#if defined(HAL_CPUTIME_1MHZ)
+    if (clock_freq != 1000000) {
+        return -1;
+    }
+#endif
 
     /* Clock frequency must be at least 1 MHz */
     if (clock_freq < 1000000U) {

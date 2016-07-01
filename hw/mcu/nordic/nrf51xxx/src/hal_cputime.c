@@ -154,6 +154,12 @@ cputime_hw_init(uint32_t clock_freq)
     uint32_t max_freq;
     uint32_t pre_scaler;
 
+#if defined(HAL_CPUTIME_1MHZ)
+    if (clock_freq != 1000000) {
+        return -1;
+    }
+#endif
+
     /* Clock frequency must be at least 1 MHz */
     if (clock_freq < 1000000U) {
         return -1;

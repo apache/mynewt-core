@@ -90,7 +90,6 @@ cputime_init(uint32_t clock_freq)
     return rc;
 }
 
-
 /**
  * cputime nsecs to ticks
  *
@@ -105,7 +104,11 @@ cputime_nsecs_to_ticks(uint32_t nsecs)
 {
     uint32_t ticks;
 
+#if defined(HAL_CPUTIME_1MHZ)
+    ticks = (nsecs + 999) / 1000;
+#else
     ticks = ((nsecs * g_cputime.ticks_per_usec) + 999) / 1000;
+#endif
     return ticks;
 }
 
@@ -123,12 +126,17 @@ cputime_ticks_to_nsecs(uint32_t ticks)
 {
     uint32_t nsecs;
 
+#if defined(HAL_CPUTIME_1MHZ)
+    nsecs = ticks * 1000;
+#else
     nsecs = ((ticks * 1000) + (g_cputime.ticks_per_usec - 1)) /
             g_cputime.ticks_per_usec;
+#endif
 
     return nsecs;
 }
 
+#if !defined(HAL_CPUTIME_1MHZ)
 /**
  * cputime usecs to ticks
  *
@@ -164,6 +172,7 @@ cputime_ticks_to_usecs(uint32_t ticks)
     us =  (ticks + (g_cputime.ticks_per_usec - 1)) / g_cputime.ticks_per_usec;
     return us;
 }
+#endif
 
 /**
  * cputime delay ticks

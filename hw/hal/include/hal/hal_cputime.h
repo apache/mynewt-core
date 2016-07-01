@@ -108,6 +108,10 @@ uint32_t cputime_nsecs_to_ticks(uint32_t nsecs);
  */
 uint32_t cputime_ticks_to_nsecs(uint32_t ticks);
 
+#if defined(HAL_CPUTIME_1MHZ)
+#define cputime_usecs_to_ticks(x)       (x)
+#define cputime_ticks_to_usecs(x)       (x)
+#else
 /**
  * cputime usecs to ticks
  *
@@ -129,6 +133,7 @@ uint32_t cputime_usecs_to_ticks(uint32_t usecs);
  * @return uint32_t The number of microseconds corresponding to 'ticks'
  */
 uint32_t cputime_ticks_to_usecs(uint32_t ticks);
+#endif
 
 /**
  * cputime delay ticks
