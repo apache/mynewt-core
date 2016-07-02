@@ -89,11 +89,11 @@ struct nffs_disk_V0object {
     union {
         struct nffs_disk_V0inode ndo_disk_V0inode;
         struct nffs_disk_V0block ndo_disk_V0block;
-    } ndo_un_obj;
+    } ndo_un_V0obj;
 };
 
-#define ndo_disk_V0inode    ndo_un_obj.ndo_disk_V0inode
-#define ndo_disk_V0block    ndo_un_obj.ndo_disk_V0block
+#define ndo_disk_V0inode    ndo_un_V0obj.ndo_disk_V0inode
+#define ndo_disk_V0block    ndo_un_V0obj.ndo_disk_V0block
 
 static void usage(int rc);
 
@@ -364,6 +364,7 @@ file_flash_read(uint32_t addr, void *dst, int byte_cnt)
 
 /*
  * Print NFFS V0 structures
+ * XXX could check for CRC errors
  */
 static int
 print_nffs_flash_V0inode(struct nffs_area_desc *area, uint32_t off)
@@ -375,6 +376,7 @@ print_nffs_flash_V0inode(struct nffs_area_desc *area, uint32_t off)
 
     rc = file_flash_read(area->nad_offset + off, &ndi, sizeof(ndi));
     assert(rc == 0);
+	assert(nffs_hash_id_is_inode(ndi.ndi_id));
 
     memset(filename, 0, sizeof(filename));
     len = min(sizeof(filename) - 1, ndi.ndi_filename_len);
@@ -382,10 +384,10 @@ print_nffs_flash_V0inode(struct nffs_area_desc *area, uint32_t off)
     filename[len] = '\0';
     assert(rc == 0);
 
-    printf("   %s off %x id %x magic %x flen %d seq %d prnt %x %s\n",
+    printf("   %s off %d id %x flen %d seq %d prnt %x %s\n",
            (nffs_hash_id_is_file(ndi.ndi_id) ? "File" :
             (nffs_hash_id_is_dir(ndi.ndi_id) ? "Dir" : "???")),
-           off, ndi.ndi_id, ndi.ndi_magic, ndi.ndi_filename_len,
+           off, ndi.ndi_id, ndi.ndi_filename_len,
            ndi.ndi_seq, ndi.ndi_parent_id, filename);
     return sizeof(struct nffs_disk_V0inode) + ndi.ndi_filename_len;
 }
@@ -398,8 +400,10 @@ print_nffs_flash_V0block(struct nffs_area_desc *area, uint32_t off)
 
     rc = file_flash_read(area->nad_offset + off, &ndb, sizeof(ndb));
     assert(rc == 0);
+	assert(nffs_hash_id_is_block(ndb.ndb_id));
+	assert(!nffs_hash_id_is_inode(ndb.ndb_id));
 
-    printf("   Block off %x id %x len %d seq %d prev %x ino %x\n",
+    printf("   Block off %d id %x len %d seq %d prev %x ino %x\n",
            off, ndb.ndb_id, ndb.ndb_data_len, ndb.ndb_seq,
            ndb.ndb_prev_id, ndb.ndb_inode_id);
     return sizeof(struct nffs_disk_V0block) + ndb.ndb_data_len;
@@ -408,22 +412,23 @@ print_nffs_flash_V0block(struct nffs_area_desc *area, uint32_t off)
 static int
 print_nffs_flash_V0object(struct nffs_area_desc *area, uint32_t off)
 {
-    struct nffs_disk_V0object ndo;
+	uint32_t magic;
     int rc;
 
-    rc = file_flash_read(area->nad_offset + off, &ndo, sizeof(ndo));
+    rc = file_flash_read(area->nad_offset + off, &magic, sizeof magic);
     assert(rc == 0);
 
-    if (nffs_hash_id_is_inode(ndo.ndo_disk_V0inode.ndi_id)) {
+	switch (magic) {
+	case NFFS_INODE_MAGIC:
         return print_nffs_flash_V0inode(area, off);
 
-    } else if (nffs_hash_id_is_block(ndo.ndo_disk_V0block.ndb_id)) {
+	case NFFS_BLOCK_MAGIC:
         return print_nffs_flash_V0block(area, off);
 
-    } else if (ndo.ndo_disk_V0block.ndb_id == 0xffffffff) {
+	case 0xffffffff:
         return area->nad_length;
 
-    } else {
+	default:
         return 1;
     }
 }
@@ -496,32 +501,6 @@ print_nffs_flash_object(struct nffs_area_desc *area, uint32_t off)
         return 1;
     }
 }
-
-#if 0
-void
-print_file_areas()
-{
-    struct nffs_area_desc *area;
-    int off;
-    int i;
-
-    for (i = 0; i < nffs_num_areas; i++) {
-        area = &area_descs[i];
-        printf("%d: id:%d 0x%x - 0x%x %s\n",
-               i, area->nad_flash_id, area->nad_offset,
-               area->nad_offset + area->nad_length,
-               (i == file_scratch_idx ? "(scratch)" : ""));
-        off = sizeof (struct nffs_disk_area);
-        while (off < area->nad_length) {
-            if (nffs_version == 0) {
-                off += print_nffsV0_flash_object(area, off);
-            } else if (nffs_version == NFFS_AREA_VER) {
-                off += print_nffs_flash_object(area, off);
-            }
-        }
-    }
-}
-#endif
 
 static void
 print_nffs_file_flash(char *flash_area, size_t size)
