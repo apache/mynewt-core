@@ -376,7 +376,7 @@ print_nffs_flash_V0inode(struct nffs_area_desc *area, uint32_t off)
 
     rc = file_flash_read(area->nad_offset + off, &ndi, sizeof(ndi));
     assert(rc == 0);
-	assert(nffs_hash_id_is_inode(ndi.ndi_id));
+    assert(nffs_hash_id_is_inode(ndi.ndi_id));
 
     memset(filename, 0, sizeof(filename));
     len = min(sizeof(filename) - 1, ndi.ndi_filename_len);
@@ -400,8 +400,8 @@ print_nffs_flash_V0block(struct nffs_area_desc *area, uint32_t off)
 
     rc = file_flash_read(area->nad_offset + off, &ndb, sizeof(ndb));
     assert(rc == 0);
-	assert(nffs_hash_id_is_block(ndb.ndb_id));
-	assert(!nffs_hash_id_is_inode(ndb.ndb_id));
+    assert(nffs_hash_id_is_block(ndb.ndb_id));
+    assert(!nffs_hash_id_is_inode(ndb.ndb_id));
 
     printf("   Block off %d id %x len %d seq %d prev %x ino %x\n",
            off, ndb.ndb_id, ndb.ndb_data_len, ndb.ndb_seq,
@@ -412,23 +412,23 @@ print_nffs_flash_V0block(struct nffs_area_desc *area, uint32_t off)
 static int
 print_nffs_flash_V0object(struct nffs_area_desc *area, uint32_t off)
 {
-	uint32_t magic;
+    uint32_t magic;
     int rc;
 
     rc = file_flash_read(area->nad_offset + off, &magic, sizeof magic);
     assert(rc == 0);
 
-	switch (magic) {
-	case NFFS_INODE_MAGIC:
+    switch (magic) {
+    case NFFS_INODE_MAGIC:
         return print_nffs_flash_V0inode(area, off);
 
-	case NFFS_BLOCK_MAGIC:
+    case NFFS_BLOCK_MAGIC:
         return print_nffs_flash_V0block(area, off);
 
-	case 0xffffffff:
+    case 0xffffffff:
         return area->nad_length;
 
-	default:
+    default:
         return 1;
     }
 }
@@ -591,7 +591,7 @@ main(int argc, char **argv)
     int cnt;
     struct stat st;
     int standalone = 0;
-
+            
     progname = argv[0];
 
     while ((ch = getopt(argc, argv, "c:d:f:sv")) != -1) {
@@ -635,6 +635,8 @@ main(int argc, char **argv)
     log_init();
     log_console_handler_init(&nffs_log_console_handler);
     log_register("nffs-log", &nffs_log, &nffs_log_console_handler);
+
+    file_scratch_idx = MAX_AREAS + 1;
 
     if (standalone) {
         fd = open(native_flash_file, O_RDWR);
