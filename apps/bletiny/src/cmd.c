@@ -867,6 +867,33 @@ cmd_read(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $rssi                                                                     *
+ *****************************************************************************/
+
+static int
+cmd_rssi(int argc, char **argv)
+{
+    uint16_t conn_handle;
+    int8_t rssi;
+    int rc;
+
+    conn_handle = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_rssi(conn_handle, &rssi);
+    if (rc != 0) {
+        console_printf("error reading rssi; rc=%d\n", rc);
+        return rc;
+    }
+
+    console_printf("conn=%d rssi=%d\n", conn_handle, rssi);
+
+    return 0;
+}
+
+/*****************************************************************************
  * $scan                                                                     *
  *****************************************************************************/
 
@@ -2153,6 +2180,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "mtu",        cmd_mtu },
     { "passkey",    cmd_passkey },
     { "read",       cmd_read },
+    { "rssi",       cmd_rssi },
     { "scan",       cmd_scan },
     { "show",       cmd_show },
     { "sec",        cmd_sec },

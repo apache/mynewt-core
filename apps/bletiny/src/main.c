@@ -1475,6 +1475,19 @@ bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
     return 0;
 }
 
+int
+bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi)
+{
+    int rc;
+
+    rc = ble_hci_util_read_rssi(conn_handle, out_rssi);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
 /**
  * BLE test task
  *

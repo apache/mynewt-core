@@ -178,6 +178,7 @@ int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
                         uint64_t rand_val, int auth);
 int bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
                      uint16_t num);
+int bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi);
 
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
