@@ -44,6 +44,8 @@ int console_is_midline;
 
 typedef void (*console_write_char)(char);
 
+char console_prompt = '>';
+
 struct console_ring {
     uint8_t cr_head;
     uint8_t cr_tail;
@@ -68,6 +70,12 @@ console_add_char(struct console_ring *cr, char ch)
 {
     cr->cr_buf[cr->cr_head] = ch;
     cr->cr_head = CONSOLE_HEAD_INC(cr);
+}
+
+void 
+console_set_prompt(char p)
+{
+    console_prompt = p;
 }
 
 static uint8_t
@@ -179,10 +187,11 @@ console_file_write(void *arg, const char *str, size_t cnt)
 }
 
 void
-console_print_prompt()
+console_print_prompt(void)
 {
     struct console_tty *ct = &console_tty;
-    ct->ct_write_char('>');
+    
+    ct->ct_write_char(console_prompt);
     ct->ct_write_char(' ');
     hal_uart_start_tx(CONSOLE_UART);
 }
@@ -218,6 +227,7 @@ console_read(char *str, int cnt)
     if (i >= 0) {
         hal_uart_start_rx(CONSOLE_UART);
     }
+    console_print_prompt();
     return i;
 }
 
