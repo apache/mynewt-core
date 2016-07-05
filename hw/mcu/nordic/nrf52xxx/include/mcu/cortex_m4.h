@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -22,6 +22,10 @@
 
 #include "mcu/nrf52.h"
 
+#if defined(BSP_HAS_32768_XTAL)
+#define OS_TICKS_PER_SEC    (128)
+#else
 #define OS_TICKS_PER_SEC    (1000)
+#endif
 
 #endif /* __MCU_CORTEX_M4_H__ */

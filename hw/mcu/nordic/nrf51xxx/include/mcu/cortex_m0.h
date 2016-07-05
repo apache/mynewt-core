@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -27,6 +27,6 @@
  * clocked at 32768Hz. The tick frequency is chosen such that it divides
  * cleanly into 32768 to avoid a systemic bias in the actual tick frequency.
  */
-#define OS_TICKS_PER_SEC    (1024)
+#define OS_TICKS_PER_SEC    (128)
 
 #endif /* __MCU_CORTEX_M0_H__ */

@@ -32,7 +32,7 @@ pkg.linkerscript: "nrf52dk.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52dk.ld"
 pkg.downloadscript: nrf52dk_download.sh
 pkg.debugscript: nrf52dk_debug.sh
-pkg.cflags: -DNRF52
+pkg.cflags: -DNRF52 -DBSP_HAS_32768_XTAL
 pkg.deps:
     - hw/mcu/nordic/nrf52xxx
     - libs/baselibc
