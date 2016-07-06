@@ -22,7 +22,7 @@
 #include <os/os.h>
 #include <testutil/testutil.h>
 #include "hal/flash_map.h"
-
+#include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 

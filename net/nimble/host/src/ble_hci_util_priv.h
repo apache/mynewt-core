@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -23,5 +23,8 @@
 int ble_hci_util_read_adv_tx_pwr(int8_t *out_pwr);
 int ble_hci_util_rand(void *dst, int len);
 int ble_hci_util_read_rssi(uint16_t conn_handle, int8_t *out_rssi);
+int ble_hs_util_set_random_addr(uint8_t *addr);
+int ble_hci_util_set_data_len(uint16_t conn_handle, uint16_t tx_octets,
+                              uint16_t tx_time);
 
 #endif

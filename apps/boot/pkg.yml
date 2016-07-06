@@ -26,12 +26,28 @@ pkg.keywords:
     - loader
 
 pkg.features: bootloader
+
 pkg.deps:
     - sys/config
     - fs/nffs
     - libs/bootutil
-    - libs/console/stub
     - libs/mbedtls
     - libs/os
     - libs/util
+    - libs/console/stub
+
 pkg.cflags: -DLOG_LEVEL=255
+pkg.cflags.NFFS:
+    - -DNFFS_PRESENT
+pkg.cflags.FCB:
+    - -DFCB_PRESENT
+
+#
+# Define BOOT_SERIAL in target features to include serial downloader.
+# And uncomment 'libs/console/stub' from pkg.deps.
+#
+pkg.deps.BOOT_SERIAL.OVERWRITE:
+    - libs/console/full
+    - libs/boot_serial
+pkg.cflags.BOOT_SERIAL:
+    - -DBOOT_SERIAL

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -50,6 +50,11 @@ os_deltatime(os_time_t delta, const struct os_timeval *base,
     os_timeradd(base, &tvdelta, result);
 }
 
+/**
+ * Get the current OS time in ticks
+ *
+ * @return OS time in ticks
+ */
 os_time_t
 os_time_get(void)
 {
@@ -81,6 +86,11 @@ os_time_tick(int ticks)
     OS_EXIT_CRITICAL(sr);
 }
 
+/**
+ * Move OS time forward ticks.
+ *
+ * @param ticks The number of ticks to move time forward.
+ */
 void
 os_time_advance(int ticks)
 {
@@ -113,6 +123,15 @@ os_time_delay(int32_t osticks)
     }
 }
 
+/**
+ * Set the time of day.  This does not modify os time, but rather just modifies
+ * the offset by which we are tracking real time against os time.
+ *
+ * @param utctime A timeval representing the UTC time we are setting
+ * @param tz The time-zone to apply against the utctime being set.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
 int
 os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz)
 {
@@ -138,6 +157,16 @@ os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz)
     return (0);
 }
 
+/**
+ * Get the current time of day.  Returns the time of day in UTC
+ * into the tv argument, and returns the timezone (if set) into
+ * tz.
+ *
+ * @param tv The structure to put the UTC time of day into
+ * @param tz The structure to put the timezone information into
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
 os_gettimeofday(struct os_timeval *tv, struct os_timezone *tz)
 {
@@ -158,8 +187,13 @@ os_gettimeofday(struct os_timeval *tv, struct os_timezone *tz)
     return (0);
 }
 
+/**
+ * Get time since boot in microseconds.
+ *
+ * @return time since boot in microseconds
+ */
 int64_t
-os_get_uptime_usec(void) 
+os_get_uptime_usec(void)
 {
   struct os_timeval tv;
   os_time_t delta;
@@ -176,4 +210,35 @@ os_get_uptime_usec(void)
   os_deltatime(delta, &tv, &tv);
 
   return(tv.tv_sec * 1000000 + tv.tv_usec);
+}
+
+/**
+ * Converts milliseconds to OS ticks.
+ *
+ * @param ms                    The milliseconds input.
+ * @param out_ticks             The OS ticks output.
+ *
+ * @return                      0 on success; OS_EINVAL if the result is too
+ *                                  large to fit in a uint32_t.
+ */
+int
+os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks)
+{
+    uint64_t ticks;
+
+#if OS_TICKS_PER_SEC == 1000
+    *out_ticks = ms;
+    return 0;
+#endif
+
+    _Static_assert(OS_TICKS_PER_SEC <= UINT32_MAX,
+                   "OS_TICKS_PER_SEC must be <= UINT32_MAX");
+
+    ticks = (uint64_t)ms * OS_TICKS_PER_SEC / 1000;
+    if (ticks > UINT32_MAX) {
+        return OS_EINVAL;
+    }
+
+    *out_ticks = ticks;
+    return 0;
 }

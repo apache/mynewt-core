@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -134,11 +134,6 @@ struct ble_att_svr_entry {
     void *ha_cb_arg;
 };
 
-#define HA_OPCODE_METHOD_START (0)
-#define HA_OPCODE_METHOD_END (5)
-#define HA_OPCODE_COMMAND_FLAG (1 << 6) 
-#define HA_OPCODE_AUTH_SIG_FLAG (1 << 7) 
-
 SLIST_HEAD(ble_att_clt_entry_list, ble_att_clt_entry);
 
 /*** @gen */
@@ -152,11 +147,13 @@ uint16_t ble_att_mtu(uint16_t conn_handle);
 void ble_att_set_peer_mtu(struct ble_l2cap_chan *chan, uint16_t peer_mtu);
 int ble_att_init(void);
 
+#define BLE_ATT_LOG_CMD(is_tx, cmd_name, conn_handle, log_cb, cmd) \
+    BLE_HS_LOG_CMD((is_tx), "att", (cmd_name), (conn_handle), (log_cb), (cmd))
+
+#define BLE_ATT_LOG_EMPTY_CMD(is_tx, cmd_name, conn_handle) \
+    BLE_HS_LOG_EMPTY_CMD((is_tx), "att", (cmd_name), (conn_handle))
 
 /*** @svr */
-
-extern ble_att_svr_notify_fn *ble_att_svr_notify_cb;
-extern void *ble_att_svr_notify_cb_arg;
 
 struct ble_att_svr_entry *
 ble_att_svr_find_by_uuid(struct ble_att_svr_entry *start_at, uint8_t *uuid);

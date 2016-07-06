@@ -580,4 +580,36 @@ bletest_hci_le_create_connection(struct hci_create_conn *hcc)
     return rc;
 }
 
+int
+bletest_hci_le_add_resolv_list(uint8_t *local_irk, uint8_t *peer_irk,
+                               uint8_t *peer_ident_addr, uint8_t addr_type)
+{
+    int rc;
+    struct hci_add_dev_to_resolving_list padd;
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_ADD_TO_RESOLV_LIST_LEN];
+
+    padd.addr_type = addr_type;
+    memcpy(padd.addr, peer_ident_addr, BLE_DEV_ADDR_LEN);
+    swap_buf(padd.local_irk, local_irk, 16);
+    swap_buf(padd.peer_irk, peer_irk, 16);
+    rc = host_hci_cmd_build_add_to_resolv_list(&padd, buf, sizeof buf);
+    if (!rc) {
+        rc = ble_hci_cmd_tx_empty_ack(buf);
+    }
+    return rc;
+}
+
+int
+bletest_hci_le_enable_resolv_list(uint8_t enable)
+{
+    int rc;
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_SET_ADDR_RESOL_ENA_LEN];
+
+
+    rc = host_hci_cmd_build_set_addr_res_en(enable, buf, sizeof buf);
+    if (!rc) {
+        rc = ble_hci_cmd_tx_empty_ack(buf);
+    }
+    return rc;
+}
 

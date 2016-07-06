@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -37,6 +38,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_l2cap.h"
+#include "host/ble_sm.h"
 #include "controller/ble_ll.h"
 
 #include "bleprph.h"
@@ -84,21 +86,8 @@ uint8_t bleprph_reconnect_addr[6];
 uint8_t bleprph_pref_conn_params[8];
 uint8_t bleprph_gatt_service_changed[4];
 
-static int bleprph_gap_event(int event, int status,
-                             struct ble_gap_conn_ctxt *ctxt, void *arg);
-
-/**
- * Utility function to log an array of bytes.
- */
-static void
-bleprph_print_bytes(uint8_t *bytes, int len)
-{
-    int i;
-
-    for (i = 0; i < len; i++) {
-        BLEPRPH_LOG(INFO, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
-    }
-}
+static int bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt,
+                             void *arg);
 
 /**
  * Logs information about a connection to the console.
@@ -106,17 +95,25 @@ bleprph_print_bytes(uint8_t *bytes, int len)
 static void
 bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    BLEPRPH_LOG(INFO, "handle=%d peer_addr_type=%d peer_addr=",
-                desc->conn_handle,
-                desc->peer_addr_type);
-    bleprph_print_bytes(desc->peer_addr, 6);
+    BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+                desc->conn_handle, desc->our_ota_addr_type);
+    print_addr(desc->our_ota_addr);
+    BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
+                desc->our_id_addr_type);
+    print_addr(desc->our_id_addr);
+    BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+                desc->peer_ota_addr_type);
+    print_addr(desc->peer_ota_addr);
+    BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
+                desc->peer_id_addr_type);
+    print_addr(desc->peer_id_addr);
     BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                      "encrypted=%d authenticated=%d",
-                desc->conn_itvl,
-                desc->conn_latency,
+                "encrypted=%d authenticated=%d bonded=%d\n",
+                desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
-                desc->sec_state.enc_enabled,
-                desc->sec_state.authenticated);
+                desc->sec_state.encrypted,
+                desc->sec_state.authenticated,
+                desc->sec_state.bonded);
 }
 
 /**
@@ -170,8 +167,6 @@ bleprph_advertise(void)
  * bleprph uses the same callback for all connections.
  *
  * @param event                 The type of event being signalled.
- * @param status                The error code associated with the event
- *                                  (0 = success).
  * @param ctxt                  Various information pertaining to the event.
  * @param arg                   Application-specified argument; unuesd by
  *                                  bleprph.
@@ -182,86 +177,44 @@ bleprph_advertise(void)
  *                                  particular GAP event being signalled.
  */
 static int
-bleprph_gap_event(int event, int status, struct ble_gap_conn_ctxt *ctxt,
-                  void *arg)
+bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
 {
-    int authenticated;
-    int rc;
-
     switch (event) {
-    case BLE_GAP_EVENT_CONN:
-        /* A new connection has been established or an existing one has been
-         * terminated.
-         */
+    case BLE_GAP_EVENT_CONNECT:
+        /* A new connection was established or a connection attempt failed. */
         BLEPRPH_LOG(INFO, "connection %s; status=%d ",
-                    status == 0 ? "up" : "down", status);
+                       ctxt->connect.status == 0 ? "established" : "failed",
+                       ctxt->connect.status);
         bleprph_print_conn_desc(ctxt->desc);
         BLEPRPH_LOG(INFO, "\n");
 
-        if (status != 0) {
-            /* Connection terminated; resume advertising. */
+        if (ctxt->connect.status != 0) {
+            /* Connection failed; resume advertising. */
             bleprph_advertise();
         }
         return 0;
 
-    case BLE_GAP_EVENT_CONN_UPDATED:
+    case BLE_GAP_EVENT_DISCONNECT:
+        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", ctxt->disconnect.reason);
+        bleprph_print_conn_desc(ctxt->desc);
+        BLEPRPH_LOG(INFO, "\n");
+
+        /* Connection terminated; resume advertising. */
+        bleprph_advertise();
+        return 0;
+
+    case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        BLEPRPH_LOG(INFO, "connection updated; status=%d ", status);
+        BLEPRPH_LOG(INFO, "connection updated; status=%d ",
+                    ctxt->conn_update.status);
         bleprph_print_conn_desc(ctxt->desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
 
-    case BLE_GAP_EVENT_LTK_REQUEST:
-        /* An encryption procedure (bonding) is being attempted.  The nimble
-         * stack is asking us to look in our key database for a long-term key
-         * corresponding to the specified ediv and random number.
-         */
-        BLEPRPH_LOG(INFO, "looking up ltk with ediv=0x%02x rand=0x%llx\n",
-                    ctxt->ltk_params->ediv, ctxt->ltk_params->rand_num);
-
-        /* Perform a key lookup and populate the context object with the
-         * result.  The nimble stack will use this key if this function returns
-         * success.
-         */
-        rc = keystore_lookup(ctxt->ltk_params->ediv,
-                             ctxt->ltk_params->rand_num, ctxt->ltk_params->ltk,
-                             &authenticated);
-        if (rc == 0) {
-            ctxt->ltk_params->authenticated = authenticated;
-            BLEPRPH_LOG(INFO, "ltk=");
-            bleprph_print_bytes(ctxt->ltk_params->ltk,
-                                sizeof ctxt->ltk_params->ltk);
-            BLEPRPH_LOG(INFO, " authenticated=%d\n", authenticated);
-        } else {
-            BLEPRPH_LOG(INFO, "no matching ltk\n");
-        }
-
-        /* Indicate whether we were able to find an appropriate key. */
-        return rc;
-
-    case BLE_GAP_EVENT_KEY_EXCHANGE:
-        /* The central is sending us key information or vice-versa.  If the
-         * central is doing the sending, save the long-term key in the in-RAM
-         * database.  This permits bonding to occur on subsequent connections
-         * with this peer (as long as bleprph isn't restarted!).
-         */
-        if (ctxt->key_params->is_ours   &&
-            ctxt->key_params->ltk_valid &&
-            ctxt->key_params->ediv_rand_valid) {
-
-            rc = keystore_add(ctxt->key_params->ediv,
-                              ctxt->key_params->rand_val,
-                              ctxt->key_params->ltk,
-                              ctxt->desc->sec_state.authenticated);
-            if (rc != 0) {
-                BLEPRPH_LOG(INFO, "error persisting LTK; status=%d\n", rc);
-            }
-        }
-        return 0;
-
-    case BLE_GAP_EVENT_SECURITY:
+    case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        BLEPRPH_LOG(INFO, "security event; status=%d ", status);
+        BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
+                    ctxt->enc_change.status);
         bleprph_print_conn_desc(ctxt->desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
@@ -372,8 +325,10 @@ main(void)
     cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 1;
     cfg.sm_bonding = 1;
-    cfg.sm_our_key_dist = BLE_L2CAP_SM_PAIR_KEY_DIST_ENC;
-    cfg.sm_their_key_dist = BLE_L2CAP_SM_PAIR_KEY_DIST_ENC;
+    cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    cfg.store_read_cb = store_read;
+    cfg.store_write_cb = store_write;
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);

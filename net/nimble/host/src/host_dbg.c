@@ -39,17 +39,30 @@ host_hci_dbg_le_event_disp(uint8_t subev, uint8_t len, uint8_t *evdata)
     char adv_data_buf[32];
 
     switch (subev) {
+    case BLE_HCI_LE_SUBEV_ENH_CONN_COMPLETE:
     case BLE_HCI_LE_SUBEV_CONN_COMPLETE:
         status = evdata[0];
         if (status == BLE_ERR_SUCCESS) {
             BLE_HS_LOG(DEBUG, "LE connection complete. handle=%u role=%u "
-                              "paddrtype=%u addr=%x.%x.%x.%x.%x.%x itvl=%u "
-                              "latency=%u spvn_tmo=%u mca=%u\n",
+                              "paddrtype=%u addr=%x.%x.%x.%x.%x.%x ",
                        le16toh(evdata + 1), evdata[3], evdata[4],
                        evdata[10], evdata[9], evdata[8], evdata[7],
-                       evdata[6], evdata[5], le16toh(evdata + 11),
-                       le16toh(evdata + 13), le16toh(evdata + 15),
-                       evdata[17]);
+                       evdata[6], evdata[5]);
+
+            evdata += 11;
+            if (subev == BLE_HCI_LE_SUBEV_ENH_CONN_COMPLETE) {
+                BLE_HS_LOG(DEBUG, "local_rpa=%x.%x.%x.%x.%x.%x "
+                                   "peer_rpa=%x.%x.%x.%x.%x.%x ",
+                           evdata[5], evdata[4], evdata[3], evdata[2],
+                           evdata[1], evdata[0],
+                           evdata[11], evdata[10], evdata[9], evdata[8],
+                           evdata[7], evdata[6]);
+
+                evdata += 12;
+            }
+            BLE_HS_LOG(DEBUG, "itvl=%u latency=%u spvn_tmo=%u mca=%u\n",
+                       le16toh(evdata), le16toh(evdata + 2),
+                       le16toh(evdata + 4), evdata[6]);
         } else {
             BLE_HS_LOG(DEBUG, "LE connection complete. FAIL (status=%u)\n",
                        status);
@@ -262,6 +275,28 @@ host_hci_dbg_num_comp_pkts_disp(uint8_t *evdata, uint8_t len)
     }
 }
 
+/**
+ * Display the authenticated payload timeout event
+ *
+ * @param evdata
+ * @param len
+ */
+static void
+host_hci_dbg_auth_pyld_tmo_disp(uint8_t *evdata, uint8_t len)
+{
+    uint16_t handle;
+
+    if (len != sizeof(uint16_t)) {
+        BLE_HS_LOG(DEBUG, "ERR: AuthPyldTmoEvent bad length %u\n", len);
+        return;
+
+    }
+
+    handle = le16toh(evdata);
+    BLE_HS_LOG(DEBUG, "AuthPyldTmo: handle=%u\n", handle);
+}
+
+
 static void
 host_hci_dbg_cmd_comp_info_params(uint8_t status, uint8_t ocf, uint8_t *evdata)
 {
@@ -312,17 +347,29 @@ host_hci_dbg_cmd_complete_disp(uint8_t *evdata, uint8_t len)
     uint8_t status;
     uint16_t opcode;
 
+    if (len < 3) {
+        BLE_HS_LOG(DEBUG, "Invalid command complete: len=%d "
+                          "(expected >= 3)", len);
+        goto done;
+    }
+
     cmd_pkts = evdata[0];
     opcode = le16toh(evdata + 1);
     ogf = BLE_HCI_OGF(opcode);
     ocf = BLE_HCI_OCF(opcode);
+
+    BLE_HS_LOG(DEBUG, "Command complete: cmd_pkts=%u ogf=0x%x ocf=0x%x",
+               cmd_pkts, ogf, ocf);
+
+    if (len == 3) {
+        goto done;
+    }
+
     status = evdata[3];
+    BLE_HS_LOG(DEBUG, " status=%u ", status);
 
     /* Move past header and status */
     evdata += 4;
-
-    BLE_HS_LOG(DEBUG, "Command Complete: cmd_pkts=%u ogf=0x%x ocf=0x%x "
-                      "status=%u ", cmd_pkts, ogf, ocf, status);
 
     /* Display parameters based on command. */
     switch (ogf) {
@@ -385,6 +432,8 @@ host_hci_dbg_cmd_complete_disp(uint8_t *evdata, uint8_t len)
     default:
         break;
     }
+
+done:
     BLE_HS_LOG(DEBUG, "\n");
 }
 
@@ -443,6 +492,9 @@ host_hci_dbg_event_disp(uint8_t *evbuf)
         break;
     case BLE_HCI_EVCODE_LE_META:
         host_hci_dbg_le_event_disp(evdata[0], len, evdata + 1);
+        break;
+    case BLE_HCI_EVCODE_AUTH_PYLD_TMO:
+        host_hci_dbg_auth_pyld_tmo_disp(evdata, len);
         break;
     default:
         BLE_HS_LOG(DEBUG, "Unknown event 0x%x len=%u\n", evcode, len);

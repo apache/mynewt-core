@@ -20,6 +20,8 @@
 #ifndef H_BSP_H
 #define H_BSP_H
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,15 +34,16 @@ extern "C" {
 /* More convenient section placement macros. */
 #define bssnz_t         sec_bss_nz_core
 
+extern uint8_t _ram_start;
+#define RAM_SIZE        0x10000
+
 /* LED pins */
 #define LED_BLINK_PIN   (17)
 
 /* UART info */
 #define CONSOLE_UART    0
 
-int bsp_imgr_current_slot(void);
-
-#define NFFS_AREA_MAX    (8)
+#define NFFS_AREA_MAX   (8)
 
 #ifdef __cplusplus
 }

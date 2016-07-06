@@ -72,30 +72,23 @@ conf_line_parse(char *buf, char **namep, char **valp)
 }
 
 int
-conf_line_make(char *dst, int dlen, const struct conf_handler *ch,
-  const char *name, const char *value)
+conf_line_make(char *dst, int dlen, const char *name, const char *value)
 {
-    int clen;
     int nlen;
     int vlen;
     int off;
 
-    clen = strlen(ch->ch_name);
     nlen = strlen(name);
     if (value) {
         vlen = strlen(value);
     } else {
         vlen = 0;
     }
-    if (clen + nlen + vlen + 2 > dlen) {
+    if (nlen + vlen + 2 > dlen) {
         return -1;
     }
-    memcpy(dst, ch->ch_name, clen);
-    off = clen;
-    dst[off++] = '/';
-
-    memcpy(dst + off, name, nlen);
-    off += nlen;
+    memcpy(dst, name, nlen);
+    off = nlen;
     dst[off++] = '=';
 
     memcpy(dst + off, value, vlen);

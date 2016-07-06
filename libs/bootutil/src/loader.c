@@ -126,6 +126,27 @@ boot_select_image_slot(void)
 }
 
 /*
+ * Validate image hash/signature in a slot.
+ */
+static int
+boot_image_check(struct image_header *hdr, struct boot_image_location *loc)
+{
+    static void *tmpbuf;
+
+    if (!tmpbuf) {
+        tmpbuf = malloc(BOOT_TMPBUF_SZ);
+        if (!tmpbuf) {
+            return BOOT_ENOMEM;
+        }
+    }
+    if (bootutil_img_validate(hdr, loc->bil_flash_id, loc->bil_address,
+        tmpbuf, BOOT_TMPBUF_SZ)) {
+        return BOOT_EBADIMAGE;
+    }
+    return 0;
+}
+
+/*
  * How many sectors starting from sector[idx] can fit inside scratch.
  *
  */
@@ -385,7 +406,6 @@ int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
     struct boot_image_location image_addrs[BOOT_NUM_SLOTS];
-    void *tmpbuf;
     int slot;
     int rc;
     int i;
@@ -441,16 +461,16 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
             return BOOT_EBADIMAGE;
         }
     }
-    tmpbuf = malloc(BOOT_TMPBUF_SZ);
-    if (!tmpbuf) {
-        return BOOT_ENOMEM;
-    }
-    if (bootutil_img_validate(&boot_img_hdrs[slot],
-        image_addrs[slot].bil_flash_id, image_addrs[slot].bil_address,
-        tmpbuf, BOOT_TMPBUF_SZ)) {
-        return BOOT_EBADIMAGE;
-    }
 
+    /*
+     * If the selected image fails integrity check, try the other one.
+     */
+    if (boot_image_check(&boot_img_hdrs[slot], &image_addrs[slot])) {
+        slot ^= 1;
+        if (boot_image_check(&boot_img_hdrs[slot], &image_addrs[slot])) {
+            return BOOT_EBADIMAGE;
+        }
+    }
     switch (slot) {
     case 0:
         rsp->br_hdr = &boot_img_hdrs[0];

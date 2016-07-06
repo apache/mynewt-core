@@ -106,6 +106,22 @@ static void *ble_l2cap_sig_proc_mem;
 static struct os_mempool ble_l2cap_sig_proc_pool;
 
 /*****************************************************************************
+ * $debug                                                                    *
+ *****************************************************************************/
+
+static void
+ble_l2cap_sig_dbg_assert_proc_not_inserted(struct ble_l2cap_sig_proc *proc)
+{
+#if BLE_HS_DEBUG
+    struct ble_l2cap_sig_proc *cur;
+
+    STAILQ_FOREACH(cur, &ble_l2cap_sig_procs, next) {
+        BLE_HS_DBG_ASSERT(cur != proc);
+    }
+#endif
+}
+
+/*****************************************************************************
  * $misc                                                                     *
  *****************************************************************************/
 
@@ -158,6 +174,8 @@ ble_l2cap_sig_proc_free(struct ble_l2cap_sig_proc *proc)
     int rc;
 
     if (proc != NULL) {
+        ble_l2cap_sig_dbg_assert_proc_not_inserted(proc);
+
         rc = os_memblock_put(&ble_l2cap_sig_proc_pool, proc);
         BLE_HS_DBG_ASSERT_EVAL(rc == 0);
     }
@@ -166,7 +184,9 @@ ble_l2cap_sig_proc_free(struct ble_l2cap_sig_proc *proc)
 static void
 ble_l2cap_sig_proc_insert(struct ble_l2cap_sig_proc *proc)
 {
-    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+    ble_l2cap_sig_dbg_assert_proc_not_inserted(proc);
+
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
     STAILQ_INSERT_HEAD(&ble_l2cap_sig_procs, proc, next);
 }
 
@@ -553,15 +573,16 @@ ble_l2cap_sig_extract_expired(struct ble_l2cap_sig_proc_list *dst_list)
 /**
  * Applies periodic checks and actions to all active procedures.
  *
- * All procedures that failed due to memory exaustion have their pending flag
- * set so they can be retried.
+ * All procedures that have been expecting a response for longer than 30
+ * seconds are aborted and their corresponding connection is terminated.
  *
- * All procedures that have been expecting a response for longer than five
- * seconds are aborted, and their corresponding connection is terminated.
+ * Called by the heartbeat timer; executed at least once a second.
  *
- * Called by the heartbeat timer; executed every second.
+ * @return                      The number of ticks until this function should
+ *                                  be called again; currently always
+ *                                  UINT32_MAX.
  */
-void
+uint32_t
 ble_l2cap_sig_heartbeat(void)
 {
     struct ble_l2cap_sig_proc_list temp_list;
@@ -577,6 +598,8 @@ ble_l2cap_sig_heartbeat(void)
         STATS_INC(ble_l2cap_stats, proc_timeout);
         ble_gap_terminate(proc->conn_handle);
     }
+
+    return UINT32_MAX;
 }
 
 int

@@ -59,6 +59,8 @@ STATS_SECT_START(ble_gap_stats)
     STATS_SECT_ENTRY(rx_update_complete)
     STATS_SECT_ENTRY(rx_adv_report)
     STATS_SECT_ENTRY(rx_conn_complete)
+    STATS_SECT_ENTRY(discover_cancel)
+    STATS_SECT_ENTRY(discover_cancel_fail)
 STATS_SECT_END
 
 extern STATS_SECT_DECL(ble_gap_stats) ble_gap_stats;
@@ -74,18 +76,17 @@ void ble_gap_rx_update_complete(struct hci_le_conn_upd_complete *evt);
 void ble_gap_rx_param_req(struct hci_le_conn_param_req *evt);
 int ble_gap_rx_l2cap_update_req(uint16_t conn_handle,
                                 struct ble_gap_upd_params *params);
-void ble_gap_security_event(uint16_t conn_handle, int status,
-                            struct ble_gap_sec_state *sec_state);
-void ble_gap_passkey_event(uint16_t conn_handle, int status,
-                           uint8_t passkey_action);
-void ble_gap_key_exchange_event(uint16_t conn_handle,
-                           struct ble_gap_key_parms *key_params);
-int ble_gap_ltk_event(uint16_t conn_handle,
-                      struct ble_gap_ltk_params *ltk_params);
+void ble_gap_enc_event(uint16_t conn_handle, int status,
+                       int security_restored);
+void ble_gap_passkey_event(uint16_t conn_handle,
+                           struct ble_gap_passkey_action *passkey_action);
+void ble_gap_notify_event(uint16_t conn_handle, uint16_t attr_handle,
+                          void *attr_data, uint16_t attr_len,
+                          int is_indication);
 int ble_gap_master_in_progress(void);
 int ble_gap_slave_in_progress(void);
 
-void ble_gap_heartbeat(void);
+uint32_t ble_gap_heartbeat(void);
 
 int ble_gap_init(void);
 

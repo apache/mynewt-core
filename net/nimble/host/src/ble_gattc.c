@@ -845,15 +845,16 @@ ble_gattc_extract_with_rx_entry(uint16_t conn_handle,
 /**
  * Applies periodic checks and actions to all active procedures.
  *
- * All procedures that failed due to memory exaustion have their pending flag
- * set so they can be retried.
- *
  * All procedures that have been expecting a response for longer than 30
- * seconds are aborted, and their corresponding connection is terminated.
+ * seconds are aborted and their corresponding connection is terminated.
  *
- * Called by the host heartbeat timer; executed every second.
+ * Called by the heartbeat timer; executed at least once a second.
+ *
+ * @return                      The number of ticks until this function should
+ *                                  be called again; currently always
+ *                                  UINT32_MAX.
  */
-void
+uint32_t
 ble_gattc_heartbeat(void)
 {
     struct ble_gattc_proc_list exp_list;
@@ -873,6 +874,8 @@ ble_gattc_heartbeat(void)
         STAILQ_REMOVE_HEAD(&exp_list, next);
         ble_gattc_proc_free(proc);
     }
+
+    return UINT32_MAX;
 }
 
 /**
@@ -1011,7 +1014,7 @@ done:
 static int
 ble_gattc_disc_all_svcs_cb(struct ble_gattc_proc *proc,
                            uint16_t status, uint16_t att_handle,
-                           struct ble_gatt_service *service)
+                           struct ble_gatt_svc *service)
 {
     int rc;
 
@@ -1088,7 +1091,7 @@ static int
 ble_gattc_disc_all_svcs_rx_adata(struct ble_gattc_proc *proc,
                                  struct ble_att_read_group_type_adata *adata)
 {
-    struct ble_gatt_service service;
+    struct ble_gatt_svc service;
     uint16_t uuid16;
     int cbrc;
     int rc;
@@ -1225,7 +1228,7 @@ done:
 static int
 ble_gattc_disc_svc_uuid_cb(struct ble_gattc_proc *proc, int status,
                            uint16_t att_handle,
-                           struct ble_gatt_service *service)
+                           struct ble_gatt_svc *service)
 {
     int rc;
 
@@ -1300,7 +1303,7 @@ static int
 ble_gattc_disc_svc_uuid_rx_hinfo(struct ble_gattc_proc *proc,
                                  struct ble_att_find_type_value_hinfo *hinfo)
 {
-    struct ble_gatt_service service;
+    struct ble_gatt_svc service;
     int cbrc;
     int rc;
 
@@ -1420,7 +1423,7 @@ done:
 static int
 ble_gattc_find_inc_svcs_cb(struct ble_gattc_proc *proc, int status,
                            uint16_t att_handle,
-                           struct ble_gatt_service *service)
+                           struct ble_gatt_svc *service)
 {
     int rc;
 
@@ -1510,7 +1513,7 @@ static int
 ble_gattc_find_inc_svcs_rx_read_rsp(struct ble_gattc_proc *proc, int status,
                                     void *value, int value_len)
 {
-    struct ble_gatt_service service;
+    struct ble_gatt_svc service;
     int cbrc;
     int rc;
 
@@ -1564,7 +1567,7 @@ static int
 ble_gattc_find_inc_svcs_rx_adata(struct ble_gattc_proc *proc,
                                  struct ble_att_read_type_adata *adata)
 {
-    struct ble_gatt_service service;
+    struct ble_gatt_svc service;
     uint16_t uuid16;
     int call_cb;
     int cbrc;
@@ -1813,7 +1816,7 @@ ble_gattc_disc_all_chrs_rx_adata(struct ble_gattc_proc *proc,
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
     memset(&chr, 0, sizeof chr);
-    chr.decl_handle = adata->att_handle;
+    chr.def_handle = adata->att_handle;
 
     switch (adata->value_len) {
     case BLE_GATT_CHR_DECL_SZ_16:
@@ -1835,7 +1838,7 @@ ble_gattc_disc_all_chrs_rx_adata(struct ble_gattc_proc *proc,
     }
 
     chr.properties = adata->value[0];
-    chr.value_handle = le16toh(adata->value + 1);
+    chr.val_handle = le16toh(adata->value + 1);
 
     if (adata->att_handle <= proc->disc_all_chrs.prev_handle) {
         /* Peer sent characteristics out of order; terminate procedure. */
@@ -2038,7 +2041,7 @@ ble_gattc_disc_chr_uuid_rx_adata(struct ble_gattc_proc *proc,
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
     memset(&chr, 0, sizeof chr);
-    chr.decl_handle = adata->att_handle;
+    chr.def_handle = adata->att_handle;
 
     switch (adata->value_len) {
     case BLE_GATT_CHR_DECL_SZ_16:
@@ -2060,7 +2063,7 @@ ble_gattc_disc_chr_uuid_rx_adata(struct ble_gattc_proc *proc,
     }
 
     chr.properties = adata->value[0];
-    chr.value_handle = le16toh(adata->value + 1);
+    chr.val_handle = le16toh(adata->value + 1);
 
     if (adata->att_handle <= proc->disc_chr_uuid.prev_handle) {
         /* Peer sent characteristics out of order; terminate procedure. */
@@ -3175,8 +3178,20 @@ static void
 ble_gattc_write_long_err(struct ble_gattc_proc *proc, int status,
                          uint16_t att_handle)
 {
+    struct ble_att_exec_write_req exec_req;
+
     ble_gattc_dbg_assert_proc_not_inserted(proc);
     ble_gattc_write_long_cb(proc, status, att_handle);
+
+    /* If we have successfully queued any data, and the failure occurred before
+     * we could send the execute write command, then erase all queued data.
+     */
+    if (proc->write_long.attr.offset > 0 &&
+        proc->write_long.attr.offset < proc->write_long.attr.value_len) {
+
+        exec_req.baeq_flags = 0;
+        ble_att_clt_tx_exec_write(proc->conn_handle, &exec_req);
+    }
 }
 
 /**
@@ -3386,7 +3401,20 @@ static void
 ble_gattc_write_reliable_err(struct ble_gattc_proc *proc, int status,
                              uint16_t att_handle)
 {
+    struct ble_att_exec_write_req exec_req;
+
+    ble_gattc_dbg_assert_proc_not_inserted(proc);
     ble_gattc_write_reliable_cb(proc, status, att_handle);
+
+    /* If we have successfully queued any data, and the failure occurred before
+     * we could send the execute write command, then erase all queued data.
+     */
+    if (proc->write_reliable.cur_attr > 0 &&
+        proc->write_reliable.cur_attr < proc->write_reliable.num_attrs) {
+
+        exec_req.baeq_flags = 0;
+        ble_att_clt_tx_exec_write(proc->conn_handle, &exec_req);
+    }
 }
 
 /**
@@ -3649,23 +3677,18 @@ ble_gattc_indicate_err(struct ble_gattc_proc *proc, int status,
 static void
 ble_gattc_indicate_rx_rsp(struct ble_gattc_proc *proc)
 {
-    struct ble_hs_conn *conn;
+    int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    ble_gattc_indicate_cb(proc, 0, 0);
-
-    ble_hs_lock();
-    conn = ble_hs_conn_find(proc->conn_handle);
-    if (conn != NULL) {
-        conn->bhc_flags &= ~BLE_HS_CONN_F_INDICATE_TXED;
+    rc = ble_gatts_rx_indicate_ack(proc->conn_handle,
+                                   proc->indicate.chr_val_handle);
+    if (rc != BLE_HS_ENOTCONN && rc != BLE_HS_ENOENT) {
+        ble_gattc_indicate_cb(proc, rc, 0);
     }
-    ble_hs_unlock();
 
     /* Send the next indication if one is pending. */
-    if (conn != NULL) {
-        ble_gatts_send_updates_for_conn(proc->conn_handle);
-    }
+    ble_gatts_send_next_indicate(proc->conn_handle);
 }
 
 /**
@@ -3682,6 +3705,7 @@ ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle,
     struct ble_att_svr_access_ctxt ctxt;
     struct ble_att_indicate_req req;
     struct ble_gattc_proc *proc;
+    struct ble_hs_conn *conn;
     int rc;
 
     STATS_INC(ble_gattc_stats, indicate);
@@ -3716,6 +3740,15 @@ ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle,
     if (rc != 0) {
         goto done;
     }
+
+    ble_hs_lock();
+    conn = ble_hs_conn_find(conn_handle);
+    if (conn != NULL) {
+        BLE_HS_DBG_ASSERT(conn->bhc_gatt_svr.indicate_val_handle == 0);
+        conn->bhc_gatt_svr.indicate_val_handle = chr_val_handle;
+    }
+    ble_hs_unlock();
+
 
 done:
     if (rc != 0) {

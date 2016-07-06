@@ -44,9 +44,11 @@ ble_hs_test_hci_txed(uint8_t *cmdbuf)
 #ifdef MYNEWT_SELFTEST
 
 int
-main(void)
+main(int argc, char **argv)
 {
     tu_config.tc_print_results = 1;
+    tu_parse_args(argc, argv);
+
     tu_init();
 
     ble_att_clt_test_all();
@@ -64,9 +66,9 @@ main(void)
     ble_host_hci_test_all();
     ble_hs_adv_test_all();
     ble_hs_conn_test_all();
-    ble_l2cap_sm_test_all();
     ble_l2cap_test_all();
     ble_os_test_all();
+    ble_sm_test_all();
     ble_uuid_test_all();
 
     return tu_any_failed;

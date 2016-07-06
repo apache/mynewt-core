@@ -30,6 +30,7 @@ pkg.deps:
     - libs/util
     - libs/testutil
     - libs/shell
+    - sys/reboot
 
 pkg.features:
     - NEWTMGR 

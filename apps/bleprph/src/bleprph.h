@@ -21,6 +21,8 @@
 #define H_BLEPRPH_
 
 #include "log/log.h"
+union ble_store_value;
+union ble_store_key;
 
 extern struct log bleprph_log;
 
@@ -51,10 +53,13 @@ extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
 void gatt_svr_init(void);
 
-/** Keystore. */
-int keystore_lookup(uint16_t ediv, uint64_t rand_num,
-                    void *out_ltk, int *out_authenticated);
-int keystore_add(uint16_t ediv, uint64_t rand_num, uint8_t *key,
-                 int authenticated);
+/** Store. */
+int store_read(int obj_type, union ble_store_key *key,
+               union ble_store_value *dst);
+int store_write(int obj_type, union ble_store_value *val);
+
+/** Misc. */
+void print_bytes(uint8_t *bytes, int len);
+void print_addr(void *addr);
 
 #endif

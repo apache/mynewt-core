@@ -46,18 +46,18 @@ static char *ctest_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int ctest_handle_set(int argc, char **argv, char *val);
 static int ctest_handle_commit(void);
-static int ctest_handle_export(void (*cb)(struct conf_handler *, char *name,
-    char *value));
+static int ctest_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt);
 static char *c2_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int c2_handle_set(int argc, char **argv, char *val);
-static int c2_handle_export(void (*cb)(struct conf_handler *, char *name,
-    char *value));
+static int c2_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt);
 static char *c3_handle_get(int argc, char **argv, char *val,
   int val_len_max);
 static int c3_handle_set(int argc, char **argv, char *val);
-static int c3_handle_export(void (*cb)(struct conf_handler *, char *name,
-    char *value));
+static int c3_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt);
 
 struct conf_handler config_test_handler = {
     .ch_name = "myfoo",
@@ -101,7 +101,8 @@ ctest_handle_commit(void)
 }
 
 static int
-ctest_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
+ctest_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt)
 {
     char value[32];
 
@@ -109,7 +110,7 @@ ctest_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
         return 0;
     }
     conf_str_from_value(CONF_INT8, &val8, value, sizeof(value));
-    cb(&config_test_handler, "mybar", value);
+    cb("myfoo/mybar", value);
 
     return 0;
 }
@@ -180,14 +181,15 @@ c2_handle_set(int argc, char **argv, char *val)
 }
 
 static int
-c2_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
+c2_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt)
 {
     int i;
     char name[32];
 
     for (i = 0; i < c2_var_count; i++) {
-        snprintf(name, sizeof(name), "string%d", i);
-        cb(&c2_test_handler, name, val_string[i]);
+        snprintf(name, sizeof(name), "2nd/string%d", i);
+        cb(name, val_string[i]);
     }
     return 0;
 }
@@ -225,12 +227,13 @@ c3_handle_set(int argc, char **argv, char *val)
 }
 
 static int
-c3_handle_export(void (*cb)(struct conf_handler *, char *name, char *value))
+c3_handle_export(void (*cb)(char *name, char *value),
+  enum conf_export_tgt tgt)
 {
     char value[32];
 
     conf_str_from_value(CONF_INT32, &val32, value, sizeof(value));
-    cb(&c3_test_handler, "v", value);
+    cb("3/v", value);
 
     return 0;
 }
@@ -606,14 +609,14 @@ TEST_CASE(config_test_save_one_file)
     rc = conf_save();
     TEST_ASSERT(rc == 0);
 
-    rc = conf_save_one(&config_test_handler, "mybar", "42");
+    rc = conf_save_one("myfoo/mybar", "42");
     TEST_ASSERT(rc == 0);
 
     rc = conf_load();
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(val8 == 42);
 
-    rc = conf_save_one(&config_test_handler, "mybar", "44");
+    rc = conf_save_one("myfoo/mybar", "44");
     TEST_ASSERT(rc == 0);
 
     rc = conf_load();
@@ -890,14 +893,14 @@ TEST_CASE(config_test_save_one_fcb)
     rc = conf_save();
     TEST_ASSERT(rc == 0);
 
-    rc = conf_save_one(&config_test_handler, "mybar", "42");
+    rc = conf_save_one("myfoo/mybar", "42");
     TEST_ASSERT(rc == 0);
 
     rc = conf_load();
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(val8 == 42);
 
-    rc = conf_save_one(&config_test_handler, "mybar", "44");
+    rc = conf_save_one("myfoo/mybar", "44");
     TEST_ASSERT(rc == 0);
 
     rc = conf_load();

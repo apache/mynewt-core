@@ -21,13 +21,14 @@
 
 #include "config/config.h"
 
-#define CONF_FILE_NAME_MAX	32	/* max length for config filename */
+#define CONF_FILE_NAME_MAX      32      /* max length for config filename */
 
 struct fs_file;
 struct conf_file {
     struct conf_store cf_store;
-    const char *cf_name;
-    struct fs_file *cf_save_fp;
+    const char *cf_name;                /* filename */
+    int cf_maxlines;                    /* max # of lines before compressing */
+    int cf_lines;                       /* private */
 };
 
 int conf_file_src(struct conf_file *);  /* register file to be source of cfg */

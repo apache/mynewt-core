@@ -24,6 +24,10 @@
 struct ble_hs_conn;
 struct os_mbuf;
 
+#define HCI_CMD_BUF_SIZE        260
+
+extern uint8_t host_hci_cmd_buf[HCI_CMD_BUF_SIZE];
+
 int host_hci_os_event_proc(struct os_event *ev);
 int host_hci_event_rx(uint8_t *data);
 uint16_t host_hci_opcode_join(uint8_t ogf, uint16_t ocf);
@@ -32,6 +36,8 @@ int host_hci_cmd_send(uint8_t ogf, uint8_t ocf, uint8_t len, void *cmddata);
 int host_hci_cmd_send_buf(void *cmddata);
 void host_hci_cmd_build_set_event_mask(uint64_t event_mask,
                                        uint8_t *dst, int dst_len);
+void host_hci_cmd_build_set_event_mask2(uint64_t event_mask, uint8_t *dst,
+                                        int dst_len);
 void host_hci_cmd_build_disconnect(uint16_t handle, uint8_t reason,
                                    uint8_t *dst, int dst_len);
 int host_hci_cmd_disconnect(uint16_t handle, uint8_t reason);
@@ -48,8 +54,6 @@ void host_hci_cmd_build_le_set_event_mask(uint64_t event_mask,
 void host_hci_cmd_build_le_read_buffer_size(uint8_t *dst, int dst_len);
 int host_hci_cmd_le_read_buffer_size(void);
 void host_hci_cmd_build_le_read_loc_supp_feat(uint8_t *dst, uint8_t dst_len);
-void host_hci_cmd_build_le_set_rand_addr(uint8_t *addr, uint8_t *dst,
-                                         int dst_len);
 void host_hci_cmd_build_le_set_adv_enable(uint8_t enable, uint8_t *dst,
                                           int dst_len);
 int host_hci_cmd_le_set_adv_enable(uint8_t enable);
@@ -98,6 +102,32 @@ uint16_t host_hci_handle_pb_bc_join(uint16_t handle, uint8_t pb, uint8_t bc);
 int host_hci_data_rx(struct os_mbuf *om);
 int host_hci_data_tx(struct ble_hs_conn *connection, struct os_mbuf *om);
 
+int host_hci_cmd_build_set_data_len(uint16_t connection_handle,
+                                    uint16_t tx_octets, uint16_t tx_time,
+                                    uint8_t *dst, int dst_len);
+int host_hci_cmd_build_add_to_resolv_list(
+                                    struct hci_add_dev_to_resolving_list *padd,
+                                    uint8_t *dst, int dst_len);
+int host_hci_cmd_build_remove_from_resolv_list(uint8_t addr_type,
+                                            uint8_t *addr, uint8_t *dst,
+                                            int dst_len);
+int host_hci_cmd_build_read_resolv_list_size(uint8_t *dst, int dst_len);
+int
+host_hci_cmd_build_clear_resolv_list(uint8_t *dst, int dst_len);
+int host_hci_cmd_build_read_peer_resolv_addr(uint8_t peer_identity_addr_type,
+                                          uint8_t *peer_identity_addr,
+                                          uint8_t *dst, int dst_len);
+int host_hci_cmd_build_read_lcl_resolv_addr(uint8_t local_identity_addr_type,
+                                        uint8_t *local_identity_addr,
+                                        uint8_t *dst, int dst_len);
+int host_hci_cmd_build_set_addr_res_en(uint8_t enable,
+                                          uint8_t *dst, int dst_len);
+int host_hci_cmd_build_set_resolv_priv_addr_timeout(uint16_t timeout,
+                                                            uint8_t *dst,
+                                                            int dst_len);
+
 void host_hci_timer_set(void);
+
+int host_hci_cmd_build_set_random_addr(uint8_t *addr, uint8_t *dst, int dst_len);
 
 #endif /* H_HOST_HCI_ */

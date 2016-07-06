@@ -24,6 +24,12 @@
 
 #include <os/queue.h>
 
+/* Global log info */
+struct log_info {
+    int64_t li_timestamp;
+    uint8_t li_index;
+} g_log_info;
+
 struct log;
 
 typedef int (*log_walk_func_t)(struct log *, void *arg, void *offset,
@@ -35,6 +41,11 @@ typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, void *arg);
 typedef int (*lh_flush_func_t)(struct log *);
+/*
+ * This function pointer points to a function that restores the numebr
+ * of entries that are specified while erasing
+ */
+typedef int (*lh_rtr_erase_func_t)(struct log *, void *arg);
 
 #define LOG_TYPE_STREAM  (0)
 #define LOG_TYPE_MEMORY  (1)
@@ -46,6 +57,7 @@ struct log_handler {
     lh_append_func_t log_append;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
+    lh_rtr_erase_func_t log_rtr_erase;
     void *log_arg;
 };
 
@@ -57,13 +69,21 @@ struct log_entry_hdr {
 }__attribute__((__packed__));
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
 
-#define LOG_LEVEL_DEBUG    (0x01)
-#define LOG_LEVEL_INFO     (0x02)
-#define LOG_LEVEL_WARN     (0x04)
-#define LOG_LEVEL_ERROR    (0x08)
-#define LOG_LEVEL_CRITICAL (0x10)
+#define LOG_LEVEL_DEBUG    (0)
+#define LOG_LEVEL_INFO     (1)
+#define LOG_LEVEL_WARN     (2)
+#define LOG_LEVEL_ERROR    (3)
+#define LOG_LEVEL_CRITICAL (4)
 /* Up to 7 custom log levels. */
-#define LOG_LEVEL_PERUSER  (0x12)
+#define LOG_LEVEL_MAX      (UINT8_MAX)
+
+#define LOG_LEVEL_STR(level) \
+    (LOG_LEVEL_DEBUG    == level ? "DEBUG"    :\
+    (LOG_LEVEL_INFO     == level ? "INFO"     :\
+    (LOG_LEVEL_WARN     == level ? "WARN"     :\
+    (LOG_LEVEL_ERROR    == level ? "ERROR"    :\
+    (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
+     "UNKNOWN")))))
 
 /* Log module, eventually this can be a part of the filter. */
 #define LOG_MODULE_DEFAULT          (0)
@@ -72,10 +92,24 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_CTLR      (3)
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
+#define LOG_MODULE_REBOOT           (6)
 #define LOG_MODULE_PERUSER          (64)
+#define LOG_MODULE_MAX              (255)
+
+#define LOG_MODULE_STR(module) \
+    (LOG_MODULE_DEFAULT     == module ? "DEFAULT"     :\
+    (LOG_MODULE_OS          == module ? "OS"          :\
+    (LOG_MODULE_NEWTMGR     == module ? "NEWTMGR"     :\
+    (LOG_MODULE_NIMBLE_CTLR == module ? "NIMBLE_CTLR" :\
+    (LOG_MODULE_NIMBLE_HOST == module ? "NIMBLE_HOST" :\
+    (LOG_MODULE_NFFS        == module ? "NFFS"        :\
+    (LOG_MODULE_REBOOT      == module ? "REBOOT"      :\
+     "UNKNOWN")))))))
 
 /* UTC Timestamnp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
+
+#define LOG_NAME_MAX_LEN    (64)
 
 /* Compile in Log Debug by default */
 #ifndef LOG_LEVEL
@@ -120,7 +154,6 @@ struct log_entry_hdr {
 struct log {
     char *l_name;
     struct log_handler *l_log;
-    uint8_t l_index;
     STAILQ_ENTRY(log) l_next;
 };
 
@@ -139,6 +172,7 @@ int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
 int log_walk(struct log *log, log_walk_func_t walk_func,
         void *arg);
 int log_flush(struct log *log);
+int log_rtr_erase(struct log *log, void *arg);
 
 
 
@@ -146,7 +180,8 @@ int log_flush(struct log *log);
 int log_cbmem_handler_init(struct log_handler *, struct cbmem *);
 int log_console_handler_init(struct log_handler *);
 struct fcb;
-int log_fcb_handler_init(struct log_handler *handler, struct fcb *fcb);
+int log_fcb_handler_init(struct log_handler *, struct fcb *,
+                         uint8_t entries);
 
 /* Private */
 #ifdef NEWTMGR_PRESENT

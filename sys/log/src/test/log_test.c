@@ -61,7 +61,7 @@ TEST_CASE(log_setup_fcb)
     }
     rc = fcb_init(&log_fcb);
     TEST_ASSERT(rc == 0);
-    rc = log_fcb_handler_init(&log_fcb_handler, &log_fcb);
+    rc = log_fcb_handler_init(&log_fcb_handler, &log_fcb, 0);
     TEST_ASSERT(rc == 0);
 
     log_register("log", &my_log, &log_fcb_handler);

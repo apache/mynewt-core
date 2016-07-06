@@ -89,7 +89,7 @@ conf_dup_check_cb(char *name, char *val, void *cb_arg)
         return;
     }
     if (!val) {
-        if (!cdca->val) {
+        if (!cdca->val || cdca->val[0] == '\0') {
             cdca->is_dup = 1;
         } else {
             cdca->is_dup = 0;
@@ -107,12 +107,10 @@ conf_dup_check_cb(char *name, char *val, void *cb_arg)
  * Append a single value to persisted config. Don't store duplicate value.
  */
 int
-conf_save_one(const struct conf_handler *ch, const char *name, char *value)
+conf_save_one(const char *name, char *value)
 {
     struct conf_store *cs;
     struct conf_dup_check_arg cdca;
-    char name_str[CONF_MAX_NAME_LEN];
-    int clen, nlen;
 
     cs = conf_save_dst;
     if (!cs) {
@@ -122,24 +120,14 @@ conf_save_one(const struct conf_handler *ch, const char *name, char *value)
     /*
      * Check if we're writing the same value again.
      */
-    clen = strlen(ch->ch_name);
-    nlen = strlen(name);
-    if (clen + nlen + 1 > sizeof(name_str)) {
-        return OS_INVALID_PARM;
-    }
-    memcpy(name_str, ch->ch_name, clen);
-    name_str[clen++] = '/';
-    memcpy(name_str + clen, name, nlen);
-    name_str[clen + nlen] = '\0';
-
-    cdca.name = name_str;
+    cdca.name = name;
     cdca.val = value;
     cdca.is_dup = 0;
     cs->cs_itf->csi_load(cs, conf_dup_check_cb, &cdca);
     if (cdca.is_dup == 1) {
         return 0;
     }
-    return cs->cs_itf->csi_save(cs, ch, name, value);
+    return cs->cs_itf->csi_save(cs, name, value);
 }
 
 /*
@@ -147,9 +135,9 @@ conf_save_one(const struct conf_handler *ch, const char *name, char *value)
  * config variables. Persist these settings.
  */
 static void
-conf_store_one(struct conf_handler *ch, char *name, char *value)
+conf_store_one(char *name, char *value)
 {
-    conf_save_one(ch, name, value);
+    conf_save_one(name, value);
 }
 
 int
@@ -165,17 +153,20 @@ conf_save(void)
         return OS_ENOENT;
     }
 
-    cs->cs_itf->csi_save_start(cs);
+    if (cs->cs_itf->csi_save_start) {
+        cs->cs_itf->csi_save_start(cs);
+    }
     rc = 0;
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
         if (ch->ch_export) {
-            rc2 = ch->ch_export(conf_store_one);
+            rc2 = ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
             if (!rc) {
                 rc = rc2;
             }
         }
     }
-    cs->cs_itf->csi_save_end(cs);
-
+    if (cs->cs_itf->csi_save_end) {
+        cs->cs_itf->csi_save_end(cs);
+    }
     return rc;
 }

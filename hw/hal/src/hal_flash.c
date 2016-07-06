@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <bsp/bsp.h>
 
+#include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 

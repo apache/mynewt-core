@@ -31,6 +31,8 @@ static struct os_mempool ble_hs_conn_pool;
 
 static os_membuf_t *ble_hs_conn_elem_mem;
 
+static const uint8_t ble_hs_conn_null_addr[6];
+
 int
 ble_hs_conn_can_alloc(void)
 {
@@ -136,7 +138,7 @@ ble_hs_conn_alloc(void)
      * to reject SM messages.
      */
 #if NIMBLE_OPT(SM)
-    chan = ble_l2cap_sm_create_chan();
+    chan = ble_sm_create_chan();
     if (chan == NULL) {
         goto err;
     }
@@ -206,7 +208,7 @@ ble_hs_conn_insert(struct ble_hs_conn *conn)
     return;
 #endif
 
-    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
 
     BLE_HS_DBG_ASSERT_EVAL(ble_hs_conn_find(conn->bhc_handle) == NULL);
     SLIST_INSERT_HEAD(&ble_hs_conns, conn, bhc_next);
@@ -219,7 +221,7 @@ ble_hs_conn_remove(struct ble_hs_conn *conn)
     return;
 #endif
 
-    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
 
     SLIST_REMOVE(&ble_hs_conns, conn, ble_hs_conn, bhc_next);
 }
@@ -233,12 +235,58 @@ ble_hs_conn_find(uint16_t conn_handle)
 
     struct ble_hs_conn *conn;
 
-    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
 
     SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
         if (conn->bhc_handle == conn_handle) {
             return conn;
         }
+    }
+
+    return NULL;
+}
+
+struct ble_hs_conn *
+ble_hs_conn_find_by_addr(uint8_t addr_type, uint8_t *addr)
+{
+#if !NIMBLE_OPT(CONNECT)
+    return NULL;
+#endif
+
+    struct ble_hs_conn *conn;
+
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
+
+    SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
+        if (conn->bhc_addr_type == addr_type &&
+            memcmp(conn->bhc_addr, addr, 6) == 0) {
+
+            return conn;
+        }
+    }
+
+    return NULL;
+}
+
+struct ble_hs_conn *
+ble_hs_conn_find_by_idx(int idx)
+{
+#if !NIMBLE_OPT(CONNECT)
+    return NULL;
+#endif
+
+    struct ble_hs_conn *conn;
+    int i;
+
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
+
+    i = 0;
+    SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
+        if (i == idx) {
+            return conn;
+        }
+
+        i++;
     }
 
     return NULL;
@@ -263,8 +311,65 @@ ble_hs_conn_first(void)
     return NULL;
 #endif
 
-    BLE_HS_DBG_ASSERT(ble_hs_thread_safe());
+    BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
     return SLIST_FIRST(&ble_hs_conns);
+}
+
+void
+ble_hs_conn_addrs(struct ble_hs_conn *conn,
+                  struct ble_hs_conn_addrs *addrs)
+{
+    /* Determine our address information. */
+    addrs->our_id_addr =
+        ble_hs_pvcy_our_id_addr(&addrs->our_id_addr_type);
+    if (memcmp(conn->our_rpa_addr, ble_hs_conn_null_addr, 6) == 0) {
+        addrs->our_ota_addr_type = addrs->our_id_addr_type;
+        addrs->our_ota_addr = addrs->our_id_addr;
+    } else {
+        switch (addrs->our_id_addr_type) {
+        case BLE_ADDR_TYPE_PUBLIC:
+            addrs->our_ota_addr_type = BLE_ADDR_TYPE_RPA_PUB_DEFAULT;
+            break;
+
+        case BLE_ADDR_TYPE_RANDOM:
+            addrs->our_ota_addr_type = BLE_ADDR_TYPE_RPA_RND_DEFAULT;
+            break;
+
+        default:
+            BLE_HS_DBG_ASSERT(0);
+        }
+
+        addrs->our_ota_addr = conn->our_rpa_addr;
+    }
+
+    /* Determine peer address information. */
+    addrs->peer_ota_addr_type = conn->bhc_addr_type;
+    addrs->peer_id_addr = conn->bhc_addr;
+    switch (conn->bhc_addr_type) {
+    case BLE_ADDR_TYPE_PUBLIC:
+        addrs->peer_id_addr_type = BLE_ADDR_TYPE_PUBLIC;
+        addrs->peer_ota_addr = conn->bhc_addr;
+        break;
+
+    case BLE_ADDR_TYPE_RANDOM:
+        addrs->peer_id_addr_type = BLE_ADDR_TYPE_RANDOM;
+        addrs->peer_ota_addr = conn->bhc_addr;
+        break;
+
+    case BLE_ADDR_TYPE_RPA_PUB_DEFAULT:
+        addrs->peer_id_addr_type = BLE_ADDR_TYPE_PUBLIC;
+        addrs->peer_ota_addr = conn->peer_rpa_addr;
+        break;
+
+    case BLE_ADDR_TYPE_RPA_RND_DEFAULT:
+        addrs->peer_id_addr_type = BLE_ADDR_TYPE_RANDOM;
+        addrs->peer_ota_addr = conn->peer_rpa_addr;
+        break;
+
+    default:
+        BLE_HS_DBG_ASSERT(0);
+        return;
+    }
 }
 
 static void

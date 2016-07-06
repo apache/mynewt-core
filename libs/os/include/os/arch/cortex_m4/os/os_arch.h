@@ -69,7 +69,6 @@ void os_default_irq_asm(void);
 
 /* External function prototypes supplied by BSP */
 void os_bsp_systick_init(uint32_t os_tick_per_sec, int prio);
-void os_bsp_init(void);
 void os_bsp_idle(os_time_t ticks);
 void os_bsp_ctx_sw(void);
 

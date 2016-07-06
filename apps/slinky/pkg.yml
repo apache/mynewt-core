@@ -34,5 +34,15 @@ pkg.deps:
     - libs/shell
     - libs/util
     - sys/config
+    - sys/id
     - sys/log
     - sys/stats
+
+pkg.cflags:
+    - "-DSTATS_NAME_ENABLE=1"
+
+pkg.cflags.NFFS:
+    - "-DNFFS_PRESENT"
+
+pkg.cflags.FCB:
+    - "-DFCB_PRESENT"

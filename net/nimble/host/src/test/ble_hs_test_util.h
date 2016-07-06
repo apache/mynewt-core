@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include "host/ble_gap.h"
 #include "ble_hs_priv.h"
+#include "ble_hs_test_util_store.h"
 struct ble_hs_conn;
 struct ble_l2cap_chan;
 struct hci_disconn_complete;
@@ -53,14 +54,20 @@ void ble_hs_test_util_build_cmd_complete(uint8_t *dst, int len,
 void ble_hs_test_util_build_cmd_status(uint8_t *dst, int len,
                                        uint8_t status, uint8_t num_pkts,
                                        uint16_t opcode);
+void ble_hs_test_util_create_rpa_conn(uint16_t handle, uint8_t *our_rpa,
+                                      uint8_t peer_addr_type,
+                                      uint8_t *peer_id_addr,
+                                      uint8_t *peer_rpa,
+                                      ble_gap_event_fn *cb, void *cb_arg);
 void ble_hs_test_util_create_conn(uint16_t handle, uint8_t *addr,
-                                  ble_gap_conn_fn *cb, void *cb_arg);
+                                  ble_gap_event_fn *cb, void *cb_arg);
 int ble_hs_test_util_conn_initiate(int addr_type, uint8_t *addr,
                                    struct ble_gap_crt_params *params,
-                                   ble_gap_conn_fn *cb, void *cb_arg,
+                                   ble_gap_event_fn *cb, void *cb_arg,
                                    uint8_t ack_status);
 int ble_hs_test_util_conn_cancel(uint8_t ack_status);
 int ble_hs_test_util_conn_terminate(uint16_t conn_handle, uint8_t hci_status);
+void ble_hs_test_util_conn_disconnect(uint16_t conn_handle);
 int ble_hs_test_util_disc(uint32_t duration_ms, uint8_t discovery_mode,
                           uint8_t scan_type, uint8_t filter_policy,
                           ble_gap_disc_fn *cb, void *cb_arg, int fail_idx,
@@ -68,8 +75,8 @@ int ble_hs_test_util_disc(uint32_t duration_ms, uint8_t discovery_mode,
 int ble_hs_test_util_adv_start(uint8_t discoverable_mode,
                                uint8_t connectable_mode,
                                uint8_t *peer_addr, uint8_t peer_addr_type,
-                               struct hci_adv_params *adv_params,
-                               ble_gap_conn_fn *cb, void *cb_arg,
+                               struct ble_gap_adv_params *adv_params,
+                               ble_gap_event_fn *cb, void *cb_arg,
                                int fail_idx, uint8_t fail_status);
 int ble_hs_test_util_adv_stop(uint8_t hci_status);
 int ble_hs_test_util_wl_set(struct ble_gap_white_entry *white_list,
@@ -100,6 +107,7 @@ uint8_t *ble_hs_test_util_verify_tx_hci(uint8_t ogf, uint16_t ocf,
                                         uint8_t *out_param_len);
 void ble_hs_test_util_tx_all(void);
 void ble_hs_test_util_set_public_addr(uint8_t *addr);
+void ble_hs_test_util_verify_tx_exec_write(uint8_t expected_flags);
 void ble_hs_test_util_init(void);
 
 #endif

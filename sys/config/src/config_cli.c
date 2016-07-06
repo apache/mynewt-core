@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -36,9 +36,9 @@ static struct shell_cmd shell_conf_cmd = {
 };
 
 static void
-conf_running_one(struct conf_handler *ch, char *name, char *val)
+conf_running_one(char *name, char *val)
 {
-    console_printf("%s/%s = %s\n", ch->ch_name, name, val ? val : "<del>");
+    console_printf("%s = %s\n", name, val ? val : "<del>");
 }
 
 static void
@@ -48,7 +48,7 @@ conf_dump_running(void)
 
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
         if (ch->ch_export) {
-            ch->ch_export(conf_running_one);
+            ch->ch_export(conf_running_one, CONF_EXPORT_SHOW);
         }
     }
 }
@@ -74,7 +74,7 @@ shell_conf_command(int argc, char **argv)
 {
     char *name = NULL;
     char *val = NULL;
-    char tmp_buf[16];
+    char tmp_buf[CONF_MAX_VAL_LEN + 1];
     int rc;
 
     switch (argc) {
