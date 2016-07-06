@@ -44,6 +44,7 @@ int console_is_midline;
 
 typedef void (*console_write_char)(char);
 
+
 struct console_ring {
     uint8_t cr_head;
     uint8_t cr_tail;
@@ -69,6 +70,8 @@ console_add_char(struct console_ring *cr, char ch)
     cr->cr_buf[cr->cr_head] = ch;
     cr->cr_head = CONSOLE_HEAD_INC(cr);
 }
+
+
 
 static uint8_t
 console_pull_char(struct console_ring *cr)
@@ -178,6 +181,8 @@ console_file_write(void *arg, const char *str, size_t cnt)
     return cnt;
 }
 
+
+
 void
 console_write(const char *str, int cnt)
 {
@@ -204,6 +209,9 @@ console_read(char *str, int cnt)
             break;
         }
         *str++ = ch;
+    }
+    if(i == 0){
+        console_print_prompt();
     }
     OS_EXIT_CRITICAL(sr);
     if (i >= 0) {
@@ -378,6 +386,6 @@ console_init(console_rx_cb rx_cb)
     }
 
     g_console_is_init = 1;
-
+    console_print_prompt();
     return 0;
 }
