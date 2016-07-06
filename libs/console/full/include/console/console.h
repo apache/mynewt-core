@@ -30,6 +30,7 @@ int console_read(char *str, int cnt);
 void console_blocking_mode(void);
 void console_echo(int on);
 void console_print_prompt(void);
+void console_set_prompt(char);
 void console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
 
