@@ -75,7 +75,6 @@ shell_os_tasks_display_cmd(int argc, char **argv)
     if (name && !found) {
         console_printf("Couldn't find task with name %s\n", name);
     }
-
     return (0);
 }
 
@@ -119,7 +118,6 @@ shell_os_mpool_display_cmd(int argc, char **argv)
         console_printf("Couldn't find a memory pool with name %s\n", 
                 name);
     }
-
     return (0);
 }
 
@@ -151,6 +149,5 @@ shell_os_date_cmd(int argc, char **argv)
     } else {
         rc = -1;
     }
-
     return (rc);
 }

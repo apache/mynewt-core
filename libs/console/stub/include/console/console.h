@@ -23,6 +23,22 @@
 
 typedef void (*console_rx_cb)(void);
 
+<<<<<<< HEAD
+int console_init(console_rx_cb rx_cb);
+int console_is_init(void);
+void console_write(const char *str, int cnt);
+int console_read(char *str, int cnt);
+void console_blocking_mode(void);
+void console_echo(int on);
+void console_print_prompt(void);
+void console_set_prompt(char);
+void console_printf(const char *fmt, ...)
+    __attribute__ ((format (printf, 1, 2)));;
+
+extern int console_is_midline;
+
+#endif /* __CONSOLE_H__ */
+=======
 static int inline
 console_is_init(void)
 {
@@ -69,3 +85,4 @@ console_echo(int on)
 
 #endif /* __CONSOLE__ */
 
+>>>>>>> origin/develop

@@ -22,6 +22,7 @@
 #include <os/os_time.h>
 
 #define CONS_OUTPUT_MAX_LINE	128
+char console_prompt[2] = {'>', ' '};
 
 #ifdef BASELIBC_PRESENT
 size_t console_file_write(FILE *p, const char *str, size_t cnt);
@@ -74,3 +75,15 @@ console_printf(const char *fmt, ...)
     va_end(args);
 }
 #endif
+
+void 
+console_set_prompt(char p)
+{
+    sprintf(console_prompt, "%c ", p);
+}
+
+void
+console_print_prompt(void)
+{
+    console_write(console_prompt, 2);
+}
