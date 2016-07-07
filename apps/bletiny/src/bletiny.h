@@ -106,6 +106,7 @@ long parse_arg_long(char *name, int *staus);
 uint8_t parse_arg_bool(char *name, int *status);
 uint8_t parse_arg_bool_default(char *name, uint8_t dflt, int *out_status);
 uint8_t parse_arg_uint8(char *name, int *status);
+uint8_t parse_arg_uint8_dflt(char *name, uint8_t dflt, int *out_status);
 uint16_t parse_arg_uint16(char *name, int *status);
 uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);
@@ -161,7 +162,7 @@ int bletiny_conn_initiate(uint8_t own_addr_type,
                           uint8_t peer_addr_type, uint8_t *peer_addr,
                           struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
-int bletiny_term_conn(uint16_t conn_handle);
+int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
 int bletiny_wl_set(struct ble_gap_white_entry *white_list,
                     int white_list_count);
 int bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,

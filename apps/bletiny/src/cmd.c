@@ -29,6 +29,7 @@
 #include "host/ble_hs_adv.h"
 #include "host/ble_sm.h"
 #include "host/ble_eddystone.h"
+#include "host/ble_hs_id.h"
 #include "../src/ble_l2cap_priv.h"
 #include "../src/ble_hs_priv.h"
 
@@ -1004,13 +1005,24 @@ cmd_scan(int argc, char **argv)
 static int
 cmd_show_addr(int argc, char **argv)
 {
-    uint8_t *id_addr;
-    uint8_t id_addr_type;
+    uint8_t id_addr[6];
+    int rc;
 
-    id_addr = ble_hs_pvcy_our_id_addr(&id_addr_type);
+    console_printf("public_id_addr=");
+    rc = ble_hs_id_copy_addr(BLE_ADDR_TYPE_PUBLIC, id_addr, NULL);
+    if (rc == 0) {
+        print_addr(id_addr);
+    } else {
+        console_printf("none");
+    }
 
-    console_printf("id_addr_type=%d id_addr=", id_addr_type);
-    print_addr(id_addr);
+    console_printf(" random_id_addr=");
+    rc = ble_hs_id_copy_addr(BLE_ADDR_TYPE_RANDOM, id_addr, NULL);
+    if (rc == 0) {
+        print_addr(id_addr);
+    } else {
+        console_printf("none");
+    }
     console_printf("\n");
 
     return 0;
@@ -1576,7 +1588,7 @@ cmd_set(int argc, char **argv)
          * needs to be removed.
          */
         memcpy(g_dev_addr, addr, 6);
-        ble_gap_init_identity_addr(g_dev_addr);
+        ble_hs_id_set_pub(g_dev_addr);
     } else if (rc != ENOENT) {
         return rc;
     }
@@ -1615,6 +1627,7 @@ static int
 cmd_term(int argc, char **argv)
 {
     uint16_t conn_handle;
+    uint8_t reason;
     int rc;
 
     conn_handle = parse_arg_uint16("conn", &rc);
@@ -1622,7 +1635,12 @@ cmd_term(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_term_conn(conn_handle);
+    reason = parse_arg_uint8_dflt("reason", BLE_ERR_REM_USER_CONN_TERM, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bletiny_term_conn(conn_handle, reason);
     if (rc != 0) {
         console_printf("error terminating connection; rc=%d\n", rc);
         return rc;
