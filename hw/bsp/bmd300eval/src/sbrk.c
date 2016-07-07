@@ -18,7 +18,6 @@
  */
 
 #include <errno.h>
-#include <hal/hal_bsp.h>
 
 extern char __HeapBase;
 extern char __HeapLimit;

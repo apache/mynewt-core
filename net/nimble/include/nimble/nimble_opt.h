@@ -52,16 +52,10 @@
 #define NIMBLE_OPT_WHITELIST                    1
 #endif
 
-/** HOST: Security manager legacy pairing.  Enabled by default. */
+/** HOST / CONTROLLER: Security manager.  Enabled by default. */
 
 #ifndef NIMBLE_OPT_SM
 #define NIMBLE_OPT_SM                           1
-#endif
-
-/** HOST: Security manage secure connections (4.2).  Disabled by default. */
-
-#ifndef NIMBLE_OPT_SM_SC
-#define NIMBLE_OPT_SM_SC                        0
 #endif
 
 /** HOST: Supported GATT procedures.  By default, all are enabled. */
@@ -270,11 +264,6 @@
 #define NIMBLE_OPT_LL_WHITELIST_SIZE            (8)
 #endif
 
-/* Size of the resolving ist */
-#ifndef NIMBLE_OPT_LL_RESOLV_LIST_SIZE
-#define NIMBLE_OPT_LL_RESOLV_LIST_SIZE          (4)
-#endif
-
 /*
  * Data length management definitions for connections. These define the maximum
  * size of the PDU's that will be sent and/or received in a connection.
@@ -348,7 +337,7 @@
  * has no effect.
  */
 #ifndef BLE_LL_CFG_FEAT_LE_PING
-#define  BLE_LL_CFG_FEAT_LE_PING                (1)
+#define  BLE_LL_CFG_FEAT_LE_PING                (0)
 #endif
 
 /*
@@ -366,7 +355,7 @@
  * is not supported by the nimble controller.
  */
 #ifndef BLE_LL_CFG_FEAT_LL_PRIVACY
-#define BLE_LL_CFG_FEAT_LL_PRIVACY              (1)
+#define BLE_LL_CFG_FEAT_LL_PRIVACY              (0)
 #endif
 
 /*

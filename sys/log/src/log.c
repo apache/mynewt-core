@@ -102,11 +102,10 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     struct log_entry_hdr *ue;
     int rc;
     struct os_timeval tv;
-    int64_t prev_ts;
+
+    log->l_index++;
 
     ue = (struct log_entry_hdr *) data;
-
-    g_log_info.li_index++;
 
     /* Try to get UTC Time */
     rc = os_gettimeofday(&tv, NULL);
@@ -115,21 +114,13 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     } else {
         ue->ue_ts = tv.tv_sec * 1000000 + tv.tv_usec;
     }
-
-    prev_ts = g_log_info.li_timestamp;
-    g_log_info.li_timestamp = ue->ue_ts;
     ue->ue_level = level;
     ue->ue_module = module;
-    ue->ue_index = g_log_info.li_index;
+    ue->ue_index = log->l_index;
 
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
         goto err;
-    }
-
-    /* Resetting index every millisecond */
-    if (g_log_info.li_timestamp > 1000 + prev_ts) {
-        g_log_info.li_index = 0;
     }
 
     return (0);
@@ -191,7 +182,7 @@ log_flush(struct log *log)
         goto err;
     }
 
-    g_log_info.li_index = 0;
+    log->l_index = 0;
 
     return (0);
 err:

@@ -21,12 +21,12 @@
 
 #include <stdarg.h>
 
-typedef void (*console_rx_cb)(void);
+typedef void (*console_rx_cb)(int full_line);
 
 int console_init(console_rx_cb rx_cb);
 int console_is_init(void);
 void console_write(const char *str, int cnt);
-int console_read(char *str, int cnt, int *newline);
+int console_read(char *str, int cnt);
 void console_blocking_mode(void);
 void console_echo(int on);
 void console_print_prompt(void);

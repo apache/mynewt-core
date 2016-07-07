@@ -16,10 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <inttypes.h>
 #include <string.h>
 
-#include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 #ifdef NFFS_PRESENT

@@ -48,8 +48,6 @@ static uint8_t ble_os_test_peer_addr[6] = { 1, 2, 3, 4, 5, 6 };
 
 static void ble_os_test_app_task_handler(void *arg);
 
-static int ble_os_test_gap_event;
-
 static void
 ble_os_test_init_app_task(void)
 {
@@ -96,7 +94,7 @@ ble_os_test_misc_conn_exists(uint16_t conn_handle)
 }
 
 static int
-ble_gap_direct_connect_test_connect_cb(int event,
+ble_gap_direct_connect_test_connect_cb(int event, int status,
                                        struct ble_gap_conn_ctxt *ctxt,
                                        void *arg)
 {
@@ -105,11 +103,11 @@ ble_gap_direct_connect_test_connect_cb(int event,
     cb_called = arg;
     *cb_called = 1;
 
-    TEST_ASSERT(event == BLE_GAP_EVENT_CONNECT);
-    TEST_ASSERT(ctxt->connect.status == 0);
+    TEST_ASSERT(event == BLE_GAP_EVENT_CONN);
+    TEST_ASSERT(status == 0);
     TEST_ASSERT(ctxt->desc->conn_handle == 2);
-    TEST_ASSERT(ctxt->desc->peer_id_addr_type == BLE_ADDR_TYPE_PUBLIC);
-    TEST_ASSERT(memcmp(ctxt->desc->peer_id_addr, ble_os_test_peer_addr, 6) == 0);
+    TEST_ASSERT(ctxt->desc->peer_addr_type == BLE_ADDR_TYPE_PUBLIC);
+    TEST_ASSERT(memcmp(ctxt->desc->peer_addr, ble_os_test_peer_addr, 6) == 0);
 
     return 0;
 }
@@ -177,7 +175,7 @@ ble_gap_gen_disc_test_connect_cb(int event, int status,
     cb_called = arg;
     *cb_called = 1;
 
-    TEST_ASSERT(event == BLE_GAP_EVENT_DISC_COMPLETE);
+    TEST_ASSERT(event == BLE_GAP_EVENT_DISC_FINISHED);
     TEST_ASSERT(status == 0);
 }
 
@@ -252,16 +250,18 @@ TEST_CASE(ble_gap_gen_disc_test_case)
 }
 
 static int
-ble_gap_terminate_cb(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
+ble_gap_terminate_cb(int event, int status,
+                     struct ble_gap_conn_ctxt *ctxt, void *arg)
 {
     int *disconn_handle;
 
-    ble_os_test_gap_event = event;
-
-    if (event == BLE_GAP_EVENT_DISCONNECT) {
-        disconn_handle = arg;
-        *disconn_handle = ctxt->desc->conn_handle;
+    TEST_ASSERT_FATAL(event == BLE_GAP_EVENT_CONN);
+    if (status == 0) {
+        return 0;
     }
+
+    disconn_handle = arg;
+    *disconn_handle = ctxt->desc->conn_handle;
 
     return 0;
 }
@@ -324,7 +324,6 @@ ble_gap_terminate_test_task_handler(void *arg)
     disconn_evt.status = 0;
     disconn_evt.reason = BLE_ERR_REM_USER_CONN_TERM;
     ble_hs_test_util_rx_disconn_complete_event(&disconn_evt);
-    TEST_ASSERT(ble_os_test_gap_event == BLE_GAP_EVENT_DISCONNECT);
     TEST_ASSERT(disconn_handle == 1);
     TEST_ASSERT_FATAL(!ble_os_test_misc_conn_exists(1));
     TEST_ASSERT_FATAL(ble_os_test_misc_conn_exists(2));
@@ -336,7 +335,6 @@ ble_gap_terminate_test_task_handler(void *arg)
     disconn_evt.status = 0;
     disconn_evt.reason = BLE_ERR_REM_USER_CONN_TERM;
     ble_hs_test_util_rx_disconn_complete_event(&disconn_evt);
-    TEST_ASSERT(ble_os_test_gap_event == BLE_GAP_EVENT_DISCONNECT);
     TEST_ASSERT(disconn_handle == 2);
     TEST_ASSERT_FATAL(!ble_os_test_misc_conn_exists(1));
     TEST_ASSERT_FATAL(!ble_os_test_misc_conn_exists(2));

@@ -123,7 +123,6 @@ log_cbmem_handler_init(struct log_handler *handler, struct cbmem *cbmem)
     handler->log_walk = log_cbmem_walk;
     handler->log_flush = log_cbmem_flush;
     handler->log_arg = (void *) cbmem;
-    handler->log_rtr_erase = NULL;
 
     return (0);
 }

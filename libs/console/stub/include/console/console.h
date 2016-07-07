@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,9 +21,8 @@
 
 #include <stdarg.h>
 
-typedef void (*console_rx_cb)(void);
+typedef void (*console_rx_cb)(int full_line);
 
-<<<<<<< HEAD
 int console_init(console_rx_cb rx_cb);
 int console_is_init(void);
 void console_write(const char *str, int cnt);
@@ -38,51 +37,3 @@ void console_printf(const char *fmt, ...)
 extern int console_is_midline;
 
 #endif /* __CONSOLE_H__ */
-=======
-static int inline
-console_is_init(void)
-{
-    return 0;
-}
-
-static int inline
-console_init(console_rx_cb rxcb)
-{
-    return 0;
-}
-
-static int inline
-console_read(char *str, int cnt, int *newline)
-{
-    *newline = 0;
-    return 0;
-}
-
-static void inline
-console_blocking_mode(void)
-{
-}
-
-static void inline
-console_write(const char *str, int cnt)
-{
-}
-
-static void inline console_printf(const char *fmt, ...)
-    __attribute__ ((format (printf, 1, 2)));
-
-static void inline
-console_printf(const char *fmt, ...)
-{
-}
-
-static void inline
-console_echo(int on)
-{
-}
-
-#define console_is_midline  (0)
-
-#endif /* __CONSOLE__ */
-
->>>>>>> origin/develop

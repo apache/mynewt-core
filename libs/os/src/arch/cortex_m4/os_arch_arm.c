@@ -19,7 +19,6 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
-#include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 
@@ -199,8 +198,7 @@ os_arch_os_init(void)
          * state at the time of the interrupt, and few other regs which
          * should help in trying to figure out what went wrong.
          */
-        NVIC_SetVector(NonMaskableInt_IRQn, (uint32_t)os_default_irq_asm);
-        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm);
+        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm); /* Hardfault */
         NVIC_SetVector(MemoryManagement_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(BusFault_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(UsageFault_IRQn, (uint32_t)os_default_irq_asm);
@@ -209,7 +207,7 @@ os_arch_os_init(void)
         }
 
         /* Call bsp related OS initializations */
-        bsp_init();
+        os_bsp_init();
 
         /* Set the PendSV interrupt exception priority to the lowest priority */
         NVIC_SetPriority(PendSV_IRQn, PEND_SV_PRIO);

@@ -28,6 +28,7 @@
 
 static struct os_mutex ble_hci_cmd_mutex;
 static struct os_sem ble_hci_cmd_sem;
+static uint8_t *ble_hci_cmd_ack_ev;
 
 #if PHONY_HCI_ACKS
 static ble_hci_cmd_phony_ack_fn *ble_hci_cmd_phony_ack_cb;
@@ -61,7 +62,7 @@ ble_hci_cmd_unlock(void)
 
 static int
 ble_hci_cmd_rx_cmd_complete(uint8_t event_code, uint8_t *data, int len,
-                            struct ble_hci_ack *out_ack)
+                         struct ble_hci_ack *out_ack)
 {
     uint16_t opcode;
     uint8_t *params;
@@ -105,7 +106,7 @@ ble_hci_cmd_rx_cmd_complete(uint8_t event_code, uint8_t *data, int len,
 
 static int
 ble_hci_cmd_rx_cmd_status(uint8_t event_code, uint8_t *data, int len,
-                          struct ble_hci_ack *out_ack)
+                       struct ble_hci_ack *out_ack)
 {
     uint16_t opcode;
     uint8_t num_pkts;
@@ -140,20 +141,16 @@ ble_hci_cmd_process_ack(uint8_t *params_buf, uint8_t params_buf_len,
     uint8_t event_len;
     int rc;
 
-    /***
-     * The controller always reuses the command buffer for its acknowledgement
-     * events.  This function processes the acknowledgement event contained in
-     * the command buffer.
-     */
+    BLE_HS_DBG_ASSERT(ble_hci_cmd_ack_ev != NULL);
 
     /* Count events received */
     STATS_INC(ble_hs_stats, hci_event);
 
     /* Display to console */
-    host_hci_dbg_event_disp(host_hci_cmd_buf);
+    host_hci_dbg_event_disp(ble_hci_cmd_ack_ev);
 
-    event_code = host_hci_cmd_buf[0];
-    param_len = host_hci_cmd_buf[1];
+    event_code = ble_hci_cmd_ack_ev[0];
+    param_len = ble_hci_cmd_ack_ev[1];
     event_len = param_len + 2;
 
     /* Clear ack fields up front to silence spurious gcc warnings. */
@@ -161,12 +158,12 @@ ble_hci_cmd_process_ack(uint8_t *params_buf, uint8_t params_buf_len,
 
     switch (event_code) {
     case BLE_HCI_EVCODE_COMMAND_COMPLETE:
-        rc = ble_hci_cmd_rx_cmd_complete(event_code, host_hci_cmd_buf,
+        rc = ble_hci_cmd_rx_cmd_complete(event_code, ble_hci_cmd_ack_ev,
                                          event_len, out_ack);
         break;
 
     case BLE_HCI_EVCODE_COMMAND_STATUS:
-        rc = ble_hci_cmd_rx_cmd_status(event_code, host_hci_cmd_buf,
+        rc = ble_hci_cmd_rx_cmd_status(event_code, ble_hci_cmd_ack_ev,
                                        event_len, out_ack);
         break;
 
@@ -189,6 +186,9 @@ ble_hci_cmd_process_ack(uint8_t *params_buf, uint8_t params_buf_len,
         out_ack->bha_params = params_buf;
     }
 
+    os_memblock_put(&g_hci_cmd_pool, ble_hci_cmd_ack_ev);
+    ble_hci_cmd_ack_ev = NULL;
+
     return rc;
 }
 
@@ -199,22 +199,18 @@ ble_hci_cmd_wait_for_ack(void)
 
 #if PHONY_HCI_ACKS
     if (ble_hci_cmd_phony_ack_cb == NULL) {
-        rc = BLE_HS_ETIMEOUT_HCI;
+        rc = BLE_HS_ETIMEOUT;
     } else {
-        rc = ble_hci_cmd_phony_ack_cb(host_hci_cmd_buf, 260);
+        BLE_HS_DBG_ASSERT(ble_hci_cmd_ack_ev == NULL);
+        ble_hci_cmd_ack_ev = os_memblock_get(&g_hci_cmd_pool);
+        if (ble_hci_cmd_ack_ev == NULL) {
+            rc = BLE_HS_ENOMEM;
+        } else {
+            rc = ble_hci_cmd_phony_ack_cb(ble_hci_cmd_ack_ev, 260);
+        }
     }
 #else
     rc = os_sem_pend(&ble_hci_cmd_sem, BLE_HCI_CMD_TIMEOUT);
-    switch (rc) {
-    case 0:
-        break;
-    case OS_TIMEOUT:
-        rc = BLE_HS_ETIMEOUT_HCI;
-        break;
-    default:
-        rc = BLE_HS_EOS;
-        break;
-    }
 #endif
 
     return rc;
@@ -271,17 +267,16 @@ ble_hci_cmd_tx_empty_ack(void *cmd)
 void
 ble_hci_cmd_rx_ack(uint8_t *ack_ev)
 {
-    /* The controller should always reuse the command buffer for its acks. */
-    BLE_HS_DBG_ASSERT(ack_ev == host_hci_cmd_buf);
+    int rc;
 
-    if (ble_hci_cmd_sem.sem_tokens != 0) {
-        /* This ack is unexpected; ignore it. */
-        return;
+    if (ble_hci_cmd_ack_ev != NULL) {
+        /* The controller sent two acks.  Free the first one. */
+        rc = os_memblock_put(&g_hci_cmd_pool, ble_hci_cmd_ack_ev);
+        BLE_HS_DBG_ASSERT_EVAL(rc == 0);
     }
 
-    /* Unblock the application now that the HCI command buffer is populated
-     * with the acknowledgement.
-     */
+    /* Hand up the acknowledgement and unblock the application. */
+    ble_hci_cmd_ack_ev = ack_ev;
     os_sem_release(&ble_hci_cmd_sem);
 }
 
@@ -295,4 +290,6 @@ ble_hci_cmd_init(void)
 
     rc = os_mutex_init(&ble_hci_cmd_mutex);
     BLE_HS_DBG_ASSERT_EVAL(rc == 0);
+
+    ble_hci_cmd_ack_ev = NULL;
 }

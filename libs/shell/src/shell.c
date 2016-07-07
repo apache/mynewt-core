@@ -75,21 +75,22 @@ static struct os_task shell_task;
 static struct os_eventq shell_evq;
 static struct os_event console_rdy_ev;
 
-static struct os_mutex g_shell_cmd_list_lock;
+static struct os_mutex g_shell_cmd_list_lock; 
 
 static char *shell_line;
 static char shell_prompt = '>';
 static int shell_line_capacity;
 static int shell_line_len;
 static char *argv[SHELL_MAX_ARGS];
+static uint8_t shell_full_line;
 
-static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list =
+static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list = 
     STAILQ_HEAD_INITIALIZER(g_shell_cmd_list);
 
 static struct os_mbuf *g_nlip_mbuf;
 static uint16_t g_nlip_expected_len;
 
-static int
+static int 
 shell_cmd_list_lock(void)
 {
     int rc;
@@ -107,7 +108,7 @@ err:
     return (rc);
 }
 
-static int
+static int 
 shell_cmd_list_unlock(void)
 {
     int rc;
@@ -148,7 +149,7 @@ err:
     return (rc);
 }
 
-static int
+static int 
 shell_cmd(char *cmd, char **argv, int argc)
 {
     struct shell_cmd *sc;
@@ -400,7 +401,7 @@ shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg)
     return (0);
 }
 
-int
+int 
 shell_nlip_output(struct os_mbuf *m)
 {
     int rc;
@@ -415,21 +416,25 @@ err:
     return (rc);
 }
 
-static void
+static int
 shell_read_console(void)
 {
     int rc;
-    int full_line;
 
     while (1) {
         rc = console_read(shell_line + shell_line_len,
-          shell_line_capacity - shell_line_len, &full_line);
-        if (rc <= 0 && !full_line) {
+                          shell_line_capacity - shell_line_len);
+        if (rc < 0) {
+            goto err;
+        }
+        if (rc == 0) {
             break;
         }
-        shell_line_len += rc;
-        if (full_line) {
-            if (shell_line_len > 2) {
+
+        if (shell_full_line) {
+            shell_line_len = 0;
+            shell_full_line = 0;
+            if (rc > 2) {
                 if (shell_line[0] == SHELL_NLIP_PKT_START1 &&
                         shell_line[1] == SHELL_NLIP_PKT_START2) {
                     if (g_nlip_mbuf) {
@@ -438,31 +443,35 @@ shell_read_console(void)
                     }
                     g_nlip_expected_len = 0;
 
-                    rc = shell_nlip_process(&shell_line[2], shell_line_len - 2);
+                    rc = shell_nlip_process(&shell_line[2], rc-2);
                 } else if (shell_line[0] == SHELL_NLIP_DATA_START1 &&
                         shell_line[1] == SHELL_NLIP_DATA_START2) {
-                    rc = shell_nlip_process(&shell_line[2], shell_line_len - 2);
+                    rc = shell_nlip_process(&shell_line[2], rc-2);
                 } else {
-                    shell_process_command(shell_line, shell_line_len);
+                    rc = shell_process_command(shell_line, rc);
+                    if (rc != 0) {
+                        goto err;
+                    }
                 }
             } else {
-                shell_process_command(shell_line, shell_line_len);
+                rc = shell_process_command(shell_line, rc);
+                if (rc != 0) {
+                    goto err;
+                }
             }
-            shell_line_len = 0;
+        } else {
+            shell_line_len += rc;
         }
     }
-<<<<<<< HEAD
     
     return (0);
 err:
     return (rc);
-=======
->>>>>>> origin/develop
 }
 
 
 static void
-shell_task_func(void *arg)
+shell_task_func(void *arg) 
 {
     struct os_event *ev;
 
@@ -473,9 +482,9 @@ shell_task_func(void *arg)
         assert(ev != NULL);
 
         switch (ev->ev_type) {
-            case OS_EVENT_T_CONSOLE_RDY:
+            case OS_EVENT_T_CONSOLE_RDY: 
                 // Read and process all available lines on the console.
-                shell_read_console();
+                (void) shell_read_console();
                 break;
             case OS_EVENT_T_MQUEUE_DATA:
                 shell_nlip_mqueue_process();
@@ -485,20 +494,22 @@ shell_task_func(void *arg)
 }
 
 /**
- * This function is called from the console APIs when data is available
- * to be read.  This is either a full line, or when the
- * console buffer (default = 128) is full.
+ * This function is called from the console APIs when data is available 
+ * to be read.  This is either a full line (full_line = 1), or when the 
+ * console buffer (default = 128) is full.   At the moment, we assert() 
+ * when the buffer is filled to avoid double buffering this data. 
  */
 void
-shell_console_rx_cb(void)
+shell_console_rx_cb(int full_line)
 {
+    shell_full_line = full_line;
     os_eventq_put(&shell_evq, &console_rdy_ev);
 }
 
 static int
 shell_echo_cmd(int argc, char **argv)
 {
-    int i;
+    int i; 
 
     for (i = 1; i < argc; i++) {
         console_write(argv[i], strlen(argv[i]));
@@ -534,7 +545,6 @@ shell_help_cmd(int argc, char **argv)
     return (0);
 }
 
-<<<<<<< HEAD
 static int
 shell_prompt_cmd(int argc, char **argv)
 {
@@ -567,9 +577,6 @@ shell_prompt_cmd(int argc, char **argv)
     return (0);
 }
 int 
-=======
-int
->>>>>>> origin/develop
 shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
                 int max_input_length)
 {
@@ -622,7 +629,7 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
     os_eventq_init(&shell_evq);
     os_mqueue_init(&g_shell_nlip_mq, NULL);
 
-    rc = os_task_init(&shell_task, "shell", shell_task_func,
+    rc = os_task_init(&shell_task, "shell", shell_task_func, 
             NULL, prio, OS_WAIT_FOREVER, stack, stack_size);
     if (rc != 0) {
         goto err;

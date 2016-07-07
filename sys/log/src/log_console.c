@@ -78,7 +78,6 @@ log_console_handler_init(struct log_handler *handler)
     handler->log_walk = log_console_walk;
     handler->log_flush = log_console_flush;
     handler->log_arg = NULL;
-    handler->log_rtr_erase = NULL;
 
     return (0);
 }

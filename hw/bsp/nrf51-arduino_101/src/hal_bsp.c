@@ -19,26 +19,13 @@
 
 #include <stdint.h>
 #include <stddef.h>
-
-#include <mcu/nrf51_hal.h>
-#include <hal/hal_bsp.h>
-#include "bsp/bsp.h"
+#include "mcu/nrf51_hal.h"
 
 static const struct nrf51_uart_cfg uart_cfg = {
     .suc_pin_tx = 9,
     .suc_pin_rx = 11,
     .suc_pin_rts = 12,
     .suc_pin_cts = 10
-};
-
-/*
- * What memory to include in coredump.
- */
-static const struct bsp_mem_dump dump_cfg[] = {
-    [0] = {
-        .bmd_start = &_ram_start,
-        .bmd_size = RAM_SIZE
-    }
 };
 
 const struct nrf51_uart_cfg *bsp_uart_config(void)
@@ -56,11 +43,4 @@ bsp_flash_dev(uint8_t id)
         return NULL;
     }
     return &nrf51_flash_dev;
-}
-
-const struct bsp_mem_dump *
-bsp_core_dump(int *area_cnt)
-{
-    *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
-    return dump_cfg;
 }

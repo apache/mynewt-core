@@ -30,7 +30,7 @@ int console_is_midline;
 
 #define CONSOLE_TX_BUF_SZ	32	/* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ	128
-#define CONSOLE_RX_CHUNK	16
+
 
 #define CONSOLE_DEL		0x7f	/* del character */
 #define CONSOLE_ESC		0x1b	/* esc character */
@@ -190,7 +190,7 @@ console_write(const char *str, int cnt)
 }
 
 int
-console_read(char *str, int cnt, int *newline)
+console_read(char *str, int cnt)
 {
     struct console_tty *ct = &console_tty;
     struct console_ring *cr = &ct->ct_rx;
@@ -198,25 +198,14 @@ console_read(char *str, int cnt, int *newline)
     int i;
     uint8_t ch;
 
-    *newline = 0;
     OS_ENTER_CRITICAL(sr);
     for (i = 0; i < cnt; i++) {
         if (cr->cr_head == cr->cr_tail) {
             break;
         }
-
-	if ((i & (CONSOLE_RX_CHUNK - 1)) == (CONSOLE_RX_CHUNK - 1)) {
-		/*
-		 * Make a break from blocking interrupts during the copy.
-		 */
-		OS_EXIT_CRITICAL(sr);
-		OS_ENTER_CRITICAL(sr);
-	}
-
         ch = console_pull_char(cr);
         if (ch == '\n') {
             *str = '\0';
-            *newline = 1;
             break;
         }
         *str++ = ch;
@@ -225,7 +214,7 @@ console_read(char *str, int cnt, int *newline)
         console_print_prompt();
     }
     OS_EXIT_CRITICAL(sr);
-    if (i > 0 || *newline) {
+    if (i >= 0) {
         hal_uart_start_rx(CONSOLE_UART);
     }
     return i;
@@ -273,7 +262,7 @@ console_rx_char(void *arg, uint8_t data)
          * RX queue full. Reader must drain this.
          */
         if (ct->ct_rx_cb) {
-            ct->ct_rx_cb();
+            ct->ct_rx_cb(0);
         }
         return -1;
     }
@@ -290,7 +279,7 @@ console_rx_char(void *arg, uint8_t data)
         tx_space = 2;
         console_add_char(rx, '\n');
         if (ct->ct_rx_cb) {
-            ct->ct_rx_cb();
+            ct->ct_rx_cb(1);
         }
         break;
     case CONSOLE_ESC:
