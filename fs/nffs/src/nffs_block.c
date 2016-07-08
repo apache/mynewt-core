@@ -94,7 +94,7 @@ nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
     if (rc != 0) {
         return rc;
     }
-    if (out_disk_block->ndb_magic != NFFS_BLOCK_MAGIC) {
+    if (!nffs_hash_id_is_block(out_disk_block->ndb_id)) {
         return FS_EUNEXP;
     }
 
@@ -214,7 +214,6 @@ nffs_block_to_disk(const struct nffs_block *block,
 {
     assert(block->nb_inode_entry != NULL);
 
-    out_disk_block->ndb_magic = NFFS_BLOCK_MAGIC;
     out_disk_block->ndb_id = block->nb_hash_entry->nhe_id;
     out_disk_block->ndb_seq = block->nb_seq;
     out_disk_block->ndb_inode_id =
@@ -240,6 +239,17 @@ nffs_block_delete_from_ram(struct nffs_hash_entry *block_entry)
     struct nffs_inode_entry *inode_entry;
     struct nffs_block block;
     int rc;
+
+    if (nffs_hash_entry_is_dummy(block_entry)) {
+        /*
+         * it's very limited to what we can do here as the block doesn't have
+         * any way to get to the inode via hash entry. Just delete the
+         * block and return FS_ECORRUPT
+         */
+        nffs_hash_remove(block_entry);
+        nffs_block_entry_free(block_entry);
+        return FS_ECORRUPT;
+    }
 
     rc = nffs_block_from_hash_entry(&block, block_entry);
     if (rc == 0 || rc == FS_ECORRUPT) {
@@ -327,6 +337,15 @@ nffs_block_from_hash_entry_no_ptrs(struct nffs_block *out_block,
 
     assert(nffs_hash_id_is_block(block_entry->nhe_id));
 
+    if (nffs_hash_entry_is_dummy(block_entry)) {
+        /*
+         * We can't read this from disk so we'll be missing filling in anything
+         * not already in inode_entry (e.g., prev_id).
+         */
+        out_block->nb_hash_entry = block_entry;
+        return FS_ENOENT; /* let caller know it's a partial inode_entry */
+    }
+
     nffs_flash_loc_expand(block_entry->nhe_flash_loc, &area_idx, &area_offset);
     rc = nffs_block_read_disk(area_idx, area_offset, &disk_block);
     if (rc != 0) {
@@ -372,6 +391,20 @@ nffs_block_from_hash_entry(struct nffs_block *out_block,
 
     assert(nffs_hash_id_is_block(block_entry->nhe_id));
 
+    if (nffs_block_is_dummy(block_entry)) {
+        out_block->nb_hash_entry = block_entry;
+        out_block->nb_inode_entry = NULL;
+        out_block->nb_prev = NULL;
+        /*
+         * Dummy block added when inode was read in before real block
+         * (see nffs_restore_inode()). Return success (because there's 
+         * too many places that ned to check for this,
+         * but it's the responsibility fo the upstream code to check
+         * whether this is still a dummy entry.  XXX
+         */
+        return 0;
+        /*return FS_ENOENT;*/
+    }
     nffs_flash_loc_expand(block_entry->nhe_flash_loc, &area_idx, &area_offset);
     rc = nffs_block_read_disk(area_idx, area_offset, &disk_block);
     if (rc != 0) {
@@ -406,4 +439,10 @@ nffs_block_read_data(const struct nffs_block *block, uint16_t offset,
     }
 
     return 0;
+}
+
+int
+nffs_block_is_dummy(struct nffs_hash_entry *entry)
+{
+    return (entry->nhe_flash_loc == NFFS_FLASH_LOC_NONE);
 }

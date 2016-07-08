@@ -178,6 +178,8 @@ nffs_format_full(const struct nffs_area_desc *area_descs)
         goto err;
     }
 
+    nffs_current_area_descs = (struct nffs_area_desc*) area_descs;
+
     return 0;
 
 err:
