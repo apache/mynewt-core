@@ -263,6 +263,8 @@ uart_rx_pkt_type(uint8_t data)
 static int
 uart_rx_cmd(uint8_t data)
 {
+    int rc;
+
     hci.tx_cmd.data[hci.tx_cmd.cur++] = data;
 
     if (hci.tx_cmd.cur < HCI_CMD_HDR_LEN) {
@@ -272,7 +274,10 @@ uart_rx_cmd(uint8_t data)
     }
 
     if (hci.tx_cmd.cur == hci.tx_cmd.len) {
-        ble_hci_transport_host_cmd_send(hci.tx_cmd.data);
+        rc = ble_hci_transport_host_cmd_send(hci.tx_cmd.data);
+        if (rc != 0) {
+            os_memblock_put(&g_hci_cmd_pool, hci.tx_cmd.data);
+        }
         hci.tx_type = H4_NONE;
     }
 
