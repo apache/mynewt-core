@@ -509,6 +509,45 @@ err:
     return (rc);
 }
 
+/**
+ * Reads data from one mbuf and appends it to another.  On error, the specified
+ * data range may be partially appended.  Neither mbuf is required to contain
+ * an mbuf packet header.
+ *
+ * @param dst                   The mbuf to append to.
+ * @param src                   The mbuf to copy data from.
+ * @param src_off               The absolute offset within the source mbuf
+ *                                  chain to read from.
+ * @param len                   The number of bytes to append.
+ */
+int
+os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
+                   uint16_t src_off, uint16_t len)
+{
+    const struct os_mbuf *src_cur_om;
+    uint16_t chunk_sz;
+    int src_cur_off;
+    int rc;
+
+    src_cur_om = os_mbuf_off(src, src_off, &src_cur_off);
+    if (src_cur_om == NULL) {
+        return OS_EINVAL;
+    }
+
+    while (len > 0) {
+        chunk_sz = min(len, src_cur_om->om_len - src_cur_off);
+        rc = os_mbuf_append(dst, src_cur_om->om_data + src_cur_off, chunk_sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        len -= chunk_sz;
+        src_cur_om = SLIST_NEXT(src_cur_om, om_next);
+        src_cur_off = 0;
+    }
+
+    return 0;
+}
 
 /**
  * Duplicate a chain of mbufs.  Return the start of the duplicated chain.

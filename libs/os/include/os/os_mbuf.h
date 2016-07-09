@@ -267,6 +267,9 @@ int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
 /* Append data onto a mbuf */
 int os_mbuf_append(struct os_mbuf *m, const void *, uint16_t);
 
+int os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
+                       uint16_t src_off, uint16_t len);
+
 /* Free a mbuf */
 int os_mbuf_free(struct os_mbuf *mb);
 
