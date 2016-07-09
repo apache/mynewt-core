@@ -576,26 +576,30 @@ err:
  *                              NULL if the specified offset is out of bounds.
  */
 struct os_mbuf *
-os_mbuf_off(struct os_mbuf *om, int off, int *out_off)
+os_mbuf_off(const struct os_mbuf *om, int off, int *out_off)
 {
     struct os_mbuf *next;
+    struct os_mbuf *cur;
+
+    /* Cast away const. */
+    cur = (struct os_mbuf *)om;
 
     while (1) {
-        if (om == NULL) {
+        if (cur == NULL) {
             return NULL;
         }
 
-        next = SLIST_NEXT(om, om_next);
+        next = SLIST_NEXT(cur, om_next);
 
-        if (om->om_len > off ||
-            (om->om_len == off && next == NULL)) {
+        if (cur->om_len > off ||
+            (cur->om_len == off && next == NULL)) {
 
             *out_off = off;
-            return om;
+            return cur;
         }
 
-        off -= om->om_len;
-        om = next;
+        off -= cur->om_len;
+        cur = next;
     }
 }
 
