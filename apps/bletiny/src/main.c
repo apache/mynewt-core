@@ -1512,7 +1512,7 @@ bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi)
 {
     int rc;
 
-    rc = ble_hci_util_read_rssi(conn_handle, out_rssi);
+    rc = ble_gap_conn_rssi(conn_handle, out_rssi);
     if (rc != 0) {
         return rc;
     }
