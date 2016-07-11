@@ -395,8 +395,9 @@ cmd_conn(int argc, char **argv)
         return 0;
     }
 
-    peer_addr_type = parse_arg_kv("peer_addr_type", cmd_conn_peer_addr_types,
-                                  &rc);
+    peer_addr_type = parse_arg_kv_default("peer_addr_type",
+                                          cmd_conn_peer_addr_types,
+                                          BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
         return rc;
     }
