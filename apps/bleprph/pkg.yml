@@ -31,6 +31,8 @@ pkg.deps:
     - net/nimble/host/store/ram
     - libs/console/full
     - libs/baselibc
+    - libs/newtmgr
+    - libs/newtmgr/transport/ble
 
 pkg.cflags:
     # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.

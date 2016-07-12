@@ -41,14 +41,6 @@ static int log_nmgr_logs_list(struct nmgr_jbuf *njb);
 static struct nmgr_group log_nmgr_group;
 
 
-/* Newtmgr Log opcodes */
-#define LOGS_NMGR_OP_READ         (0)
-#define LOGS_NMGR_OP_CLEAR        (1)
-#define LOGS_NMGR_OP_APPEND       (2)
-#define LOGS_NMGR_OP_MODULE_LIST  (3)
-#define LOGS_NMGR_OP_LEVEL_LIST   (4)
-#define LOGS_NMGR_OP_LOGS_LIST    (5)
-
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
  */

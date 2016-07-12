@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: net/nimble/host
-pkg.description: Host side of the nimble Bluetooth Smart stack.
+pkg.name: libs/newtmgr/transport/ble
+pkg.description: BLE transport newtmgr functionality.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -26,30 +26,5 @@ pkg.keywords:
     - bluetooth
 
 pkg.deps:
-    - sys/log
-    - sys/stats
     - libs/os
-    - libs/util
-    - libs/mbedtls
     - net/nimble
-
-    # Tinycrypt is only required when secure connections (NIMBPLE_OPT_SM_SC)
-    # is enabled.  It always gets built as a dependency, but not is not
-    # included by the linker unless SC is enabled.  XXX: We should not build
-    # this library if it is not requiresd.
-    - libs/tinycrypt
-
-pkg.req_apis:
-    - console
-
-pkg.features:
-    - BLE_HOST
-
-# Satisfy capability dependencies for the self-contained test executable.
-pkg.deps.SELFTEST: libs/console/stub
-pkg.cflags.SELFTEST:
-    - -DPHONY_TRANSPORT=1
-    - -DPHONY_HCI_ACKS=1
-    - -DNIMBLE_OPT_SM=1
-    - -DNIMBLE_OPT_SM_SC=1
-pkg.cflags.TEST: -DBLE_HS_DEBUG

@@ -27,6 +27,7 @@
 #include "hal/hal_gpio.h"
 #include "hal/hal_cputime.h"
 #include "console/console.h"
+#include <imgmgr/imgmgr.h>
 
 /* BLE */
 #include "nimble/ble.h"
@@ -40,6 +41,9 @@
 #include "host/ble_l2cap.h"
 #include "host/ble_sm.h"
 #include "controller/ble_ll.h"
+/* Newtmgr include */
+#include "newtmgr/newtmgr.h"
+#include "nmgrble/newtmgr_ble.h"
 
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
@@ -52,7 +56,7 @@
 #include "bleprph.h"
 
 /** Mbuf settings. */
-#define MBUF_NUM_MBUFS      (12)
+#define MBUF_NUM_MBUFS      (24)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -70,7 +74,11 @@ struct log bleprph_log;
 
 /** bleprph task settings. */
 #define BLEPRPH_TASK_PRIO           1
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(512))
+
+#define NEWTMGR_TASK_PRIO (4)
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct os_eventq bleprph_evq;
 struct os_task bleprph_task;
@@ -277,6 +285,13 @@ bleprph_task_handler(void *unused)
 
     while (1) {
         ev = os_eventq_get(&bleprph_evq);
+
+        /* Check if the event is a nmgr ble mqueue event */
+        rc = nmgr_ble_proc_mq_evt(ev);
+        if (!rc) {
+            continue;
+        }
+
         switch (ev->ev_type) {
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
@@ -387,6 +402,9 @@ main(void)
     rc = console_init(NULL);
     assert(rc == 0);
 
+    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
+    imgmgr_module_init();
+
     /* Register GATT attributes (services, characteristics, and
      * descriptors).
      */
@@ -402,6 +420,9 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-bleprph");
     assert(rc == 0);
+
+    /* Register nmgr ble GATT service and characteristic */
+    nmgr_ble_gatt_svr_init(&bleprph_evq);
 
     /* Start the OS */
     os_start();
