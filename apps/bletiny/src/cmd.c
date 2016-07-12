@@ -380,6 +380,7 @@ static int
 cmd_conn(int argc, char **argv)
 {
     struct ble_gap_conn_params params;
+    int32_t duration_ms;
     uint8_t peer_addr[6];
     int peer_addr_type;
     int own_addr_type;
@@ -465,8 +466,13 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
+    duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX, 0, &rc);
+    if (rc != 0) {
+        return rc;
+    }
+
     rc = bletiny_conn_initiate(own_addr_type, peer_addr_type, peer_addr,
-                               &params);
+                               duration_ms, &params);
     if (rc != 0) {
         return rc;
     }

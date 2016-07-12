@@ -158,8 +158,8 @@ int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
                       const uint8_t *peer_addr, int32_t duration_ms,
                       const struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
-int bletiny_conn_initiate(uint8_t own_addr_type,
-                          uint8_t peer_addr_type, uint8_t *peer_addr,
+int bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
+                          uint8_t *peer_addr, int32_t duration_ms,
                           struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
