@@ -29,7 +29,7 @@
 struct ble_gap_white_entry;
 struct ble_hs_adv_fields;
 struct ble_gap_upd_params;
-struct ble_gap_crt_params;
+struct ble_gap_conn_params;
 struct hci_adv_params;
 struct ble_l2cap_sig_update_req;
 struct ble_l2cap_sig_update_params;
@@ -37,6 +37,7 @@ union ble_store_value;
 union ble_store_key;
 struct ble_gap_adv_params;
 struct ble_gap_conn_desc;
+struct ble_gap_disc_params;
 
 typedef int cmd_fn(int argc, char **argv);
 struct cmd_entry {
@@ -92,25 +93,27 @@ extern uint16_t nm_attr_val_handle;
 
 extern struct log bletiny_log;
 
-void print_addr(void *addr);
-void print_uuid(void *uuid128);
-void print_bytes(uint8_t *bytes, int len);
 const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
                                        char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
 char *parse_arg_find(char *key);
 long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
+long parse_arg_long_bounds_default(char *name, long min, long max,
+                                   long dflt, int *out_status);
 uint64_t parse_arg_uint64_bounds(char *name, uint64_t min,
                                  uint64_t max, int *out_status);
 long parse_arg_long(char *name, int *staus);
 uint8_t parse_arg_bool(char *name, int *status);
+uint8_t parse_arg_bool_default(char *name, uint8_t dflt, int *out_status);
 uint8_t parse_arg_uint8(char *name, int *status);
+uint8_t parse_arg_uint8_dflt(char *name, uint8_t dflt, int *out_status);
 uint16_t parse_arg_uint16(char *name, int *status);
 uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);
 uint64_t parse_arg_uint64(char *name, int *out_status);
-int parse_arg_kv(char *name, struct kv_pair *kvs);
-int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val);
+int parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status);
+int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val,
+                         int *out_status);
 int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);
@@ -119,7 +122,7 @@ int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
 int nm_chr_access(uint16_t conn_handle, uint16_t attr_handle,
-                  uint8_t op, union ble_gatt_access_ctxt *ctxt,
+                  uint8_t op, struct ble_gatt_access_ctxt *ctxt,
                   void *arg);
 int nm_rx_rsp(uint8_t *attr_val, uint16_t attr_len);
 void nm_init(void);
@@ -143,26 +146,27 @@ int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                           uint16_t end_handle, uint8_t *uuid128);
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                        int num_attr_handles);
-int bletiny_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                   uint16_t value_len);
+int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
+                  const void *value, uint16_t value_len);
 int bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
-                          void *value, uint16_t value_len);
+                         const void *value, uint16_t value_len);
 int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                        void *value, uint16_t value_len);
-int bletiny_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
-                            int num_attrs);
-int bletiny_adv_start(int disc, int conn,
-                     uint8_t *peer_addr, uint8_t peer_addr_type,
-                     struct ble_gap_adv_params *params);
+                       const void *value, uint16_t value_len);
+int bletiny_write_reliable(uint16_t conn_handle,
+                           const struct ble_gatt_attr *attrs, int num_attrs);
+int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
+                      const uint8_t *peer_addr, int32_t duration_ms,
+                      const struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
-int bletiny_conn_initiate(int addr_type, uint8_t *peer_addr,
-                           struct ble_gap_crt_params *params);
+int bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
+                          uint8_t *peer_addr, int32_t duration_ms,
+                          struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
-int bletiny_term_conn(uint16_t conn_handle);
+int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
 int bletiny_wl_set(struct ble_gap_white_entry *white_list,
                     int white_list_count);
-int bletiny_scan(uint32_t dur_ms, uint8_t disc_mode, uint8_t scan_type,
-                  uint8_t filter_policy, uint8_t our_addr_mode);
+int bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,
+                 const struct ble_gap_disc_params *disc_params);
 int bletiny_scan_cancel(void);
 int bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bletiny_update_conn(uint16_t conn_handle,
@@ -203,10 +207,13 @@ int store_read(int obj_type, union ble_store_key *key,
 int store_write(int obj_type, union ble_store_value *val);
 
 /** Misc. */
-void print_bytes(uint8_t *bytes, int len);
-int svc_is_empty(struct bletiny_svc *svc);
-uint16_t chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr);
-int chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr);
-void print_conn_desc(struct ble_gap_conn_desc *desc);
+void print_bytes(const uint8_t *bytes, int len);
+void print_addr(const void *addr);
+void print_uuid(const void *uuid128);
+int svc_is_empty(const struct bletiny_svc *svc);
+uint16_t chr_end_handle(const struct bletiny_svc *svc,
+                        const struct bletiny_chr *chr);
+int chr_is_empty(const struct bletiny_svc *svc, const struct bletiny_chr *chr);
+void print_conn_desc(const struct ble_gap_conn_desc *desc);
 
 #endif

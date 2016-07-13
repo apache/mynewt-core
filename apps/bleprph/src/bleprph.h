@@ -59,7 +59,7 @@ int store_read(int obj_type, union ble_store_key *key,
 int store_write(int obj_type, union ble_store_value *val);
 
 /** Misc. */
-void print_bytes(uint8_t *bytes, int len);
-void print_addr(void *addr);
+void print_bytes(const uint8_t *bytes, int len);
+void print_addr(const void *addr);
 
 #endif

@@ -86,8 +86,7 @@ uint8_t bleprph_reconnect_addr[6];
 uint8_t bleprph_pref_conn_params[8];
 uint8_t bleprph_gatt_service_changed[4];
 
-static int bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt,
-                             void *arg);
+static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
  * Logs information about a connection to the console.
@@ -124,11 +123,13 @@ bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 bleprph_advertise(void)
 {
+    struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     int rc;
 
     /**
      *  Set the advertisement data included in our advertisements:
+     *     o Flags (indicates advertisement type and other general info).
      *     o Advertising tx power.
      *     o Device name.
      *     o 16-bit service UUIDs (alert notifications).
@@ -136,7 +137,18 @@ bleprph_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
+    /* Indicate that the flags field should be included; specify a value of 0
+     * to instruct the stack to fill the value in for us.
+     */
+    fields.flags_is_present = 1;
+    fields.flags = 0;
+
+    /* Indicate that the TX power level field should be included; have the
+     * stack fill this one automatically as well.  This is done by assiging the
+     * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
+     */
     fields.tx_pwr_lvl_is_present = 1;
+    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
     fields.name = (uint8_t *)bleprph_device_name;
     fields.name_len = strlen(bleprph_device_name);
@@ -153,8 +165,11 @@ bleprph_advertise(void)
     }
 
     /* Begin advertising. */
-    rc = ble_gap_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
-                           NULL, 0, NULL, bleprph_gap_event, NULL);
+    memset(&adv_params, 0, sizeof adv_params);
+    adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+                           &adv_params, bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
@@ -177,26 +192,26 @@ bleprph_advertise(void)
  *                                  particular GAP event being signalled.
  */
 static int
-bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
+bleprph_gap_event(struct ble_gap_event *event, void *arg)
 {
-    switch (event) {
+    switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
         BLEPRPH_LOG(INFO, "connection %s; status=%d ",
-                       ctxt->connect.status == 0 ? "established" : "failed",
-                       ctxt->connect.status);
-        bleprph_print_conn_desc(ctxt->desc);
+                       event->connect.status == 0 ? "established" : "failed",
+                       event->connect.status);
+        bleprph_print_conn_desc(&event->connect.conn);
         BLEPRPH_LOG(INFO, "\n");
 
-        if (ctxt->connect.status != 0) {
+        if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
             bleprph_advertise();
         }
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", ctxt->disconnect.reason);
-        bleprph_print_conn_desc(ctxt->desc);
+        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        bleprph_print_conn_desc(&event->disconnect.conn);
         BLEPRPH_LOG(INFO, "\n");
 
         /* Connection terminated; resume advertising. */
@@ -206,16 +221,16 @@ bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
         BLEPRPH_LOG(INFO, "connection updated; status=%d ",
-                    ctxt->conn_update.status);
-        bleprph_print_conn_desc(ctxt->desc);
+                    event->conn_update.status);
+        bleprph_print_conn_desc(&event->conn_update.conn);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
         BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
-                    ctxt->enc_change.status);
-        bleprph_print_conn_desc(ctxt->desc);
+                    event->enc_change.status);
+        bleprph_print_conn_desc(&event->enc_change.conn);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
     }
