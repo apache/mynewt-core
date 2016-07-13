@@ -57,6 +57,7 @@ struct os_mbuf;
 
 struct mn_socket {
     const union mn_socket_cb *ms_cbs;          /* filled in by user */
+    void *ms_cb_arg;                           /* filled in by user */
     const struct mn_socket_ops *ms_ops;        /* filled in by mn_socket */
 };
 
@@ -66,11 +67,11 @@ struct mn_socket {
  */
 union mn_socket_cb {
     struct {
-        void (*readable)(struct mn_socket *, int err);
-        void (*writable)(struct mn_socket *, int err);
+        void (*readable)(void *cb_arg, int err);
+        void (*writable)(void *cb_arg, int err);
     } socket;
     struct {
-        int (*newconn)(struct mn_socket *listen, struct mn_socket *new);
+        int (*newconn)(void *cb_arg, struct mn_socket *new);
     } listen;
 };
 
@@ -131,7 +132,11 @@ int mn_getpeername(struct mn_socket *, struct mn_sockaddr *);
 
 int mn_close(struct mn_socket *);
 
-#define mn_socket_set_cbs(sock, cbs) (sock)->ms_cbs = (cbs)
+#define mn_socket_set_cbs(sock, cb_arg, cbs)                            \
+    do {                                                                \
+        (sock)->ms_cbs = (cbs);                                         \
+        (sock)->ms_cb_arg = (cb_arg);                                   \
+    } while (0)
 
 /*
  * Address conversion
