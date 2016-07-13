@@ -44,6 +44,8 @@ static struct os_mqueue g_shell_nlip_mq;
 
 static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
+static int shell_prompt_cmd(int argc, char **argv);
+
 
 static struct shell_cmd g_shell_echo_cmd = {
     .sc_cmd = "echo",
@@ -52,6 +54,10 @@ static struct shell_cmd g_shell_echo_cmd = {
 static struct shell_cmd g_shell_help_cmd = {
     .sc_cmd = "?",
     .sc_cmd_func = shell_help_cmd
+};
+static struct shell_cmd g_shell_prompt_cmd = {
+    .sc_cmd = "prompt",
+    .sc_cmd_func = shell_prompt_cmd
 };
 static struct shell_cmd g_shell_os_tasks_display_cmd = {
     .sc_cmd = "tasks",
@@ -73,6 +79,7 @@ static struct os_event console_rdy_ev;
 static struct os_mutex g_shell_cmd_list_lock;
 
 static char *shell_line;
+static char shell_prompt = '>';
 static int shell_line_capacity;
 static int shell_line_len;
 static char *argv[SHELL_MAX_ARGS];
@@ -521,7 +528,47 @@ shell_help_cmd(int argc, char **argv)
 
     return (0);
 }
+/**
+ * Handles the 'prompt' command
+ * with set argument, sets the prompt to the provided char
+ * with the show argument, echos the current prompt
+ * otherwise echos the prompt and the usage message
+ */
+static int
+shell_prompt_cmd(int argc, char **argv)
+{
+    int rc;
 
+    rc = shell_cmd_list_lock();
+    if (rc != 0) {
+        return -1;
+    }
+    if(argc > 1){
+        if(!strcmp(argv[1], "show")){
+            console_printf("Prompt character: %c\n", shell_prompt);
+        }   
+        else if (!strcmp(argv[1],"set")){
+            shell_prompt = argv[2][0];
+            console_printf("Prompt set to: %c\n", argv[2][0]);
+            console_set_prompt(argv[2][0]);
+        }
+        else {
+            goto usage;
+        }
+        
+    } 
+    else {
+        goto usage;
+        
+    }
+usage:
+    console_printf("Usage: prompt [set|show] [prompt_char]\n");
+    
+    shell_cmd_list_unlock();
+    
+    return (0);
+
+}
 int
 shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
                 int max_input_length)
@@ -553,7 +600,10 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
     if (rc != 0) {
         goto err;
     }
-
+    rc = shell_cmd_register(&g_shell_prompt_cmd);
+    if (rc != 0) {
+        goto err;
+    }
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
     if (rc != 0) {
         goto err;
@@ -577,7 +627,7 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
     if (rc != 0) {
         goto err;
     }
-
+    //console_print_prompt();
     return (0);
 err:
     free(shell_line);

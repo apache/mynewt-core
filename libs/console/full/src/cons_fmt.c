@@ -23,6 +23,9 @@
 
 #define CONS_OUTPUT_MAX_LINE	128
 
+/* console prompt, always followed by a space */
+char console_prompt[2] = {'>', ' '};
+
 #ifdef BASELIBC_PRESENT
 size_t console_file_write(FILE *p, const char *str, size_t cnt);
 
@@ -74,3 +77,16 @@ console_printf(const char *fmt, ...)
     va_end(args);
 }
 #endif
+/* set the prompt character, leave the space */
+void 
+console_set_prompt(char p)
+{
+    console_prompt[0] = p;
+}
+
+/* print the prompt & space to the console */
+void
+console_print_prompt(void)
+{
+    console_write(console_prompt, 2);
+}
