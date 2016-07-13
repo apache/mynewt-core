@@ -49,7 +49,6 @@
 /* XXX: An app should not include private headers from a library.  The bletest
  * app uses some of nimble's internal details for logging.
  */
-#include "../src/ble_hci_util_priv.h"
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
