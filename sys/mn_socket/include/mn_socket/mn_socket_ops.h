@@ -57,7 +57,7 @@ static inline void
 mn_socket_writable(struct mn_socket *s, int error)
 {
     if (s->ms_cbs && s->ms_cbs->socket.writable) {
-        s->ms_cbs->socket.writable(s, error);
+        s->ms_cbs->socket.writable(s->ms_cb_arg, error);
     }
 }
 
@@ -65,7 +65,7 @@ static inline void
 mn_socket_readable(struct mn_socket *s, int error)
 {
     if (s->ms_cbs && s->ms_cbs->socket.readable) {
-        s->ms_cbs->socket.readable(s, error);
+        s->ms_cbs->socket.readable(s->ms_cb_arg, error);
     }
 }
 
@@ -73,7 +73,7 @@ static inline int
 mn_socket_newconn(struct mn_socket *s, struct mn_socket *new)
 {
     if (s->ms_cbs && s->ms_cbs->listen.newconn) {
-        return s->ms_cbs->listen.newconn(s, new);
+        return s->ms_cbs->listen.newconn(s->ms_cb_arg, new);
     } else {
         return -1;
     }
