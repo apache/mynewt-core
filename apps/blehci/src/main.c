@@ -53,8 +53,8 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN] = { 0 };
 
 #define HCI_MAX_BUFS        (5)
 
-#define HCI_CMD_BUF_SIZE    (260)
-struct os_mempool g_hci_cmd_pool;
+#define HCI_EVT_BUF_SIZE    (260)
+struct os_mempool g_hci_evt_pool;
 static void *hci_cmd_buf;
 
 #define HCI_OS_EVENT_BUF_SIZE   (sizeof(struct os_event))
@@ -143,7 +143,7 @@ ble_hci_transport_ctlr_event_send(uint8_t *hci_ev)
     if (!ev) {
         os_error_t err;
 
-        err = os_memblock_put(&g_hci_cmd_pool, hci_ev);
+        err = os_memblock_put(&g_hci_evt_pool, hci_ev);
         assert(err == OS_OK);
 
         return -1;
@@ -218,7 +218,7 @@ uart_tx_char(void *arg)
         rc = hci.rx_evt.data[hci.rx_evt.cur++];
 
         if (hci.rx_evt.cur == hci.rx_evt.len) {
-            os_memblock_put(&g_hci_cmd_pool, hci.rx_evt.data);
+            os_memblock_put(&g_hci_evt_pool, hci.rx_evt.data);
             hci.rx_type = H4_NONE;
         }
 
@@ -244,7 +244,7 @@ uart_rx_pkt_type(uint8_t data)
 
     switch (hci.tx_type) {
     case H4_CMD:
-        hci.tx_cmd.data = os_memblock_get(&g_hci_cmd_pool);
+        hci.tx_cmd.data = os_memblock_get(&g_hci_evt_pool);
         hci.tx_cmd.len = 0;
         hci.tx_cmd.cur = 0;
         break;
@@ -276,7 +276,7 @@ uart_rx_cmd(uint8_t data)
     if (hci.tx_cmd.cur == hci.tx_cmd.len) {
         rc = ble_hci_transport_host_cmd_send(hci.tx_cmd.data);
         if (rc != 0) {
-            os_memblock_put(&g_hci_cmd_pool, hci.tx_cmd.data);
+            os_memblock_put(&g_hci_evt_pool, hci.tx_cmd.data);
         }
         hci.tx_type = H4_NONE;
     }
@@ -366,11 +366,11 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
-    hci_cmd_buf = malloc(OS_MEMPOOL_BYTES(HCI_MAX_BUFS, HCI_CMD_BUF_SIZE));
+    hci_cmd_buf = malloc(OS_MEMPOOL_BYTES(HCI_MAX_BUFS, HCI_EVT_BUF_SIZE));
     assert(hci_cmd_buf != NULL);
 
     /* Create memory pool of command buffers */
-    rc = os_mempool_init(&g_hci_cmd_pool, HCI_MAX_BUFS, HCI_CMD_BUF_SIZE,
+    rc = os_mempool_init(&g_hci_evt_pool, HCI_MAX_BUFS, HCI_EVT_BUF_SIZE,
                          hci_cmd_buf, "HCICmdPool");
     assert(rc == 0);
 
