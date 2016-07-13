@@ -136,7 +136,7 @@ struct bletiny_tx_data_s
     uint16_t tx_len;
 };
 static struct bletiny_tx_data_s bletiny_tx_data;
-int bletiny_full_disc_prev_chr_def;
+int bletiny_full_disc_prev_chr_val;
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -697,7 +697,7 @@ static void
 bletiny_full_disc_complete(int rc)
 {
     console_printf("full discovery complete; rc=%d\n", rc);
-    bletiny_full_disc_prev_chr_def = 0;
+    bletiny_full_disc_prev_chr_val = 0;
 }
 
 static void
@@ -720,16 +720,16 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
         SLIST_FOREACH(chr, &svc->chrs, next) {
             if (!chr_is_empty(svc, chr) &&
                 SLIST_EMPTY(&chr->dscs) &&
-                bletiny_full_disc_prev_chr_def <= chr->chr.def_handle) {
+                bletiny_full_disc_prev_chr_val <= chr->chr.def_handle) {
 
                 rc = bletiny_disc_all_dscs(conn_handle,
-                                           chr->chr.def_handle,
+                                           chr->chr.val_handle,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
                     bletiny_full_disc_complete(rc);
                 }
 
-                bletiny_full_disc_prev_chr_def = chr->chr.val_handle;
+                bletiny_full_disc_prev_chr_val = chr->chr.val_handle;
                 return;
             }
         }
@@ -780,7 +780,7 @@ bletiny_on_disc_s(uint16_t conn_handle, const struct ble_gatt_error *error,
 
     case BLE_HS_EDONE:
         console_printf("service discovery successful\n");
-        if (bletiny_full_disc_prev_chr_def > 0) {
+        if (bletiny_full_disc_prev_chr_val > 0) {
             bletiny_disc_full_chrs(conn_handle);
         }
         break;
@@ -808,7 +808,7 @@ bletiny_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
 
     case BLE_HS_EDONE:
         console_printf("characteristic discovery successful\n");
-        if (bletiny_full_disc_prev_chr_def > 0) {
+        if (bletiny_full_disc_prev_chr_val > 0) {
             bletiny_disc_full_chrs(conn_handle);
         }
         break;
@@ -833,7 +833,7 @@ bletiny_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
 
     case BLE_HS_EDONE:
         console_printf("descriptor discovery successful\n");
-        if (bletiny_full_disc_prev_chr_def > 0) {
+        if (bletiny_full_disc_prev_chr_val > 0) {
             bletiny_disc_full_dscs(conn_handle);
         }
         break;
@@ -1161,7 +1161,7 @@ bletiny_disc_full(uint16_t conn_handle)
         bletiny_svc_delete(svc);
     }
 
-    bletiny_full_disc_prev_chr_def = 1;
+    bletiny_full_disc_prev_chr_val = 1;
     bletiny_disc_svcs(conn_handle);
 
     return 0;
