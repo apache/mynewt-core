@@ -107,6 +107,7 @@ os_init(void)
     os_error_t err;
 
     TAILQ_INIT(&g_callout_list);
+    STAILQ_INIT(&g_os_task_list);
 
     err = os_arch_os_init();
     assert(err == OS_OK);
