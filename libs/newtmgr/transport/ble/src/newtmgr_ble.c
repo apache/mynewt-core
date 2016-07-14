@@ -24,8 +24,6 @@
 #include <newtmgr/newtmgr.h>
 #include <os/endian.h>
 
-#define BLE_ATT_MTU_MAX 240
-
 /* nmgr ble mqueue */
 struct os_mqueue ble_nmgr_mq;
 
@@ -60,8 +58,7 @@ const uint8_t gatt_svr_chr_newtmgr[16] = {
 
 static int
 gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
-                            uint8_t op, union ble_gatt_access_ctxt *ctxt,
-                            void *arg);
+                            struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
@@ -73,6 +70,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             .uuid128 = (void *)gatt_svr_chr_newtmgr,
             .access_cb = gatt_svr_chr_access_newtmgr,
             .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
+            .val_handle = &g_ble_nmgr_attr_handle,
         }, {
             0, /* No more characteristics in this service */
         } },
@@ -85,20 +83,19 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
 
 static int
 gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
-                            uint8_t op, union ble_gatt_access_ctxt *ctxt,
-                            void *arg)
+                            struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     int rc;
     struct os_mbuf *m_req;
 
-    switch (op) {
+    switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            m_req = os_msys_get_pkthdr(ctxt->chr_access.len, sizeof(conn_handle));
+            m_req = os_msys_get_pkthdr(ctxt->att->write.len, sizeof(conn_handle));
             if (!m_req) {
                 goto err;
             }
             rc = os_mbuf_copyinto(m_req, OS_MBUF_PKTHDR(m_req)->omp_len,
-                                  ctxt->chr_access.data, ctxt->chr_access.len);
+                                  ctxt->att->write.data, ctxt->att->write.len);
             if (rc) {
                 goto err;
             }
@@ -118,27 +115,6 @@ gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
     assert(0);
 err:
     return BLE_ATT_ERR_UNLIKELY;
-}
-
-static void
-gatt_svr_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
-{
-
-    switch (op) {
-    case BLE_GATT_REGISTER_OP_DSC:
-    case BLE_GATT_REGISTER_OP_SVC:
-        break;
-    case BLE_GATT_REGISTER_OP_CHR:
-        /* Searching for the newtmgr characteristic */
-        if (!memcmp(ctxt->chr_reg.chr->uuid128, gatt_svr_chr_newtmgr, 16)) {
-            g_ble_nmgr_attr_handle = ctxt->chr_reg.val_handle;
-        }
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
 }
 
 int
@@ -205,7 +181,7 @@ nmgr_ble_gatt_svr_init(struct os_eventq *evq)
 
     assert(evq != NULL);
 
-    rc = ble_gatts_register_svcs(gatt_svr_svcs, gatt_svr_register_cb, NULL);
+    rc = ble_gatts_register_svcs(gatt_svr_svcs, NULL, NULL);
     assert(rc == 0);
 
     app_evq = evq;
