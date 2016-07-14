@@ -419,11 +419,11 @@ gatt_svr_uuid_to_s(const void *uuid128, char *dst)
 }
 
 static void
-gatt_svr_register_cb(uint8_t op, union ble_gatt_register_ctxt *ctxt, void *arg)
+gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 {
     char buf[40];
 
-    switch (op) {
+    switch (ctxt->op) {
     case BLE_GATT_REGISTER_OP_SVC:
         BLETINY_LOG(DEBUG, "registered service %s with handle=%d\n",
                     gatt_svr_uuid_to_s(ctxt->svc.svc_def->uuid128, buf),
