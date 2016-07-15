@@ -162,8 +162,6 @@ bletiny_print_error(char *msg, uint16_t conn_handle,
 static void
 bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
-    uint32_t u32;
-    uint16_t u16;
     uint8_t *u8p;
     int i;
 
@@ -174,10 +172,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids16 != NULL) {
         console_printf("    uuids16(%scomplete)=",
                        fields->uuids16_is_complete ? "" : "in");
-        u8p = fields->uuids16;
         for (i = 0; i < fields->num_uuids16; i++) {
-            memcpy(&u16, u8p + i * 2, 2);
-            console_printf("0x%04x ", u16);
+            console_printf("0x%04x ", fields->uuids16[i]);
         }
         console_printf("\n");
     }
@@ -185,10 +181,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids32 != NULL) {
         console_printf("    uuids32(%scomplete)=",
                        fields->uuids32_is_complete ? "" : "in");
-        u8p = fields->uuids32;
         for (i = 0; i < fields->num_uuids32; i++) {
-            memcpy(&u32, u8p + i * 4, 4);
-            console_printf("0x%08x ", (unsigned)u32);
+            console_printf("0x%08x ", (unsigned int)fields->uuids32[i]);
         }
         console_printf("\n");
     }
@@ -483,7 +477,6 @@ bletiny_chr_find(const struct bletiny_svc *svc, uint16_t chr_def_handle,
     }
     return chr;
 }
-
 
 static struct bletiny_chr *
 bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
@@ -1183,7 +1176,11 @@ bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
 {
     int rc;
 
-    rc = ble_gattc_read(conn_handle, attr_handle, bletiny_on_read, NULL);
+    if (conn_handle == BLE_HS_CONN_HANDLE_NONE) {
+        rc = ble_att_svr_read_local(attr_handle, NULL, NULL);
+    } else {
+        rc = ble_gattc_read(conn_handle, attr_handle, bletiny_on_read, NULL);
+    }
     return rc;
 }
 
