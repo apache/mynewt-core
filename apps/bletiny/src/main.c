@@ -435,14 +435,14 @@ bletiny_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 }
 
 static struct bletiny_chr *
-bletiny_chr_find_prev(const struct bletiny_svc *svc, uint16_t chr_def_handle)
+bletiny_chr_find_prev(const struct bletiny_svc *svc, uint16_t chr_val_handle)
 {
     struct bletiny_chr *prev;
     struct bletiny_chr *chr;
 
     prev = NULL;
     SLIST_FOREACH(chr, &svc->chrs, next) {
-        if (chr->chr.def_handle >= chr_def_handle) {
+        if (chr->chr.val_handle >= chr_val_handle) {
             break;
         }
 
@@ -453,20 +453,20 @@ bletiny_chr_find_prev(const struct bletiny_svc *svc, uint16_t chr_def_handle)
 }
 
 static struct bletiny_chr *
-bletiny_chr_find(const struct bletiny_svc *svc, uint16_t chr_def_handle,
+bletiny_chr_find(const struct bletiny_svc *svc, uint16_t chr_val_handle,
                  struct bletiny_chr **out_prev)
 {
     struct bletiny_chr *prev;
     struct bletiny_chr *chr;
 
-    prev = bletiny_chr_find_prev(svc, chr_def_handle);
+    prev = bletiny_chr_find_prev(svc, chr_val_handle);
     if (prev == NULL) {
         chr = SLIST_FIRST(&svc->chrs);
     } else {
         chr = SLIST_NEXT(prev, next);
     }
 
-    if (chr != NULL && chr->chr.def_handle != chr_def_handle) {
+    if (chr != NULL && chr->chr.val_handle != chr_val_handle) {
         chr = NULL;
     }
 
@@ -500,7 +500,7 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
         return NULL;
     }
 
-    chr = bletiny_chr_find(svc, gatt_chr->def_handle, &prev);
+    chr = bletiny_chr_find(svc, gatt_chr->val_handle, &prev);
     if (chr != NULL) {
         /* Characteristic already discovered. */
         return chr;
@@ -567,7 +567,7 @@ bletiny_dsc_find(const struct bletiny_chr *chr, uint16_t dsc_handle,
 }
 
 static struct bletiny_dsc *
-bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
+bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
                 const struct ble_gatt_dsc *gatt_dsc)
 {
     struct bletiny_conn *conn;
@@ -584,14 +584,14 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_def_handle,
         return NULL;
     }
 
-    svc = bletiny_svc_find_range(conn, chr_def_handle);
+    svc = bletiny_svc_find_range(conn, chr_val_handle);
     if (svc == NULL) {
         BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
 
-    chr = bletiny_chr_find(svc, chr_def_handle, NULL);
+    chr = bletiny_chr_find(svc, chr_val_handle, NULL);
     if (chr == NULL) {
         BLETINY_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
                            "HANDLE=%d\n",
@@ -814,12 +814,12 @@ bletiny_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
 
 static int
 bletiny_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
-                  uint16_t chr_def_handle, const struct ble_gatt_dsc *dsc,
+                  uint16_t chr_val_handle, const struct ble_gatt_dsc *dsc,
                   void *arg)
 {
     switch (error->status) {
     case 0:
-        bletiny_dsc_add(conn_handle, chr_def_handle, dsc);
+        bletiny_dsc_add(conn_handle, chr_val_handle, dsc);
         break;
 
     case BLE_HS_EDONE:
