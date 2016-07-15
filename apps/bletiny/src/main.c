@@ -47,6 +47,9 @@
 #include "host/ble_sm.h"
 #include "controller/ble_ll.h"
 
+/* RAM persistence layer. */
+#include "store/ram/ble_store_ram.h"
+
 /* XXX: An app should not include private headers from a library.  The bletiny
  * app uses some of nimble's internal details for logging.
  */
@@ -1655,8 +1658,8 @@ main(void)
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = NIMBLE_OPT(MAX_CONNECTIONS) * 3;
     cfg.max_l2cap_sig_procs = 2;
-    cfg.store_read_cb = store_read;
-    cfg.store_write_cb = store_write;
+    cfg.store_read_cb = ble_store_ram_read;
+    cfg.store_write_cb = ble_store_ram_write;
 
     rc = ble_hs_init(&bletiny_evq, &cfg);
     assert(rc == 0);

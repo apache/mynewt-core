@@ -27,5 +27,6 @@ pkg.deps:
     - sys/log
     - net/nimble/controller
     - net/nimble/host
+    - net/nimble/host/store/ram
     - libs/console/full
     - libs/baselibc

@@ -41,6 +41,9 @@
 #include "host/ble_sm.h"
 #include "controller/ble_ll.h"
 
+/* RAM persistence layer. */
+#include "store/ram/ble_store_ram.h"
+
 #include "bleprph.h"
 
 #define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
@@ -342,8 +345,8 @@ main(void)
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.store_read_cb = store_read;
-    cfg.store_write_cb = store_write;
+    cfg.store_read_cb = ble_store_ram_read;
+    cfg.store_write_cb = ble_store_ram_write;
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);

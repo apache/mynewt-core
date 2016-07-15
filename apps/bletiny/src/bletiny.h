@@ -201,11 +201,6 @@ extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
 void gatt_svr_init(void);
 
-/** Store. */
-int store_read(int obj_type, union ble_store_key *key,
-               union ble_store_value *dst);
-int store_write(int obj_type, union ble_store_value *val);
-
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);
 void print_addr(const void *addr);
