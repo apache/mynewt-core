@@ -992,14 +992,23 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
         print_conn_desc(&event->enc_change.conn);
         return 0;
 
-    case BLE_GAP_EVENT_NOTIFY:
-        console_printf("notification event; attr_handle=%d indication=%d "
+    case BLE_GAP_EVENT_NOTIFY_RX:
+        console_printf("notification rx event; attr_handle=%d indication=%d "
                        "len=%d data=",
-                       event->notify.attr_handle, event->notify.indication,
-                       event->notify.attr_len);
+                       event->notify_rx.attr_handle,
+                       event->notify_rx.indication,
+                       event->notify_rx.attr_len);
 
-        print_bytes(event->notify.attr_data, event->notify.attr_len);
+        print_bytes(event->notify_rx.attr_data, event->notify_rx.attr_len);
         console_printf("\n");
+        return 0;
+
+    case BLE_GAP_EVENT_NOTIFY_TX:
+        console_printf("notification tx event; status=%d attr_handle=%d "
+                       "indication=%d\n",
+                       event->notify_tx.status,
+                       event->notify_tx.attr_handle,
+                       event->notify_tx.indication);
         return 0;
 
     default:
