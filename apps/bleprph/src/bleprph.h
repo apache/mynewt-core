@@ -25,13 +25,6 @@ struct ble_hs_cfg;
 
 extern struct log bleprph_log;
 
-extern const char *bleprph_device_name;
-extern const uint16_t bleprph_appearance;
-extern const uint8_t bleprph_privacy_flag;
-extern uint8_t bleprph_reconnect_addr[6];
-extern uint8_t bleprph_pref_conn_params[8];
-extern uint8_t bleprph_gatt_service_changed[4];
-
 /* bleprph uses the first "peruser" log module. */
 #define BLEPRPH_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 
@@ -46,11 +39,9 @@ extern uint8_t bleprph_gatt_service_changed[4];
 #define GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID   0x2A48
 #define GATT_SVR_CHR_UNR_ALERT_STAT_UUID      0x2A45
 #define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
-extern const uint8_t gatt_svr_svc_bleprph[16];
-extern const uint8_t gatt_svr_chr_bleprph_read[16];
-extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
-void gatt_svr_init(void);
+int gatt_svr_register(void);
+int gatt_svr_init(struct ble_hs_cfg *cfg);
 
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);

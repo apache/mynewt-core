@@ -81,14 +81,6 @@ struct bletiny_conn {
 extern struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
 extern int bletiny_num_conns;
 
-extern const char *bletiny_device_name;
-extern const uint16_t bletiny_appearance;
-extern const uint8_t bletiny_privacy_flag;
-extern uint8_t bletiny_reconnect_addr[6];
-extern uint8_t bletiny_pref_conn_params[8];
-extern uint8_t bletiny_gatt_service_changed[4];
-
-extern struct nmgr_transport nm_ble_transport;
 extern uint16_t nm_attr_val_handle;
 
 extern struct log bletiny_log;
@@ -195,11 +187,9 @@ int bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi);
 #define GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID   0x2A48
 #define GATT_SVR_CHR_UNR_ALERT_STAT_UUID      0x2A45
 #define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
-extern const uint8_t gatt_svr_svc_bleprph[16];
-extern const uint8_t gatt_svr_chr_bleprph_read[16];
-extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
-void gatt_svr_init(void);
+int gatt_svr_register(void);
+int gatt_svr_init(struct ble_hs_cfg *cfg);
 
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);

@@ -55,66 +55,16 @@ const uint8_t gatt_svr_chr_sec_test_static_uuid[16] = {
 static uint8_t gatt_svr_sec_test_static_val;
 
 static int
-gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle,
-                        struct ble_gatt_access_ctxt *ctxt, void *arg);
-static int
-gatt_svr_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle,
-                         struct ble_gatt_access_ctxt *ctxt, void *arg);
-static int
 gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
-                          struct ble_gatt_access_ctxt *ctxt, void *arg);
+                          struct ble_gatt_access_ctxt *ctxt,
+                          void *arg);
+
 static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
-                             struct ble_gatt_access_ctxt *ctxt, void *arg);
+                             struct ble_gatt_access_ctxt *ctxt,
+                             void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
-    {
-        /*** Service: GAP. */
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = BLE_UUID16(BLE_GAP_SVC_UUID16),
-        .characteristics = (struct ble_gatt_chr_def[]) { {
-            /*** Characteristic: Device Name. */
-            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_DEVICE_NAME),
-            .access_cb = gatt_svr_chr_access_gap,
-            .flags = BLE_GATT_CHR_F_READ,
-        }, {
-            /*** Characteristic: Appearance. */
-            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_APPEARANCE),
-            .access_cb = gatt_svr_chr_access_gap,
-            .flags = BLE_GATT_CHR_F_READ,
-        }, {
-            /*** Characteristic: Peripheral Privacy Flag. */
-            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_PERIPH_PRIV_FLAG),
-            .access_cb = gatt_svr_chr_access_gap,
-            .flags = BLE_GATT_CHR_F_READ,
-        }, {
-            /*** Characteristic: Reconnection Address. */
-            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_RECONNECT_ADDR),
-            .access_cb = gatt_svr_chr_access_gap,
-            .flags = BLE_GATT_CHR_F_WRITE,
-        }, {
-            /*** Characteristic: Peripheral Preferred Connection Parameters. */
-            .uuid128 = BLE_UUID16(BLE_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS),
-            .access_cb = gatt_svr_chr_access_gap,
-            .flags = BLE_GATT_CHR_F_READ,
-        }, {
-            0, /* No more characteristics in this service. */
-        } },
-    },
-
-    {
-        /*** Service: GATT */
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = BLE_UUID16(BLE_GATT_SVC_UUID16),
-        .characteristics = (struct ble_gatt_chr_def[]) { {
-            .uuid128 = BLE_UUID16(BLE_GATT_CHR_SERVICE_CHANGED_UUID16),
-            .access_cb = gatt_svr_chr_access_gatt,
-            .flags = BLE_GATT_CHR_F_INDICATE,
-        }, {
-            0, /* No more characteristics in this service. */
-        } },
-    },
-
     {
         /*** Alert Notification Service. */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -189,88 +139,6 @@ gatt_svr_chr_write(uint8_t op, struct ble_gatt_access_ctxt *ctxt,
     return 0;
 }
 
-static int
-gatt_svr_chr_access_gap(uint16_t conn_handle, uint16_t attr_handle,
-                        struct ble_gatt_access_ctxt *ctxt, void *arg)
-{
-    uint16_t uuid16;
-
-    uuid16 = ble_uuid_128_to_16(ctxt->chr->uuid128);
-    assert(uuid16 != 0);
-
-    switch (uuid16) {
-    case BLE_GAP_CHR_UUID16_DEVICE_NAME:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->att->read.data = bletiny_device_name;
-        ctxt->att->read.len = strlen(bletiny_device_name);
-        break;
-
-    case BLE_GAP_CHR_UUID16_APPEARANCE:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->att->read.data = &bletiny_appearance;
-        ctxt->att->read.len = sizeof bletiny_appearance;
-        break;
-
-    case BLE_GAP_CHR_UUID16_PERIPH_PRIV_FLAG:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->att->read.data = &bletiny_privacy_flag;
-        ctxt->att->read.len = sizeof bletiny_privacy_flag;
-        break;
-
-    case BLE_GAP_CHR_UUID16_RECONNECT_ADDR:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-        if (ctxt->att->write.len != sizeof bletiny_reconnect_addr) {
-            return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
-        }
-        memcpy(bletiny_reconnect_addr, ctxt->att->write.data,
-               sizeof bletiny_reconnect_addr);
-        break;
-
-    case BLE_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->att->read.data = &bletiny_pref_conn_params;
-        ctxt->att->read.len = sizeof bletiny_pref_conn_params;
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
-
-    return 0;
-}
-
-static int
-gatt_svr_chr_access_gatt(uint16_t conn_handle, uint16_t attr_handle,
-                         struct ble_gatt_access_ctxt *ctxt, void *arg)
-{
-    uint16_t uuid16;
-
-    uuid16 = ble_uuid_128_to_16(ctxt->chr->uuid128);
-    assert(uuid16 != 0);
-
-    switch (uuid16) {
-    case BLE_GATT_CHR_SERVICE_CHANGED_UUID16:
-        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            if (ctxt->att->write.len != sizeof bletiny_gatt_service_changed) {
-                return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
-            }
-            memcpy(bletiny_gatt_service_changed, ctxt->att->write.data,
-                   sizeof bletiny_gatt_service_changed);
-        } else if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
-            ctxt->att->read.data = &bletiny_gatt_service_changed;
-            ctxt->att->read.len = sizeof bletiny_gatt_service_changed;
-        }
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
-
-    return 0;
-}
-
 #define GATT_SVR_NEW_ALERT_VAL_MAX_LEN    64
 
 static const uint8_t gatt_svr_new_alert_cat = 0x01; /* Simple alert. */
@@ -282,7 +150,8 @@ static uint16_t gatt_svr_alert_not_ctrl_pt;
 
 static int
 gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
-                          struct ble_gatt_access_ctxt *ctxt, void *arg)
+                          struct ble_gatt_access_ctxt *ctxt,
+                          void *arg)
 {
     uint16_t uuid16;
     int rc;
@@ -345,7 +214,8 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
-                             struct ble_gatt_access_ctxt *ctxt, void *arg)
+                             struct ble_gatt_access_ctxt *ctxt,
+                             void *arg)
 {
     const void *uuid128;
     int rand_num;
@@ -450,11 +320,24 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
     }
 }
 
-void
-gatt_svr_init(void)
+int
+gatt_svr_register(void)
 {
     int rc;
 
     rc = ble_gatts_register_svcs(gatt_svr_svcs, gatt_svr_register_cb, NULL);
-    assert(rc == 0);
+    return rc;
+}
+
+int
+gatt_svr_init(struct ble_hs_cfg *cfg)
+{
+    int rc;
+
+    rc = ble_gatts_count_cfg(gatt_svr_svcs, cfg);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }

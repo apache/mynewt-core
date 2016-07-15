@@ -50,14 +50,16 @@
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
 
+/* Mandatory services. */
+#include "services/mandatory/ble_svc_gap.h"
+#include "services/mandatory/ble_svc_gatt.h"
+
 /* XXX: An app should not include private headers from a library.  The bletiny
  * app uses some of nimble's internal details for logging.
  */
 #include "../src/ble_hs_conn_priv.h"
 #include "../src/ble_hs_atomic_priv.h"
 #include "../src/ble_hci_priv.h"
-
-#define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
 
 /* Nimble task priorities */
 #define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
@@ -122,13 +124,6 @@ static struct os_mempool bletiny_chr_pool;
 
 static void *bletiny_dsc_mem;
 static struct os_mempool bletiny_dsc_pool;
-
-const char *bletiny_device_name = "nimble-bletiny";
-const uint16_t bletiny_appearance = BSWAP16(BLE_GAP_APPEARANCE_GEN_COMPUTER);
-const uint8_t bletiny_privacy_flag = 0;
-uint8_t bletiny_reconnect_addr[6];
-uint8_t bletiny_pref_conn_params[8];
-uint8_t bletiny_gatt_service_changed[4];
 
 static struct os_callout_func bletiny_tx_timer;
 struct bletiny_tx_data_s
@@ -1652,14 +1647,25 @@ main(void)
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
-    cfg.max_attrs = 36;
-    cfg.max_services = 5;
-    cfg.max_client_configs = (NIMBLE_OPT(MAX_CONNECTIONS) + 1) * 3;
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = NIMBLE_OPT(MAX_CONNECTIONS) * 3;
     cfg.max_l2cap_sig_procs = 2;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
+
+    /* Populate config with the required GATT server settings. */
+    cfg.max_attrs = 0;
+    cfg.max_services = 0;
+    cfg.max_client_configs = 0;
+
+    rc = ble_svc_gap_init(&cfg);
+    assert(rc == 0);
+
+    rc = ble_svc_gatt_init(&cfg);
+    assert(rc == 0);
+
+    rc = gatt_svr_init(&cfg);
+    assert(rc == 0);
 
     rc = ble_hs_init(&bletiny_evq, &cfg);
     assert(rc == 0);
@@ -1671,13 +1677,21 @@ main(void)
     rc = cmd_init();
     assert(rc == 0);
 
-    /* Initialize the preferred parameters. */
-    htole16(bletiny_pref_conn_params + 0, BLE_GAP_INITIAL_CONN_ITVL_MIN);
-    htole16(bletiny_pref_conn_params + 2, BLE_GAP_INITIAL_CONN_ITVL_MAX);
-    htole16(bletiny_pref_conn_params + 4, 0);
-    htole16(bletiny_pref_conn_params + 6, BSWAP16(0x100));
+    /* Register GATT attributes (services, characteristics, and
+     * descriptors).
+     */
+    rc = ble_svc_gap_register();
+    assert(rc == 0);
 
-    gatt_svr_init();
+    rc = ble_svc_gatt_register();
+    assert(rc == 0);
+
+    rc = gatt_svr_register();
+    assert(rc == 0);
+
+    /* Set the default device name. */
+    rc = ble_svc_gap_device_name_set("nimble-bletiny");
+    assert(rc == 0);
 
     os_callout_func_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
                          NULL);

@@ -44,9 +44,12 @@
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
 
-#include "bleprph.h"
+/* Mandatory services. */
+#include "services/mandatory/ble_svc_gap.h"
+#include "services/mandatory/ble_svc_gatt.h"
 
-#define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
+/* Application-specified header. */
+#include "bleprph.h"
 
 /** Mbuf settings. */
 #define MBUF_NUM_MBUFS      (12)
@@ -78,16 +81,6 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a};
 
 /** Our random address (in case we need it) */
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
-/** Device name - included in advertisements and exposed by GAP service. */
-const char *bleprph_device_name = "nimble-bleprph";
-
-/** Device properties - exposed by GAP service. */
-const uint16_t bleprph_appearance = BSWAP16(BLE_GAP_APPEARANCE_GEN_COMPUTER);
-const uint8_t bleprph_privacy_flag = 0;
-uint8_t bleprph_reconnect_addr[6];
-uint8_t bleprph_pref_conn_params[8];
-uint8_t bleprph_gatt_service_changed[4];
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -128,6 +121,7 @@ bleprph_advertise(void)
 {
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
+    const char *name;
     int rc;
 
     /**
@@ -153,8 +147,9 @@ bleprph_advertise(void)
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    fields.name = (uint8_t *)bleprph_device_name;
-    fields.name_len = strlen(bleprph_device_name);
+    name = ble_svc_gap_device_name();
+    fields.name = (uint8_t *)name;
+    fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
     fields.uuids16 = (uint16_t[]){ GATT_SVR_SVC_ALERT_UUID };
@@ -336,9 +331,6 @@ main(void)
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
     cfg.max_connections = 1;
-    cfg.max_attrs = 42;
-    cfg.max_services = 5;
-    cfg.max_client_configs = 6;
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 1;
@@ -347,6 +339,20 @@ main(void)
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
+
+    /* Populate config with the required GATT server settings. */
+    cfg.max_attrs = 0;
+    cfg.max_services = 0;
+    cfg.max_client_configs = 0;
+
+    rc = ble_svc_gap_init(&cfg);
+    assert(rc == 0);
+
+    rc = ble_svc_gatt_init(&cfg);
+    assert(rc == 0);
+
+    rc = gatt_svr_init(&cfg);
+    assert(rc == 0);
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);
@@ -361,7 +367,18 @@ main(void)
     /* Register GATT attributes (services, characteristics, and
      * descriptors).
      */
-    gatt_svr_init();
+    rc = ble_svc_gap_register();
+    assert(rc == 0);
+
+    rc = ble_svc_gatt_register();
+    assert(rc == 0);
+
+    rc = gatt_svr_register();
+    assert(rc == 0);
+
+    /* Set the default device name. */
+    rc = ble_svc_gap_device_name_set("nimble-bleprph");
+    assert(rc == 0);
 
     /* Start the OS */
     os_start();
