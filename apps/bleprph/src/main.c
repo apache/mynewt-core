@@ -192,13 +192,20 @@ bleprph_advertise(void)
 static int
 bleprph_gap_event(struct ble_gap_event *event, void *arg)
 {
+    struct ble_gap_conn_desc desc;
+    int rc;
+
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
         BLEPRPH_LOG(INFO, "connection %s; status=%d ",
                        event->connect.status == 0 ? "established" : "failed",
                        event->connect.status);
-        bleprph_print_conn_desc(&event->connect.conn);
+        if (event->connect.status == 0) {
+            rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+            assert(rc == 0);
+            bleprph_print_conn_desc(&desc);
+        }
         BLEPRPH_LOG(INFO, "\n");
 
         if (event->connect.status != 0) {
@@ -220,7 +227,9 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         /* The central has updated the connection parameters. */
         BLEPRPH_LOG(INFO, "connection updated; status=%d ",
                     event->conn_update.status);
-        bleprph_print_conn_desc(&event->conn_update.conn);
+        rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+        assert(rc == 0);
+        bleprph_print_conn_desc(&desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
 
@@ -228,7 +237,9 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         /* Encryption has been enabled or disabled for this connection. */
         BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
                     event->enc_change.status);
-        bleprph_print_conn_desc(&event->enc_change.conn);
+        rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+        assert(rc == 0);
+        bleprph_print_conn_desc(&desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
     }

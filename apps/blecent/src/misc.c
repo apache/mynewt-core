@@ -88,7 +88,7 @@ print_conn_desc(const struct ble_gap_conn_desc *desc)
     BLECENT_LOG(DEBUG, "peer_id_addr_type=%d peer_id_addr=%s ",
                 desc->peer_id_addr_type, addr_str(desc->peer_id_addr));
     BLECENT_LOG(DEBUG, "conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                "encrypted=%d authenticated=%d bonded=%d\n",
+                "encrypted=%d authenticated=%d bonded=%d",
                 desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
                 desc->sec_state.encrypted,

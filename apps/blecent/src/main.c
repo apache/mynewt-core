@@ -372,6 +372,7 @@ blecent_connect_if_interesting(const struct ble_gap_disc_desc *disc)
 static int
 blecent_gap_event(struct ble_gap_event *event, void *arg)
 {
+    struct ble_gap_conn_desc desc;
     int rc;
 
     switch (event->type) {
@@ -385,32 +386,34 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
-        BLECENT_LOG(INFO, "connection %s; status=%d ",
-                    event->connect.status == 0 ? "established" : "failed",
-                    event->connect.status);
-        print_conn_desc(&event->connect.conn);
-        BLECENT_LOG(INFO, "\n");
-
-        if (event->connect.status != 0) {
-            /* Connection attempt failed; resume scanning. */
-            blecent_scan();
-        } else {
+        if (event->connect.status == 0) {
             /* Connection successfully established. */
+            BLECENT_LOG(INFO, "Connection established ");
+
+            rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+            assert(rc == 0);
+            print_conn_desc(&desc);
+            BLECENT_LOG(INFO, "\n");
 
             /* Remember peer. */
-            rc = peer_add(event->connect.conn.conn_handle);
+            rc = peer_add(event->connect.conn_handle);
             if (rc != 0) {
                 BLECENT_LOG(ERROR, "Failed to add peer; rc=%d\n", rc);
                 return 0;
             }
 
             /* Perform service discovery. */
-            rc = peer_disc_all(event->connect.conn.conn_handle,
+            rc = peer_disc_all(event->connect.conn_handle,
                                blecent_on_disc_complete, NULL);
             if (rc != 0) {
                 BLECENT_LOG(ERROR, "Failed to discover services; rc=%d\n", rc);
                 return 0;
             }
+        } else {
+            /* Connection attempt failed; resume scanning. */
+            BLECENT_LOG(ERROR, "Error: Connection failed; status=%d\n",
+                        event->connect.status);
+            blecent_scan();
         }
 
         return 0;
@@ -432,8 +435,9 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
         /* Encryption has been enabled or disabled for this connection. */
         BLECENT_LOG(INFO, "encryption change event; status=%d ",
                     event->enc_change.status);
-        print_conn_desc(&event->enc_change.conn);
-        BLECENT_LOG(INFO, "\n");
+        rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
+        assert(rc == 0);
+        print_conn_desc(&desc);
         return 0;
 
     default:

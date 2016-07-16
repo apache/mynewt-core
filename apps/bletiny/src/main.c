@@ -915,17 +915,21 @@ bletiny_on_write_reliable(uint16_t conn_handle,
 static int
 bletiny_gap_event(struct ble_gap_event *event, void *arg)
 {
+    struct ble_gap_conn_desc desc;
     int conn_idx;
+    int rc;
 
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         console_printf("connection %s; status=%d ",
                        event->connect.status == 0 ? "established" : "failed",
                        event->connect.status);
-        print_conn_desc(&event->connect.conn);
 
         if (event->connect.status == 0) {
-            bletiny_conn_add(&event->connect.conn);
+            rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+            assert(rc == 0);
+            print_conn_desc(&desc);
+            bletiny_conn_add(&desc);
         }
         return 0;
 
@@ -967,7 +971,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_CONN_UPDATE:
         console_printf("connection updated; status=%d ",
                        event->conn_update.status);
-        print_conn_desc(&event->conn_update.conn);
+        rc = ble_gap_conn_find(event->conn_update.conn_handle, &desc);
+        assert(rc == 0);
+        print_conn_desc(&desc);
         return 0;
 
     case BLE_GAP_EVENT_CONN_UPDATE_REQ:
@@ -989,7 +995,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_ENC_CHANGE:
         console_printf("encryption change event; status=%d ",
                        event->enc_change.status);
-        print_conn_desc(&event->enc_change.conn);
+        rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
+        assert(rc == 0);
+        print_conn_desc(&desc);
         return 0;
 
     case BLE_GAP_EVENT_NOTIFY_RX:
