@@ -242,6 +242,18 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         bleprph_print_conn_desc(&desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
+
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        BLEPRPH_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+                          "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
+                    event->subscribe.conn_handle,
+                    event->subscribe.attr_handle,
+                    event->subscribe.reason,
+                    event->subscribe.prev_notify,
+                    event->subscribe.cur_notify,
+                    event->subscribe.prev_indicate,
+                    event->subscribe.cur_indicate);
+        return 0;
     }
 
     return 0;
