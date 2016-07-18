@@ -56,7 +56,7 @@
 #include "bleprph.h"
 
 /** Mbuf settings. */
-#define MBUF_NUM_MBUFS      (24)
+#define MBUF_NUM_MBUFS      (12)
 #define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
 #define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
 #define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
@@ -74,10 +74,10 @@ struct log bleprph_log;
 
 /** bleprph task settings. */
 #define BLEPRPH_TASK_PRIO           1
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(512))
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
 
 #define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(1024))
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
 os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct os_eventq bleprph_evq;
@@ -392,6 +392,10 @@ main(void)
     rc = gatt_svr_init(&cfg);
     assert(rc == 0);
 
+    /* Nmgr ble GATT server initialization */
+    rc = nmgr_ble_gatt_svr_init(&bleprph_evq, &cfg);
+    assert(rc == 0);
+
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);
 
@@ -421,8 +425,9 @@ main(void)
     rc = ble_svc_gap_device_name_set("nimble-bleprph");
     assert(rc == 0);
 
-    /* Register nmgr ble GATT service and characteristic */
-    nmgr_ble_gatt_svr_init(&bleprph_evq);
+    /* Nmgr ble GATT server initialization */
+    rc = nmgr_ble_svc_register();
+    assert(rc == 0);
 
     /* Start the OS */
     os_start();
