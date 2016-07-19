@@ -255,6 +255,9 @@ nffs_block_delete_from_ram(struct nffs_hash_entry *block_entry)
     if (rc == 0 || rc == FS_ECORRUPT) {
         /* If file system corruption was detected, the resulting block is still
          * valid and can be removed from RAM.
+         * Note that FS_CORRUPT can occur because the owning inode was not
+         * found in the hash table - this can occur during the sweep where
+         * the inodes were deleted ahead of the blocks.
          */
         inode_entry = block.nb_inode_entry;
         if (inode_entry != NULL &&

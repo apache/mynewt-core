@@ -313,10 +313,10 @@ nffs_cache_log_block(struct nffs_cache_inode *cache_inode,
 {
     NFFS_LOG(DEBUG, "id=%u inode=%u flash_off=0x%08x "
                     "file_off=%u len=%d (entry=%p)\n",
-             cache_block->ncb_block.nb_hash_entry->nhe_id,
-             cache_inode->nci_inode.ni_inode_entry->nie_hash_entry.nhe_id,
-             cache_block->ncb_block.nb_hash_entry->nhe_flash_loc,
-             cache_block->ncb_file_offset,
+             (unsigned int)cache_block->ncb_block.nb_hash_entry->nhe_id,
+             (unsigned int)cache_inode->nci_inode.ni_inode_entry->nie_hash_entry.nhe_id,
+             (unsigned int)cache_block->ncb_block.nb_hash_entry->nhe_flash_loc,
+             (unsigned int)cache_block->ncb_file_offset,
              cache_block->ncb_block.nb_data_len,
              cache_block->ncb_block.nb_hash_entry);
 }

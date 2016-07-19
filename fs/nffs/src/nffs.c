@@ -118,6 +118,14 @@ nffs_unlock(void)
     assert(rc == 0 || rc == OS_NOT_STARTED);
 }
 
+static void
+nffs_stats_init(void)
+{
+    nffs_hashcnt_ins = 0;
+    nffs_hashcnt_rm = 0;
+    nffs_object_count = 0;
+}
+
 /**
  * Opens a file at the specified path.  The result of opening a nonexistent
  * file depends on the access flags specified.  All intermediate directories
@@ -623,6 +631,8 @@ nffs_init(void)
     nffs_config_init();
 
     nffs_cache_clear();
+
+    nffs_stats_init();
 
     rc = os_mutex_init(&nffs_mutex);
     if (rc != 0) {
