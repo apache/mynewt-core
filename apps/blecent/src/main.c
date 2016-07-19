@@ -127,13 +127,6 @@ blecent_on_subscribe(uint16_t conn_handle,
                       "attr_handle=%d\n",
                 error->status, conn_handle, attr->handle);
 
-    /* Now that notifications have been enabled, we can terminate the
-     * connection.
-     */
-    BLECENT_LOG(INFO, "Terminating the connection; conn_handle=%d\n",
-                conn_handle);
-    ble_gap_terminate(conn_handle, BLE_ERR_REM_USER_CONN_TERM);
-
     return 0;
 }
 
@@ -146,11 +139,8 @@ blecent_on_subscribe(uint16_t conn_handle,
  *
  * If the peer does not support a required service, characteristic, or
  * descriptor, then the peer lied when it claimed support for the alert
- * notification service!  When this happens, or if a GATT procedure fails, this
- * function immediately terminates the connection.
- *
- * When all three procedures have completed, the connection is terminated (this
- * happens in the subscribe callback, not in this function).
+ * notification service!  When this happens, or if a GATT procedure fails,
+ * this function immediately terminates the connection.
  */
 static void
 blecent_read_write_subscribe(const struct peer *peer)
@@ -438,6 +428,20 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
         rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
         assert(rc == 0);
         print_conn_desc(&desc);
+        return 0;
+
+    case BLE_GAP_EVENT_NOTIFY_RX:
+        /* Peer sent us a notification or indication. */
+        BLECENT_LOG(INFO, "received %s; conn_handle=%d attr_handle=%d "
+                          "attr_len=%d\n",
+                    event->notify_rx.indication ?
+                        "indication" :
+                        "notification",
+                    event->notify_rx.conn_handle,
+                    event->notify_rx.attr_handle,
+                    event->notify_rx.attr_len);
+
+        /* Attribute data is contained in event->notify_rx.attr_data. */
         return 0;
 
     default:
