@@ -282,7 +282,7 @@ nffs_restore_sweep(void)
     struct nffs_hash_list *list;
     struct nffs_inode inode;
     struct nffs_block block;
-    int del;
+    int del = 0;
     int rc;
     int i;
 
@@ -319,17 +319,6 @@ nffs_restore_sweep(void)
                     return rc;
                 }
 
-#if 0 /* for now, don't preserve corrupted directories */
-                /*
-                 * if this inode doesn't have a parent, move it to
-                 * the lost_found directory
-                 */
-                if (inode_entry != nffs_root_dir && inode.ni_parent == NULL) {
-                    rc = nffs_inode_rename(inode_entry,
-                                           nffs_lost_found_dir, NULL);
-                }
-#endif
-
                 if (del) {
 
                     /* Remove the inode and all its children from RAM.  We
@@ -346,12 +335,18 @@ nffs_restore_sweep(void)
                 }
             } else if (nffs_hash_id_is_block(entry->nhe_id)) {
                 if (nffs_hash_id_is_dummy(entry->nhe_id)) {
+                    del = 1;
                     nffs_block_delete_from_ram(entry);
                 } else {
                     rc = nffs_block_from_hash_entry(&block, entry);
                     if (rc != 0 && rc != FS_ENOENT) {
+                        del = 1;
                         nffs_block_delete_from_ram(entry);
                     }
+                }
+                if (del) {
+                    del = 0;
+                    next = SLIST_FIRST(list);
                 }
             }
 
@@ -504,7 +499,8 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
              * Restore this inode even though deleted on disk
              * so the additional restored blocks have a place to go
              */
-            NFFS_LOG(DEBUG, "restoring deleted inode %x\n", disk_inode->ndi_id);
+            NFFS_LOG(DEBUG, "restoring deleted inode %x\n",
+                     (unsigned int)disk_inode->ndi_id);
             nffs_inode_setflags(inode_entry, NFFS_INODE_FLAG_DELETED);
         }
 
@@ -629,7 +625,8 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
              * Restore this inode even though deleted on disk
              * so the additional restored blocks have a place to go
              */
-            NFFS_LOG(DEBUG, "restoring deleted inode %x\n", disk_inode->ndi_id);
+            NFFS_LOG(DEBUG, "restoring deleted inode %x\n",
+                     (unsigned int)disk_inode->ndi_id);
             nffs_inode_setflags(inode_entry, NFFS_INODE_FLAG_DELETED);
         }
 
@@ -649,12 +646,6 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
             if (lastblock_entry != NULL) {
                 if (lastblock_entry->nhe_id == disk_inode->ndi_lastblock_id) {
                     inode_entry->nie_last_block_entry = lastblock_entry;
-                    /*
-                     * This flag should have been turned unset
-                     * when the block was restored.
-                     */
-                    assert(!nffs_inode_getflags(inode_entry,
-                                               NFFS_INODE_FLAG_DUMMYLSTBLK));
                 }
 
             } else {
@@ -717,13 +708,13 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
 
     if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
         NFFS_LOG(DEBUG, "restoring file; id=0x%08x\n",
-                 inode_entry->nie_hash_entry.nhe_id);
+                 (unsigned int)inode_entry->nie_hash_entry.nhe_id);
         if (inode_entry->nie_hash_entry.nhe_id >= nffs_hash_next_file_id) {
             nffs_hash_next_file_id = inode_entry->nie_hash_entry.nhe_id + 1;
         }
     } else {
         NFFS_LOG(DEBUG, "restoring dir; id=0x%08x\n",
-                 inode_entry->nie_hash_entry.nhe_id);
+                 (unsigned int)inode_entry->nie_hash_entry.nhe_id);
         if (inode_entry->nie_hash_entry.nhe_id >= nffs_hash_next_dir_id) {
             nffs_hash_next_dir_id = inode_entry->nie_hash_entry.nhe_id + 1;
         }
@@ -890,8 +881,11 @@ nffs_restore_block(const struct nffs_disk_block *disk_block, uint8_t area_idx,
     }
 
     NFFS_LOG(DEBUG, "restoring block; id=0x%08x seq=%u inode_id=%u prev_id=%u "
-             "data_len=%u\n", disk_block->ndb_id, disk_block->ndb_seq,
-             disk_block->ndb_inode_id, disk_block->ndb_prev_id,
+             "data_len=%u\n",
+             (unsigned int)disk_block->ndb_id,
+             (unsigned int)disk_block->ndb_seq,
+             (unsigned int)disk_block->ndb_inode_id,
+             (unsigned int)disk_block->ndb_prev_id,
              disk_block->ndb_data_len);
 
     inode_entry = nffs_hash_find_inode(disk_block->ndb_inode_id);
@@ -1065,6 +1059,7 @@ nffs_restore_area_contents(int area_idx)
             if (rc == FS_ECORRUPT) {
                 area->na_cur++;
             } else {
+                nffs_object_count++; /* total count of restored objects */
                 area->na_cur += nffs_restore_disk_object_size(&disk_object);
             }
             break;
@@ -1219,19 +1214,20 @@ nffs_log_contents(void)
         if (nffs_hash_id_is_block(entry->nhe_id)) {
             rc = nffs_block_from_hash_entry(&block, entry);
             assert(rc == 0 || rc == FS_ENOENT);
-            NFFS_LOG(DEBUG, "block; id=%u inode_id=", entry->nhe_id);
+            NFFS_LOG(DEBUG, "block; id=%u inode_id=",
+                     (unsigned int)entry->nhe_id);
             if (block.nb_inode_entry == NULL) {
                 NFFS_LOG(DEBUG, "null ");
             } else {
                 NFFS_LOG(DEBUG, "%u ",
-                         block.nb_inode_entry->nie_hash_entry.nhe_id);
+                     (unsigned int)block.nb_inode_entry->nie_hash_entry.nhe_id);
             }
 
             NFFS_LOG(DEBUG, "prev_id=");
             if (block.nb_prev == NULL) {
                 NFFS_LOG(DEBUG, "null ");
             } else {
-                NFFS_LOG(DEBUG, "%u ", block.nb_prev->nhe_id);
+                NFFS_LOG(DEBUG, "%u ", (unsigned int)block.nb_prev->nhe_id);
             }
 
             NFFS_LOG(DEBUG, "data_len=%u\n", block.nb_data_len);
@@ -1245,7 +1241,7 @@ nffs_log_contents(void)
                     NFFS_LOG(DEBUG, "null");
                 } else {
                     NFFS_LOG(DEBUG, "%x",
-                             (unsigned int)inode_entry->nie_last_block_entry->nhe_id);
+                     (unsigned int)inode_entry->nie_last_block_entry->nhe_id);
                 }
             } else if (rc != 0) {
                 continue;
@@ -1254,18 +1250,18 @@ nffs_log_contents(void)
 
             if (nffs_hash_id_is_file(entry->nhe_id)) {
                 NFFS_LOG(DEBUG, "file; id=%u name=%.3s block_id=",
-                         entry->nhe_id, inode.ni_filename);
+                         (unsigned int)entry->nhe_id, inode.ni_filename);
                 if (inode_entry->nie_last_block_entry == NULL) {
                     NFFS_LOG(DEBUG, "null");
                 } else {
                     NFFS_LOG(DEBUG, "%u",
-                             inode_entry->nie_last_block_entry->nhe_id);
+                     (unsigned int)inode_entry->nie_last_block_entry->nhe_id);
                 }
                 NFFS_LOG(DEBUG, "\n");
             } else {
                 inode_entry = (void *)entry;
-                NFFS_LOG(DEBUG, "dir; id=%u name=%.3s\n", entry->nhe_id,
-                         inode.ni_filename);
+                NFFS_LOG(DEBUG, "dir; id=%u name=%.3s\n",
+                         (unsigned int)entry->nhe_id, inode.ni_filename);
 
             }
         }

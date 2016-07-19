@@ -236,6 +236,10 @@ struct nffs_dir {
     struct nffs_dirent nd_dirent;
 };
 
+uint32_t nffs_hashcnt_ins;
+uint32_t nffs_hashcnt_rm;
+uint32_t nffs_object_count;
+
 extern void *nffs_file_mem;
 extern void *nffs_block_entry_mem;
 extern void *nffs_inode_mem;
