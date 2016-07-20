@@ -345,6 +345,7 @@ hal_gpio_irq_enable(int pin)
     if (i < 0) {
         return;
     }
+    NRF_GPIOTE->EVENTS_IN[i] = 0;
     NRF_GPIOTE->INTENSET = 1 << i;
 }
 
