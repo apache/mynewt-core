@@ -30,6 +30,30 @@ tu_suite_set_name(const char *name)
     tu_suite_name = name;
 }
 
+/**
+ * Configures a callback that gets executed at the end of each test case in the
+ * current suite.  This is useful when there are some checks that should be
+ * performed at the end of each test (e.g., verify no memory leaks).  This
+ * callback is cleared when the current suite completes.
+ *
+ * @param cb                    The callback to execute at the end of each test
+ *                                  case.
+ * @param cb_arg                An optional argument that gets passed to the
+ *                                  callback.
+ */
+void
+tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg)
+{
+    tu_case_post_test_cb = cb;
+    tu_case_post_test_cb_arg = cb_arg;
+}
+
+void
+tu_suite_complete(void)
+{
+    tu_suite_set_post_test_cb(NULL, NULL);
+}
+
 void
 tu_suite_init(const char *name)
 {

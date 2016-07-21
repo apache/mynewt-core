@@ -57,6 +57,9 @@ extern const char *tu_suite_name;
 extern const char *tu_case_name;
 extern int tu_first_idx;
 
+typedef void tu_post_test_fn_t(void *arg);
+
+void tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg);
 int tu_parse_args(int argc, char **argv);
 int tu_init(void);
 void tu_restart(void);
@@ -65,6 +68,7 @@ void tu_restart(void);
  * Private declarations                                                      *
  *****************************************************************************/
 
+void tu_suite_complete(void);
 void tu_suite_init(const char *name);
 
 void tu_case_init(const char *name);
@@ -74,7 +78,7 @@ void tu_case_fail_assert(int fatal, const char *file, int line,
 void tu_case_write_pass_auto(void);
 void tu_case_pass_manual(const char *file, int line,
                          const char *format, ...);
-
+void tu_case_post_test(void);
 
 extern int tu_any_failed;
 extern int tu_suite_failed;
@@ -91,6 +95,7 @@ extern jmp_buf tu_case_jb;
     {                                                                         \
         tu_suite_init(#suite_name);                                           \
         TEST_SUITE_##suite_name();                                            \
+        tu_suite_complete();                                                  \
                                                                               \
         return tu_suite_failed;                                               \
     }                                                                         \
@@ -113,6 +118,7 @@ extern jmp_buf tu_case_jb;
                                                                               \
             if (setjmp(tu_case_jb) == 0) {                                    \
                 TEST_CASE_##case_name();                                      \
+                tu_case_post_test();                                          \
                 tu_case_write_pass_auto();                                    \
             }                                                                 \
         }                                                                     \
