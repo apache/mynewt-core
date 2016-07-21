@@ -526,8 +526,8 @@ os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
                    uint16_t src_off, uint16_t len)
 {
     const struct os_mbuf *src_cur_om;
+    uint16_t src_cur_off;
     uint16_t chunk_sz;
-    int src_cur_off;
     int rc;
 
     src_cur_om = os_mbuf_off(src, src_off, &src_cur_off);
@@ -616,7 +616,7 @@ err:
  *                              NULL if the specified offset is out of bounds.
  */
 struct os_mbuf *
-os_mbuf_off(const struct os_mbuf *om, int off, int *out_off)
+os_mbuf_off(const struct os_mbuf *om, int off, uint16_t *out_off)
 {
     struct os_mbuf *next;
     struct os_mbuf *cur;
@@ -783,14 +783,14 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
  *
  * @return                      0 if both memory regions are identical;
  *                              A memcmp return code if there is a mismatch;
- *                              -1 if the mbuf is too short.
+ *                              INT_MAX if the mbuf is too short.
  */
 int
-os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
+os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 {
-    int chunk_sz;
-    int data_off;
-    int om_off;
+    uint16_t chunk_sz;
+    uint16_t data_off;
+    uint16_t om_off;
     int rc;
 
     if (len <= 0) {
@@ -798,10 +798,10 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
     }
 
     data_off = 0;
-    om = os_mbuf_off((struct os_mbuf *)om, off, &om_off);
+    om = os_mbuf_off(om, off, &om_off);
     while (1) {
         if (om == NULL) {
-            return -1;
+            return INT_MAX;
         }
 
         chunk_sz = min(om->om_len - om_off, len - data_off);
@@ -821,7 +821,7 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
         om_off = 0;
 
         if (om == NULL) {
-            return -1;
+            return INT_MAX;
         }
     }
 }
@@ -1013,8 +1013,8 @@ os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
     struct os_mbuf *next;
     struct os_mbuf *cur;
     const uint8_t *sptr;
+    uint16_t cur_off;
     int copylen;
-    int cur_off;
     int rc;
 
     /* Find the mbuf,offset pair for the start of the destination. */
