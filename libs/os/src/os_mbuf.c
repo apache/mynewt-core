@@ -37,6 +37,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
 
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
@@ -822,6 +823,78 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
         if (om == NULL) {
             return -1;
         }
+    }
+}
+
+/**
+ * Compares the contents of two mbuf chains.  The ranges of the two chains to
+ * be compared are specified via the two offset parameters and the len
+ * parameter.  Neither mbuf chain is required to contain a packet header.
+ *
+ * @param om1                   The first mbuf chain to compare.
+ * @param offset1               The absolute offset within om1 at which to
+ *                                  start the comparison.
+ * @param om2                   The second mbuf chain to compare.
+ * @param offset2               The absolute offset within om2 at which to
+ *                                  start the comparison.
+ * @param len                   The number of bytes to compare.
+ *
+ * @return                      0 if both mbuf segments are identical;
+ *                              A memcmp() return code if the segment contents
+ *                                  differ;
+ *                              INT_MAX if a specified range extends beyond the
+ *                                  end of its corresponding mbuf chain.
+ */
+int
+os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
+             const struct os_mbuf *om2, uint16_t offset2,
+             uint16_t len)
+{
+    const struct os_mbuf *cur1;
+    const struct os_mbuf *cur2;
+    uint16_t bytes_remaining;
+    uint16_t chunk_sz;
+    uint16_t om1_left;
+    uint16_t om2_left;
+    uint16_t om1_off;
+    uint16_t om2_off;
+    int rc;
+
+    cur1 = os_mbuf_off(om1, offset1, &om1_off);
+    cur2 = os_mbuf_off(om2, offset2, &om2_off);
+
+    bytes_remaining = len;
+    while (1) {
+        if (bytes_remaining == 0) {
+            return 0;
+        }
+
+        while (cur1 != NULL && om1_off >= cur1->om_len) {
+            cur1 = SLIST_NEXT(cur1, om_next);
+            om1_off = 0;
+        }
+        while (cur2 != NULL && om2_off >= cur2->om_len) {
+            cur2 = SLIST_NEXT(cur2, om_next);
+            om2_off = 0;
+        }
+
+        if (cur1 == NULL || cur2 == NULL) {
+            return INT_MAX;
+        }
+
+        om1_left = cur1->om_len - om1_off;
+        om2_left = cur2->om_len - om2_off;
+        chunk_sz = min(min(om1_left, om2_left), bytes_remaining);
+
+        rc = memcmp(cur1->om_data + om1_off, cur2->om_data + om2_off,
+                    chunk_sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        om1_off += chunk_sz;
+        om2_off += chunk_sz;
+        bytes_remaining -= chunk_sz;
     }
 }
 

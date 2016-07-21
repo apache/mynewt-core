@@ -279,6 +279,9 @@ int os_mbuf_free_chain(struct os_mbuf *om);
 void os_mbuf_adj(struct os_mbuf *mp, int req_len);
 int os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data,
                    int len);
+int os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
+                 const struct os_mbuf *om2, uint16_t offset2,
+                 uint16_t len);
 
 struct os_mbuf *os_mbuf_prepend(struct os_mbuf *om, int len);
 int os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len);
