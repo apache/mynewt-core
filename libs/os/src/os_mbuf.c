@@ -967,6 +967,33 @@ os_mbuf_prepend(struct os_mbuf *om, int len)
 }
 
 /**
+ * Prepends a chunk of empty data to the specified mbuf chain and ensures the
+ * chunk is contiguous.  If either operation fails, the specified mbuf chain is
+ * freed and NULL is returned.
+ *
+ * @param om                    The mbuf chain to prepend to.
+ * @param len                   The number of bytes to prepend and pullup.
+ *
+ * @return                      The modified mbuf on success;
+ *                              NULL on failure (and the mbuf chain is freed).
+ */
+struct os_mbuf *
+os_mbuf_prepend_pullup(struct os_mbuf *om, uint16_t len)
+{
+    om = os_mbuf_prepend(om, len);
+    if (om == NULL) {
+        return NULL;
+    }
+
+    om = os_mbuf_pullup(om, len);
+    if (om == NULL) {
+        return NULL;
+    }
+
+    return om;
+}
+
+/**
  * Copies the contents of a flat buffer into an mbuf chain, starting at the
  * specified destination offset.  If the mbuf is too small for the source data,
  * it is extended as necessary.  If the destination mbuf contains a packet

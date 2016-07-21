@@ -284,6 +284,7 @@ int os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
                  uint16_t len);
 
 struct os_mbuf *os_mbuf_prepend(struct os_mbuf *om, int len);
+struct os_mbuf *os_mbuf_prepend_pullup(struct os_mbuf *om, uint16_t len);
 int os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len);
 void os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second);
 void *os_mbuf_extend(struct os_mbuf *om, uint16_t len);
