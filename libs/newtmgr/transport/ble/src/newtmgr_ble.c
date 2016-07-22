@@ -33,15 +33,13 @@ struct nmgr_transport ble_nt;
 /* ble nmgr attr handle */
 uint16_t g_ble_nmgr_attr_handle;
 
-/* ble nmgr response buffer */
-char ble_nmgr_resp_buf[BLE_ATT_MTU_MAX];
-
 struct os_eventq *app_evq;
 /**
- * The vendor specific "newtmgr" service consists of one write no-rsp characteristic
- * for newtmgr requests
- *     o "write no-rsp": a single-byte characteristic that can always be read, but
- *       can only be written over an encrypted connection.
+ * The vendor specific "newtmgr" service consists of one write no-rsp
+ * characteristic for newtmgr requests: a single-byte characteristic that can
+ * only accepts write-without-response commands.  The contents of each write
+ * command contains an NMP request.  NMP responses are sent back in the form of
+ * unsolicited notifications from the same characteristic.
  */
 
 /* {8D53DC1D-1DB7-4CD3-868B-8A527460AA84} */
@@ -90,31 +88,57 @@ gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
 
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            m_req = os_msys_get_pkthdr(ctxt->att->write.len, sizeof(conn_handle));
-            if (!m_req) {
-                goto err;
+            /* Try to reuse the BLE packet mbuf as the newtmgr request.  This
+             * requires a two-byte usrhdr to hold the BLE connection handle so
+             * that the newtmgr response can be sent to the correct peer.  If
+             * it is not possible to reuse the mbuf, then allocate a new one
+             * and copy the request contents.
+             */
+            if (OS_MBUF_USRHDR_LEN(ctxt->om) > sizeof (conn_handle)) {
+                /* Sufficient usrhdr space already present. */
+                m_req = ctxt->om;
+                ctxt->om = NULL;
+            } else if (OS_MBUF_LEADINGSPACE(ctxt->om) > sizeof (conn_handle)) {
+                /* Usrhdr isn't present, but there is enough leading space to
+                 * add one.
+                 */
+                m_req = ctxt->om;
+                ctxt->om = NULL;
+
+                m_req->om_pkthdr_len += sizeof (conn_handle);
+            } else {
+                /* The mbuf can't be reused.  Allocate a new one and perform a
+                 * copy.  Don't set ctxt->om to NULL; let the NimBLE host free
+                 * it.
+                 */
+                m_req = os_msys_get_pkthdr(OS_MBUF_PKTLEN(ctxt->om),
+                                           sizeof (conn_handle));
+                if (!m_req) {
+                    return BLE_ATT_ERR_INSUFFICIENT_RES;
+                }
+                rc = os_mbuf_appendfrom(m_req, ctxt->om, 0,
+                                        OS_MBUF_PKTLEN(ctxt->om));
+                if (rc) {
+                    return BLE_ATT_ERR_INSUFFICIENT_RES;
+                }
             }
-            rc = os_mbuf_copyinto(m_req, OS_MBUF_PKTHDR(m_req)->omp_len,
-                                  ctxt->att->write.data, ctxt->att->write.len);
-            if (rc) {
-                goto err;
-            }
+
+            /* Write the connection handle to the newtmgr request usrhdr.  This
+             * is necessary so that we later know who to send the newtmgr
+             * response to.
+             */
             memcpy(OS_MBUF_USRHDR(m_req), &conn_handle, sizeof(conn_handle));
 
             rc = nmgr_rx_req(&ble_nt, m_req);
-            return rc;
+            if (rc != 0) {
+                return BLE_ATT_ERR_UNLIKELY;
+            }
+            return 0;
 
         default:
             assert(0);
             return BLE_ATT_ERR_UNLIKELY;
     }
-
-    /* Unknown characteristic; the nimble stack should not have called this
-     * function.
-     */
-    assert(0);
-err:
-    return BLE_ATT_ERR_UNLIKELY;
 }
 
 /**
@@ -130,12 +154,10 @@ nmgr_ble_proc_mq_evt(struct os_event *ev)
 {
     struct os_mbuf *m_resp;
     uint16_t conn_handle;
-    uint16_t max_pktlen;
     int rc;
 
     rc = 0;
     switch (ev->ev_type) {
-
         case OS_EVENT_T_MQUEUE_DATA:
             if (ev->ev_arg != &ble_nmgr_mq) {
                 rc = -1;
@@ -148,16 +170,12 @@ nmgr_ble_proc_mq_evt(struct os_event *ev)
                     break;
                 }
                 memcpy(&conn_handle, OS_MBUF_USRHDR(m_resp),
-                       sizeof(conn_handle));
-                max_pktlen = min(OS_MBUF_PKTLEN(m_resp), sizeof(ble_nmgr_resp_buf));
-                rc = os_mbuf_copydata(m_resp, 0, max_pktlen, ble_nmgr_resp_buf);
-                assert(rc == 0);
-                rc = os_mbuf_free_chain(m_resp);
-                assert(rc == 0);
+                       sizeof (conn_handle));
                 ble_gattc_notify_custom(conn_handle, g_ble_nmgr_attr_handle,
-                                        ble_nmgr_resp_buf, max_pktlen);
+                                        &m_resp);
             }
             break;
+
         default:
             rc = -1;
             goto done;
