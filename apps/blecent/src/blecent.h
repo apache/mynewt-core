@@ -51,6 +51,7 @@ void gatt_svr_init_cfg(struct ble_hs_cfg *cfg);
 
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);
+void print_mbuf(const struct os_mbuf *om);
 char *addr_str(const void *addr);
 void print_uuid(const void *uuid128);
 void print_conn_desc(const struct ble_gap_conn_desc *desc);

@@ -37,6 +37,23 @@ print_bytes(const uint8_t *bytes, int len)
 }
 
 void
+print_mbuf(const struct os_mbuf *om)
+{
+    int colon;
+
+    colon = 0;
+    while (om != NULL) {
+        if (colon) {
+            console_printf(":");
+        } else {
+            colon = 1;
+        }
+        print_bytes(om->om_data, om->om_len);
+        om = SLIST_NEXT(om, om_next);
+    }
+}
+
+void
 print_addr(const void *addr)
 {
     const uint8_t *u8p;

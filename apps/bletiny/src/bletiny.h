@@ -139,13 +139,13 @@ int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                        int num_attr_handles);
 int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
-                  const void *value, uint16_t value_len);
+                  struct os_mbuf **om);
 int bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
-                         const void *value, uint16_t value_len);
+                         struct os_mbuf **om);
 int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                       const void *value, uint16_t value_len);
+                       struct os_mbuf **om);
 int bletiny_write_reliable(uint16_t conn_handle,
-                           const struct ble_gatt_attr *attrs, int num_attrs);
+                           struct ble_gatt_attr *attrs, int num_attrs);
 int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
                       const uint8_t *peer_addr, int32_t duration_ms,
                       const struct ble_gap_adv_params *params);
@@ -193,6 +193,7 @@ int gatt_svr_init(struct ble_hs_cfg *cfg);
 
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);
+void print_mbuf(const struct os_mbuf *om);
 void print_addr(const void *addr);
 void print_uuid(const void *uuid128);
 int svc_is_empty(const struct bletiny_svc *svc);

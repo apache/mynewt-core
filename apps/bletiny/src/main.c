@@ -839,14 +839,14 @@ bletiny_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
 
 static int
 bletiny_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
-                const struct ble_gatt_attr *attr, void *arg)
+                struct ble_gatt_attr *attr, void *arg)
 {
     switch (error->status) {
     case 0:
         console_printf("characteristic read; conn_handle=%d "
                        "attr_handle=%d len=%d value=", conn_handle,
-                       attr->handle, attr->value_len);
-        print_bytes(attr->value, attr->value_len);
+                       attr->handle, OS_MBUF_PKTLEN(attr->om));
+        print_mbuf(attr->om);
         console_printf("\n");
         break;
 
@@ -864,15 +864,12 @@ bletiny_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
 
 static int
 bletiny_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
-                 const struct ble_gatt_attr *attr, void *arg)
+                 struct ble_gatt_attr *attr, void *arg)
 {
     switch (error->status) {
     case 0:
         console_printf("characteristic write complete; conn_handle=%d "
-                       "attr_handle=%d len=%d value=", conn_handle,
-                       attr->handle, attr->value_len);
-        print_bytes(attr->value, attr->value_len);
-        console_printf("\n");
+                       "attr_handle=%d\n", conn_handle, attr->handle);
         break;
 
     default:
@@ -886,7 +883,7 @@ bletiny_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
 static int
 bletiny_on_write_reliable(uint16_t conn_handle,
                           const struct ble_gatt_error *error,
-                          const struct ble_gatt_attr *attrs, uint8_t num_attrs,
+                          struct ble_gatt_attr *attrs, uint8_t num_attrs,
                           void *arg)
 {
     int i;
@@ -898,8 +895,8 @@ bletiny_on_write_reliable(uint16_t conn_handle,
 
         for (i = 0; i < num_attrs; i++) {
             console_printf(" attr_handle=%d len=%d value=", attrs[i].handle,
-                           attrs[i].value_len);
-            print_bytes(attrs[i].value, attrs[i].value_len);
+                           OS_MBUF_PKTLEN(attrs[i].om));
+            print_mbuf(attrs[i].om);
         }
         console_printf("\n");
         break;
@@ -1005,9 +1002,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                        "len=%d data=",
                        event->notify_rx.attr_handle,
                        event->notify_rx.indication,
-                       event->notify_rx.attr_len);
+                       OS_MBUF_PKTLEN(event->notify_rx.om));
 
-        print_bytes(event->notify_rx.attr_data, event->notify_rx.attr_len);
+        print_mbuf(event->notify_rx.om);
         console_printf("\n");
         return 0;
 
@@ -1201,10 +1198,19 @@ bletiny_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
 int
 bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
 {
+    struct os_mbuf *om;
     int rc;
 
     if (conn_handle == BLE_HS_CONN_HANDLE_NONE) {
-        rc = ble_att_svr_read_local(attr_handle, NULL, NULL);
+        rc = ble_att_svr_read_local(attr_handle, &om);
+        if (rc == 0) {
+            console_printf("read local; attr_handle=%d len=%d value=",
+                           attr_handle, OS_MBUF_PKTLEN(om));
+            print_mbuf(om);
+            console_printf("\n");
+
+            os_mbuf_free_chain(om);
+        }
     } else {
         rc = ble_gattc_read(conn_handle, attr_handle, bletiny_on_read, NULL);
     }
@@ -1243,15 +1249,14 @@ bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
 }
 
 int
-bletiny_write(uint16_t conn_handle, uint16_t attr_handle, const void *value,
-              uint16_t value_len)
+bletiny_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf **om)
 {
     int rc;
 
     if (conn_handle == BLE_HS_CONN_HANDLE_NONE) {
-        rc = ble_att_svr_write_local(attr_handle, value, value_len);
+        rc = ble_att_svr_write_local(attr_handle, om);
     } else {
-        rc = ble_gattc_write(conn_handle, attr_handle, value, value_len,
+        rc = ble_gattc_write(conn_handle, attr_handle, om,
                              bletiny_on_write, NULL);
     }
 
@@ -1260,29 +1265,29 @@ bletiny_write(uint16_t conn_handle, uint16_t attr_handle, const void *value,
 
 int
 bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
-                     const void *value, uint16_t value_len)
+                     struct os_mbuf **om)
 {
     int rc;
 
-    rc = ble_gattc_write_no_rsp(conn_handle, attr_handle, value, value_len);
+    rc = ble_gattc_write_no_rsp(conn_handle, attr_handle, om);
 
     return rc;
 }
 
 int
 bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                   const void *value, uint16_t value_len)
+                   struct os_mbuf **om)
 {
     int rc;
 
-    rc = ble_gattc_write_long(conn_handle, attr_handle, value, value_len,
+    rc = ble_gattc_write_long(conn_handle, attr_handle, om,
                               bletiny_on_write, NULL);
     return rc;
 }
 
 int
 bletiny_write_reliable(uint16_t conn_handle,
-                       const struct ble_gatt_attr *attrs,
+                       struct ble_gatt_attr *attrs,
                        int num_attrs)
 {
     int rc;
@@ -1559,6 +1564,9 @@ bletiny_task_handler(void *arg)
     int rc;
 
     rc = ble_hs_start();
+    assert(rc == 0);
+
+    rc = ble_hs_id_set_rnd(((uint8_t[6]){0x79,0xe4,0x59,0x8f,0xbc,0xf2}));
     assert(rc == 0);
 
     while (1) {

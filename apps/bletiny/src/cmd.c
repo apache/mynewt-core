@@ -24,6 +24,7 @@
 #include "shell/shell.h"
 
 #include "nimble/ble.h"
+#include "nimble/nimble_opt.h"
 #include "nimble/hci_common.h"
 #include "host/ble_gap.h"
 #include "host/ble_hs_adv.h"
@@ -1770,12 +1771,10 @@ cmd_wl(int argc, char **argv)
  * $write                                                                    *
  *****************************************************************************/
 
-#define CMD_WRITE_MAX_ATTRS 16
-
 static int
 cmd_write(int argc, char **argv)
 {
-    static struct ble_gatt_attr attrs[CMD_WRITE_MAX_ATTRS];
+    struct ble_gatt_attr attrs[NIMBLE_OPT(GATT_WRITE_MAX_ATTRS)] = { { 0 } };
     uint16_t attr_handle;
     uint16_t conn_handle;
     int total_attr_len;
@@ -1784,6 +1783,7 @@ cmd_write(int argc, char **argv)
     int is_long;
     int no_rsp;
     int rc;
+    int i;
 
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
@@ -1811,7 +1811,8 @@ cmd_write(int argc, char **argv)
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
-            return rc;
+            rc = -rc;
+            goto done;
         }
 
         rc = parse_arg_byte_stream("value", sizeof cmd_buf - total_attr_len,
@@ -1819,17 +1820,21 @@ cmd_write(int argc, char **argv)
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
-            return rc;
+            goto done;
         }
 
-        if (num_attrs >= CMD_WRITE_MAX_ATTRS) {
-            return EINVAL;
+        if (num_attrs >= sizeof attrs / sizeof attrs[0]) {
+            rc = -EINVAL;
+            goto done;
         }
 
         attrs[num_attrs].handle = attr_handle;
         attrs[num_attrs].offset = 0;
-        attrs[num_attrs].value_len = attr_len;
-        attrs[num_attrs].value = cmd_buf + total_attr_len;
+        attrs[num_attrs].om = ble_hs_mbuf_from_flat(cmd_buf + total_attr_len,
+                                                    attr_len);
+        if (attrs[num_attrs].om == NULL) {
+            goto done;
+        }
 
         total_attr_len += attr_len;
         num_attrs++;
@@ -1837,31 +1842,34 @@ cmd_write(int argc, char **argv)
 
     if (no_rsp) {
         if (num_attrs != 1) {
-            return EINVAL;
+            rc = -EINVAL;
+            goto done;
         }
-        rc = bletiny_write_no_rsp(conn_handle, attrs[0].handle,
-                                  attrs[0].value, attrs[0].value_len);
+        rc = bletiny_write_no_rsp(conn_handle, attrs[0].handle, &attrs[0].om);
     } else if (is_long) {
         if (num_attrs != 1) {
-            return EINVAL;
+            rc = -EINVAL;
+            goto done;
         }
-        rc = bletiny_write_long(conn_handle, attrs[0].handle,
-                                attrs[0].value, attrs[0].value_len);
+        rc = bletiny_write_long(conn_handle, attrs[0].handle, &attrs[0].om);
     } else if (num_attrs > 1) {
         rc = bletiny_write_reliable(conn_handle, attrs, num_attrs);
     } else if (num_attrs == 1) {
-        rc = bletiny_write(conn_handle, attrs[0].handle,
-                           attrs[0].value, attrs[0].value_len);
+        rc = bletiny_write(conn_handle, attrs[0].handle, &attrs[0].om);
     } else {
-        return EINVAL;
+        rc = -EINVAL;
+    }
+
+done:
+    for (i = 0; i < sizeof attrs / sizeof attrs[0]; i++) {
+        os_mbuf_free_chain(attrs[i].om);
     }
 
     if (rc != 0) {
         console_printf("error writing characteristic; rc=%d\n", rc);
-        return rc;
     }
 
-    return 0;
+    return rc;
 }
 
 /*****************************************************************************

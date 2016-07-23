@@ -82,14 +82,14 @@ static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 static int
 blecent_on_read(uint16_t conn_handle,
                 const struct ble_gatt_error *error,
-                const struct ble_gatt_attr *attr,
+                struct ble_gatt_attr *attr,
                 void *arg)
 {
     BLECENT_LOG(INFO, "Read complete; status=%d conn_handle=%d", error->status,
                 conn_handle);
     if (error->status == 0) {
         BLECENT_LOG(INFO, " attr_handle=%d value=", attr->handle);
-        print_bytes(attr->value, attr->value_len);
+        print_mbuf(attr->om);
     }
     BLECENT_LOG(INFO, "\n");
 
@@ -103,7 +103,7 @@ blecent_on_read(uint16_t conn_handle,
 static int
 blecent_on_write(uint16_t conn_handle,
                  const struct ble_gatt_error *error,
-                 const struct ble_gatt_attr *attr,
+                 struct ble_gatt_attr *attr,
                  void *arg)
 {
     BLECENT_LOG(INFO, "Write complete; status=%d conn_handle=%d "
@@ -120,7 +120,7 @@ blecent_on_write(uint16_t conn_handle,
 static int
 blecent_on_subscribe(uint16_t conn_handle,
                      const struct ble_gatt_error *error,
-                     const struct ble_gatt_attr *attr,
+                     struct ble_gatt_attr *attr,
                      void *arg)
 {
     BLECENT_LOG(INFO, "Subscribe complete; status=%d conn_handle=%d "
@@ -182,8 +182,8 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     value[0] = 99;
     value[1] = 100;
-    rc = ble_gattc_write(peer->conn_handle, chr->chr.val_handle, 
-                         value, sizeof value, blecent_on_write, NULL);
+    rc = ble_gattc_write_flat(peer->conn_handle, chr->chr.val_handle, 
+                              value, sizeof value, blecent_on_write, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to write characteristic; rc=%d\n",
                     rc);
@@ -205,8 +205,8 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     value[0] = 1;
     value[1] = 0;
-    rc = ble_gattc_write(peer->conn_handle, dsc->dsc.handle,
-                         value, sizeof value, blecent_on_subscribe, NULL);
+    rc = ble_gattc_write_flat(peer->conn_handle, dsc->dsc.handle,
+                              value, sizeof value, blecent_on_subscribe, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to subscribe to characteristic; "
                            "rc=%d\n", rc);
@@ -439,7 +439,7 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
                         "notification",
                     event->notify_rx.conn_handle,
                     event->notify_rx.attr_handle,
-                    event->notify_rx.attr_len);
+                    OS_MBUF_PKTLEN(event->notify_rx.om));
 
         /* Attribute data is contained in event->notify_rx.attr_data. */
         return 0;

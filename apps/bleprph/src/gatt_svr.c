@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "bsp/bsp.h"
-#include "console/console.h"
 #include "host/ble_hs.h"
 #include "bleprph.h"
 
@@ -120,20 +119,20 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
 };
 
 static int
-gatt_svr_chr_write(uint8_t op, struct ble_gatt_access_ctxt *ctxt,
-                   uint16_t min_len, uint16_t max_len, void *dst,
-                   uint16_t *len)
+gatt_svr_chr_write(struct os_mbuf *om, uint16_t min_len, uint16_t max_len,
+                   void *dst, uint16_t *len)
 {
-    assert(op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-    if (ctxt->att->write.len < min_len ||
-        ctxt->att->write.len > max_len) {
+    uint16_t om_len;
+    int rc;
 
+    om_len = OS_MBUF_PKTLEN(om);
+    if (om_len < min_len || om_len > max_len) {
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
 
-    memcpy(dst, ctxt->att->write.data, ctxt->att->write.len);
-    if (len != NULL) {
-        *len = ctxt->att->write.len;
+    rc = ble_hs_mbuf_to_flat(om, dst, max_len, len);
+    if (rc != 0) {
+        return BLE_ATT_ERR_UNLIKELY;
     }
 
     return 0;
@@ -162,44 +161,43 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
     switch (uuid16) {
     case GATT_SVR_CHR_SUP_NEW_ALERT_CAT_UUID:
         assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->att->read.data = &gatt_svr_new_alert_cat;
-        ctxt->att->read.len = sizeof gatt_svr_new_alert_cat;
-        return 0;
+        rc = os_mbuf_append(ctxt->om, &gatt_svr_new_alert_cat,
+                            sizeof gatt_svr_new_alert_cat);
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 
     case GATT_SVR_CHR_NEW_ALERT:
         if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            rc = gatt_svr_chr_write(ctxt->op, ctxt, 0,
+            rc = gatt_svr_chr_write(ctxt->om, 0,
                                     sizeof gatt_svr_new_alert_val,
                                     gatt_svr_new_alert_val,
                                     &gatt_svr_new_alert_val_len);
             return rc;
         } else if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
-            ctxt->att->read.data = (void *)&gatt_svr_new_alert_val;
-            ctxt->att->read.len = sizeof gatt_svr_new_alert_val;
-            return 0;
+            rc = os_mbuf_append(ctxt->om, &gatt_svr_new_alert_val,
+                                sizeof gatt_svr_new_alert_val);
+            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
         }
 
     case GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID:
         assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        ctxt->att->read.data = &gatt_svr_unr_alert_cat;
-        ctxt->att->read.len = sizeof gatt_svr_unr_alert_cat;
-        return 0;
+        rc = os_mbuf_append(ctxt->om, &gatt_svr_unr_alert_cat,
+                            sizeof gatt_svr_unr_alert_cat);
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 
     case GATT_SVR_CHR_UNR_ALERT_STAT_UUID:
         if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            rc = gatt_svr_chr_write(ctxt->op, ctxt, 2, 2,
-                                    &gatt_svr_unr_alert_stat,
+            rc = gatt_svr_chr_write(ctxt->om, 2, 2, &gatt_svr_unr_alert_stat,
                                     NULL);
+            return rc;
         } else {
-            ctxt->att->read.data = &gatt_svr_unr_alert_stat;
-            ctxt->att->read.len = sizeof gatt_svr_unr_alert_stat;
-            rc = 0;
+            rc = os_mbuf_append(ctxt->om, &gatt_svr_unr_alert_stat,
+                                sizeof gatt_svr_unr_alert_stat);
+            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
         }
-        return rc;
 
     case GATT_SVR_CHR_ALERT_NOT_CTRL_PT:
         if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            rc = gatt_svr_chr_write(ctxt->op, ctxt, 2, 2,
+            rc = gatt_svr_chr_write(ctxt->om, 2, 2,
                                     &gatt_svr_alert_not_ctrl_pt, NULL);
         } else {
             rc = BLE_ATT_ERR_UNLIKELY;
@@ -230,24 +228,21 @@ gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
     if (memcmp(uuid128, gatt_svr_chr_sec_test_rand_uuid, 16) == 0) {
         assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
 
-        /* Respond with a 32-bit random number.  Use the stack-provided buffer
-         * to hold the response data.
-         */
+        /* Respond with a 32-bit random number. */
         rand_num = rand();
-        memcpy(ctxt->att->read.buf, &rand_num, sizeof rand_num);
-        ctxt->att->read.len = sizeof rand_num;
-        return 0;
+        rc = os_mbuf_append(ctxt->om, &rand_num, sizeof rand_num);
+        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
     }
 
     if (memcmp(uuid128, gatt_svr_chr_sec_test_static_uuid, 16) == 0) {
         switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_READ_CHR:
-            ctxt->att->read.data = &gatt_svr_sec_test_static_val;
-            ctxt->att->read.len = sizeof gatt_svr_sec_test_static_val;
-            return 0;
+            rc = os_mbuf_append(ctxt->om, &gatt_svr_sec_test_static_val,
+                                sizeof gatt_svr_sec_test_static_val);
+            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            rc = gatt_svr_chr_write(ctxt->op, ctxt,
+            rc = gatt_svr_chr_write(ctxt->om,
                                     sizeof gatt_svr_sec_test_static_val,
                                     sizeof gatt_svr_sec_test_static_val,
                                     &gatt_svr_sec_test_static_val, NULL);
