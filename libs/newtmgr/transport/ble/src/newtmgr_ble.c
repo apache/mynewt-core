@@ -94,11 +94,13 @@ gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
              * it is not possible to reuse the mbuf, then allocate a new one
              * and copy the request contents.
              */
-            if (OS_MBUF_USRHDR_LEN(ctxt->om) > sizeof (conn_handle)) {
+            if (OS_MBUF_USRHDR_LEN(ctxt->om) >= sizeof (conn_handle)) {
                 /* Sufficient usrhdr space already present. */
                 m_req = ctxt->om;
                 ctxt->om = NULL;
-            } else if (OS_MBUF_LEADINGSPACE(ctxt->om) > sizeof (conn_handle)) {
+            } else if (OS_MBUF_LEADINGSPACE(ctxt->om) >=
+                       sizeof (conn_handle)) {
+
                 /* Usrhdr isn't present, but there is enough leading space to
                  * add one.
                  */
