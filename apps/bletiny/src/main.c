@@ -1685,16 +1685,11 @@ main(void)
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = NIMBLE_OPT(MAX_CONNECTIONS) * 3;
     cfg.max_l2cap_sig_procs = 2;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
 
     /* Populate config with the required GATT server settings. */
-    cfg.max_attrs = 0;
-    cfg.max_services = 0;
-    cfg.max_client_configs = 0;
-
     rc = ble_svc_gap_init(&cfg);
     assert(rc == 0);
 

@@ -368,9 +368,7 @@ main(void)
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
-    cfg.max_connections = 1;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = 3;
     cfg.max_l2cap_sig_procs = 1;
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
@@ -379,10 +377,6 @@ main(void)
     cfg.store_write_cb = ble_store_ram_write;
 
     /* Populate config with the required GATT server settings. */
-    cfg.max_attrs = 0;
-    cfg.max_services = 0;
-    cfg.max_client_configs = 0;
-
     rc = ble_svc_gap_init(&cfg);
     assert(rc == 0);
 
