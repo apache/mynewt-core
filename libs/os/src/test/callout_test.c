@@ -35,35 +35,44 @@ os_stack_t callout_task_stack_receive[CALLOUT_STACK_SIZE];
 
 /* Delearing variables for callout_func */
 struct os_callout_func callout_func_test;
-struct os_eventq *callout_eventq;
-void native_cputimer_cb(void *arg);
 
 /* The event to be sent*/
 struct os_eventq callout_evq;
 struct os_event callout_ev;
 
+/* This is the function for callout_init*/
+void my_callout_func(void *arg)
+{
+    int i;
+    i = 4;
+    TEST_ASSERT(i==4);
+}
+
 /* This is a callout task to send data */
 void
 callout_task_send()
 {
-   int i;
-    /* assigning the *callout_eventq */
-    callout_eventq = &callout_evq;
-
-    /* Initialize the callout function */
-    os_callout_func_init(&callout_func_test, callout_eventq,
-        native_cputimer_cb, NULL);
-
+    int i; 
     /* should say whether os is armed or not */
     i = os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 0);
-    
+
     /* Arm the OS */
-    os_callout_reset(&callout_func_test.cf_c, OS_TICKS_PER_SEC/ 50);
-    
+    i = os_callout_reset(&callout_func_test.cf_c, OS_TICKS_PER_SEC/ 50);
+    TEST_ASSERT_FATAL(i == 0);
+
+    /* should say whether os is armed or not */
+    i = os_callout_queued(&callout_func_test.cf_c);
+    TEST_ASSERT(i == 1);
+
     /* Send the callout */ 
-    os_time_delay(OS_TICKS_PER_SEC / 50);
+    os_time_delay(OS_TICKS_PER_SEC );
     TEST_ASSERT(i == 0);
+
+     /* should say whether os is armed or not */
+    i = os_callout_queued(&callout_func_test.cf_c);
+    TEST_ASSERT(i == 0);
+
 }
 
 void
@@ -75,7 +84,6 @@ callout_task_receive(void *arg)
         event = os_eventq_poll(&callout_func_test.cf_c.c_evq, 1, OS_WAIT_FOREVER);
         TEST_ASSERT(event->ev_type ==  OS_EVENT_T_TIMER);
         TEST_ASSERT(event->ev_arg == NULL);
-
 
     /* Finishes the test when OS has been started */
     os_test_restart();
@@ -98,8 +106,12 @@ TEST_CASE(callout_test)
         callout_task_receive, NULL, RECEIVE_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
         callout_task_stack_receive, CALLOUT_STACK_SIZE);
 
-    os_eventq_init(callout_eventq);
+    os_eventq_init(&callout_evq);
     
+    /* Initialize the callout function */
+    os_callout_func_init(&callout_func_test, &callout_evq,
+        my_callout_func, NULL);
+
     /* Does not return until OS_restart is called */
     os_start();
 
