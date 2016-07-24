@@ -1341,7 +1341,7 @@ cmd_set_adv_data(void)
         return rc;
     }
 
-    adv_fields.name = (uint8_t *)parse_arg_find("name");
+    adv_fields.name = (uint8_t *)parse_arg_extract("name");
     if (adv_fields.name != NULL) {
         adv_fields.name_len = strlen((char *)adv_fields.name);
     }
@@ -1470,7 +1470,7 @@ cmd_set_adv_data(void)
         return rc;
     }
 
-    eddystone_url_full = parse_arg_find("eddystone_url");
+    eddystone_url_full = parse_arg_extract("eddystone_url");
     if (eddystone_url_full != NULL) {
         rc = cmd_parse_eddystone_url(eddystone_url_full, &eddystone_url_scheme,
                                      eddystone_url_body,
@@ -1568,11 +1568,60 @@ cmd_set_sm_data(void)
     return 0;
 }
 
+static struct kv_pair cmd_set_addr_types[] = {
+    { "public",         BLE_ADDR_TYPE_PUBLIC },
+    { "random",         BLE_ADDR_TYPE_RANDOM },
+    { NULL }
+};
+
+static int
+cmd_set_addr(void)
+{
+    uint8_t addr[6];
+    int addr_type;
+    int rc;
+
+    addr_type = parse_arg_kv_default("addr_type", cmd_set_addr_types,
+                                     BLE_ADDR_TYPE_PUBLIC, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'addr_type' parameter\n");
+        return rc;
+    }
+
+    rc = parse_arg_mac("addr", addr);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch (addr_type) {
+    case BLE_ADDR_TYPE_PUBLIC:
+        /* We shouldn't be writing to the controller's address (g_dev_addr).
+         * There is no standard way to set the local public address, so this is
+         * our only option at the moment.
+         */
+        memcpy(g_dev_addr, addr, 6);
+        ble_hs_id_set_pub(g_dev_addr);
+        break;
+
+    case BLE_ADDR_TYPE_RANDOM:
+        rc = ble_hs_id_set_rnd(addr);
+        if (rc != 0) {
+            return rc;
+        }
+        break;
+
+    default:
+        assert(0);
+        return BLE_HS_EUNKNOWN;
+    }
+
+    return 0;
+}
+
 static int
 cmd_set(int argc, char **argv)
 {
     uint16_t mtu;
-    uint8_t addr[6];
     uint8_t irk[16];
     int good;
     int rc;
@@ -1589,16 +1638,14 @@ cmd_set(int argc, char **argv)
 
     good = 0;
 
-    rc = parse_arg_mac("addr", addr);
-    if (rc == 0) {
+    rc = parse_arg_find_idx("addr");
+    if (rc != -1) {
+        rc = cmd_set_addr();
+        if (rc != 0) {
+            return rc;
+        }
+
         good = 1;
-        /* XXX: There are a lot of problems with this.  This command probably
-         * needs to be removed.
-         */
-        memcpy(g_dev_addr, addr, 6);
-        ble_hs_id_set_pub(g_dev_addr);
-    } else if (rc != ENOENT) {
-        return rc;
     }
 
     mtu = parse_arg_uint16("mtu", &rc);
@@ -2149,7 +2196,7 @@ cmd_passkey(int argc, char **argv)
             break;
 
         case BLE_SM_IOACT_NUMCMP:
-            yesno = parse_arg_find("yesno");
+            yesno = parse_arg_extract("yesno");
             if (yesno == NULL) {
                 return EINVAL;
             }

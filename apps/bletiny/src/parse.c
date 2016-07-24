@@ -72,8 +72,22 @@ parse_kv_find(struct kv_pair *kvs, char *name)
     return NULL;
 }
 
+int
+parse_arg_find_idx(const char *key)
+{
+    int i;
+
+    for (i = 0; i < cmd_num_args; i++) {
+        if (strcmp(cmd_args[i][0], key) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 char *
-parse_arg_find(char *key)
+parse_arg_extract(const char *key)
 {
     int i;
 
@@ -111,7 +125,7 @@ parse_arg_long_bounds(char *name, long min, long max, int *out_status)
     char *sval;
     long lval;
 
-    sval = parse_arg_find(name);
+    sval = parse_arg_extract(name);
     if (sval == NULL) {
         *out_status = ENOENT;
         return 0;
@@ -154,7 +168,7 @@ parse_arg_uint64_bounds(char *name, uint64_t min, uint64_t max, int *out_status)
     char *sval;
     uint64_t lval;
 
-    sval = parse_arg_find(name);
+    sval = parse_arg_extract(name);
     if (sval == NULL) {
         *out_status = ENOENT;
         return 0;
@@ -252,7 +266,7 @@ parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status)
     struct kv_pair *kv;
     char *sval;
 
-    sval = parse_arg_find(name);
+    sval = parse_arg_extract(name);
     if (sval == NULL) {
         *out_status = ENOENT;
         return -1;
@@ -324,7 +338,7 @@ parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
 {
     char *sval;
 
-    sval = parse_arg_find(name);
+    sval = parse_arg_extract(name);
     if (sval == NULL) {
         return ENOENT;
     }

@@ -88,7 +88,8 @@ extern struct log bletiny_log;
 const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
                                        char *name);
 struct kv_pair *parse_kv_find(struct kv_pair *kvs, char *name);
-char *parse_arg_find(char *key);
+int parse_arg_find_idx(const char *key);
+char *parse_arg_extract(const char *key);
 long parse_arg_long_bounds(char *name, long min, long max, int *out_status);
 long parse_arg_long_bounds_default(char *name, long min, long max,
                                    long dflt, int *out_status);
