@@ -220,6 +220,11 @@ nmgr_ble_gatt_svr_init(struct os_eventq *evq, struct ble_hs_cfg *cfg)
         goto err;
     }
 
+    rc = ble_gatts_add_svcs(gatt_svr_svcs);
+    if (rc != 0) {
+        return rc;
+    }
+
     app_evq = evq;
 
     os_mqueue_init(&ble_nmgr_mq, &ble_nmgr_mq);
@@ -228,18 +233,4 @@ nmgr_ble_gatt_svr_init(struct os_eventq *evq, struct ble_hs_cfg *cfg)
 
 err:
     return rc;
-}
-
-/**
- * Register nmgr service
- *
- * @return 0 on success; non-zero on failure
- */
-int
-nmgr_ble_svc_register(void) {
-
-    int rc;
-    rc = ble_gatts_register_svcs(gatt_svr_svcs, NULL, NULL);
-    return rc;
-
 }

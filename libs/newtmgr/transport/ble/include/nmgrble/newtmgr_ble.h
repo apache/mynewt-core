@@ -24,7 +24,5 @@ int
 nmgr_ble_proc_mq_evt(struct os_event *ev);
 int
 nmgr_ble_gatt_svr_init(struct os_eventq *evq, struct ble_hs_cfg *cfg);
-int
-nmgr_ble_svc_register(void);
 
 #endif /* _NETMGR_H */
