@@ -277,6 +277,9 @@ bleprph_task_handler(void *unused)
     struct os_callout_func *cf;
     int rc;
 
+    /* Activate the host.  This causes the host to synchronize with the
+     * controller.
+     */
     rc = ble_hs_start();
     assert(rc == 0);
 
@@ -352,11 +355,21 @@ main(void)
     rc = os_msys_register(&bleprph_mbuf_pool);
     assert(rc == 0);
 
+    /* Initialize the console (for log output). */
+    rc = console_init(NULL);
+    assert(rc == 0);
+
     /* Initialize the logging system. */
     log_init();
     log_console_handler_init(&bleprph_log_console_handler);
     log_register("bleprph", &bleprph_log, &bleprph_log_console_handler);
 
+    /* Initialize eventq */
+    os_eventq_init(&bleprph_evq);
+
+    /* Create the bleprph task.  All application logic and NimBLE host
+     * operations are performed in this task.
+     */
     os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
                  NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
                  bleprph_stack, BLEPRPH_STACK_SIZE);
@@ -365,62 +378,38 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
-    /* Initialize the BLE host. */
+    /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
-    cfg.max_hci_bufs = 3;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_sig_procs = 1;
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
+    cfg.gatts_register_cb = gatt_svr_register_cb;
 
-    /* Populate config with the required GATT server settings. */
+    /* Initialize GATT services. */
     rc = ble_svc_gap_init(&cfg);
     assert(rc == 0);
 
     rc = ble_svc_gatt_init(&cfg);
     assert(rc == 0);
 
-    rc = gatt_svr_init(&cfg);
-    assert(rc == 0);
-
-    /* Nmgr ble GATT server initialization */
     rc = nmgr_ble_gatt_svr_init(&bleprph_evq, &cfg);
     assert(rc == 0);
 
-    /* Initialize eventq */
-    os_eventq_init(&bleprph_evq);
-
-    rc = ble_hs_init(&bleprph_evq, &cfg);
+    rc = gatt_svr_init(&cfg);
     assert(rc == 0);
 
-    /* Initialize the console (for log output). */
-    rc = console_init(NULL);
+    /* Initialize NimBLE host. */
+    rc = ble_hs_init(&bleprph_evq, &cfg);
     assert(rc == 0);
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
     imgmgr_module_init();
 
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    rc = ble_svc_gap_register();
-    assert(rc == 0);
-
-    rc = ble_svc_gatt_register();
-    assert(rc == 0);
-
-    rc = gatt_svr_register();
-    assert(rc == 0);
-
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-bleprph");
-    assert(rc == 0);
-
-    /* Nmgr ble GATT server initialization */
-    rc = nmgr_ble_svc_register();
     assert(rc == 0);
 
     /* Start the OS */

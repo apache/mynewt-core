@@ -284,7 +284,7 @@ gatt_svr_uuid_to_s(const void *uuid128, char *dst)
     return dst;
 }
 
-static void
+void
 gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 {
     char buf[40];

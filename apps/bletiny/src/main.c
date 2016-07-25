@@ -1622,6 +1622,7 @@ main(void)
     }
     srand(seed);
 
+    /* Allocate some application specific memory pools. */
     bletiny_svc_mem = malloc(
         OS_MEMPOOL_BYTES(BLETINY_MAX_SVCS, sizeof (struct bletiny_svc)));
     assert(bletiny_svc_mem != NULL);
@@ -1649,6 +1650,7 @@ main(void)
                          "bletiny_dsc_pool");
     assert(rc == 0);
 
+    /* Initialize msys mbufs. */
     rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS,
                          MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data,
                          "default_mbuf_data");
@@ -1661,35 +1663,46 @@ main(void)
     rc = os_msys_register(&default_mbuf_pool);
     assert(rc == 0);
 
-    log_init();
-    log_console_handler_init(&bletiny_log_console_handler);
-    log_register("bletiny", &bletiny_log, &bletiny_log_console_handler);
+    /* Initialize the console (for shell and logging). */
+    rc = console_init(shell_console_rx_cb);
+    assert(rc == 0);
 
-    os_eventq_init(&bletiny_evq);
-    os_task_init(&bletiny_task, "bletiny", bletiny_task_handler,
-                 NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
-                 bletiny_stack, BLETINY_STACK_SIZE);
-
+    /* Create the shell task. */
     rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                          SHELL_MAX_INPUT_LEN);
     assert(rc == 0);
 
-    /* Init the console */
-    rc = console_init(shell_console_rx_cb);
-    assert(rc == 0);
+    /* Initialize the logging system. */
+    log_init();
+    log_console_handler_init(&bletiny_log_console_handler);
+    log_register("bletiny", &bletiny_log, &bletiny_log_console_handler);
+
+    /* Initialize eventq for the application task. */
+    os_eventq_init(&bletiny_evq);
+
+    /* Create the bletiny task.  All application logic and NimBLE host
+     * operations are performed in this task.
+     */
+    os_task_init(&bletiny_task, "bletiny", bletiny_task_handler,
+                 NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
+                 bletiny_stack, BLETINY_STACK_SIZE);
 
     rc = stats_module_init();
     assert(rc == 0);
 
-    /* Initialize the BLE host. */
+    /* Initialize the BLE LL */
+    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
+    assert(rc == 0);
+
+    /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_sig_procs = 2;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
+    cfg.gatts_register_cb = gatt_svr_register_cb;
 
-    /* Populate config with the required GATT server settings. */
+    /* Initialize GATT services. */
     rc = ble_svc_gap_init(&cfg);
     assert(rc == 0);
 
@@ -1699,32 +1712,20 @@ main(void)
     rc = gatt_svr_init(&cfg);
     assert(rc == 0);
 
+    /* Initialize NimBLE host. */
     rc = ble_hs_init(&bletiny_evq, &cfg);
     assert(rc == 0);
 
-    /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
-    assert(rc == 0);
-
     rc = cmd_init();
-    assert(rc == 0);
-
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    rc = ble_svc_gap_register();
-    assert(rc == 0);
-
-    rc = ble_svc_gatt_register();
-    assert(rc == 0);
-
-    rc = gatt_svr_register();
     assert(rc == 0);
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-bletiny");
     assert(rc == 0);
 
+    /* Create a callout (timer).  This callout is used by the "tx" bletiny
+     * command to repeatedly send packets of sequential data bytes.
+     */
     os_callout_func_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
                          NULL);
 

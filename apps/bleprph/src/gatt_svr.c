@@ -283,7 +283,7 @@ gatt_svr_uuid_to_s(const void *uuid128, char *dst)
     return dst;
 }
 
-static void
+void
 gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 {
     char buf[40];
@@ -316,20 +316,16 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 }
 
 int
-gatt_svr_register(void)
-{
-    int rc;
-
-    rc = ble_gatts_register_svcs(gatt_svr_svcs, gatt_svr_register_cb, NULL);
-    return rc;
-}
-
-int
 gatt_svr_init(struct ble_hs_cfg *cfg)
 {
     int rc;
 
     rc = ble_gatts_count_cfg(gatt_svr_svcs, cfg);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ble_gatts_add_svcs(gatt_svr_svcs);
     if (rc != 0) {
         return rc;
     }

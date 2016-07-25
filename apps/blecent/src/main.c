@@ -540,12 +540,15 @@ main(void)
     log_console_handler_init(&blecent_log_console_handler);
     log_register("blecent", &blecent_log, &blecent_log_console_handler);
 
+    /* Initialize the eventq for the application task. */
+    os_eventq_init(&blecent_evq);
+
+    /* Create the blecent task.  All application logic and NimBLE host
+     * operations are performed in this task.
+     */
     os_task_init(&blecent_task, "blecent", blecent_task_handler,
                  NULL, BLECENT_TASK_PRIO, OS_WAIT_FOREVER,
                  blecent_stack, BLECENT_STACK_SIZE);
-
-    /* Initialize the eventq for the application task. */
-    os_eventq_init(&blecent_evq);
 
     /* Initialize the BLE LL */
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
@@ -555,14 +558,13 @@ main(void)
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
     cfg.max_gattc_procs = 5;
-    cfg.max_l2cap_sig_procs = 1;
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
 
-    /* Populate config with the required GATT server settings. */
+    /* Initialize GATT services. */
     rc = ble_svc_gap_init(&cfg);
     assert(rc == 0);
 
@@ -573,14 +575,9 @@ main(void)
     rc = ble_hs_init(&blecent_evq, &cfg);
     assert(rc == 0);
 
+    /* Initialize data structures to track connected peers. */
     rc = peer_init(cfg.max_connections, 64, 64, 64);
     assert(rc == 0);
-
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    ble_svc_gap_register();
-    ble_svc_gatt_register();
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-blecent");

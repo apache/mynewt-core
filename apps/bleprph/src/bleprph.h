@@ -22,6 +22,7 @@
 
 #include "log/log.h"
 struct ble_hs_cfg;
+struct ble_gatt_register_ctxt;
 
 extern struct log bleprph_log;
 
@@ -40,7 +41,7 @@ extern struct log bleprph_log;
 #define GATT_SVR_CHR_UNR_ALERT_STAT_UUID      0x2A45
 #define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
 
-int gatt_svr_register(void);
+void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg);
 int gatt_svr_init(struct ble_hs_cfg *cfg);
 
 /** Misc. */
