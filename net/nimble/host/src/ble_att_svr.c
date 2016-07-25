@@ -2071,7 +2071,7 @@ ble_att_svr_rx_read_group_type(uint16_t conn_handle, struct os_mbuf **rxom)
 
     rc = ble_att_svr_build_read_group_type_rsp(conn_handle, &req, uuid128,
                                                &txom, &att_err, &err_handle);
-    if (rc != 0) {
+    if (rc != 0 && rc != BLE_HS_EMSGSIZE) {
         goto done;
     }
 
