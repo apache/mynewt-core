@@ -135,7 +135,7 @@ ble_hs_rx_data(struct os_mbuf **om)
     }
 
     /* Free the mbuf if we weren't able to enqueue it. */
-    os_mbuf_free_chain(om);
+    os_mbuf_free_chain(*om);
 
     return rc;
 }
