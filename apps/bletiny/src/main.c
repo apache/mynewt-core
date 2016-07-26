@@ -201,6 +201,7 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    name(%scomplete)=",
                        fields->name_is_complete ? "" : "in");
         console_write((char *)fields->name, fields->name_len);
+        console_printf("\n");
     }
 
     if (fields->tx_pwr_lvl_is_present) {
