@@ -335,5 +335,10 @@ gatt_svr_init(struct ble_hs_cfg *cfg)
         return rc;
     }
 
+    rc = ble_gatts_add_svcs(gatt_svr_svcs);
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
 }
