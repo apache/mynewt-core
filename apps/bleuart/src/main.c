@@ -129,6 +129,16 @@ bleuart_advertise(void)
         return;
     }
 
+    memset(&fields, 0, sizeof fields);
+    fields.name = (uint8_t *)ble_svc_gap_device_name();
+    fields.name_len = strlen((char *)fields.name);
+    fields.name_is_complete = 1;
+
+    rc = ble_gap_adv_rsp_set_fields(&fields);
+    if (rc != 0) {
+        return;
+    }
+
     /* Begin advertising. */
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
@@ -303,15 +313,16 @@ main(void)
     rc = ble_svc_gatt_init(&cfg);
     assert(rc == 0);
 
-    /* Nmgr ble GATT server initialization */
-    rc = nmgr_ble_gatt_svr_init(&bleuart_evq, &cfg);
-    assert(rc == 0);
-
     rc = bleuart_gatt_svr_init(&cfg);
     assert(rc == 0);
 
     /* Initialize eventq */
     os_eventq_init(&bleuart_evq);
+
+    /* Nmgr ble GATT server initialization */
+    rc = nmgr_ble_gatt_svr_init(&bleuart_evq, &cfg);
+    assert(rc == 0);
+
 
     rc = ble_hs_init(&bleuart_evq, &cfg);
     assert(rc == 0);
