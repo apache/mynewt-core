@@ -40,10 +40,11 @@ uint16_t console_max_input;
 uint16_t g_console_conn_handle;
 /**
  * The vendor specific "bleuart" service consists of one write no-rsp characteristic
- *     o "write no-rsp": a single-byte characteristic that can always be read, but
- *       can only be written over an encrypted connection.
- *     o "read": a single-byte characteristic taht can always be read but can
- *       only be written over an encrypted connection
+ * and one notification only read charateristic
+ *     o "write no-rsp": a single-byte characteristic that can be written only
+ *       over a non-encrypted connection
+ *     o "read": a single-byte characteristic that can always be read only via
+ *       notifications
  */
 
 /* {6E400001-B5A3-F393-E0A9-E50E24DCCA9E} */
@@ -99,9 +100,13 @@ static int
 gatt_svr_chr_access_uart_write(uint16_t conn_handle, uint16_t attr_handle,
                                struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
+    struct os_mbuf *om = ctxt->om;
     switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_WRITE_CHR:
-              console_write(ctxt->att->write.data, ctxt->att->write.len);
+              while(om) {
+                  console_write((char *)om->om_data, om->om_len);
+                  om = SLIST_NEXT(om, om_next);
+              }
               console_write("\n", 1);
               return 0;
         default:
@@ -126,23 +131,13 @@ bleuart_gatt_svr_init(struct ble_hs_cfg *cfg)
         goto err;
     }
 
+    rc = ble_gatts_add_svcs(gatt_svr_svcs);
+    if (rc != 0) {
+        return rc;
+    }
+
 err:
     return rc;
-}
-
-/**
- * Register ble uart service
- *
- * @return 0 on success; non-zero on failure
- */
-int
-bleuart_svc_register(void)
-{
-
-    int rc;
-    rc = ble_gatts_register_svcs(gatt_svr_svcs, NULL, NULL);
-    return rc;
-
 }
 
 /**
@@ -154,6 +149,7 @@ bleuart_uart_read(void)
     int rc;
     int off;
     int full_line;
+    struct os_mbuf *om;
 
     off = 0;
     while (1) {
@@ -167,8 +163,12 @@ bleuart_uart_read(void)
             continue;
         }
 
-        ble_gattc_notify_custom(g_console_conn_handle, g_bleuart_attr_read_handle,
-                                console_buf, off);
+        om = ble_hs_mbuf_from_flat(console_buf, off);
+        if (!om) {
+            return;
+        }
+        ble_gattc_notify_custom(g_console_conn_handle,
+                                g_bleuart_attr_read_handle, &om);
         off = 0;
         break;
     }
