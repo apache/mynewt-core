@@ -96,15 +96,13 @@ bleuart_advertise(void)
 {
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
-    //const char *name;
     int rc;
 
-    /**
+    /*
      *  Set the advertisement data included in our advertisements:
      *     o Flags (indicates advertisement type and other general info).
      *     o Advertising tx power.
-     *     o Device name.
-     *     o 16-bit service UUIDs (alert notifications).
+     *     o 128 bit UUID
      */
 
     memset(&fields, 0, sizeof fields);
@@ -326,22 +324,9 @@ main(void)
     /* Register GATT attributes (services, characteristics, and
      * descriptors).
      */
-    rc = ble_svc_gap_register();
-    assert(rc == 0);
-
-    rc = ble_svc_gatt_register();
-    assert(rc == 0);
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("Mynewt_BLEuart");
-    assert(rc == 0);
-
-    /* Nmgr ble GATT server initialization */
-    rc = nmgr_ble_svc_register();
-    assert(rc == 0);
-
-    /* bleuart GATT server initialization */
-    rc = bleuart_svc_register();
     assert(rc == 0);
 
     /* Start the OS */
