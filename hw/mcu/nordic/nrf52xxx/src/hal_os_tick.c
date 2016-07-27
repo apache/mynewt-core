@@ -19,7 +19,7 @@
 #include <assert.h>
 #include <os/os.h>
 #include <hal/hal_os_tick.h>
-#include <mcu/nrf52_bitfields.h>
+#include <nrf52_bitfields.h>
 #include <bsp/cmsis_nvic.h>
 
 #if defined(BSP_HAS_32768_XTAL)

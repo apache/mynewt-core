@@ -6,16 +6,16 @@
   * @date    01-July-2015
   * @brief   CMSIS Cortex-M4 Device Peripheral Access Layer System Source File.
   *
-  *   This file provides two functions and one global variable to be called from 
+  *   This file provides two functions and one global variable to be called from
   *   user application:
-  *      - SystemInit(): This function is called at startup just after reset and 
+  *      - SystemInit(): This function is called at startup just after reset and
   *                      before branch to main program. This call is made inside
   *                      the "startup_stm32f4xx.s" file.
   *
   *      - SystemCoreClock variable: Contains the core clock (HCLK), it can be used
-  *                                  by the user application to setup the SysTick 
+  *                                  by the user application to setup the SysTick
   *                                  timer or configure other parameters.
-  *                                     
+  *
   *      - SystemCoreClockUpdate(): Updates the variable SystemCoreClock and must
   *                                 be called whenever the core clock is changed
   *                                 during program execution.
@@ -57,13 +57,14 @@
 
 /** @addtogroup stm32f4xx_system
   * @{
-  */  
-  
+  */
+
 /** @addtogroup STM32F4xx_System_Private_Includes
   * @{
   */
 
-#include "mcu/stm32f4xx.h"
+#include "bsp/stm32f4xx_hal_conf.h"
+#include "stm32f4xx.h"
 #include "bsp/cmsis_nvic.h"
 
 /**
@@ -100,7 +101,7 @@
   /* This variable is updated in three ways:
       1) by calling CMSIS function SystemCoreClockUpdate()
       2) by calling HAL API function HAL_RCC_GetHCLKFreq()
-      3) each time HAL_RCC_ClockConfig() is called to configure the system clock frequency 
+      3) each time HAL_RCC_ClockConfig() is called to configure the system clock frequency
          Note: If you use this function to configure the system clock; then there
                is no need to call the 2 first functions listed above, since SystemCoreClock
                variable is updated automatically.
@@ -129,7 +130,7 @@ static void SystemClock_Config(void);
 
 /**
   * @brief  Setup the microcontroller system
-  *         Initialize the FPU setting, vector table location and External memory 
+  *         Initialize the FPU setting, vector table location and External memory
   *         configuration.
   * @param  None
   * @retval None
@@ -171,41 +172,41 @@ void SystemInit(void)
   *         The SystemCoreClock variable contains the core clock (HCLK), it can
   *         be used by the user application to setup the SysTick timer or configure
   *         other parameters.
-  *           
+  *
   * @note   Each time the core clock (HCLK) changes, this function must be called
   *         to update SystemCoreClock variable value. Otherwise, any configuration
-  *         based on this variable will be incorrect.         
-  *     
-  * @note   - The system frequency computed by this function is not the real 
-  *           frequency in the chip. It is calculated based on the predefined 
+  *         based on this variable will be incorrect.
+  *
+  * @note   - The system frequency computed by this function is not the real
+  *           frequency in the chip. It is calculated based on the predefined
   *           constant and the selected clock source:
-  *             
+  *
   *           - If SYSCLK source is HSI, SystemCoreClock will contain the HSI_VALUE(*)
-  *                                              
+  *
   *           - If SYSCLK source is HSE, SystemCoreClock will contain the HSE_VALUE(**)
-  *                          
-  *           - If SYSCLK source is PLL, SystemCoreClock will contain the HSE_VALUE(**) 
+  *
+  *           - If SYSCLK source is PLL, SystemCoreClock will contain the HSE_VALUE(**)
   *             or HSI_VALUE(*) multiplied/divided by the PLL factors.
-  *         
+  *
   *         (*) HSI_VALUE is a constant defined in stm32f4xx_hal_conf.h file (default value
   *             16 MHz) but the real value may vary depending on the variations
-  *             in voltage and temperature.   
-  *    
+  *             in voltage and temperature.
+  *
   *         (**) HSE_VALUE is a constant defined in stm32f4xx_hal_conf.h file (its value
   *              depends on the application requirements), user has to ensure that HSE_VALUE
   *              is same as the real frequency of the crystal used. Otherwise, this function
   *              may have wrong result.
-  *                
+  *
   *         - The result of this function could be not correct when using fractional
   *           value for HSE crystal.
-  *     
+  *
   * @param  None
   * @retval None
   */
 void SystemCoreClockUpdate(void)
 {
   uint32_t tmp = 0, pllvco = 0, pllp = 2, pllsource = 0, pllm = 2;
-  
+
   /* Get SYSCLK source -------------------------------------------------------*/
   tmp = RCC->CFGR & RCC_CFGR_SWS;
 
@@ -221,10 +222,10 @@ void SystemCoreClockUpdate(void)
 
       /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N
          SYSCLK = PLL_VCO / PLL_P
-         */    
+         */
       pllsource = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;
       pllm = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
-      
+
       if (pllsource != 0)
       {
         /* HSE used as PLL clock source */
@@ -252,7 +253,7 @@ void SystemCoreClockUpdate(void)
 
 /**
   * @brief  System Clock Configuration
-  *         The system Clock is configured as follow : 
+  *         The system Clock is configured as follow :
   *            System Clock source            = PLL (HSE)
   *            SYSCLK(Hz)                     = 168000000
   *            HCLK(Hz)                       = 168000000
@@ -272,7 +273,7 @@ void SystemCoreClockUpdate(void)
   */
 static void SystemClock_Config(void)
 {
-  /* Configure Flash prefetch, Instruction cache, Data cache */ 
+  /* Configure Flash prefetch, Instruction cache, Data cache */
 #if (INSTRUCTION_CACHE_ENABLE != 0)
     __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
 #endif /* INSTRUCTION_CACHE_ENABLE */
@@ -287,13 +288,13 @@ static void SystemClock_Config(void)
 
     /* Enable Power Control clock */
     __HAL_RCC_PWR_CLK_ENABLE();
-  
-    /* The voltage scaling allows optimizing the power consumption when the device is 
-     clocked below the maximum system frequency, to update the voltage scaling value 
+
+    /* The voltage scaling allows optimizing the power consumption when the device is
+     clocked below the maximum system frequency, to update the voltage scaling value
      regarding system frequency refer to product datasheet.  */
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    /* Enable HSE and wait till HSE is ready */  
+    /* Enable HSE and wait till HSE is ready */
     RCC->CR |= ((uint32_t)RCC_CR_HSEON);
     while(__HAL_RCC_GET_FLAG(RCC_FLAG_HSERDY) == RESET) {
         /* XXX: some error should occur here */
@@ -302,10 +303,10 @@ static void SystemClock_Config(void)
     /* HCLK Configuration */
     MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE, RCC_SYSCLK_DIV1);
 
-    /* PCLK1 Configuration */ 
+    /* PCLK1 Configuration */
     MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_HCLK_DIV4);
 
-    /* PCLK2 Configuration */ 
+    /* PCLK2 Configuration */
     MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, (RCC_HCLK_DIV2 << 3));
 
     /* Configure the main PLL clock source, multiplication and division factors. */
@@ -318,7 +319,7 @@ static void SystemClock_Config(void)
     /* Enable the main PLL. */
     __HAL_RCC_PLL_ENABLE();
 
-    /* Wait till PLL is ready */  
+    /* Wait till PLL is ready */
     while(__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
         /* XXX: handle this */
     }
@@ -328,8 +329,8 @@ static void SystemClock_Config(void)
 
     /* Set flash wait states */
     __HAL_FLASH_SET_LATENCY(FLASH_LATENCY_5);
-  
-    /* Start PLL */  
+
+    /* Start PLL */
     __HAL_RCC_SYSCLK_CONFIG(RCC_SYSCLKSOURCE_PLLCLK);
 
     while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_SYSCLKSOURCE_STATUS_PLLCLK) {
@@ -344,8 +345,8 @@ static void SystemClock_Config(void)
 /**
   * @}
   */
-  
+
 /**
   * @}
-  */    
+  */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

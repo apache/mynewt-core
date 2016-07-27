@@ -19,6 +19,7 @@
 
 #include <mcu/cortex_m4.h>
 #include "hal/hal_system.h"
+#include "stm32f4xx_hal_def.h"
 
 void
 system_reset(void)

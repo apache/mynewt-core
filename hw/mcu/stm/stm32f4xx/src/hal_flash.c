@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -18,9 +18,9 @@
  */
 
 #include <string.h>
-#include "mcu/stm32f4xx_hal_def.h"
-#include "mcu/stm32f4xx_hal_flash.h"
-#include "mcu/stm32f4xx_hal_flash_ex.h"
+#include "stm32f4xx_hal_def.h"
+#include "stm32f4xx_hal_flash.h"
+#include "stm32f4xx_hal_flash_ex.h"
 #include "hal/hal_flash_int.h"
 
 static int stm32f4_flash_read(uint32_t address, void *dst, uint32_t num_bytes);

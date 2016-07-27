@@ -25,6 +25,14 @@ pkg.keywords:
     - stm32
     - stm32f4
 
+pkg.type: sdk
+
+pkg.ign_files:
+    - ".*template.*" 
+
+pkg.ign_dirs:
+    - "Device"
+
 pkg.deps: 
     - hw/hal 
     - libs/cmsis-core 

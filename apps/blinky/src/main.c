@@ -30,6 +30,10 @@
 #include <mcu/mcu_sim.h>
 #endif
 
+#include "nrf.h"
+#include "nrf_drv_saadc.h"
+#include "app_error.h"
+
 /* Init all tasks */
 volatile int tasks_initialized;
 int init_tasks(void);
@@ -72,6 +76,40 @@ uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
 
+#define SAADC_SAMPLES_IN_BUFFER (4)
+static nrf_saadc_value_t       m_buffer_pool[2][SAADC_SAMPLES_IN_BUFFER];
+
+int event_finished;
+int total_events;
+
+static void
+saadc_cb(const nrf_drv_saadc_evt_t *event)
+{
+    if (event->type == NRF_DRV_SAADC_EVT_DONE) {
+        ++event_finished;
+    }
+    ++total_events;
+}
+
+void
+saadc_test(void)
+{
+    ret_code_t rc;
+    nrf_saadc_channel_config_t cc =
+        NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
+
+    rc = nrf_drv_saadc_init(NULL, saadc_cb);
+    APP_ERROR_CHECK(rc);
+    rc = nrf_drv_saadc_channel_init(0, &cc);
+    APP_ERROR_CHECK(rc);
+
+    rc = nrf_drv_saadc_buffer_convert(m_buffer_pool[0], SAADC_SAMPLES_IN_BUFFER);
+    APP_ERROR_CHECK(rc);
+
+    rc = nrf_drv_saadc_buffer_convert(m_buffer_pool[1], SAADC_SAMPLES_IN_BUFFER);
+    APP_ERROR_CHECK(rc);
+}
+
 
 void
 task1_handler(void *arg)
@@ -96,7 +134,10 @@ task1_handler(void *arg)
 
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
+
+        nrf_drv_saadc_sample();
     }
+
 }
 
 void
@@ -181,6 +222,8 @@ main(int argc, char **argv)
     (void) console_init(shell_console_rx_cb);
 
     stats_module_init();
+
+    saadc_test();
 
     rc = init_tasks();
     os_start();

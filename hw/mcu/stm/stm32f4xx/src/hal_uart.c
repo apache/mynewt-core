@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,11 +21,12 @@
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
 #include "bsp/bsp.h"
-#include "mcu/stm32f4xx.h"
-#include "mcu/stm32f4xx_hal_dma.h"
-#include "mcu/stm32f4xx_hal_uart.h"
-#include "mcu/stm32f4xx_hal_rcc.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal_dma.h"
+#include "stm32f4xx_hal_uart.h"
+#include "stm32f4xx_hal_rcc.h"
 #include "mcu/stm32f4_bsp.h"
+#include "mcu/stm32f4xx_mynewt_hal.h"
 #include <assert.h>
 #include <stdlib.h>
 

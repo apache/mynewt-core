@@ -24,3 +24,4 @@ pkg.homepage: "http://www.keil.com/pack/doc/CMSIS/Core/html/index.html"
 pkg.keywords:
     - cmsis
     - core
+pkg.type: sdk

@@ -20,8 +20,9 @@
 #include <assert.h>
 #include "bsp/cmsis_nvic.h"
 #include "hal/hal_cputime.h"
-#include "mcu/stm32f4xx.h"
-#include "mcu/stm32f4xx_hal_rcc.h"
+#include "stm32f4xx.h"
+#include "mcu/stm32f4xx_mynewt_hal.h"
+#include "stm32f4xx_hal_rcc.h"
 
 /* XXX:
  *  - Must determine how to set priority of cpu timer interrupt

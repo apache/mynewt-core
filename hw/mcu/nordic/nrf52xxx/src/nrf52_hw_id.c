@@ -22,7 +22,7 @@
 
 #include <hal/hal_bsp.h>
 
-#include "mcu/nrf52.h"
+#include "nrf52.h"
 
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))

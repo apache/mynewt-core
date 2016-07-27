@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -19,8 +19,8 @@
 #include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_flash_int.h"
-#include "mcu/stm32f407xx.h"
-#include "mcu/stm32f4xx_hal_gpio_ex.h"
+#include "stm32f407xx.h"
+#include "stm32f4xx_hal_gpio_ex.h"
 #include "mcu/stm32f4_bsp.h"
 #include "bsp/bsp.h"
 #include <assert.h>
