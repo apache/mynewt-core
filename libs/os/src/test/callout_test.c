@@ -40,19 +40,21 @@ struct os_callout_func callout_func_test;
 struct os_eventq callout_evq;
 struct os_event callout_ev;
 
+ int i; 
+ 
 /* This is the function for callout_init*/
 void my_callout_func(void *arg)
 {
-    int i;
-    i = 4;
-    TEST_ASSERT(i==4);
+    int p;
+    p = 4;
+    TEST_ASSERT(p==4);
 }
 
 /* This is a callout task to send data */
 void
 callout_task_send()
 {
-    int i; 
+   
     /* should say whether os is armed or not */
     i = os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 0);
@@ -67,23 +69,21 @@ callout_task_send()
 
     /* Send the callout */ 
     os_time_delay(OS_TICKS_PER_SEC );
-    TEST_ASSERT(i == 0);
-
-     /* should say whether os is armed or not */
-    i = os_callout_queued(&callout_func_test.cf_c);
-    TEST_ASSERT(i == 0);
-
 }
 
 void
 callout_task_receive(void *arg)
 {
     struct os_event *event;
-    os_time_delay(OS_TICKS_PER_SEC / 20);
     /* Recieving using the os_eventq_poll*/
         event = os_eventq_poll(&callout_func_test.cf_c.c_evq, 1, OS_WAIT_FOREVER);
         TEST_ASSERT(event->ev_type ==  OS_EVENT_T_TIMER);
         TEST_ASSERT(event->ev_arg == NULL);
+
+    TEST_ASSERT(i == 1);
+    /* should say whether os is armed or not */
+    i = os_callout_queued(&callout_func_test.cf_c);
+    TEST_ASSERT(i == 0);
 
     /* Finishes the test when OS has been started */
     os_test_restart();
