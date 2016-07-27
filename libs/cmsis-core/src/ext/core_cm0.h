@@ -124,8 +124,8 @@
 #endif
 
 #include <stdint.h>                      /* standard types definitions */
-#include <cmsis-core/core_cmInstr.h>     /* Core Instruction Access */
-#include <cmsis-core/core_cmFunc.h>     /* Core Function Access */
+#include <core_cmInstr.h>     /* Core Instruction Access */
+#include <core_cmFunc.h>     /* Core Function Access */
 
 #endif /* __CORE_CM0_H_GENERIC */
 
