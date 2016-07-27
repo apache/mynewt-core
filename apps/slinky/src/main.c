@@ -326,6 +326,13 @@ setup_for_fcb(void)
     my_conf.cf_fcb.f_sector_cnt = cnt;
 
     rc = conf_fcb_src(&my_conf);
+    if (rc) {
+        for (cnt = 0; cnt < my_conf.cf_fcb.f_sector_cnt; cnt++) {
+            flash_area_erase(&conf_fcb_area[cnt], 0,
+              conf_fcb_area[cnt].fa_size);
+        }
+        rc = conf_fcb_src(&my_conf);
+    }
     assert(rc == 0);
     rc = conf_fcb_dst(&my_conf);
     assert(rc == 0);
