@@ -245,12 +245,8 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     fcb_scratch.f_magic = 0x7EADBADF;
     fcb_scratch.f_version = 0;
 
+    flash_area_erase(&sector, 0, sector.fa_size);
     rc = fcb_init(&fcb_scratch);
-    if (rc) {
-        goto err;
-    }
-
-    rc = fcb_clear(&fcb_scratch);
     if (rc) {
         goto err;
     }
