@@ -119,10 +119,8 @@ setup_for_fcb(void)
 
     my_conf.cf_fcb.f_sector_cnt = cnt;
 
-    rc = conf_fcb_src(&my_conf);
-    assert(rc == 0);
-    rc = conf_fcb_dst(&my_conf);
-    assert(rc == 0);
+    conf_fcb_src(&my_conf);
+    conf_fcb_dst(&my_conf);
 }
 #endif
 
