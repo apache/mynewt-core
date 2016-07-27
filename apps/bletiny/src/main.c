@@ -1567,9 +1567,6 @@ bletiny_task_handler(void *arg)
     rc = ble_hs_start();
     assert(rc == 0);
 
-    rc = ble_hs_id_set_rnd(((uint8_t[6]){0x79,0xe4,0x59,0x8f,0xbc,0xf2}));
-    assert(rc == 0);
-
     while (1) {
         ev = os_eventq_get(&bletiny_evq);
         switch (ev->ev_type) {
