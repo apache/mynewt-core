@@ -1105,10 +1105,6 @@ main(void)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    /* Init the console */
-    rc = console_init(shell_console_rx_cb);
-    assert(rc == 0);
-
 #if 0
     rc = hal_flash_init();
     assert(rc == 0);
