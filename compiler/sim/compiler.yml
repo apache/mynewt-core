@@ -31,6 +31,7 @@ compiler.ld.resolve_circular_deps: true
 compiler.flags.default: [compiler.flags.base, -O1]
 compiler.flags.debug: [compiler.flags.base, -O0]
 compiler.ld.mapfile: false
+compiler.ld.binfile: false
 
 # Linux.
 compiler.flags.base.LINUX: >
