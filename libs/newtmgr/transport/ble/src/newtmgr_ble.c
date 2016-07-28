@@ -171,10 +171,11 @@ nmgr_ble_proc_mq_evt(struct os_event *ev)
                 if (!m_resp) {
                     break;
                 }
+                assert(OS_MBUF_USRHDR_LEN(m_resp) >= sizeof (conn_handle));
                 memcpy(&conn_handle, OS_MBUF_USRHDR(m_resp),
                        sizeof (conn_handle));
                 ble_gattc_notify_custom(conn_handle, g_ble_nmgr_attr_handle,
-                                        &m_resp);
+                                        m_resp);
             }
             break;
 
