@@ -1250,7 +1250,7 @@ bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
 }
 
 int
-bletiny_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf **om)
+bletiny_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf *om)
 {
     int rc;
 
@@ -1266,7 +1266,7 @@ bletiny_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf **om)
 
 int
 bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
-                     struct os_mbuf **om)
+                     struct os_mbuf *om)
 {
     int rc;
 
@@ -1277,7 +1277,7 @@ bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
 
 int
 bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                   struct os_mbuf **om)
+                   struct os_mbuf *om)
 {
     int rc;
 
