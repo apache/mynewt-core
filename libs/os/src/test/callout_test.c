@@ -55,15 +55,15 @@ void
 callout_task_send()
 {
    
-    /* should say whether os is armed or not */
+    /* should say whether callout is armed or not */
     i = os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 0);
 
-    /* Arm the OS */
+    /* Arm the callout */
     i = os_callout_reset(&callout_func_test.cf_c, OS_TICKS_PER_SEC/ 50);
     TEST_ASSERT_FATAL(i == 0);
 
-    /* should say whether os is armed or not */
+    /* should say whether callout is armed or not */
     i = os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 1);
 
@@ -81,7 +81,7 @@ callout_task_receive(void *arg)
         TEST_ASSERT(event->ev_arg == NULL);
 
     TEST_ASSERT(i == 1);
-    /* should say whether os is armed or not */
+    /* should say whether callout is armed or not */
     i = os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 0);
 
