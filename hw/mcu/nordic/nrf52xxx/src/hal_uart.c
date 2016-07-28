@@ -21,7 +21,7 @@
 #include "bsp/cmsis_nvic.h"
 #include "bsp/bsp.h"
 
-#include "mcu/nrf.h"
+#include "nrf.h"
 #include "mcu/nrf52_hal.h"
 
 #include <assert.h>
