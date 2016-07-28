@@ -168,7 +168,7 @@ bleuart_uart_read(void)
             return;
         }
         ble_gattc_notify_custom(g_console_conn_handle,
-                                g_bleuart_attr_read_handle, &om);
+                                g_bleuart_attr_read_handle, om);
         off = 0;
         break;
     }
