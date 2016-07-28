@@ -140,11 +140,11 @@ int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                        int num_attr_handles);
 int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
-                  struct os_mbuf **om);
+                  struct os_mbuf *om);
 int bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
-                         struct os_mbuf **om);
+                         struct os_mbuf *om);
 int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                       struct os_mbuf **om);
+                       struct os_mbuf *om);
 int bletiny_write_reliable(uint16_t conn_handle,
                            struct ble_gatt_attr *attrs, int num_attrs);
 int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,

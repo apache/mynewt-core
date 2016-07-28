@@ -109,35 +109,28 @@ static struct {
 } hci;
 
 int
-ble_hs_rx_data(struct os_mbuf **om)
+ble_hs_rx_data(struct os_mbuf *om)
 {
     struct os_event *ev;
     os_sr_t sr;
-    int rc;
 
     ev = os_memblock_get(&g_hci_os_event_pool);
-    if (ev != NULL) {
-        ev->ev_type = BLE_HOST_HCI_EVENT_CTLR_DATA;
-        ev->ev_arg = *om;
-        ev->ev_queued = 1;
-
-        *om = NULL;
-
-        OS_ENTER_CRITICAL(sr);
-        STAILQ_INSERT_TAIL(&hci.rx_pkts, ev, ev_next);
-        OS_EXIT_CRITICAL(sr);
-
-        hal_uart_start_tx(HCI_UART);
-
-        rc = 0;
-    } else {
-        rc = -1;
+    if (!ev) {
+        os_mbuf_free_chain(om);
+        return -1;
     }
 
-    /* Free the mbuf if we weren't able to enqueue it. */
-    os_mbuf_free_chain(*om);
+    ev->ev_type = BLE_HOST_HCI_EVENT_CTLR_DATA;
+    ev->ev_arg = om;
+    ev->ev_queued = 1;
 
-    return rc;
+    OS_ENTER_CRITICAL(sr);
+    STAILQ_INSERT_TAIL(&hci.rx_pkts, ev, ev_next);
+    OS_EXIT_CRITICAL(sr);
+
+    hal_uart_start_tx(HCI_UART);
+
+    return 0;
 }
 
 int

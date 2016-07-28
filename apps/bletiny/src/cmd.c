@@ -1892,17 +1892,20 @@ cmd_write(int argc, char **argv)
             rc = -EINVAL;
             goto done;
         }
-        rc = bletiny_write_no_rsp(conn_handle, attrs[0].handle, &attrs[0].om);
+        rc = bletiny_write_no_rsp(conn_handle, attrs[0].handle, attrs[0].om);
+        attrs[0].om = NULL;
     } else if (is_long) {
         if (num_attrs != 1) {
             rc = -EINVAL;
             goto done;
         }
-        rc = bletiny_write_long(conn_handle, attrs[0].handle, &attrs[0].om);
+        rc = bletiny_write_long(conn_handle, attrs[0].handle, attrs[0].om);
+        attrs[0].om = NULL;
     } else if (num_attrs > 1) {
         rc = bletiny_write_reliable(conn_handle, attrs, num_attrs);
     } else if (num_attrs == 1) {
-        rc = bletiny_write(conn_handle, attrs[0].handle, &attrs[0].om);
+        rc = bletiny_write(conn_handle, attrs[0].handle, attrs[0].om);
+        attrs[0].om = NULL;
     } else {
         rc = -EINVAL;
     }
