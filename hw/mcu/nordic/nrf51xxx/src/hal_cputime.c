@@ -22,8 +22,8 @@
 #include <assert.h>
 #include "bsp/cmsis_nvic.h"
 #include "hal/hal_cputime.h"
-#include "mcu/nrf51.h"
-#include "mcu/nrf51_bitfields.h"
+#include "nrf51.h"
+#include "nrf51_bitfields.h"
 #include "mcu/nrf51_hal.h"
 
 /* Maximum timer frequency */

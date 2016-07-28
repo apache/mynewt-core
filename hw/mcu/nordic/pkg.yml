@@ -31,6 +31,19 @@ pkg.ign_files.NRF52:
     - "pstorage*"
     - "sdk_mapped_flags.c"
 
+pkg.ign_files.NRF51:
+    - "nrf_saadc.c"
+    - "nrf_drv_saadc.c"
+    - "nrf_drv_comp.c"
+    - "nrf_drv_i2s.c"
+    - "nrf_drv_pdm.c"
+    - "nrf_drv_pwm.c"
+    - "nrf_drv_spis.c"
+    - "nrf_drv_twis.c"
+    - "spi_5W_master.c"
+    - "pstorage*"
+    - "sdk_mapped_flags.c"
+
 pkg.ign_dirs:
     - "deprecated"
 

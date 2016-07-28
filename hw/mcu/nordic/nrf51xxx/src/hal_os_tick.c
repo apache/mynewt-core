@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,12 +21,14 @@
 #include <hal/hal_os_tick.h>
 
 #include <bsp/cmsis_nvic.h>
-#include <mcu/nrf51.h>
-#include <mcu/nrf51_bitfields.h>
+#include <nrf51.h>
+#include <nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>
 
 #define OS_TICK_CMPREG  0
 #define RTC_FREQ        32768
+
+#define RTC_COMPARE_INT_MASK(ccreg) (1UL << ((ccreg) + 16))
 
 static uint32_t lastocmp;
 static uint32_t timer_ticks_per_ostick;

@@ -29,10 +29,11 @@
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
-
+#if 0
 #include "nrf.h"
 #include "nrf_drv_saadc.h"
 #include "app_error.h"
+#endif
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -75,7 +76,7 @@ uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
 
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
-
+#if 0
 #define SAADC_SAMPLES_IN_BUFFER (4)
 static nrf_saadc_value_t       m_buffer_pool[2][SAADC_SAMPLES_IN_BUFFER];
 
@@ -109,7 +110,7 @@ saadc_test(void)
     rc = nrf_drv_saadc_buffer_convert(m_buffer_pool[1], SAADC_SAMPLES_IN_BUFFER);
     APP_ERROR_CHECK(rc);
 }
-
+#endif
 
 void
 task1_handler(void *arg)
@@ -135,7 +136,9 @@ task1_handler(void *arg)
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
 
+#if 0
         nrf_drv_saadc_sample();
+#endif
     }
 
 }
@@ -223,8 +226,9 @@ main(int argc, char **argv)
 
     stats_module_init();
 
+#if 0
     saadc_test();
-
+#endif
     rc = init_tasks();
     os_start();
 

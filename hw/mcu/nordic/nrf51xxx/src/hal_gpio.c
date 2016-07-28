@@ -19,8 +19,8 @@
 
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
-#include "mcu/nrf51.h"
-#include "mcu/nrf51_bitfields.h"
+#include "nrf51.h"
+#include "nrf51_bitfields.h"
 #include <assert.h>
 
  /* XXX: Notes

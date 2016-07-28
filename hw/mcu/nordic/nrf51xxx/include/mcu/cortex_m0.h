@@ -20,7 +20,7 @@
 #ifndef __MCU_CORTEX_M0_H__
 #define __MCU_CORTEX_M0_H__
 
-#include "mcu/nrf51.h"
+#include "nrf51.h"
 
 /*
  * The nRF51 microcontroller uses RTC0 for periodic interrupts and it is
