@@ -165,6 +165,9 @@ console_file_write(void *arg, const char *str, size_t cnt)
     struct console_tty *ct = &console_tty;
     int i;
 
+    if (!ct->ct_write_char) {
+        return cnt;
+    }
     for (i = 0; i < cnt; i++) {
         if (str[i] == '\n') {
             ct->ct_write_char('\r');
