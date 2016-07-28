@@ -454,6 +454,7 @@ shell_task_func(void *arg)
     struct os_event *ev;
 
     console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
+    console_init(shell_console_rx_cb);
 
     while (1) {
         ev = os_eventq_get(&shell_evq);

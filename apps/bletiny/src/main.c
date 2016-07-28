@@ -1661,10 +1661,6 @@ main(void)
     rc = os_msys_register(&default_mbuf_pool);
     assert(rc == 0);
 
-    /* Initialize the console (for shell and logging). */
-    rc = console_init(shell_console_rx_cb);
-    assert(rc == 0);
-
     /* Create the shell task. */
     rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                          SHELL_MAX_INPUT_LEN);

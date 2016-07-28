@@ -88,7 +88,6 @@ main(int argc, char **argv)
     /* Init tasks */
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                          SHELL_MAX_INPUT_LEN);
-    console_init(shell_console_rx_cb);
 
     nffs_init();
 
