@@ -52,7 +52,6 @@ os_set_env:
         .fnstart
         .cantunwind
 
-        MOV     R0,SP           /* Copy MSP to PSP */
         MSR     PSP,R0
         LDR     R0,=os_flags
         LDRB    R0,[R0]
