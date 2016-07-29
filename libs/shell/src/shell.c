@@ -454,7 +454,6 @@ shell_task_func(void *arg)
     struct os_event *ev;
 
     console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
-    console_init(shell_console_rx_cb);
 
     while (1) {
         ev = os_eventq_get(&shell_evq);
@@ -572,6 +571,8 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
 
     os_eventq_init(&shell_evq);
     os_mqueue_init(&g_shell_nlip_mq, NULL);
+
+    console_init(shell_console_rx_cb);
 
     rc = os_task_init(&shell_task, "shell", shell_task_func,
             NULL, prio, OS_WAIT_FOREVER, stack, stack_size);
