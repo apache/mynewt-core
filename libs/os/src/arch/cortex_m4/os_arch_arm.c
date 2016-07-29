@@ -281,7 +281,6 @@ os_arch_os_start(void)
      * We switch to using "empty" part of idle task's stack until
      * the svc_os_arch_start() executes SVC, and we will never return.
      */
-     */
     os_set_env(g_idle_task.t_stackptr - 1);
 
     err = OS_ERR_IN_ISR;
