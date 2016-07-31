@@ -97,10 +97,14 @@ os_time_advance(int ticks)
     assert(ticks >= 0);
 
     if (ticks > 0) {
-        os_time_tick(ticks);
-        os_callout_tick();
-        os_sched_os_timer_exp();
-        os_sched(NULL);
+        if (!os_started()) {
+            g_os_time += ticks;
+        } else {
+            os_time_tick(ticks);
+            os_callout_tick();
+            os_sched_os_timer_exp();
+            os_sched(NULL);
+        }
     }
 }
 
