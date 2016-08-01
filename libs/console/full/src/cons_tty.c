@@ -203,13 +203,13 @@ console_read(char *str, int cnt, int *newline)
             break;
         }
 
-	if ((i & (CONSOLE_RX_CHUNK - 1)) == (CONSOLE_RX_CHUNK - 1)) {
-		/*
-		 * Make a break from blocking interrupts during the copy.
-		 */
-		OS_EXIT_CRITICAL(sr);
-		OS_ENTER_CRITICAL(sr);
-	}
+        if ((i & (CONSOLE_RX_CHUNK - 1)) == (CONSOLE_RX_CHUNK - 1)) {
+            /*
+             * Make a break from blocking interrupts during the copy.
+             */
+            OS_EXIT_CRITICAL(sr);
+            OS_ENTER_CRITICAL(sr);
+        }
 
         ch = console_pull_char(cr);
         if (ch == '\n') {
