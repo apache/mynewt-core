@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,24 +16,16 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: apps/blecent
-pkg.type: app
-pkg.description: Simple BLE central application.
+
+pkg.name: net/nimble/host/services/lls
+pkg.description: Link Loss Service Implementation.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - ble 
+    - bluetooth
+    - lls
+    - nimble 
 
-pkg.deps: 
-    - libs/os 
-    - sys/log
-    - net/nimble/controller
+pkg.deps:
     - net/nimble/host
-    - net/nimble/host/services/gap
-    - net/nimble/host/services/gatt
-    - net/nimble/host/store/ram
-    - libs/console/full
-    - libs/baselibc
-
-pkg.cflags:
-    # DEBUG logging is a bit noisy; use INFO.
-    - "-DLOG_LEVEL=1"

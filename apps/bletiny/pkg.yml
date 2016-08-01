@@ -27,7 +27,8 @@ pkg.deps:
     - sys/log
     - net/nimble/controller
     - net/nimble/host
-    - net/nimble/host/services/mandatory
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
     - net/nimble/host/store/ram
     - libs/console/full
     - libs/shell

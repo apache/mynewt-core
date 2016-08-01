@@ -49,8 +49,8 @@
 #include "store/ram/ble_store_ram.h"
 
 /* Mandatory services. */
-#include "services/mandatory/ble_svc_gap.h"
-#include "services/mandatory/ble_svc_gatt.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
 
 /** Mbuf settings. */
 #define MBUF_NUM_MBUFS      (12)
