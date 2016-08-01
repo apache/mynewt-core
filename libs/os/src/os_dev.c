@@ -23,7 +23,8 @@
 
 #include <string.h>
 
-static STAILQ_HEAD(, os_dev) g_os_dev_list;
+static STAILQ_HEAD(, os_dev) g_os_dev_list =
+    STAILQ_HEAD_INITIALIZER(g_os_dev_list);
 
 static int
 os_dev_init(struct os_dev *dev, char *name, uint8_t stage,

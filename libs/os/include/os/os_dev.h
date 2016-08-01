@@ -31,7 +31,9 @@ struct os_dev;
  * by the Mynewt kernel.
  *
  */
-#define OS_DEV_INIT_KERNEL    (1)
+#define OS_DEV_INIT_PRIMARY   (1)
+#define OS_DEV_INIT_SECONDARY (2)
+#define OS_DEV_INIT_KERNEL    (3)
 
 #define OS_DEV_INIT_F_CRITICAL (1 << 0)
 

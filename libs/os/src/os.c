@@ -112,6 +112,12 @@ os_init(void)
 
     err = os_arch_os_init();
     assert(err == OS_OK);
+
+    err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_PRIMARY);
+    assert(err == OS_OK);
+
+    err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_SECONDARY);
+    assert(err == OS_OK);
 }
 
 /**
