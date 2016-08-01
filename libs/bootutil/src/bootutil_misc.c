@@ -261,13 +261,13 @@ boot_write_status(struct boot_status *bs)
     char str[12];
     int rc;
 
-    rc = conf_save_one("boot/status",
-      conf_str_from_value(CONF_INT32, &bs->state, str, sizeof(str)));
+    rc = conf_save_one("boot/len",
+      conf_str_from_value(CONF_INT32, &bs->length, str, sizeof(str)));
     if (rc) {
         return rc;
     }
-    return conf_save_one("boot/len",
-      conf_str_from_value(CONF_INT32, &bs->length, str, sizeof(str)));
+    return conf_save_one("boot/status",
+      conf_str_from_value(CONF_INT32, &bs->state, str, sizeof(str)));
 }
 
 /**
