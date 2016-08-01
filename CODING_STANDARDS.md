@@ -254,6 +254,8 @@ applications to use pointers to those structures opaquely.
 hide or alias the underlying type used (e.g. ```os_time_t```.)   Indicate
 typedefs by applying the ```_t``` marker to them.
 
+* Place all function-local variable definitions at the top of the function body, before any statements.
+
 ## Compiler Directives
 
 * Code must compile cleanly with -Wall enabled.
