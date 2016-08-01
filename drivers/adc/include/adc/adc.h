@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,37 +17,27 @@
  * under the License.
  */
 
+#ifndef __ADC_H__
+#define __ADC_H__
 
-#ifndef H_HAL_I2C_INT_
-#define H_HAL_I2C_INT_
+#include <os/os_dev.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct adc_dev;
 
-#include <hal/hal_i2c.h>
-#include <inttypes.h>
+typedef int (*adc_config_func_t)(struct adc_dev *dev, void *);
+typedef int (*adc_sample_func_t)(struct adc_dev *);
 
-struct hal_i2c;
-
-struct hal_i2c_funcs {
-    int (*hi2cm_write_data) (struct hal_i2c *pi2c, struct hal_i2c_master_data *ppkt);
-    int (*hi2cm_read_data)  (struct hal_i2c *pi2c, struct hal_i2c_master_data *ppkt);
-    int (*hi2cm_probe)      (struct hal_i2c *pi2c, uint8_t address);
-    int (*hi2cm_start)      (struct hal_i2c *pi2c);
-    int (*hi2cm_stop)       (struct hal_i2c *pi2c);
+struct adc_driver_funcs {
+    adc_config_func_t af_config;
+    adc_sample_func_t af_sample;
 };
 
-struct hal_i2c {
-    const struct hal_i2c_funcs *driver_api;
+struct adc_dev {
+    struct os_dev ad_dev;
+    struct adc_driver_funcs ad_funcs;
 };
 
-struct hal_i2c *
-bsp_get_hal_i2c_driver(enum system_device_id sysid);
+#define adc_sample(__dev) ((__dev)->ad_funcs.af_sample((__dev)))
+#define adc_configure(__dev, __b) ((__dev)->ad_funcs.af_configure((__dev), (__b)))
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* H_HAL_I2C_INT_ */
-
+#endif /* __ADC_H__ */

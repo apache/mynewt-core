@@ -19,6 +19,7 @@
 
 #include "os/os.h"
 #include "os/queue.h"
+#include "os/os_dev.h"
 #include "os_priv.h"
 
 #include "hal/hal_os_tick.h"
@@ -121,6 +122,9 @@ void
 os_start(void)
 {
     os_error_t err;
+
+    err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
+    assert(err == OS_OK);
 
     err = os_arch_os_start();
     assert(err == OS_OK);

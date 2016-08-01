@@ -64,11 +64,10 @@ struct hal_i2c_master_data {
     uint8_t *buffer;    /* buffer space to hold the transmit or receive */
 };
 
-/* Initialize a new i2c device with the given system id.
+/* Initialize a new i2c device with the I2C number.
  * Returns a pointer to the i2c device or NULL on error
  */
-struct hal_i2c*
-hal_i2c_init(enum system_device_id sysid);
+struct hal_i2c *hal_i2c_init(uint8_t i2c_num);
 
 /* Sends a start condition and writes <len> bytes of data on the i2c.
  * This API assumes that you have already called hal_i2c_master_begin
@@ -79,7 +78,7 @@ hal_i2c_init(enum system_device_id sysid);
  * Returns 0 on success, negative on failure
  */
 int
-hal_i2c_master_write(struct hal_i2c*, struct hal_i2c_master_data *pdata);
+hal_i2c_master_write(struct hal_i2c *, struct hal_i2c_master_data *pdata);
 
 /* Sends a start condition and reads <len> bytes of data on the i2c.
  * This API assumes that you have already called hal_i2c_master_begin
@@ -90,20 +89,20 @@ hal_i2c_master_write(struct hal_i2c*, struct hal_i2c_master_data *pdata);
  * Returns 0 on success, negative on failure
  */
 int
-hal_i2c_master_read(struct hal_i2c*, struct hal_i2c_master_data *pdata);
+hal_i2c_master_read(struct hal_i2c *, struct hal_i2c_master_data *pdata);
 
 /*
  * Starts an I2C transaction with the driver. This API does not send
  * anything over the bus itself
  */
 int
-hal_i2c_master_begin(struct hal_i2c*);
+hal_i2c_master_begin(struct hal_i2c *);
 
 /* issues a stop condition on the bus and ends the I2C transaction.
  * You must call i2c_master_end for every hal_i2c_master_begin
  * API call that succeeds  */
 int
-hal_i2c_master_end(struct hal_i2c*);
+hal_i2c_master_end(struct hal_i2c *);
 
 /* Probes the i2c bus for a device with this address.  THIS API
  * issues a start condition, probes the address using a read
@@ -111,7 +110,7 @@ hal_i2c_master_end(struct hal_i2c*);
  * hal_i2c_master_begin/end with this method
  */
 int
-hal_i2c_master_probe(struct hal_i2c*, uint8_t address);
+hal_i2c_master_probe(struct hal_i2c *, uint8_t address);
 
 #ifdef __cplusplus
 }

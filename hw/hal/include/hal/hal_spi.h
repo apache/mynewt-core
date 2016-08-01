@@ -62,8 +62,7 @@ struct hal_spi_settings {
  * to the SPI object to use for the methods below. Returns NULL on
  * error
  */
-struct hal_spi *
-hal_spi_init(enum system_device_id sysid);
+struct hal_spi *hal_spi_init(uint8_t spi_num);
 
 /* configure the spi., Reutrns 0 on success, negative on error */
 int
