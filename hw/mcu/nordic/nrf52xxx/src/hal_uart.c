@@ -316,6 +316,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     NRF_UARTE0->RXD.MAXCNT = sizeof(u->u_rx_buf);
     NRF_UARTE0->TASKS_STARTRX = 1;
 
+    u->u_rx_stall = 0;
+    u->u_tx_started = 0;
     u->u_open = 1;
 
     return 0;
