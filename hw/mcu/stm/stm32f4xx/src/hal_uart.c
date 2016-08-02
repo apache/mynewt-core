@@ -371,3 +371,19 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     return 0;
 }
+
+int
+hal_uart_close(int port)
+{
+    struct hal_uart *u;
+
+    if (port >= UART_CNT) {
+        return -1;
+    }
+    u = &uarts[port];
+
+    u->u_open = 0;
+    u->u_regs->CR1 = 0;
+
+    return 0;
+}
