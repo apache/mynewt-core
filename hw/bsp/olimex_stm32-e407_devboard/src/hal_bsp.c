@@ -32,8 +32,8 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
         .suc_rcc_dev = RCC_APB2ENR_USART6EN,
         .suc_pin_tx = 38,
         .suc_pin_rx = 39,
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
+        .suc_pin_rts = 34,
+        .suc_pin_cts = 35,
         .suc_pin_af = GPIO_AF8_USART6,
         .suc_irqn = USART6_IRQn
     }
