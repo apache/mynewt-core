@@ -59,7 +59,7 @@ int init_tasks(void);
 
 /* Task 1 */
 #define TASK1_PRIO (8)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(192)
 #define MAX_CBMEM_BUF 600
 struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
