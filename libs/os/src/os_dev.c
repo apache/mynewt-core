@@ -28,7 +28,7 @@ static STAILQ_HEAD(, os_dev) g_os_dev_list =
 
 static int
 os_dev_init(struct os_dev *dev, char *name, uint8_t stage,
-        uint8_t priority, os_dev_init_func_t od_init)
+        uint8_t priority, os_dev_init_func_t od_init, void *arg)
 {
     dev->od_name = name;
     dev->od_stage = stage;
@@ -42,8 +42,11 @@ os_dev_init(struct os_dev *dev, char *name, uint8_t stage,
 }
 
 /**
- * Add this device to the kernel.  This function adds the
- * device to the OS
+ * Add the device to the device tree.  This is a private function.
+ *
+ * @param dev The device to add to the device tree.
+ *
+ * @return 0 on success, non-zero on failure.
  */
 static int
 os_dev_add(struct os_dev *dev)
@@ -57,7 +60,8 @@ os_dev_add(struct os_dev *dev)
     }
 
     /* Add devices to the list, sorted first by stage, then by
-     * priority.
+     * priority.  Keep sorted in this order for initialization
+     * stage.
      */
     cur_dev = NULL;
     STAILQ_FOREACH(cur_dev, &g_os_dev_list, od_next) {
@@ -79,13 +83,28 @@ os_dev_add(struct os_dev *dev)
     return (0);
 }
 
+
+/**
+ * Create a new device in the kernel.
+ *
+ * @param dev The device to create.
+ * @param name The name of the device to create.
+ * @param stage The stage to initialize that device to.
+ * @param priority The priority of initializing that device
+ * @param od_init The initialization function to call for this
+ *                device.
+ * @param arg The argument to provide this device initialization
+ *            function.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
 int
 os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
-        uint8_t priority, os_dev_init_func_t od_init)
+        uint8_t priority, os_dev_init_func_t od_init, void *arg)
 {
     int rc;
 
-    rc = os_dev_init(dev, name, stage, priority, od_init);
+    rc = os_dev_init(dev, name, stage, priority, od_init, arg);
     if (rc != 0) {
         goto err;
     }
@@ -100,7 +119,13 @@ err:
     return (rc);
 }
 
-
+/**
+ * Initialize all devices for a given state.
+ *
+ * @param stage The stage to initialize.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
 int
 os_dev_initialize_all(uint8_t stage)
 {
@@ -109,10 +134,13 @@ os_dev_initialize_all(uint8_t stage)
 
     STAILQ_FOREACH(dev, &g_os_dev_list, od_next) {
         if (dev->od_stage == stage) {
-            rc = dev->od_init(dev);
-            if (dev->od_init_flags & OS_DEV_INIT_F_CRITICAL &&
-                    rc != 0) {
-                goto err;
+            rc = dev->od_init(dev, dev->od_init_arg);
+            if (rc != 0) {
+                if (dev->od_init_flags & OS_DEV_INIT_F_CRITICAL) {
+                    goto err;
+                }
+            } else {
+                dev->od_status |= OS_DEV_STATUS_READY;
             }
         }
     }
@@ -122,7 +150,14 @@ err:
     return (rc);
 }
 
-struct os_dev *
+/**
+ * Lookup a device by name, internal function only.
+ *
+ * @param name The name of the device to look up.
+ *
+ * @return A pointer to the device corresponding to name, or NULL if not found.
+ */
+static struct os_dev *
 os_dev_lookup(char *name)
 {
     struct os_dev *dev;
@@ -136,29 +171,50 @@ os_dev_lookup(char *name)
     return (dev);
 }
 
-
-int
-os_dev_open(struct os_dev *dev)
+/**
+ * Open a device.
+ *
+ * @param dev The device to open
+ * @param timo The timeout to open the device, if not specified.
+ * @param arg The argument to the device open() call.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+struct os_dev *
+os_dev_open(char *devname, uint32_t timo, void *arg)
 {
+    struct os_dev *dev;
     int rc;
+
+    dev = os_dev_lookup(devname);
+    if (dev == NULL) {
+        return (NULL);
+    }
 
     /* Device is not ready to be opened. */
     if ((dev->od_status & OS_DEV_STATUS_READY) == 0) {
-        return (OS_EINVAL);
+        return (NULL);
     }
 
     if (dev->od_handlers.od_open) {
-        rc = dev->od_handlers.od_open(dev);
+        rc = dev->od_handlers.od_open(dev, timo, arg);
         if (rc != 0) {
             goto err;
         }
     }
 
-    return (0);
+    return (dev);
 err:
-    return (rc);
+    return (NULL);
 }
 
+/**
+ * Close a device.
+ *
+ * @param dev The device to close
+ *
+ * @return 0 on success, non-zero on failure.
+ */
 int
 os_dev_close(struct os_dev *dev)
 {

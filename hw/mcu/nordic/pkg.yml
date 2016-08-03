@@ -52,7 +52,7 @@ pkg.src_dirs:
     - "src/ext/nRF5_SDK_11.0.0_89a8197/components/libraries/fifo/"
     - "src/ext/nRF5_SDK_11.0.0_89a8197/components/libraries/util/"
 
-pkg.cflags: -std=gnu99 
+pkg.cflags: -std=gnu99 -DNRF52_PAN_28
 
 pkg.deps: 
     - hw/hal 

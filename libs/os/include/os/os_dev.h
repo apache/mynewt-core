@@ -48,8 +48,9 @@ struct os_dev;
 #define OS_DEV_STATUS_INITING (1 << 1)
 #define OS_DEV_STATUS_READY   (1 << 2)
 
-typedef int (*os_dev_init_func_t)(struct os_dev *);
-typedef int (*os_dev_open_func_t)(struct os_dev *);
+typedef int (*os_dev_init_func_t)(struct os_dev *, void *);
+typedef int (*os_dev_open_func_t)(struct os_dev *, uint32_t,
+        void *);
 typedef int (*os_dev_close_func_t)(struct os_dev *);
 
 struct os_dev_handlers {
@@ -59,11 +60,11 @@ struct os_dev_handlers {
 
 /*
  * Device structure.
- *
  */
 struct os_dev {
     struct os_dev_handlers od_handlers;
     os_dev_init_func_t od_init;
+    void *od_init_arg;
     uint8_t od_stage;
     uint8_t od_priority;
     uint8_t od_init_flags;
@@ -77,10 +78,9 @@ struct os_dev {
     (__dev)->od_handlers.od_close = (__close);
 
 int os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
-        uint8_t priority, os_dev_init_func_t od_init);
+        uint8_t priority, os_dev_init_func_t od_init, void *arg);
 int os_dev_initialize_all(uint8_t stage);
-struct os_dev *os_dev_lookup(char *name);
-int os_dev_open(struct os_dev *dev);
+struct os_dev *os_dev_open(char *devname, uint32_t timo, void *arg);
 int os_dev_close(struct os_dev *dev);
 
 #endif /* _OS_DEV_H */

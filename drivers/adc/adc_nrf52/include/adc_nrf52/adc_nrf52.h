@@ -22,6 +22,9 @@
 
 #include <adc/adc.h>
 
-int nrf52_adc_dev_init(struct os_dev *);
+#include <nrf.h>
+#include <nrf_saadc.h>
+
+int nrf52_adc_dev_init(struct os_dev *, void *);
 
 #endif /* __ADC_H__ */
