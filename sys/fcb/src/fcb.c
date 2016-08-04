@@ -83,11 +83,15 @@ fcb_init(struct fcb *fcb)
     while (1) {
         rc = fcb_getnext_in_area(fcb, &fcb->f_active);
         if (rc == FCB_ERR_NOVAR) {
+            rc = FCB_OK;
+            break;
+        }
+        if (rc != 0) {
             break;
         }
     }
     os_mutex_init(&fcb->f_mtx);
-    return FCB_OK;
+    return rc;
 }
 
 int
