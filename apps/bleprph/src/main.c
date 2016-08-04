@@ -426,9 +426,6 @@ main(void)
     rc = ble_hs_init(&bleprph_evq, &cfg);
     assert(rc == 0);
 
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
-    assert(rc == 0);
-
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
     imgmgr_module_init();
 

@@ -44,6 +44,8 @@
 #include "controller/ble_ll_conn.h"
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
+
+/* RAM HCI transport. */
 #include "transport/ram/ble_hci_ram.h"
 
 /* RAM HCI transport. */
