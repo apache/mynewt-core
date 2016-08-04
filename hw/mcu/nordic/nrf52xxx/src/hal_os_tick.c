@@ -37,6 +37,7 @@
 #define OS_TICK_COUNTER     1   /* capture current timer value */
 #define OS_TICK_PRESCALER   4   /* prescaler to generate 1MHz timer freq */
 #define TIMER_LT(__t1, __t2)    ((int32_t)((__t1) - (__t2)) < 0)
+#define TIMER_COMPARE_INT_MASK(ccreg)   (1UL << ((ccreg) + 16))
 #endif
 
 struct hal_os_tick

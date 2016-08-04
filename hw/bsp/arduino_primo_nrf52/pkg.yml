@@ -33,8 +33,9 @@ pkg.linkerscript: "primo.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-primo.ld"
 pkg.downloadscript: primo_download.sh
 pkg.debugscript: primo_debug.sh
-pkg.cflags: -DNRF52
+pkg.cflags: -DNRF52 -DSPI_MASTER_0_ENABLE
 pkg.deps:
+    - hw/mcu/nordic
     - hw/mcu/nordic/nrf52xxx
     - libs/baselibc
 pkg.deps.BLE_DEVICE:

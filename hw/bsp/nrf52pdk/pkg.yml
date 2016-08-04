@@ -32,8 +32,9 @@ pkg.linkerscript: "nrf52pdk.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
 pkg.downloadscript: nrf52pdk_download.sh
 pkg.debugscript: nrf52pdk_debug.sh
-pkg.cflags: -DNRF52
+pkg.cflags: -DNRF52 -DSPI_MASTER_0_ENABLE
 pkg.deps:
+    - hw/mcu/nordic
     - hw/mcu/nordic/nrf52xxx
     - libs/baselibc
 pkg.deps.BLE_DEVICE:

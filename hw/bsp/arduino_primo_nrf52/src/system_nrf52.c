@@ -31,17 +31,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "bsp/cmsis_nvic.h"
-#include "mcu/nrf.h"
-#include "mcu/system_nrf52.h"
+#include "nrf.h"
+#include "system_nrf52.h"
 
 /*lint ++flb "Enter library region" */
 
-#define __SYSTEM_CLOCK_16M      (16000000UL)     
-#define __SYSTEM_CLOCK_64M      (64000000UL)   
+#define __SYSTEM_CLOCK_16M      (16000000UL)
+#define __SYSTEM_CLOCK_64M      (64000000UL)
 
-static bool ftpan_32(void); 
-static bool ftpan_37(void); 
-static bool ftpan_36(void); 
+static bool ftpan_32(void);
+static bool ftpan_37(void);
+static bool ftpan_36(void);
 
 
 #if defined ( __CC_ARM )
@@ -59,54 +59,54 @@ void SystemCoreClockUpdate(void)
 
 void SystemInit(void)
 {
-    /* Workaround for FTPAN-32 "DIF: Debug session automatically enables TracePort pins" found at Product Anomaly document 
+    /* Workaround for FTPAN-32 "DIF: Debug session automatically enables TracePort pins" found at Product Anomaly document
        for your device located at https://www.nordicsemi.com/ */
-    if (ftpan_32()){        
+    if (ftpan_32()){
         CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
     }
-    
-    /* Workaround for FTPAN-37 "AMLI: EasyDMA is slow with Radio, ECB, AAR and CCM." found at Product Anomaly document 
+
+    /* Workaround for FTPAN-37 "AMLI: EasyDMA is slow with Radio, ECB, AAR and CCM." found at Product Anomaly document
        for your device located at https://www.nordicsemi.com/  */
-    if (ftpan_37()){        
+    if (ftpan_37()){
         *(volatile uint32_t *)0x400005A0 = 0x3;
     }
-    
-    /* Workaround for FTPAN-36 "CLOCK: Some registers are not reset when expected." found at Product Anomaly document 
+
+    /* Workaround for FTPAN-36 "CLOCK: Some registers are not reset when expected." found at Product Anomaly document
        for your device located at https://www.nordicsemi.com/  */
-    if (ftpan_36()){        
+    if (ftpan_36()){
         NRF_CLOCK->EVENTS_DONE = 0;
         NRF_CLOCK->EVENTS_CTTO = 0;
     }
 
-    /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the 
-     * compiler. Since the FPU consumes energy, remember to disable FPU use in the compiler if floating point unit 
+    /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the
+     * compiler. Since the FPU consumes energy, remember to disable FPU use in the compiler if floating point unit
      * operations are not used in your code. */
     #if (__FPU_USED == 1)
-        SCB->CPACR |= (3UL << 20) | (3UL << 22); 
+        SCB->CPACR |= (3UL << 20) | (3UL << 22);
         __DSB();
         __ISB();
     #endif
-    
-    /* Configure NFCT pins as GPIOs if NFCT is not to be used in your code. If CONFIG_NFCT_PINS_AS_GPIOS is not defined, 
-       two GPIOs (see Product Specification to see which ones) will be reserved for NFC and will not be available as 
+
+    /* Configure NFCT pins as GPIOs if NFCT is not to be used in your code. If CONFIG_NFCT_PINS_AS_GPIOS is not defined,
+       two GPIOs (see Product Specification to see which ones) will be reserved for NFC and will not be available as
        normal GPIOs. */
     #if defined (CONFIG_NFCT_PINS_AS_GPIOS)
         if ((NRF_UICR->NFCPINS & UICR_NFCPINS_PROTECT_Msk) == (UICR_NFCPINS_PROTECT_NFC << UICR_NFCPINS_PROTECT_Pos)){
             NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
-            while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}            
+            while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}
             NRF_UICR->NFCPINS &= ~UICR_NFCPINS_PROTECT_Msk;
-            while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}            
+            while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}
             NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-            while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}            
+            while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}
             NVIC_SystemReset();
         }
     #endif
-    
+
     /* Configure GPIO pads as pPin Reset pin if Pin Reset capabilities desired. If CONFIG_GPIO_AS_PINRESET is not
-      defined, pin reset will not be available. One GPIO (see Product Specification to see which one) will then be 
+      defined, pin reset will not be available. One GPIO (see Product Specification to see which one) will then be
       reserved for PinReset and not available as normal GPIO. */
     #if defined (CONFIG_GPIO_AS_PINRESET)
-        if (((NRF_UICR->PSELRESET[0] & UICR_PSELRESET_CONNECT_Msk) != (UICR_PSELRESET_CONNECT_Connected << UICR_PSELRESET_CONNECT_Pos)) || 
+        if (((NRF_UICR->PSELRESET[0] & UICR_PSELRESET_CONNECT_Msk) != (UICR_PSELRESET_CONNECT_Connected << UICR_PSELRESET_CONNECT_Pos)) ||
             ((NRF_UICR->PSELRESET[0] & UICR_PSELRESET_CONNECT_Msk) != (UICR_PSELRESET_CONNECT_Connected << UICR_PSELRESET_CONNECT_Pos))){
             NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
             while (NRF_NVMC->READY == NVMC_READY_READY_Busy){}
@@ -119,15 +119,15 @@ void SystemInit(void)
             NVIC_SystemReset();
         }
     #endif
-    
-    /* Enable SWO trace functionality. If ENABLE_SWO is not defined, SWO pin will be used as GPIO (see Product 
+
+    /* Enable SWO trace functionality. If ENABLE_SWO is not defined, SWO pin will be used as GPIO (see Product
        Specification to see which one). */
     #if defined (ENABLE_SWO)
         CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
         NRF_CLOCK->TRACECONFIG |= CLOCK_TRACECONFIG_TRACEMUX_Serial << CLOCK_TRACECONFIG_TRACEMUX_Pos;
     #endif
-    
-    /* Enable Trace functionality. If ENABLE_TRACE is not defined, TRACE pins will be used as GPIOs (see Product 
+
+    /* Enable Trace functionality. If ENABLE_TRACE is not defined, TRACE pins will be used as GPIOs (see Product
        Specification to see which ones). */
     #if defined (ENABLE_TRACE)
         CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -148,7 +148,7 @@ static bool ftpan_32(void)
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -161,7 +161,7 @@ static bool ftpan_37(void)
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -174,7 +174,7 @@ static bool ftpan_36(void)
             return true;
         }
     }
-    
+
     return false;
 }
 
