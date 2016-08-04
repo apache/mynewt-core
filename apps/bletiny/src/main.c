@@ -45,6 +45,8 @@
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
 #include "host/ble_sm.h"
+
+/* RAM HCI transport. */
 #include "transport/ram/ble_hci_ram.h"
 
 /* RAM persistence layer. */
@@ -1697,13 +1699,11 @@ main(void)
 
     /* Initialize the RAM HCI transport. */
     hci_cfg = ble_hci_ram_cfg_dflt;
-    hci_cfg.num_evt_bufs = 3;
     rc = ble_hci_ram_init(&hci_cfg);
     assert(rc == 0);
 
     /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
-    cfg.max_hci_bufs = hci_cfg.num_evt_bufs;
     cfg.max_gattc_procs = 2;
     cfg.reset_cb = bletiny_on_reset;
     cfg.store_read_cb = ble_store_ram_read;
