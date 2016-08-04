@@ -184,7 +184,7 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     value[0] = 99;
     value[1] = 100;
-    rc = ble_gattc_write_flat(peer->conn_handle, chr->chr.val_handle, 
+    rc = ble_gattc_write_flat(peer->conn_handle, chr->chr.val_handle,
                               value, sizeof value, blecent_on_write, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to write characteristic; rc=%d\n",
