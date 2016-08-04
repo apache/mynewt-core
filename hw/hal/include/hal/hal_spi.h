@@ -28,8 +28,6 @@ extern "C" {
 #include <inttypes.h>
 #include <bsp/bsp_sysid.h>
 
-struct hal_spi;
-
 enum hal_spi_data_mode{
     HAL_SPI_MODE0,
     HAL_SPI_MODE1,
@@ -49,8 +47,10 @@ enum hal_spi_word_size{
 
 typedef uint32_t hal_spi_baudrate;
 
-/* since one spi device can control multiple devices, some configuration
- * can be changed on the fly from the hal */
+/**
+ * since one spi device can control multiple devices, some configuration
+ * can be changed on the fly from the hal
+ */
 struct hal_spi_settings {
     enum hal_spi_data_mode  data_mode;
     enum hal_spi_data_order data_order;
@@ -58,22 +58,37 @@ struct hal_spi_settings {
     hal_spi_baudrate        baudrate;
 };
 
-/* initialize the SPI on the corresponding BSP device. Returns a pointer
- * to the SPI object to use for the methods below. Returns NULL on
- * error
+/**
+ * Initialize the SPI, given by spi_num.
+ *
+ * @param spi_num The number of the SPI to initialize
+ *
+ * @return 0 on success, non-zero error code on failure.
  */
-struct hal_spi *hal_spi_init(uint8_t spi_num);
+int hal_spi_init(uint8_t spi_num);
 
-/* configure the spi., Reutrns 0 on success, negative on error */
-int hal_spi_config(struct hal_spi *pspi, struct hal_spi_settings *psettings);
+/**
+ * Configure the spi.
+ *
+ * @param spi_num The number of the SPI to configure.
+ * @param psettings The settings to configure this SPI with
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int hal_spi_config(uint8_t spi_num, struct hal_spi_settings *psettings);
 
-/* Do a blocking master spi transfer of one SPI data word.
+/**
+ * Do a blocking master spi transfer of one SPI data word.
  * The data to send is an 8 or 9-bit pattern (depending on configuration)
  * stored in <tx>.  NOTE: This does not send multiple bytes. The argument is
  * a 16-bit number to allow up to 9-bit SPI data words.
- * Returns the data received from the remote device or negative on error.
+ *
+ * @param spi_num The number of the SPI to TX data on
+ * @param tx The data to TX
+ *
+ * @return The data received from the remote device, or negative on error.
  */
-int hal_spi_master_transfer(struct hal_spi *psdi, uint16_t tx);
+int hal_spi_master_transfer(uint8_t spi_num, uint16_t tx);
 
 
 #ifdef __cplusplus
