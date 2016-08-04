@@ -41,21 +41,29 @@ STAILQ_HEAD(, os_mempool) g_os_mempool_list =
  * @return os_error_t 
  */
 os_error_t
-os_mempool_init(struct os_mempool *mp, int blocks, int block_size, void *membuf,
-                char *name)
+os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
+                void *membuf, char *name)
 {
     int true_block_size;
     uint8_t *block_addr;
     struct os_memblock *block_ptr;
 
     /* Check for valid parameters */
-    if ((!mp) || (!membuf) || (blocks <= 0) || (block_size <= 0)) {
+    if ((!mp) || (blocks < 0) || (block_size <= 0)) {
         return OS_INVALID_PARM;
     }
 
-    /* Blocks need to be sized properly and memory buffer should be aligned */
-    if (((uint32_t)membuf & (OS_ALIGNMENT - 1)) != 0) {
-        return OS_MEM_NOT_ALIGNED;
+    if ((!membuf) && (blocks != 0)) {
+        return OS_INVALID_PARM;
+    }
+
+    if (membuf != NULL) {
+        /* Blocks need to be sized properly and memory buffer should be
+         * aligned
+         */
+        if (((uint32_t)membuf & (OS_ALIGNMENT - 1)) != 0) {
+            return OS_MEM_NOT_ALIGNED;
+        }
     }
     true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(block_size);
 
