@@ -40,9 +40,9 @@
 #include "host/ble_l2cap.h"
 #include "host/ble_sm.h"
 #include "controller/ble_ll.h"
-/* Newtmgr include */
-#include "newtmgr/newtmgr.h"
-#include "nmgrble/newtmgr_ble.h"
+
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
 
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
@@ -50,6 +50,10 @@
 /* Mandatory services. */
 #include "services/mandatory/ble_svc_gap.h"
 #include "services/mandatory/ble_svc_gatt.h"
+
+/* Newtmgr include */
+#include "newtmgr/newtmgr.h"
+#include "nmgrble/newtmgr_ble.h"
 
 /* Application-specified header. */
 #include "bleprph.h"
@@ -266,6 +270,19 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
     return 0;
 }
 
+static void
+bleprph_on_reset(int reason)
+{
+    BLEPRPH_LOG(ERROR, "Resetting state; reason=%d\n", reason);
+}
+
+static void
+bleprph_on_sync(void)
+{
+    /* Begin advertising. */
+    bleprph_advertise();
+}
+
 /**
  * Event loop for the main bleprph task.
  */
@@ -280,10 +297,6 @@ bleprph_task_handler(void *unused)
      * controller.
      */
     rc = ble_hs_start();
-    assert(rc == 0);
-
-    /* Begin advertising. */
-    bleprph_advertise();
 
     while (1) {
         ev = os_eventq_get(&bleprph_evq);
@@ -383,6 +396,8 @@ main(void)
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    cfg.reset_cb = bleprph_on_reset;
+    cfg.sync_cb = bleprph_on_sync;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
     cfg.gatts_register_cb = gatt_svr_register_cb;
@@ -402,6 +417,9 @@ main(void)
 
     /* Initialize NimBLE host. */
     rc = ble_hs_init(&bleprph_evq, &cfg);
+    assert(rc == 0);
+
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
     assert(rc == 0);
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);

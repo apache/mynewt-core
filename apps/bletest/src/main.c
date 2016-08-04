@@ -36,7 +36,7 @@
 
 /* BLE */
 #include "nimble/ble.h"
-#include "nimble/hci_transport.h"
+#include "nimble/ble_hci_trans.h"
 #include "nimble/hci_common.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
@@ -44,6 +44,7 @@
 #include "controller/ble_ll_conn.h"
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
+#include "transport/ram/ble_hci_ram.h"
 
 /* XXX: An app should not include private headers from a library.  The bletest
  * app uses some of nimble's internal details for logging.
@@ -767,7 +768,7 @@ bletest_execute_advertiser(void)
 
                         /* Add length */
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                        ble_hci_transport_host_acl_data_send(om);
+                        ble_hci_trans_hs_acl_data_send(om);
 
                         /* Increment last handle used */
                         ++g_last_handle_used;
@@ -823,7 +824,7 @@ bletest_execute_advertiser(void)
 
                 /* Add length */
                 OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                ble_hci_transport_host_acl_data_send(om);
+                ble_hci_trans_hs_acl_data_send(om);
 
                 ++g_bletest_outstanding_pkts;
             }
@@ -894,6 +895,8 @@ bletest_task_handler(void *arg)
     /* Initialize the host timer */
     os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
                          NULL);
+
+    ble_hs_dbg_set_sync_state(BLE_HS_SYNC_STATE_GOOD);
 
     /* Send the reset command first */
     rc = bletest_hci_reset_ctlr();
@@ -1149,6 +1152,9 @@ main(void)
 
     /* Initialize host */
     rc = ble_hs_init(&g_bletest_evq, NULL);
+    assert(rc == 0);
+
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
     assert(rc == 0);
 
     rc = os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL,

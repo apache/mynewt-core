@@ -35,8 +35,8 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
-#include "nimble/hci_transport.h"
-#include "host/host_hci.h"
+#include "nimble/ble_hci_trans.h"
+#include "controller/ble_ll.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_uuid.h"
@@ -45,7 +45,7 @@
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
 #include "host/ble_sm.h"
-#include "controller/ble_ll.h"
+#include "transport/ram/ble_hci_ram.h"
 
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
@@ -1084,7 +1084,7 @@ bletiny_tx_timer_cb(void *arg)
 
         /* Set packet header length */
         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-        ble_hci_transport_host_acl_data_send(om);
+        ble_hci_trans_hs_acl_tx(om);
 
         --bletiny_tx_data.tx_num;
     }
@@ -1552,6 +1552,12 @@ bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi)
     return 0;
 }
 
+static void
+bletiny_on_reset(int reason)
+{
+    console_printf("Error: Resetting state; reason=%d\n", reason);
+}
+
 /**
  * BLE test task
  *
@@ -1594,6 +1600,7 @@ bletiny_task_handler(void *arg)
 int
 main(void)
 {
+    struct ble_hci_ram_cfg hci_cfg;
     struct ble_hs_cfg cfg;
     uint32_t seed;
     int rc;
@@ -1688,10 +1695,17 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
+    /* Initialize the RAM HCI transport. */
+    hci_cfg = ble_hci_ram_cfg_dflt;
+    hci_cfg.num_evt_bufs = 3;
+    rc = ble_hci_ram_init(&hci_cfg);
+    assert(rc == 0);
+
     /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
-    cfg.max_hci_bufs = 3;
+    cfg.max_hci_bufs = hci_cfg.num_evt_bufs;
     cfg.max_gattc_procs = 2;
+    cfg.reset_cb = bletiny_on_reset;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
     cfg.gatts_register_cb = gatt_svr_register_cb;
