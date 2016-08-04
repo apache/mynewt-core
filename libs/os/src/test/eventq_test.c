@@ -17,7 +17,7 @@
  * under the License.
  */
  
-
+#include <string.h>
 #include "testutil/testutil.h"
 #include "os/os.h"
 #include "os_test_priv.h"
@@ -59,10 +59,6 @@ os_stack_t eventq_task_stack_poll_s[POLL_STACK_SIZE];
 struct os_task eventq_task_poll_r;
 os_stack_t eventq_task_stack_poll_r[POLL_STACK_SIZE ];
 
-struct os_eventq *poll_eventq[POLL_STACK_SIZE];
-struct os_eventq p_event[POLL_STACK_SIZE];
-struct os_event poll_event[POLL_STACK_SIZE];
-
 /* Setting the data for the poll timeout */
 /* Define the task stack for the eventq_task_poll_timeout_send */
 #define SEND_TASK_POLL_TIMEOUT_PRIO        (5)
@@ -74,10 +70,6 @@ os_stack_t eventq_task_stack_poll_timeout_s[POLL_STACK_SIZE];
 struct os_task eventq_task_poll_timeout_r;
 os_stack_t eventq_task_stack_poll_timeout_r[POLL_STACK_SIZE];
 
-struct os_eventq *poll_eventq_timeout[POLL_STACK_SIZE];
-struct os_eventq p_event_timeout[POLL_STACK_SIZE];
-struct os_event poll_event_timeout[POLL_STACK_SIZE];
-
 /* Setting the data for the poll single */
 /* Define the task stack for the eventq_task_poll_single_send */
 #define SEND_TASK_POLL_SINGLE_PRIO        (7)
@@ -88,10 +80,6 @@ os_stack_t eventq_task_stack_poll_single_s[POLL_STACK_SIZE];
 #define RECEIVE_TASK_POLL_SINGLE_PRIO     (8)
 struct os_task eventq_task_poll_single_r;
 os_stack_t eventq_task_stack_poll_single_r[POLL_STACK_SIZE];
-
-struct os_eventq *poll_eventq_single[POLL_STACK_SIZE];
-struct os_eventq p_event_single[POLL_STACK_SIZE];
-struct os_event poll_event_single[POLL_STACK_SIZE];
 
 /* This is the task function  to send data */
 void
@@ -143,24 +131,19 @@ eventq_task_receive(void *arg)
 void
 eventq_task_poll_send(void *arg)
 {
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
     int i;
 
-    /* Assigning the *poll_eventq[] */
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        poll_eventq[i] = &p_event[i];
-    }
-
-    /* Initializing the *poll_eventq */
-    for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        os_eventq_init(poll_eventq[i]);
+        eventqs[i] = &multi_eventq[i];
     }
 
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        poll_event[i].ev_type = i + 10;
-        poll_event[i].ev_arg = NULL;
+        m_event[i].ev_type = i + 10;
+        m_event[i].ev_arg = NULL;
 
         /* Put and send */
-        os_eventq_put(poll_eventq[i], &poll_event[i]);
+        os_eventq_put(eventqs[i], &m_event[i]);
         os_time_delay(OS_TICKS_PER_SEC / 2);
     }
 
@@ -171,12 +154,17 @@ eventq_task_poll_send(void *arg)
 void
 eventq_task_poll_receive(void *arg)
 {
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
     struct os_event *event;
     int i;
 
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        eventqs[i] = &multi_eventq[i];
+    }
+
     /* Recieving using the os_eventq_poll*/
     for (i = 0; i < SIZE_MULTI_EVENT; i++) {
-        event = os_eventq_poll(poll_eventq, SIZE_MULTI_EVENT, OS_WAIT_FOREVER);
+        event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, OS_WAIT_FOREVER);
         TEST_ASSERT(event->ev_type == i +10);
     }
 
@@ -189,26 +177,18 @@ eventq_task_poll_receive(void *arg)
 void
 eventq_task_poll_timeout_send(void *arg)
 {
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
     int i;
 
-    /* Assigning the *poll_eventq_timeout[] */
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        poll_eventq_timeout[i] = &p_event_timeout[i];
-    }
-
-    /* Initializing the *poll_eventq_timeout */
-    for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        os_eventq_init(poll_eventq_timeout[i]);
+        eventqs[i] = &multi_eventq[i];
     }
 
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
          os_time_delay(1000);
 
-        poll_event_timeout[i].ev_type = i + 10;
-        poll_event_timeout[i].ev_arg = NULL;
-
         /* Put and send */
-        os_eventq_put(poll_eventq_timeout[i], &poll_event_timeout[i]);
+        os_eventq_put(eventqs[i], &m_event[i]);
         os_time_delay(OS_TICKS_PER_SEC / 2);
     }
 
@@ -221,12 +201,17 @@ eventq_task_poll_timeout_send(void *arg)
 void
 eventq_task_poll_timeout_receive(void *arg)
 {
-     struct os_event *event;
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
+    struct os_event *event;
     int i;
+
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        eventqs[i] = &multi_eventq[i];
+    }
 
     /* Recieving using the os_eventq_poll_timeout*/
     for (i = 0; i < SIZE_MULTI_EVENT; i++) {
-        event = os_eventq_poll(poll_eventq_timeout, SIZE_MULTI_EVENT, 200);
+        event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, 200);
         TEST_ASSERT(event == NULL);
     }
 
@@ -239,45 +224,40 @@ eventq_task_poll_timeout_receive(void *arg)
 void
 eventq_task_poll_single_send(void *arg)
 {
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
     int i;
     int position = 2;
 
-    /* Assigning the *poll_eventq_single */
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        poll_eventq_single[i] = &p_event_single[i];
+        eventqs[i] = &multi_eventq[i];
     }
 
-    /* Initializing the *poll_eventq_single */
-    for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        os_eventq_init(poll_eventq_single[i]);
-    }
-
-    poll_event_single[position].ev_type = 20;
-    poll_event_single[position].ev_arg = NULL;
-
-        /* Put and send */
-        os_eventq_put(poll_eventq_single[position],
-            &poll_event_single[position]);
-        os_time_delay(OS_TICKS_PER_SEC / 2);
+    /* Put and send */
+    os_eventq_put(eventqs[position], &m_event[position]);
+    os_time_delay(OS_TICKS_PER_SEC / 2);
 
     /* This task sleeps until the receive task completes the test. */
     os_time_delay(1000000);
-
 }
 
 /* Recieving the single event */
 void
 eventq_task_poll_single_receive(void *arg)
 {
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
     struct os_event *event;
+    int i;
+
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        eventqs[i] = &multi_eventq[i];
+    }
 
     /* Recieving using the os_eventq_poll*/
-    event = os_eventq_poll(poll_eventq_single, SIZE_MULTI_EVENT,  OS_WAIT_FOREVER);
+    event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, OS_WAIT_FOREVER);
     TEST_ASSERT(event->ev_type == 20);
 
     /* Finishes the test when OS has been started */
     os_test_restart();
-
 }
 
 TEST_CASE(event_test_sr)
@@ -309,6 +289,8 @@ TEST_CASE(event_test_sr)
 /* To test for the basic function of os_eventq_poll() */
 TEST_CASE(event_test_poll_sr)
 {
+    int i;
+
     /* Initializing the OS */
     os_init();
     /* Initialize the task */
@@ -321,6 +303,11 @@ TEST_CASE(event_test_poll_sr)
         NULL, RECEIVE_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_r,
         POLL_STACK_SIZE);
 
+    /* Initializing the eventqs. */
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        os_eventq_init(&multi_eventq[i]);
+    }
+
     /* Does not return until OS_restart is called */
     os_start();
 
@@ -329,6 +316,8 @@ TEST_CASE(event_test_poll_sr)
 /* Test case for poll timeout */
 TEST_CASE(event_test_poll_timeout_sr)
 {
+    int i;
+
     /* Initializing the OS */
     os_init();
     /* Initialize the task */
@@ -341,6 +330,14 @@ TEST_CASE(event_test_poll_timeout_sr)
         eventq_task_poll_timeout_receive, NULL, RECEIVE_TASK_POLL_TIMEOUT_PRIO,
         OS_WAIT_FOREVER, eventq_task_stack_poll_timeout_r, POLL_STACK_SIZE);
 
+    /* Initializing the eventqs. */
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        os_eventq_init(&multi_eventq[i]);
+
+        m_event[i].ev_type = i + 10;
+        m_event[i].ev_arg = NULL;
+    }
+
     /* Does not return until OS_restart is called */
     os_start();
 
@@ -350,6 +347,8 @@ TEST_CASE(event_test_poll_timeout_sr)
 /* Test case for poll timeout */
 TEST_CASE(event_test_poll_single_sr)
 {
+    int i;
+
     /* Initializing the OS */
     os_init();
     /* Initialize the task */
@@ -362,9 +361,49 @@ TEST_CASE(event_test_poll_single_sr)
         eventq_task_poll_single_receive, NULL, RECEIVE_TASK_POLL_SINGLE_PRIO,
         OS_WAIT_FOREVER, eventq_task_stack_poll_single_r, POLL_STACK_SIZE);
 
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        os_eventq_init(&multi_eventq[i]);
+
+        m_event[i].ev_type = 10 * i;
+        m_event[i].ev_arg = NULL;
+    }
+
     /* Does not return until OS_restart is called */
     os_start();
 
+}
+
+/**
+ * Tests eventq_poll() with a timeout of 0.  This should not involve the
+ * scheduler at all, so it should work without starting the OS.
+ */
+TEST_CASE(event_test_poll_0timo)
+{
+    struct os_eventq *eventqs[SIZE_MULTI_EVENT];
+    struct os_event *evp;
+    struct os_event ev;
+    int i;
+
+    for (i = 0; i < SIZE_MULTI_EVENT; i++){
+        os_eventq_init(&multi_eventq[i]);
+        eventqs[i] = &multi_eventq[i];
+    }
+
+    evp = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, 0);
+    TEST_ASSERT(evp == NULL);
+
+    /* Ensure no eventq thinks a task is waiting on it. */
+    for (i = 0; i < SIZE_MULTI_EVENT; i++) {
+        TEST_ASSERT(eventqs[i]->evq_task == NULL);
+    }
+
+    /* Put an event on one of the queues. */
+    memset(&ev, 0, sizeof ev);
+    ev.ev_type = 1;
+    os_eventq_put(eventqs[3], &ev);
+
+    evp = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, 0);
+    TEST_ASSERT(evp == &ev);
 }
 
 TEST_SUITE(os_eventq_test_suite)
@@ -373,5 +412,5 @@ TEST_SUITE(os_eventq_test_suite)
     event_test_poll_sr();
     event_test_poll_timeout_sr();
     event_test_poll_single_sr();
-
+    event_test_poll_0timo();
 }
