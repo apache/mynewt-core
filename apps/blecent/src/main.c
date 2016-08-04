@@ -29,6 +29,9 @@
 #include "controller/ble_ll.h"
 #include "host/ble_hs.h"
 
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
+
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
 
@@ -448,6 +451,19 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
     }
 }
 
+static void
+blecent_on_reset(int reason)
+{
+    BLECENT_LOG(ERROR, "Resetting state; reason=%d\n", reason);
+}
+
+static void
+blecent_on_sync(void)
+{
+    /* Begin scanning for a peripheral to connect to. */
+    blecent_scan();
+}
+
 /**
  * Event loop for the main blecent task.
  */
@@ -463,9 +479,6 @@ blecent_task_handler(void *unused)
      */
     rc = ble_hs_start();
     assert(rc == 0);
-
-    /* Begin scanning for a peripheral to connect to. */
-    blecent_scan();
 
     while (1) {
         ev = os_eventq_get(&blecent_evq);
@@ -553,6 +566,10 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
+    /* Initialize the RAM HCI transport. */
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
+    assert(rc == 0);
+
     /* Configure the host. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_hci_bufs = 3;
@@ -560,6 +577,8 @@ main(void)
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    cfg.reset_cb = blecent_on_reset;
+    cfg.sync_cb = blecent_on_sync;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
 

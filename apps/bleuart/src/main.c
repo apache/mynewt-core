@@ -195,6 +195,13 @@ bleuart_gap_event(struct ble_gap_event *event, void *arg)
     return 0;
 }
 
+static void
+bleuart_on_sync(void)
+{
+    /* Begin advertising. */
+    bleuart_advertise();
+}
+
 /**
  * Event loop for the main bleuart task.
  */
@@ -207,9 +214,6 @@ bleuart_task_handler(void *unused)
 
     rc = ble_hs_start();
     assert(rc == 0);
-
-    /* Begin advertising. */
-    bleuart_advertise();
 
     while (1) {
         ev = os_eventq_get(&bleuart_evq);
@@ -298,6 +302,7 @@ main(void)
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
+    cfg.sync_cb = bleuart_on_sync;
     cfg.store_read_cb = ble_store_ram_read;
     cfg.store_write_cb = ble_store_ram_write;
 

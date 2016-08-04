@@ -29,6 +29,7 @@ pkg.deps:
     - net/nimble/host
     - net/nimble/host/services/mandatory
     - net/nimble/host/store/ram
+    - net/nimble/transport/ram
     - libs/console/full
     - libs/shell
 
