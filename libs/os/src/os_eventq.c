@@ -117,6 +117,29 @@ pull_one:
     return (ev);
 }
 
+static struct os_event *
+os_eventq_poll_0timo(struct os_eventq **evq, int nevqs)
+{
+    struct os_event *ev;
+    os_sr_t sr;
+    int i;
+
+    ev = NULL;
+
+    OS_ENTER_CRITICAL(sr);
+    for (i = 0; i < nevqs; i++) {
+        ev = STAILQ_FIRST(&evq[i]->evq_list);
+        if (ev) {
+            STAILQ_REMOVE(&evq[i]->evq_list, ev, os_event, ev_next);
+            ev->ev_queued = 0;
+            break;
+        }
+    }
+    OS_EXIT_CRITICAL(sr);
+
+    return ev;
+}
+
 /**
  * Poll the list of event queues specified by the evq parameter 
  * (size nevqs), and return the "first" event available on any of 
@@ -137,6 +160,13 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
     int i, j;
     os_sr_t sr;
 
+    /* If the timeout is 0, don't involve the scheduler at all.  Grab an event
+     * if one is available, else return immediately.
+     */
+    if (timo == 0) {
+        return os_eventq_poll_0timo(evq, nevqs);
+    }
+
     ev = NULL;
 
     OS_ENTER_CRITICAL(sr);
@@ -147,8 +177,7 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
         if (ev) {
             STAILQ_REMOVE(&evq[i]->evq_list, ev, os_event, ev_next);
             ev->ev_queued = 0;
-            /* Reset the items that already have an evq task set
-             */
+            /* Reset the items that already have an evq task set. */
             for (j = 0; j < i; j++) {
                 evq[j]->evq_task = NULL;
             }
