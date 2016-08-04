@@ -27,7 +27,6 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "controller/ble_ll.h"
-#include "host/host_hci.h"
 #include "host/ble_hs.h"
 
 /* RAM persistence layer. */

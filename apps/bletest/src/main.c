@@ -38,7 +38,6 @@
 #include "nimble/ble.h"
 #include "nimble/hci_transport.h"
 #include "nimble/hci_common.h"
-#include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
@@ -420,14 +419,14 @@ bletest_init_scanner(void)
     uint8_t add_whitelist;
 
     own_addr_type = BLETEST_CFG_SCAN_OWN_ADDR_TYPE;
-    rc = host_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
+    rc = ble_hs_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                                BLETEST_CFG_SCAN_ITVL,
                                                BLETEST_CFG_SCAN_WINDOW,
                                                BLETEST_CFG_SCAN_OWN_ADDR_TYPE,
                                                BLETEST_CFG_SCAN_FILT_POLICY,
                                                buf, sizeof buf);
     assert(rc == 0);
-    rc = ble_hci_cmd_tx_empty_ack(buf);
+    rc = ble_hs_hci_cmd_tx_empty_ack(buf);
     if (rc == 0) {
         add_whitelist = BLETEST_CFG_SCAN_FILT_POLICY;
 #if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
@@ -615,7 +614,7 @@ bletest_execute_initiator(void)
             } else {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
-                        ble_hci_util_read_rssi(i+1, &rssi);
+                        ble_hs_hci_util_read_rssi(i+1, &rssi);
                     }
                 }
             }
@@ -989,7 +988,7 @@ bletest_task_handler(void *arg)
 #endif
 
     /* Get a random number */
-    rc = ble_hci_util_rand(&rand64, 8);
+    rc = ble_hs_hci_util_rand(&rand64, 8);
     assert(rc == 0);
 
     /* Wait some time before starting */

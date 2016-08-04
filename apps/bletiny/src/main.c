@@ -59,7 +59,7 @@
  */
 #include "../src/ble_hs_conn_priv.h"
 #include "../src/ble_hs_atomic_priv.h"
-#include "../src/ble_hci_priv.h"
+#include "../src/ble_hs_hci_priv.h"
 
 /* Nimble task priorities */
 #define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
@@ -1408,7 +1408,7 @@ bletiny_datalen(uint16_t conn_handle, uint16_t tx_octets, uint16_t tx_time)
 {
     int rc;
 
-    rc = ble_hci_util_set_data_len(conn_handle, tx_octets, tx_time);
+    rc = ble_hs_hci_util_set_data_len(conn_handle, tx_octets, tx_time);
     return rc;
 }
 
