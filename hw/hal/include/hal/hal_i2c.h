@@ -27,7 +27,8 @@
 extern "C" {
 #endif
 
-/* This is the API for an i2c bus.  Currently, this is a master API
+/**
+ * This is the API for an i2c bus.  Currently, this is a master API
  * allowing the mynewt device to function as an I2C master.
  *
  * A slave API is pending for future release
@@ -47,9 +48,9 @@ extern "C" {
  *      hal_i2c_end();
  */
 
-struct hal_i2c;
-
-/* when sending a packet, use this structure to pass the arguments */
+/**
+ * when sending a packet, use this structure to pass the arguments.
+ */
 struct hal_i2c_master_data {
     uint8_t  address;   /* destination address */
             /* a I2C address has 7 bits. In the protocol these
@@ -64,53 +65,82 @@ struct hal_i2c_master_data {
     uint8_t *buffer;    /* buffer space to hold the transmit or receive */
 };
 
-/* Initialize a new i2c device with the I2C number.
- * Returns a pointer to the i2c device or NULL on error
+/**
+ * Initialize a new i2c device with the I2C number.
+ *
+ * @param i2c_num The number of the I2C device being initialized
+ * @param scl_pin The GPIO pin to use for clock
+ * @param sda_pin The GPIO pin to use for data
+ * @param i2c_frequency The I2C frequency to use, in KHz
+ *
+ * @return 0 on success, and non-zero error code on failure
  */
-struct hal_i2c *hal_i2c_init(uint8_t i2c_num);
+int hal_i2c_init(uint8_t i2c_num, int scl_pin, int sda_pin,
+        uint32_t i2c_frequency);
 
-/* Sends a start condition and writes <len> bytes of data on the i2c.
+/**
+ * Sends a start condition and writes <len> bytes of data on the i2c.
  * This API assumes that you have already called hal_i2c_master_begin
- *  It will fail if you have not. This API does NOT issue a stop condition.
+ * It will fail if you have not. This API does NOT issue a stop condition.
  * You must stop the bus after successful or unsuccessful write attempts.
  * This API is blocking until an error or NaK occurs. Timeout is platform
- * dependent
- * Returns 0 on success, negative on failure
+ * dependent.
+ *
+ * @param i2c_num The number of the I2C device being written to
+ * @param pdata The data to write to the I2C bus
+ *
+ * @return 0 on success, and non-zero error code on failure
  */
-int
-hal_i2c_master_write(struct hal_i2c *, struct hal_i2c_master_data *pdata);
+int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata);
 
-/* Sends a start condition and reads <len> bytes of data on the i2c.
+/**
+ * Sends a start condition and reads <len> bytes of data on the i2c.
  * This API assumes that you have already called hal_i2c_master_begin
- *  It will fail if you have not. This API does NOT issue a stop condition.
+ * It will fail if you have not. This API does NOT issue a stop condition.
  * You must stop the bus after successful or unsuccessful write attempts.
  * This API is blocking until an error or NaK occurs. Timeout is platform
- * dependent
- * Returns 0 on success, negative on failure
+ * dependent.
+ *
+ * @param i2c_num The number of the I2C device being written to
+ * @param pdata The location to place read data
+ *
+ * @return 0 on success, and non-zero error code on failure
  */
-int
-hal_i2c_master_read(struct hal_i2c *, struct hal_i2c_master_data *pdata);
+int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata);
 
-/*
+/**
  * Starts an I2C transaction with the driver. This API does not send
- * anything over the bus itself
+ * anything over the bus itself.
+ *
+ * @param i2c_num The number of the I2C to begin a transaction on
+ *
+ * @return 0 on success, non-zero error code on failure
  */
-int
-hal_i2c_master_begin(struct hal_i2c *);
+int hal_i2c_master_begin(uint8_t i2c_num);
 
-/* issues a stop condition on the bus and ends the I2C transaction.
+/**
+ * Issues a stop condition on the bus and ends the I2C transaction.
  * You must call i2c_master_end for every hal_i2c_master_begin
- * API call that succeeds  */
-int
-hal_i2c_master_end(struct hal_i2c *);
+ * API call that succeeds.
+ *
+ * @param i2c_num The number of the I2C to end a transaction on
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+int hal_i2c_master_end(uint8_t i2c_num);
 
-/* Probes the i2c bus for a device with this address.  THIS API
+/**
+ * Probes the i2c bus for a device with this address.  THIS API
  * issues a start condition, probes the address using a read
  * command and issues a stop condition.   There is no need to call
- * hal_i2c_master_begin/end with this method
+ * hal_i2c_master_begin/end with this method.
+ *
+ * @param i2c_num The number of the I2C to probe
+ * @param address The address to probe for
+ *
+ * @return 0 on success, non-zero error code on failure
  */
-int
-hal_i2c_master_probe(struct hal_i2c *, uint8_t address);
+int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address);
 
 #ifdef __cplusplus
 }

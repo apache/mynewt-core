@@ -65,8 +65,7 @@ struct hal_spi_settings {
 struct hal_spi *hal_spi_init(uint8_t spi_num);
 
 /* configure the spi., Reutrns 0 on success, negative on error */
-int
-hal_spi_config(struct hal_spi *pspi, struct hal_spi_settings *psettings);
+int hal_spi_config(struct hal_spi *pspi, struct hal_spi_settings *psettings);
 
 /* Do a blocking master spi transfer of one SPI data word.
  * The data to send is an 8 or 9-bit pattern (depending on configuration)
@@ -74,8 +73,7 @@ hal_spi_config(struct hal_spi *pspi, struct hal_spi_settings *psettings);
  * a 16-bit number to allow up to 9-bit SPI data words.
  * Returns the data received from the remote device or negative on error.
  */
-int
-hal_spi_master_transfer(struct hal_spi *psdi, uint16_t tx);
+int hal_spi_master_transfer(struct hal_spi *psdi, uint16_t tx);
 
 
 #ifdef __cplusplus
