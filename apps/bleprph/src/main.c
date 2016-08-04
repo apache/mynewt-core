@@ -31,7 +31,6 @@
 
 /* BLE */
 #include "nimble/ble.h"
-#include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_uuid.h"
