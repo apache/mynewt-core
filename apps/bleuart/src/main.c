@@ -39,10 +39,9 @@
 #include "host/ble_l2cap.h"
 #include "host/ble_sm.h"
 #include "controller/ble_ll.h"
-/* Newtmgr include */
-#include "newtmgr/newtmgr.h"
-#include "nmgrble/newtmgr_ble.h"
-#include "bleuart/bleuart.h"
+
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
 
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
@@ -50,6 +49,11 @@
 /* Mandatory services. */
 #include "services/mandatory/ble_svc_gap.h"
 #include "services/mandatory/ble_svc_gatt.h"
+
+/* Newtmgr include */
+#include "newtmgr/newtmgr.h"
+#include "nmgrble/newtmgr_ble.h"
+#include "bleuart/bleuart.h"
 
 /** Mbuf settings. */
 #define MBUF_NUM_MBUFS      (12)
@@ -292,9 +296,12 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
+    /* Initialize the RAM HCI transport. */
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
+    assert(rc == 0);
+
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
-    cfg.max_hci_bufs = 3;
     cfg.max_connections = 1;
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = 3;

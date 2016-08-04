@@ -390,6 +390,10 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
+    /* Initialize the RAM HCI transport. */
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
+    assert(rc == 0);
+
     /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
     cfg.max_gattc_procs = 2;
@@ -417,9 +421,6 @@ main(void)
 
     /* Initialize NimBLE host. */
     rc = ble_hs_init(&bleprph_evq, &cfg);
-    assert(rc == 0);
-
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
     assert(rc == 0);
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);

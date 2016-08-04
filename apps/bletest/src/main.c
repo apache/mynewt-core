@@ -44,6 +44,8 @@
 #include "controller/ble_ll_conn.h"
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
+
+/* RAM HCI transport. */
 #include "transport/ram/ble_hci_ram.h"
 
 /* XXX: An app should not include private headers from a library.  The bletest
@@ -1154,6 +1156,7 @@ main(void)
     rc = ble_hs_init(&g_bletest_evq, NULL);
     assert(rc == 0);
 
+    /* Initialize the RAM HCI transport. */
     rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
     assert(rc == 0);
 
