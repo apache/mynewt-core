@@ -363,8 +363,8 @@ cmd_adv(int argc, char **argv)
 static struct kv_pair cmd_conn_peer_addr_types[] = {
     { "public",         BLE_HCI_CONN_PEER_ADDR_PUBLIC },
     { "random",         BLE_HCI_CONN_PEER_ADDR_RANDOM },
-    { "public_ident",   BLE_HCI_CONN_PEER_ADDR_PUBLIC_IDENT },
-    { "random_ident",   BLE_HCI_CONN_PEER_ADDR_RANDOM_IDENT },
+    { "rpa_pub",        BLE_HCI_CONN_PEER_ADDR_PUBLIC_IDENT },
+    { "rpa_rnd",        BLE_HCI_CONN_PEER_ADDR_RANDOM_IDENT },
     { "wl",             BLE_GAP_ADDR_TYPE_WL },
     { NULL }
 };
