@@ -26,6 +26,10 @@
 #include <nrf_drv_spi.h>
 #include <app_util_platform.h>
 
+/*
+ * XXX: Should handle 9-bit SPI values in SW.
+ */
+
 #define NRF52_HAL_SPI_MAX (2)
 
 struct nrf52_hal_spi {
