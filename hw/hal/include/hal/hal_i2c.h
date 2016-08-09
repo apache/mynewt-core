@@ -69,14 +69,12 @@ struct hal_i2c_master_data {
  * Initialize a new i2c device with the I2C number.
  *
  * @param i2c_num The number of the I2C device being initialized
- * @param scl_pin The GPIO pin to use for clock
- * @param sda_pin The GPIO pin to use for data
- * @param i2c_frequency The I2C frequency to use, in KHz
+ * @param cfg The hardware specific configuration structure to configure
+ *            the I2C with.  This includes things like pin configuration.
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int hal_i2c_init(uint8_t i2c_num, int scl_pin, int sda_pin,
-        uint32_t i2c_frequency);
+int hal_i2c_init(uint8_t i2c_num, void *cfg);
 
 /**
  * Sends a start condition and writes <len> bytes of data on the i2c.

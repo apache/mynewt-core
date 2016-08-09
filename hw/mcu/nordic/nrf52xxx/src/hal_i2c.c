@@ -25,6 +25,10 @@
 #include <nrf.h>
 #include <nrf_drv_twi.h>
 
+#include <mcu/nrf52_hal.h>
+
+#include <assert.h>
+
 struct nrf52_hal_i2c {
     nrf_drv_twi_t nhi_nrf_master;
 };
@@ -63,18 +67,22 @@ struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
     }
 
 int
-hal_i2c_init(uint8_t i2c_num, int scl_pin, int sda_pin,
-        uint32_t i2c_frequency)
+hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
     struct nrf52_hal_i2c *i2c;
+    struct nrf52_hal_i2c_cfg *i2c_cfg;
     nrf_drv_twi_config_t cfg;
     int rc;
 
+    assert(usercfg != NULL);
+
     NRF52_HAL_I2C_RESOLVE(i2c_num, i2c);
 
-    cfg.scl = scl_pin;
-    cfg.sda = sda_pin;
-    switch (i2c_frequency) {
+    i2c_cfg = (struct nrf52_hal_i2c_cfg *) usercfg;
+
+    cfg.scl = i2c_cfg->scl_pin;
+    cfg.sda = i2c_cfg->sda_pin;
+    switch (i2c_cfg->i2c_frequency) {
         case 100:
             cfg.frequency = NRF_TWI_FREQ_100K;
             break;

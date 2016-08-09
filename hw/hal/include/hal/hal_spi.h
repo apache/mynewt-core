@@ -62,10 +62,13 @@ struct hal_spi_settings {
  * Initialize the SPI, given by spi_num.
  *
  * @param spi_num The number of the SPI to initialize
+ * @param cfg HW/MCU specific configuration,
+ *            passed to the underlying
+ *            implementation, providing extra configuration.
  *
  * @return 0 on success, non-zero error code on failure.
  */
-int hal_spi_init(uint8_t spi_num);
+int hal_spi_init(uint8_t spi_num, void *cfg);
 
 /**
  * Configure the spi.

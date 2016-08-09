@@ -69,6 +69,15 @@ enum hal_uart_flow_ctl {
 };
 
 /**
+ * Initialize the HAL uart.
+ *
+ * @param uart  The uart number to configure
+ * @param cfg   Hardware specific uart configuration.  This is passed from BSP
+ *              directly to the MCU specific driver.
+ */
+int hal_uart_init(int uart, void *cfg);
+
+/**
  * hal uart config
  *
  * Applies given configuration to UART.

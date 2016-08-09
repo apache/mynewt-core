@@ -75,7 +75,7 @@ nrf_drv_spi_config_t cfg_spi1 = NRF_DRV_SPI_DEFAULT_CONFIG(1);
     }
 
 int
-hal_spi_init(uint8_t spi_num)
+hal_spi_init(uint8_t spi_num, void *cfg)
 {
     return (0);
 }
