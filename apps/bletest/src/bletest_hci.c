@@ -63,7 +63,7 @@ bletest_send_conn_update(uint16_t handle)
 void
 bletest_ltk_req_reply(uint16_t handle)
 {
-    g_bletest_ltk_reply_handle = handle;
+    g_bletest_ltk_reply_handle |= (1 << (handle-1));
 }
 
 int
