@@ -659,6 +659,8 @@ bletest_execute_advertiser(void)
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
+    uint16_t mask;
+    uint16_t reply_handle;
 #endif
     int rc;
     uint16_t handle;
@@ -730,10 +732,16 @@ bletest_execute_advertiser(void)
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
 #if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
         /* Do we need to send a LTK reply? */
-        if (g_bletest_ltk_reply_handle) {
-            //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
-            bletest_send_ltk_req_reply(g_bletest_ltk_reply_handle);
-            g_bletest_ltk_reply_handle = 0;
+        mask = 1;
+        reply_handle = 1;
+        while (g_bletest_ltk_reply_handle && mask) {
+            if (g_bletest_ltk_reply_handle & mask) {
+                bletest_send_ltk_req_reply(reply_handle);
+                //bletest_send_ltk_req_neg_reply(reply_handle);
+                g_bletest_ltk_reply_handle &= ~mask;
+            }
+            ++reply_handle;
+            mask <<= 1;
         }
 #endif
         if (g_bletest_current_conns) {
