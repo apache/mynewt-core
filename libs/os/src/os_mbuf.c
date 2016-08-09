@@ -520,6 +520,10 @@ err:
  * @param src_off               The absolute offset within the source mbuf
  *                                  chain to read from.
  * @param len                   The number of bytes to append.
+ *
+ * @return                      0 on success;
+ *                              OS_EINVAL if the specified range extends beyond
+ *                                  the end of the source mbuf chain.
  */
 int
 os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
@@ -531,11 +535,11 @@ os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
     int rc;
 
     src_cur_om = os_mbuf_off(src, src_off, &src_cur_off);
-    if (src_cur_om == NULL) {
-        return OS_EINVAL;
-    }
-
     while (len > 0) {
+        if (src_cur_om == NULL) {
+            return OS_EINVAL;
+        }
+
         chunk_sz = min(len, src_cur_om->om_len - src_cur_off);
         rc = os_mbuf_append(dst, src_cur_om->om_data + src_cur_off, chunk_sz);
         if (rc != 0) {
