@@ -67,7 +67,9 @@ mem_malloc_mempool(struct os_mempool *mempool, int num_blocks, int block_size,
 }
 
 /**
- * Mallocs a block of memory and initializes an mbuf pool to use it.
+ * Mallocs a block of memory and initializes an mbuf pool to use it.  The
+ * specified block_size indicates the size of an mbuf acquired from the pool if
+ * it does not contain a pkthdr.
  *
  * @param mempool               The mempool to initialize.
  * @param mbuf_pool             The mbuf pool to initialize.
@@ -111,6 +113,24 @@ mem_malloc_mbuf_pool(struct os_mempool *mempool,
     return 0;
 }
 
+/**
+ * Mallocs a block of memory and initializes an mbuf pool to use it.  The
+ * specified block_size indicates the size of an mbuf acquired from the pool if
+ * it contains a pkthdr.
+ *
+ * @param mempool               The mempool to initialize.
+ * @param mbuf_pool             The mbuf pool to initialize.
+ * @param num_blocks            The total number of mbufs in the pool.
+ * @param block_size            The size of each mbuf.
+ * @param name                  The name to give the mempool.
+ * @param out_buf               On success, this points to the malloced memory.
+ *                                  Pass NULL if you don't need this
+ *                                  information.
+ *
+ * @return                      0 on success;
+ *                              OS_ENOMEM on malloc failure;
+ *                              Other OS code on unexpected error.
+ */
 int
 mem_malloc_mbufpkt_pool(struct os_mempool *mempool,
                         struct os_mbuf_pool *mbuf_pool, int num_blocks,
