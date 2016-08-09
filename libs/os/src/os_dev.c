@@ -36,6 +36,7 @@ os_dev_init(struct os_dev *dev, char *name, uint8_t stage,
     /* assume these are set after the fact. */
     dev->od_init_flags = 0;
     dev->od_init = od_init;
+    dev->od_init_arg = arg;
     memset(&dev->od_handlers, 0, sizeof(dev->od_handlers));
 
     return (0);
