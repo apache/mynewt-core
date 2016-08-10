@@ -253,6 +253,7 @@ bleuart_task_handler(void *unused)
 int
 main(void)
 {
+    struct ble_hci_ram_cfg hci_cfg;
     struct ble_hs_cfg cfg;
     uint32_t seed;
     int rc;
@@ -297,11 +298,13 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the RAM HCI transport. */
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
+    hci_cfg = ble_hci_ram_cfg_dflt;
+    rc = ble_hci_ram_init(&hci_cfg);
     assert(rc == 0);
 
     /* Initialize the BLE host. */
     cfg = ble_hs_cfg_dflt;
+    cfg.max_hci_bufs = hci_cfg.num_evt_hi_bufs + hci_cfg.num_evt_lo_bufs;
     cfg.max_connections = 1;
     cfg.max_gattc_procs = 2;
     cfg.max_l2cap_chans = 3;
@@ -333,7 +336,6 @@ main(void)
     /* Nmgr ble GATT server initialization */
     rc = nmgr_ble_gatt_svr_init(&bleuart_evq, &cfg);
     assert(rc == 0);
-
 
     rc = ble_hs_init(&bleuart_evq, &cfg);
     assert(rc == 0);

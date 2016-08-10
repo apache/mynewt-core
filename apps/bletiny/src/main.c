@@ -1704,6 +1704,7 @@ main(void)
 
     /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
+    cfg.max_hci_bufs = hci_cfg.num_evt_hi_bufs + hci_cfg.num_evt_lo_bufs;
     cfg.max_gattc_procs = 2;
     cfg.reset_cb = bletiny_on_reset;
     cfg.store_read_cb = ble_store_ram_read;

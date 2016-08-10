@@ -332,6 +332,7 @@ bleprph_task_handler(void *unused)
 int
 main(void)
 {
+    struct ble_hci_ram_cfg hci_cfg;
     struct ble_hs_cfg cfg;
     uint32_t seed;
     int rc;
@@ -391,11 +392,13 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the RAM HCI transport. */
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
+    hci_cfg = ble_hci_ram_cfg_dflt;
+    rc = ble_hci_ram_init(&hci_cfg);
     assert(rc == 0);
 
     /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
+    cfg.max_hci_bufs = hci_cfg.num_evt_hi_bufs + hci_cfg.num_evt_lo_bufs;
     cfg.max_gattc_procs = 2;
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
