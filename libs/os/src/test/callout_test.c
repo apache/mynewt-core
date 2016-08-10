@@ -41,9 +41,6 @@ struct os_callout_func callout_func_test;
 struct os_eventq callout_evq;
 struct os_event callout_ev;
 
-int i; 
-int j;
- 
 /* The callout_stop task */
 #define SEND_STOP_CALLOUT_TASK_PRIO        (3)
 struct os_task callout_task_struct_stop_send;
@@ -73,37 +70,35 @@ os_stack_t callout_task_stack_listen[CALLOUT_STACK_SIZE];
 
 struct os_callout_func callout_func_speak;
 
+/* Global variables to be used by the callout functions */
+int p;
+int q;
+int t;
 /* This is the function for callout_init*/
 void
 my_callout_func(void *arg)
 {
-    int p;
     p = 4;
-    TEST_ASSERT(p == 4);
 }
 
 /* This is the function for callout_init of stop test_case*/
 void
 my_callout_stop_func(void *arg)
 {
-    int q;
     q = 1;
-    TEST_ASSERT(q == 1);
 }
 /* This is the function for callout_init for speak test_case*/
 void
 my_callout_speak_func(void *arg)
 {
-    int p;
-    p = 4;
-    TEST_ASSERT(p == 4);
+    t = 2;
 }
 
 /* This is a callout task to send data */
 void
 callout_task_send(void *arg )
 {
-   
+   int i;
     /* Should say whether callout is armed or not */
     i= os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 0);
@@ -124,6 +119,7 @@ callout_task_send(void *arg )
 void
 callout_task_receive( void *arg)
 {
+    int i;
     struct os_event *event;
     os_time_t now;
     os_time_t tm;
@@ -133,7 +129,6 @@ callout_task_receive( void *arg)
     TEST_ASSERT(event->ev_type ==  OS_EVENT_T_TIMER);
     TEST_ASSERT(event->ev_arg == NULL);
 
-    TEST_ASSERT(i == 1);
     /* Should say whether callout is armed or not */
     i = os_callout_queued(&callout_func_test.cf_c);
     TEST_ASSERT(i == 0);
@@ -153,13 +148,14 @@ callout_task_receive( void *arg)
 void
 callout_task_stop_send( void *arg)
 {
-     int k;
-
+    int k;
+    int j;    
      /* Should say whether callout is armed or not */
     for(k = 0; k<MULTI_SIZE; k++){
         j = os_callout_queued(&callout_func_stop_test[k].cf_c);
         TEST_ASSERT(j == 0);
     }
+
 
     /* Show that  callout is not armed after calling callout_stop */
     for(k = 0; k<MULTI_SIZE; k++){
@@ -167,13 +163,10 @@ callout_task_stop_send( void *arg)
         j = os_callout_queued(&callout_func_stop_test[k].cf_c);
         TEST_ASSERT(j == 0);
     }
-    /* Assigning data to send */
+    /* Arm the callout */
     for(k = 0; k<MULTI_SIZE; k++){
-        callout_func_stop_test[k].cf_c.c_ev.ev_type = 10+ k;
-        callout_func_stop_test[k].cf_c.c_ev.ev_arg = NULL;
-
-         os_eventq_put(callout_func_stop_test[k].cf_c.c_evq,
-             &callout_func_stop_test[k].cf_c.c_ev);
+        j = os_callout_reset(&callout_func_stop_test[k].cf_c, OS_TICKS_PER_SEC/ 50);
+        TEST_ASSERT_FATAL(j == 0);
     }
     os_time_delay( OS_TICKS_PER_SEC );
 }
@@ -188,8 +181,9 @@ callout_task_stop_receive( void *arg )
     for(k=0; k<MULTI_SIZE; k++){
         event = os_eventq_poll(&callout_func_stop_test[k].cf_c.c_evq, 1,
            OS_WAIT_FOREVER);
-        TEST_ASSERT(event->ev_type == 10+k);
+        TEST_ASSERT(event->ev_type ==  OS_EVENT_T_TIMER);
         TEST_ASSERT(event->ev_arg == NULL);
+
      }
      
     /* Show that event is removed from the queued after calling callout_stop */
@@ -207,6 +201,7 @@ callout_task_stop_receive( void *arg )
 void
 callout_task_stop_speak( void *arg )
 {
+    int i;
     /* Arm the callout */
     i = os_callout_reset(&callout_func_speak.cf_c, OS_TICKS_PER_SEC/ 50);
     TEST_ASSERT_FATAL(i == 0);
@@ -216,7 +211,6 @@ callout_task_stop_speak( void *arg )
     TEST_ASSERT(i == 1);
 
     os_callout_stop(&callout_func_speak.cf_c);
-    TEST_ASSERT(i == 1);
     
     /* Send the callout */ 
     os_time_delay(OS_TICKS_PER_SEC/ 100 );
@@ -253,6 +247,7 @@ TEST_CASE(callout_test)
     /* Initialize the callout function */
     os_callout_func_init(&callout_func_test, &callout_evq,
         my_callout_func, NULL);
+    TEST_ASSERT(p == 4);
 
     /* Does not return until OS_restart is called */
     os_start();
@@ -284,6 +279,8 @@ TEST_CASE(callout_test_stop)
     for(k = 0; k<MULTI_SIZE; k++){
         os_callout_func_init(&callout_func_stop_test[k], &callout_stop_evq[k],
            my_callout_stop_func, NULL);
+         TEST_ASSERT(q == 1);
+
     }
 
     /* Does not return until OS_restart is called */
@@ -312,7 +309,8 @@ TEST_CASE(callout_test_speak)
     /* Initialize the callout function */
     os_callout_func_init(&callout_func_speak, &callout_evq,
         my_callout_speak_func, NULL);
-
+    TEST_ASSERT(t == 2);
+    
     /* Does not return until OS_restart is called */
     os_start();
 
