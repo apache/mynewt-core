@@ -64,7 +64,7 @@ bsp_imgr_current_slot(void)
 }
 
 void
-os_bsp_init(void)
+bsp_init(void)
 {
     /*
      * XXX this reference is here to keep this function in.
