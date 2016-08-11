@@ -781,7 +781,7 @@ bletest_execute_advertiser(void)
 
                         /* Add length */
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                        ble_hci_trans_hs_acl_data_send(om);
+                        ble_hci_trans_hs_acl_tx(om);
 
                         /* Increment last handle used */
                         ++g_last_handle_used;
