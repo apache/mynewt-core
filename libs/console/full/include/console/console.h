@@ -20,7 +20,6 @@
 #define __CONSOLE_H__
 
 #include <stdarg.h>
-//#include "console/prompt.h"
 
 typedef void (*console_rx_cb)(void);
 
