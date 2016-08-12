@@ -20,9 +20,11 @@
 #include <os/os.h>
 
 #include <console/console.h>
+#include <console/prompt.h>
 
 #include "shell/shell.h"
 #include "shell_priv.h"
+#include "shell/shell_prompt.h"
 
 #include <os/endian.h>
 #include <util/base64.h>
@@ -44,6 +46,9 @@ static struct os_mqueue g_shell_nlip_mq;
 
 static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
+void console_print_prompt(void);
+void console_set_prompt(char p);
+int shell_prompt_cmd(int argc, char **argv);
 
 static struct shell_cmd g_shell_echo_cmd = {
     .sc_cmd = "echo",
@@ -52,6 +57,10 @@ static struct shell_cmd g_shell_echo_cmd = {
 static struct shell_cmd g_shell_help_cmd = {
     .sc_cmd = "?",
     .sc_cmd_func = shell_help_cmd
+};
+static struct shell_cmd g_shell_prompt_cmd = {
+   .sc_cmd = "prompt",
+   .sc_cmd_func = shell_prompt_cmd
 };
 static struct shell_cmd g_shell_os_tasks_display_cmd = {
     .sc_cmd = "tasks",
@@ -83,7 +92,7 @@ static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list =
 static struct os_mbuf *g_nlip_mbuf;
 static uint16_t g_nlip_expected_len;
 
-static int
+int
 shell_cmd_list_lock(void)
 {
     int rc;
@@ -101,7 +110,7 @@ err:
     return (rc);
 }
 
-static int
+int
 shell_cmd_list_unlock(void)
 {
     int rc;
@@ -197,6 +206,10 @@ shell_process_command(char *line, int len)
     if (argc) {
         (void) shell_cmd(argv[0], argv, argc);
     }
+    else {
+        console_printf("\n");
+    }
+    console_print_prompt();
     return (0);
 }
 
@@ -507,7 +520,7 @@ shell_help_cmd(int argc, char **argv)
     if (rc != 0) {
         return -1;
     }
-
+    console_printf("Commands:\n");
     STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
         console_printf("%9s ", sc->sc_cmd);
         if (i++ % SHELL_HELP_PER_LINE == SHELL_HELP_PER_LINE - 1) {
@@ -554,6 +567,11 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
         goto err;
     }
 
+    rc = shell_cmd_register(&g_shell_prompt_cmd);
+    if (rc != 0) {
+        goto err;
+    }
+    
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
     if (rc != 0) {
         goto err;
