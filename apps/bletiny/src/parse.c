@@ -260,6 +260,22 @@ parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status)
     return val;
 }
 
+uint32_t
+parse_arg_uint32_dflt(char *name, uint32_t dflt, int *out_status)
+{
+    uint32_t val;
+    int rc;
+
+    val = parse_arg_uint32(name, &rc);
+    if (rc == ENOENT) {
+        val = dflt;
+        rc = 0;
+    }
+
+    *out_status = rc;
+    return val;
+}
+
 int
 parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status)
 {
