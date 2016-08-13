@@ -193,7 +193,6 @@ bleuart_gap_event(struct ble_gap_event *event, void *arg)
         /* Connection terminated; resume advertising. */
         bleuart_advertise();
         return 0;
-
     }
 
     return 0;

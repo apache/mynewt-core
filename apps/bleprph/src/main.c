@@ -265,6 +265,13 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
                     event->subscribe.prev_indicate,
                     event->subscribe.cur_indicate);
         return 0;
+
+    case BLE_GAP_EVENT_MTU:
+        BLEPRPH_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+                    event->mtu.conn_handle,
+                    event->mtu.channel_id,
+                    event->mtu.value);
+        return 0;
     }
 
     return 0;

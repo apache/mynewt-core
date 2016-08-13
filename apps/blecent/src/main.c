@@ -446,6 +446,13 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
         /* Attribute data is contained in event->notify_rx.attr_data. */
         return 0;
 
+    case BLE_GAP_EVENT_MTU:
+        BLECENT_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+                    event->mtu.conn_handle,
+                    event->mtu.channel_id,
+                    event->mtu.value);
+        return 0;
+
     default:
         return 0;
     }
