@@ -24,7 +24,6 @@
 #include <hal/flash_map.h>
 #include <hal/hal_flash.h>
 #include <os/os_malloc.h>
-#include <console/console.h>
 #include "bootutil/loader.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil_misc.h"
@@ -67,7 +66,22 @@ boot_slot_addr(int slot_num, struct boot_image_location *loc)
     loc->bil_address = area_desc->fa_off;
 }
 
-static void
+/*
+ * Status about copy-in-progress is either in slot0 (target slot) or
+ * in scratch area. It is in scratch area if the process is currently
+ * moving the last sector within image.
+ *
+ * If the copy-in-progress status is within the image slot, it will
+ * be at the end of the area.
+ * If the sector containing the boot copy status is in scratch, it's
+ * offset from beginning of scratch depends on how much of the image
+ * fits inside the scratch area.
+ *
+ * We start copy from the end of image, so boot-copy-status is in
+ * scratch when the first area is being moved. Otherwise it will be
+ * in slot 0.
+ */
+void
 boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off)
 {
     struct boot_img *b;
@@ -77,7 +91,7 @@ boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off)
     *off = b->area + b->loc.bil_address - sizeof(struct boot_img_trailer);
 }
 
-static void
+void
 boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
 {
     struct flash_area *scratch;
@@ -85,11 +99,15 @@ boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
 
     scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
     *flash_id = scratch->fa_flash_id;
+
+    /*
+     * Calculate where the boot status would be, if it was copied to scratch.
+     */
     *off = boot_copy_sz(boot_req->br_slot_areas[1], &cnt);
     *off += (scratch->fa_off - sizeof(struct boot_img_trailer));
 }
 
-static void
+void
 boot_slot_magic(int slot_num, struct boot_img_trailer *bit)
 {
     uint32_t off;
@@ -100,7 +118,7 @@ boot_slot_magic(int slot_num, struct boot_img_trailer *bit)
     hal_flash_read(flash_id, off, bit, sizeof(*bit));
 }
 
-static void
+void
 boot_scratch_magic(struct boot_img_trailer *bit)
 {
     uint32_t off;
@@ -398,104 +416,6 @@ boot_copy_image(void)
     boot_clear_status();
 
     return 0;
-}
-
-
-/*
- * Is copy in progress?
- */
-static void
-boot_read_status_bytes(struct boot_status *bs, uint8_t flash_id, uint32_t off)
-{
-    uint8_t status;
-
-    off -= sizeof(status) * 2;
-    while (1) {
-        hal_flash_read(flash_id, off, &status, sizeof(status));
-        if (status == 0xff) {
-            break;
-        }
-        off--;
-        if (bs->state == 2) {
-            bs->idx++;
-            bs->state = 0;
-        } else {
-            bs->state++;
-        }
-    }
-}
-
-int
-boot_read_status(struct boot_status *bs)
-{
-    struct boot_img_trailer bit;
-    uint8_t flash_id;
-    uint32_t off;
-
-    /*
-     * Check if boot_img_trailer is in scratch, or at the end of slot0.
-     */
-    boot_slot_magic(0, &bit);
-    if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
-        boot_magic_loc(0, &flash_id, &off);
-        boot_read_status_bytes(bs, flash_id, off);
-        console_printf("status in slot0, %lu/%lu\n", bs->idx, bs->state);
-        return 1;
-    }
-    boot_scratch_magic(&bit);
-    if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
-        boot_scratch_loc(&flash_id, &off);
-        boot_read_status_bytes(bs, flash_id, off);
-        console_printf("status in scratch, %lu/%lu\n", bs->idx, bs->state);
-        return 1;
-    }
-    return 0;
-}
-
-#include <hal/hal_system.h>
-
-int
-boot_write_status(struct boot_status *bs)
-{
-    uint32_t off;
-    uint8_t flash_id;
-    uint8_t val;
-
-    if (bs->idx == 0) {
-        /*
-         * Write to scratch
-         */
-        boot_scratch_loc(&flash_id, &off);
-    } else {
-        /*
-         * Write to slot 0;
-         */
-        boot_magic_loc(0, &flash_id, &off);
-    }
-    off -= ((3 * sizeof(uint8_t)) * bs->idx +
-      sizeof(uint8_t) * (bs->state + 1));
-
-    console_printf("status write, %lu/%lu -> %lx\n", bs->idx, bs->state, off);
-
-    val = bs->state;
-    hal_flash_write(flash_id, off, &val, sizeof(val));
-
-    return 0;
-}
-
-void
-boot_clear_status(void)
-{
-    uint32_t off;
-    uint32_t val = BOOT_IMG_MAGIC;
-    uint8_t flash_id;
-
-    /*
-     * Write to slot 0;
-     */
-    boot_magic_loc(0, &flash_id, &off);
-    off += sizeof(uint32_t);
-    hal_flash_write(flash_id, off, &val, sizeof(val));
 }
 
 /**

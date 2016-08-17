@@ -62,5 +62,10 @@ int boot_write_status(struct boot_status *bs);
 int boot_read_status(struct boot_status *bs);
 void boot_clear_status(void);
 
+void boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off);
+void boot_scratch_loc(uint8_t *flash_id, uint32_t *off);
+void boot_slot_magic(int slot_num, struct boot_img_trailer *bit);
+void boot_scratch_magic(struct boot_img_trailer *bit);
+
 #endif
 
