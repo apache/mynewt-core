@@ -40,8 +40,9 @@ struct boot_image_location {
  * Maintain state of copy progress.
  */
 struct boot_status {
-    uint32_t idx;
-    uint32_t state;
+    uint32_t idx;       /* Which area we're operating on */
+    uint8_t elem_sz;    /* Size of the status element to write in bytes */
+    uint8_t state;      /* Which part of the swapping process are we at */
 };
 
 /*

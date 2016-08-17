@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 #include <hal/hal_flash.h>
 #include <hal/flash_map.h>
 #include <os/os.h>
@@ -150,13 +151,14 @@ boot_read_status_bytes(struct boot_status *bs, uint8_t flash_id, uint32_t off)
 {
     uint8_t status;
 
-    off -= sizeof(status) * 2;
+    assert(bs->elem_sz);
+    off -= bs->elem_sz * 2;
     while (1) {
         hal_flash_read(flash_id, off, &status, sizeof(status));
         if (status == 0xff) {
             break;
         }
-        off--;
+        off -= bs->elem_sz;
         if (bs->state == 2) {
             bs->idx++;
             bs->state = 0;
@@ -186,14 +188,14 @@ boot_read_status(struct boot_status *bs)
     if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
         boot_magic_loc(0, &flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
-        console_printf("status in slot0, %lu/%lu\n", bs->idx, bs->state);
+        console_printf("status in slot0, %lu/%u\n", bs->idx, bs->state);
         return 1;
     }
     boot_scratch_magic(&bit);
     if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
         boot_scratch_loc(&flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
-        console_printf("status in scratch, %lu/%lu\n", bs->idx, bs->state);
+        console_printf("status in scratch, %lu/%u\n", bs->idx, bs->state);
         return 1;
     }
     return 0;
@@ -227,10 +229,9 @@ boot_write_status(struct boot_status *bs)
          */
         boot_magic_loc(0, &flash_id, &off);
     }
-    off -= ((3 * sizeof(uint8_t)) * bs->idx +
-      sizeof(uint8_t) * (bs->state + 1));
+    off -= ((3 * bs->elem_sz) * bs->idx + bs->elem_sz * (bs->state + 1));
 
-    console_printf("status write, %lu/%lu -> %lx\n", bs->idx, bs->state, off);
+    console_printf("status write, %lu/%u -> %lx\n", bs->idx, bs->state, off);
 
     val = bs->state;
     hal_flash_write(flash_id, off, &val, sizeof(val));

@@ -137,12 +137,27 @@ boot_image_info(void)
 {
     int i;
     struct boot_img *b;
+    struct flash_area *scratch;
 
     for (i = 0; i < BOOT_NUM_SLOTS; i++) {
         b = &boot_img[i];
         boot_slot_addr(i, &b->loc);
         boot_read_image_header(&b->loc, &b->hdr);
         b->area = boot_req->br_img_sz;
+    }
+
+    /*
+     * Figure out what size to write update status update as.
+     * The size depends on what the minimum write size is for scratch
+     * area, active image slot. We need to use the bigger of those 2
+     * values.
+     */
+    boot_state.elem_sz = hal_flash_align(boot_img[0].loc.bil_flash_id);
+
+    scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
+    i = hal_flash_align(scratch->fa_flash_id);
+    if (i > boot_state.elem_sz) {
+        boot_state.elem_sz = i;
     }
 }
 
