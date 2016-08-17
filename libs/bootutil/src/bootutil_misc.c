@@ -30,14 +30,35 @@
  * Retrieves from the boot vector the version number of the test image (i.e.,
  * the image that has not been proven stable, and which will only run once).
  *
- * @param out_ver           On success, the test version gets written here.
+ * @param slot              On success, the slot number of image to boot.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_read_test(struct image_version *out_ver)
+boot_vect_read_test(int *slot)
 {
-    return 0;
+    const struct flash_area *fap;
+    struct boot_img_trailer bit;
+    int i;
+    int rc;
+    uint32_t off;
+
+    for (i = FLASH_AREA_IMAGE_1; i <= FLASH_AREA_IMAGE_1; i++) {
+        rc = flash_area_open(i, &fap);
+        if (rc) {
+            continue;
+        }
+        off = fap->fa_size - sizeof(struct boot_img_trailer);
+        rc = flash_area_read(fap, off, &bit, sizeof(bit));
+        if (rc) {
+            continue;
+        }
+        if (bit.bit_start == BOOT_IMG_MAGIC) {
+            *slot = i;
+            return 0;
+        }
+    }
+    return -1;
 }
 
 /**
@@ -50,7 +71,7 @@ boot_vect_read_test(struct image_version *out_ver)
 int
 boot_vect_read_main(struct image_version *out_ver)
 {
-    return 0;
+    return -1;
 }
 
 /**
@@ -85,7 +106,7 @@ boot_vect_write_test(int slot)
 int
 boot_vect_write_main(struct image_version *ver)
 {
-    return 0;
+    return -1;
 }
 
 /**

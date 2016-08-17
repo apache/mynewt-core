@@ -63,6 +63,7 @@ imgr_boot_read(struct nmgr_jbuf *njb)
 {
     int rc;
     struct json_encoder *enc;
+    int slot;
     struct image_version ver;
     struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
@@ -71,9 +72,12 @@ imgr_boot_read(struct nmgr_jbuf *njb)
 
     json_encode_object_start(enc);
 
-    rc = boot_vect_read_test(&ver);
+    rc = boot_vect_read_test(&slot);
     if (!rc) {
-        imgr_ver_jsonstr(enc, "test", &ver);
+        rc = imgr_read_info(slot, &ver, hash);
+        if (!rc) {
+            imgr_ver_jsonstr(enc, "test", &ver);
+        }
     }
 
     rc = boot_vect_read_main(&ver);
@@ -161,14 +165,15 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
     struct image_version ver;
     struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
+    int slot;
 
     enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
 
-    rc = boot_vect_read_test(&ver);
+    rc = boot_vect_read_test(&slot);
     if (!rc) {
-        rc = imgr_find_by_ver(&ver, hash);
+        rc = imgr_read_info(slot, &ver, hash);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "test", hash);
         }
