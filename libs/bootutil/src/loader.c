@@ -36,7 +36,7 @@
 /** The request object provided by the client. */
 static const struct boot_req *boot_req;
 
-/** Image headers read from flash. */
+/** Info about image slots. */
 static struct boot_img {
     struct image_header hdr;
     struct boot_image_location loc;
@@ -52,8 +52,8 @@ static uint32_t boot_copy_sz(int max_idx, int *cnt);
  * Calculates the flash offset of the specified image slot.
  *
  * @param slot_num              The number of the slot to calculate.
+ * @param loc                   The flash location of the slot.
  *
- * @return                      The flash offset of the image slot.
  */
 static void
 boot_slot_addr(int slot_num, struct boot_image_location *loc)
@@ -67,50 +67,53 @@ boot_slot_addr(int slot_num, struct boot_image_location *loc)
     loc->bil_address = area_desc->fa_off;
 }
 
-static uint32_t
-boot_magic_off(int slot_num)
+static void
+boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off)
 {
-    return boot_img[slot_num].area + boot_img[slot_num].loc.bil_address -
-      sizeof(struct boot_img_trailer);
+    struct boot_img *b;
+
+    b = &boot_img[slot_num];
+    *flash_id = b->loc.bil_flash_id;
+    *off = b->area + b->loc.bil_address - sizeof(struct boot_img_trailer);
 }
 
-static uint32_t
-boot_scratch_off(void)
+static void
+boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
 {
     struct flash_area *scratch;
-    uint32_t off;
     int cnt;
 
     scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
-    off = boot_copy_sz(boot_req->br_slot_areas[1], &cnt);
-    off += (scratch->fa_off - sizeof(struct boot_img_trailer));
-    return off;
+    *flash_id = scratch->fa_flash_id;
+    *off = boot_copy_sz(boot_req->br_slot_areas[1], &cnt);
+    *off += (scratch->fa_off - sizeof(struct boot_img_trailer));
 }
 
 static void
 boot_slot_magic(int slot_num, struct boot_img_trailer *bit)
 {
     uint32_t off;
-    struct boot_img *b;
+    uint8_t flash_id;
 
-    b = &boot_img[slot_num];
-    off = boot_magic_off(slot_num);
+    boot_magic_loc(slot_num, &flash_id, &off);
     memset(bit, 0xff, sizeof(*bit));
-    hal_flash_read(b->loc.bil_flash_id, off, bit, sizeof(*bit));
+    hal_flash_read(flash_id, off, bit, sizeof(*bit));
 }
 
 static void
 boot_scratch_magic(struct boot_img_trailer *bit)
 {
     uint32_t off;
-    struct flash_area *scratch;
+    uint8_t flash_id;
 
-    scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
-
-    off = boot_scratch_off();
-    hal_flash_read(scratch->fa_flash_id, off, bit, sizeof(*bit));
+    boot_scratch_loc(&flash_id, &off);
+    memset(bit, 0xff, sizeof(*bit));
+    hal_flash_read(flash_id, off, bit, sizeof(*bit));
 }
 
+/*
+ * Gather info about image in a given slot.
+ */
 void
 boot_image_info(void)
 {
@@ -218,6 +221,15 @@ boot_copy_sz(int max_idx, int *cnt)
     return sz;
 }
 
+/**
+ * Erase one area.  The destination area must
+ * be erased prior to this function being called.
+ *
+ * @param area_idx            The index of the area.
+ * @param sz                  The number of bytes to erase.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static int
 boot_erase_area(int area_idx, uint32_t sz)
 {
@@ -289,13 +301,15 @@ boot_copy_area(int from_area_idx, int to_area_idx, uint32_t sz)
 }
 
 /**
- * Swaps the contents of two flash areas.
+ * Swaps the contents of two flash areas belonging to images.
  *
- * @param area_idx_1          The index of one area to swap.  This area
+ * @param area_idx            The index of first slot to exchange. This area
  *                                  must be part of the first image slot.
- * @param area_idx_2          The index of the other area to swap.  This
- *                                  area must be part of the second image
- *                                  slot.
+ * @param sz                  The number of bytes swap.
+ *
+ * @param end_area            Boolean telling whether this includes this
+ *                                  area has last slots.
+ *
  * @return                      0 on success; nonzero on failure.
  */
 static int
@@ -415,22 +429,23 @@ int
 boot_read_status(struct boot_status *bs)
 {
     struct boot_img_trailer bit;
-    struct flash_area *scratch;
+    uint8_t flash_id;
+    uint32_t off;
 
     /*
      * Check if boot_img_trailer is in scratch, or at the end of slot0.
      */
     boot_slot_magic(0, &bit);
     if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
-        boot_read_status_bytes(bs, boot_img[0].loc.bil_flash_id,
-          boot_magic_off(0));
+        boot_magic_loc(0, &flash_id, &off);
+        boot_read_status_bytes(bs, flash_id, off);
         console_printf("status in slot0, %lu/%lu\n", bs->idx, bs->state);
         return 1;
     }
     boot_scratch_magic(&bit);
     if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
-        scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
-        boot_read_status_bytes(bs, scratch->fa_flash_id, boot_scratch_off());
+        boot_scratch_loc(&flash_id, &off);
+        boot_read_status_bytes(bs, flash_id, off);
         console_printf("status in scratch, %lu/%lu\n", bs->idx, bs->state);
         return 1;
     }
@@ -450,15 +465,12 @@ boot_write_status(struct boot_status *bs)
         /*
          * Write to scratch
          */
-        off = boot_scratch_off();
-        flash_id =
-          boot_req->br_area_descs[boot_req->br_scratch_area_idx].fa_flash_id;
+        boot_scratch_loc(&flash_id, &off);
     } else {
         /*
          * Write to slot 0;
          */
-        off = boot_magic_off(0);
-        flash_id = boot_img[0].loc.bil_flash_id;
+        boot_magic_loc(0, &flash_id, &off);
     }
     off -= ((3 * sizeof(uint8_t)) * bs->idx +
       sizeof(uint8_t) * (bs->state + 1));
@@ -481,8 +493,7 @@ boot_clear_status(void)
     /*
      * Write to slot 0;
      */
-    off = boot_magic_off(0);
-    flash_id = boot_img[0].loc.bil_flash_id;
+    boot_magic_loc(0, &flash_id, &off);
     off += sizeof(uint32_t);
     hal_flash_write(flash_id, off, &val, sizeof(val));
 }
