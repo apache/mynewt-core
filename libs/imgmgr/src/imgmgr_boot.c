@@ -132,12 +132,11 @@ imgr_boot_write(struct nmgr_jbuf *njb)
         rc = NMGR_ERR_EINVAL;
         goto err;
     }
-    rc = boot_vect_write_test(&ver);
+    rc = boot_vect_write_test(rc);
     if (rc) {
         rc = NMGR_ERR_EINVAL;
         goto err;
     }
-
     enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
@@ -226,11 +225,12 @@ imgr_boot2_write(struct nmgr_jbuf *njb)
     base64_decode(hash_str, hash);
     rc = imgr_find_by_hash(hash, &ver);
     if (rc >= 0) {
-        rc = boot_vect_write_test(&ver);
+        rc = boot_vect_write_test(rc);
         if (rc) {
             rc = NMGR_ERR_EUNKNOWN;
             goto err;
         }
+        rc = 0;
     } else {
         rc = NMGR_ERR_EINVAL;
         goto err;

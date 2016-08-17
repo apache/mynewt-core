@@ -29,12 +29,11 @@ pkg.features: bootloader
 
 pkg.deps:
     - sys/config
-    - fs/nffs
     - libs/bootutil
     - libs/mbedtls
     - libs/os
     - libs/util
-    - libs/console/stub
+    - libs/console/full
 
 pkg.cflags: -DLOG_LEVEL=255
 pkg.cflags.NFFS:

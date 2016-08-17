@@ -397,7 +397,6 @@ main(int argc, char **argv)
 
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
     imgmgr_module_init();
-    bootutil_cfg_register();
 
     stats_module_init();
 
