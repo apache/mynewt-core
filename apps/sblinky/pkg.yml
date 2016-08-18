@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -33,10 +33,15 @@ pkg.feature_blacklist:
 pkg.feature_whitelist:
     ".*newtmgr.*": SHELL
 
+pkg.deps.ADC_NRF51:
+    - drivers/adc/adc_nrf51
+
+pkg.deps.ADC_NRF52:
+    - drivers/adc/adc_nrf52
+
 pkg.deps:
     - libs/newtmgr
     - hw/mcu/nordic
-    - drivers/adc/adc_nrf52
     - drivers/adc
     - libs/console/full
     - libs/os

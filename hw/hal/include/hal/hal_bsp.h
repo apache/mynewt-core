@@ -65,7 +65,8 @@ const struct bsp_mem_dump *bsp_core_dump(int *area_cnt);
 #define BSP_MAX_ID_LEN  32
 int bsp_hw_id(uint8_t *id, int max_len);
 
-uint16_t bsp_get_refmv(void);
+struct adc_dev;
+uint16_t bsp_get_refmv(void *cfgdata);
 
 #ifdef __cplusplus
 }

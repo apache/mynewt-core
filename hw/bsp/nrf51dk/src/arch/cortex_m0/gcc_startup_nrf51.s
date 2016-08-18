@@ -93,7 +93,7 @@ __isr_vector:
     .long   _SPI1_TWI1_IRQHandler
     .long   0                         /*Reserved */
     .long   _GPIOTE_IRQHandler
-    .long   _ADC_IRQHandler
+    .long   ADC_IRQHandler
     .long   _TIMER0_IRQHandler
     .long   _TIMER1_IRQHandler
     .long   _TIMER2_IRQHandler
@@ -244,7 +244,7 @@ Default_Handler:
     IRQ  _SPI0_TWI0_IRQHandler
     IRQ  _SPI1_TWI1_IRQHandler
     IRQ  _GPIOTE_IRQHandler
-    IRQ  _ADC_IRQHandler
+    IRQ  ADC_IRQHandler
     IRQ  _TIMER0_IRQHandler
     IRQ  _TIMER1_IRQHandler
     IRQ  _TIMER2_IRQHandler

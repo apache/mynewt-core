@@ -39,3 +39,5 @@ pkg.deps:
     - libs/baselibc
 pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/nrf52
+pkg.features:
+    - ADC_NRF52

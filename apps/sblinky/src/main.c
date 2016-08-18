@@ -26,20 +26,32 @@
 #include "config/config.h"
 #include <os/os_dev.h>
 #include <adc/adc.h>
-#include <adc_nrf52/adc_nrf52.h>
 #include <assert.h>
 #include <string.h>
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
 #include "nrf.h"
-#include "nrf_drv_saadc.h"
 #include "app_util_platform.h"
 #include "app_error.h"
 
+#ifdef NRF51
+#include <adc_nrf51/adc_nrf51.h>
+#include "nrf_drv_adc.h"
+nrf_drv_adc_config_t adc_config = NRF_DRV_ADC_DEFAULT_CONFIG;
+nrf_drv_adc_channel_t g_nrf_adc_chan =
+    NRF_DRV_ADC_DEFAULT_CHANNEL(NRF_ADC_CONFIG_INPUT_2);
+#endif
+
+#ifdef NRF52
+#include <adc_nrf52/adc_nrf52.h>
+#include "nrf_drv_saadc.h"
+nrf_drv_saadc_config_t adc_config = NRF_DRV_SAADC_DEFAULT_CONFIG;
+#endif
+
 int g_result_mv;
 int g_result;
-nrf_drv_saadc_config_t adc_config = NRF_DRV_SAADC_DEFAULT_CONFIG;
+
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -156,37 +168,52 @@ err:
 void
 task1_handler(void *arg)
 {
+    //int rc;
     struct os_task *t;
     struct adc_dev *adc;
 
+#ifdef NRF52
     nrf_saadc_channel_config_t cc =
         NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN1);
     cc.gain = NRF_SAADC_GAIN1_4;
     cc.reference = NRF_SAADC_REFERENCE_VDD4;
+#endif
+
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    adc = (struct adc_dev *) os_dev_open("adc0", 1, NULL);
+    adc = (struct adc_dev *) os_dev_open("adc0", 1, &adc_config);
     assert(adc != NULL);
 
+#ifdef NRF51
+    adc_chan_config(adc, 0, &g_nrf_adc_chan);
+#endif
+#ifdef NRF52
     adc_chan_config(adc, 0, &cc);
+#endif
 
     sample_buffer1 = malloc(adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
     sample_buffer2 = malloc(adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    memset(sample_buffer1, 0, adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    memset(sample_buffer2, 0, adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
 
+#if 1
     adc_buf_set(adc, sample_buffer1, sample_buffer2,
             adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
     adc_event_handler_set(adc, adc_read_event, (void *) NULL);
+#endif
+
+#if 0
+    rc = adc_chan_read(adc, 0, &g_result);
+    assert(rc == 0);
+    g_result_mv = adc_result_mv(adc, 0, g_result);
+#endif
 
     while (1) {
         t = os_sched_get_current_task();
         assert(t->t_func == task1_handler);
-/*
-        rc = adc_read_channel(adc, 0, &g_result);
-        assert(rc == 0);
-        g_result_mv = adc_result_mv(adc, 0, g_result);
-*/
+
         adc_sample(adc);
 
         ++g_task1_loops;
@@ -205,7 +232,7 @@ task1_handler(void *arg)
 #endif
     }
 
-        os_dev_close((struct os_dev *) adc);
+    os_dev_close((struct os_dev *) adc);
 }
 
 void
@@ -291,10 +318,18 @@ main(int argc, char **argv)
 
     stats_module_init();
 
+#ifdef NRF52
     rc = os_dev_create((struct os_dev *) &my_dev, "adc0",
             OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
             nrf52_adc_dev_init, &adc_config);
     assert(rc == 0);
+#endif
+#ifdef NRF51
+    rc = os_dev_create((struct os_dev *) &my_dev, "adc0",
+            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+            nrf51_adc_dev_init, &adc_config);
+    assert(rc == 0);
+#endif
 
 #if 0
     saadc_test();

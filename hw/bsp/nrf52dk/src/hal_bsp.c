@@ -66,7 +66,7 @@ bsp_core_dump(int *area_cnt)
 }
 
 uint16_t
-bsp_get_refmv(void)
+bsp_get_refmv(void *cfgdata)
 {
     return (2800);
 }

@@ -205,7 +205,7 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
             refmv = 600; /* 0.6V for NRF52 */
             break;
         case NRF_SAADC_REFERENCE_VDD4:
-            refmv = bsp_get_refmv() / 4;
+            refmv = bsp_get_refmv(NULL) / 4;
             break;
         default:
             assert(0);
