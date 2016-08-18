@@ -46,12 +46,14 @@ struct boot_status {
 };
 
 /*
- * End-of-image data structure.
+ * End-of-image slot data structure.
  */
 #define BOOT_IMG_MAGIC  0x12344321
 struct boot_img_trailer {
-    uint32_t bit_start;
-    uint32_t bit_done;
+    uint32_t bit_copy_start;
+    uint8_t  bit_copy_done;
+    uint8_t  bit_img_ok;
+    uint16_t _pad;
 };
 
 int bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,

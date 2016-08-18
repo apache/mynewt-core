@@ -25,5 +25,6 @@ int boot_vect_read_test(int *slot);
 int boot_vect_read_main(struct image_version *out_ver);
 int boot_vect_write_test(int slot);
 int boot_vect_write_main(struct image_version *ver);
+void boot_confirm_ok(void);
 
 #endif /*  __BOOTUTIL_MISC_H_ */

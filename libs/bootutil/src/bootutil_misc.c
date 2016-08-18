@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <hal/hal_flash.h>
 #include <hal/flash_map.h>
+#include <hal/hal_bsp.h>
 #include <os/os.h>
 #include <console/console.h>
 #include "bootutil/image.h"
@@ -54,7 +55,7 @@ boot_vect_read_test(int *slot)
         if (rc) {
             continue;
         }
-        if (bit.bit_start == BOOT_IMG_MAGIC) {
+        if (bit.bit_copy_start == BOOT_IMG_MAGIC) {
             *slot = i;
             return 0;
         }
@@ -185,14 +186,14 @@ boot_read_status(struct boot_status *bs)
      * Check if boot_img_trailer is in scratch, or at the end of slot0.
      */
     boot_slot_magic(0, &bit);
-    if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
+    if (bit.bit_copy_start == BOOT_IMG_MAGIC && bit.bit_copy_done == 0xff) {
         boot_magic_loc(0, &flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
         console_printf("status in slot0, %lu/%u\n", bs->idx, bs->state);
         return 1;
     }
     boot_scratch_magic(&bit);
-    if (bit.bit_start == BOOT_IMG_MAGIC && bit.bit_done == 0xffffffff) {
+    if (bit.bit_copy_start == BOOT_IMG_MAGIC && bit.bit_copy_done == 0xff) {
         boot_scratch_loc(&flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
         console_printf("status in scratch, %lu/%u\n", bs->idx, bs->state);
@@ -249,14 +250,44 @@ void
 boot_clear_status(void)
 {
     uint32_t off;
-    uint32_t val = BOOT_IMG_MAGIC;
+    uint8_t val = 0;
     uint8_t flash_id;
 
     /*
-     * Write to slot 0;
+     * Write to slot 0; boot_img_trailer is the 8 bytes within image slot.
+     * Here we say that copy operation was finished.
      */
     boot_magic_loc(0, &flash_id, &off);
     off += sizeof(uint32_t);
     hal_flash_write(flash_id, off, &val, sizeof(val));
 }
 
+/*
+ * This must be called by the app to confirm that it is ok to keep booting
+ * to this image.
+ *
+ */
+void
+boot_confirm_ok(void)
+{
+    const struct flash_area *fap;
+    uint32_t off;
+    int rc;
+    uint8_t val;
+
+    /*
+     * Write to slot 0.
+     */
+    rc = flash_area_open(bsp_imgr_current_slot(), &fap);
+    if (rc) {
+        return;
+    }
+
+    off = fap->fa_size - sizeof(struct boot_img_trailer);
+    off += (sizeof(uint32_t) + sizeof(uint8_t));
+    rc = flash_area_read(fap, off, &val, sizeof(val));
+    if (!rc && val == 0xff) {
+        val = 0;
+        flash_area_write(fap, off, &val, sizeof(val));
+    }
+}

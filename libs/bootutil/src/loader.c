@@ -200,10 +200,19 @@ boot_select_image_slot(void)
     struct boot_img *b;
     struct boot_img_trailer bit;
 
+    boot_slot_magic(0, &bit);
+    if (bit.bit_copy_start == BOOT_IMG_MAGIC && bit.bit_copy_done != 0xff &&
+      bit.bit_img_ok == 0xff) {
+        /*
+         * Copied the image successfully, but image was not confirmed as good.
+         * We need to go back to another image.
+         */
+        boot_vect_write_test(FLASH_AREA_IMAGE_1);
+    }
     for (i = 1; i < BOOT_NUM_SLOTS; i++) {
         b = &boot_img[i];
         boot_slot_magic(i, &bit);
-        if (bit.bit_start == BOOT_IMG_MAGIC) {
+        if (bit.bit_copy_start == BOOT_IMG_MAGIC) {
             rc = boot_image_check(&b->hdr, &b->loc);
             if (rc) {
                 /*
@@ -473,7 +482,8 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     }
 
     /*
-     * Check if we should initiate copy.
+     * Check if we should initiate copy, or revert back to earlier image.
+     *
      */
     slot = boot_select_image_slot();
     if (slot == -1) {
