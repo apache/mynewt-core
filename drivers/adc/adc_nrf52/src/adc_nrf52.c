@@ -45,7 +45,7 @@ static struct nrf52_saadc_stats nrf52_saadc_stats;
 struct adc_dev *global_adc_dev;
 nrf_drv_saadc_config_t *global_adc_config;
 
-uint8_t nrf52_adc_chans[NRF_SAADC_CHANNEL_COUNT];
+uint8_t nrf52_adc_chans[NRF_SAADC_CHANNEL_COUNT * sizeof(struct adc_chan_config)];
 
 static void
 nrf52_saadc_event_handler(const nrf_drv_saadc_evt_t *event)
