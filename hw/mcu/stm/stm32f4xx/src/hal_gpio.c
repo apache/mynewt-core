@@ -370,8 +370,8 @@ hal_gpio_set_nvic(IRQn_Type irqn)
  *
  * @return int
  */
-static int
-hal_gpio_init(int pin, GPIO_InitTypeDef *cfg)
+int
+hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
 {
     int port;
     uint32_t mcu_pin_mask;
@@ -413,7 +413,7 @@ hal_gpio_init_in(int pin, gpio_pull_t pull)
     init_cfg.Mode = GPIO_MODE_INPUT;
     init_cfg.Pull = pull;
 
-    rc = hal_gpio_init(pin, &init_cfg);
+    rc = hal_gpio_init_stm(pin, &init_cfg);
     return rc;
 }
 
@@ -438,7 +438,7 @@ int hal_gpio_init_out(int pin, int val)
     init_cfg.Speed = GPIO_SPEED_HIGH;
     init_cfg.Alternate = 0;
 
-    rc = hal_gpio_init(pin, &init_cfg);
+    rc = hal_gpio_init_stm(pin, &init_cfg);
     return rc;
 }
 
@@ -457,7 +457,7 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull)
     gpio.Pull = pull;
     gpio.Alternate = af_type;
 
-    return hal_gpio_init(pin, &gpio);
+    return hal_gpio_init_stm(pin, &gpio);
 }
 
 /**
@@ -611,7 +611,7 @@ hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
         /* Configure the GPIO */
         init_cfg.Mode = mode;
         init_cfg.Pull = pull;
-        rc = hal_gpio_init(pin, &init_cfg);
+        rc = hal_gpio_init_stm(pin, &init_cfg);
         if (!rc) {
             /* Enable interrupt vector in NVIC */
             irqn = hal_gpio_pin_to_irq(pin);

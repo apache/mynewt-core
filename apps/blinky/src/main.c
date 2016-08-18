@@ -76,6 +76,7 @@ uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
 
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
+
 #if 0
 #define SAADC_SAMPLES_IN_BUFFER (4)
 static nrf_saadc_value_t       m_buffer_pool[2][SAADC_SAMPLES_IN_BUFFER];

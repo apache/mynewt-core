@@ -20,6 +20,11 @@
 #ifndef __MCU_STM32F4_MYNEWT_HAL_H
 #define __MCU_STM32F4_MYNEWT_HAL_H
 
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal_dma.h"
+#include "stm32f4xx_hal_gpio.h"
+#include "stm32f4xx_hal_i2c.h"
+
 /* Helper functions to enable/disable interrupts. */
 #define __HAL_DISABLE_INTERRUPTS(x)                     \
     do {                                                \
@@ -33,5 +38,14 @@
             __enable_irq();                             \
         }                                               \
     } while(0);
+
+
+int hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg);
+
+struct stm32_hal_i2c_cfg {
+    int sda_pin;
+    int scl_pin;
+    I2C_InitTypeDef *i2c_settings;
+};
 
 #endif /* __MCU_STM32F4_MYNEWT_HAL_H */
