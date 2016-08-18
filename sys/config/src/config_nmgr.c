@@ -43,34 +43,36 @@ static struct nmgr_group conf_nmgr_group = {
 static int
 conf_nmgr_read(struct nmgr_jbuf *njb)
 {
-    char tmp_str[CONF_MAX_NAME_LEN];
-    char *val_str;
+    int rc;
+    char name_str[CONF_MAX_NAME_LEN];
+    char val_str[CONF_MAX_VAL_LEN];
+    char *val;
+
     const struct json_attr_t attr[2] = {
         [0] = {
             .attribute = "name",
             .type = t_string,
-            .addr.string = tmp_str,
-            .len = sizeof(tmp_str)
+            .addr.string = name_str,
+            .len = sizeof(name_str)
         },
         [1] = {
             .attribute = NULL
         }
     };
     struct json_value jv;
-    int rc;
 
     rc = json_read_object(&njb->njb_buf, attr);
     if (rc) {
         return OS_EINVAL;
     }
 
-    val_str = conf_get_value(tmp_str, tmp_str, sizeof(tmp_str));
-    if (!val_str) {
+    val = conf_get_value(name_str, val_str, sizeof(val_str));
+    if (!val) {
         return OS_EINVAL;
     }
 
     json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_STRING(&jv, val_str);
+    JSON_VALUE_STRING(&jv, val);
     json_encode_object_entry(&njb->njb_enc, "val", &jv);
     json_encode_object_finish(&njb->njb_enc);
 
