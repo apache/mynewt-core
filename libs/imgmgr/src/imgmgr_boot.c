@@ -80,9 +80,12 @@ imgr_boot_read(struct nmgr_jbuf *njb)
         }
     }
 
-    rc = boot_vect_read_main(&ver);
+    rc = boot_vect_read_main(&slot);
     if (!rc) {
-        imgr_ver_jsonstr(enc, "main", &ver);
+        rc = imgr_read_info(slot, &ver, hash);
+        if (!rc) {
+            imgr_ver_jsonstr(enc, "main", &ver);
+        }
     }
 
     rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash);
@@ -179,9 +182,9 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
         }
     }
 
-    rc = boot_vect_read_main(&ver);
+    rc = boot_vect_read_main(&slot);
     if (!rc) {
-        rc = imgr_find_by_ver(&ver, hash);
+        rc = imgr_read_info(slot, &ver, hash);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "main", hash);
         }

@@ -26,10 +26,32 @@
 #include <os/os.h>
 #include <console/console.h>
 #include "bootutil/image.h"
+#include "bootutil/bootutil_misc.h"
 #include "bootutil_priv.h"
 
+/*
+ * Read the image trailer from a given slot.
+ */
+static int
+boot_vect_read_img_trailer(int slot, struct boot_img_trailer *bit)
+{
+    int rc;
+    const struct flash_area *fap;
+    uint32_t off;
+
+    rc = flash_area_open(slot, &fap);
+    if (rc) {
+        return rc;
+    }
+    off = fap->fa_size - sizeof(struct boot_img_trailer);
+    rc = flash_area_read(fap, off, bit, sizeof(*bit));
+    flash_area_close(fap);
+
+    return rc;
+}
+
 /**
- * Retrieves from the boot vector the version number of the test image (i.e.,
+ * Retrieves from the slot number of the test image (i.e.,
  * the image that has not been proven stable, and which will only run once).
  *
  * @param slot              On success, the slot number of image to boot.
@@ -39,19 +61,15 @@
 int
 boot_vect_read_test(int *slot)
 {
-    const struct flash_area *fap;
     struct boot_img_trailer bit;
     int i;
     int rc;
-    uint32_t off;
 
-    for (i = FLASH_AREA_IMAGE_1; i <= FLASH_AREA_IMAGE_1; i++) {
-        rc = flash_area_open(i, &fap);
-        if (rc) {
+    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
+        if (i == bsp_imgr_current_slot()) {
             continue;
         }
-        off = fap->fa_size - sizeof(struct boot_img_trailer);
-        rc = flash_area_read(fap, off, &bit, sizeof(bit));
+        rc = boot_vect_read_img_trailer(i, &bit);
         if (rc) {
             continue;
         }
@@ -64,16 +82,32 @@ boot_vect_read_test(int *slot)
 }
 
 /**
- * Retrieves from the boot vector the version number of the main image.
+ * Retrieves from the slot number of the main image. If this is
+ * different from test image slot, next restart will revert to main.
  *
  * @param out_ver           On success, the main version gets written here.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_read_main(struct image_version *out_ver)
+boot_vect_read_main(int *slot)
 {
-    return -1;
+    int rc;
+    struct boot_img_trailer bit;
+
+    rc = boot_vect_read_img_trailer(FLASH_AREA_IMAGE_0, &bit);
+    assert(rc == 0);
+
+    if (bit.bit_copy_start != BOOT_IMG_MAGIC || bit.bit_img_ok != 0xff) {
+        /*
+         * If there never was copy that took place, or if the current
+         * image has been marked good, we'll keep booting it.
+         */
+        *slot = FLASH_AREA_IMAGE_0;
+    } else {
+        *slot = FLASH_AREA_IMAGE_1;
+    }
+    return 0;
 }
 
 /**
@@ -97,18 +131,43 @@ boot_vect_write_test(int slot)
     off = fap->fa_size - sizeof(struct boot_img_trailer);
     magic = BOOT_IMG_MAGIC;
 
-    return flash_area_write(fap, off, &magic, sizeof(magic));
+    rc = flash_area_write(fap, off, &magic, sizeof(magic));
+    flash_area_close(fap);
+
+    return rc;
 }
 
 /**
  * Deletes the main image version number from the boot vector.
+ * This must be called by the app to confirm that it is ok to keep booting
+ * to this image.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_write_main(struct image_version *ver)
+boot_vect_write_main(void)
 {
-    return -1;
+    const struct flash_area *fap;
+    uint32_t off;
+    int rc;
+    uint8_t val;
+
+    /*
+     * Write to slot 0.
+     */
+    rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
+    if (rc) {
+        return rc;
+    }
+
+    off = fap->fa_size - sizeof(struct boot_img_trailer);
+    off += (sizeof(uint32_t) + sizeof(uint8_t));
+    rc = flash_area_read(fap, off, &val, sizeof(val));
+    if (!rc && val == 0xff) {
+        val = 0;
+        rc = flash_area_write(fap, off, &val, sizeof(val));
+    }
+    return rc;
 }
 
 /**
@@ -260,34 +319,4 @@ boot_clear_status(void)
     boot_magic_loc(0, &flash_id, &off);
     off += sizeof(uint32_t);
     hal_flash_write(flash_id, off, &val, sizeof(val));
-}
-
-/*
- * This must be called by the app to confirm that it is ok to keep booting
- * to this image.
- *
- */
-void
-boot_confirm_ok(void)
-{
-    const struct flash_area *fap;
-    uint32_t off;
-    int rc;
-    uint8_t val;
-
-    /*
-     * Write to slot 0.
-     */
-    rc = flash_area_open(bsp_imgr_current_slot(), &fap);
-    if (rc) {
-        return;
-    }
-
-    off = fap->fa_size - sizeof(struct boot_img_trailer);
-    off += (sizeof(uint32_t) + sizeof(uint8_t));
-    rc = flash_area_read(fap, off, &val, sizeof(val));
-    if (!rc && val == 0xff) {
-        val = 0;
-        flash_area_write(fap, off, &val, sizeof(val));
-    }
 }

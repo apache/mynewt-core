@@ -496,7 +496,7 @@ imgmgr_module_init(void)
     rc = nmgr_group_register(&imgr_nmgr_group);
     assert(rc == 0);
 
-    boot_confirm_ok();
+    boot_vect_write_main();
 
     return rc;
 }
