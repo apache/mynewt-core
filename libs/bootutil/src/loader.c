@@ -47,6 +47,12 @@ static struct boot_status boot_state;
 static int boot_erase_area(int area_idx, uint32_t sz);
 static uint32_t boot_copy_sz(int max_idx, int *cnt);
 
+void
+boot_req_set(struct boot_req *req)
+{
+    boot_req = req;
+}
+
 /**
  * Calculates the flash offset of the specified image slot.
  *
@@ -491,6 +497,8 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     }
 
     if (slot) {
+        boot_state.idx = 0;
+        boot_state.state = 0;
         rc = boot_copy_image();
         if (rc) {
             return rc;
@@ -500,7 +508,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     /* Always boot from the primary slot. */
     rsp->br_flash_id = boot_img[0].loc.bil_flash_id;
     rsp->br_image_addr = boot_img[0].loc.bil_address;
-    rsp->br_hdr = &boot_img[0].hdr;
+    rsp->br_hdr = &boot_img[slot].hdr;
 
     return 0;
 }

@@ -70,5 +70,8 @@ void boot_scratch_loc(uint8_t *flash_id, uint32_t *off);
 void boot_slot_magic(int slot_num, struct boot_img_trailer *bit);
 void boot_scratch_magic(struct boot_img_trailer *bit);
 
+struct boot_req;
+void boot_req_set(struct boot_req *req);
+
 #endif
 
