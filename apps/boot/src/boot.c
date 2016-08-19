@@ -23,6 +23,7 @@
 #include <hal/flash_map.h>
 #include <os/os.h>
 #include <bsp/bsp.h>
+#include <hal/hal_bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
 #include <config/config.h>
@@ -66,7 +67,11 @@ main(void)
         .br_slot_areas = img_starts,
     };
 
+#ifdef BOOT_SERIAL
     os_init();
+#else
+    bsp_init();
+#endif
 
     rc = hal_flash_init();
     assert(rc == 0);
