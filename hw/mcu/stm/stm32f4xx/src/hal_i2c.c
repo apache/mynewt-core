@@ -34,31 +34,31 @@
 
 #define STM32F4_HAL_I2C_TIMEOUT (1000)
 
-struct stm32_hal_i2c {
+struct stm32f4_hal_i2c {
     I2C_HandleTypeDef handle;
 };
 
 #define STM32_HAL_I2C_MAX (3)
 
 #ifdef I2C1
-struct stm32_hal_i2c hal_i2c1;
+struct stm32f4_hal_i2c hal_i2c1;
 #else
 #define __HAL_RCC_I2C1_CLK_ENABLE()
 #endif
 
 #ifdef I2C2
-struct stm32_hal_i2c hal_i2c2;
+struct stm32f4_hal_i2c hal_i2c2;
 #else
 #define __HAL_RCC_I2C2_CLK_ENABLE()
 #endif
 
 #ifdef I2C3
-struct stm32_hal_i2c hal_i2c3;
+struct stm32f4_hal_i2c hal_i2c3;
 #else
 #define __HAL_RCC_I2C3_CLK_ENABLE()
 #endif
 
-struct stm32_hal_i2c *stm32_hal_i2cs[STM32_HAL_I2C_MAX] = {
+struct stm32f4_hal_i2c *stm32f4_hal_i2cs[STM32_HAL_I2C_MAX] = {
 #ifdef I2C1
         &hal_i2c1,
 #else
@@ -81,7 +81,7 @@ struct stm32_hal_i2c *stm32_hal_i2cs[STM32_HAL_I2C_MAX] = {
         rc = EINVAL;                    \
         goto err;                       \
     }                                   \
-    (__v) = stm32_hal_i2cs[(__n)];      \
+    (__v) = stm32f4_hal_i2cs[(__n)];      \
     if ((__v) == NULL) {                \
         rc = EINVAL;                    \
         goto err;                       \
@@ -91,13 +91,13 @@ int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
     GPIO_InitTypeDef pcf;
-    struct stm32_hal_i2c *i2c;
-    struct stm32_hal_i2c_cfg *cfg;
+    struct stm32f4_hal_i2c *i2c;
+    struct stm32f4_hal_i2c_cfg *cfg;
     int rc;
 
     STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
 
-    cfg = (struct stm32_hal_i2c_cfg *) usercfg;
+    cfg = (struct stm32f4_hal_i2c_cfg *) usercfg;
     assert(cfg != NULL);
 
     pcf.Mode = GPIO_MODE_OUTPUT_PP;
@@ -151,7 +151,7 @@ err:
 int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata)
 {
-    struct stm32_hal_i2c *i2c;
+    struct stm32f4_hal_i2c *i2c;
     int rc;
 
     STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
@@ -170,7 +170,7 @@ err:
 int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata)
 {
-    struct stm32_hal_i2c *i2c;
+    struct stm32f4_hal_i2c *i2c;
     int rc;
 
     STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
@@ -195,7 +195,7 @@ hal_i2c_master_begin(uint8_t i2c_num)
 int
 hal_i2c_master_end(uint8_t i2c_num)
 {
-    struct stm32_hal_i2c *i2c;
+    struct stm32f4_hal_i2c *i2c;
     int rc;
 
     STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
@@ -210,7 +210,7 @@ err:
 int
 hal_i2c_master_probe(uint8_t i2c_num, uint8_t address)
 {
-    struct stm32_hal_i2c *i2c;
+    struct stm32f4_hal_i2c *i2c;
     int rc;
 
     STM32_HAL_I2C_RESOLVE(i2c_num, i2c);

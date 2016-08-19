@@ -29,6 +29,7 @@
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_spi.h"
 #include "stm32f4xx_hal_gpio.h"
+#include "stm32f4xx_hal_gpio_ex.h"
 #include "stm32f4xx_hal_rcc.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
 
@@ -117,10 +118,12 @@ struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
     }
 
 int
-hal_spi_init(uint8_t spi_num, void *cfg)
+hal_spi_init(uint8_t spi_num, void *usercfg)
 {
     struct stm32f4_hal_spi *spi;
+    struct stm32f4_hal_spi_cfg *cfg;
     SPI_InitTypeDef *init;
+    GPIO_InitTypeDef pcf;
     int rc;
 
     /* Allow user to specify default init settings for the SPI.
@@ -129,33 +132,66 @@ hal_spi_init(uint8_t spi_num, void *cfg)
      */
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
-    init = (SPI_InitTypeDef *) cfg;
+    cfg = (struct stm32f4_hal_spi_cfg *) usercfg;
+
+    init = (SPI_InitTypeDef *) cfg->spi_settings;
     if (init != NULL) {
         memcpy(&spi->handle.Init, init, sizeof(SPI_InitTypeDef));
     } else {
         /* Provide default initialization of SPI */
     }
 
+    pcf.Mode = GPIO_MODE_AF_PP;
+    pcf.Pull = GPIO_NOPULL;
+    pcf.Speed = GPIO_SPEED_FREQ_HIGH;
+
     /* Enable the clocks for this SPI */
     switch (spi_num) {
         case 0:
             __HAL_RCC_SPI1_CLK_ENABLE();
+            pcf.Alternate = GPIO_AF5_SPI1;
             break;
         case 1:
             __HAL_RCC_SPI2_CLK_ENABLE();
+            pcf.Alternate = GPIO_AF5_SPI2;
             break;
         case 2:
             __HAL_RCC_SPI3_CLK_ENABLE();
+            pcf.Alternate = GPIO_AF6_SPI3;
             break;
         case 3:
             __HAL_RCC_SPI4_CLK_ENABLE();
+#ifdef SPI4
+            pcf.Alternate = GPIO_AF5_SPI4;
+#endif
             break;
         case 4:
             __HAL_RCC_SPI5_CLK_ENABLE();
+#ifdef SPI5
+            pcf.Alternate = GPIO_AF5_SPI5;
+#endif
             break;
         case 5:
             __HAL_RCC_SPI6_CLK_ENABLE();
+#ifdef SPI6
+            pcf.Alternate = GPIO_AF5_SPI6;
+#endif
             break;
+    }
+
+    rc = hal_gpio_init_stm(cfg->sck_pin, &pcf);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = hal_gpio_init_stm(cfg->miso_pin, &pcf);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = hal_gpio_init_stm(cfg->mosi_pin, &pcf);
+    if (rc != 0) {
+        goto err;
     }
 
     return (0);
@@ -266,10 +302,15 @@ hal_spi_config(uint8_t spi_num, struct hal_spi_settings *settings)
 
     init->BaudRatePrescaler = prescaler;
 
+    /* Disable, Init, Enable */
+    __HAL_SPI_DISABLE(&spi->handle);
+
     rc = HAL_SPI_Init(&spi->handle);
     if (rc != 0) {
         goto err;
     }
+
+    __HAL_SPI_ENABLE(&spi->handle);
 
     return (0);
 err:
