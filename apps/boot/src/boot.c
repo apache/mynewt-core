@@ -97,8 +97,6 @@ main(void)
 
     conf_init();
 
-    console_init(NULL);
-    console_printf("\nboot_loader\n");
 #ifdef BOOT_SERIAL
     /*
      * Configure a GPIO as input, and compare it against expected value.

@@ -24,7 +24,6 @@
 #include <hal/flash_map.h>
 #include <hal/hal_bsp.h>
 #include <os/os.h>
-#include <console/console.h>
 #include "bootutil/image.h"
 #include "bootutil/bootutil_misc.h"
 #include "bootutil_priv.h"
@@ -248,20 +247,17 @@ boot_read_status(struct boot_status *bs)
     if (bit.bit_copy_start == BOOT_IMG_MAGIC && bit.bit_copy_done == 0xff) {
         boot_magic_loc(0, &flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
-        console_printf("status in slot0, %lu/%u\n", bs->idx, bs->state);
         return 1;
     }
     boot_scratch_magic(&bit);
     if (bit.bit_copy_start == BOOT_IMG_MAGIC && bit.bit_copy_done == 0xff) {
         boot_scratch_loc(&flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
-        console_printf("status in scratch, %lu/%u\n", bs->idx, bs->state);
         return 1;
     }
     return 0;
 }
 
-#include <hal/hal_system.h>
 
 /**
  * Writes the supplied boot status to the flash file system.  The boot status
@@ -290,8 +286,6 @@ boot_write_status(struct boot_status *bs)
         boot_magic_loc(0, &flash_id, &off);
     }
     off -= ((3 * bs->elem_sz) * bs->idx + bs->elem_sz * (bs->state + 1));
-
-    console_printf("status write, %lu/%u -> %lx\n", bs->idx, bs->state, off);
 
     val = bs->state;
     hal_flash_write(flash_id, off, &val, sizeof(val));

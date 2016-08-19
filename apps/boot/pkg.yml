@@ -33,7 +33,7 @@ pkg.deps:
     - libs/mbedtls
     - libs/os
     - libs/util
-    - libs/console/full
+    - libs/console/stub
 
 pkg.cflags: -DLOG_LEVEL=255
 pkg.cflags.NFFS:
