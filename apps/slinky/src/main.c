@@ -220,7 +220,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         /* Wait one second */
-        os_time_delay(1000);
+        os_time_delay(OS_TICKS_PER_SEC);
 
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
