@@ -472,7 +472,6 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 
         rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
         rsp_hdr->nh_group = htons(rsp_hdr->nh_group);
-        rsp_hdr->nh_id = htons(rsp_hdr->nh_id);
 
         off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
     }
