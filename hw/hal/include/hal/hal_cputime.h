@@ -26,6 +26,22 @@ extern "C" {
 
 #include "os/queue.h"
 
+/*
+ * NOTE: these definitions allow one to override the cputime frequency used.
+ * The reason these definitions exist is to make the code more efficient/smaller
+ * when CPUTIME counts at 1 MHz.
+ *
+ * For those who want a different cputime frequency, you can set the macro
+ * HAL_CPUTIME to the desired frequency in your project, target or bsp.
+ */
+#ifndef HAL_CPUTIME
+#define HAL_CPUTIME 1000000
+#endif
+
+#if (HAL_CPUTIME == 1000000)
+#define HAL_CPUTIME_1MHZ
+#endif
+
 /* CPU timer callback function */
 struct cpu_timer;
 typedef void (*cputimer_func)(void *arg);
