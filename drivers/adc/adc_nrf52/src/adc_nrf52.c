@@ -107,6 +107,12 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         }
     }
 
+    if (dev->od_status & OS_DEV_STATUS_OPEN) {
+        os_mutex_release(&dev->ad_lock);
+        rc = EALREADY;
+        goto err;
+    }
+
     /* Initialize the device */
     rc = nrf_drv_saadc_init((nrf_drv_saadc_config_t *) arg,
             nrf52_saadc_event_handler);

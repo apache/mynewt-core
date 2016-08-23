@@ -47,6 +47,7 @@ struct os_dev;
 #define OS_DEV_STATUS_BASE    (1 << 0)
 #define OS_DEV_STATUS_INITING (1 << 1)
 #define OS_DEV_STATUS_READY   (1 << 2)
+#define OS_DEV_STATUS_OPEN    (1 << 3)
 
 typedef int (*os_dev_init_func_t)(struct os_dev *, void *);
 typedef int (*os_dev_open_func_t)(struct os_dev *, uint32_t,

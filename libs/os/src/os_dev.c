@@ -204,6 +204,8 @@ os_dev_open(char *devname, uint32_t timo, void *arg)
         }
     }
 
+    dev->od_status |= OS_DEV_STATUS_OPEN;
+
     return (dev);
 err:
     return (NULL);
@@ -227,6 +229,8 @@ os_dev_close(struct os_dev *dev)
             goto err;
         }
     }
+
+    dev->od_status &= ~OS_DEV_STATUS_OPEN;
 
     return (0);
 err:
