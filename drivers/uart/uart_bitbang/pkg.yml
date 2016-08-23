@@ -17,11 +17,13 @@
 # under the License.
 #
 
-pkg.name: drivers/uart_bitbang
+pkg.name: drivers/uart/uart_bitbang
 pkg.description: Async UART port with a bitbanger.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+pkg.apis:
+   - UART_HW_IMPL
 pkg.deps.TEST:
    - hw/hal
    - libs/testutil
