@@ -65,7 +65,15 @@ console_echo(int on)
 {
 }
 
+static void inline
+console_print_prompt(void)
+{
+}
+
+static void inline console_set_prompt(char)
+{
+}
+
 #define console_is_midline  (0)
 
 #endif /* __CONSOLE__ */
-

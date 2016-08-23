@@ -220,6 +220,10 @@ console_read(char *str, int cnt, int *newline)
         *str++ = ch;
     }
     OS_EXIT_CRITICAL(sr);
+    /* print the prompt on an empty newline */
+    if(i == 0 && *newline){
+        console_print_prompt();
+    }
     if (i > 0 || *newline) {
         hal_uart_start_rx(CONSOLE_UART);
     }
@@ -392,6 +396,7 @@ console_init(console_rx_cb rx_cb)
     }
 
     g_console_is_init = 1;
-
+    console_print_prompt();
+    
     return 0;
 }
