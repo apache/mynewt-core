@@ -27,8 +27,12 @@ struct uart_dev;
 
 /*
  * Function prototype for UART driver to ask for more data to send.
- * Returns -1 if no more data is available for TX.
  * Driver must call this with interrupts disabled.
+ *
+ * @param arg		This is uc_cb_arg passed in uart_conf in
+ *			os_dev_open().
+ *
+ * @return		Byte value to send next, -1 if no more data to send.
  */
 typedef int (*uart_tx_char)(void *arg);
 
@@ -37,13 +41,24 @@ typedef int (*uart_tx_char)(void *arg);
  * complete. This should be called when transmission of last byte is
  * finished.
  * Driver must call this with interrupts disabled.
+ *
+ * @param arg		This is uc_cb_arg passed in uart_conf in
+ *			os_dev_open().
  */
 typedef void (*uart_tx_done)(void *arg);
 
 /*
  * Function prototype for UART driver to report incoming byte of data.
- * Returns -1 if data was dropped.
  * Driver must call this with interrupts disabled.
+ *
+ * @param arg		This is uc_cb_arg passed in uart_conf in
+ *			os_dev_open().
+ * @param byte		Received byte
+ *
+ * @return		0 on success; -1 if data could not be received.
+ *			Note that returning -1 triggers flow control (if
+ *			configured), and user must call uart_start_rx() to
+ *			start receiving more data again.
  */
 typedef int (*uart_rx_char)(void *arg, uint8_t byte);
 
@@ -59,6 +74,9 @@ struct uart_dev {
     void *ud_priv;
 };
 
+/*
+ * ***Note that these enum values must match what hw/hal/hal_uart.h***
+ */
 enum uart_parity {
     UART_PARITY_NONE = 0,       /* no parity */
     UART_PARITY_ODD = 1,        /* odd parity bit */
@@ -82,18 +100,36 @@ struct uart_conf {
     void *uc_cb_arg;
 };
 
+/*
+ * Tell driver that more data has been queued, and that the driver should
+ * start asking for it.
+ *
+ * @param dev		Uart device in question
+ */
 static inline void
 uart_start_tx(struct uart_dev *dev)
 {
     dev->ud_funcs.uf_start_tx(dev);
 }
 
+/*
+ * Tell driver that previous report on RX buffer shortage is now done,
+ * and that app is ready to receive more data.
+ *
+ * @param dev		Uart device in question
+ */
 static inline void
 uart_start_rx(struct uart_dev *dev)
 {
     dev->ud_funcs.uf_start_rx(dev);
 }
 
+/*
+ * Blocking transmit. ***Note that this should only be used with console.
+ * And only when MCU is about to restart, to write final log messages***
+ *
+ * @param dev		Uart device in question
+ */
 static inline void
 uart_blocking_tx(struct uart_dev *dev, uint8_t byte)
 {
