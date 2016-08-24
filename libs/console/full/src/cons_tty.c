@@ -23,8 +23,6 @@
 #include <bsp/bsp.h>
 #include "console/console.h"
 
-int g_console_is_init;
-
 /** Indicates whether the previous line of output was completed. */
 int console_is_midline;
 
@@ -367,7 +365,9 @@ out:
 int
 console_is_init(void)
 {
-    return (g_console_is_init);
+    struct console_tty *ct = &console_tty;
+
+    return (ct->ct_dev != NULL);
 }
 
 int
@@ -375,7 +375,7 @@ console_init(console_rx_cb rx_cb)
 {
     struct console_tty *ct = &console_tty;
     struct uart_conf uc = {
-        .uc_speed = 9600,
+        .uc_speed = CONSOLE_UART_SPEED,
         .uc_databits = 8,
         .uc_stopbits = 1,
         .uc_parity = UART_PARITY_NONE,
@@ -385,20 +385,20 @@ console_init(console_rx_cb rx_cb)
         .uc_cb_arg = ct
     };
 
-    ct->ct_tx.cr_size = CONSOLE_TX_BUF_SZ;
-    ct->ct_tx.cr_buf = ct->ct_tx_buf;
-    ct->ct_rx.cr_size = CONSOLE_RX_BUF_SZ;
-    ct->ct_rx.cr_buf = ct->ct_rx_buf;
     ct->ct_rx_cb = rx_cb;
-    ct->ct_write_char = console_queue_char;
-
-    ct->ct_dev = (struct uart_dev *)os_dev_open(CONSOLE_UART,
-      OS_TIMEOUT_NEVER, &uc);
     if (!ct->ct_dev) {
-        return -1;
-    }
+        ct->ct_tx.cr_size = CONSOLE_TX_BUF_SZ;
+        ct->ct_tx.cr_buf = ct->ct_tx_buf;
+        ct->ct_rx.cr_size = CONSOLE_RX_BUF_SZ;
+        ct->ct_rx.cr_buf = ct->ct_rx_buf;
+        ct->ct_write_char = console_queue_char;
 
-    g_console_is_init = 1;
+        ct->ct_dev = (struct uart_dev *)os_dev_open(CONSOLE_UART,
+          OS_TIMEOUT_NEVER, &uc);
+        if (!ct->ct_dev) {
+            return -1;
+        }
+    }
 
     return 0;
 }

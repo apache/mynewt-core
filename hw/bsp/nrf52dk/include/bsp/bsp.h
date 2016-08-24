@@ -42,6 +42,7 @@ extern uint8_t _ram_start;
 
 /* UART info */
 #define CONSOLE_UART    "uart0"
+#define CONSOLE_UART_SPEED      115200
 
 #define NFFS_AREA_MAX   (8)
 
