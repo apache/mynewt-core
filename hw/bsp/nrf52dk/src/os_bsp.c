@@ -21,9 +21,12 @@
 #include <hal/flash_map.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_cputime.h>
-#include <uart_hal/uart_hal.h>
 #include <mcu/nrf52_hal.h>
+
 #include <os/os_dev.h>
+
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {

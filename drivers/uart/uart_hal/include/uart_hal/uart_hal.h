@@ -20,8 +20,7 @@
 #ifndef __DRIVERS_UART_HAL_H_
 #define __DRIVERS_UART_HAL_H_
 
-#include <uart/uart.h>
-
+struct os_dev;
 int uart_hal_init(struct os_dev *, void *);
 
 #endif /* __DRIVERS_UART_HAL_H_ */
