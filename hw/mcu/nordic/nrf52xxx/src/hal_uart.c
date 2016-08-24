@@ -231,11 +231,30 @@ hal_uart_baudrate(int baudrate)
 }
 
 int
+hal_uart_init(int port, void *arg)
+{
+    struct nrf52_uart_cfg *cfg;
+
+    if (port != 0) {
+        return -1;
+    }
+    cfg = (struct nrf52_uart_cfg *)arg;
+
+    NRF_UARTE0->PSEL.TXD = cfg->suc_pin_tx;
+    NRF_UARTE0->PSEL.RXD = cfg->suc_pin_rx;
+    NRF_UARTE0->PSEL.RTS = cfg->suc_pin_rts;
+    NRF_UARTE0->PSEL.CTS = cfg->suc_pin_cts;
+
+    NVIC_SetVector(UARTE0_UART0_IRQn, (uint32_t)uart_irq_handler);
+
+    return 0;
+}
+
+int
 hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
   enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
     struct hal_uart *u;
-    const struct nrf52_uart_cfg *cfg;
     uint32_t cfg_reg = 0;
     uint32_t baud_reg;
 
@@ -247,8 +266,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (u->u_open) {
         return -1;
     }
-    cfg = bsp_uart_config();
-    assert(cfg);
 
     /*
      * pin config
@@ -278,7 +295,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         break;
     case HAL_UART_FLOW_CTL_RTS_CTS:
         cfg_reg |= UARTE_CONFIG_HWFC;
-        if (cfg->suc_pin_rts < 0 || cfg->suc_pin_cts < 0) {
+        if (NRF_UARTE0->PSEL.RTS == 0xffffffff ||
+          NRF_UARTE0->PSEL.CTS == 0xffffffff) {
             /*
              * Can't turn on HW flow control if pins to do that are not
              * defined.
@@ -294,19 +312,9 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     }
     NRF_UARTE0->ENABLE = 0;
     NRF_UARTE0->INTENCLR = 0xffffffff;
-    NRF_UARTE0->PSEL.TXD = cfg->suc_pin_tx;
-    NRF_UARTE0->PSEL.RXD = cfg->suc_pin_rx;
-    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
-        NRF_UARTE0->PSEL.RTS = cfg->suc_pin_rts;
-        NRF_UARTE0->PSEL.CTS = cfg->suc_pin_cts;
-    } else {
-        NRF_UARTE0->PSEL.RTS = 0xffffffff;
-        NRF_UARTE0->PSEL.CTS = 0xffffffff;
-    }
     NRF_UARTE0->BAUDRATE = baud_reg;
     NRF_UARTE0->CONFIG = cfg_reg;
 
-    NVIC_SetVector(UARTE0_UART0_IRQn, (uint32_t)uart_irq_handler);
     NVIC_EnableIRQ(UARTE0_UART0_IRQn);
 
     NRF_UARTE0->ENABLE = UARTE_ENABLE;
