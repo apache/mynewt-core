@@ -37,3 +37,4 @@ pkg.cflags: -DSTM32F407xx
 pkg.deps:
     - hw/mcu/stm/stm32f4xx
     - libs/baselibc
+    - drivers/uart/uart_hal

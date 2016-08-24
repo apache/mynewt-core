@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,8 +20,16 @@
 /*
  * XXXX for now have this here.
  */
+#include <assert.h>
+
 #include <hal/flash_map.h>
 #include <hal/hal_bsp.h>
+
+#include <os/os_dev.h>
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
+
+#include "bsp/bsp.h"
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -51,6 +59,11 @@ static struct flash_area bsp_flash_areas[] = {
         .fa_size = (32 * 1024)
     }
 };
+static struct uart_dev hal_uart0;
+
+/* XXX should not be here */
+struct stm32f4_uart_cfg;
+extern struct stm32f4_uart_cfg *bsp_uart_config(int port);
 
 void _close(int fd);
 
@@ -71,6 +84,8 @@ bsp_imgr_current_slot(void)
 void
 bsp_init(void)
 {
+    int rc;
+
     /*
      * XXX this reference is here to keep this function in.
      */
@@ -78,5 +93,9 @@ bsp_init(void)
     _close(0);
     flash_area_init(bsp_flash_areas,
                     sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+
+    rc = os_dev_create((struct os_dev *) &hal_uart0, CONSOLE_UART,
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)bsp_uart_config(0));
+    assert(rc == 0);
 }
 

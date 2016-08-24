@@ -44,7 +44,8 @@ extern uint8_t _ccram_start;
 
 /* UART */
 #define UART_CNT 1
-#define CONSOLE_UART 0
+#define CONSOLE_UART            "uart0"
+#define CONSOLE_UART_SPEED      115200
 
 #define NFFS_AREA_MAX    (8)
 
