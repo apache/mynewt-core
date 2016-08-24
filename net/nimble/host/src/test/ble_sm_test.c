@@ -23,7 +23,6 @@
 #include "testutil/testutil.h"
 #include "nimble/hci_common.h"
 #include "nimble/nimble_opt.h"
-#include "host/host_hci.h"
 #include "host/ble_sm.h"
 #include "host/ble_hs_test.h"
 #include "ble_hs_test_util.h"
@@ -648,6 +647,8 @@ TEST_CASE(ble_sm_test_case_us_fail_inval)
 
 TEST_SUITE(ble_sm_gen_test_suite)
 {
+    tu_suite_set_post_test_cb(ble_hs_test_util_post_test, NULL);
+
     ble_sm_test_case_f4();
     ble_sm_test_case_f5();
     ble_sm_test_case_f6();

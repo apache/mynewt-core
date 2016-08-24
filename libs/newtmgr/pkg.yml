@@ -32,5 +32,8 @@ pkg.deps:
     - libs/shell
     - sys/reboot
 
+pkg.deps.BLE_HOST:
+    - libs/newtmgr/transport/ble
+
 pkg.features:
-    - NEWTMGR 
+    - NEWTMGR

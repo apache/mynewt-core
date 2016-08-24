@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef _OS_ARCH_ARM_H 
-#define _OS_ARCH_ARM_H 
+#ifndef _OS_ARCH_ARM_H
+#define _OS_ARCH_ARM_H
 
 #include <stdint.h>
 #include <mcu/cortex_m0.h>
@@ -48,7 +48,7 @@ typedef uint32_t os_stack_t;
     (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
 
 /* Enter a critical section, save processor state, and block interrupts */
-#define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr()) 
+#define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr())
 /* Exit a critical section, restore processor state and unblock interrupts */
 #define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
 #define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
@@ -63,7 +63,7 @@ void os_arch_init(void);
 uint32_t os_arch_start(void);
 os_error_t os_arch_os_init(void);
 os_error_t os_arch_os_start(void);
-void os_set_env(void);
+void os_set_env(os_stack_t *);
 void os_arch_init_task_stack(os_stack_t *sf);
 void os_default_irq_asm(void);
 
@@ -71,4 +71,4 @@ void os_default_irq_asm(void);
 void os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio);
 void os_bsp_ctx_sw(void);
 
-#endif /* _OS_ARCH_X86_H */ 
+#endif /* _OS_ARCH_ARM_H */

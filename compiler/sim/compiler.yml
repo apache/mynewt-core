@@ -31,6 +31,7 @@ compiler.ld.resolve_circular_deps: true
 compiler.flags.default: [compiler.flags.base, -O1]
 compiler.flags.debug: [compiler.flags.base, -O0]
 compiler.ld.mapfile: false
+compiler.ld.binfile: false
 
 # Linux.
 compiler.flags.base.LINUX: >
@@ -41,7 +42,6 @@ compiler.ld.flags.LINUX: -lutil
 compiler.path.cc.DARWIN.OVERWRITE: "/usr/local/bin/gcc-5"
 compiler.path.as.DARWIN.OVERWRITE: "/usr/local/bin/gcc-5 -x assembler-with-cpp"
 compiler.path.objdump.DARWIN.OVERWRITE: "gobjdump"
-compiler.path.objsize.DARWIN.OVERWRITE: "objsize"
 compiler.path.objcopy.DARWIN.OVERWRITE: "gobjcopy"
 compiler.flags.base.DARWIN: >
     -DMN_OSX

@@ -36,9 +36,8 @@
 
 /* BLE */
 #include "nimble/ble.h"
-#include "nimble/hci_transport.h"
+#include "nimble/ble_hci_trans.h"
 #include "nimble/hci_common.h"
-#include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
@@ -46,10 +45,15 @@
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
 
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
+
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
+
 /* XXX: An app should not include private headers from a library.  The bletest
  * app uses some of nimble's internal details for logging.
  */
-#include "../src/ble_hci_util_priv.h"
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
@@ -421,14 +425,14 @@ bletest_init_scanner(void)
     uint8_t add_whitelist;
 
     own_addr_type = BLETEST_CFG_SCAN_OWN_ADDR_TYPE;
-    rc = host_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
+    rc = ble_hs_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                                BLETEST_CFG_SCAN_ITVL,
                                                BLETEST_CFG_SCAN_WINDOW,
                                                BLETEST_CFG_SCAN_OWN_ADDR_TYPE,
                                                BLETEST_CFG_SCAN_FILT_POLICY,
                                                buf, sizeof buf);
     assert(rc == 0);
-    rc = ble_hci_cmd_tx_empty_ack(buf);
+    rc = ble_hs_hci_cmd_tx_empty_ack(buf);
     if (rc == 0) {
         add_whitelist = BLETEST_CFG_SCAN_FILT_POLICY;
 #if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
@@ -616,7 +620,7 @@ bletest_execute_initiator(void)
             } else {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
-                        ble_hci_util_read_rssi(i+1, &rssi);
+                        ble_hs_hci_util_read_rssi(i+1, &rssi);
                     }
                 }
             }
@@ -655,6 +659,8 @@ bletest_execute_advertiser(void)
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
+    uint16_t mask;
+    uint16_t reply_handle;
 #endif
     int rc;
     uint16_t handle;
@@ -726,10 +732,16 @@ bletest_execute_advertiser(void)
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
 #if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
         /* Do we need to send a LTK reply? */
-        if (g_bletest_ltk_reply_handle) {
-            //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
-            bletest_send_ltk_req_reply(g_bletest_ltk_reply_handle);
-            g_bletest_ltk_reply_handle = 0;
+        mask = 1;
+        reply_handle = 1;
+        while (g_bletest_ltk_reply_handle && mask) {
+            if (g_bletest_ltk_reply_handle & mask) {
+                bletest_send_ltk_req_reply(reply_handle);
+                //bletest_send_ltk_req_neg_reply(reply_handle);
+                g_bletest_ltk_reply_handle &= ~mask;
+            }
+            ++reply_handle;
+            mask <<= 1;
         }
 #endif
         if (g_bletest_current_conns) {
@@ -769,7 +781,7 @@ bletest_execute_advertiser(void)
 
                         /* Add length */
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                        ble_hci_transport_host_acl_data_send(om);
+                        ble_hci_trans_hs_acl_tx(om);
 
                         /* Increment last handle used */
                         ++g_last_handle_used;
@@ -825,7 +837,7 @@ bletest_execute_advertiser(void)
 
                 /* Add length */
                 OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                ble_hci_transport_host_acl_data_send(om);
+                ble_hci_trans_hs_acl_data_send(om);
 
                 ++g_bletest_outstanding_pkts;
             }
@@ -896,6 +908,8 @@ bletest_task_handler(void *arg)
     /* Initialize the host timer */
     os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
                          NULL);
+
+    ble_hs_dbg_set_sync_state(BLE_HS_SYNC_STATE_GOOD);
 
     /* Send the reset command first */
     rc = bletest_hci_reset_ctlr();
@@ -990,7 +1004,7 @@ bletest_task_handler(void *arg)
 #endif
 
     /* Get a random number */
-    rc = ble_hci_util_rand(&rand64, 8);
+    rc = ble_hs_hci_util_rand(&rand64, 8);
     assert(rc == 0);
 
     /* Wait some time before starting */
@@ -1106,10 +1120,6 @@ main(void)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    /* Init the console */
-    rc = console_init(shell_console_rx_cb);
-    assert(rc == 0);
-
 #if 0
     rc = hal_flash_init();
     assert(rc == 0);
@@ -1155,6 +1165,10 @@ main(void)
 
     /* Initialize host */
     rc = ble_hs_init(&g_bletest_evq, NULL);
+    assert(rc == 0);
+
+    /* Initialize the RAM HCI transport. */
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
     assert(rc == 0);
 
     rc = os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL,

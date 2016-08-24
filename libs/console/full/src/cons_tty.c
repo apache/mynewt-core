@@ -165,6 +165,9 @@ console_file_write(void *arg, const char *str, size_t cnt)
     struct console_tty *ct = &console_tty;
     int i;
 
+    if (!ct->ct_write_char) {
+        return cnt;
+    }
     for (i = 0; i < cnt; i++) {
         if (str[i] == '\n') {
             ct->ct_write_char('\r');
@@ -200,13 +203,13 @@ console_read(char *str, int cnt, int *newline)
             break;
         }
 
-	if ((i & (CONSOLE_RX_CHUNK - 1)) == (CONSOLE_RX_CHUNK - 1)) {
-		/*
-		 * Make a break from blocking interrupts during the copy.
-		 */
-		OS_EXIT_CRITICAL(sr);
-		OS_ENTER_CRITICAL(sr);
-	}
+        if ((i & (CONSOLE_RX_CHUNK - 1)) == (CONSOLE_RX_CHUNK - 1)) {
+            /*
+             * Make a break from blocking interrupts during the copy.
+             */
+            OS_EXIT_CRITICAL(sr);
+            OS_ENTER_CRITICAL(sr);
+        }
 
         ch = console_pull_char(cr);
         if (ch == '\n') {

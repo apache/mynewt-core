@@ -25,6 +25,7 @@
 #include <inttypes.h>
 #include <util/base64.h>
 #include <util/crc16.h>
+#include <os/endian.h>
 #include <testutil/testutil.h>
 #include <hal/hal_flash.h>
 #include <hal/flash_map.h>

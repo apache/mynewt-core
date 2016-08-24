@@ -157,6 +157,14 @@ struct log {
     STAILQ_ENTRY(log) l_next;
 };
 
+/* Newtmgr Log opcodes */
+#define LOGS_NMGR_OP_READ         (0)
+#define LOGS_NMGR_OP_CLEAR        (1)
+#define LOGS_NMGR_OP_APPEND       (2)
+#define LOGS_NMGR_OP_MODULE_LIST  (3)
+#define LOGS_NMGR_OP_LEVEL_LIST   (4)
+#define LOGS_NMGR_OP_LOGS_LIST    (5)
+
 /* Log system level functions (for all logs.) */
 int log_init(void);
 struct log *log_list_get_next(struct log *);

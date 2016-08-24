@@ -31,6 +31,11 @@ fcb_rotate(struct fcb *fcb)
         return FCB_ERR_ARGS;
     }
 
+    rc = flash_area_erase(fcb->f_oldest, 0, fcb->f_oldest->fa_size);
+    if (rc) {
+        rc = FCB_ERR_FLASH;
+        goto out;
+    }
     if (fcb->f_oldest == fcb->f_active.fe_area) {
         /*
          * Need to create a new active area, as we're wiping the current.
@@ -43,11 +48,6 @@ fcb_rotate(struct fcb *fcb)
         fcb->f_active.fe_area = fap;
         fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
         fcb->f_active_id++;
-    }
-    rc = flash_area_erase(fcb->f_oldest, 0, fcb->f_oldest->fa_size);
-    if (rc) {
-        rc = FCB_ERR_FLASH;
-        goto out;
     }
     fcb->f_oldest = fcb_getnext_area(fcb, fcb->f_oldest);
 out:

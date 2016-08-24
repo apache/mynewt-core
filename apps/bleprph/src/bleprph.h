@@ -21,17 +21,10 @@
 #define H_BLEPRPH_
 
 #include "log/log.h"
-union ble_store_value;
-union ble_store_key;
+struct ble_hs_cfg;
+struct ble_gatt_register_ctxt;
 
 extern struct log bleprph_log;
-
-extern const char *bleprph_device_name;
-extern const uint16_t bleprph_appearance;
-extern const uint8_t bleprph_privacy_flag;
-extern uint8_t bleprph_reconnect_addr[6];
-extern uint8_t bleprph_pref_conn_params[8];
-extern uint8_t bleprph_gatt_service_changed[4];
 
 /* bleprph uses the first "peruser" log module. */
 #define BLEPRPH_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
@@ -47,19 +40,12 @@ extern uint8_t bleprph_gatt_service_changed[4];
 #define GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID   0x2A48
 #define GATT_SVR_CHR_UNR_ALERT_STAT_UUID      0x2A45
 #define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
-extern const uint8_t gatt_svr_svc_bleprph[16];
-extern const uint8_t gatt_svr_chr_bleprph_read[16];
-extern const uint8_t gatt_svr_chr_bleprph_write[16];
 
-void gatt_svr_init(void);
-
-/** Store. */
-int store_read(int obj_type, union ble_store_key *key,
-               union ble_store_value *dst);
-int store_write(int obj_type, union ble_store_value *val);
+void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg);
+int gatt_svr_init(struct ble_hs_cfg *cfg);
 
 /** Misc. */
-void print_bytes(uint8_t *bytes, int len);
-void print_addr(void *addr);
+void print_bytes(const uint8_t *bytes, int len);
+void print_addr(const void *addr);
 
 #endif

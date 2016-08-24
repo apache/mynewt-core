@@ -21,7 +21,6 @@
 #include <errno.h>
 #include "testutil/testutil.h"
 #include "nimble/hci_common.h"
-#include "host/host_hci.h"
 #include "host/ble_hs_test.h"
 #include "ble_hs_test_util.h"
 
@@ -74,7 +73,8 @@ ble_l2cap_test_util_rx_update_req(uint16_t conn_handle, uint8_t id,
     ble_l2cap_sig_update_req_write(v, BLE_L2CAP_SIG_UPDATE_REQ_SZ, &req);
 
     ble_hs_test_util_set_ack(
-        host_hci_opcode_join(BLE_HCI_OGF_LE, BLE_HCI_OCF_LE_CONN_UPDATE), 0);
+        ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                    BLE_HCI_OCF_LE_CONN_UPDATE), 0);
     rc = ble_hs_test_util_l2cap_rx_first_frag(conn_handle, BLE_L2CAP_CID_SIG,
                                               &hci_hdr, om);
     TEST_ASSERT_FATAL(rc == 0);
@@ -242,7 +242,7 @@ ble_l2cap_test_util_rx_first_frag(uint16_t conn_handle,
     void *v;
     int rc;
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     v = os_mbuf_extend(om, l2cap_frag_len);
@@ -266,7 +266,7 @@ ble_l2cap_test_util_rx_next_frag(uint16_t conn_handle, uint16_t hci_len)
     void *v;
     int rc;
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     v = os_mbuf_extend(om, hci_len);
@@ -374,7 +374,7 @@ TEST_CASE(ble_l2cap_test_case_frag_single)
     /*** HCI header specifies middle fragment without start. */
     hci_hdr = BLE_L2CAP_TEST_UTIL_HCI_HDR(2, BLE_HCI_PB_MIDDLE, 10);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     om = ble_l2cap_prepend_hdr(om, 0, 5);
@@ -480,12 +480,11 @@ TEST_CASE(ble_l2cap_test_case_sig_unsol_rsp)
  *****************************************************************************/
 
 static int
-ble_l2cap_test_util_conn_cb(int event, struct ble_gap_conn_ctxt *ctxt,
-                            void *arg)
+ble_l2cap_test_util_conn_cb(struct ble_gap_event *event, void *arg)
 {
     int *accept;
 
-    switch (event) {
+    switch (event->type) {
     case BLE_GAP_EVENT_L2CAP_UPDATE_REQ:
         accept = arg;
         return !*accept;
@@ -667,6 +666,8 @@ TEST_CASE(ble_l2cap_test_case_sig_update_init_fail_bad_id)
 
 TEST_SUITE(ble_l2cap_test_suite)
 {
+    tu_suite_set_post_test_cb(ble_hs_test_util_post_test, NULL);
+
     ble_l2cap_test_case_bad_header();
     ble_l2cap_test_case_frag_single();
     ble_l2cap_test_case_frag_multiple();

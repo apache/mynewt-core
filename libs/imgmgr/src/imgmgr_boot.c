@@ -63,6 +63,7 @@ imgr_boot_read(struct nmgr_jbuf *njb)
 {
     int rc;
     struct json_encoder *enc;
+    int slot;
     struct image_version ver;
     struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
@@ -71,14 +72,20 @@ imgr_boot_read(struct nmgr_jbuf *njb)
 
     json_encode_object_start(enc);
 
-    rc = boot_vect_read_test(&ver);
+    rc = boot_vect_read_test(&slot);
     if (!rc) {
-        imgr_ver_jsonstr(enc, "test", &ver);
+        rc = imgr_read_info(slot, &ver, hash);
+        if (!rc) {
+            imgr_ver_jsonstr(enc, "test", &ver);
+        }
     }
 
-    rc = boot_vect_read_main(&ver);
+    rc = boot_vect_read_main(&slot);
     if (!rc) {
-        imgr_ver_jsonstr(enc, "main", &ver);
+        rc = imgr_read_info(slot, &ver, hash);
+        if (!rc) {
+            imgr_ver_jsonstr(enc, "main", &ver);
+        }
     }
 
     rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash);
@@ -132,12 +139,11 @@ imgr_boot_write(struct nmgr_jbuf *njb)
         rc = NMGR_ERR_EINVAL;
         goto err;
     }
-    rc = boot_vect_write_test(&ver);
+    rc = boot_vect_write_test(rc);
     if (rc) {
         rc = NMGR_ERR_EINVAL;
         goto err;
     }
-
     enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
@@ -162,22 +168,23 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
     struct image_version ver;
     struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
+    int slot;
 
     enc = &njb->njb_enc;
 
     json_encode_object_start(enc);
 
-    rc = boot_vect_read_test(&ver);
+    rc = boot_vect_read_test(&slot);
     if (!rc) {
-        rc = imgr_find_by_ver(&ver, hash);
+        rc = imgr_read_info(slot, &ver, hash);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "test", hash);
         }
     }
 
-    rc = boot_vect_read_main(&ver);
+    rc = boot_vect_read_main(&slot);
     if (!rc) {
-        rc = imgr_find_by_ver(&ver, hash);
+        rc = imgr_read_info(slot, &ver, hash);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "main", hash);
         }
@@ -226,11 +233,12 @@ imgr_boot2_write(struct nmgr_jbuf *njb)
     base64_decode(hash_str, hash);
     rc = imgr_find_by_hash(hash, &ver);
     if (rc >= 0) {
-        rc = boot_vect_write_test(&ver);
+        rc = boot_vect_write_test(rc);
         if (rc) {
             rc = NMGR_ERR_EUNKNOWN;
             goto err;
         }
+        rc = 0;
     } else {
         rc = NMGR_ERR_EINVAL;
         goto err;

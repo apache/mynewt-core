@@ -104,6 +104,11 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     struct os_timeval tv;
     int64_t prev_ts;
 
+    if (log->l_name == NULL || log->l_log == NULL) {
+        rc = -1;
+        goto err;
+    }
+
     ue = (struct log_entry_hdr *) data;
 
     g_log_info.li_index++;

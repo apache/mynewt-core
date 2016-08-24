@@ -22,9 +22,7 @@
 #include "bsp/bsp.h"
 #include "ble_hs_priv.h"
 
-static bssnz_t uint8_t ble_att_flat_buf[BLE_ATT_ATTR_MAX_LEN];
-
-static uint16_t ble_att_preferred_mtu;
+static uint16_t ble_att_preferred_mtu_val;
 
 /** Dispatch table for incoming ATT requests.  Sorted by op code. */
 typedef int ble_att_rx_fn(uint16_t conn_handle, struct os_mbuf **om);
@@ -145,15 +143,12 @@ ble_att_rx_dispatch_entry_find(uint8_t op)
     return NULL;
 }
 
-int
+void
 ble_att_conn_chan_find(uint16_t conn_handle, struct ble_hs_conn **out_conn,
                        struct ble_l2cap_chan **out_chan)
 {
-    int rc;
-
-    rc = ble_hs_misc_conn_chan_find_reqd(conn_handle, BLE_L2CAP_CID_ATT,
-                                         out_conn, out_chan);
-    return rc;
+    ble_hs_misc_conn_chan_find(conn_handle, BLE_L2CAP_CID_ATT,
+                               out_conn, out_chan);
 }
 
 void
@@ -390,17 +385,29 @@ ble_att_inc_rx_stat(uint8_t att_op)
     }
 }
 
-/**
- * Retrieves a pointer to the global ATT flat buffer.  This buffer is only used
- * by the host parent task, so users can assume exclusive access.
- */
-uint8_t *
-ble_att_get_flat_buf(void)
+void
+ble_att_truncate_to_mtu(const struct ble_l2cap_chan *att_chan,
+                        struct os_mbuf *txom)
 {
-    BLE_HS_DBG_ASSERT(ble_hs_is_parent_task());
-    return ble_att_flat_buf;
+    int32_t extra_len;
+    uint16_t mtu;
+
+    mtu = ble_l2cap_chan_mtu(att_chan);
+    extra_len = OS_MBUF_PKTLEN(txom) - mtu;
+    if (extra_len > 0) {
+        os_mbuf_adj(txom, -extra_len);
+    }
 }
 
+/**
+ * Retrieves the ATT MTU of the specified connection.  If an MTU exchange for
+ * this connection has occurred, the MTU is the lower of the two peers'
+ * preferred values.  Otherwise, the MTU is the default value of 23.
+ *
+ * @param conn_handle           The handle of the connection to query.
+ *
+ * @return                      The specified connection's ATT MTU.
+ */
 uint16_t
 ble_att_mtu(uint16_t conn_handle)
 {
@@ -420,6 +427,16 @@ ble_att_mtu(uint16_t conn_handle)
     ble_hs_unlock();
 
     return mtu;
+}
+
+void
+ble_att_set_peer_mtu(struct ble_l2cap_chan *chan, uint16_t peer_mtu)
+{
+    if (peer_mtu < BLE_ATT_MTU_DFLT) {
+        peer_mtu = BLE_ATT_MTU_DFLT;
+    }
+
+    chan->blc_peer_mtu = peer_mtu;
 }
 
 static int
@@ -449,19 +466,40 @@ ble_att_rx(uint16_t conn_handle, struct os_mbuf **om)
     return 0;
 }
 
-void
-ble_att_set_peer_mtu(struct ble_l2cap_chan *chan, uint16_t peer_mtu)
+/**
+ * Retrieves the preferred ATT MTU.
+ *
+ * @return                      The preferred ATT MTU.
+ */
+uint16_t
+ble_att_preferred_mtu(void)
 {
-    if (peer_mtu < BLE_ATT_MTU_DFLT) {
-        peer_mtu = BLE_ATT_MTU_DFLT;
-    }
-
-    chan->blc_peer_mtu = peer_mtu;
+    return ble_att_preferred_mtu_val;
 }
 
+/**
+ * Sets the preferred ATT MTU; the device will indicate this value in all
+ * subseqeunt ATT MTU exchanges.  The ATT MTU of a connection is equal to the
+ * lower of the two peers' preferred MTU values.  The ATT MTU is what dictates
+ * the maximum size of any message sent during a GATT procedure.
+ *
+ * The specified MTU must be within the following range: [23, BLE_ATT_MTU_MAX].
+ * 23 is a minimum imposed by the Bluetooth specification; BLE_ATT_MTU_MAX is a
+ * NimBLE compile-time setting.
+ *
+ * @param mtu                   The preferred ATT MTU.
+ *
+ * @return                      0 on success;
+ *                              BLE_HS_EINVAL if the specifeid value is not
+ *                                  within the allowed range.
+ */
 int
 ble_att_set_preferred_mtu(uint16_t mtu)
 {
+    struct ble_l2cap_chan *chan;
+    struct ble_hs_conn *conn;
+    int i;
+
     if (mtu < BLE_ATT_MTU_DFLT) {
         return BLE_HS_EINVAL;
     }
@@ -469,9 +507,24 @@ ble_att_set_preferred_mtu(uint16_t mtu)
         return BLE_HS_EINVAL;
     }
 
-    ble_att_preferred_mtu = mtu;
+    ble_att_preferred_mtu_val = mtu;
 
-    /* XXX: Set my_mtu for established connections that haven't exchanged. */
+    /* Set my_mtu for established connections that haven't exchanged. */
+    ble_hs_lock();
+
+    i = 0;
+    while ((conn = ble_hs_conn_find_by_idx(i)) != NULL) {
+        chan = ble_hs_conn_chan_find(conn, BLE_L2CAP_CID_ATT);
+        BLE_HS_DBG_ASSERT(chan != NULL);
+
+        if (!(chan->blc_flags & BLE_L2CAP_CHAN_F_TXED_MTU)) {
+            chan->blc_my_mtu = mtu;
+        }
+
+        i++;
+    }
+
+    ble_hs_unlock();
 
     return 0;
 }
@@ -487,7 +540,7 @@ ble_att_create_chan(void)
     }
 
     chan->blc_cid = BLE_L2CAP_CID_ATT;
-    chan->blc_my_mtu = ble_att_preferred_mtu;
+    chan->blc_my_mtu = ble_att_preferred_mtu_val;
     chan->blc_default_mtu = BLE_ATT_MTU_DFLT;
     chan->blc_rx_fn = ble_att_rx;
 
@@ -499,7 +552,7 @@ ble_att_init(void)
 {
     int rc;
 
-    ble_att_preferred_mtu = BLE_ATT_MTU_PREFERRED_DFLT;
+    ble_att_preferred_mtu_val = BLE_ATT_MTU_PREFERRED_DFLT;
 
     rc = stats_init_and_reg(
         STATS_HDR(ble_att_stats), STATS_SIZE_INIT_PARMS(ble_att_stats,

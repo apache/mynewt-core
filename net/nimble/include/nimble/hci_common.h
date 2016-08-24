@@ -131,6 +131,9 @@
 /* --- Set event mask (OGF 0x03, OCF 0x0001 --- */
 #define BLE_HCI_SET_EVENT_MASK_LEN          (8)
 
+/* --- Read BD_ADDR (OGF 0x04, OCF 0x0009 --- */
+#define BLE_HCI_IP_RD_BD_ADDR_ACK_PARAM_LEN (6)
+
 /* --- Read/Write authenticated payload timeout (ocf 0x007B/0x007C) */
 #define BLE_HCI_RD_AUTH_PYLD_TMO_LEN        (4)
 #define BLE_HCI_WR_AUTH_PYLD_TMO_LEN        (2)
@@ -477,6 +480,9 @@
 /* Event encryption change (code=0x08) */
 #define BLE_HCI_EVENT_ENCRYPT_CHG_LEN       (4)
 
+/* Event hardware error (code=0x10) */
+#define BLE_HCI_EVENT_HW_ERROR_LEN          (1)
+
 /* Event key refresh complete (code=0x30) */
 #define BLE_HCI_EVENT_ENC_KEY_REFRESH_LEN   (3)
 
@@ -514,6 +520,9 @@
 #define BLE_HCI_LE_ADV_DIRECT_RPT_LEN       (18)
 #define BLE_HCI_LE_ADV_RPT_NUM_RPTS_MIN     (1)
 #define BLE_HCI_LE_ADV_RPT_NUM_RPTS_MAX     (0x19)
+
+/* Length of each record in an LE direct advertising report event. */
+#define BLE_HCI_LE_ADV_DIRECT_RPT_SUB_LEN   (16)
 
 /* LE connection update complete event (sub event 0x03) */
 #define BLE_HCI_LE_CONN_UPD_LEN             (10)

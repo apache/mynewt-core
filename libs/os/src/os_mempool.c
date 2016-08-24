@@ -41,21 +41,29 @@ STAILQ_HEAD(, os_mempool) g_os_mempool_list =
  * @return os_error_t 
  */
 os_error_t
-os_mempool_init(struct os_mempool *mp, int blocks, int block_size, void *membuf,
-                char *name)
+os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
+                void *membuf, char *name)
 {
     int true_block_size;
     uint8_t *block_addr;
     struct os_memblock *block_ptr;
 
     /* Check for valid parameters */
-    if ((!mp) || (!membuf) || (blocks <= 0) || (block_size <= 0)) {
+    if ((!mp) || (blocks < 0) || (block_size <= 0)) {
         return OS_INVALID_PARM;
     }
 
-    /* Blocks need to be sized properly and memory buffer should be aligned */
-    if (((uint32_t)membuf & (OS_ALIGNMENT - 1)) != 0) {
-        return OS_MEM_NOT_ALIGNED;
+    if ((!membuf) && (blocks != 0)) {
+        return OS_INVALID_PARM;
+    }
+
+    if (membuf != NULL) {
+        /* Blocks need to be sized properly and memory buffer should be
+         * aligned
+         */
+        if (((uint32_t)membuf & (OS_ALIGNMENT - 1)) != 0) {
+            return OS_MEM_NOT_ALIGNED;
+        }
     }
     true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(block_size);
 
@@ -83,6 +91,42 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size, void *membuf,
     STAILQ_INSERT_TAIL(&g_os_mempool_list, mp, mp_list);
 
     return OS_OK;
+}
+
+/**
+ * Checks if a memory block was allocated from the specified mempool.
+ *
+ * @param mp                    The mempool to check as parent.
+ * @param block_addr            The memory block to check as child.
+ *
+ * @return                      0 if the block does not belong to the mempool;
+ *                              1 if the block does belong to the mempool.
+ */
+int
+os_memblock_from(struct os_mempool *mp, void *block_addr)
+{
+    uint32_t true_block_size;
+    uint32_t baddr32;
+    uint32_t end;
+
+    _Static_assert(sizeof block_addr == sizeof baddr32,
+                   "Pointer to void must be 32-bits.");
+
+    baddr32 = (uint32_t)block_addr;
+    true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(mp->mp_block_size);
+    end = mp->mp_membuf_addr + (mp->mp_num_blocks * true_block_size);
+
+    /* Check that the block is in the memory buffer range. */
+    if ((baddr32 < mp->mp_membuf_addr) || (baddr32 >= end)) {
+        return 0;
+    }
+
+    /* All freed blocks should be on true block size boundaries! */
+    if (((baddr32 - mp->mp_membuf_addr) % true_block_size) != 0) {
+        return 0;
+    }
+
+    return 1;
 }
 
 /**
@@ -135,9 +179,6 @@ os_error_t
 os_memblock_put(struct os_mempool *mp, void *block_addr)
 {
     os_sr_t sr;
-    uint32_t end;
-    uint32_t true_block_size;
-    uint32_t baddr32;
     struct os_memblock *block;
 
     /* Make sure parameters are valid */
@@ -146,23 +187,10 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
     }
 
     /* Check that the block we are freeing is a valid block! */
-    baddr32 = (uint32_t)block_addr;
-    true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(mp->mp_block_size);
-    end = mp->mp_membuf_addr + (mp->mp_num_blocks * true_block_size);
-    if ((baddr32 < mp->mp_membuf_addr) || (baddr32 >= end)) {
+    if (!os_memblock_from(mp, block_addr)) {
         return OS_INVALID_PARM;
     }
 
-    /* All freed blocks should be on true block size boundaries! */
-    if (((baddr32 - mp->mp_membuf_addr) % true_block_size) != 0) {
-        return OS_INVALID_PARM;
-    }
-
-    /* 
-     * XXX: we should do boundary checks here! The block had better be within 
-     * the pool. If it fails, do we return an error or assert()? Add this when 
-     * we add the memory debug. 
-     */ 
     block = (struct os_memblock *)block_addr;
     OS_ENTER_CRITICAL(sr);
     

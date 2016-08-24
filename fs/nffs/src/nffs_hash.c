@@ -156,6 +156,7 @@ nffs_hash_insert(struct nffs_hash_entry *entry)
     list = nffs_hash + idx;
 
     SLIST_INSERT_HEAD(list, entry, nhe_next);
+    nffs_hashcnt_ins++;
 
     if (nffs_hash_id_is_inode(entry->nhe_id)) {
         nie = nffs_hash_find_inode(entry->nhe_id);
@@ -185,6 +186,7 @@ nffs_hash_remove(struct nffs_hash_entry *entry)
     list = nffs_hash + idx;
 
     SLIST_REMOVE(list, entry, nffs_hash_entry, nhe_next);
+    nffs_hashcnt_rm++;
 
     if (nffs_hash_id_is_inode(entry->nhe_id) && nie) {
         nffs_inode_unsetflags(nie, NFFS_INODE_FLAG_INHASH);

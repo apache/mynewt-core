@@ -219,18 +219,28 @@ ble_gatt_disc_s_test_misc_verify_services(
 
 static int
 ble_gatt_disc_s_test_misc_disc_cb(uint16_t conn_handle,
-                                  struct ble_gatt_error *error,
-                                  struct ble_gatt_svc *service, void *arg)
+                                  const struct ble_gatt_error *error,
+                                  const struct ble_gatt_svc *service,
+                                  void *arg)
 {
-    TEST_ASSERT(error == NULL);
+    TEST_ASSERT(error != NULL);
     TEST_ASSERT(!ble_gatt_disc_s_test_rx_complete);
 
-    if (service == NULL) {
-        ble_gatt_disc_s_test_rx_complete = 1;
-    } else {
+    switch (error->status) {
+    case 0:
+        TEST_ASSERT(service != NULL);
         TEST_ASSERT_FATAL(ble_gatt_disc_s_test_num_svcs <
                           BLE_GATT_DISC_S_TEST_MAX_SERVICES);
         ble_gatt_disc_s_test_svcs[ble_gatt_disc_s_test_num_svcs++] = *service;
+        break;
+
+    case BLE_HS_EDONE:
+        TEST_ASSERT(service == NULL);
+        ble_gatt_disc_s_test_rx_complete = 1;
+        break;
+
+    default:
+        TEST_ASSERT(0);
     }
 
     return 0;
@@ -381,6 +391,8 @@ TEST_CASE(ble_gatt_disc_s_test_disc_service_uuid)
 
 TEST_SUITE(ble_gatt_disc_s_test_suite)
 {
+    tu_suite_set_post_test_cb(ble_hs_test_util_post_test, NULL);
+
     ble_gatt_disc_s_test_disc_all();
     ble_gatt_disc_s_test_disc_service_uuid();
 }

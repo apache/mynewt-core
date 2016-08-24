@@ -63,12 +63,14 @@ ble_att_clt_test_tx_write_req_or_cmd(uint16_t conn_handle,
                                      struct ble_att_write_req *req,
                                      void *value, int value_len, int is_req)
 {
+    struct os_mbuf *om;
     int rc;
 
+    om = ble_hs_test_util_om_from_flat(value, value_len);
     if (is_req) {
-        rc = ble_att_clt_tx_write_req(conn_handle, req, value, value_len);
+        rc = ble_att_clt_tx_write_req(conn_handle, req, om);
     } else {
-        rc = ble_att_clt_tx_write_cmd(conn_handle, req, value, value_len);
+        rc = ble_att_clt_tx_write_cmd(conn_handle, req, om);
     }
     TEST_ASSERT(rc == 0);
 }
@@ -212,8 +214,8 @@ ble_att_clt_test_misc_prep_good(uint16_t handle, uint16_t offset,
 
     req.bapc_handle = handle;
     req.bapc_offset = offset;
-    rc = ble_att_clt_tx_prep_write(conn_handle, &req, attr_data,
-                                   attr_data_len);
+    om = ble_hs_test_util_om_from_flat(attr_data, attr_data_len);
+    rc = ble_att_clt_tx_prep_write(conn_handle, &req, om);
     TEST_ASSERT(rc == 0);
 
     ble_hs_test_util_tx_all();
@@ -259,17 +261,35 @@ ble_att_clt_test_misc_prep_bad(uint16_t handle, uint16_t offset,
                                int status)
 {
     struct ble_att_prep_write_cmd req;
+    struct os_mbuf *om;
     uint16_t conn_handle;
     int rc;
 
     conn_handle = ble_att_clt_test_misc_init();
 
+    om = ble_hs_test_util_om_from_flat(attr_data, attr_data_len);
+
     req.bapc_handle = handle;
     req.bapc_offset = offset;
-    rc = ble_att_clt_tx_prep_write(conn_handle, &req, attr_data,
-                                   attr_data_len);
+    rc = ble_att_clt_tx_prep_write(conn_handle, &req, om);
     TEST_ASSERT(rc == status);
 }
+
+static void
+ble_att_clt_test_misc_tx_mtu(uint16_t conn_handle, uint16_t mtu, int status)
+{
+    struct ble_att_mtu_cmd req;
+    int rc;
+
+    req.bamc_mtu = mtu;
+    rc = ble_att_clt_tx_mtu(conn_handle, &req);
+    TEST_ASSERT(rc == status);
+
+    if (rc == 0) {
+        ble_hs_test_util_verify_tx_mtu_cmd(1, mtu);
+    }
+}
+
 
 TEST_CASE(ble_att_clt_test_tx_write)
 {
@@ -408,7 +428,8 @@ TEST_CASE(ble_att_clt_test_rx_read_mult)
     htole16(buf + BLE_ATT_READ_MULT_RSP_BASE_SZ + 0, 12);
 
     rc = ble_hs_test_util_l2cap_rx_payload_flat(
-        conn_handle, BLE_L2CAP_CID_ATT, buf, BLE_ATT_READ_MULT_RSP_BASE_SZ + 2);
+        conn_handle, BLE_L2CAP_CID_ATT, buf,
+        BLE_ATT_READ_MULT_RSP_BASE_SZ + 2);
     TEST_ASSERT(rc == 0);
 
     /*** Larger response. */
@@ -416,12 +437,14 @@ TEST_CASE(ble_att_clt_test_rx_read_mult)
     htole16(buf + BLE_ATT_READ_MULT_RSP_BASE_SZ + 2, 43);
     htole16(buf + BLE_ATT_READ_MULT_RSP_BASE_SZ + 4, 91);
     rc = ble_hs_test_util_l2cap_rx_payload_flat(
-        conn_handle, BLE_L2CAP_CID_ATT, buf, BLE_ATT_READ_MULT_RSP_BASE_SZ + 6);
+        conn_handle, BLE_L2CAP_CID_ATT, buf,
+        BLE_ATT_READ_MULT_RSP_BASE_SZ + 6);
     TEST_ASSERT(rc == 0);
 
     /*** Zero-length response. */
     rc = ble_hs_test_util_l2cap_rx_payload_flat(
-        conn_handle, BLE_L2CAP_CID_ATT, buf, BLE_ATT_READ_MULT_RSP_BASE_SZ + 0);
+        conn_handle, BLE_L2CAP_CID_ATT, buf,
+        BLE_ATT_READ_MULT_RSP_BASE_SZ + 0);
     TEST_ASSERT(rc == 0);
 }
 
@@ -502,8 +525,24 @@ TEST_CASE(ble_att_clt_test_tx_exec_write)
     TEST_ASSERT(rc == BLE_HS_EINVAL);
 }
 
+TEST_CASE(ble_att_clt_test_tx_mtu)
+{
+    uint16_t conn_handle;
+
+    conn_handle = ble_att_clt_test_misc_init();
+
+    /*** Success. */
+    ble_att_clt_test_misc_tx_mtu(conn_handle, 50, 0);
+
+    /*** Error: repeated sends. */
+    ble_att_clt_test_misc_tx_mtu(conn_handle, 50, BLE_HS_EALREADY);
+    ble_att_clt_test_misc_tx_mtu(conn_handle, 60, BLE_HS_EALREADY);
+}
+
 TEST_SUITE(ble_att_clt_suite)
 {
+    tu_suite_set_post_test_cb(ble_hs_test_util_post_test, NULL);
+
     ble_att_clt_test_tx_find_info();
     ble_att_clt_test_rx_find_info();
     ble_att_clt_test_tx_read();
@@ -516,6 +555,7 @@ TEST_SUITE(ble_att_clt_suite)
     ble_att_clt_test_tx_prep_write();
     ble_att_clt_test_rx_prep_write();
     ble_att_clt_test_tx_exec_write();
+    ble_att_clt_test_tx_mtu();
 }
 
 int

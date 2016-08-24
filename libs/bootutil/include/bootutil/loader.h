@@ -46,6 +46,9 @@ struct boot_req {
     /** The area to use as the image scratch area, index is
 	index to br_area_descs array, of the  */
     uint8_t br_scratch_area_idx;
+
+    /** Size of the image slot */
+    uint32_t br_img_sz;
 };
 
 /**

@@ -27,10 +27,10 @@
 #include "hal/hal_gpio.h"
 #include "hal/hal_cputime.h"
 #include "console/console.h"
+#include <imgmgr/imgmgr.h>
 
 /* BLE */
 #include "nimble/ble.h"
-#include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_uuid.h"
@@ -41,9 +41,22 @@
 #include "host/ble_sm.h"
 #include "controller/ble_ll.h"
 
-#include "bleprph.h"
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
 
-#define BSWAP16(x)  ((uint16_t)(((x) << 8) | (((x) & 0xff00) >> 8)))
+/* RAM persistence layer. */
+#include "store/ram/ble_store_ram.h"
+
+/* Mandatory services. */
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
+
+/* Newtmgr include */
+#include "newtmgr/newtmgr.h"
+#include "nmgrble/newtmgr_ble.h"
+
+/* Application-specified header. */
+#include "bleprph.h"
 
 /** Mbuf settings. */
 #define MBUF_NUM_MBUFS      (12)
@@ -66,6 +79,10 @@ struct log bleprph_log;
 #define BLEPRPH_TASK_PRIO           1
 #define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
 
+#define NEWTMGR_TASK_PRIO (4)
+#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
+os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
+
 struct os_eventq bleprph_evq;
 struct os_task bleprph_task;
 bssnz_t os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
@@ -76,18 +93,7 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a};
 /** Our random address (in case we need it) */
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
-/** Device name - included in advertisements and exposed by GAP service. */
-const char *bleprph_device_name = "nimble-bleprph";
-
-/** Device properties - exposed by GAP service. */
-const uint16_t bleprph_appearance = BSWAP16(BLE_GAP_APPEARANCE_GEN_COMPUTER);
-const uint8_t bleprph_privacy_flag = 0;
-uint8_t bleprph_reconnect_addr[6];
-uint8_t bleprph_pref_conn_params[8];
-uint8_t bleprph_gatt_service_changed[4];
-
-static int bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt,
-                             void *arg);
+static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
  * Logs information about a connection to the console.
@@ -124,11 +130,14 @@ bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 bleprph_advertise(void)
 {
+    struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
+    const char *name;
     int rc;
 
     /**
      *  Set the advertisement data included in our advertisements:
+     *     o Flags (indicates advertisement type and other general info).
      *     o Advertising tx power.
      *     o Device name.
      *     o 16-bit service UUIDs (alert notifications).
@@ -136,10 +145,22 @@ bleprph_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
-    fields.tx_pwr_lvl_is_present = 1;
+    /* Indicate that the flags field should be included; specify a value of 0
+     * to instruct the stack to fill the value in for us.
+     */
+    fields.flags_is_present = 1;
+    fields.flags = 0;
 
-    fields.name = (uint8_t *)bleprph_device_name;
-    fields.name_len = strlen(bleprph_device_name);
+    /* Indicate that the TX power level field should be included; have the
+     * stack fill this one automatically as well.  This is done by assiging the
+     * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
+     */
+    fields.tx_pwr_lvl_is_present = 1;
+    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
+
+    name = ble_svc_gap_device_name();
+    fields.name = (uint8_t *)name;
+    fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
     fields.uuids16 = (uint16_t[]){ GATT_SVR_SVC_ALERT_UUID };
@@ -153,8 +174,11 @@ bleprph_advertise(void)
     }
 
     /* Begin advertising. */
-    rc = ble_gap_adv_start(BLE_GAP_DISC_MODE_GEN, BLE_GAP_CONN_MODE_UND,
-                           NULL, 0, NULL, bleprph_gap_event, NULL);
+    memset(&adv_params, 0, sizeof adv_params);
+    adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
+    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+                           &adv_params, bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
@@ -177,26 +201,33 @@ bleprph_advertise(void)
  *                                  particular GAP event being signalled.
  */
 static int
-bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
+bleprph_gap_event(struct ble_gap_event *event, void *arg)
 {
-    switch (event) {
+    struct ble_gap_conn_desc desc;
+    int rc;
+
+    switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
         BLEPRPH_LOG(INFO, "connection %s; status=%d ",
-                       ctxt->connect.status == 0 ? "established" : "failed",
-                       ctxt->connect.status);
-        bleprph_print_conn_desc(ctxt->desc);
+                       event->connect.status == 0 ? "established" : "failed",
+                       event->connect.status);
+        if (event->connect.status == 0) {
+            rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+            assert(rc == 0);
+            bleprph_print_conn_desc(&desc);
+        }
         BLEPRPH_LOG(INFO, "\n");
 
-        if (ctxt->connect.status != 0) {
+        if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
             bleprph_advertise();
         }
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", ctxt->disconnect.reason);
-        bleprph_print_conn_desc(ctxt->desc);
+        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        bleprph_print_conn_desc(&event->disconnect.conn);
         BLEPRPH_LOG(INFO, "\n");
 
         /* Connection terminated; resume advertising. */
@@ -206,21 +237,57 @@ bleprph_gap_event(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
         BLEPRPH_LOG(INFO, "connection updated; status=%d ",
-                    ctxt->conn_update.status);
-        bleprph_print_conn_desc(ctxt->desc);
+                    event->conn_update.status);
+        rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+        assert(rc == 0);
+        bleprph_print_conn_desc(&desc);
         BLEPRPH_LOG(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
         BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
-                    ctxt->enc_change.status);
-        bleprph_print_conn_desc(ctxt->desc);
+                    event->enc_change.status);
+        rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
+        assert(rc == 0);
+        bleprph_print_conn_desc(&desc);
         BLEPRPH_LOG(INFO, "\n");
+        return 0;
+
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        BLEPRPH_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+                          "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
+                    event->subscribe.conn_handle,
+                    event->subscribe.attr_handle,
+                    event->subscribe.reason,
+                    event->subscribe.prev_notify,
+                    event->subscribe.cur_notify,
+                    event->subscribe.prev_indicate,
+                    event->subscribe.cur_indicate);
+        return 0;
+
+    case BLE_GAP_EVENT_MTU:
+        BLEPRPH_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+                    event->mtu.conn_handle,
+                    event->mtu.channel_id,
+                    event->mtu.value);
         return 0;
     }
 
     return 0;
+}
+
+static void
+bleprph_on_reset(int reason)
+{
+    BLEPRPH_LOG(ERROR, "Resetting state; reason=%d\n", reason);
+}
+
+static void
+bleprph_on_sync(void)
+{
+    /* Begin advertising. */
+    bleprph_advertise();
 }
 
 /**
@@ -233,14 +300,20 @@ bleprph_task_handler(void *unused)
     struct os_callout_func *cf;
     int rc;
 
+    /* Activate the host.  This causes the host to synchronize with the
+     * controller.
+     */
     rc = ble_hs_start();
-    assert(rc == 0);
-
-    /* Begin advertising. */
-    bleprph_advertise();
 
     while (1) {
         ev = os_eventq_get(&bleprph_evq);
+
+        /* Check if the event is a nmgr ble mqueue event */
+        rc = nmgr_ble_proc_mq_evt(ev);
+        if (!rc) {
+            continue;
+        }
+
         switch (ev->ev_type) {
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)ev;
@@ -266,6 +339,7 @@ bleprph_task_handler(void *unused)
 int
 main(void)
 {
+    struct ble_hci_ram_cfg hci_cfg;
     struct ble_hs_cfg cfg;
     uint32_t seed;
     int rc;
@@ -301,11 +375,21 @@ main(void)
     rc = os_msys_register(&bleprph_mbuf_pool);
     assert(rc == 0);
 
+    /* Initialize the console (for log output). */
+    rc = console_init(NULL);
+    assert(rc == 0);
+
     /* Initialize the logging system. */
     log_init();
     log_console_handler_init(&bleprph_log_console_handler);
     log_register("bleprph", &bleprph_log, &bleprph_log_console_handler);
 
+    /* Initialize eventq */
+    os_eventq_init(&bleprph_evq);
+
+    /* Create the bleprph task.  All application logic and NimBLE host
+     * operations are performed in this task.
+     */
     os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
                  NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
                  bleprph_stack, BLEPRPH_STACK_SIZE);
@@ -314,36 +398,47 @@ main(void)
     rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
-    /* Initialize the BLE host. */
+    /* Initialize the RAM HCI transport. */
+    hci_cfg = ble_hci_ram_cfg_dflt;
+    rc = ble_hci_ram_init(&hci_cfg);
+    assert(rc == 0);
+
+    /* Initialize the NimBLE host configuration. */
     cfg = ble_hs_cfg_dflt;
-    cfg.max_hci_bufs = 3;
-    cfg.max_connections = 1;
-    cfg.max_attrs = 42;
-    cfg.max_services = 5;
-    cfg.max_client_configs = 6;
+    cfg.max_hci_bufs = hci_cfg.num_evt_hi_bufs + hci_cfg.num_evt_lo_bufs;
     cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = 3;
-    cfg.max_l2cap_sig_procs = 1;
     cfg.sm_bonding = 1;
     cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
     cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.store_read_cb = store_read;
-    cfg.store_write_cb = store_write;
+    cfg.reset_cb = bleprph_on_reset;
+    cfg.sync_cb = bleprph_on_sync;
+    cfg.store_read_cb = ble_store_ram_read;
+    cfg.store_write_cb = ble_store_ram_write;
+    cfg.gatts_register_cb = gatt_svr_register_cb;
 
-    /* Initialize eventq */
-    os_eventq_init(&bleprph_evq);
+    /* Initialize GATT services. */
+    rc = ble_svc_gap_init(&cfg);
+    assert(rc == 0);
 
+    rc = ble_svc_gatt_init(&cfg);
+    assert(rc == 0);
+
+    rc = nmgr_ble_gatt_svr_init(&bleprph_evq, &cfg);
+    assert(rc == 0);
+
+    rc = gatt_svr_init(&cfg);
+    assert(rc == 0);
+
+    /* Initialize NimBLE host. */
     rc = ble_hs_init(&bleprph_evq, &cfg);
     assert(rc == 0);
 
-    /* Initialize the console (for log output). */
-    rc = console_init(NULL);
-    assert(rc == 0);
+    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
+    imgmgr_module_init();
 
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
-    gatt_svr_init();
+    /* Set the default device name. */
+    rc = ble_svc_gap_device_name_set("nimble-bleprph");
+    assert(rc == 0);
 
     /* Start the OS */
     os_start();

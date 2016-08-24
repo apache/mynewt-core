@@ -23,7 +23,12 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+#include "testutil/testutil.h"
+
 void tu_arch_restart(void);
 void tu_case_abort(void);
+
+extern tu_post_test_fn_t *tu_case_post_test_cb;
+extern void *tu_case_post_test_cb_arg;
 
 #endif

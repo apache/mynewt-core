@@ -27,7 +27,7 @@
  * Utility function to log an array of bytes.
  */
 void
-print_bytes(uint8_t *bytes, int len)
+print_bytes(const uint8_t *bytes, int len)
 {
     int i;
 
@@ -37,9 +37,26 @@ print_bytes(uint8_t *bytes, int len)
 }
 
 void
-print_addr(void *addr)
+print_mbuf(const struct os_mbuf *om)
 {
-    uint8_t *u8p;
+    int colon;
+
+    colon = 0;
+    while (om != NULL) {
+        if (colon) {
+            console_printf(":");
+        } else {
+            colon = 1;
+        }
+        print_bytes(om->om_data, om->om_len);
+        om = SLIST_NEXT(om, om_next);
+    }
+}
+
+void
+print_addr(const void *addr)
+{
+    const uint8_t *u8p;
 
     u8p = addr;
     console_printf("%02x:%02x:%02x:%02x:%02x:%02x",
@@ -47,10 +64,10 @@ print_addr(void *addr)
 }
 
 void
-print_uuid(void *uuid128)
+print_uuid(const void *uuid128)
 {
     uint16_t uuid16;
-    uint8_t *u8p;
+    const uint8_t *u8p;
 
     uuid16 = ble_uuid_128_to_16(uuid128);
     if (uuid16 != 0) {
@@ -69,15 +86,15 @@ print_uuid(void *uuid128)
 }
 
 int
-svc_is_empty(struct bletiny_svc *svc)
+svc_is_empty(const struct bletiny_svc *svc)
 {
     return svc->svc.end_handle < svc->svc.start_handle;
 }
 
 uint16_t
-chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr)
+chr_end_handle(const struct bletiny_svc *svc, const struct bletiny_chr *chr)
 {
-    struct bletiny_chr *next_chr;
+    const struct bletiny_chr *next_chr;
 
     next_chr = SLIST_NEXT(chr, next);
     if (next_chr != NULL) {
@@ -88,13 +105,13 @@ chr_end_handle(struct bletiny_svc *svc, struct bletiny_chr *chr)
 }
 
 int
-chr_is_empty(struct bletiny_svc *svc, struct bletiny_chr *chr)
+chr_is_empty(const struct bletiny_svc *svc, const struct bletiny_chr *chr)
 {
     return chr_end_handle(svc, chr) <= chr->chr.val_handle;
 }
 
 void
-print_conn_desc(struct ble_gap_conn_desc *desc)
+print_conn_desc(const struct ble_gap_conn_desc *desc)
 {
     console_printf("handle=%d our_ota_addr_type=%d our_ota_addr=",
                    desc->conn_handle, desc->our_ota_addr_type);

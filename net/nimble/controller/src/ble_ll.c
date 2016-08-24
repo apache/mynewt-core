@@ -26,6 +26,7 @@
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "nimble/hci_common.h"
+#include "nimble/ble_hci_trans.h"
 #include "controller/ble_hw.h"
 #include "controller/ble_phy.h"
 #include "controller/ble_ll.h"
@@ -150,6 +151,7 @@ STATS_NAME_START(ble_ll_stats)
     STATS_NAME(ble_ll_stats, hci_events_sent)
     STATS_NAME(ble_ll_stats, bad_ll_state)
     STATS_NAME(ble_ll_stats, bad_acl_hdr)
+    STATS_NAME(ble_ll_stats, no_bufs)
     STATS_NAME(ble_ll_stats, rx_adv_pdu_crc_ok)
     STATS_NAME(ble_ll_stats, rx_adv_pdu_crc_err)
     STATS_NAME(ble_ll_stats, rx_adv_bytes_crc_ok)
@@ -181,6 +183,9 @@ STATS_NAME_END(ble_ll_stats)
 #define BLE_LL_STACK_SIZE   (80)
 struct os_task g_ble_ll_task;
 os_stack_t g_ble_ll_stack[BLE_LL_STACK_SIZE];
+
+struct os_mempool g_ble_ll_hci_ev_pool;
+static void *ble_ll_hci_os_event_buf;
 
 /* XXX: temporary logging until we transition to real logging */
 #ifdef BLE_LL_LOG
@@ -256,6 +261,68 @@ ble_ll_count_rx_adv_pdus(uint8_t pdu_type)
     default:
         break;
     }
+}
+
+/**
+ * Allocate a pdu (chain) for reception.
+ *
+ * @param len
+ *
+ * @return struct os_mbuf*
+ */
+struct os_mbuf *
+ble_ll_rxpdu_alloc(uint16_t len)
+{
+    uint16_t mb_bytes;
+    struct os_mbuf *m;
+    struct os_mbuf *n;
+    struct os_mbuf *p;
+    struct os_mbuf_pkthdr *pkthdr;
+
+    p = os_msys_get_pkthdr(len, sizeof(struct ble_mbuf_hdr));
+    if (!p) {
+        goto rxpdu_alloc_exit;
+    }
+
+    /* Set packet length */
+    pkthdr = OS_MBUF_PKTHDR(p);
+    pkthdr->omp_len = len;
+
+    /*
+     * NOTE: first mbuf in chain will have data pre-pended to it so we adjust
+     * m_data by a word.
+     */
+    p->om_data += 4;
+    mb_bytes = (p->om_omp->omp_databuf_len - p->om_pkthdr_len - 4);
+
+    if (mb_bytes < len) {
+        n = p;
+        len -= mb_bytes;
+        while (len) {
+            m = os_msys_get(len, 0);
+            if (!m) {
+                os_mbuf_free_chain(p);
+                p = NULL;
+                goto rxpdu_alloc_exit;
+            }
+            /* Chain new mbuf to existing chain */
+            SLIST_NEXT(n, om_next) = m;
+            n = m;
+            mb_bytes = m->om_omp->omp_databuf_len;
+            if (mb_bytes >= len) {
+                len = 0;
+            } else {
+                len -= mb_bytes;
+            }
+        }
+    }
+
+
+rxpdu_alloc_exit:
+    if (!p) {
+        STATS_INC(ble_ll_stats, no_bufs);
+    }
+    return p;
 }
 
 int
@@ -662,25 +729,21 @@ ble_ll_acl_data_in(struct os_mbuf *txpkt)
  *   > 0: Continue to receive frame and go from rx to tx when done
  */
 int
-ble_ll_rx_start(struct os_mbuf *rxpdu, uint8_t chan)
+ble_ll_rx_start(uint8_t *rxbuf, uint8_t chan, struct ble_mbuf_hdr *rxhdr)
 {
     int rc;
     uint8_t pdu_type;
-    uint8_t *rxbuf;
-    struct ble_mbuf_hdr *ble_hdr;
 
-    ble_ll_log(BLE_LL_LOG_ID_RX_START, chan, 0, (uint32_t)rxpdu);
+    ble_ll_log(BLE_LL_LOG_ID_RX_START, chan, 0, rxhdr->beg_cputime);
 
     /* Check channel type */
-    rxbuf = rxpdu->om_data;
     if (chan < BLE_PHY_NUM_DATA_CHANS) {
         /*
          * Data channel pdu. We should be in CONNECTION state with an
          * ongoing connection
          */
         if (g_ble_ll_data.ll_state == BLE_LL_STATE_CONNECTION) {
-            ble_hdr = BLE_MBUF_HDR_PTR(rxpdu);
-            rc = ble_ll_conn_rx_isr_start(ble_hdr, ble_phy_access_addr_get());
+            rc = ble_ll_conn_rx_isr_start(rxhdr, ble_phy_access_addr_get());
         } else {
             STATS_INC(ble_ll_stats, bad_ll_state);
             rc = 0;
@@ -704,7 +767,7 @@ ble_ll_rx_start(struct os_mbuf *rxpdu, uint8_t chan)
         }
         break;
     case BLE_LL_STATE_SCANNING:
-        rc = ble_ll_scan_rx_isr_start(pdu_type, rxpdu);
+        rc = ble_ll_scan_rx_isr_start(pdu_type, &rxhdr->rxinfo.flags);
         break;
     case BLE_LL_STATE_CONNECTION:
         /* Should not occur */
@@ -726,8 +789,8 @@ ble_ll_rx_start(struct os_mbuf *rxpdu, uint8_t chan)
  *
  * NOTE: Called from interrupt context!
  *
- * @param rxpdu Pointer to received PDU
- *        ble_hdr Pointer to BLE header of received mbuf
+ * @param rxbuf Pointer to received PDU data
+ *        rxhdr Pointer to BLE header of received mbuf
  *
  * @return int
  *       < 0: Disable the phy after reception.
@@ -735,7 +798,7 @@ ble_ll_rx_start(struct os_mbuf *rxpdu, uint8_t chan)
  *       > 0: Do not disable PHY as that has already been done.
  */
 int
-ble_ll_rx_end(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *ble_hdr)
+ble_ll_rx_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
 {
     int rc;
     int badpkt;
@@ -743,40 +806,23 @@ ble_ll_rx_end(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *ble_hdr)
     uint8_t len;
     uint8_t chan;
     uint8_t crcok;
-    uint16_t mblen;
-    uint8_t *rxbuf;
-
-    /* Set the rx buffer pointer to the start of the received data */
-    rxbuf = rxpdu->om_data;
+    struct os_mbuf *rxpdu;
 
     /* Get channel and CRC status from BLE header */
-    chan = ble_hdr->rxinfo.channel;
-    crcok = BLE_MBUF_HDR_CRC_OK(ble_hdr);
+    chan = rxhdr->rxinfo.channel;
+    crcok = BLE_MBUF_HDR_CRC_OK(rxhdr);
 
     ble_ll_log(BLE_LL_LOG_ID_RX_END, rxbuf[0],
-               ((uint16_t)ble_hdr->rxinfo.flags << 8) | rxbuf[1],
-               (BLE_MBUF_HDR_PTR(rxpdu))->beg_cputime);
+               ((uint16_t)rxhdr->rxinfo.flags << 8) | rxbuf[1],
+               rxhdr->beg_cputime);
 
     /* Check channel type */
     if (chan < BLE_PHY_NUM_DATA_CHANS) {
-        /* Set length in the received PDU */
-        mblen = rxbuf[1] + BLE_LL_PDU_HDR_LEN;
-        OS_MBUF_PKTHDR(rxpdu)->omp_len = mblen;
-        rxpdu->om_len = mblen;
-
-        /*
-         * NOTE: this looks a bit odd, and it is, but for now we place the
-         * received PDU on the Link Layer task before calling the rx end
-         * function. We do this to guarantee connection event end ordering
-         * and receive PDU processing.
-         */
-        ble_ll_rx_pdu_in(rxpdu);
-
         /*
          * Data channel pdu. We should be in CONNECTION state with an
          * ongoing connection.
          */
-        rc = ble_ll_conn_rx_isr_end(rxpdu);
+        rc = ble_ll_conn_rx_isr_end(rxbuf, rxhdr);
         return rc;
     }
 
@@ -784,14 +830,9 @@ ble_ll_rx_end(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *ble_hdr)
     pdu_type = rxbuf[0] & BLE_ADV_PDU_HDR_TYPE_MASK;
     len = rxbuf[1] & BLE_ADV_PDU_HDR_LEN_MASK;
 
-    /* Setup the mbuf lengths */
-    mblen = len + BLE_LL_PDU_HDR_LEN;
-    OS_MBUF_PKTHDR(rxpdu)->omp_len = mblen;
-    rxpdu->om_len = mblen;
-
     /* If the CRC checks, make sure lengths check! */
+    badpkt = 0;
     if (crcok) {
-        badpkt = 0;
         switch (pdu_type) {
         case BLE_ADV_PDU_TYPE_SCAN_REQ:
         case BLE_ADV_PDU_TYPE_ADV_DIRECT_IND:
@@ -820,22 +861,32 @@ ble_ll_rx_end(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *ble_hdr)
         /* If this is a malformed packet, just kill it here */
         if (badpkt) {
             STATS_INC(ble_ll_stats, rx_adv_malformed_pkts);
-            os_mbuf_free_chain(rxpdu);
-            rxpdu = NULL;
         }
     }
 
-
     /* Hand packet to the appropriate state machine (if crc ok) */
-    switch (BLE_MBUF_HDR_RX_STATE(ble_hdr)) {
+    rxpdu = NULL;
+    switch (BLE_MBUF_HDR_RX_STATE(rxhdr)) {
     case BLE_LL_STATE_ADV:
+        if (!badpkt) {
+            rxpdu = ble_ll_rxpdu_alloc(len + BLE_LL_PDU_HDR_LEN);
+            if (rxpdu) {
+                ble_phy_rxpdu_copy(rxbuf, rxpdu);
+            }
+        }
         rc = ble_ll_adv_rx_isr_end(pdu_type, rxpdu, crcok);
         break;
     case BLE_LL_STATE_SCANNING:
+        if (!badpkt) {
+            rxpdu = ble_ll_rxpdu_alloc(len + BLE_LL_PDU_HDR_LEN);
+            if (rxpdu) {
+                ble_phy_rxpdu_copy(rxbuf, rxpdu);
+            }
+        }
         rc = ble_ll_scan_rx_isr_end(rxpdu, crcok);
         break;
     case BLE_LL_STATE_INITIATING:
-        rc = ble_ll_init_rx_isr_end(rxpdu, crcok);
+        rc = ble_ll_init_rx_isr_end(rxbuf, crcok, rxhdr);
         break;
     default:
         rc = -1;
@@ -1129,6 +1180,16 @@ ble_ll_init(uint8_t ll_task_prio, uint8_t num_acl_pkts, uint16_t acl_pkt_size)
     cputime_timer_init(&g_ble_ll_data.ll_wfr_timer, ble_ll_wfr_timer_exp,
                        NULL);
 
+    ble_ll_hci_os_event_buf = malloc(
+        OS_MEMPOOL_BYTES(16, sizeof (struct os_event)));
+    assert(ble_ll_hci_os_event_buf != NULL);
+
+    /* Create memory pool of OS events */
+    rc = os_mempool_init(&g_ble_ll_hci_ev_pool, 16,
+                         sizeof (struct os_event), ble_ll_hci_os_event_buf,
+                         "g_ble_ll_hci_ev_pool");
+    assert(rc == 0);
+
     /* Initialize LL HCI */
     ble_ll_hci_init();
 
@@ -1182,6 +1243,9 @@ ble_ll_init(uint8_t ll_task_prio, uint8_t num_acl_pkts, uint16_t acl_pkt_size)
                             STATS_SIZE_INIT_PARMS(ble_ll_stats, STATS_SIZE_32),
                             STATS_NAME_INIT_PARMS(ble_ll_stats),
                             "ble_ll");
+
+    ble_hci_trans_cfg_ll(ble_ll_hci_cmd_rx, NULL,
+                                    ble_ll_hci_acl_rx, NULL);
     return rc;
 }
 

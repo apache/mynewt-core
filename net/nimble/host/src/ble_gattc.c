@@ -138,7 +138,7 @@ struct ble_gattc_proc {
         } disc_chr_uuid;
 
         struct {
-            uint16_t chr_def_handle;
+            uint16_t chr_val_handle;
             uint16_t prev_handle;
             uint16_t end_handle;
             ble_gatt_dsc_fn *cb;
@@ -182,17 +182,16 @@ struct ble_gattc_proc {
         } write_long;
 
         struct {
-            struct ble_gatt_attr *attrs;
-            int num_attrs;
-            int cur_attr;
+            struct ble_gatt_attr attrs[NIMBLE_OPT(GATT_WRITE_MAX_ATTRS)];
+            uint8_t num_attrs;
+            uint8_t cur_attr;
+            uint16_t length;
             ble_gatt_reliable_attr_fn *cb;
             void *cb_arg;
         } write_reliable;
 
         struct {
-            ble_gatt_attr_fn *cb;
             uint16_t chr_val_handle;
-            void *cb_arg;
         } indicate;
     };
 };
@@ -248,10 +247,10 @@ typedef int ble_gattc_rx_adata_fn(struct ble_gattc_proc *proc,
 
 typedef int ble_gattc_rx_prep_fn(struct ble_gattc_proc *proc, int status,
                                  struct ble_att_prep_write_cmd *rsp,
-                                 void *attr_data, uint16_t attr_len);
+                                 struct os_mbuf **om);
 
 typedef int ble_gattc_rx_attr_fn(struct ble_gattc_proc *proc, int status,
-                                 void *value, int value_len);
+                                 struct os_mbuf **om);
 
 typedef int ble_gattc_rx_complete_fn(struct ble_gattc_proc *proc, int status);
 typedef int ble_gattc_rx_exec_fn(struct ble_gattc_proc *proc, int status);
@@ -393,9 +392,9 @@ ble_gattc_log_proc_init(char *name)
 }
 
 static void
-ble_gattc_log_uuid(void *uuid128)
+ble_gattc_log_uuid(const void *uuid128)
 {
-    uint8_t *u8p;
+    const uint8_t *u8p;
 
     u8p = uuid128;
     BLE_HS_LOG(INFO, "%02x%02x%02x%02x-%02x%02x-%02x%02x-"
@@ -447,8 +446,8 @@ static void
 ble_gattc_log_disc_all_dscs(struct ble_gattc_proc *proc)
 {
     ble_gattc_log_proc_init("discover all descriptors; ");
-    BLE_HS_LOG(INFO, "chr_def_handle=%d end_handle=%d\n",
-               proc->disc_all_dscs.chr_def_handle,
+    BLE_HS_LOG(INFO, "chr_val_handle=%d end_handle=%d\n",
+               proc->disc_all_dscs.chr_val_handle,
                proc->disc_all_dscs.end_handle);
 }
 
@@ -461,7 +460,7 @@ ble_gattc_log_read(uint16_t att_handle)
 
 static void
 ble_gattc_log_read_uuid(uint16_t start_handle, uint16_t end_handle,
-                        uint8_t *uuid128)
+                        const uint8_t *uuid128)
 {
     uint16_t uuid16;
 
@@ -486,7 +485,7 @@ ble_gattc_log_read_long(struct ble_gattc_proc *proc)
 }
 
 static void
-ble_gattc_log_read_mult(uint16_t *handles, uint8_t num_handles)
+ble_gattc_log_read_mult(const uint16_t *handles, uint8_t num_handles)
 {
     int i;
 
@@ -518,7 +517,8 @@ ble_gattc_log_write_long(struct ble_gattc_proc *proc)
 {
     ble_gattc_log_proc_init("write long; ");
     BLE_HS_LOG(INFO, "att_handle=%d len=%d\n",
-               proc->write_long.attr.handle, proc->write_long.attr.value_len);
+               proc->write_long.attr.handle,
+               OS_MBUF_PKTLEN(proc->write_long.attr.om));
 }
 
 static void
@@ -603,9 +603,25 @@ static void
 ble_gattc_proc_free(struct ble_gattc_proc *proc)
 {
     int rc;
+    int i;
 
     if (proc != NULL) {
         ble_gattc_dbg_assert_proc_not_inserted(proc);
+
+        switch (proc->op) {
+        case BLE_GATT_OP_WRITE_LONG:
+            os_mbuf_free_chain(proc->write_long.attr.om);
+            break;
+
+        case BLE_GATT_OP_WRITE_RELIABLE:
+            for (i = 0; i < proc->write_reliable.num_attrs; i++) {
+                os_mbuf_free_chain(proc->write_reliable.attrs[i].om);
+            }
+            break;
+
+        default:
+            break;
+        }
 
         rc = os_memblock_put(&ble_gattc_proc_pool, proc);
         BLE_HS_DBG_ASSERT_EVAL(rc == 0);
@@ -618,7 +634,7 @@ ble_gattc_proc_insert(struct ble_gattc_proc *proc)
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
     ble_hs_lock();
-    STAILQ_INSERT_HEAD(&ble_gattc_procs, proc, next);
+    STAILQ_INSERT_TAIL(&ble_gattc_procs, proc, next);
     ble_hs_unlock();
 }
 
@@ -707,9 +723,26 @@ ble_gattc_extract(uint16_t conn_handle, uint8_t op)
     return proc;
 }
 
+static int
+ble_gattc_conn_op_matches(struct ble_gattc_proc *proc, uint16_t conn_handle,
+                          uint8_t op)
+{
+    if (conn_handle != BLE_HS_CONN_HANDLE_NONE &&
+        conn_handle != proc->conn_handle) {
+
+        return 0;
+    }
+
+    if (op != BLE_GATT_OP_NONE && op != proc->op) {
+        return 0;
+    }
+
+    return 1;
+}
+
 static void
-ble_gattc_extract_by_conn(uint16_t conn_handle,
-                          struct ble_gattc_proc_list *dst_list)
+ble_gattc_extract_by_conn_op(uint16_t conn_handle, uint8_t op,
+                             struct ble_gattc_proc_list *dst_list)
 {
     struct ble_gattc_proc *proc;
     struct ble_gattc_proc *prev;
@@ -727,7 +760,7 @@ ble_gattc_extract_by_conn(uint16_t conn_handle,
     while (proc != NULL) {
         next = STAILQ_NEXT(proc, next);
 
-        if (proc->conn_handle == conn_handle) {
+        if (ble_gattc_conn_op_matches(proc, conn_handle, op)) {
             if (prev == NULL) {
                 STAILQ_REMOVE_HEAD(&ble_gattc_procs, next);
             } else {
@@ -842,6 +875,35 @@ ble_gattc_extract_with_rx_entry(uint16_t conn_handle,
         sizeof (rx_entries) / sizeof (rx_entries)[0],                         \
         (const void **)(out_rx_entry))
 
+
+/**
+ * Causes all GATT procedures matching the specified criteria to fail with the
+ * specified status code.
+ */
+static void
+ble_gattc_fail_procs(uint16_t conn_handle, uint8_t op, int status)
+{
+    struct ble_gattc_proc_list temp_list;
+    struct ble_gattc_proc *proc;
+    ble_gattc_err_fn *err_cb;
+
+    /* Remove all procs with the specified conn handle-op-pair and insert them
+     * into the temporary list.
+     */
+    ble_gattc_extract_by_conn_op(conn_handle, op, &temp_list);
+
+    /* Notify application of failed procedures and free the corresponding proc
+     * entries.
+     */
+    while ((proc = STAILQ_FIRST(&temp_list)) != NULL) {
+        err_cb = ble_gattc_err_dispatch_get(proc->op);
+        err_cb(proc, status, 0);
+
+        STAILQ_REMOVE_HEAD(&temp_list, next);
+        ble_gattc_proc_free(proc);
+    }
+}
+
 /**
  * Applies periodic checks and actions to all active procedures.
  *
@@ -854,7 +916,7 @@ ble_gattc_extract_with_rx_entry(uint16_t conn_handle,
  *                                  be called again; currently always
  *                                  UINT32_MAX.
  */
-uint32_t
+int32_t
 ble_gattc_heartbeat(void)
 {
     struct ble_gattc_proc_list exp_list;
@@ -869,13 +931,13 @@ ble_gattc_heartbeat(void)
     /* Terminate the connection associated with each timed-out procedure. */
     while ((proc = STAILQ_FIRST(&exp_list)) != NULL) {
         STATS_INC(ble_gattc_stats, proc_timeout);
-        ble_gap_terminate(proc->conn_handle);
+        ble_gap_terminate(proc->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
 
         STAILQ_REMOVE_HEAD(&exp_list, next);
         ble_gattc_proc_free(proc);
     }
 
-    return UINT32_MAX;
+    return BLE_HS_FOREVER;
 }
 
 /**
@@ -883,13 +945,14 @@ ble_gattc_heartbeat(void)
  * returned object is statically allocated, so this function is not reentrant.
  * This function should only ever be called by the ble_hs task.
  */
-struct ble_gatt_error *
+static struct ble_gatt_error *
 ble_gattc_error(int status, uint16_t att_handle)
 {
     static struct ble_gatt_error error;
 
-    if (status == 0) {
-        return NULL;
+    /* For consistency, always indicate a handle of 0 on success. */
+    if (status == 0 || status == BLE_HS_EDONE) {
+        att_handle = 0;
     }
 
     error.status = status;
@@ -917,7 +980,7 @@ ble_gattc_mtu_cb(struct ble_gattc_proc *proc, int status, uint16_t att_handle,
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, mtu_fail);
     }
 
@@ -949,7 +1012,10 @@ ble_gattc_mtu_err(struct ble_gattc_proc *proc, int status, uint16_t att_handle)
  *                                  procedure.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_exchange_mtu(uint16_t conn_handle, ble_gatt_mtu_fn *cb, void *cb_arg)
@@ -976,15 +1042,9 @@ ble_gattc_exchange_mtu(uint16_t conn_handle, ble_gatt_mtu_fn *cb, void *cb_arg)
     ble_gattc_log_proc_init("exchange mtu\n");
 
     ble_hs_lock();
-    rc = ble_att_conn_chan_find(proc->conn_handle, &conn, &chan);
-    if (rc == 0) {
-        req.bamc_mtu = chan->blc_my_mtu;
-    }
+    ble_att_conn_chan_find(proc->conn_handle, &conn, &chan);
+    req.bamc_mtu = chan->blc_my_mtu;
     ble_hs_unlock();
-
-    if (rc != 0) {
-        goto done;
-    }
 
     rc = ble_att_clt_tx_mtu(proc->conn_handle, &req);
     if (rc != 0) {
@@ -1019,9 +1079,10 @@ ble_gattc_disc_all_svcs_cb(struct ble_gattc_proc *proc,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(service != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, disc_all_svcs_fail);
     }
 
@@ -1077,7 +1138,7 @@ ble_gattc_disc_all_svcs_err(struct ble_gattc_proc *proc, int status,
 
     if (status == BLE_HS_ATT_ERR(BLE_ATT_ERR_ATTR_NOT_FOUND)) {
         /* Discovery is complete. */
-        status = 0;
+        status = BLE_HS_EDONE;
     }
 
     ble_gattc_disc_all_svcs_cb(proc, status, att_handle, NULL);
@@ -1149,19 +1210,24 @@ ble_gattc_disc_all_svcs_rx_complete(struct ble_gattc_proc *proc, int status)
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0 || proc->disc_all_svcs.prev_handle == 0xffff) {
-        /* Error or all svcs discovered. */
+    if (status != 0) {
         ble_gattc_disc_all_svcs_cb(proc, status, 0, NULL);
         return BLE_HS_EDONE;
-    } else {
-        /* Send follow-up request. */
-        rc = ble_gattc_disc_all_svcs_go(proc, 1);
-        if (rc != 0) {
-            return BLE_HS_EDONE;
-        }
-
-        return 0;
     }
+
+    if (proc->disc_all_svcs.prev_handle == 0xffff) {
+        /* Service discovery complete. */
+        ble_gattc_disc_all_svcs_cb(proc, BLE_HS_EDONE, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* Send follow-up request. */
+    rc = ble_gattc_disc_all_svcs_go(proc, 1);
+    if (rc != 0) {
+        return BLE_HS_EDONE;
+    }
+
+    return 0;
 }
 
 /**
@@ -1171,7 +1237,8 @@ ble_gattc_disc_all_svcs_rx_complete(struct ble_gattc_proc *proc, int status)
  *                                  procedure.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
  */
 int
 ble_gattc_disc_all_svcs(uint16_t conn_handle, ble_gatt_disc_svc_fn *cb,
@@ -1233,9 +1300,10 @@ ble_gattc_disc_svc_uuid_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(service != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, disc_svc_uuid_fail);
     }
 
@@ -1289,7 +1357,7 @@ ble_gattc_disc_svc_uuid_err(struct ble_gattc_proc *proc, int status,
 
     if (status == BLE_HS_ATT_ERR(BLE_ATT_ERR_ATTR_NOT_FOUND)) {
         /* Discovery is complete. */
-        status = 0;
+        status = BLE_HS_EDONE;
     }
 
     ble_gattc_disc_svc_uuid_cb(proc, status, att_handle, NULL);
@@ -1343,18 +1411,24 @@ ble_gattc_disc_svc_uuid_rx_complete(struct ble_gattc_proc *proc, int status)
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0 || proc->disc_svc_uuid.prev_handle == 0xffff) {
-        /* Error or all svcs discovered. */
+    if (status != 0) {
         ble_gattc_disc_svc_uuid_cb(proc, status, 0, NULL);
         return BLE_HS_EDONE;
-    } else {
-        /* Send follow-up request. */
-        rc = ble_gattc_disc_svc_uuid_go(proc, 1);
-        if (rc != 0) {
-            return BLE_HS_EDONE;
-        }
-        return 0;
     }
+
+    if (proc->disc_svc_uuid.prev_handle == 0xffff) {
+        /* Service discovery complete. */
+        ble_gattc_disc_svc_uuid_cb(proc, BLE_HS_EDONE, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* Send follow-up request. */
+    rc = ble_gattc_disc_svc_uuid_go(proc, 1);
+    if (rc != 0) {
+        return BLE_HS_EDONE;
+    }
+
+    return 0;
 }
 
 /**
@@ -1365,10 +1439,13 @@ ble_gattc_disc_svc_uuid_rx_complete(struct ble_gattc_proc *proc, int status)
  * @param service_uuid128       The 128-bit UUID of the service to discover.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_disc_svc_by_uuid(uint16_t conn_handle, void *service_uuid128,
+ble_gattc_disc_svc_by_uuid(uint16_t conn_handle, const void *svc_uuid128,
                            ble_gatt_disc_svc_fn *cb, void *cb_arg)
 {
 #if !NIMBLE_OPT(GATT_DISC_SVC_UUID)
@@ -1388,7 +1465,7 @@ ble_gattc_disc_svc_by_uuid(uint16_t conn_handle, void *service_uuid128,
 
     proc->op = BLE_GATT_OP_DISC_SVC_UUID;
     proc->conn_handle = conn_handle;
-    memcpy(proc->disc_svc_uuid.service_uuid, service_uuid128, 16);
+    memcpy(proc->disc_svc_uuid.service_uuid, svc_uuid128, 16);
     proc->disc_svc_uuid.prev_handle = 0x0000;
     proc->disc_svc_uuid.cb = cb;
     proc->disc_svc_uuid.cb_arg = cb_arg;
@@ -1428,9 +1505,10 @@ ble_gattc_find_inc_svcs_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(service != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, find_inc_svcs_fail);
     }
 
@@ -1499,7 +1577,7 @@ ble_gattc_find_inc_svcs_err(struct ble_gattc_proc *proc, int status,
         status == BLE_HS_ATT_ERR(BLE_ATT_ERR_ATTR_NOT_FOUND)) {
 
         /* Discovery is complete. */
-        status = 0;
+        status = BLE_HS_EDONE;
     }
 
     ble_gattc_find_inc_svcs_cb(proc, status, att_handle, NULL);
@@ -1511,52 +1589,57 @@ ble_gattc_find_inc_svcs_err(struct ble_gattc_proc *proc, int status,
  */
 static int
 ble_gattc_find_inc_svcs_rx_read_rsp(struct ble_gattc_proc *proc, int status,
-                                    void *value, int value_len)
+                                    struct os_mbuf **om)
 {
     struct ble_gatt_svc service;
-    int cbrc;
+    uint16_t om_len;
     int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
+    rc = ble_hs_mbuf_to_flat(*om, service.uuid128, 16, &om_len);
+    os_mbuf_free_chain(*om);
+    *om = NULL;
+
+    if (rc != 0 || om_len != 16) {
+        /* Invalid UUID. */
+        rc = BLE_HS_EBADDATA;
+        goto err;
+    }
+
     if (proc->find_inc_svcs.cur_start == 0) {
         /* Unexpected read response; terminate procedure. */
         rc = BLE_HS_EBADDATA;
-        goto done;
+        goto err;
     }
 
     if (status != 0) {
         rc = status;
-        goto done;
+        goto err;
     }
 
-    if (value_len != 16) {
-        /* Invalid UUID. */
-        rc = BLE_HS_EBADDATA;
-        goto done;
-    }
-
+    /* Report discovered service to application. */
     service.start_handle = proc->find_inc_svcs.cur_start;
     service.end_handle = proc->find_inc_svcs.cur_end;
-    memcpy(service.uuid128, value, 16);
+    rc = ble_gattc_find_inc_svcs_cb(proc, 0, 0, &service);
+    if (rc != 0) {
+        /* Application has indicated that the procedure should be aborted. */
+        return BLE_HS_EDONE;
+    }
 
-    /* We are done with this service; proceed to the next. */
+    /* Proceed to the next service. */
     proc->find_inc_svcs.cur_start = 0;
     proc->find_inc_svcs.cur_end = 0;
     rc = ble_gattc_find_inc_svcs_go(proc, 1);
     if (rc != 0) {
-        goto done;
+        goto err;
     }
 
-    rc = 0;
+    return 0;
 
-done:
-    cbrc = ble_gattc_find_inc_svcs_cb(proc, rc, 0, &service);
-    if (rc != 0 || cbrc != 0) {
-        return BLE_HS_EDONE;
-    } else {
-        return 0;
-    }
+err:
+    ble_gattc_find_inc_svcs_cb(proc, rc, 0, NULL);
+    return BLE_HS_EDONE;
 }
 
 /**
@@ -1646,18 +1729,23 @@ ble_gattc_find_inc_svcs_rx_complete(struct ble_gattc_proc *proc, int status)
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0 || proc->find_inc_svcs.prev_handle == 0xffff) {
-        /* Error or all svcs discovered. */
+    if (status != 0) {
         ble_gattc_find_inc_svcs_cb(proc, status, 0, NULL);
         return BLE_HS_EDONE;
-    } else {
-        /* Send follow-up request. */
-        rc = ble_gattc_find_inc_svcs_go(proc, 1);
-        if (rc != 0) {
-            return BLE_HS_EDONE;
-        }
-        return 0;
     }
+
+    if (proc->find_inc_svcs.prev_handle == 0xffff) {
+        /* Procedure complete. */
+        ble_gattc_find_inc_svcs_cb(proc, BLE_HS_EDONE, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* Send follow-up request. */
+    rc = ble_gattc_find_inc_svcs_go(proc, 1);
+    if (rc != 0) {
+        return BLE_HS_EDONE;
+    }
+    return 0;
 }
 
 /**
@@ -1671,7 +1759,10 @@ ble_gattc_find_inc_svcs_rx_complete(struct ble_gattc_proc *proc, int status)
  *                                  last handle in the service).
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
@@ -1734,9 +1825,10 @@ ble_gattc_disc_all_chrs_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(chr != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, disc_all_chrs_fail);
     }
 
@@ -1794,7 +1886,7 @@ ble_gattc_disc_all_chrs_err(struct ble_gattc_proc *proc, int status,
 
     if (status == BLE_HS_ATT_ERR(BLE_ATT_ERR_ATTR_NOT_FOUND)) {
         /* Discovery is complete. */
-        status = 0;
+        status = BLE_HS_EDONE;
     }
 
     ble_gattc_disc_all_chrs_cb(proc, status, att_handle, NULL);
@@ -1869,20 +1961,23 @@ ble_gattc_disc_all_chrs_rx_complete(struct ble_gattc_proc *proc, int status)
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0 ||
-        proc->disc_all_chrs.prev_handle == proc->disc_all_chrs.end_handle) {
-
-        /* Error or all svcs discovered. */
+    if (status != 0) {
         ble_gattc_disc_all_chrs_cb(proc, status, 0, NULL);
         return BLE_HS_EDONE;
-    } else {
-        /* Send follow-up request. */
-        rc = ble_gattc_disc_all_chrs_go(proc, 1);
-        if (rc != 0) {
-            return BLE_HS_EDONE;
-        }
-        return 0;
     }
+
+    if (proc->disc_all_chrs.prev_handle == proc->disc_all_chrs.end_handle) {
+        /* Characteristic discovery complete. */
+        ble_gattc_disc_all_chrs_cb(proc, BLE_HS_EDONE, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* Send follow-up request. */
+    rc = ble_gattc_disc_all_chrs_go(proc, 1);
+    if (rc != 0) {
+        return BLE_HS_EDONE;
+    }
+    return 0;
 }
 
 /**
@@ -1896,7 +1991,10 @@ ble_gattc_disc_all_chrs_rx_complete(struct ble_gattc_proc *proc, int status)
  *                                  last handle in the service).
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
@@ -1959,9 +2057,10 @@ ble_gattc_disc_chr_uuid_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(chr != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, disc_chrs_uuid_fail);
     }
 
@@ -2019,7 +2118,7 @@ ble_gattc_disc_chr_uuid_err(struct ble_gattc_proc *proc, int status,
 
     if (status == BLE_HS_ATT_ERR(BLE_ATT_ERR_ATTR_NOT_FOUND)) {
         /* Discovery is complete. */
-        status = 0;
+        status = BLE_HS_EDONE;
     }
 
     ble_gattc_disc_chr_uuid_cb(proc, status, att_handle, NULL);
@@ -2076,11 +2175,14 @@ ble_gattc_disc_chr_uuid_rx_adata(struct ble_gattc_proc *proc,
     rc = 0;
 
 done:
-    if (rc != 0 ||
-        memcmp(chr.uuid128, proc->disc_chr_uuid.chr_uuid, 16) == 0) {
-
-        cbrc = ble_gattc_disc_chr_uuid_cb(proc, rc, 0, &chr);
+    if (rc != 0) {
+        /* Failure. */
+        cbrc = ble_gattc_disc_chr_uuid_cb(proc, rc, 0, NULL);
+    } else if (memcmp(chr.uuid128, proc->disc_chr_uuid.chr_uuid, 16) == 0) {
+        /* Requested characteristic discovered. */
+        cbrc = ble_gattc_disc_chr_uuid_cb(proc, 0, 0, &chr);
     } else {
+        /* Uninteresting characteristic; ignore. */
         cbrc = 0;
     }
 
@@ -2102,20 +2204,23 @@ ble_gattc_disc_chr_uuid_rx_complete(struct ble_gattc_proc *proc, int status)
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0 ||
-        proc->disc_chr_uuid.prev_handle == proc->disc_chr_uuid.end_handle) {
-
-        /* Error or all svcs discovered. */
+    if (status != 0) {
         ble_gattc_disc_chr_uuid_cb(proc, status, 0, NULL);
         return BLE_HS_EDONE;
-    } else {
-        /* Send follow-up request. */
-        rc = ble_gattc_disc_chr_uuid_go(proc, 1);
-        if (rc != 0) {
-            return BLE_HS_EDONE;
-        }
-        return 0;
     }
+
+    if (proc->disc_chr_uuid.prev_handle == proc->disc_chr_uuid.end_handle) {
+        /* Characteristic discovery complete. */
+        ble_gattc_disc_chr_uuid_cb(proc, BLE_HS_EDONE, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* Send follow-up request. */
+    rc = ble_gattc_disc_chr_uuid_go(proc, 1);
+    if (rc != 0) {
+        return BLE_HS_EDONE;
+    }
+    return 0;
 }
 
 /**
@@ -2131,11 +2236,14 @@ ble_gattc_disc_chr_uuid_rx_complete(struct ble_gattc_proc *proc, int status)
  *                                  discover.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                            uint16_t end_handle, void *uuid128,
+                            uint16_t end_handle, const void *uuid128,
                             ble_gatt_chr_fn *cb, void *cb_arg)
 {
 #if !NIMBLE_OPT(GATT_DISC_CHR_UUID)
@@ -2195,9 +2303,10 @@ ble_gattc_disc_all_dscs_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(dsc != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, disc_all_dscs_fail);
     }
 
@@ -2206,7 +2315,7 @@ ble_gattc_disc_all_dscs_cb(struct ble_gattc_proc *proc, int status,
     } else {
         rc = proc->disc_all_dscs.cb(proc->conn_handle,
                                     ble_gattc_error(status, att_handle),
-                                    proc->disc_all_dscs.chr_def_handle,
+                                    proc->disc_all_dscs.chr_val_handle,
                                     dsc, proc->disc_all_dscs.cb_arg);
     }
 
@@ -2250,7 +2359,7 @@ ble_gattc_disc_all_dscs_err(struct ble_gattc_proc *proc, int status,
 
     if (status == BLE_HS_ATT_ERR(BLE_ATT_ERR_ATTR_NOT_FOUND)) {
         /* Discovery is complete. */
-        status = 0;
+        status = BLE_HS_EDONE;
     }
 
     ble_gattc_disc_all_dscs_cb(proc, status, att_handle, NULL);
@@ -2302,20 +2411,24 @@ ble_gattc_disc_all_dscs_rx_complete(struct ble_gattc_proc *proc, int status)
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0 ||
-        proc->disc_all_dscs.prev_handle == proc->disc_all_dscs.end_handle) {
-
-        /* Error or all descriptors discovered. */
+    if (status != 0) {
         ble_gattc_disc_all_dscs_cb(proc, status, 0, NULL);
         return BLE_HS_EDONE;
-    } else {
-        /* Send follow-up request. */
-        rc = ble_gattc_disc_all_dscs_go(proc, 1);
-        if (rc != 0) {
-            return BLE_HS_EDONE;
-        }
-        return 0;
     }
+
+    if (proc->disc_all_dscs.prev_handle == proc->disc_all_dscs.end_handle) {
+        /* All descriptors discovered. */
+        ble_gattc_disc_all_dscs_cb(proc, BLE_HS_EDONE, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* Send follow-up request. */
+    rc = ble_gattc_disc_all_dscs_go(proc, 1);
+    if (rc != 0) {
+        return BLE_HS_EDONE;
+    }
+
+    return 0;
 }
 
 /**
@@ -2323,16 +2436,19 @@ ble_gattc_disc_all_dscs_rx_complete(struct ble_gattc_proc *proc, int status)
  *
  * @param conn_handle           The connection over which to execute the
  *                                  procedure.
- * @param chr_def_handle        The handle of the characteristic definition
+ * @param chr_val_handle        The handle of the characteristic value
  *                                  attribute.
  * @param chr_end_handle        The last handle in the characteristic
  *                                  definition.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
+ble_gattc_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
                         uint16_t chr_end_handle,
                         ble_gatt_dsc_fn *cb, void *cb_arg)
 {
@@ -2353,8 +2469,8 @@ ble_gattc_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
 
     proc->op = BLE_GATT_OP_DISC_ALL_DSCS;
     proc->conn_handle = conn_handle;
-    proc->disc_all_dscs.chr_def_handle = chr_def_handle;
-    proc->disc_all_dscs.prev_handle = chr_def_handle + 1;
+    proc->disc_all_dscs.chr_val_handle = chr_val_handle;
+    proc->disc_all_dscs.prev_handle = chr_val_handle;
     proc->disc_all_dscs.end_handle = chr_end_handle;
     proc->disc_all_dscs.cb = cb;
     proc->disc_all_dscs.cb_arg = cb_arg;
@@ -2393,9 +2509,10 @@ ble_gattc_read_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(attr != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, read_fail);
     }
 
@@ -2428,7 +2545,7 @@ ble_gattc_read_err(struct ble_gattc_proc *proc, int status,
  */
 static int
 ble_gattc_read_rx_read_rsp(struct ble_gattc_proc *proc, int status,
-                           void *value, int value_len)
+                           struct os_mbuf **om)
 {
     struct ble_gatt_attr attr;
 
@@ -2436,10 +2553,12 @@ ble_gattc_read_rx_read_rsp(struct ble_gattc_proc *proc, int status,
 
     attr.handle = proc->read.handle;
     attr.offset = 0;
-    attr.value_len = value_len;
-    attr.value = value;
+    attr.om = *om;
 
     ble_gattc_read_cb(proc, status, 0, &attr);
+
+    /* Indicate to the caller whether the application consumed the mbuf. */
+    *om = attr.om;
 
     /* The read operation only has a single request / response exchange. */
     return BLE_HS_EDONE;
@@ -2453,7 +2572,10 @@ ble_gattc_read_rx_read_rsp(struct ble_gattc_proc *proc, int status,
  * @param attr_handle           The handle of the characteristic value to read.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_read(uint16_t conn_handle, uint16_t attr_handle,
@@ -2516,9 +2638,10 @@ ble_gattc_read_uuid_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(attr != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, read_uuid_fail);
     }
 
@@ -2565,10 +2688,18 @@ ble_gattc_read_uuid_rx_adata(struct ble_gattc_proc *proc,
 
     attr.handle = adata->att_handle;
     attr.offset = 0;
-    attr.value_len = adata->value_len;
-    attr.value = adata->value;
+    attr.om = ble_hs_mbuf_from_flat(adata->value, adata->value_len);
+    if (attr.om == NULL) {
+        rc = BLE_HS_ENOMEM;
+    } else {
+        rc = 0;
+    }
 
-    rc = ble_gattc_read_uuid_cb(proc, 0, 0, &attr);
+    rc = ble_gattc_read_uuid_cb(proc, rc, 0, &attr);
+
+    /* Free the attribute mbuf if the application has not consumed it. */
+    os_mbuf_free_chain(attr.om);
+
     if (rc != 0) {
         return BLE_HS_EDONE;
     }
@@ -2584,7 +2715,16 @@ static int
 ble_gattc_read_uuid_rx_complete(struct ble_gattc_proc *proc, int status)
 {
     ble_gattc_dbg_assert_proc_not_inserted(proc);
-    ble_gattc_read_uuid_cb(proc, status, 0, NULL);
+
+    if (status != 0) {
+        ble_gattc_read_uuid_cb(proc, status, 0, NULL);
+        return BLE_HS_EDONE;
+    }
+
+    /* XXX: We may need to send a follow-up request to address the possibility
+     * of multiple characteristics with identical UUIDs.
+     */
+    ble_gattc_read_uuid_cb(proc, BLE_HS_EDONE, 0, NULL);
     return BLE_HS_EDONE;
 }
 
@@ -2599,11 +2739,14 @@ ble_gattc_read_uuid_rx_complete(struct ble_gattc_proc *proc, int status)
  *                                  last handle in the service definition).
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                       uint16_t end_handle, void *uuid128,
+                       uint16_t end_handle, const void *uuid128,
                        ble_gatt_attr_fn *cb, void *cb_arg)
 {
 #if !NIMBLE_OPT(GATT_READ_UUID)
@@ -2663,9 +2806,10 @@ ble_gattc_read_long_cb(struct ble_gattc_proc *proc, int status,
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(attr != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, read_long_fail);
     }
 
@@ -2729,21 +2873,27 @@ ble_gattc_read_long_err(struct ble_gattc_proc *proc, int status,
  */
 static int
 ble_gattc_read_long_rx_read_rsp(struct ble_gattc_proc *proc, int status,
-                                void *value, int value_len)
+                                struct os_mbuf **om)
 {
     struct ble_gatt_attr attr;
+    uint16_t data_len;
     uint16_t mtu;
     int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
+    data_len = OS_MBUF_PKTLEN(*om);
+
     attr.handle = proc->read_long.handle;
     attr.offset = proc->read_long.offset;
-    attr.value_len = value_len;
-    attr.value = value;
+    attr.om = *om;
 
     /* Report partial payload to application. */
     rc = ble_gattc_read_long_cb(proc, status, 0, &attr);
+
+    /* Indicate to the caller whether the application consumed the mbuf. */
+    *om = attr.om;
+
     if (rc != 0 || status != 0) {
         return BLE_HS_EDONE;
     }
@@ -2755,13 +2905,14 @@ ble_gattc_read_long_rx_read_rsp(struct ble_gattc_proc *proc, int status,
         return BLE_HS_EDONE;
     }
 
-    if (value_len < mtu - 1) {
-        ble_gattc_read_long_cb(proc, 0, 0, NULL);
+    if (data_len < mtu - 1) {
+        /* Response shorter than maximum allowed; read complete. */
+        ble_gattc_read_long_cb(proc, BLE_HS_EDONE, 0, NULL);
         return BLE_HS_EDONE;
     }
 
     /* Send follow-up request. */
-    proc->read_long.offset += value_len;
+    proc->read_long.offset += data_len;
     rc = ble_gattc_read_long_go(proc, 1);
     if (rc != 0) {
         return BLE_HS_EDONE;
@@ -2778,7 +2929,10 @@ ble_gattc_read_long_rx_read_rsp(struct ble_gattc_proc *proc, int status,
  * @param handle                The handle of the characteristic value to read.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_read_long(uint16_t conn_handle, uint16_t handle,
@@ -2835,36 +2989,38 @@ done:
  */
 static int
 ble_gattc_read_mult_cb(struct ble_gattc_proc *proc, int status,
-                       uint16_t att_handle, uint8_t *attr_data,
-                       uint16_t attr_data_len)
+                       uint16_t att_handle, struct os_mbuf **om)
 {
-    struct ble_gatt_attr *attrp;
     struct ble_gatt_attr attr;
     int rc;
 
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
+    BLE_HS_DBG_ASSERT(om != NULL || status != 0);
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, read_mult_fail);
+    }
+
+    attr.handle = 0;
+    attr.offset = 0;
+    if (om == NULL) {
+        attr.om = NULL;
+    } else {
+        attr.om = *om;
     }
 
     if (proc->read_mult.cb == NULL) {
         rc = 0;
     } else {
-        if (status != 0) {
-            attrp = NULL;
-        } else {
-            attrp = &attr;
-            attr.handle = 0;
-            attr.offset = 0;
-            attr.value_len = attr_data_len;
-            attr.value = attr_data;
-        }
-
         rc = proc->read_mult.cb(proc->conn_handle,
-                                ble_gattc_error(status, att_handle), attrp,
+                                ble_gattc_error(status, att_handle), &attr,
                                 proc->read_mult.cb_arg);
+    }
+
+    /* Indicate to the caller whether the application consumed the mbuf. */
+    if (om != NULL) {
+        *om = attr.om;
     }
 
     return rc;
@@ -2879,7 +3035,7 @@ ble_gattc_read_mult_err(struct ble_gattc_proc *proc, int status,
                         uint16_t att_handle)
 {
     ble_gattc_dbg_assert_proc_not_inserted(proc);
-    ble_gattc_read_mult_cb(proc, status, att_handle, NULL, 0);
+    ble_gattc_read_mult_cb(proc, status, att_handle, NULL);
 }
 
 /**
@@ -2891,10 +3047,13 @@ ble_gattc_read_mult_err(struct ble_gattc_proc *proc, int status,
  * @param num_handles           The number of entries in the "handles" array.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_read_mult(uint16_t conn_handle, uint16_t *handles,
+ble_gattc_read_mult(uint16_t conn_handle, const uint16_t *handles,
                     uint8_t num_handles, ble_gatt_attr_fn *cb,
                     void *cb_arg)
 {
@@ -2939,21 +3098,20 @@ done:
  *****************************************************************************/
 
 /**
- * Initiates GATT procedure: Write Without Response.
+ * Initiates GATT procedure: Write Without Response.  This function consumes
+ * the supplied mbuf regardless of the outcome.
  *
  * @param conn_handle           The connection over which to execute the
  *                                  procedure.
  * @param attr_handle           The handle of the characteristic value to write
  *                                  to.
- * @param value                 The value to write to the characteristic.
- * @param value_len             The number of bytes to write.
- * @param cb                    The function to call to report procedure status
- *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param txom                  The value to write to the characteristic.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                       uint16_t value_len)
+ble_gattc_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
+                       struct os_mbuf *txom)
 {
 #if !NIMBLE_OPT(GATT_WRITE_NO_RSP)
     return BLE_HS_ENOTSUP;
@@ -2964,15 +3122,48 @@ ble_gattc_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle, void *value,
 
     STATS_INC(ble_gattc_stats, write_no_rsp);
 
-    ble_gattc_log_write(attr_handle, value_len, 0);
+    ble_gattc_log_write(attr_handle, OS_MBUF_PKTLEN(txom), 0);
 
     req.bawq_handle = attr_handle;
-    rc = ble_att_clt_tx_write_cmd(conn_handle, &req, value, value_len);
+    rc = ble_att_clt_tx_write_cmd(conn_handle, &req, txom);
     if (rc != 0) {
         STATS_INC(ble_gattc_stats, write);
     }
 
     return rc;
+}
+
+/**
+ * Initiates GATT procedure: Write Without Response.  This function consumes
+ * the supplied mbuf regardless of the outcome.
+ *
+ * @param conn_handle           The connection over which to execute the
+ *                                  procedure.
+ * @param attr_handle           The handle of the characteristic value to write
+ *                                  to.
+ * @param value                 The value to write to the characteristic.
+ * @param value_len             The number of bytes to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+ble_gattc_write_no_rsp_flat(uint16_t conn_handle, uint16_t attr_handle,
+                            const void *data, uint16_t data_len)
+{
+    struct os_mbuf *om;
+    int rc;
+
+    om = ble_hs_mbuf_from_flat(data, data_len);
+    if (om == NULL) {
+        return BLE_HS_ENOMEM;
+    }
+
+    rc = ble_gattc_write_no_rsp(conn_handle, attr_handle, om);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 /*****************************************************************************
@@ -2996,7 +3187,7 @@ ble_gattc_write_cb(struct ble_gattc_proc *proc, int status,
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, write_fail);
     }
 
@@ -3026,21 +3217,24 @@ ble_gattc_write_err(struct ble_gattc_proc *proc, int status,
 }
 
 /**
- * Initiates GATT procedure: Write Characteristic Value.
+ * Initiates GATT procedure: Write Characteristic Value.  This function
+ * consumes the supplied mbuf regardless of the outcome.
  *
  * @param conn_handle           The connection over which to execute the
  *                                  procedure.
  * @param attr_handle           The handle of the characteristic value to write
  *                                  to.
- * @param value                 The value to write to the characteristic.
- * @param value_len             The number of bytes to write.
+ * @param txom                  The value to write to the characteristic.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                uint16_t value_len, ble_gatt_attr_fn *cb, void *cb_arg)
+ble_gattc_write(uint16_t conn_handle, uint16_t attr_handle,
+                struct os_mbuf *txom, ble_gatt_attr_fn *cb, void *cb_arg)
 {
 #if !NIMBLE_OPT(GATT_WRITE)
     return BLE_HS_ENOTSUP;
@@ -3064,10 +3258,11 @@ ble_gattc_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
     proc->write.cb = cb;
     proc->write.cb_arg = cb_arg;
 
-    ble_gattc_log_write(attr_handle, value_len, 1);
+    ble_gattc_log_write(attr_handle, OS_MBUF_PKTLEN(txom), 1);
 
     req.bawq_handle = attr_handle;
-    rc = ble_att_clt_tx_write_req(conn_handle, &req, value, value_len);
+    rc = ble_att_clt_tx_write_req(conn_handle, &req, txom);
+    txom = NULL;
     if (rc != 0) {
         goto done;
     }
@@ -3077,8 +3272,48 @@ done:
         STATS_INC(ble_gattc_stats, write_fail);
     }
 
+    /* Free the mbuf in case the send failed. */
+    os_mbuf_free_chain(txom);
+
     ble_gattc_process_status(proc, rc);
     return rc;
+}
+
+/**
+ * Initiates GATT procedure: Write Characteristic Value (flat buffer version).
+ *
+ * @param conn_handle           The connection over which to execute the
+ *                                  procedure.
+ * @param attr_handle           The handle of the characteristic value to write
+ *                                  to.
+ * @param value                 The value to write to the characteristic.
+ * @param value_len             The number of bytes to write.
+ * @param cb                    The function to call to report procedure status
+ *                                  updates; null for no callback.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+ble_gattc_write_flat(uint16_t conn_handle, uint16_t attr_handle,
+                     const void *data, uint16_t data_len,
+                     ble_gatt_attr_fn *cb, void *cb_arg)
+{
+    struct os_mbuf *om;
+    int rc;
+
+    om = ble_hs_mbuf_from_flat(data, data_len);
+    if (om == NULL) {
+        return BLE_HS_ENOMEM;
+    }
+
+    rc = ble_gattc_write(conn_handle, attr_handle, om, cb, cb_arg);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 /*****************************************************************************
@@ -3101,7 +3336,7 @@ ble_gattc_write_long_cb(struct ble_gattc_proc *proc, int status,
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, write_long_fail);
     }
 
@@ -3126,48 +3361,65 @@ ble_gattc_write_long_go(struct ble_gattc_proc *proc, int cb_on_err)
 {
     struct ble_att_prep_write_cmd prep_req;
     struct ble_att_exec_write_req exec_req;
-    void *value;
+    struct os_mbuf *om;
+    int write_len;
     int max_sz;
     int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (proc->write_long.attr.offset < proc->write_long.attr.value_len) {
-        max_sz = ble_att_mtu(proc->conn_handle) -
-                 BLE_ATT_PREP_WRITE_CMD_BASE_SZ;
-        if (max_sz == 0) {
-            /* Not connected. */
-            rc = BLE_HS_ENOTCONN;
-        } else {
-            if (proc->write_long.attr.offset + max_sz >
-                proc->write_long.attr.value_len) {
+    om = NULL;
 
-                proc->write_long.length = proc->write_long.attr.value_len -
-                                          proc->write_long.attr.offset;
-            } else {
-                proc->write_long.length = max_sz;
-            }
+    max_sz = ble_att_mtu(proc->conn_handle) -
+             BLE_ATT_PREP_WRITE_CMD_BASE_SZ;
+    if (max_sz <= 0) {
+        /* Not connected. */
+        rc = BLE_HS_ENOTCONN;
+        goto done;
+    }
 
-            prep_req.bapc_handle = proc->write_long.attr.handle;
-            prep_req.bapc_offset = proc->write_long.attr.offset;
-            value = proc->write_long.attr.value + proc->write_long.attr.offset;
-            rc = ble_att_clt_tx_prep_write(proc->conn_handle,
-                                           &prep_req, value,
-                                           proc->write_long.length);
-        }
-    } else {
+    write_len = min(max_sz,
+                    OS_MBUF_PKTLEN(proc->write_long.attr.om) -
+                        proc->write_long.attr.offset);
+
+    if (write_len <= 0) {
         exec_req.baeq_flags = BLE_ATT_EXEC_WRITE_F_CONFIRM;
         rc = ble_att_clt_tx_exec_write(proc->conn_handle, &exec_req);
+        goto done;
     }
 
+    proc->write_long.length = write_len;
+    om = ble_hs_mbuf_att_pkt();
+    if (om == NULL) {
+        rc = BLE_HS_ENOMEM;
+        goto done;
+    }
+
+    rc = os_mbuf_appendfrom(om, proc->write_long.attr.om,
+                            proc->write_long.attr.offset,
+                            proc->write_long.length);
     if (rc != 0) {
-        if (cb_on_err) {
-            ble_gattc_write_long_cb(proc, rc, 0);
-        }
-        return rc;
+        rc = BLE_HS_ENOMEM;
+        goto done;
     }
 
-    return 0;
+    prep_req.bapc_handle = proc->write_long.attr.handle;
+    prep_req.bapc_offset = proc->write_long.attr.offset;
+
+    rc = ble_att_clt_tx_prep_write(proc->conn_handle, &prep_req, om);
+    om = NULL;
+    if (rc != 0) {
+        goto done;
+    }
+
+done:
+    os_mbuf_free_chain(om);
+
+    if (rc != 0 && cb_on_err) {
+        ble_gattc_write_long_cb(proc, rc, 0);
+    }
+
+    return rc;
 }
 
 /**
@@ -3181,17 +3433,20 @@ ble_gattc_write_long_err(struct ble_gattc_proc *proc, int status,
     struct ble_att_exec_write_req exec_req;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
-    ble_gattc_write_long_cb(proc, status, att_handle);
 
     /* If we have successfully queued any data, and the failure occurred before
      * we could send the execute write command, then erase all queued data.
      */
     if (proc->write_long.attr.offset > 0 &&
-        proc->write_long.attr.offset < proc->write_long.attr.value_len) {
+        proc->write_long.attr.offset <
+            OS_MBUF_PKTLEN(proc->write_long.attr.om)) {
 
         exec_req.baeq_flags = 0;
         ble_att_clt_tx_exec_write(proc->conn_handle, &exec_req);
     }
+
+    /* Report failure. */
+    ble_gattc_write_long_cb(proc, status, att_handle);
 }
 
 /**
@@ -3201,11 +3456,15 @@ ble_gattc_write_long_err(struct ble_gattc_proc *proc, int status,
 static int
 ble_gattc_write_long_rx_prep(struct ble_gattc_proc *proc,
                              int status, struct ble_att_prep_write_cmd *rsp,
-                             void *attr_data, uint16_t attr_len)
+                             struct os_mbuf **rxom)
 {
+    struct os_mbuf *om;
     int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
+
+    /* Let the caller free the mbuf. */
+    om = *rxom;
 
     if (status != 0) {
         rc = status;
@@ -3213,6 +3472,15 @@ ble_gattc_write_long_rx_prep(struct ble_gattc_proc *proc,
     }
 
     /* Verify the response. */
+    if (proc->write_long.attr.offset >=
+        OS_MBUF_PKTLEN(proc->write_long.attr.om)) {
+
+        /* Expecting a prepare write response, not an execute write
+         * response.
+         */
+        rc = BLE_HS_EBADDATA;
+        goto err;
+    }
     if (rsp->bapc_handle != proc->write_long.attr.handle) {
         rc = BLE_HS_EBADDATA;
         goto err;
@@ -3221,22 +3489,26 @@ ble_gattc_write_long_rx_prep(struct ble_gattc_proc *proc,
         rc = BLE_HS_EBADDATA;
         goto err;
     }
-    if (rsp->bapc_offset + attr_len > proc->write_long.attr.value_len) {
+    if (rsp->bapc_offset + OS_MBUF_PKTLEN(om) >
+        OS_MBUF_PKTLEN(proc->write_long.attr.om)) {
+
         rc = BLE_HS_EBADDATA;
         goto err;
     }
-    if (attr_len != proc->write_long.length) {
+    if (OS_MBUF_PKTLEN(om) != proc->write_long.length) {
         rc = BLE_HS_EBADDATA;
         goto err;
     }
-    if (memcmp(attr_data, proc->write_long.attr.value + rsp->bapc_offset,
-               attr_len) != 0) {
+    if (os_mbuf_cmpm(om, 0,
+                     proc->write_long.attr.om, rsp->bapc_offset,
+                     proc->write_long.length) != 0) {
+
         rc = BLE_HS_EBADDATA;
         goto err;
     }
 
     /* Send follow-up request. */
-    proc->write_long.attr.offset += attr_len;
+    proc->write_long.attr.offset += OS_MBUF_PKTLEN(om);
     rc = ble_gattc_write_long_go(proc, 1);
     if (rc != 0) {
         goto err;
@@ -3258,26 +3530,39 @@ static int
 ble_gattc_write_long_rx_exec(struct ble_gattc_proc *proc, int status)
 {
     ble_gattc_dbg_assert_proc_not_inserted(proc);
+
+    if (proc->write_long.attr.offset <
+        OS_MBUF_PKTLEN(proc->write_long.attr.om)) {
+
+        /* Expecting an execute write response, not a prepare write
+         * response.
+         */
+        return BLE_HS_EBADDATA;
+    }
+
     ble_gattc_write_long_cb(proc, status, 0);
     return BLE_HS_EDONE;
 }
 
 /**
- * Initiates GATT procedure: Write Long Characteristic Values.
+ * Initiates GATT procedure: Write Long Characteristic Values.  This function
+ * consumes the supplied mbuf regardless of the outcome.
  *
  * @param conn_handle           The connection over which to execute the
  *                                  procedure.
  * @param attr_handle           The handle of the characteristic value to write
  *                                  to.
- * @param value                 The value to write to the characteristic.
- * @param value_len             The number of bytes to write.
+ * @param txom                  The value to write to the characteristic.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_write_long(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                     uint16_t value_len, ble_gatt_attr_fn *cb, void *cb_arg)
+ble_gattc_write_long(uint16_t conn_handle, uint16_t attr_handle,
+                     struct os_mbuf *txom, ble_gatt_attr_fn *cb, void *cb_arg)
 {
 #if !NIMBLE_OPT(GATT_WRITE_LONG)
     return BLE_HS_ENOTSUP;
@@ -3298,10 +3583,12 @@ ble_gattc_write_long(uint16_t conn_handle, uint16_t attr_handle, void *value,
     proc->conn_handle = conn_handle;
     proc->write_long.attr.handle = attr_handle;
     proc->write_long.attr.offset = 0;
-    proc->write_long.attr.value = value;
-    proc->write_long.attr.value_len = value_len;
+    proc->write_long.attr.om = txom;
     proc->write_long.cb = cb;
     proc->write_long.cb_arg = cb_arg;
+
+    /* The mbuf is consumed by the procedure. */
+    txom = NULL;
 
     ble_gattc_log_write_long(proc);
 
@@ -3314,6 +3601,9 @@ done:
     if (rc != 0) {
         STATS_INC(ble_gattc_stats, write_long_fail);
     }
+
+    /* Free the mbuf in case of failure. */
+    os_mbuf_free_chain(txom);
 
     ble_gattc_process_status(proc, rc);
     return rc;
@@ -3339,7 +3629,7 @@ ble_gattc_write_reliable_cb(struct ble_gattc_proc *proc, int status,
     BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
-    if (status != 0) {
+    if (status != 0 && status != BLE_HS_EDONE) {
         STATS_INC(ble_gattc_stats, write_reliable_fail);
     }
 
@@ -3366,31 +3656,65 @@ ble_gattc_write_reliable_go(struct ble_gattc_proc *proc, int cb_on_err)
     struct ble_att_prep_write_cmd prep_req;
     struct ble_att_exec_write_req exec_req;
     struct ble_gatt_attr *attr;
+    struct os_mbuf *om;
+    uint16_t max_sz;
     int attr_idx;
     int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
 
+    om = NULL;
+
     attr_idx = proc->write_reliable.cur_attr;
-    if (attr_idx < proc->write_reliable.num_attrs) {
-        attr = proc->write_reliable.attrs + attr_idx;
-        prep_req.bapc_handle = attr->handle;
-        prep_req.bapc_offset = 0;
-        rc = ble_att_clt_tx_prep_write(proc->conn_handle, &prep_req,
-                                       attr->value, attr->value_len);
-    } else {
+
+    if (attr_idx >= proc->write_reliable.num_attrs) {
         exec_req.baeq_flags = BLE_ATT_EXEC_WRITE_F_CONFIRM;
         rc = ble_att_clt_tx_exec_write(proc->conn_handle, &exec_req);
+        goto done;
     }
 
+    attr = proc->write_reliable.attrs + attr_idx;
+
+    max_sz = ble_att_mtu(proc->conn_handle) - BLE_ATT_PREP_WRITE_CMD_BASE_SZ;
+    if (max_sz <= 0) {
+        /* Not connected. */
+        rc = BLE_HS_ENOTCONN;
+        goto done;
+    }
+
+    proc->write_reliable.length =
+        min(max_sz, OS_MBUF_PKTLEN(attr->om) - attr->offset);
+
+    om = ble_hs_mbuf_att_pkt();
+    if (om == NULL) {
+        rc = BLE_HS_ENOMEM;
+        goto done;
+    }
+
+    rc = os_mbuf_appendfrom(om, attr->om, attr->offset,
+                            proc->write_reliable.length);
     if (rc != 0) {
-        if (cb_on_err) {
-            ble_gattc_write_reliable_cb(proc, rc, 0);
-        }
-        return rc;
+        rc = BLE_HS_ENOMEM;
+        goto done;
     }
 
-    return 0;
+    prep_req.bapc_handle = attr->handle;
+    prep_req.bapc_offset = attr->offset;
+
+    rc = ble_att_clt_tx_prep_write(proc->conn_handle, &prep_req, om);
+    om = NULL;
+    if (rc != 0) {
+        goto done;
+    }
+
+done:
+    os_mbuf_free_chain(om);
+
+    if (rc != 0 && cb_on_err) {
+        ble_gattc_write_reliable_cb(proc, rc, 0);
+    }
+
+    return rc;
 }
 
 /**
@@ -3425,12 +3749,16 @@ static int
 ble_gattc_write_reliable_rx_prep(struct ble_gattc_proc *proc,
                                  int status,
                                  struct ble_att_prep_write_cmd *rsp,
-                                 void *attr_data, uint16_t attr_len)
+                                 struct os_mbuf **rxom)
 {
     struct ble_gatt_attr *attr;
+    struct os_mbuf *om;
     int rc;
 
     ble_gattc_dbg_assert_proc_not_inserted(proc);
+
+    /* Let the caller free the mbuf. */
+    om = *rxom;
 
     if (status != 0) {
         rc = status;
@@ -3438,6 +3766,9 @@ ble_gattc_write_reliable_rx_prep(struct ble_gattc_proc *proc,
     }
 
     if (proc->write_reliable.cur_attr >= proc->write_reliable.num_attrs) {
+        /* Expecting an execute write response, not a prepare write
+         * response.
+         */
         rc = BLE_HS_EBADDATA;
         goto err;
     }
@@ -3448,21 +3779,23 @@ ble_gattc_write_reliable_rx_prep(struct ble_gattc_proc *proc,
         rc = BLE_HS_EBADDATA;
         goto err;
     }
-    if (rsp->bapc_offset != 0) {
+    if (rsp->bapc_offset != attr->offset) {
         rc = BLE_HS_EBADDATA;
         goto err;
     }
-    if (attr_len != attr->value_len) {
-        rc = BLE_HS_EBADDATA;
-        goto err;
-    }
-    if (memcmp(attr_data, attr->value, attr_len) != 0) {
+    if (os_mbuf_cmpm(attr->om, rsp->bapc_offset, om, 0,
+                     proc->write_reliable.length) != 0) {
+
         rc = BLE_HS_EBADDATA;
         goto err;
     }
 
     /* Send follow-up request. */
-    proc->write_reliable.cur_attr++;
+    attr->offset += proc->write_reliable.length;
+    if (attr->offset >= OS_MBUF_PKTLEN(attr->om)) {
+        attr->offset = 0;
+        proc->write_reliable.cur_attr++;
+    }
     rc = ble_gattc_write_reliable_go(proc, 1);
     if (rc != 0) {
         goto err;
@@ -3489,22 +3822,29 @@ ble_gattc_write_reliable_rx_exec(struct ble_gattc_proc *proc, int status)
 }
 
 /**
- * Initiates GATT procedure: Write Long Characteristic Values.
+ * Initiates GATT procedure: Reliable Writes.  This function consumes the
+ * supplied mbufs regardless of the outcome.
  *
  * @param conn_handle           The connection over which to execute the
  *                                  procedure.
- * @param attr_handle           The handle of the characteristic value to write
- *                                  to.
- * @param value                 The value to write to the characteristic.
- * @param value_len             The number of bytes to write.
+ * @param attrs                 An array of attribute descriptors; specifies
+ *                                  which characteristics to write to and what
+ *                                  data to write to them.  The mbuf pointer in
+ *                                  each attribute is set to NULL by this
+ *                                  function.
+ * @param num_attrs             The number of characteristics to write; equal
+ *                                  to the number of elements in the 'attrs'
+ *                                  array.
  * @param cb                    The function to call to report procedure status
  *                                  updates; null for no callback.
- * @param cb_arg                The argument to pass to the callback function.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
  */
 int
-ble_gattc_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
-                         int num_attrs, ble_gatt_reliable_attr_fn *cb,
-                         void *cb_arg)
+ble_gattc_write_reliable(uint16_t conn_handle,
+                         struct ble_gatt_attr *attrs,
+                         int num_attrs,
+                         ble_gatt_reliable_attr_fn *cb, void *cb_arg)
 {
 #if !NIMBLE_OPT(GATT_WRITE_RELIABLE)
     return BLE_HS_ENOTSUP;
@@ -3512,8 +3852,16 @@ ble_gattc_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
 
     struct ble_gattc_proc *proc;
     int rc;
+    int i;
+
+    proc = NULL;
 
     STATS_INC(ble_gattc_stats, write_reliable);
+
+    if (num_attrs > NIMBLE_OPT(GATT_WRITE_MAX_ATTRS)) {
+        rc = BLE_HS_EINVAL;
+        goto done;
+    }
 
     proc = ble_gattc_proc_alloc();
     if (proc == NULL) {
@@ -3523,11 +3871,18 @@ ble_gattc_write_reliable(uint16_t conn_handle, struct ble_gatt_attr *attrs,
 
     proc->op = BLE_GATT_OP_WRITE_RELIABLE;
     proc->conn_handle = conn_handle;
-    proc->write_reliable.attrs = attrs;
     proc->write_reliable.num_attrs = num_attrs;
     proc->write_reliable.cur_attr = 0;
     proc->write_reliable.cb = cb;
     proc->write_reliable.cb_arg = cb_arg;
+
+    for (i = 0; i < num_attrs; i++) {
+        proc->write_reliable.attrs[i] = attrs[i];
+        proc->write_reliable.attrs[i].offset = 0;
+
+        /* Consume mbuf from caller. */
+        attrs[i].om = NULL;
+    }
 
     ble_gattc_log_write_reliable(proc);
 
@@ -3541,6 +3896,12 @@ done:
         STATS_INC(ble_gattc_stats, write_reliable_fail);
     }
 
+    /* Free supplied mbufs in case something failed. */
+    for (i = 0; i < num_attrs; i++) {
+        os_mbuf_free_chain(attrs[i].om);
+        attrs[i].om = NULL;
+    }
+
     ble_gattc_process_status(proc, rc);
     return rc;
 }
@@ -3550,45 +3911,53 @@ done:
  *****************************************************************************/
 
 /**
- * Sends an attribute notification.  The content of the message is specified
- * in the attr parameter.
+ * Sends a "free-form" characteristic notification.  This function consumes the
+ * supplied mbuf regardless of the outcome.
+ *
+ * @param conn_handle           The connection over which to execute the
+ *                                  procedure.
+ * @param chr_val_handle        The attribute handle to indicate in the
+ *                                  outgoing notification.
+ * @param txom                  The value to write to the characteristic.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_notify_custom(uint16_t conn_handle, uint16_t att_handle,
-                        void *attr_data, uint16_t attr_data_len)
+ble_gattc_notify_custom(uint16_t conn_handle, uint16_t chr_val_handle,
+                        struct os_mbuf *txom)
 {
 #if !NIMBLE_OPT(GATT_NOTIFY)
     return BLE_HS_ENOTSUP;
 #endif
 
-    struct ble_att_svr_access_ctxt ctxt;
     struct ble_att_notify_req req;
     int rc;
 
     STATS_INC(ble_gattc_stats, notify);
 
-    ble_gattc_log_notify(att_handle);
+    ble_gattc_log_notify(chr_val_handle);
 
-    if (attr_data == NULL) {
+    if (txom == NULL) {
         /* No custom attribute data; read the value from the specified
          * attribute.
          */
+        txom = ble_hs_mbuf_att_pkt();
+        if (txom == NULL) {
+            rc = BLE_HS_ENOMEM;
+            goto err;
+        }
         rc = ble_att_svr_read_handle(BLE_HS_CONN_HANDLE_NONE,
-                                     att_handle, &ctxt, NULL);
+                                     chr_val_handle, 0, txom, NULL);
         if (rc != 0) {
             /* Fatal error; application disallowed attribute read. */
             rc = BLE_HS_EAPP;
             goto err;
         }
-    } else {
-        ctxt.attr_data = attr_data;
-        ctxt.data_len = attr_data_len;
-        ctxt.offset = 0;
     }
 
-    req.banq_handle = att_handle;
-    rc = ble_att_clt_tx_notify(conn_handle, &req,
-                               ctxt.attr_data, ctxt.data_len);
+    req.banq_handle = chr_val_handle;
+    rc = ble_att_clt_tx_notify(conn_handle, &req, txom);
+    txom = NULL;
     if (rc != 0) {
         goto err;
     }
@@ -3596,13 +3965,26 @@ ble_gattc_notify_custom(uint16_t conn_handle, uint16_t att_handle,
     return 0;
 
 err:
-    STATS_INC(ble_gattc_stats, notify_fail);
+    if (rc != 0) {
+        STATS_INC(ble_gattc_stats, notify_fail);
+    }
+
+    os_mbuf_free_chain(txom);
+
     return rc;
 }
 
 /**
- * Sends an attribute notification.  The content of the message is read from
- * the specified characteristic.
+ * Sends a characteristic notification.  The content of the message is read
+ * from the specified characteristic.
+ *
+ * @param conn_handle           The connection over which to execute the
+ *                                  procedure.
+ * @param chr_val_handle        The value attribute handle of the
+ *                                  characteristic to include in the outgoing
+ *                                  notification.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
 ble_gattc_notify(uint16_t conn_handle, uint16_t chr_val_handle)
@@ -3613,12 +3995,12 @@ ble_gattc_notify(uint16_t conn_handle, uint16_t chr_val_handle)
 
     int rc;
 
-    rc = ble_gattc_notify_custom(conn_handle, chr_val_handle, NULL, 0);
-    if (rc != 0) {
-        return rc;
-    }
+    rc = ble_gattc_notify_custom(conn_handle, chr_val_handle, NULL);
 
-    return 0;
+    /* Tell the application that a notification transmission was attempted. */
+    ble_gap_notify_tx_event(rc, conn_handle, chr_val_handle, 0);
+
+    return rc;
 }
 
 /*****************************************************************************
@@ -3626,48 +4008,33 @@ ble_gattc_notify(uint16_t conn_handle, uint16_t chr_val_handle)
  *****************************************************************************/
 
 /**
- * Calls an indication proc's callback with the specified parameters.  If the
- * proc has no callback, this function is a no-op.
- *
- * @return                      The return code of the callback (or 0 if there
- *                                  is no callback).
- */
-static int
-ble_gattc_indicate_cb(struct ble_gattc_proc *proc, int status,
-                      uint16_t att_handle)
-{
-    struct ble_gatt_attr attr;
-    int rc;
-
-    BLE_HS_DBG_ASSERT(!ble_hs_locked_by_cur_task());
-    ble_gattc_dbg_assert_proc_not_inserted(proc);
-
-    if (status != 0) {
-        STATS_INC(ble_gattc_stats, indicate_fail);
-    }
-
-    if (proc->indicate.cb == NULL) {
-        rc = 0;
-    } else {
-        memset(&attr, 0, sizeof attr);
-        attr.handle = proc->indicate.chr_val_handle;
-        rc = proc->indicate.cb(proc->conn_handle,
-                               ble_gattc_error(status, att_handle),
-                               &attr, proc->indicate.cb_arg);
-    }
-
-    return rc;
-}
-
-/**
  * Handles an incoming ATT error response for the specified indication proc.
+ * A device should never send an error in response to an indication.  If this
+ * happens, we treat it like a confirmation (indication ack), but report the
+ * error status to the application.
  */
 static void
 ble_gattc_indicate_err(struct ble_gattc_proc *proc, int status,
                        uint16_t att_handle)
 {
+    int rc;
+
     ble_gattc_dbg_assert_proc_not_inserted(proc);
-    ble_gattc_indicate_cb(proc, status, att_handle);
+
+    if (status != BLE_HS_ENOTCONN) {
+        rc = ble_gatts_rx_indicate_ack(proc->conn_handle,
+                                       proc->indicate.chr_val_handle);
+        if (rc != 0) {
+            return;
+        }
+    }
+
+    /* Tell the application about the received acknowledgment. */
+    ble_gap_notify_tx_event(status, proc->conn_handle,
+                            proc->indicate.chr_val_handle, 1);
+
+    /* Send the next indication if one is pending. */
+    ble_gatts_send_next_indicate(proc->conn_handle);
 }
 
 /**
@@ -3683,32 +4050,56 @@ ble_gattc_indicate_rx_rsp(struct ble_gattc_proc *proc)
 
     rc = ble_gatts_rx_indicate_ack(proc->conn_handle,
                                    proc->indicate.chr_val_handle);
-    if (rc != BLE_HS_ENOTCONN && rc != BLE_HS_ENOENT) {
-        ble_gattc_indicate_cb(proc, rc, 0);
+    if (rc != 0) {
+        return;
     }
+
+    /* Tell the application about the received acknowledgment. */
+    ble_gap_notify_tx_event(BLE_HS_EDONE, proc->conn_handle,
+                            proc->indicate.chr_val_handle, 1);
 
     /* Send the next indication if one is pending. */
     ble_gatts_send_next_indicate(proc->conn_handle);
 }
 
 /**
- * Sends an attribute indication.
+ * Causes the indication in progress for the specified connection (if any) to
+ * fail with a status code of BLE_HS_ENOTCONN;
+ */
+void
+ble_gatts_indicate_fail_notconn(uint16_t conn_handle)
+{
+    ble_gattc_fail_procs(conn_handle, BLE_GATT_OP_INDICATE, BLE_HS_ENOTCONN);
+}
+
+/**
+ * Sends a characteristic indication.  The content of the message is read from
+ * the specified characteristic.
+ *
+ * @param conn_handle           The connection over which to execute the
+ *                                  procedure.
+ * @param chr_val_handle        The value attribute handle of the
+ *                                  characteristic to include in the outgoing
+ *                                  indication.
+ *
+ * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle,
-                   ble_gatt_attr_fn *cb, void *cb_arg)
+ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle)
 {
 #if !NIMBLE_OPT(GATT_INDICATE)
     return BLE_HS_ENOTSUP;
 #endif
 
-    struct ble_att_svr_access_ctxt ctxt;
     struct ble_att_indicate_req req;
     struct ble_gattc_proc *proc;
     struct ble_hs_conn *conn;
+    struct os_mbuf *om;
     int rc;
 
     STATS_INC(ble_gattc_stats, indicate);
+
+    om = NULL;
 
     proc = ble_gattc_proc_alloc();
     if (proc == NULL) {
@@ -3719,13 +4110,17 @@ ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle,
     proc->op = BLE_GATT_OP_INDICATE;
     proc->conn_handle = conn_handle;
     proc->indicate.chr_val_handle = chr_val_handle;
-    proc->indicate.cb = cb;
-    proc->indicate.cb_arg = cb_arg;
 
     ble_gattc_log_indicate(chr_val_handle);
 
-    rc = ble_att_svr_read_handle(BLE_HS_CONN_HANDLE_NONE, chr_val_handle,
-                                 &ctxt, NULL);
+    om = ble_hs_mbuf_att_pkt();
+    if (om == NULL) {
+        rc = BLE_HS_ENOMEM;
+        goto done;
+    }
+
+    rc = ble_att_svr_read_handle(BLE_HS_CONN_HANDLE_NONE, chr_val_handle, 0,
+                                 om, NULL);
     if (rc != 0) {
         /* Fatal error; application disallowed attribute read. */
         BLE_HS_DBG_ASSERT(0);
@@ -3734,9 +4129,8 @@ ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle,
     }
 
     req.baiq_handle = chr_val_handle;
-    rc = ble_att_clt_tx_indicate(conn_handle, &req,
-                                 ctxt.attr_data, ctxt.data_len);
-
+    rc = ble_att_clt_tx_indicate(conn_handle, &req, om);
+    om = NULL;
     if (rc != 0) {
         goto done;
     }
@@ -3755,7 +4149,11 @@ done:
         STATS_INC(ble_gattc_stats, indicate_fail);
     }
 
+    /* Tell the application that an indication transmission was attempted. */
+    ble_gap_notify_tx_event(rc, conn_handle, chr_val_handle, 1);
+
     ble_gattc_process_status(proc, rc);
+    os_mbuf_free_chain(om);
     return rc;
 }
 
@@ -3983,8 +4381,7 @@ ble_gattc_rx_read_group_type_complete(uint16_t conn_handle, int status)
  * procedure.
  */
 void
-ble_gattc_rx_read_rsp(uint16_t conn_handle, int status, void *value,
-                      int value_len)
+ble_gattc_rx_read_rsp(uint16_t conn_handle, int status, struct os_mbuf **om)
 {
 #if !NIMBLE_OPT(ATT_CLT_READ)
     return;
@@ -3998,7 +4395,7 @@ ble_gattc_rx_read_rsp(uint16_t conn_handle, int status, void *value,
                                          ble_gattc_rx_read_rsp_entries,
                                          &rx_entry);
     if (proc != NULL) {
-        rc = rx_entry->cb(proc, status, value, value_len);
+        rc = rx_entry->cb(proc, status, om);
         ble_gattc_process_status(proc, rc);
     }
 }
@@ -4009,7 +4406,7 @@ ble_gattc_rx_read_rsp(uint16_t conn_handle, int status, void *value,
  */
 void
 ble_gattc_rx_read_blob_rsp(uint16_t conn_handle, int status,
-                           void *value, int value_len)
+                           struct os_mbuf **om)
 {
 #if !NIMBLE_OPT(ATT_CLT_READ_BLOB)
     return;
@@ -4020,7 +4417,7 @@ ble_gattc_rx_read_blob_rsp(uint16_t conn_handle, int status,
 
     proc = ble_gattc_extract(conn_handle, BLE_GATT_OP_READ_LONG);
     if (proc != NULL) {
-        rc = ble_gattc_read_long_rx_read_rsp(proc, status, value, value_len);
+        rc = ble_gattc_read_long_rx_read_rsp(proc, status, om);
         ble_gattc_process_status(proc, rc);
     }
 }
@@ -4031,7 +4428,7 @@ ble_gattc_rx_read_blob_rsp(uint16_t conn_handle, int status,
  */
 void
 ble_gattc_rx_read_mult_rsp(uint16_t conn_handle, int status,
-                           void *value, int value_len)
+                           struct os_mbuf **om)
 {
 #if !NIMBLE_OPT(ATT_CLT_READ_MULT)
     return;
@@ -4041,7 +4438,7 @@ ble_gattc_rx_read_mult_rsp(uint16_t conn_handle, int status,
 
     proc = ble_gattc_extract(conn_handle, BLE_GATT_OP_READ_MULT);
     if (proc != NULL) {
-        ble_gattc_read_mult_cb(proc, status, 0, value, value_len);
+        ble_gattc_read_mult_cb(proc, status, 0, om);
         ble_gattc_process_status(proc, BLE_HS_EDONE);
     }
 }
@@ -4073,7 +4470,7 @@ ble_gattc_rx_write_rsp(uint16_t conn_handle)
 void
 ble_gattc_rx_prep_write_rsp(uint16_t conn_handle, int status,
                             struct ble_att_prep_write_cmd *rsp,
-                            void *attr_data, uint16_t attr_data_len)
+                            struct os_mbuf **om)
 {
 #if !NIMBLE_OPT(ATT_CLT_PREP_WRITE)
     return;
@@ -4087,7 +4484,7 @@ ble_gattc_rx_prep_write_rsp(uint16_t conn_handle, int status,
                                          ble_gattc_rx_prep_entries,
                                          &rx_entry);
     if (proc != NULL) {
-        rc = rx_entry->cb(proc, status, rsp, attr_data, attr_data_len);
+        rc = rx_entry->cb(proc, status, rsp, om);
         ble_gattc_process_status(proc, rc);
     }
 }
@@ -4150,25 +4547,7 @@ ble_gattc_rx_indicate_rsp(uint16_t conn_handle)
 void
 ble_gattc_connection_broken(uint16_t conn_handle)
 {
-    struct ble_gattc_proc_list temp_list;
-    struct ble_gattc_proc *proc;
-    ble_gattc_err_fn *err_cb;
-
-    /* Remove all procs with the specified conn handle and insert them into the
-     * temporary list.
-     */
-    ble_gattc_extract_by_conn(conn_handle, &temp_list);
-
-    /* Notify application of failed procedures and free the corresponding proc
-     * entries.
-     */
-    while ((proc = STAILQ_FIRST(&temp_list)) != NULL) {
-        err_cb = ble_gattc_err_dispatch_get(proc->op);
-        err_cb(proc, BLE_HS_ENOTCONN, 0);
-
-        STAILQ_REMOVE_HEAD(&temp_list, next);
-        ble_gattc_proc_free(proc);
-    }
+    ble_gattc_fail_procs(conn_handle, BLE_GATT_OP_NONE, BLE_HS_ENOTCONN);
 }
 
 /**

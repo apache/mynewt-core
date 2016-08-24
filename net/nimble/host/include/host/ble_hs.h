@@ -21,16 +21,23 @@
 #define H_BLE_HS_
 
 #include <inttypes.h>
+#include "nimble/hci_common.h"
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
 #include "host/ble_hs.h"
+#include "host/ble_hs_adv.h"
+#include "host/ble_hs_id.h"
+#include "host/ble_hs_log.h"
 #include "host/ble_hs_test.h"
-#include "host/ble_uuid.h"
+#include "host/ble_hs_mbuf.h"
+#include "host/ble_sm.h"
 #include "host/ble_store.h"
-#include "host/host_hci.h"
+#include "host/ble_uuid.h"
 struct os_eventq;
 struct os_event;
+
+#define BLE_HS_FOREVER              INT32_MAX
 
 #define BLE_HS_CONN_HANDLE_NONE     0xffff
 
@@ -45,17 +52,17 @@ struct os_event;
 #define BLE_HS_EAPP                 9
 #define BLE_HS_EBADDATA             10
 #define BLE_HS_EOS                  11
-#define BLE_HS_ECONGESTED           12
-#define BLE_HS_ECONTROLLER          13
-#define BLE_HS_ETIMEOUT             14
-#define BLE_HS_EDONE                15
-#define BLE_HS_EBUSY                16
-#define BLE_HS_EREJECT              17
-#define BLE_HS_EUNKNOWN             18
-#define BLE_HS_EROLE                19
-#define BLE_HS_ETIMEOUT_HCI         20
-#define BLE_HS_ENOMEM_HCI           21
-#define BLE_HS_ENOMEM_EVT           22
+#define BLE_HS_ECONTROLLER          12
+#define BLE_HS_ETIMEOUT             13
+#define BLE_HS_EDONE                14
+#define BLE_HS_EBUSY                15
+#define BLE_HS_EREJECT              16
+#define BLE_HS_EUNKNOWN             17
+#define BLE_HS_EROLE                18
+#define BLE_HS_ETIMEOUT_HCI         19
+#define BLE_HS_ENOMEM_EVT           20
+#define BLE_HS_ENOADDR              21
+#define BLE_HS_ENOTSYNCED           22
 
 #define BLE_HS_ERR_ATT_BASE         0x100   /* 256 */
 #define BLE_HS_ATT_ERR(x)           ((x) ? BLE_HS_ERR_ATT_BASE + (x) : 0)
@@ -69,39 +76,31 @@ struct os_event;
 #define BLE_HS_ERR_SM_US_BASE       0x400   /* 1024 */
 #define BLE_HS_SM_US_ERR(x)         ((x) ? BLE_HS_ERR_SM_US_BASE + (x) : 0)
 
-#define BLE_HS_ERR_SM_THEM_BASE     0x500   /* 1280 */
-#define BLE_HS_SM_THEM_ERR(x)       ((x) ? BLE_HS_ERR_SM_THEM_BASE + (x) : 0)
+#define BLE_HS_ERR_SM_PEER_BASE     0x500   /* 1280 */
+#define BLE_HS_SM_PEER_ERR(x)       ((x) ? BLE_HS_ERR_SM_PEER_BASE + (x) : 0)
 
-/* defines the input output (io) capabilities for the host device */
+/* Note: A hardware error of 0 is not success. */
+#define BLE_HS_ERR_HW_BASE          0x600   /* 1536 */
+#define BLE_HS_HW_ERR(x)            (BLE_HS_ERR_HW_BASE + (x))
+
+/* Defines the IO capabilities for the local device. */
 #define BLE_HS_IO_DISPLAY_ONLY              0x00
 #define BLE_HS_IO_DISPLAY_YESNO             0x01
 #define BLE_HS_IO_KEYBOARD_ONLY             0x02
 #define BLE_HS_IO_NO_INPUT_OUTPUT           0x03
 #define BLE_HS_IO_KEYBOARD_DISPLAY          0x04
 
-#define BLE_HS_PRIVACY_MODE_NONE            0
-#define BLE_HS_PRIVACY_MODE_RANDOM_STATIC   1
-#define BLE_HS_PRIVACY_MODE_RESOLV_RAND     2
+typedef void ble_hs_reset_fn(int reason);
+typedef void ble_hs_sync_fn(void);
 
 struct ble_hs_cfg {
-    /*** HCI settings. */
     /**
-     * An HCI buffer is a "flat" 260-byte buffer.  HCI buffers are used by the
-     * controller to send unsolicited events to the host.
-     *
-     * HCI buffers can get tied up when the controller sends lots of
-     * asynchronous / unsolicited events (i.e., non-acks).  When the controller
-     * needs to send one of these events, it allocates an HCI buffer, fills it
-     * with the event payload, and puts it on a host queue.  If the controller
-     * sends a quick burst of these events, the buffer pool may be exhausted,
-     * preventing the host from sending an HCI command to the controller.
-     *
      * Every time the controller sends a non-ack HCI event to the host, it also
      * allocates an OS event (it is unfortunate that these are both called
      * "events").  The OS event is put on the host-parent-task's event queue;
      * it is what wakes up the host-parent-task and indicates that an HCI event
-     * needs to be processsed.  The pool of OS events is allocated with the
-     * same number of elements as the HCI buffer pool.
+     * needs to be processsed.  This setting should be equal to the total
+     * number of HCI event buffers that the transport is configured to use.
      */
     uint8_t max_hci_bufs;
 
@@ -131,6 +130,18 @@ struct ble_hs_cfg {
      *     (num-subscribable-characteristics) * (max-connections + 1)
      */
     uint16_t max_client_configs;
+
+    /**
+     * An optional callback that gets executed upon registration of each GATT
+     * resource (service, characteristic, or descriptor).
+     */
+    ble_gatt_register_fn *gatts_register_cb;
+
+    /**
+     * An optional argument that gets passed to the GATT registration
+     * callback.
+     */
+    void *gatts_register_arg;
 
     /*** GATT client settings. */
     /**
@@ -197,6 +208,19 @@ struct ble_hs_cfg {
     uint8_t sm_our_key_dist;
     uint8_t sm_their_key_dist;
 
+    /*** HCI settings */
+    /**
+     * This callback is executed when the host resets itself and the controller
+     * due to fatal error.
+     */
+    ble_hs_reset_fn *reset_cb;
+
+    /**
+     * This callback is executed when the host and controller become synced.
+     * This happens at startup and after a reset.
+     */
+    ble_hs_sync_fn *sync_cb;
+
     /*** Store settings. */
     /**
      * These function callbacks handle persistence of sercurity material
@@ -206,7 +230,7 @@ struct ble_hs_cfg {
     ble_store_write_fn *store_write_cb;
     ble_store_delete_fn *store_delete_cb;
 
-    /*** privacy settings */
+    /*** Privacy settings. */
     /**
      * The frequency at which new resovlable private addresses are generated.
      * Units are seconds.
@@ -216,9 +240,8 @@ struct ble_hs_cfg {
 
 extern const struct ble_hs_cfg ble_hs_cfg_dflt;
 
+int ble_hs_synced(void);
 int ble_hs_start(void);
-void ble_hs_event_enqueue(struct os_event *ev);
-int ble_ibeacon_set_adv_data(void *uuid128, uint16_t major, uint16_t minor);
 int ble_hs_init(struct os_eventq *app_evq, struct ble_hs_cfg *cfg);
 
 #endif

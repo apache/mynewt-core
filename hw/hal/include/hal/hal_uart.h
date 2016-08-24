@@ -76,6 +76,12 @@ enum hal_uart_flow_ctl {
 int hal_uart_config(int uart, int32_t speed, uint8_t databits, uint8_t stopbits,
   enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl);
 
+/*
+ * Close UART port. Can call hal_uart_config() with different settings after
+ * calling this.
+ */
+int hal_uart_close(int port);
+
 /**
  * hal uart start tx
  *

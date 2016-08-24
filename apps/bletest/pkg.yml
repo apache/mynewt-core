@@ -28,6 +28,7 @@ pkg.deps:
     - fs/nffs
     - net/nimble/controller
     - net/nimble/host
+    - net/nimble/transport/ram
     - libs/os 
     - libs/console/full
     - libs/shell

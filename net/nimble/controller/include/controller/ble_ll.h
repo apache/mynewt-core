@@ -22,6 +22,7 @@
 
 #include "stats/stats.h"
 #include "hal/hal_cputime.h"
+#include "os/os_eventq.h"
 #include "nimble/nimble_opt.h"
 
 /* Controller revision. */
@@ -85,6 +86,7 @@ STATS_SECT_START(ble_ll_stats)
     STATS_SECT_ENTRY(hci_events_sent)
     STATS_SECT_ENTRY(bad_ll_state)
     STATS_SECT_ENTRY(bad_acl_hdr)
+    STATS_SECT_ENTRY(no_bufs)
     STATS_SECT_ENTRY(rx_adv_pdu_crc_ok)
     STATS_SECT_ENTRY(rx_adv_pdu_crc_err)
     STATS_SECT_ENTRY(rx_adv_bytes_crc_ok)
@@ -311,13 +313,24 @@ int ble_ll_is_our_devaddr(uint8_t *addr, int addr_type);
  */
 void ble_ll_acl_data_in(struct os_mbuf *txpkt);
 
+/**
+ * Allocate a pdu (chain) for reception.
+ *
+ * @param len Length of PDU. This includes the PDU header as well as payload.
+ * Does not include MIC if encrypted.
+ *
+ * @return struct os_mbuf* Pointer to mbuf chain to hold received packet
+ */
+struct os_mbuf *ble_ll_rxpdu_alloc(uint16_t len);
+
 /*--- PHY interfaces ---*/
+struct ble_mbuf_hdr;
+
 /* Called by the PHY when a packet has started */
-int ble_ll_rx_start(struct os_mbuf *rxpdu, uint8_t chan);
+int ble_ll_rx_start(uint8_t *rxbuf, uint8_t chan, struct ble_mbuf_hdr *hdr);
 
 /* Called by the PHY when a packet reception ends */
-struct ble_mbuf_hdr;
-int ble_ll_rx_end(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *ble_hdr);
+int ble_ll_rx_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr);
 
 /*--- Controller API ---*/
 void ble_ll_mbuf_init(struct os_mbuf *m, uint8_t pdulen, uint8_t hdr);
@@ -330,6 +343,9 @@ uint8_t ble_ll_state_get(void);
 
 /* Send an event to LL task */
 void ble_ll_event_send(struct os_event *ev);
+
+/* Hand received pdu's to LL task  */
+void ble_ll_rx_pdu_in(struct os_mbuf *rxpdu);
 
 /* Set random address */
 int ble_ll_set_random_addr(uint8_t *addr);
@@ -382,6 +398,7 @@ int ble_ll_rand_start(void);
 #define BLE_LL_LOG_ID_CONN_END          (30)
 #define BLE_LL_LOG_ID_ADV_TXBEG         (50)
 #define BLE_LL_LOG_ID_ADV_TXDONE        (60)
+#define BLE_LL_LOG_ID_SCHED             (80)
 
 #ifdef BLE_LL_LOG
 void ble_ll_log(uint8_t id, uint8_t arg8, uint16_t arg16, uint32_t arg32);

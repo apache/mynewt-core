@@ -178,8 +178,6 @@ main(int argc, char **argv)
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                     SHELL_MAX_INPUT_LEN);
 
-    (void) console_init(shell_console_rx_cb);
-
     stats_module_init();
 
     rc = init_tasks();

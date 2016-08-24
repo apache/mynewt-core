@@ -37,6 +37,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
 
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
@@ -509,6 +510,49 @@ err:
     return (rc);
 }
 
+/**
+ * Reads data from one mbuf and appends it to another.  On error, the specified
+ * data range may be partially appended.  Neither mbuf is required to contain
+ * an mbuf packet header.
+ *
+ * @param dst                   The mbuf to append to.
+ * @param src                   The mbuf to copy data from.
+ * @param src_off               The absolute offset within the source mbuf
+ *                                  chain to read from.
+ * @param len                   The number of bytes to append.
+ *
+ * @return                      0 on success;
+ *                              OS_EINVAL if the specified range extends beyond
+ *                                  the end of the source mbuf chain.
+ */
+int
+os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
+                   uint16_t src_off, uint16_t len)
+{
+    const struct os_mbuf *src_cur_om;
+    uint16_t src_cur_off;
+    uint16_t chunk_sz;
+    int rc;
+
+    src_cur_om = os_mbuf_off(src, src_off, &src_cur_off);
+    while (len > 0) {
+        if (src_cur_om == NULL) {
+            return OS_EINVAL;
+        }
+
+        chunk_sz = min(len, src_cur_om->om_len - src_cur_off);
+        rc = os_mbuf_append(dst, src_cur_om->om_data + src_cur_off, chunk_sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        len -= chunk_sz;
+        src_cur_om = SLIST_NEXT(src_cur_om, om_next);
+        src_cur_off = 0;
+    }
+
+    return 0;
+}
 
 /**
  * Duplicate a chain of mbufs.  Return the start of the duplicated chain.
@@ -576,26 +620,30 @@ err:
  *                              NULL if the specified offset is out of bounds.
  */
 struct os_mbuf *
-os_mbuf_off(struct os_mbuf *om, int off, int *out_off)
+os_mbuf_off(const struct os_mbuf *om, int off, uint16_t *out_off)
 {
     struct os_mbuf *next;
+    struct os_mbuf *cur;
+
+    /* Cast away const. */
+    cur = (struct os_mbuf *)om;
 
     while (1) {
-        if (om == NULL) {
+        if (cur == NULL) {
             return NULL;
         }
 
-        next = SLIST_NEXT(om, om_next);
+        next = SLIST_NEXT(cur, om_next);
 
-        if (om->om_len > off ||
-            (om->om_len == off && next == NULL)) {
+        if (cur->om_len > off ||
+            (cur->om_len == off && next == NULL)) {
 
             *out_off = off;
-            return om;
+            return cur;
         }
 
-        off -= om->om_len;
-        om = next;
+        off -= cur->om_len;
+        cur = next;
     }
 }
 
@@ -739,14 +787,14 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
  *
  * @return                      0 if both memory regions are identical;
  *                              A memcmp return code if there is a mismatch;
- *                              -1 if the mbuf is too short.
+ *                              INT_MAX if the mbuf is too short.
  */
 int
-os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
+os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 {
-    int chunk_sz;
-    int data_off;
-    int om_off;
+    uint16_t chunk_sz;
+    uint16_t data_off;
+    uint16_t om_off;
     int rc;
 
     if (len <= 0) {
@@ -754,10 +802,10 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
     }
 
     data_off = 0;
-    om = os_mbuf_off((struct os_mbuf *)om, off, &om_off);
+    om = os_mbuf_off(om, off, &om_off);
     while (1) {
         if (om == NULL) {
-            return -1;
+            return INT_MAX;
         }
 
         chunk_sz = min(om->om_len - om_off, len - data_off);
@@ -777,8 +825,80 @@ os_mbuf_memcmp(const struct os_mbuf *om, int off, const void *data, int len)
         om_off = 0;
 
         if (om == NULL) {
-            return -1;
+            return INT_MAX;
         }
+    }
+}
+
+/**
+ * Compares the contents of two mbuf chains.  The ranges of the two chains to
+ * be compared are specified via the two offset parameters and the len
+ * parameter.  Neither mbuf chain is required to contain a packet header.
+ *
+ * @param om1                   The first mbuf chain to compare.
+ * @param offset1               The absolute offset within om1 at which to
+ *                                  start the comparison.
+ * @param om2                   The second mbuf chain to compare.
+ * @param offset2               The absolute offset within om2 at which to
+ *                                  start the comparison.
+ * @param len                   The number of bytes to compare.
+ *
+ * @return                      0 if both mbuf segments are identical;
+ *                              A memcmp() return code if the segment contents
+ *                                  differ;
+ *                              INT_MAX if a specified range extends beyond the
+ *                                  end of its corresponding mbuf chain.
+ */
+int
+os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
+             const struct os_mbuf *om2, uint16_t offset2,
+             uint16_t len)
+{
+    const struct os_mbuf *cur1;
+    const struct os_mbuf *cur2;
+    uint16_t bytes_remaining;
+    uint16_t chunk_sz;
+    uint16_t om1_left;
+    uint16_t om2_left;
+    uint16_t om1_off;
+    uint16_t om2_off;
+    int rc;
+
+    cur1 = os_mbuf_off(om1, offset1, &om1_off);
+    cur2 = os_mbuf_off(om2, offset2, &om2_off);
+
+    bytes_remaining = len;
+    while (1) {
+        if (bytes_remaining == 0) {
+            return 0;
+        }
+
+        while (cur1 != NULL && om1_off >= cur1->om_len) {
+            cur1 = SLIST_NEXT(cur1, om_next);
+            om1_off = 0;
+        }
+        while (cur2 != NULL && om2_off >= cur2->om_len) {
+            cur2 = SLIST_NEXT(cur2, om_next);
+            om2_off = 0;
+        }
+
+        if (cur1 == NULL || cur2 == NULL) {
+            return INT_MAX;
+        }
+
+        om1_left = cur1->om_len - om1_off;
+        om2_left = cur2->om_len - om2_off;
+        chunk_sz = min(min(om1_left, om2_left), bytes_remaining);
+
+        rc = memcmp(cur1->om_data + om1_off, cur2->om_data + om2_off,
+                    chunk_sz);
+        if (rc != 0) {
+            return rc;
+        }
+
+        om1_off += chunk_sz;
+        om2_off += chunk_sz;
+        bytes_remaining -= chunk_sz;
     }
 }
 
@@ -851,6 +971,33 @@ os_mbuf_prepend(struct os_mbuf *om, int len)
 }
 
 /**
+ * Prepends a chunk of empty data to the specified mbuf chain and ensures the
+ * chunk is contiguous.  If either operation fails, the specified mbuf chain is
+ * freed and NULL is returned.
+ *
+ * @param om                    The mbuf chain to prepend to.
+ * @param len                   The number of bytes to prepend and pullup.
+ *
+ * @return                      The modified mbuf on success;
+ *                              NULL on failure (and the mbuf chain is freed).
+ */
+struct os_mbuf *
+os_mbuf_prepend_pullup(struct os_mbuf *om, uint16_t len)
+{
+    om = os_mbuf_prepend(om, len);
+    if (om == NULL) {
+        return NULL;
+    }
+
+    om = os_mbuf_pullup(om, len);
+    if (om == NULL) {
+        return NULL;
+    }
+
+    return om;
+}
+
+/**
  * Copies the contents of a flat buffer into an mbuf chain, starting at the
  * specified destination offset.  If the mbuf is too small for the source data,
  * it is extended as necessary.  If the destination mbuf contains a packet
@@ -870,8 +1017,8 @@ os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
     struct os_mbuf *next;
     struct os_mbuf *cur;
     const uint8_t *sptr;
+    uint16_t cur_off;
     int copylen;
-    int cur_off;
     int rc;
 
     /* Find the mbuf,offset pair for the start of the destination. */
