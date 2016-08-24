@@ -40,6 +40,7 @@ struct hal_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
+    const struct stm32f4_uart_cfg *u_cfg;
 };
 static struct hal_uart uarts[UART_CNT];
 
@@ -271,7 +272,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (u->u_open) {
         return -1;
     }
-    cfg = bsp_uart_config(port);
+    cfg = u->u_cfg;
     assert(cfg);
 
     /*
@@ -369,6 +370,20 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     u->u_regs->CR1 |= (USART_CR1_RXNEIE | USART_CR1_UE);
     u->u_open = 1;
+
+    return 0;
+}
+
+int
+hal_uart_init(int port, void *arg)
+{
+    struct hal_uart *u;
+
+    if (port >= UART_CNT) {
+        return -1;
+    }
+    u = &uarts[port];
+    u->u_cfg = (const struct stm32f4_uart_cfg *)arg;
 
     return 0;
 }
