@@ -50,6 +50,9 @@ static struct flash_area bsp_flash_areas[] = {
 
 void _close(int fd);
 
+/* XXX should not be declaring function prototypes here */
+extern int bsp_hal_init(void);
+
 /*
  * Returns the flash map slot where the currently active image is located.
  * If executing from internal flash from fixed location, that slot would
@@ -75,4 +78,5 @@ bsp_init(void)
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+    bsp_hal_init();
 }
