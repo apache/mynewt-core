@@ -16,8 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <assert.h>
+
 #include <hal/flash_map.h>
 #include <hal/hal_bsp.h>
+#include <hal/hal_cputime.h>
+#include <uart_hal/uart_hal.h>
+#include <mcu/nrf52_hal.h>
+#include <os/os_dev.h>
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -47,6 +53,7 @@ static struct flash_area bsp_flash_areas[] = {
         .fa_size = (12 * 1024)
     }
 };
+static struct uart_dev hal_uart0;
 
 void _close(int fd);
 
@@ -67,6 +74,8 @@ bsp_imgr_current_slot(void)
 void
 bsp_init(void)
 {
+    int rc;
+
     /*
      * XXX this reference is here to keep this function in.
      */
@@ -75,4 +84,8 @@ bsp_init(void)
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+
+    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)bsp_uart_config());
+    assert(rc == 0);
 }

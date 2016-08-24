@@ -37,6 +37,7 @@ pkg.deps:
     - hw/mcu/nordic
     - hw/mcu/nordic/nrf52xxx
     - libs/baselibc
+    - drivers/uart/uart_hal
 pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/nrf52
 pkg.features:
