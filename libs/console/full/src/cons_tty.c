@@ -18,9 +18,9 @@
  */
 
 #include <inttypes.h>
-#include "os/os.h"
-#include "hal/hal_uart.h"
-#include "bsp/bsp.h"
+#include <os/os.h>
+#include <uart/uart.h>
+#include <bsp/bsp.h>
 #include "console/console.h"
 
 int g_console_is_init;
@@ -53,6 +53,7 @@ struct console_ring {
 };
 
 struct console_tty {
+    struct uart_dev *ct_dev;
     struct console_ring ct_tx;
     uint8_t ct_tx_buf[CONSOLE_TX_BUF_SZ]; /* must be after console_ring */
     struct console_ring ct_rx;
@@ -100,7 +101,7 @@ console_queue_char(char ch)
     OS_ENTER_CRITICAL(sr);
     while (CONSOLE_HEAD_INC(&ct->ct_tx) == ct->ct_tx.cr_tail) {
         /* TX needs to drain */
-        hal_uart_start_tx(CONSOLE_UART);
+        uart_start_tx(ct->ct_dev);
         OS_EXIT_CRITICAL(sr);
 	if (os_started()) {
             os_time_delay(1);
@@ -114,7 +115,9 @@ console_queue_char(char ch)
 static void
 console_blocking_tx(char ch)
 {
-    hal_uart_blocking_tx(CONSOLE_UART, ch);
+    struct console_tty *ct = &console_tty;
+
+    uart_blocking_tx(ct->ct_dev, ch);
 }
 
 /*
@@ -177,7 +180,7 @@ console_file_write(void *arg, const char *str, size_t cnt)
     if (cnt > 0) {
         console_is_midline = str[cnt - 1] != '\n';
     }
-    hal_uart_start_tx(CONSOLE_UART);
+    uart_start_tx(ct->ct_dev);
     return cnt;
 }
 
@@ -221,7 +224,7 @@ console_read(char *str, int cnt, int *newline)
     }
     OS_EXIT_CRITICAL(sr);
     if (i > 0 || *newline) {
-        hal_uart_start_rx(CONSOLE_UART);
+        uart_start_rx(ct->ct_dev);
     }
     return i;
 }
@@ -355,7 +358,7 @@ queue_char:
         for (i = 0; i < tx_space; i++) {
             console_add_char(tx, tx_buf[i]);
         }
-        hal_uart_start_tx(CONSOLE_UART);
+        uart_start_tx(ct->ct_dev);
     }
 out:
     return 0;
@@ -371,13 +374,17 @@ int
 console_init(console_rx_cb rx_cb)
 {
     struct console_tty *ct = &console_tty;
-    int rc;
+    struct uart_conf uc = {
+        .uc_speed = 9600,
+        .uc_databits = 8,
+        .uc_stopbits = 1,
+        .uc_parity = UART_PARITY_NONE,
+        .uc_flow_ctl = UART_FLOW_CTL_NONE,
+        .uc_tx_char = console_tx_char,
+        .uc_rx_char = console_rx_char,
+        .uc_cb_arg = ct
+    };
 
-    rc = hal_uart_init_cbs(CONSOLE_UART, console_tx_char, NULL,
-            console_rx_char, ct);
-    if (rc) {
-        return rc;
-    }
     ct->ct_tx.cr_size = CONSOLE_TX_BUF_SZ;
     ct->ct_tx.cr_buf = ct->ct_tx_buf;
     ct->ct_rx.cr_size = CONSOLE_RX_BUF_SZ;
@@ -385,10 +392,10 @@ console_init(console_rx_cb rx_cb)
     ct->ct_rx_cb = rx_cb;
     ct->ct_write_char = console_queue_char;
 
-    rc = hal_uart_config(CONSOLE_UART, 115200, 8, 1, HAL_UART_PARITY_NONE,
-      HAL_UART_FLOW_CTL_NONE);
-    if (rc) {
-        return rc;
+    ct->ct_dev = (struct uart_dev *)os_dev_open(CONSOLE_UART,
+      OS_TIMEOUT_NEVER, &uc);
+    if (!ct->ct_dev) {
+        return -1;
     }
 
     g_console_is_init = 1;
