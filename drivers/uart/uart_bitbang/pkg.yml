@@ -24,6 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.apis:
    - UART_HW_IMPL
-pkg.deps.TEST:
+pkg.deps:
    - hw/hal
-   - libs/testutil
+   - drivers/uart
