@@ -26,10 +26,11 @@
 #include <hal/hal_cputime.h>
 
 #include <os/os.h>
-#include <bsp/bsp.h>
+#include <os/os_dev.h>
+
+#include <uart/uart.h>
 
 #include "uart_bitbang/uart_bitbang.h"
-#include "uart_bitbang/uart_bitbang_api.h"
 
 /*
  * Async UART as a bitbanger.
@@ -63,8 +64,6 @@ struct uart_bitbang {
     hal_uart_tx_done ub_tx_done;
     void *ub_func_arg;
 };
-
-struct uart_bitbang uart_bitbang;
 
 /*
  * Bytes start with START bit (0) followed by 8 data bits and then the
@@ -175,13 +174,14 @@ uart_bitbang_isr(void *arg)
     hal_gpio_irq_disable(ub->ub_rx.pin);
 }
 
-void
-uart_bitbang_blocking_tx(int port, uint8_t data)
+static void
+uart_bitbang_blocking_tx(struct uart_dev *dev, uint8_t data)
 {
-    struct uart_bitbang *ub = &uart_bitbang;
+    struct uart_bitbang *ub;
     int i;
     uint32_t start, next;
 
+    ub = (struct uart_bitbang *)dev->ud_priv;
     if (!ub->ub_open) {
         return;
     }
@@ -200,24 +200,13 @@ uart_bitbang_blocking_tx(int port, uint8_t data)
     while (cputime_get32() < next);
 }
 
-int
-uart_bitbang_init(int rxpin, int txpin, uint32_t cputimer_freq)
+static void
+uart_bitbang_start_tx(struct uart_dev *dev)
 {
-    struct uart_bitbang *ub = &uart_bitbang;
-
-    ub->ub_rx.pin = rxpin;
-    ub->ub_tx.pin = txpin;
-    ub->ub_cputimer_freq = cputimer_freq;
-
-    return 0;
-}
-
-void
-uart_bitbang_start_tx(int port)
-{
-    struct uart_bitbang *ub = &uart_bitbang;
+    struct uart_bitbang *ub;
     int sr;
 
+    ub = (struct uart_bitbang *)dev->ud_priv;
     if (!ub->ub_open) {
         return;
     }
@@ -228,13 +217,14 @@ uart_bitbang_start_tx(int port)
     }
 }
 
-void
-uart_bitbang_start_rx(int port)
+static void
+uart_bitbang_start_rx(struct uart_dev *dev)
 {
-    struct uart_bitbang *ub = &uart_bitbang;
+    struct uart_bitbang *ub;
     int sr;
     int rc;
 
+    ub = (struct uart_bitbang *)dev->ud_priv;
     if (ub->ub_rx_stall) {
         rc = ub->ub_rx_func(ub->ub_func_arg, ub->ub_rx.byte);
         if (rc == 0) {
@@ -250,33 +240,11 @@ uart_bitbang_start_rx(int port)
     }
 }
 
-int
-uart_bitbang_init_cbs(int port, hal_uart_tx_char tx_func,
-  hal_uart_tx_done tx_done, hal_uart_rx_char rx_func, void *arg)
-{
-    struct uart_bitbang *ub = &uart_bitbang;
-
-    if (port != 0) {
-        return -1;
-    }
-
-    if (ub->ub_open) {
-        return -1;
-    }
-    ub->ub_rx_func = rx_func;
-    ub->ub_tx_func = tx_func;
-    ub->ub_tx_done = tx_done;
-    ub->ub_func_arg = arg;
-    return 0;
-}
-
-int
-uart_bitbang_config(int port, int32_t baudrate, uint8_t databits,
+static int
+uart_bitbang_config(struct uart_bitbang *ub, int32_t baudrate, uint8_t databits,
   uint8_t stopbits, enum hal_uart_parity parity,
   enum hal_uart_flow_ctl flow_ctl)
 {
-    struct uart_bitbang *ub = &uart_bitbang;
-
     if (databits != 8 || parity != HAL_UART_PARITY_NONE ||
       flow_ctl != HAL_UART_FLOW_CTL_NONE) {
         return -1;
@@ -289,8 +257,8 @@ uart_bitbang_config(int port, int32_t baudrate, uint8_t databits,
     }
     ub->ub_bittime = ub->ub_cputimer_freq / baudrate;
 
-    cputime_timer_init(&ub->ub_rx.timer, uart_bitbang_rx_timer, &uart_bitbang);
-    cputime_timer_init(&ub->ub_tx.timer, uart_bitbang_tx_timer, &uart_bitbang);
+    cputime_timer_init(&ub->ub_rx.timer, uart_bitbang_rx_timer, ub);
+    cputime_timer_init(&ub->ub_tx.timer, uart_bitbang_tx_timer, ub);
 
     if (hal_gpio_init_out(ub->ub_tx.pin, 1)) {
         return -1;
@@ -306,12 +274,33 @@ uart_bitbang_config(int port, int32_t baudrate, uint8_t databits,
     return 0;
 }
 
-int
-uart_bitbang_close(int port)
+static int
+uart_bitbang_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
-    struct uart_bitbang *ub = &uart_bitbang;
+    struct uart_dev *dev = (struct uart_dev *)odev;
+    struct uart_bitbang *ub;
+    struct uart_conf *uc;
+
+    ub = (struct uart_bitbang *)dev->ud_priv;
+    uc = (struct uart_conf *)arg;
+
+    ub->ub_rx_func = uc->uc_rx_char;
+    ub->ub_tx_func = uc->uc_tx_char;
+    ub->ub_tx_done = uc->uc_tx_done;
+    ub->ub_func_arg = uc->uc_cb_arg;
+
+    return uart_bitbang_config(ub, uc->uc_speed, uc->uc_databits,
+      uc->uc_stopbits, uc->uc_parity, uc->uc_flow_ctl);
+}
+
+static int
+uart_bitbang_close(struct os_dev *odev)
+{
+    struct uart_dev *dev = (struct uart_dev *)odev;
+    struct uart_bitbang *ub;
     int sr;
 
+    ub = (struct uart_bitbang *)dev->ud_priv;
     OS_ENTER_CRITICAL(sr);
     hal_gpio_irq_disable(ub->ub_rx.pin);
     hal_gpio_irq_release(ub->ub_rx.pin);
@@ -323,3 +312,32 @@ uart_bitbang_close(int port)
     OS_EXIT_CRITICAL(sr);
     return 0;
 }
+
+int
+uart_bitbang_init(struct os_dev *odev, void *arg)
+{
+    struct uart_dev *dev = (struct uart_dev *)odev;
+    struct uart_bitbang *ub;
+    struct uart_bitbang_conf *ubc;
+
+    ub = (struct uart_bitbang *)os_malloc(sizeof(struct uart_bitbang));
+    if (!ub) {
+        return -1;
+    }
+    memset(ub, 0, sizeof(*ub));
+
+    ubc = (struct uart_bitbang_conf *)arg;
+    ub->ub_rx.pin = ubc->ubc_rxpin;
+    ub->ub_tx.pin = ubc->ubc_txpin;
+    ub->ub_cputimer_freq = ubc->ubc_cputimer_freq;
+
+    OS_DEV_SETHANDLERS(odev, uart_bitbang_open, uart_bitbang_close);
+
+    dev->ud_funcs.uf_start_tx = uart_bitbang_start_tx;
+    dev->ud_funcs.uf_start_rx = uart_bitbang_start_rx;
+    dev->ud_funcs.uf_blocking_tx = uart_bitbang_blocking_tx;
+    dev->ud_priv = ub;
+
+    return 0;
+}
+

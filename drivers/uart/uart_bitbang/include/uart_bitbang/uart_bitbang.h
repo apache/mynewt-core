@@ -20,6 +20,13 @@
 #ifndef __UART_BITBANG_H__
 #define __UART_BITBANG_H__
 
-int uart_bitbang_init(int rxpin, int txpin, uint32_t cputimer_freq);
+struct uart_bitbang_conf {
+    int ubc_rxpin;
+    int ubc_txpin;
+    uint32_t ubc_cputimer_freq;
+};
+
+struct os_dev;
+int uart_bitbang_init(struct os_dev *, void *);
 
 #endif /* __UART_BITBANG_H__ */
