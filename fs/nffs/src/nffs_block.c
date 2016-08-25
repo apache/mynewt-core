@@ -89,6 +89,7 @@ nffs_block_read_disk(uint8_t area_idx, uint32_t area_offset,
 {
     int rc;
 
+    STATS_INC(nffs_stats, nffs_readcnt_block);
     rc = nffs_flash_read(area_idx, area_offset, out_disk_block,
                          sizeof *out_disk_block);
     if (rc != 0) {
@@ -436,6 +437,7 @@ nffs_block_read_data(const struct nffs_block *block, uint16_t offset,
     area_offset += sizeof (struct nffs_disk_block);
     area_offset += offset;
 
+    STATS_INC(nffs_stats, nffs_readcnt_data);
     rc = nffs_flash_read(area_idx, area_offset, dst, length);
     if (rc != 0) {
         return rc;
