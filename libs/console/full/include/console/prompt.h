@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __CONSOLE_H__
-#define __CONSOLE_H__
+#ifndef __CONSOLE_PROMPT_H__
+#define __CONSOLE_PROMPT_H__
 
 #include <stdarg.h>
 
@@ -28,8 +28,4 @@ void console_print_prompt();
 /* set the console prompt character */
 void console_set_prompt(char);
 
-
-extern char console_prompt[2];
-
-
-#endif /* __CONSOLE_H__ */
+#endif /* __CONSOLE_PROMPT_H__ */

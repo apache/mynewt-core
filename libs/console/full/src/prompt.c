@@ -22,7 +22,7 @@
 #include "console/prompt.h"
 
 /* console prompt, always followed by a space */
-char console_prompt[3] = {' ', '>', ' '};
+static char console_prompt[3] = {' ', '>', ' '};
 
 
 /* set the prompt character, leave the space */

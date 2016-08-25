@@ -46,8 +46,6 @@ static struct os_mqueue g_shell_nlip_mq;
 
 static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
-void console_print_prompt(void);
-void console_set_prompt(char p);
 int shell_prompt_cmd(int argc, char **argv);
 
 static struct shell_cmd g_shell_echo_cmd = {
