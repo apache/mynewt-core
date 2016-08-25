@@ -69,28 +69,41 @@ uart_hal_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct uart_hal_priv *priv;
     struct uart_conf *uc;
+    int rc;
 
     priv = ((struct uart_dev *)odev)->ud_priv;
 
     uc = (struct uart_conf *)arg;
     if (!uc) {
-        return -1;
+        return OS_EINVAL;
+    }
+    if (odev->od_status & OS_DEV_STATUS_OPEN) {
+        return OS_EBUSY;
     }
     hal_uart_init_cbs(priv->unit, uc->uc_tx_char, uc->uc_tx_done,
       uc->uc_rx_char, uc->uc_cb_arg);
 
-    return hal_uart_config(priv->unit, uc->uc_speed, uc->uc_databits,
+    rc = hal_uart_config(priv->unit, uc->uc_speed, uc->uc_databits,
       uc->uc_stopbits, uc->uc_parity, uc->uc_flow_ctl);
+    if (rc) {
+        return OS_EINVAL;
+    }
+    return OS_OK;
 }
 
 static int
 uart_hal_close(struct os_dev *odev)
 {
     struct uart_hal_priv *priv;
+    int rc;
 
     priv = ((struct uart_dev *)odev)->ud_priv;
 
-    return hal_uart_close(priv->unit);
+    rc = hal_uart_close(priv->unit);
+    if (rc) {
+        return OS_EINVAL;
+    }
+    return OS_OK;
 }
 
 /*
@@ -105,13 +118,13 @@ uart_hal_init(struct os_dev *odev, void *arg)
 
     priv = os_malloc(sizeof(struct uart_hal_priv));
     if (!priv) {
-        return -1;
+        return OS_ENOMEM;
     }
     priv->unit = -1;
 
     ch = odev->od_name[strlen(odev->od_name) - 1];
     if (!isdigit(ch)) {
-        return -1;
+        return OS_EINVAL;
     }
     priv->unit = ch - '0';
 
@@ -126,5 +139,5 @@ uart_hal_init(struct os_dev *odev, void *arg)
 
     hal_uart_init(priv->unit, arg);
 
-    return 0;
+    return OS_OK;
 }

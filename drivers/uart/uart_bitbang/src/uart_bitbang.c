@@ -289,8 +289,11 @@ uart_bitbang_open(struct os_dev *odev, uint32_t wait, void *arg)
     ub->ub_tx_done = uc->uc_tx_done;
     ub->ub_func_arg = uc->uc_cb_arg;
 
-    return uart_bitbang_config(ub, uc->uc_speed, uc->uc_databits,
-      uc->uc_stopbits, uc->uc_parity, uc->uc_flow_ctl);
+    if (uart_bitbang_config(ub, uc->uc_speed, uc->uc_databits,
+        uc->uc_stopbits, uc->uc_parity, uc->uc_flow_ctl)) {
+        return OS_EINVAL;
+    }
+    return OS_OK;
 }
 
 static int
@@ -310,7 +313,7 @@ uart_bitbang_close(struct os_dev *odev)
     cputime_timer_stop(&ub->ub_tx.timer);
     cputime_timer_stop(&ub->ub_rx.timer);
     OS_EXIT_CRITICAL(sr);
-    return 0;
+    return OS_OK;
 }
 
 int
@@ -322,7 +325,7 @@ uart_bitbang_init(struct os_dev *odev, void *arg)
 
     ub = (struct uart_bitbang *)os_malloc(sizeof(struct uart_bitbang));
     if (!ub) {
-        return -1;
+        return OS_ENOMEM;
     }
     memset(ub, 0, sizeof(*ub));
 
@@ -338,6 +341,6 @@ uart_bitbang_init(struct os_dev *odev, void *arg)
     dev->ud_funcs.uf_blocking_tx = uart_bitbang_blocking_tx;
     dev->ud_priv = ub;
 
-    return 0;
+    return OS_OK;
 }
 
