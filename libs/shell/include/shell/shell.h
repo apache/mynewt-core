@@ -43,4 +43,7 @@ void shell_console_rx_cb(void);
 int shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
                     int max_input_length);
 
+int shell_cmd_list_lock(void);
+int shell_cmd_list_unlock(void);
+
 #endif /* __SHELL_H__ */
