@@ -18,7 +18,7 @@
  */
 
 #ifndef _OS_H
-#define _OS_H 
+#define _OS_H
 
 #include <stdlib.h>
 //#include <stdint.h>
@@ -40,16 +40,16 @@
         )
 
 
-/** 
- * Whether or not the operating system has been started.  Set to 
+/**
+ * Whether or not the operating system has been started.  Set to
  * 1 right before first task is run.
  */
-extern int g_os_started; 
+extern int g_os_started;
 
 int os_info_init(void);
 
 /**
- * Returns 1 if the OS has been started, 0 if it has not yet been 
+ * Returns 1 if the OS has been started, 0 if it has not yet been
  * been started.
  */
 int os_started(void);
@@ -67,9 +67,10 @@ enum os_error {
     OS_ERR_PRIV = 8,        /* Privileged access error */
     OS_NOT_STARTED = 9,     /* Operating must be started to call this function, but isn't */
     OS_ENOENT = 10,         /* No such thing */
+    OS_EBUSY = 11,          /* Resource busy */
 };
 
-#define OS_WAIT_FOREVER (-1) 
+#define OS_WAIT_FOREVER (-1)
 
 typedef enum os_error os_error_t;
 
@@ -89,7 +90,7 @@ void os_init_idle_task(void);
 #include "os/os_task.h"
 #include "os/os_sched.h"
 #include "os/os_eventq.h"
-#include "os/os_callout.h" 
+#include "os/os_callout.h"
 #include "os/os_heap.h"
 #include "os/os_mutex.h"
 #include "os/os_sem.h"
