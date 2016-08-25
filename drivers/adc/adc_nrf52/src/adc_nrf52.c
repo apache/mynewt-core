@@ -107,9 +107,9 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         }
     }
 
-    if (dev->od_status & OS_DEV_STATUS_OPEN) {
+    if (odev->od_status & OS_DEV_STATUS_OPEN) {
         os_mutex_release(&dev->ad_lock);
-        rc = EALREADY;
+        rc = -1;
         goto err;
     }
 
