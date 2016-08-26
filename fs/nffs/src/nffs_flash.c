@@ -54,6 +54,7 @@ nffs_flash_read(uint8_t area_idx, uint32_t area_offset, void *data,
         return FS_EOFFSET;
     }
 
+    STATS_INC(nffs_stats, nffs_iocnt_read);
     rc = hal_flash_read(area->na_flash_id, area->na_offset + area_offset, data,
                         len);
     if (rc != 0) {
@@ -95,6 +96,7 @@ nffs_flash_write(uint8_t area_idx, uint32_t area_offset, const void *data,
         return FS_EOFFSET;
     }
 
+    STATS_INC(nffs_stats, nffs_iocnt_write);
     rc = hal_flash_write(area->na_flash_id, area->na_offset + area_offset,
                          data, len);
     if (rc != 0) {
@@ -133,6 +135,7 @@ nffs_flash_copy(uint8_t area_idx_from, uint32_t area_offset_from,
             chunk_len = len;
         }
 
+        STATS_INC(nffs_stats, nffs_readcnt_copy);
         rc = nffs_flash_read(area_idx_from, area_offset_from, nffs_flash_buf,
                              chunk_len);
         if (rc != 0) {

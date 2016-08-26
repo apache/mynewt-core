@@ -37,6 +37,7 @@ nffs_crc_flash(uint16_t initial_crc, uint8_t area_idx, uint32_t area_offset,
             chunk_len = len;
         }
 
+        STATS_INC(nffs_stats, nffs_readcnt_crc);
         rc = nffs_flash_read(area_idx, area_offset, nffs_flash_buf, chunk_len);
         if (rc != 0) {
             return rc;

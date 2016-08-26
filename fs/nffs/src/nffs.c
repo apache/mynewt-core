@@ -25,6 +25,7 @@
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
 #include "os/os_malloc.h"
+#include "stats/stats.h"
 #include "nffs_priv.h"
 #include "nffs/nffs.h"
 #include "fs/fs_if.h"
@@ -34,10 +35,6 @@ uint8_t nffs_num_areas;
 uint8_t nffs_scratch_area_idx;
 uint16_t nffs_block_max_data_sz;
 struct nffs_area_desc *nffs_current_area_descs;
-
-uint32_t nffs_hashcnt_ins;
-uint32_t nffs_hashcnt_rm;
-uint32_t nffs_object_count;
 
 struct os_mempool nffs_file_pool;
 struct os_mempool nffs_dir_pool;
@@ -104,6 +101,29 @@ static const struct fs_ops nffs_ops = {
     .f_name = "nffs"
 };
 
+STATS_SECT_DECL(nffs_stats) nffs_stats;
+STATS_NAME_START(nffs_stats)
+    STATS_NAME(nffs_stats, nffs_hashcnt_ins)
+    STATS_NAME(nffs_stats, nffs_hashcnt_rm)
+    STATS_NAME(nffs_stats, nffs_object_count)
+    STATS_NAME(nffs_stats, nffs_iocnt_read)
+    STATS_NAME(nffs_stats, nffs_iocnt_write)
+    STATS_NAME(nffs_stats, nffs_gccnt)
+    STATS_NAME(nffs_stats, nffs_readcnt_data)
+    STATS_NAME(nffs_stats, nffs_readcnt_block)
+    STATS_NAME(nffs_stats, nffs_readcnt_crc)
+    STATS_NAME(nffs_stats, nffs_readcnt_copy)
+    STATS_NAME(nffs_stats, nffs_readcnt_format)
+    STATS_NAME(nffs_stats, nffs_readcnt_gccollate)
+    STATS_NAME(nffs_stats, nffs_readcnt_inode)
+    STATS_NAME(nffs_stats, nffs_readcnt_inodeent)
+    STATS_NAME(nffs_stats, nffs_readcnt_rename)
+    STATS_NAME(nffs_stats, nffs_readcnt_update)
+    STATS_NAME(nffs_stats, nffs_readcnt_filename)
+    STATS_NAME(nffs_stats, nffs_readcnt_object)
+    STATS_NAME(nffs_stats, nffs_readcnt_detect)
+STATS_NAME_END(nffs_stats)
+
 static void
 nffs_lock(void)
 {
@@ -122,12 +142,24 @@ nffs_unlock(void)
     assert(rc == 0 || rc == OS_NOT_STARTED);
 }
 
-static void
+static int
 nffs_stats_init(void)
 {
-    nffs_hashcnt_ins = 0;
-    nffs_hashcnt_rm = 0;
-    nffs_object_count = 0;
+    int rc = 0;
+    rc = stats_init_and_reg(
+                    STATS_HDR(nffs_stats),
+                    STATS_SIZE_INIT_PARMS(nffs_stats, STATS_SIZE_32),
+                    STATS_NAME_INIT_PARMS(nffs_stats),
+                    "nffs_stats");
+    if (rc) {
+        if (rc < 0) {
+            /* multiple initializations are okay */
+            rc = 0;
+        } else {
+            rc = FS_EOS;
+        }
+    }
+    return rc;
 }
 
 /**
@@ -636,7 +668,10 @@ nffs_init(void)
 
     nffs_cache_clear();
 
-    nffs_stats_init();
+    rc = nffs_stats_init();
+    if (rc != 0) {
+        return FS_EOS;
+    }
 
     rc = os_mutex_init(&nffs_mutex);
     if (rc != 0) {
