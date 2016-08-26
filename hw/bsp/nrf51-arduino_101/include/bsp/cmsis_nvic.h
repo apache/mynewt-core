@@ -13,7 +13,7 @@
 #define NVIC_USER_IRQ_OFFSET  16
 #define NVIC_NUM_VECTORS      (NVIC_USER_IRQ_OFFSET + 26)
 
-#include "mcu/nrf51.h"
+#include "nrf51.h"
 
 #ifdef __cplusplus
 extern "C" {

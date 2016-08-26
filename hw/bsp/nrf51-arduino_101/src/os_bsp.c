@@ -19,8 +19,8 @@
 #include <hal/flash_map.h>
 #include <hal/hal_bsp.h>
 #include "bsp/cmsis_nvic.h"
-#include "mcu/nrf51.h"
-#include "mcu/nrf51_bitfields.h"
+#include "nrf51.h"
+#include "nrf51_bitfields.h"
 #include "mcu/nrf51_hal.h"
 
 #define BSP_LOWEST_PRIO     ((1 << __NVIC_PRIO_BITS) - 1)
