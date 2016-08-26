@@ -22,7 +22,6 @@
 
 #define SPLIT_NMGR_OP_SPLIT 0
 
-
 typedef enum splitMode_e {
     SPLIT_NONE,
     SPLIT_TEST,
@@ -36,9 +35,22 @@ typedef enum splitStatus_e {
     SPLIT_MATCHING,
 }splitStatus_t;
 
+/*
+  * Initializes the split application library */
 void
 split_app_init(void);
 
+/**
+  * checks the split application state.
+  * If the application is configured to be run (and valid)
+  * returns zero and puts the entry data into entry. NOTE:
+  * Entry data is not a function pointer, but a pointer
+  * suitable to call system_start
+  *
+  * If toBoot is true, also performs the necessary steps
+  * to prepare to boot.  An application may set toBoot to
+  * false and call this function to check whether the split
+  * application is bootable */
 int
 split_app_go(void **entry, int toBoot);
 
