@@ -48,6 +48,7 @@ static struct flash_area bsp_flash_areas[] = {
 };
 
 void _close(int fd);
+void bsp_hal_init(void);
 
 /*
  * Returns the flash map slot where the currently active image is located.
@@ -75,4 +76,5 @@ bsp_init(void)
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 
+    bsp_hal_init();
 }
