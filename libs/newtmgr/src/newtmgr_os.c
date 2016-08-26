@@ -229,8 +229,6 @@ nmgr_reset(struct nmgr_jbuf *njb)
     }
     log_reboot(SOFT_REBOOT);
     os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
-    json_encode_object_start(&njb->njb_enc);
-    json_encode_object_finish(&njb->njb_enc);
 
     nmgr_jbuf_setoerr(njb, 0);
 
