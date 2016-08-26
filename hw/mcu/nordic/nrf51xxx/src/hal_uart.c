@@ -42,6 +42,7 @@ struct hal_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
+    const struct nrf51_uart_cfg *u_cfg;
 };
 static struct hal_uart uart;
 
@@ -217,6 +218,24 @@ hal_uart_baudrate(int baudrate)
 }
 
 int
+hal_uart_init(int port, void *arg)
+{
+    struct hal_uart *u;
+
+    if (port != 0) {
+        return -1;
+    }
+
+    u = &uart;
+    if (u->u_open) {
+        return -1;
+    }
+    u->u_cfg = arg;
+
+    return 0;
+}
+
+int
 hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
   enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
@@ -233,7 +252,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (u->u_open) {
         return -1;
     }
-    cfg = bsp_uart_config();
+    cfg = u->u_cfg;
     assert(cfg);
 
     /*
@@ -302,4 +321,20 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     u->u_open = 1;
 
     return 0;
+}
+
+int
+hal_uart_close(int port)
+{
+    struct hal_uart *u;
+
+    u = &uart;
+
+    if (port == 0) {
+        u->u_open = 0;
+        NRF_UART0->ENABLE = 0;
+        NRF_UART0->INTENCLR = 0xffffffff;
+        return 0;
+    }
+    return -1;
 }
