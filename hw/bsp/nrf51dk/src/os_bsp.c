@@ -47,6 +47,7 @@ static struct flash_area bsp_flash_areas[] = {
     }
 };
 
+void bsp_hal_init(void);
 void _close(int fd);
 
 /*
@@ -75,4 +76,5 @@ bsp_init(void)
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 
+    bsp_hal_init();
 }
