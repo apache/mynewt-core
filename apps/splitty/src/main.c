@@ -119,7 +119,7 @@ static struct conf_fcb my_conf = {
 #endif
 
 #define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
-#define DEFAULT_MBUF_MPOOL_NBUFS (10)
+#define DEFAULT_MBUF_MPOOL_NBUFS (9)
 
 static uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
     DEFAULT_MBUF_MPOOL_NBUFS];
