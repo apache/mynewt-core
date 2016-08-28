@@ -31,19 +31,21 @@
 /** Indicates whether the previous line of output was completed. */
 int console_is_midline;
 
-#define CONSOLE_TX_BUF_SZ	32	/* IO buffering, must be power of 2 */
-#define CONSOLE_RX_BUF_SZ	128
-#define CONSOLE_RX_CHUNK	16
+#define CONSOLE_TX_BUF_SZ       32      /* IO buffering, must be power of 2 */
+#define CONSOLE_RX_BUF_SZ       128
 
-#define CONSOLE_DEL		0x7f	/* del character */
-#define CONSOLE_ESC		0x1b	/* esc character */
-#define CONSOLE_LEFT		'D'     /* esc-[-D emitted when moving left */
-#define CONSOLE_UP		'A'     /* esc-[-A moving up */
-#define CONSOLE_RIGHT		'C'     /* esc-[-C moving right */
-#define CONSOLE_DOWN		'B'     /* esc-[-B moving down */
+#define CONSOLE_HIST_SZ         32
 
-#define CONSOLE_HEAD_INC(cr)	(((cr)->cr_head + 1) & ((cr)->cr_size - 1))
-#define CONSOLE_TAIL_INC(cr)	(((cr)->cr_tail + 1) & ((cr)->cr_size - 1))
+
+#define CONSOLE_DEL             0x7f    /* del character */
+#define CONSOLE_ESC             0x1b    /* esc character */
+#define CONSOLE_LEFT            'D'     /* esc-[-D emitted when moving left */
+#define CONSOLE_UP              'A'     /* esc-[-A moving up */
+#define CONSOLE_RIGHT           'C'     /* esc-[-C moving right */
+#define CONSOLE_DOWN            'B'     /* esc-[-B moving down */
+
+#define CONSOLE_HEAD_INC(cr)    (((cr)->cr_head + 1) & ((cr)->cr_size - 1))
+#define CONSOLE_TAIL_INC(cr)    (((cr)->cr_tail + 1) & ((cr)->cr_size - 1))
 
 typedef void (*console_write_char)(char);
 void console_print_prompt(void);
@@ -62,11 +64,18 @@ struct console_tty {
     uint8_t ct_tx_buf[CONSOLE_TX_BUF_SZ]; /* must be after console_ring */
     struct console_ring ct_rx;
     uint8_t ct_rx_buf[CONSOLE_RX_BUF_SZ]; /* must be after console_ring */
-    console_rx_cb ct_rx_cb;	/* callback that input is ready */
+    console_rx_cb ct_rx_cb; /* callback that input is ready */
     console_write_char ct_write_char;
     uint8_t ct_echo_off:1;
     uint8_t ct_esc_seq:2;
 } console_tty;
+
+struct console_hist {
+    uint8_t ch_head;
+    uint8_t ch_tail;
+    uint8_t ch_curr;
+    uint8_t ch_buf[CONSOLE_HIST_SZ][CONSOLE_RX_BUF_SZ];
+} console_hist;
 
 static void
 console_add_char(struct console_ring *cr, char ch)
@@ -89,6 +98,7 @@ static int
 console_pull_char_head(struct console_ring *cr)
 {
     if (cr->cr_head != cr->cr_tail) {
+        // TODO: CONSOLE_HEAD_DEC
         cr->cr_head = (cr->cr_head - 1) & (cr->cr_size - 1);
         return 0;
     } else {
@@ -107,13 +117,100 @@ console_queue_char(char ch)
         /* TX needs to drain */
         uart_start_tx(ct->ct_dev);
         OS_EXIT_CRITICAL(sr);
-	if (os_started()) {
+    if (os_started()) {
             os_time_delay(1);
-	}
+    }
         OS_ENTER_CRITICAL(sr);
     }
     console_add_char(&ct->ct_tx, ch);
     OS_EXIT_CRITICAL(sr);
+}
+
+static void
+console_hist_init(void)
+{
+    struct console_hist *ch = &console_hist;
+
+    ch->ch_head = 0;
+    ch->ch_tail = 0;
+    ch->ch_curr = 0;
+}
+
+static void
+console_hist_add(struct console_ring *rx)
+{
+    struct console_hist *ch = &console_hist;
+    uint8_t *str = ch->ch_buf[ch->ch_head];
+    uint8_t tail;
+
+    /* TODO: don't add empty lines? */
+    tail = rx->cr_tail;
+    while (tail != rx->cr_head) {
+        *str = rx->cr_buf[tail];
+        if (*str == '\n') {
+            *str = '\0';
+            break;
+        }
+        str++;
+        tail = (tail + 1) % CONSOLE_RX_BUF_SZ;
+    }
+
+    ch->ch_head = (ch->ch_head + 1) % CONSOLE_HIST_SZ;
+    ch->ch_curr = ch->ch_head;
+
+    /* buffer full, start overwriting old history */
+    if (ch->ch_head == ch->ch_tail) {
+        ch->ch_tail = (ch->ch_tail + 1) % CONSOLE_HIST_SZ;
+    }
+}
+
+static int
+console_hist_prev(struct console_ring *rx, uint8_t *tx_buf)
+{
+    struct console_hist *ch = &console_hist;
+    uint8_t *str = NULL;
+    int space = 0;
+
+    /* no more history to return */
+    if (ch->ch_curr == ch->ch_tail) {
+        return 0;
+    }
+
+    ch->ch_curr = (ch->ch_curr - 1) % CONSOLE_HIST_SZ;
+    str = ch->ch_buf[ch->ch_curr];
+
+    /* consume all chars */
+    while (console_pull_char_head(rx) == 0) {
+        /* do nothing */
+    }
+
+    for (int i = 0; i < CONSOLE_RX_BUF_SZ; ++i) {
+        if (str[i] == '\0') {
+            break;
+        }
+        tx_buf[i] = str[i];
+        console_add_char(rx, str[i]);
+        space++;
+    }
+
+    return space;
+}
+
+static int
+console_hist_next(struct console_ring *rx, uint8_t *tx_buf)
+{
+    struct console_hist *ch = &console_hist;
+    //uint8_t *str = ch->ch_buf[ch->ch_curr];
+    //int space = 0;
+
+    /* no more history to return */
+    if (ch->ch_curr == ch->ch_head) {
+        return 0;
+    }
+
+    ch->ch_curr = (ch->ch_curr + 1) % CONSOLE_HIST_SZ;
+
+    return 0;
 }
 
 static void
@@ -270,7 +367,7 @@ console_rx_char(void *arg, uint8_t data)
     struct console_ring *rx = &ct->ct_rx;
     int tx_space = 0;
     int i;
-    int tx_buf[3];
+    uint8_t tx_buf[CONSOLE_RX_BUF_SZ];
 
     if (CONSOLE_HEAD_INC(&ct->ct_rx) == ct->ct_rx.cr_tail) {
         /*
@@ -294,6 +391,7 @@ console_rx_char(void *arg, uint8_t data)
         tx_buf[1] = '\r';
         tx_space = 2;
         console_add_char(rx, '\n');
+        console_hist_add(rx);
         if (ct->ct_rx_cb) {
             ct->ct_rx_cb();
         }
@@ -319,13 +417,36 @@ console_rx_char(void *arg, uint8_t data)
     case CONSOLE_UP:
     case CONSOLE_DOWN:
         if (ct->ct_esc_seq == 2) {
-            /*
-             * Do nothing.
-             */
+            if (data == CONSOLE_UP) {
+                tx_space = console_hist_prev(rx, tx_buf);
+            } else {
+                tx_space = console_hist_next(rx, tx_buf);
+            }
+            tx_buf[tx_space] = 0;
             ct->ct_esc_seq = 0;
-            goto out;
+            if (tx_space == 0) {
+                goto out;
+            }
+            if (!ct->ct_echo_off) {
+                i = 0;
+                while (console_pull_char_head(tx) == 0) {
+                    i++;
+                }
+                //FIXME: pulling doesnt get real count of chars...
+#if 1
+                while (i) {
+                    console_add_char(tx, '\b');
+                    console_add_char(tx, ' ');
+                    console_add_char(tx, '\b');
+                    hal_uart_start_tx(CONSOLE_UART);
+                    i--;
+                }
+#endif
+            }
+        } else {
+            goto queue_char;
         }
-        goto queue_char;
+        break;
     case CONSOLE_RIGHT:
         if (ct->ct_esc_seq == 2) {
             data = ' '; /* add space */
@@ -411,6 +532,7 @@ console_init(console_rx_cb rx_cb)
     }
 
     console_print_prompt();
+    console_hist_init();
 
     return 0;
 }
