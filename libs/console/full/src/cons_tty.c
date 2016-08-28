@@ -117,9 +117,9 @@ console_queue_char(char ch)
         /* TX needs to drain */
         uart_start_tx(ct->ct_dev);
         OS_EXIT_CRITICAL(sr);
-    if (os_started()) {
+        if (os_started()) {
             os_time_delay(1);
-    }
+        }
         OS_ENTER_CRITICAL(sr);
     }
     console_add_char(&ct->ct_tx, ch);
