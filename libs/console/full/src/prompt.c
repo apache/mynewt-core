@@ -26,7 +26,7 @@ static char console_prompt[] = " > ";
 
 
 /* set the prompt character, leave the space */
-void 
+void
 console_set_prompt(char p)
 {
     console_prompt[1] = p;
@@ -36,5 +36,5 @@ console_set_prompt(char p)
 void
 console_print_prompt(void)
 {
-    console_write(console_prompt, sizeof console_prompt - 1);
+    console_printf(console_prompt);
 }
