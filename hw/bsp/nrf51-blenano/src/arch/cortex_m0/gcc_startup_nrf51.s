@@ -169,6 +169,11 @@ Reset_Handler:
     str    r0, [r2,r3]
     bgt    .LC1
 .LC0:
+    LDR     R0, =__HeapBase
+    LDR     R1, =__HeapLimit
+    BL      _sbrkInit
+
+    BL      bsp_slot_init_split_application
 
     LDR     R0, =SystemInit
     BLX     R0
