@@ -44,7 +44,8 @@ extern uint8_t _code_ram_start;
 #define LED_BLINK_PIN   (17)
 
 /* UART info */
-#define CONSOLE_UART    0
+#define CONSOLE_UART            "uart0"
+#define CONSOLE_UART_SPEED	115200
 
 #define NFFS_AREA_MAX    (8)
 

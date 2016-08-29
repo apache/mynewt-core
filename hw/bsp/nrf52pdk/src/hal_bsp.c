@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -18,9 +18,15 @@
  */
 #include <stdint.h>
 #include <stddef.h>
+#include <assert.h>
 
 #include <hal/hal_bsp.h>
 #include <mcu/nrf52_hal.h>
+
+#include <os/os_dev.h>
+
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
 
 #include "bsp/bsp.h"
 
@@ -42,11 +48,7 @@ static const struct bsp_mem_dump dump_cfg[] = {
     }
 };
 
-const struct nrf52_uart_cfg *
-bsp_uart_config(void)
-{
-    return &uart_cfg;
-}
+static struct uart_dev hal_uart0;
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
@@ -65,4 +67,14 @@ bsp_core_dump(int *area_cnt)
 {
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;
+}
+
+void
+bsp_hal_init(void)
+{
+    int rc;
+
+    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg);
+    assert(rc == 0);
 }
