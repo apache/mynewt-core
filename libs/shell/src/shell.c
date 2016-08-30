@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <errno.h>
 
 static shell_nlip_input_func_t g_shell_nlip_in_func;
 static void *g_shell_nlip_in_arg;
@@ -544,7 +543,7 @@ shell_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size,
     if (max_input_length > 0) {
         shell_line = malloc(max_input_length);
         if (shell_line == NULL) {
-            rc = ENOMEM;
+            rc = OS_ENOMEM;
             goto err;
         }
     }

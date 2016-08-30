@@ -77,7 +77,6 @@ PERMISSIONS
 #include <stdbool.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <errno.h>
 #include <math.h>        /* for HUGE_VAL */
 
 static void

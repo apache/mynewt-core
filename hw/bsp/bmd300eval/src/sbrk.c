@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <errno.h>
 #include <hal/hal_bsp.h>
 
 extern char __HeapBase;
@@ -35,7 +34,6 @@ _sbrk(int incr)
         incr = -incr;
         if (brk - incr < &__HeapBase) {
             prev_brk = (void *)-1;
-            errno = EINVAL;
         } else {
             prev_brk = brk;
             brk -= incr;
@@ -47,7 +45,6 @@ _sbrk(int incr)
             brk += incr;
         } else {
             prev_brk = (void *)-1;
-            errno = ENOMEM;
         }
     }
 
