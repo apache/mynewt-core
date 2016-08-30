@@ -32,9 +32,5 @@ pkg.deps:
     - hw/hal
     - sys/config
 
-pkg.deps.FS:
-    - fs/fs
-pkg.cflags.NFFS: -DUSE_STATUS_FILE
-
 pkg.cflags.IMAGE_KEYS_RSA: -DIMAGE_SIGNATURES_RSA
 pkg.cflags.IMAGE_KEYS_EC: -DIMAGE_SIGNATURES_EC
