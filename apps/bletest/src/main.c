@@ -120,7 +120,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
 #define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
-#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
+#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
 #define BLETEST_CFG_FILT_DUP_ADV        (1)
 
 /* Connection config */
@@ -428,7 +428,7 @@ bletest_init_scanner(void)
     rc = ble_hs_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                                BLETEST_CFG_SCAN_ITVL,
                                                BLETEST_CFG_SCAN_WINDOW,
-                                               BLETEST_CFG_SCAN_OWN_ADDR_TYPE,
+                                               own_addr_type,
                                                BLETEST_CFG_SCAN_FILT_POLICY,
                                                buf, sizeof buf);
     assert(rc == 0);
@@ -659,8 +659,10 @@ bletest_execute_advertiser(void)
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
     uint16_t mask;
     uint16_t reply_handle;
+#endif
 #endif
     int rc;
     uint16_t handle;
