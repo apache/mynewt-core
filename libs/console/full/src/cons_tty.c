@@ -68,6 +68,7 @@ struct console_tty {
 struct console_hist {
     uint8_t ch_head;
     uint8_t ch_tail;
+    uint8_t ch_size;
     uint8_t ch_curr;
     uint8_t ch_buf[CONSOLE_HIST_SZ][CONSOLE_RX_BUF_SZ];
 } console_hist;
@@ -129,6 +130,7 @@ console_hist_init(void)
     ch->ch_head = 0;
     ch->ch_tail = 0;
     ch->ch_curr = 0;
+    ch->ch_size = CONSOLE_HIST_SZ;
 }
 
 static void
@@ -137,48 +139,60 @@ console_hist_add(struct console_ring *rx)
     struct console_hist *ch = &console_hist;
     uint8_t *str = ch->ch_buf[ch->ch_head];
     uint8_t tail;
+    uint8_t empty = 1;
 
-    /* TODO: don't add empty lines? */
     tail = rx->cr_tail;
     while (tail != rx->cr_head) {
         *str = rx->cr_buf[tail];
+        if (*str != ' ' && *str != '\t' && *str != '\n') {
+            empty = 0;
+        }
         if (*str == '\n') {
             *str = '\0';
+            /* don't save empty history */
+            if (empty) {
+                return;
+            }
             break;
         }
         str++;
         tail = (tail + 1) % CONSOLE_RX_BUF_SZ;
     }
 
-    ch->ch_head = (ch->ch_head + 1) % CONSOLE_HIST_SZ;
+    ch->ch_head = (ch->ch_head + 1) & (ch->ch_size - 1);
     ch->ch_curr = ch->ch_head;
 
     /* buffer full, start overwriting old history */
     if (ch->ch_head == ch->ch_tail) {
-        ch->ch_tail = (ch->ch_tail + 1) % CONSOLE_HIST_SZ;
+        ch->ch_tail = (ch->ch_tail + 1) & (ch->ch_size - 1);
     }
 }
 
 static int
-console_hist_prev(struct console_ring *rx, uint8_t *tx_buf)
+console_hist_move(struct console_ring *rx, uint8_t *tx_buf, uint8_t direction)
 {
     struct console_hist *ch = &console_hist;
     uint8_t *str = NULL;
     int space = 0;
+    uint8_t limit = direction == CONSOLE_UP ? ch->ch_tail : ch->ch_head;
 
-    /* no more history to return */
-    if (ch->ch_curr == ch->ch_tail) {
+    /* no more history to return in this direction */
+    if (ch->ch_curr == limit) {
         return 0;
     }
 
-    ch->ch_curr = (ch->ch_curr - 1) % CONSOLE_HIST_SZ;
-    str = ch->ch_buf[ch->ch_curr];
+    if (direction == CONSOLE_UP) {
+        ch->ch_curr = (ch->ch_curr - 1) & (ch->ch_size - 1);
+    } else {
+        ch->ch_curr = (ch->ch_curr + 1) & (ch->ch_size - 1);
+    }
 
     /* consume all chars */
     while (console_pull_char_head(rx) == 0) {
         /* do nothing */
     }
 
+    str = ch->ch_buf[ch->ch_curr];
     for (int i = 0; i < CONSOLE_RX_BUF_SZ; ++i) {
         if (str[i] == '\0') {
             break;
@@ -189,23 +203,6 @@ console_hist_prev(struct console_ring *rx, uint8_t *tx_buf)
     }
 
     return space;
-}
-
-static int
-console_hist_next(struct console_ring *rx, uint8_t *tx_buf)
-{
-    struct console_hist *ch = &console_hist;
-    //uint8_t *str = ch->ch_buf[ch->ch_curr];
-    //int space = 0;
-
-    /* no more history to return */
-    if (ch->ch_curr == ch->ch_head) {
-        return 0;
-    }
-
-    ch->ch_curr = (ch->ch_curr + 1) % CONSOLE_HIST_SZ;
-
-    return 0;
 }
 
 static void
@@ -407,35 +404,31 @@ console_rx_char(void *arg, uint8_t data)
     case CONSOLE_UP:
     case CONSOLE_DOWN:
         if (ct->ct_esc_seq == 2) {
-            if (data == CONSOLE_UP) {
-                tx_space = console_hist_prev(rx, tx_buf);
-            } else {
-                tx_space = console_hist_next(rx, tx_buf);
-            }
+            tx_space = console_hist_move(rx, tx_buf, data);
             tx_buf[tx_space] = 0;
             ct->ct_esc_seq = 0;
-            if (tx_space == 0) {
+            /*
+             * when moving up, stop on oldest history entry
+             * when moving down, let it delete input before leaving...
+             */
+            if (data == CONSOLE_UP && tx_space == 0) {
                 goto out;
             }
             if (!ct->ct_echo_off) {
-                i = 0;
-                while (console_pull_char_head(tx) == 0) {
-                    i++;
-                }
-                //FIXME: pulling doesnt get real count of chars...
-#if 1
-                while (i) {
+                /* HACK: clean line by backspacing up to maximum possible space */
+                for (i = 0; i < CONSOLE_TX_BUF_SZ; i++) {
+                    if (console_buf_space(tx) < 3) {
+                        console_tx_flush(ct, 3);
+                    }
                     console_add_char(tx, '\b');
                     console_add_char(tx, ' ');
                     console_add_char(tx, '\b');
                     hal_uart_start_tx(CONSOLE_UART);
-                    i--;
                 }
-#endif
             }
-        } else {
-            goto queue_char;
-        }
+            if (tx_space == 0) {
+                goto out;
+            }
         break;
     case CONSOLE_RIGHT:
         if (ct->ct_esc_seq == 2) {
