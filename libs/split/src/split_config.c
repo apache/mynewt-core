@@ -9,8 +9,6 @@
 #define SPLIT_IMAGE_SLOT    1
 #define SPLIT_TOTAL_IMAGES  2
 
-#define SPLIT_NO_BOOT  (1)
-
 
 static char *split_conf_get(int argc, char **argv, char *buf, int max_len);
 static int split_conf_set(int argc, char **argv, char *val);

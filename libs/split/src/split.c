@@ -6,11 +6,10 @@
 #include <split/split.h>
 #include <split/split_priv.h>
 
+
 #define LOADER_IMAGE_SLOT    0
 #define SPLIT_IMAGE_SLOT    1
 #define SPLIT_TOTAL_IMAGES  2
-
-#define SPLIT_NO_BOOT  (1)
 
 void
 split_app_init(void) {
@@ -29,8 +28,9 @@ split_check_status(void) {
     void *entry;
     rc =split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, &entry);
 
-    if(rc) {
-        return SPLIT_NOT_MATCHING;
+    if(rc == SPLIT_GO_ERR) {
+        return SPLIT_INVALID;
+    } else if (rc) {
     }
     return SPLIT_MATCHING;
 }
@@ -54,12 +54,12 @@ split_app_go(void **entry, int toBoot) {
         /* if we can't read this, then we don't boot an app */
         rc = split_read_split(&split);
         if(rc) {
-            return SPLIT_NO_BOOT;
+            return -1;
         }
 
         /* if we are told not to, then we don't boot an app */
         if(split == SPLIT_NONE) {
-            return SPLIT_NO_BOOT;
+            return -1;
         }
 
         /* if this is a one-time test, reset the split mode */

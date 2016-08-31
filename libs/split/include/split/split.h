@@ -50,7 +50,9 @@ split_app_init(void);
   * If toBoot is true, also performs the necessary steps
   * to prepare to boot.  An application may set toBoot to
   * false and call this function to check whether the split
-  * application is bootable */
+  * application is bootable.
+ * 
+ * @Returns zero on success, non-zero on failures */
 int
 split_app_go(void **entry, int toBoot);
 

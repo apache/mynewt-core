@@ -607,40 +607,44 @@ split_go(int loader_slot, int split_slot, void **entry)
     /** Areas representing the beginning of image slots. */
     uint8_t img_starts[2];
     struct flash_area *descs;
+    uint32_t entry_val;
     struct boot_req req = {
         .br_slot_areas = img_starts,
     };
 
     descs = calloc(SPLIT_AREA_DESC_MAX, sizeof(struct flash_area));
     if (descs == NULL) {
-        return BOOT_ENOMEM;
+        return SPLIT_GO_ERR;
     }
 
     req.br_area_descs = descs;
 
     rc = boot_build_request(&req, SPLIT_AREA_DESC_MAX);
     if (rc != 0) {
-        return rc;
+        rc = SPLIT_GO_ERR;
+        goto split_app_go_end;
     }
 
     boot_req = &req;
 
     boot_image_info();
 
-    /* if this is not a bootable image and it validates, boot it
-     * TODO check flash config state */
-    if (!boot_image_bootable(&boot_img[split_slot].hdr) &&
-         split_image_check(&boot_img[split_slot].hdr,
+    /* Don't check the bootable image flag because we could really
+      * call a bootable or non-bootable image.  Just validate that
+      * the image check passes which is distinct from the normal check */
+    rc = split_image_check(&boot_img[split_slot].hdr,
                            &boot_img[split_slot].loc,
                            &boot_img[loader_slot].hdr,
-                           &boot_img[loader_slot].loc) == 0) {
-        uint32_t entry_val = (uint32_t) boot_img[split_slot].loc.bil_address +
-                             (uint32_t)  boot_img[split_slot].hdr.ih_hdr_size;
-            *entry = (void*) entry_val;
-            rc = 0;
-            goto split_app_go_end;
+                           &boot_img[loader_slot].loc);
+    if (rc != 0) {
+        rc = SPLIT_GO_NON_MATCHING;
+        goto split_app_go_end;
     }
-    rc =BOOT_EBADIMAGE;
+
+    entry_val = (uint32_t) boot_img[split_slot].loc.bil_address +
+                         (uint32_t)  boot_img[split_slot].hdr.ih_hdr_size;
+    *entry = (void*) entry_val;
+    rc = SPLIT_GO_OK;
 
 split_app_go_end:
     free(descs);
