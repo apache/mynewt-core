@@ -21,5 +21,6 @@
 #define __UTIL_TEST_PRIV_
 
 int cbmem_test_suite(void);
+int hex_fmt_test_suite(void);
 
 #endif
