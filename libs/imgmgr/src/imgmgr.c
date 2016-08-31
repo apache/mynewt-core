@@ -33,14 +33,13 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-static int imgr_list(struct nmgr_jbuf *);
 static int imgr_list2(struct nmgr_jbuf *);
 static int imgr_noop(struct nmgr_jbuf *);
 static int imgr_upload(struct nmgr_jbuf *);
 
 static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_LIST] = {
-        .nh_read = imgr_list,
+        .nh_read = imgr_noop,
         .nh_write = imgr_noop
     },
     [IMGMGR_NMGR_OP_UPLOAD] = {
@@ -48,8 +47,8 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
         .nh_write = imgr_upload
     },
     [IMGMGR_NMGR_OP_BOOT] = {
-        .nh_read = imgr_boot_read,
-        .nh_write = imgr_boot_write
+        .nh_read = imgr_noop,
+        .nh_write = imgr_noop
     },
     [IMGMGR_NMGR_OP_FILE] = {
 #ifdef FS_PRESENT
@@ -228,43 +227,6 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
         }
     }
     return -1;
-}
-
-static int
-imgr_list(struct nmgr_jbuf *njb)
-{
-    struct image_version ver;
-    int i;
-    int rc;
-    struct json_encoder *enc;
-    struct json_value array;
-    struct json_value versions[IMGMGR_MAX_IMGS];
-    struct json_value *version_ptrs[IMGMGR_MAX_IMGS];
-    char vers_str[IMGMGR_MAX_IMGS][IMGMGR_NMGR_MAX_VER];
-    int ver_len;
-    int cnt = 0;
-
-    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        rc = imgr_read_info(i, &ver, NULL, NULL);
-        if (rc != 0) {
-            continue;
-        }
-        ver_len = imgr_ver_str(&ver, vers_str[cnt]);
-        JSON_VALUE_STRINGN(&versions[cnt], vers_str[cnt], ver_len);
-        version_ptrs[cnt] = &versions[cnt];
-        cnt++;
-    }
-    array.jv_type = JSON_VALUE_TYPE_ARRAY;
-    array.jv_len = cnt;
-    array.jv_val.composite.values = version_ptrs;
-
-    enc = &njb->njb_enc;
-
-    json_encode_object_start(enc);
-    json_encode_object_entry(enc, "images", &array);
-    json_encode_object_finish(enc);
-
-    return 0;
 }
 
 static int
