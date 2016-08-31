@@ -34,3 +34,7 @@ pkg.cflags.FS: -DFS_PRESENT
 pkg.deps.COREDUMP:
     - sys/coredump
 pkg.cflags.COREDUMP: -DCOREDUMP_PRESENT
+
+pkg.deps.SHELL:
+    - libs/shell
+pkg.cflags.SHELL: -DSHELL_PRESENT

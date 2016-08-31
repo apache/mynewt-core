@@ -463,6 +463,11 @@ imgmgr_module_init(void)
     rc = nmgr_group_register(&imgr_nmgr_group);
     assert(rc == 0);
 
+#ifdef SHELL_PRESENT
+    rc = imgr_cli_register();
+    assert(rc == 0);
+#endif
+
     boot_vect_write_main();
 
     return rc;
