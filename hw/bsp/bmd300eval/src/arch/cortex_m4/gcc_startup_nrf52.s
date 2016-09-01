@@ -168,9 +168,10 @@ Reset_Handler:
     LDR     R0, =SystemInit
     BLX     R0
 
-#ifdef SPLIT_APPLICATION
+    /* This is called but current_slot is in the data section so it is
+     * overwritten. its only called here to ensure that the global and this
+     * function are linked into the loader */
     BL      bsp_slot_init_split_application
-#endif
 
     LDR     R0, =_start
     BX      R0
