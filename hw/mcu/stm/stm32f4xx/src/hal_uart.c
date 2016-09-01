@@ -182,6 +182,7 @@ uart_irq2(void)
 
 }
 
+#if !defined(STM32F401xE)
 static void
 uart_irq3(void)
 {
@@ -199,6 +200,7 @@ uart_irq5(void)
 {
     uart_irq_handler(4);
 }
+#endif
 
 static void
 uart_irq6(void)
@@ -221,6 +223,7 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq2;
         ui = &uart_irqs[1];
         break;
+#if !defined(STM32F401xE)
     case USART3_IRQn:
         isr = (uint32_t)&uart_irq3;
         ui = &uart_irqs[2];
@@ -233,6 +236,7 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq5;
         ui = &uart_irqs[4];
         break;
+#endif
     case USART6_IRQn:
         isr = (uint32_t)&uart_irq6;
         ui = &uart_irqs[5];
