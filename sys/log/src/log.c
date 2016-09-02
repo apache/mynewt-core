@@ -58,6 +58,10 @@ log_init(void)
     }
     log_inited = 1;
 
+    g_log_info.li_version = LOG_VERSION_V2;
+    g_log_info.li_index = 0;
+    g_log_info.li_timestamp = 0;
+
 #ifdef SHELL_PRESENT
     shell_cmd_register(&g_shell_log_cmd);
 #endif
