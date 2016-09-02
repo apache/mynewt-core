@@ -113,6 +113,7 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
 
     ue = (struct log_entry_hdr *) data;
 
+    /* Could check for li_index wraparound here */
     g_log_info.li_index++;
 
     /* Try to get UTC Time */
@@ -132,11 +133,6 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
         goto err;
-    }
-
-    /* Resetting index every millisecond */
-    if (g_log_info.li_timestamp > 1000 + prev_ts) {
-        g_log_info.li_index = 0;
     }
 
     return (0);

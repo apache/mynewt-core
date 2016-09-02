@@ -28,7 +28,10 @@
 struct log_info {
     int64_t li_timestamp;
     uint8_t li_index;
+    uint8_t li_version;
 };
+#define LOG_VERSION_V2  2
+#define LOG_VERSION_V1  1
 
 extern struct log_info g_log_info;
 
@@ -65,8 +68,8 @@ struct log_handler {
 
 struct log_entry_hdr {
     int64_t ue_ts;
-    uint16_t ue_module;
-    uint8_t ue_index;
+    uint16_t ue_index;
+    uint8_t ue_module;
     uint8_t ue_level;
 }__attribute__((__packed__));
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
