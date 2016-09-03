@@ -132,12 +132,6 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
     }
 }
 
-/* WWW */
-uint32_t SlaveAcqIRQs;
-uint32_t SlaveEndIRQs;
-uint32_t SlaveReleases;
-/* WWW */
-
 static void
 nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 {
@@ -149,10 +143,6 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
     /* Semaphore acquired event */
     if (nrf_spis_event_check(p_spis, NRF_SPIS_EVENT_ACQUIRED)) {
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_ACQUIRED);
-
-        /* WWW */
-        ++SlaveAcqIRQs;
-        /* WWW */
 
         if (spi->slave_state == HAL_SPI_SLAVE_STATE_ACQ_SEM) {
             if (spi->slave_txbuf == NULL) {
@@ -166,9 +156,6 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
             } else {
                 nrf_spis_rx_buffer_set(p_spis, spi->slave_rxbuf, spi->slave_buflen);
             }
-            /* WWW */
-            ++SlaveReleases;
-            /* WWW */
             nrf_spis_task_trigger(p_spis, NRF_SPIS_TASK_RELEASE);
             spi->slave_state = HAL_SPI_SLAVE_STATE_READY;
         }
@@ -177,10 +164,6 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
     /* SPI transaction complete */
     if (nrf_spis_event_check(p_spis, NRF_SPIS_EVENT_END)) {
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_END);
-        /* WWW */
-        ++SlaveEndIRQs;
-        /* WWW */
-
         if (spi->slave_state == HAL_SPI_SLAVE_STATE_READY) {
             if (spi->spi_cfg.txrx_cb_func) {
                 /* Get transfer length */
