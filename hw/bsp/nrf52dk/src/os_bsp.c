@@ -17,7 +17,6 @@
  * under the License.
  */
 #include <assert.h>
-
 #include <hal/flash_map.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_cputime.h>
@@ -27,6 +26,15 @@
 
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
+#include <hal/hal_spi.h>
+#ifdef BSP_CFG_SPI_MASTER
+#include "nrf_drv_spi.h"
+#endif
+#ifdef BSP_CFG_SPI_SLAVE
+#include "nrf_drv_spis.h"
+#endif
+#include "nrf_drv_config.h"
+#include <app_util_platform.h>
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -78,6 +86,12 @@ void
 bsp_init(void)
 {
     int rc;
+#ifdef BSP_CFG_SPI_MASTER
+    nrf_drv_spi_config_t spi_cfg = NRF_DRV_SPI_DEFAULT_CONFIG(0);
+#endif
+#ifdef BSP_CFG_SPI_SLAVE
+    nrf_drv_spis_config_t spi_cfg = NRF_DRV_SPIS_DEFAULT_CONFIG(0);
+#endif
 
     /*
      * XXX this reference is here to keep this function in.
@@ -91,4 +105,17 @@ bsp_init(void)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)bsp_uart_config());
     assert(rc == 0);
+
+#ifdef BSP_CFG_SPI_MASTER
+    /*  We initialize one SPI interface as a master. */
+    rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#ifdef BSP_CFG_SPI_SLAVE
+    /*  We initialize one SPI interface as a master. */
+    spi_cfg.csn_pin = SPIS0_CONFIG_CSN_PIN;
+    rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
 }

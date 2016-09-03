@@ -19,6 +19,7 @@
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
+#include "hal/hal_spi.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "log/log.h"
@@ -47,11 +48,20 @@ nrf_drv_adc_channel_t g_nrf_adc_chan =
 #include <adc_nrf52/adc_nrf52.h>
 #include "nrf_drv_saadc.h"
 nrf_drv_saadc_config_t adc_config = NRF_DRV_SAADC_DEFAULT_CONFIG;
+
+/* The spi txrx callback */
+struct sblinky_spi_cb_arg
+{
+    int transfers;
+    int txlen;
+    uint32_t tx_rx_bytes;
+};
+struct sblinky_spi_cb_arg spi_cb_obj;
+void *spi_cb_arg;
 #endif
 
 int g_result_mv;
 int g_result;
-
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -94,6 +104,92 @@ uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
 
 struct os_mbuf_pool default_mbuf_pool;
 struct os_mempool default_mbuf_mpool;
+
+#ifdef BSP_CFG_SPI_MASTER
+uint8_t g_spi_tx_buf[32];
+uint8_t g_spi_rx_buf[32];
+
+void
+sblinky_spi_irqm_handler(void *arg, int len)
+{
+    struct sblinky_spi_cb_arg *cb;
+
+    hal_gpio_set(SPI0_CONFIG_CSN_PIN);
+
+    assert(arg == spi_cb_arg);
+    if (spi_cb_arg) {
+        cb = (struct sblinky_spi_cb_arg *)arg;
+        assert(len == cb->txlen);
+        ++cb->transfers;
+    }
+}
+
+#if 0
+static void
+sblinky_spi_tx_vals(int spi_num, uint8_t *buf, int len)
+{
+    int i;
+    int rc;
+    uint8_t *txptr;
+
+    /* Send all bytes in a loop */
+    txptr = buf;
+    for (i = 0; i < len; ++i) {
+        rc = hal_spi_tx_val(0, *txptr);
+        assert(rc != 0xFFFF);
+        ++txptr;
+    }
+}
+#endif
+#endif
+
+#ifdef BSP_CFG_SPI_SLAVE
+uint8_t g_spi_tx_buf[32];
+uint8_t g_spi_rx_buf[32];
+
+void
+sblinky_spi_irqs_handler(void *arg, int len)
+{
+    struct sblinky_spi_cb_arg *cb;
+
+    assert(arg == spi_cb_arg);
+    if (spi_cb_arg) {
+        cb = (struct sblinky_spi_cb_arg *)arg;
+        ++cb->transfers;
+        cb->tx_rx_bytes += len;
+    }
+
+    /* Post semaphore to task waiting for SPI slave */
+    os_sem_release(&g_test_sem);
+}
+#endif
+
+void
+sblinky_spi_cfg(int spi_num)
+{
+    struct hal_spi_settings my_spi;
+
+#ifdef BSP_CFG_SPI_MASTER
+    my_spi.spi_type = HAL_SPI_TYPE_MASTER;
+    my_spi.data_order = HAL_SPI_MSB_FIRST;
+    my_spi.data_mode = HAL_SPI_MODE0;
+    my_spi.baudrate = 8000;
+    my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
+    my_spi.txrx_cb_func = NULL;
+    my_spi.txrx_cb_arg = NULL;
+#endif
+
+#ifdef BSP_CFG_SPI_SLAVE
+    my_spi.spi_type = HAL_SPI_TYPE_SLAVE;
+    my_spi.data_order = HAL_SPI_MSB_FIRST;
+    my_spi.data_mode = HAL_SPI_MODE0;
+    my_spi.baudrate = 0;
+    my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
+    my_spi.txrx_cb_func = sblinky_spi_irqs_handler;
+    my_spi.txrx_cb_arg = spi_cb_arg;
+#endif
+    hal_spi_config(0, &my_spi);
+}
 
 struct adc_dev my_dev;
 
@@ -168,9 +264,13 @@ err:
 void
 task1_handler(void *arg)
 {
-    //int rc;
+    int rc;
     struct os_task *t;
     struct adc_dev *adc;
+#ifdef BSP_CFG_SPI_MASTER
+    int i;
+    uint8_t last_val;
+#endif
 
 #ifdef NRF52
     nrf_saadc_channel_config_t cc =
@@ -191,6 +291,63 @@ task1_handler(void *arg)
 #endif
 #ifdef NRF52
     adc_chan_config(adc, 0, &cc);
+#endif
+
+#ifdef BSP_CFG_SPI_MASTER
+    /* Use SS pin for testing */
+    hal_gpio_init_out(SPI0_CONFIG_CSN_PIN, 1);
+    sblinky_spi_cfg(0);
+    hal_spi_enable(0);
+
+#if 0
+    /* Send some bytes in a non-blocking manner to SPI using tx val */
+    spi_tx_buf[0] = 0xde;
+    spi_tx_buf[1] = 0xad;
+    spi_tx_buf[2] = 0xbe;
+    spi_tx_buf[3] = 0xef;
+    sblinky_spi_tx_vals(0, spi_tx_buf, 4);
+
+    /* Send blocking with txrx interface */
+    for (i = 0; i < 32; ++i) {
+        spi_tx_buf[i] = i + 1;
+    }
+    memset(spi_rx_buf, 0x55, 32);
+    rc = hal_spi_txrx(0, spi_tx_buf, spi_rx_buf, 32);
+    assert(!rc);
+
+    /* Now send with no rx buf and make sure it dont change! */
+    for (i = 0; i < 32; ++i) {
+        spi_tx_buf[i] = (uint8_t)(i + 32);
+    }
+    memset(spi_rx_buf, 0xAA, 32);
+    rc = hal_spi_txrx(0, spi_tx_buf, NULL, 32);
+    assert(!rc);
+    for (i = 0; i < 32; ++i) {
+        if (spi_rx_buf[i] != 0xAA) {
+            assert(0);
+        }
+    }
+#endif
+
+    /* Set up for non-blocking */
+    hal_spi_disable(0);
+    spi_cb_arg = &spi_cb_obj;
+    spi_cb_obj.txlen = 32;
+    hal_spi_set_txrx_cb(0, sblinky_spi_irqm_handler, spi_cb_arg);
+    hal_spi_enable(0);
+#endif
+
+#ifdef BSP_CFG_SPI_SLAVE
+    sblinky_spi_cfg(0);
+    hal_spi_enable(0);
+
+    /* Make the default character 0xAA */
+    hal_spi_slave_set_def_tx_val(0, 0xAA);
+
+    /* Setup a buffer to receive into */
+    memset(g_spi_tx_buf, 0xEE, 32);
+    rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+    assert(rc == 0);
 #endif
 
     sample_buffer1 = malloc(adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
@@ -218,14 +375,25 @@ task1_handler(void *arg)
 
         ++g_task1_loops;
 
+#ifdef BSP_CFG_SPI_MASTER
+        /*
+         * Send a spi buffer using non-blocking callbacks.
+         * Every other transfer should use a NULL rxbuf
+         */
+        last_val = g_spi_tx_buf[31];
+        for (i = 0; i < 32; ++i) {
+            g_spi_tx_buf[i] = (uint8_t)(last_val + i);
+        }
+        hal_gpio_clear(SPI0_CONFIG_CSN_PIN);
+        rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+        assert(!rc);
+#endif
+
         /* Wait one second */
         os_time_delay(OS_TICKS_PER_SEC);
 
         /* Toggle the LED */
         hal_gpio_toggle(g_led_pin);
-
-        /* Release semaphore to task 2 */
-        os_sem_release(&g_test_sem);
 
 #if 0
         nrf_drv_saadc_sample();
@@ -238,6 +406,9 @@ task1_handler(void *arg)
 void
 task2_handler(void *arg)
 {
+#ifdef BSP_CFG_SPI_SLAVE
+    int rc;
+#endif
     struct os_task *t;
 
     while (1) {
@@ -250,6 +421,13 @@ task2_handler(void *arg)
 
         /* Wait for semaphore from ISR */
         os_sem_pend(&g_test_sem, OS_TIMEOUT_NEVER);
+
+#ifdef BSP_CFG_SPI_SLAVE
+        /* transmit back what we just received */
+        memcpy(g_spi_tx_buf, g_spi_rx_buf, 32);
+        rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+        assert(rc == 0);
+#endif
     }
 }
 
