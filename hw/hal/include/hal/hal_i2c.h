@@ -86,10 +86,12 @@ int hal_i2c_init(uint8_t i2c_num, void *cfg);
  *
  * @param i2c_num The number of the I2C device being written to
  * @param pdata The data to write to the I2C bus
+ * @param timeout How long to wait for transaction to complete in ticks
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata);
+int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
+                         uint32_t timeout);
 
 /**
  * Sends a start condition and reads <len> bytes of data on the i2c.
@@ -101,10 +103,12 @@ int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata);
  *
  * @param i2c_num The number of the I2C device being written to
  * @param pdata The location to place read data
+ * @param timeout How long to wait for transaction to complete in ticks
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata);
+int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
+                        uint32_t timeout);
 
 /**
  * Starts an I2C transaction with the driver. This API does not send
@@ -135,10 +139,12 @@ int hal_i2c_master_end(uint8_t i2c_num);
  *
  * @param i2c_num The number of the I2C to probe
  * @param address The address to probe for
+ * @param timeout How long to wait for transaction to complete in ticks
  *
  * @return 0 on success, non-zero error code on failure
  */
-int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address);
+int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address,
+                         uint32_t timeout);
 
 #ifdef __cplusplus
 }
