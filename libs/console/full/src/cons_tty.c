@@ -34,8 +34,9 @@ int console_is_midline;
 #define CONSOLE_TX_BUF_SZ       32      /* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ       128
 
+#ifdef CONSOLE_HIST_ENABLE
 #define CONSOLE_HIST_SZ         32
-
+#endif
 
 #define CONSOLE_DEL             0x7f    /* del character */
 #define CONSOLE_ESC             0x1b    /* esc character */
@@ -70,6 +71,7 @@ struct console_tty {
     uint8_t ct_esc_seq:2;
 } console_tty;
 
+#ifdef CONSOLE_HIST_ENABLE
 struct console_hist {
     uint8_t ch_head;
     uint8_t ch_tail;
@@ -77,6 +79,7 @@ struct console_hist {
     uint8_t ch_curr;
     uint8_t ch_buf[CONSOLE_HIST_SZ][CONSOLE_RX_BUF_SZ];
 } console_hist;
+#endif
 
 static void
 console_add_char(struct console_ring *cr, char ch)
@@ -99,7 +102,6 @@ static int
 console_pull_char_head(struct console_ring *cr)
 {
     if (cr->cr_head != cr->cr_tail) {
-        // TODO: CONSOLE_HEAD_DEC
         cr->cr_head = (cr->cr_head - 1) & (cr->cr_size - 1);
         return 0;
     } else {
@@ -127,6 +129,7 @@ console_queue_char(char ch)
     OS_EXIT_CRITICAL(sr);
 }
 
+#ifdef CONSOLE_HIST_ENABLE
 static void
 console_hist_init(void)
 {
@@ -209,6 +212,7 @@ console_hist_move(struct console_ring *rx, uint8_t *tx_buf, uint8_t direction)
 
     return space;
 }
+#endif
 
 static void
 console_blocking_tx(char ch)
@@ -388,7 +392,9 @@ console_rx_char(void *arg, uint8_t data)
         tx_buf[1] = '\r';
         tx_space = 2;
         console_add_char(rx, '\n');
+#ifdef CONSOLE_HIST_ENABLE
         console_hist_add(rx);
+#endif
         if (ct->ct_rx_cb) {
             ct->ct_rx_cb();
         }
@@ -413,33 +419,40 @@ console_rx_char(void *arg, uint8_t data)
         break;
     case CONSOLE_UP:
     case CONSOLE_DOWN:
-        if (ct->ct_esc_seq == 2) {
-            tx_space = console_hist_move(rx, tx_buf, data);
-            tx_buf[tx_space] = 0;
-            ct->ct_esc_seq = 0;
-            /*
-             * when moving up, stop on oldest history entry
-             * when moving down, let it delete input before leaving...
-             */
-            if (data == CONSOLE_UP && tx_space == 0) {
-                goto out;
-            }
-            if (!ct->ct_echo_off) {
-                /* HACK: clean line by backspacing up to maximum possible space */
-                for (i = 0; i < CONSOLE_TX_BUF_SZ; i++) {
-                    if (console_buf_space(tx) < 3) {
-                        console_tx_flush(ct, 3);
-                    }
-                    console_add_char(tx, '\b');
-                    console_add_char(tx, ' ');
-                    console_add_char(tx, '\b');
-                    hal_uart_start_tx(CONSOLE_UART);
+        if (ct->ct_esc_seq != 2) {
+            goto queue_char;
+        }
+#ifdef CONSOLE_HIST_ENABLE
+        tx_space = console_hist_move(rx, tx_buf, data);
+        tx_buf[tx_space] = 0;
+        ct->ct_esc_seq = 0;
+        /*
+         * when moving up, stop on oldest history entry
+         * when moving down, let it delete input before leaving...
+         */
+        if (data == CONSOLE_UP && tx_space == 0) {
+            goto out;
+        }
+        if (!ct->ct_echo_off) {
+            /* HACK: clean line by backspacing up to maximum possible space */
+            for (i = 0; i < CONSOLE_TX_BUF_SZ; i++) {
+                if (console_buf_space(tx) < 3) {
+                    console_tx_flush(ct, 3);
                 }
+                console_add_char(tx, '\b');
+                console_add_char(tx, ' ');
+                console_add_char(tx, '\b');
+                hal_uart_start_tx(CONSOLE_UART);
             }
-            if (tx_space == 0) {
-                goto out;
-            }
+        }
+        if (tx_space == 0) {
+            goto out;
+        }
         break;
+#else
+        ct->ct_esc_seq = 0;
+        goto out;
+#endif
     case CONSOLE_RIGHT:
         if (ct->ct_esc_seq == 2) {
             data = ' '; /* add space */
@@ -524,8 +537,9 @@ console_init(console_rx_cb rx_cb)
         ct->ct_echo_off = ! MYNEWT_VAL(CONSOLE_ECHO);
     }
 
-    console_print_prompt();
+#ifdef CONSOLE_HIST_ENABLE
     console_hist_init();
+#endif
 
     return 0;
 }
