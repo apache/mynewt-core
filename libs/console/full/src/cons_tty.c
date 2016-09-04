@@ -368,7 +368,11 @@ console_rx_char(void *arg, uint8_t data)
     struct console_ring *rx = &ct->ct_rx;
     int tx_space = 0;
     int i;
+#ifdef CONSOLE_HIST_ENABLE
     uint8_t tx_buf[CONSOLE_RX_BUF_SZ];
+#else
+    uint8_t tx_buf[3];
+#endif
 
     if (CONSOLE_HEAD_INC(&ct->ct_rx) == ct->ct_rx.cr_tail) {
         /*
