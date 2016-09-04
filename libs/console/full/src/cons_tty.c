@@ -30,6 +30,7 @@ int console_is_midline;
 
 #define CONSOLE_TX_BUF_SZ       32      /* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ       128
+#define CONSOLE_RX_CHUNK        16
 
 #define CONSOLE_HIST_SZ         32
 
@@ -429,6 +430,9 @@ console_rx_char(void *arg, uint8_t data)
             if (tx_space == 0) {
                 goto out;
             }
+        } else {
+            goto queue_char;
+        }
         break;
     case CONSOLE_RIGHT:
         if (ct->ct_esc_seq == 2) {
