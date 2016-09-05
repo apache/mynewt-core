@@ -107,7 +107,7 @@ bs_list(char *buf, int len)
 
         if (hdr.ih_magic == IMAGE_MAGIC &&
           bootutil_img_validate(&hdr, fap->fa_flash_id, fap->fa_off,
-            tmpbuf, sizeof(tmpbuf)) == 0) {
+            tmpbuf, sizeof(tmpbuf), NULL, 0, NULL) == 0) {
             good_img = 1;
         } else {
             good_img = 0;

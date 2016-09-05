@@ -30,11 +30,18 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
+if [ $# -lt 3 ]; then
+    echo "Need image slot to download"
+    exit 1
+fi
+
 IS_BOOTLOADER=0
 BASENAME=$2
+IMAGE_SLOT=$3
 GDB_CMD_FILE=.gdb_cmds
 
-# Look for 'bootloader' from 3rd arg onwards
+# Look for 'bootloader' from 4th arg onwards
+shift
 shift
 shift
 while [ $# -gt 0 ]; do
@@ -47,9 +54,15 @@ done
 if [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x0
     FILE_NAME=$BASENAME.elf.bin
-else
+elif [ $IMAGE_SLOT -eq 0 ]; then
     FLASH_OFFSET=0x8000
     FILE_NAME=$BASENAME.img
+elif [ $IMAGE_SLOT -eq 1 ]; then
+    FLASH_OFFSET=0x42000
+    FILE_NAME=$BASENAME.img
+else 
+    echo "Invalid Image Slot Number: $IMAGE_SLOT"
+    exit 1
 fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET

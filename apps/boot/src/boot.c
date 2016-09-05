@@ -55,17 +55,16 @@ int
 main(void)
 {
     struct flash_area descs[AREA_DESC_MAX];
-    const struct flash_area *fap;
     /** Areas representing the beginning of image slots. */
     uint8_t img_starts[2];
-    int cnt;
-    int total;
-    struct boot_rsp rsp;
-    int rc;
     struct boot_req req = {
         .br_area_descs = descs,
         .br_slot_areas = img_starts,
     };
+
+    struct boot_rsp rsp;
+    int rc;
+
 
 #ifdef BOOT_SERIAL
     os_init();
@@ -76,30 +75,9 @@ main(void)
     rc = hal_flash_init();
     assert(rc == 0);
 
-    cnt = BOOT_AREA_DESC_MAX;
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
-    img_starts[0] = 0;
-    total = cnt;
-
-    flash_area_open(FLASH_AREA_IMAGE_0, &fap);
-    req.br_img_sz = fap->fa_size;
-
-    cnt = BOOT_AREA_DESC_MAX - total;
-    assert(cnt >= 0);
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
+    rc = boot_build_request(&req, AREA_DESC_MAX);
     assert(rc == 0);
-    img_starts[1] = total;
-    total += cnt;
-
-    cnt = BOOT_AREA_DESC_MAX - total;
-    assert(cnt >= 0);
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
-    assert(rc == 0);
-    req.br_scratch_area_idx = total;
-    total += cnt;
-
-    req.br_num_image_areas = total;
-
+    
     conf_init();
 
 #ifdef BOOT_SERIAL

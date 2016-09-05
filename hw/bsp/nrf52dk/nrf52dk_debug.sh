@@ -30,6 +30,13 @@ if [ $# -lt 1 ]; then
 fi
 
 FILE_NAME=$2.elf
+
+SPLIT_ELF_PRESENT=0
+if [ $# -gt 2 ]; then
+    SPLIT_ELF_PRESENT=1
+    SPLIT_ELF_NAME=$3.elf
+fi
+
 GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME
@@ -39,7 +46,14 @@ set -m
 JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
 set +m
 
+
+
 echo "target remote localhost:3333" > $GDB_CMD_FILE
+if [ $SPLIT_ELF_PRESENT -eq 1 ]; then
+    # TODO -- this magic number 0x42000 is the location of the second image slot.
+    # we should either get this from a flash map file or somehow learn this from the image itself
+    echo "add-symbol-file $SPLIT_ELF_NAME 0x8000 -readnow" >> $GDB_CMD_FILE
+fi
 
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
 

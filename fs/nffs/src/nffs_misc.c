@@ -153,6 +153,7 @@ nffs_misc_gc_if_oom(void *resource, int *out_rc)
     /* Attempt a garbage collection on the next area. */
     *out_rc = nffs_gc(NULL);
     total_gc_cycles++;
+    STATS_INC(nffs_stats, nffs_gccnt);
     if (*out_rc != 0) {
         return 0;
     }

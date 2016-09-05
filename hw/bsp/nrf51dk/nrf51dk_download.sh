@@ -29,8 +29,14 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
+if [ $# -lt 3 ]; then
+    echo "Need image slot to download"
+    exit 1
+fi
+
 IS_BOOTLOADER=0
 BASENAME=$2
+IMAGE_SLOT=$3
 #JLINK_SCRIPT=.download.jlink
 GDB_CMD_FILE=.gdb_cmds
 
@@ -47,17 +53,24 @@ done
 if [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x0
     FILE_NAME=$BASENAME.elf.bin
-else
+elif [ $IMAGE_SLOT -eq 0 ]; then
     FLASH_OFFSET=0x8000
     FILE_NAME=$BASENAME.img
+elif [ $IMAGE_SLOT -eq 1 ]; then
+    FLASH_OFFSET=0x23800
+    FILE_NAME=$BASENAME.img
+else
+    echo "Invalid Image Slot Number: $IMAGE_SLOT"
+    exit 1
 fi
+
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
 # XXX for some reason JLinkExe overwrites flash at offset 0 when
 # downloading somewhere in the flash. So need to figure out how to tell it
 # not to do that, or report failure if gdb fails to write this file
-# 
+#
 echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD -port 3333 -singlerun' & " > $GDB_CMD_FILE
 echo "target remote localhost:3333" >> $GDB_CMD_FILE
 echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE

@@ -33,6 +33,8 @@
 #include <shell/shell.h>
 #endif
 
+struct log_info g_log_info;
+
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static uint8_t log_inited;
 

@@ -33,3 +33,4 @@ pkg.deps:
     - libs/os
     - libs/testutil
     - sys/log
+    - sys/stats

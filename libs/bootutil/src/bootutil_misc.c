@@ -25,6 +25,7 @@
 #include <hal/hal_bsp.h>
 #include <os/os.h>
 #include "bootutil/image.h"
+#include "bootutil/loader.h"
 #include "bootutil/bootutil_misc.h"
 #include "bootutil_priv.h"
 

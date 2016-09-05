@@ -210,6 +210,7 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
         nffs_flash_loc_expand(block.nb_hash_entry->nhe_flash_loc,
                               &from_area_idx, &from_area_offset);
         from_area_offset += sizeof disk_block;
+        STATS_INC(nffs_stats, nffs_readcnt_gccollate);
         rc = nffs_flash_read(from_area_idx, from_area_offset,
                              data + data_offset, block.nb_data_len);
         if (rc != 0) {
@@ -534,6 +535,7 @@ nffs_gc(uint8_t *out_area_idx)
      * reset its pointers to cached objects.
      */
     nffs_gc_count++;
+    STATS_INC(nffs_stats, nffs_gccnt);
 
     return 0;
 }

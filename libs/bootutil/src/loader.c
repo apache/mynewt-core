@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
+#include <stdlib.h>
 #include <string.h>
 #include <hal/flash_map.h>
 #include <hal/hal_flash.h>
@@ -46,6 +47,53 @@ static struct boot_status boot_state;
 
 static int boot_erase_area(int area_idx, uint32_t sz);
 static uint32_t boot_copy_sz(int max_idx, int *cnt);
+
+
+int
+boot_build_request(struct boot_req *preq, int area_descriptor_max)
+{
+    int cnt;
+    int total;
+    int rc;
+    const struct flash_area *fap;
+    struct flash_area *descs = preq->br_area_descs;
+    uint8_t *img_starts = preq->br_slot_areas;
+
+    cnt = area_descriptor_max;
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
+    img_starts[0] = 0;
+    total = cnt;
+
+    flash_area_open(FLASH_AREA_IMAGE_0, &fap);
+    preq->br_img_sz = fap->fa_size;
+
+    cnt = area_descriptor_max - total;
+    if( cnt < 0) {
+        return -1;
+    }
+
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
+    if(rc != 0) {
+        return -2;
+    }
+    img_starts[1] = total;
+    total += cnt;
+
+    cnt = area_descriptor_max - total;
+    if( cnt < 0) {
+        return -3;
+    }
+
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
+    if(rc != 0) {
+        return -4;
+    }
+
+    preq->br_scratch_area_idx = total;
+    total += cnt;
+    preq->br_num_image_areas = total;
+    return 0;
+}
 
 void
 boot_req_set(struct boot_req *req)
@@ -167,6 +215,11 @@ boot_image_info(void)
     }
 }
 
+static int
+boot_image_bootable(struct image_header *hdr) {
+    return ((hdr->ih_flags & IMAGE_F_NON_BOOTABLE) == 0);
+}
+
 /*
  * Validate image hash/signature in a slot.
  */
@@ -182,7 +235,33 @@ boot_image_check(struct image_header *hdr, struct boot_image_location *loc)
         }
     }
     if (bootutil_img_validate(hdr, loc->bil_flash_id, loc->bil_address,
-        tmpbuf, BOOT_TMPBUF_SZ)) {
+        tmpbuf, BOOT_TMPBUF_SZ, NULL, 0, NULL)) {
+        return BOOT_EBADIMAGE;
+    }
+    return 0;
+}
+
+
+static int
+split_image_check(struct image_header *app_hdr, struct boot_image_location *app_loc,
+                  struct image_header *loader_hdr, struct boot_image_location *loader_loc)
+{
+    static void *tmpbuf;
+    uint8_t loader_hash[32];
+
+    if (!tmpbuf) {
+        tmpbuf = malloc(BOOT_TMPBUF_SZ);
+        if (!tmpbuf) {
+            return BOOT_ENOMEM;
+        }
+    }
+    if (bootutil_img_validate(loader_hdr, loader_loc->bil_flash_id, loader_loc->bil_address,
+        tmpbuf, BOOT_TMPBUF_SZ, NULL, 0, loader_hash)) {
+        return BOOT_EBADIMAGE;
+    }
+
+    if (bootutil_img_validate(app_hdr, app_loc->bil_flash_id, app_loc->bil_address,
+        tmpbuf, BOOT_TMPBUF_SZ, loader_hash, 32, NULL)) {
         return BOOT_EBADIMAGE;
     }
     return 0;
@@ -219,6 +298,12 @@ boot_select_image_slot(void)
         b = &boot_img[i];
         boot_slot_magic(i, &bit);
         if (bit.bit_copy_start == BOOT_IMG_MAGIC) {
+            if (b->hdr.ih_magic == IMAGE_MAGIC_NONE) {
+                continue;
+            }
+            if (!boot_image_bootable(&b->hdr)) {
+                continue;
+            }
             rc = boot_image_check(&b->hdr, &b->loc);
             if (rc) {
                 /*
@@ -511,4 +596,57 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     rsp->br_hdr = &boot_img[slot].hdr;
 
     return 0;
+}
+
+#define SPLIT_AREA_DESC_MAX     (255)
+
+int
+split_go(int loader_slot, int split_slot, void **entry)
+{
+    int rc;
+    /** Areas representing the beginning of image slots. */
+    uint8_t img_starts[2];
+    struct flash_area *descs;
+    uint32_t entry_val;
+    struct boot_req req = {
+        .br_slot_areas = img_starts,
+    };
+
+    descs = calloc(SPLIT_AREA_DESC_MAX, sizeof(struct flash_area));
+    if (descs == NULL) {
+        return SPLIT_GO_ERR;
+    }
+
+    req.br_area_descs = descs;
+
+    rc = boot_build_request(&req, SPLIT_AREA_DESC_MAX);
+    if (rc != 0) {
+        rc = SPLIT_GO_ERR;
+        goto split_app_go_end;
+    }
+
+    boot_req = &req;
+
+    boot_image_info();
+
+    /* Don't check the bootable image flag because we could really
+      * call a bootable or non-bootable image.  Just validate that
+      * the image check passes which is distinct from the normal check */
+    rc = split_image_check(&boot_img[split_slot].hdr,
+                           &boot_img[split_slot].loc,
+                           &boot_img[loader_slot].hdr,
+                           &boot_img[loader_slot].loc);
+    if (rc != 0) {
+        rc = SPLIT_GO_NON_MATCHING;
+        goto split_app_go_end;
+    }
+
+    entry_val = (uint32_t) boot_img[split_slot].loc.bil_address +
+                         (uint32_t)  boot_img[split_slot].hdr.ih_hdr_size;
+    *entry = (void*) entry_val;
+    rc = SPLIT_GO_OK;
+
+split_app_go_end:
+    free(descs);
+    return rc;
 }

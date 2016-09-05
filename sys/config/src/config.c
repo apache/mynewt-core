@@ -124,6 +124,7 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
     case CONF_INT8:
     case CONF_INT16:
     case CONF_INT32:
+    case CONF_BOOL:
         if (val_str) {
             val = strtol(val_str, &eptr, 0);
             if (*eptr != '\0') {
@@ -132,7 +133,12 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
         } else {
             val = 0;
         }
-        if (type == CONF_INT8) {
+        if (type == CONF_BOOL) {
+            if (val < 0 || val > 1) {
+                goto err;
+            }
+            *(bool *)vp = val;
+        } else if (type == CONF_INT8) {
             if (val < INT8_MIN || val > UINT8_MAX) {
                 goto err;
             }
@@ -189,7 +195,10 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
     case CONF_INT8:
     case CONF_INT16:
     case CONF_INT32:
-        if (type == CONF_INT8) {
+    case CONF_BOOL:
+        if (type == CONF_BOOL) {
+            val = *(bool *)vp;
+        } else if (type == CONF_INT8) {
             val = *(int8_t *)vp;
         } else if (type == CONF_INT16) {
             val = *(int16_t *)vp;

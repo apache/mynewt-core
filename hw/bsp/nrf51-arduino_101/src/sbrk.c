@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#include <errno.h>
-
 extern char __HeapBase;
 extern char __HeapLimit;
 
@@ -33,7 +31,6 @@ _sbrk(int incr)
         incr = -incr;
         if (brk - incr < &__HeapBase) {
             prev_brk = (void *)-1;
-            errno = EINVAL;
         } else {
             prev_brk = brk;
             brk -= incr;
@@ -45,7 +42,6 @@ _sbrk(int incr)
             brk += incr;
         } else {
             prev_brk = (void *)-1;
-            errno = ENOMEM;
         }
     }
 

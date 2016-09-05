@@ -77,7 +77,6 @@ PERMISSIONS
 #include <stdbool.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <errno.h>
 #include <math.h>        /* for HUGE_VAL */
 
 static void
@@ -262,6 +261,8 @@ json_internal_read_object(struct json_buffer *jb,
                     maxlen = JSON_VAL_MAX;
                 } else if (cursor->map != NULL) {
                     maxlen = (int)sizeof(valbuf) - 1;
+                } else if (cursor->type == t_boolean) {
+                    maxlen = 5; /* false */
                 }
                 pval = valbuf;
             } else if (pattr >= attrbuf + JSON_ATTR_MAX - 1) {

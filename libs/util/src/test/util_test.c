@@ -29,6 +29,13 @@ util_test_all(void)
     return tu_case_failed;
 }
 
+int
+hex_fmt_test_all(void)
+{
+    hex_fmt_test_suite();
+    return tu_case_failed;
+}
+
 #ifdef MYNEWT_SELFTEST
 
 int
@@ -38,7 +45,7 @@ main(int argc, char **argv)
     tu_init();
 
     util_test_all();
-
+    hex_fmt_test_all();
     return tu_any_failed;
 }
 

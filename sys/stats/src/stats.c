@@ -149,7 +149,7 @@ int
 stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
         struct stats_name_map *map, uint8_t map_cnt)
 {
-    memset((uint8_t *) shdr, 0, sizeof(*shdr) + (size * cnt));
+    memset((uint8_t *) shdr+sizeof(*shdr), 0, size * cnt);
 
     shdr->s_size = size;
     shdr->s_cnt = cnt;

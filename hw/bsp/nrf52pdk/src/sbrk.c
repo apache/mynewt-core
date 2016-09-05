@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <errno.h>
 #include <hal/hal_bsp.h>
 
 extern char __HeapBase;
@@ -35,7 +34,6 @@ _sbrk(int incr)
         incr = -incr;
         if (brk - incr < &__HeapBase) {
             prev_brk = (void *)-1;
-            errno = EINVAL;
         } else {
             prev_brk = brk;
             brk -= incr;
@@ -47,7 +45,6 @@ _sbrk(int incr)
             brk += incr;
         } else {
             prev_brk = (void *)-1;
-            errno = ENOMEM;
         }
     }
 

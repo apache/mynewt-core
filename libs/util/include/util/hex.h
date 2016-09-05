@@ -16,45 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef _UTIL_HEX_H_
+#define _UTIL_HEX_H_
 
-#include <stdint.h>
-#include <assert.h>
-#include <string.h>
-#include "os/os.h"
-#include "nimble/ble.h"
-#include "controller/ble_hw.h"
-#include "controller/ble_ll.h"
+char *hex_format(void *src_v, int src_len, char *dst, int dst_len);
+int hex_parse(char *src, int src_len, void *dst_v, int dst_len);
 
-/* This is a simple circular buffer for holding N samples of random data */
-struct ble_ll_rnum_data
-{
-    uint8_t rnd_in;
-    uint8_t rnd_out;
-    uint8_t rnd_size;
-    uint8_t _pad;
-};
-
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
-int
-ble_ll_rng_init(void)
-{
-    return 0;
-}
-
-/* Get 'len' bytes of random data */
-int
-ble_ll_rand_data_get(uint8_t *buf, uint8_t len)
-{
-    os_sr_t sr;
-
-    while (len != 0) {
-        OS_ENTER_CRITICAL(sr);
-
-        OS_EXIT_CRITICAL(sr);
-        --len;
-    }
-
-    return 0;
-}
-#endif
-
+#endif /* _UTIL_HEX_H_ */

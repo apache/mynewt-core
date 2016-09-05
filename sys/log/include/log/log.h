@@ -28,7 +28,9 @@
 struct log_info {
     int64_t li_timestamp;
     uint8_t li_index;
-} g_log_info;
+};
+
+extern struct log_info g_log_info;
 
 struct log;
 
