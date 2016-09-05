@@ -55,11 +55,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef uint32_t os_time_t;
-
 #ifndef UINT32_MAX
 #define UINT32_MAX  0xFFFFFFFFU
 #endif
+
+typedef uint32_t os_time_t;
+#define OS_TIME_MAX UINT32_MAX
  
 /* Used to wait forever for events and mutexs */
 #define OS_TIMEOUT_NEVER    (UINT32_MAX)

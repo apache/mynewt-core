@@ -1044,9 +1044,10 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
 }
 
 static void
-bletiny_on_l2cap_update(int status, void *arg)
+bletiny_on_l2cap_update(uint16_t conn_handle, int status, void *arg)
 {
-    console_printf("l2cap update complete; status=%d\n", status);
+    console_printf("l2cap update complete; conn_handle=%d status=%d\n",
+                   conn_handle, status);
 }
 
 static void
