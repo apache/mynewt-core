@@ -21,11 +21,11 @@
 
 #include <string.h>
 #include <errno.h>
-
+#include <assert.h>
 #include <hal/hal_spi.h>
 #include <bsp/cmsis_nvic.h>
 #include <nrf.h>
-#include <nrf_spim.h>
+#include <nrf_spi.h>
 #include <nrf_spis.h>
 #include <nrf_drv_spi.h>
 #include <nrf_drv_spis.h>
@@ -39,7 +39,7 @@
  */
 
 /* The maximum number of SPI interfaces we will allow */
-#define NRF52_HAL_SPI_MAX (2)
+#define NRF51_HAL_SPI_MAX (2)
 
 /* Used to disable all interrupts */
 #define NRF_SPI_IRQ_DISABLE_ALL 0xFFFFFFFF
@@ -57,37 +57,37 @@
 #define HAL_SPI_SLAVE_STATE_ACQ_SEM     (1)
 #define HAL_SPI_SLAVE_STATE_READY       (2)
 
-struct nrf52_hal_spi {
+struct nrf51_hal_spi {
     uint8_t spi_xfr_flag;   /* Master only */
-    uint8_t dummy_rx;       /* Master only */
     uint8_t slave_state;    /* Slave only */
-    uint8_t slave_buflen;   /* Slave only */
+    uint16_t nhs_buflen;
+    uint16_t nhs_rxd_bytes;
+    uint16_t nhs_txd_bytes;
     struct hal_spi_settings spi_cfg; /* Slave and master */
     union {
         nrf_drv_spi_t   spim;
         nrf_drv_spis_t  spis;
     } nhs_spi;
 
-    /* These are slave only */
-    uint8_t *slave_txbuf;
-    uint8_t *slave_rxbuf;
+    uint8_t *nhs_txbuf;
+    uint8_t *nhs_rxbuf;
 };
 
-#if SPI0_ENABLED || SPIS0_ENABLED
-struct nrf52_hal_spi nrf52_hal_spi0;
+#if SPI0_ENABLED
+struct nrf51_hal_spi nrf51_hal_spi0;
 #endif
 #if SPI1_ENABLED || SPIS1_ENABLED
-struct nrf52_hal_spi nrf52_hal_spi1;
+struct nrf51_hal_spi nrf51_hal_spi1;
 #endif
 
-struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
-#if SPI0_ENABLED || SPIS0_ENABLED
-    &nrf52_hal_spi0,
+struct nrf51_hal_spi *nrf51_hal_spis[NRF51_HAL_SPI_MAX] = {
+#if SPI0_ENABLED
+    &nrf51_hal_spi0,
 #else
     NULL,
 #endif
 #if SPI1_ENABLED || SPIS1_ENABLED
-    &nrf52_hal_spi1
+    &nrf51_hal_spi1
 #else
     NULL
 #endif
@@ -99,19 +99,16 @@ nrf_drv_spi_t inst_spi0_m = NRF_DRV_SPI_INSTANCE(0);
 #if SPI1_ENABLED
 nrf_drv_spi_t inst_spi1_m = NRF_DRV_SPI_INSTANCE(1);
 #endif
-#if SPIS0_ENABLED
-nrf_drv_spis_t inst_spi0_s = NRF_DRV_SPIS_INSTANCE(0);
-#endif
 #if SPIS1_ENABLED
 nrf_drv_spis_t inst_spi1_s = NRF_DRV_SPIS_INSTANCE(1);
 #endif
 
-#define NRF52_HAL_SPI_RESOLVE(__n, __v)         \
-    if ((__n) >= NRF52_HAL_SPI_MAX) {           \
+#define NRF51_HAL_SPI_RESOLVE(__n, __v)         \
+    if ((__n) >= NRF51_HAL_SPI_MAX) {           \
         rc = EINVAL;                            \
         goto err;                               \
     }                                           \
-    (__v) = nrf52_hal_spis[(__n)];              \
+    (__v) = nrf51_hal_spis[(__n)];              \
     if ((__v) == NULL) {                        \
         rc = EINVAL;                            \
         goto err;                               \
@@ -119,31 +116,37 @@ nrf_drv_spis_t inst_spi1_s = NRF_DRV_SPIS_INSTANCE(1);
 
 #if (SPI0_ENABLED || SPI1_ENABLED)
 static void
-nrf52_irqm_handler(struct nrf52_hal_spi *spi)
+nrf51_irqm_handler(struct nrf51_hal_spi *spi)
 {
-    NRF_SPIM_Type *p_spim;
+    NRF_SPI_Type *p_spi;
 
-    p_spim = spi->nhs_spi.spim.p_registers;
-    if (nrf_spim_event_check(p_spim, NRF_SPIM_EVENT_END)) {
-        nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_END);
+    /* XXX: what if not in a transfer? */
 
-        /* Should not occur but if no transfer just leave  */
-        if (spi->spi_xfr_flag == 0) {
-            return;
+    p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
+    if (nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {
+        nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
+        if (spi->nhs_rxbuf) {
+            spi->nhs_rxbuf[spi->nhs_rxd_bytes] = nrf_spi_rxd_get(p_spi);
         }
-
-        if (spi->spi_cfg.txrx_cb_func) {
-            spi->spi_cfg.txrx_cb_func(spi->spi_cfg.txrx_cb_arg,
-                                      p_spim->TXD.AMOUNT);
+        ++spi->nhs_rxd_bytes;
+        if (spi->nhs_rxd_bytes == spi->nhs_buflen) {
+            if (spi->spi_cfg.txrx_cb_func) {
+                spi->spi_cfg.txrx_cb_func(spi->spi_cfg.txrx_cb_arg,
+                                          spi->nhs_buflen);
+            }
+            spi->spi_xfr_flag = 0;
         }
-        spi->spi_xfr_flag = 0;
+        if (spi->nhs_txd_bytes != spi->nhs_buflen) {
+            nrf_spi_txd_set(p_spi, spi->nhs_txbuf[spi->nhs_txd_bytes]);
+            ++spi->nhs_txd_bytes;
+        }
     }
 }
 #endif
 
-#if (SPIS0_ENABLED || SPIS1_ENABLED)
+#if (SPIS1_ENABLED)
 static void
-nrf52_irqs_handler(struct nrf52_hal_spi *spi)
+nrf51_irqs_handler(struct nrf51_hal_spi *spi)
 {
     uint8_t xfr_len;
     NRF_SPIS_Type *p_spis;
@@ -155,16 +158,16 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_ACQUIRED);
 
         if (spi->slave_state == HAL_SPI_SLAVE_STATE_ACQ_SEM) {
-            if (spi->slave_txbuf == NULL) {
+            if (spi->nhs_txbuf == NULL) {
                 nrf_spis_tx_buffer_set(p_spis, 0, 0);
             } else {
-                nrf_spis_tx_buffer_set(p_spis, spi->slave_txbuf, spi->slave_buflen);
+                nrf_spis_tx_buffer_set(p_spis, spi->nhs_txbuf, spi->nhs_buflen);
             }
 
-            if (spi->slave_rxbuf == NULL) {
+            if (spi->nhs_rxbuf == NULL) {
                 nrf_spis_rx_buffer_set(p_spis, 0, 0);
             } else {
-                nrf_spis_rx_buffer_set(p_spis, spi->slave_rxbuf, spi->slave_buflen);
+                nrf_spis_rx_buffer_set(p_spis, spi->nhs_rxbuf, spi->nhs_buflen);
             }
             nrf_spis_task_trigger(p_spis, NRF_SPIS_TASK_RELEASE);
             spi->slave_state = HAL_SPI_SLAVE_STATE_READY;
@@ -177,7 +180,7 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
         if (spi->slave_state == HAL_SPI_SLAVE_STATE_READY) {
             if (spi->spi_cfg.txrx_cb_func) {
                 /* Get transfer length */
-                if (spi->slave_txbuf == NULL) {
+                if (spi->nhs_txbuf == NULL) {
                     xfr_len = nrf_spis_rx_amount_get(p_spis);
                 } else {
                     xfr_len = nrf_spis_tx_amount_get(p_spis);
@@ -192,49 +195,49 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 #endif
 
 /* Interrupt handlers for SPI ports */
-#if SPI0_ENABLED || SPIS0_ENABLED
+#if SPI0_ENABLED
 void
-nrf52_spi0_irq_handler(void)
+nrf51_spi0_irq_handler(void)
 {
-    if (nrf52_hal_spi0.spi_cfg.spi_type == HAL_SPI_TYPE_MASTER) {
-        nrf52_irqm_handler(&nrf52_hal_spi0);
+    if (nrf51_hal_spi0.spi_cfg.spi_type == HAL_SPI_TYPE_MASTER) {
+        nrf51_irqm_handler(&nrf51_hal_spi0);
     } else {
-        nrf52_irqs_handler(&nrf52_hal_spi0);
+        assert(0);
     }
 }
 #endif
 
 #if SPI1_ENABLED || SPIS1_ENABLED
 void
-nrf52_spi1_irq_handler(void)
+nrf51_spi1_irq_handler(void)
 {
-    if (nrf52_hal_spi1.spi_cfg.spi_type == HAL_SPI_TYPE_MASTER) {
-        nrf52_irqm_handler(&nrf52_hal_spi1);
+    if (nrf51_hal_spi1.spi_cfg.spi_type == HAL_SPI_TYPE_MASTER) {
+#if SPI1_ENABLED
+        nrf51_irqm_handler(&nrf51_hal_spi1);
+#else
+        assert(0);
+#endif
     } else {
-        nrf52_irqs_handler(&nrf52_hal_spi1);
+#if SPIS1_ENABLED
+        nrf51_irqs_handler(&nrf51_hal_spi1);
+#else
+        assert(0);
+#endif
     }
 }
 #endif
 
-static void
-hal_spi_stop_transfer(NRF_SPIM_Type *p_spim)
-{
-    nrf_spim_task_trigger(p_spim, NRF_SPIM_TASK_STOP);
-    while (!nrf_spim_event_check(p_spim, NRF_SPIM_EVENT_STOPPED)) {}
-    nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_STOPPED);
-}
-
 static int
-hal_spi_config_master(struct nrf52_hal_spi *spi,
+hal_spi_config_master(struct nrf51_hal_spi *spi,
                       struct hal_spi_settings *settings)
 {
     int rc;
-    NRF_SPIM_Type *p_spim;
-    nrf_spim_frequency_t frequency;
-    nrf_spim_mode_t spi_mode;
-    nrf_spim_bit_order_t bit_order;
+    NRF_SPI_Type *p_spi;
+    nrf_spi_frequency_t frequency;
+    nrf_spi_mode_t spi_mode;
+    nrf_spi_bit_order_t bit_order;
 
-    p_spim = spi->nhs_spi.spim.p_registers;
+    p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
     memcpy(&spi->spi_cfg, settings, sizeof(*settings));
 
     /* Only 8-bit word sizes supported. */
@@ -248,16 +251,16 @@ hal_spi_config_master(struct nrf52_hal_spi *spi,
 
     switch (settings->data_mode) {
         case HAL_SPI_MODE0:
-            spi_mode = NRF_SPIM_MODE_0;
+            spi_mode = NRF_SPI_MODE_0;
             break;
         case HAL_SPI_MODE1:
-            spi_mode = NRF_SPIM_MODE_1;
+            spi_mode = NRF_SPI_MODE_1;
             break;
         case HAL_SPI_MODE2:
-            spi_mode = NRF_SPIM_MODE_2;
+            spi_mode = NRF_SPI_MODE_2;
             break;
         case HAL_SPI_MODE3:
-            spi_mode = NRF_SPIM_MODE_3;
+            spi_mode = NRF_SPI_MODE_3;
             break;
         default:
             spi_mode = 0;
@@ -266,44 +269,44 @@ hal_spi_config_master(struct nrf52_hal_spi *spi,
 
     switch (settings->data_order) {
         case HAL_SPI_MSB_FIRST:
-            bit_order = NRF_SPIM_BIT_ORDER_MSB_FIRST;
+            bit_order = NRF_SPI_BIT_ORDER_MSB_FIRST;
             break;
         case HAL_SPI_LSB_FIRST:
-            bit_order = NRF_SPIM_BIT_ORDER_LSB_FIRST;
+            bit_order = NRF_SPI_BIT_ORDER_LSB_FIRST;
             break;
         default:
             bit_order = 0;
             break;
     }
-    nrf_spim_configure(p_spim, spi_mode, bit_order);
+    nrf_spi_configure(p_spi, spi_mode, bit_order);
 
     switch (settings->baudrate) {
         case 125:
-            frequency = NRF_SPIM_FREQ_125K;
+            frequency = NRF_SPI_FREQ_125K;
             break;
         case 250:
-            frequency = NRF_SPIM_FREQ_250K;
+            frequency = NRF_SPI_FREQ_250K;
             break;
         case 500:
-            frequency = NRF_SPIM_FREQ_500K;
+            frequency = NRF_SPI_FREQ_500K;
             break;
         case 1000:
-            frequency = NRF_SPIM_FREQ_1M;
+            frequency = NRF_SPI_FREQ_1M;
             break;
         case 2000:
-            frequency = NRF_SPIM_FREQ_2M;
+            frequency = NRF_SPI_FREQ_2M;
             break;
         case 4000:
-            frequency = NRF_SPIM_FREQ_4M;
+            frequency = NRF_SPI_FREQ_4M;
             break;
         case 8000:
-            frequency = NRF_SPIM_FREQ_8M;
+            frequency = NRF_SPI_FREQ_8M;
             break;
         default:
             rc = EINVAL;
             goto err;
     }
-    nrf_spim_frequency_set(p_spim, frequency);
+    nrf_spi_frequency_set(p_spi, frequency);
 
     return (0);
 err:
@@ -311,7 +314,7 @@ err:
 }
 
 static int
-hal_spi_config_slave(struct nrf52_hal_spi *spi,
+hal_spi_config_slave(struct nrf51_hal_spi *spi,
                      struct hal_spi_settings *settings)
 {
     int rc;
@@ -369,7 +372,7 @@ hal_spi_init_master(nrf_drv_spi_t *p_instance,
 {
     uint32_t mosi_pin;
     uint32_t miso_pin;
-    NRF_SPIM_Type *p_spim;
+    NRF_SPI_Type *p_spi;
 
 #if PERIPHERAL_RESOURCE_SHARING_ENABLED
     if (nrf_drv_common_per_res_acquire(p_instance->p_registers,
@@ -413,14 +416,12 @@ hal_spi_init_master(nrf_drv_spi_t *p_instance,
     } else {
         miso_pin = NRF_SPI_PIN_NOT_CONNECTED;
     }
-    p_spim = (NRF_SPIM_Type *)p_instance->p_registers;
-    nrf_spim_pins_set(p_spim, p_config->sck_pin, mosi_pin, miso_pin);
-    nrf_spim_frequency_set(p_spim, (nrf_spim_frequency_t)p_config->frequency);
-    nrf_spim_orc_set(p_spim, p_config->orc);
-    nrf_spim_configure(p_spim,
-        (nrf_spim_mode_t)p_config->mode,
-        (nrf_spim_bit_order_t)p_config->bit_order);
-    nrf_spim_int_disable(p_spim, NRF_SPI_IRQ_DISABLE_ALL);
+    p_spi = (NRF_SPI_Type *)p_instance->p_registers;
+    nrf_spi_pins_set(p_spi, p_config->sck_pin, mosi_pin, miso_pin);
+    nrf_spi_frequency_set(p_spi, (nrf_spi_frequency_t)p_config->frequency);
+    nrf_spi_configure(p_spi ,(nrf_spi_mode_t)p_config->mode,
+                      (nrf_spi_bit_order_t)p_config->bit_order);
+    nrf_spi_int_disable(p_spi, NRF_SPI_INT_READY_MASK);
     NVIC_SetVector(p_instance->irq, (uint32_t)handler);
     nrf_drv_common_irq_enable(p_instance->irq, p_config->irq_priority);
 
@@ -507,6 +508,16 @@ hal_spi_init_slave(nrf_drv_spis_t *p_instance,
     return NRF_SUCCESS;
 }
 
+static void
+hal_spi_master_send_first(NRF_SPI_Type *p_spi, uint8_t txval)
+{
+    while (nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {
+        (void)nrf_spi_rxd_get(p_spi);
+        nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
+    }
+    nrf_spi_txd_set(p_spi, txval);
+}
+
 /**
  * Initialize the SPI interface
  *
@@ -521,10 +532,10 @@ int
 hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
 {
     int rc;
-    struct nrf52_hal_spi *spi;
+    struct nrf51_hal_spi *spi;
     nrf_drv_irq_handler_t irq_handler;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     /* Check for valid arguments */
     rc = EINVAL;
@@ -539,30 +550,22 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
     irq_handler = NULL;
     spi->spi_cfg.spi_type  = spi_type;
     if (spi_num == 0) {
-#if SPI0_ENABLED || SPIS0_ENABLED
-        irq_handler = nrf52_spi0_irq_handler;
-        if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if SPI0_ENABLED
+        irq_handler = nrf51_spi0_irq_handler;
+        if (spi_type == HAL_SPI_TYPE_MASTER) {
             memcpy(&spi->nhs_spi.spim, &inst_spi0_m, sizeof(inst_spi0_m));
-#else
-            assert(0);
-#endif
         } else {
-#if SPIS0_ENABLED
-            memcpy(&spi->nhs_spi.spis, &inst_spi0_s, sizeof(inst_spi0_s));
-#else
             assert(0);
-#endif
         }
 #else
         goto err;
 #endif
     } else if (spi_num == 1) {
 #if SPI1_ENABLED || SPIS1_ENABLED
-        irq_handler = nrf52_spi1_irq_handler;
+        irq_handler = nrf51_spi1_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if SPI1_ENABLED
-            memcpy(&spi->nhs_spi.spim, &inst_spi1_m, sizeof(inst_spi1_m));
+            memcpy(&spi->nhs_spi.spim, &inst_spi1_m, sizeof(inst_spi0_m));
 #else
             assert(0);
 #endif
@@ -600,9 +603,9 @@ int
 hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 {
     int rc;
-    struct nrf52_hal_spi *spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     spi->spi_cfg.txrx_cb_func = settings->txrx_cb_func;
     spi->spi_cfg.txrx_cb_arg = settings->txrx_cb_arg;
@@ -631,21 +634,19 @@ hal_spi_enable(int spi_num)
 {
     int rc;
     NRF_SPIS_Type *p_spis;
-    NRF_SPIM_Type *p_spim;
-    struct nrf52_hal_spi *spi;
+    NRF_SPI_Type *p_spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
-        p_spim = spi->nhs_spi.spim.p_registers;
+        p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
         /* We need to enable this in blocking or non-blocking mode */
         if (spi->spi_cfg.txrx_cb_func) {
-            nrf_spim_event_clear(p_spim, NRF_SPIM_INT_END_MASK);
-            nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
-            nrf_spim_enable(p_spim);
-        } else {
-            nrf_spi_enable((NRF_SPI_Type *)p_spim);
+            nrf_spi_event_clear(p_spi, NRF_SPI_INT_READY_MASK);
+            nrf_spi_int_enable(p_spi, NRF_SPI_INT_READY_MASK);
         }
+        nrf_spi_enable(p_spi);
     } else {
         if (spi->spi_cfg.txrx_cb_func == NULL) {
             rc = EINVAL;
@@ -677,19 +678,16 @@ hal_spi_disable(int spi_num)
 {
     int rc;
     NRF_SPIS_Type *p_spis;
-    NRF_SPIM_Type *p_spim;
-    struct nrf52_hal_spi *spi;
+    NRF_SPI_Type *p_spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
-        p_spim = spi->nhs_spi.spim.p_registers;
-        nrf_spim_int_disable(p_spim, NRF_SPI_IRQ_DISABLE_ALL);
-        if (spi->spi_xfr_flag) {
-            hal_spi_stop_transfer(p_spim);
-            spi->spi_xfr_flag = 0;
-        }
-        nrf_spim_disable(p_spim);
+        p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
+        nrf_spi_int_disable(p_spi, NRF_SPI_INT_READY_MASK);
+        spi->spi_xfr_flag = 0;
+        nrf_spi_disable(p_spi);
     } else {
         p_spis = spi->nhs_spi.spis.p_reg;
         nrf_spis_int_disable(p_spis, NRF_SPI_IRQ_DISABLE_ALL);
@@ -697,8 +695,8 @@ hal_spi_disable(int spi_num)
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_ACQUIRED);
         nrf_spis_disable(p_spis);
         spi->slave_state = HAL_SPI_SLAVE_STATE_IDLE;
-        spi->slave_txbuf = NULL;
-        spi->slave_rxbuf = NULL;
+        spi->nhs_txbuf = NULL;
+        spi->nhs_rxbuf = NULL;
     }
     rc = 0;
 
@@ -726,9 +724,9 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     int rc;
     uint16_t retval;
     NRF_SPI_Type *p_spi;
-    struct nrf52_hal_spi *spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
         p_spi = (NRF_SPI_Type *) spi->nhs_spi.spim.p_registers;
@@ -768,17 +766,17 @@ int
 hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 {
     int rc;
-    NRF_SPIM_Type *p_spim;
-    struct nrf52_hal_spi *spi;
+    NRF_SPI_Type *p_spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     /*
      * This looks odd, but the ENABLE register is in the same location for
      * SPIM, SPI and SPIS
      */
-    p_spim = spi->nhs_spi.spim.p_registers;
-    if (p_spim->ENABLE != 0) {
+    p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
+    if (p_spi->ENABLE != 0) {
         rc = -1;
     } else {
         spi->spi_cfg.txrx_cb_func = txrx_cb;
@@ -821,17 +819,17 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     uint8_t *txd, *rxd;
     uint8_t rxval;
     NRF_SPI_Type *p_spi;
-    NRF_SPIM_Type *p_spim;
-    struct nrf52_hal_spi *spi;
+    struct nrf51_hal_spi *spi;
 
     rc = EINVAL;
     if (!len || (len > 255)) {
         goto err;
     }
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
+        p_spi = (NRF_SPI_Type *) spi->nhs_spi.spim.p_registers;
         if (spi->spi_cfg.txrx_cb_func) {
             /* Must have a txbuf for master! */
             if (txbuf == NULL) {
@@ -843,32 +841,23 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
                 rc = -1;
                 goto err;
             }
-            spi->spi_xfr_flag = 1;
 
-            p_spim = spi->nhs_spi.spim.p_registers;
-            nrf_spim_tx_buffer_set(p_spim, txbuf, len);
-
-            /* If no rxbuf, we need to set rxbuf and maxcnt to 1 */
-            if (rxbuf == NULL) {
-                nrf_spim_rx_buffer_set(p_spim, &spi->dummy_rx, 1);
-            } else {
-                nrf_spim_rx_buffer_set(p_spim, rxbuf, len);
+            spi->nhs_buflen = (uint16_t)len;
+            spi->nhs_txbuf = txbuf;
+            spi->nhs_rxbuf = rxbuf;
+            spi->nhs_rxd_bytes = 0;
+            txd = (uint8_t *)txbuf;
+            hal_spi_master_send_first(p_spi, txd[0]);
+            spi->nhs_txd_bytes = 1;
+            if (len > 1) {
+                nrf_spi_txd_set(p_spi, txd[1]);
+                ++spi->nhs_txd_bytes;
             }
-
-            nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_END);
-            nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_STOPPED);
-
-            nrf_spim_task_trigger(p_spim, NRF_SPIM_TASK_START);
-            nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
+            nrf_spi_int_enable(p_spi, NRF_SPI_INT_READY_MASK);
         } else {
             /* Blocking spi transfer */
-            p_spi = (NRF_SPI_Type *) spi->nhs_spi.spim.p_registers;
-            while (nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {
-                rxval = nrf_spi_rxd_get(p_spi);
-                nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
-            }
             txd = (uint8_t *)txbuf;
-            nrf_spi_txd_set(p_spi, *txd);
+            hal_spi_master_send_first(p_spi, txd[0]);
             txcnt = len - 1;
             rxd = (uint8_t *)rxbuf;
             for (i = 0; i < len; ++i) {
@@ -902,9 +891,9 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
             goto err;
         }
 
-        spi->slave_rxbuf = rxbuf;
-        spi->slave_txbuf = txbuf;
-        spi->slave_buflen = len;
+        spi->nhs_rxbuf = rxbuf;
+        spi->nhs_txbuf = txbuf;
+        spi->nhs_buflen = len;
         spi->slave_state = HAL_SPI_SLAVE_STATE_ACQ_SEM;
         nrf_spis_task_trigger(spi->nhs_spi.spis.p_reg, NRF_SPIS_TASK_ACQUIRE);
     }
@@ -926,9 +915,9 @@ hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
 {
     int rc;
     NRF_SPIS_Type *p_spis;
-    struct nrf52_hal_spi *spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_SLAVE) {
         p_spis = spi->nhs_spi.spis.p_reg;
         nrf_spis_def_set(p_spis, (uint8_t) val);
@@ -955,10 +944,10 @@ int
 hal_spi_abort(int spi_num)
 {
     int rc;
-    NRF_SPIM_Type *p_spim;
-    struct nrf52_hal_spi *spi;
+    NRF_SPI_Type *p_spi;
+    struct nrf51_hal_spi *spi;
 
-    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+    NRF51_HAL_SPI_RESOLVE(spi_num, spi);
 
     rc = 0;
     if (spi->spi_cfg.txrx_cb_func == NULL) {
@@ -966,12 +955,13 @@ hal_spi_abort(int spi_num)
     }
 
     if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
-        p_spim = spi->nhs_spi.spim.p_registers;
+        p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
         if (spi->spi_xfr_flag) {
-            nrf_spim_int_disable(p_spim, NRF_SPI_IRQ_DISABLE_ALL);
-            hal_spi_stop_transfer(p_spim);
+            nrf_spi_int_disable(p_spi, NRF_SPI_INT_READY_MASK);
+            nrf_spi_disable(p_spi);
+            nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
             spi->spi_xfr_flag = 0;
-            nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
+            nrf_spi_int_enable(p_spi, NRF_SPI_INT_READY_MASK);
         }
     } else {
         /* Only way I can see doing this is to disable, then re-enable */

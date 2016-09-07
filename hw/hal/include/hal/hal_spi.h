@@ -135,18 +135,19 @@ int hal_spi_disable(int spi_num);
 uint16_t hal_spi_tx_val(int spi_num, uint16_t val);
 
 /**
- * Non-blocking call to send a buffer and also store the received values.
- * For both the master and slave, the txrx callback is executed at interrupt
- * context when the buffer is sent.
+ * Sends a buffer and also stores the received values. This is always a
+ * non-blocking call for a spi slave. It is a blocking call if the callback is
+ * NULL; non-blocking if callback is set. For both the master and slave, the
+ * txrx callback is executed at interrupt context when the buffer is sent.
  *     MASTER: master sends all the values in the buffer and stores the
  *             stores the values in the receive buffer if rxbuf is not NULL.
  *             The txbuf parameter cannot be NULL
  *     SLAVE: Slave preloads the data to be sent to the master (values
  *            stored in txbuf) and places received data from master in rxbuf (if
- *            not NULL). No callback per received value; txrx callback when len
- *            values are transferred or master de-asserts chip select. If
- *            txbuf is NULL, the slave transfers its default byte. Both rxbuf
- *            and txbuf cannot be NULL.
+ *            not NULL). The txrx callback occurs when len values are
+ *            transferred or master de-asserts chip select. If txbuf is NULL,
+ *            the slave transfers its default byte. Both rxbuf and txbuf cannot
+ *            be NULL.
  *
  * @param spi_num   SPI interface to use
  * @param txbuf     Pointer to buffer where values to transmit are stored.

@@ -48,7 +48,9 @@ nrf_drv_adc_channel_t g_nrf_adc_chan =
 #include <adc_nrf52/adc_nrf52.h>
 #include "nrf_drv_saadc.h"
 nrf_drv_saadc_config_t adc_config = NRF_DRV_SAADC_DEFAULT_CONFIG;
+#endif
 
+#if defined(NRF52) || defined(NRF51)
 /* The spi txrx callback */
 struct sblinky_spi_cb_arg
 {
@@ -124,7 +126,7 @@ sblinky_spi_irqm_handler(void *arg, int len)
     }
 }
 
-#if 0
+#if 1
 static void
 sblinky_spi_tx_vals(int spi_num, uint8_t *buf, int len)
 {
@@ -147,6 +149,13 @@ sblinky_spi_tx_vals(int spi_num, uint8_t *buf, int len)
 uint8_t g_spi_tx_buf[32];
 uint8_t g_spi_rx_buf[32];
 
+/* XXX: This is an ugly hack for now. */
+#ifdef NRF51
+#define SPI_SLAVE_ID    (1)
+#else
+#define SPI_SLAVE_ID    (0)
+#endif
+
 void
 sblinky_spi_irqs_handler(void *arg, int len)
 {
@@ -167,6 +176,7 @@ sblinky_spi_irqs_handler(void *arg, int len)
 void
 sblinky_spi_cfg(int spi_num)
 {
+    int spi_id;
     struct hal_spi_settings my_spi;
 
 #ifdef BSP_CFG_SPI_MASTER
@@ -177,6 +187,7 @@ sblinky_spi_cfg(int spi_num)
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
     my_spi.txrx_cb_func = NULL;
     my_spi.txrx_cb_arg = NULL;
+    spi_id = 0;
 #endif
 
 #ifdef BSP_CFG_SPI_SLAVE
@@ -187,8 +198,9 @@ sblinky_spi_cfg(int spi_num)
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
     my_spi.txrx_cb_func = sblinky_spi_irqs_handler;
     my_spi.txrx_cb_arg = spi_cb_arg;
+    spi_id = SPI_SLAVE_ID;
 #endif
-    hal_spi_config(0, &my_spi);
+    hal_spi_config(spi_id, &my_spi);
 }
 
 struct adc_dev my_dev;
@@ -299,31 +311,31 @@ task1_handler(void *arg)
     sblinky_spi_cfg(0);
     hal_spi_enable(0);
 
-#if 0
+#if 1
     /* Send some bytes in a non-blocking manner to SPI using tx val */
-    spi_tx_buf[0] = 0xde;
-    spi_tx_buf[1] = 0xad;
-    spi_tx_buf[2] = 0xbe;
-    spi_tx_buf[3] = 0xef;
-    sblinky_spi_tx_vals(0, spi_tx_buf, 4);
+    g_spi_tx_buf[0] = 0xde;
+    g_spi_tx_buf[1] = 0xad;
+    g_spi_tx_buf[2] = 0xbe;
+    g_spi_tx_buf[3] = 0xef;
+    sblinky_spi_tx_vals(0, g_spi_tx_buf, 4);
 
     /* Send blocking with txrx interface */
     for (i = 0; i < 32; ++i) {
-        spi_tx_buf[i] = i + 1;
+        g_spi_tx_buf[i] = i + 1;
     }
-    memset(spi_rx_buf, 0x55, 32);
-    rc = hal_spi_txrx(0, spi_tx_buf, spi_rx_buf, 32);
+    memset(g_spi_rx_buf, 0x55, 32);
+    rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
     assert(!rc);
 
     /* Now send with no rx buf and make sure it dont change! */
     for (i = 0; i < 32; ++i) {
-        spi_tx_buf[i] = (uint8_t)(i + 32);
+        g_spi_tx_buf[i] = (uint8_t)(i + 32);
     }
-    memset(spi_rx_buf, 0xAA, 32);
-    rc = hal_spi_txrx(0, spi_tx_buf, NULL, 32);
+    memset(g_spi_rx_buf, 0xAA, 32);
+    rc = hal_spi_txrx(0, g_spi_tx_buf, NULL, 32);
     assert(!rc);
     for (i = 0; i < 32; ++i) {
-        if (spi_rx_buf[i] != 0xAA) {
+        if (g_spi_rx_buf[i] != 0xAA) {
             assert(0);
         }
     }
@@ -338,15 +350,15 @@ task1_handler(void *arg)
 #endif
 
 #ifdef BSP_CFG_SPI_SLAVE
-    sblinky_spi_cfg(0);
-    hal_spi_enable(0);
+    sblinky_spi_cfg(SPI_SLAVE_ID);
+    hal_spi_enable(SPI_SLAVE_ID);
 
     /* Make the default character 0xAA */
-    hal_spi_slave_set_def_tx_val(0, 0xAA);
+    hal_spi_slave_set_def_tx_val(SPI_SLAVE_ID, 0xAA);
 
     /* Setup a buffer to receive into */
     memset(g_spi_tx_buf, 0xEE, 32);
-    rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+    rc = hal_spi_txrx(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf, 32);
     assert(rc == 0);
 #endif
 
@@ -425,7 +437,7 @@ task2_handler(void *arg)
 #ifdef BSP_CFG_SPI_SLAVE
         /* transmit back what we just received */
         memcpy(g_spi_tx_buf, g_spi_rx_buf, 32);
-        rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+        rc = hal_spi_txrx(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf, 32);
         assert(rc == 0);
 #endif
     }
