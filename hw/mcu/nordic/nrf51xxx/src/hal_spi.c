@@ -120,11 +120,14 @@ nrf51_irqm_handler(struct nrf51_hal_spi *spi)
 {
     NRF_SPI_Type *p_spi;
 
-    /* XXX: what if not in a transfer? */
-
     p_spi = (NRF_SPI_Type *)spi->nhs_spi.spim.p_registers;
     if (nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {
         nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
+
+        if (spi->spi_xfr_flag == 0) {
+            return;
+        }
+
         if (spi->nhs_rxbuf) {
             spi->nhs_rxbuf[spi->nhs_rxd_bytes] = nrf_spi_rxd_get(p_spi);
         }
@@ -841,6 +844,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
                 rc = -1;
                 goto err;
             }
+            spi->spi_xfr_flag = 1;
 
             spi->nhs_buflen = (uint16_t)len;
             spi->nhs_txbuf = txbuf;
