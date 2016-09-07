@@ -67,6 +67,11 @@ fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
+if [ ! -f $FILE_NAME ]; then
+    echo "File " $FILE_NAME "not found"
+    exit 1
+fi
+
 # XXX for some reason JLinkExe overwrites flash at offset 0 when
 # downloading somewhere in the flash. So need to figure out how to tell it
 # not to do that, or report failure if gdb fails to write this file
