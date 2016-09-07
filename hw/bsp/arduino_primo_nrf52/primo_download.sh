@@ -72,6 +72,11 @@ fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
+if [ ! -f $FILE_NAME ]; then
+    echo "File " $FILE_NAME "not found"
+    exit 1
+fi
+
 if [ $USE_OPENOCD -eq 1 ]; then
     #
     # XXXX note that this is using openocd through STM32, with openocd
