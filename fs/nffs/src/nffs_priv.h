@@ -504,10 +504,10 @@ int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
 
 #define NFFS_FLASH_LOC_NONE  nffs_flash_loc(NFFS_AREA_ID_NONE, 0)
 
-#ifdef NFFS_DEBUG
+#ifdef ARCH_sim
 #include <stdio.h>
 #define NFFS_LOG(lvl, ...) \
-      printf(__VA_ARGS__)
+    printf(__VA_ARGS__)
 #else
 #define NFFS_LOG(lvl, ...) \
     LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)

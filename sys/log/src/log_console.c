@@ -18,13 +18,9 @@
  */
 
 #include <os/os.h>
-
 #include <util/cbmem.h>
-
 #include <console/console.h>
-
 #include "log/log.h"
-
 
 static int
 log_console_append(struct log *log, void *buf, int len)
@@ -69,17 +65,11 @@ log_console_flush(struct log *log)
     return (OS_EINVAL);
 }
 
-int
-log_console_handler_init(struct log_handler *handler)
-{
-    handler->log_type = LOG_TYPE_STREAM;
-    handler->log_read = log_console_read;
-    handler->log_append = log_console_append;
-    handler->log_walk = log_console_walk;
-    handler->log_flush = log_console_flush;
-    handler->log_arg = NULL;
-    handler->log_rtr_erase = NULL;
-
-    return (0);
-}
-
+const struct log_handler log_console_handler = {
+    .log_type = LOG_TYPE_STREAM,
+    .log_read = log_console_read,
+    .log_append = log_console_append,
+    .log_walk = log_console_walk,
+    .log_flush = log_console_flush,
+    .log_rtr_erase = NULL,
+};

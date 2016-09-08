@@ -78,7 +78,6 @@ static struct os_task task2;
 #define NEWTMGR_TASK_PRIO (4)
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(896))
 
-static struct log_handler log_cbmem_handler;
 static struct log my_log;
 
 static volatile int g_task2_loops;
@@ -307,8 +306,7 @@ main(int argc, char **argv)
 
     log_init();
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_cbmem_handler_init(&log_cbmem_handler, &cbmem);
-    log_register("log", &my_log, &log_cbmem_handler);
+    log_register("log", &my_log, &log_cbmem_handler, &cbmem);
 
     os_init();
 

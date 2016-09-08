@@ -55,7 +55,6 @@ struct os_mbuf_pool blecent_mbuf_pool;
 struct os_mempool blecent_mbuf_mpool;
 
 /** Log data. */
-static struct log_handler blecent_log_console_handler;
 struct log blecent_log;
 
 /** Priority of the nimble host and controller tasks. */
@@ -557,8 +556,7 @@ main(void)
 
     /* Initialize the logging system. */
     log_init();
-    log_console_handler_init(&blecent_log_console_handler);
-    log_register("blecent", &blecent_log, &blecent_log_console_handler);
+    log_register("blecent", &blecent_log, &log_console_handler, NULL);
 
     /* Initialize the eventq for the application task. */
     os_eventq_init(&blecent_evq);

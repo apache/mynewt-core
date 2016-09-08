@@ -55,7 +55,6 @@ struct nffs_inode_entry *nffs_lost_found_dir;
 
 static struct os_mutex nffs_mutex;
 
-static struct log_handler nffs_log_console_handler;
 struct log nffs_log;
 
 static int nffs_open(const char *path, uint8_t access_flags,
@@ -725,14 +724,12 @@ nffs_init(void)
         return FS_ENOMEM;
     }
 
-    log_init();
-    log_console_handler_init(&nffs_log_console_handler);
-    log_register("nffs", &nffs_log, &nffs_log_console_handler);
-
     rc = nffs_misc_reset();
     if (rc != 0) {
         return rc;
     }
+
+    NFFS_LOG(DEBUG, "nffs_init");
 
     fs_register(&nffs_ops);
     return 0;
