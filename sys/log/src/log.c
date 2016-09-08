@@ -46,6 +46,8 @@ struct shell_cmd g_shell_log_cmd = {
 };
 #endif
 
+char *log_modules[LOG_MODULE_MAX];
+
 int
 log_init(void)
 {
@@ -90,11 +92,16 @@ log_list_get_next(struct log *log)
     return (next);
 }
 
+/*
+ * Associate an instantiation of a log with the logging infrastructure
+ */
 int
-log_register(char *name, struct log *log, struct log_handler *lh)
+log_register(char *name, struct log *log, const struct log_handler *lh,
+             void *arg)
 {
     log->l_name = name;
-    log->l_log = lh;
+    log->l_log = (struct log_handler *)lh;
+    log->l_arg = arg;
 
     STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
 
@@ -108,7 +115,6 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     struct log_entry_hdr *ue;
     int rc;
     struct os_timeval tv;
-    int64_t prev_ts;
 
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
@@ -128,7 +134,6 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         ue->ue_ts = tv.tv_sec * 1000000 + tv.tv_usec;
     }
 
-    prev_ts = g_log_info.li_timestamp;
     g_log_info.li_timestamp = ue->ue_ts;
     ue->ue_level = level;
     ue->ue_module = module;
@@ -145,8 +150,7 @@ err:
 }
 
 void
-log_printf(struct log *log, uint16_t module, uint16_t level, char *msg,
-        ...)
+log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
 {
     va_list args;
     char buf[LOG_ENTRY_HDR_SIZE + LOG_PRINTF_MAX_ENTRY_LEN];

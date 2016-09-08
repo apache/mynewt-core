@@ -33,7 +33,6 @@ static struct flash_area fcb_areas[] = {
         .fa_size = 16 * 1024
     }
 };
-static struct log_handler log_fcb_handler;
 static struct fcb log_fcb;
 static struct log my_log;
 
@@ -61,10 +60,8 @@ TEST_CASE(log_setup_fcb)
     }
     rc = fcb_init(&log_fcb);
     TEST_ASSERT(rc == 0);
-    rc = log_fcb_handler_init(&log_fcb_handler, &log_fcb, 0);
-    TEST_ASSERT(rc == 0);
 
-    log_register("log", &my_log, &log_fcb_handler);
+    log_register("log", &my_log, &log_fcb_handler, &log_fcb);
 }
 
 TEST_CASE(log_append_fcb)

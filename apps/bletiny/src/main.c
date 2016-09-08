@@ -112,7 +112,6 @@ struct os_eventq bletiny_evq;
 struct os_task bletiny_task;
 bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 
-static struct log_handler bletiny_log_console_handler;
 struct log bletiny_log;
 
 bssnz_t struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
@@ -1685,8 +1684,7 @@ main(void)
 
     /* Initialize the logging system. */
     log_init();
-    log_console_handler_init(&bletiny_log_console_handler);
-    log_register("bletiny", &bletiny_log, &bletiny_log_console_handler);
+    log_register("bletiny", &bletiny_log, &log_console_handler, NULL);
 
     /* Initialize eventq for the application task. */
     os_eventq_init(&bletiny_evq);
