@@ -69,7 +69,6 @@ struct os_mbuf_pool bleprph_mbuf_pool;
 struct os_mempool bleprph_mbuf_mpool;
 
 /** Log data. */
-static struct log_handler bleprph_log_console_handler;
 struct log bleprph_log;
 
 /** Priority of the nimble host and controller tasks. */
@@ -381,8 +380,7 @@ main(void)
 
     /* Initialize the logging system. */
     log_init();
-    log_console_handler_init(&bleprph_log_console_handler);
-    log_register("bleprph", &bleprph_log, &bleprph_log_console_handler);
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL);
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);

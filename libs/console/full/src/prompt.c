@@ -36,5 +36,5 @@ console_set_prompt(char p)
 void
 console_print_prompt(void)
 {
-    console_printf(console_prompt);
+    console_printf("%s", console_prompt);
 }

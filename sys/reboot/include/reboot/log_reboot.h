@@ -29,7 +29,7 @@
     (GEN_CORE     == reason ? "GEN_CORE" :\
      "UNKNOWN")))
 
-int reboot_init_handler(int log_type, uint8_t entries);
+int reboot_init_handler(int log_store_type, uint8_t entries);
 int log_reboot(int reason);
 
 #endif /* _LOG_REBOOT_H__ */

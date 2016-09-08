@@ -40,7 +40,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-static struct log_handler nffs_log_console_handler;
 struct log nffs_log;
 static const char *copy_in_dir;
 static const char *progname;
@@ -684,8 +683,7 @@ main(int argc, char **argv)
     assert(rc == 0);
 
     log_init();
-    log_console_handler_init(&nffs_log_console_handler);
-    log_register("nffs-log", &nffs_log, &nffs_log_console_handler);
+    log_register("nffs-log", &nffs_log, &log_console_handler, NULL);
 
     file_scratch_idx = MAX_AREAS + 1;
 

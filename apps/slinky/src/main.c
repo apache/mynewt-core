@@ -79,8 +79,8 @@ static struct os_task task2;
 #define NEWTMGR_TASK_PRIO (4)
 #define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(896))
 
-static struct log_handler log_cbmem_handler;
 static struct log my_log;
+extern struct log nffs_log; /* defined in the OS module */
 
 static volatile int g_task2_loops;
 
@@ -147,6 +147,9 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
+
+static uint32_t nffs_cbmem_buf[MAX_CBMEM_BUF];
+static struct cbmem nffs_cbmem;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -372,8 +375,9 @@ main(int argc, char **argv)
 
     log_init();
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_cbmem_handler_init(&log_cbmem_handler, &cbmem);
-    log_register("log", &my_log, &log_cbmem_handler);
+    cbmem_init(&nffs_cbmem, nffs_cbmem_buf, MAX_CBMEM_BUF);
+    log_register("log", &my_log, &log_cbmem_handler, &cbmem);
+    log_register("nffs", &nffs_log, &log_cbmem_handler, &nffs_cbmem);
 
     os_init();
 
@@ -422,7 +426,7 @@ main(int argc, char **argv)
 
     flash_test_init();
 
-    reboot_init_handler(LOG_TYPE_STORAGE, 10);
+    reboot_init_handler(LOG_STORE_FCB, 11);
 
 #if defined SPLIT_LOADER || defined SPLIT_APPLICATION
     split_app_init();
