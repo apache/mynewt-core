@@ -16,55 +16,48 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# Called: $0 <bsp_directory_path> <binary> [features...]
-#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
-#  - binary is the path to prefix to target binary, .elf.bin appended to this
-#    name is the raw binary format of the binary.
-#  - features are the target features. So you can have e.g. different
-#    flash offset for bootloader 'feature'
-#
+# Called with following variables set:
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - IMAGE_SLOT is the image slot to download to
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #
 
-if [ $# -lt 2 ]; then
+if [ -z "$BIN_BASENAME" ]; then
     echo "Need binary to download"
     exit 1
 fi
 
-if [ $# -lt 3 ]; then
+if [ -z "$IMAGE_SLOT" ]; then
     echo "Need image slot to download"
     exit 1
 fi
 
 IS_BOOTLOADER=0
 USE_OPENOCD=0
-MYPATH=$1
-BASENAME=$2
-IMAGE_SLOT=$3
 GDB_CMD_FILE=.gdb_cmds
 
-# Look for 'bootloader' from 3rd arg onwards
-shift
-shift
-shift
-while [ $# -gt 0 ]; do
-    if [ $1 = "bootloader" ]; then
-        IS_BOOTLOADER=1
+# Look for 'bootloader' in FEATURES
+for feature in $FEATURES; do
+    if [ $feature == "bootloader" ]; then
+	IS_BOOTLOADER=1
     fi
-    if [ $1 = "openocd_debug" ]; then
+    if [ $feature = "openocd_debug" ]; then
 	USE_OPENOCD=1
     fi
-    shift
 done
 
 if [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x0
-    FILE_NAME=$BASENAME.elf.bin
+    FILE_NAME=$BIN_BASENAME.elf.bin
 elif [ $IMAGE_SLOT -eq 0 ]; then
     FLASH_OFFSET=0x8000
-    FILE_NAME=$BASENAME.img
+    FILE_NAME=$BIN_BASENAME.img
 elif [ $IMAGE_SLOT -eq 1 ]; then
     FLASH_OFFSET=0x42000
-    FILE_NAME=$BASENAME.img
+    FILE_NAME=$BIN_BASENAME.img
 else 
     echo "Invalid Image Slot Number: $IMAGE_SLOT"
     exit 1
@@ -78,11 +71,23 @@ if [ ! -f $FILE_NAME ]; then
 fi
 
 if [ $USE_OPENOCD -eq 1 ]; then
+    if [ -z "$BSP_PATH" ]; then
+	echo "Need BSP path for openocd script location"
+	exit 1
+    fi
+
+    # Extra parameters to pass to openocd
+    if [ ! -z "$EXTRA_JTAG_CMD" ]; then
+	EXTRA_CMD="-c $EXTRA_JTAG_CMD"
+    else
+	EXTRA_CMD=
+    fi
+
     #
     # XXXX note that this is using openocd through STM32, with openocd
     # which has been patched to support nrf52 flash.
     #
-    openocd -s $MYPATH -f arduino_primo.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+    openocd -s $BSP_PATH -f arduino_primo.cfg $EXTRA_CMD -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 else
     echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun' & " > $GDB_CMD_FILE
     echo "target remote localhost:3333" >> $GDB_CMD_FILE

@@ -16,49 +16,46 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Called: $0 <bsp_directory_path> <binary> [features...]
-#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
-#  - binary is the path to prefix to target binary, .elf.bin appended to this
-#    name is the raw binary format of the binary.
-#  - features is the project features string. So you can have e.g. different
-#    flash offset for bootloader 'feature'
-# 
+
+# Called with following variables set:
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - IMAGE_SLOT is the image slot to download to
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #
-if [ $# -lt 2 ]; then
+
+if [ -z "$BIN_BASENAME" ]; then
     echo "Need binary to download"
     exit 1
 fi
 
-if [ $# -lt 3 ]; then
+if [ -z "$IMAGE_SLOT" ]; then
     echo "Need image slot to download"
     exit 1
 fi
 
 IS_BOOTLOADER=0
-BASENAME=$2
-IMAGE_SLOT=$3
 #JLINK_SCRIPT=.download.jlink
 GDB_CMD_FILE=.gdb_cmds
 
-# Look for 'bootloader' from 3rd arg onwards
-shift
-shift
-while [ $# -gt 0 ]; do
-    if [ $1 = "bootloader" ]; then
-	IS_BOOTLOADER=1
+# Look for 'bootloader' in FEATURES
+for feature in $FEATURES; do
+    if [ $feature == "bootloader" ]; then
+        IS_BOOTLOADER=1
     fi
-    shift
 done
 
 if [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x0
-    FILE_NAME=$BASENAME.elf.bin
+    FILE_NAME=$BIN_BASENAME.elf.bin
 elif [ $IMAGE_SLOT -eq 0 ]; then
     FLASH_OFFSET=0x8000
-    FILE_NAME=$BASENAME.img
+    FILE_NAME=$BIN_BASENAME.img
 elif [ $IMAGE_SLOT -eq 1 ]; then
     FLASH_OFFSET=0x23800
-    FILE_NAME=$BASENAME.img
+    FILE_NAME=$BIN_BASENAME.img
 else
     echo "Invalid Image Slot Number: $IMAGE_SLOT"
     exit 1
