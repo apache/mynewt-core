@@ -78,7 +78,7 @@ int fcb_init(struct fcb *fcb);
 struct fcb_log {
     struct fcb fl_fcb;
     uint8_t fl_entries;
-} fcb_log;
+};
 
 int log_fcb_init(struct fcb_log *fcblog, struct fcb *fcb, uint16_t entries);
 
