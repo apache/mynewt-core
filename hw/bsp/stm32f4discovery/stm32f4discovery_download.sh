@@ -50,12 +50,5 @@ fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-# Extra parameters to pass to openocd
-if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-    EXTRA_CMD="-c $EXTRA_JTAG_CMD"
-else
-    EXTRA_CMD=
-fi
-
-openocd -f board/stm32f4discovery.cfg $EXTRA_CMD -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+openocd -f board/stm32f4discovery.cfg -c "$EXTRA_JTAG_CMD" -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 

@@ -76,18 +76,11 @@ if [ $USE_OPENOCD -eq 1 ]; then
 	exit 1
     fi
 
-    # Extra parameters to pass to openocd
-    if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-	EXTRA_CMD="-c $EXTRA_JTAG_CMD"
-    else
-	EXTRA_CMD=
-    fi
-
     #
     # XXXX note that this is using openocd through STM32, with openocd
     # which has been patched to support nrf52 flash.
     #
-    openocd -s $BSP_PATH -f arduino_primo.cfg $EXTRA_CMD -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+    openocd -s $BSP_PATH -f arduino_primo.cfg -c "$EXTRA_JTAG_CMD" -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 else
     echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun' & " > $GDB_CMD_FILE
     echo "target remote localhost:3333" >> $GDB_CMD_FILE

@@ -68,18 +68,11 @@ if [ ! -f $FILE_NAME ]; then
     exit 1
 fi
 
-# Extra parameters to pass to openocd
-if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-    EXTRA_CMD="-c $EXTRA_JTAG_CMD"
-else
-    EXTRA_CMD=
-fi
-
 # XXX for some reason JLinkExe overwrites flash at offset 0 when
 # downloading somewhere in the flash. So need to figure out how to tell it
 # not to do that, or report failure if gdb fails to write this file
 #
-echo "shell /bin/sh -c 'trap \"\" 2;openocd -s $BSP_PATH -f cmsis-dap.cfg $EXTRA_CMD -f nrf51.cfg' &" > $GDB_CMD_FILE
+echo "shell /bin/sh -c 'trap \"\" 2;openocd -s $BSP_PATH -f cmsis-dap.cfg -c \"$EXTRA_JTAG_CMD\" -f nrf51.cfg' &" > $GDB_CMD_FILE
 echo "target remote localhost:3333" >> $GDB_CMD_FILE
 echo "monitor reset halt" >> $GDB_CMD_FILE
 echo "monitor flash write_image erase $FILE_NAME $FLASH_OFFSET" >> $GDB_CMD_FILE
