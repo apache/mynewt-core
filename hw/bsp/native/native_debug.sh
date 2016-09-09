@@ -16,20 +16,27 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Called $0 <bsp_path> <binary> [identities ...]
-#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
-#  - binary is the path to prefix to target binary, .elf appended to name is
-#    the ELF file
-#  - identities is the project identities string.
-#
-#
-if [ $# -lt 2 ]; then
+
+# Called with following variables set:
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+#  - RESET set if target should be reset when attaching
+
+if [ -z "$BSP_PATH" ]; then
     echo "Need binary to debug"
     exit 1
 fi
 
-GDB_SCRIPT_PATH=$1/sim.gdb
-FILE_NAME=$2.elf
+if [ -z "$BIN_BASENAME" ]; then
+    echo "Need binary to debug"
+    exit 1
+fi
+
+GDB_SCRIPT_PATH=$BSP_PATH/sim.gdb
+FILE_NAME=$BIN_BASENAME.elf
 
 echo "Debugging" $FILE_NAME
 

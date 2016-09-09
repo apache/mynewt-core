@@ -16,20 +16,21 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Called: $0 <bsp_directory_path> <binary> [features...]
-#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
-#  - binary is the path to prefix to target binary, .elf.bin appended to this
-#    name is the raw binary format of the binary.
-#  - features is the project identities string. So you can have e.g. different
-#    flash offset for bootloader 'feature'
-# 
+
+# Called with following variables set:
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+#  - RESET set if target should be reset when attaching
 #
-if [ $# -lt 2 ]; then
-    echo "Need binary to download"
+if [ -z "$BIN_BASENAME" ]; then
+    echo "Need binary to debug"
     exit 1
 fi
 
-FILE_NAME=$2.elf
+FILE_NAME=$BIN_BASENAME.elf
 GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME
@@ -39,6 +40,10 @@ JLinkGDBServer -device nRF51422_xxAC -speed 4000 -if SWD -port 3333 -singlerun >
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE
+# Whether target should be reset or not
+if [ ! -z "$RESET" ]; then
+    echo "mon reset" >> $GDB_CMD_FILE
+fi
 
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
 
