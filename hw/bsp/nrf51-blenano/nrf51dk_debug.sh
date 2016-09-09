@@ -41,7 +41,7 @@ GDB_CMD_FILE=.gdb_cmds
 echo "Debugging" $FILE_NAME
 
 set -m
-openocd -s $BSP_PATH -f cmsis-dap.cfg -f nrf51.cfg -c "nrf51.cpu configure -event gdb-detach {resume;shutdown}" -c init -c halt &
+openocd -s $BSP_PATH -f cmsis-dap.cfg -f nrf51.cfg -c "nrf51.cpu configure -event gdb-detach {resume;shutdown}" -c "$EXTRA_JTAG_CMD" -c init -c halt &
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE

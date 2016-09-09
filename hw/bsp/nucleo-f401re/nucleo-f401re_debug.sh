@@ -40,7 +40,7 @@ echo "Debugging" $FILE_NAME
 # Exit openocd when gdb detaches.
 #
 set -m
-openocd -f board/st_nucleo_f4.cfg -s $BSP_PATH -c "gdb_port 3333; telnet_port 4444; stm32f4x.cpu configure -event gdb-detach {resume;shutdown}" -c init -c halt &
+openocd -f board/st_nucleo_f4.cfg -s $BSP_PATH -c "gdb_port 3333; telnet_port 4444; stm32f4x.cpu configure -event gdb-detach {resume;shutdown}" -c "$EXTRA_JTAG_CMD" -c init -c halt &
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE
