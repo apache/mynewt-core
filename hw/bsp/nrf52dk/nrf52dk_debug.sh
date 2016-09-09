@@ -48,6 +48,10 @@ JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > /dev/nu
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE
+# Whether target should be reset or not
+if [ ! -z "$RESET" ]; then
+    echo "mon reset" >> $GDB_CMD_FILE
+fi
 if [ $SPLIT_ELF_PRESENT -eq 1 ]; then
     # TODO -- this magic number 0x42000 is the location of the second image slot.
     # we should either get this from a flash map file or somehow learn this from the image itself
@@ -55,10 +59,6 @@ if [ $SPLIT_ELF_PRESENT -eq 1 ]; then
 fi
 
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-# Whether target should be reset or not
-if [ ! -z "$RESET" ]; then
-    echo "mon reset" >> $GDB_CMD_FILE
-fi
 
 rm $GDB_CMD_FILE
 
