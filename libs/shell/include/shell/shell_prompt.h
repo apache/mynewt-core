@@ -17,7 +17,9 @@
  * under the License.
  */
 
-
+#ifndef H_SHELL_PROMPT_
+#define H_SHELL_PROMPT_
 
 int shell_prompt_cmd(int argc, char **argv);
 
+#endif
