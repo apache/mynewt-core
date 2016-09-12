@@ -61,9 +61,40 @@ TEST_CASE(inet_pton_test)
     }
 }
 
+TEST_CASE(inet_ntop_test)
+{
+    const char *rstr;
+    char addr[48];
+    struct test_vec {
+        char *str;
+        uint8_t cmp[4];
+    };
+    struct test_vec ok_vec[] = {
+        { "1.1.1.1", { 1, 1, 1, 1 } },
+        { "1.2.3.4", { 1, 2, 3, 4 } },
+        { "255.1.255.255", { 255, 1, 255, 255 } },
+        { "1.2.5.6", { 1, 2, 5, 6 } }
+    };
+    int i;
+
+    for (i = 0; i < sizeof(ok_vec) / sizeof(ok_vec[0]); i++) {
+        memset(addr, 0xa5, sizeof(addr));
+        rstr = mn_inet_ntop(MN_PF_INET, ok_vec[i].cmp, addr, sizeof(addr));
+        TEST_ASSERT(rstr);
+        TEST_ASSERT(!strcmp(ok_vec[i].str, addr));
+    }
+    rstr = mn_inet_ntop(MN_PF_INET, ok_vec[0].cmp, addr, 1);
+    TEST_ASSERT(rstr == NULL);
+
+    /* does not have space to null terminate */
+    rstr = mn_inet_ntop(MN_PF_INET, ok_vec[0].cmp, addr, 7);
+    TEST_ASSERT(rstr == NULL);
+}
+
 TEST_SUITE(mn_socket_test_all)
 {
     inet_pton_test();
+    inet_ntop_test();
 }
 
 #ifdef MYNEWT_SELFTEST

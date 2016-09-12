@@ -17,6 +17,7 @@
  * under the License.
  */
 #include <ctype.h>
+#include <stdio.h>
 #include <os/queue.h>
 #include "mn_socket/mn_socket.h"
 
@@ -53,5 +54,24 @@ mn_inet_pton(int af, const char *src, void *dst)
         return 1;
     } else {
         return MN_EAFNOSUPPORT;
+    }
+}
+
+const char *
+mn_inet_ntop(int af, const void *src_v, void *dst, int len)
+{
+    const unsigned char *src = src_v;
+    int rc;
+
+    if (af == MN_PF_INET) {
+        rc = snprintf(dst, len, "%u.%u.%u.%u",
+          src[0], src[1], src[2], src[3]);
+        if (rc >= len) {
+            return NULL;
+        } else {
+            return dst;
+        }
+    } else {
+        return NULL;
     }
 }

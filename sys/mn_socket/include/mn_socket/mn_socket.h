@@ -50,6 +50,16 @@
 #define MN_EAGAIN               10
 #define MN_EUNKNOWN             11
 
+/*
+ * Multicast macros
+ */
+#define MN_IN_MULTICAST(a)                                              \
+    (((a) & 0xf0000000) == 0xe0000000)
+
+/* XXXX notyet */
+#define MN_IN6_IS_ADDR_MULTICAST(a)                                     \
+    0
+
 struct mn_socket;
 struct mn_socket_ops;
 struct mn_sock_cb;
@@ -142,5 +152,6 @@ int mn_close(struct mn_socket *);
  * Address conversion
  */
 int mn_inet_pton(int af, const char *src, void *dst);
+const char *mn_inet_ntop(int af, const void *src, void *dst, int len);
 
 #endif /* __SYS_MN_SOCKET_H_ */
