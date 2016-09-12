@@ -113,7 +113,7 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
-#define BLETEST_CFG_ADV_ADDR_RES_EN     (1)
+#define BLETEST_CFG_ADV_ADDR_RES_EN     (0)
 
 /* Scan config */
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
@@ -170,6 +170,7 @@ uint16_t g_bletest_completed_pkts;
 uint16_t g_bletest_outstanding_pkts;
 uint16_t g_bletest_ltk_reply_handle;
 uint32_t g_bletest_hw_id[4];
+struct hci_create_conn g_cc;
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -482,11 +483,10 @@ bletest_init_initiator(void)
 {
     int rc;
     uint8_t rand_addr[BLE_DEV_ADDR_LEN];
-    struct hci_create_conn cc;
     struct hci_create_conn *hcc;
 
     /* Enable initiating */
-    hcc = &cc;
+    hcc = &g_cc;
     hcc->conn_itvl_max = BLETEST_CFG_CONN_ITVL;
     hcc->conn_itvl_min = BLETEST_CFG_CONN_ITVL;
     hcc->conn_latency = BLETEST_CFG_SLAVE_LATENCY;
@@ -529,8 +529,7 @@ bletest_init_initiator(void)
         }
 #endif
 
-    rc = bletest_hci_le_create_connection(hcc);
-    assert(rc == 0);
+    bletest_hci_le_create_connection(hcc);
 }
 
 void
@@ -572,6 +571,10 @@ bletest_execute_initiator(void)
                     g_dev_addr[5] += 1;
                     bletest_init_initiator();
                 }
+            }
+        } else {
+            if (ble_ll_scan_enabled() == 0) {
+                bletest_hci_le_create_connection(&g_cc);
             }
         }
     } else {
@@ -716,7 +719,12 @@ bletest_execute_advertiser(void)
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
                 bletest_init_advertising();
-                rc = bletest_hci_le_set_adv_enable(1);
+                bletest_hci_le_set_adv_enable(1);
+            }
+        } else {
+            /* If we failed to start advertising we should keep trying */
+            if (ble_ll_adv_enabled() == 0) {
+                bletest_hci_le_set_adv_enable(1);
             }
         }
     }
