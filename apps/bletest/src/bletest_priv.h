@@ -20,6 +20,10 @@
 #ifndef H_BLETEST_PRIV_
 #define H_BLETEST_PRIV_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void bletest_send_conn_update(uint16_t handle);
 
 #if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
@@ -62,5 +66,9 @@ int bletest_hci_le_add_resolv_list(uint8_t *local_irk, uint8_t *peer_irk,
                                    uint8_t *peer_ident_addr, uint8_t addr_type);
 int bletest_hci_le_enable_resolv_list(uint8_t enable);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* H_BLETEST_PRIV_*/

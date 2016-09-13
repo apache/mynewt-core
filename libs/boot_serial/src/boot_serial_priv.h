@@ -20,6 +20,10 @@
 #ifndef __BOOTUTIL_SERIAL_PRIV_H__
 #define __BOOTUTIL_SERIAL_PRIV_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * From shell.h
  */
@@ -57,5 +61,9 @@ struct nmgr_hdr {
 
 
 void boot_serial_input(char *buf, int len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*  __BOOTUTIL_SERIAL_PRIV_H__ */

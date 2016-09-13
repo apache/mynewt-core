@@ -31,6 +31,10 @@
 #ifndef NRF51_DEPRECATED_H
 #define NRF51_DEPRECATED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region */
 
 /* This file is given to prevent your SW from not compiling with the updates made to nrf51.h and 
@@ -433,6 +437,10 @@
 
 
 /*lint --flb "Leave library region" */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF51_DEPRECATED_H */
 

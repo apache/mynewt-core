@@ -30,6 +30,10 @@
 #ifndef __NRF52_BITS_H
 #define __NRF52_BITS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region" */
 
 /* Peripheral: AAR */
@@ -12137,4 +12141,8 @@
 
 
 /*lint --flb "Leave library region" */
+#ifdef __cplusplus
+}
+#endif
+
 #endif

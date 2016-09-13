@@ -19,11 +19,19 @@
 #ifndef __MCU_SIM_H__
 #define __MCU_SIM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OS_TICKS_PER_SEC    (1000)
 
 extern char *native_flash_file;
 extern char *native_uart_log_file;
 
 void mcu_sim_parse_args(int argc, char **argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MCU_SIM_H__ */

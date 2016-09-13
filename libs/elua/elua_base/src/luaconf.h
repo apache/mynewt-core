@@ -11,6 +11,10 @@
 #include <limits.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 ** ==================================================================
 ** Search for "@@" to find all configurable definitions.
@@ -886,6 +890,10 @@ typedef long int32_t;
 
 #if LUA_OPTIMIZE_MEMORY == 2 && defined(LUA_USE_POPEN)
 #error "Pipes not supported in aggresive optimization mode (LUA_OPTIMIZE_MEMORY=2)"
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

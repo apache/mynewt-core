@@ -23,6 +23,10 @@
 #include <stdlib.h>
 //#include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
@@ -95,5 +99,9 @@ void os_init_idle_task(void);
 #include "os/os_sem.h"
 #include "os/os_mempool.h"
 #include "os/os_mbuf.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_H */

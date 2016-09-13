@@ -11,6 +11,10 @@
 #include "lstate.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define pcRel(pc, p)	(cast(int, (pc) - (p)->code) - 1)
 
 #define getline(f,pc)	(((f)->lineinfo) ? (f)->lineinfo[pc] : 0)
@@ -29,5 +33,9 @@ LUAI_FUNC void luaG_runerror (lua_State *L, const char *fmt, ...);
 LUAI_FUNC void luaG_errormsg (lua_State *L);
 LUAI_FUNC int luaG_checkcode (const Proto *pt);
 LUAI_FUNC int luaG_checkopenop (Instruction i);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

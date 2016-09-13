@@ -11,6 +11,10 @@
 #include "lua.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Key to file-handle type */
 #define LUA_FILEHANDLE		"FILE*"
 
@@ -49,5 +53,9 @@ LUALIB_API void (luaL_openlibs) (lua_State *L);
 #define lua_assert(x)	((void)0)
 #endif
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

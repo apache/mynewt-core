@@ -13,6 +13,10 @@
 #include "ltm.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define tostring(L,o) ((ttype(o) == LUA_TSTRING) || (luaV_tostring(L, o)))
 
 #define tonumber(o,n)	(ttype(o) == LUA_TNUMBER || \
@@ -32,5 +36,9 @@ LUAI_FUNC void luaV_settable (lua_State *L, const TValue *t, TValue *key,
                                             StkId val);
 LUAI_FUNC void luaV_execute (lua_State *L, int nexeccalls);
 LUAI_FUNC void luaV_concat (lua_State *L, int total, int last);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -31,6 +31,10 @@
 #ifndef NRF_H
 #define NRF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(_WIN32)         
     /* Do not include nrf51 specific files when building for PC host */
 #elif defined(__unix)       
@@ -55,6 +59,10 @@
     #include "compiler_abstraction.h"
 
 #endif /* _WIN32 || __unix || __APPLE__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_H */
 

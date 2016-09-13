@@ -20,6 +20,10 @@
 #ifndef H_NIMBLE_OPT_
 #define H_NIMBLE_OPT_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** HOST / CONTROLLER: Maximum number of concurrent connections. */
 
 #ifndef NIMBLE_OPT_MAX_CONNECTIONS
@@ -413,5 +417,9 @@
 
 /* Include automatically-generated settings. */
 #include "nimble/nimble_opt_auto.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

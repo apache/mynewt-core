@@ -8,6 +8,10 @@
 #include "lobject.h"
 #include "luaconf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Macros one can use to define rotable entries */
 #ifndef LUA_PACK_VALUE
 #define LRO_FUNCVAL(v)  {{.p = v}, LUA_TLIGHTFUNCTION}
@@ -72,6 +76,10 @@ void* luaR_getmeta(void *data);
 int luaR_isrotable(void *p);
 #else
 #define luaR_isrotable(p)     (0)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

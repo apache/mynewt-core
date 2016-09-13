@@ -20,6 +20,10 @@
 #ifndef __UART_BITBANG_API_H__
 #define __UART_BITBANG_API_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int uart_bitbang_config(int port, int32_t baudrate, uint8_t databits,
   uint8_t stopbits, enum hal_uart_parity parity,
   enum hal_uart_flow_ctl flow_ctl);
@@ -29,5 +33,9 @@ void uart_bitbang_start_rx(int port);
 void uart_bitbang_start_tx(int port);
 void uart_bitbang_blocking_tx(int port, uint8_t data);
 int uart_bitbang_close(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

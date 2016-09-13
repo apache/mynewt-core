@@ -20,8 +20,16 @@
 #ifndef __WIFI_PRIV_H__
 #define __WIFI_PRIV_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef SHELL_PRESENT
 extern struct shell_cmd wifi_cli_cmd;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __WIFI_PRIV_H__ */

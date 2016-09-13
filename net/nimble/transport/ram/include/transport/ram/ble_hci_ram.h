@@ -3,6 +3,10 @@
 
 #include "nimble/ble_hci_trans.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ble_hci_ram_cfg {
     /** Number of high-priority event buffers. */
     uint16_t num_evt_hi_bufs;
@@ -26,5 +30,9 @@ struct ble_hci_ram_cfg {
 extern const struct ble_hci_ram_cfg ble_hci_ram_cfg_dflt;
 
 int ble_hci_ram_init(const struct ble_hci_ram_cfg *cfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -22,6 +22,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IMAGE_MAGIC                 0x96f3b83c
 #define IMAGE_MAGIC_NONE            0xffffffff
 
@@ -78,5 +82,9 @@ _Static_assert(sizeof(struct image_header) == IMAGE_HEADER_SIZE,
 
 int bootutil_img_validate(struct image_header *hdr, uint8_t flash_id,
   uint32_t addr, uint8_t *tmp_buf, uint32_t tmp_buf_sz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -20,9 +20,17 @@
 #ifndef _NEWTMGR_BLE_H_
 #define _NEWTMGR_BLE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int
 nmgr_ble_proc_mq_evt(struct os_event *ev);
 int
 nmgr_ble_gatt_svr_init(struct os_eventq *evq, struct ble_hs_cfg *cfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NETMGR_H */

@@ -22,6 +22,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IMGMGR_MAX_IMGS		2
 
 #define IMGMGR_HASH_STR		48
@@ -107,5 +111,9 @@ int imgr_core_erase(struct nmgr_jbuf *);
 
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __IMGMGR_PRIV_H */

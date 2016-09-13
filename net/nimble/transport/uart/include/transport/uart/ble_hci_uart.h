@@ -1,6 +1,10 @@
 #ifndef H_BLE_HCI_UART_
 #define H_BLE_HCI_UART_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ble_hci_uart_cfg {
     uint32_t baud;
     uint16_t num_evt_bufs;
@@ -15,5 +19,9 @@ struct ble_hci_uart_cfg {
 extern const struct ble_hci_uart_cfg ble_hci_uart_cfg_dflt;
 
 int ble_hci_uart_init(const struct ble_hci_uart_cfg *cfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

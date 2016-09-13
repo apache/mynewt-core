@@ -13,6 +13,10 @@
 #include "lparser.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 ** Marks the end of a patch list. It is an invalid value both as an absolute
 ** address, and as a list link (would link an element to itself).
@@ -72,5 +76,9 @@ LUAI_FUNC void luaK_infix (FuncState *fs, BinOpr op, expdesc *v);
 LUAI_FUNC void luaK_posfix (FuncState *fs, BinOpr op, expdesc *v1, expdesc *v2);
 LUAI_FUNC void luaK_setlist (FuncState *fs, int base, int nelems, int tostore);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

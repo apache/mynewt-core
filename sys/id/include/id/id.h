@@ -20,6 +20,10 @@
 #ifndef __SYS_ID_H__
 #define __SYS_ID_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Maximum configurable serial number.
  */
@@ -29,5 +33,9 @@
  * Initialize manufacturing info storage/reporting.
  */
 int id_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

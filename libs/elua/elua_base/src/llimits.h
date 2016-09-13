@@ -15,6 +15,10 @@
 #include "lua.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef LUAI_UINT32 lu_int32;
 
 typedef LUAI_UMEM lu_mem;
@@ -123,6 +127,10 @@ typedef lu_int32 Instruction;
 #define condhardstacktests(x)	((void)0)
 #else
 #define condhardstacktests(x)	x
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

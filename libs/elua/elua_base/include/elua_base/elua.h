@@ -20,8 +20,16 @@
 #ifndef __ELUA_BASE_H__
 #define __ELUA_BASE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int lua_main( int argc, char **argv );
 
 int lua_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ELUA_BASE_H__ */

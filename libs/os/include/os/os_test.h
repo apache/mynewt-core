@@ -20,6 +20,14 @@
 #ifndef H_OS_TEST_
 #define H_OS_TEST_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int os_test_all(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

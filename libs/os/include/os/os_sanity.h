@@ -25,6 +25,10 @@
 #include "os/os_time.h"
 #include "os/queue.h" 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_sanity_check;
 typedef int (*os_sanity_check_func_t)(struct os_sanity_check *, void *);
 
@@ -50,5 +54,9 @@ int os_sanity_task_checkin(struct os_task *);
 int os_sanity_check_init(struct os_sanity_check *);
 int os_sanity_check_register(struct os_sanity_check *);
 int os_sanity_check_reset(struct os_sanity_check *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_SANITY_H */

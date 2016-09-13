@@ -19,6 +19,10 @@
 #ifndef __NETMGR_PRIV_H_
 #define __NETMGR_PRIV_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern struct os_eventq g_nmgr_evq;
 
 int nmgr_def_taskstat_read(struct nmgr_jbuf *);
@@ -27,5 +31,9 @@ int nmgr_def_logs_read(struct nmgr_jbuf *);
 int nmgr_datetime_get(struct nmgr_jbuf *);
 int nmgr_datetime_set(struct nmgr_jbuf *);
 int nmgr_reset(struct nmgr_jbuf *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

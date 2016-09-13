@@ -12,6 +12,10 @@
 
 #if (MIN_OPT_LEVEL > 0) && (LUA_OPTIMIZE_MEMORY >= MIN_OPT_LEVEL)
 #define LUA_REG_TYPE                luaR_entry 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LSTRKEY                     LRO_STRKEY
 #define LNUMKEY                     LRO_NUMKEY
 #define LNILKEY                     LRO_NILKEY
@@ -30,5 +34,9 @@
 #define LREGISTER(L, name, table)\
   luaL_register(L, name, table);\
   return 1
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

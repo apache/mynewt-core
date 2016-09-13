@@ -5,6 +5,10 @@
 
 #include "lstate.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // EGC operations modes
 #define EGC_NOT_ACTIVE        0   // EGC disabled
 #define EGC_ON_ALLOC_FAILURE  1   // run EGC on allocation failure
@@ -12,6 +16,10 @@
 #define EGC_ALWAYS            4   // always run EGC before an allocation
 
 void legc_set_mode(lua_State *L, int mode, unsigned limit);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

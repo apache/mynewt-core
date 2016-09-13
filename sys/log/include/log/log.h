@@ -24,6 +24,10 @@
 
 #include <os/queue.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Global log info */
 struct log_info {
     int64_t li_timestamp;
@@ -194,6 +198,10 @@ int log_fcb_handler_init(struct log_handler *, struct fcb *,
 /* Private */
 #ifdef NEWTMGR_PRESENT
 int log_nmgr_register_group(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __LOG_H__ */

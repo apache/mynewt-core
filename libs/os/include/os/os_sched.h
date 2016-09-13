@@ -22,6 +22,10 @@
 
 #include "os/os_task.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void os_sched_ctx_sw_hook(struct os_task *);
 struct os_task *os_sched_get_current_task(void);
 void os_sched_set_current_task(struct os_task *);
@@ -33,5 +37,9 @@ int os_sched_sleep(struct os_task *, os_time_t nticks);
 int os_sched_wakeup(struct os_task *);
 void os_sched_resort(struct os_task *);
 os_time_t os_sched_wakeup_ticks(os_time_t now);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_SCHED_H */

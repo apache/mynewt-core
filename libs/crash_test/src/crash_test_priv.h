@@ -19,6 +19,10 @@
 #ifndef __CRASH_TEST_PRIV_H__
 #define __CRASH_TEST_PRIV_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef SHELL_PRESENT
 extern struct shell_cmd crash_cmd_struct;
 #endif
@@ -27,5 +31,9 @@ extern struct nmgr_group crash_test_nmgr_group;
 #endif
 
 int crash_device(char *how);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CRASH_TEST_PRIV_H__ */

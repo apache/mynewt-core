@@ -22,6 +22,10 @@
 #include <os/queue.h>
 #include <os/os_eventq.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* A task packet queue element */
 struct tpq_elem {
     STAILQ_ENTRY(tpq_elem) tpq_next;
@@ -63,5 +67,9 @@ struct tpq_elem *tpq_get(struct tpq *tpq);
  * @return int 
  */
 void tpq_init(struct tpq *tpq, uint8_t ev_type, void *ev_arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UTIL_TPQ_H__ */

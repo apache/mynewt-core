@@ -12,6 +12,10 @@
 #include "lobject.h"
 #include "lzio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint32_t strsize_t;
 
 /* info about target machine for cross-compilation */
@@ -56,5 +60,9 @@ LUAI_FUNC void luaU_print (const Proto* f, int full);
 
 /* target lua_Number is integral but a constant is non-integer */
 #define LUA_ERR_CC_NOTINTEGER 102
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

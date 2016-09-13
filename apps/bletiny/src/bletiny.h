@@ -26,6 +26,10 @@
 #include "os/queue.h"
 
 #include "host/ble_gatt.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ble_gap_white_entry;
 struct ble_hs_adv_fields;
 struct ble_gap_upd_params;
@@ -203,5 +207,9 @@ uint16_t chr_end_handle(const struct bletiny_svc *svc,
                         const struct bletiny_chr *chr);
 int chr_is_empty(const struct bletiny_svc *svc, const struct bletiny_chr *chr);
 void print_conn_desc(const struct ble_gap_conn_desc *desc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

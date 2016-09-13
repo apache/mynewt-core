@@ -23,6 +23,10 @@
 #include "os/queue.h"
 #include "os/os_eventq.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * A mbuf pool from which to allocate mbufs. This contains a pointer to the os 
  * mempool to allocate mbufs out of, the total number of elements in the pool, 
@@ -290,5 +294,9 @@ int os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len);
 void os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second);
 void *os_mbuf_extend(struct os_mbuf *om, uint16_t len);
 struct os_mbuf *os_mbuf_pullup(struct os_mbuf *om, uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_MBUF_H */ 

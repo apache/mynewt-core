@@ -22,6 +22,10 @@
 
 #include "nimble/nimble_opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /***
  * Automatic options.
  * 
@@ -101,6 +105,10 @@
 #if NIMBLE_OPT_SM_SC
 #undef NIMBLE_OPT_SM
 #define NIMBLE_OPT_SM                           1
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

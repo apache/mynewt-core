@@ -34,6 +34,10 @@
 #include "host/ble_sm.h"
 #include "host/ble_store.h"
 #include "host/ble_uuid.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_eventq;
 struct os_event;
 
@@ -243,5 +247,9 @@ extern const struct ble_hs_cfg ble_hs_cfg_dflt;
 int ble_hs_synced(void);
 int ble_hs_start(void);
 int ble_hs_init(struct os_eventq *app_evq, struct ble_hs_cfg *cfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

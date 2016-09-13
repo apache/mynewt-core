@@ -21,6 +21,10 @@
 #ifndef _OS_CALLOUT_H
 #define _OS_CALLOUT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OS_CALLOUT_F_QUEUED (0x01)
 
 struct os_callout {
@@ -53,6 +57,10 @@ os_callout_queued(struct os_callout *c)
 {
     return c->c_next.tqe_prev != NULL;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_CALLOUT_H */
 

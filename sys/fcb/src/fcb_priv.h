@@ -19,6 +19,10 @@
 #ifndef __SYS_FCB_PRIV_H_
 #define __SYS_FCB_PRIV_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FCB_CRC_SZ	sizeof(uint8_t)
 #define FCB_TMP_BUF_SZ	32
 
@@ -53,5 +57,9 @@ int fcb_elem_crc8(struct fcb *, struct fcb_entry *loc, uint8_t *crc8p);
 int fcb_sector_hdr_init(struct fcb *, struct flash_area *fap, uint16_t id);
 int fcb_sector_hdr_read(struct fcb *, struct flash_area *fap,
   struct fcb_disk_area *fdap);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

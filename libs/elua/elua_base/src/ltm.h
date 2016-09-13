@@ -11,6 +11,10 @@
 #include "lobject.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 * WARNING: if you change the order of this enumeration,
 * grep "ORDER TM"
@@ -50,5 +54,9 @@ LUAI_FUNC const TValue *luaT_gettm (Table *events, TMS event, TString *ename);
 LUAI_FUNC const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o,
                                                        TMS event);
 LUAI_FUNC void luaT_init (lua_State *L);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

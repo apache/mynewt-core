@@ -19,11 +19,19 @@
 #ifndef __FS_PRIV_H__
 #define __FS_PRIV_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct fs_ops;
 extern const struct fs_ops *fs_root_ops;
 
 #ifdef SHELL_PRESENT
 void fs_cli_init(void);
 #endif /* SHELL_PRESENT */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

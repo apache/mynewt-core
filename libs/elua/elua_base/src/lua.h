@@ -16,6 +16,10 @@
 #include "luaconf.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LUA_VERSION	"Lua 5.1"
 #define LUA_RELEASE	"Lua 5.1.4"
 #define LUA_VERSION_NUM	501
@@ -395,5 +399,9 @@ int lua_main( int argc, char **argv );
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

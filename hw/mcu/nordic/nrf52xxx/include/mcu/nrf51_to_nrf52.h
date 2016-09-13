@@ -31,6 +31,10 @@
 #ifndef NRF51_TO_NRF52_H
 #define NRF51_TO_NRF52_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region */
 
 /* This file is given to prevent your SW from not compiling with the name changes between nRF51 and nRF52 devices. 
@@ -930,6 +934,10 @@
 
 
 /*lint --flb "Leave library region" */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF51_TO_NRF52_H */
 

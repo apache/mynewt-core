@@ -5,6 +5,10 @@
 #ifndef _ASSERT_H
 #define _ASSERT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef NDEBUG
 
 /*
@@ -23,6 +27,10 @@ extern void __assert_func(const char *, int, const char *, const char *)
 
 #define assert(x) ((x) ? (void)0 : __assert_func(__FILE__, __LINE__, NULL, NULL))
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif				/* _ASSERT_H */

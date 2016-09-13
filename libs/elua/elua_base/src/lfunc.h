@@ -12,6 +12,10 @@
 
 #include "lgc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define sizeCclosure(n)	(cast(int, sizeof(CClosure)) + \
                          cast(int, sizeof(TValue)*((n)-1)))
 
@@ -33,5 +37,9 @@ LUAI_FUNC void luaF_freeupval (lua_State *L, UpVal *uv);
 LUAI_FUNC const char *luaF_getlocalname (const Proto *func, int local_number,
                                          int pc);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

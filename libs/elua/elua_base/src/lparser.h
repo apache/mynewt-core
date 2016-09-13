@@ -12,6 +12,10 @@
 #include "lzio.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 ** Expression descriptor
 */
@@ -78,5 +82,9 @@ typedef struct FuncState {
 LUAI_FUNC Proto *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
                                             const char *name);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

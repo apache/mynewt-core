@@ -11,6 +11,10 @@
 #include "lzio.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FIRST_RESERVED	257
 
 /* maximum length of a reserved word */
@@ -77,5 +81,9 @@ LUAI_FUNC void luaX_lexerror (LexState *ls, const char *msg, int token);
 LUAI_FUNC void luaX_syntaxerror (LexState *ls, const char *s);
 LUAI_FUNC const char *luaX_token2str (LexState *ls, int token);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
