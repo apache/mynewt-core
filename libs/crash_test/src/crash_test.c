@@ -17,20 +17,22 @@
  * under the License.
  */
 #include <inttypes.h>
-#include <os/os.h>
-#include <console/console.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
+#include "syscfg/syscfg.h"
+#include "os/os.h"
+#include "console/console.h"
+
 #include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
-#ifdef SHELL_PRESENT
-#include <shell/shell.h>
+#if MYNEWT_VAL(CRASH_TEST_CLI)
+#include "shell/shell.h"
 #endif
-#ifdef NEWTMGR_PRESENT
-#include <newtmgr/newtmgr.h>
+#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
+#include "newtmgr/newtmgr.h"
 #endif
 
 int
@@ -60,10 +62,10 @@ crash_device(char *how)
 int
 crash_test_init(void)
 {
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(CRASH_TEST_CLI)
     shell_cmd_register(&crash_cmd_struct);
 #endif
-#ifdef NEWTMGR_PRESENT
+#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
     nmgr_group_register(&crash_test_nmgr_group);
 #endif
     return 0;

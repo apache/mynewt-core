@@ -26,8 +26,6 @@
 extern "C" {
 #endif
 
-#include <hal/hal_adc.h>
-    
 /* this is a native build and these pins are not real.  They are used only
  * for simulated HAL devices */
     

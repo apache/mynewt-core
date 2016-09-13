@@ -27,18 +27,6 @@ pkg.keywords:
 pkg.req_apis:
     - ADC_HW_IMPL
 
-pkg.feature_blacklist:
-    ".*": SHELL
-
-pkg.feature_whitelist:
-    ".*newtmgr.*": SHELL
-
-pkg.deps.ADC_NRF51:
-    - drivers/adc/adc_nrf51
-
-pkg.deps.ADC_NRF52:
-    - drivers/adc/adc_nrf52
-
 pkg.deps:
     - libs/newtmgr
     - hw/mcu/nordic

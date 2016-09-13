@@ -16,12 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef NEWTMGR_PRESENT
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CONFIG_NEWTMGR)
 
 #include "config/config.h"
 #include "config_priv.h"
-
-#include <json/json.h>
+#include "json/json.h"
 
 int
 conf_json_line(struct json_buffer *jb, char *name, int nlen, char *value,

@@ -27,16 +27,16 @@
 #include <hal/hal_flash.h>
 #include <config/config.h>
 #include <config/config_file.h>
-#ifdef NFFS_PRESENT
+#if MYNEWT_VAL(BOOT_NFFS)
 #include <fs/fs.h>
 #include <nffs/nffs.h>
-#elif FCB_PRESENT
+#elif MYNEWT_VAL(BOOT_FCB)
 #include <fcb/fcb.h>
 #include <config/config_fcb.h>
 #else
 #error "Need NFFS or FCB for config storage"
 #endif
-#ifdef BOOT_SERIAL
+#ifdef MYNEWT_VAL(BOOT_SERIAL)
 #include <hal/hal_gpio.h>
 #include <boot_serial/boot_serial.h>
 #endif
@@ -58,7 +58,7 @@ static struct os_task boot_ser_task;
 static os_stack_t boot_ser_stack[BOOT_SER_STACK_SZ];
 #endif
 
-#ifdef NFFS_PRESENT
+#if MYNEWT_VAL(BOOT_NFFS)
 #define MY_CONFIG_FILE "/cfg/run"
 
 static struct conf_file my_conf = {
@@ -78,7 +78,7 @@ setup_for_nffs(void)
      * be readable.
      */
     cnt = NFFS_AREA_MAX;
-    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, nffs_descs);
+    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, nffs_descs);
     assert(rc == 0);
 
     /*
@@ -167,14 +167,14 @@ main(void)
 
     conf_init();
 
-#ifdef NFFS_PRESENT
+#if MYNEWT_VAL(BOOT_NFFS)
     setup_for_nffs();
-#elif FCB_PRESENT
+#elif MYNEWT_VAL(BOOT_FCB)
     setup_for_fcb();
 #endif
     bootutil_cfg_register();
 
-#ifdef BOOT_SERIAL
+#if MYNEWT_VAL(BOOT_SERIAL)
     /*
      * Configure a GPIO as input, and compare it against expected value.
      * If it matches, await for download commands from serial.

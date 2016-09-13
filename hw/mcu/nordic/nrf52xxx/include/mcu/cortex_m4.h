@@ -20,9 +20,10 @@
 #ifndef __MCU_CORTEX_M4_H__
 #define __MCU_CORTEX_M4_H__
 
+#include "syscfg/syscfg.h"
 #include "nrf52.h"
 
-#if defined(BSP_HAS_32768_XTAL)
+#if MYNEWT_VAL(XTAL_32768)
 #define OS_TICKS_PER_SEC    (128)
 #else
 #define OS_TICKS_PER_SEC    (1000)

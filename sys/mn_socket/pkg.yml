@@ -28,4 +28,3 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - libs/util
-    - libs/testutil

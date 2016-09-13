@@ -16,14 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef COREDUMP_PRESENT
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(IMGMGR_COREDUMP)
 
 #include <limits.h>
 
-#include <hal/flash_map.h>
-#include <newtmgr/newtmgr.h>
-#include <coredump/coredump.h>
-#include <util/base64.h>
+#include "hal/flash_map.h"
+#include "newtmgr/newtmgr.h"
+#include "coredump/coredump.h"
+#include "util/base64.h"
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"

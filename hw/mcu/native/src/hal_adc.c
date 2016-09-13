@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#if 0
 #include <fcntl.h>
 #include <unistd.h>
 #include <inttypes.h>
@@ -23,7 +24,6 @@
 #include <hal/hal_adc.h>
 #include <hal/hal_adc_int.h>
 #include <mcu/mcu_hal.h>
-#if 1
 
 
 /* forwards for the const structure below */

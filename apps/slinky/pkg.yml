@@ -38,11 +38,5 @@ pkg.deps:
     - sys/log
     - sys/stats
 
-pkg.cflags:
-    - "-DSTATS_NAME_ENABLE=1"
-
-pkg.cflags.NFFS:
-    - "-DNFFS_PRESENT"
-
-pkg.cflags.FCB:
-    - "-DFCB_PRESENT"
+pkg.syscfg_vals:
+    STATS_NAMES: 1

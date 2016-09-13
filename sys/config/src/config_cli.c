@@ -19,10 +19,11 @@
 
 #include <stddef.h>
 
+#include "syscfg/syscfg.h"
 #include "config/config.h"
 #include "config_priv.h"
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(CONFIG_CLI)
 #include <string.h>
 
 #include <shell/shell.h>

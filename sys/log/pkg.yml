@@ -27,18 +27,30 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - libs/util
-    - libs/testutil
-pkg.deps.SHELL:
-    - libs/shell
-pkg.deps.NEWTMGR:
+pkg.deps.LOG_NEWTMGR:
     - libs/newtmgr
-pkg.deps.FCB:
+pkg.deps.LOG_FCB:
     - hw/hal
     - sys/fcb
-pkg.deps.TEST:
-    - sys/fcb
-pkg.req_apis.SHELL:
-    - console
-pkg.cflags.SHELL: -DSHELL_PRESENT
-pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
-pkg.cflags.FCB: -DFCB_PRESENT
+pkg.deps.LOG_CLI:
+    - libs/shell
+
+pkg.init_function: log_init
+pkg.init_stage: 1
+
+pkg.syscfg_defs:
+    LOG_LEVEL:
+        description: 'TBD'
+        value: 0
+
+    LOG_FCB:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_SYS_FCB'
+
+    LOG_CLI:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_SHELL'
+
+    LOG_NEWTMGR:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_NEWTMGR'

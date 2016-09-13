@@ -33,4 +33,6 @@ extern struct os_task_stailq g_os_task_list;
 extern struct os_task *g_current_task;
 extern struct os_callout_list g_callout_list;
 
+void os_msys_init(void);
+
 #endif

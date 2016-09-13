@@ -19,8 +19,9 @@
 #ifndef __UTIL_STATS_H__ 
 #define __UTIL_STATS_H__ 
 
-#include <os/queue.h>
 #include <stdint.h>
+#include "syscfg/syscfg.h"
+#include "os/queue.h"
 
 struct stats_name_map {
     uint16_t snm_off;
@@ -32,7 +33,7 @@ struct stats_hdr {
     uint8_t s_size;
     uint8_t s_cnt;
     uint16_t s_pad1;
-#ifdef STATS_NAME_ENABLE
+#if MYNEWT_VAL(STATS_NAMES)
     struct stats_name_map *s_map;
     int s_map_cnt;
 #endif
@@ -72,7 +73,7 @@ STATS_SECT_DECL(__name) {                   \
 #define STATS_INCN(__sectvarname, __var, __n)  \
     ((__sectvarname).STATS_SECT_VAR(__var) += (__n))
 
-#ifdef STATS_NAME_ENABLE
+#if MYNEWT_VAL(STATS_NAMES)
 
 #define STATS_NAME_MAP_NAME(__sectname) g_stats_map_ ## __sectname
 
@@ -90,17 +91,16 @@ struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
     &(STATS_NAME_MAP_NAME(__name)[0]),                                      \
     (sizeof(STATS_NAME_MAP_NAME(__name)) / sizeof(struct stats_name_map))
 
-#else /* STATS_NAME_ENABLE */
+#else /* MYNEWT_VAL(STATS_NAME) */
 
 #define STATS_NAME_START(__name)
 #define STATS_NAME(__name, __entry)
 #define STATS_NAME_END(__name)
 #define STATS_NAME_INIT_PARMS(__name) NULL, 0
 
-#endif /* STATS_NAME_ENABLE */
+#endif /* MYNEWT_VAL(STATS_NAME) */
 
-int stats_module_init(void);
-void stats_module_reset(void);
+void stats_module_init(void);
 int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt, 
     struct stats_name_map *map, uint8_t map_cnt);
 int stats_register(char *name, struct stats_hdr *shdr);
@@ -118,10 +118,10 @@ int stats_group_walk(stats_group_walk_func_t, void *);
 struct stats_hdr *stats_group_find(char *name);
 
 /* Private */
-#ifdef NEWTMGR_PRESENT 
+#if MYNEWT_VAL(STATS_NEWTMGR)
 int stats_nmgr_register_group(void);
 #endif 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(STATS_CLI)
 int stats_shell_register(void);
 #endif
 

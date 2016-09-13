@@ -16,7 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef SHELL_PRESENT
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(WIFI_MGMT_CLI)
+
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>

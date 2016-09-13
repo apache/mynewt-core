@@ -1821,7 +1821,7 @@ cmd_wl(int argc, char **argv)
 static int
 cmd_write(int argc, char **argv)
 {
-    struct ble_gatt_attr attrs[NIMBLE_OPT(GATT_WRITE_MAX_ATTRS)] = { { 0 } };
+    struct ble_gatt_attr attrs[MYNEWT_VAL(BLE_GATT_WRITE_MAX_ATTRS)] = { { 0 } };
     uint16_t attr_handle;
     uint16_t conn_handle;
     int total_attr_len;
@@ -2162,7 +2162,7 @@ cmd_keystore(int argc, char **argv)
 static int
 cmd_passkey(int argc, char **argv)
 {
-#if !NIMBLE_OPT(SM)
+#if !NIMBLE_BLE_SM
     return BLE_HS_ENOTSUP;
 #endif
 

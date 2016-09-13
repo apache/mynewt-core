@@ -26,15 +26,24 @@ pkg.keywords:
     - bootloader
 
 pkg.deps: 
-    - libs/os 
-    - libs/testutil
-    - libs/mbedtls
     - hw/hal
+    - libs/mbedtls
+    - libs/os 
     - sys/config
 
-pkg.deps.FS:
-    - fs/fs
-pkg.cflags.NFFS: -DUSE_STATUS_FILE
+pkg.deps.BOOTUTIL_NFFS:
+    - fs/nffs
 
-pkg.cflags.IMAGE_KEYS_RSA: -DIMAGE_SIGNATURES_RSA
-pkg.cflags.IMAGE_KEYS_EC: -DIMAGE_SIGNATURES_EC
+pkg.init_function: bootutil_pkg_init
+pkg.init_stage: 5
+
+pkg.syscfg_defs:
+    BOOTUTIL_NFFS:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_FS_NFFS'
+    BOOTUTIL_SIGN_RSA:
+        description: 'TBD'
+        value: '0'
+    BOOTUTIL_SIGN_EC:
+        description: 'TBD'
+        value: '0'

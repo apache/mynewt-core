@@ -30,9 +30,6 @@ pkg.deps:
     - sys/mn_socket
     - libs/os
     - libs/util
-    - libs/testutil
 
 pkg.reqs:
     - console
-
-pkg.features:

@@ -1198,7 +1198,7 @@ nffs_restore_corrupt_scratch(void)
 static void
 nffs_log_contents(void)
 {
-#if LOG_LEVEL > LOG_LEVEL_DEBUG
+#if MYNEWT_VAL(LOG_LEVEL) > LOG_LEVEL_DEBUG
     return;
 #endif
 

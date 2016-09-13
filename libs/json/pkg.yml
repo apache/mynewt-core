@@ -22,7 +22,5 @@ pkg.description: JSON encoding / decoding library.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.deps.TEST:
-   - libs/testutil
 
 pkg.cflags.float_user: -DFLOAT_SUPPORT

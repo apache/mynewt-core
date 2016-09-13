@@ -19,11 +19,13 @@
 #ifndef __FS_PRIV_H__
 #define __FS_PRIV_H__
 
+#include "syscfg/syscfg.h"
+
 struct fs_ops;
 extern const struct fs_ops *fs_root_ops;
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(FS_CLI)
 void fs_cli_init(void);
-#endif /* SHELL_PRESENT */
+#endif
 
 #endif

@@ -58,6 +58,9 @@
 
 #define NFFS_BLOCK_MAX_DATA_SZ_MAX   2048
 
+#define NFFS_DETECT_FAIL_IGNORE     1
+#define NFFS_DETECT_FAIL_FORMAT     2
+
 /** On-disk representation of an area header. */
 struct nffs_disk_area {
     uint32_t nda_magic[4];  /* NFFS_AREA_MAGIC{0,1,2,3} */

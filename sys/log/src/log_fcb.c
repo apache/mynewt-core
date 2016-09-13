@@ -16,13 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef FCB_PRESENT
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(LOG_FCB)
+
 #include <string.h>
 
-#include <os/os.h>
+#include "os/os.h"
 
-#include <hal/flash_map.h>
-#include <fcb/fcb.h>
+#include "hal/flash_map.h"
+#include "fcb/fcb.h"
 
 #include "log/log.h"
 

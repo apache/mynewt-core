@@ -18,11 +18,12 @@
  */
 #include <assert.h>
 #include <os/os.h>
-#include <hal/hal_os_tick.h>
-#include <nrf52_bitfields.h>
-#include <bsp/cmsis_nvic.h>
+#include "syscfg/syscfg.h"
+#include "hal/hal_os_tick.h"
+#include "nrf52_bitfields.h"
+#include "bsp/cmsis_nvic.h"
 
-#if defined(BSP_HAS_32768_XTAL)
+#if MYNEWT_VAL(XTAL_32768)
 #define RTC_FREQ            32768       /* in Hz */
 #define OS_TICK_TIMER       NRF_RTC1
 #define OS_TICK_IRQ         RTC1_IRQn
@@ -85,7 +86,7 @@ nrf52_os_tick_counter(void)
      */
     OS_ASSERT_CRITICAL();
 
-#if defined(BSP_HAS_32768_XTAL)
+#if MYNEWT_VAL(XTAL_32768)
     return OS_TICK_TIMER->COUNTER;
 #else
     /*
@@ -103,7 +104,7 @@ nrf52_os_tick_set_ocmp(uint32_t ocmp)
 
     OS_ASSERT_CRITICAL();
     while (1) {
-#if defined(BSP_HAS_32768_XTAL)
+#if MYNEWT_VAL(XTAL_32768)
         int delta;
 
         ocmp &= 0xffffff;
@@ -143,7 +144,7 @@ nrf52_timer_handler(void)
     OS_ENTER_CRITICAL(sr);
 
     /* Calculate elapsed ticks and advance OS time. */
-#if defined(BSP_HAS_32768_XTAL)
+#if MYNEWT_VAL(XTAL_32768)
     int delta;
 
     counter = nrf52_os_tick_counter();
@@ -205,7 +206,7 @@ os_tick_idle(os_time_t ticks)
     }
 }
 
-#if defined(BSP_HAS_32768_XTAL)
+#if MYNEWT_VAL(XTAL_32768)
 void
 os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {

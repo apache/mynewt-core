@@ -17,7 +17,9 @@
  * under the License.
  */
 
-#ifdef SHELL_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(FS_CLI)
 
 #include <inttypes.h>
 #include <string.h>
@@ -227,4 +229,4 @@ fs_cli_init(void)
     shell_cmd_register(&fs_mv_struct);
     shell_cmd_register(&fs_cat_struct);
 }
-#endif /* SHELL_PRESENT */
+#endif /* MYNEWT_VAL(FS_CLI) */

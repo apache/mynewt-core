@@ -27,12 +27,21 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - libs/util
-    - libs/testutil
-pkg.deps.SHELL:
+pkg.deps.STATS_CLI:
     - libs/shell
-pkg.deps.NEWTMGR:
+pkg.deps.STATS_NEWTMGR:
     - libs/newtmgr
-pkg.req_apis.SHELL:
-    - console
-pkg.cflags.SHELL: -DSHELL_PRESENT
-pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT 
+
+pkg.init_function: stats_module_init
+pkg.init_stage: 0
+
+pkg.syscfg_defs:
+    STATS_NAMES:
+        description: 'TBD'
+        value: 1
+    STATS_CLI:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_SHELL'
+    STATS_NEWTMGR:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_NEWTMGR'

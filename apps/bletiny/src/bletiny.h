@@ -78,7 +78,7 @@ struct bletiny_conn {
     struct bletiny_svc_list svcs;
 };
 
-extern struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
+extern struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
 extern int bletiny_num_conns;
 
 extern uint16_t nm_attr_val_handle;
@@ -190,7 +190,7 @@ int bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi);
 #define GATT_SVR_CHR_ALERT_NOT_CTRL_PT        0x2A44
 
 void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg);
-int gatt_svr_init(struct ble_hs_cfg *cfg);
+int gatt_svr_init(void);
 
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);

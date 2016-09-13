@@ -17,7 +17,9 @@
  * under the License.
  */
 
-#ifdef FS_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CONFIG_NFFS)
 
 #include <string.h>
 #include <assert.h>

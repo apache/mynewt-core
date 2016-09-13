@@ -16,7 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef SHELL_PRESENT
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CRASH_TEST_CLI)
 #include <inttypes.h>
 #include <os/os.h>
 #include <console/console.h>
@@ -43,4 +46,4 @@ crash_cli_cmd(int argc, char **argv)
     return 0;
 }
 
-#endif /* SHELL_PRESENT */
+#endif /* MYNEWT_VAL(CRASH_TEST_CLI) */

@@ -17,7 +17,10 @@
  * under the License.
  */
 
-#ifdef FCB_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CONFIG_FCB)
+
 #include <os/os.h>
 #include <fcb/fcb.h>
 #include <string.h>

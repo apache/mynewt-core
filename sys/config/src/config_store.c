@@ -31,7 +31,7 @@ struct conf_dup_check_arg {
     int is_dup;
 };
 
-struct conf_store_head conf_load_srcs = SLIST_HEAD_INITIALIZER(&conf_load_srcs);
+struct conf_store_head conf_load_srcs;
 struct conf_store *conf_save_dst;
 
 void
@@ -169,4 +169,10 @@ conf_save(void)
         cs->cs_itf->csi_save_end(cs);
     }
     return rc;
+}
+
+void
+conf_store_init(void)
+{
+    SLIST_INIT(&conf_load_srcs);
 }

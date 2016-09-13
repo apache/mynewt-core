@@ -16,8 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <fs/fs.h>
-#include <fs/fs_if.h>
+
+#include "syscfg/syscfg.h"
+#include "fs/fs.h"
+#include "fs/fs_if.h"
 #include "fs_priv.h"
 
 const struct fs_ops *fs_root_ops = NULL;
@@ -30,7 +32,7 @@ fs_register(const struct fs_ops *fops)
     }
     fs_root_ops = fops;
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(FS_CLI)
     fs_cli_init();
 #endif
 

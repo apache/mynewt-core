@@ -1,3 +1,4 @@
+#if 0
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -130,4 +131,4 @@ native_pwm_enable_duty(struct hal_pwm *ppwm, uint16_t fraction)
     }
     return -2;
 }
-
+#endif

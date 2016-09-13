@@ -17,24 +17,22 @@
  * under the License.
  */
 
+#include "syscfg/syscfg.h"
+
 /* This whole file is conditionally compiled based on whether the 
- * SHELL_PRESENT identity is provided.
+ * log package is configured to use the shell (MYNEWT_VAL(LOG_CLI)).
  */
 
-#ifdef SHELL_PRESENT
-
-#include <os/os.h>
-
-#include <string.h>
-
-#include <util/cbmem.h>
-
-#include "log/log.h"
+#if MYNEWT_VAL(LOG_CLI)
 
 #include <stdio.h>
+#include <string.h>
 
-#include <shell/shell.h>
-#include <console/console.h> 
+#include "os/os.h"
+#include "util/cbmem.h"
+#include "log/log.h"
+#include "shell/shell.h"
+#include "console/console.h"
 
 static int 
 shell_log_dump_entry(struct log *log, void *arg, void *dptr, uint16_t len) 

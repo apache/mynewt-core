@@ -20,37 +20,42 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <os/os.h>
-#include <util/base64.h>
+#include "sysinit/sysinit.h"
+#include "syscfg/syscfg.h"
+#include "os/os.h"
+#include "util/base64.h"
 
 #include "config/config.h"
 #include "config_priv.h"
 
-struct conf_handler_head conf_handlers = SLIST_HEAD_INITIALIZER(&conf_handlers);
+struct conf_handler_head conf_handlers;
 
 static uint8_t conf_cmd_inited;
 
-int
+void
 conf_init(void)
 {
     int rc;
 
-    rc = 0;
+    SLIST_INIT(&conf_handlers);
+    conf_store_init();
+
     if (conf_cmd_inited) {
-        goto done;
-    }
-#ifdef SHELL_PRESENT
-    rc = conf_cli_register();
-#endif
-#ifdef NEWTMGR_PRESENT
-    rc = conf_nmgr_register();
-#endif
-    if (!rc) {
-        conf_cmd_inited = 1;
+        return;
     }
 
-done:
-    return rc;
+    (void)rc;
+
+#if MYNEWT_VAL(CONFIG_CLI)
+    rc = conf_cli_register();
+    SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+#if MYNEWT_VAL(CONFIG_NEWTMGR)
+    rc = conf_nmgr_register();
+    SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+
+    conf_cmd_inited = 1;
 }
 
 int

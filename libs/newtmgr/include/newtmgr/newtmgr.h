@@ -127,7 +127,7 @@ struct nmgr_transport {
 };
 
 
-int nmgr_task_init(uint8_t, os_stack_t *, uint16_t);
+int nmgr_task_init(void);
 int nmgr_transport_init(struct nmgr_transport *nt,
         nmgr_transport_out_func_t output_func);
 int nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req);

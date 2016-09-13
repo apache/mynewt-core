@@ -20,12 +20,12 @@
 #ifndef _BLEUART_H_
 #define _BLEUART_H_
 
-int
-bleuart_init(int max_input);
+void
+bleuart_init(void);
 int
 bleuart_svc_register(void);
 int
-bleuart_gatt_svr_init(struct ble_hs_cfg *cfg);
+bleuart_gatt_svr_init(void);
 void
 bleuart_set_conn_handle(uint16_t conn_handle);
 

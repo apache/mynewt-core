@@ -261,6 +261,33 @@ err:
     return (NULL);
 }
 
+int
+os_msys_count(void)
+{
+    struct os_mbuf_pool *omp;
+    int total;
+
+    total = 0;
+    STAILQ_FOREACH(omp, &g_msys_pool_list, omp_next) {
+        total += omp->omp_pool->mp_num_blocks;
+    }
+
+    return total;
+}
+
+int
+os_msys_num_free(void)
+{
+    struct os_mbuf_pool *omp;
+    int total;
+
+    total = 0;
+    STAILQ_FOREACH(omp, &g_msys_pool_list, omp_next) {
+        total += omp->omp_pool->mp_num_free;
+    }
+
+    return total;
+}
 
 /**
  * Initialize a pool of mbufs.

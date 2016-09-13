@@ -28,11 +28,23 @@ pkg.keywords:
     - scripting
     - interpreter
 
-pkg.cflags: -DLUA_OPTIMIZE_MEMORY=2 -DLUA_CROSS_COMPILER -DLUA_USE_MKSTEMP -DLUA_NUMBER_INTEGRAL -DMYNEWT
+pkg.cflags:
+    - "-DLUA_OPTIMIZE_MEMORY=2"
+    - "-DLUA_CROSS_COMPILER"
+    - "-DLUA_USE_MKSTEMP"
+    - "-DLUA_NUMBER_INTEGRAL"
+    - "-DMYNEWT"
 pkg.req_apis:
     - console
 pkg.deps:
     - fs/fs
-pkg.deps.SHELL:
+pkg.deps.ELUA_CLI:
     - libs/shell
-pkg.cflags.SHELL: -DSHELL_PRESENT
+
+pkg.init_function: lua_init
+pkg.init_stage: 5
+
+pkg.syscfg_defs:
+    ELUA_CLI:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_SHELL'

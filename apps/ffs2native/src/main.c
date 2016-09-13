@@ -666,18 +666,7 @@ main(int argc, char **argv)
     }
 
     os_init();
-    if (standalone == 0) {
-        rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, area_descs);
-        assert(rc == 0);
-    }
 
-    rc = hal_flash_init();
-    assert(rc == 0);
-
-    rc = nffs_init();
-    assert(rc == 0);
-
-    log_init();
     log_console_handler_init(&nffs_log_console_handler);
     log_register("nffs-log", &nffs_log, &nffs_log_console_handler);
 
@@ -697,6 +686,9 @@ main(int argc, char **argv)
 
         return 0;
     }
+
+    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, area_descs);
+    assert(rc == 0);
 
     if (copy_in_dir) {
         /*

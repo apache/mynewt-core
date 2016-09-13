@@ -17,13 +17,15 @@
  * under the License.
  */
 
-#ifdef NEWTMGR_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
 
 #include <string.h>
 
-#include <newtmgr/newtmgr.h>
-#include <json/json.h>
-#include <console/console.h>
+#include "newtmgr/newtmgr.h"
+#include "json/json.h"
+#include "console/console.h"
 
 #include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
@@ -70,4 +72,4 @@ crash_test_nmgr_write(struct nmgr_jbuf *njb)
     return 0;
 }
 
-#endif
+#endif /* MYNEWT_VAL(CRASH_TEST_NEWTMGR) */

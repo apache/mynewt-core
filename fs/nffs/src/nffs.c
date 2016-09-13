@@ -21,7 +21,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#include "sysinit/sysinit.h"
+#include "bsp/bsp.h"
 #include "hal/hal_flash.h"
+#include "hal/flash_map.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
 #include "os/os_malloc.h"
@@ -686,7 +690,6 @@ nffs_init(void)
         return FS_ENOMEM;
     }
 
-    log_init();
     log_console_handler_init(&nffs_log_console_handler);
     log_register("nffs", &nffs_log, &nffs_log_console_handler);
 
@@ -697,4 +700,53 @@ nffs_init(void)
 
     fs_register(&nffs_ops);
     return 0;
+}
+
+void
+nffs_pkg_init(void)
+{
+    struct nffs_area_desc descs[NFFS_AREA_MAX + 1];
+    int cnt;
+    int rc;
+
+    /* Initialize nffs's internal state. */
+    rc = nffs_init();
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+    /* Convert the set of flash blocks we intend to use for nffs into an array
+     * of nffs area descriptors.
+     */
+    cnt = NFFS_AREA_MAX;
+    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, descs);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+    /* Attempt to restore an existing nffs file system from flash. */
+    rc = nffs_detect(descs);
+    switch (rc) {
+    case 0:
+        break;
+
+    case FS_ECORRUPT:
+        /* No valid nffs instance detected; act based on configued detection
+         * failure policy.
+         */
+        switch (MYNEWT_VAL(NFFS_DETECT_FAIL)) {
+        case NFFS_DETECT_FAIL_IGNORE:
+            break;
+
+        case NFFS_DETECT_FAIL_FORMAT:
+            rc = nffs_format(descs);
+            SYSINIT_PANIC_ASSERT(rc == 0);
+            break;
+
+        default:
+            SYSINIT_PANIC();
+            break;
+        }
+        break;
+
+    default:
+        SYSINIT_PANIC();
+        break;
+    }
 }

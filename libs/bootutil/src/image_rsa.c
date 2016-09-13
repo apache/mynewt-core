@@ -16,11 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef IMAGE_SIGNATURES_RSA
-#include <bootutil/sign_key.h>
 
-#include <mbedtls/rsa.h>
-#include <mbedtls/asn1.h>
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(BOOTUTIL_SIGN_RSA)
+#include "bootutil/sign_key.h"
+
+#include "mbedtls/rsa.h"
+#include "mbedtls/asn1.h"
 
 #include "bootutil_priv.h"
 
@@ -138,4 +141,4 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
 
     return rc;
 }
-#endif /* IMAGE_SIGNATURES_RSA */
+#endif /* MYNEWT_VAL(BOOTUTIL_SIGN_RSA) */

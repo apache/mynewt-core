@@ -55,27 +55,9 @@
 #include "nmgrble/newtmgr_ble.h"
 #include "bleuart/bleuart.h"
 
-/** Mbuf settings. */
-#define MBUF_NUM_MBUFS      (12)
-#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
-#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
-#define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
-
-#define MAX_CONSOLE_INPUT 120
-static os_membuf_t bleuart_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
-struct os_mbuf_pool bleuart_mbuf_pool;
-struct os_mempool bleuart_mbuf_mpool;
-
-/** Priority of the nimble host and controller tasks. */
-#define BLE_LL_TASK_PRI             (OS_TASK_PRI_HIGHEST)
-
 /** bleuart task settings. */
 #define bleuart_TASK_PRIO           1
 #define bleuart_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-#define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
-os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
 
 struct os_eventq bleuart_evq;
 struct os_task bleuart_task;
@@ -253,99 +235,26 @@ bleuart_task_handler(void *unused)
 int
 main(void)
 {
-    struct ble_hs_cfg cfg;
-    uint32_t seed;
     int rc;
-    int i;
 
     /* Initialize OS */
     os_init();
-
-    /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(1000000);
-    assert(rc == 0);
-
-    /* Seed random number generator with least significant bytes of device
-     * address.
-     */
-    seed = 0;
-    for (i = 0; i < 4; ++i) {
-        seed |= g_dev_addr[i];
-        seed <<= 8;
-    }
-    srand(seed);
-
-    /* Initialize msys mbufs. */
-    rc = os_mempool_init(&bleuart_mbuf_mpool, MBUF_NUM_MBUFS,
-                         MBUF_MEMBLOCK_SIZE, bleuart_mbuf_mpool_data,
-                         "bleuart_mbuf_data");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&bleuart_mbuf_pool, &bleuart_mbuf_mpool,
-                           MBUF_MEMBLOCK_SIZE, MBUF_NUM_MBUFS);
-    assert(rc == 0);
-
-    rc = os_msys_register(&bleuart_mbuf_pool);
-    assert(rc == 0);
 
     os_task_init(&bleuart_task, "bleuart", bleuart_task_handler,
                  NULL, bleuart_TASK_PRIO, OS_WAIT_FOREVER,
                  bleuart_stack, bleuart_STACK_SIZE);
 
-    /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
-    assert(rc == 0);
-
-    /* Initialize the RAM HCI transport. */
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
-    assert(rc == 0);
-
     /* Initialize the BLE host. */
-    cfg = ble_hs_cfg_dflt;
-    cfg.max_connections = 1;
-    cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = 3;
-    cfg.max_l2cap_sig_procs = 1;
-    cfg.sm_bonding = 1;
-    cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.sync_cb = bleuart_on_sync;
-    cfg.store_read_cb = ble_store_ram_read;
-    cfg.store_write_cb = ble_store_ram_write;
+    ble_hs_cfg.parent_evq = &bleuart_evq;
+    ble_hs_cfg.sync_cb = bleuart_on_sync;
+    ble_hs_cfg.store_read_cb = ble_store_ram_read;
+    ble_hs_cfg.store_write_cb = ble_store_ram_write;
 
-    /* Populate config with the required GATT server settings. */
-    cfg.max_attrs = 0;
-    cfg.max_services = 0;
-    cfg.max_client_configs = 0;
-
-    rc = ble_svc_gap_init(&cfg);
-    assert(rc == 0);
-
-    rc = ble_svc_gatt_init(&cfg);
-    assert(rc == 0);
-
-    rc = bleuart_gatt_svr_init(&cfg);
+    rc = bleuart_gatt_svr_init();
     assert(rc == 0);
 
     /* Initialize eventq */
     os_eventq_init(&bleuart_evq);
-
-    /* Nmgr ble GATT server initialization */
-    rc = nmgr_ble_gatt_svr_init(&bleuart_evq, &cfg);
-    assert(rc == 0);
-
-
-    rc = ble_hs_init(&bleuart_evq, &cfg);
-    assert(rc == 0);
-
-    bleuart_init(MAX_CONSOLE_INPUT);
-
-    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
-    imgmgr_module_init();
-
-    /* Register GATT attributes (services, characteristics, and
-     * descriptors).
-     */
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("Mynewt_BLEuart");

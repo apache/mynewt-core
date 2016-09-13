@@ -35,7 +35,7 @@
 
 #define IMGMGR_HASH_LEN                 32
 
-int imgmgr_module_init(void);
+void imgmgr_module_init(void);
 
 struct image_version;
 

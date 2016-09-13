@@ -38,3 +38,7 @@ pkg.deps:
     - sys/log
     - sys/stats
 pkg.cflags: -DBLETEST
+
+pkg.syscfg_vals:
+    MSYS_1_BLOCK_COUNT: 16
+    MSYS_1_BLOCK_SIZE: 260

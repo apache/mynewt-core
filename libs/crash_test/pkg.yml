@@ -22,15 +22,19 @@ pkg.description: Generate different kinds of faults
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
-pkg.deps.SHELL:
+pkg.deps.CRASH_TEST_CLI:
     - libs/shell
-pkg.req_apis.SHELL:
+pkg.req_apis.CRASH_TEST_CLI:
     - console
-pkg.cflags.SHELL:
-    - -DSHELL_PRESENT
 
-pkg.deps.NEWTMGR:
+pkg.deps.CRASH_TEST_NEWTMGR:
     - libs/newtmgr
     - libs/json
-pkg.cflags.NEWTMGR:
-    - -DNEWTMGR_PRESENT
+
+pkg.syscfg_defs:
+    CRASH_TEST_CLI:
+        description: 'TBD'
+        value: 1
+    CRASH_TEST_NEWTMGR:
+        description: 'TBD'
+        value: 1

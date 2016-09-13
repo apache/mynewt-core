@@ -33,12 +33,63 @@ pkg.linkerscript: "primo.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-primo.ld"
 pkg.downloadscript: primo_download.sh
 pkg.debugscript: primo_debug.sh
-pkg.cflags: -DNRF52 -DSPI_MASTER_0_ENABLE
+pkg.cflags:
+    # Nordic SDK files require these defines.
+    - '-DNRF52'
+    - '-DSPI_MASTER_0_ENABLE'
+
 pkg.deps:
-    - hw/mcu/nordic
     - hw/mcu/nordic/nrf52xxx
     - libs/baselibc
-    - drivers/uart/uart_hal
-    - drivers/uart/uart_bitbang
+
 pkg.deps.BLE_DEVICE:
     - net/nimble/drivers/nrf52
+
+pkg.deps.ADC_0:
+    - drivers/adc/adc_nrf52
+
+pkg.deps.UART_0:
+    - drivers/uart/uart_hal
+
+pkg.deps.UART_1:
+    - drivers/uart/uart_bitbang
+
+pkg.syscfg_defs:
+    BSP_NRF52:
+        description: 'TBD'
+        value: 1
+
+    CLOCK_FREQ:
+        description: 'TBD'
+        value:  1000000
+
+    XTAL_32768:
+        description: 'TBD'
+        value: 1
+
+    ADC_0:
+        description: 'TBD'
+        value:  1
+    ADC_0_RESOLUTION:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_RESOLUTION'
+    ADC_0_OVERSAMPLE:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_OVERSAMPLE'
+    ADC_0_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_IRQ_PRIORITY'
+
+    UART_0:
+        description: 'TBD'
+        value:  1
+    UART_1:
+        description: 'TBD'
+        value:  0
+
+    SPI_MASTER:
+        description: 'TBD'
+        value:  1
+    SPI_SLAVE:
+        description: 'TBD'
+        value:  0

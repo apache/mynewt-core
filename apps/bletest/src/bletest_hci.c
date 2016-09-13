@@ -59,7 +59,7 @@ bletest_send_conn_update(uint16_t handle)
     assert(rc == 0);
 }
 
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
 void
 bletest_ltk_req_reply(uint16_t handle)
 {
@@ -153,7 +153,7 @@ bletest_hci_rd_bd_addr(void)
     return rc;
 }
 
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
 int
 bletest_hci_le_encrypt(uint8_t *key, uint8_t *pt)
 {
@@ -372,7 +372,7 @@ bletest_hci_le_set_adv_data(uint8_t *data, uint8_t len)
     return ble_hs_hci_cmd_tx_empty_ack(buf);
 }
 
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
 int
 bletest_hci_le_start_encrypt(struct hci_start_encrypt *cmd)
 {

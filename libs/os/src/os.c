@@ -17,12 +17,14 @@
  * under the License.
  */
 
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "os/queue.h"
 #include "os/os_dev.h"
 #include "os_priv.h"
 
 #include "hal/hal_os_tick.h"
+#include "hal/hal_bsp.h"
 
 #include <assert.h>
 
@@ -113,11 +115,17 @@ os_init(void)
     err = os_arch_os_init();
     assert(err == OS_OK);
 
+    /* Call bsp related OS initializations */
+    bsp_init();
+
     err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_PRIMARY);
     assert(err == OS_OK);
 
     err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_SECONDARY);
     assert(err == OS_OK);
+
+    /* Initialize target-specific packages. */
+    sysinit();
 }
 
 /**
@@ -134,4 +142,10 @@ os_start(void)
 
     err = os_arch_os_start();
     assert(err == OS_OK);
+}
+
+void
+os_pkg_init(void)
+{
+    os_msys_init();
 }

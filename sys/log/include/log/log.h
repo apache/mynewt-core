@@ -19,6 +19,7 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+#include "syscfg/syscfg.h"
 #include "log/ignore.h"
 #include "util/cbmem.h"
 
@@ -111,40 +112,35 @@ struct log_entry_hdr {
 
 #define LOG_NAME_MAX_LEN    (64)
 
-/* Compile in Log Debug by default */
-#ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_LEVEL_DEBUG
-#endif
-
-#if LOG_LEVEL <= LOG_LEVEL_DEBUG
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG
 #define LOG_DEBUG(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_DEBUG, __msg, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_INFO
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_INFO
 #define LOG_INFO(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_INFO, __msg, ##__VA_ARGS__)
 #else
 #define LOG_INFO(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_INFO
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_INFO
 #define LOG_WARN(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_WARN, __msg, ##__VA_ARGS__)
 #else
 #define LOG_WARN(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_ERROR
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_ERROR
 #define LOG_ERROR(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_ERROR, __msg, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_CRITICAL
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_CRITICAL
 #define LOG_CRITICAL(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_CRITICAL, __msg, ##__VA_ARGS__)
 #else
@@ -166,7 +162,7 @@ struct log {
 #define LOGS_NMGR_OP_LOGS_LIST    (5)
 
 /* Log system level functions (for all logs.) */
-int log_init(void);
+void log_init(void);
 struct log *log_list_get_next(struct log *);
 
 /* Log functions, manipulate a single log */
@@ -192,7 +188,7 @@ int log_fcb_handler_init(struct log_handler *, struct fcb *,
                          uint8_t entries);
 
 /* Private */
-#ifdef NEWTMGR_PRESENT
+#if MYNEWT_VAL(LOG_NEWTMGR)
 int log_nmgr_register_group(void);
 #endif
 

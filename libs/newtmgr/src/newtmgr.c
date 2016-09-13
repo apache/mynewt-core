@@ -17,17 +17,21 @@
  * under the License.
  */
 
-#include <os/os.h>
-#include <os/endian.h>
-
 #include <assert.h>
 #include <string.h>
 
-#include <shell/shell.h>
-#include <console/console.h>
-#include <newtmgr/newtmgr.h>
+#include "syscfg/syscfg.h"
+#include "sysinit/sysinit.h"
+#include "os/os.h"
+#include "os/endian.h"
+
+#include "shell/shell.h"
+#include "console/console.h"
+#include "newtmgr/newtmgr.h"
 
 #include "newtmgr_priv.h"
+
+os_stack_t newtmgr_stack[OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE))];
 
 struct nmgr_transport g_nmgr_shell_transport;
 
@@ -624,7 +628,7 @@ err:
 }
 
 int
-nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
+nmgr_task_init(void)
 {
     int rc;
 
@@ -641,8 +645,9 @@ nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
         goto err;
     }
 
-    rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL, prio,
-            OS_WAIT_FOREVER, stack_ptr, stack_len);
+    rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL,
+                      MYNEWT_VAL(NEWTMGR_TASK_PRIO), OS_WAIT_FOREVER,
+                      newtmgr_stack, MYNEWT_VAL(NEWTMGR_STACK_SIZE));
     if (rc != 0) {
         goto err;
     }
@@ -655,4 +660,13 @@ nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
     return (0);
 err:
     return (rc);
+}
+
+void
+nmgr_pkg_init(void)
+{
+    int rc;
+
+    rc = nmgr_task_init();
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }

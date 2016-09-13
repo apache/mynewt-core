@@ -19,10 +19,10 @@
 #ifndef __CRASH_TEST_PRIV_H__
 #define __CRASH_TEST_PRIV_H__
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(CRASH_TEST_CLI)
 extern struct shell_cmd crash_cmd_struct;
 #endif
-#ifdef NEWTMGR_PRESENT
+#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
 extern struct nmgr_group crash_test_nmgr_group;
 #endif
 

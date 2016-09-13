@@ -28,6 +28,6 @@
 /*
  * Initialize manufacturing info storage/reporting.
  */
-int id_init(void);
+void id_init(void);
 
 #endif

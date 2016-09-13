@@ -54,23 +54,7 @@
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
-/* Task priorities */
-#define BLE_LL_TASK_PRI     (OS_TASK_PRI_HIGHEST)
-#define HOST_TASK_PRIO      (OS_TASK_PRI_HIGHEST + 1)
-#define BLETEST_TASK_PRIO   (HOST_TASK_PRIO + 1)
-#define SHELL_TASK_PRIO     (BLETEST_TASK_PRIO + 1)
-#define NEWTMGR_TASK_PRIO   (SHELL_TASK_PRIO + 1)
-
-/* Shell task stack */
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(256))
-os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
-
-/* Newt manager task stack */
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(448))
-os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
-
-/* Shell maximum input line length */
-#define SHELL_MAX_INPUT_LEN     (256)
+#define BLETEST_TASK_PRIO   5
 
 /* For LED toggling */
 int g_led_pin;
@@ -84,16 +68,6 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
-
-/* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (16)
-#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
-#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
-#define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
-
-struct os_mbuf_pool g_mbuf_pool;
-struct os_mempool g_mbuf_mempool;
-os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 
 /* Some application configurations */
 #define BLETEST_ROLE_ADVERTISER         (0)
@@ -190,7 +164,7 @@ const uint8_t g_ble_ll_encrypt_test_encrypted_data[16] =
     0x05, 0x8e, 0x3b, 0x8e, 0x27, 0xc2, 0xc6, 0x66
 };
 
-#if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
 uint8_t g_bletest_adv_irk[16] = {
     0xec, 0x02, 0x34, 0xa3, 0x57, 0xc8, 0xad, 0x05,
     0x34, 0x10, 0x10, 0xa6, 0x0a, 0x39, 0x7d, 0x9b
@@ -202,7 +176,7 @@ uint8_t g_bletest_init_irk[16] = {
 };
 #endif
 
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
 /* LTK 0x4C68384139F574D836BCF34E9DFB01BF */
 const uint8_t g_bletest_LTK[16] =
 {
@@ -386,7 +360,7 @@ bletest_init_advertising(void)
     rc = bletest_hci_le_set_adv_params(&adv);
     assert(rc == 0);
 
-#if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
     if ((adv.own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM) ||
         (BLETEST_CFG_ADV_ADDR_RES_EN == 1)) {
         rc = bletest_hci_le_add_resolv_list(g_bletest_adv_irk,
@@ -432,7 +406,7 @@ bletest_init_scanner(void)
     rc = ble_hs_hci_cmd_tx_empty_ack(buf);
     if (rc == 0) {
         add_whitelist = BLETEST_CFG_SCAN_FILT_POLICY;
-#if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
         if (own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM) {
             rc = bletest_hci_le_add_resolv_list(g_bletest_init_irk,
                                                 g_bletest_adv_irk,
@@ -512,7 +486,7 @@ bletest_init_initiator(void)
         assert(rc == 0);
     }
 
-#if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
         if ((hcc->peer_addr_type > BLE_HCI_CONN_PEER_ADDR_RANDOM) ||
             (hcc->own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM)) {
             rc = bletest_hci_le_add_resolv_list(g_bletest_init_irk,
@@ -587,7 +561,7 @@ bletest_execute_initiator(void)
                 new_chan_map[4] = 0;
                 bletest_hci_le_set_host_chan_class(new_chan_map);
             } else if (g_bletest_state == 4) {
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
                 struct hci_start_encrypt hsle;
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -601,7 +575,7 @@ bletest_execute_initiator(void)
                 }
 #endif
             } else if (g_bletest_state == 8) {
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
                 struct hci_start_encrypt hsle;
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
@@ -725,7 +699,7 @@ bletest_execute_advertiser(void)
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     /* See if it is time to hand a data packet to the connection */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
         /* Do we need to send a LTK reply? */
         if (g_bletest_ltk_reply_handle) {
             //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
@@ -965,7 +939,7 @@ bletest_task_handler(void *arg)
     rc = bletest_hci_le_rd_max_datalen();
     assert(rc == 0);
 
-#if (BLE_LL_CFG_FEAT_DATA_LEN_EXT == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_DATA_LEN_EXT) == 1)
     /* Read suggested data length */
     rc = bletest_hci_le_rd_sugg_datalen();
     assert(rc == 0);
@@ -986,7 +960,7 @@ bletest_task_handler(void *arg)
 #endif
 
     /* Encrypt a block */
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
     rc = bletest_hci_le_encrypt((uint8_t *)g_ble_ll_encrypt_test_key,
                                 (uint8_t *)g_ble_ll_encrypt_test_plain_text);
     assert(rc == 0);
@@ -1037,31 +1011,10 @@ bletest_task_handler(void *arg)
 int
 main(void)
 {
-    int i;
     int rc;
-    uint32_t seed;
-#if 0
-    int cnt;
-    struct nffs_area_desc descs[NFFS_AREA_MAX];
-#endif
 
     /* Initialize OS */
     os_init();
-
-    /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(1000000);
-    assert(rc == 0);
-
-    rc = os_mempool_init(&g_mbuf_mempool, MBUF_NUM_MBUFS,
-            MBUF_MEMBLOCK_SIZE, &g_mbuf_buffer[0], "mbuf_pool");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&g_mbuf_pool, &g_mbuf_mempool, MBUF_MEMBLOCK_SIZE,
-                           MBUF_NUM_MBUFS);
-    assert(rc == 0);
-
-    rc = os_msys_register(&g_mbuf_pool);
-    assert(rc == 0);
 
     /* Dummy device address */
 #if BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER
@@ -1094,71 +1047,15 @@ main(void)
     g_bletest_cur_peer_addr[5] = 0x08;
 #endif
 
-    /*
-     * Seed random number generator with least significant bytes of device
-     * address.
-     */
-    seed = 0;
-    for (i = 0; i < 4; ++i) {
-        seed |= g_dev_addr[i];
-        seed <<= 8;
-    }
-    srand(seed);
+    /* Set the NimBLE host's parent event queue. */
+    ble_hs_cfg.parent_evq = &g_bletest_evq;
 
     /* Set the led pin as an output */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-#if 0
-    rc = hal_flash_init();
-    assert(rc == 0);
-
-    nffs_config.nc_num_inodes = 32;
-    nffs_config.nc_num_blocks = 64;
-    nffs_config.nc_num_files = 2;
-    nffs_config.nc_num_dirs = 2;
-    rc = nffs_init();
-    assert(rc == 0);
-
-    cnt = NFFS_AREA_MAX;
-    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
-    assert(rc == 0);
-    if (nffs_detect(descs) == FS_ECORRUPT) {
-        rc = nffs_format(descs);
-        assert(rc == 0);
-    }
-#endif
-
-    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
-                         SHELL_MAX_INPUT_LEN);
-    assert(rc == 0);
-
-    rc = nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack,
-                        NEWTMGR_TASK_STACK_SIZE);
-    assert(rc == 0);
-
-#if 0
-    imgmgr_module_init();
-#endif
-
-    /* Init statistics module */
-    rc = stats_module_init();
-    assert(rc == 0);
-
     /* Initialize eventq for bletest task */
     os_eventq_init(&g_bletest_evq);
-
-    /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
-    assert(rc == 0);
-
-    /* Initialize host */
-    rc = ble_hs_init(&g_bletest_evq, NULL);
-    assert(rc == 0);
-
-    /* Initialize the RAM HCI transport. */
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
-    assert(rc == 0);
 
     rc = os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL,
                       BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack,

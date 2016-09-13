@@ -17,15 +17,17 @@
  * under the License.
  */
 
-#include <console/console.h>
-#include <hal/hal_system.h>
-#ifdef COREDUMP_PRESENT
-#include <coredump/coredump.h>
+#include <stdint.h>
+#include <unistd.h>
+
+#include "syscfg/syscfg.h"
+#include "console/console.h"
+#include "hal/hal_system.h"
+#if MYNEWT_VAL(OS_COREDUMP)
+#include "coredump/coredump.h"
 #endif
 #include "os/os.h"
 
-#include <stdint.h>
-#include <unistd.h>
 
 struct exception_frame {
     uint32_t r0;
@@ -73,7 +75,7 @@ struct coredump_regs {
 
 void __assert_func(const char *file, int line, const char *func, const char *e);
 
-#ifdef COREDUMP_PRESENT
+#if MYNEWT_VAL(OS_COREDUMP)
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
 {
@@ -131,7 +133,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 void
 os_default_irq(struct trap_frame *tf)
 {
-#ifdef COREDUMP_PRESENT
+#if MYNEWT_VAL(OS_COREDUMP)
     struct coredump_regs regs;
 #endif
 
@@ -147,7 +149,7 @@ os_default_irq(struct trap_frame *tf)
     console_printf("r12:0x%08lx  lr:0x%08lx  pc:0x%08lx psr:0x%08lx\n",
       tf->ef->r12, tf->ef->lr, tf->ef->pc, tf->ef->psr);
     console_printf("ICSR:0x%08lx\n", SCB->ICSR);
-#ifdef COREDUMP_PRESENT
+#if MYNEWT_VAL(OS_COREDUMP)
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
 #endif

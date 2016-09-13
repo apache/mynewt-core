@@ -17,12 +17,14 @@
  * under the License.
  */
 
-#ifdef NEWTMGR_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CONFIG_NEWTMGR)
 
 #include <string.h>
 
-#include <newtmgr/newtmgr.h>
-#include <json/json.h>
+#include "newtmgr/newtmgr.h"
+#include "json/json.h"
 
 #include "config/config.h"
 #include "config_priv.h"

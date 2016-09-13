@@ -57,12 +57,14 @@ struct conf_handler {
       enum conf_export_tgt tgt);
 };
 
-int conf_init(void);
+void conf_init(void);
 int conf_register(struct conf_handler *);
 int conf_load(void);
 
 int conf_save(void);
 int conf_save_one(const char *name, char *var);
+
+void conf_store_init(void);
 
 /*
   XXXX for later

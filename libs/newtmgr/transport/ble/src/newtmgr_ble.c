@@ -20,9 +20,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "sysinit/sysinit.h"
 #include "host/ble_hs.h"
-#include <newtmgr/newtmgr.h>
-#include <os/endian.h>
+#include "newtmgr/newtmgr.h"
+#include "os/endian.h"
 
 /* nmgr ble mqueue */
 struct os_mqueue ble_nmgr_mq;
@@ -33,7 +34,6 @@ struct nmgr_transport ble_nt;
 /* ble nmgr attr handle */
 uint16_t g_ble_nmgr_attr_handle;
 
-struct os_eventq *app_evq;
 /**
  * The vendor specific "newtmgr" service consists of one write no-rsp
  * characteristic for newtmgr requests: a single-byte characteristic that can
@@ -193,7 +193,7 @@ nmgr_ble_out(struct nmgr_transport *nt, struct os_mbuf *m)
 {
     int rc;
 
-    rc = os_mqueue_put(&ble_nmgr_mq, app_evq, m);
+    rc = os_mqueue_put(&ble_nmgr_mq, ble_hs_cfg.parent_evq, m);
     if (rc != 0) {
         goto err;
     }
@@ -210,13 +210,11 @@ err:
  * @return 0 on success; non-zero on failure
  */
 int
-nmgr_ble_gatt_svr_init(struct os_eventq *evq, struct ble_hs_cfg *cfg)
+nmgr_ble_gatt_svr_init(void)
 {
     int rc;
 
-    assert(evq != NULL);
-
-    rc = ble_gatts_count_cfg(gatt_svr_svcs, cfg);
+    rc = ble_gatts_count_cfg(gatt_svr_svcs);
     if (rc != 0) {
         goto err;
     }
@@ -226,12 +224,19 @@ nmgr_ble_gatt_svr_init(struct os_eventq *evq, struct ble_hs_cfg *cfg)
         return rc;
     }
 
-    app_evq = evq;
-
     os_mqueue_init(&ble_nmgr_mq, &ble_nmgr_mq);
 
     rc = nmgr_transport_init(&ble_nt, &nmgr_ble_out);
 
 err:
     return rc;
+}
+
+void
+newtmgr_ble_pkg_init(void)
+{
+    int rc;
+
+    rc = nmgr_ble_gatt_svr_init();
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }

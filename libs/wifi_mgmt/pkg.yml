@@ -25,11 +25,10 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/libs/os"
     - "@apache-mynewt-core/libs/util"
-pkg.reqs:
-    - console
-pkg.cflags.SHELL:
-    - -DSHELL_PRESENT
+pkg.deps.WIFI_MGMT_CLI:
+    - libs/shell
 
-pkg.deps.TEST:
-   - libs/testutil
-
+pkg.syscfg_defs:
+    WIFI_MGMT_CLI:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_SHELL'

@@ -17,26 +17,25 @@
  * under the License.
  */
 
-#include <os/os.h>
-#include "os/os_time.h"
-
+#include <assert.h>
 #include <string.h>
-
-#include <util/cbmem.h>
-
-#include "log/log.h"
-
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef SHELL_PRESENT
-#include <shell/shell.h>
+#include "sysinit/sysinit.h"
+#include "syscfg/syscfg.h"
+#include "os/os.h"
+#include "util/cbmem.h"
+#include "log/log.h"
+
+#if MYNEWT_VAL(LOG_CLI)
+#include "shell/shell.h"
 #endif
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static uint8_t log_inited;
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(LOG_CLI)
 int shell_log_dump_all_cmd(int, char **);
 struct shell_cmd g_shell_log_cmd = {
     .sc_cmd = "log",
@@ -44,30 +43,26 @@ struct shell_cmd g_shell_log_cmd = {
 };
 #endif
 
-int
+void
 log_init(void)
 {
-#ifdef NEWTMGR_PRESENT
     int rc;
-#endif
+
+    (void)rc;
 
     if (log_inited) {
-        return (0);
+        return;
     }
     log_inited = 1;
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
 #endif
 
-#ifdef NEWTMGR_PRESENT
+#if MYNEWT_VAL(LOG_NEWTMGR)
     rc = log_nmgr_register_group();
-    if (rc != 0) {
-        return (rc);
-    }
-#endif /* NEWTMGR_PRESENT */
-
-    return (0);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 }
 
 struct log *

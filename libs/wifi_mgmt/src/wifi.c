@@ -338,7 +338,7 @@ wifi_task(void *arg)
 int
 wifi_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size)
 {
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(WIFI_MGMT_CLI)
     shell_cmd_register(&wifi_cli_cmd);
 #endif
     os_eventq_init(&wifi_evq);

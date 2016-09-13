@@ -26,7 +26,3 @@ pkg.keywords:
 
 pkg.req_apis:
     - console
-pkg.features:
-    - LIBC
-    - BASELIBC
-

@@ -210,9 +210,6 @@ os_arch_os_init(void)
             NVIC_SetVector(i, (uint32_t)os_default_irq_asm);
         }
 
-        /* Call bsp related OS initializations */
-        bsp_init();
-
         /* Set the PendSV interrupt exception priority to the lowest priority */
         NVIC_SetPriority(PendSV_IRQn, PEND_SV_PRIO);
 

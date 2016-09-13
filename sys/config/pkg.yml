@@ -25,23 +25,44 @@ pkg.keywords:
 
 pkg.deps:
     - libs/util
-    - libs/testutil
-pkg.deps.SHELL:
+pkg.deps.CONFIG_CLI:
     - libs/shell
-pkg.req_apis.SHELL:
-    - console
-pkg.cflags.SHELL: -DSHELL_PRESENT
-pkg.deps.NEWTMGR:
+pkg.deps.CONFIG_NEWTMGR:
     - libs/newtmgr
     - libs/json
-pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
-pkg.deps.FCB:
+pkg.deps.CONFIG_FCB:
     - sys/fcb
-pkg.cflags.FCB: -DFCB_PRESENT
-pkg.deps.FS:
-    - fs/fs
-pkg.cflags.FS: -DFS_PRESENT
-
-pkg.deps.TEST:
+pkg.deps.CONFIG_NFFS:
     - fs/nffs
-    - sys/fcb
+
+pkg.init_function: config_pkg_init
+pkg.init_stage: 5
+
+pkg.syscfg_defs:
+    CONFIG_FCB:
+        description: 'TBD'
+        value: 1
+    CONFIG_FCB_MAGIC:
+        description: 'TBD'
+        value: 0xc09f6e5e
+
+    CONFIG_NFFS:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_FS_NFFS'
+    CONFIG_NFFS_DIR:
+        description: 'TBD'
+        value: '"/cfg"'
+    CONFIG_NFFS_FILE:
+        description: 'TBD'
+        value: '"/cfg/run"'
+    CONFIG_NFFS_MAX_LINES:
+        description: 'TBD'
+        value: 32
+
+    CONFIG_NEWTMGR:
+        description: 'TBD'
+        value: 0
+
+    CONFIG_CLI:
+        description: 'TBD'
+        value: 0

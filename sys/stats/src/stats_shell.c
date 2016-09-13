@@ -17,19 +17,18 @@
  * under the License.
  */
 
-#include <os/os.h>
-
-#include <string.h>
-
-#include "stats/stats.h"
+#include "syscfg/syscfg.h"
 
 /* Source code is only included if the shell library is enabled.  Otherwise
  * this file is compiled out for code size.
  */
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(STATS_CLI)
 
-#include <shell/shell.h>
-#include <console/console.h>
+#include <string.h>
+#include "shell/shell.h"
+#include "console/console.h"
+#include "os/os.h"
+#include "stats/stats.h"
 
 static int shell_stats_display(int argc, char **argv);
 static struct shell_cmd shell_stats_cmd = {
@@ -117,4 +116,4 @@ stats_shell_register(void)
 }
 
 
-#endif /* SHELL_PRESENT */
+#endif

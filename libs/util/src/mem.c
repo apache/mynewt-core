@@ -144,3 +144,23 @@ mem_malloc_mbufpkt_pool(struct os_mempool *mempool,
                               name, out_buf);
     return rc;
 }
+
+int
+mem_init_mbuf_pool(void *mem, struct os_mempool *mempool,
+                   struct os_mbuf_pool *mbuf_pool, int num_blocks,
+                   int block_size, char *name)
+{
+    int rc;
+
+    rc = os_mempool_init(mempool, num_blocks, block_size, mem, name);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = os_mbuf_pool_init(mbuf_pool, mempool, block_size, num_blocks);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}

@@ -16,21 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef FS_PRESENT
-#include <os/os.h>
-#include <os/endian.h>
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(IMGMGR_FS)
 
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
-#include <newtmgr/newtmgr.h>
-#include <bootutil/image.h>
-#include <fs/fs.h>
-#include <json/json.h>
-#include <util/base64.h>
-#include <bsp/bsp.h>
+#include "os/os.h"
+#include "os/endian.h"
+#include "newtmgr/newtmgr.h"
+#include "bootutil/image.h"
+#include "fs/fs.h"
+#include "json/json.h"
+#include "util/base64.h"
+#include "bsp/bsp.h"
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"

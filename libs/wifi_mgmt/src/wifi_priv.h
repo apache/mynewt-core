@@ -20,7 +20,9 @@
 #ifndef __WIFI_PRIV_H__
 #define __WIFI_PRIV_H__
 
-#ifdef SHELL_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(WIFI_MGMT_CLI)
 extern struct shell_cmd wifi_cli_cmd;
 #endif
 

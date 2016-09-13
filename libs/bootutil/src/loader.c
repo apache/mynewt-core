@@ -499,3 +499,9 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 
     return 0;
 }
+
+void
+bootutil_pkg_init(void)
+{
+    bootutil_cfg_register();
+}

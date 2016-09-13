@@ -33,8 +33,51 @@ pkg.linkerscript: "olimex_stm32-e407_devboard.ld"
 pkg.linkerscript.bootloader.OVERWRITE: "boot-olimex_stm32-e407_devboard.ld"
 pkg.downloadscript: "olimex_stm32-e407_devboard_download.sh"
 pkg.debugscript: "olimex_stm32-e407_devboard_debug.sh"
-pkg.cflags: -DSTM32F407xx
+pkg.cflags:
+    # STM SDK files require these defines.
+    - '-DSTM32F407xx'
+
 pkg.deps:
     - hw/mcu/stm/stm32f4xx
     - libs/baselibc
+
+pkg.deps.ADC_0:
+    - drivers/adc/adc_nrf52
+
+pkg.deps.UART_0:
     - drivers/uart/uart_hal
+
+pkg.deps.UART_1:
+    - drivers/uart/uart_bitbang
+
+pkg.syscfg_defs:
+    CLOCK_FREQ:
+        description: 'TBD'
+        value:  1000000
+
+    ADC_0:
+        description: 'TBD'
+        value:  1
+    ADC_0_RESOLUTION:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_RESOLUTION'
+    ADC_0_OVERSAMPLE:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_OVERSAMPLE'
+    ADC_0_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_IRQ_PRIORITY'
+
+    UART_0:
+        description: 'TBD'
+        value:  1
+    UART_1:
+        description: 'TBD'
+        value:  0
+
+    SPI_MASTER:
+        description: 'TBD'
+        value:  1
+    SPI_SLAVE:
+        description: 'TBD'
+        value:  0

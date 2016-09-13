@@ -18,12 +18,12 @@
  */
 
 #include <os/os.h>
-
 #include <string.h>
-
 #include <stdio.h>
 
-#ifdef NEWTMGR_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(LOG_NEWTMGR)
 
 #include "newtmgr/newtmgr.h"
 #include "json/json.h"
@@ -498,4 +498,4 @@ err:
     return (rc);
 }
 
-#endif /* NEWTMGR_PRESENT */
+#endif

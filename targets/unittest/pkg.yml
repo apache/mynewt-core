@@ -23,3 +23,5 @@ pkg.type: "target"
 pkg.description: "Used for unit tests by the \"newt test\" command."
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
+
+pkg.deps: sys/sysinit

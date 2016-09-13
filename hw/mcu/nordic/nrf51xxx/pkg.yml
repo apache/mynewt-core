@@ -24,9 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - nrf51
 
-pkg.features:
-    - NRF51
-
 pkg.deps: 
     - hw/hal 
     - libs/cmsis-core 

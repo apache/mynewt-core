@@ -16,12 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <shell/shell.h>
-#include <elua_base/elua.h>
+
+#include <assert.h>
+#include "sysinit/sysinit.h"
+#include "syscfg/syscfg.h"
+#include "shell/shell.h"
+#include "elua_base/elua.h"
 
 #ifdef MYNEWT
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(ELUA_CLI)
 static int lua_cmd(int argc, char **argv);
 
 static struct shell_cmd lua_shell_cmd = {
@@ -37,13 +41,16 @@ lua_cmd(int argc, char **argv)
 }
 #endif
 
-int
+void
 lua_init(void)
 {
-#ifdef SHELL_PRESENT
-    return shell_cmd_register(&lua_shell_cmd);
-#else
-    return 0;
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(ELUA_CLI)
+    rc = shell_cmd_register(&lua_shell_cmd);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
 #endif

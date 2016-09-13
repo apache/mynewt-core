@@ -24,7 +24,3 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.req_apis: 
     - ADC_HW_IMPL
-
-pkg.deps.TEST:
-   - hw/hal
-   - libs/testutil

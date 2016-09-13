@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "syscfg/syscfg.h"
 #include "bsp/bsp.h"
 #include "log/log.h"
 #include "stats/stats.h"
@@ -63,16 +64,8 @@
 #include "../src/ble_hs_atomic_priv.h"
 #include "../src/ble_hs_hci_priv.h"
 
-/* Nimble task priorities */
-#define BLE_LL_TASK_PRI         (OS_TASK_PRI_HIGHEST)
-
-#define SHELL_TASK_PRIO         (3)
-#define SHELL_MAX_INPUT_LEN     (256)
-#define SHELL_TASK_STACK_SIZE   (OS_STACK_ALIGN(512))
-static bssnz_t os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
-
 /* Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
+uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
 
 /* Our random address (in case we need it) */
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
@@ -80,25 +73,11 @@ uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 /* A buffer for host advertising data */
 uint8_t g_host_adv_len;
 
-/** Our public address.  Note: this is in reverse byte order. */
-static uint8_t bletiny_addr[6] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
-
-/* Create a mbuf pool of BLE mbufs */
-#define MBUF_NUM_MBUFS      (16)
-#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
-#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
-#define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
-
-os_membuf_t default_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
-
-struct os_mbuf_pool default_mbuf_pool;
-struct os_mempool default_mbuf_mpool;
-
 /* BLETINY variables */
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(512))
 #define BLETINY_TASK_PRIO              1
 
-#if NIMBLE_OPT(ROLE_CENTRAL)
+#if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
 #define BLETINY_MAX_DSCS               64
@@ -115,7 +94,7 @@ bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 static struct log_handler bletiny_log_console_handler;
 struct log bletiny_log;
 
-bssnz_t struct bletiny_conn bletiny_conns[NIMBLE_OPT(MAX_CONNECTIONS)];
+bssnz_t struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
 int bletiny_num_conns;
 
 static void *bletiny_svc_mem;
@@ -631,7 +610,7 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
 {
     struct bletiny_conn *conn;
 
-    assert(bletiny_num_conns < NIMBLE_OPT(MAX_CONNECTIONS));
+    assert(bletiny_num_conns < MYNEWT_VAL(BLE_MAX_CONNECTIONS));
 
     conn = bletiny_conns + bletiny_num_conns;
     bletiny_num_conns++;
@@ -659,7 +638,7 @@ bletiny_conn_delete_idx(int idx)
     /* This '#if' is not strictly necessary.  It is here to prevent a spurious
      * warning from being reported.
      */
-#if NIMBLE_OPT(MAX_CONNECTIONS) > 1
+#if MYNEWT_VAL(BLE_MAX_CONNECTIONS) > 1
     int i;
     for (i = idx + 1; i < bletiny_num_conns; i++) {
         bletiny_conns[i - 1] = bletiny_conns[i];
@@ -1056,8 +1035,9 @@ bletiny_tx_timer_cb(void *arg)
     }
 
     len = bletiny_tx_data.tx_len;
+
     om = NULL;
-    if (default_mbuf_mpool.mp_num_free >= 4) {
+    if (os_msys_num_free() >= 4) {
         om = os_msys_get_pkthdr(len + 4, sizeof(struct ble_mbuf_hdr));
     }
 
@@ -1428,7 +1408,7 @@ bletiny_l2cap_update(uint16_t conn_handle,
 int
 bletiny_sec_pair(uint16_t conn_handle)
 {
-#if !NIMBLE_OPT(SM)
+#if !NIMBLE_BLE_SM
     return BLE_HS_ENOTSUP;
 #endif
 
@@ -1441,7 +1421,7 @@ bletiny_sec_pair(uint16_t conn_handle)
 int
 bletiny_sec_start(uint16_t conn_handle)
 {
-#if !NIMBLE_OPT(SM)
+#if !NIMBLE_BLE_SM
     return BLE_HS_ENOTSUP;
 #endif
 
@@ -1458,7 +1438,7 @@ bletiny_sec_restart(uint16_t conn_handle,
                     uint64_t rand_val,
                     int auth)
 {
-#if !NIMBLE_OPT(SM)
+#if !NIMBLE_BLE_SM
     return BLE_HS_ENOTSUP;
 #endif
 
@@ -1527,7 +1507,7 @@ bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
     }
 
     /* XXX: for now, must have contiguous mbuf space */
-    if ((len + 4) > MBUF_BUF_SIZE) {
+    if ((len + 4) > MYNEWT_VAL_MSYS_1_BLOCK_SIZE) {
         return -2;
     }
 
@@ -1602,32 +1582,10 @@ bletiny_task_handler(void *arg)
 int
 main(void)
 {
-    struct ble_hci_ram_cfg hci_cfg;
-    struct ble_hs_cfg cfg;
-    uint32_t seed;
     int rc;
-    int i;
 
     /* Initialize OS */
     os_init();
-
-    /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(1000000);
-    assert(rc == 0);
-
-    /* Dummy device address */
-    memcpy(g_dev_addr, bletiny_addr, 6);
-
-    /*
-     * Seed random number generator with least significant bytes of device
-     * address.
-     */
-    seed = 0;
-    for (i = 0; i < 4; ++i) {
-        seed |= g_dev_addr[i];
-        seed <<= 8;
-    }
-    srand(seed);
 
     /* Allocate some application specific memory pools. */
     bletiny_svc_mem = malloc(
@@ -1657,26 +1615,7 @@ main(void)
                          "bletiny_dsc_pool");
     assert(rc == 0);
 
-    /* Initialize msys mbufs. */
-    rc = os_mempool_init(&default_mbuf_mpool, MBUF_NUM_MBUFS,
-                         MBUF_MEMBLOCK_SIZE, default_mbuf_mpool_data,
-                         "default_mbuf_data");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
-                           MBUF_MEMBLOCK_SIZE, MBUF_NUM_MBUFS);
-    assert(rc == 0);
-
-    rc = os_msys_register(&default_mbuf_pool);
-    assert(rc == 0);
-
-    /* Create the shell task. */
-    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
-                         SHELL_MAX_INPUT_LEN);
-    assert(rc == 0);
-
-    /* Initialize the logging system. */
-    log_init();
+    /* Initialize the bletiny system. */
     log_console_handler_init(&bletiny_log_console_handler);
     log_register("bletiny", &bletiny_log, &bletiny_log_console_handler);
 
@@ -1690,38 +1629,14 @@ main(void)
                  NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
                  bletiny_stack, BLETINY_STACK_SIZE);
 
-    rc = stats_module_init();
-    assert(rc == 0);
-
-    /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
-    assert(rc == 0);
-
-    /* Initialize the RAM HCI transport. */
-    hci_cfg = ble_hci_ram_cfg_dflt;
-    rc = ble_hci_ram_init(&hci_cfg);
-    assert(rc == 0);
-
     /* Initialize the NimBLE host configuration. */
-    cfg = ble_hs_cfg_dflt;
-    cfg.max_gattc_procs = 2;
-    cfg.reset_cb = bletiny_on_reset;
-    cfg.store_read_cb = ble_store_ram_read;
-    cfg.store_write_cb = ble_store_ram_write;
-    cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.parent_evq = &bletiny_evq;
+    ble_hs_cfg.reset_cb = bletiny_on_reset;
+    ble_hs_cfg.store_read_cb = ble_store_ram_read;
+    ble_hs_cfg.store_write_cb = ble_store_ram_write;
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
-    /* Initialize GATT services. */
-    rc = ble_svc_gap_init(&cfg);
-    assert(rc == 0);
-
-    rc = ble_svc_gatt_init(&cfg);
-    assert(rc == 0);
-
-    rc = gatt_svr_init(&cfg);
-    assert(rc == 0);
-
-    /* Initialize NimBLE host. */
-    rc = ble_hs_init(&bletiny_evq, &cfg);
+    rc = gatt_svr_init();
     assert(rc == 0);
 
     rc = cmd_init();

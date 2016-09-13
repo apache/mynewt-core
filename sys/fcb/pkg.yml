@@ -26,6 +26,3 @@ pkg.keywords:
 
 pkg.deps:
     - libs/os
-    - libs/testutil
-pkg.features:
-    - FCB

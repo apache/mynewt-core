@@ -326,11 +326,11 @@ gatt_svr_register(void)
 }
 
 int
-gatt_svr_init(struct ble_hs_cfg *cfg)
+gatt_svr_init(void)
 {
     int rc;
 
-    rc = ble_gatts_count_cfg(gatt_svr_svcs, cfg);
+    rc = ble_gatts_count_cfg(gatt_svr_svcs);
     if (rc != 0) {
         return rc;
     }

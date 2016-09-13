@@ -17,13 +17,14 @@
  * under the License.
  */
 
-#include <os/os.h>
-
+#include <assert.h>
 #include <string.h>
-
-#include "stats/stats.h"
-
 #include <stdio.h>
+
+#include "sysinit/sysinit.h"
+#include "syscfg/syscfg.h"
+#include "os/os.h"
+#include "stats/stats.h"
 
 STATS_SECT_START(stats)
     STATS_SECT_ENTRY(num_registered)
@@ -38,8 +39,6 @@ STATS_NAME_END(stats)
 STAILQ_HEAD(, stats_hdr) g_stats_registry =
     STAILQ_HEAD_INITIALIZER(g_stats_registry);
 
-static uint8_t stats_module_inited;
-
 int
 stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
 {
@@ -50,7 +49,7 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
     int ent_n;
     int len;
     int rc;
-#ifdef STATS_NAME_ENABLE
+#if MYNEWT_VAL(STATS_NAMES)
     int i;
 #endif
 
@@ -63,7 +62,7 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
          * walk function
          */
         name = NULL;
-#ifdef STATS_NAME_ENABLE
+#if MYNEWT_VAL(STATS_NAMES)
         for (i = 0; i < hdr->s_map_cnt; ++i) {
             if (hdr->s_map[i].snm_off == cur) {
                 name = hdr->s_map[i].snm_name;
@@ -92,57 +91,30 @@ err:
 }
 
 
-int
+void
 stats_module_init(void)
 {
     int rc;
 
-    if (stats_module_inited) {
-        return 0;
-    }
-    stats_module_inited = 1;
+    STAILQ_INIT(&g_stats_registry);
 
-#ifdef SHELL_PRESENT
+#if MYNEWT_VAL(STATS_CLI)
     rc = stats_shell_register();
-    if (rc != 0) {
-        goto err;
-    }
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
-#ifdef NEWTMGR_PRESENT
+#if MYNEWT_VAL(STATS_NEWTMGR)
     rc = stats_nmgr_register_group();
-    if (rc != 0) {
-        goto err;
-    }
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
     rc = stats_init(STATS_HDR(g_stats_stats),
                     STATS_SIZE_INIT_PARMS(g_stats_stats, STATS_SIZE_32),
                     STATS_NAME_INIT_PARMS(stats));
-    if (rc != 0) {
-        goto err;
-    }
+    SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = stats_register("stat", STATS_HDR(g_stats_stats));
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
-/**
- * Uninitializes all statistic sections.  This is likely only useful for unit
- * tests that need to run in sequence.
- */
-void
-stats_module_reset(void)
-{
-    stats_module_inited = 0;
-
-    STAILQ_INIT(&g_stats_registry);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
 int
@@ -153,7 +125,7 @@ stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
 
     shdr->s_size = size;
     shdr->s_cnt = cnt;
-#ifdef STATS_NAME_ENABLE
+#if MYNEWT_VAL(STATS_NAMES)
     shdr->s_map = map;
     shdr->s_map_cnt = map_cnt;
 #endif

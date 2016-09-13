@@ -245,6 +245,9 @@ void os_msys_reset(void);
 /* Return a packet header mbuf from the system pool */
 struct os_mbuf *os_msys_get_pkthdr(uint16_t dsize, uint16_t user_hdr_len);
 
+int os_msys_count(void);
+int os_msys_num_free(void);
+
 /* Initialize a mbuf pool */
 int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp, 
         uint16_t, uint16_t);

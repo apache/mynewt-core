@@ -32,66 +32,24 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
-#include "host/ble_hs_adv.h"
-#include "host/ble_uuid.h"
-#include "host/ble_att.h"
-#include "host/ble_gap.h"
-#include "host/ble_gatt.h"
-#include "host/ble_l2cap.h"
-#include "host/ble_sm.h"
-#include "controller/ble_ll.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
-
-/* RAM persistence layer. */
-#include "store/ram/ble_store_ram.h"
-
-/* Mandatory services. */
 #include "services/mandatory/ble_svc_gap.h"
-#include "services/mandatory/ble_svc_gatt.h"
-
-/* Newtmgr include */
-#include "newtmgr/newtmgr.h"
-#include "nmgrble/newtmgr_ble.h"
 
 /* Application-specified header. */
 #include "bleprph.h"
 
-/** Mbuf settings. */
-#define MBUF_NUM_MBUFS      (12)
-#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
-#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
-#define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
-
-static os_membuf_t bleprph_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
-struct os_mbuf_pool bleprph_mbuf_pool;
-struct os_mempool bleprph_mbuf_mpool;
+#include "nmgrble/newtmgr_ble.h"
 
 /** Log data. */
 static struct log_handler bleprph_log_console_handler;
 struct log bleprph_log;
 
-/** Priority of the nimble host and controller tasks. */
-#define BLE_LL_TASK_PRI             (OS_TASK_PRI_HIGHEST)
-
 /** bleprph task settings. */
 #define BLEPRPH_TASK_PRIO           1
 #define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
 
-#define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
-os_stack_t newtmgr_stack[NEWTMGR_TASK_STACK_SIZE];
-
 struct os_eventq bleprph_evq;
 struct os_task bleprph_task;
 bssnz_t os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
-
-/** Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a};
-
-/** Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -332,47 +290,15 @@ bleprph_task_handler(void *unused)
 int
 main(void)
 {
-    struct ble_hs_cfg cfg;
-    uint32_t seed;
     int rc;
-    int i;
+
+    /* Set initial BLE device address. */
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
     /* Initialize OS */
     os_init();
 
-    /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(1000000);
-    assert(rc == 0);
-
-    /* Seed random number generator with least significant bytes of device
-     * address.
-     */
-    seed = 0;
-    for (i = 0; i < 4; ++i) {
-        seed |= g_dev_addr[i];
-        seed <<= 8;
-    }
-    srand(seed);
-
-    /* Initialize msys mbufs. */
-    rc = os_mempool_init(&bleprph_mbuf_mpool, MBUF_NUM_MBUFS,
-                         MBUF_MEMBLOCK_SIZE, bleprph_mbuf_mpool_data,
-                         "bleprph_mbuf_data");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&bleprph_mbuf_pool, &bleprph_mbuf_mpool,
-                           MBUF_MEMBLOCK_SIZE, MBUF_NUM_MBUFS);
-    assert(rc == 0);
-
-    rc = os_msys_register(&bleprph_mbuf_pool);
-    assert(rc == 0);
-
-    /* Initialize the console (for log output). */
-    rc = console_init(NULL);
-    assert(rc == 0);
-
-    /* Initialize the logging system. */
-    log_init();
+    /* Initialize the bleprph log. */
     log_console_handler_init(&bleprph_log_console_handler);
     log_register("bleprph", &bleprph_log, &bleprph_log_console_handler);
 
@@ -386,45 +312,14 @@ main(void)
                  NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
                  bleprph_stack, BLEPRPH_STACK_SIZE);
 
-    /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
-    assert(rc == 0);
-
-    /* Initialize the RAM HCI transport. */
-    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
-    assert(rc == 0);
-
     /* Initialize the NimBLE host configuration. */
-    cfg = ble_hs_cfg_dflt;
-    cfg.max_gattc_procs = 2;
-    cfg.sm_bonding = 1;
-    cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.reset_cb = bleprph_on_reset;
-    cfg.sync_cb = bleprph_on_sync;
-    cfg.store_read_cb = ble_store_ram_read;
-    cfg.store_write_cb = ble_store_ram_write;
-    cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.parent_evq = &bleprph_evq;
+    ble_hs_cfg.reset_cb = bleprph_on_reset;
+    ble_hs_cfg.sync_cb = bleprph_on_sync;
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
-    /* Initialize GATT services. */
-    rc = ble_svc_gap_init(&cfg);
+    rc = gatt_svr_init();
     assert(rc == 0);
-
-    rc = ble_svc_gatt_init(&cfg);
-    assert(rc == 0);
-
-    rc = nmgr_ble_gatt_svr_init(&bleprph_evq, &cfg);
-    assert(rc == 0);
-
-    rc = gatt_svr_init(&cfg);
-    assert(rc == 0);
-
-    /* Initialize NimBLE host. */
-    rc = ble_hs_init(&bleprph_evq, &cfg);
-    assert(rc == 0);
-
-    nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
-    imgmgr_module_init();
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-bleprph");

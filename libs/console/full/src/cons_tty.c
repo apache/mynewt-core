@@ -18,9 +18,11 @@
  */
 
 #include <inttypes.h>
-#include <os/os.h>
-#include <uart/uart.h>
-#include <bsp/bsp.h>
+#include <assert.h>
+#include "sysinit/sysinit.h"
+#include "os/os.h"
+#include "uart/uart.h"
+#include "bsp/bsp.h"
 #include "console/console.h"
 
 /** Indicates whether the previous line of output was completed. */
@@ -401,4 +403,13 @@ console_init(console_rx_cb rx_cb)
     }
 
     return 0;
+}
+
+void
+console_pkg_init(void)
+{
+    int rc;
+
+    rc = console_init(NULL);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }

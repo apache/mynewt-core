@@ -1,3 +1,4 @@
+#if 0
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -111,3 +112,4 @@ native_dac_write(struct hal_dac *pdac, int val)
     }
     return -1;    
 }
+#endif

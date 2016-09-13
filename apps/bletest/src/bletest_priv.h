@@ -22,7 +22,7 @@
 
 void bletest_send_conn_update(uint16_t handle);
 
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
 void bletest_ltk_req_reply(uint16_t handle);
 int bletest_send_ltk_req_neg_reply(uint16_t handle);
 int bletest_send_ltk_req_reply(uint16_t handle);

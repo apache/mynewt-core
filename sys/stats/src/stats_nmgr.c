@@ -17,14 +17,14 @@
  * under the License.
  */
 
-#include <os/os.h>
-
 #include <string.h>
-
 #include <stdio.h>
 
-#ifdef NEWTMGR_PRESENT
+#include "syscfg/syscfg.h"
 
+#if MYNEWT_VAL(STATS_NEWTMGR)
+
+#include "os/os.h"
 #include "newtmgr/newtmgr.h"
 #include "json/json.h"
 #include "stats/stats.h"
@@ -180,4 +180,4 @@ err:
     return (rc);
 }
 
-#endif /* NEWTMGR_PRESENT */
+#endif /* MYNEWT_VAL(STATS_NEWTMGR) */

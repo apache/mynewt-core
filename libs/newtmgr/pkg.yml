@@ -28,12 +28,23 @@ pkg.deps:
     - libs/os
     - libs/json
     - libs/util
-    - libs/testutil
     - libs/shell
     - sys/reboot
 
 pkg.deps.BLE_HOST:
     - libs/newtmgr/transport/ble
 
-pkg.features:
-    - NEWTMGR
+pkg.init_function: nmgr_pkg_init
+pkg.init_stage: 5
+
+pkg.syscfg_defs:
+    NEWTMGR_TASK_PRIO:
+        description: 'TBD'
+        type: 'task_priority'
+        value: 'any'
+    NEWTMGR_STACK_SIZE:
+        description: 'TBD'
+        value: 512
+    NEWTMGR_BLE_HOST:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_NET_NIMBLE_HOST'

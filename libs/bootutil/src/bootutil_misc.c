@@ -19,22 +19,24 @@
 
 #include <string.h>
 #include <inttypes.h>
-#include <hal/hal_flash.h>
-#include <config/config.h>
-#include <os/os.h>
+
+#include "syscfg/syscfg.h"
+#include "hal/hal_flash.h"
+#include "config/config.h"
+#include "os/os.h"
 #include "bootutil/image.h"
 #include "bootutil_priv.h"
 
-#ifdef USE_STATUS_FILE
-#include <fs/fs.h>
-#include <fs/fsutil.h>
+#if MYNEWT_VAL(BOOTUTIL_NFFS)
+#include "fs/fs.h"
+#include "fs/fsutil.h"
 #endif
 
 static int boot_conf_set(int argc, char **argv, char *val);
 
 static struct image_version boot_main;
 static struct image_version boot_test;
-#ifndef USE_STATUS_FILE
+#if !MYNEWT_VAL(BOOTUTIL_NFFS)
 static struct boot_status boot_saved;
 #endif
 
@@ -69,7 +71,7 @@ boot_conf_set(int argc, char **argv, char *val)
                 memset(&boot_test, 0, len);
                 rc = 0;
             }
-#ifndef USE_STATUS_FILE
+#if !MYNEWT_VAL(BOOTUTIL_NFFS)
         } else if (!strcmp(argv[0], "status")) {
             if (!val) {
                 boot_saved.state = 0;
@@ -237,7 +239,7 @@ bootutil_cfg_register(void)
     conf_register(&boot_conf_handler);
 }
 
-#ifndef USE_STATUS_FILE
+#if !MYNEWT_VAL(BOOTUTIL_NFFS)
 int
 boot_read_status(struct boot_status *bs)
 {

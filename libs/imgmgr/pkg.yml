@@ -27,10 +27,20 @@ pkg.deps:
     - libs/newtmgr
     - libs/bootutil
     - libs/util
-pkg.deps.FS:
-    - fs/fs
-pkg.cflags.FS: -DFS_PRESENT
 
-pkg.deps.COREDUMP:
+pkg.deps.IMGMGR_FS:
+    - fs/fs
+
+pkg.deps.IMGMGR_COREDUMP:
     - sys/coredump
-pkg.cflags.COREDUMP: -DCOREDUMP_PRESENT
+
+pkg.init_function: imgmgr_module_init
+pkg.init_stage: 5
+
+pkg.syscfg_defs:
+    IMGMGR_FS:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_FS_FS'
+    IMGMGR_COREDUMP:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_SYS_COREDUMP'

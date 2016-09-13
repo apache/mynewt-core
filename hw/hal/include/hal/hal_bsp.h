@@ -29,6 +29,7 @@ extern "C" {
 /*
  * Initializes BSP; registers flash_map with the system.
  */
+void bsp_init_devs(void);
 void bsp_init(void);
 
 /*

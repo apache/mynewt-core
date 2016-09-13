@@ -33,14 +33,14 @@ pkg.deps:
     - libs/console/full
     - libs/shell
 
-pkg.cflags:
-    ### Disable some features to make bletiny small enough to fit on the nRF51.
-    ### These features can be re-enabled in the target definition.
+### Disable some features to make bletiny small enough to fit on the nRF51.
+### These features can be re-enabled in the target definition.
+pkg.syscfg_vals:
     # Set log level to info (disable debug logging).
-    - "-DLOG_LEVEL=1"
+    LOG_LEVEL: 1
 
     # Disable security manager (pairing and bonding).
-    - "-DNIMBLE_OPT_SM=0"
+    BLE_SM: 0
 
     # Disable eddystone beacons.
-    - "-DNIMBLE_OPT_EDDYSTONE=0"
+    BLE_EDDYSTONE: 0

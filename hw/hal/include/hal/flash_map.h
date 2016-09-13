@@ -61,6 +61,9 @@ struct flash_area {
 #define FLASH_AREA_CORE                 2
 #define FLASH_AREA_REBOOT_LOG           5
 
+extern const struct flash_area *flash_map;
+extern int flash_map_entries;
+
 /*
  * Initializes flash map. Memory will be referenced by flash_map code
  * from this on.
@@ -97,7 +100,7 @@ int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
  * Given flash map index, return sector info in NFFS area desc format.
  */
 struct nffs_area_desc;
-int flash_area_to_nffs_desc(int idx, int *cnt, struct nffs_area_desc *nad);
+int nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad);
 
 #ifdef __cplusplus
 }

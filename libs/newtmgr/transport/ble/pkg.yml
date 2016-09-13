@@ -28,3 +28,6 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - net/nimble
+
+pkg.init_function: newtmgr_ble_pkg_init
+pkg.init_stage: 5

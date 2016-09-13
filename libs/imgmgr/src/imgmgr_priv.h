@@ -21,6 +21,7 @@
 #define __IMGMGR_PRIV_H_
 
 #include <stdint.h>
+#include "syscfg/syscfg.h"
 
 #define IMGMGR_MAX_IMGS		2
 
@@ -87,7 +88,7 @@ struct imgr_state {
         uint32_t off;
         uint32_t size;
         const struct flash_area *fa;
-#ifdef FS_PRESENT
+#if MYNEWT_VAL(IMGMGR_FS)
         struct fs_file *file;
 #endif
     } upload;

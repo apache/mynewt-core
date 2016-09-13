@@ -18,12 +18,13 @@
  */
 #include <stdarg.h>
 #include <stdio.h>
-#include <console/console.h>
-#include <os/os_time.h>
+#include "syscfg/syscfg.h"
+#include "console/console.h"
+#include "os/os_time.h"
 
 #define CONS_OUTPUT_MAX_LINE	128
 
-#ifdef BASELIBC_PRESENT
+#if MYNEWT_PKG(LIBS_BASELIBC)
 size_t console_file_write(FILE *p, const char *str, size_t cnt);
 
 static const struct File_methods console_file_ops = {

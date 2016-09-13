@@ -18,6 +18,9 @@
  */
 
 #include <assert.h>
+#include "hal/flash_map.h"
+#include "hal/hal_bsp.h"
+#include "hal/hal_flash_int.h"
 #include "os/os_malloc.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
@@ -436,4 +439,71 @@ int
 nffs_misc_ready(void)
 {
     return nffs_root_dir != NULL;
+}
+
+
+/*
+ * Turn flash region into a set of areas for NFFS use.
+ *
+ * Limit the number of regions we return to be less than *cnt.
+ * If sector count within region exceeds that, collect multiple sectors
+ * to a region.
+ */
+int
+nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad)
+{
+    int i, j;
+    const struct hal_flash *hf;
+    const struct flash_area *fa;
+    int max_cnt, move_on;
+    int first_idx, last_idx;
+    uint32_t start, size;
+    uint32_t min_size;
+
+    if (!flash_map || idx >= flash_map_entries) {
+        return -1;
+    }
+    first_idx = last_idx = -1;
+    max_cnt = *cnt;
+    *cnt = 0;
+
+    fa = &flash_map[idx];
+
+    hf = bsp_flash_dev(fa->fa_flash_id);
+    for (i = 0; i < hf->hf_sector_cnt; i++) {
+        hf->hf_itf->hff_sector_info(i, &start, &size);
+        if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
+            if (first_idx == -1) {
+                first_idx = i;
+            }
+            last_idx = i;
+            *cnt = *cnt + 1;
+        }
+    }
+    if (*cnt > max_cnt) {
+        min_size = fa->fa_size / max_cnt;
+    } else {
+        min_size = 0;
+    }
+    *cnt = 0;
+
+    move_on = 1;
+    for (i = first_idx, j = 0; i < last_idx + 1; i++) {
+        hf->hf_itf->hff_sector_info(i, &start, &size);
+        if (move_on) {
+            nad[j].nad_flash_id = fa->fa_flash_id;
+            nad[j].nad_offset = start;
+            nad[j].nad_length = size;
+            *cnt = *cnt + 1;
+            move_on = 0;
+        } else {
+            nad[j].nad_length += size;
+        }
+        if (nad[j].nad_length >= min_size) {
+            j++;
+            move_on = 1;
+        }
+    }
+    nad[*cnt].nad_length = 0;
+    return 0;
 }

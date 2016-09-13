@@ -24,6 +24,3 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: libs/os
-pkg.deps.NFFS:
-    - fs/nffs
-pkg.cflags.NFFS: -DNFFS_PRESENT

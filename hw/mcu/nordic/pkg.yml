@@ -26,12 +26,12 @@ pkg.keywords:
 
 pkg.type: sdk
 
-pkg.ign_files.NRF52: 
+pkg.ign_files.BSP_NRF52: 
     - "nrf_drv_adc.c"
     - "pstorage*"
     - "sdk_mapped_flags.c"
 
-pkg.ign_files.NRF51:
+pkg.ign_files.BSP_NRF51:
     - "nrf_saadc.c"
     - "nrf_drv_saadc.c"
     - "nrf_drv_comp.c"
@@ -57,4 +57,3 @@ pkg.cflags: -std=gnu99 -DNRF52_PAN_28
 pkg.deps: 
     - hw/hal 
     - libs/cmsis-core 
-    - compiler/arm-none-eabi-m4

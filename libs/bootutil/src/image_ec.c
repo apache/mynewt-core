@@ -16,13 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifdef IMAGE_SIGNATURES_EC
-#include <bootutil/sign_key.h>
 
-#include <mbedtls/sha256.h>
-#include <mbedtls/ecdsa.h>
-#include <mbedtls/oid.h>
-#include <mbedtls/asn1.h>
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(BOOTUTIL_SIGN_EC)
+#include "bootutil/sign_key.h"
+
+#include "mbedtls/sha256.h"
+#include "mbedtls/ecdsa.h"
+#include "mbedtls/oid.h"
+#include "mbedtls/asn1.h"
 
 #include "bootutil_priv.h"
 
@@ -115,4 +118,4 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
 
     return rc;
 }
-#endif /* IMAGE_SIGNATURES_EC */
+#endif /* MYNEWT_VAL(BOOTUTIL_SIGN_EC) */
