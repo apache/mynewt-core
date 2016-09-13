@@ -51,7 +51,7 @@ struct os_mempool default_mbuf_mpool;
 int
 main(void)
 {
-    struct ble_hci_uart_cfg hci_cfg;
+    const struct ble_hci_uart_cfg *hci_cfg;
     int rc;
 
     /* Initialize OS */
@@ -74,11 +74,12 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
+    hci_cfg = &ble_hci_uart_cfg_dflt;
+    rc = ble_ll_init(BLE_LL_TASK_PRI, hci_cfg->num_acl_bufs,
+                     BLE_MBUF_PAYLOAD_SIZE);
     assert(rc == 0);
 
-    hci_cfg = ble_hci_uart_cfg_dflt;
-    rc = ble_hci_uart_init(&hci_cfg);
+    rc = ble_hci_uart_init(hci_cfg);
     assert(rc == 0);
 
     /* Start the OS */
