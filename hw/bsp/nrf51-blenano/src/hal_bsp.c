@@ -21,18 +21,6 @@
 #include <stddef.h>
 #include "mcu/nrf51_hal.h"
 
-static const struct nrf51_uart_cfg uart_cfg = {
-    .suc_pin_tx = 9,
-    .suc_pin_rx = 11,
-    .suc_pin_rts = 8,
-    .suc_pin_cts = 10
-};
-
-const struct nrf51_uart_cfg *bsp_uart_config(void)
-{
-    return &uart_cfg;
-}
-
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
 {

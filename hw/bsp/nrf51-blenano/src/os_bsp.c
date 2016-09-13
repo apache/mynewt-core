@@ -16,7 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <hal/flash_map.h>
+
+#include <assert.h>
+#include "syscfg/syscfg.h"
+#include "hal/flash_map.h"
+#if MYNEWT_VAL(UART_0)
+#include "mcu/nrf51_hal.h"
+#include "uart/uart.h"
+#include "uart_hal/uart_hal.h"
+#endif
+#include "os/os_dev.h"
+#include "app_util_platform.h"
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -46,6 +56,16 @@ static struct flash_area bsp_flash_areas[] = {
     }
 };
 
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+};
+#endif
+
 void *_sbrk(int incr);
 void _close(int fd);
 
@@ -66,6 +86,10 @@ bsp_imgr_current_slot(void)
 void
 os_bsp_init(void)
 {
+    int rc;
+
+    (void)rc;
+
     /*
      * XXX this reference is here to keep this function in.
      */
@@ -75,4 +99,9 @@ os_bsp_init(void)
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
+    assert(rc == 0);
+#endif
 }

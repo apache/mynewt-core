@@ -20,23 +20,12 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
-#include <hal/hal_bsp.h>
-#include <mcu/nrf51_hal.h>
+#include "hal/hal_bsp.h"
+#include "mcu/nrf51_hal.h"
 #include "bsp/bsp.h"
-#include <nrf_adc.h>
-#include <nrf_drv_adc.h>
-#include <os/os_dev.h>
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-
-static const struct nrf51_uart_cfg uart_cfg = {
-    .suc_pin_tx = 9,
-    .suc_pin_rx = 11,
-    .suc_pin_rts = 8,
-    .suc_pin_cts = 10
-};
-
-static struct uart_dev hal_uart0;
+#include "nrf_adc.h"
+#include "nrf_drv_adc.h"
+#include "os/os_dev.h"
 
 /*
  * What memory to include in coredump.
@@ -101,14 +90,4 @@ bsp_get_refmv(void *cfgdata)
     }
 
     return refmv;
-}
-
-void
-bsp_hal_init(void)
-{
-    int rc;
-
-    rc = os_dev_create((struct os_dev *)&hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg);
-    assert(rc == 0);
 }

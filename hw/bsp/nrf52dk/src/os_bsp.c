@@ -74,6 +74,21 @@ static struct flash_area bsp_flash_areas[] = {
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
+static const struct nrf52_uart_cfg os_bsp_uart0_cfg = {
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+};
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev os_bsp_bitbang_uart1;
+static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
+    .ubc_rxpin = MYNEWT_VAL(UART_1_PIN_TX),
+    .ubc_txpin = MYNEWT_VAL(UART_1_PIN_RX),
+    .ubc_cputimer_freq = MYNEWT_VAL(CLOCK_FREQ),
+};
 #endif
 
 #if MYNEWT_VAL(ADC_0)
@@ -144,7 +159,13 @@ bsp_init(void)
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)bsp_uart_config());
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &os_bsp_bitbang_uart1, "uart1",
+      OS_DEV_INIT_PRIMARY, 0, uart_bitbang_init, (void *)&os_bsp_uart1_cfg);
     assert(rc == 0);
 #endif
 

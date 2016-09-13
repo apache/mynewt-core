@@ -58,13 +58,13 @@ pkg.syscfg_defs:
         description: 'TBD'
         value: 1000000
 
-    32768_XTAL:
+    XTAL_32768:
         description: 'TBD'
         value: 1
 
     ADC_0:
         description: 'TBD'
-        value:  1
+        value: 1
     ADC_0_RESOLUTION:
         description: 'TBD'
         value: 'SAADC_CONFIG_RESOLUTION'
@@ -77,11 +77,23 @@ pkg.syscfg_defs:
 
     UART_0:
         description: 'TBD'
-        value:  1
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TBD'
+        value: 9
+    UART_0_PIN_RX:
+        description: 'TBD'
+        value: 11
+    UART_0_PIN_RTS:
+        description: 'TBD'
+        value: 8
+    UART_0_PIN_CTS:
+        description: 'TBD'
+        value: 10
 
     SPI_MASTER:
         description: 'TBD'
-        value:  1
+        value: 1
     SPI_SLAVE:
         description: 'TBD'
-        value:  0
+        value: 0

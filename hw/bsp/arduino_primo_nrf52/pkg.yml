@@ -83,7 +83,32 @@ pkg.syscfg_defs:
     UART_0:
         description: 'TBD'
         value:  1
+    UART_0_PIN_TX:
+        description: 'TBD'
+        value:  6
+    UART_0_PIN_RX:
+        description: 'TBD'
+        value:  5
+    UART_0_PIN_RTS:
+        description: 'TBD'
+        value:  0
+    UART_0_PIN_CTS:
+        description: 'TBD'
+        value:  0
+
     UART_1:
+        description: 'Bitbanger UART'
+        value:  0
+    UART_1_PIN_TX:
+        description: 'TBD'
+        value:  11
+    UART_1_PIN_RX:
+        description: 'TBD'
+        value:  12
+    UART_1_PIN_RTS:
+        description: 'TBD'
+        value:  0
+    UART_1_PIN_CTS:
         description: 'TBD'
         value:  0
 
