@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
+#include "syscfg/syscfg.h"
 #include <hal/flash_map.h>
 #include <os/os.h>
 #include <bsp/bsp.h>
@@ -36,7 +37,7 @@
 #else
 #error "Need NFFS or FCB for config storage"
 #endif
-#ifdef MYNEWT_VAL(BOOT_SERIAL)
+#if MYNEWT_VAL(BOOT_SERIAL)
 #include <hal/hal_gpio.h>
 #include <boot_serial/boot_serial.h>
 #endif
@@ -49,7 +50,7 @@
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
 
-#ifdef BOOT_SERIAL
+#if MYNEWT_VAL(BOOT_SERIAL)
 #define BOOT_SER_PRIO_TASK          1
 #define BOOT_SER_STACK_SZ           512
 #define BOOT_SER_CONS_INPUT         128
