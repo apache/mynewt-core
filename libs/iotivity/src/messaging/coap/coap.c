@@ -405,7 +405,7 @@ coap_serialize_message(void *packet, uint8_t *buffer)
 void
 coap_send_message(oc_message_t *message)
 {
-  LOG("-sending OCF message (%lu)-\n", message->length);
+  LOG("-sending OCF message (%u)-\n", (unsigned int) message->length);
 
   oc_send_message(message);
 }

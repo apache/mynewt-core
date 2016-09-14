@@ -68,7 +68,7 @@ coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
   if (t) {
     oc_message_t *message = oc_allocate_message();
     if (message) {
-      LOG("Created new transaction %d %ld\n", mid, message->length);
+      LOG("Created new transaction %d %d\n", mid, (int) message->length);
       t->mid = mid;
       t->retrans_counter = 0;
 

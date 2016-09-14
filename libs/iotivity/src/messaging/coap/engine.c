@@ -61,7 +61,7 @@ coap_receive(oc_message_t *msg)
 {
   erbium_status_code = NO_ERROR;
 
-  LOG("\n\nCoAP Engine: received datalen=%lu \n", msg->length);
+  LOG("\n\nCoAP Engine: received datalen=%u \n", (unsigned int) msg->length);
 
   /* static declaration reduces stack peaks and program code size */
   static coap_packet_t
@@ -141,8 +141,8 @@ coap_receive(oc_message_t *msg)
         }
         if (coap_get_header_block2(message, &block_num, NULL, &block_size,
                                    &block_offset)) {
-          LOG("\tBlockwise: block request %u (%u/%u) @ %u bytes\n", block_num,
-              block_size, COAP_MAX_BLOCK_SIZE, block_offset);
+          LOG("\tBlockwise: block request %u (%u/%u) @ %u bytes\n", (unsigned int) block_num,
+              block_size, COAP_MAX_BLOCK_SIZE, (unsigned int) block_offset);
           block_size = MIN(block_size, COAP_MAX_BLOCK_SIZE);
           new_offset = block_offset;
         }
@@ -195,7 +195,7 @@ coap_receive(oc_message_t *msg)
                 /* resource provides chunk-wise data */
               } else {
                 LOG("\tBlockwise: blockwise resource, new offset %d\n",
-                    new_offset);
+                    (int) new_offset);
                 coap_set_header_block2(response, block_num,
                                        new_offset != -1 ||
                                          response->payload_len > block_size,
