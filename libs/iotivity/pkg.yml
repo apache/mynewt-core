@@ -26,6 +26,8 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/libs/tinycbor"
     - "@apache-mynewt-core/libs/os"
+    - "@apache-mynewt-core/sys/mn_socket"
+    - "@apache-mynewt-core/sys/log"
 
 pkg.cflags: -DDEBUG=1
         -DSECURE=0

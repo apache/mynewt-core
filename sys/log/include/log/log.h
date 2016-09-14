@@ -97,6 +97,7 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
 #define LOG_MODULE_REBOOT           (6)
+#define LOG_MODULE_IOTIVITY         (7)
 #define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
@@ -108,6 +109,7 @@ struct log_entry_hdr {
     (LOG_MODULE_NIMBLE_HOST == module ? "NIMBLE_HOST" :\
     (LOG_MODULE_NFFS        == module ? "NFFS"        :\
     (LOG_MODULE_REBOOT      == module ? "REBOOT"      :\
+    (LOG_MODULE_IOTIVITY    == module ? "IOTIVITY"    :\
      "UNKNOWN")))))))
 
 /*
