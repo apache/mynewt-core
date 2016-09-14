@@ -326,12 +326,124 @@ sock_udp_data(void)
 }
 
 void
+std_writable(void *cb_arg, int err)
+{
+    int *i;
+
+    TEST_ASSERT(err == 0);
+    i = (int *)cb_arg;
+    if (i) {
+        *i = *i + 1;
+    }
+}
+
+void
+std_readable(void *cb_arg, int err)
+{
+    os_sem_release(&test_sem);
+}
+
+static union mn_socket_cb sud_sock_cbs = {
+    .socket.writable = std_writable,
+    .socket.readable = std_readable
+};
+
+int
+std_newconn(void *cb_arg, struct mn_socket *new)
+{
+    struct mn_socket **r_sock;
+
+    r_sock = cb_arg;
+    *r_sock = new;
+
+    mn_socket_set_cbs(new, NULL, &sud_sock_cbs);
+
+    os_sem_release(&test_sem);
+    return 0;
+}
+
+void
+sock_tcp_data(void)
+{
+    struct mn_socket *listen_sock;
+    struct mn_socket *sock;
+    struct mn_sockaddr_in msin;
+    int rc;
+    union mn_socket_cb listen_cbs = {
+        .listen.newconn = std_newconn,
+    };
+    int connected = 0;
+    struct mn_socket *new_sock = NULL;
+    struct os_mbuf *m;
+    char data[] = "1234567890";
+
+    rc = mn_socket(&listen_sock, MN_PF_INET, MN_SOCK_STREAM, 0);
+    TEST_ASSERT(rc == 0);
+
+    msin.msin_family = MN_PF_INET;
+    msin.msin_len = sizeof(msin);
+    msin.msin_port = htons(12447);
+
+    mn_inet_pton(MN_PF_INET, "127.0.0.1", &msin.msin_addr);
+
+    mn_socket_set_cbs(listen_sock, &new_sock, &listen_cbs);
+    rc = mn_bind(listen_sock, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_listen(listen_sock, 2);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_socket(&sock, MN_PF_INET, MN_SOCK_STREAM, 0);
+    TEST_ASSERT(rc == 0);
+
+    mn_socket_set_cbs(sock, &connected, &sud_sock_cbs);
+
+    rc = mn_connect(sock, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(connected == 1);
+    TEST_ASSERT(new_sock != NULL);
+
+    m = os_msys_get(sizeof(data), 0);
+    TEST_ASSERT(m);
+    rc = os_mbuf_copyinto(m, 0, data, sizeof(data));
+    TEST_ASSERT(rc == 0);
+    rc = mn_sendto(new_sock, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    /*
+     * Wait for the packet.
+     */
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == 0);
+
+    memset(&msin, 0, sizeof(msin));
+    rc = mn_recvfrom(sock, &m, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(m != NULL);
+    TEST_ASSERT(msin.msin_family == MN_AF_INET);
+    TEST_ASSERT(msin.msin_len == sizeof(msin));
+    TEST_ASSERT(msin.msin_port != 0);
+    TEST_ASSERT(msin.msin_addr != 0);
+    os_mbuf_free_chain(m);
+
+    if (new_sock) {
+        mn_close(new_sock);
+    }
+    mn_close(sock);
+    mn_close(listen_sock);
+}
+
+void
 mn_socket_test_handler(void *arg)
 {
     sock_open_close();
     sock_listen();
     sock_tcp_connect();
     sock_udp_data();
+    sock_tcp_data();
     os_test_restart();
 }
 
