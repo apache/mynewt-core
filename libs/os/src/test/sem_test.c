@@ -85,7 +85,7 @@ sem_test_sleep_task_handler(void *arg)
     t = os_sched_get_current_task();
     TEST_ASSERT(t->t_func == sem_test_sleep_task_handler);
 
-    os_time_delay(2000);
+    os_time_delay(2 * OS_TICKS_PER_SEC);
     os_test_restart();
 }
 
@@ -195,14 +195,14 @@ sem_test_1_task1_handler(void *arg)
         TEST_ASSERT(err == OS_OK);
 
         /* Sleep to let other tasks run */
-        os_time_delay(100);
+        os_time_delay(OS_TICKS_PER_SEC / 10);
 
         /* Release the semaphore */
         err = os_sem_release(&g_sem1);
         TEST_ASSERT(err == OS_OK);
 
         /* Sleep to let other tasks run */
-        os_time_delay(100);
+        os_time_delay(OS_TICKS_PER_SEC / 10);
     }
 
     os_test_restart();
@@ -226,13 +226,13 @@ TEST_CASE(os_sem_test_basic)
 static void 
 sem_test_1_task2_handler(void *arg) 
 {
-    sem_test_pend_release_loop(0, 100, 100);
+    sem_test_pend_release_loop(0, OS_TICKS_PER_SEC / 10, OS_TICKS_PER_SEC / 10);
 }
 
 static void 
 sem_test_1_task3_handler(void *arg) 
 {
-    sem_test_pend_release_loop(0, OS_TIMEOUT_NEVER, 2000);
+    sem_test_pend_release_loop(0, OS_TIMEOUT_NEVER, OS_TICKS_PER_SEC * 2);
 }
 
 TEST_CASE(os_sem_test_case_1)
