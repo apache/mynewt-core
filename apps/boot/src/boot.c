@@ -69,30 +69,7 @@ static struct conf_file my_conf = {
 static void
 setup_for_nffs(void)
 {
-    struct nffs_area_desc nffs_descs[NFFS_AREA_MAX + 1];
-    int cnt;
     int rc;
-
-    /*
-     * Make sure we have enough left to initialize the NFFS with the
-     * right number of maximum areas otherwise the file-system will not
-     * be readable.
-     */
-    cnt = NFFS_AREA_MAX;
-    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, nffs_descs);
-    assert(rc == 0);
-
-    /*
-     * Initializes the flash driver and file system for use by the boot loader.
-     */
-    rc = nffs_init();
-    if (rc == 0) {
-        /* Look for an nffs file system in internal flash.  If no file
-         * system gets detected, all subsequent file operations will fail,
-         * but the boot loader should proceed anyway.
-         */
-        nffs_detect(nffs_descs);
-    }
 
     rc = conf_file_src(&my_conf);
     assert(rc == 0);
@@ -142,9 +119,6 @@ main(void)
 
     os_init();
 
-    rc = hal_flash_init();
-    assert(rc == 0);
-
     cnt = BOOT_AREA_DESC_MAX;
     rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
     img_starts[0] = 0;
@@ -165,8 +139,6 @@ main(void)
     total += cnt;
 
     req.br_num_image_areas = total;
-
-    conf_init();
 
 #if MYNEWT_VAL(BOOT_NFFS)
     setup_for_nffs();

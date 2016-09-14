@@ -419,8 +419,6 @@ os_arch_os_init(void)
     os_init_idle_task();
     os_sanity_task_init(1);
 
-    bsp_init();
-
     return OS_OK;
 }
 
