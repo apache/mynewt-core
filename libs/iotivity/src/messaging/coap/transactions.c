@@ -112,10 +112,10 @@ coap_send_transaction(coap_transaction_t *t)
           COAP_RESPONSE_TIMEOUT_TICKS +
           (oc_random_rand() %
            (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
-        LOG("Initial interval %lu\n", t->retrans_timer.timer.interval);
+        LOG("Initial interval " OC_CLK_FMT "\n", t->retrans_timer.timer.interval);
       } else {
         t->retrans_timer.timer.interval <<= 1; /* double */
-        LOG("Doubled %lu\n", t->retrans_timer.timer.interval);
+        LOG("Doubled " OC_CLK_FMT "\n", t->retrans_timer.timer.interval);
       }
 
       OC_PROCESS_CONTEXT_BEGIN(transaction_handler_process);

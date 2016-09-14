@@ -8,6 +8,11 @@
 
 typedef os_time_t oc_clock_time_t;
 #define OC_CLOCK_CONF_TICKS_PER_SECOND (OS_TICKS_PER_SEC)
+#ifdef ARCH_sim
+#define OC_CLK_FMT  "%u"
+#else
+#define OC_CLK_FMT  "%lu"
+#endif
 
 /* Memory pool sizes */
 #define OC_BYTES_POOL_SIZE (2048)
