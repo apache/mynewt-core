@@ -19,7 +19,7 @@
 #ifndef __MCU_SIM_H__
 #define __MCU_SIM_H__
 
-#define OS_TICKS_PER_SEC    (1000)
+#define OS_TICKS_PER_SEC    (100)
 
 extern char *native_flash_file;
 extern char *native_uart_log_file;
