@@ -206,7 +206,7 @@ uart_poller(void *arg)
             }
         }
         uart_log_data(NULL, 0, 0);
-        os_time_delay(10);
+        os_time_delay(OS_TICKS_PER_SEC / 100);
     }
 }
 
