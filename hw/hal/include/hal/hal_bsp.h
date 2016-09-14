@@ -69,6 +69,15 @@ int bsp_hw_id(uint8_t *id, int max_len);
 struct adc_dev;
 uint16_t bsp_get_refmv(void *cfgdata);
 
+#define HAL_BSP_POWER_ON (1)
+#define HAL_BSP_POWER_WFI (2)
+#define HAL_BSP_POWER_SLEEP (3)
+#define HAL_BSP_POWER_DEEP_SLEEP (4)
+#define HAL_BSP_POWER_OFF (5)
+#define HAL_BSP_POWER_PERUSER (128)
+
+int hal_bsp_power_state(int state);
+
 #ifdef __cplusplus
 }
 #endif

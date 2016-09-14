@@ -75,3 +75,9 @@ bsp_core_dump(int *area_cnt)
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;
 }
+
+int
+hal_bsp_power_state(int state)
+{
+    return (0);
+}

@@ -78,3 +78,9 @@ bsp_hal_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg);
     assert(rc == 0);
 }
+
+int
+hal_bsp_power_state(int state)
+{
+    return (0);
+}

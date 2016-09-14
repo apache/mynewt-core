@@ -91,3 +91,9 @@ bsp_get_refmv(void *cfgdata)
 
     return refmv;
 }
+
+int
+hal_bsp_power_state(int state)
+{
+    return (0);
+}

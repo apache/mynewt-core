@@ -34,7 +34,8 @@ os_dev_init(struct os_dev *dev, char *name, uint8_t stage,
     dev->od_stage = stage;
     dev->od_priority = priority;
     /* assume these are set after the fact. */
-    dev->od_init_flags = 0;
+    dev->od_flags = 0;
+    dev->od_open_ref = 0;
     dev->od_init = od_init;
     dev->od_init_arg = arg;
     memset(&dev->od_handlers, 0, sizeof(dev->od_handlers));
@@ -137,12 +138,63 @@ os_dev_initialize_all(uint8_t stage)
         if (dev->od_stage == stage) {
             rc = dev->od_init(dev, dev->od_init_arg);
             if (rc != 0) {
-                if (dev->od_init_flags & OS_DEV_INIT_F_CRITICAL) {
+                if (dev->od_flags & OS_DEV_F_INIT_CRITICAL) {
                     goto err;
                 }
             } else {
-                dev->od_status |= OS_DEV_STATUS_READY;
+                dev->od_flags |= OS_DEV_F_STATUS_READY;
             }
+        }
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+/**
+ * Suspend all devices.
+ *
+ * @param dev The device to suspend
+ * @param suspend_t The number of ticks to suspend this device for
+ * @param force Whether or not to force suspending the device
+ *
+ * @return 0 on success, or a non-zero error code if one of the devices
+ *                       returned it.
+ */
+int
+os_dev_suspend_all(os_time_t suspend_t, uint8_t force)
+{
+    struct os_dev *dev;
+    int suspend_failure;
+    int rc;
+
+    suspend_failure = 0;
+    STAILQ_FOREACH(dev, &g_os_dev_list, od_next) {
+        rc = os_dev_suspend(dev, suspend_t, force);
+        if (rc != 0) {
+            suspend_failure = OS_ERROR;
+        }
+    }
+
+    return (suspend_failure);
+}
+
+/**
+ * Resume all the devices that were suspended.
+ *
+ * @return 0 on success, -1 if any of the devices have failed to resume.
+ */
+int
+os_dev_resume_all(void)
+{
+    struct os_dev *dev;
+    int rc;
+
+    STAILQ_FOREACH(dev, &g_os_dev_list, od_next) {
+        rc = os_dev_resume(dev);
+        if (rc != 0) {
+            goto err;
         }
     }
 
@@ -185,6 +237,7 @@ struct os_dev *
 os_dev_open(char *devname, uint32_t timo, void *arg)
 {
     struct os_dev *dev;
+    os_sr_t sr;
     int rc;
 
     dev = os_dev_lookup(devname);
@@ -193,7 +246,7 @@ os_dev_open(char *devname, uint32_t timo, void *arg)
     }
 
     /* Device is not ready to be opened. */
-    if ((dev->od_status & OS_DEV_STATUS_READY) == 0) {
+    if ((dev->od_flags & OS_DEV_F_STATUS_READY) == 0) {
         return (NULL);
     }
 
@@ -204,7 +257,10 @@ os_dev_open(char *devname, uint32_t timo, void *arg)
         }
     }
 
-    dev->od_status |= OS_DEV_STATUS_OPEN;
+    OS_ENTER_CRITICAL(sr);
+    ++dev->od_open_ref;
+    dev->od_flags |= OS_DEV_F_STATUS_OPEN;
+    OS_EXIT_CRITICAL(sr);
 
     return (dev);
 err:
@@ -222,6 +278,7 @@ int
 os_dev_close(struct os_dev *dev)
 {
     int rc;
+    os_sr_t sr;
 
     if (dev->od_handlers.od_close) {
         rc = dev->od_handlers.od_close(dev);
@@ -230,7 +287,11 @@ os_dev_close(struct os_dev *dev)
         }
     }
 
-    dev->od_status &= ~OS_DEV_STATUS_OPEN;
+    OS_ENTER_CRITICAL(sr);
+    if (--dev->od_open_ref == 0) {
+        dev->od_flags &= ~OS_DEV_F_STATUS_OPEN;
+    }
+    OS_EXIT_CRITICAL(sr);
 
     return (0);
 err:

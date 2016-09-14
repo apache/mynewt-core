@@ -44,18 +44,22 @@ struct os_dev;
  * Device status, so functions can ensure device is called in a
  * consistent state.
  */
-#define OS_DEV_STATUS_BASE    (1 << 0)
-#define OS_DEV_STATUS_INITING (1 << 1)
-#define OS_DEV_STATUS_READY   (1 << 2)
-#define OS_DEV_STATUS_OPEN    (1 << 3)
+#define OS_DEV_F_STATUS_READY     (1 << 0)
+#define OS_DEV_F_STATUS_OPEN      (1 << 1)
+#define OS_DEV_F_STATUS_SUSPENDED (1 << 2)
+#define OS_DEV_F_INIT_CRITICAL    (1 << 3)
 
 typedef int (*os_dev_init_func_t)(struct os_dev *, void *);
 typedef int (*os_dev_open_func_t)(struct os_dev *, uint32_t,
         void *);
+typedef int (*os_dev_suspend_func_t)(struct os_dev *, os_time_t, int);
+typedef int (*os_dev_resume_func_t)(struct os_dev *);
 typedef int (*os_dev_close_func_t)(struct os_dev *);
 
 struct os_dev_handlers {
     os_dev_open_func_t od_open;
+    os_dev_suspend_func_t od_suspend;
+    os_dev_resume_func_t od_resume;
     os_dev_close_func_t od_close;
 };
 
@@ -68,8 +72,8 @@ struct os_dev {
     void *od_init_arg;
     uint8_t od_stage;
     uint8_t od_priority;
-    uint8_t od_init_flags;
-    uint8_t od_status;
+    uint8_t od_open_ref;
+    uint8_t od_flags;
     char *od_name;
     STAILQ_ENTRY(os_dev) od_next;
 };
@@ -78,9 +82,31 @@ struct os_dev {
     (__dev)->od_handlers.od_open = (__open);                \
     (__dev)->od_handlers.od_close = (__close);
 
+static inline int
+os_dev_suspend(struct os_dev *dev, os_time_t suspend_t, uint8_t force)
+{
+    if (dev->od_handlers.od_suspend == NULL) {
+        return (0);
+    } else {
+        return (dev->od_handlers.od_suspend(dev, suspend_t, force));
+    }
+}
+
+static inline int
+os_dev_resume(struct os_dev *dev)
+{
+    if (dev->od_handlers.od_resume == NULL) {
+        return (0);
+    } else {
+        return (dev->od_handlers.od_resume(dev));
+    }
+}
+
 int os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg);
 int os_dev_initialize_all(uint8_t stage);
+int os_dev_suspend_all(os_time_t, uint8_t);
+int os_dev_resume_all(void);
 struct os_dev *os_dev_open(char *devname, uint32_t timo, void *arg);
 int os_dev_close(struct os_dev *dev);
 

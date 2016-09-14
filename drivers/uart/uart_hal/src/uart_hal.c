@@ -77,7 +77,7 @@ uart_hal_open(struct os_dev *odev, uint32_t wait, void *arg)
     if (!uc) {
         return OS_EINVAL;
     }
-    if (odev->od_status & OS_DEV_STATUS_OPEN) {
+    if (odev->od_flags & OS_DEV_F_STATUS_OPEN) {
         return OS_EBUSY;
     }
     hal_uart_init_cbs(priv->unit, uc->uc_tx_char, uc->uc_tx_done,
