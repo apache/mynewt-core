@@ -16,56 +16,64 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Called: $0 <bsp_directory_path> <binary> [features...]
-#  - bsp_directory_path is absolute path to hw/bsp/bsp_name
-#  - binary is the path to prefix to target binary, .elf.bin appended to this
-#    name is the raw binary format of the binary.
-#  - features are the target features. So you can have e.g. different
-#    flash offset for bootloader 'feature'
-# 
-#
-if [ $# -lt 1 ]; then
+
+# Called with following variables set:
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+#  - RESET set if target should be reset when attaching
+
+if [ -z "$BIN_BASENAME" ]; then
     echo "Need binary to debug"
     exit 1
 fi
 
 USE_OPENOCD=0
-MY_PATH=$1
-FILE_NAME=$2.elf
+FILE_NAME=$BIN_BASENAME.elf
 GDB_CMD_FILE=.gdb_cmds
 
 echo "Debugging" $FILE_NAME
 
-# Look for 'openocd_debug' from 3rd arg onwards
-shift
-shift
-while [ $# -gt 0 ]; do
-    if [ $1 = "openocd_debug" ]; then
+# Look for 'openocd_debug' in FEATURES
+for feature in $FEATURES; do
+    if [ $feature = "openocd_debug" ]; then
         USE_OPENOCD=1
     fi
-    shift
 done
 
+echo "target remote localhost:3333" > $GDB_CMD_FILE
+
 if [ $USE_OPENOCD -eq 1 ]; then
+    if [ -z "$BSP_PATH" ]; then
+        echo "Need BSP path for openocd script location"
+        exit 1
+    fi
+
     #
     # Block Ctrl-C from getting passed to openocd.
     # Exit openocd when gdb detaches.
     #
-    # Note that openocd behaves differently than Primo. We reset the target
-    # as we attach with openocd. If you don't want that, replace "reset halt"
-    # with just "halt"
     set -m
-    openocd -s $MY_PATH -f arduino_primo.cfg -c "gdb_port 3333; telnet_port 4444; nrf52.cpu configure -event gdb-detach {shutdown}" -c init -c "reset halt" &
+    openocd -s $BSP_PATH -f arduino_primo.cfg -c "$EXTRA_JTAG_CMD" -c "gdb_port 3333; telnet_port 4444; nrf52.cpu configure -event gdb-detach {resume;shutdown}" -c init -c halt &
     set +m
+    # Whether target should be reset or not
+    if [ ! -z "$RESET" ]; then
+	echo "mon reset halt" >> $GDB_CMD_FILE
+    fi
 else
     #
     # Block Ctrl-C from getting passed to JLinkGDBServer
     set -m
     JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
     set +m
+    # Whether target should be reset or not
+    if [ ! -z "$RESET" ]; then
+	echo "mon reset" >> $GDB_CMD_FILE
+    fi
 fi
 
-echo "target remote localhost:3333" > $GDB_CMD_FILE
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
 rm $GDB_CMD_FILE
 

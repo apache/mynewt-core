@@ -29,7 +29,7 @@ pkg.keywords:
 pkg.arch: cortex_m4
 pkg.compiler: compiler/arm-none-eabi-m4
 pkg.linkerscript: "nrf52pdk.ld"
-pkg.linkerscript.bootloader.OVERWRITE: "boot-nrf52pdk.ld"
+pkg.linkerscript.BOOT_LOADER.OVERWRITE: "boot-nrf52pdk.ld"
 pkg.downloadscript: nrf52pdk_download.sh
 pkg.debugscript: nrf52pdk_debug.sh
 pkg.cflags:

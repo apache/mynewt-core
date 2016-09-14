@@ -43,9 +43,6 @@ pkg.deps.BOOT_SERIAL.OVERWRITE:
     - libs/console/full
     - libs/boot_serial
 
-pkg.syscfg_vals:
-    LOG_LEVEL: 255
-
 pkg.syscfg_defs:
     BOOT_LOADER:
         description: 'TBD'
@@ -59,3 +56,7 @@ pkg.syscfg_defs:
     BOOT_SERIAL:
         description: 'TBD'
         value: 0
+
+pkg.syscfg_vals:
+    LOG_LEVEL: 255
+    STATS_NAMES: 0
