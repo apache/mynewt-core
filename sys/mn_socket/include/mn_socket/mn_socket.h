@@ -106,7 +106,7 @@ struct mn_sockaddr_in6 {
     uint32_t msin6_addr[4];
 };
 
-const uint32_t nm_in6addr_any[4] = {0,0,0,0};
+extern const uint32_t nm_in6addr_any[4];
 
 /*
  * Socket calls.

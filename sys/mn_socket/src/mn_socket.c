@@ -30,6 +30,9 @@
  */
 static const struct mn_socket_ops *mn_sock_tgt;
 
+/** All zeros. */
+const uint32_t nm_in6addr_any[4];
+
 int
 mn_socket_ops_reg(const struct mn_socket_ops *ops)
 {
