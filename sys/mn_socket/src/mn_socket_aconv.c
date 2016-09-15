@@ -18,7 +18,7 @@
  */
 #include <ctype.h>
 #include <stdio.h>
-#include <os/queue.h>
+#include <os/endian.h>
 #include "mn_socket/mn_socket.h"
 
 int
@@ -61,7 +61,9 @@ const char *
 mn_inet_ntop(int af, const void *src_v, void *dst, int len)
 {
     const unsigned char *src = src_v;
+    const struct mn_in6_addr *a6;
     int rc;
+    int i;
 
     if (af == MN_PF_INET) {
         rc = snprintf(dst, len, "%u.%u.%u.%u",
@@ -72,6 +74,22 @@ mn_inet_ntop(int af, const void *src_v, void *dst, int len)
             return dst;
         }
     } else {
-        return NULL;
+        a6 = src_v;
+        rc = 0;
+
+        for (i = 0; i < sizeof(*a6); i += 2) {
+            rc += snprintf(dst + rc, len - rc, "%x",
+              htons(*(uint16_t *)&a6->s_addr[i]));
+            if (rc >= len) {
+                return NULL;
+            }
+            if (i < sizeof(*a6) - 2) {
+                rc += snprintf(dst + rc, len - rc, ":");
+                if (rc >= len) {
+                    return NULL;
+                }
+            }
+        }
+        return dst;
     }
 }
