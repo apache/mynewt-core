@@ -110,7 +110,7 @@ struct log_entry_hdr {
     (LOG_MODULE_NFFS        == module ? "NFFS"        :\
     (LOG_MODULE_REBOOT      == module ? "REBOOT"      :\
     (LOG_MODULE_IOTIVITY    == module ? "IOTIVITY"    :\
-     "UNKNOWN")))))))
+     "UNKNOWN"))))))))
 
 /*
  * Logging Implementations
