@@ -49,6 +49,9 @@ struct mn_socket_ops {
 
     int (*mso_getsockname)(struct mn_socket *, struct mn_sockaddr *);
     int (*mso_getpeername)(struct mn_socket *, struct mn_sockaddr *);
+
+    int (*mso_itf_getnext)(struct mn_itf *);
+    int (*mso_itf_addr_getnext)(struct mn_itf *, struct mn_itf_addr *);
 };
 
 int mn_socket_ops_reg(const struct mn_socket_ops *ops);

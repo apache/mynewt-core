@@ -32,6 +32,9 @@
 #include "mn_socket/mn_socket.h"
 #include "mn_socket/mn_socket_ops.h"
 
+#include "mn_socket/arch/sim/native_sock.h"
+#include "native_sock_priv.h"
+
 #define NATIVE_SOCK_MAX 8
 #define NATIVE_SOCK_MAX_UDP 2048
 #define NATIVE_SOCK_POLL_ITVL (OS_TICKS_PER_SEC / 5)
@@ -48,6 +51,7 @@ static int native_sock_sendto(struct mn_socket *, struct os_mbuf *,
   struct mn_sockaddr *);
 static int native_sock_recvfrom(struct mn_socket *, struct os_mbuf **,
   struct mn_sockaddr *);
+static int native_sock_getsockname(struct mn_socket *, struct mn_sockaddr *);
 static int native_sock_getpeername(struct mn_socket *, struct mn_sockaddr *);
 
 static struct native_sock {
@@ -79,8 +83,11 @@ static const struct mn_socket_ops native_sock_ops = {
     .mso_sendto = native_sock_sendto,
     .mso_recvfrom = native_sock_recvfrom,
 
+    .mso_getsockname = native_sock_getsockname,
     .mso_getpeername = native_sock_getpeername,
 
+    .mso_itf_getnext = native_sock_itf_getnext,
+    .mso_itf_addr_getnext = native_sock_itf_addr_getnext
 };
 
 static struct native_sock *
@@ -138,7 +145,7 @@ native_sock_poll_rebuild(struct native_sock_state *nss)
     os_mutex_release(&nss->mtx);
 }
 
-static int
+int
 native_sock_err_to_mn_err(int err)
 {
     switch (err) {
@@ -166,7 +173,7 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa)
     case MN_AF_INET:
         sin->sin_family = AF_INET;
         sin->sin_len = sizeof(*sin);
-        sin->sin_addr.s_addr = msin->msin_addr;
+        sin->sin_addr.s_addr = msin->msin_addr.s_addr;
         sin->sin_port = msin->msin_port;
         break;
     case MN_AF_INET6:
@@ -175,7 +182,7 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa)
         sin6->sin6_port = msin6->msin6_port;
         sin6->sin6_flowinfo = msin6->msin6_flowinfo;
         sin6->sin6_scope_id = 0; /* XXX need this */
-        memcpy(&sin6->sin6_addr, msin6->msin6_addr, sizeof(msin6->msin6_addr));
+        memcpy(&sin6->sin6_addr, &msin6->msin6_addr, sizeof(msin6->msin6_addr));
         break;
     default:
         return MN_EPROTONOSUPPORT;
@@ -195,7 +202,7 @@ native_sock_addr_to_mn_addr( struct sockaddr *sa, struct mn_sockaddr *ms)
     case AF_INET:
         msin->msin_family = MN_AF_INET;
         msin->msin_len = sizeof(*msin);
-        msin->msin_addr = sin->sin_addr.s_addr;
+        msin->msin_addr.s_addr = sin->sin_addr.s_addr;
         msin->msin_port = sin->sin_port;
         break;
     case AF_INET6:
@@ -203,7 +210,7 @@ native_sock_addr_to_mn_addr( struct sockaddr *sa, struct mn_sockaddr *ms)
         msin6->msin6_len = sizeof(*msin6);
         msin6->msin6_port = sin6->sin6_port;
         msin6->msin6_flowinfo = sin6->sin6_flowinfo;
-        memcpy(msin6->msin6_addr, &sin6->sin6_addr, sizeof(msin6->msin6_addr));
+        memcpy(&msin6->msin6_addr, &sin6->sin6_addr, sizeof(msin6->msin6_addr));
         break;
     default:
         return MN_EPROTONOSUPPORT;
@@ -506,6 +513,27 @@ native_sock_recvfrom(struct mn_socket *s, struct os_mbuf **mp,
 }
 
 static int
+native_sock_getsockname(struct mn_socket *s, struct mn_sockaddr *addr)
+{
+    struct native_sock *ns = (struct native_sock *)s;
+    struct sockaddr_storage ss;
+    struct sockaddr *sa = (struct sockaddr *)&ss;
+    socklen_t len;
+    int rc;
+
+    len = sizeof(struct sockaddr_storage);
+    rc = getsockname(ns->ns_fd, sa, &len);
+    if (rc) {
+        return native_sock_err_to_mn_err(errno);
+    }
+    rc = native_sock_addr_to_mn_addr(sa, addr);
+    if (rc) {
+        return rc;
+    }
+    return 0;
+}
+
+static int
 native_sock_getpeername(struct mn_socket *s, struct mn_sockaddr *addr)
 {
     struct native_sock *ns = (struct native_sock *)s;
@@ -553,12 +581,10 @@ socket_task(void *arg)
         if (rc == 0) {
             continue;
         }
-        printf("events %d\n", rc);
         for (i = 0; i < nss->poll_fd_cnt; i++) {
             if (!nss->poll_fds[i].revents) {
                 continue;
             }
-            printf("  on %d - %d\n", i, nss->poll_fds[i].fd);
             nss->poll_fds[i].revents = 0;
             ns = native_find_sock(nss->poll_fds[i].fd);
             assert(ns);

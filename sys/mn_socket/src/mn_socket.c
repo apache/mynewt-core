@@ -124,3 +124,15 @@ mn_close(struct mn_socket *s)
 {
     return s->ms_ops->mso_close(s);
 }
+
+int
+mn_itf_getnext(struct mn_itf *mi)
+{
+    return mn_sock_tgt->mso_itf_getnext(mi);
+}
+
+int
+mn_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
+{
+    return mn_sock_tgt->mso_itf_addr_getnext(mi, mia);
+}

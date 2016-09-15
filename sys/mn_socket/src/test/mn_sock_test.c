@@ -186,6 +186,7 @@ sock_tcp_connect(void)
     struct mn_socket *listen_sock;
     struct mn_socket *sock;
     struct mn_sockaddr_in msin;
+    struct mn_sockaddr_in msin2;
     int rc;
     union mn_socket_cb listen_cbs = {
         .listen.newconn = stc_newconn,
@@ -224,6 +225,22 @@ sock_tcp_connect(void)
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(connected == 1);
     TEST_ASSERT(new_sock != NULL);
+
+    /*
+     * Check endpoint data matches
+     */
+    rc = mn_getsockname(sock, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+    rc = mn_getpeername(new_sock, (struct mn_sockaddr *)&msin2);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(!memcmp(&msin, &msin2, sizeof(msin)));
+
+    rc = mn_getsockname(new_sock, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+    rc = mn_getpeername(sock, (struct mn_sockaddr *)&msin2);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(!memcmp(&msin, &msin2, sizeof(msin)));
+
 
     if (new_sock) {
         mn_close(new_sock);
@@ -272,7 +289,7 @@ sock_udp_data(void)
     msin2.msin_family = MN_PF_INET;
     msin2.msin_len = sizeof(msin2);
     msin2.msin_port = 0;
-    msin2.msin_addr = 0;
+    msin2.msin_addr.s_addr = 0;
     rc = mn_bind(sock2, (struct mn_sockaddr *)&msin2);
     TEST_ASSERT(rc == 0);
 
@@ -295,7 +312,7 @@ sock_udp_data(void)
     TEST_ASSERT(msin2.msin_family == MN_AF_INET);
     TEST_ASSERT(msin2.msin_len == sizeof(msin2));
     TEST_ASSERT(msin2.msin_port != 0);
-    TEST_ASSERT(msin2.msin_addr != 0);
+    TEST_ASSERT(msin2.msin_addr.s_addr != 0);
 
     if (m) {
         TEST_ASSERT(OS_MBUF_IS_PKTHDR(m));
@@ -426,7 +443,7 @@ sock_tcp_data(void)
     TEST_ASSERT(msin.msin_family == MN_AF_INET);
     TEST_ASSERT(msin.msin_len == sizeof(msin));
     TEST_ASSERT(msin.msin_port != 0);
-    TEST_ASSERT(msin.msin_addr != 0);
+    TEST_ASSERT(msin.msin_addr.s_addr != 0);
     os_mbuf_free_chain(m);
 
     if (new_sock) {
@@ -437,6 +454,48 @@ sock_tcp_data(void)
 }
 
 void
+sock_itf_list(void)
+{
+    struct mn_itf itf;
+    struct mn_itf_addr itf_addr;
+    int if_cnt = 0;
+    int seen_127;
+    struct mn_in_addr addr127;
+    char addr_str[64];
+    int rc;
+
+    mn_inet_pton(MN_PF_INET, "127.0.0.1", &addr127);
+
+    memset(&itf, 0, sizeof(itf));
+
+    while (1) {
+        rc = mn_itf_getnext(&itf);
+        if (rc) {
+            break;
+        }
+        printf("%d: %x %s\n", itf.mif_idx, itf.mif_flags, itf.mif_name);
+        memset(&itf_addr, 0, sizeof(itf_addr));
+        while (1) {
+            rc = mn_itf_addr_getnext(&itf, &itf_addr);
+            if (rc) {
+                break;
+            }
+            if (itf_addr.mifa_family == MN_AF_INET &&
+              !memcmp(&itf_addr.mifa_addr, &addr127, sizeof(addr127))) {
+                seen_127 = 1;
+            }
+            addr_str[0] = '\0';
+            mn_inet_ntop(itf_addr.mifa_family, &itf_addr.mifa_addr,
+              addr_str, sizeof(addr_str));
+            printf(" %s/%d\n", addr_str, itf_addr.mifa_plen);
+        }
+        if_cnt++;
+    }
+    TEST_ASSERT(if_cnt > 0);
+    TEST_ASSERT(seen_127);
+}
+
+void
 mn_socket_test_handler(void *arg)
 {
     sock_open_close();
@@ -444,6 +503,7 @@ mn_socket_test_handler(void *arg)
     sock_tcp_connect();
     sock_udp_data();
     sock_tcp_data();
+    sock_itf_list();
     os_test_restart();
 }
 
