@@ -181,8 +181,8 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa)
         sin6->sin6_len = sizeof(*sin6);
         sin6->sin6_port = msin6->msin6_port;
         sin6->sin6_flowinfo = msin6->msin6_flowinfo;
-        sin6->sin6_scope_id = 0; /* XXX need this */
         memcpy(&sin6->sin6_addr, &msin6->msin6_addr, sizeof(msin6->msin6_addr));
+        sin6->sin6_scope_id = msin6->msin6_scope_id;
         break;
     default:
         return MN_EPROTONOSUPPORT;
@@ -211,6 +211,7 @@ native_sock_addr_to_mn_addr( struct sockaddr *sa, struct mn_sockaddr *ms)
         msin6->msin6_port = sin6->sin6_port;
         msin6->msin6_flowinfo = sin6->sin6_flowinfo;
         memcpy(&msin6->msin6_addr, &sin6->sin6_addr, sizeof(msin6->msin6_addr));
+        msin6->msin6_scope_id = sin6->sin6_scope_id;
         break;
     default:
         return MN_EPROTONOSUPPORT;

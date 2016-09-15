@@ -112,6 +112,7 @@ struct mn_sockaddr_in6 {
     uint16_t msin6_port;
     uint32_t msin6_flowinfo;
     struct mn_in6_addr msin6_addr;
+    uint32_t msin6_scope_id;
 };
 
 extern const uint32_t nm_in6addr_any[4];

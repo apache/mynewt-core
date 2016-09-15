@@ -495,6 +495,111 @@ sock_itf_list(void)
     TEST_ASSERT(seen_127);
 }
 
+static int
+first_ll_addr(struct mn_sockaddr_in6 *ra)
+{
+    struct mn_itf itf;
+    struct mn_itf_addr itf_addr;
+    int rc;
+    struct mn_in6_addr *addr;
+
+    memset(&itf, 0, sizeof(itf));
+    addr = (struct mn_in6_addr *)&itf_addr.mifa_addr;
+    while (1) {
+        rc = mn_itf_getnext(&itf);
+        if (rc) {
+            break;
+        }
+        memset(&itf_addr, 0, sizeof(itf_addr));
+        while (1) {
+            rc = mn_itf_addr_getnext(&itf, &itf_addr);
+            if (rc) {
+                break;
+            }
+            if (itf_addr.mifa_family == MN_AF_INET6 &&
+              addr->s_addr[0] == 0xfe && addr->s_addr[1] == 0x80) {
+                memset(ra, 0, sizeof(*ra));
+                ra->msin6_family = MN_AF_INET6;
+                ra->msin6_len = sizeof(*ra);
+                ra->msin6_scope_id = itf.mif_idx;
+                memcpy(&ra->msin6_addr, addr, sizeof(*addr));
+                return 0;
+            }
+        }
+    }
+    return -1;
+}
+
+void
+sul_readable(void *cb_arg, int err)
+{
+    os_sem_release(&test_sem);
+}
+
+void
+sock_udp_ll(void)
+{
+    struct mn_socket *sock1;
+    struct mn_socket *sock2;
+    struct mn_sockaddr_in6 msin;
+    struct mn_sockaddr_in6 msin2;
+    int rc;
+    union mn_socket_cb sock_cbs = {
+        .socket.readable = sul_readable
+    };
+    struct os_mbuf *m;
+    char data[] = "1234567890";
+
+    rc = mn_socket(&sock1, MN_PF_INET6, MN_SOCK_DGRAM, 0);
+    TEST_ASSERT(rc == 0);
+    mn_socket_set_cbs(sock1, NULL, &sock_cbs);
+
+    rc = mn_socket(&sock2, MN_PF_INET6, MN_SOCK_DGRAM, 0);
+    TEST_ASSERT(rc == 0);
+    mn_socket_set_cbs(sock2, NULL, &sock_cbs);
+
+    rc = first_ll_addr(&msin);
+    if (rc != 0) {
+        printf("No ipv6 address present?\n");
+        return;
+    }
+    msin.msin6_port = htons(12445);
+
+    rc = mn_bind(sock1, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_getsockname(sock1, (struct mn_sockaddr *)&msin2);
+    TEST_ASSERT(rc == 0);
+
+    m = os_msys_get(sizeof(data), 0);
+    TEST_ASSERT(m);
+    rc = os_mbuf_copyinto(m, 0, data, sizeof(data));
+    TEST_ASSERT(rc == 0);
+    rc = mn_sendto(sock2, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin2);
+    TEST_ASSERT(rc == 0);
+
+    /*
+     * Wait for the packet.
+     */
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_recvfrom(sock1, &m, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(m != NULL);
+
+    if (m) {
+        TEST_ASSERT(OS_MBUF_IS_PKTHDR(m));
+        TEST_ASSERT(OS_MBUF_PKTLEN(m) == sizeof(data));
+        TEST_ASSERT(m->om_len == sizeof(data));
+        TEST_ASSERT(!memcmp(m->om_data, data, sizeof(data)));
+        os_mbuf_free_chain(m);
+    }
+
+    mn_close(sock1);
+    mn_close(sock2);
+}
+
 void
 mn_socket_test_handler(void *arg)
 {
@@ -504,6 +609,7 @@ mn_socket_test_handler(void *arg)
     sock_udp_data();
     sock_tcp_data();
     sock_itf_list();
+    sock_udp_ll();
     os_test_restart();
 }
 
