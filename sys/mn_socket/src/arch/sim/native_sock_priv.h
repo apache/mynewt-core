@@ -25,6 +25,7 @@ struct mn_itf_addr;
 
 int native_sock_itf_getnext(struct mn_itf *);
 int native_sock_itf_addr_getnext(struct mn_itf *, struct mn_itf_addr *);
+int native_sock_itf_addr(int idx, uint32_t *addr);
 
 int native_sock_err_to_mn_err(int err);
 

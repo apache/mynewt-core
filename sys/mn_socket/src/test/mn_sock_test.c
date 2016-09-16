@@ -600,6 +600,141 @@ sock_udp_ll(void)
     mn_close(sock2);
 }
 
+static int
+sock_find_loopback_if(void)
+{
+    struct mn_itf itf;
+    struct mn_itf_addr itf_addr;
+    struct mn_in_addr addr127;
+
+    mn_inet_pton(MN_PF_INET, "127.0.0.1", &addr127);
+
+    memset(&itf, 0, sizeof(itf));
+
+    while (1) {
+        if (mn_itf_getnext(&itf)) {
+            break;
+        }
+        memset(&itf_addr, 0, sizeof(itf_addr));
+        while (1) {
+            if (mn_itf_addr_getnext(&itf, &itf_addr)) {
+                break;
+            }
+            if (itf_addr.mifa_family == MN_AF_INET &&
+              !memcmp(&itf_addr.mifa_addr, &addr127, sizeof(addr127))) {
+                return itf.mif_idx;
+            }
+        }
+    }
+    return -1;
+}
+
+void
+sum4_readable(void *cb_arg, int err)
+{
+    os_sem_release(&test_sem);
+}
+
+static void
+sock_udp_mcast_v4(void)
+{
+    int loop_if_idx;
+    struct mn_socket *rx_sock;
+    struct mn_socket *tx_sock;
+    struct mn_sockaddr_in msin;
+    union mn_socket_cb sock_cbs = {
+        .socket.readable = sum4_readable
+    };
+    struct os_mbuf *m;
+    char data[] = "1234567890";
+    int rc;
+    struct mn_mreq mreq;
+    loop_if_idx = sock_find_loopback_if();
+    TEST_ASSERT(loop_if_idx > 0);
+
+    msin.msin_family = MN_AF_INET;
+    msin.msin_len = sizeof(msin);
+    msin.msin_port = htons(44344);
+    memset(&msin.msin_addr, 0, sizeof(msin.msin_addr));
+
+    rc = mn_socket(&rx_sock, MN_PF_INET, MN_SOCK_DGRAM, 0);
+    TEST_ASSERT(rc == 0);
+    mn_socket_set_cbs(rx_sock, NULL, &sock_cbs);
+
+    rc = mn_bind(rx_sock, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_socket(&tx_sock, MN_PF_INET, MN_SOCK_DGRAM, 0);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_setsockopt(tx_sock, MN_SO_LEVEL, MN_MCAST_IF, &loop_if_idx);
+    TEST_ASSERT(rc == 0);
+
+    m = os_msys_get(sizeof(data), 0);
+    rc = os_mbuf_copyinto(m, 0, data, sizeof(data));
+    TEST_ASSERT(rc == 0);
+
+    /*
+     * multicast tgt
+     */
+    mn_inet_pton(MN_PF_INET, "224.0.2.241", &msin.msin_addr);
+
+    rc = mn_sendto(tx_sock, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    /*
+     * RX socket has not joined group yet.
+     */
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC / 2);
+    TEST_ASSERT(rc == OS_TIMEOUT);
+
+    mreq.mm_idx = loop_if_idx;
+    mreq.mm_family = MN_AF_INET;
+    mreq.mm_addr.v4.s_addr = msin.msin_addr.s_addr;
+
+    /*
+     * Now join it.
+     */
+    rc = mn_setsockopt(rx_sock, MN_SO_LEVEL, MN_MCAST_JOIN_GROUP, &mreq);
+    TEST_ASSERT(rc == 0);
+
+    m = os_msys_get(sizeof(data), 0);
+    rc = os_mbuf_copyinto(m, 0, data, sizeof(data));
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_sendto(tx_sock, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_recvfrom(rx_sock, &m, NULL);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(m != NULL);
+    TEST_ASSERT(!memcmp(m->om_data, data, sizeof(data)));
+    os_mbuf_free_chain(m);
+
+    /*
+     * Then leave
+     */
+    rc = mn_setsockopt(rx_sock, MN_SO_LEVEL, MN_MCAST_LEAVE_GROUP, &mreq);
+    TEST_ASSERT(rc == 0);
+
+    m = os_msys_get(sizeof(data), 0);
+    TEST_ASSERT(m);
+    rc = os_mbuf_copyinto(m, 0, data, sizeof(data));
+    TEST_ASSERT(rc == 0);
+
+    rc = mn_sendto(tx_sock, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin);
+    TEST_ASSERT(rc == 0);
+
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == OS_TIMEOUT);
+
+    mn_close(rx_sock);
+    mn_close(tx_sock);
+}
+
 void
 mn_socket_test_handler(void *arg)
 {
@@ -610,6 +745,7 @@ mn_socket_test_handler(void *arg)
     sock_tcp_data();
     sock_itf_list();
     sock_udp_ll();
+    sock_udp_mcast_v4();
     os_test_restart();
 }
 
