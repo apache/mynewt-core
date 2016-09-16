@@ -192,6 +192,7 @@ const char *mn_inet_ntop(int af, const void *src, void *dst, int len);
  * Interface flags
  */
 #define MN_ITF_F_UP        1
+#define MN_ITF_F_MULTICAST 2
 
 struct mn_itf {
     char mif_name[MN_ITF_NAME_MAX];
