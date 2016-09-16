@@ -53,7 +53,10 @@ mn_inet_pton(int af, const char *src, void *dst)
         }
         return 1;
     } else {
-        return MN_EAFNOSUPPORT;
+        /*
+         * Add code here. XXX
+         */
+        return 0;
     }
 }
 
