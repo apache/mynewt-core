@@ -23,6 +23,20 @@
 #define PRINT(...) printf(__VA_ARGS__)
 
 #define PRINTipaddr(endpoint)                                                  \
+  PRINT(                                                                      \
+    "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%"    \
+    "02x]:%d",                                                                 \
+    ((endpoint).ipv6_addr.address)[0], ((endpoint).ipv6_addr.address)[1],      \
+    ((endpoint).ipv6_addr.address)[2], ((endpoint).ipv6_addr.address)[3],      \
+    ((endpoint).ipv6_addr.address)[4], ((endpoint).ipv6_addr.address)[5],      \
+    ((endpoint).ipv6_addr.address)[6], ((endpoint).ipv6_addr.address)[7],      \
+    ((endpoint).ipv6_addr.address)[8], ((endpoint).ipv6_addr.address)[9],      \
+    ((endpoint).ipv6_addr.address)[10], ((endpoint).ipv6_addr.address)[11],    \
+    ((endpoint).ipv6_addr.address)[12], ((endpoint).ipv6_addr.address)[13],    \
+    ((endpoint).ipv6_addr.address)[14], ((endpoint).ipv6_addr.address)[15],    \
+    (endpoint).ipv6_addr.port)
+
+#define LogMynewtipaddr(endpoint)                                                  \
 {\
   char tmp_buf[16*3+6]; /* 16 octets plus port */                              \
   sprintf(tmp_buf,                                                             \
@@ -40,12 +54,21 @@
     LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "%s", tmp_buf);                     \
 }
 
-#if DEBUG
-#define LOG(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
+#if defined(ARCH_sim)
+#define LOG(...) PRINT(__VA_ARGS__)
+#define ERROR(...) LOG(__VA_ARGS__)
 #define LOGipaddr(endpoint) PRINTipaddr(endpoint)
+#define oc_log_init()   0
+#elif defined(DEBUG)
+int oc_log_init(void);
+#define LOG(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
+#define ERROR(...) LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
+#define LOGipaddr(endpoint) LogMynewtipaddr(endpoint)
 #else
 #define LOG(...)
+#define ERROR(...)
 #define LOGipaddr(endpoint)
+#define oc_log_init()   0
 #endif
 
 #endif /* OC_LOG_H */

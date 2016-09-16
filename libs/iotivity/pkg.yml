@@ -29,6 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/mn_socket"
     - "@apache-mynewt-core/sys/log"
 
+# remove debug option to save logging 
 pkg.cflags: -std=c99
         -DDEBUG=1
         -DSECURE=0
