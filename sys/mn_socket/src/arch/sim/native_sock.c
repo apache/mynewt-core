@@ -179,7 +179,8 @@ native_sock_err_to_mn_err(int err)
 }
 
 static int
-native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa)
+native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa,
+  int *sa_len)
 {
     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
     struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
@@ -189,17 +190,23 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa)
     switch (ms->msa_family) {
     case MN_AF_INET:
         sin->sin_family = AF_INET;
+#ifndef MN_LINUX
         sin->sin_len = sizeof(*sin);
+#endif
         sin->sin_addr.s_addr = msin->msin_addr.s_addr;
         sin->sin_port = msin->msin_port;
+        *sa_len = sizeof(*sin);
         break;
     case MN_AF_INET6:
         sin6->sin6_family = AF_INET6;
+#ifndef MN_LINUX
         sin6->sin6_len = sizeof(*sin6);
+#endif
         sin6->sin6_port = msin6->msin6_port;
         sin6->sin6_flowinfo = msin6->msin6_flowinfo;
         memcpy(&sin6->sin6_addr, &msin6->msin6_addr, sizeof(msin6->msin6_addr));
         sin6->sin6_scope_id = msin6->msin6_scope_id;
+        *sa_len = sizeof(*sin6);
         break;
     default:
         return MN_EPROTONOSUPPORT;
@@ -208,7 +215,7 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa)
 }
 
 static int
-native_sock_addr_to_mn_addr( struct sockaddr *sa, struct mn_sockaddr *ms)
+native_sock_addr_to_mn_addr(struct sockaddr *sa, struct mn_sockaddr *ms)
 {
     struct mn_sockaddr_in *msin = (struct mn_sockaddr_in *)ms;
     struct mn_sockaddr_in6 *msin6 = (struct mn_sockaddr_in6 *)ms;
@@ -319,13 +326,14 @@ native_sock_connect(struct mn_socket *s, struct mn_sockaddr *addr)
     struct sockaddr_storage ss;
     struct sockaddr *sa = (struct sockaddr *)&ss;
     int rc;
+    int sa_len;
 
-    rc = native_sock_mn_addr_to_addr(addr, sa);
+    rc = native_sock_mn_addr_to_addr(addr, sa, &sa_len);
     if (rc) {
         return rc;
     }
     os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
-    if (connect(ns->ns_fd, sa, sa->sa_len)) {
+    if (connect(ns->ns_fd, sa, sa_len)) {
         rc = errno;
         os_mutex_release(&nss->mtx);
         return native_sock_err_to_mn_err(rc);
@@ -345,9 +353,10 @@ native_sock_bind(struct mn_socket *s, struct mn_sockaddr *addr)
     struct sockaddr_storage ss;
     struct sockaddr *sa = (struct sockaddr *)&ss;
     int rc;
+    int sa_len;
     int val = 1;
 
-    rc = native_sock_mn_addr_to_addr(addr, sa);
+    rc = native_sock_mn_addr_to_addr(addr, sa, &sa_len);
     if (rc) {
         return rc;
     }
@@ -364,7 +373,7 @@ native_sock_bind(struct mn_socket *s, struct mn_sockaddr *addr)
     if (rc) {
         goto err;
     }
-    if (bind(ns->ns_fd, sa, sa->sa_len)) {
+    if (bind(ns->ns_fd, sa, sa_len)) {
         goto err;
     }
     if (ns->ns_type == SOCK_DGRAM) {
@@ -455,11 +464,12 @@ native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
     struct sockaddr *sa = (struct sockaddr *)&ss;
     uint8_t tmpbuf[NATIVE_SOCK_MAX_UDP];
     struct os_mbuf *o;
+    int sa_len;
     int off;
     int rc;
 
     if (ns->ns_type == SOCK_DGRAM) {
-        rc = native_sock_mn_addr_to_addr(addr, sa);
+        rc = native_sock_mn_addr_to_addr(addr, sa, &sa_len);
         if (rc) {
             return rc;
         }
@@ -471,7 +481,7 @@ native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
             os_mbuf_copydata(o, 0, o->om_len, &tmpbuf[off]);
             off += o->om_len;
         }
-        rc = sendto(ns->ns_fd, tmpbuf, off, 0, sa, sa->sa_len);
+        rc = sendto(ns->ns_fd, tmpbuf, off, 0, sa, sa_len);
         if (rc != off) {
             return native_sock_err_to_mn_err(errno);
         }
@@ -559,13 +569,17 @@ native_sock_setsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
             greq.gr_interface = mreq->mm_idx;
             if (mreq->mm_family == MN_AF_INET) {
                 sin = (struct sockaddr_in *)&greq.gr_group;
+#ifndef MN_LINUX
                 sin->sin_len = sizeof(*sin);
+#endif
                 sin->sin_family = AF_INET;
                 memcpy(&sin->sin_addr, &mreq->mm_addr, sizeof(struct in_addr));
                 level = IPPROTO_IP;
             } else {
                 sin6 = (struct sockaddr_in6 *)&greq.gr_group;
+#ifndef MN_LINUX
                 sin6->sin6_len = sizeof(*sin6);
+#endif
                 sin6->sin6_family = AF_INET6;
                 memcpy(&sin6->sin6_addr, &mreq->mm_addr,
                   sizeof(struct in6_addr));
