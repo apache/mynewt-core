@@ -33,12 +33,11 @@
 #endif
 
 #define COAP_PORT_UNSECURED (5683)
-#define ALL_COAP_NODES_V6 "FF02::FD"
-
-/* TODO these should be defined elsewhere but they are here as stubs */
-#define MN_SOL_SOCKET (0)
-#define MN_SO_REUSEPORT (1)
-#define MN_SO_REUSEADDR (2)
+/* TODO use inet_pton when its available */
+const struct mn_in6_addr coap_all_nodes_v6 = {
+    .s_addr = {0xFF,0x02,0x00,0x00,0x00,0x00,0x00,0x00,
+               0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFD}
+};
 
 /* need a task to process OCF messages */
 #define OC_NET_TASK_STACK_SIZE          OS_STACK_ALIGN(300)
@@ -99,8 +98,9 @@ oc_send_buffer(oc_message_t *message)
 
         to.msin6_len = sizeof(to);
         to.msin6_family = MN_AF_INET6;
+        to.msin6_scope_id = message->endpoint.ipv6_addr.scope;
         to.msin6_port = htons(message->endpoint.ipv6_addr.port);
-        memcpy(to.msin6_addr, message->endpoint.ipv6_addr.address,
+        memcpy(&to.msin6_addr, message->endpoint.ipv6_addr.address,
                sizeof(to.msin6_addr));
         send_sock = ucast;
 
@@ -125,9 +125,9 @@ oc_send_buffer(oc_message_t *message)
 oc_message_t *
 oc_attempt_rx(struct mn_socket * rxsock) {
     int rc;
-    struct os_mbuf *m;
+    struct os_mbuf *m = NULL;
     struct os_mbuf_pkthdr *pkt;
-    oc_message_t *message;
+    oc_message_t *message = NULL;
     struct mn_sockaddr_in6 from;
 
     LOG_DEBUG(&oc_log, LOG_MODULE_DEFAULT, "attempt rx from %u\n", rxsock);
@@ -138,42 +138,67 @@ oc_attempt_rx(struct mn_socket * rxsock) {
         return NULL;
     }
 
-    if(!OS_MBUF_IS_PKTHDR(m)) {
-        return NULL;
+    if (!OS_MBUF_IS_PKTHDR(m)) {
+        goto rx_attempt_err;
     }
 
     pkt = OS_MBUF_PKTHDR(m);
 
+    LOG_DEBUG(&oc_log, LOG_MODULE_DEFAULT,
+              "rx from %u %p-%u\n", rxsock, pkt, pkt->omp_len);
+
     message = oc_allocate_message();
-    if (NULL != message) {
+    if (NULL == message) {
         /* TODO log an error that we dropped a frame */
-        return NULL;
+        goto rx_attempt_err;
     }
 
-    if (pkt->omp_len > message->length) {
+    if (pkt->omp_len > MAX_PAYLOAD_SIZE) {
         /* TODO what do we do with this */
-        free(message);
-        return NULL;
+        goto rx_attempt_err;
     }
     /* copy to message from mbuf chain */
     rc = os_mbuf_copydata(m, 0, pkt->omp_len, message->data);
     if (rc != 0) {
         /* TODO what do we do with this */
-        free(message);
-        return NULL;
+        goto rx_attempt_err;
     }
 
+    os_mbuf_free_chain(m);
+
     message->endpoint.flags = IP;
-    memcpy(message->endpoint.ipv6_addr.address, from.msin6_addr,
+    message->length = pkt->omp_len;
+    memcpy(&message->endpoint.ipv6_addr.address, &from.msin6_addr,
              sizeof(message->endpoint.ipv6_addr.address));
-    message->endpoint.ipv6_addr.scope = 0; /* TODO what is scope */
+    message->endpoint.ipv6_addr.scope = from.msin6_scope_id;
     message->endpoint.ipv6_addr.port = ntohs(from.msin6_port);
 
     LOG_INFO(&oc_log, LOG_MODULE_DEFAULT, "rx from %u len %u\n",
              rxsock, message->length);
 
-    /* add the addr info to the message */
     return message;
+
+    /* add the addr info to the message */
+rx_attempt_err:
+    if (m) {
+        os_mbuf_free_chain(m);
+    }
+
+    if (message) {
+        oc_message_unref(message);
+    }
+
+    return NULL;
+}
+
+oc_message_t *
+oc_attempt_rx_mcast(void) {
+    return oc_attempt_rx(mcast);
+}
+
+oc_message_t *
+oc_attempt_rx_ucast(void) {
+    return oc_attempt_rx(ucast);
 }
 
 static void oc_socks_readable(void *cb_arg, int err);
@@ -196,18 +221,17 @@ oc_socks_writable(void *cb_arg, int err)
     os_sem_release(&oc_write_sem);
 }
 
-
 void
 oc_task_handler(void *arg) {
-    while(1) {
+    while (1) {
         oc_message_t *pmsg;
         os_sem_pend(&oc_read_sem, OS_TIMEOUT_NEVER);
-        pmsg = oc_attempt_rx(ucast);
+        pmsg = oc_attempt_rx_ucast();
         if (pmsg) {
             oc_network_event(pmsg);
         }
 
-        pmsg = oc_attempt_rx(mcast);
+        pmsg = oc_attempt_rx_mcast();
         if (pmsg) {
             oc_network_event(pmsg);
         }
@@ -266,18 +290,19 @@ oc_connectivity_shutdown(void)
     }
 }
 
-
 int
 oc_connectivity_init(void)
 {
     int rc;
     struct mn_sockaddr_in6 sin;
-    uint32_t mcast_addr[4];
+    struct mn_itf itf;
+
+    memset(&itf, 0, sizeof(itf));
 
     log_init();
 
     cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
-    if(cbmem_buf == NULL) {
+    if (cbmem_buf == NULL) {
         return -1;
     }
 
@@ -287,13 +312,13 @@ oc_connectivity_init(void)
     LOG_INFO(&oc_log, LOG_MODULE_DEFAULT, "OC Init");
 
     rc = mn_socket(&ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
-    if( !ucast || !rc) {
+    if ( rc != 0 || !ucast ) {
         LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
                   "Could not create oc unicast socket\n");
         return rc;
     }
     rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
-    if( !mcast || !rc) {
+    if ( rc != 0 || !mcast ) {
         mn_close(ucast);
         LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
                   "Could not create oc multicast socket\n");
@@ -306,7 +331,7 @@ oc_connectivity_init(void)
     sin.msin6_family = MN_AF_INET6;
     sin.msin6_port = 0;
     sin.msin6_flowinfo = 0;
-    memcpy(sin.msin6_addr,nm_in6addr_any, sizeof(sin.msin6_addr));
+    memcpy(&sin.msin6_addr, nm_in6addr_any, sizeof(sin.msin6_addr));
 
     rc = mn_bind(ucast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
@@ -315,22 +340,32 @@ oc_connectivity_init(void)
         goto oc_connectivity_init_err;
     }
 
-    rc = mn_inet_pton(MN_AF_INET6, ALL_COAP_NODES_V6, mcast_addr);
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
-    }
+    /* Set socket option to join multicast group on all valid interfaces */
+    while (1) {
+        struct mn_mreq join;
 
-    /* TODO --set socket option to join multicast group */
+        rc = mn_itf_getnext(&itf);
+        if (rc) {
+            break;
+        }
 
-    int reuse = 1;
-    rc = mn_setsockopt(mcast, MN_SOL_SOCKET, MN_SO_REUSEADDR, &reuse);
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
-    }
+        if (0 == (itf.mif_flags & MN_ITF_F_UP)) {
+            continue;
+        }
 
-    rc = mn_setsockopt(mcast, MN_SOL_SOCKET, MN_SO_REUSEPORT, &reuse);
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
+        join.mm_addr.v6 = coap_all_nodes_v6;
+        join.mm_idx = itf.mif_idx;
+        join.mm_family = MN_AF_INET6;
+
+        rc = mn_setsockopt(mcast, MN_SO_LEVEL, MN_MCAST_JOIN_GROUP, &join);
+        if (rc != 0) {
+            LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+                 "Could not join multicast group on %s\n", itf.mif_name);
+            continue;
+        }
+
+        LOG_INFO(&oc_log, LOG_MODULE_DEFAULT,
+                  "Joined Coap multicast grop on %s\n", itf.mif_name);
     }
 
     sin.msin6_port = htons(COAP_PORT_UNSECURED);

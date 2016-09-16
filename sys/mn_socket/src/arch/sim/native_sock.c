@@ -51,6 +51,11 @@ static int native_sock_sendto(struct mn_socket *, struct os_mbuf *,
   struct mn_sockaddr *);
 static int native_sock_recvfrom(struct mn_socket *, struct os_mbuf **,
   struct mn_sockaddr *);
+static int native_sock_getsockopt(struct mn_socket *, uint8_t level,
+  uint8_t name, void *val);
+static int native_sock_setsockopt(struct mn_socket *, uint8_t level,
+  uint8_t name, void *val);
+
 static int native_sock_getsockname(struct mn_socket *, struct mn_sockaddr *);
 static int native_sock_getpeername(struct mn_socket *, struct mn_sockaddr *);
 
@@ -60,6 +65,7 @@ static struct native_sock {
     unsigned int ns_poll:1;
     unsigned int ns_listen:1;
     uint8_t ns_type;
+    uint8_t ns_pf;
     struct os_sem ns_sem;
     STAILQ_HEAD(, os_mbuf_pkthdr) ns_rx;
     struct os_mbuf *ns_tx;
@@ -82,6 +88,9 @@ static const struct mn_socket_ops native_sock_ops = {
 
     .mso_sendto = native_sock_sendto,
     .mso_recvfrom = native_sock_recvfrom,
+
+    .mso_getsockopt = native_sock_getsockopt,
+    .mso_setsockopt = native_sock_setsockopt,
 
     .mso_getsockname = native_sock_getsockname,
     .mso_getpeername = native_sock_getpeername,
@@ -151,11 +160,19 @@ native_sock_err_to_mn_err(int err)
     switch (err) {
     case 0:
         return 0;
+    case EAGAIN:
+    case EINPROGRESS:
+        return MN_EAGAIN;
+    case ENOTCONN:
+        return MN_ENOTCONN;
+    case ETIMEDOUT:
+        return MN_ETIMEDOUT;
     case ENOMEM:
         return MN_ENOBUFS;
     case EADDRINUSE:
-    case EADDRNOTAVAIL:
         return MN_EADDRINUSE;
+    case EADDRNOTAVAIL:
+        return MN_EADDRNOTAVAIL;
     default:
         return MN_EINVAL;
     }
@@ -260,6 +277,7 @@ native_sock_create(struct mn_socket **sp, uint8_t domain,
     os_sem_init(&ns->ns_sem, 0);
     idx = socket(domain, type, proto);
     ns->ns_fd = idx;
+    ns->ns_pf = domain;
     ns->ns_type = type;
     os_mutex_release(&nss->mtx);
     if (idx < 0) {
@@ -511,6 +529,80 @@ native_sock_recvfrom(struct mn_socket *s, struct os_mbuf **mp,
         native_sock_addr_to_mn_addr(sa, addr);
     }
     return 0;
+}
+
+static int
+native_sock_getsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
+  void *val)
+{
+    return MN_EPROTONOSUPPORT;
+}
+
+static int
+native_sock_setsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
+  void *val)
+{
+    struct native_sock *ns = (struct native_sock *)s;
+    int rc;
+    uint32_t val32;
+    struct group_req greq;
+    struct sockaddr_in *sin;
+    struct sockaddr_in6 *sin6;
+    struct mn_mreq *mreq;
+
+    if (level == MN_SO_LEVEL) {
+        switch (name) {
+        case MN_MCAST_JOIN_GROUP:
+        case MN_MCAST_LEAVE_GROUP:
+            mreq = val;
+            memset(&greq, 0, sizeof(greq));
+            greq.gr_interface = mreq->mm_idx;
+            if (mreq->mm_family == MN_AF_INET) {
+                sin = (struct sockaddr_in *)&greq.gr_group;
+                sin->sin_len = sizeof(*sin);
+                sin->sin_family = AF_INET;
+                memcpy(&sin->sin_addr, &mreq->mm_addr, sizeof(struct in_addr));
+                level = IPPROTO_IP;
+            } else {
+                sin6 = (struct sockaddr_in6 *)&greq.gr_group;
+                sin6->sin6_len = sizeof(*sin6);
+                sin6->sin6_family = AF_INET6;
+                memcpy(&sin6->sin6_addr, &mreq->mm_addr,
+                  sizeof(struct in6_addr));
+                level = IPPROTO_IPV6;
+            }
+
+            if (name == MN_MCAST_JOIN_GROUP) {
+                name = MCAST_JOIN_GROUP;
+            } else {
+                name = MCAST_LEAVE_GROUP;
+            }
+            rc = setsockopt(ns->ns_fd, level, name, &greq, sizeof(greq));
+            if (rc) {
+                return native_sock_err_to_mn_err(errno);
+            }
+            return 0;
+        case MN_MCAST_IF:
+            if (ns->ns_pf == AF_INET) {
+                level = IPPROTO_IP;
+                name = IP_MULTICAST_IF;
+                rc = native_sock_itf_addr(*(int *)val, &val32);
+                if (rc) {
+                    return rc;
+                }
+            } else {
+                level = IPPROTO_IPV6;
+                name = IPV6_MULTICAST_IF;
+                val32 = *(uint32_t *)val;
+            }
+            rc = setsockopt(ns->ns_fd, level, name, &val32, sizeof(val32));
+            if (rc) {
+                return native_sock_err_to_mn_err(errno);
+            }
+            return 0;
+        }
+    }
+    return MN_EPROTONOSUPPORT;
 }
 
 static int

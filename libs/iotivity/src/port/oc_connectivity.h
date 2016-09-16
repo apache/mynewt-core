@@ -17,10 +17,10 @@
 #ifndef OC_CONNECTIVITY_H
 #define OC_CONNECTIVITY_H
 
-#include "config.h"
-#include "oc_network_events.h"
-#include "port/oc_log.h"
-#include "util/oc_process.h"
+#include "mynewt/config.h"
+#include "../../include/iotivity/oc_network_events.h"
+#include "oc_log.h"
+#include "../util/oc_process.h"
 #include <stdint.h>
 
 typedef struct

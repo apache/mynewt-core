@@ -106,6 +106,36 @@ plen(void *addr, int alen)
 }
 
 int
+native_sock_itf_addr(int idx, uint32_t *addr)
+{
+    struct ifaddrs *ifap;
+    struct ifaddrs *ifa;
+    struct sockaddr_in *sin;
+    int rc;
+
+    rc = getifaddrs(&ifap);
+    if (rc < 0) {
+        rc = native_sock_err_to_mn_err(errno);
+        return rc;
+    }
+
+    rc = MN_EADDRNOTAVAIL;
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if (if_nametoindex(ifa->ifa_name) != idx) {
+            continue;
+        }
+        if (ifa->ifa_addr->sa_family == AF_INET) {
+            sin = (struct sockaddr_in *)ifa->ifa_addr;
+            *addr = sin->sin_addr.s_addr;
+            rc = 0;
+            break;
+        }
+    }
+    freeifaddrs(ifap);
+    return rc;
+}
+
+int
 native_sock_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
 {
     struct ifaddrs *ifap;

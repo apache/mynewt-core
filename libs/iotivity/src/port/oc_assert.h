@@ -17,7 +17,7 @@
 #ifndef OC_ASSERT_H
 #define OC_ASSERT_H
 
-#include "port/oc_log.h"
+#include "oc_log.h"
 
 #ifdef __linux__
 #include <stdlib.h>

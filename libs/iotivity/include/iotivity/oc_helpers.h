@@ -17,8 +17,8 @@
 #ifndef OC_HELPERS_H
 #define OC_HELPERS_H
 
-#include "util/oc_list.h"
-#include "util/oc_mmem.h"
+#include "../../src/util/oc_list.h"
+#include "../../src/util/oc_mmem.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

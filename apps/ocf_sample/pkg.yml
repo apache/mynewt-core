@@ -17,24 +17,20 @@
 # under the License.
 #
 
-pkg.name: libs/iotivity
-pkg.description: OCF contstrained iotivity stack
-pkg.author: "https://github.com/iotivity/iotivity-constrained"
-pkg.homepage: "https://www.iotivity.org/"
+pkg.name: apps/ocf_sample
+pkg.type: app
+pkg.description: Example application which uses OCF iotivity.
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/libs/tinycbor"
-    - "@apache-mynewt-core/libs/os"
-    - "@apache-mynewt-core/sys/mn_socket"
-    - "@apache-mynewt-core/sys/log"
+    - libs/console/full
+    - libs/os
+    - libs/shell
+    - libs/util
+    - sys/log
+    - libs/iotivity
 
-pkg.cflags: -std=c99
-        -DDEBUG=1
-        -DSECURE=0
-        -I./port/mynewt
-        -I../port/mynewt
-        -I../../port/mynewt
-        -I../include/iotivity
-        -I../../include/iotivity
-        -I../../../include/iotivity
+# this tells the library that you intend to suppor the server functionality
+pkg.cflags: -DOC_SERVER

@@ -63,7 +63,7 @@
 #ifndef OC_TIMER_H
 #define OC_TIMER_H
 
-#include "port/oc_clock.h"
+#include "../port/oc_clock.h"
 
 /**
  * A timer.
