@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <os/os.h>
+#include <os/endian.h>
 #include <os/../../src/test/os_test_priv.h>
 #include <testutil/testutil.h>
 
@@ -601,13 +602,9 @@ sock_udp_ll(void)
 }
 
 static int
-sock_find_loopback_if(void)
+sock_find_multicast_if(void)
 {
     struct mn_itf itf;
-    struct mn_itf_addr itf_addr;
-    struct mn_in_addr addr127;
-
-    mn_inet_pton(MN_PF_INET, "127.0.0.1", &addr127);
 
     memset(&itf, 0, sizeof(itf));
 
@@ -615,15 +612,11 @@ sock_find_loopback_if(void)
         if (mn_itf_getnext(&itf)) {
             break;
         }
-        memset(&itf_addr, 0, sizeof(itf_addr));
-        while (1) {
-            if (mn_itf_addr_getnext(&itf, &itf_addr)) {
-                break;
-            }
-            if (itf_addr.mifa_family == MN_AF_INET &&
-              !memcmp(&itf_addr.mifa_addr, &addr127, sizeof(addr127))) {
-                return itf.mif_idx;
-            }
+        if ((itf.mif_flags & MN_ITF_F_UP) == 0) {
+            continue;
+        }
+        if (itf.mif_flags & MN_ITF_F_MULTICAST) {
+            return itf.mif_idx;
         }
     }
     return -1;
@@ -649,7 +642,7 @@ sock_udp_mcast_v4(void)
     char data[] = "1234567890";
     int rc;
     struct mn_mreq mreq;
-    loop_if_idx = sock_find_loopback_if();
+    loop_if_idx = sock_find_multicast_if();
     TEST_ASSERT(loop_if_idx > 0);
 
     msin.msin_family = MN_AF_INET;
@@ -756,7 +749,7 @@ sock_udp_mcast_v6(void)
         0, 0, 0, 2
     };
 
-    loop_if_idx = sock_find_loopback_if();
+    loop_if_idx = sock_find_multicast_if();
     TEST_ASSERT(loop_if_idx > 0);
 
     msin6.msin6_family = MN_AF_INET6;
