@@ -18,11 +18,14 @@
 #define OC_LOG_H
 
 #include <stdio.h>
+#include "mynewt/config.h"
 
 #define PRINT(...) printf(__VA_ARGS__)
 
 #define PRINTipaddr(endpoint)                                                  \
-  PRINT(                                                                       \
+{\
+  char tmp_buf[16*3+6]; /* 16 octets plus port */                              \
+  sprintf(tmp_buf,                                                             \
     "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%"    \
     "02x]:%d",                                                                 \
     ((endpoint).ipv6_addr.address)[0], ((endpoint).ipv6_addr.address)[1],      \
@@ -33,10 +36,12 @@
     ((endpoint).ipv6_addr.address)[10], ((endpoint).ipv6_addr.address)[11],    \
     ((endpoint).ipv6_addr.address)[12], ((endpoint).ipv6_addr.address)[13],    \
     ((endpoint).ipv6_addr.address)[14], ((endpoint).ipv6_addr.address)[15],    \
-    (endpoint).ipv6_addr.port)
+    (endpoint).ipv6_addr.port);                                                \
+    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "%s", tmp_buf);                     \
+}
 
 #if DEBUG
-#define LOG(...) PRINT(__VA_ARGS__)
+#define LOG(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
 #define LOGipaddr(endpoint) PRINTipaddr(endpoint)
 #else
 #define LOG(...)

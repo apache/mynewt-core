@@ -58,7 +58,23 @@ struct os_sem oc_write_sem;
 #define MAX_CBMEM_BUF   (600)
 static uint32_t *cbmem_buf;
 static struct cbmem cbmem;
-static struct log oc_log;
+struct log oc_log;
+
+static int oc_log_init(void) {
+
+    log_init();
+
+    cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
+    if (cbmem_buf == NULL) {
+        return -1;
+    }
+
+    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
+    log_register("iot", &oc_log, &log_cbmem_handler, &cbmem);
+
+    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "OC Init");
+    return 0;
+}
 
 /* not sure if these semaphores are necessary yet.  If we are running
  * all of this from one task, we may not need these */
@@ -93,7 +109,7 @@ oc_send_buffer(oc_message_t *message)
     int rc;
 
     while (1) {
-        LOG_INFO(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,
                  "attempt send buffer %u\n", message->length);
 
         to.msin6_len = sizeof(to);
@@ -112,7 +128,7 @@ oc_send_buffer(oc_message_t *message)
         rc = mn_sendto(send_sock, &m, (struct mn_sockaddr *) &to);
         /* TODO what to do if this fails, we can't keep the buffer */
         if (rc != 0) {
-            LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+            LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                       "Failed sending buffer %u\n", message->length);
         } else {
             break;
@@ -130,7 +146,7 @@ oc_attempt_rx(struct mn_socket * rxsock) {
     oc_message_t *message = NULL;
     struct mn_sockaddr_in6 from;
 
-    LOG_DEBUG(&oc_log, LOG_MODULE_DEFAULT, "attempt rx from %u\n", rxsock);
+    LOG_DEBUG(&oc_log, LOG_MODULE_IOTIVITY, "attempt rx from %u\n", rxsock);
 
     rc= mn_recvfrom(rxsock, &m, (struct mn_sockaddr *) &from);
 
@@ -144,7 +160,7 @@ oc_attempt_rx(struct mn_socket * rxsock) {
 
     pkt = OS_MBUF_PKTHDR(m);
 
-    LOG_DEBUG(&oc_log, LOG_MODULE_DEFAULT,
+    LOG_DEBUG(&oc_log, LOG_MODULE_IOTIVITY,
               "rx from %u %p-%u\n", rxsock, pkt, pkt->omp_len);
 
     message = oc_allocate_message();
@@ -173,7 +189,7 @@ oc_attempt_rx(struct mn_socket * rxsock) {
     message->endpoint.ipv6_addr.scope = from.msin6_scope_id;
     message->endpoint.ipv6_addr.port = ntohs(from.msin6_port);
 
-    LOG_INFO(&oc_log, LOG_MODULE_DEFAULT, "rx from %u len %u\n",
+    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "rx from %u len %u\n",
              rxsock, message->length);
 
     return message;
@@ -245,21 +261,21 @@ oc_init_net_task(void) {
     /* start this thing running to check right away */
     rc = os_sem_init(&oc_read_sem, 1);
     if (0 != rc) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not initialize oc read sem\n");
         return rc;
     }
 
     rc = os_sem_init(&oc_write_sem, 1);
     if (0 != rc) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not initialize oc write sem\n");
         return rc;
     }
 
     oc_stack = (os_stack_t*) malloc(sizeof(os_stack_t)*OC_NET_TASK_STACK_SIZE);
     if (NULL == oc_stack) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not malloc oc stack\n");
         return -1;
     }
@@ -269,7 +285,7 @@ oc_init_net_task(void) {
             oc_stack, OC_NET_TASK_STACK_SIZE);
 
     if (rc != 0) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT, "Could not start oc task\n");
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY, "Could not start oc task\n");
         free(oc_stack);
     }
 
@@ -279,7 +295,7 @@ oc_init_net_task(void) {
 void
 oc_connectivity_shutdown(void)
 {
-    LOG_INFO(&oc_log, LOG_MODULE_DEFAULT, "OC shutdown");
+    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "OC shutdown");
 
     if (ucast) {
         mn_close(ucast);
@@ -299,28 +315,22 @@ oc_connectivity_init(void)
 
     memset(&itf, 0, sizeof(itf));
 
-    log_init();
-
-    cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
-    if (cbmem_buf == NULL) {
-        return -1;
-    }
-
-    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_register("iot", &oc_log, &log_cbmem_handler, &cbmem);
-
-    LOG_INFO(&oc_log, LOG_MODULE_DEFAULT, "OC Init");
+    rc = oc_log_init();
+    if ( rc != 0) {
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
+                  "Could not create oc logging\n");
+        return rc;    }
 
     rc = mn_socket(&ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !ucast ) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not create oc unicast socket\n");
         return rc;
     }
     rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !mcast ) {
         mn_close(ucast);
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not create oc multicast socket\n");
         return rc;
     }
@@ -335,7 +345,7 @@ oc_connectivity_init(void)
 
     rc = mn_bind(ucast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not bind oc unicast socket\n");
         goto oc_connectivity_init_err;
     }
@@ -359,19 +369,19 @@ oc_connectivity_init(void)
 
         rc = mn_setsockopt(mcast, MN_SO_LEVEL, MN_MCAST_JOIN_GROUP, &join);
         if (rc != 0) {
-            LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+            LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                  "Could not join multicast group on %s\n", itf.mif_name);
             continue;
         }
 
-        LOG_INFO(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,
                   "Joined Coap multicast grop on %s\n", itf.mif_name);
     }
 
     sin.msin6_port = htons(COAP_PORT_UNSECURED);
     rc = mn_bind(mcast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
-        LOG_ERROR(&oc_log, LOG_MODULE_DEFAULT,
+        LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,
                   "Could not bind oc multicast socket\n");
         goto oc_connectivity_init_err;
     }
