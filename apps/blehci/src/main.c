@@ -23,6 +23,7 @@
 
 /* BLE */
 #include "nimble/ble.h"
+#include "nimble/hci_common.h"
 #include "controller/ble_ll.h"
 #include "transport/uart/ble_hci_uart.h"
 
@@ -41,8 +42,6 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = { 0 };
 /* Our random address (in case we need it) */
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN] = { 0 };
 
-#define HCI_MAX_BUFS        (5)
-
 os_membuf_t default_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
 
 struct os_mbuf_pool default_mbuf_pool;
@@ -51,7 +50,7 @@ struct os_mempool default_mbuf_mpool;
 int
 main(void)
 {
-    const struct ble_hci_uart_cfg *hci_cfg;
+    struct ble_hci_uart_cfg hci_cfg;
     int rc;
 
     /* Initialize OS */
@@ -74,12 +73,19 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the BLE LL */
-    hci_cfg = &ble_hci_uart_cfg_dflt;
-    rc = ble_ll_init(BLE_LL_TASK_PRI, hci_cfg->num_acl_bufs,
-                     BLE_MBUF_PAYLOAD_SIZE);
+    hci_cfg = ble_hci_uart_cfg_dflt;
+    rc = ble_ll_init(BLE_LL_TASK_PRI, hci_cfg.num_acl_bufs,
+                     BLE_MBUF_PAYLOAD_SIZE - BLE_HCI_DATA_HDR_SZ);
     assert(rc == 0);
 
-    rc = ble_hci_uart_init(hci_cfg);
+    /*
+     * XXX: for now, the developer MUST configure the number of msys buffers
+     * and not rely on the default value. The number of msys buffers must
+     * be >= to the number of pool elements registered to os_msys. In this
+     * project, we only register the default mbuf pool.
+     */
+    hci_cfg.num_msys_bufs = MBUF_NUM_MBUFS;
+    rc = ble_hci_uart_init(&hci_cfg);
     assert(rc == 0);
 
     /* Start the OS */
