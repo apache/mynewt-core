@@ -29,7 +29,8 @@ pkg.deps:
     - "@apache-mynewt-core/sys/mn_socket"
     - "@apache-mynewt-core/sys/log"
 
-pkg.cflags: -DDEBUG=1
+pkg.cflags: -std=c99
+        -DDEBUG=1
         -DSECURE=0
         -I./port/mynewt
         -I../port/mynewt
