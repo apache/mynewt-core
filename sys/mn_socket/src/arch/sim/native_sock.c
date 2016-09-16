@@ -160,6 +160,13 @@ native_sock_err_to_mn_err(int err)
     switch (err) {
     case 0:
         return 0;
+    case EAGAIN:
+    case EINPROGRESS:
+        return MN_EAGAIN;
+    case ENOTCONN:
+        return MN_ENOTCONN;
+    case ETIMEDOUT:
+        return MN_ETIMEDOUT;
     case ENOMEM:
         return MN_ENOBUFS;
     case EADDRINUSE:
