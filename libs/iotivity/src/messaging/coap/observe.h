@@ -36,10 +36,10 @@
 
 #include "coap.h"
 #include "transactions.h"
-#include "util/oc_list.h"
+#include "../../util/oc_list.h"
 
 /* OIC stack headers */
-#include "oc_ri.h"
+#include "../../../include/iotivity/oc_ri.h"
 
 #define COAP_OBSERVER_URL_LEN 20
 

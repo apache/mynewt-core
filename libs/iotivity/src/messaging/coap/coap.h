@@ -40,11 +40,11 @@
 #include <stdint.h>
 
 /* OIC stack headers */
-#include "config.h"
-#include "oc_buffer.h"
-#include "port/oc_connectivity.h"
-#include "port/oc_log.h"
-#include "port/oc_random.h"
+#include "../src/port/mynewt/config.h"
+#include "../../../include/iotivity/oc_buffer.h"
+#include "../src/port/oc_connectivity.h"
+#include "../src/port/oc_log.h"
+#include "../src/port/oc_random.h"
 
 #ifndef MAX
 #define MAX(n, m) (((n) < (m)) ? (m) : (n))

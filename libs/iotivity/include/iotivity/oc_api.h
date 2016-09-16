@@ -17,10 +17,10 @@
 #ifndef OC_API_H
 #define OC_API_H
 
-#include "messaging/coap/oc_coap.h"
+#include "../src/messaging/coap/oc_coap.h"
 #include "oc_ri.h"
-#include "port/oc_signal_main_loop.h"
-#include "port/oc_storage.h"
+#include "../src/port/oc_signal_main_loop.h"
+#include "../src/port/oc_storage.h"
 
 typedef struct
 {

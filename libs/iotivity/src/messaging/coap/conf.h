@@ -34,7 +34,7 @@
 #ifndef CONF_H
 #define CONF_H
 
-#include "config.h"
+#include "../../port/mynewt/config.h"
 
 /* Features that can be disabled to achieve smaller memory footprint */
 #define COAP_LINK_FORMAT_FILTERING 0

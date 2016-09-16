@@ -20,7 +20,7 @@
 #include <tinycbor/cbor.h>
 #include "oc_constants.h"
 #include "oc_helpers.h"
-#include <config.h>
+#include "../src/port/mynewt/config.h"
 #include <stdbool.h>
 #include <stdint.h>
 

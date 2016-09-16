@@ -50,7 +50,7 @@
 #ifndef OC_CLOCK_H
 #define OC_CLOCK_H
 
-#include "config.h"
+#include "mynewt/config.h"
 #include <stdint.h>
 
 /**

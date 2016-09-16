@@ -17,11 +17,11 @@
 #ifndef OC_RI_H
 #define OC_RI_H
 
-#include "config.h"
+#include "../src/port/mynewt/config.h"
 #include "oc_rep.h"
 #include "oc_uuid.h"
-#include "port/oc_connectivity.h"
-#include "util/oc_etimer.h"
+#include "../../src/port/oc_connectivity.h"
+#include "../../src/util/oc_etimer.h"
 
 typedef enum { OC_GET = 1, OC_POST, OC_PUT, OC_DELETE } oc_method_t;
 

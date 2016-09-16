@@ -39,7 +39,7 @@
 
 /* OIC stack headers */
 #include "oc_coap.h"
-#include "oc_ri.h"
+#include "../../../include/iotivity/oc_ri.h"
 
 typedef struct coap_separate
 {

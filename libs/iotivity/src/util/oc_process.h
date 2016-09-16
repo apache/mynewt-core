@@ -42,7 +42,7 @@
 
 #ifndef OC_PROCESS_H
 #define OC_PROCESS_H
-#include "util/pt/pt.h"
+#include "pt/pt.h"
 
 #ifndef NULL
 #define NULL 0

@@ -35,7 +35,7 @@
 #define TRANSACTIONS_H
 
 #include "coap.h"
-#include "util/oc_etimer.h"
+#include "../../util/oc_etimer.h"
 
 /*
  * Modulo mask (thus +1) for a random number to get the tick number for the

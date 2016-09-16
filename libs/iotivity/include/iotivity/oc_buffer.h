@@ -17,8 +17,8 @@
 #ifndef OC_BUFFER_H
 #define OC_BUFFER_H
 
-#include "port/oc_connectivity.h"
-#include "util/oc_process.h"
+#include "../../src/port/oc_connectivity.h"
+#include "../../src/util/oc_process.h"
 #include <stdbool.h>
 
 OC_PROCESS_NAME(message_buffer_handler);

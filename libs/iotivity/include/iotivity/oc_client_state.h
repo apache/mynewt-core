@@ -17,7 +17,7 @@
 #ifndef OC_CLIENT_STATE_H
 #define OC_CLIENT_STATE_H
 
-#include "messaging/coap/constants.h"
+#include "../../src/messaging/coap/constants.h"
 #include "oc_ri.h"
 #include <stdbool.h>
 
