@@ -34,8 +34,8 @@ wifi_cli(int argc, char **argv)
     struct wifi_if *wi;
     int i;
 
-    if (argc < 1) {
-        return 0;
+    if (argc < 2) {
+        goto usage;
     }
     wi = wifi_if_lookup(0);
 
@@ -74,9 +74,12 @@ wifi_cli(int argc, char **argv)
         strcpy(wi->wi_ssid, argv[2]);
         if (wifi_connect(wi)) {
 conn_usage:
-            console_printf("%s %s [<ssid> [<key>]]\n",
+            console_printf("%s %s <ssid> [<key>]\n",
               argv[0], argv[1]);
         }
+    } else {
+usage:
+        console_printf("start|stop|scan|aps|connect <ssid> [<key>]\n");
     }
     return 0;
 }
