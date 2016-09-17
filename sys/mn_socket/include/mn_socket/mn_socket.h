@@ -198,7 +198,6 @@ struct mn_itf {
     char mif_name[MN_ITF_NAME_MAX];
     uint8_t mif_idx;
     uint8_t mif_flags;
-    uint8_t mif_addr_cnt;
 };
 
 struct mn_itf_addr {
