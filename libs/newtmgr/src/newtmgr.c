@@ -24,10 +24,10 @@
 #include <string.h>
 
 #include <shell/shell.h>
-#include <console/console.h>
 #include <newtmgr/newtmgr.h>
+#include <nmgr_os/nmgr_os.h>
 
-#include "newtmgr_priv.h"
+#include "newtmgr/newtmgr_priv.h"
 
 struct nmgr_transport g_nmgr_shell_transport;
 
@@ -39,82 +39,9 @@ struct os_task g_nmgr_task;
 STAILQ_HEAD(, nmgr_group) g_nmgr_group_list =
     STAILQ_HEAD_INITIALIZER(g_nmgr_group_list);
 
-static int nmgr_def_echo(struct nmgr_jbuf *);
-static int nmgr_def_console_echo(struct nmgr_jbuf *);
-
-static struct nmgr_group nmgr_def_group;
-/* ORDER MATTERS HERE.
- * Each element represents the command ID, referenced from newtmgr.
- */
-static const struct nmgr_handler nmgr_def_group_handlers[] = {
-    [NMGR_ID_ECHO] = {nmgr_def_echo, nmgr_def_echo},
-    [NMGR_ID_CONS_ECHO_CTRL] = {nmgr_def_console_echo, nmgr_def_console_echo},
-    [NMGR_ID_TASKSTATS] = {nmgr_def_taskstat_read, NULL},
-    [NMGR_ID_MPSTATS] = {nmgr_def_mpstat_read, NULL},
-    [NMGR_ID_DATETIME_STR] = {nmgr_datetime_get, nmgr_datetime_set},
-    [NMGR_ID_RESET] = {NULL, nmgr_reset},
-};
-
 /* JSON buffer for NMGR task
  */
 struct nmgr_jbuf nmgr_task_jbuf;
-
-static int
-nmgr_def_echo(struct nmgr_jbuf *njb)
-{
-    uint8_t echo_buf[128];
-    struct json_attr_t attrs[] = {
-        { "d", t_string, .addr.string = (char *) &echo_buf[0],
-            .len = sizeof(echo_buf) },
-        { NULL },
-    };
-    struct json_value jv;
-    int rc;
-
-    rc = json_read_object((struct json_buffer *) njb, attrs);
-    if (rc != 0) {
-        goto err;
-    }
-
-    json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_STRINGN(&jv, (char *) echo_buf, strlen((char *) echo_buf));
-    json_encode_object_entry(&njb->njb_enc, "r", &jv);
-    json_encode_object_finish(&njb->njb_enc);
-
-    return (0);
-err:
-    return (rc);
-}
-
-static int
-nmgr_def_console_echo(struct nmgr_jbuf *njb)
-{
-    long long int echo_on = 1;
-    int rc;
-    struct json_attr_t attrs[3] = {
-        [0] = {
-            .attribute = "echo",
-            .type = t_integer,
-            .addr.integer = &echo_on,
-            .nodefault = 1
-        },
-        [1] = {
-            .attribute = NULL
-        }
-    };
-
-    rc = json_read_object(&njb->njb_buf, attrs);
-    if (rc) {
-        return OS_EINVAL;
-    }
-
-    if (echo_on) {
-        console_echo(1);
-    } else {
-        console_echo(0);
-    }
-    return (0);
-}
 
 int
 nmgr_group_list_lock(void)
@@ -601,27 +528,6 @@ err:
 }
 
 
-static int
-nmgr_default_groups_register(void)
-{
-    int rc;
-
-    NMGR_GROUP_SET_HANDLERS(&nmgr_def_group,
-      (struct nmgr_handler *)nmgr_def_group_handlers);
-    nmgr_def_group.ng_group_id = NMGR_GROUP_ID_DEFAULT;
-    nmgr_def_group.ng_handlers_count =
-      sizeof(nmgr_def_group_handlers) / sizeof(nmgr_def_group_handlers[0]);
-
-    rc = nmgr_group_register(&nmgr_def_group);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
 int
 nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
 {
@@ -646,7 +552,7 @@ nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
         goto err;
     }
 
-    rc = nmgr_default_groups_register();
+    rc = nmgr_os_groups_register();
     if (rc != 0) {
         goto err;
     }

@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: libs/newtmgr
-pkg.description: Server-side newtmgr functionality.
+pkg.name: libs/newtmgr/os
+pkg.description: Default newtmgr command.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -27,14 +27,10 @@ pkg.deps:
     - hw/hal
     - libs/os
     - libs/json
-    - libs/newtmgr/os
     - libs/util
     - libs/testutil
-    - libs/shell
+    - libs/newtmgr
     - sys/reboot
 
-pkg.deps.BLE_HOST:
-    - libs/newtmgr/transport/ble
-
-pkg.features:
-    - NEWTMGR
+pkg.reqs:
+    - console

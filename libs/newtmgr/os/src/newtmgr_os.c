@@ -26,14 +26,110 @@
 #include <hal/hal_system.h>
 
 #include <newtmgr/newtmgr.h>
+#include <newtmgr/newtmgr_priv.h>
+
+#include <console/console.h>
 #include <util/datetime.h>
 #include <reboot/log_reboot.h>
 
-#include "newtmgr_priv.h"
-
 static struct os_callout_func nmgr_reset_callout;
 
-int
+static int nmgr_def_echo(struct nmgr_jbuf *);
+static int nmgr_def_console_echo(struct nmgr_jbuf *);
+static int nmgr_def_taskstat_read(struct nmgr_jbuf *njb);
+static int nmgr_def_mpstat_read(struct nmgr_jbuf *njb);
+static int nmgr_datetime_get(struct nmgr_jbuf *njb);
+static int nmgr_datetime_set(struct nmgr_jbuf *njb);
+static int nmgr_reset(struct nmgr_jbuf *njb);
+
+static const struct nmgr_handler nmgr_def_group_handlers[] = {
+    [NMGR_ID_ECHO] = {
+        nmgr_def_echo, nmgr_def_echo
+    },
+    [NMGR_ID_CONS_ECHO_CTRL] = {
+        nmgr_def_console_echo, nmgr_def_console_echo
+    },
+    [NMGR_ID_TASKSTATS] = {
+        nmgr_def_taskstat_read, NULL
+    },
+    [NMGR_ID_MPSTATS] = {
+        nmgr_def_mpstat_read, NULL
+    },
+    [NMGR_ID_DATETIME_STR] = {
+        nmgr_datetime_get, nmgr_datetime_set
+    },
+    [NMGR_ID_RESET] = {
+        NULL, nmgr_reset
+    },
+};
+
+#define NMGR_DEF_GROUP_SZ                                               \
+    (sizeof(nmgr_def_group_handlers) / sizeof(nmgr_def_group_handlers[0]))
+
+static struct nmgr_group nmgr_def_group = {
+    .ng_handlers = (struct nmgr_handler *)nmgr_def_group_handlers,
+    .ng_handlers_count = NMGR_DEF_GROUP_SZ,
+    .ng_group_id = NMGR_GROUP_ID_DEFAULT
+};
+
+static int
+nmgr_def_echo(struct nmgr_jbuf *njb)
+{
+    uint8_t echo_buf[128];
+    struct json_attr_t attrs[] = {
+        { "d", t_string, .addr.string = (char *) &echo_buf[0],
+            .len = sizeof(echo_buf) },
+        { NULL },
+    };
+    struct json_value jv;
+    int rc;
+
+    rc = json_read_object((struct json_buffer *) njb, attrs);
+    if (rc != 0) {
+        goto err;
+    }
+
+    json_encode_object_start(&njb->njb_enc);
+    JSON_VALUE_STRINGN(&jv, (char *) echo_buf, strlen((char *) echo_buf));
+    json_encode_object_entry(&njb->njb_enc, "r", &jv);
+    json_encode_object_finish(&njb->njb_enc);
+
+    return (0);
+err:
+    return (rc);
+}
+
+static int
+nmgr_def_console_echo(struct nmgr_jbuf *njb)
+{
+    long long int echo_on = 1;
+    int rc;
+    struct json_attr_t attrs[3] = {
+        [0] = {
+            .attribute = "echo",
+            .type = t_integer,
+            .addr.integer = &echo_on,
+            .nodefault = 1
+        },
+        [1] = {
+            .attribute = NULL
+        }
+    };
+
+    rc = json_read_object(&njb->njb_buf, attrs);
+    if (rc) {
+        return OS_EINVAL;
+    }
+
+    if (echo_on) {
+        console_echo(1);
+    } else {
+        console_echo(0);
+    }
+    return (0);
+}
+
+static int
 nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
 {
     struct os_task *prev_task;
@@ -83,13 +179,7 @@ nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
     return (0);
 }
 
-int
-nmgr_def_taskstat_write(struct nmgr_jbuf *njb)
-{
-    return (OS_EINVAL);
-}
-
-int
+static int
 nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
 {
     struct os_mempool *prev_mp;
@@ -128,13 +218,7 @@ nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
     return (0);
 }
 
-int
-nmgr_def_mpstat_write(struct nmgr_jbuf *njb)
-{
-    return (OS_EINVAL);
-}
-
-int
+static int
 nmgr_datetime_get(struct nmgr_jbuf *njb)
 {
     struct os_timeval tv;
@@ -165,7 +249,7 @@ err:
     return (rc);
 }
 
-int
+static int
 nmgr_datetime_set(struct nmgr_jbuf *njb)
 {
     struct os_timeval tv;
@@ -220,7 +304,7 @@ nmgr_reset_tmo(void *arg)
     system_reset();
 }
 
-int
+static int
 nmgr_reset(struct nmgr_jbuf *njb)
 {
     if (nmgr_reset_callout.cf_func == NULL) {
@@ -234,3 +318,10 @@ nmgr_reset(struct nmgr_jbuf *njb)
 
     return OS_OK;
 }
+
+int
+nmgr_os_groups_register(void)
+{
+    return nmgr_group_register(&nmgr_def_group);
+}
+

@@ -16,16 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __NETMGR_PRIV_H_
-#define __NETMGR_PRIV_H_
 
-extern struct os_eventq g_nmgr_evq;
+#ifndef _NMGR_OS_H_
+#define _NMGR_OS_H_
 
-int nmgr_def_taskstat_read(struct nmgr_jbuf *);
-int nmgr_def_mpstat_read(struct nmgr_jbuf *);
-int nmgr_def_logs_read(struct nmgr_jbuf *);
-int nmgr_datetime_get(struct nmgr_jbuf *);
-int nmgr_datetime_set(struct nmgr_jbuf *);
-int nmgr_reset(struct nmgr_jbuf *);
+int nmgr_os_groups_register(void);
 
-#endif
+#endif /* _NMGR_OS_H_ */
