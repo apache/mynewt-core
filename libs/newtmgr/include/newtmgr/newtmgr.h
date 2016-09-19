@@ -61,17 +61,6 @@
 #define NMGR_ERR_ENOENT   (5)
 #define NMGR_ERR_EPERUSER (256)
 
-
-/*
- * Id's for default group commands
- */
-#define NMGR_ID_ECHO            0
-#define NMGR_ID_CONS_ECHO_CTRL  1
-#define NMGR_ID_TASKSTATS       2
-#define NMGR_ID_MPSTATS         3
-#define NMGR_ID_DATETIME_STR    4
-#define NMGR_ID_RESET           5
-
 struct nmgr_hdr {
     uint8_t  nh_op;             /* NMGR_OP_XXX */
     uint8_t  nh_flags;

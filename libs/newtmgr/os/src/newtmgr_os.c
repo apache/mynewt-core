@@ -32,6 +32,8 @@
 #include <util/datetime.h>
 #include <reboot/log_reboot.h>
 
+#include "nmgr_os/nmgr_os.h"
+
 static struct os_callout_func nmgr_reset_callout;
 
 static int nmgr_def_echo(struct nmgr_jbuf *);

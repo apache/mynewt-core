@@ -20,6 +20,16 @@
 #ifndef _NMGR_OS_H_
 #define _NMGR_OS_H_
 
+/*
+ * Id's for OS group commands
+ */
+#define NMGR_ID_ECHO            0
+#define NMGR_ID_CONS_ECHO_CTRL  1
+#define NMGR_ID_TASKSTATS       2
+#define NMGR_ID_MPSTATS         3
+#define NMGR_ID_DATETIME_STR    4
+#define NMGR_ID_RESET           5
+
 int nmgr_os_groups_register(void);
 
 #endif /* _NMGR_OS_H_ */
