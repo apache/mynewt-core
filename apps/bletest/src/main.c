@@ -1170,7 +1170,8 @@ main(void)
     os_eventq_init(&g_bletest_evq);
 
     /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
+    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS,
+                     BLE_MBUF_PAYLOAD_SIZE - BLE_HCI_DATA_HDR_SZ);
     assert(rc == 0);
 
     /* Initialize host */
