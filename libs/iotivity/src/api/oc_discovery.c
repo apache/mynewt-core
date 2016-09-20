@@ -156,7 +156,7 @@ oc_core_discovery_handler(oc_request_t *request, oc_interface_mask_t interface)
 
   int response_length = oc_rep_finalize();
 
-  if (matches && response_length) {
+  if (matches && response_length > 0) {
     request->response->response_buffer->response_length = response_length;
     request->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
   } else {
