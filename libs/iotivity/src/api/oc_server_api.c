@@ -219,7 +219,7 @@ oc_interate_query(oc_request_t *request, char **key, int *key_len, char **value,
 {
   if (query_iterator >= request->query_len)
     return -1;
-  query_iterator = oc_ri_get_query_nth_key_value(
+  query_iterator += oc_ri_get_query_nth_key_value(
     request->query + query_iterator, request->query_len - query_iterator, key,
     key_len, value, value_len, 1);
   return 1;
