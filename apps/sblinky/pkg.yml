@@ -31,6 +31,7 @@ pkg.deps:
     - libs/newtmgr
     - hw/mcu/nordic
     - drivers/adc
+    - fs/nffs
     - libs/console/full
     - libs/os
     - libs/shell
