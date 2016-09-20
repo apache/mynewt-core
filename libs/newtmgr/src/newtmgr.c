@@ -41,7 +41,7 @@ STAILQ_HEAD(, nmgr_group) g_nmgr_group_list =
 
 /* JSON buffer for NMGR task
  */
-struct nmgr_jbuf nmgr_task_jbuf;
+static struct nmgr_jbuf nmgr_task_jbuf;
 
 int
 nmgr_group_list_lock(void)
@@ -259,7 +259,7 @@ err:
     return (rc);
 }
 
-int
+static int
 nmgr_jbuf_init(struct nmgr_jbuf *njb)
 {
     memset(njb, 0, sizeof(*njb));
