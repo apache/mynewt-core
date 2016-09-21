@@ -20,6 +20,7 @@
 #include <os/os.h>
 #include <bsp/bsp.h>
 #include <console/console.h>
+#include <console/prompt.h>
 #include <shell/shell.h>
 #include <log/log.h>
 
@@ -29,7 +30,7 @@
 
 /* Shell */
 #define SHELL_TASK_PRIO         (8)
-#define SHELL_MAX_INPUT_LEN     (256)
+#define SHELL_MAX_INPUT_LEN     (512)
 #define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
 static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 
@@ -285,6 +286,11 @@ main(int argc, char **argv)
 
     rc = os_msys_register(&default_mbuf_pool);
     assert(rc == 0);
+
+#ifdef OC_TRANSPORT_SERIAL
+    console_echo(0);
+    console_no_prompt();
+#endif
 
     /* Init tasks */
     rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,

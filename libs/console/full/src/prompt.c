@@ -23,18 +23,26 @@
 
 /* console prompt, always followed by a space */
 static char console_prompt[] = " > ";
+static char do_prompt = 1;
 
 
 /* set the prompt character, leave the space */
 void
 console_set_prompt(char p)
 {
+    do_prompt = 1;
     console_prompt[1] = p;
+}
+
+void console_no_prompt(void) {
+    do_prompt = 0;
 }
 
 /* print the prompt to the console */
 void
 console_print_prompt(void)
 {
-    console_printf("%s", console_prompt);
+    if (do_prompt) {
+        console_printf("%s", console_prompt);
+    }
 }

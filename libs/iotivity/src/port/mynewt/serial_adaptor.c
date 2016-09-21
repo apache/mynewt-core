@@ -54,6 +54,7 @@ oc_connectivity_init_serial(void) {
     }
     /* override the eventq type */
     oc_serial_mqueue.mq_ev.ev_type = OC_ADATOR_EVENT_SERIAL;
+    return 0;
 
 err:
     oc_connectivity_shutdown_serial();
@@ -68,25 +69,27 @@ void oc_send_buffer_serial(oc_message_t *message) {
     /* get a packet header */
     m = os_msys_get_pkthdr(0, 0);
     if (m == NULL) {
+        ERROR("oc_transport_serial: No mbuf available\n");
         goto err;
     }
 
     /* add this data to the mbuf */
     rc = os_mbuf_append(m, message->data, message->length);
     if (rc != 0) {
+        ERROR("oc_transport_serial: could not append data \n");
         goto err;
     }
 
     /* send over the shell output */
     rc = shell_nlip_output(m);
     if (rc != 0) {
+        ERROR("oc_transport_serial: nlip output failed \n");
         goto err;
     }
 
-    return;
+    LOG("oc_transport_serial: send buffer %lu\n", message->length);
 
-    err:
-    ERROR("Unable to send message via oc_serial %d\n", rc);
+err:
     oc_message_unref(message);
     return;
 
@@ -103,8 +106,13 @@ oc_attempt_rx_serial(void) {
 
     /* get an mbuf from the queue */
     m = os_mqueue_get(&oc_serial_mqueue);
+    if (NULL == m) {
+        ERROR("oc_transport_serial: Woke for for receive but found no mbufs\n");
+        goto rx_attempt_err;
+    }
 
     if (!OS_MBUF_IS_PKTHDR(m)) {
+        ERROR("oc_transport_serial: received mbuf that wasn't a packet header\n");
         goto rx_attempt_err;
     }
 
@@ -150,4 +158,4 @@ rx_attempt_err:
     return NULL;
 }
 
-#endif 
+#endif

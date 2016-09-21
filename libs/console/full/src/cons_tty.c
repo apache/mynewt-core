@@ -282,6 +282,7 @@ console_rx_char(void *arg, uint8_t data)
     /* echo */
     switch (data) {
     case '\r':
+        break;
     case '\n':
         /*
          * linefeed

@@ -28,4 +28,6 @@ void console_print_prompt();
 /* set the console prompt character */
 void console_set_prompt(char);
 
+void console_no_prompt(void);
+
 #endif /* __CONSOLE_PROMPT_H__ */
