@@ -33,4 +33,10 @@ pkg.deps:
     - libs/iotivity
 
 # this tells the library that you intend to suppor the server functionality
-pkg.cflags: -DOC_SERVER
+pkg.cflags:
+
+#-DOC_SERVER -- build the server examples 
+#-DOC_CLIENT -- build the client examples
+#-DOC_TRANSPORT_GATT -- to send COAP over GATT
+#-DOC_TRANSPORT_SERIAL -- to send COAP over serial
+#-DOC_TRANSPORT_IP -- to send COAP over IP ßß

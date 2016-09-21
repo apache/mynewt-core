@@ -44,7 +44,8 @@ typedef struct
     GATT = 1 << 1,
     IPSP = 1 << 2,
     MULTICAST = 1 << 3,
-    SECURED = 1 << 4
+    SECURED = 1 << 4,
+    SERIAL = 1 <<5,
   } flags;
 
   union

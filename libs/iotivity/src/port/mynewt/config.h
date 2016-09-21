@@ -54,4 +54,6 @@ typedef os_time_t oc_clock_time_t;
 /* Max inactivity timeout before tearing down DTLS connection */
 //#define DTLS_INACTIVITY_TIMEOUT (10)
 
+#define MYNEWT_OCF_SERIAL_PORT  (1)
+
 #endif /* CONFIG_H */

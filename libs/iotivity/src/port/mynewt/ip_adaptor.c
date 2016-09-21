@@ -24,14 +24,21 @@
 #include <log/log.h>
 #include <mn_socket/mn_socket.h>
 
-#include "../oc_network_events_mutex.h"
 #include "../oc_connectivity.h"
 #include "oc_buffer.h"
 #include "../oc_log.h"
+#include "adaptor.h"
+
+#ifdef OC_TRANSPORT_IP
+
+struct os_event oc_sock_read_event = {
+    .ev_type = OC_ADATOR_EVENT_IP,
+};
 
 #ifdef OC_SECURITY
 #error This implementation does not yet support security
 #endif
+
 
 #define COAP_PORT_UNSECURED (5683)
 /* TODO use inet_pton when its available */
@@ -40,89 +47,86 @@ const struct mn_in6_addr coap_all_nodes_v6 = {
                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFD}
 };
 
-/* need a task to process OCF messages */
-#define OC_NET_TASK_STACK_SIZE          OS_STACK_ALIGN(300)
-#define OC_NET_TASK_PRIORITY            (4)
-struct os_task oc_task;
-os_stack_t *oc_stack;
 
 /* sockets to use for coap unicast and multicast */
-struct mn_socket *mcast;
 struct mn_socket *ucast;
 
-/* to wake our task when stuff is ready */
-struct os_sem oc_read_sem;
-struct os_sem oc_write_sem;
+#ifdef OC_SERVER
+struct mn_socket *mcast;
+#endif
 
-/* not sure if these semaphores are necessary yet.  If we are running
- * all of this from one task, we may not need these */
-static struct os_mutex oc_net_mutex;
-
-void
-oc_network_event_handler_mutex_init(void)
-{
-    os_error_t rc;
-    rc = os_mutex_init(&oc_net_mutex);
-    assert(rc == 0);
-}
-
-void
-oc_network_event_handler_mutex_lock(void)
-{
-    os_mutex_pend(&oc_net_mutex, OS_TIMEOUT_NEVER);
-}
-
-void
-oc_network_event_handler_mutex_unlock(void)
-{
-    os_mutex_release(&oc_net_mutex);
-}
-
-void
-oc_send_buffer(oc_message_t *message)
+static void
+oc_send_buffer_ip_int(oc_message_t *message, int mcast)
 {
     struct mn_sockaddr_in6 to;
-    struct mn_socket * send_sock;
     struct os_mbuf m;
     int rc;
 
-    while (1) {
-        LOG("attempt send buffer %lu\n", message->length);
+    LOG("oc_transport_ip attempt send buffer %lu\n", message->length);
 
-        to.msin6_len = sizeof(to);
-        to.msin6_family = MN_AF_INET6;
-        to.msin6_scope_id = message->endpoint.ipv6_addr.scope;
-        to.msin6_port = htons(message->endpoint.ipv6_addr.port);
-        memcpy(&to.msin6_addr, message->endpoint.ipv6_addr.address,
-               sizeof(to.msin6_addr));
-        send_sock = ucast;
+    to.msin6_len = sizeof(to);
+    to.msin6_family = MN_AF_INET6;
 
-        /* put on an mbuf header to make the socket happy */
-        memset(&m,0, sizeof(m));
-        m.om_data = message->data;
-        m.om_len = message->length;
+    to.msin6_port = htons(message->endpoint.ipv6_addr.port);
+    memcpy(&to.msin6_addr, message->endpoint.ipv6_addr.address,
+           sizeof(to.msin6_addr));
 
-        rc = mn_sendto(send_sock, &m, (struct mn_sockaddr *) &to);
-        /* TODO what to do if this fails, we can't keep the buffer */
-        if (rc != 0) {
-            ERROR("Failed sending buffer %lu\n", message->length);
-        } else {
-            break;
+    /* put on an mbuf header to make the socket happy */
+    memset(&m,0, sizeof(m));
+    m.om_data = message->data;
+    m.om_len = message->length;
+    to.msin6_scope_id = message->endpoint.ipv6_addr.scope;
+
+    if (mcast) {
+        struct mn_itf itf;
+        memset(&itf, 0, sizeof(itf));
+
+        while (1) {
+            rc = mn_itf_getnext(&itf);
+            if (rc) {
+                break;
+            }
+
+            if (0 == (itf.mif_flags & MN_ITF_F_UP)) {
+                continue;
+            }
+
+            to.msin6_scope_id = itf.mif_idx;
+
+            rc = mn_sendto(ucast, &m, (struct mn_sockaddr *) &to);
+            if (rc != 0) {
+                ERROR("Failed sending buffer %lu on itf %d\n",
+                      message->length, to.msin6_scope_id);
+            }
         }
-        /* if we failed to write, wait around until we can */
-        os_sem_pend(&oc_write_sem, OS_TIMEOUT_NEVER);
+    } else {
+        rc = mn_sendto(ucast, &m, (struct mn_sockaddr *) &to);
+        if (rc != 0) {
+            ERROR("Failed sending buffer %lu on itf %d\n",
+                  message->length, to.msin6_scope_id);
+        }
     }
+    oc_message_unref(message);
+}
+
+void
+oc_send_buffer_ip(oc_message_t *message) {
+    oc_send_buffer_ip_int(message, 0);
+}
+void
+oc_send_buffer_ip_mcast(oc_message_t *message) {
+    oc_send_buffer_ip_int(message, 1);
 }
 
 oc_message_t *
-oc_attempt_rx(struct mn_socket * rxsock) {
+oc_attempt_rx_ip_sock(struct mn_socket * rxsock) {
     int rc;
     struct os_mbuf *m = NULL;
     struct os_mbuf_pkthdr *pkt;
     oc_message_t *message = NULL;
     struct mn_sockaddr_in6 from;
 
-    LOG("attempt rx from %p\n", rxsock);
+    LOG("oc_transport_ip attempt rx from %p\n", rxsock);
 
     rc= mn_recvfrom(rxsock, &m, (struct mn_sockaddr *) &from);
 
@@ -181,108 +185,55 @@ rx_attempt_err:
 }
 
 oc_message_t *
-oc_attempt_rx_mcast(void) {
-    return oc_attempt_rx(mcast);
-}
-
-oc_message_t *
-oc_attempt_rx_ucast(void) {
-    return oc_attempt_rx(ucast);
+oc_attempt_rx_ip(void) {
+    oc_message_t *pmsg;
+    pmsg = oc_attempt_rx_ip_sock(ucast);
+#ifdef OC_SERVER
+    if (pmsg == NULL ) {
+        pmsg = oc_attempt_rx_ip_sock(mcast);
+    }
+#endif
+    return pmsg;
 }
 
 static void oc_socks_readable(void *cb_arg, int err);
-static void oc_socks_writable(void *cb_arg, int err);
 
 union mn_socket_cb oc_sock_cbs = {
     .socket.readable = oc_socks_readable,
-    .socket.writable = oc_socks_writable
+    .socket.writable = NULL
 };
 
 void
 oc_socks_readable(void *cb_arg, int err)
 {
-    os_sem_release(&oc_read_sem);
+    os_eventq_put(&oc_event_q, &oc_sock_read_event);
 }
 
 void
-oc_socks_writable(void *cb_arg, int err)
+oc_connectivity_shutdown_ip(void)
 {
-    os_sem_release(&oc_write_sem);
-}
-
-void
-oc_task_handler(void *arg) {
-    while (1) {
-        oc_message_t *pmsg;
-        os_sem_pend(&oc_read_sem, OS_TIMEOUT_NEVER);
-        pmsg = oc_attempt_rx_ucast();
-        if (pmsg) {
-            oc_network_event(pmsg);
-        }
-
-        pmsg = oc_attempt_rx_mcast();
-        if (pmsg) {
-            oc_network_event(pmsg);
-        }
-    }
-}
-
-static int
-oc_init_net_task(void) {
-    int rc;
-
-    /* start this thing running to check right away */
-    rc = os_sem_init(&oc_read_sem, 1);
-    if (0 != rc) {
-        ERROR("Could not initialize oc read sem\n");
-        return rc;
-    }
-
-    rc = os_sem_init(&oc_write_sem, 1);
-    if (0 != rc) {
-        ERROR("Could not initialize oc write sem\n");
-        return rc;
-    }
-
-    oc_stack = (os_stack_t*) malloc(sizeof(os_stack_t)*OC_NET_TASK_STACK_SIZE);
-    if (NULL == oc_stack) {
-        ERROR("Could not malloc oc stack\n");
-        return -1;
-    }
-
-    rc = os_task_init(&oc_task, "oc", oc_task_handler, NULL,
-            OC_NET_TASK_PRIORITY, OS_WAIT_FOREVER,
-            oc_stack, OC_NET_TASK_STACK_SIZE);
-
-    if (rc != 0) {
-        ERROR("Could not start oc task\n");
-        free(oc_stack);
-    }
-
-    return rc;
-}
-
-void
-oc_connectivity_shutdown(void)
-{
-    LOG("OC shutdown");
+    LOG("OC shutdown IP\n");
 
     if (ucast) {
         mn_close(ucast);
     }
 
+#ifdef OC_SERVER
     if (mcast) {
         mn_close(mcast);
     }
+#endif
+
 }
 
 int
-oc_connectivity_init(void)
+oc_connectivity_init_ip(void)
 {
     int rc;
     struct mn_sockaddr_in6 sin;
     struct mn_itf itf;
 
+    LOG("OC transport init IP\n");
     memset(&itf, 0, sizeof(itf));
 
     rc = oc_log_init();
@@ -295,14 +246,17 @@ oc_connectivity_init(void)
         ERROR("Could not create oc unicast socket\n");
         return rc;
     }
+    mn_socket_set_cbs(ucast, ucast, &oc_sock_cbs);
+
+#ifdef OC_SERVER
     rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !mcast ) {
         mn_close(ucast);
         ERROR("Could not create oc multicast socket\n");
         return rc;
     }
-    mn_socket_set_cbs(ucast, ucast, &oc_sock_cbs);
     mn_socket_set_cbs(mcast, mcast, &oc_sock_cbs);
+#endif
 
     sin.msin6_len = sizeof(sin);
     sin.msin6_family = MN_AF_INET6;
@@ -316,6 +270,7 @@ oc_connectivity_init(void)
         goto oc_connectivity_init_err;
     }
 
+#ifdef OC_SERVER
     /* Set socket option to join multicast group on all valid interfaces */
     while (1) {
         struct mn_mreq join;
@@ -348,11 +303,7 @@ oc_connectivity_init(void)
         ERROR("Could not bind oc multicast socket\n");
         goto oc_connectivity_init_err;
     }
-
-    rc = oc_init_net_task();
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
-    }
+#endif
 
     return 0;
 
@@ -361,7 +312,4 @@ oc_connectivity_init_err:
     return rc;
 }
 
-void oc_send_multicast_message(oc_message_t *message)
-{
-    oc_send_buffer(message);
-}
+#endif
