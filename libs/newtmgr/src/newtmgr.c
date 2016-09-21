@@ -27,14 +27,12 @@
 #include <newtmgr/newtmgr.h>
 #include <nmgr_os/nmgr_os.h>
 
-#include "newtmgr/newtmgr_priv.h"
-
 struct nmgr_transport g_nmgr_shell_transport;
 
 struct os_mutex g_nmgr_group_list_lock;
 
-struct os_eventq g_nmgr_evq;
-struct os_task g_nmgr_task;
+static struct os_eventq g_nmgr_evq;
+static struct os_task g_nmgr_task;
 
 STAILQ_HEAD(, nmgr_group) g_nmgr_group_list =
     STAILQ_HEAD_INITIALIZER(g_nmgr_group_list);
@@ -552,7 +550,7 @@ nmgr_task_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
         goto err;
     }
 
-    rc = nmgr_os_groups_register();
+    rc = nmgr_os_groups_register(&g_nmgr_evq);
     if (rc != 0) {
         goto err;
     }

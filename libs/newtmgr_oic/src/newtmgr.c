@@ -28,18 +28,17 @@
 
 #include <iotivity/oc_api.h>
 
-#include "newtmgr/newtmgr_priv.h"
-
 #define NMGR_OC_EVENT	(OS_EVENT_T_PERUSER)
 #define NMGR_OC_TIMER	(OS_EVENT_T_PERUSER + 1)
 
 struct nmgr_state {
     struct os_mutex ns_group_lock;
     STAILQ_HEAD(, nmgr_group) ns_groups;
+    struct os_eventq ns_evq;
     struct os_event ns_oc_event;
     struct os_callout ns_oc_timer;
     struct os_task ns_task;
-    struct nmgr_jbuf ns_jbuf;
+    struct nmgr_jbuf ns_jbuf;		/* JSON buffer for NMGR task */
     char ns_rsp[NMGR_MAX_MTU];
 };
 
@@ -47,13 +46,8 @@ static struct nmgr_state nmgr_state = {
   .ns_groups = STAILQ_HEAD_INITIALIZER(nmgr_state.ns_groups),
   .ns_oc_event.ev_type = NMGR_OC_EVENT,
   .ns_oc_timer.c_ev.ev_type = NMGR_OC_TIMER,
-  .ns_oc_timer.c_evq = &g_nmgr_evq
+  .ns_oc_timer.c_evq = &nmgr_state.ns_evq
 };
-struct os_eventq g_nmgr_evq;
-
-/* JSON buffer for NMGR task
- */
-
 
 static void nmgr_oic_get(oc_request_t *request, oc_interface_mask_t interface);
 static void nmgr_oic_put(oc_request_t *request, oc_interface_mask_t interface);
@@ -445,7 +439,9 @@ static const oc_handler_t nmgr_oc_handler = {
 void
 oc_signal_main_loop(void)
 {
-    os_eventq_put(&g_nmgr_evq, &nmgr_state.ns_oc_event);
+    struct nmgr_state *ns = &nmgr_state;
+
+    os_eventq_put(&ns->ns_evq, &ns->ns_oc_event);
 }
 
 void
@@ -460,7 +456,7 @@ nmgr_oic_task(void *arg)
 
     oc_main_init((oc_handler_t *)&nmgr_oc_handler);
     while (1) {
-        ev = os_eventq_get(&g_nmgr_evq);
+        ev = os_eventq_get(&ns->ns_evq);
         switch (ev->ev_type) {
         case NMGR_OC_EVENT:
         case NMGR_OC_TIMER:
@@ -485,7 +481,7 @@ nmgr_oic_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
     struct nmgr_state *ns = &nmgr_state;
     int rc;
 
-    os_eventq_init(&g_nmgr_evq);
+    os_eventq_init(&ns->ns_evq);
 
     rc = os_task_init(&ns->ns_task, "newtmgr_oic", nmgr_oic_task, NULL, prio,
             OS_WAIT_FOREVER, stack_ptr, stack_len);
@@ -493,7 +489,7 @@ nmgr_oic_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
         goto err;
     }
 
-    rc = nmgr_os_groups_register();
+    rc = nmgr_os_groups_register(&ns->ns_evq);
     if (rc != 0) {
         goto err;
     }

@@ -26,7 +26,6 @@
 #include <hal/hal_system.h>
 
 #include <newtmgr/newtmgr.h>
-#include <newtmgr/newtmgr_priv.h>
 
 #include <console/console.h>
 #include <util/datetime.h>
@@ -309,10 +308,6 @@ nmgr_reset_tmo(void *arg)
 static int
 nmgr_reset(struct nmgr_jbuf *njb)
 {
-    if (nmgr_reset_callout.cf_func == NULL) {
-        os_callout_func_init(&nmgr_reset_callout, &g_nmgr_evq,
-          nmgr_reset_tmo, NULL);
-    }
     log_reboot(SOFT_REBOOT);
     os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
 
@@ -322,8 +317,10 @@ nmgr_reset(struct nmgr_jbuf *njb)
 }
 
 int
-nmgr_os_groups_register(void)
+nmgr_os_groups_register(struct os_eventq *nmgr_evq)
 {
+    os_callout_func_init(&nmgr_reset_callout, nmgr_evq, nmgr_reset_tmo, NULL);
+
     return nmgr_group_register(&nmgr_def_group);
 }
 

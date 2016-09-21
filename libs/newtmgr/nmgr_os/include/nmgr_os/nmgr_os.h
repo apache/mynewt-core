@@ -30,6 +30,7 @@
 #define NMGR_ID_DATETIME_STR    4
 #define NMGR_ID_RESET           5
 
-int nmgr_os_groups_register(void);
+struct os_eventq;
+int nmgr_os_groups_register(struct os_eventq *nmgr_evq);
 
 #endif /* _NMGR_OS_H_ */
