@@ -301,8 +301,8 @@ nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode)
 static struct nmgr_handler *
 nmgr_oic_find_handler(const char *q, int qlen)
 {
-    int grp;
-    int id;
+    int grp = -1;
+    int id = -1;
     char *str;
     char *eptr;
     int slen;
