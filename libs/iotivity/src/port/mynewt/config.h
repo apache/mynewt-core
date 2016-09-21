@@ -21,7 +21,7 @@ typedef os_time_t oc_clock_time_t;
 
 /* Server-side parameters */
 /* Maximum number of server resources */
-#define MAX_APP_RESOURCES (2)
+#define MAX_APP_RESOURCES (8)
 
 /* Common paramters */
 /* Maximum number of concurrent requests */
