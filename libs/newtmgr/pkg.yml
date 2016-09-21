@@ -36,5 +36,8 @@ pkg.deps:
 pkg.deps.BLE_HOST:
     - libs/newtmgr/transport/ble
 
+pkg.apis:
+    - newtmgr
+
 pkg.features:
     - NEWTMGR
