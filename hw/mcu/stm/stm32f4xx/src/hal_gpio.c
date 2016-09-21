@@ -60,7 +60,7 @@
  *          - Multiply by 16.
  *          - Add port pin number.
  *
- *      Ex: PE11 = (4 * 16) + 11 = 75.
+ *      Ex: PD11 = (3 * 16) + 11 = 59.
  *          PA0 = (0 * 16) + 0 = 0
  */
 #define GPIO_INDEX(pin)     ((pin) & 0x0F)
@@ -390,6 +390,37 @@ hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
 
     /* Initialize pin as an input, setting proper mode */
     HAL_GPIO_Init(portmap[port], cfg);
+
+    return 0;
+}
+
+/**
+ * hal gpio deinit
+ *
+ * Called to deinitialize a gpio.
+ *
+ * @param pin
+ * @param cfg
+ *
+ * @return int
+ */
+int
+hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg)
+{
+    int port;
+    uint32_t mcu_pin_mask;
+
+    /* Is this a valid pin? */
+    port = GPIO_PORT(pin);
+    if (port >= HAL_GPIO_NUM_PORTS) {
+        return -1;
+    }
+
+    mcu_pin_mask = GPIO_MASK(pin);
+    cfg->Pin = mcu_pin_mask;
+
+    /* Initialize pin as an input, setting proper mode */
+    HAL_GPIO_DeInit(portmap[port], cfg->Pin);
 
     return 0;
 }

@@ -118,7 +118,7 @@ struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
     }
 
 int
-hal_spi_init(uint8_t spi_num, void *usercfg)
+hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
 {
     struct stm32f4_hal_spi *spi;
     struct stm32f4_hal_spi_cfg *cfg;
@@ -238,7 +238,7 @@ stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *pres
 }
 
 int
-hal_spi_config(uint8_t spi_num, struct hal_spi_settings *settings)
+hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 {
     struct stm32f4_hal_spi *spi;
     SPI_InitTypeDef *init;

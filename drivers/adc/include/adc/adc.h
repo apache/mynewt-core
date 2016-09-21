@@ -146,6 +146,7 @@ struct adc_chan_config {
     uint16_t c_refmv;
     uint8_t c_res;
     uint8_t c_configured;
+    uint8_t c_cnum;
 };
 
 struct adc_dev {
@@ -153,9 +154,13 @@ struct adc_dev {
     struct os_mutex ad_lock;
     struct adc_driver_funcs ad_funcs;
     struct adc_chan_config *ad_chans;
+    void *adc_dev_cfg;
     int ad_chan_count;
     adc_event_handler_func_t ad_event_handler_func;
     void *ad_event_handler_arg;
+    void *primarybuf;
+    void *secondarybuf;
+    int buflen;
 };
 
 int adc_chan_config(struct adc_dev *, uint8_t, void *);

@@ -22,16 +22,36 @@
 
 #include <adc/adc.h>
 
+/* Mynewt HAL Port pin mapping */
+#define ADC123_CH0_PIN    0
+#define ADC123_CH1_PIN    1
+#define ADC123_CH2_PIN    2
+#define ADC123_CH3_PIN    3
+#define ADC12_CH4_PIN     4
+#define ADC12_CH5_PIN     5
+#define ADC12_CH6_PIN     6
+#define ADC12_CH7_PIN     7
+#define ADC12_CH8_PIN     16
+#define ADC12_CH9_PIN     17
+#define ADC3_CH4_PIN      86
+#define ADC3_CH5_PIN      87
+#define ADC3_CH6_PIN      88
+#define ADC3_CH7_PIN      89
+#define ADC3_CH8_PIN      90
+#define ADC3_CH9_PIN      83
+#define ADC123_CH10_PIN   32
+#define ADC123_CH11_PIN   33
+#define ADC123_CH12_PIN   34
+#define ADC123_CH13_PIN   35
+#define ADC12_CH14_PIN    36
+#define ADC12_CH15_PIN    37
+#define ADC3_CH14_PIN     84
+#define ADC3_CH15_PIN     85
+
 struct stm32f4_adc_dev_cfg {
     uint8_t sac_chan_count;
-    uint8_t *sac_chans;
-    ADC_InitTypeDef sac_init;
-};
-
-struct stm32f4_adc_dev {
-    struct adc_dev sad_dev;
-    ADC_TypeDef *sad_adc;
-    ADC_InitTypeDef *sad_init;
+    void *sac_chans;
+    ADC_HandleTypeDef *sac_adc_handle;
 };
 
 int stm32f4_adc_dev_init(struct os_dev *, void *);
