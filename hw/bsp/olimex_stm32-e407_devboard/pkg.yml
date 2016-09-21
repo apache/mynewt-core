@@ -65,7 +65,7 @@ pkg.syscfg_defs:
         value:  1
     ADC_2:
         description: "ADC_2"
-        value:  1
+        value:  0
     ADC_3:
         description: "ADC_3"
         value:  1

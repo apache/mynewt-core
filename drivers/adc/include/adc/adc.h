@@ -158,9 +158,6 @@ struct adc_dev {
     int ad_chan_count;
     adc_event_handler_func_t ad_event_handler_func;
     void *ad_event_handler_arg;
-    void *primarybuf;
-    void *secondarybuf;
-    int buflen;
 };
 
 int adc_chan_config(struct adc_dev *, uint8_t, void *);

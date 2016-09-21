@@ -240,14 +240,14 @@ saadc_test(void)
 
 #if MYNEWT_VAL(ADC_3)
 
-#define STM32F4_ADC_DEFAULT_CHAN_CFG {\
+#define STM32F4_ADC3_DEFAULT_CHAN_CFG {\
     .Channel = ADC_CHANNEL_4,\
     .Rank = 1,\
     .SamplingTime = ADC_SAMPLETIME_144CYCLES,\
     .Offset = 0\
 }
 
-ADC_ChannelConfTypeDef adc_chan_cfg = STM32F4_ADC_DEFAULT_CHAN_CFG;
+ADC_ChannelConfTypeDef adc3_chan_cfg = STM32F4_ADC3_DEFAULT_CHAN_CFG;
 
 uint8_t *sample_buffer1;
 uint8_t *sample_buffer2;
@@ -280,14 +280,14 @@ err:
 
 #if MYNEWT_VAL(ADC_1)
 
-#define STM32F4_ADC_DEFAULT_CHAN_CFG10 {\
+#define STM32F4_ADC1_DEFAULT_CHAN_CFG {\
     .Channel = ADC_CHANNEL_10,\
     .Rank = 1,\
     .SamplingTime = ADC_SAMPLETIME_144CYCLES,\
     .Offset = 0\
 }
 
-ADC_ChannelConfTypeDef adc_chan_cfg10 = STM32F4_ADC_DEFAULT_CHAN_CFG10;
+ADC_ChannelConfTypeDef adc1_chan_cfg = STM32F4_ADC1_DEFAULT_CHAN_CFG;
 
 int adc1_result;
 int my_result_mv1[ADC_NUMBER_SAMPLES];
@@ -363,10 +363,10 @@ task1_handler(void *arg)
 
 #ifdef STM32F4
 #if MYNEWT_VAL(ADC_3)
-    adc_chan_config(adc3, ADC_CHANNEL_4, &adc_chan_cfg);
+    adc_chan_config(adc3, ADC_CHANNEL_4, &adc3_chan_cfg);
 #endif
 #if MYNEWT_VAL(ADC_1)
-    adc_chan_config(adc1, ADC_CHANNEL_10, &adc_chan_cfg10);
+    adc_chan_config(adc1, ADC_CHANNEL_10, &adc1_chan_cfg);
 #endif
 #endif
 
@@ -468,13 +468,14 @@ task1_handler(void *arg)
         int rc;
         rc = OS_OK;
 
-#if MYNEWT_VAL(ADC_3)
-        rc = adc_sample(adc3);
-        assert(rc == OS_OK);
-#endif
 
 #if MYNEWT_VAL(ADC_1)
         rc = adc_sample(adc1);
+        assert(rc == OS_OK);
+#endif
+
+#if MYNEWT_VAL(ADC_3)
+        rc = adc_sample(adc3);
         assert(rc == OS_OK);
 #endif
         ++g_task1_loops;
@@ -505,13 +506,15 @@ task1_handler(void *arg)
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
     }
-#if MYNEWT_VAL(ADC_3)
-    os_dev_close((struct os_dev *) adc3);
-#endif
 
 #if MYNEWT_VAL(ADC_1)
     os_dev_close((struct os_dev *) adc1);
 #endif
+
+#if MYNEWT_VAL(ADC_3)
+    os_dev_close((struct os_dev *) adc3);
+#endif
+
 }
 
 void

@@ -39,10 +39,13 @@ static struct adc_dev *adc_dma[5];
 
 struct stm32f4_adc_stats {
     uint16_t adc_events;
+    uint16_t adc_error;
     uint16_t adc_DMA_xfer_failed;
     uint16_t adc_DMA_xfer_aborted;
     uint16_t adc_DMA_xfer_complete;
-    uint16_t adc_error;
+    uint16_t adc_DMA_start_error;
+    uint16_t adc_DMA_overrun;
+    uint16_t adc_internal_error;
 };
 
 static struct stm32f4_adc_stats stm32f4_adc_stats;
@@ -266,32 +269,37 @@ stm32f4_resolve_dma_handle_idx(DMA_HandleTypeDef *hdma)
     return ((stream_addr & 0xFF) - ((uintptr_t)DMA2_Stream0_BASE & 0xFF))/0x18;
 }
 
-static void
-stm32f4_xfer_error_cb(DMA_HandleTypeDef *hdma)
-{
-    /* DMA transfer error callback */
-    stm32f4_adc_stats.adc_DMA_xfer_failed++;
-}
-
-static void
-stm32f4_xfer_abort_cb(DMA_HandleTypeDef *hdma)
-{
-    /* DMA transfer Abort callback */
-    stm32f4_adc_stats.adc_DMA_xfer_aborted++;
-}
-
 void
 HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
 {
-    stm32f4_adc_stats.adc_error++;
+    ++stm32f4_adc_stats.adc_error;
+
+    if (hadc->ErrorCode & HAL_ADC_ERROR_DMA) {
+        /* DMA transfer error */
+        ++stm32f4_adc_stats.adc_DMA_xfer_failed;
+    } else if (hadc->ErrorCode & HAL_ADC_ERROR_OVR) {
+        /* DMA transfer overrun */
+        ++stm32f4_adc_stats.adc_DMA_overrun;
+    } else if (hadc->ErrorCode & HAL_ADC_ERROR_INTERNAL) {
+       /* ADC IP Internal Error */
+        ++stm32f4_adc_stats.adc_internal_error;
+    }
 }
 
+/**
+ * Callback that gets called by the HAL when ADC conversion is complete and
+ * the DMA buffer is full. If a secondary buffer exists it will the buffers.
+ *
+ * @param ADC Handle
+ */
 void
 HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     int rc;
     struct adc_dev *adc;
     DMA_HandleTypeDef *hdma;
+    struct stm32f4_adc_dev_cfg *cfg;
+    void *buf;
 
     assert(hadc);
     hdma = hadc->DMA_Handle;
@@ -299,16 +307,35 @@ HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     ++stm32f4_adc_stats.adc_DMA_xfer_complete;
 
     adc = adc_dma[stm32f4_resolve_dma_handle_idx(hdma)];
+    cfg  = adc->adc_dev_cfg;
 
-    rc = adc->ad_event_handler_func(adc, NULL, ADC_EVENT_RESULT, adc->primarybuf,
-                                    adc->buflen);
+    buf = cfg->primarybuf;
+    /**
+     * If primary buffer gets full and secondary buffer exists, swap the
+     * buffers and start ADC conversion with DMA with the now primary
+     * buffer(former secondary buffer)
+     * If the secondary buffer(former primary buffer) doesn't get processed
+     * by the application in sampling period required for the primary/secondary buffer
+     * i,e; (sample itvl * ADC_NUMBER_SAMPLES), the buffers would get swapped resulting
+     * in new sample data.
+     */
+    if (cfg->secondarybuf) {
+        cfg->primarybuf = cfg->secondarybuf;
+        cfg->secondarybuf = buf;
+
+        if (HAL_ADC_Start_DMA(hadc, cfg->primarybuf, cfg->buflen) != HAL_OK) {
+            ++stm32f4_adc_stats.adc_DMA_start_error;
+        }
+    }
+
+    rc = adc->ad_event_handler_func(adc, NULL, ADC_EVENT_RESULT, buf,
+                                    cfg->buflen);
+
     if (rc) {
         ++stm32f4_adc_stats.adc_error;
     }
 }
 
-
-//void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 static void
 stm32f4_adc_dma_init(ADC_HandleTypeDef* hadc)
 {
@@ -323,16 +350,6 @@ stm32f4_adc_dma_init(ADC_HandleTypeDef* hadc)
 
     HAL_DMA_Init(hdma);
     dma_handle[stm32f4_resolve_dma_handle_idx(hdma)] = hdma;
-
-    if (HAL_DMA_RegisterCallback(hdma, HAL_DMA_XFER_ERROR_CB_ID,
-                                 stm32f4_xfer_error_cb) != HAL_OK) {
-        assert(0);
-    }
-
-    if (HAL_DMA_RegisterCallback(hdma, HAL_DMA_XFER_ABORT_CB_ID,
-                                 stm32f4_xfer_abort_cb) != HAL_OK) {
-        assert(0);
-    }
 
     NVIC_SetPriority(stm32f4_resolve_adc_dma_irq(hdma),
                      NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
@@ -528,16 +545,19 @@ static int
 stm32f4_adc_set_buffer(struct adc_dev *dev, void *buf1, void *buf2,
         int buflen)
 {
+    struct stm32f4_adc_dev_cfg *cfg;
     int rc;
 
+
+    assert(dev != NULL && buf1 != NULL);
     rc = OS_OK;
     buflen /= sizeof(uint16_t);
 
-    assert(dev != NULL && buf1 != NULL);
+    cfg  = dev->adc_dev_cfg;
 
-    dev->primarybuf = buf1;
-    dev->secondarybuf = buf2;
-    dev->buflen = buflen;
+    cfg->primarybuf = buf1;
+    cfg->secondarybuf = buf2;
+    cfg->buflen = buflen;
 
     return rc;
 }
@@ -554,18 +574,14 @@ stm32f4_adc_release_buffer(struct adc_dev *dev, void *buf, int buf_len)
 
     HAL_ADC_Stop_DMA(hadc);
 
-    if (dev->primarybuf == buf) {
-        if (dev->secondarybuf) {
-            dev->primarybuf = dev->secondarybuf;
-            dev->secondarybuf = buf;
-        }
-    }
-
     return (0);
 }
 
 /**
  * Trigger an ADC sample.
+ *
+ * @param ADC device structure
+ * @return OS_OK on success, non OS_OK on failure
  */
 static int
 stm32f4_adc_sample(struct adc_dev *dev)
@@ -574,13 +590,14 @@ stm32f4_adc_sample(struct adc_dev *dev)
     ADC_HandleTypeDef *hadc;
     struct stm32f4_adc_dev_cfg *cfg;
 
-    assert(dev != NULL && dev->primarybuf != NULL);
+    assert(dev);
     cfg  = dev->adc_dev_cfg;
     hadc = cfg->sac_adc_handle;
 
     rc = OS_EINVAL;
 
-    if (HAL_ADC_Start_DMA(hadc, dev->primarybuf, dev->buflen) != HAL_OK) {
+    if (HAL_ADC_Start_DMA(hadc, cfg->primarybuf, cfg->buflen) != HAL_OK) {
+        ++stm32f4_adc_stats.adc_DMA_start_error;
         goto err;
     }
 
@@ -592,6 +609,10 @@ err:
 
 /**
  * Blocking read of an ADC channel, returns result as an integer.
+ *
+ * @param1 ADC device structure
+ * @param2 channel number
+ * @param3 ADC result ptr
  */
 static int
 stm32f4_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
@@ -615,11 +636,23 @@ stm32f4_adc_read_buffer(struct adc_dev *dev, void *buf, int buf_len, int off,
 
     assert(off < buf_len);
 
-    *result = *((uint32_t *) buf + off);
+    /*
+     * If secondary buffer exists the primary buf is going to be cached
+     * in the secondary buffer if the primary buffer is full and we
+     * would be reading that instead since the buffer is specified by
+     * the application
+     */
+    *result = *((uint32_t *)buf + off);
 
     return (OS_OK);
 }
 
+/**
+ * Callback to return size of buffer
+ *
+ * @param1 ADC device ptr
+ * @param2 
+ */
 static int
 stm32f4_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
 {
@@ -638,6 +671,10 @@ void ADC_IRQHandler(void)
  * Callback to initialize an adc_dev structure from the os device
  * initialization callback.  This sets up a stm32f4_adc_device(), so
  * that subsequent lookups to this device allow us to manipulate it.
+ *
+ * @param1 os device ptr
+ * @param2 stm32f4 ADC device cfg ptr
+ * @return OS_OK on success
  */
 int
 stm32f4_adc_dev_init(struct os_dev *odev, void *arg)
@@ -653,10 +690,6 @@ stm32f4_adc_dev_init(struct os_dev *odev, void *arg)
     dev = (struct adc_dev *)odev;
 
     os_mutex_init(&dev->ad_lock);
-
-    /* Have a pointer to the init typedef from the configured
-     * value.  This allows non-driver specific items to be configured.
-     */
 
     dev->ad_chans = (void *) sac->sac_chans;
     dev->ad_chan_count = sac->sac_chan_count;
@@ -674,6 +707,6 @@ stm32f4_adc_dev_init(struct os_dev *odev, void *arg)
     af->af_read_buffer = stm32f4_adc_read_buffer;
     af->af_size_buffer = stm32f4_adc_size_buffer;
 
-    return (0);
+    return (OS_OK);
 }
 

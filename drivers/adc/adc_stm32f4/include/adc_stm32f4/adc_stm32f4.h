@@ -51,6 +51,9 @@
 struct stm32f4_adc_dev_cfg {
     uint8_t sac_chan_count;
     void *sac_chans;
+    void *primarybuf;
+    void *secondarybuf;
+    int buflen;
     ADC_HandleTypeDef *sac_adc_handle;
 };
 
