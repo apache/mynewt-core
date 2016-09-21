@@ -263,7 +263,7 @@ log_nmgr_read(struct nmgr_jbuf *njb)
         return rc;
     }
 
-    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+    encoder = (struct json_encoder *) &njb->njb_enc;
 
     json_encode_object_start(encoder);
     json_encode_array_name(encoder, "logs");
@@ -325,7 +325,7 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
     int module;
     char *str;
 
-    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+    encoder = (struct json_encoder *) &njb->njb_enc;
 
     json_encode_object_start(encoder);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
@@ -366,7 +366,7 @@ log_nmgr_logs_list(struct nmgr_jbuf *njb)
     struct json_encoder *encoder;
     struct log *log;
 
-    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+    encoder = (struct json_encoder *) &njb->njb_enc;
 
     json_encode_object_start(encoder);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
@@ -408,7 +408,7 @@ log_nmgr_level_list(struct nmgr_jbuf *njb)
     int level;
     char *str;
 
-    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+    encoder = (struct json_encoder *) &njb->njb_enc;
 
     json_encode_object_start(encoder);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
@@ -465,7 +465,7 @@ log_nmgr_clear(struct nmgr_jbuf *njb)
         }
     }
 
-    encoder = (struct json_encoder *) &nmgr_task_jbuf.njb_enc;
+    encoder = (struct json_encoder *) &njb->njb_enc;
 
     json_encode_object_start(encoder);
     json_encode_object_finish(encoder);

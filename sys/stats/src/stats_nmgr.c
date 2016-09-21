@@ -124,14 +124,14 @@ stats_nmgr_read(struct nmgr_jbuf *njb)
 
     json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "rc", &jv);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
     JSON_VALUE_STRINGN(&jv, stats_name, strlen(stats_name));
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "name", &jv);
+    json_encode_object_entry(&njb->njb_enc, "name", &jv);
     JSON_VALUE_STRINGN(&jv, "sys", sizeof("sys")-1);
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "group", &jv);
-    json_encode_object_key(&nmgr_task_jbuf.njb_enc, "fields");
-    json_encode_object_start(&nmgr_task_jbuf.njb_enc);
-    stats_walk(hdr, stats_nmgr_walk_func, &nmgr_task_jbuf.njb_enc);
+    json_encode_object_entry(&njb->njb_enc, "group", &jv);
+    json_encode_object_key(&njb->njb_enc, "fields");
+    json_encode_object_start(&njb->njb_enc);
+    stats_walk(hdr, stats_nmgr_walk_func, &njb->njb_enc);
     json_encode_object_finish(&njb->njb_enc);
     json_encode_object_finish(&njb->njb_enc);
 
@@ -149,10 +149,10 @@ stats_nmgr_list(struct nmgr_jbuf *njb)
 
     json_encode_object_start(&njb->njb_enc);
     JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&nmgr_task_jbuf.njb_enc, "rc", &jv);
-    json_encode_array_name(&nmgr_task_jbuf.njb_enc, "stat_list");
-    json_encode_array_start(&nmgr_task_jbuf.njb_enc);
-    stats_group_walk(stats_nmgr_encode_name, &nmgr_task_jbuf.njb_enc);
+    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    json_encode_array_name(&njb->njb_enc, "stat_list");
+    json_encode_array_start(&njb->njb_enc);
+    stats_group_walk(stats_nmgr_encode_name, &njb->njb_enc);
     json_encode_array_finish(&njb->njb_enc);
     json_encode_object_finish(&njb->njb_enc);
 

@@ -24,29 +24,20 @@
 #include <hal/flash_map.h>
 #include <os/os.h>
 #include <bsp/bsp.h>
+#include <hal/hal_bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
 #include <config/config.h>
 #include <config/config_file.h>
-#if MYNEWT_VAL(BOOT_NFFS)
-#include <fs/fs.h>
-#include <nffs/nffs.h>
-#elif MYNEWT_VAL(BOOT_FCB)
-#include <fcb/fcb.h>
-#include <config/config_fcb.h>
-#else
-#error "Need NFFS or FCB for config storage"
-#endif
 #if MYNEWT_VAL(BOOT_SERIAL)
 #include <hal/hal_gpio.h>
 #include <boot_serial/boot_serial.h>
 #endif
+#include <console/console.h>
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "bootutil/bootutil_misc.h"
 
-/* we currently need extra nffs_area_descriptors for booting since the
- * boot code uses these to keep track of which block to write and copy.*/
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
 
@@ -59,93 +50,31 @@ static struct os_task boot_ser_task;
 static os_stack_t boot_ser_stack[BOOT_SER_STACK_SZ];
 #endif
 
-#if MYNEWT_VAL(BOOT_NFFS)
-#define MY_CONFIG_FILE "/cfg/run"
-
-static struct conf_file my_conf = {
-    .cf_name = MY_CONFIG_FILE
-};
-
-static void
-setup_for_nffs(void)
-{
-    int rc;
-
-    rc = conf_file_src(&my_conf);
-    assert(rc == 0);
-    rc = conf_file_dst(&my_conf);
-    assert(rc == 0);
-}
-#else
-struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
-
-static struct conf_fcb my_conf = {
-    .cf_fcb.f_magic = 0xc09f6e5e,
-    .cf_fcb.f_sectors = conf_fcb_area
-};
-
-static void
-setup_for_fcb(void)
-{
-    int cnt;
-    int rc;
-
-    rc = flash_area_to_sectors(FLASH_AREA_NFFS, &cnt, NULL);
-    assert(rc == 0);
-    assert(cnt <= sizeof(conf_fcb_area) / sizeof(conf_fcb_area[0]));
-    flash_area_to_sectors(FLASH_AREA_NFFS, &cnt, conf_fcb_area);
-
-    my_conf.cf_fcb.f_sector_cnt = cnt;
-
-    conf_fcb_src(&my_conf);
-    conf_fcb_dst(&my_conf);
-}
-#endif
-
 int
 main(void)
 {
     struct flash_area descs[AREA_DESC_MAX];
     /** Areas representing the beginning of image slots. */
     uint8_t img_starts[2];
-    int cnt;
-    int total;
-    struct boot_rsp rsp;
-    int rc;
     struct boot_req req = {
         .br_area_descs = descs,
         .br_slot_areas = img_starts,
     };
 
+    struct boot_rsp rsp;
+    int rc;
+
+#if MYNEWT_VAL(BOOT_SERIAL)
     os_init();
-
-    cnt = BOOT_AREA_DESC_MAX;
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
-    img_starts[0] = 0;
-    total = cnt;
-
-    cnt = BOOT_AREA_DESC_MAX - total;
-    assert(cnt >= 0);
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
-    assert(rc == 0);
-    img_starts[1] = total;
-    total += cnt;
-
-    cnt = BOOT_AREA_DESC_MAX - total;
-    assert(cnt >= 0);
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
-    assert(rc == 0);
-    req.br_scratch_area_idx = total;
-    total += cnt;
-
-    req.br_num_image_areas = total;
-
-#if MYNEWT_VAL(BOOT_NFFS)
-    setup_for_nffs();
-#elif MYNEWT_VAL(BOOT_FCB)
-    setup_for_fcb();
+#else
+    bsp_init();
 #endif
-    bootutil_cfg_register();
+
+    rc = hal_flash_init();
+    assert(rc == 0);
+
+    rc = boot_build_request(&req, AREA_DESC_MAX);
+    assert(rc == 0);
 
 #if MYNEWT_VAL(BOOT_SERIAL)
     /*
@@ -162,9 +91,10 @@ main(void)
 #endif
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
+    console_blocking_mode();
+    console_printf("\nboot_go = %d\n", rc);
 
     system_start((void *)(rsp.br_image_addr + rsp.br_hdr->ih_hdr_size));
 
     return 0;
 }
-

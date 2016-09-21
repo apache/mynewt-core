@@ -32,6 +32,8 @@
 #include "shell/shell.h"
 #endif
 
+struct log_info g_log_info;
+
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static uint8_t log_inited;
 
@@ -42,6 +44,8 @@ struct shell_cmd g_shell_log_cmd = {
     .sc_cmd_func = shell_log_dump_all_cmd
 };
 #endif
+
+char *log_modules[LOG_MODULE_MAX];
 
 void
 log_init(void)
@@ -54,6 +58,10 @@ log_init(void)
         return;
     }
     log_inited = 1;
+
+    g_log_info.li_version = LOG_VERSION_V2;
+    g_log_info.li_index = 0;
+    g_log_info.li_timestamp = 0;
 
 #if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
@@ -79,11 +87,16 @@ log_list_get_next(struct log *log)
     return (next);
 }
 
+/*
+ * Associate an instantiation of a log with the logging infrastructure
+ */
 int
-log_register(char *name, struct log *log, struct log_handler *lh)
+log_register(char *name, struct log *log, const struct log_handler *lh,
+             void *arg)
 {
     log->l_name = name;
-    log->l_log = lh;
+    log->l_log = (struct log_handler *)lh;
+    log->l_arg = arg;
 
     STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
 
@@ -97,7 +110,6 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     struct log_entry_hdr *ue;
     int rc;
     struct os_timeval tv;
-    int64_t prev_ts;
 
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
@@ -106,6 +118,7 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
 
     ue = (struct log_entry_hdr *) data;
 
+    /* Could check for li_index wraparound here */
     g_log_info.li_index++;
 
     /* Try to get UTC Time */
@@ -116,7 +129,6 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         ue->ue_ts = tv.tv_sec * 1000000 + tv.tv_usec;
     }
 
-    prev_ts = g_log_info.li_timestamp;
     g_log_info.li_timestamp = ue->ue_ts;
     ue->ue_level = level;
     ue->ue_module = module;
@@ -127,19 +139,13 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         goto err;
     }
 
-    /* Resetting index every millisecond */
-    if (g_log_info.li_timestamp > 1000 + prev_ts) {
-        g_log_info.li_index = 0;
-    }
-
     return (0);
 err:
     return (rc);
 }
 
 void
-log_printf(struct log *log, uint16_t module, uint16_t level, char *msg,
-        ...)
+log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
 {
     va_list args;
     char buf[LOG_ENTRY_HDR_SIZE + LOG_PRINTF_MAX_ENTRY_LEN];

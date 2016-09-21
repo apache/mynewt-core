@@ -23,7 +23,9 @@
 #include "os/os.h"
 #include "uart/uart.h"
 #include "bsp/bsp.h"
+
 #include "console/console.h"
+#include "console/prompt.h"
 
 /** Indicates whether the previous line of output was completed. */
 int console_is_midline;
@@ -43,6 +45,7 @@ int console_is_midline;
 #define CONSOLE_TAIL_INC(cr)	(((cr)->cr_tail + 1) & ((cr)->cr_size - 1))
 
 typedef void (*console_write_char)(char);
+void console_print_prompt(void);
 
 struct console_ring {
     uint8_t cr_head;
@@ -402,6 +405,8 @@ console_init(console_rx_cb rx_cb)
         }
     }
 
+    console_print_prompt();
+    
     return 0;
 }
 

@@ -185,7 +185,6 @@ nffs_restore_should_sweep_inode_entry(struct nffs_inode_entry *inode_entry,
      */
     if (nffs_inode_getflags(inode_entry, NFFS_INODE_FLAG_DUMMYINOBLK)) {
         *out_should_sweep = 2;
-        /*nffs_inode_inc_refcnt(inode_entry);*/
         inode_entry->nie_refcnt = 1;
         assert(inode_entry->nie_refcnt >= 1);
         return 0;
@@ -724,6 +723,8 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
 
 err:
     if (new_inode) {
+        assert(nffs_inode_getflags(inode_entry, NFFS_INODE_FLAG_INHASH));
+        nffs_hash_remove(&inode_entry->nie_hash_entry);
         nffs_inode_entry_free(inode_entry);
     }
     return rc;
@@ -920,6 +921,7 @@ nffs_restore_block(const struct nffs_disk_block *disk_block, uint8_t area_idx,
 
 err:
     if (new_block) {
+        nffs_hash_remove(entry);
         nffs_block_entry_free(entry);
     }
     return rc;
@@ -981,6 +983,7 @@ nffs_restore_disk_object(int area_idx, uint32_t area_offset,
     if (rc != 0) {
         return rc;
     }
+    STATS_INC(nffs_stats, nffs_readcnt_object);
 
     if (nffs_hash_id_is_inode(out_disk_object->ndo_disk_inode.ndi_id)) {
         out_disk_object->ndo_type = NFFS_OBJECT_TYPE_INODE;
@@ -1059,7 +1062,7 @@ nffs_restore_area_contents(int area_idx)
             if (rc == FS_ECORRUPT) {
                 area->na_cur++;
             } else {
-                nffs_object_count++; /* total count of restored objects */
+                STATS_INC(nffs_stats, nffs_object_count); /* restored objects */
                 area->na_cur += nffs_restore_disk_object_size(&disk_object);
             }
             break;
@@ -1101,6 +1104,7 @@ nffs_restore_detect_one_area(uint8_t flash_id, uint32_t area_offset,
 {
     int rc;
 
+    STATS_INC(nffs_stats, nffs_readcnt_detect);
     rc = hal_flash_read(flash_id, area_offset, out_disk_area,
                         sizeof *out_disk_area);
     if (rc != 0) {

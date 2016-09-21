@@ -29,7 +29,12 @@
 struct log_info {
     int64_t li_timestamp;
     uint8_t li_index;
-} g_log_info;
+    uint8_t li_version;
+};
+#define LOG_VERSION_V2  2
+#define LOG_VERSION_V1  1
+
+extern struct log_info g_log_info;
 
 struct log;
 
@@ -59,13 +64,12 @@ struct log_handler {
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
     lh_rtr_erase_func_t log_rtr_erase;
-    void *log_arg;
 };
 
 struct log_entry_hdr {
     int64_t ue_ts;
-    uint16_t ue_module;
-    uint8_t ue_index;
+    uint16_t ue_index;
+    uint8_t ue_module;
     uint8_t ue_level;
 }__attribute__((__packed__));
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
@@ -94,6 +98,7 @@ struct log_entry_hdr {
 #define LOG_MODULE_NIMBLE_HOST      (4)
 #define LOG_MODULE_NFFS             (5)
 #define LOG_MODULE_REBOOT           (6)
+#define LOG_MODULE_IOTIVITY         (7)
 #define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
@@ -105,7 +110,15 @@ struct log_entry_hdr {
     (LOG_MODULE_NIMBLE_HOST == module ? "NIMBLE_HOST" :\
     (LOG_MODULE_NFFS        == module ? "NFFS"        :\
     (LOG_MODULE_REBOOT      == module ? "REBOOT"      :\
-     "UNKNOWN")))))))
+    (LOG_MODULE_IOTIVITY    == module ? "IOTIVITY"    :\
+     "UNKNOWN"))))))))
+
+/*
+ * Logging Implementations
+ */
+#define LOG_STORE_CONSOLE    1
+#define LOG_STORE_CBMEM      2
+#define LOG_STORE_FCB        3
 
 /* UTC Timestamnp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
@@ -150,6 +163,7 @@ struct log_entry_hdr {
 struct log {
     char *l_name;
     struct log_handler *l_log;
+    void *l_arg;
     STAILQ_ENTRY(log) l_next;
 };
 
@@ -166,7 +180,8 @@ void log_init(void);
 struct log *log_list_get_next(struct log *);
 
 /* Log functions, manipulate a single log */
-int log_register(char *name, struct log *log, struct log_handler *);
+int log_register(char *name, struct log *log, const struct log_handler *,
+                 void *arg);
 int log_append(struct log *, uint16_t, uint16_t, void *, uint16_t);
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
@@ -178,14 +193,10 @@ int log_walk(struct log *log, log_walk_func_t walk_func,
 int log_flush(struct log *log);
 int log_rtr_erase(struct log *log, void *arg);
 
-
-
 /* Handler exports */
-int log_cbmem_handler_init(struct log_handler *, struct cbmem *);
-int log_console_handler_init(struct log_handler *);
-struct fcb;
-int log_fcb_handler_init(struct log_handler *, struct fcb *,
-                         uint8_t entries);
+extern const struct log_handler log_console_handler;
+extern const struct log_handler log_cbmem_handler;
+extern const struct log_handler log_fcb_handler;
 
 /* Private */
 #if MYNEWT_VAL(LOG_NEWTMGR)

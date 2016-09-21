@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,13 +17,19 @@
  * under the License.
  */
 
-#include <errno.h>
 #include <hal/hal_bsp.h>
 
-extern char __HeapBase;
-extern char __HeapLimit;
+/* put these in the data section so they are not cleared by _start */
+static char *sbrkBase __attribute__ ((section (".data")));
+static char *sbrkLimit __attribute__ ((section (".data")));
+static char *brk __attribute__ ((section (".data")));
 
-static char *brk = &__HeapBase;
+void
+_sbrkInit(char *base, char *limit) {
+    sbrkBase = base;
+    sbrkLimit = limit;
+    brk = base;
+}
 
 void *
 _sbrk(int incr)
@@ -33,21 +39,19 @@ _sbrk(int incr)
     if (incr < 0) {
         /* Returning memory to the heap. */
         incr = -incr;
-        if (brk - incr < &__HeapBase) {
+        if (brk - incr < sbrkBase) {
             prev_brk = (void *)-1;
-            errno = EINVAL;
         } else {
             prev_brk = brk;
             brk -= incr;
         }
     } else {
         /* Allocating memory from the heap. */
-        if (&__HeapLimit - brk >= incr) {
+        if (sbrkLimit - brk >= incr) {
             prev_brk = brk;
             brk += incr;
         } else {
             prev_brk = (void *)-1;
-            errno = ENOMEM;
         }
     }
 

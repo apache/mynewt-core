@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -28,11 +28,11 @@
 /*
  * Image header flags.
  */
-#define IMAGE_F_PIC                 0x00000001
-#define IMAGE_F_SHA256              0x00000002	/* Image contains hash TLV */
-#define IMAGE_F_PKCS15_RSA2048_SHA256   0x00000004 /* PKCS15 w/RSA and SHA */
-#define IMAGE_F_ECDSA224_SHA256     0x00000008  /* ECDSA256 over SHA256 */
-
+#define IMAGE_F_PIC                   0x00000001
+#define IMAGE_F_SHA256                0x00000002	/* Image contains hash TLV */
+#define IMAGE_F_PKCS15_RSA2048_SHA256 0x00000004 /* PKCS15 w/RSA and SHA */
+#define IMAGE_F_ECDSA224_SHA256       0x00000008  /* ECDSA256 over SHA256 */
+#define IMAGE_F_NON_BOOTABLE          0x00000010
 #define IMAGE_HEADER_SIZE           32
 
 /*
@@ -73,10 +73,17 @@ struct image_tlv {
     uint16_t it_len;
 };
 
+struct boot_image_location {
+    uint8_t bil_flash_id;
+    uint32_t bil_address;
+};
+
+
 _Static_assert(sizeof(struct image_header) == IMAGE_HEADER_SIZE,
                "struct image_header not required size");
 
 int bootutil_img_validate(struct image_header *hdr, uint8_t flash_id,
-  uint32_t addr, uint8_t *tmp_buf, uint32_t tmp_buf_sz);
+                        uint32_t addr, uint8_t *tmp_buf, uint32_t tmp_buf_sz,
+                        uint8_t *seed, int seed_len, uint8_t *out_hash);
 
 #endif

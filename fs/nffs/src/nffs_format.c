@@ -35,6 +35,7 @@ nffs_format_from_scratch_area(uint8_t area_idx, uint8_t area_id)
     int rc;
 
     assert(area_idx < nffs_num_areas);
+    STATS_INC(nffs_stats, nffs_readcnt_format);
     rc = nffs_flash_read(area_idx, 0, &disk_area, sizeof disk_area);
     if (rc != 0) {
         return rc;

@@ -47,13 +47,27 @@
 #include "store/ram/ble_store_ram.h"
 
 /* Mandatory services. */
-#include "services/mandatory/ble_svc_gap.h"
-#include "services/mandatory/ble_svc_gatt.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
 
 /* Newtmgr include */
 #include "newtmgr/newtmgr.h"
 #include "nmgrble/newtmgr_ble.h"
 #include "bleuart/bleuart.h"
+
+/** Mbuf settings. */
+#define MBUF_NUM_MBUFS      (12)
+#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
+#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
+#define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
+
+#define MAX_CONSOLE_INPUT 120
+static os_membuf_t bleuart_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
+struct os_mbuf_pool bleuart_mbuf_pool;
+struct os_mempool bleuart_mbuf_mpool;
+
+/** Priority of the nimble host and controller tasks. */
+#define BLE_LL_TASK_PRI             (OS_TASK_PRI_HIGHEST)
 
 /** bleuart task settings. */
 #define bleuart_TASK_PRIO           1
@@ -175,7 +189,6 @@ bleuart_gap_event(struct ble_gap_event *event, void *arg)
         /* Connection terminated; resume advertising. */
         bleuart_advertise();
         return 0;
-
     }
 
     return 0;

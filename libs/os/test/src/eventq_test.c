@@ -185,7 +185,7 @@ eventq_task_poll_timeout_send(void *arg)
     }
 
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-         os_time_delay(1000);
+         os_time_delay(OS_TICKS_PER_SEC);
 
         /* Put and send */
         os_eventq_put(eventqs[i], &m_event[i]);
@@ -211,7 +211,7 @@ eventq_task_poll_timeout_receive(void *arg)
 
     /* Recieving using the os_eventq_poll_timeout*/
     for (i = 0; i < SIZE_MULTI_EVENT; i++) {
-        event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, 200);
+        event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, OS_TICKS_PER_SEC / 5);
         TEST_ASSERT(event == NULL);
     }
 

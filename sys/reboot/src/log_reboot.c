@@ -33,8 +33,7 @@
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
 
-static struct log_handler reboot_log_handler;
-static struct fcb fcb;
+static struct log_handler *reboot_log_handler;
 static struct log reboot_log;
 static uint16_t reboot_cnt;
 static uint16_t soft_reboot;
@@ -43,6 +42,8 @@ static char soft_reboot_str[12];
 static char *reboot_cnt_get(int argc, char **argv, char *buf, int max_len);
 static int reboot_cnt_set(int argc, char **argv, char *val);
 static struct flash_area sector;
+
+static struct fcb_log reboot_log_fcb;
 
 struct conf_handler reboot_conf_handler = {
     .ch_name = "reboot",
@@ -58,44 +59,46 @@ struct conf_handler reboot_conf_handler = {
  * @return 0 on success; non-zero on failure
  */
 int
-reboot_init_handler(int log_type, uint8_t entries)
+reboot_init_handler(int log_store_type, uint8_t entries)
 {
     int rc;
     const struct flash_area *ptr;
+    struct fcb *fcbp = &reboot_log_fcb.fl_fcb;
 
     rc = conf_register(&reboot_conf_handler);
 
-    switch (log_type) {
-        case LOG_TYPE_STORAGE:
+    switch (log_store_type) {
+        case LOG_STORE_FCB:
             if (flash_area_open(FLASH_AREA_REBOOT_LOG, &ptr)) {
                 goto err;
             }
             sector = *ptr;
-            fcb.f_sectors = &sector;
-            fcb.f_sector_cnt = 1;
-            fcb.f_magic = 0x7EADBADF;
-            fcb.f_version = 0;
+            fcbp->f_sectors = &sector;
+            fcbp->f_sector_cnt = 1;
+            fcbp->f_magic = 0x7EADBADF;
+            fcbp->f_version = g_log_info.li_version;
 
-            rc = fcb_init(&fcb);
+            reboot_log_fcb.fl_entries = entries;
+
+            rc = fcb_init(fcbp);
             if (rc) {
                 goto err;
             }
-            rc = log_fcb_handler_init(&reboot_log_handler, &fcb, entries);
+            reboot_log_handler = (struct log_handler *)&log_fcb_handler;
             if (rc) {
                 goto err;
             }
             break;
-       case LOG_TYPE_STREAM:
-            rc = log_console_handler_init(&reboot_log_handler);
-            if (rc) {
-                goto err;
-            }
+       case LOG_STORE_CONSOLE:
+            reboot_log_handler = (struct log_handler *)&log_console_handler;
             break;
        default:
             assert(0);
     }
 
-    rc = log_register("reboot_log", &reboot_log, &reboot_log_handler);
+    rc = log_register("reboot_log", &reboot_log,
+                      (struct log_handler *)reboot_log_handler,
+                      &reboot_log_fcb);
 err:
     return (rc);
 }

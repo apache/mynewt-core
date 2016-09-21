@@ -40,7 +40,6 @@
 #include "nmgrble/newtmgr_ble.h"
 
 /** Log data. */
-static struct log_handler bleprph_log_console_handler;
 struct log bleprph_log;
 
 /** bleprph task settings. */
@@ -222,6 +221,13 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
                     event->subscribe.cur_notify,
                     event->subscribe.prev_indicate,
                     event->subscribe.cur_indicate);
+        return 0;
+
+    case BLE_GAP_EVENT_MTU:
+        BLEPRPH_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+                    event->mtu.conn_handle,
+                    event->mtu.channel_id,
+                    event->mtu.value);
         return 0;
     }
 

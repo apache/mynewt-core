@@ -28,18 +28,20 @@
 #include "controller/ble_ll.h"
 #include "host/ble_hs.h"
 
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
+
 /* RAM persistence layer. */
 #include "store/ram/ble_store_ram.h"
 
 /* Mandatory services. */
-#include "services/mandatory/ble_svc_gap.h"
-#include "services/mandatory/ble_svc_gatt.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
 
 /* Application-specified header. */
 #include "blecent.h"
 
 /** Log data. */
-static struct log_handler blecent_log_console_handler;
 struct log blecent_log;
 
 /** blecent task settings. */
@@ -165,7 +167,7 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     value[0] = 99;
     value[1] = 100;
-    rc = ble_gattc_write_flat(peer->conn_handle, chr->chr.val_handle, 
+    rc = ble_gattc_write_flat(peer->conn_handle, chr->chr.val_handle,
                               value, sizeof value, blecent_on_write, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to write characteristic; rc=%d\n",
@@ -425,6 +427,13 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
                     OS_MBUF_PKTLEN(event->notify_rx.om));
 
         /* Attribute data is contained in event->notify_rx.attr_data. */
+        return 0;
+
+    case BLE_GAP_EVENT_MTU:
+        BLECENT_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+                    event->mtu.conn_handle,
+                    event->mtu.channel_id,
+                    event->mtu.value);
         return 0;
 
     default:

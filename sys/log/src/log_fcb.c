@@ -31,10 +31,6 @@
 #include "log/log.h"
 
 static struct flash_area sector;
-struct fcb_log {
-    uint8_t fl_entries;
-    struct fcb *fl_fcb;
-} fcb_log;
 
 static int
 log_fcb_append(struct log *log, void *buf, int len)
@@ -44,8 +40,8 @@ log_fcb_append(struct log *log, void *buf, int len)
     struct fcb_log *fcb_log;
     int rc;
 
-    fcb_log = (struct fcb_log *)log->l_log->log_arg;
-    fcb = fcb_log->fl_fcb;
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
 
     while (1) {
         rc = fcb_append(fcb, len, &loc);
@@ -110,7 +106,7 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     int rc;
 
     rc = 0;
-    fcb = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
+    fcb = &((struct fcb_log *)log->l_arg)->fl_fcb;
 
     memset(&loc, 0, sizeof(loc));
 
@@ -126,9 +122,7 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
 static int
 log_fcb_flush(struct log *log)
 {
-
-    return fcb_clear(((struct fcb_log *)log->l_log->log_arg)->fl_fcb);
-
+    return fcb_clear(&((struct fcb_log *)log->l_arg)->fl_fcb);
 }
 
 /**
@@ -145,7 +139,6 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     int dlen;
     int rc;
     struct fcb *fcb_tmp;
-    uint8_t entries_tmp;
 
     rc = log_fcb_read(log, entry, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
@@ -161,11 +154,9 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     data[rc] = '\0';
 
     /* Changing the fcb to be logged to be dst fcb */
-    fcb_tmp = ((struct fcb_log *)log->l_log->log_arg)->fl_fcb;
+    fcb_tmp = &((struct fcb_log *)log->l_arg)->fl_fcb;
 
-    entries_tmp = ((struct fcb_log *)log->l_log->log_arg)->fl_entries;
-
-    rc = log_fcb_handler_init(log->l_log, dst_fcb, 0);
+    rc = log_register(log->l_name, log, &log_fcb_handler, dst_fcb);
     if (rc) {
         goto err;
     }
@@ -175,7 +166,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
         goto err;
     }
 
-    rc = log_fcb_handler_init(log->l_log, fcb_tmp, entries_tmp);
+    rc = log_register(log->l_name, log, &log_fcb_handler, fcb_tmp);
     if (rc) {
         goto err;
     }
@@ -236,7 +227,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     }
 
     fcb_log = (struct fcb_log *)arg;
-    fcb = fcb_log->fl_fcb;
+    fcb = (struct fcb *)fcb_log;
 
     memset(&fcb_scratch, 0, sizeof(fcb_scratch));
 
@@ -247,7 +238,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     fcb_scratch.f_sectors = &sector;
     fcb_scratch.f_sector_cnt = 1;
     fcb_scratch.f_magic = 0x7EADBADF;
-    fcb_scratch.f_version = 0;
+    fcb_scratch.f_version = g_log_info.li_version;
 
     flash_area_erase(&sector, 0, sector.fa_size);
     rc = fcb_init(&fcb_scratch);
@@ -280,20 +271,13 @@ err:
     return (rc);
 }
 
-int
-log_fcb_handler_init(struct log_handler *handler, struct fcb *fcb, uint8_t entries)
-{
-    handler->log_type = LOG_TYPE_STORAGE;
-    handler->log_read = log_fcb_read;
-    handler->log_append = log_fcb_append;
-    handler->log_walk = log_fcb_walk;
-    handler->log_flush = log_fcb_flush;
-    handler->log_rtr_erase = log_fcb_rtr_erase;
-    fcb_log.fl_entries = entries;
-    fcb_log.fl_fcb = fcb;
-    handler->log_arg = &fcb_log;
-
-    return 0;
-}
+const struct log_handler log_fcb_handler = {
+    .log_type = LOG_TYPE_STORAGE,
+    .log_read = log_fcb_read,
+    .log_append = log_fcb_append,
+    .log_walk = log_fcb_walk,
+    .log_flush = log_fcb_flush,
+    .log_rtr_erase = log_fcb_rtr_erase,
+};
 
 #endif

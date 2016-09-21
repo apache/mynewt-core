@@ -49,6 +49,16 @@
 #define MN_ETIMEDOUT            9
 #define MN_EAGAIN               10
 #define MN_EUNKNOWN             11
+#define MN_EADDRNOTAVAIL        12
+
+/*
+ * Multicast macros
+ */
+#define MN_IN_MULTICAST(a)                                              \
+    ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
+
+#define MN_IN6_IS_ADDR_MULTICAST(a)                                     \
+    ((a)->s_addr[0] == 0xff)
 
 struct mn_socket;
 struct mn_socket_ops;
@@ -81,11 +91,19 @@ struct mn_sockaddr {
     char    msa_data[2];
 };
 
+struct mn_in_addr {
+    uint32_t s_addr;
+};
+
 struct mn_sockaddr_in {
     uint8_t msin_len;
     uint8_t msin_family;
     uint16_t msin_port;
-    uint32_t msin_addr;
+    struct mn_in_addr msin_addr;
+};
+
+struct mn_in6_addr {
+    uint8_t s_addr[16];
 };
 
 struct mn_sockaddr_in6 {
@@ -93,8 +111,29 @@ struct mn_sockaddr_in6 {
     uint8_t msin6_family;
     uint16_t msin6_port;
     uint32_t msin6_flowinfo;
-    uint32_t msin6_addr[4];
+    struct mn_in6_addr msin6_addr;
+    uint32_t msin6_scope_id;
 };
+
+extern const uint32_t nm_in6addr_any[4];
+
+/*
+ * Structure for multicast join/leave
+ */
+struct mn_mreq {
+    uint8_t mm_idx;			/* interface index */
+    uint8_t mm_family;			/* address family */
+    union {
+        struct mn_in_addr v4;
+        struct mn_in6_addr v6;
+    } mm_addr;
+};
+
+#define MN_SO_LEVEL                     0xfe
+
+#define MN_MCAST_JOIN_GROUP             1
+#define MN_MCAST_LEAVE_GROUP            2
+#define MN_MCAST_IF                     3
 
 /*
  * Socket calls.
@@ -142,5 +181,38 @@ int mn_close(struct mn_socket *);
  * Address conversion
  */
 int mn_inet_pton(int af, const char *src, void *dst);
+const char *mn_inet_ntop(int af, const void *src, void *dst, int len);
+
+/*
+ * Info about interfaces.
+ */
+#define MN_ITF_NAME_MAX    8
+
+/*
+ * Interface flags
+ */
+#define MN_ITF_F_UP        1
+#define MN_ITF_F_MULTICAST 2
+
+struct mn_itf {
+    char mif_name[MN_ITF_NAME_MAX];
+    uint8_t mif_idx;
+    uint8_t mif_flags;
+};
+
+struct mn_itf_addr {
+    uint8_t mifa_family;
+    uint8_t mifa_plen;
+    union {
+        struct mn_in_addr v4;
+        struct mn_in6_addr v6;
+    } mifa_addr;
+};
+
+/*
+ * Iterate through interfaces, and their addresses
+ */
+int mn_itf_getnext(struct mn_itf *);
+int mn_itf_addr_getnext(struct mn_itf *, struct mn_itf_addr *);
 
 #endif /* __SYS_MN_SOCKET_H_ */

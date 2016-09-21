@@ -16,13 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <os/os.h>
-
 #include <util/cbmem.h>
-
 #include "log/log.h"
-
 
 static int
 log_cbmem_append(struct log *log, void *buf, int len)
@@ -30,7 +26,7 @@ log_cbmem_append(struct log *log, void *buf, int len)
     struct cbmem *cbmem;
     int rc;
 
-    cbmem = (struct cbmem *) log->l_log->log_arg;
+    cbmem = (struct cbmem *) log->l_arg;
 
     rc = cbmem_append(cbmem, buf, len);
     if (rc != 0) {
@@ -50,7 +46,7 @@ log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
     struct cbmem_entry_hdr *hdr;
     int rc;
 
-    cbmem = (struct cbmem *) log->l_log->log_arg;
+    cbmem = (struct cbmem *) log->l_arg;
     hdr = (struct cbmem_entry_hdr *) dptr;
 
     rc = cbmem_read(cbmem, hdr, buf, offset, len);
@@ -66,7 +62,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     struct cbmem_iter iter;
     int rc;
 
-    cbmem = (struct cbmem *) log->l_log->log_arg;
+    cbmem = (struct cbmem *) log->l_arg;
 
     rc = cbmem_lock_acquire(cbmem);
     if (rc != 0) {
@@ -102,7 +98,7 @@ log_cbmem_flush(struct log *log)
     struct cbmem *cbmem;
     int rc;
 
-    cbmem = (struct cbmem *) log->l_log->log_arg;
+    cbmem = (struct cbmem *) log->l_arg;
 
     rc = cbmem_flush(cbmem);
     if (rc != 0) {
@@ -114,16 +110,11 @@ err:
     return (rc);
 }
 
-int
-log_cbmem_handler_init(struct log_handler *handler, struct cbmem *cbmem)
-{
-    handler->log_type = LOG_TYPE_MEMORY;
-    handler->log_read = log_cbmem_read;
-    handler->log_append = log_cbmem_append;
-    handler->log_walk = log_cbmem_walk;
-    handler->log_flush = log_cbmem_flush;
-    handler->log_arg = (void *) cbmem;
-    handler->log_rtr_erase = NULL;
-
-    return (0);
-}
+const struct log_handler log_cbmem_handler = {
+    .log_type = LOG_TYPE_MEMORY,
+    .log_read = log_cbmem_read,
+    .log_append = log_cbmem_append,
+    .log_walk = log_cbmem_walk,
+    .log_flush = log_cbmem_flush,
+    .log_rtr_erase = NULL,
+};

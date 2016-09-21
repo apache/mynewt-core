@@ -31,8 +31,10 @@ pkg.deps:
     - libs/imgmgr
     - libs/newtmgr
     - libs/os
+    - libs/bootutil
     - libs/shell
     - libs/util
+    - libs/split
     - sys/config
     - sys/id
     - sys/log

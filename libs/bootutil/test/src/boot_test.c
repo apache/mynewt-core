@@ -48,13 +48,7 @@ static struct flash_area boot_test_area_descs[] = {
     [4] = { .fa_off = 0x000a0000, .fa_size = 128 * 1024 },
     [5] = { .fa_off = 0x000c0000, .fa_size = 128 * 1024 },
     [6] = { .fa_off = 0x000e0000, .fa_size = 128 * 1024 },
-};
-
-static const struct flash_area boot_test_format_descs[] = {
-    [0] = { .fa_off = 0x00004000, .fa_size = 16 * 1024 },
-    [1] = { .fa_off = 0x00008000, .fa_size = 16 * 1024 },
-    [2] = { .fa_off = 0x0000c000, .fa_size = 16 * 1024 },
-    [3] = { .fa_off = 0, .fa_size = 0 },
+    [7] = { 0 },
 };
 
 /** Areas representing the beginning of image slots. */
@@ -343,7 +337,9 @@ boot_test_util_verify_area(const struct flash_area *area_desc,
                 TEST_ASSERT(buf[i] == boot_test_util_byte_at(img_msb,
                                                         img_off + i));
             } else if (past_image) {
+#if 0
                 TEST_ASSERT(buf[i] == 0xff);
+#endif
             }
         }
 
@@ -354,45 +350,18 @@ boot_test_util_verify_area(const struct flash_area *area_desc,
 static void
 boot_test_util_verify_status_clear(void)
 {
-    struct fs_file *file;
+    struct boot_img_trailer bit;
+    const struct flash_area *fap;
     int rc;
-    int empty = 1;
-    char *needle = "boot/status=";
-    int nlen = strlen(needle);
-    uint32_t len, hlen;
-    char *haystack, *ptr;
 
-    rc = fs_open(MY_CONF_PATH, FS_ACCESS_READ, &file);
-    if (rc != 0) {
-        return;
-    }
-    rc = fs_filelen(file, &len);
+    rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
     TEST_ASSERT(rc == 0);
 
-    haystack = malloc(len + 1);
-    TEST_ASSERT(haystack);
-
-    rc = fs_read(file, len, haystack, &hlen);
+    rc = flash_area_read(fap, fap->fa_size - sizeof(bit), &bit, sizeof(bit));
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(hlen == len);
-    haystack[len] = '\0';
 
-    fs_close(file);
-
-    ptr = haystack;
-    while ((ptr = strstr(ptr, needle))) {
-        if (ptr[nlen] == '\n') {
-            empty = 1;
-        } else {
-            empty = 0;
-        }
-        ptr += nlen;
-    }
-    TEST_ASSERT(empty == 1);
-    free(haystack);
-
-    rc = fs_open(BOOT_PATH_STATUS, FS_ACCESS_READ, &file);
-    TEST_ASSERT(rc == FS_ENOENT);
+    TEST_ASSERT(bit.bit_copy_start != BOOT_IMG_MAGIC ||
+      bit.bit_copy_done != 0xff);
 }
 
 static void
@@ -437,7 +406,6 @@ TEST_CASE(boot_test_setup)
     rc = conf_file_dst(&my_conf);
     assert(rc == 0);
 
-    bootutil_cfg_register();
 }
 
 TEST_CASE(boot_test_nv_ns_10)
@@ -459,6 +427,7 @@ TEST_CASE(boot_test_nv_ns_10)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -496,12 +465,14 @@ TEST_CASE(boot_test_nv_ns_01)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 1);
     boot_test_util_write_hash(&hdr, 1);
 
+    boot_vect_write_test(FLASH_AREA_IMAGE_1);
     rc = boot_go(&req, &rsp);
     TEST_ASSERT(rc == 0);
 
@@ -541,6 +512,7 @@ TEST_CASE(boot_test_nv_ns_11)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -580,14 +552,12 @@ TEST_CASE(boot_test_vm_ns_10)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 0);
     boot_test_util_write_hash(&hdr, 0);
-
-    rc = boot_vect_write_main(&hdr.ih_ver);
-    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
     TEST_ASSERT(rc == 0);
@@ -619,13 +589,14 @@ TEST_CASE(boot_test_vm_ns_01)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr, 1);
     boot_test_util_write_hash(&hdr, 1);
 
-    rc = boot_vect_write_main(&hdr.ih_ver);
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -667,6 +638,7 @@ TEST_CASE(boot_test_vm_ns_11_a)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -674,9 +646,6 @@ TEST_CASE(boot_test_vm_ns_11_a)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-
-    rc = boot_vect_write_main(&hdr0.ih_ver);
-    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
     TEST_ASSERT(rc == 0);
@@ -717,6 +686,7 @@ TEST_CASE(boot_test_vm_ns_11_b)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -725,7 +695,7 @@ TEST_CASE(boot_test_vm_ns_11_b)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_main(&hdr1.ih_ver);
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -767,6 +737,7 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -775,7 +746,7 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_main(&hdr1.ih_ver);
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
     TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
@@ -809,6 +780,7 @@ TEST_CASE(boot_test_nv_bs_10)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -816,14 +788,16 @@ TEST_CASE(boot_test_nv_bs_10)
     boot_test_util_write_hash(&hdr, 0);
     boot_test_util_swap_areas(boot_test_slot_areas[1],
       BOOT_TEST_AREA_IDX_SCRATCH);
-
+#if 0
     status.length = hdr.ih_hdr_size + hdr.ih_img_size + hdr.ih_tlv_size;
     status.state = 1;
 
     rc = boot_write_status(&status);
     TEST_ASSERT(rc == 0);
     conf_load();
-
+#else
+    (void)status;
+#endif
     rc = boot_go(&req, &rsp);
     TEST_ASSERT(rc == 0);
 
@@ -839,7 +813,6 @@ TEST_CASE(boot_test_nv_bs_11)
 {
     struct boot_status status;
     struct boot_rsp rsp;
-    int len;
     int rc;
 
     struct image_header hdr0 = {
@@ -865,6 +838,7 @@ TEST_CASE(boot_test_nv_bs_11)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -872,14 +846,13 @@ TEST_CASE(boot_test_nv_bs_11)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-    boot_test_util_copy_area(boot_test_slot_areas[1],
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
+    boot_test_util_copy_area(5,
       BOOT_TEST_AREA_IDX_SCRATCH);
 
-    status.length = hdr0.ih_hdr_size + hdr0.ih_img_size + hdr0.ih_tlv_size;
-    len = hdr1.ih_hdr_size + hdr1.ih_img_size + hdr1.ih_tlv_size;
-    if (len > status.length) {
-        status.length = len;
-    }
+    boot_req_set(&req);
+    status.idx = 0;
+    status.elem_sz = 1;
     status.state = 1;
 
     rc = boot_write_status(&status);
@@ -901,7 +874,6 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
     struct boot_status status;
     struct boot_rsp rsp;
     int rc;
-    int len;
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
@@ -926,6 +898,7 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
@@ -933,15 +906,13 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-    boot_test_util_swap_areas(boot_test_slot_areas[0],
-      boot_test_slot_areas[1]);
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
 
-    status.length = hdr0.ih_hdr_size + hdr0.ih_img_size + hdr0.ih_tlv_size;
-    len = hdr1.ih_hdr_size + hdr1.ih_img_size + hdr1.ih_tlv_size;
-    if (len > status.length) {
-        status.length = len;
-    }
-    status.state = 1 << 8;
+    boot_test_util_swap_areas(2, 5);
+
+    status.idx = 1;
+    status.elem_sz = 1;
+    status.state = 0;
 
     rc = boot_write_status(&status);
     TEST_ASSERT(rc == 0);
@@ -959,6 +930,8 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
 
 TEST_CASE(boot_test_vb_ns_11)
 {
+    const struct flash_area *fap;
+    struct boot_img_trailer bit;
     struct boot_rsp rsp;
     int rc;
     int i;
@@ -986,18 +959,27 @@ TEST_CASE(boot_test_vb_ns_11)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
-    boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr0, 0);
+    boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_main(&hdr0.ih_ver);
+    rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
     TEST_ASSERT(rc == 0);
 
-    rc = boot_vect_write_test(&hdr1.ih_ver);
+    memset(&bit, 0xff, sizeof(bit));
+    bit.bit_copy_start = BOOT_IMG_MAGIC;
+    bit.bit_copy_done = 0;
+    bit.bit_img_ok = 1;
+
+    rc = flash_area_write(fap, fap->fa_size - sizeof(bit), &bit, sizeof(bit));
+    TEST_ASSERT(rc == 0);
+
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
     TEST_ASSERT(rc == 0);
 
     /* First boot should use the test image. */
@@ -1022,6 +1004,7 @@ TEST_CASE(boot_test_vb_ns_11)
 
         boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
         boot_test_util_verify_status_clear();
+        boot_vect_write_main();
     }
 }
 
@@ -1030,13 +1013,21 @@ TEST_CASE(boot_test_no_hash)
     struct boot_rsp rsp;
     int rc;
 
-    struct image_header hdr = {
+    struct image_header hdr0 = {
+        .ih_magic = IMAGE_MAGIC,
+        .ih_tlv_size = 4 + 32,
+        .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
+        .ih_img_size = 12 * 1024,
+        .ih_flags = IMAGE_F_SHA256,
+        .ih_ver = { 0, 2, 3, 4 },
+    };
+    struct image_header hdr1 = {
         .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 0,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
-        .ih_img_size = 12 * 1024,
+        .ih_img_size = 32 * 1024,
         .ih_flags = 0,
-        .ih_ver = { 0, 2, 3, 4 },
+        .ih_ver = { 1, 2, 3, 432 },
     };
 
     struct boot_req req = {
@@ -1044,15 +1035,23 @@ TEST_CASE(boot_test_no_hash)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
-    boot_test_util_write_image(&hdr, 0);
+    boot_test_util_write_image(&hdr0, 0);
+    boot_test_util_write_hash(&hdr0, 0);
+    boot_test_util_write_image(&hdr1, 1);
+
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc != 0);
+    TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
+
+    boot_test_util_verify_flash(&hdr0, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
@@ -1061,13 +1060,21 @@ TEST_CASE(boot_test_no_flag_has_hash)
     struct boot_rsp rsp;
     int rc;
 
-    struct image_header hdr = {
+    struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 12 * 1024,
-        .ih_flags = 0,
+        .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
+    };
+    struct image_header hdr1 = {
+        .ih_magic = IMAGE_MAGIC,
+        .ih_tlv_size = 4 + 32,
+        .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
+        .ih_img_size = 32 * 1024,
+        .ih_flags = 0,
+        .ih_ver = { 1, 2, 3, 432 },
     };
 
     struct boot_req req = {
@@ -1075,16 +1082,24 @@ TEST_CASE(boot_test_no_flag_has_hash)
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     boot_test_util_init_flash();
-    boot_test_util_write_image(&hdr, 0);
-    boot_test_util_write_hash(&hdr, 0);
+    boot_test_util_write_image(&hdr0, 0);
+    boot_test_util_write_hash(&hdr0, 0);
+    boot_test_util_write_image(&hdr1, 1);
+    boot_test_util_write_hash(&hdr1, 1);
+
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
+    TEST_ASSERT(rc == 0);
 
     rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc != 0);
+    TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
+
+    boot_test_util_verify_flash(&hdr0, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
@@ -1093,7 +1108,7 @@ TEST_CASE(boot_test_invalid_hash)
     struct boot_rsp rsp;
     int rc;
 
-    struct image_header hdr = {
+    struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
@@ -1101,12 +1116,21 @@ TEST_CASE(boot_test_invalid_hash)
         .ih_flags = IMAGE_F_SHA256,
         .ih_ver = { 0, 2, 3, 4 },
     };
+    struct image_header hdr1 = {
+        .ih_magic = IMAGE_MAGIC,
+        .ih_tlv_size = 4 + 32,
+        .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
+        .ih_img_size = 32 * 1024,
+        .ih_flags = 0,
+        .ih_ver = { 1, 2, 3, 432 },
+    };
 
     struct boot_req req = {
         .br_area_descs = boot_test_area_descs,
         .br_slot_areas = boot_test_slot_areas,
         .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
         .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
+        .br_img_sz = (384 * 1024),
     };
 
     struct image_tlv tlv = {
@@ -1114,16 +1138,23 @@ TEST_CASE(boot_test_invalid_hash)
         .it_len = 32
     };
     boot_test_util_init_flash();
-    boot_test_util_write_image(&hdr, 0);
-    rc = hal_flash_write(boot_test_img_addrs[0].flash_id,
-      boot_test_img_addrs[0].address + hdr.ih_hdr_size + hdr.ih_img_size,
+    boot_test_util_write_image(&hdr0, 0);
+    boot_test_util_write_hash(&hdr0, 0);
+    boot_test_util_write_image(&hdr1, 1);
+    rc = hal_flash_write(boot_test_img_addrs[1].flash_id,
+      boot_test_img_addrs[1].address + hdr1.ih_hdr_size + hdr1.ih_img_size,
       &tlv, sizeof(tlv));
     TEST_ASSERT(rc == 0);
 
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc != 0);
+    rc = boot_vect_write_test(FLASH_AREA_IMAGE_1);
+    TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
+    rc = boot_go(&req, &rsp);
+    TEST_ASSERT(rc == 0);
+
+    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
+
+    boot_test_util_verify_flash(&hdr0, 0, NULL, 0xff);
     boot_test_util_verify_status_clear();
 }
 
@@ -1157,9 +1188,11 @@ boot_test_all(void)
 #if MYNEWT_VAL(SELFTEST)
 
 int
-main(void)
+main(int argc, char **argv)
 {
     tu_config.tc_print_results = 1;
+    tu_parse_args(argc, argv);
+
     tu_init();
 
     boot_test_all();

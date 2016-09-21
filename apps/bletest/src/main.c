@@ -84,14 +84,14 @@ uint8_t g_host_adv_len;
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
-#define BLETEST_CFG_ADV_ADDR_RES_EN     (1)
+#define BLETEST_CFG_ADV_ADDR_RES_EN     (0)
 
 /* Scan config */
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
 #define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
-#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
+#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
 #define BLETEST_CFG_FILT_DUP_ADV        (1)
 
 /* Connection config */
@@ -141,6 +141,7 @@ uint16_t g_bletest_completed_pkts;
 uint16_t g_bletest_outstanding_pkts;
 uint16_t g_bletest_ltk_reply_handle;
 uint32_t g_bletest_hw_id[4];
+struct hci_create_conn g_cc;
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -399,7 +400,7 @@ bletest_init_scanner(void)
     rc = ble_hs_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                                BLETEST_CFG_SCAN_ITVL,
                                                BLETEST_CFG_SCAN_WINDOW,
-                                               BLETEST_CFG_SCAN_OWN_ADDR_TYPE,
+                                               own_addr_type,
                                                BLETEST_CFG_SCAN_FILT_POLICY,
                                                buf, sizeof buf);
     assert(rc == 0);
@@ -453,11 +454,10 @@ bletest_init_initiator(void)
 {
     int rc;
     uint8_t rand_addr[BLE_DEV_ADDR_LEN];
-    struct hci_create_conn cc;
     struct hci_create_conn *hcc;
 
     /* Enable initiating */
-    hcc = &cc;
+    hcc = &g_cc;
     hcc->conn_itvl_max = BLETEST_CFG_CONN_ITVL;
     hcc->conn_itvl_min = BLETEST_CFG_CONN_ITVL;
     hcc->conn_latency = BLETEST_CFG_SLAVE_LATENCY;
@@ -500,8 +500,7 @@ bletest_init_initiator(void)
         }
 #endif
 
-    rc = bletest_hci_le_create_connection(hcc);
-    assert(rc == 0);
+    bletest_hci_le_create_connection(hcc);
 }
 
 void
@@ -543,6 +542,10 @@ bletest_execute_initiator(void)
                     g_dev_addr[5] += 1;
                     bletest_init_initiator();
                 }
+            }
+        } else {
+            if (ble_ll_scan_enabled() == 0) {
+                bletest_hci_le_create_connection(&g_cc);
             }
         }
     } else {
@@ -630,6 +633,10 @@ bletest_execute_advertiser(void)
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+    uint16_t mask;
+    uint16_t reply_handle;
+#endif
 #endif
     int rc;
     uint16_t handle;
@@ -683,7 +690,12 @@ bletest_execute_advertiser(void)
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
                 bletest_init_advertising();
-                rc = bletest_hci_le_set_adv_enable(1);
+                bletest_hci_le_set_adv_enable(1);
+            }
+        } else {
+            /* If we failed to start advertising we should keep trying */
+            if (ble_ll_adv_enabled() == 0) {
+                bletest_hci_le_set_adv_enable(1);
             }
         }
     }
@@ -701,10 +713,16 @@ bletest_execute_advertiser(void)
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
         /* Do we need to send a LTK reply? */
-        if (g_bletest_ltk_reply_handle) {
-            //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
-            bletest_send_ltk_req_reply(g_bletest_ltk_reply_handle);
-            g_bletest_ltk_reply_handle = 0;
+        mask = 1;
+        reply_handle = 1;
+        while (g_bletest_ltk_reply_handle && mask) {
+            if (g_bletest_ltk_reply_handle & mask) {
+                bletest_send_ltk_req_reply(reply_handle);
+                //bletest_send_ltk_req_neg_reply(reply_handle);
+                g_bletest_ltk_reply_handle &= ~mask;
+            }
+            ++reply_handle;
+            mask <<= 1;
         }
 #endif
         if (g_bletest_current_conns) {
@@ -744,7 +762,7 @@ bletest_execute_advertiser(void)
 
                         /* Add length */
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                        ble_hci_trans_hs_acl_data_send(om);
+                        ble_hci_trans_hs_acl_tx(om);
 
                         /* Increment last handle used */
                         ++g_last_handle_used;

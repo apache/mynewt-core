@@ -81,7 +81,7 @@ coredump_dump(void *regs, int regs_sz)
     off = sizeof(hdr);
     dump_core_tlv(fa, &off, &tlv, regs);
 
-    if (imgr_read_info(bsp_imgr_current_slot(), &ver, hash) == 0) {
+    if (imgr_read_info(bsp_imgr_current_slot(), &ver, hash, NULL) == 0) {
         tlv.ct_type = COREDUMP_TLV_IMAGE;
         tlv.ct_len = IMGMGR_HASH_LEN;
 

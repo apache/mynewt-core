@@ -27,6 +27,7 @@
 #include "nffs/nffs.h"
 #include "fs/fs.h"
 #include "util/crc16.h"
+#include "stats/stats.h"
 
 #define NFFS_HASH_SIZE               256
 
@@ -127,7 +128,8 @@ struct nffs_inode_entry {
     };
     uint8_t nie_refcnt;
     uint8_t nie_flags;
-    uint16_t reserved16;
+    uint8_t nie_blkcnt;
+    uint8_t reserved8;
 };
 
 #define    NFFS_INODE_FLAG_FREE        0x00
@@ -177,6 +179,7 @@ struct nffs_area {
     uint16_t na_id;
     uint8_t na_gc_seq;
     uint8_t na_flash_id;
+    uint32_t na_obsolete;   /* deleted bytecount */
 };
 
 struct nffs_disk_object {
@@ -239,9 +242,28 @@ struct nffs_dir {
     struct nffs_dirent nd_dirent;
 };
 
-uint32_t nffs_hashcnt_ins;
-uint32_t nffs_hashcnt_rm;
-uint32_t nffs_object_count;
+STATS_SECT_START(nffs_stats)
+    STATS_SECT_ENTRY(nffs_hashcnt_ins)
+    STATS_SECT_ENTRY(nffs_hashcnt_rm)
+    STATS_SECT_ENTRY(nffs_object_count)
+    STATS_SECT_ENTRY(nffs_iocnt_read)
+    STATS_SECT_ENTRY(nffs_iocnt_write)
+    STATS_SECT_ENTRY(nffs_gccnt)
+    STATS_SECT_ENTRY(nffs_readcnt_data)
+    STATS_SECT_ENTRY(nffs_readcnt_block)
+    STATS_SECT_ENTRY(nffs_readcnt_crc)
+    STATS_SECT_ENTRY(nffs_readcnt_copy)
+    STATS_SECT_ENTRY(nffs_readcnt_format)
+    STATS_SECT_ENTRY(nffs_readcnt_gccollate)
+    STATS_SECT_ENTRY(nffs_readcnt_inode)
+    STATS_SECT_ENTRY(nffs_readcnt_inodeent)
+    STATS_SECT_ENTRY(nffs_readcnt_rename)
+    STATS_SECT_ENTRY(nffs_readcnt_update)
+    STATS_SECT_ENTRY(nffs_readcnt_filename)
+    STATS_SECT_ENTRY(nffs_readcnt_object)
+    STATS_SECT_ENTRY(nffs_readcnt_detect)
+STATS_SECT_END
+extern STATS_SECT_DECL(nffs_stats) nffs_stats;
 
 extern void *nffs_file_mem;
 extern void *nffs_block_entry_mem;
@@ -485,10 +507,10 @@ int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
 
 #define NFFS_FLASH_LOC_NONE  nffs_flash_loc(NFFS_AREA_ID_NONE, 0)
 
-#ifdef NFFS_DEBUG
+#ifdef ARCH_sim
 #include <stdio.h>
 #define NFFS_LOG(lvl, ...) \
-      printf(__VA_ARGS__)
+    printf(__VA_ARGS__)
 #else
 #define NFFS_LOG(lvl, ...) \
     LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)

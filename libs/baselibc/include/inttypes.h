@@ -23,6 +23,9 @@ __extern uintmax_t strntoumax(const char *, char **, int, size_t);
 
 #if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS)
 
+#define __PRI64_RANK "ll"
+#define __PRI32_RANK "l"
+
 #define PRId8	"d"
 #define PRId16	"d"
 #define PRId32	"d"
@@ -97,7 +100,7 @@ __extern uintmax_t strntoumax(const char *, char **, int, size_t);
 
 #define PRIx8	"x"
 #define PRIx16	"x"
-#define PRIx32	"x"
+#define PRIx32	__PRI32_RANK "x"
 #define PRIx64	__PRI64_RANK "x"
 
 #define PRIxLEAST8	"x"
@@ -115,7 +118,7 @@ __extern uintmax_t strntoumax(const char *, char **, int, size_t);
 
 #define PRIX8	"X"
 #define PRIX16	"X"
-#define PRIX32	"X"
+#define PRIX32	__PRI32_RANK "X"
 #define PRIX64	__PRI64_RANK "X"
 
 #define PRIXLEAST8	"X"

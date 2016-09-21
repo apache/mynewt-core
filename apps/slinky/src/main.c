@@ -29,7 +29,10 @@
 #include <config/config.h>
 #include <hal/flash_map.h>
 #include <hal/hal_system.h>
-#if MYNEWT_PKG_FS_FS
+#if defined SPLIT_LOADER || defined SPLIT_APPLICATION
+#include <split/split.h>
+#endif
+#if MYNEWT_PKG_FS_NFFS
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <config/config_file.h>
@@ -56,41 +59,39 @@
 #endif
 
 /* Init all tasks */
-volatile int tasks_initialized;
+static volatile int tasks_initialized;
 int init_tasks(void);
 
 /* Task 1 */
 #define TASK1_PRIO (8)
 #define TASK1_STACK_SIZE    OS_STACK_ALIGN(192)
 #define MAX_CBMEM_BUF 600
-struct os_task task1;
-os_stack_t stack1[TASK1_STACK_SIZE];
+static struct os_task task1;
 static volatile int g_task1_loops;
 
 /* Task 2 */
 #define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(128)
-struct os_task task2;
-os_stack_t stack2[TASK2_STACK_SIZE];
+static struct os_task task2;
 
-struct log_handler log_cbmem_handler;
-struct log my_log;
+static struct log my_log;
+extern struct log nffs_log; /* defined in the OS module */
 
 static volatile int g_task2_loops;
 
 /* Global test semaphore */
-struct os_sem g_test_sem;
+static struct os_sem g_test_sem;
 
 /* For LED toggling */
-int g_led_pin;
+static int g_led_pin;
 
 STATS_SECT_START(gpio_stats)
 STATS_SECT_ENTRY(toggles)
 STATS_SECT_END
 
-STATS_SECT_DECL(gpio_stats) g_stats_gpio_toggle;
+static STATS_SECT_DECL(gpio_stats) g_stats_gpio_toggle;
 
-STATS_NAME_START(gpio_stats)
+static STATS_NAME_START(gpio_stats)
 STATS_NAME(gpio_stats, toggles)
 STATS_NAME_END(gpio_stats)
 
@@ -112,7 +113,10 @@ static uint8_t test8;
 static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
-struct cbmem cbmem;
+static struct cbmem cbmem;
+
+static uint32_t nffs_cbmem_buf[MAX_CBMEM_BUF];
+static struct cbmem nffs_cbmem;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -185,7 +189,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         /* Wait one second */
-        os_time_delay(1000);
+        os_time_delay(OS_TICKS_PER_SEC);
 
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
@@ -228,14 +232,21 @@ task2_handler(void *arg)
 int
 init_tasks(void)
 {
+    os_stack_t *pstack;
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
+    pstack = malloc(sizeof(os_stack_t)*TASK1_STACK_SIZE);
+    assert(pstack);
+
     os_task_init(&task1, "task1", task1_handler, NULL,
-            TASK1_PRIO, OS_WAIT_FOREVER, stack1, TASK1_STACK_SIZE);
+            TASK1_PRIO, OS_WAIT_FOREVER, pstack, TASK1_STACK_SIZE);
+
+    pstack = malloc(sizeof(os_stack_t)*TASK2_STACK_SIZE);
+    assert(pstack);
 
     os_task_init(&task2, "task2", task2_handler, NULL,
-            TASK2_PRIO, OS_WAIT_FOREVER, stack2, TASK2_STACK_SIZE);
+            TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 
     tasks_initialized = 1;
     return 0;
@@ -284,6 +295,8 @@ int
 main(int argc, char **argv)
 {
     int rc;
+    os_stack_t *pstack;
+
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
@@ -295,8 +308,9 @@ main(int argc, char **argv)
     assert(rc == 0);
 
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_cbmem_handler_init(&log_cbmem_handler, &cbmem);
-    log_register("log", &my_log, &log_cbmem_handler);
+    cbmem_init(&nffs_cbmem, nffs_cbmem_buf, MAX_CBMEM_BUF);
+    log_register("log", &my_log, &log_cbmem_handler, &cbmem);
+    log_register("nffs", &nffs_log, &log_cbmem_handler, &nffs_cbmem);
 
 #if !MYNEWT_VAL(CONFIG_NFFS)
     setup_for_fcb();
@@ -310,9 +324,23 @@ main(int argc, char **argv)
 
     flash_test_init();
 
+#if defined SPLIT_LOADER || defined SPLIT_APPLICATION
+    split_app_init();
+#endif
+
     conf_load();
 
     log_reboot(HARD_REBOOT);
+
+#ifdef SPLIT_LOADER
+    {
+        void *entry;
+        rc = split_app_go(&entry, true);
+        if(rc == 0) {
+            system_start(entry);
+        }
+    }
+#endif
 
     rc = init_tasks();
 
@@ -323,4 +351,3 @@ main(int argc, char **argv)
 
     return rc;
 }
-

@@ -17,7 +17,8 @@
  * under the License.
  */
 #include <ctype.h>
-#include <os/queue.h>
+#include <stdio.h>
+#include <os/endian.h>
 #include "mn_socket/mn_socket.h"
 
 int
@@ -52,6 +53,46 @@ mn_inet_pton(int af, const char *src, void *dst)
         }
         return 1;
     } else {
-        return MN_EAFNOSUPPORT;
+        /*
+         * Add code here. XXX
+         */
+        return 0;
+    }
+}
+
+const char *
+mn_inet_ntop(int af, const void *src_v, void *dst, int len)
+{
+    const unsigned char *src = src_v;
+    const struct mn_in6_addr *a6;
+    int rc;
+    int i;
+
+    if (af == MN_PF_INET) {
+        rc = snprintf(dst, len, "%u.%u.%u.%u",
+          src[0], src[1], src[2], src[3]);
+        if (rc >= len) {
+            return NULL;
+        } else {
+            return dst;
+        }
+    } else {
+        a6 = src_v;
+        rc = 0;
+
+        for (i = 0; i < sizeof(*a6); i += 2) {
+            rc += snprintf(dst + rc, len - rc, "%x",
+              htons(*(uint16_t *)&a6->s_addr[i]));
+            if (rc >= len) {
+                return NULL;
+            }
+            if (i < sizeof(*a6) - 2) {
+                rc += snprintf(dst + rc, len - rc, ":");
+                if (rc >= len) {
+                    return NULL;
+                }
+            }
+        }
+        return dst;
     }
 }

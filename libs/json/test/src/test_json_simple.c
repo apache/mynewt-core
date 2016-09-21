@@ -306,9 +306,9 @@ TEST_CASE(test_json_simple_decode){
 
    TEST_ASSERT(uintarr[0] == 0);
    TEST_ASSERT(uintarr[1] == 65535);
-   TEST_ASSERT(uintarr[2] == 4294967295);
-   TEST_ASSERT(uintarr[3] == 8589934590);
-   TEST_ASSERT(uintarr[4] ==  3451257);
+   TEST_ASSERT(uintarr[2] == 4294967295ULL);
+   TEST_ASSERT(uintarr[3] == 8589934590ULL);
+   TEST_ASSERT(uintarr[4] == 3451257ULL);
 
     /*testing arrays with empty spaces within the elements*/
     struct json_attr_t test_boolspacearr[2] = {

@@ -39,7 +39,8 @@ enum conf_type {
     CONF_STRING,
     CONF_BYTES,
     CONF_FLOAT,
-    CONF_DOUBLE
+    CONF_DOUBLE,
+    CONF_BOOL,
 } __attribute__((__packed__));
 
 enum conf_export_tgt {

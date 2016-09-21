@@ -25,6 +25,7 @@ tags
 .gdb_history
 .gdb_out
 .gdb_cmds
+.gdbinit
 *~
 .DS_Store
 *.swp

@@ -23,7 +23,7 @@
 uint8_t g_dev_addr[6] = { 0 };
 
 /* Our random address (in case we need it) */
-uint8_t g_random_addr[6] = { 0 };
+uint8_t g_random_addr[BLE_DEV_ADDR_LEN] = { 0 };
 
 int
 main(void)

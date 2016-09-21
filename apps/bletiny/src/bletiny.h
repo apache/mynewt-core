@@ -103,6 +103,7 @@ uint8_t parse_arg_uint8_dflt(char *name, uint8_t dflt, int *out_status);
 uint16_t parse_arg_uint16(char *name, int *status);
 uint16_t parse_arg_uint16_dflt(char *name, uint16_t dflt, int *out_status);
 uint32_t parse_arg_uint32(char *name, int *out_status);
+uint32_t parse_arg_uint32_dflt(char *name, uint32_t dflt, int *out_status);
 uint64_t parse_arg_uint64(char *name, int *out_status);
 int parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status);
 int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val,

@@ -42,4 +42,7 @@ int shell_nlip_output(struct os_mbuf *m);
 void shell_console_rx_cb(void);
 void shell_init(void);
 
+int shell_cmd_list_lock(void);
+int shell_cmd_list_unlock(void);
+
 #endif /* __SHELL_H__ */

@@ -40,7 +40,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-static struct log_handler nffs_log_console_handler;
 struct log nffs_log;
 static const char *copy_in_dir;
 static const char *progname;
@@ -544,6 +543,7 @@ print_nffs_file_flash(char *flash_area, size_t size)
     struct nffs_disk_area *nda;
     int nad_cnt = 0;    /* Nffs Area Descriptor count */
     int off;
+    int objsz;
 
     daptr = flash_area;
     eoda = flash_area + size;
@@ -576,8 +576,13 @@ print_nffs_file_flash(char *flash_area, size_t size)
                    nda->nda_ver != NFFS_AREA_VER ? " (V0)" : "",
                    nad_cnt == file_scratch_idx ? " (Scratch)" : "");
 
+            if (nffs_version == 0) {
+                objsz = sizeof (struct nffs_disk_V0object);
+            } else {
+                objsz = sizeof (struct nffs_disk_object);
+            }
             off = sizeof (struct nffs_disk_area);
-            while (off < area_descs[nad_cnt].nad_length) {
+            while (off + objsz < area_descs[nad_cnt].nad_length) {
                 if (nffs_version == 0) {
                     off += print_nffs_flash_V0object(&area_descs[nad_cnt], off);
                 } else if (nffs_version == NFFS_AREA_VER) {
@@ -667,8 +672,7 @@ main(int argc, char **argv)
 
     os_init();
 
-    log_console_handler_init(&nffs_log_console_handler);
-    log_register("nffs-log", &nffs_log, &nffs_log_console_handler);
+    log_register("nffs-log", &nffs_log, &log_console_handler, NULL);
 
     file_scratch_idx = MAX_AREAS + 1;
 

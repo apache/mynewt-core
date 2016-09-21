@@ -68,10 +68,16 @@ void bsp_hal_init(void);
  * this routine would have to figure out which one of those slots is being
  * used.
  */
+int current_image_slot = 1;
+
 int
 bsp_imgr_current_slot(void)
 {
-    return FLASH_AREA_IMAGE_0;
+    return current_image_slot;
+}
+
+void bsp_slot_init_split_application(void) {
+    current_image_slot = FLASH_AREA_IMAGE_1;
 }
 
 void

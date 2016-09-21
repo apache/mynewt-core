@@ -184,6 +184,7 @@ uart_irq2(void)
 
 }
 
+#if !defined(STM32F401xE)
 static void
 uart_irq3(void)
 {
@@ -201,6 +202,7 @@ uart_irq5(void)
 {
     uart_irq_handler(4);
 }
+#endif
 
 static void
 uart_irq6(void)
@@ -223,6 +225,7 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq2;
         ui = &uart_irqs[1];
         break;
+#if !defined(STM32F401xE)
     case USART3_IRQn:
         isr = (uint32_t)&uart_irq3;
         ui = &uart_irqs[2];
@@ -235,6 +238,7 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq5;
         ui = &uart_irqs[4];
         break;
+#endif
     case USART6_IRQn:
         isr = (uint32_t)&uart_irq6;
         ui = &uart_irqs[5];
@@ -370,20 +374,6 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     u->u_regs->CR1 |= (USART_CR1_RXNEIE | USART_CR1_UE);
     u->u_open = 1;
-
-    return 0;
-}
-
-int
-hal_uart_init(int port, void *arg)
-{
-    struct hal_uart *u;
-
-    if (port >= UART_CNT) {
-        return -1;
-    }
-    u = &uarts[port];
-    u->u_cfg = (const struct stm32f4_uart_cfg *)arg;
 
     return 0;
 }

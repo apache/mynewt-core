@@ -41,6 +41,7 @@
 #define NMGR_GROUP_ID_CONFIG    (3)
 #define NMGR_GROUP_ID_LOGS      (4)
 #define NMGR_GROUP_ID_CRASH     (5)
+#define NMGR_GROUP_ID_SPLIT     (6)
 #define NMGR_GROUP_ID_PERUSER   (64)
 
 #define NMGR_OP_READ            (0)
@@ -59,17 +60,6 @@
 #define NMGR_ERR_ETIMEOUT (4)
 #define NMGR_ERR_ENOENT   (5)
 #define NMGR_ERR_EPERUSER (256)
-
-
-/*
- * Id's for default group commands
- */
-#define NMGR_ID_ECHO            0
-#define NMGR_ID_CONS_ECHO_CTRL  1
-#define NMGR_ID_TASKSTATS       2
-#define NMGR_ID_MPSTATS         3
-#define NMGR_ID_DATETIME_STR    4
-#define NMGR_ID_RESET           5
 
 struct nmgr_hdr {
     uint8_t  nh_op;             /* NMGR_OP_XXX */
@@ -90,9 +80,7 @@ struct nmgr_jbuf {
     uint16_t njb_off;
     uint16_t njb_end;
 };
-int nmgr_jbuf_init(struct nmgr_jbuf *njb);
 int nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode);
-extern struct nmgr_jbuf nmgr_task_jbuf;
 
 typedef int (*nmgr_handler_func_t)(struct nmgr_jbuf *);
 

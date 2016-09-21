@@ -149,15 +149,15 @@ mutex_test1_task14_handler(void *arg)
     TEST_ASSERT(t->t_func == mutex_test1_task14_handler);
 
     for (iters = 0; iters < 3; iters++) {
-        os_time_delay(100);
+        os_time_delay(OS_TICKS_PER_SEC / 10);
 
         g_task14_val = 1;
 
-        err = os_mutex_pend(&g_mutex1, 100);
+        err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC / 10);
         TEST_ASSERT(err == OS_OK);
         TEST_ASSERT(g_task16_val == 1);
 
-        os_time_delay(100);
+        os_time_delay(OS_TICKS_PER_SEC / 10);
     }
 
     os_test_restart();
@@ -178,7 +178,7 @@ mutex_test2_task14_handler(void *arg)
         TEST_ASSERT(err == OS_OK, "err=%d", err);
 
         g_task14_val = 1;
-        os_time_delay(100);
+        os_time_delay(OS_TICKS_PER_SEC / 10);
 
         /* 
          * Task17 should have its mutex wait flag set; at least the first time
@@ -193,7 +193,7 @@ mutex_test2_task14_handler(void *arg)
         }
 
         os_mutex_release(&g_mutex1);
-        os_time_delay(100);
+        os_time_delay(OS_TICKS_PER_SEC / 10);
     }
 
     os_test_restart();
@@ -210,7 +210,7 @@ task15_handler(void *arg)
             t = os_sched_get_current_task();
             TEST_ASSERT(t->t_func == task15_handler);
 
-            os_time_delay(50);
+            os_time_delay(OS_TICKS_PER_SEC / 20);
             while (1) {
                 /* Wait here forever */
             }
@@ -219,25 +219,25 @@ task15_handler(void *arg)
         if (g_mutex_test == 2) {
             /* Sleep for 3 seconds */
             t = os_sched_get_current_task();
-            os_time_delay(500);
+            os_time_delay(OS_TICKS_PER_SEC / 2);
         } else if (g_mutex_test == 3) {
             /* Sleep for 3 seconds */
             t = os_sched_get_current_task();
-            os_time_delay(30);
+            os_time_delay(OS_TICKS_PER_SEC / 33);
         }
 
         while (1) {
             t = os_sched_get_current_task();
             TEST_ASSERT(t->t_func == task15_handler);
 
-            err = os_mutex_pend(&g_mutex1, 10000);
+            err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC * 10);
             if (g_mutex_test == 4) {
                 TEST_ASSERT(err == OS_TIMEOUT);
             } else {
                 TEST_ASSERT(err == OS_OK);
             }
 
-            os_time_delay(100);
+            os_time_delay(OS_TICKS_PER_SEC / 10);
         }
     }
 }
@@ -254,7 +254,7 @@ task16_handler(void *arg)
             TEST_ASSERT(t->t_func == task16_handler);
 
             /* Get mutex 1 */
-            err = os_mutex_pend(&g_mutex1, 0xFFFFFFFF);
+            err = os_mutex_pend(&g_mutex1, OS_TIMEOUT_NEVER);
             TEST_ASSERT(err == OS_OK);
 
             while (g_task14_val != 1) {
@@ -270,18 +270,18 @@ task16_handler(void *arg)
         if (g_mutex_test == 2) {
             /* Sleep for 3 seconds */
             t = os_sched_get_current_task();
-            os_time_delay(30);
+            os_time_delay(OS_TICKS_PER_SEC / 33);
         } else if (g_mutex_test == 3) {
             /* Sleep for 3 seconds */
             t = os_sched_get_current_task();
-            os_time_delay(50);
+            os_time_delay(OS_TICKS_PER_SEC / 20);
         }
 
         while (1) {
             t = os_sched_get_current_task();
             TEST_ASSERT(t->t_func == task16_handler);
 
-            err = os_mutex_pend(&g_mutex1, 10000);
+            err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC * 10);
             if (g_mutex_test == 4) {
                 TEST_ASSERT(err == OS_TIMEOUT);
             } else {
@@ -293,7 +293,7 @@ task16_handler(void *arg)
                 TEST_ASSERT(err == OS_OK);
             }
 
-            os_time_delay(10000);
+            os_time_delay(OS_TICKS_PER_SEC * 10);
         }
     }
 }
@@ -309,9 +309,9 @@ task17_handler(void *arg)
         TEST_ASSERT(t->t_func == task17_handler);
 
         if (g_mutex_test == 5) {
-            err = os_mutex_pend(&g_mutex1, 10);
+            err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC / 10);
         } else {
-            err = os_mutex_pend(&g_mutex1, 10000);
+            err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC * 10);
             TEST_ASSERT((t->t_flags & OS_TASK_FLAG_MUTEX_WAIT) == 0);
         }
 
@@ -326,7 +326,7 @@ task17_handler(void *arg)
             TEST_ASSERT(err == OS_OK);
         }
 
-        os_time_delay(10000);
+        os_time_delay(OS_TICKS_PER_SEC * 10);
     }
 }
 

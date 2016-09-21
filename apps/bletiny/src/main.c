@@ -54,8 +54,8 @@
 #include "store/ram/ble_store_ram.h"
 
 /* Mandatory services. */
-#include "services/mandatory/ble_svc_gap.h"
-#include "services/mandatory/ble_svc_gatt.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
 
 /* XXX: An app should not include private headers from a library.  The bletiny
  * app uses some of nimble's internal details for logging.
@@ -91,7 +91,6 @@ struct os_eventq bletiny_evq;
 struct os_task bletiny_task;
 bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 
-static struct log_handler bletiny_log_console_handler;
 struct log bletiny_log;
 
 bssnz_t struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
@@ -1010,15 +1009,23 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                        event->subscribe.cur_indicate);
         return 0;
 
+    case BLE_GAP_EVENT_MTU:
+        console_printf("mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+                       event->mtu.conn_handle,
+                       event->mtu.channel_id,
+                       event->mtu.value);
+        return 0;
+
     default:
         return 0;
     }
 }
 
 static void
-bletiny_on_l2cap_update(int status, void *arg)
+bletiny_on_l2cap_update(uint16_t conn_handle, int status, void *arg)
 {
-    console_printf("l2cap update complete; status=%d\n", status);
+    console_printf("l2cap update complete; conn_handle=%d status=%d\n",
+                   conn_handle, status);
 }
 
 static void
@@ -1615,9 +1622,8 @@ main(void)
                          "bletiny_dsc_pool");
     assert(rc == 0);
 
-    /* Initialize the bletiny system. */
-    log_console_handler_init(&bletiny_log_console_handler);
-    log_register("bletiny", &bletiny_log, &bletiny_log_console_handler);
+    /* Initialize the logging system. */
+    log_register("bletiny", &bletiny_log, &log_console_handler, NULL);
 
     /* Initialize eventq for the application task. */
     os_eventq_init(&bletiny_evq);

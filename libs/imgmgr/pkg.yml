@@ -24,7 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/newtmgr
     - libs/bootutil
     - libs/util
 
@@ -33,6 +32,9 @@ pkg.deps.IMGMGR_FS:
 
 pkg.deps.IMGMGR_COREDUMP:
     - sys/coredump
+
+pkg.deps.IMGMGR_SHELL:
+    - libs/shell
 
 pkg.init_function: imgmgr_module_init
 pkg.init_stage: 5
@@ -44,3 +46,6 @@ pkg.syscfg_defs:
     IMGMGR_COREDUMP:
         description: 'TBD'
         value: 'MYNEWT_PKG_SYS_COREDUMP'
+    IMGMGR_CLI:
+        description: 'TBD'
+        value: 'MYNEWT_PKG_LIBS_SHELL'

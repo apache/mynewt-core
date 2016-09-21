@@ -31,6 +31,7 @@ pkg.arch: cortex_m4
 pkg.compiler: compiler/arm-none-eabi-m4
 pkg.linkerscript: "primo.ld"
 pkg.linkerscript.BOOT_LOADER.OVERWRITE: "boot-primo.ld"
+pkg.part2linkerscript: "split-primo.ld"
 pkg.downloadscript: primo_download.sh
 pkg.debugscript: primo_debug.sh
 pkg.cflags:
