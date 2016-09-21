@@ -26,15 +26,19 @@ pkg.keywords:
 pkg.deps:
     - libs/util
     - libs/testutil
+
 pkg.deps.SHELL:
     - libs/shell
 pkg.req_apis.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT
+
 pkg.deps.NEWTMGR:
-    - libs/newtmgr
     - libs/json
+pkg.req_apis.NEWTMGR:
+    - newtmgr
 pkg.cflags.NEWTMGR: -DNEWTMGR_PRESENT
+
 pkg.deps.FCB:
     - sys/fcb
 pkg.cflags.FCB: -DFCB_PRESENT

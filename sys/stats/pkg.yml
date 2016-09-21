@@ -30,8 +30,8 @@ pkg.deps:
     - libs/testutil
 pkg.deps.SHELL:
     - libs/shell
-pkg.deps.NEWTMGR:
-    - libs/newtmgr
+pkg.req_apis.NEWTMGR:
+    - newtmgr
 pkg.req_apis.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT

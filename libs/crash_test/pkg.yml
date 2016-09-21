@@ -30,7 +30,8 @@ pkg.cflags.SHELL:
     - -DSHELL_PRESENT
 
 pkg.deps.NEWTMGR:
-    - libs/newtmgr
     - libs/json
+pkg.req_apis.NEWTMGR:
+    - newtmgr
 pkg.cflags.NEWTMGR:
     - -DNEWTMGR_PRESENT

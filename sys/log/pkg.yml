@@ -30,13 +30,13 @@ pkg.deps:
     - libs/testutil
 pkg.deps.SHELL:
     - libs/shell
-pkg.deps.NEWTMGR:
-    - libs/newtmgr
 pkg.deps.FCB:
     - hw/hal
     - sys/fcb
 pkg.deps.TEST:
     - sys/fcb
+pkg.req_apis.NEWTMGR:
+    - newtmgr
 pkg.req_apis.SHELL:
     - console
 pkg.cflags.SHELL: -DSHELL_PRESENT

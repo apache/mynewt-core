@@ -29,8 +29,7 @@ pkg.deps:
     - libs/json
     - libs/util
     - libs/testutil
-    - libs/newtmgr
     - sys/reboot
 
-pkg.reqs:
-    - console
+pkg.req_apis:
+    - newtmgr
