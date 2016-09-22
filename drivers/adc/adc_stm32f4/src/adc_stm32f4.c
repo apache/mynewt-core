@@ -124,6 +124,10 @@ stm32f4_resolve_adc_gpio(ADC_HandleTypeDef *adc, uint8_t cnum)
                     pin = ADC12_CH15_PIN;
                     goto done;
             }
+        /*
+         * Falling through intentionally as ADC_3 contains seperate pins for
+         * Channels that ADC_1 and ADC_2 contain as well.
+         */
         case (uintptr_t)ADC3:
             switch(cnum) {
                 case ADC_CHANNEL_0:
@@ -362,14 +366,23 @@ stm32f4_adc_dma_init(ADC_HandleTypeDef* hadc)
 static void
 stm32f4_adc_init(void *arg)
 {
-    struct stm32f4_adc_dev_cfg *adc_config = (struct stm32f4_adc_dev_cfg *)arg;
+    struct adc_dev *dev;
+    struct stm32f4_adc_dev_cfg *adc_config;
     ADC_HandleTypeDef *hadc;
+    GPIO_InitTypeDef gpio_td;
+    uint8_t cnum;
 
-    assert(adc_config);
+    assert(arg);
 
+    dev = (struct adc_dev *)arg;
+    adc_config = (struct stm32f4_adc_dev_cfg *)dev->ad_dev_cfg;
     hadc = adc_config->sac_adc_handle;
+    cnum = dev->ad_chans->c_cnum;
 
     stm32f4_adc_dma_init(hadc);
+
+    gpio_td = stm32f4_resolve_adc_gpio(hadc, cnum);
+    hal_gpio_init_stm(gpio_td.Pin, &gpio_td);
 
     if (HAL_ADC_Init(hadc) != HAL_OK) {
         assert(0);
@@ -445,8 +458,7 @@ stm32f4_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         goto err;
     }
 
-
-    stm32f4_adc_init(dev->ad_dev_cfg);
+    stm32f4_adc_init(dev);
 
     cfg  = dev->ad_dev_cfg;
     hadc = cfg->sac_adc_handle;
@@ -500,21 +512,21 @@ stm32f4_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
     int rc;
     ADC_HandleTypeDef *hadc;
     struct stm32f4_adc_dev_cfg *cfg;
-    GPIO_InitTypeDef gpio_td;
     struct adc_chan_config *chan_cfg;
 
-    assert(dev != NULL && IS_ADC_CHANNEL(cnum));
+    rc = OS_EINVAL;
+
+    if (dev != NULL && IS_ADC_CHANNEL(cnum)) {
+        goto err;
+    }
+
     cfg  = dev->ad_dev_cfg;
     hadc = cfg->sac_adc_handle;
     chan_cfg = cfg->sac_chans;
 
-    gpio_td = stm32f4_resolve_adc_gpio(hadc, cnum);
-    hal_gpio_init_stm(gpio_td.Pin, &gpio_td);
-
-
     cfgdata = (ADC_ChannelConfTypeDef *)cfgdata;
 
-    if ((rc = HAL_ADC_ConfigChannel(hadc, cfgdata)) != HAL_OK) {
+    if ((HAL_ADC_ConfigChannel(hadc, cfgdata)) != HAL_OK) {
         goto err;
     }
 
@@ -524,11 +536,11 @@ stm32f4_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
 
 #if 0
     if (HAL_ADC_Start_IT(hadc) != HAL_OK) {
-        assert(0);
+        goto err;
     }
 #endif
 
-    return (0);
+    return (OS_OK);
 err:
     return (rc);
 }
