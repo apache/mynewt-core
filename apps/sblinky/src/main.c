@@ -22,7 +22,6 @@
 #include "hal/hal_spi.h"
 #include "console/console.h"
 #include "shell/shell.h"
-#include "log/log.h"
 #include "stats/stats.h"
 #include "config/config.h"
 #include <os/os_dev.h>
@@ -90,9 +89,6 @@ static volatile int g_task1_loops;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
-
-struct log_handler log_console_handler;
-struct log my_log;
 
 static volatile int g_task2_loops;
 
@@ -589,9 +585,6 @@ main(int argc, char **argv)
 
     os_init();
 
-    /* Initialize the sblinky log. */
-    log_console_handler_init(&log_console_handler);
-    log_register("sblinky", &my_log, &log_console_handler);
 #if 0
     saadc_test();
 #endif
