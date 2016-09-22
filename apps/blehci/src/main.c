@@ -19,12 +19,6 @@
 #include <assert.h>
 #include "os/os.h"
 
-/* Our global device address (public) */
-uint8_t g_dev_addr[6] = { 0 };
-
-/* Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN] = { 0 };
-
 int
 main(void)
 {

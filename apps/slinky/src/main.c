@@ -32,11 +32,11 @@
 #if defined SPLIT_LOADER || defined SPLIT_APPLICATION
 #include <split/split.h>
 #endif
-#if MYNEWT_PKG_FS_NFFS
+#if MYNEWT_VAL(CONFIG_NFFS)
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <config/config_file.h>
-#elif MYNEWT_PKG_SYS_FCB
+#elif MYNEWT_VAL(CONFIG_FCB)
 #include <fcb/fcb.h>
 #include <config/config_fcb.h>
 #else
@@ -94,6 +94,15 @@ static STATS_SECT_DECL(gpio_stats) g_stats_gpio_toggle;
 static STATS_NAME_START(gpio_stats)
 STATS_NAME(gpio_stats, toggles)
 STATS_NAME_END(gpio_stats)
+
+#if !MYNEWT_VAL(CONFIG_NFFS)
+struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
+
+static struct conf_fcb my_conf = {
+    .cf_fcb.f_magic = 0xc09f6e5e,
+    .cf_fcb.f_sectors = conf_fcb_area
+};
+#endif
 
 static char *test_conf_get(int argc, char **argv, char *val, int max_len);
 static int test_conf_set(int argc, char **argv, char *val);
@@ -295,8 +304,6 @@ int
 main(int argc, char **argv)
 {
     int rc;
-    os_stack_t *pstack;
-
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);

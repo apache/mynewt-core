@@ -39,6 +39,11 @@ pkg.cflags:
 pkg.apis:
     - newtmgr
 
-pkg.features:
-    - NEWTMGR
-    - OC_SERVER
+pkg.syscfg_defs:
+    ### These should be renamed with a proper prefix.
+    NEWTMGR:
+        description: 'TBD'
+        value: 1
+    OC_SERVER:
+        description: 'TBD'
+        value: 1

@@ -38,7 +38,7 @@ pkg.init_stage: 0
 pkg.syscfg_defs:
     STATS_NAMES:
         description: 'TBD'
-        value: 1
+        value: 0
     STATS_CLI:
         description: 'TBD'
         value: 'MYNEWT_PKG_LIBS_SHELL'

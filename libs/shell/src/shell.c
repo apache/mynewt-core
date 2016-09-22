@@ -24,6 +24,7 @@
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "console/console.h"
+#include "console/prompt.h"
 #include "os/os.h"
 #include "os/endian.h"
 #include "util/base64.h"
@@ -554,9 +555,7 @@ shell_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = shell_cmd_register(&g_shell_prompt_cmd);
-    if (rc != 0) {
-        goto err;
-    }
+    SYSINIT_PANIC_ASSERT(rc == 0);
     
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);

@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#ifndef __CONSOLE_H__
-#define __CONSOLE_H__
+#ifndef H_CONSOLE_PROMPT_
+#define H_CONSOLE_PROMPT_
 
 #include <stdarg.h>
-
 
 /* print console prompt */
 void console_print_prompt(void);

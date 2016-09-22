@@ -30,11 +30,11 @@
 #if defined SPLIT_APPLICATION
 #include <split/split.h>
 #endif
-#ifdef NFFS_PRESENT
+#if MYNEWT_VAL(CONFIG_NFFS)
 #include <fs/fs.h>
 #include <nffs/nffs.h>
 #include <config/config_file.h>
-#elif FCB_PRESENT
+#elif MYNEWT_VAL(CONFIG_FCB)
 #include <fcb/fcb.h>
 #include <config/config_fcb.h>
 #else
@@ -71,13 +71,6 @@ static volatile int g_task1_loops;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(128)
 static struct os_task task2;
 
-#define SHELL_TASK_PRIO (3)
-#define SHELL_MAX_INPUT_LEN     (256)
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(384))
-
-#define NEWTMGR_TASK_PRIO (4)
-#define NEWTMGR_TASK_STACK_SIZE (OS_STACK_ALIGN(896))
-
 static struct log my_log;
 
 static volatile int g_task2_loops;
@@ -94,21 +87,11 @@ STATS_SECT_END
 
 static STATS_SECT_DECL(gpio_stats) g_stats_gpio_toggle;
 
-static STATS_NAME_START(gpio_stats)
+STATS_NAME_START(gpio_stats)
 STATS_NAME(gpio_stats, toggles)
 STATS_NAME_END(gpio_stats)
 
-#ifdef NFFS_PRESENT
-/* configuration file */
-#define MY_CONFIG_DIR  "/cfg"
-#define MY_CONFIG_FILE "/cfg/run"
-#define MY_CONFIG_MAX_LINES  32
-
-static struct conf_file my_conf = {
-    .cf_name = MY_CONFIG_FILE,
-    .cf_maxlines = MY_CONFIG_MAX_LINES
-};
-#elif FCB_PRESENT
+#if !MYNEWT_VAL(CONFIG_NFFS)
 struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
 
 static struct conf_fcb my_conf = {
@@ -116,15 +99,6 @@ static struct conf_fcb my_conf = {
     .cf_fcb.f_sectors = conf_fcb_area
 };
 #endif
-
-#define DEFAULT_MBUF_MPOOL_BUF_LEN (256)
-#define DEFAULT_MBUF_MPOOL_NBUFS (9)
-
-static uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
-    DEFAULT_MBUF_MPOOL_NBUFS];
-
-static struct os_mbuf_pool default_mbuf_pool;
-static struct os_mempool default_mbuf_mpool;
 
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
@@ -199,6 +173,7 @@ int
 init_tasks(void)
 {
     os_stack_t *pstack;
+
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
@@ -218,41 +193,7 @@ init_tasks(void)
     return 0;
 }
 
-#ifdef NFFS_PRESENT
-static void
-setup_for_nffs(void)
-{
-    /* NFFS_AREA_MAX is defined in the BSP-specified bsp.h header file. */
-    struct nffs_area_desc descs[NFFS_AREA_MAX + 1];
-    int cnt;
-    int rc;
-
-    /* Initialize nffs's internal state. */
-    rc = nffs_init();
-    assert(rc == 0);
-
-    /* Convert the set of flash blocks we intend to use for nffs into an array
-     * of nffs area descriptors.
-     */
-    cnt = NFFS_AREA_MAX;
-    rc = flash_area_to_nffs_desc(FLASH_AREA_NFFS, &cnt, descs);
-    assert(rc == 0);
-
-    /* Attempt to restore an existing nffs file system from flash. */
-    if (nffs_detect(descs) == FS_ECORRUPT) {
-        /* No valid nffs instance detected; format a new one. */
-        rc = nffs_format(descs);
-        assert(rc == 0);
-    }
-
-    fs_mkdir(MY_CONFIG_DIR);
-    rc = conf_file_src(&my_conf);
-    assert(rc == 0);
-    rc = conf_file_dst(&my_conf);
-    assert(rc == 0);
-}
-
-#elif FCB_PRESENT
+#if !MYNEWT_VAL(CONFIG_NFFS)
 
 static void
 setup_for_fcb(void)
@@ -295,65 +236,25 @@ int
 main(int argc, char **argv)
 {
     int rc;
-    os_stack_t *pstack;
-
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
 #endif
 
-    conf_init();
+    os_init();
 
-    log_init();
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem);
 
-    os_init();
-
-    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
-            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data,
-            "default_mbuf_data");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
-            DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
-    assert(rc == 0);
-
-    rc = os_msys_register(&default_mbuf_pool);
-    assert(rc == 0);
-
-    rc = hal_flash_init();
-    assert(rc == 0);
-
-#ifdef NFFS_PRESENT
-    setup_for_nffs();
-#elif FCB_PRESENT
+#if !MYNEWT_VAL(CONFIG_NFFS)
     setup_for_fcb();
 #endif
-
-    id_init();
-
-    pstack = malloc(sizeof(os_stack_t) * SHELL_TASK_STACK_SIZE);
-    assert(pstack);
-
-    shell_task_init(SHELL_TASK_PRIO, pstack, SHELL_TASK_STACK_SIZE,
-                    SHELL_MAX_INPUT_LEN);
-
-    pstack = malloc(sizeof(os_stack_t) * NEWTMGR_TASK_STACK_SIZE);
-    assert(pstack);
-#
-    nmgr_task_init(NEWTMGR_TASK_PRIO, pstack, NEWTMGR_TASK_STACK_SIZE);
-    imgmgr_module_init();
-
-    stats_module_init();
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),
                STATS_NAME_INIT_PARMS(gpio_stats));
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
-
-    reboot_init_handler(LOG_TYPE_STORAGE, 10);
 
 #if defined SPLIT_APPLICATION
     split_app_init();
@@ -372,4 +273,3 @@ main(int argc, char **argv)
 
     return rc;
 }
-

@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#define UART_CNT                2
+
 #define UART_MAX_BYTES_PER_POLL	64
 #define UART_POLLER_STACK_SZ	OS_STACK_ALIGN(1024)
 #define UART_POLLER_PRIO	0

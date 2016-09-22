@@ -504,8 +504,7 @@ main(void)
     os_init();
 
     /* Initialize the blecent log. */
-    log_console_handler_init(&blecent_log_console_handler);
-    log_register("blecent", &blecent_log, &blecent_log_console_handler);
+    log_register("blecent", &blecent_log, &log_console_handler, NULL);
 
     /* Initialize the eventq for the application task. */
     os_eventq_init(&blecent_evq);

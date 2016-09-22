@@ -30,3 +30,7 @@ pkg.deps.SELFTEST:
     - fs/nffs
     - sys/fcb
     - libs/console/stub
+
+pkg.syscfg_vals.SELFTEST:
+    CONFIG_NFFS: 1
+    CONFIG_FCB: 1

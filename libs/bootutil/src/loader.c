@@ -650,9 +650,3 @@ split_app_go_end:
     free(descs);
     return rc;
 }
-
-void
-bootutil_pkg_init(void)
-{
-    bootutil_cfg_register();
-}

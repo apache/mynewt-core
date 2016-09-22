@@ -28,6 +28,8 @@
 #include "json/json.h"
 #include "util/base64.h"
 #include "bootutil/image.h"
+#include "bootutil/bootutil_misc.h"
+#include "newtmgr/newtmgr.h"
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"

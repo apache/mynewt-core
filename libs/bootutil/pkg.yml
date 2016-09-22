@@ -34,9 +34,6 @@ pkg.deps:
 pkg.deps.BOOTUTIL_NFFS:
     - fs/nffs
 
-pkg.init_function: bootutil_pkg_init
-pkg.init_stage: 5
-
 pkg.syscfg_defs:
     BOOTUTIL_NFFS:
         description: 'TBD'

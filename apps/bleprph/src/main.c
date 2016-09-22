@@ -32,7 +32,7 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
-#include "services/mandatory/ble_svc_gap.h"
+#include "services/gap/ble_svc_gap.h"
 
 /* Application-specified header. */
 #include "bleprph.h"
@@ -305,8 +305,7 @@ main(void)
     os_init();
 
     /* Initialize the bleprph log. */
-    log_console_handler_init(&bleprph_log_console_handler);
-    log_register("bleprph", &bleprph_log, &bleprph_log_console_handler);
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL);
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);

@@ -17,7 +17,9 @@
  * under the License.
  */
 
-#ifdef SHELL_PRESENT
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(IMGMGR_CLI)
 
 #include <string.h>
 
@@ -136,4 +138,4 @@ imgr_cli_register(void)
 {
     return shell_cmd_register(&shell_imgr_cmd);
 }
-#endif
+#endif /* MYNEWT_VAL(IMGMGR_CLI) */

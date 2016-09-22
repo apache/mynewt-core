@@ -55,20 +55,6 @@
 #include "nmgrble/newtmgr_ble.h"
 #include "bleuart/bleuart.h"
 
-/** Mbuf settings. */
-#define MBUF_NUM_MBUFS      (12)
-#define MBUF_BUF_SIZE       OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
-#define MBUF_MEMBLOCK_SIZE  (MBUF_BUF_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD)
-#define MBUF_MEMPOOL_SIZE   OS_MEMPOOL_SIZE(MBUF_NUM_MBUFS, MBUF_MEMBLOCK_SIZE)
-
-#define MAX_CONSOLE_INPUT 120
-static os_membuf_t bleuart_mbuf_mpool_data[MBUF_MEMPOOL_SIZE];
-struct os_mbuf_pool bleuart_mbuf_pool;
-struct os_mempool bleuart_mbuf_mpool;
-
-/** Priority of the nimble host and controller tasks. */
-#define BLE_LL_TASK_PRI             (OS_TASK_PRI_HIGHEST)
-
 /** bleuart task settings. */
 #define bleuart_TASK_PRIO           1
 #define bleuart_STACK_SIZE          (OS_STACK_ALIGN(336))

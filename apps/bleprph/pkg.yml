@@ -52,5 +52,3 @@ pkg.syscfg_vals:
 
     # Disable unused eddystone feature.
     BLE_EDDYSTONE: 0
-
-    BLE_SM: 0

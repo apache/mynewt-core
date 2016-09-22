@@ -40,7 +40,7 @@ pkg.init_stage: 2
 pkg.syscfg_defs:
     REBOOT_LOG_0_TYPE:
         description: 'TBD'
-        value:  LOG_TYPE_STORAGE
+        value: LOG_STORE_CONSOLE
     REBOOT_LOG_0_ENTRY_COUNT:
         description: 'TBD'
         value:  10

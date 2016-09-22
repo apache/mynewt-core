@@ -34,9 +34,9 @@ extern "C" {
 /* LED pins */
 #define LED_BLINK_PIN   (0x1)
 
-/* Logical UART ports */
-#define UART_CNT	2
-#define CONSOLE_UART	0
+/* UART info */
+#define CONSOLE_UART    	"uart1"
+#define CONSOLE_UART_SPEED    	9600
 
 #define NFFS_AREA_MAX    (8)
 

@@ -847,7 +847,7 @@ mn_socket_test_handler(void *arg)
     sock_udp_ll();
     sock_udp_mcast_v4();
     sock_udp_mcast_v6();
-    os_test_restart();
+    tu_restart();
 }
 
 TEST_CASE(socket_tests)
