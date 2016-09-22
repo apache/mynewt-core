@@ -41,6 +41,10 @@ console_printf(const char *fmt, ...)
 {
     va_list args;
 
+    if (!console_is_init()) {
+        return;
+    }
+
     /* Prefix each line with a timestamp. */
     if (!console_is_midline) {
         fprintf((FILE *)&console_file, "%lu:", (unsigned long)os_time_get());
@@ -59,6 +63,10 @@ console_printf(const char *fmt, ...)
     va_list args;
     char buf[CONS_OUTPUT_MAX_LINE];
     int len;
+
+    if (!console_is_init()) {
+        return;
+    }
 
     /* Prefix each line with a timestamp. */
     if (!console_is_midline) {
