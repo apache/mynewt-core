@@ -29,8 +29,6 @@
 #include "shell/shell.h"
 #include "stats/stats.h"
 #include "hal/flash_map.h"
-#include "fs/fs.h"
-#include "nffs/nffs.h"
 #include "newtmgr/newtmgr.h"
 #include "imgmgr/imgmgr.h"
 
