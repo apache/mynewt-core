@@ -535,6 +535,10 @@ shell_help_cmd(int argc, char **argv)
 void
 shell_init(void)
 {
+#if !MYNEWT_VAL(SHELL_TASK)
+    return;
+#endif
+
     int rc;
 
     free(shell_line);
