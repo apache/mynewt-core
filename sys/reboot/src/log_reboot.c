@@ -22,7 +22,6 @@
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
-#include "fcb/fcb.h"
 #include "console/console.h"
 #include "log/log.h"
 #include "bootutil/image.h"
@@ -32,6 +31,11 @@
 #include "config/config_file.h"
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
+#include "hal/flash_map.h"
+
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
+#include "fcb/fcb.h"
+#endif
 
 static struct log_handler *reboot_log_handler;
 static struct log reboot_log;
@@ -41,9 +45,6 @@ static char reboot_cnt_str[12];
 static char soft_reboot_str[12];
 static char *reboot_cnt_get(int argc, char **argv, char *buf, int max_len);
 static int reboot_cnt_set(int argc, char **argv, char *val);
-static struct flash_area sector;
-
-static struct fcb_log reboot_log_fcb;
 
 struct conf_handler reboot_conf_handler = {
     .ch_name = "reboot",
@@ -53,6 +54,11 @@ struct conf_handler reboot_conf_handler = {
     .ch_export = NULL
 };
 
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
+static struct fcb_log reboot_log_fcb;
+static struct flash_area sector;
+#endif
+
 /**
  * Reboot log initilization
  * @param type of log(console or storage); number of entries to restore
@@ -61,17 +67,25 @@ struct conf_handler reboot_conf_handler = {
 int
 reboot_init_handler(int log_store_type, uint8_t entries)
 {
-    int rc;
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
     const struct flash_area *ptr;
     struct fcb *fcbp = &reboot_log_fcb.fl_fcb;
+#endif
+    void *arg;
+    int rc;
 
     rc = conf_register(&reboot_conf_handler);
+    if (rc != 0) {
+        return rc;
+    }
 
     switch (log_store_type) {
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
         case LOG_STORE_FCB:
             if (flash_area_open(FLASH_AREA_REBOOT_LOG, &ptr)) {
-                goto err;
+                return rc;
             }
+            fcbp = &reboot_log_fcb.fl_fcb;
             sector = *ptr;
             fcbp->f_sectors = &sector;
             fcbp->f_sector_cnt = 1;
@@ -82,15 +96,18 @@ reboot_init_handler(int log_store_type, uint8_t entries)
 
             rc = fcb_init(fcbp);
             if (rc) {
-                goto err;
+                return rc;
             }
             reboot_log_handler = (struct log_handler *)&log_fcb_handler;
             if (rc) {
-                goto err;
+                return rc;
             }
+            arg = &reboot_log_fcb;
             break;
+#endif
        case LOG_STORE_CONSOLE:
             reboot_log_handler = (struct log_handler *)&log_console_handler;
+            arg = NULL;
             break;
        default:
             assert(0);
@@ -98,9 +115,12 @@ reboot_init_handler(int log_store_type, uint8_t entries)
 
     rc = log_register("reboot_log", &reboot_log,
                       (struct log_handler *)reboot_log_handler,
-                      &reboot_log_fcb);
-err:
-    return (rc);
+                      arg);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 /**
@@ -207,13 +227,19 @@ err:
 void
 log_reboot_pkg_init(void)
 {
+    int type;
     int rc;
 
     (void)rc;
+    (void)type;
 
-#if MYNEWT_VAL(REBOOT_LOG_0_TYPE)
-    rc = reboot_init_handler(MYNEWT_VAL(REBOOT_LOG_0_TYPE),
-                             MYNEWT_VAL(REBOOT_LOG_0_ENTRY_COUNT));
+#if MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT)
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
+    type = LOG_STORE_FCB;
+#else
+    type = LOG_STORE_CONSOLE;
+#endif
+    rc = reboot_init_handler(type, MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT));
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }

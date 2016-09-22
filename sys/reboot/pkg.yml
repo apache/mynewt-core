@@ -28,9 +28,10 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - libs/util
-    - sys/fcb
     - sys/log
     - libs/imgmgr
+pkg.deps.REBOOT_LOG_FCB:
+    - sys/fcb
 pkg.req_apis:
     - console
 
@@ -38,9 +39,9 @@ pkg.init_function: log_reboot_pkg_init
 pkg.init_stage: 2
 
 pkg.syscfg_defs:
-    REBOOT_LOG_0_TYPE:
+    REBOOT_LOG_FCB:
         description: 'TBD'
-        value: LOG_STORE_CONSOLE
-    REBOOT_LOG_0_ENTRY_COUNT:
+        value: 0
+    REBOOT_LOG_ENTRY_COUNT:
         description: 'TBD'
-        value:  10
+        value: 10
