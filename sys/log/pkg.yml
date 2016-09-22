@@ -27,13 +27,14 @@ pkg.keywords:
 pkg.deps:
     - libs/os
     - libs/util
-pkg.deps.LOG_NEWTMGR:
-    - libs/newtmgr
 pkg.deps.LOG_FCB:
     - hw/hal
     - sys/fcb
 pkg.deps.LOG_CLI:
     - libs/shell
+
+pkg.req_apis.LOG_NEWTMGR:
+    - newtmgr
 
 pkg.init_function: log_init
 pkg.init_stage: 1

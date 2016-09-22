@@ -27,6 +27,9 @@ pkg.deps:
     - libs/bootutil
     - libs/util
 
+pkg.req_apis:
+    - newtmgr
+
 pkg.deps.IMGMGR_FS:
     - fs/fs
 

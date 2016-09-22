@@ -26,6 +26,8 @@ pkg.deps.CRASH_TEST_CLI:
     - libs/shell
 pkg.req_apis.CRASH_TEST_CLI:
     - console
+pkg.req_apis.CRASH_TEST_NEWTMGR:
+    - newtmgr
 
 pkg.deps.CRASH_TEST_NEWTMGR:
     - libs/newtmgr

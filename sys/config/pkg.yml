@@ -28,12 +28,14 @@ pkg.deps:
 pkg.deps.CONFIG_CLI:
     - libs/shell
 pkg.deps.CONFIG_NEWTMGR:
-    - libs/newtmgr
     - libs/json
 pkg.deps.CONFIG_FCB:
     - sys/fcb
 pkg.deps.CONFIG_NFFS:
     - fs/nffs
+
+pkg.req_apis.CONFIG_NEWTMGR:
+    - newtmgr
 
 pkg.init_function: config_pkg_init
 pkg.init_stage: 5
