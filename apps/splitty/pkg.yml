@@ -39,11 +39,8 @@ pkg.deps:
     - sys/log
     - sys/stats
 
-pkg.cflags:
-    - "-DSTATS_NAME_ENABLE=1"
+pkg.syscfg_vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
 
-pkg.cflags.NFFS:
-    - "-DNFFS_PRESENT"
-
-pkg.cflags.FCB:
-    - "-DFCB_PRESENT"
+    STATS_NAMES: 1

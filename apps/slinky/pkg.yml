@@ -41,4 +41,7 @@ pkg.deps:
     - sys/stats
 
 pkg.syscfg_vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
+
     STATS_NAMES: 1

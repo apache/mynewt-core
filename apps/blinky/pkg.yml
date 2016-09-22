@@ -32,3 +32,7 @@ pkg.deps:
     - sys/config
     - sys/log
     - sys/stats
+
+pkg.syscfg_vals:
+    # Enable the shell task.
+    SHELL_TASK: 1

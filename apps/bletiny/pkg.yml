@@ -37,6 +37,9 @@ pkg.deps:
 ### Disable some features to make bletiny small enough to fit on the nRF51.
 ### These features can be re-enabled in the target definition.
 pkg.syscfg_vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
+
     # Set log level to info (disable debug logging).
     LOG_LEVEL: 1
 
