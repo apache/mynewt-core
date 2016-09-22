@@ -35,10 +35,8 @@ int hal_watchdog_init(int expire_secs);
 
 /*
  * Starts the watchdog.
- *
- * @return			0 on success; non-zero on failure.
  */
-int hal_watchdog_enable(void);
+void hal_watchdog_enable(void);
 
 /*
  * Tickles the watchdog. Needs to be done before 'expire_secs' fires.
