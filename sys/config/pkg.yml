@@ -41,7 +41,7 @@ pkg.init_stage: 5
 pkg.syscfg_defs:
     CONFIG_FCB:
         description: 'TBD'
-        value: 1
+        value: 0
     CONFIG_FCB_MAGIC:
         description: 'TBD'
         value: 0xc09f6e5e

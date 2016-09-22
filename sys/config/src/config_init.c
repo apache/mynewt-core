@@ -88,8 +88,6 @@ config_init_fcb(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
-#else
-#error "Need NFFS or FCB for config storage"
 #endif
 
 void
