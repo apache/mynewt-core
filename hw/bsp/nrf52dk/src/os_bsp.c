@@ -40,8 +40,11 @@
 #include "app_util_platform.h"
 #include "nrf.h"
 #include "app_error.h"
-#include "adc_nrf52/adc_nrf52.h"
 #include "nrf_drv_saadc.h"
+
+#if MYNEWT_VAL(ADC_0)
+#include "adc_nrf52/adc_nrf52.h"
+#endif
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {

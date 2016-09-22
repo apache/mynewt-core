@@ -67,7 +67,7 @@ pkg.syscfg_defs:
 
     ADC_0:
         description: 'TBD'
-        value:  1
+        value:  0
     ADC_0_RESOLUTION:
         description: 'TBD'
         value: 'SAADC_CONFIG_RESOLUTION'
@@ -87,7 +87,7 @@ pkg.syscfg_defs:
 
     SPI_MASTER:
         description: 'TBD'
-        value:  1
+        value:  0
     SPI_SLAVE:
         description: 'TBD'
         value:  0
