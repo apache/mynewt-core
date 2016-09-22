@@ -26,17 +26,10 @@ pkg.keywords:
     - loader
 
 pkg.deps:
-    - sys/config
     - libs/bootutil
     - libs/os
     - libs/util
     - libs/console/stub
-
-pkg.deps.BOOT_NFFS:
-    - fs/nffs
-
-pkg.deps.BOOT_FCB:
-    - sys/fcb
 
 pkg.deps.BOOT_SERIAL.OVERWRITE:
     - libs/console/full
@@ -46,12 +39,6 @@ pkg.syscfg_defs:
     BOOT_LOADER:
         description: 'TBD'
         value: 1
-    BOOT_NFFS:
-        description: 'TBD'
-        value: 1
-    BOOT_FCB:
-        description: 'TBD'
-        value: 0
     BOOT_SERIAL:
         description: 'TBD'
         value: 0

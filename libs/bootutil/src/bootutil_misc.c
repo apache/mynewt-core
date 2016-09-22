@@ -25,7 +25,6 @@
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/flash_map.h"
-#include "config/config.h"
 #include "os/os.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"

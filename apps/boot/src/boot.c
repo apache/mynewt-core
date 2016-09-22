@@ -27,8 +27,6 @@
 #include <hal/hal_bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
-#include <config/config.h>
-#include <config/config_file.h>
 #if MYNEWT_VAL(BOOT_SERIAL)
 #include <hal/hal_gpio.h>
 #include <boot_serial/boot_serial.h>
