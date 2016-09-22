@@ -414,7 +414,7 @@ void hal_gpio_write(int pin, int val)
  */
 int hal_gpio_read(int pin)
 {
-    return (NRF_GPIO->IN & GPIO_MASK(pin));
+    return ((NRF_GPIO->IN & GPIO_MASK(pin)) != 0);
 }
 
 /**
