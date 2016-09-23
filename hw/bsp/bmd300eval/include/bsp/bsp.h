@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -42,7 +42,8 @@ extern uint8_t _ram_start;
 #define LED_BLINK_PIN   (17)
 
 /* UART info */
-#define CONSOLE_UART    0
+#define CONSOLE_UART    "uart0"
+#define CONSOLE_UART_SPEED      115200
 
 #define NFFS_AREA_MAX    (8)
 
