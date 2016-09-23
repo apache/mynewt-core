@@ -42,7 +42,3 @@ pkg.syscfg_defs:
     BOOT_SERIAL:
         description: 'TBD'
         value: 0
-
-pkg.syscfg_vals:
-    LOG_LEVEL: 255
-    STATS_NAMES: 0
