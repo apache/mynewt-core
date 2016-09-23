@@ -373,3 +373,36 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     uart->u_open = 1;
     return 0;
 }
+
+int
+hal_uart_close(int port)
+{
+    struct uart *uart;
+    int rc;
+
+    if (port >= UART_CNT) {
+        rc = -1;
+        goto err;
+    }
+
+    uart = &uarts[port];
+    if (!uart->u_open) {
+        rc = -1;
+        goto err;
+    }
+
+    close(uart->u_fd);
+
+    uart->u_open = 0;
+    return (0);
+err:
+    return (rc);
+}
+
+int
+hal_uart_init(int port, void *arg)
+{
+    return (0);
+}
+
+

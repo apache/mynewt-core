@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,7 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <assert.h>
+
+#include <os/os.h>
 #include <hal/flash_map.h>
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
 #include <mcu/native_bsp.h>
 
 static struct flash_area bsp_flash_areas[] = {
@@ -53,6 +58,8 @@ static struct flash_area bsp_flash_areas[] = {
     },
 };
 
+static struct uart_dev os_bsp_uart0;
+
 /*
  * Returns the flash map slot where the currently active image is located.
  * If executing from internal flash from fixed location, that slot would
@@ -67,9 +74,16 @@ bsp_imgr_current_slot(void)
     return FLASH_AREA_IMAGE_0;
 }
 
+
 void
 bsp_init(void)
 {
+    int rc;
+
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
+    assert(rc == 0);
 }
