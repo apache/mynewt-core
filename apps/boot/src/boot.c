@@ -89,8 +89,6 @@ main(void)
 #endif
     rc = boot_go(&req, &rsp);
     assert(rc == 0);
-    console_blocking_mode();
-    console_printf("\nboot_go = %d\n", rc);
 
     system_start((void *)(rsp.br_image_addr + rsp.br_hdr->ih_hdr_size));
 
