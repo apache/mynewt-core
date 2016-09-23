@@ -32,18 +32,17 @@
 
 /* Task 1 */
 #define TASK1_PRIO (1)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(1024)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(256)
 struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
 
 /* Task 2 */
 #define TASK2_PRIO (2)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
+#define TASK2_STACK_SIZE    OS_STACK_ALIGN(256)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
-struct log_handler log_console_handler;
 struct log my_log;
 
 static volatile int g_task2_loops;
