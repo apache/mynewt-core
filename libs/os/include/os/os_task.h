@@ -57,7 +57,7 @@ typedef void (*os_task_func_t)(void *);
 struct os_task {
     os_stack_t *t_stackptr;
     os_stack_t *t_stacktop;
-    
+
     uint16_t t_stacksize;
     uint16_t t_pad;
 
@@ -66,30 +66,30 @@ struct os_task {
     uint8_t t_state;
     uint8_t t_flags;
 
-    char *t_name;
+    const char *t_name;
     os_task_func_t t_func;
     void *t_arg;
 
     void *t_obj;
 
-    struct os_sanity_check t_sanity_check; 
+    struct os_sanity_check t_sanity_check;
 
     os_time_t t_next_wakeup;
     os_time_t t_run_time;
     uint32_t t_ctx_sw_cnt;
-   
+
     /* Global list of all tasks, irrespective of run or sleep lists */
     STAILQ_ENTRY(os_task) t_os_task_list;
 
-    /* Used to chain task to either the run or sleep list */ 
+    /* Used to chain task to either the run or sleep list */
     TAILQ_ENTRY(os_task) t_os_list;
 
     /* Used to chain task to an object such as a semaphore or mutex */
     SLIST_ENTRY(os_task) t_obj_list;
 };
 
-int os_task_init(struct os_task *, char *, os_task_func_t, void *, uint8_t,
-        os_time_t, os_stack_t *, uint16_t);
+int os_task_init(struct os_task *, const char *, os_task_func_t, void *,
+        uint8_t, os_time_t, os_stack_t *, uint16_t);
 
 uint8_t os_task_count(void);
 
@@ -107,7 +107,7 @@ struct os_task_info {
 
     char oti_name[OS_TASK_MAX_NAME_LEN];
 };
-struct os_task *os_task_info_get_next(const struct os_task *, 
+struct os_task *os_task_info_get_next(const struct os_task *,
         struct os_task_info *);
 
 
