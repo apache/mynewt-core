@@ -88,10 +88,10 @@ extern struct stm32f4_uart_cfg *bsp_uart_config(int port);
  * adc_handle is defined earlier because the DMA handle's
  * parent needs to be pointing to the adc_handle
  */
-ADC_HandleTypeDef adc1_handle;
+extern ADC_HandleTypeDef adc1_handle;
 
-#define STM32F4_DEFAULT_DMA40_HANDLE {\
-    .Instance = DMA2_Stream4,\
+#define STM32F4_DEFAULT_DMA00_HANDLE {\
+    .Instance = DMA2_Stream0,\
     .Init.Channel = DMA_CHANNEL_0,\
     .Init.Direction = DMA_PERIPH_TO_MEMORY,\
     .Init.PeriphInc = DMA_PINC_DISABLE,\
@@ -107,12 +107,12 @@ ADC_HandleTypeDef adc1_handle;
     .Parent = &adc1_handle,\
 }
 
-DMA_HandleTypeDef adc1_dma40_handle = STM32F4_DEFAULT_DMA40_HANDLE;
+DMA_HandleTypeDef adc1_dma00_handle = STM32F4_DEFAULT_DMA00_HANDLE;
 #endif
 
 #if MYNEWT_VAL(ADC_2)
 
-ADC_HandleTypeDef adc2_handle;
+extern ADC_HandleTypeDef adc2_handle;
 
 #define STM32F4_DEFAULT_DMA21_HANDLE {\
     .Instance = DMA2_Stream2,\
@@ -137,10 +137,10 @@ DMA_HandleTypeDef adc2_dma21_handle = STM32F4_DEFAULT_DMA21_HANDLE;
 
 #if MYNEWT_VAL(ADC_3)
 
-ADC_HandleTypeDef adc3_handle;
+extern ADC_HandleTypeDef adc3_handle;
 
-#define STM32F4_DEFAULT_DMA02_HANDLE {\
-    .Instance = DMA2_Stream0,\
+#define STM32F4_DEFAULT_DMA12_HANDLE {\
+    .Instance = DMA2_Stream1,\
     .Init.Channel = DMA_CHANNEL_2,\
     .Init.Direction = DMA_PERIPH_TO_MEMORY,\
     .Init.PeriphInc = DMA_PINC_DISABLE,\
@@ -156,7 +156,7 @@ ADC_HandleTypeDef adc3_handle;
     .Parent = &adc3_handle,\
 }
 
-DMA_HandleTypeDef adc3_dma02_handle = STM32F4_DEFAULT_DMA02_HANDLE;
+DMA_HandleTypeDef adc3_dma12_handle = STM32F4_DEFAULT_DMA12_HANDLE;
 #endif
 
 #define STM32F4_ADC_DEFAULT_INIT_TD {\
@@ -166,10 +166,10 @@ DMA_HandleTypeDef adc3_dma02_handle = STM32F4_DEFAULT_DMA02_HANDLE;
     .ScanConvMode = DISABLE,\
     .EOCSelection = DISABLE,\
     .ContinuousConvMode = ENABLE,\
-    .NbrOfConversion = 2,\
+    .NbrOfConversion = 1,\
     .DiscontinuousConvMode = DISABLE,\
     .NbrOfDiscConversion = 0,\
-    .ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1,\
+    .ExternalTrigConv = ADC_SOFTWARE_START,\
     .ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE,\
     .DMAContinuousRequests = ENABLE\
 }
@@ -181,7 +181,7 @@ DMA_HandleTypeDef adc3_dma02_handle = STM32F4_DEFAULT_DMA02_HANDLE;
     .Init = STM32F4_ADC_DEFAULT_INIT_TD,\
     .Instance = ADC1,\
     .NbrOfCurrentConversionRank = 0,\
-    .DMA_Handle = &adc1_dma40_handle,\
+    .DMA_Handle = &adc1_dma00_handle,\
     .Lock = HAL_UNLOCKED,\
     .State = 0,\
     .ErrorCode = 0\
@@ -200,7 +200,7 @@ struct adc_chan_config adc1_chan10_config = STM32F4_ADC1_DEFAULT_SAC;
 
 #define STM32F4_ADC1_DEFAULT_CONFIG {\
     .sac_chan_count = 16,\
-    .sac_chans = &adc1_chan10_config,\
+    .sac_chans = (struct adc_chan_config [16]){{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},STM32F4_ADC1_DEFAULT_SAC},\
     .sac_adc_handle = &adc1_handle,\
 }
 
@@ -234,7 +234,7 @@ struct adc_chan_config adc2_chan1_config = STM32F4_ADC2_DEFAULT_SAC;
 
 #define STM32F4_ADC2_DEFAULT_CONFIG {\
     .sac_chan_count = 16,\
-    .sac_chans = &adc2_chan1_config,\
+    .sac_chans = (struct adc_chan_config [16]){{0},STM32F4_ADC1_DEFAULT_SAC}\
     .sac_adc_handle = &adc2_handle,\
 }
 
@@ -248,7 +248,7 @@ struct stm32f4_adc_dev_cfg adc2_config = STM32F4_ADC2_DEFAULT_CONFIG;
     .Init = STM32F4_ADC_DEFAULT_INIT_TD,\
     .Instance = ADC3,\
     .NbrOfCurrentConversionRank = 0,\
-    .DMA_Handle = &adc3_dma02_handle,\
+    .DMA_Handle = &adc3_dma12_handle,\
     .Lock = HAL_UNLOCKED,\
     .State = 0,\
     .ErrorCode = 0\
@@ -267,7 +267,7 @@ struct adc_chan_config adc3_chan4_config = STM32F4_ADC3_DEFAULT_SAC;
 
 #define STM32F4_ADC3_DEFAULT_CONFIG {\
     .sac_chan_count = 16,\
-    .sac_chans = &adc3_chan4_config,\
+    .sac_chans = (struct adc_chan_config [16]){{0},{0},{0},{0},STM32F4_ADC3_DEFAULT_SAC},\
     .sac_adc_handle = &adc3_handle,\
 }
 

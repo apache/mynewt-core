@@ -526,7 +526,7 @@ stm32f4_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
 
     cfg  = (struct stm32f4_adc_dev_cfg *)dev->ad_dev.od_init_arg;
     hadc = cfg->sac_adc_handle;
-    chan_cfg = cfg->sac_chans;
+    chan_cfg = &((struct adc_chan_config *)cfg->sac_chans)[cnum];
 
     cfgdata = (ADC_ChannelConfTypeDef *)cfgdata;
 
