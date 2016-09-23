@@ -34,7 +34,7 @@ pkg.downloadscript: nrf51dk-16kbram_download.sh
 pkg.debugscript: nrf51dk-16kbram_debug.sh
 pkg.cflags:
     # Nordic SDK files require these defines.
-    - '-DNRF52'
+    - '-DNRF51'
 
 pkg.deps:
     - hw/mcu/nordic/nrf51xxx
@@ -59,7 +59,7 @@ pkg.syscfg_defs:
 
     CLOCK_FREQ:
         description: 'TBD'
-        value:  1000000
+        value: 1000000
 
     XTAL_32768:
         description: 'TBD'
@@ -68,26 +68,32 @@ pkg.syscfg_defs:
     ADC_0:
         description: 'TBD'
         value:  0
-    ADC_0_RESOLUTION:
-        description: 'TBD'
-        value: 'SAADC_CONFIG_RESOLUTION'
-    ADC_0_OVERSAMPLE:
-        description: 'TBD'
-        value: 'SAADC_CONFIG_OVERSAMPLE'
     ADC_0_INTERRUPT_PRIORITY:
         description: 'TBD'
-        value: 'SAADC_CONFIG_IRQ_PRIORITY'
+        value: 'ADC_CONFIG_IRQ_PRIORITY'
 
     UART_0:
         description: 'TBD'
-        value:  1
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TBD'
+        value: 9
+    UART_0_PIN_RX:
+        description: 'TBD'
+        value: 11
+    UART_0_PIN_RTS:
+        description: 'TBD'
+        value: 12
+    UART_0_PIN_CTS:
+        description: 'TBD'
+        value: 10
     UART_1:
         description: 'TBD'
         value:  0
 
     SPI_MASTER:
         description: 'TBD'
-        value:  0
+        value: 0
     SPI_SLAVE:
         description: 'TBD'
-        value:  0
+        value: 0

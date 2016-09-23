@@ -105,8 +105,6 @@ static nrf_drv_saadc_config_t os_bsp_adc0_config = {
 };
 #endif
 
-//void _close(int fd);
-
 /*
  * Returns the flash map slot where the currently active image is located.
  * If executing from internal flash from fixed location, that slot would
@@ -147,7 +145,6 @@ bsp_init(void)
      * XXX this reference is here to keep this function in.
      */
     (void)_sbrk;
-    //(void)_close;
 
     /* Set cputime to count at 1 usec increments */
     rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));

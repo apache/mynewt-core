@@ -16,12 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <hal/flash_map.h>
-#include <hal/hal_bsp.h>
+#include <assert.h>
+#include "syscfg/syscfg.h"
+#include "hal/flash_map.h"
+#include "hal/hal_flash.h"
+#include "hal/hal_bsp.h"
 #include "bsp/cmsis_nvic.h"
 #include "nrf51.h"
 #include "nrf51_bitfields.h"
 #include "mcu/nrf51_hal.h"
+#include "os/os_dev.h"
+#include "uart/uart.h"
+#include "uart_hal/uart_hal.h"
 
 #define BSP_LOWEST_PRIO     ((1 << __NVIC_PRIO_BITS) - 1)
 
@@ -53,7 +59,15 @@ static struct flash_area bsp_flash_areas[] = {
     }
 };
 
-void _close(int fd);
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+};
+#endif
 
 /*
  * Returns the flash map slot where the currently active image is located.
@@ -72,15 +86,24 @@ bsp_imgr_current_slot(void)
 void
 bsp_init(void)
 {
+    int rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
+    assert(rc == 0);
+#endif
+
     /*
      * XXX this reference is here to keep this function in.
      */
     _sbrk(0);
-    _close(0);
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 
+    rc = hal_flash_init();
+    assert(rc == 0);
 }
 
 extern void timer_handler(void);
@@ -94,7 +117,7 @@ rtc0_timer_handler(void)
 }
 
 void
-os_bsp_systick_init(uint32_t os_ticks_per_sec)
+os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio)
 {
     uint32_t ctx;
     uint32_t mask;
@@ -130,7 +153,7 @@ os_bsp_systick_init(uint32_t os_ticks_per_sec)
     NRF_RTC0->TASKS_CLEAR = 1;
 
     /* Set isr in vector table and enable interrupt */
-    NVIC_SetPriority(RTC0_IRQn, BSP_LOWEST_PRIO - 1);
+    NVIC_SetPriority(RTC0_IRQn, prio);
     NVIC_SetVector(RTC0_IRQn, (uint32_t)rtc0_timer_handler);
     NVIC_EnableIRQ(RTC0_IRQn);
 

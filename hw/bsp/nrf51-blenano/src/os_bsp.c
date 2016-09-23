@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,6 +20,7 @@
 #include <assert.h>
 #include "syscfg/syscfg.h"
 #include "hal/flash_map.h"
+#include "hal/hal_flash.h"
 #if MYNEWT_VAL(UART_0)
 #include "mcu/nrf51_hal.h"
 #include "uart/uart.h"
@@ -67,7 +68,6 @@ static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
 #endif
 
 void *_sbrk(int incr);
-void _close(int fd);
 
 /*
  * Returns the flash map slot where the currently active image is located.
@@ -100,10 +100,12 @@ bsp_init(void)
      * XXX this reference is here to keep this function in.
      */
     _sbrk(0);
-    _close(0);
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+
+    rc = hal_flash_init();
+    assert(rc == 0);
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",

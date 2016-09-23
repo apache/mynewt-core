@@ -20,6 +20,7 @@
 #include <assert.h>
 #include "hal/flash_map.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_flash.h"
 #include "hal/hal_cputime.h"
 #include "mcu/nrf52_hal.h"
 #include "uart/uart.h"
@@ -104,8 +105,6 @@ static nrf_drv_saadc_config_t os_bsp_adc0_config = {
 };
 #endif
 
-void _close(int fd);
-
 /*
  * Returns the flash map slot where the currently active image is located.
  * If executing from internal flash from fixed location, that slot would
@@ -141,10 +140,12 @@ bsp_init(void)
      * XXX this reference is here to keep this function in.
      */
     _sbrk(0);
-    _close(0);
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+
+    rc = hal_flash_init();
+    assert(rc == 0);
 
     /*
      * Need to initialize cputime here, because bitbanger uart uses it.
