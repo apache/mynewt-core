@@ -47,6 +47,14 @@ pkg.syscfg_defs:
         description: 'TBD'
         value: 'MYNEWT_PKG_SYS_COREDUMP'
 
+    SANITY_INTERVAL:
+        description: 'The interval at which the sanity checks should run, should be at least 200ms prior to watchdog'
+        value: 500
+
+    WATCHDOG_INTERVAL:
+        description: 'The interval at which the watchdog should reset if not tickled, in ms'
+        value: 1000
+
     MSYS_1_BLOCK_COUNT:
         description: 'TBD'
         value: 12

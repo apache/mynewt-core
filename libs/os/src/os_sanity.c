@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -18,20 +18,14 @@
  */
 
 #include <assert.h>
-#include <string.h> 
+#include <string.h>
 
-#include "os/os.h" 
+#include "os/os.h"
 
-SLIST_HEAD(, os_sanity_check) g_os_sanity_check_list = 
-    SLIST_HEAD_INITIALIZER(os_sanity_check_list); 
+SLIST_HEAD(, os_sanity_check) g_os_sanity_check_list =
+    SLIST_HEAD_INITIALIZER(os_sanity_check_list);
 
-struct os_mutex g_os_sanity_check_mu; 
-
-int g_os_sanity_num_secs;
-
-struct os_task g_os_sanity_task;
-os_stack_t g_os_sanity_task_stack[OS_STACK_ALIGN(OS_SANITY_STACK_SIZE)];
-
+struct os_mutex g_os_sanity_check_mu;
 
 /**
  * Initialize a sanity check
@@ -40,10 +34,10 @@ os_stack_t g_os_sanity_task_stack[OS_STACK_ALIGN(OS_SANITY_STACK_SIZE)];
  *
  * @return 0 on success, error code on failure.
  */
-int 
+int
 os_sanity_check_init(struct os_sanity_check *sc)
 {
-    memset(sc, 0, sizeof(*sc)); 
+    memset(sc, 0, sizeof(*sc));
 
     return (0);
 }
@@ -51,12 +45,12 @@ os_sanity_check_init(struct os_sanity_check *sc)
 /**
  * Lock the sanity check list
  *
- * @return 0 on success, error code on failure. 
+ * @return 0 on success, error code on failure.
  */
 static int
 os_sanity_check_list_lock(void)
 {
-    int rc; 
+    int rc;
 
     if (!g_os_started) {
         return (0);
@@ -73,14 +67,14 @@ err:
 }
 
 /**
- * Unlock the sanity check list 
+ * Unlock the sanity check list
  *
  * @return 0 on success, error code on failure
  */
-static int 
+static int
 os_sanity_check_list_unlock(void)
 {
-    int rc; 
+    int rc;
 
     if (!g_os_started) {
         return (0);
@@ -103,10 +97,10 @@ err:
  *
  * @return 0 on success, error code on failure
  */
-int 
+int
 os_sanity_task_checkin(struct os_task *t)
 {
-    int rc; 
+    int rc;
 
     if (t == NULL) {
         t = os_sched_get_current_task();
@@ -124,13 +118,13 @@ err:
 
 
 /**
- * Register a sanity check 
+ * Register a sanity check
  *
- * @param sc The sanity check to register 
+ * @param sc The sanity check to register
  *
  * @return 0 on success, error code on failure
  */
-int 
+int
 os_sanity_check_register(struct os_sanity_check *sc)
 {
     int rc;
@@ -154,14 +148,14 @@ err:
 
 
 /**
- * Reset the os sanity check, so that it doesn't trip up the 
+ * Reset the os sanity check, so that it doesn't trip up the
  * sanity timer.
  *
- * @param sc The sanity check to reset 
+ * @param sc The sanity check to reset
  *
- * @return 0 on success, error code on failure 
+ * @return 0 on success, error code on failure
  */
-int 
+int
 os_sanity_check_reset(struct os_sanity_check *sc)
 {
     int rc;
@@ -183,75 +177,58 @@ err:
     return (rc);
 }
 
-/**
- * The main sanity check task loop.  This executes every SANITY_CHECK_NUM_SECS
- * and goes through to see if any of the registered sanity checks are expired.
- * If the sanity checks have expired, it restarts the operating system.
+/*
+ * Called from the IDLE task context, every MYNEWT_VAL(SANITY_INTERVAL) msecs.
  *
- * @param arg unused 
- *
- * @return never 
+ * Goes through the sanity check list, and performs sanity checks.  If any of
+ * these checks failed, or tasks have not checked in, it resets the processor.
  */
-static void
-os_sanity_task_loop(void *arg)
+void
+os_sanity_run(void)
 {
-    struct os_sanity_check *sc; 
-    int rc; 
+    struct os_sanity_check *sc;
+    int rc;
 
-    while (1) {
-        rc = os_sanity_check_list_lock();
-        if (rc != 0) {
-            assert(0);
-        }
+    rc = os_sanity_check_list_lock();
+    if (rc != 0) {
+        assert(0);
+    }
 
-        SLIST_FOREACH(sc, &g_os_sanity_check_list, sc_next) {
-            rc = OS_OK; 
+    SLIST_FOREACH(sc, &g_os_sanity_check_list, sc_next) {
+        rc = OS_OK;
 
-            if (sc->sc_func) {
-                rc = sc->sc_func(sc, sc->sc_arg);
-                if (rc == OS_OK) {
-                    sc->sc_checkin_last = os_time_get();
-                    continue;
-                }
-            }
-
-            if (OS_TIME_TICK_GT(os_time_get() - sc->sc_checkin_last, 
-                        sc->sc_checkin_itvl)) {
-                assert(0);
+        if (sc->sc_func) {
+            rc = sc->sc_func(sc, sc->sc_arg);
+            if (rc == OS_OK) {
+                sc->sc_checkin_last = os_time_get();
+                continue;
             }
         }
 
-
-        rc = os_sanity_check_list_unlock();
-        if (rc != 0) {
+        if (OS_TIME_TICK_GT(os_time_get(),
+                    sc->sc_checkin_last + sc->sc_checkin_itvl)) {
             assert(0);
         }
+    }
 
-        os_time_delay(g_os_sanity_num_secs); 
+    rc = os_sanity_check_list_unlock();
+    if (rc != 0) {
+        assert(0);
     }
 }
 
 /**
- * Initialize the sanity task and mutex. 
+ * Initialize the sanity task and mutex.
  *
  * @return 0 on success, error code on failure
  */
-int 
-os_sanity_task_init(int num_secs)
+int
+os_sanity_init(void)
 {
     int rc;
 
-    g_os_sanity_num_secs = num_secs * OS_TICKS_PER_SEC;
-
-    rc = os_mutex_init(&g_os_sanity_check_mu); 
+    rc = os_mutex_init(&g_os_sanity_check_mu);
     if (rc != 0) {
-        goto err;
-    }
-
-    rc = os_task_init(&g_os_sanity_task, "os_sanity", os_sanity_task_loop, 
-            NULL, OS_SANITY_PRIO, OS_WAIT_FOREVER, g_os_sanity_task_stack, 
-            OS_STACK_ALIGN(OS_SANITY_STACK_SIZE));
-    if (rc != OS_OK) {
         goto err;
     }
 

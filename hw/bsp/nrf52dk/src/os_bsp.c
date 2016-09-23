@@ -25,6 +25,7 @@
 #include "hal/hal_cputime.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_watchdog.h"
 #include "mcu/nrf52_hal.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
@@ -188,4 +189,5 @@ bsp_init(void)
             nrf52_adc_dev_init, &os_bsp_adc0_config);
     assert(rc == 0);
 #endif
+
 }

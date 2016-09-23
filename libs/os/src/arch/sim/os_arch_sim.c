@@ -115,7 +115,7 @@ static void
 ctxsw_handler(int sig)
 {
     struct os_task *t, *next_t;
-    struct stack_frame *sf; 
+    struct stack_frame *sf;
     int rc;
 
     OS_ASSERT_CRITICAL();
@@ -417,7 +417,6 @@ os_arch_os_init(void)
     signals_init();
 
     os_init_idle_task();
-    os_sanity_task_init(1);
 
     return OS_OK;
 }

@@ -18,6 +18,7 @@
  */
 
 #include "hal/hal_watchdog.h"
+#include "bsp/cmsis_nvic.h"
 
 #include <assert.h>
 
@@ -26,6 +27,8 @@
 #include "nrf_wdt.h"
 #include "nrf_drv_wdt.h"
 
+extern void WDT_IRQHandler(void);
+
 static void
 nrf51_hal_wdt_default_handler(void)
 {
@@ -33,16 +36,24 @@ nrf51_hal_wdt_default_handler(void)
 }
 
 int
-hal_watchdog_init(int expire_secs)
+hal_watchdog_init(int expire_msecs)
 {
     nrf_drv_wdt_config_t cfg;
+    nrf_drv_wdt_channel_id cid;
     int rc;
+
+    NVIC_SetVector(WDT_IRQn, (uint32_t) WDT_IRQHandler);
 
     cfg.behaviour = NRF_WDT_BEHAVIOUR_RUN_SLEEP;
     cfg.interrupt_priority = WDT_CONFIG_IRQ_PRIORITY;
-    cfg.reload_value = (uint32_t) expire_secs;
+    cfg.reload_value = (uint32_t) expire_msecs;
 
     rc = nrf_drv_wdt_init(&cfg, nrf51_hal_wdt_default_handler);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = nrf_drv_wdt_channel_alloc(&cid);
     if (rc != 0) {
         goto err;
     }

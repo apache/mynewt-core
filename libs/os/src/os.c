@@ -25,6 +25,7 @@
 
 #include "hal/hal_os_tick.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_watchdog.h"
 
 #include <assert.h>
 
@@ -43,6 +44,7 @@ int g_os_started;
 #endif
 #define MAX_IDLE_TICKS  (600 * OS_TICKS_PER_SEC)        /* 10 minutes */
 
+
 /**
  * Idle operating system task, runs when no other tasks are running.
  * The idle task operates in tickless mode, which means it looks for
@@ -57,14 +59,35 @@ os_idle_task(void *arg)
     os_sr_t sr;
     os_time_t now;
     os_time_t iticks, sticks, cticks;
+    os_time_t sanity_last;
+    os_time_t sanity_itvl_ticks;
+
+    sanity_itvl_ticks = (MYNEWT_VAL(SANITY_INTERVAL) * OS_TICKS_PER_SEC) / 1000;
+    sanity_last = 0;
+
+    hal_watchdog_tickle();
 
     while (1) {
         ++g_os_idle_ctr;
+
+        now = os_time_get();
+        if (OS_TIME_TICK_GT(now, sanity_last + sanity_itvl_ticks)) {
+            os_sanity_run();
+            /* Tickle the watchdog after successfully running sanity */
+            hal_watchdog_tickle();
+            sanity_last = now;
+        }
+
         OS_ENTER_CRITICAL(sr);
         now = os_time_get();
         sticks = os_sched_wakeup_ticks(now);
         cticks = os_callout_wakeup_ticks(now);
         iticks = min(sticks, cticks);
+        /* Wakeup in time to run sanity as well from the idle context,
+         * as the idle task does not schedule itself.
+         */
+        iticks = min(iticks, ((sanity_last + sanity_itvl_ticks) - now));
+
         if (iticks < MIN_IDLE_TICKS) {
             iticks = 0;
         } else if (iticks > MAX_IDLE_TICKS) {
@@ -95,9 +118,20 @@ os_started(void)
 void
 os_init_idle_task(void)
 {
-    os_task_init(&g_idle_task, "idle", os_idle_task, NULL,
+    int rc;
+
+    rc = os_task_init(&g_idle_task, "idle", os_idle_task, NULL,
             OS_IDLE_PRIO, OS_WAIT_FOREVER, g_idle_task_stack,
             OS_STACK_ALIGN(OS_IDLE_STACK_SIZE));
+    assert(rc == 0);
+
+    /* Initialize sanity */
+    rc = os_sanity_init();
+    assert(rc == 0);
+
+    assert(MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 > MYNEWT_VAL(SANITY_INTERVAL));
+
+    hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
 }
 
 /**
@@ -139,6 +173,9 @@ os_start(void)
 
     err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
     assert(err == OS_OK);
+
+    /* Enable the watchdog prior to starting the OS */
+    hal_watchdog_enable();
 
     err = os_arch_os_start();
     assert(err == OS_OK);

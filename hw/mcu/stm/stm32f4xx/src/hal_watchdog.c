@@ -17,30 +17,21 @@
  * under the License.
  */
 
-#ifndef _HAL_WATCHDOG_H_
-#define _HAL_WATCHDOG_H_
+#include "hal/hal_watchdog.h"
 
-/*
- * Set a recurring watchdog timer to fire no sooner than in 'expire_secs'
- * seconds. Watchdog should be tickled periodically with a frequency
- * smaller than 'expire_secs'. Watchdog needs to be then started with
- * a call to hal_watchdog_enable().
- *
- * @param expire_msecs		Watchdog timer expiration time in msecs
- *
- * @return			< 0 on failure; on success return the actual
- *                              expiration time as positive value
- */
-int hal_watchdog_init(int expire_msecs);
+int
+hal_watchdog_init(int expire_msecs)
+{
+    return (0);
+}
 
-/*
- * Starts the watchdog.
- */
-void hal_watchdog_enable(void);
+void
+hal_watchdog_enable(void)
+{
+}
 
-/*
- * Tickles the watchdog. Needs to be done before 'expire_secs' fires.
- */
-void hal_watchdog_tickle(void);
+void
+hal_watchdog_tickle(void)
+{
+}
 
-#endif /* _HAL_WATCHDOG_H_ */

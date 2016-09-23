@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,10 +20,10 @@
 #ifndef _OS_SANITY_H
 #define _OS_SANITY_H
 
-#include <stdint.h> 
+#include <stdint.h>
 
 #include "os/os_time.h"
-#include "os/queue.h" 
+#include "os/queue.h"
 
 struct os_sanity_check;
 typedef int (*os_sanity_check_func_t)(struct os_sanity_check *, void *);
@@ -32,7 +32,7 @@ struct os_sanity_check {
     os_time_t sc_checkin_last;
     os_time_t sc_checkin_itvl;
     os_sanity_check_func_t sc_func;
-    void *sc_arg; 
+    void *sc_arg;
 
     SLIST_ENTRY(os_sanity_check) sc_next;
 
@@ -43,7 +43,9 @@ struct os_sanity_check {
     (__sc)->sc_arg = (__arg);                              \
     (__sc)->sc_checkin_itvl = (__itvl) * OS_TICKS_PER_SEC;
 
-int os_sanity_task_init(int);
+int os_sanity_init(void);
+void os_sanity_run(void);
+
 struct os_task;
 int os_sanity_task_checkin(struct os_task *);
 
