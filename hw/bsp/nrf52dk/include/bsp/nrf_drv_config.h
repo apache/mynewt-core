@@ -208,7 +208,6 @@
 
 #if (SPI0_ENABLED == 1)
 #define SPI0_USE_EASY_DMA 1
-#define SPI0_CONFIG_CSN_PIN         22 /* Note: not defined by SDK */
 #define SPI0_CONFIG_SCK_PIN         23
 #define SPI0_CONFIG_MOSI_PIN        24
 #define SPI0_CONFIG_MISO_PIN        25
@@ -249,7 +248,6 @@
 #define SPIS0_ENABLED 1
 
 #if (SPIS0_ENABLED == 1)
-#define SPIS0_CONFIG_CSN_PIN         22 /* Note: not defined by SDK */
 #define SPIS0_CONFIG_SCK_PIN         23
 #define SPIS0_CONFIG_MOSI_PIN        24
 #define SPIS0_CONFIG_MISO_PIN        25

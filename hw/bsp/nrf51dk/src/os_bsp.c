@@ -18,6 +18,7 @@
  */
 #include <assert.h>
 #include "syscfg/syscfg.h"
+#include "bsp.h"
 #include "hal/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_spi.h"
@@ -124,14 +125,12 @@ bsp_init(void)
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 
 #if MYNEWT_VAL(SPI_MASTER)
-    /*  We initialize one SPI interface as a master. */
     rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(SPI_SLAVE)
-    /*  We initialize one SPI interface as a master. */
-    spi_cfg.csn_pin = SPIS1_CONFIG_CSN_PIN;
+    spi_cfg.csn_pin = SPI_SS_PIN;
     spi_cfg.csn_pullup = NRF_GPIO_PIN_PULLUP;
     rc = hal_spi_init(1, &spi_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);

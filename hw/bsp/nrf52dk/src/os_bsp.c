@@ -29,6 +29,7 @@
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #include "os/os_dev.h"
+#include "bsp.h"
 
 #if MYNEWT_VAL(SPI_MASTER)
 #include "nrf_drv_spi.h"
@@ -158,14 +159,13 @@ bsp_init(void)
     assert(rc == 0);
 
 #if MYNEWT_VAL(SPI_MASTER)
-    /*  We initialize one SPI interface as a master. */
     rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(SPI_SLAVE)
-    /*  We initialize one SPI interface as a master. */
-    spi_cfg.csn_pin = SPIS0_CONFIG_CSN_PIN;
+    spi_cfg.csn_pin = SPI_SS_PIN;
+    spi_cfg.csn_pullup = NRF_GPIO_PIN_PULLUP;
     rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif

@@ -32,6 +32,10 @@
 #include <nrf_drv_common.h>
 #include <app_util_platform.h>
 
+#ifndef min
+#define min(a, b) ((a)<(b)?(a):(b))
+#endif
+
 /* XXX:
  * 1) what about stats?
  * 2) Dealing with errors (OVERFLOW, OVERREAD)
@@ -58,19 +62,25 @@
 #define HAL_SPI_SLAVE_STATE_READY       (2)
 
 struct nrf52_hal_spi {
+    uint8_t spi_type;
     uint8_t spi_xfr_flag;   /* Master only */
     uint8_t dummy_rx;       /* Master only */
     uint8_t slave_state;    /* Slave only */
-    uint8_t slave_buflen;   /* Slave only */
+    uint16_t nhs_buflen;
+    uint16_t nhs_bytes_txd;
     struct hal_spi_settings spi_cfg; /* Slave and master */
     union {
         nrf_drv_spi_t   spim;
         nrf_drv_spis_t  spis;
     } nhs_spi;
 
-    /* These are slave only */
-    uint8_t *slave_txbuf;
-    uint8_t *slave_rxbuf;
+    /* Pointers to tx/rx buffers */
+    uint8_t *nhs_txbuf;
+    uint8_t *nhs_rxbuf;
+
+    /* Callback and arguments */
+    hal_spi_txrx_cb txrx_cb_func;
+    void            *txrx_cb_arg;
 };
 
 #if SPI0_ENABLED || SPIS0_ENABLED
@@ -121,6 +131,8 @@ nrf_drv_spis_t inst_spi1_s = NRF_DRV_SPIS_INSTANCE(1);
 static void
 nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 {
+    uint8_t xfr_bytes;
+    uint16_t len;
     NRF_SPIM_Type *p_spim;
 
     p_spim = spi->nhs_spi.spim.p_registers;
@@ -132,11 +144,29 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
             return;
         }
 
-        if (spi->spi_cfg.txrx_cb_func) {
-            spi->spi_cfg.txrx_cb_func(spi->spi_cfg.txrx_cb_arg,
-                                      p_spim->TXD.AMOUNT);
+        /* Are there more bytes to send? */
+        xfr_bytes = p_spim->TXD.AMOUNT;
+        spi->nhs_bytes_txd += xfr_bytes;
+        if (spi->nhs_bytes_txd < spi->nhs_buflen) {
+            spi->nhs_txbuf += xfr_bytes;
+            len = spi->nhs_buflen - spi->nhs_bytes_txd;
+            len = min(255, len);
+            nrf_spim_tx_buffer_set(p_spim, spi->nhs_txbuf, (uint8_t)len);
+
+            /* If no rxbuf, we need to set rxbuf and maxcnt to 1 */
+            if (spi->nhs_rxbuf) {
+                spi->nhs_rxbuf += xfr_bytes;
+                nrf_spim_rx_buffer_set(p_spim, spi->nhs_rxbuf, (uint8_t)len);
+            }
+            nrf_spim_task_trigger(p_spim, NRF_SPIM_TASK_START);
+        } else {
+            if (spi->txrx_cb_func) {
+                spi->txrx_cb_func(spi->txrx_cb_arg, spi->nhs_buflen);
+
+            }
+            spi->spi_xfr_flag = 0;
+            nrf_spim_int_disable(p_spim, NRF_SPIM_INT_END_MASK);
         }
-        spi->spi_xfr_flag = 0;
     }
 }
 #endif
@@ -155,16 +185,16 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_ACQUIRED);
 
         if (spi->slave_state == HAL_SPI_SLAVE_STATE_ACQ_SEM) {
-            if (spi->slave_txbuf == NULL) {
+            if (spi->nhs_txbuf == NULL) {
                 nrf_spis_tx_buffer_set(p_spis, 0, 0);
             } else {
-                nrf_spis_tx_buffer_set(p_spis, spi->slave_txbuf, spi->slave_buflen);
+                nrf_spis_tx_buffer_set(p_spis, spi->nhs_txbuf, spi->nhs_buflen);
             }
 
-            if (spi->slave_rxbuf == NULL) {
+            if (spi->nhs_rxbuf == NULL) {
                 nrf_spis_rx_buffer_set(p_spis, 0, 0);
             } else {
-                nrf_spis_rx_buffer_set(p_spis, spi->slave_rxbuf, spi->slave_buflen);
+                nrf_spis_rx_buffer_set(p_spis, spi->nhs_rxbuf, spi->nhs_buflen);
             }
             nrf_spis_task_trigger(p_spis, NRF_SPIS_TASK_RELEASE);
             spi->slave_state = HAL_SPI_SLAVE_STATE_READY;
@@ -175,14 +205,14 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
     if (nrf_spis_event_check(p_spis, NRF_SPIS_EVENT_END)) {
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_END);
         if (spi->slave_state == HAL_SPI_SLAVE_STATE_READY) {
-            if (spi->spi_cfg.txrx_cb_func) {
+            if (spi->txrx_cb_func) {
                 /* Get transfer length */
-                if (spi->slave_txbuf == NULL) {
+                if (spi->nhs_txbuf == NULL) {
                     xfr_len = nrf_spis_rx_amount_get(p_spis);
                 } else {
                     xfr_len = nrf_spis_tx_amount_get(p_spis);
                 }
-                spi->spi_cfg.txrx_cb_func(spi->spi_cfg.txrx_cb_arg, xfr_len);
+                spi->txrx_cb_func(spi->txrx_cb_arg, xfr_len);
             }
             spi->slave_state = HAL_SPI_SLAVE_STATE_IDLE;
         }
@@ -196,7 +226,7 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 void
 nrf52_spi0_irq_handler(void)
 {
-    if (nrf52_hal_spi0.spi_cfg.spi_type == HAL_SPI_TYPE_MASTER) {
+    if (nrf52_hal_spi0.spi_type == HAL_SPI_TYPE_MASTER) {
         nrf52_irqm_handler(&nrf52_hal_spi0);
     } else {
         nrf52_irqs_handler(&nrf52_hal_spi0);
@@ -208,7 +238,7 @@ nrf52_spi0_irq_handler(void)
 void
 nrf52_spi1_irq_handler(void)
 {
-    if (nrf52_hal_spi1.spi_cfg.spi_type == HAL_SPI_TYPE_MASTER) {
+    if (nrf52_hal_spi1.spi_type == HAL_SPI_TYPE_MASTER) {
         nrf52_irqm_handler(&nrf52_hal_spi1);
     } else {
         nrf52_irqs_handler(&nrf52_hal_spi1);
@@ -508,14 +538,15 @@ hal_spi_init_slave(nrf_drv_spis_t *p_instance,
 }
 
 /**
- * Initialize the SPI interface
+ * Initialize the SPI, given by spi_num.
  *
+ * @param spi_num The number of the SPI to initialize
+ * @param cfg HW/MCU specific configuration,
+ *            passed to the underlying implementation, providing extra
+ *            configuration.
+ * @param spi_type SPI type (master or slave)
  *
- * @param spi_num
- * @param cfg
- * @param spi_type
- *
- * @return int
+ * @return int 0 on success, non-zero error code on failure.
  */
 int
 hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
@@ -537,7 +568,7 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
     }
 
     irq_handler = NULL;
-    spi->spi_cfg.spi_type  = spi_type;
+    spi->spi_type  = spi_type;
     if (spi_num == 0) {
 #if SPI0_ENABLED || SPIS0_ENABLED
         irq_handler = nrf52_spi0_irq_handler;
@@ -596,18 +627,37 @@ err:
     return (rc);
 }
 
+/**
+ * Configure the spi. Must be called after the spi is initialized (after
+ * hal_spi_init is called) and when the spi is disabled (user must call
+ * hal_spi_disable if the spi has been enabled through hal_spi_enable prior
+ * to calling this function). Can also be used to reconfigure an initialized
+ * SPI (assuming it is disabled as described previously).
+ *
+ * @param spi_num The number of the SPI to configure.
+ * @param psettings The settings to configure this SPI with
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
 int
 hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 {
     int rc;
     struct nrf52_hal_spi *spi;
+    NRF_SPIM_Type *p_spim;
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
-    spi->spi_cfg.txrx_cb_func = settings->txrx_cb_func;
-    spi->spi_cfg.txrx_cb_arg = settings->txrx_cb_arg;
+    /*
+     * This looks odd, but the ENABLE register is in the same location for
+     * SPIM, SPI and SPIS
+     */
+    p_spim = spi->nhs_spi.spim.p_registers;
+    if (p_spim->ENABLE != 0) {
+        return -1;
+    }
 
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
         rc = hal_spi_config_master(spi, settings);
     } else {
         rc = hal_spi_config_slave(spi, settings);
@@ -636,18 +686,12 @@ hal_spi_enable(int spi_num)
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
+        /* For now, enable this in normal SPI mode (not spim) */
         p_spim = spi->nhs_spi.spim.p_registers;
-        /* We need to enable this in blocking or non-blocking mode */
-        if (spi->spi_cfg.txrx_cb_func) {
-            nrf_spim_event_clear(p_spim, NRF_SPIM_INT_END_MASK);
-            nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
-            nrf_spim_enable(p_spim);
-        } else {
-            nrf_spi_enable((NRF_SPI_Type *)p_spim);
-        }
+        nrf_spi_enable((NRF_SPI_Type *)p_spim);
     } else {
-        if (spi->spi_cfg.txrx_cb_func == NULL) {
+        if (spi->txrx_cb_func == NULL) {
             rc = EINVAL;
             goto err;
         }
@@ -682,7 +726,7 @@ hal_spi_disable(int spi_num)
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
         p_spim = spi->nhs_spi.spim.p_registers;
         nrf_spim_int_disable(p_spim, NRF_SPI_IRQ_DISABLE_ALL);
         if (spi->spi_xfr_flag) {
@@ -697,9 +741,13 @@ hal_spi_disable(int spi_num)
         nrf_spis_event_clear(p_spis, NRF_SPIS_EVENT_ACQUIRED);
         nrf_spis_disable(p_spis);
         spi->slave_state = HAL_SPI_SLAVE_STATE_IDLE;
-        spi->slave_txbuf = NULL;
-        spi->slave_rxbuf = NULL;
     }
+
+    spi->nhs_txbuf = NULL;
+    spi->nhs_rxbuf = NULL;
+    spi->nhs_buflen = 0;
+    spi->nhs_bytes_txd = 0;
+
     rc = 0;
 
 err:
@@ -708,18 +756,16 @@ err:
 
 /**
  * Blocking call to send a value on the SPI. Returns the value received from the
- * SPI.
+ * SPI slave.
  *
  * MASTER: Sends the value and returns the received value from the slave.
- * SLAVE: Sets the value to send to the master when the master transfers a
- *        value. This value will be sent until another call to hal_spi_tx_val()
- *        is made. The return code is ignored for a slave. 
+ * SLAVE: Invalid API. Returns 0xFFFF
  *
- * @param spi_num
- * @param val
+ * @param spi_num   Spi interface to use
+ * @param val       Value to send
  *
  * @return uint16_t Value received on SPI interface from slave. Returns 0xFFFF
- * if called when SPI configured as a Slave.
+ * if called when the SPI is configured to be a slave
  */
 uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
 {
@@ -730,7 +776,7 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
         p_spi = (NRF_SPI_Type *) spi->nhs_spi.spim.p_registers;
         nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
         nrf_spi_txd_set(p_spi, (uint8_t) val);
@@ -749,20 +795,18 @@ err:
 
 /**
  * Sets the txrx callback (executed at interrupt context) when the
- * buffer is transferred by the master or the slave using the hal_spi_rxtx API.
- * This callback is also called when the SPI is a slave and chip select is
- * de-asserted and there is data available in the receive buffer.
+ * buffer is transferred by the master or the slave using the non-blocking API.
+ * Cannot be called when the spi is enabled. This callback will also be called
+ * when chip select is de-asserted on the slave.
  *
- * If the callback is NULL, the SPI will be in blocking mode; otherwise it is
- * in non-blocking mode.
- *
- * Cannot be called when the SPI is enabled.
+ * NOTE: This callback is only used for the non-blocking interface and must
+ * be called prior to using the non-blocking API.
  *
  * @param spi_num   SPI interface on which to set callback
- * @param txrx_cb   Pointer to callback function. NULL to set into blocking mode
- * @param arg       Argument passed to callback function.
+ * @param txrx      Callback function
+ * @param arg       Argument to be passed to callback function
  *
- * @return int 0 on success, -1 if spi is already enabled.
+ * @return int 0 on success, non-zero error code on failure.
  */
 int
 hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
@@ -781,8 +825,8 @@ hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
     if (p_spim->ENABLE != 0) {
         rc = -1;
     } else {
-        spi->spi_cfg.txrx_cb_func = txrx_cb;
-        spi->spi_cfg.txrx_cb_arg = arg;
+        spi->txrx_cb_func = txrx_cb;
+        spi->txrx_cb_arg = arg;
         rc = 0;
     }
 
@@ -791,24 +835,25 @@ err:
 }
 
 /**
- * Send a buffer and also store the received values. This call can be either
- * blocking or non-blocking for the master; it is always non-blocking for slave.
- * In non-blocking mode, the txrx callback is executed at interrupt context when
- * the buffer is sent.
+ * Blocking interface to send a buffer and store the received values from the
+ * slave. The transmit and receive buffers are either arrays of 8-bit (uint8_t)
+ * values or 16-bit values depending on whether the spi is configured for 8 bit
+ * data or more than 8 bits per value. The 'cnt' parameter is the number of
+ * 8-bit or 16-bit values. Thus, if 'cnt' is 10, txbuf/rxbuf would point to an
+ * array of size 10 (in bytes) if the SPI is using 8-bit data; otherwise
+ * txbuf/rxbuf would point to an array of size 20 bytes (ten, uint16_t values).
+ *
+ * NOTE: these buffers are in the native endian-ness of the platform.
+ *
  *     MASTER: master sends all the values in the buffer and stores the
  *             stores the values in the receive buffer if rxbuf is not NULL.
  *             The txbuf parameter cannot be NULL.
- *     SLAVE: Slave preloads the data to be sent to the master (values
- *            stored in txbuf) and places received data from master in rxbuf (if
- *            not NULL).  The txrx callback when len values are transferred or
- *            master de-asserts chip select. If txbuf is NULL, the slave
- *            transfers its default byte. Both rxbuf and txbuf cannot be NULL.
+ *     SLAVE: cannot be called for a slave; returns -1
  *
  * @param spi_num   SPI interface to use
  * @param txbuf     Pointer to buffer where values to transmit are stored.
- * @param rxbuf     Pointer to buffer to store values received from peer. Can
- *                  be NULL.
- * @param len       Number of values to be transferred.
+ * @param rxbuf     Pointer to buffer to store values received from peer.
+ * @param cnt       Number of 8-bit or 16-bit values to be transferred.
  *
  * @return int 0 on success, non-zero error code on failure.
  */
@@ -818,6 +863,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     int i;
     int rc;
     int txcnt;
+    uint32_t enabled;
     uint8_t *txd, *rxd;
     uint8_t rxval;
     NRF_SPI_Type *p_spi;
@@ -825,70 +871,158 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     struct nrf52_hal_spi *spi;
 
     rc = EINVAL;
-    if (!len || (len > 255)) {
+    if (!len) {
         goto err;
     }
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
-        if (spi->spi_cfg.txrx_cb_func) {
-            /* Must have a txbuf for master! */
-            if (txbuf == NULL) {
-                goto err;
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
+        /* Must have a txbuf for master! */
+        if (txbuf == NULL) {
+            goto err;
+        }
+
+        /*
+         * If SPIM is enabled, we want to stop, disable, then enable
+         * the legacy SPI interface.
+         */
+        p_spim = spi->nhs_spi.spim.p_registers;
+        enabled = p_spim->ENABLE;
+        if (enabled == SPIM_ENABLE_ENABLE_Enabled) {
+            nrf_spim_int_disable(p_spim, NRF_SPI_IRQ_DISABLE_ALL);
+            hal_spi_stop_transfer(p_spim);
+            nrf_spim_disable(p_spim);
+            enabled = 0;
+        }
+
+        if (enabled == 0) {
+            nrf_spi_enable((NRF_SPI_Type *)p_spim);
+        }
+
+        p_spi = (NRF_SPI_Type *) spi->nhs_spi.spim.p_registers;
+        while (nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {
+            rxval = nrf_spi_rxd_get(p_spi);
+            nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
+        }
+        txd = (uint8_t *)txbuf;
+        nrf_spi_txd_set(p_spi, *txd);
+        txcnt = len - 1;
+        rxd = (uint8_t *)rxbuf;
+        for (i = 0; i < len; ++i) {
+            if (txcnt) {
+                ++txd;
+                nrf_spi_txd_set(p_spi, *txd);
+                --txcnt;
             }
-
-            /* Not allowed if transfer in progress */
-            if (spi->spi_xfr_flag) {
-                rc = -1;
-                goto err;
-            }
-            spi->spi_xfr_flag = 1;
-
-            p_spim = spi->nhs_spi.spim.p_registers;
-            nrf_spim_tx_buffer_set(p_spim, txbuf, len);
-
-            /* If no rxbuf, we need to set rxbuf and maxcnt to 1 */
-            if (rxbuf == NULL) {
-                nrf_spim_rx_buffer_set(p_spim, &spi->dummy_rx, 1);
-            } else {
-                nrf_spim_rx_buffer_set(p_spim, rxbuf, len);
-            }
-
-            nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_END);
-            nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_STOPPED);
-
-            nrf_spim_task_trigger(p_spim, NRF_SPIM_TASK_START);
-            nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
-        } else {
-            /* Blocking spi transfer */
-            p_spi = (NRF_SPI_Type *) spi->nhs_spi.spim.p_registers;
-            while (nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {
-                rxval = nrf_spi_rxd_get(p_spi);
-                nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
-            }
-            txd = (uint8_t *)txbuf;
-            nrf_spi_txd_set(p_spi, *txd);
-            txcnt = len - 1;
-            rxd = (uint8_t *)rxbuf;
-            for (i = 0; i < len; ++i) {
-                if (txcnt) {
-                    ++txd;
-                    nrf_spi_txd_set(p_spi, *txd);
-                    --txcnt;
-                }
-                while (!nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {}
-                nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
-                rxval = nrf_spi_rxd_get(p_spi);
-                if (rxbuf) {
-                    *rxd = rxval;
-                    ++rxd;
-                }
+            while (!nrf_spi_event_check(p_spi, NRF_SPI_EVENT_READY)) {}
+            nrf_spi_event_clear(p_spi, NRF_SPI_EVENT_READY);
+            rxval = nrf_spi_rxd_get(p_spi);
+            if (rxbuf) {
+                *rxd = rxval;
+                ++rxd;
             }
         }
+        return 0;
+    }
+
+err:
+    return rc;
+}
+
+/**
+ * Non-blocking interface to send a buffer and store received values. Can be
+ * used for both master and slave SPI types. The user must configure the
+ * callback (using hal_spi_set_txrx_cb); the txrx callback is executed at
+ * interrupt context when the buffer is sent.
+ *
+ * The transmit and receive buffers are either arrays of 8-bit (uint8_t)
+ * values or 16-bit values depending on whether the spi is configured for 8 bit
+ * data or more than 8 bits per value. The 'cnt' parameter is the number of
+ * 8-bit or 16-bit values. Thus, if 'cnt' is 10, txbuf/rxbuf would point to an
+ * array of size 10 (in bytes) if the SPI is using 8-bit data; otherwise
+ * txbuf/rxbuf would point to an array of size 20 bytes (ten, uint16_t values).
+ *
+ * NOTE: these buffers are in the native endian-ness of the platform.
+ *
+ *     MASTER: master sends all the values in the buffer and stores the
+ *             stores the values in the receive buffer if rxbuf is not NULL.
+ *             The txbuf parameter cannot be NULL
+ *     SLAVE: Slave "preloads" the data to be sent to the master (values
+ *            stored in txbuf) and places received data from master in rxbuf
+ *            (if not NULL). The txrx callback occurs when len values are
+ *            transferred or master de-asserts chip select. If txbuf is NULL,
+ *            the slave transfers its default byte. Both rxbuf and txbuf cannot
+ *            be NULL.
+ *
+ * @param spi_num   SPI interface to use
+ * @param txbuf     Pointer to buffer where values to transmit are stored.
+ * @param rxbuf     Pointer to buffer to store values received from peer.
+ * @param cnt       Number of 8-bit or 16-bit values to be transferred.
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int
+hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
+{
+    int rc;
+    NRF_SPIM_Type *p_spim;
+    struct nrf52_hal_spi *spi;
+
+    rc = EINVAL;
+    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+
+    if ((spi->txrx_cb_func == NULL) || (len == 0)) {
+        goto err;
+    }
+
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
+        /* Must have a txbuf for master! */
+        if (txbuf == NULL) {
+            goto err;
+        }
+
+        /* Not allowed if transfer in progress */
+        if (spi->spi_xfr_flag) {
+            rc = -1;
+            goto err;
+        }
+        p_spim = spi->nhs_spi.spim.p_registers;
+        nrf_spim_int_disable(p_spim, NRF_SPIM_INT_END_MASK);
+        spi->spi_xfr_flag = 1;
+
+        /* Must be enabled for SPIM as opposed to SPI */
+        if (p_spim->ENABLE != SPIM_ENABLE_ENABLE_Enabled) {
+            p_spim->ENABLE = 0;
+            nrf_spim_enable(p_spim);
+        }
+
+        spi->nhs_bytes_txd = 0;
+        spi->nhs_buflen = len;
+        spi->nhs_txbuf = txbuf;
+        nrf_spim_tx_buffer_set(p_spim, txbuf, len);
+
+        /* If no rxbuf, we need to set rxbuf and maxcnt to 1 */
+        spi->nhs_rxbuf = rxbuf;
+        if (rxbuf == NULL) {
+            nrf_spim_rx_buffer_set(p_spim, &spi->dummy_rx, 1);
+        } else {
+            nrf_spim_rx_buffer_set(p_spim, rxbuf, len);
+        }
+
+        nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_END);
+        nrf_spim_event_clear(p_spim, NRF_SPIM_EVENT_STOPPED);
+
+        nrf_spim_task_trigger(p_spim, NRF_SPIM_TASK_START);
+        nrf_spim_int_enable(p_spim, NRF_SPIM_INT_END_MASK);
     } else {
-        /* Must have txbuf and rxbuf */
+        /* Must have txbuf or rxbuf */
         if ((txbuf == NULL) && (rxbuf == NULL)) {
+            goto err;
+        }
+
+        /* XXX: what to do here? */
+        if (len > 255) {
             goto err;
         }
 
@@ -902,9 +1036,9 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
             goto err;
         }
 
-        spi->slave_rxbuf = rxbuf;
-        spi->slave_txbuf = txbuf;
-        spi->slave_buflen = len;
+        spi->nhs_rxbuf = rxbuf;
+        spi->nhs_txbuf = txbuf;
+        spi->nhs_buflen = len;
         spi->slave_state = HAL_SPI_SLAVE_STATE_ACQ_SEM;
         nrf_spis_task_trigger(spi->nhs_spi.spis.p_reg, NRF_SPIS_TASK_ACQUIRE);
     }
@@ -915,7 +1049,7 @@ err:
 }
 
 /**
- * Sets the default value transferred by the slave.
+ * Sets the default value transferred by the slave. Not valid for master
  *
  * @param spi_num SPI interface to use
  *
@@ -929,9 +1063,10 @@ hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
     struct nrf52_hal_spi *spi;
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_SLAVE) {
+    if (spi->spi_type  == HAL_SPI_TYPE_SLAVE) {
         p_spis = spi->nhs_spi.spis.p_reg;
         nrf_spis_def_set(p_spis, (uint8_t) val);
+        nrf_spis_orc_set(p_spis, (uint8_t) val);
         rc = 0;
     } else {
         rc = EINVAL;
@@ -942,8 +1077,7 @@ err:
 }
 
 /**
- * This aborts the current transfer but keeps the spi enabled. Should only
- * be used when the SPI is in non-blocking mode.
+ * This aborts the current transfer but keeps the spi enabled.
  *
  * @param spi_num   SPI interface on which transfer should be aborted.
  *
@@ -961,11 +1095,7 @@ hal_spi_abort(int spi_num)
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
     rc = 0;
-    if (spi->spi_cfg.txrx_cb_func == NULL) {
-        goto err;
-    }
-
-    if (spi->spi_cfg.spi_type  == HAL_SPI_TYPE_MASTER) {
+    if (spi->spi_type  == HAL_SPI_TYPE_MASTER) {
         p_spim = spi->nhs_spi.spim.p_registers;
         if (spi->spi_xfr_flag) {
             nrf_spim_int_disable(p_spim, NRF_SPI_IRQ_DISABLE_ALL);
