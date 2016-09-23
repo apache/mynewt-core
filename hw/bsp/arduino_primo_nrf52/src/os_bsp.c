@@ -41,8 +41,11 @@
 #include "app_util_platform.h"
 #include "nrf.h"
 #include "app_error.h"
-#include "adc_nrf52/adc_nrf52.h"
 #include "nrf_drv_saadc.h"
+
+#if MYNEWT_VAL(ADC_0)
+#include "adc_nrf52/adc_nrf52.h"
+#endif
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -163,8 +166,8 @@ bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(SPI_SLAVE)
-    /*  We initialize one SPI interface as a master. */
-    spi_cfg.csn_pin = SPIS0_CONFIG_CSN_PIN;
+    spi_cfg.csn_pin = SPI_SS_PIN;
+    spi_cfg.csn_pullup = NRF_GPIO_PIN_PULLUP;
     rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
