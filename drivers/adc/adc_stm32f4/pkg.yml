@@ -26,8 +26,9 @@ pkg.features:
     - ADC_STM32F4
 pkg.apis:
     - ADC_HW_IMPL
+pkg.deps:
+   - drivers/adc
 pkg.deps.TEST:
    - hw/hal
    - hw/mcu/stm/stm32f4xx
-   - drivers/adc
    - libs/testutil
