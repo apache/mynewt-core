@@ -379,6 +379,20 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 }
 
 int
+hal_uart_init(int port, void *arg)
+{
+    struct hal_uart *u;
+
+    if (port >= UART_CNT) {
+        return -1;
+    }
+    u = &uarts[port];
+    u->u_cfg = (const struct stm32f4_uart_cfg *)arg;
+
+    return 0;
+}
+
+int
 hal_uart_close(int port)
 {
     struct hal_uart *u;
