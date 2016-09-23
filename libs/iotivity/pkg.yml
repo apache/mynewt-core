@@ -28,7 +28,10 @@ pkg.deps:
     - "@apache-mynewt-core/libs/os"
     - "@apache-mynewt-core/sys/mn_socket"
     - "@apache-mynewt-core/sys/log"
-
+    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-core/net/nimble/transport/ram"
+    - "@apache-mynewt-core/net/nimble/host/services/gap"
+    - "@apache-mynewt-core/net/nimble/host/services/gatt"
 # remove debug option to save logging
 pkg.cflags: -std=c99
         -DDEBUG=1

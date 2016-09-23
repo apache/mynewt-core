@@ -265,7 +265,7 @@ console_rx_char(void *arg, uint8_t data)
     struct console_tty *ct = (struct console_tty *)arg;
     struct console_ring *tx = &ct->ct_tx;
     struct console_ring *rx = &ct->ct_rx;
-    int tx_space;
+    int tx_space = 0;
     int i;
     int tx_buf[3];
 

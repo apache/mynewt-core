@@ -31,11 +31,16 @@ pkg.deps:
     - libs/util
     - sys/log
     - libs/iotivity
-
+    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-core/net/nimble/controller"
+    - "@apache-mynewt-core/net/nimble/transport/ram"
+    - "@apache-mynewt-core/net/nimble/host/store/ram"
+    - "@apache-mynewt-core/net/nimble/host/services/gap"
+    - "@apache-mynewt-core/net/nimble/host/services/gatt"
 # this tells the library that you intend to suppor the server functionality
 pkg.cflags:
 
-#-DOC_SERVER -- build the server examples 
+#-DOC_SERVER -- build the server examples
 #-DOC_CLIENT -- build the client examples
 #-DOC_TRANSPORT_GATT -- to send COAP over GATT
 #-DOC_TRANSPORT_SERIAL -- to send COAP over serial

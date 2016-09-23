@@ -41,9 +41,12 @@ oc_message_t *oc_attempt_rx_ip(void);
 
 #ifdef OC_TRANSPORT_GATT
 int oc_connectivity_init_gatt(void);
+void oc_connectivity_start_gatt(void);
 void oc_connectivity_shutdown_gatt(void);
 void oc_send_buffer_gatt(oc_message_t *message);
+void oc_send_buffer_gatt_mcast(oc_message_t *message);
 oc_message_t *oc_attempt_rx_gatt(void);
+
 #endif
 
 #ifdef OC_TRANSPORT_SERIAL

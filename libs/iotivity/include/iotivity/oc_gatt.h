@@ -17,13 +17,22 @@
  * under the License.
  */
 
-#ifndef _NEWTMGR_BLE_H_
-#define _NEWTMGR_BLE_H_
+#ifndef OC_GATT_H
+#define OC_GATT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct ble_hs_cfg;
+
+/* returns the event q for bluetooth to use */
 int
-nmgr_ble_proc_mq_evt(struct os_event *ev);
+ble_coap_gatt_srv_init(struct ble_hs_cfg *cfg, struct os_eventq **out);
 
-int
-nmgr_ble_gatt_svr_init(void);
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* _NETMGR_H */
+#endif /* OC_GATT_H */
+

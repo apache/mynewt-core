@@ -76,6 +76,7 @@ void oc_send_buffer_serial(oc_message_t *message) {
     /* add this data to the mbuf */
     rc = os_mbuf_append(m, message->data, message->length);
     if (rc != 0) {
+
         ERROR("oc_transport_serial: could not append data \n");
         goto err;
     }

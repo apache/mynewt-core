@@ -34,6 +34,7 @@ typedef struct
 {
   uint8_t type;
   uint8_t address[6];
+  uint16_t conn_handle;
 } oc_le_addr_t;
 
 typedef struct

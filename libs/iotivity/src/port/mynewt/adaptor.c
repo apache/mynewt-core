@@ -111,13 +111,18 @@ void oc_send_multicast_message(oc_message_t *message)
 /* send all the entries to the OCF stack through the same task */
 void
 oc_task_handler(void *arg) {
+
+#ifdef OC_TRANSPORT_GATT
+    oc_connectivity_start_gatt();
+#endif
+
     while (1) {
+        struct os_callout_func *cf;
         oc_message_t *pmsg;
         (void) pmsg;    /* to avoid unused */
         struct os_event *evt = os_eventq_get(&oc_event_q);
 
         switch(evt->ev_type) {
-
 #ifdef OC_TRANSPORT_IP
             case OC_ADATOR_EVENT_IP:
                 while ((pmsg = oc_attempt_rx_ip()) != NULL) {
@@ -125,7 +130,6 @@ oc_task_handler(void *arg) {
                 }
                 break;
 #endif
-
 #ifdef OC_TRANSPORT_SERIAL
             case OC_ADATOR_EVENT_SERIAL:
                 while ((pmsg = oc_attempt_rx_serial()) != NULL) {
@@ -133,17 +137,20 @@ oc_task_handler(void *arg) {
                 }
                 break;
 #endif
-
 #ifdef OC_TRANSPORT_GATT
             case OC_ADATOR_EVENT_GATT:
                 while ((pmsg = oc_attempt_rx_gatt()) != NULL) {
                     oc_network_event(pmsg);
                 }
                 break;
+        case OS_EVENT_T_TIMER:
+            cf = (struct os_callout_func *)evt;
+            assert(cf->cf_func);
+            cf->cf_func(CF_ARG(cf));
+            break;
 #endif
             default:
                 ERROR("oc_task_handler: Unidentified event %d\n", evt->ev_type);
-
         }
     }
 }
