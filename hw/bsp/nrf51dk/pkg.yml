@@ -50,6 +50,9 @@ pkg.deps.ADC_0:
 pkg.deps.UART_0:
     - drivers/uart/uart_hal
 
+pkg.deps.UART_1:
+    - drivers/uart/uart_bitbang
+
 pkg.syscfg_defs:
     BSP_NRF51:
         description: 'TBD'

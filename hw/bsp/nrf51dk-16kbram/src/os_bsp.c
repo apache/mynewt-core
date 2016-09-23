@@ -17,17 +17,23 @@
  * under the License.
  */
 #include <assert.h>
-#include <hal/flash_map.h>
-#include <hal/hal_bsp.h>
-#include <hal/hal_spi.h>
-#ifdef BSP_CFG_SPI_MASTER
+#include "syscfg/syscfg.h"
+#include "bsp.h"
+#include "hal/flash_map.h"
+#include "hal/hal_bsp.h"
+#include "hal/hal_spi.h"
+#include "mcu/nrf51_hal.h"
+#if MYNEWT_VAL(SPI_MASTER)
 #include "nrf_drv_spi.h"
 #endif
-#ifdef BSP_CFG_SPI_SLAVE
+#if MYNEWT_VAL(SPI_SLAVE)
 #include "nrf_drv_spis.h"
 #endif
 #include "nrf_drv_config.h"
-#include <app_util_platform.h>
+#include "app_util_platform.h"
+#include "os/os_dev.h"
+#include "uart/uart.h"
+#include "uart_hal/uart_hal.h"
 
 static struct flash_area bsp_flash_areas[] = {
     [FLASH_AREA_BOOTLOADER] = {
@@ -57,6 +63,16 @@ static struct flash_area bsp_flash_areas[] = {
     }
 };
 
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+};
+#endif
+
 void _close(int fd);
 void bsp_hal_init(void);
 
@@ -83,12 +99,20 @@ void bsp_slot_init_split_application(void) {
 void
 bsp_init(void)
 {
-#ifdef BSP_CFG_SPI_MASTER
     int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_MASTER)
     nrf_drv_spi_config_t spi_cfg = NRF_DRV_SPI_DEFAULT_CONFIG(0);
 #endif
-#ifdef BSP_CFG_SPI_SLAVE
-    int rc;
+#if MYNEWT_VAL(SPI_SLAVE)
     nrf_drv_spis_config_t spi_cfg = NRF_DRV_SPIS_DEFAULT_CONFIG(1);
 #endif
 
@@ -101,17 +125,13 @@ bsp_init(void)
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
 
-    bsp_hal_init();
-
-#ifdef BSP_CFG_SPI_MASTER
-    /*  We initialize one SPI interface as a master. */
+#if MYNEWT_VAL(SPI_MASTER)
     rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 
-#ifdef BSP_CFG_SPI_SLAVE
-    /*  We initialize one SPI interface as a master. */
-    spi_cfg.csn_pin = SPIS1_CONFIG_CSN_PIN;
+#if MYNEWT_VAL(SPI_SLAVE)
+    spi_cfg.csn_pin = SPI_SS_PIN;
     spi_cfg.csn_pullup = NRF_GPIO_PIN_PULLUP;
     rc = hal_spi_init(1, &spi_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
