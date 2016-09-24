@@ -46,3 +46,6 @@ pkg.syscfg_defs:
     REBOOT_LOG_ENTRY_COUNT:
         description: 'TBD'
         value: 10
+
+pkg.syscfg_vals.REBOOT_LOG_FCB:
+    LOG_FCB: 1
