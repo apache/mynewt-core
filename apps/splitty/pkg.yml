@@ -43,4 +43,8 @@ pkg.syscfg_vals:
     # Enable the shell task.
     SHELL_TASK: 1
 
+    # Include names for statistics.
     STATS_NAMES: 1
+
+    # Log reboot messages to a flash circular buffer.
+    REBOOT_LOG_FCB: 1
