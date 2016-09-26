@@ -63,8 +63,8 @@ pkg.syscfg_defs:
 
     CONFIG_NEWTMGR:
         description: 'TBD'
-        value: 0
+        value: 'MYNEWT_PKG_LIBS_NEWTMGR'
 
     CONFIG_CLI:
         description: 'TBD'
-        value: 0
+        value: 'MYNEWT_PKG_LIBS_SHELL'
