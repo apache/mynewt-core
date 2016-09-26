@@ -17,6 +17,7 @@
 #ifndef OC_API_H
 #define OC_API_H
 
+#include "../src/port/mynewt/config.h"
 #include "../src/messaging/coap/oc_coap.h"
 #include "oc_ri.h"
 #include "../src/port/oc_signal_main_loop.h"

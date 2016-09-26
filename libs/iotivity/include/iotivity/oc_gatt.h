@@ -28,7 +28,7 @@ struct ble_hs_cfg;
 
 /* returns the event q for bluetooth to use */
 int
-ble_coap_gatt_srv_init(struct ble_hs_cfg *cfg, struct os_eventq **out);
+ble_coap_gatt_srv_init(struct os_eventq **out);
 
 #ifdef __cplusplus
 }

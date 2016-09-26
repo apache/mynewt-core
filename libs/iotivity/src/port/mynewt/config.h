@@ -6,6 +6,22 @@
 #include <stdint.h>
 #include <os/os.h>
 #include <log/log.h>
+#include <syscfg/syscfg.h>
+
+/* rather than change all their source files, just translate the mynewt
+ * package defines into their defines here */
+#if (MYNEWT_VAL(OC_SERVER) == 1)
+#define OC_SERVER
+#endif
+
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
+#define OC_CLIENT
+#endif
+
+#if (MYNEWT_VAL(OC_DEBUG) == 1)
+#define DEBUG 1
+#endif
+
 extern struct log oc_log;
 
 typedef os_time_t oc_clock_time_t;
@@ -53,7 +69,5 @@ typedef os_time_t oc_clock_time_t;
 
 /* Max inactivity timeout before tearing down DTLS connection */
 //#define DTLS_INACTIVITY_TIMEOUT (10)
-
-#define MYNEWT_OCF_SERIAL_PORT  (1)
 
 #endif /* CONFIG_H */

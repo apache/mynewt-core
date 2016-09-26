@@ -19,82 +19,40 @@
 #include <assert.h>
 #include <os/os.h>
 #include <bsp/bsp.h>
-#include <console/console.h>
-#include <console/prompt.h>
-#include <shell/shell.h>
 #include <log/log.h>
 #include <hal/hal_cputime.h>
 #include <iotivity/oc_api.h>
-#include "mn_socket/mn_socket.h"
-#include "mn_socket/arch/sim/native_sock.h"
 
-#ifdef OC_TRANSPORT_GATT
-
-#include <iotivity/oc_gatt.h>
-
-/* BLE */
-#include "nimble/ble.h"
-#include "host/ble_hs.h"
-#include "host/ble_hs_adv.h"
-#include "host/ble_uuid.h"
-#include "host/ble_att.h"
-#include "host/ble_gap.h"
-#include "host/ble_gatt.h"
-#include "host/ble_l2cap.h"
-#include "host/ble_sm.h"
-#include "controller/ble_ll.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
-
-/* RAM persistence layer. */
-#include "store/ram/ble_store_ram.h"
-
-/* Mandatory services. */
-#include "services/gap/ble_svc_gap.h"
-#include "services/gatt/ble_svc_gatt.h"
-
-uint8_t g_random_addr[6] = {6,5,4,3,2,1};
-uint8_t g_dev_addr[6] = {1,2,3,4,5,6};
-
-/** Priority of the nimble host and controller tasks. */
-#define BLE_LL_TASK_PRI             (OS_TASK_PRI_HIGHEST)
-
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+#include <console/console.h>
+#include <console/prompt.h>
+#include <shell/shell.h>
 #endif
 
-/* Shell */
-#ifdef OC_TRANSPORT_SERIAL
-#define SHELL_TASK_PRIO         (8)
-#define SHELL_MAX_INPUT_LEN     (512)
-#define SHELL_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
-static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
+#include "mn_socket/mn_socket.h"
+#include "mn_socket/arch/sim/native_sock.h"
+#endif
+
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+#include <iotivity/oc_gatt.h>
+#include "nimble/ble.h"
+#include "host/ble_hs.h"
+#include "controller/ble_ll.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
 #endif
 
 #define OCF_TASK_PRIO      (8)
-#define OCF_TASK_STACK_SIZE (OS_STACK_ALIGN(2048))
+#define OCF_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
 static os_stack_t ocf_stack[OCF_TASK_STACK_SIZE];
 struct os_task ocf_task;
 
-#ifdef OC_TRANSPORT_GATT
-#define MBUF_PAYLOAD_SIZE BLE_MBUF_PAYLOAD_SIZE
-#else
-#define MBUF_PAYLOAD_SIZE 128
-#endif
-
-#define DEFAULT_MBUF_MPOOL_BUF_LEN OS_ALIGN(MBUF_PAYLOAD_SIZE, 4)
-#define DEFAULT_MBUF_MPOOL_NBUFS (12)
-
-static uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
-    DEFAULT_MBUF_MPOOL_NBUFS];
-
-static struct os_mbuf_pool default_mbuf_pool;
-static struct os_mempool default_mbuf_mpool;
-
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
 static void issue_requests(void);
 #endif
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
 static bool light_state = false;
 
 static void
@@ -156,7 +114,7 @@ register_resources(void)
 }
 #endif
 
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
 #define MAX_URI_LENGTH (30)
 static char light_1[MAX_URI_LENGTH];
 static oc_server_handle_t light_server;
@@ -245,29 +203,27 @@ issue_requests(void)
 {
   oc_do_ip_discovery("oic.r.light", &discovery);
 }
-
 #endif
 
 static void
 app_init(void)
 {
   oc_init_platform("Mynewt", NULL, NULL);
-#ifdef OC_CLIENT
-  oc_add_device("/oic/d", "oic.d.phone", "MynewtClient", "1.0", "1.0",
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
+  oc_add_device("/oic/d", "oic.d.light", "MynewtClient", "1.0", "1.0",
                 set_device_custom_property, NULL);
 #endif
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     oc_add_device("/oic/d", "oic.d.light", "MynewtServer", "1.0", "1.0", NULL, NULL);
 #endif
 }
 
-
  oc_handler_t ocf_handler = {.init = app_init,
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
                           .register_resources = register_resources,
 #endif
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
                           .requests_entry = issue_requests,
 #endif
  };
@@ -309,14 +265,14 @@ ocf_task_init(void) {
     oc_main_init(&ocf_handler);
 }
 
+static const uint8_t addr[6] = {1,2,3,4,5,6};
+
 int
 main(int argc, char **argv)
 {
     int rc;
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     struct os_eventq *ev;
-    struct ble_hci_ram_cfg hci_cfg;
-    struct ble_hs_cfg cfg;
 #endif
     /* Initialize OS */
     os_init();
@@ -325,86 +281,27 @@ main(int argc, char **argv)
     rc = cputime_init(1000000);
     assert(rc == 0);
 
-
-    rc = os_mempool_init(&default_mbuf_mpool, DEFAULT_MBUF_MPOOL_NBUFS,
-            DEFAULT_MBUF_MPOOL_BUF_LEN, default_mbuf_mpool_data,
-            "default_mbuf_data");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&default_mbuf_pool, &default_mbuf_mpool,
-            DEFAULT_MBUF_MPOOL_BUF_LEN, DEFAULT_MBUF_MPOOL_NBUFS);
-    assert(rc == 0);
-
-    rc = os_msys_register(&default_mbuf_pool);
-    assert(rc == 0);
-
-#ifdef OC_TRANSPORT_SERIAL
-    console_echo(0);
-    console_no_prompt();
-
-    /* Init tasks */
-    rc = shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
-                         SHELL_MAX_INPUT_LEN);
-    assert(rc == 0);
-#else
-    console_init(NULL);
-#endif
-
-#ifdef OC_TRANSPORT_IP
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     rc = native_sock_init();
     assert(rc == 0);
 #endif
 
-#ifdef OC_TRANSPORT_GATT
-    /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, DEFAULT_MBUF_MPOOL_NBUFS,
-                     DEFAULT_MBUF_MPOOL_BUF_LEN - BLE_HCI_DATA_HDR_SZ);
-    assert(rc == 0);
-
-    /* Initialize the RAM HCI transport. */
-    hci_cfg = ble_hci_ram_cfg_dflt;
-    rc = ble_hci_ram_init(&hci_cfg);
-    assert(rc == 0);
-
-    /* Initialize the BLE host. */
-    cfg = ble_hs_cfg_dflt;
-    cfg.max_hci_bufs = hci_cfg.num_evt_hi_bufs + hci_cfg.num_evt_lo_bufs;
-    cfg.max_connections = 1;
-    cfg.max_gattc_procs = 2;
-    cfg.max_l2cap_chans = 3;
-    cfg.max_l2cap_sig_procs = 1;
-    cfg.sm_bonding = 1;
-    cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC;
-    cfg.sync_cb = NULL; /* TODO */
-    cfg.store_read_cb = ble_store_ram_read;
-    cfg.store_write_cb = ble_store_ram_write;
-
-    /* Populate config with the required GATT server settings. */
-    cfg.max_attrs = 0;
-    cfg.max_services = 0;
-    cfg.max_client_configs = 0;
-
-    rc = ble_svc_gap_init(&cfg);
-    assert(rc == 0);
-
-    rc = ble_svc_gatt_init(&cfg);
-    assert(rc == 0);
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+    memcpy(g_dev_addr, addr, sizeof(g_dev_addr));
 
     /* COAP Gatt server initialization */
-    rc = ble_coap_gatt_srv_init(&cfg, &ev);
+    rc = ble_coap_gatt_srv_init(&ev);
     assert(rc == 0);
 
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
     /* TODO INIT CLIENT */
 #endif
-
-    rc = ble_hs_init(ev, &cfg);
-    assert(rc == 0);
-
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("Mynewt_OCF");
     assert(rc == 0);
+
+    /* Initialize the BLE host. */
+    ble_hs_cfg.parent_evq = ev;
 #endif
 
     ocf_task_init();

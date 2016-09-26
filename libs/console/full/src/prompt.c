@@ -20,10 +20,11 @@
 
 #include "console/console.h"
 #include "console/prompt.h"
+#include <syscfg/syscfg.h>
 
 /* console prompt, always followed by a space */
 static char console_prompt[] = " > ";
-static char do_prompt = 1;
+static char do_prompt = MYNEWT_VAL(CONSOLE_PROMPT);
 
 
 /* set the prompt character, leave the space */

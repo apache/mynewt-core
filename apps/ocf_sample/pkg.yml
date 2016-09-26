@@ -25,23 +25,16 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/console/full
     - libs/os
-    - libs/shell
     - libs/util
     - sys/log
     - libs/iotivity
-    - "@apache-mynewt-core/net/nimble/host"
-    - "@apache-mynewt-core/net/nimble/controller"
-    - "@apache-mynewt-core/net/nimble/transport/ram"
-    - "@apache-mynewt-core/net/nimble/host/store/ram"
-    - "@apache-mynewt-core/net/nimble/host/services/gap"
-    - "@apache-mynewt-core/net/nimble/host/services/gatt"
-# this tells the library that you intend to suppor the server functionality
-pkg.cflags:
 
-#-DOC_SERVER -- build the server examples
-#-DOC_CLIENT -- build the client examples
-#-DOC_TRANSPORT_GATT -- to send COAP over GATT
-#-DOC_TRANSPORT_SERIAL -- to send COAP over serial
-#-DOC_TRANSPORT_IP -- to send COAP over IP ßß
+pkg.deps.OC_TRANSPORT_SERIAL:
+    - libs/shell
+    - libs/console/full
+
+pkg.deps.OC_TRANSPORT_GATT:
+    - net/nimble/controller
+    - net/nimble/transport/ram
+    - net/nimble/host/store/ram

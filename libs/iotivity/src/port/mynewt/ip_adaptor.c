@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
 #include <assert.h>
 #include <os/os.h>
 #include <os/endian.h>
@@ -28,8 +30,6 @@
 #include "oc_buffer.h"
 #include "../oc_log.h"
 #include "adaptor.h"
-
-#ifdef OC_TRANSPORT_IP
 
 struct os_event oc_sock_read_event = {
     .ev_type = OC_ADATOR_EVENT_IP,
@@ -51,7 +51,7 @@ const struct mn_in6_addr coap_all_nodes_v6 = {
 /* sockets to use for coap unicast and multicast */
 struct mn_socket *ucast;
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
 struct mn_socket *mcast;
 #endif
 
@@ -188,7 +188,7 @@ oc_message_t *
 oc_attempt_rx_ip(void) {
     oc_message_t *pmsg;
     pmsg = oc_attempt_rx_ip_sock(ucast);
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     if (pmsg == NULL ) {
         pmsg = oc_attempt_rx_ip_sock(mcast);
     }
@@ -218,7 +218,7 @@ oc_connectivity_shutdown_ip(void)
         mn_close(ucast);
     }
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     if (mcast) {
         mn_close(mcast);
     }
@@ -248,7 +248,7 @@ oc_connectivity_init_ip(void)
     }
     mn_socket_set_cbs(ucast, ucast, &oc_sock_cbs);
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !mcast ) {
         mn_close(ucast);
@@ -270,7 +270,7 @@ oc_connectivity_init_ip(void)
         goto oc_connectivity_init_err;
     }
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     /* Set socket option to join multicast group on all valid interfaces */
     while (1) {
         struct mn_mreq join;

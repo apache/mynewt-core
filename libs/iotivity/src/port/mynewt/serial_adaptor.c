@@ -17,6 +17,9 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+
 #include <assert.h>
 #include <os/os.h>
 #include <shell/shell.h>
@@ -24,7 +27,6 @@
 #include "../oc_log.h"
 #include "adaptor.h"
 
-#ifdef OC_TRANSPORT_SERIAL
 
 struct os_mqueue oc_serial_mqueue;
 

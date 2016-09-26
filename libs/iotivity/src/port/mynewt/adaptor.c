@@ -17,6 +17,7 @@
  * under the License.
  */
 #include <assert.h>
+#include <syscfg/syscfg.h>
 #include <os/os.h>
 #include <os/endian.h>
 #include <string.h>
@@ -54,8 +55,8 @@ oc_network_event_handler_mutex_unlock(void)
 }
 
 /* need a task to process OCF messages */
-#define OC_NET_TASK_STACK_SIZE          OS_STACK_ALIGN(300)
-#define OC_NET_TASK_PRIORITY            (4)
+#define OC_NET_TASK_STACK_SIZE          MYNEWT_VAL(OC_TASK_STACK_SIZE)
+#define OC_NET_TASK_PRIORITY            MYNEWT_VAL(OC_TASK_PRIORITY)
 struct os_task oc_task;
 os_stack_t *oc_stack;
 
@@ -64,17 +65,17 @@ oc_send_buffer(oc_message_t *message) {
 
     switch (message->endpoint.flags)
     {
-#ifdef OC_TRANSPORT_IP
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
         case IP:
             oc_send_buffer_ip(message);
             break;
 #endif
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
         case GATT:
             oc_send_buffer_gatt(message);
             break;
 #endif
-#ifdef OC_TRANSPORT_SERIAL
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
         case SERIAL:
             oc_send_buffer_serial(message);
             break;
@@ -91,17 +92,17 @@ void oc_send_multicast_message(oc_message_t *message)
     /* send on all the transports.  Don't forget to reference the message
      * so it doesn't get deleted  */
 
-#ifdef OC_TRANSPORT_IP
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     oc_send_buffer_ip_mcast(message);
 #endif
 
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     /* no multicast for GATT, just send unicast */
     oc_message_add_ref(message);
     oc_send_buffer_gatt(message);
 #endif
 
-#ifdef OC_TRANSPORT_SERIAL
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     /* no multi-cast for serial.  just send unicast */
     oc_message_add_ref(message);
     oc_send_buffer_serial(message);
@@ -112,7 +113,7 @@ void oc_send_multicast_message(oc_message_t *message)
 void
 oc_task_handler(void *arg) {
 
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     oc_connectivity_start_gatt();
 #endif
 
@@ -123,21 +124,21 @@ oc_task_handler(void *arg) {
         struct os_event *evt = os_eventq_get(&oc_event_q);
 
         switch(evt->ev_type) {
-#ifdef OC_TRANSPORT_IP
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
             case OC_ADATOR_EVENT_IP:
                 while ((pmsg = oc_attempt_rx_ip()) != NULL) {
                     oc_network_event(pmsg);
                 }
                 break;
 #endif
-#ifdef OC_TRANSPORT_SERIAL
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
             case OC_ADATOR_EVENT_SERIAL:
                 while ((pmsg = oc_attempt_rx_serial()) != NULL) {
                     oc_network_event(pmsg);
                 }
                 break;
 #endif
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
             case OC_ADATOR_EVENT_GATT:
                 while ((pmsg = oc_attempt_rx_gatt()) != NULL) {
                     oc_network_event(pmsg);
@@ -182,13 +183,13 @@ oc_init_task(void) {
 void
 oc_connectivity_shutdown(void)
 {
-#ifdef OC_TRANSPORT_IP
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     oc_connectivity_shutdown_ip();
 #endif
-#ifdef OC_TRANSPORT_SERIAL
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     oc_connectivity_shutdown_serial();
 #endif
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     oc_connectivity_shutdown_gatt();
 #endif
 }
@@ -198,25 +199,25 @@ oc_connectivity_init(void)
 {
     int rc;
 
-#ifdef OC_TRANSPORT_IP
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     rc = oc_connectivity_init_ip();
     if (rc != 0) {
         goto oc_connectivity_init_err;
     }
 #endif
-#ifdef OC_TRANSPORT_SERIAL
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+
     rc = oc_connectivity_init_serial();
     if (rc != 0) {
         goto oc_connectivity_init_err;
     }
 #endif
-#ifdef OC_TRANSPORT_GATT
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     rc = oc_connectivity_init_gatt();
     if (rc != 0) {
         goto oc_connectivity_init_err;
     }
 #endif
-
     rc = oc_init_task();
     if (rc != 0) {
         goto oc_connectivity_init_err;

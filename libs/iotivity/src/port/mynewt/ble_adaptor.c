@@ -16,6 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <syscfg/syscfg.h>
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
 #include <assert.h>
 #include <os/os.h>
 #include <string.h>
@@ -26,7 +29,6 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
-#ifdef OC_TRANSPORT_GATT
 
 /* a custom service for COAP over GATT */
 /* {e3f9f9c4-8a83-4055-b647-728b769745d6} */
@@ -47,7 +49,7 @@ struct os_mqueue ble_coap_mq;
 static int
 blecoap_gap_event(struct ble_gap_event *event, void *arg);
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
 /* ble nmgr attr handle */
 uint16_t g_ble_coap_attr_handle;
 
@@ -167,7 +169,7 @@ oc_gatt_advertise(void)
 }
 #endif
 
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
 static char *
 addr_str(const void *addr)
 {
@@ -358,7 +360,7 @@ static int
 blecoap_gap_event(struct ble_gap_event *event, void *arg)
 {
     switch (event->type) {
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
     case BLE_GAP_EVENT_DISC:
         /* Try to connect to the advertiser if it looks interesting. */
         oc_gatt_connect_if_interesting(&event->disc);
@@ -373,11 +375,11 @@ blecoap_gap_event(struct ble_gap_event *event, void *arg)
             /* nothing to do here on the client */
         }
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     /* keep advertising for multiple connections */
     oc_gatt_advertise();
 #endif
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
         /* keep scanning for new connections */
         oc_gatt_scan();
 #endif
@@ -385,16 +387,16 @@ blecoap_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_DISCONNECT:
         /* Connection terminated; resume advertising. */
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
         /* keep scanning for new connections */
         oc_gatt_scan();
 #endif
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
         /* resume advertising  */
         oc_gatt_advertise();
 #endif
         return 0;
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
     case BLE_GAP_EVENT_NOTIFY_RX:
         /* TODO queue the packet */
         return 0;
@@ -404,11 +406,11 @@ blecoap_gap_event(struct ble_gap_event *event, void *arg)
 }
 
 int
-ble_coap_gatt_srv_init(struct ble_hs_cfg *cfg, struct os_eventq **out)
+ble_coap_gatt_srv_init(struct os_eventq **out)
 {
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     int rc;
-    rc = ble_gatts_count_cfg(gatt_svr_svcs, cfg);
+    rc = ble_gatts_count_cfg(gatt_svr_svcs);
     if (rc != 0) {
         return rc;
     }
@@ -435,13 +437,13 @@ void oc_connectivity_start_gatt(void) {
     if (rc != 0) {
         goto err;
     }
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     rc = oc_gatt_advertise();
     if (rc != 0) {
         goto err;
     }
 #endif
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
     rc = oc_gatt_scan();
     if (rc != 0) {
         goto err;
@@ -475,11 +477,11 @@ void oc_send_buffer_gatt(oc_message_t *message)
         goto err;
     }
 
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
     ERROR("send not supported on client");
 #endif
 
-#ifdef OC_SERVER
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     ble_gattc_notify_custom(message->endpoint.bt_addr.conn_handle,
                                 g_ble_coap_attr_handle, m);
     m = NULL;
@@ -496,9 +498,9 @@ err:
 void
 oc_send_buffer_gatt_mcast(oc_message_t *message)
 {
-#ifdef OC_CLIENT
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
     ERROR("send not supported on client");
-#elif defined(OC_SERVER)
+#elif (MYNEWT_VAL(OC_SERVER) == 1)
     oc_message_unref(message);
     ERROR("oc_transport_gatt: no multicast support for server only system \n");
 #endif

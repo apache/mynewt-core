@@ -26,15 +26,21 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/libs/tinycbor"
     - "@apache-mynewt-core/libs/os"
-    - "@apache-mynewt-core/sys/mn_socket"
     - "@apache-mynewt-core/sys/log"
+
+pkg.deps.OC_TRANSPORT_GATT:
     - "@apache-mynewt-core/net/nimble/host"
-    - "@apache-mynewt-core/net/nimble/transport/ram"
     - "@apache-mynewt-core/net/nimble/host/services/gap"
     - "@apache-mynewt-core/net/nimble/host/services/gatt"
+
+pkg.deps.OC_TRANSPORT_IP:
+    - "@apache-mynewt-core/sys/mn_socket"
+
+pkg.deps.OC_TRANSPORT_SERIAL:
+    - "@apache-mynewt-core/libs/shell"
+
 # remove debug option to save logging
 pkg.cflags: -std=c99
-        -DDEBUG=1
         -DSECURE=0
         -I./port/mynewt
         -I../port/mynewt
@@ -42,3 +48,29 @@ pkg.cflags: -std=c99
         -I../include/iotivity
         -I../../include/iotivity
         -I../../../include/iotivity
+
+pkg.syscfg_defs:
+    OC_TRANSPORT_SERIAL:
+        description: 'Enables OIC transport over nlip serial'
+        value: '0'
+    OC_TRANSPORT_GATT:
+        description: 'Enables OIC transport over BLE GATT'
+        value: '0'
+    OC_TRANSPORT_IP:
+        description: 'Enables OIC transport over IP UDP'
+        value: '0'
+    OC_CLIENT:
+        description: 'Enables OIC client support'
+        value: '0'
+    OC_SERVER:
+        description: 'Enables OIC server support'
+        value: '0'
+    OC_DEBUG:
+        description: 'Enables OIC debug logs'
+        value: '0'
+    OC_TASK_PRIORITY:
+        description: 'The task priority for an internal tasks that runs the OCF stack'
+        value: '4'
+    OC_TASK_STACK_SIZE:
+        description: 'The stack size of the OC task in words'
+        value: '300'

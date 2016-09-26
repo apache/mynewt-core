@@ -31,3 +31,11 @@ pkg.apis: console
 
 pkg.init_function: console_pkg_init
 pkg.init_stage: 0
+
+pkg.syscfg_defs:
+    CONSOLE_PROMPT:
+        description: 'Default console prompt '
+        value: '0'
+    CONSOLE_ECHO:
+        description: 'Default console echo '
+        value: '0'

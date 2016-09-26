@@ -19,6 +19,7 @@
 
 #include <inttypes.h>
 #include <assert.h>
+#include "syscfg/syscfg.h"
 #include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "uart/uart.h"
@@ -404,6 +405,7 @@ console_init(console_rx_cb rx_cb)
         if (!ct->ct_dev) {
             return -1;
         }
+        ct->ct_echo_off = ! MYNEWT_VAL(CONSOLE_ECHO);
     }
 
     console_print_prompt();
