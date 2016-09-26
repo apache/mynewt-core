@@ -168,6 +168,20 @@ oc_gatt_advertise(void)
 #endif
 
 #ifdef OC_CLIENT
+static char *
+addr_str(const void *addr)
+{
+    static char buf[6 * 2 + 5 + 1];
+    const uint8_t *u8p;
+
+    u8p = addr;
+    sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+            u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+
+    return buf;
+}
+
+
 /**
  * Indicates whether we should tre to connect to the sender of the specified
  * advertisement.  The function returns a positive result if the device
@@ -187,9 +201,9 @@ oc_gatt_should_connect(const struct ble_gap_disc_desc *disc)
 
     /* The device has to advertise support for the COAP service
      */
-    for
     for (i = 0; i < disc->fields->num_uuids128; i++) {
-        if (disc->fields->uuids128[i] == gatt_svr_svc_coap) {
+        char *ptr = ((char*) disc->fields->uuids128) + 16 * i;
+        if (memcmp(ptr, gatt_svr_svc_coap, sizeof(gatt_svr_svc_coap)) == 0) {
             return 1;
         }
     }
@@ -259,7 +273,7 @@ oc_gatt_scan(void)
     disc_params.limited = 0;
 
     rc = ble_gap_disc(BLE_ADDR_TYPE_PUBLIC, BLE_HS_FOREVER, &disc_params,
-                      blecent_gap_event, NULL);
+                      blecoap_gap_event, NULL);
     if (rc != 0) {
         ERROR("Error initiating GAP discovery procedure; rc=%d\n",
                     rc);
@@ -347,7 +361,7 @@ blecoap_gap_event(struct ble_gap_event *event, void *arg)
 #ifdef OC_CLIENT
     case BLE_GAP_EVENT_DISC:
         /* Try to connect to the advertiser if it looks interesting. */
-        blecent_connect_if_interesting(&event->disc);
+        oc_gatt_connect_if_interesting(&event->disc);
         return 0;
 #endif
     case BLE_GAP_EVENT_CONNECT:
@@ -389,14 +403,11 @@ blecoap_gap_event(struct ble_gap_event *event, void *arg)
     return 0;
 }
 
-#ifdef OC_SERVER
 int
 ble_coap_gatt_srv_init(struct ble_hs_cfg *cfg, struct os_eventq **out)
 {
+#ifdef OC_SERVER
     int rc;
-
-    *out = &oc_event_q;
-
     rc = ble_gatts_count_cfg(gatt_svr_svcs, cfg);
     if (rc != 0) {
         return rc;
@@ -406,9 +417,11 @@ ble_coap_gatt_srv_init(struct ble_hs_cfg *cfg, struct os_eventq **out)
     if (rc != 0) {
         return rc;
     }
+#endif
+
+    *out = &oc_event_q;
     return 0;
 }
-#endif
 
 int oc_connectivity_init_gatt(void) {
     os_mqueue_init(&ble_coap_mq, NULL);

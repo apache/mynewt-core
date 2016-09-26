@@ -395,6 +395,10 @@ main(int argc, char **argv)
     rc = ble_coap_gatt_srv_init(&cfg, &ev);
     assert(rc == 0);
 
+#ifdef OC_CLIENT
+    /* TODO INIT CLIENT */
+#endif
+
     rc = ble_hs_init(ev, &cfg);
     assert(rc == 0);
 
