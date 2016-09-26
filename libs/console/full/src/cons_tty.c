@@ -152,9 +152,11 @@ console_blocking_mode(void)
     int sr;
 
     OS_ENTER_CRITICAL(sr);
-    ct->ct_write_char = console_blocking_tx;
+    if (ct->ct_write_char) {
+        ct->ct_write_char = console_blocking_tx;
 
-    console_tx_flush(ct, CONSOLE_TX_BUF_SZ);
+        console_tx_flush(ct, CONSOLE_TX_BUF_SZ);
+    }
     OS_EXIT_CRITICAL(sr);
 }
 
@@ -409,7 +411,7 @@ console_init(console_rx_cb rx_cb)
     }
 
     console_print_prompt();
-    
+
     return 0;
 }
 
