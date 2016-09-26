@@ -109,5 +109,6 @@ int os_dev_suspend_all(os_time_t, uint8_t);
 int os_dev_resume_all(void);
 struct os_dev *os_dev_open(char *devname, uint32_t timo, void *arg);
 int os_dev_close(struct os_dev *dev);
+void os_dev_reset(void);
 
 #endif /* _OS_DEV_H */

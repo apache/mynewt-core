@@ -146,6 +146,9 @@ os_init(void)
     TAILQ_INIT(&g_callout_list);
     STAILQ_INIT(&g_os_task_list);
 
+    /* Initialize device list. */
+    os_dev_reset();
+
     err = os_arch_os_init();
     assert(err == OS_OK);
 

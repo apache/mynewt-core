@@ -23,8 +23,7 @@
 
 #include <string.h>
 
-static STAILQ_HEAD(, os_dev) g_os_dev_list =
-    STAILQ_HEAD_INITIALIZER(g_os_dev_list);
+static STAILQ_HEAD(, os_dev) g_os_dev_list;
 
 static int
 os_dev_init(struct os_dev *dev, char *name, uint8_t stage,
@@ -298,3 +297,13 @@ err:
     return (rc);
 }
 
+/**
+ * Clears the device list.  This function does not close any devices or free
+ * any resources; its purpose is to allow a full system reset between unit
+ * tests.
+ */
+void
+os_dev_reset(void)
+{
+    STAILQ_INIT(&g_os_dev_list);
+}
