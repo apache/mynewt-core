@@ -462,9 +462,6 @@ shell_task_func(void *arg)
 {
     struct os_event *ev;
 
-    console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
-    console_init(shell_console_rx_cb);
-
     while (1) {
         ev = os_eventq_get(&shell_evq);
         assert(ev != NULL);
@@ -560,7 +557,7 @@ shell_init(void)
 
     rc = shell_cmd_register(&g_shell_prompt_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
-    
+
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
@@ -572,7 +569,7 @@ shell_init(void)
 
     os_eventq_init(&shell_evq);
     os_mqueue_init(&g_shell_nlip_mq, NULL);
-
+    console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
     console_init(shell_console_rx_cb);
 
     rc = os_task_init(&shell_task, "shell", shell_task_func,
