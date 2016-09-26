@@ -23,6 +23,7 @@
 #include <console/prompt.h>
 #include <shell/shell.h>
 #include <log/log.h>
+#include <hal/hal_cputime.h>
 #include <iotivity/oc_api.h>
 #include "mn_socket/mn_socket.h"
 #include "mn_socket/arch/sim/native_sock.h"
@@ -74,7 +75,13 @@ static os_stack_t shell_stack[SHELL_TASK_STACK_SIZE];
 static os_stack_t ocf_stack[OCF_TASK_STACK_SIZE];
 struct os_task ocf_task;
 
-#define DEFAULT_MBUF_MPOOL_BUF_LEN OS_ALIGN(BLE_MBUF_PAYLOAD_SIZE, 4)
+#ifdef OC_TRANSPORT_GATT
+#define MBUF_PAYLOAD_SIZE BLE_MBUF_PAYLOAD_SIZE
+#else
+#define MBUF_PAYLOAD_SIZE 128
+#endif
+
+#define DEFAULT_MBUF_MPOOL_BUF_LEN OS_ALIGN(MBUF_PAYLOAD_SIZE, 4)
 #define DEFAULT_MBUF_MPOOL_NBUFS (12)
 
 static uint8_t default_mbuf_mpool_data[DEFAULT_MBUF_MPOOL_BUF_LEN *
@@ -306,8 +313,8 @@ int
 main(int argc, char **argv)
 {
     int rc;
-    struct os_eventq *ev;
 #ifdef OC_TRANSPORT_GATT
+    struct os_eventq *ev;
     struct ble_hci_ram_cfg hci_cfg;
     struct ble_hs_cfg cfg;
 #endif

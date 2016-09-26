@@ -143,12 +143,12 @@ oc_task_handler(void *arg) {
                     oc_network_event(pmsg);
                 }
                 break;
+#endif
         case OS_EVENT_T_TIMER:
             cf = (struct os_callout_func *)evt;
             assert(cf->cf_func);
             cf->cf_func(CF_ARG(cf));
             break;
-#endif
             default:
                 ERROR("oc_task_handler: Unidentified event %d\n", evt->ev_type);
         }

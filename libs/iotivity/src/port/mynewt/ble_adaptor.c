@@ -26,6 +26,8 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+#ifdef OC_TRANSPORT_GATT
+
 /* a custom service for COAP over GATT */
 /* {e3f9f9c4-8a83-4055-b647-728b769745d6} */
 const uint8_t gatt_svr_svc_coap[16] = {
@@ -62,7 +64,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             /* Characteristic: Write No Rsp */
             .uuid128 = (void *)gatt_svr_chr_coap,
             .access_cb = gatt_svr_chr_access_coap,
-            .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
+            .flags = BLE_GATT_CHR_F_WRITE_NO_RSP | BLE_GATT_CHR_F_NOTIFY,
             .val_handle = &g_ble_coap_attr_handle,
         }, {
             0, /* No more characteristics in this service */
@@ -459,13 +461,17 @@ void oc_send_buffer_gatt(oc_message_t *message)
         ERROR("oc_transport_gatt: could not append data \n");
         goto err;
     }
+
 #ifdef OC_CLIENT
-    /* TODO */
+    ERROR("send not supported on client");
 #endif
+
 #ifdef OC_SERVER
     ble_gattc_notify_custom(message->endpoint.bt_addr.conn_handle,
                                 g_ble_coap_attr_handle, m);
+    m = NULL;
 #endif
+
 err:
     if (m) {
         os_mbuf_free_chain(m);
@@ -478,9 +484,11 @@ void
 oc_send_buffer_gatt_mcast(oc_message_t *message)
 {
 #ifdef OC_CLIENT
-    /* TODO */
+    ERROR("send not supported on client");
 #elif defined(OC_SERVER)
     oc_message_unref(message);
     ERROR("oc_transport_gatt: no multicast support for server only system \n");
 #endif
 }
+
+#endif
