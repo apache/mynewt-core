@@ -20,6 +20,7 @@
 #ifndef _HAL_WATCHDOG_H_
 #define _HAL_WATCHDOG_H_
 
+#include <stdint.h>
 /*
  * Set a recurring watchdog timer to fire no sooner than in 'expire_secs'
  * seconds. Watchdog should be tickled periodically with a frequency
@@ -31,7 +32,7 @@
  * @return			< 0 on failure; on success return the actual
  *                              expiration time as positive value
  */
-int hal_watchdog_init(int expire_msecs);
+int hal_watchdog_init(uint32_t expire_msecs);
 
 /*
  * Starts the watchdog.

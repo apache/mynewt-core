@@ -24,10 +24,8 @@
 
 #include "app_util_platform.h"
 #include "nrf.h"
+#include "nrf_drv_common.h"
 #include "nrf_wdt.h"
-#include "nrf_drv_wdt.h"
-
-extern void WDT_IRQHandler(void);
 
 static void
 nrf52_hal_wdt_default_handler(void)
@@ -35,43 +33,41 @@ nrf52_hal_wdt_default_handler(void)
     assert(0);
 }
 
-int
-hal_watchdog_init(int expire_msecs)
+/**@brief WDT interrupt handler. */
+static void
+WDT_IRQHandler(void)
 {
-    nrf_drv_wdt_config_t cfg;
-    nrf_drv_wdt_channel_id cid;
-    int rc;
+    if (nrf_wdt_int_enable_check(NRF_WDT_INT_TIMEOUT_MASK) == true) {
+        nrf_wdt_event_clear(NRF_WDT_EVENT_TIMEOUT);
+        nrf52_hal_wdt_default_handler();
+    }
+}
 
+int
+hal_watchdog_init(uint32_t expire_msecs)
+{
     NVIC_SetVector(WDT_IRQn, (uint32_t) WDT_IRQHandler);
 
-    cfg.behaviour = NRF_WDT_BEHAVIOUR_RUN_SLEEP;
-    cfg.interrupt_priority = WDT_CONFIG_IRQ_PRIORITY;
-    cfg.reload_value = (uint32_t) expire_msecs;
+    nrf_wdt_behaviour_set(NRF_WDT_BEHAVIOUR_RUN_SLEEP);
 
-    rc = nrf_drv_wdt_init(&cfg, nrf52_hal_wdt_default_handler);
-    if (rc != 0) {
-        goto err;
-    }
-
-    rc = nrf_drv_wdt_channel_alloc(&cid);
-    if (rc != 0) {
-        goto err;
-    }
+    /* Program in timeout in msecs */
+    nrf_wdt_reload_value_set((expire_msecs * 32768ULL) / 1000);
+    nrf_drv_common_irq_enable(WDT_IRQn, APP_IRQ_PRIORITY_HIGH);
+    nrf_wdt_reload_request_enable(NRF_WDT_RR0);
 
     return (0);
-err:
-    return (rc);
 }
 
 void
 hal_watchdog_enable(void)
 {
-    nrf_drv_wdt_enable();
+    nrf_wdt_int_enable(NRF_WDT_INT_TIMEOUT_MASK);
+    nrf_wdt_task_trigger(NRF_WDT_TASK_START);
 }
 
 void
 hal_watchdog_tickle(void)
 {
-    nrf_drv_wdt_feed();
+    nrf_wdt_reload_request_set(NRF_WDT_RR0);
 }
 
