@@ -183,6 +183,7 @@ console_hist_move(struct console_ring *rx, uint8_t *tx_buf, uint8_t direction)
     struct console_hist *ch = &console_hist;
     uint8_t *str = NULL;
     int space = 0;
+    int i;
     uint8_t limit = direction == CONSOLE_UP ? ch->ch_tail : ch->ch_head;
 
     /* no more history to return in this direction */
@@ -202,7 +203,7 @@ console_hist_move(struct console_ring *rx, uint8_t *tx_buf, uint8_t direction)
     }
 
     str = ch->ch_buf[ch->ch_curr];
-    for (int i = 0; i < CONSOLE_RX_BUF_SZ; ++i) {
+    for (i = 0; i < CONSOLE_RX_BUF_SZ; ++i) {
         if (str[i] == '\0') {
             break;
         }
