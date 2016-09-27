@@ -34,4 +34,4 @@ pkg.deps:
     - drivers/uart/uart_hal
 
 pkg.deps.BLE_DEVICE:
-    - net/nimble/drivers/native
+    - drivers/nimble/native

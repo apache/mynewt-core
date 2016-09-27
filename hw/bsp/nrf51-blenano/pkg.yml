@@ -43,7 +43,7 @@ pkg.deps:
     - libs/baselibc
 
 pkg.deps.BLE_DEVICE:
-    - net/nimble/drivers/nrf51
+    - drivers/nimble/nrf51
 
 pkg.deps.ADC_0:
     - drivers/adc/adc_nrf51
