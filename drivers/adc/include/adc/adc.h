@@ -146,6 +146,7 @@ struct adc_chan_config {
     uint16_t c_refmv;
     uint8_t c_res;
     uint8_t c_configured;
+    uint8_t c_cnum;
 };
 
 struct adc_dev {

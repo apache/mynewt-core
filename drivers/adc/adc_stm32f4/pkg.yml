@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,23 +17,18 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/stm/stm32f4xx
-pkg.description: MCU definition for STM32F4 ARM Cortex-M4 chips.
+pkg.name: drivers/adc/adc_stm32f4
+pkg.description: ADC driver for the STM32F4 series of processors.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - stm32
-    - stm32f4
-
-pkg.type: sdk
-
-pkg.ign_files:
-    - ".*template.*" 
-
-pkg.ign_dirs:
-    - "Device"
-
-pkg.deps: 
-    - hw/hal 
-    - libs/cmsis-core
-    - compiler/arm-none-eabi-m4
+pkg.features:
+    - ADC_STM32F4
+pkg.apis:
+    - ADC_HW_IMPL
+pkg.deps:
+   - drivers/adc
+pkg.deps.TEST:
+   - hw/hal
+   - hw/mcu/stm/stm32f4xx
+   - libs/testutil

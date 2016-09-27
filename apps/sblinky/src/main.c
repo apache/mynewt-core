@@ -22,7 +22,6 @@
 #include "hal/hal_spi.h"
 #include "console/console.h"
 #include "shell/shell.h"
-#include "log/log.h"
 #include "stats/stats.h"
 #include "config/config.h"
 #include <os/os_dev.h>
@@ -32,22 +31,31 @@
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
-#include "nrf.h"
-#include "app_util_platform.h"
-#include "app_error.h"
 
 #ifdef NRF51
+#include "nrf.h"
 #include <adc_nrf51/adc_nrf51.h>
 #include "nrf_drv_adc.h"
+#include "app_util_platform.h"
+#include "app_error.h"
 nrf_drv_adc_config_t adc_config = NRF_DRV_ADC_DEFAULT_CONFIG;
 nrf_drv_adc_channel_t g_nrf_adc_chan =
     NRF_DRV_ADC_DEFAULT_CHANNEL(NRF_ADC_CONFIG_INPUT_2);
 #endif
 
 #ifdef NRF52
+#include "nrf.h"
 #include <adc_nrf52/adc_nrf52.h>
 #include "nrf_drv_saadc.h"
+#include "app_util_platform.h"
+#include "app_error.h"
 nrf_drv_saadc_config_t adc_config = NRF_DRV_SAADC_DEFAULT_CONFIG;
+#endif
+
+#ifdef STM32F4
+#include "stm32f4xx_hal_dma.h"
+#include "stm32f4xx_hal_adc.h"
+#include <adc_stm32f4/adc_stm32f4.h>
 #endif
 
 #if defined(NRF52) || defined(NRF51)
@@ -81,9 +89,6 @@ static volatile int g_task1_loops;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(1024)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
-
-struct log_handler log_console_handler;
-struct log my_log;
 
 static volatile int g_task2_loops;
 
@@ -162,7 +167,7 @@ sblinky_spi_irqs_handler(void *arg, int len)
 void
 sblinky_spi_cfg(int spi_num)
 {
-    int spi_id;
+    int spi_id = 0;
     struct hal_spi_settings my_spi;
 
 #if MYNEWT_VAL(SPI_MASTER)
@@ -188,8 +193,6 @@ sblinky_spi_cfg(int spi_num)
 #endif
     hal_spi_config(spi_id, &my_spi);
 }
-
-struct adc_dev my_dev;
 
 #if 0
 #define SAADC_SAMPLES_IN_BUFFER (4)
@@ -227,29 +230,40 @@ saadc_test(void)
 }
 #endif
 
-#define ADC_NUMBER_SAMPLES (2)
+
+#define ADC_NUMBER_SAMPLES (16)
 #define ADC_NUMBER_CHANNELS (1)
+
+#if MYNEWT_VAL(ADC_3)
+
+#define STM32F4_ADC3_DEFAULT_CHAN_CFG {\
+    .Channel = ADC_CHANNEL_4,\
+    .Rank = 1,\
+    .SamplingTime = ADC_SAMPLETIME_144CYCLES,\
+    .Offset = 0\
+}
+
+ADC_ChannelConfTypeDef adc3_chan_cfg = STM32F4_ADC3_DEFAULT_CHAN_CFG;
 
 uint8_t *sample_buffer1;
 uint8_t *sample_buffer2;
 
-int adc_result;
-int my_result_mv;
+int adc3_result;
+int my_result_mv3[ADC_NUMBER_SAMPLES];
 
 int
-adc_read_event(struct adc_dev *dev, void *arg, uint8_t etype,
+adc3_read_event(struct adc_dev *dev, void *arg, uint8_t etype,
         void *buffer, int buffer_len)
 {
     int i;
-    //int result;
     int rc;
 
     for (i = 0; i < ADC_NUMBER_SAMPLES; i++) {
-        rc = adc_buf_read(dev, buffer, buffer_len, i, &adc_result);
+        rc = adc_buf_read(dev, buffer, buffer_len, i, &adc3_result);
         if (rc != 0) {
             goto err;
         }
-        my_result_mv = adc_result_mv(dev, 0, adc_result);
+        my_result_mv3[i] = adc_result_mv(dev, ADC_CHANNEL_4, adc3_result);
     }
 
     adc_buf_release(dev, buffer, buffer_len);
@@ -258,13 +272,57 @@ adc_read_event(struct adc_dev *dev, void *arg, uint8_t etype,
 err:
     return (rc);
 }
+#endif
+
+#if MYNEWT_VAL(ADC_1)
+
+#define STM32F4_ADC1_DEFAULT_CHAN_CFG {\
+    .Channel = ADC_CHANNEL_10,\
+    .Rank = 1,\
+    .SamplingTime = ADC_SAMPLETIME_144CYCLES,\
+    .Offset = 0\
+}
+
+ADC_ChannelConfTypeDef adc1_chan_cfg = STM32F4_ADC1_DEFAULT_CHAN_CFG;
+
+int adc1_result;
+int my_result_mv1[ADC_NUMBER_SAMPLES];
+uint8_t *sample_buffer3;
+uint8_t *sample_buffer4;
+int
+adc1_read_event(struct adc_dev *dev, void *arg, uint8_t etype,
+        void *buffer, int buffer_len)
+{
+    int i;
+    int rc;
+
+    for (i = 0; i < ADC_NUMBER_SAMPLES; i++) {
+        rc = adc_buf_read(dev, buffer, buffer_len, i, &adc1_result);
+        if (rc != 0) {
+            goto err;
+        }
+        my_result_mv1[i] = adc_result_mv(dev, ADC_CHANNEL_10, adc1_result);
+    }
+
+    adc_buf_release(dev, buffer, buffer_len);
+
+    return (0);
+err:
+    return (rc);
+}
+#endif
 
 void
 task1_handler(void *arg)
 {
-    int rc;
     struct os_task *t;
-    struct adc_dev *adc;
+#if MYNEWT_VAL(ADC_3)
+    struct adc_dev *adc3;
+#endif
+#if MYNEWT_VAL(ADC_1)
+    struct adc_dev *adc1;
+#endif
+
 #if MYNEWT_VAL(SPI_MASTER)
     int i;
     uint8_t last_val;
@@ -281,14 +339,31 @@ task1_handler(void *arg)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    adc = (struct adc_dev *) os_dev_open("adc0", 1, &adc_config);
-    assert(adc != NULL);
+#if MYNEWT_VAL(ADC_3)
+    adc3 = (struct adc_dev *) os_dev_open("adc3", 1, NULL);
+    assert(adc3 != NULL);
+#endif
+
+#if MYNEWT_VAL(ADC_1)
+    adc1 = (struct adc_dev *) os_dev_open("adc1", 1, NULL);
+    assert(adc1 != NULL);
+#endif
 
 #ifdef NRF51
-    adc_chan_config(adc, 0, &g_nrf_adc_chan);
+    adc_chan_config(adc3, 0, &g_nrf_adc_chan);
 #endif
+
 #ifdef NRF52
-    adc_chan_config(adc, 0, &cc);
+    adc_chan_config(adc3, 0, &cc);
+#endif
+
+#ifdef STM32F4
+#if MYNEWT_VAL(ADC_3)
+    adc_chan_config(adc3, ADC_CHANNEL_4, &adc3_chan_cfg);
+#endif
+#if MYNEWT_VAL(ADC_1)
+    adc_chan_config(adc1, ADC_CHANNEL_10, &adc1_chan_cfg);
+#endif
 #endif
 
 #if MYNEWT_VAL(SPI_MASTER)
@@ -298,6 +373,7 @@ task1_handler(void *arg)
     hal_spi_enable(0);
 
 #if 1
+    int rc;
     /* Send some bytes in a non-blocking manner to SPI using tx val */
     g_spi_tx_buf[0] = 0xde;
     g_spi_tx_buf[1] = 0xad;
@@ -347,30 +423,57 @@ task1_handler(void *arg)
     rc = hal_spi_txrx(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf, 32);
     assert(rc == 0);
 #endif
-
-    sample_buffer1 = malloc(adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
-    sample_buffer2 = malloc(adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
-    memset(sample_buffer1, 0, adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
-    memset(sample_buffer2, 0, adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
-
-#if 1
-    adc_buf_set(adc, sample_buffer1, sample_buffer2,
-            adc_buf_size(adc, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
-    adc_event_handler_set(adc, adc_read_event, (void *) NULL);
+#if MYNEWT_VAL(ADC_3)
+    sample_buffer1 = malloc(adc_buf_size(adc3, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    sample_buffer2 = malloc(adc_buf_size(adc3, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    memset(sample_buffer1, 0, adc_buf_size(adc3, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    memset(sample_buffer2, 0, adc_buf_size(adc3, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
 #endif
 
-#if 0
-    rc = adc_chan_read(adc, 0, &g_result);
-    assert(rc == 0);
-    g_result_mv = adc_result_mv(adc, 0, g_result);
+#if MYNEWT_VAL(ADC_1)
+    sample_buffer3 = malloc(adc_buf_size(adc1, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    sample_buffer4 = malloc(adc_buf_size(adc1, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    memset(sample_buffer3, 0, adc_buf_size(adc1, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    memset(sample_buffer4, 0, adc_buf_size(adc1, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+#endif
+
+#if 1
+#if MYNEWT_VAL(ADC_3)
+    adc_buf_set(adc3, sample_buffer1, sample_buffer2,
+            adc_buf_size(adc3, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    adc_event_handler_set(adc3, adc3_read_event, NULL);
+#endif
+
+#if MYNEWT_VAL(ADC_1)
+    adc_buf_set(adc1, sample_buffer3, sample_buffer4,
+            adc_buf_size(adc1, ADC_NUMBER_CHANNELS, ADC_NUMBER_SAMPLES));
+    adc_event_handler_set(adc1, adc1_read_event, NULL);
+#endif
 #endif
 
     while (1) {
         t = os_sched_get_current_task();
         assert(t->t_func == task1_handler);
 
-        adc_sample(adc);
+#if 0
+        int rc;
+        rc = adc_chan_read(adc, 4, &g_result);
+        assert(rc == 0);
+        g_result_mv = adc_result_mv(adc, 4, g_result);
+#endif
+        int rc;
+        rc = OS_OK;
 
+
+#if MYNEWT_VAL(ADC_1)
+        rc = adc_sample(adc1);
+        assert(rc == OS_OK);
+#endif
+
+#if MYNEWT_VAL(ADC_3)
+        rc = adc_sample(adc3);
+        assert(rc == OS_OK);
+#endif
         ++g_task1_loops;
 
 #if MYNEWT_VAL(SPI_MASTER)
@@ -400,7 +503,14 @@ task1_handler(void *arg)
         os_sem_release(&g_test_sem);
     }
 
-    os_dev_close((struct os_dev *) adc);
+#if MYNEWT_VAL(ADC_1)
+    os_dev_close((struct os_dev *) adc1);
+#endif
+
+#if MYNEWT_VAL(ADC_3)
+    os_dev_close((struct os_dev *) adc3);
+#endif
+
 }
 
 void
@@ -474,10 +584,6 @@ main(int argc, char **argv)
 #endif
 
     os_init();
-
-    /* Initialize the sblinky log. */
-    log_console_handler_init(&log_console_handler);
-    log_register("sblinky", &my_log, &log_console_handler);
 
 #if 0
     saadc_test();

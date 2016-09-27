@@ -42,6 +42,7 @@
 
 
 int hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg);
+int hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg);
 
 struct stm32f4_hal_i2c_cfg {
     int sda_pin;
