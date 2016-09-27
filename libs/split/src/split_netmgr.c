@@ -35,10 +35,10 @@ static const struct nmgr_handler split_nmgr_handlers[] = {
     },
 };
 
-    static struct nmgr_group split_nmgr_group = {
+static struct nmgr_group split_nmgr_group = {
     .ng_handlers = (struct nmgr_handler *)split_nmgr_handlers,
     .ng_handlers_count =
-    sizeof(split_nmgr_handlers) / sizeof(split_nmgr_handlers[0]),
+        sizeof(split_nmgr_handlers) / sizeof(split_nmgr_handlers[0]),
     .ng_group_id = NMGR_GROUP_ID_SPLIT,
 };
 
@@ -47,14 +47,15 @@ split_nmgr_register(void)
 {
     int rc;
     rc = nmgr_group_register(&split_nmgr_group);
-    return rc;
+    return (rc);
 }
+
 int
 imgr_splitapp_read(struct nmgr_jbuf *njb)
 {
     int rc;
     int x;
-    splitMode_t split;
+    split_mode_t split;
     struct json_encoder *enc;
     struct json_value jv;
 
@@ -86,23 +87,22 @@ imgr_splitapp_read(struct nmgr_jbuf *njb)
 int
 imgr_splitapp_write(struct nmgr_jbuf *njb)
 {
-    long long int splitMode;
-    long long int sendSplitStatus;  /* ignored */
+    long long int split_mode;
+    long long int send_split_status;  /* ignored */
     long long int sent_rc; /* ignored */
-
     const struct json_attr_t split_write_attr[4] = {
         [0] =
         {
             .attribute = "splitMode",
             .type = t_integer,
-            .addr.integer = &splitMode,
+            .addr.integer = &split_mode,
             .nodefault = true,
         },
         [1] =
         {
             .attribute = "splitStatus",
             .type = t_integer,
-            .addr.integer = &sendSplitStatus,
+            .addr.integer = &send_split_status,
             .nodefault = true,
         },
         [2] =
@@ -127,7 +127,7 @@ imgr_splitapp_write(struct nmgr_jbuf *njb)
         goto err;
     }
 
-    rc = split_write_split((splitMode_t) splitMode);
+    rc = split_write_split((split_mode_t) split_mode);
     if (rc) {
         rc = NMGR_ERR_EINVAL;
         goto err;
@@ -143,7 +143,6 @@ imgr_splitapp_write(struct nmgr_jbuf *njb)
     json_encode_object_finish(enc);
 
     return 0;
-
 err:
     nmgr_jbuf_setoerr(njb, rc);
     return 0;

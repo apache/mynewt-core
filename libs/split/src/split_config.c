@@ -23,14 +23,18 @@ static struct conf_handler split_conf_handler = {
     .ch_export = split_conf_export
 };
 
+static int8_t split_status;
+
 int
-split_conf_init(void) {
+split_conf_init(void)
+{
     int rc;
+
     rc = conf_register(&split_conf_handler);
+
     return rc;
 }
 
-static int8_t split_status;
 
 static char *
 split_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -71,15 +75,16 @@ split_conf_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
 }
 
 int
-split_read_split(splitMode_t *split) {
-    *split = (splitMode_t) split_status;
+split_read_split(split_mode_t *split)
+{
+    *split = (split_mode_t) split_status;
     return 0;
 }
 
 int
-split_write_split(splitMode_t split)
+split_write_split(split_mode_t split)
 {
-    char str[CONF_STR_FROM_BYTES_LEN(sizeof(splitMode_t))];
+    char str[CONF_STR_FROM_BYTES_LEN(sizeof(split_mode_t))];
 
     split_status = (int8_t) split;
     if (!conf_str_from_value(CONF_INT8, &split_status, str, sizeof(str))) {

@@ -22,23 +22,22 @@
 
 #define SPLIT_NMGR_OP_SPLIT 0
 
-typedef enum splitMode_e {
+typedef enum {
     SPLIT_NONE,
     SPLIT_TEST,
     SPLIT_RUN,
-} splitMode_t;
+} split_mode_t;
 
 
-typedef enum splitStatus_e {
+typedef enum {
     SPLIT_INVALID,
     SPLIT_NOT_MATCHING,
     SPLIT_MATCHING,
-}splitStatus_t;
+} split_status_t;
 
 /*
   * Initializes the split application library */
-void
-split_app_init(void);
+void split_app_init(void);
 
 /**
   * checks the split application state.
@@ -51,9 +50,8 @@ split_app_init(void);
   * to prepare to boot.  An application may set toBoot to
   * false and call this function to check whether the split
   * application is bootable.
- * 
+ *
  * @Returns zero on success, non-zero on failures */
-int
-split_app_go(void **entry, int toBoot);
+int split_app_go(void **entry, int toboot);
 
 #endif /* _SPLIT_H__ */

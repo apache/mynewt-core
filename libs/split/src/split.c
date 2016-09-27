@@ -6,13 +6,13 @@
 #include <split/split.h>
 #include <split/split_priv.h>
 
-
 #define LOADER_IMAGE_SLOT    0
 #define SPLIT_IMAGE_SLOT    1
 #define SPLIT_TOTAL_IMAGES  2
 
 void
-split_app_init(void) {
+split_app_init(void)
+{
     int rc;
 
     rc = split_conf_init();
@@ -22,16 +22,19 @@ split_app_init(void) {
     assert(rc==0);
 }
 
-splitStatus_t
-split_check_status(void) {
-    int rc;
+split_status_t
+split_check_status(void)
+{
     void *entry;
-    rc =split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, &entry);
+    int rc;
+
+    rc = split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, &entry);
 
     if(rc == SPLIT_GO_ERR) {
         return SPLIT_INVALID;
     } else if (rc) {
     }
+
     return SPLIT_MATCHING;
 }
 
@@ -43,14 +46,13 @@ split_check_status(void) {
  *
  * @return                      0 on success; nonzero on failure.
  */
-
-
 int
-split_app_go(void **entry, int toBoot) {
-    splitMode_t split;
+split_app_go(void **entry, int toboot)
+{
+    split_mode_t split;
     int rc;
 
-    if (toBoot) {
+    if (toboot) {
         /* if we can't read this, then we don't boot an app */
         rc = split_read_split(&split);
         if(rc) {
@@ -58,7 +60,7 @@ split_app_go(void **entry, int toBoot) {
         }
 
         /* if we are told not to, then we don't boot an app */
-        if(split == SPLIT_NONE) {
+        if (split == SPLIT_NONE) {
             return -1;
         }
 
@@ -68,7 +70,8 @@ split_app_go(void **entry, int toBoot) {
         }
     }
 
-    rc =split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, entry);
-    return rc;
+    rc = split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, entry);
+
+    return (rc);
 }
 
