@@ -673,7 +673,9 @@ stm32f4_adc_read_buffer(struct adc_dev *dev, void *buf, int buf_len, int off,
  * Callback to return size of buffer
  *
  * @param1 ADC device ptr
- * @param2 
+ * @param2 Total number of channels
+ * @param3 Total number of samples
+ * @return Length of buffer in bytes
  */
 static int
 stm32f4_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
