@@ -33,8 +33,9 @@ int console_is_midline;
 
 #define CONSOLE_TX_BUF_SZ       32      /* IO buffering, must be power of 2 */
 #define CONSOLE_RX_BUF_SZ       128
+#define CONSOLE_RX_CHUNK        16
 
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
 #define CONSOLE_HIST_SZ         32
 #endif
 
@@ -71,7 +72,7 @@ struct console_tty {
     uint8_t ct_esc_seq:2;
 } console_tty;
 
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
 struct console_hist {
     uint8_t ch_head;
     uint8_t ch_tail;
@@ -129,7 +130,7 @@ console_queue_char(char ch)
     OS_EXIT_CRITICAL(sr);
 }
 
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
 static void
 console_hist_init(void)
 {
@@ -368,7 +369,7 @@ console_rx_char(void *arg, uint8_t data)
     struct console_ring *rx = &ct->ct_rx;
     int tx_space = 0;
     int i;
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
     uint8_t tx_buf[CONSOLE_RX_BUF_SZ];
 #else
     uint8_t tx_buf[3];
@@ -387,8 +388,6 @@ console_rx_char(void *arg, uint8_t data)
     /* echo */
     switch (data) {
     case '\r':
-        break;
-    case '\n':
         /*
          * linefeed
          */
@@ -396,7 +395,7 @@ console_rx_char(void *arg, uint8_t data)
         tx_buf[1] = '\r';
         tx_space = 2;
         console_add_char(rx, '\n');
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
         console_hist_add(rx);
 #endif
         if (ct->ct_rx_cb) {
@@ -426,7 +425,7 @@ console_rx_char(void *arg, uint8_t data)
         if (ct->ct_esc_seq != 2) {
             goto queue_char;
         }
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
         tx_space = console_hist_move(rx, tx_buf, data);
         tx_buf[tx_space] = 0;
         ct->ct_esc_seq = 0;
@@ -446,11 +445,13 @@ console_rx_char(void *arg, uint8_t data)
                 console_add_char(tx, '\b');
                 console_add_char(tx, ' ');
                 console_add_char(tx, '\b');
-                hal_uart_start_tx(CONSOLE_UART);
+                uart_start_tx(ct->ct_dev);
             }
-        }
-        if (tx_space == 0) {
-            goto out;
+            if (tx_space == 0) {
+                goto out;
+            }
+        } else {
+            goto queue_char;
         }
         break;
 #else
@@ -541,7 +542,7 @@ console_init(console_rx_cb rx_cb)
         ct->ct_echo_off = ! MYNEWT_VAL(CONSOLE_ECHO);
     }
 
-#ifdef CONSOLE_HIST_ENABLE
+#if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
     console_hist_init();
 #endif
 

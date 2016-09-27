@@ -38,4 +38,7 @@ pkg.syscfg_defs:
         value: '0'
     CONSOLE_ECHO:
         description: 'Default console echo '
-        value: '0'
+        value: '1'
+    CONSOLE_HIST_ENABLE:
+        description: 'Console history '
+        value: 1
