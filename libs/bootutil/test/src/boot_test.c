@@ -27,9 +27,6 @@
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
 #include "hal/flash_map.h"
-#include "fs/fs.h"
-#include "nffs/nffs.h"
-#include "config/config_file.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "bootutil/bootutil_misc.h"
@@ -67,12 +64,6 @@ static struct {
 
 #define BOOT_TEST_AREA_IDX_SCRATCH 6
 
-#define MY_CONF_PATH "/cfg/run"
-
-static struct conf_file my_conf = {
-    .cf_name = MY_CONF_PATH
-};
-
 static uint8_t
 boot_test_util_byte_at(int img_msb, uint32_t image_offset)
 {
@@ -90,8 +81,6 @@ boot_test_util_init_flash(void)
 {
     const struct flash_area *area_desc;
     int rc;
-    struct nffs_area_desc nffs_descs[32];
-    int cnt;
 
     rc = hal_flash_init();
     TEST_ASSERT(rc == 0);
@@ -103,17 +92,6 @@ boot_test_util_init_flash(void)
         rc = flash_area_erase(area_desc, 0, area_desc->fa_size);
         TEST_ASSERT(rc == 0);
     }
-    cnt = 32;
-
-    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, nffs_descs);
-    TEST_ASSERT(rc == 0);
-
-    rc = nffs_init();
-    TEST_ASSERT(rc == 0);
-    rc = nffs_format(nffs_descs);
-    TEST_ASSERT(rc == 0);
-
-    fs_mkdir("/cfg");
 }
 
 static void
@@ -395,17 +373,6 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
                                    boot_test_img_addrs[1].address, orig_slot_1);
         area_idx++;
     }
-}
-
-TEST_CASE(boot_test_setup)
-{
-    int rc;
-
-    rc = conf_file_src(&my_conf);
-    assert(rc == 0);
-    rc = conf_file_dst(&my_conf);
-    assert(rc == 0);
-
 }
 
 TEST_CASE(boot_test_nv_ns_10)
@@ -1160,7 +1127,6 @@ TEST_CASE(boot_test_invalid_hash)
 
 TEST_SUITE(boot_test_main)
 {
-    boot_test_setup();
     boot_test_nv_ns_10();
     boot_test_nv_ns_01();
     boot_test_nv_ns_11();
