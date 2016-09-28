@@ -17,13 +17,12 @@
 # under the License.
 #
 
-pkg.name: drivers/uart/uart_hal
-pkg.description: UART driver using HAL
+pkg.name: hw/drivers/adc/adc_nrf52
+pkg.description: ADC driver for the NRF52
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.apis:
-    - UART_HW_IMPL
+pkg.apis: 
+    - ADC_HW_IMPL
 pkg.deps:
-    - hw/hal
-    - drivers/uart
+   - hw/drivers/adc

@@ -31,7 +31,7 @@ pkg.arch: sim
 pkg.compiler: compiler/sim
 pkg.deps:
     - hw/mcu/native
-    - drivers/uart/uart_hal
+    - hw/drivers/uart/uart_hal
 
 pkg.deps.BLE_DEVICE:
-    - drivers/nimble/native
+    - hw/drivers/nimble/native

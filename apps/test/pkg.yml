@@ -28,7 +28,7 @@ pkg.deps:
     - fs/nffs
     - libs/bootutil
     - libs/console/full
-    - libs/mbedtls
+    - crypto/mbedtls
     - libs/os
     - libs/testreport
     - libs/testutil

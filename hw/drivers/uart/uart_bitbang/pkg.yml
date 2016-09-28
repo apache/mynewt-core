@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,15 +17,13 @@
 # under the License.
 #
 
-pkg.name: drivers/nimble/nrf52
-pkg.description: BLE driver for nRF52 systems.
+pkg.name: hw/drivers/uart/uart_bitbang
+pkg.description: Async UART port with a bitbanger.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - ble
-    - bluetooth
-
-pkg.apis: ble_driver
+pkg.apis:
+   - UART_HW_IMPL
 pkg.deps:
-    - net/nimble
-    - net/nimble/controller
+   - hw/hal
+   - hw/drivers/uart

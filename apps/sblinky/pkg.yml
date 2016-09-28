@@ -26,7 +26,7 @@ pkg.keywords:
 
 pkg.deps:
     - libs/newtmgr
-    - drivers/adc
+    - hw/drivers/adc
     - fs/nffs
     - libs/console/full
     - libs/os

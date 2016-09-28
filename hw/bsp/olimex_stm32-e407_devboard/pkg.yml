@@ -43,17 +43,17 @@ pkg.deps:
     - libs/baselibc
 
 pkg.deps.ADC_1:
-    - drivers/adc/adc_stm32f4
+    - hw/drivers/adc/adc_stm32f4
 pkg.deps.ADC_2:
-    - drivers/adc/adc_stm32f4
+    - hw/drivers/adc/adc_stm32f4
 pkg.deps.ADC_3:
-    - drivers/adc/adc_stm32f4
+    - hw/drivers/adc/adc_stm32f4
 
 pkg.deps.UART_0:
-    - drivers/uart/uart_hal
+    - hw/drivers/uart/uart_hal
 
 pkg.deps.UART_1:
-    - drivers/uart/uart_bitbang
+    - hw/drivers/uart/uart_bitbang
 
 pkg.syscfg_defs:
     CLOCK_FREQ:

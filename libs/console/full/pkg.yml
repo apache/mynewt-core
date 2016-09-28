@@ -26,7 +26,7 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - libs/os
-    - drivers/uart
+    - hw/drivers/uart
 pkg.apis: console
 
 pkg.init_function: console_pkg_init

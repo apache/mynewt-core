@@ -17,13 +17,12 @@
 # under the License.
 #
 
-pkg.name: drivers/uart/uart_bitbang
-pkg.description: Async UART port with a bitbanger.
+pkg.name: hw/drivers/adc/adc_nrf51
+pkg.description: ADC driver for the NRF51
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.apis:
-   - UART_HW_IMPL
+    - ADC_HW_IMPL
 pkg.deps:
-   - hw/hal
-   - drivers/uart
+   - hw/drivers/adc

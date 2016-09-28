@@ -27,7 +27,7 @@ pkg.keywords:
 
 pkg.deps: 
     - hw/hal
-    - libs/mbedtls
+    - crypto/mbedtls
     - libs/os 
 
 pkg.syscfg_defs:
