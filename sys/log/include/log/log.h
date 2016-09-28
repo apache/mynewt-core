@@ -21,7 +21,7 @@
 
 #include "syscfg/syscfg.h"
 #include "log/ignore.h"
-#include "util/cbmem.h"
+#include "cbmem/cbmem.h"
 
 #include <os/queue.h>
 

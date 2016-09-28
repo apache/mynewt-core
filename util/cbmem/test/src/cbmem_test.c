@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "testutil/testutil.h"
-#include "util/cbmem.h" 
+#include "cbmem/cbmem.h"
 
 #define CBMEM1_BUF_SIZE (64 * 1024)
 
@@ -31,7 +31,7 @@ uint8_t cbmem1_entry[1024];
 /*
  * Things to test.
  *
- * - Wrap of the circular buffer.  
+ * - Wrap of the circular buffer.
  * - Reading through all entries.
  */
 
@@ -46,9 +46,9 @@ setup_cbmem1(void)
 
     memset(cbmem1_entry, 0xff, sizeof(cbmem1_entry));
 
-    /* Insert 65 1024 entries, and overflow buffer.  
-     * This should overflow two entries, because the buffer is sized for 64 
-     * entries, and then the headers themselves will eat into one of the entries, 
+    /* Insert 65 1024 entries, and overflow buffer.
+     * This should overflow two entries, because the buffer is sized for 64
+     * entries, and then the headers themselves will eat into one of the entries,
      * so there should be a total of 63 entries.
      * Ensure no data corruption.
      */
@@ -59,8 +59,8 @@ setup_cbmem1(void)
     }
 }
 
-static int 
-cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr, 
+static int
+cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
         void *arg)
 {
     uint8_t expected;
@@ -71,7 +71,7 @@ cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
 
     rc = cbmem_read(cbmem, hdr, &actual, 0, sizeof(actual));
     TEST_ASSERT_FATAL(rc == 1, "Couldn't read 1 byte from cbmem");
-    TEST_ASSERT_FATAL(actual == expected, 
+    TEST_ASSERT_FATAL(actual == expected,
             "Actual doesn't equal expected (%d = %d)", actual, expected);
 
     *(uint8_t *) arg = ++expected;
@@ -79,7 +79,7 @@ cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
     return (0);
 }
 
-TEST_CASE(cbmem_test_case_1) 
+TEST_CASE(cbmem_test_case_1)
 {
     int i;
     int rc;
@@ -88,7 +88,7 @@ TEST_CASE(cbmem_test_case_1)
     i = 2;
     rc = cbmem_walk(&cbmem1, cbmem_test_case_1_walk, &i);
     TEST_ASSERT_FATAL(rc == 0, "Could not walk cbmem tree!  rc = %d", rc);
-    TEST_ASSERT_FATAL(i == 65, 
+    TEST_ASSERT_FATAL(i == 65,
             "Did not go through every element of walk, %d processed", i - 2);
 
 }
@@ -111,15 +111,15 @@ TEST_CASE(cbmem_test_case_2)
 
         rc = cbmem_read(&cbmem1, hdr, &val, 0, sizeof(val));
         TEST_ASSERT_FATAL(rc == 1, "Couldn't read 1 byte from cbmem");
-        TEST_ASSERT_FATAL(val == i, "Entry index does not match %d vs %d", 
+        TEST_ASSERT_FATAL(val == i, "Entry index does not match %d vs %d",
                 val, i);
 
         i++;
     }
 
     /* i starts at 2, for the 2 overwritten entries */
-    TEST_ASSERT_FATAL(i == 65, 
-            "Did not iterate through all 63 elements of CBMEM1, processed %d", 
+    TEST_ASSERT_FATAL(i == 65,
+            "Did not iterate through all 63 elements of CBMEM1, processed %d",
             i - 2);
 }
 
@@ -140,14 +140,14 @@ TEST_CASE(cbmem_test_case_3)
         if (hdr == NULL) {
             break;
         }
-        
+
         /* first ensure we can read the entire entry */
         off = 0;
         len = 0;
         while (1) {
             rc = cbmem_read(&cbmem1, hdr, buf, off, sizeof(buf));
             TEST_ASSERT_FATAL(rc >= 0,
-                    "Error reading from buffer rc=%d, off=%d,len=%d", rc, off, 
+                    "Error reading from buffer rc=%d, off=%d,len=%d", rc, off,
                     sizeof(buf));
             if (rc == 0) {
                 break;
@@ -155,13 +155,13 @@ TEST_CASE(cbmem_test_case_3)
             off += rc;
             len += rc;
         }
-        TEST_ASSERT_FATAL(len == 1024, 
+        TEST_ASSERT_FATAL(len == 1024,
                 "Couldn't read full entry, expected %d got %d", 1024, len);
         i++;
 
         /* go apesh*t, and read data out of bounds, see what we get. */
         rc = cbmem_read(&cbmem1, hdr, buf, 2048, sizeof(buf));
-        TEST_ASSERT_FATAL(rc < 0, 
+        TEST_ASSERT_FATAL(rc < 0,
                 "Reading invalid should return error, instead %d returned.",
                 rc);
     }

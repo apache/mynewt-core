@@ -18,7 +18,7 @@
  */
 
 #include <os/os.h>
-#include <util/cbmem.h>
+#include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
 

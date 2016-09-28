@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -19,7 +19,7 @@
 
 #include "syscfg/syscfg.h"
 
-/* This whole file is conditionally compiled based on whether the 
+/* This whole file is conditionally compiled based on whether the
  * log package is configured to use the shell (MYNEWT_VAL(LOG_CLI)).
  */
 
@@ -29,20 +29,20 @@
 #include <string.h>
 
 #include "os/os.h"
-#include "util/cbmem.h"
+#include "cbmem/cbmem.h"
 #include "log/log.h"
 #include "shell/shell.h"
 #include "console/console.h"
 
-static int 
-shell_log_dump_entry(struct log *log, void *arg, void *dptr, uint16_t len) 
+static int
+shell_log_dump_entry(struct log *log, void *arg, void *dptr, uint16_t len)
 {
     struct log_entry_hdr ueh;
     char data[128];
     int dlen;
     int rc;
 
-    rc = log_read(log, dptr, &ueh, 0, sizeof(ueh)); 
+    rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
         goto err;
     }
@@ -55,8 +55,8 @@ shell_log_dump_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     }
     data[rc] = 0;
 
-    /* XXX: This is evil.  newlib printf does not like 64-bit 
-     * values, and this causes memory to be overwritten.  Cast to a 
+    /* XXX: This is evil.  newlib printf does not like 64-bit
+     * values, and this causes memory to be overwritten.  Cast to a
      * unsigned 32-bit value for now.
      */
     console_printf("[%lu] %s\n", (unsigned long) ueh.ue_ts, data);
@@ -66,7 +66,7 @@ err:
     return (rc);
 }
 
-int 
+int
 shell_log_dump_all_cmd(int argc, char **argv)
 {
     struct log *log;
@@ -96,6 +96,6 @@ err:
     return (rc);
 }
 
-#endif 
+#endif
 
 
