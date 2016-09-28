@@ -23,4 +23,4 @@ pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
-pkg.deps: libs/os
+pkg.deps: kernel/os

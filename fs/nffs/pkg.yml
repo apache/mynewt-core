@@ -28,9 +28,10 @@ pkg.keywords:
 
 pkg.deps:
     - fs/fs
+    - encoding/crc
     - hw/hal
-    - libs/os
-    - libs/testutil
+    - kernel/os
+    - test/testutil
     - sys/log
     - sys/stats
 

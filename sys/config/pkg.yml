@@ -26,11 +26,11 @@ pkg.keywords:
 pkg.deps:
     - libs/util
 pkg.deps.CONFIG_CLI:
-    - libs/shell
+    - sys/shell
 pkg.deps.CONFIG_NEWTMGR:
-    - libs/json
+    - encoding/json
 pkg.deps.CONFIG_FCB:
-    - sys/fcb
+    - fs/fcb
 pkg.deps.CONFIG_NFFS:
     - fs/nffs
 

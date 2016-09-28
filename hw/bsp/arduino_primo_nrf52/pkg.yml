@@ -41,7 +41,7 @@ pkg.cflags:
 
 pkg.deps:
     - hw/mcu/nordic/nrf52xxx
-    - libs/baselibc
+    - libc/baselibc
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf52

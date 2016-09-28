@@ -25,13 +25,13 @@ pkg.keywords:
     - logging
 
 pkg.deps:
-    - libs/os
+    - kernel/os
     - libs/util
 pkg.deps.LOG_FCB:
     - hw/hal
-    - sys/fcb
+    - fs/fcb
 pkg.deps.LOG_CLI:
-    - libs/shell
+    - sys/shell
 
 pkg.req_apis.LOG_NEWTMGR:
     - newtmgr

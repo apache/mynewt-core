@@ -26,5 +26,5 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
-    - libs/bootutil
+    - boot/bootutil
     - libs/imgmgr

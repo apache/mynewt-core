@@ -36,4 +36,4 @@ pkg.debugscript: "stm32f4discovery_debug.sh"
 pkg.cflags: -DSTM32F407xx
 pkg.deps:
     - hw/mcu/stm/stm32f4xx
-    - libs/baselibc
+    - libc/baselibc

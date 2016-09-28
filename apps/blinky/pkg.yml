@@ -25,10 +25,10 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/console/full
+    - sys/console/full
     - libs/newtmgr
-    - libs/os
-    - libs/shell
+    - kernel/os
+    - sys/shell
     - sys/config
     - sys/log
     - sys/stats

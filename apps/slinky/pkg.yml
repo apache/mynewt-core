@@ -25,15 +25,15 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/console/full
-    - libs/flash_test
+    - sys/console/full
+    - test/flash_test
     - libs/imgmgr
     - libs/newtmgr
-    - libs/os
-    - libs/bootutil
-    - libs/shell
+    - kernel/os
+    - boot/bootutil
+    - sys/shell
     - libs/util
-    - libs/split
+    - boot/split
     - sys/config
     - sys/id
     - sys/log

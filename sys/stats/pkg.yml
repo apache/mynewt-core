@@ -25,10 +25,10 @@ pkg.keywords:
     - statistics
 
 pkg.deps:
-    - libs/os
+    - kernel/os
     - libs/util
 pkg.deps.STATS_CLI:
-    - libs/shell
+    - sys/shell
 pkg.req_apis.STATS_NEWTMGR:
     - newtmgr
 

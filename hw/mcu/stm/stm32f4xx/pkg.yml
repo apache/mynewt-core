@@ -35,5 +35,5 @@ pkg.ign_dirs:
 
 pkg.deps: 
     - hw/hal 
-    - libs/cmsis-core
+    - hw/cmsis-core
     - compiler/arm-none-eabi-m4

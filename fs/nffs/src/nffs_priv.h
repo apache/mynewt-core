@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -26,7 +26,7 @@
 #include "os/os_mempool.h"
 #include "nffs/nffs.h"
 #include "fs/fs.h"
-#include "util/crc16.h"
+#include "crc/crc16.h"
 #include "stats/stats.h"
 
 #define NFFS_HASH_SIZE               256

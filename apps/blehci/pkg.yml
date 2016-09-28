@@ -23,8 +23,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/baselibc
-    - libs/console/stub
-    - libs/os
+    - libc/baselibc
+    - sys/console/stub
+    - kernel/os
     - net/nimble/controller
     - net/nimble/transport/uart

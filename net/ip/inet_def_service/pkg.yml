@@ -27,8 +27,8 @@ pkg.keywords:
     - test
 
 pkg.deps:
-    - sys/mn_socket
-    - libs/os
+    - net/ip/mn_socket
+    - kernel/os
     - libs/util
 
 pkg.reqs:

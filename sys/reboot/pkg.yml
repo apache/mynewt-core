@@ -26,13 +26,13 @@ pkg.keywords:
     - logging
 
 pkg.deps:
-    - libs/os
+    - kernel/os
     - libs/util
     - sys/log
     - libs/imgmgr
     - sys/config
 pkg.deps.REBOOT_LOG_FCB:
-    - sys/fcb
+    - fs/fcb
 pkg.req_apis:
     - console
 

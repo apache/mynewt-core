@@ -27,5 +27,5 @@ pkg.keywords:
 pkg.deps: 
     - hw/hal 
     - hw/mcu/nordic
-    - libs/cmsis-core 
+    - hw/cmsis-core 
     - compiler/arm-none-eabi-m4

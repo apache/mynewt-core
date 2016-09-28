@@ -20,7 +20,7 @@
 #include "hal/hal_watchdog.h"
 
 int
-hal_watchdog_init(int expire_msecs)
+hal_watchdog_init(uint32_t expire_msecs)
 {
     return (0);
 }

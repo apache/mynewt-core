@@ -26,14 +26,14 @@ pkg.keywords:
 
 pkg.deps:
     - fs/nffs
-    - libs/console/full
+    - sys/console/full
     - libs/imgmgr
     - libs/newtmgr
-    - libs/os
-    - libs/bootutil
-    - libs/shell
+    - kernel/os
+    - boot/bootutil
+    - sys/shell
     - libs/util
-    - libs/split
+    - boot/split
     - sys/config
     - sys/id
     - sys/log

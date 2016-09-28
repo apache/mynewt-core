@@ -28,7 +28,7 @@
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
 #include <json/json.h>
-#include <util/base64.h>
+#include <base64/base64.h>
 #include <hal/hal_bsp.h>
 
 #include "imgmgr/imgmgr.h"

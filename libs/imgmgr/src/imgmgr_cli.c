@@ -32,7 +32,7 @@
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
 
-#include <util/hex.h>
+#include <base64/hex.h>
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"

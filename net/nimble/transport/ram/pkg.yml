@@ -27,7 +27,7 @@ pkg.keywords:
 
 pkg.deps:
     - net/nimble
-    - libs/os
+    - kernel/os
 
 pkg.apis:
     - ble_transport

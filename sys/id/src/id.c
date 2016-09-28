@@ -25,7 +25,7 @@
 #include "hal/hal_bsp.h"
 #include "os/os.h"
 #include "config/config.h"
-#include "util/base64.h"
+#include "base64/base64.h"
 
 #include "id/id.h"
 

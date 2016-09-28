@@ -36,4 +36,4 @@ pkg.debugscript: "nucleo-f401re_debug.sh"
 pkg.cflags: -DSTM32F401xE
 pkg.deps:
     - hw/mcu/stm/stm32f4xx
-    - libs/baselibc
+    - libc/baselibc

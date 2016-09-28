@@ -26,11 +26,11 @@ pkg.keywords:
 
 pkg.deps:
     - fs/nffs
-    - libs/bootutil
-    - libs/console/full
+    - boot/bootutil
+    - sys/console/full
     - crypto/mbedtls
-    - libs/os
-    - libs/testreport
-    - libs/testutil
+    - kernel/os
+    - test/testreport
+    - test/testutil
     - libs/util
     - sys/config

@@ -56,4 +56,4 @@ pkg.cflags: -std=gnu99 -DNRF52_PAN_28
 
 pkg.deps: 
     - hw/hal 
-    - libs/cmsis-core 
+    - hw/cmsis-core 

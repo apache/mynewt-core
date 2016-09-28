@@ -23,7 +23,7 @@
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
-#include "util/base64.h"
+#include "base64/base64.h"
 
 #include "config/config.h"
 #include "config_priv.h"

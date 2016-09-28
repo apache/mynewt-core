@@ -28,9 +28,9 @@ pkg.deps:
     - net/nimble/controller
     - net/nimble/host
     - net/nimble/transport/ram
-    - libs/os 
-    - libs/console/full
-    - libs/shell
+    - kernel/os 
+    - sys/console/full
+    - sys/shell
     - libs/imgmgr
     - libs/newtmgr
     - sys/config

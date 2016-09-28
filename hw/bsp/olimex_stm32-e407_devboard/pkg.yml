@@ -40,7 +40,7 @@ pkg.cflags:
     - '-DHAL_DMA_MODULE_ENABLED'
 pkg.deps:
     - hw/mcu/stm/stm32f4xx
-    - libs/baselibc
+    - libc/baselibc
 
 pkg.deps.ADC_1:
     - hw/drivers/adc/adc_stm32f4

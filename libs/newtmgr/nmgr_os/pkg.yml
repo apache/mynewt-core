@@ -25,10 +25,10 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
-    - libs/os
-    - libs/json
+    - kernel/os
+    - encoding/json
     - libs/util
-    - libs/testutil
+    - test/testutil
     - sys/reboot
 
 pkg.req_apis:

@@ -26,7 +26,7 @@ pkg.keywords:
     - bluetooth
 
 pkg.deps:
-    - libs/os
+    - kernel/os
     - net/nimble
 
 pkg.init_function: newtmgr_ble_pkg_init

@@ -24,8 +24,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/bootutil
-    - libs/util
+    - boot/bootutil
+    - encoding/base64
 
 pkg.req_apis:
     - newtmgr
@@ -37,7 +37,7 @@ pkg.deps.IMGMGR_COREDUMP:
     - sys/coredump
 
 pkg.deps.IMGMGR_SHELL:
-    - libs/shell
+    - sys/shell
 
 pkg.init_function: imgmgr_module_init
 pkg.init_stage: 5

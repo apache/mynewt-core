@@ -32,7 +32,7 @@
 #include "bootutil/image.h"
 #include "fs/fs.h"
 #include "json/json.h"
-#include "util/base64.h"
+#include "base64/base64.h"
 #include "bsp/bsp.h"
 
 #include "imgmgr/imgmgr.h"

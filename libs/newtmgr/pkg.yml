@@ -25,11 +25,11 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
-    - libs/os
-    - libs/json
+    - kernel/os
+    - encoding/json
     - libs/newtmgr/nmgr_os
     - libs/util
-    - libs/shell
+    - sys/shell
     - sys/reboot
 
 pkg.deps.BLE_HOST:

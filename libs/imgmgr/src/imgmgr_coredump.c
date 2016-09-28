@@ -26,7 +26,7 @@
 #include "hal/flash_map.h"
 #include "newtmgr/newtmgr.h"
 #include "coredump/coredump.h"
-#include "util/base64.h"
+#include "base64/base64.h"
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"

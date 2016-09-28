@@ -24,13 +24,13 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/os
+    - kernel/os
     - libs/iotivity
-    - libs/json
+    - encoding/json
     - libs/newtmgr/nmgr_os
     - libs/util
-    - libs/testutil
-    - libs/shell
+    - test/testutil
+    - sys/shell
     - sys/reboot
 
 pkg.cflags:
