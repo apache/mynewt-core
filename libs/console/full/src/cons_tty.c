@@ -362,9 +362,6 @@ console_buf_space(struct console_ring *cr)
     return space - 1;
 }
 
-uint8_t yourmom[512];
-int yourmom_idx;
-
 static int
 console_rx_char(void *arg, uint8_t data)
 {
@@ -378,10 +375,6 @@ console_rx_char(void *arg, uint8_t data)
 #else
     uint8_t tx_buf[3];
 #endif
-
-    if (yourmom_idx < sizeof yourmom) {
-        yourmom[yourmom_idx++] = data;
-    }
 
     if (CONSOLE_HEAD_INC(&ct->ct_rx) == ct->ct_rx.cr_tail) {
         /*
