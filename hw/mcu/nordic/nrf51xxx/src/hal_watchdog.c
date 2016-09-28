@@ -35,7 +35,7 @@ nrf51_hal_wdt_default_handler(void)
 
 /**@brief WDT interrupt handler. */
 static void
-WDT_IRQHandler(void)
+nrf51_wdt_irq_handler(void)
 {
     if (nrf_wdt_int_enable_check(NRF_WDT_INT_TIMEOUT_MASK) == true) {
         nrf_wdt_event_clear(NRF_WDT_EVENT_TIMEOUT);
@@ -46,7 +46,7 @@ WDT_IRQHandler(void)
 int
 hal_watchdog_init(uint32_t expire_msecs)
 {
-    NVIC_SetVector(WDT_IRQn, (uint32_t) WDT_IRQHandler);
+    NVIC_SetVector(WDT_IRQn, (uint32_t) nrf51_wdt_irq_handler);
 
     nrf_wdt_behaviour_set(NRF_WDT_BEHAVIOUR_RUN_SLEEP);
 
