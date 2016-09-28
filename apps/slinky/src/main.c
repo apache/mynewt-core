@@ -75,7 +75,10 @@ static volatile int g_task1_loops;
 static struct os_task task2;
 
 static struct log my_log;
+
+#if MYNEWT_VAL(CONFIG_NFFS)
 extern struct log nffs_log; /* defined in the OS module */
+#endif
 
 static volatile int g_task2_loops;
 
@@ -317,7 +320,10 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     cbmem_init(&nffs_cbmem, nffs_cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem);
+
+#if MYNEWT_VAL(CONFIG_NFFS)
     log_register("nffs", &nffs_log, &log_cbmem_handler, &nffs_cbmem);
+#endif
 
 #if !MYNEWT_VAL(CONFIG_NFFS)
     setup_for_fcb();

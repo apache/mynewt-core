@@ -25,7 +25,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - fs/nffs
     - libs/console/full
     - libs/flash_test
     - libs/imgmgr
@@ -40,6 +39,12 @@ pkg.deps:
     - sys/log
     - sys/stats
 
+pkg.deps.CONFIG_NFFS:
+    - fs/nffs
+
+pkg.deps.CONFIG_FCB:
+    - sys/fcb
+
 pkg.syscfg_vals:
     # Enable the shell task.
     SHELL_TASK: 1
@@ -49,3 +54,5 @@ pkg.syscfg_vals:
 
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
+
+    CONFIG_FCB: 1
