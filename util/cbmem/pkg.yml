@@ -17,12 +17,14 @@
 # under the License.
 #
 
-pkg.name: encoding/crc
-pkg.description: Library containing encoding functions
+pkg.name: libs/util
+pkg.description: Library containing miscellaneous utilities.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - crc16 
-    - crc32
-    - crc8
-    - crc
+    - base64
+    - circular buffer
+
+pkg.deps:
+    - hw/hal
+    - kernel/os

@@ -27,7 +27,7 @@ pkg.deps:
     - kernel/os
     - libs/util
     - encoding/base64 
-    - encoding/crc
+    - util/crc
 pkg.req_apis:
     - console
 

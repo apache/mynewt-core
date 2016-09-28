@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,29 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-pkg.name: fs/nffs
-pkg.description: Newtron Flash File System.
+pkg.name: util/cbmem/test
+pkg.type: unittest
+pkg.description: "Util unit tests."
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - file
-    - filesystem
-    - ffs
 
-pkg.deps:
-    - fs/fs
-    - util/crc
-    - hw/hal
-    - kernel/os
+pkg.deps: 
     - test/testutil
-    - sys/log
-    - sys/stats
+    - util/cbmem
 
-pkg.init_function: nffs_pkg_init
-pkg.init_stage: 2
-
-pkg.syscfg_defs:
-    NFFS_DETECT_FAIL:
-        description: 'TBD'
-        value: 'NFFS_DETECT_FAIL_FORMAT'
+pkg.deps.SELFTEST:
+    - sys/console/stub

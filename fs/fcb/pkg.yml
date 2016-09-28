@@ -26,4 +26,4 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - encoding/crc
+    - util/crc

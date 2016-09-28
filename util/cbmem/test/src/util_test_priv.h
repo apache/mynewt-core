@@ -16,17 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __UTIL_BASE64_H
-#define __UTIL_BASE64_H
 
-#include <stdint.h>
-#include <string.h>
+#ifndef __UTIL_TEST_PRIV_
+#define __UTIL_TEST_PRIV_
 
-int base64_encode(const void *, int, char *, uint8_t);
-int base64_decode(const char *, void *buf);
-int base64_pad(char *, int);
-int base64_decode_len(const char *str);
+int cbmem_test_suite(void);
 
-#define BASE64_ENCODE_SIZE(__size) ((((__size) * 4) / 3) + 4)
-
-#endif /* __UTIL_BASE64_H__ */
+#endif

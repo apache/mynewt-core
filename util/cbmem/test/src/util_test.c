@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,10 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef _UTIL_HEX_H_
-#define _UTIL_HEX_H_
 
-char *hex_format(void *src_v, int src_len, char *dst, int dst_len);
-int hex_parse(char *src, int src_len, void *dst_v, int dst_len);
+#include <assert.h>
+#include <stddef.h>
+#include "syscfg/syscfg.h"
+#include "testutil/testutil.h"
+#include "util_test_priv.h"
 
-#endif /* _UTIL_HEX_H_ */
+int
+util_test_all(void)
+{
+    cbmem_test_suite();
+    return tu_case_failed;
+}
+
+int
+hex_fmt_test_all(void)
+{
+    hex_fmt_test_suite();
+    return tu_case_failed;
+}
+
+#if MYNEWT_VAL(SELFTEST)
+
+int
+main(int argc, char **argv)
+{
+    tu_config.tc_print_results = 1;
+    tu_init();
+
+    util_test_all();
+    hex_fmt_test_all();
+    return tu_any_failed;
+}
+
+#endif
