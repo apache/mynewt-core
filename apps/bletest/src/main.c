@@ -29,8 +29,6 @@
 #include "shell/shell.h"
 #include "stats/stats.h"
 #include "hal/flash_map.h"
-#include "newtmgr/newtmgr.h"
-#include "imgmgr/imgmgr.h"
 
 /* BLE */
 #include "nimble/ble.h"
