@@ -49,6 +49,7 @@
 #define NMGR_OP_WRITE           (2)
 #define NMGR_OP_WRITE_RSP       (3)
 
+#define NMGR_F_JSON_RSP_COMPLETE     (0x0001)
 
 /**
  * Newtmgr JSON error codes

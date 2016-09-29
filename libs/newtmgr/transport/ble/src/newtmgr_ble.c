@@ -143,6 +143,23 @@ gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
     }
 }
 
+void
+nmgr_ble_update_rsp_len(struct os_mbuf *req, uint16_t *len, uint8_t *flags) {
+
+    uint16_t ble_data_len;
+    uint16_t conn_handle;
+
+    memcpy(&conn_handle, OS_MBUF_USRHDR(req), sizeof (conn_handle));
+
+    ble_data_len = ble_att_mtu(conn_handle) - 3 - sizeof(struct nmgr_hdr);
+
+    if (*len <= ble_data_len) {
+        *flags |= NMGR_F_JSON_RSP_COMPLETE;
+    } else {
+        *len = ble_data_len;
+    }
+}
+
 /**
  * Nmgr ble process mqueue event
  * Gets an event from the nmgr mqueue and does a notify with the response

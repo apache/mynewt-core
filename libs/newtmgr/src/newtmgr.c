@@ -28,6 +28,7 @@
 #include "shell/shell.h"
 #include "newtmgr/newtmgr.h"
 #include "nmgr_os/nmgr_os.h"
+#include "nmgrble/newtmgr_ble.h"
 
 os_stack_t newtmgr_stack[OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE))];
 
@@ -317,9 +318,14 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     struct nmgr_handler *handler;
     struct nmgr_hdr *rsp_hdr;
     struct nmgr_hdr hdr;
+    struct os_mbuf *rspfrag;
     uint32_t off;
-    uint32_t len;
+    uint32_t offtmp;
+    uint16_t len;
     int rc;
+
+    rspfrag = NULL;
+    rsp_hdr = NULL;
 
     rsp = os_msys_get_pkthdr(512, OS_MBUF_USRHDR_LEN(req));
     if (!rsp) {
@@ -359,7 +365,7 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
             goto err;
         }
         rsp_hdr->nh_len = 0;
-        rsp_hdr->nh_flags = 0;
+        rsp_hdr->nh_flags = hdr.nh_flags;
         rsp_hdr->nh_op = (hdr.nh_op == NMGR_OP_READ) ? NMGR_OP_READ_RSP :
             NMGR_OP_WRITE_RSP;
         rsp_hdr->nh_group = hdr.nh_group;
@@ -399,17 +405,61 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
             goto err;
         }
 
-        rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
+        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
+
+        if (!rsp_hdr) {
+            goto err;
+        }
+
+        offtmp = 8;
+        len = rsp_hdr->nh_len;
         rsp_hdr->nh_group = htons(rsp_hdr->nh_group);
 
-        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
+        do {
+
+        nmgr_ble_update_rsp_len(req, &len, &rsp_hdr->nh_flags);
+
+        rspfrag = os_msys_get_pkthdr(len, OS_MBUF_USRHDR_LEN(req));
+        if (!rspfrag) {
+            rc = OS_EINVAL;
+            goto err;
+        }
+        /* Copy the request packet header into the response. */
+        memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
+
+        if (os_mbuf_append(rspfrag, rsp_hdr, sizeof(struct nmgr_hdr))) {
+            rc = OS_EINVAL;
+            goto err;
+        }
+
+        if (os_mbuf_appendfrom(rspfrag, rsp, offtmp, len)) {
+            rc = OS_EINVAL;
+            goto err;
+        }
+
+        offtmp += len;
+
+        len = htons(len);
+
+        if (os_mbuf_copyinto(rspfrag, offsetof(struct nmgr_hdr, nh_len), &len, sizeof(len))) {
+            rc = OS_EINVAL;
+            goto err;
+        }
+
+        nt->nt_output(nt, rspfrag);
+        len = rsp_hdr->nh_len - offtmp + sizeof(struct nmgr_hdr);
+
+        } while (!((hdr.nh_flags & NMGR_F_JSON_RSP_COMPLETE) ==
+                 NMGR_F_JSON_RSP_COMPLETE));
     }
 
-    nt->nt_output(nt, rsp);
-
+    os_mbuf_free_chain(rsp);
     return (0);
 err:
     os_mbuf_free_chain(rsp);
+    if (rspfrag) {
+        os_mbuf_free_chain(rspfrag);
+    }
     return (rc);
 }
 

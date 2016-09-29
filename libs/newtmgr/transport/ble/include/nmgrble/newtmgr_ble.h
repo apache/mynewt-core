@@ -20,10 +20,15 @@
 #ifndef _NEWTMGR_BLE_H_
 #define _NEWTMGR_BLE_H_
 
+struct nmgr_hdr;
+
 int
 nmgr_ble_proc_mq_evt(struct os_event *ev);
 
 int
 nmgr_ble_gatt_svr_init(void);
+
+void
+nmgr_ble_update_rsp_len(struct os_mbuf *req, uint16_t *len, uint8_t *flags);
 
 #endif /* _NETMGR_H */
