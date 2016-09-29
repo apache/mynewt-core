@@ -25,7 +25,7 @@
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
-#include "util/cbmem.h"
+#include "cbmem/cbmem.h"
 #include "log/log.h"
 
 #if MYNEWT_VAL(LOG_CLI)
