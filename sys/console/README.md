@@ -28,6 +28,6 @@ There are two versions of this library;
 You can write a package which uses ```console_printf()```, and builder of a
 project can select which one they'll use.
 For the package, list in the pkg.yml console as the required capability.
-Project builder will then include either libs/console/full or
-libs/console/stub as their choice.
+Project builder will then include either sys/console/full or
+sys/console/stub as their choice.
 
