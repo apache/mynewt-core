@@ -43,7 +43,7 @@ pkg.deps.CONFIG_NFFS:
     - fs/nffs
 
 pkg.deps.CONFIG_FCB:
-    - sys/fcb
+    - fs/fcb
 
 pkg.syscfg_vals:
     # Enable the shell task.

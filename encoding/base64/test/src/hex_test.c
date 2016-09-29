@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "testutil/testutil.h"
-#include "util/hex.h"
+#include "base64/hex.h"
 
 TEST_CASE(hex2str)
 {

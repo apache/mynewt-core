@@ -23,13 +23,13 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - libs/testutil
+    - test/testutil
     - sys/config
 
 pkg.deps.SELFTEST:
     - fs/nffs
-    - sys/fcb
-    - libs/console/stub
+    - fs/fcb
+    - sys/console/stub
 
 pkg.syscfg_vals.SELFTEST:
     CONFIG_NFFS: 1

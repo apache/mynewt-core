@@ -24,8 +24,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include "syscfg/syscfg.h"
-#include "encoding/base64.h"
-#include "encoding/crc16.h"
+#include "base64/base64.h"
+#include "crc/crc16.h"
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
 #include "hal/flash_map.h"

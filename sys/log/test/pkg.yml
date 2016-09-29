@@ -23,11 +23,11 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - libs/testutil
+    - test/testutil
     - sys/log
 
 pkg.deps.SELFTEST:
-    - libs/console/stub
+    - sys/console/stub
 
 pkg.syscfg_vals:
     LOG_FCB: 1

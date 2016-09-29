@@ -23,8 +23,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - libs/testutil
-    - libs/util
+    - test/testutil
+    - encoding/base64
 
 pkg.deps.SELFTEST:
-    - libs/console/stub
+    - sys/console/stub

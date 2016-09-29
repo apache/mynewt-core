@@ -23,8 +23,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - libs/testutil
-    - sys/mn_socket
+    - test/testutil
+    - net/ip/mn_socket
 
 pkg.deps.SELFTEST:
-    - libs/console/stub
+    - sys/console/stub

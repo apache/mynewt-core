@@ -24,7 +24,7 @@ pkg.keywords:
 
 pkg.deps: 
     - crypto/mbedtls
-    - libs/testutil
+    - test/testutil
 
 pkg.deps.SELFTEST:
-    - libs/console/stub
+    - sys/console/stub
