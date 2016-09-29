@@ -119,6 +119,7 @@ bs_list(char *buf, int len)
               (unsigned int)hdr.ih_ver.iv_build_num);
         }
         flash_area_close(fap);
+        need_comma = 1;
     }
     len += snprintf(ptr + len, BOOT_SERIAL_OUT_MAX - len, "]}");
     boot_serial_output(ptr, len);
@@ -254,32 +255,7 @@ bs_reset(char *buf, int len)
 void
 boot_serial_input(char *buf, int len)
 {
-    int rc;
-    uint16_t crc;
-    uint16_t expected_len;
     struct nmgr_hdr *hdr;
-
-    if (len < BASE64_ENCODE_SIZE(sizeof(uint16_t) * 2)) {
-        return;
-    }
-    rc = base64_decode(buf, buf);
-    if (rc < 0) {
-        return;
-    }
-    len = rc;
-
-    expected_len = ntohs(*(uint16_t *)buf);
-    buf += sizeof(uint16_t);
-    len -= sizeof(uint16_t);
-
-    len = min(len, expected_len);
-
-    crc = crc16_ccitt(CRC16_INITIAL_CRC, buf, len);
-    if (crc || len <= sizeof(crc)) {
-        return;
-    }
-    len -= sizeof(crc);
-    buf[len] = '\0';
 
     hdr = (struct nmgr_hdr *)buf;
     if (len < sizeof(*hdr) ||
@@ -357,15 +333,54 @@ boot_serial_output(char *data, int len)
 }
 
 /*
+ * Returns 1 if full packet has been received.
+ */
+static int
+boot_serial_in_dec(char *in, int inlen, char *out, int *out_off, int maxout)
+{
+    int rc;
+    uint16_t crc;
+    uint16_t len;
+
+    if (*out_off + base64_decode_len(in) >= maxout) {
+        return -1;
+    }
+    rc = base64_decode(in, &out[*out_off]);
+    if (rc < 0) {
+        return -1;
+    }
+    *out_off += rc;
+
+    if (*out_off > sizeof(uint16_t)) {
+        len = ntohs(*(uint16_t *)out);
+
+        len = min(len, *out_off - sizeof(uint16_t));
+        out += sizeof(uint16_t);
+        crc = crc16_ccitt(CRC16_INITIAL_CRC, out, len);
+        if (crc || len <= sizeof(crc)) {
+            return 0;
+        }
+        *out_off -= sizeof(crc);
+        out[*out_off] = '\0';
+
+        return 1;
+    }
+    return 0;
+}
+
+/*
  * Task which waits reading console, expecting to get image over
  * serial port.
  */
+int cont;
 static void
 boot_serial(void *arg)
 {
     int rc;
     int off;
     char *buf;
+    char *dec;
+    int dec_off;
     int full_line;
     int max_input = (int)arg;
 
@@ -374,7 +389,8 @@ boot_serial(void *arg)
     console_echo(0);
 
     buf = os_malloc(max_input);
-    assert(buf);
+    dec = os_malloc(max_input);
+    assert(buf && dec);
 
     off = 0;
     while (1) {
@@ -388,7 +404,15 @@ boot_serial(void *arg)
         }
         if (buf[0] == SHELL_NLIP_PKT_START1 &&
           buf[1] == SHELL_NLIP_PKT_START2) {
-            boot_serial_input(&buf[2], off - 2);
+            dec_off = 0;
+            rc = boot_serial_in_dec(&buf[2], off - 2, dec, &dec_off, max_input);
+        } else if (buf[0] == SHELL_NLIP_DATA_START1 &&
+          buf[1] == SHELL_NLIP_DATA_START2) {
+            ++cont;
+            rc = boot_serial_in_dec(&buf[2], off - 2, dec, &dec_off, max_input);
+        }
+        if (rc == 1) {
+            boot_serial_input(&dec[2], dec_off - 2);
         }
         off = 0;
     }

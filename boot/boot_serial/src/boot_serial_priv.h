@@ -26,6 +26,9 @@
 #define SHELL_NLIP_PKT_START1   6
 #define SHELL_NLIP_PKT_START2   9
 
+#define SHELL_NLIP_DATA_START1   4
+#define SHELL_NLIP_DATA_START2   20
+
 /*
  * From newtmgr.h
  */
