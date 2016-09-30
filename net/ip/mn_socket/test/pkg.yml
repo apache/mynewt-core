@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: sys/mn_socket/test
+pkg.name: net/ip/mn_socket/test
 pkg.type: unittest
 pkg.description: "Mynewt socket unit tests."
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
