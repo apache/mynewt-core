@@ -59,7 +59,7 @@ crash_device(char *how)
     return 0;
 }
 
-int
+void
 crash_test_init(void)
 {
 #if MYNEWT_VAL(CRASH_TEST_CLI)
@@ -68,5 +68,4 @@ crash_test_init(void)
 #if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
     nmgr_group_register(&crash_test_nmgr_group);
 #endif
-    return 0;
 }

@@ -33,6 +33,9 @@ pkg.deps.CRASH_TEST_NEWTMGR:
     - libs/newtmgr
     - encoding/json
 
+pkg.init_function: crash_test_init
+pkg.init_stage: 5
+
 pkg.syscfg_defs:
     CRASH_TEST_CLI:
         description: 'TBD'

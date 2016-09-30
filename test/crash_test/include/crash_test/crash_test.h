@@ -22,6 +22,6 @@
 /*
  * Adds the crash commands to your shell/newtmgr.
  */
-int crash_test_init(void);
+void crash_test_init(void);
 
 #endif /* __CRASH_TEST_H__ */
