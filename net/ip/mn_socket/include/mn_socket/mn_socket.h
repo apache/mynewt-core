@@ -50,6 +50,7 @@
 #define MN_EAGAIN               10
 #define MN_EUNKNOWN             11
 #define MN_EADDRNOTAVAIL        12
+#define MN_ENETUNREACH          13
 
 /*
  * Multicast macros
