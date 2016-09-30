@@ -109,16 +109,19 @@ struct nmgr_group {
 struct nmgr_transport;
 typedef int (*nmgr_transport_out_func_t)(struct nmgr_transport *nt, 
         struct os_mbuf *m);
+typedef uint16_t (*nmgr_transport_get_mtu_func_t)(struct os_mbuf *m);
 
 struct nmgr_transport {
     struct os_mqueue nt_imq;
-    nmgr_transport_out_func_t nt_output; 
+    nmgr_transport_out_func_t nt_output;
+    nmgr_transport_get_mtu_func_t nt_get_mtu;
 };
 
 
 int nmgr_task_init(void);
 int nmgr_transport_init(struct nmgr_transport *nt,
-        nmgr_transport_out_func_t output_func);
+        nmgr_transport_out_func_t output_func,
+        nmgr_transport_get_mtu_func_t get_mtu_func);
 int nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req);
 int nmgr_rsp_extend(struct nmgr_hdr *, struct os_mbuf *, void *data, uint16_t);
 int nmgr_group_register(struct nmgr_group *group);

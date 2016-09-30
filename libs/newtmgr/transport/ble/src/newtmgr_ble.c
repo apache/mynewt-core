@@ -24,6 +24,7 @@
 #include "host/ble_hs.h"
 #include "newtmgr/newtmgr.h"
 #include "os/endian.h"
+#include "console/console.h"
 
 /* nmgr ble mqueue */
 struct os_mqueue ble_nmgr_mq;
@@ -143,21 +144,22 @@ gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
     }
 }
 
-void
-nmgr_ble_update_rsp_len(struct os_mbuf *req, uint16_t *len, uint8_t *flags) {
+uint16_t
+nmgr_ble_get_mtu(struct os_mbuf *req) {
 
-    uint16_t ble_data_len;
     uint16_t conn_handle;
+    uint16_t mtu;
 
     memcpy(&conn_handle, OS_MBUF_USRHDR(req), sizeof (conn_handle));
-
-    ble_data_len = ble_att_mtu(conn_handle) - 3 - sizeof(struct nmgr_hdr);
-
-    if (*len <= ble_data_len) {
-        *flags |= NMGR_F_JSON_RSP_COMPLETE;
-    } else {
-        *len = ble_data_len;
+    mtu = ble_att_mtu(conn_handle);
+    if (!mtu) {
+        assert(0);
     }
+
+    /* 3 is the number of bytes for ATT notification base */
+    mtu = mtu - 3;
+
+    return (mtu);
 }
 
 /**
@@ -243,7 +245,7 @@ nmgr_ble_gatt_svr_init(void)
 
     os_mqueue_init(&ble_nmgr_mq, &ble_nmgr_mq);
 
-    rc = nmgr_transport_init(&ble_nt, &nmgr_ble_out);
+    rc = nmgr_transport_init(&ble_nt, nmgr_ble_out, nmgr_ble_get_mtu);
 
 err:
     return rc;

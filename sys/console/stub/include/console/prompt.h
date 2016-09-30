@@ -19,7 +19,6 @@
 
 #ifndef __CONSOLE_PROMPT_H__
 #define __CONSOLE_PROMPT_H__
-nclude/console/prompt.h
 
 #include <stdarg.h>
 
