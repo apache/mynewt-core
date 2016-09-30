@@ -311,15 +311,107 @@ nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode)
 }
 
 static int
+nmgr_send_rspfrag(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
+                  struct os_mbuf *rsp, struct os_mbuf *req, uint16_t len,
+                  uint16_t *offset) {
+
+    struct os_mbuf *rspfrag;
+    int rc;
+
+    rspfrag = NULL;
+
+    rspfrag = os_msys_get_pkthdr(len, OS_MBUF_USRHDR_LEN(req));
+    if (!rspfrag) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    /* Copy the request packet header into the response. */
+    memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
+
+    if (os_mbuf_append(rspfrag, rsp_hdr, sizeof(struct nmgr_hdr))) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    if (os_mbuf_appendfrom(rspfrag, rsp, *offset, len)) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    *offset += len;
+
+    len = htons(len);
+
+    if (os_mbuf_copyinto(rspfrag, offsetof(struct nmgr_hdr, nh_len), &len, sizeof(len))) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    nt->nt_output(nt, rspfrag);
+
+    return OS_OK;
+err:
+    if (rspfrag) {
+        os_mbuf_free_chain(rspfrag);
+    }
+    return rc;
+}
+
+static int
+nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
+                  struct os_mbuf *rsp, struct os_mbuf *req) {
+
+    uint16_t offset;
+    uint16_t len;
+    uint16_t mtu;
+    int rc;
+
+    if (!rsp_hdr) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
+    offset = sizeof(struct nmgr_hdr);
+    len = rsp_hdr->nh_len;
+    rsp_hdr->nh_group = htons(rsp_hdr->nh_group);
+
+    mtu = nt->nt_get_mtu(req) - sizeof(struct nmgr_hdr);
+
+    do {
+        if (len <= mtu) {
+            rsp_hdr->nh_flags |= NMGR_F_JSON_RSP_COMPLETE;
+        } else {
+            len = mtu;
+        }
+
+        rc = nmgr_send_rspfrag(nt, rsp_hdr, rsp, req, len, &offset);
+        if (rc) {
+            goto err;
+        }
+
+        len = rsp_hdr->nh_len - offset + sizeof(struct nmgr_hdr);
+
+    } while (!((rsp_hdr->nh_flags & NMGR_F_JSON_RSP_COMPLETE) ==
+                NMGR_F_JSON_RSP_COMPLETE));
+
+    return OS_OK;
+err:
+    return rc;
+}
+
+static int
 nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {
     struct os_mbuf *rsp;
     struct nmgr_handler *handler;
     struct nmgr_hdr *rsp_hdr;
     struct nmgr_hdr hdr;
-    uint32_t off;
-    uint32_t len;
+    int off;
+    uint16_t len;
     int rc;
+
+    rsp_hdr = NULL;
 
     rsp = os_msys_get_pkthdr(512, OS_MBUF_USRHDR_LEN(req));
     if (!rsp) {
@@ -399,15 +491,15 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
             goto err;
         }
 
-        rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
-        rsp_hdr->nh_group = htons(rsp_hdr->nh_group);
-
         off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
+        rc = nmgr_rsp_fragment(nt, rsp_hdr, rsp, req);
+        if (rc) {
+            goto err;
+        }
     }
 
-    nt->nt_output(nt, rsp);
-
-    return (0);
+    os_mbuf_free_chain(rsp);
+    return OS_OK;
 err:
     os_mbuf_free_chain(rsp);
     return (rc);
@@ -456,11 +548,13 @@ nmgr_task(void *arg)
 
 int
 nmgr_transport_init(struct nmgr_transport *nt,
-        nmgr_transport_out_func_t output_func)
+        nmgr_transport_out_func_t output_func,
+        nmgr_transport_get_mtu_func_t get_mtu_func)
 {
     int rc;
 
     nt->nt_output = output_func;
+    nt->nt_get_mtu = get_mtu_func;
 
     rc = os_mqueue_init(&nt->nt_imq, nt);
     if (rc != 0) {
@@ -494,6 +588,11 @@ nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
     }
 
     return rc;
+}
+
+static uint16_t
+nmgr_shell_get_mtu(struct os_mbuf *m) {
+    return NMGR_MAX_MTU;
 }
 
 static int
@@ -537,7 +636,8 @@ nmgr_task_init(void)
 
     os_eventq_init(&g_nmgr_evq);
 
-    rc = nmgr_transport_init(&g_nmgr_shell_transport, nmgr_shell_out);
+    rc = nmgr_transport_init(&g_nmgr_shell_transport, nmgr_shell_out,
+                             nmgr_shell_get_mtu);
     if (rc != 0) {
         goto err;
     }
