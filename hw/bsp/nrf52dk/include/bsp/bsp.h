@@ -39,6 +39,7 @@ extern uint8_t _ram_start;
 
 /* LED pins */
 #define LED_BLINK_PIN   (17)
+#define LED_2           (18)
 
 /* SPI SS */
 #define SPI_SS_PIN      (22)
