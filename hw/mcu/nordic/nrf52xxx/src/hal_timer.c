@@ -164,6 +164,8 @@ nrf_timer_disable_ocmp(NRF_TIMER_Type *hwtimer)
     hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
 }
 
+#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) || \
+     MYNEWT_VAL(TIMER_3) || MYNEWT_VAL(TIMER_4))
 /**
  * hal timer chk queue
  *
@@ -199,6 +201,7 @@ hal_timer_chk_queue(struct nrf52_hal_timer *bsptimer)
     }
     __HAL_ENABLE_INTERRUPTS(ctx);
 }
+#endif
 
 /**
  * hal timer irq handler
