@@ -31,6 +31,10 @@
 #include "lwip/ip.h"
 #include "lwip/priv/tcp_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_SLOTS 16 /* must be > 2 and < 256 */
 #define MAX_HDR   128
 
@@ -157,5 +161,9 @@ extern int   vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp);
 extern int   vj_uncompress_tcp   (struct pbuf **nb, struct vjcompress *comp);
 
 #endif /* VJ_H */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPP_SUPPORT && VJ_SUPPORT */

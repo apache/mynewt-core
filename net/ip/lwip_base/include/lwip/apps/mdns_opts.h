@@ -40,6 +40,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup mdns_opts Options
  * @ingroup mdns
@@ -69,6 +73,10 @@
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_APPS_MDNS_OPTS_H */
 

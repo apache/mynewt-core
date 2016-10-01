@@ -17,6 +17,10 @@
 
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /***********************************************************************************************//**
  * General parameters configuration.
  **************************************************************************************************/
@@ -109,5 +113,9 @@
 #define CONN_CHIP_WAKEUP_TIME           500     /**< The time for nRF51822 to reset and become ready to receive serialized commands (in milliseconds). */
 
 #define SER_MAX_CONNECTIONS 8
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_CONFIG_H__ */

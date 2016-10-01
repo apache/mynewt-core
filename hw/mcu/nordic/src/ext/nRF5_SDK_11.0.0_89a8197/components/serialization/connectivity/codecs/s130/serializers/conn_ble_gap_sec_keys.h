@@ -12,6 +12,10 @@
 #ifndef _CONN_BLE_GAP_SEC_KEYS_H
 #define _CONN_BLE_GAP_SEC_KEYS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -84,5 +88,9 @@ uint32_t conn_ble_gap_sec_context_destroy(uint16_t conn_handle);
  */
 uint32_t conn_ble_gap_sec_context_find(uint16_t conn_handle, uint32_t *p_index);
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_CONN_BLE_GAP_SEC_KEYS_H

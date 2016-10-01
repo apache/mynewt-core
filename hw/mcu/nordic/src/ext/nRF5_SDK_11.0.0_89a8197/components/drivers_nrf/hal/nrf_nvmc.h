@@ -22,6 +22,10 @@
 #include <stdint.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_nvmc Non-volatile memory controller
  * @{
@@ -83,6 +87,10 @@ void nrf_nvmc_write_bytes(uint32_t  address, const uint8_t * src, uint32_t num_b
  */
 void nrf_nvmc_write_words(uint32_t address, const uint32_t * src, uint32_t num_words);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_NVMC_H__
 /** @} */

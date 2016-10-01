@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include "ser_hal_transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief A function for dispatching packets from an Application Chip to an appropriate decoder.
  *
  * @details    The function is called to process received packets from a transport layer.
@@ -48,6 +52,10 @@
  */
 uint32_t ser_conn_received_pkt_process(
         ser_hal_transport_evt_rx_pkt_received_params_t * p_rx_pkt_params);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_CONN_PKT_DECODER_H__ */
 

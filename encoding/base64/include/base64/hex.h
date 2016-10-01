@@ -19,7 +19,15 @@
 #ifndef _UTIL_HEX_H_
 #define _UTIL_HEX_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *hex_format(void *src_v, int src_len, char *dst, int dst_len);
 int hex_parse(char *src, int src_len, void *dst_v, int dst_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _UTIL_HEX_H_ */

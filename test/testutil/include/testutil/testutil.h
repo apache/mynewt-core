@@ -25,6 +25,10 @@
 
 #include "syscfg/syscfg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*****************************************************************************
  * Public declarations                                                       *
  *****************************************************************************/
@@ -169,6 +173,10 @@ extern jmp_buf tu_case_jb;
 #define ASSERT_IF_TEST(expr) assert(expr)
 #else
 #define ASSERT_IF_TEST(expr)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

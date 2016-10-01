@@ -24,6 +24,10 @@
 #include "os/os_time.h"
 #include "os/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_event {
     uint8_t ev_queued;
     uint8_t ev_type;
@@ -47,6 +51,10 @@ void os_eventq_put(struct os_eventq *, struct os_event *);
 struct os_event *os_eventq_get(struct os_eventq *);
 struct os_event *os_eventq_poll(struct os_eventq **, int, os_time_t);
 void os_eventq_remove(struct os_eventq *, struct os_event *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_EVENTQ_H */
 

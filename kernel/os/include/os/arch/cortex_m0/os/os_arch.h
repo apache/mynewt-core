@@ -23,6 +23,10 @@
 #include <stdint.h>
 #include <mcu/cortex_m0.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_task;
 
 /* Run in priviliged or unprivileged Thread mode */
@@ -70,5 +74,9 @@ void os_default_irq_asm(void);
 /* External function prototypes supplied by BSP */
 void os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio);
 void os_bsp_ctx_sw(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_ARCH_ARM_H */

@@ -19,6 +19,10 @@
 
 #include "oc_ri.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*oc_core_init_platform_cb_t)(void *data);
 typedef void (*oc_core_add_device_cb_t)(void *data);
 
@@ -48,5 +52,9 @@ void oc_core_populate_resource(
   oc_interface_mask_t default_interface, oc_resource_properties_t properties,
   oc_request_handler_t get, oc_request_handler_t put, oc_request_handler_t post,
   oc_request_handler_t delete, int device);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_CORE_RES_H */

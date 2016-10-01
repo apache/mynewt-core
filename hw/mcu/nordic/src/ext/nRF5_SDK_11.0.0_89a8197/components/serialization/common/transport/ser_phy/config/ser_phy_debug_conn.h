@@ -13,6 +13,10 @@
 #ifndef SER_PHY_DEBUG_CONN_H__
 #define SER_PHY_DEBUG_CONN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SER_PHY_DEBUG_CONN_ENABLE
 
 #define DEBUG_EVT_SPI_SLAVE_RAW_RX_XFER_DONE(data);
@@ -125,6 +129,10 @@ do {                                                \
 } while (0);
 
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif //SER_PHY_DEBUG_CONN_H__

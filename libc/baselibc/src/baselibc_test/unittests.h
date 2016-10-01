@@ -22,6 +22,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define COMMENT(x) printf("\n----" x "----\n");
 #define STR(x) #x
 #define STR2(x) STR(x)
@@ -32,5 +36,9 @@
     } else { \
         printf("\033[32;1mOK:\033[22;39m " #x "\n"); \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

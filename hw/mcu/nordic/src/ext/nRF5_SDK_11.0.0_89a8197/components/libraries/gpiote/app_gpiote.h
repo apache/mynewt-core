@@ -46,6 +46,10 @@
 #include "app_error.h"
 #include "app_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define GPIOTE_USER_NODE_SIZE   24          /**< Size of app_gpiote.gpiote_user_t (only for use inside APP_GPIOTE_BUF_SIZE()). */
 #define NO_OF_PINS              32          /**< Number of GPIO pins on the \nRFXX chip. */
 
@@ -213,6 +217,10 @@ uint32_t app_gpiote_enable_interrupts(void);
  */
 uint32_t app_gpiote_disable_interrupts(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_GPIOTE_H__
 

@@ -20,9 +20,17 @@
 #ifndef __BOOTUTIL_MISC_H_
 #define __BOOTUTIL_MISC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int boot_vect_read_test(int *slot);
 int boot_vect_read_main(int *slot);
 int boot_vect_write_test(int slot);
 int boot_vect_write_main(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*  __BOOTUTIL_MISC_H_ */

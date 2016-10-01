@@ -22,8 +22,16 @@
 
 #include "syscfg/syscfg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if MYNEWT_VAL(WIFI_MGMT_CLI)
 extern struct shell_cmd wifi_cli_cmd;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __WIFI_PRIV_H__ */

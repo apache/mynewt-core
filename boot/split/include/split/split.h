@@ -20,6 +20,10 @@
 #ifndef _SPLIT_H__
 #define _SPLIT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SPLIT_NMGR_OP_SPLIT 0
 
 typedef enum {
@@ -53,5 +57,9 @@ void split_app_init(void);
  *
  * @Returns zero on success, non-zero on failures */
 int split_app_go(void **entry, int toboot);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SPLIT_H__ */

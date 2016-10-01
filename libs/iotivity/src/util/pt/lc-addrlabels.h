@@ -59,6 +59,10 @@
 #ifndef LC_ADDRLABELS_H_
 #define LC_ADDRLABELS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** \hideinitializer */
 typedef void *lc_t;
 
@@ -81,6 +85,10 @@ typedef void *lc_t;
   } while (0)
 
 #define LC_END(s)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LC_ADDRLABELS_H_ */
 /** @} */

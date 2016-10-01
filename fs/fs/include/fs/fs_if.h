@@ -20,6 +20,10 @@
 #ifndef __FS_IF_H__
 #define __FS_IF_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Common interface filesystem(s) provide.
  */
@@ -54,5 +58,9 @@ struct fs_ops {
  * Currently allow only one type of FS, starts at root.
  */
 int fs_register(const struct fs_ops *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

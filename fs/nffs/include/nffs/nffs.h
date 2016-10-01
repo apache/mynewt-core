@@ -24,6 +24,10 @@
 #include <inttypes.h>
 #include "fs/fs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NFFS_FILENAME_MAX_LEN   256  /* Does not require null terminator. */
 #define NFFS_MAX_AREAS          256
 
@@ -60,5 +64,9 @@ int nffs_detect(const struct nffs_area_desc *area_descs);
 int nffs_format(const struct nffs_area_desc *area_descs);
 
 int nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

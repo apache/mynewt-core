@@ -23,11 +23,19 @@
 #include <stdarg.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* print console prompt */
 void console_print_prompt();
 /* set the console prompt character */
 void console_set_prompt(char);
 
 void console_no_prompt(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CONSOLE_PROMPT_H__ */

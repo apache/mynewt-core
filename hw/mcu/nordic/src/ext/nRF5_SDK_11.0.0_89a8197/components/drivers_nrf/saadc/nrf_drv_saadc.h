@@ -31,6 +31,10 @@
 #include "nrf_saadc.h"
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Value that should be set as high limit to disable limit detection.
  */
@@ -297,6 +301,10 @@ __STATIC_INLINE nrf_saadc_input_t nrf_drv_saadc_gpio_to_ain(uint32_t pin)
         return NRF_SAADC_INPUT_DISABLED;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_SAADC_H__
 

@@ -39,6 +39,10 @@
 
 #include "bignum.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(MBEDTLS_HAVE_ASM)
 
 #ifndef asm
@@ -872,5 +876,9 @@
 
 #endif /* C (generic)  */
 #endif /* C (longlong) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* bn_mul.h */

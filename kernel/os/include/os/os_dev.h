@@ -24,6 +24,10 @@
 
 #include "os/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_dev;
 
 /*
@@ -110,5 +114,9 @@ int os_dev_resume_all(void);
 struct os_dev *os_dev_open(char *devname, uint32_t timo, void *arg);
 int os_dev_close(struct os_dev *dev);
 void os_dev_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_DEV_H */

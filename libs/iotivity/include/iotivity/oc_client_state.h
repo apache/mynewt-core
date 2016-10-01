@@ -21,6 +21,10 @@
 #include "oc_ri.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { HIGH_QOS = 0, LOW_QOS } oc_qos_t;
 
 typedef struct
@@ -84,5 +88,9 @@ oc_discovery_flags_t oc_ri_process_discovery_payload(uint8_t *payload, int len,
 
 bool oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
                     uint16_t mid);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_CLIENT_STATE_H */

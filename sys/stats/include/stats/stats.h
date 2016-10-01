@@ -23,6 +23,10 @@
 #include "syscfg/syscfg.h"
 #include "os/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct stats_name_map {
     uint16_t snm_off;
     char *snm_name;
@@ -123,6 +127,10 @@ int stats_nmgr_register_group(void);
 #endif 
 #if MYNEWT_VAL(STATS_CLI)
 int stats_shell_register(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __UTIL_STATS_H__ */

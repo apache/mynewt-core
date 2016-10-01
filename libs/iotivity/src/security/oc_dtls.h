@@ -23,6 +23,10 @@
 #include "util/oc_process.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 OC_PROCESS_NAME(oc_dtls_handler);
 
 void oc_sec_dtls_close_init(oc_endpoint_t *endpoint);
@@ -46,5 +50,9 @@ typedef struct oc_sec_dtls_peer_s
   bool connected;
   oc_clock_time_t timestamp;
 } oc_sec_dtls_peer_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_DTLS_H_ */

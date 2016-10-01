@@ -34,6 +34,10 @@
 
 #include <stdint.h>
 #include "nrf_soc.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Encodes @ref sd_power_system_off command request.
  *
  * @sa @ref nrf51_sd_power_off for packet format.
@@ -122,5 +126,9 @@ uint32_t ecb_block_encrypt_rsp_dec(uint8_t const * const  p_buf,
                                    nrf_ecb_hal_data_t *   p_ecb_data,
                                    uint32_t * const       p_result_code);
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_SOC_APP_H__

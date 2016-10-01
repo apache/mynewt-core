@@ -29,6 +29,10 @@
 #include "nrf.h"
 #include "app_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NRF_UICR_BOOT_START_ADDRESS         (NRF_UICR_BASE + 0x14)      /**< Register where the bootloader start address is stored in the UICR register. */
 
 #if defined(NRF52)                                                  
@@ -162,6 +166,10 @@ typedef struct
 
 /**@brief Update complete handler type. */
 typedef void (*dfu_complete_handler_t)(dfu_update_status_t dfu_update_status);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_TYPES_H__
 

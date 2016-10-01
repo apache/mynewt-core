@@ -15,6 +15,10 @@
 
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
 * @defgroup nrf_temperature TEMP (temperature) abstraction
 * @{
@@ -51,5 +55,9 @@ static __INLINE int32_t nrf_temp_read(void)
 /**@endcond */
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

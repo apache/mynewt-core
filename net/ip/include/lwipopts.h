@@ -19,6 +19,10 @@
 #ifndef __LWIP_LWIPOPTS_H__
 #define __LWIP_LWIPOPTS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MEM_LIBC_MALLOC			1	/* use platform malloc */
 #define LWIP_NETIF_TX_SINGLE_PBUF 	1
 #define LWIP_NETIF_LOOPBACK		1	/* yes loopback interface */
@@ -187,5 +191,9 @@
 
 #define LWIP_PROVIDE_ERRNO 1
 #define ERRNO                     0
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*  __LWIP_LWIPOPTS_H__ */

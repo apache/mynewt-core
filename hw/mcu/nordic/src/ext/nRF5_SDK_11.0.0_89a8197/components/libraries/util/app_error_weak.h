@@ -13,6 +13,10 @@
 #ifndef APP_ERROR_WEAK_H__
 #define APP_ERROR_WEAK_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @file
  *
  * @defgroup app_error Common application error handler
@@ -47,5 +51,9 @@ __WEAK void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info);
 
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_ERROR_WEAK_H__

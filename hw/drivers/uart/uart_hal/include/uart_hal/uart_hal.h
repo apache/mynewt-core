@@ -20,7 +20,15 @@
 #ifndef __DRIVERS_UART_HAL_H_
 #define __DRIVERS_UART_HAL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_dev;
 int uart_hal_init(struct os_dev *, void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DRIVERS_UART_HAL_H_ */

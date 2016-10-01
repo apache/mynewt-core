@@ -34,6 +34,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup netbiosns_opts Options
  * @ingroup netbiosns
@@ -65,5 +69,9 @@
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_APPS_NETBIOS_OPTS_H */

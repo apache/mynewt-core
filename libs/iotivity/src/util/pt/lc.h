@@ -69,6 +69,10 @@
  */
 #define LC_INIT(lc)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Set a local continuation.
  *
@@ -123,6 +127,10 @@
 #else /* LC_CONF_INCLUDE */
 #include "lc-switch.h"
 #endif /* LC_CONF_INCLUDE */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LC_H_ */
 

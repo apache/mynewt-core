@@ -21,6 +21,10 @@
 #define H_LOADER_
 
 #include <inttypes.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct image_header;
 
 /** A request object instructing the boot loader how to proceed. */
@@ -80,5 +84,9 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp);
 #define SPLIT_GO_ERR                (-2)
 int
 split_go(int loader_slot, int split_slot, void **entry);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

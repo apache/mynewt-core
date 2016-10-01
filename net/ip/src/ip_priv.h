@@ -20,11 +20,19 @@
 #ifndef __IP_PRIV_H__
 #define __IP_PRIV_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mn_itf;
 struct mn_itf_addr;
 int lwip_itf_getnext(struct mn_itf *mi);
 int lwip_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia);
 
 int lwip_socket_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __IP_PRIV_H__ */

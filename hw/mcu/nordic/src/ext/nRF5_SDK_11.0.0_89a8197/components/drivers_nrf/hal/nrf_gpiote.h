@@ -17,6 +17,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
 * @defgroup nrf_gpiote_abs GPIOTE abstraction
 * @{
@@ -387,5 +391,9 @@ __STATIC_INLINE void nrf_gpiote_te_default(uint32_t idx)
 }
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

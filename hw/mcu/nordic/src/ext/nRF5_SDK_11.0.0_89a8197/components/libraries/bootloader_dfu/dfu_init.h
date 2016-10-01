@@ -44,6 +44,10 @@
 #include <stdint.h>
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Structure contained in an init packet. Contains information on device type, revision, and 
  *        supported SoftDevices.
  */
@@ -128,6 +132,10 @@ uint32_t dfu_init_prevalidate(uint8_t * p_init_data, uint32_t init_data_len);
  *                                 or the verification of the image fails (signing).
  */
 uint32_t dfu_init_postvalidate(uint8_t * p_image, uint32_t image_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_INIT_H__
 

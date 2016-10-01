@@ -20,6 +20,14 @@
 #ifndef __NATIVE_SOCK_H_
 #define __NATIVE_SOCK_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int native_sock_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NATIVE_SOCK_H_ */

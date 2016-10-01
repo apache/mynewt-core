@@ -30,6 +30,10 @@
 #include "ble_srv_common.h"
 #include "nordic_common.h"
     
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint8_t nibble_t;
 typedef uint32_t uint24_t;
 typedef uint64_t uint40_t;
@@ -407,6 +411,10 @@ static __INLINE uint8_t bds_ble_date_time_decode(const uint8_t   len,
 
     return pos;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_UTIL_BDS_H__
 

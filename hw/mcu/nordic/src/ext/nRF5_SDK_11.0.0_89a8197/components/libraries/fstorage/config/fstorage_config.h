@@ -13,6 +13,10 @@
 #ifndef FS_CONFIG_H__
 #define FS_CONFIG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup fstorage_config fstorage configuration
  * @ingroup fstorage
@@ -54,6 +58,10 @@
 #endif
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FS_CONFIG_H__
 

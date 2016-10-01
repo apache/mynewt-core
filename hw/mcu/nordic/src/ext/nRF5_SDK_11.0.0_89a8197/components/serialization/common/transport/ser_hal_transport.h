@@ -37,6 +37,10 @@
 #include <stdint.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Serialization HAL Transport layer event types. */
 typedef enum
 {
@@ -226,6 +230,10 @@ uint32_t ser_hal_transport_tx_pkt_send(const uint8_t * p_buffer, uint16_t num_of
  */
 uint32_t ser_hal_transport_tx_pkt_free(uint8_t * p_buffer);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_HAL_TRANSPORT_H__ */
 /** @} */

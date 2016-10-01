@@ -12,6 +12,10 @@
 #ifndef BLE_GAP_APP_H__
 #define BLE_GAP_APP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -1317,4 +1321,8 @@ uint32_t ble_gap_lesc_oob_data_get_rsp_dec(uint8_t const * const       p_buf,
                                            ble_gap_lesc_oob_data_t  * *pp_oobd_own,
                                            uint32_t * const            p_result_code);
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif

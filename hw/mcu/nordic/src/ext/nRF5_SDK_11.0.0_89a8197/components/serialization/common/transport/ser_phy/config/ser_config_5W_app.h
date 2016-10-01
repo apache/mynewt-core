@@ -13,4 +13,12 @@
 #ifndef SER_CONFIG_5W_APP_H__
 #define SER_CONFIG_5W_APP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* SER_CONFIG_APP_H__ */

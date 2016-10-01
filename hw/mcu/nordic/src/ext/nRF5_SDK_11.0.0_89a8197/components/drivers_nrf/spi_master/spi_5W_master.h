@@ -17,6 +17,10 @@
 #include <stdlib.h>
 #include "boards.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _SPI_5W_
 
 /**@brief Struct containing configuration parameters of the SPI master. */
@@ -165,6 +169,10 @@ uint32_t spi_master_restart(const spi_master_hw_instance_t spi_master_hw_instanc
 
 void spi_5W_master_evt_handler_reg(const spi_master_hw_instance_t spi_master_hw_instance,
                                          spi_master_event_handler_t event_handler);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

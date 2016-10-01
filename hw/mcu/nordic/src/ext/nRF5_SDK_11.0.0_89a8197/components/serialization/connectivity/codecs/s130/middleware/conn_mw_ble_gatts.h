@@ -15,6 +15,10 @@
  
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Handles @ref sd_ble_gatts_service_add command and prepares response.
  *
  * @param[in]     p_rx_buf            Pointer to input buffer.
@@ -248,5 +252,9 @@ uint32_t conn_mw_ble_gatts_initial_user_handle_get(uint8_t const * const p_rx_bu
                                                    uint32_t              rx_buf_len,
                                                    uint8_t * const       p_tx_buf,
                                                    uint32_t * const      p_tx_buf_len);
+#ifdef __cplusplus
+}
+#endif
+
 #endif //_CONN_MW_BLE_GATTS_H
 

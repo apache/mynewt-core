@@ -36,6 +36,10 @@
 
 #include "../../port/mynewt/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Features that can be disabled to achieve smaller memory footprint */
 #define COAP_LINK_FORMAT_FILTERING 0
 #define COAP_PROXY_OPTION_PROCESSING 0
@@ -67,5 +71,9 @@
 /* Interval in notifies in which NON notifies are changed to CON notifies to
  * check client. */
 #define COAP_OBSERVE_REFRESH_INTERVAL 20
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CONF_H */

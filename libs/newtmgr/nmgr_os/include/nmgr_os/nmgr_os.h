@@ -20,6 +20,10 @@
 #ifndef _NMGR_OS_H_
 #define _NMGR_OS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Id's for OS group commands
  */
@@ -32,5 +36,9 @@
 
 struct os_eventq;
 int nmgr_os_groups_register(struct os_eventq *nmgr_evq);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NMGR_OS_H_ */

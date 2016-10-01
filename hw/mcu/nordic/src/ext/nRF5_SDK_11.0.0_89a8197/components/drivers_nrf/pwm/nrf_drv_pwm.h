@@ -31,6 +31,10 @@
 #include "sdk_errors.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief PWM driver instance data structure.
  */
@@ -420,6 +424,10 @@ __STATIC_INLINE uint32_t nrf_drv_pwm_event_address_get(
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_PWM_H__
 

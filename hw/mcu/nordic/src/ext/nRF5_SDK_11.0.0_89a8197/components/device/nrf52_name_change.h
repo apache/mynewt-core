@@ -31,6 +31,10 @@
 #ifndef NRF52_NAME_CHANGE_H
 #define NRF52_NAME_CHANGE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region */
 
 /* This file is given to prevent your SW from not compiling with the updates made to nrf52.h and 
@@ -65,6 +69,10 @@
 
 
 /*lint --flb "Leave library region" */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF52_NAME_CHANGE_H */
 

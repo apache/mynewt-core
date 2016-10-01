@@ -19,6 +19,10 @@
 #ifndef __WIFI_MGMT_IF_H__
 #define __WIFI_MGMT_IF_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Interface between Wi-fi management and the driver.
  */
@@ -43,5 +47,9 @@ void wifi_scan_done(struct wifi_if *, int status);
 void wifi_connect_done(struct wifi_if *wi, int status);
 void wifi_disconnected(struct wifi_if *wi, int status);
 void wifi_dhcp_done(struct wifi_if *wi, uint8_t *ip); /* XXX more IP info */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WIFI_MGMT_IF_H__ */

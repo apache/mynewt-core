@@ -21,6 +21,10 @@
 
 #include "config/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CONF_FILE_NAME_MAX      32      /* max length for config filename */
 
 struct fs_file;
@@ -33,5 +37,9 @@ struct conf_file {
 
 int conf_file_src(struct conf_file *);  /* register file to be source of cfg */
 int conf_file_dst(struct conf_file *);  /* cfg saves go to a file */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SYS_CONFIG_FILE_H_ */

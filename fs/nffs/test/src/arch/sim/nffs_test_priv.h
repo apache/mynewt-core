@@ -20,6 +20,10 @@
 #ifndef H_NFFS_TEST_PRIV_
 #define H_NFFS_TEST_PRIV_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct nffs_test_block_desc {
     const char *data;
     int data_len;
@@ -37,6 +41,10 @@ int nffs_test(void);
 
 extern const struct nffs_test_file_desc *nffs_test_system_01;
 extern const struct nffs_test_file_desc *nffs_test_system_01_rm_1014_mk10;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

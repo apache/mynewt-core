@@ -22,4 +22,12 @@
 #define _OS_CFG_H_ 
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _OS_CFG_H_ */

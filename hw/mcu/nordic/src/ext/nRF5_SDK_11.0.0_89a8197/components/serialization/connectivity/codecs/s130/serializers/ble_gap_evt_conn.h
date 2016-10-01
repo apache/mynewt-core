@@ -12,6 +12,10 @@
 #ifndef BLE_GAP_EVT_CONN_H__
 #define BLE_GAP_EVT_CONN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -373,4 +377,8 @@ uint32_t ble_gap_evt_lesc_dhkey_request_enc(ble_evt_t const * const p_event,
                                             uint32_t * const        p_buf_len);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif

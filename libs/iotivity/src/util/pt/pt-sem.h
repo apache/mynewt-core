@@ -63,6 +63,10 @@
 #include "pt-sem.h"
 
 #define NUM_ITEMS 32
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BUFSIZE 8
 
 static struct pt_sem mutex, full, empty;
@@ -226,6 +230,10 @@ struct pt_sem
  * \hideinitializer
  */
 #define PT_SEM_SIGNAL(pt, s) (++(s)->head)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PT_SEM_H_ */
 

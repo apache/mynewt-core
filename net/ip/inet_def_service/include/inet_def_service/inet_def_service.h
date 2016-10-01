@@ -20,6 +20,14 @@
 #ifndef __INET_DEF_SERVICE_H__
 #define __INET_DEF_SERVICE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int inet_def_service_init(uint8_t prio, os_stack_t *stack, uint16_t stack_sz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __INET_DEF_SERVICE_H__ */

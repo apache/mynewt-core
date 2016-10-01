@@ -16,6 +16,10 @@
 #include "boards.h"
 #include "ser_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(SPI_MASTER_0_ENABLE)
 #define SER_PHY_SPI_MASTER SPI_MASTER_0
 #endif
@@ -66,5 +70,9 @@
 #define SER_PHY_UART_TX                         SER_APP_TX_PIN
 #define SER_PHY_UART_CTS                        SER_APP_CTS_PIN
 #define SER_PHY_UART_RTS                        SER_APP_RTS_PIN
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //SER_CONFIG_APP_HAL_NRF51_H__

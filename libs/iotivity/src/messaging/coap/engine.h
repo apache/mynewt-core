@@ -39,10 +39,18 @@
 #include "separate.h"
 #include "transactions.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 OC_PROCESS_NAME(coap_engine);
 
 void coap_init_engine(void);
 /*---------------------------------------------------------------------------*/
 int coap_receive(oc_message_t *message);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ENGINE_H */

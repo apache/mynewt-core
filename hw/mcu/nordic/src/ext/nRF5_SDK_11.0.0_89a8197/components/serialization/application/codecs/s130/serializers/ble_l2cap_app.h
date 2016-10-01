@@ -34,6 +34,10 @@
 #include "ble_err.h"
 #include "ble_l2cap.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Register a CID with L2CAP.
  *
  * @details This registers a higher protocol layer with the L2CAP multiplexer, and is requried prior to all operations on the CID.
@@ -154,6 +158,10 @@ uint32_t ble_l2cap_tx_rsp_dec(uint8_t const * const p_buf,
                               uint32_t              packet_len,
                               uint32_t * const      p_result_code);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //BLE_L2CAP_APP_H__
 

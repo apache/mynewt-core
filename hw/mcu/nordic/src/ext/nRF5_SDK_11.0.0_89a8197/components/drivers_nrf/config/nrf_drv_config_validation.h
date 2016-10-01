@@ -13,6 +13,10 @@
 #ifndef NRF_DRV_CONFIG_VALIDATION_H
 #define NRF_DRV_CONFIG_VALIDATION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef NRF52
 
 #if (!PERIPHERAL_RESOURCE_SHARING_ENABLED) && \
@@ -79,5 +83,9 @@
 #endif
 
 #endif //NRF51
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_CONFIG_VALIDATION_H

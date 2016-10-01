@@ -21,6 +21,10 @@
 #include "nrf_drv_config.h"
 #include "nrf_drv_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  *
  * @addtogroup nrf_clock Clock HAL and driver
@@ -243,4 +247,8 @@ __STATIC_INLINE uint32_t nrf_drv_clock_ppi_event_addr(nrf_clock_event_t event)
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
 
 /*lint --flb "Leave library region" */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // NRF_CLOCK_H__

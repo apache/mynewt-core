@@ -34,6 +34,10 @@
 #ifndef _UICR_CONFIG_H
 #define _UICR_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region" */
 
 #include <stdint.h>
@@ -100,5 +104,9 @@
 // const uint32_t UICR_ADDR_0xFC __attribute__((at(0x100010FC))) __attribute__((used)) = 0xFFFFFFFF;
 
 /*lint --flb "Leave library region" */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_UICR_CONFIG_H

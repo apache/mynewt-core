@@ -17,10 +17,18 @@
 #ifndef OC_STORE_H_
 #define OC_STORE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void oc_sec_load_pstat(void);
 void oc_sec_load_doxm(void);
 void oc_sec_load_cred(void);
 void oc_sec_load_acl(void);
 void oc_sec_dump_state(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_STORE_H_ */

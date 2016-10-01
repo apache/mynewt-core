@@ -27,6 +27,10 @@
 #include "compiler_abstraction.h"
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //lint -save -e27 -e10 -e19
 #if defined ( __CC_ARM )
 extern char STACK$$Base;
@@ -487,6 +491,10 @@ static __INLINE bool is_address_from_stack(void * ptr)
         return false;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_UTIL_H__
 

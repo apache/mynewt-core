@@ -13,6 +13,10 @@
 #ifndef NRF_DRV_PPI_H
 #define NRF_DRV_PPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region" */
 #include "sdk_errors.h"
 #include "nrf_ppi.h"
@@ -281,4 +285,8 @@ __STATIC_INLINE uint32_t nrf_drv_ppi_task_addr_group_disable_get(nrf_ppi_channel
  **/
 
 /*lint --flb "Leave library region" */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // NRF_DRV_PPI_H

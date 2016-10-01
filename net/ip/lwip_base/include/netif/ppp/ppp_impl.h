@@ -35,6 +35,10 @@
 
 #include "netif/ppp/ppp_opts.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #ifdef PPP_INCLUDE_SETTINGS_HEADER
@@ -626,4 +630,8 @@ void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len);
 
 
 #endif /* PPP_SUPPORT */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* LWIP_HDR_PPP_IMPL_H */

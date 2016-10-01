@@ -53,6 +53,10 @@
 #include "mynewt/config.h"
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * A second, measured in system clock time.
  *
@@ -98,5 +102,9 @@ unsigned long oc_clock_seconds(void);
  *
  */
 void oc_clock_wait(oc_clock_time_t t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_CLOCK_H */

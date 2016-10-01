@@ -12,6 +12,10 @@
 #ifndef _APP_BLE_USER_MEM_H
 #define _APP_BLE_USER_MEM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -77,5 +81,9 @@ uint32_t app_ble_user_mem_context_destroy(uint16_t conn_handle);
  */
 uint32_t app_ble_user_mem_context_find(uint16_t conn_handle, uint32_t *p_index);
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_APP_BLE_USER_MEM_H

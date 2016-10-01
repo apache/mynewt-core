@@ -18,6 +18,10 @@
 #include "app_util.h"
 #include "compiler_abstraction.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file
  * @defgroup sdk_mapped_flags Mapped flags
@@ -149,5 +153,9 @@ static __INLINE bool sdk_mapped_flags_any_set(sdk_mapped_flags_t flags)
 
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SDK_MAPPED_FLAGS_H__ */

@@ -38,6 +38,10 @@
 #ifndef PPPCRYPT_H
 #define	PPPCRYPT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * If included PolarSSL copy is not used, user is expected to include
  * external libraries in arch/cc.h (which is included by lwip/arch.h).
@@ -132,5 +136,9 @@
 void pppcrypt_56_to_64_bit_key(u_char *key, u_char *des_key);
 
 #endif /* PPPCRYPT_H */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPP_SUPPORT */

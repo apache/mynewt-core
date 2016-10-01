@@ -20,6 +20,10 @@
 #include <stdio.h>
 #include "mynewt/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PRINT(...) printf(__VA_ARGS__)
 
 #define PRINTipaddr(endpoint)                                                  \
@@ -69,6 +73,10 @@ int oc_log_init(void);
 #define ERROR(...)
 #define LOGipaddr(endpoint)
 #define oc_log_init()   0
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* OC_LOG_H */

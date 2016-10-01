@@ -15,6 +15,10 @@
 
 #include "boards.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // define CONN_DGB to prevent CONN chip from being reseted while connected via DBG
 #define nCONN_DGB
 
@@ -39,6 +43,10 @@
 
 #define PIO_SLIP_EVT_ERR_RXED     LED_2   // only pulses not change of state
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //DEBUG_CONFIG_NRF6310_H__
 

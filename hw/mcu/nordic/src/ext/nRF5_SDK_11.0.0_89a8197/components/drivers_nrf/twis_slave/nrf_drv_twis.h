@@ -18,6 +18,10 @@
 #include "nrf_twis.h"
 #include <stdint.h>
 #include "app_util.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @ingroup  nrf_twi
  * @defgroup nrf_twis TWI slave HAL and driver
@@ -395,4 +399,8 @@ bool nrf_drv_twis_is_pending_tx(nrf_drv_twis_t const * const p_inst);
 bool nrf_drv_twis_is_pending_rx(nrf_drv_twis_t const * const p_inst);
 
 /** @} */ /* End of lib_twis_drv group */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* NRF_DRV_TWIS_H__ */

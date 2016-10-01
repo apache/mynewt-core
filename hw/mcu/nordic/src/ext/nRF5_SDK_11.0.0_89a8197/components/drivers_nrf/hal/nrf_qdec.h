@@ -16,6 +16,10 @@
 #include "nrf_error.h"
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region" */
 
 /**
@@ -465,4 +469,8 @@ __STATIC_INLINE uint32_t nrf_qdec_ledpol_get(void)
  **/
 
 /*lint --flb "Leave library region" */
+#ifdef __cplusplus
+}
+#endif
+
 #endif

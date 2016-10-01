@@ -24,6 +24,10 @@
 #include "os/os_sanity.h" 
 #include "os/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The highest and lowest task priorities */
 #define OS_TASK_PRI_HIGHEST (0)
 #define OS_TASK_PRI_LOWEST  (0xff)
@@ -110,5 +114,9 @@ struct os_task_info {
 struct os_task *os_task_info_get_next(const struct os_task *,
         struct os_task_info *);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_TASK_H */

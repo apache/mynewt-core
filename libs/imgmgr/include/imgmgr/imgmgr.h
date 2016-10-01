@@ -20,6 +20,10 @@
 #ifndef _IMGMGR_H_
 #define _IMGMGR_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IMGMGR_NMGR_OP_LIST		0
 #define IMGMGR_NMGR_OP_UPLOAD		1
 #define IMGMGR_NMGR_OP_BOOT		2
@@ -58,5 +62,9 @@ int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32
  * Returns version number of current image (if available).
  */
 int imgr_my_version(struct image_version *ver);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IMGMGR_H */

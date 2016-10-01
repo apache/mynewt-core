@@ -13,6 +13,10 @@
 #ifndef NRF_DRV_CONFIG_H
 #define NRF_DRV_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Provide a non-zero value here in applications that need to use several
  * peripherals with the same ID that are sharing certain resources
@@ -459,5 +463,9 @@
 #endif
 
 #include "nrf_drv_config_validation.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_CONFIG_H

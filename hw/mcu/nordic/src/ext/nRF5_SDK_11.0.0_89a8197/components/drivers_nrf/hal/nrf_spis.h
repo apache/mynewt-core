@@ -28,6 +28,10 @@
 #include "nrf.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief This value can be used as a parameter for the @ref nrf_spis_pins_set
  *        function to specify that a given SPI signal (SCK, MOSI, or MISO)
@@ -506,6 +510,10 @@ __STATIC_INLINE void nrf_spis_def_set(NRF_SPIS_Type * p_spis,
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_SPIS_H__
 

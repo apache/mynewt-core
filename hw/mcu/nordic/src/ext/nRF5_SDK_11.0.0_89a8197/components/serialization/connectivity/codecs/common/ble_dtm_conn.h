@@ -13,6 +13,10 @@
 #ifndef BLE_DTM_CONN_H__
 #define BLE_DTM_CONN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -73,5 +77,9 @@ uint32_t ble_dtm_init_rsp_enc(uint32_t         return_code,
                               uint32_t * const p_buf_len);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // BLE_DTM_CONN_H__
 

@@ -22,11 +22,19 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int base64_encode(const void *, int, char *, uint8_t);
 int base64_decode(const char *, void *buf);
 int base64_pad(char *, int);
 int base64_decode_len(const char *str);
 
 #define BASE64_ENCODE_SIZE(__size) ((((__size) * 4) / 3) + 4)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UTIL_BASE64_H__ */

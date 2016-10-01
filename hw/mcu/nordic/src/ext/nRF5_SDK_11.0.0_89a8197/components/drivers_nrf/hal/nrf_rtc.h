@@ -18,6 +18,10 @@
 #ifndef NRF_RTC_H
 #define NRF_RTC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_rtc_hal RTC HAL
  * @{
@@ -298,6 +302,10 @@ __STATIC_INLINE void nrf_rtc_event_enable(NRF_RTC_Type * p_rtc, uint32_t mask)
 __STATIC_INLINE void nrf_rtc_event_disable(NRF_RTC_Type * p_rtc, uint32_t mask)
 {
     p_rtc->EVTENCLR = mask;
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

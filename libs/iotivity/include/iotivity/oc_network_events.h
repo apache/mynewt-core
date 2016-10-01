@@ -20,10 +20,18 @@
 #include "../../src/port/oc_network_events_mutex.h"
 #include "../../src/util/oc_process.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 OC_PROCESS_NAME(oc_network_events);
 
 typedef struct oc_message_s oc_message_t;
 
 void oc_network_event(oc_message_t *message);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_NETWORK_EVENTS_H */

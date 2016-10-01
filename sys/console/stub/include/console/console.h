@@ -21,6 +21,10 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*console_rx_cb)(void);
 
 static int inline
@@ -66,6 +70,10 @@ console_echo(int on)
 }
 
 #define console_is_midline  (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CONSOLE__ */
 

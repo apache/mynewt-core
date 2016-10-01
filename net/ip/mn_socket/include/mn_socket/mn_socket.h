@@ -21,6 +21,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Address/protocol family.
  */
@@ -215,5 +219,9 @@ struct mn_itf_addr {
  */
 int mn_itf_getnext(struct mn_itf *);
 int mn_itf_addr_getnext(struct mn_itf *, struct mn_itf_addr *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SYS_MN_SOCKET_H_ */

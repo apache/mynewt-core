@@ -23,6 +23,10 @@
 #include "../src/port/oc_signal_main_loop.h"
 #include "../src/port/oc_storage.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   void (*init)(void);
@@ -162,5 +166,9 @@ void oc_remove_delayed_callback(void *cb_data, oc_trigger_t callback);
     OC_PROCESS_END();                                                          \
   }                                                                            \
   void name##_interrupt_x_handler(void)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_API_H */

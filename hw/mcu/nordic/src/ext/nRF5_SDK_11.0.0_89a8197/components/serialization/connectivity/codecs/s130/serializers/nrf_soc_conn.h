@@ -12,6 +12,10 @@
 #ifndef NRF_SOC_CONN_H__
 #define NRF_SOC_CONN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -123,5 +127,9 @@ uint32_t ecb_block_encrypt_rsp_enc(uint32_t         return_code,
                                    nrf_ecb_hal_data_t * const  p_ecb_data);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

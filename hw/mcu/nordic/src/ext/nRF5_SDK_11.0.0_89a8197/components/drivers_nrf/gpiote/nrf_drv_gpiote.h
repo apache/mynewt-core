@@ -13,6 +13,10 @@
 #ifndef NRF_DRV_GPIOTE__
 #define NRF_DRV_GPIOTE__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup nrf_gpiote GPIOTE abstraction and driver
  * @ingroup nrf_drivers
@@ -305,5 +309,9 @@ void nrf_drv_gpiote_out_task_trigger(nrf_drv_gpiote_pin_t pin);
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //NRF_DRV_GPIOTE__

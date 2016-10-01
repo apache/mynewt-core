@@ -16,6 +16,10 @@
 #include <stdint.h>
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Enable External Interrupt.
  * @note Corresponds to NVIC_EnableIRQ in CMSIS.
  *
@@ -126,5 +130,9 @@ uint32_t sd_nvic_critical_region_enter(uint8_t * p_is_nested_critical_region);
  * @retval ::NRF_SUCCESS
  */
 uint32_t sd_nvic_critical_region_exit(uint8_t is_nested_critical_region);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_SOC_H__ */

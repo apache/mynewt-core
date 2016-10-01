@@ -20,6 +20,10 @@
 #include "nrf_rtc.h"
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup nrf_rtc RTC HAL and driver
  * @ingroup nrf_drivers
@@ -322,4 +326,8 @@ __STATIC_INLINE uint32_t nrf_drv_rtc_event_address_get(nrf_drv_rtc_t const * con
 /**
  *@}
  **/
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* NRF_DRV_RTC_H */

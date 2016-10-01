@@ -22,6 +22,10 @@
 
 #include <os/os_dev.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct adc_dev;
 
 /**
@@ -273,5 +277,9 @@ adc_result_mv(struct adc_dev *dev, uint8_t cnum, int val)
 
     return (ret);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ADC_H__ */

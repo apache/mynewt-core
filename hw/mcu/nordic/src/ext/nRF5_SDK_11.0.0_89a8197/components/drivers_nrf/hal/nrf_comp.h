@@ -18,6 +18,10 @@
 #ifndef NRF_COMP_H_
 #define NRF_COMP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_comp_hal COMP HAL
  * @{
@@ -465,5 +469,9 @@ __STATIC_INLINE bool nrf_comp_event_check(nrf_comp_event_t comp_event)
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_COMP_H_ 

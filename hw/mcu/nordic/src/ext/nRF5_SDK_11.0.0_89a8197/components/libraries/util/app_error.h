@@ -31,6 +31,10 @@
 #include "nrf_log.h"
 #include "app_error_weak.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NRF_FAULT_ID_SDK_RANGE_START 0x00004000 /**< The start of the range of error IDs defined in the SDK. */
 
 /**@defgroup APP_ERROR_FAULT_IDS Fault ID types
@@ -195,6 +199,10 @@ static __INLINE void app_error_print(uint32_t id, uint32_t pc, uint32_t info)
             APP_ERROR_HANDLER(0);                             \
         }                                                     \
     } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_ERROR_H__
 

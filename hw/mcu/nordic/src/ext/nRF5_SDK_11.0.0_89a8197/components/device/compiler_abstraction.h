@@ -30,6 +30,10 @@
 #ifndef _COMPILER_ABSTRACTION_H
 #define _COMPILER_ABSTRACTION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region" */
 
 #if defined ( __CC_ARM )
@@ -122,5 +126,9 @@
 #endif
 
 /*lint --flb "Leave library region" */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

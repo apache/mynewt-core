@@ -25,6 +25,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BOOTLOADER_DFU_START 0xB1
 
 #define BOOTLOADER_SVC_APP_DATA_PTR_GET 0x02
@@ -53,6 +57,10 @@ typedef struct
     uint32_t               app_image_size;  /**< Size of Application image in bank0 if bank_0 code is BANK_VALID_SD. */
     uint32_t               sd_image_start;  /**< Location in flash where SoftDevice image is stored for SoftDevice update. */
 } bootloader_settings_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // BOOTLOADER_TYPES_H__ 
 

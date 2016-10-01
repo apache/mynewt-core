@@ -34,6 +34,10 @@
 #include "ble_err.h"
 #include "ble_l2cap.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Decodes @ref sd_ble_l2cap_cid_register command request.
  *
  * @sa @ref nrf51_ble_l2cap_cid_register for packet format,
@@ -148,6 +152,10 @@ uint32_t ble_l2cap_tx_req_dec(uint8_t const * const        p_buf,
 uint32_t ble_l2cap_tx_rsp_enc(uint32_t         return_code,
                               uint8_t * const  p_buf,
                               uint32_t * const p_buf_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //BLE_L2CAP_CONN_H__
 

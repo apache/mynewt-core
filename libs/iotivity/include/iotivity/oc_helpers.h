@@ -24,6 +24,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct oc_mmem oc_handle_t, oc_string_t, oc_array_t, oc_string_array_t;
 
 #define oc_cast(block, type) ((type *)(OC_MMEM_PTR(&(block))))
@@ -74,5 +78,9 @@ void oc_join_string_array(oc_string_array_t *ocstringarray,
   (strlen((const char *)oc_string_array_get_item(ocstringarray, index)))
 #define oc_string_array_get_allocated_size(ocstringarray)                      \
   ((ocstringarray).size / STRING_ARRAY_ITEM_MAX_LEN)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_HELPERS_H */

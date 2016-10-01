@@ -16,8 +16,16 @@
 #include <stdint.h>
 #include "dtm_uart_params.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define  UART_PIN_DISCONNECTED  0xFFFFFFFF  /**< Value indicating that no pin is connected to this UART register. */
 
 uint32_t dtm_start(app_uart_stream_comm_params_t uart_comm_params);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DTM_UART_H__

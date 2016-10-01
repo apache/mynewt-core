@@ -12,6 +12,10 @@
 #ifndef BLE_APP_H__
 #define BLE_APP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -444,4 +448,8 @@ uint32_t ble_event_dec(uint8_t const * const p_buf,
                        uint32_t * const      p_event_len);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif

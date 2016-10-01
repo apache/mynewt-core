@@ -37,6 +37,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*ser_sd_transport_evt_handler_t)(uint8_t * p_buffer, uint16_t length);
 typedef void (*ser_sd_transport_rsp_wait_handler_t)(void);
 typedef void (*ser_sd_transport_rsp_set_handler_t)(void);
@@ -148,6 +152,10 @@ bool ser_sd_transport_is_busy(void);
 uint32_t ser_sd_transport_cmd_write(const uint8_t *                p_buffer,
                                     uint16_t                       length,
                                     ser_sd_transport_rsp_handler_t cmd_resp_decode_callback);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_SD_TRANSPORT_H_ */
 /** @} */

@@ -78,6 +78,10 @@
 #include <stdint.h>
 #include "nrf_error.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Generic event callback function events. */
 typedef enum
 {
@@ -214,6 +218,10 @@ uint32_t hci_transport_rx_pkt_extract(uint8_t ** pp_buffer, uint16_t * p_length)
  * @retval NRF_ERROR_INVALID_ADDR   Operation failure. Not a valid pointer. 
  */
 uint32_t hci_transport_rx_pkt_consume(uint8_t * p_buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HCI_TRANSPORT_H__
 

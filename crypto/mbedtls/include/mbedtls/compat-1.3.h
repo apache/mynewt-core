@@ -33,6 +33,10 @@
 #ifndef MBEDTLS_COMPAT13_H
 #define MBEDTLS_COMPAT13_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * config.h options
  */
@@ -2631,4 +2635,8 @@
 #define xtea_setup mbedtls_xtea_setup
 
 #endif /* compat-1.3.h */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* MBEDTLS_DEPRECATED_REMOVED */

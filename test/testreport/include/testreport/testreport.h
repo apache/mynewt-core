@@ -20,6 +20,10 @@
 #ifndef H_TESTREPORT_
 #define H_TESTREPORT_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct nffs_area_desc;
 
 struct tr_config {
@@ -30,5 +34,9 @@ struct tr_config {
 extern struct tr_config tr_config;
 
 int tr_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -30,6 +30,10 @@
 #include "nrf_assert.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief This value can be provided as a parameter for the @ref nrf_pwm_pins_set
  *        function call to specify that a given output channel shall not be
@@ -655,6 +659,10 @@ __STATIC_INLINE void nrf_pwm_loop_set(NRF_PWM_Type * p_pwm,
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_PWM_H__
 

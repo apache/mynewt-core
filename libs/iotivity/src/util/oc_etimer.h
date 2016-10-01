@@ -57,6 +57,10 @@
 #include "oc_process.h"
 #include "oc_timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * A timer.
  *
@@ -242,6 +246,10 @@ oc_clock_time_t oc_etimer_next_expiration_time(void);
 /** @} */
 
 OC_PROCESS_NAME(oc_etimer_process);
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* OC_ETIMER_H */
 /** @} */
 /** @} */

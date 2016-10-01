@@ -20,6 +20,10 @@
 #ifndef __UART_BITBANG_H__
 #define __UART_BITBANG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct uart_bitbang_conf {
     int ubc_rxpin;
     int ubc_txpin;
@@ -28,5 +32,9 @@ struct uart_bitbang_conf {
 
 struct os_dev;
 int uart_bitbang_init(struct os_dev *, void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UART_BITBANG_H__ */

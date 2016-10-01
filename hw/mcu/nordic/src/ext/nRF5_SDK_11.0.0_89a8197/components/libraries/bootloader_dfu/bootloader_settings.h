@@ -24,11 +24,19 @@
 #include <stdint.h>
 #include "bootloader_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Function for getting the bootloader settings.
  * 
  * @param[out] pp_bootloader_settings Bootloader settings. 
  */
 void bootloader_util_settings_get(const bootloader_settings_t ** pp_bootloader_settings);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // BOOTLOADER_SETTINGS_H__
 

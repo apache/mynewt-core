@@ -54,6 +54,10 @@
 #include "app_error.h"
 #include "app_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define APP_SCHED_EVENT_HEADER_SIZE 8       /**< Size of app_scheduler.event_header_t (only for use inside APP_SCHED_BUF_SIZE()). */
 
 /**@brief Compute number of bytes required to hold the scheduler buffer.
@@ -158,6 +162,10 @@ void app_sched_pause(void);
  */
 void app_sched_resume(void);
 #endif
+#ifdef __cplusplus
+}
+#endif
+
 #endif // APP_SCHEDULER_H__
 
 /** @} */

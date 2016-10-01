@@ -26,6 +26,10 @@
 #include "stm32f4xx_hal_i2c.h"
 #include "stm32f4xx_hal_spi.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Helper functions to enable/disable interrupts. */
 #define __HAL_DISABLE_INTERRUPTS(x)                     \
     do {                                                \
@@ -56,5 +60,9 @@ struct stm32f4_hal_spi_cfg {
     int mosi_pin;
     SPI_InitTypeDef *spi_settings;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MCU_STM32F4_MYNEWT_HAL_H */

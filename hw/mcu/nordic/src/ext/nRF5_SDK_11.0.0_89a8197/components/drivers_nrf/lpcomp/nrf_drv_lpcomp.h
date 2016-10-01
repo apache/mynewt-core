@@ -18,6 +18,10 @@
 #include "nrf_drv_common.h"
 #include "nrf_drv_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup nrf_lpcomp LPCOMP HAL and driver
  * @ingroup nrf_drivers
@@ -103,5 +107,9 @@ void nrf_drv_lpcomp_disable(void);
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
  #endif /* NRF_DRV_LPCOMP_H__ */

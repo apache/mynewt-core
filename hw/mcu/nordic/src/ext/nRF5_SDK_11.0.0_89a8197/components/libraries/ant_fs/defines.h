@@ -21,6 +21,10 @@ All rights reserved.
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_ULONG 0xFFFFFFFFu                 /**< The Max value for the type. */
 
 /**@brief uint16_t type presentation as an union. */
@@ -52,6 +56,10 @@ typedef union
 } ulong_union_t;
 
 #define APP_TIMER_PRESCALER 0                 /**< Value of the RTC1 PRESCALER register. */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DEFINES_H__
 
