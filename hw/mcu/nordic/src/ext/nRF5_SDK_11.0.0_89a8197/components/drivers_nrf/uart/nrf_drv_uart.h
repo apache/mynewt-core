@@ -27,6 +27,10 @@
 #define NRF_DRV_UART_H
 
 #include "nrf_uart.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef NRF52
 #include "nrf_uarte.h"
 #endif
@@ -289,5 +293,9 @@ __STATIC_INLINE uint32_t nrf_drv_uart_event_address_get(nrf_uart_event_t event)
     return nrf_uart_event_address_get(NRF_UART0, event);
 }
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
+#ifdef __cplusplus
+}
+#endif
+
 #endif //NRF_DRV_UART_H
 /** @} */

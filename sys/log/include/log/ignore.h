@@ -20,6 +20,10 @@
 #ifndef H_IGNORE_
 #define H_IGNORE_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * These macros prevent the "set but not used" warnings for log writes below
  * the log level.
@@ -52,5 +56,9 @@
     GET_MACRO(__VA_ARGS__, IGN_20, IGN_19, IGN_18, IGN_17, IGN_16, IGN_15, \
               IGN_14, IGN_13, IGN_12, IGN_11, IGN_10, IGN_9, IGN_8, IGN_7, \
               IGN_6, IGN_5, IGN_4, IGN_3, IGN_2, IGN_1)(__VA_ARGS__)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

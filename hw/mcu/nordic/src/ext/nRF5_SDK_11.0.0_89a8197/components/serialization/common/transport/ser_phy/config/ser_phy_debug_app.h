@@ -13,6 +13,10 @@
 #ifndef SER_PHY_DEBUG_APP_H__
 #define SER_PHY_DEBUG_APP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SER_PHY_DEBUG_APP_ENABLE
 
 #define DEBUG_EVT_SPI_MASTER_RAW_REQUEST(data)
@@ -157,6 +161,10 @@ do {                                                    \
 
 
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif //SER_PHY_DEBUG_APP_H__

@@ -20,8 +20,16 @@
 #ifndef TEST_JSON_H
 #define TEST_JSON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 TEST_CASE_DECL(test_json_simple_encode);
 TEST_CASE_DECL(test_json_simple_decode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TEST_JSON_H */
 

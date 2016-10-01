@@ -20,6 +20,14 @@
 #ifndef H_SHELL_PROMPT_
 #define H_SHELL_PROMPT_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int shell_prompt_cmd(int argc, char **argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

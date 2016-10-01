@@ -37,6 +37,10 @@
 #include "sdk_common.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Initializes Memory Manager.
  *
  * @details API to initialize the Memory Manager. Always call this API before using any of the other
@@ -134,6 +138,10 @@ void * nrf_realloc(void *p_buffer, uint32_t size);
 void nrf_mem_diagnose(void);
 
 #endif // MEM_MANAGER_ENABLE_DIAGNOSTICS
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MEM_MANAGER_H__
 /** @} */

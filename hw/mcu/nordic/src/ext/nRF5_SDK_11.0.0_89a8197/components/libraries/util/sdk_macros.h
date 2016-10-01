@@ -22,6 +22,10 @@
 #ifndef SDK_MACROS_H__
 #define SDK_MACROS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Macro for verifying that the module is initialized. It will cause the function to return
  *        @ref NRF_ERROR_INVALID_STATE if not.
  */
@@ -68,5 +72,9 @@ do                                                  \
 
 /** @} */
 /** @endcond */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // SDK_MACROS_H__
 

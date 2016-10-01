@@ -13,6 +13,10 @@
 #ifndef NRF_TWIM_H__
 #define NRF_TWIM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_twim_hal TWIM HAL
  * @{
@@ -474,5 +478,9 @@ __STATIC_INLINE void nrf_twim_rx_list_disable(NRF_TWIM_Type * p_twim)
     p_twim->RXD.LIST = 0;
 }
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_TWIM_H__

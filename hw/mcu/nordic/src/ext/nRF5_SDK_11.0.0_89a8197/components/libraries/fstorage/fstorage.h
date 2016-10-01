@@ -13,6 +13,10 @@
 #ifndef FSTORAGE_H__
 #define FSTORAGE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup fstorage fstorage
  * @ingroup app_common
@@ -231,5 +235,9 @@ void fs_sys_event_handler(uint32_t sys_evt);
 
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FSTORAGE_H__

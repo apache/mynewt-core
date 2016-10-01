@@ -21,6 +21,10 @@
 
 #include <os/os.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct cbmem_entry_hdr {
     uint16_t ceh_len;
     uint16_t ceh_flags;
@@ -62,5 +66,9 @@ int cbmem_read(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr, void *buf,
 int cbmem_walk(struct cbmem *cbmem, cbmem_walk_func_t walk_func, void *arg);
 
 int cbmem_flush(struct cbmem *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UTIL_CBMEM_H__ */

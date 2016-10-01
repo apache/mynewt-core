@@ -22,6 +22,10 @@
 #include <stdint.h>
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static __INLINE uint16_t pstorage_flash_page_size()
 {
   	return (uint16_t)NRF_FICR->CODEPAGESIZE;
@@ -65,6 +69,10 @@ typedef uint16_t pstorage_size_t;      /** Size of length and offset fields. */
 
 /**@brief Handles Flash Access Result Events. To be called in the system event dispatcher of the application. */
 void pstorage_sys_event_handler (uint32_t sys_evt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PSTORAGE_PL_H__
 

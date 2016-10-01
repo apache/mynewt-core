@@ -18,6 +18,10 @@
  
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_clock_hal Clock HAL
  * @{
@@ -411,4 +415,8 @@ __STATIC_INLINE void nrf_clock_cal_timer_timeout_set(uint32_t interval)
 /**
  *@}
  **/
+#ifdef __cplusplus
+}
+#endif
+
 #endif // NRF_CLOCK_H__

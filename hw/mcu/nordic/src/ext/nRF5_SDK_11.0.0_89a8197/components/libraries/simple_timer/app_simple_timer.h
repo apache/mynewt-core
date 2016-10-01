@@ -29,6 +29,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Timer time-out handler type. */
 typedef void (*app_simple_timer_timeout_handler_t)(void * p_context);
 
@@ -92,6 +96,10 @@ uint32_t app_simple_timer_stop(void);
  * @retval NRF_SUCCESS             If the operation is successful.
  */
 uint32_t app_simple_timer_uninit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TIMER_H__
 

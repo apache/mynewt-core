@@ -19,6 +19,10 @@
 #ifndef NRF_ECB_H__
 #define NRF_ECB_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_ecb AES ECB encryption
  * @{
@@ -60,6 +64,10 @@ bool nrf_ecb_crypt(uint8_t * dst, const uint8_t * src);
  * @param key Pointer to the key. 16 bytes will be read.
  */
 void nrf_ecb_set_key(const uint8_t * key);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // NRF_ECB_H__
 

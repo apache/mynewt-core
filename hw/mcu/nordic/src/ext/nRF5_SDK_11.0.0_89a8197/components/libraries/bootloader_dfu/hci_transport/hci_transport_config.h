@@ -23,6 +23,10 @@
 
 #include "boards.h"                                                     /**< Default include for boards.h which means that default pin numbers will be used for RX, TX, CTS, and RTS on the UART. Other pin number can be used if desired. */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** This section covers configurable parameters for the HCI Transport SLIP layer. */
 #define HCI_SLIP_UART_RX_PIN_NUMBER  RX_PIN_NUMBER                      /**< Defines the UART RX pin number. The default pin for the board is chosen, but can be overwritten. */
 
@@ -39,6 +43,10 @@
 /** This section covers configurable parameters for the HCI Transport layer that are used for calculating correct value for the retransmission timer timeout. */
 #define MAX_PACKET_SIZE_IN_BITS      8000u                              /**< Maximum size of a single application packet in bits. */      
 #define USED_BAUD_RATE               38400u                             /**< The used uart baudrate. */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HCI_TRANSPORT_CONFIG_H__
 

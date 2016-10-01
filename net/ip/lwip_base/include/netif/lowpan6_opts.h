@@ -43,6 +43,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef LWIP_6LOWPAN
 #define LWIP_6LOWPAN                     0
 #endif
@@ -65,6 +69,10 @@
 
 #ifndef LOWPAN6_DEBUG
 #define LOWPAN6_DEBUG                    LWIP_DBG_OFF
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* LWIP_HDR_LOWPAN6_OPTS_H */

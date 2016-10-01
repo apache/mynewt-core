@@ -1,6 +1,10 @@
 #ifndef NRF_LOG_H_
 #define NRF_LOG_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef DOXYGEN
 
 #include <stdint.h>
@@ -696,4 +700,8 @@ uint32_t NRF_LOG_READ_INPUT(char* p_char);
 
 /** @} */
 #endif // DOXYGEN
+#ifdef __cplusplus
+}
+#endif
+
 #endif // NRF_LOG_H_

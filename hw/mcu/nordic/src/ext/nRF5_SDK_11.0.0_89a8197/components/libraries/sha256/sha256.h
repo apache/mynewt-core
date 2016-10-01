@@ -38,6 +38,10 @@
 #include "sdk_errors.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Current state of a hash operation.
  */
 typedef struct {
@@ -85,6 +89,10 @@ ret_code_t sha256_update(sha256_context_t *ctx, const uint8_t * data, const size
  * @retval NRF_ERROR_NULL  If a parameter was NULL.
  */
 ret_code_t sha256_final(sha256_context_t *ctx, uint8_t * hash);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   // SHA256_H
 

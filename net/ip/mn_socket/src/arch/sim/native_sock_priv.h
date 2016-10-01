@@ -20,6 +20,10 @@
 #ifndef __NATIVE_SOCK_PRIV_H_
 #define __NATIVE_SOCK_PRIV_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mn_itf;
 struct mn_itf_addr;
 
@@ -28,5 +32,9 @@ int native_sock_itf_addr_getnext(struct mn_itf *, struct mn_itf_addr *);
 int native_sock_itf_addr(int idx, uint32_t *addr);
 
 int native_sock_err_to_mn_err(int err);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

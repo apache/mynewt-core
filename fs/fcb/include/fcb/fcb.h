@@ -19,6 +19,10 @@
 #ifndef __SYS_FCB_H_
 #define __SYS_FCB_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Flash circular buffer.
  */
@@ -130,5 +134,9 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off);
  * Clears FCB passed to it
  */
 int fcb_clear(struct fcb *fcb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SYS_FLASHVAR_H_ */

@@ -21,6 +21,10 @@
 
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #undef LITTLE_ENDIAN
 #include <os/os.h>
 #include <ip/os_queue.h>
@@ -147,6 +151,10 @@ sys_thread_new(const char *name, void (*thread)(void *arg), void *arg,
     }
     return task;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_SYS_ARCH_H__ */
 

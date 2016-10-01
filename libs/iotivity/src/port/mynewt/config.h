@@ -2,6 +2,10 @@
 #define CONFIG_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Time resolution */
 #include <stdint.h>
 #include <os/os.h>
@@ -69,5 +73,9 @@ typedef os_time_t oc_clock_time_t;
 
 /* Max inactivity timeout before tearing down DTLS connection */
 //#define DTLS_INACTIVITY_TIMEOUT (10)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CONFIG_H */

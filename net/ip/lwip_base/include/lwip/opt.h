@@ -44,6 +44,10 @@
 #if !defined LWIP_HDR_OPT_H
 #define LWIP_HDR_OPT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Include user defined options first. Anything not defined in these files
  * will be set to standard values. Override anything you don't like!
@@ -2792,5 +2796,9 @@
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_OPT_H */

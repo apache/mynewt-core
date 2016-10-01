@@ -13,6 +13,10 @@
 #define HARFAULT_H__
 #include <stdint.h>
 #include <stddef.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup hardfault_default HardFault exception
  * @{
@@ -56,5 +60,9 @@ typedef struct HardFault_stack
 void HardFault_process(HardFault_stack_t *p_stack);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* HARFAULT_H__ */
 

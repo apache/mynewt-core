@@ -48,6 +48,10 @@
 #include <stdint.h>
 #include "nrf_error.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Function for opening the module.
  *
  * @retval NRF_SUCCESS          Operation success. 
@@ -127,6 +131,10 @@ uint32_t hci_mem_pool_rx_extract(uint8_t ** pp_buffer, uint32_t * p_length);
  */
 uint32_t hci_mem_pool_rx_consume(uint8_t * p_buffer);
  
+#ifdef __cplusplus
+}
+#endif
+
 #endif // HCI_MEM_POOL_H__
  
 /** @} */

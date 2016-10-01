@@ -29,6 +29,10 @@
 #include "nrf_assert.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Macro for validating the correctness of the BIT_WIDTH setting.
  */
@@ -570,6 +574,10 @@ __STATIC_INLINE uint32_t nrf_timer_ms_to_ticks(uint32_t time_ms,
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_TIMER_H__
 

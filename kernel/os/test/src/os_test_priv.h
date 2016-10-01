@@ -20,6 +20,10 @@
 #ifndef H_OS_TEST_PRIV_
 #define H_OS_TEST_PRIV_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void os_test_restart(void);
 
 int os_mempool_test_suite(void);
@@ -28,5 +32,9 @@ int os_mutex_test_suite(void);
 int os_sem_test_suite(void);
 int os_eventq_test_suite(void);
 int os_callout_test_suite(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

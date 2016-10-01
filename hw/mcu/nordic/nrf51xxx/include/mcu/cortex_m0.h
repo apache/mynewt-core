@@ -22,11 +22,19 @@
 
 #include "nrf51.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * The nRF51 microcontroller uses RTC0 for periodic interrupts and it is
  * clocked at 32768Hz. The tick frequency is chosen such that it divides
  * cleanly into 32768 to avoid a systemic bias in the actual tick frequency.
  */
 #define OS_TICKS_PER_SEC    (128)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MCU_CORTEX_M0_H__ */

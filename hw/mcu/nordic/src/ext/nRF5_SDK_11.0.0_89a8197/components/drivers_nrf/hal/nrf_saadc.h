@@ -14,6 +14,10 @@
 #ifndef NRF_SAADC_H_
 #define NRF_SAADC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_saadc_hal SAADC HAL
  * @{
@@ -550,5 +554,9 @@ void nrf_saadc_channel_init(uint8_t channel, nrf_saadc_channel_config_t const * 
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_SAADC_H_ */

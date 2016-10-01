@@ -20,8 +20,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int oc_storage_config(const char *store);
 long oc_storage_read(const char *store, uint8_t *buf, size_t size);
 long oc_storage_write(const char *store, uint8_t *buf, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_STORAGE_H */

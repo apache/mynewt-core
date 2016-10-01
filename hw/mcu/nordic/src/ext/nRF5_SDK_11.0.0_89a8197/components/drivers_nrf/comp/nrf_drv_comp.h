@@ -19,6 +19,10 @@
 #include "nrf_drv_config.h"
 #include "app_util_platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup nrf_comp COMP HAL and driver
  * @ingroup nrf_drivers
@@ -264,5 +268,9 @@ __STATIC_INLINE uint8_t nrf_drv_comp_ain_to_gpio(nrf_comp_input_t ain)
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
  #endif /* NRF_DRV_COMP_H__ */

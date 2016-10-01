@@ -15,10 +15,18 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ser_app_power_system_off_set(void);
 
 bool ser_app_power_system_off_get(void);
 
 void ser_app_power_system_off_enter(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

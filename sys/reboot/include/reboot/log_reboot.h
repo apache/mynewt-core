@@ -19,6 +19,10 @@
 #ifndef __LOG_REBOOT_H__
 #define __LOG_REBOOT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define  SOFT_REBOOT (0)
 #define  HARD_REBOOT (1)
 #define  GEN_CORE    (2)
@@ -31,5 +35,9 @@
 
 int reboot_init_handler(int log_store_type, uint8_t entries);
 int log_reboot(int reason);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _LOG_REBOOT_H__ */

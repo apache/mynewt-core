@@ -28,6 +28,10 @@
 #include "app_util.h"
 #include "nordic_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Supported overflow modes.
  */
@@ -138,6 +142,10 @@ uint32_t app_mailbox_length_get (const app_mailbox_t * p_mailbox);
  * @param mode             New mode to set.
  */
 void app_mailbox_mode_set(const app_mailbox_t * p_mailbox, app_mailbox_overflow_mode_t mode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_APP_MAILBOX_H
 /** @} */

@@ -23,10 +23,18 @@
 #include "syscfg/syscfg.h"
 #include "nrf52.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if MYNEWT_VAL(XTAL_32768)
 #define OS_TICKS_PER_SEC    (128)
 #else
 #define OS_TICKS_PER_SEC    (1000)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __MCU_CORTEX_M4_H__ */

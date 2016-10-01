@@ -19,6 +19,14 @@
 #ifndef __IP_INIT_H__
 #define __IP_INIT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int ip_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __IP_INIT_H__ */

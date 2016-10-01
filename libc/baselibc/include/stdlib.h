@@ -10,6 +10,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 __extern_inline int abs(int __n)
 {
 	return (__n < 0) ? -__n : __n;
@@ -97,5 +101,9 @@ __extern_inline void srandom(unsigned int __s)
 {
 	srand48(__s);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _STDLIB_H */

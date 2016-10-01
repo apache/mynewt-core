@@ -21,6 +21,10 @@
 #include "oc_uuid.h"
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct oc_sec_cred_s
 {
   struct oc_sec_cred_s *next;
@@ -36,5 +40,9 @@ oc_sec_cred_t *oc_sec_find_cred(oc_uuid_t *subjectuuid);
 oc_sec_cred_t *oc_sec_get_cred(oc_uuid_t *subjectuuid);
 void put_cred(oc_request_t *request, oc_interface_mask_t interface);
 void post_cred(oc_request_t *request, oc_interface_mask_t interface);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_CRED_H_ */

@@ -28,6 +28,10 @@
 #ifndef MBEDTLS_CONFIG_MYNEWT_H
 #define MBEDTLS_CONFIG_MYNEWT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #undef MBEDTLS_HAVE_TIME /* we have no time.h */
 #undef MBEDTLS_HAVE_TIME_DATE
 #define MBEDTLS_PLATFORM_PRINTF_ALT	console_print
@@ -135,5 +139,9 @@
 
 /* \} name SECTION: Module configuration options */
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MBEDTLS_CONFIG_MYNEWT_H */

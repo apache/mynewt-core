@@ -3,6 +3,10 @@
 
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Function for delaying execution for number of microseconds.
  *
@@ -238,5 +242,9 @@ __ASM volatile (
 #endif
 
 void nrf_delay_ms(uint32_t volatile number_of_ms);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

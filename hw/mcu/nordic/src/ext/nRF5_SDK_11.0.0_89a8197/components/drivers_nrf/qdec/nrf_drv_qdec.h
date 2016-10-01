@@ -19,6 +19,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup nrf_qdec QDEC HAL and driver
  * @ingroup nrf_drivers
@@ -146,4 +150,8 @@ void nrf_drv_qdec_event_address_get(nrf_qdec_event_t event, uint32_t * p_event);
 /**
    *@}
  **/
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* NRF_DRV_QDEC_H__ */

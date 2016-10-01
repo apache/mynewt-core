@@ -21,6 +21,10 @@
 #define H_BLEPRPH_
 
 #include "log/log.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ble_hs_cfg;
 struct ble_gatt_register_ctxt;
 
@@ -47,5 +51,9 @@ int gatt_svr_init(void);
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);
 void print_addr(const void *addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

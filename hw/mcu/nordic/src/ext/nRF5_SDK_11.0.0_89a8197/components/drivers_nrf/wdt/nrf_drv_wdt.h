@@ -32,6 +32,10 @@
 #include "nrf_wdt.h"
 #include "nrf_drv_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Struct for WDT initialization. */
 typedef struct
 {
@@ -119,6 +123,10 @@ __STATIC_INLINE uint32_t nrf_drv_wdt_ppi_event_addr(nrf_wdt_event_t event)
 {
     return nrf_wdt_event_address_get(event);
 }
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /** @} */

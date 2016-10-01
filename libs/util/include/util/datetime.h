@@ -19,6 +19,10 @@
 #ifndef __UTIL_DATETIME_H
 #define __UTIL_DATETIME_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_timeval;
 struct os_timezone;
 
@@ -46,5 +50,9 @@ int format_datetime(const struct os_timeval *utctime,
  */
 int parse_datetime(const char *input, struct os_timeval *utctime,
     struct os_timezone *tz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __UTIL_DATETIME_H */

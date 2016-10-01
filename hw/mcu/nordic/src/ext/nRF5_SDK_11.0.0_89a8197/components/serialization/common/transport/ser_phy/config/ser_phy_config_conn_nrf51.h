@@ -16,6 +16,10 @@
 #include "boards.h"
 #include "ser_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /***********************************************************************************************//**
  * SER_PHY layer configuration.
  **************************************************************************************************/
@@ -38,5 +42,9 @@
 #define SER_PHY_UART_TX                         SER_CON_TX_PIN
 #define SER_PHY_UART_CTS                        SER_CON_CTS_PIN
 #define SER_PHY_UART_RTS                        SER_CON_RTS_PIN
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //SER_PHY_CONFIG_CONN_NRF51_H__

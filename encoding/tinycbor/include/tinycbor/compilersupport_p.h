@@ -27,6 +27,10 @@
 
 #include "cbor.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _BSD_SOURCE
 #  define _BSD_SOURCE
 #endif
@@ -213,6 +217,10 @@ static inline unsigned short encode_half(double val)
     return sign | ((exp + 15) << 10) | mant;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COMPILERSUPPORT_H */
 

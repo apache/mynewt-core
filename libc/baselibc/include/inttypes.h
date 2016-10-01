@@ -9,6 +9,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static __inline__ intmax_t imaxabs(intmax_t __n)
 {
 	return (__n < (intmax_t) 0) ? -__n : __n;
@@ -224,6 +228,10 @@ __extern uintmax_t strntoumax(const char *, char **, int, size_t);
 #define SCNxMAX	 __PRI64_RANK "x"
 #define SCNxPTR  __PRIPTR_RANK "x"
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif				/* _INTTYPES_H */

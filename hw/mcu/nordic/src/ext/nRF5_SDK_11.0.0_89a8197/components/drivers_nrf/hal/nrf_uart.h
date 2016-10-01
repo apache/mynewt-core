@@ -17,6 +17,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_uart_hal UART HAL
  * @{
@@ -468,4 +472,8 @@ __STATIC_INLINE void nrf_uart_baudrate_set(NRF_UART_Type   * p_reg, nrf_uart_bau
 }
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif //NRF_UART_H__

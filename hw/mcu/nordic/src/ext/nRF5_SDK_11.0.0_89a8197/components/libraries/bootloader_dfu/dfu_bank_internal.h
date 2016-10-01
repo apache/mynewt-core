@@ -27,6 +27,10 @@
 
 #include <dfu_types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief States of the DFU state machine. */
 typedef enum
 {
@@ -81,6 +85,10 @@ typedef struct
     dfu_bank_cleared_t  cleared;                                                    /**< Function pointer to the cleared function called after prepare function completes. */
     dfu_bank_activate_t activate;                                                   /**< Function pointer to the activate function called on finalizing the update procedure. */
 } dfu_bank_func_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_BANK_INTERNAL_H__
 

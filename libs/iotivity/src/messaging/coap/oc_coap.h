@@ -20,6 +20,10 @@
 #include "separate.h"
 #include "../../util/oc_list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct oc_separate_response_s
 {
   OC_LIST_STRUCT(requests);
@@ -35,5 +39,9 @@ typedef struct oc_response_buffer_s
   uint16_t response_length;
   int code;
 } oc_response_buffer_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_COAP_H */

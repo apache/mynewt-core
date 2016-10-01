@@ -32,6 +32,10 @@
 #include "sdk_errors.h"
 #include "app_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Macro for verifying that the module is initialized. It will cause the function to return
  *        if not.
  *
@@ -170,5 +174,9 @@ do                                          \
 
 /** @} */
 /** @endcond */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // SDK_COMMON_H__
 

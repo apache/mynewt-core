@@ -23,6 +23,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Function for starting the update of Device Firmware.
  *
  * @retval NRF_SUCCESS Operation success.   
@@ -34,6 +38,10 @@ uint32_t dfu_transport_update_start(void);
  * @retval NRF_SUCCESS Operation success.    
  */
 uint32_t dfu_transport_close(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_TRANSPORT_H__
 

@@ -23,6 +23,10 @@
 #include "../../src/port/oc_connectivity.h"
 #include "../../src/util/oc_etimer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { OC_GET = 1, OC_POST, OC_PUT, OC_DELETE } oc_method_t;
 
 typedef enum {
@@ -172,5 +176,9 @@ int oc_ri_get_query_value(const char *query, int query_len, const char *key,
                           char **value);
 
 oc_interface_mask_t oc_ri_get_interface_mask(char *iface, int if_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_RI_H */

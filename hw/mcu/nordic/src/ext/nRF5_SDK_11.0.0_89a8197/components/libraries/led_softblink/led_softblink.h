@@ -32,6 +32,10 @@
 #include <stdint.h>
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Structure holding the initialization parameters.
  */
@@ -125,6 +129,10 @@ void led_softblink_on_time_set(uint32_t on_time_ticks);
  * @retval NRF_SUCCESS          If LED softblink was uninitialized successfully.
  */
 ret_code_t led_softblink_uninit(void);
+#ifdef __cplusplus
+}
+#endif
+
 #endif // LED_SOFTBLINK_H__
 
 /** @} */

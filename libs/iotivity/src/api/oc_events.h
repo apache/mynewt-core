@@ -19,6 +19,10 @@
 
 #include "util/oc_process.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
   INBOUND_NETWORK_EVENT,
   UDP_TO_DTLS_EVENT,
@@ -30,5 +34,9 @@ typedef enum {
 } oc_events_t;
 
 oc_process_event_t oc_events[__NUM_OC_EVENT_TYPES__];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_EVENTS_H */

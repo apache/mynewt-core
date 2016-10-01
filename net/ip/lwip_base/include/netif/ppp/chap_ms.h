@@ -36,9 +36,17 @@
 #ifndef CHAPMS_INCLUDE
 #define CHAPMS_INCLUDE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct chap_digest_type chapms_digest;
 extern const struct chap_digest_type chapms2_digest;
 
 #endif /* CHAPMS_INCLUDE */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPP_SUPPORT && MSCHAP_SUPPORT */

@@ -14,6 +14,10 @@
 #ifndef NRF_PDM_H_
 #define NRF_PDM_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_pdm_hal PDM HAL
  * @{
@@ -355,5 +359,9 @@ __STATIC_INLINE uint32_t * nrf_pdm_buffer_get()
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_PDM_H_ */

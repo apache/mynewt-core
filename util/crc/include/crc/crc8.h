@@ -26,7 +26,15 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint8_t crc8_init(void);
 uint8_t crc8_calc(uint8_t val, void *buf, int cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

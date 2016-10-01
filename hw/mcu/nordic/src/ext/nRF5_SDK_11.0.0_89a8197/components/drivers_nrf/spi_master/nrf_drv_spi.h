@@ -30,6 +30,10 @@
 #include "nrf_spim.h"
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(NRF52)
     #define NRF_DRV_SPI_PERIPHERAL(id)           \
         (CONCAT_3(SPI, id, _USE_EASY_DMA) == 1 ? \
@@ -363,6 +367,10 @@ uint32_t nrf_drv_spi_start_task_get(nrf_drv_spi_t const * p_instance);
  * @return     END event address.
  */
 uint32_t nrf_drv_spi_end_event_get(nrf_drv_spi_t const * p_instance);
+#ifdef __cplusplus
+}
+#endif
+
 #endif // NRF_DRV_SPI_H__
 
 /** @} */

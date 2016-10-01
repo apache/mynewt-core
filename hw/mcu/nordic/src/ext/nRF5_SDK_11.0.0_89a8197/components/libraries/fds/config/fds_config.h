@@ -13,6 +13,10 @@
 #ifndef FDS_CONFIG_H__
 #define FDS_CONFIG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
  /**
  * @file fds_config.h
  *
@@ -59,5 +63,9 @@
 #endif
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FDS_CONFIG_H__

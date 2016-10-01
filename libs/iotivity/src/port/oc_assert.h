@@ -19,6 +19,10 @@
 
 #include "oc_log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __linux__
 #include <stdlib.h>
 #define abort_impl() abort()
@@ -38,5 +42,9 @@ void abort_impl(void);
       oc_abort("Assertion (" #cond ") failed.");                               \
     }                                                                          \
   } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_ASSERT_H */

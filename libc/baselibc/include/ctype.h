@@ -10,6 +10,10 @@
 #include <klibc/extern.h>
 #include <klibc/inline.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 __extern_inline int isupper(int __c)
 {
 	return __c >= 'A' && __c <= 'Z';
@@ -82,5 +86,9 @@ __extern_inline int tolower(int __c)
 {
 	return isupper(__c) ? (__c | 32) : __c;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _CTYPE_H */

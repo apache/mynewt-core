@@ -27,6 +27,10 @@
 #include <sys/types.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define JSON_VALUE_TYPE_BOOL   (0)
 #define JSON_VALUE_TYPE_UINT64 (1)
 #define JSON_VALUE_TYPE_INT64  (2)
@@ -241,5 +245,9 @@ int json_read_array(struct json_buffer *, const struct json_array_t *);
         .addr.array.arr.objects.stride = sizeof(a[0]), \
         .addr.array.count = n, \
         .addr.array.maxlen = (int)(sizeof(a)/sizeof(a[0]))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _JSON_H_ */

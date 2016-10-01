@@ -31,6 +31,10 @@
 #include "sdk_errors.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief This value can be provided instead of a pin number for the signals
  *        SDOUT, SDIN, and MCK to specify that a given signal is not used
@@ -213,6 +217,10 @@ ret_code_t nrf_drv_i2s_start(uint32_t * p_rx_buffer,
  * @brief Function for stopping the I2S transfer.
  */
 void       nrf_drv_i2s_stop(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_I2S_H__
 

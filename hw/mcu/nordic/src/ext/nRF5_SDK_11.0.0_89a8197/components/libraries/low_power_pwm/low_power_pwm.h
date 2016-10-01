@@ -34,6 +34,10 @@
 #include "nrf_drv_common.h"
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Event types.
  */
@@ -162,6 +166,10 @@ ret_code_t low_power_pwm_stop(low_power_pwm_t * p_pwm_instance);
  * @retval NRF_ERROR_INVALID_PARAM      If the function returned an error because of invalid parameters.
  */
 ret_code_t low_power_pwm_duty_set(low_power_pwm_t * p_pwm_instance, uint8_t duty_cycle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LOW_POWER_PWM_H__
 

@@ -23,6 +23,10 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int tr_results_mkdir_results(void);
 int tr_results_rmdir_results(void);
 
@@ -44,5 +48,9 @@ int tr_io_delete(const char *path);
 
 int tr_io_mkdir(const char *path);
 int tr_io_rmdir(const char *path);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

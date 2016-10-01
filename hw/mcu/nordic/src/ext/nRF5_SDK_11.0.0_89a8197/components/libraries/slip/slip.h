@@ -16,6 +16,10 @@
 #include <stdint.h>
 #include "app_fifo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @file
  *
  * @defgroup slip SLIP encoding decoding
@@ -60,6 +64,10 @@ uint32_t slip_encode(uint8_t * p_output,  uint8_t * p_input, uint32_t input_leng
  */
 uint32_t slip_decoding_add_char(uint8_t c, buffer_t * p_buf, slip_state_t * current_state);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SLIP_H__
 

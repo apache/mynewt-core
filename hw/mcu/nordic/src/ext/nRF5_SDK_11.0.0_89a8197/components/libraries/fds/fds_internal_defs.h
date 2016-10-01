@@ -17,6 +17,10 @@
 #include <stdbool.h>
 #include "fds_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined (FDS_THREADS)
     #include "nrf_soc.h"
     #include "app_util_platform.h"
@@ -301,5 +305,9 @@ typedef struct
 
 #endif
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FDS_INTERNAL_DEFS_H__

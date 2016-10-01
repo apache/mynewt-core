@@ -38,6 +38,10 @@
 #include "transactions.h"
 #include "../../util/oc_list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* OIC stack headers */
 #include "../../../include/iotivity/oc_ri.h"
 
@@ -76,5 +80,9 @@ int coap_notify_observers(oc_resource_t *resource,
 
 int coap_observe_handler(void *request, void *response, oc_resource_t *resource,
                          oc_endpoint_t *endpoint);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OBSERVE_H */

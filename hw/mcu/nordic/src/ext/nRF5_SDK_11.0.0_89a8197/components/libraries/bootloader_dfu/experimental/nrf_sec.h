@@ -16,6 +16,10 @@
 #include "nrf_svc.h"
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NRF_SEC_SVC_BASE 0x8 /**< The lowest SVC number reserved for the nRF Security library. */
 
 /**@brief The SVC numbers used by the SVC functions in the security library. */
@@ -104,5 +108,9 @@ SVCALL(NRF_SEC_SVC_VERIFY, uint32_t, nrf_sec_svc_verify (nrf_sec_data_t         
 SVCALL(NRF_SEC_SVC_HASH, uint32_t, nrf_sec_svc_hash(nrf_sec_data_t      * p_data, 
                                                     uint8_t             * p_digest, 
                                                     nrf_sec_hash_func_t   hash_func));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_SEC_H__

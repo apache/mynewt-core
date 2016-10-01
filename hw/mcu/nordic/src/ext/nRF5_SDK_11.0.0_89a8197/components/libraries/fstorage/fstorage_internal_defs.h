@@ -16,6 +16,10 @@
 #include "nrf.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FS_FLAG_INITIALIZED         (1 << 0)  // The module has been initialized.
 #define FS_FLAG_PROCESSING          (1 << 1)  // The module is processing flash operations.
 // The module is waiting for a flash operation initiated by another module to complete.
@@ -131,5 +135,9 @@ static uint32_t const * fs_flash_page_end_addr()
 // will act as the page beyond the end of the available flash storage.
 #define FS_PAGE_END_ADDR    (fs_flash_page_end_addr())
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //__FSTORAGE_INTERNAL_DEFS_H

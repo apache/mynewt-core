@@ -24,6 +24,10 @@
 #include <inttypes.h>
 #include <os/os.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* MTU for newtmgr responses */
 #define NMGR_MAX_MTU 1024
 
@@ -125,5 +129,9 @@ int nmgr_transport_init(struct nmgr_transport *nt,
 int nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req);
 int nmgr_rsp_extend(struct nmgr_hdr *, struct os_mbuf *, void *data, uint16_t);
 int nmgr_group_register(struct nmgr_group *group);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NETMGR_H */

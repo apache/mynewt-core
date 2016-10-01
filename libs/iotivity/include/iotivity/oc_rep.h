@@ -24,6 +24,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern CborEncoder g_encoder, root_map, links_array;
 extern CborError g_err;
 
@@ -224,5 +228,9 @@ uint16_t oc_parse_rep(const uint8_t *payload, uint16_t payload_size,
                       oc_rep_t **value_list);
 
 void oc_free_rep(oc_rep_t *rep);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_REP_H */

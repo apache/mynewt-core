@@ -24,6 +24,10 @@
 #include <inttypes.h>
 #include <os/os.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* MTU for newtmgr responses */
 #define NMGR_MAX_MTU 1024
 
@@ -108,5 +112,9 @@ struct nmgr_group {
 
 int nmgr_oic_init(uint8_t, os_stack_t *, uint16_t);
 int nmgr_group_register(struct nmgr_group *group);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NETMGR_H */

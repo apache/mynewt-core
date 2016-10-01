@@ -42,6 +42,10 @@
 #include "app_error.h"
 #include "nrf_gpio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define APP_BUTTON_PUSH        1                               /**< Indicates that a button is pushed. */
 #define APP_BUTTON_RELEASE     0                               /**< Indicates that a button is released. */
 #define APP_BUTTON_ACTIVE_HIGH 1                               /**< Indicates that a button is active high. */
@@ -106,6 +110,10 @@ uint32_t app_button_disable(void);
  * @retval     NRF_ERROR_INVALID_PARAM   Invalid button index.
  */
 uint32_t app_button_is_pushed(uint8_t button_id, bool * p_is_pushed);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_BUTTON_H__
 

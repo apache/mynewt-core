@@ -32,6 +32,10 @@
 #ifndef LWIP_HDR_LWIPOPTS_H
 #define LWIP_HDR_LWIPOPTS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
 #define NO_SYS                          1
 #define SYS_LIGHTWEIGHT_PROT            0
@@ -58,5 +62,9 @@
 
 /* Minimal changes to opt.h required for etharp unit tests: */
 #define ETHARP_SUPPORT_STATIC_ENTRIES   1
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_LWIPOPTS_H */

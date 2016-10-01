@@ -20,6 +20,10 @@
 #ifndef __MCU_STM32F4_BSP_H_
 #define __MCU_STM32F4_BSP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * BSP specific UART settings.
  */
@@ -44,5 +48,9 @@ int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull);
 
 struct hal_flash;
 extern struct hal_flash stm32f4_flash_dev;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MCU_STM32F4_BSP_H_ */

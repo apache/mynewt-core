@@ -39,6 +39,10 @@
 #include "bootloader_types.h"
 #include "device_manager.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DFU_APP_ATT_TABLE_POS     0                     /**< Position for the ATT table changed setting. */
 #define DFU_APP_ATT_TABLE_CHANGED 1                     /**< Value indicating that the ATT table might have changed. This value will be set in the application-specific context in Device Manager when entering DFU mode. */
 
@@ -80,6 +84,10 @@ void dfu_app_reset_prepare_set(dfu_app_reset_prepare_t reset_prepare_func);
  * @param[in] app_instance Value for the application instance in use.
  */
 void dfu_app_dm_appl_instance_set(dm_application_instance_t app_instance);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_APP_HANDLER_H__
 

@@ -17,6 +17,10 @@
 #ifndef OC_CONSTANTS_H
 #define OC_CONSTANTS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* OCF standard resource interfaces */
 #define OC_NUM_STD_INTERFACES (7)
 #define OC_RSRVD_IF_BASELINE "oic.if.baseline"
@@ -39,5 +43,9 @@
 #define OC_MULTICAST_DISCOVERY_URI "/oic/res"
 #define OC_RSRVD_DEVICE_URI "/oic/d"
 #define OC_RSRVD_PLATFORM_URI "/oic/p"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_CONSTANTS_H */

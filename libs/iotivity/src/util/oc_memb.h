@@ -47,6 +47,10 @@
 #ifndef OC_MEMB_H
 #define OC_MEMB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CC_CONCAT2(s1, s2) s1##s2
 /**
  * A C preprocessing macro for concatenating two preprocessor tokens.
@@ -123,5 +127,9 @@ char oc_memb_free(struct oc_memb *m, void *ptr);
 int oc_memb_inmemb(struct oc_memb *m, void *ptr);
 
 int oc_memb_numfree(struct oc_memb *m);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_MEMB_H */

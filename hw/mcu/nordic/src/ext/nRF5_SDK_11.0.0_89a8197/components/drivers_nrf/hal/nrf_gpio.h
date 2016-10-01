@@ -15,6 +15,10 @@
 #include "nrf.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_gpio GPIO abstraction
  * @{
@@ -643,5 +647,9 @@ __STATIC_INLINE void nrf_gpio_port_clear(nrf_gpio_port_select_t port, uint8_t cl
 }
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

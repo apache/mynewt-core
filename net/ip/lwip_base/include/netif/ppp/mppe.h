@@ -41,6 +41,10 @@
 
 #include "netif/ppp/pppcrypt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MPPE_PAD		4	/* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
 
@@ -170,4 +174,8 @@ void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
 err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
 
 #endif /* MPPE_H */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */

@@ -28,6 +28,10 @@
 #include "nrf.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief This value can be provided as a parameter for the @ref nrf_i2s_pins_set
  *        function call to specify that a given I2S signal (SDOUT, SDIN, or MCK)
@@ -517,6 +521,10 @@ __STATIC_INLINE uint32_t * nrf_i2s_tx_buffer_get(NRF_I2S_Type const * p_i2s)
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_I2S_H__
 

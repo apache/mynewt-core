@@ -30,6 +30,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * PPP_SUPPORT==1: Enable PPP.
  */
@@ -589,5 +593,9 @@
 #endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
 
 #endif /* PPP_SUPPORT */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_PPP_OPTS_H */

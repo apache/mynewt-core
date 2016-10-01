@@ -20,6 +20,14 @@
 #ifndef H_BOOTUTIL_TEST_
 #define H_BOOTUTIL_TEST_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int boot_test_all(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

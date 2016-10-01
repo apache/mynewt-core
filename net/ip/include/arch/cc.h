@@ -22,6 +22,10 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif
@@ -41,5 +45,9 @@
 void __assert_f(const char *file, int line);
 
 #define LWIP_PLATFORM_ASSERT(x) assert(x)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_ARCH_CC_H__ */

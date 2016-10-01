@@ -20,11 +20,19 @@
 #ifndef SPLIT_PRIV_H
 #define SPLIT_PRIV_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int split_conf_init(void);
 int split_nmgr_register(void);
 int split_read_split(split_mode_t *split);
 int split_write_split(split_mode_t mode);
 split_status_t split_check_status(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SPLIT_PRIV_H */
 

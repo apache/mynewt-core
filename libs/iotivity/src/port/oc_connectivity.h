@@ -23,6 +23,10 @@
 #include "../util/oc_process.h"
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   uint16_t port;
@@ -81,5 +85,9 @@ int oc_connectivity_init(void);
 void oc_connectivity_shutdown(void);
 
 void oc_send_multicast_message(oc_message_t *message);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_CONNECTIVITY_H */

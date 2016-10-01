@@ -14,6 +14,10 @@
 
 #include "ble_gattc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint32_t ble_gattc_evt_char_val_by_uuid_read_rsp_t_enc(void const * const p_void_struct,
                                                        uint8_t * const    p_buf,
                                                        uint32_t           buf_len,
@@ -114,4 +118,8 @@ uint32_t ble_gattc_evt_attr_info_disc_rsp_t_dec(uint8_t const * const p_buf,
                                                 uint32_t              buf_len,
                                                 uint32_t * const      p_index,
                                                 void * const          p_void_struct);
+#ifdef __cplusplus
+}
+#endif
+
 #endif /*BLE_GATTC_STRUCT_SERIALIZATION_H*/

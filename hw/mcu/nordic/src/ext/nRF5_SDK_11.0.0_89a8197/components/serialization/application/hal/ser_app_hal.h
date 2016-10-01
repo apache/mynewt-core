@@ -24,6 +24,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*ser_app_hal_flash_op_done_handler_t)(bool success);
 /**@brief Function for initializing hw modules.
  *
@@ -75,6 +79,10 @@ void ser_app_hal_nrf_evt_irq_priority_set(void);
  */
 void ser_app_hal_nrf_evt_pending(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_APP_HAL_H_ */
 /** @} */

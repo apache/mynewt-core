@@ -34,6 +34,10 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define COAP_DEFAULT_PORT 5683
 
 #define COAP_DEFAULT_MAX_AGE 60
@@ -154,5 +158,9 @@ typedef enum {
   APPLICATION_X_OBIX_BINARY = 51,
   APPLICATION_CBOR = 60
 } coap_content_format_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CONSTANTS_H */

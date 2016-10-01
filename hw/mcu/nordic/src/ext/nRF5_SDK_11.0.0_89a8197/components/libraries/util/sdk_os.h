@@ -25,6 +25,10 @@
 #ifndef SDK_OS_H__
 #define SDK_OS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SDK_MUTEX_DEFINE(X)
 #define SDK_MUTEX_INIT(X)
 #define SDK_MUTEX_LOCK(X)
@@ -36,5 +40,9 @@
  
 /** @} */
 /** @endcond */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // SDK_OS_H__
 

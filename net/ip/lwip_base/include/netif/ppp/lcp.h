@@ -50,6 +50,10 @@
 
 #include "ppp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Options.
  */
@@ -168,4 +172,8 @@ extern const struct protent lcp_protent;
 #endif /* moved to ppp_opts.h */
 
 #endif /* LCP_H */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PPP_SUPPORT */

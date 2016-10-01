@@ -16,6 +16,10 @@
 #include <stddef.h>
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_ppi_hal PPI HAL
  * @{
@@ -399,4 +403,8 @@ __STATIC_INLINE uint32_t * nrf_ppi_task_group_disable_address_get(nrf_ppi_channe
  **/
 
 /*lint --flb "Leave library region" */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // NRF_PPI_H__

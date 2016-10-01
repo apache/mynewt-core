@@ -32,12 +32,20 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief A function for processing the encoded reset commands from an Application Chip.
  *
  * @details     The function decodes encoded system reset command and performs software reset.
  *              This command does not send back the Command Response packet to an Application Chip.
  */
 void ser_conn_reset_command_process(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_CONN_RESET_CMD_DECODER_H__ */
 

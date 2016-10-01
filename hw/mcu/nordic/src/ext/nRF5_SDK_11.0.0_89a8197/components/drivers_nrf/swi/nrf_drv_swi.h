@@ -30,6 +30,10 @@
 #include "nrf_drv_config.h"
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef EGU_ENABLED
     #define EGU_ENABLED 0
 #endif
@@ -161,6 +165,10 @@ uint32_t nrf_drv_swi_event_triggered_address_get(nrf_swi_t swi, uint8_t channel)
 
 #endif // EGU_ENABLED > 0
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_SWI_H__
 

@@ -13,6 +13,10 @@
 #ifndef SER_PHY_DEBUG_COMM_H__
 #define SER_PHY_DEBUG_COMM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SER_PHY_HCI_DEBUG_ENABLE
 
 // empty definitions here
@@ -163,5 +167,9 @@ do {                                                  \
 } while (0);
 
 #endif  // SER_PHY_HCI_DEBUG_ENABLE
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // SER_PHY_DEBUG_COMM_H__

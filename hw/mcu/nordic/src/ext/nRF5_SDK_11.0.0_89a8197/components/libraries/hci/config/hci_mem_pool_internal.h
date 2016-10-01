@@ -22,10 +22,18 @@
 #ifndef MEM_POOL_INTERNAL_H__
 #define MEM_POOL_INTERNAL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TX_BUF_SIZE       600u         /**< TX buffer size in bytes. */
 #define RX_BUF_SIZE       TX_BUF_SIZE  /**< RX buffer size in bytes. */
 
 #define RX_BUF_QUEUE_SIZE 4u           /**< RX buffer element size. */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MEM_POOL_INTERNAL_H__
  

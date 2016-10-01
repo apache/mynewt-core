@@ -1,6 +1,10 @@
 #ifndef CBORCONSTANTS_P_H
 #define CBORCONSTANTS_P_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * CBOR Major types
  * Encoded in the high 3 bits of the descriptor byte
@@ -48,5 +52,9 @@ enum {
 
     BreakByte               = (unsigned)Break | (SimpleTypesType << MajorTypeShift)
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CBORCONSTANTS_P_H */

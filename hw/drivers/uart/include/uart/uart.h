@@ -23,6 +23,10 @@
 #include <inttypes.h>
 #include <os/os_dev.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct uart_dev;
 
 /*
@@ -135,5 +139,9 @@ uart_blocking_tx(struct uart_dev *dev, uint8_t byte)
 {
     dev->ud_funcs.uf_blocking_tx(dev, byte);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DRIVERS_UART_H_ */

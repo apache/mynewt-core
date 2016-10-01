@@ -21,6 +21,10 @@
 
 #include <os/os.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*shell_cmd_func_t)(int argc, char **argv);
 struct shell_cmd {
     char *sc_cmd;
@@ -44,5 +48,9 @@ void shell_init(void);
 
 int shell_cmd_list_lock(void);
 int shell_cmd_list_unlock(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SHELL_H__ */
