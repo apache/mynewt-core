@@ -90,7 +90,7 @@ struct nrf52_hal_spi nrf52_hal_spi0;
 struct nrf52_hal_spi nrf52_hal_spi1;
 #endif
 
-struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
+static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
 #if SPI0_ENABLED || SPIS0_ENABLED
     &nrf52_hal_spi0,
 #else
@@ -116,15 +116,15 @@ nrf_drv_spis_t inst_spi0_s = NRF_DRV_SPIS_INSTANCE(0);
 nrf_drv_spis_t inst_spi1_s = NRF_DRV_SPIS_INSTANCE(1);
 #endif
 
-#define NRF52_HAL_SPI_RESOLVE(__n, __v)         \
-    if ((__n) >= NRF52_HAL_SPI_MAX) {           \
-        rc = EINVAL;                            \
-        goto err;                               \
-    }                                           \
-    (__v) = nrf52_hal_spis[(__n)];              \
-    if ((__v) == NULL) {                        \
-        rc = EINVAL;                            \
-        goto err;                               \
+#define NRF52_HAL_SPI_RESOLVE(__n, __v)                     \
+    if ((__n) >= NRF52_HAL_SPI_MAX) {                       \
+        rc = EINVAL;                                        \
+        goto err;                                           \
+    }                                                       \
+    (__v) = (struct nrf52_hal_spi *) nrf52_hal_spis[(__n)]; \
+    if ((__v) == NULL) {                                    \
+        rc = EINVAL;                                        \
+        goto err;                                           \
     }
 
 #if (SPI0_ENABLED || SPI1_ENABLED)

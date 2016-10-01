@@ -27,8 +27,6 @@
 #include "mcu/mcu_hal.h"
 #include <bsp/bsp.h>
 #include <bsp/bsp_sysid.h>
-#include <mcu/hal_pwm.h>
-#include <mcu/hal_dac.h>
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)

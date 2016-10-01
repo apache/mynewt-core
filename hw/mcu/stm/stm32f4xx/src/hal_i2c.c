@@ -58,7 +58,7 @@ struct stm32f4_hal_i2c hal_i2c3;
 #define __HAL_RCC_I2C3_CLK_ENABLE()
 #endif
 
-struct stm32f4_hal_i2c *stm32f4_hal_i2cs[STM32_HAL_I2C_MAX] = {
+static const struct stm32f4_hal_i2c *stm32f4_hal_i2cs[STM32_HAL_I2C_MAX] = {
 #ifdef I2C1
         &hal_i2c1,
 #else
@@ -76,15 +76,15 @@ struct stm32f4_hal_i2c *stm32f4_hal_i2cs[STM32_HAL_I2C_MAX] = {
 #endif
 };
 
-#define STM32_HAL_I2C_RESOLVE(__n, __v) \
-    if ((__n) >= STM32_HAL_I2C_MAX) {   \
-        rc = EINVAL;                    \
-        goto err;                       \
-    }                                   \
-    (__v) = stm32f4_hal_i2cs[(__n)];      \
-    if ((__v) == NULL) {                \
-        rc = EINVAL;                    \
-        goto err;                       \
+#define STM32_HAL_I2C_RESOLVE(__n, __v)                          \
+    if ((__n) >= STM32_HAL_I2C_MAX) {                            \
+        rc = EINVAL;                                             \
+        goto err;                                                \
+    }                                                            \
+    (__v) = (struct stm32f4_hal_i2c *) stm32f4_hal_i2cs[(__n)];  \
+    if ((__v) == NULL) {                                         \
+        rc = EINVAL;                                             \
+        goto err;                                                \
     }
 
 int

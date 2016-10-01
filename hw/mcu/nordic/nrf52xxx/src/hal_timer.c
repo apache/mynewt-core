@@ -68,7 +68,7 @@ struct nrf52_hal_timer nrf52_hal_timer3;
 struct nrf52_hal_timer nrf52_hal_timer4;
 #endif
 
-struct nrf52_hal_timer *nrf52_hal_timers[NRF52_HAL_TIMER_MAX] = {
+static const struct nrf52_hal_timer *nrf52_hal_timers[NRF52_HAL_TIMER_MAX] = {
 #if MYNEWT_VAL(TIMER_0)
     &nrf52_hal_timer0,
 #else
@@ -102,7 +102,7 @@ struct nrf52_hal_timer *nrf52_hal_timers[NRF52_HAL_TIMER_MAX] = {
         rc = EINVAL;                            \
         goto err;                               \
     }                                           \
-    (__v) = nrf52_hal_timers[(__n)];            \
+    (__v) = (struct nrf52_hal_timer *) nrf52_hal_timers[(__n)];            \
     if ((__v) == NULL) {                        \
         rc = EINVAL;                            \
         goto err;                               \

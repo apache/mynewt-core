@@ -42,7 +42,7 @@ struct nrf52_hal_i2c hal_twi_i2c0;
 struct nrf52_hal_i2c hal_twi_i2c1;
 #endif
 
-struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
+static const struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
 #if TWI0_ENABLED
         &hal_twi_i2c0,
 #else
@@ -55,15 +55,15 @@ struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
 #endif
 };
 
-#define NRF52_HAL_I2C_RESOLVE(__n, __v) \
-    if ((__n) >= NRF52_HAL_I2C_MAX) {   \
-        rc = EINVAL;                    \
-        goto err;                       \
-    }                                   \
-    (__v) = nrf52_hal_i2cs[(__n)];     \
-    if ((__v) == NULL) {                \
-        rc = EINVAL;                    \
-        goto err;                       \
+#define NRF52_HAL_I2C_RESOLVE(__n, __v)                      \
+    if ((__n) >= NRF52_HAL_I2C_MAX) {                        \
+        rc = EINVAL;                                         \
+        goto err;                                            \
+    }                                                        \
+    (__v) = (struct nrf52_hal_i2c *) nrf52_hal_i2cs[(__n)];  \
+    if ((__v) == NULL) {                                     \
+        rc = EINVAL;                                         \
+        goto err;                                            \
     }
 
 int

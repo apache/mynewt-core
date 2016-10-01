@@ -73,7 +73,7 @@ struct stm32f4_hal_spi stm32f4_hal_spi6;
 #define __HAL_RCC_SPI6_CLK_ENABLE()
 #endif
 
-struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
+static const struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
 #ifdef SPI1
     &stm32f4_hal_spi1,
 #else
@@ -106,15 +106,15 @@ struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
 #endif
 };
 
-#define STM32F4_HAL_SPI_RESOLVE(__n, __v)       \
-    if ((__n) >= STM32F4_HAL_SPI_MAX) {         \
-        rc = EINVAL;                            \
-        goto err;                               \
-    }                                           \
-    (__v) = stm32f4_hal_spis[(__n)];            \
-    if ((__v) == NULL) {                        \
-        rc = EINVAL;                            \
-        goto err;                               \
+#define STM32F4_HAL_SPI_RESOLVE(__n, __v)                        \
+    if ((__n) >= STM32F4_HAL_SPI_MAX) {                          \
+        rc = EINVAL;                                             \
+        goto err;                                                \
+    }                                                            \
+    (__v) = (struct stm32f4_hal_spi *) stm32f4_hal_spis[(__n)];  \
+    if ((__v) == NULL) {                                         \
+        rc = EINVAL;                                             \
+        goto err;                                                \
     }
 
 int
