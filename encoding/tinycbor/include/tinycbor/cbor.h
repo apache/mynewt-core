@@ -157,14 +157,14 @@ typedef enum CborError {
 
 CBOR_API const char *cbor_error_string(CborError error);
 
+
+typedef int (cbor_encoder_writer)(void *arg, const char *data, int len);
+
 /* Encoder API */
 struct CborEncoder
 {
-    union {
-        uint8_t *ptr;
-        ptrdiff_t bytes_needed;
-    };
-    const uint8_t *end;
+    cbor_encoder_writer *writer;
+    void *writer_arg;
     size_t added;
     int flags;
 };
@@ -172,7 +172,8 @@ typedef struct CborEncoder CborEncoder;
 
 static const size_t CborIndefiniteLength = SIZE_MAX;
 
-CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags);
+
+CBOR_API void cbor_encoder_init(CborEncoder *encoder, cbor_encoder_writer *pwriter, void *writer_arg, int flags);
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
 CBOR_API CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value);
@@ -202,16 +203,6 @@ CBOR_API CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *
 CBOR_API CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length);
 CBOR_API CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder);
 CBOR_API CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborEncoder *containerEncoder);
-
-CBOR_INLINE_API size_t cbor_encoder_get_buffer_size(const CborEncoder *encoder, const uint8_t *buffer)
-{
-    return (size_t)(encoder->ptr - buffer);
-}
-
-CBOR_INLINE_API size_t cbor_encoder_get_extra_bytes_needed(const CborEncoder *encoder)
-{
-    return encoder->end ? 0 : (size_t)encoder->bytes_needed;
-}
 
 /* Parser API */
 

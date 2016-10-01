@@ -50,7 +50,7 @@ static inline uint64_t get64(const uint8_t *ptr)
     return cbor_ntohll(result);
 }
 
-static CborError extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
+static inline CborError extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
@@ -76,3 +76,4 @@ static CborError extract_number(const uint8_t **ptr, const uint8_t *end, uint64_
     *ptr += bytesNeeded;
     return CborNoError;
 }
+

@@ -19,25 +19,28 @@
 #include "port/oc_assert.h"
 #include "port/oc_log.h"
 #include "util/oc_memb.h"
+#include <tinycbor/cbor_buf_writer.h>
 
 OC_MEMB(rep_objects, oc_rep_t, EST_NUM_REP_OBJECTS);
 static const CborEncoder g_empty;
 static uint8_t *g_buf;
 CborEncoder g_encoder, root_map, links_array;
 CborError g_err;
+struct CborBufWriter g_buf_writer;
 
 void
 oc_rep_new(uint8_t *out_payload, int size)
 {
   g_err = CborNoError;
   g_buf = out_payload;
-  cbor_encoder_init(&g_encoder, out_payload, size, 0);
+  cbor_buf_writer_init(&g_buf_writer, out_payload, size);
+  cbor_encoder_init(&g_encoder, &cbor_buf_writer, &g_buf_writer, 0);
 }
 
 int
 oc_rep_finalize(void)
 {
-  int size = cbor_encoder_get_buffer_size(&g_encoder, g_buf);
+  int size = cbor_buf_writer_buffer_size(&g_buf_writer, g_buf);
   oc_rep_reset();
   if (g_err != CborNoError)
     return -1;

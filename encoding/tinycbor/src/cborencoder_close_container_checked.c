@@ -42,41 +42,5 @@
  * @{
  */
 
-/**
- *
- * Closes the CBOR container (array or map) provided by \a containerEncoder and
- * updates the CBOR stream provided by \a encoder. Both parameters must be the
- * same as were passed to cbor_encoder_create_array() or
- * cbor_encoder_create_map().
- *
- * Unlike cbor_encoder_close_container(), this function checks that the number
- * of items (or pair of items, in the case of a map) was correct. If the number
- * of items inserted does not match the length originally passed to
- * cbor_encoder_create_array() or cbor_encoder_create_map(), this function
- * returns either CborErrorTooFewItems or CborErrorTooManyItems.
- *
- * \sa cbor_encoder_create_array(), cbor_encoder_create_map()
- */
-CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborEncoder *containerEncoder)
-{
-    const uint8_t *ptr = encoder->ptr;
-    CborError err = cbor_encoder_close_container(encoder, containerEncoder);
-    if (containerEncoder->flags & CborIteratorFlag_UnknownLength || encoder->end == NULL)
-        return err;
-
-    /* check what the original length was */
-    uint64_t actually_added;
-    err = extract_number(&ptr, encoder->ptr, &actually_added);
-    if (err)
-        return err;
-
-    if (containerEncoder->flags & CborIteratorFlag_ContainerIsMap) {
-        if (actually_added > SIZE_MAX / 2)
-            return CborErrorDataTooLarge;
-        actually_added *= 2;
-    }
-    return actually_added == containerEncoder->added ? CborNoError :
-           actually_added < containerEncoder->added ? CborErrorTooManyItems : CborErrorTooFewItems;
-}
 
 /** @} */
