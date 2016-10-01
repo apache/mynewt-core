@@ -26,3 +26,8 @@ pkg.keywords:
 
 pkg.req_apis:
     - console
+
+pkg.syscfg_defs:
+    BASELIBC_PRESENT:
+        description: "Indicates that baselibc is the libc implementation."
+        value: 1

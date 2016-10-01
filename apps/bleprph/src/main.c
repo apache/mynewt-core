@@ -21,13 +21,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_cputime.h"
 #include "console/console.h"
-#include <imgmgr/imgmgr.h>
+#include "imgmgr/imgmgr.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -302,7 +303,7 @@ main(void)
     memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     /* Initialize the bleprph log. */
     log_register("bleprph", &bleprph_log, &log_console_handler, NULL);

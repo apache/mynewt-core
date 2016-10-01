@@ -18,6 +18,7 @@
  */
  
 #include <string.h>
+#include "sysinit/sysinit.h"
 #include "testutil/testutil.h"
 #include "os/os.h"
 #include "os_test_priv.h"
@@ -265,7 +266,7 @@ TEST_CASE(event_test_sr)
     int i;
 
     /* Initializing the OS */
-    os_init();
+    sysinit();
     /* Initialize the task */
     os_task_init(&eventq_task_s, "eventq_task_s", eventq_task_send, NULL,
         SEND_TASK_PRIO, OS_WAIT_FOREVER, eventq_task_stack_s, MY_STACK_SIZE);
@@ -292,7 +293,7 @@ TEST_CASE(event_test_poll_sr)
     int i;
 
     /* Initializing the OS */
-    os_init();
+    sysinit();
     /* Initialize the task */
     os_task_init(&eventq_task_poll_s, "eventq_task_poll_s", eventq_task_poll_send,
         NULL, SEND_TASK_POLL_PRIO, OS_WAIT_FOREVER, eventq_task_stack_poll_s, 
@@ -319,7 +320,7 @@ TEST_CASE(event_test_poll_timeout_sr)
     int i;
 
     /* Initializing the OS */
-    os_init();
+    sysinit();
     /* Initialize the task */
     os_task_init(&eventq_task_poll_timeout_s, "eventq_task_poll_timeout_s", 
         eventq_task_poll_timeout_send, NULL, SEND_TASK_POLL_TIMEOUT_PRIO,
@@ -350,7 +351,7 @@ TEST_CASE(event_test_poll_single_sr)
     int i;
 
     /* Initializing the OS */
-    os_init();
+    sysinit();
     /* Initialize the task */
     os_task_init(&eventq_task_poll_single_s, "eventq_task_poll_single_s", 
         eventq_task_poll_single_send, NULL, SEND_TASK_POLL_SINGLE_PRIO,

@@ -41,9 +41,6 @@ pkg.syscfg_vals:
     # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
     LOG_LEVEL: 1
 
-    BOOTUTIL_NFFS: 0
-    CONFIG_NFFS: 0
-
     # Disable central and observer roles.
     BLE_ROLE_BROADCASTER: 1
     BLE_ROLE_CENTRAL: 0

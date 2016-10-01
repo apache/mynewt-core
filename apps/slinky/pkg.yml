@@ -54,5 +54,6 @@ pkg.syscfg_vals:
 
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
+    LOG_FCB: 1
 
     CONFIG_FCB: 1

@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "hal/hal_flash.h"
 #include "testutil/testutil.h"
@@ -30,7 +31,7 @@ int tu_first_idx;
 int
 tu_init(void)
 {
-    os_init();
+    sysinit();
 
     return 0;
 }

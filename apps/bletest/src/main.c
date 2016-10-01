@@ -1028,7 +1028,7 @@ main(void)
     int rc;
 
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     /* Dummy device address */
 #if BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER

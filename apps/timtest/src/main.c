@@ -138,7 +138,7 @@ task2_handler(void *arg)
 /**
  * init_tasks
  *
- * Called by main.c after os_init(). This function performs initializations
+ * Called by main.c after sysinit(). This function performs initializations
  * that are required before tasks are running.
  *
  * @return int 0 success; error otherwise.
@@ -185,7 +185,7 @@ main(int argc, char **argv)
 {
     int rc;
 
-    os_init();
+    sysinit();
     rc = init_tasks();
     os_start();
 

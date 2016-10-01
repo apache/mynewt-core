@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include "mcu/cortex_m4.h"
+#include "os/os_time.h"
 
 struct os_task;
 

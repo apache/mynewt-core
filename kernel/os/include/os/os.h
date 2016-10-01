@@ -21,7 +21,7 @@
 #define _OS_H
 
 #include <stdlib.h>
-//#include <stdint.h>
+#include <inttypes.h>
 
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))
@@ -84,18 +84,19 @@ void os_start(void);
  * should be called by application developers as those that should not. */
 void os_init_idle_task(void);
 
-#include "os/os_sanity.h"
+#include "os/endian.h"
 #include "os/os_arch.h"
-#include "os/os_time.h"
-#include "os/os_task.h"
-#include "os/os_sched.h"
-#include "os/os_eventq.h"
 #include "os/os_callout.h"
-#include "os/os_heap.h"
-#include "os/os_mutex.h"
-#include "os/os_sem.h"
-#include "os/os_mempool.h"
-#include "os/os_mbuf.h"
 #include "os/os_dev.h"
+#include "os/os_eventq.h"
+#include "os/os_heap.h"
+#include "os/os_mbuf.h"
+#include "os/os_mempool.h"
+#include "os/os_mutex.h"
+#include "os/os_sanity.h"
+#include "os/os_sched.h"
+#include "os/os_sem.h"
+#include "os/os_task.h"
+#include "os/os_time.h"
 
 #endif /* _OS_H */

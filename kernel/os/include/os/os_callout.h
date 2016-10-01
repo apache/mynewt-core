@@ -23,6 +23,8 @@
 
 #define OS_CALLOUT_F_QUEUED (0x01)
 
+#include "os/os_eventq.h"
+
 struct os_callout {
     struct os_event c_ev;
     struct os_eventq *c_evq;

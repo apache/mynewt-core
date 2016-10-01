@@ -237,7 +237,7 @@ main(void)
     int rc;
 
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     os_task_init(&bleuart_task, "bleuart", bleuart_task_handler,
                  NULL, bleuart_TASK_PRIO, OS_WAIT_FOREVER,

@@ -51,7 +51,7 @@ pkg.syscfg_defs:
 
     CONFIG_NFFS:
         description: 'TBD'
-        value: 'MYNEWT_PKG_FS_NFFS'
+        value: 0
     CONFIG_NFFS_DIR:
         description: 'TBD'
         value: '"/cfg"'
@@ -64,8 +64,8 @@ pkg.syscfg_defs:
 
     CONFIG_NEWTMGR:
         description: 'TBD'
-        value: 'MYNEWT_PKG_LIBS_NEWTMGR'
+        value: 0
 
     CONFIG_CLI:
         description: 'TBD'
-        value: 'MYNEWT_PKG_LIBS_SHELL'
+        value: 0

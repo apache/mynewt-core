@@ -17,12 +17,10 @@
  * under the License.
  */
  
+#include "sysinit/sysinit.h"
 #include "testutil/testutil.h"
 #include "os/os.h"
 #include "os_test_priv.h"
-#include "os/os_eventq.h"
-#include "os/os_callout.h"
-#include "os/os_time.h"
 
 /* Task 1 for sending */
 #define CALLOUT_STACK_SIZE        (5120)
@@ -242,7 +240,7 @@ TEST_CASE(callout_test)
 {
 
     /* Initializing the OS */
-    os_init();
+    sysinit();
     
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_send, "callout_task_send",
@@ -269,7 +267,7 @@ TEST_CASE(callout_test_stop)
 {
     int k;
     /* Initializing the OS */
-    os_init();
+    sysinit();
 
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_stop_send, "callout_task_stop_send",
@@ -300,7 +298,7 @@ TEST_CASE(callout_test_stop)
 TEST_CASE(callout_test_speak)
 {
     /* Initializing the OS */
-    os_init();
+    sysinit();
     
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_speak, "callout_task_speak",

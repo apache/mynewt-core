@@ -1592,7 +1592,7 @@ main(void)
     int rc;
 
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     /* Allocate some application specific memory pools. */
     bletiny_svc_mem = malloc(

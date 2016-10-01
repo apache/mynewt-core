@@ -23,7 +23,7 @@ int
 main(void)
 {
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     /* Start the OS */
     os_start();

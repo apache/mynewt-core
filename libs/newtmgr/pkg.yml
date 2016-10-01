@@ -32,7 +32,7 @@ pkg.deps:
     - sys/shell
     - sys/reboot
 
-pkg.deps.BLE_HOST:
+pkg.deps.NEWTMGR_BLE_HOST:
     - libs/newtmgr/transport/ble
 
 pkg.apis:
@@ -51,4 +51,4 @@ pkg.syscfg_defs:
         value: 512
     NEWTMGR_BLE_HOST:
         description: 'TBD'
-        value: 'MYNEWT_PKG_NET_NIMBLE_HOST'
+        value: 0

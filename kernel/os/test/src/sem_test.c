@@ -18,10 +18,9 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include "sysinit/sysinit.h"
 #include "testutil/testutil.h"
 #include "os/os.h"
-#include "os/os_cfg.h"
-#include "os/os_sem.h"
 #include "os_test_priv.h"
 
 #ifdef ARCH_sim
@@ -212,7 +211,7 @@ TEST_CASE(os_sem_test_basic)
 {
     os_error_t err;
 
-    os_init();
+    sysinit();
 
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
@@ -239,7 +238,7 @@ TEST_CASE(os_sem_test_case_1)
 {
     os_error_t err;
 
-    os_init();
+    sysinit();
 
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
@@ -280,7 +279,7 @@ TEST_CASE(os_sem_test_case_2)
 {
     os_error_t err;
 
-    os_init();
+    sysinit();
 
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
@@ -324,7 +323,7 @@ TEST_CASE(os_sem_test_case_3)
 {
     os_error_t err;
 
-    os_init();
+    sysinit();
 
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
@@ -369,7 +368,7 @@ TEST_CASE(os_sem_test_case_4)
 {
     os_error_t err;
 
-    os_init();
+    sysinit();
 
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);

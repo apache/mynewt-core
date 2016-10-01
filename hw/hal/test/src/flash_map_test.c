@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "testutil/testutil.h"
@@ -40,7 +41,7 @@ TEST_CASE(flash_map_test_case_1)
     int my_sec_cnt;
     uint32_t end;
 
-    os_init();
+    sysinit();
 
     for (i = 0; i < 8; i++) {
         rc = flash_area_open(i, &fa);
@@ -85,7 +86,7 @@ TEST_CASE(flash_map_test_case_2)
     uint8_t wd[256];
     uint8_t rd[256];
 
-    os_init();
+    sysinit();
 
     rc = flash_area_open(FLASH_AREA_IMAGE_0, &fa);
     TEST_ASSERT_FATAL(rc == 0, "flash_area_open() fail");

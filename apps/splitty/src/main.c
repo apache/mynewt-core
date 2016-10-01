@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "sysinit/sysinit.h"
 #include <os/os.h>
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
@@ -92,7 +93,7 @@ STATS_NAME(gpio_stats, toggles)
 STATS_NAME_END(gpio_stats)
 
 #if !MYNEWT_VAL(CONFIG_NFFS)
-struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
+static struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
 
 static struct conf_fcb my_conf = {
     .cf_fcb.f_magic = 0xc09f6e5e,
@@ -164,7 +165,7 @@ task2_handler(void *arg)
 /**
  * init_tasks
  *
- * Called by main.c after os_init(). This function performs initializations
+ * Called by main.c after sysinit(). This function performs initializations
  * that are required before tasks are running.
  *
  * @return int 0 success; error otherwise.
@@ -241,7 +242,7 @@ main(int argc, char **argv)
     mcu_sim_parse_args(argc, argv);
 #endif
 
-    os_init();
+    sysinit();
 
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem);

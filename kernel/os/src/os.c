@@ -160,9 +160,6 @@ os_init(void)
 
     err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_SECONDARY);
     assert(err == OS_OK);
-
-    /* Initialize target-specific packages. */
-    sysinit();
 }
 
 /**

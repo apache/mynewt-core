@@ -6,7 +6,7 @@
 #include <split/split.h>
 #include <split/split_priv.h>
 
-#define LOADER_IMAGE_SLOT    0
+#define LOADER_IMAGE_SLOT   0
 #define SPLIT_IMAGE_SLOT    1
 #define SPLIT_TOTAL_IMAGES  2
 

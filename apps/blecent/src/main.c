@@ -501,7 +501,7 @@ main(void)
     int rc;
 
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     /* Initialize the blecent log. */
     log_register("blecent", &blecent_log, &log_console_handler, NULL);

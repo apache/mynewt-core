@@ -31,4 +31,4 @@ pkg.deps.WIFI_MGMT_CLI:
 pkg.syscfg_defs:
     WIFI_MGMT_CLI:
         description: 'TBD'
-        value: 'MYNEWT_PKG_LIBS_SHELL'
+        value: 0

@@ -20,11 +20,10 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/time.h>
+#include "sysinit/sysinit.h"
 #include "testutil/testutil.h"
 #include "os/os.h"
 #include "os/os_test.h"
-#include "os/os_cfg.h"
-#include "os/os_mutex.h"
 #include "os_test_priv.h"
 
 #ifdef ARCH_sim
@@ -332,7 +331,7 @@ task17_handler(void *arg)
 
 TEST_CASE(os_mutex_test_basic)
 {
-    os_init();
+    sysinit();
 
     os_mutex_init(&g_mutex1);
 
@@ -347,7 +346,7 @@ TEST_CASE(os_mutex_test_case_1)
 {
     int rc;
 
-    os_init();
+    sysinit();
 
     g_mutex_test = 1;
     g_task14_val = 0;
@@ -374,7 +373,7 @@ TEST_CASE(os_mutex_test_case_1)
 
 TEST_CASE(os_mutex_test_case_2)
 {
-    os_init();
+    sysinit();
 
     g_mutex_test = 2;
     g_task14_val = 0;

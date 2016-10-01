@@ -45,10 +45,10 @@ pkg.init_stage: 5
 pkg.syscfg_defs:
     IMGMGR_FS:
         description: 'TBD'
-        value: 'MYNEWT_PKG_FS_FS'
+        value: 0
     IMGMGR_COREDUMP:
         description: 'TBD'
-        value: 'MYNEWT_PKG_SYS_COREDUMP'
+        value: 0
     IMGMGR_CLI:
         description: 'TBD'
-        value: 'MYNEWT_PKG_LIBS_SHELL'
+        value: 0

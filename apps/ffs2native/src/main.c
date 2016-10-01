@@ -670,7 +670,7 @@ main(int argc, char **argv)
         }
     }
 
-    os_init();
+    sysinit();
 
     log_register("nffs-log", &nffs_log, &log_console_handler, NULL);
 

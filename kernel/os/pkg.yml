@@ -42,10 +42,10 @@ pkg.init_stage: 0
 pkg.syscfg_defs:
     OS_CLI:
         description: 'TBD'
-        value: 'MYNEWT_PKG_LIBS_SHELL'
+        value: 0
     OS_COREDUMP:
         description: 'TBD'
-        value: 'MYNEWT_PKG_SYS_COREDUMP'
+        value: 0
     SANITY_INTERVAL:
         description: 'The interval (in milliseconds) at which the sanity checks should run, should be at least 200ms prior to watchdog'
         value: 59500

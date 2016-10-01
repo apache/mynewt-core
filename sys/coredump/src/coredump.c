@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <stddef.h>
 #include <limits.h>
 #include <hal/hal_bsp.h>
 #include <hal/flash_map.h>

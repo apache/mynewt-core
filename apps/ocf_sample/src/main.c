@@ -275,7 +275,7 @@ main(int argc, char **argv)
     struct os_eventq *ev;
 #endif
     /* Initialize OS */
-    os_init();
+    sysinit();
 
     /* Set cputime to count at 1 usec increments */
     rc = cputime_init(1000000);

@@ -28,3 +28,4 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - kernel/os
+    - sys/sysinit

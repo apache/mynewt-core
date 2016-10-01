@@ -63,7 +63,7 @@ main(void)
     int rc;
 
 #if MYNEWT_VAL(BOOT_SERIAL)
-    os_init();
+    sysinit();
 #else
     bsp_init();
 #endif

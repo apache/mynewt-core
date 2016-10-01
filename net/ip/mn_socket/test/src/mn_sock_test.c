@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "testutil/testutil.h"
@@ -852,7 +853,7 @@ mn_socket_test_handler(void *arg)
 
 TEST_CASE(socket_tests)
 {
-    os_init();
+    sysinit();
     native_sock_init();
 
     os_sem_init(&test_sem, 0);

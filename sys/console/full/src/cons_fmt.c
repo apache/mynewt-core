@@ -24,7 +24,7 @@
 
 #define CONS_OUTPUT_MAX_LINE	128
 
-#if MYNEWT_PKG(LIBS_BASELIBC)
+#if MYNEWT_VAL(BASELIBC_PRESENT)
 size_t console_file_write(FILE *p, const char *str, size_t cnt);
 
 static const struct File_methods console_file_ops = {

@@ -24,6 +24,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "syscfg/syscfg.h"
+#include "os/endian.h"
 #include "base64/base64.h"
 #include "crc/crc16.h"
 #include "testutil/testutil.h"
