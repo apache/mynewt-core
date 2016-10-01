@@ -55,7 +55,8 @@ struct stm32f4_adc_stats {
 static struct stm32f4_adc_stats stm32f4_adc_stats;
 
 static void
-stm32f4_adc_clk_enable(ADC_HandleTypeDef *hadc) {
+stm32f4_adc_clk_enable(ADC_HandleTypeDef *hadc)
+{
     uintptr_t adc_addr = (uintptr_t)hadc->Instance;
 
     switch (adc_addr) {
@@ -74,7 +75,8 @@ stm32f4_adc_clk_enable(ADC_HandleTypeDef *hadc) {
 }
 
 static void
-stm32f4_adc_clk_disable(ADC_HandleTypeDef *hadc) {
+stm32f4_adc_clk_disable(ADC_HandleTypeDef *hadc)
+{
     uintptr_t adc_addr = (uintptr_t)hadc->Instance;
 
     switch (adc_addr) {
@@ -93,7 +95,8 @@ stm32f4_adc_clk_disable(ADC_HandleTypeDef *hadc) {
 }
 
 static int
-stm32f4_resolve_adc_gpio(ADC_HandleTypeDef *adc, uint8_t cnum, GPIO_InitTypeDef *gpio)
+stm32f4_resolve_adc_gpio(ADC_HandleTypeDef *adc, uint8_t cnum,
+        GPIO_InitTypeDef *gpio)
 {
     uintptr_t adc_addr = (uintptr_t)adc->Instance;
     uint32_t pin;
@@ -414,7 +417,7 @@ stm32f4_adc_uninit(struct adc_dev *dev)
         goto err;
     }
 
-    if(hal_gpio_deinit_stm(gpio_td.Pin, &gpio_td)) {
+    if (hal_gpio_deinit_stm(gpio_td.Pin, &gpio_td)) {
         goto err;
     }
 
@@ -544,12 +547,6 @@ stm32f4_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
     }
 
     hal_gpio_init_stm(gpio_td.Pin, &gpio_td);
-
-#if 0
-    if (HAL_ADC_Start_IT(hadc) != HAL_OK) {
-        goto err;
-    }
-#endif
 
     return (OS_OK);
 err:
@@ -682,14 +679,6 @@ stm32f4_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
 {
     return (sizeof(uint32_t) * chans * samples);
 }
-
-#if 0
-void ADC_IRQHandler(void)
-{
-    HAL_ADC_IRQHandler(adc_handle);
-}
-#endif
-
 
 /**
  * Callback to initialize an adc_dev structure from the os device
