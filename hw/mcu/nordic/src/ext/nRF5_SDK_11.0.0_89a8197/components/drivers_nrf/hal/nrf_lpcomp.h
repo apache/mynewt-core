@@ -18,6 +18,10 @@
 #ifndef NRF_LPCOMP_H_
 #define NRF_LPCOMP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_lpcomp_hal LPCOMP HAL
  * @{
@@ -363,5 +367,9 @@ __STATIC_INLINE bool nrf_lpcomp_event_check(nrf_lpcomp_event_t lpcomp_event)
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_LPCOMP_H_ */

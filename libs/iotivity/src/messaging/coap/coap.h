@@ -39,6 +39,10 @@
 #include <stddef.h> /* for size_t */
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* OIC stack headers */
 #include "../src/port/mynewt/config.h"
 #include "../../../include/iotivity/oc_buffer.h"
@@ -293,5 +297,9 @@ int coap_set_header_size1(void *packet, uint32_t size);
 
 int coap_get_payload(void *packet, const uint8_t **payload);
 int coap_set_payload(void *packet, const void *payload, size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COAP_H */

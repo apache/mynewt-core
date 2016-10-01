@@ -32,6 +32,10 @@
 #include "sdk_errors.h"
 #include "nrf_assert.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Timer driver instance data structure.
  */
@@ -366,6 +370,10 @@ __STATIC_INLINE uint32_t nrf_drv_timer_ms_to_ticks(
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_TIMER_H__
 

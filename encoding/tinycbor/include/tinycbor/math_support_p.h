@@ -27,6 +27,10 @@
 
 #include <math.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* this function was copied & adapted from RFC 7049 Appendix D */
 static inline double decode_half(unsigned short half)
 {
@@ -42,6 +46,10 @@ static inline double decode_half(unsigned short half)
     return half & 0x8000 ? -val : val;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MATH_SUPPORT_H
 

@@ -43,6 +43,10 @@
 #include "lwip/netif.h"
 #include "lwip/sys.h"
 #include "lwip/timeouts.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if PPP_IPV6_SUPPORT
 #include "lwip/ip6_addr.h"
 #endif /* PPP_IPV6_SUPPORT */
@@ -684,5 +688,9 @@ err_t ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
         netif_set_link_callback(ppp->netif, link_cb);
 
 #endif /* PPP_H */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPP_SUPPORT */

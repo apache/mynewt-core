@@ -26,6 +26,10 @@
 #include <stdint.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief DFU event callback for asynchronous calls.
  *
  * @param[in] packet  Packet type for which this callback is related. START_PACKET, DATA_PACKET.
@@ -128,6 +132,10 @@ uint32_t dfu_sd_image_swap(void);
  * @return    NRF_SUCCESS on success, an error_code otherwise.
  */
 uint32_t dfu_init_pkt_complete(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_H__
 

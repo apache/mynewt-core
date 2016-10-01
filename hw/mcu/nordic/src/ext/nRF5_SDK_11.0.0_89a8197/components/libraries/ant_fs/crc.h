@@ -21,6 +21,10 @@ All rights reserved.
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Function for calculating CRC-16 in blocks.
  *
  * Feed each consecutive data block into this function, along with the current value of current_crc
@@ -34,6 +38,10 @@ All rights reserved.
  * @return The updated CRC-16 value, based on the input supplied.
  */
 uint16_t crc_crc16_update(uint16_t current_crc, const volatile void * p_data, uint32_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // CRC_H__
 

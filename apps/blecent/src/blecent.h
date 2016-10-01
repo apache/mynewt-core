@@ -22,6 +22,10 @@
 
 #include "os/queue.h"
 #include "log/log.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ble_hs_adv_fields;
 struct ble_gap_conn_desc;
 struct ble_hs_cfg;
@@ -113,5 +117,9 @@ peer_svc_find_uuid(const struct peer *peer, const uint8_t *uuid128);
 int peer_delete(uint16_t conn_handle);
 int peer_add(uint16_t conn_handle);
 int peer_init(int max_peers, int max_svcs, int max_chrs, int max_dscs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

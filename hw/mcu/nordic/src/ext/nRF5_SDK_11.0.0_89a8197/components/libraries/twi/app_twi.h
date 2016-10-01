@@ -17,6 +17,10 @@
 #include "nrf_drv_twi.h"
 #include "sdk_errors.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup app_twi TWI transaction manager
  * @{
@@ -286,5 +290,9 @@ __STATIC_INLINE bool app_twi_is_idle(app_twi_t * p_app_twi)
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_TWI_H__

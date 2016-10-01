@@ -14,6 +14,10 @@
 
 #include "ble_gatts.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint32_t ser_ble_gatts_char_pf_enc(void const * const p_void_char_pf,
                                    uint8_t * const    p_buf,
                                    uint32_t           buf_len,
@@ -146,5 +150,9 @@ uint32_t ble_gatts_value_t_dec(uint8_t const * const p_buf,
                                uint32_t              buf_len,
                                uint32_t * const      p_index,
                                void * const          p_void_struct);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* BLE_GATTS_STRUCT_SERIALIZATION_H */

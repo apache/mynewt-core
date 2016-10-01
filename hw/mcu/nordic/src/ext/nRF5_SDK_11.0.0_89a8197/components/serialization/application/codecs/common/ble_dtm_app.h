@@ -13,6 +13,10 @@
 #ifndef BLE_DTM_APP_H__
 #define BLE_DTM_APP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -81,4 +85,8 @@ uint32_t ble_dtm_init_rsp_dec(uint8_t const * const p_buf,
 uint32_t ble_dtm_init(app_uart_stream_comm_params_t * p_uart_comm_params);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // BLE_DTM_APP_H__

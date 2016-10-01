@@ -33,6 +33,10 @@
 #ifndef _QUEUE_H_
 #define	_QUEUE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * This file defines five types of data structures: singly-linked lists,
  * singly-linked tail queues, lists, tail queues, and circular queues.
@@ -510,5 +514,9 @@ struct {								\
 		CIRCLEQ_NEXT(CIRCLEQ_PREV((elm), field), field) =	\
 		    CIRCLEQ_NEXT((elm), field);				\
 } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_QUEUE_H_ */

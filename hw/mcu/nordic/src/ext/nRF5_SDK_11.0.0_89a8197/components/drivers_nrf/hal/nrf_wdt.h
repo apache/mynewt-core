@@ -27,6 +27,10 @@
 
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NRF_WDT_CHANNEL_NUMBER 0x8UL
 #define NRF_WDT_RR_VALUE       0x6E524635UL /* Fixed value, shouldn't be modified.*/
 
@@ -293,6 +297,10 @@ __STATIC_INLINE void nrf_wdt_reload_request_set(nrf_wdt_rr_register_t rr_registe
     NRF_WDT->RR[rr_register] = NRF_WDT_RR_VALUE;
 }
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

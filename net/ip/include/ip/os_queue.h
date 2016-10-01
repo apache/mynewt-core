@@ -19,6 +19,10 @@
 #ifndef __OS_QUEUE_H__
 #define __OS_QUEUE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_queue {
     uint8_t oq_head;
     uint8_t oq_tail;
@@ -32,5 +36,9 @@ struct os_queue {
 int os_queue_init(struct os_queue *, uint8_t elem_size, uint8_t elem_cnt);
 int os_queue_put(struct os_queue *, void *elem, uint32_t timeout);
 int os_queue_get(struct os_queue *, void *elem, uint32_t timeout);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __OS_QUEUE_H__ */

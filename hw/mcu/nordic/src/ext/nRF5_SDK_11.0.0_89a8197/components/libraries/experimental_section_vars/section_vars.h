@@ -14,6 +14,10 @@
 #define SECTION_VARS_H__
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup section_vars Section variables
  * @ingroup app_common
@@ -259,5 +263,9 @@
     NRF_SECTION_VARS_LENGTH(section_name) / sizeof(type_name)
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SECTION_VARS_H__

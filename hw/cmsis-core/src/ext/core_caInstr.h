@@ -37,9 +37,17 @@
 #ifndef __CORE_CAINSTR_H__
 #define __CORE_CAINSTR_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define __CORTEX_M 0x3
 #include "core_cmInstr.h"
 #undef  __CORTEX_M
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

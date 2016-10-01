@@ -19,6 +19,10 @@
 #ifndef __NATIVE_BSP_SYSID_H
 #define __NATIVE_BSP_SYSID_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* This file defines the system device descriptors for this BSP.
  * System device descriptors are any HAL devies */
 
@@ -44,5 +48,9 @@ enum system_device_id {
     NATIVE_BSP_DAC_3,
     /* TODO -- add other hals here */    
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __NATIVE_BSP_SYSID_H */

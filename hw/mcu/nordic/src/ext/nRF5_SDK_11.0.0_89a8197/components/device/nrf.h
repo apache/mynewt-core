@@ -31,6 +31,10 @@
 #ifndef NRF_H
 #define NRF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* MDK version */
 #define MDK_MAJOR_VERSION   8
 #define MDK_MINOR_VERSION   5
@@ -61,6 +65,10 @@
     #include "compiler_abstraction.h"
 
 #endif /* _WIN32 || __unix || __APPLE__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_H */
 

@@ -14,6 +14,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Handles @ref sd_ble_gap_address_set command request and prepares response.
  *
  * @param[in]     p_rx_buf            Pointer to input buffer.
@@ -603,5 +607,9 @@ uint32_t conn_mw_ble_gap_sec_context_destroy(uint16_t conn_handle);
  * @retval NRF_ERROR_NOT_FOUND        instance with conn_handle not found
  */
 uint32_t conn_mw_ble_gap_sec_context_find(uint16_t conn_handle, uint32_t *p_index);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_CONN_MW_BLE_GAP_H

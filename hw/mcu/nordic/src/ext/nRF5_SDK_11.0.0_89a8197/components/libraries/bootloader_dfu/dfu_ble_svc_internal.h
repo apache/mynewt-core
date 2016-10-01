@@ -28,6 +28,10 @@
 #include "dfu_ble_svc.h"
 #include "ble_gap.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Internal bootloader/DFU function for retrieving peer data provided from application.
  *
  * @param[out] p_peer_data Peer data set by application to be used for DFU connection.
@@ -37,6 +41,10 @@
  * @retval NRF_ERROR_INVALID_DATA If peer data is not available or invalid.
  */
 uint32_t dfu_ble_peer_data_get(dfu_ble_peer_data_t * p_peer_data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_BLE_SVC_INTERNAL_H__
 

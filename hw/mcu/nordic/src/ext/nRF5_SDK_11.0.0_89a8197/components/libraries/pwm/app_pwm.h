@@ -40,6 +40,10 @@
 #include "nrf_drv_ppi.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define APP_PWM_NOPIN                 0xFFFFFFFF
 
 /** @brief Number of channels for one timer instance (fixed to 2 due to timer properties).*/
@@ -289,6 +293,10 @@ app_pwm_duty_t app_pwm_channel_duty_get(app_pwm_t const * const p_instance, uint
     uint16_t app_pwm_cycle_ticks_get(app_pwm_t const * const p_instance);
 /** @} */
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

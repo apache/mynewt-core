@@ -31,6 +31,10 @@
 #include "nordic_common.h"
 #include "nrf_drv_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // This set of macros makes it possible to exclude parts of code when one type
 // of supported peripherals is not used.
 #if ((TWI0_ENABLED == 1 && TWI0_USE_EASY_DMA == 1) || \
@@ -380,5 +384,9 @@ uint32_t nrf_drv_twi_stopped_event_get(nrf_drv_twi_t const * p_instance);
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_TWI_H__

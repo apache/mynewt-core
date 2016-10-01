@@ -39,6 +39,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup sntp_opts Options
  * @ingroup sntp
@@ -169,5 +173,9 @@
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_APPS_SNTP_OPTS_H */

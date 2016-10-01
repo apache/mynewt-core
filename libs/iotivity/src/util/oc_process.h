@@ -44,6 +44,10 @@
 #define OC_PROCESS_H
 #include "pt/pt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif /* NULL */
@@ -523,5 +527,9 @@ int oc_process_nevents(void);
 extern struct oc_process *oc_process_list;
 
 #define OC_PROCESS_LIST() oc_process_list
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_PROCESS_H */

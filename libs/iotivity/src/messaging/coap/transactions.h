@@ -37,6 +37,10 @@
 #include "coap.h"
 #include "../../util/oc_etimer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Modulo mask (thus +1) for a random number to get the tick number for the
  * random
@@ -71,5 +75,9 @@ void coap_clear_transaction(coap_transaction_t *t);
 coap_transaction_t *coap_get_transaction_by_mid(uint16_t mid);
 
 void coap_check_transactions(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TRANSACTIONS_H */

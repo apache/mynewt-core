@@ -17,6 +17,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NRF_UARTE_PSEL_DISCONNECTED 0xFFFFFFFF
 
 /**
@@ -531,4 +535,8 @@ __STATIC_INLINE uint32_t nrf_uarte_rx_amount_get(NRF_UARTE_Type * p_reg)
 }
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif //NRF_UARTE_H__

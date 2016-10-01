@@ -27,6 +27,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief TWIS tasks
  */
@@ -671,6 +675,10 @@ uint8_t nrf_twis_orc_get(NRF_TWIS_Type const * const p_twis)
 }
 
 #endif /* SUPPRESS_INLINE_IMPLEMENTATION */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_TWIS_H__ */
 

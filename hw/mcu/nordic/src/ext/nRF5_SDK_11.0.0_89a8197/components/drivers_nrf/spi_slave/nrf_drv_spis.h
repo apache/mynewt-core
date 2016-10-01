@@ -30,6 +30,10 @@
 #include "sdk_common.h"
 #include "app_util_platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(NRF52)
     #define SPIS2_IRQ            SPIM2_SPIS2_SPI2_IRQn
     #define SPIS2_IRQ_HANDLER    SPIM2_SPIS2_SPI2_IRQHandler
@@ -217,6 +221,10 @@ ret_code_t nrf_drv_spis_buffers_set(nrf_drv_spis_t const * const  p_instance,
                                     uint8_t   tx_buffer_length, 
                                     uint8_t * p_rx_buffer, 
                                     uint8_t   rx_buffer_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SPI_SLAVE_H__
 

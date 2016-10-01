@@ -40,6 +40,10 @@
 #include "lwip/arch.h"
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** lower two bits indicate debug level
  * - 0 all
  * - 1 warning
@@ -117,6 +121,10 @@
 #else  /* LWIP_DEBUG */
 #define LWIP_DEBUGF(debug, message)
 #endif /* LWIP_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_DEBUG_H */
 

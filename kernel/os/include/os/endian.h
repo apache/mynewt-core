@@ -22,6 +22,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 
 #ifndef ntohll
@@ -89,4 +93,8 @@
 #endif
 
 #endif
+#ifdef __cplusplus
+}
+#endif
+
 #endif

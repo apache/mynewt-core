@@ -48,6 +48,10 @@
 #ifndef IPCP_H
 #define	IPCP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Options.
  */
@@ -123,4 +127,8 @@ char *ip_ntoa (u32_t);
 extern const struct protent ipcp_protent;
 
 #endif /* IPCP_H */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PPP_SUPPORT && PPP_IPV4_SUPPORT */

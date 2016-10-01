@@ -22,6 +22,10 @@
 
 #include <mcu/mcu_sim.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_task;
 
 /* CPU status register */
@@ -70,5 +74,9 @@ int os_arch_in_critical(void);
 os_error_t os_arch_os_init(void);
 void os_arch_os_stop(void);
 os_error_t os_arch_os_start(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_ARCH_SIM_H */

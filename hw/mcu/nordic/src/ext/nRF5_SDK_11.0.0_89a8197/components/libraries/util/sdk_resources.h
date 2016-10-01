@@ -16,6 +16,10 @@
 #ifndef APP_RESOURCES_H__
 #define APP_RESOURCES_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef SOFTDEVICE_PRESENT
 	#include "nrf_sd_def.h"
 #else
@@ -46,5 +50,9 @@
 #define NRF_PPI_GROUPS_USED   (SD_PPI_GROUPS_USED)
 #define NRF_SWI_USED          (SD_SWI_USED | GZLL_SWI_USED | ESB_SWI_USED)
 #define NRF_TIMERS_USED       (SD_TIMERS_USED | GZLL_TIMERS_USED | ESB_TIMERS_USED)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_RESOURCES_H__

@@ -12,6 +12,10 @@
 #ifndef BLE_GATTS_CONN_H__
 #define BLE_GATTS_CONN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -587,5 +591,9 @@ uint32_t ble_gatts_initial_user_handle_get_rsp_enc(uint32_t           return_cod
                                                    uint32_t * const   p_buf_len,
                                                    uint16_t         * p_handle);
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif //BLE_GATTS_CONN_H__
 

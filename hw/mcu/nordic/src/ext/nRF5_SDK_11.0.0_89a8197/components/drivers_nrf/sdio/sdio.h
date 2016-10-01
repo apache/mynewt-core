@@ -13,6 +13,10 @@
 #ifndef SDIO_H
 #define SDIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*lint ++flb "Enter library region" */
 
 #include <stdbool.h>
@@ -66,4 +70,8 @@ void sdio_write_byte(uint8_t address, uint8_t data_byte);
  **/
 
 /*lint --flb "Leave library region" */ 
+#ifdef __cplusplus
+}
+#endif
+
 #endif

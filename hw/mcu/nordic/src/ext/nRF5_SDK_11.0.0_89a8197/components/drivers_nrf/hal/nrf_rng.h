@@ -17,6 +17,10 @@
 
 #ifndef NRF_RNG_H__
 #define NRF_RNG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_rng_hal RNG HAL
  * @{
@@ -208,4 +212,8 @@ __STATIC_INLINE void nrf_rng_error_correction_disable(void)
 /**
  *@}
  **/
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* NRF_RNG_H__ */

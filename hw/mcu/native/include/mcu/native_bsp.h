@@ -19,6 +19,14 @@
 #ifndef H_NATIVE_BSP_
 #define H_NATIVE_BSP_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct hal_flash native_flash_dev;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* H_NATIVE_BSP_ */

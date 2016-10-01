@@ -29,6 +29,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Serialization PHY HCI module events types. */
 typedef enum
 {
@@ -142,6 +146,10 @@ uint32_t ser_phy_hci_slip_rx_buf_free(uint8_t * p_buffer);
  *        callback function.
  */
 void ser_phy_hci_slip_close(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_PHY_HCI_H__ */
 /** @} */

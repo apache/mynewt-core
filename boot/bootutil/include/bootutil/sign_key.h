@@ -22,6 +22,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct bootutil_key {
     const uint8_t *key;
     const unsigned int *len;
@@ -29,5 +33,9 @@ struct bootutil_key {
 
 extern const struct bootutil_key bootutil_keys[];
 extern const int bootutil_key_cnt;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __BOOTUTIL_SIGN_KEY_H_ */

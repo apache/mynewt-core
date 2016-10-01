@@ -25,6 +25,10 @@
 #include <stdint.h>
 #include "compiler_abstraction.h"
 #include "nrf.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_soc.h"
 #include "nrf_nvic.h"
@@ -205,6 +209,10 @@ static __INLINE uint8_t privilege_level_get(void)
     }
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // APP_UTIL_PLATFORM_H__
 

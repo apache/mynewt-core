@@ -39,6 +39,10 @@
 #define __CORE_CMFUNC_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ###########################  Core Function Access  ########################### */
 /** \ingroup  CMSIS_Core_FunctionInterface
     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
@@ -632,5 +636,9 @@ __attribute__( ( always_inline ) ) __STATIC_INLINE void __set_FPSCR(uint32_t fps
 
 /*@} end of CMSIS_Core_RegAccFunctions */
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CORE_CMFUNC_H */

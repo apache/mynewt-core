@@ -23,6 +23,10 @@
 #include "os/os.h"
 #include "os/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct os_mutex
 {
     SLIST_HEAD(, os_task) mu_head;  /* chain of waiting tasks */
@@ -55,5 +59,9 @@ os_error_t os_mutex_release(struct os_mutex *mu);
 
 /* Pend (wait) for a mutex */
 os_error_t os_mutex_pend(struct os_mutex *mu, uint32_t timeout);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _OS_MUTEX_H_ */

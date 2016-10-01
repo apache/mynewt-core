@@ -34,6 +34,10 @@
 #ifndef OC_RANDOM_H
 #define OC_RANDOM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Initialize the pseudo-random generator.
  *
@@ -52,5 +56,9 @@ unsigned short oc_random_rand(void);
 #define RANDOM_RAND_MAX 65535U
 
 void oc_random_destroy(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_RANDOM_H */

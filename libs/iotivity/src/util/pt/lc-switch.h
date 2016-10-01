@@ -56,6 +56,10 @@
 #ifndef LC_SWITCH_H_
 #define LC_SWITCH_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* WARNING! lc implementation using switch() does not work if an
    LC_SET() is done within another switch() statement! */
 
@@ -73,6 +77,10 @@ typedef unsigned short lc_t;
   case __LINE__:
 
 #define LC_END(s) }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LC_SWITCH_H_ */
 

@@ -22,6 +22,10 @@
 
 #include <adc/adc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Mynewt HAL Port pin mapping */
 #define ADC123_CH0_PIN    0
 #define ADC123_CH1_PIN    1
@@ -58,5 +62,9 @@ struct stm32f4_adc_dev_cfg {
 };
 
 int stm32f4_adc_dev_init(struct os_dev *, void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ADC_H__ */

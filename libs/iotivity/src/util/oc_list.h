@@ -56,6 +56,10 @@
 #ifndef OC_LIST_H
 #define OC_LIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OC_LIST_CONCAT2(s1, s2) s1##s2
 #define OC_LIST_CONCAT(s1, s2) OC_LIST_CONCAT2(s1, s2)
 
@@ -140,5 +144,9 @@ void oc_list_copy(oc_list_t dest, oc_list_t src);
 void oc_list_insert(oc_list_t list, void *previtem, void *newitem);
 
 void *oc_list_item_next(void *item);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_LIST_H */

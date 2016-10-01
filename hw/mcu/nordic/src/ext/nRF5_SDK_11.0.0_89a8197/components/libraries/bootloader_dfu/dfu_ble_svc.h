@@ -40,6 +40,10 @@
 #include "nrf_soc.h"
 #include "nrf_error_sdm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BOOTLOADER_SVC_BASE     0x0     /**< The number of the lowest SVC number reserved for the bootloader. */
 #define SYSTEM_SERVICE_ATT_SIZE 8       /**< Size of the system service attribute length including CRC-16 at the end. */  
 
@@ -74,6 +78,10 @@ typedef struct
  * @retval NRF_SUCCESS    If the function completed successfully.
  */
 SVCALL(DFU_BLE_SVC_PEER_DATA_SET, uint32_t, dfu_ble_svc_peer_data_set(dfu_ble_peer_data_t * p_peer_data));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DFU_BLE_SVC_H__
 

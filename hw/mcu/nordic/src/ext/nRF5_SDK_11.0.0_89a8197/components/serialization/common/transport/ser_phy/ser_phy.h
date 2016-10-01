@@ -91,6 +91,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Serialization PHY module events types. */
 typedef enum
 {
@@ -251,6 +255,10 @@ void ser_phy_interrupts_enable(void);
  */
 void ser_phy_interrupts_disable(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_PHY_H__ */
 /** @} */

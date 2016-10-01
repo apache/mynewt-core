@@ -20,6 +20,10 @@
 #ifndef __CONFIG_PRIV_H_
 #define __CONFIG_PRIV_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int conf_cli_register(void);
 int conf_nmgr_register(void);
 
@@ -50,5 +54,9 @@ extern struct conf_store_head conf_load_srcs;
 SLIST_HEAD(conf_handler_head, conf_handler);
 extern struct conf_handler_head conf_handlers;
 extern struct conf_store *conf_save_dst;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CONFIG_PRIV_H_ */

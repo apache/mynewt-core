@@ -22,6 +22,10 @@
 
 #include "bootutil/image.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BOOT_EFLASH     1
 #define BOOT_EFILE      2
 #define BOOT_EBADIMAGE  3
@@ -70,6 +74,10 @@ void boot_scratch_magic(struct boot_img_trailer *bit);
 
 struct boot_req;
 void boot_req_set(struct boot_req *req);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -55,6 +55,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef UINT32_MAX
 #define UINT32_MAX  0xFFFFFFFFU
 #endif
@@ -107,5 +111,9 @@ int os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz);
 int os_gettimeofday(struct os_timeval *utctime, struct os_timezone *tz);
 int64_t os_get_uptime_usec(void);
 int os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OS_TIME_H */

@@ -32,6 +32,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief A function decodes an encoded command and sends a response to an Application Chip.
  *
  * @details The function decodes an encoded command and calls a SoftDevice API function when a
@@ -47,6 +51,10 @@
  * @retval    NRF_ERROR_INTERNAL    Operation failure. Internal error ocurred.                                               .
  */
 uint32_t ser_conn_command_process(uint8_t * p_command, uint16_t command_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_CONN_CMD_DECODER_H__ */
 

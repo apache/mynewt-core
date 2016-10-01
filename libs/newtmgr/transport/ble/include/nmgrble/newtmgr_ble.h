@@ -20,6 +20,10 @@
 #ifndef _NEWTMGR_BLE_H_
 #define _NEWTMGR_BLE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct nmgr_hdr;
 
 int
@@ -30,5 +34,9 @@ nmgr_ble_gatt_svr_init(void);
 
 void
 nmgr_ble_update_rsp_len(struct os_mbuf *req, uint16_t *len, uint8_t *flags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NETMGR_H */

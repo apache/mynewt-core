@@ -13,6 +13,10 @@
 #ifndef NRF_EGU_H__
 #define NRF_EGU_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NRF52
     #error EGU is not supported on your chip.
 #endif
@@ -282,5 +286,9 @@ __STATIC_INLINE nrf_egu_int_mask_t nrf_egu_int_get(uint8_t channel)
 }
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

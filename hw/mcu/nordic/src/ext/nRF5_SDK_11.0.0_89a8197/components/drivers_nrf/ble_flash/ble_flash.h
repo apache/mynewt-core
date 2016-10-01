@@ -34,6 +34,10 @@
 #include <stdbool.h>
 #include "nrf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BLE_FLASH_PAGE_SIZE     ((uint16_t)NRF_FICR->CODEPAGESIZE)  /**< Size of one flash page. */
 #define BLE_FLASH_MAGIC_NUMBER  0x45DE0000                          /**< Magic value to identify if flash contains valid data. */
 #define BLE_FLASH_EMPTY_MASK    0xFFFFFFFF                          /**< Bit mask that defines an empty address in flash. */
@@ -136,6 +140,10 @@ uint16_t ble_flash_crc16_compute(uint8_t * p_data, uint16_t size, uint16_t * p_c
  * @param[in]  radio_active   TRUE if radio is active (or about to become active), FALSE otherwise.
  */
 void ble_flash_on_radio_active_evt(bool radio_active);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // BLE_FLASH_H__
 

@@ -45,6 +45,10 @@
 #include <stdint.h>
 #include "nrf_error.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup sdk_err_base Base defined for SDK Modules
  * @{
@@ -110,6 +114,10 @@
 typedef uint32_t ret_code_t;
 /** @} */
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SDK_ERRORS_H__
 

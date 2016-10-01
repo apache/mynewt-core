@@ -20,6 +20,14 @@
 #ifndef __ENCODING_TEST_PRIV_
 #define __ENCODING_TEST_PRIV_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int hex_fmt_test_suite(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -13,6 +13,10 @@
 #ifndef CONN_SYSTEMRESET_H__
 #define CONN_SYSTEMRESET_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -40,4 +44,8 @@
 uint32_t conn_systemreset(void);
 
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif // CONN_SYSTEMRESET_H__

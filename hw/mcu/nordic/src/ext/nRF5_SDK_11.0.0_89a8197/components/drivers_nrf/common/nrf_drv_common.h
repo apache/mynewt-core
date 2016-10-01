@@ -20,6 +20,10 @@
 #include "nrf_drv_config.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Offset of event registers in every peripheral instance
  *
@@ -190,5 +194,9 @@ __STATIC_INLINE bool nrf_drv_is_in_RAM(void const * const ptr)
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_COMMON_H__

@@ -20,6 +20,10 @@
 #ifndef _NATIVE_HAL_DAC_H
 #define _NATIVE_HAL_DAC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum native_dac_channel 
 {
     NATIVE_MCU_DAC0 = 0,
@@ -31,6 +35,10 @@ enum native_dac_channel
 /* to create a native dac driver */
 struct hal_dac *
 native_dac_create (enum native_dac_channel);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _NATIVE_HAL_PWM_H */
 

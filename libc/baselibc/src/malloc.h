@@ -21,6 +21,10 @@ struct arena_header {
 
 #ifdef DEBUG_MALLOC
 #define ARENA_TYPE_USED 0x64e69c70
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ARENA_TYPE_FREE 0x012d610a
 #define ARENA_TYPE_HEAD 0x971676b5
 #define ARENA_TYPE_DEAD 0xeeeeeeee
@@ -28,6 +32,10 @@ struct arena_header {
 #define ARENA_TYPE_USED 0
 #define ARENA_TYPE_FREE 1
 #define ARENA_TYPE_HEAD 2
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 #define ARENA_SIZE_MASK (~(sizeof(struct arena_header)-1))

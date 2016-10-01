@@ -17,6 +17,14 @@
 #ifndef OC_SIGNAL_MAIN_LOOP_H
 #define OC_SIGNAL_MAIN_LOOP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void oc_signal_main_loop(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_SIGNAL_MAIN_LOOP_H */

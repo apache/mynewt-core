@@ -12,6 +12,10 @@
 #ifndef BLE_GATTC_CONN_H__
 #define BLE_GATTC_CONN_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @addtogroup ser_codecs Serialization codecs
  * @ingroup ble_sdk_lib_serialization
@@ -430,5 +434,9 @@ uint32_t ble_gattc_attr_info_discover_rsp_enc(uint32_t         return_code,
                                               uint8_t * const  p_buf,
                                               uint32_t * const p_buf_len);
 /** @} */
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

@@ -23,6 +23,10 @@
 #include "os/os.h"
 #include "os/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* 
  * A memory block structure. This simply contains a pointer to the free list 
  * chain and is only used when the block is on the free list. When the block 
@@ -90,5 +94,9 @@ void *os_memblock_get(struct os_mempool *mp);
 
 /* Put the memory block back into the pool */
 os_error_t os_memblock_put(struct os_mempool *mp, void *block_addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _OS_MEMPOOL_H_ */

@@ -22,6 +22,10 @@
 
 #include "syscfg/syscfg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void sysinit_panic_fn(const char *file, int line);
 
 #if !MYNEWT_VAL(SYSINIT_PANIC_FN)
@@ -39,5 +43,9 @@ typedef void sysinit_panic_fn(const char *file, int line);
 } while (0)
 
 void sysinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

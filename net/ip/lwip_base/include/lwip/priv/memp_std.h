@@ -21,6 +21,10 @@
 /* This treats "malloc pools" just like any other pool.
    The pools are a little bigger to provide 'size' as the amount of user data. */
 #define LWIP_MALLOC_MEMPOOL(num, size) LWIP_MEMPOOL(POOL_##size, num, (size + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper))), "MALLOC_"#size)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LWIP_MALLOC_MEMPOOL_START
 #define LWIP_MALLOC_MEMPOOL_END
 #endif /* LWIP_MALLOC_MEMPOOL */
@@ -133,6 +137,10 @@ LWIP_PBUF_MEMPOOL(PBUF_POOL, PBUF_POOL_SIZE,           PBUF_POOL_BUFSIZE,       
  */
 #if MEMP_USE_CUSTOM_POOLS
 #include "lwippools.h"
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* MEMP_USE_CUSTOM_POOLS */
 
 /*

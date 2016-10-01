@@ -24,6 +24,10 @@
 #include <stdint.h>
 #include "bootloader_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Function for starting the application (or bootloader) at the provided address.
  * 
  * @param[in]  start_addr             Start address.
@@ -32,6 +36,10 @@
  *       provided address.
  */
 void bootloader_util_app_start(uint32_t start_addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // BOOTLOADER_UTIL_H__
 

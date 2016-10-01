@@ -11,6 +11,10 @@
 #include <stddef.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The File structure is designed to be compatible with ChibiOS/RT type
  * BaseSequentialStream.
  */
@@ -120,5 +124,9 @@ struct MemFile
 
 FILE *fmemopen_w(struct MemFile* storage, char *buffer, size_t size);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _STDIO_H */

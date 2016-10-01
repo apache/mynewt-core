@@ -21,6 +21,10 @@
 #include "../../src/util/oc_process.h"
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 OC_PROCESS_NAME(message_buffer_handler);
 oc_message_t *oc_allocate_message(void);
 void oc_message_add_ref(oc_message_t *message);
@@ -28,5 +32,9 @@ void oc_message_unref(oc_message_t *message);
 
 void oc_recv_message(oc_message_t *message);
 void oc_send_message(oc_message_t *message);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_BUFFER_H */

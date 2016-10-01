@@ -14,6 +14,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Handles @ref sd_power_system_off command request.
  *
  * @param[in]     p_rx_buf            Pointer to input buffer.
@@ -70,5 +74,9 @@ uint32_t conn_mw_ecb_block_encrypt(uint8_t const * const p_rx_buf,
                                    uint32_t              rx_buf_len,
                                    uint8_t * const       p_tx_buf,
                                    uint32_t * const      p_tx_buf_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

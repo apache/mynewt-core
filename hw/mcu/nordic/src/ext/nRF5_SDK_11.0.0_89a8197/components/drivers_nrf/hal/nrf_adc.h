@@ -13,6 +13,10 @@
 #ifndef NRF_ADC_H_
 #define NRF_ADC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_adc_hal ADC HAL
  * @{
@@ -412,5 +416,9 @@ __STATIC_INLINE void nrf_adc_disable(void)
 /**
  *@}
  **/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NRF_ADC_H_ */

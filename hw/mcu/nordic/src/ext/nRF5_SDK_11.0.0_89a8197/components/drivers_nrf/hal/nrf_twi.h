@@ -13,6 +13,10 @@
 #ifndef NRF_TWI_H__
 #define NRF_TWI_H__
  
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup nrf_twi_hal TWI HAL
  * @{
@@ -398,5 +402,9 @@ __STATIC_INLINE void nrf_twi_shorts_set(NRF_TWI_Type * p_twi,
 }
 
 #endif // SUPPRESS_INLINE_IMPLEMENTATION
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_TWI_H__

@@ -22,6 +22,10 @@
 #include <os/queue.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CONF_MAX_DIR_DEPTH	8	/* max depth of config tree */
 #define CONF_MAX_NAME_LEN	(8 * CONF_MAX_DIR_DEPTH)
 #define CONF_MAX_VAL_LEN	256
@@ -96,5 +100,9 @@ struct conf_store {
     SLIST_ENTRY(conf_store) cs_next;
     const struct conf_store_itf *cs_itf;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SYS_CONFIG_H_ */

@@ -31,6 +31,10 @@
 #include <stdbool.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Function for checking if there is any more events in the internal mailbox.
  *
  * @param[in] p_mailbox_length Pointer to mailbox length.
@@ -39,6 +43,10 @@
  * @retval ::NRF_ERROR_NULL Null pointer provided.
  */
 uint32_t sd_ble_evt_mailbox_length_get(uint32_t * p_mailbox_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_SOFTDEVICE_HANDLER_H_ */
 /** @} */

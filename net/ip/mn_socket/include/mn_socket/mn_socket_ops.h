@@ -21,6 +21,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Interface for socket providers.
  * - mso_create() creates a socket, memory allocation has to be done by
@@ -81,5 +85,9 @@ mn_socket_newconn(struct mn_socket *s, struct mn_socket *new)
         return -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SYS_MN_SOCKET_OPS_H_ */

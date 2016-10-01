@@ -26,6 +26,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief Triangular waveform sensor simulator configuration. */
 typedef struct
 {
@@ -79,6 +83,10 @@ void sensorsim_increment(sensorsim_state_t *     p_state,
  */
 void sensorsim_decrement(sensorsim_state_t *     p_state,
                          const sensorsim_cfg_t * p_cfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SENSORSIM_H__
 

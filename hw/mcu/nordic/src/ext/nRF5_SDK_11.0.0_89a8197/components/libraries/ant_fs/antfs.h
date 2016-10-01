@@ -25,6 +25,10 @@ All rights reserved.
 #include "defines.h"
 #include "antfs_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ANTFS_VERSION_MAJOR               1u                                                                                             /**< Version major number. */
 #define ANTFS_VERSION_MINOR               0                                                                                              /**< Version minor number. */
 #define ANTFS_VERSION_ITERATION           0                                                                                              /**< Version iteration. */
@@ -342,6 +346,10 @@ void antfs_message_process(uint8_t * p_message);
 /**@brief Function for setting up the ANT-FS channel.
  */
 void antfs_channel_setup(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // ANTFS_H__
 

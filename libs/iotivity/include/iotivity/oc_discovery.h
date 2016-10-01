@@ -17,6 +17,14 @@
 #ifndef OC_DISCOVERY_H
 #define OC_DISCOVERY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void oc_create_discovery_resource(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_DISCOVERY_H */

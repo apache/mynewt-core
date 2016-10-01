@@ -26,6 +26,10 @@
 #include <stdbool.h>
 #include "app_util_platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define  UART_PIN_DISCONNECTED 0xFFFFFFFF /**< Value indicating that no pin is connected to this UART register. */
 
 /**@brief UART Flow Control modes for the peripheral.
@@ -221,6 +225,10 @@ uint32_t app_uart_flush(void);
  */
 uint32_t app_uart_close(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //APP_UART_H__
 

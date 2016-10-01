@@ -41,6 +41,10 @@
 #include "ble.h"
 #include "ser_hal_transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Maximum number of events in the application scheduler queue. */
 #define SER_CONN_SCHED_QUEUE_SIZE             16u
 
@@ -79,6 +83,10 @@ uint32_t ser_conn_rx_process(void);
  * @param[in] p_ble_evt    A pointer to a BLE event.
  */
 void ser_conn_ble_event_handle(ble_evt_t * p_ble_evt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_CONN_HANDLERS_H__ */
 /** @} */

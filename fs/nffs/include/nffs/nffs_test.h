@@ -20,6 +20,14 @@
 #ifndef H_NFFS_TEST_
 #define H_NFFS_TEST_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int nffs_test_all(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

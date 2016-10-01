@@ -19,6 +19,10 @@
 #ifndef __WIFI_MGMT_H__
 #define __WIFI_MGMT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Wi-Fi interface abstraction.
  */
@@ -78,5 +82,9 @@ int wifi_stop(struct wifi_if *w);
 int wifi_scan_start(struct wifi_if *w);
 
 int wifi_task_init(uint8_t prio, os_stack_t *stack, uint16_t stack_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WIFI_MGMT_H__ */

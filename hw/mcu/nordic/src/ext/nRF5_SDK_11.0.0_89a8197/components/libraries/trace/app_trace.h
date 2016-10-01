@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup app_trace Debug Logger
  * @ingroup app_common
@@ -52,5 +56,9 @@ void app_trace_dump(uint8_t * p_buffer, uint32_t len);
 #endif // ENABLE_DEBUG_LOG_SUPPORT
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //__DEBUG_H_

@@ -32,6 +32,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@brief A function for processing the encoded DTM commands from an Application Chip.
  *
  * @details     The function decodes encoded DTM commands and calls the appropriate DTM API.
@@ -55,6 +59,10 @@ uint32_t ser_conn_dtm_command_process(uint8_t * p_command, uint16_t command_len)
  *              and starts DTM mode.
  */
 void ser_conn_is_ready_to_enter_dtm(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SER_CONN_DTM_CMD_DECODER_H__ */
 

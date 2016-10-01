@@ -45,6 +45,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if LWIP_IPV6_DHCP6  /* don't build if not configured for use in lwipopts.h */
 
 
@@ -54,5 +58,9 @@ struct dhcp6
 };
 
 #endif /* LWIP_IPV6_DHCP6 */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_IP6_DHCP6_H */

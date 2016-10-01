@@ -13,6 +13,10 @@
 #ifndef FDS_H__
 #define FDS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup flash_data_storage Flash Data Storage
  * @ingroup app_common
@@ -729,5 +733,9 @@ ret_code_t fds_verify_crc_on_writes(bool enabled);
 #endif
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // FDS_H__

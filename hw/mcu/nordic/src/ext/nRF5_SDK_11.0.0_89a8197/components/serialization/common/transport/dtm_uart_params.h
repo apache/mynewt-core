@@ -16,6 +16,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @ingroup ble_dtm_app
  */
 
@@ -53,5 +57,9 @@ typedef struct
     bool                        use_parity;     /**< Even parity if TRUE, no parity if FALSE. */
     app_uart_stream_baud_rate_t baud_rate;      /**< Baud rate configuration. */
 } app_uart_stream_comm_params_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DTM_UART_PARAMS_H__

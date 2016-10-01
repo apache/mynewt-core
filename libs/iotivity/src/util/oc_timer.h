@@ -65,6 +65,10 @@
 
 #include "../port/oc_clock.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * A timer.
  *
@@ -84,5 +88,9 @@ void oc_timer_reset(struct oc_timer *t);
 void oc_timer_restart(struct oc_timer *t);
 int oc_timer_expired(struct oc_timer *t);
 oc_clock_time_t oc_timer_remaining(struct oc_timer *t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OC_TIMER_H */

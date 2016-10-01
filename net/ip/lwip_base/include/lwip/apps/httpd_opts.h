@@ -43,6 +43,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup httpd_opts Options
  * @ingroup httpd
@@ -341,5 +345,9 @@
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_APPS_HTTPD_OPTS_H */

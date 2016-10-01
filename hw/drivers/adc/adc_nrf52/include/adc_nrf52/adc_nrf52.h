@@ -25,6 +25,14 @@
 #include <nrf.h>
 #include <nrf_saadc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int nrf52_adc_dev_init(struct os_dev *, void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ADC_H__ */

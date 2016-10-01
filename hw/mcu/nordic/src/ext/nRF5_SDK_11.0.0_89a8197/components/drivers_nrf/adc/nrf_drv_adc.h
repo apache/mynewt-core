@@ -72,6 +72,10 @@ typedef struct
 
 /**@brief Macro for initializing the ADC channel with the default configuration. */
 #define NRF_DRV_ADC_DEFAULT_CHANNEL(analog_input)          \
+#ifdef __cplusplus
+extern "C" {
+#endif
+
  {{{                                                       \
     .resolution = NRF_ADC_CONFIG_RES_10BIT,                \
     .input      = NRF_ADC_CONFIG_SCALING_INPUT_FULL_SCALE, \
@@ -284,5 +288,9 @@ __STATIC_INLINE nrf_adc_config_input_t nrf_drv_adc_gpio_to_ain(uint32_t pin)
         return NRF_ADC_CONFIG_INPUT_DISABLED;
     }
 }
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 /** @} */

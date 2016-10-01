@@ -19,6 +19,14 @@
 #ifndef _MBEDTLS_TEST_H_
 #define _MBEDTLS_TEST_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int mbedtls_test_all();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

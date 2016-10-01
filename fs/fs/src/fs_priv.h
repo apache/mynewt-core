@@ -21,11 +21,19 @@
 
 #include "syscfg/syscfg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct fs_ops;
 extern const struct fs_ops *fs_root_ops;
 
 #if MYNEWT_VAL(FS_CLI)
 void fs_cli_init(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

@@ -34,6 +34,10 @@
 #include "sdk_errors.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NRF_PDM_MAX_BUFFER_SIZE 32768
 
 
@@ -161,6 +165,10 @@ ret_code_t nrf_drv_pdm_start(void);
  */
 ret_code_t nrf_drv_pdm_stop(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NRF_DRV_PDM_H__
 

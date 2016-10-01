@@ -146,6 +146,10 @@
 
 #include "eui64.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Options.
  */
@@ -180,4 +184,8 @@ typedef struct ipv6cp_options {
 extern const struct protent ipv6cp_protent;
 
 #endif /* IPV6CP_H */
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

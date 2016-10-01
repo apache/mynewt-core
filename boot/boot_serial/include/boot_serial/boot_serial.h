@@ -20,6 +20,10 @@
 #ifndef __BOOT_SERIAL_H__
 #define __BOOT_SERIAL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Create a task for uploading image0 over serial.
  *
@@ -29,5 +33,9 @@
  */
 int boot_serial_task_init(struct os_task *task, uint8_t prio,
   os_stack_t *stack, uint16_t stack_size, int max_input);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*  __BOOT_SERIAL_H__ */
