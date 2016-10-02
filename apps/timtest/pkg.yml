@@ -31,8 +31,3 @@ pkg.deps:
     - sys/config
     - sys/log
     - sys/stats
-
-pkg.syscfg_vals:
-    SHELL_TASK: 0
-    TIMER_1: 1
-    TIMER_2: 1

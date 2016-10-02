@@ -28,6 +28,3 @@ pkg.deps:
 
 pkg.deps.SELFTEST:
     - sys/console/stub
-
-pkg.syscfg_vals.SELFTEST:
-    CONFIG_FCB: 1

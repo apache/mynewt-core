@@ -1,0 +1,14 @@
+# Package: apps/bletiny
+
+syscfg.vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
+
+    # Set log level to info (disable debug logging).
+    LOG_LEVEL: 1
+
+    # Disable security manager (pairing and bonding).
+    BLE_SM: 0
+
+    # Disable eddystone beacons.
+    BLE_EDDYSTONE: 0

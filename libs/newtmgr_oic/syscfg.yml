@@ -1,0 +1,10 @@
+# Package: libs/newtmgr_oic
+
+syscfg.defs:
+    ### These should be renamed with a proper prefix.
+    NEWTMGR:
+        description: 'TBD'
+        value: 1
+    OC_SERVER:
+        description: 'TBD'
+        value: 1

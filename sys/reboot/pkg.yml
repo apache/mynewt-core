@@ -38,13 +38,3 @@ pkg.req_apis:
 
 pkg.init_function: log_reboot_pkg_init
 pkg.init_stage: 2
-
-pkg.syscfg_defs:
-    REBOOT_LOG_FCB:
-        description: 'TBD'
-        value: 0
-        restrictions:
-            - LOG_FCB
-    REBOOT_LOG_ENTRY_COUNT:
-        description: 'TBD'
-        value: 10

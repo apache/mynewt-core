@@ -1,0 +1,27 @@
+# Package: libs/iotivity
+
+syscfg.defs:
+    OC_TRANSPORT_SERIAL:
+        description: 'Enables OIC transport over nlip serial'
+        value: '0'
+    OC_TRANSPORT_GATT:
+        description: 'Enables OIC transport over BLE GATT'
+        value: '0'
+    OC_TRANSPORT_IP:
+        description: 'Enables OIC transport over IP UDP'
+        value: '0'
+    OC_CLIENT:
+        description: 'Enables OIC client support'
+        value: '0'
+    OC_SERVER:
+        description: 'Enables OIC server support'
+        value: '0'
+    OC_DEBUG:
+        description: 'Enables OIC debug logs'
+        value: '0'
+    OC_TASK_PRIORITY:
+        description: 'The task priority for an internal tasks that runs the OCF stack'
+        value: '4'
+    OC_TASK_STACK_SIZE:
+        description: 'The stack size of the OC task in words'
+        value: '300'

@@ -39,8 +39,3 @@ pkg.req_apis.ID_CLI:
 
 pkg.init_function: id_init
 pkg.init_stage: 5
-
-pkg.syscfg_defs:
-    ID_CLI:
-        description: 'TBD'
-        value: 1

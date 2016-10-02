@@ -1,0 +1,6 @@
+# Package: fs/nffs
+
+syscfg.defs:
+    NFFS_DETECT_FAIL:
+        description: 'TBD'
+        value: 'NFFS_DETECT_FAIL_FORMAT'

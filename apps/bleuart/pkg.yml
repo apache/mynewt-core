@@ -36,8 +36,3 @@ pkg.deps:
     - libs/newtmgr
     - libs/newtmgr/transport/ble
     - net/nimble/host/services/bleuart
-
-pkg.syscfg_vals:
-    # Disable unused roles; bleuart is a peripheral-only app.
-    BLE_ROLE_OBSERVER: 0
-    BLE_ROLE_CENTRAL: 0

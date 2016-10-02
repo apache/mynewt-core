@@ -34,11 +34,3 @@ pkg.deps:
 pkg.deps.BOOT_SERIAL.OVERWRITE:
     - sys/console/full
     - boot/boot_serial
-
-pkg.syscfg_defs:
-    BOOT_LOADER:
-        description: 'TBD'
-        value: 1
-    BOOT_SERIAL:
-        description: 'TBD'
-        value: 0

@@ -38,20 +38,3 @@ pkg.req_apis.LOG_NEWTMGR:
 
 pkg.init_function: log_init
 pkg.init_stage: 1
-
-pkg.syscfg_defs:
-    LOG_LEVEL:
-        description: 'TBD'
-        value: 0
-
-    LOG_FCB:
-        description: 'TBD'
-        value: 0
-
-    LOG_CLI:
-        description: 'TBD'
-        value: 0
-
-    LOG_NEWTMGR:
-        description: 'TBD'
-        value: 0

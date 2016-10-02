@@ -1,0 +1,4 @@
+# Package: sys/log/test
+
+syscfg.vals:
+    LOG_FCB: 1

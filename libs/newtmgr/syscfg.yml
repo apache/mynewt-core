@@ -1,0 +1,13 @@
+# Package: libs/newtmgr
+
+syscfg.defs:
+    NEWTMGR_TASK_PRIO:
+        description: 'TBD'
+        type: 'task_priority'
+        value: 'any'
+    NEWTMGR_STACK_SIZE:
+        description: 'TBD'
+        value: 512
+    NEWTMGR_BLE_HOST:
+        description: 'TBD'
+        value: 0

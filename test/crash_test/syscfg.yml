@@ -1,0 +1,9 @@
+# Package: test/crash_test
+
+syscfg.defs:
+    CRASH_TEST_CLI:
+        description: 'TBD'
+        value: 1
+    CRASH_TEST_NEWTMGR:
+        description: 'TBD'
+        value: 1

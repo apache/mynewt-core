@@ -1,0 +1,12 @@
+# Package: sys/stats
+
+syscfg.defs:
+    STATS_NAMES:
+        description: 'TBD'
+        value: 0
+    STATS_CLI:
+        description: 'TBD'
+        value: 0
+    STATS_NEWTMGR:
+        description: 'TBD'
+        value: 0

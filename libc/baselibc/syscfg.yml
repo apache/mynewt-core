@@ -1,0 +1,6 @@
+# Package: libc/baselibc
+
+syscfg.defs:
+    BASELIBC_PRESENT:
+        description: "Indicates that baselibc is the libc implementation."
+        value: 1

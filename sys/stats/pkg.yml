@@ -34,14 +34,3 @@ pkg.req_apis.STATS_NEWTMGR:
 
 pkg.init_function: stats_module_init
 pkg.init_stage: 0
-
-pkg.syscfg_defs:
-    STATS_NAMES:
-        description: 'TBD'
-        value: 0
-    STATS_CLI:
-        description: 'TBD'
-        value: 0
-    STATS_NEWTMGR:
-        description: 'TBD'
-        value: 0

@@ -27,8 +27,3 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - libs/util
-
-pkg.syscfg_defs:
-    SYSINIT_PANIC_FN:
-        description: 'TBD'
-        value:

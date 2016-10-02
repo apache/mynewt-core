@@ -41,14 +41,3 @@ pkg.deps.IMGMGR_SHELL:
 
 pkg.init_function: imgmgr_module_init
 pkg.init_stage: 5
-
-pkg.syscfg_defs:
-    IMGMGR_FS:
-        description: 'TBD'
-        value: 0
-    IMGMGR_COREDUMP:
-        description: 'TBD'
-        value: 0
-    IMGMGR_CLI:
-        description: 'TBD'
-        value: 0

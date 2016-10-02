@@ -28,8 +28,3 @@ pkg.keywords:
 
 pkg.deps.FS_CLI:
     - sys/shell
-
-pkg.syscfg_defs:
-    FS_CLI:
-        description: 'TBD'
-        value: 0

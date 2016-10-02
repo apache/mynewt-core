@@ -1,0 +1,6 @@
+# Package: sys/sysinit
+
+syscfg.defs:
+    SYSINIT_PANIC_FN:
+        description: 'TBD'
+        value:

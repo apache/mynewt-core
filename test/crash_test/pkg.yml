@@ -35,11 +35,3 @@ pkg.deps.CRASH_TEST_NEWTMGR:
 
 pkg.init_function: crash_test_init
 pkg.init_stage: 5
-
-pkg.syscfg_defs:
-    CRASH_TEST_CLI:
-        description: 'TBD'
-        value: 1
-    CRASH_TEST_NEWTMGR:
-        description: 'TBD'
-        value: 1

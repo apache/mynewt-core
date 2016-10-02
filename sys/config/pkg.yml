@@ -40,32 +40,3 @@ pkg.req_apis.CONFIG_NEWTMGR:
 
 pkg.init_function: config_pkg_init
 pkg.init_stage: 5
-
-pkg.syscfg_defs:
-    CONFIG_FCB:
-        description: 'TBD'
-        value: 0
-    CONFIG_FCB_MAGIC:
-        description: 'TBD'
-        value: 0xc09f6e5e
-
-    CONFIG_NFFS:
-        description: 'TBD'
-        value: 0
-    CONFIG_NFFS_DIR:
-        description: 'TBD'
-        value: '"/cfg"'
-    CONFIG_NFFS_FILE:
-        description: 'TBD'
-        value: '"/cfg/run"'
-    CONFIG_NFFS_MAX_LINES:
-        description: 'TBD'
-        value: 32
-
-    CONFIG_NEWTMGR:
-        description: 'TBD'
-        value: 0
-
-    CONFIG_CLI:
-        description: 'TBD'
-        value: 0

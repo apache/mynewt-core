@@ -1,0 +1,11 @@
+# Package: sys/reboot
+
+syscfg.defs:
+    REBOOT_LOG_FCB:
+        description: 'TBD'
+        value: 0
+        restrictions:
+            - LOG_FCB
+    REBOOT_LOG_ENTRY_COUNT:
+        description: 'TBD'
+        value: 10

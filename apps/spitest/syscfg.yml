@@ -1,0 +1,4 @@
+# Package: apps/spitest
+
+syscfg.vals:
+    - SHELL_TASK: 0

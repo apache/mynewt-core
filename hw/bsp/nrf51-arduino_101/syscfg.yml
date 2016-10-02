@@ -1,0 +1,47 @@
+# Package: hw/bsp/nrf51-arduino_101
+
+syscfg.defs:
+    BSP_NRF51:
+        description: 'TBD'
+        value: 1
+
+    CLOCK_FREQ:
+        description: 'TBD'
+        value: 1000000
+
+    XTAL_32768:
+        description: 'TBD'
+        value: 1
+
+    ADC_0:
+        description: 'TBD'
+        value:  0
+    ADC_0_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: 'ADC_CONFIG_IRQ_PRIORITY'
+
+    UART_0:
+        description: 'TBD'
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TBD'
+        value: 9
+    UART_0_PIN_RX:
+        description: 'TBD'
+        value: 11
+    UART_0_PIN_RTS:
+        description: 'TBD'
+        value: 12
+    UART_0_PIN_CTS:
+        description: 'TBD'
+        value: 10
+    UART_1:
+        description: 'TBD'
+        value:  0
+
+    SPI_MASTER:
+        description: 'TBD'
+        value: 0
+    SPI_SLAVE:
+        description: 'TBD'
+        value: 0

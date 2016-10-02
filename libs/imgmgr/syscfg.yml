@@ -1,0 +1,12 @@
+# Package: libs/imgmgr
+
+syscfg.defs:
+    IMGMGR_FS:
+        description: 'TBD'
+        value: 0
+    IMGMGR_COREDUMP:
+        description: 'TBD'
+        value: 0
+    IMGMGR_CLI:
+        description: 'TBD'
+        value: 0

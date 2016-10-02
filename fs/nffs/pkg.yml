@@ -37,8 +37,3 @@ pkg.deps:
 
 pkg.init_function: nffs_pkg_init
 pkg.init_stage: 2
-
-pkg.syscfg_defs:
-    NFFS_DETECT_FAIL:
-        description: 'TBD'
-        value: 'NFFS_DETECT_FAIL_FORMAT'

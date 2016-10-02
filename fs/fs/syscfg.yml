@@ -1,0 +1,6 @@
+# Package: fs/fs
+
+syscfg.defs:
+    FS_CLI:
+        description: 'TBD'
+        value: 0

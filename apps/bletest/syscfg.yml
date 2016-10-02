@@ -1,0 +1,5 @@
+# Package: apps/bletest
+
+syscfg.vals:
+    MSYS_1_BLOCK_COUNT: 16
+    MSYS_1_BLOCK_SIZE: 260

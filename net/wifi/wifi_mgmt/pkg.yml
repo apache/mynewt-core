@@ -27,8 +27,3 @@ pkg.deps:
     - "@apache-mynewt-core/libs/util"
 pkg.deps.WIFI_MGMT_CLI:
     - libs/shell
-
-pkg.syscfg_defs:
-    WIFI_MGMT_CLI:
-        description: 'TBD'
-        value: 0

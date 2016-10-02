@@ -1,0 +1,9 @@
+# Package: apps/boot
+
+syscfg.defs:
+    BOOT_LOADER:
+        description: 'TBD'
+        value: 1
+    BOOT_SERIAL:
+        description: 'TBD'
+        value: 0

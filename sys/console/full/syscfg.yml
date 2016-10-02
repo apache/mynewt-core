@@ -1,0 +1,12 @@
+# Package: sys/console/full
+
+syscfg.defs:
+    CONSOLE_PROMPT:
+        description: 'Default console prompt '
+        value: '0'
+    CONSOLE_ECHO:
+        description: 'Default console echo '
+        value: '1'
+    CONSOLE_HIST_ENABLE:
+        description: 'Console history '
+        value: 1

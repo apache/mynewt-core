@@ -28,7 +28,6 @@ pkg.deps:
     - kernel/os
     - encoding/json
     - libs/util
-    - test/testutil
     - sys/reboot
 
 pkg.req_apis:

@@ -1,0 +1,18 @@
+# Package: sys/log
+
+syscfg.defs:
+    LOG_LEVEL:
+        description: 'TBD'
+        value: 0
+
+    LOG_FCB:
+        description: 'TBD'
+        value: 0
+
+    LOG_CLI:
+        description: 'TBD'
+        value: 0
+
+    LOG_NEWTMGR:
+        description: 'TBD'
+        value: 0
