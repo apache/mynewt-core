@@ -10,3 +10,5 @@ syscfg.defs:
     IMGMGR_CLI:
         description: 'TBD'
         value: 0
+        restrictions:
+            - SHELL_TASK

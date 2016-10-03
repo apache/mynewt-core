@@ -4,6 +4,8 @@ syscfg.defs:
     CRASH_TEST_CLI:
         description: 'TBD'
         value: 1
+        restrictions:
+            - SHELL_TASK
     CRASH_TEST_NEWTMGR:
         description: 'TBD'
         value: 1

@@ -4,3 +4,5 @@ syscfg.defs:
     WIFI_MGMT_CLI:
         description: 'TBD'
         value: 0
+        restrictions:
+            - SHELL_TASK

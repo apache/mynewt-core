@@ -4,3 +4,5 @@ syscfg.defs:
     FS_CLI:
         description: 'TBD'
         value: 0
+        restrictions:
+            - SHELL_TASK

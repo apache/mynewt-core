@@ -12,6 +12,8 @@ syscfg.defs:
     LOG_CLI:
         description: 'TBD'
         value: 0
+        restrictions:
+            - SHELL_TASK
 
     LOG_NEWTMGR:
         description: 'TBD'

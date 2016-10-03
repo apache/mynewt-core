@@ -4,6 +4,8 @@ syscfg.defs:
     OS_CLI:
         description: 'TBD'
         value: 0
+        restrictions:
+            - SHELL_TASK
     OS_COREDUMP:
         description: 'TBD'
         value: 0
