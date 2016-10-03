@@ -30,8 +30,8 @@
 #include <config/config.h>
 #include <hal/flash_map.h>
 #include <hal/hal_system.h>
-#if defined SPLIT_LOADER || defined SPLIT_APPLICATION
-#include <split/split.h>
+#if MYNEWT_VAL(SPLIT_LOADER)
+#include "split/split.h"
 #endif
 #if MYNEWT_VAL(CONFIG_NFFS)
 #include <fs/fs.h>
@@ -338,15 +338,11 @@ main(int argc, char **argv)
 
     flash_test_init();
 
-#if defined SPLIT_LOADER || defined SPLIT_APPLICATION
-    split_app_init();
-#endif
-
     conf_load();
 
     log_reboot(HARD_REBOOT);
 
-#ifdef SPLIT_LOADER
+#if MYNEWT_VAL(SPLIT_LOADER)
     {
         void *entry;
         rc = split_app_go(&entry, true);

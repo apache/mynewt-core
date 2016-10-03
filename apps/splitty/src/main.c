@@ -28,9 +28,6 @@
 #include <config/config.h>
 #include <hal/flash_map.h>
 #include <hal/hal_system.h>
-#if defined SPLIT_APPLICATION
-#include <split/split.h>
-#endif
 #if MYNEWT_VAL(CONFIG_NFFS)
 #include <fs/fs.h>
 #include <nffs/nffs.h>
@@ -256,10 +253,6 @@ main(int argc, char **argv)
                STATS_NAME_INIT_PARMS(gpio_stats));
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
-
-#if defined SPLIT_APPLICATION
-    split_app_init();
-#endif
 
     conf_load();
 

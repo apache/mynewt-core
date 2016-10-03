@@ -38,7 +38,7 @@ typedef void sysinit_panic_fn(const char *file, int line);
     }                               \
 } while (0)
 
-#if SPLIT_LOADER
+#if MYNEWT_VAL(SPLIT_LOADER)
 void sysinit_loader(void);
 #define sysinit sysinit_loader
 #else

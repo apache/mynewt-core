@@ -19,7 +19,7 @@
 
 pkg.name: apps/slinky
 pkg.type: app
-pkg.description: Example application which uses a variety of mynewt features.
+pkg.description: "Example application which uses a variety of mynewt features."
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -33,11 +33,13 @@ pkg.deps:
     - boot/bootutil
     - sys/shell
     - libs/util
-    - boot/split
     - sys/config
     - sys/id
     - sys/log
     - sys/stats
+
+pkg.deps.SPLIT_IMAGE:
+    - boot/split
 
 pkg.deps.CONFIG_NFFS:
     - fs/nffs
