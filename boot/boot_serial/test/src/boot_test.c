@@ -36,36 +36,7 @@
 void
 tx_msg(void *src, int len)
 {
-    char *msg;
-    char *enc;
-    int off;
-    uint16_t crc;
-
-    crc = htons(crc16_ccitt(CRC16_INITIAL_CRC, src, len));
-
-    /*
-     * Lazy, malloc a buffer, fill it and send it.
-     */
-    msg = malloc(len + 2 * sizeof(uint16_t));
-    assert(msg);
-
-    *(uint16_t *)msg = ntohs(len + sizeof(uint16_t));
-    off = sizeof(uint16_t);
-    memcpy(&msg[off], src, len);
-    off += len;
-    memcpy(&msg[off], &crc, sizeof(crc));
-    off += sizeof(uint16_t);
-
-    enc = malloc(BASE64_ENCODE_SIZE(off) + 1);
-    assert(enc);
-
-    off = base64_encode(msg, off, enc, 1);
-    assert(off > 0);
-
-    boot_serial_input(enc, off + 1);
-
-    free(enc);
-    free(msg);
+    boot_serial_input(src, len);
 }
 
 TEST_CASE(boot_serial_setup)
