@@ -1,6 +1,0 @@
-# Package: sys/id
-
-syscfg.defs:
-    ID_CLI:
-        description: 'TBD'
-        value: 1
