@@ -573,7 +573,7 @@ shell_init(void)
     console_init(shell_console_rx_cb);
 
     rc = os_task_init(&shell_task, "shell", shell_task_func,
-            NULL, MYNEWT_VAL(SHELL_TASK_PRIO), OS_WAIT_FOREVER, shell_stack,
-            MYNEWT_VAL(SHELL_STACK_SIZE));
+      NULL, MYNEWT_VAL(SHELL_TASK_PRIO), OS_WAIT_FOREVER, shell_stack,
+      OS_STACK_ALIGN(MYNEWT_VAL(SHELL_STACK_SIZE)));
     SYSINIT_PANIC_ASSERT(rc == 0);
 }

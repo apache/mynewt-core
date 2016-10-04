@@ -668,8 +668,8 @@ nmgr_task_init(void)
     }
 
     rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL,
-                      MYNEWT_VAL(NEWTMGR_TASK_PRIO), OS_WAIT_FOREVER,
-                      newtmgr_stack, MYNEWT_VAL(NEWTMGR_STACK_SIZE));
+      MYNEWT_VAL(NEWTMGR_TASK_PRIO), OS_WAIT_FOREVER,
+      newtmgr_stack, OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE)));
     if (rc != 0) {
         goto err;
     }

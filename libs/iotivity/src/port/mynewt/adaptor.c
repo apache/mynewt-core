@@ -55,7 +55,7 @@ oc_network_event_handler_mutex_unlock(void)
 }
 
 /* need a task to process OCF messages */
-#define OC_NET_TASK_STACK_SIZE          MYNEWT_VAL(OC_TASK_STACK_SIZE)
+#define OC_NET_TASK_STACK_SIZE  OS_STACK_ALIGN(MYNEWT_VAL(OC_TASK_STACK_SIZE))
 #define OC_NET_TASK_PRIORITY            MYNEWT_VAL(OC_TASK_PRIORITY)
 struct os_task oc_task;
 os_stack_t *oc_stack;
