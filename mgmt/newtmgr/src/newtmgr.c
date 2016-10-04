@@ -25,13 +25,10 @@
 #include "os/os.h"
 #include "os/endian.h"
 
-#include "shell/shell.h"
 #include "newtmgr/newtmgr.h"
 #include "nmgr_os/nmgr_os.h"
 
 os_stack_t newtmgr_stack[OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE))];
-
-struct nmgr_transport g_nmgr_shell_transport;
 
 struct os_mutex g_nmgr_group_list_lock;
 
@@ -609,63 +606,12 @@ nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
     return rc;
 }
 
-static uint16_t
-nmgr_shell_get_mtu(struct os_mbuf *m) {
-    return NMGR_MAX_MTU;
-}
-
-static int
-nmgr_shell_out(struct nmgr_transport *nt, struct os_mbuf *m)
-{
-    int rc;
-
-    rc = shell_nlip_output(m);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
-static int
-nmgr_shell_in(struct os_mbuf *m, void *arg)
-{
-    struct nmgr_transport *nt;
-    int rc;
-
-    nt = (struct nmgr_transport *) arg;
-
-    rc = os_mqueue_put(&nt->nt_imq, &g_nmgr_evq, m);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
-
 int
 nmgr_task_init(void)
 {
     int rc;
 
     os_eventq_init(&g_nmgr_evq);
-
-    rc = nmgr_transport_init(&g_nmgr_shell_transport, nmgr_shell_out,
-                             nmgr_shell_get_mtu);
-    if (rc != 0) {
-        goto err;
-    }
-
-    rc = shell_nlip_input_register(nmgr_shell_in,
-            (void *) &g_nmgr_shell_transport);
-    if (rc != 0) {
-        goto err;
-    }
 
     rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL,
       MYNEWT_VAL(NEWTMGR_TASK_PRIO), OS_WAIT_FOREVER,

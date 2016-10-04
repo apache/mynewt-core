@@ -29,6 +29,7 @@ pkg.deps:
     - sys/console/full
     - libs/imgmgr
     - mgmt/newtmgr
+    - mgmt/newtmgr/transport/nmgr_shell
     - kernel/os
     - boot/bootutil
     - sys/shell

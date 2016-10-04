@@ -24,13 +24,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - hw/hal
     - kernel/os
     - encoding/json
     - mgmt/newtmgr/nmgr_os
-    - libs/util
-    - sys/shell
-    - sys/reboot
 
 pkg.deps.NEWTMGR_BLE_HOST:
     - mgmt/newtmgr/transport/ble
