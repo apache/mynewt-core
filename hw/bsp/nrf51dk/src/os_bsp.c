@@ -23,6 +23,7 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_cputime.h"
 #include "mcu/nrf51_hal.h"
 #if MYNEWT_VAL(SPI_MASTER)
 #include "nrf_drv_spi.h"
@@ -118,6 +119,10 @@ bsp_init(void)
      * XXX this reference is here to keep this function in.
      */
     _sbrk(0);
+
+    /* Set cputime to count at 1 usec increments */
+    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+    assert(rc == 0);
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
