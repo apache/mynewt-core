@@ -19,6 +19,7 @@
 
 #include "syscfg/syscfg.h"
 #include "sysinit/sysinit.h"
+#include "sysflash/sysflash.h"
 #include <os/os.h>
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
@@ -28,7 +29,7 @@
 #include <log/log.h>
 #include <stats/stats.h>
 #include <config/config.h>
-#include <hal/flash_map.h>
+#include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"

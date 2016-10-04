@@ -23,9 +23,10 @@
 #include <assert.h>
 
 #include "sysinit/sysinit.h"
+#include "sysflash/sysflash.h"
 #include "bsp/bsp.h"
 #include "hal/hal_flash.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
 #include "os/os_malloc.h"
@@ -754,7 +755,8 @@ nffs_pkg_init(void)
      * of nffs area descriptors.
      */
     cnt = NFFS_AREA_MAX;
-    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, descs);
+    rc = nffs_misc_desc_from_flash_area(
+        MYNEWT_VAL(NFFS_FLASH_AREA), &cnt, descs);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     /* Attempt to restore an existing nffs file system from flash. */

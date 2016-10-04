@@ -151,7 +151,7 @@ Reset_Handler_split:
     LDR     R1, =__HeapLimit
     BL      _sbrkInit
 
-    BL      bsp_slot_init_split_application
+    BL      boot_set_image_slot_split
 
     LDR     R0, =SystemInit
     BLX     R0

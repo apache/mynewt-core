@@ -18,6 +18,7 @@
  */
 
 #include "syscfg/syscfg.h"
+#include "sysflash/sysflash.h"
 
 #if MYNEWT_VAL(LOG_FCB)
 
@@ -25,9 +26,8 @@
 
 #include "os/os.h"
 
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "fcb/fcb.h"
-
 #include "log/log.h"
 
 static struct flash_area sector;

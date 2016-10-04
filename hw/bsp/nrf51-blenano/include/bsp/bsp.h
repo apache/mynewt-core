@@ -38,10 +38,7 @@ extern "C" {
 #define CONSOLE_UART            "uart0"
 #define CONSOLE_UART_SPEED      115200
 
-int bsp_imgr_current_slot(void);
-
 #define NFFS_AREA_MAX    (8)
-
 
 #ifdef __cplusplus
 }

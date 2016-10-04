@@ -24,12 +24,13 @@
 #include <string.h>
 #include <inttypes.h>
 #include "syscfg/syscfg.h"
+#include "sysflash/sysflash.h"
 #include "os/endian.h"
 #include "base64/base64.h"
 #include "crc/crc16.h"
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 
 #include "boot_serial_priv.h"
 

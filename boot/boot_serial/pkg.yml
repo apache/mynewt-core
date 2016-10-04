@@ -30,6 +30,7 @@ pkg.deps:
     - kernel/os
     - boot/bootutil
     - encoding/base64
+    - sys/flash_map
     - util/crc
 
 pkg.req_apis:

@@ -30,7 +30,7 @@
 #include <bsp/bsp.h>
 #include <nffs/nffs.h>
 #include <hal/hal_flash.h>
-#include <hal/flash_map.h>
+#include <flash_map/flash_map.h>
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif

@@ -27,6 +27,10 @@ pkg.deps:
     - boot/bootutil
     - encoding/base64
     - mgmt/mgmt
+    - sys/flash_map
+
+pkg.req_apis:
+    - newtmgr
 
 pkg.deps.IMGMGR_FS:
     - fs/fs

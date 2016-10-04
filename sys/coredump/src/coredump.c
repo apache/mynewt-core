@@ -19,11 +19,13 @@
 
 #include <stddef.h>
 #include <limits.h>
-#include <hal/hal_bsp.h>
-#include <hal/flash_map.h>
-#include <bootutil/image.h>
-#include <imgmgr/imgmgr.h>
-#include <coredump/coredump.h>
+#include "syscfg/syscfg.h"
+#include "sysflash/sysflash.h"
+#include "hal/hal_bsp.h"
+#include "flash_map/flash_map.h"
+#include "bootutil/image.h"
+#include "imgmgr/imgmgr.h"
+#include "coredump/coredump.h"
 
 uint8_t coredump_disabled;
 
@@ -54,7 +56,7 @@ coredump_dump(void *regs, int regs_sz)
     if (coredump_disabled) {
         return;
     }
-    if (flash_area_open(FLASH_AREA_CORE, &fa)) {
+    if (flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa)) {
         return;
     }
 
@@ -83,7 +85,7 @@ coredump_dump(void *regs, int regs_sz)
     off = sizeof(hdr);
     dump_core_tlv(fa, &off, &tlv, regs);
 
-    if (imgr_read_info(bsp_imgr_current_slot(), &ver, hash, NULL) == 0) {
+    if (imgr_read_info(boot_current_slot, &ver, hash, NULL) == 0) {
         tlv.ct_type = COREDUMP_TLV_IMAGE;
         tlv.ct_len = IMGMGR_HASH_LEN;
 

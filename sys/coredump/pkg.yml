@@ -28,3 +28,4 @@ pkg.deps:
     - hw/hal
     - boot/bootutil
     - libs/imgmgr
+    - sys/flash_map

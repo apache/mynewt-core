@@ -29,7 +29,7 @@
 #include "console/console.h"
 #include "shell/shell.h"
 #include "stats/stats.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 
 /* BLE */
 #include "nimble/ble.h"

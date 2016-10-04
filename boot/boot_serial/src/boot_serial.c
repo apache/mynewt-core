@@ -22,9 +22,11 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include "sysflash/sysflash.h"
+
 #include <bsp/bsp.h>
 
-#include <hal/flash_map.h>
+#include <flash_map/flash_map.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_system.h>
 
@@ -89,6 +91,7 @@ bs_list(char *buf, int len)
     uint8_t tmpbuf[64];
     const struct flash_area *fap = NULL;
     int good_img, need_comma = 0;
+    int area_id;
     int rc;
     int i;
 
@@ -97,8 +100,9 @@ bs_list(char *buf, int len)
         return;
     }
     len = snprintf(ptr, BOOT_SERIAL_OUT_MAX, "{\"images\":[");
-    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        rc = flash_area_open(i, &fap);
+    for (i = 0; i < 2; i++) {
+        area_id = flash_area_id_from_image_slot(i);
+        rc = flash_area_open(area_id, &fap);
         if (rc) {
             continue;
         }
@@ -106,7 +110,7 @@ bs_list(char *buf, int len)
         flash_area_read(fap, 0, &hdr, sizeof(hdr));
 
         if (hdr.ih_magic == IMAGE_MAGIC &&
-          bootutil_img_validate(&hdr, fap->fa_flash_id, fap->fa_off,
+          bootutil_img_validate(&hdr, fap->fa_device_id, fap->fa_off,
             tmpbuf, sizeof(tmpbuf), NULL, 0, NULL) == 0) {
             good_img = 1;
         } else {

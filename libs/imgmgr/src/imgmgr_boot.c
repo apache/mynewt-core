@@ -75,7 +75,7 @@ imgr_boot2_read(struct mgmt_jbuf *njb)
         }
     }
 
-    rc = imgr_read_info(bsp_imgr_current_slot(), &ver, hash, NULL);
+    rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
     if (!rc) {
         imgr_hash_jsonstr(enc, "active", hash);
     }

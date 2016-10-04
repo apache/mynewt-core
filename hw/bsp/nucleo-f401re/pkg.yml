@@ -27,13 +27,10 @@ pkg.keywords:
     - stm32f4
     - nucleo
 
-pkg.arch: cortex_m4
-pkg.compiler: compiler/arm-none-eabi-m4
-pkg.linkerscript: "nucleo-f401re.ld"
-pkg.linkerscript.bootloader.OVERWRITE: "boot-nucleo-f401re.ld"
-pkg.downloadscript: "nucleo-f401re_download.sh"
-pkg.debugscript: "nucleo-f401re_debug.sh"
 pkg.cflags: -DSTM32F401xE
+
 pkg.deps:
+    - boot/bootutil
     - hw/mcu/stm/stm32f4xx
     - libc/baselibc
+    - sys/flash_map

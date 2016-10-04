@@ -40,11 +40,6 @@ struct hal_flash;
 const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
 
 /*
- * Returns which flash map slot the currently running image is at.
- */
-int bsp_imgr_current_slot(void);
-
-/*
  * Grows heap by given amount. XXX giving space back not implemented.
  */
 void *_sbrk(int incr);

@@ -29,6 +29,8 @@ int boot_vect_read_main(int *slot);
 int boot_vect_write_test(int slot);
 int boot_vect_write_main(void);
 
+void boot_set_image_slot_split(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -25,13 +25,12 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - native
     - bsp
-pkg.debugscript: "native_debug.sh"
 
-pkg.arch: sim
-pkg.compiler: compiler/sim
 pkg.deps:
+    - boot/bootutil
     - hw/mcu/native
     - hw/drivers/uart/uart_hal
+    - sys/flash_map
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/native

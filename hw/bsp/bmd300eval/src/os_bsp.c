@@ -20,7 +20,7 @@
 #include <assert.h>
 
 #include "syscfg/syscfg.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_cputime.h"
 #include "hal/hal_flash.h"
@@ -47,34 +47,6 @@
 #include "adc_nrf52/adc_nrf52.h"
 #endif
 
-static struct flash_area bsp_flash_areas[] = {
-    [FLASH_AREA_BOOTLOADER] = {
-        .fa_flash_id = 0,       /* internal flash */
-        .fa_off = 0x00000000,   /* beginning */
-        .fa_size = (32 * 1024)
-    },
-    /* 2*16K and 1*64K sectors here */
-    [FLASH_AREA_IMAGE_0] = {
-        .fa_flash_id = 0,
-        .fa_off = 0x00008000,
-        .fa_size = (232 * 1024)
-    },
-    [FLASH_AREA_IMAGE_1] = {
-        .fa_flash_id = 0,
-        .fa_off = 0x00042000,
-        .fa_size = (232 * 1024)
-    },
-    [FLASH_AREA_IMAGE_SCRATCH] = {
-        .fa_flash_id = 0,
-        .fa_off = 0x0007c000,
-        .fa_size = (4 * 1024)
-    },
-    [FLASH_AREA_NFFS] = {
-        .fa_flash_id = 0,
-        .fa_off = 0x0007d000,
-        .fa_size = (12 * 1024)
-    }
-};
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -104,30 +76,6 @@ static nrf_drv_saadc_config_t os_bsp_adc0_config = {
 };
 #endif
 
-/*
- * Returns the flash map slot where the currently active image is located.
- * If executing from internal flash from fixed location, that slot would
- * be easy to find.
- * If images are in external flash, and copied to RAM for execution, then
- * this routine would have to figure out which one of those slots is being
- * used.
- */
-
-/* extern this so compiler knows its global  */
-extern int current_image_slot;
-
-int current_image_slot = 1;
-
-int
-bsp_imgr_current_slot(void)
-{
-    return current_image_slot;
-}
-
-void bsp_slot_init_split_application(void) {
-    current_image_slot = FLASH_AREA_IMAGE_1;
-}
-
 void
 bsp_init(void)
 {
@@ -140,19 +88,8 @@ bsp_init(void)
     nrf_drv_spis_config_t spi_cfg = NRF_DRV_SPIS_DEFAULT_CONFIG(0);
 #endif
 
-    /*
-     * XXX this reference is here to keep this function in.
-     */
-    (void)_sbrk;
-
     /* Set cputime to count at 1 usec increments */
     rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
-    assert(rc == 0);
-
-    flash_area_init(bsp_flash_areas,
-      sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
-
-    rc = hal_flash_init();
     assert(rc == 0);
 
 #if MYNEWT_VAL(SPI_MASTER)

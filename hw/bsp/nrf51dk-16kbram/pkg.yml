@@ -26,20 +26,15 @@ pkg.keywords:
     - nrf51
     - nrf51dk
 
-pkg.arch: cortex_m0
-pkg.compiler: compiler/arm-none-eabi-m0
-pkg.linkerscript: "nrf51dk-16kbram.ld"
-pkg.linkerscript.BOOT_LOADER.OVERWRITE: "boot-nrf51dk-16kbram.ld"
-pkg.part2linkerscript: "split-nrf51dk-16kbram.ld"
-pkg.downloadscript: nrf51dk-16kbram_download.sh
-pkg.debugscript: nrf51dk-16kbram_debug.sh
 pkg.cflags:
     # Nordic SDK files require this define.
     - '-DNRF51'
 
 pkg.deps:
+    - boot/bootutil
     - hw/mcu/nordic/nrf51xxx
     - libc/baselibc
+    - sys/flash_map
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf51

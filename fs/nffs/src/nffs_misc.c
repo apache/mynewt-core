@@ -18,7 +18,7 @@
  */
 
 #include <assert.h>
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash_int.h"
 #include "os/os_malloc.h"
@@ -470,7 +470,7 @@ nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad)
 
     fa = &flash_map[idx];
 
-    hf = bsp_flash_dev(fa->fa_flash_id);
+    hf = bsp_flash_dev(fa->fa_device_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
         hf->hf_itf->hff_sector_info(i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
@@ -492,7 +492,7 @@ nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad)
     for (i = first_idx, j = 0; i < last_idx + 1; i++) {
         hf->hf_itf->hff_sector_info(i, &start, &size);
         if (move_on) {
-            nad[j].nad_flash_id = fa->fa_flash_id;
+            nad[j].nad_flash_id = fa->fa_device_id;
             nad[j].nad_offset = start;
             nad[j].nad_length = size;
             *cnt = *cnt + 1;

@@ -39,6 +39,8 @@ extern "C" {
 
 #define IMGMGR_HASH_LEN                 32
 
+extern int boot_current_slot;
+
 void imgmgr_module_init(void);
 
 struct image_version;

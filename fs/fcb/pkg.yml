@@ -27,3 +27,4 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - util/crc
+    - sys/flash_map

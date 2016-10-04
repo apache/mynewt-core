@@ -26,7 +26,7 @@
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "bootutil/bootutil_misc.h"
@@ -276,7 +276,7 @@ boot_test_util_verify_area(const struct flash_area *area_desc,
         img_size = hdr->ih_img_size;
 
         if (addr == image_addr) {
-            rc = hal_flash_read(area_desc->fa_flash_id, image_addr,
+            rc = hal_flash_read(area_desc->fa_device_id, image_addr,
                                 &temp_hdr, sizeof temp_hdr);
             TEST_ASSERT(rc == 0);
             TEST_ASSERT(memcmp(&temp_hdr, hdr, sizeof *hdr) == 0);
@@ -307,7 +307,7 @@ boot_test_util_verify_area(const struct flash_area *area_desc,
             chunk_sz = rem_area;
         }
 
-        rc = hal_flash_read(area_desc->fa_flash_id, addr, buf, chunk_sz);
+        rc = hal_flash_read(area_desc->fa_device_id, addr, buf, chunk_sz);
         TEST_ASSERT(rc == 0);
 
         for (i = 0; i < chunk_sz; i++) {
@@ -354,7 +354,7 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
     while (1) {
         area_desc = boot_test_area_descs + area_idx;
         if (area_desc->fa_off == boot_test_img_addrs[1].address &&
-            area_desc->fa_flash_id == boot_test_img_addrs[1].flash_id) {
+            area_desc->fa_device_id == boot_test_img_addrs[1].flash_id) {
             break;
         }
 

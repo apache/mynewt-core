@@ -39,7 +39,7 @@ syscfg.defs:
         value:  5
     UART_0_PIN_CTS:
         description: 'TBD'
-        value:  7
+        value: 0 #'((1 << __NVIC_PRIO_BITS) - 1)'
 
     UART_1:
         description: 'Bitbanger UART'
@@ -82,3 +82,9 @@ syscfg.defs:
     TIMER_4_INTERRUPT_PRIORITY:
         description: 'TBD'
         value: '((1 << __NVIC_PRIO_BITS) - 1)'
+
+syscfg.vals:
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1

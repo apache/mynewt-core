@@ -23,8 +23,9 @@
 #include <string.h>
 
 #include "sysinit/sysinit.h"
+#include "sysflash/sysflash.h"
 #include "hal/hal_bsp.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "json/json.h"
 #include "base64/base64.h"
 #include "bootutil/image.h"
@@ -99,7 +100,8 @@ static struct mgmt_group imgr_nmgr_group = {
 struct imgr_state imgr_state;
 
 /*
- * Read version and build hash from image located in flash area 'area_id'.
+ * Read version and build hash from image located slot "image_slot".  Note:
+ * this is a slot index, not a flash area ID.
  *
  * Returns -1 if area is not readable.
  * Returns 0 if image in slot is ok, and version string is valid.
@@ -107,7 +109,8 @@ struct imgr_state imgr_state;
  * Returns 2 if slot is empty. XXXX not there yet
  */
 int
-imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32_t *flags)
+imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
+               uint32_t *flags)
 {
     struct image_header *hdr;
     struct image_tlv *tlv;
@@ -116,6 +119,9 @@ imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32_t *
     const struct flash_area *fa;
     uint8_t data[sizeof(struct image_header)];
     uint32_t data_off, data_end;
+    int area_id;
+
+    area_id = flash_area_id_from_image_slot(image_slot);
 
     hdr = (struct image_header *)data;
     rc2 = flash_area_open(area_id, &fa);
@@ -186,7 +192,7 @@ end:
 int
 imgr_my_version(struct image_version *ver)
 {
-    return imgr_read_info(bsp_imgr_current_slot(), ver, NULL, NULL);
+    return imgr_read_info(boot_current_slot, ver, NULL, NULL);
 }
 
 /*
@@ -199,7 +205,7 @@ imgr_find_by_ver(struct image_version *find, uint8_t *hash)
     int i;
     struct image_version ver;
 
-    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
+    for (i = 0; i < 2; i++) {
         if (imgr_read_info(i, &ver, hash, NULL) != 0) {
             continue;
         }
@@ -220,7 +226,7 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
     int i;
     uint8_t hash[IMGMGR_HASH_LEN];
 
-    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
+    for (i = 0; i < 2; i++) {
         if (imgr_read_info(i, ver, hash, NULL) != 0) {
             continue;
         }
@@ -250,7 +256,7 @@ imgr_list2(struct mgmt_jbuf *njb)
     json_encode_object_start(enc);
     json_encode_array_name(enc, "images");
     json_encode_array_start(enc);
-    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
+    for (i = 0; i < 2; i++) {
         rc = imgr_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
             continue;
@@ -309,6 +315,7 @@ imgr_upload(struct mgmt_jbuf *njb)
     struct image_header *hdr;
     struct json_encoder *enc;
     struct json_value jv;
+    int area_id;
     int active;
     int best;
     int rc;
@@ -348,10 +355,10 @@ imgr_upload(struct mgmt_jbuf *njb)
          */
         imgr_state.upload.off = 0;
         imgr_state.upload.size = size;
-        active = bsp_imgr_current_slot();
+        active = boot_current_slot;
         best = -1;
 
-        for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
+        for (i = 0; i < 2; i++) {
             rc = imgr_read_info(i, &ver, NULL, NULL);
             if (rc < 0) {
                 continue;
@@ -378,21 +385,22 @@ imgr_upload(struct mgmt_jbuf *njb)
             break;
         }
         if (best >= 0) {
+            area_id = flash_area_id_from_image_slot(best);
             if (imgr_state.upload.fa) {
                 flash_area_close(imgr_state.upload.fa);
                 imgr_state.upload.fa = NULL;
             }
-            rc = flash_area_open(best, &imgr_state.upload.fa);
+            rc = flash_area_open(area_id, &imgr_state.upload.fa);
             if (rc) {
                 rc = MGMT_ERR_EINVAL;
                 goto err;
             }
-	    if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
+            if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
                 rc = MGMT_ERR_EINVAL;
                 goto err;
             }
             /*
-             * XXXX only erase if needed.
+             * XXX only erase if needed.
              */
             rc = flash_area_erase(imgr_state.upload.fa, 0,
               imgr_state.upload.fa->fa_size);

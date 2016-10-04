@@ -27,10 +27,11 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - libs/util
-    - sys/log
     - libs/imgmgr
+    - libs/util
     - sys/config
+    - sys/flash_map
+    - sys/log
 pkg.deps.REBOOT_LOG_FCB:
     - fs/fcb
 pkg.req_apis:

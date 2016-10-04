@@ -27,13 +27,10 @@ pkg.keywords:
     - stm32f4
     - discovery
 
-pkg.arch: cortex_m4
-pkg.compiler: compiler/arm-none-eabi-m4
-pkg.linkerscript: "stm32f4discovery.ld"
-pkg.linkerscript.bootloader.OVERWRITE: "boot-stm32f4discovery.ld"
-pkg.downloadscript: "stm32f4discovery_download.sh"
-pkg.debugscript: "stm32f4discovery_debug.sh"
 pkg.cflags: -DSTM32F407xx
+
 pkg.deps:
+    - boot/bootutil
     - hw/mcu/stm/stm32f4xx
     - libc/baselibc
+    - sys/flash_map

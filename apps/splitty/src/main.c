@@ -26,7 +26,7 @@
 #include <log/log.h>
 #include <stats/stats.h>
 #include <config/config.h>
-#include <hal/flash_map.h>
+#include <flash_map/flash_map.h>
 #include <hal/hal_system.h>
 #include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>

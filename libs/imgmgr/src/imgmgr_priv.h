@@ -83,6 +83,7 @@ struct imgmgr_upload_cmd {
  * }
  */
 
+struct mgmt_jbuf;
 struct nmgr_hdr;
 struct os_mbuf;
 struct fs_file;

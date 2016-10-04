@@ -21,9 +21,10 @@
 
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
+#include "sysflash/sysflash.h"
 #include "os/os.h"
 #include "testutil/testutil.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
@@ -49,7 +50,7 @@ TEST_CASE(flash_map_test_case_1)
             continue;
         }
 
-        hf = bsp_flash_dev(fa->fa_flash_id);
+        hf = bsp_flash_dev(fa->fa_device_id);
         TEST_ASSERT_FATAL(hf != NULL, "bsp_flash_dev");
 
         rc = flash_area_to_sectors(i, &my_sec_cnt, my_secs);
@@ -58,7 +59,7 @@ TEST_CASE(flash_map_test_case_1)
         end = fa->fa_off;
         for (j = 0; j < my_sec_cnt; j++) {
             TEST_ASSERT_FATAL(end == my_secs[j].fa_off, "Non contiguous area");
-            TEST_ASSERT_FATAL(my_secs[j].fa_flash_id == fa->fa_flash_id,
+            TEST_ASSERT_FATAL(my_secs[j].fa_device_id == fa->fa_device_id,
               "Sectors not in same flash?");
             end = my_secs[j].fa_off + my_secs[j].fa_size;
         }
@@ -98,7 +99,7 @@ TEST_CASE(flash_map_test_case_2)
      * First erase the area so it's ready for use.
      */
     for (i = 0; i < sec_cnt; i++) {
-        rc = hal_flash_erase_sector(secs[i].fa_flash_id, secs[i].fa_off);
+        rc = hal_flash_erase_sector(secs[i].fa_device_id, secs[i].fa_off);
         TEST_ASSERT_FATAL(rc == 0, "hal_flash_erase_sector() failed");
     }
     TEST_ASSERT_FATAL(rc == 0, "read data != write data");
@@ -112,14 +113,14 @@ TEST_CASE(flash_map_test_case_2)
         TEST_ASSERT_FATAL(rc == 0, "flash_area_write() fail");
 
         /* read it back via hal_flash_Read() */
-        rc = hal_flash_read(fa->fa_flash_id, fa->fa_off + off, rd, sizeof(rd));
+        rc = hal_flash_read(fa->fa_device_id, fa->fa_off + off, rd, sizeof(rd));
         TEST_ASSERT_FATAL(rc == 0, "hal_flash_read() fail");
 
         rc = memcmp(wd, rd, sizeof(wd));
         TEST_ASSERT_FATAL(rc == 0, "read data != write data");
 
         /* write stuff to end of area */
-        rc = hal_flash_write(fa->fa_flash_id,
+        rc = hal_flash_write(fa->fa_device_id,
           fa->fa_off + off + secs[i].fa_size - sizeof(wd), wd, sizeof(wd));
         TEST_ASSERT_FATAL(rc == 0, "hal_flash_write() fail");
 

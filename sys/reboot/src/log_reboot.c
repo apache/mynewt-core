@@ -21,6 +21,7 @@
 #include <assert.h>
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
+#include "sysflash/sysflash.h"
 #include "os/os.h"
 #include "console/console.h"
 #include "log/log.h"
@@ -31,7 +32,7 @@
 #include "config/config_file.h"
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
 #include "fcb/fcb.h"
@@ -82,7 +83,7 @@ reboot_init_handler(int log_store_type, uint8_t entries)
     switch (log_store_type) {
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
         case LOG_STORE_FCB:
-            if (flash_area_open(FLASH_AREA_REBOOT_LOG, &ptr)) {
+            if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
                 return rc;
             }
             fcbp = &reboot_log_fcb.fl_fcb;
@@ -138,7 +139,7 @@ log_reboot(int reason)
     const struct flash_area *ptr;
 
     rc = 0;
-    if (flash_area_open(FLASH_AREA_REBOOT_LOG, &ptr)) {
+    if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
         goto err;
     }
 

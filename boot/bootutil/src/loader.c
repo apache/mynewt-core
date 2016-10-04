@@ -22,7 +22,8 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hal/flash_map.h>
+#include "sysflash/sysflash.h"
+#include "flash_map/flash_map.h"
 #include <hal/hal_flash.h>
 #include <os/os_malloc.h>
 #include "bootutil/loader.h"
@@ -72,7 +73,8 @@ boot_build_request(struct boot_req *preq, int area_descriptor_max)
         return -1;
     }
 
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt, &descs[total]);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt,
+                               &descs[total]);
     if(rc != 0) {
         return -2;
     }
@@ -84,7 +86,8 @@ boot_build_request(struct boot_req *preq, int area_descriptor_max)
         return -3;
     }
 
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt, &descs[total]);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt,
+                               &descs[total]);
     if(rc != 0) {
         return -4;
     }
@@ -116,7 +119,7 @@ boot_slot_addr(int slot_num, struct boot_image_location *loc)
 
     area_idx = boot_req->br_slot_areas[slot_num];
     area_desc = boot_req->br_area_descs + area_idx;
-    loc->bil_flash_id = area_desc->fa_flash_id;
+    loc->bil_flash_id = area_desc->fa_device_id;
     loc->bil_address = area_desc->fa_off;
 }
 
@@ -152,7 +155,7 @@ boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
     int cnt;
 
     scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
-    *flash_id = scratch->fa_flash_id;
+    *flash_id = scratch->fa_device_id;
 
     /*
      * Calculate where the boot status would be, if it was copied to scratch.
@@ -209,7 +212,7 @@ boot_image_info(void)
     boot_state.elem_sz = hal_flash_align(boot_img[0].loc.bil_flash_id);
 
     scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
-    i = hal_flash_align(scratch->fa_flash_id);
+    i = hal_flash_align(scratch->fa_device_id);
     if (i > boot_state.elem_sz) {
         boot_state.elem_sz = i;
     }
@@ -243,8 +246,10 @@ boot_image_check(struct image_header *hdr, struct boot_image_location *loc)
 
 
 static int
-split_image_check(struct image_header *app_hdr, struct boot_image_location *app_loc,
-                  struct image_header *loader_hdr, struct boot_image_location *loader_loc)
+split_image_check(struct image_header *app_hdr,
+                  struct boot_image_location *app_loc,
+                  struct image_header *loader_hdr,
+                  struct boot_image_location *loader_loc)
 {
     static void *tmpbuf;
     uint8_t loader_hash[32];
@@ -255,12 +260,15 @@ split_image_check(struct image_header *app_hdr, struct boot_image_location *app_
             return BOOT_ENOMEM;
         }
     }
-    if (bootutil_img_validate(loader_hdr, loader_loc->bil_flash_id, loader_loc->bil_address,
-        tmpbuf, BOOT_TMPBUF_SZ, NULL, 0, loader_hash)) {
+    if (bootutil_img_validate(loader_hdr, loader_loc->bil_flash_id,
+        loader_loc->bil_address, tmpbuf, BOOT_TMPBUF_SZ,
+        NULL, 0, loader_hash)) {
+
         return BOOT_EBADIMAGE;
     }
 
-    if (bootutil_img_validate(app_hdr, app_loc->bil_flash_id, app_loc->bil_address,
+    if (bootutil_img_validate(app_hdr, app_loc->bil_flash_id,
+                              app_loc->bil_address,
         tmpbuf, BOOT_TMPBUF_SZ, loader_hash, 32, NULL)) {
         return BOOT_EBADIMAGE;
     }
@@ -370,7 +378,7 @@ boot_erase_area(int area_idx, uint32_t sz)
     int rc;
 
     area_desc = boot_req->br_area_descs + area_idx;
-    rc = hal_flash_erase(area_desc->fa_flash_id, area_desc->fa_off, sz);
+    rc = hal_flash_erase(area_desc->fa_device_id, area_desc->fa_off, sz);
     if (rc != 0) {
         return BOOT_EFLASH;
     }
@@ -414,14 +422,14 @@ boot_copy_area(int from_area_idx, int to_area_idx, uint32_t sz)
         }
 
         from_addr = from_area_desc->fa_off + off;
-        rc = hal_flash_read(from_area_desc->fa_flash_id, from_addr, buf,
+        rc = hal_flash_read(from_area_desc->fa_device_id, from_addr, buf,
                             chunk_sz);
         if (rc != 0) {
             return rc;
         }
 
         to_addr = to_area_desc->fa_off + off;
-        rc = hal_flash_write(to_area_desc->fa_flash_id, to_addr, buf,
+        rc = hal_flash_write(to_area_desc->fa_device_id, to_addr, buf,
                              chunk_sz);
         if (rc != 0) {
             return rc;

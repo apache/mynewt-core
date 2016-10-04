@@ -1,6 +1,12 @@
 # Package: fs/nffs
 
 syscfg.defs:
+    NFFS_FLASH_AREA:
+        description: 'TBD'
+        type: flash_owner
+        value:
+        restrictions:
+            - $notnull
     NFFS_DETECT_FAIL:
         description: 'TBD'
         value: 'NFFS_DETECT_FAIL_FORMAT'

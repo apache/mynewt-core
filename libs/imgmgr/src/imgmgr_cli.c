@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#include <hal/flash_map.h>
+#include <flash_map/flash_map.h>
 #include <hal/hal_bsp.h>
 
 #include <shell/shell.h>
@@ -116,7 +116,7 @@ imgr_cli_cmd(int argc, char **argv)
         return 0;
     }
     if (!strcmp(argv[1], "list")) {
-        for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
+        for (i = 0; i < 2; i++) {
             imgr_cli_show_slot(i);
         }
     } else if (!strcmp(argv[1], "boot")) {
@@ -126,7 +126,7 @@ imgr_cli_cmd(int argc, char **argv)
             imgr_cli_boot_get();
         }
     } else if (!strcmp(argv[1], "ver")) {
-        imgr_cli_show_slot(bsp_imgr_current_slot());
+        imgr_cli_show_slot(boot_current_slot);
     } else {
         console_printf("Unknown cmd\n");
     }

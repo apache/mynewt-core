@@ -22,14 +22,17 @@
 #include <inttypes.h>
 
 #include "syscfg/syscfg.h"
+#include "sysflash/sysflash.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
-#include "hal/flash_map.h"
+#include "flash_map/flash_map.h"
 #include "os/os.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
 #include "bootutil/bootutil_misc.h"
 #include "bootutil_priv.h"
+
+int boot_current_slot;
 
 /*
  * Read the image trailer from a given slot.
@@ -40,8 +43,10 @@ boot_vect_read_img_trailer(int slot, struct boot_img_trailer *bit)
     int rc;
     const struct flash_area *fap;
     uint32_t off;
+    int area_id;
 
-    rc = flash_area_open(slot, &fap);
+    area_id = flash_area_id_from_image_slot(slot);
+    rc = flash_area_open(area_id, &fap);
     if (rc) {
         return rc;
     }
@@ -67,8 +72,8 @@ boot_vect_read_test(int *slot)
     int i;
     int rc;
 
-    for (i = FLASH_AREA_IMAGE_0; i <= FLASH_AREA_IMAGE_1; i++) {
-        if (i == bsp_imgr_current_slot()) {
+    for (i = 0; i < 2; i++) {
+        if (i == boot_current_slot) {
             continue;
         }
         rc = boot_vect_read_img_trailer(i, &bit);
@@ -316,4 +321,10 @@ boot_clear_status(void)
     boot_magic_loc(0, &flash_id, &off);
     off += sizeof(uint32_t);
     hal_flash_write(flash_id, off, &val, sizeof(val));
+}
+
+void
+boot_set_image_slot_split(void)
+{
+    boot_current_slot = 1;
 }

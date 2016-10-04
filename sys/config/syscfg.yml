@@ -4,6 +4,13 @@ syscfg.defs:
     CONFIG_FCB:
         description: 'TBD'
         value: 0
+        restrictions:
+            - '!CONFIG_NFFS'
+            - 'CONFIG_FCB_FLASH_AREA'
+    CONFIG_FCB_FLASH_AREA:
+        description: 'TBD'
+        type: 'flash_owner'
+        value:
     CONFIG_FCB_MAGIC:
         description: 'TBD'
         value: 0xc09f6e5e
@@ -11,6 +18,8 @@ syscfg.defs:
     CONFIG_NFFS:
         description: 'TBD'
         value: 0
+        restrictions:
+            - '!CONFIG_FCB'
     CONFIG_NFFS_DIR:
         description: 'TBD'
         value: '"/cfg"'
@@ -29,4 +38,4 @@ syscfg.defs:
         description: 'TBD'
         value: 0
         restrictions:
-            - SHELL_TASK
+            - 'SHELL_TASK'

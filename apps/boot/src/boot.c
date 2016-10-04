@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include "syscfg/syscfg.h"
-#include <hal/flash_map.h>
+#include <flash_map/flash_map.h>
 #include <os/os.h>
 #include <bsp/bsp.h>
 #include <hal/hal_bsp.h>
@@ -65,11 +65,9 @@ main(void)
 #if MYNEWT_VAL(BOOT_SERIAL)
     sysinit();
 #else
+    flash_map_init();
     bsp_init();
 #endif
-
-    rc = hal_flash_init();
-    assert(rc == 0);
 
     rc = boot_build_request(&req, AREA_DESC_MAX);
     assert(rc == 0);

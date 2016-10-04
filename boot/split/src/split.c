@@ -18,11 +18,12 @@
  */
 
 #include <assert.h>
-#include <bootutil/bootutil_misc.h>
-#include <bootutil/image.h>
-#include <bootutil/loader.h>
-#include <split/split.h>
-#include <split/split_priv.h>
+#include "bootutil/bootutil_misc.h"
+#include "bootutil/image.h"
+#include "bootutil/loader.h"
+#include "imgmgr/imgmgr.h"
+#include "split/split.h"
+#include "split/split_priv.h"
 
 #define LOADER_IMAGE_SLOT   0
 #define SPLIT_IMAGE_SLOT    1
@@ -92,4 +93,3 @@ split_app_go(void **entry, int toboot)
 
     return (rc);
 }
-

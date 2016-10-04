@@ -23,7 +23,8 @@
 
 #include <limits.h>
 
-#include "hal/flash_map.h"
+#include "sysflash/sysflash.h"
+#include "flash_map/flash_map.h"
 #include "mgmt/mgmt.h"
 #include "coredump/coredump.h"
 #include "base64/base64.h"
@@ -40,7 +41,7 @@ imgr_core_list(struct mgmt_jbuf *njb)
     struct json_value jv;
     int rc;
 
-    rc = flash_area_open(FLASH_AREA_CORE, &fa);
+    rc = flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
     } else {
@@ -92,7 +93,7 @@ imgr_core_load(struct mgmt_jbuf *njb)
         goto err;
     }
 
-    rc = flash_area_open(FLASH_AREA_CORE, &fa);
+    rc = flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
         goto err;
@@ -156,7 +157,7 @@ imgr_core_erase(struct mgmt_jbuf *njb)
     const struct flash_area *fa;
     int rc;
 
-    rc = flash_area_open(FLASH_AREA_CORE, &fa);
+    rc = flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
         goto err;

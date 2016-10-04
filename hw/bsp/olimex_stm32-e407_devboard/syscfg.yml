@@ -27,3 +27,9 @@ syscfg.defs:
     SPI_SLAVE:
         description: 'TBD'
         value:  0
+
+syscfg.vals:
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1

@@ -31,22 +31,22 @@ static struct fcb test_fcb;
 
 static struct flash_area test_fcb_area[] = {
     [0] = {
-        .fa_flash_id = 0,
+        .fa_device_id = 0,
         .fa_off = 0,
         .fa_size = 0x4000, /* 16K */
     },
     [1] = {
-        .fa_flash_id = 0,
+        .fa_device_id = 0,
         .fa_off = 0x4000,
         .fa_size = 0x4000
     },
     [2] = {
-        .fa_flash_id = 0,
+        .fa_device_id = 0,
         .fa_off = 0x8000,
         .fa_size = 0x4000
     },
     [3] = {
-        .fa_flash_id = 0,
+        .fa_device_id = 0,
         .fa_off = 0xc000,
         .fa_size = 0x4000
     }
