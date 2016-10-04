@@ -25,7 +25,7 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - libs/iotivity
+    - net/oic
     - encoding/json
     - libs/newtmgr/nmgr_os
     - libs/util

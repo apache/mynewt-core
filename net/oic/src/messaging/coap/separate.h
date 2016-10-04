@@ -43,7 +43,7 @@ extern "C" {
 
 /* OIC stack headers */
 #include "oc_coap.h"
-#include "../../../include/iotivity/oc_ri.h"
+#include "oic/oc_ri.h"
 
 typedef struct coap_separate
 {

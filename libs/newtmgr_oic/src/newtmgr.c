@@ -26,7 +26,7 @@
 #include <newtmgr/newtmgr.h>
 #include <nmgr_os/nmgr_os.h>
 
-#include <iotivity/oc_api.h>
+#include <oic/oc_api.h>
 
 #define NMGR_OC_EVENT	(OS_EVENT_T_PERUSER)
 #define NMGR_OC_TIMER	(OS_EVENT_T_PERUSER + 1)

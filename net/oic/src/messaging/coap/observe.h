@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
 /* OIC stack headers */
-#include "../../../include/iotivity/oc_ri.h"
+#include "oic/oc_ri.h"
 
 #define COAP_OBSERVER_URL_LEN 20
 

@@ -28,7 +28,7 @@ pkg.deps:
     - kernel/os
     - libs/util
     - sys/log
-    - libs/iotivity
+    - net/oic
 
 pkg.deps.OC_TRANSPORT_SERIAL:
     - sys/shell

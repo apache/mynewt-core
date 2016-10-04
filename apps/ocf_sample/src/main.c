@@ -18,10 +18,11 @@
  */
 #include <assert.h>
 #include <os/os.h>
+#include <sysinit/sysinit.h>
 #include <bsp/bsp.h>
 #include <log/log.h>
 #include <hal/hal_cputime.h>
-#include <iotivity/oc_api.h>
+#include <oic/oc_api.h>
 
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 #include <console/console.h>
@@ -35,7 +36,7 @@
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-#include <iotivity/oc_gatt.h>
+#include <oic/oc_gatt.h>
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"

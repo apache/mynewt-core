@@ -45,7 +45,7 @@ extern "C" {
 
 /* OIC stack headers */
 #include "../src/port/mynewt/config.h"
-#include "../../../include/iotivity/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #include "../src/port/oc_connectivity.h"
 #include "../src/port/oc_log.h"
 #include "../src/port/oc_random.h"
