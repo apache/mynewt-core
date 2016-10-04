@@ -35,34 +35,33 @@
 #include "imgmgr_priv.h"
 
 static int imgr_list2(struct nmgr_jbuf *);
-static int imgr_noop(struct nmgr_jbuf *);
 static int imgr_upload(struct nmgr_jbuf *);
 
 static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_LIST] = {
-        .nh_read = imgr_noop,
-        .nh_write = imgr_noop
+        .nh_read = NULL,
+        .nh_write = NULL
     },
     [IMGMGR_NMGR_OP_UPLOAD] = {
-        .nh_read = imgr_noop,
+        .nh_read = NULL,
         .nh_write = imgr_upload
     },
     [IMGMGR_NMGR_OP_BOOT] = {
-        .nh_read = imgr_noop,
-        .nh_write = imgr_noop
+        .nh_read = NULL,
+        .nh_write = NULL
     },
     [IMGMGR_NMGR_OP_FILE] = {
 #if MYNEWT_VAL(IMGMGR_FS)
         .nh_read = imgr_file_download,
         .nh_write = imgr_file_upload
 #else
-        .nh_read = imgr_noop,
-        .nh_write = imgr_noop
+        .nh_read = NULL,
+        .nh_write = NULL
 #endif
     },
     [IMGMGR_NMGR_OP_LIST2] = {
         .nh_read = imgr_list2,
-        .nh_write = imgr_noop
+        .nh_write = NULL
     },
     [IMGMGR_NMGR_OP_BOOT2] = {
         .nh_read = imgr_boot2_read,
@@ -71,10 +70,10 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .nh_read = imgr_core_list,
-        .nh_write = imgr_noop,
+        .nh_write = NULL
 #else
-        .nh_read = imgr_noop,
-        .nh_write = imgr_noop
+        .nh_read = NULL,
+        .nh_write = NULL
 #endif
     },
     [IMGMGR_NMGR_OP_CORELOAD] = {
@@ -82,8 +81,8 @@ static const struct nmgr_handler imgr_nmgr_handlers[] = {
         .nh_read = imgr_core_load,
         .nh_write = imgr_core_erase,
 #else
-        .nh_read = imgr_noop,
-        .nh_write = imgr_noop
+        .nh_read = NULL,
+        .nh_write = NULL
 #endif
     }
 };
@@ -275,12 +274,6 @@ imgr_list2(struct nmgr_jbuf *njb)
     json_encode_array_finish(enc);
     json_encode_object_finish(enc);
 
-    return 0;
-}
-
-static int
-imgr_noop(struct nmgr_jbuf *njb)
-{
     return 0;
 }
 
