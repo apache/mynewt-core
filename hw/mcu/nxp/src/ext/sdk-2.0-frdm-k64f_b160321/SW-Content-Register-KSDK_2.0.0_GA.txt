@@ -1,0 +1,161 @@
+Release Name: KSDK_2.0.0_GA
+Kinetis Software Development Kit (SDK) Package - Kinetis SDK
+
+KSDK Peripheral Drivers    Description: Peripheral drivers are designed for t
+                           he most common use cases identified for the underl
+                           ying hardware block.
+                           Author: Freescale
+                           version: 2.x.x
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           Location: devices/<device_name>/drivers
+
+CMSIS Core header files    Description: Industry-standard header files distri
+                           butes by ARM for cortex-M cores
+                           Author: ARM
+                           version: 4.3 (CMSIS Download 4.5)
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           URL: http://silver.arm.com
+                           Location: CMSIS/Include
+
+CMSIS Driver header files  Description: Industry-standard header files distri
+                           butes by ARM for cortex-M cores containing Driver
+                           definitions
+                           Author: ARM
+                           version: 4.3 (CMSIS Download 4.5)
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           URL: http://silver.arm.com
+                           Location: CMSIS/Driver/Include
+
+CMSIS DSP Library          Description: A digital signal processing library f
+                           or Cortex-M cores from ARM
+                           Author: ARM
+                           version: 1.4.5 (CMSIS download 4.5)
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           URL: http://silver.arm.com
+                           Location: CMSIS/DSP_Lib
+
+FreeRTOS(tm)               Description: A real-time operating system(RTOS) fr
+                           om Real Time Engineers, Ltd.
+                           Author: Real Time Engineers, Ltd.
+                           version: 8.2.3
+                           License: Modified GPLv2. See rtos/freertos/License
+                           /license.txt.
+                           Format: source code
+                           URL: http://www.freertos.org
+                           Location: rtos/freertos_8.2.3
+
+uC/OS-II(R)                Description: A real-time operating system(RTOS) fr
+                           om Micrium
+                           Author: Micrium, Inc.
+                           version: 2.92.11
+                           License: Proprietary. See LA_OPT_Base_License.htm,
+                            Appendix A, Micrium.
+                           Format: source code
+                           URL: http://micrium.com
+                           Location: rtos/ucosii_2.92.11
+
+uC/OS-III(R)               Description: A real-time operating system(RTOS) fr
+                           om Micrium
+                           Author: Micrium, Inc.
+                           version: 3.05.01
+                           License: Proprietary. See LA_OPT_Base_License.htm,
+                            Appendix A, Micrium.
+                           Format: source code
+                           URL: http://micrium.com
+                           Location: rtos/ucosiii_3.05.01
+
+SD MMC Card middleware     Description: A software componnet support SD card,
+                            eMMC card.
+                           Author: Freescale
+                           version: 2.0.0
+                           License: Open Source - BSC-3-Clause
+                           Format: source code
+                           Location: middleware/sdmmc_2.0.0
+
+MBED TLS stack             Description: Cryptographic and SSL/TLS Library
+                           Author: ARM
+                           version: 2.1.2
+                           License: Apache-2-Clause
+                           Format: source code
+                           URL: https://tls.mbed.org/
+                           Location: middleware/mbedtls_2.1.2
+
+DMA Manager                Description: A software component used for manage
+                           on-chip DMA channel resources.
+                           Author: Freescale
+                           version: 2.0.0
+                           License: Open Source - BSC-3-Clause
+                           Format: source code
+                           Location: middleware/dma_manager_2.0.0
+
+USB                        Description: Freescale USB stack. This is a versio
+                           n of the USB stack that has been integrated with t
+                           he Kinetis SDK.
+                           Author: Freescale
+                           version: 1.0.0
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           Location: middleware/usb_1.0.0
+
+ISSDK                      Description: Freescale IoT Sensing SDK. It combines
+                           a set of robust Sensor Drivers and Algorithms along
+                           with example applications for standard kits.
+                           Author: Freescale
+                           version: 1.0
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           Location: middleware/issdk_1.0
+
+lwIP TCP/IP Stack          Description: A light-weight TCP/IP stack
+                           Author: Swedish Institute of Computer Science
+                           version: 1.4.1
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           URL: http://savannah.nongnu.org/projects/lwip
+                           Location: middleware/lwip_1.4.1
+
+wolfSSL                    Description: wolfSSL is cryptography and SSL/TLS l
+                           ibrary
+                           Author: wolfSSL Inc.
+                           version: 3.6.8
+                           License: 3rd party evaluation. See middleware/wolf
+                           ssl_3.6.8/wolfSSL_cyaSSL_evaluation_license_agreem
+                           ent.pdf
+                           Format: source code
+                           URL: https://www.wolfssl.com
+                           Location: middleware/wolfssl_3.6.8
+
+mmCAU S/W Library          Description: S/W library that works with the memor
+                           y-mapped cryptographic acceleration unit present o
+                           n some Kinetis SoCs
+                           Author: Freescale
+                           version: 2.0.0
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           Location: middleware/mmcau_2.0.0
+
+EMV L1 stack               Description: The EMV (Europay-MasterCard-Visa) L1
+                           stack which complies to EMV_v4.3_Book_1 specificat
+                           ion.
+                           Author: Freescale
+                           version: 2.0.0
+                           License: Open Source - BSD-3-Clause
+                           Format: source code
+                           Location: middleware/emv_2.0.0
+
+
+FatFs                      Description: FatFs is a generic FAT file system mo
+                           dule for small embedded systems.
+                           Author: Electronic Lives Mfg. by ChaN of Ageo city
+                           , Japan (hobbyist)
+                           version: 0.11a
+                           License: Open Source - FatFs License, middleware/f
+                           atfs/doc/en/appnote.html
+                           Format: source code
+                           URL: http://elm-chan.org/fsw/ff/00index_e.html
+                           Approved Open Source License: Yes
+                           Location: middleware/fatfs_0.11a
