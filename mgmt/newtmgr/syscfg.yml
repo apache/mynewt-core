@@ -1,4 +1,4 @@
-# Package: libs/newtmgr
+# Package: mgmt/newtmgr
 
 syscfg.defs:
     NEWTMGR_TASK_PRIO:

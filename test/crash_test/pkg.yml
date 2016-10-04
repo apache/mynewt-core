@@ -30,7 +30,6 @@ pkg.req_apis.CRASH_TEST_NEWTMGR:
     - newtmgr
 
 pkg.deps.CRASH_TEST_NEWTMGR:
-    - libs/newtmgr
     - encoding/json
 
 pkg.init_function: crash_test_init

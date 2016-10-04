@@ -17,17 +17,14 @@
 # under the License.
 #
 
-pkg.name: libs/newtmgr/transport/ble
-pkg.description: BLE transport newtmgr functionality.
+pkg.name: mgmt/mgmt
+pkg.description: System-wide management interfaces.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - ble
-    - bluetooth
 
 pkg.deps:
     - kernel/os
-    - net/nimble/host
 
-pkg.init_function: newtmgr_ble_pkg_init
-pkg.init_stage: 5
+pkg.apis:
+    - newtmgr

@@ -33,6 +33,6 @@ pkg.deps:
     - net/nimble/transport/ram
     - sys/console/full
     - libc/baselibc
-    - libs/newtmgr
-    - libs/newtmgr/transport/ble
+    - mgmt/newtmgr
+    - mgmt/newtmgr/transport/ble
     - net/nimble/host/services/bleuart
