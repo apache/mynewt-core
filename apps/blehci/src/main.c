@@ -17,6 +17,7 @@
  * under the License.
  */
 #include <assert.h>
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 
 int

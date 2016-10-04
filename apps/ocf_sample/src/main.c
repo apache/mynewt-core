@@ -17,13 +17,13 @@
  * under the License.
  */
 #include <assert.h>
+#include "sysinit/sysinit.h"
 #include <os/os.h>
 #include <sysinit/sysinit.h>
 #include <bsp/bsp.h>
 #include <log/log.h>
 #include <hal/hal_cputime.h>
 #include <oic/oc_api.h>
-
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 #include <console/console.h>
 #include <console/prompt.h>

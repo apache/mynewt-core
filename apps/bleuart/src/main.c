@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
 #include "bsp/bsp.h"

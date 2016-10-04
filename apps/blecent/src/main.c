@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include "syscfg/syscfg.h"
+#include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
 

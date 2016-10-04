@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"

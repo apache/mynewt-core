@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "syscfg/syscfg.h"
+#include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
 #include "log/log.h"
 #include "stats/stats.h"
