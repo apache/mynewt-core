@@ -26,6 +26,7 @@ extern "C" {
 
 #include <inttypes.h>
 
+
 /*
  * Function prototype for UART driver to ask for more data to send.
  * Returns -1 if no more data is available for TX.
