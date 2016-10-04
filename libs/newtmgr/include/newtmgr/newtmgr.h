@@ -85,7 +85,7 @@ struct nmgr_jbuf {
     uint16_t njb_off;
     uint16_t njb_end;
 };
-int nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode);
+void nmgr_jbuf_setoerr(struct nmgr_jbuf *njb, int errcode);
 
 typedef int (*nmgr_handler_func_t)(struct nmgr_jbuf *);
 
