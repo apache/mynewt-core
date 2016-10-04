@@ -39,4 +39,4 @@ pkg.req_apis.CONFIG_NEWTMGR:
     - newtmgr
 
 pkg.init_function: config_pkg_init
-pkg.init_stage: 5
+pkg.init_stage: 3
