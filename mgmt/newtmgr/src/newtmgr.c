@@ -40,6 +40,8 @@ static struct os_task g_nmgr_task;
  */
 static struct nmgr_jbuf {
     struct mgmt_jbuf n_b;
+    struct os_mbuf *n_in_m;
+    struct os_mbuf *n_out_m;
     struct nmgr_hdr *n_hdr;
     uint16_t n_off;
     uint16_t n_end;
@@ -75,7 +77,7 @@ nmgr_jbuf_read_next(struct json_buffer *jb)
         return '\0';
     }
 
-    rc = os_mbuf_copydata(njb->n_b.mjb_in_m, njb->n_off, 1, &c);
+    rc = os_mbuf_copydata(njb->n_in_m, njb->n_off, 1, &c);
     if (rc == -1) {
         c = '\0';
     }
@@ -98,7 +100,7 @@ nmgr_jbuf_read_prev(struct json_buffer *jb)
     }
 
     --njb->n_off;
-    rc = os_mbuf_copydata(njb->n_b.mjb_in_m, njb->n_off, 1, &c);
+    rc = os_mbuf_copydata(njb->n_in_m, njb->n_off, 1, &c);
     if (rc == -1) {
         c = '\0';
     }
@@ -119,7 +121,7 @@ nmgr_jbuf_readn(struct json_buffer *jb, char *buf, int size)
     left = njb->n_end - njb->n_off;
     read = size > left ? left : size;
 
-    rc = os_mbuf_copydata(njb->n_b.mjb_in_m, njb->n_off, read, buf);
+    rc = os_mbuf_copydata(njb->n_in_m, njb->n_off, read, buf);
     if (rc != 0) {
         goto err;
     }
@@ -137,7 +139,7 @@ nmgr_jbuf_write(void *arg, char *data, int len)
 
     njb = (struct nmgr_jbuf *) arg;
 
-    rc = nmgr_rsp_extend(njb->n_hdr, njb->n_b.mjb_out_m, data, len);
+    rc = nmgr_rsp_extend(njb->n_hdr, njb->n_out_m, data, len);
     if (rc != 0) {
         assert(0);
         goto err;
@@ -169,7 +171,7 @@ static void
 nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m,
         uint16_t off, uint16_t len)
 {
-    njb->n_b.mjb_in_m = m;
+    njb->n_in_m = m;
     njb->n_off = off;
     njb->n_end = off + len;
 }
@@ -178,8 +180,8 @@ static void
 nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr,
         struct os_mbuf *m)
 {
-    njb->n_b.mjb_out_m = m;
     njb->n_b.mjb_enc.je_wr_commas = 0;
+    njb->n_out_m = m;
     njb->n_hdr = hdr;
 }
 
@@ -217,7 +219,7 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
     mgmt_jbuf_setoerr(&nmgr_task_jbuf.n_b, rc);
     hdr->nh_len = htons(hdr->nh_len);
     hdr->nh_flags = NMGR_F_JSON_RSP_COMPLETE;
-    nt->nt_output(nt, nmgr_task_jbuf.n_b.mjb_out_m);
+    nt->nt_output(nt, nmgr_task_jbuf.n_out_m);
 }
 
 static int
