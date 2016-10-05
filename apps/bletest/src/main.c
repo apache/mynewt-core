@@ -617,7 +617,7 @@ bletest_get_packet(void)
     struct os_mbuf *om;
 
     om = NULL;
-    if (g_mbuf_pool.omp_pool->mp_num_free >= 5) {
+    if (os_msys_num_free() >= 5) {
         om = os_msys_get_pkthdr(BLE_MBUF_PAYLOAD_SIZE,
                                 sizeof(struct ble_mbuf_hdr));
     }
@@ -630,7 +630,7 @@ bletest_execute_advertiser(void)
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
-#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
     uint16_t mask;
     uint16_t reply_handle;
 #endif
