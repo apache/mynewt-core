@@ -29,8 +29,8 @@ pkg.deps:
     - libs/util
 pkg.deps.STATS_CLI:
     - sys/shell
-pkg.req_apis.STATS_NEWTMGR:
-    - newtmgr
+pkg.deps.STATS_NEWTMGR:
+    - mgmt/mgmt
 
 pkg.init_function: stats_module_init
 pkg.init_stage: 0

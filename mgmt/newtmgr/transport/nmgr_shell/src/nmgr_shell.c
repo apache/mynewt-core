@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include <shell/shell.h>
+#include <mgmt/mgmt.h>
 #include <newtmgr/newtmgr.h>
 
 static struct nmgr_transport nmgr_shell_transport;
@@ -27,7 +28,7 @@ static struct nmgr_transport nmgr_shell_transport;
 static uint16_t
 nmgr_shell_get_mtu(struct os_mbuf *m)
 {
-    return NMGR_MAX_MTU;
+    return MGMT_MAX_MTU;
 }
 
 static int

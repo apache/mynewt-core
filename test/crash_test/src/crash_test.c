@@ -32,7 +32,7 @@
 #include "shell/shell.h"
 #endif
 #if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 #endif
 
 int
@@ -66,6 +66,6 @@ crash_test_init(void)
     shell_cmd_register(&crash_cmd_struct);
 #endif
 #if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
-    nmgr_group_register(&crash_test_nmgr_group);
+    mgmt_group_register(&crash_test_nmgr_group);
 #endif
 }

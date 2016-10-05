@@ -26,8 +26,8 @@ pkg.deps.CRASH_TEST_CLI:
     - sys/shell
 pkg.req_apis.CRASH_TEST_CLI:
     - console
-pkg.req_apis.CRASH_TEST_NEWTMGR:
-    - newtmgr
+pkg.deps.CRASH_TEST_NEWTMGR:
+    - mgmt/mgmt
 
 pkg.deps.CRASH_TEST_NEWTMGR:
     - encoding/json

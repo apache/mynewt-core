@@ -25,7 +25,7 @@
 
 #if MYNEWT_VAL(LOG_NEWTMGR)
 
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 #include "json/json.h"
 #include "log/log.h"
 
@@ -33,18 +33,18 @@
  * this file is compiled out for code size.
  */
 
-static int log_nmgr_read(struct nmgr_jbuf *njb);
-static int log_nmgr_clear(struct nmgr_jbuf *njb);
-static int log_nmgr_module_list(struct nmgr_jbuf *njb);
-static int log_nmgr_level_list(struct nmgr_jbuf *njb);
-static int log_nmgr_logs_list(struct nmgr_jbuf *njb);
-static struct nmgr_group log_nmgr_group;
+static int log_nmgr_read(struct mgmt_jbuf *njb);
+static int log_nmgr_clear(struct mgmt_jbuf *njb);
+static int log_nmgr_module_list(struct mgmt_jbuf *njb);
+static int log_nmgr_level_list(struct mgmt_jbuf *njb);
+static int log_nmgr_logs_list(struct mgmt_jbuf *njb);
+static struct mgmt_group log_nmgr_group;
 
 
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
  */
-static struct nmgr_handler log_nmgr_group_handlers[] = {
+static struct mgmt_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_READ] = {log_nmgr_read, log_nmgr_read},
     [LOGS_NMGR_OP_CLEAR] = {log_nmgr_clear, log_nmgr_clear},
     [LOGS_NMGR_OP_MODULE_LIST] = {log_nmgr_module_list, NULL},
@@ -108,7 +108,7 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
                 sizeof(STR(UINT32_MAX)) + sizeof(",index:")  +
                 sizeof(STR(UINT16_MAX)) + sizeof(",module:}"));
 
-    if (rsp_len > NMGR_MAX_MTU) {
+    if (rsp_len > MGMT_MAX_MTU) {
         rc = OS_ENOMEM;
         goto err;
     }
@@ -173,7 +173,7 @@ log_encode_entries(struct log *log, struct json_encoder *encoder,
     rsp_len += (sizeof("entries") + 3);
     rsp_len += encode_off.rsp_len;
 
-    if (rsp_len > NMGR_MAX_MTU) {
+    if (rsp_len > MGMT_MAX_MTU) {
         rc = OS_ENOMEM;
         goto err;
     }
@@ -225,7 +225,7 @@ log_encode(struct log *log, struct json_encoder *encoder,
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_read(struct nmgr_jbuf *njb)
+log_nmgr_read(struct mgmt_jbuf *njb)
 {
     struct log *log;
     int rc;
@@ -258,12 +258,12 @@ log_nmgr_read(struct nmgr_jbuf *njb)
         }
     };
 
-    rc = json_read_object(&njb->njb_buf, attr);
+    rc = json_read_object(&njb->mjb_buf, attr);
     if (rc) {
         return rc;
     }
 
-    encoder = (struct json_encoder *) &njb->njb_enc;
+    encoder = (struct json_encoder *) &njb->mjb_enc;
 
     json_encode_object_start(encoder);
     json_encode_array_name(encoder, "logs");
@@ -318,17 +318,17 @@ err:
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_module_list(struct nmgr_jbuf *njb)
+log_nmgr_module_list(struct mgmt_jbuf *njb)
 {
     struct json_value jv;
     struct json_encoder *encoder;
     int module;
     char *str;
 
-    encoder = (struct json_encoder *) &njb->njb_enc;
+    encoder = (struct json_encoder *) &njb->mjb_enc;
 
     json_encode_object_start(encoder);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(encoder, "rc", &jv);
     json_encode_object_key(encoder, "module_map");
     json_encode_object_start(encoder);
@@ -360,16 +360,16 @@ log_nmgr_module_list(struct nmgr_jbuf *njb)
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_logs_list(struct nmgr_jbuf *njb)
+log_nmgr_logs_list(struct mgmt_jbuf *njb)
 {
     struct json_value jv;
     struct json_encoder *encoder;
     struct log *log;
 
-    encoder = (struct json_encoder *) &njb->njb_enc;
+    encoder = (struct json_encoder *) &njb->mjb_enc;
 
     json_encode_object_start(encoder);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(encoder, "rc", &jv);
     json_encode_array_name(encoder, "log_list");
     json_encode_array_start(encoder);
@@ -401,17 +401,17 @@ log_nmgr_logs_list(struct nmgr_jbuf *njb)
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_level_list(struct nmgr_jbuf *njb)
+log_nmgr_level_list(struct mgmt_jbuf *njb)
 {
     struct json_value jv;
     struct json_encoder *encoder;
     int level;
     char *str;
 
-    encoder = (struct json_encoder *) &njb->njb_enc;
+    encoder = (struct json_encoder *) &njb->mjb_enc;
 
     json_encode_object_start(encoder);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(encoder, "rc", &jv);
     json_encode_object_key(encoder, "level_map");
     json_encode_object_start(encoder);
@@ -442,7 +442,7 @@ log_nmgr_level_list(struct nmgr_jbuf *njb)
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_clear(struct nmgr_jbuf *njb)
+log_nmgr_clear(struct mgmt_jbuf *njb)
 {
     struct log *log;
     int rc;
@@ -465,14 +465,14 @@ log_nmgr_clear(struct nmgr_jbuf *njb)
         }
     }
 
-    encoder = (struct json_encoder *) &njb->njb_enc;
+    encoder = (struct json_encoder *) &njb->mjb_enc;
 
     json_encode_object_start(encoder);
     json_encode_object_finish(encoder);
 
     return 0;
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
     return (rc);
 }
 
@@ -485,10 +485,10 @@ log_nmgr_register_group(void)
 {
     int rc;
 
-    NMGR_GROUP_SET_HANDLERS(&log_nmgr_group, log_nmgr_group_handlers);
-    log_nmgr_group.ng_group_id = NMGR_GROUP_ID_LOGS;
+    MGMT_GROUP_SET_HANDLERS(&log_nmgr_group, log_nmgr_group_handlers);
+    log_nmgr_group.mg_group_id = MGMT_GROUP_ID_LOGS;
 
-    rc = nmgr_group_register(&log_nmgr_group);
+    rc = mgmt_group_register(&log_nmgr_group);
     if (rc) {
         goto err;
     }

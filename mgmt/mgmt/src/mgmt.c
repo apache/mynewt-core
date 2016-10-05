@@ -62,7 +62,6 @@ err:
     return (rc);
 }
 
-
 int
 mgmt_group_register(struct mgmt_group *group)
 {
@@ -135,3 +134,15 @@ mgmt_find_handler(uint16_t group_id, uint16_t handler_id)
 err:
     return (NULL);
 }
+
+void
+mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode)
+{
+    struct json_value jv;
+
+    json_encode_object_start(&njb->mjb_enc);
+    JSON_VALUE_INT(&jv, errcode);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
+    json_encode_object_finish(&njb->mjb_enc);
+}
+

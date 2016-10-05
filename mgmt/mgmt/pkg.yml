@@ -25,6 +25,3 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-
-pkg.apis:
-    - newtmgr

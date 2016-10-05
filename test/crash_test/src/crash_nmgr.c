@@ -23,27 +23,27 @@
 
 #include <string.h>
 
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 #include "json/json.h"
 #include "console/console.h"
 
 #include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
-static int crash_test_nmgr_write(struct nmgr_jbuf *);
+static int crash_test_nmgr_write(struct mgmt_jbuf *);
 
-static const struct nmgr_handler crash_test_nmgr_handler[] = {
+static const struct mgmt_handler crash_test_nmgr_handler[] = {
     [0] = { crash_test_nmgr_write, crash_test_nmgr_write }
 };
 
-struct nmgr_group crash_test_nmgr_group = {
-    .ng_handlers = (struct nmgr_handler *)crash_test_nmgr_handler,
-    .ng_handlers_count = 1,
-    .ng_group_id = NMGR_GROUP_ID_CRASH
+struct mgmt_group crash_test_nmgr_group = {
+    .mg_handlers = (struct mgmt_handler *)crash_test_nmgr_handler,
+    .mg_handlers_count = 1,
+    .mg_group_id = MGMT_GROUP_ID_CRASH
 };
 
 static int
-crash_test_nmgr_write(struct nmgr_jbuf *njb)
+crash_test_nmgr_write(struct mgmt_jbuf *njb)
 {
     char tmp_str[64];
     const struct json_attr_t attr[2] = {
@@ -59,16 +59,16 @@ crash_test_nmgr_write(struct nmgr_jbuf *njb)
     };
     int rc;
 
-    rc = json_read_object(&njb->njb_buf, attr);
+    rc = json_read_object(&njb->mjb_buf, attr);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
     } else {
         rc = crash_device(tmp_str);
         if (rc) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
         }
     }
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
     return 0;
 }
 

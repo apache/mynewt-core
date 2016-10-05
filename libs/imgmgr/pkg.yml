@@ -26,9 +26,7 @@ pkg.keywords:
 pkg.deps:
     - boot/bootutil
     - encoding/base64
-
-pkg.req_apis:
-    - newtmgr
+    - mgmt/mgmt
 
 pkg.deps.IMGMGR_FS:
     - fs/fs

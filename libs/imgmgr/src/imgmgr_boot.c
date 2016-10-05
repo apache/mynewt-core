@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <newtmgr/newtmgr.h>
+#include <mgmt/mgmt.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
 #include <json/json.h>
@@ -46,7 +46,7 @@ imgr_hash_jsonstr(struct json_encoder *enc, char *key, uint8_t *hash)
 }
 
 int
-imgr_boot2_read(struct nmgr_jbuf *njb)
+imgr_boot2_read(struct mgmt_jbuf *njb)
 {
     int rc;
     struct json_encoder *enc;
@@ -55,7 +55,7 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
     uint8_t hash[IMGMGR_HASH_LEN];
     int slot;
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
 
@@ -80,7 +80,7 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
         imgr_hash_jsonstr(enc, "active", hash);
     }
 
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(enc, "rc", &jv);
 
     json_encode_object_finish(enc);
@@ -89,7 +89,7 @@ imgr_boot2_read(struct nmgr_jbuf *njb)
 }
 
 int
-imgr_boot2_write(struct nmgr_jbuf *njb)
+imgr_boot2_write(struct mgmt_jbuf *njb)
 {
     char hash_str[IMGMGR_HASH_STR + 1];
     uint8_t hash[IMGMGR_HASH_LEN];
@@ -109,9 +109,9 @@ imgr_boot2_write(struct nmgr_jbuf *njb)
     int rc;
     struct image_version ver;
 
-    rc = json_read_object(&njb->njb_buf, boot_write_attr);
+    rc = json_read_object(&njb->mjb_buf, boot_write_attr);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
@@ -120,28 +120,28 @@ imgr_boot2_write(struct nmgr_jbuf *njb)
     if (rc >= 0) {
         rc = boot_vect_write_test(rc);
         if (rc) {
-            rc = NMGR_ERR_EUNKNOWN;
+            rc = MGMT_ERR_EUNKNOWN;
             goto err;
         }
         rc = 0;
     } else {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
 
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
 
     json_encode_object_finish(enc);
 
     return 0;
 
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
 
     return 0;
 }

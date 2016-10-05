@@ -25,7 +25,7 @@
 
 #include <hal/hal_system.h>
 
-#include <newtmgr/newtmgr.h>
+#include <mgmt/mgmt.h>
 
 #include <console/console.h>
 #include <util/datetime.h>
@@ -35,15 +35,15 @@
 
 static struct os_callout_func nmgr_reset_callout;
 
-static int nmgr_def_echo(struct nmgr_jbuf *);
-static int nmgr_def_console_echo(struct nmgr_jbuf *);
-static int nmgr_def_taskstat_read(struct nmgr_jbuf *njb);
-static int nmgr_def_mpstat_read(struct nmgr_jbuf *njb);
-static int nmgr_datetime_get(struct nmgr_jbuf *njb);
-static int nmgr_datetime_set(struct nmgr_jbuf *njb);
-static int nmgr_reset(struct nmgr_jbuf *njb);
+static int nmgr_def_echo(struct mgmt_jbuf *);
+static int nmgr_def_console_echo(struct mgmt_jbuf *);
+static int nmgr_def_taskstat_read(struct mgmt_jbuf *njb);
+static int nmgr_def_mpstat_read(struct mgmt_jbuf *njb);
+static int nmgr_datetime_get(struct mgmt_jbuf *njb);
+static int nmgr_datetime_set(struct mgmt_jbuf *njb);
+static int nmgr_reset(struct mgmt_jbuf *njb);
 
-static const struct nmgr_handler nmgr_def_group_handlers[] = {
+static const struct mgmt_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_ECHO] = {
         nmgr_def_echo, nmgr_def_echo
     },
@@ -67,14 +67,14 @@ static const struct nmgr_handler nmgr_def_group_handlers[] = {
 #define NMGR_DEF_GROUP_SZ                                               \
     (sizeof(nmgr_def_group_handlers) / sizeof(nmgr_def_group_handlers[0]))
 
-static struct nmgr_group nmgr_def_group = {
-    .ng_handlers = (struct nmgr_handler *)nmgr_def_group_handlers,
-    .ng_handlers_count = NMGR_DEF_GROUP_SZ,
-    .ng_group_id = NMGR_GROUP_ID_DEFAULT
+static struct mgmt_group nmgr_def_group = {
+    .mg_handlers = (struct mgmt_handler *)nmgr_def_group_handlers,
+    .mg_handlers_count = NMGR_DEF_GROUP_SZ,
+    .mg_group_id = MGMT_GROUP_ID_DEFAULT
 };
 
 static int
-nmgr_def_echo(struct nmgr_jbuf *njb)
+nmgr_def_echo(struct mgmt_jbuf *njb)
 {
     uint8_t echo_buf[128];
     struct json_attr_t attrs[] = {
@@ -90,10 +90,10 @@ nmgr_def_echo(struct nmgr_jbuf *njb)
         goto err;
     }
 
-    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_start(&njb->mjb_enc);
     JSON_VALUE_STRINGN(&jv, (char *) echo_buf, strlen((char *) echo_buf));
-    json_encode_object_entry(&njb->njb_enc, "r", &jv);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_entry(&njb->mjb_enc, "r", &jv);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return (0);
 err:
@@ -101,7 +101,7 @@ err:
 }
 
 static int
-nmgr_def_console_echo(struct nmgr_jbuf *njb)
+nmgr_def_console_echo(struct mgmt_jbuf *njb)
 {
     long long int echo_on = 1;
     int rc;
@@ -117,7 +117,7 @@ nmgr_def_console_echo(struct nmgr_jbuf *njb)
         }
     };
 
-    rc = json_read_object(&njb->njb_buf, attrs);
+    rc = json_read_object(&njb->mjb_buf, attrs);
     if (rc) {
         return OS_EINVAL;
     }
@@ -131,18 +131,18 @@ nmgr_def_console_echo(struct nmgr_jbuf *njb)
 }
 
 static int
-nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
+nmgr_def_taskstat_read(struct mgmt_jbuf *njb)
 {
     struct os_task *prev_task;
     struct os_task_info oti;
     struct json_value jv;
 
-    json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    json_encode_object_start(&njb->mjb_enc);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
 
-    json_encode_object_key(&njb->njb_enc, "tasks");
-    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_key(&njb->mjb_enc, "tasks");
+    json_encode_object_start(&njb->mjb_enc);
 
     prev_task = NULL;
     while (1) {
@@ -151,48 +151,48 @@ nmgr_def_taskstat_read(struct nmgr_jbuf *njb)
             break;
         }
 
-        json_encode_object_key(&njb->njb_enc, oti.oti_name);
+        json_encode_object_key(&njb->mjb_enc, oti.oti_name);
 
-        json_encode_object_start(&njb->njb_enc);
+        json_encode_object_start(&njb->mjb_enc);
         JSON_VALUE_UINT(&jv, oti.oti_prio);
-        json_encode_object_entry(&njb->njb_enc, "prio", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "prio", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_taskid);
-        json_encode_object_entry(&njb->njb_enc, "tid", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "tid", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_state);
-        json_encode_object_entry(&njb->njb_enc, "state", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "state", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_stkusage);
-        json_encode_object_entry(&njb->njb_enc, "stkuse", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "stkuse", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_stksize);
-        json_encode_object_entry(&njb->njb_enc, "stksiz", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "stksiz", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_cswcnt);
-        json_encode_object_entry(&njb->njb_enc, "cswcnt", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "cswcnt", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_runtime);
-        json_encode_object_entry(&njb->njb_enc, "runtime", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "runtime", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_last_checkin);
-        json_encode_object_entry(&njb->njb_enc, "last_checkin", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "last_checkin", &jv);
         JSON_VALUE_UINT(&jv, oti.oti_next_checkin);
-        json_encode_object_entry(&njb->njb_enc, "next_checkin", &jv);
-        json_encode_object_finish(&njb->njb_enc);
+        json_encode_object_entry(&njb->mjb_enc, "next_checkin", &jv);
+        json_encode_object_finish(&njb->mjb_enc);
     }
-    json_encode_object_finish(&njb->njb_enc);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return (0);
 }
 
 static int
-nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
+nmgr_def_mpstat_read(struct mgmt_jbuf *njb)
 {
     struct os_mempool *prev_mp;
     struct os_mempool_info omi;
     struct json_value jv;
 
-    json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    json_encode_object_start(&njb->mjb_enc);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
 
-    json_encode_object_key(&njb->njb_enc, "mpools");
-    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_key(&njb->mjb_enc, "mpools");
+    json_encode_object_start(&njb->mjb_enc);
 
     prev_mp = NULL;
     while (1) {
@@ -201,26 +201,26 @@ nmgr_def_mpstat_read(struct nmgr_jbuf *njb)
             break;
         }
 
-        json_encode_object_key(&njb->njb_enc, omi.omi_name);
+        json_encode_object_key(&njb->mjb_enc, omi.omi_name);
 
-        json_encode_object_start(&njb->njb_enc);
+        json_encode_object_start(&njb->mjb_enc);
         JSON_VALUE_UINT(&jv, omi.omi_block_size);
-        json_encode_object_entry(&njb->njb_enc, "blksiz", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "blksiz", &jv);
         JSON_VALUE_UINT(&jv, omi.omi_num_blocks);
-        json_encode_object_entry(&njb->njb_enc, "nblks", &jv);
+        json_encode_object_entry(&njb->mjb_enc, "nblks", &jv);
         JSON_VALUE_UINT(&jv, omi.omi_num_free);
-        json_encode_object_entry(&njb->njb_enc, "nfree", &jv);
-        json_encode_object_finish(&njb->njb_enc);
+        json_encode_object_entry(&njb->mjb_enc, "nfree", &jv);
+        json_encode_object_finish(&njb->mjb_enc);
     }
 
-    json_encode_object_finish(&njb->njb_enc);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return (0);
 }
 
 static int
-nmgr_datetime_get(struct nmgr_jbuf *njb)
+nmgr_datetime_get(struct mgmt_jbuf *njb)
 {
     struct os_timeval tv;
     struct os_timezone tz;
@@ -228,9 +228,9 @@ nmgr_datetime_get(struct nmgr_jbuf *njb)
     struct json_value jv;
     int rc;
 
-    json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    json_encode_object_start(&njb->mjb_enc);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
 
     /* Display the current datetime */
     rc = os_gettimeofday(&tv, &tz);
@@ -242,8 +242,8 @@ nmgr_datetime_get(struct nmgr_jbuf *njb)
     }
 
     JSON_VALUE_STRING(&jv, buf)
-    json_encode_object_entry(&njb->njb_enc, "datetime", &jv);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_entry(&njb->mjb_enc, "datetime", &jv);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return OS_OK;
 err:
@@ -251,7 +251,7 @@ err:
 }
 
 static int
-nmgr_datetime_set(struct nmgr_jbuf *njb)
+nmgr_datetime_set(struct mgmt_jbuf *njb)
 {
     struct os_timeval tv;
     struct os_timezone tz;
@@ -272,7 +272,7 @@ nmgr_datetime_set(struct nmgr_jbuf *njb)
         }
     };
 
-    rc = json_read_object(&njb->njb_buf, datetime_write_attr);
+    rc = json_read_object(&njb->mjb_buf, datetime_write_attr);
     if (rc) {
         rc = OS_EINVAL;
         goto out;
@@ -292,10 +292,10 @@ nmgr_datetime_set(struct nmgr_jbuf *njb)
     }
 
 out:
-    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_start(&njb->mjb_enc);
     JSON_VALUE_INT(&jv, rc);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
+    json_encode_object_finish(&njb->mjb_enc);
     return OS_OK;
 }
 
@@ -306,12 +306,12 @@ nmgr_reset_tmo(void *arg)
 }
 
 static int
-nmgr_reset(struct nmgr_jbuf *njb)
+nmgr_reset(struct mgmt_jbuf *njb)
 {
     log_reboot(SOFT_REBOOT);
     os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
 
-    nmgr_jbuf_setoerr(njb, 0);
+    mgmt_jbuf_setoerr(njb, 0);
 
     return OS_OK;
 }
@@ -321,6 +321,6 @@ nmgr_os_groups_register(struct os_eventq *nmgr_evq)
 {
     os_callout_func_init(&nmgr_reset_callout, nmgr_evq, nmgr_reset_tmo, NULL);
 
-    return nmgr_group_register(&nmgr_def_group);
+    return mgmt_group_register(&nmgr_def_group);
 }
 

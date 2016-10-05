@@ -29,69 +29,71 @@
 #include "base64/base64.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil_misc.h"
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-static int imgr_list2(struct nmgr_jbuf *);
-static int imgr_upload(struct nmgr_jbuf *);
+static int imgr_list2(struct mgmt_jbuf *);
+static int imgr_upload(struct mgmt_jbuf *);
 
-static const struct nmgr_handler imgr_nmgr_handlers[] = {
+static const struct mgmt_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_LIST] = {
-        .nh_read = NULL,
-        .nh_write = NULL
+        .mh_read = NULL,
+        .mh_write = NULL
     },
     [IMGMGR_NMGR_OP_UPLOAD] = {
-        .nh_read = NULL,
-        .nh_write = imgr_upload
+        .mh_read = NULL,
+        .mh_write = imgr_upload
     },
     [IMGMGR_NMGR_OP_BOOT] = {
-        .nh_read = NULL,
-        .nh_write = NULL
+        .mh_read = NULL,
+        .mh_write = NULL
     },
     [IMGMGR_NMGR_OP_FILE] = {
 #if MYNEWT_VAL(IMGMGR_FS)
-        .nh_read = imgr_file_download,
-        .nh_write = imgr_file_upload
+        .mh_read = imgr_file_download,
+        .mh_write = imgr_file_upload
 #else
-        .nh_read = NULL,
-        .nh_write = NULL
+        .mh_read = NULL,
+        .mh_write = NULL
 #endif
     },
     [IMGMGR_NMGR_OP_LIST2] = {
-        .nh_read = imgr_list2,
-        .nh_write = NULL
+        .mh_read = imgr_list2,
+        .mh_write = NULL
     },
     [IMGMGR_NMGR_OP_BOOT2] = {
-        .nh_read = imgr_boot2_read,
-        .nh_write = imgr_boot2_write
+        .mh_read = imgr_boot2_read,
+        .mh_write = imgr_boot2_write
     },
     [IMGMGR_NMGR_OP_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
-        .nh_read = imgr_core_list,
-        .nh_write = NULL
+        .mh_read = imgr_core_list,
+        .mh_write = NULL
 #else
-        .nh_read = NULL,
-        .nh_write = NULL
+        .mh_read = NULL,
+        .mh_write = NULL
 #endif
     },
     [IMGMGR_NMGR_OP_CORELOAD] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
-        .nh_read = imgr_core_load,
-        .nh_write = imgr_core_erase,
+        .mh_read = imgr_core_load,
+        .mh_write = imgr_core_erase,
 #else
-        .nh_read = NULL,
-        .nh_write = NULL
+        .mh_read = NULL,
+        .mh_write = NULL
 #endif
     }
 };
 
-static struct nmgr_group imgr_nmgr_group = {
-    .ng_handlers = (struct nmgr_handler *)imgr_nmgr_handlers,
-    .ng_handlers_count =
-    sizeof(imgr_nmgr_handlers) / sizeof(imgr_nmgr_handlers[0]),
-    .ng_group_id = NMGR_GROUP_ID_IMAGE,
+#define IMGR_HANDLER_CNT                                                \
+    sizeof(imgr_nmgr_handlers) / sizeof(imgr_nmgr_handlers[0])
+
+static struct mgmt_group imgr_nmgr_group = {
+    .mg_handlers = (struct mgmt_handler *)imgr_nmgr_handlers,
+    .mg_handlers_count = IMGR_HANDLER_CNT,
+    .mg_group_id = MGMT_GROUP_ID_IMAGE,
 };
 
 struct imgr_state imgr_state;
@@ -230,7 +232,7 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
 }
 
 static int
-imgr_list2(struct nmgr_jbuf *njb)
+imgr_list2(struct mgmt_jbuf *njb)
 {
     struct json_encoder *enc;
     int i;
@@ -243,7 +245,7 @@ imgr_list2(struct nmgr_jbuf *njb)
     char hash_str[IMGMGR_HASH_STR + 1];
     int ver_len;
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
     json_encode_array_name(enc, "images");
@@ -278,7 +280,7 @@ imgr_list2(struct nmgr_jbuf *njb)
 }
 
 static int
-imgr_upload(struct nmgr_jbuf *njb)
+imgr_upload(struct mgmt_jbuf *njb)
 {
     char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
     long long unsigned int off = UINT_MAX;
@@ -313,16 +315,16 @@ imgr_upload(struct nmgr_jbuf *njb)
     int len;
     int i;
 
-    rc = json_read_object(&njb->njb_buf, off_attr);
+    rc = json_read_object(&njb->mjb_buf, off_attr);
     if (rc || off == UINT_MAX) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
     len = strlen(img_data);
     if (len) {
         len = base64_decode(img_data, img_data);
         if (len < 0) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err;
         }
     }
@@ -332,12 +334,12 @@ imgr_upload(struct nmgr_jbuf *njb)
             /*
              * Image header is the first thing in the image.
              */
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err;
         }
         hdr = (struct image_header *)img_data;
         if (hdr->ih_magic != IMAGE_MAGIC) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err;
         }
 
@@ -382,11 +384,11 @@ imgr_upload(struct nmgr_jbuf *njb)
             }
             rc = flash_area_open(best, &imgr_state.upload.fa);
             if (rc) {
-                rc = NMGR_ERR_EINVAL;
+                rc = MGMT_ERR_EINVAL;
                 goto err;
             }
 	    if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
-                rc = NMGR_ERR_EINVAL;
+                rc = MGMT_ERR_EINVAL;
                 goto err;
             }
             /*
@@ -398,7 +400,7 @@ imgr_upload(struct nmgr_jbuf *njb)
             /*
              * No slot where to upload!
              */
-            rc = NMGR_ERR_ENOMEM;
+            rc = MGMT_ERR_ENOMEM;
             goto err;
         }
     } else if (off != imgr_state.upload.off) {
@@ -410,14 +412,14 @@ imgr_upload(struct nmgr_jbuf *njb)
     }
 
     if (!imgr_state.upload.fa) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
     if (len) {
         rc = flash_area_write(imgr_state.upload.fa, imgr_state.upload.off,
           img_data, len);
         if (rc) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err_close;
         }
         imgr_state.upload.off += len;
@@ -428,11 +430,11 @@ imgr_upload(struct nmgr_jbuf *njb)
         }
     }
 out:
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
 
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(enc, "rc", &jv);
 
     JSON_VALUE_UINT(&jv, imgr_state.upload.off);
@@ -445,7 +447,7 @@ err_close:
     flash_area_close(imgr_state.upload.fa);
     imgr_state.upload.fa = NULL;
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
     return 0;
 }
 
@@ -454,7 +456,7 @@ imgmgr_module_init(void)
 {
     int rc;
 
-    rc = nmgr_group_register(&imgr_nmgr_group);
+    rc = mgmt_group_register(&imgr_nmgr_group);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
 #if MYNEWT_VAL(IMGMGR_CLI)

@@ -101,15 +101,15 @@ struct imgr_state {
 extern struct imgr_state imgr_state;
 
 struct nmgr_jbuf;
-int imgr_boot2_read(struct nmgr_jbuf *);
-int imgr_boot2_write(struct nmgr_jbuf *);
-int imgr_file_upload(struct nmgr_jbuf *);
-int imgr_file_download(struct nmgr_jbuf *);
-int imgr_core_list(struct nmgr_jbuf *);
-int imgr_core_load(struct nmgr_jbuf *);
-int imgr_core_erase(struct nmgr_jbuf *);
-int imgr_splitapp_read(struct nmgr_jbuf *);
-int imgr_splitapp_write(struct nmgr_jbuf *);
+int imgr_boot2_read(struct mgmt_jbuf *);
+int imgr_boot2_write(struct mgmt_jbuf *);
+int imgr_file_upload(struct mgmt_jbuf *);
+int imgr_file_download(struct mgmt_jbuf *);
+int imgr_core_list(struct mgmt_jbuf *);
+int imgr_core_load(struct mgmt_jbuf *);
+int imgr_core_erase(struct mgmt_jbuf *);
+int imgr_splitapp_read(struct mgmt_jbuf *);
+int imgr_splitapp_write(struct mgmt_jbuf *);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
 int imgr_cli_register(void);

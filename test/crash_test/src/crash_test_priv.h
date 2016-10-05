@@ -27,7 +27,7 @@ extern "C" {
 extern struct shell_cmd crash_cmd_struct;
 #endif
 #if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
-extern struct nmgr_group crash_test_nmgr_group;
+extern struct mgmt_group crash_test_nmgr_group;
 #endif
 
 int crash_device(char *how);

@@ -23,6 +23,21 @@
 #include <inttypes.h>
 #include <json/json.h>
 
+#include <os/queue.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* MTU for newtmgr responses */
+#define MGMT_MAX_MTU 1024
+
+#ifndef STR
+/* Stringification of constants */
+#define STR(x) #x
+#endif
+
+
 /* First 64 groups are reserved for system level newtmgr commands.
  * Per-user commands are then defined after group 64.
  */
@@ -34,6 +49,17 @@
 #define MGMT_GROUP_ID_CRASH     (5)
 #define MGMT_GROUP_ID_SPLIT     (6)
 #define MGMT_GROUP_ID_PERUSER   (64)
+
+/**
+ * Newtmgr JSON error codes
+ */
+#define MGMT_ERR_EOK      (0)
+#define MGMT_ERR_EUNKNOWN (1)
+#define MGMT_ERR_ENOMEM   (2)
+#define MGMT_ERR_EINVAL   (3)
+#define MGMT_ERR_ETIMEOUT (4)
+#define MGMT_ERR_ENOENT   (5)
+#define MGMT_ERR_EPERUSER (256)
 
 struct mgmt_jbuf {
     /* json_buffer must be first element in the structure */
@@ -49,8 +75,8 @@ struct mgmt_jbuf {
 typedef int (*mgmt_handler_func_t)(struct mgmt_jbuf *);
 
 struct mgmt_handler {
-    mgmt_handler_func_t nh_read;
-    mgmt_handler_func_t nh_write;
+    mgmt_handler_func_t mh_read;
+    mgmt_handler_func_t mh_write;
 };
 
 struct mgmt_group {
@@ -59,5 +85,18 @@ struct mgmt_group {
     uint16_t mg_group_id;
     STAILQ_ENTRY(mgmt_group) mg_next;
 };
+
+#define MGMT_GROUP_SET_HANDLERS(__group, __handlers)       \
+    (__group)->mg_handlers = (__handlers);                 \
+    (__group)->mg_handlers_count = (sizeof((__handlers)) / \
+            sizeof(struct mgmt_handler));
+
+int mgmt_group_register(struct mgmt_group *group);
+void mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode);
+struct mgmt_handler *mgmt_find_handler(uint16_t group_id, uint16_t handler_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MGMT_MGMT_H_ */

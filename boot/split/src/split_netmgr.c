@@ -18,40 +18,40 @@
  */
 
 #include <json/json.h>
-#include <newtmgr/newtmgr.h>
+#include <mgmt/mgmt.h>
 #include <bootutil/bootutil_misc.h>
 #include <bootutil/image.h>
 #include <split/split.h>
 #include <split/split_priv.h>
 
 
-static int imgr_splitapp_read(struct nmgr_jbuf *njb);
-static int imgr_splitapp_write(struct nmgr_jbuf *njb);
+static int imgr_splitapp_read(struct mgmt_jbuf *njb);
+static int imgr_splitapp_write(struct mgmt_jbuf *njb);
 
-static const struct nmgr_handler split_nmgr_handlers[] = {
+static const struct mgmt_handler split_nmgr_handlers[] = {
     [SPLIT_NMGR_OP_SPLIT] = {
-        .nh_read = imgr_splitapp_read,
-        .nh_write = imgr_splitapp_write
+        .mh_read = imgr_splitapp_read,
+        .mh_write = imgr_splitapp_write
     },
 };
 
-static struct nmgr_group split_nmgr_group = {
-    .ng_handlers = (struct nmgr_handler *)split_nmgr_handlers,
-    .ng_handlers_count =
+static struct mgmt_group split_nmgr_group = {
+    .mg_handlers = (struct mgmt_handler *)split_nmgr_handlers,
+    .mg_handlers_count =
         sizeof(split_nmgr_handlers) / sizeof(split_nmgr_handlers[0]),
-    .ng_group_id = NMGR_GROUP_ID_SPLIT,
+    .mg_group_id = MGMT_GROUP_ID_SPLIT,
 };
 
 int
 split_nmgr_register(void)
 {
     int rc;
-    rc = nmgr_group_register(&split_nmgr_group);
+    rc = mgmt_group_register(&split_nmgr_group);
     return (rc);
 }
 
 int
-imgr_splitapp_read(struct nmgr_jbuf *njb)
+imgr_splitapp_read(struct mgmt_jbuf *njb)
 {
     int rc;
     int x;
@@ -59,7 +59,7 @@ imgr_splitapp_read(struct nmgr_jbuf *njb)
     struct json_encoder *enc;
     struct json_value jv;
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
 
@@ -76,7 +76,7 @@ imgr_splitapp_read(struct nmgr_jbuf *njb)
     JSON_VALUE_INT(&jv, x)
     json_encode_object_entry(enc, "splitStatus", &jv);
 
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(enc, "rc", &jv);
 
     json_encode_object_finish(enc);
@@ -85,7 +85,7 @@ imgr_splitapp_read(struct nmgr_jbuf *njb)
 }
 
 int
-imgr_splitapp_write(struct nmgr_jbuf *njb)
+imgr_splitapp_write(struct mgmt_jbuf *njb)
 {
     long long int split_mode;
     long long int send_split_status;  /* ignored */
@@ -121,29 +121,29 @@ imgr_splitapp_write(struct nmgr_jbuf *njb)
     struct json_value jv;
     int rc;
 
-    rc = json_read_object(&njb->njb_buf, split_write_attr);
+    rc = json_read_object(&njb->mjb_buf, split_write_attr);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     rc = split_write_split((split_mode_t) split_mode);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
 
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
     json_encode_object_entry(enc, "rc", &jv);
 
     json_encode_object_finish(enc);
 
     return 0;
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
     return 0;
 }

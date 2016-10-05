@@ -25,17 +25,17 @@
 #if MYNEWT_VAL(STATS_NEWTMGR)
 
 #include "os/os.h"
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 #include "json/json.h"
 #include "stats/stats.h"
 
 /* Source code is only included if the newtmgr library is enabled.  Otherwise
  * this file is compiled out for code size.
  */
-static int stats_nmgr_read(struct nmgr_jbuf *njb);
-static int stats_nmgr_list(struct nmgr_jbuf *njb);
+static int stats_nmgr_read(struct mgmt_jbuf *njb);
+static int stats_nmgr_list(struct mgmt_jbuf *njb);
 
-static struct nmgr_group shell_nmgr_group;
+static struct mgmt_group shell_nmgr_group;
 
 #define STATS_NMGR_ID_READ  (0)
 #define STATS_NMGR_ID_LIST  (1)
@@ -43,7 +43,7 @@ static struct nmgr_group shell_nmgr_group;
 /* ORDER MATTERS HERE.
  * Each element represents the command ID, referenced from newtmgr.
  */
-static struct nmgr_handler shell_nmgr_group_handlers[] = {
+static struct mgmt_handler shell_nmgr_group_handlers[] = {
     [STATS_NMGR_ID_READ] = {stats_nmgr_read, stats_nmgr_read},
     [STATS_NMGR_ID_LIST] = {stats_nmgr_list, stats_nmgr_list}
 };
@@ -97,7 +97,7 @@ stats_nmgr_encode_name(struct stats_hdr *hdr, void *arg)
 }
 
 static int
-stats_nmgr_read(struct nmgr_jbuf *njb)
+stats_nmgr_read(struct mgmt_jbuf *njb)
 {
     struct stats_hdr *hdr;
 #define STATS_NMGR_NAME_LEN (32)
@@ -112,49 +112,49 @@ stats_nmgr_read(struct nmgr_jbuf *njb)
 
     rc = json_read_object((struct json_buffer *) njb, attrs);
     if (rc != 0) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     hdr = stats_group_find(stats_name);
     if (!hdr) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
-    json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
+    json_encode_object_start(&njb->mjb_enc);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
     JSON_VALUE_STRINGN(&jv, stats_name, strlen(stats_name));
-    json_encode_object_entry(&njb->njb_enc, "name", &jv);
+    json_encode_object_entry(&njb->mjb_enc, "name", &jv);
     JSON_VALUE_STRINGN(&jv, "sys", sizeof("sys")-1);
-    json_encode_object_entry(&njb->njb_enc, "group", &jv);
-    json_encode_object_key(&njb->njb_enc, "fields");
-    json_encode_object_start(&njb->njb_enc);
-    stats_walk(hdr, stats_nmgr_walk_func, &njb->njb_enc);
-    json_encode_object_finish(&njb->njb_enc);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_entry(&njb->mjb_enc, "group", &jv);
+    json_encode_object_key(&njb->mjb_enc, "fields");
+    json_encode_object_start(&njb->mjb_enc);
+    stats_walk(hdr, stats_nmgr_walk_func, &njb->mjb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return (0);
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
 
     return (0);
 }
 
 static int
-stats_nmgr_list(struct nmgr_jbuf *njb)
+stats_nmgr_list(struct mgmt_jbuf *njb)
 {
     struct json_value jv;
 
-    json_encode_object_start(&njb->njb_enc);
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
-    json_encode_array_name(&njb->njb_enc, "stat_list");
-    json_encode_array_start(&njb->njb_enc);
-    stats_group_walk(stats_nmgr_encode_name, &njb->njb_enc);
-    json_encode_array_finish(&njb->njb_enc);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_start(&njb->mjb_enc);
+    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
+    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
+    json_encode_array_name(&njb->mjb_enc, "stat_list");
+    json_encode_array_start(&njb->mjb_enc);
+    stats_group_walk(stats_nmgr_encode_name, &njb->mjb_enc);
+    json_encode_array_finish(&njb->mjb_enc);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return (0);
 }
@@ -167,10 +167,10 @@ stats_nmgr_register_group(void)
 {
     int rc;
 
-    NMGR_GROUP_SET_HANDLERS(&shell_nmgr_group, shell_nmgr_group_handlers);
-    shell_nmgr_group.ng_group_id = NMGR_GROUP_ID_STATS;
+    MGMT_GROUP_SET_HANDLERS(&shell_nmgr_group, shell_nmgr_group_handlers);
+    shell_nmgr_group.mg_group_id = MGMT_GROUP_ID_STATS;
 
-    rc = nmgr_group_register(&shell_nmgr_group);
+    rc = mgmt_group_register(&shell_nmgr_group);
     if (rc != 0) {
         goto err;
     }

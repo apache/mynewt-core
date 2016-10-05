@@ -24,7 +24,7 @@
 #include <limits.h>
 
 #include "hal/flash_map.h"
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 #include "coredump/coredump.h"
 #include "base64/base64.h"
 
@@ -32,7 +32,7 @@
 #include "imgmgr_priv.h"
 
 int
-imgr_core_list(struct nmgr_jbuf *njb)
+imgr_core_list(struct mgmt_jbuf *njb)
 {
     const struct flash_area *fa;
     struct coredump_header hdr;
@@ -42,19 +42,19 @@ imgr_core_list(struct nmgr_jbuf *njb)
 
     rc = flash_area_open(FLASH_AREA_CORE, &fa);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
     } else {
         rc = flash_area_read(fa, 0, &hdr, sizeof(hdr));
         if (rc != 0) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
         } else if (hdr.ch_magic != COREDUMP_MAGIC) {
-            rc = NMGR_ERR_ENOENT;
+            rc = MGMT_ERR_ENOENT;
         } else {
             rc = 0;
         }
     }
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
     JSON_VALUE_INT(&jv, rc);
@@ -65,7 +65,7 @@ imgr_core_list(struct nmgr_jbuf *njb)
 }
 
 int
-imgr_core_load(struct nmgr_jbuf *njb)
+imgr_core_load(struct mgmt_jbuf *njb)
 {
     unsigned long long off = UINT_MAX;
     const struct json_attr_t dload_attr[2] = {
@@ -86,25 +86,25 @@ imgr_core_load(struct nmgr_jbuf *njb)
 
     hdr = (struct coredump_header *)data;
 
-    rc = json_read_object(&njb->njb_buf, dload_attr);
+    rc = json_read_object(&njb->mjb_buf, dload_attr);
     if (rc || off == UINT_MAX) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     rc = flash_area_open(FLASH_AREA_CORE, &fa);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     rc = flash_area_read(fa, 0, hdr, sizeof(*hdr));
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err_close;
     }
     if (hdr->ch_magic != COREDUMP_MAGIC) {
-        rc = NMGR_ERR_ENOENT;
+        rc = MGMT_ERR_ENOENT;
         goto err_close;
     }
     if (off > hdr->ch_size) {
@@ -117,13 +117,13 @@ imgr_core_load(struct nmgr_jbuf *njb)
 
     rc = flash_area_read(fa, off, data, sz);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err_close;
     }
 
     sz = base64_encode(data, sz, encoded, 1);
 
-    enc = &njb->njb_enc;
+    enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
     JSON_VALUE_INT(&jv, 0);
@@ -142,7 +142,7 @@ imgr_core_load(struct nmgr_jbuf *njb)
 err_close:
     flash_area_close(fa);
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
     return 0;
 }
 
@@ -150,7 +150,7 @@ err:
  * Erase the area if it has a coredump, or the header is empty.
  */
 int
-imgr_core_erase(struct nmgr_jbuf *njb)
+imgr_core_erase(struct mgmt_jbuf *njb)
 {
     struct coredump_header hdr;
     const struct flash_area *fa;
@@ -158,7 +158,7 @@ imgr_core_erase(struct nmgr_jbuf *njb)
 
     rc = flash_area_open(FLASH_AREA_CORE, &fa);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
@@ -167,14 +167,14 @@ imgr_core_erase(struct nmgr_jbuf *njb)
       (hdr.ch_magic == COREDUMP_MAGIC || hdr.ch_magic == 0xffffffff)) {
         rc = flash_area_erase(fa, 0, fa->fa_size);
         if (rc) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
         }
     }
     rc = 0;
 
     flash_area_close(fa);
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_jbuf_setoerr(njb, rc);
     return 0;
 }
 

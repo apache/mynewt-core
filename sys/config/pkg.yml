@@ -30,13 +30,11 @@ pkg.deps.CONFIG_CLI:
     - sys/shell
 pkg.deps.CONFIG_NEWTMGR:
     - encoding/json
+    - mgmt/mgmt
 pkg.deps.CONFIG_FCB:
     - fs/fcb
 pkg.deps.CONFIG_NFFS:
     - fs/nffs
-
-pkg.req_apis.CONFIG_NEWTMGR:
-    - newtmgr
 
 pkg.init_function: config_pkg_init
 pkg.init_stage: 3

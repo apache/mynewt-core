@@ -23,27 +23,27 @@
 
 #include <string.h>
 
-#include "newtmgr/newtmgr.h"
+#include "mgmt/mgmt.h"
 #include "json/json.h"
 
 #include "config/config.h"
 #include "config_priv.h"
 
-static int conf_nmgr_read(struct nmgr_jbuf *);
-static int conf_nmgr_write(struct nmgr_jbuf *);
+static int conf_nmgr_read(struct mgmt_jbuf *);
+static int conf_nmgr_write(struct mgmt_jbuf *);
 
-static const struct nmgr_handler conf_nmgr_handlers[] = {
+static const struct mgmt_handler conf_nmgr_handlers[] = {
     [CONF_NMGR_OP] = { conf_nmgr_read, conf_nmgr_write}
 };
 
-static struct nmgr_group conf_nmgr_group = {
-    .ng_handlers = (struct nmgr_handler *)conf_nmgr_handlers,
-    .ng_handlers_count = 1,
-    .ng_group_id = NMGR_GROUP_ID_CONFIG
+static struct mgmt_group conf_nmgr_group = {
+    .mg_handlers = (struct mgmt_handler *)conf_nmgr_handlers,
+    .mg_handlers_count = 1,
+    .mg_group_id = MGMT_GROUP_ID_CONFIG
 };
 
 static int
-conf_nmgr_read(struct nmgr_jbuf *njb)
+conf_nmgr_read(struct mgmt_jbuf *njb)
 {
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
@@ -63,45 +63,45 @@ conf_nmgr_read(struct nmgr_jbuf *njb)
     };
     struct json_value jv;
 
-    rc = json_read_object(&njb->njb_buf, attr);
+    rc = json_read_object(&njb->mjb_buf, attr);
     if (rc) {
-        return OS_EINVAL;
+        return MGMT_ERR_EINVAL;
     }
 
     val = conf_get_value(name_str, val_str, sizeof(val_str));
     if (!val) {
-        return OS_EINVAL;
+        return MGMT_ERR_EINVAL;
     }
 
-    json_encode_object_start(&njb->njb_enc);
+    json_encode_object_start(&njb->mjb_enc);
     JSON_VALUE_STRING(&jv, val);
-    json_encode_object_entry(&njb->njb_enc, "val", &jv);
-    json_encode_object_finish(&njb->njb_enc);
+    json_encode_object_entry(&njb->mjb_enc, "val", &jv);
+    json_encode_object_finish(&njb->mjb_enc);
 
     return 0;
 }
 
 static int
-conf_nmgr_write(struct nmgr_jbuf *njb)
+conf_nmgr_write(struct mgmt_jbuf *njb)
 {
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
     char val_str[CONF_MAX_VAL_LEN];
 
-    rc = conf_json_line(&njb->njb_buf, name_str, sizeof(name_str), val_str,
+    rc = conf_json_line(&njb->mjb_buf, name_str, sizeof(name_str), val_str,
       sizeof(val_str));
     if (rc) {
-        return OS_EINVAL;
+        return MGMT_ERR_EINVAL;
     }
 
     rc = conf_set_value(name_str, val_str);
     if (rc) {
-        return OS_EINVAL;
+        return MGMT_ERR_EINVAL;
     }
 
     rc = conf_commit(NULL);
     if (rc) {
-        return OS_EINVAL;
+        return MGMT_ERR_EINVAL;
     }
     return 0;
 }
@@ -109,6 +109,6 @@ conf_nmgr_write(struct nmgr_jbuf *njb)
 int
 conf_nmgr_register(void)
 {
-    return nmgr_group_register(&conf_nmgr_group);
+    return mgmt_group_register(&conf_nmgr_group);
 }
 #endif
