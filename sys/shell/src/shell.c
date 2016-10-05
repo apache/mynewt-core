@@ -280,7 +280,7 @@ shell_nlip_mtx(struct os_mbuf *m)
 #define SHELL_NLIP_MTX_BUF_SIZE (12)
     uint8_t readbuf[SHELL_NLIP_MTX_BUF_SIZE];
     char encodebuf[BASE64_ENCODE_SIZE(SHELL_NLIP_MTX_BUF_SIZE)];
-    char pkt_seq[2] = { SHELL_NLIP_PKT_START1, SHELL_NLIP_PKT_START2 };
+    char pkt_seq[3] = { '\n', SHELL_NLIP_PKT_START1, SHELL_NLIP_PKT_START2 };
     char esc_seq[2] = { SHELL_NLIP_DATA_START1, SHELL_NLIP_DATA_START2 };
     uint16_t totlen;
     uint16_t dlen;
