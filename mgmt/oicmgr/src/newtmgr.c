@@ -36,7 +36,7 @@
 #define OICMGR_STACK_SZ	OS_STACK_ALIGN(MYNEWT_VAL(OICMGR_STACK_SIZE))
 
 struct omgr_jbuf {
-    struct mgmt_jbuf ob_m;
+    struct mgmt_jbuf ob_mj;
     char *ob_in;
     uint16_t ob_in_off;
     uint16_t ob_in_end;
@@ -127,7 +127,7 @@ omgr_jbuf_write(void *arg, char *data, int len)
     njb = (struct omgr_jbuf *)arg;
 
     if (njb->ob_out_off + len >= njb->ob_out_end) {
-        assert(0);
+        rc = -1;
         goto err;
     }
     memcpy(njb->ob_out + njb->ob_out_off, data, len);
@@ -146,7 +146,7 @@ omgr_jbuf_init(struct omgr_jbuf *ob)
 
     memset(ob, 0, sizeof(*ob));
 
-    mjb = &ob->ob_m;
+    mjb = &ob->ob_mj;
     mjb->mjb_buf.jb_read_next = omgr_jbuf_read_next;
     mjb->mjb_buf.jb_read_prev = omgr_jbuf_read_prev;
     mjb->mjb_buf.jb_readn = omgr_jbuf_readn;
@@ -169,12 +169,13 @@ omgr_jbuf_setobuf(struct omgr_jbuf *ob, char *ptr, uint16_t maxlen)
     ob->ob_out_off = 0;
     ob->ob_out_end = maxlen;
     ob->ob_out[0] = '\0';
-    ob->ob_m.mjb_enc.je_wr_commas = 0;
+    ob->ob_mj.mjb_enc.je_wr_commas = 0;
 }
 
 static struct mgmt_handler *
 omgr_oic_find_handler(const char *q, int qlen)
 {
+    char id_str[8];
     int grp = -1;
     int id = -1;
     char *str;
@@ -182,16 +183,20 @@ omgr_oic_find_handler(const char *q, int qlen)
     int slen;
 
     slen = oc_ri_get_query_value(q, qlen, "gr", &str);
-    if (slen > 0) {
-        grp = strtoul(str, &eptr, 0);
-        if (*eptr != '\0' && *eptr != '&') {
+    if (slen > 0 && slen < sizeof(id_str) - 1) {
+        memcpy(id_str, str, slen);
+        id_str[slen] = '\0';
+        grp = strtoul(id_str, &eptr, 0);
+        if (*eptr != '\0') {
             return NULL;
         }
     }
     slen = oc_ri_get_query_value(q, qlen, "id", &str);
-    if (slen > 0) {
-        id = strtoul(str, &eptr, 0);
-        if (*eptr != '\0' && *eptr != '&') {
+    if (slen > 0 && slen < sizeof(id_str) - 1) {
+        memcpy(id_str, str, slen);
+        id_str[slen] = '\0';
+        id = strtoul(id_str, &eptr, 0);
+        if (*eptr != '\0') {
             return NULL;
         }
     }
@@ -233,13 +238,13 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
 
     if (!isset) {
         if (handler->mh_read) {
-            rc = handler->mh_read(&o->os_jbuf.ob_m);
+            rc = handler->mh_read(&o->os_jbuf.ob_mj);
         } else {
             goto bad_req;
         }
     } else {
         if (handler->mh_write) {
-            rc = handler->mh_write(&o->os_jbuf.ob_m);
+            rc = handler->mh_write(&o->os_jbuf.ob_mj);
         } else {
             goto bad_req;
         }
