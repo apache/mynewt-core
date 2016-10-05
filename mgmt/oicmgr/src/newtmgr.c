@@ -17,6 +17,9 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
+#include <sysinit/sysinit.h>
+
 #include <os/os.h>
 #include <os/endian.h>
 
@@ -30,6 +33,7 @@
 
 #define NMGR_OC_EVENT	(OS_EVENT_T_PERUSER)
 #define NMGR_OC_TIMER	(OS_EVENT_T_PERUSER + 1)
+#define OICMGR_STACK_SZ	OS_STACK_ALIGN(MYNEWT_VAL(OICMGR_STACK_SIZE))
 
 struct nmgr_state {
     struct os_mutex ns_group_lock;
@@ -48,6 +52,8 @@ static struct nmgr_state nmgr_state = {
   .ns_oc_timer.c_ev.ev_type = NMGR_OC_TIMER,
   .ns_oc_timer.c_evq = &nmgr_state.ns_evq
 };
+
+static os_stack_t oicmgr_stack[OICMGR_STACK_SZ];
 
 static void nmgr_oic_get(oc_request_t *request, oc_interface_mask_t interface);
 static void nmgr_oic_put(oc_request_t *request, oc_interface_mask_t interface);
@@ -476,15 +482,16 @@ nmgr_oic_task(void *arg)
 }
 
 int
-nmgr_oic_init(uint8_t prio, os_stack_t *stack_ptr, uint16_t stack_len)
+oicmgr_init(void)
 {
     struct nmgr_state *ns = &nmgr_state;
     int rc;
 
     os_eventq_init(&ns->ns_evq);
 
-    rc = os_task_init(&ns->ns_task, "newtmgr_oic", nmgr_oic_task, NULL, prio,
-            OS_WAIT_FOREVER, stack_ptr, stack_len);
+    rc = os_task_init(&ns->ns_task, "newtmgr_oic", nmgr_oic_task, NULL,
+      MYNEWT_VAL(OICMGR_TASK_PRIO), OS_WAIT_FOREVER,
+      oicmgr_stack, OICMGR_STACK_SZ);
     if (rc != 0) {
         goto err;
     }

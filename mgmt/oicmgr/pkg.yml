@@ -33,8 +33,8 @@ pkg.deps:
     - sys/shell
     - sys/reboot
 
-pkg.cflags:
-    - -DOC_SERVER
-
 pkg.apis:
     - newtmgr
+
+pkg.init_function: oicmgr_init
+pkg.init_stage: 5

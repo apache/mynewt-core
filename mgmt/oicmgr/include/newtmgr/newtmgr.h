@@ -110,7 +110,6 @@ struct nmgr_group {
     (__group)->ng_handlers_count = (sizeof((__handlers)) / \
             sizeof(struct nmgr_handler));
 
-int nmgr_oic_init(uint8_t, os_stack_t *, uint16_t);
 int nmgr_group_register(struct nmgr_group *group);
 
 #ifdef __cplusplus
