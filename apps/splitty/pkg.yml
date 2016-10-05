@@ -25,7 +25,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - fs/nffs
     - sys/console/full
     - libs/imgmgr
     - mgmt/newtmgr
