@@ -99,15 +99,6 @@ static STATS_NAME_START(gpio_stats)
 STATS_NAME(gpio_stats, toggles)
 STATS_NAME_END(gpio_stats)
 
-#if !MYNEWT_VAL(CONFIG_NFFS)
-static struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
-
-static struct conf_fcb my_conf = {
-    .cf_fcb.f_magic = 0xc09f6e5e,
-    .cf_fcb.f_sectors = conf_fcb_area
-};
-#endif
-
 static char *test_conf_get(int argc, char **argv, char *val, int max_len);
 static int test_conf_set(int argc, char **argv, char *val);
 static int test_conf_commit(void);
@@ -265,36 +256,6 @@ init_tasks(void)
     return 0;
 }
 
-#if !MYNEWT_VAL(CONFIG_NFFS)
-
-static void
-setup_for_fcb(void)
-{
-    int cnt;
-    int rc;
-
-    rc = flash_area_to_sectors(FLASH_AREA_NFFS, &cnt, NULL);
-    assert(rc == 0);
-    assert(cnt <= sizeof(conf_fcb_area) / sizeof(conf_fcb_area[0]));
-    flash_area_to_sectors(FLASH_AREA_NFFS, &cnt, conf_fcb_area);
-
-    my_conf.cf_fcb.f_sector_cnt = cnt;
-
-    rc = conf_fcb_src(&my_conf);
-    if (rc) {
-        for (cnt = 0; cnt < my_conf.cf_fcb.f_sector_cnt; cnt++) {
-            flash_area_erase(&conf_fcb_area[cnt], 0,
-              conf_fcb_area[cnt].fa_size);
-        }
-        rc = conf_fcb_src(&my_conf);
-    }
-    assert(rc == 0);
-    rc = conf_fcb_dst(&my_conf);
-    assert(rc == 0);
-}
-
-#endif
-
 /**
  * main
  *
@@ -324,10 +285,6 @@ main(int argc, char **argv)
 
 #if MYNEWT_VAL(CONFIG_NFFS)
     log_register("nffs", &nffs_log, &log_cbmem_handler, &nffs_cbmem);
-#endif
-
-#if !MYNEWT_VAL(CONFIG_NFFS)
-    setup_for_fcb();
 #endif
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
