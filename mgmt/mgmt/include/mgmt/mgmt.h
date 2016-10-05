@@ -63,13 +63,10 @@ extern "C" {
 
 struct mgmt_jbuf {
     /* json_buffer must be first element in the structure */
-    struct json_buffer mjb_buf;
-    struct json_encoder mjb_enc;
+    struct json_buffer mjb_buf;  /* for input */
+    struct json_encoder mjb_enc; /* for output */
     struct os_mbuf *mjb_in_m;
     struct os_mbuf *mjb_out_m;
-    void *mjb_arg;
-    uint16_t mjb_off;
-    uint16_t mjb_end;
 };
 
 typedef int (*mgmt_handler_func_t)(struct mgmt_jbuf *);
