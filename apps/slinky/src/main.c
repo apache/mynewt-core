@@ -33,16 +33,6 @@
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"
 #endif
-#if MYNEWT_VAL(CONFIG_NFFS)
-#include <fs/fs.h>
-#include <nffs/nffs.h>
-#include <config/config_file.h>
-#elif MYNEWT_VAL(CONFIG_FCB)
-#include <fcb/fcb.h>
-#include <config/config_fcb.h>
-#else
-#error "Need NFFS or FCB for config storage"
-#endif
 #include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
@@ -76,10 +66,6 @@ static volatile int g_task1_loops;
 static struct os_task task2;
 
 static struct log my_log;
-
-#if MYNEWT_VAL(CONFIG_NFFS)
-extern struct log nffs_log; /* defined in the OS module */
-#endif
 
 static volatile int g_task2_loops;
 
@@ -118,9 +104,6 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
-
-static uint32_t nffs_cbmem_buf[MAX_CBMEM_BUF];
-static struct cbmem nffs_cbmem;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -280,12 +263,7 @@ main(int argc, char **argv)
     assert(rc == 0);
 
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    cbmem_init(&nffs_cbmem, nffs_cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem);
-
-#if MYNEWT_VAL(CONFIG_NFFS)
-    log_register("nffs", &nffs_log, &log_cbmem_handler, &nffs_cbmem);
-#endif
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),

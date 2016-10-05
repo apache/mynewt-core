@@ -28,16 +28,6 @@
 #include <config/config.h>
 #include <hal/flash_map.h>
 #include <hal/hal_system.h>
-#if MYNEWT_VAL(CONFIG_NFFS)
-#include <fs/fs.h>
-#include <nffs/nffs.h>
-#include <config/config_file.h>
-#elif MYNEWT_VAL(CONFIG_FCB)
-#include <fcb/fcb.h>
-#include <config/config_fcb.h>
-#else
-#error "Need NFFS or FCB for config storage"
-#endif
 #include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
