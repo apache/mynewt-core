@@ -38,8 +38,6 @@ pkg.deps:
     - sys/id
     - sys/log
     - sys/stats
-
-pkg.deps.SPLIT_IMAGE:
     - boot/split
 
 pkg.deps.CONFIG_NFFS:

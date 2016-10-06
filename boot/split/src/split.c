@@ -17,12 +17,6 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-
-#if !MYNEWT_VAL(SPLIT_IMAGE)
-#error The split package can only be used in split image builds
-#endif
-
 #include <assert.h>
 #include <bootutil/bootutil_misc.h>
 #include <bootutil/image.h>
