@@ -35,17 +35,20 @@ extern "C" {
 #define bssnz_t         sec_bss_nz_core
 
 extern uint8_t _ram_start;
-
 #define RAM_SIZE        0x10000
 
 /* LED pins */
 #define LED_BLINK_PIN   (17)
+#define LED_2           (18)
+
+/* SPI SS */
+#define SPI_SS_PIN      (22)
 
 /* UART info */
 #define CONSOLE_UART    "uart0"
 #define CONSOLE_UART_SPEED      115200
 
-#define NFFS_AREA_MAX    (8)
+#define NFFS_AREA_MAX   (8)
 
 #ifdef __cplusplus
 }

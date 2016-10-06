@@ -18,18 +18,20 @@
  */
 
 #include <assert.h>
+
+#include "syscfg/syscfg.h"
 #include "hal/flash_map.h"
 #include "hal/hal_bsp.h"
-#include "hal/hal_flash.h"
 #include "hal/hal_cputime.h"
+#include "hal/hal_flash.h"
+#include "hal/hal_spi.h"
+#include "hal/hal_watchdog.h"
 #include "mcu/nrf52_hal.h"
 #include "uart/uart.h"
 #if MYNEWT_VAL(SPI_MASTER)
-#include "hal/hal_spi.h"
 #include "nrf_drv_spi.h"
 #endif
 #if MYNEWT_VAL(SPI_SLAVE)
-#include "hal/hal_spi.h"
 #include "nrf_drv_spis.h"
 #endif
 #if MYNEWT_VAL(UART_0)
@@ -134,25 +136,6 @@ bsp_init(void)
 {
     int rc;
 
-    (void)rc;
-
-    /*
-     * XXX this reference is here to keep this function in.
-     */
-    _sbrk(0);
-
-    flash_area_init(bsp_flash_areas,
-      sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
-
-    rc = hal_flash_init();
-    assert(rc == 0);
-
-    /*
-     * Need to initialize cputime here, because bitbanger uart uses it.
-     */
-    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
-    assert(rc == 0);
-
 #if MYNEWT_VAL(SPI_MASTER)
     nrf_drv_spi_config_t spi_cfg = NRF_DRV_SPI_DEFAULT_CONFIG(0);
 #endif
@@ -160,8 +143,22 @@ bsp_init(void)
     nrf_drv_spis_config_t spi_cfg = NRF_DRV_SPIS_DEFAULT_CONFIG(0);
 #endif
 
+    /*
+     * XXX this reference is here to keep this function in.
+     */
+    (void)_sbrk;
+
+    /* Set cputime to count at 1 usec increments */
+    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+    assert(rc == 0);
+
+    flash_area_init(bsp_flash_areas,
+      sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
+
+    rc = hal_flash_init();
+    assert(rc == 0);
+
 #if MYNEWT_VAL(SPI_MASTER)
-    /*  We initialize one SPI interface as a master. */
     rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif

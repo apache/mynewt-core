@@ -191,5 +191,4 @@ bsp_init(void)
             nrf52_adc_dev_init, &os_bsp_adc0_config);
     assert(rc == 0);
 #endif
-
 }

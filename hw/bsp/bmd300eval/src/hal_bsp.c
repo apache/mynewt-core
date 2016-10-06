@@ -19,17 +19,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <hal/hal_bsp.h>
-#include <mcu/nrf52_hal.h>
-
 #include "bsp/bsp.h"
-
-static const struct nrf52_uart_cfg uart_cfg = {
-    .suc_pin_tx = 6,
-    .suc_pin_rx = 8,
-    .suc_pin_rts = 5,
-    .suc_pin_cts = 7
-};
+#include <hal/hal_bsp.h>
+#include "mcu/nrf52_hal.h"
 
 /*
  * What memory to include in coredump.
@@ -40,12 +32,6 @@ static const struct bsp_mem_dump dump_cfg[] = {
         .bmd_size = RAM_SIZE
     }
 };
-
-const struct nrf52_uart_cfg *
-bsp_uart_config(void)
-{
-    return &uart_cfg;
-}
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)

@@ -28,6 +28,7 @@
 #include "os/os_dev.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
+#include "hal/hal_cputime.h"
 
 #define BSP_LOWEST_PRIO     ((1 << __NVIC_PRIO_BITS) - 1)
 
@@ -98,6 +99,10 @@ bsp_init(void)
      * XXX this reference is here to keep this function in.
      */
     _sbrk(0);
+
+    /* Set cputime to count at 1 usec increments */
+    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+    assert(rc == 0);
 
     flash_area_init(bsp_flash_areas,
       sizeof(bsp_flash_areas) / sizeof(bsp_flash_areas[0]));
