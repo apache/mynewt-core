@@ -19,12 +19,13 @@
 
 
 #include "os/os.h"
+#include "os_priv.h"
 
 #include <string.h>
 
 uint8_t g_task_id;
 
-STAILQ_HEAD(, os_task) g_os_task_list = STAILQ_HEAD_INITIALIZER(g_os_task_list);
+struct os_task_stailq g_os_task_list;
 
 static void
 _clear_stack(os_stack_t *stack_bottom, int size)

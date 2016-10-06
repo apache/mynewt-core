@@ -27,7 +27,21 @@ pkg.deps:
     - sys/log
     - net/nimble/controller
     - net/nimble/host
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
+    - net/nimble/host/store/ram
+    - net/nimble/transport/ram
     - libs/console/full
     - libs/shell
 
 pkg.cflags:
+    ### Disable some features to make bletiny small enough to fit on the nRF51.
+    ### These features can be re-enabled in the target definition.
+    # Set log level to info (disable debug logging).
+    - "-DLOG_LEVEL=1"
+
+    # Disable security manager (pairing and bonding).
+    - "-DNIMBLE_OPT_SM=0"
+
+    # Disable eddystone beacons.
+    - "-DNIMBLE_OPT_EDDYSTONE=0"

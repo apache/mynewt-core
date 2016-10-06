@@ -21,6 +21,7 @@
 #define H_BLE_ATT_
 
 #include "os/queue.h"
+struct os_mbuf;
 
 #define BLE_ATT_UUID_PRIMARY_SERVICE        0x2800
 #define BLE_ATT_UUID_SECONDARY_SERVICE      0x2801
@@ -31,14 +32,17 @@
 #define BLE_ATT_ERR_READ_NOT_PERMITTED      0x02
 #define BLE_ATT_ERR_WRITE_NOT_PERMITTED     0x03
 #define BLE_ATT_ERR_INVALID_PDU             0x04
-#define BLE_ATT_ERR_INSUFFICIENT_AUTHENT    0x05
+#define BLE_ATT_ERR_INSUFFICIENT_AUTHEN     0x05
 #define BLE_ATT_ERR_REQ_NOT_SUPPORTED       0x06
 #define BLE_ATT_ERR_INVALID_OFFSET          0x07
+#define BLE_ATT_ERR_INSUFFICIENT_AUTHOR     0x08
 #define BLE_ATT_ERR_PREPARE_QUEUE_FULL      0x09
 #define BLE_ATT_ERR_ATTR_NOT_FOUND          0x0a
 #define BLE_ATT_ERR_ATTR_NOT_LONG           0x0b
+#define BLE_ATT_ERR_INSUFFICIENT_KEY_SZ     0x0c
 #define BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN  0x0d
 #define BLE_ATT_ERR_UNLIKELY                0x0e
+#define BLE_ATT_ERR_INSUFFICIENT_ENC        0x0f
 #define BLE_ATT_ERR_UNSUPPORTED_GROUP       0x10
 #define BLE_ATT_ERR_INSUFFICIENT_RES        0x11
 
@@ -86,44 +90,15 @@
 #define BLE_ATT_ACCESS_OP_READ              1
 #define BLE_ATT_ACCESS_OP_WRITE             2
 
-struct ble_att_svr_access_ctxt {
-    void *attr_data;
-    uint16_t data_len;
-    uint16_t offset; /* Only used for read-blob requests. */
-};
+#define BLE_ATT_MTU_DFLT                23  /* Also the minimum. */
+#define BLE_ATT_MTU_MAX                 240
+#define BLE_ATT_MTU_PREFERRED_DFLT      240
 
-/**
- * Handles a host attribute request.
- *
- * @param entry                 The host attribute being requested.
- * @param op                    The operation being performed on the attribute.
- * @param arg                   The request data associated with that host
- *                                  attribute.
- *
- * @return                      0 on success;
- *                              One of the BLE_ATT_ERR_[...] codes on
- *                                  failure.
- */
-typedef int ble_att_svr_access_fn(uint16_t conn_handle, uint16_t attr_handle,
-                                  uint8_t *uuid128, uint8_t op,
-                                  struct ble_att_svr_access_ctxt *ctxt,
-                                  void *arg);
+int ble_att_svr_read_local(uint16_t attr_handle, struct os_mbuf **out_om);
+int ble_att_svr_write_local(uint16_t attr_handle, struct os_mbuf *om);
 
-int ble_att_svr_register(uint8_t *uuid, uint8_t flags, uint16_t *handle_id,
-                         ble_att_svr_access_fn *cb, void *cb_arg);
-int ble_att_svr_register_uuid16(uint16_t uuid16, uint8_t flags,
-                                uint16_t *handle_id, ble_att_svr_access_fn *cb,
-                                void *cb_arg);
-
-typedef int ble_att_svr_notify_fn(uint16_t conn_handle, uint16_t attr_handle,
-                                  uint8_t *attr_val, uint16_t attr_len,
-                                  void *arg);
-
-int ble_att_svr_read_local(uint16_t attr_handle, void **out_data,
-                           uint16_t *out_attr_len);
-int ble_att_svr_write_local(uint16_t attr_handle, void *data,
-                            uint16_t data_len);
-
+uint16_t ble_att_mtu(uint16_t conn_handle);
+uint16_t ble_att_preferred_mtu(void);
 int ble_att_set_preferred_mtu(uint16_t mtu);
 
 #endif

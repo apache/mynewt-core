@@ -23,15 +23,16 @@
 #include "testutil/testutil.h"
 #include "nimble/hci_common.h"
 #include "nimble/nimble_opt.h"
-#include "host/host_hci.h"
 #include "host/ble_sm.h"
 #include "host/ble_hs_test.h"
+#include "host/ble_hs_id.h"
 #include "ble_hs_test_util.h"
 #include "ble_sm_test_util.h"
 
-int ble_sm_test_gap_event;
+int ble_sm_test_gap_event_type;
 int ble_sm_test_gap_status;
 struct ble_gap_sec_state ble_sm_test_sec_state;
+static struct ble_gap_passkey_params ble_sm_test_ioact;
 
 int ble_sm_test_store_obj_type;
 union ble_store_key ble_sm_test_store_key;
@@ -102,9 +103,10 @@ ble_sm_test_util_init(void)
     ble_hs_cfg.store_write_cb = ble_sm_test_util_store_write;
 
     ble_sm_test_store_obj_type = -1;
-    ble_sm_test_gap_event = -1;
+    ble_sm_test_gap_event_type = -1;
     ble_sm_test_gap_status = -1;
 
+    memset(&ble_sm_test_ioact, 0, sizeof ble_sm_test_ioact);
     memset(&ble_sm_test_sec_state, 0xff, sizeof ble_sm_test_sec_state);
 }
 
@@ -223,19 +225,19 @@ ble_sm_test_util_init_good(struct ble_sm_test_params *params,
         ble_hs_cfg.sm_their_key_dist = out_us->pair_cmd->init_key_dist;
     }
 
-    ble_hs_test_util_set_public_addr(out_us->id_addr);
+    ble_hs_id_set_pub(out_us->id_addr);
     ble_sm_dbg_set_next_pair_rand(out_us->randoms[0].value);
     ble_sm_dbg_set_next_ediv(out_us->ediv);
     ble_sm_dbg_set_next_master_id_rand(out_us->rand_num);
     ble_sm_dbg_set_next_ltk(out_us->ltk);
-    ble_hs_pvcy_set_our_irk(out_us->id_info->irk);
+    ble_hs_test_util_set_our_irk(out_us->id_info->irk, 0, 0);
     ble_sm_dbg_set_next_csrk(out_us->sign_info->sig_key);
 
     if (out_us->public_key != NULL) {
         ble_sm_dbg_set_sc_keys(out_us->public_key->x, params->our_priv_key);
     }
 
-    ble_hs_test_util_create_rpa_conn(2, out_us->rpa,
+    ble_hs_test_util_create_rpa_conn(2, out_us->addr_type, out_us->rpa,
                                      out_peer->addr_type,
                                      out_peer->id_addr, out_peer->rpa,
                                      ble_sm_test_util_conn_cb,
@@ -260,31 +262,32 @@ ble_sm_test_util_init_good(struct ble_sm_test_params *params,
     }
 }
 
-struct ble_gap_passkey_action ble_sm_test_ioact;
-
 int
-ble_sm_test_util_conn_cb(int event, struct ble_gap_conn_ctxt *ctxt, void *arg)
+ble_sm_test_util_conn_cb(struct ble_gap_event *event, void *arg)
 {
+    struct ble_gap_conn_desc desc;
     int rc;
 
-    switch (event) {
+    switch (event->type) {
     case BLE_GAP_EVENT_ENC_CHANGE:
-        ble_sm_test_gap_status = ctxt->enc_change.status;
-        ble_sm_test_sec_state = ctxt->desc->sec_state;
-        rc = 0;
+        ble_sm_test_gap_status = event->enc_change.status;
+
+        rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
+        TEST_ASSERT_FATAL(rc == 0);
+        ble_sm_test_sec_state = desc.sec_state;
         break;
 
     case BLE_GAP_EVENT_PASSKEY_ACTION:
-        ble_sm_test_ioact = ctxt->passkey_action;
+        ble_sm_test_ioact = event->passkey.params;
         break;
 
     default:
         return 0;
     }
 
-    ble_sm_test_gap_event = event;
+    ble_sm_test_gap_event_type = event->type;
 
-    return rc;
+    return 0;
 }
 
 static void
@@ -302,7 +305,7 @@ ble_sm_test_util_rx_pair_cmd(uint16_t conn_handle, uint8_t op,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_PAIR_CMD_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_PAIR_CMD_SZ;
@@ -349,7 +352,7 @@ ble_sm_test_util_rx_confirm(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_PAIR_CONFIRM_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_PAIR_CONFIRM_SZ;
@@ -379,7 +382,7 @@ ble_sm_test_util_rx_random(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_PAIR_RANDOM_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_PAIR_RANDOM_SZ;
@@ -408,7 +411,7 @@ ble_sm_test_util_rx_sec_req(uint16_t conn_handle, struct ble_sm_sec_req *cmd,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_SEC_REQ_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_SEC_REQ_SZ;
@@ -437,7 +440,7 @@ ble_sm_test_util_rx_public_key(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_PUBLIC_KEY_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_PUBLIC_KEY_SZ;
@@ -467,7 +470,7 @@ ble_sm_test_util_rx_dhkey_check(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_DHKEY_CHECK_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_DHKEY_CHECK_SZ;
@@ -497,7 +500,7 @@ ble_sm_test_util_rx_enc_info(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_ENC_INFO_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_ENC_INFO_SZ;
@@ -527,7 +530,7 @@ ble_sm_test_util_rx_master_id(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_MASTER_ID_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_MASTER_ID_SZ;
@@ -557,7 +560,7 @@ ble_sm_test_util_rx_id_info(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_ID_INFO_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_ID_INFO_SZ;
@@ -587,7 +590,7 @@ ble_sm_test_util_rx_id_addr_info(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_ID_ADDR_INFO_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_ID_ADDR_INFO_SZ;
@@ -617,7 +620,7 @@ ble_sm_test_util_rx_sign_info(uint16_t conn_handle,
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_SM_HDR_SZ + BLE_SM_SIGN_INFO_SZ);
 
-    om = ble_hs_misc_pkthdr();
+    om = ble_hs_mbuf_l2cap_pkt();
     TEST_ASSERT_FATAL(om != NULL);
 
     payload_len = BLE_SM_HDR_SZ + BLE_SM_SIGN_INFO_SZ;
@@ -637,7 +640,7 @@ ble_sm_test_util_verify_tx_hdr(uint8_t sm_op, uint16_t payload_len)
 {
     struct os_mbuf *om;
 
-    om = ble_hs_test_util_prev_tx_dequeue();
+    om = ble_hs_test_util_prev_tx_dequeue_pullup();
     TEST_ASSERT_FATAL(om != NULL);
 
     TEST_ASSERT(OS_MBUF_PKTLEN(om) == BLE_SM_HDR_SZ + payload_len);
@@ -797,10 +800,14 @@ ble_sm_test_util_verify_tx_id_addr_info(struct ble_sm_id_addr_info *exp_cmd)
 {
     struct ble_sm_id_addr_info cmd;
     struct os_mbuf *om;
-    uint8_t *our_id_addr;
-    uint8_t our_id_addr_type;
+    const uint8_t *our_id_addr;
+    int rc;
 
-    our_id_addr = ble_hs_pvcy_our_id_addr(&our_id_addr_type);
+    ble_hs_lock();
+    rc = ble_hs_id_addr(exp_cmd->addr_type, &our_id_addr, NULL);
+    ble_hs_unlock();
+
+    TEST_ASSERT_FATAL(rc == 0);
 
     ble_hs_test_util_tx_all();
     om = ble_sm_test_util_verify_tx_hdr(BLE_SM_OP_IDENTITY_ADDR_INFO,
@@ -809,8 +816,6 @@ ble_sm_test_util_verify_tx_id_addr_info(struct ble_sm_id_addr_info *exp_cmd)
 
     TEST_ASSERT(cmd.addr_type == exp_cmd->addr_type);
     TEST_ASSERT(memcmp(cmd.bd_addr, exp_cmd->bd_addr, 6) == 0);
-
-    TEST_ASSERT(cmd.addr_type == our_id_addr_type);
     TEST_ASSERT(memcmp(cmd.bd_addr, our_id_addr, 6) == 0);
 }
 
@@ -902,14 +907,27 @@ ble_sm_test_util_verify_tx_lt_key_req_neg_reply(uint16_t conn_handle)
 }
 
 static void
-ble_sm_test_util_set_lt_key_req_reply_ack(uint8_t status,
-                                                uint16_t conn_handle)
+ble_sm_test_util_set_lt_key_req_neg_reply_ack(uint8_t status,
+                                              uint16_t conn_handle)
+{
+    static uint8_t params[BLE_HCI_LT_KEY_REQ_NEG_REPLY_ACK_PARAM_LEN];
+
+    htole16(params, conn_handle);
+    ble_hs_test_util_set_ack_params(
+        ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                    BLE_HCI_OCF_LE_LT_KEY_REQ_NEG_REPLY),
+        status, params, sizeof params);
+}
+
+static void
+ble_sm_test_util_set_lt_key_req_reply_ack(uint8_t status, uint16_t conn_handle)
 {
     static uint8_t params[BLE_HCI_LT_KEY_REQ_REPLY_ACK_PARAM_LEN];
 
     htole16(params, conn_handle);
     ble_hs_test_util_set_ack_params(
-        host_hci_opcode_join(BLE_HCI_OGF_LE, BLE_HCI_OCF_LE_LT_KEY_REQ_REPLY),
+        ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                    BLE_HCI_OCF_LE_LT_KEY_REQ_REPLY),
         status, params, sizeof params);
 }
 
@@ -975,8 +993,11 @@ ble_sm_test_util_io_inject(struct ble_sm_test_passkey_info *passkey_info,
 
     io_sm_state = ble_sm_ioact_state(passkey_info->passkey.action);
     if (io_sm_state != cur_sm_state) {
+        TEST_ASSERT(ble_sm_test_ioact.action == BLE_SM_IOACT_NONE);
         return;
     }
+
+    TEST_ASSERT(ble_sm_test_ioact.action == passkey_info->passkey.action);
 
     if (passkey_info->passkey.action == BLE_SM_IOACT_NUMCMP) {
         TEST_ASSERT(ble_sm_test_ioact.numcmp == passkey_info->exp_numcmp);
@@ -984,6 +1005,8 @@ ble_sm_test_util_io_inject(struct ble_sm_test_passkey_info *passkey_info,
 
     rc = ble_sm_inject_io(2, &passkey_info->passkey);
     TEST_ASSERT(rc == 0);
+
+    ble_sm_test_ioact.action = BLE_SM_IOACT_NONE;
 }
 
 void
@@ -1193,6 +1216,7 @@ ble_sm_test_util_verify_persist(struct ble_sm_test_params *params,
 
 static void
 ble_sm_test_util_peer_bonding_good(int send_enc_req,
+                                   uint8_t our_addr_type,
                                    uint8_t *our_rpa,
                                    uint8_t peer_addr_type,
                                    uint8_t *peer_id_addr,
@@ -1203,8 +1227,9 @@ ble_sm_test_util_peer_bonding_good(int send_enc_req,
     struct ble_hs_conn *conn;
     int rc;
 
-    ble_hs_test_util_create_rpa_conn(2, our_rpa, peer_addr_type, peer_id_addr,
-                                     peer_rpa, ble_sm_test_util_conn_cb, NULL);
+    ble_hs_test_util_create_rpa_conn(2, our_addr_type, our_rpa, peer_addr_type,
+                                     peer_id_addr, peer_rpa,
+                                     ble_sm_test_util_conn_cb, NULL);
 
     /* This test inspects and modifies the connection object after unlocking
      * the host mutex.  It is not OK for real code to do this, but this test
@@ -1255,7 +1280,7 @@ ble_sm_test_util_peer_bonding_good(int send_enc_req,
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status == 0);
     TEST_ASSERT(ble_sm_test_sec_state.encrypted);
     TEST_ASSERT(ble_sm_test_sec_state.authenticated ==
@@ -1294,7 +1319,7 @@ ble_sm_test_util_peer_bonding_bad(uint16_t ediv, uint64_t rand_num)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Receive a long term key request from the controller. */
-    ble_sm_test_util_set_lt_key_req_reply_ack(0, 2);
+    ble_sm_test_util_set_lt_key_req_neg_reply_ack(0, 2);
     ble_sm_test_util_rx_lt_key_req(2, rand_num, ediv);
     TEST_ASSERT(!conn->bhc_sec_state.encrypted);
 
@@ -1323,7 +1348,8 @@ ble_sm_test_util_peer_bonding_bad(uint16_t ediv, uint64_t rand_num)
  *                                  0: No security request; we initiate.
  */
 static void
-ble_sm_test_util_us_bonding_good(int send_enc_req, uint8_t *our_rpa,
+ble_sm_test_util_us_bonding_good(int send_enc_req, uint8_t our_addr_type,
+                                 uint8_t *our_rpa,
                                  uint8_t peer_addr_type,
                                  uint8_t *peer_id_addr, uint8_t *peer_rpa,
                                  uint8_t *ltk, int authenticated,
@@ -1332,7 +1358,8 @@ ble_sm_test_util_us_bonding_good(int send_enc_req, uint8_t *our_rpa,
     struct ble_sm_sec_req sec_req;
     struct ble_hs_conn *conn;
 
-    ble_hs_test_util_create_rpa_conn(2, our_rpa, peer_addr_type, peer_id_addr,
+    ble_hs_test_util_create_rpa_conn(2, our_addr_type, our_rpa,
+                                     peer_addr_type, peer_id_addr,
                                      peer_rpa, ble_sm_test_util_conn_cb, NULL);
 
     /* This test inspects and modifies the connection object after unlocking
@@ -1348,7 +1375,8 @@ ble_sm_test_util_us_bonding_good(int send_enc_req, uint8_t *our_rpa,
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     ble_hs_test_util_set_ack(
-        host_hci_opcode_join(BLE_HCI_OGF_LE, BLE_HCI_OCF_LE_START_ENCRYPT),
+        ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                    BLE_HCI_OCF_LE_START_ENCRYPT),
         0);
 
     if (send_enc_req) {
@@ -1376,7 +1404,7 @@ ble_sm_test_util_us_bonding_good(int send_enc_req, uint8_t *our_rpa,
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status == 0);
     TEST_ASSERT(ble_sm_test_sec_state.encrypted);
     TEST_ASSERT(ble_sm_test_sec_state.authenticated ==
@@ -1401,7 +1429,7 @@ ble_sm_test_util_peer_fail_inval(
     struct ble_hs_conn *conn;
 
     ble_sm_test_util_init();
-    ble_hs_test_util_set_public_addr(resp_addr);
+    ble_hs_id_set_pub(resp_addr);
 
     ble_hs_test_util_create_conn(2, init_id_addr, ble_sm_test_util_conn_cb,
                                  NULL);
@@ -1435,7 +1463,7 @@ ble_sm_test_util_peer_fail_inval(
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was not executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == -1);
+    TEST_ASSERT(ble_sm_test_gap_event_type == -1);
     TEST_ASSERT(ble_sm_test_gap_status == -1);
 
     /* Verify that connection has correct security state. */
@@ -1458,7 +1486,7 @@ ble_sm_test_util_peer_lgcy_fail_confirm(
     struct ble_hs_conn *conn;
 
     ble_sm_test_util_init();
-    ble_hs_test_util_set_public_addr(resp_addr);
+    ble_hs_id_set_pub(resp_addr);
     ble_sm_dbg_set_next_pair_rand(random_rsp->value);
 
     ble_hs_test_util_create_conn(2, init_id_addr, ble_sm_test_util_conn_cb,
@@ -1512,7 +1540,7 @@ ble_sm_test_util_peer_lgcy_fail_confirm(
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status ==
                 BLE_HS_SM_US_ERR(BLE_SM_ERR_CONFIRM_MISMATCH));
     TEST_ASSERT(!ble_sm_test_sec_state.encrypted);
@@ -1548,7 +1576,8 @@ ble_sm_test_util_bonding_all(struct ble_sm_test_params *params,
 
     if (sc || peer_entity.key_dist & BLE_SM_PAIR_KEY_DIST_ENC) {
         /* We are master; we initiate procedure. */
-        ble_sm_test_util_us_bonding_good(0, our_entity.rpa,
+        ble_sm_test_util_us_bonding_good(0, our_entity.addr_type,
+                                         our_entity.rpa,
                                          peer_entity.addr_type,
                                          peer_entity.id_addr,
                                          peer_entity.rpa,
@@ -1558,7 +1587,8 @@ ble_sm_test_util_bonding_all(struct ble_sm_test_params *params,
                                          peer_entity.rand_num);
 
         /* We are master; peer initiates procedure via security request. */
-        ble_sm_test_util_us_bonding_good(1, our_entity.rpa,
+        ble_sm_test_util_us_bonding_good(1, our_entity.addr_type,
+                                         our_entity.rpa,
                                          peer_entity.addr_type,
                                          peer_entity.id_addr,
                                          peer_entity.rpa,
@@ -1570,7 +1600,8 @@ ble_sm_test_util_bonding_all(struct ble_sm_test_params *params,
 
     if (sc || our_entity.key_dist & BLE_SM_PAIR_KEY_DIST_ENC) {
         /* Peer is master; peer initiates procedure. */
-        ble_sm_test_util_peer_bonding_good(0, our_entity.rpa,
+        ble_sm_test_util_peer_bonding_good(0, our_entity.addr_type,
+                                           our_entity.rpa,
                                            peer_entity.addr_type,
                                            peer_entity.id_addr,
                                            peer_entity.rpa,
@@ -1580,7 +1611,8 @@ ble_sm_test_util_bonding_all(struct ble_sm_test_params *params,
                                            our_entity.rand_num);
 
         /* Peer is master; we initiate procedure via security request. */
-        ble_sm_test_util_peer_bonding_good(1, our_entity.rpa,
+        ble_sm_test_util_peer_bonding_good(1, our_entity.addr_type,
+                                           our_entity.rpa,
                                            peer_entity.addr_type,
                                            peer_entity.id_addr,
                                            peer_entity.rpa,
@@ -1629,8 +1661,8 @@ ble_sm_test_util_rx_keys(struct ble_sm_test_params *params,
     }
     if (peer_key_dist & BLE_SM_PAIR_KEY_DIST_ID) {
         ble_hs_test_util_set_ack(
-            host_hci_opcode_join(BLE_HCI_OGF_LE,
-                                 BLE_HCI_OCF_LE_ADD_RESOLV_LIST), 0);
+            ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                        BLE_HCI_OCF_LE_ADD_RESOLV_LIST), 0);
         ble_sm_test_util_rx_id_info(2, peer_id_info, 0);
         ble_sm_test_util_rx_id_addr_info(2, peer_id_addr_info, 0);
     }
@@ -1697,7 +1729,8 @@ ble_sm_test_util_us_lgcy_good_once(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     ble_hs_test_util_set_ack(
-        host_hci_opcode_join(BLE_HCI_OGF_LE, BLE_HCI_OCF_LE_START_ENCRYPT), 0);
+        ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                    BLE_HCI_OCF_LE_START_ENCRYPT), 0);
     if (params->sec_req.authreq != 0) {
         ble_sm_test_util_rx_sec_req(2, &params->sec_req, 0);
     } else {
@@ -1768,7 +1801,7 @@ ble_sm_test_util_us_lgcy_good_once(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status == 0);
     TEST_ASSERT(ble_sm_test_sec_state.encrypted);
     TEST_ASSERT(ble_sm_test_sec_state.authenticated == params->authenticated);
@@ -1894,7 +1927,7 @@ ble_sm_test_util_peer_lgcy_good_once(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status == 0);
     TEST_ASSERT(ble_sm_test_sec_state.encrypted);
     TEST_ASSERT(ble_sm_test_sec_state.authenticated ==
@@ -1957,7 +1990,8 @@ ble_sm_test_util_us_sc_good_once(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     ble_hs_test_util_set_ack(
-        host_hci_opcode_join(BLE_HCI_OGF_LE, BLE_HCI_OCF_LE_START_ENCRYPT), 0);
+        ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
+                                    BLE_HCI_OCF_LE_START_ENCRYPT), 0);
     if (params->sec_req.authreq != 0) {
         ble_sm_test_util_rx_sec_req(2, &params->sec_req, 0);
     } else {
@@ -2079,7 +2113,7 @@ ble_sm_test_util_us_sc_good_once(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status == 0);
     TEST_ASSERT(ble_sm_test_sec_state.encrypted);
     TEST_ASSERT(ble_sm_test_sec_state.authenticated ==
@@ -2267,7 +2301,7 @@ ble_sm_test_util_peer_sc_good_once(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == BLE_GAP_EVENT_ENC_CHANGE);
+    TEST_ASSERT(ble_sm_test_gap_event_type == BLE_GAP_EVENT_ENC_CHANGE);
     TEST_ASSERT(ble_sm_test_gap_status == 0);
     TEST_ASSERT(ble_sm_test_sec_state.encrypted);
     TEST_ASSERT(ble_sm_test_sec_state.authenticated ==
@@ -2321,7 +2355,7 @@ ble_sm_test_util_us_fail_inval(struct ble_sm_test_params *params)
     int rc;
 
     ble_sm_test_util_init();
-    ble_hs_test_util_set_public_addr(params->resp_id_addr);
+    ble_hs_id_set_pub(params->resp_id_addr);
 
     ble_sm_dbg_set_next_pair_rand(((uint8_t[16]){0}));
 
@@ -2365,7 +2399,7 @@ ble_sm_test_util_us_fail_inval(struct ble_sm_test_params *params)
     TEST_ASSERT(ble_sm_dbg_num_procs() == 0);
 
     /* Verify that security callback was not executed. */
-    TEST_ASSERT(ble_sm_test_gap_event == -1);
+    TEST_ASSERT(ble_sm_test_gap_event_type == -1);
     TEST_ASSERT(ble_sm_test_gap_status == -1);
 
     /* Verify that connection has correct security state. */

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,16 +20,11 @@
 #ifndef H_BLE_HS_ADV_PRIV_
 #define H_BLE_HS_ADV_PRIV_
 
-#include "host/ble_hs_adv.h"
-
-struct ble_hs_adv {
-    uint8_t event_type;
-    uint8_t addr_type;
-    uint8_t length_data;
-    int8_t rssi;
-    uint8_t addr[6];
-    uint8_t *data;
-    struct ble_hs_adv_fields *fields;
-};
+int ble_hs_adv_set_flat(uint8_t type, int data_len, const void *data,
+                        uint8_t *dst, uint8_t *dst_len, uint8_t max_len);
+int ble_hs_adv_set_fields(const struct ble_hs_adv_fields *adv_fields,
+                          uint8_t *dst, uint8_t *dst_len, uint8_t max_len);
+int ble_hs_adv_parse_fields(struct ble_hs_adv_fields *adv_fields, uint8_t *src,
+                            uint8_t src_len);
 
 #endif

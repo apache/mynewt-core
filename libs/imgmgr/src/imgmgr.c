@@ -28,6 +28,7 @@
 #include <util/base64.h>
 
 #include <bootutil/image.h>
+#include <bootutil/bootutil_misc.h>
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
@@ -494,5 +495,8 @@ imgmgr_module_init(void)
 
     rc = nmgr_group_register(&imgr_nmgr_group);
     assert(rc == 0);
+
+    boot_vect_write_main();
+
     return rc;
 }

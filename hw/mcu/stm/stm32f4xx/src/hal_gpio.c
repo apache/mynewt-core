@@ -59,7 +59,7 @@
  *          - Multiply by 16.
  *          - Add port pin number.
  *
- *      Ex: PD11 = (4 * 16) + 11 = 75.
+ *      Ex: PE11 = (4 * 16) + 11 = 75.
  *          PA0 = (0 * 16) + 0 = 0
  */
 #define GPIO_INDEX(pin)     ((pin) & 0x0F)

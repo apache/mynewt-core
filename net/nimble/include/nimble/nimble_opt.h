@@ -64,66 +64,70 @@
 #define NIMBLE_OPT_SM_SC                        0
 #endif
 
-/** HOST: Supported GATT procedures.  By default, all are enabled. */
+/**
+ * HOST: Supported GATT procedures.  By default:
+ *     o Notify and indicate are enabled;
+ *     o All other procedures are enabled for centrals.
+ */
 
 #ifndef NIMBLE_OPT_GATT_DISC_ALL_SVCS
-#define NIMBLE_OPT_GATT_DISC_ALL_SVCS           1
+#define NIMBLE_OPT_GATT_DISC_ALL_SVCS           NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_DISC_SVC_UUID
-#define NIMBLE_OPT_GATT_DISC_SVC_UUID           1
+#define NIMBLE_OPT_GATT_DISC_SVC_UUID           NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_FIND_INC_SVCS
-#define NIMBLE_OPT_GATT_FIND_INC_SVCS           1
+#define NIMBLE_OPT_GATT_FIND_INC_SVCS           NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_DISC_ALL_CHRS
-#define NIMBLE_OPT_GATT_DISC_ALL_CHRS           1
+#define NIMBLE_OPT_GATT_DISC_ALL_CHRS           NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_DISC_CHR_UUID
-#define NIMBLE_OPT_GATT_DISC_CHR_UUID           1
+#define NIMBLE_OPT_GATT_DISC_CHR_UUID           NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_DISC_ALL_DSCS
-#define NIMBLE_OPT_GATT_DISC_ALL_DSCS           1
+#define NIMBLE_OPT_GATT_DISC_ALL_DSCS           NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_READ
-#define NIMBLE_OPT_GATT_READ                    1
+#define NIMBLE_OPT_GATT_READ                    NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_READ_UUID
-#define NIMBLE_OPT_GATT_READ_UUID               1
+#define NIMBLE_OPT_GATT_READ_UUID               NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_READ_LONG
-#define NIMBLE_OPT_GATT_READ_LONG               1
+#define NIMBLE_OPT_GATT_READ_LONG               NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_READ_MULT
-#define NIMBLE_OPT_GATT_READ_MULT               1
+#define NIMBLE_OPT_GATT_READ_MULT               NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_WRITE_NO_RSP
-#define NIMBLE_OPT_GATT_WRITE_NO_RSP            1
+#define NIMBLE_OPT_GATT_WRITE_NO_RSP            NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_SIGNED_WRITE
-#define NIMBLE_OPT_GATT_SIGNED_WRITE            1
+#define NIMBLE_OPT_GATT_SIGNED_WRITE            NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_WRITE
-#define NIMBLE_OPT_GATT_WRITE                   1
+#define NIMBLE_OPT_GATT_WRITE                   NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_WRITE_LONG
-#define NIMBLE_OPT_GATT_WRITE_LONG              1
+#define NIMBLE_OPT_GATT_WRITE_LONG              NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_WRITE_RELIABLE
-#define NIMBLE_OPT_GATT_WRITE_RELIABLE          1
+#define NIMBLE_OPT_GATT_WRITE_RELIABLE          NIMBLE_OPT_ROLE_CENTRAL
 #endif
 
 #ifndef NIMBLE_OPT_GATT_NOTIFY
@@ -134,6 +138,14 @@
 #define NIMBLE_OPT_GATT_INDICATE                1
 #endif
 
+/** HOST: GATT options. */
+
+/* The maximum number of attributes that can be written with a single GATT
+ * Reliable Write procedure.
+ */
+#ifndef NIMBLE_OPT_GATT_WRITE_MAX_ATTRS
+#define NIMBLE_OPT_GATT_WRITE_MAX_ATTRS         4
+#endif
 
 /** HOST: Supported server ATT commands. */
 
@@ -241,11 +253,23 @@
 #endif
 
 /*
- * Determines the maximum rate at which the controller will send the
- * number of completed packets event to the host. Rate is in os time ticks
+ * Timeout used by the controller when determining if a number of completed
+ * packets event should be sent to the host if there are data buffers in the
+ * controller that have not completed.
+ *
+ * NOTE:  the controller attempts to send the number of completed packets
+ * event after each connection event in which a packet was completed. This
+ * means that the host should expect that event at a rate much faster than
+ * defined here (assuming packets are being sent and the connection interval
+ * is shorter than the rate defined here). Thus, this definition exists in
+ * order to satisfy the spec requirement to notify the host (at some
+ * manufacturer specified rate) when the controller has data buffers that
+ * have not completed.
+ *
+ * This rate is in seconds.
  */
 #ifndef NIMBLE_OPT_NUM_COMP_PKT_RATE
-#define NIMBLE_OPT_NUM_COMP_PKT_RATE    ((2000 * OS_TICKS_PER_SEC) / 1000)
+#define NIMBLE_OPT_NUM_COMP_PKT_RATE            (10)
 #endif
 
 /* Manufacturer ID. Should be set to unique ID per manufacturer */
@@ -343,12 +367,15 @@
 #endif
 
 /*
- * This option allows a controller to send/receive LE pings. Currently,
- * this feature is not implemented by the controller so turning it on or off
- * has no effect.
+ * This option allows a controller to send/receive LE pings.
  */
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 0)
+#undef BLE_LL_CFG_FEAT_LE_PING
+#define BLE_LL_CFG_FEAT_LE_PING                 (0)
+#else
 #ifndef BLE_LL_CFG_FEAT_LE_PING
 #define  BLE_LL_CFG_FEAT_LE_PING                (1)
+#endif
 #endif
 
 /*
@@ -362,8 +389,7 @@
 #endif
 
 /*
- * This option is used to enable/disable LL privacy. Currently, this feature
- * is not supported by the nimble controller.
+ * This option is used to enable/disable LL privacy.
  */
 #ifndef BLE_LL_CFG_FEAT_LL_PRIVACY
 #define BLE_LL_CFG_FEAT_LL_PRIVACY              (1)

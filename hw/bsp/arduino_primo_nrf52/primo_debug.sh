@@ -51,8 +51,11 @@ if [ $USE_OPENOCD -eq 1 ]; then
     # Block Ctrl-C from getting passed to openocd.
     # Exit openocd when gdb detaches.
     #
+    # Note that openocd behaves differently than Primo. We reset the target
+    # as we attach with openocd. If you don't want that, replace "reset halt"
+    # with just "halt"
     set -m
-    openocd -s $MY_PATH -f arduino_primo.cfg -c "gdb_port 3333; telnet_port 4444; nrf52.cpu configure -event gdb-detach {shutdown}" -c init -c "halt" &
+    openocd -s $MY_PATH -f arduino_primo.cfg -c "gdb_port 3333; telnet_port 4444; nrf52.cpu configure -event gdb-detach {shutdown}" -c init -c "reset halt" &
     set +m
 else
     #

@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include "host/ble_eddystone.h"
+#include "host/ble_hs_adv.h"
 #include "ble_hs_priv.h"
 
 #define BLE_EDDYSTONE_MAX_SVC_DATA_LEN  23
@@ -112,7 +113,11 @@ ble_eddystone_set_adv_data_gen(struct ble_hs_adv_fields *adv_fields,
  *                                  this struct before calling this function.
  * @param uid                   The 16-byte UID to advertise.
  *
- * @return                      0 on success; BLE_HS_E... on failure.
+ * @return                      0 on success;
+ *                              BLE_HS_EBUSY if advertising is in progress;
+ *                              BLE_HS_EMSGSIZE if the specified data is too
+ *                                  large to fit in an advertisement;
+ *                              Other nonzero on failure.
  */
 int
 ble_eddystone_set_adv_data_uid(struct ble_hs_adv_fields *adv_fields, void *uid)
@@ -151,7 +156,11 @@ ble_eddystone_set_adv_data_uid(struct ble_hs_adv_fields *adv_fields, void *uid)
  *                                  BLE_EDDYSTONE_URL_SUFFIX_NONE if the suffix
  *                                  is embedded in the body argument.
  *
- * @return                      0 on success; BLE_HS_E... on failure.
+ * @return                      0 on success;
+ *                              BLE_HS_EBUSY if advertising is in progress;
+ *                              BLE_HS_EMSGSIZE if the specified data is too
+ *                                  large to fit in an advertisement;
+ *                              Other nonzero on failure.
  */
 int
 ble_eddystone_set_adv_data_url(struct ble_hs_adv_fields *adv_fields,
@@ -177,7 +186,7 @@ ble_eddystone_set_adv_data_url(struct ble_hs_adv_fields *adv_fields,
 
     svc_data = ble_eddystone_set_svc_data_base(BLE_EDDYSTONE_FRAME_TYPE_URL);
     
-    rc = ble_hci_util_read_adv_tx_pwr(&tx_pwr);
+    rc = ble_hs_hci_util_read_adv_tx_pwr(&tx_pwr);
     if (rc != 0) {
         return rc;
     }

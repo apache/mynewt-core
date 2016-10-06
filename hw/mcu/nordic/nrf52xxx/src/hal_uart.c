@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -31,6 +31,7 @@
 #define UARTE_CONFIG_PARITY	UARTE_CONFIG_PARITY_Msk
 #define UARTE_CONFIG_HWFC	UARTE_CONFIG_HWFC_Msk
 #define UARTE_ENABLE		UARTE_ENABLE_ENABLE_Enabled
+#define UARTE_DISABLE           UARTE_ENABLE_ENABLE_Disabled
 
 /*
  * Only one UART on NRF 52832.
@@ -91,6 +92,9 @@ hal_uart_start_tx(int port)
     int sr;
     int rc;
 
+    if (port != 0) {
+        return;
+    }
     u = &uart;
     __HAL_DISABLE_INTERRUPTS(sr);
     if (u->u_tx_started == 0) {
@@ -113,6 +117,9 @@ hal_uart_start_rx(int port)
     int sr;
     int rc;
 
+    if (port != 0) {
+        return;
+    }
     u = &uart;
     if (u->u_rx_stall) {
         __HAL_DISABLE_INTERRUPTS(sr);
@@ -130,6 +137,10 @@ void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
     struct hal_uart *u;
+
+    if (port != 0) {
+        return;
+    }
 
     u = &uart;
     if (!u->u_open) {
@@ -202,6 +213,8 @@ hal_uart_baudrate(int baudrate)
         return UARTE_BAUDRATE_BAUDRATE_Baud38400;
     case 57600:
         return UARTE_BAUDRATE_BAUDRATE_Baud57600;
+    case 76800:
+        return UARTE_BAUDRATE_BAUDRATE_Baud76800;
     case 115200:
         return UARTE_BAUDRATE_BAUDRATE_Baud115200;
     case 230400:
@@ -303,7 +316,25 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     NRF_UARTE0->RXD.MAXCNT = sizeof(u->u_rx_buf);
     NRF_UARTE0->TASKS_STARTRX = 1;
 
+    u->u_rx_stall = 0;
+    u->u_tx_started = 0;
     u->u_open = 1;
 
     return 0;
+}
+
+int
+hal_uart_close(int port)
+{
+    struct hal_uart *u;
+
+    u = &uart;
+
+    if (port == 0) {
+        u->u_open = 0;
+        NRF_UARTE0->ENABLE = 0;
+        NRF_UARTE0->INTENCLR = 0xffffffff;
+        return 0;
+    }
+    return -1;
 }

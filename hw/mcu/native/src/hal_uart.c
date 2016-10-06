@@ -148,9 +148,9 @@ uart_transmit_char(struct uart *uart)
         OS_EXIT_CRITICAL(sr);
         return 0;
     }
+    ch = rc;
     uart_log_data(uart, 1, ch);
     OS_EXIT_CRITICAL(sr);
-    ch = rc;
     rc = write(uart->u_fd, &ch, 1);
     if (rc <= 0) {
         /* XXX EOF/error, what now? */

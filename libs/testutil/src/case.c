@@ -30,6 +30,8 @@ int tu_case_failed;
 int tu_case_idx;
 
 const char *tu_case_name;
+tu_post_test_fn_t *tu_case_post_test_cb;
+void *tu_case_post_test_cb_arg;
 
 #define TU_CASE_BUF_SZ      1024
 
@@ -99,6 +101,14 @@ void
 tu_case_complete(void)
 {
     tu_case_idx++;
+}
+
+void
+tu_case_post_test(void)
+{
+    if (tu_case_post_test_cb != NULL) {
+        tu_case_post_test_cb(tu_case_post_test_cb_arg);
+    }
 }
 
 static void

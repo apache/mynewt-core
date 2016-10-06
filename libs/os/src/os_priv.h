@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,11 +20,17 @@
 #ifndef H_OS_PRIV_
 #define H_OS_PRIV_
 
-TAILQ_HEAD(os_task_list, os_task);
+#include "os/queue.h"
 
+TAILQ_HEAD(os_task_list, os_task);
+TAILQ_HEAD(os_callout_list, os_callout);
+STAILQ_HEAD(os_task_stailq, os_task);
+
+extern struct os_task g_idle_task;
 extern struct os_task_list g_os_run_list;
 extern struct os_task_list g_os_sleep_list;
-extern struct os_task_list g_os_task_list;
+extern struct os_task_stailq g_os_task_list;
 extern struct os_task *g_current_task;
+extern struct os_callout_list g_callout_list;
 
 #endif

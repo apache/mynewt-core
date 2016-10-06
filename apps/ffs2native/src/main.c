@@ -53,6 +53,7 @@ int file_scratch_idx;
 #define MAX_AREAS    16
 static struct nffs_area_desc area_descs[MAX_AREAS];
 int nffs_version;
+int force_version;
 
 /** On-disk representation of a version 0 inode (file or directory). */
 struct nffs_disk_V0inode {
@@ -415,6 +416,7 @@ print_nffs_flash_V0object(struct nffs_area_desc *area, uint32_t off)
     uint32_t magic;
     int rc;
 
+    printf("print_nffs_flash_V0object(area:%d off%d)\n", area->nad_flash_id, off);
     rc = file_flash_read(area->nad_offset + off, &magic, sizeof magic);
     assert(rc == 0);
 
@@ -440,25 +442,35 @@ print_nffs_flash_inode(struct nffs_area_desc *area, uint32_t off)
     char filename[128];
     int len;
     int rc;
+    uint16_t crc16;
+    int badcrc = 0;
 
     rc = file_flash_read(area->nad_offset + off, &ndi, sizeof(ndi));
     assert(rc == 0);
+
+    crc16 = crc16_ccitt(0, (void*)&ndi, NFFS_DISK_INODE_OFFSET_CRC);
 
     memset(filename, 0, sizeof(filename));
     len = min(sizeof(filename) - 1, ndi.ndi_filename_len);
     rc = file_flash_read(area->nad_offset + off + sizeof(ndi), filename, len);
 
-    printf("  off %x %s id %x flen %d seq %d last %x prnt %x flgs %x %s\n",
+    crc16 = crc16_ccitt(crc16, filename, ndi.ndi_filename_len);
+    if (crc16 != ndi.ndi_crc16) {
+        badcrc = 1;
+    }
+
+    printf("  off %x %s id %x flen %d seq %d last %x prnt %x flgs %x %s%s\n",
            off,
            (nffs_hash_id_is_file(ndi.ndi_id) ? "File" :
-            (nffs_hash_id_is_dir(ndi.ndi_id) ? "Dir" : "???")),
+            nffs_hash_id_is_dir(ndi.ndi_id) ? "Dir" : "???"),
            ndi.ndi_id,
            ndi.ndi_filename_len,
            ndi.ndi_seq,
            ndi.ndi_lastblock_id,
            ndi.ndi_parent_id,
            ndi.ndi_flags,
-           filename);
+           filename,
+           badcrc ? " (Bad CRC!)" : "");
     return sizeof(ndi) + ndi.ndi_filename_len;
 }
 
@@ -467,34 +479,56 @@ print_nffs_flash_block(struct nffs_area_desc *area, uint32_t off)
 {
     struct nffs_disk_block ndb;
     int rc;
+    uint16_t crc16;
+    int badcrc = 0;
+    int dataover = 0;
 
     rc = file_flash_read(area->nad_offset + off, &ndb, sizeof(ndb));
     assert(rc == 0);
 
-    printf("  off %x Block id %x len %d seq %d prev %x own ino %x\n",
+    if (off + ndb.ndb_data_len > area->nad_length) {
+        dataover++;
+    } else {
+        crc16 = crc16_ccitt(0, (void*)&ndb, NFFS_DISK_BLOCK_OFFSET_CRC);
+        crc16 = crc16_ccitt(crc16,
+            (void*)(file_flash_area + area->nad_offset + off + sizeof(ndb)),
+            ndb.ndb_data_len);
+        if (crc16 != ndb.ndb_crc16) {
+            badcrc++;
+        }
+    }
+
+    printf("  off %x Block id %x len %d seq %d prev %x own ino %x%s%s\n",
            off,
            ndb.ndb_id,
            ndb.ndb_data_len,
            ndb.ndb_seq,
            ndb.ndb_prev_id,
-           ndb.ndb_inode_id);
+           ndb.ndb_inode_id,
+           dataover ? " (Bad data length)" : "",
+           badcrc ? " (Bad CRC!)" : "");
+    if (dataover) {
+        return 1;
+    }
     return sizeof(ndb) + ndb.ndb_data_len;
 }
 
 static int
 print_nffs_flash_object(struct nffs_area_desc *area, uint32_t off)
 {
-    struct nffs_disk_object ndo;
+    struct nffs_disk_inode *ndi;
+    struct nffs_disk_block *ndb;
 
-    file_flash_read(area->nad_offset + off, &ndo, sizeof(ndo));
+    ndi = (struct nffs_disk_inode*)(file_flash_area + area->nad_offset + off);
+    ndb = (struct nffs_disk_block*)ndi;
 
-    if (nffs_hash_id_is_inode(ndo.ndo_disk_inode.ndi_id)) {
+    if (nffs_hash_id_is_inode(ndi->ndi_id)) {
         return print_nffs_flash_inode(area, off);
 
-    } else if (nffs_hash_id_is_block(ndo.ndo_disk_block.ndb_id)) {
+    } else if (nffs_hash_id_is_block(ndb->ndb_id)) {
         return print_nffs_flash_block(area, off);
 
-    } else if (ndo.ndo_disk_block.ndb_id == 0xffffffff) {
+    } else if (ndb->ndb_id == 0xffffffff) {
         return area->nad_length;
 
     } else {
@@ -510,6 +544,7 @@ print_nffs_file_flash(char *flash_area, size_t size)
     struct nffs_disk_area *nda;
     int nad_cnt = 0;    /* Nffs Area Descriptor count */
     int off;
+    int objsz;
 
     daptr = flash_area;
     eoda = flash_area + size;
@@ -520,7 +555,11 @@ print_nffs_file_flash(char *flash_area, size_t size)
             area_descs[nad_cnt].nad_offset = (daptr - flash_area);
             area_descs[nad_cnt].nad_length = nda->nda_length;
             area_descs[nad_cnt].nad_flash_id = nda->nda_id;
-            nffs_version = nda->nda_ver;
+            if (force_version >= 0) {
+                nffs_version = force_version;
+            } else {
+                nffs_version = nda->nda_ver;
+            }
 
             if (nda->nda_id == 0xff)
                 file_scratch_idx = nad_cnt;
@@ -538,8 +577,13 @@ print_nffs_file_flash(char *flash_area, size_t size)
                    nda->nda_ver != NFFS_AREA_VER ? " (V0)" : "",
                    nad_cnt == file_scratch_idx ? " (Scratch)" : "");
 
+            if (nffs_version == 0) {
+                objsz = sizeof (struct nffs_disk_V0object);
+            } else {
+                objsz = sizeof (struct nffs_disk_object);
+            }
             off = sizeof (struct nffs_disk_area);
-            while (off < area_descs[nad_cnt].nad_length) {
+            while (off + objsz < area_descs[nad_cnt].nad_length) {
                 if (nffs_version == 0) {
                     off += print_nffs_flash_V0object(&area_descs[nad_cnt], off);
                 } else if (nffs_version == NFFS_AREA_VER) {
@@ -593,8 +637,9 @@ main(int argc, char **argv)
     int standalone = 0;
             
     progname = argv[0];
+    force_version = -1;
 
-    while ((ch = getopt(argc, argv, "c:d:f:sv")) != -1) {
+    while ((ch = getopt(argc, argv, "c:d:f:sv01")) != -1) {
         switch (ch) {
         case 'c':
             fp = fopen(optarg, "rb");
@@ -613,6 +658,12 @@ main(int argc, char **argv)
             break;
         case 'v':
             print_verbose++;
+            break;
+        case '0':
+            force_version = 0;
+            break;
+        case '1':
+            force_version = 1;
             break;
         case '?':
         default:

@@ -21,6 +21,7 @@
 #include <string.h>
 #include "nimble/ble.h"
 #include "nimble/hci_common.h"
+#include "nimble/ble_hci_trans.h"
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
 #include "controller/ble_ll_ctrl.h"
@@ -41,7 +42,7 @@ ble_ll_hci_ev_datalen_chg(struct ble_ll_conn_sm *connsm)
     uint8_t *evbuf;
 
     if (ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_DATA_LEN_CHG)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_LE_META;
             evbuf[1] = BLE_HCI_LE_DATA_LEN_CHG_LEN;
@@ -68,7 +69,7 @@ ble_ll_hci_ev_rem_conn_parm_req(struct ble_ll_conn_sm *connsm,
     uint8_t *evbuf;
 
     if (ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_REM_CONN_PARM_REQ)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_LE_META;
             evbuf[1] = BLE_HCI_LE_REM_CONN_PARM_REQ_LEN;
@@ -95,7 +96,7 @@ ble_ll_hci_ev_conn_update(struct ble_ll_conn_sm *connsm, uint8_t status)
     uint8_t *evbuf;
 
     if (ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_CONN_UPD_COMPLETE)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_LE_META;
             evbuf[1] = BLE_HCI_LE_CONN_UPD_LEN;
@@ -127,7 +128,7 @@ ble_ll_hci_ev_encrypt_chg(struct ble_ll_conn_sm *connsm, uint8_t status)
     }
 
     if (ble_ll_hci_is_event_enabled(evcode)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = evcode;
             evbuf[1] = evlen;
@@ -158,7 +159,7 @@ ble_ll_hci_ev_ltk_req(struct ble_ll_conn_sm *connsm)
     uint8_t *evbuf;
 
     if (ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_LT_KEY_REQ)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_LE_META;
             evbuf[1] = BLE_HCI_LE_LT_KEY_REQ_LEN;
@@ -188,7 +189,7 @@ ble_ll_hci_ev_rd_rem_used_feat(struct ble_ll_conn_sm *connsm, uint8_t status)
     uint8_t *evbuf;
 
     if (ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_RD_REM_USED_FEAT)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_LE_META;
             evbuf[1] = BLE_HCI_LE_RD_REM_USED_FEAT_LEN;
@@ -208,7 +209,7 @@ ble_ll_hci_ev_rd_rem_ver(struct ble_ll_conn_sm *connsm, uint8_t status)
     uint8_t *evbuf;
 
     if (ble_ll_hci_is_event_enabled(BLE_HCI_EVCODE_RD_REM_VER_INFO_CMP)) {
-        evbuf = os_memblock_get(&g_hci_cmd_pool);
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
         if (evbuf) {
             evbuf[0] = BLE_HCI_EVCODE_RD_REM_VER_INFO_CMP;
             evbuf[1] = BLE_HCI_EVENT_RD_RM_VER_LEN;
@@ -217,6 +218,50 @@ ble_ll_hci_ev_rd_rem_ver(struct ble_ll_conn_sm *connsm, uint8_t status)
             evbuf[5] = connsm->vers_nr;
             htole16(evbuf + 6, connsm->comp_id);
             htole16(evbuf + 8, connsm->sub_vers_nr);
+            ble_ll_hci_event_send(evbuf);
+        }
+    }
+}
+
+/**
+ * Send a HW error to the host.
+ *
+ * @param hw_err
+ *
+ * @return int 0: event masked or event sent, -1 otherwise
+ */
+int
+ble_ll_hci_ev_hw_err(uint8_t hw_err)
+{
+    int rc;
+    uint8_t *evbuf;
+
+    rc = 0;
+    if (ble_ll_hci_is_event_enabled(BLE_HCI_EVCODE_HW_ERROR)) {
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
+        if (evbuf) {
+            evbuf[0] = BLE_HCI_EVCODE_HW_ERROR;
+            evbuf[1] = BLE_HCI_EVENT_HW_ERROR_LEN;
+            evbuf[2] = hw_err;
+            ble_ll_hci_event_send(evbuf);
+        } else {
+            rc = -1;
+        }
+    }
+    return rc;
+}
+
+void
+ble_ll_hci_ev_databuf_overflow(void)
+{
+    uint8_t *evbuf;
+
+    if (ble_ll_hci_is_event_enabled(BLE_HCI_EVCODE_DATA_BUF_OVERFLOW)) {
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
+        if (evbuf) {
+            evbuf[0] = BLE_HCI_EVCODE_DATA_BUF_OVERFLOW;
+            evbuf[1] = BLE_HCI_EVENT_DATABUF_OVERFLOW_LEN;
+            evbuf[2] = BLE_HCI_EVENT_ACL_BUF_OVERFLOW;
             ble_ll_hci_event_send(evbuf);
         }
     }

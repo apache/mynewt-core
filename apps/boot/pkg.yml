@@ -29,9 +29,7 @@ pkg.features: bootloader
 
 pkg.deps:
     - sys/config
-    - fs/nffs
     - libs/bootutil
-    - libs/mbedtls
     - libs/os
     - libs/util
     - libs/console/stub

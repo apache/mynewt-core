@@ -27,5 +27,22 @@ pkg.deps:
     - sys/log
     - net/nimble/controller
     - net/nimble/host
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
+    - net/nimble/host/store/ram
+    - net/nimble/transport/ram
     - libs/console/full
     - libs/baselibc
+    - libs/newtmgr
+    - libs/newtmgr/transport/ble
+
+pkg.cflags:
+    # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
+    - "-DLOG_LEVEL=1"
+
+    # Disable unused roles; bleprph is a peripheral-only app.
+    - "-DNIMBLE_OPT_ROLE_OBSERVER=0"
+    - "-DNIMBLE_OPT_ROLE_CENTRAL=0"
+
+    # Disable unused eddystone feature.
+    - "-DNIMBLE_OPT_EDDYSTONE=0"

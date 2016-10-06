@@ -36,9 +36,8 @@
 
 /* BLE */
 #include "nimble/ble.h"
-#include "nimble/hci_transport.h"
+#include "nimble/ble_hci_trans.h"
 #include "nimble/hci_common.h"
-#include "host/host_hci.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
@@ -46,10 +45,15 @@
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
 
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
+
+/* RAM HCI transport. */
+#include "transport/ram/ble_hci_ram.h"
+
 /* XXX: An app should not include private headers from a library.  The bletest
  * app uses some of nimble's internal details for logging.
  */
-#include "../src/ble_hci_util_priv.h"
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
@@ -109,14 +113,14 @@ os_membuf_t g_mbuf_buffer[MBUF_MEMPOOL_SIZE];
 #define BLETEST_CFG_ADV_ITVL            (60000 / BLE_HCI_ADV_ITVL)
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
-#define BLETEST_CFG_ADV_ADDR_RES_EN     (1)
+#define BLETEST_CFG_ADV_ADDR_RES_EN     (0)
 
 /* Scan config */
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_WINDOW         (700000 / BLE_HCI_SCAN_ITVL)
 #define BLETEST_CFG_SCAN_TYPE           (BLE_HCI_SCAN_TYPE_PASSIVE)
 #define BLETEST_CFG_SCAN_OWN_ADDR_TYPE  (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
-#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_USE_WL)
+#define BLETEST_CFG_SCAN_FILT_POLICY    (BLE_HCI_SCAN_FILT_NO_WL)
 #define BLETEST_CFG_FILT_DUP_ADV        (1)
 
 /* Connection config */
@@ -166,6 +170,7 @@ uint16_t g_bletest_completed_pkts;
 uint16_t g_bletest_outstanding_pkts;
 uint16_t g_bletest_ltk_reply_handle;
 uint32_t g_bletest_hw_id[4];
+struct hci_create_conn g_cc;
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -421,14 +426,14 @@ bletest_init_scanner(void)
     uint8_t add_whitelist;
 
     own_addr_type = BLETEST_CFG_SCAN_OWN_ADDR_TYPE;
-    rc = host_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
+    rc = ble_hs_hci_cmd_build_le_set_scan_params(BLETEST_CFG_SCAN_TYPE,
                                                BLETEST_CFG_SCAN_ITVL,
                                                BLETEST_CFG_SCAN_WINDOW,
-                                               BLETEST_CFG_SCAN_OWN_ADDR_TYPE,
+                                               own_addr_type,
                                                BLETEST_CFG_SCAN_FILT_POLICY,
                                                buf, sizeof buf);
     assert(rc == 0);
-    rc = ble_hci_cmd_tx_empty_ack(buf);
+    rc = ble_hs_hci_cmd_tx_empty_ack(buf);
     if (rc == 0) {
         add_whitelist = BLETEST_CFG_SCAN_FILT_POLICY;
 #if (BLE_LL_CFG_FEAT_LL_PRIVACY == 1)
@@ -478,11 +483,10 @@ bletest_init_initiator(void)
 {
     int rc;
     uint8_t rand_addr[BLE_DEV_ADDR_LEN];
-    struct hci_create_conn cc;
     struct hci_create_conn *hcc;
 
     /* Enable initiating */
-    hcc = &cc;
+    hcc = &g_cc;
     hcc->conn_itvl_max = BLETEST_CFG_CONN_ITVL;
     hcc->conn_itvl_min = BLETEST_CFG_CONN_ITVL;
     hcc->conn_latency = BLETEST_CFG_SLAVE_LATENCY;
@@ -525,8 +529,7 @@ bletest_init_initiator(void)
         }
 #endif
 
-    rc = bletest_hci_le_create_connection(hcc);
-    assert(rc == 0);
+    bletest_hci_le_create_connection(hcc);
 }
 
 void
@@ -568,6 +571,10 @@ bletest_execute_initiator(void)
                     g_dev_addr[5] += 1;
                     bletest_init_initiator();
                 }
+            }
+        } else {
+            if (ble_ll_scan_enabled() == 0) {
+                bletest_hci_le_create_connection(&g_cc);
             }
         }
     } else {
@@ -616,7 +623,7 @@ bletest_execute_initiator(void)
             } else {
                 for (i = 0; i < g_bletest_current_conns; ++i) {
                     if (ble_ll_conn_find_active_conn(i + 1)) {
-                        ble_hci_util_read_rssi(i+1, &rssi);
+                        ble_hs_hci_util_read_rssi(i+1, &rssi);
                     }
                 }
             }
@@ -655,6 +662,10 @@ bletest_execute_advertiser(void)
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
     int j;
+#if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
+    uint16_t mask;
+    uint16_t reply_handle;
+#endif
 #endif
     int rc;
     uint16_t handle;
@@ -708,7 +719,12 @@ bletest_execute_advertiser(void)
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
                 bletest_init_advertising();
-                rc = bletest_hci_le_set_adv_enable(1);
+                bletest_hci_le_set_adv_enable(1);
+            }
+        } else {
+            /* If we failed to start advertising we should keep trying */
+            if (ble_ll_adv_enabled() == 0) {
+                bletest_hci_le_set_adv_enable(1);
             }
         }
     }
@@ -726,10 +742,16 @@ bletest_execute_advertiser(void)
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
 #if (BLE_LL_CFG_FEAT_LE_ENCRYPTION == 1)
         /* Do we need to send a LTK reply? */
-        if (g_bletest_ltk_reply_handle) {
-            //bletest_send_ltk_req_neg_reply(g_bletest_ltk_reply_handle);
-            bletest_send_ltk_req_reply(g_bletest_ltk_reply_handle);
-            g_bletest_ltk_reply_handle = 0;
+        mask = 1;
+        reply_handle = 1;
+        while (g_bletest_ltk_reply_handle && mask) {
+            if (g_bletest_ltk_reply_handle & mask) {
+                bletest_send_ltk_req_reply(reply_handle);
+                //bletest_send_ltk_req_neg_reply(reply_handle);
+                g_bletest_ltk_reply_handle &= ~mask;
+            }
+            ++reply_handle;
+            mask <<= 1;
         }
 #endif
         if (g_bletest_current_conns) {
@@ -769,7 +791,7 @@ bletest_execute_advertiser(void)
 
                         /* Add length */
                         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                        ble_hci_transport_host_acl_data_send(om);
+                        ble_hci_trans_hs_acl_tx(om);
 
                         /* Increment last handle used */
                         ++g_last_handle_used;
@@ -825,7 +847,7 @@ bletest_execute_advertiser(void)
 
                 /* Add length */
                 OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                ble_hci_transport_host_acl_data_send(om);
+                ble_hci_trans_hs_acl_data_send(om);
 
                 ++g_bletest_outstanding_pkts;
             }
@@ -896,6 +918,8 @@ bletest_task_handler(void *arg)
     /* Initialize the host timer */
     os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
                          NULL);
+
+    ble_hs_dbg_set_sync_state(BLE_HS_SYNC_STATE_GOOD);
 
     /* Send the reset command first */
     rc = bletest_hci_reset_ctlr();
@@ -990,7 +1014,7 @@ bletest_task_handler(void *arg)
 #endif
 
     /* Get a random number */
-    rc = ble_hci_util_rand(&rand64, 8);
+    rc = ble_hs_hci_util_rand(&rand64, 8);
     assert(rc == 0);
 
     /* Wait some time before starting */
@@ -1106,10 +1130,6 @@ main(void)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    /* Init the console */
-    rc = console_init(shell_console_rx_cb);
-    assert(rc == 0);
-
 #if 0
     rc = hal_flash_init();
     assert(rc == 0);
@@ -1150,11 +1170,16 @@ main(void)
     os_eventq_init(&g_bletest_evq);
 
     /* Initialize the BLE LL */
-    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS, BLE_MBUF_PAYLOAD_SIZE);
+    rc = ble_ll_init(BLE_LL_TASK_PRI, MBUF_NUM_MBUFS,
+                     BLE_MBUF_PAYLOAD_SIZE - BLE_HCI_DATA_HDR_SZ);
     assert(rc == 0);
 
     /* Initialize host */
     rc = ble_hs_init(&g_bletest_evq, NULL);
+    assert(rc == 0);
+
+    /* Initialize the RAM HCI transport. */
+    rc = ble_hci_ram_init(&ble_hci_ram_cfg_dflt);
     assert(rc == 0);
 
     rc = os_task_init(&bletest_task, "bletest", bletest_task_handler, NULL,

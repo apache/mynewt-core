@@ -114,6 +114,9 @@ nffs_inode_write_disk(const struct nffs_disk_inode *disk_inode,
 {
     int rc;
 
+    /* Only the DELETED flag is ever written out to flash */
+    assert((disk_inode->ndi_flags & ~NFFS_INODE_FLAG_DELETED) == 0);
+
     rc = nffs_flash_write(area_idx, area_offset, disk_inode,
                           sizeof *disk_inode);
     if (rc != 0) {
@@ -611,6 +614,7 @@ nffs_inode_rename(struct nffs_inode_entry *inode_entry,
     disk_inode.ndi_id = inode_entry->nie_hash_entry.nhe_id;
     disk_inode.ndi_seq = inode.ni_seq + 1;
     disk_inode.ndi_parent_id = nffs_inode_parent_id(&inode);
+    disk_inode.ndi_flags = 0;
     disk_inode.ndi_filename_len = filename_len;
     if (inode_entry->nie_last_block_entry &&
         inode_entry->nie_last_block_entry->nhe_id != NFFS_ID_NONE)

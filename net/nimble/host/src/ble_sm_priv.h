@@ -276,7 +276,7 @@ struct ble_sm_proc {
 struct ble_sm_result {
     int app_status;
     uint8_t sm_err;
-    struct ble_gap_passkey_action passkey_action;
+    struct ble_gap_passkey_params passkey_params;
     void *state_arg;
     unsigned execute:1;
     unsigned enc_cb:1;
@@ -386,9 +386,10 @@ int ble_sm_alg_g2(uint8_t *u, uint8_t *v, uint8_t *x, uint8_t *y,
 int ble_sm_alg_f5(uint8_t *w, uint8_t *n1, uint8_t *n2, uint8_t a1t,
                   uint8_t *a1, uint8_t a2t, uint8_t *a2,
                   uint8_t *mackey, uint8_t *ltk);
-int ble_sm_alg_f6(uint8_t *w, uint8_t *n1, uint8_t *n2, uint8_t *r,
-                  uint8_t *iocap, uint8_t a1t, uint8_t *a1,
-                  uint8_t a2t, uint8_t *a2, uint8_t *check);
+int ble_sm_alg_f6(const uint8_t *w, const uint8_t *n1, const uint8_t *n2,
+                  const uint8_t *r, const uint8_t *iocap, uint8_t a1t,
+                  const uint8_t *a1, uint8_t a2t, const uint8_t *a2,
+                  uint8_t *check);
 int ble_sm_alg_gen_dhkey(uint8_t *peer_pub_key_x, uint8_t *peer_pub_key_y,
                          uint32_t *our_priv_key, void *out_dhkey);
 int ble_sm_alg_gen_key_pair(void *pub, uint32_t *priv);
@@ -416,11 +417,12 @@ void ble_sm_sc_public_key_exec(struct ble_sm_proc *proc,
                                struct ble_sm_result *res,
                                void *arg);
 void ble_sm_sc_public_key_rx(uint16_t conn_handle, uint8_t op,
-                             struct os_mbuf **om, struct ble_sm_result *res);
+                             struct os_mbuf **rxom, struct ble_sm_result *res);
 void ble_sm_sc_dhkey_check_exec(struct ble_sm_proc *proc,
                                 struct ble_sm_result *res, void *arg);
 void ble_sm_sc_dhkey_check_rx(uint16_t conn_handle, uint8_t op,
-                              struct os_mbuf **om, struct ble_sm_result *res);
+                              struct os_mbuf **rxom,
+                              struct ble_sm_result *res);
 void ble_sm_sc_init(void);
 #else
 #define ble_sm_sc_io_action(proc) (BLE_SM_IOACT_NONE)
@@ -446,17 +448,15 @@ int ble_sm_ioact_state(uint8_t action);
 int ble_sm_proc_can_advance(struct ble_sm_proc *proc);
 void ble_sm_process_result(uint16_t conn_handle, struct ble_sm_result *res);
 void ble_sm_confirm_advance(struct ble_sm_proc *proc);
-int ble_sm_peer_addr(struct ble_sm_proc *proc,
-                     uint8_t *out_type, uint8_t **out_addr);
-int ble_sm_ia_ra(struct ble_sm_proc *proc,
-                 uint8_t *out_iat, uint8_t *out_ia,
-                 uint8_t *out_rat, uint8_t *out_ra);
+void ble_sm_ia_ra(struct ble_sm_proc *proc,
+                  uint8_t *out_iat, uint8_t *out_ia,
+                  uint8_t *out_rat, uint8_t *out_ra);
 
-uint32_t ble_sm_heartbeat(void);
+int32_t ble_sm_heartbeat(void);
 void ble_sm_connection_broken(uint16_t conn_handle);
 int ble_sm_pair_initiate(uint16_t conn_handle);
 int ble_sm_slave_initiate(uint16_t conn_handle);
-int ble_sm_enc_initiate(uint16_t conn_handle, uint8_t *ltk,
+int ble_sm_enc_initiate(uint16_t conn_handle, const uint8_t *ltk,
                         uint16_t ediv, uint64_t rand_val, int auth);
 int ble_sm_init(void);
 
@@ -471,7 +471,7 @@ int ble_sm_init(void);
 #define ble_sm_ltk_req_rx(evt) ((void)(evt))
 #define ble_sm_enc_key_refresh_rx(evt) ((void)(evt))
 
-#define ble_sm_heartbeat() UINT32_MAX
+#define ble_sm_heartbeat() BLE_HS_FOREVER
 #define ble_sm_connection_broken(conn_handle)
 #define ble_sm_pair_initiate(conn_handle)   BLE_HS_ENOTSUP
 #define ble_sm_slave_initiate(conn_handle)  BLE_HS_ENOTSUP

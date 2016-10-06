@@ -22,7 +22,6 @@
 #include "os/os.h"
 #include "nimble/ble.h"
 #include "nimble/hci_common.h"
-#include "host/host_hci.h"
 #include "ble_hs_priv.h"
 
 _Static_assert(sizeof (struct ble_l2cap_hdr) == BLE_L2CAP_HDR_SZ,
@@ -79,7 +78,7 @@ ble_l2cap_chan_free(struct ble_l2cap_chan *chan)
 }
 
 uint16_t
-ble_l2cap_chan_mtu(struct ble_l2cap_chan *chan)
+ble_l2cap_chan_mtu(const struct ble_l2cap_chan *chan)
 {
     uint16_t mtu;
 
@@ -124,7 +123,7 @@ ble_l2cap_prepend_hdr(struct os_mbuf *om, uint16_t cid, uint16_t len)
     htole16(&hdr.blh_len, len);
     htole16(&hdr.blh_cid, cid);
 
-    om = os_mbuf_prepend(om, sizeof hdr);
+    om = os_mbuf_prepend_pullup(om, sizeof hdr);
     if (om == NULL) {
         return NULL;
     }
@@ -270,33 +269,27 @@ err:
  * mbuf is consumed, regardless of the outcome of the function call.
  * 
  * @param chan                  The L2CAP channel to transmit over.
- * @param om                    The data to transmit.
+ * @param txom                  The data to transmit.
  *
  * @return                      0 on success; nonzero on error.
  */
 int
 ble_l2cap_tx(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan,
-             struct os_mbuf *om)
+             struct os_mbuf *txom)
 {
     int rc;
 
-    om = ble_l2cap_prepend_hdr(om, chan->blc_cid, OS_MBUF_PKTLEN(om));
-    if (om == NULL) {
-        rc = BLE_HS_ENOMEM;
-        goto err;
+    txom = ble_l2cap_prepend_hdr(txom, chan->blc_cid, OS_MBUF_PKTLEN(txom));
+    if (txom == NULL) {
+        return BLE_HS_ENOMEM;
     }
 
-    rc = host_hci_data_tx(conn, om);
-    om = NULL;
+    rc = ble_hs_hci_acl_tx(conn, txom);
     if (rc != 0) {
-        goto err;
+        return rc;
     }
 
     return 0;
-
-err:
-    os_mbuf_free_chain(om);
-    return rc;
 }
 
 static void

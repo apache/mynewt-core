@@ -18,12 +18,12 @@
  */
 
 #include "os/os.h"
+#include "os_priv.h"
 
 #include <assert.h>
 #include <string.h>
 
-TAILQ_HEAD(, os_callout) g_callout_list =
-  TAILQ_HEAD_INITIALIZER(g_callout_list);
+struct os_callout_list g_callout_list;
 
 static void
 _os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)

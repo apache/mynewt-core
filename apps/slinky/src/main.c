@@ -58,15 +58,15 @@ volatile int tasks_initialized;
 int init_tasks(void);
 
 /* Task 1 */
-#define TASK1_PRIO (1)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
+#define TASK1_PRIO (8)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(192)
 #define MAX_CBMEM_BUF 600
 struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
 static volatile int g_task1_loops;
 
 /* Task 2 */
-#define TASK2_PRIO (2)
+#define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(128)
 struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
@@ -199,10 +199,19 @@ task1_handler(void *arg)
 {
     struct os_task *t;
     int prev_pin_state, curr_pin_state;
+    struct image_version ver;
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
+
+    if (imgr_my_version(&ver) == 0) {
+        console_printf("\nSlinky %u.%u.%u.%u\n",
+          ver.iv_major, ver.iv_minor, ver.iv_revision,
+          (unsigned int)ver.iv_build_num);
+    } else {
+        console_printf("\nSlinky\n");
+    }
 
     while (1) {
         t = os_sched_get_current_task();
@@ -211,7 +220,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         /* Wait one second */
-        os_time_delay(1000);
+        os_time_delay(OS_TICKS_PER_SEC);
 
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
@@ -317,6 +326,13 @@ setup_for_fcb(void)
     my_conf.cf_fcb.f_sector_cnt = cnt;
 
     rc = conf_fcb_src(&my_conf);
+    if (rc) {
+        for (cnt = 0; cnt < my_conf.cf_fcb.f_sector_cnt; cnt++) {
+            flash_area_erase(&conf_fcb_area[cnt], 0,
+              conf_fcb_area[cnt].fa_size);
+        }
+        rc = conf_fcb_src(&my_conf);
+    }
     assert(rc == 0);
     rc = conf_fcb_dst(&my_conf);
     assert(rc == 0);
@@ -337,7 +353,6 @@ int
 main(int argc, char **argv)
 {
     int rc;
-    struct image_version ver;
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
@@ -380,11 +395,8 @@ main(int argc, char **argv)
     shell_task_init(SHELL_TASK_PRIO, shell_stack, SHELL_TASK_STACK_SIZE,
                     SHELL_MAX_INPUT_LEN);
 
-    (void) console_init(shell_console_rx_cb);
-
     nmgr_task_init(NEWTMGR_TASK_PRIO, newtmgr_stack, NEWTMGR_TASK_STACK_SIZE);
     imgmgr_module_init();
-    bootutil_cfg_register();
 
     stats_module_init();
 
@@ -403,15 +415,6 @@ main(int argc, char **argv)
     log_reboot(HARD_REBOOT);
 
     rc = init_tasks();
-
-    rc = imgr_my_version(&ver);
-    if (rc == 0) {
-        console_printf("\nSlinky %u.%u.%u.%u\n",
-          ver.iv_major, ver.iv_minor, ver.iv_revision,
-          (unsigned int)ver.iv_build_num);
-    } else {
-        console_printf("\nSlinky\n");
-    }
 
     os_start();
 

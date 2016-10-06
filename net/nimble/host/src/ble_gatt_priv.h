@@ -84,8 +84,6 @@ extern STATS_SECT_DECL(ble_gatts_stats) ble_gatts_stats;
 #define BLE_GATT_CHR_DECL_SZ_16     5
 #define BLE_GATT_CHR_DECL_SZ_128    19
 
-#define BLE_GATT_DSC_CLT_CFG_UUID16 0x2902
-
 typedef uint8_t ble_gatts_conn_flags;
 
 struct ble_gatts_conn {
@@ -97,22 +95,19 @@ struct ble_gatts_conn {
 
 /*** @client. */
 int ble_gattc_locked_by_cur_task(void);
-int ble_gattc_write(uint16_t conn_handle, uint16_t attr_handle, void *value,
-                    uint16_t value_len, ble_gatt_attr_fn *cb, void *cb_arg);
-int ble_gattc_indicate(uint16_t conn_handle, uint16_t chr_val_handle,
-                       ble_gatt_attr_fn *cb, void *cb_arg);
+void ble_gatts_indicate_fail_notconn(uint16_t conn_handle);
 
 void ble_gattc_rx_err(uint16_t conn_handle, struct ble_att_error_rsp *rsp);
 void ble_gattc_rx_mtu(uint16_t conn_handle, int status, uint16_t chan_mtu);
 void ble_gattc_rx_read_type_adata(uint16_t conn_handle,
                                   struct ble_att_read_type_adata *adata);
 void ble_gattc_rx_read_type_complete(uint16_t conn_handle, int status);
-void ble_gattc_rx_read_rsp(uint16_t conn_handle, int status, void *value,
-                           int value_len);
+void ble_gattc_rx_read_rsp(uint16_t conn_handle, int status,
+                           struct os_mbuf **rxom);
 void ble_gattc_rx_read_blob_rsp(uint16_t conn_handle, int status,
-                                void *value, int value_len);
+                                struct os_mbuf **rxom);
 void ble_gattc_rx_read_mult_rsp(uint16_t conn_handle, int status,
-                                void *value, int value_len);
+                                struct os_mbuf **rxom);
 void ble_gattc_rx_read_group_type_adata(
     uint16_t conn_handle, struct ble_att_read_group_type_adata *adata);
 void ble_gattc_rx_read_group_type_complete(uint16_t conn_handle, int rc);
@@ -122,7 +117,7 @@ void ble_gattc_rx_find_type_value_complete(uint16_t conn_handle, int status);
 void ble_gattc_rx_write_rsp(uint16_t conn_handle);
 void ble_gattc_rx_prep_write_rsp(uint16_t conn_handle, int status,
                                  struct ble_att_prep_write_cmd *rsp,
-                                 void *attr_data, uint16_t attr_data_len);
+                                 struct os_mbuf **rxom);
 void ble_gattc_rx_exec_write_rsp(uint16_t conn_handle, int status);
 void ble_gattc_rx_indicate_rsp(uint16_t conn_handle);
 void ble_gattc_rx_find_info_idata(uint16_t conn_handle,
@@ -130,7 +125,7 @@ void ble_gattc_rx_find_info_idata(uint16_t conn_handle,
 void ble_gattc_rx_find_info_complete(uint16_t conn_handle, int status);
 void ble_gattc_connection_txable(uint16_t conn_handle);
 void ble_gattc_connection_broken(uint16_t conn_handle);
-uint32_t ble_gattc_heartbeat(void);
+int32_t ble_gattc_heartbeat(void);
 
 int ble_gattc_any_jobs(void);
 int ble_gattc_init(void);
@@ -138,7 +133,7 @@ int ble_gattc_init(void);
 /*** @server. */
 #define BLE_GATTS_CLT_CFG_F_NOTIFY              0x0001
 #define BLE_GATTS_CLT_CFG_F_INDICATE            0x0002
-#define BLE_GATTS_CLT_CFG_F_INDICATE_PENDING    0x0080 /* Internal only. */
+#define BLE_GATTS_CLT_CFG_F_MODIFIED            0x0080 /* Internal only. */
 #define BLE_GATTS_CLT_CFG_F_RESERVED            0xfffc
 
 #define BLE_GATTS_INC_SVC_LEN_NO_UUID           4
@@ -146,10 +141,11 @@ int ble_gattc_init(void);
 
 int ble_gatts_rx_indicate_ack(uint16_t conn_handle, uint16_t chr_val_handle);
 int ble_gatts_send_next_indicate(uint16_t conn_handle);
+void ble_gatts_tx_notifications(void);
 void ble_gatts_bonding_restored(uint16_t conn_handle);
+void ble_gatts_connection_broken(uint16_t conn_handle);
 
 /*** @misc. */
-void ble_gatts_conn_deinit(struct ble_gatts_conn *gatts_conn);
 int ble_gatts_conn_can_alloc(void);
 int ble_gatts_conn_init(struct ble_gatts_conn *gatts_conn);
 int ble_gatts_start(void);

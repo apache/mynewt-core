@@ -23,7 +23,6 @@
 #include "testutil/testutil.h"
 #include "nimble/hci_common.h"
 #include "nimble/nimble_opt.h"
-#include "host/host_hci.h"
 #include "host/ble_sm.h"
 #include "host/ble_hs_test.h"
 #include "ble_hs_test_util.h"
@@ -822,6 +821,8 @@ TEST_CASE(ble_sm_lgcy_peer_pk_iio4_rio4_b1_iat0_rat0_ik7_rk7)
 
 TEST_SUITE(ble_sm_lgcy_test_suite)
 {
+    tu_suite_set_post_test_cb(ble_hs_test_util_post_test, NULL);
+
     /*** No privacy. */
 
     /* Peer as initiator. */
