@@ -40,7 +40,7 @@ struct os_task task1;
 os_stack_t stack1[TASK1_STACK_SIZE];
 
 #define TASK1_TIMER_NUM     (1)
-#define TASK1_TIMER_FREQ    (1000000)
+#define TASK1_TIMER_FREQ    (4000000)
 
 /* Task 2 */
 #define TASK2_PRIO (2)
@@ -49,7 +49,7 @@ struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
 #define TASK2_TIMER_NUM     (2)
-#define TASK2_TIMER_FREQ    (250000)
+#define TASK2_TIMER_FREQ    (62500)
 
 /* For LED toggling */
 int g_led1_pin;
@@ -58,6 +58,7 @@ struct os_sem g_test_sem;
 
 struct hal_timer g_task1_timer;
 uint32_t task1_timer_arg = 0xdeadc0de;
+uint32_t g_task1_loops;
 
 void
 task1_timer_cb(void *arg)
@@ -74,7 +75,6 @@ void
 task1_handler(void *arg)
 {
     int rc;
-    int cntr;
     uint32_t timer_cntr;
 
     /* Task 1 toggles LED 1 (LED_BLINK_PIN) */
@@ -84,7 +84,7 @@ task1_handler(void *arg)
     hal_timer_set_cb(TASK1_TIMER_NUM, &g_task1_timer, task1_timer_cb,
                      &task1_timer_arg);
 
-    cntr = 0;
+    g_task1_loops = 0;
     rc = hal_timer_start(&g_task1_timer, TASK1_TIMER_FREQ);
     assert(rc == 0);
 
@@ -95,17 +95,17 @@ task1_handler(void *arg)
         /* Toggle the LED */
         hal_gpio_toggle(g_led1_pin);
 
-        ++cntr;
-        if (cntr & 1) {
+        ++g_task1_loops;
+        if (g_task1_loops & 1) {
             timer_cntr = hal_timer_read(TASK1_TIMER_NUM);
             hal_timer_start_at(&g_task1_timer, timer_cntr + TASK1_TIMER_FREQ);
-            if ((cntr % 10) == 0) {
+            if ((g_task1_loops % 10) == 0) {
                 hal_timer_stop(&g_task1_timer);
                 os_sem_release(&g_test_sem);
             }
         } else {
             hal_timer_start(&g_task1_timer, TASK1_TIMER_FREQ);
-            if ((cntr % 10) == 0) {
+            if ((g_task1_loops % 10) == 0) {
                 hal_timer_stop(&g_task1_timer);
                 os_sem_release(&g_test_sem);
             }
@@ -147,20 +147,25 @@ task2_handler(void *arg)
 int
 init_tasks(void)
 {
+    int rc;
     uint32_t res;
 
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
     /* Initialize timer 0 to count at 1 MHz */
-    hal_timer_init(TASK1_TIMER_NUM, TASK1_TIMER_FREQ);
+    rc = hal_timer_init(TASK1_TIMER_NUM, TASK1_TIMER_FREQ);
+    assert(rc == 0);
+
     res = hal_timer_get_resolution(TASK1_TIMER_NUM);
-    assert(res == 1000);
+    assert(res == (1000000000 / TASK1_TIMER_FREQ));
 
     /* Initialize timer 1 to count at 250 kHz */
-    hal_timer_init(TASK2_TIMER_NUM, TASK2_TIMER_FREQ);
+    rc = hal_timer_init(TASK2_TIMER_NUM, TASK2_TIMER_FREQ);
+    assert(rc == 0);
+
     res = hal_timer_get_resolution(TASK2_TIMER_NUM);
-    assert(res == 4000);
+    assert(res == (1000000000 / TASK2_TIMER_FREQ));
 
     os_task_init(&task1, "task1", task1_handler, NULL,
             TASK1_PRIO, OS_WAIT_FOREVER, stack1, TASK1_STACK_SIZE);

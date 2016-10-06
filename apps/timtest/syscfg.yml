@@ -2,5 +2,6 @@
 
 syscfg.vals:
     SHELL_TASK: 0
+    TIMER_0: 0
     TIMER_1: 1
     TIMER_2: 1
