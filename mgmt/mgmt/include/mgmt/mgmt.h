@@ -75,7 +75,7 @@ struct mgmt_handler {
 };
 
 struct mgmt_group {
-    struct mgmt_handler *mg_handlers;
+    const struct mgmt_handler *mg_handlers;
     uint16_t mg_handlers_count;
     uint16_t mg_group_id;
     STAILQ_ENTRY(mgmt_group) mg_next;
@@ -86,9 +86,12 @@ struct mgmt_group {
     (__group)->mg_handlers_count = (sizeof((__handlers)) / \
             sizeof(struct mgmt_handler));
 
+extern struct os_eventq *mgmt_evq;
+
 int mgmt_group_register(struct mgmt_group *group);
 void mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode);
-struct mgmt_handler *mgmt_find_handler(uint16_t group_id, uint16_t handler_id);
+const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
+  uint16_t handler_id);
 
 #ifdef __cplusplus
 }

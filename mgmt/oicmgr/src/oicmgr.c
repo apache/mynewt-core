@@ -172,7 +172,7 @@ omgr_jbuf_setobuf(struct omgr_jbuf *ob, char *ptr, uint16_t maxlen)
     ob->ob_mj.mjb_enc.je_wr_commas = 0;
 }
 
-static struct mgmt_handler *
+static const struct mgmt_handler *
 omgr_oic_find_handler(const char *q, int qlen)
 {
     char id_str[8];
@@ -207,7 +207,7 @@ static void
 omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
 {
     struct omgr_state *o = &omgr_state;
-    struct mgmt_handler *handler;
+    const struct mgmt_handler *handler;
     oc_rep_t *data;
     int rc;
 

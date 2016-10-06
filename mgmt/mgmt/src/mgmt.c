@@ -23,6 +23,7 @@
 static struct os_mutex mgmt_group_lock;
 static STAILQ_HEAD(, mgmt_group) mgmt_group_list =
     STAILQ_HEAD_INITIALIZER(mgmt_group_list);
+struct os_eventq *mgmt_evq;
 
 static int
 mgmt_group_list_lock(void)
@@ -113,11 +114,11 @@ err:
     return (NULL);
 }
 
-struct mgmt_handler *
+const struct mgmt_handler *
 mgmt_find_handler(uint16_t group_id, uint16_t handler_id)
 {
     struct mgmt_group *group;
-    struct mgmt_handler *handler;
+    const struct mgmt_handler *handler;
 
     group = mgmt_find_group(group_id);
     if (!group) {
@@ -145,4 +146,3 @@ mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode)
     json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
     json_encode_object_finish(&njb->mjb_enc);
 }
-

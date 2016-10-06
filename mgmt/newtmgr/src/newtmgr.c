@@ -310,7 +310,7 @@ static void
 nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {
     struct os_mbuf *rsp;
-    struct mgmt_handler *handler;
+    const struct mgmt_handler *handler;
     struct nmgr_hdr *rsp_hdr;
     struct nmgr_hdr hdr;
     int off;
