@@ -68,7 +68,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             /* Characteristic: Write No Rsp */
             .uuid128 = (void *)gatt_svr_chr_newtmgr,
             .access_cb = gatt_svr_chr_access_newtmgr,
-            .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
+            .flags = BLE_GATT_CHR_F_WRITE_NO_RSP | BLE_GATT_CHR_F_NOTIFY,
             .val_handle = &g_ble_nmgr_attr_handle,
         }, {
             0, /* No more characteristics in this service */
