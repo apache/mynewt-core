@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <string.h>
+
 #include <os/os.h>
 
 #include "mgmt/mgmt.h"
@@ -145,4 +147,12 @@ mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode)
     JSON_VALUE_INT(&jv, errcode);
     json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
     json_encode_object_finish(&njb->mjb_enc);
+}
+
+void
+mgmt_cb_init(struct os_event *ev, void (*func)(struct os_event *))
+{
+    memset(ev, 0, sizeof(*ev));
+    ev->ev_type = OS_EVENT_T_CB;
+    ev->ev_arg = func;
 }
