@@ -32,7 +32,8 @@
 
 os_stack_t newtmgr_stack[OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE))];
 
-static struct os_eventq g_nmgr_evq;
+static struct os_eventq nmgr_evq;
+struct os_eventq *g_mgmt_evq = &nmgr_evq;
 static struct os_task g_nmgr_task;
 
 /*
@@ -432,7 +433,7 @@ nmgr_task(void *arg)
     nmgr_jbuf_init(&nmgr_task_jbuf);
 
     while (1) {
-        ev = os_eventq_get(&g_nmgr_evq);
+        ev = os_eventq_get(&nmgr_evq);
         switch (ev->ev_type) {
             case OS_EVENT_T_MQUEUE_DATA:
                 nt = (struct nmgr_transport *) ev->ev_arg;
@@ -482,7 +483,7 @@ nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {
     int rc;
 
-    rc = os_mqueue_put(&nt->nt_imq, &g_nmgr_evq, req);
+    rc = os_mqueue_put(&nt->nt_imq, &nmgr_evq, req);
     if (rc != 0) {
         os_mbuf_free_chain(req);
     }
@@ -495,7 +496,7 @@ nmgr_task_init(void)
 {
     int rc;
 
-    os_eventq_init(&g_nmgr_evq);
+    os_eventq_init(&nmgr_evq);
 
     rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL,
       MYNEWT_VAL(NEWTMGR_TASK_PRIO), OS_WAIT_FOREVER,
@@ -504,7 +505,7 @@ nmgr_task_init(void)
         goto err;
     }
 
-    rc = nmgr_os_groups_register(&g_nmgr_evq);
+    rc = nmgr_os_groups_register();
     if (rc != 0) {
         goto err;
     }

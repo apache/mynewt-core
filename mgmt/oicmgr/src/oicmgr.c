@@ -59,6 +59,7 @@ static struct omgr_state omgr_state = {
   .os_oc_timer.c_ev.ev_type = OMGR_OC_TIMER,
   .os_oc_timer.c_evq = &omgr_state.os_evq
 };
+struct os_eventq *g_mgmt_evq = &omgr_state.os_evq;
 
 static os_stack_t oicmgr_stack[OICMGR_STACK_SZ];
 
@@ -369,7 +370,7 @@ oicmgr_init(void)
         goto err;
     }
 
-    rc = nmgr_os_groups_register(&o->os_evq);
+    rc = nmgr_os_groups_register();
     if (rc != 0) {
         goto err;
     }
