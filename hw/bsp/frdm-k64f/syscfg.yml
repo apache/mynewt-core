@@ -1,0 +1,114 @@
+# Package: hw/bsp/frdm-k64f
+
+syscfg.defs:
+    BSP_MK64F12:
+        description: 'TBD'
+        value: 1
+
+    # UART0 PINS on CMSIS-DAP Interface
+    UART_0:
+        description: 'TBD'
+        value:  1
+    UART_0_PORT:
+        description: 'TBD'
+        value:  PORTB
+    UART_0_PORT_CLOCK:
+        description: 'TBD'
+        value:  kCLOCK_PortB
+    UART_0_PIN_TX:
+        description: 'TBD'
+        value:  16
+    UART_0_PIN_RX:
+        description: 'TBD'
+        value:  17
+
+    # PINS conflict with SPI0 must choose 1
+    UART_1:
+        description: 'TBD'
+        value:  0
+    UART_1_PORT:
+        description: 'TBD'
+        value:  PORTC
+    UART_1_PORT_CLOCK:
+        description: 'TBD'
+        value:  kCLOCK_PortC
+    UART_1_PIN_TX:
+        description: 'TBD'
+        value:  3
+    UART_1_PIN_RX:
+        description: 'TBD'
+        value:  4
+
+    # PINS conflict with SPI0 must choose 1
+    UART_2:
+        description: 'TBD'
+        value:  0
+    UART_2_PORT:
+        description: 'TBD'
+        value:  PORTD
+    UART_2_PORT_CLOCK:
+        description: 'TBD'
+        value:  kCLOCK_PortD
+    UART_2_PIN_TX:
+        description: 'TBD'
+        value:  2
+    UART_2_PIN_RX:
+        description: 'TBD'
+        value:  3
+
+    # PINS conflict with ENET0 must choose 1
+    UART_3:
+        description: 'TBD'
+        value:  0
+    UART_3_PORT:
+        description: 'TBD'
+        value:  PORTC
+    UART_3_PORT_CLOCK:
+        description: 'TBD'
+        value:  kCLOCK_PortC
+    UART_3_PIN_TX:
+        description: 'TBD'
+        value:  16
+    UART_3_PIN_RX:
+        description: 'TBD'
+        value:  17
+
+    # PINS conflict with ENET0 must choose 1
+    UART_4:
+        description: 'TBD'
+        value:  0
+    UART_4_PORT:
+        description: 'TBD'
+        value:  PORTC
+    UART_4_PORT_CLOCK:
+        description: 'TBD'
+        value:  kCLOCK_PortC
+    UART_4_PIN_TX:
+        description: 'TBD'
+        value:  14
+    UART_4_PIN_RX:
+        description: 'TBD'
+        value:  15
+
+    # PINS conflict with I2S0 must choose 1
+    UART_5:
+        description: 'TBD'
+        value:  0
+    UART_5_PORT:
+        description: 'TBD'
+        value:  PORTE
+    UART_5_PORT_CLOCK:
+        description: 'TBD'
+        value:  kCLOCK_PortE
+    UART_5_PIN_TX:
+        description: 'TBD'
+        value:  9
+    UART_5_PIN_RX:
+        description: 'TBD'
+        value:  8
+
+syscfg.vals:
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
