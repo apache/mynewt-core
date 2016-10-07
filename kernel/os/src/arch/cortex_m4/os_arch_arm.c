@@ -25,6 +25,13 @@
 
 #include "os_priv.h"
 
+/*
+ * From HAL_CM4.s
+ */
+extern void SVC_Handler(void);
+extern void PendSV_Handler(void);
+extern void SysTick_Handler(void);
+
 /* Initial program status register */
 #define INITIAL_xPSR    0x01000000
 
@@ -195,6 +202,10 @@ os_arch_os_init(void)
         for (i = 0; i < sizeof(NVIC->IP); i++) {
             NVIC->IP[i] = 0xff;
         }
+
+        NVIC_SetVector(SVCall_IRQn, (uint32_t)SVC_Handler);
+        NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
+        NVIC_SetVector(SysTick_IRQn, (uint32_t)SysTick_Handler);
 
         /*
          * Install default interrupt handler, which'll print out system
