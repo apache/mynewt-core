@@ -20,7 +20,7 @@ syscfg.defs:
         value: 12
     MSYS_1_BLOCK_SIZE:
         description: 'TBD'
-        value: 260
+        value: 292
     MSYS_2_BLOCK_COUNT:
         description: 'TBD'
         value: 0
