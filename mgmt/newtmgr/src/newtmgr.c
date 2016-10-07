@@ -429,20 +429,25 @@ nmgr_task(void *arg)
     struct nmgr_transport *nt;
     struct os_event *ev;
     struct os_callout_func *ocf;
+    os_event_cb_func cb_func;
 
     nmgr_jbuf_init(&nmgr_task_jbuf);
 
     while (1) {
         ev = os_eventq_get(&nmgr_evq);
         switch (ev->ev_type) {
-            case OS_EVENT_T_MQUEUE_DATA:
-                nt = (struct nmgr_transport *) ev->ev_arg;
-                nmgr_process(nt);
-                break;
-            case OS_EVENT_T_TIMER:
-                ocf = (struct os_callout_func *)ev;
-                ocf->cf_func(CF_ARG(ocf));
-                break;
+        case OS_EVENT_T_MQUEUE_DATA:
+            nt = (struct nmgr_transport *) ev->ev_arg;
+            nmgr_process(nt);
+            break;
+        case OS_EVENT_T_TIMER:
+            ocf = (struct os_callout_func *)ev;
+            ocf->cf_func(CF_ARG(ocf));
+            break;
+        case OS_EVENT_T_CB:
+            cb_func = (os_event_cb_func)ev->ev_arg;
+            cb_func(ev);
+            break;
         }
     }
 }
