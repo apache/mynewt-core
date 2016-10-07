@@ -156,17 +156,9 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     /* Changing the fcb to be logged to be dst fcb */
     fcb_tmp = &((struct fcb_log *)log->l_arg)->fl_fcb;
 
-    rc = log_register(log->l_name, log, &log_fcb_handler, dst_fcb);
-    if (rc) {
-        goto err;
-    }
-
+    log->l_arg = dst_fcb;
     rc = log_fcb_append(log, data, dlen);
-    if (rc) {
-        goto err;
-    }
-
-    rc = log_register(log->l_name, log, &log_fcb_handler, fcb_tmp);
+    log->l_arg = fcb_tmp;
     if (rc) {
         goto err;
     }

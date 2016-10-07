@@ -87,6 +87,23 @@ log_list_get_next(struct log *log)
     return (next);
 }
 
+/**
+ * Indicates whether the specified log has been regiestered.
+ */
+static int
+log_registered(struct log *log)
+{
+    struct log *cur;
+
+    STAILQ_FOREACH(cur, &g_log_list, l_next) {
+        if (cur == log) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /*
  * Associate an instantiation of a log with the logging infrastructure
  */
@@ -98,6 +115,7 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_log = (struct log_handler *)lh;
     log->l_arg = arg;
 
+    assert(!log_registered(log));
     STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
 
     return (0);
