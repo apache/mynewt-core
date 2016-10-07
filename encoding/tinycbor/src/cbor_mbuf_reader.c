@@ -25,7 +25,7 @@ static uint8_t
 cbuf_mbuf_reader_get8(struct cbor_decoder_reader *d, int offset) {
     uint8_t val;
     struct CborMbufReader *cb = (struct CborMbufReader *) d;
-    os_mbuf_copydata(cb->m, offset, sizeof(val), &val);
+    os_mbuf_copydata(cb->m, offset + cb->init_off, sizeof(val), &val);
     return val;
 }
 
