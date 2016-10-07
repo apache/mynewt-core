@@ -17,32 +17,27 @@
  * under the License.
  */
 
-#ifndef CBOR_MBUF_WRITER_H
-#define CBOR_MBUF_WRITER_H
+
+#ifndef CBOR_BUF_READER_H
+#define CBOR_BUF_READER_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <tinycbor/cbor.h>
 
-struct CborMbufWriter {
-    int bytes_written;
-    struct os_mbuf *m;
+struct cbor_buf_reader {
+    struct cbor_decoder_reader r;
+    const uint8_t *buffer;
 };
 
 void
-cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m);
-
-int
-cbor_mbuf_writer(void *arg, const char *data, int len);
-
-
-int
-cbor_mbuf_bytes_written(struct CborMbufWriter *cb);
+cbor_buf_reader_init(struct cbor_buf_reader *cb, const uint8_t *buffer, size_t data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CBOR_MBUF_WRITER_H */
+#endif /* CBOR_BUF_READER_H */
 

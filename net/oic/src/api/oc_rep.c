@@ -20,6 +20,7 @@
 #include "port/oc_log.h"
 #include "util/oc_memb.h"
 #include <tinycbor/cbor_buf_writer.h>
+#include <tinycbor/cbor_buf_reader.h>
 
 OC_MEMB(rep_objects, oc_rep_t, EST_NUM_REP_OBJECTS);
 static const CborEncoder g_empty;
@@ -276,7 +277,10 @@ oc_parse_rep(const uint8_t *in_payload, uint16_t payload_size,
   CborParser parser;
   CborValue root_value, cur_value, map;
   CborError err = CborNoError;
-  err |= cbor_parser_init(in_payload, payload_size, 0, &parser, &root_value);
+  struct cbor_buf_reader br;
+
+  cbor_buf_reader_init(&br, in_payload, payload_size);
+  err |= cbor_parser_init(&br.r, 0, &parser, &root_value);
   if (cbor_value_is_map(&root_value)) {
     err |= cbor_value_enter_container(&root_value, &cur_value);
     *out_rep = 0;

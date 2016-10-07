@@ -499,7 +499,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         CborValue recursed;
         err = cbor_value_enter_container(it, &recursed);
         if (err) {
-            it->ptr = recursed.ptr;
+            it->offset = recursed.offset;
             return err;       /* parse error */
         }
         if (fputc(type == CborArrayType ? '[' : '{', out) < 0)
@@ -509,7 +509,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
                   array_to_json(out, &recursed, flags, status) :
                   map_to_json(out, &recursed, flags, status);
         if (err) {
-            it->ptr = recursed.ptr;
+            it->offset = recursed.offset;
             return err;       /* parse error */
         }
 

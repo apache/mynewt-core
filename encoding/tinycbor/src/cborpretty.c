@@ -282,12 +282,12 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
 
         err = cbor_value_enter_container(it, &recursed);
         if (err) {
-            it->ptr = recursed.ptr;
+            it->offset = recursed.offset;
             return err;       /* parse error */
         }
         err = container_to_pretty(out, &recursed, type);
         if (err) {
-            it->ptr = recursed.ptr;
+            it->offset = recursed.offset;
             return err;       /* parse error */
         }
         err = cbor_value_leave_container(it, &recursed);

@@ -214,9 +214,29 @@ enum CborParserIteratorFlags
     CborIteratorFlag_ContainerIsMap         = 0x20
 };
 
+struct cbor_decoder_reader;
+
+typedef uint8_t (cbor_reader_get8)(struct cbor_decoder_reader *d, int offset);
+typedef uint16_t (cbor_reader_get16)(struct cbor_decoder_reader *d, int offset);
+typedef uint32_t (cbor_reader_get32)(struct cbor_decoder_reader *d, int offset);
+typedef uint64_t (cbor_reader_get64)(struct cbor_decoder_reader *d, int offset);
+typedef uintptr_t (cbor_memcmp)(struct cbor_decoder_reader *d, char *buf, int offset, size_t len);
+typedef uintptr_t (cbor_memcpy)(struct cbor_decoder_reader *d, char *buf, int offset, size_t len);
+
+struct cbor_decoder_reader {
+    cbor_reader_get8  *get8;
+    cbor_reader_get16 *get16;
+    cbor_reader_get32 *get32;
+    cbor_reader_get64 *get64;
+    cbor_memcmp       *cmp;
+    cbor_memcpy       *cpy;
+    size_t             message_size;
+};
+
 struct CborParser
 {
-    const uint8_t *end;
+    struct cbor_decoder_reader *d;
+    int end;
     int flags;
 };
 typedef struct CborParser CborParser;
@@ -224,7 +244,7 @@ typedef struct CborParser CborParser;
 struct CborValue
 {
     const CborParser *parser;
-    const uint8_t *ptr;
+    int offset;
     uint32_t remaining;
     uint16_t extra;
     uint8_t type;
@@ -232,12 +252,10 @@ struct CborValue
 };
 typedef struct CborValue CborValue;
 
-CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it);
+CBOR_API CborError cbor_parser_init(struct cbor_decoder_reader *d, int flags, CborParser *parser, CborValue *it);
 
 CBOR_INLINE_API bool cbor_value_at_end(const CborValue *it)
 { return it->remaining == 0; }
-CBOR_INLINE_API const uint8_t *cbor_value_get_next_byte(const CborValue *it)
-{ return it->ptr; }
 CBOR_API CborError cbor_value_advance_fixed(CborValue *it);
 CBOR_API CborError cbor_value_advance(CborValue *it);
 CBOR_INLINE_API bool cbor_value_is_container(const CborValue *it)
