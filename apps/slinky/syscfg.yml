@@ -16,7 +16,9 @@ syscfg.vals:
     # Enable shell commands.
     STATS_CLI: 1
     LOG_CLI: 1
+    CONFIG_CLI: 1
 
     # Enable newtmgr commands.
     STATS_NEWTMGR: 1
     LOG_NEWTMGR: 1
+    CONFIG_NEWTMGR: 1
