@@ -35,6 +35,12 @@ struct os_event {
     STAILQ_ENTRY(os_event) ev_next;
 };
 
+/*
+ * If event type is OS_EVENT_T_CB, then this function pointer will be
+ * in ev_arg.
+ */
+typedef void (*os_event_cb_func)(struct os_event *);
+
 #define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued)
 
 #define OS_EVENT_T_TIMER        (1)
