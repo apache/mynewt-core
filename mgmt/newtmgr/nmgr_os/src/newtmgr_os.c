@@ -317,9 +317,9 @@ nmgr_reset(struct mgmt_jbuf *njb)
 }
 
 int
-nmgr_os_groups_register(struct os_eventq *nmgr_evq)
+nmgr_os_groups_register(void)
 {
-    os_callout_func_init(&nmgr_reset_callout, nmgr_evq, nmgr_reset_tmo, NULL);
+    os_callout_func_init(&nmgr_reset_callout, g_mgmt_evq, nmgr_reset_tmo, NULL);
 
     return mgmt_group_register(&nmgr_def_group);
 }

@@ -34,8 +34,7 @@ extern "C" {
 #define NMGR_ID_DATETIME_STR    4
 #define NMGR_ID_RESET           5
 
-struct os_eventq;
-int nmgr_os_groups_register(struct os_eventq *nmgr_evq);
+int nmgr_os_groups_register(void);
 
 #ifdef __cplusplus
 }
