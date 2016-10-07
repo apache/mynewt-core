@@ -438,10 +438,10 @@ nmgr_task(void *arg)
                 nt = (struct nmgr_transport *) ev->ev_arg;
                 nmgr_process(nt);
                 break;
-	    case OS_EVENT_T_TIMER:
-		ocf = (struct os_callout_func *)ev;
-		ocf->cf_func(CF_ARG(ocf));
-		break;
+            case OS_EVENT_T_TIMER:
+                ocf = (struct os_callout_func *)ev;
+                ocf->cf_func(CF_ARG(ocf));
+                break;
         }
     }
 }
