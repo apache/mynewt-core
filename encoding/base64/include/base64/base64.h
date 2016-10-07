@@ -31,7 +31,7 @@ int base64_decode(const char *, void *buf);
 int base64_pad(char *, int);
 int base64_decode_len(const char *str);
 
-#define BASE64_ENCODE_SIZE(__size) ((((__size) * 4) / 3) + 4)
+#define BASE64_ENCODE_SIZE(__size) (((((__size) - 1) / 3) * 4) + 4)
 
 #ifdef __cplusplus
 }
