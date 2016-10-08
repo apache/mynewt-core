@@ -1,4 +1,3 @@
 # Package: boot/boot_serial/test
 
 syscfg.vals:
-    CONFIG_FCB: 1
