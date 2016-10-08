@@ -102,7 +102,7 @@ boot_vect_read_main(int *slot)
     int rc;
     struct boot_img_trailer bit;
 
-    rc = boot_vect_read_img_trailer(FLASH_AREA_IMAGE_0, &bit);
+    rc = boot_vect_read_img_trailer(0, &bit);
     assert(rc == 0);
 
     if (bit.bit_copy_start != BOOT_IMG_MAGIC || bit.bit_img_ok != 0xff) {
@@ -110,9 +110,9 @@ boot_vect_read_main(int *slot)
          * If there never was copy that took place, or if the current
          * image has been marked good, we'll keep booting it.
          */
-        *slot = FLASH_AREA_IMAGE_0;
+        *slot = 0;
     } else {
-        *slot = FLASH_AREA_IMAGE_1;
+        *slot = 1;
     }
     return 0;
 }
