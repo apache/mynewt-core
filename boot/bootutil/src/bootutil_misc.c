@@ -128,9 +128,11 @@ boot_vect_write_test(int slot)
     const struct flash_area *fap;
     uint32_t off;
     uint32_t magic;
+    int area_id;
     int rc;
 
-    rc = flash_area_open(slot, &fap);
+    area_id = flash_area_id_from_image_slot(slot);
+    rc = flash_area_open(area_id, &fap);
     if (rc) {
         return rc;
     }

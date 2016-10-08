@@ -82,6 +82,7 @@ flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
         hf->hf_itf->hff_sector_info(i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
             if (ret) {
+                ret->fa_id = id;
                 ret->fa_device_id = fa->fa_device_id;
                 ret->fa_off = start;
                 ret->fa_size = size;
