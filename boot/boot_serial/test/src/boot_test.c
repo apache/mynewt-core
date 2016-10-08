@@ -84,7 +84,7 @@ TEST_CASE(boot_serial_empty_img_msg)
 TEST_CASE(boot_serial_img_msg)
 {
     char img[16];
-    char enc_img[BASE64_ENCODE_SIZE(sizeof(img))];
+    char enc_img[BASE64_ENCODE_SIZE(sizeof(img)) + 1];
     char buf[sizeof(struct nmgr_hdr) + sizeof(enc_img) + 32];
     int len;
     int rc;
@@ -94,6 +94,7 @@ TEST_CASE(boot_serial_img_msg)
     memset(img, 0xa5, sizeof(img));
     len = base64_encode(img, sizeof(img), enc_img, 1);
     assert(len > 0);
+    enc_img[len] = '\0';
 
     hdr = (struct nmgr_hdr *)buf;
     memset(hdr, 0, sizeof(*hdr));
@@ -139,6 +140,7 @@ TEST_CASE(boot_serial_upload_bigger_image)
     for (off = 0; off < sizeof(img); off += 32) {
         len = base64_encode(&img[off], 32, enc_img, 1);
         assert(len > 0);
+        enc_img[len] = '\0';
 
         hdr = (struct nmgr_hdr *)buf;
         memset(hdr, 0, sizeof(*hdr));
