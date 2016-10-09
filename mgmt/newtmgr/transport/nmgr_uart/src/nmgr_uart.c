@@ -233,7 +233,21 @@ nmgr_uart_rx_pkt(struct nmgr_uart_state *nus, struct os_mbuf_pkthdr *rxm)
     default:
         goto err;
     }
-    m->om_data[m->om_len] = '\0'; /* XXXX wrong */
+
+    if (os_mbuf_append(m, "\0", 1)) {
+        /*
+         * Null-terminate the line for base64_decode's sake.
+         */
+        goto err;
+    }
+    m = os_mbuf_pullup(m, rxm->omp_len);
+    if (!m) {
+        /*
+         * Make data contiguous for base64_decode's sake.
+         */
+        goto err;
+    }
+    rxm = OS_MBUF_PKTHDR(m);
     rc = base64_decode((char *)m->om_data + 2, (char *)m->om_data + 2);
     if (rc < 0) {
         goto err;
