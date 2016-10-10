@@ -451,7 +451,7 @@ nffs_misc_ready(void)
  * to a region.
  */
 int
-nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad)
+nffs_misc_desc_from_flash_area(int id, int *cnt, struct nffs_area_desc *nad)
 {
     int i, j;
     const struct hal_flash *hf;
@@ -460,15 +460,16 @@ nffs_misc_desc_from_flash_area(int idx, int *cnt, struct nffs_area_desc *nad)
     int first_idx, last_idx;
     uint32_t start, size;
     uint32_t min_size;
+    int rc;
 
-    if (!flash_map || idx >= flash_map_entries) {
-        return -1;
-    }
     first_idx = last_idx = -1;
     max_cnt = *cnt;
     *cnt = 0;
 
-    fa = &flash_map[idx];
+    rc = flash_area_open(id, &fa);
+    if (rc != 0) {
+        return -1;
+    }
 
     hf = bsp_flash_dev(fa->fa_device_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {

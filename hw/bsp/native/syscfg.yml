@@ -1,0 +1,2 @@
+syscfg.vals:
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
