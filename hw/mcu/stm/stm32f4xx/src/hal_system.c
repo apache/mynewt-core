@@ -18,6 +18,7 @@
  */
 
 #include <mcu/cortex_m4.h>
+#include <os/os.h>
 #include "hal/hal_system.h"
 #include "stm32f4xx_hal_def.h"
 
@@ -44,7 +45,7 @@ system_debugger_connected(void)
 uint32_t
 HAL_GetTick(void)
 {
-    return 0;
+    return os_time_get();
 }
 
 HAL_StatusTypeDef
