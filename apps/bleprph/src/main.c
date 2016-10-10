@@ -26,7 +26,6 @@
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
-#include "hal/hal_cputime.h"
 #include "console/console.h"
 #include "imgmgr/imgmgr.h"
 

@@ -9,6 +9,9 @@ syscfg.defs:
     OS_COREDUMP:
         description: 'TBD'
         value: 0
+    OS_CPUTIME_FREQ:
+        description: 'Frequency of os cputime'
+        value: 1000000
     SANITY_INTERVAL:
         description: 'The interval (in milliseconds) at which the sanity checks should run, should be at least 200ms prior to watchdog'
         value: 59500

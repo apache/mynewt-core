@@ -24,7 +24,6 @@
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
-#include "hal/hal_cputime.h"
 #include "hal/hal_flash.h"
 #include "console/console.h"
 #include "shell/shell.h"

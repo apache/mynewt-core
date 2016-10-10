@@ -17,13 +17,14 @@
  * under the License.
  */
 #include <assert.h>
+#include <stdint.h>
 #include "syscfg/syscfg.h"
+#include "os/os_cputime.h"
 #include "bsp.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_spi.h"
-#include "hal/hal_cputime.h"
 #include "mcu/nrf51_hal.h"
 #if MYNEWT_VAL(SPI_MASTER)
 #include "nrf_drv_spi.h"
@@ -69,7 +70,7 @@ bsp_init(void)
 #endif
 
     /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);
 
 #if MYNEWT_VAL(SPI_MASTER)

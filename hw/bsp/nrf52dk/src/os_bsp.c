@@ -18,12 +18,12 @@
  */
 
 #include <assert.h>
-
+#include <stdint.h>
+#include "os/os_cputime.h"
 #include "syscfg/syscfg.h"
 #include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
-#include "hal/hal_cputime.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_watchdog.h"
@@ -90,7 +90,7 @@ bsp_init(void)
 #endif
 
     /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);
 
 #if MYNEWT_VAL(SPI_MASTER)

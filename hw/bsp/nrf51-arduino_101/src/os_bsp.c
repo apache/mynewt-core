@@ -17,6 +17,8 @@
  * under the License.
  */
 #include <assert.h>
+#include <stdint.h>
+#include "os/os_cputime.h"
 #include "syscfg/syscfg.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
@@ -28,7 +30,6 @@
 #include "os/os_dev.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
-#include "hal/hal_cputime.h"
 
 #define BSP_LOWEST_PRIO     ((1 << __NVIC_PRIO_BITS) - 1)
 
@@ -55,7 +56,7 @@ bsp_init(void)
 #endif
 
     /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);
 }
 

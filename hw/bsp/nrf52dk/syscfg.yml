@@ -9,6 +9,10 @@ syscfg.defs:
         description: 'TBD'
         value:  1000000
 
+    OS_CPUTIME_TIMER_NUM:
+        description: 'Timer to use for cputime'
+        value:  0
+
     XTAL_32768:
         description: 'TBD'
         value: 1
@@ -54,7 +58,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'NRF52 Timer 0'
-        value:  0
+        value:  1
     TIMER_0_INTERRUPT_PRIORITY:
         description: 'TBD'
         value: '((1 << __NVIC_PRIO_BITS) - 1)'

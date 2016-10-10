@@ -23,11 +23,11 @@
 
 #include <hal/hal_gpio.h>
 #include <hal/hal_uart.h>
-#include <hal/hal_cputime.h>
+#include <hal/hal_timer.h>
 
 #include <os/os.h>
 #include <os/os_dev.h>
-
+#include <os/os_cputime.h>
 #include <uart/uart.h>
 
 #include "uart_bitbang/uart_bitbang.h"
@@ -41,7 +41,7 @@ struct uart_bitbang {
     int ub_bittime;             /* number of cputimer ticks per bit */
     struct {
         int pin;                /* RX pin */
-        struct cpu_timer timer;
+        struct hal_timer timer;
         uint32_t start;         /* cputime when byte rx started */
         uint8_t byte;           /* receiving this byte */
         uint8_t bits;           /* how many bits we've seen */
@@ -49,7 +49,7 @@ struct uart_bitbang {
     } ub_rx;
     struct {
         int pin;                /* TX pin */
-        struct cpu_timer timer;
+        struct hal_timer timer;
         uint32_t start;         /* cputime when byte tx started */
         uint8_t byte;           /* byte being transmitted */
         uint8_t bits;           /* how many bits have been sent */
@@ -93,7 +93,7 @@ uart_bitbang_tx_timer(void *arg)
          * Start bit
          */
         hal_gpio_write(ub->ub_tx.pin, 0);
-        ub->ub_tx.start = cputime_get32();
+        ub->ub_tx.start = os_cputime_get32();
         next = ub->ub_tx.start + ub->ub_bittime;
         ub->ub_txing = 1;
         ub->ub_tx.bits = 0;
@@ -110,7 +110,7 @@ uart_bitbang_tx_timer(void *arg)
             next = ub->ub_tx.start + (ub->ub_bittime * 10);
         }
     }
-    cputime_timer_start(&ub->ub_tx.timer, next);
+    os_cputime_timer_start(&ub->ub_tx.timer, next);
 }
 
 static void
@@ -139,7 +139,7 @@ uart_bitbang_rx_timer(void *arg)
         }
     } else {
         ub->ub_rx.bits++;
-        cputime_timer_start(&ub->ub_rx.timer,
+        os_cputime_timer_start(&ub->ub_rx.timer,
           ub->ub_rx.start + (ub->ub_bittime * (ub->ub_rx.bits + 1)) +
           (ub->ub_bittime >> 1));
     }
@@ -155,7 +155,7 @@ uart_bitbang_isr(void *arg)
     struct uart_bitbang *ub = (struct uart_bitbang *)arg;
     uint32_t time;
 
-    time = cputime_get32();
+    time = os_cputime_get32();
     if (ub->ub_rx.start - time < (9 * ub->ub_bittime)) {
         ++ub->ub_rx.false_irq;
         return;
@@ -168,8 +168,8 @@ uart_bitbang_isr(void *arg)
      * We try to sample in the middle of a bit. First sample is taken
      * 1.5 bittimes after beginning of start bit.
      */
-    cputime_timer_start(&ub->ub_rx.timer, time +
-      ub->ub_bittime + (ub->ub_bittime >> 1));
+    os_cputime_timer_start(&ub->ub_rx.timer, time +
+        ub->ub_bittime + (ub->ub_bittime >> 1));
 
     hal_gpio_irq_disable(ub->ub_rx.pin);
 }
@@ -186,18 +186,18 @@ uart_bitbang_blocking_tx(struct uart_dev *dev, uint8_t data)
         return;
     }
     hal_gpio_write(ub->ub_tx.pin, 0);
-    start = cputime_get32();
+    start = os_cputime_get32();
     next = start + ub->ub_bittime;
-    while (cputime_get32() < next);
+    while (os_cputime_get32() < next);
     for (i = 0; i < 8; i++) {
         hal_gpio_write(ub->ub_tx.pin, data & 0x01);
         data = data >> 1;
         next = start + (ub->ub_bittime * i + 1);
-        while (cputime_get32() < next);
+        while (os_cputime_get32() < next);
     }
     next = start + (ub->ub_bittime * 10);
     hal_gpio_write(ub->ub_tx.pin, 1);
-    while (cputime_get32() < next);
+    while (os_cputime_get32() < next);
 }
 
 static void
@@ -257,8 +257,8 @@ uart_bitbang_config(struct uart_bitbang *ub, int32_t baudrate, uint8_t databits,
     }
     ub->ub_bittime = ub->ub_cputimer_freq / baudrate;
 
-    cputime_timer_init(&ub->ub_rx.timer, uart_bitbang_rx_timer, ub);
-    cputime_timer_init(&ub->ub_tx.timer, uart_bitbang_tx_timer, ub);
+    os_cputime_timer_init(&ub->ub_rx.timer, uart_bitbang_rx_timer, ub);
+    os_cputime_timer_init(&ub->ub_tx.timer, uart_bitbang_tx_timer, ub);
 
     if (hal_gpio_init_out(ub->ub_tx.pin, 1)) {
         return -1;
@@ -310,8 +310,8 @@ uart_bitbang_close(struct os_dev *odev)
     ub->ub_open = 0;
     ub->ub_txing = 0;
     ub->ub_rx_stall = 0;
-    cputime_timer_stop(&ub->ub_tx.timer);
-    cputime_timer_stop(&ub->ub_rx.timer);
+    os_cputime_timer_stop(&ub->ub_tx.timer);
+    os_cputime_timer_stop(&ub->ub_rx.timer);
     OS_EXIT_CRITICAL(sr);
     return OS_OK;
 }
