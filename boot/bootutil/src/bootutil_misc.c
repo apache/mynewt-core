@@ -23,6 +23,7 @@
 
 #include "syscfg/syscfg.h"
 #include "sysflash/sysflash.h"
+#include "defs/error.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "flash_map/flash_map.h"
@@ -33,6 +34,7 @@
 #include "bootutil_priv.h"
 
 int boot_current_slot;
+int8_t boot_split_mode;
 
 /*
  * Read the image trailer from a given slot.
@@ -329,4 +331,21 @@ void
 boot_set_image_slot_split(void)
 {
     boot_current_slot = 1;
+}
+
+boot_split_mode_t
+boot_split_mode_get(void)
+{
+    return boot_split_mode;
+}
+
+int
+boot_split_mode_set(boot_split_mode_t split_mode)
+{
+    if (split_mode < 0 || split_mode > SPLIT_RUN) {
+        return EINVAL;
+    }
+
+    boot_split_mode = split_mode;
+    return 0;
 }

@@ -29,4 +29,5 @@ pkg.deps:
     - hw/hal
     - crypto/mbedtls
     - kernel/os 
+    - sys/defs
     - sys/flash_map

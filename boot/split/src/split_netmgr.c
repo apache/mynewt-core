@@ -22,7 +22,7 @@
 #include <bootutil/bootutil_misc.h>
 #include <bootutil/image.h>
 #include <split/split.h>
-#include <split/split_priv.h>
+#include <split_priv.h>
 
 
 static int imgr_splitapp_read(struct mgmt_jbuf *njb);
@@ -53,9 +53,7 @@ split_nmgr_register(void)
 int
 imgr_splitapp_read(struct mgmt_jbuf *njb)
 {
-    int rc;
     int x;
-    split_mode_t split;
     struct json_encoder *enc;
     struct json_value jv;
 
@@ -63,12 +61,7 @@ imgr_splitapp_read(struct mgmt_jbuf *njb)
 
     json_encode_object_start(enc);
 
-    rc = split_read_split(&split);
-    if (!rc) {
-        x = split;
-    } else {
-        x = SPLIT_NONE;
-    }
+    x = boot_split_mode_get();
     JSON_VALUE_INT(&jv, x)
     json_encode_object_entry(enc, "splitMode", &jv);
 
@@ -127,7 +120,7 @@ imgr_splitapp_write(struct mgmt_jbuf *njb)
         goto err;
     }
 
-    rc = split_write_split((split_mode_t) split_mode);
+    rc = split_write_split(split_mode);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
         goto err;

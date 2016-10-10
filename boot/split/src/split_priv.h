@@ -20,14 +20,16 @@
 #ifndef SPLIT_PRIV_H
 #define SPLIT_PRIV_H
 
+#include "bootutil/bootutil_misc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int split_conf_init(void);
 int split_nmgr_register(void);
-int split_read_split(split_mode_t *split);
-int split_write_split(split_mode_t mode);
+int split_read_split(boot_split_mode_t *split);
+int split_write_split(boot_split_mode_t mode);
 split_status_t split_check_status(void);
 
 #ifdef __cplusplus

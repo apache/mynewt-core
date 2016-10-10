@@ -20,9 +20,19 @@
 #ifndef __BOOTUTIL_MISC_H_
 #define __BOOTUTIL_MISC_H_
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef enum {
+    SPLIT_NONE = 0,
+    SPLIT_TEST,
+    SPLIT_RUN,
+} boot_split_mode_t;
+
+extern int8_t boot_split_mode;
 
 int boot_vect_read_test(int *slot);
 int boot_vect_read_main(int *slot);
@@ -30,6 +40,9 @@ int boot_vect_write_test(int slot);
 int boot_vect_write_main(void);
 
 void boot_set_image_slot_split(void);
+
+boot_split_mode_t boot_split_mode_get(void);
+int boot_split_mode_set(boot_split_mode_t split_mode);
 
 #ifdef __cplusplus
 }

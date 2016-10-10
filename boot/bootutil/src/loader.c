@@ -49,7 +49,6 @@ static struct boot_status boot_state;
 static int boot_erase_area(int area_idx, uint32_t sz);
 static uint32_t boot_copy_sz(int max_idx, int *cnt);
 
-
 int
 boot_build_request(struct boot_req *preq, int area_descriptor_max)
 {

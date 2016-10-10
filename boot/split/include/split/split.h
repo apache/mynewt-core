@@ -27,13 +27,6 @@ extern "C" {
 #define SPLIT_NMGR_OP_SPLIT 0
 
 typedef enum {
-    SPLIT_NONE,
-    SPLIT_TEST,
-    SPLIT_RUN,
-} split_mode_t;
-
-
-typedef enum {
     SPLIT_INVALID,
     SPLIT_NOT_MATCHING,
     SPLIT_MATCHING,

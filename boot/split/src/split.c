@@ -23,7 +23,7 @@
 #include "bootutil/loader.h"
 #include "imgmgr/imgmgr.h"
 #include "split/split.h"
-#include "split/split_priv.h"
+#include "split_priv.h"
 
 #define LOADER_IMAGE_SLOT   0
 #define SPLIT_IMAGE_SLOT    1
@@ -68,23 +68,19 @@ split_check_status(void)
 int
 split_app_go(void **entry, int toboot)
 {
-    split_mode_t split;
+    boot_split_mode_t split_mode;
     int rc;
 
     if (toboot) {
-        /* if we can't read this, then we don't boot an app */
-        rc = split_read_split(&split);
-        if(rc) {
-            return -1;
-        }
+        split_mode = boot_split_mode_get();
 
         /* if we are told not to, then we don't boot an app */
-        if (split == SPLIT_NONE) {
+        if (split_mode == SPLIT_NONE) {
             return -1;
         }
 
         /* if this is a one-time test, reset the split mode */
-        if (split == SPLIT_TEST) {
+        if (split_mode == SPLIT_TEST) {
             split_write_split(SPLIT_NONE);
         }
     }
