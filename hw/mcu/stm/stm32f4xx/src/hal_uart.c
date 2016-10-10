@@ -351,11 +351,11 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     *cfg->suc_rcc_reg |= cfg->suc_rcc_dev;
 
-    hal_gpio_init_af(cfg->suc_pin_tx, cfg->suc_pin_af, 0);
-    hal_gpio_init_af(cfg->suc_pin_rx, cfg->suc_pin_af, 0);
+    hal_gpio_init_af(cfg->suc_pin_tx, cfg->suc_pin_af, 0, 0);
+    hal_gpio_init_af(cfg->suc_pin_rx, cfg->suc_pin_af, 0, 0);
     if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
-        hal_gpio_init_af(cfg->suc_pin_rts, cfg->suc_pin_af, 0);
-        hal_gpio_init_af(cfg->suc_pin_cts, cfg->suc_pin_af, 0);
+        hal_gpio_init_af(cfg->suc_pin_rts, cfg->suc_pin_af, 0, 0);
+        hal_gpio_init_af(cfg->suc_pin_cts, cfg->suc_pin_af, 0, 0);
     }
 
     u->u_regs = cfg->suc_uart;
