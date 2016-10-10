@@ -17,13 +17,14 @@
  * under the License.
  */
 
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+
+#include <syscfg/syscfg.h>
+
 #include <hal/hal_i2c.h>
 #include <hal/hal_gpio.h>
-
-#include <string.h>
-#include <errno.h>
-
-#include <assert.h>
 
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_dma.h"
@@ -31,199 +32,142 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_rcc.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
+#include "mcu/stm32f4_bsp.h"
 
-#define STM32F4_HAL_I2C_TIMEOUT (1000)
+#define HAL_I2C_MAX_DEVS	3
+
+#define I2C_ADDRESS 		0xae
 
 struct stm32f4_hal_i2c {
-    I2C_HandleTypeDef handle;
+    I2C_HandleTypeDef hid_handle;
+    int hid_locked;
 };
 
-#define STM32_HAL_I2C_MAX (3)
-
-#ifdef I2C1
-struct stm32f4_hal_i2c hal_i2c1;
-#else
-#define __HAL_RCC_I2C1_CLK_ENABLE()
+#if MYNEWT_VAL(I2C_0)
+static struct stm32f4_hal_i2c i2c0;
+#endif
+#if MYNEWT_VAL(I2C_1)
+static struct stm32f4_hal_i2c i2c1;
+#endif
+#if MYNEWT_VAL(I2C_2)
+static struct stm32f4_hal_i2c i2c2;
 #endif
 
-#ifdef I2C2
-struct stm32f4_hal_i2c hal_i2c2;
+static struct stm32f4_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
+#if MYNEWT_VAL(I2C_0)
+    &i2c0,
 #else
-#define __HAL_RCC_I2C2_CLK_ENABLE()
+    NULL,
 #endif
-
-#ifdef I2C3
-struct stm32f4_hal_i2c hal_i2c3;
+#if MYNEWT_VAL(I2C_1)
+    &i2c1,
 #else
-#define __HAL_RCC_I2C3_CLK_ENABLE()
+    NULL,
 #endif
-
-static const struct stm32f4_hal_i2c *stm32f4_hal_i2cs[STM32_HAL_I2C_MAX] = {
-#ifdef I2C1
-        &hal_i2c1,
+#if MYNEWT_VAL(I2C_2)
+    &i2c2,
 #else
-        NULL,
-#endif
-#ifdef I2C2
-        &hal_i2c2,
-#else
-        NULL,
-#endif
-#ifdef I2C3
-        &hal_i2c3,
-#else
-        NULL,
+    NULL,
 #endif
 };
-
-#define STM32_HAL_I2C_RESOLVE(__n, __v)                          \
-    if ((__n) >= STM32_HAL_I2C_MAX) {                            \
-        rc = EINVAL;                                             \
-        goto err;                                                \
-    }                                                            \
-    (__v) = (struct stm32f4_hal_i2c *) stm32f4_hal_i2cs[(__n)];  \
-    if ((__v) == NULL) {                                         \
-        rc = EINVAL;                                             \
-        goto err;                                                \
-    }
 
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
-    GPIO_InitTypeDef pcf;
-    struct stm32f4_hal_i2c *i2c;
-    struct stm32f4_hal_i2c_cfg *cfg;
+    struct stm32f4_hal_i2c_cfg *cfg = (struct stm32f4_hal_i2c_cfg *)usercfg;
+    struct stm32f4_hal_i2c *dev;
+    I2C_InitTypeDef *init;
     int rc;
 
-    STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
-
-    cfg = (struct stm32f4_hal_i2c_cfg *) usercfg;
-    assert(cfg != NULL);
-
-    pcf.Mode = GPIO_MODE_OUTPUT_PP;
-    pcf.Pull = GPIO_PULLUP;
-    pcf.Speed = GPIO_SPEED_FREQ_MEDIUM;
-    pcf.Alternate = 0;
-
-    rc = hal_gpio_init_stm(cfg->sda_pin, &pcf);
-    if (rc != 0) {
-        goto err;
+    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+        return -1;
     }
 
-    rc = hal_gpio_init_stm(cfg->scl_pin, &pcf);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Configure I2C */
-    switch (i2c_num) {
-        case 0:
-            __HAL_RCC_I2C1_CLK_ENABLE();
-            break;
-        case 1:
-            __HAL_RCC_I2C2_CLK_ENABLE();
-            break;
-        case 2:
-            __HAL_RCC_I2C3_CLK_ENABLE();
-            break;
-        default:
-            rc = EINVAL;
-            goto err;
-    }
-
-    if (cfg->i2c_settings != NULL) {
-        /* Copy user defined settings onto the handle */
-        memcpy(&i2c->handle.Init, cfg->i2c_settings, sizeof(I2C_InitTypeDef));
+    init = &dev->hid_handle.Init;
+    dev->hid_handle.Instance = cfg->hic_i2c;
+    init->ClockSpeed = cfg->hic_speed;
+    if (cfg->hic_10bit) {
+        init->AddressingMode = I2C_ADDRESSINGMODE_10BIT;
     } else {
-        /* Initialize with default I2C Settings */
+        init->AddressingMode = I2C_ADDRESSINGMODE_7BIT;
     }
+    init->OwnAddress1 = I2C_ADDRESS;
+    init->OwnAddress2 = 0xFE;
 
-    rc = HAL_I2C_Init(&i2c->handle);
-    if (rc != 0) {
+    /*
+     * Configure GPIO pins for I2C.
+     * Enable clock routing for I2C.
+     */
+    rc = hal_gpio_init_af(cfg->hic_pin_sda, cfg->hic_pin_af, GPIO_PULL_UP, 1);
+    if (rc) {
+        goto err;
+    }
+    rc = hal_gpio_init_af(cfg->hic_pin_scl, cfg->hic_pin_af, GPIO_PULL_UP, 1);
+    if (rc) {
+        goto err;
+    }
+    *cfg->hic_rcc_reg |= cfg->hic_rcc_dev;
+    rc = HAL_I2C_Init(&dev->hid_handle);
+    if (rc) {
         goto err;
     }
 
-    return (0);
+    return 0;
 err:
-    return (rc);
+    *cfg->hic_rcc_reg &= ~cfg->hic_rcc_dev;
+    return rc;
 }
 
 int
-hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
+hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *data,
   uint32_t timo)
 {
-    struct stm32f4_hal_i2c *i2c;
-    int rc;
+    struct stm32f4_hal_i2c *dev;
 
-    STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
-
-    rc = HAL_I2C_Master_Transmit_IT(&i2c->handle, pdata->address, pdata->buffer,
-            pdata->len);
-    if (rc != 0) {
-        goto err;
+    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+        return -1;
     }
 
-    return (0);
-err:
-    return (rc);
+    return HAL_I2C_Master_Transmit(&dev->hid_handle, data->address << 1,
+      data->buffer, data->len, timo);
 }
 
 int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
   uint32_t timo)
 {
-    struct stm32f4_hal_i2c *i2c;
-    int rc;
+    struct stm32f4_hal_i2c *dev;
 
-    STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
-
-    rc = HAL_I2C_Master_Receive_IT(&i2c->handle, pdata->address, pdata->buffer,
-            pdata->len);
-    if (rc != 0) {
-        goto err;
+    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+        return -1;
     }
 
-    return (0);
-err:
-    return (rc);
+    return HAL_I2C_Master_Receive(&dev->hid_handle, pdata->address << 1,
+      pdata->buffer, pdata->len, timo);
 }
 
 int
 hal_i2c_master_begin(uint8_t i2c_num)
 {
-    return (0);
+    return 0;
 }
 
 int
 hal_i2c_master_end(uint8_t i2c_num)
 {
-    struct stm32f4_hal_i2c *i2c;
-    int rc;
-
-    STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
-
-    i2c->handle.Instance->CR1 |= I2C_CR1_STOP;
-
-    return (0);
-err:
-    return (rc);
+    return 0;
 }
 
 int
 hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
 {
-    struct stm32f4_hal_i2c *i2c;
+    struct stm32f4_hal_i2c *dev;
     int rc;
 
-    STM32_HAL_I2C_RESOLVE(i2c_num, i2c);
-
-    rc = HAL_I2C_IsDeviceReady(&i2c->handle, address, 1,
-            STM32F4_HAL_I2C_TIMEOUT);
-    if (rc != 0) {
-        goto err;
+    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+        return -1;
     }
 
-    return (0);
-err:
-    return (rc);
+    rc = HAL_I2C_IsDeviceReady(&dev->hid_handle, address, 1, timo);
+    return rc;
 }
