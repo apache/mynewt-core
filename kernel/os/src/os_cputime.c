@@ -25,7 +25,7 @@
 
 #if defined(MYNEWT_VAL_OS_CPUTIME_TIMER_NUM)
 
-struct os_cputime_data g_cputime;
+struct os_cputime_data g_os_cputime;
 
 /**
  * os cputime init
@@ -44,7 +44,7 @@ os_cputime_init(uint32_t clock_freq)
     int rc;
 
     /* Set the ticks per microsecond. */
-    g_cputime.ticks_per_usec = clock_freq / 1000000U;
+    g_os_cputime.ticks_per_usec = clock_freq / 1000000U;
     rc = hal_timer_init(MYNEWT_VAL(OS_CPUTIME_TIMER_NUM), clock_freq);
     return rc;
 }
@@ -66,7 +66,7 @@ os_cputime_nsecs_to_ticks(uint32_t nsecs)
 #if defined(OS_CPUTIME_FREQ_1MHZ)
     ticks = (nsecs + 999) / 1000;
 #else
-    ticks = ((nsecs * g_cputime.ticks_per_usec) + 999) / 1000;
+    ticks = ((nsecs * g_os_cputime.ticks_per_usec) + 999) / 1000;
 #endif
     return ticks;
 }
@@ -88,8 +88,8 @@ os_cputime_ticks_to_nsecs(uint32_t ticks)
 #if defined(OS_CPUTIME_FREQ_1MHZ)
     nsecs = ticks * 1000;
 #else
-    nsecs = ((ticks * 1000) + (g_cputime.ticks_per_usec - 1)) /
-            g_cputime.ticks_per_usec;
+    nsecs = ((ticks * 1000) + (g_os_cputime.ticks_per_usec - 1)) /
+            g_os_cputime.ticks_per_usec;
 #endif
 
     return nsecs;
@@ -110,7 +110,7 @@ os_cputime_usecs_to_ticks(uint32_t usecs)
 {
     uint32_t ticks;
 
-    ticks = (usecs * g_cputime.ticks_per_usec);
+    ticks = (usecs * g_os_cputime.ticks_per_usec);
     return ticks;
 }
 
@@ -128,7 +128,8 @@ os_cputime_ticks_to_usecs(uint32_t ticks)
 {
     uint32_t us;
 
-    us =  (ticks + (g_cputime.ticks_per_usec - 1)) / g_cputime.ticks_per_usec;
+    us =  (ticks + (g_os_cputime.ticks_per_usec - 1)) /
+        g_os_cputime.ticks_per_usec;
     return us;
 }
 #endif
