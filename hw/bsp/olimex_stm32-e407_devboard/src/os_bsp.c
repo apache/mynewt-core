@@ -39,6 +39,10 @@
 #include "stm32f4xx_hal_adc.h"
 #include <adc_stm32f4/adc_stm32f4.h>
 #include <hal/hal_i2c.h>
+#if MYNEWT_VAL(SPI_MASTER)||MYNEWT_VAL(SPI_SLAVE)
+#include "Mcu/stm32f4xx_mynewt_hal.h"
+#include "hal/hal_spi.h"
+#endif
 
 static struct uart_dev hal_uart0;
 
@@ -57,8 +61,6 @@ struct adc_dev my_dev_adc3;
 struct stm32f4_uart_cfg;
 
 extern struct stm32f4_uart_cfg *bsp_uart_config(int port);
-
-/*****************ADC3 Config ***************/
 
 #if MYNEWT_VAL(ADC_1)
 /*
@@ -264,14 +266,73 @@ static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
 };
 #endif
 
+#if MYNEWT_VAL(SPI_MASTER)
+#define STM32F4_SPI_DEFAULT_INIT_TD \
+{\
+    .Mode              = SPI_MODE_MASTER,\
+    .Direction         = SPI_DIRECTION_2LINES,\
+    .DataSize          = SPI_DATASIZE_8BIT,\
+    .CLKPolarity       = SPI_POLARITY_LOW,\
+    .CLKPhase          = SPI_PHASE_1EDGE,\
+    .NSS               = SPI_NSS_HARD_INPUT,\
+    .BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8,\
+    .FirstBit          = SPI_FIRSTBIT_MSB,\
+    .TIMode            = SPI_TIMODE_DISABLE,\
+    .CRCCalculation    = SPI_CRCCALCULATION_DISABLE,\
+    .CRCPolynomial     = 0\
+}
+#endif
+
+
+#if MYNEWT_VAL(SPI_SLAVE)
+#define STM32F4_SPI_DEFAULT_INIT_TD \
+{\
+    .Mode              = SPI_MODE_SLAVE,\
+    .Direction         = SPI_DIRECTION_2LINES,\
+    .DataSize          = SPI_DATASIZE_8BIT,\
+    .CLKPolarity       = SPI_POLARITY_LOW,\
+    .CLKPhase          = SPI_PHASE_1EDGE,\
+    .NSS               = SPI_NSS_HARD_INPUT,\
+    .BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8,\
+    .FirstBit          = SPI_FIRSTBIT_MSB,\
+    .TIMode            = SPI_TIMODE_DISABLE,\
+    .CRCCalculation    = SPI_CRCCALCULATION_DISABLE,\
+    .CRCPolynomial     = 0\
+}
+#endif
+
+
+void _close(int fd);
+
 void
 bsp_init(void)
 {
     int rc;
 
+#if MYNEWT_VAL(SPI_SLAVE)||MYNEWT_VAL(SPI_MASTER)
+    SPI_InitTypeDef spi_init_td = STM32F4_SPI_DEFAULT_INIT_TD;
+    struct stm32f4_hal_spi_cfg spi_cfg = {
+        .sck_pin  = 5,
+        .miso_pin = 6,
+        .mosi_pin = 21,
+        .spi_settings = &spi_init_td
+    };
+#endif
+
+#if MYNEWT_VAL(SPI_MASTER)
+    rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_SLAVE)
+    rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
     rc = os_dev_create((struct os_dev *) &hal_uart0, CONSOLE_UART,
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)bsp_uart_config(0));
     assert(rc == 0);
+
 #if MYNEWT_VAL(ADC_1)
     rc = os_dev_create((struct os_dev *) &my_dev_adc1, "adc1",
             OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,

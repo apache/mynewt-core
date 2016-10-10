@@ -48,6 +48,7 @@ extern uint8_t _ccram_start;
 #define CONSOLE_UART_SPEED      115200
 
 #define NFFS_AREA_MAX    (8)
+#define SPI_SS_PIN       (4)
 
 #ifdef __cplusplus
 }

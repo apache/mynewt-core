@@ -36,7 +36,7 @@ syscfg.defs:
         value:  0
     SPI_SLAVE:
         description: 'TBD'
-        value:  0
+        value:  1
 
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
