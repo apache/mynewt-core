@@ -21,6 +21,16 @@ syscfg.defs:
         description: 'TBD'
         value:  0
 
+    I2C_0:
+        description: 'I2C0'
+        value: 0
+    I2C_1:
+        description: 'I2C1'
+        value: 0
+    I2C_0:
+        description: 'I2C2'
+        value: 0
+
     SPI_MASTER:
         description: 'TBD'
         value:  0

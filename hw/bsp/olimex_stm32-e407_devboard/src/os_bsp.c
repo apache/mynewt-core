@@ -31,9 +31,14 @@
 
 #include "bsp/bsp.h"
 #include "syscfg/syscfg.h"
+#include "mcu/stm32f4xx_mynewt_hal.h"
+#include "stm32f407xx.h"
+#include "stm32f4xx_hal_gpio_ex.h"
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_adc.h"
+#include "stm32f4xx_hal_adc.h"
 #include <adc_stm32f4/adc_stm32f4.h>
+#include <hal/hal_i2c.h>
 
 static struct uart_dev hal_uart0;
 
@@ -246,6 +251,19 @@ struct adc_chan_config adc3_chan4_config = STM32F4_ADC3_DEFAULT_SAC;
 struct stm32f4_adc_dev_cfg adc3_config = STM32F4_ADC3_DEFAULT_CONFIG;
 #endif
 
+#if MYNEWT_VAL(I2C_0)
+static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = 16 + 9,		/* PB9 */
+    .hic_pin_scl = 16 + 8,		/* PB8 */
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_speed = 100000			/* 100kHz */
+};
+#endif
+
 void
 bsp_init(void)
 {
@@ -273,5 +291,9 @@ bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &i2c_cfg0);
+    assert(rc == 0);
+#endif
 }
 
