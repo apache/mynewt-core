@@ -21,3 +21,6 @@ syscfg.vals:
     # Enable newtmgr commands.
     STATS_NEWTMGR: 1
     LOG_NEWTMGR: 1
+
+    # Enable Config.
+    CONFIG_NEWTMGR: 1

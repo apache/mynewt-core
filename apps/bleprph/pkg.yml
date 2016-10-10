@@ -36,3 +36,4 @@ pkg.deps:
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/ble
     - sys/sysinit
+    - sys/id
