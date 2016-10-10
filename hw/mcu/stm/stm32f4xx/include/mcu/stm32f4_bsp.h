@@ -39,12 +39,10 @@ struct stm32f4_uart_cfg {
     IRQn_Type suc_irqn;				/* NVIC IRQn */
 };
 
-const struct stm32f4_uart_cfg *bsp_uart_config(int port);
-
 /*
  * Internal API for stm32f4xx mcu specific code.
  */
-int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull);
+int hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull, uint8_t od);
 
 struct hal_flash;
 extern struct hal_flash stm32f4_flash_dev;
