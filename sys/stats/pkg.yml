@@ -26,7 +26,6 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - libs/util
 pkg.deps.STATS_CLI:
     - sys/shell
 pkg.deps.STATS_NEWTMGR:

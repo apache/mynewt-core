@@ -17,29 +17,12 @@
 # under the License.
 #
 
-pkg.name: libs/imgmgr
-pkg.description: Library for image uploading.
+pkg.name: util/mem
+pkg.description: Library containing miscellaneous utilities.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - mempool
 
 pkg.deps:
-    - boot/bootutil
-    - encoding/base64
-    - mgmt/mgmt
-    - sys/flash_map
-
-pkg.req_apis:
-    - newtmgr
-
-pkg.deps.IMGMGR_FS:
-    - fs/fs
-
-pkg.deps.IMGMGR_COREDUMP:
-    - sys/coredump
-
-pkg.deps.IMGMGR_SHELL:
-    - sys/shell
-
-pkg.init_function: imgmgr_module_init
-pkg.init_stage: 5
+    - kernel/os

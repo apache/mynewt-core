@@ -28,7 +28,6 @@ pkg.deps:
     - net/oic
     - encoding/json
     - mgmt/newtmgr/nmgr_os
-    - libs/util
     - test/testutil
     - sys/shell
     - sys/reboot

@@ -44,6 +44,9 @@ extern "C" {
         )
 
 
+#define CTASSERT(x) typedef int __ctasssert ## __LINE__[(x) ? 1 : -1]
+
+
 /**
  * Whether or not the operating system has been started.  Set to
  * 1 right before first task is run.

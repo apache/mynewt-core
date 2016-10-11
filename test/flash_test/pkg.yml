@@ -24,7 +24,6 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - libs/util
     - hw/hal
 pkg.req_apis:
     - console

@@ -28,7 +28,6 @@ pkg.keywords:
 pkg.deps:
     - boot/bootutil
     - kernel/os
-    - libs/util
     - sys/console/stub
 
 pkg.deps.BOOT_SERIAL.OVERWRITE:

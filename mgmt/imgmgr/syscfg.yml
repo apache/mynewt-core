@@ -1,4 +1,4 @@
-# Package: libs/imgmgr
+# Package: mgmt/imgmgr
 
 syscfg.defs:
     IMGMGR_FS:

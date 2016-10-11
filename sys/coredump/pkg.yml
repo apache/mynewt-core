@@ -27,5 +27,5 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - boot/bootutil
-    - libs/imgmgr
+    - mgmt/imgmgr
     - sys/flash_map

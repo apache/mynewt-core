@@ -29,7 +29,6 @@ pkg.keywords:
 pkg.deps:
     - net/ip/mn_socket
     - kernel/os
-    - libs/util
 
 pkg.reqs:
     - console

@@ -27,13 +27,12 @@ pkg.keywords:
 pkg.deps:
     - sys/console/full
     - test/flash_test
-    - libs/imgmgr
+    - mgmt/imgmgr
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/nmgr_shell
     - kernel/os
     - boot/bootutil
     - sys/shell
-    - libs/util
     - sys/config
     - sys/id
     - sys/log

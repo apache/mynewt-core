@@ -24,6 +24,5 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/libs/util"
 pkg.deps.WIFI_MGMT_CLI:
     - libs/shell

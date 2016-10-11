@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -28,9 +28,9 @@
 
 #include <assert.h>
 #include <string.h>
-#include <util/datetime.h>
+#include <datetime/datetime.h>
 
-int 
+int
 shell_os_tasks_display_cmd(int argc, char **argv)
 {
     struct os_task *prev_task;
@@ -64,7 +64,7 @@ shell_os_tasks_display_cmd(int argc, char **argv)
         console_printf("  %s (prio: %u, tid: %u, lcheck: %lu, ncheck: %lu, "
                 "flags: 0x%x, ssize: %u, susage: %u, cswcnt: %lu, "
                 "tot_run_time: %lums)\n",
-                oti.oti_name, oti.oti_prio, oti.oti_taskid, 
+                oti.oti_name, oti.oti_prio, oti.oti_taskid,
                 (unsigned long)oti.oti_last_checkin,
                 (unsigned long)oti.oti_next_checkin, oti.oti_flags,
                 oti.oti_stksize, oti.oti_stkusage, (unsigned long)oti.oti_cswcnt,
@@ -79,7 +79,7 @@ shell_os_tasks_display_cmd(int argc, char **argv)
     return (0);
 }
 
-int 
+int
 shell_os_mpool_display_cmd(int argc, char **argv)
 {
     struct os_mempool *mp;
@@ -116,7 +116,7 @@ shell_os_mpool_display_cmd(int argc, char **argv)
     }
 
     if (name && !found) {
-        console_printf("Couldn't find a memory pool with name %s\n", 
+        console_printf("Couldn't find a memory pool with name %s\n",
                 name);
     }
 
@@ -137,12 +137,12 @@ shell_os_date_cmd(int argc, char **argv)
         /* Display the current datetime */
         rc = os_gettimeofday(&tv, &tz);
         assert(rc == 0);
-        rc = format_datetime(&tv, &tz, buf, sizeof(buf));
+        rc = datetime_format(&tv, &tz, buf, sizeof(buf));
         assert(rc == 0);
         console_printf("%s\n", buf);
     } else if (argc == 1) {
         /* Set the current datetime */
-        rc = parse_datetime(*argv, &tv, &tz);
+        rc = datetime_parse(*argv, &tv, &tz);
         if (rc == 0) {
             rc = os_settimeofday(&tv, &tz);
         } else {

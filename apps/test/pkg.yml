@@ -32,5 +32,4 @@ pkg.deps:
     - kernel/os
     - test/testreport
     - test/testutil
-    - libs/util
     - sys/config

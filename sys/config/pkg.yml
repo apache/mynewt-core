@@ -24,7 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libs/util
     - encoding/base64
 pkg.deps.CONFIG_CLI:
     - sys/shell

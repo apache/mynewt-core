@@ -25,7 +25,7 @@ pkg.keywords:
 
 pkg.deps:
     - sys/sysinit
-    - libs/util
+    - util/mem
 
 pkg.req_apis:
     - console

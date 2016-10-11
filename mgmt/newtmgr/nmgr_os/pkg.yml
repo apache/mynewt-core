@@ -25,8 +25,8 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
+    - time/datetime
     - kernel/os
     - encoding/json
-    - libs/util
     - sys/reboot
     - mgmt/mgmt

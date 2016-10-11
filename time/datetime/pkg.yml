@@ -17,14 +17,13 @@
 # under the License.
 #
 
-pkg.name: libs/util
+pkg.name: time/datetime
 pkg.description: Library containing miscellaneous utilities.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - base64
-    - circular buffer
+    - date 
+    - datetime
 
 pkg.deps:
-    - hw/hal
     - kernel/os

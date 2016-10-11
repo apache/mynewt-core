@@ -29,7 +29,6 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - kernel/os
-    - libs/util
     - sys/config
     - encoding/base64
 pkg.deps.ID_CLI:

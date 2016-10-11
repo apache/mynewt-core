@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <util/util.h>
 #include <assert.h>
 
 #include "os/os.h"

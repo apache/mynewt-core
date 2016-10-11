@@ -27,8 +27,7 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - libs/imgmgr
-    - libs/util
+    - mgmt/imgmgr
     - sys/config
     - sys/flash_map
     - sys/log

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -62,7 +62,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <util/datetime.h>
+#include <datetime/datetime.h>
 
 struct clocktime {
     int year;   /* year (4 digit year) */
@@ -206,7 +206,7 @@ parse_number(const char *str, int digits, int *val)
 {
     const char *cp;
     const char *end;
- 
+
     *val = 0;
     cp = str;
     end = str + digits;
@@ -231,7 +231,7 @@ parse_number(const char *str, int digits, int *val)
  * 2016-03-02T22:44:00.101+05:30        fractional seconds with timezone
  */
 int
-parse_datetime(const char *input, struct os_timeval *tv, struct os_timezone *tz)
+datetime_parse(const char *input, struct os_timeval *tv, struct os_timezone *tz)
 {
     int digits, sign;
     int off_hour, off_min;
@@ -363,7 +363,7 @@ err:
 }
 
 int
-format_datetime(const struct os_timeval *tv, const struct os_timezone *tz,
+datetime_format(const struct os_timeval *tv, const struct os_timezone *tz,
     char *ostr, int olen)
 {
     char *cp;
@@ -375,7 +375,7 @@ format_datetime(const struct os_timeval *tv, const struct os_timezone *tz,
     if (rc != 0) {
         goto err;
     }
- 
+
     cp = ostr;
     rlen = olen;
 

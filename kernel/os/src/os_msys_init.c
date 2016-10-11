@@ -21,7 +21,7 @@
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os_mempool.h"
-#include "util/mem.h"
+#include "mem/mem.h"
 #include "os_priv.h"
 
 #if MYNEWT_VAL(MSYS_1_BLOCK_COUNT) > 0

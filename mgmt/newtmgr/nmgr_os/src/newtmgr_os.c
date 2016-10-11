@@ -28,7 +28,7 @@
 #include <mgmt/mgmt.h>
 
 #include <console/console.h>
-#include <util/datetime.h>
+#include <datetime/datetime.h>
 #include <reboot/log_reboot.h>
 
 #include "nmgr_os/nmgr_os.h"
@@ -235,7 +235,7 @@ nmgr_datetime_get(struct mgmt_jbuf *njb)
     /* Display the current datetime */
     rc = os_gettimeofday(&tv, &tz);
     assert(rc == 0);
-    rc = format_datetime(&tv, &tz, buf, DATETIME_BUFSIZE);
+    rc = datetime_format(&tv, &tz, buf, DATETIME_BUFSIZE);
     if (rc) {
         rc = OS_EINVAL;
         goto err;
@@ -279,7 +279,7 @@ nmgr_datetime_set(struct mgmt_jbuf *njb)
     }
 
     /* Set the current datetime */
-    rc = parse_datetime(buf, &tv, &tz);
+    rc = datetime_parse(buf, &tv, &tz);
     if (!rc) {
         rc = os_settimeofday(&tv, &tz);
         if (rc) {
