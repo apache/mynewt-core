@@ -23,22 +23,22 @@
 
 #include "config/config.h"
 #include "config_priv.h"
-#include "json/json.h"
+#include "cborattr/cborattr.h"
+#include "mgmt/mgmt.h"
 
 int
-conf_json_line(struct json_buffer *jb, char *name, int nlen, char *value,
-  int vlen)
+conf_cbor_line(struct mgmt_cbuf *cb, char *name, int nlen, char *value, int vlen)
 {
-    const struct json_attr_t val_attr[3] = {
+    const struct cbor_attr_t val_attr[3] = {
         [0] = {
             .attribute = "name",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = name,
             .len = nlen
         },
         [1] = {
             .attribute = "val",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = value,
             .len = vlen
         },
@@ -48,7 +48,7 @@ conf_json_line(struct json_buffer *jb, char *name, int nlen, char *value,
     };
     int rc;
 
-    rc = json_read_object(jb, val_attr);
+    rc = cbor_read_object(&cb->it, val_attr);
     if (rc) {
         return rc;
     }

@@ -24,13 +24,13 @@
 #include <string.h>
 
 #include "mgmt/mgmt.h"
-#include "json/json.h"
+#include "cborattr/cborattr.h"
 #include "console/console.h"
 
 #include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
-static int crash_test_nmgr_write(struct mgmt_jbuf *);
+static int crash_test_nmgr_write(struct mgmt_cbuf *);
 
 static const struct mgmt_handler crash_test_nmgr_handler[] = {
     [0] = { crash_test_nmgr_write, crash_test_nmgr_write }
@@ -43,13 +43,13 @@ struct mgmt_group crash_test_nmgr_group = {
 };
 
 static int
-crash_test_nmgr_write(struct mgmt_jbuf *njb)
+crash_test_nmgr_write(struct mgmt_cbuf *cb)
 {
     char tmp_str[64];
-    const struct json_attr_t attr[2] = {
+    const struct cbor_attr_t attr[2] = {
         [0] = {
             .attribute = "t",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = tmp_str,
             .len = sizeof(tmp_str)
         },
@@ -59,7 +59,7 @@ crash_test_nmgr_write(struct mgmt_jbuf *njb)
     };
     int rc;
 
-    rc = json_read_object(&njb->mjb_buf, attr);
+    rc = cbor_read_object(&cb->it, attr);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
     } else {
@@ -68,7 +68,7 @@ crash_test_nmgr_write(struct mgmt_jbuf *njb)
             rc = MGMT_ERR_EINVAL;
         }
     }
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
     return 0;
 }
 

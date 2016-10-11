@@ -33,15 +33,18 @@
 
 #include "nmgr_os/nmgr_os.h"
 
+#include <tinycbor/cbor.h>
+#include <cborattr/cborattr.h>
+
 static struct os_callout_func nmgr_reset_callout;
 
-static int nmgr_def_echo(struct mgmt_jbuf *);
-static int nmgr_def_console_echo(struct mgmt_jbuf *);
-static int nmgr_def_taskstat_read(struct mgmt_jbuf *njb);
-static int nmgr_def_mpstat_read(struct mgmt_jbuf *njb);
-static int nmgr_datetime_get(struct mgmt_jbuf *njb);
-static int nmgr_datetime_set(struct mgmt_jbuf *njb);
-static int nmgr_reset(struct mgmt_jbuf *njb);
+static int nmgr_def_echo(struct mgmt_cbuf *);
+static int nmgr_def_console_echo(struct mgmt_cbuf *);
+static int nmgr_def_taskstat_read(struct mgmt_cbuf *njb);
+static int nmgr_def_mpstat_read(struct mgmt_cbuf *njb);
+static int nmgr_datetime_get(struct mgmt_cbuf *njb);
+static int nmgr_datetime_set(struct mgmt_cbuf *njb);
+static int nmgr_reset(struct mgmt_cbuf *njb);
 
 static const struct mgmt_handler nmgr_def_group_handlers[] = {
     [NMGR_ID_ECHO] = {
@@ -74,41 +77,44 @@ static struct mgmt_group nmgr_def_group = {
 };
 
 static int
-nmgr_def_echo(struct mgmt_jbuf *njb)
+nmgr_def_echo(struct mgmt_cbuf *cb)
 {
-    uint8_t echo_buf[128];
-    struct json_attr_t attrs[] = {
-        { "d", t_string, .addr.string = (char *) &echo_buf[0],
-            .len = sizeof(echo_buf) },
-        { NULL },
+    char echo_buf[128] = {'\0'};
+    CborEncoder *penc = &cb->encoder;
+    CborError g_err = CborNoError;
+    CborEncoder rsp;
+
+    struct cbor_attr_t attrs[3] = {
+        [0] = {
+            .attribute = "d",
+            .type = CborAttrTextStringType,
+            .addr.string = echo_buf,
+            .nodefault = 1,
+            .len = sizeof(echo_buf),
+        },
+        [1] = {
+            .attribute = NULL
+        }
     };
-    struct json_value jv;
-    int rc;
 
-    rc = json_read_object((struct json_buffer *) njb, attrs);
-    if (rc != 0) {
-        goto err;
-    }
+    g_err |= cbor_encoder_create_array(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "r");
+    g_err |= cbor_read_object(&cb->it, attrs);
+    g_err |= cbor_encode_text_string(&rsp, echo_buf, strlen(echo_buf));
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_STRINGN(&jv, (char *) echo_buf, strlen((char *) echo_buf));
-    json_encode_object_entry(&njb->mjb_enc, "r", &jv);
-    json_encode_object_finish(&njb->mjb_enc);
-
-    return (0);
-err:
-    return (rc);
+    return (g_err);
 }
 
 static int
-nmgr_def_console_echo(struct mgmt_jbuf *njb)
+nmgr_def_console_echo(struct mgmt_cbuf *cb)
 {
     long long int echo_on = 1;
     int rc;
-    struct json_attr_t attrs[3] = {
+    struct cbor_attr_t attrs[3] = {
         [0] = {
             .attribute = "echo",
-            .type = t_integer,
+            .type = CborAttrTextStringType,
             .addr.integer = &echo_on,
             .nodefault = 1
         },
@@ -118,7 +124,7 @@ nmgr_def_console_echo(struct mgmt_jbuf *njb)
         [2] = { 0 },
     };
 
-    rc = json_read_object(&njb->mjb_buf, attrs);
+    rc = cbor_read_object(&cb->it, attrs);
     if (rc) {
         return OS_EINVAL;
     }
@@ -132,68 +138,69 @@ nmgr_def_console_echo(struct mgmt_jbuf *njb)
 }
 
 static int
-nmgr_def_taskstat_read(struct mgmt_jbuf *njb)
+nmgr_def_taskstat_read(struct mgmt_cbuf *cb)
 {
     struct os_task *prev_task;
     struct os_task_info oti;
-    struct json_value jv;
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
+    CborError g_err = CborNoError;
+    CborEncoder rsp, tasks, task;
 
-    json_encode_object_key(&njb->mjb_enc, "tasks");
-    json_encode_object_start(&njb->mjb_enc);
+    g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&rsp, "tasks");
+    g_err |= cbor_encoder_create_map(&rsp, &tasks, CborIndefiniteLength);
 
     prev_task = NULL;
     while (1) {
+
         prev_task = os_task_info_get_next(prev_task, &oti);
         if (prev_task == NULL) {
             break;
         }
 
-        json_encode_object_key(&njb->mjb_enc, oti.oti_name);
-
-        json_encode_object_start(&njb->mjb_enc);
-        JSON_VALUE_UINT(&jv, oti.oti_prio);
-        json_encode_object_entry(&njb->mjb_enc, "prio", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_taskid);
-        json_encode_object_entry(&njb->mjb_enc, "tid", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_state);
-        json_encode_object_entry(&njb->mjb_enc, "state", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_stkusage);
-        json_encode_object_entry(&njb->mjb_enc, "stkuse", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_stksize);
-        json_encode_object_entry(&njb->mjb_enc, "stksiz", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_cswcnt);
-        json_encode_object_entry(&njb->mjb_enc, "cswcnt", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_runtime);
-        json_encode_object_entry(&njb->mjb_enc, "runtime", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_last_checkin);
-        json_encode_object_entry(&njb->mjb_enc, "last_checkin", &jv);
-        JSON_VALUE_UINT(&jv, oti.oti_next_checkin);
-        json_encode_object_entry(&njb->mjb_enc, "next_checkin", &jv);
-        json_encode_object_finish(&njb->mjb_enc);
+        g_err |= cbor_encode_text_stringz(&tasks, oti.oti_name);
+        g_err |= cbor_encoder_create_map(&tasks, &task, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&rsp, "prio");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_prio);
+        g_err |= cbor_encode_text_stringz(&rsp, "tid");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_taskid);
+        g_err |= cbor_encode_text_stringz(&rsp, "state");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_state);
+        g_err |= cbor_encode_text_stringz(&rsp, "stkuse");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_stkusage);
+        g_err |= cbor_encode_text_stringz(&rsp, "stksiz");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_stksize);
+        g_err |= cbor_encode_text_stringz(&rsp, "cswcnt");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_cswcnt);
+        g_err |= cbor_encode_text_stringz(&rsp, "runtime");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_runtime);
+        g_err |= cbor_encode_text_stringz(&rsp, "last_checkin");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_last_checkin);
+        g_err |= cbor_encode_text_stringz(&rsp, "next_checkin");
+        g_err |= cbor_encode_uint(&rsp, oti.oti_next_checkin);
+        g_err |= cbor_encoder_close_container(&tasks, &task);
     }
-    json_encode_object_finish(&njb->mjb_enc);
-    json_encode_object_finish(&njb->mjb_enc);
+    g_err |= cbor_encoder_close_container(&rsp, &tasks);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
 
     return (0);
 }
 
 static int
-nmgr_def_mpstat_read(struct mgmt_jbuf *njb)
+nmgr_def_mpstat_read(struct mgmt_cbuf *cb)
 {
     struct os_mempool *prev_mp;
     struct os_mempool_info omi;
-    struct json_value jv;
+    CborError g_err = CborNoError;
+    CborEncoder rsp, pools, pool;
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
-
-    json_encode_object_key(&njb->mjb_enc, "mpools");
-    json_encode_object_start(&njb->mjb_enc);
+    g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&rsp, "mpools");
+    g_err |= cbor_encoder_create_map(&rsp, &pools, CborIndefiniteLength);
 
     prev_mp = NULL;
     while (1) {
@@ -202,36 +209,36 @@ nmgr_def_mpstat_read(struct mgmt_jbuf *njb)
             break;
         }
 
-        json_encode_object_key(&njb->mjb_enc, omi.omi_name);
-
-        json_encode_object_start(&njb->mjb_enc);
-        JSON_VALUE_UINT(&jv, omi.omi_block_size);
-        json_encode_object_entry(&njb->mjb_enc, "blksiz", &jv);
-        JSON_VALUE_UINT(&jv, omi.omi_num_blocks);
-        json_encode_object_entry(&njb->mjb_enc, "nblks", &jv);
-        JSON_VALUE_UINT(&jv, omi.omi_num_free);
-        json_encode_object_entry(&njb->mjb_enc, "nfree", &jv);
-        json_encode_object_finish(&njb->mjb_enc);
+        g_err |= cbor_encode_text_stringz(&pools, omi.omi_name);
+        g_err |= cbor_encoder_create_map(&pools, &pool, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&rsp, "blksiz");
+        g_err |= cbor_encode_uint(&rsp, omi.omi_block_size);
+        g_err |= cbor_encode_text_stringz(&rsp, "nblks");
+        g_err |= cbor_encode_uint(&rsp, omi.omi_num_blocks);
+        g_err |= cbor_encode_text_stringz(&rsp, "nfree");
+        g_err |= cbor_encode_uint(&rsp, omi.omi_num_free);
+        g_err |= cbor_encoder_close_container(&pools, &pool);
     }
 
-    json_encode_object_finish(&njb->mjb_enc);
-    json_encode_object_finish(&njb->mjb_enc);
+    g_err |= cbor_encoder_close_container(&rsp, &pools);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
 
     return (0);
 }
 
 static int
-nmgr_datetime_get(struct mgmt_jbuf *njb)
+nmgr_datetime_get(struct mgmt_cbuf *cb)
 {
     struct os_timeval tv;
     struct os_timezone tz;
     char buf[DATETIME_BUFSIZE];
-    struct json_value jv;
     int rc;
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
+    CborError g_err = CborNoError;
+    CborEncoder rsp;
+    g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
 
     /* Display the current datetime */
     rc = os_gettimeofday(&tv, &tz);
@@ -241,39 +248,38 @@ nmgr_datetime_get(struct mgmt_jbuf *njb)
         rc = OS_EINVAL;
         goto err;
     }
-
-    JSON_VALUE_STRING(&jv, buf)
-    json_encode_object_entry(&njb->mjb_enc, "datetime", &jv);
-    json_encode_object_finish(&njb->mjb_enc);
-
+    g_err |= cbor_encode_text_stringz(&rsp, "datetime");
+    g_err |= cbor_encode_text_stringz(&rsp, buf);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
     return OS_OK;
+
 err:
     return (rc);
 }
 
 static int
-nmgr_datetime_set(struct mgmt_jbuf *njb)
+nmgr_datetime_set(struct mgmt_cbuf *cb)
 {
     struct os_timeval tv;
     struct os_timezone tz;
-    struct json_value jv;
     char buf[DATETIME_BUFSIZE];
     int rc = OS_OK;
-    const struct json_attr_t datetime_write_attr[3] = {
+
+    const struct cbor_attr_t datetime_write_attr[3] = {
         [0] = {
             .attribute = "datetime",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = buf,
             .len = sizeof(buf),
         },
         [1] = {
             .attribute = "rc",
-            .type = t_uinteger,
+            .type = CborAttrIntegerType,
         },
         { 0 },
     };
 
-    rc = json_read_object(&njb->mjb_buf, datetime_write_attr);
+    rc = cbor_read_object(&cb->it, datetime_write_attr);
     if (rc) {
         rc = OS_EINVAL;
         goto out;
@@ -292,12 +298,10 @@ nmgr_datetime_set(struct mgmt_jbuf *njb)
         goto out;
     }
 
+    rc = OS_OK;
 out:
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, rc);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
-    json_encode_object_finish(&njb->mjb_enc);
-    return OS_OK;
+    mgmt_cbuf_setoerr(cb, rc);
+    return rc;
 }
 
 static void
@@ -307,12 +311,12 @@ nmgr_reset_tmo(void *arg)
 }
 
 static int
-nmgr_reset(struct mgmt_jbuf *njb)
+nmgr_reset(struct mgmt_cbuf *cb)
 {
     log_reboot(SOFT_REBOOT);
     os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
 
-    mgmt_jbuf_setoerr(njb, 0);
+    mgmt_cbuf_setoerr(cb, OS_OK);
 
     return OS_OK;
 }

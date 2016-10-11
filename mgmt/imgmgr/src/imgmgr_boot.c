@@ -27,40 +27,28 @@
 #include <mgmt/mgmt.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil_misc.h>
-#include <json/json.h>
-#include <base64/base64.h>
+#include <cborattr/cborattr.h>
 #include <hal/hal_bsp.h>
 
 #include "split/split.h"
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-static void
-imgr_hash_jsonstr(struct json_encoder *enc, char *key, uint8_t *hash)
-{
-    struct json_value jv;
-    char hash_str[IMGMGR_HASH_STR + 1];
-
-    base64_encode(hash, IMGMGR_HASH_LEN, hash_str, 1);
-    JSON_VALUE_STRING(&jv, hash_str);
-    json_encode_object_entry(enc, key, &jv);
-}
 
 int
-imgr_boot2_read(struct mgmt_jbuf *njb)
+imgr_boot2_read(struct mgmt_cbuf *cb)
 {
     int rc;
-    struct json_encoder *enc;
     struct image_version ver;
-    struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
     int test_slot;
     int main_slot;
     int active_slot;
+    CborEncoder *penc = &cb->encoder;
+    CborError g_err = CborNoError;
+    CborEncoder rsp;
 
-    enc = &njb->mjb_enc;
-
-    json_encode_object_start(enc);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
 
     test_slot = -1;
     main_slot = -1;
@@ -82,60 +70,58 @@ imgr_boot2_read(struct mgmt_jbuf *njb)
     if (test_slot != -1) {
         rc = imgr_read_info(test_slot, &ver, hash, NULL);
         if (rc >= 0) {
-            imgr_hash_jsonstr(enc, "test", hash);
+            g_err |= cbor_encode_text_stringz(&rsp, "test");
+            g_err |= cbor_encode_byte_string(&rsp, hash, IMGMGR_HASH_LEN);
         }
     }
 
     if (main_slot != -1) {
         rc = imgr_read_info(main_slot, &ver, hash, NULL);
         if (rc >= 0) {
-            imgr_hash_jsonstr(enc, "main", hash);
+            g_err |= cbor_encode_text_stringz(&rsp, "main");
+            g_err |= cbor_encode_byte_string(&rsp, hash, IMGMGR_HASH_LEN);
         }
     }
 
     if (active_slot != -1) {
         rc = imgr_read_info(active_slot, &ver, hash, NULL);
         if (rc >= 0) {
-            imgr_hash_jsonstr(enc, "active", hash);
+            g_err |= cbor_encode_text_stringz(&rsp, "active");
+            g_err |= cbor_encode_byte_string(&rsp, hash, IMGMGR_HASH_LEN);
         }
     }
 
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(enc, "rc", &jv);
-
-    json_encode_object_finish(enc);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return 0;
 }
 
 int
-imgr_boot2_write(struct mgmt_jbuf *njb)
+imgr_boot2_write(struct mgmt_cbuf *cb)
 {
-    char hash_str[IMGMGR_HASH_STR + 1];
+    int rc;
     uint8_t hash[IMGMGR_HASH_LEN];
-    const struct json_attr_t boot_write_attr[2] = {
+    const struct cbor_attr_t boot_write_attr[2] = {
         [0] = {
             .attribute = "test",
-            .type = t_string,
-            .addr.string = hash_str,
-            .len = sizeof(hash_str),
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = hash,
+            .len = sizeof(hash),
         },
         [1] = {
             .attribute = NULL
         }
     };
-    struct json_encoder *enc;
-    struct json_value jv;
-    int rc;
     struct image_version ver;
 
-    rc = json_read_object(&njb->mjb_buf, boot_write_attr);
+    rc = cbor_read_object(&cb->it, boot_write_attr);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
-    base64_decode(hash_str, hash);
     rc = imgr_find_by_hash(hash, &ver);
     if (rc >= 0) {
         rc = boot_vect_write_test(rc);
@@ -149,19 +135,10 @@ imgr_boot2_write(struct mgmt_jbuf *njb)
         goto err;
     }
 
-    enc = &njb->mjb_enc;
-
-    json_encode_object_start(enc);
-
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
-
-    json_encode_object_finish(enc);
-
-    return 0;
+    rc =  MGMT_ERR_EOK;
 
 err:
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
 
     return 0;
 }

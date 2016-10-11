@@ -26,18 +26,20 @@
 #if MYNEWT_VAL(LOG_NEWTMGR)
 
 #include "mgmt/mgmt.h"
-#include "json/json.h"
+#include "cborattr/cborattr.h"
+#include "tinycbor/cbor_cnt_writer.h"
 #include "log/log.h"
 
 /* Source code is only included if the newtmgr library is enabled.  Otherwise
  * this file is compiled out for code size.
  */
 
-static int log_nmgr_read(struct mgmt_jbuf *njb);
-static int log_nmgr_clear(struct mgmt_jbuf *njb);
-static int log_nmgr_module_list(struct mgmt_jbuf *njb);
-static int log_nmgr_level_list(struct mgmt_jbuf *njb);
-static int log_nmgr_logs_list(struct mgmt_jbuf *njb);
+
+static int log_nmgr_read(struct mgmt_cbuf *njb);
+static int log_nmgr_clear(struct mgmt_cbuf *njb);
+static int log_nmgr_module_list(struct mgmt_cbuf *njb);
+static int log_nmgr_level_list(struct mgmt_cbuf *njb);
+static int log_nmgr_logs_list(struct mgmt_cbuf *njb);
 static struct mgmt_group log_nmgr_group;
 
 
@@ -53,7 +55,7 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
 };
 
 struct encode_off {
-    struct json_encoder *eo_encoder;
+    CborEncoder *eo_encoder;
     int64_t eo_ts;
     uint8_t eo_index;
     uint32_t rsp_len;
@@ -71,9 +73,11 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     struct log_entry_hdr ueh;
     char data[128];
     int dlen;
-    struct json_value jv;
     int rc;
     int rsp_len;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = encode_off->eo_encoder;
+    CborEncoder rsp;
 
     rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
@@ -98,55 +102,49 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     }
     data[rc] = 0;
 
-    rsp_len = encode_off->rsp_len;
-    /* Calculating entry len */
-    rsp_len += strlen(data);
+    /*calculate whether this would fit */
+    {
+        /* create a counting encoder for cbor */
+        struct CborCntWriter cnt_writer;
+        CborEncoder cnt_encoder;
+        cbor_cnt_writer_init(&cnt_writer);
+        cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
 
-    /* Pre calculating MAX length of the json string */
-    rsp_len += (sizeof(STR(INT64_MAX))  + sizeof("{,ts:")    +
-                sizeof(STR(UINT8_MAX))  + sizeof(",level:")  +
-                sizeof(STR(UINT32_MAX)) + sizeof(",index:")  +
-                sizeof(STR(UINT16_MAX)) + sizeof(",module:}"));
+        /* NOTE This code should exactly match what is below */
+        g_err |= cbor_encoder_create_map(&cnt_encoder, &rsp, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&rsp, "msg");
+        g_err |= cbor_encode_text_stringz(&rsp, data);
+        g_err |= cbor_encode_text_stringz(&rsp, "ts");
+        g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
+        g_err |= cbor_encode_text_stringz(&rsp, "level");
+        g_err |= cbor_encode_uint(&rsp, ueh.ue_level);
+        g_err |= cbor_encode_text_stringz(&rsp, "index");
+        g_err |= cbor_encode_uint(&rsp,  ueh.ue_index);
+        g_err |= cbor_encode_text_stringz(&rsp, "module");
+        g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
+        g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
+        rsp_len = encode_off->rsp_len;
+        rsp_len += cbor_encode_bytes_written(&cnt_encoder);
 
-    if (rsp_len > MGMT_MAX_MTU) {
-        rc = OS_ENOMEM;
-        goto err;
+        if (rsp_len > MGMT_MAX_MTU) {
+            rc = OS_ENOMEM;
+            goto err;
+        }
+        encode_off->rsp_len = rsp_len;
     }
 
-    json_encode_object_start(encode_off->eo_encoder);
-
-    JSON_VALUE_STRINGN(&jv, data, rc);
-    rc = json_encode_object_entry(encode_off->eo_encoder, "msg", &jv);
-    if (rc) {
-        goto err;
-    }
-
-    JSON_VALUE_INT(&jv, ueh.ue_ts);
-    rc = json_encode_object_entry(encode_off->eo_encoder, "ts", &jv);
-    if (rc) {
-        goto err;
-    }
-
-    JSON_VALUE_UINT(&jv, ueh.ue_level);
-    rc = json_encode_object_entry(encode_off->eo_encoder, "level", &jv);
-    if (rc) {
-        goto err;
-    }
-
-    JSON_VALUE_UINT(&jv, ueh.ue_index);
-    rc = json_encode_object_entry(encode_off->eo_encoder, "index", &jv);
-    if (rc) {
-        goto err;
-    }
-
-    JSON_VALUE_UINT(&jv, ueh.ue_module);
-    rc = json_encode_object_entry(encode_off->eo_encoder, "module", &jv);
-    if (rc) {
-        goto err;
-    }
-
-    json_encode_object_finish(encode_off->eo_encoder);
-    encode_off->rsp_len += rsp_len;
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "msg");
+    g_err |= cbor_encode_text_stringz(&rsp, data);
+    g_err |= cbor_encode_text_stringz(&rsp, "ts");
+    g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
+    g_err |= cbor_encode_text_stringz(&rsp, "level");
+    g_err |= cbor_encode_uint(&rsp, ueh.ue_level);
+    g_err |= cbor_encode_text_stringz(&rsp, "index");
+    g_err |= cbor_encode_uint(&rsp,  ueh.ue_index);
+    g_err |= cbor_encode_text_stringz(&rsp, "module");
+    g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return (0);
 err:
@@ -159,36 +157,46 @@ err:
  * @return 0 on success; non-zero on failure
  */
 static int
-log_encode_entries(struct log *log, struct json_encoder *encoder,
+log_encode_entries(struct log *log, CborEncoder *cb,
                    int64_t ts, uint32_t index)
 {
     int rc;
     struct encode_off encode_off;
-    int rsp_len;
+    int rsp_len = 0;
+    CborEncoder entries;
+    CborError g_err = CborNoError;
 
     memset(&encode_off, 0, sizeof(encode_off));
-    /* Already encoded json string */
-    rsp_len = strlen(encoder->je_encode_buf);
-    /* Pre calculating json length */
-    rsp_len += (sizeof("entries") + 3);
-    rsp_len += encode_off.rsp_len;
 
-    if (rsp_len > MGMT_MAX_MTU) {
-        rc = OS_ENOMEM;
-        goto err;
+    {
+        /* this code counts how long the message would be if we encoded
+         * this outer structure using cbor. */
+        struct CborCntWriter cnt_writer;
+        CborEncoder cnt_encoder;
+        cbor_cnt_writer_init(&cnt_writer);
+        cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
+        g_err |= cbor_encode_text_stringz(&cnt_encoder, "entries");
+        g_err |= cbor_encoder_create_array(&cnt_encoder, &entries, CborIndefiniteLength);
+        g_err |= cbor_encoder_close_container(&cnt_encoder, &entries);
+        rsp_len = cbor_encode_bytes_written(cb)
+                   + cbor_encode_bytes_written(&cnt_encoder);
+        if (rsp_len > MGMT_MAX_MTU) {
+            rc = OS_ENOMEM;
+            goto err;
+        }
     }
 
-    json_encode_array_name(encoder, "entries");
-    json_encode_array_start(encoder);
+    g_err |= cbor_encode_text_stringz(cb, "entries");
+    g_err |= cbor_encoder_create_array(cb, &entries, CborIndefiniteLength);
 
-    encode_off.eo_encoder  = encoder;
+    encode_off.eo_encoder  = &entries;
     encode_off.eo_index    = index;
     encode_off.eo_ts       = ts;
-
     encode_off.rsp_len = rsp_len;
 
     rc = log_walk(log, log_nmgr_encode_entry, &encode_off);
-    json_encode_array_finish(encoder);
+
+    g_err |= cbor_encoder_close_container(cb, &entries);
 
 err:
     return rc;
@@ -201,56 +209,58 @@ err:
  * @return 0 on success; non-zero on failure
  */
 static int
-log_encode(struct log *log, struct json_encoder *encoder,
-           struct json_value *jv, int64_t ts, uint32_t index)
+log_encode(struct log *log, CborEncoder *cb,
+            int64_t ts, uint32_t index)
 {
     int rc;
+    CborEncoder logs;
+    CborError g_err = CborNoError;
 
-    json_encode_object_start(encoder);
-    JSON_VALUE_STRING(jv, log->l_name);
-    json_encode_object_entry(encoder, "name", jv);
+    g_err |= cbor_encoder_create_map(cb, &logs, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&logs, "name");
+    g_err |= cbor_encode_text_stringz(&logs, log->l_name);
 
-    JSON_VALUE_UINT(jv, log->l_log->log_type);
-    json_encode_object_entry(encoder, "type", jv);
+    g_err |= cbor_encode_text_stringz(&logs, "type");
+    g_err |= cbor_encode_uint(&logs, log->l_log->log_type);
 
-    rc = log_encode_entries(log, encoder, ts, index);
-    json_encode_object_finish(encoder);
-
+    rc = log_encode_entries(log, &logs, ts, index);
+    g_err |= cbor_encoder_close_container(cb, &logs);
     return rc;
 }
 
 /**
  * Newtmgr Log read handler
- * @param nmgr json buffer
+ * @param cbor buffer
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_read(struct mgmt_jbuf *njb)
+log_nmgr_read(struct mgmt_cbuf *cb)
 {
     struct log *log;
     int rc;
-    struct json_value jv;
-    struct json_encoder *encoder;
     char name[LOG_NAME_MAX_LEN] = {0};
     int name_len;
     int64_t ts;
     uint64_t index;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, logs;
 
-    const struct json_attr_t attr[4] = {
+    const struct cbor_attr_t attr[4] = {
         [0] = {
             .attribute = "log_name",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = name,
             .len = sizeof(name)
         },
         [1] = {
             .attribute = "ts",
-            .type = t_integer,
+            .type = CborAttrIntegerType,
             .addr.integer = &ts
         },
         [2] = {
             .attribute = "index",
-            .type = t_uinteger,
+            .type = CborAttrUnsignedIntegerType,
             .addr.uinteger = &index
         },
         [3] = {
@@ -258,16 +268,16 @@ log_nmgr_read(struct mgmt_jbuf *njb)
         }
     };
 
-    rc = json_read_object(&njb->mjb_buf, attr);
+    rc = cbor_read_object(&cb->it, attr);
     if (rc) {
         return rc;
     }
 
-    encoder = (struct json_encoder *) &njb->mjb_enc;
 
-    json_encode_object_start(encoder);
-    json_encode_array_name(encoder, "logs");
-    json_encode_array_start(encoder);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "logs");
+
+    g_err |= cbor_encoder_create_array(&rsp, &logs, CborIndefiniteLength);
 
     name_len = strlen(name);
     log = NULL;
@@ -286,7 +296,7 @@ log_nmgr_read(struct mgmt_jbuf *njb)
             continue;
         }
 
-        rc = log_encode(log, encoder, &jv, ts, index);
+        rc = log_encode(log, &logs, ts, index);
         if (rc) {
             goto err;
         }
@@ -304,10 +314,11 @@ log_nmgr_read(struct mgmt_jbuf *njb)
     }
 
 err:
-    json_encode_array_finish(encoder);
-    JSON_VALUE_INT(&jv, rc);
-    json_encode_object_entry(encoder, "rc", &jv);
-    json_encode_object_finish(encoder);
+    g_err |= cbor_encoder_close_container(&rsp, &logs);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, rc);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
+
     rc = 0;
     return (rc);
 }
@@ -318,20 +329,20 @@ err:
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_module_list(struct mgmt_jbuf *njb)
+log_nmgr_module_list(struct mgmt_cbuf *cb)
 {
-    struct json_value jv;
-    struct json_encoder *encoder;
     int module;
     char *str;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, modules;
 
-    encoder = (struct json_encoder *) &njb->mjb_enc;
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
 
-    json_encode_object_start(encoder);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(encoder, "rc", &jv);
-    json_encode_object_key(encoder, "module_map");
-    json_encode_object_start(encoder);
+    g_err |= cbor_encode_text_stringz(&rsp, "module_map");
+    g_err |= cbor_encoder_create_map(&rsp, &modules, CborIndefiniteLength);
 
     module = LOG_MODULE_DEFAULT;
     while (module < LOG_MODULE_MAX) {
@@ -341,15 +352,14 @@ log_nmgr_module_list(struct mgmt_jbuf *njb)
             continue;
         }
 
-        JSON_VALUE_UINT(&jv, module);
-        json_encode_object_entry(encoder, str, &jv);
-
+        g_err |= cbor_encode_text_stringz(&modules, str);
+        g_err |= cbor_encode_uint(&modules, module);
         module++;
     }
 
+    g_err |= cbor_encoder_close_container(&rsp, &modules);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
-    json_encode_object_finish(encoder);
-    json_encode_object_finish(encoder);
 
     return (0);
 }
@@ -360,19 +370,19 @@ log_nmgr_module_list(struct mgmt_jbuf *njb)
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_logs_list(struct mgmt_jbuf *njb)
+log_nmgr_logs_list(struct mgmt_cbuf *cb)
 {
-    struct json_value jv;
-    struct json_encoder *encoder;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, log_list;
     struct log *log;
 
-    encoder = (struct json_encoder *) &njb->mjb_enc;
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
 
-    json_encode_object_start(encoder);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(encoder, "rc", &jv);
-    json_encode_array_name(encoder, "log_list");
-    json_encode_array_start(encoder);
+    g_err |= cbor_encode_text_stringz(&rsp, "log_list");
+    g_err |= cbor_encoder_create_array(&rsp, &log_list, CborIndefiniteLength);
 
     log = NULL;
     while (1) {
@@ -385,12 +395,11 @@ log_nmgr_logs_list(struct mgmt_jbuf *njb)
             continue;
         }
 
-        JSON_VALUE_STRING(&jv, log->l_name);
-        json_encode_array_value(encoder, &jv);
+        g_err |= cbor_encode_text_stringz(&log_list, log->l_name);
     }
 
-    json_encode_array_finish(encoder);
-    json_encode_object_finish(encoder);
+    g_err |= cbor_encoder_close_container(&rsp, &log_list);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return (0);
 }
@@ -401,20 +410,20 @@ log_nmgr_logs_list(struct mgmt_jbuf *njb)
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_level_list(struct mgmt_jbuf *njb)
+log_nmgr_level_list(struct mgmt_cbuf *cb)
 {
-    struct json_value jv;
-    struct json_encoder *encoder;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, level_map;
     int level;
     char *str;
 
-    encoder = (struct json_encoder *) &njb->mjb_enc;
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
 
-    json_encode_object_start(encoder);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(encoder, "rc", &jv);
-    json_encode_object_key(encoder, "level_map");
-    json_encode_object_start(encoder);
+    g_err |= cbor_encode_text_stringz(&rsp, "level_map");
+    g_err |= cbor_encoder_create_map(&rsp, &level_map, CborIndefiniteLength);
 
     level = LOG_LEVEL_DEBUG;
     while (level < LOG_LEVEL_MAX) {
@@ -424,14 +433,13 @@ log_nmgr_level_list(struct mgmt_jbuf *njb)
             continue;
         }
 
-        JSON_VALUE_UINT(&jv, level);
-        json_encode_object_entry(encoder, str, &jv);
-
+        g_err |= cbor_encode_text_stringz(&level_map, str);
+        g_err |= cbor_encode_uint(&level_map, level);
         level++;
     }
 
-    json_encode_object_finish(encoder);
-    json_encode_object_finish(encoder);
+    g_err |= cbor_encoder_close_container(&rsp, &level_map);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return (0);
 }
@@ -442,11 +450,13 @@ log_nmgr_level_list(struct mgmt_jbuf *njb)
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_clear(struct mgmt_jbuf *njb)
+log_nmgr_clear(struct mgmt_cbuf *cb)
 {
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp;
     struct log *log;
     int rc;
-    struct json_encoder *encoder;
 
     log = NULL;
     while (1) {
@@ -464,15 +474,12 @@ log_nmgr_clear(struct mgmt_jbuf *njb)
             goto err;
         }
     }
-
-    encoder = (struct json_encoder *) &njb->mjb_enc;
-
-    json_encode_object_start(encoder);
-    json_encode_object_finish(encoder);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return 0;
 err:
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
     return (rc);
 }
 

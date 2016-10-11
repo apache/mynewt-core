@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include <os/os.h>
-
+#include <tinycbor/cbor.h>
 #include "mgmt/mgmt.h"
 
 static struct os_mutex mgmt_group_lock;
@@ -139,14 +139,15 @@ err:
 }
 
 void
-mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode)
+mgmt_cbuf_setoerr(struct mgmt_cbuf *cb, int errcode)
 {
-    struct json_value jv;
-
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, errcode);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
-    json_encode_object_finish(&njb->mjb_enc);
+    CborEncoder *penc = &cb->encoder;
+    CborError g_err = CborNoError;
+    CborEncoder rsp;
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, errcode);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 }
 
 void

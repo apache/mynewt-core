@@ -26,19 +26,12 @@ extern "C" {
 
 
 struct CborMbufWriter {
-    int bytes_written;
+    struct cbor_encoder_writer enc;
     struct os_mbuf *m;
 };
 
 void
 cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m);
-
-int
-cbor_mbuf_writer(void *arg, const char *data, int len);
-
-
-int
-cbor_mbuf_bytes_written(struct CborMbufWriter *cb);
 
 #ifdef __cplusplus
 }

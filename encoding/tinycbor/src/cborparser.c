@@ -984,12 +984,13 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 
     /* is there enough room for the ending NUL byte? */
     if (*result && *buflen > total) {
-        /* we are just trying to write a NULL byte here, but we have
-         * to create this decoder since we may be calling different
-         * functions through the pointer below */
-        struct cbor_buf_reader cb;
-        cbor_buf_reader_init(&cb, (const uint8_t *) "", 1);
-        *result = !!func(&cb.r, buffer + total, 0, 1);
+        /* we are just trying to write a NULL byte here,, but this is hard
+         * because this is called by function pointer with an abstract
+         * reader.  Since this is the output buffer, we can assume that if
+         * we have a valid buffer its ok to write a NULL here  */
+        if(buffer) {
+            *(buffer + total) = '\0';
+        }
     }
     *buflen = total;
 

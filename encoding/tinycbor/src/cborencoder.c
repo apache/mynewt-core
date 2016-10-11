@@ -199,10 +199,9 @@
  * buffer of size \a size. The \a flags field is currently unused and must be
  * zero.
  */
-void cbor_encoder_init(CborEncoder *encoder, cbor_encoder_writer *writer, void* writer_arg, int flags)
+void cbor_encoder_init(CborEncoder *encoder, cbor_encoder_writer *writer, int flags)
 {
     encoder->writer = writer;
-    encoder->writer_arg = writer_arg;
     encoder->added = 0;
     encoder->flags = flags;
 }
@@ -238,7 +237,7 @@ static inline void put64(void *where, uint64_t v)
 
 static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
 {
-    return encoder->writer(encoder->writer_arg, data, len);
+    return encoder->writer->write(encoder->writer, data, len);
 }
 
 static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
@@ -423,7 +422,6 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
 {
     CborError err;
     container->writer = encoder->writer;
-    container->writer_arg = encoder->writer_arg;
     ++encoder->added;
     container->added = 0;
 
@@ -502,7 +500,6 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
     encoder->writer = containerEncoder->writer;
-    encoder->writer_arg = containerEncoder->writer_arg;
 
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);

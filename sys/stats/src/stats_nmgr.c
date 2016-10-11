@@ -26,14 +26,14 @@
 
 #include "os/os.h"
 #include "mgmt/mgmt.h"
-#include "json/json.h"
+#include "cborattr/cborattr.h"
 #include "stats/stats.h"
 
 /* Source code is only included if the newtmgr library is enabled.  Otherwise
  * this file is compiled out for code size.
  */
-static int stats_nmgr_read(struct mgmt_jbuf *njb);
-static int stats_nmgr_list(struct mgmt_jbuf *njb);
+static int stats_nmgr_read(struct mgmt_cbuf *cb);
+static int stats_nmgr_list(struct mgmt_cbuf *cb);
 
 static struct mgmt_group shell_nmgr_group;
 
@@ -52,109 +52,106 @@ static int
 stats_nmgr_walk_func(struct stats_hdr *hdr, void *arg, char *sname,
         uint16_t stat_off)
 {
-    struct json_encoder *encoder;
-    struct json_value jv;
     void *stat_val;
-    int rc;
+    CborEncoder *penc = (CborEncoder *) arg;
+    CborError g_err = CborNoError;
 
     stat_val = (uint8_t *)hdr + stat_off;
 
-    encoder = (struct json_encoder *) arg;
+    g_err |= cbor_encode_text_stringz(penc, sname);
 
     switch (hdr->s_size) {
         case sizeof(uint16_t):
-            JSON_VALUE_UINT(&jv, *(uint16_t *) stat_val);
+            g_err |= cbor_encode_uint(penc, *(uint16_t *) stat_val);
             break;
         case sizeof(uint32_t):
-            JSON_VALUE_UINT(&jv, *(uint32_t *) stat_val);
+            g_err |= cbor_encode_uint(penc, *(uint32_t *) stat_val);
             break;
         case sizeof(uint64_t):
-            JSON_VALUE_UINT(&jv, *(uint64_t *) stat_val);
+            g_err |= cbor_encode_uint(penc, *(uint64_t *) stat_val);
             break;
     }
 
-    rc = json_encode_object_entry(encoder, sname, &jv);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
+    return (g_err);
 }
 
 static int
 stats_nmgr_encode_name(struct stats_hdr *hdr, void *arg)
 {
-    struct json_encoder *encoder;
-    struct json_value jv;
-
-    encoder = (struct json_encoder *)arg;
-    JSON_VALUE_STRING(&jv, hdr->s_name);
-    json_encode_array_value(encoder, &jv);
-
+    CborEncoder *penc = (CborEncoder *) arg;
+    CborError g_err = CborNoError;
+    g_err |= cbor_encode_text_stringz(penc, hdr->s_name);
     return (0);
 }
 
 static int
-stats_nmgr_read(struct mgmt_jbuf *njb)
+stats_nmgr_read(struct mgmt_cbuf *cb)
 {
     struct stats_hdr *hdr;
 #define STATS_NMGR_NAME_LEN (32)
     char stats_name[STATS_NMGR_NAME_LEN];
-    struct json_attr_t attrs[] = {
-        { "name", t_string, .addr.string = &stats_name[0],
+    struct cbor_attr_t attrs[] = {
+        { "name", CborAttrTextStringType, .addr.string = &stats_name[0],
             .len = sizeof(stats_name) },
         { NULL },
     };
-    struct json_value jv;
-    int rc;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, stats;
 
-    rc = json_read_object((struct json_buffer *) njb, attrs);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
+    g_err = cbor_read_object(&cb->it, attrs);
+    if (g_err != 0) {
+        g_err = MGMT_ERR_EINVAL;
         goto err;
     }
 
     hdr = stats_group_find(stats_name);
     if (!hdr) {
-        rc = MGMT_ERR_EINVAL;
+        g_err = MGMT_ERR_EINVAL;
         goto err;
     }
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
-    JSON_VALUE_STRINGN(&jv, stats_name, strlen(stats_name));
-    json_encode_object_entry(&njb->mjb_enc, "name", &jv);
-    JSON_VALUE_STRINGN(&jv, "sys", sizeof("sys")-1);
-    json_encode_object_entry(&njb->mjb_enc, "group", &jv);
-    json_encode_object_key(&njb->mjb_enc, "fields");
-    json_encode_object_start(&njb->mjb_enc);
-    stats_walk(hdr, stats_nmgr_walk_func, &njb->mjb_enc);
-    json_encode_object_finish(&njb->mjb_enc);
-    json_encode_object_finish(&njb->mjb_enc);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+
+    g_err |= cbor_encode_text_stringz(&rsp, "name");
+    g_err |= cbor_encode_text_stringz(&rsp, stats_name);
+
+    g_err |= cbor_encode_text_stringz(&rsp, "group");
+    g_err |= cbor_encode_text_string(&rsp, "sys", sizeof("sys")-1);
+
+    g_err |= cbor_encode_text_stringz(&rsp, "fields");
+
+    g_err |= cbor_encoder_create_map(&rsp, &stats, CborIndefiniteLength);
+
+    stats_walk(hdr, stats_nmgr_walk_func, &stats);
+
+    g_err |= cbor_encoder_close_container(&rsp, &stats);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return (0);
 err:
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, g_err);
 
     return (0);
 }
 
 static int
-stats_nmgr_list(struct mgmt_jbuf *njb)
+stats_nmgr_list(struct mgmt_cbuf *cb)
 {
-    struct json_value jv;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, stats;
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(&njb->mjb_enc, "rc", &jv);
-    json_encode_array_name(&njb->mjb_enc, "stat_list");
-    json_encode_array_start(&njb->mjb_enc);
-    stats_group_walk(stats_nmgr_encode_name, &njb->mjb_enc);
-    json_encode_array_finish(&njb->mjb_enc);
-    json_encode_object_finish(&njb->mjb_enc);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&rsp, "stat_list");
+    g_err |= cbor_encoder_create_array(&rsp, &stats, CborIndefiniteLength);
+    stats_group_walk(stats_nmgr_encode_name, &stats);
+    g_err |= cbor_encoder_close_container(&rsp, &stats);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return (0);
 }

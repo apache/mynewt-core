@@ -20,12 +20,6 @@
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_writer.h>
 
-void cbor_buf_writer_init(struct CborBufWriter *cb, uint8_t *buffer, size_t size)
-{
-    cb->ptr = buffer;
-    cb->end = buffer + size;
-}
-
 static inline int would_overflow(struct CborBufWriter *cb, size_t len)
 {
     ptrdiff_t remaining = (ptrdiff_t)cb->end;
@@ -34,7 +28,7 @@ static inline int would_overflow(struct CborBufWriter *cb, size_t len)
     return (remaining < 0);
 }
 
-int cbor_buf_writer(void *arg, const char *data, int len) {
+int cbor_buf_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
     struct CborBufWriter *cb = (struct CborBufWriter *) arg;
 
     if (would_overflow(cb, len)) {
@@ -43,7 +37,16 @@ int cbor_buf_writer(void *arg, const char *data, int len) {
 
     memcpy(cb->ptr, data, len);
     cb->ptr += len;
+    cb->enc.bytes_written += len;
     return CborNoError;
+}
+
+void cbor_buf_writer_init(struct CborBufWriter *cb, uint8_t *buffer, size_t size)
+{
+    cb->ptr = buffer;
+    cb->end = buffer + size;
+    cb->enc.bytes_written = 0;
+    cb->enc.write = cbor_buf_writer;
 }
 
 size_t

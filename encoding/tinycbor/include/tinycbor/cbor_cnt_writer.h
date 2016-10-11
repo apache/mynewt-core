@@ -20,6 +20,9 @@
 #ifndef CBOR_CNT_WRITER_H
 #define CBOR_CNT_WRITER_H
 
+#include "cbor.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,24 +34,20 @@ extern "C" {
      */
 
 struct CborCntWriter {
-    int bytes_written;
+    struct cbor_encoder_writer enc;
 };
 
-inline void
-cbor_cnt_writer_init(struct CborCntWriter *cb) {
-    cb->bytes_written = 0;
-}
-
 inline int
-cbor_cnt_writer(void *arg, char *data, int len) {
+cbor_cnt_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
     struct CborCntWriter *cb = (struct CborCntWriter *) arg;
-    cb->bytes_written += len;
+    cb->enc.bytes_written += len;
     return CborNoError;
 }
 
-inline int
-cbor_cnt_writer_length(struct CborCntWriter *cb) {
-    return cb->bytes_written;
+inline void
+cbor_cnt_writer_init(struct CborCntWriter *cb) {
+    cb->enc.bytes_written = 0;
+    cb->enc.write = &cbor_cnt_writer;
 }
 
 #ifdef __cplusplus

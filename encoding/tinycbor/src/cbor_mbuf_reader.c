@@ -61,8 +61,14 @@ cbor_mbuf_reader_cmp(struct cbor_decoder_reader *d, char *buf, int offset, size_
 
 static uintptr_t
 cbor_mbuf_reader_cpy(struct cbor_decoder_reader *d, char *dst, int offset, size_t len) {
+    int rc;
     struct CborMbufReader *cb = (struct CborMbufReader *) d;
-    return !os_mbuf_copydata(cb->m, offset + cb->init_off, len, dst);
+    rc = os_mbuf_copydata(cb->m, offset + cb->init_off, len, dst);
+
+    if(rc == 0) {
+        return true;
+    }
+    return false;
 }
 
 void
@@ -81,5 +87,5 @@ cbor_mbuf_reader_init(struct CborMbufReader *cb, struct os_mbuf *m,
     hdr = OS_MBUF_PKTHDR(m);
     cb->m = m;
     cb->init_off = initial_offset;
-    cb->r.message_size = hdr->omp_len;
+    cb->r.message_size = hdr->omp_len - initial_offset;
 }

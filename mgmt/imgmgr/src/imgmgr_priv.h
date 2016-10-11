@@ -87,6 +87,7 @@ struct mgmt_jbuf;
 struct nmgr_hdr;
 struct os_mbuf;
 struct fs_file;
+struct mgmt_cbuf;
 
 struct imgr_state {
     struct {
@@ -102,17 +103,18 @@ struct imgr_state {
 extern struct imgr_state imgr_state;
 
 struct nmgr_jbuf;
-int imgr_boot2_read(struct mgmt_jbuf *);
-int imgr_boot2_write(struct mgmt_jbuf *);
-int imgr_file_upload(struct mgmt_jbuf *);
-int imgr_file_download(struct mgmt_jbuf *);
-int imgr_core_list(struct mgmt_jbuf *);
-int imgr_core_load(struct mgmt_jbuf *);
-int imgr_core_erase(struct mgmt_jbuf *);
-int imgr_splitapp_read(struct mgmt_jbuf *);
-int imgr_splitapp_write(struct mgmt_jbuf *);
-int imgmgr_state_read(struct mgmt_jbuf *njb);
-int imgmgr_state_write(struct mgmt_jbuf *njb);
+
+int imgr_boot2_read(struct mgmt_cbuf *);
+int imgr_boot2_write(struct mgmt_cbuf *);
+int imgr_file_upload(struct mgmt_cbuf *);
+int imgr_file_download(struct mgmt_cbuf *);
+int imgr_core_list(struct mgmt_cbuf *);
+int imgr_core_load(struct mgmt_cbuf *);
+int imgr_core_erase(struct mgmt_cbuf *);
+int imgr_splitapp_read(struct mgmt_cbuf *);
+int imgr_splitapp_write(struct mgmt_cbuf *);
+int imgmgr_state_read(struct mgmt_cbuf *cb);
+int imgmgr_state_write(struct mgmt_cbuf *njb);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
 int imgr_cli_register(void);

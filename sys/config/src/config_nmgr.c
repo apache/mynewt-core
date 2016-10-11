@@ -24,13 +24,12 @@
 #include <string.h>
 
 #include "mgmt/mgmt.h"
-#include "json/json.h"
-
+#include "cborattr/cborattr.h"
 #include "config/config.h"
 #include "config_priv.h"
 
-static int conf_nmgr_read(struct mgmt_jbuf *);
-static int conf_nmgr_write(struct mgmt_jbuf *);
+static int conf_nmgr_read(struct mgmt_cbuf *);
+static int conf_nmgr_write(struct mgmt_cbuf *);
 
 static const struct mgmt_handler conf_nmgr_handlers[] = {
     [CONF_NMGR_OP] = { conf_nmgr_read, conf_nmgr_write}
@@ -43,17 +42,17 @@ static struct mgmt_group conf_nmgr_group = {
 };
 
 static int
-conf_nmgr_read(struct mgmt_jbuf *njb)
+conf_nmgr_read(struct mgmt_cbuf *cb)
 {
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
     char val_str[CONF_MAX_VAL_LEN];
     char *val;
 
-    const struct json_attr_t attr[2] = {
+    const struct cbor_attr_t attr[2] = {
         [0] = {
             .attribute = "name",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = name_str,
             .len = sizeof(name_str)
         },
@@ -61,9 +60,8 @@ conf_nmgr_read(struct mgmt_jbuf *njb)
             .attribute = NULL
         }
     };
-    struct json_value jv;
 
-    rc = json_read_object(&njb->mjb_buf, attr);
+    rc = cbor_read_object(&cb->it, attr);
     if (rc) {
         return MGMT_ERR_EINVAL;
     }
@@ -73,22 +71,26 @@ conf_nmgr_read(struct mgmt_jbuf *njb)
         return MGMT_ERR_EINVAL;
     }
 
-    json_encode_object_start(&njb->mjb_enc);
-    JSON_VALUE_STRING(&jv, val);
-    json_encode_object_entry(&njb->mjb_enc, "val", &jv);
-    json_encode_object_finish(&njb->mjb_enc);
+    {
+        CborError g_err = CborNoError;
+        CborEncoder rsp;
+        g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&rsp, "val");
+        g_err |= cbor_encode_text_stringz(&rsp, val);
+        g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
+    }
 
     return 0;
 }
 
 static int
-conf_nmgr_write(struct mgmt_jbuf *njb)
+conf_nmgr_write(struct mgmt_cbuf *cb)
 {
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
     char val_str[CONF_MAX_VAL_LEN];
 
-    rc = conf_json_line(&njb->mjb_buf, name_str, sizeof(name_str), val_str,
+    rc = conf_cbor_line(cb, name_str, sizeof(name_str), val_str,
       sizeof(val_str));
     if (rc) {
         return MGMT_ERR_EINVAL;

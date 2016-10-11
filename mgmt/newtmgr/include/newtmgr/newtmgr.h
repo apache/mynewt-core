@@ -20,7 +20,7 @@
 #ifndef _NEWTMGR_H_
 #define _NEWTMGR_H_
 
-#include <json/json.h>
+#include <tinycbor/cbor.h>
 #include <inttypes.h>
 #include <os/os.h>
 
@@ -45,7 +45,7 @@ extern "C" {
 #define NMGR_OP_WRITE           (2)
 #define NMGR_OP_WRITE_RSP       (3)
 
-#define NMGR_F_JSON_RSP_COMPLETE     (0x0001)
+#define NMGR_F_CBOR_RSP_COMPLETE     (0x0001)
 
 struct nmgr_hdr {
     uint8_t  nh_op;             /* NMGR_OP_XXX */

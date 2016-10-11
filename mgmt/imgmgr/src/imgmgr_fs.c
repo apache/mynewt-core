@@ -31,28 +31,28 @@
 #include "newtmgr/newtmgr.h"
 #include "bootutil/image.h"
 #include "fs/fs.h"
-#include "json/json.h"
-#include "base64/base64.h"
+#include "cborattr/cborattr.h"
 #include "bsp/bsp.h"
+#include "mgmt/mgmt.h"
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
 int
-imgr_file_download(struct nmgr_jbuf *njb)
+imgr_file_download(struct mgmt_cbuf *cb)
 {
     long long unsigned int off = UINT_MAX;
     char tmp_str[IMGMGR_NMGR_MAX_NAME + 1];
-    char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
-    const struct json_attr_t dload_attr[3] = {
+    uint8_t img_data[IMGMGR_NMGR_MAX_MSG];
+    const struct cbor_attr_t dload_attr[3] = {
         [0] = {
             .attribute = "off",
-            .type = t_uinteger,
+            .type = CborAttrUnsignedIntegerType,
             .addr.uinteger = &off
         },
         [1] = {
             .attribute = "name",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = tmp_str,
             .len = sizeof(tmp_str)
         },
@@ -61,114 +61,105 @@ imgr_file_download(struct nmgr_jbuf *njb)
     int rc;
     uint32_t out_len;
     struct fs_file *file;
-    struct json_encoder *enc;
-    struct json_value jv;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp;
 
-    rc = json_read_object(&njb->njb_buf, dload_attr);
+    rc = cbor_read_object(&cb->it, dload_attr);
     if (rc || off == UINT_MAX) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     rc = fs_open(tmp_str, FS_ACCESS_READ, &file);
     if (rc || !file) {
-        rc = NMGR_ERR_ENOMEM;
+        rc = MGMT_ERR_ENOMEM;
         goto err;
     }
 
     rc = fs_seek(file, off);
     if (rc) {
-        rc = NMGR_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
         goto err_close;
     }
-    rc = fs_read(file, 32, tmp_str, &out_len);
+    rc = fs_read(file, 32, img_data, &out_len);
     if (rc) {
-        rc = NMGR_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
         goto err_close;
     }
 
-    out_len = base64_encode(tmp_str, out_len, img_data, 1);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
 
-    enc = &njb->njb_enc;
+    g_err |= cbor_encode_text_stringz(&rsp, "off");
+    g_err |= cbor_encode_uint(&rsp, off);
 
-    json_encode_object_start(enc);
+    g_err |= cbor_encode_text_stringz(&rsp, "data");
+    g_err |= cbor_encode_byte_string(&rsp, img_data, out_len);
 
-    JSON_VALUE_UINT(&jv, off);
-    json_encode_object_entry(enc, "off", &jv);
-    JSON_VALUE_STRINGN(&jv, img_data, out_len);
-    json_encode_object_entry(enc, "data", &jv);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
     if (off == 0) {
         rc = fs_filelen(file, &out_len);
-        JSON_VALUE_UINT(&jv, out_len);
-        json_encode_object_entry(enc, "len", &jv);
+        g_err |= cbor_encode_text_stringz(&rsp, "len");
+        g_err |= cbor_encode_uint(&rsp, out_len);
     }
+    g_err |= cbor_encoder_close_container(penc, &rsp);
+
     fs_close(file);
-
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
-
-    json_encode_object_finish(enc);
-
     return 0;
 
 err_close:
     fs_close(file);
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
     return 0;
 }
 
 int
-imgr_file_upload(struct nmgr_jbuf *njb)
+imgr_file_upload(struct mgmt_cbuf *cb)
 {
-    char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
+    uint8_t img_data[IMGMGR_NMGR_MAX_MSG];
     char file_name[IMGMGR_NMGR_MAX_NAME + 1];
+    size_t img_len;
     long long unsigned int off = UINT_MAX;
     long long unsigned int size = UINT_MAX;
-    const struct json_attr_t off_attr[5] = {
+    const struct cbor_attr_t off_attr[5] = {
         [0] = {
             .attribute = "off",
-            .type = t_uinteger,
+            .type = CborAttrUnsignedIntegerType,
             .addr.uinteger = &off,
             .nodefault = true
         },
         [1] = {
             .attribute = "data",
-            .type = t_string,
-            .addr.string = img_data,
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = img_data,
+            .addr.bytestring.len = &img_len,
             .len = sizeof(img_data)
         },
         [2] = {
             .attribute = "len",
-            .type = t_uinteger,
+            .type = CborAttrUnsignedIntegerType,
             .addr.uinteger = &size,
             .nodefault = true
         },
         [3] = {
             .attribute = "name",
-            .type = t_string,
+            .type = CborAttrTextStringType,
             .addr.string = file_name,
             .len = sizeof(file_name)
         },
         [4] = { 0 },
     };
-    struct json_encoder *enc;
-    struct json_value jv;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp;
     int rc;
-    int len;
 
-    rc = json_read_object(&njb->njb_buf, off_attr);
+    rc = cbor_read_object(&cb->it, off_attr);
     if (rc || off == UINT_MAX) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
-    }
-    len = strlen(img_data);
-    if (len) {
-        len = base64_decode(img_data, img_data);
-        if (len < 0) {
-            rc = NMGR_ERR_EINVAL;
-            goto err;
-        }
     }
 
     if (off == 0) {
@@ -179,7 +170,7 @@ imgr_file_upload(struct nmgr_jbuf *njb)
         imgr_state.upload.size = size;
 
         if (!strlen(file_name)) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err;
         }
         if (imgr_state.upload.file) {
@@ -189,7 +180,7 @@ imgr_file_upload(struct nmgr_jbuf *njb)
         rc = fs_open(file_name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE,
           &imgr_state.upload.file);
         if (rc) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err;
         }
     } else if (off != imgr_state.upload.off) {
@@ -201,16 +192,16 @@ imgr_file_upload(struct nmgr_jbuf *njb)
     }
 
     if (!imgr_state.upload.file) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
-    if (len) {
-        rc = fs_write(imgr_state.upload.file, img_data, len);
+    if (img_len) {
+        rc = fs_write(imgr_state.upload.file, img_data, img_len);
         if (rc) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto err_close;
         }
-        imgr_state.upload.off += len;
+        imgr_state.upload.off += img_len;
         if (imgr_state.upload.size == imgr_state.upload.off) {
             /* Done */
             fs_close(imgr_state.upload.file);
@@ -218,25 +209,19 @@ imgr_file_upload(struct nmgr_jbuf *njb)
         }
     }
 out:
-    enc = &njb->njb_enc;
-
-    json_encode_object_start(enc);
-
-    JSON_VALUE_INT(&jv, NMGR_ERR_EOK);
-    json_encode_object_entry(&njb->njb_enc, "rc", &jv);
-
-    JSON_VALUE_UINT(&jv, imgr_state.upload.off);
-    json_encode_object_entry(enc, "off", &jv);
-
-    json_encode_object_finish(enc);
-
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&rsp, "off");
+    g_err |= cbor_encode_uint(&rsp, imgr_state.upload.off);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
     return 0;
 
 err_close:
     fs_close(imgr_state.upload.file);
     imgr_state.upload.file = NULL;
 err:
-    nmgr_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
     return 0;
 }
 #endif

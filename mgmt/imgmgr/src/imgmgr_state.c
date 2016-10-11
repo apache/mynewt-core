@@ -21,7 +21,8 @@
 
 #include "bootutil/image.h"
 #include "bootutil/bootutil_misc.h"
-#include "base64/base64.h"
+#include "cborattr/cborattr.h"
+#include "tinycbor/cbor.h"
 #include "split/split.h"
 #include "mgmt/mgmt.h"
 #include "imgmgr/imgmgr.h"
@@ -195,29 +196,27 @@ imgmgr_state_confirm(void)
 }
 
 int
-imgmgr_state_read(struct mgmt_jbuf *njb)
+imgmgr_state_read(struct mgmt_cbuf *cb)
 {
-    struct json_encoder *enc;
     int i;
     int rc;
     uint32_t flags;
     struct image_version ver;
     uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
-    struct json_value jv;
     char vers_str[IMGMGR_NMGR_MAX_VER];
-    char hash_str[IMGMGR_HASH_STR + 1];
-    int ver_len;
     int any_non_bootable;
     int split_status;
     uint8_t state_flags;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp, images, image;
 
     any_non_bootable = 0;
-    enc = &njb->mjb_enc;
 
-    json_encode_object_start(enc);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "images");
 
-    json_encode_array_name(enc, "images");
-    json_encode_array_start(enc);
+    g_err |= cbor_encoder_create_array(&rsp, &images, CborIndefiniteLength);
     for (i = 0; i < 2; i++) {
         rc = imgr_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
@@ -230,92 +229,90 @@ imgmgr_state_read(struct mgmt_jbuf *njb)
 
         state_flags = imgmgr_state_flags(i);
 
-        json_encode_object_start(enc);
+        g_err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&image, "slot");
+        g_err |= cbor_encode_int(&rsp, i);
 
-        JSON_VALUE_INT(&jv, i);
-        json_encode_object_entry(enc, "slot", &jv);
+        g_err |= cbor_encode_text_stringz(&image, "version");
+        g_err |= cbor_encode_text_stringz(&image, vers_str);
 
-        ver_len = imgr_ver_str(&ver, vers_str);
-        JSON_VALUE_STRINGN(&jv, vers_str, ver_len);
-        json_encode_object_entry(enc, "version", &jv);
+        g_err |= cbor_encode_text_stringz(&image, "hash");
+        g_err |= cbor_encode_byte_string(&image, hash, IMGMGR_HASH_LEN);
 
-        base64_encode(hash, IMGMGR_HASH_LEN, hash_str, 1);
-        JSON_VALUE_STRING(&jv, hash_str);
-        json_encode_object_entry(enc, "hash", &jv);
+        g_err |= cbor_encode_text_stringz(&image, "bootable");
+        g_err |= cbor_encode_boolean(&image, !(flags & IMAGE_F_NON_BOOTABLE));
 
-        JSON_VALUE_BOOL(&jv, !(flags & IMAGE_F_NON_BOOTABLE));
-        json_encode_object_entry(enc, "bootable", &jv);
+        g_err |= cbor_encode_text_stringz(&image, "pending");
+        g_err |= cbor_encode_boolean(&image, state_flags & IMGMGR_STATE_F_PENDING);
 
-        JSON_VALUE_BOOL(&jv, state_flags & IMGMGR_STATE_F_PENDING);
-        json_encode_object_entry(enc, "pending", &jv);
+        g_err |= cbor_encode_text_stringz(&image, "confirmed");
+        g_err |= cbor_encode_boolean(&image, state_flags & IMGMGR_STATE_F_CONFIRMED);
 
-        JSON_VALUE_BOOL(&jv, state_flags & IMGMGR_STATE_F_CONFIRMED);
-        json_encode_object_entry(enc, "confirmed", &jv);
+        g_err |= cbor_encode_text_stringz(&image, "active");
+        g_err |= cbor_encode_boolean(&image, state_flags & IMGMGR_STATE_F_ACTIVE);
 
-        JSON_VALUE_BOOL(&jv, state_flags & IMGMGR_STATE_F_ACTIVE);
-        json_encode_object_entry(enc, "active", &jv);
-
-        json_encode_object_finish(enc);
+        g_err |= cbor_encoder_close_container(&images, &image);
     }
-    json_encode_array_finish(enc);
+
+    g_err |= cbor_encoder_close_container(&rsp, &images);
 
     if (any_non_bootable) {
         split_status = split_check_status();
     } else {
         split_status = SPLIT_STATUS_INVALID;
     }
-    JSON_VALUE_INT(&jv, split_status);
-    json_encode_object_entry(enc, "splitStatus", &jv);
 
-    json_encode_object_finish(enc);
+    g_err |= cbor_encode_text_stringz(&image, "splitStatus");
+    g_err |= cbor_encode_int(&rsp, split_status);
+
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return 0;
 }
 
 int
-imgmgr_state_write(struct mgmt_jbuf *njb)
+imgmgr_state_write(struct mgmt_cbuf *cb)
 {
-    char hash_str[IMGMGR_HASH_STR + 1];
     uint8_t hash[IMGMGR_HASH_LEN];
+    size_t hash_len = 0;
     bool confirm;
     int slot;
     int rc;
 
-    const struct json_attr_t write_attr[] = {
+    const struct cbor_attr_t write_attr[] = {
         [0] = {
             .attribute = "hash",
-            .type = t_string,
-            .addr.string = hash_str,
-            .len = sizeof(hash_str),
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = hash,
+            .addr.bytestring.len = &hash_len,
+            .len = sizeof(hash),
         },
         [1] = {
             .attribute = "confirm",
-            .type = t_boolean,
+            .type = CborAttrBooleanType,
             .addr.boolean = &confirm,
             .dflt.boolean = false,
         },
         [2] = { 0 },
     };
 
-    rc = json_read_object(&njb->mjb_buf, write_attr);
+    rc = cbor_read_object(&cb->it, write_attr);
     if (rc != 0) {
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     /* Validate arguments. */
-    if (hash_str[0] == '\0' && !confirm) {
+    if ((hash_len == 0) && !confirm) {
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
-    if (hash_str[0] != '\0' && confirm) {
+    if ((hash_len != 0) && confirm) {
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
 
     if (!confirm) {
-        /* Test image with specified hash. */
-        base64_decode(hash_str, hash);
         slot = imgr_find_by_hash(hash, NULL);
         if (slot < 0) {
             rc = MGMT_ERR_EINVAL;
@@ -335,7 +332,7 @@ imgmgr_state_write(struct mgmt_jbuf *njb)
     }
 
     /* Send the current image state in the response. */
-    rc = imgmgr_state_read(njb);
+    rc = imgmgr_state_read(cb);
     if (rc != 0) {
         goto err;
     }
@@ -343,7 +340,7 @@ imgmgr_state_write(struct mgmt_jbuf *njb)
     return 0;
 
 err:
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
 
     return 0;
 }

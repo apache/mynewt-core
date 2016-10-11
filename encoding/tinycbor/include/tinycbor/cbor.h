@@ -157,8 +157,15 @@ typedef enum CborError {
 
 CBOR_API const char *cbor_error_string(CborError error);
 
+struct cbor_encoder_writer;
 
-typedef int (cbor_encoder_writer)(void *arg, const char *data, int len);
+typedef int (cbor_encoder_write)(struct cbor_encoder_writer *, const char *data, int len);
+
+typedef struct cbor_encoder_writer {
+    cbor_encoder_write *write;
+    int                 bytes_written;
+} cbor_encoder_writer;
+
 
 /* Encoder API */
 struct CborEncoder
@@ -173,7 +180,7 @@ typedef struct CborEncoder CborEncoder;
 static const size_t CborIndefiniteLength = SIZE_MAX;
 
 
-CBOR_API void cbor_encoder_init(CborEncoder *encoder, cbor_encoder_writer *pwriter, void *writer_arg, int flags);
+CBOR_API void cbor_encoder_init(CborEncoder *encoder, cbor_encoder_writer *pwriter, int flags);
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
 CBOR_API CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value);
@@ -184,7 +191,8 @@ CBOR_INLINE_API CborError cbor_encode_text_stringz(CborEncoder *encoder, const c
 { return cbor_encode_text_string(encoder, string, strlen(string)); }
 CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
 CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
-
+CBOR_INLINE_API CborError cbor_encode_bytes_written(CborEncoder *encoder)
+{   return encoder->writer->bytes_written; }
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }
 CBOR_INLINE_API CborError cbor_encode_null(CborEncoder *encoder)
@@ -479,6 +487,12 @@ CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value
     CborValue copy = *value;
     return cbor_value_to_pretty_advance(out, &copy);
 }
+
+struct mgmt_cbuf {
+    struct CborParser  parser;
+    struct CborEncoder encoder;
+    struct CborValue   it;
+};
 
 #ifdef __cplusplus
 }

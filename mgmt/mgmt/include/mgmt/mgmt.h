@@ -21,7 +21,6 @@
 #define _MGMT_MGMT_H_
 
 #include <inttypes.h>
-#include <json/json.h>
 
 #include <os/queue.h>
 
@@ -51,7 +50,7 @@ extern "C" {
 #define MGMT_GROUP_ID_PERUSER   (64)
 
 /**
- * Newtmgr JSON error codes
+ * Newtmgr error codes
  */
 #define MGMT_ERR_EOK      (0)
 #define MGMT_ERR_EUNKNOWN (1)
@@ -61,13 +60,9 @@ extern "C" {
 #define MGMT_ERR_ENOENT   (5)
 #define MGMT_ERR_EPERUSER (256)
 
-struct mgmt_jbuf {
-    /* json_buffer must be first element in the structure */
-    struct json_buffer mjb_buf;  /* for input */
-    struct json_encoder mjb_enc; /* for output */
-};
+struct mgmt_cbuf;
 
-typedef int (*mgmt_handler_func_t)(struct mgmt_jbuf *);
+typedef int (*mgmt_handler_func_t)(struct mgmt_cbuf *);
 
 struct mgmt_handler {
     mgmt_handler_func_t mh_read;
@@ -87,7 +82,7 @@ struct mgmt_group {
             sizeof(struct mgmt_handler));
 
 int mgmt_group_register(struct mgmt_group *group);
-void mgmt_jbuf_setoerr(struct mgmt_jbuf *njb, int errcode);
+void mgmt_cbuf_setoerr(struct mgmt_cbuf *njb, int errcode);
 const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
   uint16_t handler_id);
 

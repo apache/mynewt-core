@@ -17,7 +17,8 @@
  * under the License.
  */
 
-#include <json/json.h>
+#include <tinycbor/cbor.h>
+#include <cborattr/cborattr.h>
 #include <mgmt/mgmt.h>
 #include <bootutil/bootutil_misc.h>
 #include <bootutil/image.h>
@@ -25,8 +26,8 @@
 #include <split_priv.h>
 
 
-static int imgr_splitapp_read(struct mgmt_jbuf *njb);
-static int imgr_splitapp_write(struct mgmt_jbuf *njb);
+static int imgr_splitapp_read(struct mgmt_cbuf *cb);
+static int imgr_splitapp_write(struct mgmt_cbuf *cb);
 
 static const struct mgmt_handler split_nmgr_handlers[] = {
     [SPLIT_NMGR_OP_SPLIT] = {
@@ -51,56 +52,56 @@ split_nmgr_register(void)
 }
 
 int
-imgr_splitapp_read(struct mgmt_jbuf *njb)
+imgr_splitapp_read(struct mgmt_cbuf *cb)
 {
     int x;
-    struct json_encoder *enc;
-    struct json_value jv;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp;
 
-    enc = &njb->mjb_enc;
-
-    json_encode_object_start(enc);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
 
     x = split_mode_get();
-    JSON_VALUE_INT(&jv, x)
-    json_encode_object_entry(enc, "splitMode", &jv);
+    g_err |= cbor_encode_text_stringz(&rsp, "splitMode");
+    g_err |= cbor_encode_int(&rsp, x);
 
-    JSON_VALUE_INT(&jv, split_check_status())
-    json_encode_object_entry(enc, "splitStatus", &jv);
+    x = split_check_status();
+    g_err |= cbor_encode_text_stringz(&rsp, "splitStatus");
+    g_err |= cbor_encode_int(&rsp, x);
 
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(enc, "rc", &jv);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
 
-    json_encode_object_finish(enc);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     return 0;
 }
 
 int
-imgr_splitapp_write(struct mgmt_jbuf *njb)
+imgr_splitapp_write(struct mgmt_cbuf *cb)
 {
     long long int split_mode;
     long long int send_split_status;  /* ignored */
     long long int sent_rc; /* ignored */
-    const struct json_attr_t split_write_attr[4] = {
+    const struct cbor_attr_t split_write_attr[4] = {
         [0] =
         {
             .attribute = "splitMode",
-            .type = t_integer,
+            .type = CborAttrIntegerType,
             .addr.integer = &split_mode,
             .nodefault = true,
         },
         [1] =
         {
             .attribute = "splitStatus",
-            .type = t_integer,
+            .type = CborAttrIntegerType,
             .addr.integer = &send_split_status,
             .nodefault = true,
         },
         [2] =
         {
             .attribute = "rc",
-            .type = t_integer,
+            .type = CborAttrIntegerType,
             .addr.integer = &sent_rc,
             .nodefault = true,
         },
@@ -109,11 +110,9 @@ imgr_splitapp_write(struct mgmt_jbuf *njb)
             .attribute = NULL
         }
     };
-    struct json_encoder *enc;
-    struct json_value jv;
     int rc;
 
-    rc = json_read_object(&njb->mjb_buf, split_write_attr);
+    rc = cbor_read_object(&cb->it, split_write_attr);
     if (rc) {
         rc = MGMT_ERR_EINVAL;
         goto err;
@@ -125,17 +124,8 @@ imgr_splitapp_write(struct mgmt_jbuf *njb)
         goto err;
     }
 
-    enc = &njb->mjb_enc;
-
-    json_encode_object_start(enc);
-
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(enc, "rc", &jv);
-
-    json_encode_object_finish(enc);
-
-    return 0;
+    rc = MGMT_ERR_EOK;
 err:
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
     return 0;
 }

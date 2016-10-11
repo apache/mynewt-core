@@ -26,8 +26,7 @@
 #include "sysflash/sysflash.h"
 #include "hal/hal_bsp.h"
 #include "flash_map/flash_map.h"
-#include "json/json.h"
-#include "base64/base64.h"
+#include "cborattr/cborattr.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil_misc.h"
 #include "mgmt/mgmt.h"
@@ -35,8 +34,8 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-static int imgr_list2(struct mgmt_jbuf *);
-static int imgr_upload(struct mgmt_jbuf *);
+static int imgr_list2(struct mgmt_cbuf *);
+static int imgr_upload(struct mgmt_cbuf *);
 
 static const struct mgmt_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_OP_LIST] = {
@@ -250,106 +249,91 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
 }
 
 static int
-imgr_list2(struct mgmt_jbuf *njb)
+imgr_list2(struct mgmt_cbuf *cb)
 {
-    struct json_encoder *enc;
     int i;
     int rc;
     uint32_t flags;
     struct image_version ver;
     uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
-    struct json_value jv;
     char vers_str[IMGMGR_NMGR_MAX_VER];
-    char hash_str[IMGMGR_HASH_STR + 1];
     int ver_len;
+    CborEncoder *penc = &cb->encoder;
+    CborError g_err = CborNoError;
+    CborEncoder rsp, images, image;
 
-    enc = &njb->mjb_enc;
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "images");
+    g_err |= cbor_encoder_create_array(&rsp, &images, CborIndefiniteLength);
 
-    json_encode_object_start(enc);
-    json_encode_array_name(enc, "images");
-    json_encode_array_start(enc);
     for (i = 0; i < 2; i++) {
         rc = imgr_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
             continue;
         }
-        json_encode_object_start(enc);
-
-        JSON_VALUE_INT(&jv, i);
-        json_encode_object_entry(enc, "slot", &jv);
-
+        g_err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&image, "slot");
+        g_err |= cbor_encode_int(&image, i);
+        g_err |= cbor_encode_text_stringz(&image, "version");
         ver_len = imgr_ver_str(&ver, vers_str);
-        JSON_VALUE_STRINGN(&jv, vers_str, ver_len);
-        json_encode_object_entry(enc, "version", &jv);
-
-        base64_encode(hash, IMGMGR_HASH_LEN, hash_str, 1);
-        JSON_VALUE_STRING(&jv, hash_str);
-        json_encode_object_entry(enc, "hash", &jv);
-
-        JSON_VALUE_BOOL(&jv, !(flags & IMAGE_F_NON_BOOTABLE));
-        json_encode_object_entry(enc, "bootable", &jv);
-
-        json_encode_object_finish(enc);
+        g_err |= cbor_encode_text_string(&image, vers_str, ver_len);
+        g_err |= cbor_encode_text_stringz(&image, "hash");
+        g_err |= cbor_encode_byte_string(&image, hash, IMGMGR_HASH_LEN);
+        g_err |= cbor_encode_text_stringz(&image, "bootable");
+        g_err |= cbor_encode_boolean(&image,  !(flags & IMAGE_F_NON_BOOTABLE));
+        g_err |= cbor_encoder_close_container(&images, &image);
     }
-    json_encode_array_finish(enc);
-    json_encode_object_finish(enc);
+    g_err |= cbor_encoder_close_container(&rsp, &images);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
 
-    return 0;
+    return g_err;
 }
 
 static int
-imgr_upload(struct mgmt_jbuf *njb)
+imgr_upload(struct mgmt_cbuf *cb)
 {
-    char img_data[BASE64_ENCODE_SIZE(IMGMGR_NMGR_MAX_MSG)];
+    uint8_t img_data[IMGMGR_NMGR_MAX_MSG];
     long long unsigned int off = UINT_MAX;
     long long unsigned int size = UINT_MAX;
-    const struct json_attr_t off_attr[4] = {
+    size_t data_len = 0;
+    const struct cbor_attr_t off_attr[4] = {
         [0] = {
-            .attribute = "off",
-            .type = t_uinteger,
-            .addr.uinteger = &off,
-            .nodefault = true
-        },
-        [1] = {
             .attribute = "data",
-            .type = t_string,
-            .addr.string = img_data,
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = img_data,
+            .addr.bytestring.len = &data_len,
             .len = sizeof(img_data)
         },
-        [2] = {
+        [1] = {
             .attribute = "len",
-            .type = t_uinteger,
+            .type = CborAttrUnsignedIntegerType,
             .addr.uinteger = &size,
+            .nodefault = true
+        },
+        [2] = {
+            .attribute = "off",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &off,
             .nodefault = true
         },
         [3] = { 0 },
     };
     struct image_version ver;
     struct image_header *hdr;
-    struct json_encoder *enc;
-    struct json_value jv;
     int area_id;
+
     int best;
     int rc;
-    int len;
     int i;
 
-    rc = json_read_object(&njb->mjb_buf, off_attr);
+    rc = cbor_read_object(&cb->it, off_attr);
     if (rc || off == UINT_MAX) {
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
-    len = strlen(img_data);
-    if (len) {
-        len = base64_decode(img_data, img_data);
-        if (len < 0) {
-            rc = MGMT_ERR_EINVAL;
-            goto err;
-        }
-    }
 
     if (off == 0) {
-        if (len < sizeof(struct image_header)) {
+        if (data_len < sizeof(struct image_header)) {
             /*
              * Image header is the first thing in the image.
              */
@@ -430,14 +414,14 @@ imgr_upload(struct mgmt_jbuf *njb)
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
-    if (len) {
+    if (data_len) {
         rc = flash_area_write(imgr_state.upload.fa, imgr_state.upload.off,
-          img_data, len);
+          img_data, data_len);
         if (rc) {
             rc = MGMT_ERR_EINVAL;
             goto err_close;
         }
-        imgr_state.upload.off += len;
+        imgr_state.upload.off += data_len;
         if (imgr_state.upload.size == imgr_state.upload.off) {
             /* Done */
             flash_area_close(imgr_state.upload.fa);
@@ -445,24 +429,23 @@ imgr_upload(struct mgmt_jbuf *njb)
         }
     }
 out:
-    enc = &njb->mjb_enc;
-
-    json_encode_object_start(enc);
-
-    JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
-    json_encode_object_entry(enc, "rc", &jv);
-
-    JSON_VALUE_UINT(&jv, imgr_state.upload.off);
-    json_encode_object_entry(enc, "off", &jv);
-
-    json_encode_object_finish(enc);
-
+    {
+        CborError g_err = CborNoError;
+        CborEncoder *penc = &cb->encoder;
+        CborEncoder rsp;
+        g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+        g_err |= cbor_encode_text_stringz(&rsp, "rc");
+        g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+        g_err |= cbor_encode_text_stringz(&rsp, "off");
+        g_err |= cbor_encode_int(&rsp, imgr_state.upload.off);
+        g_err |= cbor_encoder_close_container(penc, &rsp);
+    }
     return 0;
 err_close:
     flash_area_close(imgr_state.upload.fa);
     imgr_state.upload.fa = NULL;
 err:
-    mgmt_jbuf_setoerr(njb, rc);
+    mgmt_cbuf_setoerr(cb, rc);
     return 0;
 }
 

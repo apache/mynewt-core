@@ -30,6 +30,10 @@
 #include "newtmgr/newtmgr.h"
 #include "nmgr_os/nmgr_os.h"
 
+#include <tinycbor/cbor.h>
+#include <tinycbor/cbor_mbuf_writer.h>
+#include <tinycbor/cbor_mbuf_reader.h>
+
 os_stack_t newtmgr_stack[OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE))];
 
 static struct os_eventq nmgr_evq;
@@ -37,17 +41,23 @@ struct os_eventq *g_mgmt_evq = &nmgr_evq;
 static struct os_task g_nmgr_task;
 
 /*
- * JSON buffer for newtmgr
+ * cbor buffer for newtmgr
  */
-static struct nmgr_jbuf {
-    struct mgmt_jbuf n_b;
-    struct os_mbuf *n_in_m;
+static struct nmgr_cbuf {
+    struct mgmt_cbuf n_b;
+    struct CborMbufWriter writer;
+    struct CborMbufReader reader;
     struct os_mbuf *n_out_m;
+
+#if 0
+    struct os_mbuf *n_in_m;
     struct nmgr_hdr *n_hdr;
     uint16_t n_off;
     uint16_t n_end;
-} nmgr_task_jbuf;
+#endif
+} nmgr_task_cbuf;
 
+#if 0
 static int
 nmgr_rsp_extend(struct nmgr_hdr *hdr, struct os_mbuf *rsp, void *data,
         uint16_t len)
@@ -64,126 +74,13 @@ nmgr_rsp_extend(struct nmgr_hdr *hdr, struct os_mbuf *rsp, void *data,
 err:
     return (rc);
 }
-
-static char
-nmgr_jbuf_read_next(struct json_buffer *jb)
-{
-    struct nmgr_jbuf *njb;
-    char c;
-    int rc;
-
-    njb = (struct nmgr_jbuf *) jb;
-
-    if (njb->n_off + 1 > njb->n_end) {
-        return '\0';
-    }
-
-    rc = os_mbuf_copydata(njb->n_in_m, njb->n_off, 1, &c);
-    if (rc == -1) {
-        c = '\0';
-    }
-    ++njb->n_off;
-
-    return (c);
-}
-
-static char
-nmgr_jbuf_read_prev(struct json_buffer *jb)
-{
-    struct nmgr_jbuf *njb;
-    char c;
-    int rc;
-
-    njb = (struct nmgr_jbuf *) jb;
-
-    if (njb->n_off == 0) {
-        return '\0';
-    }
-
-    --njb->n_off;
-    rc = os_mbuf_copydata(njb->n_in_m, njb->n_off, 1, &c);
-    if (rc == -1) {
-        c = '\0';
-    }
-
-    return (c);
-}
+#endif
 
 static int
-nmgr_jbuf_readn(struct json_buffer *jb, char *buf, int size)
+nmgr_cbuf_init(struct nmgr_cbuf *njb)
 {
-    struct nmgr_jbuf *njb;
-    int read;
-    int left;
-    int rc;
-
-    njb = (struct nmgr_jbuf *) jb;
-
-    left = njb->n_end - njb->n_off;
-    read = size > left ? left : size;
-
-    rc = os_mbuf_copydata(njb->n_in_m, njb->n_off, read, buf);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (read);
-err:
-    return (rc);
-}
-
-int
-nmgr_jbuf_write(void *arg, char *data, int len)
-{
-    struct nmgr_jbuf *njb;
-    int rc;
-
-    njb = (struct nmgr_jbuf *) arg;
-
-    rc = nmgr_rsp_extend(njb->n_hdr, njb->n_out_m, data, len);
-    if (rc != 0) {
-        assert(0);
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
-static int
-nmgr_jbuf_init(struct nmgr_jbuf *njb)
-{
-    struct mgmt_jbuf *mj;
-
     memset(njb, 0, sizeof(*njb));
-
-    mj = &njb->n_b;
-    mj->mjb_buf.jb_read_next = nmgr_jbuf_read_next;
-    mj->mjb_buf.jb_read_prev = nmgr_jbuf_read_prev;
-    mj->mjb_buf.jb_readn = nmgr_jbuf_readn;
-    mj->mjb_enc.je_write = nmgr_jbuf_write;
-    mj->mjb_enc.je_arg = njb;
-
     return (0);
-}
-
-static void
-nmgr_jbuf_setibuf(struct nmgr_jbuf *njb, struct os_mbuf *m,
-        uint16_t off, uint16_t len)
-{
-    njb->n_in_m = m;
-    njb->n_off = off;
-    njb->n_end = off + len;
-}
-
-static void
-nmgr_jbuf_setobuf(struct nmgr_jbuf *njb, struct nmgr_hdr *hdr,
-        struct os_mbuf *m)
-{
-    njb->n_b.mjb_enc.je_wr_commas = 0;
-    njb->n_out_m = m;
-    njb->n_hdr = hdr;
 }
 
 static struct nmgr_hdr*
@@ -204,8 +101,10 @@ nmgr_init_rsp(struct os_mbuf *m, struct nmgr_hdr *src)
     hdr->nh_seq = src->nh_seq;
     hdr->nh_id = src->nh_id;
 
-    nmgr_jbuf_setobuf(&nmgr_task_jbuf, hdr, m);
-
+    /* setup state for cbor encoding */
+    cbor_mbuf_writer_init(&nmgr_task_cbuf.writer, m);
+    cbor_encoder_init(&nmgr_task_cbuf.n_b.encoder, &nmgr_task_cbuf.writer.enc, 0);
+    nmgr_task_cbuf.n_out_m = m;
     return hdr;
 }
 
@@ -217,10 +116,12 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
     if (!hdr) {
         return;
     }
+#if 0
     mgmt_jbuf_setoerr(&nmgr_task_jbuf.n_b, rc);
+#endif
     hdr->nh_len = htons(hdr->nh_len);
-    hdr->nh_flags = NMGR_F_JSON_RSP_COMPLETE;
-    nt->nt_output(nt, nmgr_task_jbuf.n_out_m);
+    hdr->nh_flags = NMGR_F_CBOR_RSP_COMPLETE;
+    nt->nt_output(nt, nmgr_task_cbuf.n_out_m);
 }
 
 static int
@@ -287,7 +188,7 @@ nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
 
     do {
         if (len <= mtu) {
-            rsp_hdr->nh_flags |= NMGR_F_JSON_RSP_COMPLETE;
+            rsp_hdr->nh_flags |= NMGR_F_CBOR_RSP_COMPLETE;
         } else {
             len = mtu;
         }
@@ -299,8 +200,8 @@ nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
 
         len = rsp_hdr->nh_len - offset + sizeof(struct nmgr_hdr);
 
-    } while (!((rsp_hdr->nh_flags & NMGR_F_JSON_RSP_COMPLETE) ==
-                NMGR_F_JSON_RSP_COMPLETE));
+    } while (!((rsp_hdr->nh_flags & NMGR_F_CBOR_RSP_COMPLETE) ==
+                NMGR_F_CBOR_RSP_COMPLETE));
 
     return MGMT_ERR_EOK;
 err:
@@ -361,20 +262,18 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
             goto err_norsp;
         }
 
-        /*
-         * Setup state for JSON encoding.
-         */
-        nmgr_jbuf_setibuf(&nmgr_task_jbuf, req, off + sizeof(hdr), hdr.nh_len);
+        cbor_mbuf_reader_init(&nmgr_task_cbuf.reader, req, sizeof(hdr));
+        cbor_parser_init(&nmgr_task_cbuf.reader.r, 0, &nmgr_task_cbuf.n_b.parser, &nmgr_task_cbuf.n_b.it);
 
         if (hdr.nh_op == NMGR_OP_READ) {
             if (handler->mh_read) {
-                rc = handler->mh_read(&nmgr_task_jbuf.n_b);
+                rc = handler->mh_read(&nmgr_task_cbuf.n_b);
             } else {
                 rc = MGMT_ERR_ENOENT;
             }
         } else if (hdr.nh_op == NMGR_OP_WRITE) {
             if (handler->mh_write) {
-                rc = handler->mh_write(&nmgr_task_jbuf.n_b);
+                rc = handler->mh_write(&nmgr_task_cbuf.n_b);
             } else {
                 rc = MGMT_ERR_ENOENT;
             }
@@ -386,6 +285,7 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
             goto err;
         }
 
+        rsp_hdr->nh_len += cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
         off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
         rc = nmgr_rsp_fragment(nt, rsp_hdr, rsp, req);
         if (rc) {
@@ -431,7 +331,7 @@ nmgr_task(void *arg)
     struct os_callout_func *ocf;
     os_event_cb_func cb_func;
 
-    nmgr_jbuf_init(&nmgr_task_jbuf);
+    nmgr_cbuf_init(&nmgr_task_cbuf);
 
     while (1) {
         ev = os_eventq_get(&nmgr_evq);

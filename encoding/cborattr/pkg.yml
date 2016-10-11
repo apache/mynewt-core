@@ -17,22 +17,11 @@
 # under the License.
 #
 
-pkg.name: mgmt/newtmgr
-pkg.description: Server-side newtmgr functionality.
+pkg.name: encoding/cborattr 
+pkg.description: CBOR encoding/decoding library 
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
-    - encoding/cborattr
-    - mgmt/newtmgr/nmgr_os
-
-pkg.deps.NEWTMGR_BLE_HOST:
-    - mgmt/newtmgr/transport/ble
-
-pkg.apis:
-    - newtmgr
-
-pkg.init_function: nmgr_pkg_init
-pkg.init_stage: 5
+    - "@apache-mynewt-core/encoding/tinycbor"
