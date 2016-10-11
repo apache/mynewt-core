@@ -33,7 +33,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <assert.h>
-#include <util/util.h>
 
 struct stack_frame {
     int sf_mainsp;              /* stack on which main() is executing */
