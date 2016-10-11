@@ -47,27 +47,27 @@ static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
 int shell_prompt_cmd(int argc, char **argv);
 
-static struct shell_cmd g_shell_echo_cmd = {
+static const struct shell_cmd g_shell_echo_cmd = {
     .sc_cmd = "echo",
     .sc_cmd_func = shell_echo_cmd
 };
-static struct shell_cmd g_shell_help_cmd = {
+static const struct shell_cmd g_shell_help_cmd = {
     .sc_cmd = "?",
     .sc_cmd_func = shell_help_cmd
 };
-static struct shell_cmd g_shell_prompt_cmd = {
+static const struct shell_cmd g_shell_prompt_cmd = {
    .sc_cmd = "prompt",
    .sc_cmd_func = shell_prompt_cmd
 };
-static struct shell_cmd g_shell_os_tasks_display_cmd = {
+static const struct shell_cmd g_shell_os_tasks_display_cmd = {
     .sc_cmd = "tasks",
     .sc_cmd_func = shell_os_tasks_display_cmd
 };
-static struct shell_cmd g_shell_os_mpool_display_cmd = {
+static const struct shell_cmd g_shell_os_mpool_display_cmd = {
     .sc_cmd = "mempools",
     .sc_cmd_func = shell_os_mpool_display_cmd
 };
-static struct shell_cmd g_shell_os_date_cmd = {
+static const struct shell_cmd g_shell_os_date_cmd = {
     .sc_cmd = "date",
     .sc_cmd_func = shell_os_date_cmd
 };
@@ -549,22 +549,22 @@ shell_init(void)
     rc = os_mutex_init(&g_shell_cmd_list_lock);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_echo_cmd);
+    rc = shell_cmd_register((struct shell_cmd *) &g_shell_echo_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_help_cmd);
+    rc = shell_cmd_register((struct shell_cmd *) &g_shell_help_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_prompt_cmd);
+    rc = shell_cmd_register((struct shell_cmd *) &g_shell_prompt_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
+    rc = shell_cmd_register((struct shell_cmd *) &g_shell_os_tasks_display_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_os_mpool_display_cmd);
+    rc = shell_cmd_register((struct shell_cmd *) &g_shell_os_mpool_display_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_os_date_cmd);
+    rc = shell_cmd_register((struct shell_cmd *) &g_shell_os_date_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     os_eventq_init(&shell_evq);

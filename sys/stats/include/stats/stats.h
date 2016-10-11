@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __UTIL_STATS_H__ 
-#define __UTIL_STATS_H__ 
+#ifndef __UTIL_STATS_H__
+#define __UTIL_STATS_H__
 
 #include <stdint.h>
 #include "syscfg/syscfg.h"
@@ -30,7 +30,7 @@ extern "C" {
 struct stats_name_map {
     uint16_t snm_off;
     char *snm_name;
-};
+} __attribute__((packed));
 
 struct stats_hdr {
     char *s_name;
@@ -38,7 +38,7 @@ struct stats_hdr {
     uint8_t s_cnt;
     uint16_t s_pad1;
 #if MYNEWT_VAL(STATS_NAMES)
-    struct stats_name_map *s_map;
+    const struct stats_name_map *s_map;
     int s_map_cnt;
 #endif
     STAILQ_ENTRY(stats_hdr) s_next;
@@ -82,7 +82,7 @@ STATS_SECT_DECL(__name) {                   \
 #define STATS_NAME_MAP_NAME(__sectname) g_stats_map_ ## __sectname
 
 #define STATS_NAME_START(__sectname)                                        \
-struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
+const struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
 
 #define STATS_NAME(__sectname, __entry)                                     \
     { offsetof(STATS_SECT_DECL(__sectname), STATS_SECT_VAR(__entry)),       \
@@ -105,14 +105,14 @@ struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
 #endif /* MYNEWT_VAL(STATS_NAME) */
 
 void stats_module_init(void);
-int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt, 
-    struct stats_name_map *map, uint8_t map_cnt);
+int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
+    const struct stats_name_map *map, uint8_t map_cnt);
 int stats_register(char *name, struct stats_hdr *shdr);
 int stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
                        struct stats_name_map *map, uint8_t map_cnt,
                        char *name);
 
-typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *, 
+typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *,
         uint16_t);
 int stats_walk(struct stats_hdr *, stats_walk_func_t, void *);
 
@@ -124,7 +124,7 @@ struct stats_hdr *stats_group_find(char *name);
 /* Private */
 #if MYNEWT_VAL(STATS_NEWTMGR)
 int stats_nmgr_register_group(void);
-#endif 
+#endif
 #if MYNEWT_VAL(STATS_CLI)
 int stats_shell_register(void);
 #endif

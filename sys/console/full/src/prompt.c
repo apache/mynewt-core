@@ -35,7 +35,9 @@ console_set_prompt(char p)
     console_prompt[1] = p;
 }
 
-void console_no_prompt(void) {
+void
+console_no_prompt(void)
+{
     do_prompt = 0;
 }
 
