@@ -1,0 +1,90 @@
+# Package: hw/bsp/rb-nano2
+
+syscfg.defs:
+    BSP_NRF52:
+        description: 'TBD'
+        value: 1
+
+    CLOCK_FREQ:
+        description: 'TBD'
+        value:  1000000
+
+    OS_CPUTIME_TIMER_NUM:
+        description: 'Timer to use for cputime'
+        value:  0
+
+    XTAL_32768:
+        description: 'TBD'
+        value: 1
+    ADC_0:
+        description: 'TBD'
+        value:  0
+    ADC_0_RESOLUTION:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_RESOLUTION'
+    ADC_0_OVERSAMPLE:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_OVERSAMPLE'
+    ADC_0_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: 'SAADC_CONFIG_IRQ_PRIORITY'
+
+    UART_0:
+        description: 'TBD'
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TBD'
+        value: 29
+    UART_0_PIN_RX:
+        description: 'TBD'
+        value: 30
+    UART_0_PIN_RTS:
+        description: 'TBD'
+        value: 2
+    UART_0_PIN_CTS:
+        description: 'TBD'
+        value: 28
+
+    SPI_MASTER:
+        description: 'TBD'
+        value:  0
+    SPI_SLAVE:
+        description: 'TBD'
+        value:  0
+
+    TIMER_0:
+        description: 'NRF52 Timer 0'
+        value:  1
+    TIMER_0_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: '((1 << __NVIC_PRIO_BITS) - 1)'
+    TIMER_1:
+        description: 'NRF52 Timer 1'
+        value:  0
+    TIMER_1_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: '((1 << __NVIC_PRIO_BITS) - 1)'
+    TIMER_2:
+        description: 'NRF52 Timer 2'
+        value:  0
+    TIMER_2_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: '((1 << __NVIC_PRIO_BITS) - 1)'
+    TIMER_3:
+        description: 'NRF52 Timer 3'
+        value:  0
+    TIMER_3_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: '((1 << __NVIC_PRIO_BITS) - 1)'
+    TIMER_4:
+        description: 'NRF52 Timer 4'
+        value:  0
+    TIMER_4_INTERRUPT_PRIORITY:
+        description: 'TBD'
+        value: '((1 << __NVIC_PRIO_BITS) - 1)'
+
+syscfg.vals:
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
