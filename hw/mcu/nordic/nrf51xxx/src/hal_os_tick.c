@@ -18,12 +18,22 @@
  */
 #include <assert.h>
 #include <os/os.h>
+#include "syscfg/syscfg.h"
 #include <hal/hal_os_tick.h>
 
 #include <bsp/cmsis_nvic.h>
 #include <nrf51.h>
 #include <nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>
+
+/* Must have external 32.768 crystal or used synthesized */
+#if (MYNEWT_VAL(XTAL_32768) == 1) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 1)
+#error "Cannot configure both external and synthesized 32.768 xtal sources"
+#endif
+
+#if (MYNEWT_VAL(XTAL_32768) == 0) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 0)
+#error "Must configure either external or synthesized 32.768 xtal source"
+#endif
 
 #define OS_TICK_CMPREG  0
 #define RTC_FREQ        32768
@@ -176,6 +186,7 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     NRF_CLOCK->XTALFREQ = CLOCK_XTALFREQ_XTALFREQ_16MHz;
     NRF_CLOCK->TASKS_LFCLKSTOP = 1;
     NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+#if MYNEWT_VAL(XTAL_32768)
     NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Xtal;
     NRF_CLOCK->TASKS_LFCLKSTART = 1;
 
@@ -188,6 +199,33 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
             }
         }
     }
+#endif
+
+#if MYNEWT_VAL(XTAL_32768_SYNTH)
+    /* Must turn on HFLCK for synthesized 32768 crystal */
+    mask = CLOCK_HFCLKSTAT_STATE_Msk | CLOCK_HFCLKSTAT_SRC_Msk;
+    if ((NRF_CLOCK->HFCLKSTAT & mask) != mask) {
+        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+        NRF_CLOCK->TASKS_HFCLKSTART = 1;
+        while (1) {
+            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
+                break;
+            }
+        }
+    }
+
+    NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Synth;
+    NRF_CLOCK->TASKS_LFCLKSTART = 1;
+    mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSRC_SRC_Synth;
+    while (1) {
+        if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
+            if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
+                break;
+            }
+        }
+    }
+
+#endif
 
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
