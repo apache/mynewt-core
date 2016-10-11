@@ -67,7 +67,9 @@ imgr_boot2_read(struct mgmt_jbuf *njb)
 
     /* Temporary hack to preserve old behavior. */
     if (boot_split_app_active_get()) {
-        test_slot = 0;
+        if (boot_split_mode_get() == BOOT_SPLIT_MODE_TEST_APP) {
+            test_slot = 0;
+        }
         main_slot = 0;
         active_slot = 1;
     } else {
