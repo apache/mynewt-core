@@ -55,13 +55,17 @@ split_conf_set(int argc, char **argv, char *val)
 
     if (argc == 1) {
         if (!strcmp(argv[0], "status")) {
-            split_mode = boot_split_mode_get();
             rc = CONF_VALUE_SET(val, CONF_INT8, split_mode);
             if (rc != 0) {
                 return rc;
             }
 
-            boot_split_mode_set(split_mode);
+            rc = boot_split_mode_set(split_mode);
+            if (rc != 0) {
+                return rc;
+            }
+
+            return 0;
         }
     }
     return -1;

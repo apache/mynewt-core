@@ -35,10 +35,10 @@ split_app_init(void)
     int rc;
 
     rc = split_conf_init();
-    assert(rc==0);
+    assert(rc == 0);
 
     rc = split_nmgr_register();
-    assert(rc==0);
+    assert(rc == 0);
 }
 
 split_status_t
@@ -48,20 +48,24 @@ split_check_status(void)
     int rc;
 
     rc = split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, &entry);
+    switch (rc) {
+    case SPLIT_GO_ERR:
+        return SPLIT_STATUS_INVALID;
 
-    if(rc == SPLIT_GO_ERR) {
-        return SPLIT_INVALID;
-    } else if (rc) {
+    case SPLIT_GO_NON_MATCHING:
+        return SPLIT_STATUS_NOT_MATCHING;
+
+    case SPLIT_GO_OK:
+        return SPLIT_STATUS_MATCHING;
+
+    default:
+        assert(0);
+        return SPLIT_STATUS_INVALID;
     }
-
-    return SPLIT_MATCHING;
 }
 
 /**
  * This validates and provides the loader image data
- *
- * @param req                   Contains information about the flash layout.
- * @param rsp                   On success, indicates how booting should occur.
  *
  * @return                      0 on success; nonzero on failure.
  */
@@ -69,23 +73,47 @@ int
 split_app_go(void **entry, int toboot)
 {
     boot_split_mode_t split_mode;
+    int run_app;
     int rc;
 
     if (toboot) {
         split_mode = boot_split_mode_get();
 
         /* if we are told not to, then we don't boot an app */
-        if (split_mode == SPLIT_NONE) {
+        if (split_mode == BOOT_SPLIT_MODE_LOADER) {
             return -1;
         }
 
         /* if this is a one-time test, reset the split mode */
-        if (split_mode == SPLIT_TEST) {
-            split_write_split(SPLIT_NONE);
+        switch (split_mode) {
+        case BOOT_SPLIT_MODE_LOADER:
+            run_app = 0;
+            break;
+
+        case BOOT_SPLIT_MODE_TEST_APP:
+            split_write_split(BOOT_SPLIT_MODE_LOADER);
+            run_app = 1;
+            break;
+
+        case BOOT_SPLIT_MODE_TEST_LOADER:
+            split_write_split(BOOT_SPLIT_MODE_APP);
+            run_app = 0;
+            break;
+
+        case BOOT_SPLIT_MODE_APP:
+            run_app = 1;
+            break;
+
+        default:
+            run_app = 0;
+            break;
+        }
+
+        if (!run_app) {
+            return -1;
         }
     }
 
     rc = split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, entry);
-
-    return (rc);
+    return rc;
 }

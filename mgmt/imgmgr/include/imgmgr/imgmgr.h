@@ -20,24 +20,27 @@
 #ifndef _IMGMGR_H_
 #define _IMGMGR_H_
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define IMGMGR_NMGR_OP_LIST		0
-#define IMGMGR_NMGR_OP_UPLOAD		1
-#define IMGMGR_NMGR_OP_BOOT		2
-#define IMGMGR_NMGR_OP_FILE		3
-#define IMGMGR_NMGR_OP_LIST2		4
-#define IMGMGR_NMGR_OP_BOOT2		5
-#define IMGMGR_NMGR_OP_CORELIST		6
-#define IMGMGR_NMGR_OP_CORELOAD		7
+#define IMGMGR_NMGR_OP_LIST         0
+#define IMGMGR_NMGR_OP_UPLOAD       1
+#define IMGMGR_NMGR_OP_BOOT         2
+#define IMGMGR_NMGR_OP_FILE         3
+#define IMGMGR_NMGR_OP_LIST2        4
+#define IMGMGR_NMGR_OP_BOOT2        5
+#define IMGMGR_NMGR_OP_CORELIST     6
+#define IMGMGR_NMGR_OP_CORELOAD     7
+#define IMGMGR_NMGR_OP_STATE        8
 
-#define IMGMGR_NMGR_MAX_MSG		400
+#define IMGMGR_NMGR_MAX_MSG         400
 #define IMGMGR_NMGR_MAX_NAME		64
-#define IMGMGR_NMGR_MAX_VER		25	/* 255.255.65535.4294967295\0 */
+#define IMGMGR_NMGR_MAX_VER         25  /* 255.255.65535.4294967295\0 */
 
-#define IMGMGR_HASH_LEN                 32
+#define IMGMGR_HASH_LEN             32
 
 extern int boot_current_slot;
 

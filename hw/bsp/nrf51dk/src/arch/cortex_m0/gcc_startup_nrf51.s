@@ -149,11 +149,6 @@ Reset_Handler:
     ORRS    R2, R1
     STR     R2, [R0]
 
-    /* This is called but current_slot is in the data section so it is
-     * overwritten. its only called here to ensure that the global and this
-     * function are linked into the loader */
-    BL      boot_set_image_slot_split
-
 /*     Loop to copy data from read only memory to RAM. The ranges
  *      of copy from/to are specified by following symbols evaluated in
  *      linker script.

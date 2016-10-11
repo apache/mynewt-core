@@ -35,6 +35,7 @@
 
 int boot_current_slot;
 int8_t boot_split_mode;
+int8_t boot_split_app_active;
 
 /*
  * Read the image trailer from a given slot.
@@ -65,7 +66,8 @@ boot_vect_read_img_trailer(int slot, struct boot_img_trailer *bit)
  *
  * @param slot              On success, the slot number of image to boot.
  *
- * @return                  0 on success; nonzero on failure.
+ * @return                  0 if a test image was found;
+ *                          nonzero if there is no test image.
  */
 int
 boot_vect_read_test(int *slot)
@@ -121,6 +123,9 @@ boot_vect_read_main(int *slot)
 
 /**
  * Write the test image version number from the boot vector.
+ *
+ * @param slot              The image slot to write to.  Note: this is an
+ *                              image slot index, not a flash area ID.
  *
  * @return                  0 on success; nonzero on failure.
  */
@@ -327,12 +332,6 @@ boot_clear_status(void)
     hal_flash_write(flash_id, off, &val, sizeof(val));
 }
 
-void
-boot_set_image_slot_split(void)
-{
-    boot_current_slot = 1;
-}
-
 boot_split_mode_t
 boot_split_mode_get(void)
 {
@@ -342,10 +341,22 @@ boot_split_mode_get(void)
 int
 boot_split_mode_set(boot_split_mode_t split_mode)
 {
-    if (split_mode < 0 || split_mode > SPLIT_RUN) {
+    if (split_mode < 0 || split_mode >= BOOT_SPLIT_MODE_CNT) {
         return EINVAL;
     }
 
     boot_split_mode = split_mode;
     return 0;
+}
+
+int
+boot_split_app_active_get(void)
+{
+    return boot_split_app_active;
+}
+
+void
+boot_split_app_active_set(int active)
+{
+    boot_split_app_active = !!active;
 }

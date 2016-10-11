@@ -21,6 +21,7 @@
 #define H_SYSINIT_
 
 #include "syscfg/syscfg.h"
+#include "bootutil/bootutil_misc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,12 +43,30 @@ typedef void sysinit_panic_fn(const char *file, int line);
     }                               \
 } while (0)
 
+
 #if MYNEWT_VAL(SPLIT_LOADER)
+
+/*** System initialization for loader (first stage of split image). */
 void sysinit_loader(void);
-#define sysinit sysinit_loader
-#else
+#define sysinit() sysinit_loader()
+
+#elif MYNEWT_VAL(SPLIT_APPLICATION)
+
+/*** System initialization for split-app (second stage of split image). */
 void sysinit_app(void);
-#define sysinit sysinit_app
+#define sysinit() do                                                        \
+{                                                                           \
+    /* Record that a split app is running; imgmgt needs to know this. */    \
+    boot_split_app_active_set(1);                                           \
+    sysinit_app();                                                          \
+} while (0)
+
+#else
+
+/*** System initialization for a unified image (no split). */
+void sysinit_app(void);
+#define sysinit() sysinit_app()
+
 #endif
 
 #ifdef __cplusplus

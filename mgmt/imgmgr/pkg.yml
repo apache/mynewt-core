@@ -25,6 +25,7 @@ pkg.keywords:
 
 pkg.deps:
     - boot/bootutil
+    - boot/split
     - encoding/base64
     - mgmt/mgmt
     - sys/flash_map

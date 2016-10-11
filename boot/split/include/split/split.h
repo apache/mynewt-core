@@ -27,9 +27,9 @@ extern "C" {
 #define SPLIT_NMGR_OP_SPLIT 0
 
 typedef enum {
-    SPLIT_INVALID,
-    SPLIT_NOT_MATCHING,
-    SPLIT_MATCHING,
+    SPLIT_STATUS_INVALID =      0,
+    SPLIT_STATUS_NOT_MATCHING = 1,
+    SPLIT_STATUS_MATCHING =     2,
 } split_status_t;
 
 /*
@@ -50,6 +50,8 @@ void split_app_init(void);
  *
  * @Returns zero on success, non-zero on failures */
 int split_app_go(void **entry, int toboot);
+
+split_status_t split_check_status(void);
 
 #ifdef __cplusplus
 }

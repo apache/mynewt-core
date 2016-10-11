@@ -27,10 +27,21 @@ extern "C" {
 #endif
 
 typedef enum {
-    SPLIT_NONE = 0,
-    SPLIT_TEST,
-    SPLIT_RUN,
+    /** Loader only. */
+    BOOT_SPLIT_MODE_LOADER =            0,
+
+    /** Loader + app; revert to loader on reboot. */
+    BOOT_SPLIT_MODE_TEST_APP =          1,
+
+    /** Loader + app; no change on reboot. */
+    BOOT_SPLIT_MODE_APP =               2,
+
+    /** Loader only, revert to loader + app on reboot. */
+    BOOT_SPLIT_MODE_TEST_LOADER =       3,
 } boot_split_mode_t;
+
+/** Count of valid enum values. */
+#define BOOT_SPLIT_MODE_CNT         4
 
 extern int8_t boot_split_mode;
 
@@ -39,10 +50,11 @@ int boot_vect_read_main(int *slot);
 int boot_vect_write_test(int slot);
 int boot_vect_write_main(void);
 
-void boot_set_image_slot_split(void);
-
 boot_split_mode_t boot_split_mode_get(void);
 int boot_split_mode_set(boot_split_mode_t split_mode);
+
+int boot_split_app_active_get(void);
+void boot_split_app_active_set(int active);
 
 #ifdef __cplusplus
 }

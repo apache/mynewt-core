@@ -30,7 +30,6 @@ int split_conf_init(void);
 int split_nmgr_register(void);
 int split_read_split(boot_split_mode_t *split);
 int split_write_split(boot_split_mode_t mode);
-split_status_t split_check_status(void);
 
 #ifdef __cplusplus
 }

@@ -85,7 +85,11 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_read = NULL,
         .mh_write = NULL
 #endif
-    }
+    },
+    [IMGMGR_NMGR_OP_STATE] = {
+        .mh_read = imgr_state_read,
+        .mh_write = NULL,//imgr_state_write,
+    },
 };
 
 #define IMGR_HANDLER_CNT                                                \

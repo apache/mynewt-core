@@ -65,8 +65,7 @@ imgr_splitapp_read(struct mgmt_jbuf *njb)
     JSON_VALUE_INT(&jv, x)
     json_encode_object_entry(enc, "splitMode", &jv);
 
-    x = split_check_status();
-    JSON_VALUE_INT(&jv, x)
+    JSON_VALUE_INT(&jv, split_check_status())
     json_encode_object_entry(enc, "splitStatus", &jv);
 
     JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
