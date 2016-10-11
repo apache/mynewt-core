@@ -219,7 +219,6 @@ uint32_t
 stm32f4_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
 {
     switch((uintptr_t)hspi->Instance) {
-        /* DMA2 */
         case (uintptr_t)SPI1:
             return (uint32_t)&spi1_irq_handler;
         case (uintptr_t)SPI2:
@@ -330,30 +329,15 @@ hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
         goto err;
     }
 
-    //rc = hal_gpio_init_out(cfg->sck_pin, 0);
-    //if (rc != 0) {
-    //    goto err;
-    //}
-
     rc = hal_gpio_init_stm(cfg->miso_pin, &pcf);
     if (rc != 0) {
         goto err;
     }
 
-    //rc = hal_gpio_init_in(cfg->miso_pin, 0);
-    //if (rc != 0) {
-    //    goto err;
-    //}
-
     rc = hal_gpio_init_stm(cfg->mosi_pin, &pcf);
     if (rc != 0) {
         goto err;
     }
-
-    // rc = hal_gpio_init_out(cfg->mosi_pin, 0);
-    //if (rc != 0) {
-    //    goto err;
-    //}
 
     NVIC_SetPriority(stm32f4_resolve_spi_irq(&spi->handle),
                      NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
