@@ -299,7 +299,7 @@ boot_select_image_slot(void)
          * Copied the image successfully, but image was not confirmed as good.
          * We need to go back to another image.
          */
-        boot_vect_write_test(FLASH_AREA_IMAGE_1);
+        boot_vect_write_test(1);
     }
     for (i = 1; i < BOOT_NUM_SLOTS; i++) {
         b = &boot_img[i];
