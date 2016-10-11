@@ -53,31 +53,48 @@ imgr_boot2_read(struct mgmt_jbuf *njb)
     struct image_version ver;
     struct json_value jv;
     uint8_t hash[IMGMGR_HASH_LEN];
-    int slot;
+    int test_slot;
+    int main_slot;
+    int active_slot;
 
     enc = &njb->mjb_enc;
 
     json_encode_object_start(enc);
 
-    rc = boot_vect_read_test(&slot);
-    if (!rc) {
-        rc = imgr_read_info(slot, &ver, hash, NULL);
+    test_slot = -1;
+    main_slot = -1;
+    active_slot = -1;
+
+    /* Temporary hack to preserve old behavior. */
+    if (boot_split_app_active_get()) {
+        test_slot = 0;
+        main_slot = 0;
+        active_slot = 1;
+    } else {
+        boot_vect_read_test(&test_slot);
+        boot_vect_read_main(&main_slot);
+        active_slot = boot_current_slot;
+    }
+
+    if (test_slot != -1) {
+        rc = imgr_read_info(test_slot, &ver, hash, NULL);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "test", hash);
         }
     }
 
-    rc = boot_vect_read_main(&slot);
-    if (!rc) {
-        rc = imgr_read_info(slot, &ver, hash, NULL);
+    if (main_slot != -1) {
+        rc = imgr_read_info(main_slot, &ver, hash, NULL);
         if (rc >= 0) {
             imgr_hash_jsonstr(enc, "main", hash);
         }
     }
 
-    rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
-    if (!rc) {
-        imgr_hash_jsonstr(enc, "active", hash);
+    if (active_slot != -1) {
+        rc = imgr_read_info(active_slot, &ver, hash, NULL);
+        if (rc >= 0) {
+            imgr_hash_jsonstr(enc, "active", hash);
+        }
     }
 
     JSON_VALUE_INT(&jv, MGMT_ERR_EOK);
