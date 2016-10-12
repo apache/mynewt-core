@@ -24,12 +24,6 @@ syscfg.defs:
     I2C_0:
         description: 'I2C0'
         value: 0
-    I2C_1:
-        description: 'I2C1'
-        value: 0
-    I2C_0:
-        description: 'I2C2'
-        value: 0
 
     SPI_MASTER:
         description: 'TBD'
@@ -37,6 +31,18 @@ syscfg.defs:
     SPI_SLAVE:
         description: 'TBD'
         value:  1
+
+    TIMER_0:
+        description: 'TIMER_0'
+        value: 0
+
+    TIMER_0_INTERRUPT_PRIORITY:
+        description: 'Interrupt priority for HAL timer 0'
+        value: 1
+
+    TIMER_0_UNIT:
+        description: 'MCU timer unit assigned as HAL timer0'
+        value: TIM9
 
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

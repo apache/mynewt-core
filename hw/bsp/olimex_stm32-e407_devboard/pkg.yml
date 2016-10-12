@@ -34,6 +34,8 @@ pkg.cflags:
     - '-DHAL_DMA_MODULE_ENABLED'
     - -DHAL_I2C_MODULE_ENABLED
     - '-DHAL_SPI_MODULE_ENABLED'
+    - -DHAL_TIM_MODULE_ENABLED
+
 pkg.deps:
     - boot/bootutil
     - hw/mcu/stm/stm32f4xx
