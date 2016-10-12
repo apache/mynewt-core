@@ -74,7 +74,8 @@ imgr_core_load(struct mgmt_jbuf *njb)
             .attribute = "off",
             .type = t_uinteger,
             .addr.uinteger = &off
-        }
+        },
+        [1] = { 0 },
     };
     int rc;
     int sz;

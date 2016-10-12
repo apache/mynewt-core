@@ -55,7 +55,8 @@ imgr_file_download(struct nmgr_jbuf *njb)
             .type = t_string,
             .addr.string = tmp_str,
             .len = sizeof(tmp_str)
-        }
+        },
+        [2] = { 0 },
     };
     int rc;
     uint32_t out_len;
@@ -148,7 +149,8 @@ imgr_file_upload(struct nmgr_jbuf *njb)
             .type = t_string,
             .addr.string = file_name,
             .len = sizeof(file_name)
-        }
+        },
+        [4] = { 0 },
     };
     struct json_encoder *enc;
     struct json_value jv;

@@ -114,7 +114,8 @@ nmgr_def_console_echo(struct mgmt_jbuf *njb)
         },
         [1] = {
             .attribute = NULL
-        }
+        },
+        [2] = { 0 },
     };
 
     rc = json_read_object(&njb->mjb_buf, attrs);
@@ -258,7 +259,7 @@ nmgr_datetime_set(struct mgmt_jbuf *njb)
     struct json_value jv;
     char buf[DATETIME_BUFSIZE];
     int rc = OS_OK;
-    const struct json_attr_t datetime_write_attr[2] = {
+    const struct json_attr_t datetime_write_attr[3] = {
         [0] = {
             .attribute = "datetime",
             .type = t_string,
@@ -268,8 +269,8 @@ nmgr_datetime_set(struct mgmt_jbuf *njb)
         [1] = {
             .attribute = "rc",
             .type = t_uinteger,
-
-        }
+        },
+        { 0 },
     };
 
     rc = json_read_object(&njb->mjb_buf, datetime_write_attr);

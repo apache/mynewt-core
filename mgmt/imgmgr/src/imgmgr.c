@@ -321,7 +321,8 @@ imgr_upload(struct mgmt_jbuf *njb)
             .type = t_uinteger,
             .addr.uinteger = &size,
             .nodefault = true
-        }
+        },
+        [3] = { 0 },
     };
     struct image_version ver;
     struct image_header *hdr;
