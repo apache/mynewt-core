@@ -79,7 +79,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     I2C_InitTypeDef *init;
     int rc;
 
-    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+    if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
         return -1;
     }
 
@@ -124,7 +124,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *data,
 {
     struct stm32f4_hal_i2c *dev;
 
-    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+    if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
         return -1;
     }
 
@@ -138,7 +138,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 {
     struct stm32f4_hal_i2c *dev;
 
-    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+    if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
         return -1;
     }
 
@@ -164,7 +164,7 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
     struct stm32f4_hal_i2c *dev;
     int rc;
 
-    if (i2c_num > HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
+    if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
         return -1;
     }
 
