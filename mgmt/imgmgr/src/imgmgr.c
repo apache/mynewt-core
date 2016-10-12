@@ -87,8 +87,8 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
 #endif
     },
     [IMGMGR_NMGR_OP_STATE] = {
-        .mh_read = imgr_state_read,
-        .mh_write = NULL,//imgr_state_write,
+        .mh_read = imgmgr_state_read,
+        .mh_write = imgmgr_state_write,
     },
 };
 
@@ -106,6 +106,11 @@ struct imgr_state imgr_state;
 /*
  * Read version and build hash from image located slot "image_slot".  Note:
  * this is a slot index, not a flash area ID.
+ *
+ * @param image_slot
+ * @param ver (optional)
+ * @param hash (optional)
+ * @param flags
  *
  * Returns -1 if area is not readable.
  * Returns 0 if image in slot is ok, and version string is valid.
@@ -136,15 +141,18 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     if (rc2) {
         goto end;
     }
-    memset(ver, 0xff, sizeof(*ver));
-    if (hdr->ih_magic == IMAGE_MAGIC) {
-        memcpy(ver, &hdr->ih_ver, sizeof(*ver));
-    } else if (hdr->ih_magic == 0xffffffff) {
-        rc = 2;
-        goto end;
-    } else {
-        rc = 1;
-        goto end;
+
+    if (ver != NULL) {
+        memset(ver, 0xff, sizeof(*ver));
+        if (hdr->ih_magic == IMAGE_MAGIC) {
+            memcpy(ver, &hdr->ih_ver, sizeof(*ver));
+        } else if (hdr->ih_magic == 0xffffffff) {
+            rc = 2;
+            goto end;
+        } else {
+            rc = 1;
+            goto end;
+        }
     }
 
     if(flags) {
@@ -320,7 +328,6 @@ imgr_upload(struct mgmt_jbuf *njb)
     struct json_encoder *enc;
     struct json_value jv;
     int area_id;
-    int active;
     int best;
     int rc;
     int len;
@@ -359,7 +366,6 @@ imgr_upload(struct mgmt_jbuf *njb)
          */
         imgr_state.upload.off = 0;
         imgr_state.upload.size = size;
-        active = boot_current_slot;
         best = -1;
 
         for (i = 0; i < 2; i++) {
@@ -368,13 +374,9 @@ imgr_upload(struct mgmt_jbuf *njb)
                 continue;
             }
             if (rc == 0) {
-                /*
-                 * Image in slot is ok.
-                 */
-                if (active == i) {
-                    /*
-                     * Slot is currently active one. Can't upload to this.
-                     */
+                /* Image in slot is ok. */
+                if (imgmgr_state_slot_in_use(i)) {
+                    /* Slot is in use; can't upload to this. */
                     continue;
                 } else {
                     /*
@@ -476,5 +478,6 @@ imgmgr_module_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
+    /* XXX: Confirm image under test; this needs to be removed. */
     boot_vect_write_main();
 }

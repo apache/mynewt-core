@@ -68,6 +68,9 @@ int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32
  */
 int imgr_my_version(struct image_version *ver);
 
+uint8_t imgmgr_state_flags(int query_slot);
+int imgmgr_state_slot_in_use(int slot);
+
 #ifdef __cplusplus
 }
 #endif

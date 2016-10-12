@@ -34,7 +34,6 @@
 #include "bootutil_priv.h"
 
 int boot_current_slot;
-int8_t boot_split_mode;
 int8_t boot_split_app_active;
 
 /*
@@ -330,23 +329,6 @@ boot_clear_status(void)
     boot_magic_loc(0, &flash_id, &off);
     off += sizeof(uint32_t);
     hal_flash_write(flash_id, off, &val, sizeof(val));
-}
-
-boot_split_mode_t
-boot_split_mode_get(void)
-{
-    return boot_split_mode;
-}
-
-int
-boot_split_mode_set(boot_split_mode_t split_mode)
-{
-    if (split_mode < 0 || split_mode >= BOOT_SPLIT_MODE_CNT) {
-        return EINVAL;
-    }
-
-    boot_split_mode = split_mode;
-    return 0;
 }
 
 int

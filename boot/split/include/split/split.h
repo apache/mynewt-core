@@ -20,11 +20,30 @@
 #ifndef _SPLIT_H__
 #define _SPLIT_H__
 
+#include "bootutil/bootutil_misc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define SPLIT_NMGR_OP_SPLIT 0
+
+typedef enum {
+    /** Loader only. */
+    SPLIT_MODE_LOADER =            0,
+
+    /** Loader + app; revert to loader on reboot. */
+    SPLIT_MODE_TEST_APP =          1,
+
+    /** Loader + app; no change on reboot. */
+    SPLIT_MODE_APP =               2,
+
+    /** Loader only, revert to loader + app on reboot. */
+    SPLIT_MODE_TEST_LOADER =       3,
+} split_mode_t;
+
+/** Count of valid enum values. */
+#define SPLIT_MODE_CNT         4
 
 typedef enum {
     SPLIT_STATUS_INVALID =      0,
@@ -52,6 +71,10 @@ void split_app_init(void);
 int split_app_go(void **entry, int toboot);
 
 split_status_t split_check_status(void);
+split_mode_t split_mode_get(void);
+int split_mode_set(split_mode_t split_mode);
+
+int split_write_split(split_mode_t mode);
 
 #ifdef __cplusplus
 }

@@ -31,6 +31,7 @@
 #include <base64/base64.h>
 #include <hal/hal_bsp.h>
 
+#include "split/split.h"
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
@@ -67,7 +68,7 @@ imgr_boot2_read(struct mgmt_jbuf *njb)
 
     /* Temporary hack to preserve old behavior. */
     if (boot_split_app_active_get()) {
-        if (boot_split_mode_get() == BOOT_SPLIT_MODE_TEST_APP) {
+        if (split_mode_get() == SPLIT_MODE_TEST_APP) {
             test_slot = 0;
         }
         main_slot = 0;

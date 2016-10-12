@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include "defs/error.h"
 #include "bootutil/bootutil_misc.h"
 #include "bootutil/image.h"
 #include "bootutil/loader.h"
@@ -28,6 +29,8 @@
 #define LOADER_IMAGE_SLOT   0
 #define SPLIT_IMAGE_SLOT    1
 #define SPLIT_TOTAL_IMAGES  2
+
+static int8_t split_mode_cur;
 
 void
 split_app_init(void)
@@ -64,6 +67,23 @@ split_check_status(void)
     }
 }
 
+split_mode_t
+split_mode_get(void)
+{
+    return split_mode_cur;
+}
+
+int
+split_mode_set(split_mode_t split_mode)
+{
+    if (split_mode < 0 || split_mode >= SPLIT_MODE_CNT) {
+        return EINVAL;
+    }
+
+    split_mode_cur = split_mode;
+    return 0;
+}
+
 /**
  * This validates and provides the loader image data
  *
@@ -72,35 +92,35 @@ split_check_status(void)
 int
 split_app_go(void **entry, int toboot)
 {
-    boot_split_mode_t split_mode;
+    split_mode_t split_mode;
     int run_app;
     int rc;
 
     if (toboot) {
-        split_mode = boot_split_mode_get();
+        split_mode = split_mode_get();
 
         /* if we are told not to, then we don't boot an app */
-        if (split_mode == BOOT_SPLIT_MODE_LOADER) {
+        if (split_mode == SPLIT_MODE_LOADER) {
             return -1;
         }
 
         /* if this is a one-time test, reset the split mode */
         switch (split_mode) {
-        case BOOT_SPLIT_MODE_LOADER:
+        case SPLIT_MODE_LOADER:
             run_app = 0;
             break;
 
-        case BOOT_SPLIT_MODE_TEST_APP:
-            split_write_split(BOOT_SPLIT_MODE_LOADER);
+        case SPLIT_MODE_TEST_APP:
+            split_write_split(SPLIT_MODE_LOADER);
             run_app = 1;
             break;
 
-        case BOOT_SPLIT_MODE_TEST_LOADER:
-            split_write_split(BOOT_SPLIT_MODE_APP);
+        case SPLIT_MODE_TEST_LOADER:
+            split_write_split(SPLIT_MODE_APP);
             run_app = 0;
             break;
 
-        case BOOT_SPLIT_MODE_APP:
+        case SPLIT_MODE_APP:
             run_app = 1;
             break;
 

@@ -36,11 +36,11 @@ split_conf_init(void)
 static char *
 split_conf_get(int argc, char **argv, char *buf, int max_len)
 {
-    boot_split_mode_t split_mode;
+    split_mode_t split_mode;
 
     if (argc == 1) {
         if (!strcmp(argv[0], "status")) {
-            split_mode = boot_split_mode_get();
+            split_mode = split_mode_get();
             return conf_str_from_value(CONF_INT8, &split_mode, buf, max_len);
         }
     }
@@ -50,7 +50,7 @@ split_conf_get(int argc, char **argv, char *buf, int max_len)
 static int
 split_conf_set(int argc, char **argv, char *val)
 {
-    boot_split_mode_t split_mode;
+    split_mode_t split_mode;
     int rc;
 
     if (argc == 1) {
@@ -60,7 +60,7 @@ split_conf_set(int argc, char **argv, char *val)
                 return rc;
             }
 
-            rc = boot_split_mode_set(split_mode);
+            rc = split_mode_set(split_mode);
             if (rc != 0) {
                 return rc;
             }
@@ -80,22 +80,22 @@ split_conf_commit(void)
 static int
 split_conf_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
 {
-    boot_split_mode_t split_mode;
+    split_mode_t split_mode;
     char buf[4];
 
-    split_mode = boot_split_mode_get();
+    split_mode = split_mode_get();
     conf_str_from_value(CONF_INT8, &split_mode, buf, sizeof(buf));
     func("split/status", buf);
     return 0;
 }
 
 int
-split_write_split(boot_split_mode_t split_mode)
+split_write_split(split_mode_t split_mode)
 {
-    char str[CONF_STR_FROM_BYTES_LEN(sizeof(boot_split_mode_t))];
+    char str[CONF_STR_FROM_BYTES_LEN(sizeof(split_mode_t))];
     int rc;
 
-    rc = boot_split_mode_set(split_mode);
+    rc = split_mode_set(split_mode);
     if (rc != 0) {
         return rc;
     }
