@@ -294,9 +294,7 @@ imgmgr_state_write(struct mgmt_jbuf *njb)
             .addr.boolean = &confirm,
             .dflt.boolean = false,
         },
-        [2] = {
-            .attribute = NULL
-        },
+        [2] = { 0 },
     };
 
     rc = json_read_object(&njb->mjb_buf, write_attr);
