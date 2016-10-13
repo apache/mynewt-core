@@ -31,8 +31,6 @@
 /** Indicates whether the previous line of output was completed. */
 int console_is_midline;
 
-#define CONSOLE_TX_BUF_SZ       32      /* IO buffering, must be power of 2 */
-#define CONSOLE_RX_BUF_SZ       128
 #define CONSOLE_RX_CHUNK        16
 
 #if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
@@ -62,10 +60,15 @@ struct console_ring {
 
 struct console_tty {
     struct uart_dev *ct_dev;
+
     struct console_ring ct_tx;
-    uint8_t ct_tx_buf[CONSOLE_TX_BUF_SZ]; /* must be after console_ring */
+    /* must be after console_ring */
+    uint8_t ct_tx_buf[MYNEWT_VAL(CONSOLE_TX_BUF_SIZE)];
+
     struct console_ring ct_rx;
-    uint8_t ct_rx_buf[CONSOLE_RX_BUF_SZ]; /* must be after console_ring */
+    /* must be after console_ring */
+    uint8_t ct_rx_buf[MYNEWT_VAL(CONSOLE_RX_BUF_SIZE)];
+
     console_rx_cb ct_rx_cb; /* callback that input is ready */
     console_write_char ct_write_char;
     uint8_t ct_echo_off:1;
@@ -78,7 +81,7 @@ struct console_hist {
     uint8_t ch_tail;
     uint8_t ch_size;
     uint8_t ch_curr;
-    uint8_t ch_buf[CONSOLE_HIST_SZ][CONSOLE_RX_BUF_SZ];
+    uint8_t ch_buf[CONSOLE_HIST_SZ][MYNEWT_VAL(CONSOLE_RX_BUF_SIZE)];
 } console_hist;
 #endif
 
@@ -165,7 +168,7 @@ console_hist_add(struct console_ring *rx)
             break;
         }
         str++;
-        tail = (tail + 1) % CONSOLE_RX_BUF_SZ;
+        tail = (tail + 1) % MYNEWT_VAL(CONSOLE_RX_BUF_SIZE);
     }
 
     ch->ch_head = (ch->ch_head + 1) & (ch->ch_size - 1);
@@ -203,7 +206,7 @@ console_hist_move(struct console_ring *rx, uint8_t *tx_buf, uint8_t direction)
     }
 
     str = ch->ch_buf[ch->ch_curr];
-    for (i = 0; i < CONSOLE_RX_BUF_SZ; ++i) {
+    for (i = 0; i < MYNEWT_VAL(CONSOLE_RX_BUF_SIZE); ++i) {
         if (str[i] == '\0') {
             break;
         }
@@ -255,7 +258,7 @@ console_blocking_mode(void)
     if (ct->ct_write_char) {
         ct->ct_write_char = console_blocking_tx;
 
-        console_tx_flush(ct, CONSOLE_TX_BUF_SZ);
+        console_tx_flush(ct, MYNEWT_VAL(CONSOLE_TX_BUF_SIZE));
     }
     OS_EXIT_CRITICAL(sr);
 }
@@ -371,7 +374,7 @@ console_rx_char(void *arg, uint8_t data)
     int tx_space = 0;
     int i;
 #if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
-    uint8_t tx_buf[CONSOLE_RX_BUF_SZ];
+    uint8_t tx_buf[MYNEWT_VAL(CONSOLE_RX_BUF_SIZE)];
 #else
     uint8_t tx_buf[3];
 #endif
@@ -440,7 +443,7 @@ console_rx_char(void *arg, uint8_t data)
         }
         if (!ct->ct_echo_off) {
             /* HACK: clean line by backspacing up to maximum possible space */
-            for (i = 0; i < CONSOLE_TX_BUF_SZ; i++) {
+            for (i = 0; i < MYNEWT_VAL(CONSOLE_TX_BUF_SIZE); i++) {
                 if (console_buf_space(tx) < 3) {
                     console_tx_flush(ct, 3);
                 }
@@ -518,11 +521,11 @@ console_init(console_rx_cb rx_cb)
 {
     struct console_tty *ct = &console_tty;
     struct uart_conf uc = {
-        .uc_speed = CONSOLE_UART_SPEED,
+        .uc_speed = MYNEWT_VAL(CONSOLE_BAUD),
         .uc_databits = 8,
         .uc_stopbits = 1,
         .uc_parity = UART_PARITY_NONE,
-        .uc_flow_ctl = UART_FLOW_CTL_NONE,
+        .uc_flow_ctl = MYNEWT_VAL(CONSOLE_FLOW_CONTROL),
         .uc_tx_char = console_tx_char,
         .uc_rx_char = console_rx_char,
         .uc_cb_arg = ct
@@ -530,9 +533,9 @@ console_init(console_rx_cb rx_cb)
 
     ct->ct_rx_cb = rx_cb;
     if (!ct->ct_dev) {
-        ct->ct_tx.cr_size = CONSOLE_TX_BUF_SZ;
+        ct->ct_tx.cr_size = MYNEWT_VAL(CONSOLE_TX_BUF_SIZE);
         ct->ct_tx.cr_buf = ct->ct_tx_buf;
-        ct->ct_rx.cr_size = CONSOLE_RX_BUF_SZ;
+        ct->ct_rx.cr_size = MYNEWT_VAL(CONSOLE_RX_BUF_SIZE);
         ct->ct_rx.cr_buf = ct->ct_rx_buf;
         ct->ct_write_char = console_queue_char;
 

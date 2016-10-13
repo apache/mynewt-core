@@ -33,7 +33,6 @@ extern uint8_t __DATA_ROM;
 
 /* UART info */
 #define CONSOLE_UART        "uart0"
-#define CONSOLE_UART_SPEED  115200
 
 /* This defines the maximum NFFS areas (block) are in the BSPs NFS file
  * system space.  This in conjunction with flash map determines how

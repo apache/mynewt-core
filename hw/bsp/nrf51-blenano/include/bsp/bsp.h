@@ -36,7 +36,6 @@ extern "C" {
 
 /* UART info */
 #define CONSOLE_UART            "uart0"
-#define CONSOLE_UART_SPEED      115200
 
 #define NFFS_AREA_MAX    (8)
 

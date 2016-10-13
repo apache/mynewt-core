@@ -42,7 +42,6 @@ extern uint8_t _ram_start;
 
 /* UART info */
 #define CONSOLE_UART    	"uart1"
-#define CONSOLE_UART_SPEED    	9600
 
 #define ESPDUINO_UART           "uart0"
 #define ESPDUINO_UART_SPEED     9600
