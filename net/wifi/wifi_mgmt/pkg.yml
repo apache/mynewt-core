@@ -23,6 +23,6 @@ pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
+    - "kernel/os"
 pkg.deps.WIFI_MGMT_CLI:
     - libs/shell

@@ -24,20 +24,20 @@ pkg.homepage: "https://www.iotivity.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/encoding/tinycbor"
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/sys/log"
+    - "encoding/tinycbor"
+    - "kernel/os"
+    - "sys/log"
 
 pkg.deps.OC_TRANSPORT_GATT:
-    - "@apache-mynewt-core/net/nimble/host"
-    - "@apache-mynewt-core/net/nimble/host/services/gap"
-    - "@apache-mynewt-core/net/nimble/host/services/gatt"
+    - "net/nimble/host"
+    - "net/nimble/host/services/gap"
+    - "net/nimble/host/services/gatt"
 
 pkg.deps.OC_TRANSPORT_IP:
-    - "@apache-mynewt-core/net/ip/mn_socket"
+    - "net/ip/mn_socket"
 
 pkg.deps.OC_TRANSPORT_SERIAL:
-    - "@apache-mynewt-core/sys/shell"
+    - "sys/shell"
 
 # remove debug option to save logging
 pkg.cflags:
