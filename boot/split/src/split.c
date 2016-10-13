@@ -39,9 +39,6 @@ split_app_init(void)
 
     rc = split_conf_init();
     assert(rc == 0);
-
-    rc = split_nmgr_register();
-    assert(rc == 0);
 }
 
 split_status_t
@@ -135,5 +132,10 @@ split_app_go(void **entry, int toboot)
     }
 
     rc = split_go(LOADER_IMAGE_SLOT, SPLIT_IMAGE_SLOT, entry);
+    if (rc != 0) {
+        /* Images don't match; clear split status. */
+        split_write_split(SPLIT_MODE_LOADER);
+    }
+
     return rc;
 }

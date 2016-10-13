@@ -52,13 +52,14 @@ extern "C" {
 /**
  * Newtmgr error codes
  */
-#define MGMT_ERR_EOK      (0)
-#define MGMT_ERR_EUNKNOWN (1)
-#define MGMT_ERR_ENOMEM   (2)
-#define MGMT_ERR_EINVAL   (3)
-#define MGMT_ERR_ETIMEOUT (4)
-#define MGMT_ERR_ENOENT   (5)
-#define MGMT_ERR_EPERUSER (256)
+#define MGMT_ERR_EOK        (0)
+#define MGMT_ERR_EUNKNOWN   (1)
+#define MGMT_ERR_ENOMEM     (2)
+#define MGMT_ERR_EINVAL     (3)
+#define MGMT_ERR_ETIMEOUT   (4)
+#define MGMT_ERR_ENOENT     (5)
+#define MGMT_ERR_EBADSTATE  (6)     /* Current state disallows command. */
+#define MGMT_ERR_EPERUSER   (256)
 
 struct mgmt_cbuf;
 

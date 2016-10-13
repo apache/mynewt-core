@@ -95,10 +95,6 @@ imgmgr_state_flags(int query_slot)
         break;
     }
 
-    /* An image cannot be both pending and confirmed. */
-    assert(!(flags & IMGMGR_STATE_F_PENDING) ||
-           !(flags & IMGMGR_STATE_F_CONFIRMED));
-
     return flags;
 }
 
@@ -137,7 +133,7 @@ imgmgr_state_test_slot(int slot)
     if (state_flags & IMGMGR_STATE_F_CONFIRMED &&
         (slot != 0 || !split_app_active)) {
 
-        return MGMT_ERR_EINVAL;
+        return MGMT_ERR_EBADSTATE;
     }
 
     rc = imgr_read_info(slot, NULL, NULL, &image_flags);
@@ -175,7 +171,7 @@ imgmgr_state_confirm(void)
 
     /* Confirm disallowed if a test is pending. */
     if (imgmgr_state_any_pending()) {
-        return MGMT_ERR_EINVAL;
+        return MGMT_ERR_EBADSTATE;
     }
 
     /* Confirm the unified image or loader in slot 0. */
@@ -187,6 +183,11 @@ imgmgr_state_confirm(void)
     /* If a split app in slot 1 is active, confirm it as well. */
     if (boot_split_app_active_get()) {
         rc = split_write_split(SPLIT_MODE_APP);
+        if (rc != 0) {
+            return MGMT_ERR_EUNKNOWN;
+        }
+    } else {
+        rc = split_write_split(SPLIT_MODE_LOADER);
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
