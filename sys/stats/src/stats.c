@@ -330,7 +330,8 @@ err:
  */
 int
 stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
-                   struct stats_name_map *map, uint8_t map_cnt, char *name)
+                   const struct stats_name_map *map, uint8_t map_cnt,
+                   char *name)
 {
     int rc;
 
