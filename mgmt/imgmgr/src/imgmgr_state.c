@@ -234,6 +234,7 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         g_err |= cbor_encode_int(&rsp, i);
 
         g_err |= cbor_encode_text_stringz(&image, "version");
+        imgr_ver_str(&ver, vers_str);
         g_err |= cbor_encode_text_stringz(&image, vers_str);
 
         g_err |= cbor_encode_text_stringz(&image, "hash");

@@ -136,12 +136,16 @@ log_reboot(int reason)
     char str[12] = {0};
     struct image_version ver;
     int16_t reboot_tmp_cnt;
-    const struct flash_area *ptr;
 
     rc = 0;
-    if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
-        goto err;
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
+    {
+        const struct flash_area *ptr;
+        if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
+            goto err;
+        }
     }
+#endif
 
     reboot_tmp_cnt = reboot_cnt;
 

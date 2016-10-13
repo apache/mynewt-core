@@ -30,3 +30,8 @@ pkg.deps:
     - encoding/json
     - sys/reboot
     - mgmt/mgmt
+    - encoding/tinycbor
+    - encoding/cborattr
+
+pkg.req_apis:
+    - newtmgr
