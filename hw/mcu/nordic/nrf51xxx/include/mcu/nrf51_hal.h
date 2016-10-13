@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -45,6 +45,12 @@ struct nrf51_uart_cfg {
     int8_t suc_pin_cts;
 };
 const struct nrf51_uart_cfg *bsp_uart_config(void);
+
+struct nrf51_hal_i2c_cfg {
+    int scl_pin;
+    int sda_pin;
+    uint32_t i2c_frequency;
+};
 
 struct hal_flash;
 extern const struct hal_flash nrf51_flash_dev;
