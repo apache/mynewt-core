@@ -36,10 +36,10 @@ struct nrf52_hal_i2c {
 #define NRF52_HAL_I2C_MAX (2)
 
 #if TWI0_ENABLED
-struct nrf52_hal_i2c hal_twi_i2c0;
+struct nrf52_hal_i2c hal_twi_i2c0 = {NRF_DRV_TWI_INSTANCE(0)};
 #endif
 #if TWI1_ENABLED
-struct nrf52_hal_i2c hal_twi_i2c1;
+struct nrf52_hal_i2c hal_twi_i2c1 = {NRF_DRV_TWI_INSTANCE(1)};
 #endif
 
 static const struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
@@ -171,6 +171,7 @@ hal_i2c_master_end(uint8_t i2c_num)
      * private, however, seems like it will be reasonably easy to spot.
      * Famous last words.
      */
+    nrf_twi_task_trigger(i2c->nhi_nrf_master.reg.p_twi, NRF_TWI_TASK_RESUME);
     nrf_twi_task_trigger(i2c->nhi_nrf_master.reg.p_twi, NRF_TWI_TASK_STOP);
 
     return (0);
