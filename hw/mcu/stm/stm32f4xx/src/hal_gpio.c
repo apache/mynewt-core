@@ -470,7 +470,11 @@ int hal_gpio_init_out(int pin, int val)
     init_cfg.Alternate = 0;
 
     rc = hal_gpio_init_stm(pin, &init_cfg);
-    return rc;
+    if (rc) {
+        return rc;
+    }
+    hal_gpio_write(pin, val);
+    return 0;
 }
 
 /**
