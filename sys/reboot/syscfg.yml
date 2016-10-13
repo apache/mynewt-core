@@ -12,8 +12,6 @@ syscfg.defs:
         description: 'TBD'
         type: flash_owner
         value:
-        restrictions:
-            - REBOOT_LOG_FCB
 
     REBOOT_LOG_ENTRY_COUNT:
         description: 'TBD'
