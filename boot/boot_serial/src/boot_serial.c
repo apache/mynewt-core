@@ -278,7 +278,7 @@ boot_serial_input(char *buf, int len)
      */
     if (hdr->nh_group == NMGR_GROUP_ID_IMAGE) {
         switch (hdr->nh_id) {
-        case IMGMGR_NMGR_OP_LIST:
+        case IMGMGR_NMGR_OP_STATE:
             bs_list(buf, len);
             break;
         case IMGMGR_NMGR_OP_UPLOAD:

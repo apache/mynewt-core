@@ -34,21 +34,16 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-static int imgr_list2(struct mgmt_cbuf *);
 static int imgr_upload(struct mgmt_cbuf *);
 
 static const struct mgmt_handler imgr_nmgr_handlers[] = {
-    [IMGMGR_NMGR_OP_LIST] = {
-        .mh_read = NULL,
-        .mh_write = NULL
+    [IMGMGR_NMGR_OP_STATE] = {
+        .mh_read = imgmgr_state_read,
+        .mh_write = imgmgr_state_write,
     },
     [IMGMGR_NMGR_OP_UPLOAD] = {
         .mh_read = NULL,
         .mh_write = imgr_upload
-    },
-    [IMGMGR_NMGR_OP_BOOT] = {
-        .mh_read = NULL,
-        .mh_write = NULL
     },
     [IMGMGR_NMGR_OP_FILE] = {
 #if MYNEWT_VAL(IMGMGR_FS)
@@ -58,14 +53,6 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_read = NULL,
         .mh_write = NULL
 #endif
-    },
-    [IMGMGR_NMGR_OP_LIST2] = {
-        .mh_read = imgr_list2,
-        .mh_write = NULL
-    },
-    [IMGMGR_NMGR_OP_BOOT2] = {
-        .mh_read = imgr_boot2_read,
-        .mh_write = imgr_boot2_write
     },
     [IMGMGR_NMGR_OP_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
@@ -84,10 +71,6 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_read = NULL,
         .mh_write = NULL
 #endif
-    },
-    [IMGMGR_NMGR_OP_STATE] = {
-        .mh_read = imgmgr_state_read,
-        .mh_write = imgmgr_state_write,
     },
 };
 
@@ -246,47 +229,6 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
         }
     }
     return -1;
-}
-
-static int
-imgr_list2(struct mgmt_cbuf *cb)
-{
-    int i;
-    int rc;
-    uint32_t flags;
-    struct image_version ver;
-    uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
-    char vers_str[IMGMGR_NMGR_MAX_VER];
-    int ver_len;
-    CborEncoder *penc = &cb->encoder;
-    CborError g_err = CborNoError;
-    CborEncoder rsp, images, image;
-
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "images");
-    g_err |= cbor_encoder_create_array(&rsp, &images, CborIndefiniteLength);
-
-    for (i = 0; i < 2; i++) {
-        rc = imgr_read_info(i, &ver, hash, &flags);
-        if (rc != 0) {
-            continue;
-        }
-        g_err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
-        g_err |= cbor_encode_text_stringz(&image, "slot");
-        g_err |= cbor_encode_int(&image, i);
-        g_err |= cbor_encode_text_stringz(&image, "version");
-        ver_len = imgr_ver_str(&ver, vers_str);
-        g_err |= cbor_encode_text_string(&image, vers_str, ver_len);
-        g_err |= cbor_encode_text_stringz(&image, "hash");
-        g_err |= cbor_encode_byte_string(&image, hash, IMGMGR_HASH_LEN);
-        g_err |= cbor_encode_text_stringz(&image, "bootable");
-        g_err |= cbor_encode_boolean(&image,  !(flags & IMAGE_F_NON_BOOTABLE));
-        g_err |= cbor_encoder_close_container(&images, &image);
-    }
-    g_err |= cbor_encoder_close_container(&rsp, &images);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
-
-    return g_err;
 }
 
 static int
@@ -461,7 +403,4 @@ imgmgr_module_init(void)
     rc = imgr_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
-
-    /* XXX: Confirm image under test; this needs to be removed. */
-    boot_vect_write_main();
 }

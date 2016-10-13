@@ -59,7 +59,7 @@ struct nmgr_hdr {
 /*
  * From imgmgr.h
  */
-#define IMGMGR_NMGR_OP_LIST             0
+#define IMGMGR_NMGR_OP_STATE            0
 #define IMGMGR_NMGR_OP_UPLOAD           1
 
 
