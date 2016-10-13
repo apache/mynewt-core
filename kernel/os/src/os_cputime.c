@@ -234,7 +234,7 @@ os_cputime_timer_relative(struct hal_timer *timer, uint32_t usecs)
     assert(timer != NULL);
 
     cputime = os_cputime_get32() + os_cputime_usecs_to_ticks(usecs);
-    hal_timer_start(timer, cputime);
+    hal_timer_start_at(timer, cputime);
 }
 
 /**
