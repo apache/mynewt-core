@@ -35,7 +35,7 @@ oc_rep_new(uint8_t *out_payload, int size)
   g_err = CborNoError;
   g_buf = out_payload;
   cbor_buf_writer_init(&g_buf_writer, out_payload, size);
-  cbor_encoder_init(&g_encoder, &cbor_buf_writer, &g_buf_writer, 0);
+  cbor_encoder_init(&g_encoder, &g_buf_writer.enc, 0);
 }
 
 int

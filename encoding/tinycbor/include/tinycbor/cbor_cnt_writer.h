@@ -37,14 +37,14 @@ struct CborCntWriter {
     struct cbor_encoder_writer enc;
 };
 
-inline int
+static inline int
 cbor_cnt_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
     struct CborCntWriter *cb = (struct CborCntWriter *) arg;
     cb->enc.bytes_written += len;
     return CborNoError;
 }
 
-inline void
+static inline void
 cbor_cnt_writer_init(struct CborCntWriter *cb) {
     cb->enc.bytes_written = 0;
     cb->enc.write = &cbor_cnt_writer;

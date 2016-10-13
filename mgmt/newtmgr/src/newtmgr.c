@@ -48,33 +48,7 @@ static struct nmgr_cbuf {
     struct CborMbufWriter writer;
     struct CborMbufReader reader;
     struct os_mbuf *n_out_m;
-
-#if 0
-    struct os_mbuf *n_in_m;
-    struct nmgr_hdr *n_hdr;
-    uint16_t n_off;
-    uint16_t n_end;
-#endif
 } nmgr_task_cbuf;
-
-#if 0
-static int
-nmgr_rsp_extend(struct nmgr_hdr *hdr, struct os_mbuf *rsp, void *data,
-        uint16_t len)
-{
-    int rc;
-
-    rc = os_mbuf_append(rsp, data, len);
-    if (rc != 0) {
-        goto err;
-    }
-    hdr->nh_len += len;
-
-    return (0);
-err:
-    return (rc);
-}
-#endif
 
 static int
 nmgr_cbuf_init(struct nmgr_cbuf *njb)
@@ -116,9 +90,7 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
     if (!hdr) {
         return;
     }
-#if 0
-    mgmt_jbuf_setoerr(&nmgr_task_jbuf.n_b, rc);
-#endif
+    mgmt_cbuf_setoerr(&nmgr_task_cbuf.n_b, rc);
     hdr->nh_len = htons(hdr->nh_len);
     hdr->nh_flags = NMGR_F_CBOR_RSP_COMPLETE;
     nt->nt_output(nt, nmgr_task_cbuf.n_out_m);
