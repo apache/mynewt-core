@@ -111,17 +111,14 @@ nmgr_def_console_echo(struct mgmt_cbuf *cb)
 {
     long long int echo_on = 1;
     int rc;
-    struct cbor_attr_t attrs[3] = {
+    struct cbor_attr_t attrs[2] = {
         [0] = {
             .attribute = "echo",
-            .type = CborAttrTextStringType,
+            .type = CborAttrIntegerType,
             .addr.integer = &echo_on,
             .nodefault = 1
         },
-        [1] = {
-            .attribute = NULL
-        },
-        [2] = { 0 },
+        [1] = { 0 },
     };
 
     rc = cbor_read_object(&cb->it, attrs);
