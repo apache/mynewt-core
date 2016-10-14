@@ -52,10 +52,6 @@ struct boot_status {
     uint8_t state;
 };
 
-#define BOOT_SWAP_TYPE_NONE     0
-#define BOOT_SWAP_TYPE_TEMP     1
-#define BOOT_SWAP_TYPE_PERM     2
-
 /*
  * End-of-image slot data structure.
  */

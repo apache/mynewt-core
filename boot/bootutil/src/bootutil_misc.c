@@ -65,11 +65,8 @@ boot_status_sz(void)
     return sizeof(struct boot_img_trailer) + 32 * sizeof(uint32_t);
 }
 
-/*
- * Read the image trailer from a given slot.
- */
-static int
-boot_vect_read_img_trailer(int slot, struct boot_img_trailer *bit)
+int
+boot_swap_type(void)
 {
     struct boot_img_trailer bit0;
     struct boot_img_trailer bit1;
@@ -80,77 +77,25 @@ boot_vect_read_img_trailer(int slot, struct boot_img_trailer *bit)
     if (bit0.bit_copy_start == BOOT_MAGIC_SWAP_NONE &&
         bit1.bit_copy_start == BOOT_MAGIC_SWAP_NONE) {
 
-    area_id = flash_area_id_from_image_slot(slot);
-    rc = flash_area_open(area_id, &fap);
-    if (rc) {
-        return rc;
+        return BOOT_SWAP_TYPE_NONE;
     }
-    off = fap->fa_size - sizeof(struct boot_img_trailer);
-    rc = flash_area_read(fap, off, bit, sizeof(*bit));
-    flash_area_close(fap);
 
-    return rc;
-}
+    if (bit1.bit_copy_start == BOOT_MAGIC_SWAP_TEMP) {
+        return BOOT_SWAP_TYPE_TEMP;
+    }
 
-/**
- * Retrieves from the slot number of the test image (i.e.,
- * the image that has not been proven stable, and which will only run once).
- *
- * @param slot              On success, the slot number of image to boot.
- *
- * @return                  0 if a test image was found;
- *                          nonzero if there is no test image.
- */
-int
-boot_vect_read_test(int *slot)
-{
-    struct boot_img_trailer bit;
-    int i;
-    int rc;
-
-    for (i = 0; i < 2; i++) {
-        if (i == boot_current_slot) {
-            continue;
-        }
-        rc = boot_vect_read_img_trailer(i, &bit);
-        if (rc) {
-            continue;
-        }
-        if (bit.bit_copy_start == BOOT_MAGIC_SWAP_TEMP) {
-            *slot = i;
-            return 0;
+    if (bit0.bit_copy_start == BOOT_MAGIC_SWAP_PERM) {
+        if (bit0.bit_img_ok != 0xff) {
+            return BOOT_SWAP_TYPE_NONE;
+        } else {
+            return BOOT_SWAP_TYPE_PERM;
         }
     }
-    return -1;
-}
 
-/**
- * Retrieves from the slot number of the main image. If this is
- * different from test image slot, next restart will revert to main.
- *
- * @param out_ver           On success, the main version gets written here.
- *
- * @return                  0 on success; nonzero on failure.
- */
-int
-boot_vect_read_main(int *slot)
-{
-    int rc;
-    struct boot_img_trailer bit;
-
-    rc = boot_vect_read_img_trailer(0, &bit);
-    assert(rc == 0);
-
-    if (bit.bit_copy_start != BOOT_MAGIC_SWAP_TEMP || bit.bit_img_ok != 0xff) {
-        /*
-         * If there never was copy that took place, or if the current
-         * image has been marked good, we'll keep booting it.
-         */
-        *slot = 0;
-    } else {
-        *slot = 1;
-    }
-    return 0;
+    /* This should never happen. */
+    /* XXX: Remove this assert. */
+    assert(0);
+    return BOOT_SWAP_TYPE_NONE;
 }
 
 /**

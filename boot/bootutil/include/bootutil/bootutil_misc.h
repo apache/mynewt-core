@@ -26,8 +26,11 @@
 extern "C" {
 #endif
 
-int boot_vect_read_test(int *slot);
-int boot_vect_read_main(int *slot);
+#define BOOT_SWAP_TYPE_NONE     0
+#define BOOT_SWAP_TYPE_TEMP     1
+#define BOOT_SWAP_TYPE_PERM     2
+
+int boot_swap_type(void);
 int boot_vect_write_test(int slot);
 int boot_vect_write_main(void);
 

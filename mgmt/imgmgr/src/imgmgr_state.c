@@ -37,8 +37,7 @@ imgmgr_state_flags(int query_slot)
 {
     split_mode_t split_mode;
     uint8_t flags;
-    int slot;
-    int rc;
+    int swap_type;
 
     assert(query_slot == 0 || query_slot == 1);
 

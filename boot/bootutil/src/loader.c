@@ -185,39 +185,6 @@ boot_scratch_magic(struct boot_img_trailer *bit)
     hal_flash_read(flash_id, off, bit, sizeof(*bit));
 }
 
-static int
-boot_swap_type(void)
-{
-    struct boot_img_trailer bit0;
-    struct boot_img_trailer bit1;
-
-    boot_slot_magic(0, &bit0);
-    boot_slot_magic(1, &bit1);
-
-    if (bit0.bit_copy_start == BOOT_MAGIC_SWAP_NONE &&
-        bit1.bit_copy_start == BOOT_MAGIC_SWAP_NONE) {
-
-        return BOOT_SWAP_TYPE_NONE;
-    }
-
-    if (bit1.bit_copy_start == BOOT_MAGIC_SWAP_TEMP) {
-        return BOOT_SWAP_TYPE_TEMP;
-    }
-
-    if (bit0.bit_copy_start == BOOT_MAGIC_SWAP_PERM) {
-        if (bit0.bit_img_ok != 0xff) {
-            return BOOT_SWAP_TYPE_NONE;
-        } else {
-            return BOOT_SWAP_TYPE_PERM;
-        }
-    }
-
-    /* This should never happen. */
-    /* XXX: Remove this assert. */
-    assert(0);
-    return BOOT_SWAP_TYPE_NONE;
-}
-
 /*
  * Gather info about image in a given slot.
  */
@@ -613,7 +580,6 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     //}
 
     /* Check if we should initiate copy, or revert back to earlier image. */
-    //swap_type = boot_validate_state(swap_type);
     swap_type = boot_validate_state(swap_type);
 
     if (swap_type == BOOT_SWAP_TYPE_NONE) {
