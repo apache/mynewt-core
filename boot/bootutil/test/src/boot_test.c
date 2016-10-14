@@ -63,6 +63,9 @@ static struct {
     { 0, 0x80000 },
 };
 
+/** Three areas per image slot */
+#define BOOT_TEST_IMAGE_NUM_AREAS  3
+
 #define BOOT_TEST_AREA_IDX_SCRATCH 6
 
 static uint8_t
@@ -127,11 +130,46 @@ boot_test_util_copy_area(int from_area_idx, int to_area_idx)
     free(buf);
 }
 
+static uint32_t
+boot_test_util_area_write_size(int dst_idx, uint32_t off, uint32_t size)
+{
+    const struct flash_area *desc;
+    int64_t diff;
+    uint32_t trailer_start;
+    int i;
+
+    for (i = 0;
+         i < sizeof boot_test_slot_areas / sizeof boot_test_slot_areas[0];
+         i++) {
+
+        /* Don't include trailer in copy. */
+        if (dst_idx ==
+            boot_test_slot_areas[i] + BOOT_TEST_IMAGE_NUM_AREAS - 1) {
+
+            desc = boot_test_area_descs + dst_idx;
+            trailer_start = desc->fa_size - boot_status_sz();
+            diff = off + size - trailer_start;
+            if (diff > 0) {
+                if (diff > size) {
+                    size = 0;
+                } else {
+                    size -= diff;
+                }
+            }
+
+            break;
+        }
+    }
+
+    return size;
+}
+
 static void
 boot_test_util_swap_areas(int area_idx1, int area_idx2)
 {
     const struct flash_area *area_desc1;
     const struct flash_area *area_desc2;
+    uint32_t size;
     void *buf1;
     void *buf2;
     int rc;
@@ -159,10 +197,12 @@ boot_test_util_swap_areas(int area_idx1, int area_idx2)
     rc = flash_area_erase(area_desc2, 0, area_desc2->fa_size);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_area_write(area_desc1, 0, buf2, area_desc1->fa_size);
+    size = boot_test_util_area_write_size(area_idx1, 0, area_desc1->fa_size);
+    rc = flash_area_write(area_desc1, 0, buf2, size);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_area_write(area_desc2, 0, buf1, area_desc2->fa_size);
+    size = boot_test_util_area_write_size(area_idx2, 0, area_desc2->fa_size);
+    rc = flash_area_write(area_desc2, 0, buf1, size);
     TEST_ASSERT(rc == 0);
 
     free(buf1);
@@ -339,7 +379,7 @@ boot_test_util_verify_status_clear(void)
     rc = flash_area_read(fap, fap->fa_size - sizeof(bit), &bit, sizeof(bit));
     TEST_ASSERT(rc == 0);
 
-    TEST_ASSERT(bit.bit_copy_start != BOOT_IMG_MAGIC ||
+    TEST_ASSERT(bit.bit_copy_start != BOOT_MAGIC_SWAP_TEMP ||
       bit.bit_copy_done != 0xff);
 }
 
@@ -376,11 +416,69 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
     }
 }
 
+static void
+boot_test_util_verify_all(const struct boot_req *req, int expected_swap_type,
+                          const struct image_header *hdr0,
+                          const struct image_header *hdr1)
+{
+    const struct image_header *slot0hdr;
+    const struct image_header *slot1hdr;
+    struct boot_rsp rsp;
+    int orig_slot_0;
+    int orig_slot_1;
+    int num_swaps;
+    int rc;
+    int i;
+
+    num_swaps = 0;
+    for (i = 0; i < 3; i++) {
+        rc = boot_go(req, &rsp);
+        TEST_ASSERT_FATAL(rc == 0);
+
+        if (expected_swap_type != BOOT_SWAP_TYPE_NONE) {
+            num_swaps++;
+        }
+
+        if (num_swaps % 2 == 0) {
+            slot0hdr = hdr0;
+            slot1hdr = hdr1;
+            orig_slot_0 = 0;
+            orig_slot_1 = 1;
+        } else {
+            slot0hdr = hdr1;
+            slot1hdr = hdr0;
+            orig_slot_0 = 1;
+            orig_slot_1 = 0;
+        }
+
+        TEST_ASSERT(memcmp(rsp.br_hdr, slot0hdr, sizeof *slot0hdr) == 0);
+        TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
+        TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
+
+        boot_test_util_verify_flash(slot0hdr, orig_slot_0,
+                                    slot1hdr, orig_slot_1);
+        boot_test_util_verify_status_clear();
+
+        if (expected_swap_type != BOOT_SWAP_TYPE_NONE) {
+            switch (expected_swap_type) {
+            case BOOT_SWAP_TYPE_TEMP:
+                expected_swap_type = BOOT_SWAP_TYPE_PERM;
+                break;
+
+            case BOOT_SWAP_TYPE_PERM:
+                expected_swap_type = BOOT_SWAP_TYPE_NONE;
+                break;
+
+            default:
+                TEST_ASSERT_FATAL(0);
+                break;
+            }
+        }
+    }
+}
+
 TEST_CASE(boot_test_nv_ns_10)
 {
-    struct boot_rsp rsp;
-    int rc;
-
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 4 + 32,
@@ -402,15 +500,7 @@ TEST_CASE(boot_test_nv_ns_10)
     boot_test_util_write_image(&hdr, 0);
     boot_test_util_write_hash(&hdr, 0);
 
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr, sizeof hdr) == 0);
-    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
-
-    boot_test_util_verify_flash(&hdr, 0, NULL, 0xff);
-    boot_test_util_verify_status_clear();
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr, NULL);
 }
 
 TEST_CASE(boot_test_nv_ns_01)
@@ -815,8 +905,7 @@ TEST_CASE(boot_test_nv_bs_11)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
     rc = boot_vect_write_test(1);
-    boot_test_util_copy_area(5,
-      BOOT_TEST_AREA_IDX_SCRATCH);
+    boot_test_util_copy_area(5, BOOT_TEST_AREA_IDX_SCRATCH);
 
     boot_req_set(&req);
     status.idx = 0;
@@ -840,7 +929,6 @@ TEST_CASE(boot_test_nv_bs_11)
 TEST_CASE(boot_test_nv_bs_11_2areas)
 {
     struct boot_status status;
-    struct boot_rsp rsp;
     int rc;
 
     struct image_header hdr0 = {
@@ -874,35 +962,25 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-    rc = boot_vect_write_test(1);
 
     boot_test_util_swap_areas(2, 5);
+
+    rc = boot_vect_write_test(1);
+    TEST_ASSERT_FATAL(rc == 0);
 
     status.idx = 1;
     status.elem_sz = 1;
     status.state = 0;
 
     rc = boot_write_status(&status);
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
 
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
-
-    boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
-    boot_test_util_verify_status_clear();
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
 }
 
 TEST_CASE(boot_test_vb_ns_11)
 {
-    const struct flash_area *fap;
-    struct boot_img_trailer bit;
-    struct boot_rsp rsp;
     int rc;
-    int i;
 
     struct image_header hdr0 = {
         .ih_magic = IMAGE_MAGIC,
@@ -936,49 +1014,14 @@ TEST_CASE(boot_test_vb_ns_11)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
-    TEST_ASSERT(rc == 0);
-
-    memset(&bit, 0xff, sizeof(bit));
-    bit.bit_copy_start = BOOT_IMG_MAGIC;
-    bit.bit_copy_done = 0;
-    bit.bit_img_ok = 1;
-
-    rc = flash_area_write(fap, fap->fa_size - sizeof(bit), &bit, sizeof(bit));
-    TEST_ASSERT(rc == 0);
-
     rc = boot_vect_write_test(1);
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
 
-    /* First boot should use the test image. */
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr1, sizeof hdr1) == 0);
-    TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
-    TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
-
-    boot_test_util_verify_flash(&hdr1, 1, &hdr0, 0);
-    boot_test_util_verify_status_clear();
-
-    /* Ensure all subsequent boots use the main image. */
-    for (i = 0; i < 10; i++) {
-        rc = boot_go(&req, &rsp);
-        TEST_ASSERT(rc == 0);
-
-        TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-        TEST_ASSERT(rsp.br_flash_id == boot_test_img_addrs[0].flash_id);
-        TEST_ASSERT(rsp.br_image_addr == boot_test_img_addrs[0].address);
-
-        boot_test_util_verify_flash(&hdr0, 0, &hdr1, 1);
-        boot_test_util_verify_status_clear();
-        boot_vect_write_main();
-    }
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
 }
 
 TEST_CASE(boot_test_no_hash)
 {
-    struct boot_rsp rsp;
     int rc;
 
     struct image_header hdr0 = {
@@ -1012,20 +1055,13 @@ TEST_CASE(boot_test_no_hash)
     boot_test_util_write_image(&hdr1, 1);
 
     rc = boot_vect_write_test(1);
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
 
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-
-    boot_test_util_verify_flash(&hdr0, 0, NULL, 0xff);
-    boot_test_util_verify_status_clear();
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
 }
 
 TEST_CASE(boot_test_no_flag_has_hash)
 {
-    struct boot_rsp rsp;
     int rc;
 
     struct image_header hdr0 = {
@@ -1062,18 +1098,11 @@ TEST_CASE(boot_test_no_flag_has_hash)
     rc = boot_vect_write_test(1);
     TEST_ASSERT(rc == 0);
 
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-
-    boot_test_util_verify_flash(&hdr0, 0, NULL, 0xff);
-    boot_test_util_verify_status_clear();
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
 }
 
 TEST_CASE(boot_test_invalid_hash)
 {
-    struct boot_rsp rsp;
     int rc;
 
     struct image_header hdr0 = {
@@ -1117,13 +1146,7 @@ TEST_CASE(boot_test_invalid_hash)
     rc = boot_vect_write_test(1);
     TEST_ASSERT(rc == 0);
 
-    rc = boot_go(&req, &rsp);
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(memcmp(rsp.br_hdr, &hdr0, sizeof hdr0) == 0);
-
-    boot_test_util_verify_flash(&hdr0, 0, NULL, 0xff);
-    boot_test_util_verify_status_clear();
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
 }
 
 TEST_SUITE(boot_test_main)

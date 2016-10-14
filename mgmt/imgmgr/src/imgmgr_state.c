@@ -47,13 +47,27 @@ imgmgr_state_flags(int query_slot)
     /* Determine if this is is pending or confirmed (only applicable for
      * unified images and loaders.
      */
-    rc = boot_vect_read_test(&slot);
-    if (rc == 0 && slot == query_slot) {
-        flags |= IMGMGR_STATE_F_PENDING;
-    }
-    rc = boot_vect_read_main(&slot);
-    if (rc == 0 && slot == query_slot) {
-        flags |= IMGMGR_STATE_F_CONFIRMED;
+    swap_type = boot_swap_type();
+    switch (swap_type) {
+    case BOOT_SWAP_TYPE_NONE:
+        if (query_slot == 0) {
+            flags |= IMGMGR_STATE_F_CONFIRMED;
+            flags |= IMGMGR_STATE_F_ACTIVE;
+        }
+        break;
+
+    case BOOT_SWAP_TYPE_TEMP:
+        if (query_slot == 1) {
+            flags |= IMGMGR_STATE_F_PENDING;
+        }
+        break;
+    case BOOT_SWAP_TYPE_PERM:
+        if (query_slot == 0) {
+            flags |= IMGMGR_STATE_F_ACTIVE;
+        } else if (query_slot == 1) {
+            flags |= IMGMGR_STATE_F_CONFIRMED;
+        }
+        break;
     }
 
     /* Slot 0 is always active.  Slot 1 is also active if a split app is
