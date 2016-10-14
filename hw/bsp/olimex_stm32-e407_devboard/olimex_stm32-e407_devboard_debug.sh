@@ -51,7 +51,7 @@ set +m
 echo "target remote localhost:3333" > $GDB_CMD_FILE
 # Whether target should be reset or not
 if [ ! -z "$RESET" ]; then
-    echo "mon reset" >> $GDB_CMD_FILE
+    echo "mon reset halt" >> $GDB_CMD_FILE
 fi
 
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
