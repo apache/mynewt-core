@@ -54,7 +54,7 @@ struct hal_spi_settings {
     uint8_t         data_mode;
     uint8_t         data_order;
     uint8_t         word_size;
-    uint32_t        baudrate;
+    uint32_t        baudrate;		/* baudrate in kHz */
 };
 
 /**
