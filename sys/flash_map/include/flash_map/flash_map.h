@@ -87,6 +87,7 @@ uint8_t flash_area_align(const struct flash_area *);
 int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
 
 int flash_area_id_from_image_slot(int slot);
+int flash_area_id_to_image_slot(int area_id);
 
 #ifdef __cplusplus
 }

@@ -52,6 +52,7 @@ coredump_dump(void *regs, int regs_sz)
     uint8_t hash[IMGMGR_HASH_LEN];
     uint32_t off;
     uint32_t area_off, area_end;
+    int slot;
 
     if (coredump_disabled) {
         return;
@@ -68,6 +69,16 @@ coredump_dump(void *regs, int regs_sz)
          * Don't override corefile.
          */
         return;
+    }
+
+    /* Don't overwrite an image that has any flags set (pending, active, or
+     * confirmed).
+     */
+    slot = flash_area_id_to_image_slot(MYNEWT_VAL(COREDUMP_FLASH_AREA));
+    if (slot != -1) {
+        if (imgmgr_state_slot_in_use(slot)) {
+            return;
+        }
     }
 
     if (flash_area_erase(fa, 0, fa->fa_size)) {

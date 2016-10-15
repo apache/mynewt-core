@@ -129,6 +129,11 @@ flash_area_align(const struct flash_area *fa)
     return hal_flash_align(fa->fa_device_id);
 }
 
+/**
+ * Converts the specified image slot index to a flash area ID.  If the
+ * specified value is not a valid image slot index (0 or 1), a crash is
+ * triggered.
+ */
 int
 flash_area_id_from_image_slot(int slot)
 {
@@ -140,6 +145,23 @@ flash_area_id_from_image_slot(int slot)
     default:
         assert(0);
         return FLASH_AREA_IMAGE_0;
+    }
+}
+
+/**
+ * Converts the specified flash area ID to an image slot index (0 or 1).  If
+ * the area ID does not correspond to an image slot, -1 is returned.
+ */
+int
+flash_area_id_to_image_slot(int area_id)
+{
+    switch (area_id) {
+    case FLASH_AREA_IMAGE_0:
+        return 0;
+    case FLASH_AREA_IMAGE_1:
+        return 1;
+    default:
+        return -1;
     }
 }
 
