@@ -60,10 +60,11 @@ struct stm32f4_hal_i2c_cfg {
 };
 
 struct stm32f4_hal_spi_cfg {
+    int ss_pin;					/* for slave mode */
     int sck_pin;
     int miso_pin;
     int mosi_pin;
-    SPI_InitTypeDef *spi_settings;
+    int irq_prio;
 };
 
 #ifdef __cplusplus

@@ -25,12 +25,21 @@ syscfg.defs:
         description: 'I2C0'
         value: 0
 
-    SPI_MASTER:
+    SPI_0:
         description: 'TBD'
         value:  0
-    SPI_SLAVE:
+
+    SPI_0_MASTER:
         description: 'TBD'
-        value:  1
+        value:  0
+        restrictions:
+            - SPI_0
+
+    SPI_0_SLAVE:
+        description: 'TBD'
+        value:  0
+        restrictions:
+            - SPI_0
 
     TIMER_0:
         description: 'TIMER_0'

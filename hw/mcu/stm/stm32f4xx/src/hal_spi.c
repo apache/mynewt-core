@@ -21,9 +21,10 @@
 #include <hal/hal_gpio.h>
 
 #include <string.h>
-#include <errno.h>
 
 #include <assert.h>
+
+#include <syscfg/syscfg.h>
 
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_dma.h"
@@ -32,6 +33,7 @@
 #include "stm32f4xx_hal_gpio_ex.h"
 #include "stm32f4xx_hal_rcc.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
+#include "mcu/stm32f4_bsp.h"
 #include "bsp/cmsis_nvic.h"
 #include "console/console.h"
 
@@ -41,72 +43,66 @@
 
 struct stm32f4_hal_spi {
     SPI_HandleTypeDef handle;
-
+    uint8_t type;
+    uint16_t def_char;
     /* Callback and arguments */
     hal_spi_txrx_cb txrx_cb_func;
     void            *txrx_cb_arg;
 };
 
-#ifdef SPI1
+static struct stm32f4_spi_stat {
+    uint32_t irq;
+} spi_stat;
+
+static void spi_irq_handler(struct stm32f4_hal_spi *spi);
+
+#if MYNEWT_VAL(SPI_0)
+struct stm32f4_hal_spi stm32f4_hal_spi0;
+#endif
+#if MYNEWT_VAL(SPI_1)
 struct stm32f4_hal_spi stm32f4_hal_spi1;
-#else
-#define __HAL_RCC_SPI1_CLK_ENABLE()
 #endif
-#ifdef SPI2
+#if MYNEWT_VAL(SPI_2)
 struct stm32f4_hal_spi stm32f4_hal_spi2;
-#else
-#define __HAL_RCC_SPI2_CLK_ENABLE()
 #endif
-#ifdef SPI3
+#if MYNEWT_VAL(SPI_3)
 struct stm32f4_hal_spi stm32f4_hal_spi3;
-#else
-#define __HAL_RCC_SPI3_CLK_ENABLE()
 #endif
-#ifdef SPI4
+#if MYNEWT_VAL(SPI_4)
 struct stm32f4_hal_spi stm32f4_hal_spi4;
-#else
-#undef __HAL_RCC_SPI4_CLK_ENABLE
-#define __HAL_RCC_SPI4_CLK_ENABLE()
 #endif
-#ifdef SPI5
+#if MYNEWT_VAL(SPI_5)
 struct stm32f4_hal_spi stm32f4_hal_spi5;
-#else
-#define __HAL_RCC_SPI5_CLK_ENABLE()
-#endif
-#ifdef SPI6
-struct stm32f4_hal_spi stm32f4_hal_spi6;
-#else
-#define __HAL_RCC_SPI6_CLK_ENABLE()
 #endif
 
 static struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
-#ifdef SPI1
+#if MYNEWT_VAL(SPI_0)
+    &stm32f4_hal_spi0,
+#else
+    NULL,
+#endif
+#if MYNEWT_VAL(SPI_1)
     &stm32f4_hal_spi1,
 #else
     NULL,
 #endif
-#ifdef SPI2
+#if MYNEWT_VAL(SPI_2)
     &stm32f4_hal_spi2,
 #else
     NULL,
 #endif
-#ifdef SPI3
+#if MYNEWT_VAL(SPI_3)
     &stm32f4_hal_spi3,
 #else
     NULL,
 #endif
-#ifdef SPI4
+#if MYNEWT_VAL(SPI_4)
     &stm32f4_hal_spi4,
 #else
     NULL,
 #endif
-#ifdef SPI5
+#if MYNEWT_VAL(SPI_5)
     &stm32f4_hal_spi5,
-#else
-    NULL,
-#endif
-#ifdef SPI6
-    &stm32f4_hal_spi6,
 #else
     NULL,
 #endif
@@ -114,12 +110,12 @@ static struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
 
 #define STM32F4_HAL_SPI_RESOLVE(__n, __v)                        \
     if ((__n) >= STM32F4_HAL_SPI_MAX) {                          \
-        rc = EINVAL;                                             \
+        rc = -1;                                                 \
         goto err;                                                \
     }                                                            \
     (__v) = (struct stm32f4_hal_spi *) stm32f4_hal_spis[(__n)];  \
     if ((__v) == NULL) {                                         \
-        rc = EINVAL;                                             \
+        rc = -1;                                                 \
         goto err;                                                \
     }
 
@@ -153,40 +149,44 @@ stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
 }
 
 static void
+spi_irq_handler(struct stm32f4_hal_spi *spi)
+{
+    spi_stat.irq++;
+    HAL_SPI_IRQHandler(&spi->handle);
+    if (spi->type == HAL_SPI_TYPE_MASTER && spi->handle.TxXferCount == 0 &&
+      spi->handle.RxXferCount) {
+        if (spi->txrx_cb_func) {
+            spi->txrx_cb_func(spi->txrx_cb_arg, spi->handle.TxXferSize);
+        }
+    }
+    if (spi->type == HAL_SPI_TYPE_SLAVE) {
+        spi->handle.Instance->DR = spi->def_char;
+    }
+}
+
+static void
 spi1_irq_handler(void)
 {
-    HAL_SPI_IRQHandler(&stm32f4_hal_spis[0]->handle);
-    if (stm32f4_hal_spis[0]->txrx_cb_func) {
-        stm32f4_hal_spis[0]->txrx_cb_func(stm32f4_hal_spis[0]->txrx_cb_arg, 1);
-    }
+    spi_irq_handler(stm32f4_hal_spis[0]);
 }
 
 static void
 spi2_irq_handler(void)
 {
-    HAL_SPI_IRQHandler(&stm32f4_hal_spis[1]->handle);
-    if (stm32f4_hal_spis[1]->txrx_cb_func) {
-        stm32f4_hal_spis[1]->txrx_cb_func(stm32f4_hal_spis[1]->txrx_cb_arg, 1);
-    }
+    spi_irq_handler(stm32f4_hal_spis[1]);
 }
 
 static void
 spi3_irq_handler(void)
 {
-    HAL_SPI_IRQHandler(&stm32f4_hal_spis[2]->handle);
-    if (stm32f4_hal_spis[2]->txrx_cb_func) {
-        stm32f4_hal_spis[2]->txrx_cb_func(stm32f4_hal_spis[2]->txrx_cb_arg, 1);
-    }
+    spi_irq_handler(stm32f4_hal_spis[2]);
 }
 
 #ifdef SPI4
 static void
 spi4_irq_handler(void)
 {
-    HAL_SPI_IRQHandler(&stm32f4_hal_spis[3]->handle);
-    if (stm32f4_hal_spis[3]->txrx_cb_func) {
-        stm32f4_hal_spis[3]->txrx_cb_func(stm32f4_hal_spis[3]->txrx_cb_arg, 1);
-    }
+    spi_irq_handler(stm32f4_hal_spis[3]);
 }
 #endif
 
@@ -194,10 +194,7 @@ spi4_irq_handler(void)
 static void
 spi5_irq_handler(void)
 {
-    HAL_SPI_IRQHandler(&stm32f4_hal_spis[4]->handle);
-    if (stm32f4_hal_spis[4]->txrx_cb_func) {
-        stm32f4_hal_spis[4]->txrx_cb_func(stm32f4_hal_spis[4]->txrx_cb_arg, 1);
-    }
+    spi_irq_handler(stm32f4_hal_spis[4]);
 }
 #endif
 
@@ -206,12 +203,7 @@ spi5_irq_handler(void)
 static void
 spi6_irq_handler(void)
 {
-    HAL_SPI_IRQHandler(&stm32f4_hal_spis[5]->handle);
-
-    if (stm32f4_hal_spis[5]->txrx_cb_func) {
-        stm32f4_hal_spis[5]->txrx_cb_func(stm32f4_hal_spis[5]->txrx_cb_arg, 1);
-
-    }
+    spi_irq_handler(stm32f4_hal_spis[5]);
 }
 #endif
 
@@ -247,12 +239,12 @@ hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
 {
     struct stm32f4_hal_spi *spi;
     struct stm32f4_hal_spi_cfg *cfg;
-    SPI_InitTypeDef *init;
-    GPIO_InitTypeDef pcf;
+    GPIO_InitTypeDef gpio;
+    IRQn_Type irq;
     int rc;
 
     /* Check for valid arguments */
-    rc = EINVAL;
+    rc = -1;
     if (usercfg == NULL) {
         goto err;
     }
@@ -269,83 +261,88 @@ hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
 
     cfg = (struct stm32f4_hal_spi_cfg *) usercfg;
 
-    init = (SPI_InitTypeDef *) cfg->spi_settings;
-    if (init != NULL) {
-        memcpy(&spi->handle.Init, init, sizeof(SPI_InitTypeDef));
+    spi->type = spi_type;
+    if (spi_type == HAL_SPI_TYPE_MASTER) {
+        spi->handle.Init.NSS = SPI_NSS_SOFT;
+        spi->handle.Init.Mode = SPI_MODE_MASTER;
     } else {
-        /* Provide default initialization of SPI */
+        spi->handle.Init.NSS = SPI_NSS_HARD_INPUT;
+        spi->handle.Init.Mode = SPI_MODE_SLAVE;
     }
 
-    pcf.Mode = GPIO_MODE_AF_PP;
-    pcf.Pull = GPIO_NOPULL;
-    pcf.Speed = GPIO_SPEED_FREQ_HIGH;
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
     /* Enable the clocks for this SPI */
     switch (spi_num) {
         case 0:
             __HAL_RCC_SPI1_CLK_ENABLE();
-            pcf.Alternate = GPIO_AF5_SPI1;
-            (&spi->handle)->Instance = SPI1;
+            gpio.Alternate = GPIO_AF5_SPI1;
+            spi->handle.Instance = SPI1;
             break;
         case 1:
             __HAL_RCC_SPI2_CLK_ENABLE();
-            pcf.Alternate = GPIO_AF5_SPI2;
-            (&spi->handle)->Instance = SPI2;
+            gpio.Alternate = GPIO_AF5_SPI2;
+            spi->handle.Instance = SPI2;
             break;
         case 2:
             __HAL_RCC_SPI3_CLK_ENABLE();
-            pcf.Alternate = GPIO_AF6_SPI3;
-            (&spi->handle)->Instance = SPI3;
+            gpio.Alternate = GPIO_AF6_SPI3;
+            spi->handle.Instance = SPI3;
             break;
 #ifdef SPI4
         case 3:
             __HAL_RCC_SPI4_CLK_ENABLE();
-            pcf.Alternate = GPIO_AF5_SPI4;
-            (&spi->handle)->Instance = SPI4;
+            gpio.Alternate = GPIO_AF5_SPI4;
+            spi->handle.Instance = SPI4;
             break;
 #endif
 #ifdef SPI5
         case 4:
             __HAL_RCC_SPI5_CLK_ENABLE();
-            pcf.Alternate = GPIO_AF5_SPI5;
-            (&spi->handle)->Instance = SPI5;
+            gpio.Alternate = GPIO_AF5_SPI5;
+            spi->handle.Instance = SPI5;
             break;
 #endif
 #ifdef SPI6
         case 5:
             __HAL_RCC_SPI6_CLK_ENABLE();
-            pcf.Alternate = GPIO_AF5_SPI6;
-            (&spi->handle)->Instance = SPI6;
+            gpio.Alternate = GPIO_AF5_SPI6;
+            spi->handle.Instance = SPI6;
             break;
 #endif
        default:
             assert(0);
-            rc = EINVAL;
+            rc = -1;
             goto err;
     }
 
-    rc = hal_gpio_init_stm(cfg->sck_pin, &pcf);
+    rc = hal_gpio_init_stm(cfg->sck_pin, &gpio);
+    if (rc != 0) {
+        goto err;
+    }
+    rc = hal_gpio_init_stm(cfg->mosi_pin, &gpio);
     if (rc != 0) {
         goto err;
     }
 
-    rc = hal_gpio_init_stm(cfg->miso_pin, &pcf);
+    rc = hal_gpio_init_stm(cfg->miso_pin, &gpio);
     if (rc != 0) {
         goto err;
     }
-
-    rc = hal_gpio_init_stm(cfg->mosi_pin, &pcf);
-    if (rc != 0) {
-        goto err;
+    if (spi_type == HAL_SPI_TYPE_SLAVE) {
+        gpio.Pull = GPIO_PULLUP;
+        rc = hal_gpio_init_stm(cfg->ss_pin, &gpio);
+        if (rc != 0) {
+            goto err;
+        }
     }
 
-    NVIC_SetPriority(stm32f4_resolve_spi_irq(&spi->handle),
-                     NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
-    NVIC_SetVector(stm32f4_resolve_spi_irq(&spi->handle),
-                   stm32f4_resolve_spi_irq_handler(&spi->handle));
-    NVIC_EnableIRQ(stm32f4_resolve_spi_irq(&spi->handle));
-
-    console_printf("miso:%u, mosi:%u, sck:%u\n", cfg->mosi_pin, cfg->miso_pin, cfg->sck_pin);
+    irq = stm32f4_resolve_spi_irq(&spi->handle);
+    NVIC_SetPriority(irq, cfg->irq_prio);
+    NVIC_SetVector(irq, stm32f4_resolve_spi_irq_handler(&spi->handle));
+    NVIC_EnableIRQ(irq);
 
     return (0);
 err:
@@ -375,8 +372,14 @@ stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *pres
             break;
     }
 
-    /* Calculate best-fit prescaler: divide the clock by each subsequent prescalar until
-     * we reach the highest prescalar that generates at _most_ the baudrate.
+    if (baudrate == 0) {
+        *prescaler = 0;
+        return 0;
+    }
+
+    /* Calculate best-fit prescaler: divide the clock by each subsequent
+     * prescalar until we reach the highest prescalar that generates at
+     * _most_ the baudrate.
      */
     *prescaler = SPI_BAUDRATEPRESCALER_256;
     for (i = 0; i < 8; i++) {
@@ -408,20 +411,13 @@ stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *pres
 int
 hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 {
-    int rc;
     struct stm32f4_hal_spi *spi;
+    int rc = 0;
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
-    /* Return indicating error if not enabled */
-    if (((&spi->handle)->Instance->CR1 & SPI_CR1_SPE) == 0) {
-        rc = -1;
-    } else {
-        spi->txrx_cb_func = txrx_cb;
-        spi->txrx_cb_arg = arg;
-        rc = 0;
-    }
-
+    spi->txrx_cb_func = txrx_cb;
+    spi->txrx_cb_arg = arg;
 err:
     return rc;
 }
@@ -444,8 +440,7 @@ hal_spi_enable(int spi_num)
     rc = 0;
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
-    __HAL_SPI_ENABLE(&spi->handle);
-
+    /* XXX power up */
 err:
     return rc;
 }
@@ -467,8 +462,10 @@ hal_spi_disable(int spi_num)
     rc = 0;
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
-    __HAL_SPI_DISABLE(&spi->handle);
-
+    if (spi->type == HAL_SPI_TYPE_MASTER) {
+        spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
+    }
+    /* XXX power down */
 err:
     return rc;
 }
@@ -487,23 +484,23 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 
     switch (settings->data_mode) {
         case HAL_SPI_MODE0:
-            init->CLKPolarity = SPI_POLARITY_HIGH;
+            init->CLKPolarity = SPI_POLARITY_LOW;
             init->CLKPhase = SPI_PHASE_1EDGE;
             break;
         case HAL_SPI_MODE1:
-            init->CLKPolarity = SPI_POLARITY_HIGH;
+            init->CLKPolarity = SPI_POLARITY_LOW;
             init->CLKPhase = SPI_PHASE_2EDGE;
             break;
         case HAL_SPI_MODE2:
-            init->CLKPolarity = SPI_POLARITY_LOW;
+            init->CLKPolarity = SPI_POLARITY_HIGH;
             init->CLKPhase = SPI_PHASE_1EDGE;
             break;
         case HAL_SPI_MODE3:
-            init->CLKPolarity = SPI_POLARITY_LOW;
+            init->CLKPolarity = SPI_POLARITY_HIGH;
             init->CLKPhase = SPI_PHASE_2EDGE;
             break;
         default:
-            rc = EINVAL;
+            rc = -1;
             goto err;
     }
 
@@ -515,7 +512,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             init->FirstBit = SPI_FIRSTBIT_LSB;
             break;
         default:
-            rc = EINVAL;
+            rc = -1;
             goto err;
     }
 
@@ -527,27 +524,26 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             init->DataSize = SPI_DATASIZE_16BIT;
             break;
         default:
-            rc = EINVAL;
+            rc = -1;
             goto err;
     }
 
-    rc = stm32f4_spi_resolve_prescaler(spi_num, settings->baudrate, &prescaler);
+    rc = stm32f4_spi_resolve_prescaler(spi_num, settings->baudrate * 1000,
+      &prescaler);
     if (rc != 0) {
         goto err;
     }
 
     init->BaudRatePrescaler = prescaler;
 
-    /* Disable, Init, Enable */
-    __HAL_SPI_DISABLE(&spi->handle);
-
+    /* Init, Enable */
     rc = HAL_SPI_Init(&spi->handle);
     if (rc != 0) {
         goto err;
     }
-
-    __HAL_SPI_ENABLE(&spi->handle);
-
+    if (spi->type == HAL_SPI_TYPE_MASTER) {
+        spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
+    }
     return (0);
 err:
     return (rc);
@@ -561,9 +557,12 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
-    rc = EINVAL;
-    rc = HAL_SPI_TransmitReceive_IT(&spi->handle, (uint8_t *) &txbuf,
-                                    (uint8_t *) &rxbuf, len);
+    rc = -1;
+    if (spi->type == HAL_SPI_TYPE_MASTER) {
+        spi->handle.Instance->CR1 |= SPI_CR1_SSI;
+        __HAL_SPI_ENABLE(&spi->handle);
+    }
+    rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
 err:
     return (rc);
 }
@@ -578,9 +577,18 @@ err:
 int
 hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
 {
+    struct stm32f4_hal_spi *spi;
     int rc;
 
-    rc = EINVAL;
+    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+
+    spi->def_char = val;
+    if (spi->type == HAL_SPI_TYPE_SLAVE) {
+        rc = 0;
+    } else {
+        rc = -1;
+    }
+err:
     return rc;
 }
 
@@ -602,12 +610,24 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     int rc;
     struct stm32f4_hal_spi *spi;
     uint16_t retval;
+    int len;
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
-
+    if (spi->type == HAL_SPI_TYPE_SLAVE) {
+        goto err;
+    }
+    if (spi->handle.Init.DataSize == SPI_DATASIZE_8BIT) {
+        len = sizeof(uint8_t);
+    } else {
+        len = sizeof(uint16_t);
+    }
+    spi->handle.Instance->CR1 |= SPI_CR1_SSI;
+    __HAL_SPI_ENABLE(&spi->handle);
     rc = HAL_SPI_TransmitReceive(&spi->handle,(uint8_t *)&val,
-                                 (uint8_t *)&retval, 2,
+                                 (uint8_t *)&retval, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
+    __HAL_SPI_DISABLE(&spi->handle);
+    spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
     if (rc != HAL_OK) {
         retval = 0xFFFF;
     }
@@ -645,21 +665,44 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     int rc;
     struct stm32f4_hal_spi *spi;
 
-    rc = EINVAL;
+    rc = -1;
     if (!len) {
         goto err;
     }
-
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
-
+    if (spi->type == HAL_SPI_TYPE_SLAVE) {
+        goto err;
+    }
+    spi->handle.Instance->CR1 |= SPI_CR1_SSI;
+    __HAL_SPI_ENABLE(&spi->handle);
     rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
                                  (uint8_t *)rxbuf, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
+    __HAL_SPI_DISABLE(&spi->handle);
+    spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
     if (rc != HAL_OK) {
-        rc = EINVAL;
+        rc = -1;
         goto err;
     }
     rc = 0;
+err:
+    return rc;
+}
+
+int
+hal_spi_abort(int spi_num)
+{
+    int rc;
+    struct stm32f4_hal_spi *spi;
+
+    rc = 0;
+    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    if (spi->type == HAL_SPI_TYPE_SLAVE) {
+        goto err;
+    }
+    __HAL_SPI_DISABLE_IT(&spi->handle, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+    __HAL_SPI_DISABLE(&spi->handle);
+    spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
 err:
     return rc;
 }
