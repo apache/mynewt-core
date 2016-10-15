@@ -56,10 +56,13 @@ imgmgr_state_flags(int query_slot)
         break;
 
     case BOOT_SWAP_TYPE_TEMP:
-        if (query_slot == 1) {
+        if (query_slot == 0) {
+            flags |= IMGMGR_STATE_F_CONFIRMED;
+        } else if (query_slot == 1) {
             flags |= IMGMGR_STATE_F_PENDING;
         }
         break;
+
     case BOOT_SWAP_TYPE_PERM:
         if (query_slot == 0) {
             flags |= IMGMGR_STATE_F_ACTIVE;
@@ -73,7 +76,7 @@ imgmgr_state_flags(int query_slot)
      * currently running.
      */
     /* XXX: The slot 0 assumption only holds when running from flash. */
-    if (query_slot == 0 || boot_split_app_active_get()) {
+    if (query_slot == 0 || split_app_active_get()) {
         flags |= IMGMGR_STATE_F_ACTIVE;
     }
 
@@ -138,7 +141,7 @@ imgmgr_state_test_slot(int slot)
     int rc;
 
     state_flags = imgmgr_state_flags(slot);
-    split_app_active = boot_split_app_active_get();
+    split_app_active = split_app_active_get();
 
     /* Unconfirmed slots are always testable.  A confirmed slot can only be
      * tested if it is a loader in a split image setup.
@@ -158,7 +161,7 @@ imgmgr_state_test_slot(int slot)
         /* Unified image or loader. */
         if (!split_app_active) {
             /* No change in split status. */
-            rc = boot_vect_write_test(slot);
+            rc = boot_set_pending(slot);
             if (rc != 0) {
                 return MGMT_ERR_EUNKNOWN;
             }
@@ -188,13 +191,13 @@ imgmgr_state_confirm(void)
     }
 
     /* Confirm the unified image or loader in slot 0. */
-    rc = boot_vect_write_main();
+    rc = boot_set_confirmed();
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
     /* If a split app in slot 1 is active, confirm it as well. */
-    if (boot_split_app_active_get()) {
+    if (split_app_active_get()) {
         rc = split_write_split(SPLIT_MODE_APP);
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;

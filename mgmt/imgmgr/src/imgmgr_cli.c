@@ -99,7 +99,7 @@ imgr_cli_boot_set(char *hash_str)
         console_printf("Unknown img\n");
         return;
     }
-    rc = boot_vect_write_test(rc);
+    rc = boot_set_pending(rc);
     if (rc) {
         console_printf("Can't make img active\n");
         return;

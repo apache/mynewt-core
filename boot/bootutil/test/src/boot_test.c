@@ -630,7 +630,7 @@ TEST_CASE(boot_test_vm_ns_01)
     boot_test_util_write_image(&hdr, 1);
     boot_test_util_write_hash(&hdr, 1);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_PERM, NULL, &hdr);
@@ -709,7 +709,7 @@ TEST_CASE(boot_test_vm_ns_11_b)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
@@ -751,7 +751,7 @@ TEST_CASE(boot_test_vm_ns_11_2areas)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
@@ -821,7 +821,7 @@ TEST_CASE(boot_test_nv_bs_11)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     boot_test_util_copy_area(5, BOOT_TEST_AREA_IDX_SCRATCH);
 
     boot_req_set(&req);
@@ -874,7 +874,7 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
 
     boot_test_util_swap_areas(2, 5);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT_FATAL(rc == 0);
 
     status.idx = 1;
@@ -923,7 +923,7 @@ TEST_CASE(boot_test_vb_ns_11)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT_FATAL(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
@@ -963,7 +963,7 @@ TEST_CASE(boot_test_no_hash)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT_FATAL(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
@@ -1004,7 +1004,7 @@ TEST_CASE(boot_test_no_flag_has_hash)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
@@ -1052,7 +1052,7 @@ TEST_CASE(boot_test_invalid_hash)
       &tlv, sizeof(tlv));
     TEST_ASSERT(rc == 0);
 
-    rc = boot_vect_write_test(1);
+    rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);

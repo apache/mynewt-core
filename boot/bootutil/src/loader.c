@@ -327,9 +327,8 @@ boot_validate_state(int swap_type)
     return swap_type;
 }
 
-/*
+/**
  * How many sectors starting from sector[idx] can fit inside scratch.
- *
  */
 static uint32_t
 boot_copy_sz(int max_idx, int *cnt)
@@ -553,7 +552,6 @@ int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
     int swap_type;
-    int num_swaps;
     int slot;
 
     /* Set the global boot request object.  The remainder of the boot process
@@ -564,7 +562,6 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     /* Attempt to read an image header from each slot. */
     boot_image_info();
 
-    num_swaps = 0;
     swap_type = boot_swap_type();
 
     /* Read the boot status to determine if an image copy operation was
@@ -572,25 +569,18 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
      * finish its task last time).
      */
     boot_read_status(&boot_state);
-    //if (boot_read_status(&boot_state)) {
-        ///* We are resuming an interrupted image copy. */
-        //boot_copy_image(swap_type);
-        //swap_type = BOOT_SWAP_TYPE_NONE;
-        //num_swaps++;
-    //}
 
     /* Check if we should initiate copy, or revert back to earlier image. */
     swap_type = boot_validate_state(swap_type);
 
     if (swap_type == BOOT_SWAP_TYPE_NONE) {
+        slot = 0;
         boot_state.idx = 0;
         boot_state.state = 0;
     } else {
-        num_swaps++;
+        slot = 1;
         boot_copy_image(swap_type);
     }
-
-    slot = num_swaps % 2;
 
     /* Always boot from the primary slot. */
     rsp->br_flash_id = boot_img[0].loc.bil_flash_id;

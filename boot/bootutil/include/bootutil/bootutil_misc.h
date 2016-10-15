@@ -31,11 +31,8 @@ extern "C" {
 #define BOOT_SWAP_TYPE_PERM     2
 
 int boot_swap_type(void);
-int boot_vect_write_test(int slot);
-int boot_vect_write_main(void);
-
-int boot_split_app_active_get(void);
-void boot_split_app_active_set(int active);
+int boot_set_pending(int slot);
+int boot_set_confirmed(void);
 
 #ifdef __cplusplus
 }

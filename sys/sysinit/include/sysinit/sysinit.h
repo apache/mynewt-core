@@ -57,7 +57,7 @@ void sysinit_app(void);
 #define sysinit() do                                                        \
 {                                                                           \
     /* Record that a split app is running; imgmgt needs to know this. */    \
-    boot_split_app_active_set(1);                                           \
+    split_app_active_set(1);                                           \
     sysinit_app();                                                          \
 } while (0)
 

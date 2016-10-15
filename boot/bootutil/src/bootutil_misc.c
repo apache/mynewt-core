@@ -34,7 +34,6 @@
 #include "bootutil_priv.h"
 
 int boot_current_slot;
-int8_t boot_split_app_active;
 
 /*
  * Read the image trailer from a given slot.
@@ -93,13 +92,17 @@ boot_swap_type(void)
     }
 
     /* This should never happen. */
-    /* XXX: Remove this assert. */
+    /* XXX: This assert should be removed; it remains for now to help catch
+     * boot loader bugs.
+     */
     assert(0);
     return BOOT_SWAP_TYPE_NONE;
 }
 
 /**
- * Write the test image version number from the boot vector.
+ * Configures the system to test the image in the specified slot on the next
+ * reboot.  This image is only executed once unless it is confirmed while
+ * running.
  *
  * @param slot              The image slot to write to.  Note: this is an
  *                              image slot index, not a flash area ID.
@@ -107,7 +110,7 @@ boot_swap_type(void)
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_write_test(int slot)
+boot_set_pending(int slot)
 {
     const struct flash_area *fap;
     uint32_t off;
@@ -131,14 +134,12 @@ boot_vect_write_test(int slot)
 }
 
 /**
- * Deletes the main image version number from the boot vector.
- * This must be called by the app to confirm that it is ok to keep booting
- * to this image.
+ * Confirms the currently-active image.
  *
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_vect_write_main(void)
+boot_set_confirmed(void)
 {
     const struct flash_area *fap;
     uint32_t off;
@@ -313,16 +314,4 @@ boot_set_copy_done(void)
     bit.bit_copy_start = BOOT_MAGIC_SWAP_PERM;
     bit.bit_copy_done = 1;
     hal_flash_write(flash_id, off, &bit, 5);
-}
-
-int
-boot_split_app_active_get(void)
-{
-    return boot_split_app_active;
-}
-
-void
-boot_split_app_active_set(int active)
-{
-    boot_split_app_active = !!active;
 }

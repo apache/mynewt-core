@@ -31,6 +31,7 @@
 #define SPLIT_TOTAL_IMAGES  2
 
 static int8_t split_mode_cur;
+static int8_t split_app_active;
 
 void
 split_app_init(void)
@@ -68,6 +69,18 @@ split_mode_t
 split_mode_get(void)
 {
     return split_mode_cur;
+}
+
+int
+split_app_active_get(void)
+{
+    return split_app_active;
+}
+
+void
+split_app_active_set(int active)
+{
+    split_app_active = !!active;
 }
 
 int

@@ -73,6 +73,8 @@ int split_app_go(void **entry, int toboot);
 split_status_t split_check_status(void);
 split_mode_t split_mode_get(void);
 int split_mode_set(split_mode_t split_mode);
+int split_app_active_get(void);
+void split_app_active_set(int active);
 
 int split_write_split(split_mode_t mode);
 
