@@ -60,7 +60,13 @@ struct os_sem g_test_sem;
 /* For LED toggling */
 int g_led_pin;
 
-#if MYNEWT_VAL(SPI_MASTER)
+#if MYNEWT_VAL(SPI_MASTER) || MYNEWT_VAL(SPI_0_MASTER)
+#define SPI_MASTER 1
+#endif
+#if MYNEWT_VAL(SPI_SLAVE) || MYNEWT_VAL(SPI_0_SLAVE)
+#define SPI_SLAVE 1
+#endif
+#ifdef SPI_MASTER
 uint8_t g_spi_tx_buf[32];
 uint8_t g_spi_rx_buf[32];
 uint32_t g_spi_xfr_num;
@@ -124,7 +130,7 @@ sblinky_spi_cfg(int spi_num)
 }
 #endif
 
-#if MYNEWT_VAL(SPI_SLAVE)
+#ifdef SPI_SLAVE
 uint8_t g_spi_tx_buf[32];
 uint8_t g_spi_rx_buf[32];
 uint32_t g_spi_xfr_num;
@@ -168,7 +174,7 @@ sblinky_spi_cfg(int spi_num)
 }
 #endif
 
-#if MYNEWT_VAL(SPI_MASTER)
+#ifdef SPI_MASTER
 void
 task1_handler(void *arg)
 {
@@ -264,7 +270,7 @@ task1_handler(void *arg)
 }
 #endif
 
-#if MYNEWT_VAL(SPI_SLAVE)
+#ifdef SPI_SLAVE
 void
 task1_handler(void *arg)
 {
