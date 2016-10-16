@@ -20,7 +20,7 @@
 #include <assert.h>
 
 #include "bootutil/image.h"
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
 #include "cborattr/cborattr.h"
 #include "tinycbor/cbor.h"
 #include "split/split.h"
@@ -55,7 +55,7 @@ imgmgr_state_flags(int query_slot)
         }
         break;
 
-    case BOOT_SWAP_TYPE_TEMP:
+    case BOOT_SWAP_TYPE_TEST:
         if (query_slot == 0) {
             flags |= IMGMGR_STATE_F_CONFIRMED;
         } else if (query_slot == 1) {
@@ -63,7 +63,7 @@ imgmgr_state_flags(int query_slot)
         }
         break;
 
-    case BOOT_SWAP_TYPE_PERM:
+    case BOOT_SWAP_TYPE_REVERT:
         if (query_slot == 0) {
             flags |= IMGMGR_STATE_F_ACTIVE;
         } else if (query_slot == 1) {

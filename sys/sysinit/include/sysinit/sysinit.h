@@ -21,7 +21,11 @@
 #define H_SYSINIT_
 
 #include "syscfg/syscfg.h"
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
+
+#if MYNEWT_VAL(SPLIT_APPLICATION)
+#include "split/split.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

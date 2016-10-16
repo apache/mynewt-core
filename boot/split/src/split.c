@@ -19,9 +19,8 @@
 
 #include <assert.h>
 #include "defs/error.h"
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
 #include "bootutil/image.h"
-#include "bootutil/loader.h"
 #include "imgmgr/imgmgr.h"
 #include "split/split.h"
 #include "split_priv.h"

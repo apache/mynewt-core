@@ -30,7 +30,7 @@
 #include <console/console.h>
 
 #include <bootutil/image.h>
-#include <bootutil/bootutil_misc.h>
+#include <bootutil/bootutil.h>
 
 #include <base64/hex.h>
 

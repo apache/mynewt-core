@@ -33,8 +33,7 @@
 #endif
 #include <console/console.h>
 #include "bootutil/image.h"
-#include "bootutil/loader.h"
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
 
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)

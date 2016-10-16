@@ -26,7 +26,7 @@
 #include "console/console.h"
 #include "log/log.h"
 #include "bootutil/image.h"
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
 #include "imgmgr/imgmgr.h"
 #include "config/config.h"
 #include "config/config_file.h"

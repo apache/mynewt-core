@@ -26,9 +26,8 @@
 #include "flash_map/flash_map.h"
 #include <hal/hal_flash.h>
 #include <os/os_malloc.h>
-#include "bootutil/loader.h"
+#include "bootutil/bootutil.h"
 #include "bootutil/image.h"
-#include "bootutil/bootutil_misc.h"
 #include "bootutil_priv.h"
 
 /** Number of image slots in flash; currently limited to two. */
@@ -156,9 +155,7 @@ boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
     scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
     *flash_id = scratch->fa_device_id;
 
-    /*
-     * Calculate where the boot status would be, if it was copied to scratch.
-     */
+    /* Calculate where the boot status would be if it was copied to scratch. */
     *off = boot_copy_sz(boot_req->br_slot_areas[1], &cnt);
     *off += (scratch->fa_off - sizeof(struct boot_img_trailer));
 }
@@ -219,11 +216,6 @@ boot_image_info(void)
     }
 }
 
-static int
-boot_image_bootable(struct image_header *hdr) {
-    return ((hdr->ih_flags & IMAGE_F_NON_BOOTABLE) == 0);
-}
-
 /*
  * Validate image hash/signature in a slot.
  */
@@ -276,55 +268,67 @@ split_image_check(struct image_header *app_hdr,
     return 0;
 }
 
+static int
+boot_validate_slot1(void)
+{
+    if (boot_img[1].hdr.ih_magic == 0xffffffff ||
+        boot_img[1].hdr.ih_flags & IMAGE_F_NON_BOOTABLE) {
+
+        /* No bootable image in slot 1; continue booting from slot 0. */
+        return -1;
+    }
+
+    if (boot_img[1].hdr.ih_magic != IMAGE_MAGIC ||
+        boot_image_check(&boot_img[1].hdr, &boot_img[1].loc) != 0) {
+
+        /* Image in slot 1 is invalid.  Erase the image and continue booting
+         * from slot 0.
+         */
+        boot_erase_area(boot_req->br_slot_areas[1], boot_img[1].area);
+        return -1;
+    }
+
+    /* Image in slot 1 is valid. */
+    return 0;
+}
+
 /**
- * Selects a slot number to boot from.
+ * Determines which swap operation to perform, if any.  If it is determined
+ * that a swap operation is required, the image in the second slot is checked
+ * for validity.  If the image in the second slot is invalid, it is erased, and
+ * a swap type of "none" is indicated.
  *
- * @return                      The slot number to boot from on success;
- *                              -1 if an appropriate slot could not be
- *                              determined.
+ * @return                      The type of swap to perform (BOOT_SWAP_TYPE...)
  */
 static int
-boot_validate_state(int swap_type)
+boot_validated_swap_type(void)
 {
-    struct boot_img_trailer bit;
-    struct boot_img *b;
-    int img_ok;
-    int slot;
+    int swap_type;
     int rc;
 
+    swap_type = boot_swap_type();
     if (swap_type == BOOT_SWAP_TYPE_NONE) {
-        slot = 0;
-    } else {
-        slot = 1;
+        /* Continue using slot 0. */
+        return BOOT_SWAP_TYPE_NONE;
     }
 
-    /* Assume selected image is OK to boot into. */
-    img_ok = 1;
-
-    b = &boot_img[slot];
-    boot_slot_magic(slot, &bit);
-    if (b->hdr.ih_magic == IMAGE_MAGIC_NONE) {
-        img_ok = 0;
-    } else if (!boot_image_bootable(&b->hdr)) {
-        img_ok = 0;
-    } else {
-        rc = boot_image_check(&b->hdr, &b->loc);
-        if (rc != 0) {
-            /* Image fails integrity check. Erase it. */
-            boot_erase_area(boot_req->br_slot_areas[slot], b->area);
-            img_ok = 0;
-        }
-    }
-
-    if (!img_ok) {
-        if (swap_type == BOOT_SWAP_TYPE_NONE) {
-            swap_type = BOOT_SWAP_TYPE_PERM;
-        } else {
-            swap_type = BOOT_SWAP_TYPE_NONE;
-        }
+    /* Boot loader wants to switch to slot 1.  Ensure image is valid. */
+    rc = boot_validate_slot1();
+    if (rc != 0) {
+        return BOOT_SWAP_TYPE_NONE;
     }
 
     return swap_type;
+}
+
+/**
+ * Calculates the size of the swap status and image trailer at the end of each
+ * image slot.
+ */
+static int
+boot_meta_sz(int status_elem_sz)
+{
+    return sizeof (struct boot_img_trailer) + boot_status_sz(status_elem_sz);
 }
 
 /**
@@ -357,11 +361,10 @@ boot_copy_sz(int max_idx, int *cnt)
 }
 
 /**
- * Erase one area.  The destination area must
- * be erased prior to this function being called.
+ * Erases one area.
  *
- * @param area_idx            The index of the area.
- * @param sz                  The number of bytes to erase.
+ * @param area_idx              The index of the area.
+ * @param sz                    The number of bytes to erase.
  *
  * @return                      0 on success; nonzero on failure.
  */
@@ -383,9 +386,9 @@ boot_erase_area(int area_idx, uint32_t sz)
  * Copies the contents of one area to another.  The destination area must
  * be erased prior to this function being called.
  *
- * @param from_area_idx       The index of the source area.
- * @param to_area_idx         The index of the destination area.
- * @param sz                  The number of bytes to move.
+ * @param from_area_idx         The index of the source area.
+ * @param to_area_idx           The index of the destination area.
+ * @param sz                    The number of bytes to move.
  *
  * @return                      0 on success; nonzero on failure.
  */
@@ -440,7 +443,7 @@ boot_copy_area(int from_area_idx, int to_area_idx, uint32_t sz)
  *
  * @param area_idx            The index of first slot to exchange. This area
  *                                  must be part of the first image slot.
- * @param sz                  The number of bytes to swap.
+ * @param sz                  The number of bytes swap.
  *
  * @param end_area            Boolean telling whether this includes this
  *                                  area has last slots.
@@ -450,15 +453,15 @@ boot_copy_area(int from_area_idx, int to_area_idx, uint32_t sz)
 static int
 boot_swap_areas(int idx, uint32_t sz, int end_area)
 {
+    int area_idx_0;
     int area_idx_1;
-    int area_idx_2;
     int rc;
 
-    area_idx_1 = boot_req->br_slot_areas[0] + idx;
-    area_idx_2 = boot_req->br_slot_areas[1] + idx;
-    assert(area_idx_1 != area_idx_2);
+    area_idx_0 = boot_req->br_slot_areas[0] + idx;
+    area_idx_1 = boot_req->br_slot_areas[1] + idx;
+    assert(area_idx_0 != area_idx_1);
+    assert(area_idx_0 != boot_req->br_scratch_area_idx);
     assert(area_idx_1 != boot_req->br_scratch_area_idx);
-    assert(area_idx_2 != boot_req->br_scratch_area_idx);
 
     if (boot_state.state == 0) {
         rc = boot_erase_area(boot_req->br_scratch_area_idx, sz);
@@ -466,8 +469,7 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
             return rc;
         }
 
-        rc = boot_copy_area(area_idx_2, boot_req->br_scratch_area_idx,
-          end_area ? (sz - boot_status_sz()) : sz);
+        rc = boot_copy_area(area_idx_1, boot_req->br_scratch_area_idx, sz);
         if (rc != 0) {
             return rc;
         }
@@ -476,13 +478,13 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
         (void)boot_write_status(&boot_state);
     }
     if (boot_state.state == 1) {
-        rc = boot_erase_area(area_idx_2, sz);
+        rc = boot_erase_area(area_idx_1, sz);
         if (rc != 0) {
             return rc;
         }
 
-        rc = boot_copy_area(area_idx_1, area_idx_2,
-          end_area ? (sz - boot_status_sz()) : sz);
+        rc = boot_copy_area(area_idx_0, area_idx_1,
+          end_area ? (sz - boot_meta_sz(boot_state.elem_sz)) : sz);
         if (rc != 0) {
             return rc;
         }
@@ -491,13 +493,12 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
         (void)boot_write_status(&boot_state);
     }
     if (boot_state.state == 2) {
-        rc = boot_erase_area(area_idx_1, sz);
+        rc = boot_erase_area(area_idx_0, sz);
         if (rc != 0) {
             return rc;
         }
 
-        rc = boot_copy_area(boot_req->br_scratch_area_idx, area_idx_1,
-          end_area ? (sz - boot_status_sz()) : sz);
+        rc = boot_copy_area(boot_req->br_scratch_area_idx, area_idx_0, sz);
         if (rc != 0) {
             return rc;
         }
@@ -515,8 +516,8 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
  *
  * @return                      0 on success; nonzero on failure.
  */
-static void
-boot_copy_image(int swap_type)
+static int
+boot_copy_image(void)
 {
     uint32_t sz;
     int i;
@@ -533,9 +534,7 @@ boot_copy_image(int swap_type)
         end_area = 0;
     }
 
-    if (swap_type == BOOT_SWAP_TYPE_TEMP) {
-        boot_set_copy_done();
-    }
+    return 0;
 }
 
 /**
@@ -551,8 +550,10 @@ boot_copy_image(int swap_type)
 int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
+    int partial_swap;
     int swap_type;
     int slot;
+    int rc;
 
     /* Set the global boot request object.  The remainder of the boot process
      * will reference the global.
@@ -562,24 +563,40 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     /* Attempt to read an image header from each slot. */
     boot_image_info();
 
-    swap_type = boot_swap_type();
+    /* Determine if we rebootded in the middle of an image swap operation. */
+    partial_swap = boot_read_status(&boot_state);
+    if (partial_swap) {
+        /* Complete the partial swap. */
+        rc = boot_copy_image();
+        assert(rc == 0);
 
-    /* Read the boot status to determine if an image copy operation was
-     * interrupted (i.e., the system was reset before the boot loader could
-     * finish its task last time).
-     */
-    boot_read_status(&boot_state);
-
-    /* Check if we should initiate copy, or revert back to earlier image. */
-    swap_type = boot_validate_state(swap_type);
-
-    if (swap_type == BOOT_SWAP_TYPE_NONE) {
-        slot = 0;
-        boot_state.idx = 0;
-        boot_state.state = 0;
+        swap_type = boot_partial_swap_type();
     } else {
+        swap_type = boot_validated_swap_type();
+        if (swap_type != BOOT_SWAP_TYPE_NONE) {
+            rc = boot_copy_image();
+            assert(rc == 0);
+        }
+    }
+
+    switch (swap_type) {
+    case BOOT_SWAP_TYPE_NONE:
+        slot = 0;
+        break;
+
+    case BOOT_SWAP_TYPE_TEST:
         slot = 1;
-        boot_copy_image(swap_type);
+        boot_finalize_test_swap();
+        break;
+
+    case BOOT_SWAP_TYPE_REVERT:
+        slot = 1;
+        break;
+
+    default:
+        assert(0);
+        slot = 0;
+        break;
     }
 
     /* Always boot from the primary slot. */

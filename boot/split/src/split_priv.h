@@ -20,7 +20,7 @@
 #ifndef SPLIT_PRIV_H
 #define SPLIT_PRIV_H
 
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
 
 #ifdef __cplusplus
 extern "C" {

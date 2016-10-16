@@ -36,7 +36,7 @@
 #endif
 #include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
-#include <bootutil/bootutil_misc.h>
+#include <bootutil/bootutil.h>
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>

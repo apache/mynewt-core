@@ -28,7 +28,7 @@
 #include "flash_map/flash_map.h"
 #include "cborattr/cborattr.h"
 #include "bootutil/image.h"
-#include "bootutil/bootutil_misc.h"
+#include "bootutil/bootutil.h"
 #include "mgmt/mgmt.h"
 
 #include "imgmgr/imgmgr.h"

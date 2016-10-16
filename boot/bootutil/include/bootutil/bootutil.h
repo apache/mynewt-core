@@ -17,13 +17,33 @@
  * under the License.
  */
 
-#ifndef H_LOADER_
-#define H_LOADER_
+#ifndef H_BOOTUTIL_
+#define H_BOOTUTIL_
 
 #include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define BOOT_STATUS_SOURCE_NONE    0
+#define BOOT_STATUS_SOURCE_SCRATCH 1
+#define BOOT_STATUS_SOURCE_SLOT0   2
+
+#define BOOT_SWAP_TYPE_NONE     0
+#define BOOT_SWAP_TYPE_TEST     1
+#define BOOT_SWAP_TYPE_REVERT   2
+
+int boot_status_source(void);
+int boot_swap_type(void);
+int boot_partial_swap_type(void);
+
+int boot_vect_read_test(int *slot);
+int boot_vect_read_main(int *slot);
+int boot_set_pending(int slot);
+int boot_set_confirmed(void);
+
+void boot_set_image_slot_split(void);
 
 struct image_header;
 
