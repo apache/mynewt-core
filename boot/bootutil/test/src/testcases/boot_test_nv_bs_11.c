@@ -54,9 +54,10 @@ TEST_CASE(boot_test_nv_bs_11)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-    rc = boot_set_pending(1);
+    rc = boot_set_pending();
     boot_test_util_copy_area(5, BOOT_TEST_AREA_IDX_SCRATCH);
 
+    // XXX
     boot_req_set(&req);
     status.idx = 0;
     status.elem_sz = 1;

@@ -20,6 +20,7 @@
 #ifndef H_BOOTUTIL_PRIV_
 #define H_BOOTUTIL_PRIV_
 
+#include "syscfg/syscfg.h"
 #include "bootutil/image.h"
 
 #ifdef __cplusplus
@@ -63,22 +64,15 @@ struct boot_status {
 int bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
     uint8_t key_id);
 
-int boot_read_image_header(struct boot_image_location *loc,
-  struct image_header *out_hdr);
 int boot_write_status(struct boot_status *bs);
-int boot_read_status(struct boot_status *bs);
 int boot_schedule_test_swap(void);
-int boot_finalize_test_swap(void);
-int boot_finalize_revert_swap(void);
 
-void boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off);
-void boot_scratch_loc(uint8_t *flash_id, uint32_t *off);
-void boot_slot_magic(int slot_num, struct boot_img_trailer *bit);
-void boot_scratch_magic(struct boot_img_trailer *bit);
 uint32_t boot_status_sz(int elem_sz);
 
+#if MYNEWT_VAL(TEST)
 struct boot_req;
 void boot_req_set(struct boot_req *req);
+#endif
 
 #ifdef __cplusplus
 }

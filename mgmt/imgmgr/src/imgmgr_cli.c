@@ -87,6 +87,7 @@ imgr_cli_boot_set(char *hash_str)
 {
     uint8_t hash[IMGMGR_HASH_LEN];
     struct image_version ver;
+    int slot;
     int rc;
 
     if (hex_parse(hash_str, strlen(hash_str), hash, sizeof(hash)) !=
@@ -94,14 +95,16 @@ imgr_cli_boot_set(char *hash_str)
         console_printf("Invalid hash %s\n", hash_str);
         return;
     }
-    rc = imgr_find_by_hash(hash, &ver);
-    if (rc < 0) {
+
+    slot = imgr_find_by_hash(hash, &ver);
+    if (slot == -1) {
         console_printf("Unknown img\n");
         return;
     }
-    rc = boot_set_pending(rc);
+
+    rc = imgmgr_state_test_slot(slot);
     if (rc) {
-        console_printf("Can't make img active\n");
+        console_printf("Error setting image to pending; rc=%d\n", rc);
         return;
     }
 }

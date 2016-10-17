@@ -17,6 +17,11 @@
  * under the License.
  */
 
+/**
+ * This file provides an interface to the boot loader.  Functions defined in
+ * this file should only be called while the boot loader is running.
+ */
+
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
@@ -43,63 +48,144 @@ static struct boot_img {
     uint32_t area;
 } boot_img[BOOT_NUM_SLOTS];
 
-static struct boot_status boot_state;
-
 static int boot_erase_area(int area_idx, uint32_t sz);
 static uint32_t boot_copy_sz(int max_idx, int *cnt);
 
-int
-boot_build_request(struct boot_req *preq, int area_descriptor_max)
+struct boot_status_table {
+    /** * For each field, a value of 0 means "any". */
+    uint32_t bst_magic_slot0;
+    uint32_t bst_magic_scratch;
+    uint8_t bst_copy_done_slot0;
+
+    uint8_t bst_status_source;
+};
+
+/**
+ * This set of tables maps image trailer contents to swap status location.
+ * When searching for a match, these tables must be iterated sequentially.
+ */
+static const struct boot_status_table boot_status_tables[] = {
+    {
+        /*           | slot-0     | scratch    |
+         * ----------+------------+------------|
+         *     magic | 0x12344321 | 0x******** |
+         * copy-done | 0x01       | N/A        |
+         * ----------+------------+------------'
+         * status: none                        |
+         * ------------------------------------'
+         */
+        .bst_magic_slot0 =      BOOT_IMG_MAGIC,
+        .bst_magic_scratch =    0,
+        .bst_copy_done_slot0 =  0x01,
+        .bst_status_source =    BOOT_STATUS_SOURCE_NONE,
+    },
+
+    {
+        /*           | slot-0     | scratch    |
+         * ----------+------------+------------|
+         *     magic | 0x12344321 | 0x******** |
+         * copy-done | 0xff       | N/A        |
+         * ----------+------------+------------'
+         * status: slot 0                      |
+         * ------------------------------------'
+         */
+        .bst_magic_slot0 =      BOOT_IMG_MAGIC,
+        .bst_magic_scratch =    0,
+        .bst_copy_done_slot0 =  0xff,
+        .bst_status_source =    BOOT_STATUS_SOURCE_SLOT0,
+    },
+
+    {
+        /*           | slot-0     | scratch    |
+         * ----------+------------+------------|
+         *     magic | 0x******** | 0x12344321 |
+         * copy-done | 0x**       | N/A        |
+         * ----------+------------+------------'
+         * status: scratch                     |
+         * ------------------------------------'
+         */
+        .bst_magic_slot0 =      0,
+        .bst_magic_scratch =    BOOT_IMG_MAGIC,
+        .bst_copy_done_slot0 =  0,
+        .bst_status_source =    BOOT_STATUS_SOURCE_SCRATCH,
+    },
+
+    {
+        /*           | slot-0     | scratch    |
+         * ----------+------------+------------|
+         *     magic | 0xffffffff | 0xffffffff |
+         * copy-done | 0xff       | N/A        |
+         * ----------+------------+------------|
+         * status: slot 0                      |
+         * ------------------------------------+-------------------------------+
+         * This represents one of two cases:                                   |
+         * o No swaps ever (no status to read anyway, so no harm in checking). |
+         * o Mid-revert; status in slot 0.                                     |
+         * --------------------------------------------------------------------'
+         */
+        .bst_magic_slot0 =      0xffffffff,
+        .bst_magic_scratch =    0,
+        .bst_copy_done_slot0 =  0xff,
+        .bst_status_source =    BOOT_STATUS_SOURCE_SLOT0,
+    },
+};
+
+#define BOOT_STATUS_TABLES_COUNT \
+    (sizeof boot_status_tables / sizeof boot_status_tables[0])
+
+static int
+boot_status_source(void)
 {
-    int cnt;
-    int total;
+    const struct boot_status_table *table;
+    struct boot_img_trailer bit_scratch;
+    struct boot_img_trailer bit_slot0;
+    struct boot_img_trailer bit_slot1;
     int rc;
-    const struct flash_area *fap;
-    struct flash_area *descs = preq->br_area_descs;
-    uint8_t *img_starts = preq->br_slot_areas;
+    int i;
 
-    cnt = area_descriptor_max;
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
-    img_starts[0] = 0;
-    total = cnt;
+    rc = boot_read_img_trailer(0, &bit_slot0);
+    assert(rc == 0);
 
-    flash_area_open(FLASH_AREA_IMAGE_0, &fap);
-    preq->br_img_sz = fap->fa_size;
+    rc = boot_read_img_trailer(1, &bit_slot1);
+    assert(rc == 0);
 
-    cnt = area_descriptor_max - total;
-    if( cnt < 0) {
-        return -1;
+    rc = boot_read_scratch_trailer(&bit_scratch);
+    assert(rc == 0);
+
+    for (i = 0; i < BOOT_STATUS_TABLES_COUNT; i++) {
+        table = boot_status_tables + i;
+
+        if ((table->bst_magic_slot0     == 0    ||
+             table->bst_magic_slot0     == bit_slot0.bit_copy_start)   &&
+            (table->bst_magic_scratch   == 0    ||
+             table->bst_magic_scratch   == bit_scratch.bit_copy_start) &&
+            (table->bst_copy_done_slot0 == 0    ||
+             table->bst_copy_done_slot0 == bit_slot0.bit_copy_done)) {
+
+            return table->bst_status_source;
+        }
     }
 
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt,
-                               &descs[total]);
-    if(rc != 0) {
-        return -2;
-    }
-    img_starts[1] = total;
-    total += cnt;
-
-    cnt = area_descriptor_max - total;
-    if( cnt < 0) {
-        return -3;
-    }
-
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt,
-                               &descs[total]);
-    if(rc != 0) {
-        return -4;
-    }
-
-    preq->br_scratch_area_idx = total;
-    total += cnt;
-    preq->br_num_image_areas = total;
-    return 0;
+    return BOOT_STATUS_SOURCE_NONE;
 }
 
-void
-boot_req_set(struct boot_req *req)
+static int
+boot_partial_swap_type(void)
 {
-    boot_req = req;
+    int swap_type;
+
+    swap_type = boot_swap_type();
+    switch (swap_type) {
+    case BOOT_SWAP_TYPE_NONE:
+        return BOOT_SWAP_TYPE_REVERT;
+
+    case BOOT_SWAP_TYPE_REVERT:
+        return BOOT_SWAP_TYPE_TEST;
+
+    default:
+        assert(0);
+        return BOOT_SWAP_TYPE_REVERT;
+    }
 }
 
 /**
@@ -121,6 +207,101 @@ boot_slot_addr(int slot_num, struct boot_image_location *loc)
     loc->bil_address = area_desc->fa_off;
 }
 
+/**
+ * Reads the header of image present in flash.  Header corresponding to
+ * empty image slot is filled with 0xff bytes.
+ *
+ * @param out_headers           Points to an array of image headers.  Each
+ *                                  element is filled with the header of the
+ *                                  corresponding image in flash.
+ * @param addresses             An array containing the flash addresses of each
+ *                                  image slot.
+ * @param num_addresses         The number of headers to read.  This should
+ *                                  also be equal to the lengths of the
+ *                                  out_headers and addresses arrays.
+ */
+static int
+boot_read_image_header(struct boot_image_location *loc,
+                       struct image_header *out_hdr)
+{
+    int rc;
+
+    rc = hal_flash_read(loc->bil_flash_id, loc->bil_address, out_hdr,
+                        sizeof *out_hdr);
+    if (rc != 0) {
+        rc = BOOT_EFLASH;
+    } else if (out_hdr->ih_magic != IMAGE_MAGIC) {
+        rc = BOOT_EBADIMAGE;
+    }
+
+    if (rc) {
+        memset(out_hdr, 0xff, sizeof(*out_hdr));
+    }
+    return rc;
+}
+
+static void
+boot_read_image_headers(void)
+{
+    struct boot_img *b;
+    int i;
+
+    for (i = 0; i < BOOT_NUM_SLOTS; i++) {
+        b = &boot_img[i];
+        boot_slot_addr(i, &b->loc);
+        boot_read_image_header(&b->loc, &b->hdr);
+        b->area = boot_req->br_img_sz;
+    }
+}
+
+int
+boot_build_request(struct boot_req *preq, int area_descriptor_max)
+{
+    int cnt;
+    int total;
+    int rc;
+    const struct flash_area *fap;
+    struct flash_area *descs = preq->br_area_descs;
+    uint8_t *img_starts = preq->br_slot_areas;
+
+    cnt = area_descriptor_max;
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &cnt, descs);
+    img_starts[0] = 0;
+    total = cnt;
+
+    flash_area_open(FLASH_AREA_IMAGE_0, &fap);
+    preq->br_img_sz = fap->fa_size;
+
+    cnt = area_descriptor_max - total;
+    if (cnt < 0) {
+        return -1;
+    }
+
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_1, &cnt,
+                               &descs[total]);
+    if (rc != 0) {
+        return -2;
+    }
+    img_starts[1] = total;
+    total += cnt;
+
+    cnt = area_descriptor_max - total;
+    if (cnt < 0) {
+        return -3;
+    }
+
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_SCRATCH, &cnt,
+                               &descs[total]);
+    if(rc != 0) {
+        return -4;
+    }
+
+    preq->br_scratch_area_idx = total;
+    total += cnt;
+    preq->br_num_image_areas = total;
+    return 0;
+}
+
 /*
  * Status about copy-in-progress is either in slot0 (target slot) or
  * in scratch area. It is in scratch area if the process is currently
@@ -136,7 +317,7 @@ boot_slot_addr(int slot_num, struct boot_image_location *loc)
  * scratch when the first area is being moved. Otherwise it will be
  * in slot 0.
  */
-void
+static void
 boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off)
 {
     struct boot_img *b;
@@ -146,7 +327,7 @@ boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off)
     *off = b->area + b->loc.bil_address - sizeof(struct boot_img_trailer);
 }
 
-void
+static void
 boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
 {
     struct flash_area *scratch;
@@ -160,60 +341,148 @@ boot_scratch_loc(uint8_t *flash_id, uint32_t *off)
     *off += (scratch->fa_off - sizeof(struct boot_img_trailer));
 }
 
-void
-boot_slot_magic(int slot_num, struct boot_img_trailer *bit)
+static uint32_t
+boot_status_off(uint32_t trailer_off, int status_idx, int status_state,
+                int elem_sz)
 {
-    uint32_t off;
-    uint8_t flash_id;
+    uint32_t status_start;
+    int idx_sz;
 
-    boot_magic_loc(slot_num, &flash_id, &off);
-    memset(bit, 0xff, sizeof(*bit));
-    hal_flash_read(flash_id, off, bit, sizeof(*bit));
+    status_start = trailer_off - boot_status_sz(elem_sz);
+
+    idx_sz = BOOT_STATUS_STATE_COUNT * elem_sz;
+    return status_start +
+           status_idx * idx_sz +
+           status_state * elem_sz;
 }
 
-void
-boot_scratch_magic(struct boot_img_trailer *bit)
-{
-    uint32_t off;
-    uint8_t flash_id;
-
-    boot_scratch_loc(&flash_id, &off);
-    memset(bit, 0xff, sizeof(*bit));
-    hal_flash_read(flash_id, off, bit, sizeof(*bit));
-}
-
-/*
- * Gather info about image in a given slot.
+/**
+ * Reads the status of a partially-completed swap, if any.  This is necessary
+ * to recover in case the boot lodaer was reset in the middle of a swap
+ * operation.
  */
-void
-boot_image_info(void)
+static void
+boot_read_status_bytes(struct boot_status *bs, uint8_t flash_id,
+                       uint32_t trailer_off)
 {
+    uint32_t status_sz;
+    uint32_t off;
+    uint8_t status;
+    int found;
     int i;
-    struct boot_img *b;
-    struct flash_area *scratch;
 
-    memset(&boot_state, 0, sizeof boot_state);
+    status_sz = boot_status_sz(bs->elem_sz);
+    off = trailer_off - status_sz;
 
-    for (i = 0; i < BOOT_NUM_SLOTS; i++) {
-        b = &boot_img[i];
-        boot_slot_addr(i, &b->loc);
-        boot_read_image_header(&b->loc, &b->hdr);
-        b->area = boot_req->br_img_sz;
+    found = 0;
+    for (i = 0; i < status_sz; i++) {
+        hal_flash_read(flash_id, off + i * bs->elem_sz,
+                       &status, sizeof status);
+        if (status == 0xff) {
+            if (found) {
+                break;
+            }
+        } else if (!found) {
+            found = 1;
+        }
     }
 
-    /*
-     * Figure out what size to write update status update as.
-     * The size depends on what the minimum write size is for scratch
-     * area, active image slot. We need to use the bigger of those 2
-     * values.
+    if (found) {
+        i--;
+        bs->idx = i / BOOT_STATUS_STATE_COUNT;
+        bs->state = i % BOOT_STATUS_STATE_COUNT;
+    }
+}
+
+static uint8_t
+boot_status_elem_sz(void)
+{
+    const struct flash_area *scratch;
+    uint8_t elem_sz;
+    uint8_t align;
+
+    /* Figure out what size to write update status update as.  The size depends
+     * on what the minimum write size is for scratch area, active image slot.
+     * We need to use the bigger of those 2 values.
      */
-    boot_state.elem_sz = hal_flash_align(boot_img[0].loc.bil_flash_id);
+    elem_sz = hal_flash_align(boot_img[0].loc.bil_flash_id);
 
     scratch = &boot_req->br_area_descs[boot_req->br_scratch_area_idx];
-    i = hal_flash_align(scratch->fa_device_id);
-    if (i > boot_state.elem_sz) {
-        boot_state.elem_sz = i;
+    align = hal_flash_align(scratch->fa_device_id);
+    if (align > elem_sz) {
+        elem_sz = align;
     }
+
+    return elem_sz;
+}
+
+/**
+ * Reads the boot status from the flash.  The boot status contains
+ * the current state of an interrupted image copy operation.  If the boot
+ * status is not present, or it indicates that previous copy finished,
+ * there is no operation in progress.
+ */
+static int
+boot_read_status(struct boot_status *boot_state)
+{
+    uint32_t off;
+    uint8_t flash_id;
+    int status_loc;
+
+    memset(boot_state, 0, sizeof *boot_state);
+
+    boot_state->elem_sz = boot_status_elem_sz();
+
+    status_loc = boot_status_source();
+    switch (status_loc) {
+    case BOOT_STATUS_SOURCE_NONE:
+        break;
+
+    case BOOT_STATUS_SOURCE_SCRATCH:
+        boot_scratch_loc(&flash_id, &off);
+        boot_read_status_bytes(boot_state, flash_id, off);
+        break;
+
+    case BOOT_STATUS_SOURCE_SLOT0:
+        boot_magic_loc(0, &flash_id, &off);
+        boot_read_status_bytes(boot_state, flash_id, off);
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+
+    return boot_state->idx != 0 || boot_state->state != 0;
+}
+
+/**
+ * Writes the supplied boot status to the flash file system.  The boot status
+ * contains the current state of an in-progress image copy operation.
+ *
+ * @param bs                    The boot status to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+boot_write_status(struct boot_status *bs)
+{
+    uint32_t trailer_off;
+    uint32_t status_off;
+    uint8_t flash_id;
+
+    if (bs->idx == 0) {
+        /* Write to scratch. */
+        boot_scratch_loc(&flash_id, &trailer_off);
+    } else {
+        /* Write to slot 0. */
+        boot_magic_loc(0, &flash_id, &trailer_off);
+    }
+
+    status_off = boot_status_off(trailer_off, bs->idx, bs->state, bs->elem_sz);
+    hal_flash_write(flash_id, status_off, &bs->state, 1);
+
+    return 0;
 }
 
 /*
@@ -441,17 +710,18 @@ boot_copy_area(int from_area_idx, int to_area_idx, uint32_t sz)
 /**
  * Swaps the contents of two flash areas belonging to images.
  *
- * @param area_idx            The index of first slot to exchange. This area
+ * @param idx                   The index of first slot to exchange. This area
  *                                  must be part of the first image slot.
- * @param sz                  The number of bytes swap.
+ * @param sz                    The number of bytes swap.
  *
- * @param end_area            Boolean telling whether this includes this
- *                                  area has last slots.
+ * @param end_area              Whether this is the last sector in the source
+ *                                  and destination slots (0/1).
  *
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_swap_areas(int idx, uint32_t sz, int end_area)
+boot_swap_areas(int idx, uint32_t sz, int end_area,
+                struct boot_status *boot_state)
 {
     int area_idx_0;
     int area_idx_1;
@@ -463,7 +733,7 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
     assert(area_idx_0 != boot_req->br_scratch_area_idx);
     assert(area_idx_1 != boot_req->br_scratch_area_idx);
 
-    if (boot_state.state == 0) {
+    if (boot_state->state == 0) {
         rc = boot_erase_area(boot_req->br_scratch_area_idx, sz);
         if (rc != 0) {
             return rc;
@@ -474,25 +744,25 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
             return rc;
         }
 
-        boot_state.state = 1;
-        (void)boot_write_status(&boot_state);
+        boot_state->state = 1;
+        (void)boot_write_status(boot_state);
     }
-    if (boot_state.state == 1) {
+    if (boot_state->state == 1) {
         rc = boot_erase_area(area_idx_1, sz);
         if (rc != 0) {
             return rc;
         }
 
         rc = boot_copy_area(area_idx_0, area_idx_1,
-          end_area ? (sz - boot_meta_sz(boot_state.elem_sz)) : sz);
+          end_area ? (sz - boot_meta_sz(boot_state->elem_sz)) : sz);
         if (rc != 0) {
             return rc;
         }
 
-        boot_state.state = 2;
-        (void)boot_write_status(&boot_state);
+        boot_state->state = 2;
+        (void)boot_write_status(boot_state);
     }
-    if (boot_state.state == 2) {
+    if (boot_state->state == 2) {
         rc = boot_erase_area(area_idx_0, sz);
         if (rc != 0) {
             return rc;
@@ -503,9 +773,9 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
             return rc;
         }
 
-        boot_state.idx++;
-        boot_state.state = 0;
-        (void)boot_write_status(&boot_state);
+        boot_state->idx++;
+        boot_state->state = 0;
+        (void)boot_write_status(boot_state);
     }
     return 0;
 }
@@ -517,7 +787,7 @@ boot_swap_areas(int idx, uint32_t sz, int end_area)
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_copy_image(void)
+boot_copy_image(struct boot_status *boot_state)
 {
     uint32_t sz;
     int i;
@@ -528,13 +798,62 @@ boot_copy_image(void)
     for (i = boot_req->br_slot_areas[1], cur_idx = 0; i > 0; cur_idx++) {
         sz = boot_copy_sz(i, &cnt);
         i -= cnt;
-        if (cur_idx >= boot_state.idx) {
-            boot_swap_areas(i, sz, end_area);
+        if (cur_idx >= boot_state->idx) {
+            boot_swap_areas(i, sz, end_area, boot_state);
         }
         end_area = 0;
     }
 
     return 0;
+}
+
+/**
+ * Marks a test image in slot 0 as fully copied.
+ */
+static int
+boot_finalize_test_swap(void)
+{
+    struct boot_img_trailer bit;
+    uint32_t off;
+    uint8_t flash_id;
+    int rc;
+
+    boot_magic_loc(0, &flash_id, &off);
+    off += offsetof(struct boot_img_trailer, bit_copy_done);
+
+    bit.bit_copy_done = 1;
+    rc = hal_flash_write(flash_id, off, &bit.bit_copy_done, 1);
+
+    return rc;
+}
+
+/**
+ * Marks a reverted image in slot 0 as confirmed.  This is necessary to ensure
+ * the status bytes from the image revert operation don't get processed on a
+ * subsequent boot.
+ */
+static int
+boot_finalize_revert_swap(void)
+{
+    struct boot_img_trailer bit;
+    uint32_t off;
+    uint8_t flash_id;
+    int rc;
+
+    boot_magic_loc(0, &flash_id, &off);
+
+    bit.bit_copy_start = BOOT_IMG_MAGIC;
+    bit.bit_copy_done = 1;
+    bit.bit_img_ok = 1;
+    rc = hal_flash_write(flash_id, off, &bit, sizeof bit);
+
+    return rc;
+}
+
+uint32_t
+boot_status_sz(int elem_sz)
+{
+    return BOOT_STATUS_MAX_ENTRIES * BOOT_STATUS_STATE_COUNT * elem_sz;
 }
 
 /**
@@ -550,6 +869,7 @@ boot_copy_image(void)
 int
 boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 {
+    struct boot_status boot_state;
     int partial_swap;
     int swap_type;
     int slot;
@@ -561,20 +881,20 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
     boot_req = req;
 
     /* Attempt to read an image header from each slot. */
-    boot_image_info();
+    boot_read_image_headers();
 
-    /* Determine if we rebootded in the middle of an image swap operation. */
+    /* Determine if we rebooted in the middle of an image swap operation. */
     partial_swap = boot_read_status(&boot_state);
     if (partial_swap) {
         /* Complete the partial swap. */
-        rc = boot_copy_image();
+        rc = boot_copy_image(&boot_state);
         assert(rc == 0);
 
         swap_type = boot_partial_swap_type();
     } else {
         swap_type = boot_validated_swap_type();
         if (swap_type != BOOT_SWAP_TYPE_NONE) {
-            rc = boot_copy_image();
+            rc = boot_copy_image(&boot_state);
             assert(rc == 0);
         }
     }
@@ -637,7 +957,7 @@ split_go(int loader_slot, int split_slot, void **entry)
 
     boot_req = &req;
 
-    boot_image_info();
+    boot_read_image_headers();
 
     /* Don't check the bootable image flag because we could really
       * call a bootable or non-bootable image.  Just validate that
@@ -660,3 +980,17 @@ split_app_go_end:
     free(descs);
     return rc;
 }
+
+#if MYNEWT_VAL(TEST)
+
+/**
+ * Used by unit tests.  This allows a test to call boot loader functions
+ * without starting the boot loader.
+ */
+void
+boot_req_set(struct boot_req *req)
+{
+    boot_req = req;
+}
+
+#endif

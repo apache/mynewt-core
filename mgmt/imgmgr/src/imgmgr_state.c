@@ -132,7 +132,7 @@ imgmgr_state_slot_in_use(int slot)
            state_flags & IMGMGR_STATE_F_PENDING;
 }
 
-static int
+int
 imgmgr_state_test_slot(int slot)
 {
     uint32_t image_flags;
@@ -161,7 +161,7 @@ imgmgr_state_test_slot(int slot)
         /* Unified image or loader. */
         if (!split_app_active) {
             /* No change in split status. */
-            rc = boot_set_pending(slot);
+            rc = boot_set_pending();
             if (rc != 0) {
                 return MGMT_ERR_EUNKNOWN;
             }
