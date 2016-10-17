@@ -21,7 +21,6 @@
 #define H_HAL_I2C_
 
 #include <inttypes.h>
-#include <bsp/bsp_sysid.h>
 
 #ifdef __cplusplus
 extern "C" {
