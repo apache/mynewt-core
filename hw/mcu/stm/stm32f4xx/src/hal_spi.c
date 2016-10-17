@@ -488,7 +488,13 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 
     gpio.Mode = GPIO_MODE_AF_PP;
     gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    if (settings->baudrate <= 2000) {
+        gpio.Speed = GPIO_SPEED_FREQ_LOW;
+    } else if (settings->baudrate <= 12500) {
+        gpio.Speed = GPIO_SPEED_FREQ_MEDIUM;
+    } else {
+        gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+    }
 
     /* Enable the clocks for this SPI */
     switch (spi_num) {
@@ -665,7 +671,7 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
             spi->handle.pTxBuffPtr = txbuf;
             spi->handle.TxXferSize = len;
             spi->handle.pRxBuffPtr = rxbuf;
-            spi->handle.RxXferSize  = len;
+            spi->handle.RxXferSize = len;
         }
     }
     __HAL_ENABLE_INTERRUPTS(sr);
