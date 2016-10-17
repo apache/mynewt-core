@@ -68,15 +68,48 @@ int g_led_pin;
 #endif
 #ifdef SPI_MASTER
 uint8_t g_spi_tx_buf[32];
+uint8_t g_spi_last_tx_buf[32];
 uint8_t g_spi_rx_buf[32];
 uint32_t g_spi_xfr_num;
 uint8_t g_spi_null_rx;
+uint8_t g_last_tx_len;
+
+static
+void spitest_validate_last(int len)
+{
+    int i;
+    int curlen;
+    int remlen;
+    int curindex;
+    uint8_t expval;
+
+    if (g_spi_null_rx == 0) {
+        expval = 0xaa;
+        if (g_last_tx_len < len) {
+            curlen = g_last_tx_len;
+            remlen = len - g_last_tx_len;
+        } else {
+            curlen = len;
+            remlen = 0;
+        }
+        for (i = 0; i < curlen; ++i) {
+            if (g_spi_rx_buf[i] != g_spi_last_tx_buf[i]) {
+                assert(0);
+            }
+        }
+        curindex = curlen;
+        for (i = 0; i < remlen; ++i) {
+            if (g_spi_rx_buf[curindex + i] != expval) {
+                assert(0);
+            }
+        }
+    }
+}
 
 void
 sblinky_spi_irqm_handler(void *arg, int len)
 {
     int i;
-    uint8_t expval;
     struct sblinky_spi_cb_arg *cb;
 
     hal_gpio_set(SPI_SS_PIN);
@@ -96,21 +129,12 @@ sblinky_spi_irqm_handler(void *arg, int len)
                 assert(0);
             }
         }
+
+        /* copy current tx buf to last */
+        memcpy(g_spi_last_tx_buf, g_spi_tx_buf, len);
     } else {
-        /*
-         * We expect the buffer to be filled with an incrementing pattern
-         * That starts at 31 less than the first value sent this time.
-         */
-        if (g_spi_null_rx == 0) {
-            expval = g_spi_tx_buf[0];
-            expval = (uint8_t)(expval - 31);
-            for (i = 0; i < len; ++i) {
-                if (g_spi_rx_buf[i] != expval) {
-                    assert(0);
-                }
-                ++expval;
-            }
-        }
+        /* Check that we received what we last sent */
+        spitest_validate_last(len);
     }
     ++g_spi_xfr_num;
 }
@@ -152,6 +176,7 @@ sblinky_spi_irqs_handler(void *arg, int len)
         cb = (struct sblinky_spi_cb_arg *)arg;
         ++cb->transfers;
         cb->tx_rx_bytes += len;
+        cb->txlen = len;
     }
 
     /* Post semaphore to task waiting for SPI slave */
@@ -228,12 +253,12 @@ task1_handler(void *arg)
         /* Toggle the LED */
         hal_gpio_toggle(g_led_pin);
 
-        /*
-         * Send to a slave, using blocking and non-blocking calls. The
-         * slave should be sending back the last thing we sent it.
-         */
-        last_val = g_spi_tx_buf[31];
-        for (i = 0; i < 32; ++i) {
+        /* Get random length to send */
+        g_last_tx_len = spi_cb_obj.txlen;
+        spi_cb_obj.txlen = (rand() & 0x1F) + 1;
+        memcpy(g_spi_last_tx_buf, g_spi_tx_buf, g_last_tx_len);
+        last_val = g_spi_last_tx_buf[g_last_tx_len - 1];
+        for (i= 0; i < spi_cb_obj.txlen; ++i) {
             g_spi_tx_buf[i] = (uint8_t)(last_val + i);
         }
 
@@ -242,6 +267,7 @@ task1_handler(void *arg)
             ++spi_nb_cntr;
             assert(hal_gpio_read(SPI_SS_PIN) == 1);
             hal_gpio_clear(SPI_SS_PIN);
+#if 0
             if (spi_nb_cntr == 7) {
                 g_spi_null_rx = 1;
                 rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, NULL, 32);
@@ -250,11 +276,18 @@ task1_handler(void *arg)
                 rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, g_spi_rx_buf, 32);
             }
             assert(!rc);
+#else
+            g_spi_null_rx = 0;
+            rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, g_spi_rx_buf,
+                                      spi_cb_obj.txlen);
+            assert(!rc);
+#endif
         } else {
             /* Send blocking */
             ++spi_b_cntr;
             assert(hal_gpio_read(SPI_SS_PIN) == 1);
             hal_gpio_clear(SPI_SS_PIN);
+#if 0
             if (spi_b_cntr == 7) {
                 g_spi_null_rx = 1;
                 rc = hal_spi_txrx(0, g_spi_tx_buf, NULL, 32);
@@ -265,6 +298,13 @@ task1_handler(void *arg)
             }
             assert(!rc);
             hal_gpio_set(SPI_SS_PIN);
+            spitest_validate_last(spi_cb_obj.txlen);
+#else
+            rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
+            assert(!rc);
+            hal_gpio_set(SPI_SS_PIN);
+            spitest_validate_last(spi_cb_obj.txlen);
+#endif
         }
     }
 }
@@ -280,6 +320,7 @@ task1_handler(void *arg)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
+    spi_cb_arg = &spi_cb_obj;
     sblinky_spi_cfg(SPI_SLAVE_ID);
     hal_spi_enable(SPI_SLAVE_ID);
 
@@ -303,9 +344,11 @@ task1_handler(void *arg)
             memset(g_spi_tx_buf, 0x88, 32);
             rc = hal_spi_txrx_noblock(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf,
                                       32);
+            assert(rc == 0);
         } else {
             /* transmit back what we just received */
-            memcpy(g_spi_tx_buf, g_spi_rx_buf, 32);
+            memset(g_spi_tx_buf, 0xaa, 32);
+            memcpy(g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
             rc = hal_spi_txrx_noblock(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf,
                                       32);
             assert(rc == 0);
