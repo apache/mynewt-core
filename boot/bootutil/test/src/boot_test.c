@@ -286,6 +286,11 @@ boot_test_util_write_bit(int flash_area_id, struct boot_img_trailer *bit)
     const struct flash_area *fap;
     int rc;
 
+    /* XXX: This function only works by chance.  It requires that the boot
+     * loader have have been run once already so that its global state has been
+     * populated.
+     */
+
     rc = flash_area_open(flash_area_id, &fap);
     TEST_ASSERT_FATAL(rc == 0);
 
@@ -1177,11 +1182,7 @@ TEST_SUITE(boot_test_main)
     boot_test_no_flag_has_hash();
     boot_test_invalid_hash();
     boot_test_revert();
-
-    /* XXX: This test fails due to a known issue.  We do not currently recover
-     * correctly when the device reboots during a revert swap.
-     */
-    //boot_test_revert_continue();
+    boot_test_revert_continue();
 }
 
 int

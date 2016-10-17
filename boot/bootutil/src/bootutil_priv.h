@@ -69,6 +69,7 @@ int boot_write_status(struct boot_status *bs);
 int boot_read_status(struct boot_status *bs);
 int boot_schedule_test_swap(void);
 int boot_finalize_test_swap(void);
+int boot_finalize_revert_swap(void);
 
 void boot_magic_loc(int slot_num, uint8_t *flash_id, uint32_t *off);
 void boot_scratch_loc(uint8_t *flash_id, uint32_t *off);

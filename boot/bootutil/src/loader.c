@@ -591,6 +591,7 @@ boot_go(const struct boot_req *req, struct boot_rsp *rsp)
 
     case BOOT_SWAP_TYPE_REVERT:
         slot = 1;
+        boot_finalize_revert_swap();
         break;
 
     default:

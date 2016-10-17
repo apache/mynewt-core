@@ -50,21 +50,6 @@ static const struct boot_status_table boot_status_tables[] = {
     {
         /*           | slot-0     | scratch    |
          * ----------+------------+------------|
-         *     magic | 0xffffffff | 0xffffffff |
-         * copy-done | 0x**       | N/A        |
-         * ----------+------------+------------'
-         * status: none                        |
-         * ------------------------------------'
-         */
-        .bst_magic_slot0 =      0xffffffff,
-        .bst_magic_scratch =    0xffffffff,
-        .bst_copy_done_slot0 =  0,
-        .bst_status_source =    BOOT_STATUS_SOURCE_NONE,
-    },
-
-    {
-        /*           | slot-0     | scratch    |
-         * ----------+------------+------------|
          *     magic | 0x12344321 | 0x******** |
          * copy-done | 0x01       | N/A        |
          * ----------+------------+------------'
@@ -105,6 +90,25 @@ static const struct boot_status_table boot_status_tables[] = {
         .bst_magic_scratch =    BOOT_IMG_MAGIC,
         .bst_copy_done_slot0 =  0,
         .bst_status_source =    BOOT_STATUS_SOURCE_SCRATCH,
+    },
+
+    {
+        /*           | slot-0     | scratch    |
+         * ----------+------------+------------|
+         *     magic | 0xffffffff | 0xffffffff |
+         * copy-done | 0xff       | N/A        |
+         * ----------+------------+------------|
+         * status: slot0                       |
+         * ------------------------------------+-------------------------------+
+         * This represents one of two cases:                                   |
+         * o No swaps ever (no status to read anyway, so no harm in checking). |
+         * o Mid-revert; status in slot 0.                                     |
+         * --------------------------------------------------------------------'
+         */
+        .bst_magic_slot0 =      0xffffffff,
+        .bst_magic_scratch =    0,
+        .bst_copy_done_slot0 =  0xff,
+        .bst_status_source =    BOOT_STATUS_SOURCE_SLOT0,
     },
 };
 
@@ -591,22 +595,24 @@ boot_read_status(struct boot_status *bs)
 
     switch (status_loc) {
     case BOOT_STATUS_SOURCE_NONE:
-        return 0;
+        break;
 
     case BOOT_STATUS_SOURCE_SCRATCH:
         boot_scratch_loc(&flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
-        return 1;
+        break;
 
     case BOOT_STATUS_SOURCE_SLOT0:
         boot_magic_loc(0, &flash_id, &off);
         boot_read_status_bytes(bs, flash_id, off);
-        return 1;
+        break;
 
     default:
         assert(0);
-        return 0;
+        break;
     }
+
+    return bs->idx != 0 || bs->state != 0;
 }
 
 
@@ -655,6 +661,29 @@ boot_finalize_test_swap(void)
 
     bit.bit_copy_done = 1;
     rc = hal_flash_write(flash_id, off, &bit.bit_copy_done, 1);
+
+    return rc;
+}
+
+/**
+ * Marks a reverted image in slot 0 as confirmed.  This is necessary to ensure
+ * the status bytes from the image revert operation don't get processed on a
+ * subsequent boot.
+ */
+int
+boot_finalize_revert_swap(void)
+{
+    struct boot_img_trailer bit;
+    uint32_t off;
+    uint8_t flash_id;
+    int rc;
+
+    boot_magic_loc(0, &flash_id, &off);
+
+    bit.bit_copy_start = BOOT_IMG_MAGIC;
+    bit.bit_copy_done = 1;
+    bit.bit_img_ok = 1;
+    rc = hal_flash_write(flash_id, off, &bit, sizeof bit);
 
     return rc;
 }
