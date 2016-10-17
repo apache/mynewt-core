@@ -24,7 +24,7 @@
 #include "fcb/fcb.h"
 #include "log/log.h"
 
-static struct flash_area fcb_areas[] = {
+struct flash_area fcb_areas[] = {
     [0] = {
         .fa_off = 0x00000000,
         .fa_size = 16 * 1024
@@ -34,52 +34,18 @@ static struct flash_area fcb_areas[] = {
         .fa_size = 16 * 1024
     }
 };
-static struct fcb log_fcb;
-static struct log my_log;
+struct fcb log_fcb;
+struct log my_log;
 
-static char *str_logs[] = {
+char *str_logs[] = {
     "testdata",
     "1testdata2",
     NULL
 };
-static int str_idx = 0;
-static int str_max_idx = 0;
+int str_idx = 0;
+int str_max_idx = 0;
 
-TEST_CASE(log_setup_fcb)
-{
-    int rc;
-    int i;
-
-    log_fcb.f_sectors = fcb_areas;
-    log_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
-    log_fcb.f_magic = 0x7EADBADF;
-    log_fcb.f_version = 0;
-
-    for (i = 0; i < log_fcb.f_sector_cnt; i++) {
-        rc = flash_area_erase(&fcb_areas[i], 0, fcb_areas[i].fa_size);
-        TEST_ASSERT(rc == 0);
-    }
-    rc = fcb_init(&log_fcb);
-    TEST_ASSERT(rc == 0);
-
-    log_register("log", &my_log, &log_fcb_handler, &log_fcb);
-}
-
-TEST_CASE(log_append_fcb)
-{
-    char *str;
-
-    while (1) {
-        str = str_logs[str_max_idx];
-        if (!str) {
-            break;
-        }
-        log_printf(&my_log, 0, 0, str, strlen(str));
-        str_max_idx++;
-    }
-}
-
-static int
+int
 log_test_walk1(struct log *log, void *arg, void *dptr, uint16_t len)
 {
     int rc;
@@ -107,17 +73,7 @@ log_test_walk1(struct log *log, void *arg, void *dptr, uint16_t len)
     return 0;
 }
 
-TEST_CASE(log_walk_fcb)
-{
-    int rc;
-
-    str_idx = 0;
-
-    rc = log_walk(&my_log, log_test_walk1, NULL);
-    TEST_ASSERT(rc == 0);
-}
-
-static int
+int
 log_test_walk2(struct log *log, void *arg, void *dptr, uint16_t len)
 {
     TEST_ASSERT(0);
@@ -135,6 +91,11 @@ TEST_CASE(log_flush_fcb)
     TEST_ASSERT(rc == 0);
 }
 
+TEST_CASE_DECL(log_setup_fcb)
+TEST_CASE_DECL(log_append_fcb)
+TEST_CASE_DECL(log_walk_fcb)
+TEST_CASE_DECL(log_flush_fcb)
+
 TEST_SUITE(log_test_all)
 {
     log_setup_fcb();
@@ -148,7 +109,7 @@ TEST_SUITE(log_test_all)
 int
 main(int argc, char **argv)
 {
-    tu_config.tc_print_results = 1;
+    ts_config.ts_print_results = 1;
     tu_init();
 
     log_init();

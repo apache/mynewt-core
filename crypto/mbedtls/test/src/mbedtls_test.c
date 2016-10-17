@@ -43,152 +43,24 @@
 #include "mbedtls/x509.h"
 #include "mbedtls/xtea.h"
 
-TEST_CASE(sha1_test)
-{
-    int rc;
-
-    rc = mbedtls_sha1_self_test(0);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(sha256_test)
-{
-    int rc;
-
-    rc = mbedtls_sha256_self_test(0);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(sha512_test)
-{
-    int rc;
-
-    rc = mbedtls_sha512_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(aes_test)
-{
-    int rc;
-
-    rc = mbedtls_aes_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(arc4_test)
-{
-    int rc;
-
-    rc = mbedtls_arc4_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(bignum_test)
-{
-    int rc;
-
-    rc = mbedtls_mpi_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(ccm_test)
-{
-    int rc;
-
-    rc = mbedtls_ccm_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(dhm_test)
-{
-    int rc;
-
-    rc = mbedtls_dhm_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(ecp_test)
-{
-    int rc;
-
-    rc = mbedtls_ecp_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(entropy_test)
-{
-#if 0 /* XXX fix this later, no strong entropy source atm */
-    int rc;
-
-    rc = mbedtls_entropy_self_test(1);
-    TEST_ASSERT(rc == 0);
-#endif
-}
-
-TEST_CASE(gcm_test)
-{
-    int rc;
-
-    rc = mbedtls_gcm_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(hmac_drbg_test)
-{
-    int rc;
-
-    rc = mbedtls_hmac_drbg_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(md5_test)
-{
-    int rc;
-
-    rc = mbedtls_md5_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(pkcs5_test)
-{
-    int rc;
-
-    rc = mbedtls_pkcs5_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(ripemd160_test)
-{
-    int rc;
-
-    rc = mbedtls_ripemd160_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(rsa_test)
-{
-    int rc;
-
-    rc = mbedtls_rsa_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(x509_test)
-{
-    int rc;
-
-    rc = mbedtls_x509_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
-TEST_CASE(xtea_test)
-{
-    int rc;
-
-    rc = mbedtls_xtea_self_test(1);
-    TEST_ASSERT(rc == 0);
-}
-
+TEST_CASE_DECL(sha1_test)
+TEST_CASE_DECL(sha256_test)
+TEST_CASE_DECL(sha512_test)
+TEST_CASE_DECL(aes_test)
+TEST_CASE_DECL(arc4_test)
+TEST_CASE_DECL(bignum_test)
+TEST_CASE_DECL(ccm_test)
+TEST_CASE_DECL(dhm_test)
+TEST_CASE_DECL(ecp_test)
+TEST_CASE_DECL(entropy_test)
+TEST_CASE_DECL(gcm_test)
+TEST_CASE_DECL(hmac_drbg_test)
+TEST_CASE_DECL(md5_test)
+TEST_CASE_DECL(pkcs5_test)
+TEST_CASE_DECL(ripemd160_test)
+TEST_CASE_DECL(rsa_test)
+TEST_CASE_DECL(x509_test)
+TEST_CASE_DECL(xtea_test)
 
 TEST_SUITE(mbedtls_test_all)
 {
@@ -216,7 +88,7 @@ TEST_SUITE(mbedtls_test_all)
 int
 main(int argc, char **argv)
 {
-    tu_config.tc_print_results = 1;
+    ts_config.ts_print_results = 1;
     tu_init();
 
     mbedtls_test_all();
@@ -225,4 +97,3 @@ main(int argc, char **argv)
 }
 
 #endif
-

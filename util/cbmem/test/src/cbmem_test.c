@@ -18,15 +18,16 @@
  */
 #include <stdio.h>
 #include <string.h>
-
+#include <assert.h>
+#include <stddef.h>
+#include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "cbmem/cbmem.h"
-
-#define CBMEM1_BUF_SIZE (64 * 1024)
+#include "cbmem_test.h"
 
 struct cbmem cbmem1;
 uint8_t cbmem1_buf[CBMEM1_BUF_SIZE];
-uint8_t cbmem1_entry[1024];
+uint8_t cbmem1_entry[CBMEM1_ENTRY_SIZE];
 
 /*
  * Things to test.
@@ -35,8 +36,8 @@ uint8_t cbmem1_entry[1024];
  * - Reading through all entries.
  */
 
-static void
-setup_cbmem1(void)
+void
+setup_cbmem1(void *arg)
 {
     int i;
     int rc;
@@ -59,7 +60,7 @@ setup_cbmem1(void)
     }
 }
 
-static int
+int
 cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
         void *arg)
 {
@@ -79,98 +80,29 @@ cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
     return (0);
 }
 
-TEST_CASE(cbmem_test_case_1)
-{
-    int i;
-    int rc;
-
-    /* i starts at 2, for the 2 overwritten entries. */
-    i = 2;
-    rc = cbmem_walk(&cbmem1, cbmem_test_case_1_walk, &i);
-    TEST_ASSERT_FATAL(rc == 0, "Could not walk cbmem tree!  rc = %d", rc);
-    TEST_ASSERT_FATAL(i == 65,
-            "Did not go through every element of walk, %d processed", i - 2);
-
-}
-
-TEST_CASE(cbmem_test_case_2)
-{
-    struct cbmem_entry_hdr *hdr;
-    struct cbmem_iter iter;
-    uint8_t i;
-    uint8_t val;
-    int rc;
-
-    i = 2;
-    cbmem_iter_start(&cbmem1, &iter);
-    while (1) {
-        hdr = cbmem_iter_next(&cbmem1, &iter);
-        if (hdr == NULL) {
-            break;
-        }
-
-        rc = cbmem_read(&cbmem1, hdr, &val, 0, sizeof(val));
-        TEST_ASSERT_FATAL(rc == 1, "Couldn't read 1 byte from cbmem");
-        TEST_ASSERT_FATAL(val == i, "Entry index does not match %d vs %d",
-                val, i);
-
-        i++;
-    }
-
-    /* i starts at 2, for the 2 overwritten entries */
-    TEST_ASSERT_FATAL(i == 65,
-            "Did not iterate through all 63 elements of CBMEM1, processed %d",
-            i - 2);
-}
-
-TEST_CASE(cbmem_test_case_3)
-{
-    struct cbmem_entry_hdr *hdr;
-    struct cbmem_iter iter;
-    uint16_t off;
-    uint16_t len;
-    uint8_t buf[128];
-    int i;
-    int rc;
-
-    i = 0;
-    cbmem_iter_start(&cbmem1, &iter);
-    while (1) {
-        hdr = cbmem_iter_next(&cbmem1, &iter);
-        if (hdr == NULL) {
-            break;
-        }
-
-        /* first ensure we can read the entire entry */
-        off = 0;
-        len = 0;
-        while (1) {
-            rc = cbmem_read(&cbmem1, hdr, buf, off, sizeof(buf));
-            TEST_ASSERT_FATAL(rc >= 0,
-                    "Error reading from buffer rc=%d, off=%d,len=%d", rc, off,
-                    sizeof(buf));
-            if (rc == 0) {
-                break;
-            }
-            off += rc;
-            len += rc;
-        }
-        TEST_ASSERT_FATAL(len == 1024,
-                "Couldn't read full entry, expected %d got %d", 1024, len);
-        i++;
-
-        /* go apesh*t, and read data out of bounds, see what we get. */
-        rc = cbmem_read(&cbmem1, hdr, buf, 2048, sizeof(buf));
-        TEST_ASSERT_FATAL(rc < 0,
-                "Reading invalid should return error, instead %d returned.",
-                rc);
-    }
-}
+TEST_CASE_DECL(cbmem_test_case_1)
+TEST_CASE_DECL(cbmem_test_case_2)
+TEST_CASE_DECL(cbmem_test_case_3)
 
 TEST_SUITE(cbmem_test_suite)
 {
-    setup_cbmem1();
     cbmem_test_case_1();
     cbmem_test_case_2();
     cbmem_test_case_3();
 }
+
+#if MYNEWT_VAL(SELFTEST)
+
+int
+main(int argc, char **argv)
+{
+    ts_config.ts_print_results = 1;
+    tu_init();
+
+    tu_suite_set_init_cb(setup_cbmem1, NULL);
+    cbmem_test_suite();
+
+    return tu_any_failed;
+}
+
+#endif

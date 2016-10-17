@@ -30,27 +30,71 @@ tu_suite_set_name(const char *name)
     tu_suite_name = name;
 }
 
+void
+tu_suite_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg)
+{
+    ts_config.ts_suite_init_cb = cb;
+    ts_config.ts_suite_init_arg = cb_arg;
+}
+
 /**
- * Configures a callback that gets executed at the end of each test case in the
- * current suite.  This is useful when there are some checks that should be
- * performed at the end of each test (e.g., verify no memory leaks).  This
- * callback is cleared when the current suite completes.
+ * Configures a callback that gets executed at the end of each test
+ * case in the current suite.  This is useful when there are some
+ * checks that should be performed at the end of each test
+ * (e.g., verify no memory leaks).  This callback is cleared when the
+ * current suite completes.
  *
- * @param cb                    The callback to execute at the end of each test
- *                                  case.
- * @param cb_arg                An optional argument that gets passed to the
+ * @param cb -  The callback to execute at the end of each test case.
+ * @param cb_arg - An optional argument that gets passed to the
  *                                  callback.
  */
 void
+tu_suite_set_pre_test_cb(tu_pre_test_fn_t *cb, void *cb_arg)
+{
+    ts_config.ts_case_pre_test_cb = cb;
+    ts_config.ts_case_pre_arg = cb_arg;
+}
+
+void
+tu_suite_pre_test(void)
+{
+    if (ts_config.ts_case_pre_test_cb != NULL) {
+        ts_config.ts_case_pre_test_cb(ts_config.ts_case_pre_arg);
+    }
+}
+
+void
 tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg)
 {
-    tu_case_post_test_cb = cb;
-    tu_case_post_test_cb_arg = cb_arg;
+    ts_config.ts_case_post_test_cb = cb;
+    ts_config.ts_case_post_arg = cb_arg;
+}
+
+void
+tu_suite_post_test(void)
+{
+    if (ts_config.ts_case_post_test_cb != NULL) {
+        ts_config.ts_case_post_test_cb(ts_config.ts_case_post_arg);
+    }
+}
+
+void
+tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg) {
+    ts_config.ts_case_pass_cb = cb;
+    ts_config.ts_case_pass_arg = cb_arg;
+}
+
+void
+tu_suite_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg) {
+    ts_config.ts_case_fail_cb = cb;
+    ts_config.ts_case_fail_arg = cb_arg;
 }
 
 void
 tu_suite_complete(void)
 {
+    tu_suite_set_init_cb(NULL, NULL);
+    tu_suite_set_pre_test_cb(NULL, NULL);
     tu_suite_set_post_test_cb(NULL, NULL);
 }
 
@@ -61,7 +105,7 @@ tu_suite_init(const char *name)
 
     tu_suite_set_name(name);
 
-    if (tu_config.tc_suite_init_cb != NULL) {
-        tu_config.tc_suite_init_cb(tu_config.tc_suite_init_arg);
+    if (ts_config.ts_suite_init_cb != NULL) {
+        ts_config.ts_suite_init_cb(ts_config.ts_suite_init_arg);
     }
 }

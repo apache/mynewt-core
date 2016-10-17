@@ -30,8 +30,6 @@ int tu_case_failed;
 int tu_case_idx;
 
 const char *tu_case_name;
-tu_post_test_fn_t *tu_case_post_test_cb;
-void *tu_case_post_test_cb_arg;
 
 #define TU_CASE_BUF_SZ      1024
 
@@ -84,6 +82,38 @@ tu_case_set_name(const char *name)
     tu_case_name = name;
 }
 
+/**
+ * Configures a callback that gets executed at the end of each test.
+ * This callback is cleared when the current test completes.
+ *
+ * @param cb -  The callback to execute at the end of each test case.
+ * @param cb_arg - An optional argument that gets passed to the
+ *                                  callback.
+ */
+/*
+ * Called to initialize test (after tu_suite_pre_cb and before 
+ */
+void
+tu_case_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg)
+{
+    tc_config.tc_case_init_cb = cb;
+    tc_config.tc_case_init_arg = cb_arg;
+}
+
+void
+tu_case_set_pre_cb(tu_pre_test_fn_t *cb, void *cb_arg)
+{
+    tc_config.tc_case_pre_test_cb = cb;
+    tc_config.tc_case_pre_arg = cb_arg;
+}
+
+void
+tu_case_set_post_cb(tu_post_test_fn_t *cb, void *cb_arg)
+{
+    tc_config.tc_case_post_test_cb = cb;
+    tc_config.tc_case_post_arg = cb_arg;
+}
+
 void
 tu_case_init(const char *name)
 {
@@ -92,8 +122,8 @@ tu_case_init(const char *name)
 
     tu_case_set_name(name);
 
-    if (tu_config.tc_case_init_cb != NULL) {
-        tu_config.tc_case_init_cb(tu_config.tc_case_init_arg);
+    if (tc_config.tc_case_init_cb != NULL) {
+        tc_config.tc_case_init_cb(tc_config.tc_case_init_arg);
     }
 }
 
@@ -101,13 +131,68 @@ void
 tu_case_complete(void)
 {
     tu_case_idx++;
+    tu_case_set_pre_cb(NULL, NULL);
+    tu_case_set_post_cb(NULL, NULL);
+}
+
+void
+tu_case_pre_test(void)
+{
+    if (tc_config.tc_case_pre_test_cb != NULL) {
+        tc_config.tc_case_pre_test_cb(tc_config.tc_case_pre_arg);
+    }
 }
 
 void
 tu_case_post_test(void)
 {
-    if (tu_case_post_test_cb != NULL) {
-        tu_case_post_test_cb(tu_case_post_test_cb_arg);
+    if (tc_config.tc_case_post_test_cb != NULL) {
+        tc_config.tc_case_post_test_cb(tc_config.tc_case_post_arg);
+    }
+}
+
+void
+tu_case_pass(void)
+{
+#if MYNEWT_VAL(SELFTEST)
+    if (ts_config.ts_print_results) {
+        printf("[pass] %s/%s\n", tu_suite_name, tu_case_name);
+        if (tu_case_buf_len > 0) {
+            printf("%s", tu_case_buf);
+        }
+        fflush(stdout);
+    }
+#endif
+
+    tu_case_reported = 1;
+    tu_case_failed = 0;
+
+    if (ts_config.ts_case_pass_cb != NULL) {
+        ts_config.ts_case_pass_cb(tu_case_buf, tu_case_buf_len,
+                                  ts_config.ts_case_pass_arg);
+    }
+}
+
+void
+tu_case_fail(void)
+{
+    tu_case_reported = 1;
+    tu_case_failed = 1;
+    tu_suite_failed = 1;
+    tu_any_failed = 1;
+
+#if MYNEWT_VAL(SELFTEST)
+    if (ts_config.ts_print_results) {
+        printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
+        fflush(stdout);
+    }
+#endif
+
+    tu_case_post_test();
+
+    if (ts_config.ts_case_fail_cb != NULL) {
+        ts_config.ts_case_fail_cb(tu_case_buf, tu_case_buf_len,
+                                  ts_config.ts_case_fail_arg);
     }
 }
 
@@ -119,14 +204,16 @@ tu_case_write_fail_buf(void)
     tu_suite_failed = 1;
     tu_any_failed = 1;
 
-    if (tu_config.tc_print_results) {
+#if MYNEWT_VAL(SELFTEST)
+    if (ts_config.ts_print_results) {
         printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
         fflush(stdout);
     }
+#endif
 
-    if (tu_config.tc_case_fail_cb != NULL) {
-        tu_config.tc_case_fail_cb(tu_case_buf, tu_case_buf_len,
-                                  tu_config.tc_case_fail_arg);
+    if (ts_config.ts_case_fail_cb != NULL) {
+        ts_config.ts_case_fail_cb(tu_case_buf, tu_case_buf_len,
+                                  ts_config.ts_case_fail_arg);
     }
 }
 
@@ -151,19 +238,22 @@ tu_case_append_assert_msg(const char *expr)
 static void
 tu_case_write_pass_buf(void)
 {
-    if (tu_config.tc_print_results) {
+
+#if MYNEWT_VAL(SELFTEST)
+    if (ts_config.ts_print_results) {
         printf("[pass] %s/%s\n", tu_suite_name, tu_case_name);
         if (tu_case_buf_len > 0) {
             printf("%s", tu_case_buf);
         }
         fflush(stdout);
     }
+#endif
 
     tu_case_reported = 1;
 
-    if (tu_config.tc_case_pass_cb != NULL) {
-        tu_config.tc_case_pass_cb(tu_case_buf, tu_case_buf_len,
-                                  tu_config.tc_case_pass_arg);
+    if (ts_config.ts_case_pass_cb != NULL) {
+        ts_config.ts_case_pass_cb(tu_case_buf, tu_case_buf_len,
+                                  ts_config.ts_case_pass_arg);
     }
 }
 
@@ -192,7 +282,7 @@ tu_case_fail_assert(int fatal, const char *file, int line,
     va_list ap;
     int rc;
 
-    if (tu_config.tc_system_assert) {
+    if (ts_config.ts_system_assert) {
         assert(0);
     }
 

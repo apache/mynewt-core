@@ -1,0 +1,4 @@
+# Package: sys/config/test-fcb
+
+syscfg.vals:
+    CONFIG_FCB: 1

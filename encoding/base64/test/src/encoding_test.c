@@ -16,13 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <assert.h>
 #include <stddef.h>
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "encoding_test_priv.h"
 
+TEST_CASE_DECL(hex2str)
+TEST_CASE_DECL(str2hex)
 
 int
 hex_fmt_test_all(void)
@@ -31,12 +32,18 @@ hex_fmt_test_all(void)
     return tu_case_failed;
 }
 
+TEST_SUITE(hex_fmt_test_suite)
+{
+    hex2str();
+    str2hex();
+}
+
 #if MYNEWT_VAL(SELFTEST)
 
 int
 main(int argc, char **argv)
 {
-    tu_config.tc_print_results = 1;
+    ts_config.ts_print_results = 1;
     tu_init();
 
     hex_fmt_test_all();

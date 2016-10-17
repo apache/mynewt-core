@@ -16,19 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
 #include "sysinit/sysinit.h"
 #include "testutil/testutil.h"
 #include "os/os.h"
 #include "os_test_priv.h"
 
 /* Task 1 for sending */
-#define CALLOUT_STACK_SIZE        (5120)
-#define SEND_CALLOUT_TASK_PRIO        (1)
 struct os_task callout_task_struct_send;
 os_stack_t callout_task_stack_send[CALLOUT_STACK_SIZE];
 
-#define RECEIVE_CALLOUT_TASK_PRIO        (2)
 struct os_task callout_task_struct_receive;
 os_stack_t callout_task_stack_receive[CALLOUT_STACK_SIZE];
 
@@ -40,16 +36,13 @@ struct os_eventq callout_evq;
 struct os_event callout_ev;
 
 /* The callout_stop task */
-#define SEND_STOP_CALLOUT_TASK_PRIO        (3)
 struct os_task callout_task_struct_stop_send;
 os_stack_t callout_task_stack_stop_send[CALLOUT_STACK_SIZE];
 
-#define RECEIVE_STOP_CALLOUT_TASK_PRIO        (4)
 struct os_task callout_task_struct_stop_receive;
 os_stack_t callout_task_stack_stop_receive[CALLOUT_STACK_SIZE];
 
 /* Delearing variables for callout_stop_func */
-#define MULTI_SIZE    (2)
 struct os_callout_func callout_func_stop_test[MULTI_SIZE];
 
 /* The event to be sent*/
@@ -57,12 +50,10 @@ struct os_eventq callout_stop_evq[MULTI_SIZE];
 struct os_event callout_stop_ev;
 
 /* Declearing varables for callout_speak */
-#define SPEAK_CALLOUT_TASK_PRIO        (5)
 struct os_task callout_task_struct_speak;
 os_stack_t callout_task_stack_speak[CALLOUT_STACK_SIZE];
 
 /* Declearing varaibles for listen */
-#define LISTEN_CALLOUT_TASK_PRIO        (6)
 struct os_task callout_task_struct_listen;
 os_stack_t callout_task_stack_listen[CALLOUT_STACK_SIZE];
 
@@ -72,6 +63,7 @@ struct os_callout_func callout_func_speak;
 int p;
 int q;
 int t;
+
 /* This is the function for callout_init*/
 void
 my_callout_func(void *arg)
@@ -235,90 +227,9 @@ callout_task_stop_listen( void *arg )
 
 }
 
-/* Test case to test the basics of the callout */
-TEST_CASE(callout_test)
-{
-
-    /* Initializing the OS */
-    sysinit();
-    
-    /* Initialize the sending task */
-    os_task_init(&callout_task_struct_send, "callout_task_send",
-        callout_task_send, NULL, SEND_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_send, CALLOUT_STACK_SIZE);
-
-    /* Initialize the receive task */
-    os_task_init(&callout_task_struct_receive, "callout_task_receive",
-        callout_task_receive, NULL, RECEIVE_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_receive, CALLOUT_STACK_SIZE);
-
-    os_eventq_init(&callout_evq);
-    
-    /* Initialize the callout function */
-    os_callout_func_init(&callout_func_test, &callout_evq,
-        my_callout_func, NULL);
-
-    /* Does not return until OS_restart is called */
-    os_start();
-}
-
-/* Test case of the callout_task_stop */
-TEST_CASE(callout_test_stop)
-{
-    int k;
-    /* Initializing the OS */
-    sysinit();
-
-    /* Initialize the sending task */
-    os_task_init(&callout_task_struct_stop_send, "callout_task_stop_send",
-        callout_task_stop_send, NULL, SEND_STOP_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_stop_send, CALLOUT_STACK_SIZE);
-
-    /* Initialize the receiving task */
-    os_task_init(&callout_task_struct_stop_receive, "callout_task_stop_receive",
-        callout_task_stop_receive, NULL, RECEIVE_STOP_CALLOUT_TASK_PRIO,
-        OS_WAIT_FOREVER, callout_task_stack_stop_receive, CALLOUT_STACK_SIZE);
-
-    for(k = 0; k< MULTI_SIZE; k++){
-        os_eventq_init(&callout_stop_evq[k]);
-    }
-    
-    /* Initialize the callout function */
-    for(k = 0; k<MULTI_SIZE; k++){
-        os_callout_func_init(&callout_func_stop_test[k], &callout_stop_evq[k],
-           my_callout_stop_func, NULL);
-    }
-
-    /* Does not return until OS_restart is called */
-    os_start();
-
-}
-
-/* Test case to test case for speak and listen */
-TEST_CASE(callout_test_speak)
-{
-    /* Initializing the OS */
-    sysinit();
-    
-    /* Initialize the sending task */
-    os_task_init(&callout_task_struct_speak, "callout_task_speak",
-        callout_task_stop_speak, NULL, SPEAK_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_speak, CALLOUT_STACK_SIZE);
-
-    /* Initialize the receive task */
-    os_task_init(&callout_task_struct_listen, "callout_task_listen",
-        callout_task_stop_listen, NULL, LISTEN_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_listen, CALLOUT_STACK_SIZE);
-
-    os_eventq_init(&callout_evq);
-    
-    /* Initialize the callout function */
-    os_callout_func_init(&callout_func_speak, &callout_evq,
-        my_callout_speak_func, NULL);    
-    /* Does not return until OS_restart is called */
-    os_start();
-
-}
+TEST_CASE_DECL(callout_test_speak)
+TEST_CASE_DECL(callout_test_stop)
+TEST_CASE_DECL(callout_test)
 
 TEST_SUITE(os_callout_test_suite)
 {   

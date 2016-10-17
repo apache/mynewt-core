@@ -46,7 +46,7 @@ void *block_array[MEMPOOL_TEST_MAX_BLOCKS];
 
 int verbose = 0;
 
-static int
+int
 mempool_test_get_pool_size(int num_blocks, int block_size)
 {
     int mem_pool_size;
@@ -60,7 +60,7 @@ mempool_test_get_pool_size(int num_blocks, int block_size)
     return mem_pool_size;
 }
 
-static void
+void
 mempool_test(int num_blocks, int block_size)
 {
     int cnt;
@@ -209,17 +209,7 @@ mempool_test(int num_blocks, int block_size)
     TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
 }
 
-/**
- * os mempool test 
- *  
- * Main test loop for memory pool testing. 
- * 
- * @return int 
- */
-TEST_CASE(os_mempool_test_case)
-{
-    mempool_test(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE);
-}
+TEST_CASE_DECL(os_mempool_test_case)
 
 TEST_SUITE(os_mempool_test_suite)
 {
