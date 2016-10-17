@@ -396,11 +396,14 @@ hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 {
     struct stm32f4_hal_spi *spi;
     int rc = 0;
+    int sr;
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
+    __HAL_DISABLE_INTERRUPTS(sr);
     spi->txrx_cb_func = txrx_cb;
     spi->txrx_cb_arg = arg;
+    __HAL_ENABLE_INTERRUPTS(sr);
 err:
     return rc;
 }
@@ -463,7 +466,9 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     IRQn_Type irq;
     uint32_t prescaler;
     int rc;
+    int sr;
 
+    __HAL_DISABLE_INTERRUPTS(sr);
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
     init = &spi->handle.Init;
@@ -631,8 +636,10 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             spi_ss_isr(spi);
         }
     }
+    __HAL_ENABLE_INTERRUPTS(sr);
     return (0);
 err:
+    __HAL_ENABLE_INTERRUPTS(sr);
     return (rc);
 }
 
@@ -641,9 +648,11 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
 {
     struct stm32f4_hal_spi *spi;
     int rc;
+    int sr;
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
+    __HAL_DISABLE_INTERRUPTS(sr);
     rc = -1;
     if (!spi->slave) {
         spi->handle.Instance->CR1 |= (SPI_CR1_SSI | SPI_CR1_SPE);
@@ -660,6 +669,7 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
             spi->handle.RxXferSize  = len;
         }
     }
+    __HAL_ENABLE_INTERRUPTS(sr);
 err:
     return (rc);
 }
@@ -676,11 +686,13 @@ hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
 {
     struct stm32f4_hal_spi *spi;
     int rc;
+    int sr;
     int i;
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->slave) {
+        __HAL_DISABLE_INTERRUPTS(sr);
         if (spi->handle.Init.DataSize == SPI_DATASIZE_8BIT) {
             for (i = 0; i < 4; i++) {
                 ((uint8_t *)spi->def_char)[i] = val;
@@ -693,6 +705,7 @@ hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
         if (!spi->tx_in_prog && spi->selected) {
             spi->handle.Instance->DR = val;
         }
+        __HAL_ENABLE_INTERRUPTS(sr);
     } else {
         rc = -1;
     }
@@ -719,6 +732,7 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     struct stm32f4_hal_spi *spi;
     uint16_t retval;
     int len;
+    int sr;
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->slave) {
@@ -730,11 +744,13 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     } else {
         len = sizeof(uint16_t);
     }
+    __HAL_DISABLE_INTERRUPTS(sr);
     spi->handle.Instance->CR1 |= (SPI_CR1_SSI | SPI_CR1_SPE);
     rc = HAL_SPI_TransmitReceive(&spi->handle,(uint8_t *)&val,
                                  (uint8_t *)&retval, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
     spi->handle.Instance->CR1 &= ~(SPI_CR1_SSI | SPI_CR1_SPE);
+    __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         retval = 0xFFFF;
     }
@@ -771,6 +787,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
 {
     int rc;
     struct stm32f4_hal_spi *spi;
+    int sr;
 
     rc = -1;
     if (!len) {
@@ -780,11 +797,13 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     if (spi->slave) {
         goto err;
     }
+    __HAL_DISABLE_INTERRUPTS(sr);
     spi->handle.Instance->CR1 |= (SPI_CR1_SSI | SPI_CR1_SPE);
     rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
                                  (uint8_t *)rxbuf, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
     spi->handle.Instance->CR1 &= ~(SPI_CR1_SSI | SPI_CR1_SPE);
+    __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         rc = -1;
         goto err;
@@ -799,15 +818,18 @@ hal_spi_abort(int spi_num)
 {
     int rc;
     struct stm32f4_hal_spi *spi;
+    int sr;
 
     rc = 0;
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->slave) {
         goto err;
     }
+    __HAL_DISABLE_INTERRUPTS(sr);
     spi->handle.State = HAL_SPI_STATE_READY;
     __HAL_SPI_DISABLE_IT(&spi->handle, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
     spi->handle.Instance->CR1 &= ~(SPI_CR1_SSI | SPI_CR1_SPE);
+    __HAL_ENABLE_INTERRUPTS(sr);
 err:
     return rc;
 }
