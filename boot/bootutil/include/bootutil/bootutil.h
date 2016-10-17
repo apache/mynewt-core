@@ -34,18 +34,8 @@ extern "C" {
 #define BOOT_SWAP_TYPE_TEST     1
 #define BOOT_SWAP_TYPE_REVERT   2
 
-int boot_status_source(void);
-int boot_swap_type(void);
-int boot_partial_swap_type(void);
-
-int boot_vect_read_test(int *slot);
-int boot_vect_read_main(int *slot);
-int boot_set_pending(int slot);
-int boot_set_confirmed(void);
-
-void boot_set_image_slot_split(void);
-
 struct image_header;
+struct boot_img_trailer;
 
 /** A request object instructing the boot loader how to proceed. */
 struct boot_req {
@@ -92,12 +82,17 @@ struct boot_rsp {
 };
 
 /* you must have pre-allocated all the entries within this structure */
-int
-boot_build_request(struct boot_req *preq, int area_descriptor_max);
+int boot_build_request(struct boot_req *preq, int area_descriptor_max);
 
-int
-boot_go(const struct boot_req *req, struct boot_rsp *rsp);
+int boot_go(const struct boot_req *req, struct boot_rsp *rsp);
 
+int boot_swap_type(void);
+
+int boot_set_pending(void);
+int boot_set_confirmed(void);
+
+int boot_read_img_trailer(int slot, struct boot_img_trailer *bit);
+int boot_read_scratch_trailer(struct boot_img_trailer *bit);
 
 #define SPLIT_GO_OK                 (0)
 #define SPLIT_GO_NON_MATCHING       (-1)
