@@ -21,6 +21,8 @@
 #include "testutil/testutil.h"
 #include "test_json.h"
 
+TEST_CASE_DECL(test_json_simple_encode);
+TEST_CASE_DECL(test_json_simple_decode);
 
 TEST_SUITE(test_json_suite) {
     test_json_simple_encode();
@@ -28,16 +30,14 @@ TEST_SUITE(test_json_suite) {
 }
 
 #if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
-    tu_config.tc_print_results = 1;
+    ts_config.ts_print_results = 1;
     tu_init();
 
     test_json_suite();
 
     return tu_any_failed;
 }
-
 #endif

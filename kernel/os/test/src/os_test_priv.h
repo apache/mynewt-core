@@ -20,6 +20,19 @@
 #ifndef H_OS_TEST_PRIV_
 #define H_OS_TEST_PRIV_
 
+#include "sysinit/sysinit.h"
+#include "testutil/testutil.h"
+#include "os/os.h"
+#include "os_test_priv.h"
+
+#include "callout_test.h"
+
+#include "eventq_test.h"
+#include "mbuf_test.h"
+#include "mempool_test.h"
+#include "mutex_test.h"
+#include "sem_test.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

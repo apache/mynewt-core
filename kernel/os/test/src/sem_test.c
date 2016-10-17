@@ -58,6 +58,8 @@ struct os_sem g_sem1;
  * 
  */
 
+char sem_test_buf[128];
+
 /**
  * sem test disp sem
  *  
@@ -65,18 +67,25 @@ struct os_sem g_sem1;
  * 
  * @param sem 
  */
-static const char *
+const char *
 sem_test_sem_to_s(const struct os_sem *sem)
 {
-    static char buf[128];
+#if 0
+    char buf[128];
 
     snprintf(buf, sizeof buf, "\tSemaphore: tokens=%u head=%p",
              sem->sem_tokens, SLIST_FIRST(&sem->sem_head));
 
     return buf;
+#else
+    snprintf(sem_test_buf, sizeof sem_test_buf, "\tSemaphore: tokens=%u head=%p",
+             sem->sem_tokens, SLIST_FIRST(&sem->sem_head));
+
+    return sem_test_buf;
+#endif
 }
 
-static void 
+void 
 sem_test_sleep_task_handler(void *arg)
 {
     struct os_task *t;
@@ -88,7 +97,7 @@ sem_test_sleep_task_handler(void *arg)
     os_test_restart();
 }
 
-static void
+void
 sem_test_pend_release_loop(int delay, int timeout, int itvl)
 {
     os_error_t err;
@@ -113,7 +122,7 @@ sem_test_pend_release_loop(int delay, int timeout, int itvl)
  * 
  * @return int 
  */
-static void 
+void 
 sem_test_basic_handler(void *arg)
 {
     struct os_task *t;
@@ -178,7 +187,7 @@ sem_test_basic_handler(void *arg)
     os_test_restart();
 }
 
-static void 
+void 
 sem_test_1_task1_handler(void *arg)
 {
     os_error_t err;
@@ -207,188 +216,77 @@ sem_test_1_task1_handler(void *arg)
     os_test_restart();
 }
 
-TEST_CASE(os_sem_test_basic)
-{
-    os_error_t err;
-
-    sysinit();
-
-    err = os_sem_init(&g_sem1, 1);
-    TEST_ASSERT(err == OS_OK);
-
-    os_task_init(&task1, "task1", sem_test_basic_handler, NULL, TASK1_PRIO, 
-            OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_start();
-}
-
-static void 
+void 
 sem_test_1_task2_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, OS_TICKS_PER_SEC / 10, OS_TICKS_PER_SEC / 10);
 }
 
-static void 
+void 
 sem_test_1_task3_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, OS_TIMEOUT_NEVER, OS_TICKS_PER_SEC * 2);
 }
 
-TEST_CASE(os_sem_test_case_1)
-{
-    os_error_t err;
-
-    sysinit();
-
-    err = os_sem_init(&g_sem1, 1);
-    TEST_ASSERT(err == OS_OK);
-
-    os_task_init(&task1, "task1", sem_test_1_task1_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task2, "task2", sem_test_1_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task3, "task3", sem_test_1_task3_handler, NULL, TASK3_PRIO, 
-                 OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_start();
-}
-
-static void 
+void 
 sem_test_2_task2_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-static void 
+void 
 sem_test_2_task3_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, OS_TIMEOUT_NEVER, 2000);
 }
 
-static void 
+void 
 sem_test_2_task4_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-TEST_CASE(os_sem_test_case_2)
-{
-    os_error_t err;
-
-    sysinit();
-
-    err = os_sem_init(&g_sem1, 1);
-    TEST_ASSERT(err == OS_OK);
-
-    os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task2, "task2", sem_test_2_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task3, "task3", sem_test_2_task3_handler, NULL, TASK3_PRIO,
-            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task4, "task4", sem_test_2_task4_handler, NULL, TASK4_PRIO,
-            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_start();
-}
-
-static void 
+void 
 sem_test_3_task2_handler(void *arg) 
 {
     sem_test_pend_release_loop(100, 2000, 2000);
 }
 
-static void 
+void 
 sem_test_3_task3_handler(void *arg) 
 {
     sem_test_pend_release_loop(150, 2000, 2000);
 }
 
-static void 
+void 
 sem_test_3_task4_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-TEST_CASE(os_sem_test_case_3)
-{
-    os_error_t err;
-
-    sysinit();
-
-    err = os_sem_init(&g_sem1, 1);
-    TEST_ASSERT(err == OS_OK);
-
-    os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task2, "task2", sem_test_3_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task3, "task3", sem_test_3_task3_handler, NULL, TASK3_PRIO,
-            OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task4, "task4", sem_test_3_task4_handler, NULL, TASK4_PRIO,
-            OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_start();
-}
-
-static void 
+void 
 sem_test_4_task2_handler(void *arg) 
 {
     sem_test_pend_release_loop(60, 2000, 2000);
 }
 
-static void 
+void 
 sem_test_4_task3_handler(void *arg) 
 {
     sem_test_pend_release_loop(60, 2000, 2000);
 }
 
-static void 
+void 
 sem_test_4_task4_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-
-TEST_CASE(os_sem_test_case_4)
-{
-    os_error_t err;
-
-    sysinit();
-
-    err = os_sem_init(&g_sem1, 1);
-    TEST_ASSERT(err == OS_OK);
-
-    os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task2, "task2", sem_test_4_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task3, "task3", sem_test_4_task3_handler, NULL, TASK3_PRIO,
-                 OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_task_init(&task4, "task4", sem_test_4_task4_handler, NULL, TASK4_PRIO,
-                 OS_WAIT_FOREVER, stack4, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
-
-    os_start();
-}
+TEST_CASE_DECL(os_sem_test_basic)
+TEST_CASE_DECL(os_sem_test_case_1)
+TEST_CASE_DECL(os_sem_test_case_2)
+TEST_CASE_DECL(os_sem_test_case_3)
+TEST_CASE_DECL(os_sem_test_case_4)
 
 TEST_SUITE(os_sem_test_suite)
 {

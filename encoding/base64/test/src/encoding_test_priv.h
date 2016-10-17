@@ -16,9 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #ifndef __ENCODING_TEST_PRIV_
 #define __ENCODING_TEST_PRIV_
+
+#include <assert.h>
+#include <stddef.h>
+#include "syscfg/syscfg.h"
+#include "base64/hex.h"
+#include "testutil/testutil.h"
 
 #ifdef __cplusplus
 extern "C" {

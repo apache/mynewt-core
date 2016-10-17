@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <assert.h>
 #include "sysinit/sysinit.h"
 #include "os/os.h"
@@ -24,7 +23,15 @@
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
 
-struct tu_config tu_config;
+#include <errno.h>
+#include <unistd.h>
+
+struct tc_config tc_config;
+struct tc_config *tc_current_config = &tc_config;
+
+struct ts_config ts_config;
+struct ts_config *ts_current_config = &ts_config;
+
 int tu_any_failed;
 int tu_first_idx;
 
@@ -37,14 +44,44 @@ tu_init(void)
 }
 
 void
+tu_arch_restart(void)
+{
+#if MYNEWT_VAL(SELFTEST)
+    os_arch_os_stop();
+    tu_case_abort();
+#else
+    system_reset();
+#endif
+}
+
+int
+tu_parse_args(int argc, char **argv)
+{
+    int ch;
+
+    while ((ch = getopt(argc, argv, "s")) != -1) {
+        switch (ch) {
+        case 's':
+            ts_config.ts_system_assert = 1;
+            break;
+
+        default:
+            return EINVAL;
+        }
+    }
+
+    return 0;
+}
+
+void
 tu_restart(void)
 {
     tu_case_write_pass_auto();
 
     tu_first_idx = tu_case_idx + 1;
 
-    if (tu_config.tc_restart_cb != NULL) {
-        tu_config.tc_restart_cb(tu_config.tc_restart_arg);
+    if (ts_config.ts_restart_cb != NULL) {
+        ts_config.ts_restart_cb(ts_config.ts_restart_arg);
     }
 
     tu_arch_restart();

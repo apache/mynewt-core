@@ -29,62 +29,141 @@
 extern "C" {
 #endif
 
-/*****************************************************************************
- * Public declarations                                                       *
- *****************************************************************************/
+/*
+ * General execution flow of test suites and cases (more to come XXX)
+ *
+ * TEST_SUITE
+ *      tu_suite_init
+ *          tu_suite_pre_test
+ *              tu_case_init
+ *              tu_case_pre_test
+ *                  TEST_CASE
+ *              tu_case_post_test
+ *              tu_case_pass/tu_case_fail
+ *              tu_case_complete
+ *          tu_suite_post_test
+ *      tu_suite_complete
+ */
 
-typedef void tu_case_init_fn_t(void *arg);
 typedef void tu_case_report_fn_t(char *msg, int msg_len, void *arg);
-typedef void tu_suite_init_fn_t(void *arg);
-typedef void tu_restart_fn_t(void *arg);
+typedef void tu_suite_restart_fn_t(void *arg);
 
-struct tu_config {
-    int tc_print_results;
-    int tc_system_assert;
-
-    tu_case_init_fn_t *tc_case_init_cb;
-    void *tc_case_init_arg;
-
-    tu_case_report_fn_t *tc_case_fail_cb;
-    void *tc_case_fail_arg;
-
-    tu_case_report_fn_t *tc_case_pass_cb;
-    void *tc_case_pass_arg;
-
-    tu_suite_init_fn_t *tc_suite_init_cb;
-    void *tc_suite_init_arg;
-
-    tu_restart_fn_t *tc_restart_cb;
-    void *tc_restart_arg;
-};
-
-extern struct tu_config tu_config;
-extern const char *tu_suite_name;
-extern const char *tu_case_name;
-extern int tu_first_idx;
-
+typedef void tu_pre_test_fn_t(void *arg);
 typedef void tu_post_test_fn_t(void *arg);
 
+typedef void tu_init_test_fn_t(void *arg);
+typedef void tu_pre_test_fn_t(void *arg);
+typedef void tu_post_test_fn_t(void *arg);
+
+/*
+ * Private declarations - Test Suite configuration
+ */
+void tu_suite_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg);
+void tu_suite_set_pre_test_cb(tu_pre_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg);
+void tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg);
+void tu_suite_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg);
+
+void tu_suite_init(const char *name);
+void tu_suite_pre_test(void);
+void tu_suite_post_test(void);
+void tu_suite_complete(void);
+
+struct ts_config {
+    int ts_print_results;
+    int ts_system_assert;
+
+    /*
+     * Called prior to the first test in the suite
+     */
+    tu_init_test_fn_t *ts_suite_init_cb;
+    void *ts_suite_init_arg;
+
+    /*
+     * Called before every test in the suite
+     */
+    tu_pre_test_fn_t *ts_case_pre_test_cb;
+    void *ts_case_pre_arg;
+
+    /*
+     * Called after every test in the suite
+     */
+    tu_post_test_fn_t *ts_case_post_test_cb;
+    void *ts_case_post_arg;
+
+    /*
+     * Called after test returns success
+     */
+    tu_case_report_fn_t *ts_case_pass_cb;
+    void *ts_case_pass_arg;
+
+    /*
+     * Called after test fails (primarily thoough a failed test assert
+     */
+    tu_case_report_fn_t *ts_case_fail_cb;
+    void *ts_case_fail_arg;
+
+    /*
+     * restart after running the test suite
+     */
+    tu_suite_restart_fn_t *ts_restart_cb;
+    void *ts_restart_arg;
+};
+
 int tu_parse_args(int argc, char **argv);
 int tu_init(void);
 void tu_restart(void);
 
-/*****************************************************************************
- * Private declarations                                                      *
- *****************************************************************************/
+/*
+ * Public declarations - test case configuration
+ */
 
-void tu_suite_complete(void);
-void tu_suite_init(const char *name);
+void tu_case_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg);
+void tu_case_set_pre_cb(tu_pre_test_fn_t *cb, void *cb_arg);
+void tu_case_set_post_cb(tu_post_test_fn_t *cb, void *cb_arg);
+
+struct tc_config {
+    /*
+     * Called to initialize the test case
+     */
+    tu_init_test_fn_t *tc_case_init_cb;
+    void *tc_case_init_arg;
+
+    /*
+     * Called prior to the test case start
+     */
+    tu_pre_test_fn_t *tc_case_pre_test_cb;
+    void *tc_case_pre_arg;
+
+    /*
+     * Called after the test case completes
+     */
+    tu_post_test_fn_t *tc_case_post_test_cb;
+    void *tc_case_post_arg;
+};
 
 void tu_case_init(const char *name);
 void tu_case_complete(void);
+void tu_case_pass(void);
+void tu_case_fail(void);
 void tu_case_fail_assert(int fatal, const char *file, int line,
                          const char *expr, const char *format, ...);
 void tu_case_write_pass_auto(void);
 void tu_case_pass_manual(const char *file, int line,
                          const char *format, ...);
+void tu_case_pre_test(void);
 void tu_case_post_test(void);
+
+void tu_case_complete(void);
+
+extern struct tc_config tc_config;
+extern struct tc_config *tc_current_config;
+extern struct ts_config ts_config;
+extern struct ts_config *ts_current_config;
+
+extern const char *tu_suite_name;
+extern const char *tu_case_name;
+extern int tu_first_idx;
 
 extern int tu_any_failed;
 extern int tu_suite_failed;
@@ -93,48 +172,57 @@ extern int tu_case_failed;
 extern int tu_case_idx;
 extern jmp_buf tu_case_jb;
 
-#define TEST_SUITE(suite_name)                                                \
-    static void TEST_SUITE_##suite_name(void);                                \
-                                                                              \
-    int                                                                       \
-    suite_name(void)                                                          \
-    {                                                                         \
-        tu_suite_init(#suite_name);                                           \
-        TEST_SUITE_##suite_name();                                            \
-        tu_suite_complete();                                                  \
-                                                                              \
-        return tu_suite_failed;                                               \
-    }                                                                         \
-                                                                              \
-    static void                                                               \
+#define TEST_SUITE(suite_name)                               \
+static void                                                  \
+TEST_SUITE_##suite_name(void);                               \
+                                                             \
+    int                                                      \
+    suite_name(void)                                         \
+    {                                                        \
+        tu_suite_init(#suite_name);                          \
+        TEST_SUITE_##suite_name();                           \
+        tu_suite_complete();                                 \
+                                                             \
+        return tu_suite_failed;                              \
+    }                                                        \
+                                                             \
+    static void                                              \
     TEST_SUITE_##suite_name(void)
 
-/* for creating multiple files with test cases all belonging to the same
- * suite */
-#define TEST_CASE_DECL(case_name)  int case_name(void);
+/*
+ * for creating multiple files with test cases
+ * all belonging to the same suite
+ */
+#define TEST_CASE_DECL(case_name)                            \
+    int case_name(void);
 
-#define TEST_CASE(case_name)                                                  \
-    static void TEST_CASE_##case_name(void);                                  \
-                                                                              \
-    int                                                                       \
-    case_name(void)                                                           \
-    {                                                                         \
-        if (tu_case_idx >= tu_first_idx) {                                    \
-            tu_case_init(#case_name);                                         \
-                                                                              \
-            if (setjmp(tu_case_jb) == 0) {                                    \
-                TEST_CASE_##case_name();                                      \
-                tu_case_post_test();                                          \
-                tu_case_write_pass_auto();                                    \
-            }                                                                 \
-        }                                                                     \
-                                                                              \
-        tu_case_complete();                                                   \
-                                                                              \
-        return tu_case_failed;                                                \
-    }                                                                         \
-                                                                              \
-    static void                                                               \
+/*
+ * Unit test definition.
+ */
+#define TEST_CASE(case_name)                                  \
+    static void TEST_CASE_##case_name(void);                  \
+                                                              \
+    int                                                       \
+    case_name(void)                                           \
+    {                                                         \
+        tu_suite_pre_test();                                  \
+        if (tu_case_idx >= tu_first_idx) {                    \
+            tu_case_init(#case_name);                         \
+                                                              \
+            tu_case_pre_test();                               \
+            if (setjmp(tu_case_jb) == 0) {                    \
+                TEST_CASE_##case_name();                      \
+                tu_case_post_test();                          \
+                tu_case_pass();                               \
+            }                                                 \
+            tu_case_complete();                               \
+        }                                                     \
+        tu_suite_post_test();                                 \
+                                                              \
+        return tu_case_failed;                                \
+    }                                                         \
+                                                              \
+    static void                                               \
     TEST_CASE_##case_name(void)
 
 #define FIRST_AUX(first, ...) first
@@ -152,21 +240,22 @@ extern jmp_buf tu_case_jb;
 #define XSTR(s) STR(s)
 #define STR(s) #s
 
-#define TEST_ASSERT_FULL(fatal, expr, ...) do                                 \
-{                                                                             \
-    if (!(expr)) {                                                            \
-        tu_case_fail_assert((fatal), __FILE__, __LINE__, XSTR(expr),          \
-                            __VA_ARGS__);                                     \
-    }                                                                         \
+#define TEST_ASSERT_FULL(fatal, expr, ...) do                 \
+{                                                             \
+    if (!(expr)) {                                            \
+        tu_case_fail_assert((fatal), __FILE__,                \
+                            __LINE__, XSTR(expr),             \
+                            __VA_ARGS__);                     \
+    }                                                         \
 } while (0)
 
-#define TEST_ASSERT(...)                                                      \
+#define TEST_ASSERT(...)                                      \
     TEST_ASSERT_FULL(0, FIRST(__VA_ARGS__), REST_OR_0(__VA_ARGS__))
 
-#define TEST_ASSERT_FATAL(...)                                                \
+#define TEST_ASSERT_FATAL(...)                                \
     TEST_ASSERT_FULL(1, FIRST(__VA_ARGS__), REST_OR_0(__VA_ARGS__))
 
-#define TEST_PASS(...)                                                        \
+#define TEST_PASS(...)                                        \
     tu_case_pass_manual(__FILE__, __LINE__, __VA_ARGS__);
 
 #if MYNEWT_VAL(TEST)

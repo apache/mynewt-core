@@ -30,8 +30,8 @@ struct conf_fcb {
     struct fcb cf_fcb;
 };
 
-int conf_fcb_src(struct conf_fcb *fcb);
-int conf_fcb_dst(struct conf_fcb *fcb);
+extern int conf_fcb_src(struct conf_fcb *cf);
+extern int conf_fcb_dst(struct conf_fcb *cf);
 
 #ifdef __cplusplus
 }
