@@ -313,7 +313,7 @@ hal_timer_init(int num, uint32_t freq_hz)
 
     memset(&init, 0, sizeof(init));
     init.Period = 0xffff;
-    init.Prescaler = SystemCoreClock / freq_hz;
+    init.Prescaler = prescaler;
     init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     init.CounterMode = TIM_COUNTERMODE_UP;
 
@@ -394,14 +394,20 @@ hal_timer_get_resolution(int num)
 static uint32_t
 hal_timer_cnt(struct stm32f4_hal_tmr *tmr)
 {
-    uint32_t rc;
+    uint32_t cnt;
     int sr;
 
     __HAL_DISABLE_INTERRUPTS(sr);
-    rc = tmr->sht_oflow + tmr->sht_regs->CNT;
+    cnt = tmr->sht_oflow + tmr->sht_regs->CNT;
+    if (tmr->sht_regs->SR & TIM_SR_UIF) {
+        /*
+         * Just overflowed
+         */
+        cnt = tmr->sht_oflow + tmr->sht_regs->CNT + 0x10000;
+    }
     __HAL_ENABLE_INTERRUPTS(sr);
 
-    return rc;
+    return cnt;
 }
 
 /**
@@ -437,6 +443,17 @@ hal_timer_read(int num)
 int
 hal_timer_delay(int num, uint32_t ticks)
 {
+    struct stm32f4_hal_tmr *tmr;
+    uint32_t until;
+
+    if (num >= STM32F4_HAL_TIMER_MAX || !(tmr = stm32f4_tmr_devs[num])) {
+        return -1;
+    }
+
+    until = hal_timer_cnt(tmr) + ticks;
+    while ((int32_t)(hal_timer_cnt(tmr) - until) <= 0) {
+        ;
+    }
     return 0;
 }
 
@@ -482,9 +499,6 @@ hal_timer_start(struct hal_timer *timer, uint32_t ticks)
     struct stm32f4_hal_tmr *tmr;
     uint32_t tick;
 
-    if (!ticks) {
-        return -1;
-    }
     tmr = (struct stm32f4_hal_tmr *)timer->bsp_timer;
 
     tick = ticks + hal_timer_cnt(tmr);
@@ -510,12 +524,6 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
 
     tmr = (struct stm32f4_hal_tmr *)timer->bsp_timer;
 
-    if ((int32_t)(tick - hal_timer_cnt(tmr)) <= 0) {
-        /*
-         * Can't schedule events to past.
-         */
-        return -1;
-    }
     timer->expiry = tick;
 
     __HAL_DISABLE_INTERRUPTS(sr);
@@ -534,10 +542,18 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
         }
     }
 
-    if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
-        TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_ENABLE);
-        tmr->sht_regs->CCR1 = timer->expiry;
+    if ((int32_t)(tick - hal_timer_cnt(tmr)) <= 0) {
+        /*
+         * Event in the past (should be the case if it was just inserted).
+         */
+        tmr->sht_regs->EGR |= TIM_EGR_CC1G;
         tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
+    } else {
+        if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
+            TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+            tmr->sht_regs->CCR1 = timer->expiry;
+            tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
+        }
     }
     __HAL_ENABLE_INTERRUPTS(sr);
 
