@@ -469,11 +469,11 @@ int hal_gpio_init_out(int pin, int val)
     init_cfg.Speed = GPIO_SPEED_HIGH;
     init_cfg.Alternate = 0;
 
+    hal_gpio_write(pin, val);
     rc = hal_gpio_init_stm(pin, &init_cfg);
     if (rc) {
         return rc;
     }
-    hal_gpio_write(pin, val);
     return 0;
 }
 
