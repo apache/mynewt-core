@@ -95,6 +95,7 @@
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
+#define HAL_IWDG_MODULE_ENABLED
 #endif
 
 /* ########################## HSE/HSI Values adaptation ##################### */

@@ -131,7 +131,8 @@ os_init_idle_task(void)
 
     assert(MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 > MYNEWT_VAL(SANITY_INTERVAL));
 
-    hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
+    rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
+    assert(rc == 0);
 }
 
 /**

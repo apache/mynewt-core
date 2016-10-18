@@ -14,10 +14,10 @@ syscfg.defs:
         value: 1000000
     SANITY_INTERVAL:
         description: 'The interval (in milliseconds) at which the sanity checks should run, should be at least 200ms prior to watchdog'
-        value: 59500
+        value: 15000
     WATCHDOG_INTERVAL:
         description: 'The interval (in milliseconds) at which the watchdog should reset if not tickled, in ms'
-        value: 60000
+        value: 30000
     MSYS_1_BLOCK_COUNT:
         description: 'TBD'
         value: 12
