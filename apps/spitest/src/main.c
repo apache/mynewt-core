@@ -60,6 +60,8 @@ struct os_sem g_test_sem;
 /* For LED toggling */
 int g_led_pin;
 
+#define SPI_BAUDRATE 500
+
 #if MYNEWT_VAL(SPI_MASTER) || MYNEWT_VAL(SPI_0_MASTER)
 #define SPI_MASTER 1
 #endif
@@ -147,7 +149,7 @@ sblinky_spi_cfg(int spi_num)
 
     my_spi.data_order = HAL_SPI_MSB_FIRST;
     my_spi.data_mode = HAL_SPI_MODE0;
-    my_spi.baudrate = 8000;
+    my_spi.baudrate = SPI_BAUDRATE;
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
     spi_id = 0;
     hal_spi_config(spi_id, &my_spi);
@@ -191,7 +193,7 @@ sblinky_spi_cfg(int spi_num)
 
     my_spi.data_order = HAL_SPI_MSB_FIRST;
     my_spi.data_mode = HAL_SPI_MODE0;
-    my_spi.baudrate = 0;
+    my_spi.baudrate =  SPI_BAUDRATE;
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
     spi_id = SPI_SLAVE_ID;
     hal_spi_config(spi_id, &my_spi);
@@ -311,6 +313,9 @@ task1_handler(void *arg)
 #endif
 
 #ifdef SPI_SLAVE
+int prev_len;
+uint8_t prev_buf[32];
+
 void
 task1_handler(void *arg)
 {
@@ -347,6 +352,7 @@ task1_handler(void *arg)
             assert(rc == 0);
         } else {
             /* transmit back what we just received */
+            memcpy(prev_buf, g_spi_tx_buf, 32);
             memset(g_spi_tx_buf, 0xaa, 32);
             memcpy(g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
             rc = hal_spi_txrx_noblock(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf,
