@@ -55,10 +55,6 @@ struct stm32f4_hal_spi {
 static struct stm32f4_spi_stat {
     uint32_t irq;
     uint32_t ss_irq;
-    uint32_t tx;
-    uint32_t eovf;
-    uint32_t emodf;
-    uint32_t efre;
 } spi_stat;
 
 static void spi_irq_handler(struct stm32f4_hal_spi *spi);
@@ -158,7 +154,10 @@ stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
 static void
 spim_irq_handler(struct stm32f4_hal_spi *spi)
 {
+    HAL_SPI_IRQHandler(&spi->handle);
+
     if (spi->handle.TxXferCount == 0 && spi->handle.RxXferCount == 0) {
+        spi->handle.Instance->CR1 |= SPI_CR1_SSI;
         if (spi->txrx_cb_func) {
             spi->txrx_cb_func(spi->txrx_cb_arg, spi->handle.TxXferSize);
         }
@@ -168,6 +167,7 @@ spim_irq_handler(struct stm32f4_hal_spi *spi)
 static void
 spis_irq_handler(struct stm32f4_hal_spi *spi)
 {
+    HAL_SPI_IRQHandler(&spi->handle);
     if (spi->tx_in_prog) {
         if (spi->handle.TxXferCount == 0 && spi->handle.RxXferCount == 0) {
             spi->tx_in_prog = 0;
@@ -187,24 +187,7 @@ spis_irq_handler(struct stm32f4_hal_spi *spi)
 static void
 spi_irq_handler(struct stm32f4_hal_spi *spi)
 {
-    uint32_t err;
-
     spi_stat.irq++;
-
-    HAL_SPI_IRQHandler(&spi->handle);
-    err = spi->handle.ErrorCode;
-    if (err) {
-        if (err & HAL_SPI_ERROR_OVR) {
-            spi_stat.eovf++;
-        }
-        if (err & HAL_SPI_ERROR_MODF) {
-            spi_stat.emodf++;
-        }
-        if (err & HAL_SPI_ERROR_FRE) {
-            spi_stat.efre++;
-        }
-        spi->handle.ErrorCode = 0;
-    }
     if (!spi->slave) {
         spim_irq_handler(spi);
     } else {
@@ -225,6 +208,7 @@ spi_ss_isr(void *arg)
     ss = hal_gpio_read(spi->cfg->ss_pin);
     if (ss == 0 && !spi->selected) {
         reg = spi->handle.Instance->CR1;
+        reg |= SPI_CR1_SPE;
         reg &= ~SPI_CR1_SSI;
         spi->handle.Instance->CR1 = reg;
         if (spi->tx_in_prog) {
@@ -238,15 +222,9 @@ spi_ss_isr(void *arg)
         spi->selected = 1;
     }
     if (ss == 1 && spi->selected) {
-        if (spi->handle.Instance->SR & SPI_SR_RXNE && spi->handle.RxISR) {
-            spi->handle.RxISR(&spi->handle);
-        }
         reg = spi->handle.Instance->CR1;
         reg &= ~SPI_CR1_SPE;
         reg |= SPI_CR1_SSI;
-
-        __HAL_SPI_DISABLE_IT(&spi->handle, SPI_IT_RXNE|SPI_IT_TXE|SPI_IT_ERR);
-
         spi->handle.Instance->CR1 = reg;
         len = spi->handle.RxXferSize - spi->handle.RxXferCount;
         if (spi->tx_in_prog && len) {
@@ -477,6 +455,9 @@ hal_spi_disable(int spi_num)
     rc = 0;
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
+    if (!spi->slave) {
+        spi->handle.Instance->CR1 |= SPI_CR1_SSI;
+    }
     /* XXX power down */
 err:
     return rc;
@@ -502,7 +483,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     cfg = spi->cfg;
 
     if (!spi->slave) {
-        spi->handle.Init.NSS = SPI_NSS_HARD_OUTPUT;
+        spi->handle.Init.NSS = SPI_NSS_SOFT;
         spi->handle.Init.Mode = SPI_MODE_MASTER;
     } else {
         spi->handle.Init.NSS = SPI_NSS_SOFT;
@@ -511,13 +492,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 
     gpio.Mode = GPIO_MODE_AF_PP;
     gpio.Pull = GPIO_NOPULL;
-    if (settings->baudrate <= 2000) {
-        gpio.Speed = GPIO_SPEED_FREQ_LOW;
-    } else if (settings->baudrate <= 12500) {
-        gpio.Speed = GPIO_SPEED_FREQ_MEDIUM;
-    } else {
-        gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-    }
+    gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
     /* Enable the clocks for this SPI */
     switch (spi_num) {
@@ -659,8 +634,9 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     if (rc != 0) {
         goto err;
     }
-    if (spi->slave) {
-        spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
+    if (!spi->slave) {
+        spi->handle.Instance->CR1 |= SPI_CR1_SSI;
+    } else {
         rc = hal_gpio_irq_init(cfg->ss_pin, spi_ss_isr, spi, GPIO_TRIG_BOTH,
           GPIO_PULL_UP);
         spi_ss_isr(spi);
@@ -682,21 +658,20 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
     __HAL_DISABLE_INTERRUPTS(sr);
-    spi_stat.tx++;
     rc = -1;
     if (!spi->slave) {
+        spi->handle.Instance->CR1 |= (SPI_CR1_SSI | SPI_CR1_SPE);
         rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
     } else {
         spi->tx_in_prog = 1;
         if (spi->selected) {
-            spi->handle.State = HAL_SPI_STATE_READY;
             rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
         } else {
             rc = 0;
             spi->handle.pTxBuffPtr = txbuf;
             spi->handle.TxXferSize = len;
             spi->handle.pRxBuffPtr = rxbuf;
-            spi->handle.RxXferSize = len;
+            spi->handle.RxXferSize  = len;
         }
     }
     __HAL_ENABLE_INTERRUPTS(sr);
@@ -761,6 +736,7 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     int rc;
     struct stm32f4_hal_spi *spi;
     uint16_t retval;
+    uint16_t reg;
     int len;
     int sr;
 
@@ -775,10 +751,17 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
         len = sizeof(uint16_t);
     }
     __HAL_DISABLE_INTERRUPTS(sr);
-    spi_stat.tx++;
+    reg = spi->handle.Instance->CR1;
+    reg &= ~SPI_CR1_SSI;
+    reg |= SPI_CR1_SPE;
+    spi->handle.Instance->CR1 = reg;
     rc = HAL_SPI_TransmitReceive(&spi->handle,(uint8_t *)&val,
                                  (uint8_t *)&retval, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
+    reg = spi->handle.Instance->CR1;
+    reg |= SPI_CR1_SSI;
+    reg &= ~SPI_CR1_SPE;
+    spi->handle.Instance->CR1 = reg;
     __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         retval = 0xFFFF;
@@ -827,11 +810,11 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
         goto err;
     }
     __HAL_DISABLE_INTERRUPTS(sr);
-    spi_stat.tx++;
-    __HAL_SPI_ENABLE(&spi->handle);
+    spi->handle.Instance->CR1 |= (SPI_CR1_SSI | SPI_CR1_SPE);
     rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
                                  (uint8_t *)rxbuf, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
+    spi->handle.Instance->CR1 &= ~(SPI_CR1_SSI | SPI_CR1_SPE);
     __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         rc = -1;
@@ -857,7 +840,7 @@ hal_spi_abort(int spi_num)
     __HAL_DISABLE_INTERRUPTS(sr);
     spi->handle.State = HAL_SPI_STATE_READY;
     __HAL_SPI_DISABLE_IT(&spi->handle, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
-    spi->handle.Instance->CR1 &= ~SPI_CR1_SPE;
+    spi->handle.Instance->CR1 &= ~(SPI_CR1_SSI | SPI_CR1_SPE);
     __HAL_ENABLE_INTERRUPTS(sr);
 err:
     return rc;
