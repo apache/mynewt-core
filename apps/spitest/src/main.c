@@ -26,6 +26,7 @@
 #include <os/os_dev.h>
 #include <assert.h>
 #include <string.h>
+#include <console/console.h>
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
@@ -283,6 +284,16 @@ task1_handler(void *arg)
             rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, g_spi_rx_buf,
                                       spi_cb_obj.txlen);
             assert(!rc);
+            console_printf("a transmitted: ");
+            for (i = 0; i < spi_cb_obj.txlen; i++) {
+                console_printf("%2x ", g_spi_tx_buf[i]);
+            }
+            console_printf("\n");
+            console_printf("received: ");
+            for (i = 0; i < spi_cb_obj.txlen; i++) {
+                console_printf("%2x ", g_spi_rx_buf[i]);
+            }
+            console_printf("\n");
 #endif
         } else {
             /* Send blocking */
@@ -305,6 +316,16 @@ task1_handler(void *arg)
             rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
             assert(!rc);
             hal_gpio_set(SPI_SS_PIN);
+            console_printf("b transmitted: ");
+            for (i = 0; i < spi_cb_obj.txlen; i++) {
+                console_printf("%2x ", g_spi_tx_buf[i]);
+            }
+            console_printf("\n");
+            console_printf("received: ");
+            for (i = 0; i < spi_cb_obj.txlen; i++) {
+                console_printf("%2x ", g_spi_rx_buf[i]);
+            }
+            console_printf("\n");
             spitest_validate_last(spi_cb_obj.txlen);
 #endif
         }
