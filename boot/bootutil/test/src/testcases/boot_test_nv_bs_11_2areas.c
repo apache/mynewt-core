@@ -54,11 +54,10 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
     boot_test_util_write_hash(&hdr0, 0);
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
-
-    boot_test_util_swap_areas(2, 5);
-
     rc = boot_set_pending(1);
     TEST_ASSERT_FATAL(rc == 0);
+
+    boot_test_util_swap_areas(2, 5);
 
     status.idx = 1;
     status.elem_sz = 1;
@@ -67,5 +66,5 @@ TEST_CASE(boot_test_nv_bs_11_2areas)
     rc = boot_write_status(&status);
     TEST_ASSERT_FATAL(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEST, &hdr0, &hdr1);
 }

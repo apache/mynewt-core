@@ -46,5 +46,5 @@ TEST_CASE(boot_test_vm_ns_01)
     rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_PERM, NULL, &hdr);
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_REVERT, NULL, &hdr);
 }

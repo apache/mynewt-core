@@ -55,10 +55,10 @@ TEST_CASE(boot_test_revert_continue)
     boot_test_util_write_image(&hdr1, 1);
     boot_test_util_write_hash(&hdr1, 1);
 
-    boot_test_util_swap_areas(2, 5);
-
     /* Indicate that the image in slot 0 is being tested. */
-    boot_set_copy_done();
+    boot_test_util_mark_revert();
+
+    boot_test_util_swap_areas(2, 5);
 
     status.idx = 1;
     status.elem_sz = 1;
@@ -67,5 +67,5 @@ TEST_CASE(boot_test_revert_continue)
     rc = boot_write_status(&status);
     TEST_ASSERT_FATAL(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_PERM, &hdr0, &hdr1);
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_REVERT, &hdr0, &hdr1);
 }

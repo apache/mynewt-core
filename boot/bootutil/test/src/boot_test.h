@@ -31,15 +31,14 @@
 #include "hal/hal_flash.h"
 #include "flash_map/flash_map.h"
 #include "bootutil/image.h"
-#include "bootutil/loader.h"
-#include "bootutil/bootutil_misc.h"
-#include "../../src/bootutil_priv.h"
+#include "bootutil/bootutil.h"
+#include "bootutil_priv.h"
 #include "testutil/testutil.h"
 
 #include "mbedtls/sha256.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 #define BOOT_TEST_HEADER_SIZE       0x200
@@ -66,6 +65,7 @@ void boot_test_util_swap_areas(int area_idx1, int area_idx2);
 void boot_test_util_write_image(const struct image_header *hdr,
                                        int slot);
 void boot_test_util_write_hash(const struct image_header *hdr, int slot);
+void boot_test_util_mark_revert(void);
 void boot_test_util_verify_area(const struct flash_area *area_desc,
                                        const struct image_header *hdr,
                                        uint32_t image_addr, int img_msb);

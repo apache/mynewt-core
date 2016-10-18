@@ -65,5 +65,5 @@ TEST_CASE(boot_test_nv_bs_11)
     rc = boot_write_status(&status);
     TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEST, &hdr0, &hdr1);
 }

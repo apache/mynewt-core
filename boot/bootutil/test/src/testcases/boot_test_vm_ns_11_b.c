@@ -57,5 +57,5 @@ TEST_CASE(boot_test_vm_ns_11_b)
     rc = boot_set_pending(1);
     TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEMP, &hdr0, &hdr1);
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEST, &hdr0, &hdr1);
 }

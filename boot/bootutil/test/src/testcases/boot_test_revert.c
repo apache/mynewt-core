@@ -20,8 +20,7 @@
 
 TEST_CASE(boot_test_revert)
 {
-    struct image_header hdr0 = {
-        .ih_magic = IMAGE_MAGIC,
+    struct image_header hdr0 = { .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 4 + 32,
         .ih_hdr_size = BOOT_TEST_HEADER_SIZE,
         .ih_img_size = 5 * 1024,
@@ -53,7 +52,7 @@ TEST_CASE(boot_test_revert)
     boot_test_util_write_hash(&hdr1, 1);
 
     /* Indicate that the image in slot 0 is being tested. */
-    boot_set_copy_done();
+    boot_test_util_mark_revert();
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_PERM, &hdr0, &hdr1);
+    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_REVERT, &hdr0, &hdr1);
 }

@@ -53,7 +53,7 @@ TEST_CASE(boot_test_no_hash)
     boot_test_util_write_image(&hdr1, 1);
 
     rc = boot_set_pending(1);
-    TEST_ASSERT_FATAL(rc == 0);
+    TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
 }
