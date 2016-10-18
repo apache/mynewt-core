@@ -1100,6 +1100,9 @@ HAL_StatusTypeDef HAL_SPI_Transmit_IT(SPI_HandleTypeDef *hspi, uint8_t *pData, u
     __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_ERR));
   }
 
+  if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
+      hspi->TxISR(hspi);
+  }
   /* Check if the SPI is already enabled */
   if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
   {
@@ -1277,6 +1280,9 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive_IT(SPI_HandleTypeDef *hspi, uint8_t *p
   /* Enable TXE, RXNE and ERR interrupt */
   __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
 
+  if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
+      hspi->TxISR(hspi);
+  }
   /* Check if the SPI is already enabled */
   if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
   {
