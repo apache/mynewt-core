@@ -28,10 +28,6 @@ pkg.keywords:
     - danube
     - mips
 
-pkg.arch: mips
-pkg.compiler: compiler/mips
-pkg.linkerscript: "uhi32.ld"
 pkg.cflags:
 pkg.deps:
     - hw/mcu/mips/danube
-    - libs/baselibc

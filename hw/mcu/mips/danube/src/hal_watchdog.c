@@ -17,33 +17,23 @@
  * under the License.
  */
 
-#include "hal/hal_bsp.h"
-#include "syscfg/syscfg.h"
-#include "uart/uart.h"
-#include "uart_hal/uart_hal.h"
+#include "hal/hal_watchdog.h"
 
 #include <assert.h>
 
-#if MYNEWT_VAL(UART_0)
-static struct uart_dev os_bsp_uart0;
-#endif
-
-#if MYNEWT_VAL(UART_1)
-static struct uart_dev os_bsp_uart1;
-#endif
-
-void _close(int fd);
+int
+hal_watchdog_init(uint32_t expire_msecs)
+{
+    return (0);
+}
 
 void
-bsp_init(void)
+hal_watchdog_enable(void)
 {
-    #if MYNEWT_VAL(UART_0)
-        assert(os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
-          OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0) == 0);
-    #endif
-
-    #if MYNEWT_VAL(UART_1)
-        assert(os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
-          OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0) == 0);
-    #endif
 }
+
+void
+hal_watchdog_tickle(void)
+{
+}
+

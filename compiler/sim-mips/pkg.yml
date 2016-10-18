@@ -23,6 +23,7 @@ pkg.description: Compiler definition for Linux user mips gcc compiler.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - mips
     - sim
     - compiler
     - gcc
