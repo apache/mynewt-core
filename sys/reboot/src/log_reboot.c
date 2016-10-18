@@ -116,7 +116,7 @@ reboot_init_handler(int log_store_type, uint8_t entries)
 
     rc = log_register("reboot_log", &reboot_log,
                       (struct log_handler *)reboot_log_handler,
-                      arg);
+                      arg, LOG_SYSLEVEL);
     if (rc != 0) {
         return rc;
     }

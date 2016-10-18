@@ -1623,7 +1623,7 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the logging system. */
-    log_register("bletiny", &bletiny_log, &log_console_handler, NULL);
+    log_register("bletiny", &bletiny_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     /* Initialize eventq for the application task. */
     os_eventq_init(&bletiny_evq);
