@@ -1040,6 +1040,37 @@ HAL_StatusTypeDef HAL_SPI_Transmit_IT(SPI_HandleTypeDef *hspi, uint8_t *pData, u
   /* Process Locked */
   __HAL_LOCK(hspi);
 
+  errorcode = HAL_SPI_QueueTransmit(hspi, pData, Size);
+  if (errorcode) {
+      goto error;
+  }
+  if (hspi->Init.Direction == SPI_DIRECTION_2LINES)
+  {
+    /* Enable TXE interrupt */
+    __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE));
+  }
+  else
+  {
+    /* Enable TXE and ERR interrupt */
+    __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_ERR));
+  }
+
+  /* Check if the SPI is already enabled */
+  if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
+  {
+    /* Enable SPI peripheral */
+    __HAL_SPI_ENABLE(hspi);
+  }
+
+error :
+  __HAL_UNLOCK(hspi);
+  return errorcode;
+}
+
+HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size)
+{
+  HAL_StatusTypeDef errorcode = HAL_OK;
+
   if((pData == NULL) || (Size == 0U))
   {
     errorcode = HAL_ERROR;
@@ -1089,29 +1120,11 @@ HAL_StatusTypeDef HAL_SPI_Transmit_IT(SPI_HandleTypeDef *hspi, uint8_t *pData, u
   }
 #endif /* USE_SPI_CRC */
 
-  if (hspi->Init.Direction == SPI_DIRECTION_2LINES)
-  {
-    /* Enable TXE interrupt */
-    __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE));
-  }
-  else
-  {
-    /* Enable TXE and ERR interrupt */
-    __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_ERR));
-  }
-
   if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
       hspi->TxISR(hspi);
   }
-  /* Check if the SPI is already enabled */
-  if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
-  {
-    /* Enable SPI peripheral */
-    __HAL_SPI_ENABLE(hspi);
-  }
 
 error :
-  __HAL_UNLOCK(hspi);
   return errorcode;
 }
 
@@ -1217,14 +1230,42 @@ error :
   */
 HAL_StatusTypeDef HAL_SPI_TransmitReceive_IT(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size)
 {
-  uint32_t tmp = 0U, tmp1 = 0U;
-  HAL_StatusTypeDef errorcode = HAL_OK;
+  HAL_StatusTypeDef errorcode;
 
   /* Check Direction parameter */
   assert_param(IS_SPI_DIRECTION_2LINES(hspi->Init.Direction));
 
   /* Process locked */
   __HAL_LOCK(hspi);
+
+  errorcode = HAL_SPI_Slave_Queue_TransmitReceive(hspi, pTxData, pRxData, Size);
+  if (errorcode) {
+      goto error;
+  }
+
+  /* Enable TXE, RXNE and ERR interrupt */
+  __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
+
+  /* Check if the SPI is already enabled */
+  if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
+  {
+    /* Enable SPI peripheral */
+    __HAL_SPI_ENABLE(hspi);
+  }
+
+error:
+  /* Process Unlocked */
+  __HAL_UNLOCK(hspi);
+  return errorcode;
+}
+
+HAL_StatusTypeDef HAL_SPI_Slave_Queue_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size)
+{
+  uint32_t tmp = 0U, tmp1 = 0U;
+  HAL_StatusTypeDef errorcode = HAL_OK;
+
+  /* Check Direction parameter */
+  assert_param(IS_SPI_DIRECTION_2LINES(hspi->Init.Direction));
 
   tmp  = hspi->State;
   tmp1 = hspi->Init.Mode;
@@ -1277,22 +1318,11 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive_IT(SPI_HandleTypeDef *hspi, uint8_t *p
   }
 #endif /* USE_SPI_CRC */
 
-  /* Enable TXE, RXNE and ERR interrupt */
-  __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR));
-
   if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) {
       hspi->TxISR(hspi);
   }
-  /* Check if the SPI is already enabled */
-  if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
-  {
-    /* Enable SPI peripheral */
-    __HAL_SPI_ENABLE(hspi);
-  }
 
 error :
-  /* Process Unlocked */
-  __HAL_UNLOCK(hspi);
   return errorcode;
 }
 
