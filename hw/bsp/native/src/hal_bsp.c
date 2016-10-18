@@ -23,10 +23,8 @@
 #include <inttypes.h>
 #include "hal/hal_flash_int.h"
 #include "mcu/native_bsp.h"
-#include "bsp/bsp_sysid.h"
 #include "mcu/mcu_hal.h"
 #include <bsp/bsp.h>
-#include <bsp/bsp_sysid.h>
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
