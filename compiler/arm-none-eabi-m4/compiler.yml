@@ -18,6 +18,7 @@
 #
 
 compiler.path.cc: arm-none-eabi-gcc
+compiler.path.cpp: arm-none-eabi-g++ -x c++
 compiler.path.archive: arm-none-eabi-ar
 compiler.path.as: arm-none-eabi-gcc -x assembler-with-cpp
 compiler.path.objdump: arm-none-eabi-objdump
