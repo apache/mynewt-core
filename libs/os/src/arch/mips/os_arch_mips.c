@@ -27,61 +27,43 @@
 #include <mips/hal.h>
 #include <mips/uhi_syscalls.h>
 
+#include <string.h>
+
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void SysTick_Handler(void);
 
-/* XXX: determine how we will deal with running un-privileged */
+/* XXX: determine how to deal with running un-privileged */
 /* only priv currently supported */
 uint32_t os_flags = OS_RUN_PRIV;
 
-/* fucntion to call from syscall */
-void (* volatile os_ftc)(void) = 0;
 extern struct os_task g_idle_task;
-/* exception handler */
-void
-_mips_handle_exception (struct gpctx* ctx, int exception)
-{
-    switch (exception) {
-        case EXC_SYS:
-            if (os_ftc != 0) {
-                os_ftc();
-                os_ftc = 0;
-                return;
-            }
-    }
-    /* default handler for anything not handled above */
-    __exception_handle(ctx, exception);
-}
-
 
 /* core timer interrupt */
 void __attribute__((interrupt, keep_interrupts_masked))
 _mips_isr_hw5(void)
 {
+    mips_setcompare(mips_getcompare() + 273000);
     timer_handler();
 }
 
 static int
 os_in_isr(void)
 {
-    /* check the EXL bit XXX: Actually, that breaks it for some reason. */
-    return 0; //(mips_getsr() & (1 << 1)) ? 1 : 0;
+    /* check the EXL bit */
+    return (mips_getsr() & (1 << 1)) ? 1 : 0;
 }
 
 void
 timer_handler(void)
 {
-    /* This actually does the context switch by calling the below function if
-       necessary */
     os_time_advance(1);
 }
 
 void
 os_arch_ctx_sw(struct os_task *t)
 {
-    if ((os_sched_get_current_task() != 0) && (t != 0))
-    {
+    if ((os_sched_get_current_task() != 0) && (t != 0)) {
         os_sched_ctx_sw_hook(t);
     }
 
@@ -111,26 +93,27 @@ os_arch_in_critical(void)
 
 reg_t get_global_pointer(void);
 
+/* assumes stack_top will be 8 aligned */
+
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
-    const size_t frame_size = sizeof(struct gpctx);
-    os_stack_t *s = stack_top - frame_size;
+    os_stack_t *s = stack_top - ((((sizeof(struct gpctx) - 1) /
+        OS_STACK_ALIGNMENT) + 1) * 2);
 
     struct gpctx ctx = {
         .r = {
             [3] = (reg_t)t->t_arg,
             [27] = get_global_pointer(),
-            [28] = (reg_t)stack_top
+            [28] = (reg_t)(stack_top - 4)
         },
-        /* XXX: copying the status register from when the task was created
-         * seems like a modreately sensible thing to do? */
         .status = mips_getsr(),
+        .cause = mips_getcr(),
         .epc = (reg_t)t->t_func
     };
 
     /* copy struct onto the stack */
-    *((struct gpctx*)s) = ctx;
+    memcpy(s, &ctx, sizeof(struct gpctx));
 
     return (s);
 }
@@ -138,6 +121,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 void
 os_arch_init(void)
 {
+    mips_bissr((1 << 15) | (1 << 8));
     os_init_idle_task();
 }
 
@@ -168,13 +152,13 @@ os_arch_start(void)
     t = os_sched_next_task();
 
     /* set the core timer compare register */
-    /* XXX: take this magic number (for a 1ms tick from a 550MHz clock) and put
+    /* XXX: take this magic number (for a 1ms tick from a 546MHz clock) and put
     ** it in bsp or mcu somewhere
     */
-    mips_setcompare(275000);
+    mips_setcompare(mips_getcount() + 273000);
 
-    /* enable core timer and software0 interupts and global enable */
-    mips_bissr((1 << 15) | (1 << 8) | 1);
+    /* global interrupt enable */
+    mips_bissr(1);
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
@@ -191,7 +175,7 @@ os_arch_os_start(void)
     os_error_t err;
 
     err = OS_ERR_IN_ISR;
-    if (os_in_isr() == 0) { // cause
+    if (os_in_isr() == 0) {
         err = OS_OK;
         /* should be in kernel mode here */
         os_arch_start();

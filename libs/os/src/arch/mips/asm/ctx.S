@@ -34,6 +34,7 @@
 #include <mips/hal.h>
 
 # note that k0 is not saved when using these macros.
+# The cause register is saved but not resored.
 
 # saves to location k0
 .macro _gpctx_save
@@ -83,6 +84,8 @@
 	REG_S	$9, CTX_BADVADDR(k0)
     mfc0	$9, C0_SR
 	sw	    $9, CTX_STATUS(k0)
+    mfc0    $9, C0_CR
+    sw      $9, CTX_CAUSE(k0)
 
     move	$11, $0
 	move	$12, $0
@@ -169,21 +172,26 @@ get_global_pointer:
 .global _mips_isr_sw0
 .ent _mips_isr_sw0
 _mips_isr_sw0:
-    /* context switch */
+    # context switch
     .set noat
-    /* save k0 */
-    REG_S $26, (CTX_REG(25) - CTX_SIZE) (sp)
-    addi k0, sp, 0 - CTX_SIZE
-    _gpctx_save                     /* save the context to sp - CTX_SIZE */
+    # save k0
+    REG_S   $26, (CTX_REG(25) - CTX_SIZE) (sp)
+    addi    k0, sp, -((((CTX_SIZE - 1) / 8) + 1) * 8)
+    _gpctx_save                     # save the context
     .set at
-    lw t0, g_current_task           /* get current task */
-    beqz t0, 1f
-    sw k0, 0(t0)                    /* update stored sp */
+    lw      t0, g_current_task      # get current task
+    beqz    t0, 1f
+    sw      k0, 0(t0)               # update stored sp
 1:
-    lw t1, g_os_run_list            /* get new task */
-    sw t1, g_current_task           /* g_current_task = g_os_run_list */
-    lw a0, 0(t1)
+    lw      t1, g_os_run_list       # get new task
+    sw      t1, g_current_task      # g_current_task = g_os_run_list
+    mfc0    k0, C0_CR
+    andi    k0, k0, 0xfeff          # clear interrupt in cause register
+    lui     k1, 0x0080              # make sure IV is set
+    or      k0, k0, k1
+    mtc0    k0, C0_CR
+    lw      a0, 0(t1)
     .set noat
-    _gpctx_load                     /* update actual sp */
+    _gpctx_load                     # updates actual sp
     eret
 .end
