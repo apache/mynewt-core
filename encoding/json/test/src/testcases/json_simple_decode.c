@@ -42,7 +42,7 @@ TEST_CASE(test_json_simple_decode)
     int array_count1u;
     bool boolspacearr[3];
     bool boolemptyarr[2];
-    
+
     struct json_attr_t test_attr[7] = {
         [0] = {
             .attribute = "KeyBool",
@@ -92,7 +92,7 @@ TEST_CASE(test_json_simple_decode)
             .attribute = NULL
         }
     };
-    
+
     test_buf_init(&tjb, output);
 
     rc = json_read_object(&tjb.json_buf, test_attr);
@@ -112,35 +112,37 @@ TEST_CASE(test_json_simple_decode)
     TEST_ASSERT(intarr[1] == 2532);
     TEST_ASSERT(intarr[2] == -322);
 
-   /*testing for the boolean*/
-   struct json_attr_t test_attr1[2] = {
-       [0] = {
-           .attribute = "KeyBoolArr",
-           .type = t_array,
-           .addr.array = {
-               .element_type = t_boolean,
-               .arr.booleans.store = boolarr,
-               .maxlen = sizeof boolarr / sizeof boolarr[0],
-               .count =&array_count1,
-           },
-           .nodefault = true,
-           .len = sizeof( boolarr),
-       },
+    /*testing for the boolean*/
+    struct json_attr_t test_attr1[] = {
+        [0] = {
+            .attribute = "KeyBoolArr",
+            .type = t_array,
+            .addr.array = {
+                .element_type = t_boolean,
+                .arr.booleans.store = boolarr,
+                .maxlen = sizeof boolarr / sizeof boolarr[0],
+                .count =&array_count1,
+            },
+            .nodefault = true,
+            .len = sizeof( boolarr),
+        },
 
-       [1] = {
-           .attribute = "KeyUintArr",
-           .type = t_array,
-           .addr.array = {
-               .element_type = t_uinteger,
-               .arr.uintegers.store = uintarr,
-               .maxlen = sizeof uintarr / sizeof uintarr[0],
-               .count =&array_count1u,
-           },
-           .nodefault = true,
-           .len = sizeof( uintarr),
-       }
+        [1] = {
+            .attribute = "KeyUintArr",
+            .type = t_array,
+            .addr.array = {
+                .element_type = t_uinteger,
+                .arr.uintegers.store = uintarr,
+                .maxlen = sizeof uintarr / sizeof uintarr[0],
+                .count =&array_count1u,
+            },
+            .nodefault = true,
+            .len = sizeof( uintarr),
+        },
+
+        [2] = { 0 },
    };
-   
+
    test_buf_init(&tjb1, output1);
 
    rc1 = json_read_object(&tjb1.json_buf, test_attr1);
@@ -156,8 +158,8 @@ TEST_CASE(test_json_simple_decode)
    TEST_ASSERT(uintarr[4] == 3451257ULL);
 
     /*testing arrays with empty spaces within the elements*/
-    struct json_attr_t test_boolspacearr[2] = {
-       [0] = {    
+   struct json_attr_t test_boolspacearr[] = {
+       [0] = {
            .attribute = "KeyBoolArr",
            .type = t_array,
            .addr.array = {
@@ -168,10 +170,11 @@ TEST_CASE(test_json_simple_decode)
            },
            .nodefault = true,
            .len = sizeof( boolspacearr),
-       }
-           
-    };
-    
+       },
+
+       [1] = { 0 },
+   };
+
     test_buf_init(&tjbboolspacearr, outputboolspace);
 
     rcbsa = json_read_object(&tjbboolspacearr.json_buf, test_boolspacearr);
@@ -182,7 +185,7 @@ TEST_CASE(test_json_simple_decode)
     TEST_ASSERT(boolspacearr[2] == true);
 
     /*testing array with empty value*/
-    struct json_attr_t test_boolemptyarr[2] = {
+    struct json_attr_t test_boolemptyarr[] = {
         [0] = {
             .attribute = "KeyBoolArr",
            .type = t_array,
@@ -194,12 +197,13 @@ TEST_CASE(test_json_simple_decode)
            },
            .nodefault = true,
            .len = sizeof( boolemptyarr),
-        }
+        },
+
+        [1] = { 0 },
     };
-   
+
    test_buf_init(&tjbboolemptyarr, outputboolempty);
 
-    rcbsa = json_read_object(&tjbboolemptyarr.json_buf, test_boolemptyarr);
-    TEST_ASSERT(rcbsa == 6); 
-    
+   rcbsa = json_read_object(&tjbboolemptyarr.json_buf, test_boolemptyarr);
+   TEST_ASSERT(rcbsa == 6);
 }
