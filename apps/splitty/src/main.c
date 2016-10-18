@@ -193,7 +193,7 @@ main(int argc, char **argv)
     sysinit();
 
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_register("log", &my_log, &log_cbmem_handler, &cbmem);
+    log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),

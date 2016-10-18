@@ -16,28 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <log/log.h>
+#include "log_test.h"
 
-/* logging data for this module. TODO, the application should
- * define the logging strategy for this module */
-#define MAX_CBMEM_BUF   (600)
-static uint32_t *cbmem_buf;
-static struct cbmem cbmem;
-struct log oc_log;
+TEST_CASE(log_flush_fcb)
+{
+    int rc;
 
-int
-oc_log_init(void) {
+    rc = log_flush(&my_log);
+    TEST_ASSERT(rc == 0);
 
-    log_init();
-
-    cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
-    if (cbmem_buf == NULL) {
-        return -1;
-    }
-
-    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_register("iot", &oc_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
-
-    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "OC Init");
-    return 0;
+    rc = log_walk(&my_log, log_test_walk2, NULL);
+    TEST_ASSERT(rc == 0);
 }

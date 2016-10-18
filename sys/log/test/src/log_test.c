@@ -80,17 +80,6 @@ log_test_walk2(struct log *log, void *arg, void *dptr, uint16_t len)
     return 0;
 }
 
-TEST_CASE(log_flush_fcb)
-{
-    int rc;
-
-    rc = log_flush(&my_log);
-    TEST_ASSERT(rc == 0);
-
-    rc = log_walk(&my_log, log_test_walk2, NULL);
-    TEST_ASSERT(rc == 0);
-}
-
 TEST_CASE_DECL(log_setup_fcb)
 TEST_CASE_DECL(log_append_fcb)
 TEST_CASE_DECL(log_walk_fcb)
