@@ -45,8 +45,6 @@ struct shell_cmd g_shell_log_cmd = {
 };
 #endif
 
-char *log_modules[LOG_MODULE_MAX];
-
 void
 log_init(void)
 {
