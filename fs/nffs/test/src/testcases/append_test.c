@@ -82,12 +82,7 @@ TEST_CASE(nffs_test_append)
     for (i = 0; i < 1000; i++) {
         rc = fs_filelen(file, &len);
         TEST_ASSERT_FATAL(rc == 0);
-
         TEST_ASSERT(len == i);
-
-        if (i == 920) {
-            process_inode_entry(nffs_root_dir, 1);
-        }
 
         c = '0' + i % 10;
         rc = fs_write(file, &c, 1);
