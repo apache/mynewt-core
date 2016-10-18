@@ -42,10 +42,10 @@
 
 struct stm32f4_hal_spi {
     SPI_HandleTypeDef handle;
-    uint8_t slave:1;
-    uint8_t tx_in_prog:1;
-    uint8_t selected:1;
-    uint8_t def_char[4];
+    uint8_t slave:1;			/* slave or master */
+    uint8_t tx_in_prog:1;		/* slave: tx'ing user data not def */
+    uint8_t selected:1;			/* slave: if we see SS */
+    uint8_t def_char[4];		/* slave: default data to tx */
     struct stm32f4_hal_spi_cfg *cfg;
     /* Callback and arguments */
     hal_spi_txrx_cb txrx_cb_func;
@@ -155,6 +155,9 @@ stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
     }
 }
 
+/*
+ * SPI master IRQ handler.
+ */
 static void
 spim_irq_handler(struct stm32f4_hal_spi *spi)
 {
@@ -165,11 +168,17 @@ spim_irq_handler(struct stm32f4_hal_spi *spi)
     }
 }
 
+/*
+ * SPI slave IRQ handler.
+ */
 static void
 spis_irq_handler(struct stm32f4_hal_spi *spi)
 {
     if (spi->tx_in_prog) {
         if (spi->handle.TxXferCount == 0 && spi->handle.RxXferCount == 0) {
+            /*
+             * If finished with data tx, start transmitting default char
+             */
             spi->tx_in_prog = 0;
 
             HAL_SPI_Transmit_IT(&spi->handle, spi->def_char, 2);
@@ -179,11 +188,17 @@ spis_irq_handler(struct stm32f4_hal_spi *spi)
             }
         }
     } else {
+        /*
+         * Reset TX pointer within default data.
+         */
         spi->handle.pTxBuffPtr = spi->def_char;
         spi->handle.TxXferCount = 2;
     }
 }
 
+/*
+ * Common IRQ handler for both master and slave.
+ */
 static void
 spi_irq_handler(struct stm32f4_hal_spi *spi)
 {
@@ -212,51 +227,71 @@ spi_irq_handler(struct stm32f4_hal_spi *spi)
     }
 }
 
+/*
+ * GPIO interrupt when slave gets selected/deselected.
+ */
 static void
 spi_ss_isr(void *arg)
 {
     struct stm32f4_hal_spi *spi = (struct stm32f4_hal_spi *)arg;
     int ss;
     int len;
-    int rc;
     uint16_t reg;
 
     spi_stat.ss_irq++;
     ss = hal_gpio_read(spi->cfg->ss_pin);
     if (ss == 0 && !spi->selected) {
+        /*
+         * We're now seeing chip select. Enable SPI, SPI interrupts.
+         */
+        if (spi->tx_in_prog) {
+            __HAL_SPI_ENABLE_IT(&spi->handle,
+              SPI_IT_RXNE | SPI_IT_TXE | SPI_IT_ERR);
+        } else {
+            __HAL_SPI_ENABLE_IT(&spi->handle, SPI_IT_TXE | SPI_IT_ERR);
+        }
         reg = spi->handle.Instance->CR1;
         reg &= ~SPI_CR1_SSI;
+        reg |= SPI_CR1_SPE;
         spi->handle.Instance->CR1 = reg;
-        if (spi->tx_in_prog) {
-            rc = HAL_SPI_TransmitReceive_IT(&spi->handle,
-              spi->handle.pTxBuffPtr, spi->handle.pRxBuffPtr,
-              spi->handle.TxXferSize);
-        } else {
-            rc = HAL_SPI_Transmit_IT(&spi->handle, spi->def_char, 2);
-        }
-        assert(rc == 0);
         spi->selected = 1;
     }
     if (ss == 1 && spi->selected) {
+        /*
+         * Chip select done. Check whether there's pending data to RX.
+         */
         if (spi->handle.Instance->SR & SPI_SR_RXNE && spi->handle.RxISR) {
             spi->handle.RxISR(&spi->handle);
         }
+
+        /*
+         * Disable SPI.
+         */
         reg = spi->handle.Instance->CR1;
         reg &= ~SPI_CR1_SPE;
         reg |= SPI_CR1_SSI;
+        spi->handle.Instance->CR1 = reg;
 
         __HAL_SPI_DISABLE_IT(&spi->handle, SPI_IT_RXNE|SPI_IT_TXE|SPI_IT_ERR);
 
-        spi->handle.Instance->CR1 = reg;
         len = spi->handle.RxXferSize - spi->handle.RxXferCount;
-        if (spi->tx_in_prog && len) {
-            spi->tx_in_prog = 0;
+        if (len) {
+            /*
+             * If some data was clocked out, reset to start sending
+             * default data and call callback, if user was waiting for
+             * data.
+             */
+            spi->handle.State = HAL_SPI_STATE_READY;
+            HAL_SPI_QueueTransmit(&spi->handle, spi->def_char, 2);
 
-            if (spi->txrx_cb_func) {
-                spi->txrx_cb_func(spi->txrx_cb_arg, len);
+            if (spi->tx_in_prog) {
+                spi->tx_in_prog = 0;
+
+                if (spi->txrx_cb_func) {
+                    spi->txrx_cb_func(spi->txrx_cb_arg, len);
+                }
             }
         }
-        spi->handle.State = HAL_SPI_STATE_READY;
         spi->selected = 0;
     }
 }
@@ -660,7 +695,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         goto err;
     }
     if (spi->slave) {
-        spi->handle.Instance->CR1 &= ~SPI_CR1_SSI;
+        hal_spi_slave_set_def_tx_val(spi_num, 0);
         rc = hal_gpio_irq_init(cfg->ss_pin, spi_ss_isr, spi, GPIO_TRIG_BOTH,
           GPIO_PULL_UP);
         spi_ss_isr(spi);
@@ -681,22 +716,25 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
 
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
-    __HAL_DISABLE_INTERRUPTS(sr);
     spi_stat.tx++;
     rc = -1;
+    __HAL_DISABLE_INTERRUPTS(sr);
     if (!spi->slave) {
         rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
     } else {
-        spi->tx_in_prog = 1;
+        /*
+         * Slave: if selected, start transmitting new data.
+         * If not selected, queue it for transmission.
+         */
+        spi->handle.State = HAL_SPI_STATE_READY;
         if (spi->selected) {
-            spi->handle.State = HAL_SPI_STATE_READY;
             rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
         } else {
-            rc = 0;
-            spi->handle.pTxBuffPtr = txbuf;
-            spi->handle.TxXferSize = len;
-            spi->handle.pRxBuffPtr = rxbuf;
-            spi->handle.RxXferSize = len;
+            rc = HAL_SPI_Slave_Queue_TransmitReceive(&spi->handle, txbuf, rxbuf,
+              len);
+        }
+        if (rc == 0) {
+            spi->tx_in_prog = 1;
         }
     }
     __HAL_ENABLE_INTERRUPTS(sr);
@@ -732,8 +770,13 @@ hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
                 ((uint16_t *)spi->def_char)[i] = val;
             }
         }
-        if (!spi->tx_in_prog && spi->selected) {
-            spi->handle.Instance->DR = val;
+        if (!spi->tx_in_prog) {
+            /*
+             * Replaces the current default char in tx buffer register.
+             */
+            spi->handle.State = HAL_SPI_STATE_READY;
+            rc = HAL_SPI_QueueTransmit(&spi->handle, spi->def_char, 2);
+            assert(rc == 0);
         }
         __HAL_ENABLE_INTERRUPTS(sr);
     } else {
