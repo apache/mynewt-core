@@ -55,6 +55,7 @@ struct stm32f4_hal_spi {
 static struct stm32f4_spi_stat {
     uint32_t irq;
     uint32_t ss_irq;
+    uint32_t tx;
 } spi_stat;
 
 static void spi_irq_handler(struct stm32f4_hal_spi *spi);
@@ -207,7 +208,6 @@ spi_ss_isr(void *arg)
     ss = hal_gpio_read(spi->cfg->ss_pin);
     if (ss == 0 && !spi->selected) {
         reg = spi->handle.Instance->CR1;
-        reg |= SPI_CR1_SPE;
         reg &= ~SPI_CR1_SSI;
         spi->handle.Instance->CR1 = reg;
         if (spi->tx_in_prog) {
@@ -659,12 +659,14 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
     __HAL_DISABLE_INTERRUPTS(sr);
+    spi_stat.tx++;
     rc = -1;
     if (!spi->slave) {
         rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
     } else {
         spi->tx_in_prog = 1;
         if (spi->selected) {
+            spi->handle.State = HAL_SPI_STATE_READY;
             rc = HAL_SPI_TransmitReceive_IT(&spi->handle, txbuf, rxbuf, len);
         } else {
             rc = 0;
@@ -750,6 +752,7 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
         len = sizeof(uint16_t);
     }
     __HAL_DISABLE_INTERRUPTS(sr);
+    spi_stat.tx++;
     rc = HAL_SPI_TransmitReceive(&spi->handle,(uint8_t *)&val,
                                  (uint8_t *)&retval, len,
                                  STM32F4_HAL_SPI_TIMEOUT);
@@ -801,6 +804,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
         goto err;
     }
     __HAL_DISABLE_INTERRUPTS(sr);
+    spi_stat.tx++;
     __HAL_SPI_ENABLE(&spi->handle);
     rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
                                  (uint8_t *)rxbuf, len,
