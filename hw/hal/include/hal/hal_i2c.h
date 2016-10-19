@@ -86,11 +86,13 @@ int hal_i2c_init(uint8_t i2c_num, void *cfg);
  * @param i2c_num The number of the I2C device being written to
  * @param pdata The data to write to the I2C bus
  * @param timeout How long to wait for transaction to complete in ticks
+ * @param last_op Master should send a STOP at the end to signify end of
+ *        transaction.
  *
  * @return 0 on success, and non-zero error code on failure
  */
 int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-                         uint32_t timeout);
+                         uint32_t timeout, uint8_t last_op);
 
 /**
  * Sends a start condition and reads <len> bytes of data on the i2c.
@@ -103,32 +105,13 @@ int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
  * @param i2c_num The number of the I2C device being written to
  * @param pdata The location to place read data
  * @param timeout How long to wait for transaction to complete in ticks
+ * @param last_op Master should send a STOP at the end to signify end of
+ *        transaction.
  *
  * @return 0 on success, and non-zero error code on failure
  */
 int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-                        uint32_t timeout);
-
-/**
- * Starts an I2C transaction with the driver. This API does not send
- * anything over the bus itself.
- *
- * @param i2c_num The number of the I2C to begin a transaction on
- *
- * @return 0 on success, non-zero error code on failure
- */
-int hal_i2c_master_begin(uint8_t i2c_num);
-
-/**
- * Issues a stop condition on the bus and ends the I2C transaction.
- * You must call i2c_master_end for every hal_i2c_master_begin
- * API call that succeeds.
- *
- * @param i2c_num The number of the I2C to end a transaction on
- *
- * @return 0 on success, non-zero error code on failure
- */
-int hal_i2c_master_end(uint8_t i2c_num);
+                         uint32_t timeout, uint8_t last_op);
 
 /**
  * Probes the i2c bus for a device with this address.  THIS API
