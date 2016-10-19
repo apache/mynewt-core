@@ -40,7 +40,6 @@
 
 struct stm32f4_hal_i2c {
     I2C_HandleTypeDef hid_handle;
-    int hid_locked;
 };
 
 #if MYNEWT_VAL(I2C_0)
@@ -120,7 +119,7 @@ err:
 
 int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *data,
-  uint32_t timo)
+  uint32_t timo, uint8_t last_op)
 {
     struct stm32f4_hal_i2c *dev;
 
@@ -128,13 +127,18 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *data,
         return -1;
     }
 
-    return HAL_I2C_Master_Transmit(&dev->hid_handle, data->address << 1,
-      data->buffer, data->len, timo);
+    if (!last_op) {
+        return HAL_I2C_Master_Transmit_NoStop(&dev->hid_handle,
+          data->address << 1, data->buffer, data->len, timo);
+    } else {
+        return HAL_I2C_Master_Transmit(&dev->hid_handle,
+          data->address << 1, data->buffer, data->len, timo);
+    }
 }
 
 int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-  uint32_t timo)
+  uint32_t timo, uint8_t last_op)
 {
     struct stm32f4_hal_i2c *dev;
 
@@ -142,20 +146,13 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         return -1;
     }
 
-    return HAL_I2C_Master_Receive(&dev->hid_handle, pdata->address << 1,
-      pdata->buffer, pdata->len, timo);
-}
-
-int
-hal_i2c_master_begin(uint8_t i2c_num)
-{
-    return 0;
-}
-
-int
-hal_i2c_master_end(uint8_t i2c_num)
-{
-    return 0;
+    if (!last_op) {
+        return HAL_I2C_Master_Receive_NoStop(&dev->hid_handle,
+          pdata->address << 1, pdata->buffer, pdata->len, timo);
+    } else {
+        return HAL_I2C_Master_Receive(&dev->hid_handle, pdata->address << 1,
+          pdata->buffer, pdata->len, timo);
+    }
 }
 
 int
