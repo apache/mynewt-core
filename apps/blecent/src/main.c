@@ -505,7 +505,7 @@ main(void)
     sysinit();
 
     /* Initialize the blecent log. */
-    log_register("blecent", &blecent_log, &log_console_handler, NULL);
+    log_register("blecent", &blecent_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     /* Initialize the eventq for the application task. */
     os_eventq_init(&blecent_evq);

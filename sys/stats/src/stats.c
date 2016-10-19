@@ -347,3 +347,41 @@ stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
 
     return rc;
 }
+
+/**
+ * Resets and zeroes the specified statistics section.
+ *
+ * @param shdr The statistics header to zero
+ */
+void
+stats_reset(struct stats_hdr *hdr)
+{
+    uint16_t cur;
+    uint16_t end;
+    void *stat_val;
+
+    cur = sizeof(*hdr);
+    end = sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);
+
+    while (cur < end) {
+        stat_val = (uint8_t*)hdr + cur;
+        switch (hdr->s_size) {
+            case sizeof(uint16_t):
+                *(uint16_t *)stat_val = 0;
+                break;
+            case sizeof(uint32_t):
+                *(unsigned long *)stat_val = 0;
+                break;
+            case sizeof(uint64_t):
+                *(uint64_t *)stat_val = 0;
+                break;
+        }
+
+        /*
+         * Statistics are variable sized, move forward either 16, 32 or 64
+         * bits in the structure.
+         */
+        cur += hdr->s_size;
+    }
+    return;
+}

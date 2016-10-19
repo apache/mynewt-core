@@ -305,7 +305,7 @@ main(void)
     sysinit();
 
     /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL);
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);

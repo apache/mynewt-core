@@ -77,6 +77,9 @@ STATS_SECT_DECL(__name) {                   \
 #define STATS_INCN(__sectvarname, __var, __n)  \
     ((__sectvarname).STATS_SECT_VAR(__var) += (__n))
 
+#define STATS_CLEAR(__sectvarname, __var)        \
+    ((__sectvarname).STATS_SECT_VAR(__var) = 0)
+
 #if MYNEWT_VAL(STATS_NAMES)
 
 #define STATS_NAME_MAP_NAME(__sectname) g_stats_map_ ## __sectname
@@ -111,6 +114,7 @@ int stats_register(char *name, struct stats_hdr *shdr);
 int stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
                        const struct stats_name_map *map, uint8_t map_cnt,
                        char *name);
+void stats_reset(struct stats_hdr *shdr);
 
 typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *,
         uint16_t);

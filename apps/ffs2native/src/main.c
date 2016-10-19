@@ -672,7 +672,7 @@ main(int argc, char **argv)
 
     sysinit();
 
-    log_register("nffs-log", &nffs_log, &log_console_handler, NULL);
+    log_register("nffs-log", &nffs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     file_scratch_idx = MAX_AREAS + 1;
 

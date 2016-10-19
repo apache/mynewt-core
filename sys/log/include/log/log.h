@@ -143,7 +143,7 @@ struct log_entry_hdr {
 #define LOG_INFO(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_INFO
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_WARN
 #define LOG_WARN(__l, __mod, __msg, ...) log_printf(__l, __mod, \
         LOG_LEVEL_WARN, __msg, ##__VA_ARGS__)
 #else
@@ -164,11 +164,18 @@ struct log_entry_hdr {
 #define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
+#ifndef MYNEWT_VAL_LOG_LEVEL
+#define LOG_SYSLEVEL    ((uint8_t)0xff)
+#else
+#define LOG_SYSLEVEL    ((uint8_t)MYNEWT_VAL_LOG_LEVEL)
+#endif
+
 struct log {
     char *l_name;
     struct log_handler *l_log;
     void *l_arg;
     STAILQ_ENTRY(log) l_next;
+    uint8_t l_level;
 };
 
 /* Newtmgr Log opcodes */
@@ -185,7 +192,7 @@ struct log *log_list_get_next(struct log *);
 
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, const struct log_handler *,
-                 void *arg);
+                 void *arg, uint8_t level);
 int log_append(struct log *, uint16_t, uint16_t, void *, uint16_t);
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
