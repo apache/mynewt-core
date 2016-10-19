@@ -29,6 +29,6 @@ compiler.flags.default: -mcpu=cortex-m0 -mthumb-interwork -mthumb -Wall -Werror 
 compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
 compiler.flags.debug: [compiler.flags.default, -O1 -ggdb]
 
-compiler.ld.flags: -static -lgcc -Wl,--gc-sections
+compiler.ld.flags: -static -specs=nosys.specs -lgcc -Wl,--gc-sections
 compiler.ld.resolve_circular_deps: true
 compiler.ld.mapfile: true

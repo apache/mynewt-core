@@ -80,7 +80,7 @@ hex_parse(char *src, int src_len, void *dst_v, int dst_len)
     }
     for (i = 0; i < src_len; i++, src++) {
         c = *src;
-        if (isdigit(c)) {
+        if (isdigit((int) c)) {
             c -= '0';
         } else if (c >= 'a' && c <= 'f') {
             c -= ('a' - 10);
