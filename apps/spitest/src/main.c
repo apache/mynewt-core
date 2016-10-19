@@ -327,6 +327,7 @@ task1_handler(void *arg)
             }
             console_printf("\n");
             spitest_validate_last(spi_cb_obj.txlen);
+            ++g_spi_xfr_num;
 #endif
         }
     }
