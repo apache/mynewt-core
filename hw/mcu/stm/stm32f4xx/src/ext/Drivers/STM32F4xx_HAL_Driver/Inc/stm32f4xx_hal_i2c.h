@@ -156,7 +156,8 @@ typedef enum
   HAL_I2C_MODE_NONE               = 0x00U,   /*!< No I2C communication on going             */
   HAL_I2C_MODE_MASTER             = 0x10U,   /*!< I2C communication is in Master Mode       */
   HAL_I2C_MODE_SLAVE              = 0x20U,   /*!< I2C communication is in Slave Mode        */
-  HAL_I2C_MODE_MEM                = 0x40U    /*!< I2C communication is in Memory Mode       */
+  HAL_I2C_MODE_MEM                = 0x40U,   /*!< I2C communication is in Memory Mode       */
+  HAL_I2C_MODE_MASTER_SEL         = 0x11U    /*!< I2C communication is in Master Mode, no stop sent       */
 
 }HAL_I2C_ModeTypeDef;
 
@@ -503,6 +504,9 @@ HAL_StatusTypeDef HAL_I2C_Slave_Receive(I2C_HandleTypeDef *hi2c, uint8_t *pData,
 HAL_StatusTypeDef HAL_I2C_Mem_Write(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size, uint32_t Timeout);
 HAL_StatusTypeDef HAL_I2C_Mem_Read(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size, uint32_t Timeout);
 HAL_StatusTypeDef HAL_I2C_IsDeviceReady(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint32_t Trials, uint32_t Timeout);
+
+HAL_StatusTypeDef HAL_I2C_Master_Transmit_NoStop(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout);
+HAL_StatusTypeDef HAL_I2C_Master_Receive_NoStop(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout);
 
 /******* Non-Blocking mode: Interrupt */
 HAL_StatusTypeDef HAL_I2C_Master_Transmit_IT(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size);

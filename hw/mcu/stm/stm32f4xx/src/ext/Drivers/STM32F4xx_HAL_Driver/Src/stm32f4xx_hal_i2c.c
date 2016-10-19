@@ -563,7 +563,7 @@ HAL_StatusTypeDef HAL_I2C_DeInit(I2C_HandleTypeDef *hi2c)
   * @param  Timeout Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+static HAL_StatusTypeDef HAL_I2C_Master_Transmit_Common(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout, uint8_t sendStop)
 {
   uint32_t tickstart = 0x00U;
 
@@ -572,10 +572,12 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
   
   if(hi2c->State == HAL_I2C_STATE_READY)
   {
-    /* Wait until BUSY flag is reset */
-    if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY_FLAG, tickstart) != HAL_OK)
-    {
-      return HAL_BUSY;
+    if (hi2c->Mode != HAL_I2C_MODE_MASTER_SEL) {
+      /* Wait until BUSY flag is reset */
+      if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY_FLAG, tickstart) != HAL_OK)
+      {
+        return HAL_BUSY;
+      }
     }
 
     /* Process Locked */
@@ -654,10 +656,14 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
     }
 
     /* Generate Stop */
-    hi2c->Instance->CR1 |= I2C_CR1_STOP;
+    if (sendStop) {
+      hi2c->Instance->CR1 |= I2C_CR1_STOP;
+      hi2c->Mode = HAL_I2C_MODE_NONE;
+    } else {
+      hi2c->Mode = HAL_I2C_MODE_MASTER_SEL;
+    }
 
     hi2c->State = HAL_I2C_STATE_READY;
-    hi2c->Mode = HAL_I2C_MODE_NONE;
     
     /* Process Unlocked */
     __HAL_UNLOCK(hi2c);
@@ -668,6 +674,18 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
   {
     return HAL_BUSY;
   }
+}
+
+HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+{
+  return HAL_I2C_Master_Transmit_Common(hi2c, DevAddress, pData, Size,
+   Timeout, 1);
+}
+
+HAL_StatusTypeDef HAL_I2C_Master_Transmit_NoStop(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+{
+  return HAL_I2C_Master_Transmit_Common(hi2c, DevAddress, pData, Size,
+   Timeout, 0);
 }
 
 /**
@@ -681,7 +699,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevA
   * @param  Timeout Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+static HAL_StatusTypeDef HAL_I2C_Master_Receive_Common(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout, int sendStop)
 {
   uint32_t tickstart = 0x00U;
 
@@ -690,10 +708,12 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
   
   if(hi2c->State == HAL_I2C_STATE_READY)
   {
-    /* Wait until BUSY flag is reset */
-    if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY_FLAG, tickstart) != HAL_OK)
-    {
-      return HAL_BUSY;
+    if (hi2c->Mode != HAL_I2C_MODE_MASTER_SEL) {
+      /* Wait until BUSY flag is reset */
+      if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY_FLAG, tickstart) != HAL_OK)
+      {
+        return HAL_BUSY;
+      }
     }
     
     /* Process Locked */
@@ -728,9 +748,11 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
     {
       /* Clear ADDR flag */
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
-      
-      /* Generate Stop */
-      hi2c->Instance->CR1 |= I2C_CR1_STOP;
+
+      if (sendStop) {
+        /* Generate Stop */
+        hi2c->Instance->CR1 |= I2C_CR1_STOP;
+      }
     }
     else if(Size == 1U)
     {
@@ -740,8 +762,10 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
       /* Clear ADDR flag */
       __HAL_I2C_CLEAR_ADDRFLAG(hi2c);
 
-      /* Generate Stop */
-      hi2c->Instance->CR1 |= I2C_CR1_STOP;
+      if (sendStop) {
+        /* Generate Stop */
+        hi2c->Instance->CR1 |= I2C_CR1_STOP;
+      }
     }
     else if(Size == 2U)
     {
@@ -796,9 +820,10 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
             return HAL_TIMEOUT;
           }
 
-          /* Generate Stop */
-          hi2c->Instance->CR1 |= I2C_CR1_STOP;
-
+          if (sendStop) {
+            /* Generate Stop */
+            hi2c->Instance->CR1 |= I2C_CR1_STOP;
+          }
           /* Read data from DR */
           (*pData++) = hi2c->Instance->DR;
           Size--;
@@ -829,8 +854,10 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
             return HAL_TIMEOUT;
           }
 
-          /* Generate Stop */
-          hi2c->Instance->CR1 |= I2C_CR1_STOP;
+          if (sendStop) {
+            /* Generate Stop */
+            hi2c->Instance->CR1 |= I2C_CR1_STOP;
+          }
 
           /* Read data from DR */
           (*pData++) = hi2c->Instance->DR;
@@ -870,7 +897,11 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
     }
 
     hi2c->State = HAL_I2C_STATE_READY;
-    hi2c->Mode = HAL_I2C_MODE_NONE;
+    if (!sendStop) {
+      hi2c->Mode = HAL_I2C_MODE_MASTER_SEL;
+    } else {
+      hi2c->Mode = HAL_I2C_MODE_NONE;
+    }
 
     /* Process Unlocked */
     __HAL_UNLOCK(hi2c);
@@ -881,6 +912,18 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
   {
     return HAL_BUSY;
   }
+}
+
+HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+{
+  return HAL_I2C_Master_Receive_Common(hi2c, DevAddress, pData, Size,
+   Timeout, 1);
+}
+
+HAL_StatusTypeDef HAL_I2C_Master_Receive_NoStop(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+{
+  return HAL_I2C_Master_Receive_Common(hi2c, DevAddress, pData, Size,
+   Timeout, 0);
 }
 
 /**
