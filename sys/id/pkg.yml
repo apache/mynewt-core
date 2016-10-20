@@ -31,10 +31,6 @@ pkg.deps:
     - kernel/os
     - sys/config
     - encoding/base64
-pkg.deps.ID_CLI:
-    - sys/shell
-pkg.req_apis.ID_CLI:
-    - console
 
 pkg.init_function: id_init
 pkg.init_stage: 5
