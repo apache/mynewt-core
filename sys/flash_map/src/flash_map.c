@@ -105,13 +105,14 @@ flash_area_read(const struct flash_area *fa, uint32_t off, void *dst,
 }
 
 int
-flash_area_write(const struct flash_area *fa, uint32_t off, void *src,
+flash_area_write(const struct flash_area *fa, uint32_t off, const void *src,
     uint32_t len)
 {
     if (off > fa->fa_size || off + len > fa->fa_size) {
         return -1;
     }
-    return hal_flash_write(fa->fa_device_id, fa->fa_off + off, src, len);
+    return hal_flash_write(fa->fa_device_id, fa->fa_off + off,
+                           (void *)src, len);
 }
 
 int

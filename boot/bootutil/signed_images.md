@@ -66,8 +66,6 @@ This gets bootutil to turn on image signature validation.
     pkg.name: libs/mykeys
     pkg.deps:
         - libs/bootutil
-    pkg.features.bootloader:
-        - IMAGE_KEYS_RSA
 
 ## Sample source file
 This exports the keys.
@@ -86,6 +84,12 @@ This exports the keys.
     const int bootutil_key_cnt = sizeof(bootutil_keys) / sizeof(bootutil_keys[0]);
 
 ## Building bootloader
+
+Enable the BOOTUTIL_SIGN_RSA syscfg setting in your app or target syscfg.yml
+file
+
+    syscfg.vals:
+        BOOTUTIL_SIGN_RSA: 1
 
 After you've created the key package, you must include it in the build
 for bootloader. So modify the pkg.yml for apps/boot to include it.

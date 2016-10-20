@@ -24,6 +24,7 @@
 
 #include "syscfg/syscfg.h"
 #include "hal/hal_flash.h"
+#include "flash_map/flash_map.h"
 #include "bootutil/image.h"
 #include "bootutil/sign_key.h"
 
@@ -38,8 +39,9 @@
  * Compute SHA256 over the image.
  */
 static int
-bootutil_img_hash(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
-  uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *hash_result, uint8_t *seed, int seed_len)
+bootutil_img_hash(struct image_header *hdr, const struct flash_area *fap,
+                  uint8_t *tmp_buf, uint32_t tmp_buf_sz,
+                  uint8_t *hash_result, uint8_t *seed, int seed_len)
 {
     mbedtls_sha256_context sha256_ctx;
     uint32_t blk_sz;
@@ -68,7 +70,7 @@ bootutil_img_hash(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
         if (blk_sz > tmp_buf_sz) {
             blk_sz = tmp_buf_sz;
         }
-        rc = hal_flash_read(flash_id, addr + off, tmp_buf, blk_sz);
+        rc = flash_area_read(fap, off, tmp_buf, blk_sz);
         if (rc) {
             return rc;
         }
@@ -84,8 +86,9 @@ bootutil_img_hash(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
  * Return non-zero if image could not be validated/does not validate.
  */
 int
-bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
-  uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *seed, int seed_len, uint8_t *out_hash)
+bootutil_img_validate(struct image_header *hdr, const struct flash_area *fap,
+                      uint8_t *tmp_buf, uint32_t tmp_buf_sz,
+                      uint8_t *seed, int seed_len, uint8_t *out_hash)
 {
     uint32_t off;
     uint32_t size;
@@ -113,23 +116,22 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
         return -1;
     }
 
-    rc = bootutil_img_hash(hdr, flash_id, addr, tmp_buf, tmp_buf_sz, hash, seed, seed_len);
+    rc = bootutil_img_hash(hdr, fap, tmp_buf, tmp_buf_sz, hash,
+                           seed, seed_len);
     if (rc) {
         return rc;
     }
 
-    if(out_hash) {
+    if (out_hash) {
         memcpy(out_hash, hash, 32);
     }
 
-    /*
-     * After image there's TLVs.
-     */
+    /* After image there are TLVs. */
     off = hdr->ih_img_size + hdr->ih_hdr_size;
     size = off + hdr->ih_tlv_size;
 
     for (; off < size; off += sizeof(tlv) + tlv.it_len) {
-        rc = hal_flash_read(flash_id, addr + off, &tlv, sizeof(tlv));
+        rc = flash_area_read(fap, off, &tlv, sizeof tlv);
         if (rc) {
             return rc;
         }
@@ -137,14 +139,14 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
             if (tlv.it_len != sizeof(hash)) {
                 return -1;
             }
-            sha_off = addr + off + sizeof(tlv);
+            sha_off = off + sizeof(tlv);
         }
 #if MYNEWT_VAL(BOOTUTIL_SIGN_RSA)
         if (tlv.it_type == IMAGE_TLV_RSA2048) {
             if (tlv.it_len != 256) { /* 2048 bits */
                 return -1;
             }
-            sig_off = addr + off + sizeof(tlv);
+            sig_off = off + sizeof(tlv);
             sig_len = tlv.it_len;
         }
 #endif
@@ -153,7 +155,7 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
             if (tlv.it_len < 64) { /* oids + 2 * 28 bytes */
                 return -1;
             }
-            sig_off = addr + off + sizeof(tlv);
+            sig_off = off + sizeof(tlv);
             sig_len = tlv.it_len;
         }
 #endif
@@ -165,7 +167,7 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
              */
             return -1;
         }
-        rc = hal_flash_read(flash_id, sha_off, buf, sizeof(hash));
+        rc = flash_area_read(fap, sha_off, buf, sizeof hash);
         if (rc) {
             return rc;
         }
@@ -181,7 +183,7 @@ bootutil_img_validate(struct image_header *hdr, uint8_t flash_id, uint32_t addr,
          */
         return -1;
     }
-    rc = hal_flash_read(flash_id, sig_off, buf, sig_len);
+    rc = flash_area_read(fap, sig_off, buf, sig_len);
     if (rc) {
         return -1;
     }

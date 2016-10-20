@@ -110,8 +110,8 @@ bs_list(char *buf, int len)
         flash_area_read(fap, 0, &hdr, sizeof(hdr));
 
         if (hdr.ih_magic == IMAGE_MAGIC &&
-          bootutil_img_validate(&hdr, fap->fa_device_id, fap->fa_off,
-            tmpbuf, sizeof(tmpbuf), NULL, 0, NULL) == 0) {
+          bootutil_img_validate(&hdr, fap, tmpbuf, sizeof(tmpbuf),
+                                NULL, 0, NULL) == 0) {
             good_img = 1;
         } else {
             good_img = 0;

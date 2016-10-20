@@ -41,14 +41,6 @@ TEST_CASE(boot_test_nv_bs_11)
         .ih_ver = { 1, 1, 5, 5 },
     };
 
-    struct boot_req req = {
-        .br_area_descs = boot_test_area_descs,
-        .br_slot_areas = boot_test_slot_areas,
-        .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
-        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
-        .br_img_sz = (384 * 1024),
-    };
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_hash(&hdr0, 0);
@@ -57,14 +49,11 @@ TEST_CASE(boot_test_nv_bs_11)
     rc = boot_set_pending();
     boot_test_util_copy_area(5, BOOT_TEST_AREA_IDX_SCRATCH);
 
-    // XXX
-    boot_req_set(&req);
     status.idx = 0;
-    status.elem_sz = 1;
     status.state = 1;
 
     rc = boot_write_status(&status);
     TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_TEST, &hdr0, &hdr1);
+    boot_test_util_verify_all(BOOT_SWAP_TYPE_TEST, &hdr0, &hdr1);
 }

@@ -74,8 +74,7 @@ void boot_test_util_verify_flash(const struct image_header *hdr0,
                                         int orig_slot_0,
                                         const struct image_header *hdr1,
                                         int orig_slot_1);
-void boot_test_util_verify_all(const struct boot_req *req,
-                               int expected_swap_type,
+void boot_test_util_verify_all(int expected_swap_type,
                                const struct image_header *hdr0,
                                const struct image_header *hdr1);
 #ifdef __cplusplus

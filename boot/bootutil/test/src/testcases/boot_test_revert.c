@@ -37,14 +37,6 @@ TEST_CASE(boot_test_revert)
         .ih_ver = { 1, 2, 3, 432 },
     };
 
-    struct boot_req req = {
-        .br_area_descs = boot_test_area_descs,
-        .br_slot_areas = boot_test_slot_areas,
-        .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
-        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
-        .br_img_sz = (384 * 1024),
-    };
-
     boot_test_util_init_flash();
     boot_test_util_write_image(&hdr0, 0);
     boot_test_util_write_hash(&hdr0, 0);
@@ -54,5 +46,5 @@ TEST_CASE(boot_test_revert)
     /* Indicate that the image in slot 0 is being tested. */
     boot_test_util_mark_revert();
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_REVERT, &hdr0, &hdr1);
+    boot_test_util_verify_all(BOOT_SWAP_TYPE_REVERT, &hdr0, &hdr1);
 }

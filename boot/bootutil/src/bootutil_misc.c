@@ -33,10 +33,17 @@
 
 int boot_current_slot;
 
+const uint32_t boot_img_magic[4] = {
+    0xf395c277,
+    0x7fefd260,
+    0x0f505235,
+    0x8079b62c,
+};
+
 struct boot_swap_table {
     /** * For each field, a value of 0 means "any". */
-    uint32_t bsw_magic_slot0;
-    uint32_t bsw_magic_slot1;
+    uint8_t bsw_magic_slot0;
+    uint8_t bsw_magic_slot1;
     uint8_t bsw_image_ok_slot0;
 
     uint8_t bsw_swap_type;
@@ -50,14 +57,14 @@ static const struct boot_swap_table boot_swap_tables[] = {
     {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
-         *    magic | 0xffffffff | 0xffffffff |
-         * image-ok | 0x**       | N/A        |
+         *    magic | Unset      | Unset      |
+         * image-ok | Any        | N/A        |
          * ---------+------------+------------'
          * swap: none                         |
          * -----------------------------------'
          */
-        .bsw_magic_slot0 =      0xffffffff,
-        .bsw_magic_slot1 =      0xffffffff,
+        .bsw_magic_slot0 =      BOOT_MAGIC_UNSET,
+        .bsw_magic_slot1 =      BOOT_MAGIC_UNSET,
         .bsw_image_ok_slot0 =   0,
         .bsw_swap_type =        BOOT_SWAP_TYPE_NONE,
     },
@@ -65,14 +72,14 @@ static const struct boot_swap_table boot_swap_tables[] = {
     {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
-         *    magic | 0x******** | 0x12344321 |
-         * image-ok | 0x**       | N/A        |
+         *    magic | Any        | Good       |
+         * image-ok | Any        | N/A        |
          * ---------+------------+------------'
          * swap: test                         |
          * -----------------------------------'
          */
         .bsw_magic_slot0 =      0,
-        .bsw_magic_slot1 =      0x12344321,
+        .bsw_magic_slot1 =      BOOT_MAGIC_GOOD,
         .bsw_image_ok_slot0 =   0,
         .bsw_swap_type =        BOOT_SWAP_TYPE_TEST,
     },
@@ -80,14 +87,14 @@ static const struct boot_swap_table boot_swap_tables[] = {
     {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
-         *    magic | 0x12344321 | 0xffffffff |
+         *    magic | Good       | Unset      |
          * image-ok | 0xff       | N/A        |
          * ---------+------------+------------'
          * swap: revert (test image running)  |
          * -----------------------------------'
          */
-        .bsw_magic_slot0 =      0x12344321,
-        .bsw_magic_slot1 =      0xffffffff,
+        .bsw_magic_slot0 =      BOOT_MAGIC_GOOD,
+        .bsw_magic_slot1 =      BOOT_MAGIC_UNSET,
         .bsw_image_ok_slot0 =   0xff,
         .bsw_swap_type =        BOOT_SWAP_TYPE_REVERT,
     },
@@ -95,14 +102,14 @@ static const struct boot_swap_table boot_swap_tables[] = {
     {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
-         *    magic | 0x12344321 | 0xffffffff |
+         *    magic | Good       | Unset      |
          * image-ok | 0x01       | N/A        |
          * ---------+------------+------------'
          * swap: none (confirmed test image)  |
          * -----------------------------------'
          */
-        .bsw_magic_slot0 =      0x12344321,
-        .bsw_magic_slot1 =      0xffffffff,
+        .bsw_magic_slot0 =      BOOT_MAGIC_GOOD,
+        .bsw_magic_slot1 =      BOOT_MAGIC_UNSET,
         .bsw_image_ok_slot0 =   0x01,
         .bsw_swap_type =        BOOT_SWAP_TYPE_NONE,
     },
@@ -111,24 +118,124 @@ static const struct boot_swap_table boot_swap_tables[] = {
 #define BOOT_SWAP_TABLES_COUNT \
     (sizeof boot_swap_tables / sizeof boot_swap_tables[0])
 
+int
+boot_magic_code(const uint32_t *magic)
+{
+    int i;
+
+    if (memcmp(magic, boot_img_magic, sizeof boot_img_magic) == 0) {
+        return BOOT_MAGIC_GOOD;
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (magic[i] == 0xffffffff) {
+            return BOOT_MAGIC_UNSET;
+        }
+    }
+
+    return BOOT_MAGIC_BAD;
+}
+
+uint32_t
+boot_status_sz(uint8_t min_write_sz)
+{
+    return BOOT_STATUS_MAX_ENTRIES * BOOT_STATUS_STATE_COUNT * min_write_sz;
+}
+
+uint32_t
+boot_trailer_sz(uint8_t min_write_sz)
+{
+    return sizeof boot_img_magic            +
+           boot_status_sz(min_write_sz)     +
+           min_write_sz * 2;
+}
+
+static uint32_t
+boot_magic_off(const struct flash_area *fap)
+{
+    uint32_t off_from_end;
+    uint8_t elem_sz;
+
+    elem_sz = flash_area_align(fap);
+
+    off_from_end = boot_trailer_sz(elem_sz);
+
+    assert(off_from_end <= fap->fa_size);
+    return fap->fa_size - off_from_end;
+}
+
+uint32_t
+boot_status_off(const struct flash_area *fap)
+{
+    return boot_magic_off(fap) + sizeof boot_img_magic;
+}
+
+static uint32_t
+boot_copy_done_off(const struct flash_area *fap)
+{
+    return fap->fa_size - flash_area_align(fap) * 2;
+}
+
+static uint32_t
+boot_image_ok_off(const struct flash_area *fap)
+{
+    return fap->fa_size - flash_area_align(fap);
+}
+
+int
+boot_read_swap_state(const struct flash_area *fap,
+                     struct boot_swap_state *state)
+{
+    uint32_t magic[4];
+    uint32_t off;
+    int rc;
+
+    off = boot_magic_off(fap);
+    rc = flash_area_read(fap, off, magic, sizeof magic);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+    state->magic = boot_magic_code(magic);
+
+    off = boot_copy_done_off(fap);
+    rc = flash_area_read(fap, off, &state->copy_done, 1);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+
+    off = boot_image_ok_off(fap);
+    rc = flash_area_read(fap, off, &state->image_ok, 1);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+
+    return 0;
+}
+
 /**
  * Reads the image trailer from the scratch area.
  */
 int
-boot_read_scratch_trailer(struct boot_img_trailer *bit)
+boot_read_swap_state_scratch(struct boot_swap_state *state)
 {
-    int rc;
     const struct flash_area *fap;
-    uint32_t off;
+    int rc;
 
     rc = flash_area_open(FLASH_AREA_IMAGE_SCRATCH, &fap);
     if (rc) {
-        return rc;
+        rc = BOOT_EFLASH;
+        goto done;
     }
-    off = fap->fa_size - sizeof(struct boot_img_trailer);
-    rc = flash_area_read(fap, off, bit, sizeof(*bit));
-    flash_area_close(fap);
 
+    rc = boot_read_swap_state(fap, state);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    flash_area_close(fap);
     return rc;
 }
 
@@ -136,49 +243,107 @@ boot_read_scratch_trailer(struct boot_img_trailer *bit)
  * Reads the image trailer from a given image slot.
  */
 int
-boot_read_img_trailer(int slot, struct boot_img_trailer *bit)
+boot_read_swap_state_img(int slot, struct boot_swap_state *state)
 {
-    int rc;
     const struct flash_area *fap;
-    uint32_t off;
     int area_id;
+    int rc;
 
     area_id = flash_area_id_from_image_slot(slot);
     rc = flash_area_open(area_id, &fap);
-    if (rc) {
-        return rc;
+    if (rc != 0) {
+        rc = BOOT_EFLASH;
+        goto done;
     }
-    off = fap->fa_size - sizeof(struct boot_img_trailer);
-    rc = flash_area_read(fap, off, bit, sizeof(*bit));
-    flash_area_close(fap);
 
+    rc = boot_read_swap_state(fap, state);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    flash_area_close(fap);
     return rc;
+}
+
+int
+boot_write_magic(const struct flash_area *fap)
+{
+    uint32_t off;
+    int rc;
+
+    off = boot_magic_off(fap);
+
+    rc = flash_area_write(fap, off, boot_img_magic, sizeof boot_img_magic);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+
+    return 0;
+}
+
+int
+boot_write_copy_done(const struct flash_area *fap)
+{
+    uint32_t off;
+    uint8_t val;
+    int rc;
+
+    off = boot_copy_done_off(fap);
+
+    val = 1;
+    rc = flash_area_write(fap, off, &val, 1);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+
+    return 0;
+}
+
+int
+boot_write_image_ok(const struct flash_area *fap)
+{
+    uint32_t off;
+    uint8_t val;
+    int rc;
+
+    off = boot_image_ok_off(fap);
+
+    val = 1;
+    rc = flash_area_write(fap, off, &val, 1);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+
+    return 0;
 }
 
 int
 boot_swap_type(void)
 {
     const struct boot_swap_table *table;
-    struct boot_img_trailer bit_slot0;
-    struct boot_img_trailer bit_slot1;
+    struct boot_swap_state state_slot0;
+    struct boot_swap_state state_slot1;
     int rc;
     int i;
 
-    rc = boot_read_img_trailer(0, &bit_slot0);
+    rc = boot_read_swap_state_img(0, &state_slot0);
     assert(rc == 0);
 
-    rc = boot_read_img_trailer(1, &bit_slot1);
+    rc = boot_read_swap_state_img(1, &state_slot1);
     assert(rc == 0);
 
     for (i = 0; i < BOOT_SWAP_TABLES_COUNT; i++) {
         table = boot_swap_tables + i;
 
         if ((table->bsw_magic_slot0     == 0    ||
-             table->bsw_magic_slot0     == bit_slot0.bit_copy_start)    &&
+             table->bsw_magic_slot0     == state_slot0.magic)           &&
             (table->bsw_magic_slot1     == 0    ||
-             table->bsw_magic_slot1     == bit_slot1.bit_copy_start)    &&
+             table->bsw_magic_slot1     == state_slot1.magic)           &&
             (table->bsw_image_ok_slot0  == 0    ||
-             table->bsw_image_ok_slot0  == bit_slot0.bit_img_ok)) {
+             table->bsw_image_ok_slot0  == state_slot0.image_ok)) {
 
             return table->bsw_swap_type;
         }
@@ -189,7 +354,8 @@ boot_swap_type(void)
 }
 
 /**
- * Write the test image version number from the boot vector.
+ * Marks the image in slot 1 as pending.  On the next reboot, the system will
+ * perform a one-time boot of the slot 1 image.
  *
  * @return                  0 on success; nonzero on failure.
  */
@@ -197,31 +363,29 @@ int
 boot_set_pending(void)
 {
     const struct flash_area *fap;
-    struct boot_img_trailer bit_slot1;
-    uint32_t off;
+    struct boot_swap_state state_slot1;
     int area_id;
     int rc;
 
-    rc = boot_read_img_trailer(1, &bit_slot1);
-    assert(rc == 0);
+    rc = boot_read_swap_state_img(1, &state_slot1);
+    if (rc != 0) {
+        return rc;
+    }
 
-    switch (bit_slot1.bit_copy_start) {
-    case BOOT_IMG_MAGIC:
+    switch (state_slot1.magic) {
+    case BOOT_MAGIC_GOOD:
         /* Swap already scheduled. */
         return 0;
 
-    case 0xffffffff:
-        bit_slot1.bit_copy_start = BOOT_IMG_MAGIC;
-
+    case BOOT_MAGIC_UNSET:
         area_id = flash_area_id_from_image_slot(1);
         rc = flash_area_open(area_id, &fap);
-        if (rc) {
-            return rc;
+        if (rc != 0) {
+            rc = BOOT_EFLASH;
+        } else {
+            rc = boot_write_magic(fap);
         }
 
-        off = fap->fa_size - sizeof(struct boot_img_trailer);
-        rc = flash_area_write(fap, off, &bit_slot1,
-                              sizeof bit_slot1.bit_copy_start);
         flash_area_close(fap);
         return rc;
 
@@ -233,9 +397,7 @@ boot_set_pending(void)
 }
 
 /**
- * Deletes the main image version number from the boot vector.
- * This must be called by the app to confirm that it is ok to keep booting
- * to this image.
+ * Marks the image in slot 0 as confirmed.  The system will continue booting into the image in slot 0 until told to boot from a different slot.
  *
  * @return                  0 on success; nonzero on failure.
  */
@@ -243,39 +405,52 @@ int
 boot_set_confirmed(void)
 {
     const struct flash_area *fap;
-    struct boot_img_trailer bit_slot0;
-    uint32_t off;
-    uint8_t img_ok;
+    struct boot_swap_state state_slot0;
     int rc;
 
-    rc = boot_read_img_trailer(0, &bit_slot0);
-    assert(rc == 0);
+    rc = boot_read_swap_state_img(0, &state_slot0);
+    if (rc != 0) {
+        return rc;
+    }
 
-    if (bit_slot0.bit_copy_start != BOOT_IMG_MAGIC) {
+    switch (state_slot0.magic) {
+    case BOOT_MAGIC_GOOD:
+        /* Confirm needed; proceed. */
+        break;
+
+    case BOOT_MAGIC_UNSET:
         /* Already confirmed. */
         return 0;
+
+    case BOOT_MAGIC_BAD:
+        /* Unexpected state. */
+        return BOOT_EBADVECT;
     }
 
-    if (bit_slot0.bit_copy_done == 0xff) {
+    if (state_slot0.copy_done == 0xff) {
         /* Swap never completed.  This is unexpected. */
-        return -1;
+        return BOOT_EBADVECT;
     }
 
-    if (bit_slot0.bit_img_ok != 0xff) {
+    if (state_slot0.image_ok != 0xff) {
         /* Already confirmed. */
         return 0;
     }
 
     rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
     if (rc) {
-        return rc;
+        rc = BOOT_EFLASH;
+        goto done;
     }
 
-    off = fap->fa_size -
-          sizeof(struct boot_img_trailer) +
-          offsetof(struct boot_img_trailer, bit_img_ok);
+    rc = boot_write_image_ok(fap);
+    if (rc != 0) {
+        goto done;
+    }
 
-    img_ok = 1;
-    rc = flash_area_write(fap, off, &img_ok, 1);
+    rc = 0;
+
+done:
+    flash_area_close(fap);
     return rc;
 }

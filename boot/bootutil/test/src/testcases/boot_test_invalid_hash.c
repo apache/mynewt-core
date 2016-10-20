@@ -39,14 +39,6 @@ TEST_CASE(boot_test_invalid_hash)
         .ih_ver = { 1, 2, 3, 432 },
     };
 
-    struct boot_req req = {
-        .br_area_descs = boot_test_area_descs,
-        .br_slot_areas = boot_test_slot_areas,
-        .br_num_image_areas = BOOT_TEST_AREA_IDX_SCRATCH + 1,
-        .br_scratch_area_idx = BOOT_TEST_AREA_IDX_SCRATCH,
-        .br_img_sz = (384 * 1024),
-    };
-
     struct image_tlv tlv = {
         .it_type = IMAGE_TLV_SHA256,
         .it_len = 32
@@ -63,5 +55,5 @@ TEST_CASE(boot_test_invalid_hash)
     rc = boot_set_pending();
     TEST_ASSERT(rc == 0);
 
-    boot_test_util_verify_all(&req, BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
+    boot_test_util_verify_all(BOOT_SWAP_TYPE_NONE, &hdr0, NULL);
 }

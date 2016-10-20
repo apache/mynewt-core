@@ -7,5 +7,3 @@ syscfg.defs:
     BOOTUTIL_SIGN_EC:
         description: 'TBD'
         value: '0'
-pkg.cflags.IMAGE_KEYS_RSA: -DIMAGE_SIGNATURES_RSA
-pkg.cflags.IMAGE_KEYS_EC: -DIMAGE_SIGNATURES_EC

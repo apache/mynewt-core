@@ -72,7 +72,7 @@ void flash_area_close(const struct flash_area *);
  */
 int flash_area_read(const struct flash_area *, uint32_t off, void *dst,
   uint32_t len);
-int flash_area_write(const struct flash_area *, uint32_t off, void *src,
+int flash_area_write(const struct flash_area *, uint32_t off, const void *src,
   uint32_t len);
 int flash_area_erase(const struct flash_area *, uint32_t off, uint32_t len);
 

@@ -120,7 +120,7 @@ boot_test_util_area_write_size(int dst_idx, uint32_t off, uint32_t size)
 
     /* Don't include trailer in copy to second slot. */
     desc = boot_test_area_descs + dst_idx;
-    trailer_start = desc->fa_size - boot_status_sz(1);
+    trailer_start = desc->fa_size - boot_trailer_sz(1);
     diff = off + size - trailer_start;
     if (diff > 0) {
         if (diff > size) {
@@ -262,35 +262,51 @@ boot_test_util_write_hash(const struct image_header *hdr, int slot)
     TEST_ASSERT(rc == 0);
 }
 
-void
-boot_test_util_write_bit(int flash_area_id, struct boot_img_trailer *bit)
+static void
+boot_test_util_write_swap_state(int flash_area_id,
+                                const struct boot_swap_state *state)
 {
     const struct flash_area *fap;
     int rc;
 
-    /* XXX: This function only works by chance.  It requires that the boot
-     * loader have have been run once already so that its global state has been
-     * populated.
-     */
-
     rc = flash_area_open(flash_area_id, &fap);
     TEST_ASSERT_FATAL(rc == 0);
 
-    rc = flash_area_write(fap, fap->fa_size - sizeof *bit, bit, sizeof *bit);
-    TEST_ASSERT_FATAL(rc == 0);
+    switch (state->magic) {
+    case 0:
+        break;
+
+    case BOOT_MAGIC_GOOD:
+        rc = boot_write_magic(fap);
+        TEST_ASSERT_FATAL(rc == 0);
+        break;
+
+    default:
+        TEST_ASSERT_FATAL(0);
+        break;
+    }
+
+    if (state->copy_done != 0xff) {
+        rc = boot_write_copy_done(fap);
+        TEST_ASSERT_FATAL(rc == 0);
+    }
+
+    if (state->image_ok != 0xff) {
+        rc = boot_write_image_ok(fap);
+        TEST_ASSERT_FATAL(rc == 0);
+    }
 }
 
 void
 boot_test_util_mark_revert(void)
 {
-    struct boot_img_trailer bit_slot0 = {
-        .bit_copy_start = BOOT_IMG_MAGIC,
-        .bit_copy_done = 0x01,
-        .bit_img_ok = 0xff,
-        ._pad = 0xffff,
+    struct boot_swap_state state_slot0 = {
+        .magic = BOOT_MAGIC_GOOD,
+        .copy_done = 0x01,
+        .image_ok = 0xff,
     };
 
-    boot_test_util_write_bit(FLASH_AREA_IMAGE_0, &bit_slot0);
+    boot_test_util_write_swap_state(FLASH_AREA_IMAGE_0, &state_slot0);
 }
 
 void
@@ -371,18 +387,14 @@ boot_test_util_verify_area(const struct flash_area *area_desc,
 void
 boot_test_util_verify_status_clear(void)
 {
-    struct boot_img_trailer bit;
-    const struct flash_area *fap;
+    struct boot_swap_state state_slot0;
     int rc;
 
-    rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
-    TEST_ASSERT(rc == 0);
+    rc = boot_read_swap_state_img(0, &state_slot0);
+    assert(rc == 0);
 
-    rc = flash_area_read(fap, fap->fa_size - sizeof(bit), &bit, sizeof(bit));
-    TEST_ASSERT(rc == 0);
-
-    TEST_ASSERT(bit.bit_copy_start != BOOT_IMG_MAGIC ||
-      bit.bit_copy_done != 0xff);
+    TEST_ASSERT(state_slot0.magic != BOOT_MAGIC_UNSET ||
+                state_slot0.copy_done != 0);
 }
 
 
@@ -420,7 +432,7 @@ boot_test_util_verify_flash(const struct image_header *hdr0, int orig_slot_0,
 }
 
 void
-boot_test_util_verify_all(const struct boot_req *req, int expected_swap_type,
+boot_test_util_verify_all(int expected_swap_type,
                           const struct image_header *hdr0,
                           const struct image_header *hdr1)
 {
@@ -433,12 +445,11 @@ boot_test_util_verify_all(const struct boot_req *req, int expected_swap_type,
     int rc;
     int i;
 
-    TEST_ASSERT_FATAL(req != NULL);
     TEST_ASSERT_FATAL(hdr0 != NULL || hdr1 != NULL);
 
     num_swaps = 0;
     for (i = 0; i < 3; i++) {
-        rc = boot_go(req, &rsp);
+        rc = boot_go(&rsp);
         TEST_ASSERT_FATAL(rc == 0);
 
         if (expected_swap_type != BOOT_SWAP_TYPE_NONE) {

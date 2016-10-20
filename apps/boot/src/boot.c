@@ -50,14 +50,6 @@ static os_stack_t boot_ser_stack[BOOT_SER_STACK_SZ];
 int
 main(void)
 {
-    struct flash_area descs[AREA_DESC_MAX];
-    /** Areas representing the beginning of image slots. */
-    uint8_t img_starts[2];
-    struct boot_req req = {
-        .br_area_descs = descs,
-        .br_slot_areas = img_starts,
-    };
-
     struct boot_rsp rsp;
     int rc;
 
@@ -67,9 +59,6 @@ main(void)
     flash_map_init();
     hal_bsp_init();
 #endif
-
-    rc = boot_build_request(&req, AREA_DESC_MAX);
-    assert(rc == 0);
 
 #if MYNEWT_VAL(BOOT_SERIAL)
     /*
@@ -84,7 +73,7 @@ main(void)
         os_start();
     }
 #endif
-    rc = boot_go(&req, &rsp);
+    rc = boot_go(&rsp);
     assert(rc == 0);
 
     system_start((void *)(rsp.br_image_addr + rsp.br_hdr->ih_hdr_size));
