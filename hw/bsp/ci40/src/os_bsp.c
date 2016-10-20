@@ -37,13 +37,19 @@ void _close(int fd);
 void
 bsp_init(void)
 {
-    #if MYNEWT_VAL(UART_0)
-        assert(os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
-          OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0) == 0);
-    #endif
+    int rc;
 
-    #if MYNEWT_VAL(UART_1)
-        assert(os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
-          OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0) == 0);
-    #endif
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+    (void)rc;
 }

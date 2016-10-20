@@ -19,6 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_arch.h"
+#include "syscfg/syscfg.h"
 #include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 
@@ -43,7 +44,7 @@ extern struct os_task g_idle_task;
 void __attribute__((interrupt, keep_interrupts_masked))
 _mips_isr_hw5(void)
 {
-    mips_setcompare(mips_getcompare() + 273000);
+    mips_setcompare(mips_getcompare() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
     timer_handler();
 }
 
@@ -134,9 +135,6 @@ os_arch_os_init(void)
     if (os_in_isr() == 0) {
         err = OS_OK;
 
-        /* Call bsp related OS initializations */
-        bsp_init();
-
         /* should be in kernel mode here */
         os_arch_init();
     }
@@ -155,7 +153,7 @@ os_arch_start(void)
     /* XXX: take this magic number (for a 1ms tick from a 546MHz clock) and put
     ** it in bsp or mcu somewhere
     */
-    mips_setcompare(mips_getcount() + 273000);
+    mips_setcompare(mips_getcount() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
 
     /* global interrupt enable */
     mips_bissr(1);
