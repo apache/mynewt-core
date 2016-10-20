@@ -27,10 +27,16 @@ pkg.keywords:
     - stm32f4
     - nucleo
 
-pkg.cflags: -DSTM32F401xE
+pkg.cflags:
+    - -DSTM32F401xE
 
 pkg.deps:
     - boot/bootutil
     - hw/mcu/stm/stm32f4xx
     - libc/baselibc
     - sys/flash_map
+
+pkg.deps.UART_0:
+    - hw/drivers/uart/uart_hal
+pkg.deps.UART_1:
+    - hw/drivers/uart/uart_hal
