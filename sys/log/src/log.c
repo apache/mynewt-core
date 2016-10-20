@@ -112,11 +112,7 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_name = name;
     log->l_log = (struct log_handler *)lh;
     log->l_arg = arg;
-    if (level == 0) {
-        log->l_level = LOG_SYSLEVEL;
-    } else {
-        log->l_level = level;
-    }
+    log->l_level = level;
 
     assert(!log_registered(log));
     STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
@@ -141,7 +137,7 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
      * If the log message is below what this log instance is
      * configured to accept, then just drop it.
      */
-    if (level > log->l_level) {
+    if (level < log->l_level) {
         rc = -1;
         goto err;
     }
