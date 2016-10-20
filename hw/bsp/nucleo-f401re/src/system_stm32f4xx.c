@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    system_stm32f4xx.c
   * @author  MCD Application Team
-  * @version V1.3.0
-  * @date    01-July-2015
+  * @version V1.2.3
+  * @date    06-May-2016
   * @brief   CMSIS Cortex-M4 Device Peripheral Access Layer System Source File.
   *
   *   This file provides two functions and one global variable to be called from 
@@ -24,7 +24,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2016 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -63,8 +63,16 @@
   * @{
   */
 
-#include "mcu/stm32f4xx.h"
+#include "stm32f4xx.h"
 #include "bsp/cmsis_nvic.h"
+
+#if !defined  (HSE_VALUE) 
+  #define HSE_VALUE    ((uint32_t)8000000) /*!< Default value of the External oscillator in Hz */
+#endif /* HSE_VALUE */
+
+#if !defined  (HSI_VALUE)
+  #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
+#endif /* HSI_VALUE */
 
 /**
   * @}
@@ -81,6 +89,15 @@
 /** @addtogroup STM32F4xx_System_Private_Defines
   * @{
   */
+
+/************************* Miscellaneous Configuration ************************/
+
+/*!< Uncomment the following line if you need to relocate your vector Table in
+     Internal SRAM. */
+/* #define VECT_TAB_SRAM */
+#define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
+                                   This value must be a multiple of 0x200. */
+/******************************************************************************/
 
 /**
   * @}
@@ -105,9 +122,8 @@
                is no need to call the 2 first functions listed above, since SystemCoreClock
                variable is updated automatically.
   */
-uint32_t SystemCoreClock = 168000000;
-
-const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+  uint32_t SystemCoreClock = 16000000;
+  __I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
 /**
   * @}
@@ -116,8 +132,6 @@ const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 
 /** @addtogroup STM32F4xx_System_Private_FunctionPrototypes
   * @{
   */
-
-static void SystemClock_Config(void);
 
 /**
   * @}
@@ -159,11 +173,9 @@ void SystemInit(void)
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
 
-  /* Configure System Clock */
-  SystemClock_Config();
-
   /* Relocate the vector table */
   NVIC_Relocate();
+
 }
 
 /**
@@ -248,93 +260,6 @@ void SystemCoreClockUpdate(void)
   tmp = AHBPrescTable[((RCC->CFGR & RCC_CFGR_HPRE) >> 4)];
   /* HCLK frequency */
   SystemCoreClock >>= tmp;
-}
-
-/**
-  * @brief  System Clock Configuration
-  *         The system Clock is configured as follow : 
-  *            System Clock source            = PLL (HSE_CRYSTAL or HSE_BYPASS)
-  *            SYSCLK(Hz)                     = 84000000
-  *            HCLK(Hz)                       = 84000000
-  *            AHB Prescaler                  = 1
-  *            APB1 Prescaler                 = 2
-  *            APB2 Prescaler                 = 1
-  *            HSE Frequency(Hz)              = 8000000
-  *            PLL_M                          = 8
-  *            PLL_N                          = 336
-  *            PLL_P                          = 4
-  *            PLL_Q                          = 7
-  *            VDD(V)                         = 3.3
-  *            Main regulator output voltage  = Scale2 mode
-  *            Flash Latency(WS)              = 3
-  * @param  None
-  * @retval None
-  */
-static void SystemClock_Config(void)
-{
-  /* Configure Flash prefetch, Instruction cache, Data cache */ 
-#if (INSTRUCTION_CACHE_ENABLE != 0)
-    __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
-#endif /* INSTRUCTION_CACHE_ENABLE */
-
-#if (DATA_CACHE_ENABLE != 0)
-    __HAL_FLASH_DATA_CACHE_ENABLE();
-#endif /* DATA_CACHE_ENABLE */
-
-#if (PREFETCH_ENABLE != 0)
-    __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-#endif /* PREFETCH_ENABLE */
-
-    /* Enable Power Control clock */
-    __HAL_RCC_PWR_CLK_ENABLE();
-  
-    /* The voltage scaling allows optimizing the power consumption when the device is 
-     clocked below the maximum system frequency, to update the voltage scaling value 
-     regarding system frequency refer to product datasheet.  */
-    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
-
-    /* Enable HSE and wait till HSE is ready */  
-    RCC->CR |= ((uint32_t)RCC_CR_HSEON);
-    while(__HAL_RCC_GET_FLAG(RCC_FLAG_HSERDY) == RESET) {
-        /* XXX: some error should occur here */
-    }
-
-    /* HCLK Configuration */
-    MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE, RCC_SYSCLK_DIV1);
-
-    /* PCLK1 Configuration */ 
-    MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_HCLK_DIV2);
-
-    /* PCLK2 Configuration */ 
-    MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, (RCC_HCLK_DIV1 << 3));
-
-    /* Configure the main PLL clock source, multiplication and division factors. */
-    WRITE_REG(RCC->PLLCFGR, (RCC_PLLSOURCE_HSE  | \
-                             8                 | \
-                             (336 << POSITION_VAL(RCC_PLLCFGR_PLLN))  | \
-                             (((RCC_PLLP_DIV4 >> 1) -1) << POSITION_VAL(RCC_PLLCFGR_PLLP)) | \
-                             (7 << POSITION_VAL(RCC_PLLCFGR_PLLQ))));
-
-    /* Enable the main PLL. */
-    __HAL_RCC_PLL_ENABLE();
-
-    /* Wait till PLL is ready */  
-    while(__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
-        /* XXX: handle this */
-    }
-
-    /* Enable the Flash prefetch */
-    __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-
-    /* Set flash wait states */
-    __HAL_FLASH_SET_LATENCY(FLASH_LATENCY_3);
-  
-    /* Start PLL */  
-    __HAL_RCC_SYSCLK_CONFIG(RCC_SYSCLKSOURCE_PLLCLK);
-
-    while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_SYSCLKSOURCE_STATUS_PLLCLK) {
-        /* XXX: deal with this*/
-    }
 }
 
 /**
