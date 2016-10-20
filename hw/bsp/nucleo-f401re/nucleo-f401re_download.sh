@@ -25,7 +25,7 @@
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #
-
+set -x
 if [ -z "$BIN_BASENAME" ]; then
     echo "Need binary to download"
     exit 1
@@ -35,7 +35,7 @@ IS_BOOTLOADER=0
 
 # Look for 'bootloader' in FEATURES
 for feature in $FEATURES; do
-    if [ $feature == "bootloader" ]; then
+    if [ $feature == "BOOT_LOADER" ]; then
         IS_BOOTLOADER=1
     fi
 done
