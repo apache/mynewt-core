@@ -17,12 +17,12 @@
  * under the License.
  */
  
-/* Linker script for STM32F401 when running code from SRAM */
+/* Linker script for STM32F401 when running the boot loader */
 
 /* Linker script to configure memory regions. */
 MEMORY
 { 
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 16K
   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 96K
 }
 
