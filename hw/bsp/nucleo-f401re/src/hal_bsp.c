@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,14 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "hal/hal_bsp.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_flash_int.h"
-#include "mcu/stm32f401xe.h"
-#include "mcu/stm32f4xx_hal_gpio_ex.h"
-#include "mcu/stm32f4_bsp.h"
+#include <syscfg/syscfg.h>
+
+#include <os/os_dev.h>
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
+
+#include <hal/hal_bsp.h>
+#include <hal/hal_gpio.h>
+#include <hal/hal_flash_int.h>
+#include <hal/hal_i2c.h>
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
+#include <hal/hal_spi.h>
+#endif
+#include <stm32f401xe.h>
+#include <stm32f4xx_hal_gpio_ex.h>
+#include <mcu/stm32f4_bsp.h>
+#include <mcu/stm32f4xx_mynewt_hal.h>
 #include "bsp/bsp.h"
 #include <assert.h>
+
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev hal_uart0;
 
 static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
@@ -38,6 +52,7 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
         .suc_irqn = USART2_IRQn
     }
 };
+#endif
 
 static const struct bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -46,12 +61,28 @@ static const struct bsp_mem_dump dump_cfg[] = {
     }
 };
 
-const struct stm32f4_uart_cfg *
-bsp_uart_config(int port)
-{
-    assert(port < UART_CNT);
-    return &uart_cfg[port];
-}
+#if MYNEWT_VAL(I2C_0)
+static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = 16 + 9,              /* PB9 */
+    .hic_pin_scl = 16 + 8,              /* PB8 */
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_speed = 100000                 /* 100kHz */
+};
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
+struct stm32f4_hal_spi_cfg spi0_cfg = {
+    .ss_pin = 4,
+    .sck_pin  = 5,
+    .miso_pin = 6,
+    .mosi_pin = 21,
+    .irq_prio = 2
+};
+#endif
 
 const struct hal_flash *
 bsp_flash_dev(uint8_t id)
@@ -70,4 +101,50 @@ bsp_core_dump(int *area_cnt)
 {
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;
+}
+
+void
+bsp_init(void)
+{
+    int rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &hal_uart0, CONSOLE_UART,
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ADC_1)
+    rc = os_dev_create((struct os_dev *) &my_dev_adc1, "adc1",
+            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+            stm32f4_adc_dev_init, &adc1_config);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(ADC_2)
+    rc = os_dev_create((struct os_dev *) &my_dev_adc2, "adc2",
+            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+            stm32f4_adc_dev_init, &adc2_config);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(ADC_3)
+    rc = os_dev_create((struct os_dev *) &my_dev_adc3, "adc3",
+            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+            stm32f4_adc_dev_init, &adc3_config);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &i2c_cfg0);
+    assert(rc == 0);
+#endif
 }
