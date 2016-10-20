@@ -30,11 +30,6 @@ pkg.keywords:
 pkg.cflags:
     # STM SDK files require these defines.
     - '-DSTM32F407xx'
-    - '-DHAL_ADC_MODULE_ENABLED'
-    - '-DHAL_DMA_MODULE_ENABLED'
-    - -DHAL_I2C_MODULE_ENABLED
-    - '-DHAL_SPI_MODULE_ENABLED'
-    - -DHAL_TIM_MODULE_ENABLED
 
 pkg.deps:
     - boot/bootutil
