@@ -911,7 +911,7 @@ bletest_task_handler(void *arg)
 #endif
 
     /* Read unique HW id */
-    rc = bsp_hw_id((void *)&g_bletest_hw_id[0], sizeof(g_bletest_hw_id));
+    rc = hal_bsp_hw_id((void *)&g_bletest_hw_id[0], sizeof(g_bletest_hw_id));
     assert(rc == 16);
     console_printf("HW id=%04x%04x%04x%04x\n",
                    (unsigned int)g_bletest_hw_id[0],

@@ -32,7 +32,7 @@ hal_flash_init(void)
     int rc = 0;
 
     for (i = 0; ; i++) {
-        hf = bsp_flash_dev(i);
+        hf = hal_bsp_flash_dev(i);
         if (!hf) {
             break;
         }
@@ -48,7 +48,7 @@ hal_flash_align(uint8_t flash_id)
 {
     const struct hal_flash *hf;
 
-    hf = bsp_flash_dev(flash_id);
+    hf = hal_bsp_flash_dev(flash_id);
     if (!hf) {
         return 1;
     }
@@ -81,7 +81,7 @@ hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
     const struct hal_flash *hf;
 
-    hf = bsp_flash_dev(id);
+    hf = hal_bsp_flash_dev(id);
     if (!hf) {
         return -1;
     }
@@ -98,7 +98,7 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
 {
     const struct hal_flash *hf;
 
-    hf = bsp_flash_dev(id);
+    hf = hal_bsp_flash_dev(id);
     if (!hf) {
         return -1;
     }
@@ -114,7 +114,7 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
 {
     const struct hal_flash *hf;
 
-    hf = bsp_flash_dev(id);
+    hf = hal_bsp_flash_dev(id);
     if (!hf) {
         return -1;
     }
@@ -134,7 +134,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     int i;
     int rc;
 
-    hf = bsp_flash_dev(id);
+    hf = hal_bsp_flash_dev(id);
     if (!hf) {
         return -1;
     }

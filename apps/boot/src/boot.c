@@ -65,7 +65,7 @@ main(void)
     sysinit();
 #else
     flash_map_init();
-    bsp_init();
+    hal_bsp_init();
 #endif
 
     rc = boot_build_request(&req, AREA_DESC_MAX);

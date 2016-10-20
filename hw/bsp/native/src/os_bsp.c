@@ -28,7 +28,7 @@
 static struct uart_dev os_bsp_uart0;
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
     int rc;
 

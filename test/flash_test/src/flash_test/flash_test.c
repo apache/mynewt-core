@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -46,7 +46,7 @@ flash_cli_cmd(int argc, char **argv)
     char tmp_buf[8];
     char pr_str[80];
 
-    hf = bsp_flash_dev(0);
+    hf = hal_bsp_flash_dev(0);
     if (!hf) {
         console_printf("No flash device present\n");
         return 0;

@@ -32,14 +32,15 @@
 /*
  * What memory to include in coredump.
  */
-static const struct bsp_mem_dump dump_cfg[] = {
+static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
-	.bmd_start = &__DATA_ROM,
-        .bmd_size = RAM_SIZE
+	.hbmd_start = &__DATA_ROM,
+        .hbmd_size = RAM_SIZE
     }
 };
 
-const struct hal_flash *bsp_flash_dev(uint8_t id)
+const struct hal_flash *
+hal_bsp_flash_dev(uint8_t id)
 {
     /*
      * Internal flash mapped to id 0.
@@ -50,8 +51,8 @@ const struct hal_flash *bsp_flash_dev(uint8_t id)
     return &mk64f12_flash_dev;
 }
 
-const struct bsp_mem_dump *
-bsp_core_dump(int *area_cnt)
+const struct hal_bsp_mem_dump *
+hal_bsp_core_dump(int *area_cnt)
 {
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;

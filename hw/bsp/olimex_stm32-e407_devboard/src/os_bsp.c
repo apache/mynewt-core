@@ -279,7 +279,7 @@ struct stm32f4_hal_spi_cfg spi0_cfg = {
 void _close(int fd);
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
     int rc;
 

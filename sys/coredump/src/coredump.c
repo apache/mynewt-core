@@ -47,7 +47,7 @@ coredump_dump(void *regs, int regs_sz)
     struct coredump_tlv tlv;
     const struct flash_area *fa;
     struct image_version ver;
-    const struct bsp_mem_dump *mem, *cur;
+    const struct hal_bsp_mem_dump *mem, *cur;
     int area_cnt, i;
     uint8_t hash[IMGMGR_HASH_LEN];
     uint32_t off;
@@ -103,17 +103,17 @@ coredump_dump(void *regs, int regs_sz)
         dump_core_tlv(fa, &off, &tlv, hash);
     }
 
-    mem = bsp_core_dump(&area_cnt);
+    mem = hal_bsp_core_dump(&area_cnt);
     for (i = 0; i < area_cnt; i++) {
         cur = &mem[i];
-        area_off = (uint32_t)cur->bmd_start;
-        area_end = area_off + cur->bmd_size;
+        area_off = (uint32_t)cur->hbmd_start;
+        area_end = area_off + cur->hbmd_size;
         while (area_off < area_end) {
             tlv.ct_type = COREDUMP_TLV_MEM;
-            if (cur->bmd_size > USHRT_MAX) {
+            if (cur->hbmd_size > USHRT_MAX) {
                 tlv.ct_len = SHRT_MAX + 1;
             } else {
-                tlv.ct_len = cur->bmd_size;
+                tlv.ct_len = cur->hbmd_size;
             }
             tlv.ct_off = area_off;
             dump_core_tlv(fa, &off, &tlv, (void *)area_off);

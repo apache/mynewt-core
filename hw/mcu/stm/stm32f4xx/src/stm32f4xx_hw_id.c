@@ -31,7 +31,7 @@
  * See ref manual chapter 39.1.
  */
 int
-bsp_hw_id(uint8_t *id, int max_len)
+hal_bsp_hw_id(uint8_t *id, int max_len)
 {
     int cnt;
 

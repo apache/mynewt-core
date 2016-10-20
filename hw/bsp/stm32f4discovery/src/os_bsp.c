@@ -27,6 +27,6 @@
 void _close(int fd);
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
 }

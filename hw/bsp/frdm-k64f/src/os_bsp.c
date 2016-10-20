@@ -69,7 +69,8 @@ static void init_hardware(void)
 
 extern void BOARD_BootClockRUN(void);
 
-void bsp_init(void)
+void
+hal_bsp_init(void)
 {
     int rc = 0;
 

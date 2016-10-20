@@ -27,7 +27,7 @@
 #include <bsp/bsp.h>
 
 const struct hal_flash *
-bsp_flash_dev(uint8_t id)
+hal_bsp_flash_dev(uint8_t id)
 {
     /*
      * Just one to start with

@@ -57,12 +57,12 @@ struct conf_handler id_conf = {
 static char *
 id_conf_get(int argc, char **argv, char *val, int val_len_max)
 {
-    uint8_t src_buf[BSP_MAX_ID_LEN];
+    uint8_t src_buf[HAL_BSP_MAX_ID_LEN];
     int len;
 
     if (argc == 1) {
         if (!strcmp(argv[0], "hwid")) {
-            len = bsp_hw_id(src_buf, sizeof(src_buf));
+            len = hal_bsp_hw_id(src_buf, sizeof(src_buf));
             if (len > 0) {
                 return conf_str_from_bytes(src_buf, len, val, val_len_max);
             }
@@ -92,12 +92,12 @@ static int
 id_conf_export(void (*export_func)(char *name, char *val),
   enum conf_export_tgt tgt)
 {
-    uint8_t src_buf[BSP_MAX_ID_LEN];
+    uint8_t src_buf[HAL_BSP_MAX_ID_LEN];
     char str[sizeof(src_buf) * 2];
     int len;
 
     if (tgt == CONF_EXPORT_SHOW) {
-        len = bsp_hw_id(src_buf, sizeof(src_buf));
+        len = hal_bsp_hw_id(src_buf, sizeof(src_buf));
         if (len > 0) {
             conf_str_from_bytes(src_buf, len, str, sizeof(str));
         }

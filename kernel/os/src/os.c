@@ -154,7 +154,7 @@ os_init(void)
     assert(err == OS_OK);
 
     /* Call bsp related OS initializations */
-    bsp_init();
+    hal_bsp_init();
 
     err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_PRIMARY);
     assert(err == OS_OK);

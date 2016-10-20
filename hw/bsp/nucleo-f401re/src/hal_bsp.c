@@ -54,10 +54,10 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
 };
 #endif
 
-static const struct bsp_mem_dump dump_cfg[] = {
+static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
-        .bmd_start = &_ram_start,
-        .bmd_size = RAM_SIZE
+        .hbmd_start = &_ram_start,
+        .hbmd_size = RAM_SIZE
     }
 };
 
@@ -85,7 +85,7 @@ struct stm32f4_hal_spi_cfg spi0_cfg = {
 #endif
 
 const struct hal_flash *
-bsp_flash_dev(uint8_t id)
+hal_bsp_flash_dev(uint8_t id)
 {
     /*
      * Internal flash mapped to id 0.
@@ -96,15 +96,15 @@ bsp_flash_dev(uint8_t id)
     return &stm32f4_flash_dev;
 }
 
-const struct bsp_mem_dump *
-bsp_core_dump(int *area_cnt)
+const struct hal_bsp_mem_dump *
+hal_bsp_core_dump(int *area_cnt)
 {
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;
 }
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
     int rc;
 

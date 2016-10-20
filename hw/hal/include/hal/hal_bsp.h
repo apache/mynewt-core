@@ -29,15 +29,14 @@ extern "C" {
 /*
  * Initializes BSP; registers flash_map with the system.
  */
-void bsp_init_devs(void);
-void bsp_init(void);
+void hal_bsp_init(void);
 
 /*
  * Return pointer to flash device structure, given BSP specific
  * flash id.
  */
 struct hal_flash;
-const struct hal_flash *bsp_flash_dev(uint8_t flash_id);
+const struct hal_flash *hal_bsp_flash_dev(uint8_t flash_id);
 
 /*
  * Grows heap by given amount. XXX giving space back not implemented.
@@ -47,19 +46,19 @@ void *_sbrk(int incr);
 /*
  * Report which memory areas should be included inside a coredump.
  */
-struct bsp_mem_dump {
-    void *bmd_start;
-    uint32_t bmd_size;
+struct hal_bsp_mem_dump {
+    void *hbmd_start;
+    uint32_t hbmd_size;
 };
 
-const struct bsp_mem_dump *bsp_core_dump(int *area_cnt);
+const struct hal_bsp_mem_dump *hal_bsp_core_dump(int *area_cnt);
 
 /*
  * Get unique HW identifier/serial number for platform.
  * Returns the number of bytes filled in.
  */
-#define BSP_MAX_ID_LEN  32
-int bsp_hw_id(uint8_t *id, int max_len);
+#define HAL_BSP_MAX_ID_LEN  32
+int hal_bsp_hw_id(uint8_t *id, int max_len);
 
 uint16_t bsp_get_refmv(void *cfgdata);
 

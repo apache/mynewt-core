@@ -31,7 +31,7 @@
 /*
  * TODO: Use serial# registers
  */
-int bsp_hw_id(uint8_t *id, int max_len)
+int hal_bsp_hw_id(uint8_t *id, int max_len)
 {
     memcpy(id, (void *)"ABCDEFG", 8);
 

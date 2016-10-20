@@ -77,7 +77,7 @@ static nrf_drv_saadc_config_t os_bsp_adc0_config = {
 #endif
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
     int rc;
 

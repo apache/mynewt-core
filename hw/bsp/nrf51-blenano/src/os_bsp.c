@@ -49,7 +49,7 @@ static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
 #endif
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
     int rc;
 

@@ -22,7 +22,7 @@
 #include "mcu/nrf51_hal.h"
 
 const struct hal_flash *
-bsp_flash_dev(uint8_t id)
+hal_bsp_flash_dev(uint8_t id)
 {
     /*
      * Internal flash mapped to id 0.

@@ -39,8 +39,8 @@ TEST_CASE(flash_map_test_case_1)
             continue;
         }
 
-        hf = bsp_flash_dev(fa->fa_device_id);
-        TEST_ASSERT_FATAL(hf != NULL, "bsp_flash_dev");
+        hf = hal_bsp_flash_dev(fa->fa_device_id);
+        TEST_ASSERT_FATAL(hf != NULL, "hal_bsp_flash_dev");
 
         rc = flash_area_to_sectors(i, &my_sec_cnt, my_secs);
         TEST_ASSERT_FATAL(rc == 0, "flash_area_to_sectors failed");
