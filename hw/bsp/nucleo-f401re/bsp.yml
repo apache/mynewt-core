@@ -20,7 +20,7 @@
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript: "nucleo-f401re.ld"
-bsp.linkerscript.bootloader.OVERWRITE: "boot-nucleo-f401re.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE: "boot-nucleo-f401re.ld"
 bsp.downloadscript: "nucleo-f401re_download.sh"
 bsp.debugscript: "nucleo-f401re_debug.sh"
 
@@ -48,7 +48,7 @@ bsp.flash_map:
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x00004000
+            offset: 0x08004000
             size: 16kB
         FLASH_AREA_NFFS:
             user_id: 1
