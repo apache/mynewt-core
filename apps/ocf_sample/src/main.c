@@ -302,6 +302,7 @@ main(int argc, char **argv)
     assert(rc == 0);
 
     /* Initialize the BLE host. */
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
     ble_hs_cfg.parent_evq = ev;
 #endif
 

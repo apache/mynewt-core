@@ -1061,6 +1061,8 @@ main(void)
     g_bletest_cur_peer_addr[5] = 0x08;
 #endif
 
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+
     /* Set the NimBLE host's parent event queue. */
     ble_hs_cfg.parent_evq = &g_bletest_evq;
 

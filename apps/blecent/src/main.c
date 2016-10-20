@@ -518,6 +518,7 @@ main(void)
                  blecent_stack, BLECENT_STACK_SIZE);
 
     /* Configure the host. */
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
     ble_hs_cfg.parent_evq = &blecent_evq;
     ble_hs_cfg.reset_cb = blecent_on_reset;
     ble_hs_cfg.sync_cb = blecent_on_sync;

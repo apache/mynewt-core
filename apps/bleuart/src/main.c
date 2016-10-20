@@ -244,6 +244,7 @@ main(void)
                  bleuart_stack, bleuart_STACK_SIZE);
 
     /* Initialize the BLE host. */
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
     ble_hs_cfg.parent_evq = &bleuart_evq;
     ble_hs_cfg.sync_cb = bleuart_on_sync;
     ble_hs_cfg.store_read_cb = ble_store_ram_read;
