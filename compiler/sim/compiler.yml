@@ -19,7 +19,7 @@
 
 # Default.
 compiler.path.cc: "gcc"
-compiler.path.cc: "g++"
+compiler.path.cpp: "g++"
 compiler.path.as: "gcc -x assembler-with-cpp"
 compiler.path.archive: "ar"
 compiler.path.objdump: "objdump"
