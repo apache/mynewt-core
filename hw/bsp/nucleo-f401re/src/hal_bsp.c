@@ -124,25 +124,6 @@ bsp_init(void)
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(ADC_1)
-    rc = os_dev_create((struct os_dev *) &my_dev_adc1, "adc1",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            stm32f4_adc_dev_init, &adc1_config);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(ADC_2)
-    rc = os_dev_create((struct os_dev *) &my_dev_adc2, "adc2",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            stm32f4_adc_dev_init, &adc2_config);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(ADC_3)
-    rc = os_dev_create((struct os_dev *) &my_dev_adc3, "adc3",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            stm32f4_adc_dev_init, &adc3_config);
-    assert(rc == 0);
-#endif
-
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, &i2c_cfg0);
     assert(rc == 0);
