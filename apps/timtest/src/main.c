@@ -26,8 +26,6 @@
 #include <os/os_dev.h>
 #include <assert.h>
 #include <string.h>
-#include "app_util_platform.h"
-#include "app_error.h"
 
 /* Init all tasks */
 volatile int tasks_initialized;
@@ -49,7 +47,7 @@ struct os_task task2;
 os_stack_t stack2[TASK2_STACK_SIZE];
 
 #define TASK2_TIMER_NUM     (2)
-#define TASK2_TIMER_FREQ    (62500)
+#define TASK2_TIMER_FREQ    (31250)
 
 /* For LED toggling */
 int g_led1_pin;
@@ -116,6 +114,7 @@ task1_handler(void *arg)
 void
 task2_handler(void *arg)
 {
+    int cntr;
     int32_t delta;
     uint32_t tval1;
     uint32_t tval2;
@@ -123,6 +122,7 @@ task2_handler(void *arg)
     g_led2_pin = LED_2;
     hal_gpio_init_out(g_led2_pin, 1);
 
+    cntr = 8;
     while (1) {
         /* Read timer, block for 500 msecs, make sure timer counter counts! */
         tval1 = hal_timer_read(TASK2_TIMER_NUM);
@@ -133,6 +133,13 @@ task2_handler(void *arg)
 
         /* Toggle LED2 */
         hal_gpio_toggle(g_led2_pin);
+
+        /* We want to wait to hit watchdog so delay every now and then */
+        --cntr;
+        if (cntr == 0) {
+            os_time_delay(OS_TICKS_PER_SEC);
+            cntr = 8;
+        }
     }
 }
 
