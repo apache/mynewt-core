@@ -20,6 +20,7 @@
 #define H_BSP_H
 
 #include <stdint.h>
+#include <mcu/mcu.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +30,7 @@ extern uint8_t __DATA_ROM;
 #define RAM_SIZE            0x40000
 
 /* LED pins */
-#define LED_BLINK_PIN       (54)
+#define LED_BLINK_PIN       MCU_GPIO_PORTB(22)
 
 /* UART info */
 #define CONSOLE_UART        "uart0"

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,39 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef H_BSP_H
-#define H_BSP_H
 
-#include <inttypes.h>
-#include <mcu/mcu.h>
+#ifndef __MCU_MCU_H_
+#define __MCU_MCU_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Define special stackos sections */
-#define sec_data_core   __attribute__((section(".data.core")))
-#define sec_bss_core    __attribute__((section(".bss.core")))
-#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
-
-/* More convenient section placement macros. */
-#define bssnz_t         sec_bss_nz_core
-
-extern uint8_t _ram_start;
-
-#define RAM_SIZE        (96 * 1024)
-
-/* LED pins */
-#define LED_BLINK_PIN   MCU_GPIO_PORTA(5)
-
-/* UART */
-#define UART_CNT 1
-#define CONSOLE_UART "uart0"
-
-#define NFFS_AREA_MAX    (8)
+/*
+ * Defines for naming GPIOs.
+ */
+#define MCU_GPIO_PORTA(pin)	((0 * 16) + (pin))
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* H_BSP_H */
+#endif /* __MCU_MCU_H_ */
