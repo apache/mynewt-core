@@ -940,7 +940,7 @@ boot_go(struct boot_rsp *rsp)
     int slot;
     int rc;
 
-    /* The array of slot sectars are defined here so that they don't get
+    /* The array of slot sectors are defined here so that they don't get
      * allocated for non-boot-loader apps.  This is necessary because the gcc
      * option "-fdata-sections" doesn't seem to have any effect for some
      * reason.
@@ -1051,7 +1051,8 @@ split_go(int loader_slot, int split_slot, void **entry)
     /* Determine the sector layout of the image slots and scratch area. */
     rc = boot_read_sectors();
     if (rc != 0) {
-        return rc;
+        rc = SPLIT_GO_ERR;
+        goto done;
     }
 
     rc = boot_read_image_headers();
