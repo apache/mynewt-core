@@ -19,10 +19,10 @@
 #include <assert.h>
 #include "sysinit/sysinit.h"
 #include <os/os.h>
+#include <os/os_cputime.h>
 #include <sysinit/sysinit.h>
 #include <bsp/bsp.h>
 #include <log/log.h>
-#include <hal/hal_cputime.h>
 #include <oic/oc_api.h>
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 #include <console/console.h>
@@ -279,7 +279,7 @@ main(int argc, char **argv)
     sysinit();
 
     /* Set cputime to count at 1 usec increments */
-    rc = cputime_init(1000000);
+    rc = os_cputime_init(1000000);
     assert(rc == 0);
 
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
