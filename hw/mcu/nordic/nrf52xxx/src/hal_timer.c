@@ -438,8 +438,6 @@ hal_timer_init(int timer_num, uint32_t freq_hz)
 
     __HAL_ENABLE_INTERRUPTS(ctx);
 
-    hwtimer->PRESCALER = prescaler;
-
     return 0;
 
 err:

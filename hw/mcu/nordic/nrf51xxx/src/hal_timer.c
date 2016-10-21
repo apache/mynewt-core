@@ -165,7 +165,7 @@ nrf_timer_set_ocmp(struct nrf51_hal_timer *bsptimer, uint32_t expiry)
             hwtimer->INTENSET = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
 
             /* Force interrupt to occur as we may have missed it */
-            if (nrf_read_timer_cntr(hwtimer) > expiry16) {
+            if (nrf_read_timer_cntr(hwtimer) >= expiry16) {
                 goto set_ocmp_late;
             }
         } else {
@@ -493,8 +493,6 @@ hal_timer_init(int timer_num, uint32_t freq_hz)
     NVIC_EnableIRQ(irq_num);
 
     __HAL_ENABLE_INTERRUPTS(ctx);
-
-    hwtimer->PRESCALER = prescaler;
 
     return 0;
 
