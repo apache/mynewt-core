@@ -43,7 +43,7 @@
 static struct {
     struct {
         struct image_header hdr;
-        struct flash_area sectors[BOOT_MAX_IMG_SECTORS];
+        struct flash_area *sectors;
     } imgs[BOOT_NUM_SLOTS];
 
     int num_img_sectors;
@@ -940,6 +940,16 @@ boot_go(struct boot_rsp *rsp)
     int slot;
     int rc;
 
+    /* The array of slot sectars are defined here so that they don't get
+     * allocated for non-boot-loader apps.  This is necessary because the gcc
+     * option "-fdata-sections" doesn't seem to have any effect for some
+     * reason.
+     */
+    static struct flash_area slot0_sectors[BOOT_MAX_IMG_SECTORS];
+    static struct flash_area slot1_sectors[BOOT_MAX_IMG_SECTORS];
+    boot_data.imgs[0].sectors = slot0_sectors;
+    boot_data.imgs[1].sectors = slot1_sectors;
+
     /* Determine the sector layout of the image slots and scratch area. */
     rc = boot_read_sectors();
     if (rc != 0) {
@@ -1021,6 +1031,7 @@ split_go(int loader_slot, int split_slot, void **entry)
 {
     const struct flash_area *loader_fap;
     const struct flash_area *app_fap;
+    struct flash_area *sectors;
     uint32_t entry_val;
     int loader_flash_id;
     int app_flash_id;
@@ -1029,9 +1040,18 @@ split_go(int loader_slot, int split_slot, void **entry)
     app_fap = NULL;
     loader_fap = NULL;
 
+    sectors = malloc(BOOT_MAX_IMG_SECTORS * 2 * sizeof *sectors);
+    if (sectors == NULL) {
+        rc = SPLIT_GO_ERR;
+        goto done;
+    }
+    boot_data.imgs[0].sectors = sectors + 0;
+    boot_data.imgs[1].sectors = sectors + BOOT_MAX_IMG_SECTORS;
+
+    /* Determine the sector layout of the image slots and scratch area. */
     rc = boot_read_sectors();
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
     rc = boot_read_image_headers();
@@ -1071,9 +1091,8 @@ split_go(int loader_slot, int split_slot, void **entry)
     *entry = (void*) entry_val;
     rc = SPLIT_GO_OK;
 
-    rc = 0;
-
 done:
+    free(sectors);
     flash_area_close(app_fap);
     flash_area_close(loader_fap);
     return rc;
