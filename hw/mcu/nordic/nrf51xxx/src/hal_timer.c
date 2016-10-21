@@ -644,13 +644,9 @@ hal_timer_start(struct hal_timer *timer, uint32_t ticks)
     struct nrf51_hal_timer *bsptimer;
 
     /* Set the tick value at which the timer should expire */
-    if (ticks) {
-        bsptimer = (struct nrf51_hal_timer *)timer->bsp_timer;
-        tick = hal_timer_read_bsptimer(bsptimer) + ticks;
-        rc = hal_timer_start_at(timer, tick);
-    } else {
-        rc = EINVAL;
-    }
+    bsptimer = (struct nrf51_hal_timer *)timer->bsp_timer;
+    tick = hal_timer_read_bsptimer(bsptimer) + ticks;
+    rc = hal_timer_start_at(timer, tick);
     return rc;
 }
 
