@@ -60,8 +60,6 @@ const struct hal_bsp_mem_dump *hal_bsp_core_dump(int *area_cnt);
 #define HAL_BSP_MAX_ID_LEN  32
 int hal_bsp_hw_id(uint8_t *id, int max_len);
 
-uint16_t bsp_get_refmv(void *cfgdata);
-
 #define HAL_BSP_POWER_ON (1)
 #define HAL_BSP_POWER_WFI (2)
 #define HAL_BSP_POWER_SLEEP (3)

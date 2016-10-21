@@ -51,6 +51,7 @@ echo "target remote localhost:3333" > $GDB_CMD_FILE
 # Whether target should be reset or not
 if [ ! -z "$RESET" ]; then
     echo "mon reset" >> $GDB_CMD_FILE
+    echo "si" >> $GDB_CMD_FILE
 fi
 if [ $SPLIT_ELF_PRESENT -eq 1 ]; then
     # TODO -- this magic number 0x42000 is the location of the second image slot.

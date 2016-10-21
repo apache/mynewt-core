@@ -29,6 +29,12 @@
 extern "C" {
 #endif
 
+struct nrf51_adc_dev_cfg {
+    uint16_t nadc_refmv0;	/* reference mV in AREF0 */
+    uint16_t nadc_refmv1;	/* reference mV in AREF1 */
+    uint16_t nadc_refmv_vdd;	/* reference mV in VDD */
+};
+
 int nrf51_adc_dev_init(struct os_dev *, void *);
 
 #ifdef __cplusplus

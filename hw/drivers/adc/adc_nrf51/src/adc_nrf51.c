@@ -28,6 +28,8 @@
 #include <nrf_drv_adc.h>
 #include <app_error.h>
 
+#include "adc_nrf51/adc_nrf51.h"
+
 /**
  * Weak symbol, this is defined in Nordic drivers but not exported.
  * Needed for NVIC_SetVector().
@@ -42,13 +44,13 @@ struct nrf51_adc_stats {
 };
 static struct nrf51_adc_stats nrf51_adc_stats;
 
-struct adc_dev *global_adc_dev;
+static struct adc_dev *global_adc_dev;
 
-nrf_adc_config_t adc_cfg;
-nrf_drv_adc_config_t *global_adc_config;
+static nrf_drv_adc_config_t *global_adc_config;
+static struct nrf51_adc_dev_cfg *init_adc_config;
 
-struct adc_chan_config nrf51_adc_chans[NRF_ADC_CHANNEL_COUNT];
-nrf_drv_adc_channel_t *nrf_adc_chan;
+static struct adc_chan_config nrf51_adc_chans[NRF_ADC_CHANNEL_COUNT];
+static nrf_drv_adc_channel_t *nrf_adc_chan;
 
 static void
 nrf51_adc_event_handler(const nrf_drv_adc_evt_t *event)
@@ -211,16 +213,16 @@ nrf51_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
             refmv = 1200; /* 1.2V for NRF51 */
             break;
         case NRF_ADC_CONFIG_REF_EXT_REF0:
-            refmv = bsp_get_refmv(cc_cfg);
+            refmv = init_adc_config->nadc_refmv0;
             break;
         case NRF_ADC_CONFIG_REF_EXT_REF1:
-            refmv = bsp_get_refmv(cc_cfg);
+            refmv = init_adc_config->nadc_refmv1;
             break;
         case NRF_ADC_CONFIG_REF_SUPPLY_ONE_HALF:
-            refmv = bsp_get_refmv(cc_cfg) / 2;
+            refmv = init_adc_config->nadc_refmv_vdd / 2;
             break;
         case NRF_ADC_CONFIG_REF_SUPPLY_ONE_THIRD:
-            refmv = bsp_get_refmv(cc_cfg) / 3;
+            refmv = init_adc_config->nadc_refmv_vdd / 3;
             break;
         default:
             assert(0);
@@ -381,6 +383,9 @@ nrf51_adc_dev_init(struct os_dev *odev, void *arg)
     dev->ad_chan_count = NRF_ADC_CHANNEL_COUNT;
 
     OS_DEV_SETHANDLERS(odev, nrf51_adc_open, nrf51_adc_close);
+
+    assert(init_adc_config == NULL || init_adc_config == arg);
+    init_adc_config = arg;
 
     af = &dev->ad_funcs;
 

@@ -16,48 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdint.h>
-#include <stddef.h>
-#include <assert.h>
 
-#include "bsp/bsp.h"
-#include <hal/hal_bsp.h>
-#include "mcu/nrf52_hal.h"
+#ifndef __STM32F4_ETH_H__
+#define __STM32F4_ETH_H__
 
-#include <os/os_dev.h>
+int stm32f4_eth_init(void *cfg);
+int stm32f4_eth_open(void);
+int stm32f4_eth_close(void);
 
-
-/*
- * What memory to include in coredump.
- */
-static const struct hal_bsp_mem_dump dump_cfg[] = {
-    [0] = {
-	.hbmd_start = &_ram_start,
-        .hbmd_size = RAM_SIZE
-    }
-};
-
-const struct hal_flash *
-hal_bsp_flash_dev(uint8_t id)
-{
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id != 0) {
-        return NULL;
-    }
-    return &nrf52k_flash_dev;
-}
-
-const struct hal_bsp_mem_dump *
-hal_bsp_core_dump(int *area_cnt)
-{
-    *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
-    return dump_cfg;
-}
-
-int
-hal_bsp_power_state(int state)
-{
-    return (0);
-}
+#endif /* __STM32F4_ETH_H__ */

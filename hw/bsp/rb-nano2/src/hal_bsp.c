@@ -52,12 +52,6 @@ hal_bsp_core_dump(int *area_cnt)
     return dump_cfg;
 }
 
-uint16_t
-bsp_get_refmv(void *cfgdata)
-{
-    return (2800);
-}
-
 int
 hal_bsp_power_state(int state)
 {

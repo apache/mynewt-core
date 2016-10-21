@@ -30,6 +30,8 @@
 #include <nrf_drv_saadc.h>
 #include <app_error.h>
 
+#include "adc_nrf52/adc_nrf52.h"
+
 /**
  * Weak symbol, this is defined in Nordic drivers but not exported.
  * Needed for NVIC_SetVector().
@@ -42,10 +44,11 @@ struct nrf52_saadc_stats {
 };
 static struct nrf52_saadc_stats nrf52_saadc_stats;
 
-struct adc_dev *global_adc_dev;
-nrf_drv_saadc_config_t *global_adc_config;
+static struct adc_dev *global_adc_dev;
+static nrf_drv_saadc_config_t *global_adc_config;
+static struct nrf52_adc_dev_cfg *init_adc_config;
 
-uint8_t nrf52_adc_chans[NRF_SAADC_CHANNEL_COUNT * sizeof(struct adc_chan_config)];
+static uint8_t nrf52_adc_chans[NRF_SAADC_CHANNEL_COUNT * sizeof(struct adc_chan_config)];
 
 static void
 nrf52_saadc_event_handler(const nrf_drv_saadc_evt_t *event)
@@ -211,7 +214,7 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
             refmv = 600; /* 0.6V for NRF52 */
             break;
         case NRF_SAADC_REFERENCE_VDD4:
-            refmv = bsp_get_refmv(NULL) / 4;
+            refmv = init_adc_config->nadc_refmv / 4;
             break;
         default:
             assert(0);
@@ -379,6 +382,9 @@ nrf52_adc_dev_init(struct os_dev *odev, void *arg)
     dev->ad_chan_count = NRF_SAADC_CHANNEL_COUNT;
 
     OS_DEV_SETHANDLERS(odev, nrf52_adc_open, nrf52_adc_close);
+
+    assert(init_adc_config == NULL || init_adc_config == arg);
+    init_adc_config = arg;
 
     af = &dev->ad_funcs;
 

@@ -56,42 +56,6 @@ hal_bsp_core_dump(int *area_cnt)
     return dump_cfg;
 }
 
-uint16_t
-bsp_get_refmv(void *cfgdata)
-{
-    uint16_t refmv;
-    nrf_drv_adc_channel_config_t *cc;
-    nrf_adc_config_reference_t cref;
-
-    cc = (nrf_drv_adc_channel_config_t *) cfgdata;
-    cref = cc->reference | (cc->external_reference << ADC_CONFIG_EXTREFSEL_Pos);
-    switch (cref) {
-        case NRF_ADC_CONFIG_REF_VBG:
-            refmv = 1200;
-            break;
-/* XXX: fill these out if using an external reference */
-#if 0
-        case NRF_ADC_CONFIG_REF_EXT_REF0:
-            refmv = XXX;
-            break;
-        case NRF_ADC_CONFIG_REF_EXT_REF1:
-            refmv = YYY;
-            break;
-#endif
-        case NRF_ADC_CONFIG_REF_SUPPLY_ONE_HALF:
-            refmv = 2800 / 2;
-            break;
-        case NRF_ADC_CONFIG_REF_SUPPLY_ONE_THIRD:
-            refmv = 2800 / 3;
-            break;
-        default:
-            refmv = 0;
-            break;
-    }
-
-    return refmv;
-}
-
 int
 hal_bsp_power_state(int state)
 {
