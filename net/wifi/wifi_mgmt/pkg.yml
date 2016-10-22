@@ -25,4 +25,4 @@ pkg.keywords:
 pkg.deps:
     - "kernel/os"
 pkg.deps.WIFI_MGMT_CLI:
-    - libs/shell
+    - sys/shell
