@@ -7,6 +7,22 @@ syscfg.defs:
         restrictions:
             - '!CONFIG_NFFS'
             - 'CONFIG_FCB_FLASH_AREA'
+    CONFIG_NFFS:
+        description: 'TBD'
+        value: 0
+        restrictions:
+            - '!CONFIG_FCB'
+    CONFIG_NEWTMGR:
+        description: 'TBD'
+        value: 0
+
+    CONFIG_CLI:
+        description: 'TBD'
+        value: 0
+        restrictions:
+            - 'SHELL_TASK'
+
+syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_FLASH_AREA:
         description: 'TBD'
         type: 'flash_owner'
@@ -15,11 +31,7 @@ syscfg.defs:
         description: 'TBD'
         value: 0xc09f6e5e
 
-    CONFIG_NFFS:
-        description: 'TBD'
-        value: 0
-        restrictions:
-            - '!CONFIG_FCB'
+syscfg.defs.CONFIG_NFFS:
     CONFIG_NFFS_DIR:
         description: 'TBD'
         value: '"/cfg"'
@@ -30,12 +42,3 @@ syscfg.defs:
         description: 'TBD'
         value: 32
 
-    CONFIG_NEWTMGR:
-        description: 'TBD'
-        value: 0
-
-    CONFIG_CLI:
-        description: 'TBD'
-        value: 0
-        restrictions:
-            - 'SHELL_TASK'
