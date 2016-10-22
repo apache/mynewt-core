@@ -33,9 +33,9 @@ fi
 
 IS_BOOTLOADER=0
 
-# Look for 'bootloader' in FEATURES
+# Look for 'BOOT_LOADER' in FEATURES
 for feature in $FEATURES; do
-    if [ $feature == "bootloader" ]; then
+    if [ $feature == "BOOT_LOADER" ]; then
         IS_BOOTLOADER=1
     fi
 done
@@ -50,5 +50,5 @@ fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-openocd -f board/stm32f4discovery.cfg -c "$EXTRA_JTAG_CMD" -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+openocd openocd -s $BSP_PATH -f f4discovery.cfg -c "$EXTRA_JTAG_CMD" -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,28 +16,41 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "hal/hal_bsp.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_flash_int.h"
-#include "mcu/stm32f407xx.h"
-#include "mcu/stm32f4xx_hal_gpio_ex.h"
-#include "mcu/stm32f4_bsp.h"
-#include "bsp/bsp.h"
 #include <assert.h>
+
+#include <syscfg/syscfg.h>
+
+#include <os/os_dev.h>
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
+
+#include <hal/hal_bsp.h>
+#include <hal/hal_gpio.h>
+#include <hal/hal_flash_int.h>
+
+#include <stm32f407xx.h>
+#include <stm32f4xx_hal_gpio_ex.h>
+#include <mcu/stm32f4_bsp.h>
+
+#include "bsp/bsp.h"
+
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev hal_uart0;
 
 static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART6,
         .suc_rcc_reg = &RCC->APB2ENR,
         .suc_rcc_dev = RCC_APB2ENR_USART6EN,
-        .suc_pin_tx = 38,
-        .suc_pin_rx = 39,
-        .suc_pin_rts = 34,
-        .suc_pin_cts = 35,
+        .suc_pin_tx = MCU_GPIO_PORTC(6),	/* PC6 */
+        .suc_pin_rx = MCU_GPIO_PORTC(7),	/* PC7 */
+        .suc_pin_rts = -1,
+        .suc_pin_cts = -1,
         .suc_pin_af = GPIO_AF8_USART6,
         .suc_irqn = USART6_IRQn
     }
 };
+#endif
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -49,13 +62,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = CCRAM_SIZE
     }
 };
-
-const struct stm32f4_uart_cfg *
-bsp_uart_config(int port)
-{
-    assert(port < UART_CNT);
-    return &uart_cfg[port];
-}
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -74,4 +80,17 @@ hal_bsp_core_dump(int *area_cnt)
 {
     *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
     return dump_cfg;
+}
+
+void
+hal_bsp_init(void)
+{
+    int rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &hal_uart0, CONSOLE_UART,
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    assert(rc == 0);
+#endif
+
 }
