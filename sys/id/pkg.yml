@@ -30,6 +30,7 @@ pkg.deps:
     - hw/hal
     - kernel/os
     - sys/config
+    - sys/mfg
     - encoding/base64
 
 pkg.init_function: id_init

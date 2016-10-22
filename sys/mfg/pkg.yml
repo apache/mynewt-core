@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,18 +17,17 @@
 # under the License.
 #
 
-pkg.name: sys/flash_map
-pkg.description: System utilities required by all BSPs.
+pkg.name: sys/mfg
+pkg.description: Utilities for reading manufacturing configuration.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - bsp
-    - flash map
+    - manufacturing
 
 pkg.deps:
-    - sys/defs
+    - kernel/os
     - sys/flash_map
-    - sys/mfg
 
-pkg.init_function: flash_map_init
-pkg.init_stage: 0
+# sys/flash_map must get initialized before sys/mfg.
+pkg.init_function: mfg_init
+pkg.init_stage: 1

@@ -28,6 +28,7 @@
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
+#include "mfg/mfg.h"
 #include "flash_map/flash_map.h"
 
 const struct flash_area *flash_map;
@@ -166,18 +167,102 @@ flash_area_id_to_image_slot(int area_id)
     }
 }
 
+/**
+ * Reads the flash map layout from the manufacturing meta region.  This
+ * function requires that the flash map be populated with a
+ * FLASH_AREA_BOOTLOADER entry, as the meta region is stored at the end of the
+ * boot loader area.
+ *
+ * @param max_areas             The maximum number of flash areas to read.  If
+ *                                  the count of flash area TLVs in the meta
+ *                                  region is greater than this number, this
+ *                                  function fails.
+ * @param out_areas (out)       An array of flash areas.  On success, the flash
+ *                                  map stored in the meta region gets written
+ *                                  here.
+ * @param out_num_areas (out)   On success, the number of flash areas read gets
+ *                                  written here.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static int
+flash_map_read_mfg(int max_areas,
+                   struct flash_area *out_areas, int *out_num_areas)
+{
+    struct mfg_meta_flash_area meta_flash_area;
+    struct mfg_meta_tlv tlv;
+    struct flash_area *fap;
+    uint32_t off;
+    int rc;
+
+    *out_num_areas = 0;
+    off = 0;
+
+    /* Ensure manufacturing meta region has been located in flash. */
+    rc = mfg_init();
+    if (rc != 0) {
+        return rc;
+    }
+
+    while (1) {
+        if (*out_num_areas >= max_areas) {
+            return -1;
+        }
+
+        rc = mfg_next_tlv_with_type(&tlv, &off, MFG_META_TLV_TYPE_FLASH_AREA);
+        switch (rc) {
+        case 0:
+            break;
+        case MFG_EDONE:
+            return 0;
+        default:
+            return rc;
+        }
+
+        rc = mfg_read_tlv_flash_area(&tlv, off, &meta_flash_area);
+        if (rc != 0) {
+            return rc;
+        }
+
+        fap = out_areas + *out_num_areas;
+        fap->fa_id = meta_flash_area.area_id;
+        fap->fa_device_id = meta_flash_area.device_id;
+        fap->fa_off = meta_flash_area.offset;
+        fap->fa_size = meta_flash_area.size;
+
+        (*out_num_areas)++;
+    }
+}
+
 void
 flash_map_init(void)
 {
+    static struct flash_area mfg_areas[MYNEWT_VAL(FLASH_MAP_MAX_AREAS)];
+
+    int num_areas;
     int rc;
 
     rc = hal_flash_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    /* XXX: Attempt to read from meta region; for now we always use default
-     * map
+    /* Use the hardcoded default flash map.  This is done for two reasons:
+     * 1. A minimal flash map configuration is required to boot strap the
+     *    process of reading the flash map from the manufacturing meta region.
+     *    In particular, a FLASH_AREA_BOOTLOADER entry is required, as the meta
+     *    region is located at the end of the boot loader area.
+     * 2. If we fail to read the flash map from the meta region, the system
+     *    continues to use the default flash map.
      */
-
     flash_map = sysflash_map_dflt;
     flash_map_entries = sizeof sysflash_map_dflt / sizeof sysflash_map_dflt[0];
+
+    /* Attempt to read the flash map from the manufacturing meta region.  On
+     * success, use the new flash map instead of the default hardcoded one.
+     */
+    rc = flash_map_read_mfg(sizeof mfg_areas / sizeof mfg_areas[0],
+                            mfg_areas, &num_areas);
+    if (rc == 0) {
+        flash_map = mfg_areas;
+        flash_map_entries = num_areas;
+    }
 }

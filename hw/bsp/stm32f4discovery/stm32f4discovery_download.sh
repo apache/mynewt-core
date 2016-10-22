@@ -21,10 +21,10 @@
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
-#  - IMAGE_SLOT is the image slot to download to
+#  - IMAGE_SLOT is the image slot to download to (for non-mfg-image, non-boot)
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
-#
+#  - MFG_IMAGE is "1" if this is a manufacturing image
 
 if [ -z "$BIN_BASENAME" ]; then
     echo "Need binary to download"
@@ -40,7 +40,10 @@ for feature in $FEATURES; do
     fi
 done
 
-if [ $IS_BOOTLOADER -eq 1 ]; then
+if [ "$MFG_IMAGE" -eq 1 ]; then
+    FLASH_OFFSET=0x0
+    FILE_NAME=$BIN_BASENAME.bin
+elif [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x08000000
     FILE_NAME=$BIN_BASENAME.elf.bin
 else

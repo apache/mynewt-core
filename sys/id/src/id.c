@@ -26,6 +26,7 @@
 #include "os/os.h"
 #include "config/config.h"
 #include "base64/base64.h"
+#include "mfg/mfg.h"
 
 #include "id/id.h"
 
@@ -46,6 +47,9 @@ static const char *app_str = "";
 #endif
 
 static char serial[ID_SERIAL_MAX_LEN];
+
+/** Base64-encoded null-terminated manufacturing hash. */
+static char id_mfghash[BASE64_ENCODE_SIZE(MFG_HASH_SZ) + 1];
 
 struct conf_handler id_conf = {
     .ch_name = "id",
@@ -72,6 +76,8 @@ id_conf_get(int argc, char **argv, char *val, int val_len_max)
             return (char *)app_str;
         } else if (!strcmp(argv[0], "serial")) {
             return serial;
+        } else if (!strcmp(argv[0], "mfghash")) {
+            return id_mfghash;
         }
     }
     return NULL;
@@ -104,10 +110,38 @@ id_conf_export(void (*export_func)(char *name, char *val),
         export_func("id/hwid", str);
         export_func("id/bsp", (char *)bsp_str);
         export_func("id/app", (char *)app_str);
+        export_func("id/mfghash", (char *)id_mfghash);
     }
     export_func("id/serial", serial);
 
     return 0;
+}
+
+static void
+id_read_mfghash(void)
+{
+    uint8_t raw_hash[MFG_HASH_SZ];
+    struct mfg_meta_tlv tlv;
+    uint32_t off;
+    int rc;
+
+    memset(id_mfghash, 0, sizeof id_mfghash);
+
+    /* Find hash TLV in the manufacturing meta region. */
+    off = 0;
+    rc = mfg_next_tlv_with_type(&tlv, &off, MFG_META_TLV_TYPE_HASH);
+    if (rc != 0) {
+        return;
+    }
+
+    /* Read the TLV contents. */
+    rc = mfg_read_tlv_hash(&tlv, off, raw_hash);
+    if (rc != 0) {
+        return;
+    }
+
+    /* Store the SHA256 hash as a base64-encoded string. */
+    base64_encode(raw_hash, sizeof raw_hash, id_mfghash, 1);
 }
 
 void
@@ -117,4 +151,7 @@ id_init(void)
 
     rc = conf_register(&id_conf);
     SYSINIT_PANIC_ASSERT(rc == 0);
+
+    /* Attempt to read the manufacturing image hash from the meta region. */
+    id_read_mfghash();
 }

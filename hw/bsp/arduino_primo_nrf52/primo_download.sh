@@ -20,18 +20,13 @@
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
-#  - IMAGE_SLOT is the image slot to download to
+#  - IMAGE_SLOT is the image slot to download to (for non-mfg-image, non-boot)
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
-#
+#  - MFG_IMAGE is "1" if this is a manufacturing image
 
 if [ -z "$BIN_BASENAME" ]; then
     echo "Need binary to download"
-    exit 1
-fi
-
-if [ -z "$IMAGE_SLOT" ]; then
-    echo "Need image slot to download"
     exit 1
 fi
 
@@ -42,14 +37,17 @@ GDB_CMD_FILE=.gdb_cmds
 # Look for 'bootloader' in FEATURES
 for feature in $FEATURES; do
     if [ $feature == "BOOT_LOADER" ]; then
-	IS_BOOTLOADER=1
+        IS_BOOTLOADER=1
     fi
     if [ $feature = "openocd_debug" ]; then
-	USE_OPENOCD=1
+        USE_OPENOCD=1
     fi
 done
 
-if [ $IS_BOOTLOADER -eq 1 ]; then
+if [ "$MFG_IMAGE" -eq 1 ]; then
+    FLASH_OFFSET=0x0
+    FILE_NAME=$BIN_BASENAME.bin
+elif [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x0
     FILE_NAME=$BIN_BASENAME.elf.bin
 elif [ $IMAGE_SLOT -eq 0 ]; then
@@ -72,8 +70,8 @@ fi
 
 if [ $USE_OPENOCD -eq 1 ]; then
     if [ -z "$BSP_PATH" ]; then
-	echo "Need BSP path for openocd script location"
-	exit 1
+        echo "Need BSP path for openocd script location"
+        exit 1
     fi
 
     #
@@ -97,21 +95,21 @@ else
 
     error=`echo $msgs | grep error`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     error=`echo $msgs | grep -i failed`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     error=`echo $msgs | grep -i "unknown / supported"`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     error=`echo $msgs | grep -i "not found"`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 fi
