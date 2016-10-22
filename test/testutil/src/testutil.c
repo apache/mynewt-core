@@ -20,6 +20,7 @@
 #include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "hal/hal_flash.h"
+#include "hal/hal_system.h"
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
 
