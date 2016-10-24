@@ -316,10 +316,11 @@ static bool twi_send_byte(NRF_TWI_Type  * p_twi,
     return true;
 }
 
-static void twi_receive_byte(NRF_TWI_Type * p_twi,
+static bool twi_receive_byte(NRF_TWI_Type * p_twi,
                              uint8_t      * p_data,
                              uint8_t        length,
-                             uint8_t      * p_bytes_transferred)
+                             uint8_t      * p_bytes_transferred,
+                             bool           no_stop)
 {
     if (*p_bytes_transferred < length)
     {
@@ -327,16 +328,25 @@ static void twi_receive_byte(NRF_TWI_Type * p_twi,
 
         ++(*p_bytes_transferred);
 
-        if (*p_bytes_transferred == length-1)
+        if ((*p_bytes_transferred == length-1) && !no_stop)
         {
             nrf_twi_shorts_set(p_twi, NRF_TWI_SHORT_BB_STOP_MASK);
         }
         else if (*p_bytes_transferred == length)
         {
-            return;
+            goto xfer_done;
         }
 
         nrf_twi_task_trigger(p_twi, NRF_TWI_TASK_RESUME);
+
+        return true;
+    }
+
+xfer_done:
+    if (no_stop) {
+        return false;
+    } else {
+        return true;
     }
 }
 
@@ -400,7 +410,11 @@ static bool twi_transfer(NRF_TWI_Type  * p_twi,
             }
             else
             {
-                twi_receive_byte(p_twi, p_data, length, p_bytes_transferred);
+                if (!twi_receive_byte(p_twi, p_data, length,
+                                      p_bytes_transferred, no_stop))
+                {
+                    return false;
+                }
             }
         }
     }
@@ -463,6 +477,7 @@ static ret_code_t twi_rx_start_transfer(twi_control_block_t * p_cb,
                                         uint8_t const *       p_data,
                                         uint8_t               length)
 {
+    bool no_stop;
     ret_code_t ret_code = NRF_SUCCESS;
 
     nrf_twi_event_clear(p_twi, NRF_TWI_EVENT_STOPPED);
@@ -473,7 +488,15 @@ static ret_code_t twi_rx_start_transfer(twi_control_block_t * p_cb,
     p_cb->bytes_transferred = 0;
     p_cb->error             = false;
 
-    if (length == 1)
+    if (p_cb->flags & NRF_DRV_TWI_FLAG_RX_NO_STOP)
+    {
+        no_stop = true;
+    } else
+    {
+        no_stop = false;
+    }
+
+    if ((length == 1) && !no_stop)
     {
         nrf_twi_shorts_set(p_twi, NRF_TWI_SHORT_BB_STOP_MASK);
     }
@@ -495,7 +518,8 @@ static ret_code_t twi_rx_start_transfer(twi_control_block_t * p_cb,
     }
     else
     {
-        while (twi_transfer(p_twi, &p_cb->error, &p_cb->bytes_transferred, (uint8_t*)p_data, length, false))
+        while (twi_transfer(p_twi, &p_cb->error, &p_cb->bytes_transferred,
+                            (uint8_t *)p_data, length, no_stop))
         {}
 
         if (p_cb->error)
@@ -756,6 +780,24 @@ ret_code_t nrf_drv_twi_rx(nrf_drv_twi_t const * p_instance,
     nrf_drv_twi_xfer_desc_t xfer = NRF_DRV_TWI_XFER_DESC_RX(address, p_data, length);
     return nrf_drv_twi_xfer(p_instance, &xfer, 0);
 }
+
+ret_code_t nrf_drv_twi_rx_ext(nrf_drv_twi_t const * p_instance,
+                              uint8_t               address,
+                              uint8_t *             p_data,
+                              uint8_t               length,
+                              bool                  no_stop)
+{
+    uint32_t flags;
+    nrf_drv_twi_xfer_desc_t xfer = NRF_DRV_TWI_XFER_DESC_RX(address, p_data, length);
+
+    if (no_stop) {
+        flags = NRF_DRV_TWI_FLAG_RX_NO_STOP;
+    } else {
+        flags = 0;
+    }
+    return nrf_drv_twi_xfer(p_instance, &xfer, flags);
+}
+
 
 uint32_t nrf_drv_twi_data_count_get(nrf_drv_twi_t const * const p_instance)
 {

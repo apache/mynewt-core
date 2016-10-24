@@ -19,7 +19,7 @@
  * @defgroup nrf_twi_master TWI master HAL and driver
  * @ingroup nrf_twi
  * @brief TWI master APIs.
- * @details The TWI and TWIM HALs provide basic APIs for accessing the registers of the TWI and TWIM peripherals, respectively. 
+ * @details The TWI and TWIM HALs provide basic APIs for accessing the registers of the TWI and TWIM peripherals, respectively.
  *
  * The TWI master driver provides APIs on a higher level.
  *
@@ -122,6 +122,7 @@ typedef struct
 #define NRF_DRV_TWI_FLAG_HOLD_XFER           (1UL << 3) /**< Set up the transfer but do not start it. */
 #define NRF_DRV_TWI_FLAG_REPEATED_XFER       (1UL << 4) /**< Flag indicating that the transfer will be executed multiple times. */
 #define NRF_DRV_TWI_FLAG_TX_NO_STOP          (1UL << 5) /**< Flag indicating that the TX transfer will not end with a stop condition. */
+#define NRF_DRV_TWI_FLAG_RX_NO_STOP          (1UL << 6) /**< Flag indicating that the RX transfer will not end with a stop condition. */
 
 /**
  * @brief TWI master driver event types.
@@ -224,8 +225,8 @@ typedef void (* nrf_drv_twi_evt_handler_t)(nrf_drv_twi_evt_t const * p_event,
  * @retval NRF_SUCCESS             If initialization was successful.
  * @retval NRF_ERROR_INVALID_STATE If the driver is in invalid state.
  * @retval NRF_ERROR_BUSY          If some other peripheral with the same
- *                                 instance ID is already in use. This is 
- *                                 possible only if PERIPHERAL_RESOURCE_SHARING_ENABLED 
+ *                                 instance ID is already in use. This is
+ *                                 possible only if PERIPHERAL_RESOURCE_SHARING_ENABLED
  *                                 is set to a value other than zero.
  */
 ret_code_t nrf_drv_twi_init(nrf_drv_twi_t const *        p_instance,
@@ -282,7 +283,7 @@ ret_code_t nrf_drv_twi_tx(nrf_drv_twi_t const * p_instance,
  * @brief Function for reading data from a TWI slave.
  *
  * The transmission will be stopped when an error occurs. If a transfer is ongoing,
- * the function returns the error code @ref NRF_ERROR_BUSY. 
+ * the function returns the error code @ref NRF_ERROR_BUSY.
  *
  * @param[in] p_instance TWI instance.
  * @param[in] address    Address of a specific slave device (only 7 LSB).
@@ -297,6 +298,28 @@ ret_code_t nrf_drv_twi_rx(nrf_drv_twi_t const * p_instance,
                           uint8_t               address,
                           uint8_t *             p_data,
                           uint8_t               length);
+
+/**
+ * @brief Function for reading data from a TWI slave.
+ *
+ * The transmission will be stopped when an error occurs. If a transfer is ongoing,
+ * the function returns the error code @ref NRF_ERROR_BUSY.
+ *
+ * @param[in] p_instance TWI instance.
+ * @param[in] address    Address of a specific slave device (only 7 LSB).
+ * @param[in] p_data     Pointer to a receive buffer.
+ * @param[in] length     Number of bytes to be received.
+ * @param[in] no_stop    If set, do not generate a stop after transfer
+ *
+ * @retval NRF_SUCCESS             If the procedure was successful.
+ * @retval NRF_ERROR_BUSY          If the driver is not ready for a new transfer.
+ * @retval NRF_ERROR_INTERNAL      If an error was detected by hardware.
+ */
+ret_code_t nrf_drv_twi_rx_ext(nrf_drv_twi_t const * p_instance,
+                              uint8_t               address,
+                              uint8_t *             p_data,
+                              uint8_t               length,
+                              bool                  no_stop);
 
 /**
  * @brief Function for preparing a TWI transfer.

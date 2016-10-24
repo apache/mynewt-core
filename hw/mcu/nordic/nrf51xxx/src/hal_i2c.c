@@ -111,15 +111,23 @@ err:
 
 int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-  uint32_t timo, uint8_t last_op)
+                     uint32_t timo, uint8_t last_op)
 {
     struct nrf51_hal_i2c *i2c;
+    bool no_stop;
     int rc;
 
     NRF51_HAL_I2C_RESOLVE(i2c_num, i2c);
 
+    /* If last_op is zero it means we dont put a stop at end. */
+    if (last_op == 0) {
+        no_stop = true;
+    } else {
+        no_stop = false;
+    }
+
     rc = nrf_drv_twi_tx(&i2c->nhi_nrf_master, pdata->address, pdata->buffer,
-            pdata->len, true);
+            pdata->len, no_stop);
     if (rc != 0) {
         goto err;
     }
@@ -131,15 +139,22 @@ err:
 
 int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-  uint32_t timo, uint8_t last_op)
+                    uint32_t timo, uint8_t last_op)
 {
     struct nrf51_hal_i2c *i2c;
+    bool no_stop;
     int rc;
 
     NRF51_HAL_I2C_RESOLVE(i2c_num, i2c);
 
-    rc = nrf_drv_twi_rx(&i2c->nhi_nrf_master, pdata->address, pdata->buffer,
-            pdata->len);
+    if (last_op) {
+        no_stop = false;
+    } else {
+        no_stop = true;
+    }
+
+    rc = nrf_drv_twi_rx_ext(&i2c->nhi_nrf_master, pdata->address, pdata->buffer,
+                            pdata->len, no_stop);
     if (rc != 0) {
         goto err;
     }
