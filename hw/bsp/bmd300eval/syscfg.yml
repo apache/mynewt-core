@@ -78,7 +78,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'NRF52 Timer 0'
-        value:  0
+        value:  1
     TIMER_0_INTERRUPT_PRIORITY:
         description: 'TBD'
         value: '((1 << __NVIC_PRIO_BITS) - 1)'
