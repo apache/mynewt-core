@@ -28,10 +28,10 @@ pkg.deps:
     - kernel/os
     - sys/log
     - net/oic
+    - sys/console/full
 
 pkg.deps.OC_TRANSPORT_SERIAL:
     - sys/shell
-    - sys/console/full
 
 pkg.deps.OC_TRANSPORT_GATT:
     - net/nimble/controller
