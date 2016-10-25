@@ -41,12 +41,10 @@ oc_message_t *oc_attempt_rx_ip(void);
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
 int oc_connectivity_init_gatt(void);
-void oc_connectivity_start_gatt(void);
 void oc_connectivity_shutdown_gatt(void);
 void oc_send_buffer_gatt(oc_message_t *message);
 void oc_send_buffer_gatt_mcast(oc_message_t *message);
 oc_message_t *oc_attempt_rx_gatt(void);
-
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)

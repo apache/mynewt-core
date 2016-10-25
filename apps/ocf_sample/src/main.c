@@ -35,6 +35,7 @@
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+#include "host/ble_hs.h"
 #include "ocf_sample.h"
 #endif
 
@@ -237,6 +238,13 @@ oc_signal_main_loop(void)
 void
 ocf_task_handler(void *arg)
 {
+#if MYNEWT_VAL(OC_TRANSPORT_GATT)
+    int rc;
+
+    rc = ble_hs_start();
+    assert(rc == 0);
+#endif
+
     os_sem_init(&ocf_main_loop_sem, 1);
 
     while (1) {

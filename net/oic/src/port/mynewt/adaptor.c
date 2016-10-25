@@ -111,12 +111,8 @@ void oc_send_multicast_message(oc_message_t *message)
 
 /* send all the entries to the OCF stack through the same task */
 void
-oc_task_handler(void *arg) {
-
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    oc_connectivity_start_gatt();
-#endif
-
+oc_task_handler(void *arg)
+{
     while (1) {
         struct os_callout_func *cf;
         oc_message_t *pmsg;
