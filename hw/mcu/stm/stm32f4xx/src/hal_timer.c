@@ -388,7 +388,7 @@ hal_timer_get_resolution(int num)
     if (num >= STM32F4_HAL_TIMER_MAX || !(tmr = stm32f4_tmr_devs[num])) {
         return -1;
     }
-    return SystemCoreClock / tmr->sht_regs->PSC;
+    return (1000000000 / (SystemCoreClock / tmr->sht_regs->PSC));
 }
 
 static uint32_t
