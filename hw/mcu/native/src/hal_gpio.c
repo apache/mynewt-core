@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -32,14 +32,14 @@ static struct {
 } hal_gpio[HAL_GPIO_NUM_PINS];
 
 int
-hal_gpio_init_in(int pin, gpio_pull_t pull)
+hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     if (pin >= HAL_GPIO_NUM_PINS) {
         return -1;
     }
     hal_gpio[pin].dir = INPUT;
     switch (pull) {
-    case GPIO_PULL_UP:
+    case HAL_GPIO_PULL_UP:
         hal_gpio[pin].val = 1;
         break;
     default:

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -31,6 +31,11 @@
 #include <nffs/nffs.h>
 #include <hal/hal_flash.h>
 #include <flash_map/flash_map.h>
+
+#include <sysinit/sysinit.h>
+#include <syscfg/syscfg.h>
+#include <sysflash/sysflash.h>
+
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
@@ -634,7 +639,7 @@ main(int argc, char **argv)
     int cnt;
     struct stat st;
     int standalone = 0;
-            
+
     progname = argv[0];
     force_version = -1;
 
@@ -691,7 +696,8 @@ main(int argc, char **argv)
         return 0;
     }
 
-    rc = nffs_misc_desc_from_flash_area(FLASH_AREA_NFFS, &cnt, area_descs);
+    rc = nffs_misc_desc_from_flash_area(MYNEWT_VAL(NFFS_FLASH_AREA), &cnt,
+      area_descs);
     assert(rc == 0);
 
     if (copy_in_dir) {

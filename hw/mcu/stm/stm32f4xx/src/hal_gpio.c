@@ -116,7 +116,7 @@ static GPIO_TypeDef * const portmap[HAL_GPIO_NUM_PORTS] =
 struct gpio_irq_obj
 {
     void *arg;
-    gpio_irq_handler_t isr;
+    hal_gpio_irq_handler_t isr;
 };
 
 static struct gpio_irq_obj gpio_irq_handlers[16];
@@ -436,7 +436,7 @@ hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg)
  * @return int  0: no error; -1 otherwise.
  */
 int
-hal_gpio_init_in(int pin, gpio_pull_t pull)
+hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     int rc;
     GPIO_InitTypeDef init_cfg;
@@ -483,7 +483,7 @@ int hal_gpio_init_out(int pin, int val)
  * Configure the specified pin for AF.
  */
 int
-hal_gpio_init_af(int pin, uint8_t af_type, enum gpio_pull pull, uint8_t od)
+hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
 {
     GPIO_InitTypeDef gpio;
 
@@ -599,8 +599,8 @@ int hal_gpio_toggle(int pin)
  * @return int
  */
 int
-hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-                  gpio_irq_trig_t trig, gpio_pull_t pull)
+hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
+                  hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull)
 {
     int rc;
     int irqn;
@@ -612,22 +612,22 @@ hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
     /* Configure the gpio for an external interrupt */
     rc = 0;
     switch (trig) {
-    case GPIO_TRIG_NONE:
+    case HAL_GPIO_TRIG_NONE:
         rc = -1;
         break;
-    case GPIO_TRIG_RISING:
+    case HAL_GPIO_TRIG_RISING:
         mode = GPIO_MODE_IT_RISING;
         break;
-    case GPIO_TRIG_FALLING:
+    case HAL_GPIO_TRIG_FALLING:
         mode = GPIO_MODE_IT_FALLING;
         break;
-    case GPIO_TRIG_BOTH:
+    case HAL_GPIO_TRIG_BOTH:
         mode = GPIO_MODE_IT_RISING_FALLING;
         break;
-    case GPIO_TRIG_LOW:
+    case HAL_GPIO_TRIG_LOW:
         rc = -1;
         break;
-    case GPIO_TRIG_HIGH:
+    case HAL_GPIO_TRIG_HIGH:
         rc = -1;
         break;
     default:

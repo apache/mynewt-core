@@ -55,7 +55,7 @@
 struct gpio_irq_obj
 {
     void *arg;
-    gpio_irq_handler_t isr;
+    hal_gpio_irq_handler_t isr;
 };
 
 #if 0
@@ -316,18 +316,18 @@ hal_gpio_set_nvic(IRQn_Type irqn)
  * @return int  0: no error; -1 otherwise.
  */
 int
-hal_gpio_init_in(int pin, gpio_pull_t pull)
+hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     uint32_t conf;
 
     switch (pull) {
-    case GPIO_PULL_UP:
+    case HAL_GPIO_PULL_UP:
         conf = GPIO_PIN_CNF_PULL_Pullup << GPIO_PIN_CNF_PULL_Pos;
         break;
-    case GPIO_PULL_DOWN:
+    case HAL_GPIO_PULL_DOWN:
         conf = GPIO_PIN_CNF_PULL_Pulldown << GPIO_PIN_CNF_PULL_Pos;
         break;
-    case GPIO_PULL_NONE:
+    case HAL_GPIO_PULL_NONE:
     default:
         conf = 0;
         break;
@@ -447,8 +447,8 @@ int hal_gpio_toggle(int pin)
  * @return int
  */
 int
-hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-                  gpio_irq_trig_t trig, gpio_pull_t pull)
+hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
+                  hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull)
 {
 #if 0
     int rc;

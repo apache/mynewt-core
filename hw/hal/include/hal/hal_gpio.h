@@ -28,38 +28,38 @@ extern "C" {
  * The "mode" of the gpio. The gpio is either an input, output, or it is
  * "not connected" (the pin specified is not functioning as a gpio)
  */
-enum gpio_mode_e {
-    GPIO_MODE_NC = -1,
-    GPIO_MODE_IN = 0,
-    GPIO_MODE_OUT = 1
+enum hal_gpio_mode_e {
+    HAL_GPIO_MODE_NC = -1,
+    HAL_GPIO_MODE_IN = 0,
+    HAL_GPIO_MODE_OUT = 1
 };
-typedef enum gpio_mode_e gpio_mode_t;
+typedef enum hal_gpio_mode_e hal_gpio_mode_t;
 
 /*
  * The "pull" of the gpio. This is either an input or an output.
  */
-enum gpio_pull {
-    GPIO_PULL_NONE = 0,     /* pull-up/down not enabled */
-    GPIO_PULL_UP = 1,       /* pull-up enabled */
-    GPIO_PULL_DOWN = 2      /* pull-down enabled */
+enum hal_gpio_pull {
+    HAL_GPIO_PULL_NONE = 0,     /* pull-up/down not enabled */
+    HAL_GPIO_PULL_UP = 1,       /* pull-up enabled */
+    HAL_GPIO_PULL_DOWN = 2      /* pull-down enabled */
 };
-typedef enum gpio_pull gpio_pull_t;
+typedef enum hal_gpio_pull hal_gpio_pull_t;
 
 /*
  * IRQ trigger type.
  */
-enum gpio_irq_trigger {
-    GPIO_TRIG_NONE = 0,
-    GPIO_TRIG_RISING = 1,   /* IRQ occurs on rising edge */
-    GPIO_TRIG_FALLING = 2,  /* IRQ occurs on falling edge */
-    GPIO_TRIG_BOTH = 3,     /* IRQ occurs on either edge */
-    GPIO_TRIG_LOW = 4,      /* IRQ occurs when line is low */
-    GPIO_TRIG_HIGH = 5      /* IRQ occurs when line is high */
+enum hal_gpio_irq_trigger {
+    HAL_GPIO_TRIG_NONE = 0,
+    HAL_GPIO_TRIG_RISING = 1,   /* IRQ occurs on rising edge */
+    HAL_GPIO_TRIG_FALLING = 2,  /* IRQ occurs on falling edge */
+    HAL_GPIO_TRIG_BOTH = 3,     /* IRQ occurs on either edge */
+    HAL_GPIO_TRIG_LOW = 4,      /* IRQ occurs when line is low */
+    HAL_GPIO_TRIG_HIGH = 5      /* IRQ occurs when line is high */
 };
-typedef enum gpio_irq_trigger gpio_irq_trig_t;
+typedef enum hal_gpio_irq_trigger hal_gpio_irq_trig_t;
 
 /* Function proto for GPIO irq handler functions */
-typedef void (*gpio_irq_handler_t)(void *arg);
+typedef void (*hal_gpio_irq_handler_t)(void *arg);
 
 /**
  * gpio init in
@@ -71,7 +71,7 @@ typedef void (*gpio_irq_handler_t)(void *arg);
  *
  * @return int  0: no error; -1 otherwise.
  */
-int hal_gpio_init_in(int pin, gpio_pull_t pull);
+int hal_gpio_init_in(int pin, hal_gpio_pull_t pull);
 
 /**
  * gpio init out
@@ -137,8 +137,8 @@ int hal_gpio_read(int pin);
  */
 int hal_gpio_toggle(int pin);
 
-int hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-                      gpio_irq_trig_t trig, gpio_pull_t pull);
+int hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
+                      hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull);
 void hal_gpio_irq_release(int pin);
 void hal_gpio_irq_enable(int pin);
 void hal_gpio_irq_disable(int pin);

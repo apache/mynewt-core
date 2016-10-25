@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,39 +17,19 @@
  * under the License.
  */
 
-#ifndef __MCU_STM32F4_BSP_H_
-#define __MCU_STM32F4_BSP_H_
+#ifndef H_OCF_BLE_
+#define H_OCF_BLE_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * BSP specific UART settings.
- */
-struct stm32f4_uart_cfg {
-    USART_TypeDef *suc_uart;			/* UART dev registers */
-    volatile uint32_t *suc_rcc_reg;		/* RCC register to modify */
-    uint32_t suc_rcc_dev;			/* RCC device ID */
-    int8_t suc_pin_tx;				/* pins for IO */
-    int8_t suc_pin_rx;
-    int8_t suc_pin_rts;
-    int8_t suc_pin_cts;
-    uint8_t suc_pin_af;				/* AF selection for this */
-    IRQn_Type suc_irqn;				/* NVIC IRQn */
-};
-
-/*
- * Internal API for stm32f4xx mcu specific code.
- */
-int hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t
-od);
-
-struct hal_flash;
-extern struct hal_flash stm32f4_flash_dev;
+#if MYNEWT_VAL(OC_TRANSPORT_GATT)
+void ocf_ble_init(void);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __MCU_STM32F4_BSP_H_ */
+#endif

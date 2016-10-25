@@ -265,7 +265,7 @@ uart_bitbang_config(struct uart_bitbang *ub, int32_t baudrate, uint8_t databits,
     }
 
     if (hal_gpio_irq_init(ub->ub_rx.pin, uart_bitbang_isr, ub,
-        GPIO_TRIG_FALLING, GPIO_PULL_UP)) {
+        HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_UP)) {
         return -1;
     }
     hal_gpio_irq_enable(ub->ub_rx.pin);
