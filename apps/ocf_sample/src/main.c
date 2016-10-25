@@ -19,7 +19,6 @@
 #include <assert.h>
 #include "sysinit/sysinit.h"
 #include <os/os.h>
-#include <os/os_cputime.h>
 #include <sysinit/sysinit.h>
 #include <bsp/bsp.h>
 #include <log/log.h>
