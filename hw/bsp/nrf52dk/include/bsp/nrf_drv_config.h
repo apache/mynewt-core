@@ -310,8 +310,8 @@ extern "C" {
 #define TWI0_USE_EASY_DMA 0
 
 #define TWI0_CONFIG_FREQUENCY    NRF_TWI_FREQ_100K
-#define TWI0_CONFIG_SCL          0
-#define TWI0_CONFIG_SDA          1
+#define TWI0_CONFIG_SCL          27
+#define TWI0_CONFIG_SDA          26
 #define TWI0_CONFIG_IRQ_PRIORITY APP_IRQ_PRIORITY_LOW
 
 #define TWI0_INSTANCE_INDEX      0

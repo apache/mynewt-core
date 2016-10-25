@@ -25,6 +25,7 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_i2c.h"
 #include "mcu/nrf51_hal.h"
 #if MYNEWT_VAL(SPI_MASTER)
 #include "nrf_drv_spi.h"
@@ -53,6 +54,9 @@ void
 hal_bsp_init(void)
 {
     int rc;
+#if MYNEWT_VAL(I2C_0)
+    struct nrf51_hal_i2c_cfg hal_i2c_cfg;
+#endif
 
     (void)rc;
 
@@ -82,6 +86,14 @@ hal_bsp_init(void)
     spi_cfg.csn_pin = SPI_SS_PIN;
     spi_cfg.csn_pullup = NRF_GPIO_PIN_PULLUP;
     rc = hal_spi_init(1, &spi_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    hal_i2c_cfg.scl_pin = TWI0_CONFIG_SCL;
+    hal_i2c_cfg.sda_pin = TWI0_CONFIG_SDA;
+    hal_i2c_cfg.i2c_frequency = 100;        /* 100 kHz */
+    rc = hal_i2c_init(0, &hal_i2c_cfg);
     assert(rc == 0);
 #endif
 }
