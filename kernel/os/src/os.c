@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,6 +28,15 @@
 #include "hal/hal_watchdog.h"
 
 #include <assert.h>
+
+/**
+ * @defgroup OSKernel Operating System Kernel
+ * @brief This section contains documentation for the core operating system kernel
+ * of Apache Mynewt.
+ * @{
+ *   @addtogroup OSGeneral General Functions
+ *   @{
+ */
 
 struct os_task g_idle_task;
 os_stack_t g_idle_task_stack[OS_STACK_ALIGN(OS_IDLE_STACK_SIZE)];
@@ -187,3 +196,8 @@ os_pkg_init(void)
 {
     os_msys_init();
 }
+
+/**
+ *   }@ General OS functions
+ * }@ OS Kernel
+ */

@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,6 +23,12 @@
 #include <assert.h>
 #include <string.h>
 
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSCallouts Event Timers (Callouts)
+ *   @{
+ */
 struct os_callout_list g_callout_list;
 
 static void
@@ -198,3 +204,8 @@ os_callout_wakeup_ticks(os_time_t now)
 
     return (rt);
 }
+
+/**
+ *   @} Callout Timers
+ * @} OS Kernel
+ */

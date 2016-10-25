@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,6 +21,13 @@
 #include <string.h>
 
 #include "os/os.h"
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSSanity Sanity
+ *   @{
+ */
 
 SLIST_HEAD(, os_sanity_check) g_os_sanity_check_list =
     SLIST_HEAD_INITIALIZER(os_sanity_check_list);
@@ -236,3 +243,8 @@ os_sanity_init(void)
 err:
     return (rc);
 }
+
+/**
+ *   @} OSSanity
+ * @} OSKernel
+ */

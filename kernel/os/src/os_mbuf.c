@@ -39,6 +39,14 @@
 #include <string.h>
 #include <limits.h>
 
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSMbuf Chained Memory Buffers
+ *   @{
+ */
+
+
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
 
@@ -1268,3 +1276,8 @@ bad:
     os_mbuf_free_chain(om);
     return (NULL);
 }
+
+/**
+ *   @} OSMbuf
+ * @} OSKernel
+ */

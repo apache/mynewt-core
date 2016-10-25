@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,13 +21,21 @@
 #include <assert.h>
 
 /**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSMutex Mutexes
+ *   @{
+ */
+
+
+/**
  * os mutex create
- *  
- * Create a mutex and initialize it. 
- * 
+ *
+ * Create a mutex and initialize it.
+ *
  * @param mu Pointer to mutex
- * 
- * @return os_error_t 
+ *
+ * @return os_error_t
  *      OS_INVALID_PARM     Mutex passed in was NULL.
  *      OS_OK               no error.
  */
@@ -49,12 +57,12 @@ os_mutex_init(struct os_mutex *mu)
 
 /**
  * os mutex release
- *  
- * Release a mutex. 
- * 
+ *
+ * Release a mutex.
+ *
  * @param mu Pointer to the mutex to be released
- * 
- * @return os_error_t 
+ *
+ * @return os_error_t
  *      OS_INVALID_PARM Mutex passed in was NULL.
  *      OS_BAD_MUTEX    Mutex was not granted to current task (not owner).
  *      OS_OK           No error
@@ -129,21 +137,21 @@ os_mutex_release(struct os_mutex *mu)
 }
 
 /**
- * os mutex pend 
- *  
- * Pend (wait) for a mutex. 
- * 
+ * os mutex pend
+ *
+ * Pend (wait) for a mutex.
+ *
  * @param mu Pointer to mutex.
- * @param timeout Timeout, in os ticks. A timeout of 0 means do 
+ * @param timeout Timeout, in os ticks. A timeout of 0 means do
  *                not wait if not available. A timeout of
  *                0xFFFFFFFF means wait forever.
- *              
- * 
- * @return os_error_t 
+ *
+ *
+ * @return os_error_t
  *      OS_INVALID_PARM     Mutex passed in was NULL.
  *      OS_TIMEOUT          Mutex was owned by another task and timeout=0
  *      OS_OK               no error.
- */ 
+ */
 os_error_t
 os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
 {
@@ -199,7 +207,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     if (!SLIST_EMPTY(&mu->mu_head)) {
         /* Insert in priority order */
         SLIST_FOREACH(entry, &mu->mu_head, t_obj_list) {
-            if (current->t_prio < entry->t_prio) { 
+            if (current->t_prio < entry->t_prio) {
                 break;
             }
             last = entry;
@@ -226,7 +234,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
 
     /* If we are owner we did not time out. */
     if (mu->mu_owner == current) {
-        rc = OS_OK; 
+        rc = OS_OK;
     } else {
         rc = OS_TIMEOUT;
     }
@@ -234,3 +242,8 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     return rc;
 }
 
+
+/**
+ *   @} OSMutex
+ * @} OSKernel
+ */

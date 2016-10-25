@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -22,23 +22,30 @@
 #include <string.h>
 #include <assert.h>
 
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSMempool Memory Pools
+ *   @{
+ */
+
 #define OS_MEMPOOL_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
 
-STAILQ_HEAD(, os_mempool) g_os_mempool_list = 
+STAILQ_HEAD(, os_mempool) g_os_mempool_list =
     STAILQ_HEAD_INITIALIZER(g_os_mempool_list);
 
 /**
  * os mempool init
- *  
- * Initialize a memory pool. 
- * 
+ *
+ * Initialize a memory pool.
+ *
  * @param mp            Pointer to a pointer to a mempool
  * @param blocks        The number of blocks in the pool
- * @param blocks_size   The size of the block, in bytes. 
- * @param membuf        Pointer to memory to contain blocks. 
+ * @param blocks_size   The size of the block, in bytes.
+ * @param membuf        Pointer to memory to contain blocks.
  * @param name          Name of the pool.
- * 
- * @return os_error_t 
+ *
+ * @return os_error_t
  */
 os_error_t
 os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
@@ -130,12 +137,12 @@ os_memblock_from(struct os_mempool *mp, void *block_addr)
 }
 
 /**
- * os memblock get 
- *  
- * Get a memory block from a memory pool 
- * 
+ * os memblock get
+ *
+ * Get a memory block from a memory pool
+ *
  * @param mp Pointer to the memory pool
- * 
+ *
  * @return void* Pointer to block if available; NULL otherwise
  */
 void *
@@ -166,14 +173,14 @@ os_memblock_get(struct os_mempool *mp)
 }
 
 /**
- * os memblock put 
- *  
- * Puts the memory block back into the pool 
- * 
+ * os memblock put
+ *
+ * Puts the memory block back into the pool
+ *
  * @param mp Pointer to memory pool
  * @param block_addr Pointer to memory block
- * 
- * @return os_error_t 
+ *
+ * @return os_error_t
  */
 os_error_t
 os_memblock_put(struct os_mempool *mp, void *block_addr)
@@ -193,7 +200,7 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
 
     block = (struct os_memblock *)block_addr;
     OS_ENTER_CRITICAL(sr);
-    
+
     /* Chain current free list pointer to this block; make this block head */
     SLIST_NEXT(block, mb_next) = SLIST_FIRST(mp);
     SLIST_FIRST(mp) = block;
@@ -231,3 +238,8 @@ os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
     return (cur);
 }
 
+
+/**
+ *   @} OSMempool
+ * @} OSKernel
+ */

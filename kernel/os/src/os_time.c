@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,6 +21,13 @@
 
 #include "os/os.h"
 #include "os/queue.h"
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSTime Time
+ *   @{
+ */
 
 CTASSERT(sizeof(os_time_t) == 4);
 
@@ -245,3 +252,8 @@ os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks)
     *out_ticks = ticks;
     return 0;
 }
+
+/**
+ *   @} OSKernel
+ * @} OSTime
+ */

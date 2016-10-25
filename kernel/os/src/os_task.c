@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,6 +22,13 @@
 #include "os_priv.h"
 
 #include <string.h>
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSTask Tasks
+ *   @{
+ */
 
 uint8_t g_task_id;
 
@@ -214,3 +221,7 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     return (next);
 }
 
+/**
+ *   @} OSTask
+ * @} OSKernel
+ */

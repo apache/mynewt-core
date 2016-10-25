@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,6 +22,13 @@
 #include "os/os_dev.h"
 
 #include <string.h>
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSDevice Device Framework
+ *   @{
+ */
 
 static STAILQ_HEAD(, os_dev) g_os_dev_list;
 
@@ -307,3 +314,8 @@ os_dev_reset(void)
 {
     STAILQ_INIT(&g_os_dev_list);
 }
+
+/**
+ *   @} OSDevice
+ * @} OSKernel
+ */

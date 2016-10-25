@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,6 +24,13 @@
 #include "os/os_cputime.h"
 
 #if defined(MYNEWT_VAL_OS_CPUTIME_TIMER_NUM)
+
+/**
+ * @addtogroup OSKernel Operating System Kernel
+ * @{
+ *   @defgroup OSCPUTime High Resolution Timers
+ *   @{
+ */
 
 struct os_cputime_data g_os_cputime;
 
@@ -268,4 +275,10 @@ os_cputime_get32(void)
     return cpu_time;
 }
 
+/**
+ *   @} OSCPUTime
+ * @} OSKernel
+ */
+
 #endif  /* if defined(MYNEWT_VAL_OS_CPUTIME_TIMER_NUM) */
+

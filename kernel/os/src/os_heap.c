@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,6 +21,13 @@
 #include <assert.h>
 #include "os/os_mutex.h"
 #include "os/os_heap.h"
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSGeneral
+ *   @{
+ */
 
 static struct os_mutex os_malloc_mutex;
 
@@ -104,3 +111,8 @@ os_realloc(void *ptr, size_t size)
 
     return new_ptr;
 }
+
+/**
+ *   @} OSGeneral
+ * @} OS Kernel
+ */

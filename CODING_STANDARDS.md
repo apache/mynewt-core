@@ -19,7 +19,7 @@ source is here: http://www.apache.org/dev/apply-license.html
 * The Apache License clause for the top of files is as follows:
 
 ```no-highlight
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
