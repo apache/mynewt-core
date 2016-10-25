@@ -97,11 +97,13 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
      * Configure GPIO pins for I2C.
      * Enable clock routing for I2C.
      */
-    rc = hal_gpio_init_af(cfg->hic_pin_sda, cfg->hic_pin_af, GPIO_PULL_UP, 1);
+    rc = hal_gpio_init_af(cfg->hic_pin_sda, cfg->hic_pin_af, HAL_GPIO_PULL_UP,
+                          1);
     if (rc) {
         goto err;
     }
-    rc = hal_gpio_init_af(cfg->hic_pin_scl, cfg->hic_pin_af, GPIO_PULL_UP, 1);
+    rc = hal_gpio_init_af(cfg->hic_pin_scl, cfg->hic_pin_af, HAL_GPIO_PULL_UP,
+                          1);
     if (rc) {
         goto err;
     }

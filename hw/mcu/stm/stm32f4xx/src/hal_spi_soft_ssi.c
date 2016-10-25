@@ -637,8 +637,8 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     if (!spi->slave) {
         spi->handle.Instance->CR1 |= SPI_CR1_SSI;
     } else {
-        rc = hal_gpio_irq_init(cfg->ss_pin, spi_ss_isr, spi, GPIO_TRIG_BOTH,
-          GPIO_PULL_UP);
+        rc = hal_gpio_irq_init(cfg->ss_pin, spi_ss_isr, spi, HAL_GPIO_TRIG_BOTH,
+          HAL_GPIO_PULL_UP);
         spi_ss_isr(spi);
     }
     __HAL_ENABLE_INTERRUPTS(sr);

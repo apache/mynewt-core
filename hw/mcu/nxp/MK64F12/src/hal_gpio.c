@@ -36,20 +36,20 @@ static GPIO_Type *const s_gpioBases[] = GPIO_BASE_PTRS;
 static PORT_Type *const s_portBases[] = PORT_BASE_PTRS;
 static clock_ip_name_t const s_portClocks[] = PORT_CLOCKS;
 
-uint16_t hal_to_fsl_pull(gpio_pull_t pull)
+uint16_t hal_to_fsl_pull(hal_gpio_pull_t pull)
 {
     switch ((int)pull)
     {
-    case GPIO_PULL_UP:
+    case HAL_GPIO_PULL_UP:
         return kPORT_PullUp;
-    case GPIO_PULL_DOWN:
+    case HAL_GPIO_PULL_DOWN:
         return kPORT_PullDown;
     default:
         return kPORT_PullDisable;
     }
 }
 
-int hal_gpio_init_in(int pin, gpio_pull_t pull)
+int hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     gpio_pin_config_t gconfig;
     port_pin_config_t pconfig;

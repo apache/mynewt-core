@@ -45,7 +45,7 @@
 
 /* Storage for GPIO callbacks. */
 struct hal_gpio_irq {
-    gpio_irq_handler_t func;
+    hal_gpio_irq_handler_t func;
     void *arg;
 };
 
@@ -62,18 +62,18 @@ static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
  * @return int  0: no error; -1 otherwise.
  */
 int
-hal_gpio_init_in(int pin, gpio_pull_t pull)
+hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     uint32_t conf;
 
     switch (pull) {
-    case GPIO_PULL_UP:
+    case HAL_GPIO_PULL_UP:
         conf = GPIO_PIN_CNF_PULL_Pullup << GPIO_PIN_CNF_PULL_Pos;
         break;
-    case GPIO_PULL_DOWN:
+    case HAL_GPIO_PULL_DOWN:
         conf = GPIO_PIN_CNF_PULL_Pulldown << GPIO_PIN_CNF_PULL_Pos;
         break;
-    case GPIO_PULL_NONE:
+    case HAL_GPIO_PULL_NONE:
     default:
         conf = 0;
         break;
@@ -266,8 +266,8 @@ hal_gpio_find_pin(int pin)
  * @return int
  */
 int
-hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
-                  gpio_irq_trig_t trig, gpio_pull_t pull)
+hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
+                  hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull)
 {
     uint32_t conf;
     int i;
@@ -280,13 +280,13 @@ hal_gpio_irq_init(int pin, gpio_irq_handler_t handler, void *arg,
     hal_gpio_init_in(pin, pull);
 
     switch (trig) {
-    case GPIO_TRIG_RISING:
+    case HAL_GPIO_TRIG_RISING:
         conf = GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos;
         break;
-    case GPIO_TRIG_FALLING:
+    case HAL_GPIO_TRIG_FALLING:
         conf = GPIOTE_CONFIG_POLARITY_HiToLo << GPIOTE_CONFIG_POLARITY_Pos;
         break;
-    case GPIO_TRIG_BOTH:
+    case HAL_GPIO_TRIG_BOTH:
         conf = GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos;
         break;
     default:
