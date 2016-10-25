@@ -35,5 +35,6 @@ pkg.deps.OC_TRANSPORT_SERIAL:
 
 pkg.deps.OC_TRANSPORT_GATT:
     - net/nimble/controller
-    - net/nimble/transport/ram
+    - net/nimble/host
     - net/nimble/host/store/ram
+    - net/nimble/transport/ram

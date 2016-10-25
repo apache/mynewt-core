@@ -36,12 +36,7 @@
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-#include <oic/oc_gatt.h>
-#include "nimble/ble.h"
-#include "host/ble_hs.h"
-#include "controller/ble_ll.h"
-#include "services/gap/ble_svc_gap.h"
-#include "services/gatt/ble_svc_gatt.h"
+#include "ocf_sample.h"
 #endif
 
 #define OCF_TASK_PRIO      (8)
@@ -266,21 +261,15 @@ ocf_task_init(void) {
     oc_main_init(&ocf_handler);
 }
 
-static const uint8_t addr[6] = {1,2,3,4,5,6};
-
 int
 main(int argc, char **argv)
 {
     int rc;
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    struct os_eventq *ev;
-#endif
+
+    (void)rc;
+
     /* Initialize OS */
     sysinit();
-
-    /* Set cputime to count at 1 usec increments */
-    rc = os_cputime_init(1000000);
-    assert(rc == 0);
 
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     rc = native_sock_init();
@@ -288,22 +277,7 @@ main(int argc, char **argv)
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    memcpy(g_dev_addr, addr, sizeof(g_dev_addr));
-
-    /* COAP Gatt server initialization */
-    rc = ble_coap_gatt_srv_init(&ev);
-    assert(rc == 0);
-
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    /* TODO INIT CLIENT */
-#endif
-    /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("Mynewt_OCF");
-    assert(rc == 0);
-
-    /* Initialize the BLE host. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    ble_hs_cfg.parent_evq = ev;
+    ocf_ble_init();
 #endif
 
     ocf_task_init();
