@@ -139,14 +139,15 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
     case OC_IF_BASELINE:
         oc_process_baseline_interface(req->resource);
     case OC_IF_RW:
-        cbor_encode_text_string(&root_map, "key", strlen("key"));
         if (!isset) {
+            cbor_encode_text_string(&root_map, "r", 1);
             if (handler->mh_read) {
                 rc = handler->mh_read(&o->os_cbuf.ob_mj);
             } else {
                 goto bad_req;
             }
         } else {
+            cbor_encode_text_string(&root_map, "w", 1);
             if (handler->mh_write) {
                 rc = handler->mh_write(&o->os_cbuf.ob_mj);
             } else {
