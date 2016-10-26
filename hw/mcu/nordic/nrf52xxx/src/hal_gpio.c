@@ -24,24 +24,18 @@
 #include "nrf52_bitfields.h"
 #include <assert.h>
 
-/*
- * 1) Currently, this code does not change the interrupt priority of the
- * external interrupt vectors in the NVIC. The application developer must
- * decide on the priority level for each external interrupt and program that
- * by using the CMSIS NVIC API  (NVIC_SetPriority and NVIC_SetPriorityGrouping)
- *
- * 2) The code probably does not handle "re-purposing" gpio very well.
+/* XXX:
+ * 1) The code probably does not handle "re-purposing" gpio very well.
  * "Re-purposing" means changing a gpio from input to output, or calling
  * gpio_init_in and expecting previously enabled interrupts to be stopped.
  *
  */
 
-/*
- * GPIO pin mapping
- *
- */
-#define HAL_GPIO_MAX_IRQ        8
+/* GPIO pin mapping */
 #define HAL_GPIO_MASK(pin)      (1 << pin)
+
+/* GPIO interrupts */
+#define HAL_GPIO_MAX_IRQ        8
 
 /* Storage for GPIO callbacks. */
 struct hal_gpio_irq {
