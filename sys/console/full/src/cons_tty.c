@@ -53,8 +53,7 @@ void console_print_prompt(void);
 struct console_ring {
     uint8_t cr_head;
     uint8_t cr_tail;
-    uint8_t cr_size;
-    uint8_t _pad;
+    uint16_t cr_size;
     uint8_t *cr_buf;
 };
 
@@ -516,6 +515,11 @@ console_is_init(void)
     return (ct->ct_dev != NULL);
 }
 
+static int is_power_of_two (unsigned int x)
+{
+  return ((x != 0) && !(x & (x - 1)));
+}
+
 int
 console_init(console_rx_cb rx_cb)
 {
@@ -546,6 +550,9 @@ console_init(console_rx_cb rx_cb)
         }
         ct->ct_echo_off = ! MYNEWT_VAL(CONSOLE_ECHO);
     }
+
+    /* must be a power of 2 */
+    assert(is_power_of_two(MYNEWT_VAL(CONSOLE_RX_BUF_SIZE)));
 
 #if MYNEWT_VAL(CONSOLE_HIST_ENABLE)
     console_hist_init();
