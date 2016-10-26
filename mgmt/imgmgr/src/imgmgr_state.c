@@ -280,7 +280,7 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         split_status = SPLIT_STATUS_INVALID;
     }
 
-    g_err |= cbor_encode_text_stringz(&image, "splitStatus");
+    g_err |= cbor_encode_text_stringz(&rsp, "splitStatus");
     g_err |= cbor_encode_int(&rsp, split_status);
 
     g_err |= cbor_encoder_close_container(penc, &rsp);
