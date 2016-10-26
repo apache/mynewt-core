@@ -1,0 +1,25 @@
+# Package: apps/slinky
+
+syscfg.vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
+
+    # Include names for statistics.
+    STATS_NAMES: 1
+
+    # Log reboot messages to a flash circular buffer.
+    REBOOT_LOG_FCB: 1
+    LOG_FCB: 1
+
+    CONFIG_FCB: 1
+
+    # Enable shell commands.
+    STATS_CLI: 1
+    LOG_CLI: 1
+
+    # Enable newtmgr commands.
+    STATS_NEWTMGR: 1
+    LOG_NEWTMGR: 1
+    OC_SERVER: 1
+    OC_TRANSPORT_IP: 1
+    OC_TRANSPORT_SERIAL: 1
