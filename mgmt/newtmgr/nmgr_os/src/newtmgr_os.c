@@ -84,7 +84,7 @@ nmgr_def_echo(struct mgmt_cbuf *cb)
     CborError g_err = CborNoError;
     CborEncoder rsp;
 
-    struct cbor_attr_t attrs[3] = {
+    struct cbor_attr_t attrs[2] = {
         [0] = {
             .attribute = "d",
             .type = CborAttrTextStringType,
@@ -97,7 +97,7 @@ nmgr_def_echo(struct mgmt_cbuf *cb)
         }
     };
 
-    g_err |= cbor_encoder_create_array(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
     g_err |= cbor_encode_text_stringz(&rsp, "r");
     g_err |= cbor_read_object(&cb->it, attrs);
     g_err |= cbor_encode_text_string(&rsp, echo_buf, strlen(echo_buf));
