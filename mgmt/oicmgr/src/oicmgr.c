@@ -115,7 +115,7 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
 
     data = req->request_payload;
     if (data) {
-        if (data->type != BYTE_STRING) {
+        if (data->type != STRING) {
             goto bad_req;
         }
 
