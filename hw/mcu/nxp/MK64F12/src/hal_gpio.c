@@ -36,7 +36,8 @@ static GPIO_Type *const s_gpioBases[] = GPIO_BASE_PTRS;
 static PORT_Type *const s_portBases[] = PORT_BASE_PTRS;
 static clock_ip_name_t const s_portClocks[] = PORT_CLOCKS;
 
-uint16_t hal_to_fsl_pull(hal_gpio_pull_t pull)
+uint16_t
+hal_to_fsl_pull(hal_gpio_pull_t pull)
 {
     switch ((int)pull)
     {
@@ -49,7 +50,8 @@ uint16_t hal_to_fsl_pull(hal_gpio_pull_t pull)
     }
 }
 
-int hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
+int
+hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     gpio_pin_config_t gconfig;
     port_pin_config_t pconfig;
@@ -65,7 +67,8 @@ int hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
     return 0;
 }
 
-int hal_gpio_init_out(int pin, int val)
+int
+hal_gpio_init_out(int pin, int val)
 {
     gpio_pin_config_t gconfig;
     port_pin_config_t pconfig;
@@ -80,27 +83,20 @@ int hal_gpio_init_out(int pin, int val)
     return 0;
 }
 
-void hal_gpio_set(int pin)
-{
-    GPIO_WritePinOutput(s_gpioBases[GPIO_PORT(pin)], GPIO_INDEX(pin), 1);
-}
-
-void hal_gpio_clear(int pin)
-{
-    GPIO_WritePinOutput(s_gpioBases[GPIO_PORT(pin)], GPIO_INDEX(pin), 0);
-}
-
-void hal_gpio_write(int pin, int val)
+void
+hal_gpio_write(int pin, int val)
 {
     GPIO_WritePinOutput(s_gpioBases[GPIO_PORT(pin)], GPIO_INDEX(pin), val);
 }
 
-int hal_gpio_read(int pin)
+int
+hal_gpio_read(int pin)
 {
     return (int)GPIO_ReadPinInput(s_gpioBases[GPIO_PORT(pin)], GPIO_INDEX(pin));
 }
 
-int hal_gpio_toggle(int pin)
+int
+hal_gpio_toggle(int pin)
 {
     GPIO_TogglePinsOutput(s_gpioBases[GPIO_PORT(pin)], 1 << GPIO_INDEX(pin));
 

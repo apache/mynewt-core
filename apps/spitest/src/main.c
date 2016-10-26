@@ -115,7 +115,7 @@ sblinky_spi_irqm_handler(void *arg, int len)
     int i;
     struct sblinky_spi_cb_arg *cb;
 
-    hal_gpio_set(SPI_SS_PIN);
+    hal_gpio_write(SPI_SS_PIN, 1);
 
     assert(arg == spi_cb_arg);
     if (spi_cb_arg) {
@@ -231,13 +231,13 @@ task1_handler(void *arg)
     g_spi_tx_buf[1] = 0xad;
     g_spi_tx_buf[2] = 0xbe;
     g_spi_tx_buf[3] = 0xef;
-    hal_gpio_clear(SPI_SS_PIN);
+    hal_gpio_write(SPI_SS_PIN, 0);
     for (i = 0; i < 4; ++i) {
         rxval = hal_spi_tx_val(0, g_spi_tx_buf[i]);
         assert(rxval == 0x77);
         g_spi_rx_buf[i] = (uint8_t)rxval;
     }
-    hal_gpio_set(SPI_SS_PIN);
+    hal_gpio_write(SPI_SS_PIN, 1);
     ++g_spi_xfr_num;
 
     /* Set up the callback to use when non-blocking API used */
@@ -269,7 +269,7 @@ task1_handler(void *arg)
             /* Send non-blocking */
             ++spi_nb_cntr;
             assert(hal_gpio_read(SPI_SS_PIN) == 1);
-            hal_gpio_clear(SPI_SS_PIN);
+            hal_gpio_write(SPI_SS_PIN, 0);
 #if 0
             if (spi_nb_cntr == 7) {
                 g_spi_null_rx = 1;
@@ -299,7 +299,7 @@ task1_handler(void *arg)
             /* Send blocking */
             ++spi_b_cntr;
             assert(hal_gpio_read(SPI_SS_PIN) == 1);
-            hal_gpio_clear(SPI_SS_PIN);
+            hal_gpio_write(SPI_SS_PIN, 0);
 #if 0
             if (spi_b_cntr == 7) {
                 g_spi_null_rx = 1;
@@ -310,12 +310,12 @@ task1_handler(void *arg)
                 rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
             }
             assert(!rc);
-            hal_gpio_set(SPI_SS_PIN);
+            hal_gpio_write(SPI_SS_PIN, 1);
             spitest_validate_last(spi_cb_obj.txlen);
 #else
             rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
             assert(!rc);
-            hal_gpio_set(SPI_SS_PIN);
+            hal_gpio_write(SPI_SS_PIN, 1);
             console_printf("b transmitted: ");
             for (i = 0; i < spi_cb_obj.txlen; i++) {
                 console_printf("%2x ", g_spi_tx_buf[i]);

@@ -500,40 +500,6 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
 }
 
 /**
- * gpio set
- *
- * Sets specified pin to 1 (high)
- *
- * @param pin
- */
-void hal_gpio_set(int pin)
-{
-    int port;
-    uint32_t mcu_pin_mask;
-
-    port = GPIO_PORT(pin);
-    mcu_pin_mask = GPIO_MASK(pin);
-    HAL_GPIO_WritePin(portmap[port], mcu_pin_mask, GPIO_PIN_SET);
-}
-
-/**
- * gpio clear
- *
- * Sets specified pin to 0 (low).
- *
- * @param pin
- */
-void hal_gpio_clear(int pin)
-{
-    int port;
-    uint32_t mcu_pin_mask;
-
-    port = GPIO_PORT(pin);
-    mcu_pin_mask = GPIO_MASK(pin);
-    HAL_GPIO_WritePin(portmap[port], mcu_pin_mask, GPIO_PIN_RESET);
-}
-
-/**
  * gpio write
  *
  * Write a value (either high or low) to the specified pin.
@@ -543,11 +509,20 @@ void hal_gpio_clear(int pin)
  */
 void hal_gpio_write(int pin, int val)
 {
+    int port;
+    uint32_t mcu_pin_mask;
+    GPIO_PinState state;
+
+    port = GPIO_PORT(pin);
+    mcu_pin_mask = GPIO_MASK(pin);
+
     if (val) {
-        hal_gpio_set(pin);
+        state = GPIO_PIN_SET;
     } else {
-        hal_gpio_clear(pin);
+        state = GPIO_PIN_RESET;
     }
+
+    HAL_GPIO_WritePin(portmap[port], mcu_pin_mask, state);
 }
 
 /**

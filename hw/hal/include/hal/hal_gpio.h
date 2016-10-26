@@ -87,24 +87,6 @@ int hal_gpio_init_in(int pin, hal_gpio_pull_t pull);
 int hal_gpio_init_out(int pin, int val);
 
 /**
- * gpio set
- *
- * Sets specified pin to 1 (high)
- *
- * @param pin
- */
-void hal_gpio_set(int pin);
-
-/**
- * gpio clear
- *
- * Sets specified pin to 0 (low).
- *
- * @param pin
- */
-void hal_gpio_clear(int pin);
-
-/**
  * gpio write
  *
  * Write a value (either high or low) to the specified pin.

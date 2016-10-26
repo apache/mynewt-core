@@ -60,18 +60,6 @@ hal_gpio_init_out(int pin, int val)
     return 0;
 }
 
-void
-hal_gpio_set(int pin)
-{
-    hal_gpio_write(pin, 1);
-}
-
-void
-hal_gpio_clear(int pin)
-{
-    hal_gpio_write(pin, 0);
-}
-
 void hal_gpio_write(int pin, int val)
 {
     if (pin >= HAL_GPIO_NUM_PINS) {

@@ -90,7 +90,8 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
  *
  * @return int  0: no error; -1 otherwise.
  */
-int hal_gpio_init_out(int pin, int val)
+int
+hal_gpio_init_out(int pin, int val)
 {
     if (val) {
         NRF_P0->OUTSET = HAL_GPIO_MASK(pin);
@@ -103,30 +104,6 @@ int hal_gpio_init_out(int pin, int val)
 }
 
 /**
- * gpio set
- *
- * Sets specified pin to 1 (high)
- *
- * @param pin
- */
-void hal_gpio_set(int pin)
-{
-    NRF_P0->OUTSET = HAL_GPIO_MASK(pin);
-}
-
-/**
- * gpio clear
- *
- * Sets specified pin to 0 (low).
- *
- * @param pin
- */
-void hal_gpio_clear(int pin)
-{
-    NRF_P0->OUTCLR = HAL_GPIO_MASK(pin);
-}
-
-/**
  * gpio write
  *
  * Write a value (either high or low) to the specified pin.
@@ -134,12 +111,13 @@ void hal_gpio_clear(int pin)
  * @param pin Pin to set
  * @param val Value to set pin (0:low 1:high)
  */
-void hal_gpio_write(int pin, int val)
+void
+hal_gpio_write(int pin, int val)
 {
     if (val) {
-        hal_gpio_set(pin);
+        NRF_P0->OUTSET = HAL_GPIO_MASK(pin);
     } else {
-        hal_gpio_clear(pin);
+        NRF_P0->OUTCLR = HAL_GPIO_MASK(pin);
     }
 }
 
@@ -152,7 +130,8 @@ void hal_gpio_write(int pin, int val)
  *
  * @return int 0: low, 1: high
  */
-int hal_gpio_read(int pin)
+int
+hal_gpio_read(int pin)
 {
     return ((NRF_P0->IN & HAL_GPIO_MASK(pin)) != 0);
 }
@@ -166,7 +145,8 @@ int hal_gpio_read(int pin)
  *
  * @return current pin state int 0: low, 1: high
  */
-int hal_gpio_toggle(int pin)
+int
+hal_gpio_toggle(int pin)
 {
     int pin_state = (hal_gpio_read(pin) == 0);
     hal_gpio_write(pin, pin_state);
