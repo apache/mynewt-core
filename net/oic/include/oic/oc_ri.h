@@ -106,6 +106,7 @@ typedef struct
   int query_len;
   oc_rep_t *request_payload;
   oc_response_t *response;
+  void *packet;
 } oc_request_t;
 
 typedef void (*oc_request_handler_t)(oc_request_t *, oc_interface_mask_t);

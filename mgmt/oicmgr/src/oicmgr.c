@@ -100,7 +100,7 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
 {
     struct omgr_state *o = &omgr_state;
     const struct mgmt_handler *handler;
-    oc_rep_t *data;
+    const uint8_t *data;
     int rc;
     extern CborEncoder g_encoder;
 
@@ -113,18 +113,8 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
         goto bad_req;
     }
 
-    data = req->request_payload;
-    if (data) {
-        if (data->type != STRING) {
-            goto bad_req;
-        }
-
-        cbor_buf_reader_init(&o->os_cbuf.ob_reader,
-                             (uint8_t *) oc_string(data->value_string),
-                             oc_string_len(data->value_string));
-    } else {
-        cbor_buf_reader_init(&o->os_cbuf.ob_reader, NULL, 0);
-    }
+    rc = coap_get_payload(req->packet, &data);
+    cbor_buf_reader_init(&o->os_cbuf.ob_reader, data, rc);
 
     cbor_parser_init(&o->os_cbuf.ob_reader.r, 0, &o->os_cbuf.ob_mj.parser, &o->os_cbuf.ob_mj.it);
 
@@ -167,6 +157,9 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
 
     return;
 bad_req:
+    /*
+     * XXXX might send partially constructed response as payload
+     */
     oc_send_response(req, OC_STATUS_BAD_REQUEST);
 }
 

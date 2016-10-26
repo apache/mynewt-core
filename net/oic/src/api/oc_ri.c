@@ -528,6 +528,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   request_obj.query_len = 0;
   request_obj.resource = 0;
   request_obj.origin = endpoint;
+  request_obj.packet = packet;
 
   /* Initialize OCF interface selector. */
   oc_interface_mask_t interface = 0;
