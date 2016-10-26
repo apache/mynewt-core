@@ -197,7 +197,7 @@ os_arch_os_init(void)
 
         /* Drop priority for all interrupts */
         for (i = 0; i < sizeof(NVIC->IP); i++) {
-            NVIC->IP[i] = 0xffffffff;
+            NVIC->IP[i] = -1;
         }
 
         NVIC_SetVector(SVCall_IRQn, (uint32_t)SVC_Handler);
