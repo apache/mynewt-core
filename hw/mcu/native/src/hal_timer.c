@@ -32,7 +32,7 @@ static struct os_task native_timer_task_struct;
 static struct os_eventq native_timer_evq;
 
 struct native_timer {
-    struct os_callout_func callout;
+    struct os_callout callout;
     uint32_t ticks_per_ostick;
     uint32_t cnt;
     uint32_t last_ostime;
@@ -45,10 +45,10 @@ struct native_timer {
  *
  * @param arg
  */
-void
-native_timer_cb(void *arg)
+static void
+native_timer_cb(struct os_event *ev)
 {
-    struct native_timer *nt = (struct native_timer *)arg;
+    struct native_timer *nt = (struct native_timer *)ev->ev_arg;
     uint32_t cnt;
     struct hal_timer *ht;
     os_sr_t sr;
@@ -66,30 +66,17 @@ native_timer_cb(void *arg)
     }
     ht = TAILQ_FIRST(&nt->timers);
     if (ht) {
-        os_callout_reset(&nt->callout.cf_c,
+        os_callout_reset(&nt->callout,
           (ht->expiry - hal_timer_read(nt->num)) / nt->ticks_per_ostick);
     }
     OS_EXIT_CRITICAL(sr);
 }
 
-void
+static void
 native_timer_task(void *arg)
 {
-    struct os_event *ev;
-    struct os_callout_func *cf;
-
     while (1) {
-        ev = os_eventq_get(&native_timer_evq);
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-        default:
-            assert(0);
-            break;
-        }
+        os_eventq_run(&native_timer_evq);
     }
 }
 
@@ -132,7 +119,7 @@ hal_timer_init(int num, uint32_t clock_freq)
     }
 
     /* Initialize the callout function */
-    os_callout_func_init(&nt->callout, &native_timer_evq, native_timer_cb, nt);
+    os_callout_init(&nt->callout, &native_timer_evq, native_timer_cb, nt);
 
     return 0;
 }
@@ -147,7 +134,7 @@ hal_timer_deinit(int num)
     }
     nt = &native_timers[num];
 
-    os_callout_stop(&nt->callout.cf_c);
+    os_callout_stop(&nt->callout);
     return 0;
 }
 
@@ -323,11 +310,11 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
         /*
          * Event in the past (should be the case if it was just inserted).
          */
-        os_callout_reset(&nt->callout.cf_c, 0);
+        os_callout_reset(&nt->callout, 0);
     } else {
         if (timer == TAILQ_FIRST(&nt->timers)) {
             osticks = (tick - curtime) / nt->ticks_per_ostick;
-            os_callout_reset(&nt->callout.cf_c, osticks);
+            os_callout_reset(&nt->callout, osticks);
         }
     }
     OS_EXIT_CRITICAL(sr);
@@ -366,11 +353,11 @@ hal_timer_stop(struct hal_timer *timer)
         timer->link.tqe_prev = NULL;
         if (reset_ocmp) {
             if (ht) {
-                os_callout_reset(&nt->callout.cf_c,
+                os_callout_reset(&nt->callout,
                   (ht->expiry - hal_timer_read(nt->num) /
                     nt->ticks_per_ostick));
             } else {
-                os_callout_stop(&nt->callout.cf_c);
+                os_callout_stop(&nt->callout);
             }
         }
     }

@@ -17,11 +17,11 @@
  * under the License.
  */
 
-#include "os/os.h"
-#include "os_priv.h"
-
 #include <assert.h>
 #include <string.h>
+
+#include "os/os.h"
+#include "os_priv.h"
 
 /**
  * @addtogroup OSKernel
@@ -31,22 +31,13 @@
  */
 struct os_callout_list g_callout_list;
 
-static void
-_os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)
-{
-    memset(c, 0, sizeof(*c));
-    c->c_ev.ev_type = OS_EVENT_T_TIMER;
-    c->c_ev.ev_arg = ev_arg;
-    c->c_evq = evq;
-}
-
 /**
  * Initialize a callout.
  *
  * Callouts are used to schedule events in the future onto a task's event
  * queue.  Callout timers are scheduled using the os_callout_reset()
  * function.  When the timer expires, an event is posted to the event
- * queue specified in os_callout_func_init().  The event argument given here
+ * queue specified in os_callout_init().  The event argument given here
  * is posted in the ev_arg field of that event.
  *
  * @param c The callout to initialize
@@ -57,12 +48,13 @@ _os_callout_init(struct os_callout *c, struct os_eventq *evq, void *ev_arg)
  * @param ev_arg The argument to provide to the event when posting the
  *               timer.
  */
-void
-os_callout_func_init(struct os_callout_func *cf, struct os_eventq *evq,
-  os_callout_func_t timo_func, void *ev_arg)
+void os_callout_init(struct os_callout *c, struct os_eventq *evq,
+                     os_event_fn *ev_cb, void *ev_arg)
 {
-    _os_callout_init(&cf->cf_c, evq, ev_arg);
-    cf->cf_func = timo_func;
+    memset(c, 0, sizeof(*c));
+    c->c_ev.ev_cb = ev_cb;
+    c->c_ev.ev_arg = ev_arg;
+    c->c_evq = evq;
 }
 
 /**
@@ -143,7 +135,7 @@ err:
  * This function is called by the OS in the time tick.  It searches the list
  * of callouts, and sees if any of them are ready to run.  If they are ready
  * to run, it posts an event for each callout that's ready to run,
- * to the event queue provided to os_callout_func_init().
+ * to the event queue provided to os_callout_init().
  */
 void
 os_callout_tick(void)

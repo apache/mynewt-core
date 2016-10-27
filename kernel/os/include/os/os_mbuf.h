@@ -229,7 +229,7 @@ _os_mbuf_trailingspace(struct os_mbuf *om)
 /* Mbuf queue functions */
 
 /* Initialize a mbuf queue */
-int os_mqueue_init(struct os_mqueue *, void *arg);
+int os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg);
 
 /* Get an element from a mbuf queue */
 struct os_mbuf *os_mqueue_get(struct os_mqueue *);

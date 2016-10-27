@@ -66,7 +66,7 @@ STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
  *
  */
 int
-os_mqueue_init(struct os_mqueue *mq, void *arg)
+os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg)
 {
     struct os_event *ev;
 
@@ -74,8 +74,8 @@ os_mqueue_init(struct os_mqueue *mq, void *arg)
 
     ev = &mq->mq_ev;
     memset(ev, 0, sizeof(*ev));
+    ev->ev_cb = ev_cb;
     ev->ev_arg = arg;
-    ev->ev_type = OS_EVENT_T_MQUEUE_DATA;
 
     return (0);
 }

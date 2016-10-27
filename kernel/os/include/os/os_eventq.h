@@ -28,18 +28,15 @@
 extern "C" {
 #endif
 
+struct os_event;
+typedef void os_event_fn(struct os_event *ev);
+
 struct os_event {
     uint8_t ev_queued;
-    uint8_t ev_type;
+    os_event_fn *ev_cb;
     void *ev_arg;
     STAILQ_ENTRY(os_event) ev_next;
 };
-
-/*
- * If event type is OS_EVENT_T_CB, then this function pointer will be
- * in ev_arg.
- */
-typedef void (*os_event_cb_func)(struct os_event *);
 
 #define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued)
 
@@ -54,10 +51,17 @@ struct os_eventq {
 };
 
 void os_eventq_init(struct os_eventq *);
+int os_eventq_inited(const struct os_eventq *evq);
 void os_eventq_put(struct os_eventq *, struct os_event *);
 struct os_event *os_eventq_get(struct os_eventq *);
+void os_eventq_run(struct os_eventq *evq);
 struct os_event *os_eventq_poll(struct os_eventq **, int, os_time_t);
 void os_eventq_remove(struct os_eventq *, struct os_event *);
+void os_eventq_dflt_set(struct os_eventq *evq);
+struct os_eventq *os_eventq_dflt_get(void);
+void os_eventq_designate(struct os_eventq **dst, struct os_eventq *val,
+                         struct os_event *start_ev);
+void os_eventq_ensure(struct os_eventq **evq, struct os_event *start_ev);
 
 #ifdef __cplusplus
 }

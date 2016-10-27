@@ -17,10 +17,10 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <string.h>
 
 #include "os/os.h"
-
-#include <string.h>
 
 /**
  * @addtogroup OSKernel
@@ -28,6 +28,8 @@
  *   @defgroup OSEvent Event Queues
  *   @{
  */
+
+static struct os_eventq *os_eventq_main;
 
 /**
  * Initialize the event queue
@@ -39,6 +41,12 @@ os_eventq_init(struct os_eventq *evq)
 {
     memset(evq, 0, sizeof(*evq));
     STAILQ_INIT(&evq->evq_list);
+}
+
+int
+os_eventq_inited(const struct os_eventq *evq)
+{
+    return evq->evq_list.stqh_last != NULL;
 }
 
 /**
@@ -122,6 +130,17 @@ pull_one:
     OS_EXIT_CRITICAL(sr);
 
     return (ev);
+}
+
+void
+os_eventq_run(struct os_eventq *evq)
+{
+    struct os_event *ev;
+
+    ev = os_eventq_get(evq);
+    assert(ev->ev_cb != NULL);
+
+    ev->ev_cb(ev);
 }
 
 static struct os_event *
@@ -239,6 +258,47 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
     }
     ev->ev_queued = 0;
     OS_EXIT_CRITICAL(sr);
+}
+
+void
+os_eventq_dflt_set(struct os_eventq *evq)
+{
+    os_eventq_main = evq;
+}
+
+struct os_eventq *
+os_eventq_dflt_get(void)
+{
+    return os_eventq_main;
+}
+
+void
+os_eventq_designate(struct os_eventq **dst, struct os_eventq *val,
+                    struct os_event *start_ev)
+{
+    *dst = val;
+    if (start_ev != NULL) {
+        os_eventq_put(*dst, start_ev);
+    }
+}
+
+void
+os_eventq_ensure(struct os_eventq **evq, struct os_event *start_ev)
+{
+    struct os_eventq *eventq_dflt;
+
+    if (*evq == NULL) {
+        eventq_dflt = os_eventq_dflt_get();
+        if (eventq_dflt != NULL) {
+            os_eventq_designate(evq, eventq_dflt, start_ev);
+        }
+
+        /* The system is misconfigured if there is still no parent eventq.  The
+         * application should have explicitly specified a parent queue for each
+         * package, or indicated a default.
+         */
+        assert(*evq != NULL);
+    }
 }
 
 /**

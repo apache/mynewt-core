@@ -36,19 +36,10 @@ struct os_callout {
     TAILQ_ENTRY(os_callout) c_next;
 };
 
-typedef void (*os_callout_func_t)(void *);
-
-struct os_callout_func {
-    /* Must be the first element in the structure for casting
-     * purposes.
-     */
-    struct os_callout cf_c;
-    os_callout_func_t cf_func;
-};
 #define CF_ARG(__cf) ((__cf)->cf_c.c_ev.ev_arg)
 
-void os_callout_func_init(struct os_callout_func *cf, struct os_eventq *evq,
-  os_callout_func_t timo_func, void *ev_arg);
+void os_callout_init(struct os_callout *cf, struct os_eventq *evq,
+                     os_event_fn *ev_cb, void *ev_arg);
 void os_callout_stop(struct os_callout *);
 int os_callout_reset(struct os_callout *, int32_t);
 void os_callout_tick(void);

@@ -301,6 +301,8 @@ main(void)
     /* Set initial BLE device address. */
     memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
+    ble_hs_cfg.parent_evq = &bleprph_evq;
+
     /* Initialize OS */
     sysinit();
 
@@ -319,7 +321,6 @@ main(void)
 
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    ble_hs_cfg.parent_evq = &bleprph_evq;
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
