@@ -53,7 +53,7 @@ typedef os_time_t oc_clock_time_t;
 #define EST_NUM_REP_OBJECTS (100)
 
 /* Maximum size of request/response PDUs */
-#define MAX_PAYLOAD_SIZE (612)
+#define MAX_PAYLOAD_SIZE (1120)
 
 /* Number of devices on the OCF platform */
 #define MAX_NUM_DEVICES (1)
