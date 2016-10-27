@@ -2,13 +2,13 @@
 
 syscfg.defs:
     STATS_NAMES:
-        description: 'TBD'
+        description: 'Include and report the textual name of each statistic.'
         value: 0
     STATS_CLI:
-        description: 'TBD'
+        description: 'Expose the "stat" shell command.'
         value: 0
         restrictions:
             - SHELL_TASK
     STATS_NEWTMGR:
-        description: 'TBD'
+        description: 'Expose the "stat" newtmgr command.'
         value: 0
