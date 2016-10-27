@@ -21,7 +21,6 @@
 TEST_CASE(socket_tests)
 {
     sysinit();
-    native_sock_init();
 
     os_sem_init(&test_sem, 0);
 

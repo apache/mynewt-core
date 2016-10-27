@@ -39,10 +39,6 @@
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-#include <mn_socket/arch/sim/native_sock.h>
-#endif
-
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
@@ -272,11 +268,6 @@ main(int argc, char **argv)
     conf_load();
 
     log_reboot(HARD_REBOOT);
-
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    rc = native_sock_init();
-    assert(rc == 0);
-#endif
 
 #if MYNEWT_VAL(SPLIT_LOADER)
     {

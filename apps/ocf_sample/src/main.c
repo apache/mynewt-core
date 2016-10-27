@@ -29,11 +29,6 @@
 #include <shell/shell.h>
 #endif
 
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-#include "mn_socket/mn_socket.h"
-#include "mn_socket/arch/sim/native_sock.h"
-#endif
-
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
 #include "host/ble_hs.h"
 #include "ocf_sample.h"
@@ -283,11 +278,6 @@ main(int argc, char **argv)
 
     /* Initialize OS */
     sysinit();
-
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    rc = native_sock_init();
-    assert(rc == 0);
-#endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     ocf_ble_init();

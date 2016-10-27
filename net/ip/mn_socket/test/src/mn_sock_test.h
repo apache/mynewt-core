@@ -28,7 +28,6 @@
 #include "testutil/testutil.h"
 
 #include "mn_socket/mn_socket.h"
-#include "mn_socket/arch/sim/native_sock.h"
 
 #define TEST_STACK_SIZE 4096
 #define TEST_PRIO 22

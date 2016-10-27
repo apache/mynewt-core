@@ -32,7 +32,6 @@
 #include "mn_socket/mn_socket.h"
 #include "mn_socket/mn_socket_ops.h"
 
-#include "mn_socket/arch/sim/native_sock.h"
 #include "native_sock_priv.h"
 
 #define NATIVE_SOCK_MAX 8

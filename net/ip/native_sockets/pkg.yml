@@ -17,22 +17,17 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/native
-pkg.type: bsp
-pkg.description: BSP definition for native (amd64) applications.
+pkg.name: net/ip/native_sockets
+pkg.description: Socket interface for Mynewt, uses native sockets.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - native
-    - bsp
+    - socket
+    - IP
 
 pkg.deps:
-    - boot/bootutil
-    - hw/mcu/native
-    - hw/drivers/uart/uart_hal
-    - sys/flash_map
-    - net/ip/native_sockets
+    - kernel/os
+    - net/ip/mn_socket
 
-pkg.deps.BLE_DEVICE:
-    - hw/drivers/nimble/native
-
+pkg.init_function: native_sock_init
+pkg.init_stage: 2

@@ -26,7 +26,6 @@
 #include "testutil/testutil.h"
 
 #include "mn_socket/mn_socket.h"
-#include "mn_socket/arch/sim/native_sock.h"
 
 struct os_sem test_sem;
 
