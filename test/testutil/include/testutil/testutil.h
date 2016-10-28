@@ -213,7 +213,9 @@ TEST_SUITE_##suite_name(void);                               \
             if (setjmp(tu_case_jb) == 0) {                    \
                 TEST_CASE_##case_name();                      \
                 tu_case_post_test();                          \
-                tu_case_pass();                               \
+                if (!tu_case_failed) {                        \
+                    tu_case_pass();                           \
+                }                                             \
             }                                                 \
             tu_case_complete();                               \
         }                                                     \
