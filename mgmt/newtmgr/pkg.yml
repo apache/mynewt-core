@@ -24,8 +24,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
     - encoding/cborattr
+    - kernel/os
+    - mgmt/mgmt
     - mgmt/newtmgr/nmgr_os
 
 pkg.deps.NEWTMGR_BLE_HOST:

@@ -36,7 +36,7 @@
 #include <tinycbor/cbor.h>
 #include <cborattr/cborattr.h>
 
-static struct os_callout_func nmgr_reset_callout;
+static struct os_callout nmgr_reset_callout;
 
 static int nmgr_def_echo(struct mgmt_cbuf *);
 static int nmgr_def_console_echo(struct mgmt_cbuf *);
@@ -313,7 +313,7 @@ out:
 }
 
 static void
-nmgr_reset_tmo(void *arg)
+nmgr_reset_tmo(struct os_event *ev)
 {
     system_reset();
 }
@@ -321,8 +321,10 @@ nmgr_reset_tmo(void *arg)
 static int
 nmgr_reset(struct mgmt_cbuf *cb)
 {
+    os_callout_init(&nmgr_reset_callout, mgmt_evq_get(), nmgr_reset_tmo, NULL);
+
     log_reboot(SOFT_REBOOT);
-    os_callout_reset(&nmgr_reset_callout.cf_c, OS_TICKS_PER_SEC / 4);
+    os_callout_reset(&nmgr_reset_callout, OS_TICKS_PER_SEC / 4);
 
     mgmt_cbuf_setoerr(cb, OS_OK);
 
@@ -332,8 +334,6 @@ nmgr_reset(struct mgmt_cbuf *cb)
 int
 nmgr_os_groups_register(void)
 {
-    os_callout_func_init(&nmgr_reset_callout, g_mgmt_evq, nmgr_reset_tmo, NULL);
-
     return mgmt_group_register(&nmgr_def_group);
 }
 

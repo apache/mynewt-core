@@ -365,5 +365,5 @@ nmgr_uart_pkg_init(void)
       (struct uart_dev *)os_dev_open(MYNEWT_VAL(NMGR_UART), 0, &uc);
     assert(nus->nus_dev);
 
-    mgmt_cb_init(&nus->nus_cb_ev, nmgr_uart_rx_frame);
+    nus->nus_cb_ev.ev_cb = nmgr_uart_rx_frame;
 }

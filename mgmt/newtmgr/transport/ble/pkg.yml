@@ -27,6 +27,7 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
+    - mgmt/mgmt
     - mgmt/newtmgr
     - net/nimble/host
 

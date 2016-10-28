@@ -22,12 +22,13 @@
 #include <string.h>
 #include "sysinit/sysinit.h"
 #include "host/ble_hs.h"
+#include "mgmt/mgmt.h"
 #include "newtmgr/newtmgr.h"
 #include "os/endian.h"
 #include "console/console.h"
 
 /* nmgr ble mqueue */
-struct os_mqueue ble_nmgr_mq;
+struct os_mqueue nmgr_ble_mq;
 
 /* ble nmgr transport */
 struct nmgr_transport ble_nt;
@@ -170,49 +171,26 @@ nmgr_ble_get_mtu(struct os_mbuf *req) {
  * @return 0 on success; non-zero on failure
  */
 
-int
-nmgr_ble_proc_mq_evt(struct os_event *ev)
+static void
+nmgr_ble_event_data_in(struct os_event *ev)
 {
     struct os_mbuf *m_resp;
     uint16_t conn_handle;
-    int rc;
 
-    rc = 0;
-    switch (ev->ev_type) {
-        case OS_EVENT_T_MQUEUE_DATA:
-            if (ev->ev_arg != &ble_nmgr_mq) {
-                rc = -1;
-                goto done;
-            }
-
-            while (1) {
-                m_resp = os_mqueue_get(&ble_nmgr_mq);
-                if (!m_resp) {
-                    break;
-                }
-                assert(OS_MBUF_USRHDR_LEN(m_resp) >= sizeof (conn_handle));
-                memcpy(&conn_handle, OS_MBUF_USRHDR(m_resp),
-                       sizeof (conn_handle));
-                ble_gattc_notify_custom(conn_handle, g_ble_nmgr_attr_handle,
-                                        m_resp);
-            }
-            break;
-
-        default:
-            rc = -1;
-            goto done;
+    while ((m_resp = os_mqueue_get(&nmgr_ble_mq)) != NULL) {
+        assert(OS_MBUF_USRHDR_LEN(m_resp) >= sizeof (conn_handle));
+        memcpy(&conn_handle, OS_MBUF_USRHDR(m_resp), sizeof (conn_handle));
+        ble_gattc_notify_custom(conn_handle, g_ble_nmgr_attr_handle,
+                                m_resp);
     }
-
-done:
-    return rc;
 }
 
 static int
-nmgr_ble_out(struct nmgr_transport *nt, struct os_mbuf *m)
+nmgr_ble_out(struct nmgr_transport *nt, struct os_mbuf *om)
 {
     int rc;
 
-    rc = os_mqueue_put(&ble_nmgr_mq, ble_hs_cfg.parent_evq, m);
+    rc = os_mqueue_put(&nmgr_ble_mq, mgmt_evq_get(), om);
     if (rc != 0) {
         goto err;
     }
@@ -243,7 +221,7 @@ nmgr_ble_gatt_svr_init(void)
         return rc;
     }
 
-    os_mqueue_init(&ble_nmgr_mq, &ble_nmgr_mq);
+    os_mqueue_init(&nmgr_ble_mq, &nmgr_ble_event_data_in, NULL);
 
     rc = nmgr_transport_init(&ble_nt, nmgr_ble_out, nmgr_ble_get_mtu);
 

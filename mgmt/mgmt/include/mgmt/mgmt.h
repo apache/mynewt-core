@@ -87,10 +87,7 @@ void mgmt_cbuf_setoerr(struct mgmt_cbuf *njb, int errcode);
 const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
   uint16_t handler_id);
 
-struct os_event;
-struct os_eventq;
-void mgmt_cb_init(struct os_event *ev, void (*func)(struct os_event *));
-extern struct os_eventq *g_mgmt_evq;
+struct os_eventq *mgmt_evq_get(void);
 
 #ifdef __cplusplus
 }

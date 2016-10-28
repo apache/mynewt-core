@@ -67,6 +67,8 @@ struct nmgr_transport {
     nmgr_transport_get_mtu_func_t nt_get_mtu;
 };
 
+void nmgr_evq_set(struct os_eventq *evq);
+void nmgr_event_put(struct os_event *ev);
 int nmgr_task_init(void);
 int nmgr_transport_init(struct nmgr_transport *nt,
         nmgr_transport_out_func_t output_func,

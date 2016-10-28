@@ -25,20 +25,17 @@
 #include "os/os.h"
 #include "os/endian.h"
 
-#include <mgmt/mgmt.h>
+#include "mgmt/mgmt.h"
 
 #include "newtmgr/newtmgr.h"
 #include "nmgr_os/nmgr_os.h"
 
-#include <tinycbor/cbor.h>
-#include <tinycbor/cbor_mbuf_writer.h>
-#include <tinycbor/cbor_mbuf_reader.h>
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_mbuf_writer.h"
+#include "tinycbor/cbor_mbuf_reader.h"
 
-os_stack_t newtmgr_stack[OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE))];
-
-static struct os_eventq nmgr_evq;
-struct os_eventq *g_mgmt_evq = &nmgr_evq;
-static struct os_task g_nmgr_task;
+/* Shared queue that newtmgr uses for work items. */
+struct os_eventq *nmgr_evq;
 
 /*
  * cbor buffer for newtmgr
@@ -50,6 +47,19 @@ static struct nmgr_cbuf {
     struct os_mbuf *n_out_m;
 } nmgr_task_cbuf;
 
+struct os_eventq *
+mgmt_evq_get(void)
+{
+    os_eventq_ensure(&nmgr_evq, NULL);
+    return nmgr_evq;
+}
+
+void
+nmgr_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&nmgr_evq, evq, NULL);
+}
+
 static int
 nmgr_cbuf_init(struct nmgr_cbuf *njb)
 {
@@ -57,7 +67,7 @@ nmgr_cbuf_init(struct nmgr_cbuf *njb)
     return (0);
 }
 
-static struct nmgr_hdr*
+static struct nmgr_hdr *
 nmgr_init_rsp(struct os_mbuf *m, struct nmgr_hdr *src)
 {
     struct nmgr_hdr *hdr;
@@ -99,8 +109,8 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
 static int
 nmgr_send_rspfrag(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
                   struct os_mbuf *rsp, struct os_mbuf *req, uint16_t len,
-                  uint16_t *offset) {
-
+                  uint16_t *offset)
+{
     struct os_mbuf *rspfrag;
     int rc;
 
@@ -113,7 +123,8 @@ nmgr_send_rspfrag(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
     }
 
     /* Copy the request packet header into the response. */
-    memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
+    memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req),
+           OS_MBUF_USRHDR_LEN(req));
 
     if (os_mbuf_append(rspfrag, rsp_hdr, sizeof(struct nmgr_hdr))) {
         rc = MGMT_ERR_ENOMEM;
@@ -129,7 +140,8 @@ nmgr_send_rspfrag(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
 
     len = htons(len);
 
-    if (os_mbuf_copyinto(rspfrag, offsetof(struct nmgr_hdr, nh_len), &len, sizeof(len))) {
+    if (os_mbuf_copyinto(rspfrag, offsetof(struct nmgr_hdr, nh_len), &len,
+                         sizeof(len))) {
         rc = MGMT_ERR_ENOMEM;
         goto err;
     }
@@ -146,8 +158,8 @@ err:
 
 static int
 nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
-                  struct os_mbuf *rsp, struct os_mbuf *req) {
-
+                  struct os_mbuf *rsp, struct os_mbuf *req)
+{
     uint16_t offset;
     uint16_t len;
     uint16_t mtu;
@@ -235,7 +247,8 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         }
 
         cbor_mbuf_reader_init(&nmgr_task_cbuf.reader, req, sizeof(hdr));
-        cbor_parser_init(&nmgr_task_cbuf.reader.r, 0, &nmgr_task_cbuf.n_b.parser, &nmgr_task_cbuf.n_b.it);
+        cbor_parser_init(&nmgr_task_cbuf.reader.r, 0,
+                         &nmgr_task_cbuf.n_b.parser, &nmgr_task_cbuf.n_b.it);
 
         if (hdr.nh_op == NMGR_OP_READ) {
             if (handler->mh_read) {
@@ -257,7 +270,8 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
             goto err;
         }
 
-        rsp_hdr->nh_len += cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
+        rsp_hdr->nh_len +=
+            cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
         off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
         rc = nmgr_rsp_fragment(nt, rsp_hdr, rsp, req);
         if (rc) {
@@ -280,7 +294,7 @@ err_norsp:
 }
 
 
-void
+static void
 nmgr_process(struct nmgr_transport *nt)
 {
     struct os_mbuf *m;
@@ -295,33 +309,10 @@ nmgr_process(struct nmgr_transport *nt)
     }
 }
 
-void
-nmgr_task(void *arg)
+static void
+nmgr_event_data_in(struct os_event *ev)
 {
-    struct nmgr_transport *nt;
-    struct os_event *ev;
-    struct os_callout_func *ocf;
-    os_event_cb_func cb_func;
-
-    nmgr_cbuf_init(&nmgr_task_cbuf);
-
-    while (1) {
-        ev = os_eventq_get(&nmgr_evq);
-        switch (ev->ev_type) {
-        case OS_EVENT_T_MQUEUE_DATA:
-            nt = (struct nmgr_transport *) ev->ev_arg;
-            nmgr_process(nt);
-            break;
-        case OS_EVENT_T_TIMER:
-            ocf = (struct os_callout_func *)ev;
-            ocf->cf_func(CF_ARG(ocf));
-            break;
-        case OS_EVENT_T_CB:
-            cb_func = (os_event_cb_func)ev->ev_arg;
-            cb_func(ev);
-            break;
-        }
-    }
+    nmgr_process(ev->ev_arg);
 }
 
 int
@@ -334,7 +325,7 @@ nmgr_transport_init(struct nmgr_transport *nt,
     nt->nt_output = output_func;
     nt->nt_get_mtu = get_mtu_func;
 
-    rc = os_mqueue_init(&nt->nt_imq, nt);
+    rc = os_mqueue_init(&nt->nt_imq, nmgr_event_data_in, nt);
     if (rc != 0) {
         goto err;
     }
@@ -360,7 +351,7 @@ nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {
     int rc;
 
-    rc = os_mqueue_put(&nt->nt_imq, &nmgr_evq, req);
+    rc = os_mqueue_put(&nt->nt_imq, mgmt_evq_get(), req);
     if (rc != 0) {
         os_mbuf_free_chain(req);
     }
@@ -373,19 +364,12 @@ nmgr_task_init(void)
 {
     int rc;
 
-    os_eventq_init(&nmgr_evq);
-
-    rc = os_task_init(&g_nmgr_task, "newtmgr", nmgr_task, NULL,
-      MYNEWT_VAL(NEWTMGR_TASK_PRIO), OS_WAIT_FOREVER,
-      newtmgr_stack, OS_STACK_ALIGN(MYNEWT_VAL(NEWTMGR_STACK_SIZE)));
-    if (rc != 0) {
-        goto err;
-    }
-
     rc = nmgr_os_groups_register();
     if (rc != 0) {
         goto err;
     }
+
+    nmgr_cbuf_init(&nmgr_task_cbuf);
 
     return (0);
 err:

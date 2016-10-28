@@ -25,7 +25,6 @@
 static struct os_mutex mgmt_group_lock;
 static STAILQ_HEAD(, mgmt_group) mgmt_group_list =
     STAILQ_HEAD_INITIALIZER(mgmt_group_list);
-struct os_eventq *mgmt_evq;
 
 static int
 mgmt_group_list_lock(void)
@@ -148,12 +147,4 @@ mgmt_cbuf_setoerr(struct mgmt_cbuf *cb, int errcode)
     g_err |= cbor_encode_text_stringz(&rsp, "rc");
     g_err |= cbor_encode_int(&rsp, errcode);
     g_err |= cbor_encoder_close_container(penc, &rsp);
-}
-
-void
-mgmt_cb_init(struct os_event *ev, void (*func)(struct os_event *))
-{
-    memset(ev, 0, sizeof(*ev));
-    ev->ev_type = OS_EVENT_T_CB;
-    ev->ev_arg = func;
 }
