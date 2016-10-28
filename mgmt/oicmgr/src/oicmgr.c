@@ -252,7 +252,7 @@ oicmgr_init(void)
 
     os_eventq_init(&o->os_evq);
 
-    rc = os_task_init(&o->os_task, "newtmgr_oic", omgr_oic_task, NULL,
+    rc = os_task_init(&o->os_task, "oicmgr", omgr_oic_task, NULL,
       MYNEWT_VAL(OICMGR_TASK_PRIO), OS_WAIT_FOREVER,
       oicmgr_stack, OICMGR_STACK_SZ);
     if (rc != 0) {
