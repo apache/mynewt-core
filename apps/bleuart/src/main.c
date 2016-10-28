@@ -193,33 +193,7 @@ bleuart_on_sync(void)
 static void
 bleuart_task_handler(void *unused)
 {
-    struct os_event *ev;
-    struct os_callout_func *cf;
-    int rc;
-
-    rc = ble_hs_start();
-    assert(rc == 0);
-
-    while (1) {
-        ev = os_eventq_get(&bleuart_evq);
-
-        /* Check if the event is a nmgr ble mqueue event */
-        rc = nmgr_ble_proc_mq_evt(ev);
-        if (!rc) {
-            continue;
-        }
-
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-        default:
-            assert(0);
-            break;
-        }
-    }
+    os_eventq_run(&bleuart_evq);
 }
 
 /**
@@ -244,8 +218,8 @@ main(void)
                  bleuart_stack, bleuart_STACK_SIZE);
 
     /* Initialize the BLE host. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    ble_hs_cfg.parent_evq = &bleuart_evq;
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
     ble_hs_cfg.sync_cb = bleuart_on_sync;
     ble_hs_cfg.store_read_cb = ble_store_ram_read;
     ble_hs_cfg.store_write_cb = ble_store_ram_write;
@@ -259,6 +233,9 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("Mynewt_BLEuart");
     assert(rc == 0);
+
+    /* Set the default eventq for packages that lack a dedicated task. */
+    os_eventq_dflt_set(&bleuart_evq);
 
     /* Start the OS */
     os_start();

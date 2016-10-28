@@ -253,34 +253,8 @@ bleprph_on_sync(void)
 static void
 bleprph_task_handler(void *unused)
 {
-    struct os_event *ev;
-    struct os_callout_func *cf;
-    int rc;
-
-    /* Activate the host.  This causes the host to synchronize with the
-     * controller.
-     */
-    rc = ble_hs_start();
-
     while (1) {
-        ev = os_eventq_get(&bleprph_evq);
-
-        /* Check if the event is a nmgr ble mqueue event */
-        rc = nmgr_ble_proc_mq_evt(ev);
-        if (!rc) {
-            continue;
-        }
-
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-        default:
-            assert(0);
-            break;
-        }
+        os_eventq_run(&bleprph_evq);
     }
 }
 
@@ -301,13 +275,12 @@ main(void)
     /* Set initial BLE device address. */
     memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
-    ble_hs_cfg.parent_evq = &bleprph_evq;
-
     /* Initialize OS */
     sysinit();
 
     /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);
@@ -320,7 +293,8 @@ main(void)
                  bleprph_stack, BLEPRPH_STACK_SIZE);
 
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
@@ -331,6 +305,9 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-bleprph");
     assert(rc == 0);
+
+    /* Set the default eventq for packages that lack a dedicated task. */
+    os_eventq_dflt_set(&bleprph_evq);
 
     /* Start the OS */
     os_start();

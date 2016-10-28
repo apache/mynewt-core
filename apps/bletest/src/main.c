@@ -120,7 +120,7 @@ uint8_t g_host_adv_len;
 uint32_t g_next_os_time;
 int g_bletest_state;
 struct os_eventq g_bletest_evq;
-struct os_callout_func g_bletest_timer;
+struct os_callout g_bletest_timer;
 struct os_task bletest_task;
 bssnz_t os_stack_t bletest_stack[BLETEST_STACK_SIZE];
 uint32_t g_bletest_conn_end;
@@ -853,13 +853,13 @@ bletest_execute(void)
  * @param arg
  */
 void
-bletest_timer_cb(void *arg)
+bletest_timer_cb(struct os_event *ev)
 {
     /* Call the bletest code */
     bletest_execute();
 
     /* Re-start the timer (run every 10 msecs) */
-    os_callout_reset(&g_bletest_timer.cf_c, OS_TICKS_PER_SEC / 100);
+    os_callout_reset(&g_bletest_timer, OS_TICKS_PER_SEC / 100);
 }
 
 /**
@@ -873,8 +873,6 @@ bletest_task_handler(void *arg)
     int rc;
     uint64_t rand64;
     uint64_t event_mask;
-    struct os_event *ev;
-    struct os_callout_func *cf;
 
     /* Set LED blink rate */
     g_bletest_led_rate = OS_TICKS_PER_SEC / 20;
@@ -883,8 +881,8 @@ bletest_task_handler(void *arg)
     os_time_delay(OS_TICKS_PER_SEC);
 
     /* Initialize the host timer */
-    os_callout_func_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
-                         NULL);
+    os_callout_init(&g_bletest_timer, &g_bletest_evq, bletest_timer_cb,
+                    NULL);
 
     ble_hs_dbg_set_sync_state(BLE_HS_SYNC_STATE_GOOD);
 
@@ -999,17 +997,7 @@ bletest_task_handler(void *arg)
     bletest_timer_cb(NULL);
 
     while (1) {
-        ev = os_eventq_get(&g_bletest_evq);
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-        default:
-            assert(0);
-            break;
-        }
+        os_eventq_run(&g_bletest_evq);
     }
 }
 
@@ -1061,10 +1049,8 @@ main(void)
     g_bletest_cur_peer_addr[5] = 0x08;
 #endif
 
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
-    /* Set the NimBLE host's parent event queue. */
-    ble_hs_cfg.parent_evq = &g_bletest_evq;
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Set the led pin as an output */
     g_led_pin = LED_BLINK_PIN;
@@ -1077,6 +1063,9 @@ main(void)
                       BLETEST_TASK_PRIO, OS_WAIT_FOREVER, bletest_stack,
                       BLETEST_STACK_SIZE);
     assert(rc == 0);
+
+    /* Set the default eventq for packages that lack a dedicated task. */
+    os_eventq_dflt_set(&g_bletest_evq);
 
     /* Start the OS */
     os_start();

@@ -52,7 +52,6 @@
 
 /* Init all tasks */
 static volatile int tasks_initialized;
-int init_tasks(void);
 
 /* Task 1 */
 #define TASK1_PRIO (8)
@@ -63,8 +62,13 @@ static volatile int g_task1_loops;
 
 /* Task 2 */
 #define TASK2_PRIO (9)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(128)
+#define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
+
+/* Task 3 */
+#define TASK3_PRIO (10)
+#define TASK3_STACK_SIZE    OS_STACK_ALIGN(384)
+static struct os_task task3;
 
 static struct log my_log;
 
@@ -105,6 +109,8 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
+
+static struct os_eventq slinky_evq;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -151,7 +157,7 @@ test_conf_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
     return 0;
 }
 
-void
+static void
 task1_handler(void *arg)
 {
     struct os_task *t;
@@ -191,7 +197,7 @@ task1_handler(void *arg)
     }
 }
 
-void
+static void
 task2_handler(void *arg)
 {
     struct os_task *t;
@@ -210,6 +216,18 @@ task2_handler(void *arg)
 }
 
 /**
+ * This task serves as a container for the shell and newtmgr packages.  These
+ * packages enqueue timer events when they need this task to do work.
+ */
+static void
+task3_handler(void *arg)
+{
+    while (1) {
+        os_eventq_run(&slinky_evq);
+    }
+}
+
+/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -217,7 +235,7 @@ task2_handler(void *arg)
  *
  * @return int 0 success; error otherwise.
  */
-int
+static void
 init_tasks(void)
 {
     os_stack_t *pstack;
@@ -236,8 +254,20 @@ init_tasks(void)
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 
+    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
+    assert(pstack);
+
+    os_task_init(&task3, "task3", task3_handler, NULL,
+            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
+
+    /* Initialize eventq and designate it as the default.  Packages that need
+     * to schedule work items will piggyback on this eventq.  Example packages
+     * which do this are sys/shell and mgmt/newtmgr.
+     */
+    os_eventq_init(&slinky_evq);
+    os_eventq_dflt_set(&slinky_evq);
+
     tasks_initialized = 1;
-    return 0;
 }
 
 /**
@@ -288,7 +318,7 @@ main(int argc, char **argv)
     }
 #endif
 
-    rc = init_tasks();
+    init_tasks();
 
     os_start();
 

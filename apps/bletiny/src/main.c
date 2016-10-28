@@ -105,7 +105,7 @@ static struct os_mempool bletiny_chr_pool;
 static void *bletiny_dsc_mem;
 static struct os_mempool bletiny_dsc_pool;
 
-static struct os_callout_func bletiny_tx_timer;
+static struct os_callout bletiny_tx_timer;
 struct bletiny_tx_data_s
 {
     uint16_t tx_num;
@@ -1029,7 +1029,7 @@ bletiny_on_l2cap_update(uint16_t conn_handle, int status, void *arg)
 }
 
 static void
-bletiny_tx_timer_cb(void *arg)
+bletiny_tx_timer_cb(struct os_event *ev)
 {
     int i;
     uint8_t len;
@@ -1081,7 +1081,7 @@ bletiny_tx_timer_cb(void *arg)
     if (bletiny_tx_data.tx_num) {
         timeout = (int32_t)bletiny_tx_data.tx_rate;
         timeout = (timeout * OS_TICKS_PER_SEC) / 1000;
-        os_callout_reset(&bletiny_tx_timer.cf_c, timeout);
+        os_callout_reset(&bletiny_tx_timer, timeout);
     }
 }
 
@@ -1523,7 +1523,7 @@ bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
     bletiny_tx_data.tx_len = len;
     bletiny_tx_data.tx_handle = handle;
 
-    os_callout_reset(&bletiny_tx_timer.cf_c, 0);
+    os_callout_reset(&bletiny_tx_timer, 0);
 
     return 0;
 }
@@ -1555,25 +1555,8 @@ bletiny_on_reset(int reason)
 static void
 bletiny_task_handler(void *arg)
 {
-    struct os_callout_func *cf;
-    struct os_event *ev;
-    int rc;
-
-    rc = ble_hs_start();
-    assert(rc == 0);
-
     while (1) {
-        ev = os_eventq_get(&bletiny_evq);
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-        default:
-            assert(0);
-            break;
-        }
+        os_eventq_run(&bletiny_evq);
     }
 }
 
@@ -1623,7 +1606,8 @@ main(void)
     assert(rc == 0);
 
     /* Initialize the logging system. */
-    log_register("bletiny", &bletiny_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("bletiny", &bletiny_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Initialize eventq for the application task. */
     os_eventq_init(&bletiny_evq);
@@ -1636,8 +1620,8 @@ main(void)
                  bletiny_stack, BLETINY_STACK_SIZE);
 
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    ble_hs_cfg.parent_evq = &bletiny_evq;
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = bletiny_on_reset;
     ble_hs_cfg.store_read_cb = ble_store_ram_read;
     ble_hs_cfg.store_write_cb = ble_store_ram_write;
@@ -1656,8 +1640,11 @@ main(void)
     /* Create a callout (timer).  This callout is used by the "tx" bletiny
      * command to repeatedly send packets of sequential data bytes.
      */
-    os_callout_func_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
-                         NULL);
+    os_callout_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
+                    NULL);
+
+    /* Set the default eventq for packages that lack a dedicated task. */
+    os_eventq_dflt_set(&bletiny_evq);
 
     /* Start the OS */
     os_start();

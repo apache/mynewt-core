@@ -461,29 +461,8 @@ blecent_on_sync(void)
 static void
 blecent_task_handler(void *unused)
 {
-    struct os_event *ev;
-    struct os_callout_func *cf;
-    int rc;
-
-    /* Activate the host.  This causes the host to synchronize with the
-     * controller.
-     */
-    rc = ble_hs_start();
-    assert(rc == 0);
-
     while (1) {
-        ev = os_eventq_get(&blecent_evq);
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-
-        default:
-            assert(0);
-            break;
-        }
+        os_eventq_run(&blecent_evq);
     }
 }
 
@@ -505,7 +484,8 @@ main(void)
     sysinit();
 
     /* Initialize the blecent log. */
-    log_register("blecent", &blecent_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("blecent", &blecent_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Initialize the eventq for the application task. */
     os_eventq_init(&blecent_evq);
@@ -518,8 +498,8 @@ main(void)
                  blecent_stack, BLECENT_STACK_SIZE);
 
     /* Configure the host. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    ble_hs_cfg.parent_evq = &blecent_evq;
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = blecent_on_reset;
     ble_hs_cfg.sync_cb = blecent_on_sync;
     ble_hs_cfg.store_read_cb = ble_store_ram_read;
@@ -532,6 +512,9 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-blecent");
     assert(rc == 0);
+
+    /* Set the default eventq for packages that lack a dedicated task. */
+    os_eventq_dflt_set(&blecent_evq);
 
     /* Start the OS */
     os_start();
