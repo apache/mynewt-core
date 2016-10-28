@@ -4,13 +4,6 @@ syscfg.defs:
     SHELL_TASK:
         description: 'TBD'
         value: 0
-    SHELL_TASK_PRIO:
-        description: 'TBD'
-        type: 'task_priority'
-        value: 'any'
-    SHELL_STACK_SIZE:
-        description: 'TBD'
-        value: 512
     SHELL_MAX_INPUT_LEN:
         description: 'TBD'
         value: 256

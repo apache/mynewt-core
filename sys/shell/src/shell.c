@@ -41,11 +41,14 @@ static struct os_mqueue g_shell_nlip_mq;
 #define SHELL_HELP_PER_LINE     6
 #define SHELL_MAX_ARGS          20
 
-static os_stack_t shell_stack[OS_STACK_ALIGN(MYNEWT_VAL(SHELL_STACK_SIZE))];
-
 static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
 int shell_prompt_cmd(int argc, char **argv);
+
+static void shell_event_console_rdy(struct os_event *ev);
+
+/* Shared queue that the shell uses for work items. */
+static struct os_eventq *shell_evq;
 
 static struct shell_cmd g_shell_echo_cmd = {
     .sc_cmd = "echo",
@@ -72,9 +75,9 @@ static struct shell_cmd g_shell_os_date_cmd = {
     .sc_cmd_func = shell_os_date_cmd
 };
 
-static struct os_task shell_task;
-static struct os_eventq shell_evq;
-static struct os_event console_rdy_ev;
+static struct os_event shell_console_rdy_ev = {
+    .ev_cb = shell_event_console_rdy,
+};
 
 static struct os_mutex g_shell_cmd_list_lock;
 
@@ -87,6 +90,19 @@ static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list =
 
 static struct os_mbuf *g_nlip_mbuf;
 static uint16_t g_nlip_expected_len;
+
+static struct os_eventq *
+shell_evq_get(void)
+{
+    os_eventq_ensure(&shell_evq, NULL);
+    return shell_evq;
+}
+
+void
+shell_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&shell_evq, evq, NULL);
+}
 
 int
 shell_cmd_list_lock(void)
@@ -208,7 +224,6 @@ shell_process_command(char *line, int len)
     console_print_prompt();
     return (0);
 }
-
 
 static int
 shell_nlip_process(char *data, int len)
@@ -374,26 +389,6 @@ err:
     return (rc);
 }
 
-static void
-shell_nlip_mqueue_process(void)
-{
-    struct os_mbuf *m;
-
-    /* Copy data out of the mbuf 12 bytes at a time and write it to
-     * the console.
-     */
-    while (1) {
-        m = os_mqueue_get(&g_shell_nlip_mq);
-        if (!m) {
-            break;
-        }
-
-        (void) shell_nlip_mtx(m);
-
-        os_mbuf_free_chain(m);
-    }
-}
-
 int
 shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg)
 {
@@ -408,7 +403,7 @@ shell_nlip_output(struct os_mbuf *m)
 {
     int rc;
 
-    rc = os_mqueue_put(&g_shell_nlip_mq, &shell_evq, m);
+    rc = os_mqueue_put(&g_shell_nlip_mq, shell_evq_get(), m);
     if (rc != 0) {
         goto err;
     }
@@ -456,25 +451,29 @@ shell_read_console(void)
     }
 }
 
+static void
+shell_event_console_rdy(struct os_event *ev)
+{
+    shell_read_console();
+}
 
 static void
-shell_task_func(void *arg)
+shell_event_data_in(struct os_event *ev)
 {
-    struct os_event *ev;
+    struct os_mbuf *m;
 
+    /* Copy data out of the mbuf 12 bytes at a time and write it to
+     * the console.
+     */
     while (1) {
-        ev = os_eventq_get(&shell_evq);
-        assert(ev != NULL);
-
-        switch (ev->ev_type) {
-            case OS_EVENT_T_CONSOLE_RDY:
-                // Read and process all available lines on the console.
-                shell_read_console();
-                break;
-            case OS_EVENT_T_MQUEUE_DATA:
-                shell_nlip_mqueue_process();
-                break;
+        m = os_mqueue_get(&g_shell_nlip_mq);
+        if (!m) {
+            break;
         }
+
+        (void) shell_nlip_mtx(m);
+
+        os_mbuf_free_chain(m);
     }
 }
 
@@ -483,10 +482,10 @@ shell_task_func(void *arg)
  * to be read.  This is either a full line, or when the
  * console buffer (default = 128) is full.
  */
-void
+static void
 shell_console_rx_cb(void)
 {
-    os_eventq_put(&shell_evq, &console_rdy_ev);
+    os_eventq_put(shell_evq_get(), &shell_console_rdy_ev);
 }
 
 static int
@@ -567,13 +566,6 @@ shell_init(void)
     rc = shell_cmd_register(&g_shell_os_date_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    os_eventq_init(&shell_evq);
-    os_mqueue_init(&g_shell_nlip_mq, NULL);
-    console_rdy_ev.ev_type = OS_EVENT_T_CONSOLE_RDY;
+    os_mqueue_init(&g_shell_nlip_mq, shell_event_data_in, NULL);
     console_init(shell_console_rx_cb);
-
-    rc = os_task_init(&shell_task, "shell", shell_task_func,
-      NULL, MYNEWT_VAL(SHELL_TASK_PRIO), OS_WAIT_FOREVER, shell_stack,
-      OS_STACK_ALIGN(MYNEWT_VAL(SHELL_STACK_SIZE)));
-    SYSINIT_PANIC_ASSERT(rc == 0);
 }

@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+struct os_eventq;
+
 typedef int (*shell_cmd_func_t)(int argc, char **argv);
 struct shell_cmd {
     char *sc_cmd;
@@ -43,7 +45,7 @@ typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
 int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
 int shell_nlip_output(struct os_mbuf *m);
 
-void shell_console_rx_cb(void);
+void shell_evq_set(struct os_eventq *evq);
 void shell_init(void);
 
 int shell_cmd_list_lock(void);
