@@ -101,7 +101,7 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
     struct omgr_state *o = &omgr_state;
     const struct mgmt_handler *handler;
     const uint8_t *data;
-    int rc;
+    int rc = 0;
     extern CborEncoder g_encoder;
 
     if (!req->query_len) {
@@ -160,7 +160,12 @@ bad_req:
     /*
      * XXXX might send partially constructed response as payload
      */
-    oc_send_response(req, OC_STATUS_BAD_REQUEST);
+    if (rc == MGMT_ERR_ENOMEM) {
+        rc = OC_STATUS_INTERNAL_SERVER_ERROR;
+    } else {
+        rc = OC_STATUS_BAD_REQUEST;
+    }
+    oc_send_response(req, rc);
 }
 
 static void
