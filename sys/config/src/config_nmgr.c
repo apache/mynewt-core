@@ -48,6 +48,8 @@ conf_nmgr_read(struct mgmt_cbuf *cb)
     char name_str[CONF_MAX_NAME_LEN];
     char val_str[CONF_MAX_VAL_LEN];
     char *val;
+    CborError g_err = CborNoError;
+    CborEncoder rsp;
 
     const struct cbor_attr_t attr[2] = {
         [0] = {
@@ -71,15 +73,13 @@ conf_nmgr_read(struct mgmt_cbuf *cb)
         return MGMT_ERR_EINVAL;
     }
 
-    {
-        CborError g_err = CborNoError;
-        CborEncoder rsp;
-        g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
-        g_err |= cbor_encode_text_stringz(&rsp, "val");
-        g_err |= cbor_encode_text_stringz(&rsp, val);
-        g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
+    g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "val");
+    g_err |= cbor_encode_text_stringz(&rsp, val);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
     }
-
     return 0;
 }
 

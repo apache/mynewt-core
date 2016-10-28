@@ -83,7 +83,6 @@ nmgr_def_echo(struct mgmt_cbuf *cb)
     CborEncoder *penc = &cb->encoder;
     CborError g_err = CborNoError;
     CborEncoder rsp;
-
     struct cbor_attr_t attrs[2] = {
         [0] = {
             .attribute = "d",
@@ -103,7 +102,10 @@ nmgr_def_echo(struct mgmt_cbuf *cb)
     g_err |= cbor_encode_text_string(&rsp, echo_buf, strlen(echo_buf));
     g_err |= cbor_encoder_close_container(penc, &rsp);
 
-    return (g_err);
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
+    return (0);
 }
 
 static int
@@ -123,7 +125,7 @@ nmgr_def_console_echo(struct mgmt_cbuf *cb)
 
     rc = cbor_read_object(&cb->it, attrs);
     if (rc) {
-        return OS_EINVAL;
+        return MGMT_ERR_EINVAL;
     }
 
     if (echo_on) {
@@ -182,6 +184,9 @@ nmgr_def_taskstat_read(struct mgmt_cbuf *cb)
     g_err |= cbor_encoder_close_container(&rsp, &tasks);
     g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
 
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return (0);
 }
 
@@ -220,6 +225,9 @@ nmgr_def_mpstat_read(struct mgmt_cbuf *cb)
     g_err |= cbor_encoder_close_container(&rsp, &pools);
     g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
 
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return (0);
 }
 
@@ -230,9 +238,9 @@ nmgr_datetime_get(struct mgmt_cbuf *cb)
     struct os_timezone tz;
     char buf[DATETIME_BUFSIZE];
     int rc;
-
     CborError g_err = CborNoError;
     CborEncoder rsp;
+
     g_err |= cbor_encoder_create_map(&cb->encoder, &rsp, CborIndefiniteLength);
     g_err |= cbor_encode_text_stringz(&rsp, "rc");
     g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
@@ -242,13 +250,17 @@ nmgr_datetime_get(struct mgmt_cbuf *cb)
     assert(rc == 0);
     rc = datetime_format(&tv, &tz, buf, DATETIME_BUFSIZE);
     if (rc) {
-        rc = OS_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto err;
     }
     g_err |= cbor_encode_text_stringz(&rsp, "datetime");
     g_err |= cbor_encode_text_stringz(&rsp, buf);
     g_err |= cbor_encoder_close_container(&cb->encoder, &rsp);
-    return OS_OK;
+
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
+    return 0;
 
 err:
     return (rc);
@@ -260,8 +272,7 @@ nmgr_datetime_set(struct mgmt_cbuf *cb)
     struct os_timeval tv;
     struct os_timezone tz;
     char buf[DATETIME_BUFSIZE];
-    int rc = OS_OK;
-
+    int rc = 0;
     const struct cbor_attr_t datetime_write_attr[3] = {
         [0] = {
             .attribute = "datetime",
@@ -278,7 +289,7 @@ nmgr_datetime_set(struct mgmt_cbuf *cb)
 
     rc = cbor_read_object(&cb->it, datetime_write_attr);
     if (rc) {
-        rc = OS_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto out;
     }
 
@@ -287,15 +298,15 @@ nmgr_datetime_set(struct mgmt_cbuf *cb)
     if (!rc) {
         rc = os_settimeofday(&tv, &tz);
         if (rc) {
-          rc = OS_EINVAL;
+          rc = MGMT_ERR_EINVAL;
           goto out;
         }
     } else {
-        rc = OS_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto out;
     }
 
-    rc = OS_OK;
+    rc = 0;
 out:
     mgmt_cbuf_setoerr(cb, rc);
     return rc;
@@ -315,7 +326,7 @@ nmgr_reset(struct mgmt_cbuf *cb)
 
     mgmt_cbuf_setoerr(cb, OS_OK);
 
-    return OS_OK;
+    return 0;
 }
 
 int

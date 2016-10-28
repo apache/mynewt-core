@@ -261,13 +261,16 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         g_err |= cbor_encode_boolean(&image, !(flags & IMAGE_F_NON_BOOTABLE));
 
         g_err |= cbor_encode_text_stringz(&image, "pending");
-        g_err |= cbor_encode_boolean(&image, state_flags & IMGMGR_STATE_F_PENDING);
+        g_err |= cbor_encode_boolean(&image,
+                                     state_flags & IMGMGR_STATE_F_PENDING);
 
         g_err |= cbor_encode_text_stringz(&image, "confirmed");
-        g_err |= cbor_encode_boolean(&image, state_flags & IMGMGR_STATE_F_CONFIRMED);
+        g_err |= cbor_encode_boolean(&image,
+                                     state_flags & IMGMGR_STATE_F_CONFIRMED);
 
         g_err |= cbor_encode_text_stringz(&image, "active");
-        g_err |= cbor_encode_boolean(&image, state_flags & IMGMGR_STATE_F_ACTIVE);
+        g_err |= cbor_encode_boolean(&image,
+                                     state_flags & IMGMGR_STATE_F_ACTIVE);
 
         g_err |= cbor_encoder_close_container(&images, &image);
     }
@@ -285,6 +288,9 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
 
     g_err |= cbor_encoder_close_container(penc, &rsp);
 
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return 0;
 }
 

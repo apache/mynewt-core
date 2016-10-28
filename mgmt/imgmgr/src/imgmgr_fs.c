@@ -106,6 +106,9 @@ imgr_file_download(struct mgmt_cbuf *cb)
     g_err |= cbor_encoder_close_container(penc, &rsp);
 
     fs_close(file);
+    if (g_err) {
+          return MGMT_ERR_ENOMEM;
+    }
     return 0;
 
 err_close:
@@ -215,6 +218,9 @@ out:
     g_err |= cbor_encode_text_stringz(&rsp, "off");
     g_err |= cbor_encode_uint(&rsp, imgr_state.upload.off);
     g_err |= cbor_encoder_close_container(penc, &rsp);
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return 0;
 
 err_close:

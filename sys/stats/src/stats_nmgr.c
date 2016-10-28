@@ -79,9 +79,8 @@ static int
 stats_nmgr_encode_name(struct stats_hdr *hdr, void *arg)
 {
     CborEncoder *penc = (CborEncoder *) arg;
-    CborError g_err = CborNoError;
-    g_err |= cbor_encode_text_stringz(penc, hdr->s_name);
-    return (0);
+
+    return cbor_encode_text_stringz(penc, hdr->s_name);
 }
 
 static int
@@ -130,6 +129,9 @@ stats_nmgr_read(struct mgmt_cbuf *cb)
     g_err |= cbor_encoder_close_container(&rsp, &stats);
     g_err |= cbor_encoder_close_container(penc, &rsp);
 
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return (0);
 err:
     mgmt_cbuf_setoerr(cb, g_err);
@@ -153,6 +155,9 @@ stats_nmgr_list(struct mgmt_cbuf *cb)
     g_err |= cbor_encoder_close_container(&rsp, &stats);
     g_err |= cbor_encoder_close_container(penc, &rsp);
 
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return (0);
 }
 

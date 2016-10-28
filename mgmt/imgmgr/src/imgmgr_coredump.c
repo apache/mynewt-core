@@ -74,6 +74,10 @@ imgr_core_load(struct mgmt_cbuf *cb)
     const struct flash_area *fa;
     uint8_t data[IMGMGR_NMGR_MAX_MSG];
     struct coredump_header *hdr;
+    CborError g_err = CborNoError;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp;
+
     hdr = (struct coredump_header *)data;
 
     rc = cbor_read_object(&cb->it, dload_attr);
@@ -111,9 +115,6 @@ imgr_core_load(struct mgmt_cbuf *cb)
         goto err_close;
     }
 
-    CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp;
     g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
     g_err |= cbor_encode_text_stringz(&rsp, "rc");
     g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
@@ -124,13 +125,16 @@ imgr_core_load(struct mgmt_cbuf *cb)
     g_err |= cbor_encoder_close_container(penc, &rsp);
 
     flash_area_close(fa);
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
     return 0;
 
 err_close:
     flash_area_close(fa);
 err:
     mgmt_cbuf_setoerr(cb, rc);
-    return 0;
+    return rc;
 }
 
 /*

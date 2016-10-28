@@ -263,10 +263,12 @@ imgr_upload(struct mgmt_cbuf *cb)
     struct image_version ver;
     struct image_header *hdr;
     int area_id;
-
     int best;
     int rc;
     int i;
+    CborEncoder *penc = &cb->encoder;
+    CborEncoder rsp;
+    CborError g_err = CborNoError;
 
     rc = cbor_read_object(&cb->it, off_attr);
     if (rc || off == UINT_MAX) {
@@ -371,16 +373,15 @@ imgr_upload(struct mgmt_cbuf *cb)
         }
     }
 out:
-    {
-        CborError g_err = CborNoError;
-        CborEncoder *penc = &cb->encoder;
-        CborEncoder rsp;
-        g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-        g_err |= cbor_encode_text_stringz(&rsp, "rc");
-        g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
-        g_err |= cbor_encode_text_stringz(&rsp, "off");
-        g_err |= cbor_encode_int(&rsp, imgr_state.upload.off);
-        g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&rsp, "rc");
+    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&rsp, "off");
+    g_err |= cbor_encode_int(&rsp, imgr_state.upload.off);
+    g_err |= cbor_encoder_close_container(penc, &rsp);
+
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
     }
     return 0;
 err_close:
