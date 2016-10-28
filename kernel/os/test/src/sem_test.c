@@ -29,6 +29,7 @@
 #define SEM_TEST_STACK_SIZE     512
 #endif
 
+#if MYNEWT_VAL(SELFTEST)
 struct os_task task1;
 os_stack_t stack1[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
 
@@ -45,6 +46,7 @@ os_stack_t stack4[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
 #define TASK2_PRIO (2) 
 #define TASK3_PRIO (3) 
 #define TASK4_PRIO (4) 
+#endif /* MYNEWT_VAL(SELFTEST) */
 
 struct os_sem g_sem1;
 

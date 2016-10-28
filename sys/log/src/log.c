@@ -114,8 +114,10 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_arg = arg;
     log->l_level = level;
 
-    assert(!log_registered(log));
-    STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+    /*assert(!log_registered(log));*/
+    if (!log_registered(log)) {
+        STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+    }
 
     return (0);
 }

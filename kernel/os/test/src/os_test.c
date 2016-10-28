@@ -33,6 +33,7 @@
 void
 os_test_restart(void)
 {
+#if MYNEWT_VAL(SELFTEST)
     struct sigaction sa;
     struct itimerval it;
     int rc;
@@ -51,6 +52,7 @@ os_test_restart(void)
         perror("Cannot set itimer");
         abort();
     }
+#endif /* MYNEWT_VAL(SELFTEST) */
 
     tu_restart();
 }
