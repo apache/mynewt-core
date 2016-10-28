@@ -61,28 +61,27 @@ struct os_task oc_task;
 os_stack_t *oc_stack;
 
 void
-oc_send_buffer(oc_message_t *message) {
-
-    switch (message->endpoint.flags)
-    {
+oc_send_buffer(oc_message_t *message)
+{
+    switch (message->endpoint.flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-        case IP:
-            oc_send_buffer_ip(message);
-            break;
+    case IP:
+        oc_send_buffer_ip(message);
+        break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-        case GATT:
-            oc_send_buffer_gatt(message);
-            break;
+    case GATT:
+        oc_send_buffer_gatt(message);
+        break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-        case SERIAL:
-            oc_send_buffer_serial(message);
-            break;
+    case SERIAL:
+        oc_send_buffer_serial(message);
+        break;
 #endif
-        default:
-            ERROR("Unknown transport option %u\n", message->endpoint.flags);
-            oc_message_unref(message);
+    default:
+        ERROR("Unknown transport option %u\n", message->endpoint.flags);
+        oc_message_unref(message);
     }
 }
 
@@ -153,7 +152,8 @@ oc_task_handler(void *arg)
 }
 
 static int
-oc_init_task(void) {
+oc_init_task(void)
+{
     int rc;
 
     os_eventq_init(&oc_event_q);
@@ -193,25 +193,21 @@ oc_connectivity_shutdown(void)
 int
 oc_connectivity_init(void)
 {
-    int rc;
+    int rc = -1;
 
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    rc = oc_connectivity_init_ip();
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
+    if (oc_connectivity_init_ip() == 0) {
+        rc = 0;
     }
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-
-    rc = oc_connectivity_init_serial();
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
+    if (oc_connectivity_init_serial() == 0) {
+        rc = 0;
     }
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    rc = oc_connectivity_init_gatt();
-    if (rc != 0) {
-        goto oc_connectivity_init_err;
+    if (oc_connectivity_init_gatt() == 0) {
+        rc = 0;
     }
 #endif
     rc = oc_init_task();
