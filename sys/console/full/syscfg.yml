@@ -22,4 +22,4 @@ syscfg.defs:
         value: '1'
     CONSOLE_HIST_ENABLE:
         description: 'Console history '
-        value: 1
+        value: 0
