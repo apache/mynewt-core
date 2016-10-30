@@ -23,7 +23,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <strings.h>
+#include <string.h>
 #include "../src/nffs_priv.h"
 #include <os/queue.h>
 #include <fs/fs.h>
