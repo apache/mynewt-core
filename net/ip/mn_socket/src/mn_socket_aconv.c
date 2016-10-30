@@ -65,6 +65,7 @@ mn_inet_ntop(int af, const void *src_v, void *dst, int len)
 {
     const unsigned char *src = src_v;
     const struct mn_in6_addr *a6;
+    uint16_t u16;
     int rc;
     int i;
 
@@ -81,8 +82,9 @@ mn_inet_ntop(int af, const void *src_v, void *dst, int len)
         rc = 0;
 
         for (i = 0; i < sizeof(*a6); i += 2) {
-            rc += snprintf(dst + rc, len - rc, "%x",
-              htons(*(uint16_t *)&a6->s_addr[i]));
+            memcpy(&u16, &a6->s_addr[i], 2);
+            u16 = htons(u16);
+            rc += snprintf(dst + rc, len - rc, "%x", 16);
             if (rc >= len) {
                 return NULL;
             }
