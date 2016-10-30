@@ -113,41 +113,7 @@ void
 oc_task_handler(void *arg)
 {
     while (1) {
-        struct os_callout_func *cf;
-        oc_message_t *pmsg;
-        (void) pmsg;    /* to avoid unused */
-        struct os_event *evt = os_eventq_get(&oc_event_q);
-
-        switch(evt->ev_type) {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-            case OC_ADATOR_EVENT_IP:
-                while ((pmsg = oc_attempt_rx_ip()) != NULL) {
-                    oc_network_event(pmsg);
-                }
-                break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-            case OC_ADATOR_EVENT_SERIAL:
-                while ((pmsg = oc_attempt_rx_serial()) != NULL) {
-                    oc_network_event(pmsg);
-                }
-                break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-            case OC_ADATOR_EVENT_GATT:
-                while ((pmsg = oc_attempt_rx_gatt()) != NULL) {
-                    oc_network_event(pmsg);
-                }
-                break;
-#endif
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)evt;
-            assert(cf->cf_func);
-            cf->cf_func(CF_ARG(cf));
-            break;
-            default:
-                ERROR("oc_task_handler: Unidentified event %d\n", evt->ev_type);
-        }
+        os_eventq_run(&oc_event_q);
     }
 }
 

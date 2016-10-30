@@ -31,8 +31,10 @@
 #include "../oc_log.h"
 #include "adaptor.h"
 
+static void oc_event_ip(struct os_event *ev);
+
 struct os_event oc_sock_read_event = {
-    .ev_type = OC_ADATOR_EVENT_IP,
+    .ev_cb = oc_event_ip,
 };
 
 #ifdef OC_SECURITY
@@ -224,6 +226,16 @@ oc_connectivity_shutdown_ip(void)
     }
 #endif
 
+}
+
+static void
+oc_event_ip(struct os_event *ev)
+{
+    oc_message_t *pmsg;
+
+    while ((pmsg = oc_attempt_rx_ip()) != NULL) {
+        oc_network_event(pmsg);
+    }
 }
 
 int

@@ -41,6 +41,16 @@ oc_connectivity_shutdown_serial(void) {
     shell_nlip_input_register(NULL, NULL);
 }
 
+static void
+oc_event_serial(struct os_event *ev)
+{
+    oc_message_t *pmsg;
+
+    while ((pmsg = oc_attempt_rx_serial()) != NULL) {
+        oc_network_event(pmsg);
+    }
+}
+
 int
 oc_connectivity_init_serial(void) {
     int rc;
@@ -55,7 +65,7 @@ oc_connectivity_init_serial(void) {
         goto err;
     }
     /* override the eventq type */
-    oc_serial_mqueue.mq_ev.ev_type = OC_ADATOR_EVENT_SERIAL;
+    oc_serial_mqueue.mq_ev.ev_cb = oc_event_serial;
     return 0;
 
 err:

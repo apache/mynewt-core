@@ -201,11 +201,21 @@ ble_coap_gatt_srv_init(struct os_eventq **out)
     return 0;
 }
 
+static void
+oc_event_gatt(struct os_event *ev)
+{
+    oc_message_t *pmsg;
+
+    while ((pmsg = oc_attempt_rx_gatt()) != NULL) {
+        oc_network_event(pmsg);
+    }
+}
+
 int
 oc_connectivity_init_gatt(void)
 {
     os_mqueue_init(&ble_coap_mq, NULL);
-    ble_coap_mq.mq_ev.ev_type = OC_ADATOR_EVENT_GATT;
+    ble_coap_mq.mq_ev.ev_cb = oc_event_gatt;
     return 0;
 }
 

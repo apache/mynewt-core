@@ -24,10 +24,6 @@
 extern "C" {
 #endif
 
-#define OC_ADATOR_EVENT_IP      (OS_EVENT_T_PERUSER + 0)
-#define OC_ADATOR_EVENT_SERIAL  (OS_EVENT_T_PERUSER + 1)
-#define OC_ADATOR_EVENT_GATT    (OS_EVENT_T_PERUSER + 2)
-
 extern struct os_eventq oc_event_q;
 
 
