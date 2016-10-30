@@ -18,6 +18,7 @@
  */
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 #include <os/endian.h>
 #include "mn_socket/mn_socket.h"
 
