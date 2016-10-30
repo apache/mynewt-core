@@ -21,6 +21,7 @@
 #include <assert.h>
 
 #include "bsp/bsp.h"
+#include <nrf52.h>
 #include <hal/hal_bsp.h>
 #include "mcu/nrf52_hal.h"
 
@@ -60,4 +61,29 @@ int
 hal_bsp_power_state(int state)
 {
     return (0);
+}
+
+/**
+ * Returns the configured priority for the given interrupt. If no priority
+ * configured, return the priority passed in
+ *
+ * @param irq_num
+ * @param pri
+ *
+ * @return uint32_t
+ */
+uint32_t
+hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
+{
+    uint32_t cfg_pri;
+
+    switch (irq_num) {
+    /* Radio gets highest priority */
+    case RADIO_IRQn:
+        cfg_pri = 0;
+        break;
+    default:
+        cfg_pri = pri;
+    }
+    return cfg_pri;
 }

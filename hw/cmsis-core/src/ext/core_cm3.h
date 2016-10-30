@@ -184,7 +184,8 @@
 
 /*@} end of group Cortex_M3 */
 
-
+/* External declarations for mynewt additions */
+extern uint32_t hal_bsp_get_nvic_priority(int irq_num, uint32_t pri);
 
 /*******************************************************************************
  *                 Register Abstraction
@@ -1404,6 +1405,8 @@ __STATIC_INLINE uint32_t NVIC_GetActive(IRQn_Type IRQn)
  */
 __STATIC_INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 {
+  priority = hal_bsp_get_nvic_priority(IRQn, priority);
+
   if(IRQn < 0) {
     SCB->SHP[((uint32_t)(IRQn) & 0xF)-4] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff); } /* set Priority for Cortex-M  System Interrupts */
   else {

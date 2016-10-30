@@ -69,6 +69,9 @@ int hal_bsp_hw_id(uint8_t *id, int max_len);
 
 int hal_bsp_power_state(int state);
 
+/* Returns priority of given interrupt number */
+uint32_t hal_bsp_get_nvic_priority(int irq_num, uint32_t pri);
+
 #ifdef __cplusplus
 }
 #endif
