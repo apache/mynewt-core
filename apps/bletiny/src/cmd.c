@@ -256,7 +256,160 @@ static struct kv_pair cmd_adv_filt_types[] = {
     { "scan", BLE_HCI_ADV_FILT_SCAN },
     { "conn", BLE_HCI_ADV_FILT_CONN },
     { "both", BLE_HCI_ADV_FILT_BOTH },
+    { NULL }
 };
+
+static void
+print_enumerate_options(struct kv_pair *options)
+{
+    int i;
+    for (i = 0; options[i].key != NULL; i++) {
+        if (i != 0) {
+            console_printf("|");
+        }
+        console_printf("%s(%d)", options[i].key, options[i].val);
+    }
+}
+
+static void
+help_cmd_long_bounds(const char *cmd_name, long min, long max)
+{
+    console_printf("\t%s=<%ld-%ld>\n", cmd_name, min, max);
+}
+
+static void
+help_cmd_long_bounds_dflt(const char *cmd_name, long min, long max, long dflt)
+{
+    console_printf("\t%s=[%ld-%ld] default=%ld\n", cmd_name, min, max, dflt);
+}
+
+static void
+help_cmd_val(const char *cmd_name)
+{
+    console_printf("\t%s=<val>\n", cmd_name);
+}
+
+static void
+help_cmd_long(const char *cmd_name)
+{
+    help_cmd_val(cmd_name);
+}
+
+static void
+help_cmd_bool(const char *cmd_name)
+{
+    console_printf("\t%s=<0|1>\n", cmd_name);
+}
+
+static void
+help_cmd_bool_dflt(const char *cmd_name, bool dflt)
+{
+    console_printf("\t%s=[0|1] default=%d\n", cmd_name, dflt);
+}
+
+static void
+help_cmd_uint8(const char *cmd_name)
+{
+    help_cmd_val(cmd_name);
+}
+
+static void
+help_cmd_uint8_dflt(const char *cmd_name, uint8_t dflt)
+{
+    console_printf("\t%s=[val] default=%u\n", cmd_name, dflt);
+}
+
+static void
+help_cmd_uint16(const char *cmd_name)
+{
+    help_cmd_val(cmd_name);
+}
+
+static void
+help_cmd_uint16_dflt(const char *cmd_name, uint16_t dflt)
+{
+    console_printf("\t%s=[val] default=%u\n", cmd_name, dflt);
+}
+
+static void
+help_cmd_uint32(const char *cmd_name)
+{
+    help_cmd_val(cmd_name);
+}
+
+static void
+help_cmd_uint64(const char *cmd_name)
+{
+    help_cmd_val(cmd_name);
+}
+
+static void
+help_cmd_kv(const char *cmd_name, struct kv_pair *options)
+{
+    console_printf("\t%s=<", cmd_name);
+    print_enumerate_options(options);
+    console_printf(">\n");
+}
+
+static void
+help_cmd_kv_dflt(const char *cmd_name, struct kv_pair *options, int dflt)
+{
+    console_printf("\t%s=[", cmd_name);
+    print_enumerate_options(options);
+    console_printf("] default=%d\n", dflt);
+}
+
+static void
+help_cmd_byte_stream(const char *cmd_name)
+{
+    console_printf("\t%s=<xx:xx:xx: ...>\n", cmd_name);
+}
+
+static void
+help_cmd_byte_stream_exact_length(const char *cmd_name, int len)
+{
+    console_printf("\t%s=<xx:xx:xx: ...> len=%d\n", cmd_name, len);
+}
+
+static void
+help_cmd_uuid(const char *cmd_name)
+{
+    console_printf("\t%s=<UUID>\n", cmd_name);
+}
+
+static void
+help_cmd_extract(const char *cmd_name)
+{
+    console_printf("\t%s=<str>\n", cmd_name);
+}
+
+static void
+help_cmd_conn_start_end(void)
+{
+    console_printf("\t%s=<val> %s=<val> %s=<val>\n", "conn", "start", "end");
+}
+
+static void
+bletiny_adv_help(void)
+{
+    console_printf("Available adv commands: \n");
+    console_printf("\thelp\n");
+    console_printf("\tstop\n");
+    console_printf("Available adv params: \n");
+    help_cmd_kv_dflt("conn", cmd_adv_conn_modes, BLE_GAP_CONN_MODE_UND);
+    help_cmd_kv_dflt("disc", cmd_adv_disc_modes, BLE_GAP_DISC_MODE_GEN);
+    help_cmd_kv_dflt("peer_addr_type", cmd_adv_addr_types,
+    BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_byte_stream_exact_length("peer_addr", 6);
+    help_cmd_kv_dflt("own_addr_type", cmd_adv_addr_types,
+                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_long_bounds_dflt("chan_map", 0, 0xff, 0);
+    help_cmd_kv_dflt("filt", cmd_adv_filt_types, BLE_HCI_ADV_FILT_NONE);
+    help_cmd_long_bounds_dflt("itvl_min", 0, UINT16_MAX, 0);
+    help_cmd_long_bounds_dflt("itvl_max", 0, UINT16_MAX, 0);
+    help_cmd_long_bounds_dflt("hd", 0, 1, 0);
+    help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
+}
 
 static int
 cmd_adv(int argc, char **argv)
@@ -267,6 +420,11 @@ cmd_adv(int argc, char **argv)
     uint8_t own_addr_type;
     uint8_t peer_addr[8];
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_adv_help();
+        return 0;
+    }
 
     if (argc > 1 && strcmp(argv[1], "stop") == 0) {
         rc = bletiny_adv_stop();
@@ -282,6 +440,7 @@ cmd_adv(int argc, char **argv)
                                             BLE_GAP_CONN_MODE_UND, &rc);
     if (rc != 0) {
         console_printf("invalid 'conn' parameter\n");
+        help_cmd_kv_dflt("conn", cmd_adv_conn_modes, BLE_GAP_CONN_MODE_UND);
         return rc;
     }
 
@@ -289,12 +448,16 @@ cmd_adv(int argc, char **argv)
                                             BLE_GAP_DISC_MODE_GEN, &rc);
     if (rc != 0) {
         console_printf("invalid 'disc' parameter\n");
+        help_cmd_kv_dflt("disc", cmd_adv_disc_modes, BLE_GAP_DISC_MODE_GEN);
         return rc;
     }
 
     peer_addr_type = parse_arg_kv_default(
         "peer_addr_type", cmd_adv_addr_types, BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
+        console_printf("invalid 'peer_addr_type' parameter\n");
+        help_cmd_kv_dflt("peer_addr_type", cmd_adv_addr_types,
+                         BLE_ADDR_TYPE_PUBLIC);
         return rc;
     }
 
@@ -302,47 +465,64 @@ cmd_adv(int argc, char **argv)
     if (rc == ENOENT) {
         memset(peer_addr, 0, sizeof peer_addr);
     } else if (rc != 0) {
+        console_printf("invalid 'peer_addr' parameter\n");
+        help_cmd_byte_stream_exact_length("peer_addr", 6);
         return rc;
     }
 
     own_addr_type = parse_arg_kv_default(
         "own_addr_type", cmd_adv_addr_types, BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
+        console_printf("invalid 'own_addr_type' parameter\n");
+        help_cmd_kv_dflt("own_addr_type", cmd_adv_addr_types,
+                         BLE_ADDR_TYPE_PUBLIC);
         return rc;
     }
 
     params.channel_map = parse_arg_long_bounds_default("chan_map", 0, 0xff, 0,
                                                        &rc);
     if (rc != 0) {
+        console_printf("invalid 'chan_map' parameter\n");
+        help_cmd_long_bounds_dflt("chan_map", 0, 0xff, 0);
         return rc;
     }
 
     params.filter_policy = parse_arg_kv_default("filt", cmd_adv_filt_types,
                                                 BLE_HCI_ADV_FILT_NONE, &rc);
     if (rc != 0) {
+        console_printf("invalid 'filt' parameter\n");
+        help_cmd_kv_dflt("filt", cmd_adv_filt_types, BLE_HCI_ADV_FILT_NONE);
         return rc;
     }
 
     params.itvl_min = parse_arg_long_bounds_default("itvl_min", 0, UINT16_MAX,
                                                     0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_min' parameter\n");
+        help_cmd_long_bounds_dflt("itvl_min", 0, UINT16_MAX, 0);
         return rc;
     }
 
     params.itvl_max = parse_arg_long_bounds_default("itvl_max", 0, UINT16_MAX,
                                                     0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_max' parameter\n");
+        help_cmd_long_bounds_dflt("itvl_max", 0, UINT16_MAX, 0);
         return rc;
     }
 
     params.high_duty_cycle = parse_arg_long_bounds_default("hd", 0, 1, 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'hd' parameter\n");
+        help_cmd_long_bounds_dflt("hd", 0, 1, 0);
         return rc;
     }
 
     duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX,
                                                 BLE_HS_FOREVER, &rc);
     if (rc != 0) {
+        console_printf("invalid 'dur' parameter\n");
+        help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
         return rc;
     }
 
@@ -377,6 +557,29 @@ static struct kv_pair cmd_conn_own_addr_types[] = {
     { NULL }
 };
 
+static void
+bletiny_conn_help(void)
+{
+    console_printf("Available conn commands: \n");
+    console_printf("\thelp\n");
+    console_printf("\tcancel\n");
+    console_printf("Available conn params: \n");
+    help_cmd_kv_dflt("peer_addr_type", cmd_conn_peer_addr_types,
+                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_byte_stream_exact_length("peer_addr", 6);
+    help_cmd_kv_dflt("own_addr_type", cmd_conn_own_addr_types,
+                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_uint16_dflt("scan_itvl", 0x0010);
+    help_cmd_uint16_dflt("scan_window", 0x0010);
+    help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+    help_cmd_uint16_dflt("itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+    help_cmd_uint16_dflt("latency", 0);
+    help_cmd_uint16_dflt("timeout", 0x0100);
+    help_cmd_uint16_dflt("min_ce_len", 0x0010);
+    help_cmd_uint16_dflt("max_ce_len", 0x0300);
+    help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, 0);
+}
+
 static int
 cmd_conn(int argc, char **argv)
 {
@@ -386,6 +589,11 @@ cmd_conn(int argc, char **argv)
     int peer_addr_type;
     int own_addr_type;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_conn_help();
+        return 0;
+    }
 
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
         rc = bletiny_conn_cancel();
@@ -401,6 +609,9 @@ cmd_conn(int argc, char **argv)
                                           cmd_conn_peer_addr_types,
                                           BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
+        console_printf("invalid 'peer_addr_type' parameter\n");
+        help_cmd_kv_dflt("peer_addr_type", cmd_conn_peer_addr_types,
+                         BLE_ADDR_TYPE_PUBLIC);
         return rc;
     }
 
@@ -412,6 +623,8 @@ cmd_conn(int argc, char **argv)
         }
 
         if (rc != 0) {
+            console_printf("invalid 'peer_addr' parameter\n");
+            help_cmd_byte_stream_exact_length("peer_addr", 6);
             return rc;
         }
     } else {
@@ -422,53 +635,74 @@ cmd_conn(int argc, char **argv)
                                          cmd_conn_own_addr_types,
                                          BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
+        console_printf("invalid 'own_addr_type' parameter\n");
+        help_cmd_kv_dflt("own_addr_type", cmd_conn_own_addr_types,
+                         BLE_ADDR_TYPE_PUBLIC);
         return rc;
     }
 
     params.scan_itvl = parse_arg_uint16_dflt("scan_itvl", 0x0010, &rc);
     if (rc != 0) {
+        console_printf("invalid 'scan_itvl' parameter\n");
+        help_cmd_uint16_dflt("scan_itvl", 0x0010);
         return rc;
     }
 
     params.scan_window = parse_arg_uint16_dflt("scan_window", 0x0010, &rc);
     if (rc != 0) {
+        console_printf("invalid 'scan_window' parameter\n");
+        help_cmd_uint16_dflt("scan_window", 0x0010);
         return rc;
     }
 
     params.itvl_min = parse_arg_uint16_dflt(
         "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_min' parameter\n");
+        help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
         return rc;
     }
 
     params.itvl_max = parse_arg_uint16_dflt(
         "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_max' parameter\n");
+        help_cmd_uint16_dflt("itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
         return rc;
     }
 
     params.latency = parse_arg_uint16_dflt("latency", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'latency' parameter\n");
+        help_cmd_uint16_dflt("latency", 0);
         return rc;
     }
 
     params.supervision_timeout = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
     if (rc != 0) {
+        console_printf("invalid 'timeout' parameter\n");
+        help_cmd_uint16_dflt("timeout", 0x0100);
         return rc;
     }
 
     params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
     if (rc != 0) {
+        console_printf("invalid 'min_ce_len' parameter\n");
+        help_cmd_uint16_dflt("min_ce_len", 0x0010);
         return rc;
     }
 
     params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
     if (rc != 0) {
+        console_printf("invalid 'max_ce_len' parameter\n");
+        help_cmd_uint16_dflt("max_ce_len", 0x0300);
         return rc;
     }
 
     duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX, 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'dur' parameter\n");
+        help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, 0);
         return rc;
     }
 
@@ -485,14 +719,30 @@ cmd_conn(int argc, char **argv)
  * $chrup                                                                    *
  *****************************************************************************/
 
+static void
+bletiny_chrup_help(void)
+{
+    console_printf("Available chrup commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available chrup params: \n");
+    help_cmd_long("attr");
+}
+
 static int
 cmd_chrup(int argc, char **argv)
 {
     uint16_t attr_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_chrup_help();
+        return 0;
+    }
+
     attr_handle = parse_arg_long("attr", &rc);
     if (rc != 0) {
+        console_printf("invalid 'attr' parameter\n");
+        help_cmd_long("attr");
         return rc;
     }
 
@@ -505,6 +755,17 @@ cmd_chrup(int argc, char **argv)
  * $datalen                                                                  *
  *****************************************************************************/
 
+static void
+bletiny_datalen_help(void)
+{
+    console_printf("Available datalen commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available datalen params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16("octets");
+    help_cmd_uint16("time");
+}
+
 static int
 cmd_datalen(int argc, char **argv)
 {
@@ -513,18 +774,29 @@ cmd_datalen(int argc, char **argv)
     uint16_t tx_time;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_datalen_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
     tx_octets = parse_arg_long("octets", &rc);
     if (rc != 0) {
+        console_printf("invalid 'octets' parameter\n");
+        help_cmd_long("octets");
         return rc;
     }
 
     tx_time = parse_arg_long("time", &rc);
     if (rc != 0) {
+        console_printf("invalid 'time' parameter\n");
+        help_cmd_long("time");
         return rc;
     }
 
@@ -541,6 +813,16 @@ cmd_datalen(int argc, char **argv)
  * $discover                                                                 *
  *****************************************************************************/
 
+static void
+bletiny_disc_chr_help(void)
+{
+    console_printf("Available disc chr commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available disc chr params: \n");
+    help_cmd_conn_start_end();
+    help_cmd_uuid("uuid");
+}
+
 static int
 cmd_disc_chr(int argc, char **argv)
 {
@@ -550,8 +832,15 @@ cmd_disc_chr(int argc, char **argv)
     uint8_t uuid128[16];
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_disc_chr_help();
+        return 0;
+    }
+
     rc = cmd_parse_conn_start_end(&conn_handle, &start_handle, &end_handle);
     if (rc != 0) {
+        console_printf("invalid 'conn start end' parameter\n");
+        help_cmd_conn_start_end();
         return rc;
     }
 
@@ -562,6 +851,8 @@ cmd_disc_chr(int argc, char **argv)
     } else if (rc == ENOENT) {
         rc = bletiny_disc_all_chrs(conn_handle, start_handle, end_handle);
     } else  {
+        console_printf("invalid 'uuid' parameter\n");
+        help_cmd_uuid("uuid");
         return rc;
     }
     if (rc != 0) {
@@ -572,6 +863,15 @@ cmd_disc_chr(int argc, char **argv)
     return 0;
 }
 
+static void
+bletiny_disc_dsc_help(void)
+{
+    console_printf("Available disc dsc commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available disc dsc params: \n");
+    help_cmd_conn_start_end();
+}
+
 static int
 cmd_disc_dsc(int argc, char **argv)
 {
@@ -580,8 +880,15 @@ cmd_disc_dsc(int argc, char **argv)
     uint16_t end_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_disc_dsc_help();
+        return 0;
+    }
+
     rc = cmd_parse_conn_start_end(&conn_handle, &start_handle, &end_handle);
     if (rc != 0) {
+        console_printf("invalid 'conn start end' parameter\n");
+        help_cmd_conn_start_end();
         return rc;
     }
 
@@ -594,6 +901,16 @@ cmd_disc_dsc(int argc, char **argv)
     return 0;
 }
 
+static void
+bletiny_disc_svc_help(void)
+{
+    console_printf("Available disc svc commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available disc svc params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uuid("uuid");
+}
+
 static int
 cmd_disc_svc(int argc, char **argv)
 {
@@ -601,8 +918,15 @@ cmd_disc_svc(int argc, char **argv)
     int conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_disc_svc_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -612,6 +936,8 @@ cmd_disc_svc(int argc, char **argv)
     } else if (rc == ENOENT) {
         rc = bletiny_disc_svcs(conn_handle);
     } else  {
+        console_printf("invalid 'uuid' parameter\n");
+        help_cmd_uuid("uuid");
         return rc;
     }
 
@@ -623,14 +949,30 @@ cmd_disc_svc(int argc, char **argv)
     return 0;
 }
 
+static void
+bletiny_disc_full_help(void)
+{
+    console_printf("Available disc full commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available disc full params: \n");
+    help_cmd_uint16("conn");
+}
+
 static int
 cmd_disc_full(int argc, char **argv)
 {
     int conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_disc_full_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -643,11 +985,26 @@ cmd_disc_full(int argc, char **argv)
     return 0;
 }
 
+static struct cmd_entry cmd_disc_entries[];
+
+static int
+cmd_disc_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available disc commands:\n");
+    for (i = 0; cmd_disc_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_disc_entries[i].name);
+    }
+    return 0;
+}
+
 static struct cmd_entry cmd_disc_entries[] = {
     { "chr", cmd_disc_chr },
     { "dsc", cmd_disc_dsc },
     { "svc", cmd_disc_svc },
     { "full", cmd_disc_full },
+    { "help", cmd_disc_help },
     { NULL, NULL }
 };
 
@@ -668,6 +1025,15 @@ cmd_disc(int argc, char **argv)
  * $find                                                                     *
  *****************************************************************************/
 
+static void
+bletiny_find_inc_svcs_help(void)
+{
+    console_printf("Available find inc svcs commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available find inc svcs params: \n");
+    help_cmd_conn_start_end();
+}
+
 static int
 cmd_find_inc_svcs(int argc, char **argv)
 {
@@ -676,8 +1042,15 @@ cmd_find_inc_svcs(int argc, char **argv)
     uint16_t end_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_find_inc_svcs_help();
+        return 0;
+    }
+
     rc = cmd_parse_conn_start_end(&conn_handle, &start_handle, &end_handle);
     if (rc != 0) {
+        console_printf("invalid 'conn start end' parameter\n");
+        help_cmd_conn_start_end();
         return rc;
     }
 
@@ -690,8 +1063,23 @@ cmd_find_inc_svcs(int argc, char **argv)
     return 0;
 }
 
+static const struct cmd_entry cmd_find_entries[];
+
+static int
+cmd_find_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available find commands:\n");
+    for (i = 0; cmd_find_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_find_entries[i].name);
+    }
+    return 0;
+}
+
 static const struct cmd_entry cmd_find_entries[] = {
     { "inc_svcs", cmd_find_inc_svcs },
+    { "help", cmd_find_help },
     { NULL, NULL }
 };
 
@@ -712,6 +1100,19 @@ cmd_find(int argc, char **argv)
  * $l2cap                                                                    *
  *****************************************************************************/
 
+static void
+bletiny_l2cap_update_help(void)
+{
+    console_printf("Available l2cap update commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available l2cap update params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+    help_cmd_uint16_dflt("itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+    help_cmd_uint16_dflt("latency", 0);
+    help_cmd_uint16_dflt("timeout", 0x0100);
+}
+
 static int
 cmd_l2cap_update(int argc, char **argv)
 {
@@ -719,30 +1120,45 @@ cmd_l2cap_update(int argc, char **argv)
     uint16_t conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_l2cap_update_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
     params.itvl_min = parse_arg_uint16_dflt(
         "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_min' parameter\n");
+        help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
         return rc;
     }
 
     params.itvl_max = parse_arg_uint16_dflt(
         "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_max' parameter\n");
+        help_cmd_uint16_dflt("itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
         return rc;
     }
 
     params.slave_latency = parse_arg_uint16_dflt("latency", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'latency' parameter\n");
+        help_cmd_uint16_dflt("latency", 0);
         return rc;
     }
 
     params.timeout_multiplier = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
     if (rc != 0) {
+        console_printf("invalid 'timeout' parameter\n");
+        help_cmd_uint16_dflt("timeout", 0x0100);
         return rc;
     }
 
@@ -755,8 +1171,23 @@ cmd_l2cap_update(int argc, char **argv)
     return 0;
 }
 
+static const struct cmd_entry cmd_l2cap_entries[];
+
+static int
+cmd_l2cap_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available l2cap commands:\n");
+    for (i = 0; cmd_l2cap_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_l2cap_entries[i].name);
+    }
+    return 0;
+}
+
 static const struct cmd_entry cmd_l2cap_entries[] = {
     { "update", cmd_l2cap_update },
+    { "help", cmd_l2cap_help },
     { NULL, NULL }
 };
 
@@ -777,14 +1208,30 @@ cmd_l2cap(int argc, char **argv)
  * $mtu                                                                      *
  *****************************************************************************/
 
+static void
+bletiny_mtu_help(void)
+{
+    console_printf("Available mtu commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available mtu params: \n");
+    help_cmd_uint16("conn");
+}
+
 static int
 cmd_mtu(int argc, char **argv)
 {
     uint16_t conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_mtu_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -803,6 +1250,20 @@ cmd_mtu(int argc, char **argv)
 
 #define CMD_READ_MAX_ATTRS  8
 
+static void
+bletiny_read_help(void)
+{
+    console_printf("Available read commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available read params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_long("long");
+    help_cmd_uint16("attr");
+    help_cmd_uuid("uuid");
+    help_cmd_uint16("start");
+    help_cmd_uint16("end");
+}
+
 static int
 cmd_read(int argc, char **argv)
 {
@@ -816,8 +1277,15 @@ cmd_read(int argc, char **argv)
     int is_long;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_read_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -825,6 +1293,8 @@ cmd_read(int argc, char **argv)
     if (rc == ENOENT) {
         is_long = 0;
     } else if (rc != 0) {
+        console_printf("invalid 'long' parameter\n");
+        help_cmd_long("long");
         return rc;
     }
 
@@ -836,6 +1306,8 @@ cmd_read(int argc, char **argv)
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
+            console_printf("invalid 'attr' parameter\n");
+            help_cmd_uint16("attr");
             return rc;
         }
     }
@@ -846,6 +1318,8 @@ cmd_read(int argc, char **argv)
     } else if (rc == 0) {
         is_uuid = 1;
     } else {
+        console_printf("invalid 'uuid' parameter\n");
+        help_cmd_uuid("uuid");
         return rc;
     }
 
@@ -853,6 +1327,8 @@ cmd_read(int argc, char **argv)
     if (rc == ENOENT) {
         start = 0;
     } else if (rc != 0) {
+        console_printf("invalid 'start' parameter\n");
+        help_cmd_uint16("start");
         return rc;
     }
 
@@ -860,6 +1336,8 @@ cmd_read(int argc, char **argv)
     if (rc == ENOENT) {
         end = 0;
     } else if (rc != 0) {
+        console_printf("invalid 'end' parameter\n");
+        help_cmd_uint16("end");
         return rc;
     }
 
@@ -893,6 +1371,15 @@ cmd_read(int argc, char **argv)
  * $rssi                                                                     *
  *****************************************************************************/
 
+static void
+bletiny_rssi_help(void)
+{
+    console_printf("Available rssi commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available rssi params: \n");
+    help_cmd_uint16("conn");
+}
+
 static int
 cmd_rssi(int argc, char **argv)
 {
@@ -900,8 +1387,15 @@ cmd_rssi(int argc, char **argv)
     int8_t rssi;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_rssi_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -936,6 +1430,25 @@ static struct kv_pair cmd_scan_addr_types[] = {
     { NULL }
 };
 
+static void
+bletiny_scan_help(void)
+{
+    console_printf("Available scan commands: \n");
+    console_printf("\thelp\n");
+    console_printf("\tcancel\n");
+    console_printf("Available scan params: \n");
+    help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
+    help_cmd_bool_dflt("ltd", 0);
+    help_cmd_bool_dflt("passive", 0);
+    help_cmd_uint16_dflt("itvl", 0);
+    help_cmd_uint16_dflt("window", 0);
+    help_cmd_kv_dflt("filt", cmd_scan_filt_policies,
+                     BLE_HCI_SCAN_FILT_NO_WL);
+    help_cmd_uint16_dflt("nodups", 0);
+    help_cmd_kv_dflt("own_addr_type", cmd_scan_addr_types,
+                     BLE_ADDR_TYPE_PUBLIC);
+}
+
 static int
 cmd_scan(int argc, char **argv)
 {
@@ -943,6 +1456,11 @@ cmd_scan(int argc, char **argv)
     int32_t duration_ms;
     uint8_t own_addr_type;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_scan_help();
+        return 0;
+    }
 
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
         rc = bletiny_scan_cancel();
@@ -957,43 +1475,61 @@ cmd_scan(int argc, char **argv)
     duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX,
                                                 BLE_HS_FOREVER, &rc);
     if (rc != 0) {
+        console_printf("invalid 'dur' parameter\n");
+        help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
         return rc;
     }
 
     params.limited = parse_arg_bool_default("ltd", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'ltd' parameter\n");
+        help_cmd_bool_dflt("ltd", 0);
         return rc;
     }
 
     params.passive = parse_arg_bool_default("passive", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'passive' parameter\n");
+        help_cmd_bool_dflt("passive", 0);
         return rc;
     }
 
     params.itvl = parse_arg_uint16_dflt("itvl", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl' parameter\n");
+        help_cmd_uint16_dflt("itvl", 0);
         return rc;
     }
 
     params.window = parse_arg_uint16_dflt("window", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'window' parameter\n");
+        help_cmd_uint16_dflt("window", 0);
         return rc;
     }
 
     params.filter_policy = parse_arg_kv_default(
         "filt", cmd_scan_filt_policies, BLE_HCI_SCAN_FILT_NO_WL, &rc);
     if (rc != 0) {
+        console_printf("invalid 'filt' parameter\n");
+        help_cmd_kv_dflt("filt", cmd_scan_filt_policies,
+                         BLE_HCI_SCAN_FILT_NO_WL);
         return rc;
     }
 
     params.filter_duplicates = parse_arg_bool_default("nodups", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'nodups' parameter\n");
+        help_cmd_uint16_dflt("nodups", 0);
         return rc;
     }
 
     own_addr_type = parse_arg_kv_default("own_addr_type", cmd_scan_addr_types,
                                          BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
+        console_printf("invalid 'own_addr_type' parameter\n");
+        help_cmd_kv_dflt("own_addr_type", cmd_scan_addr_types,
+                         BLE_ADDR_TYPE_PUBLIC);
         return rc;
     }
 
@@ -1076,10 +1612,25 @@ cmd_show_conn(int argc, char **argv)
     return 0;
 }
 
+static struct cmd_entry cmd_show_entries[];
+
+static int
+cmd_show_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available show commands:\n");
+    for (i = 0; cmd_show_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_show_entries[i].name);
+    }
+    return 0;
+}
+
 static struct cmd_entry cmd_show_entries[] = {
     { "addr", cmd_show_addr },
     { "chr", cmd_show_chr },
     { "conn", cmd_show_conn },
+    { "help", cmd_show_help },
     { NULL, NULL }
 };
 
@@ -1100,14 +1651,30 @@ cmd_show(int argc, char **argv)
  * $sec                                                                      *
  *****************************************************************************/
 
+static void
+bletiny_sec_pair_help(void)
+{
+    console_printf("Available sec pair commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available sec pair params: \n");
+    help_cmd_uint16("conn");
+}
+
 static int
 cmd_sec_pair(int argc, char **argv)
 {
     uint16_t conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_sec_pair_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -1120,14 +1687,30 @@ cmd_sec_pair(int argc, char **argv)
     return 0;
 }
 
+static void
+bletiny_sec_start_help(void)
+{
+    console_printf("Available sec start commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available sec start params: \n");
+    help_cmd_uint16("conn");
+}
+
 static int
 cmd_sec_start(int argc, char **argv)
 {
     uint16_t conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_sec_start_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -1140,6 +1723,18 @@ cmd_sec_start(int argc, char **argv)
     return 0;
 }
 
+static void
+bletiny_sec_enc_help(void)
+{
+    console_printf("Available sec enc commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available sec enc params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint64("rand");
+    help_cmd_bool("auth");
+    help_cmd_byte_stream_exact_length("ltk", 16);
+}
+
 static int
 cmd_sec_enc(int argc, char **argv)
 {
@@ -1150,8 +1745,15 @@ cmd_sec_enc(int argc, char **argv)
     int rc;
     int auth;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_sec_enc_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -1161,16 +1763,22 @@ cmd_sec_enc(int argc, char **argv)
     } else {
         rand_val = parse_arg_uint64("rand", &rc);
         if (rc != 0) {
+            console_printf("invalid 'rand' parameter\n");
+            help_cmd_uint64("rand");
             return rc;
         }
 
         auth = parse_arg_bool("auth", &rc);
         if (rc != 0) {
+            console_printf("invalid 'auth' parameter\n");
+            help_cmd_bool("auth");
             return rc;
         }
 
         rc = parse_arg_byte_stream_exact_length("ltk", ltk, 16);
         if (rc != 0) {
+            console_printf("invalid 'ltk' parameter\n");
+            help_cmd_byte_stream_exact_length("ltk", 16);
             return rc;
         }
 
@@ -1185,10 +1793,26 @@ cmd_sec_enc(int argc, char **argv)
     return 0;
 }
 
+static struct cmd_entry cmd_sec_entries[];
+
+static int
+cmd_sec_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available sec commands:\n");
+    for (i = 0; cmd_sec_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_sec_entries[i].name);
+    }
+    return 0;
+}
+
 static struct cmd_entry cmd_sec_entries[] = {
     { "pair", cmd_sec_pair },
     { "start", cmd_sec_start },
     { "enc", cmd_sec_enc },
+    { "help", cmd_sec_help },
+    { NULL }
 };
 
 static int
@@ -1217,6 +1841,36 @@ cmd_sec(int argc, char **argv)
 #define CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN   BLE_HS_ADV_MAX_FIELD_SZ
 #define CMD_ADV_DATA_URI_MAX_LEN                BLE_HS_ADV_MAX_FIELD_SZ
 #define CMD_ADV_DATA_MFG_DATA_MAX_LEN           BLE_HS_ADV_MAX_FIELD_SZ
+
+static void
+bletiny_set_adv_data_help(void)
+{
+    console_printf("Available set adv_data params: \n");
+    help_cmd_long_bounds("flags", 0, UINT8_MAX);
+    help_cmd_uint16("uuid16");
+    help_cmd_long("uuids16_is_complete");
+    help_cmd_uint32("uuid32");
+    help_cmd_long("uuids32_is_complete");
+    help_cmd_byte_stream_exact_length("uuid128", 16);
+    help_cmd_long("uuids128_is_complete");
+    help_cmd_long_bounds("tx_pwr_lvl", INT8_MIN, INT8_MAX);
+    help_cmd_byte_stream_exact_length("device_class",
+                                      BLE_HS_ADV_DEVICE_CLASS_LEN);
+    help_cmd_byte_stream_exact_length("slave_itvl_range",
+                                      BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
+    help_cmd_byte_stream("svc_data_uuid16");
+    help_cmd_byte_stream_exact_length("public_tgt_addr",
+                                      BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN);
+    help_cmd_uint16("appearance");
+    help_cmd_extract("name");
+    help_cmd_uint16("adv_itvl");
+    help_cmd_byte_stream_exact_length("le_addr", BLE_HS_ADV_LE_ADDR_LEN);
+    help_cmd_long_bounds("le_role", 0, 0xff);
+    help_cmd_byte_stream("svc_data_uuid32");
+    help_cmd_byte_stream("svc_data_uuid128");
+    help_cmd_byte_stream("uri");
+    help_cmd_byte_stream("mfg_data");
+}
 
 static int
 cmd_set_adv_data(void)
@@ -1263,6 +1917,8 @@ cmd_set_adv_data(void)
         adv_fields.flags = tmp;
         adv_fields.flags_is_present = 1;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'flags' parameter\n");
+        help_cmd_long_bounds("flags", 0, UINT8_MAX);
         return rc;
     }
 
@@ -1270,6 +1926,8 @@ cmd_set_adv_data(void)
         uuid16 = parse_arg_uint16("uuid16", &rc);
         if (rc == 0) {
             if (adv_fields.num_uuids16 >= CMD_ADV_DATA_MAX_UUIDS16) {
+                console_printf("invalid 'uuid16' parameter\n");
+                help_cmd_uint16("uuid16");
                 return EINVAL;
             }
             uuids16[adv_fields.num_uuids16] = uuid16;
@@ -1277,6 +1935,8 @@ cmd_set_adv_data(void)
         } else if (rc == ENOENT) {
             break;
         } else {
+            console_printf("invalid 'uuid16' parameter\n");
+            help_cmd_uint16("uuid16");
             return rc;
         }
     }
@@ -1288,6 +1948,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.uuids16_is_complete = !!tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'uuids16_is_complete' parameter\n");
+        help_cmd_long("uuids16_is_complete");
         return rc;
     }
 
@@ -1295,6 +1957,8 @@ cmd_set_adv_data(void)
         uuid32 = parse_arg_uint32("uuid32", &rc);
         if (rc == 0) {
             if (adv_fields.num_uuids32 >= CMD_ADV_DATA_MAX_UUIDS32) {
+                console_printf("invalid 'uuid32' parameter\n");
+                help_cmd_uint32("uuid32");
                 return EINVAL;
             }
             uuids32[adv_fields.num_uuids32] = uuid32;
@@ -1302,6 +1966,8 @@ cmd_set_adv_data(void)
         } else if (rc == ENOENT) {
             break;
         } else {
+            console_printf("invalid 'uuid32' parameter\n");
+            help_cmd_uint32("uuid32");
             return rc;
         }
     }
@@ -1313,6 +1979,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.uuids32_is_complete = !!tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'uuids32_is_complete' parameter\n");
+        help_cmd_long("uuids32_is_complete");
         return rc;
     }
 
@@ -1320,6 +1988,8 @@ cmd_set_adv_data(void)
         rc = parse_arg_byte_stream_exact_length("uuid128", uuid128, 16);
         if (rc == 0) {
             if (adv_fields.num_uuids128 >= CMD_ADV_DATA_MAX_UUIDS128) {
+                console_printf("invalid 'uuid128' parameter\n");
+                help_cmd_byte_stream_exact_length("uuid128", 16);
                 return EINVAL;
             }
             memcpy(uuids128[adv_fields.num_uuids128], uuid128, 16);
@@ -1327,6 +1997,8 @@ cmd_set_adv_data(void)
         } else if (rc == ENOENT) {
             break;
         } else {
+            console_printf("invalid 'uuid128' parameter\n");
+            help_cmd_byte_stream_exact_length("uuid128", 16);
             return rc;
         }
     }
@@ -1338,6 +2010,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.uuids128_is_complete = !!tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'uuids128_is_complete' parameter\n");
+        help_cmd_long("uuids128_is_complete");
         return rc;
     }
 
@@ -1351,6 +2025,8 @@ cmd_set_adv_data(void)
         adv_fields.tx_pwr_lvl = tmp;
         adv_fields.tx_pwr_lvl_is_present = 1;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'tx_pwr_lvl' parameter\n");
+        help_cmd_long_bounds("tx_pwr_lvl", INT8_MIN, INT8_MAX);
         return rc;
     }
 
@@ -1359,6 +2035,9 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.device_class = device_class;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'device_class' parameter\n");
+        help_cmd_byte_stream_exact_length("device_class",
+                                          BLE_HS_ADV_DEVICE_CLASS_LEN);
         return rc;
     }
 
@@ -1368,6 +2047,9 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.slave_itvl_range = slave_itvl_range;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'slave_itvl_range' parameter\n");
+        help_cmd_byte_stream_exact_length("slave_itvl_range",
+                                          BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
         return rc;
     }
 
@@ -1378,6 +2060,8 @@ cmd_set_adv_data(void)
         adv_fields.svc_data_uuid16 = svc_data_uuid16;
         adv_fields.svc_data_uuid16_len = svc_data_uuid16_len;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'svc_data_uuid16' parameter\n");
+        help_cmd_byte_stream("svc_data_uuid16");
         return rc;
     }
 
@@ -1389,6 +2073,9 @@ cmd_set_adv_data(void)
             if (adv_fields.num_public_tgt_addrs >=
                 CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS) {
 
+                console_printf("invalid 'public_tgt_addr' parameter\n");
+                help_cmd_byte_stream_exact_length("public_tgt_addr",
+                                          BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN);
                 return EINVAL;
             }
             memcpy(public_tgt_addrs[adv_fields.num_public_tgt_addrs],
@@ -1397,6 +2084,9 @@ cmd_set_adv_data(void)
         } else if (rc == ENOENT) {
             break;
         } else {
+            console_printf("invalid 'public_tgt_addr' parameter\n");
+            help_cmd_byte_stream_exact_length("public_tgt_addr",
+                                          BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN);
             return rc;
         }
     }
@@ -1408,6 +2098,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.appearance_is_present = 1;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'appearance' parameter\n");
+        help_cmd_uint16("appearance");
         return rc;
     }
 
@@ -1415,6 +2107,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.adv_itvl_is_present = 1;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'adv_itvl' parameter\n");
+        help_cmd_uint16("adv_itvl");
         return rc;
     }
 
@@ -1423,6 +2117,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.le_addr = le_addr;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'le_addr' parameter\n");
+        help_cmd_byte_stream_exact_length("le_addr", BLE_HS_ADV_LE_ADDR_LEN);
         return rc;
     }
 
@@ -1430,6 +2126,8 @@ cmd_set_adv_data(void)
     if (rc == 0) {
         adv_fields.le_role_is_present = 1;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'le_role' parameter\n");
+        help_cmd_long_bounds("le_role", 0, 0xff);
         return rc;
     }
 
@@ -1440,6 +2138,8 @@ cmd_set_adv_data(void)
         adv_fields.svc_data_uuid32 = svc_data_uuid32;
         adv_fields.svc_data_uuid32_len = svc_data_uuid32_len;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'svc_data_uuid32' parameter\n");
+        help_cmd_byte_stream("svc_data_uuid32");
         return rc;
     }
 
@@ -1450,6 +2150,8 @@ cmd_set_adv_data(void)
         adv_fields.svc_data_uuid128 = svc_data_uuid128;
         adv_fields.svc_data_uuid128_len = svc_data_uuid128_len;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'svc_data_uuid128' parameter\n");
+        help_cmd_byte_stream("svc_data_uuid128");
         return rc;
     }
 
@@ -1458,6 +2160,8 @@ cmd_set_adv_data(void)
         adv_fields.uri = uri;
         adv_fields.uri_len = uri_len;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'uri' parameter\n");
+        help_cmd_byte_stream("uri");
         return rc;
     }
 
@@ -1467,6 +2171,8 @@ cmd_set_adv_data(void)
         adv_fields.mfg_data = mfg_data;
         adv_fields.mfg_data_len = mfg_data_len;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'mfg_data' parameter\n");
+        help_cmd_byte_stream("mfg_data");
         return rc;
     }
 
@@ -1495,6 +2201,19 @@ cmd_set_adv_data(void)
     return 0;
 }
 
+static void
+bletiny_set_sm_data_help(void)
+{
+    console_printf("Available set sm_data params: \n");
+    help_cmd_bool("oob_flag");
+    help_cmd_bool("mitm_flag");
+    help_cmd_uint8("io_capabilities");
+    help_cmd_uint8("our_key_dist");
+    help_cmd_uint8("their_key_dist");
+    help_cmd_bool("bonding");
+    help_cmd_bool("sc");
+}
+
 static int
 cmd_set_sm_data(void)
 {
@@ -1509,6 +2228,8 @@ cmd_set_sm_data(void)
         ble_hs_cfg.sm_oob_data_flag = tmp;
         good++;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'oob_flag' parameter\n");
+        help_cmd_bool("oob_flag");
         return rc;
     }
 
@@ -1517,6 +2238,8 @@ cmd_set_sm_data(void)
         good++;
         ble_hs_cfg.sm_mitm = tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'mitm_flag' parameter\n");
+        help_cmd_bool("mitm_flag");
         return rc;
     }
 
@@ -1525,6 +2248,8 @@ cmd_set_sm_data(void)
         good++;
         ble_hs_cfg.sm_io_cap = tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'io_capabilities' parameter\n");
+        help_cmd_uint8("io_capabilities");
         return rc;
     }
 
@@ -1533,6 +2258,8 @@ cmd_set_sm_data(void)
         good++;
         ble_hs_cfg.sm_our_key_dist = tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'our_key_dist' parameter\n");
+        help_cmd_uint8("our_key_dist");
         return rc;
     }
 
@@ -1541,6 +2268,8 @@ cmd_set_sm_data(void)
         good++;
         ble_hs_cfg.sm_their_key_dist = tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'their_key_dist' parameter\n");
+        help_cmd_uint8("their_key_dist");
         return rc;
     }
 
@@ -1549,6 +2278,8 @@ cmd_set_sm_data(void)
         good++;
         ble_hs_cfg.sm_bonding = tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'bonding' parameter\n");
+        help_cmd_bool("bonding");
         return rc;
     }
 
@@ -1557,6 +2288,8 @@ cmd_set_sm_data(void)
         good++;
         ble_hs_cfg.sm_sc = tmp;
     } else if (rc != ENOENT) {
+        console_printf("invalid 'sc' parameter\n");
+        help_cmd_bool("sc");
         return rc;
     }
 
@@ -1574,6 +2307,14 @@ static struct kv_pair cmd_set_addr_types[] = {
     { NULL }
 };
 
+static void
+bletiny_set_addr_help(void)
+{
+    console_printf("Available set addr params: \n");
+    help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_byte_stream_exact_length("addr", 6);
+}
+
 static int
 cmd_set_addr(void)
 {
@@ -1585,11 +2326,14 @@ cmd_set_addr(void)
                                      BLE_ADDR_TYPE_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'addr_type' parameter\n");
+        help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_TYPE_PUBLIC);
         return rc;
     }
 
     rc = parse_arg_mac("addr", addr);
     if (rc != 0) {
+        console_printf("invalid 'addr' parameter\n");
+        help_cmd_byte_stream_exact_length("addr", 6);
         return rc;
     }
 
@@ -1618,6 +2362,19 @@ cmd_set_addr(void)
     return 0;
 }
 
+static void
+bletiny_set_help(void)
+{
+    console_printf("Available set commands: \n");
+    console_printf("\thelp\n");
+    console_printf("\tadv_data\n");
+    console_printf("\tsm_data\n");
+    console_printf("\taddr\n");
+    console_printf("Available set params: \n");
+    help_cmd_uint16("mtu");
+    help_cmd_byte_stream_exact_length("irk", 16);
+}
+
 static int
 cmd_set(int argc, char **argv)
 {
@@ -1625,6 +2382,14 @@ cmd_set(int argc, char **argv)
     uint8_t irk[16];
     int good;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_set_help();
+        bletiny_set_adv_data_help();
+        bletiny_set_sm_data_help();
+        bletiny_set_addr_help();
+        return 0;
+    }
 
     if (argc > 1 && strcmp(argv[1], "adv_data") == 0) {
         rc = cmd_set_adv_data();
@@ -1655,6 +2420,8 @@ cmd_set(int argc, char **argv)
             good = 1;
         }
     } else if (rc != ENOENT) {
+        console_printf("invalid 'mtu' parameter\n");
+        help_cmd_uint16("mtu");
         return rc;
     }
 
@@ -1663,6 +2430,8 @@ cmd_set(int argc, char **argv)
         good = 1;
         ble_hs_pvcy_set_our_irk(irk);
     } else if (rc != ENOENT) {
+        console_printf("invalid 'irk' parameter\n");
+        help_cmd_byte_stream_exact_length("irk", 16);
         return rc;
     }
 
@@ -1678,6 +2447,16 @@ cmd_set(int argc, char **argv)
  * $terminate                                                                *
  *****************************************************************************/
 
+static void
+bletiny_term_help(void)
+{
+    console_printf("Available term commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available term params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint8_dflt("reason", BLE_ERR_REM_USER_CONN_TERM);
+}
+
 static int
 cmd_term(int argc, char **argv)
 {
@@ -1685,13 +2464,22 @@ cmd_term(int argc, char **argv)
     uint8_t reason;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_term_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
     reason = parse_arg_uint8_dflt("reason", BLE_ERR_REM_USER_CONN_TERM, &rc);
     if (rc != 0) {
+        console_printf("invalid 'reason' parameter\n");
+        help_cmd_uint8_dflt("reason", BLE_ERR_REM_USER_CONN_TERM);
         return rc;
     }
 
@@ -1708,6 +2496,21 @@ cmd_term(int argc, char **argv)
  * $update connection parameters                                             *
  *****************************************************************************/
 
+static void
+bletiny_update_help(void)
+{
+    console_printf("Available update commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available update params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+    help_cmd_uint16_dflt("itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+    help_cmd_uint16_dflt("latency", 0);
+    help_cmd_uint16_dflt("timeout", 0x0100);
+    help_cmd_uint16_dflt("min_ce_len", 0x0010);
+    help_cmd_uint16_dflt("max_ce_len", 0x0300);
+}
+
 static int
 cmd_update(int argc, char **argv)
 {
@@ -1715,40 +2518,59 @@ cmd_update(int argc, char **argv)
     uint16_t conn_handle;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_update_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
     params.itvl_min = parse_arg_uint16_dflt(
         "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_min' parameter\n");
+        help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
         return rc;
     }
 
     params.itvl_max = parse_arg_uint16_dflt(
         "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
     if (rc != 0) {
+        console_printf("invalid 'itvl_max' parameter\n");
+        help_cmd_uint16_dflt("itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
         return rc;
     }
 
     params.latency = parse_arg_uint16_dflt("latency", 0, &rc);
     if (rc != 0) {
+        console_printf("invalid 'latency' parameter\n");
+        help_cmd_uint16_dflt("latency", 0);
         return rc;
     }
 
     params.supervision_timeout = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
     if (rc != 0) {
+        console_printf("invalid 'timeout' parameter\n");
+        help_cmd_uint16_dflt("timeout", 0x0100);
         return rc;
     }
 
     params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
     if (rc != 0) {
+        console_printf("invalid 'min_ce_len' parameter\n");
+        help_cmd_uint16_dflt("min_ce_len", 0x0010);
         return rc;
     }
 
     params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
     if (rc != 0) {
+        console_printf("invalid 'max_ce_len' parameter\n");
+        help_cmd_uint16_dflt("max_ce_len", 0x0300);
         return rc;
     }
 
@@ -1773,6 +2595,17 @@ static struct kv_pair cmd_wl_addr_types[] = {
 
 #define CMD_WL_MAX_SZ   8
 
+static void
+bletiny_wl_help(void)
+{
+    console_printf("Available wl commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available wl params: \n");
+    console_printf("\tlist of:\n");
+    help_cmd_byte_stream_exact_length("addr", 6);
+    help_cmd_kv("addr_type", cmd_wl_addr_types);
+}
+
 static int
 cmd_wl(int argc, char **argv)
 {
@@ -1781,6 +2614,11 @@ cmd_wl(int argc, char **argv)
     uint8_t addr[6];
     int wl_cnt;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_wl_help();
+        return 0;
+    }
 
     wl_cnt = 0;
     while (1) {
@@ -1792,11 +2630,15 @@ cmd_wl(int argc, char **argv)
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
+            console_printf("invalid 'addr' parameter\n");
+            help_cmd_byte_stream_exact_length("addr", 6);
             return rc;
         }
 
         addr_type = parse_arg_kv("addr_type", cmd_wl_addr_types, &rc);
         if (rc != 0) {
+            console_printf("invalid 'addr' parameter\n");
+            help_cmd_kv("addr_type", cmd_wl_addr_types);
             return rc;
         }
 
@@ -1818,6 +2660,20 @@ cmd_wl(int argc, char **argv)
  * $write                                                                    *
  *****************************************************************************/
 
+static void
+bletiny_write_help(void)
+{
+    console_printf("Available write commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available write params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_long("no_rsp");
+    help_cmd_long("long");
+    console_printf("\tlist of:\n");
+    help_cmd_long("attr");
+    help_cmd_byte_stream("value");
+}
+
 static int
 cmd_write(int argc, char **argv)
 {
@@ -1832,8 +2688,15 @@ cmd_write(int argc, char **argv)
     int rc;
     int i;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_write_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
@@ -1841,6 +2704,8 @@ cmd_write(int argc, char **argv)
     if (rc == ENOENT) {
         no_rsp = 0;
     } else if (rc != 0) {
+        console_printf("invalid 'no_rsp' parameter\n");
+        help_cmd_long("no_rsp");
         return rc;
     }
 
@@ -1848,6 +2713,8 @@ cmd_write(int argc, char **argv)
     if (rc == ENOENT) {
         is_long = 0;
     } else if (rc != 0) {
+        console_printf("invalid 'long' parameter\n");
+        help_cmd_long("long");
         return rc;
     }
 
@@ -1859,6 +2726,8 @@ cmd_write(int argc, char **argv)
             break;
         } else if (rc != 0) {
             rc = -rc;
+            console_printf("invalid 'attr' parameter\n");
+            help_cmd_long("attr");
             goto done;
         }
 
@@ -1867,6 +2736,8 @@ cmd_write(int argc, char **argv)
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
+            console_printf("invalid 'value' parameter\n");
+            help_cmd_byte_stream("value");
             goto done;
         }
 
@@ -1939,6 +2810,17 @@ static struct kv_pair cmd_keystore_addr_type[] = {
     { NULL }
 };
 
+static void
+bletiny_keystore_parse_keydata_help(void)
+{
+    console_printf("Available keystore parse keydata params: \n");
+    help_cmd_kv("type", cmd_keystore_entry_type);
+    help_cmd_kv("addr_type", cmd_keystore_addr_type);
+    help_cmd_byte_stream_exact_length("addr", 6);
+    help_cmd_uint16("ediv");
+    help_cmd_uint64("rand");
+}
+
 static int
 cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
                            int *obj_type)
@@ -1948,6 +2830,8 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
     memset(out, 0, sizeof(*out));
     *obj_type = parse_arg_kv("type", cmd_keystore_entry_type, &rc);
     if (rc != 0) {
+        console_printf("invalid 'type' parameter\n");
+        help_cmd_kv("type", cmd_keystore_entry_type);
         return rc;
     }
 
@@ -1956,21 +2840,29 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
     case BLE_STORE_OBJ_TYPE_OUR_SEC:
         rc = parse_arg_kv("addr_type", cmd_keystore_addr_type, &rc);
         if (rc != 0) {
+            console_printf("invalid 'addr_type' parameter\n");
+            help_cmd_kv("addr_type", cmd_keystore_addr_type);
             return rc;
         }
 
         rc = parse_arg_mac("addr", out->sec.peer_addr);
         if (rc != 0) {
+            console_printf("invalid 'addr' parameter\n");
+            help_cmd_byte_stream_exact_length("addr", 6);
             return rc;
         }
 
         out->sec.ediv = parse_arg_uint16("ediv", &rc);
         if (rc != 0) {
+            console_printf("invalid 'ediv' parameter\n");
+            help_cmd_uint16("ediv");
             return rc;
         }
 
         out->sec.rand_num = parse_arg_uint64("rand", &rc);
         if (rc != 0) {
+            console_printf("invalid 'rand' parameter\n");
+            help_cmd_uint64("rand");
             return rc;
         }
         return 0;
@@ -1978,6 +2870,15 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
     default:
         return EINVAL;
     }
+}
+
+static void
+bletiny_keystore_parse_valuedata_help(void)
+{
+    console_printf("Available keystore parse valuedata params: \n");
+    help_cmd_byte_stream_exact_length("ltk", 16);
+    help_cmd_byte_stream_exact_length("irk", 16);
+    help_cmd_byte_stream_exact_length("csrk", 16);
 }
 
 static int
@@ -1999,6 +2900,8 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
                 swap_in_place(out->sec.ltk, 16);
                 valcnt++;
             } else if (rc != ENOENT) {
+                console_printf("invalid 'ltk' parameter\n");
+                help_cmd_byte_stream_exact_length("ltk", 16);
                 return rc;
             }
             rc = parse_arg_byte_stream_exact_length("irk", out->sec.irk, 16);
@@ -2007,6 +2910,8 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
                 swap_in_place(out->sec.irk, 16);
                 valcnt++;
             } else if (rc != ENOENT) {
+                console_printf("invalid 'irk' parameter\n");
+                help_cmd_byte_stream_exact_length("irk", 16);
                 return rc;
             }
             rc = parse_arg_byte_stream_exact_length("csrk", out->sec.csrk, 16);
@@ -2015,6 +2920,8 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
                 swap_in_place(out->sec.csrk, 16);
                 valcnt++;
             } else if (rc != ENOENT) {
+                console_printf("invalid 'csrk' parameter\n");
+                help_cmd_byte_stream_exact_length("csrk", 16);
                 return rc;
             }
             out->sec.peer_addr_type = key->sec.peer_addr_type;
@@ -2030,6 +2937,15 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
     return -1;
 }
 
+static void
+bletiny_keystore_add_help(void)
+{
+    console_printf("Available keystore add commands: \n");
+    console_printf("\thelp\n");
+    bletiny_keystore_parse_keydata_help();
+    bletiny_keystore_parse_valuedata_help();
+}
+
 static int
 cmd_keystore_add(int argc, char **argv)
 {
@@ -2037,6 +2953,11 @@ cmd_keystore_add(int argc, char **argv)
     union ble_store_value value;
     int obj_type;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_keystore_add_help();
+        return 0;
+    }
 
     rc = cmd_keystore_parse_keydata(argc, argv, &key, &obj_type);
 
@@ -2066,12 +2987,25 @@ cmd_keystore_add(int argc, char **argv)
     return rc;
 }
 
+static void
+bletiny_keystore_del_help(void)
+{
+    console_printf("Available keystore del commands: \n");
+    console_printf("\thelp\n");
+    bletiny_keystore_parse_keydata_help();
+}
+
 static int
 cmd_keystore_del(int argc, char **argv)
 {
     union ble_store_key key;
     int obj_type;
     int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_keystore_del_help();
+        return 0;
+    }
 
     rc = cmd_keystore_parse_keydata(argc, argv, &key, &obj_type);
 
@@ -2120,14 +3054,30 @@ cmd_keystore_iterator(int obj_type,
     return 0;
 }
 
+static void
+bletiny_keystore_show_help(void)
+{
+    console_printf("Available keystore show commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available keystore show params: \n");
+    help_cmd_kv("type", cmd_keystore_entry_type);
+}
+
 static int
 cmd_keystore_show(int argc, char **argv)
 {
     int type;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_keystore_show_help();
+        return 0;
+    }
+
     type = parse_arg_kv("type", cmd_keystore_entry_type, &rc);
     if (rc != 0) {
+        console_printf("invalid 'type' parameter\n");
+        help_cmd_kv("type", cmd_keystore_entry_type);
         return rc;
     }
 
@@ -2135,10 +3085,25 @@ cmd_keystore_show(int argc, char **argv)
     return 0;
 }
 
+static struct cmd_entry cmd_keystore_entries[];
+
+static int
+cmd_keystore_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available keystore commands:\n");
+    for (i = 0; cmd_keystore_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_keystore_entries[i].name);
+    }
+    return 0;
+}
+
 static struct cmd_entry cmd_keystore_entries[] = {
     { "add", cmd_keystore_add },
     { "del", cmd_keystore_del },
     { "show", cmd_keystore_show },
+    { "help", cmd_keystore_help },
     { NULL, NULL }
 };
 
@@ -2159,6 +3124,19 @@ cmd_keystore(int argc, char **argv)
  * $passkey                                                                  *
  *****************************************************************************/
 
+static void
+bletiny_passkey_help(void)
+{
+    console_printf("Available passkey commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available passkey params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16("action");
+    help_cmd_long_bounds("key", 0, 999999);
+    help_cmd_byte_stream_exact_length("oob", 16);
+    help_cmd_extract("yesno");
+}
+
 static int
 cmd_passkey(int argc, char **argv)
 {
@@ -2171,13 +3149,22 @@ cmd_passkey(int argc, char **argv)
     char *yesno;
     int rc;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_passkey_help();
+        return 0;
+    }
+
     conn_handle = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
         return rc;
     }
 
     pk.action = parse_arg_uint16("action", &rc);
     if (rc != 0) {
+        console_printf("invalid 'action' parameter\n");
+        help_cmd_uint16("action");
         return rc;
     }
 
@@ -2187,6 +3174,8 @@ cmd_passkey(int argc, char **argv)
            /* passkey is 6 digit number */
            pk.passkey = parse_arg_long_bounds("key", 0, 999999, &rc);
            if (rc != 0) {
+               console_printf("invalid 'key' parameter\n");
+               help_cmd_long_bounds("key", 0, 999999);
                return rc;
            }
            break;
@@ -2194,6 +3183,8 @@ cmd_passkey(int argc, char **argv)
         case BLE_SM_IOACT_OOB:
             rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
             if (rc != 0) {
+                console_printf("invalid 'oob' parameter\n");
+                help_cmd_byte_stream_exact_length("oob", 16);
                 return rc;
             }
             break;
@@ -2201,6 +3192,8 @@ cmd_passkey(int argc, char **argv)
         case BLE_SM_IOACT_NUMCMP:
             yesno = parse_arg_extract("yesno");
             if (yesno == NULL) {
+                console_printf("invalid 'yesno' parameter\n");
+                help_cmd_extract("yesno");
                 return EINVAL;
             }
 
@@ -2215,6 +3208,8 @@ cmd_passkey(int argc, char **argv)
                 break;
 
             default:
+                console_printf("invalid 'yesno' parameter\n");
+                help_cmd_extract("yesno");
                 return EINVAL;
             }
             break;
@@ -2240,6 +3235,19 @@ cmd_passkey(int argc, char **argv)
  * handle 'h' Note that length must be <= 251. The rate is in msecs.
  *
  *****************************************************************************/
+
+static void
+bletiny_tx_help(void)
+{
+    console_printf("Available tx commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available tx params: \n");
+    help_cmd_uint16("r");
+    help_cmd_uint16("l");
+    help_cmd_uint16("n");
+    help_cmd_uint16("h");
+}
+
 static int
 cmd_tx(int argc, char **argv)
 {
@@ -2249,13 +3257,22 @@ cmd_tx(int argc, char **argv)
     uint16_t handle;
     uint16_t num;
 
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_tx_help();
+        return 0;
+    }
+
     rate = parse_arg_uint16("r", &rc);
     if (rc != 0) {
+        console_printf("invalid 'r' parameter\n");
+        help_cmd_uint16("r");
         return rc;
     }
 
     len = parse_arg_uint16("l", &rc);
     if (rc != 0) {
+        console_printf("invalid 'l' parameter\n");
+        help_cmd_uint16("l");
         return rc;
     }
     if ((len > 251) || (len < 4)) {
@@ -2264,16 +3281,34 @@ cmd_tx(int argc, char **argv)
 
     num = parse_arg_uint16("n", &rc);
     if (rc != 0) {
+        console_printf("invalid 'n' parameter\n");
+        help_cmd_uint16("n");
         return rc;
     }
 
     handle = parse_arg_uint16("h", &rc);
     if (rc != 0) {
+        console_printf("invalid 'h' parameter\n");
+        help_cmd_uint16("h");
         return rc;
     }
 
     rc = bletiny_tx_start(handle, len, rate, num);
     return rc;
+}
+
+static struct cmd_entry cmd_b_entries[];
+
+static int
+cmd_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available commands:\n");
+    for (i = 0; cmd_b_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_b_entries[i].name);
+    }
+    return 0;
 }
 
 /*****************************************************************************
@@ -2287,6 +3322,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "datalen",    cmd_datalen },
     { "disc",       cmd_disc },
     { "find",       cmd_find },
+    { "help",       cmd_help },
     { "l2cap",      cmd_l2cap },
     { "mtu",        cmd_mtu },
     { "passkey",    cmd_passkey },
