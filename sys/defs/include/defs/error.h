@@ -24,19 +24,19 @@
 extern "C" {
 #endif
 
-#define EOK      (0)
-#define ENOMEM   (-1)
-#define EINVAL   (-2)
-#define ETIMEOUT (-3)
-#define ENOENT   (-4)
-#define EIO      (-5)
-#define EAGAIN   (-6)
-#define EACCES   (-7)
-#define EBUSY    (-8)
-#define ENODEV   (-9)
-#define ERANGE   (-10)
+#define SYS_EOK      (0)
+#define SYS_ENOMEM   (-1)
+#define SYS_EINVAL   (-2)
+#define SYS_ETIMEOUT (-3)
+#define SYS_ENOENT   (-4)
+#define SYS_EIO      (-5)
+#define SYS_EAGAIN   (-6)
+#define SYS_EACCES   (-7)
+#define SYS_EBUSY    (-8)
+#define SYS_ENODEV   (-9)
+#define SYS_ERANGE   (-10)
 
-#define E_PERUSER (-65535)
+#define SYS_EPERUSER (-65535)
 
 #ifdef __cplusplus
 }

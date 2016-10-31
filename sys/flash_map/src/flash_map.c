@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -41,7 +41,7 @@ flash_area_open(uint8_t id, const struct flash_area **fap)
     int i;
 
     if (flash_map == NULL) {
-        return EACCES;
+        return SYS_EACCES;
     }
 
     for (i = 0; i < flash_map_entries; i++) {
@@ -52,7 +52,7 @@ flash_area_open(uint8_t id, const struct flash_area **fap)
         }
     }
 
-    return ENOENT;
+    return SYS_ENOENT;
 }
 
 void
