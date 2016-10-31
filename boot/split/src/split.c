@@ -86,7 +86,7 @@ int
 split_mode_set(split_mode_t split_mode)
 {
     if (split_mode < 0 || split_mode >= SPLIT_MODE_CNT) {
-        return EINVAL;
+        return SYS_EINVAL;
     }
 
     split_mode_cur = split_mode;
