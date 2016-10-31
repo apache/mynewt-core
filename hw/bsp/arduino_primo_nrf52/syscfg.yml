@@ -28,10 +28,6 @@ syscfg.defs:
         description: 'TBD'
         value:  1000000
 
-    OS_CPUTIME_TIMER_NUM:
-        description: 'Timer to use for cputime'
-        value:  0
-
     XTAL_32768:
         description: 'TBD'
         value: 1

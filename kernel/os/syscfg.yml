@@ -12,6 +12,9 @@ syscfg.defs:
     OS_CPUTIME_FREQ:
         description: 'Frequency of os cputime'
         value: 1000000
+    OS_CPUTIME_TIMER_NUM:
+        description: 'Timer number to use in OS CPUTime, 0 by default.'
+        value: 0
     SANITY_INTERVAL:
         description: 'The interval (in milliseconds) at which the sanity checks should run, should be at least 200ms prior to watchdog'
         value: 15000

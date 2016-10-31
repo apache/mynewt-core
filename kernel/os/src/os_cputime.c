@@ -23,8 +23,6 @@
 #include "os/os.h"
 #include "os/os_cputime.h"
 
-#if defined(MYNEWT_VAL_OS_CPUTIME_TIMER_NUM)
-
 /**
  * @addtogroup OSKernel Operating System Kernel
  * @{
@@ -279,6 +277,4 @@ os_cputime_get32(void)
  *   @} OSCPUTime
  * @} OSKernel
  */
-
-#endif  /* if defined(MYNEWT_VAL_OS_CPUTIME_TIMER_NUM) */
 
