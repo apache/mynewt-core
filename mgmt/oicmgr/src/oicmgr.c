@@ -29,6 +29,10 @@
 #include <mgmt/mgmt.h>
 #include <nmgr_os/nmgr_os.h>
 
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+#include "host/ble_hs.h"
+#endif
+
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_writer.h>
@@ -238,6 +242,12 @@ omgr_oic_process_oc_event(struct os_event *ev)
 {
     struct omgr_state *o = &omgr_state;
     os_time_t next_event;
+#if MYNEWT_VAL(OC_TRANSPORT_GATT)
+    int rc;
+
+    rc = ble_hs_start();
+    assert(rc == 0);
+#endif
 
     next_event = oc_main_poll();
     if (next_event) {
@@ -274,6 +284,8 @@ oicmgr_init(void)
     if (rc != 0) {
         goto err;
     }
+
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
 
     return (0);
 err:
