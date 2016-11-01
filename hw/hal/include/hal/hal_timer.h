@@ -47,14 +47,17 @@ struct hal_timer
     TAILQ_ENTRY(hal_timer) link;    /* Queue linked list structure */
 };
 
-/*
- * Initialize a HW timer at the given frequency and start it. If the exact
- * frequency is not obtainable the closest obtainable frequency is set.
- */
-int hal_timer_init(int timer_num, uint32_t freq_hz);
+/* Initialize a HW timer. */
+int hal_timer_init(int timer_num, void *cfg);
 
 /* Un-initialize a HW timer. */
 int hal_timer_deinit(int timer_num);
+
+/*
+ * Config a HW timer at the given frequency and start it. If the exact
+ * frequency is not obtainable the closest obtainable frequency is set.
+ */
+int hal_timer_config(int timer_num, uint32_t freq_hz);
 
 /*
  * Returns the resolution of the HW timer. NOTE: the frequency may not be

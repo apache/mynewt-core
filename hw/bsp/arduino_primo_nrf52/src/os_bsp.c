@@ -89,6 +89,27 @@ hal_bsp_init(void)
     nrf_drv_spis_config_t spi_cfg = NRF_DRV_SPIS_DEFAULT_CONFIG(0);
 #endif
 
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_2)
+    rc = hal_timer_init(2, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_3)
+    rc = hal_timer_init(3, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_4)
+    rc = hal_timer_init(4, NULL);
+    assert(rc == 0);
+#endif
+
     /* Set cputime to count at 1 usec increments */
     rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);

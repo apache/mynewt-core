@@ -45,14 +45,6 @@ syscfg.defs:
         description: 'TIMER_0'
         value: 0
 
-    TIMER_0_INTERRUPT_PRIORITY:
-        description: 'Interrupt priority for HAL timer 0'
-        value: 1
-
-    TIMER_0_UNIT:
-        description: 'MCU timer unit assigned as HAL timer0'
-        value: TIM9
-
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS

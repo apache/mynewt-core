@@ -26,6 +26,7 @@
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash_int.h>
 #include <hal/hal_i2c.h>
+#include <hal/hal_timer.h>
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 #include <hal/hal_spi.h>
 #endif
@@ -128,6 +129,10 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, &i2c_cfg0);
     assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TIMER_0)
+    hal_timer_init(0, TIM9);
 #endif
 }
 

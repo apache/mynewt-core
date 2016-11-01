@@ -65,21 +65,12 @@ syscfg.defs:
     TIMER_0:
         description: 'NRF51 Timer 0'
         value:  1
-    TIMER_0_INTERRUPT_PRIORITY:
-        description: 'TBD'
-        value: '((1 << __NVIC_PRIO_BITS) - 1)'
     TIMER_1:
         description: 'NRF51 Timer 1'
         value:  0
-    TIMER_1_INTERRUPT_PRIORITY:
-        description: 'TBD'
-        value: '((1 << __NVIC_PRIO_BITS) - 1)'
     TIMER_2:
         description: 'NRF51 Timer 2'
         value:  0
-    TIMER_2_INTERRUPT_PRIORITY:
-        description: 'TBD'
-        value: '((1 << __NVIC_PRIO_BITS) - 1)'
 
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS

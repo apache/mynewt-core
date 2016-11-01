@@ -357,7 +357,82 @@ nrf51_timer2_irq_handler(void)
 /**
  * hal timer init
  *
- * Initialize (and start) a timer to run at the desired frequency.
+ * Initialize platform specific timer items
+ *
+ * @param timer_num     Timer number to initialize
+ * @param cfg           Pointer to platform specific configuration
+ *
+ * @return int          0: success; error code otherwise
+ */
+int
+hal_timer_init(int timer_num, void *cfg)
+{
+    int rc;
+    uint8_t irq_num;
+    struct nrf51_hal_timer *bsptimer;
+    NRF_TIMER_Type *hwtimer;
+    hal_timer_irq_handler_t irq_isr;
+
+    NRF51_HAL_TIMER_RESOLVE(timer_num, bsptimer);
+
+    /* If timer is enabled do not allow init */
+    if (bsptimer->tmr_enabled) {
+        rc = EINVAL;
+        goto err;
+    }
+
+    switch (timer_num) {
+#if MYNEWT_VAL(TIMER_0)
+    case 0:
+        irq_num = TIMER0_IRQn;
+        hwtimer = NRF_TIMER0;
+        irq_isr = nrf51_timer0_irq_handler;
+        break;
+#endif
+#if MYNEWT_VAL(TIMER_1)
+    case 1:
+        irq_num = TIMER1_IRQn;
+        hwtimer = NRF_TIMER1;
+        irq_isr = nrf51_timer1_irq_handler;
+        bsptimer->tmr_16bit = 1;
+        break;
+#endif
+#if MYNEWT_VAL(TIMER_2)
+    case 2:
+        irq_num = TIMER2_IRQn;
+        hwtimer = NRF_TIMER2;
+        irq_isr = nrf51_timer2_irq_handler;
+        bsptimer->tmr_16bit = 1;
+        break;
+#endif
+    default:
+        hwtimer = NULL;
+        break;
+    }
+
+    if (hwtimer == NULL) {
+        rc = EINVAL;
+        goto err;
+    }
+
+    bsptimer->tmr_reg = hwtimer;
+    bsptimer->tmr_irq_num = irq_num;
+
+    /* Disable IRQ, set priority and set vector in table */
+    NVIC_DisableIRQ(irq_num);
+    NVIC_SetPriority(irq_num, (1 << __NVIC_PRIO_BITS) - 1);
+    NVIC_SetVector(irq_num, (uint32_t)irq_isr);
+
+    return 0;
+
+err:
+    return rc;
+}
+
+/**
+ * hal timer config
+ *
+ * Configure a timer to run at the desired frequency. This starts the timer.
  *
  * @param timer_num
  * @param freq_hz
@@ -365,19 +440,16 @@ nrf51_timer2_irq_handler(void)
  * @return int
  */
 int
-hal_timer_init(int timer_num, uint32_t freq_hz)
+hal_timer_config(int timer_num, uint32_t freq_hz)
 {
     int rc;
     uint8_t prescaler;
-    uint8_t irq_num;
     uint32_t ctx;
     uint32_t div;
     uint32_t min_delta;
     uint32_t max_delta;
-    uint32_t prio;
     struct nrf51_hal_timer *bsptimer;
     NRF_TIMER_Type *hwtimer;
-    hal_timer_irq_handler_t irq_isr;
 
     NRF51_HAL_TIMER_RESOLVE(timer_num, bsptimer);
 
@@ -385,7 +457,8 @@ hal_timer_init(int timer_num, uint32_t freq_hz)
     div = NRF51_MAX_TIMER_FREQ / freq_hz;
 
     /* Largest prescaler is 2^9 and must make sure frequency not too high */
-    if (bsptimer->tmr_enabled || (div == 0) || (div > 512)) {
+    if (bsptimer->tmr_enabled || (div == 0) || (div > 512) ||
+        (bsptimer->tmr_reg == NULL)) {
         rc = EINVAL;
         goto err;
     }
@@ -408,47 +481,6 @@ hal_timer_init(int timer_num, uint32_t freq_hz)
 
     /* Now set the actual frequency */
     bsptimer->tmr_freq = NRF51_MAX_TIMER_FREQ / (1 << prescaler);
-
-    switch (timer_num) {
-#if MYNEWT_VAL(TIMER_0)
-    case 0:
-        irq_num = TIMER0_IRQn;
-        hwtimer = NRF_TIMER0;
-        irq_isr = nrf51_timer0_irq_handler;
-        prio = MYNEWT_VAL(TIMER_0_INTERRUPT_PRIORITY);
-        break;
-#endif
-#if MYNEWT_VAL(TIMER_1)
-    case 1:
-        irq_num = TIMER1_IRQn;
-        hwtimer = NRF_TIMER1;
-        irq_isr = nrf51_timer1_irq_handler;
-        bsptimer->tmr_16bit = 1;
-        prio = MYNEWT_VAL(TIMER_1_INTERRUPT_PRIORITY);
-        break;
-#endif
-#if MYNEWT_VAL(TIMER_2)
-    case 2:
-        irq_num = TIMER2_IRQn;
-        hwtimer = NRF_TIMER2;
-        irq_isr = nrf51_timer2_irq_handler;
-        bsptimer->tmr_16bit = 1;
-        prio = MYNEWT_VAL(TIMER_2_INTERRUPT_PRIORITY);
-        break;
-#endif
-    default:
-        prio = 0;
-        hwtimer = NULL;
-        break;
-    }
-
-    if (hwtimer == NULL) {
-        rc = EINVAL;
-        goto err;
-    }
-
-    bsptimer->tmr_reg = hwtimer;
-    bsptimer->tmr_irq_num = irq_num;
     bsptimer->tmr_enabled = 1;
 
     /* disable interrupts */
@@ -465,6 +497,7 @@ hal_timer_init(int timer_num, uint32_t freq_hz)
             }
         }
     }
+    hwtimer = bsptimer->tmr_reg;
 
     /* Stop the timer first */
     hwtimer->TASKS_STOP = 1;
@@ -488,9 +521,7 @@ hal_timer_init(int timer_num, uint32_t freq_hz)
     hwtimer->TASKS_START = 1;
 
     /* Set isr in vector table and enable interrupt */
-    NVIC_SetPriority(irq_num, prio);
-    NVIC_SetVector(irq_num, (uint32_t)irq_isr);
-    NVIC_EnableIRQ(irq_num);
+    NVIC_EnableIRQ(bsptimer->tmr_irq_num);
 
     __HAL_ENABLE_INTERRUPTS(ctx);
 

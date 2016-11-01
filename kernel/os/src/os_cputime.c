@@ -50,7 +50,7 @@ os_cputime_init(uint32_t clock_freq)
 
     /* Set the ticks per microsecond. */
     g_os_cputime.ticks_per_usec = clock_freq / 1000000U;
-    rc = hal_timer_init(MYNEWT_VAL(OS_CPUTIME_TIMER_NUM), clock_freq);
+    rc = hal_timer_config(MYNEWT_VAL(OS_CPUTIME_TIMER_NUM), clock_freq);
     return rc;
 }
 

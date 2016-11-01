@@ -43,14 +43,10 @@ struct stm32f4_hal_tmr {
 };
 
 #if MYNEWT_VAL(TIMER_0)
-struct stm32f4_hal_tmr stm32f4_tmr0 = {
-    .sht_regs = MYNEWT_VAL(TIMER_0_UNIT)
-};
+struct stm32f4_hal_tmr stm32f4_tmr0;
 #endif
 #if MYNEWT_VAL(TIMER_1)
-struct stm32f4_hal_tmr stm32f4_tmr1 = {
-    .sht_regs = MYNEWT_VAL(TIMER_1_UNIT)
-};
+struct stm32f4_hal_tmr stm32f4_tmr1;
 #endif
 
 static struct stm32f4_hal_tmr *stm32f4_tmr_devs[STM32F4_HAL_TIMER_MAX] = {
@@ -147,9 +143,9 @@ stm32f4_tmr1_irq(void)
 #endif
 
 static void
-stm32f4_tmr_reg_irq(IRQn_Type irqn, uint32_t prio, uint32_t func)
+stm32f4_tmr_reg_irq(IRQn_Type irqn, uint32_t func)
 {
-    NVIC_SetPriority(irqn, prio);
+    NVIC_SetPriority(irqn, (1 << __NVIC_PRIO_BITS) - 1);
     NVIC_SetVector(irqn, func);
     NVIC_EnableIRQ(irqn);
 }
@@ -198,19 +194,16 @@ static void
 stm32f4_hw_setup(int num, TIM_TypeDef *regs)
 {
     uint32_t func;
-    uint32_t prio;
 
     switch (num) {
 #if MYNEWT_VAL(TIMER_0)
     case 0:
         func = (uint32_t)stm32f4_tmr0_irq;
-        prio = MYNEWT_VAL(TIMER_0_INTERRUPT_PRIORITY);
         break;
 #endif
 #if MYNEWT_VAL(TIMER_1)
     case 1:
         func = (uint32_t)stm32f4_tmr1_irq;
-        prio = MYNEWT_VAL(TIMER_1_INTERRUPT_PRIORITY);
         break;
 #endif
     default:
@@ -220,33 +213,33 @@ stm32f4_hw_setup(int num, TIM_TypeDef *regs)
 
 #ifdef TIM1
     if (regs == TIM1) {
-        stm32f4_tmr_reg_irq(TIM1_CC_IRQn, prio, func);
-        stm32f4_tmr_reg_irq(TIM1_UP_TIM10_IRQn, prio, func);
+        stm32f4_tmr_reg_irq(TIM1_CC_IRQn, func);
+        stm32f4_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
         __HAL_RCC_TIM1_CLK_ENABLE();
     }
 #endif
 #ifdef TIM8
     if (regs == TIM8) {
-        stm32f4_tmr_reg_irq(TIM8_CC_IRQn, prio, func);
-        stm32f4_tmr_reg_irq(TIM8_UP_TIM13_IRQn, prio, func);
+        stm32f4_tmr_reg_irq(TIM8_CC_IRQn, func);
+        stm32f4_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
         __HAL_RCC_TIM8_CLK_ENABLE();
     }
 #endif
 #ifdef TIM9
     if (regs == TIM9) {
-        stm32f4_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, prio, func);
+        stm32f4_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, func);
         __HAL_RCC_TIM9_CLK_ENABLE();
     }
 #endif
 #ifdef TIM10
     if (regs == TIM10) {
-        stm32f4_tmr_reg_irq(TIM1_UP_TIM10_IRQn, prio, func);
+        stm32f4_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
         __HAL_RCC_TIM10_CLK_ENABLE();
     }
 #endif
 #ifdef TIM11
     if (regs == TIM11) {
-        stm32f4_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, prio, func);
+        stm32f4_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, func);
         __HAL_RCC_TIM11_CLK_ENABLE();
     }
 #endif
@@ -285,7 +278,44 @@ stm32f4_hw_setdown(TIM_TypeDef *regs)
 /**
  * hal timer init
  *
- * Initialize (and start) a timer to run at the desired frequency.
+ * Initialize platform specific timer items
+ *
+ * @param timer_num     Timer number to initialize
+ * @param cfg           Pointer to platform specific configuration
+ *
+ * @return int          0: success; error code otherwise
+ */
+int
+hal_timer_init(int num, void *cfg)
+{
+    struct stm32f4_hal_tmr *tmr;
+
+    if (num >= STM32F4_HAL_TIMER_MAX || !(tmr = stm32f4_tmr_devs[num]) ||
+        (cfg == NULL)) {
+        return -1;
+    }
+
+    tmr->sht_regs = (TIM_TypeDef *)cfg;
+
+    if (!IS_TIM_CC1_INSTANCE(tmr->sht_regs)) {
+        return -1;
+    }
+
+    stm32f4_hw_setup(num, tmr->sht_regs);
+
+    /*
+     * Stop the timers at debugger. XXX Which TIM?
+     */
+    DBGMCU->APB1FZ |= 0x1ff; /* TIM2 - TIM7, TIM12-TIM14 */
+    DBGMCU->APB2FZ |= 0x70003; /* TIM1, TIM8-TIM11 */
+
+    return 0;
+}
+
+/**
+ * hal timer config
+ *
+ * Configure a timer to run at the desired frequency. This starts the timer.
  *
  * @param timer_num
  * @param freq_hz
@@ -293,7 +323,7 @@ stm32f4_hw_setdown(TIM_TypeDef *regs)
  * @return int
  */
 int
-hal_timer_init(int num, uint32_t freq_hz)
+hal_timer_config(int num, uint32_t freq_hz)
 {
     struct stm32f4_hal_tmr *tmr;
     TIM_Base_InitTypeDef init;
@@ -316,14 +346,6 @@ hal_timer_init(int num, uint32_t freq_hz)
     init.Prescaler = prescaler;
     init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     init.CounterMode = TIM_COUNTERMODE_UP;
-
-    stm32f4_hw_setup(num, tmr->sht_regs);
-
-    /*
-     * Stop the timers at debugger. XXX Which TIM?
-     */
-    DBGMCU->APB1FZ |= 0x1ff; /* TIM2 - TIM7, TIM12-TIM14 */
-    DBGMCU->APB2FZ |= 0x70003; /* TIM1, TIM8-TIM11 */
 
     /*
      * Set up to count overflow interrupts.

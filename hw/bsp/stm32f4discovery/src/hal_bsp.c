@@ -27,6 +27,7 @@
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash_int.h>
+#include <hal/hal_timer.h>
 
 #include <stm32f407xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
@@ -92,7 +93,9 @@ hal_bsp_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
     assert(rc == 0);
 #endif
-
+#if MYNEWT_VAL(TIMER_0)
+    hal_timer_init(0, TIM9);
+#endif
 }
 
 /**

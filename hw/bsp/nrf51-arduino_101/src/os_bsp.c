@@ -55,6 +55,19 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_2)
+    rc = hal_timer_init(2, NULL);
+    assert(rc == 0);
+#endif
+
     /* Set cputime to count at 1 usec increments */
     rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);
