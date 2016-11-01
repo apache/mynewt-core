@@ -52,7 +52,7 @@ struct os_task task1;
 
 /* Task 3 */
 #define TASK2_PRIO (2)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(384)
+#define TASK2_STACK_SIZE    OS_STACK_ALIGN(512)
 static struct os_task task2;
 
 static struct os_eventq spitest_evq;

@@ -57,7 +57,7 @@ static struct os_task task2;
 
 /* Task 3 */
 #define TASK3_PRIO (10)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(384)
+#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
 static struct os_task task3;
 
 static struct os_eventq slinky_oic_evq;
