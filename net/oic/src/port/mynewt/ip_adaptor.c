@@ -64,7 +64,8 @@ oc_send_buffer_ip_int(oc_message_t *message, int mcast)
     struct os_mbuf m;
     int rc;
 
-    LOG("oc_transport_ip attempt send buffer %lu\n", message->length);
+    LOG("oc_transport_ip attempt send buffer %lu\n",
+        (unsigned long)message->length);
 
     to.msin6_len = sizeof(to);
     to.msin6_family = MN_AF_INET6;
@@ -98,14 +99,14 @@ oc_send_buffer_ip_int(oc_message_t *message, int mcast)
             rc = mn_sendto(ucast, &m, (struct mn_sockaddr *) &to);
             if (rc != 0) {
                 ERROR("Failed sending buffer %lu on itf %d\n",
-                      message->length, to.msin6_scope_id);
+                      (unsigned long)message->length, to.msin6_scope_id);
             }
         }
     } else {
         rc = mn_sendto(ucast, &m, (struct mn_sockaddr *) &to);
         if (rc != 0) {
             ERROR("Failed sending buffer %lu on itf %d\n",
-                  message->length, to.msin6_scope_id);
+                  (unsigned long)message->length, to.msin6_scope_id);
         }
     }
     oc_message_unref(message);
@@ -170,7 +171,8 @@ oc_attempt_rx_ip_sock(struct mn_socket * rxsock) {
     message->endpoint.ipv6_addr.scope = from.msin6_scope_id;
     message->endpoint.ipv6_addr.port = ntohs(from.msin6_port);
 
-    LOG("Successfully rx from %p len %lu\n", rxsock, message->length);
+    LOG("Successfully rx from %p len %lu\n", rxsock,
+        (unsigned long)message->length);
     return message;
 
     /* add the addr info to the message */
@@ -208,7 +210,7 @@ union mn_socket_cb oc_sock_cbs = {
 void
 oc_socks_readable(void *cb_arg, int err)
 {
-    os_eventq_put(&oc_evq_get(), &oc_sock_read_event);
+    os_eventq_put(oc_evq_get(), &oc_sock_read_event);
 }
 
 void

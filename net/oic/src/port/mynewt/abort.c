@@ -20,6 +20,12 @@
 #include "../oc_assert.h"
 #include <assert.h>
 
-void abort_impl(void) {
+#ifndef abort_impl
+
+void
+abort_impl(void)
+{
     assert(0);
 }
+
+#endif

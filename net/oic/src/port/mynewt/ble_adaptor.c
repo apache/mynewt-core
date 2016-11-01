@@ -166,7 +166,7 @@ oc_attempt_rx_gatt(void)
     message->endpoint.flags = GATT;
     message->endpoint.bt_addr.conn_handle = conn_handle;
     message->length = pkt->omp_len;
-    LOG("Successfully rx length %lu\n", message->length);
+    LOG("Successfully rx length %lu\n", (unsigned long)message->length);
     return message;
 
     /* add the addr info to the message */
