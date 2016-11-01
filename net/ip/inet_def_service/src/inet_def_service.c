@@ -44,8 +44,12 @@ enum inet_def_type {
 static const char chargen_pattern[] = "1234567890";
 #define CHARGEN_PATTERN_SZ   (sizeof(chargen_pattern) - 1)
 
-static struct os_task inet_def_task;
-static struct os_eventq inet_def_evq;
+static struct os_eventq *inet_def_evq;
+
+static void inet_def_event_echo(struct os_event *ev);
+static void inet_def_event_discard(struct os_event *ev);
+static void inet_def_event_chargen(struct os_event *ev);
+static void inet_def_event_start(struct os_event *ev);
 
 /*
  * UDP service.
@@ -78,7 +82,35 @@ static struct inet_def {
     struct inet_def_listen tcp_service[INET_DEF_MAXTYPE];
     struct inet_def_udp udp_service[INET_DEF_MAXTYPE];
     SLIST_HEAD(, inet_def_tcp) tcp_conns; /* List of connected TCP sockets */
-} inet_def;
+} inet_def = {
+    .udp_service = {
+        [INET_DEF_ECHO] = {
+            .ev.ev_cb = inet_def_event_echo,
+            .ev.ev_arg = (void *)MN_SOCK_DGRAM,
+        },
+        [INET_DEF_DISCARD] = {
+            .ev.ev_cb = inet_def_event_discard,
+            .ev.ev_arg = (void *)MN_SOCK_DGRAM,
+        },
+        [INET_DEF_CHARGEN] = {
+            .ev.ev_cb = inet_def_event_chargen,
+            .ev.ev_arg = (void *)MN_SOCK_DGRAM,
+        },
+    }
+};
+
+static struct os_eventq *
+inet_def_evq_get(void)
+{
+    os_eventq_ensure(&inet_def_evq, inet_def_event_start);
+    return inet_def_evq;
+}
+
+void
+inet_def_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&inet_def_evq, evq, inet_def_event_start);
+}
 
 /*
  * UDP socket callbacks. Called in context of IP stack task.
@@ -212,122 +244,147 @@ err:
     return -1;
 }
 
-static void
-inet_def_srv(void *arg)
+static struct mn_socket *
+inet_def_socket_from_event(struct os_event *ev,
+                           struct inet_def_udp **out_idu,
+                           struct inet_def_tcp **out_idt)
 {
     struct inet_def_udp *idu;
     struct inet_def_tcp *idt;
     struct mn_socket *sock;
-    struct os_event *ev;
-    struct mn_sockaddr_in msin;
-    struct os_mbuf *m;
-    enum inet_def_type type;
-    int rc;
-    int off;
-    int loop_cnt;
 
-    inet_def_create_srv(INET_DEF_ECHO, ECHO_PORT);
-    inet_def_create_srv(INET_DEF_DISCARD, DISCARD_PORT);
-    inet_def_create_srv(INET_DEF_CHARGEN, CHARGEN_PORT);
-
-    while (1) {
-        /*
-         * Wait here. When event comes, check what type of socket got it,
-         * and then act on it.
-         */
-        ev = os_eventq_get(&inet_def_evq);
-        type = INET_DEF_FROM_EVENT_TYPE(ev->ev_type);
-        idt = (struct inet_def_tcp *)ev;
+    if ((int)ev->ev_arg == MN_SOCK_DGRAM) {
         idu = (struct inet_def_udp *)ev;
-        if ((int)ev->ev_arg == MN_SOCK_DGRAM) {
-            sock = idu->socket;
-        } else {
-            sock = idt->socket;
-        }
-        switch (type) {
-        case INET_DEF_ECHO:
-            while (mn_recvfrom(sock, &m, (struct mn_sockaddr *)&msin) == 0) {
-                console_printf("echo %d bytes\n", OS_MBUF_PKTLEN(m));
-                rc = mn_sendto(sock, m, (struct mn_sockaddr *)&msin);
-                if (rc) {
-                    console_printf("  failed: %d!!!!\n", rc);
-                    os_mbuf_free_chain(m);
-                }
-            }
-            break;
-        case INET_DEF_DISCARD:
-            while (mn_recvfrom(sock, &m, NULL) == 0) {
-                console_printf("discard %d bytes\n", OS_MBUF_PKTLEN(m));
-                os_mbuf_free_chain(m);
-            }
-            break;
-        case INET_DEF_CHARGEN:
-            while (mn_recvfrom(sock, &m, NULL) == 0) {
-                os_mbuf_free_chain(m);
-            }
-            if ((int)ev->ev_arg == MN_SOCK_STREAM && idt->closed) {
-                /*
-                 * Don't try to send tons of data to a closed socket.
-                 */
-                break;
-            }
-            loop_cnt = 0;
-            do {
-                m = os_msys_get(CHARGEN_WRITE_SZ, 0);
-                if (m) {
-                    for (off = 0;
-                         OS_MBUF_TRAILINGSPACE(m) >= CHARGEN_PATTERN_SZ;
-                         off += CHARGEN_PATTERN_SZ) {
-                        os_mbuf_copyinto(m, off, chargen_pattern,
-                          CHARGEN_PATTERN_SZ);
-                    }
-                    console_printf("chargen %d bytes\n", m->om_len);
-                    rc = mn_sendto(sock, m, NULL); /* assumes TCP for now */
-                    if (rc) {
-                        os_mbuf_free_chain(m);
-                        if (rc != MN_ENOBUFS && rc != MN_EAGAIN) {
-                            console_write("  sendto fail!!! %d\n", rc);
-                        }
-                        break;
-                    }
-                } else {
-                    /*
-                     * Mbuf shortage. Wait for them to appear.
-                     */
-                    os_time_delay(1);
-                }
-                loop_cnt++;
-            } while (loop_cnt < 32);
-            break;
-        default:
-            assert(0);
-            break;
-        }
-        if ((int)ev->ev_arg == MN_SOCK_STREAM && idt->closed) {
-            /*
-             * Remote end has closed the connection, as indicated in the
-             * callback. Close the socket and free the memory.
-             */
-            mn_socket_set_cbs(idt->socket, NULL, NULL);
-            os_eventq_remove(&inet_def_evq, &idt->ev);
-            mn_close(idt->socket);
-            os_free(idt);
-        }
+        idt = NULL;
+        sock = idu->socket;
+    } else {
+        idt = (struct inet_def_tcp *)ev;
+        idu = NULL;
+        sock = idt->socket;
+    }
+
+    if (out_idu != NULL) {
+        *out_idu = idu;
+    }
+    if (out_idt != NULL) {
+        *out_idt = idt;
+    }
+
+    return sock;
+}
+
+static void
+inet_def_free_closed_tcp_sock(struct inet_def_tcp *idt)
+{
+    if (idt != NULL && idt->closed) {
+        /*
+         * Remote end has closed the connection, as indicated in the
+         * callback. Close the socket and free the memory.
+         */
+        mn_socket_set_cbs(idt->socket, NULL, NULL);
+        os_eventq_remove(inet_def_evq_get(), &idt->ev);
+        mn_close(idt->socket);
+        os_free(idt);
     }
 }
 
-int
-inet_def_service_init(uint8_t prio, os_stack_t *stack, uint16_t stack_sz)
+static void
+inet_def_event_echo(struct os_event *ev)
 {
-    int i;
+    struct mn_sockaddr_in msin;
+    struct inet_def_tcp *idt;
+    struct mn_socket *sock;
+    struct os_mbuf *m;
+    int rc;
 
-    os_eventq_init(&inet_def_evq);
-    SLIST_INIT(&inet_def.tcp_conns);
-    for (i = 0; i < 3; i++) {
-        inet_def.udp_service[i].ev.ev_type = INET_EVENT_TYPE_FROM_DEF(i);
-        inet_def.udp_service[i].ev.ev_arg = (void *)MN_SOCK_DGRAM;
+    sock = inet_def_socket_from_event(ev, NULL, &idt);
+    while (mn_recvfrom(sock, &m, (struct mn_sockaddr *)&msin) == 0) {
+        console_printf("echo %d bytes\n", OS_MBUF_PKTLEN(m));
+        rc = mn_sendto(sock, m, (struct mn_sockaddr *)&msin);
+        if (rc) {
+            console_printf("  failed: %d!!!!\n", rc);
+            os_mbuf_free_chain(m);
+        }
     }
-    return os_task_init(&inet_def_task, "inet_def_task",
-      inet_def_srv, NULL, prio, OS_WAIT_FOREVER, stack, stack_sz);
+
+    inet_def_free_closed_tcp_sock(idt);
+}
+
+static void
+inet_def_event_discard(struct os_event *ev)
+{
+    struct inet_def_tcp *idt;
+    struct mn_socket *sock;
+    struct os_mbuf *m;
+
+    sock = inet_def_socket_from_event(ev, NULL, NULL);
+    while (mn_recvfrom(sock, &m, NULL) == 0) {
+        console_printf("discard %d bytes\n", OS_MBUF_PKTLEN(m));
+        os_mbuf_free_chain(m);
+    }
+
+    inet_def_free_closed_tcp_sock(idt);
+}
+
+static void
+inet_def_event_chargen(struct os_event *ev)
+{
+    struct inet_def_tcp *idt;
+    struct mn_socket *sock;
+    struct os_mbuf *m;
+    int loop_cnt;
+
+    sock = inet_def_socket_from_event(ev, NULL, &idt);
+    while (mn_recvfrom(sock, &m, NULL) == 0) {
+        os_mbuf_free_chain(m);
+    }
+    if (idt == NULL || !idt->closed) {
+        /*
+         * Don't try to send tons of data to a closed socket.
+         */
+        loop_cnt = 0;
+        do {
+            m = os_msys_get(CHARGEN_WRITE_SZ, 0);
+            if (m) {
+                for (off = 0;
+                     OS_MBUF_TRAILINGSPACE(m) >= CHARGEN_PATTERN_SZ;
+                     off += CHARGEN_PATTERN_SZ) {
+                    os_mbuf_copyinto(m, off, chargen_pattern,
+                      CHARGEN_PATTERN_SZ);
+                }
+                console_printf("chargen %d bytes\n", m->om_len);
+                rc = mn_sendto(sock, m, NULL); /* assumes TCP for now */
+                if (rc) {
+                    os_mbuf_free_chain(m);
+                    if (rc != MN_ENOBUFS && rc != MN_EAGAIN) {
+                        console_write("  sendto fail!!! %d\n", rc);
+                    }
+                    break;
+                }
+            } else {
+                /*
+                 * Mbuf shortage. Wait for them to appear.
+                 */
+                os_time_delay(1);
+            }
+            loop_cnt++;
+        } while (loop_cnt < 32);
+    }
+
+    inet_def_free_closed_tcp_sock(idt);
+}
+
+static void
+inet_def_event_start(struct os_event *ev)
+{
+    inet_def_create_srv(INET_DEF_ECHO, ECHO_PORT);
+    inet_def_create_srv(INET_DEF_DISCARD, DISCARD_PORT);
+    inet_def_create_srv(INET_DEF_CHARGEN, CHARGEN_PORT);
+}
+
+void
+inet_def_service_init(void)
+{
+    SLIST_INIT(&inet_def.tcp_conns);
 }
 

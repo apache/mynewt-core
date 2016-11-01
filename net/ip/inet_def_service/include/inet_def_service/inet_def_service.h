@@ -24,7 +24,10 @@
 extern "C" {
 #endif
 
-int inet_def_service_init(uint8_t prio, os_stack_t *stack, uint16_t stack_sz);
+struct os_eventq;
+
+void inet_def_evq_set(struct os_eventq *evq);
+void inet_def_service_init(void);
 
 #ifdef __cplusplus
 }
