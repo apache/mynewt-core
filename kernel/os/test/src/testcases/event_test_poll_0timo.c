@@ -44,7 +44,6 @@ TEST_CASE(event_test_poll_0timo)
 
     /* Put an event on one of the queues. */
     memset(&ev, 0, sizeof ev);
-    ev.ev_type = 1;
     os_eventq_put(eventqs[3], &ev);
 
     evp = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, 0);

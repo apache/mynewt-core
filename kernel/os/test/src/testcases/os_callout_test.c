@@ -38,8 +38,7 @@ TEST_CASE(callout_test)
     os_eventq_init(&callout_evq);
     
     /* Initialize the callout function */
-    os_callout_func_init(&callout_func_test, &callout_evq,
-        my_callout_func, NULL);
+    os_callout_init(&callout_test_c, &callout_evq, my_callout, NULL);
 
     /* Does not return until OS_restart is called */
     os_start();

@@ -26,20 +26,20 @@ TEST_CASE(callout_test_speak)
     
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_speak, "callout_task_speak",
-        callout_task_stop_speak, NULL, SPEAK_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_speak, CALLOUT_STACK_SIZE);
+        callout_task_stop_speak, NULL, SPEAK_CALLOUT_TASK_PRIO,
+        OS_WAIT_FOREVER, callout_task_stack_speak, CALLOUT_STACK_SIZE);
 
     /* Initialize the receive task */
     os_task_init(&callout_task_struct_listen, "callout_task_listen",
-        callout_task_stop_listen, NULL, LISTEN_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_listen, CALLOUT_STACK_SIZE);
+        callout_task_stop_listen, NULL, LISTEN_CALLOUT_TASK_PRIO,
+        OS_WAIT_FOREVER, callout_task_stack_listen, CALLOUT_STACK_SIZE);
 
     os_eventq_init(&callout_evq);
     
     /* Initialize the callout function */
-    os_callout_func_init(&callout_func_speak, &callout_evq,
+    os_callout_init(&callout_speak, &callout_evq,
         my_callout_speak_func, NULL);    
+
     /* Does not return until OS_restart is called */
     os_start();
-
 }

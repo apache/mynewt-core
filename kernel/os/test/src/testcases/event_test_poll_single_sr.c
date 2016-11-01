@@ -39,8 +39,7 @@ TEST_CASE(event_test_poll_single_sr)
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
         os_eventq_init(&multi_eventq[i]);
 
-        m_event[i].ev_type = 10 * i;
-        m_event[i].ev_arg = NULL;
+        m_event[i].ev_arg = (void *)(intptr_t)(10 * i);
     }
 
     /* Does not return until OS_restart is called */

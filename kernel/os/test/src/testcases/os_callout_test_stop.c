@@ -27,13 +27,14 @@ TEST_CASE(callout_test_stop)
 
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_stop_send, "callout_task_stop_send",
-        callout_task_stop_send, NULL, SEND_STOP_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
-        callout_task_stack_stop_send, CALLOUT_STACK_SIZE);
+        callout_task_stop_send, NULL, SEND_STOP_CALLOUT_TASK_PRIO,
+        OS_WAIT_FOREVER, callout_task_stack_stop_send, CALLOUT_STACK_SIZE);
 
     /* Initialize the receiving task */
-    os_task_init(&callout_task_struct_stop_receive, "callout_task_stop_receive",
-        callout_task_stop_receive, NULL, RECEIVE_STOP_CALLOUT_TASK_PRIO,
-        OS_WAIT_FOREVER, callout_task_stack_stop_receive, CALLOUT_STACK_SIZE);
+    os_task_init(&callout_task_struct_stop_receive,
+        "callout_task_stop_receive", callout_task_stop_receive, NULL,
+        RECEIVE_STOP_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
+        callout_task_stack_stop_receive, CALLOUT_STACK_SIZE);
 
     for(k = 0; k< MULTI_SIZE; k++){
         os_eventq_init(&callout_stop_evq[k]);
@@ -41,7 +42,7 @@ TEST_CASE(callout_test_stop)
     
     /* Initialize the callout function */
     for(k = 0; k<MULTI_SIZE; k++){
-        os_callout_func_init(&callout_func_stop_test[k], &callout_stop_evq[k],
+        os_callout_init(&callout_stop_test[k], &callout_stop_evq[k],
            my_callout_stop_func, NULL);
     }
 

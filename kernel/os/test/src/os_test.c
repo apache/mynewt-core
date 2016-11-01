@@ -76,6 +76,7 @@ int
 main(int argc, char **argv)
 {
     ts_config.ts_print_results = 1;
+    tu_parse_args(argc, argv);
     tu_init();
 
     os_test_all();

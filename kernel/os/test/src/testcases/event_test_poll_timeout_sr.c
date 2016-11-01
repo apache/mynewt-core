@@ -39,7 +39,6 @@ TEST_CASE(event_test_poll_timeout_sr)
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
         os_eventq_init(&multi_eventq[i]);
 
-        m_event[i].ev_type = i + 10;
         m_event[i].ev_arg = NULL;
     }
 

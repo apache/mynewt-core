@@ -38,9 +38,6 @@ extern os_stack_t callout_task_stack_send[CALLOUT_STACK_SIZE];
 extern struct os_task callout_task_struct_receive;
 extern os_stack_t callout_task_stack_receive[CALLOUT_STACK_SIZE];
 
-/* Delearing variables for callout_func */
-extern struct os_callout_func callout_func_test;
-
 /* The event to be sent*/
 extern struct os_eventq callout_evq;
 extern struct os_event callout_ev;
@@ -56,7 +53,7 @@ extern os_stack_t callout_task_stack_stop_receive[CALLOUT_STACK_SIZE];
 
 /* Delearing variables for callout_stop_func */
 #define MULTI_SIZE    (2)
-extern struct os_callout_func callout_func_stop_test[MULTI_SIZE];
+extern struct os_callout callout_stop_test[MULTI_SIZE];
 
 /* The event to be sent*/
 extern struct os_eventq callout_stop_evq[MULTI_SIZE];
@@ -72,16 +69,17 @@ extern os_stack_t callout_task_stack_speak[CALLOUT_STACK_SIZE];
 extern struct os_task callout_task_struct_listen;
 extern os_stack_t callout_task_stack_listen[CALLOUT_STACK_SIZE];
 
-extern struct os_callout_func callout_func_speak;
+extern struct os_callout callout_speak;
+extern struct os_callout callout_test_c;
 
 /* Global variables to be used by the callout functions */
 extern int p;
 extern int q;
 extern int t;
 
-void my_callout_func(void *arg);
-void my_callout_stop_func(void *arg);
-void my_callout_speak_func(void *arg);
+void my_callout(struct os_event *ev);
+void my_callout_stop_func(struct os_event *ev);
+void my_callout_speak_func(struct os_event *ev);
 void callout_task_send(void *arg);
 void callout_task_receive(void *arg);
 void callout_task_stop_send(void *arg);

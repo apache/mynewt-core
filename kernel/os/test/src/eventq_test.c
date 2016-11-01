@@ -47,6 +47,7 @@ struct os_event g_event;
 struct os_event m_event[SIZE_MULTI_EVENT];
 
 /* Setting the event to send and receive multiple data */
+
 uint8_t my_event_type = 1;
 
 /* Setting up data for the poll */
@@ -95,16 +96,14 @@ eventq_task_send(void *arg)
     int i;
 
     g_event.ev_queued = 0;
-    g_event.ev_type = my_event_type;
-    g_event.ev_arg = NULL;
+    g_event.ev_arg = (void *)(intptr_t)my_event_type;
 
     os_eventq_put(&my_eventq, &g_event);
 
     os_time_delay(OS_TICKS_PER_SEC / 2);
 
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        m_event[i].ev_type = i + 2;
-        m_event[i].ev_arg = NULL;
+        m_event[i].ev_arg = (void *)(intptr_t)(i + 2);
 
         /* Put and send */
         os_eventq_put(&multi_eventq[i], &m_event[i]);
@@ -123,12 +122,12 @@ eventq_task_receive(void *arg)
     int i;
 
     event = os_eventq_get(&my_eventq);
-    TEST_ASSERT(event->ev_type == my_event_type);
+    TEST_ASSERT((intptr_t)event->ev_arg == my_event_type);
 
     /* Receiving multi event from the send task */
     for (i = 0; i < SIZE_MULTI_EVENT; i++) {
         event = os_eventq_get(&multi_eventq[i]);
-        TEST_ASSERT(event->ev_type == i + 2);
+        TEST_ASSERT((intptr_t)event->ev_arg == i + 2);
     }
 
     /* Finishes the test when OS has been started */
@@ -146,8 +145,7 @@ eventq_task_poll_send(void *arg)
     }
 
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
-        m_event[i].ev_type = i + 10;
-        m_event[i].ev_arg = NULL;
+        m_event[i].ev_arg = (void *)(intptr_t)(i + 10);
 
         /* Put and send */
         os_eventq_put(eventqs[i], &m_event[i]);
@@ -172,7 +170,7 @@ eventq_task_poll_receive(void *arg)
     /* Recieving using the os_eventq_poll*/
     for (i = 0; i < SIZE_MULTI_EVENT; i++) {
         event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, OS_WAIT_FOREVER);
-        TEST_ASSERT(event->ev_type == i +10);
+        TEST_ASSERT((intptr_t)event->ev_arg == i +10);
     }
 
     /* Finishes the test when OS has been started */
@@ -261,7 +259,7 @@ eventq_task_poll_single_receive(void *arg)
 
     /* Recieving using the os_eventq_poll*/
     event = os_eventq_poll(eventqs, SIZE_MULTI_EVENT, OS_WAIT_FOREVER);
-    TEST_ASSERT(event->ev_type == 20);
+    TEST_ASSERT((intptr_t)event->ev_arg == 20);
 
     /* Finishes the test when OS has been started */
     os_test_restart();
