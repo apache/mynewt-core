@@ -59,7 +59,7 @@ struct wifi_if {
     } wi_state, wi_tgt;
     struct os_mutex wi_mtx;
     struct os_event wi_event;
-    struct os_callout_func wi_timer;
+    struct os_callout wi_timer;
     const struct wifi_if_ops *wi_ops;
 
     uint8_t wi_scan_cnt;

@@ -30,15 +30,28 @@
 #include "wifi_mgmt/wifi_mgmt_if.h"
 #include "wifi_priv.h"
 
-#define WIFI_EV_STATE           OS_EVENT_T_PERUSER
-
 static struct os_task wifi_os_task;
-struct os_eventq wifi_evq;
+struct os_eventq *wifi_evq;
 
 static struct wifi_ap *wifi_find_ap(struct wifi_if *wi, char *ssid);
 static void wifi_events(void *arg);
 
+static void wifi_event_state(struct os_event *ev);
+
 static struct wifi_if *wifi_if;
+
+static struct os_eventq *
+wifi_evq_get(void)
+{
+    os_eventq_ensure(&wifi_evq, NULL);
+    return wifi_evq;
+}
+
+void
+wifi_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&wifi_evq, evq, NULL);
+}
 
 /*
  * Looks up interface based on port number.
@@ -63,8 +76,8 @@ wifi_if_register(struct wifi_if *wi, const struct wifi_if_ops *ops)
 
     wi->wi_ops = ops;
     os_mutex_init(&wi->wi_mtx);
-    os_callout_func_init(&wi->wi_timer, &wifi_evq, wifi_events, wi);
-    wi->wi_event.ev_type = WIFI_EV_STATE;
+    os_callout_init(&wi->wi_timer, &wifi_evq, wifi_events, wi);
+    wi->wi_event.ev_cb = wifi_event_state;
     wi->wi_event.ev_arg = wi;
 
     return 0;
@@ -311,27 +324,13 @@ wifi_step(struct wifi_if *wi)
 }
 
 static void
-wifi_task(void *arg)
+wifi_event_state(struct os_event *ev)
 {
-    struct os_event *ev;
-    struct os_callout_func *cf;
     struct wifi_if *wi;
 
-    while ((ev = os_eventq_get(&wifi_evq))) {
-        switch (ev->ev_type) {
-        case OS_EVENT_T_TIMER:
-            cf = (struct os_callout_func *)ev;
-            cf->cf_func(CF_ARG(cf));
-            break;
-        case WIFI_EV_STATE:
-            wi = (struct wifi_if *)ev->ev_arg;
-            while (wi->wi_state != wi->wi_tgt) {
-                wifi_step(wi);
-            }
-            break;
-        default:
-            break;
-        }
+    wi = (struct wifi_if *)ev->ev_arg;
+    while (wi->wi_state != wi->wi_tgt) {
+        wifi_step(wi);
     }
 }
 
