@@ -33,7 +33,7 @@ struct os_mqueue oc_serial_mqueue;
 static int
 oc_serial_in(struct os_mbuf *m, void *arg)
 {
-    return os_mqueue_put(&oc_serial_mqueue, oc_evq(), m);
+    return os_mqueue_put(&oc_serial_mqueue, oc_evq_get(), m);
 }
 
 void
@@ -60,12 +60,11 @@ oc_connectivity_init_serial(void) {
         goto err;
     }
 
-    rc = os_mqueue_init(&oc_serial_mqueue, NULL);
+    rc = os_mqueue_init(&oc_serial_mqueue, oc_event_serial, NULL);
     if (rc != 0) {
         goto err;
     }
-    /* override the eventq type */
-    oc_serial_mqueue.mq_ev.ev_cb = oc_event_serial;
+
     return 0;
 
 err:
@@ -74,7 +73,9 @@ err:
 }
 
 
-void oc_send_buffer_serial(oc_message_t *message) {
+void
+oc_send_buffer_serial(oc_message_t *message)
+{
     int rc;
     struct os_mbuf *m;
 

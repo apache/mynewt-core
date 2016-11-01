@@ -50,9 +50,6 @@
 #include <mcu/mcu_sim.h>
 #endif
 
-/* Init all tasks */
-static volatile int tasks_initialized;
-
 /* Task 1 */
 #define TASK1_PRIO (8)
 #define TASK1_STACK_SIZE    OS_STACK_ALIGN(192)
@@ -239,6 +236,7 @@ static void
 init_tasks(void)
 {
     os_stack_t *pstack;
+
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
@@ -266,8 +264,6 @@ init_tasks(void)
      */
     os_eventq_init(&slinky_evq);
     os_eventq_dflt_set(&slinky_evq);
-
-    tasks_initialized = 1;
 }
 
 /**

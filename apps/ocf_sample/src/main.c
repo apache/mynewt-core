@@ -267,7 +267,7 @@ ocf_aux_task_handler(void *arg)
 }
 
 static void
-ocf_main_task_init(void)
+ocf_init_tasks(void)
 {
     int rc;
 
@@ -304,7 +304,7 @@ main(int argc, char **argv)
     ocf_ble_init();
 #endif
 
-    ocf_main_task_init();
+    ocf_init_tasks();
 
     /* Start the OS */
     os_start();
