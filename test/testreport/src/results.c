@@ -82,7 +82,7 @@ tr_report_mkdir_suite(void)
 
     rc = snprintf(tr_report_buf, sizeof tr_report_buf,
                   "%s/%s", tr_config.tc_base_path,
-                  tu_suite_name);
+                  ts_current_config->ts_suite_name);
     if (rc >= sizeof tr_report_buf) {
         return -1;
     }
@@ -106,7 +106,7 @@ tr_report_mkdir_case(void)
 
     rc = snprintf(tr_report_buf, sizeof tr_report_buf,
                   "%s/%s/%s", tr_config.tc_base_path,
-                  tu_suite_name, tu_case_name);
+                  ts_current_config->ts_suite_name, tu_case_name);
     if (rc >= sizeof tr_report_buf) {
         return -1;
     }
@@ -131,7 +131,7 @@ tr_report_write_file(const char *filename, const uint8_t *data,
 
     rc = snprintf(tr_report_buf, sizeof tr_report_buf,
                   "%s/%s/%s/%s", tr_config.tc_base_path,
-                  tu_suite_name, tu_case_name, filename);
+                  ts_current_config->ts_suite_name, tu_case_name, filename);
     if (rc >= sizeof tr_report_buf) {
         return -1;
     }

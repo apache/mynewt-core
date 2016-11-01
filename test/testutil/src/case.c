@@ -156,7 +156,7 @@ tu_case_pass(void)
 {
 #if MYNEWT_VAL(SELFTEST)
     if (ts_config.ts_print_results) {
-        printf("[pass] %s/%s\n", tu_suite_name, tu_case_name);
+        printf("[pass] %s/%s\n", ts_current_config->ts_suite_name, tu_case_name);
         if (tu_case_buf_len > 0) {
             printf("%s", tu_case_buf);
         }
@@ -183,7 +183,7 @@ tu_case_fail(void)
 
 #if MYNEWT_VAL(SELFTEST)
     if (ts_config.ts_print_results) {
-        printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
+        printf("[FAIL] %s/%s %s", ts_current_config->ts_suite_name, tu_case_name, tu_case_buf);
         fflush(stdout);
     }
 #endif
@@ -206,7 +206,7 @@ tu_case_write_fail_buf(void)
 
 #if MYNEWT_VAL(SELFTEST)
     if (ts_config.ts_print_results) {
-        printf("[FAIL] %s/%s %s", tu_suite_name, tu_case_name, tu_case_buf);
+        printf("[FAIL] %s/%s %s", ts_current_config->ts_suite_name, tu_case_name, tu_case_buf);
         fflush(stdout);
     }
 #endif
@@ -241,7 +241,7 @@ tu_case_write_pass_buf(void)
 
 #if MYNEWT_VAL(SELFTEST)
     if (ts_config.ts_print_results) {
-        printf("[pass] %s/%s\n", tu_suite_name, tu_case_name);
+        printf("[pass] %s/%s\n", ts_current_config->ts_suite_name, tu_case_name);
         if (tu_case_buf_len > 0) {
             printf("%s", tu_case_buf);
         }

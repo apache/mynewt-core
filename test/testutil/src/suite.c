@@ -27,7 +27,7 @@ int tu_suite_failed = 0;
 static void
 tu_suite_set_name(const char *name)
 {
-    tu_suite_name = name;
+    ts_current_config->ts_suite_name = name;
 }
 
 void

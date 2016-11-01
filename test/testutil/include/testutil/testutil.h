@@ -23,6 +23,8 @@
 #include <inttypes.h>
 #include <setjmp.h>
 
+#include "os/queue.h"
+
 #include "syscfg/syscfg.h"
 
 #ifdef __cplusplus
@@ -55,6 +57,8 @@ typedef void tu_init_test_fn_t(void *arg);
 typedef void tu_pre_test_fn_t(void *arg);
 typedef void tu_post_test_fn_t(void *arg);
 
+typedef void tu_testsuite_fn_t(void);
+
 /*
  * Private declarations - Test Suite configuration
  */
@@ -69,9 +73,19 @@ void tu_suite_pre_test(void);
 void tu_suite_post_test(void);
 void tu_suite_complete(void);
 
+SLIST_HEAD(ts_testsuite_list, ts_suite);
+
+struct ts_suite {
+    SLIST_ENTRY(ts_suite) ts_next;
+    const char *ts_name;
+    tu_testsuite_fn_t *ts_test;
+};
+
 struct ts_config {
     int ts_print_results;
     int ts_system_assert;
+
+    const char *ts_suite_name;
 
     /*
      * Called prior to the first test in the suite

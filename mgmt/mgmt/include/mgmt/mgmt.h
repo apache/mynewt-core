@@ -47,6 +47,7 @@ extern "C" {
 #define MGMT_GROUP_ID_LOGS      (4)
 #define MGMT_GROUP_ID_CRASH     (5)
 #define MGMT_GROUP_ID_SPLIT     (6)
+#define MGMT_GROUP_ID_RUNTEST   (7)
 #define MGMT_GROUP_ID_PERUSER   (64)
 
 /**
