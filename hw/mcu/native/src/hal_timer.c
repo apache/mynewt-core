@@ -80,18 +80,14 @@ native_timer_task(void *arg)
     }
 }
 
-/**
- * hal_timer_init
- *
- * Initialize the cputime module to run at the desired frequency.
- *
- * @param timer_num
- * @param clock_freq The desired cputime frequency, in hertz (Hz).
- *
- * @return int 0 on success; -1 on error.
- */
 int
-hal_timer_init(int num, uint32_t clock_freq)
+hal_timer_init(int num, void *cfg)
+{
+    return 0;
+}
+
+int
+hal_timer_config(int num, uint32_t clock_freq)
 {
     struct native_timer *nt;
 
