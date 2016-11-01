@@ -37,7 +37,6 @@ static void *g_shell_nlip_in_arg;
 
 static struct os_mqueue g_shell_nlip_mq;
 
-#define OS_EVENT_T_CONSOLE_RDY  (OS_EVENT_T_PERUSER)
 #define SHELL_HELP_PER_LINE     6
 #define SHELL_MAX_ARGS          20
 

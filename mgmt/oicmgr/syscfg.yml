@@ -17,9 +17,3 @@
 # under the License.
 #
 syscfg.defs:
-    OICMGR_TASK_PRIO:
-        type: 'task_priority'
-        value: 'any'
-    OICMGR_STACK_SIZE:
-        value: 512
-

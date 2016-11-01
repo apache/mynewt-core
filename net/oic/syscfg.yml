@@ -38,13 +38,6 @@ syscfg.defs:
     OC_DEBUG:
         description: 'Enables OIC debug logs'
         value: '0'
-    OC_TASK_PRIORITY:
-        description: 'The task priority for an internal tasks that runs the OCF stack'
-        value: '4'
-    OC_TASK_STACK_SIZE:
-        description: 'The stack size of the OC task in words'
-        value: '300'
-
     OC_NUM_REP_OBJECTS:
         description: 'Estimated number of nodes in payload tree structure'
         value: 32

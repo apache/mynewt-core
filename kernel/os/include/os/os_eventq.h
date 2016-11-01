@@ -40,11 +40,6 @@ struct os_event {
 
 #define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued)
 
-#define OS_EVENT_T_TIMER        (1)
-#define OS_EVENT_T_MQUEUE_DATA  (2)
-#define OS_EVENT_T_CB           (3)
-#define OS_EVENT_T_PERUSER      (16)
-
 struct os_eventq {
     struct os_task *evq_task;
     STAILQ_HEAD(, os_event) evq_list;

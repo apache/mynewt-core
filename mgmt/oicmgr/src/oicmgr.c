@@ -35,11 +35,6 @@
 #include <tinycbor/cbor_buf_reader.h>
 #include <oic/oc_api.h>
 
-#define OMGR_OC_EVENT	(OS_EVENT_T_PERUSER)
-#define OMGR_OC_TIMER	(OS_EVENT_T_PERUSER + 1)
-#define OMGR_OC_START	(OS_EVENT_T_PERUSER + 2)
-#define OICMGR_STACK_SZ	OS_STACK_ALIGN(MYNEWT_VAL(OICMGR_STACK_SIZE))
-
 struct omgr_cbuf {
     struct mgmt_cbuf ob_mj;
     struct cbor_buf_reader ob_reader;
