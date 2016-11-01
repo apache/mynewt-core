@@ -256,7 +256,6 @@ static const uint8_t ocf_ble_addr[6] = {1,2,3,4,5,6};
 void
 ocf_ble_init(void)
 {
-    struct os_eventq *evq;
     int rc;
 
     /* Initialize the ocf_ble log. */
@@ -266,7 +265,7 @@ ocf_ble_init(void)
     memcpy(g_dev_addr, ocf_ble_addr, sizeof(g_dev_addr));
 
     /* COAP Gatt server initialization */
-    rc = ble_coap_gatt_srv_init(&evq);
+    rc = ble_coap_gatt_srv_init();
     assert(rc == 0);
 
     /* Set the default device name. */
@@ -277,7 +276,6 @@ ocf_ble_init(void)
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
-    ble_hs_cfg.parent_evq = evq;
     ble_hs_cfg.sync_cb = ocf_ble_on_sync;
 }
 

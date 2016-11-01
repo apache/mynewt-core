@@ -24,11 +24,7 @@
 extern "C" {
 #endif
 
-struct ble_hs_cfg;
-
-/* returns the event q for bluetooth to use */
-int
-ble_coap_gatt_srv_init(struct os_eventq **out);
+int ble_coap_gatt_srv_init(void);
 
 #ifdef __cplusplus
 }

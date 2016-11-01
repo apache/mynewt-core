@@ -28,11 +28,24 @@
 #include "../oc_log.h"
 #include "adaptor.h"
 
-struct os_eventq oc_event_q;
+static struct os_eventq *oc_evq;
 
 /* not sure if these semaphores are necessary yet.  If we are running
  * all of this from one task, we may not need these */
 static struct os_mutex oc_net_mutex;
+
+struct os_eventq *
+oc_evq_get(void)
+{
+    os_eventq_ensure(&oc_evq, NULL);
+    return oc_evq;
+}
+
+void
+oc_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&oc_evq, evq, NULL);
+}
 
 void
 oc_network_event_handler_mutex_init(void)
@@ -53,12 +66,6 @@ oc_network_event_handler_mutex_unlock(void)
 {
     os_mutex_release(&oc_net_mutex);
 }
-
-/* need a task to process OCF messages */
-#define OC_NET_TASK_STACK_SIZE  OS_STACK_ALIGN(MYNEWT_VAL(OC_TASK_STACK_SIZE))
-#define OC_NET_TASK_PRIORITY            MYNEWT_VAL(OC_TASK_PRIORITY)
-struct os_task oc_task;
-os_stack_t *oc_stack;
 
 void
 oc_send_buffer(oc_message_t *message)
@@ -108,40 +115,6 @@ void oc_send_multicast_message(oc_message_t *message)
 #endif
 }
 
-/* send all the entries to the OCF stack through the same task */
-void
-oc_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&oc_event_q);
-    }
-}
-
-static int
-oc_init_task(void)
-{
-    int rc;
-
-    os_eventq_init(&oc_event_q);
-
-    oc_stack = (os_stack_t*) malloc(sizeof(os_stack_t)*OC_NET_TASK_STACK_SIZE);
-    if (NULL == oc_stack) {
-        ERROR("Could not malloc oc stack\n");
-        return -1;
-    }
-
-    rc = os_task_init(&oc_task, "oc", oc_task_handler, NULL,
-            OC_NET_TASK_PRIORITY, OS_WAIT_FOREVER,
-            oc_stack, OC_NET_TASK_STACK_SIZE);
-
-    if (rc != 0) {
-        ERROR("Could not start oc task\n");
-        free(oc_stack);
-    }
-
-    return rc;
-}
-
 void
 oc_connectivity_shutdown(void)
 {
@@ -176,14 +149,11 @@ oc_connectivity_init(void)
         rc = 0;
     }
 #endif
-    rc = oc_init_task();
+
     if (rc != 0) {
-        goto oc_connectivity_init_err;
+        oc_connectivity_shutdown();
+        return rc;
     }
 
     return 0;
-
-oc_connectivity_init_err:
-    oc_connectivity_shutdown();
-    return rc;
 }

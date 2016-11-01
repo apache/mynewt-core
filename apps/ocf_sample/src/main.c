@@ -34,10 +34,18 @@
 #include "ocf_sample.h"
 #endif
 
-#define OCF_TASK_PRIO      (8)
-#define OCF_TASK_STACK_SIZE (OS_STACK_ALIGN(512))
-static os_stack_t ocf_stack[OCF_TASK_STACK_SIZE];
-struct os_task ocf_task;
+/** Task for handling OCF-specific events. */
+#define OCF_MAIN_TASK_PRIO          (8)
+#define OCF_MAIN_TASK_STACK_SIZE    (OS_STACK_ALIGN(512))
+static os_stack_t ocf_stack[OCF_MAIN_TASK_STACK_SIZE];
+struct os_task ocf_main_task;
+
+/** Auxilliary task for handling events from library packages. */
+#define OCF_AUX_TASK_PRIO           (9)
+#define OCF_AUX_TASK_STACK_SIZE     (OS_STACK_ALIGN(336))
+struct os_eventq ocf_aux_evq;
+static os_stack_t ocf_aux_stack[OCF_AUX_TASK_STACK_SIZE];
+struct os_task ocf_aux_task;
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
 static void issue_requests(void);
@@ -230,8 +238,8 @@ oc_signal_main_loop(void)
      os_sem_release(&ocf_main_loop_sem);
 }
 
-void
-ocf_task_handler(void *arg)
+static void
+ocf_main_task_handler(void *arg)
 {
     os_sem_init(&ocf_main_loop_sem, 1);
 
@@ -250,16 +258,36 @@ ocf_task_handler(void *arg)
     oc_main_shutdown();
 }
 
-void
-ocf_task_init(void)
+static void
+ocf_aux_task_handler(void *arg)
+{
+    while (1) {
+        os_eventq_run(&ocf_aux_evq);
+    }
+}
+
+static void
+ocf_main_task_init(void)
 {
     int rc;
 
-    rc = os_task_init(&ocf_task, "ocf", ocf_task_handler, NULL,
-            OCF_TASK_PRIO, OS_WAIT_FOREVER, ocf_stack, OCF_TASK_STACK_SIZE);
+    rc = os_task_init(&ocf_main_task, "ocf", ocf_main_task_handler, NULL,
+            OCF_MAIN_TASK_PRIO, OS_WAIT_FOREVER, ocf_stack,
+            OCF_MAIN_TASK_STACK_SIZE);
     assert(rc == 0);
 
     oc_main_init(&ocf_handler);
+
+    /* Initialize eventq */
+    os_eventq_init(&ocf_aux_evq);
+
+    /* Set the default eventq for packages that lack a dedicated task. */
+    os_eventq_dflt_set(&ocf_aux_evq);
+
+    rc = os_task_init(&ocf_aux_task, "ocf_aux", ocf_aux_task_handler, NULL,
+            OCF_AUX_TASK_PRIO, OS_WAIT_FOREVER, ocf_aux_stack,
+            OCF_AUX_TASK_STACK_SIZE);
+    assert(rc == 0);
 }
 
 int
@@ -276,7 +304,7 @@ main(int argc, char **argv)
     ocf_ble_init();
 #endif
 
-    ocf_task_init();
+    ocf_main_task_init();
 
     /* Start the OS */
     os_start();

@@ -208,7 +208,7 @@ union mn_socket_cb oc_sock_cbs = {
 void
 oc_socks_readable(void *cb_arg, int err)
 {
-    os_eventq_put(&oc_event_q, &oc_sock_read_event);
+    os_eventq_put(&oc_evq_get(), &oc_sock_read_event);
 }
 
 void

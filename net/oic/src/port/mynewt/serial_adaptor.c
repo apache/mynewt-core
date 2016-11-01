@@ -33,7 +33,7 @@ struct os_mqueue oc_serial_mqueue;
 static int
 oc_serial_in(struct os_mbuf *m, void *arg)
 {
-    return os_mqueue_put(&oc_serial_mqueue, &oc_event_q, m);
+    return os_mqueue_put(&oc_serial_mqueue, oc_evq(), m);
 }
 
 void

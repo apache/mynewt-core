@@ -92,7 +92,7 @@ gatt_svr_chr_access_coap(uint16_t conn_handle, uint16_t attr_handle,
             if (rc) {
                 return BLE_ATT_ERR_INSUFFICIENT_RES;
             }
-            rc = os_mqueue_put(&ble_coap_mq, &oc_event_q, m);
+            rc = os_mqueue_put(&ble_coap_mq, oc_evq_get(), m);
             if (rc) {
                 return BLE_ATT_ERR_PREPARE_QUEUE_FULL;
             }
@@ -182,7 +182,7 @@ rx_attempt_err:
 #endif
 
 int
-ble_coap_gatt_srv_init(struct os_eventq **out)
+ble_coap_gatt_srv_init(void)
 {
 #if (MYNEWT_VAL(OC_SERVER) == 1)
     int rc;
@@ -197,7 +197,6 @@ ble_coap_gatt_srv_init(struct os_eventq **out)
     }
 #endif
 
-    *out = &oc_event_q;
     return 0;
 }
 
@@ -214,8 +213,7 @@ oc_event_gatt(struct os_event *ev)
 int
 oc_connectivity_init_gatt(void)
 {
-    os_mqueue_init(&ble_coap_mq, NULL);
-    ble_coap_mq.mq_ev.ev_cb = oc_event_gatt;
+    os_mqueue_init(&ble_coap_mq, oc_event_gatt, NULL);
     return 0;
 }
 
