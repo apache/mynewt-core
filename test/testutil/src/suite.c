@@ -79,13 +79,15 @@ tu_suite_post_test(void)
 }
 
 void
-tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg) {
+tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg)
+{
     ts_config.ts_case_pass_cb = cb;
     ts_config.ts_case_pass_arg = cb_arg;
 }
 
 void
-tu_suite_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg) {
+tu_suite_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg)
+{
     ts_config.ts_case_fail_cb = cb;
     ts_config.ts_case_fail_arg = cb_arg;
 }
