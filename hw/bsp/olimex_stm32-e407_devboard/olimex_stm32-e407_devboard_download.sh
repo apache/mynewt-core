@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,7 +17,7 @@
 # under the License.
 #
 
-# Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
@@ -25,33 +25,24 @@
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - MFG_IMAGE is "1" if this is a manufacturing image
+#  - FLASH_OFFSET contains the flash offset to download to
+#  - BOOTLOADER is set if downloading a bootloader
 
-if [ -z "$BIN_BASENAME" ]; then
-    echo "Need binary to download"
-    exit 1
+. $CORE_PATH/hw/scripts/openocd.sh
+
+CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f f407.cfg"
+if [ ! -z "$EXTRA_JTAG_CMD" ]; then
+    CFG="$CFG -c $EXTRA_JTAG_CMD"
 fi
 
-IS_BOOTLOADER=0
-
-# Look for 'bootloader' in FEATURES
-for feature in $FEATURES; do
-    if [ $feature == "BOOT_LOADER" ]; then
-        IS_BOOTLOADER=1
-    fi
-done
-
 if [ "$MFG_IMAGE" ]; then
-    FLASH_OFFSET=0x0
-    FILE_NAME=$BIN_BASENAME.bin
-elif [ $IS_BOOTLOADER -eq 1 ]; then
     FLASH_OFFSET=0x08000000
+    FILE_NAME=$BIN_BASENAME.bin
+elif [ "$BOOT_LOADER" ]; then
     FILE_NAME=$BIN_BASENAME.elf.bin
 else
-    FLASH_OFFSET=0x08020000
     FILE_NAME=$BIN_BASENAME.img
 fi
 
-echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
-
-openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f f407.cfg -c "$EXTRA_JTAG_CMD" -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
-
+openocd_load
+openocd_reset_run
