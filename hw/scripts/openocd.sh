@@ -34,7 +34,7 @@ openocd_load () {
 	return 1
     fi
 
-    echo "Downloading" $FILE_NAME "to" $OFF
+    echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
     openocd $CFG -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c shutdown
     return $?
