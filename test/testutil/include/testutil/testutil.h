@@ -73,13 +73,15 @@ void tu_suite_pre_test(void);
 void tu_suite_post_test(void);
 void tu_suite_complete(void);
 
-SLIST_HEAD(ts_testsuite_list, ts_suite);
-
 struct ts_suite {
     SLIST_ENTRY(ts_suite) ts_next;
     const char *ts_name;
     tu_testsuite_fn_t *ts_test;
 };
+
+SLIST_HEAD(ts_testsuite_list, ts_suite);
+
+extern struct ts_testsuite_list *ts_suites;
 
 struct ts_config {
     int ts_print_results;
@@ -186,8 +188,13 @@ extern int tu_case_failed;
 extern int tu_case_idx;
 extern jmp_buf tu_case_jb;
 
+#define TEST_SUITE_NAME(suite_name) TEST_SUITE##suite_name
+
+#define TEST_SUITE_DECL(suite_name)                         \
+  extern tu_testsuite_fn_t *TEST_SUITE##suite_name()
+
 #define TEST_SUITE(suite_name)                               \
-static void                                                  \
+void                                                         \
 TEST_SUITE_##suite_name(void);                               \
                                                              \
     int                                                      \
@@ -200,7 +207,7 @@ TEST_SUITE_##suite_name(void);                               \
         return tu_suite_failed;                              \
     }                                                        \
                                                              \
-    static void                                              \
+    void                                                     \
     TEST_SUITE_##suite_name(void)
 
 /*
@@ -214,7 +221,7 @@ TEST_SUITE_##suite_name(void);                               \
  * Unit test definition.
  */
 #define TEST_CASE(case_name)                                  \
-    static void TEST_CASE_##case_name(void);                  \
+    void TEST_CASE_##case_name(void);                         \
                                                               \
     int                                                       \
     case_name(void)                                           \
@@ -238,7 +245,7 @@ TEST_SUITE_##suite_name(void);                               \
         return tu_case_failed;                                \
     }                                                         \
                                                               \
-    static void                                               \
+    void                                                      \
     TEST_CASE_##case_name(void)
 
 #define FIRST_AUX(first, ...) first

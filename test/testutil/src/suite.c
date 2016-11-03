@@ -18,11 +18,28 @@
  */
 
 #include <assert.h>
+#include "os/os.h"
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
 
 const char *tu_suite_name = 0;
 int tu_suite_failed = 0;
+
+int
+tu_suite_register(const char *name, tu_testsuite_fn_t* ts)
+{
+    struct ts_suite *tsp;
+    TEST_SUITE_DECL(name);
+
+    tsp = (struct ts_suite *)os_malloc(sizeof(*tsp));
+    if (!tsp) {
+        return -1;
+    }
+    tsp->ts_name = name;
+    tsp->ts_test = ts;
+    SLIST_INSERT_HEAD(ts_suites, tsp, ts_next);
+    return 0;
+}
 
 static void
 tu_suite_set_name(const char *name)

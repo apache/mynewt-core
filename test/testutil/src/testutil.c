@@ -36,7 +36,7 @@ struct ts_config *ts_current_config = &ts_config;
 int tu_any_failed;
 int tu_first_idx;
 
-struct ts_testsuites;
+struct ts_testsuite_list *ts_suites;
 
 int
 tu_init(void)
