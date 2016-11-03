@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+. $CORE_PATH/hw/scripts/common.sh
 
 #
 # FILE_NAME must contain the name of the file to load
@@ -33,6 +34,9 @@ openocd_load () {
 	echo "Missing flash offset"
 	return 1
     fi
+    if [ ! -z "$EXTRA_JTAG_CMD" ]; then
+	CFG="$CFG -c $EXTRA_JTAG_CMD"
+    fi
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
@@ -40,7 +44,17 @@ openocd_load () {
     return $?
 }
 
+#
+# NO_GDB should be set if gdb should not be started
+# FILE_NAME should point to elf-file being debugged
+#
 openocd_debug () {
+    OCD_CMD_FILE=.openocd_cmds
+
+    echo "gdb_port 3333" > $OCD_CMD_FILE
+    echo "telnet_port 4444" >> $OCD_CMD_FILE
+    echo "$EXTRA_JTAG_CMD" >> $OCD_CMD_FILE
+
     if [ -z "$NO_GDB" ]; then
 	if [ -z $FILE_NAME ]; then
 	    echo "Missing filename"
@@ -55,7 +69,7 @@ openocd_debug () {
 	# Block Ctrl-C from getting passed to openocd.
 	#
 	set -m
-	openocd $CFG -c init -c halt &
+	openocd $CFG -f $OCD_CMD_FILE -c init -c halt &
 	set +m
 
     	GDB_CMD_FILE=.gdb_cmds
@@ -68,9 +82,11 @@ openocd_debug () {
 	rm $GDB_CMD_FILE
     else
 	# No GDB, wait for openocd to exit
-	openocd $CFG -c init -c halt
+	openocd $CFG -f $OCD_CMD_FILE -c init -c halt
     fi
 
+
+    rm $OCD_CMD_FILE
     return 0
 }
 
