@@ -18,48 +18,31 @@
 #
 
 # Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - RESET set if target should be reset when attaching
+#  - NO_GDB set if we should not start gdb to debug
 #
-if [ -z "$BIN_BASENAME" ]; then
-    echo "Need binary to debug"
-    exit 1
-fi
+
+. $CORE_PATH/hw/scripts/jlink.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 
-SPLIT_ELF_PRESENT=0
 if [ $# -gt 2 ]; then
-    SPLIT_ELF_PRESENT=1
     SPLIT_ELF_NAME=$3.elf
+    # TODO -- this magic number 0x42000 is the location of the second image
+    # slot. we should either get this from a flash map file or somehow learn
+    # this from the image itself
+    EXTRA_GDB_CMDS="add-symbol-file $SPLIT_ELF_NAME 0x8000 -readnow"
 fi
+
+JLINK_DEV="nRF52"
 
 GDB_CMD_FILE=.gdb_cmds
 
-echo "Debugging" $FILE_NAME
-
-# Monitor mode. Background process gets it's own process group.
-set -m
-JLinkGDBServer -device nRF52 -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
-set +m
-
-echo "target remote localhost:3333" > $GDB_CMD_FILE
-# Whether target should be reset or not
-if [ ! -z "$RESET" ]; then
-    echo "mon reset" >> $GDB_CMD_FILE
-    echo "si" >> $GDB_CMD_FILE
-fi
-if [ $SPLIT_ELF_PRESENT -eq 1 ]; then
-    # TODO -- this magic number 0x42000 is the location of the second image slot.
-    # we should either get this from a flash map file or somehow learn this from the image itself
-    echo "add-symbol-file $SPLIT_ELF_NAME 0x8000 -readnow" >> $GDB_CMD_FILE
-fi
-
-arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-
-rm $GDB_CMD_FILE
+jlink_debug
 
