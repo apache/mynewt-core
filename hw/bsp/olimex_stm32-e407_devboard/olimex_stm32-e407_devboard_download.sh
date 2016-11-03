@@ -26,7 +26,7 @@
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - MFG_IMAGE is "1" if this is a manufacturing image
 #  - FLASH_OFFSET contains the flash offset to download to
-#  - BOOTLOADER is set if downloading a bootloader
+#  - BOOT_LOADER is set if downloading a bootloader
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
