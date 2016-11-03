@@ -30,17 +30,8 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-OCD_CMD_FILE=.openocd_cmds
-
 CFG="-s $BSP_PATH -f $BSP_PATH/f4discovery.cfg -f $OCD_CMD_FILE"
-
-echo "gdb_port 3333" > $OCD_CMD_FILE
-echo "telnet_port 4444" >> $OCD_CMD_FILE
-# Exit openocd when gdb detaches.
-echo "stm32f4x.cpu configure -event gdb-detach {resume;shutdown}" >> $OCD_CMD_FILE
-if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-    echo "$EXTRA_JTAG_CMD" >> $OCD_CMD_FILE
-fi
+EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32f4x.cpu configure -event gdb-detach {resume;shutdown}"
 
 openocd_debug
 

@@ -32,18 +32,11 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 CFG="-f board/st_nucleo_f4.cfg"
-if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-    CFG="$CFG -c $EXTRA_JTAG_CMD"
-fi
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x08000000
-    FILE_NAME=$BIN_BASENAME.bin
-elif [ "$BOOT_LOADER" ]; then
-    FILE_NAME=$BIN_BASENAME.elf.bin
-else
-    FILE_NAME=$BIN_BASENAME.img
 fi
 
+common_file_to_load
 openocd_load
 openocd_reset_run

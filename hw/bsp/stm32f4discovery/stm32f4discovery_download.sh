@@ -28,23 +28,14 @@
 #  - MFG_IMAGE is "1" if this is a manufacturing image
 #  - FLASH_OFFSET contains the flash offset to download to
 #  - BOOTLOADER is set if downloading a bootloader
-set -x 
 . $CORE_PATH/hw/scripts/openocd.sh
 
 CFG="-s $BSP_PATH -f f4discovery.cfg"
 
-if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-    CFG="$CFG -c $EXTRA_JTAG_CMD"
-fi
-
 if [ "$MFG_IMAGE" ]; then
-    FILE_NAME=$BIN_BASENAME.bin
     FLASH_OFFSET=0x08000000
-elif [ "$BOOT_LOADER" ]; then
-    FILE_NAME=$BIN_BASENAME.elf.bin
-else
-    FILE_NAME=$BIN_BASENAME.img
 fi
 
+common_file_to_load
 openocd_load
 openocd_reset_run

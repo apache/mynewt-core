@@ -31,18 +31,11 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f f407.cfg"
-if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-    CFG="$CFG -c $EXTRA_JTAG_CMD"
-fi
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x08000000
-    FILE_NAME=$BIN_BASENAME.bin
-elif [ "$BOOT_LOADER" ]; then
-    FILE_NAME=$BIN_BASENAME.elf.bin
-else
-    FILE_NAME=$BIN_BASENAME.img
 fi
 
+common_file_to_load
 openocd_load
 openocd_reset_run
