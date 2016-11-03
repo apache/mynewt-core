@@ -42,7 +42,5 @@ fi
 
 JLINK_DEV="nRF52"
 
-GDB_CMD_FILE=.gdb_cmds
-
 jlink_debug
 
