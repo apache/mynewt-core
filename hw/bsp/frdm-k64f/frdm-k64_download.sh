@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,6 +17,7 @@
 # under the License.
 
 # Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
@@ -24,35 +25,15 @@
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - MFG_IMAGE is "1" if this is a manufacturing image
+#  - FLASH_OFFSET contains the flash offset to download to
+#  - BOOT_LOADER is set if downloading a bootloader
 
-if [ -z "${BIN_BASENAME}" ]; then
-    echo "Need binary to download"
-    exit 1
-fi
+. $CORE_PATH/hw/scripts/openocd.sh
 
-IS_BOOTLOADER=0
-USE_OPENOCD=0
-GDB_CMD_FILE=.gdb_cmds
-
-# Look for 'bootloader' in FEATURES
-for feature in ${FEATURES}; do
-    if [ ${feature} == "BOOT_LOADER" ]; then
-        IS_BOOTLOADER=1
-    fi
-    if [ ${feature} = "openocd_debug" ]; then
-        USE_OPENOCD=1
-    fi
-done
+common_file_to_load
 
 if [ "$MFG_IMAGE" ]; then
-    FLASH_OFFSET=0x0
-    FILE_NAME=$BIN_BASENAME.bin
-elif [ $IS_BOOTLOADER -eq 1 ]; then
-    FLASH_OFFSET=0x00000000
-    FILE_NAME=${BIN_BASENAME}.elf.bin
-else
-    FLASH_OFFSET=0x00008000
-    FILE_NAME=${BIN_BASENAME}.elf.bin
+    FLASH_OFFSET=0
 fi
 
 echo "Downloading" ${FILE_NAME} "to" ${FLASH_OFFSET}
