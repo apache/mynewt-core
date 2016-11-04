@@ -53,6 +53,9 @@ crash_device(char *how)
         val1 = *(int *)0;
     } else if (!strcmp(how, "assert")) {
         assert(0);
+    } else if (!strcmp(how, "wdog")) {
+        OS_ENTER_CRITICAL(val1);
+        while(1);
     } else {
         return -1;
     }
