@@ -6,9 +6,9 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,39 +18,20 @@
 #
 
 # Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - RESET set if target should be reset when attaching
+#  - NO_GDB set if we should not start gdb to debug
 #
-if [ -z "$BIN_BASENAME" ]; then
-    echo "Need binary to debug"
-    exit 1
-fi
-
-if [ -z "$BSP_PATH" ]; then
-    echo "Need BSP path for openocd script location"
-    exit 1
-fi
+. $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-GDB_CMD_FILE=.gdb_cmds
+CFG="-s $BSP_PATH -f cmsis-dap.cfg -f nrf52.cfg"
+EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf52.cpu configure -event gdb-detach {resume;shutdown}"
 
-echo "Debugging" $FILE_NAME
-
-set -m
-openocd -s $BSP_PATH -f cmsis-dap.cfg -f nrf52.cfg -c "nrf52.cpu configure -event gdb-detach {resume;shutdown}" -c "$EXTRA_JTAG_CMD" -c init -c halt &
-set +m
-
-echo "target remote localhost:3333" > $GDB_CMD_FILE
-# Whether target should be reset or not
-if [ ! -z "$RESET" ]; then
-    echo "mon reset" >> $GDB_CMD_FILE
-fi
-
-arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-
-rm $GDB_CMD_FILE
+openocd_debug
 
