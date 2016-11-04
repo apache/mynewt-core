@@ -299,7 +299,7 @@ main(int argc, char **argv)
         void *entry;
         rc = split_app_go(&entry, true);
         if(rc == 0) {
-            system_start(entry);
+            hal_system_start(entry);
         }
     }
 #endif

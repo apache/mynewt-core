@@ -53,7 +53,7 @@ tu_arch_restart(void)
     os_arch_os_stop();
     tu_case_abort();
 #else
-    system_reset();
+    hal_system_reset();
 #endif
 }
 

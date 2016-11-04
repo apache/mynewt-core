@@ -315,7 +315,7 @@ out:
 static void
 nmgr_reset_tmo(struct os_event *ev)
 {
-    system_reset();
+    hal_system_reset();
 }
 
 static int

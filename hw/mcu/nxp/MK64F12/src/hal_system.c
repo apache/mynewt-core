@@ -20,15 +20,15 @@
 #include <mcu/cortex_m4.h>
 #include "hal/hal_system.h"
 
-int system_debugger_connected(void)
+int hal_debugger_connected(void)
 {
     return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
 }
 
-void system_reset(void)
+void hal_system_reset(void)
 {
     while (1) {
-        if (system_debugger_connected()) {
+        if (hal_debugger_connected()) {
             /*
              * If debugger is attached, breakpoint here.
              */

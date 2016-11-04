@@ -23,10 +23,10 @@
 #include "stm32f4xx_hal_def.h"
 
 void
-system_reset(void)
+hal_system_reset(void)
 {
     while (1) {
-        if (system_debugger_connected()) {
+        if (hal_debugger_connected()) {
             /*
              * If debugger is attached, breakpoint here.
              */
@@ -37,7 +37,7 @@ system_reset(void)
 }
 
 int
-system_debugger_connected(void)
+hal_debugger_connected(void)
 {
     return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
 }

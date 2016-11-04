@@ -27,7 +27,7 @@
  * @param hdr                   The header for the image to boot.
  */
 void
-system_start(void *img_start)
+hal_system_start(void *img_start)
 {
     /* Turn off interrupts. */
     __disable_irq();

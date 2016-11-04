@@ -28,7 +28,7 @@
  * @param hdr                   The header for the image to boot.
  */
 void
-system_start(void *img_start)
+hal_system_start(void *img_start)
 {
     typedef void jump_fn(void);
 

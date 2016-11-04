@@ -21,7 +21,7 @@
 #include "hal/hal_system.h"
 
 void
-system_reset(void)
+hal_system_reset(void)
 {
     while (1) {
         NVIC_SystemReset();
@@ -29,7 +29,7 @@ system_reset(void)
 }
 
 int
-system_debugger_connected(void)
+hal_debugger_connected(void)
 {
     /* XXX is there a way? */
     return 0;

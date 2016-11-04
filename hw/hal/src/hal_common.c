@@ -24,5 +24,5 @@ void _exit(int status);
 void
 _exit(int status)
 {
-    system_reset();
+    hal_system_reset();
 }

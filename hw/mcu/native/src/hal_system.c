@@ -25,7 +25,7 @@
 #include "mcu/mcu_sim.h"
 
 void
-system_reset(void)
+hal_system_reset(void)
 {
     while(1);
 }

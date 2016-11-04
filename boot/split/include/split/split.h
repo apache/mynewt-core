@@ -60,7 +60,7 @@ void split_app_init(void);
   * If the application is configured to be run (and valid)
   * returns zero and puts the entry data into entry. NOTE:
   * Entry data is not a function pointer, but a pointer
-  * suitable to call system_start
+  * suitable to call hal_system_start
   *
   * If toBoot is true, also performs the necessary steps
   * to prepare to boot.  An application may set toBoot to

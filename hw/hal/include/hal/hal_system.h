@@ -27,17 +27,17 @@ extern "C" {
 /*
  * System reset.
  */
-void system_reset(void) __attribute((noreturn));
+void hal_system_reset(void) __attribute((noreturn));
 
 /*
  * Called by bootloader to start loaded program.
  */
-void system_start(void *img_start) __attribute((noreturn));
+void hal_system_start(void *img_start) __attribute((noreturn));
 
 /*
  * Returns non-zero if there is a HW debugger attached.
  */
-int system_debugger_connected(void);
+int hal_debugger_connected(void);
 
 #ifdef __cplusplus
 }
