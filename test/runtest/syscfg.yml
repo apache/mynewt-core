@@ -1,0 +1,11 @@
+# Package: test/runtest
+
+syscfg.defs:
+    RUNTEST_CLI:
+        description: 'TBD'
+        value: 1
+        restrictions:
+            - SHELL_TASK
+    RUNTEST_NEWTMGR:
+        description: 'TBD'
+        value: 1
