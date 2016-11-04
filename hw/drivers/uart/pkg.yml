@@ -24,4 +24,3 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:
 pkg.req_apis: 
-    - UART_HW_IMPL
