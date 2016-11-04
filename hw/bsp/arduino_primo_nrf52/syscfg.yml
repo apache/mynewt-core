@@ -20,6 +20,10 @@
 # Package: hw/bsp/arduino_primo_nrf52
 
 syscfg.defs:
+    OPENOCD_DEBUG:
+        description: 'TBD'
+        value: 0
+
     BSP_NRF52:
         description: 'TBD'
         value: 1
@@ -63,7 +67,7 @@ syscfg.defs:
 
     UART_1:
         description: 'Bitbanger UART'
-        value:  0
+        value:  1
     UART_1_PIN_TX:
         description: 'TBD'
         value:  11
@@ -98,7 +102,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'NRF52 Timer 0'
-        value:  0
+        value:  1
     TIMER_1:
         description: 'NRF52 Timer 1'
         value:  0
