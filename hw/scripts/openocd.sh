@@ -83,8 +83,8 @@ openocd_debug () {
     else
 	# No GDB, wait for openocd to exit
 	openocd $CFG -f $OCD_CMD_FILE -c init -c halt
+	return $?
     fi
-
 
     rm $OCD_CMD_FILE
     return 0
