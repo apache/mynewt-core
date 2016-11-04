@@ -88,7 +88,7 @@ nrf52k_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
         return -1;
     }
     __HAL_DISABLE_INTERRUPTS(sr);
-    NRF_NVMC->CONFIG |= NVMC_CONFIG_WEN_Wen; /* Enable erase OP */
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen; /* Enable erase OP */
     tmp = address & 0x3;
     if (tmp) {
         if (nrf52k_flash_wait_ready()) {
@@ -138,7 +138,7 @@ nrf52k_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
         goto out;
     }
 out:
-    NRF_NVMC->CONFIG &= ~NVMC_CONFIG_WEN_Wen;
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
     __HAL_ENABLE_INTERRUPTS(sr);
     return rc;
 }
@@ -153,7 +153,7 @@ nrf52k_flash_erase_sector(uint32_t sector_address)
         return -1;
     }
     __HAL_DISABLE_INTERRUPTS(sr);
-    NRF_NVMC->CONFIG |= NVMC_CONFIG_WEN_Een; /* Enable erase OP */
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een; /* Enable erase OP */
     if (nrf52k_flash_wait_ready()) {
         goto out;
     }
@@ -164,7 +164,7 @@ nrf52k_flash_erase_sector(uint32_t sector_address)
     }
     rc = 0;
 out:
-    NRF_NVMC->CONFIG &= ~NVMC_CONFIG_WEN_Een; /* Disable erase OP */
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren; /* Disable erase OP */
     __HAL_ENABLE_INTERRUPTS(sr);
     return rc;
 }
