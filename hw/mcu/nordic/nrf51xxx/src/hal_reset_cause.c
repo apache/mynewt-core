@@ -23,18 +23,23 @@
 enum hal_reset_reason
 hal_reset_cause(void)
 {
-    uint32_t reason;
+    static enum hal_reset_reason reason;
+    uint32_t reg;
 
-    reason = PWR->RESETREAS;
+    if (reason) {
+        return reason;
+    }
+    reg = NRF_POWER->RESETREAS;
 
-    if (reason & (POWER_RESETREAS_RESETPIN_Msk | POWER_RESETREAS_LOCKUP_Msk)) {
-        return HAL_RESET_WATCHDOG;
+    if (reg & (POWER_RESETREAS_DOG_Msk | POWER_RESETREAS_LOCKUP_Msk)) {
+        reason = HAL_RESET_WATCHDOG;
+    } else if (reg & POWER_RESETREAS_SREQ_Msk) {
+        reason = HAL_RESET_SOFT;
+    } else if (reg & POWER_RESETREAS_RESETPIN_Msk) {
+        reason = HAL_RESET_PIN;
+    } else {
+        reason = HAL_RESET_POR; /* could also be brownout */
     }
-    if (reason & POWER_RESETREAS_SREQ_Msk) {
-        return HAL_RESET_SOFT;
-    }
-    if (reason & POWER_RESETREAS_RESETPIN_Msk) {
-        return HAL_RESET_PIN;
-    }
-    return HAL_RESET_POR;
+    NRF_POWER->RESETREAS = reg;
+    return reason;
 }
