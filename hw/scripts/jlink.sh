@@ -54,9 +54,12 @@ jlink_load () {
     msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE 2>&1`
     echo $msgs > $GDB_OUT_FILE
 
-#    rm $GDB_CMD_FILE
+    rm $GDB_CMD_FILE
 
     # Echo output from script run, so newt can show it if things go wrong.
+    # JLinkGDBServer always exits with non-zero error code, regardless of
+    # whether there was an error during execution of it or not. So we cannot
+    # use it.
     echo $msgs
 
     error=`echo $msgs | grep error`
