@@ -1,4 +1,4 @@
 # Package: apps/spitest
 
 syscfg.vals:
-    - SHELL_TASK: 0
+    SHELL_TASK: 0

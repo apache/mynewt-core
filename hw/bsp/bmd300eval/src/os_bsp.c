@@ -31,10 +31,10 @@
 #include "os/os_dev.h"
 #include "bsp.h"
 
-#if MYNEWT_VAL(SPI_MASTER)
+#if MYNEWT_VAL(SPI_0_MASTER)
 #include "nrf_drv_spi.h"
 #endif
-#if MYNEWT_VAL(SPI_SLAVE)
+#if MYNEWT_VAL(SPI_0_SLAVE)
 #include "nrf_drv_spis.h"
 #endif
 #include "nrf_drv_config.h"
@@ -74,17 +74,46 @@ static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
 };
 #endif
 
+#if MYNEWT_VAL(SPI_0_MASTER)
+/*
+ * NOTE: do not set the ss pin here! This would cause the nordic SDK
+ * to start using the SS pin when configured as a master and this is
+ * not what our HAL expects. Our HAL expects that the SS pin, if used,
+ * is treated as a gpio line and is handled outside the SPI routines.
+ */
+static const nrf_drv_spi_config_t os_bsp_spi0m_cfg = {
+    .sck_pin      = 23,
+    .mosi_pin     = 24,
+    .miso_pin     = 25,
+    .ss_pin       = NRF_DRV_SPI_PIN_NOT_USED,
+    .irq_priority = (1 << __NVIC_PRIO_BITS) - 1,
+    .orc          = 0xFF,
+    .frequency    = NRF_DRV_SPI_FREQ_4M,
+    .mode         = NRF_DRV_SPI_MODE_0,
+    .bit_order    = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+};
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE)
+static const nrf_drv_spis_config_t os_bsp_spi0s_cfg = {
+    .sck_pin      = 23,
+    .mosi_pin     = 24,
+    .miso_pin     = 25,
+    .csn_pin      = 22,
+    .miso_drive   = NRF_DRV_SPIS_DEFAULT_MISO_DRIVE,
+    .csn_pullup   = NRF_GPIO_PIN_PULLUP,
+    .orc          = NRF_DRV_SPIS_DEFAULT_ORC,
+    .def          = NRF_DRV_SPIS_DEFAULT_DEF,
+    .mode         = NRF_DRV_SPIS_MODE_0,
+    .bit_order    = NRF_DRV_SPIS_BIT_ORDER_MSB_FIRST,
+    .irq_priority = (1 << __NVIC_PRIO_BITS) - 1
+};
+#endif
+
 void
 hal_bsp_init(void)
 {
     int rc;
-
-#if MYNEWT_VAL(SPI_MASTER)
-    nrf_drv_spi_config_t spi_cfg = NRF_DRV_SPI_DEFAULT_CONFIG(0);
-#endif
-#if MYNEWT_VAL(SPI_SLAVE)
-    nrf_drv_spis_config_t spi_cfg = NRF_DRV_SPIS_DEFAULT_CONFIG(0);
-#endif
 
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, NULL);
@@ -111,15 +140,13 @@ hal_bsp_init(void)
     rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);
 
-#if MYNEWT_VAL(SPI_MASTER)
-    rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_MASTER);
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(SPI_SLAVE)
-    spi_cfg.csn_pin = SPI_SS_PIN;
-    spi_cfg.csn_pullup = NRF_GPIO_PIN_PULLUP;
-    rc = hal_spi_init(0, &spi_cfg, HAL_SPI_TYPE_SLAVE);
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
 

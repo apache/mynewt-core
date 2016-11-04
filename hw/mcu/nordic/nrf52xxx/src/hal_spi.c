@@ -16,14 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-#include <hal/hal_spi.h>
-
 #include <string.h>
 #include <errno.h>
-
-#include <hal/hal_spi.h>
+#include <assert.h>
+#include <syscfg/syscfg.h>
 #include <bsp/cmsis_nvic.h>
+#include <hal/hal_spi.h>
 #include <nrf.h>
 #include <nrf_spim.h>
 #include <nrf_spis.h>
@@ -83,36 +81,36 @@ struct nrf52_hal_spi {
     void            *txrx_cb_arg;
 };
 
-#if SPI0_ENABLED || SPIS0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 struct nrf52_hal_spi nrf52_hal_spi0;
 #endif
-#if SPI1_ENABLED || SPIS1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
 struct nrf52_hal_spi nrf52_hal_spi1;
 #endif
 
 static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
-#if SPI0_ENABLED || SPIS0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
     &nrf52_hal_spi0,
 #else
     NULL,
 #endif
-#if SPI1_ENABLED || SPIS1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
     &nrf52_hal_spi1
 #else
     NULL
 #endif
 };
 
-#if SPI0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER)
 nrf_drv_spi_t inst_spi0_m = NRF_DRV_SPI_INSTANCE(0);
 #endif
-#if SPI1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)
 nrf_drv_spi_t inst_spi1_m = NRF_DRV_SPI_INSTANCE(1);
 #endif
-#if SPIS0_ENABLED
+#if MYNEWT_VAL(SPI_0_SLAVE)
 nrf_drv_spis_t inst_spi0_s = NRF_DRV_SPIS_INSTANCE(0);
 #endif
-#if SPIS1_ENABLED
+#if MYNEWT_VAL(SPI_1_SLAVE)
 nrf_drv_spis_t inst_spi1_s = NRF_DRV_SPIS_INSTANCE(1);
 #endif
 
@@ -127,7 +125,7 @@ nrf_drv_spis_t inst_spi1_s = NRF_DRV_SPIS_INSTANCE(1);
         goto err;                                           \
     }
 
-#if (SPI0_ENABLED || SPI1_ENABLED)
+#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) )
 static void
 nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 {
@@ -171,7 +169,7 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 }
 #endif
 
-#if (SPIS0_ENABLED || SPIS1_ENABLED)
+#if (MYNEWT_VAL(SPI_0_SLAVE)  || MYNEWT_VAL(SPI_1_SLAVE) )
 static void
 nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 {
@@ -222,26 +220,34 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 #endif
 
 /* Interrupt handlers for SPI ports */
-#if SPI0_ENABLED || SPIS0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 void
 nrf52_spi0_irq_handler(void)
 {
     if (nrf52_hal_spi0.spi_type == HAL_SPI_TYPE_MASTER) {
+#if MYNEWT_VAL(SPI_0_MASTER)
         nrf52_irqm_handler(&nrf52_hal_spi0);
+#endif
     } else {
+#if MYNEWT_VAL(SPI_0_SLAVE)
         nrf52_irqs_handler(&nrf52_hal_spi0);
+#endif
     }
 }
 #endif
 
-#if SPI1_ENABLED || SPIS1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
 void
 nrf52_spi1_irq_handler(void)
 {
     if (nrf52_hal_spi1.spi_type == HAL_SPI_TYPE_MASTER) {
+#if MYNEWT_VAL(SPI_1_MASTER)
         nrf52_irqm_handler(&nrf52_hal_spi1);
+#endif
     } else {
+#if MYNEWT_VAL(SPI_1_SLAVE)
         nrf52_irqs_handler(&nrf52_hal_spi1);
+#endif
     }
 }
 #endif
@@ -570,16 +576,16 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
     irq_handler = NULL;
     spi->spi_type  = spi_type;
     if (spi_num == 0) {
-#if SPI0_ENABLED || SPIS0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
         irq_handler = nrf52_spi0_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
-#if SPI0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER)
             memcpy(&spi->nhs_spi.spim, &inst_spi0_m, sizeof(inst_spi0_m));
 #else
             assert(0);
 #endif
         } else {
-#if SPIS0_ENABLED
+#if MYNEWT_VAL(SPI_0_SLAVE)
             memcpy(&spi->nhs_spi.spis, &inst_spi0_s, sizeof(inst_spi0_s));
 #else
             assert(0);
@@ -589,16 +595,16 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         goto err;
 #endif
     } else if (spi_num == 1) {
-#if SPI1_ENABLED || SPIS1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
         irq_handler = nrf52_spi1_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
-#if SPI1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)
             memcpy(&spi->nhs_spi.spim, &inst_spi1_m, sizeof(inst_spi1_m));
 #else
             assert(0);
 #endif
         } else {
-#if SPIS1_ENABLED
+#if MYNEWT_VAL(SPI_1_SLAVE)
             memcpy(&spi->nhs_spi.spis, &inst_spi1_s, sizeof(inst_spi1_s));
 #else
             assert(0);

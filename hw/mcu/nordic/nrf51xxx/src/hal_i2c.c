@@ -18,15 +18,12 @@
  */
 
 #include <hal/hal_i2c.h>
-
 #include <string.h>
 #include <errno.h>
-
+#include "syscfg/syscfg.h"
 #include <nrf.h>
 #include <nrf_drv_twi.h>
-
 #include <mcu/nrf51_hal.h>
-
 #include <assert.h>
 
 struct nrf51_hal_i2c {
@@ -35,20 +32,20 @@ struct nrf51_hal_i2c {
 
 #define NRF51_HAL_I2C_MAX (2)
 
-#if TWI0_ENABLED
+#if MYNEWT_VAL(I2C_0)
 struct nrf51_hal_i2c hal_twi_i2c0 = {NRF_DRV_TWI_INSTANCE(0)};
 #endif
-#if TWI1_ENABLED
+#if MYNEWT_VAL(I2C_1)
 struct nrf51_hal_i2c hal_twi_i2c1 = {NRF_DRV_TWI_INSTANCE(1)};
 #endif
 
 static const struct nrf51_hal_i2c *nrf51_hal_i2cs[NRF51_HAL_I2C_MAX] = {
-#if TWI0_ENABLED
+#if MYNEWT_VAL(I2C_0)
         &hal_twi_i2c0,
 #else
         NULL,
 #endif
-#if TWI1_ENABLED
+#if MYNEWT_VAL(I2C_1)
         &hal_twi_i2c1
 #else
         NULL
