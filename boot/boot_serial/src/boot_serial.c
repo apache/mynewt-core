@@ -249,7 +249,7 @@ bs_reset(char *buf, int len)
 
     boot_serial_output(msg, strlen(msg));
     os_time_delay(250);
-    system_reset();
+    hal_system_reset();
 }
 
 /*
