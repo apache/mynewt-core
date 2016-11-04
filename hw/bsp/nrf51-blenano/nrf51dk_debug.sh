@@ -18,39 +18,19 @@
 #
 
 # Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - RESET set if target should be reset when attaching
+#  - NO_GDB set if we should not start gdb to debug
 #
-if [ -z "$BIN_BASENAME" ]; then
-    echo "Need binary to debug"
-    exit 1
-fi
-
-if [ -z "$BSP_PATH" ]; then
-    echo "Need BSP path for openocd script location"
-    exit 1
-fi
+. $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-GDB_CMD_FILE=.gdb_cmds
+CFG="-s $BSP_PATH -f cmsis-dap.cfg -f nrf51.cfg"
+EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf51.cpu configure -event gdb-detach {resume;shutdown}"
 
-echo "Debugging" $FILE_NAME
-
-set -m
-openocd -s $BSP_PATH -f cmsis-dap.cfg -f nrf51.cfg -c "nrf51.cpu configure -event gdb-detach {resume;shutdown}" -c "$EXTRA_JTAG_CMD" -c init -c halt &
-set +m
-
-echo "target remote localhost:3333" > $GDB_CMD_FILE
-# Whether target should be reset or not
-if [ ! -z "$RESET" ]; then
-    echo "mon reset" >> $GDB_CMD_FILE
-fi
-
-arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-
-rm $GDB_CMD_FILE
-
+openocd_debug
