@@ -16,43 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "hal/hal_system.h"
 
-#ifndef H_HAL_SYSTEM_
-#define H_HAL_SYSTEM_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
- * System reset.
- */
-void hal_system_reset(void) __attribute((noreturn));
-
-/*
- * Called by bootloader to start loaded program.
- */
-void hal_system_start(void *img_start) __attribute((noreturn));
-
-/*
- * Returns non-zero if there is a HW debugger attached.
- */
-int hal_debugger_connected(void);
-
-/*
- * Reboot reason
- */
-enum hal_reset_reason {
-    HAL_RESET_POR = 1,		/* power on reset */
-    HAL_RESET_PIN = 2,		/* caused by reset pin */
-    HAL_RESET_WATCHDOG = 3,	/* watchdog */
-    HAL_RESET_SOFT = 4,		/* system_reset() or equiv */
-    HAL_RESET_BROWNOUT = 5	/* low supply voltage */
-};
-enum hal_reset_reason hal_reset_cause(void);
-
-#ifdef __cplusplus
+enum hal_reset_reason
+hal_reset_cause(void)
+{
+    return HAL_RESET_POR;
 }
-#endif
-
-#endif /* H_HAL_SYSTEM_ */

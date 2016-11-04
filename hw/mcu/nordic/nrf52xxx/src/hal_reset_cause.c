@@ -17,42 +17,24 @@
  * under the License.
  */
 
-#ifndef H_HAL_SYSTEM_
-#define H_HAL_SYSTEM_
+#include <nrf.h>
+#include "hal/hal_system.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+enum hal_reset_reason
+hal_reset_cause(void)
+{
+    uint32_t reason;
 
-/*
- * System reset.
- */
-void hal_system_reset(void) __attribute((noreturn));
+    reason = NRF_POWER->RESETREAS;
 
-/*
- * Called by bootloader to start loaded program.
- */
-void hal_system_start(void *img_start) __attribute((noreturn));
-
-/*
- * Returns non-zero if there is a HW debugger attached.
- */
-int hal_debugger_connected(void);
-
-/*
- * Reboot reason
- */
-enum hal_reset_reason {
-    HAL_RESET_POR = 1,		/* power on reset */
-    HAL_RESET_PIN = 2,		/* caused by reset pin */
-    HAL_RESET_WATCHDOG = 3,	/* watchdog */
-    HAL_RESET_SOFT = 4,		/* system_reset() or equiv */
-    HAL_RESET_BROWNOUT = 5	/* low supply voltage */
-};
-enum hal_reset_reason hal_reset_cause(void);
-
-#ifdef __cplusplus
+    if (reason & (POWER_RESETREAS_RESETPIN_Msk | POWER_RESETREAS_LOCKUP_Msk)) {
+        return HAL_RESET_WATCHDOG;
+    }
+    if (reason & POWER_RESETREAS_SREQ_Msk) {
+        return HAL_RESET_SOFT;
+    }
+    if (reason & POWER_RESETREAS_RESETPIN_Msk) {
+        return HAL_RESET_PIN;
+    }
+    return HAL_RESET_POR;
 }
-#endif
-
-#endif /* H_HAL_SYSTEM_ */
