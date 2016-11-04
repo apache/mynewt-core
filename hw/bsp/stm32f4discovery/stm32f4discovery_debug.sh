@@ -30,7 +30,7 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-s $BSP_PATH -f $BSP_PATH/f4discovery.cfg -f $OCD_CMD_FILE"
+CFG="-s $BSP_PATH -f $BSP_PATH/f4discovery.cfg"
 EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32f4x.cpu configure -event gdb-detach {resume;shutdown}"
 
 openocd_debug
