@@ -17,10 +17,20 @@
  * under the License.
  */
 
-extern char __HeapBase;
-extern char __HeapLimit;
+#include <hal/hal_bsp.h>
 
-static char *brk = &__HeapBase;
+/* put these in the data section so they are not cleared by _start */
+static char *sbrkBase __attribute__ ((section (".data")));
+static char *sbrkLimit __attribute__ ((section (".data")));
+static char *brk __attribute__ ((section (".data")));
+
+void
+_sbrkInit(char *base, char *limit) {
+    sbrkBase = base;
+    sbrkLimit = limit;
+    brk = base;
+}
+
 void *
 _sbrk(int incr)
 {
@@ -29,7 +39,7 @@ _sbrk(int incr)
     if (incr < 0) {
         /* Returning memory to the heap. */
         incr = -incr;
-        if (brk - incr < &__HeapBase) {
+        if (brk - incr < sbrkBase) {
             prev_brk = (void *)-1;
         } else {
             prev_brk = brk;
@@ -37,7 +47,7 @@ _sbrk(int incr)
         }
     } else {
         /* Allocating memory from the heap. */
-        if (&__HeapLimit - brk >= incr) {
+        if (sbrkLimit - brk >= incr) {
             prev_brk = brk;
             brk += incr;
         } else {
