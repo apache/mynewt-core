@@ -16,10 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "hal/hal_system.h"
+#include <hal/hal_system.h>
+
+#include "stm32f4xx_hal_def.h"
 
 enum hal_reset_reason
 hal_reset_cause(void)
 {
-    return HAL_RESET_POR;
+    static enum hal_reset_reason reason;
+    uint32_t reg;
+
+    if (reason) {
+        return reason;
+    }
+
+    reg = RCC->CSR;
+
+    if (reg & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF)) {
+        reason = HAL_RESET_WATCHDOG;
+    } else if (reg & RCC_CSR_SFTRSTF) {
+        reason = HAL_RESET_SOFT;
+    } else if (reg & RCC_CSR_PADRSTF) {
+        reason = HAL_RESET_PIN;
+    } else if (reg & RCC_CSR_BORRSTF) {
+        reason = HAL_RESET_BROWNOUT;
+    } else {
+        reason = HAL_RESET_POR;
+    }
+    RCC->CSR |= RCC_CSR_RMVF;
+    return reason;
 }
