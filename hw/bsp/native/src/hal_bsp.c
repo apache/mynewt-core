@@ -21,10 +21,17 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
+#include <bsp/bsp.h>
+#include "sysflash/sysflash.h"
+#include "os/os.h"
 #include "hal/hal_flash_int.h"
+#include "flash_map/flash_map.h"
+#include "uart/uart.h"
+#include "uart_hal/uart_hal.h"
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
-#include <bsp/bsp.h>
+
+static struct uart_dev os_bsp_uart0;
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -42,4 +49,14 @@ int
 hal_bsp_power_state(int state)
 {
     return (0);
+}
+
+void
+hal_bsp_init(void)
+{
+    int rc;
+
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
+    assert(rc == 0);
 }
