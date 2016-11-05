@@ -100,7 +100,11 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
     if (!hdr) {
         return;
     }
+
     mgmt_cbuf_setoerr(&nmgr_task_cbuf.n_b, rc);
+    hdr->nh_len +=
+        cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
+
     hdr->nh_len = htons(hdr->nh_len);
     hdr->nh_flags = NMGR_F_CBOR_RSP_COMPLETE;
     nt->nt_output(nt, nmgr_task_cbuf.n_out_m);
