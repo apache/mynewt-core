@@ -29,10 +29,6 @@
 #include <mgmt/mgmt.h>
 #include <nmgr_os/nmgr_os.h>
 
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-#include "host/ble_hs.h"
-#endif
-
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_writer.h>
@@ -45,22 +41,18 @@ struct omgr_cbuf {
 };
 
 struct omgr_state {
-    struct os_eventq os_evq;
-    struct os_event os_oc_event;
+    struct os_eventq *os_evq;
+    struct os_event os_event;
     struct os_callout os_oc_timer;
     struct os_task os_task;
     struct omgr_cbuf os_cbuf;		/* CBOR buffer for NMGR task */
 };
 
 static void omgr_event_start(struct os_event *ev);
-static void omgr_event_oc_ev(struct os_event *ev);
+static void omgr_process_oc_event(struct os_event *ev);
 
 static struct omgr_state omgr_state = {
-    .os_oc_event.ev_cb = omgr_event_oc_ev,
-};
-
-static struct os_event omgr_ev_start = {
-    .ev_cb = omgr_event_start,
+    .os_event.ev_cb = omgr_event_start,
 };
 
 static void omgr_oic_get(oc_request_t *request, oc_interface_mask_t interface);
@@ -69,18 +61,17 @@ static void omgr_oic_put(oc_request_t *request, oc_interface_mask_t interface);
 struct os_eventq *
 mgmt_evq_get(void)
 {
-    os_eventq_ensure(&omgr_state.os_evq;, NULL);
-    return &omgr_state.os_evq;
+    return omgr_state.os_evq;
 }
 
 void
-omgr_evq_set(struct os_eventq *evq)
+mgmt_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&omgr_state.os_evq, evq, NULL);
+    os_eventq_designate(&omgr_state.os_evq, evq, &omgr_state.os_event);
 }
 
 static const struct mgmt_handler *
-omgr_oic_find_handler(const char *q, int qlen)
+omgr_find_handler(const char *q, int qlen)
 {
     char id_str[8];
     int grp = -1;
@@ -123,7 +114,7 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
         goto bad_req;
     }
 
-    handler = omgr_oic_find_handler(req->query, req->query_len);
+    handler = omgr_find_handler(req->query, req->query_len);
     if (!handler) {
         goto bad_req;
     }
@@ -234,51 +225,38 @@ oc_signal_main_loop(void)
 {
     struct omgr_state *o = &omgr_state;
 
-    os_childq_put(&o->os_cq, &o->os_oc_event);
+    assert(o->os_evq); /* Must call mgmt_evq_set() first. */
+    os_eventq_put(o->os_evq, &o->os_event);
 }
 
 static void
-omgr_oic_process_oc_event(struct os_event *ev)
+omgr_process_oc_event(struct os_event *ev)
 {
     struct omgr_state *o = &omgr_state;
     os_time_t next_event;
-#if MYNEWT_VAL(OC_TRANSPORT_GATT)
-    int rc;
-
-    rc = ble_hs_start();
-    assert(rc == 0);
-#endif
 
     next_event = oc_main_poll();
     if (next_event) {
-        os_callout_reset(&o->os_oc_timer.cf_c, next_event - os_time_get());
+        os_callout_reset(&o->os_oc_timer, next_event - os_time_get());
     } else {
-        os_callout_stop(&o->os_oc_timer.cf_c);
+        os_callout_stop(&o->os_oc_timer);
     }
 }
 
 static void
-omgr_oic_event_start(struct os_event *ev)
+omgr_event_start(struct os_event *ev)
 {
-    oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    os_callout_init(&omgr_state.os_oc_timer, mgmt_evq_get(),
-                    omgr_oic_process_oc_event, NULL);
-}
-
-static void
-omgr_oic_event_oc_ev(struct os_event *ev)
-{
-    omgr_oic_process_oc_event(NULL);
+    struct omgr_state *o = &omgr_state;
+    os_eventq_ensure(&o->os_evq, NULL);
+    o->os_event.ev_cb = omgr_process_oc_event;
+    os_callout_init(&o->os_oc_timer, mgmt_evq_get(), omgr_process_oc_event,
+      NULL);
 }
 
 int
 oicmgr_init(void)
 {
-    struct omgr_state *o = &omgr_state;
     int rc;
-
-    os_childq_init(&o->os_cq);
-    o->os_cq.cq_ev_cb = omgr_oic_handle_event;
 
     rc = nmgr_os_groups_register();
     if (rc != 0) {
