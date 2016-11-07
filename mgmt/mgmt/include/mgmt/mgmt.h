@@ -89,6 +89,7 @@ const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
   uint16_t handler_id);
 
 struct os_eventq *mgmt_evq_get(void);
+void mgmt_evq_set(struct os_eventq *evq);
 
 #ifdef __cplusplus
 }

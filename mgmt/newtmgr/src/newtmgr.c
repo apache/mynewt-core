@@ -55,7 +55,7 @@ mgmt_evq_get(void)
 }
 
 void
-nmgr_evq_set(struct os_eventq *evq)
+mgmt_evq_set(struct os_eventq *evq)
 {
     os_eventq_designate(&nmgr_evq, evq, NULL);
 }
