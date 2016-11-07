@@ -33,6 +33,7 @@
 #endif
 #include <bootutil/image.h>
 #include <imgmgr/imgmgr.h>
+#include <mgmt/mgmt.h>
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
@@ -256,6 +257,7 @@ init_tasks(void)
      */
     os_eventq_init(&slinky_oic_evq);
     os_eventq_dflt_set(&slinky_oic_evq);
+    mgmt_evq_set(&slinky_oic_evq);
 }
 
 /**
