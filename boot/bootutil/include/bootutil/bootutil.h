@@ -32,8 +32,6 @@ extern "C" {
 #define BOOT_SWAP_TYPE_FAIL     4
 
 struct image_header;
-struct boot_img_trailer;
-
 /**
  * A response object provided by the boot loader code; indicates where to jump
  * to execute the main image.
@@ -57,9 +55,6 @@ int boot_swap_type(void);
 
 int boot_set_pending(void);
 int boot_set_confirmed(void);
-
-int boot_read_img_trailer(int slot, struct boot_img_trailer *bit);
-int boot_read_scratch_trailer(struct boot_img_trailer *bit);
 
 #define SPLIT_GO_OK                 (0)
 #define SPLIT_GO_NON_MATCHING       (-1)
