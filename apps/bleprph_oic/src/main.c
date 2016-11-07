@@ -28,6 +28,7 @@
 #include "hal/hal_gpio.h"
 #include "console/console.h"
 #include "imgmgr/imgmgr.h"
+#include "mgmt/mgmt.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -45,6 +46,10 @@ struct log bleprph_log;
 /** bleprph task settings. */
 #define BLEPRPH_TASK_PRIO           1
 #define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
+
+static struct os_eventq bleprph_evq;
+static struct os_task bleprph_task;
+static os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -243,6 +248,17 @@ bleprph_on_sync(void)
     bleprph_advertise();
 }
 
+/*
+ * Event loop for the main bleprph task.
+ */
+static void
+bleprph_task_handler(void *unused)
+{
+    while (1) {
+        os_eventq_run(&bleprph_evq);
+    }
+}
+
 /**
  * main
  *
@@ -268,6 +284,19 @@ main(void)
 
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+
+    os_eventq_init(&bleprph_evq);
+    os_eventq_dflt_set(&bleprph_evq);
+
+    /*
+     * Create the bleprph task.  All omgr and NimBLE host operations are
+     * performed in this task.
+     */
+    os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
+                 NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
+                 bleprph_stack, BLEPRPH_STACK_SIZE);
+    mgmt_evq_set(&bleprph_evq);
+    ble_hs_evq_set(&bleprph_evq);
 
     ble_coap_gatt_srv_init();
     ble_hs_cfg.reset_cb = bleprph_on_reset;
