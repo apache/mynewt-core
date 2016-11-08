@@ -47,7 +47,7 @@ shell_os_tasks_display_cmd(int argc, char **argv)
 
     console_printf("Tasks: \n");
     prev_task = NULL;
-    console_printf("  %8s %3s %3s %8s %8s %8s %8s %8s %8s %3s\n",
+    console_printf("%8s %3s %3s %8s %8s %8s %8s %8s %8s %3s\n",
       "task", "pri", "tid", "runtime", "csw", "stksz", "stkuse",
       "lcheck", "ncheck", "flg");
     while (1) {
@@ -64,7 +64,7 @@ shell_os_tasks_display_cmd(int argc, char **argv)
             }
         }
 
-        console_printf("  %8s %3u %3u %8lu %8lu %8u %8u %8lu %8lu %3x\n",
+        console_printf("%8s %3u %3u %8lu %8lu %8u %8u %8lu %8lu %3x\n",
                 oti.oti_name, oti.oti_prio, oti.oti_taskid,
                 (unsigned long)oti.oti_runtime, (unsigned long)oti.oti_cswcnt,
                 oti.oti_stksize, oti.oti_stkusage,
