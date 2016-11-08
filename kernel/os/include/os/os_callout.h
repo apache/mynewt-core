@@ -36,8 +36,6 @@ struct os_callout {
     TAILQ_ENTRY(os_callout) c_next;
 };
 
-#define CF_ARG(__cf) ((__cf)->cf_c.c_ev.ev_arg)
-
 void os_callout_init(struct os_callout *cf, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg);
 void os_callout_stop(struct os_callout *);
