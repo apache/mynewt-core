@@ -31,27 +31,14 @@
 #include "wifi_priv.h"
 
 static struct os_task wifi_os_task;
-struct os_eventq *wifi_evq;
+struct os_eventq wifi_evq;
 
 static struct wifi_ap *wifi_find_ap(struct wifi_if *wi, char *ssid);
-static void wifi_events(void *arg);
+static void wifi_events(struct os_event *);
 
 static void wifi_event_state(struct os_event *ev);
 
 static struct wifi_if *wifi_if;
-
-static struct os_eventq *
-wifi_evq_get(void)
-{
-    os_eventq_ensure(&wifi_evq, NULL);
-    return wifi_evq;
-}
-
-void
-wifi_evq_set(struct os_eventq *evq)
-{
-    os_eventq_designate(&wifi_evq, evq, NULL);
-}
 
 /*
  * Looks up interface based on port number.
@@ -184,7 +171,7 @@ wifi_find_ap(struct wifi_if *wi, char *ssid)
 }
 
 static void
-wifi_events(void *arg)
+wifi_events(struct os_event *ev)
 {
     /*
      * Expire connection attempts. Periodic scanning if tgt AP not visible.
@@ -331,6 +318,14 @@ wifi_event_state(struct os_event *ev)
     wi = (struct wifi_if *)ev->ev_arg;
     while (wi->wi_state != wi->wi_tgt) {
         wifi_step(wi);
+    }
+}
+
+static void
+wifi_task(void *arg)
+{
+    while (1) {
+        os_eventq_run(&wifi_evq);
     }
 }
 
