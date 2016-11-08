@@ -19,8 +19,12 @@
 
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
-bsp.linkerscript: "rb-nano2.ld"
-bsp.linkerscript.BOOT_LOADER.OVERWRITE: "boot-rb-nano2.ld"
+bsp.linkerscript:
+    - "nrf52xxaa.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+    - "boot-nrf52xxaa.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.part2linkerscript: "split-rb-nano2.ld"
 bsp.downloadscript: rb-nano2_download.sh
 bsp.debugscript: rb-nano2_debug.sh

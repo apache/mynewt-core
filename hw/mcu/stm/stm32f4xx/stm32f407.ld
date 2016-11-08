@@ -1,33 +1,27 @@
-/* Linker script for Nordic Semiconductor nRF5 devices
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Version: Sourcery G++ 4.5-1
- * Support: https://support.codesourcery.com/GNUToolchain/
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Copyright (c) 2007, 2008, 2009, 2010 CodeSourcery, Inc.
- *
- * The authors hereby grant permission to use, copy, modify, distribute,
- * and license this software and its documentation for any purpose, provided
- * that existing copyright notices are retained in all copies and that this
- * notice is included verbatim in any distributions.  No written agreement,
- * license, or royalty fee is required for any of the authorized uses.
- * Modifications to this software may be copyrighted by their authors
- * and need not follow the licensing terms described here, provided that
- * the new terms are clearly indicated on the first page of each file where
- * they apply.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
-OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
-
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x8000
-  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
-}
 
 /* Linker script to place sections and symbol values. Should be used together
  * with other linker script that defines memory regions FLASH and RAM.
  * It references following symbols, which must be defined in code:
  *   Reset_Handler : Entry of reset handler
- * 
+ *
  * It defines following symbols, which code can use without definition:
  *   __exidx_start
  *   __exidx_end
@@ -42,18 +36,30 @@ MEMORY
  *   __data_end__
  *   __bss_start__
  *   __bss_end__
+ *   __end__
+ *   end
  *   __HeapBase
  *   __HeapLimit
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __bssnz_start__
- *   __bssnz_end__
+ *   __coredata_start__
+ *   __coredata_end__
+ *   __corebss_start__
+ *   __corebss_end__
+ *   __ecoredata
+ *   __ecorebss
  */
 ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    /* Reserve space at the start of the image for the header. */
+    .imghdr (NOLOAD):
+    {
+        . = . + _imghdr_size;
+    } > FLASH
+
     .text :
     {
         __isr_vector_start = .;
@@ -80,23 +86,20 @@ SECTIONS
 
         *(.rodata*)
 
-        *(.eh_frame*)
-        . = ALIGN(4);
+        KEEP(*(.eh_frame*))
     } > FLASH
 
-
-    .ARM.extab : 
+    .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-        . = ALIGN(4);
     } > FLASH
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-        . = ALIGN(4);
     } > FLASH
+
     __exidx_end = .;
 
     __etext = .;
@@ -108,39 +111,62 @@ SECTIONS
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
     } > RAM
-            
-    .data : AT (__etext)
+
+    .coredata : AT (__etext)
+    {
+        __coredata_start__ = .;
+        *(.data.core)
+        . = ALIGN(4);
+        __coredata_end__ = .;
+    } > CCM
+
+    __ecoredata = __etext + SIZEOF(.coredata);
+
+    .data : AT (__ecoredata)
     {
         __data_start__ = .;
         *(vtable)
         *(.data*)
 
-        . = ALIGN(4);
         /* preinit data */
         PROVIDE_HIDDEN (__preinit_array_start = .);
-        *(.preinit_array)
+        KEEP(*(.preinit_array))
         PROVIDE_HIDDEN (__preinit_array_end = .);
 
         . = ALIGN(4);
         /* init data */
         PROVIDE_HIDDEN (__init_array_start = .);
-        *(SORT(.init_array.*))
-        *(.init_array)
+        KEEP(*(SORT(.init_array.*)))
+        KEEP(*(.init_array))
         PROVIDE_HIDDEN (__init_array_end = .);
 
 
         . = ALIGN(4);
         /* finit data */
         PROVIDE_HIDDEN (__fini_array_start = .);
-        *(SORT(.fini_array.*))
-        *(.fini_array)
+        KEEP(*(SORT(.fini_array.*)))
+        KEEP(*(.fini_array))
         PROVIDE_HIDDEN (__fini_array_end = .);
 
-        *(.jcr)
+        KEEP(*(.jcr*))
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
+
     } > RAM
+
+    .corebss (NOLOAD):
+    {
+        . = ALIGN(4);
+        __corebss_start__ = .;
+        *(.bss.core)
+        . = ALIGN(4);
+        __corebss_end__ = .;
+        *(.corebss*)
+        *(.bss.core.nz)
+        . = ALIGN(4);
+        __ecorebss = .;
+    } > CCM
 
     .bss :
     {
@@ -152,8 +178,8 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
-    /* Heap starts after BSS */
     __HeapBase = .;
+    __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
@@ -161,18 +187,14 @@ SECTIONS
     .stack_dummy (COPY):
     {
         *(.stack*)
-    } > RAM
+    } > CCM
 
-    /* Set stack top to end of RAM, and stack limit move down by
-     * size of stack_dummy section */
-    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+    /* Set stack top to end of CCM; stack limit is bottom of stack */
+    __StackTop = ORIGIN(CCM) + LENGTH(CCM);
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
 
-    /* Top of head is the bottom of the stack */
-    __HeapLimit = __StackLimit;
-
-    /* Check if data + heap + stack exceeds RAM limit */
-    ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
+    /* Check for CCM overflow */
+    ASSERT(__StackLimit >= __ecorebss, "CCM overflow!")
 }
 

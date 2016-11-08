@@ -17,17 +17,11 @@
  */
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x8000
-  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
-}
-
 /* Linker script to place sections and symbol values. Should be used together
  * with other linker script that defines memory regions FLASH and RAM.
  * It references following symbols, which must be defined in code:
  *   Reset_Handler : Entry of reset handler
- * 
+ *
  * It defines following symbols, which code can use without definition:
  *   __exidx_start
  *   __exidx_end
@@ -54,6 +48,11 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    .imghdr (NOLOAD):
+    {
+        . = . + _imghdr_size;
+    } > FLASH
+
     .text :
     {
         __isr_vector_start = .;
@@ -85,7 +84,7 @@ SECTIONS
     } > FLASH
 
 
-    .ARM.extab : 
+    .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
         . = ALIGN(4);
@@ -108,7 +107,7 @@ SECTIONS
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
     } > RAM
-            
+
     .data : AT (__etext)
     {
         __data_start__ = .;
@@ -142,6 +141,23 @@ SECTIONS
         __data_end__ = .;
     } > RAM
 
+    /* Non-zeroed BSS.  This section is similar to BSS, with the following two
+     * caveats:
+     *    1. It does not get zeroed at init-time.
+     *    2. You cannot use it as source memory for EasyDMA.
+     *
+     * This section exists because of a hardware defect; see errata 33 and 34
+     * in nrf52 errata sheet.
+     */
+    .bssnz :
+    {
+        . = ALIGN(4);
+        __bssnz_start__ = .;
+        *(.bss.core.nz*)
+        . = ALIGN(4);
+        __bssnz_end__ = .;
+    } > RAM
+
     .bss :
     {
         . = ALIGN(4);
@@ -162,6 +178,8 @@ SECTIONS
     {
         *(.stack*)
     } > RAM
+
+    _ram_start = ORIGIN(RAM);
 
     /* Set stack top to end of RAM, and stack limit move down by
      * size of stack_dummy section */

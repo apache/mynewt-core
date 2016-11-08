@@ -17,12 +17,6 @@
  */
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x00008000, LENGTH = 0x1b800
-  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
-}
-
 /* Linker script to place sections and symbol values. Should be used together
  * with other linker script that defines memory regions FLASH and RAM.
  * It references following symbols, which must be defined in code:
@@ -56,7 +50,7 @@ SECTIONS
 {
     .imghdr (NOLOAD):
     {
-    	. = . + 0x20;
+        . = . + _imghdr_size;
     } > FLASH
 
     .text :
@@ -168,6 +162,8 @@ SECTIONS
     {
         *(.stack*)
     } > RAM
+
+    _ram_start = ORIGIN(RAM);
 
     /* Set stack top to end of RAM, and stack limit move down by
      * size of stack_dummy section */

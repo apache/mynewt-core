@@ -19,8 +19,12 @@
 
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
-bsp.linkerscript: "nrf51dk.ld"
-bsp.linkerscript.BOOT_LOADER.OVERWRITE: "boot-nrf51dk.ld"
+bsp.linkerscript:
+    - "nrf51xxac.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+    - "boot-nrf51xxac.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.part2linkerscript: "split-nrf51dk.ld"
 bsp.downloadscript: nrf51dk_download.sh
 bsp.debugscript: nrf51dk_debug.sh
