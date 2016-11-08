@@ -26,8 +26,7 @@ extern "C" {
 
 struct os_eventq;
 
-void inet_def_evq_set(struct os_eventq *evq);
-void inet_def_service_init(void);
+void inet_def_service_init(struct os_eventq *evq);
 
 #ifdef __cplusplus
 }

@@ -102,14 +102,7 @@ static struct inet_def {
 static struct os_eventq *
 inet_def_evq_get(void)
 {
-    os_eventq_ensure(&inet_def_evq, inet_def_event_start);
     return inet_def_evq;
-}
-
-void
-inet_def_evq_set(struct os_eventq *evq)
-{
-    os_eventq_designate(&inet_def_evq, evq, inet_def_event_start);
 }
 
 /*
@@ -375,7 +368,7 @@ inet_def_event_chargen(struct os_event *ev)
 }
 
 static void
-inet_def_event_start(struct os_event *ev)
+inet_def_event_start(void)
 {
     inet_def_create_srv(INET_DEF_ECHO, ECHO_PORT);
     inet_def_create_srv(INET_DEF_DISCARD, DISCARD_PORT);
@@ -383,8 +376,10 @@ inet_def_event_start(struct os_event *ev)
 }
 
 void
-inet_def_service_init(void)
+inet_def_service_init(struct os_eventq *evq)
 {
+    inet_def_evq = evq;
+    os_eventq_ensure(&inet_def_evq, NULL);
     SLIST_INIT(&inet_def.tcp_conns);
 }
 
