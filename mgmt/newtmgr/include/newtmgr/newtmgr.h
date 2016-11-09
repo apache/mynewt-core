@@ -28,25 +28,12 @@
 extern "C" {
 #endif
 
-/* First 64 groups are reserved for system level newtmgr commands.
- * Per-user commands are then defined after group 64.
- */
-#define NMGR_GROUP_ID_DEFAULT   (0)
-#define NMGR_GROUP_ID_IMAGE     (1)
-#define NMGR_GROUP_ID_STATS     (2)
-#define NMGR_GROUP_ID_CONFIG    (3)
-#define NMGR_GROUP_ID_LOGS      (4)
-#define NMGR_GROUP_ID_CRASH     (5)
-#define NMGR_GROUP_ID_SPLIT     (6)
-#define NMGR_GROUP_ID_RUNTEST   (7)
-#define NMGR_GROUP_ID_PERUSER   (64)
-
 #define NMGR_OP_READ            (0)
 #define NMGR_OP_READ_RSP        (1)
 #define NMGR_OP_WRITE           (2)
 #define NMGR_OP_WRITE_RSP       (3)
 
-#define NMGR_F_CBOR_RSP_COMPLETE     (0x0001)
+#define NMGR_F_CBOR_RSP_COMPLETE (0x01)
 
 struct nmgr_hdr {
     uint8_t  nh_op;             /* NMGR_OP_XXX */
