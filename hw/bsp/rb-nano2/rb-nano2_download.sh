@@ -31,7 +31,7 @@
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-s $BSP_PATH -f cmsis-dap.cfg -f nrf52.cfg"
+CFG="-f interface/cmsis-dap.cfg -f target/nrf52.cfg"
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0
