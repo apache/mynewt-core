@@ -19,8 +19,12 @@
 
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
-bsp.linkerscript: "stm32f4discovery.ld"
-bsp.linkerscript.BOOT_LOADER.OVERWRITE: "boot-stm32f4discovery.ld"
+bsp.linkerscript:
+    - "stm32f4discovery.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx/stm32f407.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+    - "boot-stm32f4discovery.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx/stm32f407.ld"
 bsp.downloadscript: "stm32f4discovery_download.sh"
 bsp.debugscript: "stm32f4discovery_debug.sh"
 

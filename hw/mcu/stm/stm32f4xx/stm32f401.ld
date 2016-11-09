@@ -118,7 +118,7 @@ SECTIONS
         *(.data.core)
         . = ALIGN(4);
         __coredata_end__ = .;
-    } > CCM
+    } > RAM
 
     __ecoredata = __etext + SIZEOF(.coredata);
 
@@ -166,7 +166,7 @@ SECTIONS
         *(.bss.core.nz)
         . = ALIGN(4);
         __ecorebss = .;
-    } > CCM
+    } > RAM
 
     .bss :
     {
@@ -182,7 +182,6 @@ SECTIONS
     __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
     _ram_start = ORIGIN(RAM);
-    _ccram_start = ORIGIN(CCM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
@@ -190,14 +189,11 @@ SECTIONS
     .stack_dummy (COPY):
     {
         *(.stack*)
-    } > CCM
+    } > RAM
 
-    /* Set stack top to end of CCM; stack limit is bottom of stack */
-    __StackTop = ORIGIN(CCM) + LENGTH(CCM);
+    /* Set stack top to end of RAM; stack limit is bottom of stack */
+    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
-
-    /* Check for CCM overflow */
-    ASSERT(__StackLimit >= __ecorebss, "CCM overflow!")
 }
 
