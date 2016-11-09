@@ -19,7 +19,7 @@
 
 bsp.arch: sim
 bsp.compiler: compiler/sim
-bsp.debugscript: "native_debug.sh"
+bsp.debugscript: "hw/bsp/native/native_debug.sh"
 
 bsp.flash_map:
     areas:

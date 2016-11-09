@@ -20,13 +20,13 @@
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:
-    - "nrf51xxaa.ld"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
+    - "hw/bsp/nrf51-arduino_101/nrf51xxaa.ld"
+    - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "boot-nrf51xxaa.ld"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
-bsp.downloadscript: nrf51dk-16kbram_download.sh
-bsp.debugscript: nrf51dk-16kbram_debug.sh
+    - "hw/bsp/nrf51-arduino_101/boot-nrf51xxaa.ld"
+    - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
+bsp.downloadscript: "hw/bsp/nrf51-arduino_101/nrf51dk-16kbram_download.sh"
+bsp.debugscript: "hw/bsp/nrf51-arduino_101/nrf51dk-16kbram_debug.sh"
 
 bsp.flash_map:
     areas:

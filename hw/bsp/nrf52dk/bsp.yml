@@ -20,14 +20,14 @@
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
-    - "nrf52xxaa.ld"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
+    - "hw/bsp/nrf52dk/nrf52xxaa.ld"
+    - "hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "boot-nrf52xxaa.ld"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
+    - "hw/bsp/nrf52dk/boot-nrf52xxaa.ld"
+    - "hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.part2linkerscript: "split-nrf52dk.ld"
-bsp.downloadscript: nrf52dk_download.sh
-bsp.debugscript: nrf52dk_debug.sh
+bsp.downloadscript: "hw/bsp/nrf52dk/nrf52dk_download.sh"
+bsp.debugscript: "hw/bsp/nrf52dk/nrf52dk_debug.sh"
 
 bsp.flash_map:
     areas:
