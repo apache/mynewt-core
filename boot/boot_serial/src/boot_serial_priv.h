@@ -30,19 +30,21 @@ extern "C" {
 #define SHELL_NLIP_PKT_START1   6
 #define SHELL_NLIP_PKT_START2   9
 
-#define SHELL_NLIP_DATA_START1   4
-#define SHELL_NLIP_DATA_START2   20
+#define SHELL_NLIP_DATA_START1  4
+#define SHELL_NLIP_DATA_START2  20
 
 /*
  * From newtmgr.h
  */
-#define NMGR_ERR_EINVAL         3
+#define MGMT_ERR_EINVAL         3
 
 #define NMGR_OP_READ            0
 #define NMGR_OP_WRITE           2
 
-#define NMGR_GROUP_ID_DEFAULT   0
-#define NMGR_GROUP_ID_IMAGE     1
+#define NMGR_F_CBOR_RSP_COMPLETE 0x01
+
+#define MGMT_GROUP_ID_DEFAULT   0
+#define MGMT_GROUP_ID_IMAGE     1
 
 #define NMGR_ID_CONS_ECHO_CTRL  1
 #define NMGR_ID_RESET           5

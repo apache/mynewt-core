@@ -29,6 +29,8 @@ pkg.deps:
     - hw/hal
     - kernel/os
     - boot/bootutil
+    - encoding/tinycbor
+    - encoding/cborattr
     - encoding/base64
     - sys/flash_map
     - util/crc

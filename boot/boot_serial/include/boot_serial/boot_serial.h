@@ -25,14 +25,11 @@ extern "C" {
 #endif
 
 /*
- * Create a task for uploading image0 over serial.
+ * Start processing newtmgr commands for uploading image0 over serial.
  *
- * Task opens console serial port and waits for download command.
- * Return code 0 means new image was uploaded, non-zero means that
- * there was an error.
+ * Open console serial port and wait for download command.
  */
-int boot_serial_task_init(struct os_task *task, uint8_t prio,
-  os_stack_t *stack, uint16_t stack_size, int max_input);
+void boot_serial_start(int max_input);
 
 #ifdef __cplusplus
 }

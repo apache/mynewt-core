@@ -33,9 +33,13 @@
 #include <os/endian.h>
 #include <os/os.h>
 #include <os/os_malloc.h>
+#include <os/os_cputime.h>
 
 #include <console/console.h>
 
+#include <tinycbor/cbor.h>
+#include <tinycbor/cbor_buf_reader.h>
+#include <cborattr/cborattr.h>
 #include <base64/base64.h>
 #include <crc/crc16.h>
 
@@ -50,7 +54,26 @@ static uint32_t curr_off;
 static uint32_t img_size;
 static struct nmgr_hdr *bs_hdr;
 
-static void boot_serial_output(char *data, int len);
+static char bs_obuf[BOOT_SERIAL_OUT_MAX];
+
+static int bs_cbor_writer(struct cbor_encoder_writer *, const char *data,
+  int len);
+static void boot_serial_output(void);
+
+static struct cbor_encoder_writer bs_writer = {
+    .write = bs_cbor_writer
+};
+static CborEncoder bs_root;
+static CborEncoder bs_rsp;
+
+int
+bs_cbor_writer(struct cbor_encoder_writer *cew, const char *data, int len)
+{
+    memcpy(&bs_obuf[cew->bytes_written], data, len);
+    cew->bytes_written += len;
+
+    return 0;
+}
 
 /*
  * Looks for 'name' from NULL-terminated json data in buf.
@@ -86,48 +109,46 @@ bs_find_val(char *buf, char *name)
 static void
 bs_list(char *buf, int len)
 {
-    char *ptr;
+    CborEncoder images;
+    CborEncoder image;
     struct image_header hdr;
     uint8_t tmpbuf[64];
-    const struct flash_area *fap = NULL;
-    int good_img, need_comma = 0;
-    int area_id;
-    int rc;
-    int i;
+    int i, area_id;
+    const struct flash_area *fap;
 
-    ptr = os_malloc(BOOT_SERIAL_OUT_MAX);
-    if (!ptr) {
-        return;
-    }
-    len = snprintf(ptr, BOOT_SERIAL_OUT_MAX, "{\"images\":[");
+    cbor_encoder_create_map(&bs_root, &bs_rsp, CborIndefiniteLength);
+    cbor_encode_text_stringz(&bs_rsp, "images");
+    cbor_encoder_create_array(&bs_rsp, &images, CborIndefiniteLength);
     for (i = 0; i < 2; i++) {
         area_id = flash_area_id_from_image_slot(i);
-        rc = flash_area_open(area_id, &fap);
-        if (rc) {
+        if (flash_area_open(area_id, &fap)) {
             continue;
         }
 
         flash_area_read(fap, 0, &hdr, sizeof(hdr));
 
-        if (hdr.ih_magic == IMAGE_MAGIC &&
+        if (hdr.ih_magic != IMAGE_MAGIC ||
           bootutil_img_validate(&hdr, fap, tmpbuf, sizeof(tmpbuf),
-                                NULL, 0, NULL) == 0) {
-            good_img = 1;
-        } else {
-            good_img = 0;
-        }
-        if (good_img) {
-            len += snprintf(ptr + len, BOOT_SERIAL_OUT_MAX - len,
-              "%c\"%u.%u.%u.%u\"", need_comma ? ',' : ' ',
-              hdr.ih_ver.iv_major, hdr.ih_ver.iv_minor, hdr.ih_ver.iv_revision,
-              (unsigned int)hdr.ih_ver.iv_build_num);
+                                NULL, 0, NULL)) {
+            flash_area_close(fap);
+            continue;
         }
         flash_area_close(fap);
-        need_comma = 1;
+
+        cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
+        cbor_encode_text_stringz(&image, "slot");
+        cbor_encode_int(&image, i);
+        cbor_encode_text_stringz(&image, "version");
+
+        len = snprintf((char *)tmpbuf, sizeof(tmpbuf),
+          "%u.%u.%u.%u", hdr.ih_ver.iv_major, hdr.ih_ver.iv_minor,
+          hdr.ih_ver.iv_revision, (unsigned int)hdr.ih_ver.iv_build_num);
+        cbor_encode_text_stringz(&image, (char *)tmpbuf);
+        cbor_encoder_close_container(&images, &image);
     }
-    len += snprintf(ptr + len, BOOT_SERIAL_OUT_MAX - len, "]}");
-    boot_serial_output(ptr, len);
-    os_free(ptr);
+    cbor_encoder_close_container(&bs_rsp, &images);
+    cbor_encoder_close_container(&bs_root, &bs_rsp);
+    boot_serial_output();
 }
 
 /*
@@ -136,68 +157,62 @@ bs_list(char *buf, int len)
 static void
 bs_upload(char *buf, int len)
 {
-    char *ptr;
-    char *data_ptr;
-    uint32_t off, data_len = 0;
+    CborParser parser;
+    struct cbor_buf_reader reader;
+    struct CborValue value;
+    uint8_t img_data[400];
+    long long unsigned int off = UINT_MAX;
+    size_t img_blen = 0;
+    long long unsigned int data_len = UINT_MAX;
+    const struct cbor_attr_t attr[4] = {
+        [0] = {
+            .attribute = "data",
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = img_data,
+            .addr.bytestring.len = &img_blen,
+            .len = sizeof(img_data)
+        },
+        [1] = {
+            .attribute = "off",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &off,
+            .nodefault = true
+        },
+        [2] = {
+            .attribute = "len",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &data_len,
+            .nodefault = true
+        }
+    };
     const struct flash_area *fap = NULL;
     int rc;
 
-    /*
-     * should be json inside
-     */
-    ptr = bs_find_val(buf, "\"off\"");
-    if (!ptr) {
-        rc = NMGR_ERR_EINVAL;
-        goto out;
-    }
-    off = strtoul(ptr, NULL, 10);
-
-    if (off == 0) {
-        ptr = bs_find_val(buf, "\"len\"");
-        if (!ptr) {
-            rc = NMGR_ERR_EINVAL;
-            goto out;
-        }
-        data_len = strtoul(ptr, NULL, 10);
-
-    }
-    data_ptr = bs_find_val(buf, "\"data\"");
-    if (!data_ptr) {
-        rc = NMGR_ERR_EINVAL;
-        goto out;
-    }
-    if (*data_ptr != '"') {
-        rc = NMGR_ERR_EINVAL;
-        goto out;
-    }
-    ++data_ptr;
-    data_ptr = strsep(&data_ptr, "\"");
-    if (!data_ptr) {
-        rc = NMGR_ERR_EINVAL;
+    memset(img_data, 0, sizeof(img_data));
+    cbor_buf_reader_init(&reader, (uint8_t *)buf, len);
+    cbor_parser_init(&reader.r, 0, &parser, &value);
+    rc = cbor_read_object(&value, attr);
+    if (rc || off == UINT_MAX) {
+        rc = MGMT_ERR_EINVAL;
         goto out;
     }
 
-    len = base64_decode(data_ptr, data_ptr);
-    if (len <= 0) {
-        rc = NMGR_ERR_EINVAL;
-        goto out;
-    }
 
-    rc = flash_area_open(FLASH_AREA_IMAGE_0, &fap);
+    rc = flash_area_open(flash_area_id_from_image_slot(0), &fap);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto out;
     }
 
     if (off == 0) {
         curr_off = 0;
         if (data_len > fap->fa_size) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto out;
         }
         rc = flash_area_erase(fap, 0, fap->fa_size);
         if (rc) {
-            rc = NMGR_ERR_EINVAL;
+            rc = MGMT_ERR_EINVAL;
             goto out;
         }
         img_size = data_len;
@@ -206,26 +221,24 @@ bs_upload(char *buf, int len)
         rc = 0;
         goto out;
     }
-    rc = flash_area_write(fap, curr_off, data_ptr, len);
+    rc = flash_area_write(fap, curr_off, img_data, img_blen);
     if (rc) {
-        rc = NMGR_ERR_EINVAL;
+        rc = MGMT_ERR_EINVAL;
         goto out;
     }
-    curr_off += len;
+    curr_off += img_blen;
 
 out:
-    ptr = os_malloc(BOOT_SERIAL_OUT_MAX);
-    if (!ptr) {
-        return;
-    }
+    cbor_encoder_create_map(&bs_root, &bs_rsp, CborIndefiniteLength);
+    cbor_encode_text_stringz(&bs_rsp, "rc");
+    cbor_encode_int(&bs_rsp, rc);
     if (rc == 0) {
-        len = snprintf(ptr, BOOT_SERIAL_OUT_MAX, "{\"rc\":%d,\"off\":%u}",
-          rc, (int)curr_off);
-    } else {
-        len = snprintf(ptr, BOOT_SERIAL_OUT_MAX, "{\"rc\":%d}", rc);
+        cbor_encode_text_stringz(&bs_rsp, "off");
+        cbor_encode_uint(&bs_rsp, curr_off);
     }
-    boot_serial_output(ptr, len);
-    os_free(ptr);
+    cbor_encoder_close_container(&bs_root, &bs_rsp);
+
+    boot_serial_output();
     flash_area_close(fap);
 }
 
@@ -235,20 +248,23 @@ out:
 static void
 bs_echo_ctl(char *buf, int len)
 {
-    boot_serial_output(NULL, 0);
+    boot_serial_output();
 }
 
 /*
  * Reset, and (presumably) boot to newly uploaded image. Flush console
  * before restarting.
  */
-static void
+static int
 bs_reset(char *buf, int len)
 {
-    char msg[] = "{\"rc\":0}";
+    cbor_encoder_create_map(&bs_root, &bs_rsp, CborIndefiniteLength);
+    cbor_encode_text_stringz(&bs_rsp, "rc");
+    cbor_encode_int(&bs_rsp, 0);
+    cbor_encoder_close_container(&bs_root, &bs_rsp);
 
-    boot_serial_output(msg, strlen(msg));
-    os_time_delay(250);
+    boot_serial_output();
+    os_cputime_delay_usecs(250000);
     hal_system_reset();
 }
 
@@ -273,10 +289,13 @@ boot_serial_input(char *buf, int len)
     buf += sizeof(*hdr);
     len -= sizeof(*hdr);
 
+    bs_writer.bytes_written = 0;
+    cbor_encoder_init(&bs_root, &bs_writer, 0);
+
     /*
      * Limited support for commands.
      */
-    if (hdr->nh_group == NMGR_GROUP_ID_IMAGE) {
+    if (hdr->nh_group == MGMT_GROUP_ID_IMAGE) {
         switch (hdr->nh_id) {
         case IMGMGR_NMGR_OP_STATE:
             bs_list(buf, len);
@@ -287,7 +306,7 @@ boot_serial_input(char *buf, int len)
         default:
             break;
         }
-    } else if (hdr->nh_group == NMGR_GROUP_ID_DEFAULT) {
+    } else if (hdr->nh_group == MGMT_GROUP_ID_DEFAULT) {
         switch (hdr->nh_id) {
         case NMGR_ID_CONS_ECHO_CTRL:
             bs_echo_ctl(buf, len);
@@ -302,15 +321,21 @@ boot_serial_input(char *buf, int len)
 }
 
 static void
-boot_serial_output(char *data, int len)
+boot_serial_output(void)
 {
+    char *data;
+    int len;
     uint16_t crc;
     uint16_t totlen;
     char pkt_start[2] = { SHELL_NLIP_PKT_START1, SHELL_NLIP_PKT_START2 };
     char buf[BOOT_SERIAL_OUT_MAX];
     char encoded_buf[BASE64_ENCODE_SIZE(BOOT_SERIAL_OUT_MAX)];
 
+    data = bs_obuf;
+    len = bs_writer.bytes_written;
+
     bs_hdr->nh_op++;
+    bs_hdr->nh_flags = NMGR_F_CBOR_RSP_COMPLETE;
     bs_hdr->nh_len = htons(len);
     bs_hdr->nh_group = htons(bs_hdr->nh_group);
 
@@ -376,9 +401,8 @@ boot_serial_in_dec(char *in, int inlen, char *out, int *out_off, int maxout)
  * Task which waits reading console, expecting to get image over
  * serial port.
  */
-int cont;
-static void
-boot_serial(void *arg)
+void
+boot_serial_start(int max_input)
 {
     int rc;
     int off;
@@ -386,7 +410,6 @@ boot_serial(void *arg)
     char *dec;
     int dec_off;
     int full_line;
-    int max_input = (int)arg;
 
     rc = console_init(NULL);
     assert(rc == 0);
@@ -412,7 +435,6 @@ boot_serial(void *arg)
             rc = boot_serial_in_dec(&buf[2], off - 2, dec, &dec_off, max_input);
         } else if (buf[0] == SHELL_NLIP_DATA_START1 &&
           buf[1] == SHELL_NLIP_DATA_START2) {
-            ++cont;
             rc = boot_serial_in_dec(&buf[2], off - 2, dec, &dec_off, max_input);
         }
         if (rc == 1) {
@@ -420,12 +442,4 @@ boot_serial(void *arg)
         }
         off = 0;
     }
-}
-
-int
-boot_serial_task_init(struct os_task *task, uint8_t prio, os_stack_t *stack,
-  uint16_t stack_size, int max_input)
-{
-    return os_task_init(task, "boot", boot_serial, (void *)max_input,
-      prio, OS_WAIT_FOREVER, stack, stack_size);
 }
