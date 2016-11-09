@@ -248,7 +248,7 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
 
         g_err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
         g_err |= cbor_encode_text_stringz(&image, "slot");
-        g_err |= cbor_encode_int(&rsp, i);
+        g_err |= cbor_encode_int(&image, i);
 
         g_err |= cbor_encode_text_stringz(&image, "version");
         imgr_ver_str(&ver, vers_str);
