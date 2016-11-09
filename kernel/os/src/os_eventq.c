@@ -260,12 +260,26 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
     OS_EXIT_CRITICAL(sr);
 }
 
+/**
+ * Assigns the default event queue.  Packages which require an event queue, and
+ * which haven't been explicitly told which one to use, will use this one
+ * automatically.
+ *
+ * @param evq                   The event queue to designate as the default.
+ */
 void
 os_eventq_dflt_set(struct os_eventq *evq)
 {
     os_eventq_main = evq;
 }
 
+/**
+ * Retrieves the default event queue, if any.  The default event queue is
+ * designated via a call to os_eventq_dflt_set().  
+ *
+ * @return                      The default event queue, no NULL if there isn't
+ *                                  any.
+ */
 struct os_eventq *
 os_eventq_dflt_get(void)
 {
