@@ -23,25 +23,38 @@ gcc_startup_nrf51.s
 boot-nrf51dk-16kbram.ld
 nrf51dk-16kbram.ld
 nrf51dk-16kbram_no_boot.ld
+boot-nrf51-arduino_101.ld
+nrf51-arduino_101.ld
+boot-nrf51xxaa.ld
+nrf51xxaa.ld
+boot-nrf51xxac.ld
+nrf51xxac.ld
+split-nrf51dk.ld
+boot-nrf51xxac.ld
+nrf51xxac.ld
+split-nrf51dk.ld
+split-nrf51dk-16kbram.ld
+nrf51.ld
 nrf51.h
 nrf51422_peripherals.h
 nrf51822_peripherals.h
 nrf51_bitfields.h
 nrf51_deprecated.h
 system_nrf51.h
-boot-nrf51-arduino_101.ld
-nrf51-arduino_101.ld
+gcc_startup_nrf51_split.s
 
 # Nordic nRF52 SDK - BSD License.
-nrf52pdk.ld
-boot-nrf52pdk.ld
-nrf52pdk_no_boot.ld
-nrf52dk.ld
-boot-nrf52dk.ld
 nrf52dk_no_boot.ld
-bmd300eval.ld
-boot-bmd300eval.ld
 bmd300eval_no_boot.ld
+boot-nrf52xxaa.ld
+nrf52xxaa.ld
+primo_no_boot.ld
+split-primo.ld
+split-bmd300eval.ld
+split-nrf52dk.ld
+rb-nano2_no_boot.ld
+split-rb-nano2.ld
+nrf52.ld
 system_nrf52.c
 gcc_startup_nrf52.s
 nrf51_to_nrf52.h
@@ -49,6 +62,7 @@ nrf52.h
 nrf52832_peripherals.h
 nrf52_bitfields.h
 system_nrf52.h
+gcc_startup_nrf52_split.s
 
 # Nordic nRF51 SDK - BSD License.
 # Nordic nRF52 SDK - BSD License.
@@ -173,3 +187,26 @@ base64.c
 
 # crc32.c - Public domain.
 crc32.c
+
+# tinycrypt - BSD License.
+tinycrypt
+
+# frdm-k64f clock configuration - BSD License.
+clock_config.c
+clock_config.h
+
+# CMSIS Cortex-M4, STM32f4 - BSD License.
+STM32F4xx
+STM32F4xx_HAL_Driver
+
+# NXP SDK - BSD License.
+sdk-2.0-frdm-k64f_b160321
+MK64FN1M0xxx12_flash.ld
+boot-MK64FN1M0xxx12_flash.ld
+startup_MK64F12.S
+
+# LWIP - BSD License.
+lwip_base
+
+# OIC - BSD License.
+oic
