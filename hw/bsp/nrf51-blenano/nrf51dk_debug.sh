@@ -30,7 +30,7 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-s $BSP_PATH -f cmsis-dap.cfg -f nrf51.cfg"
+CFG="-f interface/cmsis-dap.cfg -f target/nrf51.cfg"
 EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf51.cpu configure -event gdb-detach {resume;shutdown}"
 
 openocd_debug
