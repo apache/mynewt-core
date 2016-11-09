@@ -30,6 +30,7 @@
 #if MYNEWT_VAL(BOOT_SERIAL)
 #include <hal/hal_gpio.h>
 #include <boot_serial/boot_serial.h>
+#include <sysinit/sysinit.h>
 #endif
 #include <console/console.h>
 #include "bootutil/image.h"
@@ -39,12 +40,7 @@
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
 
 #if MYNEWT_VAL(BOOT_SERIAL)
-#define BOOT_SER_PRIO_TASK          1
-#define BOOT_SER_STACK_SZ           512
 #define BOOT_SER_CONS_INPUT         128
-
-static struct os_task boot_ser_task;
-static os_stack_t boot_ser_stack[BOOT_SER_STACK_SZ];
 #endif
 
 int
@@ -67,10 +63,8 @@ main(void)
      */
     hal_gpio_init_in(BOOT_SERIAL_DETECT_PIN, BOOT_SERIAL_DETECT_PIN_CFG);
     if (hal_gpio_read(BOOT_SERIAL_DETECT_PIN) == BOOT_SERIAL_DETECT_PIN_VAL) {
-        rc = boot_serial_task_init(&boot_ser_task, BOOT_SER_PRIO_TASK,
-          boot_ser_stack, BOOT_SER_STACK_SZ, BOOT_SER_CONS_INPUT);
-        assert(rc == 0);
-        os_start();
+        boot_serial_start(BOOT_SER_CONS_INPUT);
+        assert(0);
     }
 #endif
     rc = boot_go(&rsp);
