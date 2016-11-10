@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include "boot_test.h"
 
 TEST_CASE(boot_serial_img_msg)

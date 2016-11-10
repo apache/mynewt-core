@@ -16,6 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <tinycbor/cborconstants_p.h>
+
 #include "boot_test.h"
 
 TEST_CASE(boot_serial_upload_bigger_image)
@@ -30,14 +33,52 @@ TEST_CASE(boot_serial_upload_bigger_image)
     const struct flash_area *fap;
     int i;
 
+    const int payload_off = sizeof *hdr;
+    const int img_data_off = payload_off + 8;
+
+    /* 00000000  a3 64 64 61 74 61 58 20  |.ddataX.|
+     * 00000008  00 00 00 00 00 00 00 00  |........|
+     * 00000010  00 00 00 00 00 00 00 00  |........|
+     * 00000018  00 00 00 00 00 00 00 00  |........|
+     * 00000020  00 00 00 00 00 00 00 00  |........|
+     * 00000028  63 6c 65 6e 1a 00 01 14  |clen....|
+     * 00000030  e8 63 6f 66 66 00        |.coff.|
+     */
+    static const uint8_t payload_first[] = {
+        0xa3, 0x64, 0x64, 0x61, 0x74, 0x61, 0x58, 0x20,
+        /* 32 bytes of image data starts here. */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x63, 0x6c, 0x65, 0x6e, 0x1a, 0x00, 0x01, 0x14,
+        0xe8, 0x63, 0x6f, 0x66, 0x66, 0x00,
+    };
+
+    /* 00000000  a3 64 64 61 74 61 58 20  |.ddataX.|
+     * 00000008  00 00 00 00 00 00 00 00  |........|
+     * 00000010  00 00 00 00 00 00 00 00  |........|
+     * 00000018  00 00 00 00 00 00 00 00  |........|
+     * 00000020  00 00 00 00 00 00 00 00  |........|
+     * 00000028  63 6f 66 66 00 00        |coff..|
+     */
+    static const uint8_t payload_next[] = {
+        0xa2, 0x64, 0x64, 0x61, 0x74, 0x61, 0x58, 0x20,
+        /* 32 bytes of image data starts here. */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x63, 0x6f, 0x66, 0x66,
+        /* 2 bytes of offset value starts here. */
+        0x00, 0x00
+    };
+
     for (i = 0; i < sizeof(img); i++) {
         img[i] = i;
     }
 
     for (off = 0; off < sizeof(img); off += 32) {
-        len = base64_encode(&img[off], 32, enc_img, 1);
-        assert(len > 0);
-
         hdr = (struct nmgr_hdr *)buf;
         memset(hdr, 0, sizeof(*hdr));
         hdr->nh_op = NMGR_OP_WRITE;
@@ -45,12 +86,15 @@ TEST_CASE(boot_serial_upload_bigger_image)
         hdr->nh_id = IMGMGR_NMGR_OP_UPLOAD;
 
         if (off) {
-            len = sprintf((char *)(hdr + 1), "{\"off\":%d,\"data\":\"%s\"}",
-              off, enc_img);
+            memcpy(buf + payload_off, payload_next, sizeof payload_next);
+            len = sizeof payload_next;
+            buf[payload_off + len - 2] = Value8Bit;
+            buf[payload_off + len - 1] = off;
         } else {
-            len = sprintf((char *)(hdr + 1), "{\"off\": 0 ,\"len\":%ld, "
-              "\"data\":\"%s\"}", (long)sizeof(img), enc_img);
+            memcpy(buf + payload_off, payload_first, sizeof payload_first);
+            len = sizeof payload_first;
         }
+        memcpy(buf + img_data_off, img + off, 32);
         hdr->nh_len = htons(len);
 
         len = sizeof(*hdr) + len;
