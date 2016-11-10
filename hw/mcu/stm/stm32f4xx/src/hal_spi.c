@@ -760,6 +760,7 @@ hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
     STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->slave) {
+        rc = 0;
         __HAL_DISABLE_INTERRUPTS(sr);
         if (spi->handle.Init.DataSize == SPI_DATASIZE_8BIT) {
             for (i = 0; i < 4; i++) {
