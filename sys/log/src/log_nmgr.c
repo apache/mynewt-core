@@ -124,7 +124,7 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
     rsp_len = encode_off->rsp_len;
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
-    if (rsp_len > MGMT_MAX_MTU) {
+    if (rsp_len > 400) {
         rc = OS_ENOMEM;
         goto err;
     }
@@ -180,7 +180,7 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     g_err |= cbor_encoder_close_container(&cnt_encoder, &entries);
     rsp_len = cbor_encode_bytes_written(cb) +
               cbor_encode_bytes_written(&cnt_encoder);
-    if (rsp_len > MGMT_MAX_MTU) {
+    if (rsp_len > 400) {
         rc = OS_ENOMEM;
         goto err;
     }
