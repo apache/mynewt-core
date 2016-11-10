@@ -29,12 +29,19 @@
 #extern "C" {
 #endif
 
-/* Create a memory pool for testing */
-#define NUM_MEM_BLOCKS  (10)
-#define MEM_BLOCK_SIZE  (80)
-
 /* Limit max blocks for testing */
+#ifndef MEMPOOL_TEST_MAX_BLOCKS
 #define MEMPOOL_TEST_MAX_BLOCKS     (128)
+#endif
+
+/* Create a memory pool for testing */
+#ifndef MEM_BLOCK_SIZE
+#define MEM_BLOCK_SIZE  (80)
+#endif
+
+#ifndef NUM_MEM_BLOCKS
+#define NUM_MEM_BLOCKS  (10)
+#endif
 
 extern int alignment;
 
@@ -42,7 +49,8 @@ extern int alignment;
 extern struct os_mempool g_TstMempool;
 
 /* Test memory pool buffer */
-extern os_membuf_t TstMembuf[OS_MEMPOOL_SIZE(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE)];
+extern os_membuf_t *TstMembuf;
+extern uint32_t TstMembufSz;
 
 /* Array of block pointers. */
 extern void *block_array[MEMPOOL_TEST_MAX_BLOCKS];

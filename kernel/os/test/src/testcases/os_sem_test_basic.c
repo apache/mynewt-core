@@ -22,13 +22,14 @@ TEST_CASE(os_sem_test_basic)
 {
     os_error_t err;
 
-    sysinit();
-
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
 
-    os_task_init(&task1, "task1", sem_test_basic_handler, NULL, TASK1_PRIO, 
-            OS_WAIT_FOREVER, stack1, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
+    os_task_init(&task1, "task1", sem_test_basic_handler, NULL,
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
+                 sizeof(stack1));
 
+#if MYNEWT_VAL(SELFTEST)
     os_start();
+#endif
 }

@@ -22,21 +22,22 @@ TEST_CASE(os_sem_test_case_1)
 {
     os_error_t err;
 
-    sysinit();
-
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_1_task1_handler, NULL,
                  TASK1_PRIO, OS_WAIT_FOREVER, stack1,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
+                 sizeof(stack1));
 
     os_task_init(&task2, "task2", sem_test_1_task2_handler, NULL,
                  TASK2_PRIO, OS_WAIT_FOREVER, stack2,
-                 OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
+                 sizeof(stack2));
 
-    os_task_init(&task3, "task3", sem_test_1_task3_handler, NULL, TASK3_PRIO, 
-                 OS_WAIT_FOREVER, stack3, OS_STACK_ALIGN(SEM_TEST_STACK_SIZE));
+    os_task_init(&task3, "task3", sem_test_1_task3_handler, NULL,
+                 TASK3_PRIO, OS_WAIT_FOREVER, stack3,
+                 sizeof(stack3));
 
+#if MYNEWT_VAL(SELFTEST)
     os_start();
+#endif
 }

@@ -27,11 +27,24 @@
 #include "os_test_priv.h"
 
 #ifdef ARCH_sim
-#define MUTEX_TEST_STACK_SIZE   1024
-#else
-#define MUTEX_TEST_STACK_SIZE   256
+#define MUTEX_TEST_STACK_SIZE     OS_STACK_ALIGN(1024)
 #endif
 
+#if MYNEWT_VAL(SELFTEST)
+struct os_task task1;
+os_stack_t *stack1;
+
+struct os_task task2;
+os_stack_t *stack2;
+
+struct os_task task3;
+os_stack_t *stack3;
+
+struct os_task task4;
+os_stack_t *stack4;
+#endif /* MYNEWT_VAL(SELFTEST) */
+
+#if 0
 struct os_task task14;
 os_stack_t stack14[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];
 
@@ -48,11 +61,12 @@ os_stack_t stack17[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];
 #define TASK15_PRIO (5)
 #define TASK16_PRIO (6)
 #define TASK17_PRIO (7)
+#endif
 
-volatile int g_task14_val;
-volatile int g_task15_val;
-volatile int g_task16_val;
-volatile int g_task17_val;
+volatile int g_task1_val;
+volatile int g_task2_val;
+volatile int g_task3_val;
+volatile int g_task4_val;
 struct os_mutex g_mutex1;
 struct os_mutex g_mutex2;
 
@@ -138,23 +152,23 @@ mutex_test_basic_handler(void *arg)
 }
 
 void 
-mutex_test1_task14_handler(void *arg)
+mutex_test1_task1_handler(void *arg)
 {
     os_error_t err;
     struct os_task *t;
     int iters;
 
     t = os_sched_get_current_task();
-    TEST_ASSERT(t->t_func == mutex_test1_task14_handler);
+    TEST_ASSERT(t->t_func == mutex_test1_task1_handler);
 
     for (iters = 0; iters < 3; iters++) {
         os_time_delay(OS_TICKS_PER_SEC / 10);
 
-        g_task14_val = 1;
+        g_task1_val = 1;
 
         err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC / 10);
         TEST_ASSERT(err == OS_OK);
-        TEST_ASSERT(g_task16_val == 1);
+        TEST_ASSERT(g_task3_val == 1);
 
         os_time_delay(OS_TICKS_PER_SEC / 10);
     }
@@ -163,28 +177,28 @@ mutex_test1_task14_handler(void *arg)
 }
 
 void 
-mutex_test2_task14_handler(void *arg)
+mutex_test2_task1_handler(void *arg)
 {
     os_error_t err;
     struct os_task *t;
     int iters;
 
     t = os_sched_get_current_task();
-    TEST_ASSERT(t->t_func == mutex_test2_task14_handler);
+    TEST_ASSERT(t->t_func == mutex_test2_task1_handler);
 
     for (iters = 0; iters < 3; iters++) {
         err = os_mutex_pend(&g_mutex1, 0);
         TEST_ASSERT(err == OS_OK, "err=%d", err);
 
-        g_task14_val = 1;
+        g_task1_val = 1;
         os_time_delay(OS_TICKS_PER_SEC / 10);
 
         /* 
-         * Task17 should have its mutex wait flag set; at least the first time
+         * Task4 should have its mutex wait flag set; at least the first time
          * through!
          */
         if (iters == 0) {
-            TEST_ASSERT(task17.t_flags & OS_TASK_FLAG_MUTEX_WAIT);
+            TEST_ASSERT(task4.t_flags & OS_TASK_FLAG_MUTEX_WAIT);
         }
 
         if (g_mutex_test == 4) {
@@ -199,7 +213,7 @@ mutex_test2_task14_handler(void *arg)
 }
 
 void 
-task15_handler(void *arg) 
+mutex_task2_handler(void *arg) 
 {
     os_error_t err;
     struct os_task *t;
@@ -207,7 +221,7 @@ task15_handler(void *arg)
     if (g_mutex_test == 1) {
         while (1) {
             t = os_sched_get_current_task();
-            TEST_ASSERT(t->t_func == task15_handler);
+            TEST_ASSERT(t->t_func == mutex_task2_handler);
 
             os_time_delay(OS_TICKS_PER_SEC / 20);
             while (1) {
@@ -227,7 +241,7 @@ task15_handler(void *arg)
 
         while (1) {
             t = os_sched_get_current_task();
-            TEST_ASSERT(t->t_func == task15_handler);
+            TEST_ASSERT(t->t_func == mutex_task2_handler);
 
             err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC * 10);
             if (g_mutex_test == 4) {
@@ -242,7 +256,7 @@ task15_handler(void *arg)
 }
 
 void 
-task16_handler(void *arg) 
+mutex_task3_handler(void *arg) 
 {
     os_error_t err;
     struct os_task *t;
@@ -250,17 +264,17 @@ task16_handler(void *arg)
     if (g_mutex_test == 1) {
         while (1) {
             t = os_sched_get_current_task();
-            TEST_ASSERT(t->t_func == task16_handler);
+            TEST_ASSERT(t->t_func == mutex_task3_handler);
 
             /* Get mutex 1 */
             err = os_mutex_pend(&g_mutex1, OS_TIMEOUT_NEVER);
             TEST_ASSERT(err == OS_OK);
 
-            while (g_task14_val != 1) {
+            while (g_task1_val != 1) {
                 /* Wait till task 1 wakes up and sets val. */
             }
 
-            g_task16_val = 1;
+            g_task3_val = 1;
 
             err = os_mutex_release(&g_mutex1);
             TEST_ASSERT(err == OS_OK);
@@ -278,7 +292,7 @@ task16_handler(void *arg)
 
         while (1) {
             t = os_sched_get_current_task();
-            TEST_ASSERT(t->t_func == task16_handler);
+            TEST_ASSERT(t->t_func == mutex_task3_handler);
 
             err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC * 10);
             if (g_mutex_test == 4) {
@@ -298,14 +312,14 @@ task16_handler(void *arg)
 }
 
 void 
-task17_handler(void *arg)
+mutex_task4_handler(void *arg)
 {
     os_error_t err;
     struct os_task *t;
 
     while (1) {
         t = os_sched_get_current_task();
-        TEST_ASSERT(t->t_func == task17_handler);
+        TEST_ASSERT(t->t_func == mutex_task4_handler);
 
         if (g_mutex_test == 5) {
             err = os_mutex_pend(&g_mutex1, OS_TICKS_PER_SEC / 10);
@@ -327,6 +341,36 @@ task17_handler(void *arg)
 
         os_time_delay(OS_TICKS_PER_SEC * 10);
     }
+}
+
+void
+os_mutex_ts_pretest(void* arg)
+{
+    sysinit();
+}
+
+void
+os_mutex_ts_posttest(void* arg)
+{
+    return;
+}
+
+void
+os_mutex_test_init(void *arg)
+{
+#if MYNEWT_VAL(SELFTEST)
+    stack1 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
+    assert(stack1);
+    stack2 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
+    assert(stack2);
+    stack3 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
+    assert(stack3);
+    stack4 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
+    assert(stack4);
+#endif
+
+    tu_suite_set_pre_test_cb(os_mutex_ts_pretest, NULL);
+    tu_suite_set_post_test_cb(os_mutex_ts_posttest, NULL);
 }
 
 TEST_CASE_DECL(os_mutex_test_basic)

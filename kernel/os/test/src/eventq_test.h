@@ -30,8 +30,14 @@
 #extern "C" {
 #endif
 
+#if MYNEWT_VAL(SELFTEST)
 #define MY_STACK_SIZE        (5120)
 #define POLL_STACK_SIZE        (4096)
+#else
+#define MY_STACK_SIZE        (128)
+#define POLL_STACK_SIZE        (32) /* for now */
+#endif
+
 /* Task 1 sending task */
 /* Define task stack and task object */
 #define SEND_TASK_PRIO        (1)

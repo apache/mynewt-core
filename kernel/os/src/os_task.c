@@ -146,6 +146,40 @@ err:
     return (rc);
 }
 
+/*
+ * Suspend specified task
+ * XXX
+ * NOTE: This interface is currently experimental and not ready for common use
+ */
+int
+os_task_suspend(struct os_task *t)
+{
+    struct os_task *current;
+    int rc;
+    os_sr_t sr;
+
+    current = os_sched_get_current_task();
+    /*
+     * Can't suspend yourself
+     */
+    if (t->t_taskid == current->t_taskid) {
+        return OS_INVALID_PARM;
+    }
+
+    /*
+     * If state is not READY or SLEEP, assume task has not been initialized
+     */
+    if (t->t_state != OS_TASK_READY && t->t_state != OS_TASK_SLEEP)
+    {
+        return OS_NOT_STARTED;
+    }
+
+    OS_ENTER_CRITICAL(sr);
+    rc = os_sched_suspend(t);
+    OS_EXIT_CRITICAL(sr);
+    return rc;
+}
+
 /**
  * Iterate through tasks, and return the following information about them:
  *

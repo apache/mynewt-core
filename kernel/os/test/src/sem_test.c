@@ -23,29 +23,22 @@
 #include "os/os.h"
 #include "os_test_priv.h"
 
+#if MYNEWT_VAL(SELFTEST)
 #ifdef ARCH_sim
-#define SEM_TEST_STACK_SIZE     1024
-#else 
-#define SEM_TEST_STACK_SIZE     512
+#define SEM_TEST_STACK_SIZE     OS_STACK_ALIGN(1024)
 #endif
 
-#if MYNEWT_VAL(SELFTEST)
 struct os_task task1;
-os_stack_t stack1[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
+os_stack_t *stack1;
 
 struct os_task task2;
-os_stack_t stack2[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
+os_stack_t *stack2;
 
 struct os_task task3;
-os_stack_t stack3[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
+os_stack_t *stack3;
 
 struct os_task task4;
-os_stack_t stack4[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
-
-#define TASK1_PRIO (1) 
-#define TASK2_PRIO (2) 
-#define TASK3_PRIO (3) 
-#define TASK4_PRIO (4) 
+os_stack_t *stack4;
 #endif /* MYNEWT_VAL(SELFTEST) */
 
 struct os_sem g_sem1;
@@ -59,7 +52,6 @@ struct os_sem g_sem1;
  *  order, get the semaphore, then release it and go back to sleep.
  * 
  */
-
 char sem_test_buf[128];
 
 /**
@@ -96,7 +88,9 @@ sem_test_sleep_task_handler(void *arg)
     TEST_ASSERT(t->t_func == sem_test_sleep_task_handler);
 
     os_time_delay(2 * OS_TICKS_PER_SEC);
+#if MYNEWT_VAL(SELFTEST)
     os_test_restart();
+#endif
 }
 
 void
@@ -148,7 +142,8 @@ sem_test_basic_handler(void *arg)
     TEST_ASSERT(sem->sem_tokens == 0 && SLIST_EMPTY(&sem->sem_head),
                 "Semaphore internals wrong after getting semaphore\n"
                 "%s\n"
-                "Task: task=%p prio=%u", sem_test_sem_to_s(sem), t, t->t_prio);
+                "Task: task=%p prio=%u", sem_test_sem_to_s(sem),
+                t, t->t_prio);
 
     /* Get the semaphore again; should fail */
     err = os_sem_pend(sem, 0);
@@ -186,7 +181,9 @@ sem_test_basic_handler(void *arg)
                 "Task: task=%p prio=%u\n", sem_test_sem_to_s(sem), t,
                 t->t_prio);
 
+#if MYNEWT_VAL(SELFTEST)
     os_test_restart();
+#endif
 }
 
 void 
@@ -199,7 +196,6 @@ sem_test_1_task1_handler(void *arg)
     for (i = 0; i < 3; i++) {
         t = os_sched_get_current_task();
         TEST_ASSERT(t->t_func == sem_test_1_task1_handler);
-
 
         err = os_sem_pend(&g_sem1, 0);
         TEST_ASSERT(err == OS_OK);
@@ -215,13 +211,16 @@ sem_test_1_task1_handler(void *arg)
         os_time_delay(OS_TICKS_PER_SEC / 10);
     }
 
+#if MYNEWT_VAL(SELFTEST)
     os_test_restart();
+#endif
 }
 
 void 
 sem_test_1_task2_handler(void *arg) 
 {
-    sem_test_pend_release_loop(0, OS_TICKS_PER_SEC / 10, OS_TICKS_PER_SEC / 10);
+    sem_test_pend_release_loop(0, OS_TICKS_PER_SEC / 10,
+                               OS_TICKS_PER_SEC / 10);
 }
 
 void 
@@ -282,6 +281,36 @@ void
 sem_test_4_task4_handler(void *arg) 
 {
     sem_test_pend_release_loop(0, 2000, 2000);
+}
+
+void
+os_sem_ts_pretest(void* arg)
+{
+    sysinit();
+}
+
+void
+os_sem_ts_posttest(void* arg)
+{
+    return;
+}
+
+void
+os_sem_test_init(void *arg)
+{
+#if MYNEWT_VAL(SELFTEST)
+    stack1 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
+    assert(stack1);
+    stack2 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
+    assert(stack2);
+    stack3 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
+    assert(stack3);
+    stack4 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
+    assert(stack4);
+#endif
+
+    tu_suite_set_pre_test_cb(os_sem_ts_pretest, NULL);
+    tu_suite_set_post_test_cb(os_sem_ts_posttest, NULL);
 }
 
 TEST_CASE_DECL(os_sem_test_basic)

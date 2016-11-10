@@ -30,10 +30,11 @@
 #include <sys/time.h>
 #include "os/os.h"
 
+#if MYNEWT_VAL(SELFTEST) /* these parameters only work in a native env */
+
 void
 os_test_restart(void)
 {
-#if MYNEWT_VAL(SELFTEST)
     struct sigaction sa;
     struct itimerval it;
     int rc;
@@ -52,25 +53,37 @@ os_test_restart(void)
         perror("Cannot set itimer");
         abort();
     }
-#endif /* MYNEWT_VAL(SELFTEST) */
 
-    tu_restart();
+#if MYNEWT_VAL(SELFTEST)
+   tu_restart();
+#endif
 }
+
+extern void os_mempool_test_init(void *arg);
+extern void os_sem_test_init(void *arg);
+extern void os_mutex_test_init(void *arg);
 
 int
 os_test_all(void)
 {
+
+    tu_suite_set_init_cb(os_mempool_test_init, NULL);
     os_mempool_test_suite();
+
+    tu_suite_set_init_cb(os_mutex_test_init, NULL);
     os_mutex_test_suite();
+
+    tu_suite_set_init_cb(os_sem_test_init, NULL);
     os_sem_test_suite();
+
     os_mbuf_test_suite();
+
     os_eventq_test_suite();
+
     os_callout_test_suite();
 
     return tu_case_failed;
 }
-
-#if MYNEWT_VAL(SELFTEST)
 
 int
 main(int argc, char **argv)
@@ -83,5 +96,10 @@ main(int argc, char **argv)
 
     return tu_any_failed;
 }
-
+#else
+void
+os_test_restart(void)
+{
+    return;
+}
 #endif

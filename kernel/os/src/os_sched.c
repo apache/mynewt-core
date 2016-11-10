@@ -194,6 +194,35 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
 }
 
 /**
+ * os sched suspend
+ *
+ * XXX
+ * NOTE - This routine is currently experimental and not ready for common use
+ *
+ * Stops a task and removes it from the run list
+ *
+ * @return int
+ *
+ * NOTE: must be called with interrupts disabled! This function does not call
+ * the scheduler
+ */
+int
+os_sched_suspend(struct os_task *t)
+{
+
+    if (t->t_state == OS_TASK_SLEEP) {
+        TAILQ_REMOVE(&g_os_sleep_list, t, t_os_list);
+    } else if (t->t_state == OS_TASK_READY) {
+        TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
+    }
+    t->t_state = OS_TASK_SUSPEND;
+    t->t_next_wakeup = 0;
+    t->t_flags |= OS_TASK_FLAG_NO_TIMEOUT;
+
+    return OS_OK;
+}
+
+/**
  * os sched wakeup
  *
  * Called to wake up a task. Waking up a task consists of setting the task state

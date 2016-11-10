@@ -37,6 +37,25 @@
 extern "C" {
 #endif
 
+/*
+ * shared amongst all os tests
+ */
+extern struct os_task task1;
+extern os_stack_t *stack1;
+#define TASK1_PRIO (20) 
+
+extern struct os_task task2;
+extern os_stack_t *stack2;
+#define TASK2_PRIO (21) 
+
+extern struct os_task task3;
+extern os_stack_t *stack3;
+#define TASK3_PRIO (22) 
+
+extern struct os_task task4;
+extern os_stack_t *stack4;
+#define TASK4_PRIO (23) 
+
 void os_test_restart(void);
 
 int os_mempool_test_suite(void);

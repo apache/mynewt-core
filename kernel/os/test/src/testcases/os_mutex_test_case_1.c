@@ -22,27 +22,24 @@ TEST_CASE(os_mutex_test_case_1)
 {
     int rc;
 
-    sysinit();
-
     g_mutex_test = 1;
-    g_task14_val = 0;
-    g_task15_val = 0;
-    g_task16_val = 0;
+    g_task1_val = 0;
+    g_task2_val = 0;
+    g_task3_val = 0;
 
     rc = os_mutex_init(&g_mutex1);
     TEST_ASSERT(rc == 0);
     rc = os_mutex_init(&g_mutex2);
     TEST_ASSERT(rc == 0);
 
-    os_task_init(&task14, "task14", mutex_test1_task14_handler, NULL,
-                 TASK14_PRIO, OS_WAIT_FOREVER, stack14,
-                 OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE));
+    os_task_init(&task1, "task1", mutex_test1_task1_handler, NULL,
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, sizeof(stack1));
 
-    os_task_init(&task15, "task15", task15_handler, NULL, TASK15_PRIO, 
-            OS_WAIT_FOREVER, stack15, OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE));
+    os_task_init(&task2, "task2", mutex_task2_handler, NULL, TASK2_PRIO, 
+            OS_WAIT_FOREVER, stack2, sizeof(stack2));
 
-    os_task_init(&task16, "task16", task16_handler, NULL, TASK16_PRIO, 
-            OS_WAIT_FOREVER, stack16, OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE));
+    os_task_init(&task3, "task3", mutex_task3_handler, NULL, TASK3_PRIO, 
+            OS_WAIT_FOREVER, stack3, sizeof(stack3));
 
     os_start();
 }

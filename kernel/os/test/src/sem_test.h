@@ -30,29 +30,6 @@
 #extern "C" {
 #endif
 
-#ifdef ARCH_sim
-#define SEM_TEST_STACK_SIZE     1024
-#else 
-#define SEM_TEST_STACK_SIZE     512
-#endif
-
-extern struct os_task task1;
-extern os_stack_t stack1[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
-
-extern struct os_task task2;
-extern os_stack_t stack2[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
-
-extern struct os_task task3;
-extern os_stack_t stack3[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
-
-extern struct os_task task4;
-extern os_stack_t stack4[OS_STACK_ALIGN(SEM_TEST_STACK_SIZE)];
-
-#define TASK1_PRIO (1) 
-#define TASK2_PRIO (2) 
-#define TASK3_PRIO (3) 
-#define TASK4_PRIO (4) 
-
 extern struct os_sem g_sem1;
 
 const char *sem_test_sem_to_s(const struct os_sem *sem);
