@@ -41,7 +41,7 @@ TEST_CASE(boot_serial_upload_bigger_image)
         hdr = (struct nmgr_hdr *)buf;
         memset(hdr, 0, sizeof(*hdr));
         hdr->nh_op = NMGR_OP_WRITE;
-        hdr->nh_group = htons(NMGR_GROUP_ID_IMAGE);
+        hdr->nh_group = htons(MGMT_GROUP_ID_IMAGE);
         hdr->nh_id = IMGMGR_NMGR_OP_UPLOAD;
 
         if (off) {

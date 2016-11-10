@@ -28,22 +28,33 @@ TEST_CASE(boot_serial_img_msg)
     struct nmgr_hdr *hdr;
     const struct flash_area *fap;
 
+    /* 00000000  a3 64 64 61 74 61 58 10  |.ddataX.|
+     * 00000008  a5 a5 a5 a5 a5 a5 a5 a5  |........|
+     * 00000010  a5 a5 a5 a5 a5 a5 a5 a5  |........|
+     * 00000018  63 6c 65 6e 1a 00 01 14  |clen....|
+     * 00000020  e8 63 6f 66 66 00        |.coff.|
+     */
+    static const uint8_t payload[] = { 
+        0xa3, 0x64, 0x64, 0x61, 0x74, 0x61, 0x58, 0x10,
+        /* 16 bytes of image data starts here. */
+        0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5,
+        0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5,
+        0x63, 0x6c, 0x65, 0x6e, 0x1a, 0x00, 0x01, 0x14,
+        0xe8, 0x63, 0x6f, 0x66, 0x66, 0x00,
+    };
+
     memset(img, 0xa5, sizeof(img));
-    len = base64_encode(img, sizeof(img), enc_img, 1);
-    assert(len > 0);
 
     hdr = (struct nmgr_hdr *)buf;
     memset(hdr, 0, sizeof(*hdr));
     hdr->nh_op = NMGR_OP_WRITE;
-    hdr->nh_group = htons(NMGR_GROUP_ID_IMAGE);
+    hdr->nh_group = htons(MGMT_GROUP_ID_IMAGE);
     hdr->nh_id = IMGMGR_NMGR_OP_UPLOAD;
 
-    len = sprintf((char *)(hdr + 1),
-                  "{\"off\":0,\"len\":16,\"data\":\"%s\"}", enc_img);
-    hdr->nh_len = htons(len);
+    memcpy(hdr + 1, payload, sizeof payload);
+    hdr->nh_len = htons(sizeof payload);
 
-    len = sizeof(*hdr) + len;
-
+    len = sizeof(*hdr) + sizeof payload;
     tx_msg(buf, len);
 
     /*
