@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "bsp/bsp.h"
 #include <nrf51.h>
 #include "mcu/nrf51_hal.h"
 #include "hal/hal_bsp.h"
@@ -86,6 +87,16 @@ static const nrf_drv_spis_config_t os_bsp_spi1s_cfg = {
 };
 #endif
 
+/*
+ * What memory to include in coredump.
+ */
+static const struct hal_bsp_mem_dump dump_cfg[] = {
+    [0] = {
+        .hbmd_start = &_ram_start,
+        .hbmd_size = RAM_SIZE
+    }
+};
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -96,6 +107,13 @@ hal_bsp_flash_dev(uint8_t id)
         return NULL;
     }
     return &nrf51_flash_dev;
+}
+
+const struct hal_bsp_mem_dump *
+hal_bsp_core_dump(int *area_cnt)
+{
+    *area_cnt = sizeof(dump_cfg) / sizeof(dump_cfg[0]);
+    return dump_cfg;
 }
 
 int

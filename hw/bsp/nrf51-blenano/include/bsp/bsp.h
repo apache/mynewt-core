@@ -24,12 +24,16 @@
 extern "C" {
 #endif
 
+#include "inttypes.h"
 /* Define special stackos sections */
 #define sec_data_core   __attribute__((section(".data.core")))
 #define sec_bss_core    __attribute__((section(".bss.core")))
 
 /* More convenient section placement macros. */
 #define bssnz_t
+
+extern uint8_t _ram_start;
+#define RAM_SIZE        0x8000
 
 /* LED pins */
 #define LED_BLINK_PIN   (19)
