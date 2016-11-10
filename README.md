@@ -38,7 +38,7 @@ It currently supports the following hardware platforms:
 * Arduino Zero (Cortex-M0)
 * Arduino Zero Pro (Cortex-M0)
 * Arduino M0 Pro (Cortex-M0)
-
+* NUCLEO-F401RE from STMicroelectronics (Cortex-M4)
 
 Apache Mynewt uses the
 [Newt](https://www.github.com/apache/incubator-mynewt-newt) build and package
