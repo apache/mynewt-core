@@ -33,7 +33,5 @@ pkg.deps:
     - net/nimble/transport/ram
     - sys/console/full
     - libc/baselibc
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/ble
     - sys/sysinit
     - sys/id

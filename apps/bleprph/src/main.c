@@ -27,7 +27,6 @@
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
-#include "imgmgr/imgmgr.h"
 
 /* BLE */
 #include "nimble/ble.h"
