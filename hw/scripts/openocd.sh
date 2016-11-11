@@ -22,6 +22,14 @@
 # FLASH_OFFSET must contain the offset in flash where to place it
 #
 openocd_load () {
+    OCD_CMD_FILE=.openocd_cmds
+
+    echo "$EXTRA_JTAG_CMD" > $OCD_CMD_FILE
+    echo "init" >> $OCD_CMD_FILE
+    echo "$CFG_POST_INIT" >> $OCD_CMD_FILE
+    echo "reset halt" >> $OCD_CMD_FILE
+    echo "flash write_image erase $FILE_NAME $FLASH_OFFSET" >> $OCD_CMD_FILE
+
     if [ -z $FILE_NAME ]; then
 	echo "Missing filename"
 	return 1
@@ -34,14 +42,15 @@ openocd_load () {
 	echo "Missing flash offset"
 	return 1
     fi
-    if [ ! -z "$EXTRA_JTAG_CMD" ]; then
-	CFG="$CFG -c $EXTRA_JTAG_CMD"
-    fi
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    openocd $CFG -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c shutdown
-    return $?
+    openocd $CFG -f $OCD_CMD_FILE -c shutdown
+    if [ $? -ne 0 ]; then
+	exit 1
+    fi
+    rm $OCD_CMD_FILE
+    return 0
 }
 
 #
