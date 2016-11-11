@@ -32,9 +32,6 @@
 /* RAM HCI transport. */
 #include "transport/ram/ble_hci_ram.h"
 
-/* RAM persistence layer. */
-#include "store/ram/ble_store_ram.h"
-
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
@@ -502,8 +499,6 @@ main(void)
                  LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = blecent_on_reset;
     ble_hs_cfg.sync_cb = blecent_on_sync;
-    ble_hs_cfg.store_read_cb = ble_store_ram_read;
-    ble_hs_cfg.store_write_cb = ble_store_ram_write;
 
     /* Initialize data structures to track connected peers. */
     rc = peer_init(MYNEWT_VAL(BLE_MAX_CONNECTIONS), 64, 64, 64);
