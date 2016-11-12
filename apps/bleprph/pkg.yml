@@ -25,6 +25,8 @@ pkg.keywords:
 pkg.deps: 
     - kernel/os 
     - sys/log
+    - mgmt/newtmgr
+    - mgmt/newtmgr/transport/ble
     - net/nimble/controller
     - net/nimble/host
     - net/nimble/host/services/gap
