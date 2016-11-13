@@ -32,15 +32,15 @@ openocd_load () {
 
     if [ -z $FILE_NAME ]; then
 	echo "Missing filename"
-	return 1
+	exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
 	echo "Cannot find file" $FILE
-	return 1
+	exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
 	echo "Missing flash offset"
-	return 1
+	exit 1
     fi
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
@@ -67,11 +67,11 @@ openocd_debug () {
     if [ -z "$NO_GDB" ]; then
 	if [ -z $FILE_NAME ]; then
 	    echo "Missing filename"
-	    return 1
+	    exit 1
 	fi
 	if [ ! -f "$FILE_NAME" ]; then
 	    echo "Cannot find file" $FILE_NAME
-	    return 1
+	    exit 1
 	fi
 
 	#
