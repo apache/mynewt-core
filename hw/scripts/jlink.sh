@@ -31,7 +31,7 @@ jlink_load () {
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
-        echo "Cannot find file" $FILE
+        echo "Cannot find file" $FILE_NAME
         exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
@@ -101,7 +101,7 @@ jlink_debug() {
             exit 1
 	fi
 	if [ ! -f "$FILE_NAME" ]; then
-            echo "Cannot find file" $FILE
+            echo "Cannot find file" $FILE_NAME
             exit 1
 	fi
 
