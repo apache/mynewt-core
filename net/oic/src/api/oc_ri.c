@@ -194,7 +194,7 @@ static void
 start_processes(void)
 {
   allocate_events();
-  oc_process_start(&oc_etimer_process, NULL);
+  oc_etimer_init();
   oc_process_start(&timed_callback_events, NULL);
   oc_process_start(&coap_engine, NULL);
   oc_process_start(&message_buffer_handler, NULL);
@@ -209,7 +209,7 @@ start_processes(void)
 static void
 stop_processes(void)
 {
-  oc_process_exit(&oc_etimer_process);
+  oc_etimer_deinit();
   oc_process_exit(&timed_callback_events);
   oc_process_exit(&coap_engine);
 

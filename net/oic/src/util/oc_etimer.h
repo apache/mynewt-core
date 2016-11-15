@@ -95,37 +95,6 @@ struct oc_etimer
 void oc_etimer_set(struct oc_etimer *et, oc_clock_time_t interval);
 
 /**
- * \brief      Reset an event timer with the same interval as was
- *             previously set.
- * \param et   A pointer to the event timer.
- *
- *             This function resets the event timer with the same
- *             interval that was given to the event timer with the
- *             oc_etimer_set() function. The start point of the interval
- *             is the exact time that the event timer last
- *             expired. Therefore, this function will cause the timer
- *             to be stable over time, unlike the oc_etimer_restart()
- *             function.
- *
- * \sa oc_etimer_restart()
- */
-void oc_etimer_reset(struct oc_etimer *et);
-
-/**
- * \brief      Reset an event timer with a new interval.
- * \param et   A pointer to the event timer.
- * \param interval The interval before the timer expires.
- *
- *             This function very similar to oc_etimer_reset. Opposed to
- *             oc_etimer_reset it is possible to change the timout.
- *             This allows accurate, non-periodic timers without drift.
- *
- * \sa oc_etimer_reset()
- */
-void oc_etimer_reset_with_new_interval(struct oc_etimer *et,
-                                       oc_clock_time_t interval);
-
-/**
  * \brief      Restart an event timer from the current point in time
  * \param et   A pointer to the event timer.
  *
@@ -141,47 +110,6 @@ void oc_etimer_reset_with_new_interval(struct oc_etimer *et,
  * \sa oc_etimer_reset()
  */
 void oc_etimer_restart(struct oc_etimer *et);
-
-/**
- * \brief      Adjust the expiration time for an event timer
- * \param et   A pointer to the event timer.
- * \param td   The time difference to adjust the expiration time with.
- *
- *             This function is used to adjust the time the event
- *             timer will expire. It can be used to synchronize
- *             periodic timers without the need to restart the timer
- *             or change the timer interval.
- *
- *             \note This function should only be used for small
- *             adjustments. For large adjustments use oc_etimer_set()
- *             instead.
- *
- *             \note A periodic timer will drift unless the
- *             oc_etimer_reset() function is used.
- *
- * \sa oc_etimer_set()
- * \sa oc_etimer_reset()
- */
-void oc_etimer_adjust(struct oc_etimer *et, int td);
-
-/**
- * \brief      Get the expiration time for the event timer.
- * \param et   A pointer to the event timer
- * \return     The expiration time for the event timer.
- *
- *             This function returns the expiration time for an event timer.
- */
-oc_clock_time_t oc_etimer_expiration_time(struct oc_etimer *et);
-
-/**
- * \brief      Get the start time for the event timer.
- * \param et   A pointer to the event timer
- * \return     The start time for the event timer.
- *
- *             This function returns the start time (when the timer
- *             was last set) for an event timer.
- */
-oc_clock_time_t oc_etimer_start_time(struct oc_etimer *et);
 
 /**
  * \brief      Check if an event timer has expired.
@@ -245,7 +173,10 @@ oc_clock_time_t oc_etimer_next_expiration_time(void);
 
 /** @} */
 
-OC_PROCESS_NAME(oc_etimer_process);
+void oc_etimer_init(void);
+void oc_etimer_deinit(void);
+void oc_etimer_sched(void);
+
 #ifdef __cplusplus
 }
 #endif
