@@ -92,10 +92,8 @@ prepare_coap_request(oc_client_cb_t *cb, oc_string_t *query)
     coap_set_header_uri_query(request, oc_string(*query));
 
   if (cb->observe_seq == -1 && cb->qos == LOW_QOS) {
-    extern oc_event_callback_retval_t oc_ri_remove_client_cb(void *data);
-
-    oc_set_delayed_callback(cb, &oc_ri_remove_client_cb,
-                            OC_CLIENT_CB_TIMEOUT_SECS);
+      os_callout_reset(&cb->callout,
+        OC_CLIENT_CB_TIMEOUT_SECS * OS_TICKS_PER_SEC);
   }
 
   return true;

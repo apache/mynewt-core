@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <strings.h>
 
+#include <os/os_callout.h>
+
 #include "util/oc_etimer.h"
 #include "util/oc_list.h"
 #include "util/oc_memb.h"
@@ -28,6 +30,7 @@
 #include "messaging/coap/oc_coap.h"
 
 #include "port/oc_random.h"
+#include "port/mynewt/adaptor.h"
 
 #include "oc_buffer.h"
 #include "oc_core_res.h"
@@ -296,39 +299,6 @@ oc_ri_add_resource(oc_resource_t *resource)
   return valid;
 }
 #endif /* OC_SERVER */
-
-void
-oc_ri_remove_timed_event_callback(void *cb_data, oc_trigger_t event_callback)
-{
-  oc_event_callback_t *event_cb =
-    (oc_event_callback_t *)oc_list_head(timed_callbacks);
-
-  while (event_cb != NULL) {
-    if (event_cb->data == cb_data && event_cb->callback == event_callback) {
-      oc_list_remove(timed_callbacks, event_cb);
-      oc_memb_free(&event_callbacks_s, event_cb);
-      break;
-    }
-    event_cb = event_cb->next;
-  }
-}
-
-void
-oc_ri_add_timed_event_callback_ticks(void *cb_data, oc_trigger_t event_callback,
-                                     oc_clock_time_t ticks)
-{
-  oc_event_callback_t *event_cb =
-    (oc_event_callback_t *)oc_memb_alloc(&event_callbacks_s);
-
-  if (event_cb) {
-    event_cb->data = cb_data;
-    event_cb->callback = event_callback;
-    OC_PROCESS_CONTEXT_BEGIN(&timed_callback_events);
-    oc_etimer_set(&event_cb->timer, ticks);
-    OC_PROCESS_CONTEXT_END(&timed_callback_events);
-    oc_list_add(timed_callbacks, event_cb);
-  }
-}
 
 static void
 poll_event_callback_timers(oc_list_t list, struct oc_memb *cb_pool)
@@ -806,9 +776,10 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
 static void
 free_client_cb(oc_client_cb_t *cb)
 {
-  oc_free_string(&cb->uri);
-  oc_list_remove(client_cbs, cb);
-  oc_memb_free(&client_cbs_s, cb);
+    os_callout_stop(&cb->callout);
+    oc_free_string(&cb->uri);
+    oc_list_remove(client_cbs, cb);
+    oc_memb_free(&client_cbs_s, cb);
 }
 
 void
@@ -935,7 +906,6 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
    for the entirety of OC_CLIENT_CB_TIMEOUT_SECS
       */
       if (client_response.observe_option == -1 && !separate && !cb->discovery) {
-        oc_ri_remove_timed_event_callback(cb, &oc_ri_remove_client_cb);
         free_client_cb(cb);
       } else
         cb->observe_seq = client_response.observe_option;
@@ -968,6 +938,16 @@ oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
   return cb;
 }
 
+static void
+oc_ri_remove_cb(struct os_event *ev)
+{
+    struct oc_client_cb_s *cb;
+
+    cb = ev->ev_arg;
+
+    oc_ri_remove_client_cb(cb);
+}
+
 oc_client_cb_t *
 oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
                       oc_method_t method, void *handler, oc_qos_t qos)
@@ -993,6 +973,8 @@ oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
   cb->timestamp = oc_clock_time();
   cb->observe_seq = -1;
   memcpy(&cb->server, server, sizeof(oc_server_handle_t));
+
+  os_callout_init(&cb->callout, oc_evq_get(), oc_ri_remove_cb, cb);
 
   oc_list_add(client_cbs, cb);
   return cb;
