@@ -59,13 +59,6 @@ OC_LIST(client_cbs);
 OC_MEMB(client_cbs_s, oc_client_cb_t, MAX_NUM_CONCURRENT_REQUESTS);
 #endif /* OC_CLIENT */
 
-OC_LIST(timed_callbacks);
-OC_MEMB(event_callbacks_s, oc_event_callback_t, NUM_OC_CORE_RESOURCES +
-                                                  MAX_APP_RESOURCES +
-                                                  MAX_NUM_CONCURRENT_REQUESTS);
-
-OC_PROCESS(timed_callback_events, "OC timed callbacks");
-
 // TODO: Define and use a  complete set of error codes.
 int oc_stack_errno;
 
@@ -200,7 +193,6 @@ start_processes(void)
 {
   allocate_events();
   oc_etimer_init();
-  oc_process_start(&timed_callback_events, NULL);
   oc_process_start(&coap_engine, NULL);
   oc_process_start(&message_buffer_handler, NULL);
 
@@ -215,7 +207,6 @@ static void
 stop_processes(void)
 {
   oc_etimer_deinit();
-  oc_process_exit(&timed_callback_events);
   oc_process_exit(&coap_engine);
 
 #ifdef OC_SECURITY
@@ -256,7 +247,6 @@ oc_ri_init(void)
   oc_list_init(client_cbs);
 #endif
 
-  oc_list_init(timed_callbacks);
   start_processes();
   oc_create_discovery_resource();
 }
@@ -308,39 +298,6 @@ oc_ri_add_resource(oc_resource_t *resource)
   return valid;
 }
 #endif /* OC_SERVER */
-
-static void
-poll_event_callback_timers(oc_list_t list, struct oc_memb *cb_pool)
-{
-  oc_event_callback_t *event_cb = (oc_event_callback_t *)oc_list_head(list),
-                      *next;
-
-  while (event_cb != NULL) {
-    next = event_cb->next;
-
-    if (oc_etimer_expired(&event_cb->timer)) {
-      if (event_cb->callback(event_cb->data) == DONE) {
-        oc_list_remove(list, event_cb);
-        oc_memb_free(cb_pool, event_cb);
-      } else {
-        OC_PROCESS_CONTEXT_BEGIN(&timed_callback_events);
-        oc_etimer_restart(&event_cb->timer);
-        OC_PROCESS_CONTEXT_END(&timed_callback_events);
-      }
-    }
-
-    event_cb = next;
-  }
-}
-
-static void
-check_event_callbacks(void)
-{
-#ifdef OC_SERVER
-  poll_event_callback_timers(observe_callbacks, &event_callbacks_s);
-#endif /* OC_SERVER */
-  poll_event_callback_timers(timed_callbacks, &event_callbacks_s);
-}
 
 #ifdef OC_SERVER
 
@@ -933,18 +890,6 @@ oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
   return cb;
 }
 #endif /* OC_CLIENT */
-
-OC_PROCESS_THREAD(timed_callback_events, ev, data)
-{
-  OC_PROCESS_BEGIN();
-  while (1) {
-    OC_PROCESS_YIELD();
-    if (ev == OC_PROCESS_EVENT_TIMER) {
-      check_event_callbacks();
-    }
-  }
-  OC_PROCESS_END();
-}
 
 // TODO:
 // resource collections
