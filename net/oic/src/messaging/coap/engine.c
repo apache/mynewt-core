@@ -302,17 +302,10 @@ coap_receive(oc_message_t *msg)
   return erbium_status_code;
 }
 /*---------------------------------------------------------------------------*/
-void
-coap_init_engine(void)
-{
-  coap_register_as_transaction_handler();
-}
-/*---------------------------------------------------------------------------*/
 OC_PROCESS_THREAD(coap_engine, ev, data)
 {
   OC_PROCESS_BEGIN();
 
-  coap_register_as_transaction_handler();
   coap_init_connection();
 
   while (1) {
@@ -322,8 +315,6 @@ OC_PROCESS_THREAD(coap_engine, ev, data)
       coap_receive(data);
 
       oc_message_unref(data);
-    } else if (ev == OC_PROCESS_EVENT_TIMER) {
-      coap_check_transactions();
     }
   }
 

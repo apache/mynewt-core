@@ -30,13 +30,16 @@
  *
  * This file is part of the Contiki operating system.
  */
+#include <string.h>
+#include <stddef.h>
+
+#include <os/os_callout.h>
 
 #include "transactions.h"
 #include "observe.h"
 #include "oc_buffer.h"
 #include "util/oc_list.h"
 #include "util/oc_memb.h"
-#include <string.h>
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
@@ -46,20 +49,13 @@
 #include "security/oc_dtls.h"
 #endif
 
+#include "port/mynewt/adaptor.h"
+
 /*---------------------------------------------------------------------------*/
 OC_MEMB(transactions_memb, coap_transaction_t, COAP_MAX_OPEN_TRANSACTIONS);
 OC_LIST(transactions_list);
 
-static struct oc_process *transaction_handler_process = NULL;
-
-/*---------------------------------------------------------------------------*/
-/*- Internal API ------------------------------------------------------------*/
-/*---------------------------------------------------------------------------*/
-void
-coap_register_as_transaction_handler()
-{
-  transaction_handler_process = OC_PROCESS_CURRENT();
-}
+static void coap_transaction_retrans(struct os_event *ev);
 
 coap_transaction_t *
 coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
@@ -77,6 +73,8 @@ coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
       /* save client address */
       memcpy(&t->message->endpoint, endpoint, sizeof(oc_endpoint_t));
 
+      os_callout_init(&t->retrans_timer, oc_evq_get(),
+        coap_transaction_retrans, t);
       oc_list_add(
         transactions_list,
         t); /* list itself makes sure same element is not added twice */
@@ -108,19 +106,17 @@ coap_send_transaction(coap_transaction_t *t)
       LOG("Keeping transaction %u\n", t->mid);
 
       if (t->retrans_counter == 0) {
-        t->retrans_timer.timer.interval =
+        t->retrans_tmo =
           COAP_RESPONSE_TIMEOUT_TICKS +
           (oc_random_rand() %
            (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
-        LOG("Initial interval " OC_CLK_FMT "\n", t->retrans_timer.timer.interval);
+        LOG("Initial interval " OC_CLK_FMT "\n", t->retrans_tmo);
       } else {
-        t->retrans_timer.timer.interval <<= 1; /* double */
-        LOG("Doubled " OC_CLK_FMT "\n", t->retrans_timer.timer.interval);
+        t->retrans_tmo <<= 1; /* double */
+        LOG("Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
       }
 
-      OC_PROCESS_CONTEXT_BEGIN(transaction_handler_process);
-      oc_etimer_restart(&t->retrans_timer); /* interval updated above */
-      OC_PROCESS_CONTEXT_END(transaction_handler_process);
+      os_callout_reset(&t->retrans_timer, t->retrans_tmo);
 
       coap_send_message(t->message);
 
@@ -163,7 +159,7 @@ coap_clear_transaction(coap_transaction_t *t)
   if (t) {
     LOG("Freeing transaction %u: %p\n", t->mid, t);
 
-    oc_etimer_stop(&t->retrans_timer);
+    os_callout_stop(&t->retrans_timer);
     oc_message_unref(t->message);
     oc_list_remove(transactions_list, t);
     oc_memb_free(&transactions_memb, t);
@@ -184,19 +180,12 @@ coap_get_transaction_by_mid(uint16_t mid)
   return NULL;
 }
 
-/*---------------------------------------------------------------------------*/
-void
-coap_check_transactions()
+static void
+coap_transaction_retrans(struct os_event *ev)
 {
-  coap_transaction_t *t = NULL;
-
-  for (t = (coap_transaction_t *)oc_list_head(transactions_list); t;
-       t = t->next) {
-    if (oc_etimer_expired(&t->retrans_timer)) {
-      ++(t->retrans_counter);
-      LOG("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
-      coap_send_transaction(t);
-    }
-  }
+    coap_transaction_t *t = ev->ev_arg;
+    ++(t->retrans_counter);
+    LOG("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
+    coap_send_transaction(t);
 }
-/*---------------------------------------------------------------------------*/
+
