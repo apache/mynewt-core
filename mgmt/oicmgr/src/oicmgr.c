@@ -247,6 +247,8 @@ static void
 omgr_event_start(struct os_event *ev)
 {
     struct omgr_state *o = &omgr_state;
+
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
     os_eventq_ensure(&o->os_evq, NULL);
     o->os_event.ev_cb = omgr_process_oc_event;
     os_callout_init(&o->os_oc_timer, mgmt_evq_get(), omgr_process_oc_event,
@@ -262,8 +264,6 @@ oicmgr_init(void)
     if (rc != 0) {
         goto err;
     }
-
-    oc_main_init((oc_handler_t *)&omgr_oc_handler);
 
     return (0);
 err:
