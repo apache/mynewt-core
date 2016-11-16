@@ -49,6 +49,8 @@
 OC_LIST(app_resources);
 OC_LIST(observe_callbacks);
 OC_MEMB(app_resources_s, oc_resource_t, MAX_APP_RESOURCES);
+
+static void periodic_observe_handler(struct os_event *ev);
 #endif /* OC_SERVER */
 
 #ifdef OC_CLIENT
@@ -270,7 +272,14 @@ oc_ri_shutdown(void)
 oc_resource_t *
 oc_ri_alloc_resource(void)
 {
-  return oc_memb_alloc(&app_resources_s);
+    struct oc_resource_s *resource;
+
+    resource = oc_memb_alloc(&app_resources_s);
+    if (resource) {
+        os_callout_init(&resource->callout, oc_evq_get(),
+          periodic_observe_handler, resource);
+    }
+    return resource;
 }
 
 void
@@ -334,73 +343,20 @@ check_event_callbacks(void)
 }
 
 #ifdef OC_SERVER
-static oc_event_callback_retval_t
-periodic_observe_handler(void *data)
-{
-  oc_resource_t *resource = (oc_resource_t *)data;
-
-  if (coap_notify_observers(resource, NULL, NULL)) {
-    return CONTINUE;
-  }
-
-  return DONE;
-}
-
-static oc_event_callback_t *
-get_periodic_observe_callback(oc_resource_t *resource)
-{
-  oc_event_callback_t *event_cb;
-  bool found = false;
-
-  for (event_cb = (oc_event_callback_t *)oc_list_head(observe_callbacks);
-       event_cb; event_cb = event_cb->next) {
-    if (resource == event_cb->data) {
-      found = true;
-      break;
-    }
-  }
-
-  if (found) {
-    return event_cb;
-  }
-
-  return NULL;
-}
 
 static void
-remove_periodic_observe_callback(oc_resource_t *resource)
+periodic_observe_handler(struct os_event *ev)
 {
-  oc_event_callback_t *event_cb = get_periodic_observe_callback(resource);
+    struct oc_resource_s *resource;
 
-  if (event_cb) {
-    oc_etimer_stop(&event_cb->timer);
-    oc_list_remove(observe_callbacks, event_cb);
-    oc_memb_free(&event_callbacks_s, event_cb);
-  }
+    resource = ev->ev_arg;
+
+    if (coap_notify_observers(resource, NULL, NULL)) {
+        os_callout_reset(&resource->callout,
+          resource->observe_period_seconds * OS_TICKS_PER_SEC);
+    }
 }
 
-static bool
-add_periodic_observe_callback(oc_resource_t *resource)
-{
-  oc_event_callback_t *event_cb = get_periodic_observe_callback(resource);
-
-  if (!event_cb) {
-    event_cb = (oc_event_callback_t *)oc_memb_alloc(&event_callbacks_s);
-
-    if (!event_cb)
-      return false;
-
-    event_cb->data = resource;
-    event_cb->callback = periodic_observe_handler;
-    OC_PROCESS_CONTEXT_BEGIN(&timed_callback_events);
-    oc_etimer_set(&event_cb->timer,
-                  resource->observe_period_seconds * OC_CLOCK_SECOND);
-    OC_PROCESS_CONTEXT_END(&timed_callback_events);
-    oc_list_add(observe_callbacks, event_cb);
-  }
-
-  return true;
-}
 #endif
 
 oc_interface_mask_t
@@ -694,11 +650,8 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
            */
           bool set_observe_option = true;
           if (cur_resource->properties & OC_PERIODIC) {
-            if (!add_periodic_observe_callback(cur_resource)) {
-              set_observe_option = false;
-              coap_remove_observer_by_token(endpoint, packet->token,
-                                            packet->token_len);
-            }
+              os_callout_reset(&cur_resource->callout,
+                resource->observe_period_seconds * OC_CLOCK_SECOND);
           }
 
           if (set_observe_option) {
@@ -715,7 +668,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
         if (coap_observe_handler(request, response, cur_resource, endpoint) >
             0) {
           if (cur_resource->properties & OC_PERIODIC) {
-            remove_periodic_observe_callback(cur_resource);
+              os_callout_stop(&cur_resource->callout);
           }
         }
       }
