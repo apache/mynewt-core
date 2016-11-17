@@ -247,16 +247,8 @@ ocf_main_task_handler(void *arg)
     os_callout_init(&callout, &ocf_aux_evq, stop_observe, NULL);
 #endif
     while (1) {
-        uint32_t ticks;
-        oc_clock_time_t next_event;
-        next_event = oc_main_poll();
-        ticks = oc_clock_time();
-        if (next_event == 0) {
-            ticks = OS_TIMEOUT_NEVER;
-        } else {
-            ticks = next_event - ticks;
-        }
-        os_sem_pend(&ocf_main_loop_sem, ticks);
+        oc_main_poll();
+        os_sem_pend(&ocf_main_loop_sem, OS_TIMEOUT_NEVER);
     }
     oc_main_shutdown();
 }

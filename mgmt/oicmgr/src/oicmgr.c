@@ -43,7 +43,6 @@ struct omgr_cbuf {
 struct omgr_state {
     struct os_eventq *os_evq;
     struct os_event os_event;
-    struct os_callout os_oc_timer;
     struct os_task os_task;
     struct omgr_cbuf os_cbuf;		/* CBOR buffer for NMGR task */
 };
@@ -232,15 +231,7 @@ oc_signal_main_loop(void)
 static void
 omgr_process_oc_event(struct os_event *ev)
 {
-    struct omgr_state *o = &omgr_state;
-    os_time_t next_event;
-
-    next_event = oc_main_poll();
-    if (next_event) {
-        os_callout_reset(&o->os_oc_timer, next_event - os_time_get());
-    } else {
-        os_callout_stop(&o->os_oc_timer);
-    }
+    oc_main_poll();
 }
 
 static void
@@ -251,8 +242,6 @@ omgr_event_start(struct os_event *ev)
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
     os_eventq_ensure(&o->os_evq, NULL);
     o->os_event.ev_cb = omgr_process_oc_event;
-    os_callout_init(&o->os_oc_timer, mgmt_evq_get(), omgr_process_oc_event,
-      NULL);
 }
 
 int
