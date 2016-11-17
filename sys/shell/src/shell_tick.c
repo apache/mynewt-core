@@ -35,8 +35,9 @@ shell_ticks_cmd(int argc, char **argv)
     if (rc != 0) {
         return -1;
     }
-    if(argc > 1){
-        if(!strcmp(argv[1], "on")){
+    if (argc > 1)
+    {
+        if (!strcmp(argv[1], "on")){
             console_yes_ticks();
             console_printf(" Console Ticks on\n");
         }   
@@ -52,11 +53,11 @@ shell_ticks_cmd(int argc, char **argv)
         goto usage;
     }
     shell_cmd_list_unlock();
-    return (0);
+    return 0;
 usage:
     console_printf(" Usage: ticks [on|off]\n");
     shell_cmd_list_unlock();
-    return (0);
+    return 0;
   
 }
  
