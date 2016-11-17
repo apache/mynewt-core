@@ -594,7 +594,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             return CborErrorIO;
         break;
     }
-
+#if FLOAT_SUPPORT
     case CborDoubleType: {
         double val;
         if (false) {
@@ -634,8 +634,10 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         }
         break;
     }
+#endif
 
     case CborInvalidType:
+    default:
         return CborErrorUnknownType;
     }
 
@@ -643,6 +645,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
 }
 
 /**
+
  * \enum CborToJsonFlags
  * The CborToJsonFlags enum contains flags that control the conversion of CBOR to JSON.
  *

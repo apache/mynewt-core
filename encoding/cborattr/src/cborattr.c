@@ -46,6 +46,7 @@ valid_attr_type(CborType ct, CborAttrType at) {
             if (ct == CborBooleanType) {
                 return 1;
             }
+#if FLOAT_SUPPORT
         case CborAttrFloatType:
             if (ct == CborFloatType) {
                 return 1;
@@ -56,6 +57,7 @@ valid_attr_type(CborType ct, CborAttrType at) {
                 return 1;
             }
             break;
+#endif
         case CborAttrArrayType:
             if (ct == CborArrayType) {
                 return 1;
@@ -65,6 +67,8 @@ valid_attr_type(CborType ct, CborAttrType at) {
             if (ct == CborNullType) {
                 return 1;
             }
+            break;
+        default:
             break;
     }
     return 0;
@@ -89,12 +93,14 @@ cbor_target_address(const struct cbor_attr_t *cursor,
         case CborAttrUnsignedIntegerType:
             targetaddr = (char *)&cursor->addr.uinteger[offset];
             break;
+#if FLOAT_SUPPORT
         case CborAttrFloatType:
             targetaddr = (char *)&cursor->addr.fval[offset];
             break;
         case CborAttrDoubleType:
             targetaddr = (char *)&cursor->addr.real[offset];
             break;
+#endif
         case CborAttrByteStringType:
             targetaddr = (char *) cursor->addr.bytestring.data;
             break;
@@ -145,12 +151,14 @@ cbor_internal_read_object(CborValue *root_value,
                     case CborAttrBooleanType:
                         memcpy(lptr, &cursor->dflt.boolean, sizeof(bool));
                         break;
+#if FLOAT_SUPPORT
                     case CborAttrFloatType:
                         memcpy(lptr, &cursor->dflt.fval, sizeof(float));
                         break;
                     case CborAttrDoubleType:
                         memcpy(lptr, &cursor->dflt.real, sizeof(double));
                         break;
+#endif
                     default:
                         break;
                 }
@@ -215,12 +223,14 @@ cbor_internal_read_object(CborValue *root_value,
                 case CborAttrUnsignedIntegerType:
                     g_err |= cbor_value_get_uint64(&cur_value, (long long unsigned int *) lptr);
                     break;
+#if FLOAT_SUPPORT
                 case CborAttrFloatType:
                     g_err |= cbor_value_get_float(&cur_value, (float *) lptr);
                     break;
                 case CborAttrDoubleType:
                     g_err |= cbor_value_get_double(&cur_value, (double *) lptr);
                     break;
+#endif
                 case CborAttrByteStringType:
                 {
                     size_t len = cursor->len;
