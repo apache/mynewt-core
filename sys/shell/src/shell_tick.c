@@ -35,13 +35,12 @@ shell_ticks_cmd(int argc, char **argv)
     if (rc != 0) {
         return -1;
     }
-    if (argc > 1)
-    {
-        if (!strcmp(argv[1], "on")){
+    if (argc > 1) {
+        if (!strcmp(argv[1], "on")) {
             console_yes_ticks();
             console_printf(" Console Ticks on\n");
         }   
-        else if (!strcmp(argv[1],"off")){
+        else if (!strcmp(argv[1],"off")) {
             console_printf(" Console Ticks off\n");
             console_no_ticks();
         }
