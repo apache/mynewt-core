@@ -21,7 +21,6 @@
 #include "oc_rep.h"
 #include "oc_uuid.h"
 #include "../../src/port/oc_connectivity.h"
-#include "../../src/util/oc_etimer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -128,18 +127,6 @@ typedef struct oc_resource_s
   uint16_t observe_period_seconds;
   uint8_t num_observers;
 } oc_resource_t;
-
-typedef enum { DONE = 0, CONTINUE } oc_event_callback_retval_t;
-
-typedef oc_event_callback_retval_t (*oc_trigger_t)(void *);
-
-typedef struct oc_event_callback_s
-{
-  struct oc_event_callback_s *next;
-  struct oc_etimer timer;
-  oc_trigger_t callback;
-  void *data;
-} oc_event_callback_t;
 
 void oc_ri_init(void);
 

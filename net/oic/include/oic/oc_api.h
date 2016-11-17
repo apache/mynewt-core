@@ -138,10 +138,6 @@ bool oc_stop_observe(const char *uri, oc_server_handle_t *server);
 
 /** Common operations */
 
-void oc_set_delayed_callback(void *cb_data, oc_trigger_t callback,
-                             uint16_t seconds);
-void oc_remove_delayed_callback(void *cb_data, oc_trigger_t callback);
-
 /** API for setting handlers for interrupts */
 
 #define oc_signal_interrupt_handler(name)                                      \

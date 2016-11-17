@@ -20,7 +20,6 @@
 
 #include <os/os_callout.h>
 
-#include "util/oc_etimer.h"
 #include "util/oc_list.h"
 #include "util/oc_memb.h"
 #include "util/oc_process.h"
@@ -30,6 +29,7 @@
 #include "messaging/coap/oc_coap.h"
 
 #include "port/oc_random.h"
+#include "port/oc_clock.h"
 #include "port/mynewt/adaptor.h"
 
 #include "oc_buffer.h"
@@ -192,7 +192,6 @@ static void
 start_processes(void)
 {
   allocate_events();
-  oc_etimer_init();
   oc_process_start(&coap_engine, NULL);
   oc_process_start(&message_buffer_handler, NULL);
 
@@ -206,7 +205,6 @@ start_processes(void)
 static void
 stop_processes(void)
 {
-  oc_etimer_deinit();
   oc_process_exit(&coap_engine);
 
 #ifdef OC_SECURITY
@@ -235,7 +233,6 @@ void
 oc_ri_init(void)
 {
   oc_random_init(0); // Fix: allow user to seed RNG.
-  oc_clock_init();
   set_mpro_status_codes();
 
 #ifdef OC_SERVER
@@ -608,7 +605,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
           bool set_observe_option = true;
           if (cur_resource->properties & OC_PERIODIC) {
               os_callout_reset(&cur_resource->callout,
-                resource->observe_period_seconds * OC_CLOCK_SECOND);
+                resource->observe_period_seconds * OS_TICKS_PER_SEC);
           }
 
           if (set_observe_option) {
@@ -705,13 +702,6 @@ oc_ri_remove_client_cb_by_mid(uint16_t mid)
     free_client_cb(cb);
 }
 
-oc_event_callback_retval_t
-oc_ri_remove_client_cb(void *data)
-{
-  free_client_cb(data);
-  return DONE;
-}
-
 bool
 oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
                uint16_t mid)
@@ -789,7 +779,7 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
         if (cb->discovery) {
           if (oc_ri_process_discovery_payload(payload, payload_len, cb->handler,
                                               endpoint) == OC_STOP_DISCOVERY) {
-            oc_ri_remove_client_cb(cb);
+            free_client_cb(cb);
           }
         } else {
           uint16_t err =
@@ -855,7 +845,7 @@ oc_ri_remove_cb(struct os_event *ev)
 
     cb = ev->ev_arg;
 
-    oc_ri_remove_client_cb(cb);
+    free_client_cb(cb);
 }
 
 oc_client_cb_t *
