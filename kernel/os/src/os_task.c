@@ -178,7 +178,8 @@ os_task_suspend(struct os_task *t)
     /*
      * Disallowing suspending tasks which are waiting on a lock
      */
-    if (t->t_flags && (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT)) {
+    if (t->t_flags && (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT |
+                                               OS_TASK_FLAG_EVQ_WAIT)) {
         return OS_EBUSY;
     }
 
