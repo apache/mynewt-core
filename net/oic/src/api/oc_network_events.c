@@ -14,44 +14,42 @@
 // limitations under the License.
 */
 
+#include <os/os_eventq.h>
+
 #include "oc_network_events.h"
 #include "oc_buffer.h"
 #include "port/oc_connectivity.h"
 #include "port/oc_signal_main_loop.h"
+#include "port/mynewt/adaptor.h"
 #include "util/oc_list.h"
 
 OC_LIST(network_events);
+static void oc_network_ev_process(struct os_event *ev);
+static struct os_event oc_network_ev = {
+    .ev_cb = oc_network_ev_process
+};
 
 static void
-oc_process_network_event(void)
+oc_network_ev_process(struct os_event *ev)
 {
-  oc_network_event_handler_mutex_lock();
-  oc_message_t *head = (oc_message_t *)oc_list_pop(network_events);
-  while (head != NULL) {
-    oc_recv_message(head);
-    head = oc_list_pop(network_events);
-  }
-  oc_network_event_handler_mutex_unlock();
-}
+    struct oc_message_s *head;
 
-OC_PROCESS(oc_network_events, "");
-OC_PROCESS_THREAD(oc_network_events, ev, data)
-{
-  OC_PROCESS_POLLHANDLER(oc_process_network_event());
-  OC_PROCESS_BEGIN();
-  while (oc_process_is_running(&(oc_network_events))) {
-    OC_PROCESS_YIELD();
-  }
-  OC_PROCESS_END();
+    oc_network_event_handler_mutex_lock();
+    head = (struct oc_message_s *)oc_list_pop(network_events);
+    while (head != NULL) {
+        oc_recv_message(head);
+        head = oc_list_pop(network_events);
+    }
+    oc_network_event_handler_mutex_unlock();
 }
 
 void
 oc_network_event(oc_message_t *message)
 {
-  oc_network_event_handler_mutex_lock();
-  oc_list_add(network_events, message);
-  oc_network_event_handler_mutex_unlock();
+    oc_network_event_handler_mutex_lock();
+    oc_list_add(network_events, message);
+    oc_network_event_handler_mutex_unlock();
 
-  oc_process_poll(&(oc_network_events));
-  oc_signal_main_loop();
+    os_eventq_put(oc_evq_get(), &oc_network_ev);
+    oc_signal_main_loop();
 }

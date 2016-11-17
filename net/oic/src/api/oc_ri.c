@@ -198,8 +198,6 @@ start_processes(void)
 #ifdef OC_SECURITY
   oc_process_start(&oc_dtls_handler, NULL);
 #endif
-
-  oc_process_start(&oc_network_events, NULL);
 }
 
 static void

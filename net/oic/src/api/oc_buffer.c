@@ -71,6 +71,7 @@ oc_recv_message(oc_message_t *message)
 {
   oc_process_post(&message_buffer_handler, oc_events[INBOUND_NETWORK_EVENT],
                   message);
+  oc_signal_main_loop();
 }
 
 void

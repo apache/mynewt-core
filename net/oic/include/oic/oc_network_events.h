@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-OC_PROCESS_NAME(oc_network_events);
-
 typedef struct oc_message_s oc_message_t;
 
 void oc_network_event(oc_message_t *message);
