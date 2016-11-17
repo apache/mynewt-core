@@ -96,12 +96,14 @@ OC_PROCESS_THREAD(message_buffer_handler, ev, data)
         LOG("Inbound network event: encrypted request\n");
         oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], data);
       } else {
-        LOG("Inbound network event: decrypted request\n");
-        oc_process_post(&coap_engine, oc_events[INBOUND_RI_EVENT], data);
+          LOG("Inbound network event: decrypted request\n");
+          coap_receive(data);
+          oc_message_unref(data);
       }
 #else
       LOG("Inbound network event: decrypted request\n");
-      oc_process_post(&coap_engine, oc_events[INBOUND_RI_EVENT], data);
+      coap_receive(data);
+      oc_message_unref(data);
 #endif
     } else if (ev == oc_events[OUTBOUND_NETWORK_EVENT]) {
       oc_message_t *message = (oc_message_t *)data;

@@ -192,7 +192,7 @@ static void
 start_processes(void)
 {
   allocate_events();
-  oc_process_start(&coap_engine, NULL);
+  coap_engine_init();
   oc_process_start(&message_buffer_handler, NULL);
 
 #ifdef OC_SECURITY
@@ -205,8 +205,6 @@ start_processes(void)
 static void
 stop_processes(void)
 {
-  oc_process_exit(&coap_engine);
-
 #ifdef OC_SECURITY
   oc_process_exit(&oc_dtls_handler);
 #endif

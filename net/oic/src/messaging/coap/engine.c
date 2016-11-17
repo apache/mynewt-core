@@ -45,8 +45,6 @@
 #include "oc_client_state.h"
 #endif
 
-OC_PROCESS(coap_engine, "CoAP Engine");
-
 extern bool oc_ri_invoke_coap_entity_handler(void *request, void *response,
                                              uint8_t *buffer,
                                              uint16_t buffer_size,
@@ -301,24 +299,9 @@ coap_receive(oc_message_t *msg)
   /* if(new data) */
   return erbium_status_code;
 }
-/*---------------------------------------------------------------------------*/
-OC_PROCESS_THREAD(coap_engine, ev, data)
+
+void
+coap_engine_init(void)
 {
-  OC_PROCESS_BEGIN();
-
-  coap_init_connection();
-
-  while (1) {
-    OC_PROCESS_YIELD();
-
-    if (ev == oc_events[INBOUND_RI_EVENT]) {
-      coap_receive(data);
-
-      oc_message_unref(data);
-    }
-  }
-
-  OC_PROCESS_END();
+    coap_init_connection();
 }
-
-/*---------------------------------------------------------------------------*/
