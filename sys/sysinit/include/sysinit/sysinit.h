@@ -33,10 +33,11 @@ extern "C" {
 
 typedef void sysinit_panic_fn(const char *file, int line);
 
-#if !MYNEWT_VAL(SYSINIT_PANIC_FN)
+#ifndef MYNEWT_VAL_SYSINIT_PANIC_FN
 #include <assert.h>
 #define SYSINIT_PANIC() assert(0)
 #else
+void MYNEWT_VAL(SYSINIT_PANIC_FN)(const char *file, int line);
 #define SYSINIT_PANIC() MYNEWT_VAL(SYSINIT_PANIC_FN)(__FILE__, __LINE__)
 #endif
 

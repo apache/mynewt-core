@@ -24,8 +24,6 @@
 #include "os_test_priv.h"
 #include "os/os_eventq.h"
 
-#define MY_STACK_SIZE        (5120)
-#define POLL_STACK_SIZE        (4096)
 /* Task 1 sending task */
 /* Define task stack and task object */
 #define SEND_TASK_PRIO        (1)

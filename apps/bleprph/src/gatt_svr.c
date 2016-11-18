@@ -51,6 +51,17 @@ const uint8_t gatt_svr_chr_sec_test_static_uuid[16] = {
     0xe1, 0x45, 0x7e, 0x89, 0x9e, 0x65, 0x3a, 0x5c
 };
 
+/* deadbeef*/
+const uint8_t gatt_svr_svc_db_test_uuid[16] = {
+    0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+    0xde, 0xad, 0xbe, 0xef, 0x1de, 0xad, 0xbe, 0xef
+};
+/* deadbeef */
+const uint8_t gatt_svr_chr_db_test_uuid[16] = {
+    0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef,
+    0xde, 0xad, 0xbe, 0xef, 0x1de, 0xad, 0xbe, 0xef
+};
+
 static uint8_t gatt_svr_sec_test_static_val;
 
 static int
@@ -92,7 +103,21 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             0, /* No more characteristics in this service. */
         } },
     },
-
+    
+    {
+        /*** DEADBEEF Test. */
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid128 = gatt_svr_svc_db_test_uuid,
+        .characteristics = (struct ble_gatt_chr_def[]) { {
+            /*** Characteristic: DEADBEEF. */
+            .uuid128 = gatt_svr_chr_db_test_uuid,
+            .access_cb = gatt_svr_chr_access_deadbeef_test,
+            .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC,
+        }, {
+            0, /* No more characteristics in this service. */
+        } },
+    },
+    
     {
         /*** Service: Security test. */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -209,7 +234,35 @@ gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
         return BLE_ATT_ERR_UNLIKELY;
     }
 }
+static int 
+gatt_svr_chr_access_deadbeef_test(uint16_t conn_handle, uint16_t attr_handle,
+                             struct ble_gatt_access_ctxt *ctxt,
+                             void *arg)
+{
+    const void *uuid128;
+    int rand_num;
+    int rc;
 
+    uuid128 = ctxt->chr->uuid128;
+   /* Determine which characteristic is being accessed by examining its
+    * 128-bit UUID.
+    */
+
+   if (memcmp(uuid128, gatt_svr_chr_db_test_uuid, 16) == 0) {
+       assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
+
+       /* Respond with a 32-bit random number. */
+       rand_num = rand();
+       rc = os_mbuf_append(ctxt->om, &rand_num, sizeof rand_num);
+       return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+   }
+  /* Unknown characteristic; the nimble stack should not have called this
+   * function.
+   */
+  assert(0);
+  return BLE_ATT_ERR_UNLIKELY;
+   
+}
 static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
                              struct ble_gatt_access_ctxt *ctxt,

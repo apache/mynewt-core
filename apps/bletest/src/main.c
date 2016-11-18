@@ -623,9 +623,53 @@ bletest_get_packet(void)
 
     om = NULL;
     if (os_msys_num_free() >= 5) {
-        om = os_msys_get_pkthdr(BLE_MBUF_PAYLOAD_SIZE,
-                                sizeof(struct ble_mbuf_hdr));
+        om = os_msys_get_pkthdr(0, sizeof(struct ble_mbuf_hdr));
     }
+    return om;
+}
+
+static struct os_mbuf *
+bletest_send_packet(uint16_t handle)
+{
+    int j;
+    uint8_t val;
+    struct os_mbuf *om;
+    uint16_t pktlen;
+
+    om = bletest_get_packet();
+    if (om) {
+        /* set payload length */
+#if BLETEST_THROUGHPUT_TEST
+        pktlen = BLETEST_PKT_SIZE;
+#else
+#if (BLETEST_CFG_RAND_PKT_SIZE == 1)
+        pktlen = rand() % (BLETEST_MAX_PKT_SIZE + 1);
+#else
+        pktlen = BLETEST_PKT_SIZE;
+#endif
+#endif
+
+        /* Put the HCI header in the mbuf */
+        htole16(om->om_data, handle);
+        htole16(om->om_data + 2, pktlen + 4);
+
+        /* Place L2CAP header in packet */
+        htole16(om->om_data + 4, pktlen);
+        om->om_data[6] = 0;
+        om->om_data[7] = 0;
+        om->om_len = 8;
+        OS_MBUF_PKTHDR(om)->omp_len = 8;
+
+        /* Fill with incrementing pattern (starting from 1) */
+        for (j = 0; j < pktlen; ++j) {
+            val = j + 1;
+            os_mbuf_append(om, &val, 1);
+        }
+
+        /* Transmit it */
+        ble_hci_trans_hs_acl_tx(om);
+    }
+
     return om;
 }
 
@@ -634,7 +678,6 @@ bletest_execute_advertiser(void)
 {
     int i;
 #if (BLETEST_CONCURRENT_CONN_TEST == 1)
-    int j;
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
     uint16_t mask;
     uint16_t reply_handle;
@@ -642,7 +685,6 @@ bletest_execute_advertiser(void)
 #endif
     int rc;
     uint16_t handle;
-    uint16_t pktlen;
     struct os_mbuf *om;
 #if (BLETEST_THROUGHPUT_TEST == 1)
     os_sr_t sr;
@@ -735,37 +777,8 @@ bletest_execute_advertiser(void)
                 }
                 handle = g_last_handle_used;
                 if (ble_ll_conn_find_active_conn(handle)) {
-                    om = bletest_get_packet();
+                    om = bletest_send_packet(handle);
                     if (om) {
-                        /* set payload length */
-#if (BLETEST_CFG_RAND_PKT_SIZE == 1)
-                        pktlen = rand() % (BLETEST_MAX_PKT_SIZE + 1);
-#else
-                        pktlen = BLETEST_PKT_SIZE;
-
-#endif
-                        /* Add header to length */
-                        om->om_len = pktlen + 4;
-
-                        /* Put the HCI header in the mbuf */
-                        htole16(om->om_data, handle);
-                        htole16(om->om_data + 2, om->om_len);
-
-                        /* Place L2CAP header in packet */
-                        htole16(om->om_data + 4, pktlen);
-                        om->om_data[6] = 0;
-                        om->om_data[7] = 0;
-                        om->om_len += 4;
-
-                        /* Fill with incrementing pattern (starting from 1) */
-                        for (j = 0; j < pktlen; ++j) {
-                            om->om_data[8 + j] = (uint8_t)(j + 1);
-                        }
-
-                        /* Add length */
-                        OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                        ble_hci_trans_hs_acl_tx(om);
-
                         /* Increment last handle used */
                         ++g_last_handle_used;
                     }
@@ -786,7 +799,6 @@ bletest_execute_advertiser(void)
 
     /* See if it is time to start throughput testing */
     if ((int32_t)(os_time_get() - g_next_os_time) >= 0) {
-
         /* Keep window full */
         OS_ENTER_CRITICAL(sr);
         completed_pkts = g_bletest_completed_pkts;
@@ -797,31 +809,8 @@ bletest_execute_advertiser(void)
         g_bletest_outstanding_pkts -= completed_pkts;
 
         while (g_bletest_outstanding_pkts < 20) {
-            om = bletest_get_packet();
+            om = bletest_send_packet(g_bletest_handle);
             if (om) {
-                /* set payload length */
-                pktlen = BLETEST_PKT_SIZE;
-                om->om_len = BLETEST_PKT_SIZE + 4;
-
-                /* Put the HCI header in the mbuf */
-                htole16(om->om_data, g_bletest_handle);
-                htole16(om->om_data + 2, om->om_len);
-
-                /* Place L2CAP header in packet */
-                htole16(om->om_data + 4, pktlen);
-                om->om_data[6] = 0;
-                om->om_data[7] = 0;
-                om->om_len += 4;
-
-                /* Fill with incrementing pattern (starting from 1) */
-                for (i = 0; i < pktlen; ++i) {
-                    om->om_data[8 + i] = (uint8_t)(i + 1);
-                }
-
-                /* Add length */
-                OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
-                ble_hci_trans_hs_acl_data_send(om);
-
                 ++g_bletest_outstanding_pkts;
             }
         }

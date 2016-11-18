@@ -30,3 +30,6 @@ syscfg.vals:
 
     # Disable eddystone beacons.
     BLE_EDDYSTONE: 0
+
+    CONSOLE_TICKS: 1
+    SHELL_PROMPT: 1

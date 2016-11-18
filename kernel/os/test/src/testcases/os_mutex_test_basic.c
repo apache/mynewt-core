@@ -20,13 +20,13 @@
 
 TEST_CASE(os_mutex_test_basic)
 {
-    sysinit();
 
     os_mutex_init(&g_mutex1);
 
-    os_task_init(&task14, "task14", mutex_test_basic_handler, NULL,
-                 TASK14_PRIO, OS_WAIT_FOREVER, stack14,
-                 OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE));
+    os_task_init(&task1, "task1", mutex_test_basic_handler, NULL,
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, sizeof(stack1));
 
+#if MYNEWT_VAL(SELFTEST)
     os_start();
+#endif
 }

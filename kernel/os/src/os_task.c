@@ -21,6 +21,7 @@
 #include "os/os.h"
 #include "os_priv.h"
 
+#include <assert.h>
 #include <string.h>
 
 /**
@@ -144,6 +145,61 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
     return (0);
 err:
     return (rc);
+}
+
+/*
+ * Suspend specified task
+ * XXX
+ * NOTE: This interface is currently experimental and not ready for common use
+ */
+int
+os_task_suspend(struct os_task *t)
+{
+    struct os_task *current;
+    int rc;
+    os_sr_t sr;
+
+    current = os_sched_get_current_task();
+    /*
+     * Can't suspend yourself
+     */
+    if (t->t_taskid == current->t_taskid) {
+        return OS_INVALID_PARM;
+    }
+
+    /*
+     * If state is not READY or SLEEP, assume task has not been initialized
+     */
+    if (t->t_state != OS_TASK_READY && t->t_state != OS_TASK_SLEEP)
+    {
+        return OS_NOT_STARTED;
+    }
+
+    /*
+     * Disallowing suspending tasks which are waiting on a lock
+     */
+    if (t->t_flags && (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT |
+                                               OS_TASK_FLAG_EVQ_WAIT)) {
+        return OS_EBUSY;
+    }
+
+    /*
+     * Disallowing suspending tasks which are holding a lock
+     * Checking lockcnt and flags separately so we can assert separately XXX
+     */
+    if (t->t_lockcnt) {
+        assert(t->t_flags && OS_TASK_FLAG_LOCK_HELD);
+        return OS_EBUSY;
+    }
+    if (t->t_flags && OS_TASK_FLAG_LOCK_HELD) {
+        assert(t->t_lockcnt);
+        return OS_EBUSY;
+    }
+
+    OS_ENTER_CRITICAL(sr);
+    rc = os_sched_suspend(t);
+    OS_EXIT_CRITICAL(sr);
+    return rc;
 }
 
 /**
