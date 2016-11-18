@@ -37,7 +37,6 @@
 #include <string.h>
 
 /* OIC Stack headers */
-#include "api/oc_events.h"
 #include "oc_buffer.h"
 #include "oc_ri.h"
 

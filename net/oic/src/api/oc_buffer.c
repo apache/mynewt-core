@@ -27,7 +27,6 @@
 
 #include "config.h"
 #include "oc_buffer.h"
-#include "oc_events.h"
 
 #include "port/mynewt/adaptor.h"
 
@@ -118,6 +117,7 @@ oc_buffer_tx(struct oc_message_s *message)
     } else {
 #endif
 #ifdef OC_SECURITY
+        /* XXX convert this */
         if (message->endpoint.flags & SECURED) {
             LOG("Outbound network event: forwarding to DTLS\n");
 

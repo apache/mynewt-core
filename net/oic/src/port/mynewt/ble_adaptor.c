@@ -23,6 +23,7 @@
 #include <os/os.h>
 #include <string.h>
 #include "oc_buffer.h"
+#include "port/oc_connectivity.h"
 #include "../oc_log.h"
 #include "adaptor.h"
 #include "host/ble_hs.h"

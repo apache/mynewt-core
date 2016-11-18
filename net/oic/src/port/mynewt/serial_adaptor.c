@@ -24,6 +24,7 @@
 #include <os/os.h>
 #include <shell/shell.h>
 #include "oc_buffer.h"
+#include "port/oc_connectivity.h"
 #include "../oc_log.h"
 #include "adaptor.h"
 

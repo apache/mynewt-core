@@ -22,7 +22,6 @@
 
 #include "util/oc_list.h"
 #include "util/oc_memb.h"
-#include "util/oc_process.h"
 
 #include "messaging/coap/constants.h"
 #include "messaging/coap/engine.h"
@@ -35,7 +34,6 @@
 #include "oc_buffer.h"
 #include "oc_core_res.h"
 #include "oc_discovery.h"
-#include "oc_events.h"
 #include "oc_network_events.h"
 #include "oc_ri.h"
 #include "oc_uuid.h"
@@ -180,18 +178,8 @@ oc_ri_get_query_value(const char *query, int query_len, const char *key,
 }
 
 static void
-allocate_events(void)
-{
-  int i = 0;
-  for (i = 0; i < __NUM_OC_EVENT_TYPES__; i++) {
-    oc_events[i] = oc_process_alloc_event();
-  }
-}
-
-static void
 start_processes(void)
 {
-  allocate_events();
   coap_engine_init();
 
 #ifdef OC_SECURITY

@@ -20,6 +20,7 @@
 #include "oc_buffer.h"
 #include "port/oc_connectivity.h"
 #include "port/oc_signal_main_loop.h"
+#include "port/oc_network_events_mutex.h"
 #include "port/mynewt/adaptor.h"
 #include "util/oc_list.h"
 

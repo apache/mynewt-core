@@ -20,8 +20,8 @@
 #include "port/oc_assert.h"
 #include "port/oc_clock.h"
 #include "port/oc_connectivity.h"
-
-#include "util/oc_process.h"
+#include "port/oc_connectivity.h"
+#include "port/oc_network_events_mutex.h"
 
 #include "oc_api.h"
 
@@ -92,8 +92,6 @@ err:
 oc_clock_time_t
 oc_main_poll(void)
 {
-    while (oc_process_run());
-
     return 0;
 }
 
