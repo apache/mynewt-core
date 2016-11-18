@@ -53,5 +53,4 @@ oc_network_event(oc_message_t *message)
     oc_network_event_handler_mutex_unlock();
 
     os_eventq_put(oc_evq_get(), &oc_network_ev);
-    oc_signal_main_loop();
 }
