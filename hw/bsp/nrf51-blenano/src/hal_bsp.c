@@ -29,12 +29,6 @@
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
-#if MYNEWT_VAL(SPI_0_MASTER)
-#include "nrf_drv_spi.h"
-#endif
-#if MYNEWT_VAL(SPI_1_SLAVE)
-#include "nrf_drv_spis.h"
-#endif
 #include "nrf_drv_config.h"
 #include "app_util_platform.h"
 #include "os/os_dev.h"
@@ -53,21 +47,13 @@ static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
 
 #if MYNEWT_VAL(SPI_0_MASTER)
 /*
- * NOTE: do not set the ss pin here! This would cause the nordic SDK
- * to start using the SS pin when configured as a master and this is
- * not what our HAL expects. Our HAL expects that the SS pin, if used,
- * is treated as a gpio line and is handled outside the SPI routines.
+ * NOTE: Our HAL expects that the SS pin, if used, is treated as a gpio line
+ * and is handled outside the SPI routines.
  */
 static const nrf_drv_spi_config_t os_bsp_spi0m_cfg = {
     .sck_pin      = 29,
     .mosi_pin     = 25,
-    .miso_pin     = 28,
-    .ss_pin       = NRF_DRV_SPI_PIN_NOT_USED,
-    .irq_priority = (1 << __NVIC_PRIO_BITS) - 1,
-    .orc          = 0xFF,
-    .frequency    = NRF_DRV_SPI_FREQ_4M,
-    .mode         = NRF_DRV_SPI_MODE_0,
-    .bit_order    = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+    .miso_pin     = 28
 };
 #endif
 
@@ -76,14 +62,7 @@ static const nrf_drv_spis_config_t os_bsp_spi1s_cfg = {
     .sck_pin      = 29,
     .mosi_pin     = 25,
     .miso_pin     = 28,
-    .csn_pin      = 24,
-    .miso_drive   = NRF_DRV_SPIS_DEFAULT_MISO_DRIVE,
-    .csn_pullup   = NRF_GPIO_PIN_PULLUP,
-    .orc          = NRF_DRV_SPIS_DEFAULT_ORC,
-    .def          = NRF_DRV_SPIS_DEFAULT_DEF,
-    .mode         = NRF_DRV_SPIS_MODE_0,
-    .bit_order    = NRF_DRV_SPIS_BIT_ORDER_MSB_FIRST,
-    .irq_priority = (1 << __NVIC_PRIO_BITS) - 1
+    .ss_pin       = 24
 };
 #endif
 
