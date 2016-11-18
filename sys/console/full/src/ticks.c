@@ -39,7 +39,8 @@ console_yes_ticks(void)
 }
 
 /* return value of CONSOLE_TICKS */
-char console_get_ticks(void){
+char console_get_ticks(void)
+{
     return do_ticks;
 }
 
