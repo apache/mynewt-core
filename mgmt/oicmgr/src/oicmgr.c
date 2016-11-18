@@ -48,7 +48,6 @@ struct omgr_state {
 };
 
 static void omgr_event_start(struct os_event *ev);
-static void omgr_process_oc_event(struct os_event *ev);
 
 static struct omgr_state omgr_state = {
     .os_event.ev_cb = omgr_event_start,
@@ -219,21 +218,6 @@ static const oc_handler_t omgr_oc_handler = {
     .register_resources = omgr_register_resources
 };
 
-void
-oc_signal_main_loop(void)
-{
-    struct omgr_state *o = &omgr_state;
-
-    assert(o->os_evq); /* Must call mgmt_evq_set() first. */
-    os_eventq_put(o->os_evq, &o->os_event);
-}
-
-static void
-omgr_process_oc_event(struct os_event *ev)
-{
-    oc_main_poll();
-}
-
 static void
 omgr_event_start(struct os_event *ev)
 {
@@ -241,7 +225,6 @@ omgr_event_start(struct os_event *ev)
 
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
     os_eventq_ensure(&o->os_evq, NULL);
-    o->os_event.ev_cb = omgr_process_oc_event;
 }
 
 int

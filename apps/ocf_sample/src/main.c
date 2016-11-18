@@ -39,13 +39,7 @@
 #define OCF_MAIN_TASK_STACK_SIZE    (OS_STACK_ALIGN(512))
 static os_stack_t ocf_stack[OCF_MAIN_TASK_STACK_SIZE];
 struct os_task ocf_main_task;
-
-/** Auxilliary task for handling events from library packages. */
-#define OCF_AUX_TASK_PRIO           (9)
-#define OCF_AUX_TASK_STACK_SIZE     (OS_STACK_ALIGN(336))
-struct os_eventq ocf_aux_evq;
-static os_stack_t ocf_aux_stack[OCF_AUX_TASK_STACK_SIZE];
-struct os_task ocf_aux_task;
+struct os_eventq ocf_main_evq;
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
 static void issue_requests(void);
@@ -230,35 +224,16 @@ oc_handler_t ocf_handler = {
 #endif
  };
 
-struct os_sem ocf_main_loop_sem;
-
-void
-oc_signal_main_loop(void)
-{
-     os_sem_release(&ocf_main_loop_sem);
-}
-
 static void
 ocf_main_task_handler(void *arg)
 {
-    os_sem_init(&ocf_main_loop_sem, 1);
-
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
-    os_callout_init(&callout, &ocf_aux_evq, stop_observe, NULL);
+    os_callout_init(&callout, &ocf_main_evq, stop_observe, NULL);
 #endif
     while (1) {
-        oc_main_poll();
-        os_sem_pend(&ocf_main_loop_sem, OS_TIMEOUT_NEVER);
+        os_eventq_run(&ocf_main_evq);
     }
     oc_main_shutdown();
-}
-
-static void
-ocf_aux_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&ocf_aux_evq);
-    }
 }
 
 static void
@@ -272,17 +247,12 @@ ocf_init_tasks(void)
     assert(rc == 0);
 
     /* Initialize eventq */
-    os_eventq_init(&ocf_aux_evq);
+    os_eventq_init(&ocf_main_evq);
 
     /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&ocf_aux_evq);
+    os_eventq_dflt_set(&ocf_main_evq);
 
     oc_main_init(&ocf_handler);
-
-    rc = os_task_init(&ocf_aux_task, "ocf_aux", ocf_aux_task_handler, NULL,
-            OCF_AUX_TASK_PRIO, OS_WAIT_FOREVER, ocf_aux_stack,
-            OCF_AUX_TASK_STACK_SIZE);
-    assert(rc == 0);
 }
 
 int
