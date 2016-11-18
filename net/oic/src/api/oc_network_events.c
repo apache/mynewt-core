@@ -35,10 +35,12 @@ oc_network_ev_process(struct os_event *ev)
     struct oc_message_s *head;
 
     oc_network_event_handler_mutex_lock();
-    head = (struct oc_message_s *)oc_list_pop(network_events);
-    while (head != NULL) {
-        oc_recv_message(head);
+    while (1) {
         head = oc_list_pop(network_events);
+        if (!head) {
+            break;
+        }
+        oc_recv_message(head);
     }
     oc_network_event_handler_mutex_unlock();
 }
