@@ -193,7 +193,6 @@ start_processes(void)
 {
   allocate_events();
   coap_engine_init();
-  oc_process_start(&message_buffer_handler, NULL);
 
 #ifdef OC_SECURITY
   oc_process_start(&oc_dtls_handler, NULL);
@@ -206,8 +205,6 @@ stop_processes(void)
 #ifdef OC_SECURITY
   oc_process_exit(&oc_dtls_handler);
 #endif
-
-  oc_process_exit(&message_buffer_handler);
 }
 
 #ifdef OC_SERVER
