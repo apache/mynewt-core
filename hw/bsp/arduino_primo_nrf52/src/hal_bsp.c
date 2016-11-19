@@ -37,11 +37,6 @@
 #if MYNEWT_VAL(UART_1)
 #include "uart_bitbang/uart_bitbang.h"
 #endif
-#include "nrf_drv_config.h"
-#include "app_util_platform.h"
-#include "nrf.h"
-#include "app_error.h"
-#include "nrf_drv_saadc.h"
 #if MYNEWT_VAL(ADC_0)
 #include "adc_nrf52/adc_nrf52.h"
 #endif

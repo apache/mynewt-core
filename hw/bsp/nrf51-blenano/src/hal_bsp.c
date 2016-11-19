@@ -29,8 +29,6 @@
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
-#include "nrf_drv_config.h"
-#include "app_util_platform.h"
 #include "os/os_dev.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"

@@ -32,11 +32,6 @@
 #include "uart_hal/uart_hal.h"
 #include "os/os_dev.h"
 #include "bsp.h"
-#include "nrf_drv_config.h"
-#include "app_util_platform.h"
-#include "nrf.h"
-#include "app_error.h"
-#include "nrf_drv_saadc.h"
 
 #if MYNEWT_VAL(ADC_0)
 #include "adc_nrf52/adc_nrf52.h"

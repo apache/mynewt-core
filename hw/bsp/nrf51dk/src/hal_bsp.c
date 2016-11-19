@@ -24,16 +24,12 @@
 #include "hal/hal_bsp.h"
 #include "mcu/nrf51_hal.h"
 #include "bsp/bsp.h"
-#include "nrf_adc.h"
-#include "nrf_drv_adc.h"
 #include "os/os_dev.h"
 #include "os/os_cputime.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
-#include "nrf_drv_config.h"
-#include "app_util_platform.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 
@@ -65,6 +61,14 @@ static const struct nrf51_hal_spi_cfg os_bsp_spi1s_cfg = {
     .mosi_pin     = 25,
     .miso_pin     = 28,
     .ss_pin       = 24
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+static const struct nrf51_hal_i2c_cfg hal_i2c_cfg = {
+    .scl_pin = 7,
+    .sda_pin = 30,
+    .i2c_frequency = 100    /* 100 kHz */
 };
 #endif
 
@@ -133,10 +137,6 @@ hal_bsp_init(void)
 {
     int rc;
 
-#if MYNEWT_VAL(I2C_0)
-    struct nrf51_hal_i2c_cfg hal_i2c_cfg;
-#endif
-
     (void)rc;
 
 #if MYNEWT_VAL(UART_0)
@@ -173,11 +173,7 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-    hal_i2c_cfg.scl_pin = TWI0_CONFIG_SCL;
-    hal_i2c_cfg.sda_pin = TWI0_CONFIG_SDA;
-    hal_i2c_cfg.i2c_frequency = 100;        /* 100 kHz */
-    rc = hal_i2c_init(0, &hal_i2c_cfg);
+    rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);
     assert(rc == 0);
 #endif
-
 }
