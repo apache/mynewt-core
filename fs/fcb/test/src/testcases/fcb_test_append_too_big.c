@@ -25,6 +25,7 @@ TEST_CASE(fcb_test_append_too_big)
     int len;
     struct fcb_entry elem_loc;
 
+#if 0
     fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
@@ -33,6 +34,9 @@ TEST_CASE(fcb_test_append_too_big)
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
+#endif
+
+    fcb = &test_fcb;
 
     /*
      * Max element which fits inside sector is

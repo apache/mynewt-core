@@ -63,6 +63,7 @@ typedef void tu_testsuite_fn_t(void);
  * Private declarations - Test Suite configuration
  */
 void tu_suite_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg);
+void tu_suite_set_complete_cb(tu_init_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_pre_test_cb(tu_pre_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg);
@@ -94,6 +95,12 @@ struct ts_config {
      */
     tu_init_test_fn_t *ts_suite_init_cb;
     void *ts_suite_init_arg;
+
+    /*
+     * Called after the last test in the suite
+     */
+    tu_init_test_fn_t *ts_suite_complete_cb;
+    void *ts_suite_complete_arg;
 
     /*
      * Called before every test in the suite
