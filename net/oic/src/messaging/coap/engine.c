@@ -304,4 +304,7 @@ coap_engine_init(void)
 {
     coap_init_connection();
     coap_transaction_init();
+#ifdef OC_SERVER
+    coap_separate_init();
+#endif
 }
