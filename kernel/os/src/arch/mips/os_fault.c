@@ -89,12 +89,12 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     (void)sr;
     console_blocking_mode();
     console_printf("Assert %s; failed in %s:%d\n", e ? e : "", file, line);
-    if (system_debugger_connected()) {
+    if (hal_debugger_connected()) {
        /*
         * If debugger is attached, breakpoint before the trap.
         */
     }
-    system_reset();
+    hal_system_reset();
 }
 
 void
@@ -119,5 +119,5 @@ os_default_irq(struct trap_frame *tf)
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
 #endif
-    system_reset();
+    hal_system_reset();
 }

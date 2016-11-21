@@ -20,7 +20,9 @@
 #include "hal/hal_bsp.h"
 #include "syscfg/syscfg.h"
 #include "uart/uart.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart_hal/uart_hal.h"
+#endif
 
 #include <assert.h>
 
@@ -35,7 +37,7 @@ static struct uart_dev os_bsp_uart1;
 void _close(int fd);
 
 void
-bsp_init(void)
+hal_bsp_init(void)
 {
     int rc;
 

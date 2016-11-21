@@ -22,20 +22,14 @@
 #include <stdint.h>
 
 void
-system_reset(void)
+hal_system_reset(void)
 {
     while (1) {
-        if (system_debugger_connected()) {
-            /*
-             * If debugger is attached, breakpoint here.
-             */
-        }
-        /* XXX: NVIC_SystemReset(); */
     }
 }
 
 int
-system_debugger_connected(void)
+hal_debugger_connected(void)
 {
     return 0;
 }
