@@ -586,7 +586,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
           bool set_observe_option = true;
           if (cur_resource->properties & OC_PERIODIC) {
               os_callout_reset(&cur_resource->callout,
-                resource->observe_period_seconds * OS_TICKS_PER_SEC);
+                cur_resource->observe_period_seconds * OS_TICKS_PER_SEC);
           }
 
           if (set_observe_option) {
