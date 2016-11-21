@@ -141,8 +141,11 @@ int ble_hs_test_util_l2cap_rx(uint16_t conn_handle,
 int ble_hs_test_util_l2cap_rx_payload_flat(uint16_t conn_handle, uint16_t cid,
                                            const void *data, int len);
 void ble_hs_test_util_rx_hci_buf_size_ack(uint16_t buf_size);
-void ble_hs_test_util_rx_att_mtu_cmd(uint16_t conn_handle, int is_req,
-                                     uint16_t mtu);
+int ble_hs_test_util_rx_att_mtu_cmd(uint16_t conn_handle, int is_req,
+                                    uint16_t mtu);
+int ble_hs_test_util_rx_att_read(uint16_t conn_handle, uint16_t attr_handle);
+int ble_hs_test_util_rx_att_read_blob(uint16_t conn_handle,
+                                      uint16_t attr_handle, uint16_t offset);
 void ble_hs_test_util_rx_att_err_rsp(uint16_t conn_handle, uint8_t req_op,
                                      uint8_t error_code, uint16_t err_handle);
 void ble_hs_test_util_set_startup_acks(void);
@@ -194,6 +197,7 @@ int ble_hs_test_util_gatt_write_long_flat(uint16_t conn_handle,
                                           uint16_t attr_handle,
                                           const void *data, uint16_t data_len,
                                           ble_gatt_attr_fn *cb, void *cb_arg);
+struct os_mbuf *ble_hs_test_util_mbuf_alloc_all_but(int count);
 int ble_hs_test_util_mbuf_count(
     const struct ble_hs_test_util_mbuf_params *params);
 void ble_hs_test_util_assert_mbufs_freed(

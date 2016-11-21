@@ -31,6 +31,7 @@ TEST_CASE(fcb_test_multiple_scratch)
         .elem_cnts = cnts
     };
 
+#if 0
     fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
@@ -40,6 +41,10 @@ TEST_CASE(fcb_test_multiple_scratch)
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
+#endif
+
+    fcb = &test_fcb;
+    fcb->f_scratch_cnt = 1;
 
     /*
      * Now fill up everything. We should be able to get 3 of the sectors

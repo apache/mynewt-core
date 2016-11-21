@@ -28,6 +28,7 @@ TEST_CASE(fcb_test_append)
     int j;
     int var_cnt;
 
+#if 0
     fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
@@ -36,6 +37,9 @@ TEST_CASE(fcb_test_append)
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
+#endif
+
+    fcb = &test_fcb;
 
     for (i = 0; i < sizeof(test_data); i++) {
         for (j = 0; j < i; j++) {

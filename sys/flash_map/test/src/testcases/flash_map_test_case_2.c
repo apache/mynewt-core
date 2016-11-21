@@ -18,13 +18,14 @@
  */
 #include "flash_map_test.h"
 
+extern struct flash_area *fa_sectors;
+
 /*
  * Test flash_erase
  */
 TEST_CASE(flash_map_test_case_2)
 {
     const struct flash_area *fa;
-    struct flash_area secs[32];
     int sec_cnt;
     int i;
     int rc;
@@ -32,19 +33,22 @@ TEST_CASE(flash_map_test_case_2)
     uint8_t wd[256];
     uint8_t rd[256];
 
+#if MYNEWT_VAL(SELFTEST)
     sysinit();
+#endif
 
     rc = flash_area_open(FLASH_AREA_IMAGE_0, &fa);
     TEST_ASSERT_FATAL(rc == 0, "flash_area_open() fail");
 
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &sec_cnt, secs);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &sec_cnt, fa_sectors);
     TEST_ASSERT_FATAL(rc == 0, "flash_area_to_sectors failed");
 
     /*
      * First erase the area so it's ready for use.
      */
     for (i = 0; i < sec_cnt; i++) {
-        rc = hal_flash_erase_sector(secs[i].fa_device_id, secs[i].fa_off);
+        rc = hal_flash_erase_sector(fa_sectors[i].fa_device_id,
+                                    fa_sectors[i].fa_off);
         TEST_ASSERT_FATAL(rc == 0, "hal_flash_erase_sector() failed");
     }
     TEST_ASSERT_FATAL(rc == 0, "read data != write data");
@@ -66,19 +70,20 @@ TEST_CASE(flash_map_test_case_2)
 
         /* write stuff to end of area */
         rc = hal_flash_write(fa->fa_device_id,
-          fa->fa_off + off + secs[i].fa_size - sizeof(wd), wd, sizeof(wd));
+                         fa->fa_off + off + fa_sectors[i].fa_size - sizeof(wd),
+                         wd, sizeof(wd));
         TEST_ASSERT_FATAL(rc == 0, "hal_flash_write() fail");
 
         /* and read it back */
         memset(rd, 0, sizeof(rd));
-        rc = flash_area_read(fa, off + secs[i].fa_size - sizeof(rd),
+        rc = flash_area_read(fa, off + fa_sectors[i].fa_size - sizeof(rd),
           rd, sizeof(rd));
         TEST_ASSERT_FATAL(rc == 0, "hal_flash_read() fail");
 
         rc = memcmp(wd, rd, sizeof(rd));
         TEST_ASSERT_FATAL(rc == 0, "read data != write data");
 
-        off += secs[i].fa_size;
+        off += fa_sectors[i].fa_size;
     }
     /* erase it */
     rc = flash_area_erase(fa, 0, fa->fa_size);

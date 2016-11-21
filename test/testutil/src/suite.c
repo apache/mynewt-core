@@ -115,6 +115,9 @@ tu_suite_complete(void)
     tu_suite_set_init_cb(NULL, NULL);
     tu_suite_set_pre_test_cb(NULL, NULL);
     tu_suite_set_post_test_cb(NULL, NULL);
+    if (ts_config.ts_suite_complete_cb != NULL) {
+        ts_config.ts_suite_complete_cb(ts_config.ts_suite_complete_arg);
+    }
 }
 
 void
