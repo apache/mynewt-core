@@ -44,7 +44,7 @@ struct mgmt_group runtest_nmgr_group = {
 /*
  * XXX global used to gate starting test - hack
  */
-int runtest_start;
+volatile int runtest_start;
 
 static int
 runtest_nmgr_write(struct mgmt_cbuf *cb)

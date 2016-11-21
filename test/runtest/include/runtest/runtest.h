@@ -31,7 +31,7 @@ void runtest_init(void);
 /*
  * XXX global used to gate starting test - hack
  */
-extern int runtest_start;
+extern volatile int runtest_start;
 
 #ifdef __cplusplus
 }
