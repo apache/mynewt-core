@@ -37,6 +37,7 @@
 #include "oc_network_events.h"
 #include "oc_ri.h"
 #include "oc_uuid.h"
+#include "oc_priv.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_acl.h"
@@ -224,6 +225,7 @@ oc_ri_init(void)
 #ifdef OC_CLIENT
   oc_list_init(client_cbs);
 #endif
+  oc_rep_init();
 
   start_processes();
   oc_create_discovery_resource();
