@@ -76,6 +76,8 @@ coap_transaction_t *coap_get_transaction_by_mid(uint16_t mid);
 
 void coap_check_transactions(void);
 
+void coap_transaction_init(void);
+
 #ifdef __cplusplus
 }
 #endif

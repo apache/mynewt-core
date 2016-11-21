@@ -34,6 +34,7 @@
 #include <stddef.h>
 
 #include <os/os_callout.h>
+#include <os/os_mempool.h>
 
 #include "transactions.h"
 #include "observe.h"
@@ -51,40 +52,50 @@
 
 #include "port/mynewt/adaptor.h"
 
-/*---------------------------------------------------------------------------*/
-OC_MEMB(transactions_memb, coap_transaction_t, COAP_MAX_OPEN_TRANSACTIONS);
+static struct os_mempool oc_transaction_memb;
+static uint8_t oc_transaction_area[OS_MEMPOOL_BYTES(COAP_MAX_OPEN_TRANSACTIONS,
+      sizeof(coap_transaction_t))];
+
 OC_LIST(transactions_list);
 
 static void coap_transaction_retrans(struct os_event *ev);
 
+void
+coap_transaction_init(void)
+{
+    os_mempool_init(&oc_transaction_memb, COAP_MAX_OPEN_TRANSACTIONS,
+      sizeof(coap_transaction_t), oc_transaction_area, "coap_tran");
+}
+
 coap_transaction_t *
 coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
 {
-  coap_transaction_t *t = oc_memb_alloc(&transactions_memb);
-  if (t) {
-    oc_message_t *message = oc_allocate_message();
-    if (message) {
-      LOG("Created new transaction %d %d\n", mid, (int) message->length);
-      t->mid = mid;
-      t->retrans_counter = 0;
+    coap_transaction_t *t;
 
-      t->message = message;
+    t = os_memblock_get(&oc_transaction_memb);
+    if (t) {
+        oc_message_t *message = oc_allocate_message();
+        if (message) {
+            LOG("Created new transaction %d %d\n", mid, (int) message->length);
+            t->mid = mid;
+            t->retrans_counter = 0;
 
-      /* save client address */
-      memcpy(&t->message->endpoint, endpoint, sizeof(oc_endpoint_t));
+            t->message = message;
 
-      os_callout_init(&t->retrans_timer, oc_evq_get(),
-        coap_transaction_retrans, t);
-      oc_list_add(
-        transactions_list,
-        t); /* list itself makes sure same element is not added twice */
-    } else {
-      oc_memb_free(&transactions_memb, t);
-      t = NULL;
+            /* save client address */
+            memcpy(&t->message->endpoint, endpoint, sizeof(oc_endpoint_t));
+
+            os_callout_init(&t->retrans_timer, oc_evq_get(),
+              coap_transaction_retrans, t);
+            /* list itself makes sure same element is not added twice */
+            oc_list_add(transactions_list, t);
+        } else {
+            os_memblock_put(&oc_transaction_memb, t);
+            t = NULL;
+        }
     }
-  }
 
-  return t;
+    return t;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -156,15 +167,16 @@ coap_send_transaction(coap_transaction_t *t)
 void
 coap_clear_transaction(coap_transaction_t *t)
 {
-  if (t) {
-    LOG("Freeing transaction %u: %p\n", t->mid, t);
+    if (t) {
+        LOG("Freeing transaction %u: %p\n", t->mid, t);
 
-    os_callout_stop(&t->retrans_timer);
-    oc_message_unref(t->message);
-    oc_list_remove(transactions_list, t);
-    oc_memb_free(&transactions_memb, t);
+        os_callout_stop(&t->retrans_timer);
+        oc_message_unref(t->message);
+        oc_list_remove(transactions_list, t);
+        os_memblock_put(&oc_transaction_memb, t);
   }
 }
+
 coap_transaction_t *
 coap_get_transaction_by_mid(uint16_t mid)
 {

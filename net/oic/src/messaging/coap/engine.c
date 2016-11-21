@@ -303,4 +303,5 @@ void
 coap_engine_init(void)
 {
     coap_init_connection();
+    coap_transaction_init();
 }
