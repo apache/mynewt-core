@@ -102,7 +102,7 @@ oc_send_buffer_serial(oc_message_t *message)
         goto err;
     }
 
-    LOG("oc_transport_serial: send buffer %lu\n", message->length);
+    LOG("oc_transport_serial: send buffer %zu\n", message->length);
 
 err:
     oc_message_unref(message);
@@ -157,7 +157,7 @@ oc_attempt_rx_serial(void) {
     message->endpoint.flags = SERIAL;
     message->length = pkt->omp_len;
 
-    LOG("Successfully rx length %lu\n", message->length);
+    LOG("Successfully rx length %zu\n", message->length);
     return message;
 
     /* add the addr info to the message */
