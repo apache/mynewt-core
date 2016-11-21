@@ -306,5 +306,6 @@ coap_engine_init(void)
     coap_transaction_init();
 #ifdef OC_SERVER
     coap_separate_init();
+    coap_observe_init();
 #endif
 }
