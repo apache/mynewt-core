@@ -17,19 +17,21 @@
  * under the License.
  */
 
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 
 #include <sysinit/sysinit.h>
+#include <fs/fs.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
 
 #include <fatfs/ff.h>
+#include <fs/fs_if.h>
 
+extern const struct fs_ops *fs_root_ops;
 static const char *progname;
 
 static void
@@ -49,10 +51,13 @@ main(int argc, char **argv)
     FATFS *p_fs;
     DWORD fre_clust, fre_sect, tot_sect;
     FRESULT res;
-    FATFS_DIR dir;
-    FILINFO fileinfo;
-    FIL file;
-    UINT bytes_read;
+    struct fs_dir *dir;
+    struct fs_dirent *dirent;
+    struct fs_file *file;
+    char out_name[80];
+    uint8_t u8_len;
+    uint32_t u32_len;
+    int rc;
     uint8_t buf[32];
     static const BYTE ft[] = {0, 12, 16, 32};
 
@@ -106,47 +111,46 @@ main(int argc, char **argv)
 
     /* List contents of root directory */
 
-    res = f_opendir(&dir, "0:/");
-    if (res) {
-        printf("f_opendir() failed %d\n", res);
+    rc = fs_root_ops->f_opendir("0:/", &dir);
+    if (rc != FS_EOK) {
+        printf("f_opendir() failed %d\n", rc);
         exit(1);
     }
 
     printf("\nListing 0:/\n");
 
     while (1) {
-        res = f_readdir(&dir, &fileinfo);
-        if (res) {
-            printf("f_readdir() failed %d\n", res);
+        rc = fs_root_ops->f_readdir(dir, &dirent);
+        if (rc == FS_ENOENT) {
+            break;
+        } else if (rc != FS_EOK) {
+            printf("f_readdir() failed %d\n", rc);
             exit(1);
         }
 
-        /* last entry in a dir always returned as NULL */
-        if (!fileinfo.fname[0]) {
-            break;
-        }
-
-        printf("%s\t\t%8lu bytes\n", fileinfo.fname, fileinfo.fsize);
+        rc = fs_root_ops->f_dirent_name(dirent, sizeof(out_name), out_name, &u8_len);
+        printf("%s\n", out_name);
     }
 
+    fs_root_ops->f_closedir(dir);
+
     /* If a README.txt exists, print contents */
-    res = f_open(&file, "0:/README.txt", FA_READ);
-    if (res == FR_OK) {
+    rc = fs_root_ops->f_open("0:/README.txt", FS_ACCESS_READ, &file);
+    if (rc == FS_EOK) {
         printf("\nREADME.txt found, showing contents:\n\n");
         printf("------------------------------------------------\n");
 
         while (1) {
-            res = f_read(&file, buf, 32, &bytes_read);
+            rc = fs_root_ops->f_read(file, sizeof(buf), buf, &u32_len);
             printf("%s\n", buf);
-            if (bytes_read != 32) {
+            if (u32_len != 32) {
                 break;
             }
         }
 
         printf("------------------------------------------------\n");
-        f_close(&file);
+        fs_root_ops->f_close(file);
     }
 
-    f_closedir(&dir);
     return 0;
 }

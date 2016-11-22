@@ -3,6 +3,7 @@
 #include <flash_map/flash_map.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
@@ -28,6 +29,12 @@ static int fatfs_closedir(struct fs_dir *dir);
 static int fatfs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
   char *out_name, uint8_t *out_name_len);
 static int fatfs_dirent_is_dir(const struct fs_dirent *fs_dirent);
+
+/* NOTE: to ease memory management of dirent structs, this single static
+ * variable holds the latest entry found by readdir. This limits FAT to
+ * working on a single thread, single opendir -> closedir cycle.
+ */
+static FILINFO filinfo;
 
 static const struct fs_ops fatfs_ops = {
     .f_open = fatfs_open,
@@ -121,8 +128,6 @@ int fatfs_to_vfs_error(FRESULT res)
 
     return rc;
 }
-
-/* File operations */
 
 static int
 fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
@@ -282,15 +287,17 @@ fatfs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
 {
     FRESULT res;
     FATFS_DIR *dir = (FATFS_DIR *)fs_dir;
-    FILINFO *filinfo = NULL; //FIXME
 
-    //TODO: check all items are read...
-    res = f_readdir(dir, filinfo);
+    res = f_readdir(dir, &filinfo);
     if (res != FR_OK) {
         return fatfs_to_vfs_error(res);
     }
+
     *out_fs_dirent = (struct fs_dirent *)&filinfo;
-    return FR_OK;
+    if (!filinfo.fname[0]) {
+        return FS_ENOENT;
+    }
+    return FS_EOK;
 }
 
 static int
@@ -308,28 +315,23 @@ static int
 fatfs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
                   char *out_name, uint8_t *out_name_len)
 {
-#if 0
-    struct nffs_dirent *dirent = (struct nffs_dirent *)fs_dirent;
+    const FILINFO *dirent = (const FILINFO *)fs_dirent;
+    size_t out_len;
 
-    assert(dirent != NULL && dirent->nde_inode_entry != NULL);
-    rc = nffs_inode_read_filename(dirent->nde_inode_entry, max_len, out_name,
-                                  out_name_len);
-#endif
-    return 0;
+    assert(dirent != NULL);
+    out_len = max_len < sizeof(dirent->fname) ? max_len : sizeof(dirent->fname);
+    memcpy(out_name, dirent->fname, out_len);
+    *out_name_len = out_len;
+    return FS_EOK;
 }
 
 static int
 fatfs_dirent_is_dir(const struct fs_dirent *fs_dirent)
 {
-#if 0
-    uint32_t id;
-    const struct nffs_dirent *dirent = (const struct nffs_dirent *)fs_dirent;
+    const FILINFO *dirent = (const FILINFO *)fs_dirent;
 
-    assert(dirent != NULL && dirent->nde_inode_entry != NULL);
-    id = dirent->nde_inode_entry->nie_hash_entry.nhe_id;
-    return nffs_hash_id_is_dir(id);
-#endif
-    return 0;
+    assert(dirent != NULL);
+    return dirent->fattrib & AM_DIR;
 }
 
 DSTATUS
