@@ -28,7 +28,7 @@ pkg.deps:
 pkg.deps.CONFIG_CLI:
     - sys/shell
 pkg.deps.CONFIG_NEWTMGR:
-    - encoding/json
+    - encoding/cborattr
     - mgmt/mgmt
 pkg.deps.CONFIG_FCB:
     - fs/fcb

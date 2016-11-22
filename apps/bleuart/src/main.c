@@ -43,9 +43,6 @@
 /* RAM HCI transport. */
 #include "transport/ram/ble_hci_ram.h"
 
-/* RAM persistence layer. */
-#include "store/ram/ble_store_ram.h"
-
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
@@ -221,8 +218,6 @@ main(void)
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
     ble_hs_cfg.sync_cb = bleuart_on_sync;
-    ble_hs_cfg.store_read_cb = ble_store_ram_read;
-    ble_hs_cfg.store_write_cb = ble_store_ram_write;
 
     rc = bleuart_gatt_svr_init();
     assert(rc == 0);

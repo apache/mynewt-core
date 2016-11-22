@@ -32,13 +32,6 @@ syscfg.defs:
         description: 'TBD'
         value: 1
 
-    ADC_0:
-        description: 'TBD'
-        value: 1
-    ADC_0_INTERRUPT_PRIORITY:
-        description: 'TBD'
-        value: 'ADC_CONFIG_IRQ_PRIORITY'
-
     UART_0:
         description: 'TBD'
         value: 1

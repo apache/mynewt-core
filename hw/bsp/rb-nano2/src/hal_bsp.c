@@ -33,11 +33,6 @@
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #include "os/os_dev.h"
-#include "nrf_drv_config.h"
-#include "app_util_platform.h"
-#include "nrf.h"
-#include "app_error.h"
-#include "nrf_drv_saadc.h"
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;

@@ -26,31 +26,11 @@ pkg.keywords:
 
 pkg.type: sdk
 
-pkg.ign_files.BSP_NRF52: 
-    - "nrf_drv_adc.c"
-    - "pstorage*"
-    - "sdk_mapped_flags.c"
-
-pkg.ign_files.BSP_NRF51:
-    - "nrf_saadc.c"
-    - "nrf_drv_saadc.c"
-    - "nrf_drv_comp.c"
-    - "nrf_drv_i2s.c"
-    - "nrf_drv_pdm.c"
-    - "nrf_drv_pwm.c"
-    - "nrf_drv_spis.c"
-    - "nrf_drv_twis.c"
-    - "spi_5W_master.c"
-    - "pstorage*"
-    - "sdk_mapped_flags.c"
-
 pkg.ign_dirs:
     - "deprecated"
 
 pkg.src_dirs:
-    - "src/ext/nRF5_SDK_11.0.0_89a8197/components/drivers_nrf/"
-    - "src/ext/nRF5_SDK_11.0.0_89a8197/components/libraries/fifo/"
-    - "src/ext/nRF5_SDK_11.0.0_89a8197/components/libraries/util/"
+    - "src/ext/nRF5_SDK_11.0.0_89a8197/components/device/"
 
 pkg.cflags: -std=gnu99 -DNRF52_PAN_28
 

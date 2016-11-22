@@ -17,15 +17,11 @@
  * under the License.
  */
 
+#include <assert.h>
 #include "hal/hal_watchdog.h"
 #include "bsp/cmsis_nvic.h"
-
-#include <assert.h>
-
-#include "app_util_platform.h"
-#include "nrf.h"
-#include "nrf_drv_common.h"
-#include "nrf_wdt.h"
+#include "nrf52.h"
+#include "nrf52_bitfields.h"
 
 static void
 nrf52_hal_wdt_default_handler(void)
@@ -37,8 +33,8 @@ nrf52_hal_wdt_default_handler(void)
 static void
 nrf52_wdt_irq_handler(void)
 {
-    if (nrf_wdt_int_enable_check(NRF_WDT_INT_TIMEOUT_MASK) == true) {
-        nrf_wdt_event_clear(NRF_WDT_EVENT_TIMEOUT);
+    if (NRF_WDT->INTENSET & WDT_INTENSET_TIMEOUT_Msk) {
+        NRF_WDT->EVENTS_TIMEOUT = 0;
         nrf52_hal_wdt_default_handler();
     }
 }
@@ -46,14 +42,19 @@ nrf52_wdt_irq_handler(void)
 int
 hal_watchdog_init(uint32_t expire_msecs)
 {
+    uint64_t expiration;
+
+    NRF_WDT->CONFIG = WDT_CONFIG_SLEEP_Msk;
+
+    /* Convert msec timeout to counts of a 32768 crystal */
+    expiration = ((uint64_t)expire_msecs * 32768) / 1000;
+    NRF_WDT->CRV = (uint32_t)expiration;
+
     NVIC_SetVector(WDT_IRQn, (uint32_t) nrf52_wdt_irq_handler);
-
-    nrf_wdt_behaviour_set(NRF_WDT_BEHAVIOUR_RUN_SLEEP);
-
-    /* Program in timeout in msecs */
-    nrf_wdt_reload_value_set((expire_msecs * 32768ULL) / 1000);
-    nrf_drv_common_irq_enable(WDT_IRQn, APP_IRQ_PRIORITY_HIGH);
-    nrf_wdt_reload_request_enable(NRF_WDT_RR0);
+    NVIC_SetPriority(WDT_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
+    NVIC_ClearPendingIRQ(WDT_IRQn);
+    NVIC_EnableIRQ(WDT_IRQn);
+    NRF_WDT->RREN |= 0x1;
 
     return (0);
 }
@@ -61,13 +62,13 @@ hal_watchdog_init(uint32_t expire_msecs)
 void
 hal_watchdog_enable(void)
 {
-    nrf_wdt_int_enable(NRF_WDT_INT_TIMEOUT_MASK);
-    nrf_wdt_task_trigger(NRF_WDT_TASK_START);
+    NRF_WDT->INTENSET = WDT_INTENSET_TIMEOUT_Msk;
+    NRF_WDT->TASKS_START = 1;
 }
 
 void
 hal_watchdog_tickle(void)
 {
-    nrf_wdt_reload_request_set(NRF_WDT_RR0);
+    NRF_WDT->RR[0] = WDT_RR_RR_Reload;
 }
 
