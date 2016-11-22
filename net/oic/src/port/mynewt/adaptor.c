@@ -94,6 +94,7 @@ oc_send_buffer(oc_message_t *message)
 
 void oc_send_multicast_message(oc_message_t *message)
 {
+    oc_message_add_ref(message);
 
     /* send on all the transports.  Don't forget to reference the message
      * so it doesn't get deleted  */
@@ -113,6 +114,8 @@ void oc_send_multicast_message(oc_message_t *message)
     oc_message_add_ref(message);
     oc_send_buffer_serial(message);
 #endif
+
+    oc_message_unref(message);
 }
 
 void
