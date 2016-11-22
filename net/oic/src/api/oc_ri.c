@@ -19,9 +19,9 @@
 #include <strings.h>
 
 #include <os/os_callout.h>
+#include <os/os_mempool.h>
 
 #include "util/oc_list.h"
-#include "util/oc_memb.h"
 
 #include "messaging/coap/constants.h"
 #include "messaging/coap/engine.h"
@@ -47,7 +47,9 @@
 #ifdef OC_SERVER
 OC_LIST(app_resources);
 OC_LIST(observe_callbacks);
-OC_MEMB(app_resources_s, oc_resource_t, MAX_APP_RESOURCES);
+static struct os_mempool oc_resources;
+static uint8_t oc_resource_area[OS_MEMPOOL_BYTES(MAX_APP_RESOURCES,
+      sizeof(oc_resource_t))];
 
 static void periodic_observe_handler(struct os_event *ev);
 #endif /* OC_SERVER */
@@ -55,7 +57,9 @@ static void periodic_observe_handler(struct os_event *ev);
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
 OC_LIST(client_cbs);
-OC_MEMB(client_cbs_s, oc_client_cb_t, MAX_NUM_CONCURRENT_REQUESTS);
+static struct os_mempool oc_client_cbs;
+static uint8_t oc_client_cb_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
+      sizeof(oc_client_cb_t))];
 #endif /* OC_CLIENT */
 
 // TODO: Define and use a  complete set of error codes.
@@ -219,11 +223,15 @@ oc_ri_init(void)
 
 #ifdef OC_SERVER
   oc_list_init(app_resources);
+  os_mempool_init(&oc_resources, MAX_APP_RESOURCES, sizeof(oc_resource_t),
+    oc_resource_area, "oc_res");
   oc_list_init(observe_callbacks);
 #endif
 
 #ifdef OC_CLIENT
   oc_list_init(client_cbs);
+  os_mempool_init(&oc_client_cbs, MAX_NUM_CONCURRENT_REQUESTS,
+    sizeof(oc_client_cb_t), oc_client_cb_area, "oc_cl_cbs");
 #endif
   oc_rep_init();
   oc_buffer_init();
@@ -245,7 +253,7 @@ oc_ri_alloc_resource(void)
 {
     struct oc_resource_s *resource;
 
-    resource = oc_memb_alloc(&app_resources_s);
+    resource = os_memblock_get(&oc_resources);
     if (resource) {
         os_callout_init(&resource->callout, oc_evq_get(),
           periodic_observe_handler, resource);
@@ -256,27 +264,27 @@ oc_ri_alloc_resource(void)
 void
 oc_ri_delete_resource(oc_resource_t *resource)
 {
-  oc_memb_free(&app_resources_s, resource);
+    os_memblock_put(&oc_resources, resource);
 }
 
 bool
 oc_ri_add_resource(oc_resource_t *resource)
 {
-  bool valid = true;
+    bool valid = true;
 
-  if (!resource->get_handler && !resource->put_handler &&
-      !resource->post_handler && !resource->delete_handler)
-    valid = false;
+    if (!resource->get_handler && !resource->put_handler &&
+      !resource->post_handler && !resource->delete_handler) {
+        valid = false;
+    }
+    if (resource->properties & OC_PERIODIC &&
+      resource->observe_period_seconds == 0) {
+        valid = false;
+    }
+    if (valid) {
+        oc_list_add(app_resources, resource);
+    }
 
-  if (resource->properties & OC_PERIODIC &&
-      resource->observe_period_seconds == 0)
-    valid = false;
-
-  if (valid) {
-    oc_list_add(app_resources, resource);
-  }
-
-  return valid;
+    return valid;
 }
 #endif /* OC_SERVER */
 
@@ -670,7 +678,7 @@ free_client_cb(oc_client_cb_t *cb)
     os_callout_stop(&cb->callout);
     oc_free_string(&cb->uri);
     oc_list_remove(client_cbs, cb);
-    oc_memb_free(&client_cbs_s, cb);
+    os_memblock_put(&oc_client_cbs, cb);
 }
 
 void
@@ -806,20 +814,21 @@ oc_client_cb_t *
 oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
                     oc_method_t method)
 {
-  oc_client_cb_t *cb = (oc_client_cb_t *)oc_list_head(client_cbs);
+    oc_client_cb_t *cb = (oc_client_cb_t *)oc_list_head(client_cbs);
 
-  while (cb != NULL) {
-    if (oc_string_len(cb->uri) == strlen(uri) &&
-        strncmp(oc_string(cb->uri), uri, strlen(uri)) == 0 &&
-        memcmp(&cb->server.endpoint, &server->endpoint,
-               sizeof(oc_endpoint_t)) == 0 &&
-        cb->method == method)
-      return cb;
+    while (cb != NULL) {
+        if (oc_string_len(cb->uri) == strlen(uri) &&
+          strncmp(oc_string(cb->uri), uri, strlen(uri)) == 0 &&
+          memcmp(&cb->server.endpoint, &server->endpoint,
+            sizeof(oc_endpoint_t)) == 0 &&
+          cb->method == method) {
+            return cb;
+        }
 
-    cb = cb->next;
-  }
+        cb = cb->next;
+    }
 
-  return cb;
+    return cb;
 }
 
 static void
@@ -836,32 +845,34 @@ oc_client_cb_t *
 oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
                       oc_method_t method, void *handler, oc_qos_t qos)
 {
-  oc_client_cb_t *cb = oc_memb_alloc(&client_cbs_s);
-  if (!cb)
+    oc_client_cb_t *cb;
+
+    cb = os_memblock_get(&oc_client_cbs);
+    if (!cb) {
+        return NULL;
+    }
+    cb->mid = coap_get_mid();
+    oc_new_string(&cb->uri, uri);
+    cb->method = method;
+    cb->qos = qos;
+    cb->handler = handler;
+    cb->token_len = 8;
+    int i = 0;
+    uint16_t r;
+    while (i < cb->token_len) {
+        r = oc_random_rand();
+        memcpy(cb->token + i, &r, sizeof(r));
+        i += sizeof(r);
+    }
+    cb->discovery = false;
+    cb->timestamp = oc_clock_time();
+    cb->observe_seq = -1;
+    memcpy(&cb->server, server, sizeof(oc_server_handle_t));
+
+    os_callout_init(&cb->callout, oc_evq_get(), oc_ri_remove_cb, cb);
+
+    oc_list_add(client_cbs, cb);
     return cb;
-
-  cb->mid = coap_get_mid();
-  oc_new_string(&cb->uri, uri);
-  cb->method = method;
-  cb->qos = qos;
-  cb->handler = handler;
-  cb->token_len = 8;
-  int i = 0;
-  uint16_t r;
-  while (i < cb->token_len) {
-    r = oc_random_rand();
-    memcpy(cb->token + i, &r, sizeof(r));
-    i += sizeof(r);
-  }
-  cb->discovery = false;
-  cb->timestamp = oc_clock_time();
-  cb->observe_seq = -1;
-  memcpy(&cb->server, server, sizeof(oc_server_handle_t));
-
-  os_callout_init(&cb->callout, oc_evq_get(), oc_ri_remove_cb, cb);
-
-  oc_list_add(client_cbs, cb);
-  return cb;
 }
 #endif /* OC_CLIENT */
 
