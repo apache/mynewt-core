@@ -29,6 +29,10 @@
 
 #include "fcb_test.h"
 
+#include "flash_map/flash_map.h"
+
+#if MYNEWT_VAL(SELFTEST)
+
 struct fcb test_fcb;
 
 #if MYNEWT_VAL(SELFTEST)
@@ -199,3 +203,5 @@ main(int argc, char **argv)
     return tu_any_failed;
 }
 #endif
+
+#endif /* MYNEWT_VAL(SELFTEST) */

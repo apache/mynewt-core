@@ -30,7 +30,7 @@
 #include <sys/time.h>
 #include "os/os.h"
 
-#if MYNEWT_VAL(SELFTEST) /* these parameters only work in a native env */
+#if MYNEWT_VAL(SELFTEST)
 
 void
 os_test_restart(void)
@@ -54,9 +54,7 @@ os_test_restart(void)
         abort();
     }
 
-#if MYNEWT_VAL(SELFTEST)
    tu_restart();
-#endif
 }
 
 extern void os_mempool_test_init(void *arg);
@@ -96,10 +94,13 @@ main(int argc, char **argv)
 
     return tu_any_failed;
 }
+
 #else
+
 void
 os_test_restart(void)
 {
     return;
 }
-#endif
+
+#endif /* MYNEWT_VAL(SELFTEST) */

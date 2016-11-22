@@ -26,11 +26,11 @@
 #include "os/os_test.h"
 #include "os_test_priv.h"
 
+#if MYNEWT_VAL(SELFTEST)
 #ifdef ARCH_sim
 #define MUTEX_TEST_STACK_SIZE     OS_STACK_ALIGN(1024)
 #endif
 
-#if MYNEWT_VAL(SELFTEST)
 struct os_task task1;
 os_stack_t *stack1;
 
@@ -44,33 +44,16 @@ struct os_task task4;
 os_stack_t *stack4;
 #endif /* MYNEWT_VAL(SELFTEST) */
 
-#if 0
-struct os_task task14;
-os_stack_t stack14[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];
-
-struct os_task task15;
-os_stack_t stack15[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];
-
-struct os_task task16;
-os_stack_t stack16[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];
-
-struct os_task task17;
-os_stack_t stack17[OS_STACK_ALIGN(MUTEX_TEST_STACK_SIZE)];
-
-#define TASK14_PRIO (4)
-#define TASK15_PRIO (5)
-#define TASK16_PRIO (6)
-#define TASK17_PRIO (7)
-#endif
-
 volatile int g_task1_val;
 volatile int g_task2_val;
 volatile int g_task3_val;
 volatile int g_task4_val;
+
+#if MYNEWT_VAL(SELFTEST)
 struct os_mutex g_mutex1;
 struct os_mutex g_mutex2;
-
 volatile int g_mutex_test;
+#endif
 
 /**
  * mutex test basic 
