@@ -88,8 +88,6 @@ pkg.deps:
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf51
 
-pkg.deps.ADC_0:
-    - hw/drivers/adc/adc_nrf51
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal

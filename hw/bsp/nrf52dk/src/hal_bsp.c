@@ -35,9 +35,6 @@
 #include "uart_hal/uart_hal.h"
 #include "os/os_dev.h"
 #include "bsp.h"
-#if MYNEWT_VAL(ADC_0)
-#include "adc_nrf52/adc_nrf52.h"
-#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -55,13 +52,6 @@ static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
     .ubc_rxpin = MYNEWT_VAL(UART_1_PIN_TX),
     .ubc_txpin = MYNEWT_VAL(UART_1_PIN_RX),
     .ubc_cputimer_freq = MYNEWT_VAL(CLOCK_FREQ),
-};
-#endif
-
-#if MYNEWT_VAL(ADC_0)
-static struct adc_dev os_bsp_adc0;
-static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
-    .nadc_refmv = 2800
 };
 #endif
 
@@ -211,10 +201,4 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(ADC_0)
-    rc = os_dev_create((struct os_dev *) &os_bsp_adc0, "adc0",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            nrf52_adc_dev_init, &os_bsp_adc0_config);
-    assert(rc == 0);
-#endif
 }

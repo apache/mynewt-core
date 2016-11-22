@@ -28,7 +28,6 @@ pkg.keywords:
 
 pkg.cflags:
     # Nordic SDK files require these defines.
-    - '-DADC_ENABLED=1'
     - '-DCLOCK_ENABLED=1'
     - '-DCOMP_ENABLED=0'
     - '-DEGU_ENABLED=0'
@@ -46,7 +45,6 @@ pkg.cflags:
     - '-DRTC0_ENABLED=0'
     - '-DRTC1_ENABLED=0'
     - '-DRTC2_ENABLED=0'
-    - '-DSAADC_ENABLED=0'
     - '-DSPI0_CONFIG_MISO_PIN=28'
     - '-DSPI0_CONFIG_MOSI_PIN=25'
     - '-DSPI0_CONFIG_SCK_PIN=29'
@@ -85,9 +83,6 @@ pkg.deps:
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf51
-
-pkg.deps.ADC_0:
-    - hw/drivers/adc/adc_nrf51
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
