@@ -25,7 +25,7 @@ pkg.keywords:
     - nrf51
 
 pkg.deps: 
-    - hw/hal 
-    - hw/cmsis-core 
-    - hw/mcu/nordic 
+    - '@mynewt_nordic/hw/mcu/nordic_sdk'
     - compiler/arm-none-eabi-m0
+    - hw/cmsis-core 
+    - hw/hal 
