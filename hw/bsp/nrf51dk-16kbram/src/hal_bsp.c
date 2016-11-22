@@ -24,8 +24,6 @@
 #include "hal/hal_bsp.h"
 #include "mcu/nrf51_hal.h"
 #include "bsp/bsp.h"
-#include "nrf_adc.h"
-#include "nrf_drv_adc.h"
 #include "os/os_dev.h"
 #include "os/os_cputime.h"
 #include "flash_map/flash_map.h"
