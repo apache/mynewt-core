@@ -30,10 +30,6 @@
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
-#ifdef NRF51
-#include "app_util_platform.h"
-#include "app_error.h"
-#endif
 
 /* The spi txrx callback */
 struct sblinky_spi_cb_arg
