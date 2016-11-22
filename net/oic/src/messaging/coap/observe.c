@@ -41,7 +41,6 @@
 #include <os/os_mempool.h>
 
 #include "observe.h"
-#include "util/oc_memb.h"
 
 #include "oc_coap.h"
 #include "oc_rep.h"

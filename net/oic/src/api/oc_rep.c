@@ -21,7 +21,6 @@
 #include "config.h"
 #include "port/oc_assert.h"
 #include "port/oc_log.h"
-#include "util/oc_memb.h"
 #include "api/oc_priv.h"
 #include <tinycbor/cbor_buf_writer.h>
 #include <tinycbor/cbor_buf_reader.h>
