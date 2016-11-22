@@ -20,5 +20,6 @@
 #define __OC_OC_PRIV_H__
 
 void oc_rep_init(void);
+void oc_buffer_init(void);
 
 #endif /* __OC_OC_PRIV_H__ */

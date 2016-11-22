@@ -226,6 +226,7 @@ oc_ri_init(void)
   oc_list_init(client_cbs);
 #endif
   oc_rep_init();
+  oc_buffer_init();
 
   start_processes();
   oc_create_discovery_resource();

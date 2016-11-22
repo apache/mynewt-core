@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
+#include <stdint.h>
+#include <stdio.h>
+
 #include <os/os_eventq.h>
+#include <os/os_mempool.h>
 
 #include "messaging/coap/engine.h"
 #include "port/oc_signal_main_loop.h"
-#include "util/oc_memb.h"
-#include <stdint.h>
-#include <stdio.h>
 
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"
@@ -30,7 +31,9 @@
 
 #include "port/mynewt/adaptor.h"
 
-OC_MEMB(oc_buffers_s, oc_message_t, (MAX_NUM_CONCURRENT_REQUESTS * 2));
+static struct os_mempool oc_buffers;
+static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS * 2,
+      sizeof(oc_message_t))];
 
 static void oc_buffer_handler(struct os_event *);
 
@@ -40,17 +43,24 @@ static struct os_event oc_buffer_ev = {
     .ev_cb = oc_buffer_handler
 };
 
+void
+oc_buffer_init(void)
+{
+    os_mempool_init(&oc_buffers, MAX_NUM_CONCURRENT_REQUESTS * 2,
+      sizeof(oc_message_t), oc_buffer_area, "oc_bufs");
+}
+
 oc_message_t *
 oc_allocate_message(void)
 {
-    oc_message_t *message = (oc_message_t *)oc_memb_alloc(&oc_buffers_s);
+    oc_message_t *message = (oc_message_t *)os_memblock_get(&oc_buffers);
 
     if (message) {
         message->length = 0;
         message->next = 0;
         message->ref_count = 1;
         LOG("buffer: Allocated TX/RX buffer; num free: %d\n",
-          oc_memb_numfree(&oc_buffers_s));
+          oc_buffers.mp_num_free);
     } else {
         LOG("buffer: No free TX/RX buffers!\n");
     }
@@ -71,9 +81,9 @@ oc_message_unref(oc_message_t *message)
     if (message) {
         message->ref_count--;
         if (message->ref_count == 0) {
-            oc_memb_free(&oc_buffers_s, message);
+            os_memblock_put(&oc_buffers, message);
             LOG("buffer: freed TX/RX buffer; num free: %d\n",
-              oc_memb_numfree(&oc_buffers_s));
+              oc_buffers.mp_num_free);
         }
     }
 }
