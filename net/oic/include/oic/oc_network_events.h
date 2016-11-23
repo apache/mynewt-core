@@ -21,9 +21,9 @@
 extern "C" {
 #endif
 
-typedef struct oc_message_s oc_message_t;
+struct oc_message;
 
-void oc_network_event(oc_message_t *message);
+void oc_network_event(struct oc_message *message);
 
 #ifdef __cplusplus
 }

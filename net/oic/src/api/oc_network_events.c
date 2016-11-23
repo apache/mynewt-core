@@ -33,7 +33,7 @@ static struct os_event oc_network_ev = {
 static void
 oc_network_ev_process(struct os_event *ev)
 {
-    struct oc_message_s *head;
+    struct oc_message *head;
 
     oc_network_event_handler_mutex_lock();
     while (1) {
