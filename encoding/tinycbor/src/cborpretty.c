@@ -392,7 +392,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
             return CborErrorIO;
         break;
     }
-
+#if FLOAT_SUPPORT
     case CborDoubleType: {
         const char *suffix;
         double val;
@@ -430,8 +430,9 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
             return CborErrorIO;
         break;
     }
-
+#endif
     case CborInvalidType:
+    default:
         if (fprintf(out, "invalid") < 0)
             return CborErrorIO;
         return CborErrorUnknownType;

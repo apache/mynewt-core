@@ -21,7 +21,6 @@
 #include "oc_rep.h"
 #include "oc_uuid.h"
 #include "../../src/port/oc_connectivity.h"
-#include "../../src/util/oc_etimer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -124,39 +123,14 @@ typedef struct oc_resource_s
   oc_request_handler_t put_handler;
   oc_request_handler_t post_handler;
   oc_request_handler_t delete_handler;
+  struct os_callout callout;
   uint16_t observe_period_seconds;
   uint8_t num_observers;
 } oc_resource_t;
 
-typedef enum { DONE = 0, CONTINUE } oc_event_callback_retval_t;
-
-typedef oc_event_callback_retval_t (*oc_trigger_t)(void *);
-
-typedef struct oc_event_callback_s
-{
-  struct oc_event_callback_s *next;
-  struct oc_etimer timer;
-  oc_trigger_t callback;
-  void *data;
-} oc_event_callback_t;
-
 void oc_ri_init(void);
 
 void oc_ri_shutdown(void);
-
-void oc_ri_add_timed_event_callback_ticks(void *cb_data,
-                                          oc_trigger_t event_callback,
-                                          oc_clock_time_t ticks);
-
-#define oc_ri_add_timed_event_callback_seconds(cb_data, event_callback,        \
-                                               seconds)                        \
-  do {                                                                         \
-    oc_ri_add_timed_event_callback_ticks(                                      \
-      cb_data, event_callback, (oc_clock_time_t)(seconds * OC_CLOCK_SECOND));  \
-  } while (0)
-
-void oc_ri_remove_timed_event_callback(void *cb_data,
-                                       oc_trigger_t event_callback);
 
 int oc_status_code(oc_status_t key);
 

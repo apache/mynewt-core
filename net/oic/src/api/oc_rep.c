@@ -14,15 +14,21 @@
 // limitations under the License.
 */
 
+#include <stddef.h>
+#include <os/os_mempool.h>
+
 #include "oc_rep.h"
 #include "config.h"
 #include "port/oc_assert.h"
 #include "port/oc_log.h"
-#include "util/oc_memb.h"
+#include "api/oc_priv.h"
 #include <tinycbor/cbor_buf_writer.h>
 #include <tinycbor/cbor_buf_reader.h>
 
-OC_MEMB(rep_objects, oc_rep_t, EST_NUM_REP_OBJECTS);
+static struct os_mempool oc_rep_objects;
+static uint8_t oc_rep_objects_area[OS_MEMPOOL_BYTES(EST_NUM_REP_OBJECTS,
+      sizeof(oc_rep_t))];
+
 static const CborEncoder g_empty;
 static uint8_t *g_buf;
 CborEncoder g_encoder, root_map, links_array;
@@ -32,79 +38,81 @@ struct CborBufWriter g_buf_writer;
 void
 oc_rep_new(uint8_t *out_payload, int size)
 {
-  g_err = CborNoError;
-  g_buf = out_payload;
-  cbor_buf_writer_init(&g_buf_writer, out_payload, size);
-  cbor_encoder_init(&g_encoder, &g_buf_writer.enc, 0);
+    g_err = CborNoError;
+    g_buf = out_payload;
+    cbor_buf_writer_init(&g_buf_writer, out_payload, size);
+    cbor_encoder_init(&g_encoder, &g_buf_writer.enc, 0);
 }
 
 int
 oc_rep_finalize(void)
 {
-  int size = cbor_buf_writer_buffer_size(&g_buf_writer, g_buf);
-  oc_rep_reset();
-  if (g_err != CborNoError)
-    return -1;
-  return size;
+    int size = cbor_buf_writer_buffer_size(&g_buf_writer, g_buf);
+    oc_rep_reset();
+    if (g_err != CborNoError) {
+        return -1;
+    }
+    return size;
 }
 
 void
 oc_rep_reset(void)
 {
-  g_encoder = g_empty;
+    g_encoder = g_empty;
 }
 
 static oc_rep_t *
 _alloc_rep(void)
 {
-  oc_rep_t *rep = oc_memb_alloc(&rep_objects);
+    oc_rep_t *rep = os_memblock_get(&oc_rep_objects);
 #ifdef DEBUG
-  oc_assert(rep != NULL);
+    oc_assert(rep != NULL);
 #endif
-  return rep;
+    return rep;
 }
 
 static void
 _free_rep(oc_rep_t *rep_value)
 {
-  oc_memb_free(&rep_objects, rep_value);
+    os_memblock_put(&oc_rep_objects, rep_value);
 }
 
 void
 oc_free_rep(oc_rep_t *rep)
 {
-  if (rep == 0)
-    return;
-  oc_free_rep(rep->next);
-  switch (rep->type) {
-  case BYTE_STRING_ARRAY:
-  case STRING_ARRAY:
-    oc_free_string_array(&rep->value_array);
-    break;
-  case BOOL_ARRAY:
-    oc_free_bool_array(&rep->value_array);
-    break;
-  case DOUBLE_ARRAY:
-    oc_free_double_array(&rep->value_array);
-    break;
-  case INT_ARRAY:
-    oc_free_int_array(&rep->value_array);
-    break;
-  case BYTE_STRING:
-  case STRING:
-    oc_free_string(&rep->value_string);
-    break;
-  case OBJECT:
-    oc_free_rep(rep->value_object);
-    break;
-  case OBJECT_ARRAY:
-    oc_free_rep(rep->value_object_array);
-    break;
-  default:
-    break;
-  }
-  oc_free_string(&rep->name);
-  _free_rep(rep);
+    if (rep == NULL) {
+        return;
+    }
+    oc_free_rep(rep->next);
+    switch (rep->type) {
+    case BYTE_STRING_ARRAY:
+    case STRING_ARRAY:
+        oc_free_string_array(&rep->value_array);
+        break;
+    case BOOL_ARRAY:
+        oc_free_bool_array(&rep->value_array);
+        break;
+    case DOUBLE_ARRAY:
+        oc_free_double_array(&rep->value_array);
+        break;
+    case INT_ARRAY:
+        oc_free_int_array(&rep->value_array);
+        break;
+    case BYTE_STRING:
+    case STRING:
+        oc_free_string(&rep->value_string);
+        break;
+    case OBJECT:
+        oc_free_rep(rep->value_object);
+        break;
+    case OBJECT_ARRAY:
+        oc_free_rep(rep->value_object_array);
+        break;
+    default:
+        break;
+    }
+    oc_free_string(&rep->name);
+    _free_rep(rep);
 }
 
 /*
@@ -305,4 +313,11 @@ oc_parse_rep(const uint8_t *in_payload, uint16_t payload_size,
     }
   }
   return (uint16_t)err;
+}
+
+void
+oc_rep_init(void)
+{
+    os_mempool_init(&oc_rep_objects, EST_NUM_REP_OBJECTS,
+      sizeof(oc_rep_t), oc_rep_objects_area, "oc_rep_o");
 }

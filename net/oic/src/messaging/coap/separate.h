@@ -72,6 +72,8 @@ void coap_separate_resume(void *response, coap_separate_t *separate_store,
 void coap_separate_clear(oc_separate_response_t *separate_response,
                          coap_separate_t *separate_store);
 
+void coap_separate_init(void);
+
 #ifdef __cplusplus
 }
 #endif

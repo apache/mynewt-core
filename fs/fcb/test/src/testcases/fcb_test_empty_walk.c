@@ -23,6 +23,7 @@ TEST_CASE(fcb_test_empty_walk)
     int rc;
     struct fcb *fcb;
 
+#if 0
     fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
@@ -32,6 +33,8 @@ TEST_CASE(fcb_test_empty_walk)
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
+#endif
+    fcb = &test_fcb;
 
     rc = fcb_walk(fcb, 0, fcb_test_empty_walk_cb, NULL);
     TEST_ASSERT(rc == 0);

@@ -109,16 +109,20 @@ os_eventq_get(struct os_eventq *evq)
 {
     struct os_event *ev;
     os_sr_t sr;
+    struct os_task *t;
 
     OS_ENTER_CRITICAL(sr);
 pull_one:
     ev = STAILQ_FIRST(&evq->evq_list);
+    t = os_sched_get_current_task();
     if (ev) {
         STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
         ev->ev_queued = 0;
+        t->t_flags &= ~OS_TASK_FLAG_EVQ_WAIT;
     } else {
-        evq->evq_task = os_sched_get_current_task();
+        evq->evq_task = t;
         os_sched_sleep(evq->evq_task, OS_TIMEOUT_NEVER);
+        t->t_flags |= OS_TASK_FLAG_EVQ_WAIT;
         OS_EXIT_CRITICAL(sr);
 
         os_sched(NULL);
@@ -214,12 +218,15 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
         evq[i]->evq_task = cur_t;
     }
 
+    cur_t->t_flags |= OS_TASK_FLAG_EVQ_WAIT;
+
     os_sched_sleep(cur_t, timo);
     OS_EXIT_CRITICAL(sr);
 
     os_sched(NULL);
 
     OS_ENTER_CRITICAL(sr);
+    cur_t->t_flags &= ~OS_TASK_FLAG_EVQ_WAIT;
     for (i = 0; i < nevqs; i++) {
         /* Go through the entire loop to clear the evq_task variable,
          * given this task is no longer sleeping on the event queues.

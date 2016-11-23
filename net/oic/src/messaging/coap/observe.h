@@ -61,7 +61,6 @@ typedef struct coap_observer
 
   int32_t obs_counter;
 
-  struct oc_etimer retrans_timer;
   uint8_t retrans_counter;
 } coap_observer_t;
 
@@ -80,6 +79,8 @@ int coap_notify_observers(oc_resource_t *resource,
 
 int coap_observe_handler(void *request, void *response, oc_resource_t *resource,
                          oc_endpoint_t *endpoint);
+
+void coap_observe_init(void);
 
 #ifdef __cplusplus
 }

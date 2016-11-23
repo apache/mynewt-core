@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
+#include <stddef.h>
+
+#include <os/os_callout.h>
 
 #include "messaging/coap/engine.h"
 #include "messaging/coap/oc_coap.h"
@@ -76,18 +79,6 @@ void
 oc_ignore_request(oc_request_t *request)
 {
   request->response->response_buffer->code = OC_IGNORE;
-}
-
-void
-oc_set_delayed_callback(void *cb_data, oc_trigger_t callback, uint16_t seconds)
-{
-  oc_ri_add_timed_event_callback_seconds(cb_data, callback, seconds);
-}
-
-void
-oc_remove_delayed_callback(void *cb_data, oc_trigger_t callback)
-{
-  oc_ri_remove_timed_event_callback(cb_data, callback);
 }
 
 void

@@ -20,7 +20,6 @@
 #include "mynewt/config.h"
 #include "oic/oc_network_events.h"
 #include "oc_log.h"
-#include "../util/oc_process.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

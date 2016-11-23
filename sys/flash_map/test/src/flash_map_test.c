@@ -29,6 +29,15 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 
+struct flash_area *fa_sectors;
+
+#if MYNEWT_VAL(SELFTEST)
+/*
+ * Max number sectors per area (for native BSP)
+ */
+#define SELFTEST_FA_SECTOR_COUNT    64
+#endif
+
 TEST_CASE_DECL(flash_map_test_case_1)
 TEST_CASE_DECL(flash_map_test_case_2)
 
@@ -44,6 +53,9 @@ main(int argc, char **argv)
 {
     ts_config.ts_print_results = 1;
     tu_init();
+
+    fa_sectors = (struct flash_area *)
+                malloc(sizeof(struct flash_area*) * SELFTEST_FA_SECTOR_COUNT);
 
     flash_map_test_suite();
 

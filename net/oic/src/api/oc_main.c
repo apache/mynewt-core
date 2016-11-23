@@ -20,9 +20,8 @@
 #include "port/oc_assert.h"
 #include "port/oc_clock.h"
 #include "port/oc_connectivity.h"
-
-#include "util/oc_etimer.h"
-#include "util/oc_process.h"
+#include "port/oc_connectivity.h"
+#include "port/oc_network_events_mutex.h"
 
 #include "oc_api.h"
 
@@ -93,11 +92,7 @@ err:
 oc_clock_time_t
 oc_main_poll(void)
 {
-  oc_clock_time_t ticks_until_next_event = oc_etimer_request_poll();
-  while (oc_process_run()) {
-    ticks_until_next_event = oc_etimer_request_poll();
-  }
-  return ticks_until_next_event;
+    return 0;
 }
 
 void

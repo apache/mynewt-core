@@ -106,14 +106,13 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
         cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
 
     hdr->nh_len = htons(hdr->nh_len);
-    hdr->nh_flags = NMGR_F_CBOR_RSP_COMPLETE;
+    hdr->nh_flags = 0;
     nt->nt_output(nt, nmgr_task_cbuf.n_out_m);
 }
 
 static int
-nmgr_send_rspfrag(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
-                  struct os_mbuf *rsp, struct os_mbuf *req, uint16_t len,
-                  uint16_t *offset)
+nmgr_send_rspfrag(struct nmgr_transport *nt, struct os_mbuf *rsp,
+                  struct os_mbuf *req, uint16_t len)
 {
     struct os_mbuf *rspfrag;
     int rc;
@@ -130,22 +129,7 @@ nmgr_send_rspfrag(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
     memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req),
            OS_MBUF_USRHDR_LEN(req));
 
-    if (os_mbuf_append(rspfrag, rsp_hdr, sizeof(struct nmgr_hdr))) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
-    }
-
-    if (os_mbuf_appendfrom(rspfrag, rsp, *offset, len)) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
-    }
-
-    *offset += len;
-
-    len = htons(len);
-
-    if (os_mbuf_copyinto(rspfrag, offsetof(struct nmgr_hdr, nh_len), &len,
-                         sizeof(len))) {
+    if (os_mbuf_appendfrom(rspfrag, rsp, 0, len)) {
         rc = MGMT_ERR_ENOMEM;
         goto err;
     }
@@ -164,32 +148,31 @@ static int
 nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
                   struct os_mbuf *rsp, struct os_mbuf *req)
 {
-    uint16_t offset;
-    uint16_t len;
     uint16_t mtu;
+    uint16_t rsplen;
+    uint16_t len ;
     int rc;
 
-    offset = sizeof(struct nmgr_hdr);
-    len = rsp_hdr->nh_len;
+    len = 0;
 
-    mtu = nt->nt_get_mtu(req) - sizeof(struct nmgr_hdr);
+    mtu = nt->nt_get_mtu(req);
 
     do {
-        if (len <= mtu) {
-            rsp_hdr->nh_flags |= NMGR_F_CBOR_RSP_COMPLETE;
+        len = OS_MBUF_PKTLEN(rsp);
+        if (len >= mtu) {
+            rsplen = mtu;
         } else {
-            len = mtu;
+            rsplen = len;
         }
 
-        rc = nmgr_send_rspfrag(nt, rsp_hdr, rsp, req, len, &offset);
+        rc = nmgr_send_rspfrag(nt, rsp, req, rsplen);
         if (rc) {
             goto err;
         }
 
-        len = rsp_hdr->nh_len - offset + sizeof(struct nmgr_hdr);
+        os_mbuf_adj(rsp, rsplen);
 
-    } while (!((rsp_hdr->nh_flags & NMGR_F_CBOR_RSP_COMPLETE) ==
-                NMGR_F_CBOR_RSP_COMPLETE));
+    } while (OS_MBUF_PKTLEN(rsp));
 
     return MGMT_ERR_EOK;
 err:
@@ -277,6 +260,8 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         rsp_hdr->nh_len +=
             cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
         off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
+
+        rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
         rc = nmgr_rsp_fragment(nt, rsp_hdr, rsp, req);
         if (rc) {
             goto err;

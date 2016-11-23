@@ -37,15 +37,12 @@
 #include <string.h>
 
 /* OIC Stack headers */
-#include "api/oc_events.h"
 #include "oc_buffer.h"
 #include "oc_ri.h"
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
 #endif
-
-OC_PROCESS(coap_engine, "CoAP Engine");
 
 extern bool oc_ri_invoke_coap_entity_handler(void *request, void *response,
                                              uint8_t *buffer,
@@ -301,33 +298,14 @@ coap_receive(oc_message_t *msg)
   /* if(new data) */
   return erbium_status_code;
 }
-/*---------------------------------------------------------------------------*/
+
 void
-coap_init_engine(void)
+coap_engine_init(void)
 {
-  coap_register_as_transaction_handler();
+    coap_init_connection();
+    coap_transaction_init();
+#ifdef OC_SERVER
+    coap_separate_init();
+    coap_observe_init();
+#endif
 }
-/*---------------------------------------------------------------------------*/
-OC_PROCESS_THREAD(coap_engine, ev, data)
-{
-  OC_PROCESS_BEGIN();
-
-  coap_register_as_transaction_handler();
-  coap_init_connection();
-
-  while (1) {
-    OC_PROCESS_YIELD();
-
-    if (ev == oc_events[INBOUND_RI_EVENT]) {
-      coap_receive(data);
-
-      oc_message_unref(data);
-    } else if (ev == OC_PROCESS_EVENT_TIMER) {
-      coap_check_transactions();
-    }
-  }
-
-  OC_PROCESS_END();
-}
-
-/*---------------------------------------------------------------------------*/

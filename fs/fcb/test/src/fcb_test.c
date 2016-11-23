@@ -29,8 +29,13 @@
 
 #include "fcb_test.h"
 
+#include "flash_map/flash_map.h"
+
+#if MYNEWT_VAL(SELFTEST)
+
 struct fcb test_fcb;
 
+#if MYNEWT_VAL(SELFTEST)
 struct flash_area test_fcb_area[] = {
     [0] = {
         .fa_device_id = 0,
@@ -53,6 +58,7 @@ struct flash_area test_fcb_area[] = {
         .fa_size = 0x4000
     }
 };
+#endif
 
 void
 fcb_test_wipe(void)
@@ -115,6 +121,34 @@ fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg)
     return 0;
 }
 
+void
+fcb_tc_pretest(void* arg)
+{
+    struct fcb *fcb;
+    int rc = 0;
+
+    fcb_test_wipe();
+    fcb = &test_fcb;
+    memset(fcb, 0, sizeof(*fcb));
+    fcb->f_sector_cnt = (int)arg;
+    fcb->f_sectors = test_fcb_area; /* XXX */
+
+    rc = 0;
+    rc = fcb_init(fcb);
+    if (rc != 0) {
+        printf("fcb_tc_pretest rc == %x, %d\n", rc, rc);
+        TEST_ASSERT(rc == 0);
+    }
+
+    return;
+}
+
+void
+fcb_ts_init(void *arg)
+{
+    return;
+}
+
 TEST_CASE_DECL(fcb_test_len)
 TEST_CASE_DECL(fcb_test_init)
 TEST_CASE_DECL(fcb_test_empty_walk)
@@ -127,14 +161,32 @@ TEST_CASE_DECL(fcb_test_multiple_scratch)
 
 TEST_SUITE(fcb_test_all)
 {
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_len();
+
+    /* pretest not needed */
     fcb_test_init();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_empty_walk();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_append();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_append_too_big();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_append_fill();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_reset();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_rotate();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)4);
     fcb_test_multiple_scratch();
 }
 
@@ -145,8 +197,11 @@ main(int argc, char **argv)
     ts_config.ts_print_results = 1;
     tu_init();
 
+    tu_suite_set_init_cb(fcb_ts_init, NULL);
     fcb_test_all();
 
     return tu_any_failed;
 }
 #endif
+
+#endif /* MYNEWT_VAL(SELFTEST) */

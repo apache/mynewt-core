@@ -35,7 +35,6 @@
 #define TRANSACTIONS_H
 
 #include "coap.h"
-#include "../../util/oc_etimer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,11 +46,11 @@ extern "C" {
  * retransmission time between COAP_RESPONSE_TIMEOUT and
  * COAP_RESPONSE_TIMEOUT*COAP_RESPONSE_RANDOM_FACTOR.
  */
-#define COAP_RESPONSE_TIMEOUT_TICKS (OC_CLOCK_SECOND * COAP_RESPONSE_TIMEOUT)
-#define COAP_RESPONSE_TIMEOUT_BACKOFF_MASK                                     \
-  (long)((OC_CLOCK_SECOND * COAP_RESPONSE_TIMEOUT *                            \
-          ((float)COAP_RESPONSE_RANDOM_FACTOR - 1.0)) +                        \
-         0.5) +                                                                \
+#define COAP_RESPONSE_TIMEOUT_TICKS (OS_TICKS_PER_SEC * COAP_RESPONSE_TIMEOUT)
+#define COAP_RESPONSE_TIMEOUT_BACKOFF_MASK                              \
+    (long)((OS_TICKS_PER_SEC * COAP_RESPONSE_TIMEOUT *                  \
+        ((float)COAP_RESPONSE_RANDOM_FACTOR - 1.0)) +                   \
+      0.5) +                                                            \
     1
 
 /* container for transactions with message buffer and retransmission info */
@@ -60,8 +59,9 @@ typedef struct coap_transaction
   struct coap_transaction *next; /* for LIST */
 
   uint16_t mid;
-  struct oc_etimer retrans_timer;
   uint8_t retrans_counter;
+  uint32_t retrans_tmo;
+  struct os_callout retrans_timer;
   oc_message_t *message;
 
 } coap_transaction_t;
@@ -75,6 +75,8 @@ void coap_clear_transaction(coap_transaction_t *t);
 coap_transaction_t *coap_get_transaction_by_mid(uint16_t mid);
 
 void coap_check_transactions(void);
+
+void coap_transaction_init(void);
 
 #ifdef __cplusplus
 }

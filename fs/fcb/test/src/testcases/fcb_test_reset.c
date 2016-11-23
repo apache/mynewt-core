@@ -27,6 +27,7 @@ TEST_CASE(fcb_test_reset)
     uint8_t test_data[128];
     int var_cnt;
 
+#if 0
     fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
@@ -35,6 +36,9 @@ TEST_CASE(fcb_test_reset)
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
+#endif
+
+    fcb = &test_fcb;
 
     var_cnt = 0;
     rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);

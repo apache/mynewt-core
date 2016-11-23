@@ -24,6 +24,7 @@
 #include "os_test_priv.h"
 
 #if MYNEWT_VAL(SELFTEST)
+
 #ifdef ARCH_sim
 #define SEM_TEST_STACK_SIZE     OS_STACK_ALIGN(1024)
 #endif
@@ -39,9 +40,9 @@ os_stack_t *stack3;
 
 struct os_task task4;
 os_stack_t *stack4;
-#endif /* MYNEWT_VAL(SELFTEST) */
 
 struct os_sem g_sem1;
+#endif /* MYNEWT_VAL(SELFTEST) */
 
 /* 
  * TEST NUMBERS:
@@ -327,3 +328,4 @@ TEST_SUITE(os_sem_test_suite)
     os_sem_test_case_3();
     os_sem_test_case_4();
 }
+

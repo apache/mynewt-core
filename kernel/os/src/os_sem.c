@@ -99,6 +99,9 @@ os_sem_release(struct os_sem *sem)
     if (rdy) {
         /* Clear flag that we are waiting on the semaphore; wake up task */
         rdy->t_flags &= ~OS_TASK_FLAG_SEM_WAIT;
+        /* Could do this after being woken up in os_sem_pend() */
+        rdy->t_lockcnt++;
+        rdy->t_flags |= OS_TASK_FLAG_LOCK_HELD;
         os_sched_wakeup(rdy);
 
         /* Schedule if waiting task higher priority */
@@ -108,6 +111,9 @@ os_sem_release(struct os_sem *sem)
     } else {
         /* Add to the number of tokens */
         sem->sem_tokens++;
+    }
+    if (--current->t_lockcnt == 0) {
+        current->t_flags &= ~OS_TASK_FLAG_LOCK_HELD;
     }
 
     OS_EXIT_CRITICAL(sr);
@@ -168,6 +174,8 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
      */
     if (sem->sem_tokens != 0) {
         sem->sem_tokens--;
+        current->t_lockcnt++;
+        current->t_flags |= OS_TASK_FLAG_LOCK_HELD;
         rc = OS_OK;
     } else if (timeout == 0) {
         rc = OS_TIMEOUT;

@@ -27,7 +27,6 @@
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
-#include "imgmgr/imgmgr.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -36,8 +35,6 @@
 
 /* Application-specified header. */
 #include "bleprph.h"
-
-#include "nmgrble/newtmgr_ble.h"
 
 /** Log data. */
 struct log bleprph_log;

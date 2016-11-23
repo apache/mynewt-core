@@ -41,5 +41,7 @@ TEST_CASE(os_mutex_test_case_1)
     os_task_init(&task3, "task3", mutex_task3_handler, NULL, TASK3_PRIO, 
             OS_WAIT_FOREVER, stack3, sizeof(stack3));
 
+#if MYNEWT_VAL(SELFTEST)
     os_start();
+#endif
 }

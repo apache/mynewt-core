@@ -32,13 +32,6 @@ syscfg.defs:
         description: 'TBD'
         value: 1
 
-    ADC_0:
-        description: 'TBD'
-        value: 0
-    ADC_0_INTERRUPT_PRIORITY:
-        description: 'TBD'
-        value: 'ADC_CONFIG_IRQ_PRIORITY'
-
     UART_0:
         description: 'TBD'
         value: 1
@@ -64,12 +57,16 @@ syscfg.defs:
     SPI_1_MASTER:
         description: 'SPI 1 master'
         value:  0
+        restrictions:
+            - "!SPI_1_SLAVE"
     SPI_1_MASTER_SS_PIN:
         description: 'SPI 1 (master) SS pin number.'
         value:  -1
     SPI_1_SLAVE:
         description: 'SPI 1 slave'
         value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
 
     TIMER_0:
         description: 'NRF51 Timer 0'

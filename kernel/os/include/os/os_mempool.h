@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -27,11 +27,11 @@
 extern "C" {
 #endif
 
-/* 
- * A memory block structure. This simply contains a pointer to the free list 
- * chain and is only used when the block is on the free list. When the block 
- * has been removed from the free list the entire memory block is usable by the 
- * caller. 
+/*
+ * A memory block structure. This simply contains a pointer to the free list
+ * chain and is only used when the block is on the free list. When the block
+ * has been removed from the free list the entire memory block is usable by the
+ * caller.
  */
 struct os_memblock {
     SLIST_ENTRY(os_memblock) mb_next;
@@ -62,19 +62,19 @@ struct os_mempool_info {
     char omi_name[OS_MEMPOOL_INFO_NAME_LEN];
 };
 
-struct os_mempool *os_mempool_info_get_next(struct os_mempool *, 
+struct os_mempool *os_mempool_info_get_next(struct os_mempool *,
         struct os_mempool_info *);
 
-/* 
- * To calculate size of the memory buffer needed for the pool. NOTE: This size 
- * is NOT in bytes! The size is the number of os_membuf_t elements required for 
+/*
+ * To calculate size of the memory buffer needed for the pool. NOTE: This size
+ * is NOT in bytes! The size is the number of os_membuf_t elements required for
  * the memory pool.
  */
 #if (OS_CFG_ALIGNMENT == OS_CFG_ALIGN_4)
 #define OS_MEMPOOL_SIZE(n,blksize)      ((((blksize) + 3) / 4) * (n))
 typedef uint32_t os_membuf_t;
 #else
-#define OS_MEMPOOL_SIZE(n,blksize)      ((((blksize) + 7) / 8) * (n)) 
+#define OS_MEMPOOL_SIZE(n,blksize)      ((((blksize) + 7) / 8) * (n))
 typedef uint64_t os_membuf_t;
 #endif
 
@@ -83,7 +83,7 @@ typedef uint64_t os_membuf_t;
     (sizeof (os_membuf_t) * OS_MEMPOOL_SIZE((n), (blksize)))
 
 /* Initialize a memory pool */
-os_error_t os_mempool_init(struct os_mempool *mp, int blocks, int block_size, 
+os_error_t os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
                            void *membuf, char *name);
 
 /* Checks if a memory block was allocated from the specified mempool. */

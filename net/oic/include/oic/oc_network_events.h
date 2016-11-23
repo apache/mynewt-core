@@ -17,14 +17,9 @@
 #ifndef OC_NETWORK_EVENTS_H
 #define OC_NETWORK_EVENTS_H
 
-#include "../../src/port/oc_network_events_mutex.h"
-#include "../../src/util/oc_process.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-OC_PROCESS_NAME(oc_network_events);
 
 typedef struct oc_message_s oc_message_t;
 

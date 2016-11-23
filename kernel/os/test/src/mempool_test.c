@@ -28,15 +28,18 @@ int alignment = 4;
 int alignment = 8;
 #endif
 
+#if MYNEWT_VAL(SELFTEST)
 /* Test memory pool structure */
 struct os_mempool g_TstMempool;
 
-/* Test memory pool buffer */
-os_membuf_t *TstMembuf;
-uint32_t TstMembufSz;
-
 /* Array of block pointers. */
 void *block_array[MEMPOOL_TEST_MAX_BLOCKS];
+
+/* Test memory pool buffer */
+os_membuf_t *TstMembuf;
+#endif
+
+uint32_t TstMembufSz;
 
 int verbose = 0;
 

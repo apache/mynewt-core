@@ -32,19 +32,19 @@ extern "C" {
 #endif
 
 /*
- * General execution flow of test suites and cases (more to come XXX)
+ * General execution flow of test suites and callbacks (more to come XXX)
  *
  * TEST_SUITE
- *      tu_suite_init
- *          tu_suite_pre_test
- *              tu_case_init
- *              tu_case_pre_test
+ *      tu_suite_init -> ts_suite_init_cb
+ *          tu_suite_pre_test -> ts_case_pre_test_cb
+ *              tu_case_init -> tc_case_init_cb
+ *              tu_case_pre_test -> tc_case_pre_test_cb
  *                  TEST_CASE
- *              tu_case_post_test
- *              tu_case_pass/tu_case_fail
+ *              tu_case_post_test -> tc_case_post_test_cb
+ *              tu_case_pass/tu_case_fail -> ts_case_{pass,fail}_cb
  *              tu_case_complete
- *          tu_suite_post_test
- *      tu_suite_complete
+ *          tu_suite_post_test -> ts_case_post_test_cb
+ *      tu_suite_complete -> ts_suite_complete_cb
  */
 
 typedef void tu_case_report_fn_t(char *msg, int msg_len, void *arg);
@@ -63,6 +63,7 @@ typedef void tu_testsuite_fn_t(void);
  * Private declarations - Test Suite configuration
  */
 void tu_suite_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg);
+void tu_suite_set_complete_cb(tu_init_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_pre_test_cb(tu_pre_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg);
 void tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg);
@@ -96,6 +97,12 @@ struct ts_config {
     void *ts_suite_init_arg;
 
     /*
+     * Called after the last test in the suite
+     */
+    tu_init_test_fn_t *ts_suite_complete_cb;
+    void *ts_suite_complete_arg;
+
+    /*
      * Called before every test in the suite
      */
     tu_pre_test_fn_t *ts_case_pre_test_cb;
@@ -114,13 +121,13 @@ struct ts_config {
     void *ts_case_pass_arg;
 
     /*
-     * Called after test fails (primarily thoough a failed test assert
+     * Called after test fails (typically thoough a failed test assert)
      */
     tu_case_report_fn_t *ts_case_fail_cb;
     void *ts_case_fail_arg;
 
     /*
-     * restart after running the test suite
+     * restart after running the test suite - self-test only 
      */
     tu_suite_restart_fn_t *ts_restart_cb;
     void *ts_restart_arg;
@@ -169,8 +176,6 @@ void tu_case_pass_manual(const char *file, int line,
                          const char *format, ...);
 void tu_case_pre_test(void);
 void tu_case_post_test(void);
-
-void tu_case_complete(void);
 
 extern struct tc_config tc_config;
 extern struct tc_config *tc_current_config;

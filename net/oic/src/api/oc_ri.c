@@ -18,24 +18,26 @@
 #include <stddef.h>
 #include <strings.h>
 
-#include "util/oc_etimer.h"
+#include <os/os_callout.h>
+#include <os/os_mempool.h>
+
 #include "util/oc_list.h"
-#include "util/oc_memb.h"
-#include "util/oc_process.h"
 
 #include "messaging/coap/constants.h"
 #include "messaging/coap/engine.h"
 #include "messaging/coap/oc_coap.h"
 
 #include "port/oc_random.h"
+#include "port/oc_clock.h"
+#include "port/mynewt/adaptor.h"
 
 #include "oc_buffer.h"
 #include "oc_core_res.h"
 #include "oc_discovery.h"
-#include "oc_events.h"
 #include "oc_network_events.h"
 #include "oc_ri.h"
 #include "oc_uuid.h"
+#include "oc_priv.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_acl.h"
@@ -45,21 +47,20 @@
 #ifdef OC_SERVER
 OC_LIST(app_resources);
 OC_LIST(observe_callbacks);
-OC_MEMB(app_resources_s, oc_resource_t, MAX_APP_RESOURCES);
+static struct os_mempool oc_resources;
+static uint8_t oc_resource_area[OS_MEMPOOL_BYTES(MAX_APP_RESOURCES,
+      sizeof(oc_resource_t))];
+
+static void periodic_observe_handler(struct os_event *ev);
 #endif /* OC_SERVER */
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
 OC_LIST(client_cbs);
-OC_MEMB(client_cbs_s, oc_client_cb_t, MAX_NUM_CONCURRENT_REQUESTS);
+static struct os_mempool oc_client_cbs;
+static uint8_t oc_client_cb_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
+      sizeof(oc_client_cb_t))];
 #endif /* OC_CLIENT */
-
-OC_LIST(timed_callbacks);
-OC_MEMB(event_callbacks_s, oc_event_callback_t, NUM_OC_CORE_RESOURCES +
-                                                  MAX_APP_RESOURCES +
-                                                  MAX_NUM_CONCURRENT_REQUESTS);
-
-OC_PROCESS(timed_callback_events, "OC timed callbacks");
 
 // TODO: Define and use a  complete set of error codes.
 int oc_stack_errno;
@@ -182,42 +183,21 @@ oc_ri_get_query_value(const char *query, int query_len, const char *key,
 }
 
 static void
-allocate_events(void)
-{
-  int i = 0;
-  for (i = 0; i < __NUM_OC_EVENT_TYPES__; i++) {
-    oc_events[i] = oc_process_alloc_event();
-  }
-}
-
-static void
 start_processes(void)
 {
-  allocate_events();
-  oc_process_start(&oc_etimer_process, NULL);
-  oc_process_start(&timed_callback_events, NULL);
-  oc_process_start(&coap_engine, NULL);
-  oc_process_start(&message_buffer_handler, NULL);
+  coap_engine_init();
 
 #ifdef OC_SECURITY
   oc_process_start(&oc_dtls_handler, NULL);
 #endif
-
-  oc_process_start(&oc_network_events, NULL);
 }
 
 static void
 stop_processes(void)
 {
-  oc_process_exit(&oc_etimer_process);
-  oc_process_exit(&timed_callback_events);
-  oc_process_exit(&coap_engine);
-
 #ifdef OC_SECURITY
   oc_process_exit(&oc_dtls_handler);
 #endif
-
-  oc_process_exit(&message_buffer_handler);
 }
 
 #ifdef OC_SERVER
@@ -239,19 +219,23 @@ void
 oc_ri_init(void)
 {
   oc_random_init(0); // Fix: allow user to seed RNG.
-  oc_clock_init();
   set_mpro_status_codes();
 
 #ifdef OC_SERVER
   oc_list_init(app_resources);
+  os_mempool_init(&oc_resources, MAX_APP_RESOURCES, sizeof(oc_resource_t),
+    oc_resource_area, "oc_res");
   oc_list_init(observe_callbacks);
 #endif
 
 #ifdef OC_CLIENT
   oc_list_init(client_cbs);
+  os_mempool_init(&oc_client_cbs, MAX_NUM_CONCURRENT_REQUESTS,
+    sizeof(oc_client_cb_t), oc_client_cb_area, "oc_cl_cbs");
 #endif
+  oc_rep_init();
+  oc_buffer_init();
 
-  oc_list_init(timed_callbacks);
   start_processes();
   oc_create_discovery_resource();
 }
@@ -267,170 +251,58 @@ oc_ri_shutdown(void)
 oc_resource_t *
 oc_ri_alloc_resource(void)
 {
-  return oc_memb_alloc(&app_resources_s);
+    struct oc_resource_s *resource;
+
+    resource = os_memblock_get(&oc_resources);
+    if (resource) {
+        os_callout_init(&resource->callout, oc_evq_get(),
+          periodic_observe_handler, resource);
+    }
+    return resource;
 }
 
 void
 oc_ri_delete_resource(oc_resource_t *resource)
 {
-  oc_memb_free(&app_resources_s, resource);
+    os_memblock_put(&oc_resources, resource);
 }
 
 bool
 oc_ri_add_resource(oc_resource_t *resource)
 {
-  bool valid = true;
+    bool valid = true;
 
-  if (!resource->get_handler && !resource->put_handler &&
-      !resource->post_handler && !resource->delete_handler)
-    valid = false;
+    if (!resource->get_handler && !resource->put_handler &&
+      !resource->post_handler && !resource->delete_handler) {
+        valid = false;
+    }
+    if (resource->properties & OC_PERIODIC &&
+      resource->observe_period_seconds == 0) {
+        valid = false;
+    }
+    if (valid) {
+        oc_list_add(app_resources, resource);
+    }
 
-  if (resource->properties & OC_PERIODIC &&
-      resource->observe_period_seconds == 0)
-    valid = false;
-
-  if (valid) {
-    oc_list_add(app_resources, resource);
-  }
-
-  return valid;
+    return valid;
 }
 #endif /* OC_SERVER */
 
-void
-oc_ri_remove_timed_event_callback(void *cb_data, oc_trigger_t event_callback)
-{
-  oc_event_callback_t *event_cb =
-    (oc_event_callback_t *)oc_list_head(timed_callbacks);
-
-  while (event_cb != NULL) {
-    if (event_cb->data == cb_data && event_cb->callback == event_callback) {
-      oc_list_remove(timed_callbacks, event_cb);
-      oc_memb_free(&event_callbacks_s, event_cb);
-      break;
-    }
-    event_cb = event_cb->next;
-  }
-}
-
-void
-oc_ri_add_timed_event_callback_ticks(void *cb_data, oc_trigger_t event_callback,
-                                     oc_clock_time_t ticks)
-{
-  oc_event_callback_t *event_cb =
-    (oc_event_callback_t *)oc_memb_alloc(&event_callbacks_s);
-
-  if (event_cb) {
-    event_cb->data = cb_data;
-    event_cb->callback = event_callback;
-    OC_PROCESS_CONTEXT_BEGIN(&timed_callback_events);
-    oc_etimer_set(&event_cb->timer, ticks);
-    OC_PROCESS_CONTEXT_END(&timed_callback_events);
-    oc_list_add(timed_callbacks, event_cb);
-  }
-}
-
-static void
-poll_event_callback_timers(oc_list_t list, struct oc_memb *cb_pool)
-{
-  oc_event_callback_t *event_cb = (oc_event_callback_t *)oc_list_head(list),
-                      *next;
-
-  while (event_cb != NULL) {
-    next = event_cb->next;
-
-    if (oc_etimer_expired(&event_cb->timer)) {
-      if (event_cb->callback(event_cb->data) == DONE) {
-        oc_list_remove(list, event_cb);
-        oc_memb_free(cb_pool, event_cb);
-      } else {
-        OC_PROCESS_CONTEXT_BEGIN(&timed_callback_events);
-        oc_etimer_restart(&event_cb->timer);
-        OC_PROCESS_CONTEXT_END(&timed_callback_events);
-      }
-    }
-
-    event_cb = next;
-  }
-}
-
-static void
-check_event_callbacks(void)
-{
 #ifdef OC_SERVER
-  poll_event_callback_timers(observe_callbacks, &event_callbacks_s);
-#endif /* OC_SERVER */
-  poll_event_callback_timers(timed_callbacks, &event_callbacks_s);
-}
-
-#ifdef OC_SERVER
-static oc_event_callback_retval_t
-periodic_observe_handler(void *data)
-{
-  oc_resource_t *resource = (oc_resource_t *)data;
-
-  if (coap_notify_observers(resource, NULL, NULL)) {
-    return CONTINUE;
-  }
-
-  return DONE;
-}
-
-static oc_event_callback_t *
-get_periodic_observe_callback(oc_resource_t *resource)
-{
-  oc_event_callback_t *event_cb;
-  bool found = false;
-
-  for (event_cb = (oc_event_callback_t *)oc_list_head(observe_callbacks);
-       event_cb; event_cb = event_cb->next) {
-    if (resource == event_cb->data) {
-      found = true;
-      break;
-    }
-  }
-
-  if (found) {
-    return event_cb;
-  }
-
-  return NULL;
-}
 
 static void
-remove_periodic_observe_callback(oc_resource_t *resource)
+periodic_observe_handler(struct os_event *ev)
 {
-  oc_event_callback_t *event_cb = get_periodic_observe_callback(resource);
+    struct oc_resource_s *resource;
 
-  if (event_cb) {
-    oc_etimer_stop(&event_cb->timer);
-    oc_list_remove(observe_callbacks, event_cb);
-    oc_memb_free(&event_callbacks_s, event_cb);
-  }
+    resource = ev->ev_arg;
+
+    if (coap_notify_observers(resource, NULL, NULL)) {
+        os_callout_reset(&resource->callout,
+          resource->observe_period_seconds * OS_TICKS_PER_SEC);
+    }
 }
 
-static bool
-add_periodic_observe_callback(oc_resource_t *resource)
-{
-  oc_event_callback_t *event_cb = get_periodic_observe_callback(resource);
-
-  if (!event_cb) {
-    event_cb = (oc_event_callback_t *)oc_memb_alloc(&event_callbacks_s);
-
-    if (!event_cb)
-      return false;
-
-    event_cb->data = resource;
-    event_cb->callback = periodic_observe_handler;
-    OC_PROCESS_CONTEXT_BEGIN(&timed_callback_events);
-    oc_etimer_set(&event_cb->timer,
-                  resource->observe_period_seconds * OC_CLOCK_SECOND);
-    OC_PROCESS_CONTEXT_END(&timed_callback_events);
-    oc_list_add(observe_callbacks, event_cb);
-  }
-
-  return true;
-}
 #endif
 
 oc_interface_mask_t
@@ -724,11 +596,8 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
            */
           bool set_observe_option = true;
           if (cur_resource->properties & OC_PERIODIC) {
-            if (!add_periodic_observe_callback(cur_resource)) {
-              set_observe_option = false;
-              coap_remove_observer_by_token(endpoint, packet->token,
-                                            packet->token_len);
-            }
+              os_callout_reset(&cur_resource->callout,
+                cur_resource->observe_period_seconds * OS_TICKS_PER_SEC);
           }
 
           if (set_observe_option) {
@@ -745,7 +614,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
         if (coap_observe_handler(request, response, cur_resource, endpoint) >
             0) {
           if (cur_resource->properties & OC_PERIODIC) {
-            remove_periodic_observe_callback(cur_resource);
+              os_callout_stop(&cur_resource->callout);
           }
         }
       }
@@ -806,9 +675,10 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
 static void
 free_client_cb(oc_client_cb_t *cb)
 {
-  oc_free_string(&cb->uri);
-  oc_list_remove(client_cbs, cb);
-  oc_memb_free(&client_cbs_s, cb);
+    os_callout_stop(&cb->callout);
+    oc_free_string(&cb->uri);
+    oc_list_remove(client_cbs, cb);
+    os_memblock_put(&oc_client_cbs, cb);
 }
 
 void
@@ -822,13 +692,6 @@ oc_ri_remove_client_cb_by_mid(uint16_t mid)
   }
   if (cb)
     free_client_cb(cb);
-}
-
-oc_event_callback_retval_t
-oc_ri_remove_client_cb(void *data)
-{
-  free_client_cb(data);
-  return DONE;
 }
 
 bool
@@ -908,7 +771,7 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
         if (cb->discovery) {
           if (oc_ri_process_discovery_payload(payload, payload_len, cb->handler,
                                               endpoint) == OC_STOP_DISCOVERY) {
-            oc_ri_remove_client_cb(cb);
+            free_client_cb(cb);
           }
         } else {
           uint16_t err =
@@ -935,7 +798,6 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
    for the entirety of OC_CLIENT_CB_TIMEOUT_SECS
       */
       if (client_response.observe_option == -1 && !separate && !cb->discovery) {
-        oc_ri_remove_timed_event_callback(cb, &oc_ri_remove_client_cb);
         free_client_cb(cb);
       } else
         cb->observe_seq = client_response.observe_option;
@@ -952,64 +814,67 @@ oc_client_cb_t *
 oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
                     oc_method_t method)
 {
-  oc_client_cb_t *cb = (oc_client_cb_t *)oc_list_head(client_cbs);
+    oc_client_cb_t *cb = (oc_client_cb_t *)oc_list_head(client_cbs);
 
-  while (cb != NULL) {
-    if (oc_string_len(cb->uri) == strlen(uri) &&
-        strncmp(oc_string(cb->uri), uri, strlen(uri)) == 0 &&
-        memcmp(&cb->server.endpoint, &server->endpoint,
-               sizeof(oc_endpoint_t)) == 0 &&
-        cb->method == method)
-      return cb;
+    while (cb != NULL) {
+        if (oc_string_len(cb->uri) == strlen(uri) &&
+          strncmp(oc_string(cb->uri), uri, strlen(uri)) == 0 &&
+          memcmp(&cb->server.endpoint, &server->endpoint,
+            sizeof(oc_endpoint_t)) == 0 &&
+          cb->method == method) {
+            return cb;
+        }
 
-    cb = cb->next;
-  }
+        cb = cb->next;
+    }
 
-  return cb;
+    return cb;
+}
+
+static void
+oc_ri_remove_cb(struct os_event *ev)
+{
+    struct oc_client_cb_s *cb;
+
+    cb = ev->ev_arg;
+
+    free_client_cb(cb);
 }
 
 oc_client_cb_t *
 oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
                       oc_method_t method, void *handler, oc_qos_t qos)
 {
-  oc_client_cb_t *cb = oc_memb_alloc(&client_cbs_s);
-  if (!cb)
+    oc_client_cb_t *cb;
+
+    cb = os_memblock_get(&oc_client_cbs);
+    if (!cb) {
+        return NULL;
+    }
+    cb->mid = coap_get_mid();
+    oc_new_string(&cb->uri, uri);
+    cb->method = method;
+    cb->qos = qos;
+    cb->handler = handler;
+    cb->token_len = 8;
+    int i = 0;
+    uint16_t r;
+    while (i < cb->token_len) {
+        r = oc_random_rand();
+        memcpy(cb->token + i, &r, sizeof(r));
+        i += sizeof(r);
+    }
+    cb->discovery = false;
+    cb->timestamp = oc_clock_time();
+    cb->observe_seq = -1;
+    memcpy(&cb->server, server, sizeof(oc_server_handle_t));
+
+    os_callout_init(&cb->callout, oc_evq_get(), oc_ri_remove_cb, cb);
+
+    oc_list_add(client_cbs, cb);
     return cb;
-
-  cb->mid = coap_get_mid();
-  oc_new_string(&cb->uri, uri);
-  cb->method = method;
-  cb->qos = qos;
-  cb->handler = handler;
-  cb->token_len = 8;
-  int i = 0;
-  uint16_t r;
-  while (i < cb->token_len) {
-    r = oc_random_rand();
-    memcpy(cb->token + i, &r, sizeof(r));
-    i += sizeof(r);
-  }
-  cb->discovery = false;
-  cb->timestamp = oc_clock_time();
-  cb->observe_seq = -1;
-  memcpy(&cb->server, server, sizeof(oc_server_handle_t));
-
-  oc_list_add(client_cbs, cb);
-  return cb;
 }
 #endif /* OC_CLIENT */
-
-OC_PROCESS_THREAD(timed_callback_events, ev, data)
-{
-  OC_PROCESS_BEGIN();
-  while (1) {
-    OC_PROCESS_YIELD();
-    if (ev == OC_PROCESS_EVENT_TIMER) {
-      check_event_callbacks();
-    }
-  }
-  OC_PROCESS_END();
-}
 
 // TODO:
 // resource collections

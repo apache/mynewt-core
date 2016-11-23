@@ -54,6 +54,8 @@ typedef enum os_task_state {
 #define OS_TASK_FLAG_NO_TIMEOUT     (0x01U)
 #define OS_TASK_FLAG_SEM_WAIT       (0x02U)
 #define OS_TASK_FLAG_MUTEX_WAIT     (0x04U)
+#define OS_TASK_FLAG_EVQ_WAIT       (0x08U)
+#define OS_TASK_FLAG_LOCK_HELD      (0x10U)
 
 typedef void (*os_task_func_t)(void *);
 
@@ -64,12 +66,13 @@ struct os_task {
     os_stack_t *t_stacktop;
 
     uint16_t t_stacksize;
-    uint16_t t_pad;
-
     uint8_t t_taskid;
     uint8_t t_prio;
+
     uint8_t t_state;
     uint8_t t_flags;
+    uint8_t t_lockcnt;
+    uint8_t t_pad;
 
     const char *t_name;
     os_task_func_t t_func;

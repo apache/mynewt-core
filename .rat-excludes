@@ -68,6 +68,13 @@ gcc_startup_nrf52_split.s
 # Nordic nRF52 SDK - BSD License.
 compiler_abstraction.h
 nrf.h
+nrf52_name_change.h
+system_nrf51422.c
+arm_startup_nrf51.s
+arm_startup_nrf52.s
+uicr_config.h
+iar_startup_nrf51.s
+iar_startup_nrf52.s
 
 # STM32CubeF4  - BSD License.
 stm32f4xx_hal_conf.h

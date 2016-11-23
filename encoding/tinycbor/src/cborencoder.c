@@ -334,6 +334,7 @@ CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
     return encode_number(encoder, value, SimpleTypesType << MajorTypeShift);
 }
 
+#if FLOAT_SUPPORT
 /**
  * Appends the floating-point value of type \a fpType and pointed to by \a
  * value to the CBOR stream provided by \a encoder. The value of \a fpType must
@@ -361,6 +362,7 @@ CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, cons
     ++encoder->added;
     return append_to_buffer(encoder, buf, size + 1);
 }
+#endif
 
 /**
  * Appends the CBOR tag \a tag to the CBOR stream provided by \a encoder.

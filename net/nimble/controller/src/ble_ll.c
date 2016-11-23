@@ -1092,6 +1092,11 @@ ble_ll_flush_pkt_queue(struct ble_ll_pkt_q *pktq)
 /**
  * Called to initialize a mbuf used by the controller
  *
+ * NOTE: this is only used when the mbuf is created by the controller;
+ * it should not be used for data packets (ACL data packets) that come from
+ * the host. This routine assumes that the entire pdu length can fit in
+ * one mbuf contiguously.
+ *
  * @param m
  * @param pdulen
  * @param hdr
@@ -1216,8 +1221,8 @@ ble_ll_init(void)
     lldata = &g_ble_ll_data;
 
     /* Set acl pkt size and number */
-    lldata->ll_num_acl_pkts = MYNEWT_VAL(BLE_LL_ACL_PKT_COUNT);
-    lldata->ll_acl_pkt_size = MYNEWT_VAL(BLE_LL_ACL_PKT_SIZE);
+    lldata->ll_num_acl_pkts = MYNEWT_VAL(BLE_ACL_BUF_COUNT);
+    lldata->ll_acl_pkt_size = MYNEWT_VAL(BLE_ACL_BUF_SIZE);
 
     /* Initialize eventq */
     os_eventq_init(&lldata->ll_evq);

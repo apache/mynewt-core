@@ -52,6 +52,14 @@ struct nrf51_hal_i2c_cfg {
     uint32_t i2c_frequency;
 };
 
+/* SPI configuration (used for both master and slave) */
+struct nrf51_hal_spi_cfg {
+    uint8_t sck_pin;
+    uint8_t mosi_pin;
+    uint8_t miso_pin;
+    uint8_t ss_pin;
+};
+
 struct hal_flash;
 extern const struct hal_flash nrf51_flash_dev;
 

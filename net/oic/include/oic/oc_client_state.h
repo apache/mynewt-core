@@ -51,23 +51,23 @@ typedef oc_discovery_flags_t(oc_discovery_cb_t)(const char *, const char *,
 
 typedef void (*oc_response_handler_t)(oc_client_response_t *);
 
-typedef struct oc_client_cb_s
-{
-  struct oc_client_cb_s *next;
-  oc_string_t uri;
-  uint8_t token[COAP_TOKEN_LEN];
-  uint8_t token_len;
-  uint16_t mid;
+typedef struct oc_client_cb_s {
+    struct oc_client_cb_s *next;
+    struct os_callout callout;
+    oc_string_t uri;
+    uint8_t token[COAP_TOKEN_LEN];
+    uint8_t token_len;
+    uint16_t mid;
 
-  oc_server_handle_t server;
+    oc_server_handle_t server;
 
-  void *handler;
+    void *handler;
 
-  bool discovery;
-  int32_t observe_seq;
-  oc_clock_time_t timestamp;
-  oc_qos_t qos;
-  oc_method_t method;
+    bool discovery;
+    int32_t observe_seq;
+    oc_clock_time_t timestamp;
+    oc_qos_t qos;
+    oc_method_t method;
 } oc_client_cb_t;
 
 bool oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint);

@@ -30,10 +30,6 @@
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
-#ifdef NRF51
-#include "app_util_platform.h"
-#include "app_error.h"
-#endif
 
 /* The spi txrx callback */
 struct sblinky_spi_cb_arg
@@ -420,7 +416,7 @@ init_tasks(void)
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
-#ifdef SPI_SLAVE
+#if defined(SPI_SLAVE) || defined(SPI_MASTER)
     pstack = malloc(sizeof(os_stack_t)*TASK1_STACK_SIZE);
     assert(pstack);
 

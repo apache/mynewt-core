@@ -961,25 +961,24 @@ ble_hci_trans_reset(void)
 int
 ble_hci_uart_init(void)
 {
+    int acl_data_length;
     int acl_block_size;
     int rc;
 
     ble_hci_uart_free_mem();
 
     /*
-     * XXX: For now, we will keep the ACL buffer size such that it can
-     * accommodate BLE_MBUF_PAYLOAD_SIZE. It should be possible to make this
-     * user defined but more testing would need to be done in that case. The
-     * MBUF payload size must accommodate the HCI data header size plus the
-     * maximum ACL data packet length.
-     *
-     * XXX: Should the max acl data length be part of config?
+     * The MBUF payload size must accommodate the HCI data header size plus the
+     * maximum ACL data packet length. The ACL block size is the size of the
+     * mbufs we will allocate.
      */
-    acl_block_size = BLE_MBUF_PAYLOAD_SIZE + BLE_MBUF_MEMBLOCK_OVERHEAD;
+    acl_data_length = MYNEWT_VAL(BLE_ACL_BUF_SIZE);
+    ble_hci_uart_max_acl_datalen = acl_data_length;
+    acl_block_size = acl_data_length + BLE_MBUF_MEMBLOCK_OVERHEAD +
+        BLE_HCI_DATA_HDR_SZ;
     acl_block_size = OS_ALIGN(acl_block_size, OS_ALIGNMENT);
-    ble_hci_uart_max_acl_datalen = BLE_MBUF_PAYLOAD_SIZE - BLE_HCI_DATA_HDR_SZ;
     rc = mem_malloc_mempool(&ble_hci_uart_acl_pool,
-                            MYNEWT_VAL(BLE_HCI_ACL_BUF_COUNT),
+                            MYNEWT_VAL(BLE_ACL_BUF_COUNT),
                             acl_block_size,
                             "ble_hci_uart_acl_pool",
                             &ble_hci_uart_acl_buf);
@@ -989,7 +988,7 @@ ble_hci_uart_init(void)
     }
 
     rc = os_mbuf_pool_init(&ble_hci_uart_acl_mbuf_pool, &ble_hci_uart_acl_pool,
-                           acl_block_size, MYNEWT_VAL(BLE_HCI_ACL_BUF_COUNT));
+                           acl_block_size, MYNEWT_VAL(BLE_ACL_BUF_COUNT));
     assert(rc == 0);
 
     /*

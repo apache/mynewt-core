@@ -91,8 +91,8 @@ extern os_stack_t eventq_task_stack_poll_single_s[POLL_STACK_SIZE];
 
 /* Define the task stack for the eventq_task_poll_single_receive */
 #define RECEIVE_TASK_POLL_SINGLE_PRIO     (8)
-struct os_task eventq_task_poll_single_r;
-os_stack_t eventq_task_stack_poll_single_r[POLL_STACK_SIZE];
+extern struct os_task eventq_task_poll_single_r;
+extern os_stack_t eventq_task_stack_poll_single_r[POLL_STACK_SIZE];
 
 void eventq_task_send(void *arg);
 void eventq_task_receive(void *arg);

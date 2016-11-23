@@ -39,13 +39,7 @@
 #define OCF_MAIN_TASK_STACK_SIZE    (OS_STACK_ALIGN(512))
 static os_stack_t ocf_stack[OCF_MAIN_TASK_STACK_SIZE];
 struct os_task ocf_main_task;
-
-/** Auxilliary task for handling events from library packages. */
-#define OCF_AUX_TASK_PRIO           (9)
-#define OCF_AUX_TASK_STACK_SIZE     (OS_STACK_ALIGN(336))
-struct os_eventq ocf_aux_evq;
-static os_stack_t ocf_aux_stack[OCF_AUX_TASK_STACK_SIZE];
-struct os_task ocf_aux_task;
+struct os_eventq ocf_main_evq;
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
 static void issue_requests(void);
@@ -118,6 +112,7 @@ register_resources(void)
 static char light_1[MAX_URI_LENGTH];
 static oc_server_handle_t light_server;
 static bool light_state = false;
+static struct os_callout callout;
 
 static void
 set_device_custom_property(void *data)
@@ -125,12 +120,11 @@ set_device_custom_property(void *data)
     oc_set_custom_device_property(purpose, "operate mynewt-light");
 }
 
-static oc_event_callback_retval_t
-stop_observe(void *data)
+static void
+stop_observe(struct os_event *ev)
 {
     PRINT("Stopping OBSERVE\n");
     oc_stop_observe(light_1, &light_server);
-    return DONE;
 }
 
 static void
@@ -191,7 +185,7 @@ discovery(const char *di, const char *uri, oc_string_array_t types,
 
             oc_do_observe(light_1, &light_server, NULL, &observe_light,
                           LOW_QOS);
-            oc_set_delayed_callback(NULL, &stop_observe, 30);
+            os_callout_reset(&callout, 30 * OS_TICKS_PER_SEC);
             return OC_STOP_DISCOVERY;
         }
     }
@@ -230,40 +224,16 @@ oc_handler_t ocf_handler = {
 #endif
  };
 
-struct os_sem ocf_main_loop_sem;
-
-void
-oc_signal_main_loop(void)
-{
-     os_sem_release(&ocf_main_loop_sem);
-}
-
 static void
 ocf_main_task_handler(void *arg)
 {
-    os_sem_init(&ocf_main_loop_sem, 1);
-
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
+    os_callout_init(&callout, &ocf_main_evq, stop_observe, NULL);
+#endif
     while (1) {
-        uint32_t ticks;
-        oc_clock_time_t next_event;
-        next_event = oc_main_poll();
-        ticks = oc_clock_time();
-        if (next_event == 0) {
-            ticks = OS_TIMEOUT_NEVER;
-        } else {
-            ticks = next_event - ticks;
-        }
-        os_sem_pend(&ocf_main_loop_sem, ticks);
+        os_eventq_run(&ocf_main_evq);
     }
     oc_main_shutdown();
-}
-
-static void
-ocf_aux_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&ocf_aux_evq);
-    }
 }
 
 static void
@@ -276,18 +246,13 @@ ocf_init_tasks(void)
             OCF_MAIN_TASK_STACK_SIZE);
     assert(rc == 0);
 
-    oc_main_init(&ocf_handler);
-
     /* Initialize eventq */
-    os_eventq_init(&ocf_aux_evq);
+    os_eventq_init(&ocf_main_evq);
 
     /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&ocf_aux_evq);
+    os_eventq_dflt_set(&ocf_main_evq);
 
-    rc = os_task_init(&ocf_aux_task, "ocf_aux", ocf_aux_task_handler, NULL,
-            OCF_AUX_TASK_PRIO, OS_WAIT_FOREVER, ocf_aux_stack,
-            OCF_AUX_TASK_STACK_SIZE);
-    assert(rc == 0);
+    oc_main_init(&ocf_handler);
 }
 
 int

@@ -25,3 +25,4 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
+    - encoding/tinycbor

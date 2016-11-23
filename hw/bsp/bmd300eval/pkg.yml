@@ -28,8 +28,55 @@ pkg.keywords:
 
 pkg.cflags:
     # Nordic SDK files require these defines.
+    - '-DADC_ENABLED=0'
+    - '-DCLOCK_ENABLED=1'
+    - '-DCOMP_ENABLED=1'
+    - '-DEGU_ENABLED=0'
+    - '-DGPIOTE_ENABLED=1'
+    - '-DI2S_ENABLED=1'
+    - '-DLPCOMP_ENABLED=1'
     - '-DNRF52'
+    - '-DPDM_ENABLED=0'
+    - '-DPERIPHERAL_RESOURCE_SHARING_ENABLED=1'
+    - '-DPWM0_ENABLED=1'
+    - '-DPWM1_ENABLED=0'
+    - '-DPWM2_ENABLED=0'
+    - '-DQDEC_ENABLED=1'
+    - '-DRNG_ENABLED=1'
+    - '-DRTC0_ENABLED=0'
+    - '-DRTC1_ENABLED=0'
+    - '-DRTC2_ENABLED=0'
+    - '-DSAADC_ENABLED=1'
+    - '-DSPI0_CONFIG_MISO_PIN=25'
+    - '-DSPI0_CONFIG_MOSI_PIN=24'
+    - '-DSPI0_CONFIG_SCK_PIN=23'
+    - '-DSPI0_ENABLED=1'
+    - '-DSPI0_USE_EASY_DMA=1'
+    - '-DSPI1_ENABLED=0'
+    - '-DSPI2_ENABLED=0'
+    - '-DSPIS0_CONFIG_MISO_PIN=25'
+    - '-DSPIS0_CONFIG_MOSI_PIN=24'
+    - '-DSPIS0_CONFIG_SCK_PIN=23'
+    - '-DSPIS0_ENABLED=1'
+    - '-DSPIS1_CONFIG_MISO_PIN=4'
+    - '-DSPIS1_CONFIG_MOSI_PIN=3'
+    - '-DSPIS1_CONFIG_SCK_PIN=2'
+    - '-DSPIS1_ENABLED=0'
+    - '-DSPIS2_ENABLED=0'
     - '-DSPI_MASTER_0_ENABLE'
+    - '-DTIMER0_ENABLED=1'
+    - '-DTIMER1_ENABLED=0'
+    - '-DTIMER2_ENABLED=0'
+    - '-DTIMER3_ENABLED=0'
+    - '-DTIMER4_ENABLED=0'
+    - '-DTWI0_CONFIG_SCL=0'
+    - '-DTWI0_CONFIG_SDA=1'
+    - '-DTWI0_ENABLED=1'
+    - '-DTWI1_ENABLED=1'
+    - '-DTWIS0_ENABLED=1'
+    - '-DTWIS1_ENABLED=0'
+    - '-DUART0_ENABLED=1'
+    - '-DWDT_ENABLED=1'
 
 pkg.deps:
     - boot/bootutil
@@ -39,9 +86,6 @@ pkg.deps:
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf52
-
-pkg.deps.ADC_0:
-    - hw/drivers/adc/adc_nrf52
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
