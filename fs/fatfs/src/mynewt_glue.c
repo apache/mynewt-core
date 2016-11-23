@@ -95,7 +95,7 @@ int fatfs_to_vfs_error(FRESULT res)
         rc = FS_EINVAL;
         break;
     case FR_WRITE_PROTECTED:       /* (10) The physical drive is write protected */
-        // TODO
+        /* TODO: assign correct error */
         break;
     case FR_INVALID_DRIVE:         /* (11) The logical drive number is invalid */
         rc = FS_EHW;
@@ -107,19 +107,19 @@ int fatfs_to_vfs_error(FRESULT res)
         rc = FS_EUNINIT;
         break;
     case FR_MKFS_ABORTED:          /* (14) The f_mkfs() aborted due to any problem */
-        //TODO
+        /* TODO: assign correct error */
         break;
     case FR_TIMEOUT:               /* (15) Could not get a grant to access the volume within defined period */
-        //TODO
+        /* TODO: assign correct error */
         break;
     case FR_LOCKED:                /* (16) The operation is rejected according to the file sharing policy */
-        //TODO
+        /* TODO: assign correct error */
         break;
     case FR_NOT_ENOUGH_CORE:       /* (17) LFN working buffer could not be allocated */
         rc = FS_ENOMEM;
         break;
     case FR_TOO_MANY_OPEN_FILES:   /* (18) Number of open files > _FS_LOCK */
-        //TODO
+        /* TODO: assign correct error */
         break;
     case FR_INVALID_PARAMETER:     /* (19) Given parameter is invalid */
         rc = FS_EINVAL;

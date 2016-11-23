@@ -77,8 +77,9 @@ main(int argc, char **argv)
 
     sysinit();
 
-    //TODO
-    //log_register("fatfs-log", &nffs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    /* TODO:
+     * log_register("fatfs-log", &nffs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+     */
 
     f_mount(&fs, "0:", 0);
 
