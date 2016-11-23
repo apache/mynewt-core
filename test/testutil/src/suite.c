@@ -54,6 +54,13 @@ tu_suite_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg)
     ts_config.ts_suite_init_arg = cb_arg;
 }
 
+void
+tu_suite_set_complete_cb(tu_init_test_fn_t *cb, void *cb_arg)
+{
+    ts_config.ts_suite_complete_cb = cb;
+    ts_config.ts_suite_complete_arg = cb_arg;
+}
+
 /**
  * Configures a callback that gets executed at the end of each test
  * case in the current suite.  This is useful when there are some

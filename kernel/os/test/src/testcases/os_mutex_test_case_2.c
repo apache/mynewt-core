@@ -20,7 +20,9 @@
 
 TEST_CASE(os_mutex_test_case_2)
 {
+#if MYNEWT_VAL(SELFTEST)
     sysinit();
+#endif
 
     g_mutex_test = 2;
     g_task1_val = 0;
@@ -41,5 +43,7 @@ TEST_CASE(os_mutex_test_case_2)
     os_task_init(&task4, "task4", mutex_task4_handler, NULL, TASK4_PRIO, 
             OS_WAIT_FOREVER, stack4, sizeof(stack4));
  
+#if MYNEWT_VAL(SELFTEST)
     os_start();
+#endif
 }
