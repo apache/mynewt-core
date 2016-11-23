@@ -26,37 +26,32 @@
 extern "C" {
 #endif
 
-typedef struct
-{
-  uint16_t port;
-  uint8_t address[16];
-  uint8_t scope;
+typedef struct {
+    uint16_t port;
+    uint8_t address[16];
+    uint8_t scope;
 } oc_ipv6_addr_t;
 
-typedef struct
-{
-  uint8_t type;
-  uint8_t address[6];
-  uint16_t conn_handle;
+typedef struct {
+    uint8_t type;
+    uint8_t address[6];
+    uint16_t conn_handle;
 } oc_le_addr_t;
 
-typedef struct
-{
-  enum transport_flags
-  {
-    IP = 1 << 0,
-    GATT = 1 << 1,
-    IPSP = 1 << 2,
-    MULTICAST = 1 << 3,
-    SECURED = 1 << 4,
-    SERIAL = 1 <<5,
-  } flags;
+typedef struct oc_endpoint {
+    enum transport_flags {
+        IP = 1 << 0,
+        GATT = 1 << 1,
+        IPSP = 1 << 2,
+        MULTICAST = 1 << 3,
+        SECURED = 1 << 4,
+        SERIAL = 1 <<5,
+    } flags;
 
-  union
-  {
-    oc_ipv6_addr_t ipv6_addr;
-    oc_le_addr_t bt_addr;
-  };
+    union {
+        oc_ipv6_addr_t ipv6_addr;
+        oc_le_addr_t bt_addr;
+    };
 } oc_endpoint_t;
 
 #define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)                \
@@ -64,13 +59,12 @@ typedef struct
                             .ipv6_addr = {.port = __port__,                    \
                                           .address = { __VA_ARGS__ } } }
 
-typedef struct oc_message_s
-{
-  struct oc_message_s *next;
-  oc_endpoint_t endpoint;
-  size_t length;
-  uint8_t ref_count;
-  uint8_t data[MAX_PAYLOAD_SIZE];
+typedef struct oc_message {
+    struct oc_message *next;
+    oc_endpoint_t endpoint;
+    size_t length;
+    uint8_t ref_count;
+    uint8_t data[MAX_PAYLOAD_SIZE];
 } oc_message_t;
 
 void oc_send_buffer(oc_message_t *message);

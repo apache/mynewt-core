@@ -37,8 +37,8 @@ static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS * 2,
 
 static void oc_buffer_handler(struct os_event *);
 
-static struct oc_message_s *oc_buffer_inq;
-static struct oc_message_s *oc_buffer_outq;
+static struct oc_message *oc_buffer_inq;
+static struct oc_message *oc_buffer_outq;
 static struct os_event oc_buffer_ev = {
     .ev_cb = oc_buffer_handler
 };
@@ -89,11 +89,11 @@ oc_message_unref(oc_message_t *message)
 }
 
 static void
-oc_queue_msg(struct oc_message_s **head, struct oc_message_s *msg)
+oc_queue_msg(struct oc_message **head, struct oc_message *msg)
 {
-    struct oc_message_s *tmp;
+    struct oc_message *tmp;
 
-    msg->next = NULL; /* oc_message_s has been oc_list once, clear next */
+    msg->next = NULL; /* oc_message has been oc_list once, clear next */
     if (!*head) {
         *head = msg;
     } else {
@@ -117,7 +117,7 @@ oc_send_message(oc_message_t *message)
 }
 
 static void
-oc_buffer_tx(struct oc_message_s *message)
+oc_buffer_tx(struct oc_message *message)
 {
 #ifdef OC_CLIENT
     if (message->endpoint.flags & MULTICAST) {
@@ -153,7 +153,7 @@ oc_buffer_tx(struct oc_message_s *message)
 }
 
 static void
-oc_buffer_rx(struct oc_message_s *msg)
+oc_buffer_rx(struct oc_message *msg)
 {
 #ifdef OC_SECURITY
     uint8_t b = (uint8_t)(msg->data[0];
@@ -175,7 +175,7 @@ oc_buffer_rx(struct oc_message_s *msg)
 static void
 oc_buffer_handler(struct os_event *ev)
 {
-    struct oc_message_s *msg;
+    struct oc_message *msg;
 
     while (oc_buffer_outq || oc_buffer_inq) {
         msg = oc_buffer_outq;

@@ -27,29 +27,29 @@ extern "C" {
 struct os_eventq *oc_evq_get(void);
 void oc_evq_set(struct os_eventq *evq);
 
-struct oc_message_s;
+struct oc_message;
 
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
 int oc_connectivity_init_ip(void);
 void oc_connectivity_shutdown_ip(void);
-void oc_send_buffer_ip(struct oc_message_s *message);
-void oc_send_buffer_ip_mcast(struct oc_message_s *message);
-struct oc_message_s *oc_attempt_rx_ip(void);
+void oc_send_buffer_ip(struct oc_message *message);
+void oc_send_buffer_ip_mcast(struct oc_message *message);
+struct oc_message *oc_attempt_rx_ip(void);
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
 int oc_connectivity_init_gatt(void);
 void oc_connectivity_shutdown_gatt(void);
-void oc_send_buffer_gatt(struct oc_message_s *message);
-void oc_send_buffer_gatt_mcast(struct oc_message_s *message);
-struct oc_message_s *oc_attempt_rx_gatt(void);
+void oc_send_buffer_gatt(struct oc_message *message);
+void oc_send_buffer_gatt_mcast(struct oc_message *message);
+struct oc_message *oc_attempt_rx_gatt(void);
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 int oc_connectivity_init_serial(void);
 void oc_connectivity_shutdown_serial(void);
-void oc_send_buffer_serial(struct oc_message_s *message);
-struct oc_message_s *oc_attempt_rx_serial(void);
+void oc_send_buffer_serial(struct oc_message *message);
+struct oc_message *oc_attempt_rx_serial(void);
 #endif
 
 #ifdef __cplusplus
