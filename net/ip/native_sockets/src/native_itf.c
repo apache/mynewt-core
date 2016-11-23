@@ -166,6 +166,9 @@ native_sock_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
         if (if_nametoindex(ifa->ifa_name) != mi->mif_idx) {
             continue;
         }
+        if (ifa->ifa_addr == NULL) {
+            continue;
+        }
         if (ifa->ifa_addr->sa_family == AF_INET) {
             sin = (struct sockaddr_in *)ifa->ifa_addr;
             if (addrcmp(MN_AF_INET, &sin->sin_addr,

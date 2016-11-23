@@ -1,11 +1,11 @@
 # RELEASE NOTES
 
-30 Apr 2016 - Apache Mynewt v0.9.0
+22 Nov 2016 - Apache Mynewt v1.0.0, beta 1
 
 For full release notes, please visit the
 [Apache Mynewt Wiki](https://cwiki.apache.org/confluence/display/MYNEWT/Release+Notes).
 
-This is the fourth source release of Apache Mynewt Core.  For more
+This is the fifth source release of Apache Mynewt Core.  For more
 information on Apache Mynewt, please visit the
 [Apache Mynewt Website](https://mynewt.apache.org/).
 
