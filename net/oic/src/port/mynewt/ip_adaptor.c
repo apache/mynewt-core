@@ -20,9 +20,11 @@
 #include <syscfg/syscfg.h>
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
 #include <assert.h>
+#include <string.h>
+
 #include <os/os.h>
 #include <os/endian.h>
-#include <string.h>
+
 #include <log/log.h>
 #include <mn_socket/mn_socket.h>
 
@@ -75,7 +77,7 @@ oc_send_buffer_ip_int(oc_message_t *message, int mcast)
            sizeof(to.msin6_addr));
 
     /* put on an mbuf header to make the socket happy */
-    memset(&m,0, sizeof(m));
+    memset(&m, 0, sizeof(m));
     m.om_data = message->data;
     m.om_len = message->length;
     to.msin6_scope_id = message->endpoint.ipv6_addr.scope;
@@ -113,91 +115,73 @@ oc_send_buffer_ip_int(oc_message_t *message, int mcast)
 }
 
 void
-oc_send_buffer_ip(oc_message_t *message) {
+oc_send_buffer_ip(oc_message_t *message)
+{
     oc_send_buffer_ip_int(message, 0);
 }
 void
-oc_send_buffer_ip_mcast(oc_message_t *message) {
+oc_send_buffer_ip_mcast(oc_message_t *message)
+{
     oc_send_buffer_ip_int(message, 1);
 }
 
-oc_message_t *
-oc_attempt_rx_ip_sock(struct mn_socket * rxsock) {
+static struct os_mbuf *
+oc_attempt_rx_ip_sock(struct mn_socket * rxsock)
+{
     int rc;
-    struct os_mbuf *m = NULL;
-    struct os_mbuf_pkthdr *pkt;
-    oc_message_t *message = NULL;
+    struct os_mbuf *m;
+    struct os_mbuf *n;
+    struct oc_endpoint *oe;
     struct mn_sockaddr_in6 from;
 
     LOG("oc_transport_ip attempt rx from %p\n", rxsock);
 
-    rc= mn_recvfrom(rxsock, &m, (struct mn_sockaddr *) &from);
-
-    if ( rc != 0) {
+    rc = mn_recvfrom(rxsock, &n, (struct mn_sockaddr *) &from);
+    if (rc != 0) {
         return NULL;
     }
+    assert(OS_MBUF_IS_PKTHDR(n));
 
-    if (!OS_MBUF_IS_PKTHDR(m)) {
-        goto rx_attempt_err;
-    }
-
-    pkt = OS_MBUF_PKTHDR(m);
-
-    LOG("rx from %p %p-%u\n", rxsock, pkt, pkt->omp_len);
-
-    message = oc_allocate_message();
-    if (NULL == message) {
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
         ERROR("Could not allocate OC message buffer\n");
         goto rx_attempt_err;
     }
+    OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
+    SLIST_NEXT(m, om_next) = n;
 
-    if (pkt->omp_len > MAX_PAYLOAD_SIZE) {
-        ERROR("Message to large for OC message buffer\n");
-        goto rx_attempt_err;
-    }
-    /* copy to message from mbuf chain */
-    rc = os_mbuf_copydata(m, 0, pkt->omp_len, message->data);
-    if (rc != 0) {
-        ERROR("Failed to copy message from mbuf to OC message buffer \n");
-        goto rx_attempt_err;
-    }
+    oe = OC_MBUF_ENDPOINT(m);
 
-    os_mbuf_free_chain(m);
+    LOG("rx from %p %p-%u\n", rxsock, m, OS_MBUF_PKTHDR(m)->omp_len);
 
-    message->endpoint.flags = IP;
-    message->length = pkt->omp_len;
-    memcpy(&message->endpoint.ipv6_addr.address, &from.msin6_addr,
-             sizeof(message->endpoint.ipv6_addr.address));
-    message->endpoint.ipv6_addr.scope = from.msin6_scope_id;
-    message->endpoint.ipv6_addr.port = ntohs(from.msin6_port);
+    oe->flags = IP;
+    memcpy(&oe->ipv6_addr.address, &from.msin6_addr,
+             sizeof(oe->ipv6_addr.address));
+    oe->ipv6_addr.scope = from.msin6_scope_id;
+    oe->ipv6_addr.port = ntohs(from.msin6_port);
 
-    LOG("Successfully rx from %p len %lu\n", rxsock,
-        (unsigned long)message->length);
-    return message;
+    LOG("Successfully rx from %p\n", rxsock);
+
+    return m;
 
     /* add the addr info to the message */
 rx_attempt_err:
-    if (m) {
-        os_mbuf_free_chain(m);
-    }
-
-    if (message) {
-        oc_message_unref(message);
-    }
-
+    os_mbuf_free_chain(n);
     return NULL;
 }
 
-oc_message_t *
-oc_attempt_rx_ip(void) {
-    oc_message_t *pmsg;
-    pmsg = oc_attempt_rx_ip_sock(ucast);
+static struct os_mbuf *
+oc_attempt_rx_ip(void)
+{
+    struct os_mbuf *m;
+
+    m = oc_attempt_rx_ip_sock(ucast);
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-    if (pmsg == NULL ) {
-        pmsg = oc_attempt_rx_ip_sock(mcast);
+    if (m == NULL ) {
+        m = oc_attempt_rx_ip_sock(mcast);
     }
 #endif
-    return pmsg;
+    return m;
 }
 
 static void oc_socks_readable(void *cb_arg, int err);
@@ -233,10 +217,10 @@ oc_connectivity_shutdown_ip(void)
 static void
 oc_event_ip(struct os_event *ev)
 {
-    oc_message_t *pmsg;
+    struct os_mbuf *m;
 
-    while ((pmsg = oc_attempt_rx_ip()) != NULL) {
-        oc_network_event(pmsg);
+    while ((m = oc_attempt_rx_ip()) != NULL) {
+        oc_recv_message(m);
     }
 }
 

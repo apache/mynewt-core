@@ -109,75 +109,58 @@ gatt_svr_chr_access_coap(uint16_t conn_handle, uint16_t attr_handle,
     return 0;
 }
 
-oc_message_t *
+static struct os_mbuf *
 oc_attempt_rx_gatt(void)
 {
     int rc;
-    struct os_mbuf *m = NULL;
+    struct os_mbuf *m;
+    struct os_mbuf *n;
     struct os_mbuf_pkthdr *pkt;
+    struct oc_endpoint *oe;
     uint16_t conn_handle;
-    oc_message_t *message = NULL;
 
     LOG("oc_transport_gatt attempt rx\n");
 
     /* get an mbuf from the queue */
-    m = os_mqueue_get(&ble_coap_mq);
-    if (NULL == m) {
-        ERROR("oc_transport_gatt: Woke for for receive but found no mbufs\n");
-        goto rx_attempt_err;
+    n = os_mqueue_get(&ble_coap_mq);
+    if (NULL == n) {
+        ERROR("oc_transport_gatt: Woke for receive but found no mbufs\n");
+        return NULL;
     }
 
-    if (!OS_MBUF_IS_PKTHDR(m)) {
-        ERROR("oc_transport_gatt: received mbuf that wasn't a packet header\n");
-        goto rx_attempt_err;
-    }
+    pkt = OS_MBUF_PKTHDR(n);
 
-    pkt = OS_MBUF_PKTHDR(m);
-
-    LOG("oc_transport_gatt rx %p-%u\n", pkt, pkt->omp_len);
     /* get the conn handle from the end of the message */
-    rc = os_mbuf_copydata(m, pkt->omp_len - sizeof(conn_handle),
+    rc = os_mbuf_copydata(n, pkt->omp_len - sizeof(conn_handle),
                           sizeof(conn_handle), &conn_handle);
     if (rc != 0) {
-        ERROR("Failed to retrieve conn_handle from mbuf \n");
+        ERROR("Failed to retrieve conn_handle from mbuf\n");
         goto rx_attempt_err;
     }
 
     /* trim conn_handle from the end */
-    os_mbuf_adj(m, - sizeof(conn_handle));
+    os_mbuf_adj(n, - sizeof(conn_handle));
 
-    message = oc_allocate_message();
-    if (NULL == message) {
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
         ERROR("Could not allocate OC message buffer\n");
         goto rx_attempt_err;
     }
+    OS_MBUF_PKTHDR(m)->omp_len = pkt->omp_len;
+    SLIST_NEXT(m, om_next) = n;
 
-    if (pkt->omp_len > MAX_PAYLOAD_SIZE) {
-        ERROR("Message to large for OC message buffer\n");
-        goto rx_attempt_err;
-    }
-    /* copy to message from mbuf chain */
-    rc = os_mbuf_copydata(m, 0, pkt->omp_len, message->data);
-    if (rc != 0) {
-        ERROR("Failed to copy message from mbuf to OC message buffer \n");
-        goto rx_attempt_err;
-    }
+    oe = OC_MBUF_ENDPOINT(m);
 
-    os_mbuf_free_chain(m);
-    message->endpoint.flags = GATT;
-    message->endpoint.bt_addr.conn_handle = conn_handle;
-    message->length = pkt->omp_len;
-    LOG("Successfully rx length %lu\n", (unsigned long)message->length);
-    return message;
+    oe->flags = GATT;
+    oe->bt_addr.conn_handle = conn_handle;
+
+    LOG("oc_transport_gatt rx %p-%u\n", pkt, pkt->omp_len);
+
+    return m;
 
     /* add the addr info to the message */
 rx_attempt_err:
-    if (m) {
-        os_mbuf_free_chain(m);
-    }
-    if (message) {
-        oc_message_unref(message);
-    }
+    os_mbuf_free_chain(n);
     return NULL;
 }
 #endif
@@ -204,10 +187,10 @@ ble_coap_gatt_srv_init(void)
 static void
 oc_event_gatt(struct os_event *ev)
 {
-    oc_message_t *pmsg;
+    struct os_mbuf *m;
 
-    while ((pmsg = oc_attempt_rx_gatt()) != NULL) {
-        oc_network_event(pmsg);
+    while ((m = oc_attempt_rx_gatt()) != NULL) {
+        oc_recv_message(m);
     }
 }
 
