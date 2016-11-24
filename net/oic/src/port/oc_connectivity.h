@@ -18,7 +18,6 @@
 #define OC_CONNECTIVITY_H
 
 #include "mynewt/config.h"
-#include "oic/oc_network_events.h"
 #include "oc_log.h"
 #include <stdint.h>
 

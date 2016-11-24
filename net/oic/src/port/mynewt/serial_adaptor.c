@@ -21,15 +21,19 @@
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 
 #include <assert.h>
+
 #include <os/os.h>
+
 #include <shell/shell.h>
+
 #include "oc_buffer.h"
 #include "port/oc_connectivity.h"
 #include "../oc_log.h"
 #include "adaptor.h"
 
-
 struct os_mqueue oc_serial_mqueue;
+
+static struct os_mbuf *oc_attempt_rx_serial(void);
 
 static int
 oc_serial_in(struct os_mbuf *m, void *arg)
@@ -38,17 +42,18 @@ oc_serial_in(struct os_mbuf *m, void *arg)
 }
 
 void
-oc_connectivity_shutdown_serial(void) {
+oc_connectivity_shutdown_serial(void)
+{
     shell_nlip_input_register(NULL, NULL);
 }
 
 static void
 oc_event_serial(struct os_event *ev)
 {
-    oc_message_t *pmsg;
+    struct os_mbuf *m;
 
-    while ((pmsg = oc_attempt_rx_serial()) != NULL) {
-        oc_network_event(pmsg);
+    while ((m = oc_attempt_rx_serial()) != NULL) {
+        oc_recv_message(m);
     }
 }
 
@@ -110,67 +115,39 @@ err:
 
 }
 
-oc_message_t *
-oc_attempt_rx_serial(void) {
-    int rc;
-    struct os_mbuf *m = NULL;
-    struct os_mbuf_pkthdr *pkt;
-    oc_message_t *message = NULL;
+static struct os_mbuf *
+oc_attempt_rx_serial(void)
+{
+    struct os_mbuf *m;
+    struct os_mbuf *n;
+    struct oc_endpoint *oe;
 
     LOG("oc_transport_serial attempt rx\n");
 
     /* get an mbuf from the queue */
-    m = os_mqueue_get(&oc_serial_mqueue);
-    if (NULL == m) {
+    n = os_mqueue_get(&oc_serial_mqueue);
+    if (NULL == n) {
         ERROR("oc_transport_serial: Woke for for receive but found no mbufs\n");
-        goto rx_attempt_err;
+        return NULL;
     }
 
-    if (!OS_MBUF_IS_PKTHDR(m)) {
-        ERROR("oc_transport_serial: received mbuf that wasn't a packet header\n");
-        goto rx_attempt_err;
-    }
-
-    pkt = OS_MBUF_PKTHDR(m);
-
-    LOG("oc_transport_serial rx %p-%u\n", pkt, pkt->omp_len);
-
-    message = oc_allocate_message();
-    if (NULL == message) {
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
         ERROR("Could not allocate OC message buffer\n");
         goto rx_attempt_err;
     }
+    OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
+    SLIST_NEXT(m, om_next) = n;
 
-    if (pkt->omp_len > MAX_PAYLOAD_SIZE) {
-        ERROR("Message to large for OC message buffer\n");
-        goto rx_attempt_err;
-    }
-    /* copy to message from mbuf chain */
-    rc = os_mbuf_copydata(m, 0, pkt->omp_len, message->data);
-    if (rc != 0) {
-        ERROR("Failed to copy message from mbuf to OC message buffer \n");
-        goto rx_attempt_err;
-    }
+    oe = OC_MBUF_ENDPOINT(m);
+    oe->flags = SERIAL;
 
-    os_mbuf_free_chain(m);
+    LOG("oc_transport_serial rx %p-%u\n", n, OS_MBUF_PKTHDR(n)->omp_len);
 
-    message->endpoint.flags = SERIAL;
-    message->length = pkt->omp_len;
+    return m;
 
-    LOG("Successfully rx length %zu\n", message->length);
-    return message;
-
-    /* add the addr info to the message */
 rx_attempt_err:
-    if (m) {
-        os_mbuf_free_chain(m);
-    }
-
-    if (message) {
-        oc_message_unref(message);
-    }
-
+    os_mbuf_free_chain(n);
     return NULL;
 }
-
 #endif

@@ -34,7 +34,6 @@ int oc_connectivity_init_ip(void);
 void oc_connectivity_shutdown_ip(void);
 void oc_send_buffer_ip(struct oc_message *message);
 void oc_send_buffer_ip_mcast(struct oc_message *message);
-struct oc_message *oc_attempt_rx_ip(void);
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
@@ -42,14 +41,12 @@ int oc_connectivity_init_gatt(void);
 void oc_connectivity_shutdown_gatt(void);
 void oc_send_buffer_gatt(struct oc_message *message);
 void oc_send_buffer_gatt_mcast(struct oc_message *message);
-struct oc_message *oc_attempt_rx_gatt(void);
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 int oc_connectivity_init_serial(void);
 void oc_connectivity_shutdown_serial(void);
 void oc_send_buffer_serial(struct oc_message *message);
-struct oc_message *oc_attempt_rx_serial(void);
 #endif
 
 #ifdef __cplusplus

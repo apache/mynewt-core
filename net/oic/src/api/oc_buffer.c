@@ -18,6 +18,7 @@
 
 #include <os/os_eventq.h>
 #include <os/os_mempool.h>
+#include <os/os_mbuf.h>
 
 #include "messaging/coap/engine.h"
 #include "port/oc_signal_main_loop.h"
@@ -37,18 +38,11 @@ static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS * 2,
 
 static void oc_buffer_handler(struct os_event *);
 
-static struct oc_message *oc_buffer_inq;
+static struct os_mqueue oc_inq;
 static struct oc_message *oc_buffer_outq;
 static struct os_event oc_buffer_ev = {
     .ev_cb = oc_buffer_handler
 };
-
-void
-oc_buffer_init(void)
-{
-    os_mempool_init(&oc_buffers, MAX_NUM_CONCURRENT_REQUESTS * 2,
-      sizeof(oc_message_t), oc_buffer_area, "oc_bufs");
-}
 
 oc_message_t *
 oc_allocate_message(void)
@@ -103,10 +97,12 @@ oc_queue_msg(struct oc_message **head, struct oc_message *msg)
 }
 
 void
-oc_recv_message(oc_message_t *message)
+oc_recv_message(struct os_mbuf *m)
 {
-    oc_queue_msg(&oc_buffer_inq, message);
-    os_eventq_put(oc_evq_get(), &oc_buffer_ev);
+    int rc;
+
+    rc = os_mqueue_put(&oc_inq, oc_evq_get(), m);
+    assert(rc == 0);
 }
 
 void
@@ -153,23 +149,52 @@ oc_buffer_tx(struct oc_message *message)
 }
 
 static void
-oc_buffer_rx(struct oc_message *msg)
+oc_buffer_rx(struct os_event *ev)
 {
+    struct oc_message *msg;
+    struct os_mbuf *m;
+#if defined(OC_SECURITY)
+    uint8_t b;
+#endif
+
+    while ((m = os_mqueue_get(&oc_inq)) != NULL) {
+        msg = oc_allocate_message();
+        if (!msg) {
+            ERROR("Could not allocate OC message buffer\n");
+            goto free_msg;
+        }
+        if (OS_MBUF_PKTHDR(m)->omp_len > MAX_PAYLOAD_SIZE) {
+            ERROR("Message to large for OC message buffer\n");
+            goto free_msg;
+        }
+        if (os_mbuf_copydata(m, 0, OS_MBUF_PKTHDR(m)->omp_len, msg->data)) {
+            ERROR("Failed to copy message from mbuf to OC message buffer \n");
+            goto free_msg;
+        }
+        memcpy(&msg->endpoint, OC_MBUF_ENDPOINT(m), sizeof(msg->endpoint));
+        msg->length = OS_MBUF_PKTHDR(m)->omp_len;
+
 #ifdef OC_SECURITY
-    uint8_t b = (uint8_t)(msg->data[0];
-    if (b > 19 && b < 64) {
-        LOG("Inbound network event: encrypted request\n");
-        oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], msg);
-    } else {
+        b = m->om_data[0];
+        if (b > 19 && b < 64) {
+            LOG("Inbound network event: encrypted request\n");
+            oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
+        } else {
+            LOG("Inbound network event: decrypted request\n");
+            coap_receive(msg);
+            oc_message_unref(msg);
+        }
+#else
         LOG("Inbound network event: decrypted request\n");
         coap_receive(msg);
         oc_message_unref(msg);
-    }
-#else
-    LOG("Inbound network event: decrypted request\n");
-    coap_receive(msg);
-    oc_message_unref(msg);
 #endif
+free_msg:
+        os_mbuf_free_chain(m);
+        if (msg) {
+            oc_message_unref(msg);
+        }
+    }
 }
 
 static void
@@ -177,18 +202,21 @@ oc_buffer_handler(struct os_event *ev)
 {
     struct oc_message *msg;
 
-    while (oc_buffer_outq || oc_buffer_inq) {
+    while (oc_buffer_outq) {
         msg = oc_buffer_outq;
         if (msg) {
             oc_buffer_outq = msg->next;
             msg->next = NULL;
             oc_buffer_tx(msg);
         }
-        msg = oc_buffer_inq;
-        if (msg) {
-            oc_buffer_inq = msg->next;
-            msg->next = NULL;
-            oc_buffer_rx(msg);
-        }
     }
 }
+
+void
+oc_buffer_init(void)
+{
+    os_mempool_init(&oc_buffers, MAX_NUM_CONCURRENT_REQUESTS * 2,
+      sizeof(oc_message_t), oc_buffer_area, "oc_bufs");
+    os_mqueue_init(&oc_inq, oc_buffer_rx, NULL);
+}
+

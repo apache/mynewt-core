@@ -61,7 +61,7 @@ struct os_mbuf_pool {
  */
 struct os_mbuf_pkthdr {
     /**
-     * Overall length of the packet. 
+     * Overall length of the packet.
      */
     uint16_t omp_len;
     /**
