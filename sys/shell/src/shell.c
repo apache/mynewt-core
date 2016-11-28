@@ -25,6 +25,7 @@
 #include "syscfg/syscfg.h"
 #include "console/console.h"
 #include "console/prompt.h"
+#include "console/ticks.h"
 #include "os/os.h"
 #include "os/endian.h"
 #include "base64/base64.h"
@@ -43,6 +44,8 @@ static struct os_mqueue g_shell_nlip_mq;
 static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
 int shell_prompt_cmd(int argc, char **argv);
+int shell_ticks_cmd(int argc, char **argv);
+
 
 static void shell_event_console_rdy(struct os_event *ev);
 
@@ -60,6 +63,10 @@ static struct shell_cmd g_shell_help_cmd = {
 static struct shell_cmd g_shell_prompt_cmd = {
    .sc_cmd = "prompt",
    .sc_cmd_func = shell_prompt_cmd
+}; 
+static struct shell_cmd g_shell_ticks_cmd = {
+   .sc_cmd = "ticks",
+   .sc_cmd_func = shell_ticks_cmd
 };
 static struct shell_cmd g_shell_os_tasks_display_cmd = {
     .sc_cmd = "tasks",
@@ -553,7 +560,10 @@ shell_init(void)
     rc = shell_cmd_register(&g_shell_help_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_prompt_cmd);
+   rc = shell_cmd_register(&g_shell_prompt_cmd);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    
+    rc = shell_cmd_register(&g_shell_ticks_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
