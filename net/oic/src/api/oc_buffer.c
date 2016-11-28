@@ -113,35 +113,58 @@ oc_send_message(oc_message_t *message)
 }
 
 static void
-oc_buffer_tx(struct oc_message *message)
+oc_buffer_tx(struct oc_message *msg)
 {
+    struct os_mbuf *m;
+    struct oc_endpoint *oe;
+    int rc;
+
+    /* get a packet header */
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
+        ERROR("oc_buffer_tx: failed to alloc mbuf\n");
+        oc_message_unref(msg);
+        return;
+    }
+
+    /* add this data to the mbuf */
+    rc = os_mbuf_append(m, msg->data, msg->length);
+    if (rc != 0) {
+        ERROR("oc_buffer_tx: could not append data\n");
+        oc_message_unref(msg);
+        return;
+    }
+
+    oe = OC_MBUF_ENDPOINT(m);
+    memcpy(oe, &msg->endpoint, sizeof(msg->endpoint));
+
+    oc_message_unref(msg);
+
 #ifdef OC_CLIENT
-    if (message->endpoint.flags & MULTICAST) {
+    if (oe->flags & MULTICAST) {
         LOG("Outbound network event: multicast request\n");
-        oc_send_multicast_message(message);
-        oc_message_unref(message);
+        oc_send_multicast_message(m);
     } else {
 #endif
 #ifdef OC_SECURITY
         /* XXX convert this */
-        if (message->endpoint.flags & SECURED) {
+        if (oe->flags & SECURED) {
             LOG("Outbound network event: forwarding to DTLS\n");
 
-            if (!oc_sec_dtls_connected(&message->endpoint)) {
+            if (!oc_sec_dtls_connected(oe)) {
                 LOG("Posting INIT_DTLS_CONN_EVENT\n");
                 oc_process_post(&oc_dtls_handler,
-                  oc_events[INIT_DTLS_CONN_EVENT], msg);
+                  oc_events[INIT_DTLS_CONN_EVENT], m);
             } else {
                 LOG("Posting RI_TO_DTLS_EVENT\n");
                 oc_process_post(&oc_dtls_handler,
-                  oc_events[RI_TO_DTLS_EVENT], msg);
+                  oc_events[RI_TO_DTLS_EVENT], m);
             }
         } else
 #endif
         {
             LOG("Outbound network event: unicast message\n");
-            oc_send_buffer(message);
-            oc_message_unref(message);
+            oc_send_buffer(m);
         }
 #ifdef OC_CLIENT
     }

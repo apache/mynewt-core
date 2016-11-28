@@ -68,54 +68,65 @@ oc_network_event_handler_mutex_unlock(void)
 }
 
 void
-oc_send_buffer(oc_message_t *message)
+oc_send_buffer(struct os_mbuf *m)
 {
-    switch (message->endpoint.flags) {
+    struct oc_endpoint *oe;
+
+    oe = OC_MBUF_ENDPOINT(m);
+
+    switch (oe->flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     case IP:
-        oc_send_buffer_ip(message);
+        oc_send_buffer_ip(m);
         break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     case GATT:
-        oc_send_buffer_gatt(message);
+        oc_send_buffer_gatt(m);
         break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     case SERIAL:
-        oc_send_buffer_serial(message);
+        oc_send_buffer_serial(m);
         break;
 #endif
     default:
-        ERROR("Unknown transport option %u\n", message->endpoint.flags);
-        oc_message_unref(message);
+        ERROR("Unknown transport option %u\n", oe->flags);
+        os_mbuf_free_chain(m);
     }
 }
 
-void oc_send_multicast_message(oc_message_t *message)
+void
+oc_send_multicast_message(struct os_mbuf *m)
 {
-    oc_message_add_ref(message);
-
-    /* send on all the transports.  Don't forget to reference the message
-     * so it doesn't get deleted  */
-
+    /*
+     * Send on all the transports.
+     */
+    void (*funcs[])(struct os_mbuf *) = {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    oc_send_buffer_ip_mcast(message);
+        oc_send_buffer_ip_mcast,
 #endif
-
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    /* no multicast for GATT, just send unicast */
-    oc_message_add_ref(message);
-    oc_send_buffer_gatt(message);
+        /* no multicast for GATT, just send unicast */
+        oc_send_buffer_gatt,
 #endif
-
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    /* no multi-cast for serial.  just send unicast */
-    oc_message_add_ref(message);
-    oc_send_buffer_serial(message);
+        /* no multi-cast for serial.  just send unicast */
+        oc_send_buffer_serial,
 #endif
+    };
+    struct os_mbuf *n;
+    int i;
 
-    oc_message_unref(message);
+    for (i = 0; i < (sizeof(funcs) / sizeof(funcs[0])) - 1; i++) {
+        n = os_mbuf_dup(m);
+        funcs[i](m);
+        if (!n) {
+            return;
+        }
+        m = n;
+    }
+    funcs[(sizeof(funcs) / sizeof(funcs[0])) - 1](m);
 }
 
 void

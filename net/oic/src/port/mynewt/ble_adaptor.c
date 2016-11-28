@@ -208,41 +208,19 @@ oc_connectivity_shutdown_gatt(void)
 }
 
 void
-oc_send_buffer_gatt(oc_message_t *message)
+oc_send_buffer_gatt(struct os_mbuf *m)
 {
-    struct os_mbuf *m = NULL;
-    int rc;
+    struct oc_endpoint *oe;
 
-    /* get a packet header */
-    m = os_msys_get_pkthdr(0, 0);
-    if (m == NULL) {
-        ERROR("oc_transport_gatt: No mbuf available\n");
-        goto err;
-    }
-
-    /* add this data to the mbuf */
-    rc = os_mbuf_append(m, message->data, message->length);
-    if (rc != 0) {
-        ERROR("oc_transport_gatt: could not append data \n");
-        goto err;
-    }
+    oe = OC_MBUF_ENDPOINT(m);
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
     ERROR("send not supported on client");
 #endif
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-    ble_gattc_notify_custom(message->endpoint.bt_addr.conn_handle,
-                            g_ble_coap_attr_handle, m);
-    m = NULL;
+    ble_gattc_notify_custom(oe->bt_addr.conn_handle, g_ble_coap_attr_handle, m);
 #endif
-
-err:
-    if (m) {
-        os_mbuf_free_chain(m);
-    }
-    oc_message_unref(message);
-    return;
 }
 
 void
