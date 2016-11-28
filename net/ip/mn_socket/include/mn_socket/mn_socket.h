@@ -126,7 +126,7 @@ extern const uint32_t nm_in6addr_any[4];
  * Structure for multicast join/leave
  */
 struct mn_mreq {
-    uint8_t mm_idx;			/* interface index */
+    uint8_t mm_idx;			/* interface index; must not be 0 */
     uint8_t mm_family;			/* address family */
     union {
         struct mn_in_addr v4;
