@@ -20,9 +20,11 @@
 #include <stdio.h>
 #include "syscfg/syscfg.h"
 #include "console/console.h"
+#include "console/ticks.h"
 #include "os/os_time.h"
 
 #define CONS_OUTPUT_MAX_LINE	128
+
 
 #if MYNEWT_VAL(BASELIBC_PRESENT)
 size_t console_file_write(FILE *p, const char *str, size_t cnt);
@@ -40,12 +42,12 @@ void
 console_printf(const char *fmt, ...)
 {
     va_list args;
-
-    /* Prefix each line with a timestamp. */
-    if (!console_is_midline) {
-        fprintf((FILE *)&console_file, "%lu:", (unsigned long)os_time_get());
+    if (console_get_ticks()) {
+        /* Prefix each line with a timestamp. */
+        if (!console_is_midline) {
+            fprintf((FILE *)&console_file, "%lu:", (unsigned long)os_time_get());
+        }
     }
-
     va_start(args, fmt);
     vfprintf((FILE *)&console_file, fmt, args);
     va_end(args);
@@ -59,11 +61,12 @@ console_printf(const char *fmt, ...)
     va_list args;
     char buf[CONS_OUTPUT_MAX_LINE];
     int len;
-
-    /* Prefix each line with a timestamp. */
-    if (!console_is_midline) {
-        len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
-        console_write(buf, len);
+    if (console_get_ticks()) {
+        /* Prefix each line with a timestamp. */
+        if (!console_is_midline) {
+            len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
+            console_write(buf, len);
+        }
     }
 
     va_start(args, fmt);
