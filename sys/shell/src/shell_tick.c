@@ -20,19 +20,14 @@
 #include <string.h>
 #include "shell/shell.h"
 #include <console/console.h>
-#include <console/prompt.h>
-static char shell_prompt = '>';
-
-void console_set_prompt(char p);
+#include <console/ticks.h>
+#include "syscfg/syscfg.h"
 
 /**
- * Handles the 'prompt' command
- * with set argument, sets the prompt to the provided char
- * with the show argument, echos the current prompt
- * otherwise echos the prompt and the usage message
+ * Handles the 'ticks' command
  */
 int
-shell_prompt_cmd(int argc, char **argv)
+shell_ticks_cmd(int argc, char **argv)
 {
     int rc;
 
@@ -41,21 +36,13 @@ shell_prompt_cmd(int argc, char **argv)
         return -1;
     }
     if (argc > 1) {
-        if (!strcmp(argv[1], "show")) {
-            console_printf(" Prompt character: %c\n", shell_prompt);
+        if (!strcmp(argv[1], "on")) {
+            console_yes_ticks();
+            console_printf(" Console Ticks on\n");
         }   
-        else if (!strcmp(argv[1],"set")) {
-            shell_prompt = argv[2][0];
-            console_printf(" Prompt set to: %c\n", argv[2][0]);
-            console_set_prompt(argv[2][0]);
-        }
-        else if (!strcmp(argv[1], "on")) {
-            console_yes_prompt();
-            console_printf(" Prompt now on.\n");
-        }   
-        else if (!strcmp(argv[1], "off")) {
-            console_no_prompt();
-            console_printf(" Prompt now off.\n");
+        else if (!strcmp(argv[1],"off")) {
+            console_printf(" Console Ticks off\n");
+            console_no_ticks();
         }
         else {
             goto usage;
@@ -67,7 +54,7 @@ shell_prompt_cmd(int argc, char **argv)
     shell_cmd_list_unlock();
     return 0;
 usage:
-    console_printf("Usage: prompt [on|off]|[set|show] [prompt_char]\n");
+    console_printf(" Usage: ticks [on|off]\n");
     shell_cmd_list_unlock();
     return 0;
   
