@@ -20,38 +20,27 @@
 
 #include "console/console.h"
 #include "console/prompt.h"
-#include <syscfg/syscfg.h>
+#include "syscfg/syscfg.h"
 
-/* console prompt, always followed by a space */
-static char console_prompt[] = " > ";
-static char do_prompt = MYNEWT_VAL(CONSOLE_PROMPT);
+static char do_ticks = MYNEWT_VAL(CONSOLE_TICKS);
 
-
-/* set the prompt character, leave the space */
+/* Turn OS Ticks off */
 void
-console_set_prompt(char p)
+console_no_ticks(void)
 {
-    do_prompt = 1;
-    console_prompt[1] = p;
+    do_ticks = 0;
 }
 
+/* Turn OS Ticks on */
 void
-console_no_prompt(void)
+console_yes_ticks(void)
 {
-    do_prompt = 0;
+    do_ticks = 1;
 }
 
-void
-console_yes_prompt(void)
+/* return value of CONSOLE_TICKS */
+char console_get_ticks(void)
 {
-    do_prompt = 1;
+    return do_ticks;
 }
 
-/* print the prompt to the console */
-void
-console_print_prompt(void)
-{
-    if (do_prompt) {
-        console_printf("%s", console_prompt);
-    }
-}

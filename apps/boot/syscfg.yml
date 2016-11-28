@@ -25,3 +25,5 @@ syscfg.defs:
     BOOT_SERIAL:
         description: 'TBD'
         value: 0
+syscfg.vals:
+    BSP_ARDUINO_ZERO_PRO: 1
