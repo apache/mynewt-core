@@ -66,17 +66,15 @@ typedef struct oc_message {
     uint8_t data[MAX_PAYLOAD_SIZE];
 } oc_message_t;
 
-void oc_send_buffer(oc_message_t *message);
-
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);
 #endif /* OC_SECURITY */
 
 int oc_connectivity_init(void);
-
 void oc_connectivity_shutdown(void);
 
-void oc_send_multicast_message(oc_message_t *message);
+void oc_send_buffer(struct os_mbuf *);
+void oc_send_multicast_message(struct os_mbuf *);
 
 #ifdef __cplusplus
 }

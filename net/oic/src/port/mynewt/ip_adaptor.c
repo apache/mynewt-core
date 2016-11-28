@@ -35,7 +35,7 @@
 
 static void oc_event_ip(struct os_event *ev);
 
-struct os_event oc_sock_read_event = {
+static struct os_event oc_sock_read_event = {
     .ev_cb = oc_event_ip,
 };
 
@@ -46,45 +46,43 @@ struct os_event oc_sock_read_event = {
 
 #define COAP_PORT_UNSECURED (5683)
 /* TODO use inet_pton when its available */
-const struct mn_in6_addr coap_all_nodes_v6 = {
+static const struct mn_in6_addr coap_all_nodes_v6 = {
     .s_addr = {0xFF,0x02,0x00,0x00,0x00,0x00,0x00,0x00,
                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFD}
 };
 
 
 /* sockets to use for coap unicast and multicast */
-struct mn_socket *ucast;
+static struct mn_socket *ucast;
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-struct mn_socket *mcast;
+static struct mn_socket *mcast;
 #endif
 
 static void
-oc_send_buffer_ip_int(oc_message_t *message, int mcast)
+oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
 {
     struct mn_sockaddr_in6 to;
-    struct os_mbuf m;
+    struct oc_endpoint *oe;
+    struct mn_itf itf;
+    struct mn_itf itf2;
+    struct os_mbuf *n;
     int rc;
 
-    LOG("oc_transport_ip attempt send buffer %lu\n",
-        (unsigned long)message->length);
+    LOG("oc_transport_ip attempt send buffer %u\n",
+      OS_MBUF_PKTHDR(m)->omp_len);
+
+    oe = OC_MBUF_ENDPOINT(m);
 
     to.msin6_len = sizeof(to);
     to.msin6_family = MN_AF_INET6;
+    to.msin6_port = htons(oe->ipv6_addr.port);
+    to.msin6_scope_id = oe->ipv6_addr.scope;
+    memcpy(&to.msin6_addr, oe->ipv6_addr.address, sizeof(to.msin6_addr));
 
-    to.msin6_port = htons(message->endpoint.ipv6_addr.port);
-    memcpy(&to.msin6_addr, message->endpoint.ipv6_addr.address,
-           sizeof(to.msin6_addr));
-
-    /* put on an mbuf header to make the socket happy */
-    memset(&m, 0, sizeof(m));
-    m.om_data = message->data;
-    m.om_len = message->length;
-    to.msin6_scope_id = message->endpoint.ipv6_addr.scope;
-
-    if (mcast) {
-        struct mn_itf itf;
+    if (is_mcast) {
         memset(&itf, 0, sizeof(itf));
+        memset(&itf2, 0, sizeof(itf2));
 
         while (1) {
             rc = mn_itf_getnext(&itf);
@@ -96,37 +94,57 @@ oc_send_buffer_ip_int(oc_message_t *message, int mcast)
                 continue;
             }
 
-            to.msin6_scope_id = itf.mif_idx;
-
-            rc = mn_sendto(ucast, &m, (struct mn_sockaddr *) &to);
+            if (!itf2.mif_idx) {
+                memcpy(&itf2, &itf, sizeof(itf));
+                continue;
+            }
+            n = os_mbuf_dup(m);
+            if (!n) {
+                break;
+            }
+            to.msin6_scope_id = itf2.mif_idx;
+            rc = mn_sendto(ucast, n, (struct mn_sockaddr *) &to);
             if (rc != 0) {
-                ERROR("Failed sending buffer %lu on itf %d\n",
-                      (unsigned long)message->length, to.msin6_scope_id);
+                ERROR("Failed sending buffer %u on itf %d\n",
+                  OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+                os_mbuf_free_chain(n);
+            }
+        }
+        if (itf2.mif_idx) {
+            to.msin6_scope_id = itf2.mif_idx;
+            rc = mn_sendto(ucast, m, (struct mn_sockaddr *) &to);
+            if (rc != 0) {
+                ERROR("Failed sending buffer %u on itf %d\n",
+                  OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+                os_mbuf_free_chain(m);
             }
         }
     } else {
-        rc = mn_sendto(ucast, &m, (struct mn_sockaddr *) &to);
+        rc = mn_sendto(ucast, m, (struct mn_sockaddr *) &to);
         if (rc != 0) {
-            ERROR("Failed sending buffer %lu on itf %d\n",
-                  (unsigned long)message->length, to.msin6_scope_id);
+            ERROR("Failed sending buffer %u on itf %d\n",
+                  OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+            os_mbuf_free_chain(m);
         }
     }
-    oc_message_unref(message);
+    if (rc) {
+        os_mbuf_free_chain(m);
+    }
 }
 
 void
-oc_send_buffer_ip(oc_message_t *message)
+oc_send_buffer_ip(struct os_mbuf *m)
 {
-    oc_send_buffer_ip_int(message, 0);
+    oc_send_buffer_ip_int(m, 0);
 }
 void
-oc_send_buffer_ip_mcast(oc_message_t *message)
+oc_send_buffer_ip_mcast(struct os_mbuf *m)
 {
-    oc_send_buffer_ip_int(message, 1);
+    oc_send_buffer_ip_int(m, 1);
 }
 
 static struct os_mbuf *
-oc_attempt_rx_ip_sock(struct mn_socket * rxsock)
+oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
 {
     int rc;
     struct os_mbuf *m;

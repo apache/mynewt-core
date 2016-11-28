@@ -58,7 +58,8 @@ oc_event_serial(struct os_event *ev)
 }
 
 int
-oc_connectivity_init_serial(void) {
+oc_connectivity_init_serial(void)
+{
     int rc;
 
     rc = shell_nlip_input_register(oc_serial_in, NULL);
@@ -80,39 +81,14 @@ err:
 
 
 void
-oc_send_buffer_serial(oc_message_t *message)
+oc_send_buffer_serial(struct os_mbuf *m)
 {
-    int rc;
-    struct os_mbuf *m;
-
-    /* get a packet header */
-    m = os_msys_get_pkthdr(0, 0);
-    if (m == NULL) {
-        ERROR("oc_transport_serial: No mbuf available\n");
-        goto err;
-    }
-
-    /* add this data to the mbuf */
-    rc = os_mbuf_append(m, message->data, message->length);
-    if (rc != 0) {
-
-        ERROR("oc_transport_serial: could not append data \n");
-        goto err;
-    }
+    LOG("oc_transport_serial: send buffer %u\n", OS_MBUF_PKTHDR(m)->omp_len);
 
     /* send over the shell output */
-    rc = shell_nlip_output(m);
-    if (rc != 0) {
-        ERROR("oc_transport_serial: nlip output failed \n");
-        goto err;
+    if (shell_nlip_output(m)) {
+        ERROR("oc_transport_serial: nlip output failed\n");
     }
-
-    LOG("oc_transport_serial: send buffer %zu\n", message->length);
-
-err:
-    oc_message_unref(message);
-    return;
-
 }
 
 static struct os_mbuf *
