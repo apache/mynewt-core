@@ -64,14 +64,13 @@ static uint8_t coap_separate_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
  * then retry later.
  */
 int
-coap_separate_accept(void *request, oc_separate_response_t *separate_response,
+coap_separate_accept(coap_packet_t *coap_req,
+                     oc_separate_response_t *separate_response,
                      oc_endpoint_t *endpoint, int observe)
 {
     if (separate_response->active == 0) {
         OC_LIST_STRUCT_INIT(separate_response, requests);
     }
-
-    coap_packet_t *const coap_req = (coap_packet_t *)request;
 
     for (coap_separate_t *item = oc_list_head(separate_response->requests);
          item != NULL; item = oc_list_item_next(separate_response->requests)) {
@@ -133,7 +132,7 @@ coap_separate_accept(void *request, oc_separate_response_t *separate_response,
 }
 /*----------------------------------------------------------------------------*/
 void
-coap_separate_resume(void *response, coap_separate_t *separate_store,
+coap_separate_resume(coap_packet_t *response, coap_separate_t *separate_store,
                      uint8_t code, uint16_t mid)
 {
     coap_init_message(response, separate_store->type, code, mid);
