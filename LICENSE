@@ -201,30 +201,30 @@
    limitations under the License.
 
 This product bundles crc16, which is available under the "3-clause BSD"
-license.  For details, see fs/nffs/src/crc16.[ch]
+license.  For details, see util/crc
 
 This product bundles queue.h 8.5, which is available under the "3-clause BSD"
-license.  For details, see libs/os/include/os/queue.h
+license.  For details, see kernel/os/include/os/queue.h
 
 This product partly derives from FreeBSD, which is available under the
 "3-clause BSD" license.  For details, see:
-    * libs/os/include/os/os_time.h
-    * libs/os/src/os_mbuf.c
-    * libs/util/src/base64.c
-    * libs/util/src/datetime.c
+    * encoding/base64/src/base64.c
+    * kernel/os/include/os/os_time.h
+    * kernel/os/src/os_mbuf.c
+    * time/datetime/src/datetime.c
 
 This product bundles baselibc, which is available under the "3-clause BSD"
 license. Baselibc bundles tinyprintf and is based on klibc for details see:
-libs/baselibc/LICENSE
+libc/baselibc/LICENSE
 
 This product bundles tinyprintf, which is available under the "3-clause BSD"
-license.  For details, see libs/baselibc/src/tinyprintf.c
+license.  For details, see libc/baselibc/src/tinyprintf.c
 
 This product conatins code based on klibc, which is available under the MIT
-license.  For details, see libs/baselibc/LICENSE
+license.  For details, see libc/baselibc/LICENSE
 
 This product bundles microjson, which is available under the "3-clause BSD"
-license.  For details, see libs/json/
+license.  For details, see encoding/json/
 
 This product bundles and partly derives from parts of the Nordic nRF5 SDK,
 which are available under a BSD style license.  Relevant files are:
@@ -303,11 +303,11 @@ which are available under a BSD style license.  Relevant files are:
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * libs/cmsis-core/
-    * libs/os/src/arch/cortex_m0/m0/HAL_CM0.s
-    * libs/os/src/arch/cortex_m0/m0/SVC_Table.s
-    * libs/os/src/arch/cortex_m4/m4/HAL_CM4.s
-    * libs/os/src/arch/cortex_m4/m4/SVC_Table.s
+    * hw/cmsis-core/
+    * kernel/os/src/arch/cortex_m0/m0/HAL_CM0.s
+    * kernel/os/src/arch/cortex_m0/m0/SVC_Table.s
+    * kernel/os/src/arch/cortex_m4/m4/HAL_CM4.s
+    * kernel/os/src/arch/cortex_m4/m4/SVC_Table.s
 
 This product bundles additional files from CMSIS-CORE, but these files are
 missing licensing information.  The BSD license was subsequently added to
