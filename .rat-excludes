@@ -159,9 +159,6 @@ stm32f4xx_hal_uart.c
 # klibc - MIT License.
 baselibc
 
-# eLua - MUT License.
-elua
-
 # CMSIS-CORE - BSD License.
 core_ca9.h
 core_caFunc.h
@@ -191,9 +188,6 @@ queue.h
 # FreeBSD - BSD License.
 os_mbuf.c
 base64.c
-
-# crc32.c - Public domain.
-crc32.c
 
 # tinycrypt - BSD License.
 tinycrypt
