@@ -318,21 +318,12 @@ these files in later releases.  These files are:
     * hw/bsp/nrf52pdk/include/bsp/cmsis_nvic.h
     * hw/bsp/olimex_stm32-e407_devboard/include/bsp/cmsis_nvic.h
 
+
 This product bundles parts of STM32CubeF4 1.5, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash_ex.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_gpio.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_rcc.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_uart.c
-    * hw/mcu/stm/stm32f4xx/include/
     * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
-    * hw/bsp/olimex_stm32-e407_devboard/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
-    * hw/bsp/olimex_stm32-e407_devboard/src/system_stm32f4xx.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_flash_ex.c
-    * hw/mcu/stm/stm32f4xx/src/stm32f4xx_hal_gpio.c
+    * hw/bsp/stm32f4discovery/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/nucleo-f401re/src/arch/cortex_m4/startup_STM32F40x.s
 
 This product bundles parts of mbed, which is available under the
 "3-clause BSD" license.  Bundled files are:
