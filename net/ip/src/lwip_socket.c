@@ -448,6 +448,7 @@ lwip_stream_tx(struct lwip_sock *s, int notify)
     struct os_mbuf *m;
     struct os_mbuf *n;
 
+    rc = 0;
     while (s->ls_tx && rc == 0) {
         m = s->ls_tx;
         n = SLIST_NEXT(m, om_next);
