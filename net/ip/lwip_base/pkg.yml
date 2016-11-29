@@ -29,6 +29,7 @@ pkg.keywords:
 
 pkg.deps:
     - net/ip
+    - net/ip/mn_socket
 
 pkg.cflags:
     - -Wno-unused-but-set-variable
