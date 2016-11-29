@@ -47,9 +47,8 @@ extern "C" {
 
 #define COAP_OBSERVER_URL_LEN 20
 
-typedef struct coap_observer
-{
-  struct coap_observer *next; /* for LIST */
+typedef struct coap_observer {
+  SLIST_ENTRY(coap_observer) next;
 
   oc_resource_t *resource;
 

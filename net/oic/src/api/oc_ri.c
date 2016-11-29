@@ -20,8 +20,7 @@
 
 #include <os/os_callout.h>
 #include <os/os_mempool.h>
-
-#include "util/oc_list.h"
+#include <os/queue.h>
 
 #include "messaging/coap/constants.h"
 #include "messaging/coap/engine.h"
@@ -44,9 +43,8 @@
 #endif /* OC_SECURITY */
 
 #ifdef OC_SERVER
-OC_LIST(app_resources);
-OC_LIST(observe_callbacks);
-static struct os_mempool oc_resources;
+static SLIST_HEAD(, oc_resource) oc_app_resources;
+static struct os_mempool oc_resource_pool;
 static uint8_t oc_resource_area[OS_MEMPOOL_BYTES(MAX_APP_RESOURCES,
       sizeof(oc_resource_t))];
 
@@ -55,8 +53,8 @@ static void periodic_observe_handler(struct os_event *ev);
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
-OC_LIST(client_cbs);
-static struct os_mempool oc_client_cbs;
+static SLIST_HEAD(, oc_client_cb) oc_client_cbs;
+static struct os_mempool oc_client_cb_pool;
 static uint8_t oc_client_cb_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
       sizeof(oc_client_cb_t))];
 #endif /* OC_CLIENT */
@@ -120,7 +118,7 @@ set_mpro_status_codes(void)
 oc_resource_t *
 oc_ri_get_app_resources(void)
 {
-  return oc_list_head(app_resources);
+    return SLIST_FIRST(&oc_app_resources);
 }
 #endif
 
@@ -203,14 +201,15 @@ stop_processes(void)
 oc_resource_t *
 oc_ri_get_app_resource_by_uri(const char *uri)
 {
-  oc_resource_t *res = oc_ri_get_app_resources();
-  while (res != NULL) {
-    if (oc_string_len(res->uri) == strlen(uri) &&
-        strncmp(uri, oc_string(res->uri), strlen(uri)) == 0)
-      return res;
-    res = res->next;
-  }
-  return res;
+    oc_resource_t *res;
+
+    SLIST_FOREACH(res, &oc_app_resources, next) {
+        if (oc_string_len(res->uri) == strlen(uri) &&
+          strncmp(uri, oc_string(res->uri), strlen(uri)) == 0)
+            return res;
+    }
+
+    return NULL;
 }
 #endif
 
@@ -221,15 +220,14 @@ oc_ri_init(void)
   set_mpro_status_codes();
 
 #ifdef OC_SERVER
-  oc_list_init(app_resources);
-  os_mempool_init(&oc_resources, MAX_APP_RESOURCES, sizeof(oc_resource_t),
+  SLIST_INIT(&oc_app_resources);
+  os_mempool_init(&oc_resource_pool, MAX_APP_RESOURCES, sizeof(oc_resource_t),
     oc_resource_area, "oc_res");
-  oc_list_init(observe_callbacks);
 #endif
 
 #ifdef OC_CLIENT
-  oc_list_init(client_cbs);
-  os_mempool_init(&oc_client_cbs, MAX_NUM_CONCURRENT_REQUESTS,
+  SLIST_INIT(&oc_client_cbs);
+  os_mempool_init(&oc_client_cb_pool, MAX_NUM_CONCURRENT_REQUESTS,
     sizeof(oc_client_cb_t), oc_client_cb_area, "oc_cl_cbs");
 #endif
   oc_rep_init();
@@ -250,9 +248,9 @@ oc_ri_shutdown(void)
 oc_resource_t *
 oc_ri_alloc_resource(void)
 {
-    struct oc_resource_s *resource;
+    struct oc_resource *resource;
 
-    resource = os_memblock_get(&oc_resources);
+    resource = os_memblock_get(&oc_resource_pool);
     if (resource) {
         os_callout_init(&resource->callout, oc_evq_get(),
           periodic_observe_handler, resource);
@@ -263,7 +261,7 @@ oc_ri_alloc_resource(void)
 void
 oc_ri_delete_resource(oc_resource_t *resource)
 {
-    os_memblock_put(&oc_resources, resource);
+    os_memblock_put(&oc_resource_pool, resource);
 }
 
 bool
@@ -280,7 +278,7 @@ oc_ri_add_resource(oc_resource_t *resource)
         valid = false;
     }
     if (valid) {
-        oc_list_add(app_resources, resource);
+        SLIST_INSERT_HEAD(&oc_app_resources, resource, next);
     }
 
     return valid;
@@ -292,7 +290,7 @@ oc_ri_add_resource(oc_resource_t *resource)
 static void
 periodic_observe_handler(struct os_event *ev)
 {
-    struct oc_resource_s *resource;
+    struct oc_resource *resource;
 
     resource = ev->ev_arg;
 
@@ -464,15 +462,14 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   /* Check against list of declared application resources.
    */
   if (!cur_resource && !bad_request) {
-    for (resource = oc_ri_get_app_resources(); resource;
-         resource = resource->next) {
-      if (oc_string_len(resource->uri) == (uri_path_len + 1) &&
-          strncmp((const char *)oc_string(resource->uri) + 1, uri_path,
-                  uri_path_len) == 0) {
-        request_obj.resource = cur_resource = resource;
-        break;
+      SLIST_FOREACH(resource, &oc_app_resources, next) {
+          if (oc_string_len(resource->uri) == (uri_path_len + 1) &&
+            strncmp((const char *)oc_string(resource->uri) + 1, uri_path,
+              uri_path_len) == 0) {
+              request_obj.resource = cur_resource = resource;
+              break;
+          }
       }
-    }
   }
 #endif
 
@@ -676,21 +673,23 @@ free_client_cb(oc_client_cb_t *cb)
 {
     os_callout_stop(&cb->callout);
     oc_free_string(&cb->uri);
-    oc_list_remove(client_cbs, cb);
-    os_memblock_put(&oc_client_cbs, cb);
+    SLIST_REMOVE(&oc_client_cbs, cb, oc_client_cb, next);
+    os_memblock_put(&oc_client_cb_pool, cb);
 }
 
 void
 oc_ri_remove_client_cb_by_mid(uint16_t mid)
 {
-  oc_client_cb_t *cb = (oc_client_cb_t *)oc_list_head(client_cbs);
-  while (cb != NULL) {
-    if (cb->mid == mid)
-      break;
-    cb = cb->next;
-  }
-  if (cb)
-    free_client_cb(cb);
+    oc_client_cb_t *cb;
+
+    SLIST_FOREACH(cb, &oc_client_cbs, next) {
+        if (cb->mid == mid) {
+            break;
+        }
+    }
+    if (cb) {
+        free_client_cb(cb);
+    }
 }
 
 bool
@@ -716,7 +715,7 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
   uint8_t *payload;
   int payload_len;
   coap_packet_t *const pkt = (coap_packet_t *)response;
-  oc_client_cb_t *cb = oc_list_head(client_cbs);
+  oc_client_cb_t *cb, *tmp;
   int i;
   /*
     if con then send ack and process as above
@@ -731,7 +730,9 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
   unsigned int content_format = APPLICATION_CBOR;
   coap_get_header_content_format(pkt, &content_format);
 
+  cb = SLIST_FIRST(&oc_client_cbs);
   while (cb != NULL) {
+    tmp = SLIST_NEXT(cb, next);
     if (cb->token_len == pkt->token_len &&
         memcmp(cb->token, pkt->token, pkt->token_len) == 0) {
 
@@ -803,7 +804,7 @@ oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
 
       break;
     }
-    cb = cb->next;
+    cb = tmp;
   }
 
   return true;
@@ -813,9 +814,9 @@ oc_client_cb_t *
 oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
                     oc_method_t method)
 {
-    oc_client_cb_t *cb = (oc_client_cb_t *)oc_list_head(client_cbs);
+    oc_client_cb_t *cb;
 
-    while (cb != NULL) {
+    SLIST_FOREACH(cb, &oc_client_cbs, next) {
         if (oc_string_len(cb->uri) == strlen(uri) &&
           strncmp(oc_string(cb->uri), uri, strlen(uri)) == 0 &&
           memcmp(&cb->server.endpoint, &server->endpoint,
@@ -823,17 +824,15 @@ oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
           cb->method == method) {
             return cb;
         }
-
-        cb = cb->next;
     }
 
-    return cb;
+    return NULL;
 }
 
 static void
 oc_ri_remove_cb(struct os_event *ev)
 {
-    struct oc_client_cb_s *cb;
+    struct oc_client_cb *cb;
 
     cb = ev->ev_arg;
 
@@ -846,7 +845,7 @@ oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
 {
     oc_client_cb_t *cb;
 
-    cb = os_memblock_get(&oc_client_cbs);
+    cb = os_memblock_get(&oc_client_cb_pool);
     if (!cb) {
         return NULL;
     }
@@ -870,7 +869,7 @@ oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
 
     os_callout_init(&cb->callout, oc_evq_get(), oc_ri_remove_cb, cb);
 
-    oc_list_add(client_cbs, cb);
+    SLIST_INSERT_HEAD(&oc_client_cbs, cb, next);
     return cb;
 }
 #endif /* OC_CLIENT */

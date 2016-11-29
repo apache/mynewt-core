@@ -84,6 +84,9 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
                       int rt_len)
 {
   int dev, matches = 0;
+#ifdef OC_SERVER
+  oc_resource_t *resource;
+#endif
   oc_rep_start_object(*device, links);
   oc_rep_set_text_string(links, di, uuid);
   oc_rep_set_array(links, links);
@@ -100,14 +103,14 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
   }
 
 #ifdef OC_SERVER
-  oc_resource_t *resource = oc_ri_get_app_resources();
-  for (; resource; resource = resource->next) {
-
-    if (!(resource->properties & OC_DISCOVERABLE))
-      continue;
-
-    if (filter_resource(resource, rt, rt_len, oc_rep_array(links)))
-      matches++;
+  for (resource = oc_ri_get_app_resources(); resource;
+       resource = SLIST_NEXT(resource, next)) {
+      if (!(resource->properties & OC_DISCOVERABLE)) {
+          continue;
+      }
+      if (filter_resource(resource, rt, rt_len, oc_rep_array(links))) {
+          matches++;
+      }
   }
 #endif
 

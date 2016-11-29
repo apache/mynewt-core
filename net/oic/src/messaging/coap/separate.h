@@ -46,21 +46,21 @@ extern "C" {
 #include "oic/oc_ri.h"
 
 typedef struct coap_separate {
-  struct coap_separate *next;
-  coap_message_type_t type;
+    SLIST_ENTRY(coap_separate) next;
+    coap_message_type_t type;
 
-  uint8_t token_len;
-  uint8_t token[COAP_TOKEN_LEN];
+    uint8_t token_len;
+    uint8_t token[COAP_TOKEN_LEN];
 
-  uint32_t block1_num;
-  uint16_t block1_size;
+    uint32_t block1_num;
+    uint16_t block1_size;
 
-  uint32_t block2_num;
-  uint16_t block2_size;
+    uint32_t block2_num;
+    uint16_t block2_size;
 
-  int32_t observe;
+    int32_t observe;
 
-  oc_endpoint_t endpoint;
+    oc_endpoint_t endpoint;
 } coap_separate_t;
 
 typedef struct coap_packet coap_packet_t;

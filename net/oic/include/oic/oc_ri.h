@@ -61,9 +61,9 @@ typedef enum {
   OC_IGNORE
 } oc_status_t;
 
-typedef struct oc_separate_response_s oc_separate_response_t;
+typedef struct oc_separate_response oc_separate_response_t;
 
-typedef struct oc_response_buffer_s oc_response_buffer_t;
+typedef struct oc_response_buffer oc_response_buffer_t;
 
 typedef struct
 {
@@ -95,7 +95,7 @@ typedef enum {
 
 #define NUM_OC_CORE_RESOURCES (__NUM_OC_CORE_RESOURCES__ + MAX_NUM_DEVICES)
 
-typedef struct oc_resource_s oc_resource_t;
+typedef struct oc_resource oc_resource_t;
 
 typedef struct
 {
@@ -110,9 +110,8 @@ typedef struct
 
 typedef void (*oc_request_handler_t)(oc_request_t *, oc_interface_mask_t);
 
-typedef struct oc_resource_s
-{
-  struct oc_resource_s *next;
+typedef struct oc_resource {
+  SLIST_ENTRY(oc_resource) next;
   int device;
   oc_string_t uri;
   oc_string_array_t types;

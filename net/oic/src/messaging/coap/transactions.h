@@ -56,7 +56,7 @@ extern "C" {
 /* container for transactions with message buffer and retransmission info */
 typedef struct coap_transaction
 {
-  struct coap_transaction *next; /* for LIST */
+  SLIST_ENTRY(coap_transaction) next;
 
   uint16_t mid;
   uint8_t retrans_counter;
