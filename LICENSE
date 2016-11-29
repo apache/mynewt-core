@@ -318,32 +318,11 @@ these files in later releases.  These files are:
     * hw/bsp/nrf52pdk/include/bsp/cmsis_nvic.h
     * hw/bsp/olimex_stm32-e407_devboard/include/bsp/cmsis_nvic.h
 
-
 This product bundles parts of STM32CubeF4 1.5, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/stm32f4discovery/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/nucleo-f401re/src/arch/cortex_m4/startup_STM32F40x.s
-
-This product bundles parts of mbed, which is available under the
-"3-clause BSD" license.  Bundled files are:
-    * hw/mcu/nordic/nrf52xxx/include/mcu/compiler_abstraction.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/cortex_m4.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf51_to_nrf52.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52832_peripherals.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52_bitfields.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/nrf52_hal.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/system_nrf52.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/compiler_abstraction.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51422_peripherals.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51822_peripherals.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51_bitfields.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/nrf51_deprecated.h
-    * hw/mcu/nordic/nrf51xxx/include/mcu/system_nrf51.h
 
 This product bundles tinycrypt, which is available under the
 "3-clause BSD" license.  For details, see: crypto/tinycrypt
