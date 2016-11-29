@@ -15,66 +15,53 @@ repository.yml
 crc16.*
 
 # Nordic nRF51 SDK - BSD License.
-boot-nrf51dk.ld
-nrf51dk.ld
-nrf51dk_no_boot.ld
-system_nrf51.c
-gcc_startup_nrf51.s
-boot-nrf51dk-16kbram.ld
-nrf51dk-16kbram.ld
-nrf51dk-16kbram_no_boot.ld
-boot-nrf51-arduino_101.ld
-nrf51-arduino_101.ld
 boot-nrf51xxaa.ld
-nrf51xxaa.ld
 boot-nrf51xxac.ld
-nrf51xxac.ld
-split-nrf51dk.ld
-boot-nrf51xxac.ld
-nrf51xxac.ld
-split-nrf51dk.ld
-split-nrf51dk-16kbram.ld
-nrf51.ld
+gcc_startup_nrf51.s
+gcc_startup_nrf51_split.s
 nrf51.h
-nrf51422_peripherals.h
-nrf51822_peripherals.h
+nrf51.ld
 nrf51_bitfields.h
 nrf51_deprecated.h
+nrf51dk-16kbram_no_boot.ld
+nrf51dk_no_boot.ld
+nrf51xxaa.ld
+nrf51xxac.ld
+split-nrf51dk-16kbram.ld
+split-nrf51dk.ld
+system_nrf51.c
 system_nrf51.h
-gcc_startup_nrf51_split.s
 
 # Nordic nRF52 SDK - BSD License.
-nrf52dk_no_boot.ld
 bmd300eval_no_boot.ld
 boot-nrf52xxaa.ld
-nrf52xxaa.ld
-primo_no_boot.ld
-split-primo.ld
-split-bmd300eval.ld
-split-nrf52dk.ld
-rb-nano2_no_boot.ld
-split-rb-nano2.ld
-nrf52.ld
-system_nrf52.c
 gcc_startup_nrf52.s
+gcc_startup_nrf52_split.s
 nrf51_to_nrf52.h
 nrf52.h
-nrf52832_peripherals.h
+nrf52.ld
 nrf52_bitfields.h
+nrf52dk_no_boot.ld
+nrf52xxaa.ld
+primo_no_boot.ld
+rb-nano2_no_boot.ld
+split-bmd300eval.ld
+split-nrf52dk.ld
+split-primo.ld
+split-rb-nano2.ld
+system_nrf52.c
 system_nrf52.h
-gcc_startup_nrf52_split.s
 
-# Nordic nRF51 SDK - BSD License.
-# Nordic nRF52 SDK - BSD License.
+# Nordic nRF5x SDK - BSD License.
+arm_startup_nrf51.s
+arm_startup_nrf52.s
 compiler_abstraction.h
+iar_startup_nrf51.s
+iar_startup_nrf52.s
 nrf.h
 nrf52_name_change.h
 system_nrf51422.c
-arm_startup_nrf51.s
-arm_startup_nrf52.s
 uicr_config.h
-iar_startup_nrf51.s
-iar_startup_nrf52.s
 
 # STM32CubeF4  - BSD License.
 stm32f4xx_hal_conf.h
