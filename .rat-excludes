@@ -179,21 +179,19 @@ base64.c
 # tinycrypt - BSD License.
 tinycrypt
 
-# frdm-k64f clock configuration - BSD License.
-clock_config.c
-clock_config.h
-
 # CMSIS Cortex-M4, STM32f4 - BSD License.
 STM32F4xx
 STM32F4xx_HAL_Driver
 
-# NXP SDK - BSD License.
-sdk-2.0-frdm-k64f_b160321
+# NXP Kinetis SDK 2.0 - BSD License.
 MK64FN1M0xxx12_flash.ld
 boot-MK64FN1M0xxx12_flash.ld
+clock_config.c
+clock_config.h
+sdk-2.0-frdm-k64f_b160321
 startup_MK64F12.S
 
-# LWIP - BSD License.
+# LWIP - BSD License + a few MIT-licensed files.
 lwip_base
 
 # OIC - BSD License.
