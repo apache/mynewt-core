@@ -226,28 +226,80 @@ license.  For details, see libs/baselibc/LICENSE
 This product bundles microjson, which is available under the "3-clause BSD"
 license.  For details, see libs/json/
 
-This product bundles and partly derives from parts of the Nordic nRF51 SDK,
+This product bundles and partly derives from parts of the Nordic nRF5 SDK,
 which are available under a BSD style license.  Relevant files are:
-    * hw/bsp/nrf51dk/boot-nrf51dk.ld
-    * hw/bsp/nrf51dk/nrf51dk.ld
-    * hw/bsp/nrf51dk/nrf51dk_no_boot.ld
-    * hw/bsp/nrf51dk-16kbram/boot-nrf51dk-16kbram.ld
-    * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram.ld
-    * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_no_boot.ld
-    * hw/bsp/nrf51-arduino_101/boot-nrf51-arduino_101.ld
-    * hw/bsp/nrf51-arduino_101/nrf51-arduino_101.ld
-
-This product bundles and partly derives from parts of the Nordic nRF52 SDK,
-which are available under a BSD style license.  Relevant files are:
-    * hw/bsp/bmd300eval/bmd300eval.ld
+    * hw/bsp/arduino_primo_nrf52/boot-nrf52xxaa.ld
+    * hw/bsp/arduino_primo_nrf52/nrf52xxaa.ld
+    * hw/bsp/arduino_primo_nrf52/primo_no_boot.ld
+    * hw/bsp/arduino_primo_nrf52/split-primo.ld
+    * hw/bsp/arduino_primo_nrf52/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/arduino_primo_nrf52/src/arch/cortex_m4/gcc_startup_nrf52_split.s
     * hw/bsp/bmd300eval/bmd300eval_no_boot.ld
-    * hw/bsp/bmd300eval/boot-bmd300eval.ld
-    * hw/bsp/nrf52dk/boot-nrf52dk.ld
-    * hw/bsp/nrf52dk/nrf52dk.ld
+    * hw/bsp/bmd300eval/boot-nrf52xxaa.ld
+    * hw/bsp/bmd300eval/nrf52xxaa.ld
+    * hw/bsp/bmd300eval/split-bmd300eval.ld
+    * hw/bsp/bmd300eval/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/bmd300eval/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/nrf51-arduino_101/boot-nrf51xxaa.ld
+    * hw/bsp/nrf51-arduino_101/nrf51dk-16kbram_no_boot.ld
+    * hw/bsp/nrf51-arduino_101/nrf51xxaa.ld
+    * hw/bsp/nrf51-arduino_101/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nrf51-blenano/boot-nrf51xxac.ld
+    * hw/bsp/nrf51-blenano/nrf51dk_no_boot.ld
+    * hw/bsp/nrf51-blenano/nrf51xxac.ld
+    * hw/bsp/nrf51-blenano/split-nrf51dk.ld
+    * hw/bsp/nrf51-blenano/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nrf51-blenano/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/nrf51dk-16kbram/boot-nrf51xxaa.ld
+    * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_no_boot.ld
+    * hw/bsp/nrf51dk-16kbram/nrf51xxaa.ld
+    * hw/bsp/nrf51dk-16kbram/split-nrf51dk-16kbram.ld
+    * hw/bsp/nrf51dk-16kbram/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nrf51dk-16kbram/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/nrf51dk/boot-nrf51xxac.ld
+    * hw/bsp/nrf51dk/nrf51dk_no_boot.ld
+    * hw/bsp/nrf51dk/nrf51xxac.ld
+    * hw/bsp/nrf51dk/split-nrf51dk.ld
+    * hw/bsp/nrf51dk/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nrf51dk/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/nrf52dk/boot-nrf52xxaa.ld
     * hw/bsp/nrf52dk/nrf52dk_no_boot.ld
-    * hw/bsp/nrf52dk/boot-nrf52dk.ld
-    * hw/bsp/nrf52pdk/nrf52pdk.ld
-    * hw/bsp/nrf52pdk/nrf52pdk_no_boot.ld
+    * hw/bsp/nrf52dk/nrf52xxaa.ld
+    * hw/bsp/nrf52dk/split-nrf52dk.ld
+    * hw/bsp/nrf52dk/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/nrf52dk/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/rb-nano2/boot-nrf52xxaa.ld
+    * hw/bsp/rb-nano2/nrf52xxaa.ld
+    * hw/bsp/rb-nano2/rb-nano2_no_boot.ld
+    * hw/bsp/rb-nano2/split-rb-nano2.ld
+    * hw/bsp/rb-nano2/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/rb-nano2/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/mcu/nordic/nrf51xxx/nrf51.ld
+    * hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
+    * hw/mcu/nordic/nrf52xxx/nrf52.ld
+    * hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/compiler_abstraction.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_bitfields.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_deprecated.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_to_nrf52.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52_bitfields.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52_name_change.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/arm/arm_startup_nrf51.s
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/arm/arm_startup_nrf52.s
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/arm/uicr_config.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/gcc/gcc_startup_nrf51.s
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/gcc/gcc_startup_nrf52.s
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/iar/iar_startup_nrf51.s
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/iar/iar_startup_nrf52.s
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51.c
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51.h
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51422.c
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52.c
+    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52.h
+
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
