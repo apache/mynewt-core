@@ -219,6 +219,7 @@ typedef struct oc_rep_s
     double value_double;
     oc_string_t value_string;
     oc_array_t value_array;
+    oc_string_array_t value_string_array;
     struct oc_rep_s *value_object;
     struct oc_rep_s *value_object_array;
   };

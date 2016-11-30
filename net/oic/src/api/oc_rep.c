@@ -142,8 +142,7 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
   *err |= cbor_value_calculate_string_length(value, &len);
   len++;
   oc_alloc_string(&cur->name, len);
-  *err |= cbor_value_copy_text_string(value, (char *)oc_string(cur->name), &len,
-                                      NULL);
+  *err |= cbor_value_copy_text_string(value, oc_string(cur->name), &len, NULL);
   *err |= cbor_value_advance(value);
   /* value */
   switch (value->type) {
@@ -163,8 +162,9 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
     *err |= cbor_value_calculate_string_length(value, &len);
     len++;
     oc_alloc_string(&cur->value_string, len);
-    *err |= cbor_value_copy_byte_string(
-      value, oc_cast(cur->value_string, uint8_t), &len, NULL);
+    *err |= cbor_value_copy_byte_string(value,
+                                        (uint8_t *)oc_string(cur->value_string),
+                                        &len, NULL);
     cur->type = BYTE_STRING;
     break;
   case CborTextStringType:

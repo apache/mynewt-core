@@ -183,15 +183,20 @@ oc_ri_process_discovery_payload(uint8_t *payload, int len,
                                 oc_endpoint_t *endpoint)
 {
   oc_discovery_flags_t ret = OC_CONTINUE_DISCOVERY;
-  oc_string_t uri;
-  uri.ptr = 0;
-  oc_string_t di;
-  di.ptr = 0;
+  oc_string_t uri = {
+      .os_sz = 0,
+      .os_str = NULL
+  };
+  oc_string_t di = {
+      .os_sz = 0,
+      .os_str = NULL
+  };
   bool secure = false;
   uint16_t dtls_port = 0, default_port = endpoint->ipv6_addr.port;
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
+
   memcpy(&handle.endpoint, endpoint, sizeof(oc_endpoint_t));
 
   oc_rep_t *array = 0, *rep;
