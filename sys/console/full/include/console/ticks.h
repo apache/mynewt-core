@@ -17,41 +17,25 @@
  * under the License.
  */
 
+#ifndef __CONSOLE_TICKS_H__
+#define __CONSOLE_TICKS_H__
 
-#include "console/console.h"
-#include "console/prompt.h"
-#include <syscfg/syscfg.h>
-
-/* console prompt, always followed by a space */
-static char console_prompt[] = " > ";
-static char do_prompt = MYNEWT_VAL(CONSOLE_PROMPT);
+#include <stdarg.h>
 
 
-/* set the prompt character, leave the space */
-void
-console_set_prompt(char p)
-{
-    do_prompt = 1;
-    console_prompt[1] = p;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+void console_no_ticks(void);
+
+void console_yes_ticks(void);
+
+char console_get_ticks(void);
+
+#ifdef __cplusplus
 }
+#endif
 
-void
-console_no_prompt(void)
-{
-    do_prompt = 0;
-}
-
-void
-console_yes_prompt(void)
-{
-    do_prompt = 1;
-}
-
-/* print the prompt to the console */
-void
-console_print_prompt(void)
-{
-    if (do_prompt) {
-        console_printf("%s", console_prompt);
-    }
-}
+#endif /* __CONSOLE_PROMPT_H__ */
