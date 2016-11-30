@@ -31,7 +31,9 @@ syscfg.defs:
     CONSOLE_RX_BUF_SIZE:
         description: 'Console receive buffer size.'
         value: 128
-        
+    CONSOLE_TICKS:
+        description: 'Print OS Ticks'
+        value: '0'
     CONSOLE_PROMPT:
         description: 'Default console prompt '
         value: '0'
