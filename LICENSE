@@ -357,8 +357,8 @@ MIT-license:
     * net/ip/lwip_base/src/netif/ppp/eap.c
     * net/ip/lwip_base/src/netif/ppp/mppe.c
     * net/ip/lwip_base/src/netif/ppp/ppp.c
-All other files in the net/ip/lwip_base are available under the "3-clause BSD"
-license.
+All other files in the net/ip/lwip_base directory are available under the
+"3-clause BSD" license.
 
 This product bundles the OCF constrained iotivity stack (OIC), which is
 available under the "3-clause BSD" license.  For details, see: net/oic
