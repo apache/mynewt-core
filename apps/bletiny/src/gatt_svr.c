@@ -52,6 +52,12 @@ const uint8_t gatt_svr_chr_sec_test_static_uuid[16] = {
     0xe1, 0x45, 0x7e, 0x89, 0x9e, 0x65, 0x3a, 0x5c
 };
 
+/* 5c3a659e-897e-45e1-b016-007107c96df8 */
+const uint8_t gatt_svr_chr_sec_test_static_auth_uuid[16] = {
+    0xf8, 0x6d, 0xc9, 0x07, 0x71, 0x00, 0x16, 0xb0,
+    0xe1, 0x45, 0x7e, 0x89, 0x9e, 0x65, 0x3a, 0x5c
+};
+
 static uint8_t gatt_svr_sec_test_static_val;
 
 static int
@@ -109,6 +115,11 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             .access_cb = gatt_svr_chr_access_sec_test,
             .flags = BLE_GATT_CHR_F_READ |
                      BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC,
+        }, {
+            /*** Characteristic: Static value. */
+            .uuid128 = gatt_svr_chr_sec_test_static_auth_uuid,
+            .access_cb = gatt_svr_chr_access_sec_test,
+            .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_AUTHEN,
         }, {
             0, /* No more characteristics in this service. */
         } },
@@ -235,7 +246,8 @@ gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
         return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
     }
 
-    if (memcmp(uuid128, gatt_svr_chr_sec_test_static_uuid, 16) == 0) {
+    if (memcmp(uuid128, gatt_svr_chr_sec_test_static_uuid, 16) == 0 ||
+        memcmp(uuid128, gatt_svr_chr_sec_test_static_auth_uuid, 16) == 0) {
         switch (ctxt->op) {
         case BLE_GATT_ACCESS_OP_READ_CHR:
             rc = os_mbuf_append(ctxt->om, &gatt_svr_sec_test_static_val,
