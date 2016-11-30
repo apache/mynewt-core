@@ -39,7 +39,6 @@
 #include "transactions.h"
 #include "observe.h"
 #include "oc_buffer.h"
-#include "util/oc_list.h"
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
@@ -54,8 +53,7 @@
 static struct os_mempool oc_transaction_memb;
 static uint8_t oc_transaction_area[OS_MEMPOOL_BYTES(COAP_MAX_OPEN_TRANSACTIONS,
       sizeof(coap_transaction_t))];
-
-OC_LIST(transactions_list);
+static SLIST_HEAD(, coap_transaction) oc_transaction_list;
 
 static void coap_transaction_retrans(struct os_event *ev);
 
@@ -87,7 +85,7 @@ coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
             os_callout_init(&t->retrans_timer, oc_evq_get(),
               coap_transaction_retrans, t);
             /* list itself makes sure same element is not added twice */
-            oc_list_add(transactions_list, t);
+            SLIST_INSERT_HEAD(&oc_transaction_list, t, next);
         } else {
             os_memblock_put(&oc_transaction_memb, t);
             t = NULL;
@@ -171,7 +169,7 @@ coap_clear_transaction(coap_transaction_t *t)
 
         os_callout_stop(&t->retrans_timer);
         oc_message_unref(t->message);
-        oc_list_remove(transactions_list, t);
+        SLIST_REMOVE(&oc_transaction_list, t, coap_transaction, next);
         os_memblock_put(&oc_transaction_memb, t);
   }
 }
@@ -179,16 +177,15 @@ coap_clear_transaction(coap_transaction_t *t)
 coap_transaction_t *
 coap_get_transaction_by_mid(uint16_t mid)
 {
-  coap_transaction_t *t = NULL;
+    coap_transaction_t *t;
 
-  for (t = (coap_transaction_t *)oc_list_head(transactions_list); t;
-       t = t->next) {
-    if (t->mid == mid) {
-      LOG("Found transaction for MID %u: %p\n", t->mid, t);
-      return t;
+    SLIST_FOREACH(t, &oc_transaction_list, next) {
+        if (t->mid == mid) {
+            LOG("Found transaction for MID %u: %p\n", t->mid, t);
+            return t;
+        }
     }
-  }
-  return NULL;
+    return NULL;
 }
 
 static void

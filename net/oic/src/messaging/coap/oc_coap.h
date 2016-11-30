@@ -18,26 +18,23 @@
 #define OC_COAP_H
 
 #include "separate.h"
-#include "../../util/oc_list.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct oc_separate_response_s
-{
-  OC_LIST_STRUCT(requests);
-  int active;
-  uint8_t buffer[COAP_MAX_BLOCK_SIZE];
+typedef struct oc_separate_response {
+    SLIST_HEAD(, coap_separate) requests;
+    int active;
+    uint8_t buffer[COAP_MAX_BLOCK_SIZE];
 } oc_separate_response_t;
 
-typedef struct oc_response_buffer_s
-{
-  uint8_t *buffer;
-  uint16_t buffer_size;
-  int32_t *block_offset;
-  uint16_t response_length;
-  int code;
+typedef struct oc_response_buffer {
+    uint8_t *buffer;
+    uint16_t buffer_size;
+    int32_t *block_offset;
+    uint16_t response_length;
+    int code;
 } oc_response_buffer_t;
 
 #ifdef __cplusplus

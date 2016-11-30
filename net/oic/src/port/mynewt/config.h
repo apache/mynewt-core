@@ -36,11 +36,6 @@ typedef os_time_t oc_clock_time_t;
 #define OC_CLK_FMT  "%lu"
 #endif
 
-/* Memory pool sizes */
-#define OC_BYTES_POOL_SIZE (2048)
-#define OC_INTS_POOL_SIZE (16)
-#define OC_DOUBLES_POOL_SIZE (16)
-
 /* Server-side parameters */
 /* Maximum number of server resources */
 #define MAX_APP_RESOURCES MYNEWT_VAL(OC_APP_RESOURCES)

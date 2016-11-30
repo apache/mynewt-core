@@ -84,6 +84,9 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
                       int rt_len)
 {
   int dev, matches = 0;
+#ifdef OC_SERVER
+  oc_resource_t *resource;
+#endif
   oc_rep_start_object(*device, links);
   oc_rep_set_text_string(links, di, uuid);
   oc_rep_set_array(links, links);
@@ -100,14 +103,14 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
   }
 
 #ifdef OC_SERVER
-  oc_resource_t *resource = oc_ri_get_app_resources();
-  for (; resource; resource = resource->next) {
-
-    if (!(resource->properties & OC_DISCOVERABLE))
-      continue;
-
-    if (filter_resource(resource, rt, rt_len, oc_rep_array(links)))
-      matches++;
+  for (resource = oc_ri_get_app_resources(); resource;
+       resource = SLIST_NEXT(resource, next)) {
+      if (!(resource->properties & OC_DISCOVERABLE)) {
+          continue;
+      }
+      if (filter_resource(resource, rt, rt_len, oc_rep_array(links))) {
+          matches++;
+      }
   }
 #endif
 
@@ -180,15 +183,20 @@ oc_ri_process_discovery_payload(uint8_t *payload, int len,
                                 oc_endpoint_t *endpoint)
 {
   oc_discovery_flags_t ret = OC_CONTINUE_DISCOVERY;
-  oc_string_t uri;
-  uri.ptr = 0;
-  oc_string_t di;
-  di.ptr = 0;
+  oc_string_t uri = {
+      .os_sz = 0,
+      .os_str = NULL
+  };
+  oc_string_t di = {
+      .os_sz = 0,
+      .os_str = NULL
+  };
   bool secure = false;
   uint16_t dtls_port = 0, default_port = endpoint->ipv6_addr.port;
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
+
   memcpy(&handle.endpoint, endpoint, sizeof(oc_endpoint_t));
 
   oc_rep_t *array = 0, *rep;

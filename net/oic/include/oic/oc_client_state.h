@@ -51,8 +51,8 @@ typedef oc_discovery_flags_t(oc_discovery_cb_t)(const char *, const char *,
 
 typedef void (*oc_response_handler_t)(oc_client_response_t *);
 
-typedef struct oc_client_cb_s {
-    struct oc_client_cb_s *next;
+typedef struct oc_client_cb {
+    SLIST_ENTRY(oc_client_cb) next;
     struct os_callout callout;
     oc_string_t uri;
     uint8_t token[COAP_TOKEN_LEN];

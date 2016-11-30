@@ -45,29 +45,30 @@ extern "C" {
 #include "oc_coap.h"
 #include "oic/oc_ri.h"
 
-typedef struct coap_separate
-{
-  struct coap_separate *next;
-  coap_message_type_t type;
+typedef struct coap_separate {
+    SLIST_ENTRY(coap_separate) next;
+    coap_message_type_t type;
 
-  uint8_t token_len;
-  uint8_t token[COAP_TOKEN_LEN];
+    uint8_t token_len;
+    uint8_t token[COAP_TOKEN_LEN];
 
-  uint32_t block1_num;
-  uint16_t block1_size;
+    uint32_t block1_num;
+    uint16_t block1_size;
 
-  uint32_t block2_num;
-  uint16_t block2_size;
+    uint32_t block2_num;
+    uint16_t block2_size;
 
-  int32_t observe;
+    int32_t observe;
 
-  oc_endpoint_t endpoint;
+    oc_endpoint_t endpoint;
 } coap_separate_t;
 
-int coap_separate_accept(void *request,
+typedef struct coap_packet coap_packet_t;
+int coap_separate_accept(coap_packet_t *request,
                          oc_separate_response_t *separate_response,
                          oc_endpoint_t *endpoint, int observe);
-void coap_separate_resume(void *response, coap_separate_t *separate_store,
+void coap_separate_resume(coap_packet_t *response,
+                          coap_separate_t *separate_store,
                           uint8_t code, uint16_t mid);
 void coap_separate_clear(oc_separate_response_t *separate_response,
                          coap_separate_t *separate_store);

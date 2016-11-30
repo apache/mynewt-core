@@ -44,22 +44,22 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-  #pragma data_alignment=4   
+  #pragma data_alignment=4
 #endif
 __ALIGN_BEGIN ETH_DMADescTypeDef  DMARxDscrTab[ETH_RXBUFNB] __ALIGN_END;/* Ethernet Rx MA Descriptor */
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-  #pragma data_alignment=4   
+  #pragma data_alignment=4
 #endif
 __ALIGN_BEGIN ETH_DMADescTypeDef  DMATxDscrTab[ETH_TXBUFNB] __ALIGN_END;/* Ethernet Tx DMA Descriptor */
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-  #pragma data_alignment=4   
+  #pragma data_alignment=4
 #endif
 __ALIGN_BEGIN uint8_t Rx_Buff[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __ALIGN_END; /* Ethernet Receive Buffer */
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-  #pragma data_alignment=4   
+  #pragma data_alignment=4
 #endif
 __ALIGN_BEGIN uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __ALIGN_END; /* Ethernet Transmit Buffer */
 
@@ -654,7 +654,9 @@ stm32f4_output(struct netif *nif, struct pbuf *p)
 static void
 stm32f4_eth_isr(void)
 {
+#if 0
     HAL_ETH_IRQHandler(&stmref4_eth_State.st_eth);
+#endif
 }
 
 static err_t
@@ -697,7 +699,9 @@ stm32f4_lwip_init(struct netif *nif)
             if ((cfg->sec_port_mask[i] & (1 << j)) == 0) {
                 continue;
             }
+#if 0
             hal_gpio_init_af(i * 16 + j, GPIO_AF11_ETH, GPIO_NOPULL);
+#endif
         }
     }
 
@@ -706,8 +710,10 @@ stm32f4_lwip_init(struct netif *nif)
     __HAL_RCC_ETH_CLK_ENABLE();
 
     ses->st_eth.Instance = ETH;
-    ses->st_eth.Init.MACAddr = { 0, 1, 2, 3, 4, 5 };
+    ses->st_eth.Init.MACAddr[1] = 2;
+#if 0
     ses->st_eth.Init.Autonegotiation = ETH_AUTONEGOTIATION_ENABLE;
+#endif
     ses->st_eth.Init.Speed = ETH_SPEED_100M;
     ses->st_eth.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
     ses->st_eth.Init.PhyAddress = 0;
