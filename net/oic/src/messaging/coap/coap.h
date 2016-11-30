@@ -152,14 +152,14 @@ typedef struct coap_packet {
 } coap_packet_t;
 
 /* option format serialization */
-#define COAP_SERIALIZE_INT_OPTION(number, field, text)                         \
+#define COAP_SERIALIZE_INT_OPTION(coap_pkt, number, field, text)               \
   if (IS_OPTION(coap_pkt, number)) {                                           \
     LOG(text " [%u]\n", (unsigned int)coap_pkt->field);                        \
     option += coap_serialize_int_option(number, current_number, option,        \
                                         coap_pkt->field);                      \
     current_number = number;                                                   \
   }
-#define COAP_SERIALIZE_BYTE_OPTION(number, field, text)                        \
+#define COAP_SERIALIZE_BYTE_OPTION(coap_pkt, number, field, text)              \
   if (IS_OPTION(coap_pkt, number)) {                                           \
     LOG(text " %u [0x%02X%02X%02X%02X%02X%02X%02X%02X]\n",                     \
         (unsigned int)coap_pkt->field##_len, coap_pkt->field[0],               \
@@ -171,7 +171,7 @@ typedef struct coap_packet {
                                           coap_pkt->field##_len, '\0');        \
     current_number = number;                                                   \
   }
-#define COAP_SERIALIZE_STRING_OPTION(number, field, splitter, text)            \
+#define COAP_SERIALIZE_STRING_OPTION(coap_pkt, number, field, splitter, text)  \
   if (IS_OPTION(coap_pkt, number)) {                                           \
     LOG(text " [%.*s]\n", (int)coap_pkt->field##_len, coap_pkt->field);        \
     option += coap_serialize_array_option(number, current_number, option,      \
@@ -179,7 +179,7 @@ typedef struct coap_packet {
                                           coap_pkt->field##_len, splitter);    \
     current_number = number;                                                   \
   }
-#define COAP_SERIALIZE_BLOCK_OPTION(number, field, text)                       \
+#define COAP_SERIALIZE_BLOCK_OPTION(coap_pkt, number, field, text)             \
   if (IS_OPTION(coap_pkt, number)) {                                           \
     LOG(text " [%lu%s (%u B/blk)]\n", (unsigned long)coap_pkt->field##_num,    \
         coap_pkt->field##_more ? "+" : "", coap_pkt->field##_size);            \
