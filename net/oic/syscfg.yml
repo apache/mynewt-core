@@ -44,7 +44,7 @@ syscfg.defs:
 
     OC_CONCURRENT_REQUESTS:
         description: 'Maximum number of concurrent requests'
-        value: 1
+        value: 2
 
     OC_MAX_PAYLOAD_SIZE:
         description: 'Maximum size of request/response PDUs'
