@@ -194,6 +194,9 @@ os_start(void)
 void
 os_pkg_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     os_msys_init();
 }
 

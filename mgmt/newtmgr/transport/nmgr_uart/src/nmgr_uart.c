@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include <syscfg/syscfg.h>
+#include <sysinit/sysinit.h>
 #include <bsp/bsp.h>
 
 #include <os/os.h>
@@ -357,6 +358,9 @@ nmgr_uart_pkg_init(void)
         .uc_rx_char = nmgr_uart_rx_char,
         .uc_cb_arg = nus
     };
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     rc = nmgr_transport_init(&nus->nus_transport, nmgr_uart_out, nmgr_uart_mtu);
     assert(rc == 0);

@@ -747,6 +747,9 @@ nffs_pkg_init(void)
     int cnt;
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     /* Initialize nffs's internal state. */
     rc = nffs_init();
     SYSINIT_PANIC_ASSERT(rc == 0);

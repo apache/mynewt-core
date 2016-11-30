@@ -537,6 +537,9 @@ shell_help_cmd(int argc, char **argv)
 void
 shell_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
 #if !MYNEWT_VAL(SHELL_TASK)
     return;
 #endif

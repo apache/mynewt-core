@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "console/console.h"
@@ -49,6 +50,9 @@ runtest()
 void
 runtest_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     runtest_start = 1;
 
 #if MYNEWT_VAL(RUNTEST_CLI)

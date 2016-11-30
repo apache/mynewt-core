@@ -94,6 +94,9 @@ config_init_fcb(void)
 void
 config_pkg_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     conf_init();
 
 #if MYNEWT_VAL(CONFIG_NFFS)

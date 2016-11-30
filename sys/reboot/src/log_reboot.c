@@ -235,6 +235,9 @@ log_reboot_pkg_init(void)
     int type;
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     (void)rc;
     (void)type;
 

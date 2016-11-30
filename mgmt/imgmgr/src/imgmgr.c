@@ -397,6 +397,9 @@ imgmgr_module_init(void)
 {
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     rc = mgmt_group_register(&imgr_nmgr_group);
     SYSINIT_PANIC_ASSERT(rc == 0);
 

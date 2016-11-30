@@ -370,6 +370,9 @@ nmgr_pkg_init(void)
 {
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     rc = nmgr_task_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }

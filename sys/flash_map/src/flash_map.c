@@ -242,6 +242,9 @@ flash_map_init(void)
     int num_areas;
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     rc = hal_flash_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 

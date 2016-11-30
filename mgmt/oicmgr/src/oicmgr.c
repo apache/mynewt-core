@@ -232,6 +232,9 @@ oicmgr_init(void)
 {
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     rc = nmgr_os_groups_register();
     if (rc != 0) {
         goto err;

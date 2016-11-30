@@ -172,6 +172,9 @@ stats_module_init(void)
 {
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     STAILQ_INIT(&g_stats_registry);
 
 #if MYNEWT_VAL(STATS_CLI)

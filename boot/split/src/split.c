@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include "sysinit/sysinit.h"
 #include "defs/error.h"
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
@@ -36,6 +37,9 @@ void
 split_app_init(void)
 {
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     rc = split_conf_init();
     assert(rc == 0);

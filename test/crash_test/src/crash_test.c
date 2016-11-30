@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "console/console.h"
@@ -65,6 +66,9 @@ crash_device(char *how)
 void
 crash_test_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
 #if MYNEWT_VAL(CRASH_TEST_CLI)
     shell_cmd_register(&crash_cmd_struct);
 #endif

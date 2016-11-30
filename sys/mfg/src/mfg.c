@@ -19,6 +19,7 @@
 
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "sysflash/sysflash.h"
 
 #include "os/os.h"
@@ -306,6 +307,9 @@ mfg_init(void)
     struct mfg_meta_footer ftr;
     uint16_t off;
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     if (mfg_state.valid) {
         /* Already initialized. */

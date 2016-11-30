@@ -31,8 +31,17 @@
 extern "C" {
 #endif
 
+extern uint8_t sysinit_active;
+
+void sysinit_start(void);
+void sysinit_end(void);
+
 typedef void sysinit_panic_fn(const char *file, int line);
 
+/* By default, a panic triggers an assertion failure.  If the project overrides
+ * the sysinit panic function setting, the specified function gets called
+ * instead.
+ */
 #ifndef MYNEWT_VAL_SYSINIT_PANIC_FN
 #include <assert.h>
 #define SYSINIT_PANIC() assert(0)
@@ -48,12 +57,23 @@ void MYNEWT_VAL(SYSINIT_PANIC_FN)(const char *file, int line);
     }                               \
 } while (0)
 
+/**
+ * Asserts that system initialization is in progress.  This macro is used to
+ * ensure packages don't get initialized a second time after system
+ * initialization has completed.
+ */
+#define SYSINIT_ASSERT_ACTIVE() assert(sysinit_active)
 
 #if MYNEWT_VAL(SPLIT_LOADER)
 
 /*** System initialization for loader (first stage of split image). */
 void sysinit_loader(void);
-#define sysinit() sysinit_loader()
+#define sysinit() do                                                        \
+{                                                                           \
+    sysinit_start();                                                        \
+    sysinit_loader();                                                       \
+    sysinit_end();                                                          \
+} while (0)
 
 #elif MYNEWT_VAL(SPLIT_APPLICATION)
 
@@ -62,15 +82,22 @@ void sysinit_app(void);
 #define sysinit() do                                                        \
 {                                                                           \
     /* Record that a split app is running; imgmgt needs to know this. */    \
-    split_app_active_set(1);                                           \
+    split_app_active_set(1);                                                \
+    sysinit_start();                                                        \
     sysinit_app();                                                          \
+    sysinit_end();                                                          \
 } while (0)
 
 #else
 
 /*** System initialization for a unified image (no split). */
 void sysinit_app(void);
-#define sysinit() sysinit_app()
+#define sysinit() do                                                        \
+{                                                                           \
+    sysinit_start();                                                        \
+    sysinit_app();                                                          \
+    sysinit_end();                                                          \
+} while (0)
 
 #endif
 

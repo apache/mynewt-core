@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <sysinit/sysinit.h>
 #include <hal/hal_flash.h>
 #include <flash_map/flash_map.h>
 #include <stdio.h>
@@ -400,5 +401,8 @@ get_fattime(void)
 void
 fatfs_pkg_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     fs_register(&fatfs_ops);
 }
