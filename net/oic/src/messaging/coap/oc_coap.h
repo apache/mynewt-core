@@ -18,7 +18,6 @@
 #define OC_COAP_H
 
 #include "separate.h"
-#include "../../util/oc_list.h"
 
 #ifdef __cplusplus
 extern "C" {

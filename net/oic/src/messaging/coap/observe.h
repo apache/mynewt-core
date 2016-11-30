@@ -36,7 +36,6 @@
 
 #include "coap.h"
 #include "transactions.h"
-#include "../../util/oc_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,7 +62,6 @@ typedef struct coap_observer {
   uint8_t retrans_counter;
 } coap_observer_t;
 
-oc_list_t coap_get_observers(void);
 void coap_remove_observer(coap_observer_t *o);
 int coap_remove_observer_by_client(oc_endpoint_t *endpoint);
 int coap_remove_observer_by_token(oc_endpoint_t *endpoint, uint8_t *token,

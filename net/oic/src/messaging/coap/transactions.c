@@ -39,7 +39,6 @@
 #include "transactions.h"
 #include "observe.h"
 #include "oc_buffer.h"
-#include "util/oc_list.h"
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
