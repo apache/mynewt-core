@@ -101,7 +101,6 @@ main(int argc, char **argv)
     ts_config.ts_print_results = 1;
     tu_init();
 
-    log_init();
     log_test_all();
 
     return tu_any_failed;
