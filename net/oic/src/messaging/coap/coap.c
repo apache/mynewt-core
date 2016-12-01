@@ -54,102 +54,102 @@ char *coap_error_message = "";
 static uint16_t
 coap_log_2(uint16_t value)
 {
-  uint16_t result = 0;
+    uint16_t result = 0;
 
-  do {
-    value = value >> 1;
-    result++;
-  } while (value);
+    do {
+        value = value >> 1;
+        result++;
+    } while (value);
 
-  return (result - 1);
+    return (result - 1);
 }
 /*---------------------------------------------------------------------------*/
 static uint32_t
 coap_parse_int_option(uint8_t *bytes, size_t length)
 {
-  uint32_t var = 0;
-  int i = 0;
+    uint32_t var = 0;
+    int i = 0;
 
-  while (i < length) {
-    var <<= 8;
-    var |= bytes[i++];
-  }
-  return var;
+    while (i < length) {
+        var <<= 8;
+        var |= bytes[i++];
+    }
+    return var;
 }
 /*---------------------------------------------------------------------------*/
 static uint8_t
 coap_option_nibble(unsigned int value)
 {
-  if (value < 13) {
-    return value;
-  } else if (value <= 0xFF + 13) {
-    return 13;
-  } else {
-    return 14;
-  }
+    if (value < 13) {
+        return value;
+    } else if (value <= 0xFF + 13) {
+        return 13;
+    } else {
+        return 14;
+    }
 }
 /*---------------------------------------------------------------------------*/
 static size_t
 coap_set_option_header(unsigned int delta, size_t length, uint8_t *buffer)
 {
-  size_t written = 0;
+    size_t written = 0;
 
-  buffer[0] = coap_option_nibble(delta) << 4 | coap_option_nibble(length);
+    buffer[0] = coap_option_nibble(delta) << 4 | coap_option_nibble(length);
 
-  if (delta > 268) {
-    buffer[++written] = ((delta - 269) >> 8) & 0xff;
-    buffer[++written] = (delta - 269) & 0xff;
-  } else if (delta > 12) {
-    buffer[++written] = (delta - 13);
-  }
+    if (delta > 268) {
+        buffer[++written] = ((delta - 269) >> 8) & 0xff;
+        buffer[++written] = (delta - 269) & 0xff;
+    } else if (delta > 12) {
+        buffer[++written] = (delta - 13);
+    }
 
-  if (length > 268) {
-    buffer[++written] = ((length - 269) >> 8) & 0xff;
-    buffer[++written] = (length - 269) & 0xff;
-  } else if (length > 12) {
-    buffer[++written] = (length - 13);
-  }
+    if (length > 268) {
+        buffer[++written] = ((length - 269) >> 8) & 0xff;
+        buffer[++written] = (length - 269) & 0xff;
+    } else if (length > 12) {
+        buffer[++written] = (length - 13);
+    }
 
-  LOG("WRITTEN %zu B opt header\n", 1 + written);
+    LOG("WRITTEN %zu B opt header\n", 1 + written);
 
-  return ++written;
+    return ++written;
 }
 /*---------------------------------------------------------------------------*/
 static size_t
 coap_serialize_int_option(unsigned int number, unsigned int current_number,
                           uint8_t *buffer, uint32_t value)
 {
-  size_t i = 0;
+    size_t i = 0;
 
-  if (0xFF000000 & value) {
-    ++i;
-  }
-  if (0xFFFF0000 & value) {
-    ++i;
-  }
-  if (0xFFFFFF00 & value) {
-    ++i;
-  }
-  if (0xFFFFFFFF & value) {
-    ++i;
-  }
-  LOG("OPTION %u (delta %u, len %zu)\n", number, number - current_number, i);
+    if (0xFF000000 & value) {
+        ++i;
+    }
+    if (0xFFFF0000 & value) {
+        ++i;
+    }
+    if (0xFFFFFF00 & value) {
+        ++i;
+    }
+    if (0xFFFFFFFF & value) {
+        ++i;
+    }
+    LOG("OPTION %u (delta %u, len %zu)\n", number, number - current_number, i);
 
-  i = coap_set_option_header(number - current_number, i, buffer);
+    i = coap_set_option_header(number - current_number, i, buffer);
 
-  if (0xFF000000 & value) {
-    buffer[i++] = (uint8_t)(value >> 24);
-  }
-  if (0xFFFF0000 & value) {
-    buffer[i++] = (uint8_t)(value >> 16);
-  }
-  if (0xFFFFFF00 & value) {
-    buffer[i++] = (uint8_t)(value >> 8);
-  }
-  if (0xFFFFFFFF & value) {
-    buffer[i++] = (uint8_t)(value);
-  }
-  return i;
+    if (0xFF000000 & value) {
+        buffer[i++] = (uint8_t)(value >> 24);
+    }
+    if (0xFFFF0000 & value) {
+        buffer[i++] = (uint8_t)(value >> 16);
+    }
+    if (0xFFFFFF00 & value) {
+        buffer[i++] = (uint8_t)(value >> 8);
+    }
+    if (0xFFFFFFFF & value) {
+        buffer[i++] = (uint8_t)(value);
+    }
+    return i;
 }
 /*---------------------------------------------------------------------------*/
 static size_t
@@ -157,67 +157,68 @@ coap_serialize_array_option(unsigned int number, unsigned int current_number,
                             uint8_t *buffer, uint8_t *array, size_t length,
                             char split_char)
 {
-  size_t i = 0;
+    size_t i = 0;
 
-  LOG("ARRAY type %u, len %zu, full [%.*s]\n", number, length, (int)length,
+    LOG("ARRAY type %u, len %zu, full [%.*s]\n", number, length, (int)length,
       array);
 
-  if (split_char != '\0') {
-    int j;
-    uint8_t *part_start = array;
-    uint8_t *part_end = NULL;
-    size_t temp_length;
+    if (split_char != '\0') {
+        int j;
+        uint8_t *part_start = array;
+        uint8_t *part_end = NULL;
+        size_t temp_length;
 
-    for (j = 0; j <= length + 1; ++j) {
-      LOG("STEP %u/%zu (%c)\n", j, length, array[j]);
-      if (array[j] == split_char || j == length) {
-        part_end = array + j;
-        temp_length = part_end - part_start;
+        for (j = 0; j <= length + 1; ++j) {
+            LOG("STEP %u/%zu (%c)\n", j, length, array[j]);
+            if (array[j] == split_char || j == length) {
+                part_end = array + j;
+                temp_length = part_end - part_start;
 
-        i += coap_set_option_header(number - current_number, temp_length,
+                i += coap_set_option_header(number - current_number,
+                                            temp_length, &buffer[i]);
+                memcpy(&buffer[i], part_start, temp_length);
+                i += temp_length;
+
+                LOG("OPTION type %u, delta %u, len %zu, part [%.*s]\n", number,
+                    number - current_number, i, (int)temp_length, part_start);
+
+                ++j; /* skip the splitter */
+                current_number = number;
+                part_start = array + j;
+            }
+        } /* for */
+    } else {
+        i += coap_set_option_header(number - current_number, length,
                                     &buffer[i]);
-        memcpy(&buffer[i], part_start, temp_length);
-        i += temp_length;
+        memcpy(&buffer[i], array, length);
+        i += length;
 
-        LOG("OPTION type %u, delta %u, len %zu, part [%.*s]\n", number,
-            number - current_number, i, (int)temp_length, part_start);
+        LOG("OPTION type %u, delta %u, len %zu\n", number,
+            number - current_number, length);
+    }
 
-        ++j; /* skip the splitter */
-        current_number = number;
-        part_start = array + j;
-      }
-    } /* for */
-  } else {
-    i += coap_set_option_header(number - current_number, length, &buffer[i]);
-    memcpy(&buffer[i], array, length);
-    i += length;
-
-    LOG("OPTION type %u, delta %u, len %zu\n", number, number - current_number,
-        length);
-  }
-
-  return i;
+    return i;
 }
 /*---------------------------------------------------------------------------*/
 static void
 coap_merge_multi_option(char **dst, size_t *dst_len, uint8_t *option,
                         size_t option_len, char separator)
 {
-  /* merge multiple options */
-  if (*dst_len > 0) {
-    /* dst already contains an option: concatenate */
-    (*dst)[*dst_len] = separator;
-    *dst_len += 1;
+    /* merge multiple options */
+    if (*dst_len > 0) {
+        /* dst already contains an option: concatenate */
+        (*dst)[*dst_len] = separator;
+        *dst_len += 1;
 
-    /* memmove handles 2-byte option headers */
-    memmove((*dst) + (*dst_len), option, option_len);
+        /* memmove handles 2-byte option headers */
+        memmove((*dst) + (*dst_len), option, option_len);
 
-    *dst_len += option_len;
-  } else {
-    /* dst is empty: set to option */
-    *dst = (char *)option;
-    *dst_len = option_len;
-  }
+        *dst_len += option_len;
+    } else {
+        /* dst is empty: set to option */
+        *dst = (char *)option;
+        *dst_len = option_len;
+    }
 }
 /*---------------------------------------------------------------------------*/
 #if 0
@@ -225,35 +226,35 @@ static int
 coap_get_variable(const char *buffer, size_t length, const char *name,
 		  const char **output)
 {
-  const char *start = NULL;
-  const char *end = NULL;
-  const char *value_end = NULL;
-  size_t name_len = 0;
+    const char *start = NULL;
+    const char *end = NULL;
+    const char *value_end = NULL;
+    size_t name_len = 0;
 
-  /*initialize the output buffer first */
-  *output = 0;
+    /*initialize the output buffer first */
+    *output = 0;
 
-  name_len = strlen(name);
-  end = buffer + length;
+    name_len = strlen(name);
+    end = buffer + length;
 
-  for(start = buffer; start + name_len < end; ++start) {
-    if((start == buffer || start[-1] == '&') && start[name_len] == '='
-       && strncmp(name, start, name_len) == 0) {
+    for(start = buffer; start + name_len < end; ++start) {
+        if ((start == buffer || start[-1] == '&') && start[name_len] == '=' &&
+          strncmp(name, start, name_len) == 0) {
 
-      /* Point start to variable value */
-      start += name_len + 1;
+            /* Point start to variable value */
+            start += name_len + 1;
 
-      /* Point end to the end of the value */
-      value_end = (const char *)memchr(start, '&', end - start);
-      if(value_end == NULL) {
-	value_end = end;
-      }
-      *output = start;
+            /* Point end to the end of the value */
+            value_end = (const char *)memchr(start, '&', end - start);
+            if(value_end == NULL) {
+                value_end = end;
+            }
+            *output = start;
 
-      return value_end - start;
+            return value_end - start;
+        }
     }
-  }
-  return 0;
+    return 0;
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -284,6 +285,7 @@ coap_init_message(coap_packet_t *coap_pkt, coap_message_type_t type,
     coap_pkt->mid = mid;
 }
 /*---------------------------------------------------------------------------*/
+
 size_t
 coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer)
 {
@@ -398,9 +400,9 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer)
 void
 coap_send_message(oc_message_t *message)
 {
-  LOG("-sending OCF message (%u)-\n", (unsigned int) message->length);
+    LOG("-sending OCF message (%u)-\n", (unsigned int) message->length);
 
-  oc_send_message(message);
+    oc_send_message(message);
 }
 
 /*---------------------------------------------------------------------------*/
