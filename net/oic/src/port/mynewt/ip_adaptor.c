@@ -98,6 +98,7 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
                 memcpy(&itf2, &itf, sizeof(itf));
                 continue;
             }
+
             n = os_mbuf_dup(m);
             if (!n) {
                 break;
@@ -310,7 +311,7 @@ oc_connectivity_init_ip(void)
             continue;
         }
 
-        LOG("Joined Coap multicast grop on %s\n", itf.mif_name);
+        LOG("Joined Coap mcast group on %s\n", itf.mif_name);
     }
 
     sin.msin6_port = htons(COAP_PORT_UNSECURED);
