@@ -287,6 +287,7 @@ coap_init_message(coap_packet_t *coap_pkt, coap_message_type_t type,
 size_t
 coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer)
 {
+    struct coap_udp_hdr *cuh;
     uint8_t *option;
     unsigned int current_number = 0;
 
@@ -297,17 +298,12 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer)
     LOG("-Serializing MID %u to %p, ", pkt->mid, pkt->buffer);
 
     /* set header fields */
-    pkt->buffer[0] = 0x00;
-    pkt->buffer[0] |= COAP_HEADER_VERSION_MASK &
-                         (pkt->version) << COAP_HEADER_VERSION_POSITION;
-    pkt->buffer[0] |=
-      COAP_HEADER_TYPE_MASK & (pkt->type) << COAP_HEADER_TYPE_POSITION;
-    pkt->buffer[0] |= COAP_HEADER_TOKEN_LEN_MASK &
-                         (pkt->token_len)
-                           << COAP_HEADER_TOKEN_LEN_POSITION;
-    pkt->buffer[1] = pkt->code;
-    pkt->buffer[2] = (uint8_t)((pkt->mid) >> 8);
-    pkt->buffer[3] = (uint8_t)(pkt->mid);
+    cuh = (struct coap_udp_hdr *)pkt->buffer;
+    cuh->version = pkt->version;
+    cuh->type = pkt->type;
+    cuh->token_len = pkt->token_len;
+    cuh->code = pkt->code;
+    cuh->id = htons(pkt->mid);
 
     /* empty packet, dont need to do more stuff */
     if (!pkt->code) {
@@ -411,6 +407,7 @@ coap_send_message(oc_message_t *message)
 coap_status_t
 coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len)
 {
+    struct coap_udp_hdr *udp;
     uint8_t *current_option;
     unsigned int option_number = 0;
     unsigned int option_delta = 0;
@@ -422,14 +419,12 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len)
     pkt->buffer = data;
 
     /* parse header fields */
-    pkt->version = (COAP_HEADER_VERSION_MASK & pkt->buffer[0]) >>
-                    COAP_HEADER_VERSION_POSITION;
-    pkt->type = (COAP_HEADER_TYPE_MASK & pkt->buffer[0]) >>
-                 COAP_HEADER_TYPE_POSITION;
-    pkt->token_len = (COAP_HEADER_TOKEN_LEN_MASK & pkt->buffer[0]) >>
-                      COAP_HEADER_TOKEN_LEN_POSITION;
-    pkt->code = pkt->buffer[1];
-    pkt->mid = pkt->buffer[2] << 8 | pkt->buffer[3];
+    udp = (struct coap_udp_hdr *)data;
+    pkt->version = udp->version;
+    pkt->type = udp->type;
+    pkt->token_len = udp->token_len;
+    pkt->code = udp->code;
+    pkt->mid = ntohs(udp->id);
 
     if (pkt->version != 1) {
         coap_error_message = "CoAP version must be 1";

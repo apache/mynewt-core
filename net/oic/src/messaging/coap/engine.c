@@ -223,6 +223,7 @@ coap_receive(oc_message_t *msg)
                  response, transaction->message->data)) == 0) {
             erbium_status_code = PACKET_SERIALIZATION_ERROR;
           }
+          transaction->type = response->type;
         }
       } else {
         erbium_status_code = SERVICE_UNAVAILABLE_5_03;

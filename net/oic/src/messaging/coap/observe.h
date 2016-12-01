@@ -74,8 +74,8 @@ int coap_notify_observers(oc_resource_t *resource,
                           oc_endpoint_t *endpoint);
 // int coap_notify_observers_sub(oc_resource_t *resource, const char *subpath);
 
-int coap_observe_handler(void *request, void *response, oc_resource_t *resource,
-                         oc_endpoint_t *endpoint);
+int coap_observe_handler(coap_packet_t *request, coap_packet_t *response,
+                         oc_resource_t *resource, oc_endpoint_t *endpoint);
 
 void coap_observe_init(void);
 

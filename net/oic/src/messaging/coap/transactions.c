@@ -76,7 +76,6 @@ coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
             LOG("Created new transaction %d %d\n", mid, (int) message->length);
             t->mid = mid;
             t->retrans_counter = 0;
-
             t->message = message;
 
             /* save client address */
@@ -99,66 +98,62 @@ coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
 void
 coap_send_transaction(coap_transaction_t *t)
 {
-  LOG("Sending transaction %u\n", t->mid);
-  bool confirmable = false;
+    LOG("Sending transaction %u\n", t->mid);
+    bool confirmable = false;
 
-  confirmable =
-    (COAP_TYPE_CON == ((COAP_HEADER_TYPE_MASK & t->message->data[0]) >>
-                       COAP_HEADER_TYPE_POSITION))
-      ? true
-      : false;
+    confirmable = (COAP_TYPE_CON == t->type) ? true : false;
 
-  if (confirmable) {
-    if (t->retrans_counter < COAP_MAX_RETRANSMIT) {
-      /* not timed out yet */
-      LOG("Keeping transaction %u\n", t->mid);
+    if (confirmable) {
+        if (t->retrans_counter < COAP_MAX_RETRANSMIT) {
+            /* not timed out yet */
+            LOG("Keeping transaction %u\n", t->mid);
 
-      if (t->retrans_counter == 0) {
-        t->retrans_tmo =
-          COAP_RESPONSE_TIMEOUT_TICKS +
-          (oc_random_rand() %
-           (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
-        LOG("Initial interval " OC_CLK_FMT "\n", t->retrans_tmo);
-      } else {
-        t->retrans_tmo <<= 1; /* double */
-        LOG("Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
-      }
+            if (t->retrans_counter == 0) {
+                t->retrans_tmo =
+                  COAP_RESPONSE_TIMEOUT_TICKS +
+                  (oc_random_rand() %
+                    (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
+                LOG("Initial interval " OC_CLK_FMT "\n", t->retrans_tmo);
+            } else {
+                t->retrans_tmo <<= 1; /* double */
+                LOG("Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
+            }
 
-      os_callout_reset(&t->retrans_timer, t->retrans_tmo);
+            os_callout_reset(&t->retrans_timer, t->retrans_tmo);
 
-      coap_send_message(t->message);
+            coap_send_message(t->message);
 
-      oc_message_add_ref(t->message);
+            oc_message_add_ref(t->message);
 
-      t = NULL;
-    } else {
-      /* timed out */
-      LOG("Timeout\n");
+            t = NULL;
+        } else {
+            /* timed out */
+            LOG("Timeout\n");
 
 #ifdef OC_SERVER
-      LOG("timeout.. so removing observers\n");
-      /* handle observers */
-      coap_remove_observer_by_client(&t->message->endpoint);
+            LOG("timeout.. so removing observers\n");
+            /* handle observers */
+            coap_remove_observer_by_client(&t->message->endpoint);
 #endif /* OC_SERVER */
 
 #ifdef OC_SECURITY
-      if (t->message->endpoint.flags & SECURED) {
-        oc_sec_dtls_close_init(&t->message->endpoint);
-      }
+            if (t->message->endpoint.flags & SECURED) {
+                oc_sec_dtls_close_init(&t->message->endpoint);
+            }
 #endif /* OC_SECURITY */
 
 #ifdef OC_CLIENT
-      oc_ri_remove_client_cb_by_mid(t->mid);
+            oc_ri_remove_client_cb_by_mid(t->mid);
 #endif /* OC_CLIENT */
 
-      coap_clear_transaction(t);
-    }
-  } else {
-    coap_send_message(t->message);
-    oc_message_add_ref(t->message);
+            coap_clear_transaction(t);
+        }
+    } else {
+        coap_send_message(t->message);
+        oc_message_add_ref(t->message);
 
-    coap_clear_transaction(t);
-  }
+        coap_clear_transaction(t);
+    }
 }
 /*---------------------------------------------------------------------------*/
 void

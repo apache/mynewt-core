@@ -50,12 +50,19 @@ extern "C" {
 #define COAP_TOKEN_LEN 8 /* The maximum number of bytes for the Token */
 #define COAP_ETAG_LEN 8  /* The maximum number of bytes for the ETag */
 
-#define COAP_HEADER_VERSION_MASK 0xC0
-#define COAP_HEADER_VERSION_POSITION 6
-#define COAP_HEADER_TYPE_MASK 0x30
-#define COAP_HEADER_TYPE_POSITION 4
-#define COAP_HEADER_TOKEN_LEN_MASK 0x0F
-#define COAP_HEADER_TOKEN_LEN_POSITION 0
+struct coap_udp_hdr {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  version:2;         /* protocol version */
+    uint8_t  type:2;            /* type flag */
+    uint8_t  token_len:4;       /* length of token */
+#else
+    uint8_t  token_len:4;       /* length of token */
+    uint8_t  type:2;            /* type flag */
+    uint8_t  version:2;         /* protocol version */
+#endif
+    uint8_t  code;          /* request (1-10) or response (value 40-255) */
+    uint16_t id;          /* transaction id */
+};
 
 #define COAP_HEADER_OPTION_DELTA_MASK 0xF0
 #define COAP_HEADER_OPTION_SHORT_LENGTH_MASK 0x0F

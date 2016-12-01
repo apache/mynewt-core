@@ -258,6 +258,7 @@ oc_send_separate_response(oc_separate_response_t *handle,
                     coap_set_payload(response, handle->buffer,
                       response_buffer.response_length);
                 }
+                t->type = response->type;
                 t->message->length = coap_serialize_message(response,
                   t->message->data);
                 coap_send_transaction(t);

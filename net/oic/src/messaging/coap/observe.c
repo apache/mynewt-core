@@ -298,6 +298,7 @@ coap_notify_observers(oc_resource_t *resource,
                 transaction->message->length =
                   coap_serialize_message(notification,
                     transaction->message->data);
+                transaction->type = notification->type;
 
                 coap_send_transaction(transaction);
             }
@@ -307,12 +308,11 @@ coap_notify_observers(oc_resource_t *resource,
 }
 /*---------------------------------------------------------------------------*/
 int
-coap_observe_handler(void *request, void *response, oc_resource_t *resource,
-                     oc_endpoint_t *endpoint)
+coap_observe_handler(coap_packet_t *coap_req, coap_packet_t *coap_res,
+                     oc_resource_t *resource, oc_endpoint_t *endpoint)
 {
-    coap_packet_t *const coap_req = (coap_packet_t *)request;
-    coap_packet_t *const coap_res = (coap_packet_t *)response;
     int dup = -1;
+
     if (coap_req->code == COAP_GET &&
       coap_res->code < 128) { /* GET request and response without error code */
         if (IS_OPTION(coap_req, COAP_OPTION_OBSERVE)) {
