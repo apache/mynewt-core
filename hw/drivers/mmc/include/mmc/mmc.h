@@ -30,8 +30,10 @@ extern "C" {
  * MMC driver errors.
  */
 #define MMC_OK              (0)
-#define MMC_CARD_ERROR      (1)  /* Is there a card installed? */
-#define MMC_TIMEOUT         (2)
+#define MMC_CARD_ERROR      (-1)  /* Is there a card installed? */
+#define MMC_READ_ERROR      (-2)
+#define MMC_WRITE_ERROR     (-3)
+#define MMC_TIMEOUT         (-4)
 
 /**
  * Initialize the MMC driver
@@ -44,6 +46,12 @@ extern "C" {
  */
 int
 mmc_init(int spi_num, void *spi_cfg, int ss_pin);
+
+int
+mmc_read(uint32_t addr, void *buf, size_t len);
+
+int
+mmc_write(uint32_t addr, void *buf, size_t len);
 
 #ifdef __cplusplus
 }
