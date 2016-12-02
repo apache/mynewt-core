@@ -23,18 +23,17 @@
 extern "C" {
 #endif
 
-#define  SOFT_REBOOT (0)
-#define  HARD_REBOOT (1)
-#define  GEN_CORE    (2)
-
-#define REBOOT_REASON_STR(reason) \
-    (SOFT_REBOOT  == reason ? "SOFT"     :\
-    (HARD_REBOOT  == reason ? "HARD"     :\
-    (GEN_CORE     == reason ? "GEN_CORE" :\
-     "UNKNOWN")))
+#include <hal/hal_system.h>
+#define REBOOT_REASON_STR(reason)                                       \
+    (reason == HAL_RESET_POR ? "HARD" :                                 \
+      (reason == HAL_RESET_PIN ? "RESET_PIN" :                          \
+        (reason == HAL_RESET_WATCHDOG ? "WDOG" :                        \
+          (reason == HAL_RESET_SOFT ? "SOFT" :                          \
+            (reason == HAL_RESET_BROWNOUT ? "BROWNOUT" :                \
+              "UNKNOWN")))))
 
 int reboot_init_handler(int log_store_type, uint8_t entries);
-int log_reboot(int reason);
+int log_reboot(enum hal_reset_reason);
 
 #ifdef __cplusplus
 }

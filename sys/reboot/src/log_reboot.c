@@ -130,7 +130,7 @@ reboot_init_handler(int log_store_type, uint8_t entries)
  * @return 0 on success; non-zero on failure
  */
 int
-log_reboot(int reason)
+log_reboot(enum hal_reset_reason reason)
 {
     int rc;
     char str[12] = {0};
@@ -149,7 +149,7 @@ log_reboot(int reason)
 
     reboot_tmp_cnt = reboot_cnt;
 
-    if (reason == SOFT_REBOOT) {
+    if (reason == HAL_RESET_SOFT) {
         /*
          * Save reboot count as soft reboot cnt if the reason is
          * a soft reboot
@@ -158,7 +158,7 @@ log_reboot(int reason)
         conf_save_one("reboot/soft_reboot",
                       conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                           str, sizeof(str)));
-    } else if (reason == HARD_REBOOT) {
+    } else {
         conf_save_one("reboot/soft_reboot", "0");
         if (soft_reboot) {
             /* No need to log as it's not a hard reboot */

@@ -323,7 +323,7 @@ nmgr_reset(struct mgmt_cbuf *cb)
 {
     os_callout_init(&nmgr_reset_callout, mgmt_evq_get(), nmgr_reset_tmo, NULL);
 
-    log_reboot(SOFT_REBOOT);
+    log_reboot(HAL_RESET_SOFT);
     os_callout_reset(&nmgr_reset_callout, OS_TICKS_PER_SEC / 4);
 
     mgmt_cbuf_setoerr(cb, OS_OK);

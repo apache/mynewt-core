@@ -302,7 +302,7 @@ main(int argc, char **argv)
 
     conf_load();
 
-    log_reboot(HARD_REBOOT);
+    log_reboot(hal_reset_cause());
 
 #if MYNEWT_VAL(SPLIT_LOADER)
     {
