@@ -97,58 +97,67 @@ enum
 
 /* parsed message struct */
 typedef struct coap_packet {
-  uint8_t *buffer; /* pointer to CoAP header / incoming packet buffer / memory
-                      to serialize packet */
+    /* pointer to CoAP header / incoming packet buffer / memory
+       to serialize packet */
+    uint8_t *buffer;
 
-  uint8_t version;
-  coap_message_type_t type;
-  uint8_t code;
-  uint16_t mid;
+    uint8_t version;
+    coap_message_type_t type;
+    uint8_t code;
+    uint16_t mid;   /* message ID */
 
-  uint8_t token_len;
-  uint8_t token[COAP_TOKEN_LEN];
+    uint8_t token_len;
+    uint8_t token[COAP_TOKEN_LEN];
 
-  uint8_t options[COAP_OPTION_SIZE1 / OPTION_MAP_SIZE +
-                  1]; /* bitmap to check if option is set */
+    /* bitmap to check if option is set */
+    uint8_t options[COAP_OPTION_SIZE1 / OPTION_MAP_SIZE + 1];
 
-  uint16_t content_format; /* parse options once and store; allows setting
-                              options in random order  */
-  uint32_t max_age;
-  uint8_t etag_len;
-  uint8_t etag[COAP_ETAG_LEN];
-  size_t proxy_uri_len;
-  const char *proxy_uri;
-  size_t proxy_scheme_len;
-  const char *proxy_scheme;
-  size_t uri_host_len;
-  const char *uri_host;
-  size_t location_path_len;
-  const char *location_path;
-  uint16_t uri_port;
-  size_t location_query_len;
-  const char *location_query;
-  size_t uri_path_len;
-  const char *uri_path;
-  int32_t observe;
-  uint16_t accept;
-  uint8_t if_match_len;
-  uint8_t if_match[COAP_ETAG_LEN];
-  uint32_t block2_num;
-  uint8_t block2_more;
-  uint16_t block2_size;
-  uint32_t block2_offset;
-  uint32_t block1_num;
-  uint8_t block1_more;
-  uint16_t block1_size;
-  uint32_t block1_offset;
-  uint32_t size2;
-  uint32_t size1;
-  size_t uri_query_len;
-  const char *uri_query;
-  uint8_t if_none_match;
+    /* parse options once and store; allows setting options in random order  */
+    uint16_t content_format;
+    uint32_t max_age;
+#if 0
+    uint8_t etag_len;
+    uint8_t etag[COAP_ETAG_LEN];
+#endif
+#if COAP_PROXY_OPTION_PROCESSING
+    uint16_t proxy_uri_len;
+    char *proxy_uri;
+    uint16_t proxy_scheme_len;
+    char *proxy_scheme;
+#endif
+    uint16_t uri_host_len;
+    char *uri_host;
+#if 0
+    uint16_t loc_path_len;
+    char *loc_path;
+    uint16_t loc_query_len;
+    char *loc_query;
+#endif
+    uint16_t uri_port;
+    uint16_t uri_path_len;
+    char *uri_path;
+    int32_t observe;
+    uint16_t accept;
+#if 0
+    uint8_t if_match_len;
+    uint8_t if_match[COAP_ETAG_LEN];
+#endif
+    uint32_t block2_num;
+    uint8_t block2_more;
+    uint16_t block2_size;
+    uint32_t block2_offset;
+    uint32_t block1_num;
+    uint8_t block1_more;
+    uint16_t block1_size;
+    uint32_t block1_offset;
+    uint32_t size2;
+    uint32_t size1;
+    uint16_t uri_query_len;
+    char *uri_query;
+    uint8_t if_none_match;
 
-  uint16_t payload_len;
-  uint8_t *payload;
+    uint16_t payload_len;
+    uint8_t *payload;
 } coap_packet_t;
 
 /* option format serialization */
