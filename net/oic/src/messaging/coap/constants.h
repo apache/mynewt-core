@@ -50,6 +50,9 @@ extern "C" {
 #define COAP_TOKEN_LEN 8 /* The maximum number of bytes for the Token */
 #define COAP_ETAG_LEN 8  /* The maximum number of bytes for the ETag */
 
+/*
+ * Standard COAP header
+ */
 struct coap_udp_hdr {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     uint8_t  version:2;         /* protocol version */
@@ -60,9 +63,74 @@ struct coap_udp_hdr {
     uint8_t  type:2;            /* type flag */
     uint8_t  version:2;         /* protocol version */
 #endif
-    uint8_t  code;          /* request (1-10) or response (value 40-255) */
-    uint16_t id;          /* transaction id */
+    uint8_t  code;              /* request (1-10) or response (value 40-255) */
+    uint16_t id;                /* transaction id */
 };
+
+/*
+ * Header used by Iotivity for TCP-like transports.
+ * 4 different kinds of headers.
+ */
+#define COAP_TCP_LENGTH_FIELD_8_BIT      13
+#define COAP_TCP_LENGTH_FIELD_16_BIT     269
+#define COAP_TCP_LENGTH_FIELD_32_BIT     65805
+
+#define COAP_TCP_TYPE0      0
+#define COAP_TCP_TYPE8      13
+#define COAP_TCP_TYPE16     14
+#define COAP_TCP_TYPE32     15
+
+struct coap_tcp_hdr0 {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  data_len:4;        /* packet length */
+    uint8_t  token_len:4;       /* length of token */
+#else
+    uint8_t  token_len:4;       /* length of token */
+    uint8_t  data_len:4;        /* packet length */
+#endif
+    uint8_t  code;
+};
+
+struct coap_tcp_hdr8 {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  type:4;            /* header type == 13 */
+    uint8_t  token_len:4;       /* length of token */
+#else
+    uint8_t  token_len:4;       /* length of token */
+    uint8_t  type:4;            /* header type == 13*/
+#endif
+    uint8_t  data_len;          /* packet size - 13 */
+    uint8_t  code;
+};
+
+struct coap_tcp_hdr16 {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  type:4;            /* header type == 14 */
+    uint8_t  token_len:4;       /* length of token */
+#else
+    uint8_t  token_len:4;       /* length of token */
+    uint8_t  type:4;            /* header type == 14 */
+#endif
+    uint16_t data_len;          /* packet size - 269 */
+    uint8_t  code;
+} __attribute__((packed));
+
+struct coap_tcp_hdr32 {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  type:4;            /* header type == 15 */
+    uint8_t  token_len:4;       /* length of token */
+#else
+    uint8_t  token_len:4;       /* length of token */
+    uint8_t  type:4;            /* header type == 15*/
+#endif
+    uint32_t data_len;       /* packet size - 65805 */
+    uint8_t  code;
+} __attribute__((packed));
+
+#define COAP_TCP_TYPE8  13
+#define COAP_TCP_TYPE16 14
+#define COAP_TCP_TYPE32 15
+
 
 #define COAP_HEADER_OPTION_DELTA_MASK 0xF0
 #define COAP_HEADER_OPTION_SHORT_LENGTH_MASK 0x0F

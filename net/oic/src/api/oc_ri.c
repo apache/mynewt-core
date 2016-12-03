@@ -696,17 +696,18 @@ bool
 oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
                uint16_t mid)
 {
-  coap_packet_t rst[1];
-  coap_init_message(rst, COAP_TYPE_RST, 0, mid);
-  coap_set_header_observe(rst, 1);
-  coap_set_token(rst, token, token_len);
-  oc_message_t *message = oc_allocate_message();
-  if (message) {
-    message->length = coap_serialize_message(rst, message->data);
-    coap_send_message(message);
-    return true;
-  }
-  return false;
+    coap_packet_t rst[1];
+    coap_init_message(rst, COAP_TYPE_RST, 0, mid);
+    coap_set_header_observe(rst, 1);
+    coap_set_token(rst, token, token_len);
+    oc_message_t *message = oc_allocate_message();
+    if (message) {
+        message->length = coap_serialize_message(rst, message->data,
+                                                 oc_endpoint_use_tcp(endpoint));
+        coap_send_message(message);
+        return true;
+    }
+    return false;
 }
 
 bool

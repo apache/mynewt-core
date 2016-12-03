@@ -212,10 +212,10 @@ uint16_t coap_get_mid(void);
 
 void coap_init_message(coap_packet_t *, coap_message_type_t type,
                        uint8_t code, uint16_t mid);
-size_t coap_serialize_message(coap_packet_t *, uint8_t *buffer);
+size_t coap_serialize_message(coap_packet_t *, uint8_t *buffer, int tcp_hdr);
 void coap_send_message(oc_message_t *message);
 coap_status_t coap_parse_message(coap_packet_t *request, uint8_t *data,
-                                 uint16_t data_len);
+                                 uint16_t data_len, int tcp_hdr);
 
 int coap_get_query_variable(coap_packet_t *, const char *name,
                             const char **output);

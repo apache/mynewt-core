@@ -289,46 +289,27 @@ coap_init_message(coap_packet_t *pkt, coap_message_type_t type,
 /*---------------------------------------------------------------------------*/
 
 size_t
-coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer)
+coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
 {
     struct coap_udp_hdr *cuh;
+    struct coap_tcp_hdr0 *cth0;
+    struct coap_tcp_hdr8 *cth8;
+    struct coap_tcp_hdr16 *cth16;
+    struct coap_tcp_hdr32 *cth32;
     uint8_t *option;
     unsigned int current_number = 0;
+    int len, data_len;
 
     /* Initialize */
     pkt->buffer = buffer;
     pkt->version = 1;
 
-    LOG("-Serializing MID %u to %p, ", pkt->mid, pkt->buffer);
-
-    /* set header fields */
-    cuh = (struct coap_udp_hdr *)pkt->buffer;
-    cuh->version = pkt->version;
-    cuh->type = pkt->type;
-    cuh->token_len = pkt->token_len;
-    cuh->code = pkt->code;
-    cuh->id = htons(pkt->mid);
-
-    /* empty packet, dont need to do more stuff */
-    if (!pkt->code) {
-        LOG("-Done serializing empty message at %p-\n", pkt->buffer);
-        return 4;
-    }
-
-    /* set Token */
-    LOG("Token (len %u)", pkt->token_len);
-    option = pkt->buffer + COAP_HEADER_LEN;
-    for (current_number = 0; current_number < pkt->token_len;
-         ++current_number) {
-        LOG(" %02X", pkt->token[current_number]);
-        *option = pkt->token[current_number];
-        ++option;
-    }
-    LOG("-\n");
+    LOG("-Serializing MID %u to %p, ", pkt->mid, buffer);
 
     /* Serialize options */
     current_number = 0;
 
+    option = buffer;
     LOG("-Serializing options at %p-\n", option);
 #if 0
     /* The options must be serialized in the order of their number */
@@ -374,20 +355,67 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer)
 
     LOG("-Done serializing at %p----\n", option);
 
-    /* Pack payload */
-    if ((option - pkt->buffer) <= COAP_MAX_HEADER_SIZE) {
-        /* Payload marker */
-        if (pkt->payload_len) {
-            *option = 0xFF;
-            ++option;
-        }
-        memmove(option, pkt->payload, pkt->payload_len);
-    } else {
-        /* an error occurred: caller must check for !=0 */
-        pkt->buffer = NULL;
-        coap_error_message = "Serialized header exceeds COAP_MAX_HEADER_SIZE";
-        return 0;
+    /* Payload marker */
+    if (pkt->payload_len) {
+        *option = 0xFF;
+        ++option;
     }
+    len = option - buffer;
+    data_len = len + pkt->payload_len;
+
+    /* set header fields */
+    if (!tcp_hdr) {
+        if (len + sizeof(*cuh) + pkt->token_len > COAP_MAX_HEADER_SIZE) {
+            pkt->buffer = NULL;
+            coap_error_message = "Serialized header exceeds MAX_HEADER_SIZE";
+            return 0;
+        }
+        memmove(buffer + sizeof(*cuh) + pkt->token_len, buffer, len);
+        cuh = (struct coap_udp_hdr *)buffer;
+        cuh->version = pkt->version;
+        cuh->type = pkt->type;
+        cuh->token_len = pkt->token_len;
+        cuh->code = pkt->code;
+        cuh->id = htons(pkt->mid);
+        option = (uint8_t *)(cuh + 1);
+    } else {
+        if (data_len < 13) {
+            memmove(buffer + sizeof(*cth0) + pkt->token_len, buffer, len);
+            cth0 = (struct coap_tcp_hdr0 *)buffer;
+            cth0->data_len = data_len;
+            cth0->token_len = pkt->token_len;
+            cth0->code = pkt->code;
+            option = (uint8_t *)(cth0 + 1);
+        } else if (data_len < 269) {
+            memmove(buffer + sizeof(*cth8) + pkt->token_len, buffer, len);
+            cth8 = (struct coap_tcp_hdr8 *)buffer;
+            cth8->type = COAP_TCP_TYPE8;
+            cth8->token_len = pkt->token_len;
+            cth8->data_len = data_len - 13;
+            cth8->code = pkt->code;
+            option = (uint8_t *)(cth8 + 1);
+        } else if (data_len < 65805) {
+            memmove(buffer + sizeof(*cth16) + pkt->token_len, buffer, len);
+            cth16 = (struct coap_tcp_hdr16 *)buffer;
+            cth16->type = COAP_TCP_TYPE16;
+            cth16->token_len = pkt->token_len;
+            cth16->data_len = htons(data_len - 269);
+            cth16->code = pkt->code;
+            option = (uint8_t *)(cth16 + 1);
+        } else {
+            memmove(buffer + sizeof(*cth32) + pkt->token_len, buffer, len);
+            cth32 = (struct coap_tcp_hdr32 *)buffer;
+            cth32->type = COAP_TCP_TYPE32;
+            cth32->token_len = pkt->token_len;
+            cth32->data_len = htonl(data_len - 65805);
+            cth32->code = pkt->code;
+            option = (uint8_t *)(cth32 + 1);
+        }
+    }
+
+    memcpy(option, pkt->token, pkt->token_len);
+    option += (len + pkt->token_len);
+    memmove(option, pkt->payload, pkt->payload_len);
 
     LOG("-Done %u B (header len %u, payload len %u)-\n",
         (unsigned int)(pkt->payload_len + option - buffer),
@@ -409,9 +437,14 @@ coap_send_message(oc_message_t *message)
 
 /*---------------------------------------------------------------------------*/
 coap_status_t
-coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len)
+coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
+                   int tcp_hdr)
 {
     struct coap_udp_hdr *udp;
+    struct coap_tcp_hdr0 *cth0;
+    struct coap_tcp_hdr8 *cth8;
+    struct coap_tcp_hdr16 *cth16;
+    struct coap_tcp_hdr32 *cth32;
     uint8_t *cur_opt;
     unsigned int opt_num = 0;
     unsigned int opt_delta = 0;
@@ -423,23 +456,50 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len)
     pkt->buffer = data;
 
     /* parse header fields */
-    udp = (struct coap_udp_hdr *)data;
-    pkt->version = udp->version;
-    pkt->type = udp->type;
-    pkt->token_len = udp->token_len;
-    pkt->code = udp->code;
-    pkt->mid = ntohs(udp->id);
-
-    if (pkt->version != 1) {
-        coap_error_message = "CoAP version must be 1";
-        return BAD_REQUEST_4_00;
+    if (!tcp_hdr) {
+        udp = (struct coap_udp_hdr *)data;
+        pkt->version = udp->version;
+        pkt->type = udp->type;
+        pkt->token_len = udp->token_len;
+        pkt->code = udp->code;
+        pkt->mid = ntohs(udp->id);
+        if (pkt->version != 1) {
+            coap_error_message = "CoAP version must be 1";
+            return BAD_REQUEST_4_00;
+        }
+        cur_opt = (uint8_t *)(udp + 1);
+    } else {
+        /*
+         * We cannot just look at the data length, as token might or might
+         * not be present. Need to figure out which header is present
+         * programmatically.
+         */
+        cth0 = (struct coap_tcp_hdr0 *)data;
+        if (cth0->data_len < 13) {
+            pkt->token_len = cth0->token_len;
+            pkt->code = cth0->code;
+            cur_opt = (uint8_t *)(cth0 + 1);
+        } else if (cth0->data_len == 13) {
+            cth8 = (struct coap_tcp_hdr8 *)data;
+            pkt->token_len = cth8->token_len;
+            pkt->code = cth8->code;
+            cur_opt = (uint8_t *)(cth8 + 1);
+        } else if (cth0->data_len == 14) {
+            cth16 = (struct coap_tcp_hdr16 *)data;
+            pkt->token_len = cth16->token_len;
+            pkt->code = cth16->code;
+            cur_opt = (uint8_t *)(cth16 + 1);
+        } else {
+            cth32 = (struct coap_tcp_hdr32 *)data;
+            pkt->token_len = cth32->token_len;
+            pkt->code = cth32->code;
+            cur_opt = (uint8_t *)(cth32 + 1);
+        }
     }
     if (pkt->token_len > COAP_TOKEN_LEN) {
         coap_error_message = "Token Length must not be more than 8";
         return BAD_REQUEST_4_00;
     }
-
-    cur_opt = data + sizeof(*udp);
 
     memcpy(pkt->token, cur_opt, pkt->token_len);
 

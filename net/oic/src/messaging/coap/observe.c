@@ -297,7 +297,8 @@ coap_notify_observers(oc_resource_t *resource,
 
                 transaction->message->length =
                   coap_serialize_message(notification,
-                    transaction->message->data);
+                    transaction->message->data,
+                    oc_endpoint_use_tcp(&obs->endpoint));
                 transaction->type = notification->type;
 
                 coap_send_transaction(transaction);

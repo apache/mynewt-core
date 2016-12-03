@@ -66,7 +66,8 @@ coap_receive(oc_message_t *msg)
   static coap_packet_t response[1];
   static coap_transaction_t *transaction = NULL;
 
-  erbium_status_code = coap_parse_message(message, msg->data, msg->length);
+  erbium_status_code = coap_parse_message(message, msg->data, msg->length,
+                                          oc_endpoint_use_tcp(&msg->endpoint));
 
   if (erbium_status_code == NO_ERROR) {
 
@@ -220,7 +221,8 @@ coap_receive(oc_message_t *msg)
         }
         if (erbium_status_code == NO_ERROR) {
           if ((transaction->message->length = coap_serialize_message(
-                 response, transaction->message->data)) == 0) {
+                response, transaction->message->data,
+                  oc_endpoint_use_tcp(&msg->endpoint))) == 0) {
             erbium_status_code = PACKET_SERIALIZATION_ERROR;
           }
           transaction->type = response->type;
@@ -264,7 +266,7 @@ coap_receive(oc_message_t *msg)
       coap_send_transaction(transaction);
     }
   } else if (erbium_status_code == CLEAR_TRANSACTION) {
-    LOG("Clearing transaction for manual response");
+    LOG("Clearing transaction for manual response\n");
     coap_clear_transaction(transaction); // used in server for separate response
   }
 #ifdef OC_CLIENT
@@ -273,7 +275,8 @@ coap_receive(oc_message_t *msg)
     oc_message_t *response = oc_allocate_message();
     if (response) {
       memcpy(&response->endpoint, &msg->endpoint, sizeof(msg->endpoint));
-      response->length = coap_serialize_message(message, response->data);
+      response->length = coap_serialize_message(message, response->data,
+                                          oc_endpoint_use_tcp(&msg->endpoint));
       coap_send_message(response);
     }
   }
@@ -290,7 +293,8 @@ coap_receive(oc_message_t *msg)
     oc_message_t *response = oc_allocate_message();
     if (response) {
       memcpy(&response->endpoint, &msg->endpoint, sizeof(msg->endpoint));
-      response->length = coap_serialize_message(message, response->data);
+      response->length = coap_serialize_message(message, response->data,
+                                     oc_endpoint_use_tcp(&response->endpoint));
       coap_send_message(response);
     }
   }

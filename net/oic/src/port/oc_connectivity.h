@@ -73,6 +73,16 @@ uint16_t oc_connectivity_get_dtls_port(void);
 int oc_connectivity_init(void);
 void oc_connectivity_shutdown(void);
 
+static inline int
+oc_endpoint_use_tcp(struct oc_endpoint *oe)
+{
+    if (oe->flags & GATT) {
+        return 1;
+    }
+    return 0;
+}
+
+
 void oc_send_buffer(struct os_mbuf *);
 void oc_send_multicast_message(struct os_mbuf *);
 

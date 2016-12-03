@@ -28,33 +28,35 @@ coap_packet_t request[1];
 static bool
 dispatch_coap_request(void)
 {
-  int response_length = oc_rep_finalize();
-  if (!transaction) {
-    if (message) {
-      if (response_length) {
-        coap_set_payload(request, message->data + COAP_MAX_HEADER_SIZE,
-                         response_length);
-        coap_set_header_content_format(request, APPLICATION_CBOR);
-      }
-      message->length = coap_serialize_message(request, message->data);
-      coap_send_message(message);
-      message = 0;
-      return true;
+    int response_length = oc_rep_finalize();
+    if (!transaction) {
+        if (message) {
+            if (response_length) {
+                coap_set_payload(request, message->data + COAP_MAX_HEADER_SIZE,
+                                 response_length);
+                coap_set_header_content_format(request, APPLICATION_CBOR);
+            }
+            message->length = coap_serialize_message(request, message->data,
+                                       oc_endpoint_use_tcp(&message->endpoint));
+            coap_send_message(message);
+            message = 0;
+            return true;
+        }
+    } else {
+        if (response_length) {
+            coap_set_payload(request,
+                             transaction->message->data + COAP_MAX_HEADER_SIZE,
+                             response_length);
+            coap_set_header_content_format(request, APPLICATION_CBOR);
+        }
+        transaction->message->length =
+          coap_serialize_message(request, transaction->message->data,
+                          oc_endpoint_use_tcp(&transaction->message->endpoint));
+        coap_send_transaction(transaction);
+        transaction = 0;
+        return true;
     }
-  } else {
-    if (response_length) {
-      coap_set_payload(request,
-                       transaction->message->data + COAP_MAX_HEADER_SIZE,
-                       response_length);
-      coap_set_header_content_format(request, APPLICATION_CBOR);
-    }
-    transaction->message->length =
-      coap_serialize_message(request, transaction->message->data);
-    coap_send_transaction(transaction);
-    transaction = 0;
-    return true;
-  }
-  return false;
+    return false;
 }
 
 static bool

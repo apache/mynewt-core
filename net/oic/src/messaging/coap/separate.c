@@ -105,7 +105,8 @@ coap_separate_accept(coap_packet_t *coap_req,
         if (message != NULL) {
             message->endpoint.flags = IP;
             memcpy(&message->endpoint, endpoint, sizeof(oc_endpoint_t));
-            message->length = coap_serialize_message(ack, message->data);
+            message->length = coap_serialize_message(ack, message->data,
+              oc_endpoint_use_tcp(&message->endpoint));
             coap_send_message(message);
         } else {
             coap_separate_clear(separate_response, separate_store);
