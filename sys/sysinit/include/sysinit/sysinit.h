@@ -62,7 +62,11 @@ void MYNEWT_VAL(SYSINIT_PANIC_FN)(const char *file, int line);
  * ensure packages don't get initialized a second time after system
  * initialization has completed.
  */
+#if MYNEWT_VAL(SYSINIT_CONSTRAIN_INIT)
 #define SYSINIT_ASSERT_ACTIVE() assert(sysinit_active)
+#else
+#define SYSINIT_ASSERT_ACTIVE()
+#endif
 
 #if MYNEWT_VAL(SPLIT_LOADER)
 

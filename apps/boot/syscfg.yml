@@ -25,3 +25,6 @@ syscfg.defs:
     BOOT_SERIAL:
         description: 'TBD'
         value: 0
+
+syscfg.vals:
+    SYSINIT_CONSTRAIN_INIT: 0
