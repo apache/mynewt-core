@@ -26,7 +26,7 @@
 
 #define MIN(n, m) (((n) < (m)) ? (n) : (m))
 
-/* Current used MMC commands */
+/* Currently used MMC commands */
 #define CMD0                (0)            /* GO_IDLE_STATE */
 #define CMD1                (1)            /* SEND_OP_COND (MMC) */
 #define CMD8                (8)            /* SEND_IF_COND */
@@ -68,6 +68,7 @@ static struct hal_spi_settings mmc_settings = {
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
+/* FIXME: this limits usage to single MMC spi device */
 static int g_spi_num = -1;
 static int g_ss_pin = -1;
 
@@ -78,6 +79,18 @@ static int g_ss_pin = -1;
 static int
 mmc_error_by_status(uint8_t status)
 {
+    if (status == 0xff) {
+        return MMC_CARD_ERROR;
+    } else if (status & R_IDLE) {
+        return MMC_TIMEOUT;
+    } else if (status & R_ERASE_RESET) {
+    } else if (status & R_ILLEGAL_COMMAND) {
+    } else if (status & R_CRC_ERROR) {
+    } else if (status & R_ERASE_ERROR) {
+    } else if (status & R_ADDR_ERROR) {
+    } else if (status & R_PARAM_ERROR) {
+    }
+
     return MMC_OK;
 }
 
@@ -145,52 +158,57 @@ send_mmc_cmd(uint8_t cmd, uint32_t payload)
      *   NOTE: CRC can be turned on with CMD59 (CRC_ON_OFF).
      */
     if (cmd == CMD0) {
-        status = hal_spi_tx_val(g_spi_num, 0x95);
+        hal_spi_tx_val(g_spi_num, 0x95);
     } else if (cmd == CMD8) {
-        status = hal_spi_tx_val(g_spi_num, 0x87);
+        hal_spi_tx_val(g_spi_num, 0x87);
     } else {
-        /* Any value is OK */
-        status = hal_spi_tx_val(g_spi_num, 0x01);
+        /* Any CRC value is OK here */
+        hal_spi_tx_val(g_spi_num, 0x01);
     }
 
-    printf("=======================\n");
-    printf("sending cmd %d\n", cmd & ~0x80);
+    //printf("==> sending cmd %d\n", cmd & ~0x80);
 
     n = 10;
     do {
         status = hal_spi_tx_val(g_spi_num, 0xff);
     } while ((status & 0x80) && --n);
 
-    if (n) {
-        type = response_type_by_cmd(cmd);
-        printf("status=0x%x\n", status);
-        if (!(type == R1 || status & R_ILLEGAL_COMMAND || status & R_CRC_ERROR)) {
-            /* Read remaining data for this command */
-            for (n = 0; n < sizeof(response); n++) {
-                response[n] = (uint8_t) hal_spi_tx_val(g_spi_num, 0xff);
-            }
-
-            printf("response=");
-            for (n = 0; n < sizeof(response); n++) {
-                printf("[%02x]", response[n]);
-            }
-            printf(" \n");
-
-            switch (type) {
-                case R3:
-                    /* NOTE: ocr is defined in section 5.1 */
-                    printf("ocr=0x%08lx\n", ocr_from_r3(response));
-                    break;
-                case R7:
-                    printf("voltage=0x%x\n", voltage_from_r7(response));
-                    break;
-            }
-        }
-    } else {
-        printf("status=%x, n=%d\n", status, n);
+    if (!n) {
+        return status;
     }
 
-    printf("\n");
+    type = response_type_by_cmd(cmd);
+
+    /* FIXME:
+     *       R1 and R1b don't have extra payload
+     *       R2 has extra status byte
+     *       R3 has 4 extra bytes for OCR
+     *       R7 has 4 extra bytes with pattern, voltage, etc
+     */
+    if (!(type == R1 || status & R_ILLEGAL_COMMAND || status & R_CRC_ERROR)) {
+        /* Read remaining data for this command */
+        for (n = 0; n < sizeof(response); n++) {
+            response[n] = (uint8_t) hal_spi_tx_val(g_spi_num, 0xff);
+        }
+
+#if 0
+        printf("response=");
+        for (n = 0; n < sizeof(response); n++) {
+            printf("[%02x]", response[n]);
+        }
+        printf(" \n");
+#endif
+
+        switch (type) {
+            case R3:
+                /* NOTE: ocr is defined in section 5.1 */
+                printf("ocr=0x%08lx\n", ocr_from_r3(response));
+                break;
+            case R7:
+                printf("voltage=0x%x\n", voltage_from_r7(response));
+                break;
+        }
+    }
 
     return status;
 }
@@ -294,7 +312,7 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
 #define TIME_TO_WAIT (3 * OS_TICKS_PER_SEC)
 
         wait_to = os_time_get() + TIME_TO_WAIT;
-        status = send_mmc_cmd(ACMD41, 0x40000000);
+        status = send_mmc_cmd(ACMD41, 0x40000000); /* FIXME */
 
         while (status & R_IDLE) {
             if (os_time_get() > wait_to) {
@@ -337,27 +355,30 @@ mmc_read(uint32_t addr, void *buf, size_t len)
     block_addr = addr / BLOCK_LEN;
     offset = addr - (block_addr * BLOCK_LEN);
 
-    printf("block_addr=%d, offset=%d\n", block_addr, offset);
-    printf("block_len=%d, block_count=%d\n", block_len, block_count);
+    //printf("block_addr=%d, offset=%d\n", block_addr, offset);
+    //printf("len=%d, block_len=%d, block_count=%d\n", len, block_len, block_count);
 
     cmd = (block_count == 1) ? CMD17 : CMD18;
     res = send_mmc_cmd(cmd, block_addr);
-    /* TODO: should be 0 */
-    printf("res=0x%x\n", res);
+    if (res != MMC_OK) {
+        hal_gpio_write(g_ss_pin, 1);
+        return MMC_CARD_ERROR;
+    }
 
-    /* 7.3.3 Control tokens */
-
-    /* wait up to 1s (should be 200ms???) for control token */
-    timeout = os_time_get() + OS_TICKS_PER_SEC;
+    /**
+     * 7.3.3 Control tokens
+     *   Wait up to 200ms for control token.
+     */
+    timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
     do {
         res = hal_spi_tx_val(g_spi_num, 0xff);
-        if (res != 0xFF) {
-            break;
-        }
+        if (res != 0xFF) break;
         os_time_delay(OS_TICKS_PER_SEC / 20);
     } while (os_time_get() < timeout);
 
-    printf("res=0x%x\n", res);
+    /**
+     * 7.3.3.2 Start Block Tokens and Stop Tran Token
+     */
     if (res == 0xFE) {
         index = 0;
         while (block_count--) {
@@ -369,7 +390,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
                 g_block_buf[n] = hal_spi_tx_val(g_spi_num, 0xff);
             }
 
-            /* consume CRC-16 */
+            /* FIXME: consume CRC-16, but should check */
             hal_spi_tx_val(g_spi_num, 0xff);
             hal_spi_tx_val(g_spi_num, 0xff);
 
@@ -403,5 +424,120 @@ mmc_read(uint32_t addr, void *buf, size_t len)
 int
 mmc_write(uint32_t addr, void *buf, size_t len)
 {
-    return 0;
+    uint8_t cmd;
+    uint8_t res;
+    uint32_t n;
+    size_t block_len;
+    size_t block_count;
+    os_time_t timeout;
+    size_t block_addr;
+    size_t offset;
+    size_t index;
+    size_t amount;
+
+    block_len = (len + BLOCK_LEN - 1) & ~(BLOCK_LEN - 1);
+    block_count = block_len / BLOCK_LEN;
+    block_addr = addr / BLOCK_LEN;
+    offset = addr - (block_addr * BLOCK_LEN);
+
+    if (offset) {
+        res = send_mmc_cmd(CMD17, block_addr);
+        if (res != MMC_OK) {
+            hal_gpio_write(g_ss_pin, 1);
+            return MMC_CARD_ERROR;
+        }
+
+        timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
+        do {
+            res = hal_spi_tx_val(g_spi_num, 0xff);
+            if (res != 0xFF) break;
+            os_time_delay(OS_TICKS_PER_SEC / 20);
+        } while (os_time_get() < timeout);
+
+        if (res != 0xFE) {
+            hal_gpio_write(g_ss_pin, 1);
+            return MMC_CARD_ERROR;
+        }
+
+        for (n = 0; n < BLOCK_LEN; n++) {
+            g_block_buf[n] = hal_spi_tx_val(g_spi_num, 0xff);
+        }
+
+        hal_spi_tx_val(g_spi_num, 0xff);
+        hal_spi_tx_val(g_spi_num, 0xff);
+    }
+
+    /* now start write */
+
+    cmd = (block_count == 1) ? CMD24 : CMD25;
+    res = send_mmc_cmd(cmd, block_addr);
+    if (res != MMC_OK) {
+        hal_gpio_write(g_ss_pin, 1);
+        return MMC_CARD_ERROR;
+    }
+
+    /**
+     * 7.3.3 Control tokens
+     *   Wait up to 500ms for control token.
+     */
+    timeout = os_time_get() + OS_TICKS_PER_SEC / 2;
+    do {
+        res = hal_spi_tx_val(g_spi_num, 0xff);
+        if (res != 0xFF) break;
+        os_time_delay(OS_TICKS_PER_SEC / 20);
+    } while (os_time_get() < timeout);
+
+    if (res == 0xFF) {
+        hal_gpio_write(g_ss_pin, 1);
+        return MMC_CARD_ERROR;
+    }
+
+    index = 0;
+    do {
+        /* FIXME: must wait for ready here? */
+
+        /**
+         * 7.3.3.2 Start Block Tokens and Stop Tran Token
+         */
+        if (cmd == CMD24) {
+            hal_spi_tx_val(g_spi_num, 0xFE);
+        } else {
+            hal_spi_tx_val(g_spi_num, 0xFC);
+        }
+
+        amount = MIN(BLOCK_LEN - offset, len);
+        memcpy(&g_block_buf[offset], ((uint8_t *)buf + index), amount);
+
+        for (n = 0; n < BLOCK_LEN; n++) {
+            hal_spi_tx_val(g_spi_num, g_block_buf[n]);
+        }
+
+        /* CRC */
+        hal_spi_tx_val(g_spi_num, 0xff);
+        hal_spi_tx_val(g_spi_num, 0xff);
+
+        /**
+         * 7.3.3.1 Data Response Token
+         */
+        res = hal_spi_tx_val(g_spi_num, 0xff);
+        if ((res & 0x1f) != 0x05) {
+            break;
+        }
+
+        offset = 0;
+        len -= amount;
+        index += amount;
+
+    } while (len);
+
+    hal_gpio_write(g_ss_pin, 1);
+
+    res &= 0x1f;
+    if (res == 0x0b) {
+        return MMC_CRC_ERROR;
+    } else if (res == 0x0d) {
+        return MMC_WRITE_ERROR;
+    }
+
+    return MMC_OK;
 }

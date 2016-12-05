@@ -34,6 +34,8 @@ extern "C" {
 #define MMC_READ_ERROR      (-2)
 #define MMC_WRITE_ERROR     (-3)
 #define MMC_TIMEOUT         (-4)
+#define MMC_PARAM           (-5)
+#define MMC_CRC_ERROR       (-6)
 
 /**
  * Initialize the MMC driver
@@ -47,9 +49,27 @@ extern "C" {
 int
 mmc_init(int spi_num, void *spi_cfg, int ss_pin);
 
+/**
+ * Read data from MMC
+ *
+ * @param addr
+ * @param buf
+ * @param len
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
 mmc_read(uint32_t addr, void *buf, size_t len);
 
+/**
+ * Write data to the MMC
+ *
+ * @param addr
+ * @param buf
+ * @param len
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
 mmc_write(uint32_t addr, void *buf, size_t len);
 
