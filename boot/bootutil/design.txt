@@ -17,41 +17,36 @@
 # under the License.
 #
 
-****** BOOTUTIL
+****** BOOT LOADER
 
 *** SUMMARY
 
+The Mynewt bootloader comprises two packages:
+
+    * The bootutil library (boot/bootutil)
+    * The boot application (apps/boot)
+
 The bootutil library performs most of the functions of a boot loader.  In
 particular, the piece that is missing is the final step of actually jumping to
-the main image.  This last step should instead be implemented in an
-architecture-specific project.  Boot loader functionality is separated in this
-manner for the following two reasons:
-
-1. By keeping architecture-dependent code separate, the bootutil library can be
-   reused among several boot loaders.
-
-2. By excluding the last boot step from the library, the rest of the code can
-   be tested in a sim environment.
-
-There is a boot loader project specific to the olimex_stm32-e407 devboard
-called "boot."  This project provides an example of how the bootutil library
-should be used.
+the main image.  This last step is instead implemented by the boot application.
+Boot loader functionality is separated in this manner to enable unit testing of
+the boot loader.  A library can be unit tested, but an application can't.
+Therefore, functionality is delegated to the bootutil library when possible.
 
 *** LIMITATIONS
 
 The boot loader currently only supports images with the following
 characteristics:
     * Built to run from flash.
-    * Build to run from a fixed location (i.e., position-independent).
-
-These limitations will likely be addressed soon.
-
+    * Build to run from a fixed location (i.e., not position-independent).
 
 *** IMAGE FORMAT
 
-The following definitions describe the image header format.
+The following definitions describe the image format.
 
 #define IMAGE_MAGIC                 0x96f3b83c
+
+#define IMAGE_HEADER_SIZE           32
 
 struct image_version {
     uint8_t iv_major;
@@ -63,351 +58,478 @@ struct image_version {
 /** Image header.  All fields are in little endian byte order. */
 struct image_header {
     uint32_t ih_magic;
-    uint32_t ih_crc32; /* Covers remainder of header and all of image body. */
-    uint32_t ih_hdr_size;
+    uint16_t ih_tlv_size; /* Combined size of trailing TLVs (bytes). */
+    uint8_t  ih_key_id;   /* Which key image is signed with (0xff=unsigned). */
+    uint8_t  _pad1;
+    uint16_t ih_hdr_size; /* Size of image header (bytes). */
+    uint16_t _pad2;
     uint32_t ih_img_size; /* Does not include header. */
-    uint32_t ih_flags;
+    uint32_t ih_flags;    /* IMAGE_F_[...] */
     struct image_version ih_ver;
+    uint32_t _pad3;
 };
 
-At this time, no flags have been defined.
+/** Image trailer TLV format. All fields in little endian. */
+struct image_tlv {
+    uint8_t  it_type;   /* IMAGE_TLV_[...]. */
+    uint8_t  _pad;
+    uint16_t it_len     /* Data length (not including TLV header). */
+};
+
+/*
+ * Image header flags.
+ */
+#define IMAGE_F_PIC                   0x00000001 /* Not currently supported. */
+#define IMAGE_F_SHA256                0x00000002 /* Image contains hash TLV */
+#define IMAGE_F_PKCS15_RSA2048_SHA256 0x00000004 /* PKCS15 w/RSA and SHA */
+#define IMAGE_F_ECDSA224_SHA256       0x00000008 /* ECDSA256 over SHA256 */
+#define IMAGE_F_NON_BOOTABLE          0x00000010 /* Split image app. */
+
+/*
+ * Image trailer TLV types.
+ */
+#define IMAGE_TLV_SHA256            1	/* SHA256 of image hdr and body */
+#define IMAGE_TLV_RSA2048           2	/* RSA2048 of hash output */
+#define IMAGE_TLV_ECDSA224          3   /* ECDSA of hash output */
+
+Optional type-length-value records (TLVs) containing image metadata are placed
+after the end of the image.
 
 The ih_hdr_size field indicates the length of the header, and therefore the
 offset of the image itself.  This field provides for backwards compatibility in
 case of changes to the format of the image header.
 
-When security is added, security data will likely go in a footer at the end of
-the image.
+*** FLASH MAP
 
-
-*** FLASH AREAS
-
-Bootutil uses the same concept of "flash areas" as the nffs file system.
-Briefly, an area is a region of disk with the following properties:
+A Mynewt device's flash is partitioned according to its _flash map_.  At a high
+level, the flash map maps numeric IDs to _flash areas_.  A flash area is a
+region of disk with the following properties:
     (1) An area can be fully erased without affecting any other areas.
     (2) A write to one area does not restrict writes to other areas.
 
-The areas used for image data must not be used for anything else.  In
-particular, these areas must be kept separate from the nffs file system.
+The boot loader uses the following flash areas:
 
+#define FLASH_AREA_BOOTLOADER                    0
+#define FLASH_AREA_IMAGE_0                       1
+#define FLASH_AREA_IMAGE_1                       2
+#define FLASH_AREA_IMAGE_SCRATCH                 3
 
 *** IMAGE SLOTS
 
 A portion of the flash memory is partitioned into two image slots: a primary
-slot and a secondary slot.  The boot loader will only run an image from the
-primary slot, so images must be built such that they can run from that fixed
-location in flash.  If the boot loader needs to run the image resident in the
-secondary slot, it must swap the two images in flash prior to booting.
+slot (0) and a secondary slot (1).  The boot loader will only run an image from
+the primary slot, so images must be built such that they can run from that
+fixed location in flash.  If the boot loader needs to run the image resident in
+the secondary slot, it must swap the two images in flash prior to booting.
 
 In addition to the two image slots, the boot loader requires a scratch area to
 allow for reliable image swapping.
 
-All areas used by image data (including the scratch area) must be the same
-size.
-
-
 *** BOOT VECTOR
 
-Bootutil determines which image it should boot into by reading the contents of
-the boot vector.  The boot vector comprises the following files in the flash
-file system:
+At startup, the boot loader determines which of the above three states the
+device is in by inspecting the boot vector.  The boot vector consists of two
+records (called "image trailers"), one written at the end of each image slot.
+An image trailer has the following structure:
 
-#define BOOT_PATH_MAIN      "/boot/main"
-#define BOOT_PATH_TEST      "/boot/test"
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    ~                       MAGIC (16 octets)                       ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    ~                                                               ~
+    ~             Swap status (128 * min-write-size * 3)            ~
+    ~                                                               ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |   Copy done   |     0xff padding (up to min-write-sz - 1)     ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |   Image OK    |     0xff padding (up to min-write-sz - 1)     ~
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-Each file, if present, must contain a 64-bit image version.  This version is
-simply a "binary dump" of an image_version struct.  The test file is used to
-indicate that an image is being "tested out," and should only be booted once.
-The main file indicates the "last known good" image which should be booted
-repeatedly.
+These records are at the end of each image slot.  The offset immediately
+following such a record represents the start of the next flash area.
 
-The boot loader uses the following procedure to determine which image to boot:
+Note: "min-write-size" is a property of the flash hardware.  If the hardware
+allows individual bytes to be written at arbitrary addresses, then
+min-write-size is 1.  If the hardware only allows writes at even addresses,
+then min-write-size is 2, and so on.
 
-1) If the test file is present and contains a valid image version:
-    * Delete the test file.
-    * Boot into the specified image.
+The fields are defined as follows:
 
-2) Else if the main file is present and contains a valid image version:
-    * Boot into the specified image.
+1. MAGIC: The following 16 bytes, written in host-byte-order:
 
-3) Else:
-    * Just boot into whichever image is in the primary slot.  If there is no
-      image in the primary slot, boot into the image in the secondary slot.
+    const uint32_t boot_img_magic[4] = {
+        0xf395c277,
+        0x7fefd260,
+        0x0f505235,
+        0x8079b62c,
+    };
 
-If a vector file contains a version which doesn't correspond to an image
-actually present in flash, the boot loader deletes the file and procedes as
-though the file was not present.
+2. Swap status: A series of single-byte records.  Each record corresponds to a
+flash sector in an image slot.  A swap status byte indicate the location of
+the corresponding sector data.  During an image swap, image data is moved one
+sector at a time.  The swap status is necessary for resuming a swap operation
+if the device rebooted before a swap operation completed.
+
+3. Copy done: A single byte indicating whether the image in this slot is
+complete (0x01=done; 0xff=not done).
+
+4. Image OK: A single byte indicating whether the image in this slot has been
+confirmed as good by the user (0x01=confirmed; 0xff=not confirmed).
+
+The boot vector records are structured around the limitations imposed by flash
+hardware.  As a consequence, they do not have a very intuitive design, and it
+is difficult to get a sense of the state of the device just by looking at the
+boot vector.  It is better to map all the possible vector states to the three
+states described above via a set of tables.  These tables are reproduced below.
+In these tables, the "pending" and "confirmed" flags are shown for illustrative
+purposes; they are not actually present in the boot vector.
 
 
-*** BOOT STATUS
+    State I
+                     | slot-0 | slot-1 |
+    -----------------+--------+--------|
+               magic | Unset  | Unset  |
+            image-ok | Any    | N/A    |
+    -----------------+--------+--------'
+             pending |        |        |
+          confirmed  |   X    |        |
+    -----------------+--------+--------'
+     swap: none                        |
+    -----------------------------------'
+    
 
-The boot status file allows the boot loader to recover in case it was reset
-while in the middle of an image swap operation.  Image swapping is discussed
-later in this document; the structure of the boot status file is presented
-here.  To ensure recovery is always possible, bootutil updates the status file
-at each step throughout the image swap process.  The boot status is contained
-in the following file:
+    State II
+                     | slot-0 | slot-1 |
+    -----------------+--------+--------|
+               magic | Any    | Good   |
+            image-ok | Any    | N/A    |
+    -----------------+--------+--------'
+             pending |        |   X    |
+          confirmed  |   X    |        |
+    -----------------+--------+--------'
+     swap: test                        |
+    -----------------------------------'
 
-#define BOOT_PATH_STATUS    "/boot/status"
 
-The contents of the boot status file are defined below.
+    State III
+                     | slot-0 | slot-1 |
+    -----------------+--------+--------|
+               magic | Good   | Unset  |
+            image-ok | 0xff   | N/A    |
+    -----------------+--------+--------'
+             pending |        |        |
+          confirmed  |        |   X    |
+    -----------------+--------+--------'
+     swap: revert (test image running) |
+    -----------------------------------'
 
-struct boot_status {
-    uint32_t bs_img1_length;
-    uint32_t bs_img2_length;
-    /* Followed by sequence of boot status entries; file size indicates number
-     * of entries.
-     */
-};
 
-struct boot_status_entry {
-    uint8_t bse_image_num;
-    uint8_t bse_part_num;
-};
+    State IV
+                     | slot-0 | slot-1 |
+    -----------------+--------+--------|
+               magic | Good   | Unset  |
+            image-ok | 0x01   | N/A    |
+    -----------------+--------+--------'
+             pending |        |        |
+          confirmed  |   X    |        |
+    -----------------+--------+--------'
+     swap: none (confirmed test image) |
+    -----------------------------------'
 
-#define BOOT_IMAGE_NUM_NONE     0xff
+*** HIGH-LEVEL OPERATION
 
-There is a separate boot status entry for each flash area used by the boot
-loader (i.e., each area in the two slots, plus one for the scratch area).  The
-entries are placed in the file in the same order as their corresponding areas
-in flash.  Each entry indicates which image part is resident in the
-corresponding flash area.  If a flash area does not contain any image data, its
-corresponding entry will have a bse_image_num value of BOOT_IMAGE_NUM_NONE.
+With the terms defined, we can now explore the boot loader's operation.  First,
+a high-level overview of the boot process is presented.  Then, the following
+sections describe each step of the process in more detail.
 
-Consider the following example:
+Procedure:
 
-Five flash areas are dedicated to image data, as follows:
+A. Inspect swap status region; is an interrupted swap is being resumed?
+    Yes: Complete the partial swap operation; skip to step C.
+    No: Proceed to step B.
 
-    Area 0: slot 0, 0/1
-    Area 1: slot 0, 1/1
-    Area 2: slot 1, 0/1
-    Area 3: slot 1, 1/1
-    Area 4: scratch
+B. Insect boot vector; is a swap requested?
+    Yes.
+        1. Is the requested image valid (integrity and security check)?
+            Yes.
+                a. Perform swap operation.
+                b. Persist completion of swap procedure to boot vector.
+                c. Proceed to step C.
+            No.
+                a. Erase invalid image.
+                b. Persist failure of swap procedure to boot vector.
+                c. Proceed to step C.
+    No: Proceed to step C.
 
-The following array of boot status entries is read from the status file:
+C. Boot into image in slot 0.
 
-    [0] = {
-        .bse_image_num = 0,
-        .bse_part_num = 0,
-    },
-    [1] = { 
-        .bse_image_num = 0,
-        .bse_part_num = 1,
-    },
-    [2] = { 
-        .bse_image_num = 1,
-        .bse_part_num = 0,
-    },
-    [3] = { 
-        .bse_image_num = 1,
-        .bse_part_num = 1,
-    },
-    [4] = { 
-        .bse_image_num = 0xff,
-        .bse_part_num = 0xff,
-    },
+*** BOOT STATES
 
-This status file indicates the following image placement:
+Logically, you can think of a pair of flags associated with each image slot:
+pending and confirmed.  On startup, the boot loader determines the state of the
+device by inspecting each pair of flags.  These flags have the following
+meanings:
 
-    Area 0: image 0, part 0
-    Area 1: image 0, part 1
-    Area 2: image 1, part 0
-    Area 3: image 1, part 1
-    Scratch area: empty
+* pending: image gets tested on next reboot; absent subsequent confirm command,
+           revert to original image on second reboot.
+* confirmed: always use image unless excluded by a test image.
 
-Images don't have an instrinsic image number.  When a swap operation is
-started, the image initially in the primary slot is labelled image 0, and the
-image in the secondary slot is labelled image 1.  All swap operations end with
-image 1 in the primary slot, and image 0 in the secondary slot.
+In English, when the user wants to run the secondary image, they set the
+pending flag for the second slot and reboot the device.  On startup, the boot
+loader will swap the two images in flash, clear the secondary slot's pending
+flag, and run the newly-copied image in slot 0.  This is a temporary state; if
+the device reboots again, the boot loader swaps the images back to their
+original slots and boots into the original image.  If the user doesn't want to
+revert to the original state, they can make the current state permanent by
+setting the confirmed flag in slot 0.
 
-The boot status header containing the image sizes is necessary so that bootutil
-can determine how many flash areas each image occupies.  Without this
-information, bootutil would need to swap the full contents of the image slots,
-including useless data after the end of each image.
+Switching to an alternate image is a two-step process (set + confirm) to
+prevent a device from becoming "bricked" by bad firmware.  If the device
+crashes immediately upon booting the second image, the boot loader reverts to
+the working image, rather than repeatedly rebooting into the bad image.
 
-The status file is always deleted upon successful boot.
+The following set of tables illustrate the three possible states that the
+device can be in:
+
+                   | slot-0 | slot-1 |
+    ---------------+--------+--------|
+           pending |        |        |
+         confirmed |   X    |        |
+    ---------------+--------+--------'
+    Image 0 confirmed;               |
+    No change on reboot              |
+    ---------------------------------'
+
+                   | slot-0 | slot-1 |
+    ---------------+--------+--------|
+           pending |        |   X    |
+         confirmed |   X    |        |
+    ---------------+--------+--------'
+    Image 0 confirmed;               |
+    Test image 1 on next reboot      |
+    ---------------------------------'
+
+                   | slot-0 | slot-1 |
+    ---------------+--------+--------|
+           pending |        |        |
+         confirmed |        |   X    |
+    ---------------+--------+--------'
+    Testing image 0;                 |
+    Revert to image 1 on next reboot |
+    ---------------------------------'
+
 
 
 *** IMAGE SWAPPING
+
+The boot loader swaps the contents of the two image slots for two reasons:
+    * User has issued an "image test" operation; the image in slot-1 should be
+      run once (state II).
+    * Test image rebooted without being confirmed; the boot loader should
+      revert to the original image currently in slot-1 (state III).
 
 If the boot vector indicates that the image in the secondary slot should be
 run, the boot loader needs to copy it to the primary slot.  The image currently
 in the primary slot also needs to be retained in flash so that it can be used
 later.  Furthermore, both images need to be recoverable if the boot loader
-resets in the middle of the process.  The two images are swapped according to
-the following procedure:
+resets in the middle of the swap operation.  The two images are swapped
+according to the following procedure:
 
-    1. Determine how many flash areas are required to hold the desired image.
-    2. For each required area in the primary slot ("destination area"):
-        a. Identify the flash area in the secondary slot which contains the
-           required image data ("source area").
+    1. Determine how many flash sectors each image slot consists of.  This
+       number must be the same for both slots.
+    2. Iterate the list of sector indices in descending order (i.e., starting
+       with the greatest index); current element = "index".
         b. Erase scratch area.
-        c. Copy destination area to scratch area.
-        d. Write updated boot status to the file system.
-        e. Erase destination area.
-        f. Copy source area to destination area.
-        g. Write updated boot status to the file system.
-        h. Erase source area.
-        i. Copy scratch area to source area.
-        j. Write updated boot status to the file system.
-    3. Determine how many flash areas are required to hold image 1.
-    4. For each required area in the secondary slot ("destination area"):
-        a. If the destination area already contains the required image data,
-           advance to the next image part.
-        b. Else, identify the flash area in the primary slot which contains the
-           required image data ("source area").
-        c. Repeat steps b through j from step 2.
+        c. Copy slot0[index] to scratch area.
+        d. Write updated swap status (i).
 
-This procedure ensures that the contents of the boot status file are always
-accurate, so the boot loader can recover after an unexpected reset.
+        e. Erase slot1[index]
+        f. Copy slot0[index] to slot1[index]
+            - If these are the last sectors (i.e., first swap being perfomed),
+              copy the full sector *except* the image trailer.
+            - Else, copy entire sector contents.
+        g. Write updated swap status (ii).
 
-Step 4 is necessary in case the two images do not occupy the same number of
-flash areas.
+        h. Erase slot0[index].
+        i. Copy scratch area slot0[index].
+        j. Write updated swap status (iii).
+
+    3. Persist completion of swap procedure to slot 0 image trailer.
+
+The additional caveats in step 2f are necessary so that the slot 1 image trailer
+can be written by the user at a later time.  With the image trailer unwritten,
+the user can test the image in slot 1 (i.e., transition to state II).
+
+The particulars of step 3 vary depending on whether an image is being tested or
+reverted:
+    * test:
+        o Write slot0.copy_done = 1
+        (should now be in state III)
+
+    * revert:
+        o Write slot0.magic = BOOT_MAGIC
+        o Write slot0.copy_done = 1
+        o Write slot0.image_ok = 1
+        (should now be in state IV)
+
+*** SWAP STATUS
+
+The swap status region allows the boot loader to recover in case it restarts in
+the middle of an image swap operation.  The swap status region consists of a
+series of single-byte records.  These records are written independently, and
+therefore must be padded according to the minimum write size imposed by the
+flash hardware.  In the below figure, a min-write-size of 1 is assumed for
+simplicity.  The structure of the swap status region is illustrated below.  In
+this figure, a min-write-size of 1 is assumed for simplicity.
+
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |sec127,state 0 |sec127,state 1 |sec127,state 2 |sec126,state 0 |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |sec126,state 1 |sec126,state 2 |sec125,state 0 |sec125,state 1 |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |sec125,state 2 |                                               |
+    +-+-+-+-+-+-+-+-+                                               +
+    ~                                                               ~
+    ~               [Records for indices 124 through 1              ~
+    ~                                                               ~
+    ~               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    ~               |sec000,state 0 |sec000,state 1 |sec000,state 2 |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+The above is probably not helpful at all; here is a description in English.
+
+Each image slot is partitioned into a sequence of flash sectors.  If we were to
+enumerate the sectors in a single slot, starting at 0, we would have a list of
+sector indices.  Since there are two image slots, each sector index would
+correspond to a pair of sectors.  For example, sector index 0 corresponds to
+the first sector in slot 0 and the first sector in slot 1.  Furthermore, we
+impose a limit of 128 indices.  If an image slot consists of more than 128
+sectors, the flash layout is not compatible with this boot loader.  Finally,
+reverse, the list of indices such that the list starts with index 127 and ends
+with 0.  The swap status region is a representation of this reversed list.
+
+During a swap operation, each sector index transitions through four separate
+states:
+    0. slot 0: image 0,   slot 1: image 1,   scratch: N/A
+    1. slot 0: image 0,   slot 1: N/A,       scratch: image 1 (1->s, erase 1)
+    2. slot 0: N/A,       slot 1: image 0,   scratch: image 1 (0->1, erase 0)
+    3. slot 0: image 1,   slot 1: image 0,   scratch: N/A     (s->0)
+
+Each time a sector index transitions to a new state, the boot loader writes a
+record to the swap status region.  Logically, the boot loader only needs one
+record per sector index to keep track of the current swap state.  However, due
+to limitations imposed by flash hardware, a record cannot be overwritten when
+an index's state changes.  To solve this problem, the boot loader uses three
+records per sector index rather than just one.
+
+Each sector-state pair is represented as a set of three records.  The record
+values map to the above four states as follows
+
+            | rec0 | rec1 | rec2
+    --------+------+------+------
+    state 0 | 0xff | 0xff | 0xff
+    state 1 | 0x01 | 0xff | 0xff
+    state 2 | 0x01 | 0x02 | 0xff
+    state 3 | 0x01 | 0x02 | 0x03
+
+The swap status region can accommodate 128 sector indices.  Hence, the size of
+the region, in bytes, is 128 * min-write-size * 3.  The number 128 is chosen
+somewhat arbitrarily and will likely be made configurable.  The only
+requirement for the index count is that is is great enough to account for a
+maximum-sized image (i.e., at least as great as the total sector count in an
+image slot).  If a device's image slots use less than 128 sectors, the first
+record that gets written will be somewhere in the middle of the region.  For
+example, if a slot uses 64 sectors, the first sector index that gets swapped is
+63, which corresponds to the exact halfway point within the region.
 
 
 *** RESET RECOVERY
 
 If the boot loader resets in the middle of a swap operation, the two images may
 be discontiguous in flash.  Bootutil recovers from this condition by using the
-boot status file to determine how the image parts are placed in flash.
+boot vector to determine how the image parts are distributed in flash.
 
-If the boot status file indicates that the images are not contiguous, bootutil
-completes the swap operation that was in progress when the system was reset.
-In other words, it applies the procedure defined in the previous section,
-moving image 1 into slot 0 and image 0 into slot 1.  If the boot status file
-indicates that an image part is present in the scratch area, this part is
-copied into the correct location by starting at step e or step h in the
+The first step is determine where the relevant swap status region is located.
+Because this region is embedded within the image slots, its location in flash
+changes during a swap operation.  The below set of tables map boot vector
+contents to swap status location.  In these tables, the "source" field
+indicates where the swap status region is located.
+
+              | slot-0     | scratch    |
+    ----------+------------+------------|
+        magic | Good       | Any        |
+    copy-done | 0x01       | N/A        |
+    ----------+------------+------------'
+    source: none                        |
+    ------------------------------------'
+    
+              | slot-0     | scratch    |
+    ----------+------------+------------|
+        magic | Good       | Any        |
+    copy-done | 0xff       | N/A        |
+    ----------+------------+------------'
+    source: slot 0                      |
+    ------------------------------------'
+    
+              | slot-0     | scratch    |
+    ----------+------------+------------|
+        magic | Any        | Good       |
+    copy-done | Any        | N/A        |
+    ----------+------------+------------'
+    source: scratch                     |
+    ------------------------------------'
+    
+              | slot-0     | scratch    |
+    ----------+------------+------------|
+        magic | Unset      | Any        |
+    copy-done | 0xff       | N/A        |
+    ----------+------------+------------|
+    source: varies                      |
+    ------------------------------------+------------------------------+
+    This represents one of two cases:                                  |
+    o No swaps ever (no status to read, so no harm in checking).       |
+    o Mid-revert; status in slot 0.                                    |
+    -------------------------------------------------------------------'
+
+
+If the swap status region indicates that the images are not contiguous,
+bootutil completes the swap operation that was in progress when the system was
+reset.  In other words, it applies the procedure defined in the previous
+section, moving image 1 into slot 0 and image 0 into slot 1.  If the boot
+status file indicates that an image part is present in the scratch area, this
+part is copied into the correct location by starting at step e or step h in the
 area-swap procedure, depending on whether the part belongs to image 0 or image
 1.
 
 After the swap operation has been completed, the boot loader proceeds as though
 it had just been started.
 
+*** INTEGRITY CHECK
 
-*** API
+An image is checked for integrity immediately before it gets copied into the
+primary slot.  If the boot loader doesn't perform an image swap, then it
+doesn't perform an integrity check.
 
-The API consists of a single function:
+During the integrity check, the boot loader verifies the following aspects of
+an image:
+    * 32-bit magic number must be correct (0x96f3b83c).
+    * Image must contain a SHA256 TLV.
+    * Calculated SHA256 must matche SHA256 TLV contents.
+    * Image *may* contain a signature TLV.  If it does, its contents must be
+      verifiable using a key embedded in the boot loader.
 
-/**
- * Prepares the booting process.  Based on the information provided in the
- * request object, this function moves images around in flash as appropriate,
- * and tells you what address to boot from.
- *
- * @param req                   Contains information about the flash layout.
- * @param rsp                   On success, indicates how booting should occur.
- *
- * @return                      0 on success; nonzero on failure.
- */
-int boot_go(const struct boot_req *req, struct boot_rsp *rsp)
+*** SECURITY
 
-The request and response structures are defined as follows:
+As indicated above, the final step of the integrity check is signature
+verification.  The boot loader can have one or more public keys embedded in it
+at build time.  During signature verification, the boot loader verifies that an
+image was signed with a private key that corresponds to one of its public keys.
+The image signature TLV indicates the index of the key that is has been signed
+with.  The boot loader uses this index to identify the corresponding public
+key.
 
-/** A request object instructing the boot loader how to proceed. */
-struct boot_req {
-    /**
-     * Array of area descriptors indicating the layout of internal flash; must
-     * be terminated with a 0-length element.
-     */
-    struct nffs_area_desc *br_area_descs;
-
-    /**
-     * Array of indices of elements in the br_area_descs array; indicates which
-     * areas hold image data.
-     */
-    uint8_t *br_image_areas;
-
-    /**
-     * Array of indices of elements in the br_area_descs array; indicates which
-     * areas represent the beginning of an image slot.  This should be a subset
-     * of the br_image_areas array.
-     */
-    uint8_t *br_slot_areas;
-
-    /**
-     * The number of image areas (i.e., the size of the br_image_areas array).
-     */
-    uint8_t br_num_image_areas;
-
-    /** The index of the area to use as the image scratch area. */
-    uint8_t br_scratch_area_idx;
-};
-
-/**
- * A response object provided by the boot loader code; indicates where to jump
- * to execute the main image.
- */
-struct boot_rsp {
-    /** A pointer to the header of the image to be executed. */
-    const struct image_header *br_hdr;
-
-    /**
-     * The flash offset of the image to execute.  Indicates the position of
-     * the image header.
-     */
-    uint32_t br_image_addr;
-};
-
-
-*** EXAMPLE USAGE
-
-In this example, each image slot consists of three flash areas.
-
-/** Internal flash layout. */
-static struct nffs_area_desc boot_area_descs[] = {
-    [0] =  { 0x08000000, 16 * 1024 },
-    [1] =  { 0x08004000, 16 * 1024 },
-    [2] =  { 0x08008000, 16 * 1024 },
-    [3] =  { 0x0800c000, 16 * 1024 },
-    [4] =  { 0x08010000, 64 * 1024 },
-    [5] =  { 0x08020000, 128 * 1024 }, /* Image data; 0,0. */
-    [6] =  { 0x08040000, 128 * 1024 }, /* Image data; 0,1. */
-    [7] =  { 0x08060000, 128 * 1024 }, /* Image data; 0,2. */
-    [8] =  { 0x08080000, 128 * 1024 }, /* Image data; 1,0. */
-    [9] =  { 0x080a0000, 128 * 1024 }, /* Image data; 1,1. */
-    [10] = { 0x080c0000, 128 * 1024 }, /* Image data; 1,2. */
-    [11] = { 0x080e0000, 128 * 1024 }, /* Image scratch area. */
-    { 0, 0 },
-};
-
-/** Contains indices of the areas which can contain image data. */
-static uint8_t boot_img_areas[] = {
-    5, 6, 7, 8, 9, 10, 11,
-};
-
-/** Areas representing the beginning of image slots. */
-static uint8_t boot_slot_areas[] = {
-    5, 8,
-};
-
-#define BOOT_NUM_IMG_AREAS \
-    ((int)(sizeof boot_img_areas / sizeof boot_img_areas[0]))
-
-/** The scratch area to use during an image swap operation. */
-#define BOOT_AREA_IDX_SCRATCH 11
-
-int
-main(void)
-{
-    struct boot_rsp rsp;
-    int rc;
-
-    const struct boot_req req = {
-        .br_area_descs = boot_area_descs,
-        .br_image_areas = boot_img_areas,
-        .br_slot_areas = boot_slot_areas,
-        .br_num_image_areas = BOOT_NUM_IMG_AREAS,
-        .br_scratch_area_idx = BOOT_AREA_IDX_SCRATCH,
-    };
-
-    rc = boot_go(&req, &rsp);
-    assert(rc == 0);
-
-    /* Perform jump to address indicated by the response object. */
-
-    return 0;
-}
-
-
-*** DEPENDENCIES
-    * nffs (for the boot vector and boot status files).
-    * os (for os_malloc() and os_free()).
+For information on embedding public keys in the boot loader, as well as
+producing signed images, see: boot/bootutil/signed_images.md
