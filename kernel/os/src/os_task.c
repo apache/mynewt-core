@@ -176,9 +176,9 @@ os_task_suspend(struct os_task *t)
     }
 
     /*
-     * Disallowing suspending tasks which are waiting on a lock
+     * Disallow suspending tasks which are waiting on a lock
      */
-    if (t->t_flags && (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT |
+    if (t->t_flags & (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT |
                                                OS_TASK_FLAG_EVQ_WAIT)) {
         return OS_EBUSY;
     }
@@ -188,10 +188,10 @@ os_task_suspend(struct os_task *t)
      * Checking lockcnt and flags separately so we can assert separately XXX
      */
     if (t->t_lockcnt) {
-        assert(t->t_flags && OS_TASK_FLAG_LOCK_HELD);
+        assert(t->t_flags & OS_TASK_FLAG_LOCK_HELD);
         return OS_EBUSY;
     }
-    if (t->t_flags && OS_TASK_FLAG_LOCK_HELD) {
+    if (t->t_flags & OS_TASK_FLAG_LOCK_HELD) {
         assert(t->t_lockcnt);
         return OS_EBUSY;
     }

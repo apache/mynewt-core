@@ -206,11 +206,13 @@ void cbor_encoder_init(CborEncoder *encoder, cbor_encoder_writer *writer, int fl
     encoder->flags = flags;
 }
 
+#if FLOAT_SUPPORT
 static inline void put16(void *where, uint16_t v)
 {
     v = cbor_htons(v);
     memcpy(where, &v, sizeof(v));
 }
+#endif
 
 /* Note: Since this is currently only used in situations where OOM is the only
  * valid error, we KNOW this to be true.  Thus, this function now returns just 'true',
@@ -223,11 +225,13 @@ static inline bool isOomError(CborError err)
     return true;
 }
 
+#if FLOAT_SUPPORT
 static inline void put32(void *where, uint32_t v)
 {
     v = cbor_htonl(v);
     memcpy(where, &v, sizeof(v));
 }
+#endif
 
 static inline void put64(void *where, uint64_t v)
 {

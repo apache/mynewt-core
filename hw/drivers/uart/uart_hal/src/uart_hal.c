@@ -84,7 +84,7 @@ uart_hal_open(struct os_dev *odev, uint32_t wait, void *arg)
       uc->uc_rx_char, uc->uc_cb_arg);
 
     rc = hal_uart_config(priv->unit, uc->uc_speed, uc->uc_databits,
-      uc->uc_stopbits, uc->uc_parity, uc->uc_flow_ctl);
+      uc->uc_stopbits, (enum hal_uart_parity)uc->uc_parity, (enum hal_uart_flow_ctl)uc->uc_flow_ctl);
     if (rc) {
         return OS_EINVAL;
     }
