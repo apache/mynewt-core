@@ -73,7 +73,7 @@ static const struct boot_status_table boot_status_tables[] = {
          *     magic | Good       | Any        |
          * copy-done | 0x01       | N/A        |
          * ----------+------------+------------'
-         * status: none                        |
+         * source: none                        |
          * ------------------------------------'
          */
         .bst_magic_slot0 =      BOOT_MAGIC_GOOD,
@@ -88,7 +88,7 @@ static const struct boot_status_table boot_status_tables[] = {
          *     magic | Good       | Any        |
          * copy-done | 0xff       | N/A        |
          * ----------+------------+------------'
-         * status: slot 0                      |
+         * source: slot 0                      |
          * ------------------------------------'
          */
         .bst_magic_slot0 =      BOOT_MAGIC_GOOD,
@@ -103,7 +103,7 @@ static const struct boot_status_table boot_status_tables[] = {
          *     magic | Any        | Good       |
          * copy-done | Any        | N/A        |
          * ----------+------------+------------'
-         * status: scratch                     |
+         * source: scratch                     |
          * ------------------------------------'
          */
         .bst_magic_slot0 =      0,
@@ -118,7 +118,7 @@ static const struct boot_status_table boot_status_tables[] = {
          *     magic | Unset      | Any        |
          * copy-done | 0xff       | N/A        |
          * ----------+------------+------------|
-         * status: slot 0                      |
+         * source: varies                      |
          * ------------------------------------+------------------------------+
          * This represents one of two cases:                                  |
          * o No swaps ever (no status to read, so no harm in checking).       |
@@ -643,7 +643,7 @@ boot_copy_sz(int last_sector_idx, int *out_first_sector_idx)
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_erase_area(int flash_area_id, uint32_t off, uint32_t sz)
+boot_erase_sector(int flash_area_id, uint32_t off, uint32_t sz)
 {
     const struct flash_area *fap;
     int rc;
@@ -682,8 +682,8 @@ done:
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_copy_area(int flash_area_id_src, int flash_area_id_dst,
-               uint32_t off_src, uint32_t off_dst, uint32_t sz)
+boot_copy_sector(int flash_area_id_src, int flash_area_id_dst,
+                 uint32_t off_src, uint32_t off_dst, uint32_t sz)
 {
     const struct flash_area *fap_src;
     const struct flash_area *fap_dst;
@@ -751,7 +751,7 @@ done:
  * @return                      0 on success; nonzero on failure.
  */
 static int
-boot_swap_areas(int idx, uint32_t sz, struct boot_status *bs)
+boot_swap_sectors(int idx, uint32_t sz, struct boot_status *bs)
 {
     uint32_t copy_sz;
     uint32_t img_off;
@@ -762,13 +762,13 @@ boot_swap_areas(int idx, uint32_t sz, struct boot_status *bs)
               boot_data.imgs[0].sectors[0].fa_off;
 
     if (bs->state == 0) {
-        rc = boot_erase_area(FLASH_AREA_IMAGE_SCRATCH, 0, sz);
+        rc = boot_erase_sector(FLASH_AREA_IMAGE_SCRATCH, 0, sz);
         if (rc != 0) {
             return rc;
         }
 
-        rc = boot_copy_area(FLASH_AREA_IMAGE_1, FLASH_AREA_IMAGE_SCRATCH,
-                            img_off, 0, sz);
+        rc = boot_copy_sector(FLASH_AREA_IMAGE_1, FLASH_AREA_IMAGE_SCRATCH,
+                              img_off, 0, sz);
         if (rc != 0) {
             return rc;
         }
@@ -777,7 +777,7 @@ boot_swap_areas(int idx, uint32_t sz, struct boot_status *bs)
         (void)boot_write_status(bs);
     }
     if (bs->state == 1) {
-        rc = boot_erase_area(FLASH_AREA_IMAGE_1, img_off, sz);
+        rc = boot_erase_sector(FLASH_AREA_IMAGE_1, img_off, sz);
         if (rc != 0) {
             return rc;
         }
@@ -792,8 +792,8 @@ boot_swap_areas(int idx, uint32_t sz, struct boot_status *bs)
             copy_sz -= boot_trailer_sz(boot_data.write_sz);
         }
 
-        rc = boot_copy_area(FLASH_AREA_IMAGE_0, FLASH_AREA_IMAGE_1,
-                            img_off, img_off, copy_sz);
+        rc = boot_copy_sector(FLASH_AREA_IMAGE_0, FLASH_AREA_IMAGE_1,
+                              img_off, img_off, copy_sz);
         if (rc != 0) {
             return rc;
         }
@@ -802,13 +802,13 @@ boot_swap_areas(int idx, uint32_t sz, struct boot_status *bs)
         (void)boot_write_status(bs);
     }
     if (bs->state == 2) {
-        rc = boot_erase_area(FLASH_AREA_IMAGE_0, img_off, sz);
+        rc = boot_erase_sector(FLASH_AREA_IMAGE_0, img_off, sz);
         if (rc != 0) {
             return rc;
         }
 
-        rc = boot_copy_area(FLASH_AREA_IMAGE_SCRATCH, FLASH_AREA_IMAGE_0,
-                            0, img_off, sz);
+        rc = boot_copy_sector(FLASH_AREA_IMAGE_SCRATCH, FLASH_AREA_IMAGE_0,
+                              0, img_off, sz);
         if (rc != 0) {
             return rc;
         }
@@ -846,7 +846,7 @@ boot_copy_image(struct boot_status *bs)
     while (last_sector_idx >= 0) {
         sz = boot_copy_sz(last_sector_idx, &first_sector_idx);
         if (swap_idx >= bs->idx) {
-            boot_swap_areas(first_sector_idx, sz, bs);
+            boot_swap_sectors(first_sector_idx, sz, bs);
         }
 
         last_sector_idx = first_sector_idx - 1;
@@ -940,10 +940,10 @@ boot_go(struct boot_rsp *rsp)
     int slot;
     int rc;
 
-    /* The array of slot sectors are defined here so that they don't get
-     * allocated for non-boot-loader apps.  This is necessary because the gcc
-     * option "-fdata-sections" doesn't seem to have any effect for some
-     * reason.
+    /* The array of slot sectors are defined here (as opposed to file scope) so
+     * that they don't get allocated for non-boot-loader apps.  This is
+     * necessary because the gcc option "-fdata-sections" doesn't seem to have
+     * any effect for some reason.
      */
     static struct flash_area slot0_sectors[BOOT_MAX_IMG_SECTORS];
     static struct flash_area slot1_sectors[BOOT_MAX_IMG_SECTORS];
