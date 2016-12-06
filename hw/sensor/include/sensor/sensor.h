@@ -26,13 +26,35 @@
 extern "C" {
 #endif
 
-struct sensor_dev;
+
+/**
+ * @{ Sensor Manager API
+ */
+#define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
+        (OS_TICKS_PER_SEC / 1000))
+
+int sensor_mgr_register(struct sensor *);
+
+typedef int (*sensor_mgr_compare_func_t*)(struct sensor *, void *);
+struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,
+        struct sensor *);
+struct sensor *sensor_mgr_find_next_bytype(sensor_type_t, struct sensor *);
+struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
+
+/**
+ * }@
+ */
+
+
+/**
+ * @{ Sensor API
+ */
 
 typedef enum {
     /* No sensor type, used for queries */
     SENSOR_TYPE_NONE                 = 0,
-    /* Accellerometer functionality supported */
-    SENSOR_TYPE_ACCELLEROMETER       = (1 << 0),
+    /* Accelerometer functionality supported */
+    SENSOR_TYPE_ACCELEROMETER       = (1 << 0),
     /* Ambient temperature supported */
     SENSOR_TYPE_AMBIENT_TEMPERATURE  = (1 << 1),
     /* Gravity supported */
@@ -41,8 +63,8 @@ typedef enum {
     SENSOR_TYPE_GYROSCOPE            = (1 << 3),
     /* Light supported */
     SENSOR_TYPE_LIGHT                = (1 << 4),
-    /* Linear accelleration supported */
-    SENSOR_TYPE_LINEAR_ACCELLERATION = (1 << 5),
+    /* Linear acceleration supported */
+    SENSOR_TYPE_LINEAR_ACCELERATION = (1 << 5),
     /* Magnetic field supported */
     SENSOR_TYPE_MAGNETIC_FIELD       = (1 << 6),
     /* Orientation sensor supported */
@@ -79,22 +101,31 @@ typedef enum {
 #define SENSOR_LISTENER_TYPE_NOTIFY (0)
 #define SENSOR_LISTENER_TYPE_POLL   (1)
 
-struct sensor_reading {
-    /* The timestamp, in CPU time ticks that the sensor value
-     * was read.
-     */
-    uint32_t sv_ts;
-    /* The value of the sensor, based on the type being read.
-     */
-    void *sv_value;
-};
-
+/**
+ * Opaque 32-bit value, must understand underlying sensor type
+ * format in order to interpret.
+ */
 #define SENSOR_VALUE_TYPE_OPAQUE (0)
+/**
+ * 32-bit signed integer
+ */
 #define SENSOR_VALUE_TYPE_INT32  (1)
+/**
+ * 32-bit floating point
+ */
 #define SENSOR_VALUE_TYPE_FLOAT  (2)
 
+/**
+ * Configuration structure, describing a specific sensor type off of
+ * an existing sensor.
+ */
 struct sensor_cfg {
+    /* The value type for this sensor (e.g. SENSOR_VALUE_TYPE_INT32).
+     * Used to describe the result format for the value corresponding
+     * to a specific sensor type.
+     */
     uint8_t sc_valtype;
+    /* Reserved for future usage */
     uint8_t _reserved[3];
 };
 
@@ -102,33 +133,32 @@ struct sensor_cfg {
  * Callback for handling sensor data, specified in a sensor listener.
  *
  * @param The sensor for which data is being returned
- * @param The sensor listener that's configured to handle this data.
- * @param A single sensor reading
+ * @param The argument provided to sensor_read() function.
+ * @param A single sensor reading for that sensor listener
  *
  * @return 0 on succes, non-zero error code on failure.
  */
-typedef int (*sensor_data_func_t)(struct sensor *,
-        struct sensor_listener *,
-        struct sensor_reading *v);
+typedef int (*sensor_data_func_t)(struct sensor *, void *, void *);
 
 /**
  *
  */
 struct sensor_listener {
-    /* The type of sensor listener, either notification based "tell me
-     * when there is a value," or polled - collect this value for me
-     * every 'n' seconds and notify me.
+    /* The type of sensor data to listen for, this is interpreted as a
+     * mask, and this listener is called for all sensor types on this
+     * sensor that match the mask.
      */
-    uint8_t sl_type;
-    /* Padding */
-    uint8_t _pad1;
-    /* Poll rate in miliseconds. */
-    uint16_t sl_poll_rate_ms;
-    /* The type of sensor data to listen for */
     sensor_type_t sl_sensor_type;
+
     /* Sensor data handler function, called when has data */
     sensor_data_func_t sl_func;
 
+    /* Argument for the sensor listener */
+    void *sl_arg;
+
+    /* Next item in the sensor listener list.  The head of this list is
+     * contained within the sensor object.
+     */
     SLIST_ENTRY(sensor_listener) sl_next;
 };
 
@@ -146,15 +176,22 @@ struct sensor;
 typedef void *(*sensor_get_interface_func_t)(struct sensor *, sensor_type_t);
 
 /**
- * Read a value from a sensor, given a specific sensor type (e.g. SENSOR_TYPE_PROXIMITY).
+ * Read a single value from a sensor, given a specific sensor type
+ * (e.g. SENSOR_TYPE_PROXIMITY).
  *
  * @param The sensor to read from
- * @param The type of sensor value to read
- * @param A pointer to the sensor value to place the returned result into.
+ * @param The type(s) of sensor values to read.  Mask containing that type, provide
+ *        all, to get all values.
+ * @param The function to call with each value read.  If NULL, it calls all
+ *        sensor listeners associated with this function.
+ * @param The argument to pass to the read callback.
+ * @param Timeout.  If block until result, specify OS_TIMEOUT_NEVER, 0 returns
+ *        immediately (no wait.)
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t, void *);
+typedef int (*sensor_read_func_t)(struct sensor *, sensor_data_func_t, void *,
+        uint32_t);
 
 /**
  * Get the configuration of the sensor for the sensor type.  This includes
@@ -174,9 +211,6 @@ struct sensor_driver_funcs {
     sensor_get_config_func_t sd_get_config;
 };
 
-/* XXX: Make me a syscfg */
-#define SENSOR_DEFAULT_POLL_RATE (10 * (OS_TICKS_PER_SEC/1000))
-
 struct sensor {
     /* The OS device this sensor inherits from, this is typically a sensor specific
      * driver.
@@ -187,6 +221,16 @@ struct sensor {
      * that variable.
      */
     sensor_type_t s_types;
+    /**
+     * Poll rate in MS for this sensor.
+     */
+    uint32_t s_poll_rate;
+
+    /**
+     * The next time at which we want to poll data from this sensor
+     */
+    os_time_t s_next_run;
+
     /* Sensor driver specific functions, created by the device registering the sensor.
      */
     const struct sensor_driver_funcs s_funcs;
@@ -197,12 +241,12 @@ struct sensor {
     SLIST_ENTRY(sensor) s_next;
 };
 
-int sensor_init(struct sensor *);
-int sensor_register(struct sensor *);
+
+int sensor_init(struct sensor *, struct os_dev *dev);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
 int sensor_register_listener(struct sensor *, struct sensor_listener *);
-struct sensor *sensor_find_next(sensor_type_t, struct sensor *);
+int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, uint32_t);
 
 
 /**
@@ -222,35 +266,7 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type, struct sensor_confi
 }
 
 /**
- * Read the data for sensor type "type," from the sensor, "sensor" and
- * return the result into the "value" parameter.
- *
- * @param The senssor to read data from
- * @param The type of sensor data to read from the sensor
- * @param The sensor value to place data into.
- *
- * @return 0 on success, non-zero on failure.
- */
-static inline int
-sensor_read(struct sensor *sensor, sensor_type_t type, struct sensor_value *value)
-{
-    int rc;
-
-    rc = sensor_lock(sensor);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = sensor->s_funcs.sd_read(sensor, type, value);
-
-    sensor_unlock(sensor);
-
-done:
-    return (rc);
-}
-
-/**
- * Get a more specific interface for this sensor, like accellerometer, or gyro.
+ * Get a more specific interface for this sensor, like accelerometer, or gyro.
  *
  * @param The sensor to get the interface from
  * @param The type of interface to get from this sensor
@@ -276,6 +292,9 @@ done:
     return (rc);
 }
 
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }
