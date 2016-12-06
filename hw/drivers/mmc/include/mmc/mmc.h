@@ -34,15 +34,16 @@ extern "C" {
 #define MMC_READ_ERROR      (-2)
 #define MMC_WRITE_ERROR     (-3)
 #define MMC_TIMEOUT         (-4)
-#define MMC_PARAM           (-5)
+#define MMC_PARAM_ERROR     (-5)
 #define MMC_CRC_ERROR       (-6)
+#define MMC_DEVICE_ERROR    (-7)
 
 /**
  * Initialize the MMC driver
  *
  * @param spi_num Number of the SPI channel to be used by MMC
  * @param spi_cfg Low-level device specific SPI configuration
- * @param ss_pin Number of SS pin if SW controlled, -1 otherwise
+ * @param ss_pin GPIO number of the SS pin
  *
  * @return 0 on success, non-zero on failure
  */
@@ -52,6 +53,7 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin);
 /**
  * Read data from MMC
  *
+ * @param mmc_id
  * @param addr
  * @param buf
  * @param len
@@ -59,11 +61,12 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin);
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_read(uint32_t addr, void *buf, size_t len);
+mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len);
 
 /**
  * Write data to the MMC
  *
+ * @param mmc_id
  * @param addr
  * @param buf
  * @param len
@@ -71,10 +74,10 @@ mmc_read(uint32_t addr, void *buf, size_t len);
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_write(uint32_t addr, const void *buf, size_t len);
+mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, size_t len);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __ADC_H__ */
+#endif /* __MMC_H__ */
