@@ -64,17 +64,18 @@ static struct hal_spi_settings mmc_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE0,
     /* XXX: MMC initialization accepts clocks in the range 100-400KHz */
+    /* TODO: switch to high-speed aka 25MHz after initialization. */
     .baudrate   = 100,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
 /* FIXME: this limits usage to single MMC spi device */
-static int g_spi_num = -1;
-static int g_ss_pin = -1;
-
-/**
- * TODO: switch to high-speed SPI after initialization.
- */
+static struct mmc_cfg {
+    int                      spi_num;
+    int                      ss_pin;
+    void                     *spi_cfg;
+    struct hal_spi_settings  *settings;
+} g_mmc_cfg;
 
 static int
 mmc_error_by_status(uint8_t status)
@@ -132,26 +133,38 @@ voltage_from_r7(uint8_t *response)
 }
 */
 
+static struct mmc_cfg *
+mmc_cfg_dev(uint8_t id)
+{
+    if (id != 0) {
+        return NULL;
+    }
+
+    return &g_mmc_cfg;
+}
+
 static uint8_t
-send_mmc_cmd(uint8_t cmd, uint32_t payload)
+send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
 {
     int n;
     uint8_t response[4];
     uint8_t status;
     uint8_t type;
+    uint8_t crc;
 
     if (cmd & 0x80) {
         /* TODO: refactor recursion? */
-        send_mmc_cmd(CMD55, 0);
+        /* TODO: error checking */
+        send_mmc_cmd(mmc, CMD55, 0);
     }
 
     /* 4.7.2: Command Format */
-    hal_spi_tx_val(g_spi_num, 0x40 | (cmd & ~0x80));
+    hal_spi_tx_val(mmc->spi_num, 0x40 | (cmd & ~0x80));
 
-    hal_spi_tx_val(g_spi_num, payload >> 24 & 0xff);
-    hal_spi_tx_val(g_spi_num, payload >> 16 & 0xff);
-    hal_spi_tx_val(g_spi_num, payload >>  8 & 0xff);
-    hal_spi_tx_val(g_spi_num, payload       & 0xff);
+    hal_spi_tx_val(mmc->spi_num, payload >> 24 & 0xff);
+    hal_spi_tx_val(mmc->spi_num, payload >> 16 & 0xff);
+    hal_spi_tx_val(mmc->spi_num, payload >>  8 & 0xff);
+    hal_spi_tx_val(mmc->spi_num, payload       & 0xff);
 
     /**
      * 7.2.2 Bus Transfer Protection
@@ -159,19 +172,21 @@ send_mmc_cmd(uint8_t cmd, uint32_t payload)
      *   require a valid CRC.
      *   NOTE: CRC can be turned on with CMD59 (CRC_ON_OFF).
      */
-    if (cmd == CMD0) {
-        hal_spi_tx_val(g_spi_num, 0x95);
-    } else if (cmd == CMD8) {
-        hal_spi_tx_val(g_spi_num, 0x87);
-    } else {
-        /* Any CRC value is OK here */
-        hal_spi_tx_val(g_spi_num, 0x01);
+    crc = 0x01;
+    switch (cmd) {
+        case CMD0:
+            crc = 0x95;
+            break;
+        case CMD8:
+            crc = 0x87;
+            break;
     }
+    hal_spi_tx_val(mmc->spi_num, crc);
 
     //printf("==> sending cmd %d\n", cmd & ~0x80);
 
     for (n = 255; n > 0; n--) {
-        status = hal_spi_tx_val(g_spi_num, 0xff);
+        status = hal_spi_tx_val(mmc->spi_num, 0xff);
         if ((status & 0x80) == 0) break;
         //os_time_delay(OS_TICKS_PER_SEC / 1000);
     }
@@ -191,7 +206,7 @@ send_mmc_cmd(uint8_t cmd, uint32_t payload)
     if (!(type == R1 || status & R_ILLEGAL_COMMAND || status & R_CRC_ERROR)) {
         /* Read remaining data for this command */
         for (n = 0; n < sizeof(response); n++) {
-            response[n] = (uint8_t) hal_spi_tx_val(g_spi_num, 0xff);
+            response[n] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
         }
 
         switch (type) {
@@ -218,6 +233,7 @@ send_mmc_cmd(uint8_t cmd, uint32_t payload)
  * @param spi_num Number of the SPI channel to be used by MMC
  * @param spi_cfg Low-level device specific SPI configuration
  * @param ss_pin Number of SS pin if SW controlled, -1 otherwise
+ * @param mmc_spi_cfg 
  *
  * @return 0 on success, non-zero on failure
  */
@@ -230,25 +246,25 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     uint32_t ocr;
     os_time_t wait_to;
 
-    g_ss_pin = ss_pin;
-    g_spi_num = spi_num;
+    g_mmc_cfg.spi_num = spi_num;
+    g_mmc_cfg.ss_pin = ss_pin;
+    g_mmc_cfg.spi_cfg = spi_cfg;
+    g_mmc_cfg.settings = &mmc_settings;
 
-    if (g_ss_pin != -1) {
-        hal_gpio_init_out(g_ss_pin, 1);
-    }
+    hal_gpio_init_out(g_mmc_cfg.ss_pin, 1);
 
-    rc = hal_spi_init(g_spi_num, spi_cfg, HAL_SPI_TYPE_MASTER);
+    rc = hal_spi_init(g_mmc_cfg.spi_num, g_mmc_cfg.spi_cfg, HAL_SPI_TYPE_MASTER);
     if (rc) {
         return (rc);
     }
 
-    rc = hal_spi_config(g_spi_num, &mmc_settings);
+    rc = hal_spi_config(g_mmc_cfg.spi_num, g_mmc_cfg.settings);
     if (rc) {
         return (rc);
     }
 
-    hal_spi_set_txrx_cb(0, NULL, NULL);
-    hal_spi_enable(0);
+    hal_spi_set_txrx_cb(g_mmc_cfg.spi_num, NULL, NULL);
+    hal_spi_enable(g_mmc_cfg.spi_num);
 
     /**
      * NOTE: The state machine below follows:
@@ -259,20 +275,20 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     /* give 10ms for VDD rampup */
     os_time_delay(OS_TICKS_PER_SEC / 100);
 
-    hal_gpio_write(g_ss_pin, 0);
-    hal_spi_tx_val(0, 0xff);
+    hal_gpio_write(g_mmc_cfg.ss_pin, 0);
+    hal_spi_tx_val(g_mmc_cfg.spi_num, 0xff);
 
     /* send the required >= 74 clock cycles */
     for (i = 0; i < 74; i++) {
-        hal_spi_tx_val(0, 0xff);
+        hal_spi_tx_val(g_mmc_cfg.spi_num, 0xff);
     }
 
     /* put card in idle state */
-    status = send_mmc_cmd(CMD0, 0);
+    status = send_mmc_cmd(&g_mmc_cfg, CMD0, 0);
 
     if (status != R_IDLE) {
         /* No card inserted or bad card! */
-        hal_gpio_write(g_ss_pin, 1);
+        hal_gpio_write(g_mmc_cfg.ss_pin, 1);
         return mmc_error_by_status(status);
     }
 
@@ -282,11 +298,11 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
      * NOTE: cards that are not compliant with "Physical Spec Version 2.00"
      *       will answer this with R_ILLEGAL_COMMAND.
      */
-    status = send_mmc_cmd(CMD8, 0x1AA);
+    status = send_mmc_cmd(&g_mmc_cfg, CMD8, 0x1AA);
     if (status & R_ILLEGAL_COMMAND) {
         /* Ver1.x SD Memory Card or Not SD Memory Card */
 
-        ocr = send_mmc_cmd(CMD58, 0);
+        ocr = send_mmc_cmd(&g_mmc_cfg, CMD58, 0);
 
         /* TODO: check if voltage range is ok! */
 
@@ -308,23 +324,23 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
 #define TIME_TO_WAIT (3 * OS_TICKS_PER_SEC)
 
         wait_to = os_time_get() + TIME_TO_WAIT;
-        status = send_mmc_cmd(ACMD41, 0x40000000); /* FIXME */
+        status = send_mmc_cmd(&g_mmc_cfg, ACMD41, 0x40000000); /* FIXME */
 
         while (status & R_IDLE) {
             if (os_time_get() > wait_to) {
                 break;
             }
             os_time_delay(OS_TICKS_PER_SEC / 10);
-            status = send_mmc_cmd(ACMD41, 0);
+            status = send_mmc_cmd(&g_mmc_cfg, ACMD41, 0);
         }
         //printf("ACMD41 status=%x\n", status);
 
         /* TODO: check CCS = OCR[30] */
-        status = send_mmc_cmd(CMD58, 0);
+        status = send_mmc_cmd(&g_mmc_cfg, CMD58, 0);
         //printf("CMD58 status=%x\n", status);
     }
 
-    hal_gpio_write(g_ss_pin, 1);
+    hal_gpio_write(g_mmc_cfg.ss_pin, 1);
 
     return rc;
 }
@@ -333,7 +349,7 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_read(uint32_t addr, void *buf, size_t len)
+mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len)
 {
     uint8_t cmd;
     uint8_t res;
@@ -345,8 +361,12 @@ mmc_read(uint32_t addr, void *buf, size_t len)
     size_t offset;
     size_t index;
     size_t amount;
+    struct mmc_cfg *mmc;
 
-    hal_gpio_write(g_ss_pin, 0);
+    mmc = mmc_cfg_dev(mmc_id);
+    if (mmc == NULL) {
+        return (MMC_DEVICE_ERROR);
+    }
 
     block_len = (len + BLOCK_LEN - 1) & ~(BLOCK_LEN - 1);
     block_count = block_len / BLOCK_LEN;
@@ -356,11 +376,13 @@ mmc_read(uint32_t addr, void *buf, size_t len)
     //printf("addr=0x%lx, block_addr=0x%lx, offset=%d\n", addr, block_addr, offset);
     //printf("len=%d, block_len=%d, block_count=%d\n", len, block_len, block_count);
 
+    hal_gpio_write(mmc->ss_pin, 0);
+
     cmd = (block_count == 1) ? CMD17 : CMD18;
-    res = send_mmc_cmd(cmd, block_addr);
+    res = send_mmc_cmd(mmc, cmd, block_addr);
     if (res != MMC_OK) {
-        hal_gpio_write(g_ss_pin, 1);
-        return MMC_CARD_ERROR;
+        hal_gpio_write(mmc->ss_pin, 1);
+        return (MMC_CARD_ERROR);
     }
 
     /**
@@ -369,7 +391,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
      */
     timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
     do {
-        res = hal_spi_tx_val(g_spi_num, 0xff);
+        res = hal_spi_tx_val(mmc->spi_num, 0xff);
         if (res != 0xFF) break;
         os_time_delay(OS_TICKS_PER_SEC / 20);
     } while (os_time_get() < timeout);
@@ -385,12 +407,12 @@ mmc_read(uint32_t addr, void *buf, size_t len)
              */
 
             for (n = 0; n < BLOCK_LEN; n++) {
-                g_block_buf[n] = hal_spi_tx_val(g_spi_num, 0xff);
+                g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
             }
 
             /* FIXME: consume CRC-16, but should check */
-            hal_spi_tx_val(g_spi_num, 0xff);
-            hal_spi_tx_val(g_spi_num, 0xff);
+            hal_spi_tx_val(mmc->spi_num, 0xff);
+            hal_spi_tx_val(mmc->spi_num, 0xff);
 
             amount = MIN(BLOCK_LEN - offset, len);
 
@@ -403,15 +425,15 @@ mmc_read(uint32_t addr, void *buf, size_t len)
         }
 
         if (cmd == CMD18) {
-            send_mmc_cmd(CMD12, 0);
+            send_mmc_cmd(mmc, CMD12, 0);  /* FIXME */
         }
 
-        hal_gpio_write(g_ss_pin, 1);
+        hal_gpio_write(mmc->ss_pin, 1);
 
         return MMC_OK;
     }
 
-    hal_gpio_write(g_ss_pin, 1);
+    hal_gpio_write(mmc->ss_pin, 1);
 
     return MMC_CARD_ERROR;
 }
@@ -420,7 +442,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_write(uint32_t addr, const void *buf, size_t len)
+mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, size_t len)
 {
     uint8_t cmd;
     uint8_t res;
@@ -433,13 +455,19 @@ mmc_write(uint32_t addr, const void *buf, size_t len)
     size_t index;
     size_t amount;
     int status;
+    struct mmc_cfg *mmc;
 
-    hal_gpio_write(g_ss_pin, 0);
+    mmc = mmc_cfg_dev(mmc_id);
+    if (mmc == NULL) {
+        return (MMC_DEVICE_ERROR);
+    }
 
     block_len = (len + BLOCK_LEN - 1) & ~(BLOCK_LEN - 1);
     block_count = block_len / BLOCK_LEN;
     block_addr = addr / BLOCK_LEN;
     offset = addr - (block_addr * BLOCK_LEN);
+
+    hal_gpio_write(mmc->ss_pin, 0);
 
     /**
      * This code ensures that if the requested address doesn't align with the
@@ -450,43 +478,43 @@ mmc_write(uint32_t addr, const void *buf, size_t len)
      * like FAT (offset is always 0).
      */
     if (offset) {
-        res = send_mmc_cmd(CMD17, block_addr);
+        res = send_mmc_cmd(mmc, CMD17, block_addr);
         if (res != MMC_OK) {
-            hal_gpio_write(g_ss_pin, 1);
-            return MMC_CARD_ERROR;
+            hal_gpio_write(mmc->ss_pin, 1);
+            return (MMC_CARD_ERROR);
         }
 
         timeout = os_time_get() + OS_TICKS_PER_SEC / 5;
         do {
-            res = hal_spi_tx_val(g_spi_num, 0xff);
-            if (res != 0xFF) break;
+            res = hal_spi_tx_val(mmc->spi_num, 0xff);
+            if (res != 0xff) break;
             os_time_delay(OS_TICKS_PER_SEC / 20);
         } while (os_time_get() < timeout);
 
-        if (res != 0xFE) {
-            hal_gpio_write(g_ss_pin, 1);
-            return MMC_CARD_ERROR;
+        if (res != 0xfe) {
+            hal_gpio_write(mmc->ss_pin, 1);
+            return (MMC_CARD_ERROR);
         }
 
         for (n = 0; n < BLOCK_LEN; n++) {
-            g_block_buf[n] = hal_spi_tx_val(g_spi_num, 0xff);
+            g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
         }
 
-        hal_spi_tx_val(g_spi_num, 0xff);
-        hal_spi_tx_val(g_spi_num, 0xff);
+        hal_spi_tx_val(mmc->spi_num, 0xff);
+        hal_spi_tx_val(mmc->spi_num, 0xff);
     }
 
     /* now start write */
 
     cmd = (block_count == 1) ? CMD24 : CMD25;
-    res = send_mmc_cmd(cmd, block_addr);
+    res = send_mmc_cmd(mmc, cmd, block_addr);
     if (res != MMC_OK) {
-        hal_gpio_write(g_ss_pin, 1);
-        return MMC_CARD_ERROR;
+        hal_gpio_write(mmc->ss_pin, 1);
+        return (MMC_CARD_ERROR);
     }
 
     /* FIXME: one byte gap, is this really required? */
-    hal_spi_tx_val(g_spi_num, 0xff);
+    hal_spi_tx_val(mmc->spi_num, 0xff);
 
     index = 0;
     do {
@@ -496,26 +524,26 @@ mmc_write(uint32_t addr, const void *buf, size_t len)
          * 7.3.3.2 Start Block Tokens and Stop Tran Token
          */
         if (cmd == CMD24) {
-            hal_spi_tx_val(g_spi_num, 0xFE);
+            hal_spi_tx_val(mmc->spi_num, 0xFE);
         } else {
-            hal_spi_tx_val(g_spi_num, 0xFC);
+            hal_spi_tx_val(mmc->spi_num, 0xFC);
         }
 
         amount = MIN(BLOCK_LEN - offset, len);
         memcpy(&g_block_buf[offset], ((uint8_t *)buf + index), amount);
 
         for (n = 0; n < BLOCK_LEN; n++) {
-            hal_spi_tx_val(g_spi_num, g_block_buf[n]);
+            hal_spi_tx_val(mmc->spi_num, g_block_buf[n]);
         }
 
         /* CRC */
-        hal_spi_tx_val(g_spi_num, 0xff);
-        hal_spi_tx_val(g_spi_num, 0xff);
+        hal_spi_tx_val(mmc->spi_num, 0xff);
+        hal_spi_tx_val(mmc->spi_num, 0xff);
 
         /**
          * 7.3.3.1 Data Response Token
          */
-        res = hal_spi_tx_val(g_spi_num, 0xff);
+        res = hal_spi_tx_val(mmc->spi_num, 0xff);
         if ((res & 0x1f) != 0x05) {
             break;
         }
@@ -531,7 +559,6 @@ mmc_write(uint32_t addr, const void *buf, size_t len)
     }
 
     res &= 0x1f;
-    //printf("final response token: 0x%x\n", res);
     switch (res) {
         case 0x05:
             status = MMC_OK;
@@ -546,12 +573,12 @@ mmc_write(uint32_t addr, const void *buf, size_t len)
 
     timeout = os_time_get() + 5 * OS_TICKS_PER_SEC;
     do {
-        res = hal_spi_tx_val(g_spi_num, 0xff);
+        res = hal_spi_tx_val(mmc->spi_num, 0xff);
         if (res) break;
         os_time_delay(OS_TICKS_PER_SEC / 100);
     } while (os_time_get() < timeout);
 
-    hal_gpio_write(g_ss_pin, 1);
+    hal_gpio_write(mmc->ss_pin, 1);
 
     return status;
 }
