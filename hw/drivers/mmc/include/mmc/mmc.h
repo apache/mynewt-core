@@ -71,7 +71,7 @@ mmc_read(uint32_t addr, void *buf, size_t len);
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_write(uint32_t addr, void *buf, size_t len);
+mmc_write(uint32_t addr, const void *buf, size_t len);
 
 #ifdef __cplusplus
 }
