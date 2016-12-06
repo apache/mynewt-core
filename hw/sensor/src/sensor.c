@@ -17,19 +17,21 @@
  * under the License.
  */
 
+#include <string.h>
 #include <errno.h>
 #include <assert.h>
 
-#include "sensor/sensor.h"
+#include "os/os.h"
+#include "sysinit/sysinit.h"
 
-struct os_callout sensors_callout;
+#include "sensor/sensor.h"
 
 struct {
     struct os_mutex mgr_lock;
 
-    struct os_callout mgr_poll_callout;
+    struct os_callout mgr_wakeup_callout;
 
-    TAILQ_HEAD(, struct sensor) mgr_sensor_list;
+    TAILQ_HEAD(, sensor) mgr_sensor_list;
 } sensor_mgr;
 
 static int
@@ -37,7 +39,7 @@ sensor_mgr_lock(void)
 {
     int rc;
 
-    rc = os_mutex_pend(&sensor_mgr.mgr_lock);
+    rc = os_mutex_pend(&sensor_mgr.mgr_lock, OS_TIMEOUT_NEVER);
     if (rc == 0 || rc == OS_NOT_STARTED) {
         return (0);
     }
@@ -63,11 +65,11 @@ sensor_mgr_insert(struct sensor *sensor)
 
     cursor = NULL;
     TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
-        if (cursor->s_next_wakeup == OS_TIMEOUT_NEVER) {
+        if (cursor->s_next_run == OS_TIMEOUT_NEVER) {
             break;
         }
 
-        if (OS_TIME_TICK_LT(sensor->s_next_wakeup, cursor->s_next_wakeup)) {
+        if (OS_TIME_TICK_LT(sensor->s_next_run, cursor->s_next_run)) {
             break;
         }
     }
@@ -75,13 +77,49 @@ sensor_mgr_insert(struct sensor *sensor)
     if (cursor) {
         TAILQ_INSERT_BEFORE(cursor, sensor, s_next);
     } else {
-        TAILQ_INSERT_TAIL(&sensor_mgr.mgr_sensor_list, s_next);
+        TAILQ_INSERT_TAIL(&sensor_mgr.mgr_sensor_list, sensor, s_next);
     }
 }
+
+/**
+ * Register the sensor with the global sensor list.   This makes the sensor
+ * searchable by other packages, who may want to look it up by type.
+ *
+ * @param The sensor to register
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_mgr_register(struct sensor *sensor)
+{
+    int rc;
+
+    rc = sensor_mgr_lock();
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    sensor_mgr_insert(sensor);
+
+    sensor_unlock(sensor);
+
+    sensor_mgr_unlock();
+
+    return (0);
+err:
+    return (rc);
+}
+
 
 static os_time_t
 sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
 {
+    uint32_t sensor_ticks;
     int rc;
 
     rc = sensor_lock(sensor);
@@ -101,7 +139,8 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
     /* Set next wakeup, and insertion sort the sensor back into the
      * list.
      */
-    sensor->s_next_run = now + os_time_ms_to_ticks(sensor->s_poll_rate);
+    os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
+    sensor->s_next_run = now + sensor_ticks;
 
     /* Re-insert the sensor manager, with the new wakeup time. */
     sensor_mgr_insert(sensor);
@@ -125,17 +164,20 @@ sensor_mgr_wakeup_event(struct os_event *ev)
     struct sensor *cursor;
     os_time_t now;
     os_time_t task_next_wakeup;
+    os_time_t next_wakeup;
     int rc;
-
-    rc = sensor_mgr_lock();
-    if (rc != 0) {
-        goto err;
-    }
 
     now = os_time_get();
     task_next_wakeup = now + SENSOR_MGR_WAKEUP_TICKS;
 
-    TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+    rc = sensor_mgr_lock();
+    if (rc != 0) {
+        /* Schedule again in 1 tick, see if we can reacquire the lock */
+        task_next_wakeup = now + 1;
+        goto done;
+    }
+
+     TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
         /* Sensors that are not periodic are inserted at the end of the sensor
          * list.
          */
@@ -154,7 +196,7 @@ sensor_mgr_wakeup_event(struct os_event *ev)
          * and re-inserts it into the list.  It returns the next wakeup time
          * for this sensor.
          */
-        next_wakeup = sensor_poll_one(cursor, now);
+        next_wakeup = sensor_mgr_poll_one(cursor, now);
 
         /* If the next wakeup time for this sensor is before the task's next
          * scheduled wakeup, move that forward, so we can collect data from that
@@ -165,10 +207,16 @@ sensor_mgr_wakeup_event(struct os_event *ev)
         }
     }
 
+done:
     os_callout_reset(&sensor_mgr.mgr_wakeup_callout, task_next_wakeup);
 }
 
-
+static struct os_eventq *
+sensor_mgr_evq_get(void)
+{
+    /* XXX: FIll me in */
+    return (NULL);
+}
 
 
 static void
@@ -176,6 +224,7 @@ sensor_mgr_init(void)
 {
     memset(&sensor_mgr, 0, sizeof(sensor_mgr));
     TAILQ_INIT(&sensor_mgr.mgr_sensor_list);
+
     /**
      * Initialize sensor polling callout and set it to fire on boot.
      */
@@ -204,7 +253,7 @@ sensor_mgr_find_next(sensor_mgr_compare_func_t compare_func, void *arg,
 
     cursor = prev_cursor;
     if (cursor == NULL) {
-        cursor = TAILQ_FIRST(&g_sensor_list);
+        cursor = TAILQ_FIRST(&sensor_mgr.mgr_sensor_list);
     }
 
     while (cursor != NULL) {
@@ -227,7 +276,7 @@ sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
 
     type = (sensor_type_t *) arg;
 
-    if ((*type & sensor->s_type) != 0) {
+    if ((*type & sensor->s_types) != 0) {
         return (1);
     } else {
         return (0);
@@ -249,7 +298,8 @@ sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
 struct sensor *
 sensor_mgr_find_next_bytype(sensor_type_t type, struct sensor *prev_cursor)
 {
-    return (sensor_mgr_find_next(sensor_mgr_match_bytype, type, prev_cursor));
+    return (sensor_mgr_find_next(sensor_mgr_match_bytype, (void *) &type,
+                prev_cursor));
 }
 
 static int
@@ -268,7 +318,13 @@ sensor_mgr_match_bydevname(struct sensor *sensor, void *arg)
 
 
 /**
+ * Search teh sensor list, and find the next sensor that correspondes
+ * to a given device name.
  *
+ * @param The device name to search for
+ * @param The previous sensor found with this device name
+ *
+ * @return 0 on success, non-zero error code on failure
  */
 struct sensor *
 sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor)
@@ -277,22 +333,10 @@ sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor)
             prev_cursor));
 }
 
-
 /**
- * Register the sensor with the global sensor list.   This makes the sensor searchable
- * by other packages, who may want to look it up by type.
- *
- * @param The sensor to register
- *
- * @return 0 on success, non-zero error code on failure.
+ * Initialize the sensor package, called through SYSINIT.  Note, this function
+ * will assert if called directly, and _NOT_ through the sysinit package.
  */
-int
-sensor_mgr_register(struct sensor *sensor)
-{
-    return (0);
-}
-
-
 void
 sensor_pkg_init(void)
 {
@@ -316,11 +360,9 @@ sensor_lock(struct sensor *sensor)
     int rc;
 
     rc = os_mutex_pend(&sensor->s_lock, OS_TIMEOUT_NEVER);
-    if (rc != 0) {
-        goto err;
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
     }
-    return (0);
-err:
     return (rc);
 }
 
@@ -347,6 +389,8 @@ sensor_unlock(struct sensor *sensor)
 int
 sensor_init(struct sensor *sensor, struct os_dev *dev)
 {
+    int rc;
+
     memset(sensor, 0, sizeof(*sensor));
 
     rc = os_mutex_init(&sensor->s_lock);
@@ -446,7 +490,8 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     src.user_func = data_func;
     src.user_arg = arg;
 
-    rc = sensor->s_funcs.sd_read(sensor, type, data_func, arg, timeout);
+    rc = sensor->s_funcs.sd_read(sensor, type, sensor_read_data_func, &src,
+            timeout);
 
     sensor_unlock(sensor);
 

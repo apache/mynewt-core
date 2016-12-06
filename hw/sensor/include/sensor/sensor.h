@@ -20,31 +20,16 @@
 #ifndef __SENSOR_H__
 #define __SENSOR_H__
 
-#include <os/os_dev.h>
+#include "os/os.h"
+#include "os/os_dev.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-/**
- * @{ Sensor Manager API
- */
-#define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
-        (OS_TICKS_PER_SEC / 1000))
-
-int sensor_mgr_register(struct sensor *);
-
-typedef int (*sensor_mgr_compare_func_t*)(struct sensor *, void *);
-struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,
-        struct sensor *);
-struct sensor *sensor_mgr_find_next_bytype(sensor_type_t, struct sensor *);
-struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
-
-/**
- * }@
- */
-
+/* Forward declare sensor structure defined below. */
+struct sensor;
 
 /**
  * @{ Sensor API
@@ -97,9 +82,6 @@ typedef enum {
     SENSOR_TYPE_ALL                  = 0xFFFFFFFF
 } sensor_type_t;
 
-
-#define SENSOR_LISTENER_TYPE_NOTIFY (0)
-#define SENSOR_LISTENER_TYPE_POLL   (1)
 
 /**
  * Opaque 32-bit value, must understand underlying sensor type
@@ -190,8 +172,8 @@ typedef void *(*sensor_get_interface_func_t)(struct sensor *, sensor_type_t);
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*sensor_read_func_t)(struct sensor *, sensor_data_func_t, void *,
-        uint32_t);
+typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
+        sensor_data_func_t, void *, uint32_t);
 
 /**
  * Get the configuration of the sensor for the sensor type.  This includes
@@ -216,6 +198,11 @@ struct sensor {
      * driver.
      */
     struct os_dev *s_dev;
+
+    /* The lock for this sensor object */
+    struct os_mutex s_lock;
+
+
     /* A bit mask describing the types of sensor objects available from this sensor.
      * If the bit corresponding to the sensor_type_t is set, then this sensor supports
      * that variable.
@@ -236,17 +223,17 @@ struct sensor {
     const struct sensor_driver_funcs s_funcs;
     /* A list of listeners that are registered to receive data off of this sensor
      */
-    SLIST_HEAD(, struct sensor_listener) s_listener_list;
+    SLIST_HEAD(, sensor_listener) s_listener_list;
     /* The next sensor in the global sensor list. */
-    SLIST_ENTRY(sensor) s_next;
+    TAILQ_ENTRY(sensor) s_next;
 };
-
 
 int sensor_init(struct sensor *, struct os_dev *dev);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
 int sensor_register_listener(struct sensor *, struct sensor_listener *);
-int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, uint32_t);
+int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *,
+        uint32_t);
 
 
 /**
@@ -260,7 +247,8 @@ int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, uint32_t);
  * @return 0 on success, non-zero error code on failure.
  */
 static inline int
-sensor_get_config(struct sensor *sensor, sensor_type_t type, struct sensor_config *cfg)
+sensor_get_config(struct sensor *sensor, sensor_type_t type,
+        struct sensor_cfg *cfg)
 {
     return (sensor->s_funcs.sd_get_config(sensor, type, cfg));
 }
@@ -271,26 +259,40 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type, struct sensor_confi
  * @param The sensor to get the interface from
  * @param The type of interface to get from this sensor
  *
- * @return A pointer to the more specific sensor interface on success, or NULL if
- *         not found.
+ * @return A pointer to the more specific sensor interface on success, or NULL
+ * if not found.
  */
 static inline void *
 sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 {
-    int rc;
-
-    rc = sensor_lock(sensor);
-    if (rc != 0) {
-        goto done;
-    }
-
-    rc = sensor->s_funcs.sd_get_interface(sensor, type);
-
-    sensor_unlock(sensor);
-
-done:
-    return (rc);
+    return (sensor->s_funcs.sd_get_interface(sensor, type));
 }
+
+/**
+ * @{ Sensor Manager API
+ */
+
+
+/* Default number of ticks to wakeup the sensor task.  If sensor
+ * polling has been configured more frequently than this, it will
+ * be triggered instead.
+ */
+#define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
+        (OS_TICKS_PER_SEC / 1000))
+
+int sensor_mgr_register(struct sensor *);
+
+typedef int (*sensor_mgr_compare_func_t)(struct sensor *, void *);
+struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,
+        struct sensor *);
+struct sensor *sensor_mgr_find_next_bytype(sensor_type_t, struct sensor *);
+struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
+
+/**
+ * }@
+ */
+
+
 
 /**
  * @}
