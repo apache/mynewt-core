@@ -104,6 +104,7 @@ response_type_by_cmd(uint8_t cmd)
     return R1;
 }
 
+/*
 static uint32_t
 ocr_from_r3(uint8_t *response)
 {
@@ -129,6 +130,7 @@ voltage_from_r7(uint8_t *response)
 {
     return response[2] & 0xF;
 }
+*/
 
 static uint8_t
 send_mmc_cmd(uint8_t cmd, uint32_t payload)
@@ -168,12 +170,13 @@ send_mmc_cmd(uint8_t cmd, uint32_t payload)
 
     //printf("==> sending cmd %d\n", cmd & ~0x80);
 
-    n = 10;
-    do {
+    for (n = 255; n > 0; n--) {
         status = hal_spi_tx_val(g_spi_num, 0xff);
-    } while ((status & 0x80) && --n);
+        if ((status & 0x80) == 0) break;
+        //os_time_delay(OS_TICKS_PER_SEC / 1000);
+    }
 
-    if (!n) {
+    if (n == 0) {
         return status;
     }
 
@@ -191,21 +194,13 @@ send_mmc_cmd(uint8_t cmd, uint32_t payload)
             response[n] = (uint8_t) hal_spi_tx_val(g_spi_num, 0xff);
         }
 
-#if 0
-        printf("response=");
-        for (n = 0; n < sizeof(response); n++) {
-            printf("[%02x]", response[n]);
-        }
-        printf(" \n");
-#endif
-
         switch (type) {
             case R3:
                 /* NOTE: ocr is defined in section 5.1 */
-                printf("ocr=0x%08lx\n", ocr_from_r3(response));
+                //printf("ocr=0x%08lx\n", ocr_from_r3(response));
                 break;
             case R7:
-                printf("voltage=0x%x\n", voltage_from_r7(response));
+                //printf("voltage=0x%x\n", voltage_from_r7(response));
                 break;
         }
     }
@@ -265,6 +260,7 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     os_time_delay(OS_TICKS_PER_SEC / 100);
 
     hal_gpio_write(g_ss_pin, 0);
+    hal_spi_tx_val(0, 0xff);
 
     /* send the required >= 74 clock cycles */
     for (i = 0; i < 74; i++) {
@@ -321,9 +317,11 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
             os_time_delay(OS_TICKS_PER_SEC / 10);
             status = send_mmc_cmd(ACMD41, 0);
         }
+        //printf("ACMD41 status=%x\n", status);
 
         /* TODO: check CCS = OCR[30] */
         status = send_mmc_cmd(CMD58, 0);
+        //printf("CMD58 status=%x\n", status);
     }
 
     hal_gpio_write(g_ss_pin, 1);
@@ -343,7 +341,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
     size_t block_len;
     size_t block_count;
     os_time_t timeout;
-    size_t block_addr;
+    uint32_t block_addr;
     size_t offset;
     size_t index;
     size_t amount;
@@ -355,7 +353,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
     block_addr = addr / BLOCK_LEN;
     offset = addr - (block_addr * BLOCK_LEN);
 
-    //printf("block_addr=%d, offset=%d\n", block_addr, offset);
+    //printf("addr=0x%lx, block_addr=0x%lx, offset=%d\n", addr, block_addr, offset);
     //printf("len=%d, block_len=%d, block_count=%d\n", len, block_len, block_count);
 
     cmd = (block_count == 1) ? CMD17 : CMD18;
@@ -396,7 +394,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
 
             amount = MIN(BLOCK_LEN - offset, len);
 
-            printf("copying %d bytes to index %d\n", amount, index);
+            //printf("copying %d bytes to index %d\n", amount, index);
             memcpy(((uint8_t *)buf + index), &g_block_buf[offset], amount);
 
             offset = 0;
@@ -422,7 +420,7 @@ mmc_read(uint32_t addr, void *buf, size_t len)
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_write(uint32_t addr, void *buf, size_t len)
+mmc_write(uint32_t addr, const void *buf, size_t len)
 {
     uint8_t cmd;
     uint8_t res;
@@ -430,16 +428,27 @@ mmc_write(uint32_t addr, void *buf, size_t len)
     size_t block_len;
     size_t block_count;
     os_time_t timeout;
-    size_t block_addr;
+    uint32_t block_addr;
     size_t offset;
     size_t index;
     size_t amount;
+    int status;
+
+    hal_gpio_write(g_ss_pin, 0);
 
     block_len = (len + BLOCK_LEN - 1) & ~(BLOCK_LEN - 1);
     block_count = block_len / BLOCK_LEN;
     block_addr = addr / BLOCK_LEN;
     offset = addr - (block_addr * BLOCK_LEN);
 
+    /**
+     * This code ensures that if the requested address doesn't align with the
+     * beginning address of a sector, the initial bytes are first read to the
+     * buffer to be then written later.
+     *
+     * NOTE: this code will never run when using a FS that is sector addressed
+     * like FAT (offset is always 0).
+     */
     if (offset) {
         res = send_mmc_cmd(CMD17, block_addr);
         if (res != MMC_OK) {
@@ -476,21 +485,8 @@ mmc_write(uint32_t addr, void *buf, size_t len)
         return MMC_CARD_ERROR;
     }
 
-    /**
-     * 7.3.3 Control tokens
-     *   Wait up to 500ms for control token.
-     */
-    timeout = os_time_get() + OS_TICKS_PER_SEC / 2;
-    do {
-        res = hal_spi_tx_val(g_spi_num, 0xff);
-        if (res != 0xFF) break;
-        os_time_delay(OS_TICKS_PER_SEC / 20);
-    } while (os_time_get() < timeout);
-
-    if (res == 0xFF) {
-        hal_gpio_write(g_ss_pin, 1);
-        return MMC_CARD_ERROR;
-    }
+    /* FIXME: one byte gap, is this really required? */
+    hal_spi_tx_val(g_spi_num, 0xff);
 
     index = 0;
     do {
@@ -530,14 +526,32 @@ mmc_write(uint32_t addr, void *buf, size_t len)
 
     } while (len);
 
-    hal_gpio_write(g_ss_pin, 1);
-
-    res &= 0x1f;
-    if (res == 0x0b) {
-        return MMC_CRC_ERROR;
-    } else if (res == 0x0d) {
-        return MMC_WRITE_ERROR;
+    /* TODO: send stop tran token */
+    if (cmd == CMD25) {
     }
 
-    return MMC_OK;
+    res &= 0x1f;
+    //printf("final response token: 0x%x\n", res);
+    switch (res) {
+        case 0x05:
+            status = MMC_OK;
+            break;
+        case 0x0b:
+            status = MMC_CRC_ERROR;
+            break;
+        case 0x0d:  /* passthrough */
+        default:
+            status = MMC_WRITE_ERROR;
+    }
+
+    timeout = os_time_get() + 5 * OS_TICKS_PER_SEC;
+    do {
+        res = hal_spi_tx_val(g_spi_num, 0xff);
+        if (res) break;
+        os_time_delay(OS_TICKS_PER_SEC / 100);
+    } while (os_time_get() < timeout);
+
+    hal_gpio_write(g_ss_pin, 1);
+
+    return status;
 }
