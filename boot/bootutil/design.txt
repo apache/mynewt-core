@@ -408,7 +408,7 @@ correspond to a pair of sectors.  For example, sector index 0 corresponds to
 the first sector in slot 0 and the first sector in slot 1.  Furthermore, we
 impose a limit of 128 indices.  If an image slot consists of more than 128
 sectors, the flash layout is not compatible with this boot loader.  Finally,
-reverse, the list of indices such that the list starts with index 127 and ends
+reverse the list of indices such that the list starts with index 127 and ends
 with 0.  The swap status region is a representation of this reversed list.
 
 During a swap operation, each sector index transitions through four separate
