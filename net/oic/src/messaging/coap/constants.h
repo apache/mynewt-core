@@ -71,9 +71,9 @@ struct coap_udp_hdr {
  * Header used by Iotivity for TCP-like transports.
  * 4 different kinds of headers.
  */
-#define COAP_TCP_LENGTH_FIELD_8_BIT      13
-#define COAP_TCP_LENGTH_FIELD_16_BIT     269
-#define COAP_TCP_LENGTH_FIELD_32_BIT     65805
+#define COAP_TCP_LENGTH8_OFF      13
+#define COAP_TCP_LENGTH16_OFF     269
+#define COAP_TCP_LENGTH32_OFF     65805
 
 #define COAP_TCP_TYPE0      0
 #define COAP_TCP_TYPE8      13

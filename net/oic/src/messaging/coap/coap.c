@@ -41,6 +41,13 @@
 #include "security/oc_dtls.h"
 #endif
 
+STATS_SECT_DECL(coap_stats) coap_stats;
+STATS_NAME_START(coap_stats)
+    STATS_NAME(coap_stats, iframe)
+    STATS_NAME(coap_stats, ierr)
+    STATS_NAME(coap_stats, oframe)
+STATS_NAME_END(coap_stats)
+
 /*---------------------------------------------------------------------------*/
 /*- Variables ---------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -266,6 +273,10 @@ coap_init_connection(void)
 {
     /* initialize transaction ID */
     current_mid = oc_random_rand();
+
+    stats_init_and_reg(STATS_HDR(coap_stats),
+      STATS_SIZE_INIT_PARMS(coap_stats, STATS_SIZE_32),
+      STATS_NAME_INIT_PARMS(coap_stats), "coap");
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
@@ -391,7 +402,7 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
             cth8 = (struct coap_tcp_hdr8 *)buffer;
             cth8->type = COAP_TCP_TYPE8;
             cth8->token_len = pkt->token_len;
-            cth8->data_len = data_len - 13;
+            cth8->data_len = data_len - COAP_TCP_LENGTH8_OFF;
             cth8->code = pkt->code;
             option = (uint8_t *)(cth8 + 1);
         } else if (data_len < 65805) {
@@ -399,7 +410,7 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
             cth16 = (struct coap_tcp_hdr16 *)buffer;
             cth16->type = COAP_TCP_TYPE16;
             cth16->token_len = pkt->token_len;
-            cth16->data_len = htons(data_len - 269);
+            cth16->data_len = htons(data_len - COAP_TCP_LENGTH16_OFF);
             cth16->code = pkt->code;
             option = (uint8_t *)(cth16 + 1);
         } else {
@@ -407,7 +418,7 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
             cth32 = (struct coap_tcp_hdr32 *)buffer;
             cth32->type = COAP_TCP_TYPE32;
             cth32->token_len = pkt->token_len;
-            cth32->data_len = htonl(data_len - 65805);
+            cth32->data_len = htonl(data_len - COAP_TCP_LENGTH32_OFF);
             cth32->code = pkt->code;
             option = (uint8_t *)(cth32 + 1);
         }
@@ -432,7 +443,45 @@ coap_send_message(oc_message_t *message)
 {
     LOG("-sending OCF message (%u)-\n", (unsigned int) message->length);
 
+    STATS_INC(coap_stats, oframe);
+
     oc_send_message(message);
+}
+
+/*
+ * Given COAP message header, return the number of bytes to expect for
+ * this frame.
+ */
+uint16_t
+coap_tcp_msg_size(uint8_t *hdr, int datalen)
+{
+    struct coap_tcp_hdr0 *cth0;
+    struct coap_tcp_hdr8 *cth8;
+    struct coap_tcp_hdr16 *cth16;
+    struct coap_tcp_hdr32 *cth32;
+
+    if (datalen < sizeof(*cth32)) {
+        return -1;
+    }
+    cth0 = (struct coap_tcp_hdr0 *)hdr;
+    if (cth0->data_len < COAP_TCP_TYPE8) {
+        return cth0->data_len + sizeof(*cth0) + cth0->token_len;
+    } else if (cth0->data_len == COAP_TCP_TYPE8) {
+        cth8 = (struct coap_tcp_hdr8 *)hdr;
+        return cth8->data_len + sizeof(*cth8) + cth8->token_len +
+               COAP_TCP_LENGTH8_OFF;
+    } else if (cth0->data_len == COAP_TCP_TYPE16) {
+        cth16 = (struct coap_tcp_hdr16 *)hdr;
+        return ntohs(cth16->data_len) + sizeof(*cth16) + cth16->token_len +
+               COAP_TCP_LENGTH16_OFF;
+    } else if (cth0->data_len == COAP_TCP_TYPE32) {
+        cth32 = (struct coap_tcp_hdr32 *)hdr;
+        return ntohl(cth32->data_len) + sizeof(*cth32) + cth32->token_len +
+               COAP_TCP_LENGTH32_OFF;
+    } else {
+        /* never here */
+        return -1;
+    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -455,6 +504,8 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
     /* pointer to packet bytes */
     pkt->buffer = data;
 
+    STATS_INC(coap_stats, iframe);
+
     /* parse header fields */
     if (!tcp_hdr) {
         udp = (struct coap_udp_hdr *)data;
@@ -465,6 +516,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
         pkt->mid = ntohs(udp->id);
         if (pkt->version != 1) {
             coap_error_message = "CoAP version must be 1";
+            STATS_INC(coap_stats, ierr);
             return BAD_REQUEST_4_00;
         }
         cur_opt = (uint8_t *)(udp + 1);
@@ -477,27 +529,40 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
         cth0 = (struct coap_tcp_hdr0 *)data;
         if (cth0->data_len < 13) {
             pkt->token_len = cth0->token_len;
+            if (data_len != cth0->data_len + sizeof(*cth0) + pkt->token_len) {
+                goto len_err;
+            }
             pkt->code = cth0->code;
             cur_opt = (uint8_t *)(cth0 + 1);
         } else if (cth0->data_len == 13) {
             cth8 = (struct coap_tcp_hdr8 *)data;
             pkt->token_len = cth8->token_len;
+            if (data_len != cth8->data_len + sizeof(*cth8) + pkt->token_len) {
+                goto len_err;
+            }
             pkt->code = cth8->code;
             cur_opt = (uint8_t *)(cth8 + 1);
         } else if (cth0->data_len == 14) {
             cth16 = (struct coap_tcp_hdr16 *)data;
             pkt->token_len = cth16->token_len;
+            if (data_len != cth16->data_len + sizeof(*cth16) + pkt->token_len) {
+                goto len_err;
+            }
             pkt->code = cth16->code;
             cur_opt = (uint8_t *)(cth16 + 1);
         } else {
             cth32 = (struct coap_tcp_hdr32 *)data;
             pkt->token_len = cth32->token_len;
+            if (data_len != cth32->data_len + sizeof(*cth32) + pkt->token_len) {
+                goto len_err;
+            }
             pkt->code = cth32->code;
             cur_opt = (uint8_t *)(cth32 + 1);
         }
     }
     if (pkt->token_len > COAP_TOKEN_LEN) {
         coap_error_message = "Token Length must not be more than 8";
+        STATS_INC(coap_stats, ierr);
         return BAD_REQUEST_4_00;
     }
 
@@ -604,6 +669,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
             LOG("Proxy-Uri NOT IMPLEMENTED [%s]\n", (char *)pkt->proxy_uri);
             coap_error_message =
               "This is a constrained server (MyNewt)";
+            STATS_INC(coap_stats, ierr);
             return PROXYING_NOT_SUPPORTED_5_05;
             break;
         case COAP_OPTION_PROXY_SCHEME:
@@ -614,6 +680,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
             LOG("Proxy-Scheme NOT IMPLEMENTED [%s]\n", pkt->proxy_scheme);
             coap_error_message =
               "This is a constrained server (MyNewt)";
+            STATS_INC(coap_stats, ierr);
             return PROXYING_NOT_SUPPORTED_5_05;
             break;
 
@@ -690,6 +757,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
             /* check if critical (odd) */
             if (opt_num & 1) {
                 coap_error_message = "Unsupported critical option";
+                STATS_INC(coap_stats, ierr);
                 return BAD_OPTION_4_02;
             }
         }
@@ -698,6 +766,10 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
     LOG("-Done parsing-------\n");
 
     return NO_ERROR;
+len_err:
+    STATS_INC(coap_stats, ierr);
+    coap_error_message = "Input len mismatch";
+    return BAD_REQUEST_4_00;
 }
 #if 0
 int

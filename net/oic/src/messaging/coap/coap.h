@@ -44,11 +44,12 @@
 extern "C" {
 #endif
 
+#include <stats/stats.h>
 /* OIC stack headers */
 #include "../src/port/mynewt/config.h"
 #include "oic/oc_buffer.h"
+#include "oic/oc_log.h"
 #include "../src/port/oc_connectivity.h"
-#include "../src/port/oc_log.h"
 #include "../src/port/oc_random.h"
 
 #ifndef MAX
@@ -160,6 +161,17 @@ typedef struct coap_packet {
     uint8_t *payload;
 } coap_packet_t;
 
+/*
+ * COAP statistics
+ */
+STATS_SECT_START(coap_stats)
+    STATS_SECT_ENTRY(iframe)
+    STATS_SECT_ENTRY(ierr)
+    STATS_SECT_ENTRY(oframe)
+STATS_SECT_END
+
+extern STATS_SECT_DECL(coap_stats) coap_stats;
+
 /* option format serialization */
 #define COAP_SERIALIZE_INT_OPTION(coap_pkt, number, field, text)               \
   if (IS_OPTION(coap_pkt, number)) {                                           \
@@ -209,6 +221,8 @@ extern char *coap_error_message;
 
 void coap_init_connection(void);
 uint16_t coap_get_mid(void);
+
+uint16_t coap_tcp_msg_size(uint8_t *hdr, int datalen);
 
 void coap_init_message(coap_packet_t *, coap_message_type_t type,
                        uint8_t code, uint16_t mid);
