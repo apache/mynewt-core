@@ -29,6 +29,7 @@
 #include <mn_socket/mn_socket.h>
 
 #include "port/oc_connectivity.h"
+#include "oic/oc_log.h"
 #include "oc_buffer.h"
 #include "adaptor.h"
 
