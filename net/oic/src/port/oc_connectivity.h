@@ -18,7 +18,6 @@
 #define OC_CONNECTIVITY_H
 
 #include "mynewt/config.h"
-#include "oc_log.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

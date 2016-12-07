@@ -28,7 +28,7 @@
 
 #include "oc_buffer.h"
 #include "port/oc_connectivity.h"
-#include "../oc_log.h"
+#include "oic/oc_log.h"
 #include "adaptor.h"
 
 struct os_mqueue oc_serial_mqueue;

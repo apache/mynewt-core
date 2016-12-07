@@ -17,10 +17,10 @@
 #include <stddef.h>
 #include <os/os_mempool.h>
 
-#include "oc_rep.h"
+#include "oic/oc_rep.h"
+#include "oic/oc_log.h"
 #include "config.h"
 #include "port/oc_assert.h"
-#include "port/oc_log.h"
 #include "api/oc_priv.h"
 #include <tinycbor/cbor_buf_writer.h>
 #include <tinycbor/cbor_buf_reader.h>

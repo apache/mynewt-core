@@ -22,13 +22,15 @@
 #include <os/endian.h>
 #include <string.h>
 #include <log/log.h>
-#include "../oc_network_events_mutex.h"
-#include "../oc_connectivity.h"
+#include "oic/oc_log.h"
+#include "port/oc_network_events_mutex.h"
+#include "port/oc_connectivity.h"
 #include "oc_buffer.h"
-#include "../oc_log.h"
 #include "adaptor.h"
 
 static struct os_eventq *oc_evq;
+
+struct log oc_log;
 
 /* not sure if these semaphores are necessary yet.  If we are running
  * all of this from one task, we may not need these */

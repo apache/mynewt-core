@@ -28,9 +28,8 @@
 #include <log/log.h>
 #include <mn_socket/mn_socket.h>
 
-#include "../oc_connectivity.h"
+#include "port/oc_connectivity.h"
 #include "oc_buffer.h"
-#include "../oc_log.h"
 #include "adaptor.h"
 
 static void oc_event_ip(struct os_event *ev);
@@ -252,11 +251,6 @@ oc_connectivity_init_ip(void)
 
     LOG("OC transport init IP\n");
     memset(&itf, 0, sizeof(itf));
-
-    rc = oc_log_init();
-    if ( rc != 0) {
-        ERROR("Could not create oc logging\n");
-        return rc;    }
 
     rc = mn_socket(&ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !ucast ) {
