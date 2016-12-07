@@ -153,7 +153,7 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
     struct oc_endpoint *oe;
     struct mn_sockaddr_in6 from;
 
-    LOG("oc_transport_ip attempt rx from %p\n", rxsock);
+    LOG("oc_transport_ip attempt rx from 0x%x\n", (unsigned)rxsock);
 
     rc = mn_recvfrom(rxsock, &n, (struct mn_sockaddr *) &from);
     if (rc != 0) {
@@ -171,7 +171,8 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
 
     oe = OC_MBUF_ENDPOINT(m);
 
-    LOG("rx from %p %p-%u\n", rxsock, m, OS_MBUF_PKTHDR(m)->omp_len);
+    LOG("rx from 0x%x 0x%x-%u\n", (unsigned)rxsock, (unsigned)m,
+                                  OS_MBUF_PKTHDR(m)->omp_len);
 
     oe->flags = IP;
     memcpy(&oe->ipv6_addr.address, &from.msin6_addr,
@@ -179,7 +180,7 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
     oe->ipv6_addr.scope = from.msin6_scope_id;
     oe->ipv6_addr.port = ntohs(from.msin6_port);
 
-    LOG("Successfully rx from %p\n", rxsock);
+    LOG("Successfully rx from 0x%x\n", (unsigned)rxsock);
 
     return m;
 

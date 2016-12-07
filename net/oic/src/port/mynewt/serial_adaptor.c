@@ -118,7 +118,8 @@ oc_attempt_rx_serial(void)
     oe = OC_MBUF_ENDPOINT(m);
     oe->flags = SERIAL;
 
-    LOG("oc_transport_serial rx %p-%u\n", n, OS_MBUF_PKTHDR(n)->omp_len);
+    LOG("oc_transport_serial rx 0x%x-%u\n",
+        (unsigned)n, OS_MBUF_PKTHDR(n)->omp_len);
 
     return m;
 

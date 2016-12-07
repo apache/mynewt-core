@@ -315,13 +315,13 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
     pkt->buffer = buffer;
     pkt->version = 1;
 
-    LOG("-Serializing MID %u to %p, ", pkt->mid, buffer);
+    LOG("-Serializing MID %u to 0x%x, ", pkt->mid, (unsigned)buffer);
 
     /* Serialize options */
     current_number = 0;
 
     option = buffer;
-    LOG("-Serializing options at %p-\n", option);
+    LOG("-Serializing options at 0x%x-\n", (unsigned)option);
 #if 0
     /* The options must be serialized in the order of their number */
     COAP_SERIALIZE_BYTE_OPTION(pkt, COAP_OPTION_IF_MATCH, if_match, "If-Match");
@@ -364,7 +364,7 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
 #endif
     COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_SIZE1, size1, "Size1");
 
-    LOG("-Done serializing at %p----\n", option);
+    LOG("-Done serializing at 0x%x----\n", (unsigned)option);
 
     /* Payload marker */
     if (pkt->payload_len) {

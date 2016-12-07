@@ -160,7 +160,7 @@ void
 coap_clear_transaction(coap_transaction_t *t)
 {
     if (t) {
-        LOG("Freeing transaction %u: %p\n", t->mid, t);
+        LOG("Freeing transaction %u: 0x%x\n", t->mid, (unsigned)t);
 
         os_callout_stop(&t->retrans_timer);
         oc_message_unref(t->message);
@@ -176,7 +176,7 @@ coap_get_transaction_by_mid(uint16_t mid)
 
     SLIST_FOREACH(t, &oc_transaction_list, next) {
         if (t->mid == mid) {
-            LOG("Found transaction for MID %u: %p\n", t->mid, t);
+            LOG("Found transaction for MID %u: 0x%x\n", t->mid, (unsigned)t);
             return t;
         }
     }
