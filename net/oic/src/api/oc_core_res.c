@@ -232,6 +232,7 @@ oc_core_init_platform(const char *mfg_name, oc_core_init_platform_cb_t init_cb,
     oc_uuid_to_str(&uuid, uuid_str, 37);
     oc_rep_set_text_string(root, pi, uuid_str);
     oc_rep_set_text_string(root, mnmn, mfg_name);
+    oc_rep_set_text_string(root, mnos, "MyNewt");
 
     if (init_cb) {
         init_cb(data);
