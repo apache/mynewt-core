@@ -38,7 +38,8 @@
 /* Application-specified header. */
 #include "bleprph.h"
 
-#include "oic/oc_gatt.h"
+#include <oic/oc_gatt.h>
+#include <oic/oc_log.h>
 
 /** Log data. */
 struct log bleprph_log;
@@ -121,9 +122,9 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (uint16_t[]){ GATT_SVR_SVC_ALERT_UUID, 0x1812 };
-    fields.num_uuids16 = 2;
-    fields.uuids16_is_complete = 1;
+    fields.uuids128 = (void *)oc_gatt_svc_uuid;
+    fields.num_uuids128 = 1;
+    fields.uuids128_is_complete = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
@@ -180,6 +181,8 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
             bleprph_advertise();
+        } else {
+            oc_ble_coap_conn_new(event->connect.conn_handle);
         }
         return 0;
 
@@ -187,6 +190,8 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         bleprph_print_conn_desc(&event->disconnect.conn);
         BLEPRPH_LOG(INFO, "\n");
+
+        oc_ble_coap_conn_del(event->disconnect.conn.conn_handle);
 
         /* Connection terminated; resume advertising. */
         bleprph_advertise();
@@ -274,7 +279,7 @@ main(void)
     int rc;
 
     /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0xf0, 0x0b, 0xa5, 0x0a}, 6);
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
 
     /* Initialize OS */
     sysinit();
@@ -284,6 +289,9 @@ main(void)
 
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+
+    /* Initialize the OIC  */
+    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     os_eventq_init(&bleprph_evq);
     os_eventq_dflt_set(&bleprph_evq);
@@ -298,13 +306,13 @@ main(void)
     mgmt_evq_set(&bleprph_evq);
     ble_hs_evq_set(&bleprph_evq);
 
-    ble_coap_gatt_srv_init();
+    oc_ble_coap_gatt_srv_init();
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pimple-bleprph");
+    rc = ble_svc_gap_device_name_set("pi");
     assert(rc == 0);
 
     /* Start the OS */
