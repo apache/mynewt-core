@@ -73,48 +73,52 @@ coap_receive(oc_message_t *msg)
 
 /*TODO duplicates suppression, if required by application */
 
-#if DEBUG
-    LOG("  Parsed: CoAP version: %u, token: 0x%02X%02X, mid: %u\n",
+    OC_LOG_DEBUG("  Parsed: CoAP version: %u, token: 0x%02X%02X, mid: %u\n",
         message->version, message->token[0], message->token[1], message->mid);
     switch (message->type) {
     case COAP_TYPE_CON:
-      LOG("  type: CON\n");
+      OC_LOG_DEBUG("  type: CON\n");
       break;
     case COAP_TYPE_NON:
-      LOG("  type: NON\n");
+      OC_LOG_DEBUG("  type: NON\n");
       break;
     case COAP_TYPE_ACK:
-      LOG("  type: ACK\n");
+      OC_LOG_DEBUG("  type: ACK\n");
       break;
     case COAP_TYPE_RST:
-      LOG("  type: RST\n");
+      OC_LOG_DEBUG("  type: RST\n");
       break;
     default:
       break;
     }
-#endif
 
     /* handle requests */
     if (message->code >= COAP_GET && message->code <= COAP_DELETE) {
 
-#if DEBUG
       switch (message->code) {
       case COAP_GET:
-        LOG("  method: GET\n");
+        OC_LOG_DEBUG("  method: GET\n");
         break;
       case COAP_PUT:
-        LOG("  method: PUT\n");
+        OC_LOG_DEBUG("  method: PUT\n");
         break;
       case COAP_POST:
-        LOG("  method: POST\n");
+        OC_LOG_DEBUG("  method: POST\n");
         break;
       case COAP_DELETE:
-        LOG("  method: DELETE\n");
+        OC_LOG_DEBUG("  method: DELETE\n");
         break;
       }
-      LOG("  URL: %.*s\n", (int) message->uri_path_len, message->uri_path);
-      LOG("  Payload: %.*s\n", (int) message->payload_len, message->payload);
+
+#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG
+      uint8_t uri[64];
+      memcpy(uri, message->uri_path, message->uri_path_len);
+      uri[message->uri_path_len] = '\0';
+
+      OC_LOG_DEBUG("  URL: %s\n", uri);
+      OC_LOG_DEBUG("  Payload: %d bytes\n", message->payload_len);
 #endif
+
       /* use transaction buffer for response to confirmable request */
       if ((transaction = coap_new_transaction(message->mid, &msg->endpoint))) {
         uint32_t block_num = 0;
