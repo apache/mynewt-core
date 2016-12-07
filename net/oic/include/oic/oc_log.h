@@ -18,11 +18,12 @@
 #define OC_LOG_H
 
 #include <stdio.h>
-#include "mynewt/config.h"
+#include <log/log.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 #define PRINT(...) printf(__VA_ARGS__)
 
@@ -58,22 +59,11 @@ extern "C" {
     LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "%s", tmp_buf);                     \
 }
 
-#if defined(ARCH_sim)
-#define LOG(...) PRINT(__VA_ARGS__)
-#define ERROR(...) LOG(__VA_ARGS__)
-#define LOGipaddr(endpoint) PRINTipaddr(endpoint)
-#define oc_log_init()   0
-#elif defined(DEBUG)
-int oc_log_init(void);
+extern struct log oc_log;
+#define OC_LOG_DEBUG(...) LOG_DEBUG(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
 #define LOG(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
 #define ERROR(...) LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
 #define LOGipaddr(endpoint) LogMynewtipaddr(endpoint)
-#else
-#define LOG(...)
-#define ERROR(...)
-#define LOGipaddr(endpoint)
-#define oc_log_init()   0
-#endif
 
 #ifdef __cplusplus
 }
