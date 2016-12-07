@@ -102,7 +102,7 @@ finalize_payload(oc_string_t *temp_buffer, oc_string_t *payload)
     oc_rep_end_root_object();
     size = oc_rep_finalize();
     if (size != -1) {
-        oc_alloc_string(payload, size);
+        oc_alloc_string(payload, size + 1);
         memcpy(payload->os_str, temp_buffer->os_str, size);
         oc_free_string(temp_buffer);
         return 1;
