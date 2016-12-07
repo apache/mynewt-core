@@ -26,7 +26,7 @@
 
 #define MIN(n, m) (((n) < (m)) ? (n) : (m))
 
-/* Currently used MMC commands */
+/* MMC commands used by the driver */
 #define CMD0                (0)            /* GO_IDLE_STATE */
 #define CMD1                (1)            /* SEND_OP_COND (MMC) */
 #define CMD8                (8)            /* SEND_IF_COND */
@@ -40,14 +40,16 @@
 #define CMD58               (58)           /* READ_OCR */
 #define ACMD41              (0x80 + 41)    /* SEND_OP_COND (SDC) */
 
+#define HCS                 ((uint32_t) 1 << 30)
+
 /* Response types */
 #define R1                  (0)
 #define R1b                 (1)
 #define R2                  (2)
-#define R3                  (3)
-#define R7                  (4)
+#define R3                  (3)            /* CMD58 */
+#define R7                  (4)            /* CMD8 */
 
-/* Response status */
+/* R1 response status */
 #define R_IDLE              (0x01)
 #define R_ERASE_RESET       (0x02)
 #define R_ILLEGAL_COMMAND   (0x04)
@@ -80,58 +82,26 @@ static struct mmc_cfg {
 static int
 mmc_error_by_status(uint8_t status)
 {
-    if (status == 0xff) {
-        return MMC_CARD_ERROR;
+    if (status == 0) {
+        return MMC_OK;
     } else if (status & R_IDLE) {
         return MMC_TIMEOUT;
     } else if (status & R_ERASE_RESET) {
+        /* TODO */
     } else if (status & R_ILLEGAL_COMMAND) {
+        /* TODO */
     } else if (status & R_CRC_ERROR) {
+        return MMC_CRC_ERROR;
     } else if (status & R_ERASE_ERROR) {
+        /* TODO */
     } else if (status & R_ADDR_ERROR) {
+        /* TODO */
     } else if (status & R_PARAM_ERROR) {
+        return MMC_PARAM_ERROR;
     }
 
-    return MMC_OK;
+    return MMC_CARD_ERROR;
 }
-
-static int8_t
-response_type_by_cmd(uint8_t cmd)
-{
-    switch (cmd) {
-        case CMD8   : return R7;
-        case CMD58  : return R3;
-    }
-    return R1;
-}
-
-/*
-static uint32_t
-ocr_from_r3(uint8_t *response)
-{
-    uint32_t ocr;
-
-    ocr  = (uint32_t) response[3];
-    ocr |= (uint32_t) response[2] <<  8;
-    ocr |= (uint32_t) response[1] << 16;
-    ocr |= (uint32_t) response[0] << 24;
-
-#if 0
-    printf("Card supports: ");
-    if (ocr & (1 << 15)) {
-        printf("2.7-2.8 ");
-    }
-#endif
-
-    return ocr;
-}
-
-static uint8_t
-voltage_from_r7(uint8_t *response)
-{
-    return response[2] & 0xF;
-}
-*/
 
 static struct mmc_cfg *
 mmc_cfg_dev(uint8_t id)
@@ -147,9 +117,7 @@ static uint8_t
 send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
 {
     int n;
-    uint8_t response[4];
     uint8_t status;
-    uint8_t type;
     uint8_t crc;
 
     if (cmd & 0x80) {
@@ -195,31 +163,6 @@ send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
         return status;
     }
 
-    type = response_type_by_cmd(cmd);
-
-    /* FIXME:
-     *       R1 and R1b don't have extra payload
-     *       R2 has extra status byte
-     *       R3 has 4 extra bytes for OCR
-     *       R7 has 4 extra bytes with pattern, voltage, etc
-     */
-    if (!(type == R1 || status & R_ILLEGAL_COMMAND || status & R_CRC_ERROR)) {
-        /* Read remaining data for this command */
-        for (n = 0; n < sizeof(response); n++) {
-            response[n] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
-        }
-
-        switch (type) {
-            case R3:
-                /* NOTE: ocr is defined in section 5.1 */
-                //printf("ocr=0x%08lx\n", ocr_from_r3(response));
-                break;
-            case R7:
-                //printf("voltage=0x%x\n", voltage_from_r7(response));
-                break;
-        }
-    }
-
     return status;
 }
 
@@ -243,28 +186,32 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     int rc;
     int i;
     uint8_t status;
+    uint8_t cmd_resp[4];
     uint32_t ocr;
-    os_time_t wait_to;
+    os_time_t timeout;
+    struct mmc_cfg *mmc;
 
-    g_mmc_cfg.spi_num = spi_num;
-    g_mmc_cfg.ss_pin = ss_pin;
-    g_mmc_cfg.spi_cfg = spi_cfg;
-    g_mmc_cfg.settings = &mmc_settings;
+    /* TODO: create new struct for every new spi mmc, add to SLIST */
+    mmc = &g_mmc_cfg;
+    mmc->spi_num = spi_num;
+    mmc->ss_pin = ss_pin;
+    mmc->spi_cfg = spi_cfg;
+    mmc->settings = &mmc_settings;
 
-    hal_gpio_init_out(g_mmc_cfg.ss_pin, 1);
+    hal_gpio_init_out(mmc->ss_pin, 1);
 
-    rc = hal_spi_init(g_mmc_cfg.spi_num, g_mmc_cfg.spi_cfg, HAL_SPI_TYPE_MASTER);
+    rc = hal_spi_init(mmc->spi_num, mmc->spi_cfg, HAL_SPI_TYPE_MASTER);
     if (rc) {
         return (rc);
     }
 
-    rc = hal_spi_config(g_mmc_cfg.spi_num, g_mmc_cfg.settings);
+    rc = hal_spi_config(mmc->spi_num, mmc->settings);
     if (rc) {
         return (rc);
     }
 
-    hal_spi_set_txrx_cb(g_mmc_cfg.spi_num, NULL, NULL);
-    hal_spi_enable(g_mmc_cfg.spi_num);
+    hal_spi_set_txrx_cb(mmc->spi_num, NULL, NULL);
+    hal_spi_enable(mmc->spi_num);
 
     /**
      * NOTE: The state machine below follows:
@@ -275,21 +222,21 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     /* give 10ms for VDD rampup */
     os_time_delay(OS_TICKS_PER_SEC / 100);
 
-    hal_gpio_write(g_mmc_cfg.ss_pin, 0);
-    hal_spi_tx_val(g_mmc_cfg.spi_num, 0xff);
+    hal_gpio_write(mmc->ss_pin, 0);
+    hal_spi_tx_val(mmc->spi_num, 0xff);
 
     /* send the required >= 74 clock cycles */
     for (i = 0; i < 74; i++) {
-        hal_spi_tx_val(g_mmc_cfg.spi_num, 0xff);
+        hal_spi_tx_val(mmc->spi_num, 0xff);
     }
 
     /* put card in idle state */
-    status = send_mmc_cmd(&g_mmc_cfg, CMD0, 0);
+    status = send_mmc_cmd(mmc, CMD0, 0);
 
+    /* No card inserted or bad card? */
     if (status != R_IDLE) {
-        /* No card inserted or bad card! */
-        hal_gpio_write(g_mmc_cfg.ss_pin, 1);
-        return mmc_error_by_status(status);
+        rc = mmc_error_by_status(status);
+        goto out;
     }
 
     /**
@@ -298,11 +245,15 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
      * NOTE: cards that are not compliant with "Physical Spec Version 2.00"
      *       will answer this with R_ILLEGAL_COMMAND.
      */
-    status = send_mmc_cmd(&g_mmc_cfg, CMD8, 0x1AA);
+    status = send_mmc_cmd(mmc, CMD8, 0x1AA);
+    for (i = 0; i < 4; i++) {
+        cmd_resp[i] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
+    }
+
     if (status & R_ILLEGAL_COMMAND) {
         /* Ver1.x SD Memory Card or Not SD Memory Card */
 
-        ocr = send_mmc_cmd(&g_mmc_cfg, CMD58, 0);
+        ocr = send_mmc_cmd(mmc, CMD58, 0);
 
         /* TODO: check if voltage range is ok! */
 
@@ -313,35 +264,69 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
         /* TODO: set blocklen */
 
     } else {
-        /* Ver2.00 or later SD Memory Card */
 
-        /* TODO:
-         * 1) check CMD8 response pattern and voltage range.
-         * 2) DONE: send ACMD41 while in R_IDLE up to 1s.
-         * 3) send CMD58, check CCS in response.
+        /**
+         * Ver2.00 or later SD Memory Card
          */
 
-#define TIME_TO_WAIT (3 * OS_TICKS_PER_SEC)
+        if (cmd_resp[3] != 0xAA) {
+            rc = MMC_RESPONSE_ERROR;
+            goto out;
+        }
 
-        wait_to = os_time_get() + TIME_TO_WAIT;
-        status = send_mmc_cmd(&g_mmc_cfg, ACMD41, 0x40000000); /* FIXME */
+        /**
+         * 4.3.13 Send Interface Condition Command (CMD8)
+         *   Check VHS for 2.7-3.6V support
+         */
+        if (cmd_resp[2] != 0x01) {
+            rc = MMC_VOLTAGE_ERROR;
+            goto out;
+        }
 
-        while (status & R_IDLE) {
-            if (os_time_get() > wait_to) {
+        /**
+         * Wait for card to leave IDLE state or time out
+         */
+
+        timeout = os_time_get() + OS_TICKS_PER_SEC;
+        for (;;) {
+            status = send_mmc_cmd(mmc, ACMD41, HCS);
+            if ((status & R_IDLE) == 0 || os_time_get() > timeout) {
                 break;
             }
             os_time_delay(OS_TICKS_PER_SEC / 10);
-            status = send_mmc_cmd(&g_mmc_cfg, ACMD41, 0);
         }
-        //printf("ACMD41 status=%x\n", status);
 
-        /* TODO: check CCS = OCR[30] */
-        status = send_mmc_cmd(&g_mmc_cfg, CMD58, 0);
-        //printf("CMD58 status=%x\n", status);
+        if (status) {
+            rc = mmc_error_by_status(status);
+            goto out;
+        }
+
+        /**
+         * Check if this is an high density card
+         */
+
+        status = send_mmc_cmd(mmc, CMD58, 0);
+        for (i = 0; i < 4; i++) {
+            cmd_resp[i] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
+        }
+        if (status == 0 && (cmd_resp[0] & (1 << 6))) {  /* FIXME: CCS */
+            /**
+             * TODO: if CCS is set this is an SDHC or SDXC card!
+             *       SDSC uses byte addressing, SDHC/SDXC block addressing
+             */
+        }
+
+#if 0  /* TODO: Can check all possible voltages supported by card */
+    printf("Card supports: ");
+    if (ocr & (1 << 15)) {
+        printf("2.7-2.8 ");
+    }
+#endif
+
     }
 
-    hal_gpio_write(g_mmc_cfg.ss_pin, 1);
-
+out:
+    hal_gpio_write(mmc->ss_pin, 1);
     return rc;
 }
 

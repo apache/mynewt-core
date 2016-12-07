@@ -37,6 +37,8 @@ extern "C" {
 #define MMC_PARAM_ERROR     (-5)
 #define MMC_CRC_ERROR       (-6)
 #define MMC_DEVICE_ERROR    (-7)
+#define MMC_RESPONSE_ERROR  (-8)
+#define MMC_VOLTAGE_ERROR   (-9)
 
 /**
  * Initialize the MMC driver
