@@ -24,7 +24,11 @@
 extern "C" {
 #endif
 
-int ble_coap_gatt_srv_init(void);
+int oc_ble_coap_gatt_srv_init(void);
+void oc_ble_coap_conn_new(uint16_t conn_handle);
+void oc_ble_coap_conn_del(uint16_t conn_handle);
+
+extern const uint8_t oc_gatt_svc_uuid[];
 
 #ifdef __cplusplus
 }
