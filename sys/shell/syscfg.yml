@@ -25,3 +25,6 @@ syscfg.defs:
     SHELL_MAX_INPUT_LEN:
         description: 'TBD'
         value: 256
+    SHELL_DEBUG:
+        description: Enables additional error checking in the shell package.
+        value: 1

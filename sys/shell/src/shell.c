@@ -23,6 +23,7 @@
 
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
+#include "defs/error.h"
 #include "console/console.h"
 #include "console/prompt.h"
 #include "console/ticks.h"
@@ -146,10 +147,48 @@ err:
     return (rc);
 }
 
+static int
+shell_cmd_find(char *cmd_name, struct shell_cmd **out_cmd)
+{
+    struct shell_cmd *sc;
+    int rc;
+
+    rc = shell_cmd_list_lock();
+    if (rc != 0) {
+        return rc;
+    }
+
+    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
+        if (!strcmp(sc->sc_cmd, cmd_name)) {
+            break;
+        }
+    }
+
+    rc = shell_cmd_list_unlock();
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (out_cmd != NULL) {
+        *out_cmd = sc;
+    }
+
+    if (sc == NULL) {
+        return SYS_ENOENT;
+    }
+
+    return 0;
+}
+
 int
 shell_cmd_register(struct shell_cmd *sc)
 {
     int rc;
+
+#if MYNEWT_VAL(SHELL_DEBUG)
+    /* Ensure command not already registered. */
+    assert(shell_cmd_find(sc->sc_cmd, NULL) == SYS_ENOENT);
+#endif
 
     /* Add the command that is being registered. */
     rc = shell_cmd_list_lock();
@@ -175,31 +214,19 @@ shell_cmd(char *cmd, char **argv, int argc)
     struct shell_cmd *sc;
     int rc;
 
-    rc = shell_cmd_list_lock();
-    if (rc != 0) {
-        goto err;
-    }
-
-    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
-        if (!strcmp(sc->sc_cmd, cmd)) {
-            break;
-        }
-    }
-
-    rc = shell_cmd_list_unlock();
-    if (rc != 0) {
-        goto err;
-    }
-
-    if (sc) {
+    rc = shell_cmd_find(cmd, &sc);
+    switch (rc) {
+    case 0:
         sc->sc_cmd_func(argc, argv);
-    } else {
-        console_printf("Unknown command %s\n", cmd);
-    }
+        return 0;
 
-    return (0);
-err:
-    return (rc);
+    case SYS_ENOENT:
+        console_printf("Unknown command %s\n", cmd);
+        return 0;
+
+    default:
+        return rc;
+    }
 }
 
 static int
@@ -563,7 +590,7 @@ shell_init(void)
     rc = shell_cmd_register(&g_shell_help_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-   rc = shell_cmd_register(&g_shell_prompt_cmd);
+    rc = shell_cmd_register(&g_shell_prompt_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
     
     rc = shell_cmd_register(&g_shell_ticks_cmd);
