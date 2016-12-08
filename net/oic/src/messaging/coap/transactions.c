@@ -121,9 +121,9 @@ coap_send_transaction(coap_transaction_t *t)
 
             os_callout_reset(&t->retrans_timer, t->retrans_tmo);
 
-            coap_send_message(t->message);
-
             oc_message_add_ref(t->message);
+
+            coap_send_message(t->message);
 
             t = NULL;
         } else {
@@ -149,8 +149,9 @@ coap_send_transaction(coap_transaction_t *t)
             coap_clear_transaction(t);
         }
     } else {
-        coap_send_message(t->message);
         oc_message_add_ref(t->message);
+
+        coap_send_message(t->message);
 
         coap_clear_transaction(t);
     }
