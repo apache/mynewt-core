@@ -529,33 +529,21 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
         cth0 = (struct coap_tcp_hdr0 *)data;
         if (cth0->data_len < 13) {
             pkt->token_len = cth0->token_len;
-            if (data_len != cth0->data_len + sizeof(*cth0) + pkt->token_len) {
-                goto len_err;
-            }
             pkt->code = cth0->code;
             cur_opt = (uint8_t *)(cth0 + 1);
         } else if (cth0->data_len == 13) {
             cth8 = (struct coap_tcp_hdr8 *)data;
             pkt->token_len = cth8->token_len;
-            if (data_len != cth8->data_len + sizeof(*cth8) + pkt->token_len) {
-                goto len_err;
-            }
             pkt->code = cth8->code;
             cur_opt = (uint8_t *)(cth8 + 1);
         } else if (cth0->data_len == 14) {
             cth16 = (struct coap_tcp_hdr16 *)data;
             pkt->token_len = cth16->token_len;
-            if (data_len != cth16->data_len + sizeof(*cth16) + pkt->token_len) {
-                goto len_err;
-            }
             pkt->code = cth16->code;
             cur_opt = (uint8_t *)(cth16 + 1);
         } else {
             cth32 = (struct coap_tcp_hdr32 *)data;
             pkt->token_len = cth32->token_len;
-            if (data_len != cth32->data_len + sizeof(*cth32) + pkt->token_len) {
-                goto len_err;
-            }
             pkt->code = cth32->code;
             cur_opt = (uint8_t *)(cth32 + 1);
         }
@@ -766,10 +754,6 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
     LOG("-Done parsing-------\n");
 
     return NO_ERROR;
-len_err:
-    STATS_INC(coap_stats, ierr);
-    coap_error_message = "Input len mismatch";
-    return BAD_REQUEST_4_00;
 }
 #if 0
 int
