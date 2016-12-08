@@ -53,8 +53,8 @@ typedef struct oc_endpoint {
 } oc_endpoint_t;
 
 #define OC_MBUF_ENDPOINT(m)                                            \
-    (struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +      \
-                           sizeof(struct os_mbuf_pkthdr))
+    ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
+                            sizeof(struct os_mbuf_pkthdr)))
 
 
 #define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)                \

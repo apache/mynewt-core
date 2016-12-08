@@ -102,9 +102,7 @@ oc_buffer_tx(struct os_event *ev)
 
     while ((m = os_mqueue_get(&oc_outq)) != NULL) {
 #ifdef OC_CLIENT
-        struct oc_endpoint *oe;
-        oe = OC_MBUF_ENDPOINT(m);
-        if (oe->flags & MULTICAST) {
+        if (OC_MBUF_ENDPOINT(m)->flags & MULTICAST) {
             LOG("oc_buffer_tx: multicast\n");
             oc_send_multicast_message(m);
         } else {
