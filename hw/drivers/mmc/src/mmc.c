@@ -71,7 +71,7 @@ static struct hal_spi_settings mmc_settings = {
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
-/* FIXME: this limits usage to single MMC spi device */
+/* FIXME: currently limited to single MMC spi device */
 static struct mmc_cfg {
     int                      spi_num;
     int                      ss_pin;
@@ -84,6 +84,8 @@ mmc_error_by_status(uint8_t status)
 {
     if (status == 0) {
         return MMC_OK;
+    } else if (status == 0xff) {
+        return MMC_CARD_ERROR;
     } else if (status & R_IDLE) {
         return MMC_TIMEOUT;
     } else if (status & R_ERASE_RESET) {
@@ -156,11 +158,6 @@ send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
     for (n = 255; n > 0; n--) {
         status = hal_spi_tx_val(mmc->spi_num, 0xff);
         if ((status & 0x80) == 0) break;
-        //os_time_delay(OS_TICKS_PER_SEC / 1000);
-    }
-
-    if (n == 0) {
-        return status;
     }
 
     return status;
@@ -223,7 +220,6 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     os_time_delay(OS_TICKS_PER_SEC / 100);
 
     hal_gpio_write(mmc->ss_pin, 0);
-    hal_spi_tx_val(mmc->spi_num, 0xff);
 
     /* send the required >= 74 clock cycles */
     for (i = 0; i < 74; i++) {
@@ -246,29 +242,18 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
      *       will answer this with R_ILLEGAL_COMMAND.
      */
     status = send_mmc_cmd(mmc, CMD8, 0x1AA);
-    for (i = 0; i < 4; i++) {
-        cmd_resp[i] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
-    }
-
-    if (status & R_ILLEGAL_COMMAND) {
-        /* Ver1.x SD Memory Card or Not SD Memory Card */
-
-        ocr = send_mmc_cmd(mmc, CMD58, 0);
-
-        /* TODO: check if voltage range is ok! */
-
-        if (ocr & R_ILLEGAL_COMMAND) {
-
-        }
-
-        /* TODO: set blocklen */
-
-    } else {
+    if (status != 0xff && !(status & R_ILLEGAL_COMMAND)) {
 
         /**
          * Ver2.00 or later SD Memory Card
          */
 
+        /* Read the contents of R7 */
+        for (i = 0; i < 4; i++) {
+            cmd_resp[i] = (uint8_t) hal_spi_tx_val(mmc->spi_num, 0xff);
+        }
+
+        /* Did the card return the same pattern? */
         if (cmd_resp[3] != 0xAA) {
             rc = MMC_RESPONSE_ERROR;
             goto out;
@@ -323,6 +308,24 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin)
     }
 #endif
 
+    } else if (status != 0xff && status & R_ILLEGAL_COMMAND) {
+
+        /**
+         * Ver1.x SD Memory Card or Not SD Memory Card
+         */
+
+        ocr = send_mmc_cmd(mmc, CMD58, 0);
+
+        /* TODO: check if voltage range is ok! */
+
+        if (ocr & R_ILLEGAL_COMMAND) {
+
+        }
+
+        /* TODO: set blocklen */
+
+    } else {
+        rc = mmc_error_by_status(status);
     }
 
 out:
@@ -338,6 +341,7 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len)
 {
     uint8_t cmd;
     uint8_t res;
+    int rc;
     uint32_t n;
     size_t block_len;
     size_t block_count;
@@ -353,6 +357,8 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len)
         return (MMC_DEVICE_ERROR);
     }
 
+    rc = MMC_OK;
+
     block_len = (len + BLOCK_LEN - 1) & ~(BLOCK_LEN - 1);
     block_count = block_len / BLOCK_LEN;
     block_addr = addr / BLOCK_LEN;
@@ -365,9 +371,9 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len)
 
     cmd = (block_count == 1) ? CMD17 : CMD18;
     res = send_mmc_cmd(mmc, cmd, block_addr);
-    if (res != MMC_OK) {
-        hal_gpio_write(mmc->ss_pin, 1);
-        return (MMC_CARD_ERROR);
+    if (res) {
+        rc = mmc_error_by_status(res);
+        goto out;
     }
 
     /**
@@ -384,43 +390,39 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len)
     /**
      * 7.3.3.2 Start Block Tokens and Stop Tran Token
      */
-    if (res == 0xFE) {
-        index = 0;
-        while (block_count--) {
-            /**
-             * FIXME: on last run doesn't need to transfer all BLOCK_LEN bytes!
-             */
-
-            for (n = 0; n < BLOCK_LEN; n++) {
-                g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
-            }
-
-            /* FIXME: consume CRC-16, but should check */
-            hal_spi_tx_val(mmc->spi_num, 0xff);
-            hal_spi_tx_val(mmc->spi_num, 0xff);
-
-            amount = MIN(BLOCK_LEN - offset, len);
-
-            //printf("copying %d bytes to index %d\n", amount, index);
-            memcpy(((uint8_t *)buf + index), &g_block_buf[offset], amount);
-
-            offset = 0;
-            len -= amount;
-            index += amount;
-        }
-
-        if (cmd == CMD18) {
-            send_mmc_cmd(mmc, CMD12, 0);  /* FIXME */
-        }
-
-        hal_gpio_write(mmc->ss_pin, 1);
-
-        return MMC_OK;
+    if (res != 0xFE) {
+        rc = MMC_TIMEOUT;
+        goto out;
     }
 
-    hal_gpio_write(mmc->ss_pin, 1);
+    index = 0;
+    while (block_count--) {
+        for (n = 0; n < BLOCK_LEN; n++) {
+            g_block_buf[n] = hal_spi_tx_val(mmc->spi_num, 0xff);
+        }
 
-    return MMC_CARD_ERROR;
+        /* TODO: CRC-16 not used here but would be cool to have */
+        hal_spi_tx_val(mmc->spi_num, 0xff);
+        hal_spi_tx_val(mmc->spi_num, 0xff);
+
+        amount = MIN(BLOCK_LEN - offset, len);
+
+        memcpy(((uint8_t *)buf + index), &g_block_buf[offset], amount);
+
+        offset = 0;
+        len -= amount;
+        index += amount;
+    }
+
+    if (cmd == CMD18) {
+        send_mmc_cmd(mmc, CMD12, 0);
+        /* FIXME: sending extra cycle to wait for stop, need to loop here? */
+        hal_spi_tx_val(mmc->spi_num, 0xff);
+    }
+
+out:
+    hal_gpio_write(mmc->ss_pin, 1);
+    return (rc);
 }
 
 /**
