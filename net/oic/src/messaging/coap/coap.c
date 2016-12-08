@@ -439,13 +439,38 @@ coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
 }
 /*---------------------------------------------------------------------------*/
 void
-coap_send_message(oc_message_t *message)
+coap_send_message(struct oc_message *msg)
 {
-    LOG("-sending OCF message (%u)-\n", (unsigned int) message->length);
+    struct os_mbuf *m;
+    struct oc_endpoint *oe;
+    int rc;
+
+    LOG("-sending OCF message (%u)-\n", msg->length);
 
     STATS_INC(coap_stats, oframe);
 
-    oc_send_message(message);
+    /* get a packet header */
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
+        ERROR("coap_send_msg: failed to alloc mbuf\n");
+        oc_message_unref(msg);
+        return;
+    }
+
+    /* add this data to the mbuf */
+    rc = os_mbuf_append(m, msg->data, msg->length);
+    if (rc != 0) {
+        ERROR("coap_send_msg: could not append data\n");
+        oc_message_unref(msg);
+        return;
+    }
+
+    oe = OC_MBUF_ENDPOINT(m);
+    memcpy(oe, &msg->endpoint, sizeof(msg->endpoint));
+
+    oc_message_unref(msg);
+
+    oc_send_message(m);
 }
 
 /*

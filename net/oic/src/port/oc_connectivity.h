@@ -58,7 +58,6 @@ typedef struct oc_endpoint {
                                           .address = { __VA_ARGS__ } } }
 
 typedef struct oc_message {
-    struct oc_message *next;
     oc_endpoint_t endpoint;
     size_t length;
     uint8_t ref_count;

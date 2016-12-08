@@ -32,7 +32,7 @@ void oc_message_add_ref(struct oc_message *message);
 void oc_message_unref(struct oc_message *message);
 
 void oc_recv_message(struct os_mbuf *m);
-void oc_send_message(struct oc_message *message);
+void oc_send_message(struct os_mbuf *m);
 
 #ifdef __cplusplus
 }
