@@ -29,6 +29,7 @@
 #include "console/console.h"
 #include "imgmgr/imgmgr.h"
 #include "mgmt/mgmt.h"
+#include "oic/oc_api.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -253,12 +254,27 @@ bleprph_on_sync(void)
     bleprph_advertise();
 }
 
+static void
+omgr_app_init(void)
+{
+    oc_init_platform("MyNewt", NULL, NULL);
+    oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
+                  NULL);
+}
+
+static const oc_handler_t omgr_oc_handler = {
+    .init = omgr_app_init,
+};
+
 /*
  * Event loop for the main bleprph task.
  */
 static void
 bleprph_task_handler(void *unused)
 {
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
+    mgmt_evq_set(&bleprph_evq);
+
     while (1) {
         os_eventq_run(&bleprph_evq);
     }
@@ -285,10 +301,12 @@ main(void)
     sysinit();
 
     /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
@@ -303,7 +321,7 @@ main(void)
     os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
                  NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
                  bleprph_stack, BLEPRPH_STACK_SIZE);
-    mgmt_evq_set(&bleprph_evq);
+
     ble_hs_evq_set(&bleprph_evq);
 
     oc_ble_coap_gatt_srv_init();

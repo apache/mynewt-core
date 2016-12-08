@@ -187,20 +187,15 @@ omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask)
 }
 
 static void
-omgr_app_init(void)
-{
-    oc_init_platform("MyNewt", NULL, NULL);
-    oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
-      NULL);
-}
-
-static void
-omgr_register_resources(void)
+omgr_event_start(struct os_event *ev)
 {
     uint8_t mode;
     oc_resource_t *res = NULL;
     char name[12];
 
+    /*
+     * net/oic must be initialized before now.
+     */
     snprintf(name, sizeof(name), "/omgr");
     res = oc_new_resource(name, 1, 0);
     oc_resource_bind_resource_type(res, "x.mynewt.nmgr");
@@ -211,20 +206,6 @@ omgr_register_resources(void)
     oc_resource_set_request_handler(res, OC_GET, omgr_oic_get);
     oc_resource_set_request_handler(res, OC_PUT, omgr_oic_put);
     oc_add_resource(res);
-}
-
-static const oc_handler_t omgr_oc_handler = {
-    .init = omgr_app_init,
-    .register_resources = omgr_register_resources
-};
-
-static void
-omgr_event_start(struct os_event *ev)
-{
-    struct omgr_state *o = &omgr_state;
-
-    oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    os_eventq_ensure(&o->os_evq, NULL);
 }
 
 int

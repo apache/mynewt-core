@@ -34,6 +34,7 @@
 #include <bootutil/image.h>
 #include <imgmgr/imgmgr.h>
 #include <mgmt/mgmt.h>
+#include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
@@ -206,6 +207,23 @@ task2_handler(void *arg)
     }
 }
 
+/*
+ * OIC platform/resource registration.
+ */
+static void
+omgr_app_init(void)
+{
+    oc_init_platform("MyNewt", NULL, NULL);
+    /*
+      oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
+                  NULL);
+    */
+}
+
+static const oc_handler_t omgr_oc_handler = {
+    .init = omgr_app_init,
+};
+
 /**
  * This task serves as a container for the shell and newtmgr packages.  These
  * packages enqueue timer events when they need this task to do work.
@@ -213,6 +231,8 @@ task2_handler(void *arg)
 static void
 task3_handler(void *arg)
 {
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
+
     while (1) {
         os_eventq_run(&slinky_oic_evq);
     }
