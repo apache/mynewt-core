@@ -268,6 +268,12 @@ TEST_SUITE_##suite_name(void);                               \
 #define XSTR(s) STR(s)
 #define STR(s) #s
 
+#if MYNEWT_VAL(TESTUTIL_SYSTEM_ASSERT)
+
+#define TEST_ASSERT_FULL(fatal, expr, ...) (assert(expr))
+
+#else 
+
 #define TEST_ASSERT_FULL(fatal, expr, ...) do                 \
 {                                                             \
     if (!(expr)) {                                            \
@@ -276,6 +282,8 @@ TEST_SUITE_##suite_name(void);                               \
                             __VA_ARGS__);                     \
     }                                                         \
 } while (0)
+
+#endif
 
 #define TEST_ASSERT(...)                                      \
     TEST_ASSERT_FULL(0, FIRST(__VA_ARGS__), REST_OR_0(__VA_ARGS__))
