@@ -159,12 +159,22 @@ coap_send_transaction(coap_transaction_t *t)
 void
 coap_clear_transaction(coap_transaction_t *t)
 {
+    struct coap_transaction *tmp;
+
     if (t) {
         LOG("Freeing transaction %u: 0x%x\n", t->mid, (unsigned)t);
 
         os_callout_stop(&t->retrans_timer);
         oc_message_unref(t->message);
-        SLIST_REMOVE(&oc_transaction_list, t, coap_transaction, next);
+        /*
+         * Transaction might not be in the list yet.
+         */
+        SLIST_FOREACH(tmp, &oc_transaction_list, next) {
+            if (t == tmp) {
+                SLIST_REMOVE(&oc_transaction_list, t, coap_transaction, next);
+                break;
+            }
+        }
         os_memblock_put(&oc_transaction_memb, t);
   }
 }
