@@ -37,6 +37,7 @@
 #include "coap.h"
 #include "transactions.h"
 
+#include "api/oc_buffer.h"
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"
 #endif

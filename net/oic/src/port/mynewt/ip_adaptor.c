@@ -30,7 +30,7 @@
 
 #include "port/oc_connectivity.h"
 #include "oic/oc_log.h"
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 #include "adaptor.h"
 
 static void oc_event_ip(struct os_event *ev);

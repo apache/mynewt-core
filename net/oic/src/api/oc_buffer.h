@@ -21,10 +21,6 @@
 extern "C" {
 #endif
 
-#define OC_MBUF_ENDPOINT(m)                                             \
-    (struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +     \
-                                          sizeof(struct os_mbuf_pkthdr))
-
 struct oc_message;
 struct os_mbuf;
 struct oc_message *oc_allocate_message(void);

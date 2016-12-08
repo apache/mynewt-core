@@ -40,7 +40,7 @@
 
 #include <os/os_mempool.h>
 
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 #include "separate.h"
 #include "transactions.h"
 

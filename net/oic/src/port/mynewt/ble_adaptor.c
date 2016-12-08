@@ -27,7 +27,7 @@
 #include "oic/oc_gatt.h"
 #include "oic/oc_log.h"
 #include "messaging/coap/coap.h"
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 #include "port/oc_connectivity.h"
 #include "adaptor.h"
 #include "host/ble_hs.h"

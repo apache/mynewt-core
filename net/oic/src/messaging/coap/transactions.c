@@ -38,7 +38,7 @@
 
 #include "transactions.h"
 #include "observe.h"
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"

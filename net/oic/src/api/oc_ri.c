@@ -30,7 +30,7 @@
 #include "port/oc_clock.h"
 #include "port/mynewt/adaptor.h"
 
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 #include "oc_core_res.h"
 #include "oc_discovery.h"
 #include "oc_ri.h"

@@ -25,7 +25,6 @@
 #include "oic/oc_log.h"
 #include "port/oc_network_events_mutex.h"
 #include "port/oc_connectivity.h"
-#include "oc_buffer.h"
 #include "adaptor.h"
 
 static struct os_eventq *oc_evq;

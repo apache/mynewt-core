@@ -47,7 +47,6 @@ extern "C" {
 #include <stats/stats.h>
 /* OIC stack headers */
 #include "../src/port/mynewt/config.h"
-#include "oic/oc_buffer.h"
 #include "oic/oc_log.h"
 #include "../src/port/oc_connectivity.h"
 #include "../src/port/oc_random.h"
@@ -227,6 +226,7 @@ uint16_t coap_tcp_msg_size(uint8_t *hdr, int datalen);
 void coap_init_message(coap_packet_t *, coap_message_type_t type,
                        uint8_t code, uint16_t mid);
 size_t coap_serialize_message(coap_packet_t *, uint8_t *buffer, int tcp_hdr);
+typedef struct oc_message oc_message_t;
 void coap_send_message(oc_message_t *message);
 coap_status_t coap_parse_message(coap_packet_t *request, uint8_t *data,
                                  uint16_t data_len, int tcp_hdr);

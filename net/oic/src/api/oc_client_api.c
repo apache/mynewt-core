@@ -17,6 +17,7 @@
 #include "messaging/coap/coap.h"
 #include "messaging/coap/transactions.h"
 #include "oc_api.h"
+#include "api/oc_buffer.h"
 
 #ifdef OC_CLIENT
 #define OC_CLIENT_CB_TIMEOUT_SECS COAP_RESPONSE_TIMEOUT

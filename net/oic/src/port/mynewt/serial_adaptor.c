@@ -26,7 +26,7 @@
 
 #include <shell/shell.h>
 
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 #include "port/oc_connectivity.h"
 #include "oic/oc_log.h"
 #include "adaptor.h"
