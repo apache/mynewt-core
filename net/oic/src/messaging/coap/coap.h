@@ -230,7 +230,7 @@ uint16_t coap_tcp_msg_size(uint8_t *hdr, int datalen);
 
 void coap_init_message(coap_packet_t *, coap_message_type_t type,
                        uint8_t code, uint16_t mid);
-int coap_serialize_message(coap_packet_t *, struct os_mbuf *m, int tcp_hdr);
+int coap_serialize_message(coap_packet_t *, struct os_mbuf *m);
 void coap_send_message(struct os_mbuf *m, int dup);
 coap_status_t coap_parse_message(coap_packet_t *request, uint8_t *data,
                                  uint16_t data_len, int tcp_hdr);

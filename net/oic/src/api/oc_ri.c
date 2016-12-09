@@ -704,8 +704,11 @@ oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
     coap_set_token(rst, token, token_len);
     m = oc_allocate_mbuf(endpoint);
     if (m) {
-        coap_serialize_message(rst, m, oc_endpoint_use_tcp(endpoint));
-        coap_send_message(m, 0);
+        if (!coap_serialize_message(rst, m)) {
+            coap_send_message(m, 0);
+        } else {
+            os_mbuf_free_chain(m);
+        }
         return true;
     }
     return false;

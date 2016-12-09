@@ -316,7 +316,7 @@ coap_init_message(coap_packet_t *pkt, coap_message_type_t type,
 /*---------------------------------------------------------------------------*/
 
 int
-coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m, int tcp_hdr)
+coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
 {
     struct coap_udp_hdr *cuh;
     struct coap_tcp_hdr0 *cth0;
@@ -324,12 +324,15 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m, int tcp_hdr)
     struct coap_tcp_hdr16 *cth16;
     struct coap_tcp_hdr32 *cth32;
     unsigned int current_number = 0;
+    int tcp_hdr;
     int len, data_len;
 
     /* Initialize */
     pkt->version = 1;
 
     LOG("-Serializing message %u to 0x%x, ", pkt->mid, (unsigned)m);
+
+    tcp_hdr = oc_endpoint_use_tcp(OC_MBUF_ENDPOINT(m));
 
     /*
      * Move data pointer, leave enough space to insert coap header and

@@ -102,8 +102,7 @@ coap_separate_accept(coap_packet_t *coap_req,
         }
         coap_set_token(ack, coap_req->token, coap_req->token_len);
         struct os_mbuf *message = oc_allocate_mbuf(endpoint); /* XXXX? */
-        if (message != NULL) {
-            coap_serialize_message(ack, message, oc_endpoint_use_tcp(endpoint));
+        if (message != NULL && coap_serialize_message(ack, message) == 0) {
             coap_send_message(message, 0);
         } else {
             coap_separate_clear(separate_response, separate_store);

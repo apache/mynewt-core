@@ -240,8 +240,7 @@ coap_receive(oc_message_t *msg)
             /* serialize response */
         }
         if (erbium_status_code == NO_ERROR) {
-            if (coap_serialize_message(response, transaction->m,
-                oc_endpoint_use_tcp(&msg->endpoint))) {
+            if (coap_serialize_message(response, transaction->m)) {
                 erbium_status_code = PACKET_SERIALIZATION_ERROR;
             }
             transaction->type = response->type;
@@ -295,9 +294,11 @@ out:
         coap_init_message(message, COAP_TYPE_ACK, 0, message->mid);
         struct os_mbuf *response = oc_allocate_mbuf(&msg->endpoint);
         if (response) {
-            coap_serialize_message(message, response,
-                                          oc_endpoint_use_tcp(&msg->endpoint));
-            coap_send_message(response, 0);
+            if (!coap_serialize_message(message, response)) {
+                coap_send_message(response, 0);
+            } else {
+                os_mbuf_free_chain(response);
+            }
         }
     }
 #endif /* OC_CLIENT */
@@ -312,9 +313,11 @@ out:
 
         struct os_mbuf *response = oc_allocate_mbuf(&msg->endpoint);
         if (response) {
-            coap_serialize_message(message, response,
-                                   oc_endpoint_use_tcp(&msg->endpoint));
-            coap_send_message(response, 0);
+            if (!coap_serialize_message(message, response)) {
+                coap_send_message(response, 0);
+            } else {
+                os_mbuf_free_chain(response);
+            }
         }
     }
 #endif /* OC_SERVER */

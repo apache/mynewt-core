@@ -293,11 +293,12 @@ coap_notify_observers(oc_resource_t *resource,
                 }
                 coap_set_token(notification, obs->token, obs->token_len);
 
-                coap_serialize_message(notification, transaction->m,
-                                       oc_endpoint_use_tcp(&obs->endpoint));
-                transaction->type = notification->type;
-
-                coap_send_transaction(transaction);
+                if (!coap_serialize_message(notification, transaction->m)) {
+                    transaction->type = notification->type;
+                    coap_send_transaction(transaction);
+                } else {
+                    coap_clear_transaction(transaction);
+                }
             }
         }
     }

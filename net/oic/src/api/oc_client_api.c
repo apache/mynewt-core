@@ -38,10 +38,12 @@ dispatch_coap_request(void)
                 coap_set_payload(request, rsp->data, response_length);
                 coap_set_header_content_format(request, APPLICATION_CBOR);
             }
-            coap_serialize_message(request, message,
-                               oc_endpoint_use_tcp(OC_MBUF_ENDPOINT(message)));
+            if (!coap_serialize_message(request, message)) {
+                coap_send_message(message, 0);
+            } else {
+                os_mbuf_free_chain(message);
+            }
             oc_message_unref(rsp);
-            coap_send_message(message, 0);
             message = NULL;
             return true;
         }
@@ -50,10 +52,12 @@ dispatch_coap_request(void)
             coap_set_payload(request, transaction->m, response_length);
             coap_set_header_content_format(request, APPLICATION_CBOR);
         }
-        coap_serialize_message(request, transaction->m,
-                         oc_endpoint_use_tcp(OC_MBUF_ENDPOINT(transaction->m)));
+        if (!coap_serialize_message(request, transaction->m)) {
+            coap_send_transaction(transaction);
+        } else {
+            coap_clear_transaction(transaction);
+        }
         oc_message_unref(rsp);
-        coap_send_transaction(transaction);
         transaction = NULL;
         return true;
     }
