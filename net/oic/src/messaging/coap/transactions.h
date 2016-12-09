@@ -62,7 +62,7 @@ typedef struct coap_transaction {
     coap_message_type_t type;
     uint32_t retrans_tmo;
     struct os_callout retrans_timer;
-    oc_message_t *message;
+    struct os_mbuf *m;
 } coap_transaction_t;
 
 void coap_register_as_transaction_handler(void);

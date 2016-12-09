@@ -259,8 +259,8 @@ oc_send_separate_response(oc_separate_response_t *handle,
                       response_buffer.response_length);
                 }
                 t->type = response->type;
-                t->message->length = coap_serialize_message(response,
-                  t->message->data, oc_endpoint_use_tcp(&cur->endpoint));
+                coap_serialize_message(response, t->m,
+                                       oc_endpoint_use_tcp(&cur->endpoint));
                 coap_send_transaction(t);
             }
             coap_separate_clear(handle, cur);

@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "coap.h"
 #include "transactions.h"
@@ -47,6 +48,7 @@ STATS_NAME_START(coap_stats)
     STATS_NAME(coap_stats, iframe)
     STATS_NAME(coap_stats, ierr)
     STATS_NAME(coap_stats, oframe)
+    STATS_NAME(coap_stats, oerr)
 STATS_NAME_END(coap_stats)
 
 /*---------------------------------------------------------------------------*/
@@ -97,9 +99,11 @@ coap_option_nibble(unsigned int value)
     }
 }
 /*---------------------------------------------------------------------------*/
-static size_t
-coap_set_option_header(unsigned int delta, size_t length, uint8_t *buffer)
+
+static int
+coap_append_opt_hdr(struct os_mbuf *m, unsigned int delta, size_t length)
 {
+    uint8_t buffer[4];
     size_t written = 0;
 
     buffer[0] = coap_option_nibble(delta) << 4 | coap_option_nibble(length);
@@ -118,16 +122,17 @@ coap_set_option_header(unsigned int delta, size_t length, uint8_t *buffer)
         buffer[++written] = (length - 13);
     }
 
-    LOG("WRITTEN %zu B opt header\n", 1 + written);
-
-    return ++written;
+    return os_mbuf_append(m, buffer, written + 1);
 }
+
 /*---------------------------------------------------------------------------*/
-static size_t
-coap_serialize_int_option(unsigned int number, unsigned int current_number,
-                          uint8_t *buffer, uint32_t value)
+static int
+coap_append_int_opt(struct os_mbuf *m, unsigned int number,
+                    unsigned int current_number, uint32_t value)
 {
     size_t i = 0;
+    uint8_t buffer[4];
+    int rc;
 
     if (0xFF000000 & value) {
         ++i;
@@ -143,8 +148,12 @@ coap_serialize_int_option(unsigned int number, unsigned int current_number,
     }
     LOG("OPTION %u (delta %u, len %zu)\n", number, number - current_number, i);
 
-    i = coap_set_option_header(number - current_number, i, buffer);
+    rc = coap_append_opt_hdr(m, number - current_number, i);
+    if (rc) {
+        return rc;
+    }
 
+    i = 0;
     if (0xFF000000 & value) {
         buffer[i++] = (uint8_t)(value >> 24);
     }
@@ -157,38 +166,40 @@ coap_serialize_int_option(unsigned int number, unsigned int current_number,
     if (0xFFFFFFFF & value) {
         buffer[i++] = (uint8_t)(value);
     }
-    return i;
+    return os_mbuf_append(m, buffer, i);
 }
 /*---------------------------------------------------------------------------*/
-static size_t
-coap_serialize_array_option(unsigned int number, unsigned int current_number,
-                            uint8_t *buffer, uint8_t *array, size_t length,
-                            char split_char)
+static int
+coap_append_array_opt(struct os_mbuf *m,
+                      unsigned int number, unsigned int current_number,
+                      uint8_t *array, size_t length, char split_char)
 {
-    size_t i = 0;
+    int rc;
+    int j;
+    uint8_t *part_start = array;
+    uint8_t *part_end = NULL;
+    size_t blk;
 
-    LOG("ARRAY type %u, len %zu, full [%.*s]\n", number, length, (int)length,
-      array);
+    LOG("ARRAY type %u, len %zu\n", number, length);
 
     if (split_char != '\0') {
-        int j;
-        uint8_t *part_start = array;
-        uint8_t *part_end = NULL;
-        size_t temp_length;
-
         for (j = 0; j <= length + 1; ++j) {
             LOG("STEP %u/%zu (%c)\n", j, length, array[j]);
             if (array[j] == split_char || j == length) {
                 part_end = array + j;
-                temp_length = part_end - part_start;
+                blk = part_end - part_start;
 
-                i += coap_set_option_header(number - current_number,
-                                            temp_length, &buffer[i]);
-                memcpy(&buffer[i], part_start, temp_length);
-                i += temp_length;
+                rc = coap_append_opt_hdr(m, number - current_number, blk);
+                if (rc) {
+                    return rc;
+                }
+                rc = os_mbuf_append(m, part_start, blk);
+                if (rc) {
+                    return rc;
+                }
 
-                LOG("OPTION type %u, delta %u, len %zu, part [%.*s]\n", number,
-                    number - current_number, i, (int)temp_length, part_start);
+                LOG("OPTION type %u, delta %u, len %zu\n", number,
+                    number - current_number, (int)blk);
 
                 ++j; /* skip the splitter */
                 current_number = number;
@@ -196,16 +207,20 @@ coap_serialize_array_option(unsigned int number, unsigned int current_number,
             }
         } /* for */
     } else {
-        i += coap_set_option_header(number - current_number, length,
-                                    &buffer[i]);
-        memcpy(&buffer[i], array, length);
-        i += length;
+        rc = coap_append_opt_hdr(m, number - current_number, length);
+        if (rc) {
+            return rc;
+        }
+        rc = os_mbuf_append(m, array, length);
+        if (rc) {
+            return rc;
+        }
 
         LOG("OPTION type %u, delta %u, len %zu\n", number,
             number - current_number, length);
     }
 
-    return i;
+    return 0;
 }
 /*---------------------------------------------------------------------------*/
 
@@ -300,177 +315,160 @@ coap_init_message(coap_packet_t *pkt, coap_message_type_t type,
 
 /*---------------------------------------------------------------------------*/
 
-size_t
-coap_serialize_message(coap_packet_t *pkt, uint8_t *buffer, int tcp_hdr)
+int
+coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m, int tcp_hdr)
 {
     struct coap_udp_hdr *cuh;
     struct coap_tcp_hdr0 *cth0;
     struct coap_tcp_hdr8 *cth8;
     struct coap_tcp_hdr16 *cth16;
     struct coap_tcp_hdr32 *cth32;
-    uint8_t *option;
     unsigned int current_number = 0;
     int len, data_len;
 
     /* Initialize */
-    pkt->buffer = buffer;
     pkt->version = 1;
 
-    LOG("-Serializing MID %u to 0x%x, ", pkt->mid, (unsigned)buffer);
+    LOG("-Serializing message %u to 0x%x, ", pkt->mid, (unsigned)m);
+
+    /*
+     * Move data pointer, leave enough space to insert coap header and
+     * token before options.
+     */
+    m->om_data += (sizeof(struct coap_tcp_hdr32) + pkt->token_len);
 
     /* Serialize options */
     current_number = 0;
 
-    option = buffer;
-    LOG("-Serializing options at 0x%x-\n", (unsigned)option);
 #if 0
     /* The options must be serialized in the order of their number */
-    COAP_SERIALIZE_BYTE_OPTION(pkt, COAP_OPTION_IF_MATCH, if_match, "If-Match");
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_URI_HOST, uri_host, '\0',
+    COAP_SERIALIZE_BYTE_OPT(pkt, m, COAP_OPTION_IF_MATCH, if_match, "If-Match");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_URI_HOST, uri_host, '\0',
                                  "Uri-Host");
-    COAP_SERIALIZE_BYTE_OPTION(pkt, COAP_OPTION_ETAG, etag, "ETag");
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_IF_NONE_MATCH,
+    COAP_SERIALIZE_BYTE_OPT(pkt, m, COAP_OPTION_ETAG, etag, "ETag");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_IF_NONE_MATCH,
         content_format - pkt-> content_format /* hack to get a zero field */,
-                              "If-None-Match");
+                           "If-None-Match");
 #endif
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_OBSERVE, observe, "Observe");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_OBSERVE, observe, "Observe");
 #if 0
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_URI_PORT, uri_port, "Uri-Port");
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_LOCATION_PATH, location_path,
-                                 '/', "Location-Path");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_URI_PORT, uri_port,
+                              "Uri-Port");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_LOCATION_PATH,
+                              location_path, '/', "Location-Path");
 #endif
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_URI_PATH, uri_path, '/',
-                                 "Uri-Path");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_URI_PATH, uri_path, '/',
+                              "Uri-Path");
     LOG("Serialize content format: %d\n", pkt->content_format);
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_CONTENT_FORMAT, content_format,
-                              "Content-Format");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_CONTENT_FORMAT, content_format,
+                           "Content-Format");
 #if 0
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_MAX_AGE, max_age, "Max-Age");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_MAX_AGE, max_age, "Max-Age");
 #endif
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_URI_QUERY, uri_query, '&',
-                                 "Uri-Query");
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_ACCEPT, accept, "Accept");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_URI_QUERY, uri_query, '&',
+                              "Uri-Query");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_ACCEPT, accept, "Accept");
 #if 0
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_LOCATION_QUERY,
-                                 location_query, '&', "Location-Query");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_LOCATION_QUERY,
+                              location_query, '&', "Location-Query");
 #endif
-    COAP_SERIALIZE_BLOCK_OPTION(pkt, COAP_OPTION_BLOCK2, block2, "Block2");
-    COAP_SERIALIZE_BLOCK_OPTION(pkt, COAP_OPTION_BLOCK1, block1, "Block1");
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_SIZE2, size2, "Size2");
+    COAP_SERIALIZE_BLOCK_OPT(pkt, m, COAP_OPTION_BLOCK2, block2, "Block2");
+    COAP_SERIALIZE_BLOCK_OPT(pkt, m, COAP_OPTION_BLOCK1, block1, "Block1");
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_SIZE2, size2, "Size2");
 #if 0
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_PROXY_URI, proxy_uri, '\0',
-                                 "Proxy-Uri");
-    COAP_SERIALIZE_STRING_OPTION(pkt, COAP_OPTION_PROXY_SCHEME, proxy_scheme,
-                                 '\0', "Proxy-Scheme");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_PROXY_URI, proxy_uri, '\0',
+                              "Proxy-Uri");
+    COAP_SERIALIZE_STRING_OPT(pkt, m, COAP_OPTION_PROXY_SCHEME, proxy_scheme,
+                              '\0', "Proxy-Scheme");
 #endif
-    COAP_SERIALIZE_INT_OPTION(pkt, COAP_OPTION_SIZE1, size1, "Size1");
-
-    LOG("-Done serializing at 0x%x----\n", (unsigned)option);
+    COAP_SERIALIZE_INT_OPT(pkt, m, COAP_OPTION_SIZE1, size1, "Size1");
 
     /* Payload marker */
     if (pkt->payload_len) {
-        *option = 0xFF;
-        ++option;
+        if (os_mbuf_append(m, "\xff", 1)) {
+            goto err_mem;
+        }
     }
-    len = option - buffer;
-    data_len = len + pkt->payload_len;
+    data_len = OS_MBUF_PKTLEN(m) + pkt->payload_len;
 
     /* set header fields */
     if (!tcp_hdr) {
-        if (len + sizeof(*cuh) + pkt->token_len > COAP_MAX_HEADER_SIZE) {
-            pkt->buffer = NULL;
-            coap_error_message = "Serialized header exceeds MAX_HEADER_SIZE";
-            return 0;
-        }
-        memmove(buffer + sizeof(*cuh) + pkt->token_len, buffer, len);
-        cuh = (struct coap_udp_hdr *)buffer;
+        len = sizeof(struct coap_udp_hdr) + pkt->token_len;
+        os_mbuf_prepend(m, len);
+        cuh = (struct coap_udp_hdr *)m->om_data;
         cuh->version = pkt->version;
         cuh->type = pkt->type;
         cuh->token_len = pkt->token_len;
         cuh->code = pkt->code;
         cuh->id = htons(pkt->mid);
-        option = (uint8_t *)(cuh + 1);
+        memcpy(cuh + 1, pkt->token, pkt->token_len);
     } else {
         if (data_len < 13) {
-            memmove(buffer + sizeof(*cth0) + pkt->token_len, buffer, len);
-            cth0 = (struct coap_tcp_hdr0 *)buffer;
+            len = sizeof(struct coap_tcp_hdr0) + pkt->token_len;
+            os_mbuf_prepend(m, len);
+            cth0 = (struct coap_tcp_hdr0 *)m->om_data;
             cth0->data_len = data_len;
             cth0->token_len = pkt->token_len;
             cth0->code = pkt->code;
-            option = (uint8_t *)(cth0 + 1);
+            memcpy(cth0 + 1, pkt->token, pkt->token_len);
         } else if (data_len < 269) {
-            memmove(buffer + sizeof(*cth8) + pkt->token_len, buffer, len);
-            cth8 = (struct coap_tcp_hdr8 *)buffer;
+            len = sizeof(struct coap_tcp_hdr8) + pkt->token_len;
+            os_mbuf_prepend(m, len);
+            cth8 = (struct coap_tcp_hdr8 *)m->om_data;
             cth8->type = COAP_TCP_TYPE8;
             cth8->token_len = pkt->token_len;
             cth8->data_len = data_len - COAP_TCP_LENGTH8_OFF;
             cth8->code = pkt->code;
-            option = (uint8_t *)(cth8 + 1);
+            memcpy(cth8 + 1, pkt->token, pkt->token_len);
         } else if (data_len < 65805) {
-            memmove(buffer + sizeof(*cth16) + pkt->token_len, buffer, len);
-            cth16 = (struct coap_tcp_hdr16 *)buffer;
+            len = sizeof(struct coap_tcp_hdr16) + pkt->token_len;
+            os_mbuf_prepend(m, len);
+            cth16 = (struct coap_tcp_hdr16 *)m->om_data;
             cth16->type = COAP_TCP_TYPE16;
             cth16->token_len = pkt->token_len;
             cth16->data_len = htons(data_len - COAP_TCP_LENGTH16_OFF);
             cth16->code = pkt->code;
-            option = (uint8_t *)(cth16 + 1);
+            memcpy(cth16 + 1, pkt->token, pkt->token_len);
         } else {
-            memmove(buffer + sizeof(*cth32) + pkt->token_len, buffer, len);
-            cth32 = (struct coap_tcp_hdr32 *)buffer;
+            len = sizeof(struct coap_tcp_hdr32) + pkt->token_len;
+            os_mbuf_prepend(m, len);
+            cth32 = (struct coap_tcp_hdr32 *)m->om_data;
             cth32->type = COAP_TCP_TYPE32;
             cth32->token_len = pkt->token_len;
             cth32->data_len = htonl(data_len - COAP_TCP_LENGTH32_OFF);
             cth32->code = pkt->code;
-            option = (uint8_t *)(cth32 + 1);
+            memcpy(cth32 + 1, pkt->token, pkt->token_len);
         }
     }
 
-    memcpy(option, pkt->token, pkt->token_len);
-    option += (len + pkt->token_len);
-    memmove(option, pkt->payload, pkt->payload_len);
+    if (os_mbuf_append(m, pkt->payload, pkt->payload_len)) {
+        goto err_mem;
+    }
 
     LOG("-Done %u B (header len %u, payload len %u)-\n",
-        (unsigned int)(pkt->payload_len + option - buffer),
-        (unsigned int)(option - buffer), (unsigned int)pkt->payload_len);
+        OS_MBUF_PKTLEN(m), OS_MBUF_PKTLEN(m) - pkt->payload_len,
+        pkt->payload_len);
 
-    LOG("Dump [0x%02X %02X %02X %02X  %02X %02X %02X %02X]\n",
-        pkt->buffer[0], pkt->buffer[1], pkt->buffer[2], pkt->buffer[3],
-        pkt->buffer[4], pkt->buffer[5], pkt->buffer[6], pkt->buffer[7]);
-    return (option - buffer) + pkt->payload_len; /* packet length */
+    return 0;
+err_mem:
+    STATS_INC(coap_stats, oerr);
+    return -1;
 }
 /*---------------------------------------------------------------------------*/
 void
-coap_send_message(struct oc_message *msg)
+coap_send_message(struct os_mbuf *m, int dup)
 {
-    struct os_mbuf *m;
-    struct oc_endpoint *oe;
-    int rc;
-
-    LOG("-sending OCF message (%u)-\n", msg->length);
+    LOG("-sending OCF message (%u)-\n", OS_MBUF_PKTLEN(m));
 
     STATS_INC(coap_stats, oframe);
 
-    /* get a packet header */
-    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
-    if (!m) {
-        ERROR("coap_send_msg: failed to alloc mbuf\n");
-        oc_message_unref(msg);
-        return;
+    if (dup) {
+        m = os_mbuf_dup(m);
+        if (!m) {
+            STATS_INC(coap_stats, oerr);
+            return;
+        }
     }
-
-    /* add this data to the mbuf */
-    rc = os_mbuf_append(m, msg->data, msg->length);
-    if (rc != 0) {
-        ERROR("coap_send_msg: could not append data\n");
-        oc_message_unref(msg);
-        return;
-    }
-
-    oe = OC_MBUF_ENDPOINT(m);
-    memcpy(oe, &msg->endpoint, sizeof(msg->endpoint));
-
-    oc_message_unref(msg);
-
     oc_send_message(m);
 }
 

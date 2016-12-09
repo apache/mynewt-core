@@ -61,6 +61,7 @@ coap_receive(oc_message_t *msg)
     static coap_packet_t message[1];
     static coap_packet_t response[1];
     static coap_transaction_t *transaction = NULL;
+    static oc_message_t *rsp;
 
     erbium_status_code = NO_ERROR;
 
@@ -156,11 +157,13 @@ coap_receive(oc_message_t *msg)
             new_offset = block_offset;
         }
 
-        /* invoke resource handler in RI layer */
-        if (oc_ri_invoke_coap_entity_handler(message, response,
-                              transaction->message->data + COAP_MAX_HEADER_SIZE,
-                              block_size, &new_offset, &msg->endpoint)) {
-
+        rsp = oc_allocate_message();
+        if (!rsp) {
+            erbium_status_code = SERVICE_UNAVAILABLE_5_03;
+            coap_error_message = "NoFreeTraBuffer";
+        } else if (oc_ri_invoke_coap_entity_handler(message, response,
+                              rsp->data, block_size, &new_offset,
+                              &msg->endpoint)) {
             if (erbium_status_code == NO_ERROR) {
                 /*
                  * TODO coap_handle_blockwise(request, response,
@@ -237,14 +240,15 @@ coap_receive(oc_message_t *msg)
             /* serialize response */
         }
         if (erbium_status_code == NO_ERROR) {
-            if ((transaction->message->length =
-                coap_serialize_message(response, transaction->message->data,
-                                   oc_endpoint_use_tcp(&msg->endpoint))) == 0) {
+            if (coap_serialize_message(response, transaction->m,
+                oc_endpoint_use_tcp(&msg->endpoint))) {
                 erbium_status_code = PACKET_SERIALIZATION_ERROR;
             }
             transaction->type = response->type;
         }
-
+        if (rsp) {
+            oc_message_unref(rsp);
+        }
     } else { // Fix this
         /* handle responses */
         if (message->type == COAP_TYPE_CON) {
@@ -289,12 +293,11 @@ out:
 #ifdef OC_CLIENT
     else if (erbium_status_code == EMPTY_ACK_RESPONSE) {
         coap_init_message(message, COAP_TYPE_ACK, 0, message->mid);
-        oc_message_t *response = oc_allocate_message();
+        struct os_mbuf *response = oc_allocate_mbuf(&msg->endpoint);
         if (response) {
-            memcpy(&response->endpoint, &msg->endpoint, sizeof(msg->endpoint));
-            response->length = coap_serialize_message(message, response->data,
+            coap_serialize_message(message, response,
                                           oc_endpoint_use_tcp(&msg->endpoint));
-            coap_send_message(response);
+            coap_send_message(response, 0);
         }
     }
 #endif /* OC_CLIENT */
@@ -307,12 +310,11 @@ out:
         coap_init_message(message, reply_type, SERVICE_UNAVAILABLE_5_03,
                           message->mid);
 
-        oc_message_t *response = oc_allocate_message();
+        struct os_mbuf *response = oc_allocate_mbuf(&msg->endpoint);
         if (response) {
-            memcpy(&response->endpoint, &msg->endpoint, sizeof(msg->endpoint));
-            response->length = coap_serialize_message(message, response->data,
-                                     oc_endpoint_use_tcp(&response->endpoint));
-            coap_send_message(response);
+            coap_serialize_message(message, response,
+                                   oc_endpoint_use_tcp(&msg->endpoint));
+            coap_send_message(response, 0);
         }
     }
 #endif /* OC_SERVER */

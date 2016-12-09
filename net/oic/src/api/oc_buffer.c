@@ -56,6 +56,20 @@ oc_allocate_message(void)
     return message;
 }
 
+struct os_mbuf *
+oc_allocate_mbuf(struct oc_endpoint *oe)
+{
+    struct os_mbuf *m;
+
+    /* get a packet header */
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
+        return NULL;
+    }
+    memcpy(OC_MBUF_ENDPOINT(m), oe, sizeof(struct oc_endpoint));
+    return m;
+}
+
 void
 oc_message_add_ref(oc_message_t *message)
 {

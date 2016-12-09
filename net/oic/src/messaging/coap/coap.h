@@ -167,52 +167,57 @@ STATS_SECT_START(coap_stats)
     STATS_SECT_ENTRY(iframe)
     STATS_SECT_ENTRY(ierr)
     STATS_SECT_ENTRY(oframe)
+    STATS_SECT_ENTRY(oerr)
 STATS_SECT_END
 
 extern STATS_SECT_DECL(coap_stats) coap_stats;
 
 /* option format serialization */
-#define COAP_SERIALIZE_INT_OPTION(coap_pkt, number, field, text)               \
-  if (IS_OPTION(coap_pkt, number)) {                                           \
-    LOG(text " [%u]\n", (unsigned int)coap_pkt->field);                        \
-    option += coap_serialize_int_option(number, current_number, option,        \
-                                        coap_pkt->field);                      \
-    current_number = number;                                                   \
-  }
-#define COAP_SERIALIZE_BYTE_OPTION(coap_pkt, number, field, text)              \
-  if (IS_OPTION(coap_pkt, number)) {                                           \
-    LOG(text " %u [0x%02X%02X%02X%02X%02X%02X%02X%02X]\n",                     \
-        (unsigned int)coap_pkt->field##_len, coap_pkt->field[0],               \
-        coap_pkt->field[1], coap_pkt->field[2], coap_pkt->field[3],            \
-        coap_pkt->field[4], coap_pkt->field[5], coap_pkt->field[6],            \
-        coap_pkt->field[7]); /* FIXME always prints 8 bytes */                 \
-    option += coap_serialize_array_option(number, current_number, option,      \
-                                          coap_pkt->field,                     \
-                                          coap_pkt->field##_len, '\0');        \
-    current_number = number;                                                   \
-  }
-#define COAP_SERIALIZE_STRING_OPTION(coap_pkt, number, field, splitter, text)  \
-  if (IS_OPTION(coap_pkt, number)) {                                           \
-    LOG(text " [%.*s]\n", (int)coap_pkt->field##_len, coap_pkt->field);        \
-    option += coap_serialize_array_option(number, current_number, option,      \
-                                          (uint8_t *)coap_pkt->field,          \
-                                          coap_pkt->field##_len, splitter);    \
-    current_number = number;                                                   \
-  }
-#define COAP_SERIALIZE_BLOCK_OPTION(coap_pkt, number, field, text)             \
-  if (IS_OPTION(coap_pkt, number)) {                                           \
-    LOG(text " [%lu%s (%u B/blk)]\n", (unsigned long)coap_pkt->field##_num,    \
-        coap_pkt->field##_more ? "+" : "", coap_pkt->field##_size);            \
-    uint32_t block = coap_pkt->field##_num << 4;                               \
-    if (coap_pkt->field##_more) {                                              \
-      block |= 0x8;                                                            \
-    }                                                                          \
-    block |= 0xF & coap_log_2(coap_pkt->field##_size / 16);                    \
-    LOG(text " encoded: 0x%lX\n", (unsigned long)block);                       \
-    option +=                                                                  \
-      coap_serialize_int_option(number, current_number, option, block);        \
-    current_number = number;                                                   \
-  }
+#define COAP_SERIALIZE_INT_OPT(pkt, m, number, field, text)             \
+    if (IS_OPTION(pkt, number)) {                                       \
+        LOG(text " [%u]\n", (unsigned int)pkt->field);                  \
+        if (coap_append_int_opt(m, number, current_number, pkt->field)) { \
+            goto err_mem;                                               \
+        }                                                               \
+        current_number = number;                                        \
+    }
+#define COAP_SERIALIZE_BYTE_OPT(pkt, m, number, field, text)            \
+    if (IS_OPTION(pkt, number)) {                                       \
+        LOG(text " %u [0x%02X%02X%02X%02X%02X%02X%02X%02X]\n",          \
+          (unsigned int)pkt->field##_len, pkt->field[0], pkt->field[1], \
+          pkt->field[2], pkt->field[3], pkt->field[4], pkt->field[5],   \
+          pkt->field[6], pkt->field[7]); /* FIXME always prints 8 bytes */ \
+        if (coap_append_array_opt(m, number, current_number, pkt->field, \
+                                  pkt->field##_len, '\0')) {            \
+            goto err_mem;                                               \
+        }                                                               \
+        current_number = number;                                        \
+    }
+#define COAP_SERIALIZE_STRING_OPT(pkt, m, number, field, splitter, text) \
+    if (IS_OPTION(pkt, number)) {                                       \
+        LOG(text " [%s]\n", pkt->field);                                \
+        if (coap_append_array_opt(m, number, current_number,            \
+                                  (uint8_t *)pkt->field,                \
+                                  pkt->field##_len, splitter)) {        \
+            goto err_mem;                                               \
+        }                                                               \
+        current_number = number;                                        \
+    }
+#define COAP_SERIALIZE_BLOCK_OPT(pkt, m, number, field, text)           \
+    if (IS_OPTION(pkt, number)) {                                       \
+        LOG(text " [%lu%s (%u B/blk)]\n", (unsigned long)pkt->field##_num, \
+          pkt->field##_more ? "+" : "", pkt->field##_size);             \
+        uint32_t block = pkt->field##_num << 4;                         \
+        if (pkt->field##_more) {                                        \
+            block |= 0x8;                                               \
+        }                                                               \
+        block |= 0xF & coap_log_2(pkt->field##_size / 16);              \
+        LOG(text " encoded: 0x%lX\n", (unsigned long)block);            \
+        if (coap_append_int_opt(m, number, current_number, block)) {    \
+            goto err_mem;                                               \
+        }                                                               \
+        current_number = number;                                        \
+    }
 
 /* to store error code and human-readable payload */
 extern coap_status_t erbium_status_code;
@@ -225,9 +230,8 @@ uint16_t coap_tcp_msg_size(uint8_t *hdr, int datalen);
 
 void coap_init_message(coap_packet_t *, coap_message_type_t type,
                        uint8_t code, uint16_t mid);
-size_t coap_serialize_message(coap_packet_t *, uint8_t *buffer, int tcp_hdr);
-typedef struct oc_message oc_message_t;
-void coap_send_message(oc_message_t *message);
+int coap_serialize_message(coap_packet_t *, struct os_mbuf *m, int tcp_hdr);
+void coap_send_message(struct os_mbuf *m, int dup);
 coap_status_t coap_parse_message(coap_packet_t *request, uint8_t *data,
                                  uint16_t data_len, int tcp_hdr);
 

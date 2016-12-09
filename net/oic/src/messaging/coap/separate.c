@@ -101,13 +101,10 @@ coap_separate_accept(coap_packet_t *coap_req,
             coap_set_header_observe(ack, observe);
         }
         coap_set_token(ack, coap_req->token, coap_req->token_len);
-        oc_message_t *message = oc_allocate_message();
+        struct os_mbuf *message = oc_allocate_mbuf(endpoint); /* XXXX? */
         if (message != NULL) {
-            message->endpoint.flags = IP;
-            memcpy(&message->endpoint, endpoint, sizeof(oc_endpoint_t));
-            message->length = coap_serialize_message(ack, message->data,
-              oc_endpoint_use_tcp(&message->endpoint));
-            coap_send_message(message);
+            coap_serialize_message(ack, message, oc_endpoint_use_tcp(endpoint));
+            coap_send_message(message, 0);
         } else {
             coap_separate_clear(separate_response, separate_store);
             erbium_status_code = SERVICE_UNAVAILABLE_5_03;

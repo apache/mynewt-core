@@ -68,18 +68,16 @@ coap_transaction_t *
 coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
 {
     coap_transaction_t *t;
+    struct os_mbuf *m;
 
     t = os_memblock_get(&oc_transaction_memb);
     if (t) {
-        oc_message_t *message = oc_allocate_message();
-        if (message) {
-            LOG("Created new transaction %d %d\n", mid, (int) message->length);
+        m = oc_allocate_mbuf(endpoint);
+        if (m) {
+            LOG("Created new transaction %d\n", mid);
             t->mid = mid;
             t->retrans_counter = 0;
-            t->message = message;
-
-            /* save client address */
-            memcpy(&t->message->endpoint, endpoint, sizeof(oc_endpoint_t));
+            t->m = m;
 
             os_callout_init(&t->retrans_timer, oc_evq_get(),
               coap_transaction_retrans, t);
@@ -121,9 +119,7 @@ coap_send_transaction(coap_transaction_t *t)
 
             os_callout_reset(&t->retrans_timer, t->retrans_tmo);
 
-            oc_message_add_ref(t->message);
-
-            coap_send_message(t->message);
+            coap_send_message(t->m, 1);
 
             t = NULL;
         } else {
@@ -133,12 +129,12 @@ coap_send_transaction(coap_transaction_t *t)
 #ifdef OC_SERVER
             LOG("timeout.. so removing observers\n");
             /* handle observers */
-            coap_remove_observer_by_client(&t->message->endpoint);
+            coap_remove_observer_by_client(OC_MBUF_ENDPOINT(t->m));
 #endif /* OC_SERVER */
 
 #ifdef OC_SECURITY
-            if (t->message->endpoint.flags & SECURED) {
-                oc_sec_dtls_close_init(&t->message->endpoint);
+            if (OC_MBUF_ENDPOINT(t->m)->flags & SECURED) {
+                oc_sec_dtls_close_init(OC_MBUF_ENDPOINT(t->m));
             }
 #endif /* OC_SECURITY */
 
@@ -149,9 +145,8 @@ coap_send_transaction(coap_transaction_t *t)
             coap_clear_transaction(t);
         }
     } else {
-        oc_message_add_ref(t->message);
-
-        coap_send_message(t->message);
+        coap_send_message(t->m, 0);
+        t->m = NULL;
 
         coap_clear_transaction(t);
     }
@@ -166,7 +161,8 @@ coap_clear_transaction(coap_transaction_t *t)
         LOG("Freeing transaction %u: 0x%x\n", t->mid, (unsigned)t);
 
         os_callout_stop(&t->retrans_timer);
-        oc_message_unref(t->message);
+        os_mbuf_free_chain(t->m);
+
         /*
          * Transaction might not be in the list yet.
          */

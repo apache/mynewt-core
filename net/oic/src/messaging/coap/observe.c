@@ -265,8 +265,6 @@ coap_notify_observers(oc_resource_t *resource,
             coap_transaction_t *transaction = NULL;
             if (response_buf && (transaction = coap_new_transaction(
                   coap_get_mid(), &obs->endpoint))) {
-                memcpy(transaction->message->data + COAP_MAX_HEADER_SIZE,
-                  response_buf->buffer, response_buf->response_length);
 
                 /* update last MID for RST matching */
                 obs->last_mid = transaction->mid;
@@ -295,10 +293,8 @@ coap_notify_observers(oc_resource_t *resource,
                 }
                 coap_set_token(notification, obs->token, obs->token_len);
 
-                transaction->message->length =
-                  coap_serialize_message(notification,
-                    transaction->message->data,
-                    oc_endpoint_use_tcp(&obs->endpoint));
+                coap_serialize_message(notification, transaction->m,
+                                       oc_endpoint_use_tcp(&obs->endpoint));
                 transaction->type = notification->type;
 
                 coap_send_transaction(transaction);
