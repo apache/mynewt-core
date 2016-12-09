@@ -86,27 +86,29 @@ static struct mmc_cfg {
 static int
 error_by_response(uint8_t status)
 {
+    int rc = MMC_CARD_ERROR;
+
     if (status == 0) {
-        return MMC_OK;
+        rc = MMC_OK;
     } else if (status == 0xff) {
-        return MMC_CARD_ERROR;
+        rc = MMC_CARD_ERROR;
     } else if (status & R_IDLE) {
-        return MMC_TIMEOUT;
+        rc = MMC_TIMEOUT;
     } else if (status & R_ERASE_RESET) {
-        /* TODO */
+        rc = MMC_ERASE_ERROR;
     } else if (status & R_ILLEGAL_COMMAND) {
-        /* TODO */
+        rc = MMC_INVALID_COMMAND;
     } else if (status & R_CRC_ERROR) {
-        return MMC_CRC_ERROR;
+        rc = MMC_CRC_ERROR;
     } else if (status & R_ERASE_ERROR) {
-        /* TODO */
+        rc = MMC_ERASE_ERROR;
     } else if (status & R_ADDR_ERROR) {
-        /* TODO */
+        rc = MMC_ADDR_ERROR;
     } else if (status & R_PARAM_ERROR) {
-        return MMC_PARAM_ERROR;
+        rc = MMC_PARAM_ERROR;
     }
 
-    return MMC_CARD_ERROR;
+    return (rc);
 }
 
 static struct mmc_cfg *
