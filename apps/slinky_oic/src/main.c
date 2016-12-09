@@ -306,6 +306,9 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
+    /* Initialize the OIC  */
+    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),
                STATS_NAME_INIT_PARMS(gpio_stats));
