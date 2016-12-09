@@ -219,6 +219,8 @@ nmgr_def_mpstat_read(struct mgmt_cbuf *cb)
         g_err |= cbor_encode_uint(&rsp, omi.omi_num_blocks);
         g_err |= cbor_encode_text_stringz(&rsp, "nfree");
         g_err |= cbor_encode_uint(&rsp, omi.omi_num_free);
+        g_err |= cbor_encode_text_stringz(&rsp, "min");
+        g_err |= cbor_encode_uint(&rsp, omi.omi_min_free);
         g_err |= cbor_encoder_close_container(&pools, &pool);
     }
 
