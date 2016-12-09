@@ -143,19 +143,18 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
     }
 
     mode = FA_OPEN_EXISTING;
-    switch (access_flags) {
-    case FS_ACCESS_READ:
+    if (access_flags & FS_ACCESS_READ) {
         mode |= FA_READ;
-        break;
-    case FS_ACCESS_WRITE:
+    }
+    if (access_flags & FS_ACCESS_WRITE) {
         mode |= FA_WRITE;
-        break;
-    case FS_ACCESS_APPEND:
+    }
+    if (access_flags & FS_ACCESS_APPEND) {
         mode |= FA_OPEN_APPEND;
-        break;
-    case FS_ACCESS_TRUNCATE:
+    }
+    if (access_flags & FS_ACCESS_TRUNCATE) {
+        mode &= ~FA_OPEN_EXISTING;
         mode |= FA_CREATE_ALWAYS;
-        break;
     }
 
     res = f_open(out_file, path, mode);
@@ -219,7 +218,7 @@ fatfs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
     FRESULT res;
     FIL *file = (FIL *)fs_file;
 
-    res = f_read(file, out_data, len, out_len);
+    res = f_read(file, out_data, len, (UINT *)out_len);
     return fatfs_to_vfs_error(res);
 }
 
