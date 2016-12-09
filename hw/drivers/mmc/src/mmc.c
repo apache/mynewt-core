@@ -168,10 +168,6 @@ send_mmc_cmd(struct mmc_cfg *mmc, uint8_t cmd, uint32_t payload)
 }
 
 /**
- * NOTE:
- */
-
-/**
  * Initialize the MMC driver
  *
  * @param spi_num Number of the SPI channel to be used by MMC
