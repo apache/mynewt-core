@@ -29,16 +29,19 @@ extern "C" {
 /**
  * MMC driver errors.
  */
-#define MMC_OK              (0)
-#define MMC_CARD_ERROR      (-1)  /* Is there a card installed? */
-#define MMC_READ_ERROR      (-2)
-#define MMC_WRITE_ERROR     (-3)
-#define MMC_TIMEOUT         (-4)
-#define MMC_PARAM_ERROR     (-5)
-#define MMC_CRC_ERROR       (-6)
-#define MMC_DEVICE_ERROR    (-7)
-#define MMC_RESPONSE_ERROR  (-8)
-#define MMC_VOLTAGE_ERROR   (-9)
+#define MMC_OK                (0)
+#define MMC_CARD_ERROR        (-1)  /* Is there a card installed? */
+#define MMC_READ_ERROR        (-2)
+#define MMC_WRITE_ERROR       (-3)
+#define MMC_TIMEOUT           (-4)
+#define MMC_PARAM_ERROR       (-5)
+#define MMC_CRC_ERROR         (-6)
+#define MMC_DEVICE_ERROR      (-7)
+#define MMC_RESPONSE_ERROR    (-8)
+#define MMC_VOLTAGE_ERROR     (-9)
+#define MMC_INVALID_COMMAND   (-10)
+#define MMC_ERASE_ERROR       (-11)
+#define MMC_ADDR_ERROR        (-12)
 
 /**
  * Initialize the MMC driver
@@ -55,10 +58,10 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin);
 /**
  * Read data from MMC
  *
- * @param mmc_id
- * @param addr
- * @param buf
- * @param len
+ * @param mmc_id Id of the MMC device (currently must be 0)
+ * @param addr Disk address (in bytes) to be read from
+ * @param buf Buffer where data should be copied to
+ * @param len Amount of data to read/copy
  *
  * @return 0 on success, non-zero on failure
  */
@@ -68,10 +71,10 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len);
 /**
  * Write data to the MMC
  *
- * @param mmc_id
- * @param addr
- * @param buf
- * @param len
+ * @param mmc_id Id of the MMC device (currently must be 0)
+ * @param addr Disk address (in bytes) to be written to
+ * @param buf Buffer where data should be copied from
+ * @param len Amount of data to copy/write
  *
  * @return 0 on success, non-zero on failure
  */
