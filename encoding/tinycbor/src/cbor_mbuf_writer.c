@@ -23,7 +23,8 @@
 #include <tinycbor/cbor_mbuf_writer.h>
 
 int
-cbor_mbuf_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
+cbor_mbuf_writer(struct cbor_encoder_writer *arg, const char *data, int len)
+{
     int rc;
     struct CborMbufWriter *cb = (struct CborMbufWriter *) arg;
     rc = os_mbuf_append(cb->m, data, len);
@@ -38,7 +39,8 @@ cbor_mbuf_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
 
 
 void
-cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m) {
+cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m)
+{
     cb->m = m;
     cb->enc.bytes_written = 0;
     cb->enc.write = &cbor_mbuf_writer;

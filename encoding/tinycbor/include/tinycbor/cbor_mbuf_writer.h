@@ -24,14 +24,12 @@
 extern "C" {
 #endif
 
-
 struct CborMbufWriter {
     struct cbor_encoder_writer enc;
     struct os_mbuf *m;
 };
 
-void
-cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m);
+void cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m);
 
 #ifdef __cplusplus
 }
