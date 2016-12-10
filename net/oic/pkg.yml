@@ -44,9 +44,5 @@ pkg.deps.OC_TRANSPORT_SERIAL:
 pkg.cflags:
     - -std=c99
     - -DSECURE=0
-    - -I./port/mynewt
-    - -I../port/mynewt
-    - -I../../port/mynewt
-    - -I../include/oic
-    - -I../../include/oic
-    - -I../../../include/oic
+    - "-I@apache-mynewt-core/net/oic/src/port/mynewt"
+    - "-I@apache-mynewt-core/net/oic/include/oic"
