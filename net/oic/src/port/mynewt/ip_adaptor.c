@@ -69,9 +69,6 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
     struct os_mbuf *n;
     int rc;
 
-    LOG("oc_transport_ip attempt send buffer %u\n",
-      OS_MBUF_PKTHDR(m)->omp_len);
-
     oe = OC_MBUF_ENDPOINT(m);
 
     to.msin6_len = sizeof(to);
@@ -106,8 +103,8 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
             to.msin6_scope_id = itf2.mif_idx;
             rc = mn_sendto(ucast, n, (struct mn_sockaddr *) &to);
             if (rc != 0) {
-                ERROR("Failed sending buffer %u on itf %d\n",
-                  OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+                OC_LOG_ERROR("Failed to send buffer %u on itf %d\n",
+                             OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
                 os_mbuf_free_chain(n);
             }
         }
@@ -115,16 +112,16 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
             to.msin6_scope_id = itf2.mif_idx;
             rc = mn_sendto(ucast, m, (struct mn_sockaddr *) &to);
             if (rc != 0) {
-                ERROR("Failed sending buffer %u on itf %d\n",
-                  OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+                OC_LOG_ERROR("Failed sending buffer %u on itf %d\n",
+                             OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
                 os_mbuf_free_chain(m);
             }
         }
     } else {
         rc = mn_sendto(ucast, m, (struct mn_sockaddr *) &to);
         if (rc != 0) {
-            ERROR("Failed sending buffer %u on itf %d\n",
-                  OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+            OC_LOG_ERROR("Failed to send buffer %u on itf %d\n",
+                         OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
             os_mbuf_free_chain(m);
         }
     }
@@ -153,8 +150,6 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
     struct oc_endpoint *oe;
     struct mn_sockaddr_in6 from;
 
-    LOG("oc_transport_ip attempt rx from 0x%x\n", (unsigned)rxsock);
-
     rc = mn_recvfrom(rxsock, &n, (struct mn_sockaddr *) &from);
     if (rc != 0) {
         return NULL;
@@ -163,7 +158,7 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
 
     m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
     if (!m) {
-        ERROR("Could not allocate OC message buffer\n");
+        OC_LOG_ERROR("Could not allocate RX buffer\n");
         goto rx_attempt_err;
     }
     OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
@@ -171,16 +166,11 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
 
     oe = OC_MBUF_ENDPOINT(m);
 
-    LOG("rx from 0x%x 0x%x-%u\n", (unsigned)rxsock, (unsigned)m,
-                                  OS_MBUF_PKTHDR(m)->omp_len);
-
     oe->flags = IP;
     memcpy(&oe->ipv6_addr.address, &from.msin6_addr,
              sizeof(oe->ipv6_addr.address));
     oe->ipv6_addr.scope = from.msin6_scope_id;
     oe->ipv6_addr.port = ntohs(from.msin6_port);
-
-    LOG("Successfully rx from 0x%x\n", (unsigned)rxsock);
 
     return m;
 
@@ -220,8 +210,6 @@ oc_socks_readable(void *cb_arg, int err)
 void
 oc_connectivity_shutdown_ip(void)
 {
-    LOG("OC shutdown IP\n");
-
     if (ucast) {
         mn_close(ucast);
     }
@@ -251,12 +239,11 @@ oc_connectivity_init_ip(void)
     struct mn_sockaddr_in6 sin;
     struct mn_itf itf;
 
-    LOG("OC transport init IP\n");
     memset(&itf, 0, sizeof(itf));
 
     rc = mn_socket(&ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !ucast ) {
-        ERROR("Could not create oc unicast socket\n");
+        OC_LOG_ERROR("Could not create oc unicast socket\n");
         return rc;
     }
     mn_socket_set_cbs(ucast, ucast, &oc_sock_cbs);
@@ -265,7 +252,7 @@ oc_connectivity_init_ip(void)
     rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
     if ( rc != 0 || !mcast ) {
         mn_close(ucast);
-        ERROR("Could not create oc multicast socket\n");
+        OC_LOG_ERROR("Could not create oc multicast socket\n");
         return rc;
     }
     mn_socket_set_cbs(mcast, mcast, &oc_sock_cbs);
@@ -279,7 +266,7 @@ oc_connectivity_init_ip(void)
 
     rc = mn_bind(ucast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
-        ERROR("Could not bind oc unicast socket\n");
+        OC_LOG_ERROR("Could not bind oc unicast socket\n");
         goto oc_connectivity_init_err;
     }
 
@@ -303,17 +290,16 @@ oc_connectivity_init_ip(void)
 
         rc = mn_setsockopt(mcast, MN_SO_LEVEL, MN_MCAST_JOIN_GROUP, &join);
         if (rc != 0) {
-            ERROR("Could not join multicast group on %s\n", itf.mif_name);
             continue;
         }
 
-        LOG("Joined Coap mcast group on %s\n", itf.mif_name);
+        OC_LOG_DEBUG("Joined Coap mcast group on %s\n", itf.mif_name);
     }
 
     sin.msin6_port = htons(COAP_PORT_UNSECURED);
     rc = mn_bind(mcast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
-        ERROR("Could not bind oc multicast socket\n");
+        OC_LOG_ERROR("Could not bind oc multicast socket\n");
         goto oc_connectivity_init_err;
     }
 #endif

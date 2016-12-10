@@ -47,10 +47,10 @@ oc_allocate_message(void)
     if (message) {
         message->length = 0;
         message->ref_count = 1;
-        LOG("buffer: Allocated TX/RX buffer; num free: %d\n",
+        OC_LOG_DEBUG("buffer: Allocated oc_message; free: %d\n",
           oc_buffers.mp_num_free);
     } else {
-        LOG("buffer: No free TX/RX buffers!\n");
+        OC_LOG_ERROR("buffer: No free oc_mesages!\n");
         assert(0);
     }
     return message;
@@ -85,7 +85,7 @@ oc_message_unref(oc_message_t *message)
         message->ref_count--;
         if (message->ref_count == 0) {
             os_memblock_put(&oc_buffers, message);
-            LOG("buffer: freed TX/RX buffer; num free: %d\n",
+            OC_LOG_DEBUG("buffer: freed oc_message; free: %d\n",
               oc_buffers.mp_num_free);
         }
     }
@@ -115,30 +115,28 @@ oc_buffer_tx(struct os_event *ev)
     struct os_mbuf *m;
 
     while ((m = os_mqueue_get(&oc_outq)) != NULL) {
+        OC_LOG_DEBUG("oc_buffer_tx");
+        OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 #ifdef OC_CLIENT
         if (OC_MBUF_ENDPOINT(m)->flags & MULTICAST) {
-            LOG("oc_buffer_tx: multicast\n");
             oc_send_multicast_message(m);
         } else {
 #endif
 #ifdef OC_SECURITY
             /* XXX convert this */
             if (OC_MBUF_ENDPOINT(m)->flags & SECURED) {
-                LOG("oc_buffer_tx: DTLS\n");
+                OC_LOG_DEBUG("oc_buffer_tx: DTLS\n");
 
                 if (!oc_sec_dtls_connected(oe)) {
-                    LOG("oc_buffer_tx: INIT_DTLS_CONN_EVENT\n");
                     oc_process_post(&oc_dtls_handler,
                                     oc_events[INIT_DTLS_CONN_EVENT], m);
                 } else {
-                    LOG("oc_buffer_tx: RI_TO_DTLS_EVENT\n");
                     oc_process_post(&oc_dtls_handler,
                                     oc_events[RI_TO_DTLS_EVENT], m);
                 }
             } else
 #endif
             {
-                LOG("oc_buffer_tx: unicast\n");
                 oc_send_buffer(m);
             }
 #ifdef OC_CLIENT
@@ -159,15 +157,17 @@ oc_buffer_rx(struct os_event *ev)
     while ((m = os_mqueue_get(&oc_inq)) != NULL) {
         msg = oc_allocate_message();
         if (!msg) {
-            ERROR("Could not allocate OC message buffer\n");
             goto free_msg;
         }
+        OC_LOG_DEBUG("oc_buffer_rx: ");
+        OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, &msg->endpoint);
+
         if (OS_MBUF_PKTHDR(m)->omp_len > MAX_PAYLOAD_SIZE) {
-            ERROR("Message to large for OC message buffer\n");
+            STATS_INC(coap_stats, itoobig);
             goto free_msg;
         }
         if (os_mbuf_copydata(m, 0, OS_MBUF_PKTHDR(m)->omp_len, msg->data)) {
-            ERROR("Failed to copy message from mbuf to OC message buffer \n");
+            STATS_INC(coap_stats, imem);
             goto free_msg;
         }
         memcpy(&msg->endpoint, OC_MBUF_ENDPOINT(m), sizeof(msg->endpoint));
@@ -176,15 +176,13 @@ oc_buffer_rx(struct os_event *ev)
 #ifdef OC_SECURITY
         b = m->om_data[0];
         if (b > 19 && b < 64) {
-            LOG("Inbound network event: encrypted request\n");
+            OC_LOG_DEBUG("oc_buffer_rx: encrypted request\n");
             oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
         } else {
-            LOG("Inbound network event: decrypted request\n");
             coap_receive(msg);
             oc_message_unref(msg);
         }
 #else
-        LOG("Inbound network event: decrypted request\n");
         coap_receive(msg);
         oc_message_unref(msg);
 #endif

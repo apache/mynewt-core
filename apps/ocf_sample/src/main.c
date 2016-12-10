@@ -51,7 +51,7 @@ static bool light_state = false;
 static void
 get_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    PRINT("GET_light:\n");
+    printf("GET_light:\n");
     oc_rep_start_root_object();
     switch (interface) {
         case OC_IF_BASELINE:
@@ -64,21 +64,21 @@ get_light(oc_request_t *request, oc_interface_mask_t interface)
     }
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
-    PRINT("Light state %d\n", light_state);
+    printf("Light state %d\n", light_state);
 }
 
 static void
 put_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    PRINT("PUT_light:\n");
+    printf("PUT_light:\n");
     bool state = false;
     oc_rep_t *rep = request->request_payload;
     while (rep != NULL) {
-        PRINT("key: %s ", oc_string(rep->name));
+        printf("key: %s ", oc_string(rep->name));
         switch (rep->type) {
             case BOOL:
                 state = rep->value_boolean;
-                PRINT("value: %d\n", state);
+                printf("value: %d\n", state);
                 break;
             default:
                 oc_send_response(request, OC_STATUS_BAD_REQUEST);
@@ -94,16 +94,16 @@ put_light(oc_request_t *request, oc_interface_mask_t interface)
 static void
 register_resources(void)
 {
-  oc_resource_t *res = oc_new_resource("/light/1", 1, 0);
-  oc_resource_bind_resource_type(res, "oic.r.light");
-  oc_resource_bind_resource_interface(res, OC_IF_RW);
-  oc_resource_set_default_interface(res, OC_IF_RW);
+    oc_resource_t *res = oc_new_resource("/light/1", 1, 0);
+    oc_resource_bind_resource_type(res, "oic.r.light");
+    oc_resource_bind_resource_interface(res, OC_IF_RW);
+    oc_resource_set_default_interface(res, OC_IF_RW);
 
-  oc_resource_set_discoverable(res);
-  oc_resource_set_periodic_observable(res, 1);
-  oc_resource_set_request_handler(res, OC_GET, get_light);
-  oc_resource_set_request_handler(res, OC_PUT, put_light);
-  oc_add_resource(res);
+    oc_resource_set_discoverable(res);
+    oc_resource_set_periodic_observable(res, 1);
+    oc_resource_set_request_handler(res, OC_GET, get_light);
+    oc_resource_set_request_handler(res, OC_PUT, put_light);
+    oc_add_resource(res);
 }
 #endif
 
@@ -123,30 +123,30 @@ set_device_custom_property(void *data)
 static void
 stop_observe(struct os_event *ev)
 {
-    PRINT("Stopping OBSERVE\n");
+    printf("Stopping OBSERVE\n");
     oc_stop_observe(light_1, &light_server);
 }
 
 static void
 put_light(oc_client_response_t *data)
 {
-    PRINT("PUT_light:\n");
+    printf("PUT_light:\n");
     if (data->code == OC_STATUS_CHANGED)
-        PRINT("PUT response OK\n");
+        printf("PUT response OK\n");
     else
-        PRINT("PUT response code %d\n", data->code);
+        printf("PUT response code %d\n", data->code);
 }
 
 static void
 observe_light(oc_client_response_t *data)
 {
-    PRINT("OBSERVE_light:\n");
+    printf("OBSERVE_light:\n");
     oc_rep_t *rep = data->payload;
     while (rep != NULL) {
-        PRINT("key %s, value ", oc_string(rep->name));
+        printf("key %s, value ", oc_string(rep->name));
         switch (rep->type) {
             case BOOL:
-                PRINT("%d\n", rep->value_boolean);
+                printf("%d\n", rep->value_boolean);
                 light_state = rep->value_boolean;
                 break;
             default:
@@ -159,12 +159,14 @@ observe_light(oc_client_response_t *data)
         oc_rep_start_root_object();
         oc_rep_set_boolean(root, state, !light_state);
         oc_rep_end_root_object();
-        if (oc_do_put())
-            PRINT("Sent PUT request\n");
-        else
-            PRINT("Could not send PUT\n");
-    } else
-        PRINT("Could not init PUT\n");
+        if (oc_do_put()) {
+            printf("Sent PUT request\n");
+        } else {
+            printf("Could not send PUT\n");
+        }
+    } else {
+        printf("Could not init PUT\n");
+    }
 }
 
 static oc_discovery_flags_t

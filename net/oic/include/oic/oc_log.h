@@ -24,46 +24,36 @@
 extern "C" {
 #endif
 
-
-#define PRINT(...) printf(__VA_ARGS__)
-
-#define PRINTipaddr(endpoint)                                                  \
-  PRINT(                                                                      \
-    "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%"    \
-    "02x]:%d",                                                                 \
-    ((endpoint).ipv6_addr.address)[0], ((endpoint).ipv6_addr.address)[1],      \
-    ((endpoint).ipv6_addr.address)[2], ((endpoint).ipv6_addr.address)[3],      \
-    ((endpoint).ipv6_addr.address)[4], ((endpoint).ipv6_addr.address)[5],      \
-    ((endpoint).ipv6_addr.address)[6], ((endpoint).ipv6_addr.address)[7],      \
-    ((endpoint).ipv6_addr.address)[8], ((endpoint).ipv6_addr.address)[9],      \
-    ((endpoint).ipv6_addr.address)[10], ((endpoint).ipv6_addr.address)[11],    \
-    ((endpoint).ipv6_addr.address)[12], ((endpoint).ipv6_addr.address)[13],    \
-    ((endpoint).ipv6_addr.address)[14], ((endpoint).ipv6_addr.address)[15],    \
-    (endpoint).ipv6_addr.port)
-
-#define LogMynewtipaddr(endpoint)                                                  \
-{\
-  char tmp_buf[16*3+6]; /* 16 octets plus port */                              \
-  sprintf(tmp_buf,                                                             \
-    "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%"    \
-    "02x]:%d",                                                                 \
-    ((endpoint).ipv6_addr.address)[0], ((endpoint).ipv6_addr.address)[1],      \
-    ((endpoint).ipv6_addr.address)[2], ((endpoint).ipv6_addr.address)[3],      \
-    ((endpoint).ipv6_addr.address)[4], ((endpoint).ipv6_addr.address)[5],      \
-    ((endpoint).ipv6_addr.address)[6], ((endpoint).ipv6_addr.address)[7],      \
-    ((endpoint).ipv6_addr.address)[8], ((endpoint).ipv6_addr.address)[9],      \
-    ((endpoint).ipv6_addr.address)[10], ((endpoint).ipv6_addr.address)[11],    \
-    ((endpoint).ipv6_addr.address)[12], ((endpoint).ipv6_addr.address)[13],    \
-    ((endpoint).ipv6_addr.address)[14], ((endpoint).ipv6_addr.address)[15],    \
-    (endpoint).ipv6_addr.port);                                                \
-    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "%s", tmp_buf);                     \
-}
-
 extern struct log oc_log;
+
 #define OC_LOG_DEBUG(...) LOG_DEBUG(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
-#define LOG(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
-#define ERROR(...) LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
-#define LOGipaddr(endpoint) LogMynewtipaddr(endpoint)
+#define OC_LOG_INFO(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
+#define OC_LOG_ERROR(...) LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
+
+struct oc_endpoint;
+void oc_log_endpoint(uint16_t lvl, struct oc_endpoint *);
+void oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char);
+
+#define OC_LOG_ENDPOINT(lvl, ep)                                        \
+    do {                                                                \
+        if (MYNEWT_VAL(LOG_LEVEL) <= (lvl)) {                           \
+            oc_log_endpoint(lvl, ep);                                   \
+        }                                                               \
+    } while(0)
+
+#define OC_LOG_STR(lvl, addr, len)                                      \
+    do {                                                                \
+        if (MYNEWT_VAL(LOG_LEVEL) <= (lvl)) {                           \
+            oc_log_bytes(lvl, addr, len, 1);                            \
+        }                                                               \
+    } while(0)
+
+#define OC_LOG_HEX(lvl, addr, len)                                      \
+    do {                                                                \
+        if (MYNEWT_VAL(LOG_LEVEL) <= (lvl)) {                           \
+            oc_log_bytes(lvl, addr, len, 0);                            \
+        }                                                               \
+    } while(0)
 
 #ifdef __cplusplus
 }

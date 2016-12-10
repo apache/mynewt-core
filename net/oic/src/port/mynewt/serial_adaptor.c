@@ -83,11 +83,9 @@ err:
 void
 oc_send_buffer_serial(struct os_mbuf *m)
 {
-    LOG("oc_transport_serial: send buffer %u\n", OS_MBUF_PKTHDR(m)->omp_len);
-
     /* send over the shell output */
     if (shell_nlip_output(m)) {
-        ERROR("oc_transport_serial: nlip output failed\n");
+        OC_LOG_ERROR("oc_transport_serial: nlip output failed\n");
     }
 }
 
@@ -98,18 +96,15 @@ oc_attempt_rx_serial(void)
     struct os_mbuf *n;
     struct oc_endpoint *oe;
 
-    LOG("oc_transport_serial attempt rx\n");
-
     /* get an mbuf from the queue */
     n = os_mqueue_get(&oc_serial_mqueue);
     if (NULL == n) {
-        ERROR("oc_transport_serial: Woke for for receive but found no mbufs\n");
         return NULL;
     }
 
     m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
     if (!m) {
-        ERROR("Could not allocate OC message buffer\n");
+        OC_LOG_ERROR("Could not allocate OC message buffer\n");
         goto rx_attempt_err;
     }
     OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
@@ -117,9 +112,6 @@ oc_attempt_rx_serial(void)
 
     oe = OC_MBUF_ENDPOINT(m);
     oe->flags = SERIAL;
-
-    LOG("oc_transport_serial rx 0x%x-%u\n",
-        (unsigned)n, OS_MBUF_PKTHDR(n)->omp_len);
 
     return m;
 

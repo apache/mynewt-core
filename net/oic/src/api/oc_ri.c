@@ -433,7 +433,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
      * request and results in a 4.00 response being sent.
      */
     if (oc_parse_rep(payload, payload_len, &request_obj.request_payload) != 0) {
-      LOG("ocri: error parsing request payload\n");
+      OC_LOG_ERROR("ocri: error parsing request payload\n");
       bad_request = true;
     }
   }
@@ -538,18 +538,18 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   }
 
   if (bad_request) {
-    LOG("ocri: Bad request\n");
+    OC_LOG_ERROR("ocri: Bad request\n");
     /* Return a 4.00 response */
     response_buffer.code = oc_status_code(OC_STATUS_BAD_REQUEST);
     success = false;
   } else if (!cur_resource) {
-    LOG("ocri: Could not find resource\n");
+    OC_LOG_ERROR("ocri: Could not find resource\n");
     /* Return a 4.04 response if the requested resource was not found */
     response_buffer.response_length = 0;
     response_buffer.code = oc_status_code(OC_STATUS_NOT_FOUND);
     success = false;
   } else if (!method_impl) {
-    LOG("ocri: Could not find method\n");
+    OC_LOG_ERROR("ocri: Could not find method\n");
     /* Return a 4.05 response if the resource does not implement the
      * request method.
      */
@@ -559,7 +559,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   }
 #ifdef OC_SECURITY
   else if (!authorized) {
-    LOG("ocri: Subject not authorized\n");
+    OC_LOG_ERROR("ocri: Subject not authorized\n");
     /* If the requestor (subject) does not have access granted via an
      * access control entry in the ACL, then it is not authorized to
      * access the resource. A 4.03 response is sent.

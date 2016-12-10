@@ -17,31 +17,19 @@
 #ifndef OC_ASSERT_H
 #define OC_ASSERT_H
 
-#include "oc_log.h"
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef __linux__
-#include <stdlib.h>
-#define abort_impl() abort()
-#else
-void abort_impl(void);
-#endif
-
-#define oc_abort(msg)                                                          \
-  do {                                                                         \
-    LOG("\n%s:%d:%s: error: %s\nAbort.\n", __FILE__, __LINE__, __func__, msg); \
-    abort_impl();                                                              \
+#define oc_abort(msg)                                                   \
+    do {                                                                \
+      OC_LOG_ERROR("error: %s\nAbort.\n", msg);                         \
+      assert(0);                                                        \
   } while (0)
 
-#define oc_assert(cond)                                                        \
-  do {                                                                         \
-    if (!(cond)) {                                                             \
-      oc_abort("Assertion (" #cond ") failed.");                               \
-    }                                                                          \
-  } while (0)
+#define oc_assert(cond) assert(cond)
 
 #ifdef __cplusplus
 }

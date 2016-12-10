@@ -92,7 +92,7 @@ oc_send_buffer(struct os_mbuf *m)
         break;
 #endif
     default:
-        ERROR("Unknown transport option %u\n", oe->flags);
+        OC_LOG_ERROR("Unknown transport option %u\n", oe->flags);
         os_mbuf_free_chain(m);
     }
 }

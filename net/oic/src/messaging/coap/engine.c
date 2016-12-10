@@ -65,7 +65,7 @@ coap_receive(oc_message_t *msg)
 
     erbium_status_code = NO_ERROR;
 
-    LOG("\nCoAP Engine: received datalen=%u\n", (unsigned int) msg->length);
+    OC_LOG_INFO("CoAP: received datalen=%u\n", (unsigned int) msg->length);
 
     erbium_status_code = coap_parse_message(message, msg->data, msg->length,
                                            oc_endpoint_use_tcp(&msg->endpoint));
@@ -111,14 +111,7 @@ coap_receive(oc_message_t *msg)
             break;
         }
 
-#if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG
-        uint8_t uri[64];
-        memcpy(uri, message->uri_path, message->uri_path_len);
-        uri[message->uri_path_len] = '\0';
-
-        OC_LOG_DEBUG("  URL: %s\n", uri);
         OC_LOG_DEBUG("  Payload: %d bytes\n", message->payload_len);
-#endif
 
         /* use transaction buffer for response to confirmable request */
         transaction = coap_new_transaction(message->mid, &msg->endpoint);
@@ -150,9 +143,9 @@ coap_receive(oc_message_t *msg)
         }
         if (coap_get_header_block2(message, &block_num, NULL,
                                    &block_size, &block_offset)) {
-            LOG("\tBlockwise: block request %u (%u/%u) @ %u bytes\n",
-                (unsigned int) block_num, block_size,
-                COAP_MAX_BLOCK_SIZE, (unsigned int) block_offset);
+            OC_LOG_DEBUG(" Blockwise: block request %u (%u/%u) @ %u bytes\n",
+                         (unsigned int) block_num, block_size,
+                         COAP_MAX_BLOCK_SIZE, (unsigned int) block_offset);
             block_size = MIN(block_size, COAP_MAX_BLOCK_SIZE);
             new_offset = block_offset;
         }
@@ -174,7 +167,7 @@ coap_receive(oc_message_t *msg)
                 if (IS_OPTION(message, COAP_OPTION_BLOCK1) &&
                   response->code < BAD_REQUEST_4_00 &&
                   !IS_OPTION(response, COAP_OPTION_BLOCK1)) {
-                    LOG("\tBlock1 option NOT IMPLEMENTED\n");
+                    OC_LOG_ERROR(" Block1 option NOT IMPLEMENTED\n");
 
                     erbium_status_code = NOT_IMPLEMENTED_5_01;
                     coap_error_message = "NoBlock1Support";
@@ -187,13 +180,9 @@ coap_receive(oc_message_t *msg)
                      * unaware of blockwise transfer
                      */
                     if (new_offset == block_offset) {
-                        LOG("\tBlockwise: unaware resource with payload"
-                            " length %u/%u\n", response->payload_len,
-                                               block_size);
+                        OC_LOG_DEBUG(" Block: unaware resource %u/%u\n",
+                                     response->payload_len, block_size);
                         if (block_offset >= response->payload_len) {
-                            LOG("\t\t: block_offset >= "
-                                "response->payload_len\n");
-
                             response->code = BAD_OPTION_4_02;
                             coap_set_payload(response, "BlockOutOfScope", 15);
                             /* a const char str[] and sizeof(str)
@@ -210,8 +199,8 @@ coap_receive(oc_message_t *msg)
 
                         /* resource provides chunk-wise data */
                     } else {
-                        LOG("\tBlockwise: blockwise resource, new "
-                            "offset %d\n", (int) new_offset);
+                        OC_LOG_DEBUG(" Block: aware resource, off %d\n",
+                                     (int) new_offset);
                         coap_set_header_block2(response, block_num,
                                                new_offset != -1 ||
                                          response->payload_len > block_size,
@@ -225,9 +214,8 @@ coap_receive(oc_message_t *msg)
 
                     /* Resource requested Block2 transfer */
                 } else if (new_offset != 0) {
-                    LOG("\tBlockwise: no block option for blockwise "
-                        "resource, using block size %u\n",
-                        COAP_MAX_BLOCK_SIZE);
+                    OC_LOG_DEBUG(" block: no block option, using block sz %u\n",
+                                 COAP_MAX_BLOCK_SIZE);
 
                     coap_set_header_block2(response, 0, new_offset != -1,
                                            COAP_MAX_BLOCK_SIZE);
@@ -285,7 +273,7 @@ out:
             coap_send_transaction(transaction);
         }
     } else if (erbium_status_code == CLEAR_TRANSACTION) {
-        LOG("Clearing transaction for manual response\n");
+        OC_LOG_DEBUG(" Clearing transaction for manual response\n");
         /* used in server for separate response */
         coap_clear_transaction(transaction);
   }

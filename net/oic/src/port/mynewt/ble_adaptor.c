@@ -159,12 +159,9 @@ oc_attempt_rx_gatt(void)
     struct oc_endpoint *oe;
     uint16_t conn_handle;
 
-    LOG("oc_gatt attempt rx\n");
-
     /* get an mbuf from the queue */
     n = os_mqueue_get(&oc_ble_coap_mq);
     if (NULL == n) {
-        ERROR("oc_gatt Woke for receive but found no mbufs\n");
         return NULL;
     }
 
@@ -177,7 +174,7 @@ oc_attempt_rx_gatt(void)
     rc = os_mbuf_copydata(n, pkt->omp_len - sizeof(conn_handle),
                           sizeof(conn_handle), &conn_handle);
     if (rc != 0) {
-        ERROR("oc_gatt Failed to retrieve conn_handle from mbuf\n");
+        OC_LOG_ERROR("oc_gatt_rx: Failed to get conn_handle from mbuf\n");
         goto rx_attempt_err;
     }
 
@@ -186,7 +183,7 @@ oc_attempt_rx_gatt(void)
 
     m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
     if (!m) {
-        ERROR("oc_gatt Could not allocate OC message buffer\n");
+        OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
         goto rx_attempt_err;
     }
     OS_MBUF_PKTHDR(m)->omp_len = pkt->omp_len;
@@ -196,8 +193,6 @@ oc_attempt_rx_gatt(void)
 
     oe->flags = GATT;
     oe->bt_addr.conn_handle = conn_handle;
-
-    LOG("oc_gatt rx %x-%u\n", (unsigned)pkt, pkt->omp_len);
 
     return m;
 
@@ -246,7 +241,7 @@ oc_ble_reass(struct os_mbuf *om1)
     assert(pkt1);
     oe1 = OC_MBUF_ENDPOINT(om1);
 
-    LOG("oc_gatt rx seg %d-%x-%u\n", oe1->bt_addr.conn_handle,
+    OC_LOG_DEBUG("oc_gatt rx seg %d-%x-%u\n", oe1->bt_addr.conn_handle,
       (unsigned)pkt1, pkt1->omp_len);
 
     OS_ENTER_CRITICAL(sr);
@@ -288,7 +283,7 @@ oc_ble_reass(struct os_mbuf *om1)
 void
 oc_ble_coap_conn_new(uint16_t conn_handle)
 {
-    LOG("oc_gatt newconn %x\n", conn_handle);
+    OC_LOG_DEBUG("oc_gatt newconn %x\n", conn_handle);
 }
 
 void
@@ -299,7 +294,7 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
     struct oc_endpoint *oe;
     int sr;
 
-    LOG("oc_gatt endconn %x\n", conn_handle);
+    OC_LOG_DEBUG("oc_gatt endconn %x\n", conn_handle);
     OS_ENTER_CRITICAL(sr);
     STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
         m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
@@ -396,7 +391,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     conn_handle = oe->bt_addr.conn_handle;
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
-    ERROR("oc_gatt send not supported on client");
+    OC_LOG_ERROR("oc_gatt send not supported on client");
 #endif
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
@@ -421,17 +416,6 @@ oc_send_buffer_gatt(struct os_mbuf *m)
             break;
         }
     }
-#endif
-}
-
-void
-oc_send_buffer_gatt_mcast(oc_message_t *message)
-{
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    ERROR("oc_gatt send not supported on client");
-#elif (MYNEWT_VAL(OC_SERVER) == 1)
-    oc_message_unref(message);
-    ERROR("oc_gatt no multicast support for server only system \n");
 #endif
 }
 
