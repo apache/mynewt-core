@@ -27,6 +27,10 @@
 extern "C" {
 #endif
 
+/* Package init function.  Remove when we have post-kernel init stages.
+ */
+void sensor_pkg_init(void);
+
 
 /* Forward declare sensor structure defined below. */
 struct sensor;
@@ -36,36 +40,32 @@ struct sensor;
  */
 
 typedef enum {
-    /* No sensor type, used for queries */
+ /* No sensor type, used for queries */
     SENSOR_TYPE_NONE                 = 0,
     /* Accelerometer functionality supported */
-    SENSOR_TYPE_ACCELEROMETER       = (1 << 0),
-    /* Ambient temperature supported */
-    SENSOR_TYPE_AMBIENT_TEMPERATURE  = (1 << 1),
-    /* Gravity supported */
-    SENSOR_TYPE_GRAVITY              = (1 << 2),
-    /* Gyroscope supported */
-    SENSOR_TYPE_GYROSCOPE            = (1 << 3),
-    /* Light supported */
-    SENSOR_TYPE_LIGHT                = (1 << 4),
-    /* Linear acceleration supported */
-    SENSOR_TYPE_LINEAR_ACCELERATION = (1 << 5),
+    SENSOR_TYPE_ACCELEROMETER        = (1 << 0),
     /* Magnetic field supported */
-    SENSOR_TYPE_MAGNETIC_FIELD       = (1 << 6),
-    /* Orientation sensor supported */
-    SENSOR_TYPE_ORIENTATION          = (1 << 7),
-    /* Pressure sensor supported */
-    SENSOR_TYPE_PRESSURE             = (1 << 8),
-    /* Proximity sensor supported */
-    SENSOR_TYPE_PROXIMITY            = (1 << 9),
-    /* Relative humidity supported */
-    SENSOR_TYPE_RELATIVE_HUMIDITY    = (1 << 10),
-    /* Rotation Vector supported */
-    SENSOR_TYPE_ROTATION_VECTOR      = (1 << 11),
+    SENSOR_TYPE_MAGNETIC_FIELD       = (1 << 1),
+    /* Gyroscope supported */
+    SENSOR_TYPE_GYROSCOPE            = (1 << 2),
+    /* Light supported */
+    SENSOR_TYPE_LIGHT                = (1 << 3),
     /* Temperature supported */
-    SENSOR_TYPE_TEMPERATURE          = (1 << 12),
+    SENSOR_TYPE_TEMPERATURE          = (1 << 4),
+    /* Ambient temperature supported */
+    SENSOR_TYPE_AMBIENT_TEMPERATURE  = (1 << 5),
+    /* Pressure sensor supported */
+    SENSOR_TYPE_PRESSURE             = (1 << 6),
+    /* Proximity sensor supported */
+    SENSOR_TYPE_PROXIMITY            = (1 << 7),
+    /* Relative humidity supported */
+    SENSOR_TYPE_RELATIVE_HUMIDITY    = (1 << 8),
+    /* Rotation vector (quaternion) supported */
+    SENSOR_TYPE_ROTATION_VECTOR      = (1 << 9),
     /* Altitude Supported */
-    SENSOR_TYPE_ALTITUDE             = (1 << 13),
+    SENSOR_TYPE_ALTITUDE             = (1 << 10),
+    /* Weight Supported */
+    SENSOR_TYPE_WEIGHT               = (1 << 11),
     /* User defined sensor type 1 */
     SENSOR_TYPE_USER_DEFINED_1       = (1 << 26),
     /* User defined sensor type 2 */
@@ -96,6 +96,18 @@ typedef enum {
  * 32-bit floating point
  */
 #define SENSOR_VALUE_TYPE_FLOAT  (2)
+/**
+ * Meters per second squared.
+ *
+ * 32-bit signed integer, with 0xFFFFFFFF reserved for unused.
+ */
+#define SENSOR_VALUE_TYPE_MS2    (3)
+/**
+ * Triplet of meters per second squared.
+ */
+#define SENSOR_VALUE_TYPE_MS2_TRIPLET (4)
+
+
 
 /**
  * Configuration structure, describing a specific sensor type off of
@@ -118,7 +130,7 @@ struct sensor_cfg {
  * @param The argument provided to sensor_read() function.
  * @param A single sensor reading for that sensor listener
  *
- * @return 0 on succes, non-zero error code on failure.
+ * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*sensor_data_func_t)(struct sensor *, void *, void *);
 
@@ -143,8 +155,6 @@ struct sensor_listener {
      */
     SLIST_ENTRY(sensor_listener) sl_next;
 };
-
-struct sensor;
 
 /**
  * Get a more specific interface on this sensor object (e.g. Gyro, Magnometer),
@@ -187,11 +197,16 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
-struct sensor_driver_funcs {
+struct sensor_driver {
     sensor_get_interface_func_t sd_get_interface;
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
 };
+
+/*
+ * Return the OS device structure corresponding to this sensor
+ */
+#define SENSOR_GET_DEVICE(__s) ((__s)->s_dev)
 
 struct sensor {
     /* The OS device this sensor inherits from, this is typically a sensor specific
@@ -220,7 +235,7 @@ struct sensor {
 
     /* Sensor driver specific functions, created by the device registering the sensor.
      */
-    const struct sensor_driver_funcs s_funcs;
+    struct sensor_driver *s_funcs;
     /* A list of listeners that are registered to receive data off of this sensor
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
@@ -235,6 +250,25 @@ int sensor_register_listener(struct sensor *, struct sensor_listener *);
 int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *,
         uint32_t);
 
+/**
+ * Set the driver functions for this sensor, along with the type of sensor
+ * data available for the given sensor.
+ *
+ * @param The sensor to set the driver information for
+ * @param The types of sensor data available for this sensor
+ * @param The driver functions for this sensor
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+static inline int
+sensor_set_driver(struct sensor *sensor, sensor_type_t type,
+        struct sensor_driver *driver)
+{
+    sensor->s_funcs = driver;
+    sensor->s_types = type;
+
+    return (0);
+}
 
 /**
  * Read the configuration for the sensor type "type," and return the
@@ -250,7 +284,7 @@ static inline int
 sensor_get_config(struct sensor *sensor, sensor_type_t type,
         struct sensor_cfg *cfg)
 {
-    return (sensor->s_funcs.sd_get_config(sensor, type, cfg));
+    return (sensor->s_funcs->sd_get_config(sensor, type, cfg));
 }
 
 /**
@@ -265,7 +299,7 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
 static inline void *
 sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 {
-    return (sensor->s_funcs.sd_get_interface(sensor, type));
+    return (sensor->s_funcs->sd_get_interface(sensor, type));
 }
 
 /**
@@ -280,7 +314,10 @@ sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 #define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
         (OS_TICKS_PER_SEC / 1000))
 
+int sensor_mgr_lock(void);
+void sensor_mgr_unlock(void);
 int sensor_mgr_register(struct sensor *);
+
 
 typedef int (*sensor_mgr_compare_func_t)(struct sensor *, void *);
 struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,

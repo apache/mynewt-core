@@ -27,6 +27,7 @@ pkg.keywords:
 pkg.deps:
     - sys/console/full
     - hw/sensor 
+    - hw/drivers/sensors/sim 
     - test/flash_test
     - mgmt/imgmgr
     - mgmt/newtmgr

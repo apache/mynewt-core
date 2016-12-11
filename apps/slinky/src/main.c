@@ -29,6 +29,8 @@
 #include <log/log.h>
 #include <stats/stats.h>
 #include <config/config.h>
+#include <sensor/sensor.h>
+#include <sim/sim_accel.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -108,6 +110,8 @@ static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
 
 static struct os_eventq slinky_evq;
+
+struct sim_accel sim_accel_sensor;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -315,6 +319,11 @@ main(int argc, char **argv)
 #endif
 
     init_tasks();
+
+    sensor_pkg_init();
+
+    os_dev_create((struct os_dev *) &sim_accel_sensor, "simaccel0",
+            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIMARY, sim_accel_init, NULL);
 
     os_start();
 

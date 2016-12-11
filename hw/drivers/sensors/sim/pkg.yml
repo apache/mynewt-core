@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,13 +17,9 @@
 # under the License.
 #
 
-# Package: hw/sensor
+pkg.name: hw/drivers/sensors/sim
+pkg.description: Sensor simulated interfaces
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
 
-syscfg.defs:
-    SENSOR_MGR_WAKEUP_RATE:
-        description: 'The default wakeup rate of the sensor manager'
-        value: 1000
-
-    SENSOR_CLI:
-        description: 'Whether or not to enable the sensor shell support'
-        value: 1

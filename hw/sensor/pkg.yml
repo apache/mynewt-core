@@ -22,8 +22,4 @@ pkg.description: Sensor Interface
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.req_apis:
-    - SENSOR_HW_IMPL
 
-pkg.init_function: sensor_pkg_init
-pkg.init_stage: 0

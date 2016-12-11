@@ -26,15 +26,18 @@
 
 #include "sensor/sensor.h"
 
+#include "sensor_priv.h"
+
 struct {
     struct os_mutex mgr_lock;
 
     struct os_callout mgr_wakeup_callout;
+    struct os_eventq *mgr_eventq;
 
     TAILQ_HEAD(, sensor) mgr_sensor_list;
 } sensor_mgr;
 
-static int
+int
 sensor_mgr_lock(void)
 {
     int rc;
@@ -46,7 +49,7 @@ sensor_mgr_lock(void)
     return (rc);
 }
 
-static void
+void
 sensor_mgr_unlock(void)
 {
     (void) os_mutex_release(&sensor_mgr.mgr_lock);
@@ -214,10 +217,10 @@ done:
 static struct os_eventq *
 sensor_mgr_evq_get(void)
 {
-    /* XXX: FIll me in */
-    return (NULL);
-}
+    os_eventq_ensure(&sensor_mgr.mgr_eventq, NULL);
 
+    return (sensor_mgr.mgr_eventq);
+}
 
 static void
 sensor_mgr_init(void)
@@ -235,7 +238,26 @@ sensor_mgr_init(void)
     os_mutex_init(&sensor_mgr.mgr_lock);
 }
 
-
+/**
+ * The sensor manager contains a list of sensors, this function returns
+ * the next sensor in that list, for which compare_func() returns successful
+ * (one).  If prev_cursor is provided, the function starts at that point
+ * in the sensor list.
+ *
+ * @warn This function MUST be locked by sensor_mgr_lock/unlock() if the goal is
+ * to iterate through sensors (as opposed to just finding one.)  As the
+ * "prev_cursor" may be resorted in the sensor list, in between calls.
+ *
+ * @param The comparison function to use against sensors in the list.
+ * @param The argument to provide to that comparison function
+ * @param The previous sensor in the sensor manager list, in case of
+ *        iteration.  If desire is to find first matching sensor, provide a
+ *        NULL value.
+ *
+ * @return A pointer to the first sensor found from prev_cursor, or
+ *         NULL, if none found.
+ *
+ */
 struct sensor *
 sensor_mgr_find_next(sensor_mgr_compare_func_t compare_func, void *arg,
         struct sensor *prev_cursor)
@@ -254,12 +276,15 @@ sensor_mgr_find_next(sensor_mgr_compare_func_t compare_func, void *arg,
     cursor = prev_cursor;
     if (cursor == NULL) {
         cursor = TAILQ_FIRST(&sensor_mgr.mgr_sensor_list);
+    } else {
+        cursor = TAILQ_NEXT(prev_cursor, s_next);
     }
 
     while (cursor != NULL) {
         if (compare_func(cursor, arg)) {
             break;
         }
+        cursor = TAILQ_NEXT(cursor, s_next);
     }
 
     sensor_mgr_unlock();
@@ -269,6 +294,7 @@ done:
 }
 
 
+
 static int
 sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
 {
@@ -276,6 +302,10 @@ sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
 
     type = (sensor_type_t *) arg;
 
+    /* s_types is a bitmask that contains the supported sensor types for this
+     * sensor, and type is the bitmask we're searching for.  Compare the two,
+     * and if there is a match, return true (1).
+     */
     if ((*type & sensor->s_types) != 0) {
         return (1);
     } else {
@@ -340,10 +370,17 @@ sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor)
 void
 sensor_pkg_init(void)
 {
+    /* Call directly until sysinit has the right hooks for us */
+#if 0
     /* Ensure this is only called by sysinit */
     SYSINIT_ASSERT_ACTIVE();
+#endif
 
     sensor_mgr_init();
+
+#if MYNEWT_VAL(SENSOR_CLI)
+    sensor_shell_register();
+#endif
 }
 
 
@@ -403,7 +440,6 @@ sensor_init(struct sensor *sensor, struct os_dev *dev)
 err:
     return (rc);
 }
-
 
 
 /**
@@ -490,7 +526,7 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     src.user_func = data_func;
     src.user_arg = arg;
 
-    rc = sensor->s_funcs.sd_read(sensor, type, sensor_read_data_func, &src,
+    rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
             timeout);
 
     sensor_unlock(sensor);
