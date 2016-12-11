@@ -89,7 +89,7 @@ split_app_active_set(int active)
 int
 split_mode_set(split_mode_t split_mode)
 {
-    if (split_mode < 0 || split_mode >= SPLIT_MODE_CNT) {
+    if (split_mode >= (split_mode_t) SPLIT_MODE_CNT) {
         return SYS_EINVAL;
     }
 
