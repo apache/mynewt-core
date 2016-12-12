@@ -197,6 +197,7 @@ nmgr_ble_out(struct nmgr_transport *nt, struct os_mbuf *om)
 
     return (0);
 err:
+    os_mbuf_free_chain(om);
     return (rc);
 }
 

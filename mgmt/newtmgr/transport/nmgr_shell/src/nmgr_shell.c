@@ -44,6 +44,7 @@ nmgr_shell_out(struct nmgr_transport *nt, struct os_mbuf *m)
 
     return (0);
 err:
+    os_mbuf_free_chain(m);
     return (rc);
 }
 
