@@ -141,7 +141,24 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
     int i;
 
     if (fields->flags_is_present) {
-        console_printf("    flags=0x%02x\n", fields->flags);
+        console_printf("    flags=0x%02x:\n", fields->flags);
+
+        if (!(fields->flags & BLE_HS_ADV_F_DISC_LTD) &&
+                !(fields->flags & BLE_HS_ADV_F_DISC_GEN)) {
+                console_printf("        Non-discoverable mode\n");
+        }
+
+        if (fields->flags & BLE_HS_ADV_F_DISC_LTD) {
+                console_printf("        Limited discoverable mode\n");
+        }
+
+        if (fields->flags & BLE_HS_ADV_F_DISC_GEN) {
+                console_printf("        General discoverable mode\n");
+        }
+
+        if (fields->flags & BLE_HS_ADV_F_BREDR_UNSUP) {
+                console_printf("        BR/EDR not supported\n");
+        }
     }
 
     if (fields->uuids16 != NULL) {
