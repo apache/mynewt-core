@@ -98,6 +98,7 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
 {
     hdr = nmgr_init_rsp(m, hdr);
     if (!hdr) {
+        os_mbuf_free_chain(m);
         return;
     }
 
