@@ -19,7 +19,8 @@
 
 #include "../src/port/mynewt/config.h"
 #include "../src/messaging/coap/oc_coap.h"
-#include "oc_ri.h"
+#include "oic/oc_ri.h"
+#include "oic/oc_api.h"
 #include "../src/port/oc_signal_main_loop.h"
 #include "../src/port/oc_storage.h"
 
@@ -135,33 +136,6 @@ bool oc_do_observe(const char *uri, oc_server_handle_t *server,
                    oc_qos_t qos);
 
 bool oc_stop_observe(const char *uri, oc_server_handle_t *server);
-
-/** Common operations */
-
-/** API for setting handlers for interrupts */
-
-#define oc_signal_interrupt_handler(name)                                      \
-  do {                                                                         \
-    oc_process_poll(&(name##_interrupt_x));                                    \
-    oc_signal_main_loop();                                                     \
-  } while (0)
-
-#define oc_activate_interrupt_handler(name)                                    \
-  (oc_process_start(&(name##_interrupt_x), 0))
-
-#define oc_define_interrupt_handler(name)                                      \
-  void name##_interrupt_x_handler(void);                                       \
-  OC_PROCESS(name##_interrupt_x, "");                                          \
-  OC_PROCESS_THREAD(name##_interrupt_x, ev, data)                              \
-  {                                                                            \
-    OC_PROCESS_POLLHANDLER(name##_interrupt_x_handler());                      \
-    OC_PROCESS_BEGIN();                                                        \
-    while (oc_process_is_running(&(name##_interrupt_x))) {                     \
-      OC_PROCESS_YIELD();                                                      \
-    }                                                                          \
-    OC_PROCESS_END();                                                          \
-  }                                                                            \
-  void name##_interrupt_x_handler(void)
 
 #ifdef __cplusplus
 }
