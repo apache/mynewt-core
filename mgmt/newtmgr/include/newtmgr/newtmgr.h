@@ -43,8 +43,20 @@ struct nmgr_hdr {
 };
 
 struct nmgr_transport;
+
+/**
+ * Transmit function.  The supplied mbuf is always consumed, regardless of
+ * return code.
+ */
 typedef int (*nmgr_transport_out_func_t)(struct nmgr_transport *nt,
         struct os_mbuf *m);
+
+/**
+ * MTU query function.  The supplied mbuf should contain a request received
+ * from the peer whose MTU is being queried.  This function takes an mbuf
+ * parameter because some transports store connection-specific information in
+ * the mbuf user header (e.g., the BLE transport stores the connection handle).
+ */
 typedef uint16_t (*nmgr_transport_get_mtu_func_t)(struct os_mbuf *m);
 
 struct nmgr_transport {
