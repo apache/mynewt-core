@@ -936,12 +936,23 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_DISC:
-        console_printf("received advertisement; event_type=%d addr_type=%d "
-                       "addr=", event->disc.event_type,
-                       event->disc.addr_type);
+        console_printf("received advertisement; event_type=%d rssi=%d "
+                       "addr_type=%d addr=", event->disc.event_type,
+                       event->disc.rssi, event->disc.addr_type);
         print_addr(event->disc.addr);
-        console_printf(" length_data=%d rssi=%d data=",
-                       event->disc.length_data, event->disc.rssi);
+
+        /*
+         * There is no adv data to print in case of connectable
+         * directed advertising
+         */
+        if (event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD ||
+                event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD) {
+                console_printf("\nConnectable directed advertising event\n");
+                return 0;
+        }
+
+        console_printf(" length_data=%d data=",
+                               event->disc.length_data);
         print_bytes(event->disc.data, event->disc.length_data);
         console_printf(" fields:\n");
         bletiny_print_adv_fields(event->disc.fields);
