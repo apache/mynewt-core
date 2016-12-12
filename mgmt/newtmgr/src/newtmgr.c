@@ -111,73 +111,95 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
     nt->nt_output(nt, nmgr_task_cbuf.n_out_m);
 }
 
+/**
+ * Splits an appropriately-sized fragment off from the front of an outgoing
+ * newtmgr response packet, if necessary.  If the packet size is within the
+ * transport MTU, no splitting is performed.  The fragment data is removed from
+ * the data packet mbuf.
+ *
+ * @param om                    The newtmgr response packet.  If this
+ *                                  constitutes a single fragment, it gets set
+ *                                  to NULL on success.
+ * @param out_frag              On success, this points to the fragment to
+ *                                  send.  If the entire packet can fit within
+ *                                  a single fragment, this will point to the
+ *                                  newtmgr response packet itself ('om').
+ *
+ * @return                      0 on success;
+ *                              BLE host core return code on error.
+ */
 static int
-nmgr_send_rspfrag(struct nmgr_transport *nt, struct os_mbuf *rsp,
-                  struct os_mbuf *req, uint16_t len)
+nmgr_rsp_split_frag(struct os_mbuf **om, uint16_t mtu,
+                    struct os_mbuf **out_frag)
 {
-    struct os_mbuf *rspfrag;
+    struct os_mbuf *frag;
     int rc;
 
-    rspfrag = NULL;
+    /* Assume failure. */
+    *out_frag = NULL;
 
-    rspfrag = os_msys_get_pkthdr(len, OS_MBUF_USRHDR_LEN(req));
-    if (!rspfrag) {
+    if (OS_MBUF_PKTLEN(*om) <= mtu) {
+        /* Final fragment. */
+        *out_frag = *om;
+        *om = NULL;
+        return 0;
+    }
+
+    frag = os_msys_get_pkthdr(mtu, OS_MBUF_USRHDR_LEN(*om));
+    if (frag == NULL) {
         rc = MGMT_ERR_ENOMEM;
         goto err;
     }
 
-    /* Copy the request packet header into the response. */
-    memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req),
-           OS_MBUF_USRHDR_LEN(req));
+    /* Copy the user header from the response into the fragment mbuf. */
+    memcpy(OS_MBUF_USRHDR(frag), OS_MBUF_USRHDR(*om), OS_MBUF_USRHDR_LEN(*om));
 
-    if (os_mbuf_appendfrom(rspfrag, rsp, 0, len)) {
+    /* Move data from the front of the packet into the fragment mbuf. */
+    rc = os_mbuf_appendfrom(frag, *om, 0, mtu);
+    if (rc != 0) {
         rc = MGMT_ERR_ENOMEM;
         goto err;
     }
+    os_mbuf_adj(*om, mtu);
 
-    nt->nt_output(nt, rspfrag);
+    /* XXX: We should try to free buffers from the response chain if
+     * possible.
+     */
 
-    return MGMT_ERR_EOK;
+    /* More fragments to follow. */
+    *out_frag = frag;
+    return 0;
+
 err:
-    if (rspfrag) {
-        os_mbuf_free_chain(rspfrag);
-    }
+    os_mbuf_free_chain(frag);
     return rc;
 }
 
+/**
+ * Sends a newtmgr response, fragmenting it as needed.  The supplied response
+ * mbuf is consumed on success and in some failure cases.  If the mbuf is
+ * consumed, the supplied pointer is set to NULL.
+ */
 static int
-nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
-                  struct os_mbuf *rsp, struct os_mbuf *req)
+nmgr_rsp_tx(struct nmgr_transport *nt, struct os_mbuf **rsp, uint16_t mtu)
 {
-    uint16_t mtu;
-    uint16_t rsplen;
-    uint16_t len ;
+    struct os_mbuf *frag;
     int rc;
 
-    len = 0;
-
-    mtu = nt->nt_get_mtu(req);
-
-    do {
-        len = OS_MBUF_PKTLEN(rsp);
-        if (len >= mtu) {
-            rsplen = mtu;
-        } else {
-            rsplen = len;
+    while (rsp != NULL) {
+        rc = nmgr_rsp_split_frag(rsp, mtu, &frag);
+        if (rc != 0) {
+            return rc;
         }
 
-        rc = nmgr_send_rspfrag(nt, rsp, req, rsplen);
-        if (rc) {
-            goto err;
+        rc = nt->nt_output(nt, frag);
+        if (rc != 0) {
+            /* Output function already freed mbuf. */
+            return MGMT_ERR_EUNKNOWN;
         }
-
-        os_mbuf_adj(rsp, rsplen);
-
-    } while (OS_MBUF_PKTLEN(rsp));
+    }
 
     return MGMT_ERR_EOK;
-err:
-    return rc;
 }
 
 static void
@@ -189,6 +211,7 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     struct nmgr_hdr hdr;
     int off;
     uint16_t len;
+    uint16_t mtu;
     int rc;
 
     rsp_hdr = NULL;
@@ -203,6 +226,8 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         req = NULL;
         goto err;
     }
+
+    mtu = nt->nt_get_mtu(req);
 
     /* Copy the request packet header into the response. */
     memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
@@ -260,13 +285,21 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 
         rsp_hdr->nh_len +=
             cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
-        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
-
         rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
-        rc = nmgr_rsp_fragment(nt, rsp_hdr, rsp, req);
+
+        rc = nmgr_rsp_tx(nt, &rsp, mtu);
         if (rc) {
-            goto err;
+            /* If the entire mbuf was consumed by the transport, don't attempt
+             * to send an error response.
+             */
+            if (rsp == NULL) {
+                goto err_norsp;
+            } else {
+                goto err;
+            }
         }
+
+        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
     }
 
     os_mbuf_free_chain(rsp);
