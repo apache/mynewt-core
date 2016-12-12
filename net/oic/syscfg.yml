@@ -62,4 +62,6 @@ syscfg.defs:
         description: 'Platform payload size'
         value: 256
 
-
+    OC_LOGGING:
+        description: 'Logging enabled'
+        value: 0

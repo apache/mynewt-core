@@ -34,7 +34,7 @@ oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
 
     switch (oe->flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    case IP:
+    case IP: {
         int len;
 
         mn_inet_ntop(MN_PF_INET6, oe->ipv6_addr.address, tmp, sizeof(tmp));
@@ -42,6 +42,7 @@ oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
         snprintf(tmp + len, sizeof(tmp) - len, "-%u\n", oe->ipv6_addr.port);
         str = tmp;
         break;
+    }
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     case GATT:

@@ -26,6 +26,11 @@ extern "C" {
 
 extern struct log oc_log;
 
+/*
+ * XXXX, this should not be needed.
+ * Figure out why logging takes so much space even with LOG_LEVEL set to 4
+ */
+#if MYNEWT_VAL(OC_LOGGING)
 #define OC_LOG_DEBUG(...) LOG_DEBUG(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
 #define OC_LOG_INFO(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
 #define OC_LOG_ERROR(...) LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
@@ -54,6 +59,16 @@ void oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char);
             oc_log_bytes(lvl, addr, len, 0);                            \
         }                                                               \
     } while(0)
+#else
+
+#define OC_LOG_DEBUG(...)
+#define OC_LOG_INFO(...)
+#define OC_LOG_ERROR(...)
+#define OC_LOG_ENDPOINT(...)
+#define OC_LOG_STR(...)
+#define OC_LOG_HEX(...)
+
+#endif
 
 #ifdef __cplusplus
 }
