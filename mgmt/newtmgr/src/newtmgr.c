@@ -161,10 +161,7 @@ nmgr_rsp_split_frag(struct os_mbuf **om, uint16_t mtu,
         goto err;
     }
     os_mbuf_adj(*om, mtu);
-
-    /* XXX: We should try to free buffers from the response chain if
-     * possible.
-     */
+    *om = os_mbuf_trim_front(*om);
 
     /* More fragments to follow. */
     *out_frag = frag;
