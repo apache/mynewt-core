@@ -23,6 +23,7 @@
 #include <bsp/bsp.h>
 #include <log/log.h>
 #include <oic/oc_api.h>
+#include <cborattr/cborattr.h>
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 #include <console/console.h>
 #include <console/prompt.h>
@@ -54,13 +55,13 @@ get_light(oc_request_t *request, oc_interface_mask_t interface)
     printf("GET_light:\n");
     oc_rep_start_root_object();
     switch (interface) {
-        case OC_IF_BASELINE:
-            oc_process_baseline_interface(request->resource);
-        case OC_IF_RW:
-            oc_rep_set_boolean(root, state, light_state);
-            break;
-        default:
-            break;
+    case OC_IF_BASELINE:
+        oc_process_baseline_interface(request->resource);
+    case OC_IF_RW:
+        oc_rep_set_boolean(root, state, light_state);
+        break;
+    default:
+        break;
     }
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
@@ -70,25 +71,30 @@ get_light(oc_request_t *request, oc_interface_mask_t interface)
 static void
 put_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    printf("PUT_light:\n");
-    bool state = false;
-    oc_rep_t *rep = request->request_payload;
-    while (rep != NULL) {
-        printf("key: %s ", oc_string(rep->name));
-        switch (rep->type) {
-            case BOOL:
-                state = rep->value_boolean;
-                printf("value: %d\n", state);
-                break;
-            default:
-                oc_send_response(request, OC_STATUS_BAD_REQUEST);
-                return;
-                break;
+    bool state;
+    int len;
+    const uint8_t *data;
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "state",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &state,
+            .dflt.boolean = false
+        },
+        [1] = {
         }
-        rep = rep->next;
+    };
+
+    printf("PUT_light:\n");
+
+    len = coap_get_payload(request->packet, &data);
+    if (cbor_read_flat_attrs(data, len, attrs)) {
+        oc_send_response(request, OC_STATUS_BAD_REQUEST);
+    } else {
+        printf("value: %d\n", state);
+        light_state = state;
+        oc_send_response(request, OC_STATUS_CHANGED);
     }
-    oc_send_response(request, OC_STATUS_CHANGED);
-    light_state = state;
 }
 
 static void

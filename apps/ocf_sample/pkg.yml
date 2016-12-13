@@ -28,6 +28,7 @@ pkg.deps:
     - kernel/os
     - sys/log
     - net/oic
+    - encoding/cborattr
     - sys/console/full
 
 pkg.deps.OC_TRANSPORT_SERIAL:
