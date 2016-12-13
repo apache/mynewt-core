@@ -87,6 +87,20 @@ parse_arg_find_idx(const char *key)
 }
 
 char *
+parse_arg_peek(const char *key)
+{
+    int i;
+
+    for (i = 0; i < cmd_num_args; i++) {
+        if (strcmp(cmd_args[i][0], key) == 0) {
+            return cmd_args[i][1];
+        }
+    }
+
+    return NULL;
+}
+
+char *
 parse_arg_extract(const char *key)
 {
     int i;
@@ -119,17 +133,10 @@ parse_arg_long_base(char *sval)
 }
 
 long
-parse_arg_long_bounds(char *name, long min, long max, int *out_status)
+parse_long_bounds(char *sval, long min, long max, int *out_status)
 {
     char *endptr;
-    char *sval;
     long lval;
-
-    sval = parse_arg_extract(name);
-    if (sval == NULL) {
-        *out_status = ENOENT;
-        return 0;
-    }
 
     lval = strtol(sval, &endptr, parse_arg_long_base(sval));
     if (sval[0] != '\0' && *endptr == '\0' &&
@@ -141,6 +148,32 @@ parse_arg_long_bounds(char *name, long min, long max, int *out_status)
 
     *out_status = EINVAL;
     return 0;
+}
+
+long
+parse_arg_long_bounds_peek(char *name, long min, long max, int *out_status)
+{
+    char *sval;
+
+    sval = parse_arg_peek(name);
+    if (sval == NULL) {
+        *out_status = ENOENT;
+        return 0;
+    }
+    return parse_long_bounds(sval, min, max, out_status);
+}
+
+long
+parse_arg_long_bounds(char *name, long min, long max, int *out_status)
+{
+    char *sval;
+
+    sval = parse_arg_extract(name);
+    if (sval == NULL) {
+        *out_status = ENOENT;
+        return 0;
+    }
+    return parse_long_bounds(sval, min, max, out_status);
 }
 
 long
@@ -214,6 +247,12 @@ uint16_t
 parse_arg_uint16(char *name, int *out_status)
 {
     return parse_arg_long_bounds(name, 0, UINT16_MAX, out_status);
+}
+
+uint16_t
+parse_arg_uint16_peek(char *name, int *out_status)
+{
+    return parse_arg_long_bounds_peek(name, 0, UINT16_MAX, out_status);
 }
 
 uint32_t
@@ -412,16 +451,17 @@ int
 parse_arg_uuid(char *str, uint8_t *dst_uuid128)
 {
     uint16_t uuid16;
-    char *tok;
     int rc;
 
-    uuid16 = parse_arg_uint16(str, &rc);
+    uuid16 = parse_arg_uint16_peek(str, &rc);
     switch (rc) {
     case ENOENT:
+        parse_arg_extract(str);
         return ENOENT;
 
     case 0:
         rc = ble_uuid_16_to_128(uuid16, dst_uuid128);
+        parse_arg_extract(str);
         if (rc != 0) {
             return EINVAL;
         } else {
@@ -429,48 +469,8 @@ parse_arg_uuid(char *str, uint8_t *dst_uuid128)
         }
 
     default:
-        /* e7add801-b042-4876-aae1112855353cc1 */
-        if (strlen(str) == 35) {
-            tok = strtok(str, "-");
-            if (tok == NULL) {
-                return EINVAL;
-            }
-            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 0, 4);
-            if (rc != 0) {
-                return rc;
-            }
-
-            tok = strtok(NULL, "-");
-            if (tok == NULL) {
-                return EINVAL;
-            }
-            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 4, 2);
-            if (rc != 0) {
-                return rc;
-            }
-
-            tok = strtok(NULL, "-");
-            if (tok == NULL) {
-                return EINVAL;
-            }
-            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 6, 2);
-            if (rc != 0) {
-                return rc;
-            }
-
-            tok = strtok(NULL, "-");
-            if (tok == NULL) {
-                return EINVAL;
-            }
-            rc = parse_arg_byte_stream_exact_length(tok, dst_uuid128 + 8, 8);
-            if (rc != 0) {
-                return rc;
-            }
-
-            return 0;
-        }
-
         rc = parse_arg_byte_stream_exact_length(str, dst_uuid128, 16);
+        parse_reverse_bytes(dst_uuid128, 16);
         return rc;
     }
 }
