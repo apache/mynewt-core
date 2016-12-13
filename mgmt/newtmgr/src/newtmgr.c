@@ -183,7 +183,7 @@ nmgr_rsp_tx(struct nmgr_transport *nt, struct os_mbuf **rsp, uint16_t mtu)
     struct os_mbuf *frag;
     int rc;
 
-    while (rsp != NULL) {
+    while (*rsp != NULL) {
         rc = nmgr_rsp_split_frag(rsp, mtu, &frag);
         if (rc != 0) {
             return rc;
