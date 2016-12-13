@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+#ifdef OC_CLIENT
 typedef enum { HIGH_QOS = 0, LOW_QOS } oc_qos_t;
 
 typedef struct
@@ -88,6 +89,7 @@ oc_discovery_flags_t oc_ri_process_discovery_payload(uint8_t *payload, int len,
 
 bool oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
                     uint16_t mid);
+#endif
 
 #ifdef __cplusplus
 }

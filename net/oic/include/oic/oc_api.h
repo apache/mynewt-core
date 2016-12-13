@@ -109,6 +109,7 @@ void oc_send_separate_response(oc_separate_response_t *handle,
 
 int oc_notify_observers(oc_resource_t *resource);
 
+#ifdef OC_CLIENT
 /** Client side */
 #include "oc_client_state.h"
 
@@ -136,6 +137,7 @@ bool oc_do_observe(const char *uri, oc_server_handle_t *server,
                    oc_qos_t qos);
 
 bool oc_stop_observe(const char *uri, oc_server_handle_t *server);
+#endif
 
 #ifdef __cplusplus
 }
