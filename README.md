@@ -24,8 +24,8 @@
 ## Overview
 
 Apache Mynewt is an open-source operating system for tiny embedded devices.
-It's goal is to make it easy to develop applications for microcontroller
-environments, where power and cost are driving factors.
+Its goal is to make it easy to develop applications for microcontroller
+environments where power and cost are driving factors.
 
 It currently supports the following hardware platforms:
 
@@ -86,12 +86,13 @@ Mynewt is being actively developed.  Some of the features we're currently workin
 If you are browsing around the source tree, and want to see some of the
 major functional chunks, here are a few pointers:
 
-- libs: Contains the core of the RTOS ([kernel/os](https://github.com/apache/incubator-mynewt-core/tree/master/libs/os))
-and a number of helper libraries for building applications.  Including a
-console ([sys/console](https://github.com/apache/incubator-mynewt-core/tree/master/libs/console))),
-shell ([sys/shell](https://github.com/apache/incubator-mynewt-core/tree/master/libs/shell))), and
-[mgmt/newtmgr](https://github.com/apache/incubator-mynewt-core/tree/master/libs/newtmgr)), which
-supports software upgrade and remote fetching of logs and statistics.
+- kernel: Contains the core of the RTOS ([kernel/os](https://github.com/apache/incubator-mynewt-core/tree/master/kernel/os))
+
+- sys: Contains a number of helper libraries for building applications.  Including a
+console ([sys/console](https://github.com/apache/incubator-mynewt-core/tree/master/sys/console))),
+shell ([sys/shell](https://github.com/apache/incubator-mynewt-core/tree/master/sys/shell)))
+
+- mgmt: Contains the management libraries for newtmgr [mgmt/newtmgr](https://github.com/apache/incubator-mynewt-core/tree/master/sys/newtmgr)), which supports software upgrade and remote fetching of logs and statistics.
 
 - net: Contains the networking packages.  Highlights of the net directory are the NimBLE and IP packages.
 [Nimble](https://github.com/apache/incubator-mynewt-core/tree/master/net/nimble)
