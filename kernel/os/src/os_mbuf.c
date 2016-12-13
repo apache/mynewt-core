@@ -1278,6 +1278,59 @@ bad:
 }
 
 /**
+ * Removes and frees empty mbufs from the front of a chain.  If the chain
+ * contains a packet header, it is preserved.
+ *
+ * @param om                    The mbuf chain to trim.
+ *
+ * @return                      The head of the trimmed mbuf chain.
+ */
+struct os_mbuf *
+os_mbuf_trim_front(struct os_mbuf *om)
+{
+    struct os_mbuf *next;
+    struct os_mbuf *cur;
+
+    /* Abort early if there is nothing to trim. */
+    if (om->om_len != 0) {
+        return om;
+    }
+
+    /* Starting with the second mbuf in the chain, continue removing and
+     * freeing mbufs until an non-empty one is encountered.
+     */
+    cur = SLIST_NEXT(om, om_next);
+    while (cur != NULL && cur->om_len == 0) {
+        next = SLIST_NEXT(cur, om_next);
+
+        SLIST_NEXT(om, om_next) = next;
+        os_mbuf_free(cur);
+
+        cur = next;
+    }
+
+    if (cur == NULL) {
+        /* All buffers after the first have been freed. */
+        return om;
+    }
+
+    /* Try to remove the first mbuf in the chain.  If this buffer contains a
+     * packet header, make sure the second buffer can accommodate it.
+     */
+    if (OS_MBUF_LEADINGSPACE(cur) >= om->om_pkthdr_len) {
+        /* Second buffer has room; copy packet header. */
+        cur->om_pkthdr_len = om->om_pkthdr_len;
+        memcpy(OS_MBUF_PKTHDR(cur), OS_MBUF_PKTHDR(om), om->om_pkthdr_len);
+
+        /* Free first buffer. */
+        os_mbuf_free(om);
+        om = cur;
+    }
+
+    return om;
+}
+
+/**
  *   @} OSMbuf
  * @} OSKernel
  */
