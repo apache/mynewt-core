@@ -19,6 +19,7 @@
 
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
+#include <tinycbor/cbor_buf_reader.h>
 
 /* this maps a CborType to a matching CborAtter Type. The mapping is not
  * one-to-one because of signedness of integers
@@ -264,4 +265,31 @@ cbor_read_object(struct CborValue *value, const struct cbor_attr_t *attrs)
 
     st = cbor_internal_read_object(value, attrs, NULL, 0);
     return st;
+}
+
+/*
+ * Read in cbor key/values from flat buffer pointed by data, and fill them
+ * into attrs.
+ *
+ * @param data		Pointer to beginning of cbor encoded data
+ * @param len		Number of bytes in the buffer
+ * @param attrs		Array of cbor objects to look for.
+ *
+ * @return		0 on success; non-zero on failure.
+ */
+int
+cbor_read_flat_attrs(const uint8_t *data, int len,
+                     const struct cbor_attr_t *attrs)
+{
+    struct cbor_buf_reader reader;
+    struct CborParser parser;
+    struct CborValue value;
+    CborError err;
+
+    cbor_buf_reader_init(&reader, data, len);
+    err = cbor_parser_init(&reader.r, 0, &parser, &value);
+    if (err != CborNoError) {
+        return -1;
+    }
+    return cbor_read_object(&value, attrs);
 }

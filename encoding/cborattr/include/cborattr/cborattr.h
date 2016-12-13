@@ -121,6 +121,8 @@ struct cbor_attr_t {
 int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
 int cbor_read_array(struct CborParser *, const struct cbor_array_t *);
 
+int cbor_read_flat_attrs(const uint8_t *data, int len,
+                         const struct cbor_attr_t *attrs);
 
 #ifdef __cplusplus
 }
