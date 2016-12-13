@@ -127,45 +127,43 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
 }
 
 static void
-oc_core_discovery_handler(oc_request_t *request, oc_interface_mask_t interface)
+oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
-  char *rt = NULL;
-  int rt_len = 0, matches = 0;
-  if (request->query_len) {
-    rt_len =
-      oc_ri_get_query_value(request->query, request->query_len, "rt", &rt);
-  }
+    char *rt = NULL;
+    int rt_len = 0, matches = 0;
+    char uuid[37];
 
-  char uuid[37];
-  oc_uuid_to_str(oc_core_get_device_id(0), uuid, 37);
+    rt_len = oc_ri_get_query_value(req->query, req->query_len, "rt", &rt);
 
-  switch (interface) {
-  case OC_IF_LL: {
-    oc_rep_start_links_array();
-    matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
-    oc_rep_end_links_array();
-  } break;
-  case OC_IF_BASELINE: {
-    oc_rep_start_root_object();
-    oc_process_baseline_interface(request->resource);
-    oc_rep_set_array(root, links);
-    matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
-    oc_rep_close_array(root, links);
-    oc_rep_end_root_object();
-  } break;
-  default:
-    break;
-  }
+    oc_uuid_to_str(oc_core_get_device_id(0), uuid, sizeof(uuid));
 
-  int response_length = oc_rep_finalize();
+    switch (interface) {
+    case OC_IF_LL: {
+        oc_rep_start_links_array();
+        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
+        oc_rep_end_links_array();
+    } break;
+    case OC_IF_BASELINE: {
+        oc_rep_start_root_object();
+        oc_process_baseline_interface(req->resource);
+        oc_rep_set_array(root, links);
+        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
+        oc_rep_close_array(root, links);
+        oc_rep_end_root_object();
+    } break;
+    default:
+        break;
+    }
 
-  if (matches && response_length > 0) {
-    request->response->response_buffer->response_length = response_length;
-    request->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
-  } else {
-    /* There were rt/if selections and there were no matches, so ignore */
-    request->response->response_buffer->code = OC_IGNORE;
-  }
+    int response_length = oc_rep_finalize();
+
+    if (matches && response_length > 0) {
+        req->response->response_buffer->response_length = response_length;
+        req->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
+    } else {
+        /* There were rt/if selections and there were no matches, so ignore */
+        req->response->response_buffer->code = OC_IGNORE;
+    }
 }
 
 void

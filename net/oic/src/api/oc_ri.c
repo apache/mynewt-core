@@ -229,8 +229,8 @@ oc_ri_init(void)
   SLIST_INIT(&oc_client_cbs);
   os_mempool_init(&oc_client_cb_pool, MAX_NUM_CONCURRENT_REQUESTS,
     sizeof(oc_client_cb_t), oc_client_cb_area, "oc_cl_cbs");
-#endif
   oc_rep_init();
+#endif
   oc_buffer_init();
 
   start_processes();
@@ -393,7 +393,6 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   response_obj.response_buffer = &response_buffer;
 
   request_obj.response = &response_obj;
-  request_obj.request_payload = 0;
   request_obj.query_len = 0;
   request_obj.resource = 0;
   request_obj.origin = endpoint;
@@ -419,22 +418,6 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
     int if_len = oc_ri_get_query_value(uri_query, uri_query_len, "if", &iface);
     if (if_len != -1) {
       interface |= oc_ri_get_interface_mask(iface, if_len);
-    }
-  }
-
-  /* Obtain handle to buffer containing the serialized payload */
-  const uint8_t *payload;
-  int payload_len = coap_get_payload(request, &payload);
-  if (payload_len) {
-    /* Attempt to parse request payload using tinyCBOR via oc_rep helper
-     * functions. The result of this parse is a tree of oc_rep_t structures
-     * which will reflect the schema of the payload.
-     * Any failures while parsing the payload is viewed as an erroneous
-     * request and results in a 4.00 response being sent.
-     */
-    if (oc_parse_rep(payload, payload_len, &request_obj.request_payload) != 0) {
-      OC_LOG_ERROR("ocri: error parsing request payload\n");
-      bad_request = true;
     }
   }
 
@@ -528,13 +511,6 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
         method_impl = false;
       }
     }
-  }
-
-  if (payload_len) {
-    /* To the extent that the request payload was parsed, free the
-     * payload structure (and return its memory to the pool).
-     */
-    oc_free_rep(request_obj.request_payload);
   }
 
   if (bad_request) {

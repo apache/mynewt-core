@@ -190,6 +190,7 @@ int oc_rep_finalize(void);
     g_err |= cbor_encoder_close_container(&object##_map, &key##_value_array);  \
   } while (0)
 
+#ifdef OC_CLIENT
 typedef enum {
   NIL = 0,
   INT = 0x01,
@@ -229,6 +230,7 @@ uint16_t oc_parse_rep(const uint8_t *payload, uint16_t payload_size,
                       oc_rep_t **value_list);
 
 void oc_free_rep(oc_rep_t *rep);
+#endif
 
 #ifdef __cplusplus
 }

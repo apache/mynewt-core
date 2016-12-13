@@ -25,9 +25,11 @@
 #include <tinycbor/cbor_buf_writer.h>
 #include <tinycbor/cbor_buf_reader.h>
 
+#ifdef OC_CLIENT
 static struct os_mempool oc_rep_objects;
 static uint8_t oc_rep_objects_area[OS_MEMPOOL_BYTES(EST_NUM_REP_OBJECTS,
       sizeof(oc_rep_t))];
+#endif
 
 static const CborEncoder g_empty;
 static uint8_t *g_buf;
@@ -61,6 +63,7 @@ oc_rep_reset(void)
     g_encoder = g_empty;
 }
 
+#ifdef OC_CLIENT
 static oc_rep_t *
 _alloc_rep(void)
 {
@@ -321,3 +324,4 @@ oc_rep_init(void)
     os_mempool_init(&oc_rep_objects, EST_NUM_REP_OBJECTS,
       sizeof(oc_rep_t), oc_rep_objects_area, "oc_rep_o");
 }
+#endif
