@@ -32,6 +32,8 @@ oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
     char *str;
     char tmp[46 + 6];
 
+    (void)tmp;
+
     switch (oe->flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     case IP: {
