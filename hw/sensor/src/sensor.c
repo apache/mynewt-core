@@ -214,7 +214,7 @@ done:
     os_callout_reset(&sensor_mgr.mgr_wakeup_callout, task_next_wakeup);
 }
 
-static struct os_eventq *
+struct os_eventq *
 sensor_mgr_evq_get(void)
 {
     os_eventq_ensure(&sensor_mgr.mgr_eventq, NULL);
@@ -473,6 +473,29 @@ sensor_register_listener(struct sensor *sensor,
 err:
     return (rc);
 }
+
+int
+sensor_unregister_listener(struct sensor *sensor,
+        struct sensor_listener *listener)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove this entry from the list */
+    SLIST_REMOVE(&sensor->s_listener_list, listener, sensor_listener,
+            sl_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
 
 struct sensor_read_ctx {
     sensor_data_func_t user_func;

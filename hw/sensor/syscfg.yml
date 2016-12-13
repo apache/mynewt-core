@@ -21,7 +21,7 @@
 syscfg.defs:
     SENSOR_MGR_WAKEUP_RATE:
         description: 'The default wakeup rate of the sensor manager'
-        value: 1000
+        value: 1
 
     SENSOR_CLI:
         description: 'Whether or not to enable the sensor shell support'

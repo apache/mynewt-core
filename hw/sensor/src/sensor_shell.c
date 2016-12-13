@@ -30,6 +30,7 @@
 #include "os/os.h"
 
 #include "sensor/sensor.h"
+#include "sensor/accel.h"
 #include "console/console.h"
 #include "shell/shell.h"
 
@@ -74,6 +75,80 @@ sensor_cmd_list_sensors(void)
     sensor_mgr_unlock();
 }
 
+struct sensor_shell_read_ctx {
+    sensor_type_t type;
+    int num_entries;
+};
+
+static int
+sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
+{
+    struct sensor_shell_read_ctx *ctx;
+    struct sensor_accel_data *sad;
+
+    ctx = (struct sensor_shell_read_ctx *) arg;
+
+    ++ctx->num_entries;
+
+    if (ctx->type == SENSOR_TYPE_ACCELEROMETER) {
+        sad = (struct sensor_accel_data *) data;
+        if (sad->sad_x != SENSOR_ACCEL_DATA_UNUSED) {
+            console_printf("x = %d, ", sad->sad_x);
+        }
+        if (sad->sad_y != SENSOR_ACCEL_DATA_UNUSED) {
+            console_printf("y = %d, ", sad->sad_y);
+        }
+        if (sad->sad_z != SENSOR_ACCEL_DATA_UNUSED) {
+            console_printf("z = %d", sad->sad_z);
+        }
+        console_printf("\n");
+    }
+
+    return (0);
+}
+
+static void
+sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
+{
+    struct sensor *sensor;
+    struct sensor_listener listener;
+    struct sensor_shell_read_ctx ctx;
+    int rc;
+
+    /* Look up sensor by name */
+    sensor = sensor_mgr_find_next_bydevname(name, NULL);
+    if (!sensor) {
+        console_printf("Sensor %s not found!\n", name);
+    }
+
+    /* Register a listener and then trigger/read a bunch of samples.
+     */
+    memset(&ctx, 0, sizeof(ctx));
+
+    ctx.type = type;
+
+    listener.sl_sensor_type = type;
+    listener.sl_func = sensor_shell_read_listener;
+    listener.sl_arg = &ctx;
+
+    rc = sensor_register_listener(sensor, &listener);
+    if (rc != 0) {
+        goto err;
+    }
+
+    while (1) {
+        rc = sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
+        if (ctx.num_entries >= nsamples) {
+            break;
+        }
+    }
+
+    sensor_unregister_listener(sensor, &listener);
+
+err:
+    return;
+}
+
 
 static int
 sensor_cmd_exec(int argc, char **argv)
@@ -90,6 +165,15 @@ sensor_cmd_exec(int argc, char **argv)
     subcmd = argv[1];
     if (!strcmp(subcmd, "list")) {
         sensor_cmd_list_sensors();
+    } else if (!strcmp(subcmd, "read")) {
+        if (argc != 5) {
+            console_printf("Three arguments required for read: device name, "
+                    "sensor type and number of samples, only %d provided.\n",
+                    argc - 2);
+            rc = SYS_EINVAL;
+            goto err;
+        }
+        sensor_cmd_read(argv[2], (sensor_type_t) atoi(argv[3]), atoi(argv[4]));
     } else {
         console_printf("Unknown sensor command %s\n", subcmd);
         rc = SYS_EINVAL;

@@ -247,6 +247,8 @@ int sensor_init(struct sensor *, struct os_dev *dev);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
 int sensor_register_listener(struct sensor *, struct sensor_listener *);
+int sensor_unregister_listener(struct sensor *, struct sensor_listener *);
+
 int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *,
         uint32_t);
 
@@ -317,6 +319,7 @@ sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 int sensor_mgr_lock(void);
 void sensor_mgr_unlock(void);
 int sensor_mgr_register(struct sensor *);
+struct os_eventq *sensor_mgr_evq_get(void);
 
 
 typedef int (*sensor_mgr_compare_func_t)(struct sensor *, void *);

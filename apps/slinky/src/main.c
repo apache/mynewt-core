@@ -270,6 +270,33 @@ init_tasks(void)
     os_eventq_dflt_set(&slinky_evq);
 }
 
+static int
+slinky_sim_accel_init(struct os_dev *dev, void *arg)
+{
+    struct sim_accel_cfg cfg;
+    int rc;
+
+    rc = sim_accel_init(dev, arg);
+    if (rc != 0) {
+        goto err;
+    }
+
+    cfg.sac_nr_samples = 10;
+    cfg.sac_nr_axises = 1;
+    /* read once per sec.  API should take this value in ms. */
+    cfg.sac_sample_itvl = OS_TICKS_PER_SEC;
+
+    rc = sim_accel_config((struct sim_accel *) dev, &cfg);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+
 /**
  * main
  *
@@ -323,7 +350,7 @@ main(int argc, char **argv)
     sensor_pkg_init();
 
     os_dev_create((struct os_dev *) &sim_accel_sensor, "simaccel0",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIMARY, sim_accel_init, NULL);
+            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIMARY, slinky_sim_accel_init, NULL);
 
     os_start();
 

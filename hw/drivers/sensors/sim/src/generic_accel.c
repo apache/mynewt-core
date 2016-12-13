@@ -112,7 +112,8 @@ sim_accel_sensor_read(struct sensor *sensor, sensor_type_t type,
     int i;
     int rc;
 
-    if (type != SENSOR_TYPE_ACCELEROMETER) {
+    /* If the read isn't looking for accel data, then don't do anything. */
+    if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
         rc = SYS_EINVAL;
         goto err;
     }

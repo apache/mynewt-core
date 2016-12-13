@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 /* Data representing a singular read from an accelerometer.
+ * All values are in MS^2
  */
 struct sensor_accel_data {
     int32_t sad_x;
