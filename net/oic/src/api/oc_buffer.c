@@ -33,8 +33,7 @@
 #include "port/mynewt/adaptor.h"
 
 static struct os_mempool oc_buffers;
-static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS * 2,
-      sizeof(oc_message_t))];
+static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(1, sizeof(oc_message_t))];
 
 static struct os_mqueue oc_inq;
 static struct os_mqueue oc_outq;
@@ -197,8 +196,8 @@ free_msg:
 void
 oc_buffer_init(void)
 {
-    os_mempool_init(&oc_buffers, MAX_NUM_CONCURRENT_REQUESTS * 2,
-      sizeof(oc_message_t), oc_buffer_area, "oc_bufs");
+    os_mempool_init(&oc_buffers, 1, sizeof(oc_message_t), oc_buffer_area,
+                    "oc_bufs");
     os_mqueue_init(&oc_inq, oc_buffer_rx, NULL);
     os_mqueue_init(&oc_outq, oc_buffer_tx, NULL);
 }
