@@ -25,6 +25,8 @@
 #include "os/os.h"
 #include "os/endian.h"
 
+#include "mem/mem.h"
+
 #include "mgmt/mgmt.h"
 
 #include "newtmgr/newtmgr.h"
@@ -112,64 +114,27 @@ nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
 }
 
 /**
- * Splits an appropriately-sized fragment off from the front of an outgoing
- * newtmgr response packet, if necessary.  If the packet size is within the
- * transport MTU, no splitting is performed.  The fragment data is removed from
- * the data packet mbuf.
- *
- * @param om                    The newtmgr response packet.  If this
- *                                  constitutes a single fragment, it gets set
- *                                  to NULL on success.
- * @param out_frag              On success, this points to the fragment to
- *                                  send.  If the entire packet can fit within
- *                                  a single fragment, this will point to the
- *                                  newtmgr response packet itself ('om').
- *
- * @return                      0 on success;
- *                              BLE host core return code on error.
+ * Allocates an mbuf to contain an outgoing response fragment.
  */
-static int
-nmgr_rsp_split_frag(struct os_mbuf **om, uint16_t mtu,
-                    struct os_mbuf **out_frag)
+static struct os_mbuf *
+nmgr_rsp_frag_alloc(uint16_t frag_size, void *arg)
 {
+    struct os_mbuf *src_rsp;
     struct os_mbuf *frag;
-    int rc;
 
-    /* Assume failure. */
-    *out_frag = NULL;
+    /* We need to duplicate the user header from the source response, as that
+     * is where transport-specific information is stored.
+     */
+    src_rsp = arg;
 
-    if (OS_MBUF_PKTLEN(*om) <= mtu) {
-        /* Final fragment. */
-        *out_frag = *om;
-        *om = NULL;
-        return 0;
+    frag = os_msys_get_pkthdr(frag_size, OS_MBUF_USRHDR_LEN(src_rsp));
+    if (frag != NULL) {
+        /* Copy the user header from the response into the fragment mbuf. */
+        memcpy(OS_MBUF_USRHDR(frag), OS_MBUF_USRHDR(src_rsp),
+               OS_MBUF_USRHDR_LEN(src_rsp));
     }
 
-    frag = os_msys_get_pkthdr(mtu, OS_MBUF_USRHDR_LEN(*om));
-    if (frag == NULL) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
-    }
-
-    /* Copy the user header from the response into the fragment mbuf. */
-    memcpy(OS_MBUF_USRHDR(frag), OS_MBUF_USRHDR(*om), OS_MBUF_USRHDR_LEN(*om));
-
-    /* Move data from the front of the packet into the fragment mbuf. */
-    rc = os_mbuf_appendfrom(frag, *om, 0, mtu);
-    if (rc != 0) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
-    }
-    os_mbuf_adj(*om, mtu);
-    *om = os_mbuf_trim_front(*om);
-
-    /* More fragments to follow. */
-    *out_frag = frag;
-    return 0;
-
-err:
-    os_mbuf_free_chain(frag);
-    return rc;
+    return frag;
 }
 
 /**
@@ -184,9 +149,9 @@ nmgr_rsp_tx(struct nmgr_transport *nt, struct os_mbuf **rsp, uint16_t mtu)
     int rc;
 
     while (*rsp != NULL) {
-        rc = nmgr_rsp_split_frag(rsp, mtu, &frag);
-        if (rc != 0) {
-            return rc;
+        frag = mem_split_frag(rsp, mtu, nmgr_rsp_frag_alloc, *rsp);
+        if (frag == NULL) {
+            return MGMT_ERR_ENOMEM;
         }
 
         rc = nt->nt_output(nt, frag);
