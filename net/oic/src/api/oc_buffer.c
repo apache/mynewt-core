@@ -81,6 +81,7 @@ void
 oc_message_unref(oc_message_t *message)
 {
     if (message) {
+        assert(message->ref_count > 0);
         message->ref_count--;
         if (message->ref_count == 0) {
             os_memblock_put(&oc_buffers, message);
@@ -171,6 +172,8 @@ oc_buffer_rx(struct os_event *ev)
         }
         memcpy(&msg->endpoint, OC_MBUF_ENDPOINT(m), sizeof(msg->endpoint));
         msg->length = OS_MBUF_PKTHDR(m)->omp_len;
+        os_mbuf_free_chain(m);
+        m = NULL;
 
 #ifdef OC_SECURITY
         b = m->om_data[0];
@@ -179,16 +182,16 @@ oc_buffer_rx(struct os_event *ev)
             oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
         } else {
             coap_receive(msg);
-            oc_message_unref(msg);
         }
 #else
         coap_receive(msg);
-        oc_message_unref(msg);
 #endif
 free_msg:
-        os_mbuf_free_chain(m);
         if (msg) {
             oc_message_unref(msg);
+        }
+        if (m) {
+            os_mbuf_free_chain(m);
         }
     }
 }
