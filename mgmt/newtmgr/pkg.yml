@@ -28,6 +28,7 @@ pkg.deps:
     - kernel/os
     - mgmt/mgmt
     - mgmt/newtmgr/nmgr_os
+    - util/mem
 
 pkg.deps.NEWTMGR_BLE_HOST:
     - mgmt/newtmgr/transport/ble
