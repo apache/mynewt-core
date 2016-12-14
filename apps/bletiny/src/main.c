@@ -1142,7 +1142,7 @@ bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
                                      uuid128, bletiny_on_disc_c,
-                                     &svc_start_handle);
+                                     (void *)svc_start_handle);
     return rc;
 }
 
