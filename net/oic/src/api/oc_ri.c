@@ -357,8 +357,9 @@ does_interface_support_method(oc_resource_t *resource,
 }
 
 bool
-oc_ri_invoke_coap_entity_handler(void *request, void *response,
-                                 int32_t *offset, oc_endpoint_t *endpoint)
+oc_ri_invoke_coap_entity_handler(coap_packet_t *request,
+                                 coap_packet_t *response, int32_t *offset,
+                                 oc_endpoint_t *endpoint)
 {
   /* Flags that capture status along various stages of processing
    *  the request.
@@ -369,13 +370,10 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response,
   bool authorized = true;
 #endif
 
-  /* Parsed CoAP PDU structure. */
-  coap_packet_t *const packet = (coap_packet_t *)request;
-
   /* This function is a server-side entry point solely for requests.
    *  Hence, "code" contains the CoAP method code.
    */
-  oc_method_t method = packet->code;
+  oc_method_t method = request->code;
 
   /* Initialize request/response objects to be sent up to the app layer. */
   oc_request_t request_obj;
@@ -395,7 +393,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response,
   request_obj.query_len = 0;
   request_obj.resource = 0;
   request_obj.origin = endpoint;
-  request_obj.packet = packet;
+  request_obj.packet = request;
 
   /* Initialize OCF interface selector. */
   oc_interface_mask_t interface = 0;
@@ -642,8 +640,9 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response,
     }
 #endif
     if (response_buffer.response_length) {
-        coap_set_payload(response, response_buffer.buffer,
-                         OS_MBUF_PKTLEN(response_buffer.buffer));
+        response->payload_m = response_buffer.buffer;
+        response->payload_len = OS_MBUF_PKTLEN(response_buffer.buffer);
+        response_buffer.buffer = NULL; /* freed in coap_serialize_message() */
         coap_set_header_content_format(response, APPLICATION_CBOR);
     }
     /* response_buffer.code at this point contains a valid CoAP status
