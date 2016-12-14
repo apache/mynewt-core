@@ -30,8 +30,7 @@ typedef struct oc_separate_response {
 } oc_separate_response_t;
 
 typedef struct oc_response_buffer {
-    uint8_t *buffer;
-    uint16_t buffer_size;
+    struct os_mbuf *buffer;
     int32_t *block_offset;
     uint16_t response_length;
     int code;

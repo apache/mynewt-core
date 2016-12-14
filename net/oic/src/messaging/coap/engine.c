@@ -44,12 +44,6 @@
 #include "oc_client_state.h"
 #endif
 
-extern bool oc_ri_invoke_coap_entity_handler(void *request, void *response,
-                                             uint8_t *buffer,
-                                             uint16_t buffer_size,
-                                             int32_t *offset,
-                                             oc_endpoint_t *endpoint);
-
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -61,7 +55,7 @@ coap_receive(oc_message_t *msg)
     static coap_packet_t message[1];
     static coap_packet_t response[1];
     static coap_transaction_t *transaction = NULL;
-    static oc_message_t *rsp;
+    struct os_mbuf *rsp;
 
     erbium_status_code = NO_ERROR;
 
@@ -150,13 +144,8 @@ coap_receive(oc_message_t *msg)
             new_offset = block_offset;
         }
 
-        rsp = oc_allocate_message();
-        if (!rsp) {
-            erbium_status_code = SERVICE_UNAVAILABLE_5_03;
-            coap_error_message = "NoFreeTraBuffer";
-        } else if (oc_ri_invoke_coap_entity_handler(message, response,
-                              rsp->data, block_size, &new_offset,
-                              &msg->endpoint)) {
+        if (oc_ri_invoke_coap_entity_handler(message, response,
+                                             &new_offset, &msg->endpoint)) {
             if (erbium_status_code == NO_ERROR) {
                 /*
                  * TODO coap_handle_blockwise(request, response,
@@ -184,17 +173,21 @@ coap_receive(oc_message_t *msg)
                                      response->payload_len, block_size);
                         if (block_offset >= response->payload_len) {
                             response->code = BAD_OPTION_4_02;
-                            coap_set_payload(response, "BlockOutOfScope", 15);
+                            rsp = os_msys_get_pkthdr(0, 0);
+                            if (rsp) {
+                                os_mbuf_copyinto(rsp, 0, "BlockOutOfScope", 15);
+                                response->payload_m = rsp;
+                                response->payload_len = 15;
+                            }
                             /* a const char str[] and sizeof(str)
                                produces larger code size */
                         } else {
                             coap_set_header_block2(response, block_num,
                                          response->payload_len - block_offset >
                                            block_size, block_size);
-                            coap_set_payload(response,
-                                             response->payload + block_offset,
-                                             MIN(response->payload_len -
-                                                 block_offset, block_size));
+                            response->payload_len = MIN(response->payload_len -
+                                                        block_offset,
+                                                        block_size);
                         } /* if(valid offset) */
 
                         /* resource provides chunk-wise data */
@@ -207,8 +200,7 @@ coap_receive(oc_message_t *msg)
                                                block_size);
 
                         if (response->payload_len > block_size) {
-                            coap_set_payload(response, response->payload,
-                                             block_size);
+                            response->payload_len = block_size;
                         }
                     } /* if(resource aware of blockwise) */
 
@@ -219,9 +211,8 @@ coap_receive(oc_message_t *msg)
 
                     coap_set_header_block2(response, 0, new_offset != -1,
                                            COAP_MAX_BLOCK_SIZE);
-                    coap_set_payload(response, response->payload,
-                                     MIN(response->payload_len,
-                                         COAP_MAX_BLOCK_SIZE));
+                    response->payload_len = MIN(response->payload_len,
+                                                COAP_MAX_BLOCK_SIZE);
                 } /* blockwise transfer handling */
             }   /* no errors/hooks */
             /* successful service callback */
@@ -232,9 +223,6 @@ coap_receive(oc_message_t *msg)
                 erbium_status_code = PACKET_SERIALIZATION_ERROR;
             }
             transaction->type = response->type;
-        }
-        if (rsp) {
-            oc_message_unref(rsp);
         }
     } else { // Fix this
         /* handle responses */

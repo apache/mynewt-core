@@ -14,10 +14,12 @@
  // limitations under the License.
  */
 
-#include "oc_core_res.h"
+#include <os/os_mbuf.h>
+
+#include "oic/oc_core_res.h"
 #include "messaging/coap/oc_coap.h"
-#include "oc_rep.h"
-#include "oc_ri.h"
+#include "oic/oc_rep.h"
+#include "oic/oc_ri.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_pstat.h"
@@ -62,26 +64,26 @@ oc_core_encode_interfaces_mask(CborEncoder *parent,
 static void
 oc_core_device_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
-    uint8_t *buffer = req->response->response_buffer->buffer;
-    uint16_t buffer_size = req->response->response_buffer->buffer_size;
+    struct oc_response_buffer *rsp_buf;
+    struct os_mbuf *buffer;
     int size;
+    char *str;
 
+    rsp_buf = req->response->response_buffer;
+    buffer = rsp_buf->buffer;
     size = oc_string_len(oc_device_info[req->resource->device].payload);
-
-    if (buffer_size < size) {
-        req->response->response_buffer->response_length = 0;
-        req->response->response_buffer->code =
-          oc_status_code(OC_STATUS_INTERNAL_SERVER_ERROR);
-        return;
-    }
+    str = oc_string(oc_device_info[req->resource->device].payload);
 
     switch (interface) {
     case OC_IF_R:
     case OC_IF_BASELINE:
-        memcpy(buffer, oc_string(oc_device_info[req->resource->device].payload),
-          size);
-        req->response->response_buffer->response_length = size;
-        req->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
+        if (os_mbuf_append(buffer, str, size)) {
+            rsp_buf->response_length = 0;
+            rsp_buf->code = oc_status_code(OC_STATUS_INTERNAL_SERVER_ERROR);
+        } else {
+            rsp_buf->response_length = size;
+            rsp_buf->code = oc_status_code(OC_STATUS_OK);
+        }
         break;
     default:
         break;
@@ -95,7 +97,7 @@ oc_core_get_num_devices(void)
 }
 
 static int
-finalize_payload(oc_string_t *temp_buffer, oc_string_t *payload)
+finalize_payload(struct os_mbuf *m, oc_string_t *payload)
 {
     int size;
 
@@ -103,11 +105,11 @@ finalize_payload(oc_string_t *temp_buffer, oc_string_t *payload)
     size = oc_rep_finalize();
     if (size != -1) {
         oc_alloc_string(payload, size + 1);
-        memcpy(payload->os_str, temp_buffer->os_str, size);
-        oc_free_string(temp_buffer);
+        os_mbuf_copydata(m, 0, size, payload->os_str);
+        os_mbuf_free_chain(m);
         return 1;
     }
-    oc_free_string(temp_buffer);
+    os_mbuf_free_chain(m);
     return -1;
 }
 
@@ -116,12 +118,12 @@ oc_core_add_new_device(const char *uri, const char *rt, const char *name,
                        const char *spec_version, const char *data_model_version,
                        oc_core_add_device_cb_t add_device_cb, void *data)
 {
-    oc_string_t temp_buffer;
+    struct os_mbuf *tmp;
     int ocf_d;
     char uuid[37];
 
     if (device_count == MAX_NUM_DEVICES) {
-        return false;
+        return NULL;
     }
 
     /* Once provisioned, UUID is retrieved from the credential store.
@@ -146,8 +148,11 @@ oc_core_add_new_device(const char *uri, const char *rt, const char *name,
                               oc_core_device_handler, 0, 0, 0, device_count);
 
     /* Encoding device resource payload */
-    oc_alloc_string(&temp_buffer, MAX_DEVICE_PAYLOAD_SIZE);
-    oc_rep_new(temp_buffer.os_str, MAX_DEVICE_PAYLOAD_SIZE);
+    tmp = os_msys_get_pkthdr(0, 0);
+    if (!tmp) {
+        return NULL;
+    }
+    oc_rep_new(tmp);
 
     oc_rep_start_root_object();
 
@@ -165,7 +170,7 @@ oc_core_add_new_device(const char *uri, const char *rt, const char *name,
     if (add_device_cb) {
         add_device_cb(data);
     }
-    if (!finalize_payload(&temp_buffer, &oc_device_info[device_count].payload)){
+    if (!finalize_payload(tmp, &oc_device_info[device_count].payload)) {
         return NULL;
     }
 
@@ -173,27 +178,28 @@ oc_core_add_new_device(const char *uri, const char *rt, const char *name,
 }
 
 void
-oc_core_platform_handler(oc_request_t *request, oc_interface_mask_t interface)
+oc_core_platform_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
-    uint8_t *buffer = request->response->response_buffer->buffer;
-    uint16_t buffer_size = request->response->response_buffer->buffer_size;
+    struct oc_response_buffer *rsp_buf;
+    struct os_mbuf *buffer;
     int size;
+    char *str;
 
+    rsp_buf = req->response->response_buffer;
+    buffer = rsp_buf->buffer;
     size = oc_string_len(oc_platform_payload);
-
-    if (buffer_size < size) {
-        request->response->response_buffer->response_length = 0;
-        request->response->response_buffer->code =
-          oc_status_code(OC_STATUS_INTERNAL_SERVER_ERROR);
-        return;
-    }
+    str = oc_string(oc_platform_payload);
 
     switch (interface) {
     case OC_IF_R:
     case OC_IF_BASELINE:
-        memcpy(buffer, oc_string(oc_platform_payload), size);
-        request->response->response_buffer->response_length = size;
-        request->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
+        if (os_mbuf_append(buffer, str, size)) {
+            rsp_buf->response_length = 0;
+            rsp_buf->code = oc_status_code(OC_STATUS_INTERNAL_SERVER_ERROR);
+        } else {
+            rsp_buf->response_length = size;
+            rsp_buf->code = oc_status_code(OC_STATUS_OK);
+        }
         break;
     default:
         break;
@@ -204,7 +210,7 @@ oc_string_t *
 oc_core_init_platform(const char *mfg_name, oc_core_init_platform_cb_t init_cb,
                       void *data)
 {
-    oc_string_t temp_buffer;
+    struct os_mbuf *tmp;
     oc_uuid_t uuid; /*fix uniqueness of platform id?? */
     char uuid_str[37];
 
@@ -218,11 +224,13 @@ oc_core_init_platform(const char *mfg_name, oc_core_init_platform_cb_t init_cb,
                               oc_core_platform_handler, 0, 0, 0, 0);
 
     /* Encoding platform resource payload */
-    oc_alloc_string(&temp_buffer, MAX_PLATFORM_PAYLOAD_SIZE);
-    oc_rep_new(temp_buffer.os_str, MAX_PLATFORM_PAYLOAD_SIZE);
+    tmp = os_msys_get_pkthdr(0, 0);
+    if (!tmp) {
+        return NULL;
+    }
+    oc_rep_new(tmp);
     oc_rep_start_root_object();
     oc_rep_set_string_array(root, rt, core_resources[OCF_P].types);
-
     oc_core_encode_interfaces_mask(oc_rep_object(root),
                                    core_resources[OCF_P].interfaces);
     oc_rep_set_uint(root, p, core_resources[OCF_P].properties & ~OC_PERIODIC);
@@ -237,7 +245,7 @@ oc_core_init_platform(const char *mfg_name, oc_core_init_platform_cb_t init_cb,
     if (init_cb) {
         init_cb(data);
     }
-    if (!finalize_payload(&temp_buffer, &oc_platform_payload)) {
+    if (!finalize_payload(tmp, &oc_platform_payload)) {
         return NULL;
     }
     return &oc_platform_payload;

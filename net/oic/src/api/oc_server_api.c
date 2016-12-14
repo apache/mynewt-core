@@ -216,6 +216,7 @@ oc_interate_query(oc_request_t *request, char **key, int *key_len, char **value,
   return 1;
 }
 
+#if 0 /* XXXX fix this */
 void
 oc_indicate_separate_response(oc_request_t *request,
                               oc_separate_response_t *response)
@@ -277,7 +278,7 @@ oc_send_separate_response(oc_separate_response_t *handle,
         handle->active = 0;
     }
 }
-
+#endif
 int
 oc_notify_observers(oc_resource_t *resource)
 {
