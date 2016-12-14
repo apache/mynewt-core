@@ -21,6 +21,7 @@
 #define __MMC_H__
 
 #include <os/os_dev.h>
+#include <diskio/diskio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,6 +43,8 @@ extern "C" {
 #define MMC_INVALID_COMMAND   (-10)
 #define MMC_ERASE_ERROR       (-11)
 #define MMC_ADDR_ERROR        (-12)
+
+extern struct disk_ops mmc_ops;
 
 /**
  * Initialize the MMC driver

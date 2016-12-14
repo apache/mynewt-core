@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,30 +17,35 @@
  * under the License.
  */
 
-#ifndef H_HAL_FLASH_
-#define H_HAL_FLASH_
+#ifndef __DISKIO_H__
+#define __DISKIO_H__
+
+#include <stddef.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <inttypes.h>
-#include <diskio/diskio.h>
+#define DISKIO_EOK          0  /* Success */
+#define DISKIO_EHW          1  /* Error accessing storage medium */
+#define DISKIO_ENOMEM       2  /* Insufficient memory */
+#define DISKIO_ENOENT       3  /* No such file or directory */
+#define DISKIO_EOS          4  /* OS error */
+#define DISKIO_EUNINIT      5  /* File system not initialized */
 
-extern struct disk_ops hal_flash_ops;
+struct disk_ops {
+    int (*read)(int, uint32_t, void *, uint32_t);
+    int (*write)(int, uint32_t, const void *, uint32_t);
+    int (*ioctl)(int, uint32_t, const void *);
 
-int hal_flash_ioctl(uint8_t flash_id, uint32_t cmd, void *args);
-int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
-  uint32_t num_bytes);
-int hal_flash_write(uint8_t flash_id, uint32_t address, const void *src,
-  uint32_t num_bytes);
-int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
-int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-uint8_t hal_flash_align(uint8_t flash_id);
-int hal_flash_init(void);
+    SLIST_ENTRY(disk_ops) sc_next;
+};
+
+int diskio_register(const char *disk_name, const char *fs_name, struct disk_ops *dops);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* H_HAL_FLASH_ */
+#endif

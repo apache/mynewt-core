@@ -24,6 +24,8 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 
+#include <diskio/diskio.h>
+
 int
 hal_flash_init(void)
 {
@@ -167,3 +169,15 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     }
     return 0;
 }
+
+int
+hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
+{
+    return 0;
+}
+
+static struct disk_ops hal_flash_ops = {
+    .read  = hal_flash_read,
+    .write = hal_flash_write,
+    .ioctl = hal_flash_ioctl,
+};

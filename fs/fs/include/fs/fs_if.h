@@ -52,12 +52,27 @@ struct fs_ops {
     int (*f_dirent_is_dir)(const struct fs_dirent *dirent);
 
     const char *f_name;
+
+    SLIST_ENTRY(fs_ops) sc_next;
 };
 
-/*
- * Currently allow only one type of FS, starts at root.
+/**
+ * Registers a new filesystem interface
+ *
+ * @param fops filesystem operations table
+ *
+ * @return 0 on success, non-zero on failure
  */
-int fs_register(const struct fs_ops *);
+int fs_register(const struct fs_ops *fops);
+
+/**
+ * Retrieve a filesystem's operations table
+ *
+ * @param name Name of the filesystem to retrieve fs_ops for
+ *
+ * @return valid pointer on success, NULL on failure
+ */
+struct fs_ops *fs_ops_for(const char *name);
 
 #ifdef __cplusplus
 }

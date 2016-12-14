@@ -24,11 +24,13 @@
 int
 fs_rename(const char *from, const char *to)
 {
-    return fs_root_ops->f_rename(from, to);
+    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    return fops->f_rename(from, to);
 }
 
 int
 fs_mkdir(const char *path)
 {
-    return fs_root_ops->f_mkdir(path);
+    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    return fops->f_mkdir(path);
 }

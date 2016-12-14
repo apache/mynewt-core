@@ -583,3 +583,20 @@ out:
     hal_gpio_write(mmc->ss_pin, 1);
     return (rc);
 }
+
+/*
+ *
+ */
+int mmc_ioctl(int cmd, void *arg)
+{
+    return 0;
+}
+
+/*
+ *
+ */
+struct disk_ops mmc_ops = {
+    .read  = mmc_read,
+    .write = mmc_write,
+    .ioctl = mmc_ioctl,
+};

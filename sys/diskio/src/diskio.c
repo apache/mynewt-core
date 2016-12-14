@@ -19,44 +19,39 @@
 
 #include "syscfg/syscfg.h"
 #include "fs/fs.h"
-#include "fs/fs_if.h"
-#include "fs_priv.h"
+#include <diskio/diskio.h>
 
-static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
-static bool g_cli_initialized = false;
+static struct disk_info {
+    char *disk_name;
+    char *fs_name;
+    struct disk_ops *dops;
+};
 
-int
-fs_register(const struct fs_ops *fops)
+static SLIST_HEAD(, disk_info) disks = SLIST_HEAD_INITIALIZER();
+
+/**
+ *
+ */
+int diskio_register(const char *disk_name, const char *fs_name, struct disk_ops *dops)
 {
-    SLIST_FOREACH(sc, &root_fops, sc_next) {
-        if (strcmp(sc->f_name, fops->f_name) == 0) {
-            return FS_EEXIST;
+    struct disk_info *info = NULL;
+
+    SLIST_FOREACH(sc, &disks, sc_next) {
+        if (strcmp(sc->disk_name, disk_name) == 0) {
+            return DISKIO_EEXIST;
         }
     }
 
-    SLIST_INSERT_HEAD(&root_fops, fops, sc_next);
-
-#if MYNEWT_VAL(FS_CLI)
-    if (!g_cli_initialized) {
-        fs_cli_init();
-        g_cli_initialized = true;
-    }
-#endif
-
-    return FS_EOK;
-}
-
-struct fs_ops *
-fs_ops_for(const char *fs_name)
-{
-    struct fs_ops *fops = NULL;
-
-    SLIST_FOREACH(sc, &root_fops, sc_next) {
-        if (strcmp(sc->f_name, fs_name) == 0) {
-            fops = sc;
-            break;
-        }
+    info = malloc(sizeof(struct disk_info));
+    if (!info) {
+        return DISKIO_ENOMEM;
     }
 
-    return fops;
+    info.disk_name = disk_name;
+    info.fs_name = fs_name;
+    info.dops = dops;
+
+    SLIST_INSERT_HEAD(&disks, info, sc_next);
+
+    return 0;
 }

@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <sysinit/sysinit.h>
 #include <hal/hal_flash.h>
-#include <mmc/mmc.h>
 #include <flash_map/flash_map.h>
+#include <mmc/mmc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -349,29 +349,18 @@ disk_status(BYTE pdrv)
     return RES_OK;
 }
 
-static struct disk_ops *disk_ops_from_handle(BYTE pdrv)
-{
-    return &mmc_ops;
-}
-
 DRESULT
 disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
 {
     int rc;
     uint32_t address;
     uint32_t num_bytes;
-    struct disk_ops *dops;
 
     /* NOTE: safe to assume sector size as 512 for now, see ffconf.h */
     address = (uint32_t) sector * 512;
     num_bytes = (uint32_t) count * 512;
-
-    dops = disk_ops_from_handle(pdrv);
-    if (dops == NULL) {
-        return STA_NOINIT;
-    }
-
-    rc = dops->read(pdrv, address, (void *) buff, num_bytes);
+    //rc = hal_flash_read(pdrv, address, (void *) buff, num_bytes);
+    rc = mmc_read(pdrv, address, (void *) buff, num_bytes);
     if (rc < 0) {
         return STA_NOINIT;
     }
@@ -385,18 +374,12 @@ disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
     int rc;
     uint32_t address;
     uint32_t num_bytes;
-    struct disk_ops *dops;
 
     /* NOTE: safe to assume sector size as 512 for now, see ffconf.h */
     address = (uint32_t) sector * 512;
     num_bytes = (uint32_t) count * 512;
-
-    dops = disk_ops_from_handle(pdrv);
-    if (dops == NULL) {
-        return STA_NOINIT;
-    }
-
-    rc = dops->write(pdrv, address, (const void *) buff, num_bytes);
+    //rc = hal_flash_write(pdrv, address, (const void *) buff, num_bytes);
+    rc = mmc_write(pdrv, address, (const void *) buff, num_bytes);
     if (rc < 0) {
         return STA_NOINIT;
     }
