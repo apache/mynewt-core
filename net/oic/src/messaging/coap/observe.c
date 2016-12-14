@@ -193,6 +193,11 @@ coap_notify_observers(oc_resource_t *resource,
                       oc_endpoint_t *endpoint)
 {
     int num_observers = 0;
+    oc_request_t request = {};
+    oc_response_t response = {};
+    oc_response_buffer_t response_buffer;
+    struct os_mbuf *m = NULL;
+
     if (resource) {
         if (!resource->num_observers) {
             OC_LOG_DEBUG("coap_notify_observers: no observers left\n");
@@ -200,21 +205,21 @@ coap_notify_observers(oc_resource_t *resource,
         }
         num_observers = resource->num_observers;
     }
-    uint8_t buffer[COAP_MAX_BLOCK_SIZE];
-    oc_request_t request = {};
-    oc_response_t response = {};
     response.separate_response = 0;
-    oc_response_buffer_t response_buffer;
     if (!response_buf && resource && (resource->properties & OC_PERIODIC)) {
         OC_LOG_DEBUG("coap_notify_observers: Issue GET request to resource\n");
         /* performing GET on the resource */
-        response_buffer.buffer = buffer;
-        response_buffer.buffer_size = COAP_MAX_BLOCK_SIZE;
+        m = os_msys_get_pkthdr(0, 0);
+        if (!m) {
+            /* XXX count */
+            return num_observers;
+        }
+        response_buffer.buffer = m;
         response_buffer.block_offset = NULL;
         response.response_buffer = &response_buffer;
         request.resource = resource;
         request.response = &response;
-        oc_rep_new(buffer, COAP_MAX_BLOCK_SIZE);
+        oc_rep_new(m);
         resource->get_handler(&request, resource->default_interface);
         response_buf = &response_buffer;
         if (response_buf->code == OC_IGNORE) {
@@ -270,7 +275,7 @@ coap_notify_observers(oc_resource_t *resource,
                     notification->type = COAP_TYPE_CON;
                 }
                 coap_set_payload(notification, response_buf->buffer,
-                  response_buf->response_length);
+                                 OS_MBUF_PKTLEN(response_buf->buffer));
                 coap_set_status_code(notification, response_buf->code);
                 if (notification->code < BAD_REQUEST_4_00 &&
                   obs->resource->num_observers) {
@@ -289,6 +294,9 @@ coap_notify_observers(oc_resource_t *resource,
                 }
             }
         }
+    }
+    if (m) {
+        os_mbuf_free_chain(m);
     }
     return num_observers;
 }

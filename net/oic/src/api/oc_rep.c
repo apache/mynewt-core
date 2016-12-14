@@ -22,7 +22,7 @@
 #include "config.h"
 #include "port/oc_assert.h"
 #include "api/oc_priv.h"
-#include <tinycbor/cbor_buf_writer.h>
+#include <tinycbor/cbor_mbuf_writer.h>
 #include <tinycbor/cbor_buf_reader.h>
 
 #ifdef OC_CLIENT
@@ -32,24 +32,24 @@ static uint8_t oc_rep_objects_area[OS_MEMPOOL_BYTES(EST_NUM_REP_OBJECTS,
 #endif
 
 static const CborEncoder g_empty;
-static uint8_t *g_buf;
+static struct os_mbuf *g_outm;
 CborEncoder g_encoder, root_map, links_array;
 CborError g_err;
-struct CborBufWriter g_buf_writer;
+struct CborMbufWriter g_buf_writer;
 
 void
-oc_rep_new(uint8_t *out_payload, int size)
+oc_rep_new(struct os_mbuf *m)
 {
     g_err = CborNoError;
-    g_buf = out_payload;
-    cbor_buf_writer_init(&g_buf_writer, out_payload, size);
+    g_outm = m;
+    cbor_mbuf_writer_init(&g_buf_writer, m);
     cbor_encoder_init(&g_encoder, &g_buf_writer.enc, 0);
 }
 
 int
 oc_rep_finalize(void)
 {
-    int size = cbor_buf_writer_buffer_size(&g_buf_writer, g_buf);
+    int size = OS_MBUF_PKTLEN(g_outm);
     oc_rep_reset();
     if (g_err != CborNoError) {
         return -1;

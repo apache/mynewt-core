@@ -357,9 +357,8 @@ does_interface_support_method(oc_resource_t *resource,
 }
 
 bool
-oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
-                                 uint16_t buffer_size, int32_t *offset,
-                                 oc_endpoint_t *endpoint)
+oc_ri_invoke_coap_entity_handler(void *request, void *response,
+                                 int32_t *offset, oc_endpoint_t *endpoint)
 {
   /* Flags that capture status along various stages of processing
    *  the request.
@@ -382,9 +381,9 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   oc_request_t request_obj;
   oc_response_buffer_t response_buffer;
   oc_response_t response_obj;
+  struct os_mbuf *m = NULL;
 
-  response_buffer.buffer = buffer;
-  response_buffer.buffer_size = buffer_size;
+  response_buffer.buffer = NULL;
   response_buffer.block_offset = offset;
   response_buffer.code = 0;
   response_buffer.response_length = 0;
@@ -473,6 +472,12 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
       bad_request = true;
   }
 
+  m = os_msys_get_pkthdr(0, 0);
+  if (!m) {
+      bad_request = true;
+  }
+  response_buffer.buffer = m;
+
   if (cur_resource && !bad_request) {
     /* Process a request against a valid resource, request payload, and
      * interface.
@@ -482,7 +487,7 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
      * points to memory allocated in the messaging layer for the "CoAP
      * Transaction" to service this request.
      */
-    oc_rep_new(buffer, buffer_size);
+    oc_rep_new(m);
 
 #ifdef OC_SECURITY
     /* If cur_resource is a coaps:// resource, then query ACL to check if
@@ -514,9 +519,14 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
   }
 
   if (bad_request) {
-    OC_LOG_ERROR("ocri: Bad request\n");
-    /* Return a 4.00 response */
-    response_buffer.code = oc_status_code(OC_STATUS_BAD_REQUEST);
+    if (!m) {
+        OC_LOG_ERROR("ocri: No bufs\n");
+        response_buffer.code = oc_status_code(OC_STATUS_SERVICE_UNAVAILABLE);
+    } else {
+        OC_LOG_ERROR("ocri: Bad request\n");
+        /* Return a 4.00 response */
+        response_buffer.code = oc_status_code(OC_STATUS_BAD_REQUEST);
+    }
     success = false;
   } else if (!cur_resource) {
     OC_LOG_ERROR("ocri: Could not find resource\n");
@@ -627,18 +637,22 @@ oc_ri_invoke_coap_entity_handler(void *request, void *response, uint8_t *buffer,
      * of that resource with the change.
      */
     if ((method == OC_PUT || method == OC_POST) &&
-        response_buffer.code < oc_status_code(OC_STATUS_BAD_REQUEST))
-      coap_notify_observers(cur_resource, NULL, NULL);
+        response_buffer.code < oc_status_code(OC_STATUS_BAD_REQUEST)) {
+        coap_notify_observers(cur_resource, NULL, NULL);
+    }
 #endif
     if (response_buffer.response_length) {
-      coap_set_payload(response, response_buffer.buffer,
-                       response_buffer.response_length);
-      coap_set_header_content_format(response, APPLICATION_CBOR);
+        coap_set_payload(response, response_buffer.buffer,
+                         OS_MBUF_PKTLEN(response_buffer.buffer));
+        coap_set_header_content_format(response, APPLICATION_CBOR);
     }
     /* response_buffer.code at this point contains a valid CoAP status
      *  code.
      */
     coap_set_status_code(response, response_buffer.code);
+  }
+  if (response_buffer.buffer) {
+      os_mbuf_free_chain(response_buffer.buffer);
   }
   return success;
 }

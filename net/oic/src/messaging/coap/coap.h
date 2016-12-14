@@ -158,6 +158,7 @@ typedef struct coap_packet {
 
     uint16_t payload_len;
     uint8_t *payload;
+    struct os_mbuf *payload_m;
 } coap_packet_t;
 
 /*
@@ -320,7 +321,7 @@ int coap_get_header_size1(coap_packet_t *, uint32_t *size);
 int coap_set_header_size1(coap_packet_t *, uint32_t size);
 
 int coap_get_payload(coap_packet_t *, const uint8_t **payload);
-int coap_set_payload(coap_packet_t *, const void *payload, size_t length);
+int coap_set_payload(coap_packet_t *, struct os_mbuf *m, size_t length);
 
 #ifdef __cplusplus
 }

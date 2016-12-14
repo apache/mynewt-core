@@ -446,16 +446,23 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
         }
     }
 
-    if (os_mbuf_append(m, pkt->payload, pkt->payload_len)) {
-        goto err_mem;
+    if (pkt->payload_m) {
+        assert(pkt->payload_len <= OS_MBUF_PKTLEN(pkt->payload_m));
+        if (pkt->payload_len < OS_MBUF_PKTLEN(pkt->payload_m)) {
+            os_mbuf_adj(pkt->payload_m,
+                        OS_MBUF_PKTLEN(pkt->payload_m) - pkt->payload_len);
+        }
+        os_mbuf_concat(m, pkt->payload_m);
     }
-
     OC_LOG_DEBUG("coap_tx: serialized %u B (header len %u, payload len %u)\n",
         OS_MBUF_PKTLEN(m), OS_MBUF_PKTLEN(m) - pkt->payload_len,
         pkt->payload_len);
 
     return 0;
 err_mem:
+    if (pkt->payload_m) {
+        os_mbuf_free_chain(pkt->payload_m);
+    }
     STATS_INC(coap_stats, oerr);
     return -1;
 }
@@ -1251,11 +1258,15 @@ coap_get_payload(coap_packet_t *pkt, const uint8_t **payload)
         return 0;
     }
 }
+
 int
-coap_set_payload(coap_packet_t *pkt, const void *payload, size_t length)
+coap_set_payload(coap_packet_t *pkt, struct os_mbuf *m, size_t length)
 {
-    pkt->payload = (uint8_t *)payload;
-    pkt->payload_len = MIN(MAX_PAYLOAD_SIZE, length);
+    pkt->payload_m = os_mbuf_dup(m);
+    if (!pkt->payload_m) {
+        return -1;
+    }
+    pkt->payload_len = MIN(OS_MBUF_PKTLEN(m), length);
 
     return pkt->payload_len;
 }
