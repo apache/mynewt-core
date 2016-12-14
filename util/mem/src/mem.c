@@ -18,6 +18,7 @@
  */
 
 #include "os/os.h"
+#include "mem/mem.h"
 
 /**
  * Mallocs a block of memory and initializes a mempool to use it.
@@ -163,4 +164,82 @@ mem_init_mbuf_pool(void *mem, struct os_mempool *mempool,
     }
 
     return 0;
+}
+
+/*
+ * Splits an appropriately-sized fragment from the front of an mbuf chain, as
+ * neeeded.  If the length of the mbuf chain greater than specified maximum
+ * fragment size, a new mbuf is allocated, and data is moved from the source
+ * mbuf to the new mbuf.  If the mbuf chain is small enough to fit in a single
+ * fragment, the source mbuf itself is returned unmodified, and the suplied
+ * pointer is set to NULL.
+ *
+ * This function is expected to be called in a loop until the entire mbuf chain
+ * has been consumed.  For example:
+ *
+ *     struct os_mbuf *frag;
+ *     struct os_mbuf *rsp;
+ *     // [...]
+ *     while (rsp != NULL) {
+ *         frag = mem_split_frag(&rsp, get_mtu(), frag_alloc, NULL);
+ *         if (frag == NULL) {
+ *             os_mbuf_free_chain(rsp);
+ *             return SYS_ENOMEM;
+ *         }
+ *         send_packet(frag)
+ *     }
+ *
+ * @param om                    The packet to fragment.  Upon fragmentation,
+ *                                  this mbuf is adjusted such that the
+ *                                  fragment data is removed.  If the packet
+ *                                  constitutes a single fragment, this gets
+ *                                  set to NULL on success.
+ * @param max_frag_sz           The maximum payload size of a fragment.
+ *                                  Typically this is the MTU of the
+ *                                  connection.
+ * @param alloc_cb              Points to a function that allocates an mbuf to
+ *                                  hold a fragment.  This function gets called
+ *                                  before the source mbuf chain is modified,
+ *                                  so it can safely inspect it.
+ * @param cb_arg                Generic parameter that gets passed to the
+ *                                  callback function.
+ *
+ * @return                      The next fragment to send on success;
+ *                              NULL on failure.
+ */
+struct os_mbuf *
+mem_split_frag(struct os_mbuf **om, uint16_t max_frag_sz,
+               mem_frag_alloc_fn *alloc_cb, void *cb_arg)
+{
+    struct os_mbuf *frag;
+    int rc;
+
+    if (OS_MBUF_PKTLEN(*om) <= max_frag_sz) {
+        /* Final fragment. */
+        frag = *om;
+        *om = NULL;
+        return frag;
+    }
+
+    /* Packet needs to be split.  Allocate a new buffer for the fragment. */
+    frag = alloc_cb(max_frag_sz, cb_arg);
+    if (frag == NULL) {
+        goto err;
+    }
+
+    /* Move data from the front of the packet into the fragment mbuf. */
+    rc = os_mbuf_appendfrom(frag, *om, 0, max_frag_sz);
+    if (rc != 0) {
+        goto err;
+    }
+    os_mbuf_adj(*om, max_frag_sz);
+
+    /* Free unused portion of of source mbuf chain, if possible. */
+    *om = os_mbuf_trim_front(*om);
+
+    return frag;
+
+err:
+    os_mbuf_free_chain(frag);
+    return NULL;
 }
