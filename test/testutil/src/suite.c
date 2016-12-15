@@ -25,11 +25,17 @@
 const char *tu_suite_name = 0;
 int tu_suite_failed = 0;
 
+struct ts_testsuite_list g_ts_suites;
+
+/*
+ * tu_suite_register must be called for each test_suite that's to
+ * be run from a list rather than explicitly called.
+ * See mynewtsanity.
+ */
 int
-tu_suite_register(const char *name, tu_testsuite_fn_t* ts)
+tu_suite_register(tu_testsuite_fn_t* ts, const char *name)
 {
     struct ts_suite *tsp;
-    TEST_SUITE_DECL(name);
 
     tsp = (struct ts_suite *)os_malloc(sizeof(*tsp));
     if (!tsp) {
@@ -37,7 +43,7 @@ tu_suite_register(const char *name, tu_testsuite_fn_t* ts)
     }
     tsp->ts_name = name;
     tsp->ts_test = ts;
-    SLIST_INSERT_HEAD(ts_suites, tsp, ts_next);
+    SLIST_INSERT_HEAD(&g_ts_suites, tsp, ts_next);
     return 0;
 }
 
