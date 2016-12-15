@@ -74,6 +74,8 @@ void tu_suite_pre_test(void);
 void tu_suite_post_test(void);
 void tu_suite_complete(void);
 
+int tu_suite_register(tu_testsuite_fn_t* ts, const char *name);
+
 struct ts_suite {
     SLIST_ENTRY(ts_suite) ts_next;
     const char *ts_name;
@@ -81,8 +83,7 @@ struct ts_suite {
 };
 
 SLIST_HEAD(ts_testsuite_list, ts_suite);
-
-extern struct ts_testsuite_list *ts_suites;
+extern struct ts_testsuite_list g_ts_suites;
 
 struct ts_config {
     int ts_print_results;
@@ -193,10 +194,10 @@ extern int tu_case_failed;
 extern int tu_case_idx;
 extern jmp_buf tu_case_jb;
 
-#define TEST_SUITE_NAME(suite_name) TEST_SUITE##suite_name
+#define TEST_SUITE_DECL(suite_name) extern void suite_name()
 
-#define TEST_SUITE_DECL(suite_name)                         \
-  extern tu_testsuite_fn_t *TEST_SUITE##suite_name()
+#define TEST_SUITE_REGISTER(suite_name)                      \
+  tu_suite_register((tu_testsuite_fn_t*)suite_name, ((const char *)#suite_name));
 
 #define TEST_SUITE(suite_name)                               \
 void                                                         \
@@ -266,7 +267,9 @@ TEST_SUITE_##suite_name(void);                               \
 #define REST_OR_0_AUX_N(first, ...) __VA_ARGS__
 
 #define XSTR(s) STR(s)
+#ifndef STR
 #define STR(s) #s
+#endif
 
 #if MYNEWT_VAL(TESTUTIL_SYSTEM_ASSERT)
 

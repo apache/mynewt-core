@@ -58,7 +58,6 @@ struct flash_area test_fcb_area[] = {
         .fa_size = 0x4000
     }
 };
-#endif
 
 void
 fcb_test_wipe(void)
@@ -73,6 +72,7 @@ fcb_test_wipe(void)
         TEST_ASSERT(rc == 0);
     }
 }
+#endif
 
 int
 fcb_test_empty_walk_cb(struct fcb_entry *loc, void *arg)

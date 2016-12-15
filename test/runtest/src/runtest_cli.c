@@ -32,14 +32,14 @@
 
 static int runtest_cli_cmd(int argc, char **argv);
 struct shell_cmd runtest_cmd_struct = {
-    .sc_cmd = "runtest",
+    .sc_cmd = "run",
     .sc_cmd_func = runtest_cli_cmd
 };
 
 static int
 runtest_cli_cmd(int argc, char **argv)
 {
-    console_printf("Usage runtest \n");
+    console_printf("Usage run [list | test testname token] \n");
     return 0;
 }
 

@@ -39,27 +39,25 @@ struct shell_cmd runtest_cmd_struct;
 struct mgmt_group runtest_nmgr_group;
 #endif
 
-int
-runtest()
-{
-    /* XXX */
+extern int run_nmgr_register_group();
 
-    return 0;
-}
-
+/*
+ * Package init routine to register newtmgr "run" commands
+ */
 void
 runtest_init(void)
 {
+    int rc;
+
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
-
-    runtest_start = 1;
 
 #if MYNEWT_VAL(RUNTEST_CLI)
     shell_cmd_register(&runtest_cmd_struct);
 #endif
 
 #if MYNEWT_VAL(RUNTEST_NEWTMGR)
-    mgmt_group_register(&runtest_nmgr_group);
+    rc = run_nmgr_register_group();
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
