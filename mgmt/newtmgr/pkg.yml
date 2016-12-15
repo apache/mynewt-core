@@ -35,6 +35,3 @@ pkg.deps.NEWTMGR_BLE_HOST:
 
 pkg.apis:
     - newtmgr
-
-pkg.init_function: nmgr_pkg_init
-pkg.init_stage: 5

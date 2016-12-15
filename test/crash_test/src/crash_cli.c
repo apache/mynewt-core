@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
 static int crash_cli_cmd(int argc, char **argv);

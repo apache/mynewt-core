@@ -35,6 +35,3 @@ pkg.deps.REBOOT_LOG_FCB:
     - fs/fcb
 pkg.req_apis:
     - console
-
-pkg.init_function: log_reboot_pkg_init
-pkg.init_stage: 2

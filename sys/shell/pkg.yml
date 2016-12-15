@@ -30,6 +30,3 @@ pkg.deps:
     - util/crc
 pkg.req_apis:
     - console
-
-pkg.init_function: shell_init
-pkg.init_stage: 5

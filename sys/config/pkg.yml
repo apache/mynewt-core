@@ -34,6 +34,3 @@ pkg.deps.CONFIG_FCB:
     - fs/fcb
 pkg.deps.CONFIG_NFFS:
     - fs/nffs
-
-pkg.init_function: config_pkg_init
-pkg.init_stage: 3

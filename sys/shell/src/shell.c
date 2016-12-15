@@ -562,7 +562,7 @@ shell_help_cmd(int argc, char **argv)
 }
 
 void
-shell_init(void)
+shell_init(struct sysinit_init_ctxt *ctxt)
 {
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
@@ -608,3 +608,5 @@ shell_init(void)
     os_mqueue_init(&g_shell_nlip_mq, shell_event_data_in, NULL);
     console_init(shell_console_rx_cb);
 }
+
+SYSINIT_REGISTER_INIT(shell_init, 5);

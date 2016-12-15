@@ -28,6 +28,3 @@ pkg.deps:
     - kernel/os
     - hw/drivers/uart
 pkg.apis: console
-
-pkg.init_function: console_pkg_init
-pkg.init_stage: 0

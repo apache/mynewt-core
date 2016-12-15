@@ -29,6 +29,3 @@ pkg.deps:
     - kernel/os
     - hw/drivers/uart
     - mgmt/newtmgr
-
-pkg.init_function: nmgr_uart_pkg_init
-pkg.init_stage: 5

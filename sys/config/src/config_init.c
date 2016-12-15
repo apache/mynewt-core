@@ -92,7 +92,7 @@ config_init_fcb(void)
 #endif
 
 void
-config_pkg_init(void)
+config_pkg_init(struct sysinit_init_ctxt *ctxt)
 {
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
@@ -105,3 +105,5 @@ config_pkg_init(void)
     config_init_fcb();
 #endif
 }
+
+SYSINIT_REGISTER_INIT(config_pkg_init, 3);

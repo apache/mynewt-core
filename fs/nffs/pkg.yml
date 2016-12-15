@@ -35,6 +35,3 @@ pkg.deps:
     - sys/flash_map
     - sys/log
     - sys/stats
-
-pkg.init_function: nffs_pkg_init
-pkg.init_stage: 2

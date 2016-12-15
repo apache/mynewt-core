@@ -231,7 +231,7 @@ err:
 }
 
 void
-newtmgr_ble_pkg_init(void)
+newtmgr_ble_pkg_init(struct sysinit_init_ctxt *ctxt)
 {
     int rc;
 
@@ -241,3 +241,5 @@ newtmgr_ble_pkg_init(void)
     rc = nmgr_ble_gatt_svr_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
+
+SYSINIT_REGISTER_INIT(newtmgr_ble_pkg_init, 5);

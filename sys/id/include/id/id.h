@@ -29,11 +29,6 @@ extern "C" {
  */
 #define ID_SERIAL_MAX_LEN       64
 
-/*
- * Initialize manufacturing info storage/reporting.
- */
-void id_init(void);
-
 #ifdef __cplusplus
 }
 #endif

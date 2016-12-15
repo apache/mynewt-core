@@ -31,6 +31,3 @@ pkg.deps.RUNTEST_NEWTMGR:
 
 pkg.deps.RUNTEST_NEWTMGR:
     - encoding/json
-
-pkg.init_function: runtest_init
-pkg.init_stage: 5

@@ -269,3 +269,16 @@ flash_map_init(void)
         flash_map_entries = num_areas;
     }
 }
+
+/*
+ * Initializes flash map. Memory will be referenced by flash_map code
+ * from this on.
+ */
+static void
+flash_map_pkg_init(struct sysinit_init_ctxt *ctxt)
+{
+    flash_map_init();
+}
+
+/* Stage 0; sys/flash_map must get initialized before sys/mfg. */
+SYSINIT_REGISTER_INIT(flash_map_pkg_init, 0);

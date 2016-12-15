@@ -17,18 +17,45 @@
  * under the License.
  */
 
+#include <limits.h>
 #include "sysinit/sysinit.h"
+#include "sysinit_priv.h"
 
 uint8_t sysinit_active;
 
 void
-sysinit_start(void)
+sysinit_init_pkgs(void)
 {
-    sysinit_active = 1;
-}
+    const struct sysinit_entry *entry;
+    const struct sysinit_entry *start;
+    const struct sysinit_entry *end;
+    struct sysinit_init_ctxt ctxt;
+    int next_stage;
+    int cur_stage;
 
-void
-sysinit_end(void)
-{
+    sysinit_active = 1;
+
+    /* Determine the start and end of the sysinit linker section. */
+    sysinit_section_bounds(&start, &end);
+
+    cur_stage = 0;
+    do {
+        /* Assume this is the final stage. */
+        next_stage = INT_MAX;
+
+        /* Execute all init functions corresponding to the current stage. */
+        for (entry = start; entry != end; entry++) {
+            if (cur_stage == entry->stage) {
+                ctxt.entry = entry;
+                ctxt.cur_stage = cur_stage;
+                entry->init_fn(&ctxt);
+            } else if (cur_stage < entry->stage && next_stage > entry->stage) {
+                /* Found a stage to execute next. */
+                next_stage = entry->stage;
+            }
+        }
+        cur_stage = next_stage;
+    } while (cur_stage != INT_MAX);
+
     sysinit_active = 0;
 }

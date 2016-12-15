@@ -34,7 +34,7 @@ static int8_t split_mode_cur;
 static int8_t split_app_active;
 
 void
-split_app_init(void)
+split_app_init(struct sysinit_init_ctxt *ctxt)
 {
     int rc;
 
@@ -44,6 +44,8 @@ split_app_init(void)
     rc = split_conf_init();
     assert(rc == 0);
 }
+
+SYSINIT_REGISTER_INIT(split_app_init, 5);
 
 split_status_t
 split_check_status(void)

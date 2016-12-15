@@ -29,6 +29,3 @@ pkg.deps:
     - sys/defs
     - sys/flash_map
     - sys/mfg
-
-pkg.init_function: flash_map_init
-pkg.init_stage: 0

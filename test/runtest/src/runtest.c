@@ -45,7 +45,7 @@ extern int run_nmgr_register_group();
  * Package init routine to register newtmgr "run" commands
  */
 void
-runtest_init(void)
+runtest_init(struct sysinit_init_ctxt *ctxt)
 {
     int rc;
 
@@ -61,3 +61,5 @@ runtest_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
+
+SYSINIT_REGISTER_INIT(runtest_init, 5);

@@ -83,6 +83,13 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH
 
+    /* The sysinit section contains package initialization information. */
+    .sysinit :
+    {
+        __sysinit_start__ = .;
+        KEEP(*(sysinit))
+        __sysinit_end__ = .;
+    } > FLASH
 
     .ARM.extab :
     {

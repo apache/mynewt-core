@@ -55,12 +55,6 @@ extern const struct flash_area *flash_map;
 extern int flash_map_entries;
 
 /*
- * Initializes flash map. Memory will be referenced by flash_map code
- * from this on.
- */
-void flash_map_init(void);
-
-/*
  * Start using flash area.
  */
 int flash_area_open(uint8_t id, const struct flash_area **);
@@ -88,6 +82,8 @@ int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
 
 int flash_area_id_from_image_slot(int slot);
 int flash_area_id_to_image_slot(int area_id);
+
+void flash_map_init(void);
 
 #ifdef __cplusplus
 }

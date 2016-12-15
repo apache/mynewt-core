@@ -189,7 +189,6 @@ struct log {
 #define LOGS_NMGR_OP_LOGS_LIST    (5)
 
 /* Log system level functions (for all logs.) */
-void log_init(void);
 struct log *log_list_get_next(struct log *);
 
 /* Log functions, manipulate a single log */

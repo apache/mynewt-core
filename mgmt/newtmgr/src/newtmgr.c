@@ -362,7 +362,7 @@ err:
 }
 
 void
-nmgr_pkg_init(void)
+nmgr_pkg_init(struct sysinit_init_ctxt *ctxt)
 {
     int rc;
 
@@ -372,3 +372,5 @@ nmgr_pkg_init(void)
     rc = nmgr_task_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
+
+SYSINIT_REGISTER_INIT(nmgr_pkg_init, 5);

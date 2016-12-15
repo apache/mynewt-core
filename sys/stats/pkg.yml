@@ -30,6 +30,3 @@ pkg.deps.STATS_CLI:
     - sys/shell
 pkg.deps.STATS_NEWTMGR:
     - mgmt/mgmt
-
-pkg.init_function: stats_module_init
-pkg.init_stage: 0

@@ -168,7 +168,7 @@ err:
  * ASSERT's if it fails, as something is likely h0rked system wide.
  */
 void
-stats_module_init(void)
+stats_module_init(struct sysinit_init_ctxt *ctxt)
 {
     int rc;
 
@@ -195,6 +195,8 @@ stats_module_init(void)
     rc = stats_register("stat", STATS_HDR(g_stats_stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
+
+SYSINIT_REGISTER_INIT(stats_module_init, 0);
 
 
 /**

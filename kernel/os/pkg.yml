@@ -35,6 +35,3 @@ pkg.deps.OS_CLI:
 
 pkg.deps.OS_COREDUMP:
     - sys/coredump
-
-pkg.init_function: os_pkg_init
-pkg.init_stage: 0

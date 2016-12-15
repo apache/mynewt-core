@@ -41,6 +41,3 @@ pkg.deps.IMGMGR_COREDUMP:
 
 pkg.deps.IMGMGR_SHELL:
     - sys/shell
-
-pkg.init_function: imgmgr_module_init
-pkg.init_stage: 5

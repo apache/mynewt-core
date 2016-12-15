@@ -27,7 +27,6 @@
 #include "cborattr/cborattr.h"
 #include "console/console.h"
 
-#include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
 static int crash_test_nmgr_write(struct mgmt_cbuf *);

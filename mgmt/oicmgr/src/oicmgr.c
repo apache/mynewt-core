@@ -208,8 +208,8 @@ omgr_event_start(struct os_event *ev)
     oc_add_resource(res);
 }
 
-int
-oicmgr_init(void)
+void
+oicmgr_init(struct sysinit_init_ctxt *ctxt)
 {
     int rc;
 
@@ -225,3 +225,5 @@ oicmgr_init(void)
 err:
     return (rc);
 }
+
+SYSINIT_REGISTER_INIT(oicmgr_init, 5);

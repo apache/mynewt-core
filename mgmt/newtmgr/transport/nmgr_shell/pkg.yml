@@ -29,6 +29,3 @@ pkg.deps:
     - kernel/os
     - sys/shell
     - mgmt/newtmgr
-
-pkg.init_function: nmgr_shell_pkg_init
-pkg.init_stage: 5
