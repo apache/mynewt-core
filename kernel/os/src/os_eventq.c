@@ -111,10 +111,21 @@ os_eventq_get(struct os_eventq *evq)
     os_sr_t sr;
     struct os_task *t;
 
+    t = os_sched_get_current_task();
+    if (evq->evq_owner != t) {
+        if (evq->evq_owner == NULL) {
+            evq->evq_owner = t;
+        } else {
+            /*
+             * A task is trying to read from event queue which is handled
+             * by another.
+             */
+            assert(0);
+        }
+    }
     OS_ENTER_CRITICAL(sr);
 pull_one:
     ev = STAILQ_FIRST(&evq->evq_list);
-    t = os_sched_get_current_task();
     if (ev) {
         STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
         ev->ev_queued = 0;
