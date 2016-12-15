@@ -41,7 +41,8 @@ struct os_event {
 #define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued)
 
 struct os_eventq {
-    struct os_task *evq_task;
+    struct os_task *evq_owner;  /* owner task */
+    struct os_task *evq_task;   /* sleeper; must be either NULL, or the owner */
     STAILQ_HEAD(, os_event) evq_list;
 };
 
