@@ -21,26 +21,28 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
-#include "bsp/bsp.h"
-#include "os/os.h"
-#include "bsp/bsp.h"
-#include "hal/hal_gpio.h"
-#include "console/console.h"
-#include "imgmgr/imgmgr.h"
-#include "mgmt/mgmt.h"
-#include "oic/oc_api.h"
+#include <sysinit/sysinit.h>
+#include <bsp/bsp.h>
+#include <os/os.h>
+#include <bsp/bsp.h>
+#include <hal/hal_gpio.h>
+#include <console/console.h>
+#include <imgmgr/imgmgr.h>
+#include <mgmt/mgmt.h>
+
+#include <oic/oc_api.h>
+#include <oic/oc_gatt.h>
+#include <oic/oc_log.h>
+#include <cborattr/cborattr.h>
 
 /* BLE */
-#include "nimble/ble.h"
-#include "host/ble_hs.h"
-#include "services/gap/ble_svc_gap.h"
+#include <nimble/ble.h>
+#include <host/ble_hs.h>
+#include <services/gap/ble_svc_gap.h>
 
 /* Application-specified header. */
 #include "bleprph.h"
 
-#include <oic/oc_gatt.h>
-#include <oic/oc_log.h>
 
 /** Log data. */
 struct log bleprph_log;
@@ -255,11 +257,76 @@ bleprph_on_sync(void)
 }
 
 static void
+app_get_light(oc_request_t *request, oc_interface_mask_t interface)
+{
+    bool state;
+
+    if (hal_gpio_read(LED_BLINK_PIN)) {
+        state = true;
+    } else {
+        state = false;
+    }
+    oc_rep_start_root_object();
+        switch (interface) {
+    case OC_IF_BASELINE:
+        oc_process_baseline_interface(request->resource);
+    case OC_IF_RW:
+        oc_rep_set_boolean(root, state, state);
+        break;
+    default:
+        break;
+    }
+    oc_rep_end_root_object();
+    oc_send_response(request, OC_STATUS_OK);
+}
+
+static void
+app_set_light(oc_request_t *request, oc_interface_mask_t interface)
+{
+    bool state;
+    int len;
+    const uint8_t *data;
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "state",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &state,
+            .dflt.boolean = false
+        },
+        [1] = {
+        }
+    };
+
+    len = coap_get_payload(request->packet, &data);
+    if (cbor_read_flat_attrs(data, len, attrs)) {
+        oc_send_response(request, OC_STATUS_BAD_REQUEST);
+    } else {
+        hal_gpio_write(LED_BLINK_PIN, state == true);
+        oc_send_response(request, OC_STATUS_CHANGED);
+    }
+
+}
+
+static void
 omgr_app_init(void)
 {
+    oc_resource_t *res;
+
     oc_init_platform("MyNewt", NULL, NULL);
     oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
                   NULL);
+
+    res = oc_new_resource("/light/1", 1, 0);
+    oc_resource_bind_resource_type(res, "oic.r.light");
+    oc_resource_bind_resource_interface(res, OC_IF_RW);
+    oc_resource_set_default_interface(res, OC_IF_RW);
+
+    oc_resource_set_discoverable(res);
+    oc_resource_set_periodic_observable(res, 1);
+    oc_resource_set_request_handler(res, OC_GET, app_get_light);
+    oc_resource_set_request_handler(res, OC_PUT, app_set_light);
+    oc_add_resource(res);
+
 }
 
 static const oc_handler_t omgr_oc_handler = {
@@ -332,6 +399,9 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("pi");
     assert(rc == 0);
+
+    /* Our light resource */
+    hal_gpio_init_out(LED_BLINK_PIN, 1);
 
     /* Start the OS */
     os_start();
