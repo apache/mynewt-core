@@ -75,8 +75,6 @@ STATS_NAME_START(oc_ble_stats)
     STATS_NAME(oc_ble_stats, oerr)
 STATS_NAME_END(oc_ble_stats)
 
-/* queue to hold mbufs until we get called from oic */
-static struct os_mqueue oc_ble_coap_mq;
 static STAILQ_HEAD(, os_mbuf_pkthdr) oc_ble_reass_q;
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
@@ -115,6 +113,70 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
     },
 };
 
+int
+oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
+{
+    struct os_mbuf_pkthdr *pkt1;
+    struct oc_endpoint *oe;
+    struct os_mbuf *om2;
+    struct os_mbuf_pkthdr *pkt2;
+    uint8_t hdr[6]; /* sizeof(coap_tcp_hdr32) */
+
+    pkt1 = OS_MBUF_PKTHDR(om1);
+    assert(pkt1);
+
+    STATS_INC(oc_ble_stats, iseg);
+    STATS_INCN(oc_ble_stats, ibytes, pkt1->omp_len);
+
+    OC_LOG_DEBUG("oc_gatt rx seg %u-%x-%u\n", conn_handle,
+                 (unsigned)pkt1, pkt1->omp_len);
+
+    STAILQ_FOREACH(pkt2, &oc_ble_reass_q, omp_next) {
+        om2 = OS_MBUF_PKTHDR_TO_MBUF(pkt2);
+        oe = OC_MBUF_ENDPOINT(om2);
+        if (conn_handle == oe->bt_addr.conn_handle) {
+            /*
+             * Data from same connection. Append.
+             */
+            os_mbuf_concat(om2, om1);
+            os_mbuf_copydata(om2, 0, sizeof(hdr), hdr);
+
+            if (coap_tcp_msg_size(hdr, sizeof(hdr)) <= pkt2->omp_len) {
+                STAILQ_REMOVE(&oc_ble_reass_q, pkt2, os_mbuf_pkthdr, omp_next);
+                oc_recv_message(om2);
+            }
+            pkt1 = NULL;
+            break;
+        }
+    }
+    if (pkt1) {
+        /*
+         * New frame
+         */
+        om2 = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+        if (!om2) {
+            OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
+            STATS_INC(oc_ble_stats, ierr);
+            return -1;
+        }
+        OS_MBUF_PKTHDR(om2)->omp_len = pkt1->omp_len;
+        SLIST_NEXT(om2, om_next) = om1;
+
+        oe = OC_MBUF_ENDPOINT(om2);
+        oe->flags = GATT;
+        oe->bt_addr.conn_handle = conn_handle;
+        pkt2 = OS_MBUF_PKTHDR(om2);
+
+        if (os_mbuf_copydata(om2, 0, sizeof(hdr), hdr) ||
+          coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
+            STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt2, omp_next);
+        } else {
+            oc_recv_message(om2);
+        }
+    }
+    return 0;
+}
+
 static int
 oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
                    struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -127,13 +189,7 @@ oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
     case BLE_GATT_ACCESS_OP_WRITE_CHR:
         m = ctxt->om;
 
-        /* stick the conn handle at the end of the frame -- we will
-         * pull it out later */
-        rc = os_mbuf_append(m, &conn_handle, sizeof(conn_handle));
-        if (rc) {
-            return BLE_ATT_ERR_INSUFFICIENT_RES;
-        }
-        rc = os_mqueue_put(&oc_ble_coap_mq, oc_evq_get(), m);
+        rc = oc_ble_reass(m, conn_handle);
         if (rc) {
             return BLE_ATT_ERR_INSUFFICIENT_RES;
         }
@@ -147,60 +203,6 @@ oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
         return BLE_ATT_ERR_UNLIKELY;
     }
     return 0;
-}
-
-static struct os_mbuf *
-oc_attempt_rx_gatt(void)
-{
-    int rc;
-    struct os_mbuf *m;
-    struct os_mbuf *n;
-    struct os_mbuf_pkthdr *pkt;
-    struct oc_endpoint *oe;
-    uint16_t conn_handle;
-
-    /* get an mbuf from the queue */
-    n = os_mqueue_get(&oc_ble_coap_mq);
-    if (NULL == n) {
-        return NULL;
-    }
-
-    pkt = OS_MBUF_PKTHDR(n);
-
-    STATS_INC(oc_ble_stats, iseg);
-    STATS_INCN(oc_ble_stats, ibytes, pkt->omp_len);
-
-    /* get the conn handle from the end of the message */
-    rc = os_mbuf_copydata(n, pkt->omp_len - sizeof(conn_handle),
-                          sizeof(conn_handle), &conn_handle);
-    if (rc != 0) {
-        OC_LOG_ERROR("oc_gatt_rx: Failed to get conn_handle from mbuf\n");
-        goto rx_attempt_err;
-    }
-
-    /* trim conn_handle from the end */
-    os_mbuf_adj(n, - sizeof(conn_handle));
-
-    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
-    if (!m) {
-        OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
-        goto rx_attempt_err;
-    }
-    OS_MBUF_PKTHDR(m)->omp_len = pkt->omp_len;
-    SLIST_NEXT(m, om_next) = n;
-
-    oe = OC_MBUF_ENDPOINT(m);
-
-    oe->flags = GATT;
-    oe->bt_addr.conn_handle = conn_handle;
-
-    return m;
-
-    /* add the addr info to the message */
-rx_attempt_err:
-    STATS_INC(oc_ble_stats, ierr);
-    os_mbuf_free_chain(n);
-    return NULL;
 }
 #endif
 
@@ -227,60 +229,6 @@ oc_ble_coap_gatt_srv_init(void)
 }
 
 void
-oc_ble_reass(struct os_mbuf *om1)
-{
-    struct os_mbuf_pkthdr *pkt1;
-    struct oc_endpoint *oe1;
-    struct os_mbuf *om2;
-    struct os_mbuf_pkthdr *pkt2;
-    struct oc_endpoint *oe2;
-    int sr;
-    uint8_t hdr[6]; /* sizeof(coap_tcp_hdr32) */
-
-    pkt1 = OS_MBUF_PKTHDR(om1);
-    assert(pkt1);
-    oe1 = OC_MBUF_ENDPOINT(om1);
-
-    OC_LOG_DEBUG("oc_gatt rx seg %d-%x-%u\n", oe1->bt_addr.conn_handle,
-      (unsigned)pkt1, pkt1->omp_len);
-
-    OS_ENTER_CRITICAL(sr);
-    STAILQ_FOREACH(pkt2, &oc_ble_reass_q, omp_next) {
-        om2 = OS_MBUF_PKTHDR_TO_MBUF(pkt2);
-        oe2 = OC_MBUF_ENDPOINT(om2);
-        if (oe1->bt_addr.conn_handle == oe2->bt_addr.conn_handle) {
-            /*
-             * Data from same connection. Append.
-             */
-            os_mbuf_concat(om2, om1);
-            if (os_mbuf_copydata(om2, 0, sizeof(hdr), hdr)) {
-                pkt1 = NULL;
-                break;
-            }
-            if (coap_tcp_msg_size(hdr, sizeof(hdr)) <= pkt2->omp_len) {
-                STAILQ_REMOVE(&oc_ble_reass_q, pkt2, os_mbuf_pkthdr,
-                  omp_next);
-                oc_recv_message(om2);
-            }
-            pkt1 = NULL;
-            break;
-        }
-    }
-    if (pkt1) {
-        /*
-         *
-         */
-        if (os_mbuf_copydata(om1, 0, sizeof(hdr), hdr) ||
-          coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt1->omp_len) {
-            STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt1, omp_next);
-        } else {
-            oc_recv_message(om1);
-        }
-    }
-    OS_EXIT_CRITICAL(sr);
-}
-
-void
 oc_ble_coap_conn_new(uint16_t conn_handle)
 {
     OC_LOG_DEBUG("oc_gatt newconn %x\n", conn_handle);
@@ -292,10 +240,8 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
     struct os_mbuf_pkthdr *pkt;
     struct os_mbuf *m;
     struct oc_endpoint *oe;
-    int sr;
 
     OC_LOG_DEBUG("oc_gatt endconn %x\n", conn_handle);
-    OS_ENTER_CRITICAL(sr);
     STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
         m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
         oe = OC_MBUF_ENDPOINT(m);
@@ -305,23 +251,11 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
             break;
         }
     }
-    OS_EXIT_CRITICAL(sr);
-}
-
-static void
-oc_event_gatt(struct os_event *ev)
-{
-    struct os_mbuf *m;
-
-    while ((m = oc_attempt_rx_gatt()) != NULL) {
-        oc_ble_reass(m);
-    }
 }
 
 int
 oc_connectivity_init_gatt(void)
 {
-    os_mqueue_init(&oc_ble_coap_mq, oc_event_gatt, NULL);
     STAILQ_INIT(&oc_ble_reass_q);
     return 0;
 }
