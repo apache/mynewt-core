@@ -75,7 +75,7 @@ oc_send_buffer(struct os_mbuf *m)
 
     oe = OC_MBUF_ENDPOINT(m);
 
-    switch (oe->flags) {
+    switch (oe->oe.flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     case IP:
         oc_send_buffer_ip(m);
@@ -92,7 +92,7 @@ oc_send_buffer(struct os_mbuf *m)
         break;
 #endif
     default:
-        OC_LOG_ERROR("Unknown transport option %u\n", oe->flags);
+        OC_LOG_ERROR("Unknown transport option %u\n", oe->oe.flags);
         os_mbuf_free_chain(m);
     }
 }

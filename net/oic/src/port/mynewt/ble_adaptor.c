@@ -117,7 +117,7 @@ int
 oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
 {
     struct os_mbuf_pkthdr *pkt1;
-    struct oc_endpoint *oe;
+    struct oc_endpoint_ble *oe_ble;
     struct os_mbuf *om2;
     struct os_mbuf_pkthdr *pkt2;
     uint8_t hdr[6]; /* sizeof(coap_tcp_hdr32) */
@@ -133,8 +133,8 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
 
     STAILQ_FOREACH(pkt2, &oc_ble_reass_q, omp_next) {
         om2 = OS_MBUF_PKTHDR_TO_MBUF(pkt2);
-        oe = OC_MBUF_ENDPOINT(om2);
-        if (conn_handle == oe->bt_addr.conn_handle) {
+        oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(om2);
+        if (conn_handle == oe_ble->conn_handle) {
             /*
              * Data from same connection. Append.
              */
@@ -151,20 +151,25 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
     }
     if (pkt1) {
         /*
-         * New frame
+         * New frame, need to add oc_endpoint_ble in the front.
+         * Check if there is enough space available. If not, allocate a
+         * new pkthdr.
          */
-        om2 = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
-        if (!om2) {
-            OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
-            STATS_INC(oc_ble_stats, ierr);
-            return -1;
+        if (OS_MBUF_USRHDR_LEN(om1) < sizeof(struct oc_endpoint_ble)) {
+            om2 = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_ble));
+            if (!om2) {
+                OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
+                STATS_INC(oc_ble_stats, ierr);
+                return -1;
+            }
+            OS_MBUF_PKTHDR(om2)->omp_len = pkt1->omp_len;
+            SLIST_NEXT(om2, om_next) = om1;
+        } else {
+            om2 = om1;
         }
-        OS_MBUF_PKTHDR(om2)->omp_len = pkt1->omp_len;
-        SLIST_NEXT(om2, om_next) = om1;
-
-        oe = OC_MBUF_ENDPOINT(om2);
-        oe->flags = GATT;
-        oe->bt_addr.conn_handle = conn_handle;
+        oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(om2);
+        oe_ble->flags = GATT;
+        oe_ble->conn_handle = conn_handle;
         pkt2 = OS_MBUF_PKTHDR(om2);
 
         if (os_mbuf_copydata(om2, 0, sizeof(hdr), hdr) ||
@@ -239,13 +244,13 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
 {
     struct os_mbuf_pkthdr *pkt;
     struct os_mbuf *m;
-    struct oc_endpoint *oe;
+    struct oc_endpoint_ble *oe_ble;
 
     OC_LOG_DEBUG("oc_gatt endconn %x\n", conn_handle);
     STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
         m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
-        oe = OC_MBUF_ENDPOINT(m);
-        if (oe->bt_addr.conn_handle == conn_handle) {
+        oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(m);
+        if (oe_ble->conn_handle == conn_handle) {
             STAILQ_REMOVE(&oc_ble_reass_q, pkt, os_mbuf_pkthdr, omp_next);
             os_mbuf_free_chain(m);
             break;
@@ -318,8 +323,9 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     uint16_t mtu;
     uint16_t conn_handle;
 
+    assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ble));
     oe = OC_MBUF_ENDPOINT(m);
-    conn_handle = oe->bt_addr.conn_handle;
+    conn_handle = oe->oe_ble.conn_handle;
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
     OC_LOG_ERROR("oc_gatt send not supported on client");
@@ -330,7 +336,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     STATS_INC(oc_ble_stats, oseg);
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
-    mtu = ble_att_mtu(oe->bt_addr.conn_handle);
+    mtu = ble_att_mtu(conn_handle);
     assert(mtu > 4);
     mtu -= 3; /* # of bytes for ATT notification base */
 

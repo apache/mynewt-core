@@ -190,7 +190,7 @@ oc_ri_process_discovery_payload(uint8_t *payload, int len,
       .os_str = NULL
   };
   bool secure = false;
-  uint16_t dtls_port = 0, default_port = endpoint->ipv6_addr.port;
+  uint16_t dtls_port = 0, default_port = endpoint->oe_ip.v6.port;
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
@@ -269,11 +269,11 @@ oc_ri_process_discovery_payload(uint8_t *payload, int len,
               resource_info = resource_info->next;
             }
             if (secure) {
-              handle.endpoint.ipv6_addr.port = dtls_port;
-              handle.endpoint.flags |= SECURED;
+              handle.endpoint.oe_ip.v6.port = dtls_port;
+              handle.endpoint.oe_ip.flags |= SECURED;
             } else {
-              handle.endpoint.ipv6_addr.port = default_port;
-              handle.endpoint.flags &= ~SECURED;
+              handle.endpoint.oe_ip.v6.port = default_port;
+              handle.endpoint.oe_ip.flags &= ~SECURED;
             }
 
             if (handler(oc_string(di), oc_string(uri), types, interfaces,

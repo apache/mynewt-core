@@ -34,21 +34,21 @@ oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
 
     (void)tmp;
 
-    switch (oe->flags) {
+    switch (oe->oe.flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
     case IP: {
         int len;
 
-        mn_inet_ntop(MN_PF_INET6, oe->ipv6_addr.address, tmp, sizeof(tmp));
+        mn_inet_ntop(MN_PF_INET6, oe->oe_ip.v6.address, tmp, sizeof(tmp));
         len = strlen(tmp);
-        snprintf(tmp + len, sizeof(tmp) - len, "-%u\n", oe->ipv6_addr.port);
+        snprintf(tmp + len, sizeof(tmp) - len, "-%u\n", oe->oe_ip.v6.port);
         str = tmp;
         break;
     }
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     case GATT:
-        snprintf(tmp, sizeof(tmp), "%u\n", oe->bt_addr.conn_handle);
+        snprintf(tmp, sizeof(tmp), "ble %u\n", oe->oe_ble.conn_handle);
         str = tmp;
         break;
 #endif

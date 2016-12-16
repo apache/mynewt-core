@@ -30,22 +30,47 @@ typedef struct {
     uint8_t scope;
 } oc_ipv6_addr_t;
 
-typedef struct {
+enum oc_transport_flags {
+    IP = 1 << 0,
+    GATT = 1 << 1,
+    IPSP = 1 << 2,
+    MULTICAST = 1 << 3,
+    SECURED = 1 << 4,
+    SERIAL = 1 << 5,
+};
+
+/*
+ * OC endpoint data structure comes in different variations,
+ * depending on flags field.
+ */
+/*
+ * oc_endpoint for IPv6 source
+ */
+struct oc_endpoint_ip {
+    enum oc_transport_flags flags;
+    oc_ipv6_addr_t v6;
+};
+
+/*
+ * oc_endpoint for BLE source.
+ */
+struct oc_endpoint_ble {
+    enum oc_transport_flags flags;
     uint16_t conn_handle;
-} oc_le_addr_t;
+};
+
+/*
+ * oc_endpoint for multicast target and serial port.
+ */
+struct oc_endpoint_plain {
+    enum oc_transport_flags flags;
+};
 
 typedef struct oc_endpoint {
-    enum transport_flags {
-        IP = 1 << 0,
-        GATT = 1 << 1,
-        IPSP = 1 << 2,
-        MULTICAST = 1 << 3,
-        SECURED = 1 << 4,
-        SERIAL = 1 << 5,
-    } flags;
     union {
-        oc_ipv6_addr_t ipv6_addr;
-        oc_le_addr_t bt_addr;
+        struct oc_endpoint_ip oe_ip;
+        struct oc_endpoint_ble oe_ble;
+        struct oc_endpoint_plain oe;
     };
 } oc_endpoint_t;
 
@@ -54,10 +79,10 @@ typedef struct oc_endpoint {
                             sizeof(struct os_mbuf_pkthdr)))
 
 
-#define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)                \
-  oc_endpoint_t __name__ = {.flags = __flags__,                                \
-                            .ipv6_addr = {.port = __port__,                    \
-                                          .address = { __VA_ARGS__ } } }
+#define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)         \
+    oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
+                                        .v6 = {.port = __port__,        \
+                                               .address = { __VA_ARGS__ } } } }
 
 typedef struct oc_message {
     oc_endpoint_t endpoint;
@@ -76,7 +101,7 @@ void oc_connectivity_shutdown(void);
 static inline int
 oc_endpoint_use_tcp(struct oc_endpoint *oe)
 {
-    if (oe->flags & GATT) {
+    if (oe->oe.flags & GATT) {
         return 1;
     }
     return 0;

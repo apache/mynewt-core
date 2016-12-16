@@ -102,7 +102,7 @@ oc_attempt_rx_serial(void)
         return NULL;
     }
 
-    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_plain));
     if (!m) {
         OC_LOG_ERROR("Could not allocate OC message buffer\n");
         goto rx_attempt_err;
@@ -111,7 +111,7 @@ oc_attempt_rx_serial(void)
     SLIST_NEXT(m, om_next) = n;
 
     oe = OC_MBUF_ENDPOINT(m);
-    oe->flags = SERIAL;
+    oe->oe.flags = SERIAL;
 
     return m;
 
