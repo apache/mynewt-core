@@ -69,13 +69,14 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
     struct os_mbuf *n;
     int rc;
 
+    assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ip));
     oe = OC_MBUF_ENDPOINT(m);
 
     to.msin6_len = sizeof(to);
     to.msin6_family = MN_AF_INET6;
-    to.msin6_port = htons(oe->ipv6_addr.port);
-    to.msin6_scope_id = oe->ipv6_addr.scope;
-    memcpy(&to.msin6_addr, oe->ipv6_addr.address, sizeof(to.msin6_addr));
+    to.msin6_port = htons(oe->oe_ip.v6.port);
+    to.msin6_scope_id = oe->oe_ip.v6.scope;
+    memcpy(&to.msin6_addr, oe->oe_ip.v6.address, sizeof(to.msin6_addr));
 
     if (is_mcast) {
         memset(&itf, 0, sizeof(itf));
@@ -156,7 +157,7 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
     }
     assert(OS_MBUF_IS_PKTHDR(n));
 
-    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_ip));
     if (!m) {
         OC_LOG_ERROR("Could not allocate RX buffer\n");
         goto rx_attempt_err;
@@ -166,11 +167,11 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
 
     oe = OC_MBUF_ENDPOINT(m);
 
-    oe->flags = IP;
-    memcpy(&oe->ipv6_addr.address, &from.msin6_addr,
-             sizeof(oe->ipv6_addr.address));
-    oe->ipv6_addr.scope = from.msin6_scope_id;
-    oe->ipv6_addr.port = ntohs(from.msin6_port);
+    oe->oe_ip.flags = IP;
+    memcpy(&oe->oe_ip.v6.address, &from.msin6_addr,
+           sizeof(oe->oe_ip.v6.address));
+    oe->oe_ip.v6.scope = from.msin6_scope_id;
+    oe->oe_ip.v6.port = ntohs(from.msin6_port);
 
     return m;
 

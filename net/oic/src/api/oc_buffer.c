@@ -118,7 +118,7 @@ oc_buffer_tx(struct os_event *ev)
         OC_LOG_DEBUG("oc_buffer_tx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 #ifdef OC_CLIENT
-        if (OC_MBUF_ENDPOINT(m)->flags & MULTICAST) {
+        if (OC_MBUF_ENDPOINT(m)->oe.flags & MULTICAST) {
             oc_send_multicast_message(m);
         } else {
 #endif

@@ -273,7 +273,7 @@ oc_do_ip_discovery(const char *rt, oc_discovery_cb_t handler)
 
     oc_make_ip_endpoint(mcast, IP | MULTICAST, 5683,
                        0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xfd);
-    mcast.ipv6_addr.scope = 0;
+    mcast.oe_ip.v6.scope = 0;
 
     memcpy(&handle.endpoint, &mcast, sizeof(oc_endpoint_t));
 
