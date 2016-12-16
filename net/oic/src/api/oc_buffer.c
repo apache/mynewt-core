@@ -160,7 +160,7 @@ oc_buffer_rx(struct os_event *ev)
             goto free_msg;
         }
         OC_LOG_DEBUG("oc_buffer_rx: ");
-        OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, &msg->endpoint);
+        OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 
         if (OS_MBUF_PKTHDR(m)->omp_len > MAX_PAYLOAD_SIZE) {
             STATS_INC(coap_stats, itoobig);
