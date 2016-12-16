@@ -278,25 +278,22 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         STAILQ_NEXT(pkt, omp_next) = NULL;
         return 0;
     }
-    off = mtu;
+    off = pkt->omp_len % mtu;
 
-    while (off < OS_MBUF_PKTLEN(m)) {
+    while (off > mtu) {
         n = os_msys_get_pkthdr(mtu, 0);
         if (!n) {
             goto err;
         }
-
+        STAILQ_NEXT(OS_MBUF_PKTHDR(n), omp_next) = STAILQ_NEXT(pkt, omp_next);
         STAILQ_NEXT(pkt, omp_next) = OS_MBUF_PKTHDR(n);
-        pkt = STAILQ_NEXT(pkt, omp_next);
 
-        blk = OS_MBUF_PKTLEN(m) - off;
-        if (blk > mtu) {
-            blk = mtu;
-        }
+        blk = pkt->omp_len - off;
         if (os_mbuf_appendfrom(n, m, off, blk)) {
             goto err;
         }
-        off += blk;
+        off -= blk;
+        os_mbuf_adj(m, -blk);
     }
     os_mbuf_adj(m, mtu - OS_MBUF_PKTLEN(m));
     return 0;
@@ -334,6 +331,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
     mtu = ble_att_mtu(oe->bt_addr.conn_handle);
+    assert(mtu > 4);
     mtu -= 3; /* # of bytes for ATT notification base */
 
     if (oc_ble_frag(m, mtu)) {
