@@ -38,9 +38,6 @@ syscfg.vals:
     # Disable unused eddystone feature.
     BLE_EDDYSTONE: 0
 
-    # Need to get this down. XXXXX
-    MSYS_1_BLOCK_COUNT: 18
-
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
     LOG_FCB: 1
