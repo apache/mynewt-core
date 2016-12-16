@@ -41,9 +41,8 @@ typedef struct oc_endpoint {
         IPSP = 1 << 2,
         MULTICAST = 1 << 3,
         SECURED = 1 << 4,
-        SERIAL = 1 <<5,
+        SERIAL = 1 << 5,
     } flags;
-
     union {
         oc_ipv6_addr_t ipv6_addr;
         oc_le_addr_t bt_addr;
