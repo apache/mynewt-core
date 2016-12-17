@@ -19,10 +19,6 @@
 # Package: sys/sysinit
 
 syscfg.defs:
-    SYSINIT_PANIC_FN:
-        description: 'TBD'
-        value:
-
     SYSINIT_CONSTRAIN_INIT:
         description: Only allow packages to be initialized by sysinit.
         value: 1
