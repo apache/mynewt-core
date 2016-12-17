@@ -73,8 +73,6 @@ struct coredump_regs {
     uint32_t psr;
 };
 
-void __assert_func(const char *file, int line, const char *func, const char *e);
-
 #if MYNEWT_VAL(OS_COREDUMP)
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)

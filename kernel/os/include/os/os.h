@@ -97,6 +97,7 @@ void os_init_idle_task(void);
 #include "os/os_dev.h"
 #include "os/os_eventq.h"
 #include "os/os_heap.h"
+#include "os/os_fault.h"
 #include "os/os_mbuf.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
