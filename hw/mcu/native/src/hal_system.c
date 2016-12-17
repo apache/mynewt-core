@@ -20,13 +20,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
+#include "syscfg/syscfg.h"
 #include "hal/hal_system.h"
 #include "mcu/mcu_sim.h"
 
 void
 hal_system_reset(void)
 {
+#if MYNEWT_VAL(SELFTEST)
+    /* Don't hang in the middle of a unit test. */
+    assert(0);
+#endif
+
     while(1);
 }
 
