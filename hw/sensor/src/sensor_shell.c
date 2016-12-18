@@ -35,7 +35,7 @@
 #include "shell/shell.h"
 
 static int sensor_cmd_exec(int, char **);
-static const struct shell_cmd shell_sensor_cmd = {
+static struct shell_cmd shell_sensor_cmd = {
     .sc_cmd = "sensor",
     .sc_cmd_func = sensor_cmd_exec
 };
