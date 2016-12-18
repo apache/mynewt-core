@@ -97,16 +97,13 @@ typedef enum {
  */
 #define SENSOR_VALUE_TYPE_FLOAT  (2)
 /**
- * Meters per second squared.
- *
- * 32-bit signed integer, with 0xFFFFFFFF reserved for unused.
+ * 32-bit integer triplet.
  */
-#define SENSOR_VALUE_TYPE_MS2    (3)
+#define SENSOR_VALUE_TYPE_INT32_TRIPLET (3)
 /**
- * Triplet of meters per second squared.
+ * 32-bit floating point number triplet.
  */
-#define SENSOR_VALUE_TYPE_MS2_TRIPLET (4)
-
+#define SENSOR_VALUE_TYPE_FLOAT_TRIPLET (4)
 
 
 /**

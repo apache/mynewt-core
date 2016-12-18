@@ -32,15 +32,15 @@ extern "C" {
  * All values are in MS^2
  */
 struct sensor_accel_data {
-    int32_t sad_x;
-    int32_t sad_y;
-    int32_t sad_z;
+    float sad_x;
+    float sad_y;
+    float sad_z;
 } __attribute__((packed));
 
 /**
  * Accelerometer data is unused for this field.
  */
-#define SENSOR_ACCEL_DATA_UNUSED (0xFFFFFFFF)
+#define SENSOR_ACCEL_DATA_UNUSED (-1)
 
 #ifdef __cplusplus
 }

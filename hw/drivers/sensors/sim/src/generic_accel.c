@@ -134,15 +134,15 @@ sim_accel_sensor_read(struct sensor *sensor, sensor_type_t type,
      * if number of axises is configured, up to 3-axises of data can be
      * returned.
      */
-    sad.sad_x = 0;
+    sad.sad_x = 0.0;
     sad.sad_y = SENSOR_ACCEL_DATA_UNUSED;
     sad.sad_z = SENSOR_ACCEL_DATA_UNUSED;
 
     if (sa->sa_cfg.sac_nr_axises > 1) {
-        sad.sad_y = 0;
+        sad.sad_y = 0.0;
     }
     if (sa->sa_cfg.sac_nr_axises > 2) {
-        sad.sad_z = 0;
+        sad.sad_z = 0.0;
     }
 
     /* Call data function for each of the generated readings. */
@@ -169,7 +169,7 @@ sim_accel_sensor_get_config(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
-    cfg->sc_valtype = SENSOR_VALUE_TYPE_MS2_TRIPLET;
+    cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
 
     return (0);
 err:
