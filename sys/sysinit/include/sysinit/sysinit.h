@@ -20,7 +20,6 @@
 #ifndef H_SYSINIT_
 #define H_SYSINIT_
 
-#include <assert.h>
 #include "syscfg/syscfg.h"
 #include "bootutil/bootutil.h"
 
@@ -107,11 +106,17 @@ struct sysinit_init_ctxt {
 
 typedef void sysinit_panic_fn(const char *file, int line);
 
-extern sysinit_panic_fn *sysinit_panic_cb;
-
-void sysinit_panic_set(sysinit_panic_fn *panic_fn);
-
-#define SYSINIT_PANIC() sysinit_panic_cb(__FILE__, __LINE__)
+/* By default, a panic triggers an assertion failure.  If the project overrides
+ * the sysinit panic function setting, the specified function gets called
+ * instead.
+ */
+#ifndef MYNEWT_VAL_SYSINIT_PANIC_FN
+#include <assert.h>
+#define SYSINIT_PANIC() assert(0)
+#else
+void MYNEWT_VAL(SYSINIT_PANIC_FN)(const char *file, int line);
+#define SYSINIT_PANIC() MYNEWT_VAL(SYSINIT_PANIC_FN)(__FILE__, __LINE__)
+#endif
 
 #define SYSINIT_PANIC_ASSERT(rc) do \
 {                                   \
