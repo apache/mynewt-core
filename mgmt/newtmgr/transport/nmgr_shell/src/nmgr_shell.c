@@ -55,7 +55,7 @@ nmgr_shell_in(struct os_mbuf *m, void *arg)
 }
 
 void
-nmgr_shell_pkg_init(struct sysinit_init_ctxt *ctxt)
+nmgr_shell_pkg_init(void)
 {
     int rc;
 
@@ -69,5 +69,3 @@ nmgr_shell_pkg_init(struct sysinit_init_ctxt *ctxt)
     rc = shell_nlip_input_register(nmgr_shell_in, &nmgr_shell_transport);
     assert(rc == 0);
 }
-
-SYSINIT_REGISTER_INIT(nmgr_shell_pkg_init, 5);

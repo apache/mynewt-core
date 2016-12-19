@@ -40,6 +40,8 @@ extern "C" {
 
 extern int boot_current_slot;
 
+void imgmgr_module_init(void);
+
 struct image_version;
 
 /*

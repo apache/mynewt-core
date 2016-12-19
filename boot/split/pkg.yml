@@ -26,3 +26,6 @@ pkg.keywords:
 
 pkg.deps: 
     - boot/bootutil
+
+pkg.init_function: split_app_init
+pkg.init_stage: 5

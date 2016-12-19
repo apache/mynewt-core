@@ -562,7 +562,7 @@ console_init(console_rx_cb rx_cb)
 }
 
 void
-console_pkg_init(struct sysinit_init_ctxt *ctxt)
+console_pkg_init(void)
 {
     int rc;
 
@@ -572,5 +572,3 @@ console_pkg_init(struct sysinit_init_ctxt *ctxt)
     rc = console_init(NULL);
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
-
-SYSINIT_REGISTER_INIT(console_pkg_init, 0);

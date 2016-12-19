@@ -46,7 +46,7 @@ struct shell_cmd g_shell_log_cmd = {
 #endif
 
 void
-log_init(struct sysinit_init_ctxt *ctxt)
+log_init(void)
 {
     int rc;
 
@@ -73,8 +73,6 @@ log_init(struct sysinit_init_ctxt *ctxt)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
-
-SYSINIT_REGISTER_INIT(log_init, 1);
 
 struct log *
 log_list_get_next(struct log *log)

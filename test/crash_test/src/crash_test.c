@@ -26,6 +26,7 @@
 #include "os/os.h"
 #include "console/console.h"
 
+#include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
 #if MYNEWT_VAL(CRASH_TEST_CLI)
@@ -63,7 +64,7 @@ crash_device(char *how)
 }
 
 void
-crash_test_init(struct sysinit_init_ctxt *ctxt)
+crash_test_init(void)
 {
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
@@ -75,5 +76,3 @@ crash_test_init(struct sysinit_init_ctxt *ctxt)
     mgmt_group_register(&crash_test_nmgr_group);
 #endif
 }
-
-SYSINIT_REGISTER_INIT(crash_test_init, 5);

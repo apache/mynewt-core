@@ -192,16 +192,13 @@ os_start(void)
 }
 
 void
-os_pkg_init(struct sysinit_init_ctxt *ctxt)
+os_pkg_init(void)
 {
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    os_init();
     os_msys_init();
 }
-
-SYSINIT_REGISTER_INIT(os_pkg_init, 0);
 
 /**
  *   }@ General OS functions

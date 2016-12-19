@@ -144,11 +144,8 @@ id_read_mfghash(void)
     base64_encode(raw_hash, sizeof raw_hash, id_mfghash, 1);
 }
 
-/**
- * Initialize manufacturing info storage/reporting.
- */
 void
-id_init(struct sysinit_init_ctxt *ctxt)
+id_init(void)
 {
     int rc;
 
@@ -161,5 +158,3 @@ id_init(struct sysinit_init_ctxt *ctxt)
     /* Attempt to read the manufacturing image hash from the meta region. */
     id_read_mfghash();
 }
-
-SYSINIT_REGISTER_INIT(id_init, 5);

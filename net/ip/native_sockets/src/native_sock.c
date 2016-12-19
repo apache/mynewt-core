@@ -723,8 +723,8 @@ socket_task(void *arg)
     }
 }
 
-void
-native_sock_init(struct sysinit_init_ctxt *ctxt)
+int
+native_sock_init(void)
 {
     struct native_sock_state *nss = &native_sock_state;
     int i;
@@ -738,14 +738,19 @@ native_sock_init(struct sysinit_init_ctxt *ctxt)
         STAILQ_INIT(&native_socks[i].ns_rx);
     }
     sp = malloc(sizeof(os_stack_t) * SOCK_STACK_SZ);
-    SYSINIT_PANIC_ASSERT(sp != NULL);
-
+    if (!sp) {
+        return -1;
+    }
     os_mutex_init(&nss->mtx);
     i = os_task_init(&nss->task, "socket", socket_task, &native_sock_state,
       SOCK_PRIO, OS_WAIT_FOREVER, sp, SOCK_STACK_SZ);
-    SYSINIT_PANIC_ASSERT(i == 0);
+    if (i) {
+        return -1;
+    }
+    i = mn_socket_ops_reg(&native_sock_ops);
+    if (i) {
+        return -1;
+    }
 
-    mn_socket_ops_reg(&native_sock_ops);
+    return 0;
 }
-
-SYSINIT_REGISTER_INIT(native_sock_init, 2);

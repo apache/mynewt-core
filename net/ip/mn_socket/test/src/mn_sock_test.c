@@ -77,10 +77,6 @@ mn_socket_test_init()
 }
 
 #if MYNEWT_VAL(SELFTEST)
-
-/* Ensure the native sock sysinit entry is included during linking. */
-SYSINIT_KEEP(native_sock_init);
-
 int
 main(int argc, char **argv)
 {

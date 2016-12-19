@@ -741,7 +741,7 @@ nffs_init(void)
 }
 
 void
-nffs_pkg_init(struct sysinit_init_ctxt *ctxt)
+nffs_pkg_init(void)
 {
     struct nffs_area_desc descs[NFFS_AREA_MAX + 1];
     int cnt;
@@ -792,5 +792,3 @@ nffs_pkg_init(struct sysinit_init_ctxt *ctxt)
         break;
     }
 }
-
-SYSINIT_REGISTER_INIT(nffs_pkg_init, 2);

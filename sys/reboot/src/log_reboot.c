@@ -230,7 +230,7 @@ err:
 }
 
 void
-log_reboot_pkg_init(struct sysinit_init_ctxt *ctxt)
+log_reboot_pkg_init(void)
 {
     int type;
     int rc;
@@ -251,5 +251,3 @@ log_reboot_pkg_init(struct sysinit_init_ctxt *ctxt)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
-
-SYSINIT_REGISTER_INIT(log_reboot_pkg_init, 2);

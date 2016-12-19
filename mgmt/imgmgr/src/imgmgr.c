@@ -393,7 +393,7 @@ err:
 }
 
 void
-imgmgr_module_init(struct sysinit_init_ctxt *ctxt)
+imgmgr_module_init(void)
 {
     int rc;
 
@@ -408,5 +408,3 @@ imgmgr_module_init(struct sysinit_init_ctxt *ctxt)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
-
-SYSINIT_REGISTER_INIT(imgmgr_module_init, 5);

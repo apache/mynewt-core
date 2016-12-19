@@ -344,7 +344,7 @@ nmgr_uart_rx_char(void *arg, uint8_t data)
 }
 
 void
-nmgr_uart_pkg_init(struct sysinit_init_ctxt *ctxt)
+nmgr_uart_pkg_init(void)
 {
     struct nmgr_uart_state *nus = &nmgr_uart_state;
     int rc;
@@ -371,5 +371,3 @@ nmgr_uart_pkg_init(struct sysinit_init_ctxt *ctxt)
 
     nus->nus_cb_ev.ev_cb = nmgr_uart_rx_frame;
 }
-
-SYSINIT_REGISTER_INIT(nmgr_uart_pkg_init, 5);

@@ -80,14 +80,9 @@ SECTIONS
         *(.rodata*)
 
         *(.eh_frame*)
-
-        /* The sysinit section contains package initialization information. */
-        __sysinit_start__ = .;
-        KEEP(*(sysinit))
-        __sysinit_end__ = .;
-
         . = ALIGN(4);
     } > FLASH
+
 
     .ARM.extab :
     {

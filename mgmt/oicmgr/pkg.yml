@@ -34,3 +34,6 @@ pkg.deps:
 
 pkg.apis:
     - newtmgr
+
+pkg.init_function: oicmgr_init
+pkg.init_stage: 5

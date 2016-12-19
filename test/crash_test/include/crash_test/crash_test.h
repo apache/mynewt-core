@@ -16,13 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef __CRASH_TEST_H__
+#define __CRASH_TEST_H__
 
-#ifndef H_SYSINIT_PRIV_
-#define H_SYSINIT_PRIV_
-
-struct sysinit_entry;
-
-void sysinit_section_bounds(const struct sysinit_entry **out_start,
-                            const struct sysinit_entry **out_end);
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/*
+ * Adds the crash commands to your shell/newtmgr.
+ */
+void crash_test_init(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CRASH_TEST_H__ */

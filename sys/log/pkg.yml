@@ -36,3 +36,6 @@ pkg.deps.LOG_CLI:
 
 pkg.deps.LOG_NEWTMGR:
     - mgmt/mgmt
+
+pkg.init_function: log_init
+pkg.init_stage: 1

@@ -51,6 +51,10 @@ typedef enum {
     SPLIT_STATUS_MATCHING =     2,
 } split_status_t;
 
+/*
+  * Initializes the split application library */
+void split_app_init(void);
+
 /**
   * checks the split application state.
   * If the application is configured to be run (and valid)

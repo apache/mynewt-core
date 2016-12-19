@@ -398,12 +398,10 @@ get_fattime(void)
 }
 
 void
-fatfs_pkg_init(struct sysinit_init_ctxt *ctxt)
+fatfs_pkg_init(void)
 {
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
     fs_register(&fatfs_ops);
 }
-
-SYSINIT_REGISTER_INIT(fatfs_pkg_init, 2);
