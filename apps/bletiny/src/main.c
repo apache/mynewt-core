@@ -1166,12 +1166,12 @@ bletiny_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
 }
 
 int
-bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
-                      uint16_t chr_end_handle)
+bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
+                      uint16_t end_handle)
 {
     int rc;
 
-    rc = ble_gattc_disc_all_dscs(conn_handle, chr_def_handle, chr_end_handle,
+    rc = ble_gattc_disc_all_dscs(conn_handle, start_handle - 1, end_handle,
                                  bletiny_on_disc_d, NULL);
     return rc;
 }
