@@ -21,7 +21,7 @@
 #define __MMC_H__
 
 #include <os/os_dev.h>
-#include <diskio/diskio.h>
+#include <disk/disk.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +69,7 @@ mmc_init(int spi_num, void *spi_cfg, int ss_pin);
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len);
+mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len);
 
 /**
  * Write data to the MMC
@@ -82,7 +82,13 @@ mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len);
  * @return 0 on success, non-zero on failure
  */
 int
-mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, size_t len);
+mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len);
+
+/**
+ * TODO
+ */
+int
+mmc_ioctl(uint8_t mmc_id, uint32_t cmd, void *arg);
 
 #ifdef __cplusplus
 }

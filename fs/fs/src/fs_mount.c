@@ -21,13 +21,19 @@
 #include "fs/fs.h"
 #include "fs/fs_if.h"
 #include "fs_priv.h"
+#include <string.h>
 
 static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
-static bool g_cli_initialized = false;
+
+#if MYNEWT_VAL(FS_CLI)
+static int g_cli_initialized = 0;
+#endif
 
 int
-fs_register(const struct fs_ops *fops)
+fs_register(struct fs_ops *fops)
 {
+    struct fs_ops *sc;
+
     SLIST_FOREACH(sc, &root_fops, sc_next) {
         if (strcmp(sc->f_name, fops->f_name) == 0) {
             return FS_EEXIST;
@@ -39,7 +45,7 @@ fs_register(const struct fs_ops *fops)
 #if MYNEWT_VAL(FS_CLI)
     if (!g_cli_initialized) {
         fs_cli_init();
-        g_cli_initialized = true;
+        g_cli_initialized = 1;
     }
 #endif
 
@@ -50,6 +56,7 @@ struct fs_ops *
 fs_ops_for(const char *fs_name)
 {
     struct fs_ops *fops = NULL;
+    struct fs_ops *sc;
 
     SLIST_FOREACH(sc, &root_fops, sc_next) {
         if (strcmp(sc->f_name, fs_name) == 0) {

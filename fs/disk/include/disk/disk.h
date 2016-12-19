@@ -17,32 +17,33 @@
  * under the License.
  */
 
-#ifndef __DISKIO_H__
-#define __DISKIO_H__
+#ifndef __DISK_H__
+#define __DISK_H__
 
 #include <stddef.h>
 #include <inttypes.h>
+#include <os/queue.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define DISKIO_EOK          0  /* Success */
-#define DISKIO_EHW          1  /* Error accessing storage medium */
-#define DISKIO_ENOMEM       2  /* Insufficient memory */
-#define DISKIO_ENOENT       3  /* No such file or directory */
-#define DISKIO_EOS          4  /* OS error */
-#define DISKIO_EUNINIT      5  /* File system not initialized */
+#define DISK_EOK          0  /* Success */
+#define DISK_EHW          1  /* Error accessing storage medium */
+#define DISK_ENOMEM       2  /* Insufficient memory */
+#define DISK_ENOENT       3  /* No such file or directory */
+#define DISK_EOS          4  /* OS error */
+#define DISK_EUNINIT      5  /* File system not initialized */
 
 struct disk_ops {
-    int (*read)(int, uint32_t, void *, uint32_t);
-    int (*write)(int, uint32_t, const void *, uint32_t);
-    int (*ioctl)(int, uint32_t, const void *);
+    int (*read)(uint8_t, uint32_t, void *, uint32_t);
+    int (*write)(uint8_t, uint32_t, const void *, uint32_t);
+    int (*ioctl)(uint8_t, uint32_t, void *);
 
     SLIST_ENTRY(disk_ops) sc_next;
 };
 
-int diskio_register(const char *disk_name, const char *fs_name, struct disk_ops *dops);
+int disk_register(const char *disk_name, const char *fs_name, struct disk_ops *dops);
 
 #ifdef __cplusplus
 }

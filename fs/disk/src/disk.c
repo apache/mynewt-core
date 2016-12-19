@@ -17,14 +17,18 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-#include "fs/fs.h"
-#include <diskio/diskio.h>
+#include <syscfg/syscfg.h>
+#include <fs/fs.h>
+#include <disk/disk.h>
+#include <stdlib.h>
+#include <string.h>
 
-static struct disk_info {
-    char *disk_name;
-    char *fs_name;
+struct disk_info {
+    const char *disk_name;
+    const char *fs_name;
     struct disk_ops *dops;
+
+    SLIST_ENTRY(disk_info) sc_next;
 };
 
 static SLIST_HEAD(, disk_info) disks = SLIST_HEAD_INITIALIZER();
@@ -32,24 +36,25 @@ static SLIST_HEAD(, disk_info) disks = SLIST_HEAD_INITIALIZER();
 /**
  *
  */
-int diskio_register(const char *disk_name, const char *fs_name, struct disk_ops *dops)
+int disk_register(const char *disk_name, const char *fs_name, struct disk_ops *dops)
 {
     struct disk_info *info = NULL;
+    struct disk_info *sc;
 
     SLIST_FOREACH(sc, &disks, sc_next) {
         if (strcmp(sc->disk_name, disk_name) == 0) {
-            return DISKIO_EEXIST;
+            return DISK_ENOENT;
         }
     }
 
     info = malloc(sizeof(struct disk_info));
     if (!info) {
-        return DISKIO_ENOMEM;
+        return DISK_ENOMEM;
     }
 
-    info.disk_name = disk_name;
-    info.fs_name = fs_name;
-    info.dops = dops;
+    info->disk_name = disk_name;
+    info->fs_name = fs_name;
+    info->dops = dops;
 
     SLIST_INSERT_HEAD(&disks, info, sc_next);
 

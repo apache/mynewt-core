@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
-#include <diskio/diskio.h>
+#include <disk/disk.h>
 
 extern struct disk_ops hal_flash_ops;
 

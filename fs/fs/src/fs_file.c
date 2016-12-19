@@ -22,27 +22,113 @@
 #include "fs_priv.h"
 
 static int
-not_initialized(const void *v, ...)
+fake_open(const char *filename, uint8_t access_flags,
+          struct fs_file **out_file)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_close(struct fs_file *file)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_read(struct fs_file *file, uint32_t len, void *out_data,
+          uint32_t *out_len)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_write(struct fs_file *file, const void *data, int len)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_seek(struct fs_file *file, uint32_t offset)
+{
+    return FS_EUNINIT;
+}
+
+static uint32_t
+fake_getpos(const struct fs_file *file)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_filelen(const struct fs_file *file, uint32_t *out_len)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_unlink(const char *filename)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_rename(const char *from, const char *to)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_mkdir(const char *path)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_opendir(const char *path, struct fs_dir **out_dir)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_readdir(struct fs_dir *dir, struct fs_dirent **out_dirent)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_closedir(struct fs_dir *dir)
+{
+    return FS_EUNINIT;
+}
+
+static int fake_dirent_name(const struct fs_dirent *dirent, size_t max_len,
+                            char *out_name, uint8_t *out_name_len)
+{
+    return FS_EUNINIT;
+}
+
+static int
+fake_dirent_is_dir(const struct fs_dirent *dirent)
 {
     return FS_EUNINIT;
 }
 
 static struct fs_ops not_initialized_ops = {
-    .f_open          = not_initialized,
-    .f_close         = not_initialized,
-    .f_read          = not_initialized,
-    .f_write         = not_initialized,
-    .f_seek          = not_initialized,
-    .f_getpos        = not_initialized,
-    .f_filelen       = not_initialized,
-    .f_unlink        = not_initialized,
-    .f_rename        = not_initialized,
-    .f_mkdir         = not_initialized,
-    .f_opendir       = not_initialized,
-    .f_readdir       = not_initialized,
-    .f_closedir      = not_initialized,
-    .f_dirent_name   = not_initialized,
-    .f_dirent_is_dir = not_initialized,
+    .f_open          = &fake_open,
+    .f_close         = &fake_close,
+    .f_read          = &fake_read,
+    .f_write         = &fake_write,
+    .f_seek          = &fake_seek,
+    .f_getpos        = &fake_getpos,
+    .f_filelen       = &fake_filelen,
+    .f_unlink        = &fake_unlink,
+    .f_rename        = &fake_rename,
+    .f_mkdir         = &fake_mkdir,
+    .f_opendir       = &fake_opendir,
+    .f_readdir       = &fake_readdir,
+    .f_closedir      = &fake_closedir,
+    .f_dirent_name   = &fake_dirent_name,
+    .f_dirent_is_dir = &fake_dirent_is_dir,
     .f_name          = "fakefs",
 };
 

@@ -38,7 +38,7 @@ static int fatfs_dirent_is_dir(const struct fs_dirent *fs_dirent);
  */
 static FILINFO filinfo;
 
-static const struct fs_ops fatfs_ops = {
+static struct fs_ops fatfs_ops = {
     .f_open = fatfs_open,
     .f_close = fatfs_close,
     .f_read = fatfs_read,

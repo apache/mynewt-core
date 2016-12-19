@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: sys/diskio
-pkg.description: Disk IO layer to glue filesystems to disk devices.
+pkg.name: fs/disk
+pkg.description: Disk management layer to glue filesystems to disk devices.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:

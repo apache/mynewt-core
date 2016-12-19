@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <os/queue.h>
+
 /*
  * Common interface filesystem(s) provide.
  */
@@ -63,7 +65,7 @@ struct fs_ops {
  *
  * @return 0 on success, non-zero on failure
  */
-int fs_register(const struct fs_ops *fops);
+int fs_register(struct fs_ops *fops);
 
 /**
  * Retrieve a filesystem's operations table
