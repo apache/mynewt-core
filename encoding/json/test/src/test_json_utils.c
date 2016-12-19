@@ -28,7 +28,11 @@ char *output1 ="{\"KeyBoolArr\": [true, false], \"KeyUintArr\": [0, 65535, 42949
 char *outputboolspace = "{\"KeyBoolArr\": [    true    ,    false,true         ]}";
 char *outputboolempty = "{\"KeyBoolArr\": , \"KeyBoolArr\": [  ]}";
 
-char bigbuf[512];
+#if MYNEWT_VAL(SELFTEST)
+char bigbuf[JSON_BIGBUF_SIZE];
+#else
+char *bigbuf;
+#endif
 int buf_index;
 
 int
