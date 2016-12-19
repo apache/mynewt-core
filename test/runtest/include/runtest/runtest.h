@@ -24,6 +24,11 @@ extern "C" {
 #endif
 
 /*
+ * Adds the run test commands to your shell/newtmgr.
+ */
+void runtest_init(void);
+
+/*
  * Callback for runtest events - newtmgr uses this to add
  * run test requests to default queue for test application (e.g., mynewtsanity)
  */
