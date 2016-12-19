@@ -19,6 +19,11 @@
 #include <fs/fs.h>
 #include <fs/fs_if.h>
 
+#include <disk/disk.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "fs_priv.h"
 
 static int
@@ -137,7 +142,7 @@ safe_fs_ops_for(const char *fs_name)
 {
     struct fs_ops *fops;
 
-    fops = fs_ops_for("fatfs");
+    fops = fs_ops_for(fs_name);
     if (fops == NULL) {
         fops = &not_initialized_ops;
     }
@@ -145,58 +150,104 @@ safe_fs_ops_for(const char *fs_name)
     return fops;
 }
 
+char *disk_from_path(const char *path)
+{
+    char *colon;
+    uint8_t len;
+    char *disk;
+
+    colon = (char *) path;
+    while (*colon && *colon != ':') {
+        colon++;
+    }
+
+    if (*colon != ':') {
+        return NULL;
+    }
+
+    len = colon - path;
+    disk = malloc(len + 1);
+    if (!disk) {
+        return NULL;
+    }
+    memcpy(disk, path, len);
+    disk[len] = '\0';
+
+    return disk;
+}
+
+struct fs_ops *
+fops_from_filename(const char *filename)
+{
+    char *disk;
+    char *fs_name = NULL;
+
+    disk = disk_from_path(filename);
+    if (disk) {
+        fs_name = disk_fs_for(disk);
+    }
+    return safe_fs_ops_for(fs_name);
+}
+
+static struct fs_ops *
+fops_from_file(const struct fs_file *file)
+{
+    /* NOTE: fs_ops must always be the first field for any fs_file */
+    return (struct fs_ops *) *((uint32_t *)file);
+}
+
 int
 fs_open(const char *filename, uint8_t access_flags, struct fs_file **out_file)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_filename(filename);
     return fops->f_open(filename, access_flags, out_file);
 }
 
 int
 fs_close(struct fs_file *file)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_file(file);
     return fops->f_close(file);
 }
 
 int
 fs_read(struct fs_file *file, uint32_t len, void *out_data, uint32_t *out_len)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_file(file);
     return fops->f_read(file, len, out_data, out_len);
 }
 
 int
 fs_write(struct fs_file *file, const void *data, int len)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_file(file);
     return fops->f_write(file, data, len);
 }
 
 int
 fs_seek(struct fs_file *file, uint32_t offset)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_file(file);
     return fops->f_seek(file, offset);
 }
 
 uint32_t
 fs_getpos(const struct fs_file *file)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_file(file);
     return fops->f_getpos(file);
 }
 
 int
 fs_filelen(const struct fs_file *file, uint32_t *out_len)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_file(file);
     return fops->f_filelen(file, out_len);
 }
 
 int
 fs_unlink(const char *filename)
 {
-    struct fs_ops *fops = safe_fs_ops_for("fatfs");
+    struct fs_ops *fops = fops_from_filename(filename);
     return fops->f_unlink(filename);
 }

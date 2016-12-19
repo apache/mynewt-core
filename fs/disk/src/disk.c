@@ -60,3 +60,39 @@ int disk_register(const char *disk_name, const char *fs_name, struct disk_ops *d
 
     return 0;
 }
+
+struct disk_ops *
+disk_ops_for(const char *disk_name)
+{
+    struct disk_ops *dops = NULL;
+    struct disk_info *sc;
+
+    if (disk_name) {
+        SLIST_FOREACH(sc, &disks, sc_next) {
+            if (strcmp(sc->disk_name, disk_name) == 0) {
+                dops = sc->dops;
+                break;
+            }
+        }
+    }
+
+    return dops;
+}
+
+char *
+disk_fs_for(const char *disk_name)
+{
+    char *fs_name = NULL;
+    struct disk_info *sc;
+
+    if (disk_name) {
+        SLIST_FOREACH(sc, &disks, sc_next) {
+            if (strcmp(sc->disk_name, disk_name) == 0) {
+                fs_name = (char *) sc->fs_name;
+                break;
+            }
+        }
+    }
+
+    return fs_name;
+}

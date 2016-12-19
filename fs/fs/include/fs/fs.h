@@ -53,6 +53,9 @@ int fs_dirent_name(const struct fs_dirent *, size_t max_len,
   char *out_name, uint8_t *out_name_len);
 int fs_dirent_is_dir(const struct fs_dirent *);
 
+/* Helper functions */
+char *disk_from_path(const char *path);
+
 /*
  * File access flags.
  */
