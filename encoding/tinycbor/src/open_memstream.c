@@ -47,7 +47,7 @@ typedef size_t LenType;
 #  error "Cannot implement open_memstream!"
 #endif
 
-#include "compilersupport_p.h"
+#include "tinycbor/compilersupport_p.h"
 
 struct Buffer
 {
