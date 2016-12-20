@@ -139,7 +139,8 @@ int bletiny_disc_full(uint16_t conn_handle);
 int bletiny_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bletiny_read(uint16_t conn_handle, uint16_t attr_handle);
-int bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle);
+int bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle,
+                      uint16_t offset);
 int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                           uint16_t end_handle, uint8_t *uuid128);
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,

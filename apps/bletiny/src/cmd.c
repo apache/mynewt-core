@@ -1263,6 +1263,7 @@ bletiny_read_help(void)
     help_cmd_uuid("uuid");
     help_cmd_uint16("start");
     help_cmd_uint16("end");
+    help_cmd_uint16("offset");
 }
 
 static int
@@ -1272,6 +1273,7 @@ cmd_read(int argc, char **argv)
     uint16_t conn_handle;
     uint16_t start;
     uint16_t end;
+    uint16_t offset;
     uint8_t uuid128[16];
     uint8_t num_attr_handles;
     int is_uuid;
@@ -1342,9 +1344,18 @@ cmd_read(int argc, char **argv)
         return rc;
     }
 
+    offset = parse_arg_uint16("offset", &rc);
+    if (rc == ENOENT) {
+        offset = 0;
+    } else if (rc != 0) {
+        console_printf("invalid 'offset' parameter\n");
+        help_cmd_uint16("offset");
+        return rc;
+    }
+
     if (num_attr_handles == 1) {
         if (is_long) {
-            rc = bletiny_read_long(conn_handle, attr_handles[0]);
+            rc = bletiny_read_long(conn_handle, attr_handles[0], offset);
         } else {
             rc = bletiny_read(conn_handle, attr_handles[0]);
         }

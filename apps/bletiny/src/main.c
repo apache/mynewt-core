@@ -1233,11 +1233,12 @@ bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
 }
 
 int
-bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle)
+bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle, uint16_t offset)
 {
     int rc;
 
-    rc = ble_gattc_read_long(conn_handle, attr_handle, bletiny_on_read, NULL);
+    rc = ble_gattc_read_long(conn_handle, attr_handle, offset,
+                             bletiny_on_read, NULL);
     return rc;
 }
 
