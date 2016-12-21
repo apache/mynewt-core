@@ -103,6 +103,8 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
 {
     struct fcb *fcb;
     struct fcb_entry loc;
+    struct fcb_entry *locp;
+    struct encode_off *encode_off = (struct encode_off *)arg;
     int rc;
 
     rc = 0;
@@ -110,10 +112,18 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
 
     memset(&loc, 0, sizeof(loc));
 
-    while (fcb_getnext(fcb, &loc) == 0) {
-        rc = walk_func(log, arg, (void *) &loc, loc.fe_data_len);
-        if (rc) {
-            break;
+    /*
+     * if timestamp for request is < 1, return last log entry
+     */
+    if (encode_off->eo_ts < 0) {
+        locp = &fcb->f_active;
+        rc = walk_func(log, arg, (void *)locp, locp->fe_data_len);
+    } else {
+        while (fcb_getnext(fcb, &loc) == 0) {
+            rc = walk_func(log, arg, (void *) &loc, loc.fe_data_len);
+            if (rc) {
+                break;
+            }
         }
     }
     return (rc);

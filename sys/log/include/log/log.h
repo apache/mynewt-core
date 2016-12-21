@@ -78,6 +78,16 @@ struct log_entry_hdr {
 }__attribute__((__packed__));
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
 
+/*
+ * Encode request - packages log entry request and response
+ */
+struct encode_off {
+    void *eo_encoder; /* typecast CborEncoder */
+    int64_t eo_ts;
+    uint8_t eo_index;
+    uint32_t rsp_len;
+};
+
 #define LOG_LEVEL_DEBUG    (0)
 #define LOG_LEVEL_INFO     (1)
 #define LOG_LEVEL_WARN     (2)

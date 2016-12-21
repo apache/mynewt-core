@@ -60,6 +60,7 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     struct cbmem *cbmem;
     struct cbmem_entry_hdr *hdr;
     struct cbmem_iter iter;
+    struct encode_off *encode_off = (struct encode_off *)arg;
     int rc;
 
     cbmem = (struct cbmem *) log->l_arg;
@@ -69,16 +70,24 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func, void *arg)
         goto err;
     }
 
-    cbmem_iter_start(cbmem, &iter);
-    while (1) {
-        hdr = cbmem_iter_next(cbmem, &iter);
-        if (!hdr) {
-            break;
-        }
-
+    /*
+     * if timestamp for request is < 1, return last log entry
+     */
+    if (encode_off->eo_ts < 0) {
+        hdr = cbmem->c_entry_end;
         rc = walk_func(log, arg, (void *)hdr, hdr->ceh_len);
-        if (rc == 1) {
-            break;
+    } else {
+        cbmem_iter_start(cbmem, &iter);
+        while (1) {
+            hdr = cbmem_iter_next(cbmem, &iter);
+            if (!hdr) {
+                break;
+            }
+
+            rc = walk_func(log, arg, (void *)hdr, hdr->ceh_len);
+            if (rc == 1) {
+                break;
+            }
         }
     }
 

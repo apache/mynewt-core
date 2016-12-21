@@ -34,7 +34,6 @@
  * this file is compiled out for code size.
  */
 
-
 static int log_nmgr_read(struct mgmt_cbuf *njb);
 static int log_nmgr_clear(struct mgmt_cbuf *njb);
 static int log_nmgr_module_list(struct mgmt_cbuf *njb);
@@ -54,12 +53,17 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL}
 };
 
+#if 0
+/*
+ * Encode request - packages log entry request and response
+ */
 struct encode_off {
-    CborEncoder *eo_encoder;
+    void *eo_encoder;
     int64_t eo_ts;
     uint8_t eo_index;
     uint32_t rsp_len;
 };
+#endif
 
 /**
  * Log encode entry
@@ -76,7 +80,7 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     int rc;
     int rsp_len;
     CborError g_err = CborNoError;
-    CborEncoder *penc = encode_off->eo_encoder;
+    CborEncoder *penc = (CborEncoder*)encode_off->eo_encoder;
     CborEncoder rsp;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
@@ -188,7 +192,7 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     g_err |= cbor_encode_text_stringz(cb, "entries");
     g_err |= cbor_encoder_create_array(cb, &entries, CborIndefiniteLength);
 
-    encode_off.eo_encoder  = &entries;
+    encode_off.eo_encoder  = (void*)&entries;
     encode_off.eo_index    = index;
     encode_off.eo_ts       = ts;
     encode_off.rsp_len = rsp_len;
