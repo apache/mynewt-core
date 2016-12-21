@@ -41,6 +41,7 @@ extern "C" {
 #define IMGMGR_STATE_F_PENDING          0x01
 #define IMGMGR_STATE_F_CONFIRMED        0x02
 #define IMGMGR_STATE_F_ACTIVE           0x04
+#define IMGMGR_STATE_F_PERMANENT        0x08
 
 extern int boot_current_slot;
 

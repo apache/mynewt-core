@@ -59,6 +59,14 @@ imgmgr_state_flags(int query_slot)
         }
         break;
 
+    case BOOT_SWAP_TYPE_PERM:
+        if (query_slot == 0) {
+            flags |= IMGMGR_STATE_F_CONFIRMED;
+        } else if (query_slot == 1) {
+            flags |= IMGMGR_STATE_F_PENDING | IMGMGR_STATE_F_PERMANENT;
+        }
+        break;
+
     case BOOT_SWAP_TYPE_REVERT:
         if (query_slot == 0) {
             flags |= IMGMGR_STATE_F_ACTIVE;
@@ -275,6 +283,10 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         g_err |= cbor_encode_text_stringz(&image, "active");
         g_err |= cbor_encode_boolean(&image,
                                      state_flags & IMGMGR_STATE_F_ACTIVE);
+
+        g_err |= cbor_encode_text_stringz(&image, "permanent");
+        g_err |= cbor_encode_boolean(&image,
+                                     state_flags & IMGMGR_STATE_F_PERMANENT);
 
         g_err |= cbor_encoder_close_container(&images, &image);
     }
