@@ -173,6 +173,7 @@ tu_case_pass(void)
     }
 }
 
+#if 0
 void
 tu_case_fail(void)
 {
@@ -195,6 +196,7 @@ tu_case_fail(void)
                                   ts_config.ts_case_fail_arg);
     }
 }
+#endif
 
 static void
 tu_case_write_fail_buf(void)
@@ -210,6 +212,8 @@ tu_case_write_fail_buf(void)
         fflush(stdout);
     }
 #endif
+
+    tu_case_post_test();
 
     if (ts_config.ts_case_fail_cb != NULL) {
         ts_config.ts_case_fail_cb(tu_case_buf, tu_case_buf_len,

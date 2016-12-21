@@ -131,6 +131,7 @@ tu_suite_complete(void)
     if (ts_config.ts_suite_complete_cb != NULL) {
         ts_config.ts_suite_complete_cb(ts_config.ts_suite_complete_arg);
     }
+    tu_suite_set_complete_cb(NULL, NULL);
 }
 
 void
