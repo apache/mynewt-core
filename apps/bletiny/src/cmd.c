@@ -31,6 +31,7 @@
 #include "host/ble_sm.h"
 #include "host/ble_eddystone.h"
 #include "host/ble_hs_id.h"
+#include "services/gatt/ble_svc_gatt.h"
 #include "../src/ble_l2cap_priv.h"
 #include "../src/ble_hs_priv.h"
 
@@ -3312,6 +3313,49 @@ cmd_help(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $svcch                                                                    *
+ *****************************************************************************/
+
+static void
+bletiny_svcchg_help(void)
+{
+    console_printf("Available svcchg params: \n");
+    help_cmd_uint16("start");
+    help_cmd_uint16("end");
+}
+
+static int
+cmd_svcchg(int argc, char **argv)
+{
+    uint16_t start;
+    uint16_t end;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_svcchg_help();
+        return 0;
+    }
+
+    start = parse_arg_uint16("start", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'start' parameter\n");
+        help_cmd_uint16("start");
+        return rc;
+    }
+
+    end = parse_arg_uint16("end", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'end' parameter\n");
+        help_cmd_uint16("end");
+        return rc;
+    }
+
+    ble_svc_gatt_changed(start, end);
+
+    return 0;
+}
+
+/*****************************************************************************
  * $init                                                                     *
  *****************************************************************************/
 
@@ -3338,6 +3382,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "tx",         cmd_tx },
     { "wl",         cmd_wl },
     { "write",      cmd_write },
+    { "svcchg",     cmd_svcchg },
     { NULL, NULL }
 };
 
