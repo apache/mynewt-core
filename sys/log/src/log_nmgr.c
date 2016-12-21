@@ -53,18 +53,6 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL}
 };
 
-#if 0
-/*
- * Encode request - packages log entry request and response
- */
-struct encode_off {
-    void *eo_encoder;
-    int64_t eo_ts;
-    uint8_t eo_index;
-    uint32_t rsp_len;
-};
-#endif
-
 /**
  * Log encode entry
  * @param log structure, arg:struct passed locally, dataptr, len
