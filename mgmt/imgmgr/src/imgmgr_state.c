@@ -28,10 +28,6 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-#define IMGMGR_STATE_F_PENDING          0x01
-#define IMGMGR_STATE_F_CONFIRMED        0x02
-#define IMGMGR_STATE_F_ACTIVE           0x04
-
 uint8_t
 imgmgr_state_flags(int query_slot)
 {
@@ -133,7 +129,7 @@ imgmgr_state_slot_in_use(int slot)
 }
 
 int
-imgmgr_state_test_slot(int slot)
+imgmgr_state_set_pending(int slot, int permanent)
 {
     uint32_t image_flags;
     uint8_t state_flags;
@@ -143,8 +139,8 @@ imgmgr_state_test_slot(int slot)
     state_flags = imgmgr_state_flags(slot);
     split_app_active = split_app_active_get();
 
-    /* Unconfirmed slots are always testable.  A confirmed slot can only be
-     * tested if it is a loader in a split image setup.
+    /* Unconfirmed slots are always runable.  A confirmed slot can only be
+     * run if it is a loader in a split image setup.
      */
     if (state_flags & IMGMGR_STATE_F_CONFIRMED &&
         (slot != 0 || !split_app_active)) {
@@ -161,17 +157,25 @@ imgmgr_state_test_slot(int slot)
         /* Unified image or loader. */
         if (!split_app_active) {
             /* No change in split status. */
-            rc = boot_set_pending();
+            rc = boot_set_pending(permanent);
             if (rc != 0) {
                 return MGMT_ERR_EUNKNOWN;
             }
         } else {
             /* Currently loader + app; testing loader-only. */
-            rc = split_write_split(SPLIT_MODE_TEST_LOADER);
+            if (permanent) {
+                rc = split_write_split(SPLIT_MODE_LOADER);
+            } else {
+                rc = split_write_split(SPLIT_MODE_TEST_LOADER);
+            }
         }
     } else {
         /* Testing split app. */
-        rc = split_write_split(SPLIT_MODE_TEST_APP);
+        if (permanent) {
+            rc = split_write_split(SPLIT_MODE_APP);
+        } else {
+            rc = split_write_split(SPLIT_MODE_TEST_APP);
+        }
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
@@ -180,7 +184,7 @@ imgmgr_state_test_slot(int slot)
     return 0;
 }
 
-static int
+int
 imgmgr_state_confirm(void)
 {
     int rc;
@@ -331,19 +335,15 @@ imgmgr_state_write(struct mgmt_cbuf *cb)
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
-    if ((hash_len != 0) && confirm) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
-    }
 
-    if (!confirm) {
+    if (hash_len != 0) {
         slot = imgr_find_by_hash(hash, NULL);
         if (slot < 0) {
             rc = MGMT_ERR_EINVAL;
             goto err;
         }
 
-        rc = imgmgr_state_test_slot(slot);
+        rc = imgmgr_state_set_pending(slot, confirm);
         if (rc != 0) {
             goto err;
         }
