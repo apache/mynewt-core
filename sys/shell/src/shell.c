@@ -590,7 +590,10 @@ shell_init(void)
     rc = shell_cmd_register(&g_shell_help_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    rc = shell_cmd_register(&g_shell_prompt_cmd);
+   rc = shell_cmd_register(&g_shell_prompt_cmd);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    
+    rc = shell_cmd_register(&g_shell_ticks_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
     
     rc = shell_cmd_register(&g_shell_ticks_cmd);
