@@ -80,6 +80,7 @@ enum lsm303dlhc_registers_mag {
 
 int lsm303dlhc_write8(uint8_t addr, uint8_t reg, uint32_t value);
 int lsm303dlhc_read8(uint8_t addr, uint8_t reg, uint8_t *value);
+int lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer);
 
 #ifdef __cplusplus
 }

@@ -169,7 +169,7 @@ error:
 }
 
 int
-lsm303dlhc_read48(uint8_t addr, uint8_t reg, int16_t *x, int16_t*y, int16_t *z)
+lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer)
 {
     int rc;
     uint8_t payload[7] = { reg | 0x80, 0, 0, 0, 0, 0, 0 };
@@ -179,6 +179,9 @@ lsm303dlhc_read48(uint8_t addr, uint8_t reg, int16_t *x, int16_t*y, int16_t *z)
         .len = 1,
         .buffer = payload
     };
+
+    /* Clear the supplied buffer */
+    memset(buffer, 0, 6);
 
     /* Register write */
     rc = hal_i2c_master_write(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
@@ -197,11 +200,6 @@ lsm303dlhc_read48(uint8_t addr, uint8_t reg, int16_t *x, int16_t*y, int16_t *z)
     rc = hal_i2c_master_read(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
 
-    /* Shift 12-bit left-aligned accel values into 16-bit int */
-    *x = ((int16_t)(payload[0] | (payload[1] << 8))) >> 4;
-    *y = ((int16_t)(payload[2] | (payload[3] << 8))) >> 4;
-    *z = ((int16_t)(payload[4] | (payload[5] << 8))) >> 4;
-
     if (rc) {
         LSM303DLHC_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
 #if MYNEWT_VAL(LSM303DLHC_STATS)
@@ -209,6 +207,9 @@ lsm303dlhc_read48(uint8_t addr, uint8_t reg, int16_t *x, int16_t*y, int16_t *z)
 #endif
         goto error;
     }
+
+    /* Copy the I2C results into the supplied buffer */
+    memcpy(buffer, payload, 6);
 
     /* ToDo: Log raw reads */
     // console_printf("0x%04X\n", (uint16_t)payload[0] | ((uint16_t)payload[1] << 8));
@@ -316,6 +317,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     int rc;
     int16_t x, y, z;
     float mg_lsb;
+    uint8_t payload[6];
 
     /* If the read isn't looking for accel data, then don't do anything. */
     if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
@@ -326,9 +328,20 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     lsm = (struct lsm303dlhc *) SENSOR_GET_DEVICE(sensor);
 
     x = y = z = 0;
-    lsm303dlhc_read48(LSM303DLHC_ADDR_ACCEL,
-                      LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A,
-                      &x, &y, &z);
+    rc = lsm303dlhc_read48(LSM303DLHC_ADDR_ACCEL,
+                          LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A,
+                          payload);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Shift raw values based on sensor type */
+    if (type & SENSOR_TYPE_ACCELEROMETER) {
+        /* Shift 12-bit left-aligned accel values into 16-bit int */
+        x = ((int16_t)(payload[0] | (payload[1] << 8))) >> 4;
+        y = ((int16_t)(payload[2] | (payload[3] << 8))) >> 4;
+        z = ((int16_t)(payload[4] | (payload[5] << 8))) >> 4;
+    }
 
     /* Determine mg per lsb based on range */
     switch(lsm->cfg.accel_range) {
