@@ -26,11 +26,8 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - net/oic
-    - encoding/json
+    - mgmt/mgmt
     - mgmt/newtmgr/nmgr_os
-    - test/testutil
-    - sys/shell
-    - sys/reboot
 
 pkg.apis:
     - newtmgr
