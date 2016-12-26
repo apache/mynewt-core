@@ -37,7 +37,6 @@
 #include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
-#include <json/json.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 
