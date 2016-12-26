@@ -80,14 +80,11 @@ pkg.cflags:
     - '-DWDT_ENABLED=1'
 
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/nordic/nrf51xxx
     - libc/baselibc
-    - sys/flash_map
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf51
-
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal

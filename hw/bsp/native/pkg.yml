@@ -27,10 +27,8 @@ pkg.keywords:
     - bsp
 
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/native
     - hw/drivers/uart/uart_hal
-    - sys/flash_map
     - net/ip/native_sockets
 
 pkg.deps.BLE_DEVICE:

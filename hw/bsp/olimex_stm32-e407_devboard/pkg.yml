@@ -32,10 +32,8 @@ pkg.cflags:
     - '-DSTM32F407xx'
 
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/stm/stm32f4xx
     - libc/baselibc
-    - sys/flash_map
 
 pkg.deps.ADC_1:
     - hw/drivers/adc/adc_stm32f4

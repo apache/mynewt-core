@@ -27,10 +27,8 @@ pkg.keywords:
 pkg.cflags: -DDEBUG -fno-builtin -fno-common -ffreestanding -mfloat-abi=hard -mfpu=fpv4-sp-d16 -DCPU_MK64FN1M0VMD12 -DPRINTF_FLOAT_ENABLE=0 -DSCANF_FLOAT_ENABLE=0 -DPRINTF_ADVANCED_ENABLE=0 -DSCANF_ADVANCED_ENABLE=0 -DFRDM_K64F -DFREEDOM -DUSE_RAM_VECTOR_TABLE -Wl,--defsym=__ram_vector_table__=1
 
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/nxp/MK64F12
     - libc/baselibc
-    - sys/flash_map
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
