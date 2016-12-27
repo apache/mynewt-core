@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <syscfg/syscfg.h>
 
 #include <os/os.h>
 #include <os/endian.h>
@@ -29,7 +30,10 @@
 
 #include <console/console.h>
 #include <datetime/datetime.h>
+
+#if MYNEWT_VAL(LOG_SOFT_RESET)
 #include <reboot/log_reboot.h>
+#endif
 
 #include "nmgr_os/nmgr_os.h"
 
@@ -325,7 +329,9 @@ nmgr_reset(struct mgmt_cbuf *cb)
 {
     os_callout_init(&nmgr_reset_callout, mgmt_evq_get(), nmgr_reset_tmo, NULL);
 
+#if MYNEWT_VAL(LOG_SOFT_RESET)
     log_reboot(HAL_RESET_SOFT);
+#endif
     os_callout_reset(&nmgr_reset_callout, OS_TICKS_PER_SEC / 4);
 
     mgmt_cbuf_setoerr(cb, OS_OK);

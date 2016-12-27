@@ -17,22 +17,7 @@
 # under the License.
 #
 
-pkg.name: mgmt/newtmgr/nmgr_os
-pkg.description: Default newtmgr command.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - hw/hal
-    - time/datetime
-    - kernel/os
-    - mgmt/mgmt
-    - encoding/tinycbor
-    - encoding/cborattr
-
-pkg.deps.LOG_SOFT_RESET:
-    - sys/reboot
-
-pkg.req_apis:
-    - newtmgr
+syscfg.defs:
+    LOG_SOFT_RESET:
+        description: 'Log soft restarts'
+        value: 1
