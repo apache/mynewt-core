@@ -20,8 +20,8 @@
 #ifndef H_SYSINIT_
 #define H_SYSINIT_
 
+#include <inttypes.h>
 #include "syscfg/syscfg.h"
-#include "bootutil/bootutil.h"
 
 #if MYNEWT_VAL(SPLIT_APPLICATION)
 #include "split/split.h"
