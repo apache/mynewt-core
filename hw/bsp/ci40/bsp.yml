@@ -19,7 +19,7 @@
 
 bsp.arch: mips
 bsp.compiler: compiler/mips
-bsp.linkerscript: "uhi32.ld"
+bsp.linkerscript: "hw/bsp/ci40/uhi32.ld"
 
 bsp.flash_map:
     areas:
