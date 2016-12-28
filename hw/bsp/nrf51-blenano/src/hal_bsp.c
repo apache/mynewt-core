@@ -30,10 +30,11 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "os/os_dev.h"
+
+#if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 
-#if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
 static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
     .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
