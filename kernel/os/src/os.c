@@ -179,6 +179,7 @@ os_init(void)
 void
 os_start(void)
 {
+#if MYNEWT_VAL(OS_SCHEDULING)
     os_error_t err;
 
     err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
@@ -189,6 +190,9 @@ os_start(void)
 
     err = os_arch_os_start();
     assert(err == OS_OK);
+#else
+    assert(0);
+#endif
 }
 
 void

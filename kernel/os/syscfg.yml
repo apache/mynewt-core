@@ -27,6 +27,9 @@ syscfg.defs:
     OS_COREDUMP:
         description: 'TBD'
         value: 0
+    OS_SCHEDULING:
+        description: 'Whether OS will be started or not'
+        value: 1
     OS_CPUTIME_FREQ:
         description: 'Frequency of os cputime'
         value: 1000000

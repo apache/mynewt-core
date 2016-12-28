@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "syscfg/syscfg.h"
 
 #include <assert.h>
 
@@ -67,6 +68,7 @@ os_time_get(void)
     return (g_os_time);
 }
 
+#if MYNEWT_VAL(OS_SCHEDULING)
 static void
 os_time_tick(int ticks)
 {
@@ -113,6 +115,13 @@ os_time_advance(int ticks)
         }
     }
 }
+#else
+void
+os_time_advance(int ticks)
+{
+    g_os_time += ticks;
+}
+#endif
 
 /**
  * Puts the current task to sleep for the specified number of os ticks. There
