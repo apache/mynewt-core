@@ -24,8 +24,7 @@
 #include "syscfg/syscfg.h"
 #include "bsp/cmsis_nvic.h"
 #include "hal/hal_timer.h"
-#include "nrf52.h"
-#include "nrf52_bitfields.h"
+#include "nrf.h"
 #include "mcu/nrf52_hal.h"
 
 /* IRQ prototype */

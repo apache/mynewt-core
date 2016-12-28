@@ -20,8 +20,7 @@
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
 #include <stdlib.h>
-#include "nrf52.h"
-#include "nrf52_bitfields.h"
+#include "nrf.h"
 #include <assert.h>
 
 /* XXX:
@@ -31,8 +30,33 @@
  *
  */
 
-/* GPIO pin mapping */
+/*
+ * GPIO pin mapping
+ *
+ * The logical GPIO pin numbers (0 to N) are mapped to ports in the following
+ * manner:
+ *  pins 0 - 31: Port 0
+ *  pins 32 - 48: Port 1.
+ *
+ *  The nrf52832 has only one port with 32 pins. The nrf52840 has 48 pins and
+ *  uses two ports.
+ *
+ *  NOTE: in order to save code space, there is no checking done to see if the
+ *  user specifies a pin that is not used by the processor. If an invalid pin
+ *  number is used unexpected and/or erroneous behavior will result.
+ */
+#ifdef NRF52
+#define HAL_GPIO_PORT(pin)      (NRF_P0)
 #define HAL_GPIO_MASK(pin)      (1 << pin)
+#define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
+#endif
+
+#ifdef NRF52840_XXAA
+#define HAL_GPIO_INDEX(pin)     ((pin) & 0x1F)
+#define HAL_GPIO_PORT(pin)      ((pin) > 31 ? NRF_P1 : NRF_P0)
+#define HAL_GPIO_MASK(pin)      (1 << HAL_GPIO_INDEX(pin))
+#define HAL_GPIOTE_PIN_MASK     (0x3FUL << GPIOTE_CONFIG_PSEL_Pos)
+#endif
 
 /* GPIO interrupts */
 #define HAL_GPIO_MAX_IRQ        8
@@ -59,6 +83,7 @@ int
 hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     uint32_t conf;
+    NRF_GPIO_Type *port;
 
     switch (pull) {
     case HAL_GPIO_PULL_UP:
@@ -73,8 +98,9 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
         break;
     }
 
-    NRF_P0->PIN_CNF[pin] = conf;
-    NRF_P0->DIRCLR = HAL_GPIO_MASK(pin);
+    port = HAL_GPIO_PORT(pin);
+    port->PIN_CNF[pin] = conf;
+    port->DIRCLR = HAL_GPIO_MASK(pin);
 
     return 0;
 }
@@ -93,13 +119,17 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 int
 hal_gpio_init_out(int pin, int val)
 {
+    NRF_GPIO_Type *port;
+
+    port = HAL_GPIO_PORT(pin);
     if (val) {
-        NRF_P0->OUTSET = HAL_GPIO_MASK(pin);
+        port->OUTSET = HAL_GPIO_MASK(pin);
     } else {
-        NRF_P0->OUTCLR = HAL_GPIO_MASK(pin);
+        port->OUTCLR = HAL_GPIO_MASK(pin);
     }
-    NRF_P0->PIN_CNF[pin] = GPIO_PIN_CNF_DIR_Output;
-    NRF_P0->DIRSET = HAL_GPIO_MASK(pin);
+    port->PIN_CNF[pin] = GPIO_PIN_CNF_DIR_Output;
+    port->DIRSET = HAL_GPIO_MASK(pin);
+
     return 0;
 }
 
@@ -114,10 +144,13 @@ hal_gpio_init_out(int pin, int val)
 void
 hal_gpio_write(int pin, int val)
 {
+    NRF_GPIO_Type *port;
+
+    port = HAL_GPIO_PORT(pin);
     if (val) {
-        NRF_P0->OUTSET = HAL_GPIO_MASK(pin);
+        port->OUTSET = HAL_GPIO_MASK(pin);
     } else {
-        NRF_P0->OUTCLR = HAL_GPIO_MASK(pin);
+        port->OUTCLR = HAL_GPIO_MASK(pin);
     }
 }
 
@@ -133,7 +166,10 @@ hal_gpio_write(int pin, int val)
 int
 hal_gpio_read(int pin)
 {
-    return ((NRF_P0->IN & HAL_GPIO_MASK(pin)) != 0);
+    NRF_GPIO_Type *port;
+
+    port = HAL_GPIO_PORT(pin);
+    return ((port->IN & HAL_GPIO_MASK(pin)) != 0);
 }
 
 /**
@@ -219,7 +255,7 @@ hal_gpio_find_pin(int pin)
 
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
         if (hal_gpio_irqs[i].func &&
-          (NRF_GPIOTE->CONFIG[i] & GPIOTE_CONFIG_PSEL_Msk) == pin) {
+           (NRF_GPIOTE->CONFIG[i] & HAL_GPIOTE_PIN_MASK) == pin) {
             return i;
         }
     }

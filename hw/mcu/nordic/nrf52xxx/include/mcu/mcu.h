@@ -25,9 +25,13 @@ extern "C" {
 #endif
 
 /*
- * Defines for naming GPIOs.
+ * Defines for naming GPIOs. NOTE: the nordic chip docs use numeric labels for
+ * ports. Port A corresponds to Port 0, B to 1, etc. The nrf52832 has only one
+ * port and thus uses pins 0 - 31. The nrf52840 has two ports but Port 1 only
+ * has 16 pins.
  */
 #define MCU_GPIO_PORTA(pin)	((0 * 16) + (pin))
+#define MCU_GPIO_PORTB(pin)	((1 * 16) + (pin))
 
 #ifdef __cplusplus
 }

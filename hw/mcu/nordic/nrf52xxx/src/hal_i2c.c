@@ -21,9 +21,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
-
 #include <os/os_time.h>
-
 #include "syscfg/syscfg.h"
 #include <hal/hal_i2c.h>
 #include <hal/hal_gpio.h>

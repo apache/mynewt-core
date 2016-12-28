@@ -23,7 +23,7 @@
 #include <bsp/cmsis_nvic.h>
 #include <hal/hal_spi.h>
 #include "mcu/nrf52_hal.h"
-#include "nrf52_bitfields.h"
+#include "nrf.h"
 
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))

@@ -16,31 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-#include <inttypes.h>
-#include <string.h>
-#include <hal/hal_bsp.h>
-#include "nrf.h"
-
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
-#endif
-
-/*
- * These values are generated at random.
- * DEVICEID[0-1] and DEVICEADDR[0-1].
- */
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
+MEMORY
 {
-    int len, cnt;
-
-    cnt = min(sizeof(NRF_FICR->DEVICEID), max_len);
-    memcpy(id, (void *)NRF_FICR->DEVICEID, cnt);
-    len = cnt;
-
-    cnt = min(sizeof(NRF_FICR->DEVICEADDR), max_len - len);
-    memcpy(id + len, (void *)NRF_FICR->DEVICEADDR, cnt);
-
-    return len + cnt;
+  FLASH (rx) : ORIGIN = 0x0000c000, LENGTH = 0x76000
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x40000
 }
+
+/* This linker script is used for images and thus contains an image header */
+_imghdr_size = 0x20;

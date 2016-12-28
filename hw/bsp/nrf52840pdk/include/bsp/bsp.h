@@ -17,30 +17,37 @@
  * under the License.
  */
 
-#include <inttypes.h>
-#include <string.h>
-#include <hal/hal_bsp.h>
-#include "nrf.h"
+#ifndef H_BSP_H
+#define H_BSP_H
 
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
+#include <inttypes.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-/*
- * These values are generated at random.
- * DEVICEID[0-1] and DEVICEADDR[0-1].
- */
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
-{
-    int len, cnt;
+/* Define special stackos sections */
+#define sec_data_core   __attribute__((section(".data.core")))
+#define sec_bss_core    __attribute__((section(".bss.core")))
+#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
 
-    cnt = min(sizeof(NRF_FICR->DEVICEID), max_len);
-    memcpy(id, (void *)NRF_FICR->DEVICEID, cnt);
-    len = cnt;
+/* More convenient section placement macros. */
+#define bssnz_t         sec_bss_nz_core
 
-    cnt = min(sizeof(NRF_FICR->DEVICEADDR), max_len - len);
-    memcpy(id + len, (void *)NRF_FICR->DEVICEADDR, cnt);
+extern uint8_t _ram_start;
+#define RAM_SIZE        0x40000
 
-    return len + cnt;
+/* LED pins */
+#define LED_BLINK_PIN   (13)
+#define LED_2           (14)
+
+/* UART info */
+#define CONSOLE_UART    "uart0"
+
+#define NFFS_AREA_MAX   (8)
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif  /* H_BSP_H */

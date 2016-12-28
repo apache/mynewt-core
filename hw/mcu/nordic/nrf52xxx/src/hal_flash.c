@@ -19,10 +19,8 @@
 
 #include <string.h>
 #include <assert.h>
-
 #include "nrf.h"
 #include "mcu/nrf52_hal.h"
-
 #include <hal/hal_flash_int.h>
 
 #define NRF52K_FLASH_SECTOR_SZ	4096

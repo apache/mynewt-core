@@ -20,7 +20,7 @@
 #include <os/os.h>
 #include "syscfg/syscfg.h"
 #include "hal/hal_os_tick.h"
-#include "nrf52_bitfields.h"
+#include "nrf.h"
 #include "bsp/cmsis_nvic.h"
 
 #if MYNEWT_VAL(XTAL_32768)
