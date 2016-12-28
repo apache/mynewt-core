@@ -28,3 +28,4 @@ syscfg.defs:
 
 syscfg.vals:
     SYSINIT_CONSTRAIN_INIT: 0
+    OS_SCHEDULING: 0
