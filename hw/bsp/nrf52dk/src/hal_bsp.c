@@ -31,8 +31,15 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
+#endif
+#if MYNEWT_VAL(UART_0)
 #include "uart_hal/uart_hal.h"
+#endif
+#if MYNEWT_VAL(UART_1)
+#include "uart_bitbang/uart_bitbang.h"
+#endif
 #include "os/os_dev.h"
 #include "bsp.h"
 
@@ -149,6 +156,7 @@ hal_bsp_init(void)
 {
     int rc;
 
+    (void)rc;
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, NULL);
     assert(rc == 0);
@@ -170,10 +178,14 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+    /*
+     * What this depends on is what the OS_CPUTIME_TIMER_NUM is set to.
+     */
+#if MYNEWT_VAL(TIMER_0)
     /* Set cputime to count at 1 usec increments */
     rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
     assert(rc == 0);
-
+#endif
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);
     assert(rc == 0);
