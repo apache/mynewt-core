@@ -70,7 +70,8 @@ enum lsm303dlhc_mag_rate {
 struct lsm303dlhc_cfg {
     enum lsm303dlhc_accel_range accel_range;
     enum lsm303dlhc_accel_rate accel_rate;
-    uint16_t sample_itvl;
+    enum lsm303dlhc_mag_gain mag_gain;
+    enum lsm303dlhc_mag_rate mag_rate;
 };
 
 struct lsm303dlhc {

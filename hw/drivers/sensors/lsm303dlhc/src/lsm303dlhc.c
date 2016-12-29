@@ -27,6 +27,7 @@
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
+#include "sensor/mag.h"
 #include "lsm303dlhc/lsm303dlhc.h"
 #include "lsm303dlhc_priv.h"
 
@@ -45,6 +46,13 @@ STATS_SECT_START(lsm303dlhc_stat_section)
     STATS_SECT_ENTRY(samples_acc_4g)
     STATS_SECT_ENTRY(samples_acc_8g)
     STATS_SECT_ENTRY(samples_acc_16g)
+    STATS_SECT_ENTRY(samples_mag_1_3g)
+    STATS_SECT_ENTRY(samples_mag_1_9g)
+    STATS_SECT_ENTRY(samples_mag_2_5g)
+    STATS_SECT_ENTRY(samples_mag_4_0g)
+    STATS_SECT_ENTRY(samples_mag_4_7g)
+    STATS_SECT_ENTRY(samples_mag_5_6g)
+    STATS_SECT_ENTRY(samples_mag_8_1g)
     STATS_SECT_ENTRY(errors)
 STATS_SECT_END
 
@@ -54,6 +62,13 @@ STATS_NAME_START(lsm303dlhc_stat_section)
     STATS_NAME(lsm303dlhc_stat_section, samples_acc_4g)
     STATS_NAME(lsm303dlhc_stat_section, samples_acc_8g)
     STATS_NAME(lsm303dlhc_stat_section, samples_acc_16g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_1_3g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_1_9g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_2_5g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_4_0g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_4_7g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_5_6g)
+    STATS_NAME(lsm303dlhc_stat_section, samples_mag_8_1g)
     STATS_NAME(lsm303dlhc_stat_section, errors)
 STATS_NAME_END(lsm303dlhc_stat_section)
 
@@ -172,7 +187,7 @@ int
 lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer)
 {
     int rc;
-    uint8_t payload[7] = { reg | 0x80, 0, 0, 0, 0, 0, 0 };
+    uint8_t payload[7] = { reg, 0, 0, 0, 0, 0, 0 };
 
     struct hal_i2c_master_data data_struct = {
         .address = addr,
@@ -258,7 +273,15 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
+    /* Add the accelerometer */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER,
+            (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Add the magnetometer */
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_MAGNETIC_FIELD,
             (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
     if (rc != 0) {
         goto err;
@@ -279,10 +302,10 @@ lsm303dlhc_config(struct lsm303dlhc *lsm, struct lsm303dlhc_cfg *cfg)
 {
     int rc;
 
-    /* Overwrite the configuration associated with this generic accelleromter. */
+    /* Overwrite the configuration data. */
     memcpy(&lsm->cfg, cfg, sizeof(*cfg));
 
-    /* Set data rate (or power down) and enable XYZ output */
+    /* Set accel data rate (or power down) and enable XYZ output */
     rc = lsm303dlhc_write8(LSM303DLHC_ADDR_ACCEL,
         LSM303DLHC_REGISTER_ACCEL_CTRL_REG1_A,
         lsm->cfg.accel_rate | 0x07);
@@ -290,10 +313,34 @@ lsm303dlhc_config(struct lsm303dlhc *lsm, struct lsm303dlhc_cfg *cfg)
         goto err;
     }
 
-    /* Set scale */
+    /* Set accel scale */
     rc = lsm303dlhc_write8(LSM303DLHC_ADDR_ACCEL,
         LSM303DLHC_REGISTER_ACCEL_CTRL_REG4_A,
         lsm->cfg.accel_range);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Enable the magnetomer (set to continuous conversion mode) */
+    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_MAG,
+        LSM303DLHC_REGISTER_MAG_MR_REG_M,
+        0x00);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Set mag rate */
+    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_MAG,
+        LSM303DLHC_REGISTER_MAG_CRA_REG_M,
+        lsm->cfg.mag_rate);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Set mag gain */
+    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_MAG,
+        LSM303DLHC_REGISTER_MAG_CRB_REG_M,
+        lsm->cfg.mag_gain);
     if (rc != 0) {
         goto err;
     }
@@ -314,77 +361,167 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
 {
     struct lsm303dlhc *lsm;
     struct sensor_accel_data sad;
+    struct sensor_mag_data smd;
     int rc;
     int16_t x, y, z;
     float mg_lsb;
+    int16_t gauss_lsb_xy;
+    int16_t gauss_lsb_z;
     uint8_t payload[6];
 
-    /* If the read isn't looking for accel data, then don't do anything. */
-    if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
+    /* If the read isn't looking for accel or mag data, don't do anything. */
+    if (!(type & SENSOR_TYPE_ACCELEROMETER) &&
+       (!(type & SENSOR_TYPE_MAGNETIC_FIELD))) {
         rc = SYS_EINVAL;
         goto err;
     }
 
     lsm = (struct lsm303dlhc *) SENSOR_GET_DEVICE(sensor);
 
-    x = y = z = 0;
-    rc = lsm303dlhc_read48(LSM303DLHC_ADDR_ACCEL,
-                          LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A,
-                          payload);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Shift raw values based on sensor type */
+    /* Get a new accelerometer sample */
     if (type & SENSOR_TYPE_ACCELEROMETER) {
+        x = y = z = 0;
+        rc = lsm303dlhc_read48(LSM303DLHC_ADDR_ACCEL,
+                              LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A | 0x80,
+                              payload);
+        if (rc != 0) {
+            goto err;
+        }
+
         /* Shift 12-bit left-aligned accel values into 16-bit int */
         x = ((int16_t)(payload[0] | (payload[1] << 8))) >> 4;
         y = ((int16_t)(payload[2] | (payload[3] << 8))) >> 4;
         z = ((int16_t)(payload[4] | (payload[5] << 8))) >> 4;
+
+        /* Determine mg per lsb based on range */
+        switch(lsm->cfg.accel_range) {
+            case LSM303DLHC_ACCEL_RANGE_2:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_acc_2g);
+#endif
+                mg_lsb = 0.001F;
+                break;
+            case LSM303DLHC_ACCEL_RANGE_4:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_acc_4g);
+#endif
+                mg_lsb = 0.002F;
+                break;
+            case LSM303DLHC_ACCEL_RANGE_8:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_acc_8g);
+#endif
+                mg_lsb = 0.004F;
+                break;
+            case LSM303DLHC_ACCEL_RANGE_16:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_acc_16g);
+#endif
+                mg_lsb = 0.012F;
+                break;
+            default:
+                LSM303DLHC_ERR("Unknown accel range: 0x%02X. Assuming +/-2G.\n",
+                    lsm->cfg.accel_range);
+                mg_lsb = 0.001F;
+                break;
+        }
+
+        /* Convert from mg to Earth gravity in m/s^2 */
+        sad.sad_x = (float)x * mg_lsb * 9.80665F;
+        sad.sad_y = (float)y * mg_lsb * 9.80665F;
+        sad.sad_z = (float)z * mg_lsb * 9.80665F;
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &sad);
+        if (rc != 0) {
+            goto err;
+        }
     }
 
-    /* Determine mg per lsb based on range */
-    switch(lsm->cfg.accel_range) {
-        case LSM303DLHC_ACCEL_RANGE_2:
-#if MYNEWT_VAL(LSM303DLHC_STATS)
-            STATS_INC(g_lsm303dlhcstats, samples_acc_2g);
-#endif
-            mg_lsb = 0.001F;
-            break;
-        case LSM303DLHC_ACCEL_RANGE_4:
-#if MYNEWT_VAL(LSM303DLHC_STATS)
-            STATS_INC(g_lsm303dlhcstats, samples_acc_4g);
-#endif
-            mg_lsb = 0.002F;
-            break;
-        case LSM303DLHC_ACCEL_RANGE_8:
-#if MYNEWT_VAL(LSM303DLHC_STATS)
-            STATS_INC(g_lsm303dlhcstats, samples_acc_8g);
-#endif
-            mg_lsb = 0.004F;
-            break;
-        case LSM303DLHC_ACCEL_RANGE_16:
-#if MYNEWT_VAL(LSM303DLHC_STATS)
-            STATS_INC(g_lsm303dlhcstats, samples_acc_16g);
-#endif
-            mg_lsb = 0.012F;
-            break;
-        default:
-            LSM303DLHC_ERR("Unknown accel range: 0x%02X. Assuming +/-2G.\n",
-                lsm->cfg.accel_range);
-            mg_lsb = 0.001F;
-            break;
-    }
+    /* Get a new magnetometer sample */
+    if (type & SENSOR_TYPE_MAGNETIC_FIELD) {
+        x = y = z = 0;
+        rc = lsm303dlhc_read48(LSM303DLHC_ADDR_MAG,
+                              LSM303DLHC_REGISTER_MAG_OUT_X_H_M,
+                              payload);
+        if (rc != 0) {
+            goto err;
+        }
 
-    /* Convert from mg to Earth gravity in m/s^2 */
-    sad.sad_x = (float)x * mg_lsb * 9.80665F;
-    sad.sad_y = (float)y * mg_lsb * 9.80665F;
-    sad.sad_z = (float)z * mg_lsb * 9.80665F;
+        /* Shift mag values into 16-bit int */
+        x = (int16_t)(payload[1] | ((int16_t)payload[0] << 8));
+        y = (int16_t)(payload[3] | ((int16_t)payload[2] << 8));
+        z = (int16_t)(payload[5] | ((int16_t)payload[4] << 8));
 
-    /* Call data function */
-    rc = data_func(sensor, data_arg, &sad);
-    if (rc != 0) {
-        goto err;
+        /* Determine gauss per lsb based on gain */
+        switch (lsm->cfg.mag_gain) {
+            case LSM303DLHC_MAG_GAIN_1_3:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_1_3g);
+#endif
+                gauss_lsb_xy = 1100;
+                gauss_lsb_z = 980;
+                break;
+            case LSM303DLHC_MAG_GAIN_1_9:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_1_9g);
+#endif
+                gauss_lsb_xy = 855;
+                gauss_lsb_z = 760;
+                break;
+            case LSM303DLHC_MAG_GAIN_2_5:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_2_5g);
+#endif
+                gauss_lsb_xy = 670;
+                gauss_lsb_z = 600;
+                break;
+            case LSM303DLHC_MAG_GAIN_4_0:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_4_0g);
+#endif
+                gauss_lsb_xy = 450;
+                gauss_lsb_z = 400;
+                break;
+            case LSM303DLHC_MAG_GAIN_4_7:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_4_7g);
+#endif
+                gauss_lsb_xy = 400;
+                gauss_lsb_z = 355;
+                break;
+            case LSM303DLHC_MAG_GAIN_5_6:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_5_6g);
+#endif
+                gauss_lsb_xy = 330;
+                gauss_lsb_z = 295;
+                break;
+            case LSM303DLHC_MAG_GAIN_8_1:
+#if MYNEWT_VAL(LSM303DLHC_STATS)
+                STATS_INC(g_lsm303dlhcstats, samples_mag_8_1g);
+#endif
+                gauss_lsb_xy = 230;
+                gauss_lsb_z = 205;
+                break;
+            default:
+                LSM303DLHC_ERR("Unknown mag gain: 0x%02X. Assuming +/-1.3g.\n",
+                    lsm->cfg.mag_gain);
+                gauss_lsb_xy = 1100;
+                gauss_lsb_z = 980;
+                break;
+        }
+
+        /* Convert from gauss to micro Tesla */
+        smd.smd_x = (float)x / gauss_lsb_xy * 100.0F;
+        smd.smd_y = (float)y / gauss_lsb_xy * 100.0F;
+        smd.smd_z = (float)z / gauss_lsb_z * 100.0F;
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &smd);
+        if (rc != 0) {
+            goto err;
+        }
     }
 
     return (0);
@@ -398,7 +535,8 @@ lsm303dlhc_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 {
     int rc;
 
-    if (type != SENSOR_TYPE_ACCELEROMETER) {
+    if ((type != SENSOR_TYPE_ACCELEROMETER) &&
+        (type != SENSOR_TYPE_MAGNETIC_FIELD)) {
         rc = SYS_EINVAL;
         goto err;
     }
