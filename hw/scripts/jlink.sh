@@ -133,7 +133,7 @@ jlink_debug() {
 
 	rm $GDB_CMD_FILE
     else
-	JLinkGDBServer -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
+	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
     fi
     return 0
 }
