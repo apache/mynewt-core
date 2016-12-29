@@ -112,7 +112,7 @@ sim_mag_sensor_read(struct sensor *sensor, sensor_type_t type,
     int i;
     int rc;
 
-    /* If the read isn't looking for accel data, then don't do anything. */
+    /* If the read isn't looking for mag data, then don't do anything. */
     if (!(type & SENSOR_TYPE_MAGNETIC_FIELD)) {
         rc = SYS_EINVAL;
         goto err;
@@ -122,7 +122,7 @@ sim_mag_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     /* When a sensor is "read", we get the last 'n' samples from the device
      * and pass them to the sensor data function.  Based on the sample
-     * interval provided to sim_accel_config() and the last time this function
+     * interval provided to sim_mag_config() and the last time this function
      * was called, 'n' samples are generated.
      */
     now = os_time_get();
