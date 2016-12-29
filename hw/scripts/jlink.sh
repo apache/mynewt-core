@@ -45,7 +45,7 @@ jlink_load () {
     # downloading somewhere in the flash. So need to figure out how to tell it
     # not to do that, or report failure if gdb fails to write this file
     #
-    echo "shell sh -c \"trap '' 2; JLinkGDBServerCL -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun &\" " > $GDB_CMD_FILE
+    echo "shell sh -c \"trap '' 2; JLinkGDBServer -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun &\" " > $GDB_CMD_FILE
     echo "target remote localhost:3333" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
     echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
@@ -109,7 +109,7 @@ jlink_debug() {
 
 	# Monitor mode. Background process gets it's own process group.
 	set -m
-	JLinkGDBServerCL -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
+	JLinkGDBServer -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
 	set +m
 
 	echo "target remote localhost:3333" > $GDB_CMD_FILE
