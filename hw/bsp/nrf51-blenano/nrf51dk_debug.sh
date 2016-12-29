@@ -31,6 +31,7 @@
 
 FILE_NAME=$BIN_BASENAME.elf
 CFG="-f interface/cmsis-dap.cfg -f target/nrf51.cfg"
-EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf51.cpu configure -event gdb-detach {resume;shutdown}"
+# Exit openocd when gdb detaches.
+EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf51.cpu configure -event gdb-detach {if {[nrf51.cpu curstate] eq \"halted\"} resume;shutdown}"
 
 openocd_debug
