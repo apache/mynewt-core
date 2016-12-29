@@ -31,6 +31,7 @@
 
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
+#include "sensor/mag.h"
 #include "console/console.h"
 #include "shell/shell.h"
 
@@ -85,6 +86,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 {
     struct sensor_shell_read_ctx *ctx;
     struct sensor_accel_data *sad;
+    struct sensor_mag_data *smd;
 
     ctx = (struct sensor_shell_read_ctx *) arg;
 
@@ -100,6 +102,20 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         }
         if (sad->sad_z != SENSOR_ACCEL_DATA_UNUSED) {
             console_printf("z = %f", sad->sad_z);
+        }
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_MAGNETIC_FIELD) {
+        smd = (struct sensor_mag_data *) data;
+        if (smd->smd_x != SENSOR_MAG_DATA_UNUSED) {
+            console_printf("x = %i, ", (int)smd->smd_x);
+        }
+        if (smd->smd_y != SENSOR_MAG_DATA_UNUSED) {
+            console_printf("y = %i, ", (int)smd->smd_y);
+        }
+        if (smd->smd_z != SENSOR_MAG_DATA_UNUSED) {
+            console_printf("z = %i", (int)smd->smd_z);
         }
         console_printf("\n");
     }
