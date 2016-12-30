@@ -20,6 +20,7 @@
 #ifndef H_TESTUTIL_
 #define H_TESTUTIL_
 
+#include <assert.h>
 #include <inttypes.h>
 #include <setjmp.h>
 

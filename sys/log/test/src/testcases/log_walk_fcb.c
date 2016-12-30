@@ -20,10 +20,11 @@
 
 TEST_CASE(log_walk_fcb)
 {
+    struct encode_off encode_off = { 0 };
     int rc;
 
     str_idx = 0;
 
-    rc = log_walk(&my_log, log_test_walk1, NULL);
+    rc = log_walk(&my_log, log_test_walk1, &encode_off);
     TEST_ASSERT(rc == 0);
 }
