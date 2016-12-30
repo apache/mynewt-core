@@ -58,12 +58,6 @@
 /* For LED toggling */
 int g_led_pin;
 
-/* Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
-
-/* Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;

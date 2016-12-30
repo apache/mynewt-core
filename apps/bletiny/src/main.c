@@ -61,15 +61,6 @@
 #include "../src/ble_hs_atomic_priv.h"
 #include "../src/ble_hs_hci_priv.h"
 
-/* Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
-
-/* Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
-/* A buffer for host advertising data */
-uint8_t g_host_adv_len;
-
 /* BLETINY variables */
 #define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(512))
 #define BLETINY_TASK_PRIO              1

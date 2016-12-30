@@ -60,12 +60,6 @@ struct os_eventq bleuart_evq;
 struct os_task bleuart_task;
 bssnz_t os_stack_t bleuart_stack[bleuart_STACK_SIZE];
 
-/** Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0xba, 0xaa, 0xad, 0xba, 0xaa, 0xad};
-
-/** Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
 static int bleuart_gap_event(struct ble_gap_event *event, void *arg);
 
 /**

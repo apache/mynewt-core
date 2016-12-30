@@ -50,12 +50,6 @@ struct os_eventq blecent_evq;
 struct os_task blecent_task;
 bssnz_t os_stack_t blecent_stack[BLECENT_STACK_SIZE];
 
-/** Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c};
-
-/** Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
 static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
