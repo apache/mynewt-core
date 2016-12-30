@@ -54,45 +54,11 @@ const uint8_t gatt_svr_chr_sec_test_static_uuid[16] = {
 static uint8_t gatt_svr_sec_test_static_val;
 
 static int
-gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
-                          struct ble_gatt_access_ctxt *ctxt,
-                          void *arg);
-
-static int
 gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
                              struct ble_gatt_access_ctxt *ctxt,
                              void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
-    {
-        /*** Alert Notification Service. */
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = BLE_UUID16(GATT_SVR_SVC_ALERT_UUID),
-        .characteristics = (struct ble_gatt_chr_def[]) { {
-            .uuid128 = BLE_UUID16(GATT_SVR_CHR_SUP_NEW_ALERT_CAT_UUID),
-            .access_cb = gatt_svr_chr_access_alert,
-            .flags = BLE_GATT_CHR_F_READ,
-        }, {
-            .uuid128 = BLE_UUID16(GATT_SVR_CHR_NEW_ALERT),
-            .access_cb = gatt_svr_chr_access_alert,
-            .flags = BLE_GATT_CHR_F_NOTIFY,
-        }, {
-            .uuid128 = BLE_UUID16(GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID),
-            .access_cb = gatt_svr_chr_access_alert,
-            .flags = BLE_GATT_CHR_F_READ,
-        }, {
-            .uuid128 = BLE_UUID16(GATT_SVR_CHR_UNR_ALERT_STAT_UUID),
-            .access_cb = gatt_svr_chr_access_alert,
-            .flags = BLE_GATT_CHR_F_NOTIFY,
-        }, {
-            .uuid128 = BLE_UUID16(GATT_SVR_CHR_ALERT_NOT_CTRL_PT),
-            .access_cb = gatt_svr_chr_access_alert,
-            .flags = BLE_GATT_CHR_F_WRITE,
-        }, {
-            0, /* No more characteristics in this service. */
-        } },
-    },
-
     {
         /*** Service: Security test. */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -136,78 +102,6 @@ gatt_svr_chr_write(struct os_mbuf *om, uint16_t min_len, uint16_t max_len,
     }
 
     return 0;
-}
-
-#define GATT_SVR_NEW_ALERT_VAL_MAX_LEN    64
-
-static const uint8_t gatt_svr_new_alert_cat = 0x01; /* Simple alert. */
-static uint8_t gatt_svr_new_alert_val[GATT_SVR_NEW_ALERT_VAL_MAX_LEN];
-static uint16_t gatt_svr_new_alert_val_len;
-static const uint8_t gatt_svr_unr_alert_cat = 0x01; /* Simple alert. */
-static uint16_t gatt_svr_unr_alert_stat;
-static uint16_t gatt_svr_alert_not_ctrl_pt;
-
-static int
-gatt_svr_chr_access_alert(uint16_t conn_handle, uint16_t attr_handle,
-                          struct ble_gatt_access_ctxt *ctxt,
-                          void *arg)
-{
-    uint16_t uuid16;
-    int rc;
-
-    uuid16 = ble_uuid_128_to_16(ctxt->chr->uuid128);
-    assert(uuid16 != 0);
-
-    switch (uuid16) {
-    case GATT_SVR_CHR_SUP_NEW_ALERT_CAT_UUID:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        rc = os_mbuf_append(ctxt->om, &gatt_svr_new_alert_cat,
-                            sizeof gatt_svr_new_alert_cat);
-        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-
-    case GATT_SVR_CHR_NEW_ALERT:
-        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            rc = gatt_svr_chr_write(ctxt->om, 0,
-                                    sizeof gatt_svr_new_alert_val,
-                                    gatt_svr_new_alert_val,
-                                    &gatt_svr_new_alert_val_len);
-            return rc;
-        } else if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
-            rc = os_mbuf_append(ctxt->om, &gatt_svr_new_alert_val,
-                                sizeof gatt_svr_new_alert_val);
-            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-        }
-
-    case GATT_SVR_CHR_SUP_UNR_ALERT_CAT_UUID:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR);
-        rc = os_mbuf_append(ctxt->om, &gatt_svr_unr_alert_cat,
-                            sizeof gatt_svr_unr_alert_cat);
-        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-
-    case GATT_SVR_CHR_UNR_ALERT_STAT_UUID:
-        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            rc = gatt_svr_chr_write(ctxt->om, 2, 2, &gatt_svr_unr_alert_stat,
-                                    NULL);
-            return rc;
-        } else {
-            rc = os_mbuf_append(ctxt->om, &gatt_svr_unr_alert_stat,
-                                sizeof gatt_svr_unr_alert_stat);
-            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-        }
-
-    case GATT_SVR_CHR_ALERT_NOT_CTRL_PT:
-        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-            rc = gatt_svr_chr_write(ctxt->om, 2, 2,
-                                    &gatt_svr_alert_not_ctrl_pt, NULL);
-        } else {
-            rc = BLE_ATT_ERR_UNLIKELY;
-        }
-        return rc;
-
-    default:
-        assert(0);
-        return BLE_ATT_ERR_UNLIKELY;
-    }
 }
 
 static int
