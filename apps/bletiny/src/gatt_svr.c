@@ -42,8 +42,9 @@
 #define  PTS_CHR_READ_WRITE_AUTHEN       0x0008
 #define  PTS_DSC_READ                    0x0009
 #define  PTS_DSC_WRITE                   0x000a
-#define  PTS_DSC_READ_WRITE_ENC          0x000b
-#define  PTS_DSC_READ_WRITE_AUTHEN       0x000c
+#define  PTS_DSC_READ_WRITE              0x000b
+#define  PTS_DSC_READ_WRITE_ENC          0x000c
+#define  PTS_DSC_READ_WRITE_AUTHEN       0x000d
 
 #define  PTS_LONG_SVC                    0x0011
 #define  PTS_LONG_CHR_READ               0x0012
@@ -54,8 +55,9 @@
 #define  PTS_LONG_CHR_READ_WRITE_AUTHEN  0x0017
 #define  PTS_LONG_DSC_READ               0x0018
 #define  PTS_LONG_DSC_WRITE              0x0019
-#define  PTS_LONG_DSC_READ_WRITE_ENC     0x001a
-#define  PTS_LONG_DSC_READ_WRITE_AUTHEN  0x001b
+#define  PTS_LONG_DSC_READ_WRITE         0x001a
+#define  PTS_LONG_DSC_READ_WRITE_ENC     0x001b
+#define  PTS_LONG_DSC_READ_WRITE_AUTHEN  0x001c
 
 /**
  * The vendor specific security test service consists of two characteristics:
@@ -155,6 +157,10 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                         .access_cb = gatt_svr_access_test,
                         .att_flags = BLE_ATT_F_WRITE,
                     }, {
+                        .uuid128 = PTS_UUID(PTS_DSC_READ_WRITE),
+                        .access_cb = gatt_svr_access_test,
+                        .att_flags = BLE_ATT_F_READ | BLE_ATT_F_WRITE,
+                    }, {
                         .uuid128 = PTS_UUID(PTS_DSC_READ_WRITE_ENC),
                         .access_cb = gatt_svr_access_test,
                         .att_flags = BLE_ATT_F_READ | BLE_ATT_F_READ_ENC |
@@ -211,6 +217,10 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                         .uuid128 = PTS_UUID(PTS_LONG_DSC_WRITE),
                         .access_cb = gatt_svr_long_access_test,
                         .att_flags = BLE_ATT_F_WRITE,
+                    }, {
+                        .uuid128 = PTS_UUID(PTS_LONG_DSC_READ_WRITE),
+                        .access_cb = gatt_svr_long_access_test,
+                        .att_flags = BLE_ATT_F_READ | BLE_ATT_F_WRITE,
                     }, {
                         .uuid128 = PTS_UUID(PTS_LONG_DSC_READ_WRITE_ENC),
                         .access_cb = gatt_svr_long_access_test,
@@ -400,6 +410,7 @@ gatt_svr_access_test(uint16_t conn_handle, uint16_t attr_handle,
                                 &gatt_svr_pts_static_val, NULL);
         return rc;
 
+    case PTS_DSC_READ_WRITE:
     case PTS_DSC_READ_WRITE_ENC:
     case PTS_DSC_READ_WRITE_AUTHEN:
         if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_DSC) {
@@ -472,6 +483,7 @@ gatt_svr_long_access_test(uint16_t conn_handle, uint16_t attr_handle,
                                 &gatt_svr_pts_static_long_val, NULL);
         return rc;
 
+    case PTS_LONG_DSC_READ_WRITE:
     case PTS_LONG_DSC_READ_WRITE_ENC:
     case PTS_LONG_DSC_READ_WRITE_AUTHEN:
         if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_DSC) {
