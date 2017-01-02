@@ -25,11 +25,12 @@
  * one-to-one because of signedness of integers
  * and therefore we need a function to do this trickery */
 static int
-valid_attr_type(CborType ct, CborAttrType at) {
+valid_attr_type(CborType ct, CborAttrType at)
+{
     switch (at) {
         case CborAttrIntegerType:
         case CborAttrUnsignedIntegerType:
-            if(ct == CborIntegerType) {
+            if (ct == CborIntegerType) {
                 return 1;
             }
             break;
@@ -128,7 +129,8 @@ static int
 cbor_internal_read_object(CborValue *root_value,
                           const struct cbor_attr_t *attrs,
                           const struct cbor_array_t *parent,
-                          int offset) {
+                          int offset)
+{
     const struct cbor_attr_t *cursor;
     char attrbuf[CBOR_ATTR_MAX + 1];
     char *lptr;
@@ -193,7 +195,7 @@ cbor_internal_read_object(CborValue *root_value,
         /* at least get the type of the next value so we can match the
          * attribute name and type for a perfect match */
         g_err |= cbor_value_advance(&cur_value);
-        if(cbor_value_is_valid(&cur_value)) {
+        if (cbor_value_is_valid(&cur_value)) {
             type = cbor_value_get_type(&cur_value);
         } else {
             g_err |= CborErrorIllegalType;
@@ -202,14 +204,14 @@ cbor_internal_read_object(CborValue *root_value,
 
         /* find this attribute in our list */
         for (cursor = attrs; cursor->attribute != NULL; cursor++) {
-            if ( valid_attr_type(type, cursor->type) &&
-                (memcmp(cursor->attribute, attrbuf, len) == 0 )) {
+            if (valid_attr_type(type, cursor->type) &&
+                (memcmp(cursor->attribute, attrbuf, len) == 0)) {
                 break;
             }
         }
 
         /* we found a match */
-        if ( cursor->attribute != NULL ) {
+        if (cursor->attribute != NULL) {
            lptr = cbor_target_address(cursor, parent, offset);
             switch (cursor->type) {
                 case CborAttrNullType:

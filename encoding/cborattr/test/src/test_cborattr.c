@@ -25,6 +25,7 @@ TEST_SUITE(test_cborattr_suite)
 {
     test_cborattr_decode1();
     test_cborattr_decode2();
+    test_cborattr_decode3();
 }
 
 #if MYNEWT_VAL(SELFTEST)

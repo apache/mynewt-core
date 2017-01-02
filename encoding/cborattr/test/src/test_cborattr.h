@@ -40,6 +40,7 @@ const uint8_t *test_str1(int *len);
  */
 TEST_CASE_DECL(test_cborattr_decode1);
 TEST_CASE_DECL(test_cborattr_decode2);
+TEST_CASE_DECL(test_cborattr_decode3);
 
 
 #ifdef __cplusplus
