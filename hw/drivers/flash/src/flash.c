@@ -176,18 +176,6 @@ buffer_equal(struct flash_dev *dev)
     return ((read_status(dev) & STATUS_CMP) == 0);
 }
 
-static inline uint16_t
-page_address(uint32_t addr)
-{
-    return (uint16_t) addr / PAGE_SIZE;
-}
-
-static inline uint16_t
-block_address(uint32_t addr)
-{
-    return (uint16_t) addr % PAGE_SIZE;
-}
-
 /* FIXME: add timeout */
 static inline void
 wait_ready(struct flash_dev *dev)
@@ -238,19 +226,20 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
     uint8_t val;
     uint32_t n;
     uint16_t page_count;
+    uint16_t page_index;
     uint16_t offset;
+    uint16_t amount;
 
     dev = cfg_dev(flash_id);
     if (!dev) {
         return -1;
     }
 
-    /* FIXME: when reading beyond the end of the page, it rolls back to the
-     * beginning of the same page...
-     */
-
     page_count = (len / (PAGE_SIZE + 1)) + 1;
-    offset = 0;
+    offset = addr % PAGE_SIZE;
+    if (len - offset >= PAGE_SIZE) {
+        page_count++;
+    }
 
     while (page_count--) {
         wait_ready(dev);
@@ -259,14 +248,14 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
 
         hal_spi_tx_val(dev->spi_num, MEM_READ);
 
-        pa = page_address(addr);
-        ba = block_address(addr);
-
-        /* FIXME: not using BA9 (required to access more than 512 bytes on page) */
+        pa = addr / PAGE_SIZE;
+        ba = addr % PAGE_SIZE;
 
         /* < r, PA12-6 > */
         val = (pa >> 6) & ~0x80;
         hal_spi_tx_val(dev->spi_num, val);
+
+        /* FIXME: not using BA9 */
 
         /* < PA5-0, BA9-8 > */
         val = (pa << 2) | ((ba >> 8) & 1);
@@ -281,13 +270,15 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
         hal_spi_tx_val(dev->spi_num, 0xff);
         hal_spi_tx_val(dev->spi_num, 0xff);
 
-        for (n = 0; n < len; n++) {
+        amount = MIN
+        for (n = 0; n < amount; n++) {
             *((uint8_t *) buf + n) = hal_spi_tx_val(dev->spi_num, 0xff);
         }
 
         hal_gpio_write(dev->ss_pin, 1);
 
-        offset += PAGE_SIZE;
+        page_index += PAGE_SIZE;
+        addr = (addr + offset) & (PAGE_SIZE - 1);
     }
 
     return 0;
@@ -299,7 +290,6 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
     struct flash_dev *dev;
     uint16_t pa;
     //uint16_t bfa;
-    //uint8_t val;
     uint32_t n;
     int page_count;
     int offset;
@@ -310,15 +300,12 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
     }
 
     /* FIXME: calculation is assuming that addr starts at offset 0 in page */
+    addr % PAGE_SIZE
     page_count = (len / (PAGE_SIZE + 1)) + 1;
 
     if (!page_count) {
         return 0;
     }
-
-    /* FIXME: when reading beyond the end of the page, it rolls back to the
-     * beginning of the same page...
-     */
 
     offset = 0;
     while (page_count-- >= 0) {
