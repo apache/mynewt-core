@@ -20,4 +20,4 @@
 
 syscfg.vals:
     MSYS_1_BLOCK_COUNT: 16
-    BLE_SM: 0
+    BLE_SM_LEGACY: 0
