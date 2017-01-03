@@ -23,6 +23,7 @@
 #include <nrf51.h>
 #include <mcu/nrf51_hal.h>
 #include <hal/hal_bsp.h>
+#include "hal/hal_system.h"
 #include "bsp/bsp.h"
 #include "os/os_cputime.h"
 #include "syscfg/syscfg.h"
@@ -130,6 +131,9 @@ void
 hal_bsp_init(void)
 {
     int rc;
+
+    /* Make sure system clocks have started */
+    hal_system_clock_start();
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",

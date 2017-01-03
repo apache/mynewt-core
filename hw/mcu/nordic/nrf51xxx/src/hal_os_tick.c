@@ -20,7 +20,7 @@
 #include <os/os.h>
 #include "syscfg/syscfg.h"
 #include <hal/hal_os_tick.h>
-
+#include <hal/hal_system.h>
 #include <bsp/cmsis_nvic.h>
 #include <nrf51.h>
 #include <nrf51_bitfields.h>
@@ -37,6 +37,9 @@
 
 #define OS_TICK_CMPREG  0
 #define RTC_FREQ        32768
+#define OS_TICK_TIMER   NRF_RTC1
+#define OS_TICK_IRQ     RTC1_IRQn
+
 
 #define RTC_COMPARE_INT_MASK(ccreg) (1UL << ((ccreg) + 16))
 
@@ -74,7 +77,7 @@ sub24(uint32_t x, uint32_t y)
 static inline uint32_t
 nrf51_os_tick_counter(void)
 {
-    return (NRF_RTC0->COUNTER);
+    return (OS_TICK_TIMER->COUNTER);
 }
 
 static inline void
@@ -86,7 +89,7 @@ nrf51_os_tick_set_ocmp(uint32_t ocmp)
     OS_ASSERT_CRITICAL();
     while (1) {
         ocmp &= 0xffffff;
-        NRF_RTC0->CC[OS_TICK_CMPREG] = ocmp;
+        OS_TICK_TIMER->CC[OS_TICK_CMPREG] = ocmp;
         counter = nrf51_os_tick_counter();
         /*
          * From section 19.1.7 "Compare Feature" nRF51 Reference Manual 3.0:
@@ -106,7 +109,7 @@ nrf51_os_tick_set_ocmp(uint32_t ocmp)
 }
 
 static void
-rtc0_timer_handler(void)
+rtc1_timer_handler(void)
 {
     int ticks, delta;
     os_sr_t sr;
@@ -123,7 +126,7 @@ rtc0_timer_handler(void)
     os_time_advance(ticks);
 
     /* Clear timer interrupt */
-    NRF_RTC0->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
+    OS_TICK_TIMER->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
 
     /* Update the time associated with the most recent tick */
     lastocmp = (lastocmp + ticks * timer_ticks_per_ostick) & 0xffffff;
@@ -160,7 +163,7 @@ os_tick_idle(os_time_t ticks)
          * Update OS time before anything else when coming out of
          * the tickless regime.
          */
-        rtc0_timer_handler();
+        rtc1_timer_handler();
     }
 }
 
@@ -168,7 +171,6 @@ void
 os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
     uint32_t ctx;
-    uint32_t mask;
 
     assert(RTC_FREQ % os_ticks_per_sec == 0);
 
@@ -182,74 +184,32 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
      */
     nrf51_max_idle_ticks = (1UL << 22) / timer_ticks_per_ostick;
 
-    /* Turn on the LFCLK */
-    NRF_CLOCK->XTALFREQ = CLOCK_XTALFREQ_XTALFREQ_16MHz;
-    NRF_CLOCK->TASKS_LFCLKSTOP = 1;
-    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-#if MYNEWT_VAL(XTAL_32768)
-    NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Xtal;
-    NRF_CLOCK->TASKS_LFCLKSTART = 1;
-
-    /* Wait here till started! */
-    mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSTAT_SRC_Xtal;
-    while (1) {
-        if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
-            if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
-                break;
-            }
-        }
-    }
-#endif
-
-#if MYNEWT_VAL(XTAL_32768_SYNTH)
-    /* Must turn on HFLCK for synthesized 32768 crystal */
-    mask = CLOCK_HFCLKSTAT_STATE_Msk | CLOCK_HFCLKSTAT_SRC_Msk;
-    if ((NRF_CLOCK->HFCLKSTAT & mask) != mask) {
-        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK->TASKS_HFCLKSTART = 1;
-        while (1) {
-            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
-                break;
-            }
-        }
-    }
-
-    NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Synth;
-    NRF_CLOCK->TASKS_LFCLKSTART = 1;
-    mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSRC_SRC_Synth;
-    while (1) {
-        if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
-            if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
-                break;
-            }
-        }
-    }
-
-#endif
+    /* Make sure system clocks have started */
+    hal_system_clock_start();
 
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
 
     /* Set isr in vector table and enable interrupt */
-    NVIC_SetPriority(RTC0_IRQn, prio);
-    NVIC_SetVector(RTC0_IRQn, (uint32_t)rtc0_timer_handler);
-    NVIC_EnableIRQ(RTC0_IRQn);
+    NVIC_SetPriority(OS_TICK_IRQ, prio);
+    NVIC_SetVector(OS_TICK_IRQ, (uint32_t)rtc1_timer_handler);
+    NVIC_EnableIRQ(OS_TICK_IRQ);
 
     /*
      * Program the OS_TICK_TIMER to operate at 32KHz and trigger an output
      * compare interrupt at a rate of 'os_ticks_per_sec'.
      */
-    NRF_RTC0->TASKS_STOP = 1;
-    NRF_RTC0->TASKS_CLEAR = 1;
+    OS_TICK_TIMER->TASKS_STOP = 1;
+    OS_TICK_TIMER->TASKS_CLEAR = 1;
 
-    NRF_RTC0->EVTENCLR = 0xffffffff;
-    NRF_RTC0->INTENCLR = 0xffffffff;
-    NRF_RTC0->INTENSET = RTC_COMPARE_INT_MASK(OS_TICK_CMPREG);
+    OS_TICK_TIMER->EVTENCLR = 0xffffffff;
+    OS_TICK_TIMER->INTENCLR = 0xffffffff;
+    OS_TICK_TIMER->INTENSET = RTC_COMPARE_INT_MASK(OS_TICK_CMPREG);
 
-    NRF_RTC0->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
-    NRF_RTC0->CC[OS_TICK_CMPREG] = timer_ticks_per_ostick;
+    OS_TICK_TIMER->EVENTS_COMPARE[OS_TICK_CMPREG] = 0;
+    OS_TICK_TIMER->CC[OS_TICK_CMPREG] = timer_ticks_per_ostick;
 
-    NRF_RTC0->TASKS_START = 1;
+    OS_TICK_TIMER->TASKS_START = 1;
 
     __HAL_ENABLE_INTERRUPTS(ctx);
 }

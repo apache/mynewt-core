@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "hal/hal_system.h"
 #include "bsp/bsp.h"
 #include <nrf51.h>
 #include "mcu/nrf51_hal.h"
@@ -131,6 +132,9 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+
+    /* Make sure system clocks have started */
+    hal_system_clock_start();
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
