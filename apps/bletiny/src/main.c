@@ -1224,11 +1224,12 @@ bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
 }
 
 int
-bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle)
+bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle, uint16_t offset)
 {
     int rc;
 
-    rc = ble_gattc_read_long(conn_handle, attr_handle, bletiny_on_read, NULL);
+    rc = ble_gattc_read_long(conn_handle, attr_handle, offset,
+                             bletiny_on_read, NULL);
     return rc;
 }
 
@@ -1282,12 +1283,12 @@ bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
 
 int
 bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                   struct os_mbuf *om)
+                   uint16_t offset, struct os_mbuf *om)
 {
     int rc;
 
-    rc = ble_gattc_write_long(conn_handle, attr_handle, om,
-                              bletiny_on_write, NULL);
+    rc = ble_gattc_write_long(conn_handle, attr_handle, offset,
+                              om, bletiny_on_write, NULL);
     return rc;
 }
 

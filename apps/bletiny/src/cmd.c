@@ -1263,6 +1263,7 @@ bletiny_read_help(void)
     help_cmd_uuid("uuid");
     help_cmd_uint16("start");
     help_cmd_uint16("end");
+    help_cmd_uint16("offset");
 }
 
 static int
@@ -1272,6 +1273,7 @@ cmd_read(int argc, char **argv)
     uint16_t conn_handle;
     uint16_t start;
     uint16_t end;
+    uint16_t offset;
     uint8_t uuid128[16];
     uint8_t num_attr_handles;
     int is_uuid;
@@ -1342,9 +1344,18 @@ cmd_read(int argc, char **argv)
         return rc;
     }
 
+    offset = parse_arg_uint16("offset", &rc);
+    if (rc == ENOENT) {
+        offset = 0;
+    } else if (rc != 0) {
+        console_printf("invalid 'offset' parameter\n");
+        help_cmd_uint16("offset");
+        return rc;
+    }
+
     if (num_attr_handles == 1) {
         if (is_long) {
-            rc = bletiny_read_long(conn_handle, attr_handles[0]);
+            rc = bletiny_read_long(conn_handle, attr_handles[0], offset);
         } else {
             rc = bletiny_read(conn_handle, attr_handles[0]);
         }
@@ -2673,6 +2684,7 @@ bletiny_write_help(void)
     console_printf("\tlist of:\n");
     help_cmd_long("attr");
     help_cmd_byte_stream("value");
+    help_cmd_uint16("offset");
 }
 
 static int
@@ -2681,6 +2693,7 @@ cmd_write(int argc, char **argv)
     struct ble_gatt_attr attrs[MYNEWT_VAL(BLE_GATT_WRITE_MAX_ATTRS)] = { { 0 } };
     uint16_t attr_handle;
     uint16_t conn_handle;
+    uint16_t offset;
     int total_attr_len;
     int num_attrs;
     int attr_len;
@@ -2742,13 +2755,22 @@ cmd_write(int argc, char **argv)
             goto done;
         }
 
+        offset = parse_arg_uint16("offset", &rc);
+        if (rc == ENOENT) {
+            offset = 0;
+        } else if (rc != 0) {
+            console_printf("invalid 'offset' parameter\n");
+            help_cmd_uint16("offset");
+            return rc;
+        }
+
         if (num_attrs >= sizeof attrs / sizeof attrs[0]) {
             rc = -EINVAL;
             goto done;
         }
 
         attrs[num_attrs].handle = attr_handle;
-        attrs[num_attrs].offset = 0;
+        attrs[num_attrs].offset = offset;
         attrs[num_attrs].om = ble_hs_mbuf_from_flat(cmd_buf + total_attr_len,
                                                     attr_len);
         if (attrs[num_attrs].om == NULL) {
@@ -2771,7 +2793,8 @@ cmd_write(int argc, char **argv)
             rc = -EINVAL;
             goto done;
         }
-        rc = bletiny_write_long(conn_handle, attrs[0].handle, attrs[0].om);
+        rc = bletiny_write_long(conn_handle, attrs[0].handle,
+                                attrs[0].offset, attrs[0].om);
         attrs[0].om = NULL;
     } else if (num_attrs > 1) {
         rc = bletiny_write_reliable(conn_handle, attrs, num_attrs);
