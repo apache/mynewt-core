@@ -69,6 +69,7 @@
 
 #define MIN(n, m) (((n) < (m)) ? (n) : (m))
 
+/* TODO: make configurable to 512/528 */
 #define PAGE_SIZE                   512
 #define PAGE_BITS                   9
 
@@ -185,6 +186,26 @@ wait_ready(struct flash_dev *dev)
     }
 }
 
+static inline uint16_t
+calc_page_count(uint32_t addr, size_t len)
+{
+    uint16_t page_count;
+
+    page_count = 1 + (len / (PAGE_SIZE + 1));
+    if ((addr % PAGE_SIZE) + len > PAGE_SIZE * page_count) {
+        page_count++;
+    }
+
+    return page_count;
+}
+
+static inline uint32_t
+next_page_addr(uint32_t addr)
+{
+    /* FIXME: works only for 512? (powers of 2) */
+    return (addr & ~(PAGE_SIZE - 1)) + PAGE_SIZE;
+}
+
 int
 flash_init(int spi_num, void *spi_cfg, int ss_pin, uint32_t baudrate)
 {
@@ -226,21 +247,18 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
     uint8_t val;
     uint32_t n;
     uint16_t page_count;
-    uint16_t page_index;
-    uint16_t offset;
     uint16_t amount;
+    uint16_t index;
+    uint8_t *u8buf;
 
     dev = cfg_dev(flash_id);
     if (!dev) {
         return -1;
     }
 
-    page_count = (len / (PAGE_SIZE + 1)) + 1;
-    offset = addr % PAGE_SIZE;
-    if (len - offset >= PAGE_SIZE) {
-        page_count++;
-    }
-
+    page_count = calc_page_count(addr, len);
+    index = 0;
+    u8buf = (uint8_t *) buf;
     while (page_count--) {
         wait_ready(dev);
 
@@ -255,10 +273,13 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
         val = (pa >> 6) & ~0x80;
         hal_spi_tx_val(dev->spi_num, val);
 
-        /* FIXME: not using BA9 */
-
         /* < PA5-0, BA9-8 > */
+
+#if (PAGE_SIZE == 512)
         val = (pa << 2) | ((ba >> 8) & 1);
+#else
+        val = (pa << 2) | ((ba >> 8) & 3);
+#endif
         hal_spi_tx_val(dev->spi_num, val);
 
         /* < BA7-0 > */
@@ -270,15 +291,20 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
         hal_spi_tx_val(dev->spi_num, 0xff);
         hal_spi_tx_val(dev->spi_num, 0xff);
 
-        amount = MIN
+        if (len + ba <= PAGE_SIZE) {
+            amount = len;
+        } else {
+            amount = PAGE_SIZE - ba;
+        }
+
         for (n = 0; n < amount; n++) {
-            *((uint8_t *) buf + n) = hal_spi_tx_val(dev->spi_num, 0xff);
+            u8buf[index++] = hal_spi_tx_val(dev->spi_num, 0xff);
         }
 
         hal_gpio_write(dev->ss_pin, 1);
 
-        page_index += PAGE_SIZE;
-        addr = (addr + offset) & (PAGE_SIZE - 1);
+        addr = next_page_addr(addr);
+        len -= amount;
     }
 
     return 0;
@@ -293,22 +319,17 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
     uint32_t n;
     int page_count;
     int offset;
+    uint8_t *u8buf;
 
     dev = cfg_dev(flash_id);
     if (!dev) {
         return -1;
     }
 
-    /* FIXME: calculation is assuming that addr starts at offset 0 in page */
-    addr % PAGE_SIZE
-    page_count = (len / (PAGE_SIZE + 1)) + 1;
-
-    if (!page_count) {
-        return 0;
-    }
-
+    page_count = calc_page_count(addr, len);
     offset = 0;
-    while (page_count-- >= 0) {
+    u8buf = (uint8_t *) buf;
+    while (page_count--) {
         wait_ready(dev);
 
         hal_gpio_write(dev->ss_pin, 0);
@@ -322,7 +343,7 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
         hal_spi_tx_val(dev->spi_num, 0);
 
         for (n = 0; n < len; n++) {
-             hal_spi_tx_val(dev->spi_num, *((uint8_t *) buf + n));
+             hal_spi_tx_val(dev->spi_num, u8buf[n]);
         }
 
         hal_gpio_write(dev->ss_pin, 1);
@@ -335,6 +356,8 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
 
         /* FIXME: check that pa doesn't overflow capacity */
         pa = addr / PAGE_SIZE;
+
+        printf("Writing at addr=%04lx, pa=%04x\n", addr, pa);
 
         hal_spi_tx_val(dev->spi_num, (pa >> 6) & ~0x80);
         hal_spi_tx_val(dev->spi_num, (pa << 2) | 0x3);
