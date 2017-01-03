@@ -44,80 +44,66 @@ test_cbor_wr(struct cbor_encoder_writer *cew, const char *data, int len)
 }
 
 static void
-test_encode_data(void)
+test_encode_obj_array(void)
 {
-    CborEncoder test_data;
-    uint8_t data[4] = { 0, 1, 2 };
+    CborEncoder data;
+    CborEncoder array;
+    CborEncoder obj;
 
     cbor_encoder_init(&test_encoder, &test_writer, 0);
 
-    cbor_encoder_create_map(&test_encoder, &test_data, CborIndefiniteLength);
-    /*
-     * a:22
-     */
-    cbor_encode_text_stringz(&test_data, "a");
-    cbor_encode_uint(&test_data, 22);
+    cbor_encoder_create_map(&test_encoder, &data, CborIndefiniteLength);
 
     /*
-     * b:-13
+     * a: [{ n:"a", v:1}, {n:"b", v:2} ]
      */
-    cbor_encode_text_stringz(&test_data, "b");
-    cbor_encode_int(&test_data, -13);
+    cbor_encode_text_stringz(&data, "a");
+    cbor_encoder_create_array(&data, &array, CborIndefiniteLength);
 
-    /*
-     * c:0x000102
-     */
-    cbor_encode_text_stringz(&test_data, "c");
-    cbor_encode_byte_string(&test_data, data, 3);
-    cbor_encoder_close_container(&test_encoder, &test_data);
+    cbor_encoder_create_map(&array, &obj, CborIndefiniteLength);
+    cbor_encode_text_stringz(&obj, "n");
+    cbor_encode_text_stringz(&obj, "a");
+    cbor_encode_text_stringz(&obj, "v");
+    cbor_encode_int(&obj, 1);
+    cbor_encoder_close_container(&array, &obj);
 
-    /*
-     * XXX add other data types to encode here.
-     */
+    cbor_encoder_create_map(&array, &obj, CborIndefiniteLength);
+    cbor_encode_text_stringz(&obj, "n");
+    cbor_encode_text_stringz(&obj, "b");
+    cbor_encode_text_stringz(&obj, "v");
+    cbor_encode_int(&obj, 2);
+    cbor_encoder_close_container(&array, &obj);
 
+    cbor_encoder_close_container(&data, &array);
+    cbor_encoder_close_container(&test_encoder, &data);
 }
 
 /*
- * Simple decoding.
+ * object array
  */
-TEST_CASE(test_cborattr_decode3)
+TEST_CASE(test_cborattr_decode_obj_array)
 {
     int rc;
-    uint64_t a_val = 0;
-    int64_t b_val = 0;
-    uint8_t c_data[4];
-    size_t c_len;
+    char arr_data[4];
+    int arr_cnt;
     struct cbor_attr_t test_attrs[] = {
         [0] = {
             .attribute = "a",
-            .type = CborAttrIntegerType,
-            .addr.uinteger = &a_val,
+            .type = CborAttrArrayType,
+            .addr.array.element_type = CborAttrNullType,
+            .addr.array.arr.objects.base = arr_data,
+            .addr.array.count = &arr_cnt,
+            .addr.array.maxlen = 4,
             .nodefault = true
         },
         [1] = {
-            .attribute = "b",
-            .type = CborAttrIntegerType,
-            .addr.integer = &b_val,
-            .nodefault = true
-        },
-        [2] = {
-            .attribute = "c",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = c_data,
-            .addr.bytestring.len = &c_len,
-            .len = sizeof(c_data)
-        },
-        [3] = {
             .attribute = NULL
         }
     };
 
-    test_encode_data();
+    test_encode_obj_array();
 
     rc = cbor_read_flat_attrs(test_cbor_buf, test_cbor_len, test_attrs);
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(a_val == 22);
-    TEST_ASSERT(b_val == -13);
-    TEST_ASSERT(c_len == 3);
-    TEST_ASSERT(c_data[0] == 0 && c_data[1] == 1 && c_data[2] == 2);
+    TEST_ASSERT(arr_cnt == 2);
 }

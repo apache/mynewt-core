@@ -24,8 +24,11 @@
 TEST_SUITE(test_cborattr_suite)
 {
     test_cborattr_decode1();
-    test_cborattr_decode2();
-    test_cborattr_decode3();
+    test_cborattr_decode_partial();
+    test_cborattr_decode_simple();
+    test_cborattr_decode_int_array();
+    test_cborattr_decode_bool_array();
+    test_cborattr_decode_string_array();
 }
 
 #if MYNEWT_VAL(SELFTEST)

@@ -21,7 +21,7 @@
 /*
  * Simple decoding. Only have key for one of the key/value pairs.
  */
-TEST_CASE(test_cborattr_decode2)
+TEST_CASE(test_cborattr_decode_partial)
 {
     const uint8_t *data;
     int len;
