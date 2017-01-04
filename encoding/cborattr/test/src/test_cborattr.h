@@ -41,9 +41,12 @@ const uint8_t *test_str1(int *len);
 TEST_CASE_DECL(test_cborattr_decode1);
 TEST_CASE_DECL(test_cborattr_decode_partial);
 TEST_CASE_DECL(test_cborattr_decode_simple);
+TEST_CASE_DECL(test_cborattr_decode_object);
 TEST_CASE_DECL(test_cborattr_decode_int_array);
 TEST_CASE_DECL(test_cborattr_decode_bool_array);
 TEST_CASE_DECL(test_cborattr_decode_string_array);
+TEST_CASE_DECL(test_cborattr_decode_object_array);
+TEST_CASE_DECL(test_cborattr_decode_unnamed_array);
 
 
 #ifdef __cplusplus

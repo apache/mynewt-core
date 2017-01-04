@@ -51,6 +51,7 @@ typedef enum CborAttrType {
     CborAttrDoubleType,
     CborAttrArrayType,
     CborAttrObjectType,
+    CborAttrStructObjectType,
     CborAttrNullType,
 } CborAttrType;
 
@@ -107,6 +108,7 @@ struct cbor_attr_t {
         } bytestring;
         struct cbor_array_t array;
         size_t offset;
+        struct cbor_attr_t *obj;
     } addr;
     union {
         long long int integer;
@@ -118,6 +120,28 @@ struct cbor_attr_t {
     const struct json_enum_t *map;
     bool nodefault;
 };
+
+/*
+ * Use the following macros to declare template initializers for
+ * CborAttrStructObjectType arrays. Writing the equivalents out by hand is
+ * error-prone.
+ *
+ * CBOR_STRUCT_OBJECT takes a structure name s, and a fieldname f in s.
+ *
+ * CBOR_STRUCT_ARRAY takes the name of a structure array, a pointer to a an
+ * initializer defining the subobject type, and the address of an integer to
+ * store the length in.
+ */
+#define CBORATTR_STRUCT_OBJECT(s, f)        .addr.offset = offsetof(s, f)
+#define CBORATTR_STRUCT_ARRAY(a, e, n)                                  \
+    .addr.array.element_type = CborAttrStructObjectType,                \
+    .addr.array.arr.objects.subtype = e,                                \
+    .addr.array.arr.objects.base = (char*)a,                            \
+    .addr.array.arr.objects.stride = sizeof(a[0]),                      \
+    .addr.array.count = n,                                              \
+    .addr.array.maxlen = (int)(sizeof(a)/sizeof(a[0]))
+
+#define CBORATTR_ATTR_UNNAMED (char *)(-1)
 
 int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
 int cbor_read_array(struct CborValue *, const struct cbor_array_t *);

@@ -65,6 +65,11 @@ valid_attr_type(CborType ct, CborAttrType at)
             return 1;
         }
         break;
+    case CborAttrObjectType:
+        if (ct == CborMapType) {
+            return 1;
+        }
+        break;
     case CborAttrNullType:
         if (ct == CborNullType) {
             return 1;
@@ -84,7 +89,7 @@ cbor_target_address(const struct cbor_attr_t *cursor,
 {
     char *targetaddr = NULL;
 
-    if (parent == NULL || parent->element_type != CborAttrObjectType) {
+    if (parent == NULL || parent->element_type != CborAttrStructObjectType) {
         /* ordinary case - use the address in the cursor structure */
         switch (cursor->type) {
         case CborAttrNullType:
@@ -132,7 +137,7 @@ cbor_internal_read_object(CborValue *root_value,
                           const struct cbor_array_t *parent,
                           int offset)
 {
-    const struct cbor_attr_t *cursor;
+    const struct cbor_attr_t *cursor, *best_match;
     char attrbuf[CBOR_ATTR_MAX + 1];
     void *lptr;
     CborValue cur_value;
@@ -190,29 +195,36 @@ cbor_internal_read_object(CborValue *root_value,
                 err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len,
                                                      NULL);
             }
-        } else {
-            err |= CborErrorIllegalType;
-            goto err_return;
-        }
 
-        /* at least get the type of the next value so we can match the
-         * attribute name and type for a perfect match */
-        err |= cbor_value_advance(&cur_value);
-        if (cbor_value_is_valid(&cur_value)) {
-            type = cbor_value_get_type(&cur_value);
+            /* at least get the type of the next value so we can match the
+             * attribute name and type for a perfect match */
+            err |= cbor_value_advance(&cur_value);
+            if (cbor_value_is_valid(&cur_value)) {
+                type = cbor_value_get_type(&cur_value);
+            } else {
+                err |= CborErrorIllegalType;
+                goto err_return;
+            }
         } else {
-            err |= CborErrorIllegalType;
-            goto err_return;
+            attrbuf[0] = '\0';
+            type = cbor_value_get_type(&cur_value);
         }
 
         /* find this attribute in our list */
+        best_match = NULL;
         for (cursor = attrs; cursor->attribute != NULL; cursor++) {
-            if (valid_attr_type(type, cursor->type) &&
-                (memcmp(cursor->attribute, attrbuf, len) == 0)) {
-                break;
+            if (valid_attr_type(type, cursor->type)) {
+                if (cursor->attribute == CBORATTR_ATTR_UNNAMED &&
+                    attrbuf[0] == '\0') {
+                    best_match = cursor;
+                } else if (!memcmp(cursor->attribute, attrbuf, len)) {
+                    break;
+                }
             }
         }
-
+        if (!cursor->attribute && best_match) {
+            cursor = best_match;
+        }
         /* we found a match */
         if (cursor->attribute != NULL) {
             lptr = cbor_target_address(cursor, parent, offset);
@@ -252,6 +264,10 @@ cbor_internal_read_object(CborValue *root_value,
             }
             case CborAttrArrayType:
                 err |= cbor_read_array(&cur_value, &cursor->addr.array);
+                continue;
+            case CborAttrObjectType:
+                err |= cbor_internal_read_object(&cur_value, cursor->addr.obj,
+                                                 NULL, 0);
                 continue;
             default:
                 err |= CborErrorIllegalType;
@@ -308,12 +324,18 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
             arr->arr.strings.ptrs[off] = tp;
             tp += len + 1;
             break;
+        case CborAttrStructObjectType:
+            err |= cbor_internal_read_object(&elem, arr->arr.objects.subtype,
+                                             arr, off);
+            break;
         default:
             err |= CborErrorIllegalType;
             break;
         }
         arrcount++;
-        err |= cbor_value_advance(&elem);
+        if (arr->element_type != CborAttrStructObjectType) {
+            err |= cbor_value_advance(&elem);
+        }
         if (!cbor_value_is_valid(&elem)) {
             break;
         }
