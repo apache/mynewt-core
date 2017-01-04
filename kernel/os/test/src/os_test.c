@@ -30,8 +30,12 @@
 #include <sys/time.h>
 #include "os/os.h"
 
+/*
+ * Most of this file is the driver for the kernel selftest running in sim
+ * In the sim environment, we can initialize and restart mynewt at will
+ * where that is not the case when the test cases are run in a target env.
+ */
 #if MYNEWT_VAL(SELFTEST)
-
 void
 os_test_restart(void)
 {
@@ -55,6 +59,22 @@ os_test_restart(void)
     }
 
    tu_restart();
+}
+
+/*
+ * sysinit and os_start are only called if running in a sim environment
+ * (ie MYNEWT_VAL(SELFTEST) is set)
+ */
+void
+os_selftest_pretest_cb(void* arg)
+{
+    sysinit();
+}
+
+void
+os_selftest_posttest_cb(void *arg)
+{
+    os_start();
 }
 
 extern void os_mempool_test_init(void *arg);
@@ -96,11 +116,12 @@ main(int argc, char **argv)
 }
 
 #else
-
+/*
+ * Leave this as an implemented function for non-sim test environments
+ */
 void
 os_test_restart(void)
 {
     return;
 }
-
 #endif /* MYNEWT_VAL(SELFTEST) */

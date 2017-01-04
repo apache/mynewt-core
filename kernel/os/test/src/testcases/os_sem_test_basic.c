@@ -28,8 +28,4 @@ TEST_CASE(os_sem_test_basic)
     os_task_init(&task1, "task1", sem_test_basic_handler, NULL,
                  TASK1_PRIO, OS_WAIT_FOREVER, stack1,
                  sizeof(stack1));
-
-#if MYNEWT_VAL(SELFTEST)
-    os_start();
-#endif
 }

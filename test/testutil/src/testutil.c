@@ -34,14 +34,15 @@ struct ts_config ts_config;
 struct ts_config *ts_current_config = &ts_config;
 
 int tu_any_failed;
-int tu_first_idx;
 
 struct ts_testsuite_list *ts_suites;
 
 int
 tu_init(void)
 {
+#if MYNEWT_VAL(SELFTEST)
     sysinit();
+#endif
 
     return 0;
 }
@@ -80,8 +81,6 @@ void
 tu_restart(void)
 {
     tu_case_write_pass_auto();
-
-    tu_first_idx = tu_case_idx + 1;
 
     if (ts_config.ts_restart_cb != NULL) {
         ts_config.ts_restart_cb(ts_config.ts_restart_arg);

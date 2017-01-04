@@ -51,9 +51,6 @@ extern "C" {
 typedef void tu_case_report_fn_t(char *msg, int msg_len, void *arg);
 typedef void tu_suite_restart_fn_t(void *arg);
 
-typedef void tu_pre_test_fn_t(void *arg);
-typedef void tu_post_test_fn_t(void *arg);
-
 typedef void tu_init_test_fn_t(void *arg);
 typedef void tu_pre_test_fn_t(void *arg);
 typedef void tu_post_test_fn_t(void *arg);
@@ -186,7 +183,6 @@ extern struct ts_config *ts_current_config;
 
 extern const char *tu_suite_name;
 extern const char *tu_case_name;
-extern int tu_first_idx;
 
 extern int tu_any_failed;
 extern int tu_suite_failed;
@@ -218,8 +214,8 @@ TEST_SUITE_##suite_name(void);                               \
     TEST_SUITE_##suite_name(void)
 
 /*
- * for creating multiple files with test cases
- * all belonging to the same suite
+ * For declaring the test cases across multiple files
+ * belonging to the same suite
  */
 #define TEST_CASE_DECL(case_name)                            \
     int case_name(void);
@@ -234,19 +230,17 @@ TEST_SUITE_##suite_name(void);                               \
     case_name(void)                                           \
     {                                                         \
         tu_suite_pre_test();                                  \
-        if (tu_case_idx >= tu_first_idx) {                    \
-            tu_case_init(#case_name);                         \
+        tu_case_init(#case_name);                             \
                                                               \
-            tu_case_pre_test();                               \
-            if (setjmp(tu_case_jb) == 0) {                    \
-                TEST_CASE_##case_name();                      \
-                tu_case_post_test();                          \
-                if (!tu_case_failed) {                        \
-                    tu_case_pass();                           \
-                }                                             \
+        tu_case_pre_test();                                   \
+        if (setjmp(tu_case_jb) == 0) {                        \
+            TEST_CASE_##case_name();                          \
+            tu_case_post_test();                              \
+            if (!tu_case_failed) {                            \
+                tu_case_pass();                               \
             }                                                 \
-            tu_case_complete();                               \
         }                                                     \
+        tu_case_complete();                                   \
         tu_suite_post_test();                                 \
                                                               \
         return tu_case_failed;                                \

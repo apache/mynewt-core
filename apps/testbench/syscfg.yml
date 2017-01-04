@@ -1,0 +1,33 @@
+# Package: apps/testbench
+
+syscfg.vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
+
+    # Include names for statistics.
+    STATS_NAMES: 1
+
+    # Log reboot messages to a flash circular buffer.
+    REBOOT_LOG_FCB: 1
+    LOG_FCB: 1
+
+    # Enable coredump
+    OS_COREDUMP: 1
+    IMGMGR_COREDUMP: 1
+
+#   CONFIG_NFFS: 1
+    CONFIG_FCB: 1
+
+    # Enable shell commands.
+    #    STATS_CLI: 1
+    LOG_CLI: 1
+    CONFIG_CLI: 1
+
+    # Enable newtmgr commands.
+    LOG_NEWTMGR: 1
+    CONFIG_NEWTMGR: 1
+
+    RUNTEST_CLI: 1
+    RUNTEST_NEWTMGR: 1
+
+#    BSP_ARDUINO_ZERO_PRO: 1

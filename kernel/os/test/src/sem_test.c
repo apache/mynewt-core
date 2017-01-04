@@ -65,19 +65,10 @@ char sem_test_buf[128];
 const char *
 sem_test_sem_to_s(const struct os_sem *sem)
 {
-#if 0
-    char buf[128];
-
-    snprintf(buf, sizeof buf, "\tSemaphore: tokens=%u head=%p",
-             sem->sem_tokens, SLIST_FIRST(&sem->sem_head));
-
-    return buf;
-#else
     snprintf(sem_test_buf, sizeof sem_test_buf, "\tSemaphore: tokens=%u head=%p",
              sem->sem_tokens, SLIST_FIRST(&sem->sem_head));
 
     return sem_test_buf;
-#endif
 }
 
 void 
@@ -285,20 +276,30 @@ sem_test_4_task4_handler(void *arg)
 }
 
 void
-os_sem_ts_pretest(void* arg)
+os_sem_tc_pretest(void* arg)
 {
+#if MYNEWT_VAL(SELFTEST)
     sysinit();
+#endif
+    return;
 }
 
 void
-os_sem_ts_posttest(void* arg)
+os_sem_tc_posttest(void* arg)
 {
+#if MYNEWT_VAL(SELFTEST)
+    os_start();
+#endif
     return;
 }
 
 void
 os_sem_test_init(void *arg)
 {
+    /*
+     * Only allocate stacks here for selftest running in sim environment.
+     * Testing apps should allocate stacks for BSP environments
+     */
 #if MYNEWT_VAL(SELFTEST)
     stack1 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
     assert(stack1);
@@ -309,9 +310,6 @@ os_sem_test_init(void *arg)
     stack4 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
     assert(stack4);
 #endif
-
-    tu_suite_set_pre_test_cb(os_sem_ts_pretest, NULL);
-    tu_suite_set_post_test_cb(os_sem_ts_posttest, NULL);
 }
 
 TEST_CASE_DECL(os_sem_test_basic)
@@ -322,10 +320,23 @@ TEST_CASE_DECL(os_sem_test_case_4)
 
 TEST_SUITE(os_sem_test_suite)
 {
+    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
+    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_basic();
+
+    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
+    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_1();
+
+    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
+    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_2();
+
+    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
+    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_3();
+
+    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
+    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_4();
 }
-
