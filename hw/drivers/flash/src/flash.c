@@ -67,11 +67,8 @@
 #define STATUS_BUSY                 (1 << 7)
 #define STATUS_CMP                  (1 << 6)
 
-#define MIN(n, m) (((n) < (m)) ? (n) : (m))
-
 /* TODO: make configurable to 512/528 */
 #define PAGE_SIZE                   512
-#define PAGE_BITS                   9
 
 /**
  * Reading memory (MEM_READ):
@@ -139,6 +136,8 @@ static struct hal_spi_settings at45db_settings = {
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
+static uint8_t g_page_buffer[PAGE_SIZE];
+
 static struct flash_dev *
 cfg_dev(uint8_t id)
 {
@@ -159,8 +158,6 @@ static uint8_t read_status(struct flash_dev *flash)
     val = hal_spi_tx_val(flash->spi_num, 0xff);
 
     hal_gpio_write(flash->ss_pin, 1);
-
-    //printf("STATUS=[%02x]\n", val);
 
     return val;
 }
@@ -200,10 +197,65 @@ calc_page_count(uint32_t addr, size_t len)
 }
 
 static inline uint32_t
-next_page_addr(uint32_t addr)
+page_start_address(uint32_t addr)
 {
     /* FIXME: works only for 512? (powers of 2) */
-    return (addr & ~(PAGE_SIZE - 1)) + PAGE_SIZE;
+    return (addr & ~(PAGE_SIZE - 1));
+}
+
+static inline uint32_t
+page_next_addr(uint32_t addr)
+{
+    return (page_start_address(addr) + PAGE_SIZE);
+}
+
+/* FIXME: assume buf has enough space? */
+static uint16_t
+read_page(struct flash_dev *dev, uint32_t addr, uint16_t len, uint8_t *buf)
+{
+    uint16_t amount;
+    uint16_t pa;
+    uint16_t ba;
+    uint16_t n;
+    uint8_t val;
+
+    hal_gpio_write(dev->ss_pin, 0);
+
+    hal_spi_tx_val(dev->spi_num, MEM_READ);
+
+    pa = addr / PAGE_SIZE;
+    ba = addr % PAGE_SIZE;
+
+    val = (pa >> 6) & ~0x80;
+    hal_spi_tx_val(dev->spi_num, val);
+
+#if (PAGE_SIZE == 512)
+    val = (pa << 2) | ((ba >> 8) & 1);
+#else
+    val = (pa << 2) | ((ba >> 8) & 3);
+#endif
+    hal_spi_tx_val(dev->spi_num, val);
+
+    hal_spi_tx_val(dev->spi_num, ba);
+
+    hal_spi_tx_val(dev->spi_num, 0xff);
+    hal_spi_tx_val(dev->spi_num, 0xff);
+    hal_spi_tx_val(dev->spi_num, 0xff);
+    hal_spi_tx_val(dev->spi_num, 0xff);
+
+    if (len + ba <= PAGE_SIZE) {
+        amount = len;
+    } else {
+        amount = PAGE_SIZE - ba;
+    }
+
+    for (n = 0; n < amount; n++) {
+        buf[n] = hal_spi_tx_val(dev->spi_num, 0xff);
+    }
+
+    hal_gpio_write(dev->ss_pin, 1);
+
+    return amount;
 }
 
 int
@@ -242,10 +294,6 @@ int
 flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
 {
     struct flash_dev *dev;
-    uint16_t pa;
-    uint16_t ba;
-    uint8_t val;
-    uint32_t n;
     uint16_t page_count;
     uint16_t amount;
     uint16_t index;
@@ -257,53 +305,16 @@ flash_read(uint8_t flash_id, uint32_t addr, void *buf, size_t len)
     }
 
     page_count = calc_page_count(addr, len);
-    index = 0;
     u8buf = (uint8_t *) buf;
+    index = 0;
+
     while (page_count--) {
         wait_ready(dev);
 
-        hal_gpio_write(dev->ss_pin, 0);
+        amount = read_page(dev, addr, len, &u8buf[index]);
 
-        hal_spi_tx_val(dev->spi_num, MEM_READ);
-
-        pa = addr / PAGE_SIZE;
-        ba = addr % PAGE_SIZE;
-
-        /* < r, PA12-6 > */
-        val = (pa >> 6) & ~0x80;
-        hal_spi_tx_val(dev->spi_num, val);
-
-        /* < PA5-0, BA9-8 > */
-
-#if (PAGE_SIZE == 512)
-        val = (pa << 2) | ((ba >> 8) & 1);
-#else
-        val = (pa << 2) | ((ba >> 8) & 3);
-#endif
-        hal_spi_tx_val(dev->spi_num, val);
-
-        /* < BA7-0 > */
-        hal_spi_tx_val(dev->spi_num, ba);
-
-        /* send 32 don't care bits */
-        hal_spi_tx_val(dev->spi_num, 0xff);
-        hal_spi_tx_val(dev->spi_num, 0xff);
-        hal_spi_tx_val(dev->spi_num, 0xff);
-        hal_spi_tx_val(dev->spi_num, 0xff);
-
-        if (len + ba <= PAGE_SIZE) {
-            amount = len;
-        } else {
-            amount = PAGE_SIZE - ba;
-        }
-
-        for (n = 0; n < amount; n++) {
-            u8buf[index++] = hal_spi_tx_val(dev->spi_num, 0xff);
-        }
-
-        hal_gpio_write(dev->ss_pin, 1);
-
-        addr = next_page_addr(addr);
+        addr = page_next_addr(addr);
+        index += amount;
         len -= amount;
     }
 
@@ -315,10 +326,12 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
 {
     struct flash_dev *dev;
     uint16_t pa;
-    //uint16_t bfa;
+    uint16_t bfa;
     uint32_t n;
+    uint32_t start_addr;
+    uint16_t index;
+    uint16_t amount;
     int page_count;
-    int offset;
     uint8_t *u8buf;
 
     dev = cfg_dev(flash_id);
@@ -327,23 +340,75 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
     }
 
     page_count = calc_page_count(addr, len);
-    offset = 0;
     u8buf = (uint8_t *) buf;
+    index = 0;
+
     while (page_count--) {
         wait_ready(dev);
 
+        bfa = addr % PAGE_SIZE;
+
+        /**
+         * If the page is not being written from the beginning,
+         * read first the current data to rewrite back.
+         *
+         * The whole page is read here for the case of some the
+         * real data ending before the end of the page, data must
+         * be written back again.
+         */
+        if (bfa || len < PAGE_SIZE) {
+            read_page(dev, page_start_address(addr), PAGE_SIZE, g_page_buffer);
+            wait_ready(dev);
+        }
+
         hal_gpio_write(dev->ss_pin, 0);
 
-        /* FIXME: ping-pong between page 1 and 2 */
+        /* TODO: ping-pong between page 1 and 2? */
         hal_spi_tx_val(dev->spi_num, BUF1_WRITE);
 
-        /* FIXME: always writing at 0 on buffer */
         hal_spi_tx_val(dev->spi_num, 0xff);
-        hal_spi_tx_val(dev->spi_num, 0xfc);
-        hal_spi_tx_val(dev->spi_num, 0);
 
-        for (n = 0; n < len; n++) {
-             hal_spi_tx_val(dev->spi_num, u8buf[n]);
+        start_addr = page_start_address(addr);
+
+        /* FIXME */
+#if (PAGE_SIZE == 512)
+        hal_spi_tx_val(dev->spi_num, (start_addr >> 8) & 1);
+#else
+        hal_spi_tx_val(dev->spi_num, (start_addr >> 8) & 3);
+#endif
+
+        hal_spi_tx_val(dev->spi_num, start_addr);
+
+        /**
+         * Write back extra stuff at the beginning of page.
+         */
+        if (bfa) {
+            amount = addr - start_addr;
+            for (n = 0; n < amount; n++) {
+                hal_spi_tx_val(dev->spi_num, g_page_buffer[n]);
+            }
+        }
+
+        if (len + bfa <= PAGE_SIZE) {
+            amount = len;
+        } else {
+            amount = PAGE_SIZE - bfa;
+        }
+
+        /**
+         * Write the stuff we're really want to write!
+         */
+        for (n = 0; n < amount; n++) {
+            hal_spi_tx_val(dev->spi_num, u8buf[index++]);
+        }
+
+        /**
+         * Write back extra stuff at the ending of page.
+         */
+        if (len < PAGE_SIZE) {
+            for (n = len; n < PAGE_SIZE; n++) {
+                hal_spi_tx_val(dev->spi_num, g_page_buffer[n]);
+            }
         }
 
         hal_gpio_write(dev->ss_pin, 1);
@@ -352,12 +417,11 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
 
         hal_gpio_write(dev->ss_pin, 0);
 
+        /* TODO: make command configurable (accept non erasing) */
         hal_spi_tx_val(dev->spi_num, BUF1_TO_MEM_ERASE);
 
         /* FIXME: check that pa doesn't overflow capacity */
         pa = addr / PAGE_SIZE;
-
-        printf("Writing at addr=%04lx, pa=%04x\n", addr, pa);
 
         hal_spi_tx_val(dev->spi_num, (pa >> 6) & ~0x80);
         hal_spi_tx_val(dev->spi_num, (pa << 2) | 0x3);
@@ -365,7 +429,8 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
 
         hal_gpio_write(dev->ss_pin, 1);
 
-        offset += PAGE_SIZE;
+        addr = page_next_addr(addr);
+        len -= amount;
     }
 
     return 0;
