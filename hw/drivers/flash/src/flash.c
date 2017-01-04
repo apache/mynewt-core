@@ -405,7 +405,7 @@ flash_write(uint8_t flash_id, uint32_t addr, const void *buf, size_t len)
         /**
          * Write back extra stuff at the ending of page.
          */
-        if (len < PAGE_SIZE) {
+        if (bfa + len < PAGE_SIZE) {
             for (n = len; n < PAGE_SIZE; n++) {
                 hal_spi_tx_val(dev->spi_num, g_page_buffer[n]);
             }
