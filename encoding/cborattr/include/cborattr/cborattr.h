@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 /* This library wraps the tinycbor decoder with a attribute based decoder
- * suitable for decoding a binary version of json.  Specificallly, the
+ * suitable for decoding a binary version of json.  Specifically, the
  * contents of the cbor contains pairs of attributes.  where the attribute
  * is a key/value pair.  keys are always text strings, but values can be
  * many different things (enumerated below) */
@@ -117,7 +117,6 @@ struct cbor_attr_t {
         float fval;
     } dflt;
     size_t len;
-    const struct json_enum_t *map;
     bool nodefault;
 };
 
