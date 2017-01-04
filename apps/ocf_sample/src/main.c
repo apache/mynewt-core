@@ -144,28 +144,33 @@ put_light(oc_client_response_t *data)
 }
 
 static void
-observe_light(oc_client_response_t *data)
+observe_light(oc_client_response_t *rsp)
 {
-    printf("OBSERVE_light:\n");
-    oc_rep_t *rep = data->payload;
-    while (rep != NULL) {
-        printf("key %s, value ", oc_string(rep->name));
-        switch (rep->type) {
-            case BOOL:
-                printf("%d\n", rep->value_boolean);
-                light_state = rep->value_boolean;
-                break;
-            default:
-                break;
+    bool state;
+    int len;
+    const uint8_t *data;
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "state",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &state,
+            .dflt.boolean = false
+        },
+        [1] = {
         }
-        rep = rep->next;
+    };
+
+    len = coap_get_payload(rsp->packet, &data);
+    if (cbor_read_flat_attrs(data, len, attrs)) {
+        printf("OBSERVE_light: %d\n", state);
+        light_state = state;
     }
 
     if (oc_init_put(light_1, &light_server, NULL, &put_light, LOW_QOS)) {
         oc_rep_start_root_object();
         oc_rep_set_boolean(root, state, !light_state);
         oc_rep_end_root_object();
-        if (oc_do_put()) {
+        if (oc_do_put() == true) {
             printf("Sent PUT request\n");
         } else {
             printf("Could not send PUT\n");

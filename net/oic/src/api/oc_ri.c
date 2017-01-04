@@ -704,104 +704,99 @@ oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
 }
 
 bool
-oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint)
+oc_ri_invoke_client_cb(coap_packet_t *rsp, oc_endpoint_t *endpoint)
 {
-  uint8_t *payload;
-  int payload_len;
-  coap_packet_t *const pkt = (coap_packet_t *)response;
-  oc_client_cb_t *cb, *tmp;
-  int i;
-  /*
-    if con then send ack and process as above
-    -empty ack sent from below by engine
-    if ack with piggyback then process as above
-    -processed below
-    if ack and empty then it is a separate response, and keep cb
-    -handled by separate flag
-    if ack is for block then store data and pass to client
-  */
+    oc_client_cb_t *cb, *tmp;
+    oc_client_response_t client_response;
+    unsigned int content_format = APPLICATION_CBOR;
+    oc_response_handler_t handler;
+    int i;
 
-  unsigned int content_format = APPLICATION_CBOR;
-  coap_get_header_content_format(pkt, &content_format);
+    /*
+      if con then send ack and process as above
+      -empty ack sent from below by engine
+      if ack with piggyback then process as above
+      -processed below
+      if ack and empty then it is a separate response, and keep cb
+      -handled by separate flag
+      if ack is for block then store data and pass to client
+    */
+    coap_get_header_content_format(rsp, &content_format);
 
-  cb = SLIST_FIRST(&oc_client_cbs);
-  while (cb != NULL) {
-    tmp = SLIST_NEXT(cb, next);
-    if (cb->token_len == pkt->token_len &&
-        memcmp(cb->token, pkt->token, pkt->token_len) == 0) {
-
-      /* If content format is not CBOR, then reject response
-         and clear callback
-   If incoming response type is RST, then clear callback
-      */
-      if (content_format != APPLICATION_CBOR || pkt->type == COAP_TYPE_RST) {
-        free_client_cb(cb);
-        break;
-      }
-
-      /* Check code, translate to oc_status_code, store
-   Check observe option:
-         if no observe option, set to -1, else store observe seq
-      */
-      oc_client_response_t client_response;
-      client_response.observe_option = -1;
-      client_response.payload = 0;
-
-      for (i = 0; i < __NUM_OC_STATUS_CODES__; i++) {
-        if (oc_coap_status_codes[i] == pkt->code) {
-          client_response.code = i;
-          break;
+    cb = SLIST_FIRST(&oc_client_cbs);
+    while (cb != NULL) {
+        tmp = SLIST_NEXT(cb, next);
+        if (cb->token_len != rsp->token_len ||
+            memcmp(cb->token, rsp->token, rsp->token_len)) {
+            cb = tmp;
+            continue;
         }
-      }
-      coap_get_header_observe(pkt, (uint32_t*)&client_response.observe_option);
 
-      bool separate = false;
-      /*
-  if payload exists, process payload and save in client response
-  send client response to callback and return
-      */
-      payload_len = coap_get_payload(response, (const uint8_t **)&payload);
-      if (payload_len) {
-        if (cb->discovery) {
-          if (oc_ri_process_discovery_payload(payload, payload_len, cb->handler,
-                                              endpoint) == OC_STOP_DISCOVERY) {
+        /* If content format is not CBOR, then reject response
+           and clear callback
+           If incoming response type is RST, then clear callback
+        */
+        if (content_format != APPLICATION_CBOR || rsp->type == COAP_TYPE_RST) {
             free_client_cb(cb);
-          }
+            break;
+        }
+
+        /* Check code, translate to oc_status_code, store
+           Check observe option:
+           if no observe option, set to -1, else store observe seq
+        */
+        client_response.packet = NULL;
+        client_response.observe_option = -1;
+
+        for (i = 0; i < __NUM_OC_STATUS_CODES__; i++) {
+            if (oc_coap_status_codes[i] == rsp->code) {
+                client_response.code = i;
+                break;
+            }
+        }
+        coap_get_header_observe(rsp, &client_response.observe_option);
+
+        bool separate = false;
+        /*
+          if payload exists, process payload and save in client response
+          send client response to callback and return
+        */
+        if (rsp->payload_len) {
+            if (cb->discovery) {
+                if (oc_ri_process_discovery_payload(rsp, cb->handler,
+                                              endpoint) == OC_STOP_DISCOVERY) {
+                    free_client_cb(cb);
+                }
+            } else {
+                client_response.packet = rsp;
+                handler = (oc_response_handler_t)cb->handler;
+                handler(&client_response);
+            }
+        } else { // no payload
+            if (rsp->type == COAP_TYPE_ACK && rsp->code == 0) {
+                separate = true;
+            } else if (!cb->discovery) {
+                handler = (oc_response_handler_t)cb->handler;
+                handler(&client_response);
+            }
+        }
+
+        /* check observe sequence number:
+           if -1 then remove cb, else keep cb
+           if it is an ACK for a separate response, keep cb
+           if it is a discovery response, keep cb so that it will last
+           for the entirety of OC_CLIENT_CB_TIMEOUT_SECS
+        */
+        if (client_response.observe_option == -1 && !separate &&
+            !cb->discovery) {
+            free_client_cb(cb);
         } else {
-          uint16_t err =
-            oc_parse_rep(payload, payload_len, &client_response.payload);
-          if (err == 0) {
-            oc_response_handler_t handler = (oc_response_handler_t)cb->handler;
-            handler(&client_response);
-          }
-          oc_free_rep(client_response.payload);
+            cb->observe_seq = client_response.observe_option;
         }
-      } else { // no payload
-        if (pkt->type == COAP_TYPE_ACK && pkt->code == 0) {
-          separate = true;
-        } else if (!cb->discovery) {
-          oc_response_handler_t handler = (oc_response_handler_t)cb->handler;
-          handler(&client_response);
-        }
-      }
-
-      /* check observe sequence number:
-   if -1 then remove cb, else keep cb
-         if it is an ACK for a separate response, keep cb
-         if it is a discovery response, keep cb so that it will last
-   for the entirety of OC_CLIENT_CB_TIMEOUT_SECS
-      */
-      if (client_response.observe_option == -1 && !separate && !cb->discovery) {
-        free_client_cb(cb);
-      } else
-        cb->observe_seq = client_response.observe_option;
-
-      break;
+        break;
     }
-    cb = tmp;
-  }
 
-  return true;
+    return true;
 }
 
 oc_client_cb_t *
