@@ -81,7 +81,7 @@ static int nffs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
   char *out_name, uint8_t *out_name_len);
 static int nffs_dirent_is_dir(const struct fs_dirent *fs_dirent);
 
-static struct fs_ops nffs_ops = {
+struct fs_ops nffs_ops = {
     .f_open = nffs_open,
     .f_close = nffs_close,
     .f_read = nffs_read,

@@ -21,6 +21,9 @@
 #include <string.h>
 #include "nffs_priv.h"
 #include "nffs/nffs.h"
+#include "fs/fs_if.h"
+
+struct fs_ops nffs_ops;
 
 static struct nffs_file *
 nffs_file_alloc(void)
@@ -242,6 +245,7 @@ nffs_file_open(struct nffs_file **out_file, const char *path,
     }
     nffs_inode_inc_refcnt(file->nf_inode_entry);
     file->nf_access_flags = access_flags;
+    file->fops = &nffs_ops;
 
     *out_file = file;
 
