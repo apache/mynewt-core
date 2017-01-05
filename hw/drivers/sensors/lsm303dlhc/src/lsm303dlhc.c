@@ -273,15 +273,9 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    /* Add the accelerometer */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER,
-            (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Add the magnetometer */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_MAGNETIC_FIELD,
+    /* Add the accelerometer/magnetometer driver */
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER |
+            SENSOR_TYPE_MAGNETIC_FIELD,
             (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
     if (rc != 0) {
         goto err;
