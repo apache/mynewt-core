@@ -22,7 +22,6 @@
 #include <disk/disk.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "fs_priv.h"
 
@@ -181,10 +180,19 @@ fops_from_filename(const char *filename)
 {
     char *disk;
     char *fs_name = NULL;
+    struct fs_ops *unique;
 
     disk = disk_from_path(filename);
     if (disk) {
         fs_name = disk_fs_for(disk);
+    } else {
+        /**
+         * special case: if only one fs was ever registered,
+         * return that fs' ops.
+         */
+        if ((unique = fs_ops_try_unique()) != NULL) {
+            return unique;
+        }
     }
     return safe_fs_ops_for(fs_name);
 }
