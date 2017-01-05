@@ -53,6 +53,18 @@ fs_register(struct fs_ops *fops)
 }
 
 struct fs_ops *
+fs_ops_try_unique(void)
+{
+    struct fs_ops *fops = SLIST_FIRST(&root_fops);
+
+    if (fops && !SLIST_NEXT(fops, sc_next)) {
+        return fops;
+    }
+
+    return NULL;
+}
+
+struct fs_ops *
 fs_ops_for(const char *fs_name)
 {
     struct fs_ops *fops = NULL;

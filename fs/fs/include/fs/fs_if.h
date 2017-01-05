@@ -68,6 +68,14 @@ struct fs_ops {
 int fs_register(struct fs_ops *fops);
 
 /**
+ * Will look for the number of registered filesystems and will return
+ * the fops if there is only one.
+ *
+ * @return fops if there's only one registered filesystem, NULL otherwise.
+ */
+struct fs_ops *fs_ops_try_unique(void);
+
+/**
  * Retrieve a filesystem's operations table
  *
  * @param name Name of the filesystem to retrieve fs_ops for
