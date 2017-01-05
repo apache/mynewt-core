@@ -175,9 +175,3 @@ hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
 {
     return 0;
 }
-
-struct disk_ops hal_flash_ops = {
-    .read  = &hal_flash_read,
-    .write = &hal_flash_write,
-    .ioctl = &hal_flash_ioctl,
-};
