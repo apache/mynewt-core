@@ -44,8 +44,8 @@ struct os_eventq *nmgr_evq;
  */
 static struct nmgr_cbuf {
     struct mgmt_cbuf n_b;
-    struct CborMbufWriter writer;
-    struct CborMbufReader reader;
+    struct cbor_mbuf_writer writer;
+    struct cbor_mbuf_reader reader;
     struct os_mbuf *n_out_m;
 } nmgr_task_cbuf;
 
