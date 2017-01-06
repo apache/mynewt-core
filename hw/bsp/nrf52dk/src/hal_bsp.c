@@ -177,6 +177,10 @@ hal_bsp_init(void)
     rc = hal_timer_init(4, NULL);
     assert(rc == 0);
 #endif
+#if MYNEWT_VAL(TIMER_5)
+    rc = hal_timer_init(5, NULL);
+    assert(rc == 0);
+#endif
 
     /*
      * What this depends on is what the OS_CPUTIME_TIMER_NUM is set to.

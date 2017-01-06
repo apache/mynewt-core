@@ -80,6 +80,9 @@ syscfg.defs:
     TIMER_2:
         description: 'NRF51 Timer 2'
         value:  0
+    TIMER_3:
+        description: 'NRF51 RTC0'
+        value:  0
 
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS

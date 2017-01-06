@@ -40,9 +40,11 @@ typedef void (*hal_timer_irq_handler_t)(void);
 #define NRF_TIMER_CC_READ       (2)
 #define NRF_TIMER_CC_INT        (3)
 
-/* XXX: what about RTC timers? How are they instantiated? How do we
-   relate timer numbers to them? */
-#define NRF51_HAL_TIMER_MAX     (3)
+/* Output compare 2 used for RTC timers */
+#define NRF_RTC_TIMER_CC_INT    (2)
+
+/* Maximum number of hal timers used */
+#define NRF51_HAL_TIMER_MAX     (4)
 
 /* Maximum timer frequency */
 #define NRF51_MAX_TIMER_FREQ    (16000000)
@@ -63,11 +65,11 @@ struct nrf51_hal_timer {
     uint8_t tmr_enabled;
     uint8_t tmr_irq_num;
     uint8_t tmr_16bit;
-    uint8_t tmr_pad;
+    uint8_t tmr_rtc;
     uint32_t tmr_cntr;
     uint32_t timer_isrs;
     uint32_t tmr_freq;
-    NRF_TIMER_Type *tmr_reg;
+    void *tmr_reg;
     TAILQ_HEAD(hal_timer_qhead, hal_timer) hal_timer_q;
 };
 
@@ -79,6 +81,9 @@ struct nrf51_hal_timer nrf51_hal_timer1;
 #endif
 #if MYNEWT_VAL(TIMER_2)
 struct nrf51_hal_timer nrf51_hal_timer2;
+#endif
+#if MYNEWT_VAL(TIMER_3)
+struct nrf51_hal_timer nrf51_hal_timer3;
 #endif
 
 struct nrf51_hal_timer *nrf51_hal_timers[NRF51_HAL_TIMER_MAX] = {
@@ -97,7 +102,16 @@ struct nrf51_hal_timer *nrf51_hal_timers[NRF51_HAL_TIMER_MAX] = {
 #else
     NULL,
 #endif
+#if MYNEWT_VAL(TIMER_3)
+    &nrf51_hal_timer3,
+#else
+    NULL,
+#endif
 };
+
+#define NRF51_TIMER_DEFINED     \
+    (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) ||   \
+     MYNEWT_VAL(TIMER_3))
 
 /* Resolve timer number into timer structure */
 #define NRF51_HAL_TIMER_RESOLVE(__n, __v)       \
@@ -140,15 +154,16 @@ nrf_timer_set_ocmp(struct nrf51_hal_timer *bsptimer, uint32_t expiry)
 {
     int32_t delta_t;
     uint16_t expiry16;
+    uint32_t expiry24;
     uint32_t temp;
     NRF_TIMER_Type *hwtimer;
-
-    hwtimer = bsptimer->tmr_reg;
-
-    /* Disable ocmp interrupt and set new value */
-    hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
+    NRF_RTC_Type *rtctimer;
 
     if (bsptimer->tmr_16bit) {
+        /* Disable ocmp interrupt */
+        hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
+        hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
+
         temp = expiry & 0xffff0000;
         delta_t = (int32_t)(temp - bsptimer->tmr_cntr);
         if (delta_t < 0) {
@@ -165,13 +180,46 @@ nrf_timer_set_ocmp(struct nrf51_hal_timer *bsptimer, uint32_t expiry)
             hwtimer->INTENSET = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
 
             /* Force interrupt to occur as we may have missed it */
-            if (nrf_read_timer_cntr(hwtimer) >= expiry16) {
+            if ((nrf_read_timer_cntr(hwtimer) >= expiry16) ||
+                (hwtimer->EVENTS_COMPARE[NRF_TIMER_CC_OVERFLOW])) {
                 goto set_ocmp_late;
             }
         } else {
             /* Nothing to do; wait for overflow interrupt to set ocmp */
         }
+    } else if (bsptimer->tmr_rtc) {
+        /* The RTC is a 24-bit counter so we need to check them first */
+        rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
+        rtctimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
+        temp = expiry & 0xff000000;
+        delta_t = (int32_t)(temp - bsptimer->tmr_cntr);
+        if (delta_t < 0) {
+            goto set_ocmp_late;
+        } else if (delta_t == 0) {
+            /* Check if we might miss the timer */
+            expiry24 = expiry & 0x00ffffff;
+
+            /*
+             * The nrf documentation states that you must set the output
+             * compare to 2 greater than the counter to guarntee an interrupt.
+             * Since the counter can tick once while we check, we make sure
+             * it is greater than 2.
+             */
+            if ((expiry <= (rtctimer->COUNTER+2)) || rtctimer->EVENTS_OVRFLW) {
+                goto set_ocmp_late;
+            }
+
+            /* Set the output compare and enable interrupt */
+            rtctimer->CC[NRF_RTC_TIMER_CC_INT] = expiry24;
+            rtctimer->INTENSET = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
+        } else {
+            /* Nothing to do; wait for overflow interrupt to set ocmp */
+        }
     } else {
+        /* Disable ocmp interrupt */
+        hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
+        hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
+
         /* Set output compare register to timer expiration */
         hwtimer->CC[NRF_TIMER_CC_INT] = expiry;
 
@@ -192,7 +240,6 @@ set_ocmp_late:
     NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
 }
 
-
 /* Disable output compare used for timer */
 static void
 nrf_timer_disable_ocmp(NRF_TIMER_Type *hwtimer)
@@ -200,16 +247,24 @@ nrf_timer_disable_ocmp(NRF_TIMER_Type *hwtimer)
     hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
 }
 
+static void
+nrf_rtc_disable_ocmp(NRF_RTC_Type *rtctimer)
+{
+    rtctimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
+}
+
 static uint32_t
 hal_timer_read_bsptimer(struct nrf51_hal_timer *bsptimer)
 {
     uint16_t low;
+    uint32_t low32;
     uint32_t ctx;
     uint32_t tcntr;
     NRF_TIMER_Type *hwtimer;
+    NRF_RTC_Type *rtctimer;
 
     if (bsptimer->tmr_16bit) {
-        hwtimer = bsptimer->tmr_reg;
+        hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
         __HAL_DISABLE_INTERRUPTS(ctx);
         tcntr = bsptimer->tmr_cntr;
         low = nrf_read_timer_cntr(hwtimer);
@@ -222,6 +277,20 @@ hal_timer_read_bsptimer(struct nrf51_hal_timer *bsptimer)
         }
         tcntr |= low;
         __HAL_ENABLE_INTERRUPTS(ctx);
+    } else if (bsptimer->tmr_rtc) {
+        rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
+        __HAL_DISABLE_INTERRUPTS(ctx);
+        tcntr = bsptimer->tmr_cntr;
+        low32 = rtctimer->COUNTER;
+        if (rtctimer->EVENTS_OVRFLW) {
+            tcntr += (1UL << 24);
+            bsptimer->tmr_cntr = tcntr;
+            low32 = rtctimer->COUNTER;
+            rtctimer->EVENTS_OVRFLW = 0;
+            NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
+        }
+        tcntr |= low32;
+        __HAL_ENABLE_INTERRUPTS(ctx);
     } else {
         /* Force a capture of the timer into 'cntr' capture channel; read it */
         tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
@@ -230,7 +299,7 @@ hal_timer_read_bsptimer(struct nrf51_hal_timer *bsptimer)
     return tcntr;
 }
 
-#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2))
+#if NRF51_TIMER_DEFINED
 /**
  * hal timer chk queue
  *
@@ -247,7 +316,7 @@ hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
     while ((timer = TAILQ_FIRST(&bsptimer->hal_timer_q)) != NULL) {
-        if (bsptimer->tmr_16bit) {
+        if (bsptimer->tmr_16bit || bsptimer->tmr_rtc) {
             tcntr = hal_timer_read_bsptimer(bsptimer);
         } else {
             tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
@@ -266,11 +335,14 @@ hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
     if (timer) {
         nrf_timer_set_ocmp(bsptimer, timer->expiry);
     } else {
-        nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+        if (bsptimer->tmr_rtc) {
+            nrf_rtc_disable_ocmp((NRF_RTC_Type *)bsptimer->tmr_reg);
+        } else {
+            nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+        }
     }
     __HAL_ENABLE_INTERRUPTS(ctx);
 }
-
 #endif
 
 /**
@@ -286,8 +358,7 @@ hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
  * This is the global timer interrupt routine.
  *
  */
-#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2))
-
+#if NRF51_TIMER_DEFINED
 static void
 hal_timer_irq_handler(struct nrf51_hal_timer *bsptimer)
 {
@@ -330,6 +401,46 @@ hal_timer_irq_handler(struct nrf51_hal_timer *bsptimer)
 }
 #endif
 
+#if MYNEWT_VAL(TIMER_3)
+static void
+hal_rtc_timer_irq_handler(struct nrf51_hal_timer *bsptimer)
+{
+    uint32_t overflow;
+    uint32_t compare;
+    NRF_RTC_Type *rtctimer;
+
+    /* Check interrupt source. If set, clear them */
+    rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
+    compare = rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT];
+    if (compare) {
+       rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT] = 0;
+    }
+
+    overflow = rtctimer->EVENTS_OVRFLW;
+    if (overflow) {
+        rtctimer->EVENTS_OVRFLW = 0;
+        bsptimer->tmr_cntr += (1UL << 24);
+    }
+
+    /* Count # of timer isrs */
+    ++bsptimer->timer_isrs;
+
+    /*
+     * NOTE: we dont check the 'compare' variable here due to how the timer
+     * is implemented on this chip. There is no way to force an output
+     * compare, so if we are late setting the output compare (i.e. the timer
+     * counter is already passed the output compare value), we use the NVIC
+     * to set a pending interrupt. This means that there will be no compare
+     * flag set, so all we do is check to see if the compare interrupt is
+     * enabled.
+     */
+    hal_timer_chk_queue(bsptimer);
+
+    /* Recommended by nordic to make sure interrupts are cleared */
+    compare = rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT];
+}
+#endif
+
 #if MYNEWT_VAL(TIMER_0)
 void
 nrf51_timer0_irq_handler(void)
@@ -354,6 +465,14 @@ nrf51_timer2_irq_handler(void)
 }
 #endif
 
+#if MYNEWT_VAL(TIMER_3)
+void
+nrf51_timer3_irq_handler(void)
+{
+    hal_rtc_timer_irq_handler(&nrf51_hal_timer3);
+}
+#endif
+
 /**
  * hal timer init
  *
@@ -370,7 +489,7 @@ hal_timer_init(int timer_num, void *cfg)
     int rc;
     uint8_t irq_num;
     struct nrf51_hal_timer *bsptimer;
-    NRF_TIMER_Type *hwtimer;
+    void *hwtimer;
     hal_timer_irq_handler_t irq_isr;
 
     NRF51_HAL_TIMER_RESOLVE(timer_num, bsptimer);
@@ -403,6 +522,14 @@ hal_timer_init(int timer_num, void *cfg)
         hwtimer = NRF_TIMER2;
         irq_isr = nrf51_timer2_irq_handler;
         bsptimer->tmr_16bit = 1;
+        break;
+#endif
+#if MYNEWT_VAL(TIMER_3)
+    case 3:
+        irq_num = RTC0_IRQn;
+        hwtimer = NRF_RTC0;
+        irq_isr = nrf51_timer3_irq_handler;
+        bsptimer->tmr_rtc = 1;
         break;
 #endif
     default:
@@ -450,8 +577,48 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     uint32_t max_delta;
     struct nrf51_hal_timer *bsptimer;
     NRF_TIMER_Type *hwtimer;
+#if MYNEWT_VAL(TIMER_3)
+    NRF_RTC_Type *rtctimer;
+#endif
 
     NRF51_HAL_TIMER_RESOLVE(timer_num, bsptimer);
+
+#if MYNEWT_VAL(TIMER_3)
+    if (timer_num == 3) {
+        /* NOTE: we only allow the RTC frequency to be set at 32768 */
+        if (bsptimer->tmr_enabled || (freq_hz != 32768) ||
+            (bsptimer->tmr_reg == NULL)) {
+            rc = EINVAL;
+            goto err;
+        }
+
+        bsptimer->tmr_freq = freq_hz;
+        bsptimer->tmr_enabled = 1;
+
+        __HAL_DISABLE_INTERRUPTS(ctx);
+
+        rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
+
+        /* Stop the timer first */
+        rtctimer->TASKS_STOP = 1;
+
+        /* Always no prescaler */
+        rtctimer->PRESCALER = 0;
+
+        /* Clear overflow events and set overflow interrupt */
+        rtctimer->EVENTS_OVRFLW = 0;
+        rtctimer->INTENSET = RTC_INTENSET_OVRFLW_Msk;
+
+        /* Start the timer */
+        rtctimer->TASKS_START = 1;
+
+        /* Set isr in vector table and enable interrupt */
+        NVIC_EnableIRQ(bsptimer->tmr_irq_num);
+
+        __HAL_ENABLE_INTERRUPTS(ctx);
+        return 0;
+    }
+#endif
 
     /* Set timer to desired frequency */
     div = NRF51_MAX_TIMER_FREQ / freq_hz;
@@ -497,7 +664,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
             }
         }
     }
-    hwtimer = bsptimer->tmr_reg;
+    hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
 
     /* Stop the timer first */
     hwtimer->TASKS_STOP = 1;
@@ -547,16 +714,23 @@ hal_timer_deinit(int timer_num)
     uint32_t ctx;
     struct nrf51_hal_timer *bsptimer;
     NRF_TIMER_Type *hwtimer;
+    NRF_RTC_Type *rtctimer;
 
     NRF51_HAL_TIMER_RESOLVE(timer_num, bsptimer);
 
     __HAL_DISABLE_INTERRUPTS(ctx);
-    hwtimer = bsptimer->tmr_reg;
-    hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
-    hwtimer->TASKS_STOP = 1;
-    __HAL_ENABLE_INTERRUPTS(ctx);
-
+    if (bsptimer->tmr_rtc) {
+        rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
+        rtctimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
+        rtctimer->TASKS_STOP = 1;
+    } else {
+        hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
+        hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
+        hwtimer->TASKS_STOP = 1;
+    }
     bsptimer->tmr_enabled = 0;
+    bsptimer->tmr_reg = NULL;
+    __HAL_ENABLE_INTERRUPTS(ctx);
 
 err:
     return rc;
@@ -760,7 +934,11 @@ hal_timer_stop(struct hal_timer *timer)
                 nrf_timer_set_ocmp((struct nrf51_hal_timer *)entry->bsp_timer,
                                    entry->expiry);
             } else {
-                nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+                if (bsptimer->tmr_rtc) {
+                    nrf_rtc_disable_ocmp((NRF_RTC_Type *)bsptimer->tmr_reg);
+                } else {
+                    nrf_timer_disable_ocmp(bsptimer->tmr_reg);
+                }
             }
         }
     }

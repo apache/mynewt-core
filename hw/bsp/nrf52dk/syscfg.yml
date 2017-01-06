@@ -91,6 +91,9 @@ syscfg.defs:
     TIMER_4:
         description: 'NRF52 Timer 4'
         value:  0
+    TIMER_5:
+        description: 'NRF52 RTC 0'
+        value:  1
 
     I2C_0:
         description: 'NRF52 I2C (TWI) interface 0'

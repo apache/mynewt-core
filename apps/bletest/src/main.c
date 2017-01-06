@@ -67,8 +67,8 @@ uint8_t g_host_adv_len;
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
 
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 
 /* Advertiser config */
