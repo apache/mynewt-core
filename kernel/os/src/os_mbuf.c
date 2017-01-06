@@ -46,24 +46,25 @@
  *   @{
  */
 
-
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
 
 /**
- * Initialize a mbuf queue.  An mbuf queue is a queue of mbufs that tie
- * to a specific task's event queue.  Mbuf queues are a helper API around
- * a common paradigm, which is to wait on an event queue, until at least
- * 1 packet is available, and then process a queue of packets.
+ * Initializes an mqueue.  An mqueue is a queue of mbufs that ties to a
+ * particular task's event queue.  Mqueues form a helper API around a common
+ * paradigm: wait on an event queue until at least one packet is available,
+ * then process a queue of packets.
  *
  * When mbufs are available on the queue, an event OS_EVENT_T_MQUEUE_DATA
  * will be posted to the task's mbuf queue.
  *
- * @param mq The mbuf queue to initialize
- * @param arg The argument to provide to the event posted on this mbuf queue
+ * @param mq                    The mqueue to initialize
+ * @param ev_cb                 The callback to associate with the mqeueue
+ *                                  event.  Typically, this callback pulls each
+ *                                  packet off the mqueue and processes them.
+ * @param arg                   The argument to associate with the mqueue event.
  *
- * @return 0 on success, non-zero on failure.
- *
+ * @return                      0 on success, non-zero on failure.
  */
 int
 os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg)
@@ -111,12 +112,12 @@ os_mqueue_get(struct os_mqueue *mq)
 }
 
 /**
- * Put a new mbuf in the mbuf queue.  Appends an mbuf to the end of the
- * mbuf queue, and posts an event to the event queue passed in.
+ * Adds a packet (i.e. packet header mbuf) to an mqueue. The event associated
+ * with the mqueue gets posted to the specified eventq.
  *
- * @param mq The mbuf queue to append the mbuf to
- * @param evq The event queue to post an OS_EVENT_T_MQUEUE_DATA event to
- * @param m The mbuf to append to the mbuf queue
+ * @param mq                    The mbuf queue to append the mbuf to.
+ * @param evq                   The event queue to post an event to.
+ * @param m                     The mbuf to append to the mbuf queue.
  *
  * @return 0 on success, non-zero on failure.
  */
