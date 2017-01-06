@@ -124,7 +124,8 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids128 = (void *)oc_gatt_svc_uuid;
+    fields.uuids128 =
+        BLE_UUID128(BLE_UUID128_DECLARE(OC_GATT_SERVICE_UUID))->value;
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 

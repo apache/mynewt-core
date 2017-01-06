@@ -96,7 +96,7 @@ bleuart_advertise(void)
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    fields.uuids128 = (void *)gatt_svr_svc_uart;
+    fields.uuids128 = BLE_UUID128(&gatt_svr_svc_uart_uuid.u)->value;
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 

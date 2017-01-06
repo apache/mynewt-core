@@ -79,7 +79,7 @@ static void
 cmd_print_dsc(struct bletiny_dsc *dsc)
 {
     console_printf("            dsc_handle=%d uuid=", dsc->dsc.handle);
-    print_uuid(dsc->dsc.uuid128);
+    print_uuid(&dsc->dsc.uuid.u);
     console_printf("\n");
 }
 
@@ -91,7 +91,7 @@ cmd_print_chr(struct bletiny_chr *chr)
     console_printf("        def_handle=%d val_handle=%d properties=0x%02x "
                    "uuid=", chr->chr.def_handle, chr->chr.val_handle,
                    chr->chr.properties);
-    print_uuid(chr->chr.uuid128);
+    print_uuid(&chr->chr.uuid.u);
     console_printf("\n");
 
     SLIST_FOREACH(dsc, &chr->dscs, next) {
@@ -106,7 +106,7 @@ cmd_print_svc(struct bletiny_svc *svc)
 
     console_printf("    start=%d end=%d uuid=", svc->svc.start_handle,
                    svc->svc.end_handle);
-    print_uuid(svc->svc.uuid128);
+    print_uuid(&svc->svc.uuid.u);
     console_printf("\n");
 
     SLIST_FOREACH(chr, &svc->chrs, next) {
@@ -830,7 +830,7 @@ cmd_disc_chr(int argc, char **argv)
     uint16_t start_handle;
     uint16_t conn_handle;
     uint16_t end_handle;
-    uint8_t uuid128[16];
+    ble_uuid_any_t uuid;
     int rc;
 
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
@@ -845,10 +845,10 @@ cmd_disc_chr(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_arg_uuid("uuid", uuid128);
+    rc = parse_arg_uuid("uuid", &uuid);
     if (rc == 0) {
         rc = bletiny_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
-                                        uuid128);
+                                       &uuid.u);
     } else if (rc == ENOENT) {
         rc = bletiny_disc_all_chrs(conn_handle, start_handle, end_handle);
     } else  {
@@ -915,7 +915,7 @@ bletiny_disc_svc_help(void)
 static int
 cmd_disc_svc(int argc, char **argv)
 {
-    uint8_t uuid128[16];
+    ble_uuid_any_t uuid;
     int conn_handle;
     int rc;
 
@@ -931,9 +931,9 @@ cmd_disc_svc(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_arg_uuid("uuid", uuid128);
+    rc = parse_arg_uuid("uuid", &uuid);
     if (rc == 0) {
-        rc = bletiny_disc_svc_by_uuid(conn_handle, uuid128);
+        rc = bletiny_disc_svc_by_uuid(conn_handle, &uuid.u);
     } else if (rc == ENOENT) {
         rc = bletiny_disc_svcs(conn_handle);
     } else  {
@@ -1274,7 +1274,7 @@ cmd_read(int argc, char **argv)
     uint16_t start;
     uint16_t end;
     uint16_t offset;
-    uint8_t uuid128[16];
+    ble_uuid_any_t uuid;
     uint8_t num_attr_handles;
     int is_uuid;
     int is_long;
@@ -1315,7 +1315,7 @@ cmd_read(int argc, char **argv)
         }
     }
 
-    rc = parse_arg_uuid("uuid", uuid128);
+    rc = parse_arg_uuid("uuid", &uuid);
     if (rc == ENOENT) {
         is_uuid = 0;
     } else if (rc == 0) {
@@ -1365,7 +1365,7 @@ cmd_read(int argc, char **argv)
         if (start == 0 || end == 0) {
             rc = EINVAL;
         } else {
-            rc = bletiny_read_by_uuid(conn_handle, start, end, uuid128);
+            rc = bletiny_read_by_uuid(conn_handle, start, end, &uuid.u);
         }
     } else {
         rc = EINVAL;

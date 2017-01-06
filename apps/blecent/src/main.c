@@ -129,8 +129,8 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     /* Read the supported-new-alert-category characteristic. */
     chr = peer_chr_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_SUP_NEW_ALERT_CAT_UUID));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_SUP_NEW_ALERT_CAT_UUID));
     if (chr == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer doesn't support the Supported New "
                            "Alert Category characteristic\n");
@@ -149,8 +149,8 @@ blecent_read_write_subscribe(const struct peer *peer)
      * characteristic.
      */
     chr = peer_chr_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_ALERT_NOT_CTRL_PT));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_ALERT_NOT_CTRL_PT));
     if (chr == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer doesn't support the Alert "
                            "Notification Control Point characteristic\n");
@@ -171,9 +171,9 @@ blecent_read_write_subscribe(const struct peer *peer)
      * characteristic's client-characteristic-configuration-descriptor (CCCD).
      */
     dsc = peer_dsc_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_UNR_ALERT_STAT_UUID),
-                             BLE_UUID16(BLE_GATT_DSC_CLT_CFG_UUID16));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_UNR_ALERT_STAT_UUID),
+                             BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16));
     if (dsc == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer lacks a CCCD for the Unread Alert "
                            "Status characteristic\n");
