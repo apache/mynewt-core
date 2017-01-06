@@ -20,6 +20,7 @@
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
+#include <tinycbor/cbor_mbuf_reader.h>
 
 /* this maps a CborType to a matching CborAtter Type. The mapping is not
  * one-to-one because of signedness of integers
@@ -381,6 +382,34 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
 
     cbor_buf_reader_init(&reader, data, len);
     err = cbor_parser_init(&reader.r, 0, &parser, &value);
+    if (err != CborNoError) {
+        return -1;
+    }
+    return cbor_read_object(&value, attrs);
+}
+
+/*
+ * Read in cbor key/values from os_mbuf pointed by m, and fill them
+ * into attrs.
+ *
+ * @param m		Pointer to os_mbuf containing cbor encoded data
+ * @param off		Offset into mbuf where cbor data begins
+ * @param len		Number of bytes to decode
+ * @param attrs		Array of cbor objects to look for.
+ *
+ * @return		0 on success; non-zero on failure.
+ */
+int
+cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
+                     const struct cbor_attr_t *attrs)
+{
+    struct cbor_mbuf_reader cmr;
+    struct CborParser parser;
+    struct CborValue value;
+    CborError err;
+
+    cbor_mbuf_reader_init(&cmr, m, off);
+    err = cbor_parser_init(&cmr.r, 0, &parser, &value);
     if (err != CborNoError) {
         return -1;
     }

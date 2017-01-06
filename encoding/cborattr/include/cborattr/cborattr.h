@@ -147,6 +147,9 @@ int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
 
 int cbor_read_flat_attrs(const uint8_t *data, int len,
                          const struct cbor_attr_t *attrs);
+struct os_mbuf;
+int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
+                         const struct cbor_attr_t *attrs);
 
 #ifdef __cplusplus
 }
