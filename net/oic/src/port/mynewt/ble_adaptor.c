@@ -337,7 +337,11 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
     mtu = ble_att_mtu(conn_handle);
-    assert(mtu > 4);
+    if (mtu < 4) {
+        oc_ble_coap_conn_del(conn_handle);
+        os_mbuf_free_chain(m);
+        return;
+    }
     mtu -= 3; /* # of bytes for ATT notification base */
 
     if (oc_ble_frag(m, mtu)) {
