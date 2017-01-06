@@ -283,9 +283,9 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         STAILQ_NEXT(pkt, omp_next) = NULL;
         return 0;
     }
-    off = pkt->omp_len % mtu;
 
-    while (off > mtu) {
+    off = pkt->omp_len - (pkt->omp_len % mtu);
+    while (off >= mtu) {
         n = os_msys_get_pkthdr(mtu, 0);
         if (!n) {
             goto err;
@@ -300,7 +300,6 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         off -= blk;
         os_mbuf_adj(m, -blk);
     }
-    os_mbuf_adj(m, mtu - OS_MBUF_PKTLEN(m));
     return 0;
 err:
     pkt = OS_MBUF_PKTHDR(m);
