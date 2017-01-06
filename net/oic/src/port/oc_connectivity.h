@@ -84,13 +84,6 @@ typedef struct oc_endpoint {
                                         .v6 = {.port = __port__,        \
                                                .address = { __VA_ARGS__ } } } }
 
-typedef struct oc_message {
-    oc_endpoint_t endpoint;
-    size_t length;
-    uint8_t ref_count;
-    uint8_t data[MAX_PAYLOAD_SIZE];
-} oc_message_t;
-
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);
 #endif /* OC_SECURITY */

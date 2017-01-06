@@ -21,14 +21,9 @@
 extern "C" {
 #endif
 
-struct oc_message;
 struct os_mbuf;
 struct oc_endpoint;
-struct oc_message *oc_allocate_message(void);
 struct os_mbuf *oc_allocate_mbuf(struct oc_endpoint *oe);
-
-void oc_message_add_ref(struct oc_message *message);
-void oc_message_unref(struct oc_message *message);
 
 void oc_recv_message(struct os_mbuf *m);
 void oc_send_message(struct os_mbuf *m);

@@ -27,8 +27,6 @@ extern "C" {
 struct os_eventq *oc_evq_get(void);
 void oc_evq_set(struct os_eventq *evq);
 
-struct oc_message;
-
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
 int oc_connectivity_init_ip(void);
 void oc_connectivity_shutdown_ip(void);

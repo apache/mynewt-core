@@ -32,28 +32,8 @@
 
 #include "port/mynewt/adaptor.h"
 
-static struct os_mempool oc_buffers;
-static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(1, sizeof(oc_message_t))];
-
 static struct os_mqueue oc_inq;
 static struct os_mqueue oc_outq;
-
-oc_message_t *
-oc_allocate_message(void)
-{
-    oc_message_t *message = (oc_message_t *)os_memblock_get(&oc_buffers);
-
-    if (message) {
-        message->length = 0;
-        message->ref_count = 1;
-        OC_LOG_DEBUG("buffer: Allocated oc_message; free: %d\n",
-          oc_buffers.mp_num_free);
-    } else {
-        OC_LOG_ERROR("buffer: No free oc_mesages!\n");
-        assert(0);
-    }
-    return message;
-}
 
 struct os_mbuf *
 oc_allocate_mbuf(struct oc_endpoint *oe)
@@ -67,28 +47,6 @@ oc_allocate_mbuf(struct oc_endpoint *oe)
     }
     memcpy(OC_MBUF_ENDPOINT(m), oe, sizeof(struct oc_endpoint));
     return m;
-}
-
-void
-oc_message_add_ref(oc_message_t *message)
-{
-    if (message) {
-        message->ref_count++;
-    }
-}
-
-void
-oc_message_unref(oc_message_t *message)
-{
-    if (message) {
-        assert(message->ref_count > 0);
-        message->ref_count--;
-        if (message->ref_count == 0) {
-            os_memblock_put(&oc_buffers, message);
-            OC_LOG_DEBUG("buffer: freed oc_message; free: %d\n",
-              oc_buffers.mp_num_free);
-        }
-    }
 }
 
 void
@@ -180,8 +138,6 @@ oc_buffer_rx(struct os_event *ev)
 void
 oc_buffer_init(void)
 {
-    os_mempool_init(&oc_buffers, 1, sizeof(oc_message_t), oc_buffer_area,
-                    "oc_bufs");
     os_mqueue_init(&oc_inq, oc_buffer_rx, NULL);
     os_mqueue_init(&oc_outq, oc_buffer_tx, NULL);
 }
