@@ -64,7 +64,7 @@ static uint8_t coap_separate_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
  * then retry later.
  */
 int
-coap_separate_accept(coap_packet_t *coap_req,
+coap_separate_accept(struct coap_packet_rx *coap_req,
                      oc_separate_response_t *separate_response,
                      oc_endpoint_t *endpoint, int observe)
 {

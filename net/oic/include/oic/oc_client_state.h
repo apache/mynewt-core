@@ -29,7 +29,7 @@ extern "C" {
 typedef enum { HIGH_QOS = 0, LOW_QOS } oc_qos_t;
 
 typedef struct {
-    void *packet;
+    struct coap_packet_rx *packet;
     oc_status_t code;
     uint32_t observe_option;
 } oc_client_response_t;
@@ -69,7 +69,8 @@ typedef struct oc_client_cb {
     oc_method_t method;
 } oc_client_cb_t;
 
-bool oc_ri_invoke_client_cb(coap_packet_t *response, oc_endpoint_t *endpoint);
+bool oc_ri_invoke_client_cb(struct coap_packet_rx *response,
+                            oc_endpoint_t *endpoint);
 
 oc_client_cb_t *oc_ri_alloc_client_cb(const char *uri,
                                       oc_server_handle_t *server,
@@ -81,7 +82,7 @@ oc_client_cb_t *oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
 
 void oc_ri_remove_client_cb_by_mid(uint16_t mid);
 
-oc_discovery_flags_t oc_ri_process_discovery_payload(coap_packet_t *rsp,
+oc_discovery_flags_t oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                                      oc_discovery_cb_t *handler,
                                                      oc_endpoint_t *endpoint);
 

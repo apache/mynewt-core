@@ -176,7 +176,7 @@ oc_create_discovery_resource(void)
 
 #ifdef OC_CLIENT
 oc_discovery_flags_t
-oc_ri_process_discovery_payload(coap_packet_t *rsp,
+oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                 oc_discovery_cb_t *handler,
                                 oc_endpoint_t *endpoint)
 {
@@ -194,15 +194,16 @@ oc_ri_process_discovery_payload(coap_packet_t *rsp,
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
-  const uint8_t *payload;
+  uint16_t data_off;
+  struct os_mbuf *m;
   int len;
 
   memcpy(&handle.endpoint, endpoint, sizeof(oc_endpoint_t));
 
   oc_rep_t *array = 0, *rep;
 
-  len = coap_get_payload(rsp, &payload);
-  int s = oc_parse_rep(payload, len, &rep);
+  len = coap_get_payload(rsp, &m, &data_off);
+  int s = oc_parse_rep(m, data_off, len, &rep);
   if (s == 0)
     array = rep;
   while (array != NULL) {

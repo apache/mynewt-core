@@ -238,14 +238,16 @@ coap_notify_observers(oc_resource_t *resource,
         num_observers = obs->resource->num_observers;
         if (response.separate_response != NULL &&
           response_buf->code == oc_status_code(OC_STATUS_OK)) {
-            coap_packet_t req[1];
-            /*
-              req->block1_num = 0;
-              req->block1_size = 0;
-              req->block2_num = 0;
-              req->block2_size = 0;
-            */
-            coap_init_message(req, COAP_TYPE_NON, CONTENT_2_05, 0);
+            struct coap_packet_rx req[1];
+
+            req->block1_num = 0;
+            req->block1_size = 0;
+            req->block2_num = 0;
+            req->block2_size = 0;
+
+            req->type = COAP_TYPE_NON;
+            req->code = CONTENT_2_05;
+            req->mid = 0;
             memcpy(req->token, obs->token, obs->token_len);
             req->token_len = obs->token_len;
             OC_LOG_DEBUG("Resource is SLOW; creating separate response\n");
@@ -302,7 +304,7 @@ coap_notify_observers(oc_resource_t *resource,
 }
 /*---------------------------------------------------------------------------*/
 int
-coap_observe_handler(coap_packet_t *coap_req, coap_packet_t *coap_res,
+coap_observe_handler(struct coap_packet_rx *coap_req, coap_packet_t *coap_res,
                      oc_resource_t *resource, oc_endpoint_t *endpoint)
 {
     int dup = -1;
@@ -311,14 +313,16 @@ coap_observe_handler(coap_packet_t *coap_req, coap_packet_t *coap_res,
       coap_res->code < 128) { /* GET request and response without error code */
         if (IS_OPTION(coap_req, COAP_OPTION_OBSERVE)) {
             if (coap_req->observe == 0) {
-                dup =
-                  add_observer(resource, endpoint, coap_req->token,
-                    coap_req->token_len, coap_req->uri_path,
-                    coap_req->uri_path_len);
+                char uri[COAP_MAX_URI];
+                int uri_len;
+
+                uri_len = coap_get_header_uri_path(coap_req, uri, sizeof(uri));
+                dup = add_observer(resource, endpoint, coap_req->token,
+                                   coap_req->token_len, uri, uri_len);
             } else if (coap_req->observe == 1) {
                 /* remove client if it is currently observe */
                 dup = coap_remove_observer_by_token(endpoint, coap_req->token,
-                  coap_req->token_len);
+                                                    coap_req->token_len);
             }
         }
     }

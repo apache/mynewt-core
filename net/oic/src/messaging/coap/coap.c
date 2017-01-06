@@ -48,6 +48,7 @@ STATS_NAME_START(coap_stats)
     STATS_NAME(coap_stats, iframe)
     STATS_NAME(coap_stats, ierr)
     STATS_NAME(coap_stats, itoobig)
+    STATS_NAME(coap_stats, ilen)
     STATS_NAME(coap_stats, imem)
     STATS_NAME(coap_stats, oframe)
     STATS_NAME(coap_stats, oerr)
@@ -77,11 +78,18 @@ coap_log_2(uint16_t value)
 }
 /*---------------------------------------------------------------------------*/
 static uint32_t
-coap_parse_int_option(uint8_t *bytes, size_t length)
+coap_parse_int_option(struct os_mbuf *m, uint16_t off, size_t length)
 {
+    uint8_t bytes[4];
     uint32_t var = 0;
     int i = 0;
 
+    if (length >= 4) {
+        return -1;
+    }
+    if (os_mbuf_copydata(m, off, length, bytes)) {
+        return -1;
+    }
     while (i < length) {
         var <<= 8;
         var |= bytes[i++];
@@ -227,22 +235,30 @@ coap_append_array_opt(struct os_mbuf *m,
 /*---------------------------------------------------------------------------*/
 
 static void
-coap_merge_multi_option(char **dst, uint16_t *dst_len, uint8_t *option,
-                        size_t option_len, char separator)
+coap_merge_multi_option(struct os_mbuf *m, uint16_t *off1, uint16_t *len1,
+                        uint16_t off2, uint16_t len2, char separator)
 {
-    /* merge multiple options */
-    if (*dst_len > 0) {
-        /* dst already contains an option: concatenate */
-        (*dst)[*dst_len] = separator;
-        *dst_len += 1;
+    uint8_t tmp[4];
+    int i;
+    int blk;
 
-        /* memmove handles 2-byte option headers */
-        memmove((*dst) + (*dst_len), option, option_len);
-        *dst_len += option_len;
+    /* merge multiple options */
+    if (*len1 > 0) {
+        /* dst already contains an option: concatenate */
+        os_mbuf_copyinto(m, *off1 + *len1, &separator, 1);
+        *len1 += 1;
+
+        for (i = 0; i < len2; i += blk) {
+            blk = min(sizeof(tmp), len2 - i);
+            os_mbuf_copydata(m, off2 + i, blk, tmp);
+            os_mbuf_copyinto(m, *off1 + *len1 + i, tmp, blk);
+        }
+
+        *len1 += len2;
     } else {
-        /* dst is empty: set to option */
-        *dst = (char *)option;
-        *dst_len = option_len;
+        /* off1 is empty: set to off2 */
+        *off1 = off2;
+        *len1 = len2;
     }
 }
 
@@ -522,29 +538,55 @@ coap_tcp_msg_size(uint8_t *hdr, int datalen)
 
 /*---------------------------------------------------------------------------*/
 coap_status_t
-coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
-                   int tcp_hdr)
+coap_parse_message(struct coap_packet_rx *pkt, struct os_mbuf **mp)
 {
+    struct os_mbuf *m;
+    int is_tcp;
     struct coap_udp_hdr *udp;
     struct coap_tcp_hdr0 *cth0;
     struct coap_tcp_hdr8 *cth8;
     struct coap_tcp_hdr16 *cth16;
     struct coap_tcp_hdr32 *cth32;
-    uint8_t *cur_opt;
+    uint8_t tmp[4];
+    uint16_t cur_opt;
     unsigned int opt_num = 0;
     unsigned int opt_delta = 0;
     size_t opt_len = 0;
 
+    m = *mp;
     /* initialize packet */
     memset(pkt, 0, sizeof(coap_packet_t));
-    /* pointer to packet bytes */
-    pkt->buffer = data;
 
     STATS_INC(coap_stats, iframe);
 
+    is_tcp = oc_endpoint_use_tcp(OC_MBUF_ENDPOINT(m));
+
+    /*
+     * Make sure that the header is in contiguous area of memory.
+     */
+    opt_len = sizeof(struct coap_tcp_hdr32);
+    if (opt_len > OS_MBUF_PKTLEN(m)) {
+        opt_len = OS_MBUF_PKTLEN(m);
+    }
+    if (m->om_len < opt_len) {
+        m = os_mbuf_pullup(m, opt_len);
+        if (!m) {
+            STATS_INC(coap_stats, imem);
+            return INTERNAL_SERVER_ERROR_5_00;
+        }
+        *mp = m;
+    }
+    pkt->m = m;
+
     /* parse header fields */
-    if (!tcp_hdr) {
-        udp = (struct coap_udp_hdr *)data;
+    if (!is_tcp) {
+        cur_opt = sizeof(*udp);
+        if (m->om_len < cur_opt) {
+err_short:
+            STATS_INC(coap_stats, ilen);
+            return BAD_REQUEST_4_00;
+        }
+        udp = (struct coap_udp_hdr *)m->om_data;
         pkt->version = udp->version;
         pkt->type = udp->type;
         pkt->token_len = udp->token_len;
@@ -555,33 +597,44 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
             STATS_INC(coap_stats, ierr);
             return BAD_REQUEST_4_00;
         }
-        cur_opt = (uint8_t *)(udp + 1);
     } else {
         /*
          * We cannot just look at the data length, as token might or might
          * not be present. Need to figure out which header is present
          * programmatically.
          */
-        cth0 = (struct coap_tcp_hdr0 *)data;
+        cth0 = (struct coap_tcp_hdr0 *)m->om_data;
         if (cth0->data_len < 13) {
+            cur_opt = sizeof(*cth0);
+            if (m->om_len < cur_opt) {
+                goto err_short;
+            }
             pkt->token_len = cth0->token_len;
             pkt->code = cth0->code;
-            cur_opt = (uint8_t *)(cth0 + 1);
         } else if (cth0->data_len == 13) {
-            cth8 = (struct coap_tcp_hdr8 *)data;
+            cur_opt = sizeof(*cth8);
+            if (m->om_len < cur_opt) {
+                goto err_short;
+            }
+            cth8 = (struct coap_tcp_hdr8 *)m->om_data;
             pkt->token_len = cth8->token_len;
             pkt->code = cth8->code;
-            cur_opt = (uint8_t *)(cth8 + 1);
         } else if (cth0->data_len == 14) {
-            cth16 = (struct coap_tcp_hdr16 *)data;
+            cur_opt = sizeof(*cth16);
+            if (m->om_len < cur_opt) {
+                goto err_short;
+            }
+            cth16 = (struct coap_tcp_hdr16 *)m->om_data;
             pkt->token_len = cth16->token_len;
             pkt->code = cth16->code;
-            cur_opt = (uint8_t *)(cth16 + 1);
         } else {
-            cth32 = (struct coap_tcp_hdr32 *)data;
+            cur_opt = sizeof(*cth32);
+            if (m->om_len < cur_opt) {
+                goto err_short;
+            }
+            cth32 = (struct coap_tcp_hdr32 *)m->om_data;
             pkt->token_len = cth32->token_len;
             pkt->code = cth32->code;
-            cur_opt = (uint8_t *)(cth32 + 1);
         }
     }
     if (pkt->token_len > COAP_TOKEN_LEN) {
@@ -590,49 +643,63 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
         return BAD_REQUEST_4_00;
     }
 
-    memcpy(pkt->token, cur_opt, pkt->token_len);
+    if (os_mbuf_copydata(m, cur_opt, pkt->token_len, pkt->token)) {
+        goto err_short;
+    }
+    cur_opt += pkt->token_len;
 
     OC_LOG_DEBUG("Token (len %u) ");
     OC_LOG_HEX(LOG_LEVEL_DEBUG, pkt->token, pkt->token_len);
 
     /* parse options */
     memset(pkt->options, 0, sizeof(pkt->options));
-    cur_opt += pkt->token_len;
 
-    while (cur_opt < data + data_len) {
+    while (cur_opt < OS_MBUF_PKTLEN(m)) {
         /* payload marker 0xFF, currently only checking for 0xF* because rest is
          * reserved */
-        if ((cur_opt[0] & 0xF0) == 0xF0) {
-            pkt->payload = ++cur_opt;
-            pkt->payload_len = data_len - (pkt->payload - data);
+        if (os_mbuf_copydata(m, cur_opt, 1, tmp)) {
+            goto err_short;
+        }
+        if ((tmp[0] & 0xF0) == 0xF0) {
+            pkt->payload_off = ++cur_opt;
+            pkt->payload_len = OS_MBUF_PKTLEN(m) - cur_opt;
 
             /* also for receiving, the Erbium upper bound is MAX_PAYLOAD_SIZE */
             if (pkt->payload_len > MAX_PAYLOAD_SIZE) {
                 pkt->payload_len = MAX_PAYLOAD_SIZE;
-                /* null-terminate payload */
             }
-            pkt->payload[pkt->payload_len] = '\0';
-
             break;
         }
 
-        opt_delta = cur_opt[0] >> 4;
-        opt_len = cur_opt[0] & 0x0F;
+        opt_delta = tmp[0] >> 4;
+        opt_len = tmp[0] & 0x0F;
         ++cur_opt;
 
         if (opt_delta == 13) {
-            opt_delta += cur_opt[0];
+            if (os_mbuf_copydata(m, cur_opt, 1, tmp)) {
+                goto err_short;
+            }
+            opt_delta += tmp[0];
             ++cur_opt;
         } else if (opt_delta == 14) {
-            opt_delta += (255 + (cur_opt[0] << 8) + cur_opt[1]);
+            if (os_mbuf_copydata(m, cur_opt, 2, tmp)) {
+                goto err_short;
+            }
+            opt_delta += (255 + (tmp[0] << 8) + tmp[1]);
             cur_opt += 2;
         }
 
         if (opt_len == 13) {
-            opt_len += cur_opt[0];
+            if (os_mbuf_copydata(m, cur_opt, 1, tmp)) {
+                goto err_short;
+            }
+            opt_len += tmp[0];
             ++cur_opt;
         } else if (opt_len == 14) {
-            opt_len += (255 + (cur_opt[0] << 8) + cur_opt[1]);
+            if (os_mbuf_copydata(m, cur_opt, 2, tmp)) {
+                goto err_short;
+            }
+            opt_len += (255 + (tmp[0] << 8) + tmp[1]);
             cur_opt += 2;
         }
 
@@ -646,30 +713,35 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
 
         switch (opt_num) {
         case COAP_OPTION_CONTENT_FORMAT:
-            pkt->content_format = coap_parse_int_option(cur_opt, opt_len);
+            pkt->content_format = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Content-Format [%u]\n", pkt->content_format);
             break;
         case COAP_OPTION_MAX_AGE:
-            pkt->max_age = coap_parse_int_option(cur_opt, opt_len);
+            pkt->max_age = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Max-Age [%lu]\n", (unsigned long)pkt->max_age);
             break;
 #if 0
         case COAP_OPTION_ETAG:
             pkt->etag_len = MIN(COAP_ETAG_LEN, opt_len);
-            memcpy(pkt->etag, cur_opt, pkt->etag_len);
+            if (os_mbuf_copydata(m, cur_opt, pkt->etag_len, pkt->etag)) {
+                goto err_short;
+            }
             OC_LOG_DEBUG("ETag %u ");
             OC_LOG_HEX(LOG_LEVEL_DEBUG, pkt->etag, pkt->etag_len);
             break;
 #endif
         case COAP_OPTION_ACCEPT:
-            pkt->accept = coap_parse_int_option(cur_opt, opt_len);
+            pkt->accept = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Accept [%u]\n", pkt->accept);
             break;
 #if 0
         case COAP_OPTION_IF_MATCH:
             /* TODO support multiple ETags */
             pkt->if_match_len = MIN(COAP_ETAG_LEN, opt_len);
-            memcpy(pkt->if_match, cur_opt, pkt->if_match_len);
+            if (os_mbuf_copydata(m, cur_opt, pkt->if_match_len,
+                                 pkt->if_match)) {
+                goto err_short;
+            }
             OC_LOG_DEBUG("If-Match %u ");
             OC_LOG_HEX(LOG_LEVEL_DEBUG, pkt->if_match, pkt->if_match_len);
             break;
@@ -680,7 +752,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
 
         case COAP_OPTION_PROXY_URI:
 #if COAP_PROXY_OPTION_PROCESSING
-            pkt->proxy_uri = cur_opt;
+            pkt->proxy_uri_off = cur_opt;
             pkt->proxy_uri_len = opt_len;
 #endif
             OC_LOG_DEBUG("Proxy-Uri NOT IMPLEMENTED [%s]\n",
@@ -692,7 +764,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
             break;
         case COAP_OPTION_PROXY_SCHEME:
 #if COAP_PROXY_OPTION_PROCESSING
-            pkt->proxy_scheme = cur_opt;
+            pkt->proxy_scheme_off = cur_opt;
             pkt->proxy_scheme_len = opt_len;
 #endif
             OC_LOG_DEBUG("Proxy-Scheme NOT IMPLEMENTED [%s]\n",
@@ -704,52 +776,57 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
             break;
 
         case COAP_OPTION_URI_HOST:
-            pkt->uri_host = cur_opt;
+            pkt->uri_host_off = cur_opt;
             pkt->uri_host_len = opt_len;
             OC_LOG_DEBUG("Uri-Host ");
-            OC_LOG_STR(LOG_LEVEL_DEBUG, pkt->uri_host, pkt->uri_host_len);
+            OC_LOG_STR_MBUF(LOG_LEVEL_DEBUG, m, pkt->uri_host_off,
+                            pkt->uri_host_len);
             break;
         case COAP_OPTION_URI_PORT:
-            pkt->uri_port = coap_parse_int_option(cur_opt, opt_len);
+            pkt->uri_port = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Uri-Port [%u]\n", pkt->uri_port);
             break;
 #endif
         case COAP_OPTION_URI_PATH:
             /* coap_merge_multi_option() operates in-place on the buf */
-            coap_merge_multi_option(&pkt->uri_path, &pkt->uri_path_len,
+            coap_merge_multi_option(m, &pkt->uri_path_off, &pkt->uri_path_len,
                                     cur_opt, opt_len, '/');
             OC_LOG_DEBUG("Uri-Path ");
-            OC_LOG_STR(LOG_LEVEL_DEBUG, pkt->uri_path, pkt->uri_path_len);
+            OC_LOG_STR_MBUF(LOG_LEVEL_DEBUG, m, pkt->uri_path_off,
+                            pkt->uri_path_len);
             break;
         case COAP_OPTION_URI_QUERY:
             /* coap_merge_multi_option() operates in-place on the mbuf */
-            coap_merge_multi_option(&pkt->uri_query, &pkt->uri_query_len,
+            coap_merge_multi_option(m, &pkt->uri_query_off, &pkt->uri_query_len,
                                     cur_opt, opt_len, '&');
             OC_LOG_DEBUG("Uri-Query ");
-            OC_LOG_STR(LOG_LEVEL_DEBUG, pkt->uri_query, pkt->uri_query_len);
+            OC_LOG_STR_MBUF(LOG_LEVEL_DEBUG, m, pkt->uri_query_off,
+                            pkt->uri_query_len);
             break;
 #if 0
         case COAP_OPTION_LOCATION_PATH:
             /* coap_merge_multi_option() operates in-place on the mbuf */
-            coap_merge_multi_option(&pkt->loc_path, &pkt->loc_path_len,
+            coap_merge_multi_option(m, &pkt->loc_path_off, &pkt->loc_path_len,
                                     cur_opt, opt_len, '/');
             OC_LOG_DEBUG("Location-Path ");
-            OC_LOG_STR(LOG_LEVEL_DEBUG, pkt->loc_path, pkt->loc_path_len);
+            OC_LOG_STR_MBUF(LOG_LEVEL_DEBUG, m, pkt->loc_path,
+                            pkt->loc_path_len);
             break;
         case COAP_OPTION_LOCATION_QUERY:
             /* coap_merge_multi_option() operates in-place on the mbuf */
-            coap_merge_multi_option(&pkt->loc_query, &pkt->loc_query_len,
+            coap_merge_multi_option(m, &pkt->loc_query_off, &pkt->loc_query_len,
                                     cur_opt, opt_len, '&');
             OC_LOG_DEBUG("Location-Query ");
-            OC_LOG_STR(LOG_LEVEL_DEBUG, pkt->loc_query, pkt->loc_query_len);
+            OC_LOG_STR_MBUF(LOG_LEVEL_DEBUG, m, pkt->loc_query_off,
+                            pkt->loc_query_len);
             break;
 #endif
         case COAP_OPTION_OBSERVE:
-            pkt->observe = coap_parse_int_option(cur_opt, opt_len);
+            pkt->observe = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Observe [%lu]\n", (unsigned long)pkt->observe);
             break;
         case COAP_OPTION_BLOCK2:
-            pkt->block2_num = coap_parse_int_option(cur_opt, opt_len);
+            pkt->block2_num = coap_parse_int_option(m, cur_opt, opt_len);
             pkt->block2_more = (pkt->block2_num & 0x08) >> 3;
             pkt->block2_size = 16 << (pkt->block2_num & 0x07);
             pkt->block2_offset =
@@ -760,7 +837,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
                          pkt->block2_more ? "+" : "", pkt->block2_size);
             break;
         case COAP_OPTION_BLOCK1:
-            pkt->block1_num = coap_parse_int_option(cur_opt, opt_len);
+            pkt->block1_num = coap_parse_int_option(m, cur_opt, opt_len);
             pkt->block1_more = (pkt->block1_num & 0x08) >> 3;
             pkt->block1_size = 16 << (pkt->block1_num & 0x07);
             pkt->block1_offset =
@@ -771,11 +848,11 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
                          pkt->block1_more ? "+" : "", pkt->block1_size);
             break;
         case COAP_OPTION_SIZE2:
-            pkt->size2 = coap_parse_int_option(cur_opt, opt_len);
+            pkt->size2 = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Size2 [%lu]\n", (unsigned long)pkt->size2);
             break;
         case COAP_OPTION_SIZE1:
-            pkt->size1 = coap_parse_int_option(cur_opt, opt_len);
+            pkt->size1 = coap_parse_int_option(m, cur_opt, opt_len);
             OC_LOG_DEBUG("Size1 [%lu]\n", (unsigned long)pkt->size1);
             break;
         default:
@@ -792,6 +869,7 @@ coap_parse_message(coap_packet_t *pkt, uint8_t *data, uint16_t data_len,
 
     return NO_ERROR;
 }
+
 #if 0
 int
 coap_get_query_variable(coap_packet_t *const pkt, const char *name,
@@ -836,7 +914,7 @@ coap_set_token(coap_packet_t *pkt, const uint8_t *token, size_t token_len)
 }
 #ifdef OC_CLIENT
 int
-coap_get_header_content_format(coap_packet_t *pkt, unsigned int *format)
+coap_get_header_content_format(struct coap_packet_rx *pkt, unsigned int *format)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_CONTENT_FORMAT)) {
         return 0;
@@ -855,7 +933,7 @@ coap_set_header_content_format(coap_packet_t *pkt, unsigned int format)
 /*---------------------------------------------------------------------------*/
 #if 0
 int
-coap_get_header_accept(coap_packet_t *pkt, unsigned int *accept)
+coap_get_header_accept(struct coap_packet_rx *pkt, unsigned int *accept)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_ACCEPT)) {
         return 0;
@@ -877,7 +955,7 @@ coap_set_header_accept(coap_packet_t *pkt, unsigned int accept)
 /*---------------------------------------------------------------------------*/
 #if 0
 int
-coap_get_header_max_age(coap_packet_t *pkt, uint32_t *age)
+coap_get_header_max_age(struct coap_packet_rx *pkt, uint32_t *age)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_MAX_AGE)) {
         *age = COAP_DEFAULT_MAX_AGE;
@@ -897,7 +975,7 @@ coap_set_header_max_age(coap_packet_t *pkt, uint32_t age)
 /*---------------------------------------------------------------------------*/
 #if 0
 int
-coap_get_header_etag(coap_packet_t *pkt, const uint8_t **etag)
+coap_get_header_etag(struct coap_packet_rx *pkt, const uint8_t **etag)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_ETAG)) {
         return 0;
@@ -920,7 +998,7 @@ coap_set_header_etag(coap_packet_t *pkt, const uint8_t *etag,
 /*FIXME support multiple ETags */
 
 int
-coap_get_header_if_match(coap_packet_t *pkt, const uint8_t **etag)
+coap_get_header_if_match(struct coap_packet_rx *pkt, const uint8_t **etag)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_IF_MATCH)) {
         return 0;
@@ -942,7 +1020,7 @@ coap_set_header_if_match(coap_packet_t *pkt, const uint8_t *etag,
 
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_if_none_match(coap_packet_t *pkt)
+coap_get_header_if_none_match(struct coap_packet_rx *pkt)
 {
     return IS_OPTION(pkt, COAP_OPTION_IF_NONE_MATCH) ? 1 : 0;
 }
@@ -955,7 +1033,7 @@ coap_set_header_if_none_match(coap_packet_t *pkt)
 }
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_proxy_uri(coap_packet_t *pkt, const char **uri)
+coap_get_header_proxy_uri(struct coap_packet_rx *pkt, const char **uri)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_PROXY_URI)) {
         return 0;
@@ -977,7 +1055,7 @@ coap_set_header_proxy_uri(coap_packet_t *pkt, const char *uri)
 }
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_uri_host(coap_packet_t *pkt, const char **host)
+coap_get_header_uri_host(struct coap_packet_rx *pkt, const char **host)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_URI_HOST)) {
         return 0;
@@ -998,13 +1076,14 @@ coap_set_header_uri_host(coap_packet_t *pkt, const char *host)
 #endif
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_uri_path(coap_packet_t *pkt, const char **path)
+coap_get_header_uri_path(struct coap_packet_rx *pkt, char *path, int maxlen)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_URI_PATH)) {
         return 0;
     }
-    *path = pkt->uri_path;
-    return pkt->uri_path_len;
+    maxlen = min(maxlen, pkt->uri_path_len);
+    os_mbuf_copydata(pkt->m, pkt->uri_path_off, maxlen, path);
+    return maxlen;
 }
 #ifdef OC_CLIENT
 int
@@ -1022,13 +1101,14 @@ coap_set_header_uri_path(coap_packet_t *pkt, const char *path)
 #endif
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_uri_query(coap_packet_t *pkt, const char **query)
+coap_get_header_uri_query(struct coap_packet_rx *pkt, char *query, int maxlen)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_URI_QUERY)) {
         return 0;
     }
-    *query = pkt->uri_query;
-    return pkt->uri_query_len;
+    maxlen = min(maxlen, pkt->uri_query_len);
+    os_mbuf_copydata(pkt->m, pkt->uri_query_off, maxlen, query);
+    return maxlen;
 }
 #ifdef OC_CLIENT
 int
@@ -1047,7 +1127,7 @@ coap_set_header_uri_query(coap_packet_t *pkt, const char *query)
 /*---------------------------------------------------------------------------*/
 #if 0
 int
-coap_get_header_location_path(coap_packet_t *pkt, const char **path)
+coap_get_header_location_path(struct coap_packet_rx *pkt, const char **path)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_LOCATION_PATH)) {
         return 0;
@@ -1081,7 +1161,7 @@ coap_set_header_location_path(coap_packet_t *pkt, const char *path)
 #if 0
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_location_query(coap_packet_t *pkt, const char **query)
+coap_get_header_location_query(struct coap_packet_rx *pkt, const char **query)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_LOCATION_QUERY)) {
         return 0;
@@ -1105,7 +1185,7 @@ coap_set_header_location_query(coap_packet_t *pkt, const char *query)
 #endif
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_observe(coap_packet_t *pkt, uint32_t *observe)
+coap_get_header_observe(struct coap_packet_rx *pkt, uint32_t *observe)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_OBSERVE)) {
         return 0;
@@ -1124,7 +1204,7 @@ coap_set_header_observe(coap_packet_t *pkt, uint32_t observe)
 
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_block2(coap_packet_t *pkt, uint32_t *num,
+coap_get_header_block2(struct coap_packet_rx *pkt, uint32_t *num,
                        uint8_t *more, uint16_t *size, uint32_t *offset)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_BLOCK2)) {
@@ -1168,7 +1248,7 @@ coap_set_header_block2(coap_packet_t *pkt, uint32_t num,
 }
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_block1(coap_packet_t *pkt, uint32_t *num, uint8_t *more,
+coap_get_header_block1(struct coap_packet_rx *pkt, uint32_t *num, uint8_t *more,
                        uint16_t *size, uint32_t *offset)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_BLOCK1)) {
@@ -1212,7 +1292,7 @@ coap_set_header_block1(coap_packet_t *pkt, uint32_t num, uint8_t more,
 }
 /*---------------------------------------------------------------------------*/
 #if 0
-int coap_get_header_size2(coap_packet_t * const pkt, uint32_t *size)
+int coap_get_header_size2(struct coap_packet_rx * const pkt, uint32_t *size)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_SIZE2)) {
         return 0;
@@ -1230,7 +1310,7 @@ coap_set_header_size2(coap_packet_t *pkt, uint32_t size)
 }
 /*---------------------------------------------------------------------------*/
 int
-coap_get_header_size1(coap_packet_t *pkt, uint32_t *size)
+coap_get_header_size1(struct coap_packet_rx *pkt, uint32_t *size)
 {
     if (!IS_OPTION(pkt, COAP_OPTION_SIZE1)) {
         return 0;
@@ -1248,15 +1328,27 @@ coap_set_header_size1(coap_packet_t *pkt, uint32_t size)
 #endif
 /*---------------------------------------------------------------------------*/
 int
-coap_get_payload(coap_packet_t *pkt, const uint8_t **payload)
+coap_get_payload_copy(struct coap_packet_rx *pkt, uint8_t *payload, int maxlen)
 {
-    if (pkt->payload) {
-        *payload = pkt->payload;
-        return pkt->payload_len;
+    if (pkt->payload_len) {
+        maxlen = min(maxlen, pkt->payload_len);
+        os_mbuf_copydata(pkt->m, pkt->payload_off, maxlen, payload);
+        return maxlen;
     } else {
-        *payload = NULL;
         return 0;
     }
+}
+
+int
+coap_get_payload(struct coap_packet_rx *pkt, struct os_mbuf **mp, uint16_t *off)
+{
+    if (pkt->payload_len) {
+        *off = pkt->payload_off;
+    } else {
+        *off = OS_MBUF_PKTLEN(pkt->m);
+    }
+    *mp = pkt->m;
+    return pkt->payload_len;
 }
 
 int

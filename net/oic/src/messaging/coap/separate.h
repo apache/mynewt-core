@@ -64,7 +64,7 @@ typedef struct coap_separate {
 } coap_separate_t;
 
 typedef struct coap_packet coap_packet_t;
-int coap_separate_accept(coap_packet_t *request,
+int coap_separate_accept(struct coap_packet_rx *request,
                          oc_separate_response_t *separate_response,
                          oc_endpoint_t *endpoint, int observe);
 void coap_separate_resume(coap_packet_t *response,

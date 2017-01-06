@@ -23,7 +23,7 @@
 #include "port/oc_assert.h"
 #include "api/oc_priv.h"
 #include <tinycbor/cbor_mbuf_writer.h>
-#include <tinycbor/cbor_buf_reader.h>
+#include <tinycbor/cbor_mbuf_reader.h>
 
 #ifdef OC_CLIENT
 static struct os_mempool oc_rep_objects;
@@ -35,7 +35,7 @@ static const CborEncoder g_empty;
 static struct os_mbuf *g_outm;
 CborEncoder g_encoder, root_map, links_array;
 CborError g_err;
-struct CborMbufWriter g_buf_writer;
+struct cbor_mbuf_writer g_buf_writer;
 
 void
 oc_rep_new(struct os_mbuf *m)
@@ -282,15 +282,15 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
 }
 
 uint16_t
-oc_parse_rep(const uint8_t *in_payload, uint16_t payload_size,
-             oc_rep_t **out_rep)
+oc_parse_rep(struct os_mbuf *m, uint16_t payload_off,
+             uint16_t payload_size, oc_rep_t **out_rep)
 {
   CborParser parser;
   CborValue root_value, cur_value, map;
   CborError err = CborNoError;
-  struct cbor_buf_reader br;
+  struct cbor_mbuf_reader br;
 
-  cbor_buf_reader_init(&br, in_payload, payload_size);
+  cbor_mbuf_reader_init(&br, m, payload_off);
   err |= cbor_parser_init(&br.r, 0, &parser, &root_value);
   if (cbor_value_is_map(&root_value)) {
     err |= cbor_value_enter_container(&root_value, &cur_value);

@@ -357,7 +357,7 @@ does_interface_support_method(oc_resource_t *resource,
 }
 
 bool
-oc_ri_invoke_coap_entity_handler(coap_packet_t *request,
+oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
                                  coap_packet_t *response, int32_t *offset,
                                  oc_endpoint_t *endpoint)
 {
@@ -399,12 +399,14 @@ oc_ri_invoke_coap_entity_handler(coap_packet_t *request,
   oc_interface_mask_t interface = 0;
 
   /* Obtain request uri from the CoAP packet. */
-  const char *uri_path;
-  int uri_path_len = coap_get_header_uri_path(request, &uri_path);
+  char uri_path[COAP_MAX_URI];
+  int uri_path_len = coap_get_header_uri_path(request, uri_path,
+                                              sizeof(uri_path));
 
   /* Obtain query string from CoAP packet. */
-  const char *uri_query;
-  int uri_query_len = coap_get_header_uri_query(request, &uri_query);
+  char uri_query[COAP_MAX_URI_QUERY];
+  int uri_query_len = coap_get_header_uri_query(request, uri_query,
+                                                sizeof(uri_query));
 
   if (uri_query_len) {
     request_obj.query = uri_query;
@@ -704,7 +706,7 @@ oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
 }
 
 bool
-oc_ri_invoke_client_cb(coap_packet_t *rsp, oc_endpoint_t *endpoint)
+oc_ri_invoke_client_cb(struct coap_packet_rx *rsp, oc_endpoint_t *endpoint)
 {
     oc_client_cb_t *cb, *tmp;
     oc_client_response_t client_response;

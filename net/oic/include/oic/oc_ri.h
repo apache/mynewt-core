@@ -98,12 +98,12 @@ typedef enum {
 typedef struct oc_resource oc_resource_t;
 
 typedef struct {
-  oc_endpoint_t *origin;
-  oc_resource_t *resource;
-  const char *query;
-  int query_len;
-  oc_response_t *response;
-  void *packet;
+    oc_endpoint_t *origin;
+    oc_resource_t *resource;
+    const char *query;
+    int query_len;
+    oc_response_t *response;
+    struct coap_packet_rx *packet;
 } oc_request_t;
 
 typedef void (*oc_request_handler_t)(oc_request_t *, oc_interface_mask_t);
@@ -150,9 +150,10 @@ int oc_ri_get_query_value(const char *query, int query_len, const char *key,
 oc_interface_mask_t oc_ri_get_interface_mask(char *iface, int if_len);
 
 typedef struct coap_packet coap_packet_t;
-bool oc_ri_invoke_coap_entity_handler(coap_packet_t *request,
-                                      coap_packet_t *response,
-                                      int32_t *offset, oc_endpoint_t *endpoint);
+struct coap_packet_rx;
+bool oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
+                                      coap_packet_t *response, int32_t *offset,
+                                      oc_endpoint_t *endpoint);
 
 #ifdef __cplusplus
 }

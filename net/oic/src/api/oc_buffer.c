@@ -148,48 +148,29 @@ oc_buffer_tx(struct os_event *ev)
 static void
 oc_buffer_rx(struct os_event *ev)
 {
-    struct oc_message *msg;
     struct os_mbuf *m;
 #if defined(OC_SECURITY)
     uint8_t b;
 #endif
 
     while ((m = os_mqueue_get(&oc_inq)) != NULL) {
-        msg = oc_allocate_message();
-        if (!msg) {
-            goto free_msg;
-        }
         OC_LOG_DEBUG("oc_buffer_rx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 
-        if (OS_MBUF_PKTHDR(m)->omp_len > MAX_PAYLOAD_SIZE) {
-            STATS_INC(coap_stats, itoobig);
-            goto free_msg;
-        }
-        if (os_mbuf_copydata(m, 0, OS_MBUF_PKTHDR(m)->omp_len, msg->data)) {
-            STATS_INC(coap_stats, imem);
-            goto free_msg;
-        }
-        memcpy(&msg->endpoint, OC_MBUF_ENDPOINT(m), sizeof(msg->endpoint));
-        msg->length = OS_MBUF_PKTHDR(m)->omp_len;
-        os_mbuf_free_chain(m);
-        m = NULL;
-
 #ifdef OC_SECURITY
+        /*
+         * XXX make sure first byte is within first mbuf
+         */
         b = m->om_data[0];
         if (b > 19 && b < 64) {
             OC_LOG_DEBUG("oc_buffer_rx: encrypted request\n");
             oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
         } else {
-            coap_receive(msg);
+            coap_receive(m);
         }
 #else
-        coap_receive(msg);
+        coap_receive(&m);
 #endif
-free_msg:
-        if (msg) {
-            oc_message_unref(msg);
-        }
         if (m) {
             os_mbuf_free_chain(m);
         }
