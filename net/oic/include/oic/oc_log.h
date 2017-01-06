@@ -69,7 +69,6 @@ void oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *, int off, int len,
             oc_log_bytes(lvl, addr, len, 0);                            \
         }                                                               \
     } while(0)
-#else
 
 #define OC_LOG_HEX_MBUF(lvl, m, off, len)                               \
     do {                                                                \
@@ -78,12 +77,16 @@ void oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *, int off, int len,
         }                                                               \
     } while(0)
 
+#else
+
 #define OC_LOG_DEBUG(...)
 #define OC_LOG_INFO(...)
 #define OC_LOG_ERROR(...)
 #define OC_LOG_ENDPOINT(...)
 #define OC_LOG_STR(...)
+#define OC_LOG_STR_MBUF(...)
 #define OC_LOG_HEX(...)
+#define OC_LOG_HEX_MBUF(...)
 
 #endif
 
