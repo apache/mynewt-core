@@ -20,16 +20,19 @@
 #ifndef CBOR_MBUF_WRITER_H
 #define CBOR_MBUF_WRITER_H
 
+#include <tinycbor/cbor.h>
+#include <os/os_mbuf.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct CborMbufWriter {
+struct cbor_mbuf_writer {
     struct cbor_encoder_writer enc;
     struct os_mbuf *m;
 };
 
-void cbor_mbuf_writer_init(struct CborMbufWriter *cb, struct os_mbuf *m);
+void cbor_mbuf_writer_init(struct cbor_mbuf_writer *cb, struct os_mbuf *m);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,8 @@
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_writer.h>
 
-static inline int would_overflow(struct CborBufWriter *cb, size_t len)
+static inline int
+would_overflow(struct cbor_buf_writer *cb, size_t len)
 {
     ptrdiff_t remaining = (ptrdiff_t)cb->end;
     remaining -= (ptrdiff_t)cb->ptr;
@@ -28,8 +29,10 @@ static inline int would_overflow(struct CborBufWriter *cb, size_t len)
     return (remaining < 0);
 }
 
-int cbor_buf_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
-    struct CborBufWriter *cb = (struct CborBufWriter *) arg;
+int
+cbor_buf_writer(struct cbor_encoder_writer *arg, const char *data, int len)
+{
+    struct cbor_buf_writer *cb = (struct cbor_buf_writer *) arg;
 
     if (would_overflow(cb, len)) {
         return CborErrorOutOfMemory;
@@ -41,7 +44,8 @@ int cbor_buf_writer(struct cbor_encoder_writer *arg, const char *data, int len) 
     return CborNoError;
 }
 
-void cbor_buf_writer_init(struct CborBufWriter *cb, uint8_t *buffer, size_t size)
+void
+cbor_buf_writer_init(struct cbor_buf_writer *cb, uint8_t *buffer, size_t size)
 {
     cb->ptr = buffer;
     cb->end = buffer + size;
@@ -50,7 +54,7 @@ void cbor_buf_writer_init(struct CborBufWriter *cb, uint8_t *buffer, size_t size
 }
 
 size_t
-cbor_buf_writer_buffer_size(struct CborBufWriter *cb, const uint8_t *buffer)
+cbor_buf_writer_buffer_size(struct cbor_buf_writer *cb, const uint8_t *buffer)
 {
     return (size_t)(cb->ptr - buffer);
 }
