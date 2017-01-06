@@ -73,7 +73,8 @@ put_light(oc_request_t *request, oc_interface_mask_t interface)
 {
     bool state;
     int len;
-    const uint8_t *data;
+    uint16_t data_off;
+    struct os_mbuf *m;
     struct cbor_attr_t attrs[] = {
         [0] = {
             .attribute = "state",
@@ -87,8 +88,8 @@ put_light(oc_request_t *request, oc_interface_mask_t interface)
 
     printf("PUT_light:\n");
 
-    len = coap_get_payload(request->packet, &data);
-    if (cbor_read_flat_attrs(data, len, attrs)) {
+    len = coap_get_payload(request->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
         oc_send_response(request, OC_STATUS_BAD_REQUEST);
     } else {
         printf("value: %d\n", state);
@@ -148,7 +149,8 @@ observe_light(oc_client_response_t *rsp)
 {
     bool state;
     int len;
-    const uint8_t *data;
+    uint16_t data_off;
+    struct os_mbuf *m;
     struct cbor_attr_t attrs[] = {
         [0] = {
             .attribute = "state",
@@ -160,8 +162,8 @@ observe_light(oc_client_response_t *rsp)
         }
     };
 
-    len = coap_get_payload(rsp->packet, &data);
-    if (cbor_read_flat_attrs(data, len, attrs)) {
+    len = coap_get_payload(rsp->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
         printf("OBSERVE_light: %d\n", state);
         light_state = state;
     }

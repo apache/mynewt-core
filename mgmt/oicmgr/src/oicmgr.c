@@ -31,13 +31,12 @@
 
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
-#include <tinycbor/cbor_buf_writer.h>
-#include <tinycbor/cbor_buf_reader.h>
+#include <tinycbor/cbor_mbuf_reader.h>
 #include <oic/oc_api.h>
 
 struct omgr_cbuf {
     struct mgmt_cbuf ob_mj;
-    struct cbor_buf_reader ob_reader;
+    struct cbor_mbuf_reader ob_reader;
 };
 
 struct omgr_state {
@@ -104,7 +103,8 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
 {
     struct omgr_state *o = &omgr_state;
     const struct mgmt_handler *handler;
-    const uint8_t *data;
+    uint16_t data_off;
+    struct os_mbuf *m;
     int rc = 0;
     extern CborEncoder g_encoder;
 
@@ -117,10 +117,11 @@ omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
         goto bad_req;
     }
 
-    rc = coap_get_payload(req->packet, &data);
-    cbor_buf_reader_init(&o->os_cbuf.ob_reader, data, rc);
+    rc = coap_get_payload(req->packet, &m, &data_off);
+    cbor_mbuf_reader_init(&o->os_cbuf.ob_reader, m, data_off);
 
-    cbor_parser_init(&o->os_cbuf.ob_reader.r, 0, &o->os_cbuf.ob_mj.parser, &o->os_cbuf.ob_mj.it);
+    cbor_parser_init(&o->os_cbuf.ob_reader.r, 0, &o->os_cbuf.ob_mj.parser,
+                     &o->os_cbuf.ob_mj.it);
 
     /* start generating the CBOR OUTPUT */
     /* this is worth a quick note.  We are encoding CBOR within CBOR, so we

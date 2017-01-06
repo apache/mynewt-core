@@ -284,7 +284,8 @@ app_set_light(oc_request_t *request, oc_interface_mask_t interface)
 {
     bool state;
     int len;
-    const uint8_t *data;
+    uint16_t data_off;
+    struct os_mbuf *m;
     struct cbor_attr_t attrs[] = {
         [0] = {
             .attribute = "state",
@@ -296,14 +297,13 @@ app_set_light(oc_request_t *request, oc_interface_mask_t interface)
         }
     };
 
-    len = coap_get_payload(request->packet, &data);
-    if (cbor_read_flat_attrs(data, len, attrs)) {
+    len = coap_get_payload(request->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
         oc_send_response(request, OC_STATUS_BAD_REQUEST);
     } else {
         hal_gpio_write(LED_BLINK_PIN, state == true);
         oc_send_response(request, OC_STATUS_CHANGED);
     }
-
 }
 
 static void
