@@ -83,3 +83,31 @@ oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char)
     }
     log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "]\n");
 }
+
+void
+oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *m, int off, int len,
+                  int print_char)
+{
+    int i;
+    uint8_t tmp[4];
+    int blen;
+
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "[");
+    while (len) {
+        blen = len;
+        if (blen > sizeof(tmp)) {
+            blen = sizeof(tmp);
+        }
+        os_mbuf_copydata(m, off, blen, tmp);
+        for (i = 0; i < blen; i++) {
+            if (print_char) {
+                log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%c", tmp[i]);
+            } else {
+                log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%02x", tmp[i]);
+            }
+        }
+        off += blen;
+        len -= blen;
+    }
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "]\n");
+}
