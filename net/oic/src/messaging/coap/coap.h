@@ -137,8 +137,8 @@ struct coap_packet_rx {
     uint16_t uri_port;
     uint16_t uri_path_len;
     uint16_t uri_path_off;
-    int32_t observe;
     uint16_t accept;
+    int32_t observe;
 #if 0
     uint8_t if_match_len;
     uint8_t if_match[COAP_ETAG_LEN];
@@ -161,12 +161,11 @@ struct coap_packet_rx {
     uint16_t payload_len;
 };
 
-/* parsed message struct */
+/*
+ * For CoAP TX, store pointers to user memory. All the TLVs need to be known
+ * before header construction can begin.
+ */
 typedef struct coap_packet {
-    /* pointer to CoAP header / incoming packet buffer / memory
-       to serialize packet */
-    uint8_t *buffer;
-
     uint8_t version;
     coap_message_type_t type;
     uint8_t code;
