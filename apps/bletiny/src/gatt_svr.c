@@ -144,6 +144,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .access_cb = gatt_svr_access_test,
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC |
                 BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC,
+                .min_key_size = 16,
             }, {
                 .uuid128 = PTS_UUID(PTS_CHR_READ_WRITE_AUTHEN),
                 .access_cb = gatt_svr_access_test,
@@ -167,6 +168,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                         .access_cb = gatt_svr_access_test,
                         .att_flags = BLE_ATT_F_READ | BLE_ATT_F_READ_ENC |
                         BLE_ATT_F_WRITE | BLE_ATT_F_WRITE_ENC,
+                        .min_key_size = 16,
                     }, {
                         .uuid128 = PTS_UUID(PTS_DSC_READ_WRITE_AUTHEN),
                         .access_cb = gatt_svr_access_test,
@@ -209,6 +211,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                 .access_cb = gatt_svr_long_access_test,
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_READ_ENC |
                 BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC,
+                .min_key_size = 16,
             }, {
                 .uuid128 = PTS_UUID(PTS_LONG_CHR_READ_WRITE_AUTHEN),
                 .access_cb = gatt_svr_long_access_test,
@@ -232,6 +235,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
                         .access_cb = gatt_svr_long_access_test,
                         .att_flags = BLE_ATT_F_READ | BLE_ATT_F_READ_ENC |
                         BLE_ATT_F_WRITE | BLE_ATT_F_WRITE_ENC,
+                        .min_key_size = 16,
                     }, {
                         .uuid128 = PTS_UUID(PTS_LONG_DSC_READ_WRITE_AUTHEN),
                         .access_cb = gatt_svr_long_access_test,
