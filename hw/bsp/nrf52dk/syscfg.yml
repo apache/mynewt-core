@@ -93,7 +93,7 @@ syscfg.defs:
         value:  0
     TIMER_5:
         description: 'NRF52 RTC 0'
-        value:  1
+        value:  0
 
     I2C_0:
         description: 'NRF52 I2C (TWI) interface 0'

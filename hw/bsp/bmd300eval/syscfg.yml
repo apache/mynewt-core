@@ -88,7 +88,7 @@ syscfg.defs:
         value:  0
     TIMER_5:
         description: 'NRF52 RTC 0'
-        value:  1
+        value:  0
 
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
