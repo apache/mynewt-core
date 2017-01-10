@@ -153,7 +153,7 @@ Reset_Handler_split:
 
     LDR     R0, =SystemInit
     BLX     R0
-    LDR     R0, =_start
+    LDR     R0, =_start_split
     BX      R0
 
     .pool
