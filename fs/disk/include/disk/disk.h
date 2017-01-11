@@ -46,6 +46,8 @@ struct disk_ops {
 int disk_register(const char *disk_name, const char *fs_name, struct disk_ops *dops);
 struct disk_ops *disk_ops_for(const char *disk_name);
 char *disk_fs_for(const char *disk_name);
+char *disk_name_from_path(const char *path);
+char *disk_filepath_from_path(const char *path);
 
 #ifdef __cplusplus
 }

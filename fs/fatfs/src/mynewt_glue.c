@@ -190,37 +190,6 @@ drivenumber_from_disk(char *disk_name)
     return disk_number;
 }
 
-/**
- * @brief Returns the path with the disk prefix removed (if found)
- *
- * Paths should be given in the form disk<number>:/path. This routine
- * will parse and return only the path, removing the disk information.
- */
-char *
-filepath_from_path(const char *path)
-{
-    char *colon;
-    char *filepath;
-    size_t len;
-
-    colon = (char *) path;
-    while (*colon && *colon != ':') {
-        colon++;
-    }
-
-    if (*colon != ':') {
-        filepath = strdup(path);
-    } else {
-        colon++;
-        len = strlen(colon);
-        filepath = malloc(len);
-        memcpy(filepath, colon, len);
-        filepath[len] = '\0';
-    }
-
-    return filepath;
-}
-
 static int
 fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 {
@@ -261,9 +230,9 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
         mode |= FA_CREATE_ALWAYS;
     }
 
-    disk = disk_from_path(path);
+    disk = disk_name_from_path(path);
     number = drivenumber_from_disk(disk);
-    filepath = filepath_from_path(path);
+    filepath = disk_filepath_from_path(path);
     sprintf(drivepath, "%d:%s", number, filepath);
     free(filepath);
 
@@ -409,9 +378,9 @@ fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
         goto out;
     }
 
-    disk = disk_from_path(path);
+    disk = disk_name_from_path(path);
     number = drivenumber_from_disk(disk);
-    filepath = filepath_from_path(path);
+    filepath = disk_filepath_from_path(path);
     sprintf(drivepath, "%d:%s", number, filepath);
     free(filepath);
 

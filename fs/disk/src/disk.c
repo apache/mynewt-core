@@ -96,3 +96,61 @@ disk_fs_for(const char *disk_name)
 
     return fs_name;
 }
+
+char *
+disk_name_from_path(const char *path)
+{
+    char *colon;
+    uint8_t len;
+    char *disk;
+
+    colon = (char *) path;
+    while (*colon && *colon != ':') {
+        colon++;
+    }
+
+    if (*colon != ':') {
+        return NULL;
+    }
+
+    len = colon - path;
+    disk = malloc(len + 1);
+    if (!disk) {
+        return NULL;
+    }
+    memcpy(disk, path, len);
+    disk[len] = '\0';
+
+    return disk;
+}
+
+/**
+ * @brief Returns the path with the disk prefix removed (if found)
+ *
+ * Paths should be given in the form disk<number>:/path. This routine
+ * will parse and return only the path, removing the disk information.
+ */
+char *
+disk_filepath_from_path(const char *path)
+{
+    char *colon;
+    char *filepath;
+    size_t len;
+
+    colon = (char *) path;
+    while (*colon && *colon != ':') {
+        colon++;
+    }
+
+    if (*colon != ':') {
+        filepath = strdup(path);
+    } else {
+        colon++;
+        len = strlen(colon);
+        filepath = malloc(len);
+        memcpy(filepath, colon, len);
+        filepath[len] = '\0';
+    }
+
+    return filepath;
+}

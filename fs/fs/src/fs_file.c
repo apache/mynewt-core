@@ -149,32 +149,6 @@ safe_fs_ops_for(const char *fs_name)
     return fops;
 }
 
-char *disk_from_path(const char *path)
-{
-    char *colon;
-    uint8_t len;
-    char *disk;
-
-    colon = (char *) path;
-    while (*colon && *colon != ':') {
-        colon++;
-    }
-
-    if (*colon != ':') {
-        return NULL;
-    }
-
-    len = colon - path;
-    disk = malloc(len + 1);
-    if (!disk) {
-        return NULL;
-    }
-    memcpy(disk, path, len);
-    disk[len] = '\0';
-
-    return disk;
-}
-
 struct fs_ops *
 fops_from_filename(const char *filename)
 {
@@ -182,7 +156,7 @@ fops_from_filename(const char *filename)
     char *fs_name = NULL;
     struct fs_ops *unique;
 
-    disk = disk_from_path(filename);
+    disk = disk_name_from_path(filename);
     if (disk) {
         fs_name = disk_fs_for(disk);
     } else {
