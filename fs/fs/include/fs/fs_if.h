@@ -58,6 +58,10 @@ struct fs_ops {
     SLIST_ENTRY(fs_ops) sc_next;
 };
 
+struct fops_container {
+    struct fs_ops *fops;
+};
+
 /**
  * Registers a new filesystem interface
  *
@@ -83,6 +87,8 @@ struct fs_ops *fs_ops_try_unique(void);
  * @return valid pointer on success, NULL on failure
  */
 struct fs_ops *fs_ops_for(const char *name);
+
+struct fs_ops *fs_ops_from_container(struct fops_container *container);
 
 #ifdef __cplusplus
 }

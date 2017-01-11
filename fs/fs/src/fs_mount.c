@@ -79,3 +79,9 @@ fs_ops_for(const char *fs_name)
 
     return fops;
 }
+
+struct fs_ops *
+fs_ops_from_container(struct fops_container *container)
+{
+    return container->fops;
+}
