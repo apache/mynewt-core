@@ -88,15 +88,6 @@ __isr_vector_split:
 Reset_Handler_split:
     .fnstart
 
-    /* Clear BSS */
-    mov     r0, #0
-    ldr     r2, =__bss_start__
-    ldr     r3, =__bss_end__
-.bss_zero_loop:
-    cmp     r2, r3
-    itt     lt
-    strlt   r0, [r2], #4
-    blt    .bss_zero_loop
 
 /* Make sure ALL RAM banks are powered on */
     MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
@@ -110,6 +101,16 @@ Reset_Handler_split:
     LDR     R2, [R0]
     ORRS    R2, R1
     STR     R2, [R0]
+
+    /* Clear BSS */
+    subs    r0, r0
+    ldr     r2, =__bss_start__
+    ldr     r3, =__bss_end__
+.bss_zero_loop:
+    cmp     r2, r3
+    bhs     .data_copy_loop
+    stmia   r2!, {r0}
+    b    .bss_zero_loop
 
 /*     Loop to copy data from read only memory to RAM. The ranges
  *      of copy from/to are specified by following symbols evaluated in
