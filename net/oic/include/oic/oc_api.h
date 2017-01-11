@@ -139,6 +139,9 @@ bool oc_do_observe(const char *uri, oc_server_handle_t *server,
 bool oc_stop_observe(const char *uri, oc_server_handle_t *server);
 #endif
 
+struct os_eventq;
+void oc_evq_set(struct os_eventq *evq);
+
 #ifdef __cplusplus
 }
 #endif
