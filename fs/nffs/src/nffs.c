@@ -34,6 +34,7 @@
 #include "nffs_priv.h"
 #include "nffs/nffs.h"
 #include "fs/fs_if.h"
+#include "disk/disk.h"
 
 struct nffs_area *nffs_areas;
 uint8_t nffs_num_areas;
@@ -192,6 +193,7 @@ nffs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 {
     int rc;
     struct nffs_file *out_file;
+    char *filepath = NULL;
 
     nffs_lock();
 
@@ -200,12 +202,17 @@ nffs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
         goto done;
     }
 
-    rc = nffs_file_open(&out_file, path, access_flags);
+    filepath = disk_filepath_from_path(path);
+
+    rc = nffs_file_open(&out_file, filepath, access_flags);
     if (rc != 0) {
         goto done;
     }
     *out_fs_file = (struct fs_file *)out_file;
 done:
+    if (filepath) {
+        free(filepath);
+    }
     nffs_unlock();
     if (rc != 0) {
         *out_fs_file = NULL;
@@ -491,6 +498,7 @@ nffs_opendir(const char *path, struct fs_dir **out_fs_dir)
 {
     int rc;
     struct nffs_dir **out_dir = (struct nffs_dir **)out_fs_dir;
+    char *filepath = NULL;
 
     nffs_lock();
 
@@ -499,9 +507,14 @@ nffs_opendir(const char *path, struct fs_dir **out_fs_dir)
         goto done;
     }
 
-    rc = nffs_dir_open(path, out_dir);
+    filepath = disk_filepath_from_path(path);
+
+    rc = nffs_dir_open(filepath, out_dir);
 
 done:
+    if (filepath) {
+        free(filepath);
+    }
     nffs_unlock();
     return rc;
 }
