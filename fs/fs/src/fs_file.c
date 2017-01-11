@@ -197,11 +197,10 @@ fops_from_filename(const char *filename)
     return safe_fs_ops_for(fs_name);
 }
 
-static struct fs_ops *
+static inline struct fs_ops *
 fops_from_file(const struct fs_file *file)
 {
-    /* NOTE: fs_ops must always be the first field for any fs_file */
-    return (struct fs_ops *) *((uint32_t *)file);
+    return fs_ops_from_container((struct fops_container *) file);
 }
 
 int

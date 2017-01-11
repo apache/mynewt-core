@@ -29,11 +29,10 @@ fops_from_dir(const struct fs_dir *dir)
     return (struct fs_ops *) *((uint32_t *)dir);
 }
 
-static struct fs_ops *
+static inline struct fs_ops *
 fops_from_dirent(const struct fs_dirent *dirent)
 {
-    /* NOTE: fs_ops must always be the first field for any fs_file */
-    return (struct fs_ops *) *((uint32_t *)dirent);
+    return fs_ops_from_container((struct fops_container *) dirent);
 }
 
 int
