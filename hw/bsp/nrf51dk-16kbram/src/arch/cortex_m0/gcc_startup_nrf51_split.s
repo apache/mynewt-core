@@ -88,6 +88,16 @@ __isr_vector_split:
 Reset_Handler_split:
     .fnstart
 
+    /* Clear BSS */
+    mov     r0, #0
+    ldr     r2, =__bss_start__
+    ldr     r3, =__bss_end__
+.bss_zero_loop:
+    cmp     r2, r3
+    itt     lt
+    strlt   r0, [r2], #4
+    blt    .bss_zero_loop
+
 /* Make sure ALL RAM banks are powered on */
     MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
 
