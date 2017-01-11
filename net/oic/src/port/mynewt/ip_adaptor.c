@@ -243,7 +243,7 @@ oc_connectivity_init_ip(void)
     memset(&itf, 0, sizeof(itf));
 
     rc = mn_socket(&ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
-    if ( rc != 0 || !ucast ) {
+    if (rc != 0 || !ucast) {
         OC_LOG_ERROR("Could not create oc unicast socket\n");
         return rc;
     }
@@ -251,7 +251,7 @@ oc_connectivity_init_ip(void)
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
     rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
-    if ( rc != 0 || !mcast ) {
+    if (rc != 0 || !mcast) {
         mn_close(ucast);
         OC_LOG_ERROR("Could not create oc multicast socket\n");
         return rc;
