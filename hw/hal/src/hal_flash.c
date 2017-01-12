@@ -24,8 +24,6 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 
-#include <disk/disk.h>
-
 int
 hal_flash_init(void)
 {
