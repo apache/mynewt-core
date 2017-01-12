@@ -24,6 +24,11 @@
 #define OIC_TAPP_PRIO       9
 #define OIC_TAPP_STACK_SIZE 1024
 
+/*
+ * How long to wait before declaring discovery process failure.
+ */
+#define OIC_TEST_FAIL_DLY   (OS_TICKS_PER_SEC * 2)
+
 static int oic_test_state;
 
 static struct os_task oic_tapp;
@@ -58,18 +63,9 @@ static oc_discovery_flags_t
 discover_cb(const char *di, const char *uri, oc_string_array_t types,
             oc_interface_mask_t interfaces, oc_server_handle_t *server)
 {
-    uint8_t local_endpoint[] = { 0, 0, 0, 0, 0, 0, 0, 1 };
-
-    /*
-     * Only care about discovery responses from localhost.
-     */
     if ((server->endpoint.oe.flags & IP) == 0) {
         return 0;
     }
-    if (memcmp(&server->endpoint.oe_ip.v6.address[8], local_endpoint, 8)) {
-        return 0;
-    }
-    printf("%d %s %s\n", oic_test_state, di, uri);
     switch (oic_test_state) {
     case 1:
         TEST_ASSERT(!strcmp(uri, "/oic/p"));
@@ -148,13 +144,13 @@ oic_test_next_step(struct os_event *ev)
          * No resources registered yet.
          */
         oc_do_ip_discovery(NULL, discover_cb);
-        os_callout_reset(&oic_test_timer, OS_TICKS_PER_SEC);
+        os_callout_reset(&oic_test_timer, OIC_TEST_FAIL_DLY);
         break;
     case 2:
         oc_add_device("/oic/d", "oic.d.light", "TestDev", "1.0", "1.1",
           NULL, NULL);
         oc_do_ip_discovery(NULL, discover_cb);
-        os_callout_reset(&oic_test_timer, OS_TICKS_PER_SEC);
+        os_callout_reset(&oic_test_timer, OIC_TEST_FAIL_DLY);
         break;
     case 3: {
         oc_resource_t *res = oc_new_resource("/light/test", 1, 0);
@@ -167,7 +163,7 @@ oic_test_next_step(struct os_event *ev)
         oc_resource_set_request_handler(res, OC_GET, oic_light_get);
         oc_add_resource(res);
         oc_do_ip_discovery(NULL, discover_cb);
-        os_callout_reset(&oic_test_timer, OS_TICKS_PER_SEC);
+        os_callout_reset(&oic_test_timer, OIC_TEST_FAIL_DLY);
         break;
     }
     default:
