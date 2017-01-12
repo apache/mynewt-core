@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <sysinit/sysinit.h>
 #include <hal/hal_flash.h>
-#include <mmc/mmc.h>
+#include <disk/disk.h>
 #include <flash_map/flash_map.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,6 +151,7 @@ int fatfs_to_vfs_error(FRESULT res)
 struct mounted_disk {
     char *disk_name;
     int disk_number;
+    struct disk_ops *dops;
 
     SLIST_ENTRY(mounted_disk) sc_next;
 };
@@ -185,6 +186,7 @@ drivenumber_from_disk(char *disk_name)
     new_disk = malloc(sizeof(struct mounted_disk));
     new_disk->disk_name = strdup(disk_name);
     new_disk->disk_number = disk_number;
+    new_disk->dops = disk_ops_for(disk_name);
     SLIST_INSERT_HEAD(&mounted_disks, new_disk, sc_next);
 
     return disk_number;
@@ -472,10 +474,17 @@ disk_status(BYTE pdrv)
     return RES_OK;
 }
 
-/* FIXME */
-static struct disk_ops *disk_ops_from_handle(BYTE pdrv)
+static struct disk_ops *dops_from_handle(BYTE pdrv)
 {
-    return &mmc_ops;
+    struct mounted_disk *sc;
+
+    SLIST_FOREACH(sc, &mounted_disks, sc_next) {
+        if (sc->disk_number == pdrv) {
+            return sc->dops;
+        }
+    }
+
+    return NULL;
 }
 
 DRESULT
@@ -490,7 +499,7 @@ disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
     address = (uint32_t) sector * 512;
     num_bytes = (uint32_t) count * 512;
 
-    dops = disk_ops_from_handle(pdrv);
+    dops = dops_from_handle(pdrv);
     if (dops == NULL) {
         return STA_NOINIT;
     }
@@ -515,7 +524,7 @@ disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
     address = (uint32_t) sector * 512;
     num_bytes = (uint32_t) count * 512;
 
-    dops = disk_ops_from_handle(pdrv);
+    dops = dops_from_handle(pdrv);
     if (dops == NULL) {
         return STA_NOINIT;
     }
