@@ -4,4 +4,16 @@ jQuery(document).ready(function($) {
       $('div.container-sidebar').toggleClass('-expanded-submenu');
     }
   });
+
+  getNavbarOffset = function() {
+    return $('#banner').height()
+  }
+
+  $('#navbar').affix({
+    offset: { top: getNavbarOffset }
+  })
+
+  $(window).resize(function() {
+    $('#navbar').affix('checkPosition')
+  })
 });

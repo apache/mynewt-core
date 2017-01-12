@@ -12,12 +12,9 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-copytemp:
-	ln -s /Users/gavin/zephyr-project/www.zephyrproject.org/sites _build/html/sites
+.PHONY: help Makefile htmldocs
 
-.PHONY: help Makefile htmldocs copytemp
-
-htmldocs: html copytemp
+htmldocs: html
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
