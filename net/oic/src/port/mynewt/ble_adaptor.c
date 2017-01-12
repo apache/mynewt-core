@@ -58,18 +58,22 @@ static const uint8_t oc_gatt_rsp_chr_uuid[16] = {
 };
 
 STATS_SECT_START(oc_ble_stats)
+    STATS_SECT_ENTRY(iframe)
     STATS_SECT_ENTRY(iseg)
     STATS_SECT_ENTRY(ibytes)
     STATS_SECT_ENTRY(ierr)
+    STATS_SECT_ENTRY(oframe)
     STATS_SECT_ENTRY(oseg)
     STATS_SECT_ENTRY(obytes)
     STATS_SECT_ENTRY(oerr)
 STATS_SECT_END
 static STATS_SECT_DECL(oc_ble_stats) oc_ble_stats;
 STATS_NAME_START(oc_ble_stats)
+    STATS_NAME(oc_ble_stats, iframe)
     STATS_NAME(oc_ble_stats, iseg)
     STATS_NAME(oc_ble_stats, ibytes)
     STATS_NAME(oc_ble_stats, ierr)
+    STATS_NAME(oc_ble_stats, oframe)
     STATS_NAME(oc_ble_stats, oseg)
     STATS_NAME(oc_ble_stats, obytes)
     STATS_NAME(oc_ble_stats, oerr)
@@ -143,6 +147,7 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
 
             if (coap_tcp_msg_size(hdr, sizeof(hdr)) <= pkt2->omp_len) {
                 STAILQ_REMOVE(&oc_ble_reass_q, pkt2, os_mbuf_pkthdr, omp_next);
+                STATS_INC(oc_ble_stats, iframe);
                 oc_recv_message(om2);
             }
             pkt1 = NULL;
@@ -176,6 +181,7 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
           coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
             STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt2, omp_next);
         } else {
+            STATS_INC(oc_ble_stats, iframe);
             oc_recv_message(om2);
         }
     }
@@ -332,7 +338,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
 
-    STATS_INC(oc_ble_stats, oseg);
+    STATS_INC(oc_ble_stats, oframe);
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
     mtu = ble_att_mtu(conn_handle);
@@ -348,6 +354,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
         return;
     }
     while (1) {
+        STATS_INC(oc_ble_stats, oseg);
         pkt = STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next);
 
         ble_gattc_notify_custom(conn_handle, oc_ble_coap_rsp_handle, m);
