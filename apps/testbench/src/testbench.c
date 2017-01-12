@@ -125,25 +125,10 @@ char runtest_token[RUNTEST_REQ_SIZE];
 static int testbench_runtests(struct os_event *ev);
 static void testbench_test_complete();
 
-#if 0
-void
-testbench_ts_init(void *arg)
-{
-    return;
-}
-
-void
-testbench_ts_pretest(void* arg)
-{
-    return;
-}
-
-void
-testbench_ts_posttest(void* arg)
-{
-    return;
-}
-#endif
+extern uint32_t stack1_size;
+extern uint32_t stack2_size;
+extern uint32_t stack3_size;
+extern uint32_t stack4_size;
 
 void
 testbench_ts_pass(char *msg, int msg_len, void *arg)
@@ -324,15 +309,19 @@ init_tasks(void)
      */
     stack1 = malloc(sizeof(os_stack_t) * TASK1_STACK_SIZE);
     assert(stack1);
+    stack1_size = TASK1_STACK_SIZE;
 
     stack2 = malloc(sizeof(os_stack_t) * TASK2_STACK_SIZE);
     assert(stack2);
+    stack2_size = TASK2_STACK_SIZE;
 
     stack3 = malloc(sizeof(os_stack_t) * TASK3_STACK_SIZE);
     assert(stack3);
+    stack3_size = TASK3_STACK_SIZE;
 
     stack4 = malloc(sizeof(os_stack_t) * TASK4_STACK_SIZE);
     assert(stack4);
+    stack4_size = TASK4_STACK_SIZE;
 
     teststack = malloc(sizeof(os_stack_t) * NMGRTASK_STACK_SIZE);
     assert(teststack);

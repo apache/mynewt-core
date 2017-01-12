@@ -30,6 +30,11 @@
 #include <sys/time.h>
 #include "os/os.h"
 
+uint32_t stack1_size;
+uint32_t stack2_size;
+uint32_t stack3_size;
+uint32_t stack4_size;
+
 /*
  * Most of this file is the driver for the kernel selftest running in sim
  * In the sim environment, we can initialize and restart mynewt at will

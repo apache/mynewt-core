@@ -363,12 +363,16 @@ os_mutex_test_init(void *arg)
 #if MYNEWT_VAL(SELFTEST)
     stack1 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack1);
+    stack1_size = MUTEX_TEST_STACK_SIZE;
     stack2 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack2);
+    stack2_size = MUTEX_TEST_STACK_SIZE;
     stack3 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack3);
+    stack3_size = MUTEX_TEST_STACK_SIZE;
     stack4 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack4);
+    stack4_size = MUTEX_TEST_STACK_SIZE;
 #endif
 }
 

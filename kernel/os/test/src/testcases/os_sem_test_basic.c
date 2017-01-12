@@ -26,6 +26,5 @@ TEST_CASE(os_sem_test_basic)
     TEST_ASSERT(err == OS_OK);
 
     os_task_init(&task1, "task1", sem_test_basic_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1,
-                 sizeof(stack1));
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, stack1_size);
 }

@@ -303,12 +303,16 @@ os_sem_test_init(void *arg)
 #if MYNEWT_VAL(SELFTEST)
     stack1 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
     assert(stack1);
+    stack1_size = SEM_TEST_STACK_SIZE;
     stack2 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
     assert(stack2);
+    stack2_size = SEM_TEST_STACK_SIZE;
     stack3 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
     assert(stack3);
+    stack3_size = SEM_TEST_STACK_SIZE;
     stack4 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
     assert(stack4);
+    stack4_size = SEM_TEST_STACK_SIZE;
 #endif
 }
 

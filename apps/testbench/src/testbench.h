@@ -146,17 +146,24 @@ struct os_task task3;
 struct os_task task4;
 #endif
 
+/*
+ * stacks are re-used to minimize space on the target
+ * Set the size to the biggest we'll need to run tests
+ * We assume that no more than 4 test tasks are needed
+ */
+#define TESTHANDLER_STACK_SIZE  OS_STACK_ALIGN(256)
+
 extern os_stack_t *stack1;
-#define TASK1_STACK_SIZE TESTTASK_STACK_SIZE
+#define TASK1_STACK_SIZE TESTHANDLER_STACK_SIZE
 
 extern os_stack_t *stack2;
-#define TASK2_STACK_SIZE TESTTASK_STACK_SIZE
+#define TASK2_STACK_SIZE TESTHANDLER_STACK_SIZE
 
 extern os_stack_t *stack3;
-#define TASK3_STACK_SIZE TESTTASK_STACK_SIZE
+#define TASK3_STACK_SIZE TESTHANDLER_STACK_SIZE
 
 extern os_stack_t *stack4;
-#define TASK4_STACK_SIZE TESTTASK_STACK_SIZE
+#define TASK4_STACK_SIZE TESTHANDLER_STACK_SIZE
 
 /*
  * Generic routines for testsuite and testcase callbacks
