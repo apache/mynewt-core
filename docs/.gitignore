@@ -1,2 +1,4 @@
+xml
 node_modules
 _build
+doxygen_*

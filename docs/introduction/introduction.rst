@@ -7,6 +7,7 @@ Introduction
     :maxdepth: 1
 
     test.rst
+    arduino_zero.md
 
 Welcome to Apache Mynewt
 ***************************
