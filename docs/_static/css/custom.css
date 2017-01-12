@@ -166,7 +166,7 @@ div.col-md-2 {
     padding-left: 0;
 }
 
-footer {
+footer div.container div.row {
     background-color: #F7F8FA;
     text-align: center;
     padding-top: 10px;

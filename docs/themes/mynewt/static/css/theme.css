@@ -3027,23 +3027,6 @@ input[type="radio"][disabled], input[type="checkbox"][disabled] {
   white-space: nowrap;
 }
 
-a {
-  color: #2980B9;
-  text-decoration: none;
-  cursor: pointer;
-}
-a:hover {
-  color: #3091d1;
-}
-a:visited {
-  color: #9B59B6;
-}
-
-html {
-  height: 100%;
-  overflow-x: hidden;
-}
-
 body {
   font-family: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
   font-weight: normal;

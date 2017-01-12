@@ -3,6 +3,11 @@
 Introduction
 ##################
 
+.. toctree::
+    :maxdepth: 1
+
+    test.rst
+
 Welcome to Apache Mynewt
 ***************************
 

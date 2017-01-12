@@ -1,14 +1,12 @@
 <!-- STARTS .container-sidebar -->
 <div class="container-sidebar col-xs-12 col-sm-3">
   <div class="sticky-container">
-    <span id="secondary-menu-button" class="">Documentation</span>
+    <span id="secondary-menu-button" class="">Mynewt Documentation</span>
+    {% include "searchbox.html" %}
     <div class="region region-sidebar">
-
-
-
       <div class="docs-menu">
       {% block menu %}
-        {% set toctree = toctree(maxdepth=3, collapse=True, includehidden=True) %}
+        {% set toctree = toctree(maxdepth=3, collapse=True, titles_only=True, includehidden=True) %}
         {% if toctree %}
             {{ toctree }}
         {% else %}
@@ -17,7 +15,6 @@
         {% endif %}
       {% endblock %}
       </div>
-    {% include "searchbox.html" %}
     </div>
   </div>
   <!-- ENDS STICKY CONTAINER -->

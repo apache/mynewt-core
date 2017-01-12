@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Mynewt'
-copyright = u'2017, The Apache Software Foundation'
+copyright = u'Copyright © 2017 The Apache Software Foundation, Licensed under the Apache License, Version 2.0 Apache and the Apache feather logo are trademarks of The Apache Software Foundation.'
 author = u'The Apache Software Foundation'
 
 # The version info for the project you're documenting, acts as replacement for
