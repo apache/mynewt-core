@@ -27,6 +27,7 @@
 
 #include <log/log.h>
 #include <mn_socket/mn_socket.h>
+#include <stats/stats.h>
 
 #include "port/oc_connectivity.h"
 #include "oic/oc_log.h"
@@ -51,12 +52,31 @@ static const struct mn_in6_addr coap_all_nodes_v6 = {
                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFD}
 };
 
+STATS_SECT_START(oc_ip_stats)
+    STATS_SECT_ENTRY(iframe)
+    STATS_SECT_ENTRY(ibytes)
+    STATS_SECT_ENTRY(ierr)
+    STATS_SECT_ENTRY(oucast)
+    STATS_SECT_ENTRY(omcast)
+    STATS_SECT_ENTRY(obytes)
+    STATS_SECT_ENTRY(oerr)
+STATS_SECT_END
+static STATS_SECT_DECL(oc_ip_stats) oc_ip_stats;
+STATS_NAME_START(oc_ip_stats)
+    STATS_NAME(oc_ip_stats, iframe)
+    STATS_NAME(oc_ip_stats, ibytes)
+    STATS_NAME(oc_ip_stats, ierr)
+    STATS_NAME(oc_ip_stats, oucast)
+    STATS_NAME(oc_ip_stats, omcast)
+    STATS_NAME(oc_ip_stats, obytes)
+    STATS_NAME(oc_ip_stats, oerr)
+STATS_NAME_END(oc_ip_stats)
 
 /* sockets to use for coap unicast and multicast */
-static struct mn_socket *ucast;
+static struct mn_socket *oc_ucast;
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-static struct mn_socket *mcast;
+static struct mn_socket *oc_mcast;
 #endif
 
 static void
@@ -78,6 +98,7 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
     to.msin6_scope_id = oe->oe_ip.v6.scope;
     memcpy(&to.msin6_addr, oe->oe_ip.v6.address, sizeof(to.msin6_addr));
 
+    STATS_INCN(oc_ip_stats, obytes, OS_MBUF_PKTLEN(m));
     if (is_mcast) {
         memset(&itf, 0, sizeof(itf));
         memset(&itf2, 0, sizeof(itf2));
@@ -88,7 +109,8 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
                 break;
             }
 
-            if (0 == (itf.mif_flags & MN_ITF_F_UP)) {
+            if ((itf.mif_flags & (MN_ITF_F_UP | MN_ITF_F_MULTICAST)) !=
+              (MN_ITF_F_UP | MN_ITF_F_MULTICAST)) {
                 continue;
             }
 
@@ -99,46 +121,52 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
 
             n = os_mbuf_dup(m);
             if (!n) {
+                STATS_INC(oc_ip_stats, oerr);
                 break;
             }
             to.msin6_scope_id = itf2.mif_idx;
-            rc = mn_sendto(ucast, n, (struct mn_sockaddr *) &to);
+            rc = mn_sendto(oc_ucast, n, (struct mn_sockaddr *) &to);
             if (rc != 0) {
                 OC_LOG_ERROR("Failed to send buffer %u on itf %d\n",
                              OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+                STATS_INC(oc_ip_stats, oerr);
                 os_mbuf_free_chain(n);
             }
+            memcpy(&itf2, &itf, sizeof(itf));
         }
         if (itf2.mif_idx) {
             to.msin6_scope_id = itf2.mif_idx;
-            rc = mn_sendto(ucast, m, (struct mn_sockaddr *) &to);
+            rc = mn_sendto(oc_ucast, m, (struct mn_sockaddr *) &to);
             if (rc != 0) {
                 OC_LOG_ERROR("Failed sending buffer %u on itf %d\n",
                              OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+                STATS_INC(oc_ip_stats, oerr);
                 os_mbuf_free_chain(m);
             }
+        } else {
+            os_mbuf_free_chain(m);
         }
     } else {
-        rc = mn_sendto(ucast, m, (struct mn_sockaddr *) &to);
+        rc = mn_sendto(oc_ucast, m, (struct mn_sockaddr *) &to);
         if (rc != 0) {
             OC_LOG_ERROR("Failed to send buffer %u on itf %d\n",
                          OS_MBUF_PKTHDR(m)->omp_len, to.msin6_scope_id);
+            STATS_INC(oc_ip_stats, oerr);
             os_mbuf_free_chain(m);
         }
-    }
-    if (rc) {
-        os_mbuf_free_chain(m);
     }
 }
 
 void
 oc_send_buffer_ip(struct os_mbuf *m)
 {
+    STATS_INC(oc_ip_stats, oucast);
     oc_send_buffer_ip_int(m, 0);
 }
 void
 oc_send_buffer_ip_mcast(struct os_mbuf *m)
 {
+    STATS_INC(oc_ip_stats, omcast);
     oc_send_buffer_ip_int(m, 1);
 }
 
@@ -157,6 +185,8 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
     }
     assert(OS_MBUF_IS_PKTHDR(n));
 
+    STATS_INC(oc_ip_stats, iframe);
+    STATS_INCN(oc_ip_stats, ibytes, OS_MBUF_PKTLEN(n));
     m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_ip));
     if (!m) {
         OC_LOG_ERROR("Could not allocate RX buffer\n");
@@ -177,6 +207,7 @@ oc_attempt_rx_ip_sock(struct mn_socket *rxsock)
 
     /* add the addr info to the message */
 rx_attempt_err:
+    STATS_INC(oc_ip_stats, ierr);
     os_mbuf_free_chain(n);
     return NULL;
 }
@@ -186,10 +217,10 @@ oc_attempt_rx_ip(void)
 {
     struct os_mbuf *m;
 
-    m = oc_attempt_rx_ip_sock(ucast);
+    m = oc_attempt_rx_ip_sock(oc_ucast);
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-    if (m == NULL ) {
-        m = oc_attempt_rx_ip_sock(mcast);
+    if (m == NULL) {
+        m = oc_attempt_rx_ip_sock(oc_mcast);
     }
 #endif
     return m;
@@ -211,13 +242,13 @@ oc_socks_readable(void *cb_arg, int err)
 void
 oc_connectivity_shutdown_ip(void)
 {
-    if (ucast) {
-        mn_close(ucast);
+    if (oc_ucast) {
+        mn_close(oc_ucast);
     }
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-    if (mcast) {
-        mn_close(mcast);
+    if (oc_mcast) {
+        mn_close(oc_mcast);
     }
 #endif
 
@@ -242,30 +273,31 @@ oc_connectivity_init_ip(void)
 
     memset(&itf, 0, sizeof(itf));
 
-    rc = mn_socket(&ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
-    if (rc != 0 || !ucast) {
+    rc = mn_socket(&oc_ucast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
+    if (rc != 0 || !oc_ucast) {
         OC_LOG_ERROR("Could not create oc unicast socket\n");
         return rc;
     }
-    mn_socket_set_cbs(ucast, ucast, &oc_sock_cbs);
+    mn_socket_set_cbs(oc_ucast, oc_ucast, &oc_sock_cbs);
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-    rc = mn_socket(&mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
-    if (rc != 0 || !mcast) {
-        mn_close(ucast);
+    rc = mn_socket(&oc_mcast, MN_PF_INET6, MN_SOCK_DGRAM, 0);
+    if (rc != 0 || !oc_mcast) {
+        mn_close(oc_ucast);
         OC_LOG_ERROR("Could not create oc multicast socket\n");
         return rc;
     }
-    mn_socket_set_cbs(mcast, mcast, &oc_sock_cbs);
+    mn_socket_set_cbs(oc_mcast, oc_mcast, &oc_sock_cbs);
 #endif
 
     sin.msin6_len = sizeof(sin);
     sin.msin6_family = MN_AF_INET6;
     sin.msin6_port = 0;
     sin.msin6_flowinfo = 0;
+    sin.msin6_scope_id = 0;
     memcpy(&sin.msin6_addr, nm_in6addr_any, sizeof(sin.msin6_addr));
 
-    rc = mn_bind(ucast, (struct mn_sockaddr *)&sin);
+    rc = mn_bind(oc_ucast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
         OC_LOG_ERROR("Could not bind oc unicast socket\n");
         goto oc_connectivity_init_err;
@@ -281,7 +313,8 @@ oc_connectivity_init_ip(void)
             break;
         }
 
-        if (0 == (itf.mif_flags & MN_ITF_F_UP)) {
+        if ((itf.mif_flags & (MN_ITF_F_UP | MN_ITF_F_MULTICAST)) !=
+          (MN_ITF_F_UP | MN_ITF_F_MULTICAST)) {
             continue;
         }
 
@@ -289,7 +322,7 @@ oc_connectivity_init_ip(void)
         join.mm_idx = itf.mif_idx;
         join.mm_family = MN_AF_INET6;
 
-        rc = mn_setsockopt(mcast, MN_SO_LEVEL, MN_MCAST_JOIN_GROUP, &join);
+        rc = mn_setsockopt(oc_mcast, MN_SO_LEVEL, MN_MCAST_JOIN_GROUP, &join);
         if (rc != 0) {
             continue;
         }
@@ -298,7 +331,7 @@ oc_connectivity_init_ip(void)
     }
 
     sin.msin6_port = htons(COAP_PORT_UNSECURED);
-    rc = mn_bind(mcast, (struct mn_sockaddr *)&sin);
+    rc = mn_bind(oc_mcast, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
         OC_LOG_ERROR("Could not bind oc multicast socket\n");
         goto oc_connectivity_init_err;
