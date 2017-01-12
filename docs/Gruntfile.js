@@ -1,6 +1,5 @@
 module.exports = function(grunt) {
 
-  // load all grunt tasks
   require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
   grunt.initConfig({
@@ -23,18 +22,17 @@ module.exports = function(grunt) {
     exec: {
       build_sphinx: {
         cmd: 'make htmldocs'
+      },
+      clean: {
+        cmd: 'make clean'
       }
-    },
-
-    clean: {
-      build: ["_build"]
     },
 
     watch: {
       /* Changes in docs, theme or static content */
       sphinx: {
-        files: ['**/*.rst', 'themes/**/*', '_static/**/*', 'conf.py'],
-        tasks: ['clean:build','exec:build_sphinx']
+        files: ['**/*.rst', '**/*.md', 'themes/**/*', '_static/**/*', 'conf.py'],
+        tasks: ['exec:clean','exec:build_sphinx']
       },
       /* live-reload if sphinx re-builds */
       livereload: {
@@ -42,9 +40,8 @@ module.exports = function(grunt) {
         options: { livereload: true }
       }
     }
-
   });
 
-  grunt.registerTask('default', ['clean:build','exec:build_sphinx','connect','open','watch']);
-  grunt.registerTask('build', ['clean:build','exec:build_sphinx']);
+  grunt.registerTask('default', ['exec:clean','exec:build_sphinx','connect','open','watch']);
+  grunt.registerTask('build',   ['exec:clean','exec:build_sphinx']);
 }
