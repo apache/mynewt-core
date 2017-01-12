@@ -5,6 +5,7 @@
 {%- set css_files = css_files + ['_static/css/sphinx_theme.css'] %}
 {%- set script_files = script_files + ['_static/js/bootstrap-3.0.3.min.js'] %}
 {%- set script_files = script_files + ['_static/js/affix.js'] %}
+{%- set script_files = script_files + ['_static/js/main.js'] %}
 {%- set url_root = pathto('', 1) %}
 {%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
 {%- if not embedded and docstitle %}
@@ -112,7 +113,7 @@
                     {% block body %}{% endblock %}
                    </div>
                   </div>
-                  <!-- {% include "navigation.html" %}  for ZEP-463 remove the prev/next links -->
+                  {% include "navigation.html" %}
                 </div>
               </div>
             </div>
