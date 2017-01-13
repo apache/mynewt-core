@@ -10,6 +10,7 @@ Building the Documentation
 
 Setup (MacOS)
 ---------------
+
 Note: This build toolchain is known to work on MacOS 10.11.
 
 Prerequisites: 
@@ -53,9 +54,9 @@ Toolchain Install:
    $ brew install doxygen
    
    $ sudo pip install recommonmark 
-   
+
 Build
-=====
+******
 
 .. code-block:: bash
 
