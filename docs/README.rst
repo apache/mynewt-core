@@ -14,14 +14,26 @@ Note: This build toolchain is known to work on MacOS 10.11.
 Prerequisites: 
 --------------
 
-* `Homebrew`_
-* Python
+* `homebrew`_
+
+::
+
+  $ brew --version
+  Homebrew 1.1.7
+
+* python
 
 ::
 
   $ python --version
   Python 2.7.10
 
+* `pip`_
+
+::
+
+  $ pip --version
+  pip 9.0.1 from /Library/Python/2.7/site-packages (python 2.7)
 
 
 
@@ -29,4 +41,4 @@ Prerequisites:
 .. _Sphinx: http://www.sphinx-doc.org/
 .. _Doxygen: http://www.doxygen.org/
 .. _Homebrew: http://brew.sh/
-
+.. _Pip: https://pip.readthedocs.io/en/stable/installing/
