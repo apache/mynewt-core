@@ -141,6 +141,10 @@ nmgr_rsp_frag_alloc(uint16_t frag_size, void *arg)
  * Sends a newtmgr response, fragmenting it as needed.  The supplied response
  * mbuf is consumed on success and in some failure cases.  If the mbuf is
  * consumed, the supplied pointer is set to NULL.
+ *
+ * This function prefers not to consume the supplied mbuf on failure.  The
+ * reason for this is to allow the caller to reuse the mbuf for an error
+ * response.
  */
 static int
 nmgr_rsp_tx(struct nmgr_transport *nt, struct os_mbuf **rsp, uint16_t mtu)
