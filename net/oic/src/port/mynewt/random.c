@@ -19,13 +19,16 @@
 #include "../oc_random.h"
 #include <stdlib.h>
 
-void oc_random_init(unsigned short seed) {
+void oc_random_init(unsigned short seed)
+{
     srand(seed);
 }
 
-unsigned short oc_random_rand(void) {
+unsigned short oc_random_rand(void)
+{
     return rand();
 }
 
-void oc_random_destroy(void) {
+void oc_random_destroy(void)
+{
 }
