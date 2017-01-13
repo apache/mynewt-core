@@ -31,7 +31,13 @@ extern "C" {
 /*
  * Testcases
  */
-TEST_CASE_DECL(oic_test_discover);
+TEST_CASE_DECL(oic_tests);
+
+extern struct os_eventq oic_tapp_evq;
+
+void oic_test_reset_tmo(void);
+
+void test_discovery(void);
 
 #ifdef __cplusplus
 }

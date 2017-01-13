@@ -23,7 +23,7 @@
 
 TEST_SUITE(oic_test_all)
 {
-    oic_test_discover();
+    oic_tests();
 }
 
 void
