@@ -11,9 +11,16 @@ Setup (MacOS)
 
 Note: This build toolchain is known to work on MacOS 10.11.
 
-Prerequisites: `Homebrew`_ (``brew``) installed.
+Prerequisites: 
+--------------
 
+* `Homebrew`_
+* Python
 
+::
+
+  $ python --version
+  Python 2.7.10
 
 
 
