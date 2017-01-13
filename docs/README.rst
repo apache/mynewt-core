@@ -8,7 +8,7 @@ This folder holds the documentation for the `Apache Mynewt`_ project. It is buil
 Building the Documentation
 ==========================
 
-Setup (MacOS)
+Setup
 ---------------
 
 Note: This build toolchain is known to work on MacOS 10.11.
