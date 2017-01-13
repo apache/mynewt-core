@@ -236,6 +236,7 @@ coap_notify_observers(oc_resource_t *resource,
              memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0));
          obs = SLIST_NEXT(obs, next)) {
         num_observers = obs->resource->num_observers;
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
         if (response.separate_response != NULL &&
           response_buf->code == oc_status_code(OC_STATUS_OK)) {
             struct coap_packet_rx req[1];
@@ -256,6 +257,7 @@ coap_notify_observers(oc_resource_t *resource,
                 response.separate_response->active = 1;
             }
         } else {
+#endif /* OC_SEPARATE_RESPONSES */
             OC_LOG_DEBUG("coap_notify_observers: notifying observer\n");
             coap_transaction_t *transaction = NULL;
             if (response_buf && (transaction = coap_new_transaction(
@@ -295,7 +297,9 @@ coap_notify_observers(oc_resource_t *resource,
                     coap_clear_transaction(transaction);
                 }
             }
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
         }
+#endif
     }
     if (m) {
         os_mbuf_free_chain(m);

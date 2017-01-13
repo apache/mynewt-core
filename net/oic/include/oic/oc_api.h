@@ -101,11 +101,13 @@ int oc_get_query_value(oc_request_t *request, const char *key, char **value);
 void oc_send_response(oc_request_t *request, oc_status_t response_code);
 void oc_ignore_request(oc_request_t *request);
 
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 void oc_indicate_separate_response(oc_request_t *request,
                                    oc_separate_response_t *response);
 void oc_set_separate_response_buffer(oc_separate_response_t *handle);
 void oc_send_separate_response(oc_separate_response_t *handle,
                                oc_status_t response_code);
+#endif
 
 int oc_notify_observers(oc_resource_t *resource);
 

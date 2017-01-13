@@ -41,6 +41,7 @@
 extern "C" {
 #endif
 
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 /* OIC stack headers */
 #include "oc_coap.h"
 #include "oic/oc_ri.h"
@@ -74,6 +75,8 @@ void coap_separate_clear(oc_separate_response_t *separate_response,
                          coap_separate_t *separate_store);
 
 void coap_separate_init(void);
+
+#endif
 
 #ifdef __cplusplus
 }

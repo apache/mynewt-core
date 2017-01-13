@@ -311,7 +311,9 @@ coap_engine_init(void)
     coap_init_connection();
     coap_transaction_init();
 #ifdef OC_SERVER
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
     coap_separate_init();
+#endif
     coap_observe_init();
 #endif
 }

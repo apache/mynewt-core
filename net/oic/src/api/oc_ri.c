@@ -594,7 +594,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
   }
 #endif
 
-#ifdef OC_SERVER
+#if defined(OC_SERVER) && MYNEWT_VAL(OC_SEPARATE_RESPONSES)
   /* The presence of a separate response handle here indicates a
    * successful handling of the request by a slow resource.
    */
@@ -613,7 +613,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
                              observe) == 1)
       response_obj.separate_response->active = 1;
   } else
-#endif
+#endif /* OC_SERVER && OC_SEPARATE_RESPONSES */
     if (response_buffer.code == OC_IGNORE) {
     /* If the server-side logic chooses to reject a request, it sends
      * below a response code of IGNORE, which results in the messaging

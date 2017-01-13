@@ -216,19 +216,20 @@ oc_interate_query(oc_request_t *request, char **key, int *key_len, char **value,
   return 1;
 }
 
-#if 0 /* XXXX fix this */
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 void
 oc_indicate_separate_response(oc_request_t *request,
                               oc_separate_response_t *response)
 {
-  request->response->separate_response = response;
-  oc_send_response(request, OC_STATUS_OK);
+    request->response->separate_response = response;
+    oc_send_response(request, OC_STATUS_OK);
 }
 
 void
 oc_set_separate_response_buffer(oc_separate_response_t *handle)
 {
-  oc_rep_new(handle->buffer, COAP_MAX_BLOCK_SIZE); // check
+    assert(handle->buffer);
+    oc_rep_new(handle->buffer); // check
 }
 
 void

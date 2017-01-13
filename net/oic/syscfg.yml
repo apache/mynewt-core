@@ -62,6 +62,10 @@ syscfg.defs:
         description: 'Platform payload size'
         value: 256
 
+    OC_SEPARATE_RESPONSES:
+        description: 'Support COAP delayed responses for slow resousrces.'
+        value: 1
+
     OC_LOGGING:
         description: 'Logging enabled'
         value: 0
