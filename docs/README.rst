@@ -65,6 +65,29 @@ Build
 
 You can preview the documentation at ``_build/html/index.html``.
 
+Live Reload
+----------------
+
+For the adventurous. You can preview changes to documentation with live reload as follows.
+
+Setup:
+*********
+
+.. code-block:: bash
+
+  $ brew install node
+  $ sudo npm install -g grunt
+  $ cd docs
+  $ npm install
+  
+Run:
+******
+
+.. code-block:: bash
+
+  $ grunt
+
+
 
 .. _Apache Mynewt: https://mynewt.apache.org/
 .. _Sphinx: http://www.sphinx-doc.org/
