@@ -20,8 +20,6 @@
 #include "port/oc_assert.h"
 #include "port/oc_clock.h"
 #include "port/oc_connectivity.h"
-#include "port/oc_connectivity.h"
-#include "port/oc_network_events_mutex.h"
 
 #include "oc_api.h"
 
@@ -54,7 +52,6 @@ oc_main_init(oc_handler_t *handler)
     oc_sec_dtls_init_context();
 #endif
 
-    oc_network_event_handler_mutex_init();
     ret = oc_connectivity_init();
     if (ret < 0) {
         goto err;
