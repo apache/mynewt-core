@@ -31,7 +31,6 @@ static uint8_t oc_rep_objects_area[OS_MEMPOOL_BYTES(EST_NUM_REP_OBJECTS,
       sizeof(oc_rep_t))];
 #endif
 
-static const CborEncoder g_empty;
 static struct os_mbuf *g_outm;
 CborEncoder g_encoder, root_map, links_array;
 CborError g_err;
@@ -60,7 +59,7 @@ oc_rep_finalize(void)
 void
 oc_rep_reset(void)
 {
-    g_encoder = g_empty;
+    memset(&g_encoder, 0, sizeof(g_encoder));
 }
 
 #ifdef OC_CLIENT
