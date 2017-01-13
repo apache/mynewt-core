@@ -95,6 +95,7 @@ oc_send_buffer_ip_int(struct os_mbuf *m, int is_mcast)
     to.msin6_len = sizeof(to);
     to.msin6_family = MN_AF_INET6;
     to.msin6_port = htons(oe->oe_ip.v6.port);
+    to.msin6_flowinfo = 0;
     to.msin6_scope_id = oe->oe_ip.v6.scope;
     memcpy(&to.msin6_addr, oe->oe_ip.v6.address, sizeof(to.msin6_addr));
 
