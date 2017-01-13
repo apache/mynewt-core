@@ -5,6 +5,15 @@ This folder holds the documentation for the `Apache Mynewt`_ project. It is buil
 
 .. contents::
 
+Writing Documentation
+=======================
+
+`Sphinx`_ use reStructuredText. http://www.sphinx-doc.org/en/1.5.1/rest.html.
+
+Embedding `Doxygen`_ generated source documentation is through the `Breathe`_ bridge. http://breathe.readthedocs.io/en/latest/.
+
+Linking to source uses `Sphinx`_'s C++ domain. http://www.sphinx-doc.org/en/1.5.1/domains.html#id2
+
 Building the Documentation
 ==========================
 
@@ -94,3 +103,4 @@ Run:
 .. _Doxygen: http://www.doxygen.org/
 .. _Homebrew: http://brew.sh/
 .. _Pip: https://pip.readthedocs.io/en/stable/installing/
+.. _Breathe: http://breathe.readthedocs.io/en/latest/
