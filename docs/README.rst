@@ -96,6 +96,8 @@ Run:
 
   $ grunt
 
+A browser should open and as you make changes it should update after a few seconds.
+
 
 
 .. _Apache Mynewt: https://mynewt.apache.org/
