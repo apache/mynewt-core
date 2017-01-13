@@ -9,12 +9,11 @@ Building the Documentation
 ==========================
 
 Setup (MacOS)
-*************
-
+---------------
 Note: This build toolchain is known to work on MacOS 10.11.
 
 Prerequisites: 
---------------
+***************
 
 * `homebrew`_
 
@@ -38,8 +37,8 @@ Prerequisites:
   pip 9.0.1 from /Library/Python/2.7/site-packages (python 2.7)
 
 
-Install
---------------
+Toolchain Install:
+*******************
 
 .. code-block:: bash
 
@@ -52,10 +51,18 @@ Install
    $ cd breathe && sudo -E python setup.py install && cd ..
    
    $ brew install doxygen
-   ....
+   
    $ sudo pip install recommonmark 
-   ....
+   
+Build
+=====
 
+.. code-block:: bash
+
+  $ cd docs
+  $ make htmldocs
+
+You can preview the documentation at ``_build/html/index.html``.
 
 
 .. _Apache Mynewt: https://mynewt.apache.org/
