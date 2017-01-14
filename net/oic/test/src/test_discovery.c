@@ -32,29 +32,15 @@ static struct os_event test_discovery_next_ev = {
 /*
  * Discovery.
  */
-static void
-test_discovery_init(void)
-{
-    oc_init_platform("TestPlatform", NULL, NULL);
-}
-
-static void
-test_discovery_client_requests(void)
-{
-}
-
-static oc_handler_t test_discovery_handler = {
-    .init = test_discovery_init,
-    .requests_entry = test_discovery_client_requests
-};
-
 static oc_discovery_flags_t
 test_discovery_cb(const char *di, const char *uri, oc_string_array_t types,
-                  oc_interface_mask_t interfaces, oc_server_handle_t *server)
+                  oc_interface_mask_t interfaces,
+                  struct oc_server_handle *server)
 {
     if ((server->endpoint.oe.flags & IP) == 0) {
         return 0;
     }
+    oic_test_set_endpoint(server);
     switch (test_discovery_state) {
     case 1:
         TEST_ASSERT(!strcmp(uri, "/oic/p"));
@@ -95,7 +81,6 @@ test_discovery_cb(const char *di, const char *uri, oc_string_array_t types,
             TEST_ASSERT(0);
         }
         if (seen_p && seen_d && seen_light) {
-            os_eventq_put(&oic_tapp_evq, &test_discovery_next_ev);
             /*
              * Done.
              */
@@ -158,13 +143,11 @@ test_discovery_next_step(struct os_event *ev)
 void
 test_discovery(void)
 {
-    oc_main_init(&test_discovery_handler);
     os_eventq_put(&oic_tapp_evq, &test_discovery_next_ev);
 
     while (!test_discovery_done) {
         os_eventq_run(&oic_tapp_evq);
     }
-    oc_main_shutdown();
 }
 
 

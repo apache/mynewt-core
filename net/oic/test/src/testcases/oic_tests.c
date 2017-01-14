@@ -21,6 +21,8 @@
 #include <os/os.h>
 #include <oic/oc_api.h>
 
+#include <mn_socket/mn_socket.h>
+
 #define OIC_TAPP_PRIO       9
 #define OIC_TAPP_STACK_SIZE 1024
 
@@ -33,6 +35,7 @@ static struct os_task oic_tapp;
 static os_stack_t oic_tapp_stack[OS_STACK_ALIGN(OIC_TAPP_STACK_SIZE)];
 struct os_eventq oic_tapp_evq;
 static struct os_callout oic_test_timer;
+static struct oc_server_handle oic_tgt;
 
 static void
 oic_test_timer_cb(struct os_event *ev)
@@ -47,9 +50,39 @@ oic_test_reset_tmo(void)
 }
 
 static void
+test_platform_init(void)
+{
+    oc_init_platform("TestPlatform", NULL, NULL);
+}
+
+static void
+test_handle_client_requests(void)
+{
+}
+
+static oc_handler_t test_handler = {
+    .init = test_platform_init,
+    .requests_entry = test_handle_client_requests
+};
+
+void
+oic_test_set_endpoint(struct oc_server_handle *ose)
+{
+    memcpy(&oic_tgt, ose, sizeof(*ose));
+}
+
+void
+oic_test_get_endpoint(struct oc_server_handle *ose)
+{
+    memcpy(ose, &oic_tgt, sizeof(*ose));
+}
+
+static void
 oic_test_handler(void *arg)
 {
+    oc_main_init(&test_handler);
     test_discovery();
+    test_getset();
     tu_restart();
 }
 

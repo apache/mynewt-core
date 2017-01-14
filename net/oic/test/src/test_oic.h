@@ -36,8 +36,12 @@ TEST_CASE_DECL(oic_tests);
 extern struct os_eventq oic_tapp_evq;
 
 void oic_test_reset_tmo(void);
+struct oc_server_handle;
+void oic_test_set_endpoint(struct oc_server_handle *);
+void oic_test_get_endpoint(struct oc_server_handle *);
 
 void test_discovery(void);
+void test_getset(void);
 
 #ifdef __cplusplus
 }
