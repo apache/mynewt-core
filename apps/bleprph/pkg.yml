@@ -23,6 +23,7 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
+    - boot/split
     - kernel/os 
     - sys/log
     - mgmt/newtmgr

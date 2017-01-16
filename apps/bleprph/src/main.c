@@ -27,6 +27,9 @@
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
+#include "hal/hal_system.h"
+#include "config/config.h"
+#include "split/split.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -41,7 +44,7 @@ struct log bleprph_log;
 
 /** bleprph task settings. */
 #define BLEPRPH_TASK_PRIO           1
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
+#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(428))
 
 struct os_eventq bleprph_evq;
 struct os_task bleprph_task;
@@ -269,11 +272,11 @@ main(void)
 {
     int rc;
 
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
-
     /* Initialize OS */
     sysinit();
+
+    /* Set initial BLE device address. */
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
     /* Initialize the bleprph log. */
     log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
@@ -305,6 +308,21 @@ main(void)
 
     /* Set the default eventq for packages that lack a dedicated task. */
     os_eventq_dflt_set(&bleprph_evq);
+
+    conf_load();
+
+    /* If this app is acting as the loader in a split image setup, jump into
+     * the second stage application instead of starting the OS.
+     */
+#if MYNEWT_VAL(SPLIT_LOADER)
+    {
+        void *entry;
+        rc = split_app_go(&entry, true);
+        if (rc == 0) {
+            hal_system_start(entry);
+        }
+    }
+#endif
 
     /* Start the OS */
     os_start();
