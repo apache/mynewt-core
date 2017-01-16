@@ -176,6 +176,9 @@ imgmgr_state_set_pending(int slot, int permanent)
             } else {
                 rc = split_write_split(SPLIT_MODE_TEST_LOADER);
             }
+            if (rc != 0) {
+                return MGMT_ERR_EUNKNOWN;
+            }
         }
     } else {
         /* Testing split app. */
