@@ -43,6 +43,11 @@ extern "C" {
  */
 #include <inttypes.h>
 
+/**
+ * Represents a named region of flash.
+ *
+ * NOTE: Also used to represent an individual sector.
+ */
 struct flash_area {
     uint8_t fa_id;
     uint8_t fa_device_id;
@@ -84,7 +89,13 @@ uint8_t flash_area_align(const struct flash_area *);
 /*
  * Given flash map index, return info about sectors within the area.
  */
-int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
+int flash_area_to_sectors(int id,
+                          int *out_first_sector_idx,
+                          int *out_num_sectors,
+                          struct flash_area *out_sectors);
+
+int flash_read_sector(int area_id, int sector_idx,
+                      struct flash_area *out_sect);
 
 int flash_area_id_from_image_slot(int slot);
 int flash_area_id_to_image_slot(int area_id);

@@ -62,12 +62,34 @@ flash_area_close(const struct flash_area *fa)
 }
 
 int
-flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
+flash_read_sector(int device_id, int sector_idx, struct flash_area *out_sect)
+{
+    const struct hal_flash *hf;
+    uint32_t start;
+    uint32_t size;
+
+    hf = hal_bsp_flash_dev(device_id);
+    hf->hf_itf->hff_sector_info(sector_idx, &start, &size);
+    if (out_sect != NULL) {
+        out_sect->fa_device_id = device_id;
+        out_sect->fa_off = start;
+        out_sect->fa_size = size;
+    }
+
+    return 0;
+}
+
+int
+flash_area_to_sectors(int id,
+                      int *out_first_sector_idx,
+                      int *out_num_sectors,
+                      struct flash_area *out_sectors)
 {
     const struct flash_area *fa;
     const struct hal_flash *hf;
     uint32_t start;
     uint32_t size;
+    int first;
     int rc;
     int i;
 
@@ -76,20 +98,25 @@ flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
         return rc;
     }
 
-    *cnt = 0;
+    first = 1;
+    *out_num_sectors = 0;
 
     hf = hal_bsp_flash_dev(fa->fa_device_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
         hf->hf_itf->hff_sector_info(i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
-            if (ret) {
-                ret->fa_id = id;
-                ret->fa_device_id = fa->fa_device_id;
-                ret->fa_off = start;
-                ret->fa_size = size;
-                ret++;
+            if (first && out_first_sector_idx != NULL) {
+                *out_first_sector_idx = i;
             }
-            (*cnt)++;
+            if (out_sectors != NULL) {
+                out_sectors->fa_id = id;
+                out_sectors->fa_device_id = fa->fa_device_id;
+                out_sectors->fa_off = start;
+                out_sectors->fa_size = size;
+                out_sectors++;
+            }
+            first = 0;
+            (*out_num_sectors)++;
         }
     }
     return 0;
