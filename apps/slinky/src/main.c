@@ -303,6 +303,11 @@ main(int argc, char **argv)
 
     log_reboot(hal_reset_cause());
 
+    init_tasks();
+
+    /* If this app is acting as the loader in a split image setup, jump into
+     * the second stage application instead of starting the OS.
+     */
 #if MYNEWT_VAL(SPLIT_LOADER)
     {
         void *entry;
@@ -312,8 +317,6 @@ main(int argc, char **argv)
         }
     }
 #endif
-
-    init_tasks();
 
     os_start();
 
