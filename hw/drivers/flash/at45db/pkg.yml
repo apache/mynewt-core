@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/flash
-pkg.description: Flash memories
+pkg.name: hw/drivers/flash/at45db
+pkg.description: AT45DB SPI flash driver
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
