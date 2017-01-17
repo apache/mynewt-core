@@ -1866,8 +1866,6 @@ bletiny_set_adv_data_help(void)
     help_cmd_byte_stream_exact_length("uuid128", 16);
     help_cmd_long("uuids128_is_complete");
     help_cmd_long_bounds("tx_pwr_lvl", INT8_MIN, INT8_MAX);
-    help_cmd_byte_stream_exact_length("device_class",
-                                      BLE_HS_ADV_DEVICE_CLASS_LEN);
     help_cmd_byte_stream_exact_length("slave_itvl_range",
                                       BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
     help_cmd_byte_stream("svc_data_uuid16");
@@ -1876,8 +1874,6 @@ bletiny_set_adv_data_help(void)
     help_cmd_uint16("appearance");
     help_cmd_extract("name");
     help_cmd_uint16("adv_itvl");
-    help_cmd_byte_stream_exact_length("le_addr", BLE_HS_ADV_LE_ADDR_LEN);
-    help_cmd_long_bounds("le_role", 0, 0xff);
     help_cmd_byte_stream("svc_data_uuid32");
     help_cmd_byte_stream("svc_data_uuid128");
     help_cmd_byte_stream("uri");
@@ -1893,7 +1889,6 @@ cmd_set_adv_data(void)
     static bssnz_t uint8_t
         public_tgt_addrs[CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS]
                         [BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN];
-    static bssnz_t uint8_t device_class[BLE_HS_ADV_DEVICE_CLASS_LEN];
     static bssnz_t uint8_t slave_itvl_range[BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN];
     static bssnz_t uint8_t
         svc_data_uuid16[CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN];
@@ -1901,7 +1896,6 @@ cmd_set_adv_data(void)
         svc_data_uuid32[CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN];
     static bssnz_t uint8_t
         svc_data_uuid128[CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN];
-    static bssnz_t uint8_t le_addr[BLE_HS_ADV_LE_ADDR_LEN];
     static bssnz_t uint8_t uri[CMD_ADV_DATA_URI_MAX_LEN];
     static bssnz_t uint8_t mfg_data[CMD_ADV_DATA_MFG_DATA_MAX_LEN];
     struct ble_hs_adv_fields adv_fields;
@@ -2041,17 +2035,6 @@ cmd_set_adv_data(void)
         return rc;
     }
 
-    rc = parse_arg_byte_stream_exact_length("device_class", device_class,
-                                            BLE_HS_ADV_DEVICE_CLASS_LEN);
-    if (rc == 0) {
-        adv_fields.device_class = device_class;
-    } else if (rc != ENOENT) {
-        console_printf("invalid 'device_class' parameter\n");
-        help_cmd_byte_stream_exact_length("device_class",
-                                          BLE_HS_ADV_DEVICE_CLASS_LEN);
-        return rc;
-    }
-
     rc = parse_arg_byte_stream_exact_length("slave_itvl_range",
                                             slave_itvl_range,
                                             BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
@@ -2120,25 +2103,6 @@ cmd_set_adv_data(void)
     } else if (rc != ENOENT) {
         console_printf("invalid 'adv_itvl' parameter\n");
         help_cmd_uint16("adv_itvl");
-        return rc;
-    }
-
-    rc = parse_arg_byte_stream_exact_length("le_addr", le_addr,
-                                            BLE_HS_ADV_LE_ADDR_LEN);
-    if (rc == 0) {
-        adv_fields.le_addr = le_addr;
-    } else if (rc != ENOENT) {
-        console_printf("invalid 'le_addr' parameter\n");
-        help_cmd_byte_stream_exact_length("le_addr", BLE_HS_ADV_LE_ADDR_LEN);
-        return rc;
-    }
-
-    adv_fields.le_role = parse_arg_long_bounds("le_role", 0, 0xff, &rc);
-    if (rc == 0) {
-        adv_fields.le_role_is_present = 1;
-    } else if (rc != ENOENT) {
-        console_printf("invalid 'le_role' parameter\n");
-        help_cmd_long_bounds("le_role", 0, 0xff);
         return rc;
     }
 

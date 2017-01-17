@@ -155,12 +155,6 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
         BLECENT_LOG(DEBUG, "    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
     }
 
-    if (fields->device_class != NULL) {
-        BLECENT_LOG(DEBUG, "    device_class=");
-        print_bytes(fields->device_class, BLE_HS_ADV_DEVICE_CLASS_LEN);
-        BLECENT_LOG(DEBUG, "\n");
-    }
-
     if (fields->slave_itvl_range != NULL) {
         BLECENT_LOG(DEBUG, "    slave_itvl_range=");
         print_bytes(fields->slave_itvl_range, BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
@@ -189,14 +183,6 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->adv_itvl_is_present) {
         BLECENT_LOG(DEBUG, "    adv_itvl=0x%04x\n", fields->adv_itvl);
-    }
-
-    if (fields->le_addr != NULL) {
-        BLECENT_LOG(DEBUG, "    le_addr=%s\n", addr_str(fields->le_addr));
-    }
-
-    if (fields->le_role_is_present) {
-        BLECENT_LOG(DEBUG, "    le_role=0x%02x\n", fields->le_role);
     }
 
     if (fields->svc_data_uuid32 != NULL) {

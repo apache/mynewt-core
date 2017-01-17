@@ -190,13 +190,6 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
     }
 
-    if (fields->device_class != NULL) {
-        console_printf("    device_class=");
-        print_bytes(fields->device_class,
-                            BLE_HS_ADV_DEVICE_CLASS_LEN);
-        console_printf("\n");
-    }
-
     if (fields->slave_itvl_range != NULL) {
         console_printf("    slave_itvl_range=");
         print_bytes(fields->slave_itvl_range,
@@ -227,16 +220,6 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->adv_itvl_is_present) {
         console_printf("    adv_itvl=0x%04x\n", fields->adv_itvl);
-    }
-
-    if (fields->le_addr != NULL) {
-        console_printf("    le_addr=");
-        print_addr(fields->le_addr);
-        console_printf("\n");
-    }
-
-    if (fields->le_role_is_present) {
-        console_printf("    le_role=0x%02x\n", fields->le_role);
     }
 
     if (fields->svc_data_uuid32 != NULL) {
