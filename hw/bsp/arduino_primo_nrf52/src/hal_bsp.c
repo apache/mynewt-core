@@ -53,7 +53,7 @@ static struct uart_dev os_bsp_bitbang_uart1;
 static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
     .ubc_rxpin = MYNEWT_VAL(UART_1_PIN_TX),
     .ubc_txpin = MYNEWT_VAL(UART_1_PIN_RX),
-    .ubc_cputimer_freq = MYNEWT_VAL(CLOCK_FREQ),
+    .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
 };
 #endif
 
@@ -168,9 +168,10 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
-    /* Set cputime to count at 1 usec increments */
-    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
     assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
