@@ -32,8 +32,8 @@ pkg.deps:
     - kernel/os
     - test/testutil
     - sys/flash_map
-    - sys/log
 pkg.req_apis:
+    - log
     - stats
 
 pkg.init_function: fatfs_pkg_init

@@ -28,4 +28,6 @@ pkg.deps:
     - fs/fatfs
     - hw/hal
     - sys/console/full
+    - sys/log/full
+    - sys/stats/stub
     - kernel/os

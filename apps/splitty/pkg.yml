@@ -35,6 +35,6 @@ pkg.deps:
     - sys/config
     - sys/console/full
     - sys/id
-    - sys/log
+    - sys/log/full
     - sys/shell
     - sys/stats/full

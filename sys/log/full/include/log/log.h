@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef __SYS_LOG_FULL_H__
+#define __SYS_LOG_FULL_H__
 
 #include "syscfg/syscfg.h"
 #include "log/ignore.h"
@@ -230,4 +230,4 @@ int log_nmgr_register_group(void);
 }
 #endif
 
-#endif /* __LOG_H__ */
+#endif /* __SYS_LOG_FULL_H__ */

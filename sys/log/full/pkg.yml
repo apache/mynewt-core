@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: sys/log
+pkg.name: sys/log/full
 pkg.description: Logging utilities for embedded systems.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
@@ -36,6 +36,9 @@ pkg.deps.LOG_CLI:
 
 pkg.deps.LOG_NEWTMGR:
     - mgmt/mgmt
+
+pkg.apis:
+    - log
 
 pkg.init_function: log_init
 pkg.init_stage: 1

@@ -35,7 +35,7 @@ pkg.deps:
     - sys/config
     - sys/console/full
     - sys/id
-    - sys/log
+    - sys/log/full
     - sys/stats/full
     - boot/split
 

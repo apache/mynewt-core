@@ -27,7 +27,8 @@ pkg.deps:
     - encoding/tinycbor
     - encoding/cborattr
     - test/testutil
-    - sys/stats/full
 
 pkg.deps.SELFTEST:
     - sys/console/stub
+    - sys/log/full
+    - sys/stats/full

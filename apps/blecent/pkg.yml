@@ -24,7 +24,6 @@ pkg.keywords:
 
 pkg.deps: 
     - kernel/os 
-    - sys/log
     - net/nimble/controller
     - net/nimble/host
     - net/nimble/host/services/gap
@@ -32,4 +31,6 @@ pkg.deps:
     - net/nimble/host/store/ram
     - net/nimble/transport/ram
     - sys/console/full
+    - sys/log/full
+    - sys/stats/full
     - libc/baselibc

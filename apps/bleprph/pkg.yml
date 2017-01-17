@@ -25,7 +25,7 @@ pkg.keywords:
 pkg.deps: 
     - boot/split
     - kernel/os 
-    - sys/log
+    - sys/log/full
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/ble
     - net/nimble/controller

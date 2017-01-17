@@ -26,10 +26,10 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - sys/log
     - net/oic
     - encoding/cborattr
     - sys/console/full
+    - sys/log/full
     - sys/stats/full
 
 pkg.deps.OC_TRANSPORT_SERIAL:

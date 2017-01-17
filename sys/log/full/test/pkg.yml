@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: sys/log/test
+pkg.name: sys/log/full/test
 pkg.type: unittest
 pkg.description: "Log unit tests."
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
@@ -24,7 +24,7 @@ pkg.keywords:
 
 pkg.deps: 
     - test/testutil
-    - sys/log
+    - sys/log/full
 
 pkg.deps.SELFTEST:
     - sys/console/stub
