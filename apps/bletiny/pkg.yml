@@ -33,4 +33,5 @@ pkg.deps:
     - net/nimble/host/store/ram
     - net/nimble/transport/ram
     - sys/console/full
+    - sys/stats/full
     - sys/shell

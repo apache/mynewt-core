@@ -34,7 +34,8 @@ pkg.deps:
     - test/testutil
     - sys/flash_map
     - sys/log
-    - sys/stats
+pkg.req_apis:
+    - stats
 
 pkg.init_function: nffs_pkg_init
 pkg.init_stage: 2

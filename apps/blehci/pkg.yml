@@ -25,6 +25,7 @@ pkg.keywords:
 pkg.deps:
     - libc/baselibc
     - sys/console/stub
+    - sys/stats/full
     - kernel/os
     - net/nimble/controller
     - net/nimble/transport/uart

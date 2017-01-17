@@ -33,5 +33,5 @@ pkg.deps:
     - sys/shell
     - sys/config
     - sys/log
-    - sys/stats
+    - sys/stats/full
 pkg.cflags: -DBLETEST

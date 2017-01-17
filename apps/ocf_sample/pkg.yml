@@ -30,6 +30,7 @@ pkg.deps:
     - net/oic
     - encoding/cborattr
     - sys/console/full
+    - sys/stats/full
 
 pkg.deps.OC_TRANSPORT_SERIAL:
     - sys/shell

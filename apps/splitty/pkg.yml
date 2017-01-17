@@ -37,4 +37,4 @@ pkg.deps:
     - sys/id
     - sys/log
     - sys/shell
-    - sys/stats
+    - sys/stats/full

@@ -28,7 +28,8 @@ pkg.deps:
     - "encoding/tinycbor"
     - "kernel/os"
     - "sys/log"
-    - "sys/stats"
+pkg.req_apis:
+    - stats
 
 pkg.deps.OC_TRANSPORT_GATT:
     - "net/nimble/host"
