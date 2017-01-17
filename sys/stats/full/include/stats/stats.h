@@ -66,6 +66,9 @@ STATS_SECT_DECL(__name) {                   \
 #define STATS_SECT_ENTRY16(__var) uint16_t STATS_SECT_VAR(__var);
 #define STATS_SECT_ENTRY32(__var) uint32_t STATS_SECT_VAR(__var);
 #define STATS_SECT_ENTRY64(__var) uint64_t STATS_SECT_VAR(__var);
+#define STATS_RESET(__var)                                              \
+    memset((uint8_t *)&__var + sizeof(struct stats_hdr), 0,             \
+           sizeof(__var) - sizeof(struct stats_hdr))
 
 #define STATS_SIZE_INIT_PARMS(__sectvarname, __size)                        \
     (__size),                                                               \
@@ -107,7 +110,6 @@ const struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
 
 #endif /* MYNEWT_VAL(STATS_NAME) */
 
-void stats_module_init(void);
 int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
     const struct stats_name_map *map, uint8_t map_cnt);
 int stats_register(char *name, struct stats_hdr *shdr);
