@@ -308,7 +308,7 @@ coap_init_connection(void)
     /* initialize transaction ID */
     current_mid = oc_random_rand();
 
-    stats_init_and_reg(STATS_HDR(coap_stats),
+    (void)stats_init_and_reg(STATS_HDR(coap_stats),
       STATS_SIZE_INIT_PARMS(coap_stats, STATS_SIZE_32),
       STATS_NAME_INIT_PARMS(coap_stats), "coap");
 }

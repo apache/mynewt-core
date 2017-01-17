@@ -67,7 +67,7 @@ STATS_SECT_START(oc_ble_stats)
     STATS_SECT_ENTRY(obytes)
     STATS_SECT_ENTRY(oerr)
 STATS_SECT_END
-static STATS_SECT_DECL(oc_ble_stats) oc_ble_stats;
+STATS_SECT_DECL(oc_ble_stats) oc_ble_stats;
 STATS_NAME_START(oc_ble_stats)
     STATS_NAME(oc_ble_stats, iframe)
     STATS_NAME(oc_ble_stats, iseg)
@@ -233,7 +233,7 @@ oc_ble_coap_gatt_srv_init(void)
         return rc;
     }
 #endif
-    stats_init_and_reg(STATS_HDR(oc_ble_stats),
+    (void)stats_init_and_reg(STATS_HDR(oc_ble_stats),
       STATS_SIZE_INIT_PARMS(oc_ble_stats, STATS_SIZE_32),
       STATS_NAME_INIT_PARMS(oc_ble_stats), "oc_ble");
     return 0;
