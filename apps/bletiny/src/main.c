@@ -129,6 +129,7 @@ static void
 bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint8_t *u8p;
+    ble_uuid_any_t uuid;
     int i;
 
     if (fields->flags_is_present) {
@@ -175,7 +176,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
                        fields->uuids128_is_complete ? "" : "in");
         u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            print_uuid(u8p);
+            ble_uuid_init_from_buf(&uuid, u8p, 16);
+            print_uuid(&uuid.u);
             console_printf(" ");
             u8p += 16;
         }
@@ -1125,14 +1127,14 @@ bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
 
 int
 bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                           uint16_t end_handle, uint8_t *uuid128)
+                           uint16_t end_handle, const ble_uuid_t *uuid)
 {
     intptr_t svc_start_handle;
     int rc;
 
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
-                                     uuid128, bletiny_on_disc_c,
+                                     uuid, bletiny_on_disc_c,
                                      (void *)svc_start_handle);
     return rc;
 }
@@ -1147,11 +1149,11 @@ bletiny_disc_svcs(uint16_t conn_handle)
 }
 
 int
-bletiny_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
+bletiny_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid)
 {
     int rc;
 
-    rc = ble_gattc_disc_svc_by_uuid(conn_handle, uuid128,
+    rc = ble_gattc_disc_svc_by_uuid(conn_handle, uuid,
                                     bletiny_on_disc_s, NULL);
     return rc;
 }
@@ -1235,11 +1237,11 @@ bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle, uint16_t offset)
 
 int
 bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                      uint16_t end_handle, uint8_t *uuid128)
+                      uint16_t end_handle, const ble_uuid_t *uuid)
 {
     int rc;
 
-    rc = ble_gattc_read_by_uuid(conn_handle, start_handle, end_handle, uuid128,
+    rc = ble_gattc_read_by_uuid(conn_handle, start_handle, end_handle, uuid,
                                 bletiny_on_read, NULL);
     return rc;
 }

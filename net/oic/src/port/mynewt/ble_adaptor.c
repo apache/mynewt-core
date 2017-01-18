@@ -38,24 +38,20 @@
 
 /* service UUID */
 /* ADE3D529-C784-4F63-A987-EB69F70EE816 */
-const uint8_t oc_gatt_svc_uuid[16] = {
-    0x16, 0xe8, 0x0e, 0xf7, 0x69, 0xeb, 0x87, 0xa9,
-    0x63, 0x4f, 0x84, 0xc7, 0x29, 0xd5, 0xe3, 0xad
-};
+static const ble_uuid128_t oc_gatt_svc_uuid =
+    BLE_UUID128_INIT(OC_GATT_SERVICE_UUID);
 
 /* request characteristic UUID */
 /* AD7B334F-4637-4B86-90B6-9D787F03D218 */
-static const uint8_t oc_gatt_req_chr_uuid[16] = {
-    0x18, 0xd2, 0x03, 0x7f, 0x78, 0x9d, 0xb6, 0x90,
-    0x86, 0x4b, 0x37, 0x46, 0x4f, 0x33, 0x7b, 0xad
-};
+static const ble_uuid128_t oc_gatt_req_chr_uuid =
+    BLE_UUID128_INIT(0x18, 0xd2, 0x03, 0x7f, 0x78, 0x9d, 0xb6, 0x90,
+                     0x86, 0x4b, 0x37, 0x46, 0x4f, 0x33, 0x7b, 0xad);
 
 /* response characteristic UUID */
 /* E9241982-4580-42C4-8831-95048216B256 */
-static const uint8_t oc_gatt_rsp_chr_uuid[16] = {
-    0x56, 0xb2, 0x16, 0x82, 0x04, 0x95, 0x31, 0x88,
-    0xc4, 0x42, 0x80, 0x45, 0x82, 0x19, 0x24, 0xe9
-};
+static const ble_uuid128_t oc_gatt_rsp_chr_uuid =
+    BLE_UUID128_INIT(0x56, 0xb2, 0x16, 0x82, 0x04, 0x95, 0x31, 0x88,
+                     0xc4, 0x42, 0x80, 0x45, 0x82, 0x19, 0x24, 0xe9);
 
 STATS_SECT_START(oc_ble_stats)
     STATS_SECT_ENTRY(iframe)
@@ -92,18 +88,18 @@ static int oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
         /* Service: newtmgr */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = (void *)oc_gatt_svc_uuid,
+        .uuid = &oc_gatt_svc_uuid.u,
         .characteristics = (struct ble_gatt_chr_def[]) {
             {
                 /* Characteristic: Request */
-                .uuid128 = (void *)oc_gatt_req_chr_uuid,
+                .uuid = &oc_gatt_req_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
                 .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP |
                          BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &oc_ble_coap_req_handle,
             },{
                 /* Characteristic: Response */
-                .uuid128 = (void *)oc_gatt_rsp_chr_uuid,
+                .uuid = &oc_gatt_rsp_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
                 .flags = BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &oc_ble_coap_rsp_handle,

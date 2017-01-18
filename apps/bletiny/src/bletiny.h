@@ -115,7 +115,7 @@ int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val,
 int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);
-int parse_arg_uuid(char *name, uint8_t *dst_uuid128);
+int parse_arg_uuid(char *name, ble_uuid_any_t *uuid);
 int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
@@ -128,11 +128,11 @@ void bletiny_lock(void);
 void bletiny_unlock(void);
 int bletiny_exchange_mtu(uint16_t conn_handle);
 int bletiny_disc_svcs(uint16_t conn_handle);
-int bletiny_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128);
+int bletiny_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid);
 int bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                               uint16_t end_handle, uint8_t *uuid128);
+                               uint16_t end_handle, const ble_uuid_t *uuid);
 int bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
                            uint16_t chr_end_handle);
 int bletiny_disc_full(uint16_t conn_handle);
@@ -142,7 +142,7 @@ int bletiny_read(uint16_t conn_handle, uint16_t attr_handle);
 int bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle,
                       uint16_t offset);
 int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                          uint16_t end_handle, uint8_t *uuid128);
+                          uint16_t end_handle, const ble_uuid_t *uuid);
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                        int num_attr_handles);
 int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
@@ -202,7 +202,7 @@ int gatt_svr_init(void);
 void print_bytes(const uint8_t *bytes, int len);
 void print_mbuf(const struct os_mbuf *om);
 void print_addr(const void *addr);
-void print_uuid(const void *uuid128);
+void print_uuid(const ble_uuid_t *uuid);
 int svc_is_empty(const struct bletiny_svc *svc);
 uint16_t chr_end_handle(const struct bletiny_svc *svc,
                         const struct bletiny_chr *chr);

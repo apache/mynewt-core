@@ -448,9 +448,11 @@ parse_arg_mac(char *name, uint8_t *dst)
 }
 
 int
-parse_arg_uuid(char *str, uint8_t *dst_uuid128)
+parse_arg_uuid(char *str, ble_uuid_any_t *uuid)
 {
     uint16_t uuid16;
+    uint8_t val[16];
+    int len;
     int rc;
 
     uuid16 = parse_arg_uint16_peek(str, &rc);
@@ -460,18 +462,27 @@ parse_arg_uuid(char *str, uint8_t *dst_uuid128)
         return ENOENT;
 
     case 0:
-        rc = ble_uuid_16_to_128(uuid16, dst_uuid128);
+        len = 2;
+        val[0] = uuid16;
+        val[1] = uuid16 >> 8;
         parse_arg_extract(str);
-        if (rc != 0) {
-            return EINVAL;
-        } else {
-            return 0;
-        }
+        break;
 
     default:
-        rc = parse_arg_byte_stream_exact_length(str, dst_uuid128, 16);
-        parse_reverse_bytes(dst_uuid128, 16);
-        return rc;
+        len = 16;
+        rc = parse_arg_byte_stream_exact_length(str, val, 16);
+        if (rc != 0) {
+            return EINVAL;
+        }
+        parse_reverse_bytes(val, 16);
+        break;
+    }
+
+    rc = ble_uuid_init_from_buf(uuid, val, len);
+    if (rc != 0) {
+        return EINVAL;
+    } else {
+        return 0;
     }
 }
 
