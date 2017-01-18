@@ -33,6 +33,7 @@ oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
     char tmp[46 + 6];
 
     (void)tmp;
+    (void)str;
 
     switch (oe->oe.flags) {
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
@@ -73,6 +74,7 @@ oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char)
     int i;
     uint8_t *p = (uint8_t *)addr;
 
+    (void)p;
     log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "[");
     for (i = 0; i < len; i++) {
         if (print_char) {
