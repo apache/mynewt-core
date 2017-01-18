@@ -33,7 +33,14 @@ extern "C" {
 #define LOG_ERROR(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 
-#define LOG_SYSLEVEL    ((uint8_t)0xff)
+#define LOG_LEVEL_DEBUG         0
+#define LOG_LEVEL_INFO          1
+#define LOG_LEVEL_WARN          2
+#define LOG_LEVEL_ERROR         3
+#define LOG_LEVEL_CRITICAL      4
+/* Up to 7 custom log levels. */
+#define LOG_LEVEL_MAX           UINT8_MAX
+#define LOG_SYSLEVEL            UINT8_MAX
 
 struct log {
 };
