@@ -25,7 +25,6 @@ pkg.keywords:
 pkg.deps: 
     - boot/split
     - kernel/os 
-    - sys/log/full
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/ble
     - net/nimble/controller
@@ -36,6 +35,8 @@ pkg.deps:
     - net/nimble/host/store/ram
     - net/nimble/transport/ram
     - sys/console/full
+    - sys/log/full
+    - sys/stats/full
     - libc/baselibc
     - sys/sysinit
     - sys/id
