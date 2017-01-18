@@ -18,10 +18,6 @@
 #
 
 syscfg.defs:
-    CLOCK_FREQ:
-        description: 'TBD'
-        value:  1000000
-
     UART_0:
         description: 'TBD'
         value:  1

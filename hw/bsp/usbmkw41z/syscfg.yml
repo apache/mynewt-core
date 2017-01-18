@@ -24,10 +24,6 @@ syscfg.defs:
         description: 'TBD'
         value: 1
 
-    CLOCK_FREQ:
-        description: 'TBD'
-        value: 1000000
-
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

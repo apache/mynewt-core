@@ -48,7 +48,7 @@ static struct uart_dev os_bsp_bitbang_uart1;
 static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
     .ubc_rxpin = MYNEWT_VAL(UART_1_PIN_TX),
     .ubc_txpin = MYNEWT_VAL(UART_1_PIN_RX),
-    .ubc_cputimer_freq = MYNEWT_VAL(CLOCK_FREQ),
+    .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
 };
 #endif
 
