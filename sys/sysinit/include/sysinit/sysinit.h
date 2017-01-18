@@ -37,13 +37,14 @@ extern uint8_t sysinit_active;
 void sysinit_start(void);
 void sysinit_end(void);
 
-typedef void sysinit_panic_fn(const char *file, int line);
+typedef void sysinit_panic_fn(const char *file, int line, const char *func,
+                              const char *expr);
 
 extern sysinit_panic_fn *sysinit_panic_cb;
 
 void sysinit_panic_set(sysinit_panic_fn *panic_fn);
 
-#define SYSINIT_PANIC() sysinit_panic_cb(__FILE__, __LINE__)
+#define SYSINIT_PANIC() sysinit_panic_cb(NULL, 0, NULL, NULL)
 
 #define SYSINIT_PANIC_ASSERT(rc) do \
 {                                   \

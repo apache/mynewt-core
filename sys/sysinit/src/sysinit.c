@@ -22,16 +22,9 @@
 #include "os/os_fault.h"
 #include "sysinit/sysinit.h"
 
-static void sysinit_panic_dflt(const char *file, int line);
-sysinit_panic_fn *sysinit_panic_cb = sysinit_panic_dflt;
+sysinit_panic_fn *sysinit_panic_cb = __assert_func;
 
 uint8_t sysinit_active;
-
-static void
-sysinit_panic_dflt(const char *file, int line)
-{
-    __assert_func(file, line, NULL, NULL);
-}
 
 /**
  * Sets the sysinit panic function; i.e., the function which executes when
