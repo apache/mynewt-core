@@ -134,7 +134,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
             }, {
                 .uuid128 = PTS_UUID(PTS_CHR_WRITE_NO_RSP),
                 .access_cb = gatt_svr_access_test,
-                .flags = BLE_GATT_CHR_F_WRITE_NO_RSP,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE_NO_RSP,
             }, {
                 .uuid128 = PTS_UUID(PTS_CHR_READ_WRITE),
                 .access_cb = gatt_svr_access_test,
@@ -387,11 +387,16 @@ gatt_svr_access_test(uint16_t conn_handle, uint16_t attr_handle,
     case PTS_CHR_WRITE:
     case PTS_CHR_RELIABLE_WRITE:
     case PTS_CHR_WRITE_NO_RSP:
-        assert(ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR);
-        rc = gatt_svr_chr_write(ctxt->om,0,
-                                sizeof gatt_svr_pts_static_val,
-                                &gatt_svr_pts_static_val, NULL);
-        return rc;
+        if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+            rc = gatt_svr_chr_write(ctxt->om,0,
+                                    sizeof gatt_svr_pts_static_val,
+                                    &gatt_svr_pts_static_val, NULL);
+            return rc;
+        } else if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
+            rc = os_mbuf_append(ctxt->om, &gatt_svr_pts_static_val,
+                                sizeof gatt_svr_pts_static_val);
+            return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+        }
 
     case PTS_CHR_READ_WRITE:
     case PTS_CHR_READ_WRITE_ENC:
