@@ -29,9 +29,10 @@
 /*
  * How long to wait before declaring discovery process failure.
  */
-#define OIC_TEST_FAIL_DLY   (OS_TICKS_PER_SEC * 2)
+#define OIC_TEST_FAIL_DLY   (OS_TICKS_PER_SEC * 4)
 
 static struct os_task oic_tapp;
+static const char *oic_test_phase;
 static os_stack_t oic_tapp_stack[OS_STACK_ALIGN(OIC_TAPP_STACK_SIZE)];
 struct os_eventq oic_tapp_evq;
 static struct os_callout oic_test_timer;
@@ -40,12 +41,13 @@ static struct oc_server_handle oic_tgt;
 static void
 oic_test_timer_cb(struct os_event *ev)
 {
-    TEST_ASSERT_FATAL(0);
+    TEST_ASSERT_FATAL(0, "test_phase: %s\n", oic_test_phase ? oic_test_phase : "unknwn");
 }
 
 void
-oic_test_reset_tmo(void)
+oic_test_reset_tmo(const char *phase)
 {
+    oic_test_phase = phase;
     os_callout_reset(&oic_test_timer, OIC_TEST_FAIL_DLY);
 }
 

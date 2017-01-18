@@ -112,13 +112,13 @@ test_discovery_next_step(struct os_event *ev)
          * No resources registered yet.
          */
         oc_do_ip_discovery(NULL, test_discovery_cb);
-        oic_test_reset_tmo();
+        oic_test_reset_tmo("1st discovery");
         break;
     case 2:
         oc_add_device("/oic/d", "oic.d.light", "TestDev", "1.0", "1.1",
           NULL, NULL);
         oc_do_ip_discovery(NULL, test_discovery_cb);
-        oic_test_reset_tmo();
+        oic_test_reset_tmo("2nd discovery");
         break;
     case 3: {
         oc_resource_t *res = oc_new_resource("/light/test", 1, 0);
@@ -131,7 +131,7 @@ test_discovery_next_step(struct os_event *ev)
         oc_resource_set_request_handler(res, OC_GET, test_discovery_get);
         oc_add_resource(res);
         oc_do_ip_discovery(NULL, test_discovery_cb);
-        oic_test_reset_tmo();
+        oic_test_reset_tmo("3rd discovery");
         break;
     }
     default:

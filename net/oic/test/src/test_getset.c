@@ -102,7 +102,7 @@ test_getset_next_step(struct os_event *ev)
         b_rc = oc_do_get("/getset", &server, NULL, test_getset_rsp1, LOW_QOS);
         TEST_ASSERT_FATAL(b_rc == true);
 
-        oic_test_reset_tmo();
+        oic_test_reset_tmo("getset");
         break;
     case 4:
         test_getset_done = 1;
