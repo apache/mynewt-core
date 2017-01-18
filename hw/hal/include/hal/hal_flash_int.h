@@ -29,12 +29,18 @@ extern "C" {
 /*
  * API that flash driver has to implement.
  */
+struct hal_flash;
+
 struct hal_flash_funcs {
-    int (*hff_read)(uint32_t address, void *dst, uint32_t num_bytes);
-    int (*hff_write)(uint32_t address, const void *src, uint32_t num_bytes);
-    int (*hff_erase_sector)(uint32_t sector_address);
-    int (*hff_sector_info)(int idx, uint32_t *address, uint32_t *size);
-    int (*hff_init)(void);
+    int (*hff_read)(const struct hal_flash *dev, uint32_t address, void *dst,
+            uint32_t num_bytes);
+    int (*hff_write)(const struct hal_flash *dev, uint32_t address,
+            const void *src, uint32_t num_bytes);
+    int (*hff_erase_sector)(const struct hal_flash *dev,
+            uint32_t sector_address);
+    int (*hff_sector_info)(const struct hal_flash *dev, int idx,
+            uint32_t *address, uint32_t *size);
+    int (*hff_init)(const struct hal_flash *dev);
 };
 
 struct hal_flash {
@@ -42,7 +48,7 @@ struct hal_flash {
     uint32_t hf_base_addr;
     uint32_t hf_size;
     int hf_sector_cnt;
-    int hf_align;		/* Alignment requirement. 1 if unrestricted. */
+    int hf_align;       /* Alignment requirement. 1 if unrestricted. */
 };
 
 /*

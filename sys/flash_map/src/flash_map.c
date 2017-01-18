@@ -103,7 +103,7 @@ flash_area_to_sectors(int id,
 
     hf = hal_bsp_flash_dev(fa->fa_device_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        hf->hf_itf->hff_sector_info(i, &start, &size);
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
             if (first && out_first_sector_idx != NULL) {
                 *out_first_sector_idx = i;

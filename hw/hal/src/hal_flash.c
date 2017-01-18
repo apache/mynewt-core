@@ -36,7 +36,7 @@ hal_flash_init(void)
         if (!hf) {
             break;
         }
-        if (hf->hf_itf->hff_init()) {
+        if (hf->hf_itf->hff_init(hf)) {
             rc = -1;
         }
     }
@@ -61,7 +61,7 @@ hal_flash_sector_size(const struct hal_flash *hf, int sec_idx)
     uint32_t size;
     uint32_t start;
 
-    if (hf->hf_itf->hff_sector_info(sec_idx, &start, &size)) {
+    if (hf->hf_itf->hff_sector_info(hf, sec_idx, &start, &size)) {
         return 0;
     }
     return size;
@@ -89,7 +89,7 @@ hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
       hal_flash_check_addr(hf, address + num_bytes)) {
         return -1;
     }
-    return hf->hf_itf->hff_read(address, dst, num_bytes);
+    return hf->hf_itf->hff_read(hf, address, dst, num_bytes);
 }
 
 int
@@ -106,7 +106,7 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
       hal_flash_check_addr(hf, address + num_bytes)) {
         return -1;
     }
-    return hf->hf_itf->hff_write(address, src, num_bytes);
+    return hf->hf_itf->hff_write(hf, address, src, num_bytes);
 }
 
 int
@@ -121,7 +121,7 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
     if (hal_flash_check_addr(hf, sector_address)) {
         return -1;
     }
-    return hf->hf_itf->hff_erase_sector(sector_address);
+    return hf->hf_itf->hff_erase_sector(hf, sector_address);
 }
 
 int
@@ -152,7 +152,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     }
 
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        rc = hf->hf_itf->hff_sector_info(i, &start, &size);
+        rc = hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         assert(rc == 0);
         end_area = start + size;
         if (address < end_area && end > start) {
@@ -160,7 +160,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
              * If some region of eraseable area falls inside sector,
              * erase the sector.
              */
-            if (hf->hf_itf->hff_erase_sector(start)) {
+            if (hf->hf_itf->hff_erase_sector(hf, start)) {
                 return -1;
             }
         }

@@ -21,7 +21,8 @@
 
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
-//#include <flash/flash.h>
+#include <hal/hal_flash.h>
+#include <hal/hal_flash_int.h>
 #include <at45db/at45db.h>
 
 #include <string.h>
@@ -60,10 +61,6 @@
 #define PAGE_ERASE                  0x81
 #define BLOCK_ERASE                 0x50
 
-
-#define PAGE_ERASE                  0x81
-#define BLOCK_ERASE                 0x50
-
 #define STATUS_REGISTER             0x57
 
 #define STATUS_BUSY                 (1 << 7)
@@ -71,57 +68,35 @@
 
 #define MAX_PAGE_SIZE               528
 
-/**
- * Reading memory (MEM_READ):
- * < r, PA12-6 >
- * < PA5-0, BA9-8 >
- * < BA7-0 >
- * < 8 don't care bits >
- * < 8 don't care bits >
- * < 8 don't care bits >
- * < 8 don't care bits >
- *
- * Reading a buffer (BUFx_READ):
- * < 8 don't care bits >
- * < 6 don't care bits, A9-8 >
- * < A7-0 >
- * < 8 don't care bits >
- *
- * Memory to buffer copy (MEM_TO_BUFx_TRANSFER):
- * < r, PA12-PA6 >
- * < PA5-0, 2 don't care bits >
- * < 8 don't care bits >
- *
- * Memory to buffer compare (MEM_TO_BUFx_CMP):
- * < r, PA12-PA6 >
- * < PA5-0, 2 don't care bits >
- * < 8 don't care bits >
- *
- * Buffer write (BUFx_WRITE):
- * < 8 don't care bits >
- * < 6 don't care bits, BFA9-8 >
- * < BFA7-0 >
- *
- * Buffer to memory program with erase (BUFx_TO_MEM_ERASE):
- * < r, PA12-PA6 >
- * < PA5-0, 2 don't care bits >
- * < 8 don't care bits >
- *
- * Buffer to memory program without erase (BUFx_TO_MEM_NO_ERASE):
- * < r, PA12-PA6 >
- * < PA5-0, 2 don't care bits >
- * < 8 don't care bits >
- *
- * Page erase (PAGE_ERASE):
- * < r, PA12-PA6 >
- * < PA5-0, 2 don't care bits >
- * < 8 don't care bits >
- *
- * Block erase (BLOCK_ERASE):
- * < r, PA12-PA6 >
- * < PA5-PA3, 5 don't care bits >
- * < 8 don't care bits >
- */
+static const struct hal_flash_funcs at45db_flash_funcs = {
+    .hff_read         = at45db_read,
+    .hff_write        = at45db_write,
+    .hff_erase_sector = at45db_erase_sector,
+    .hff_sector_info  = at45db_sector_info,
+    .hff_init         = at45db_init,
+};
+
+static struct at45db_dev at45db_default_dev = {
+    /* struct hal_flash for compatibility */
+    .hal = {
+        .hf_itf        = &at45db_flash_funcs,
+        .hf_base_addr  = 0,
+        .hf_size       = 8192 * 512,  /* FIXME: depends on page size */
+        .hf_sector_cnt = 8192,
+        .hf_align      = 1,
+    },
+
+    /* SPI settings + updates baudrate on _init */
+    .settings           = NULL,
+
+    /* Configurable fields that must be populated by user app */
+    .spi_num            = 0,
+    .spi_cfg            = NULL,
+    .ss_pin             = 0,
+    .baudrate           = 100,
+    .page_size          = 512,
+    .disable_auto_erase = 0,
+};
 
 static struct hal_spi_settings at45db_default_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -132,7 +107,8 @@ static struct hal_spi_settings at45db_default_settings = {
 
 static uint8_t g_page_buffer[MAX_PAGE_SIZE];
 
-static uint8_t read_status(struct at45db_dev *dev)
+static uint8_t
+at45db_read_status(struct at45db_dev *dev)
 {
     uint8_t val;
 
@@ -147,28 +123,28 @@ static uint8_t read_status(struct at45db_dev *dev)
 }
 
 static inline bool
-device_ready(struct at45db_dev *dev)
+at45db_device_ready(struct at45db_dev *dev)
 {
-    return ((read_status(dev) & STATUS_BUSY) != 0);
+    return ((at45db_read_status(dev) & STATUS_BUSY) != 0);
 }
 
 static inline bool
-buffer_equal(struct at45db_dev *dev)
+at45db_buffer_equal(struct at45db_dev *dev)
 {
-    return ((read_status(dev) & STATUS_CMP) == 0);
+    return ((at45db_read_status(dev) & STATUS_CMP) == 0);
 }
 
 /* FIXME: add timeout */
 static inline void
-wait_ready(struct at45db_dev *dev)
+at45db_wait_ready(struct at45db_dev *dev)
 {
-    while (!device_ready(dev)) {
+    while (!at45db_device_ready(dev)) {
         os_time_delay(OS_TICKS_PER_SEC / 10000);
     }
 }
 
 static inline uint16_t
-calc_page_count(struct at45db_dev *dev, uint32_t addr, size_t len)
+at45db_calc_page_count(struct at45db_dev *dev, uint32_t addr, size_t len)
 {
     uint16_t page_count;
     uint16_t page_size = dev->page_size;
@@ -182,21 +158,22 @@ calc_page_count(struct at45db_dev *dev, uint32_t addr, size_t len)
 }
 
 static inline uint32_t
-page_start_address(struct at45db_dev *dev, uint32_t addr)
+at45db_page_start_address(struct at45db_dev *dev, uint32_t addr)
 {
     /* FIXME: works only for 512? (powers of 2) */
     return (addr & ~(dev->page_size - 1));
 }
 
 static inline uint32_t
-page_next_addr(struct at45db_dev *dev, uint32_t addr)
+at45db_page_next_addr(struct at45db_dev *dev, uint32_t addr)
 {
-    return (page_start_address(dev, addr) + dev->page_size);
+    return (at45db_page_start_address(dev, addr) + dev->page_size);
 }
 
 /* FIXME: assume buf has enough space? */
 static uint16_t
-read_page(struct at45db_dev *dev, uint32_t addr, uint16_t len, uint8_t *buf)
+at45db_read_page(struct at45db_dev *dev, uint32_t addr,
+                 uint16_t len, uint8_t *buf)
 {
     uint16_t amount;
     uint16_t pa;
@@ -246,59 +223,27 @@ read_page(struct at45db_dev *dev, uint32_t addr, uint16_t len, uint8_t *buf)
 }
 
 int
-at45db_init(struct at45db_dev *dev)
-{
-    int rc;
-    struct hal_spi_settings *settings;
-
-    /* only alloc new settings if using non-default */
-    if (dev->baudrate == at45db_default_settings.baudrate) {
-        dev->settings = &at45db_default_settings;
-    } else {
-        settings = malloc(sizeof(at45db_default_settings));
-        if (!settings) {
-            return (-1);
-        }
-        memcpy(settings, &at45db_default_settings, sizeof(at45db_default_settings));
-        at45db_default_settings.baudrate = dev->baudrate;
-    }
-
-    hal_gpio_init_out(dev->ss_pin, 1);
-
-    rc = hal_spi_init(dev->spi_num, dev->spi_cfg, HAL_SPI_TYPE_MASTER);
-    if (rc) {
-        return (rc);
-    }
-
-    rc = hal_spi_config(dev->spi_num, dev->settings);
-    if (rc) {
-        return (rc);
-    }
-
-    hal_spi_set_txrx_cb(dev->spi_num, NULL, NULL);
-    hal_spi_enable(dev->spi_num);
-
-    return 0;
-}
-
-int
-at45db_read(struct at45db_dev *dev, uint32_t addr, void *buf, size_t len)
+at45db_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
+        uint32_t len)
 {
     uint16_t page_count;
     uint16_t amount;
     uint16_t index;
     uint8_t *u8buf;
+    struct at45db_dev *dev;
 
-    page_count = calc_page_count(dev, addr, len);
+    dev = (struct at45db_dev *) hal_flash_dev;
+
+    page_count = at45db_calc_page_count(dev, addr, len);
     u8buf = (uint8_t *) buf;
     index = 0;
 
     while (page_count--) {
-        wait_ready(dev);
+        at45db_wait_ready(dev);
 
-        amount = read_page(dev, addr, len, &u8buf[index]);
+        amount = at45db_read_page(dev, addr, len, &u8buf[index]);
 
-        addr = page_next_addr(dev, addr);
+        addr = at45db_page_next_addr(dev, addr);
         index += amount;
         len -= amount;
     }
@@ -307,7 +252,8 @@ at45db_read(struct at45db_dev *dev, uint32_t addr, void *buf, size_t len)
 }
 
 int
-at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
+at45db_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
+        const void *buf, uint32_t len)
 {
     uint16_t pa;
     uint16_t bfa;
@@ -318,14 +264,17 @@ at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
     int page_count;
     uint8_t *u8buf;
     uint16_t page_size;
+    struct at45db_dev *dev;
+
+    dev = (struct at45db_dev *) hal_flash_dev;
 
     page_size = dev->page_size;
-    page_count = calc_page_count(dev, addr, len);
+    page_count = at45db_calc_page_count(dev, addr, len);
     u8buf = (uint8_t *) buf;
     index = 0;
 
     while (page_count--) {
-        wait_ready(dev);
+        at45db_wait_ready(dev);
 
         bfa = addr % page_size;
 
@@ -338,8 +287,9 @@ at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
          * be written back again.
          */
         if (bfa || len < page_size) {
-            read_page(dev, page_start_address(dev, addr), page_size, g_page_buffer);
-            wait_ready(dev);
+            at45db_read_page(dev, at45db_page_start_address(dev, addr),
+                             page_size, g_page_buffer);
+            at45db_wait_ready(dev);
         }
 
         hal_gpio_write(dev->ss_pin, 0);
@@ -349,7 +299,7 @@ at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
 
         hal_spi_tx_val(dev->spi_num, 0xff);
 
-        start_addr = page_start_address(dev, addr);
+        start_addr = at45db_page_start_address(dev, addr);
 
         if (page_size == 512) {
             hal_spi_tx_val(dev->spi_num, (start_addr >> 8) & 1);
@@ -393,12 +343,15 @@ at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
 
         hal_gpio_write(dev->ss_pin, 1);
 
-        wait_ready(dev);
+        at45db_wait_ready(dev);
 
         hal_gpio_write(dev->ss_pin, 0);
 
-        /* TODO: make command configurable (accept non erasing) */
-        hal_spi_tx_val(dev->spi_num, BUF1_TO_MEM_ERASE);
+        if (dev->disable_auto_erase) {
+            hal_spi_tx_val(dev->spi_num, BUF1_TO_MEM_NO_ERASE);
+        } else {
+            hal_spi_tx_val(dev->spi_num, BUF1_TO_MEM_ERASE);
+        }
 
         /* FIXME: check that pa doesn't overflow capacity */
         pa = addr / page_size;
@@ -409,7 +362,7 @@ at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
 
         hal_gpio_write(dev->ss_pin, 1);
 
-        addr = page_next_addr(dev, addr);
+        addr = at45db_page_next_addr(dev, addr);
         len -= amount;
     }
 
@@ -417,7 +370,89 @@ at45db_write(struct at45db_dev *dev, uint32_t addr, const void *buf, size_t len)
 }
 
 int
-at45db_erase(struct at45db_dev *dev, uint32_t addr, size_t len)
+at45db_erase_sector(const struct hal_flash *hal_flash_dev,
+        uint32_t sector_address)
 {
+    struct at45db_dev *dev;
+    uint16_t pa;
+
+    dev = (struct at45db_dev *) hal_flash_dev;
+    pa = sector_address / dev->page_size;
+
+    at45db_wait_ready(dev);
+
+    hal_gpio_write(dev->ss_pin, 0);
+
+    hal_spi_tx_val(dev->spi_num, PAGE_ERASE);
+    hal_spi_tx_val(dev->spi_num, (pa >> 6) & ~0x80);
+    hal_spi_tx_val(dev->spi_num, pa << 2);
+    hal_spi_tx_val(dev->spi_num, 0xff);
+
+    hal_gpio_write(dev->ss_pin, 1);
+
+    return 0;
+}
+
+int
+at45db_sector_info(const struct hal_flash *hal_flash_dev, int idx,
+        uint32_t *address, uint32_t *sz)
+{
+    struct at45db_dev *dev = (struct at45db_dev *) hal_flash_dev;
+
+    *address = idx * dev->page_size;
+    *sz = dev->page_size;
+    return 0;
+}
+
+struct at45db_dev *
+at45db_default_config(void)
+{
+    struct at45db_dev *dev;
+
+    dev = malloc(sizeof(at45db_default_dev));
+    if (!dev) {
+        return NULL;
+    }
+
+    memcpy(dev, &at45db_default_dev, sizeof(at45db_default_dev));
+    return dev;
+}
+
+int
+at45db_init(const struct hal_flash *hal_flash_dev)
+{
+    int rc;
+    struct hal_spi_settings *settings;
+    struct at45db_dev *dev;
+
+    dev = (struct at45db_dev *) hal_flash_dev;
+
+    /* only alloc new settings if using non-default */
+    if (dev->baudrate == at45db_default_settings.baudrate) {
+        dev->settings = &at45db_default_settings;
+    } else {
+        settings = malloc(sizeof(at45db_default_settings));
+        if (!settings) {
+            return -1;
+        }
+        memcpy(settings, &at45db_default_settings, sizeof(at45db_default_settings));
+        at45db_default_settings.baudrate = dev->baudrate;
+    }
+
+    hal_gpio_init_out(dev->ss_pin, 1);
+
+    rc = hal_spi_init(dev->spi_num, dev->spi_cfg, HAL_SPI_TYPE_MASTER);
+    if (rc) {
+        return (rc);
+    }
+
+    rc = hal_spi_config(dev->spi_num, dev->settings);
+    if (rc) {
+        return (rc);
+    }
+
+    hal_spi_set_txrx_cb(dev->spi_num, NULL, NULL);
+    hal_spi_enable(dev->spi_num);
+
     return 0;
 }
