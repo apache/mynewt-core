@@ -116,7 +116,8 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     OS_ENTER_CRITICAL(sr);
     (void)sr;
     console_blocking_mode();
-    console_printf("Assert %s; failed in %s:%d\n", e ? e : "", file, line);
+    console_printf("Assert @ 0x%x\n",
+                   (unsigned int)__builtin_return_address(0));
     if (hal_debugger_connected()) {
        /*
         * If debugger is attached, breakpoint before the trap.
