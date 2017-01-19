@@ -41,8 +41,8 @@ compiler.flags.base.LINUX: >
 compiler.ld.flags.LINUX: -lutil
 
 # OS X.
-compiler.path.cc.DARWIN.OVERWRITE: "/usr/local/bin/gcc-5"
-compiler.path.as.DARWIN.OVERWRITE: "/usr/local/bin/gcc-5"
+compiler.path.cc.DARWIN.OVERWRITE: "gcc-5"
+compiler.path.as.DARWIN.OVERWRITE: "gcc-5"
 compiler.path.objdump.DARWIN.OVERWRITE: "gobjdump"
 compiler.path.objcopy.DARWIN.OVERWRITE: "gobjcopy"
 compiler.flags.base.DARWIN: >
