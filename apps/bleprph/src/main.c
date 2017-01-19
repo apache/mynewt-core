@@ -48,7 +48,7 @@ struct log bleprph_log;
 
 struct os_eventq bleprph_evq;
 struct os_task bleprph_task;
-bssnz_t os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
+bssnz_t os_stack_t *bleprph_stack;
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -284,6 +284,9 @@ main(void)
 
     /* Initialize eventq */
     os_eventq_init(&bleprph_evq);
+
+    bleprph_stack = malloc(sizeof bleprph_stack * BLEPRPH_STACK_SIZE);
+    assert(bleprph_stack != NULL);
 
     /* Create the bleprph task.  All application logic and NimBLE host
      * operations are performed in this task.
