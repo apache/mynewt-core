@@ -18,7 +18,6 @@
  */
 
 #include <syscfg/syscfg.h>
-#include <fs/fs.h>
 #include <disk/disk.h>
 #include <stdlib.h>
 #include <string.h>
