@@ -23,7 +23,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - libc/baselibc
     - sys/console/stub
     - sys/stats/full
     - kernel/os

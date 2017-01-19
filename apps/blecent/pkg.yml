@@ -33,4 +33,3 @@ pkg.deps:
     - sys/console/full
     - sys/log/full
     - sys/stats/full
-    - libc/baselibc
