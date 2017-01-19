@@ -154,7 +154,7 @@ nrf_timer_set_ocmp(struct nrf51_hal_timer *bsptimer, uint32_t expiry)
 {
     int32_t delta_t;
     uint16_t expiry16;
-    uint32_t expiry24;
+    uint32_t cntr;
     uint32_t temp;
     NRF_TIMER_Type *hwtimer;
     NRF_RTC_Type *rtctimer;
@@ -188,32 +188,33 @@ nrf_timer_set_ocmp(struct nrf51_hal_timer *bsptimer, uint32_t expiry)
             /* Nothing to do; wait for overflow interrupt to set ocmp */
         }
     } else if (bsptimer->tmr_rtc) {
-        /* The RTC is a 24-bit counter so we need to check them first */
         rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
         rtctimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
-        temp = expiry & 0xff000000;
-        delta_t = (int32_t)(temp - bsptimer->tmr_cntr);
-        if (delta_t < 0) {
-            goto set_ocmp_late;
-        } else if (delta_t == 0) {
-            /* Check if we might miss the timer */
-            expiry24 = expiry & 0x00ffffff;
+        temp = bsptimer->tmr_cntr;
+        cntr = rtctimer->COUNTER;
+        if (rtctimer->EVENTS_OVRFLW) {
+            temp += (1UL << 24);
+            cntr = rtctimer->COUNTER;
+        }
+        temp |= cntr;
+        delta_t = (int32_t)(expiry - temp);
 
-            /*
-             * The nrf documentation states that you must set the output
-             * compare to 2 greater than the counter to guarntee an interrupt.
-             * Since the counter can tick once while we check, we make sure
-             * it is greater than 2.
-             */
-            if ((expiry <= (rtctimer->COUNTER+2)) || rtctimer->EVENTS_OVRFLW) {
-                goto set_ocmp_late;
+        /*
+         * The nrf documentation states that you must set the output
+         * compare to 2 greater than the counter to guarantee an interrupt.
+         * Since the counter can tick once while we check, we make sure
+         * it is greater than 2.
+         */
+        if (delta_t < 3) {
+            NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
+        } else  {
+            if (delta_t < (1UL << 24)) {
+                rtctimer->CC[NRF_RTC_TIMER_CC_INT] = expiry & 0x00ffffff;
+            } else {
+                /* CC too far ahead. Just make sure we set compare far ahead */
+                rtctimer->CC[NRF_RTC_TIMER_CC_INT] = cntr + (1UL << 23);
             }
-
-            /* Set the output compare and enable interrupt */
-            rtctimer->CC[NRF_RTC_TIMER_CC_INT] = expiry24;
             rtctimer->INTENSET = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
-        } else {
-            /* Nothing to do; wait for overflow interrupt to set ocmp */
         }
     } else {
         /* Disable ocmp interrupt */
@@ -309,6 +310,7 @@ hal_timer_read_bsptimer(struct nrf51_hal_timer *bsptimer)
 static void
 hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
 {
+    int32_t delta;
     uint32_t tcntr;
     uint32_t ctx;
     struct hal_timer *timer;
@@ -316,12 +318,17 @@ hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
     while ((timer = TAILQ_FIRST(&bsptimer->hal_timer_q)) != NULL) {
-        if (bsptimer->tmr_16bit || bsptimer->tmr_rtc) {
+        if (bsptimer->tmr_16bit) {
             tcntr = hal_timer_read_bsptimer(bsptimer);
+            delta = 0;
+        } else if (bsptimer->tmr_rtc) {
+            tcntr = hal_timer_read_bsptimer(bsptimer);
+            delta = -3;
         } else {
             tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
+            delta = 0;
         }
-        if ((int32_t)(tcntr - timer->expiry) >= 0) {
+        if ((int32_t)(tcntr - timer->expiry) >= delta) {
             TAILQ_REMOVE(&bsptimer->hal_timer_q, timer, link);
             timer->link.tqe_prev = NULL;
             timer->cb_func(timer->cb_arg);
