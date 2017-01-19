@@ -83,7 +83,7 @@ static struct at45db_dev at45db_default_dev = {
         .hf_base_addr  = 0,
         .hf_size       = 8192 * 512,  /* FIXME: depends on page size */
         .hf_sector_cnt = 8192,
-        .hf_align      = 1,
+        .hf_align      = 0,
     },
 
     /* SPI settings + updates baudrate on _init */
@@ -277,6 +277,7 @@ at45db_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         at45db_wait_ready(dev);
 
         bfa = addr % page_size;
+        start_addr = at45db_page_start_address(dev, addr);
 
         /**
          * If the page is not being written from the beginning,
@@ -287,8 +288,7 @@ at45db_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
          * be written back again.
          */
         if (bfa || len < page_size) {
-            at45db_read_page(dev, at45db_page_start_address(dev, addr),
-                             page_size, g_page_buffer);
+            at45db_read_page(dev, start_addr, page_size, g_page_buffer);
             at45db_wait_ready(dev);
         }
 
@@ -299,15 +299,9 @@ at45db_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
 
         hal_spi_tx_val(dev->spi_num, 0xff);
 
-        start_addr = at45db_page_start_address(dev, addr);
-
-        if (page_size == 512) {
-            hal_spi_tx_val(dev->spi_num, (start_addr >> 8) & 1);
-        } else {
-            hal_spi_tx_val(dev->spi_num, (start_addr >> 8) & 3);
-        }
-
-        hal_spi_tx_val(dev->spi_num, start_addr);
+        /* Always write at offset 0 of internal buffer */
+        hal_spi_tx_val(dev->spi_num, 0);
+        hal_spi_tx_val(dev->spi_num, 0);
 
         /**
          * Write back extra stuff at the beginning of page.
@@ -336,7 +330,7 @@ at45db_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
          * Write back extra stuff at the ending of page.
          */
         if (bfa + len < page_size) {
-            for (n = len; n < page_size; n++) {
+            for (n = len + bfa; n < page_size; n++) {
                 hal_spi_tx_val(dev->spi_num, g_page_buffer[n]);
             }
         }
@@ -357,7 +351,7 @@ at45db_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         pa = addr / page_size;
 
         hal_spi_tx_val(dev->spi_num, (pa >> 6) & ~0x80);
-        hal_spi_tx_val(dev->spi_num, (pa << 2) | 0x3);
+        hal_spi_tx_val(dev->spi_num, pa << 2);
         hal_spi_tx_val(dev->spi_num, 0xff);
 
         hal_gpio_write(dev->ss_pin, 1);
