@@ -25,12 +25,15 @@
 
 #define NRF52K_FLASH_SECTOR_SZ	4096
 
-static int nrf52k_flash_read(uint32_t address, void *dst, uint32_t num_bytes);
-static int nrf52k_flash_write(uint32_t address, const void *src,
-  uint32_t num_bytes);
-static int nrf52k_flash_erase_sector(uint32_t sector_address);
-static int nrf52k_flash_sector_info(int idx, uint32_t *address, uint32_t *sz);
-static int nrf52k_flash_init(void);
+static int nrf52k_flash_read(const struct hal_flash *dev, uint32_t address,
+        void *dst, uint32_t num_bytes);
+static int nrf52k_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t num_bytes);
+static int nrf52k_flash_erase_sector(const struct hal_flash *dev,
+        uint32_t sector_address);
+static int nrf52k_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *address, uint32_t *sz);
+static int nrf52k_flash_init(const struct hal_flash *dev);
 
 static const struct hal_flash_funcs nrf52k_flash_funcs = {
     .hff_read = nrf52k_flash_read,
@@ -64,7 +67,8 @@ nrf52k_flash_wait_ready(void)
 }
 
 static int
-nrf52k_flash_read(uint32_t address, void *dst, uint32_t num_bytes)
+nrf52k_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
+        uint32_t num_bytes)
 {
     memcpy(dst, (void *)address, num_bytes);
     return 0;
@@ -74,7 +78,8 @@ nrf52k_flash_read(uint32_t address, void *dst, uint32_t num_bytes)
  * Flash write is done by writing 4 bytes at a time at a word boundary.
  */
 static int
-nrf52k_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
+nrf52k_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t num_bytes)
 {
     int sr;
     int rc = -1;
@@ -142,7 +147,7 @@ out:
 }
 
 static int
-nrf52k_flash_erase_sector(uint32_t sector_address)
+nrf52k_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     int sr;
     int rc = -1;
@@ -168,7 +173,8 @@ out:
 }
 
 static int
-nrf52k_flash_sector_info(int idx, uint32_t *address, uint32_t *sz)
+nrf52k_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *address, uint32_t *sz)
 {
     assert(idx < nrf52k_flash_dev.hf_sector_cnt);
     *address = idx * NRF52K_FLASH_SECTOR_SZ;
@@ -177,7 +183,7 @@ nrf52k_flash_sector_info(int idx, uint32_t *address, uint32_t *sz)
 }
 
 static int
-nrf52k_flash_init(void)
+nrf52k_flash_init(const struct hal_flash *dev)
 {
     return 0;
 }

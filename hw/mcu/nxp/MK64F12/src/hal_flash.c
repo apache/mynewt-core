@@ -31,12 +31,15 @@
 #include "MK64F12.h"
 #include "fsl_flash.h"
 
-static int mk64f12_flash_read(uint32_t address, void *dst, uint32_t num_bytes);
-static int mk64f12_flash_write(uint32_t address, const void *src,
-  uint32_t num_bytes);
-static int mk64f12_flash_erase_sector(uint32_t sector_address);
-static int mk64f12_flash_sector_info(int idx, uint32_t *addr, uint32_t *sz);
-static int mk64f12_flash_init(void);
+static int mk64f12_flash_read(const struct hal_flash *dev, uint32_t address,
+        void *dst, uint32_t num_bytes);
+static int mk64f12_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t num_bytes);
+static int mk64f12_flash_erase_sector(const struct hal_flash *dev,
+        uint32_t sector_address);
+static int mk64f12_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *addr, uint32_t *sz);
+static int mk64f12_flash_init(const struct hal_flash *dev);
 
 static const struct hal_flash_funcs mk64f12_flash_funcs = {
     .hff_read = mk64f12_flash_read,
@@ -55,14 +58,16 @@ struct hal_flash mk64f12_flash_dev = {
 };
 
 static int
-mk64f12_flash_read(uint32_t address, void *dst, uint32_t num_bytes)
+mk64f12_flash_read(const struct hal_flash *dev, uint32_t address,
+        void *dst, uint32_t num_bytes)
 {
     memcpy(dst, (void *)address, num_bytes);
     return 0;
 }
 
 static int
-mk64f12_flash_write(uint32_t address, const void *src, uint32_t len)
+mk64f12_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t len)
 {
     if (address % sizeof(uint32_t)) {
         /*
@@ -77,7 +82,7 @@ mk64f12_flash_write(uint32_t address, const void *src, uint32_t len)
 }
 
 static int
-mk64f12_flash_erase_sector(uint32_t sector_address)
+mk64f12_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     if (FLASH_Erase(&mk64f12_config, sector_address, mk64f12_config.PFlashSectorSize,
                     kFLASH_apiEraseKey) == kStatus_Success)
@@ -86,7 +91,8 @@ mk64f12_flash_erase_sector(uint32_t sector_address)
 }
 
 static int
-mk64f12_flash_sector_info(int idx, uint32_t *addr, uint32_t *sz)
+mk64f12_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *addr, uint32_t *sz)
 {
     *addr = mk64f12_config.PFlashBlockBase + (idx * mk64f12_config.PFlashSectorSize);
     *sz = mk64f12_config.PFlashSectorSize;
@@ -94,7 +100,7 @@ mk64f12_flash_sector_info(int idx, uint32_t *addr, uint32_t *sz)
 }
 
 static int
-mk64f12_flash_init(void)
+mk64f12_flash_init(const struct hal_flash *dev)
 {
     if (FLASH_Init(&mk64f12_config) == kStatus_Success) {
         mk64f12_flash_dev.hf_base_addr = mk64f12_config.PFlashBlockBase;
