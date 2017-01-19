@@ -167,3 +167,9 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     }
     return 0;
 }
+
+int
+hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
+{
+    return 0;
+}

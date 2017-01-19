@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <sysinit/sysinit.h>
 #include <hal/hal_flash.h>
+#include <disk/disk.h>
 #include <flash_map/flash_map.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,13 +32,30 @@ static int fatfs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
   char *out_name, uint8_t *out_name_len);
 static int fatfs_dirent_is_dir(const struct fs_dirent *fs_dirent);
 
+#define DRIVE_LEN 4
+
+struct fatfs_file {
+    struct fs_ops *fops;
+    FIL *file;
+};
+
+struct fatfs_dir {
+    struct fs_ops *fops;
+    FATFS_DIR *dir;
+};
+
+struct fatfs_dirent {
+    struct fs_ops *fops;
+    FILINFO filinfo;
+};
+
 /* NOTE: to ease memory management of dirent structs, this single static
  * variable holds the latest entry found by readdir. This limits FAT to
  * working on a single thread, single opendir -> closedir cycle.
  */
-static FILINFO filinfo;
+static struct fatfs_dirent dirent;
 
-static const struct fs_ops fatfs_ops = {
+static struct fs_ops fatfs_ops = {
     .f_open = fatfs_open,
     .f_close = fatfs_close,
     .f_read = fatfs_read,
@@ -130,16 +148,73 @@ int fatfs_to_vfs_error(FRESULT res)
     return rc;
 }
 
+struct mounted_disk {
+    char *disk_name;
+    int disk_number;
+    struct disk_ops *dops;
+
+    SLIST_ENTRY(mounted_disk) sc_next;
+};
+
+static SLIST_HEAD(, mounted_disk) mounted_disks = SLIST_HEAD_INITIALIZER();
+
+static int
+drivenumber_from_disk(char *disk_name)
+{
+    struct mounted_disk *sc;
+    struct mounted_disk *new_disk;
+    int disk_number;
+    FATFS *fs;
+    char path[DRIVE_LEN];
+
+    disk_number = 0;
+    if (disk_name) {
+        SLIST_FOREACH(sc, &mounted_disks, sc_next) {
+            if (strcmp(sc->disk_name, disk_name) == 0) {
+                return sc->disk_number;
+            }
+            disk_number++;
+        }
+    }
+
+    /* XXX: check for errors? */
+    fs = malloc(sizeof(FATFS));
+    sprintf(path, "%d:", disk_number);
+    f_mount(fs, path, 1);
+
+    /* FIXME */
+    new_disk = malloc(sizeof(struct mounted_disk));
+    new_disk->disk_name = strdup(disk_name);
+    new_disk->disk_number = disk_number;
+    new_disk->dops = disk_ops_for(disk_name);
+    SLIST_INSERT_HEAD(&mounted_disks, new_disk, sc_next);
+
+    return disk_number;
+}
+
 static int
 fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 {
     FRESULT res;
-    FIL *out_file;
+    FIL *out_file = NULL;
     BYTE mode;
+    struct fatfs_file *file = NULL;
+    char *disk;
+    int number;
+    char *filepath;
+    char drivepath[255 + DRIVE_LEN];  /* FIXME */
+    int rc;
+
+    file = malloc(sizeof(struct fatfs_file));
+    if (!file) {
+        rc = FS_ENOMEM;
+        goto out;
+    }
 
     out_file = malloc(sizeof(FIL));
     if (!out_file) {
-        return FS_ENOMEM;
+        rc = FS_ENOMEM;
+        goto out;
     }
 
     mode = FA_OPEN_EXISTING;
@@ -157,20 +232,36 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
         mode |= FA_CREATE_ALWAYS;
     }
 
-    res = f_open(out_file, path, mode);
+    disk = disk_name_from_path(path);
+    number = drivenumber_from_disk(disk);
+    filepath = disk_filepath_from_path(path);
+    sprintf(drivepath, "%d:%s", number, filepath);
+    free(filepath);
+
+    res = f_open(out_file, drivepath, mode);
     if (res != FR_OK) {
-        free(out_file);
-        return fatfs_to_vfs_error(res);
+        rc = fatfs_to_vfs_error(res);
+        goto out;
     }
-    *out_fs_file = (struct fs_file *)out_file;
-    return FS_EOK;
+
+    file->file = out_file;
+    file->fops = &fatfs_ops;
+    *out_fs_file = (struct fs_file *) file;
+    rc = FS_EOK;
+
+out:
+    if (rc != FS_EOK) {
+        if (file) free(file);
+        if (out_file) free(out_file);
+    }
+    return rc;
 }
 
 static int
 fatfs_close(struct fs_file *fs_file)
 {
     FRESULT res;
-    FIL *file = (FIL *)fs_file;
+    FIL *file = ((struct fatfs_file *) fs_file)->file;
 
     if (file == NULL) {
         return FS_EOK;
@@ -185,7 +276,7 @@ static int
 fatfs_seek(struct fs_file *fs_file, uint32_t offset)
 {
     FRESULT res;
-    FIL *file = (FIL *)fs_file;
+    FIL *file = ((struct fatfs_file *) fs_file)->file;
 
     res = f_lseek(file, offset);
     return fatfs_to_vfs_error(res);
@@ -195,7 +286,7 @@ static uint32_t
 fatfs_getpos(const struct fs_file *fs_file)
 {
     uint32_t offset;
-    FIL *file = (FIL *)fs_file;
+    FIL *file = ((struct fatfs_file *) fs_file)->file;
 
     offset = (uint32_t) f_tell(file);
     return offset;
@@ -205,7 +296,7 @@ static int
 fatfs_file_len(const struct fs_file *fs_file, uint32_t *out_len)
 {
     uint32_t offset;
-    FIL *file = (FIL *)fs_file;
+    FIL *file = ((struct fatfs_file *) fs_file)->file;
 
     offset = (uint32_t) f_size(file);
     return offset;
@@ -216,9 +307,11 @@ fatfs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
            uint32_t *out_len)
 {
     FRESULT res;
-    FIL *file = (FIL *)fs_file;
+    FIL *file = ((struct fatfs_file *) fs_file)->file;
+    UINT uint_len;
 
-    res = f_read(file, out_data, len, (UINT *)out_len);
+    res = f_read(file, out_data, len, &uint_len);
+    *out_len = uint_len;
     return fatfs_to_vfs_error(res);
 }
 
@@ -227,7 +320,7 @@ fatfs_write(struct fs_file *fs_file, const void *data, int len)
 {
     FRESULT res;
     UINT out_len;
-    FIL *file = (FIL *)fs_file;
+    FIL *file = ((struct fatfs_file *) fs_file)->file;
 
     res = f_write(file, data, len, &out_len);
     if (len != out_len) {
@@ -241,6 +334,7 @@ fatfs_unlink(const char *path)
 {
     FRESULT res;
 
+    //FIXME: handle disk
     res = f_unlink(path);
     return fatfs_to_vfs_error(res);
 }
@@ -250,6 +344,7 @@ fatfs_rename(const char *from, const char *to)
 {
     FRESULT res;
 
+    //FIXME: handle disk
     res = f_rename(from, to);
     return fatfs_to_vfs_error(res);
 }
@@ -267,18 +362,48 @@ static int
 fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
 {
     FRESULT res;
-    FATFS_DIR *out_dir;
+    FATFS_DIR *out_dir = NULL;
+    struct fatfs_dir *dir = NULL;
+    char *disk;
+    int number;
+    char *filepath;
+    char drivepath[255 + DRIVE_LEN];  /* FIXME */
+    int rc;
+
+    dir = malloc(sizeof(struct fatfs_dir));
+    if (!dir) {
+        rc = FS_ENOMEM;
+        goto out;
+    }
 
     out_dir = malloc(sizeof(FATFS_DIR));
     if (!out_dir) {
-        return FS_ENOMEM;
+        rc = FS_ENOMEM;
+        goto out;
     }
 
-    res = f_opendir(out_dir, path);
+    disk = disk_name_from_path(path);
+    number = drivenumber_from_disk(disk);
+    filepath = disk_filepath_from_path(path);
+    sprintf(drivepath, "%d:%s", number, filepath);
+    free(filepath);
+
+    res = f_opendir(out_dir, drivepath);
     if (res != FR_OK) {
-        return fatfs_to_vfs_error(res);
+        rc = fatfs_to_vfs_error(res);
+        goto out;
     }
-    *out_fs_dir = (struct fs_dir *)out_dir;
+
+    dir->dir = out_dir;
+    dir->fops = &fatfs_ops;
+    *out_fs_dir = (struct fs_dir *)dir;
+    rc = FS_EOK;
+
+out:
+    if (rc != FS_EOK) {
+        if (dir) free(dir);
+        if (out_dir) free(out_dir);
+    }
     return FS_EOK;
 }
 
@@ -286,15 +411,16 @@ static int
 fatfs_readdir(struct fs_dir *fs_dir, struct fs_dirent **out_fs_dirent)
 {
     FRESULT res;
-    FATFS_DIR *dir = (FATFS_DIR *)fs_dir;
+    FATFS_DIR *dir = ((struct fatfs_dir *) fs_dir)->dir;
 
-    res = f_readdir(dir, &filinfo);
+    dirent.fops = &fatfs_ops;
+    res = f_readdir(dir, &dirent.filinfo);
     if (res != FR_OK) {
         return fatfs_to_vfs_error(res);
     }
 
-    *out_fs_dirent = (struct fs_dirent *)&filinfo;
-    if (!filinfo.fname[0]) {
+    *out_fs_dirent = (struct fs_dirent *) &dirent;
+    if (!dirent.filinfo.fname[0]) {
         return FS_ENOENT;
     }
     return FS_EOK;
@@ -304,7 +430,7 @@ static int
 fatfs_closedir(struct fs_dir *fs_dir)
 {
     FRESULT res;
-    FATFS_DIR *dir = (FATFS_DIR *)fs_dir;
+    FATFS_DIR *dir = ((struct fatfs_dir *) fs_dir)->dir;
 
     res = f_closedir(dir);
     free(dir);
@@ -315,12 +441,14 @@ static int
 fatfs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
                   char *out_name, uint8_t *out_name_len)
 {
-    const FILINFO *dirent = (const FILINFO *)fs_dirent;
+
+    FILINFO *filinfo;
     size_t out_len;
 
-    assert(dirent != NULL);
-    out_len = max_len < sizeof(dirent->fname) ? max_len : sizeof(dirent->fname);
-    memcpy(out_name, dirent->fname, out_len);
+    assert(fs_dirent != NULL);
+    filinfo = &(((struct fatfs_dirent *)fs_dirent)->filinfo);
+    out_len = max_len < sizeof(filinfo->fname) ? max_len : sizeof(filinfo->fname);
+    memcpy(out_name, filinfo->fname, out_len);
     *out_name_len = out_len;
     return FS_EOK;
 }
@@ -328,10 +456,10 @@ fatfs_dirent_name(const struct fs_dirent *fs_dirent, size_t max_len,
 static int
 fatfs_dirent_is_dir(const struct fs_dirent *fs_dirent)
 {
-    const FILINFO *dirent = (const FILINFO *)fs_dirent;
-
-    assert(dirent != NULL);
-    return dirent->fattrib & AM_DIR;
+    FILINFO *filinfo;
+    assert(fs_dirent != NULL);
+    filinfo = &(((struct fatfs_dirent *)fs_dirent)->filinfo);
+    return filinfo->fattrib & AM_DIR;
 }
 
 DSTATUS
@@ -348,17 +476,37 @@ disk_status(BYTE pdrv)
     return RES_OK;
 }
 
+static struct disk_ops *dops_from_handle(BYTE pdrv)
+{
+    struct mounted_disk *sc;
+
+    SLIST_FOREACH(sc, &mounted_disks, sc_next) {
+        if (sc->disk_number == pdrv) {
+            return sc->dops;
+        }
+    }
+
+    return NULL;
+}
+
 DRESULT
 disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
 {
     int rc;
     uint32_t address;
     uint32_t num_bytes;
+    struct disk_ops *dops;
 
     /* NOTE: safe to assume sector size as 512 for now, see ffconf.h */
     address = (uint32_t) sector * 512;
     num_bytes = (uint32_t) count * 512;
-    rc = hal_flash_read(pdrv, address, (void *) buff, num_bytes);
+
+    dops = dops_from_handle(pdrv);
+    if (dops == NULL) {
+        return STA_NOINIT;
+    }
+
+    rc = dops->read(pdrv, address, (void *) buff, num_bytes);
     if (rc < 0) {
         return STA_NOINIT;
     }
@@ -372,11 +520,18 @@ disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
     int rc;
     uint32_t address;
     uint32_t num_bytes;
+    struct disk_ops *dops;
 
     /* NOTE: safe to assume sector size as 512 for now, see ffconf.h */
     address = (uint32_t) sector * 512;
     num_bytes = (uint32_t) count * 512;
-    rc = hal_flash_write(pdrv, address, (const void *) buff, num_bytes);
+
+    dops = dops_from_handle(pdrv);
+    if (dops == NULL) {
+        return STA_NOINIT;
+    }
+
+    rc = dops->write(pdrv, address, (const void *) buff, num_bytes);
     if (rc < 0) {
         return STA_NOINIT;
     }

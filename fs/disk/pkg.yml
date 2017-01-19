@@ -17,17 +17,11 @@
 # under the License.
 #
 
-pkg.name: fs/fs
-pkg.description: File system abstrction.
+pkg.name: fs/disk
+pkg.description: Disk management layer to glue filesystems to disk devices.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - file
-    - filesystem
-    - ffs
 
 pkg.deps:
-    - fs/disk
-
-pkg.deps.FS_CLI:
-    - sys/shell
+    - kernel/os
