@@ -26,6 +26,33 @@
 extern "C" {
 #endif
 
+/* Internal helpers */
+#ifndef __bswap_64
+#define __bswap_64(x)   ((uint64_t)                 \
+     ((((x) & 0xff00000000000000ull) >> 56) |       \
+      (((x) & 0x00ff000000000000ull) >> 40) |       \
+      (((x) & 0x0000ff0000000000ull) >> 24) |       \
+      (((x) & 0x000000ff00000000ull) >>  8) |       \
+      (((x) & 0x00000000ff000000ull) <<  8) |       \
+      (((x) & 0x0000000000ff0000ull) << 24) |       \
+      (((x) & 0x000000000000ff00ull) << 40) |       \
+      (((x) & 0x00000000000000ffull) << 56)))
+#endif
+
+#ifndef __bswap_32
+#define __bswap_32(x)    ((uint32_t)                \
+    ((((x) & 0xff000000) >> 24) |                   \
+     (((x) & 0x00ff0000) >>  8) |                   \
+     (((x) & 0x0000ff00) <<  8) |                   \
+     (((x) & 0x000000ff) << 24)))
+#endif
+
+#ifndef __bswap_16
+#define __bswap_16(x)   ((uint16_t)                 \
+    ((((x) & 0xff00) >> 8) |                        \
+     (((x) & 0x00ff) << 8)))
+#endif
+
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 
 #ifndef ntohll
@@ -52,18 +79,58 @@ extern "C" {
 #define htons(x)   ((uint16_t)(x))
 #endif
 
+#ifndef htobe16
+#define htobe16(x) ((uint16_t)(x))
+#endif
+
+#ifndef htole16
+#define htole16(x) __bswap_16 (x)
+#endif
+
+#ifndef be16toh
+#define be16toh(x) ((uint16_t)(x))
+#endif
+
+#ifndef le16toh
+#define le16toh(x) __bswap_16 (x)
+#endif
+
+#ifndef htobe32
+#define htobe32(x) ((uint32_t)(x))
+#endif
+
+#ifndef htole32
+#define htole32(x) __bswap_32 (x)
+#endif
+
+#ifndef be32toh
+#define be32toh(x) ((uint32_t)(x))
+#endif
+
+#ifndef le32toh
+#define le32toh(x) __bswap_32 (x)
+#endif
+
+#ifndef htobe64
+#define htobe64(x) ((uint64_t)(x))
+#endif
+
+#ifndef htole64
+#define htole64(x) __bswap_64 (x)
+#endif
+
+#ifndef be64toh
+#define be64toh(x) ((uint64_t)(x))
+#endif
+
+#ifndef le64toh
+#define le64toh(x) __bswap_64 (x)
+#endif
+
 #else
 
 #ifndef ntohll
-#define ntohll(x)   ((uint64_t)                     \
-     ((((x) & 0xff00000000000000ull) >> 56) |       \
-      (((x) & 0x00ff000000000000ull) >> 40) |       \
-      (((x) & 0x0000ff0000000000ull) >> 24) |       \
-      (((x) & 0x000000ff00000000ull) >>  8) |       \
-      (((x) & 0x00000000ff000000ull) <<  8) |       \
-      (((x) & 0x0000000000ff0000ull) << 24) |       \
-      (((x) & 0x000000000000ff00ull) << 40) |       \
-      (((x) & 0x00000000000000ffull) << 56)))
+#define ntohll(x)   __bswap_64(x)
 #endif
 
 #ifndef htonll
@@ -71,11 +138,7 @@ extern "C" {
 #endif
 
 #ifndef ntohl
-#define ntohl(x)    ((uint32_t)                     \
-    ((((x) & 0xff000000) >> 24) |                   \
-     (((x) & 0x00ff0000) >>  8) |                   \
-     (((x) & 0x0000ff00) <<  8) |                   \
-     (((x) & 0x000000ff) << 24)))
+#define ntohl(x)    __bswap_32(x)
 #endif
 
 #ifndef htonl
@@ -83,13 +146,59 @@ extern "C" {
 #endif
 
 #ifndef htons
-#define htons(x)   ((uint16_t)                      \
-    ((((x) & 0xff00) >> 8) |                        \
-     (((x) & 0x00ff) << 8)))
+#define htons(x)    __bswap_16(x)
 #endif
 
 #ifndef ntohs
 #define ntohs       htons
+#endif
+
+#ifndef htobe16
+#define htobe16(x) __bswap_16(x)
+#endif
+
+#ifndef htole16
+#define htole16(x) ((uint16_t)(x))
+#endif
+
+#ifndef be16toh
+#define be16toh(x) __bswap_16(x)
+#endif
+
+#ifndef le16toh
+#define le16toh(x) ((uint16_t)(x))
+#endif
+
+#ifndef htobe32
+#define htobe32(x) __bswap_32(x)
+#endif
+
+#ifndef htole32
+#define htole32(x) ((uint32_t)(x))
+#endif
+
+#ifndef be32toh
+#define be32toh(x) __bswap_32(x)
+#endif
+
+#ifndef le32toh
+#define le32toh(x) ((uint32_t)(x))
+#endif
+
+#ifndef htobe64
+#define htobe64(x) __builtin_bswap64(x)
+#endif
+
+#ifndef htole64
+#define htole64(x) ((uint64_t)(x))
+#endif
+
+#ifndef be64toh
+#define be64toh(x) __builtin_bswap64(x)
+#endif
+
+#ifndef le64toh
+#define le64toh(x) ((uint64_t)(x))
 #endif
 
 #endif
