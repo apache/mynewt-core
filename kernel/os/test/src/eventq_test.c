@@ -197,7 +197,6 @@ eventq_task_poll_timeout_send(void *arg)
 
     /* This task sleeps until the receive task completes the test. */
     os_time_delay(1000000);
-    
 }
 
 /* Receiving multiple event queues with a time failure */

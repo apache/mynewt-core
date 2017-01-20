@@ -18,17 +18,26 @@
  */
 #include <stdlib.h>
 
+#include <sysinit/sysinit.h>
+
 extern int main(int argc, char **argv);
+extern void os_init(void);
+extern void os_start(void);
 
 /*
  * Rudimentary startup function.
  */
 void _start(void)
 {
+#if !MYNEWT_VAL(OS_SCHEDULING)
     int rc;
 
     rc = main(0, NULL);
     exit(rc);
+#else
+    os_init();
+    os_start();
+#endif
 }
 
 void

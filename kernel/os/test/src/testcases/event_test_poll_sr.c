@@ -25,6 +25,7 @@ TEST_CASE(event_test_poll_sr)
 
 #if MYNEWT_VAL(SELFTEST)
     /* Initializing the OS */
+    os_init();
     sysinit();
 #endif
     /* Initialize the task */

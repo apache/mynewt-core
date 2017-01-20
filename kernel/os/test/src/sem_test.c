@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -44,23 +44,23 @@ os_stack_t *stack4;
 struct os_sem g_sem1;
 #endif /* MYNEWT_VAL(SELFTEST) */
 
-/* 
+/*
  * TEST NUMBERS:
  *  10: In this test we have the highest priority task getting the semaphore
  *  then sleeping. Two lower priority tasks then wake up and attempt to get
  *  the semaphore. They are blocked until the higher priority task releases
  *  the semaphore, at which point the lower priority tasks should wake up in
  *  order, get the semaphore, then release it and go back to sleep.
- * 
+ *
  */
 char sem_test_buf[128];
 
 /**
  * sem test disp sem
- *  
- * Display semaphore contents 
- * 
- * @param sem 
+ *
+ * Display semaphore contents
+ *
+ * @param sem
  */
 const char *
 sem_test_sem_to_s(const struct os_sem *sem)
@@ -71,7 +71,7 @@ sem_test_sem_to_s(const struct os_sem *sem)
     return sem_test_buf;
 }
 
-void 
+void
 sem_test_sleep_task_handler(void *arg)
 {
     struct os_task *t;
@@ -104,13 +104,13 @@ sem_test_pend_release_loop(int delay, int timeout, int itvl)
 }
 
 /**
- * sem test basic 
- *  
+ * sem test basic
+ *
  * Basic semaphore tests
- * 
- * @return int 
+ *
+ * @return int
  */
-void 
+void
 sem_test_basic_handler(void *arg)
 {
     struct os_task *t;
@@ -178,7 +178,7 @@ sem_test_basic_handler(void *arg)
 #endif
 }
 
-void 
+void
 sem_test_1_task1_handler(void *arg)
 {
     os_error_t err;
@@ -208,69 +208,69 @@ sem_test_1_task1_handler(void *arg)
 #endif
 }
 
-void 
-sem_test_1_task2_handler(void *arg) 
+void
+sem_test_1_task2_handler(void *arg)
 {
     sem_test_pend_release_loop(0, OS_TICKS_PER_SEC / 10,
                                OS_TICKS_PER_SEC / 10);
 }
 
-void 
-sem_test_1_task3_handler(void *arg) 
+void
+sem_test_1_task3_handler(void *arg)
 {
     sem_test_pend_release_loop(0, OS_TIMEOUT_NEVER, OS_TICKS_PER_SEC * 2);
 }
 
-void 
-sem_test_2_task2_handler(void *arg) 
+void
+sem_test_2_task2_handler(void *arg)
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-void 
-sem_test_2_task3_handler(void *arg) 
+void
+sem_test_2_task3_handler(void *arg)
 {
     sem_test_pend_release_loop(0, OS_TIMEOUT_NEVER, 2000);
 }
 
-void 
-sem_test_2_task4_handler(void *arg) 
+void
+sem_test_2_task4_handler(void *arg)
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-void 
-sem_test_3_task2_handler(void *arg) 
+void
+sem_test_3_task2_handler(void *arg)
 {
     sem_test_pend_release_loop(100, 2000, 2000);
 }
 
-void 
-sem_test_3_task3_handler(void *arg) 
+void
+sem_test_3_task3_handler(void *arg)
 {
     sem_test_pend_release_loop(150, 2000, 2000);
 }
 
-void 
-sem_test_3_task4_handler(void *arg) 
+void
+sem_test_3_task4_handler(void *arg)
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-void 
-sem_test_4_task2_handler(void *arg) 
+void
+sem_test_4_task2_handler(void *arg)
 {
     sem_test_pend_release_loop(60, 2000, 2000);
 }
 
-void 
-sem_test_4_task3_handler(void *arg) 
+void
+sem_test_4_task3_handler(void *arg)
 {
     sem_test_pend_release_loop(60, 2000, 2000);
 }
 
-void 
-sem_test_4_task4_handler(void *arg) 
+void
+sem_test_4_task4_handler(void *arg)
 {
     sem_test_pend_release_loop(0, 2000, 2000);
 }
@@ -279,6 +279,7 @@ void
 os_sem_tc_pretest(void* arg)
 {
 #if MYNEWT_VAL(SELFTEST)
+    os_init();
     sysinit();
 #endif
     return;

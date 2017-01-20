@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -24,9 +24,10 @@ TEST_CASE(callout_test)
 
 #if MYNEWT_VAL(SELFTEST)
     /* Initializing the OS */
+    os_init();
     sysinit();
 #endif
-    
+
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_send, "callout_task_send",
         callout_task_send, NULL, SEND_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
@@ -38,7 +39,7 @@ TEST_CASE(callout_test)
         callout_task_stack_receive, CALLOUT_STACK_SIZE);
 
     os_eventq_init(&callout_evq);
-    
+
     /* Initialize the callout function */
     os_callout_init(&callout_test_c, &callout_evq, my_callout, NULL);
 

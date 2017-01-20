@@ -20,6 +20,7 @@
 
 TEST_CASE(socket_tests)
 {
+    os_init();
     sysinit();
 
     os_sem_init(&test_sem, 0);
