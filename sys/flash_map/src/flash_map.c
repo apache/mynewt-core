@@ -69,7 +69,7 @@ flash_read_sector(int device_id, int sector_idx, struct flash_area *out_sect)
     uint32_t size;
 
     hf = hal_bsp_flash_dev(device_id);
-    hf->hf_itf->hff_sector_info(sector_idx, &start, &size);
+    hf->hf_itf->hff_sector_info(hf, sector_idx, &start, &size);
     if (out_sect != NULL) {
         out_sect->fa_device_id = device_id;
         out_sect->fa_off = start;
