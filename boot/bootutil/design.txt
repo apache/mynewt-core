@@ -214,9 +214,9 @@ An image trailer has the following structure:
     ~             Swap status (128 * min-write-size * 3)            ~
     ~                                                               ~
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |   Copy done   |     0xff padding (up to min-write-sz - 1)     ~
+    |   Copy done   |     0xff padding (up to min-write-sz - 1)     |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |   Image OK    |     0xff padding (up to min-write-sz - 1)     ~
+    |   Image OK    |     0xff padding (up to min-write-sz - 1)     |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 These records are at the end of each image slot.  The offset immediately
