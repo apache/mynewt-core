@@ -1061,8 +1061,8 @@ bletiny_tx_timer_cb(struct os_event *ev)
     if (om) {
         /* Put the HCI header in the mbuf */
         om->om_len = len + 4;
-        htole16(om->om_data, bletiny_tx_data.tx_handle);
-        htole16(om->om_data + 2, len);
+        put_le16(om->om_data, bletiny_tx_data.tx_handle);
+        put_le16(om->om_data + 2, len);
         dptr = om->om_data + 4;
 
         /*
@@ -1070,7 +1070,7 @@ bletiny_tx_timer_cb(struct os_event *ev)
          * The rest of the data gets filled with incrementing pattern starting
          * from 0.
          */
-        htole16(dptr, len - 4);
+        put_le16(dptr, len - 4);
         dptr[2] = 0xff;
         dptr[3] = 0xff;
         dptr += 4;

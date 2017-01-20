@@ -82,7 +82,7 @@ bletest_send_ltk_req_neg_reply(uint16_t handle)
                        sizeof(uint16_t), dst);
     dst += BLE_HCI_CMD_HDR_LEN;
 
-    htole16(dst, handle);
+    put_le16(dst, handle);
     rc = ble_hs_hci_cmd_tx(buf, &ack_conn_handle, 2, &rsplen);
     if (rc == 0) {
         if (rsplen != 2) {
@@ -198,9 +198,9 @@ bletest_hci_le_set_datalen(uint16_t handle, uint16_t txoctets, uint16_t txtime)
                        BLE_HCI_SET_DATALEN_LEN, dst);
     dst += BLE_HCI_CMD_HDR_LEN;
 
-    htole16(dst, handle);
-    htole16(dst + 2, txoctets);
-    htole16(dst + 4, txtime);
+    put_le16(dst, handle);
+    put_le16(dst + 2, txoctets);
+    put_le16(dst + 4, txtime);
     rc = ble_hs_hci_cmd_tx(buf, rspbuf, 2, &rsplen);
     if (rc != 0) {
         return rc;
@@ -224,8 +224,8 @@ bletest_hci_le_write_sugg_datalen(uint16_t txoctets, uint16_t txtime)
                        BLE_HCI_WR_SUGG_DATALEN_LEN, dst);
     dst += BLE_HCI_CMD_HDR_LEN;
 
-    htole16(dst, txoctets);
-    htole16(dst + 2, txtime);
+    put_le16(dst, txoctets);
+    put_le16(dst + 2, txtime);
     return ble_hs_hci_cmd_tx(buf, NULL, 0, NULL);
 }
 
@@ -426,7 +426,7 @@ bletest_hci_le_read_rem_used_feat(uint16_t handle)
                        BLE_HCI_CONN_RD_REM_FEAT_LEN, dst);
     dst += BLE_HCI_CMD_HDR_LEN;
 
-    htole16(dst, handle);
+    put_le16(dst, handle);
     return ble_hs_hci_cmd_tx(buf, NULL, 0, NULL);
 }
 
@@ -477,8 +477,8 @@ bletest_hci_le_set_multi_adv_params(struct hci_multi_adv_params *adv,
     }
 
     dst[0] = BLE_HCI_MULTI_ADV_PARAMS;
-    htole16(dst + 1, adv->adv_itvl_min);
-    htole16(dst + 3, adv->adv_itvl_max);
+    put_le16(dst + 1, adv->adv_itvl_min);
+    put_le16(dst + 3, adv->adv_itvl_max);
     dst[5] = adv->adv_type;
     dst[6] = adv->own_addr_type;
     memcpy(dst + 7, adv->own_addr, BLE_DEV_ADDR_LEN);
@@ -555,7 +555,7 @@ bletest_hci_rd_rem_version(uint16_t handle)
                        sizeof(uint16_t), dst);
     dst += BLE_HCI_CMD_HDR_LEN;
 
-    htole16(dst, handle);
+    put_le16(dst, handle);
     return ble_hs_hci_cmd_tx(buf, NULL, 0, NULL);
 }
 
@@ -588,7 +588,7 @@ bletest_hci_le_rd_chanmap(uint16_t handle)
                        BLE_HCI_RD_CHANMAP_LEN, dst);
     dst += BLE_HCI_CMD_HDR_LEN;
 
-    htole16(dst, handle);
+    put_le16(dst, handle);
     rc = ble_hs_hci_cmd_tx(buf, rspbuf, BLE_HCI_RD_CHANMAP_RSP_LEN, &rsplen);
     if (rc != 0) {
         return rc;

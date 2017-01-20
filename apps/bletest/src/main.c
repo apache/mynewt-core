@@ -876,11 +876,11 @@ bletest_send_packet(uint16_t handle)
 #endif
 
         /* Put the HCI header in the mbuf */
-        htole16(om->om_data, handle);
-        htole16(om->om_data + 2, pktlen + 4);
+        put_le16(om->om_data, handle);
+        put_le16(om->om_data + 2, pktlen + 4);
 
         /* Place L2CAP header in packet */
-        htole16(om->om_data + 4, pktlen);
+        put_le16(om->om_data + 4, pktlen);
         om->om_data[6] = 0;
         om->om_data[7] = 0;
         om->om_len = 8;
