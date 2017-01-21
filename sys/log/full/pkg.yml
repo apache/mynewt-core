@@ -40,5 +40,5 @@ pkg.deps.LOG_NEWTMGR:
 pkg.apis:
     - log
 
-pkg.init_function: log_init
-pkg.init_stage: 1
+pkg.init:
+    log_init: 100

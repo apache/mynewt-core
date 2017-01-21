@@ -36,5 +36,5 @@ pkg.req_apis:
     - log
     - console
 
-pkg.init_function: log_reboot_pkg_init
-pkg.init_stage: 2
+pkg.init:
+    log_reboot_pkg_init: 200

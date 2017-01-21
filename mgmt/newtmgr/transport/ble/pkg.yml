@@ -31,5 +31,5 @@ pkg.deps:
     - mgmt/newtmgr
     - net/nimble/host
 
-pkg.init_function: newtmgr_ble_pkg_init
-pkg.init_stage: 5
+pkg.init:
+    newtmgr_ble_pkg_init: 501

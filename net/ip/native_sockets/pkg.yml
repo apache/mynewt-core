@@ -29,5 +29,5 @@ pkg.deps:
     - kernel/os
     - net/ip/mn_socket
 
-pkg.init_function: native_sock_init
-pkg.init_stage: 2
+pkg.init:
+    native_sock_init: 200
