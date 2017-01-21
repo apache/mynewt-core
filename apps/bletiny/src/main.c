@@ -702,7 +702,7 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
                 bletiny_full_disc_prev_chr_val <= chr->chr.def_handle) {
 
                 rc = bletiny_disc_all_dscs(conn_handle,
-                                           chr->chr.val_handle,
+                                           chr->chr.val_handle + 1,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
                     bletiny_full_disc_complete(rc);
