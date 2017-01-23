@@ -35,13 +35,6 @@
 #include "ocf_sample.h"
 #endif
 
-/** Task for handling OCF-specific events. */
-#define OCF_MAIN_TASK_PRIO          (8)
-#define OCF_MAIN_TASK_STACK_SIZE    (OS_STACK_ALIGN(512))
-static os_stack_t ocf_stack[OCF_MAIN_TASK_STACK_SIZE];
-struct os_task ocf_main_task;
-struct os_eventq ocf_main_evq;
-
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
 static void issue_requests(void);
 #endif
@@ -240,42 +233,20 @@ oc_handler_t ocf_handler = {
  };
 
 static void
-ocf_main_task_handler(void *arg)
-{
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    os_callout_init(&callout, &ocf_main_evq, stop_observe, NULL);
-#endif
-    while (1) {
-        os_eventq_run(&ocf_main_evq);
-    }
-    oc_main_shutdown();
-}
-
-static void
 ocf_init_tasks(void)
 {
-    int rc;
-
-    rc = os_task_init(&ocf_main_task, "ocf", ocf_main_task_handler, NULL,
-            OCF_MAIN_TASK_PRIO, OS_WAIT_FOREVER, ocf_stack,
-            OCF_MAIN_TASK_STACK_SIZE);
-    assert(rc == 0);
-
-    /* Initialize eventq */
-    os_eventq_init(&ocf_main_evq);
-
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&ocf_main_evq);
-
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
+    os_callout_init(&callout, os_eventq_dflt_get(), stop_observe, NULL);
+#endif
     oc_main_init(&ocf_handler);
 }
 
 int
 main(int argc, char **argv)
 {
-    int rc;
-
-    (void)rc;
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
 
     /* Initialize OS */
     sysinit();
@@ -286,8 +257,10 @@ main(int argc, char **argv)
 
     ocf_init_tasks();
 
-    /* Start the OS */
-    os_start();
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
 
     /* os start should never return. If it does, this should be an error */
     assert(0);

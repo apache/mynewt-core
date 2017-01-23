@@ -61,10 +61,6 @@
 #include "../src/ble_hs_atomic_priv.h"
 #include "../src/ble_hs_hci_priv.h"
 
-/* BLETINY variables */
-#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(512))
-#define BLETINY_TASK_PRIO              1
-
 #if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
@@ -74,10 +70,6 @@
 #define BLETINY_MAX_CHRS               1
 #define BLETINY_MAX_DSCS               1
 #endif
-
-struct os_eventq bletiny_evq;
-struct os_task bletiny_task;
-bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 
 struct log bletiny_log;
 
@@ -1567,19 +1559,6 @@ bletiny_on_reset(int reason)
 }
 
 /**
- * BLE test task
- *
- * @param arg
- */
-static void
-bletiny_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&bletiny_evq);
-    }
-}
-
-/**
  * main
  *
  * The main function for the project. This function initializes the os, calls
@@ -1628,16 +1607,6 @@ main(void)
     log_register("bletiny", &bletiny_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
-    /* Initialize eventq for the application task. */
-    os_eventq_init(&bletiny_evq);
-
-    /* Create the bletiny task.  All application logic and NimBLE host
-     * operations are performed in this task.
-     */
-    os_task_init(&bletiny_task, "bletiny", bletiny_task_handler,
-                 NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
-                 bletiny_stack, BLETINY_STACK_SIZE);
-
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
@@ -1657,15 +1626,12 @@ main(void)
     /* Create a callout (timer).  This callout is used by the "tx" bletiny
      * command to repeatedly send packets of sequential data bytes.
      */
-    os_callout_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
-                    NULL);
+    os_callout_init(&bletiny_tx_timer, os_eventq_dflt_get(),
+                    bletiny_tx_timer_cb, NULL);
 
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&bletiny_evq);
-
-    /* Start the OS */
-    os_start();
-
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
     /* os start should never return. If it does, this should be an error */
     assert(0);
 

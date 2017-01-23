@@ -58,3 +58,8 @@ syscfg.vals:
     STATS_CLI: 1
     LOG_CLI: 1
     STATS_NAMES: 1
+
+    # Default task settings
+    OS_MAIN_TASK_PRIO: 1
+    OS_MAIN_STACK_SIZE: 336
+
