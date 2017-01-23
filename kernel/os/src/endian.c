@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdint.h>
-#include "nimble/ble.h"
+
+#include "os/endian.h"
 
 void
 put_le16(void *buf, uint16_t x)
@@ -216,4 +216,3 @@ swap_buf(uint8_t *dst, const uint8_t *src, int len)
         dst[len - 1 - i] = src[i];
     }
 }
-
