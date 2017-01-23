@@ -31,3 +31,7 @@ syscfg.vals:
     RUNTEST_NEWTMGR: 1
 
 #    BSP_ARDUINO_ZERO_PRO: 1
+
+    # Default task settings
+    OS_MAIN_TASK_PRIO: 2
+    OS_MAIN_STACK_SIZE: 768

@@ -296,7 +296,7 @@ mutex_task3_handler(void *arg)
     }
 }
 
-void 
+void
 mutex_task4_handler(void *arg)
 {
     os_error_t err;
@@ -335,6 +335,7 @@ os_mutex_tc_pretest(void* arg)
     /*
      * Only call if running in "native" simulated environment
      */
+    os_init();
     sysinit();
 #endif
     return;

@@ -61,11 +61,6 @@ static volatile int g_task1_loops;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
 
-/* Task 3 */
-#define TASK3_PRIO (10)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task3;
-
 static struct log my_log;
 
 static volatile int g_task2_loops;
@@ -105,8 +100,6 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
-
-static struct os_eventq slinky_evq;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -212,18 +205,6 @@ task2_handler(void *arg)
 }
 
 /**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
- */
-static void
-task3_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&slinky_evq);
-    }
-}
-
-/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -250,19 +231,6 @@ init_tasks(void)
 
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
-
-    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task3, "task3", task3_handler, NULL,
-            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&slinky_evq);
-    os_eventq_dflt_set(&slinky_evq);
 }
 
 /**
@@ -318,10 +286,10 @@ main(int argc, char **argv)
     }
 #endif
 
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
-
-    return rc;
+    /*
+     * As the last thing, process events from default event queue.
+     */
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
 }

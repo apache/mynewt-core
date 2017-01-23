@@ -31,3 +31,7 @@ syscfg.vals:
 
     # Disable eddystone beacons.
     BLE_EDDYSTONE: 0
+
+    # Default task settings
+    OS_MAIN_TASK_PRIO: 1
+    OS_MAIN_STACK_SIZE: 512

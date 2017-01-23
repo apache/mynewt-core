@@ -19,6 +19,12 @@
 # Package: kernel/os
 
 syscfg.defs:
+    OS_MAIN_TASK_PRIO:
+        description: 'Priority of initialization and main task'
+        value: 0xfe
+    OS_MAIN_STACK_SIZE:
+        description: 'Stack size of initialization and main task'
+        value: 1024
     OS_CLI:
         description: 'TBD'
         value: 0

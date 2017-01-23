@@ -31,5 +31,5 @@ pkg.deps:
 pkg.req_apis:
     - console
 
-pkg.init_function: shell_init
-pkg.init_stage: 5
+pkg.init:
+    shell_init: 500

@@ -29,7 +29,7 @@
  *   @{
  */
 
-static struct os_eventq *os_eventq_main;
+static struct os_eventq os_eventq_main;
 
 /**
  * Initialize the event queue
@@ -279,29 +279,14 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
 }
 
 /**
- * Assigns the default event queue.  Packages which require an event queue, and
- * which haven't been explicitly told which one to use, will use this one
- * automatically.
+ * Retrieves the default event queue processed by OS main task.
  *
- * @param evq                   The event queue to designate as the default.
- */
-void
-os_eventq_dflt_set(struct os_eventq *evq)
-{
-    os_eventq_main = evq;
-}
-
-/**
- * Retrieves the default event queue, if any.  The default event queue is
- * designated via a call to os_eventq_dflt_set().  
- *
- * @return                      The default event queue, no NULL if there isn't
- *                                  any.
+ * @return                      The default event queue.
  */
 struct os_eventq *
 os_eventq_dflt_get(void)
 {
-    return os_eventq_main;
+    return &os_eventq_main;
 }
 
 void

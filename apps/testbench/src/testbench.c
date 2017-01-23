@@ -86,11 +86,6 @@ int init_tasks(void);
 #define TESTTASK_STACK_SIZE    OS_STACK_ALIGN(256)
 static struct os_task testtask;
 
-/* newtmgr Task */
-#define NMGRTASK_PRIO (2)
-#define NMGRTASK_STACK_SIZE    OS_STACK_ALIGN(768)
-static struct os_task nmgrtask;
-
 /* For LED toggling */
 int g_led_pin;
 
@@ -117,8 +112,6 @@ int forcefail; /* to optionally force a fail on a tests */
 #define BLINKY_DUTYCYCLE_FAIL 16
 
 char buildID[TESTBENCH_BUILDID_SZ];
-
-static struct os_eventq run_evq;
 
 struct runtest_evq_arg test_event_arg;
 char runtest_token[RUNTEST_REQ_SIZE];
@@ -285,18 +278,6 @@ testtask_handler(void *arg)
 }
 
 /*
- * Event callbacks are automatically run and this is how
- * testbench_runtests (and the subsequent test suites) are intiated
- */
-static void
-nmgrtask_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&run_evq);
-    }
-}
-
-/*
  * init_tasks include test workers 
  */
 int
@@ -322,12 +303,6 @@ init_tasks(void)
     stack4 = malloc(sizeof(os_stack_t) * TASK4_STACK_SIZE);
     assert(stack4);
     stack4_size = TASK4_STACK_SIZE;
-
-    teststack = malloc(sizeof(os_stack_t) * NMGRTASK_STACK_SIZE);
-    assert(teststack);
-    os_task_init(&nmgrtask, "nmgrtask", nmgrtask_handler, NULL,
-                 NMGRTASK_PRIO, OS_WAIT_FOREVER, teststack,
-                 NMGRTASK_STACK_SIZE);
 
     teststack = malloc(sizeof(os_stack_t) * TESTTASK_STACK_SIZE);
     assert(teststack);
@@ -379,12 +354,6 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
-    /*
-     * Initialize eventq and designate it as the default.
-     */
-    os_eventq_init(&run_evq);
-    os_eventq_dflt_set(&run_evq);
-
     log_reboot(hal_reset_cause());
 
     conf_load();
@@ -408,9 +377,9 @@ main(int argc, char **argv)
 
     testbench_test_init(); /* initialize globals include blink duty cycle */
 
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
     assert(0);
 
     return rc;

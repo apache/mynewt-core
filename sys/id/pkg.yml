@@ -33,5 +33,5 @@ pkg.deps:
     - sys/mfg
     - encoding/base64
 
-pkg.init_function: id_init
-pkg.init_stage: 5
+pkg.init:
+    id_init: 500

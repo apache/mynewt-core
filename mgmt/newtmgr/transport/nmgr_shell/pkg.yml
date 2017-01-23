@@ -30,5 +30,5 @@ pkg.deps:
     - sys/shell
     - mgmt/newtmgr
 
-pkg.init_function: nmgr_shell_pkg_init
-pkg.init_stage: 5
+pkg.init_function:
+    nmgr_shell_pkg_init: 501

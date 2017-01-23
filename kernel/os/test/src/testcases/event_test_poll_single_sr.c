@@ -26,10 +26,11 @@ TEST_CASE(event_test_poll_single_sr)
 
 #if MYNEWT_VAL(SELFTEST)
     /* Initializing the OS */
+    os_init();
     sysinit();
 #endif
     /* Initialize the task */
-    os_task_init(&eventq_task_poll_single_s, "eventq_task_poll_single_s", 
+    os_task_init(&eventq_task_poll_single_s, "eventq_task_poll_single_s",
         eventq_task_poll_single_send, NULL, SEND_TASK_POLL_SINGLE_PRIO,
         OS_WAIT_FOREVER, eventq_task_stack_poll_single_s, POLL_STACK_SIZE);
 

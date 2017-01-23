@@ -73,6 +73,7 @@ os_test_restart(void)
 void
 os_selftest_pretest_cb(void* arg)
 {
+    os_init();
     sysinit();
 }
 
@@ -92,10 +93,10 @@ os_test_all(void)
 
     tu_suite_set_init_cb(os_mempool_test_init, NULL);
     os_mempool_test_suite();
-
+#if 1
     tu_suite_set_init_cb(os_mutex_test_init, NULL);
     os_mutex_test_suite();
-
+#endif
     tu_suite_set_init_cb(os_sem_test_init, NULL);
     os_sem_test_suite();
 

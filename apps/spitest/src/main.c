@@ -46,13 +46,6 @@ void *spi_cb_arg;
 #define TASK1_STACK_SIZE    OS_STACK_ALIGN(1024)
 struct os_task task1;
 
-/* Task 3 */
-#define TASK2_PRIO (2)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task2;
-
-static struct os_eventq spitest_evq;
-
 /* Global test semaphore */
 struct os_sem g_test_sem;
 
@@ -389,18 +382,6 @@ task1_handler(void *arg)
 #endif
 
 /**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
- */
-static void
-task2_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&spitest_evq);
-    }
-}
-
-/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -413,6 +394,8 @@ init_tasks(void)
 {
     os_stack_t *pstack;
 
+    (void)pstack;
+
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
@@ -423,19 +406,6 @@ init_tasks(void)
     os_task_init(&task1, "task1", task1_handler, NULL,
             TASK1_PRIO, OS_WAIT_FOREVER, pstack, TASK1_STACK_SIZE);
 #endif
-
-    pstack = malloc(sizeof(os_stack_t)*TASK2_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task2, "task2", task2_handler, NULL,
-            TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&spitest_evq);
-    os_eventq_dflt_set(&spitest_evq);
 }
 
 /**
@@ -458,9 +428,11 @@ main(int argc, char **argv)
 
     sysinit();
     init_tasks();
-    os_start();
 
-    /* os start should never return. If it does, this should be an error */
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
     assert(0);
 
     return rc;
