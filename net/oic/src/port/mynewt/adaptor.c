@@ -23,17 +23,12 @@
 #include <string.h>
 #include <log/log.h>
 #include "oic/oc_log.h"
-#include "port/oc_network_events_mutex.h"
 #include "port/oc_connectivity.h"
 #include "adaptor.h"
 
 static struct os_eventq *oc_evq;
 
 struct log oc_log;
-
-/* not sure if these semaphores are necessary yet.  If we are running
- * all of this from one task, we may not need these */
-static struct os_mutex oc_net_mutex;
 
 struct os_eventq *
 oc_evq_get(void)
@@ -46,26 +41,6 @@ void
 oc_evq_set(struct os_eventq *evq)
 {
     os_eventq_designate(&oc_evq, evq, NULL);
-}
-
-void
-oc_network_event_handler_mutex_init(void)
-{
-    os_error_t rc;
-    rc = os_mutex_init(&oc_net_mutex);
-    assert(rc == 0);
-}
-
-void
-oc_network_event_handler_mutex_lock(void)
-{
-    os_mutex_pend(&oc_net_mutex, OS_TIMEOUT_NEVER);
-}
-
-void
-oc_network_event_handler_mutex_unlock(void)
-{
-    os_mutex_release(&oc_net_mutex);
 }
 
 void

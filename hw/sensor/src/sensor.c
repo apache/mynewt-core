@@ -370,12 +370,6 @@ sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor)
 void
 sensor_pkg_init(void)
 {
-    /* Call directly until sysinit has the right hooks for us */
-#if 0
-    /* Ensure this is only called by sysinit */
-    SYSINIT_ASSERT_ACTIVE();
-#endif
-
     sensor_mgr_init();
 
 #if MYNEWT_VAL(SENSOR_CLI)

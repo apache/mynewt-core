@@ -42,18 +42,22 @@ extern "C" {
  */
 extern struct os_task task1;
 extern os_stack_t *stack1;
+extern uint32_t stack1_size;
 #define TASK1_PRIO (20) 
 
 extern struct os_task task2;
 extern os_stack_t *stack2;
+extern uint32_t stack2_size;
 #define TASK2_PRIO (21) 
 
 extern struct os_task task3;
 extern os_stack_t *stack3;
+extern uint32_t stack3_size;
 #define TASK3_PRIO (22) 
 
 extern struct os_task task4;
 extern os_stack_t *stack4;
+extern uint32_t stack4_size;
 #define TASK4_PRIO (23) 
 
 void os_test_restart(void);

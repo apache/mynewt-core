@@ -31,7 +31,8 @@ int tu_case_idx;
 
 const char *tu_case_name;
 
-#define TU_CASE_BUF_SZ      1024
+/*#define TU_CASE_BUF_SZ      1024*/
+#define TU_CASE_BUF_SZ      256
 
 static char tu_case_buf[TU_CASE_BUF_SZ];
 static int tu_case_buf_len;
@@ -197,27 +198,6 @@ tu_case_fail(void)
 }
 
 static void
-tu_case_write_fail_buf(void)
-{
-    tu_case_reported = 1;
-    tu_case_failed = 1;
-    tu_suite_failed = 1;
-    tu_any_failed = 1;
-
-#if MYNEWT_VAL(SELFTEST)
-    if (ts_config.ts_print_results) {
-        printf("[FAIL] %s/%s %s", ts_current_config->ts_suite_name, tu_case_name, tu_case_buf);
-        fflush(stdout);
-    }
-#endif
-
-    if (ts_config.ts_case_fail_cb != NULL) {
-        ts_config.ts_case_fail_cb(tu_case_buf, tu_case_buf_len,
-                                  ts_config.ts_case_fail_arg);
-    }
-}
-
-static void
 tu_case_append_file_info(const char *file, int line)
 {
     int rc;
@@ -304,7 +284,7 @@ tu_case_fail_assert(int fatal, const char *file, int line,
     rc = tu_case_append_buf("\n");
     assert(rc == 0);
 
-    tu_case_write_fail_buf();
+    tu_case_fail();
 
     if (fatal) {
         tu_case_abort();

@@ -38,6 +38,9 @@ extern struct log oc_log;
 struct oc_endpoint;
 void oc_log_endpoint(uint16_t lvl, struct oc_endpoint *);
 void oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char);
+struct os_mbuf;
+void oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *, int off, int len,
+                       int print_char);
 
 #define OC_LOG_ENDPOINT(lvl, ep)                                        \
     do {                                                                \
@@ -53,12 +56,27 @@ void oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char);
         }                                                               \
     } while(0)
 
+#define OC_LOG_STR_MBUF(lvl, m, off, len)                               \
+    do {                                                                \
+        if (MYNEWT_VAL(LOG_LEVEL) <= (lvl)) {                           \
+            oc_log_bytes_mbuf(lvl, m, off, len, 1);                     \
+        }                                                               \
+    } while(0)
+
 #define OC_LOG_HEX(lvl, addr, len)                                      \
     do {                                                                \
         if (MYNEWT_VAL(LOG_LEVEL) <= (lvl)) {                           \
             oc_log_bytes(lvl, addr, len, 0);                            \
         }                                                               \
     } while(0)
+
+#define OC_LOG_HEX_MBUF(lvl, m, off, len)                               \
+    do {                                                                \
+        if (MYNEWT_VAL(LOG_LEVEL) <= (lvl)) {                           \
+            oc_log_bytes_mbuf(lvl, m, off, len, 0);                     \
+        }                                                               \
+    } while(0)
+
 #else
 
 #define OC_LOG_DEBUG(...)
@@ -66,7 +84,9 @@ void oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char);
 #define OC_LOG_ERROR(...)
 #define OC_LOG_ENDPOINT(...)
 #define OC_LOG_STR(...)
+#define OC_LOG_STR_MBUF(...)
 #define OC_LOG_HEX(...)
+#define OC_LOG_HEX_MBUF(...)
 
 #endif
 

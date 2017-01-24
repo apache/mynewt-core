@@ -22,7 +22,7 @@
 **
 ****************************************************************************/
 
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 
 #ifndef _
 #  define _(msg)    msg

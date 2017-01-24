@@ -25,5 +25,5 @@ pkg.keywords:
     - init
 
 pkg.deps:
-    - boot/bootutil
     - kernel/os
+    - sys/flash_map

@@ -23,3 +23,6 @@ pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
+
+pkg.init:
+    sensor_pkg_init: 501

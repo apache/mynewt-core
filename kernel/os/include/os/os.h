@@ -83,6 +83,8 @@ enum os_error {
 typedef enum os_error os_error_t;
 
 #define OS_IDLE_PRIO (0xff)
+#define OS_MAIN_TASK_PRIO       MYNEWT_VAL(OS_MAIN_TASK_PRIO)
+#define OS_MAIN_STACK_SIZE      MYNEWT_VAL(OS_MAIN_STACK_SIZE)
 
 void os_init(void);
 void os_start(void);
@@ -97,6 +99,7 @@ void os_init_idle_task(void);
 #include "os/os_dev.h"
 #include "os/os_eventq.h"
 #include "os/os_heap.h"
+#include "os/os_fault.h"
 #include "os/os_mbuf.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"

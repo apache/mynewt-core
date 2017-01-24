@@ -227,8 +227,8 @@ typedef struct oc_rep_s
   };
 } oc_rep_t;
 
-uint16_t oc_parse_rep(const uint8_t *payload, uint16_t payload_size,
-                      oc_rep_t **value_list);
+uint16_t oc_parse_rep(struct os_mbuf *m, uint16_t payload_off,
+                      uint16_t payload_size, oc_rep_t **out_rep);
 
 void oc_free_rep(oc_rep_t *rep);
 #endif

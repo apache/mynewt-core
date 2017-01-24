@@ -51,6 +51,9 @@ enum hal_reset_reason {
 };
 enum hal_reset_reason hal_reset_cause(void);
 
+/* Starts clocks needed by system */
+void hal_system_clock_start(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -29,5 +29,5 @@ pkg.deps:
     - sys/flash_map
 
 # sys/flash_map must get initialized before sys/mfg.
-pkg.init_function: mfg_init
-pkg.init_stage: 1
+pkg.init:
+    mfg_init: 100

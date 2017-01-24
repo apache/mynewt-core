@@ -17,9 +17,24 @@
  * under the License.
  */
 
+#include <stddef.h>
+#include <limits.h>
+#include "os/os_fault.h"
 #include "sysinit/sysinit.h"
 
+sysinit_panic_fn *sysinit_panic_cb = __assert_func;
+
 uint8_t sysinit_active;
+
+/**
+ * Sets the sysinit panic function; i.e., the function which executes when
+ * initialization fails.  By default, a panic triggers a failed assertion.
+ */
+void
+sysinit_panic_set(sysinit_panic_fn *panic_cb)
+{
+    sysinit_panic_cb = panic_cb;
+}
 
 void
 sysinit_start(void)

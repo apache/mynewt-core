@@ -31,8 +31,15 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
+#endif
+#if MYNEWT_VAL(UART_0)
 #include "uart_hal/uart_hal.h"
+#endif
+#if MYNEWT_VAL(UART_1)
+#include "uart_bitbang/uart_bitbang.h"
+#endif
 #include "os/os_dev.h"
 #include "bsp.h"
 
@@ -51,7 +58,7 @@ static struct uart_dev os_bsp_bitbang_uart1;
 static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
     .ubc_rxpin = MYNEWT_VAL(UART_1_PIN_TX),
     .ubc_txpin = MYNEWT_VAL(UART_1_PIN_RX),
-    .ubc_cputimer_freq = MYNEWT_VAL(CLOCK_FREQ),
+    .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
 };
 #endif
 
@@ -149,6 +156,7 @@ hal_bsp_init(void)
 {
     int rc;
 
+    (void)rc;
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, NULL);
     assert(rc == 0);
@@ -169,10 +177,15 @@ hal_bsp_init(void)
     rc = hal_timer_init(4, NULL);
     assert(rc == 0);
 #endif
-
-    /* Set cputime to count at 1 usec increments */
-    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+#if MYNEWT_VAL(TIMER_5)
+    rc = hal_timer_init(5, NULL);
     assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);

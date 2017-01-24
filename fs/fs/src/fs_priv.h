@@ -26,7 +26,8 @@ extern "C" {
 #endif
 
 struct fs_ops;
-extern const struct fs_ops *fs_root_ops;
+struct fs_ops *fs_ops_for(const char *fs_name);
+struct fs_ops *safe_fs_ops_for(const char *fs_name);
 
 #if MYNEWT_VAL(FS_CLI)
 void fs_cli_init(void);

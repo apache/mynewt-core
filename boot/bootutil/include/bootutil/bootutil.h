@@ -26,10 +26,19 @@
 extern "C" {
 #endif
 
+/** Just boot whatever is in slot 0. */
 #define BOOT_SWAP_TYPE_NONE     1
+
+/** Swap to slot 1.  Absent a confirm command, revert back on next boot. */
 #define BOOT_SWAP_TYPE_TEST     2
-#define BOOT_SWAP_TYPE_REVERT   3
-#define BOOT_SWAP_TYPE_FAIL     4
+
+/** Swap to slot 1 permanently. */
+#define BOOT_SWAP_TYPE_PERM     3
+
+/** Swap back to alternate slot.  A confirm changes this state to NONE. */
+#define BOOT_SWAP_TYPE_REVERT   4
+
+#define BOOT_SWAP_TYPE_FAIL     0xff
 
 struct image_header;
 /**
@@ -53,7 +62,7 @@ int boot_go(struct boot_rsp *rsp);
 
 int boot_swap_type(void);
 
-int boot_set_pending(void);
+int boot_set_pending(int permanent);
 int boot_set_confirmed(void);
 
 #define SPLIT_GO_OK                 (0)

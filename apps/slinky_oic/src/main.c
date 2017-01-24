@@ -37,7 +37,6 @@
 #include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
-#include <json/json.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 
@@ -56,13 +55,6 @@ static volatile int g_task1_loops;
 #define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
-
-/* Task 3 */
-#define TASK3_PRIO (10)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task3;
-
-static struct os_eventq slinky_oic_evq;
 
 static struct log my_log;
 
@@ -225,20 +217,6 @@ static const oc_handler_t omgr_oc_handler = {
 };
 
 /**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
- */
-static void
-task3_handler(void *arg)
-{
-    oc_main_init((oc_handler_t *)&omgr_oc_handler);
-
-    while (1) {
-        os_eventq_run(&slinky_oic_evq);
-    }
-}
-
-/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -265,19 +243,8 @@ init_tasks(void)
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 
-    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task3, "task3", task3_handler, NULL,
-            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&slinky_oic_evq);
-    os_eventq_dflt_set(&slinky_oic_evq);
-    mgmt_evq_set(&slinky_oic_evq);
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
+    mgmt_evq_set(os_eventq_dflt_get());
 }
 
 /**
@@ -331,10 +298,10 @@ main(int argc, char **argv)
 
     init_tasks();
 
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
 
     return rc;
 }

@@ -40,13 +40,6 @@ struct os_task task1;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 struct os_task task2;
 
-/* Task 3 */
-#define TASK3_PRIO (3)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task3;
-
-static struct os_eventq timtest_evq;
-
 #define TASK2_TIMER_NUM     (2)
 #define TASK2_TIMER_FREQ    (31250)
 
@@ -145,18 +138,6 @@ task2_handler(void *arg)
 }
 
 /**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
- */
-static void
-task3_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&timtest_evq);
-    }
-}
-
-/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -199,19 +180,6 @@ init_tasks(void)
 
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
-
-    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task3, "task3", task3_handler, NULL,
-            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&timtest_evq);
-    os_eventq_dflt_set(&timtest_evq);
 }
 
 /**
@@ -230,10 +198,11 @@ main(int argc, char **argv)
 
     sysinit();
     init_tasks();
-    os_start();
 
-    assert(0);
-
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never exit */
     return rc;
 }
 

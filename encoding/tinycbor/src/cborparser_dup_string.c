@@ -28,7 +28,7 @@
 #  define __STDC_LIMIT_MACROS 1
 #endif
 
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include <stdlib.h>
 
 /**

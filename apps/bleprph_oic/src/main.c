@@ -27,7 +27,6 @@
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <console/console.h>
-#include <imgmgr/imgmgr.h>
 #include <mgmt/mgmt.h>
 
 #include <oic/oc_api.h>
@@ -46,14 +45,6 @@
 
 /** Log data. */
 struct log bleprph_log;
-
-/** bleprph task settings. */
-#define BLEPRPH_TASK_PRIO           1
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-static struct os_eventq bleprph_evq;
-static struct os_task bleprph_task;
-static os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -125,7 +116,8 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids128 = (void *)oc_gatt_svc_uuid;
+    fields.uuids128 =
+        BLE_UUID128(BLE_UUID128_DECLARE(OC_GATT_SERVICE_UUID))->value;
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 
@@ -285,7 +277,8 @@ app_set_light(oc_request_t *request, oc_interface_mask_t interface)
 {
     bool state;
     int len;
-    const uint8_t *data;
+    uint16_t data_off;
+    struct os_mbuf *m;
     struct cbor_attr_t attrs[] = {
         [0] = {
             .attribute = "state",
@@ -297,14 +290,13 @@ app_set_light(oc_request_t *request, oc_interface_mask_t interface)
         }
     };
 
-    len = coap_get_payload(request->packet, &data);
-    if (cbor_read_flat_attrs(data, len, attrs)) {
+    len = coap_get_payload(request->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
         oc_send_response(request, OC_STATUS_BAD_REQUEST);
     } else {
         hal_gpio_write(LED_BLINK_PIN, state == true);
         oc_send_response(request, OC_STATUS_CHANGED);
     }
-
 }
 
 static void
@@ -332,20 +324,6 @@ omgr_app_init(void)
 static const oc_handler_t omgr_oc_handler = {
     .init = omgr_app_init,
 };
-
-/*
- * Event loop for the main bleprph task.
- */
-static void
-bleprph_task_handler(void *unused)
-{
-    oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    mgmt_evq_set(&bleprph_evq);
-
-    while (1) {
-        os_eventq_run(&bleprph_evq);
-    }
-}
 
 /**
  * main
@@ -378,18 +356,10 @@ main(void)
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
-    os_eventq_init(&bleprph_evq);
-    os_eventq_dflt_set(&bleprph_evq);
+    ble_hs_evq_set(os_eventq_dflt_get());
 
-    /*
-     * Create the bleprph task.  All omgr and NimBLE host operations are
-     * performed in this task.
-     */
-    os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
-                 NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
-                 bleprph_stack, BLEPRPH_STACK_SIZE);
-
-    ble_hs_evq_set(&bleprph_evq);
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
+    mgmt_evq_set(os_eventq_dflt_get());
 
     oc_ble_coap_gatt_srv_init();
     ble_hs_cfg.reset_cb = bleprph_on_reset;
@@ -403,11 +373,10 @@ main(void)
     /* Our light resource */
     hal_gpio_init_out(LED_BLINK_PIN, 1);
 
-    /* Start the OS */
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never exit */
 
     return 0;
 }

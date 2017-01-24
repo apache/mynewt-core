@@ -17,6 +17,15 @@
 
 . $CORE_PATH/hw/scripts/common.sh
 
+if which JLinkGDBServerCL >/dev/null 2>&1; then
+  JLINK_GDB_SERVER=JLinkGDBServerCL
+elif which JLinkGDBServer >/dev/null 2>&1; then
+  JLINK_GDB_SERVER=JLinkGDBServer
+else
+  echo "Cannot find JLinkGDBServer, make sure J-Link tools are in your PATH"
+  exit 1
+fi
+
 #
 # FILE_NAME is the file to load
 # FLASH_OFFSET is location in the flash
@@ -45,7 +54,7 @@ jlink_load () {
     # downloading somewhere in the flash. So need to figure out how to tell it
     # not to do that, or report failure if gdb fails to write this file
     #
-    echo "shell /bin/sh -c 'trap \"\" 2;JLinkGDBServer -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun' & " > $GDB_CMD_FILE
+    echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun &\" " > $GDB_CMD_FILE
     echo "target remote localhost:3333" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
     echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
@@ -109,7 +118,7 @@ jlink_debug() {
 
 	# Monitor mode. Background process gets it's own process group.
 	set -m
-	JLinkGDBServer -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
+	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
 	set +m
 
 	echo "target remote localhost:3333" > $GDB_CMD_FILE
@@ -124,7 +133,7 @@ jlink_debug() {
 
 	rm $GDB_CMD_FILE
     else
-	JLinkGDBServer -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
+	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
     fi
     return 0
 }

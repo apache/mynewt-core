@@ -48,25 +48,28 @@
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 int
-coap_receive(oc_message_t *msg)
+coap_receive(struct os_mbuf **mp)
 {
     /* static declaration reduces stack peaks and program code size */
     /* this way the packet can be treated as pointer as usual */
-    static coap_packet_t message[1];
-    static coap_packet_t response[1];
+    struct os_mbuf *m;
+    static struct coap_packet_rx message[1];
+    static struct coap_packet response[1];
     static coap_transaction_t *transaction = NULL;
     struct os_mbuf *rsp;
+    oc_endpoint_t endpoint; /* XXX */
 
     erbium_status_code = NO_ERROR;
 
-    OC_LOG_INFO("CoAP: received datalen=%u\n", (unsigned int) msg->length);
+    OC_LOG_INFO("CoAP: received datalen=%u\n", OS_MBUF_PKTLEN(*mp));
 
-    erbium_status_code = coap_parse_message(message, msg->data, msg->length,
-                                           oc_endpoint_use_tcp(&msg->endpoint));
+    memcpy(&endpoint, OC_MBUF_ENDPOINT(*mp), sizeof(endpoint)); /* XXXXX */
+    erbium_status_code = coap_parse_message(message, mp);
     if (erbium_status_code != NO_ERROR) {
         goto out;
     }
 
+    m = *mp;
 /*TODO duplicates suppression, if required by application */
     OC_LOG_DEBUG("  Parsed: CoAP version: %u, token: 0x%02X%02X, mid: %u\n",
                  message->version, message->token[0], message->token[1],
@@ -108,7 +111,7 @@ coap_receive(oc_message_t *msg)
         OC_LOG_DEBUG("  Payload: %d bytes\n", message->payload_len);
 
         /* use transaction buffer for response to confirmable request */
-        transaction = coap_new_transaction(message->mid, &msg->endpoint);
+        transaction = coap_new_transaction(message->mid, OC_MBUF_ENDPOINT(m));
         if (!transaction) {
             erbium_status_code = SERVICE_UNAVAILABLE_5_03;
             coap_error_message = "NoFreeTraBuffer";
@@ -144,8 +147,8 @@ coap_receive(oc_message_t *msg)
             new_offset = block_offset;
         }
 
-        if (oc_ri_invoke_coap_entity_handler(message, response,
-                                             &new_offset, &msg->endpoint)) {
+        if (oc_ri_invoke_coap_entity_handler(message, response, &new_offset,
+                                             OC_MBUF_ENDPOINT(m))) {
             if (erbium_status_code == NO_ERROR) {
                 /*
                  * TODO coap_handle_blockwise(request, response,
@@ -233,7 +236,7 @@ coap_receive(oc_message_t *msg)
         } else if (message->type == COAP_TYPE_RST) {
 #ifdef OC_SERVER
             /* cancel possible subscriptions */
-            coap_remove_observer_by_mid(&msg->endpoint, message->mid);
+            coap_remove_observer_by_mid(OC_MBUF_ENDPOINT(m), message->mid);
 #endif
         }
 
@@ -249,7 +252,7 @@ coap_receive(oc_message_t *msg)
          * ACKs and RSTs sent to oc_ri.. RSTs cleared, ACKs sent to
          * client.
          */
-        oc_ri_invoke_client_cb(message, &msg->endpoint);
+        oc_ri_invoke_client_cb(message, OC_MBUF_ENDPOINT(m));
 #endif
 
     } /* request or response */
@@ -267,13 +270,13 @@ out:
   }
 #ifdef OC_CLIENT
     else if (erbium_status_code == EMPTY_ACK_RESPONSE) {
-        coap_init_message(message, COAP_TYPE_ACK, 0, message->mid);
-        struct os_mbuf *response = oc_allocate_mbuf(&msg->endpoint);
-        if (response) {
-            if (!coap_serialize_message(message, response)) {
-                coap_send_message(response, 0);
+        coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
+        struct os_mbuf *m_rsp = oc_allocate_mbuf(&endpoint);
+        if (m_rsp) {
+            if (!coap_serialize_message(response, m_rsp)) {
+                coap_send_message(m_rsp, 0);
             } else {
-                os_mbuf_free_chain(response);
+                os_mbuf_free_chain(m_rsp);
             }
         }
     }
@@ -284,15 +287,15 @@ out:
 
         coap_clear_transaction(transaction);
 
-        coap_init_message(message, reply_type, SERVICE_UNAVAILABLE_5_03,
+        coap_init_message(response, reply_type, SERVICE_UNAVAILABLE_5_03,
                           message->mid);
 
-        struct os_mbuf *response = oc_allocate_mbuf(&msg->endpoint);
-        if (response) {
-            if (!coap_serialize_message(message, response)) {
-                coap_send_message(response, 0);
+        struct os_mbuf *m_rsp = oc_allocate_mbuf(&endpoint);
+        if (m_rsp) {
+            if (!coap_serialize_message(response, m_rsp)) {
+                coap_send_message(m_rsp, 0);
             } else {
-                os_mbuf_free_chain(response);
+                os_mbuf_free_chain(m_rsp);
             }
         }
     }
@@ -308,7 +311,9 @@ coap_engine_init(void)
     coap_init_connection();
     coap_transaction_init();
 #ifdef OC_SERVER
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
     coap_separate_init();
+#endif
     coap_observe_init();
 #endif
 }

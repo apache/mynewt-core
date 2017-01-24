@@ -45,6 +45,7 @@ struct boot_swap_table {
     uint8_t bsw_magic_slot0;
     uint8_t bsw_magic_slot1;
     uint8_t bsw_image_ok_slot0;
+    uint8_t bsw_image_ok_slot1;
 
     uint8_t bsw_swap_type;
 };
@@ -58,7 +59,7 @@ static const struct boot_swap_table boot_swap_tables[] = {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
          *    magic | Unset      | Unset      |
-         * image-ok | Any        | N/A        |
+         * image-ok | Any        | Any        |
          * ---------+------------+------------'
          * swap: none                         |
          * -----------------------------------'
@@ -66,6 +67,7 @@ static const struct boot_swap_table boot_swap_tables[] = {
         .bsw_magic_slot0 =      BOOT_MAGIC_UNSET,
         .bsw_magic_slot1 =      BOOT_MAGIC_UNSET,
         .bsw_image_ok_slot0 =   0,
+        .bsw_image_ok_slot1 =   0,
         .bsw_swap_type =        BOOT_SWAP_TYPE_NONE,
     },
 
@@ -73,22 +75,39 @@ static const struct boot_swap_table boot_swap_tables[] = {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
          *    magic | Any        | Good       |
-         * image-ok | Any        | N/A        |
-         * ---------+------------+------------'
+         * image-ok | Any        | Unset      |
+         * ---------+------------+------------`
          * swap: test                         |
          * -----------------------------------'
          */
         .bsw_magic_slot0 =      0,
         .bsw_magic_slot1 =      BOOT_MAGIC_GOOD,
         .bsw_image_ok_slot0 =   0,
+        .bsw_image_ok_slot1 =   0xff,
         .bsw_swap_type =        BOOT_SWAP_TYPE_TEST,
     },
 
     {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
+         *    magic | Any        | Good       |
+         * image-ok | Any        | 0x01       |
+         * ---------+------------+------------`
+         * swap: permanent                    |
+         * -----------------------------------'
+         */
+        .bsw_magic_slot0 =      0,
+        .bsw_magic_slot1 =      BOOT_MAGIC_GOOD,
+        .bsw_image_ok_slot0 =   0,
+        .bsw_image_ok_slot1 =   0x01,
+        .bsw_swap_type =        BOOT_SWAP_TYPE_PERM,
+    },
+
+    {
+        /*          | slot-0     | slot-1     |
+         *----------+------------+------------|
          *    magic | Good       | Unset      |
-         * image-ok | 0xff       | N/A        |
+         * image-ok | 0xff       | Any        |
          * ---------+------------+------------'
          * swap: revert (test image running)  |
          * -----------------------------------'
@@ -96,6 +115,7 @@ static const struct boot_swap_table boot_swap_tables[] = {
         .bsw_magic_slot0 =      BOOT_MAGIC_GOOD,
         .bsw_magic_slot1 =      BOOT_MAGIC_UNSET,
         .bsw_image_ok_slot0 =   0xff,
+        .bsw_image_ok_slot1 =   0,
         .bsw_swap_type =        BOOT_SWAP_TYPE_REVERT,
     },
 
@@ -103,7 +123,7 @@ static const struct boot_swap_table boot_swap_tables[] = {
         /*          | slot-0     | slot-1     |
          *----------+------------+------------|
          *    magic | Good       | Unset      |
-         * image-ok | 0x01       | N/A        |
+         * image-ok | 0x01       | Any        |
          * ---------+------------+------------'
          * swap: none (confirmed test image)  |
          * -----------------------------------'
@@ -111,6 +131,7 @@ static const struct boot_swap_table boot_swap_tables[] = {
         .bsw_magic_slot0 =      BOOT_MAGIC_GOOD,
         .bsw_magic_slot1 =      BOOT_MAGIC_UNSET,
         .bsw_image_ok_slot0 =   0x01,
+        .bsw_image_ok_slot1 =   0,
         .bsw_swap_type =        BOOT_SWAP_TYPE_NONE,
     },
 };
@@ -343,7 +364,9 @@ boot_swap_type(void)
             (table->bsw_magic_slot1     == 0    ||
              table->bsw_magic_slot1     == state_slot1.magic)           &&
             (table->bsw_image_ok_slot0  == 0    ||
-             table->bsw_image_ok_slot0  == state_slot0.image_ok)) {
+             table->bsw_image_ok_slot0  == state_slot0.image_ok)        &&
+            (table->bsw_image_ok_slot1  == 0    ||
+             table->bsw_image_ok_slot1  == state_slot1.image_ok)) {
 
             return table->bsw_swap_type;
         }
@@ -357,10 +380,15 @@ boot_swap_type(void)
  * Marks the image in slot 1 as pending.  On the next reboot, the system will
  * perform a one-time boot of the slot 1 image.
  *
+ * @param permanent         Whether the image should be used permanently or
+ *                              only tested once:
+ *                                  0=run image once, then confirm or revert.
+ *                                  1=run image forever.
+ *
  * @return                  0 on success; nonzero on failure.
  */
 int
-boot_set_pending(void)
+boot_set_pending(int permanent)
 {
     const struct flash_area *fap;
     struct boot_swap_state state_slot1;
@@ -384,6 +412,10 @@ boot_set_pending(void)
             rc = BOOT_EFLASH;
         } else {
             rc = boot_write_magic(fap);
+        }
+
+        if (rc == 0 && permanent) {
+            rc = boot_write_image_ok(fap);
         }
 
         flash_area_close(fap);

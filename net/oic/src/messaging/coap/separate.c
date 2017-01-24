@@ -33,7 +33,7 @@
 
 #include "config.h"
 
-#ifdef OC_SERVER
+#if defined(OC_SERVER) && MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 
 #include <stdio.h>
 #include <string.h>
@@ -64,7 +64,7 @@ static uint8_t coap_separate_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
  * then retry later.
  */
 int
-coap_separate_accept(coap_packet_t *coap_req,
+coap_separate_accept(struct coap_packet_rx *coap_req,
                      oc_separate_response_t *separate_response,
                      oc_endpoint_t *endpoint, int observe)
 {
@@ -160,4 +160,4 @@ coap_separate_init(void)
     os_mempool_init(&coap_separate_pool, MAX_NUM_CONCURRENT_REQUESTS,
       sizeof(coap_separate_t), coap_separate_area, "coap_sep");
 }
-#endif /* OC_SERVER */
+#endif /* OC_SERVER && OC_SEPARATE_RESPONSES */

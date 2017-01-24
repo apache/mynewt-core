@@ -28,3 +28,5 @@ syscfg.defs:
 
 syscfg.vals:
     SYSINIT_CONSTRAIN_INIT: 0
+    OS_SCHEDULING: 0
+    OS_CPUTIME_TIMER_NUM: -1

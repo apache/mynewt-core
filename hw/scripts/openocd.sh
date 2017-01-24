@@ -26,8 +26,8 @@ openocd_load () {
 
     echo "$EXTRA_JTAG_CMD" > $OCD_CMD_FILE
     echo "init" >> $OCD_CMD_FILE
-    echo "$CFG_POST_INIT" >> $OCD_CMD_FILE
     echo "reset halt" >> $OCD_CMD_FILE
+    echo "$CFG_POST_INIT" >> $OCD_CMD_FILE
     echo "flash write_image erase $FILE_NAME $FLASH_OFFSET" >> $OCD_CMD_FILE
 
     if [ -z $FILE_NAME ]; then

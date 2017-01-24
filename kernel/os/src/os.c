@@ -42,6 +42,10 @@ struct os_task g_idle_task;
 os_stack_t g_idle_task_stack[OS_STACK_ALIGN(OS_IDLE_STACK_SIZE)];
 
 uint32_t g_os_idle_ctr;
+
+static struct os_task os_main_task;
+static os_stack_t os_main_stack[OS_STACK_ALIGN(OS_MAIN_STACK_SIZE)];
+
 /* Default zero.  Set by the architecture specific code when os is started.
  */
 int g_os_started;
@@ -123,6 +127,21 @@ os_started(void)
     return (g_os_started);
 }
 
+static void
+os_main(void *arg)
+{
+    extern int main(int argc, char **argv);
+
+    os_eventq_init(os_eventq_dflt_get());
+#if !MYNEWT_VAL(SELFTEST)
+    main(0, NULL);
+#else
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+#endif
+    assert(0);
+}
 
 void
 os_init_idle_task(void)
@@ -136,6 +155,11 @@ os_init_idle_task(void)
 
     /* Initialize sanity */
     rc = os_sanity_init();
+    assert(rc == 0);
+
+    rc = os_task_init(&os_main_task, "main", os_main, NULL,
+            OS_MAIN_TASK_PRIO, OS_WAIT_FOREVER, os_main_stack,
+            OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
     assert(rc == 0);
 
     assert(MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 > MYNEWT_VAL(SANITY_INTERVAL));
@@ -179,6 +203,7 @@ os_init(void)
 void
 os_start(void)
 {
+#if MYNEWT_VAL(OS_SCHEDULING)
     os_error_t err;
 
     err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
@@ -189,6 +214,9 @@ os_start(void)
 
     err = os_arch_os_start();
     assert(err == OS_OK);
+#else
+    assert(0);
+#endif
 }
 
 void

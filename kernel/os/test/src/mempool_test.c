@@ -60,6 +60,7 @@ mempool_test_get_pool_size(int num_blocks, int block_size)
 void
 os_mempool_ts_pretest(void* arg)
 {
+    os_init();
     sysinit();
 }
 

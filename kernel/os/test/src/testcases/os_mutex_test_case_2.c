@@ -20,10 +20,6 @@
 
 TEST_CASE(os_mutex_test_case_2)
 {
-#if MYNEWT_VAL(SELFTEST)
-    sysinit();
-#endif
-
     g_mutex_test = 2;
     g_task1_val = 0;
     g_task2_val = 0;
@@ -31,19 +27,15 @@ TEST_CASE(os_mutex_test_case_2)
     os_mutex_init(&g_mutex1);
     os_mutex_init(&g_mutex2);
 
-    os_task_init(&task1, "task1", mutex_test2_task1_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, sizeof(stack1));
+    os_task_init(&task1, "task1", mutex_test2_task1_handler, NULL, TASK1_PRIO,
+                 OS_WAIT_FOREVER, stack1, stack1_size);
 
-    os_task_init(&task2, "task2", mutex_task2_handler, NULL, TASK2_PRIO, 
-            OS_WAIT_FOREVER, stack2, sizeof(stack2));
+    os_task_init(&task2, "task2", mutex_task2_handler, NULL, TASK2_PRIO,
+                 OS_WAIT_FOREVER, stack2, stack2_size);
 
-    os_task_init(&task3, "task3", mutex_task3_handler, NULL, TASK3_PRIO, 
-            OS_WAIT_FOREVER, stack3, sizeof(stack3));
+    os_task_init(&task3, "task3", mutex_task3_handler, NULL, TASK3_PRIO,
+                 OS_WAIT_FOREVER, stack3, stack3_size);
 
-    os_task_init(&task4, "task4", mutex_task4_handler, NULL, TASK4_PRIO, 
-            OS_WAIT_FOREVER, stack4, sizeof(stack4));
- 
-#if MYNEWT_VAL(SELFTEST)
-    os_start();
-#endif
+    os_task_init(&task4, "task4", mutex_task4_handler, NULL, TASK4_PRIO,
+                 OS_WAIT_FOREVER, stack4, stack4_size);
 }

@@ -28,11 +28,21 @@ extern "C" {
 #endif
 
 
-void console_no_ticks(void);
+static void inline
+console_no_ticks(void)
+{
+}
 
-void console_yes_ticks(void);
+static void inline
+console_yes_ticks(void)
+{
+}
 
-char console_get_ticks(void);
+static char inline
+console_get_ticks(void)
+{
+    return 0;
+}
 
 #ifdef __cplusplus
 }

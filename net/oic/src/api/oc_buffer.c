@@ -32,28 +32,14 @@
 
 #include "port/mynewt/adaptor.h"
 
+<<<<<<< HEAD
 static struct os_mempool oc_buffers;
 static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(1, sizeof(oc_message_t))];
 
+=======
+>>>>>>> develop
 static struct os_mqueue oc_inq;
 static struct os_mqueue oc_outq;
-
-oc_message_t *
-oc_allocate_message(void)
-{
-    oc_message_t *message = (oc_message_t *)os_memblock_get(&oc_buffers);
-
-    if (message) {
-        message->length = 0;
-        message->ref_count = 1;
-        OC_LOG_DEBUG("buffer: Allocated oc_message; free: %d\n",
-          oc_buffers.mp_num_free);
-    } else {
-        OC_LOG_ERROR("buffer: No free oc_mesages!\n");
-        assert(0);
-    }
-    return message;
-}
 
 struct os_mbuf *
 oc_allocate_mbuf(struct oc_endpoint *oe)
@@ -70,6 +56,7 @@ oc_allocate_mbuf(struct oc_endpoint *oe)
 }
 
 void
+<<<<<<< HEAD
 oc_message_add_ref(oc_message_t *message)
 {
     if (message) {
@@ -92,6 +79,8 @@ oc_message_unref(oc_message_t *message)
 }
 
 void
+=======
+>>>>>>> develop
 oc_recv_message(struct os_mbuf *m)
 {
     int rc;
@@ -148,19 +137,15 @@ oc_buffer_tx(struct os_event *ev)
 static void
 oc_buffer_rx(struct os_event *ev)
 {
-    struct oc_message *msg;
     struct os_mbuf *m;
 #if defined(OC_SECURITY)
     uint8_t b;
 #endif
 
     while ((m = os_mqueue_get(&oc_inq)) != NULL) {
-        msg = oc_allocate_message();
-        if (!msg) {
-            goto free_msg;
-        }
         OC_LOG_DEBUG("oc_buffer_rx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
+<<<<<<< HEAD
 
         if (OS_MBUF_PKTHDR(m)->omp_len > MAX_PAYLOAD_SIZE) {
             STATS_INC(coap_stats, itoobig);
@@ -174,13 +159,19 @@ oc_buffer_rx(struct os_event *ev)
         msg->length = OS_MBUF_PKTHDR(m)->omp_len;
         os_mbuf_free_chain(m);
         m = NULL;
+=======
+>>>>>>> develop
 
 #ifdef OC_SECURITY
+        /*
+         * XXX make sure first byte is within first mbuf
+         */
         b = m->om_data[0];
         if (b > 19 && b < 64) {
             OC_LOG_DEBUG("oc_buffer_rx: encrypted request\n");
             oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
         } else {
+<<<<<<< HEAD
             coap_receive(msg);
         }
 #else
@@ -189,6 +180,15 @@ oc_buffer_rx(struct os_event *ev)
 free_msg:
         if (msg) {
             oc_message_unref(msg);
+=======
+            coap_receive(m);
+        }
+#else
+        coap_receive(&m);
+#endif
+        if (m) {
+            os_mbuf_free_chain(m);
+>>>>>>> develop
         }
         if (m) {
             os_mbuf_free_chain(m);
@@ -199,8 +199,11 @@ free_msg:
 void
 oc_buffer_init(void)
 {
+<<<<<<< HEAD
     os_mempool_init(&oc_buffers, 1, sizeof(oc_message_t), oc_buffer_area,
                     "oc_bufs");
+=======
+>>>>>>> develop
     os_mqueue_init(&oc_inq, oc_buffer_rx, NULL);
     os_mqueue_init(&oc_outq, oc_buffer_tx, NULL);
 }

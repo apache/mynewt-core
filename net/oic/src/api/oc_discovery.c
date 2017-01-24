@@ -136,6 +136,7 @@ oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
     rt_len = oc_ri_get_query_value(req->query, req->query_len, "rt", &rt);
 
     oc_uuid_to_str(oc_core_get_device_id(0), uuid, sizeof(uuid));
+<<<<<<< HEAD
 
     switch (interface) {
     case OC_IF_LL: {
@@ -157,6 +158,29 @@ oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
 
     int response_length = oc_rep_finalize();
 
+=======
+
+    switch (interface) {
+    case OC_IF_LL: {
+        oc_rep_start_links_array();
+        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
+        oc_rep_end_links_array();
+    } break;
+    case OC_IF_BASELINE: {
+        oc_rep_start_root_object();
+        oc_process_baseline_interface(req->resource);
+        oc_rep_set_array(root, links);
+        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
+        oc_rep_close_array(root, links);
+        oc_rep_end_root_object();
+    } break;
+    default:
+        break;
+    }
+
+    int response_length = oc_rep_finalize();
+
+>>>>>>> develop
     if (matches && response_length > 0) {
         req->response->response_buffer->response_length = response_length;
         req->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
@@ -176,7 +200,7 @@ oc_create_discovery_resource(void)
 
 #ifdef OC_CLIENT
 oc_discovery_flags_t
-oc_ri_process_discovery_payload(uint8_t *payload, int len,
+oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                 oc_discovery_cb_t *handler,
                                 oc_endpoint_t *endpoint)
 {
@@ -194,11 +218,16 @@ oc_ri_process_discovery_payload(uint8_t *payload, int len,
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
+  uint16_t data_off;
+  struct os_mbuf *m;
+  int len;
 
   memcpy(&handle.endpoint, endpoint, sizeof(oc_endpoint_t));
 
   oc_rep_t *array = 0, *rep;
-  int s = oc_parse_rep(payload, len, &rep);
+
+  len = coap_get_payload(rsp, &m, &data_off);
+  int s = oc_parse_rep(m, data_off, len, &rep);
   if (s == 0)
     array = rep;
   while (array != NULL) {

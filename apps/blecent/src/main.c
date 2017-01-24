@@ -42,20 +42,6 @@
 /** Log data. */
 struct log blecent_log;
 
-/** blecent task settings. */
-#define BLECENT_TASK_PRIO           1
-#define BLECENT_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-struct os_eventq blecent_evq;
-struct os_task blecent_task;
-bssnz_t os_stack_t blecent_stack[BLECENT_STACK_SIZE];
-
-/** Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c};
-
-/** Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
 static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
@@ -135,8 +121,8 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     /* Read the supported-new-alert-category characteristic. */
     chr = peer_chr_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_SUP_NEW_ALERT_CAT_UUID));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_SUP_NEW_ALERT_CAT_UUID));
     if (chr == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer doesn't support the Supported New "
                            "Alert Category characteristic\n");
@@ -155,8 +141,8 @@ blecent_read_write_subscribe(const struct peer *peer)
      * characteristic.
      */
     chr = peer_chr_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_ALERT_NOT_CTRL_PT));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_ALERT_NOT_CTRL_PT));
     if (chr == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer doesn't support the Alert "
                            "Notification Control Point characteristic\n");
@@ -177,9 +163,9 @@ blecent_read_write_subscribe(const struct peer *peer)
      * characteristic's client-characteristic-configuration-descriptor (CCCD).
      */
     dsc = peer_dsc_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_UNR_ALERT_STAT_UUID),
-                             BLE_UUID16(BLE_GATT_DSC_CLT_CFG_UUID16));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_UNR_ALERT_STAT_UUID),
+                             BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16));
     if (dsc == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer lacks a CCCD for the Unread Alert "
                            "Status characteristic\n");
@@ -453,22 +439,9 @@ blecent_on_sync(void)
 }
 
 /**
- * Event loop for the main blecent task.
- */
-static void
-blecent_task_handler(void *unused)
-{
-    while (1) {
-        os_eventq_run(&blecent_evq);
-    }
-}
-
-/**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * All application logic and NimBLE host work is performed in default task.
  *
  * @return int NOTE: this function should never return!
  */
@@ -484,16 +457,6 @@ main(void)
     log_register("blecent", &blecent_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
-    /* Initialize the eventq for the application task. */
-    os_eventq_init(&blecent_evq);
-
-    /* Create the blecent task.  All application logic and NimBLE host
-     * operations are performed in this task.
-     */
-    os_task_init(&blecent_task, "blecent", blecent_task_handler,
-                 NULL, BLECENT_TASK_PRIO, OS_WAIT_FOREVER,
-                 blecent_stack, BLECENT_STACK_SIZE);
-
     /* Configure the host. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
@@ -508,14 +471,10 @@ main(void)
     rc = ble_svc_gap_device_name_set("nimble-blecent");
     assert(rc == 0);
 
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&blecent_evq);
-
-    /* Start the OS */
-    os_start();
-
     /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
 
     return 0;
 }

@@ -150,10 +150,15 @@ hal_bsp_init(void)
     rc = hal_timer_init(4, NULL);
     assert(rc == 0);
 #endif
-
-    /* Set cputime to count at 1 usec increments */
-    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+#if MYNEWT_VAL(TIMER_5)
+    rc = hal_timer_init(5, NULL);
     assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",

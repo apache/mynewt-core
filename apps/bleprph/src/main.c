@@ -27,6 +27,9 @@
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
+#include "hal/hal_system.h"
+#include "config/config.h"
+#include "split/split.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -38,14 +41,6 @@
 
 /** Log data. */
 struct log bleprph_log;
-
-/** bleprph task settings. */
-#define BLEPRPH_TASK_PRIO           1
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-struct os_eventq bleprph_evq;
-struct os_task bleprph_task;
-bssnz_t os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -245,17 +240,6 @@ bleprph_on_sync(void)
 }
 
 /**
- * Event loop for the main bleprph task.
- */
-static void
-bleprph_task_handler(void *unused)
-{
-    while (1) {
-        os_eventq_run(&bleprph_evq);
-    }
-}
-
-/**
  * main
  *
  * The main function for the project. This function initializes the os, calls
@@ -269,25 +253,15 @@ main(void)
 {
     int rc;
 
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
-
     /* Initialize OS */
     sysinit();
+
+    /* Set initial BLE device address. */
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
     /* Initialize the bleprph log. */
     log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
-
-    /* Initialize eventq */
-    os_eventq_init(&bleprph_evq);
-
-    /* Create the bleprph task.  All application logic and NimBLE host
-     * operations are performed in this task.
-     */
-    os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
-                 NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
-                 bleprph_stack, BLEPRPH_STACK_SIZE);
 
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
@@ -303,14 +277,26 @@ main(void)
     rc = ble_svc_gap_device_name_set("nimble-bleprph");
     assert(rc == 0);
 
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&bleprph_evq);
+    conf_load();
 
-    /* Start the OS */
-    os_start();
+    /* If this app is acting as the loader in a split image setup, jump into
+     * the second stage application instead of starting the OS.
+     */
+#if MYNEWT_VAL(SPLIT_LOADER)
+    {
+        void *entry;
+        rc = split_app_go(&entry, true);
+        if (rc == 0) {
+            hal_system_start(entry);
+        }
+    }
+#endif
 
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
-
+    /*
+     * As the last thing, process events from default event queue.
+     */
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
     return 0;
 }

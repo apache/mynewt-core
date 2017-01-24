@@ -218,6 +218,16 @@ Reset_Handler:
     strlt   r0, [r1], #4
     blt    .LC2
 
+    /* Set the other bss section to zero as well*/
+    ldr     r1, =__bss_start__
+    ldr     r2, =__bss_end__
+
+.LC3:
+    cmp     r1, r2
+    itt     lt
+    strlt   r0, [r1], #4
+    blt    .LC3
+
 /* Call system initialization and startup routines */
     ldr    r0, =SystemInit
     blx    r0

@@ -473,7 +473,7 @@ nffs_misc_desc_from_flash_area(int id, int *cnt, struct nffs_area_desc *nad)
 
     hf = hal_bsp_flash_dev(fa->fa_device_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        hf->hf_itf->hff_sector_info(i, &start, &size);
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
             if (first_idx == -1) {
                 first_idx = i;
@@ -491,7 +491,7 @@ nffs_misc_desc_from_flash_area(int id, int *cnt, struct nffs_area_desc *nad)
 
     move_on = 1;
     for (i = first_idx, j = 0; i < last_idx + 1; i++) {
-        hf->hf_itf->hff_sector_info(i, &start, &size);
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         if (move_on) {
             nad[j].nad_flash_id = fa->fa_device_id;
             nad[j].nad_offset = start;

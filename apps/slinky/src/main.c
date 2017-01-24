@@ -42,7 +42,6 @@
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
-#include <json/json.h>
 #include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
@@ -63,11 +62,6 @@ static volatile int g_task1_loops;
 #define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
-
-/* Task 3 */
-#define TASK3_PRIO (10)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task3;
 
 static struct log my_log;
 
@@ -108,10 +102,6 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
-
-static struct os_eventq slinky_evq;
-
-struct sim_accel sim_accel_sensor;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -217,18 +207,6 @@ task2_handler(void *arg)
 }
 
 /**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
- */
-static void
-task3_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&slinky_evq);
-    }
-}
-
-/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -255,29 +233,21 @@ init_tasks(void)
 
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
-
-    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task3, "task3", task3_handler, NULL,
-            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&slinky_evq);
-    os_eventq_dflt_set(&slinky_evq);
 }
 
 static int
-slinky_sim_accel_init(struct os_dev *dev, void *arg)
+config_sim_sensor(void)
 {
+    struct os_dev *dev;
     struct sim_accel_cfg cfg;
     int rc;
 
-    rc = sim_accel_init(dev, arg);
+    dev = (struct os_dev *) os_dev_open("simaccel0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = sim_accel_init(dev, NULL);
     if (rc != 0) {
+        os_dev_close(dev);
         goto err;
     }
 
@@ -288,8 +258,11 @@ slinky_sim_accel_init(struct os_dev *dev, void *arg)
 
     rc = sim_accel_config((struct sim_accel *) dev, &cfg);
     if (rc != 0) {
+        os_dev_close(dev);
         goto err;
     }
+
+    os_dev_close(dev);
 
     return (0);
 err:
@@ -335,6 +308,11 @@ main(int argc, char **argv)
 
     log_reboot(hal_reset_cause());
 
+    init_tasks();
+
+    /* If this app is acting as the loader in a split image setup, jump into
+     * the second stage application instead of starting the OS.
+     */
 #if MYNEWT_VAL(SPLIT_LOADER)
     {
         void *entry;
@@ -345,17 +323,14 @@ main(int argc, char **argv)
     }
 #endif
 
-    init_tasks();
+    config_sim_sensor();
 
-    sensor_pkg_init();
+    /*
+     * As the last thing, process events from default event queue.
+     */
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
 
-    os_dev_create((struct os_dev *) &sim_accel_sensor, "simaccel0",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIMARY, slinky_sim_accel_init, NULL);
-
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
-
-    return rc;
+    return (0);
 }

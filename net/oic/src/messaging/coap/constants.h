@@ -49,6 +49,8 @@ extern "C" {
   4 /* | version:0x03 type:0x0C tkl:0xF0 | code | mid:0x00FF | mid:0xFF00 | */
 #define COAP_TOKEN_LEN 8 /* The maximum number of bytes for the Token */
 #define COAP_ETAG_LEN 8  /* The maximum number of bytes for the ETag */
+#define COAP_MAX_URI         32 /* The max number of bytes for URI */
+#define COAP_MAX_URI_QUERY   32 /* The max number of bytes for URI-query */
 
 /*
  * Standard COAP header

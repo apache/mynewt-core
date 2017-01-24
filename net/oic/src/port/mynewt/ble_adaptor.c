@@ -38,38 +38,38 @@
 
 /* service UUID */
 /* ADE3D529-C784-4F63-A987-EB69F70EE816 */
-const uint8_t oc_gatt_svc_uuid[16] = {
-    0x16, 0xe8, 0x0e, 0xf7, 0x69, 0xeb, 0x87, 0xa9,
-    0x63, 0x4f, 0x84, 0xc7, 0x29, 0xd5, 0xe3, 0xad
-};
+static const ble_uuid128_t oc_gatt_svc_uuid =
+    BLE_UUID128_INIT(OC_GATT_SERVICE_UUID);
 
 /* request characteristic UUID */
 /* AD7B334F-4637-4B86-90B6-9D787F03D218 */
-static const uint8_t oc_gatt_req_chr_uuid[16] = {
-    0x18, 0xd2, 0x03, 0x7f, 0x78, 0x9d, 0xb6, 0x90,
-    0x86, 0x4b, 0x37, 0x46, 0x4f, 0x33, 0x7b, 0xad
-};
+static const ble_uuid128_t oc_gatt_req_chr_uuid =
+    BLE_UUID128_INIT(0x18, 0xd2, 0x03, 0x7f, 0x78, 0x9d, 0xb6, 0x90,
+                     0x86, 0x4b, 0x37, 0x46, 0x4f, 0x33, 0x7b, 0xad);
 
 /* response characteristic UUID */
 /* E9241982-4580-42C4-8831-95048216B256 */
-static const uint8_t oc_gatt_rsp_chr_uuid[16] = {
-    0x56, 0xb2, 0x16, 0x82, 0x04, 0x95, 0x31, 0x88,
-    0xc4, 0x42, 0x80, 0x45, 0x82, 0x19, 0x24, 0xe9
-};
+static const ble_uuid128_t oc_gatt_rsp_chr_uuid =
+    BLE_UUID128_INIT(0x56, 0xb2, 0x16, 0x82, 0x04, 0x95, 0x31, 0x88,
+                     0xc4, 0x42, 0x80, 0x45, 0x82, 0x19, 0x24, 0xe9);
 
 STATS_SECT_START(oc_ble_stats)
+    STATS_SECT_ENTRY(iframe)
     STATS_SECT_ENTRY(iseg)
     STATS_SECT_ENTRY(ibytes)
     STATS_SECT_ENTRY(ierr)
+    STATS_SECT_ENTRY(oframe)
     STATS_SECT_ENTRY(oseg)
     STATS_SECT_ENTRY(obytes)
     STATS_SECT_ENTRY(oerr)
 STATS_SECT_END
-static STATS_SECT_DECL(oc_ble_stats) oc_ble_stats;
+STATS_SECT_DECL(oc_ble_stats) oc_ble_stats;
 STATS_NAME_START(oc_ble_stats)
+    STATS_NAME(oc_ble_stats, iframe)
     STATS_NAME(oc_ble_stats, iseg)
     STATS_NAME(oc_ble_stats, ibytes)
     STATS_NAME(oc_ble_stats, ierr)
+    STATS_NAME(oc_ble_stats, oframe)
     STATS_NAME(oc_ble_stats, oseg)
     STATS_NAME(oc_ble_stats, obytes)
     STATS_NAME(oc_ble_stats, oerr)
@@ -88,18 +88,18 @@ static int oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
         /* Service: newtmgr */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = (void *)oc_gatt_svc_uuid,
+        .uuid = &oc_gatt_svc_uuid.u,
         .characteristics = (struct ble_gatt_chr_def[]) {
             {
                 /* Characteristic: Request */
-                .uuid128 = (void *)oc_gatt_req_chr_uuid,
+                .uuid = &oc_gatt_req_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
                 .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP |
                          BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &oc_ble_coap_req_handle,
             },{
                 /* Characteristic: Response */
-                .uuid128 = (void *)oc_gatt_rsp_chr_uuid,
+                .uuid = &oc_gatt_rsp_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
                 .flags = BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &oc_ble_coap_rsp_handle,
@@ -143,6 +143,7 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
 
             if (coap_tcp_msg_size(hdr, sizeof(hdr)) <= pkt2->omp_len) {
                 STAILQ_REMOVE(&oc_ble_reass_q, pkt2, os_mbuf_pkthdr, omp_next);
+                STATS_INC(oc_ble_stats, iframe);
                 oc_recv_message(om2);
             }
             pkt1 = NULL;
@@ -176,6 +177,10 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
           coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
             STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt2, omp_next);
         } else {
+<<<<<<< HEAD
+=======
+            STATS_INC(oc_ble_stats, iframe);
+>>>>>>> develop
             oc_recv_message(om2);
         }
     }
@@ -227,7 +232,7 @@ oc_ble_coap_gatt_srv_init(void)
         return rc;
     }
 #endif
-    stats_init_and_reg(STATS_HDR(oc_ble_stats),
+    (void)stats_init_and_reg(STATS_HDR(oc_ble_stats),
       STATS_SIZE_INIT_PARMS(oc_ble_stats, STATS_SIZE_32),
       STATS_NAME_INIT_PARMS(oc_ble_stats), "oc_ble");
     return 0;
@@ -283,9 +288,15 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         STAILQ_NEXT(pkt, omp_next) = NULL;
         return 0;
     }
+<<<<<<< HEAD
     off = pkt->omp_len % mtu;
 
     while (off > mtu) {
+=======
+
+    off = pkt->omp_len - (pkt->omp_len % mtu);
+    while (off >= mtu) {
+>>>>>>> develop
         n = os_msys_get_pkthdr(mtu, 0);
         if (!n) {
             goto err;
@@ -300,7 +311,6 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         off -= blk;
         os_mbuf_adj(m, -blk);
     }
-    os_mbuf_adj(m, mtu - OS_MBUF_PKTLEN(m));
     return 0;
 err:
     pkt = OS_MBUF_PKTHDR(m);
@@ -333,11 +343,19 @@ oc_send_buffer_gatt(struct os_mbuf *m)
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
 
-    STATS_INC(oc_ble_stats, oseg);
+    STATS_INC(oc_ble_stats, oframe);
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
     mtu = ble_att_mtu(conn_handle);
+<<<<<<< HEAD
     assert(mtu > 4);
+=======
+    if (mtu < 4) {
+        oc_ble_coap_conn_del(conn_handle);
+        os_mbuf_free_chain(m);
+        return;
+    }
+>>>>>>> develop
     mtu -= 3; /* # of bytes for ATT notification base */
 
     if (oc_ble_frag(m, mtu)) {
@@ -345,6 +363,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
         return;
     }
     while (1) {
+        STATS_INC(oc_ble_stats, oseg);
         pkt = STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next);
 
         ble_gattc_notify_custom(conn_handle, oc_ble_coap_rsp_handle, m);

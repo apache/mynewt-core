@@ -26,14 +26,11 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - net/oic
-    - encoding/json
+    - mgmt/mgmt
     - mgmt/newtmgr/nmgr_os
-    - test/testutil
-    - sys/shell
-    - sys/reboot
 
 pkg.apis:
     - newtmgr
 
-pkg.init_function: oicmgr_init
-pkg.init_stage: 5
+pkg.init:
+    oicmgr_init: 500

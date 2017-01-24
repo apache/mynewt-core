@@ -52,17 +52,10 @@
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
-#define BLETEST_HOST_PROC_TASK_PRIO     4
 #define BLETEST_TASK_PRIO               5
 
 /* For LED toggling */
 int g_led_pin;
-
-/* Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
-
-/* Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
@@ -73,8 +66,8 @@ uint8_t g_host_adv_len;
 #define BLETEST_ROLE_SCANNER            (1)
 #define BLETEST_ROLE_INITIATOR          (2)
 
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
+#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
+//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
 //#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
 
 /* Advertiser config */
@@ -189,7 +182,6 @@ bletest_multi_adv_instances[BLETEST_CFG_ADV_TEST_INSTANCES] = {
 uint32_t g_next_os_time;
 int g_bletest_state;
 struct os_eventq g_bletest_evq;
-struct os_eventq g_bletest_host_proc_evq;
 struct os_callout g_bletest_timer;
 struct os_task bletest_task;
 bssnz_t os_stack_t bletest_stack[BLETEST_STACK_SIZE];
@@ -208,10 +200,6 @@ uint16_t g_bletest_outstanding_pkts;
 uint16_t g_bletest_ltk_reply_handle;
 uint32_t g_bletest_hw_id[4];
 struct hci_create_conn g_cc;
-
-/* Host processing task */
-struct os_task bletest_host_proc_task;
-bssnz_t os_stack_t bletest_host_proc_stack[BLETEST_STACK_SIZE];
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -1257,19 +1245,6 @@ bletest_task_handler(void *arg)
 }
 
 /**
- * BLE test host processing task handler
- *
- * @param arg
- */
-void
-bletest_host_proc_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&g_bletest_host_proc_evq);
-    }
-}
-
-/**
  * main
  *
  * The main function for the project. This function initializes the os, calls
@@ -1324,18 +1299,6 @@ main(void)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    /* Initialize eventq for bletest host processing task */
-    os_eventq_init(&g_bletest_host_proc_evq);
-
-    rc = os_task_init(&bletest_host_proc_task, "bletest_host_proc",
-                      bletest_host_proc_task_handler, NULL,
-                      BLETEST_HOST_PROC_TASK_PRIO, OS_WAIT_FOREVER,
-                      bletest_host_proc_stack, BLETEST_STACK_SIZE);
-    assert(rc == 0);
-
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&g_bletest_host_proc_evq);
-
     /* Initialize eventq for bletest task */
     os_eventq_init(&g_bletest_evq);
 
@@ -1344,8 +1307,10 @@ main(void)
                       BLETEST_STACK_SIZE);
     assert(rc == 0);
 
-    /* Start the OS */
-    os_start();
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
 
     /* os start should never return. If it does, this should be an error */
     assert(0);

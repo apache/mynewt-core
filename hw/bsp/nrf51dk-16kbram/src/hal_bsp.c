@@ -22,6 +22,7 @@
 #include <assert.h>
 #include "syscfg/syscfg.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_system.h"
 #include "mcu/nrf51_hal.h"
 #include "bsp/bsp.h"
 #include "os/os_dev.h"
@@ -142,6 +143,9 @@ hal_bsp_init(void)
 
     (void)rc;
 
+    /* Make sure system clocks have started */
+    hal_system_clock_start();
+
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
@@ -160,10 +164,15 @@ hal_bsp_init(void)
     rc = hal_timer_init(2, NULL);
     assert(rc == 0);
 #endif
-
-    /* Set cputime to count at 1 usec increments */
-    rc = os_cputime_init(MYNEWT_VAL(CLOCK_FREQ));
+#if MYNEWT_VAL(TIMER_3)
+    rc = hal_timer_init(3, NULL);
     assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);

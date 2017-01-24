@@ -34,7 +34,12 @@ char *output1;
 char *outputboolspace;
 char *outputboolempty;
 
-char bigbuf[512];
+#if MYNEWT_VAL(SELFTEST)
+#define JSON_BIGBUF_SIZE    192
+char bigbuf[JSON_BIGBUF_SIZE];
+#else
+char *bigbuf;
+#endif
 int buf_index;
 
 /* a test structure to hold the json flat buffer and pass bytes

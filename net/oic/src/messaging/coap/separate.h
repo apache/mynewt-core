@@ -41,6 +41,7 @@
 extern "C" {
 #endif
 
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 /* OIC stack headers */
 #include "oc_coap.h"
 #include "oic/oc_ri.h"
@@ -64,7 +65,7 @@ typedef struct coap_separate {
 } coap_separate_t;
 
 typedef struct coap_packet coap_packet_t;
-int coap_separate_accept(coap_packet_t *request,
+int coap_separate_accept(struct coap_packet_rx *request,
                          oc_separate_response_t *separate_response,
                          oc_endpoint_t *endpoint, int observe);
 void coap_separate_resume(coap_packet_t *response,
@@ -74,6 +75,8 @@ void coap_separate_clear(oc_separate_response_t *separate_response,
                          coap_separate_t *separate_store);
 
 void coap_separate_init(void);
+
+#endif
 
 #ifdef __cplusplus
 }

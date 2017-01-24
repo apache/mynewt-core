@@ -171,6 +171,7 @@ struct nffs_block {
 };
 
 struct nffs_file {
+    struct fs_ops *fops;
     struct nffs_inode_entry *nf_inode_entry;
     uint32_t nf_offset;
     uint8_t nf_access_flags;
@@ -238,10 +239,12 @@ struct nffs_cache_inode {
 };
 
 struct nffs_dirent {
+    struct fs_ops *fops;
     struct nffs_inode_entry *nde_inode_entry;
 };
 
 struct nffs_dir {
+    struct fs_ops *fops;
     struct nffs_inode_entry *nd_parent_inode_entry;
     struct nffs_dirent nd_dirent;
 };

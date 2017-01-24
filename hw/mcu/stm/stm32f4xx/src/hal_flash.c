@@ -23,12 +23,15 @@
 #include "stm32f4xx_hal_flash_ex.h"
 #include "hal/hal_flash_int.h"
 
-static int stm32f4_flash_read(uint32_t address, void *dst, uint32_t num_bytes);
-static int stm32f4_flash_write(uint32_t address, const void *src,
-  uint32_t num_bytes);
-static int stm32f4_flash_erase_sector(uint32_t sector_address);
-static int stm32f4_flash_sector_info(int idx, uint32_t *address, uint32_t *sz);
-static int stm32f4_flash_init(void);
+static int stm32f4_flash_read(const struct hal_flash *dev, uint32_t address,
+        void *dst, uint32_t num_bytes);
+static int stm32f4_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t num_bytes);
+static int stm32f4_flash_erase_sector(const struct hal_flash *dev,
+        uint32_t sector_address);
+static int stm32f4_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *address, uint32_t *sz);
+static int stm32f4_flash_init(const struct hal_flash *dev);
 
 static const struct hal_flash_funcs stm32f4_flash_funcs = {
     .hff_read = stm32f4_flash_read,
@@ -51,7 +54,7 @@ static const uint32_t stm32f4_flash_sectors[] = {
     0x080a0000,     /* 128kB */
     0x080c0000,     /* 128kB */
     0x080e0000,     /* 128kB */
-    0x08100000		/* End of flash */
+    0x08100000      /* End of flash */
 };
 
 #define STM32F4_FLASH_NUM_AREAS                                         \
@@ -67,14 +70,16 @@ const struct hal_flash stm32f4_flash_dev = {
 };
 
 static int
-stm32f4_flash_read(uint32_t address, void *dst, uint32_t num_bytes)
+stm32f4_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
+        uint32_t num_bytes)
 {
     memcpy(dst, (void *)address, num_bytes);
     return 0;
 }
 
 static int
-stm32f4_flash_write(uint32_t address, const void *src, uint32_t num_bytes)
+stm32f4_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t num_bytes)
 {
     const uint8_t *sptr;
     uint32_t i;
@@ -105,7 +110,7 @@ stm32f4_flash_erase_sector_id(int sector_id)
 }
 
 static int
-stm32f4_flash_erase_sector(uint32_t sector_address)
+stm32f4_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     int i;
 
@@ -120,7 +125,8 @@ stm32f4_flash_erase_sector(uint32_t sector_address)
 }
 
 static int
-stm32f4_flash_sector_info(int idx, uint32_t *address, uint32_t *sz)
+stm32f4_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *address, uint32_t *sz)
 {
     *address = stm32f4_flash_sectors[idx];
     *sz = stm32f4_flash_sectors[idx + 1] - stm32f4_flash_sectors[idx];
@@ -128,7 +134,7 @@ stm32f4_flash_sector_info(int idx, uint32_t *address, uint32_t *sz)
 }
 
 static int
-stm32f4_flash_init(void)
+stm32f4_flash_init(const struct hal_flash *dev)
 {
     HAL_FLASH_Unlock();
     return 0;

@@ -19,10 +19,6 @@
 # Package: hw/bsp/olimex_stm32-e407_devboard
 
 syscfg.defs:
-    CLOCK_FREQ:
-        description: 'TBD'
-        value:  1000000
-
     ADC_1:
         description: "ADC_1"
         value:  1

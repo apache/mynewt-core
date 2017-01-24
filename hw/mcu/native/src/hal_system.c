@@ -20,13 +20,24 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
+#include "syscfg/syscfg.h"
 #include "hal/hal_system.h"
 #include "mcu/mcu_sim.h"
+
+#if MYNEWT_VAL(OS_SCHEDULING)
+#include <os/os.h>
+#endif
 
 void
 hal_system_reset(void)
 {
+#if MYNEWT_VAL(SELFTEST)
+    /* Don't hang in the middle of a unit test. */
+    assert(0);
+#endif
+
     while(1);
 }
 
@@ -52,8 +63,14 @@ void
 mcu_sim_parse_args(int argc, char **argv)
 {
     int ch;
-    char *progname = argv[0];
+    char *progname;
 
+#if MYNEWT_VAL(OS_SCHEDULING)
+    if (g_os_started) {
+        return;
+    }
+#endif
+    progname = argv[0];
     while ((ch = getopt(argc, argv, "hf:u:")) != -1) {
         switch (ch) {
         case 'f':
@@ -70,4 +87,8 @@ mcu_sim_parse_args(int argc, char **argv)
             break;
         }
     }
+#if MYNEWT_VAL(OS_SCHEDULING)
+    os_init();
+    os_start();
+#endif
 }

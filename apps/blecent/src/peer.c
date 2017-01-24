@@ -497,12 +497,12 @@ peer_svc_find_range(struct peer *peer, uint16_t attr_handle)
 }
 
 const struct peer_svc *
-peer_svc_find_uuid(const struct peer *peer, const uint8_t *uuid128)
+peer_svc_find_uuid(const struct peer *peer, const ble_uuid_t *uuid)
 {
     const struct peer_svc *svc;
 
     SLIST_FOREACH(svc, &peer->svcs, next) {
-        if (memcmp(svc->svc.uuid128, uuid128, 16) == 0) {
+        if (ble_uuid_cmp(&svc->svc.uuid.u, uuid) == 0) {
             return svc;
         }
     }
@@ -511,19 +511,19 @@ peer_svc_find_uuid(const struct peer *peer, const uint8_t *uuid128)
 }
 
 const struct peer_chr *
-peer_chr_find_uuid(const struct peer *peer, const uint8_t *svc_uuid128,
-                   const uint8_t *chr_uuid128)
+peer_chr_find_uuid(const struct peer *peer, const ble_uuid_t *svc_uuid,
+                   const ble_uuid_t *chr_uuid)
 {
     const struct peer_svc *svc;
     const struct peer_chr *chr;
 
-    svc = peer_svc_find_uuid(peer, svc_uuid128);
+    svc = peer_svc_find_uuid(peer, svc_uuid);
     if (svc == NULL) {
         return NULL;
     }
 
     SLIST_FOREACH(chr, &svc->chrs, next) {
-        if (memcmp(chr->chr.uuid128, chr_uuid128, 16) == 0) {
+        if (ble_uuid_cmp(&chr->chr.uuid.u, chr_uuid) == 0) {
             return chr;
         }
     }
@@ -532,19 +532,19 @@ peer_chr_find_uuid(const struct peer *peer, const uint8_t *svc_uuid128,
 }
 
 const struct peer_dsc *
-peer_dsc_find_uuid(const struct peer *peer, const uint8_t *svc_uuid128,
-                   const uint8_t *chr_uuid128, const uint8_t *dsc_uuid128)
+peer_dsc_find_uuid(const struct peer *peer, const ble_uuid_t *svc_uuid,
+                   const ble_uuid_t *chr_uuid, const ble_uuid_t *dsc_uuid)
 {
     const struct peer_chr *chr;
     const struct peer_dsc *dsc;
 
-    chr = peer_chr_find_uuid(peer, svc_uuid128, chr_uuid128);
+    chr = peer_chr_find_uuid(peer, svc_uuid, chr_uuid);
     if (chr == NULL) {
         return NULL;
     }
 
     SLIST_FOREACH(dsc, &chr->dscs, next) {
-        if (memcmp(dsc->dsc.uuid128, dsc_uuid128, 16) == 0) {
+        if (ble_uuid_cmp(&dsc->dsc.uuid.u, dsc_uuid) == 0) {
             return dsc;
         }
     }

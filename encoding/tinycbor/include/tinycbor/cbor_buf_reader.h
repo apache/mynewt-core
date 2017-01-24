@@ -32,8 +32,8 @@ struct cbor_buf_reader {
     const uint8_t *buffer;
 };
 
-void
-cbor_buf_reader_init(struct cbor_buf_reader *cb, const uint8_t *buffer, size_t data);
+void cbor_buf_reader_init(struct cbor_buf_reader *cb, const uint8_t *buffer,
+                          size_t data);
 
 #ifdef __cplusplus
 }

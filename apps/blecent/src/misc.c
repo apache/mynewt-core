@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "host/ble_hs.h"
+#include "host/ble_uuid.h"
 #include "blecent.h"
 
 /**
@@ -67,26 +68,11 @@ addr_str(const void *addr)
 }
 
 void
-print_uuid(const void *uuid128)
+print_uuid(const ble_uuid_t *uuid)
 {
-    uint16_t uuid16;
-    const uint8_t *u8p;
+    char buf[BLE_UUID_STR_LEN];
 
-    uuid16 = ble_uuid_128_to_16(uuid128);
-    if (uuid16 != 0) {
-        BLECENT_LOG(DEBUG, "0x%04x", uuid16);
-        return;
-    }
-
-    u8p = uuid128;
-
-    /* 00001101-0000-1000-8000-00805f9b34fb */
-    BLECENT_LOG(DEBUG, "%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13],
-                u8p[12]);
-    BLECENT_LOG(DEBUG, "%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
-    BLECENT_LOG(DEBUG, "%02x%02x%02x%02x%02x%02x%02x%02x",
-                   u8p[7], u8p[6], u8p[5], u8p[4],
-                   u8p[3], u8p[2], u8p[1], u8p[0]);
+    BLECENT_LOG(DEBUG, "%s", ble_uuid_to_str(uuid, buf));
 }
 
 /**
@@ -119,6 +105,7 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     char s[BLE_HCI_MAX_ADV_DATA_LEN];
     const uint8_t *u8p;
+    ble_uuid_any_t uuid;
     int i;
 
     if (fields->flags_is_present) {
@@ -148,7 +135,8 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
                     fields->uuids128_is_complete ? "" : "in");
         u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            print_uuid(u8p);
+            ble_uuid_init_from_buf(&uuid, u8p, 16);
+            print_uuid(&uuid.u);
             BLECENT_LOG(DEBUG, " ");
             u8p += 16;
         }

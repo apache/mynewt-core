@@ -168,7 +168,7 @@ uart_poller(void *arg)
     int rc;
     int bytes;
     int sr;
-    char ch;
+    unsigned char ch;
     struct uart *uart;
 
     while (1) {

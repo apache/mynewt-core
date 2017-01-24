@@ -21,14 +21,18 @@
 
 #include "fs_priv.h"
 
+struct fs_ops *fops_from_filename(const char *);
+
 int
 fs_rename(const char *from, const char *to)
 {
-    return fs_root_ops->f_rename(from, to);
+    struct fs_ops *fops = fops_from_filename(from);
+    return fops->f_rename(from, to);
 }
 
 int
 fs_mkdir(const char *path)
 {
-    return fs_root_ops->f_mkdir(path);
+    struct fs_ops *fops = fops_from_filename(path);
+    return fops->f_mkdir(path);
 }

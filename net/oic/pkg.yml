@@ -24,10 +24,12 @@ pkg.homepage: "https://www.iotivity.org/"
 pkg.keywords:
 
 pkg.deps:
+    - "encoding/cborattr"
     - "encoding/tinycbor"
     - "kernel/os"
-    - "sys/log"
-    - "sys/stats"
+pkg.req_apis:
+    - log
+    - stats
 
 pkg.deps.OC_TRANSPORT_GATT:
     - "net/nimble/host"

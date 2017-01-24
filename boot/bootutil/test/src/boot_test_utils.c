@@ -323,6 +323,18 @@ boot_test_util_mark_revert(void)
 }
 
 void
+boot_test_util_mark_swap_perm(void)
+{
+    struct boot_swap_state state_slot0 = {
+        .magic = BOOT_MAGIC_GOOD,
+        .copy_done = 0x01,
+        .image_ok = 0x01,
+    };
+
+    boot_test_util_write_swap_state(FLASH_AREA_IMAGE_0, &state_slot0);
+}
+
+void
 boot_test_util_verify_area(const struct flash_area *area_desc,
                            const struct image_header *hdr,
                            uint32_t image_addr, int img_msb)
@@ -503,6 +515,10 @@ boot_test_util_verify_all(int expected_swap_type,
             switch (expected_swap_type) {
             case BOOT_SWAP_TYPE_TEST:
                 expected_swap_type = BOOT_SWAP_TYPE_REVERT;
+                break;
+
+            case BOOT_SWAP_TYPE_PERM:
+                expected_swap_type = BOOT_SWAP_TYPE_NONE;
                 break;
 
             case BOOT_SWAP_TYPE_REVERT:

@@ -28,9 +28,9 @@
 #  define __STDC_LIMIT_MACROS 1
 #endif
 
-#include "cbor.h"
-#include "compilersupport_p.h"
-#include "math_support_p.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/compilersupport_p.h"
+#include "tinycbor/math_support_p.h"
 
 #include <float.h>
 #include <inttypes.h>

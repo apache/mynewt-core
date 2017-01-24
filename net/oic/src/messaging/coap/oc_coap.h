@@ -26,7 +26,7 @@ extern "C" {
 typedef struct oc_separate_response {
     SLIST_HEAD(, coap_separate) requests;
     int active;
-    uint8_t buffer[COAP_MAX_BLOCK_SIZE];
+    struct os_mbuf *buffer;
 } oc_separate_response_t;
 
 typedef struct oc_response_buffer {

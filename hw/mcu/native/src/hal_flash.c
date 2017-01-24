@@ -30,12 +30,15 @@ char *native_flash_file;
 static int file;
 static void *file_loc;
 
-static int native_flash_init(void);
-static int native_flash_read(uint32_t address, void *dst, uint32_t length);
-static int native_flash_write(uint32_t address, const void *src,
-  uint32_t length);
-static int native_flash_erase_sector(uint32_t sector_address);
-static int native_flash_sector_info(int idx, uint32_t *address, uint32_t *size);
+static int native_flash_init(const struct hal_flash *dev);
+static int native_flash_read(const struct hal_flash *dev, uint32_t address,
+        void *dst, uint32_t length);
+static int native_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t length);
+static int native_flash_erase_sector(const struct hal_flash *dev,
+        uint32_t sector_address);
+static int native_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *address, uint32_t *size);
 
 static const struct hal_flash_funcs native_flash_funcs = {
     .hff_read = native_flash_read,
@@ -141,7 +144,7 @@ flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
 
         /* Ensure data is not being overwritten. */
         if (!allow_overwrite) {
-            rc = native_flash_read(cur, buf, chunk_sz);
+            rc = native_flash_read(NULL, cur, buf, chunk_sz);
             assert(rc == 0);
             for (i = 0; i < chunk_sz; i++) {
                 assert(buf[i] == 0xff);
@@ -157,7 +160,8 @@ flash_native_write_internal(uint32_t address, const void *src, uint32_t length,
 }
 
 static int
-native_flash_write(uint32_t address, const void *src, uint32_t length)
+native_flash_write(const struct hal_flash *dev, uint32_t address,
+        const void *src, uint32_t length)
 {
     assert(address % native_flash_dev.hf_align == 0);
     return flash_native_write_internal(address, src, length, 0);
@@ -171,7 +175,8 @@ flash_native_memset(uint32_t offset, uint8_t c, uint32_t len)
 }
 
 static int
-native_flash_read(uint32_t address, void *dst, uint32_t length)
+native_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
+        uint32_t length)
 {
     flash_native_ensure_file_open();
     memcpy(dst, (char *)file_loc + address, length);
@@ -207,7 +212,7 @@ flash_sector_len(int sector)
 }
 
 static int
-native_flash_erase_sector(uint32_t sector_address)
+native_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     int area_id;
     uint32_t len;
@@ -224,7 +229,8 @@ native_flash_erase_sector(uint32_t sector_address)
 }
 
 static int
-native_flash_sector_info(int idx, uint32_t *address, uint32_t *size)
+native_flash_sector_info(const struct hal_flash *dev, int idx,
+        uint32_t *address, uint32_t *size)
 {
     assert(idx < FLASH_NUM_AREAS);
 
@@ -234,11 +240,10 @@ native_flash_sector_info(int idx, uint32_t *address, uint32_t *size)
 }
 
 static int
-native_flash_init(void)
+native_flash_init(const struct hal_flash *dev)
 {
     if (native_flash_file) {
         flash_native_file_open(native_flash_file);
     }
     return 0;
 }
-

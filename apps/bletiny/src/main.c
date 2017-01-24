@@ -61,19 +61,6 @@
 #include "../src/ble_hs_atomic_priv.h"
 #include "../src/ble_hs_hci_priv.h"
 
-/* Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a};
-
-/* Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
-/* A buffer for host advertising data */
-uint8_t g_host_adv_len;
-
-/* BLETINY variables */
-#define BLETINY_STACK_SIZE             (OS_STACK_ALIGN(512))
-#define BLETINY_TASK_PRIO              1
-
 #if MYNEWT_VAL(BLE_ROLE_CENTRAL)
 #define BLETINY_MAX_SVCS               32
 #define BLETINY_MAX_CHRS               64
@@ -83,10 +70,6 @@ uint8_t g_host_adv_len;
 #define BLETINY_MAX_CHRS               1
 #define BLETINY_MAX_DSCS               1
 #endif
-
-struct os_eventq bletiny_evq;
-struct os_task bletiny_task;
-bssnz_t os_stack_t bletiny_stack[BLETINY_STACK_SIZE];
 
 struct log bletiny_log;
 
@@ -138,6 +121,7 @@ static void
 bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint8_t *u8p;
+    ble_uuid_any_t uuid;
     int i;
 
     if (fields->flags_is_present) {
@@ -184,7 +168,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
                        fields->uuids128_is_complete ? "" : "in");
         u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            print_uuid(u8p);
+            ble_uuid_init_from_buf(&uuid, u8p, 16);
+            print_uuid(&uuid.u);
             console_printf(" ");
             u8p += 16;
         }
@@ -709,7 +694,7 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
                 bletiny_full_disc_prev_chr_val <= chr->chr.def_handle) {
 
                 rc = bletiny_disc_all_dscs(conn_handle,
-                                           chr->chr.val_handle,
+                                           chr->chr.val_handle + 1,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
                     bletiny_full_disc_complete(rc);
@@ -1134,15 +1119,15 @@ bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
 
 int
 bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                           uint16_t end_handle, uint8_t *uuid128)
+                           uint16_t end_handle, const ble_uuid_t *uuid)
 {
     intptr_t svc_start_handle;
     int rc;
 
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
-                                     uuid128, bletiny_on_disc_c,
-                                     &svc_start_handle);
+                                     uuid, bletiny_on_disc_c,
+                                     (void *)svc_start_handle);
     return rc;
 }
 
@@ -1156,22 +1141,22 @@ bletiny_disc_svcs(uint16_t conn_handle)
 }
 
 int
-bletiny_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128)
+bletiny_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid)
 {
     int rc;
 
-    rc = ble_gattc_disc_svc_by_uuid(conn_handle, uuid128,
+    rc = ble_gattc_disc_svc_by_uuid(conn_handle, uuid,
                                     bletiny_on_disc_s, NULL);
     return rc;
 }
 
 int
-bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_def_handle,
-                      uint16_t chr_end_handle)
+bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
+                      uint16_t end_handle)
 {
     int rc;
 
-    rc = ble_gattc_disc_all_dscs(conn_handle, chr_def_handle, chr_end_handle,
+    rc = ble_gattc_disc_all_dscs(conn_handle, start_handle - 1, end_handle,
                                  bletiny_on_disc_d, NULL);
     return rc;
 }
@@ -1233,21 +1218,22 @@ bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
 }
 
 int
-bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle)
+bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle, uint16_t offset)
 {
     int rc;
 
-    rc = ble_gattc_read_long(conn_handle, attr_handle, bletiny_on_read, NULL);
+    rc = ble_gattc_read_long(conn_handle, attr_handle, offset,
+                             bletiny_on_read, NULL);
     return rc;
 }
 
 int
 bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                      uint16_t end_handle, uint8_t *uuid128)
+                      uint16_t end_handle, const ble_uuid_t *uuid)
 {
     int rc;
 
-    rc = ble_gattc_read_by_uuid(conn_handle, start_handle, end_handle, uuid128,
+    rc = ble_gattc_read_by_uuid(conn_handle, start_handle, end_handle, uuid,
                                 bletiny_on_read, NULL);
     return rc;
 }
@@ -1291,12 +1277,12 @@ bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
 
 int
 bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                   struct os_mbuf *om)
+                   uint16_t offset, struct os_mbuf *om)
 {
     int rc;
 
-    rc = ble_gattc_write_long(conn_handle, attr_handle, om,
-                              bletiny_on_write, NULL);
+    rc = ble_gattc_write_long(conn_handle, attr_handle, offset,
+                              om, bletiny_on_write, NULL);
     return rc;
 }
 
@@ -1573,19 +1559,6 @@ bletiny_on_reset(int reason)
 }
 
 /**
- * BLE test task
- *
- * @param arg
- */
-static void
-bletiny_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&bletiny_evq);
-    }
-}
-
-/**
  * main
  *
  * The main function for the project. This function initializes the os, calls
@@ -1634,16 +1607,6 @@ main(void)
     log_register("bletiny", &bletiny_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
-    /* Initialize eventq for the application task. */
-    os_eventq_init(&bletiny_evq);
-
-    /* Create the bletiny task.  All application logic and NimBLE host
-     * operations are performed in this task.
-     */
-    os_task_init(&bletiny_task, "bletiny", bletiny_task_handler,
-                 NULL, BLETINY_TASK_PRIO, OS_WAIT_FOREVER,
-                 bletiny_stack, BLETINY_STACK_SIZE);
-
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
@@ -1663,15 +1626,12 @@ main(void)
     /* Create a callout (timer).  This callout is used by the "tx" bletiny
      * command to repeatedly send packets of sequential data bytes.
      */
-    os_callout_init(&bletiny_tx_timer, &bletiny_evq, bletiny_tx_timer_cb,
-                    NULL);
+    os_callout_init(&bletiny_tx_timer, os_eventq_dflt_get(),
+                    bletiny_tx_timer_cb, NULL);
 
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&bletiny_evq);
-
-    /* Start the OS */
-    os_start();
-
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
     /* os start should never return. If it does, this should be an error */
     assert(0);
 
