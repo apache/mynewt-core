@@ -694,7 +694,7 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
                 bletiny_full_disc_prev_chr_val <= chr->chr.def_handle) {
 
                 rc = bletiny_disc_all_dscs(conn_handle,
-                                           chr->chr.val_handle + 1,
+                                           chr->chr.val_handle,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
                     bletiny_full_disc_complete(rc);
@@ -1156,7 +1156,7 @@ bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
 {
     int rc;
 
-    rc = ble_gattc_disc_all_dscs(conn_handle, start_handle - 1, end_handle,
+    rc = ble_gattc_disc_all_dscs(conn_handle, start_handle, end_handle,
                                  bletiny_on_disc_d, NULL);
     return rc;
 }

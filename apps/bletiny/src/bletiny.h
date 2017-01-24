@@ -133,8 +133,8 @@ int bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                                uint16_t end_handle, const ble_uuid_t *uuid);
-int bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
-                           uint16_t chr_end_handle);
+int bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
+                          uint16_t end_handle);
 int bletiny_disc_full(uint16_t conn_handle);
 int bletiny_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
