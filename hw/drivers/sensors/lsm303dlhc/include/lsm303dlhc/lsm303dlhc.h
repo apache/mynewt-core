@@ -22,6 +22,7 @@
 
 #include "os/os.h"
 #include "os/os_dev.h"
+#include "sensor/sensor.h"
 
 #ifdef __cplusplus
 extern "C" {

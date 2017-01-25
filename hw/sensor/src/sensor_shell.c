@@ -95,13 +95,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     if (ctx->type == SENSOR_TYPE_ACCELEROMETER) {
         sad = (struct sensor_accel_data *) data;
         if (sad->sad_x != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("x = %f, ", sad->sad_x);
+            console_printf("x = %x, ", (uint32_t)sad->sad_x * 1000000000);
         }
         if (sad->sad_y != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("y = %f, ", sad->sad_y);
+            console_printf("y = %x, ", (uint32_t)sad->sad_y * 1000000000);
         }
         if (sad->sad_z != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("z = %f", sad->sad_z);
+            console_printf("z = %x.", (uint32_t)sad->sad_z * 1000000000);
         }
         console_printf("\n");
     }

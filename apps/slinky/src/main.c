@@ -30,7 +30,7 @@
 #include <stats/stats.h>
 #include <config/config.h>
 #include <sensor/sensor.h>
-#include <sim/sim_accel.h>
+#include <lsm303dlhc/lsm303dlhc.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -235,11 +235,47 @@ init_tasks(void)
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 }
 
+#ifdef ARCH_arduino_zero
 static int
-config_sim_sensor(void)
+config_sensor(void)
 {
     struct os_dev *dev;
-    struct sim_accel_cfg cfg;
+    struct lsm303dlhc_cfg cfg;
+    int rc;
+
+    dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lsm303dlhc_init(dev, NULL);
+    if (rc != 0) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    /* read once per sec.  API should take this value in ms. */
+    cfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
+    cfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
+
+    rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &cfg);
+    if (rc != 0) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    os_dev_close(dev);
+
+    return (0);
+err:
+    return (rc);
+}
+#endif
+
+#ifdef ARCH_sim
+static int
+config_sensor(void)
+{
+    struct os_dev *dev;
+    struct cfg;
     int rc;
 
     dev = (struct os_dev *) os_dev_open("simaccel0", OS_TIMEOUT_NEVER, NULL);
@@ -268,7 +304,7 @@ config_sim_sensor(void)
 err:
     return (rc);
 }
-
+#endif
 
 /**
  * main
@@ -323,7 +359,7 @@ main(int argc, char **argv)
     }
 #endif
 
-    config_sim_sensor();
+    config_sensor();
 
     /*
      * As the last thing, process events from default event queue.
