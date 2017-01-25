@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include <mcu/cortex_m4.h>
+#include <mcu/nrf52_hal.h>
 
 /**
  * Boots the image described by the supplied image header.
@@ -33,7 +34,7 @@ hal_system_start(void *img_start)
 
     uint32_t base0entry;
     uint32_t jump_addr;
-    jump_fn *fn;
+    register jump_fn *fn;
 
     /* First word contains initial MSP value. */
     __set_MSP(*(uint32_t *)img_start);
@@ -45,4 +46,30 @@ hal_system_start(void *img_start)
 
     /* Jump to image. */
     fn();
+}
+
+/**
+ * Boots the image described by the supplied image header.
+ * This routine is used in split-app scenario when loader decides
+ * that it wants to run the app instead.
+ *
+ * @param hdr                   The header for the image to boot.
+ */
+void
+hal_system_restart(void *img_start)
+{
+    int i;
+    int sr;
+
+    /*
+     * Disable interrupts, and leave the disabled.
+     * They get re-enabled when system starts coming back again.
+     */
+    __HAL_DISABLE_INTERRUPTS(sr);
+    for (i = 0; i < sizeof(NVIC->ICER) / sizeof(NVIC->ICER[0]); i++) {
+        NVIC->ICER[i] = 0xffffffff;
+    }
+    (void)sr;
+
+    hal_system_start(img_start);
 }
