@@ -18,6 +18,9 @@
  */
 #include <stdlib.h>
 
+#include <sysinit/sysinit.h>
+#include <os/os.h>
+
 extern int main(int argc, char **argv);
 
 /**
@@ -39,8 +42,13 @@ extern int main(int argc, char **argv);
 void
 _start_split(void)
 {
+#if !MYNEWT_VAL(OS_SCHEDULING)
     int rc;
 
     rc = main(0, NULL);
     exit(rc);
+#else
+    os_init(main);
+    os_start();
+#endif
 }
