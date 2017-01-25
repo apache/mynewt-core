@@ -24,7 +24,7 @@ TEST_CASE(callout_test_speak)
 
 #if MYNEWT_VAL(SELFTEST)
     /* Initializing the OS */
-    os_init();
+    os_init(NULL);
     sysinit();
 #endif
 

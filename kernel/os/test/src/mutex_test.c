@@ -335,7 +335,7 @@ os_mutex_tc_pretest(void* arg)
     /*
      * Only call if running in "native" simulated environment
      */
-    os_init();
+    os_init(NULL);
     sysinit();
 #endif
     return;

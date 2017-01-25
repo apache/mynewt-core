@@ -73,7 +73,7 @@ os_test_restart(void)
 void
 os_selftest_pretest_cb(void* arg)
 {
-    os_init();
+    os_init(NULL);
     sysinit();
 }
 

@@ -279,7 +279,7 @@ void
 os_sem_tc_pretest(void* arg)
 {
 #if MYNEWT_VAL(SELFTEST)
-    os_init();
+    os_init(NULL);
     sysinit();
 #endif
     return;
