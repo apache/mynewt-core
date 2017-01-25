@@ -88,6 +88,11 @@ __isr_vector_split:
 Reset_Handler_split:
     .fnstart
 
+/* Clear CPU state before proceeding */
+    SUBS    r0, r0
+    MSR     CONTROL, r0
+    MSR     PRIMASK, r0
+
 /* Make sure ALL RAM banks are powered on */
     MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
 
