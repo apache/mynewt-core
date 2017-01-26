@@ -28,9 +28,8 @@ pkg.req_apis.RUNTEST_CLI:
     - console
 pkg.deps.RUNTEST_NEWTMGR:
     - mgmt/mgmt
-
-pkg.deps.RUNTEST_NEWTMGR:
     - encoding/json
+    - test/testutil
 
 pkg.init:
     runtest_init: 500

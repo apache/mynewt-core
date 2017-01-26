@@ -97,7 +97,10 @@ static struct bletiny_tx_data_s bletiny_tx_data;
 int bletiny_full_disc_prev_chr_val;
 
 #define XSTR(s) STR(s)
+#ifndef STR
 #define STR(s) #s
+#endif
+
 
 #ifdef DEVICE_NAME
 #define BLETINY_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
