@@ -208,9 +208,6 @@ os_start(void)
 #if MYNEWT_VAL(OS_SCHEDULING)
     os_error_t err;
 
-    err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
-    assert(err == OS_OK);
-
     /* Enable the watchdog prior to starting the OS */
     hal_watchdog_enable();
 
@@ -224,8 +221,13 @@ os_start(void)
 void
 os_pkg_init(void)
 {
+    os_error_t err;
+
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
+
+    err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
+    assert(err == OS_OK);
 
     os_msys_init();
 }
