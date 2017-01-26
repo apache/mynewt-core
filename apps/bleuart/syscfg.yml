@@ -24,5 +24,4 @@ syscfg.vals:
     BLE_ROLE_CENTRAL: 0
 
     # Default task settings
-    OS_MAIN_TASK_PRIO: 1
     OS_MAIN_STACK_SIZE: 336

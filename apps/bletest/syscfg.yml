@@ -23,5 +23,4 @@ syscfg.vals:
     BLE_SM_LEGACY: 0
 
     # Default task settings
-    OS_MAIN_TASK_PRIO: 4
     OS_MAIN_STACK_SIZE: 256

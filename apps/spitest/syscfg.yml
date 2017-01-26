@@ -22,5 +22,4 @@ syscfg.vals:
     SHELL_TASK: 0
 
     # Default task settings
-    OS_MAIN_TASK_PRIO: 2
     OS_MAIN_STACK_SIZE: 512

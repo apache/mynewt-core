@@ -41,5 +41,4 @@ syscfg.vals:
     LOG_NEWTMGR: 1
     CONFIG_NEWTMGR: 1
 
-    OS_MAIN_TASK_PRIO: 10
     OS_MAIN_STACKS_SIZE: 512

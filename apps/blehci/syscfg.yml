@@ -20,5 +20,4 @@
 
 syscfg.vals:
     # Default task settings
-    OS_MAIN_TASK_PRIO: 254
     OS_MAIN_STACK_SIZE: 64
