@@ -879,6 +879,7 @@ static int
 bletiny_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
+    struct ble_hs_adv_fields fields;
     int conn_idx;
     int rc;
 
@@ -926,7 +927,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                                event->disc.length_data);
         print_bytes(event->disc.data, event->disc.length_data);
         console_printf(" fields:\n");
-        bletiny_print_adv_fields(event->disc.fields);
+        ble_hs_adv_parse_fields(&fields, event->disc.data,
+                                event->disc.length_data);
+        bletiny_print_adv_fields(&fields);
         console_printf("\n");
         return 0;
 
