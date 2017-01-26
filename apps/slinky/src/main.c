@@ -235,7 +235,7 @@ init_tasks(void)
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 }
 
-#ifdef ARCH_arduino_zero
+#if !ARCH_sim
 static int
 config_sensor(void)
 {

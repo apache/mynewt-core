@@ -22,6 +22,7 @@
 #if MYNEWT_VAL(SENSOR_CLI)
 
 #include <string.h>
+#include <stdio.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -81,12 +82,21 @@ struct sensor_shell_read_ctx {
     int num_entries;
 };
 
+static char*
+floattostr(float num, char *fltstr, int len)
+{
+    snprintf(fltstr, len, "%s%d.%09ld", num < 0.0 ? "-":"", (int)num,
+             labs((long int)((num - (float)((int)num)) * 1000000000)));
+    return fltstr;
+}
+
 static int
 sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 {
     struct sensor_shell_read_ctx *ctx;
     struct sensor_accel_data *sad;
     struct sensor_mag_data *smd;
+    char tmpstr[13];
 
     ctx = (struct sensor_shell_read_ctx *) arg;
 
@@ -95,13 +105,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     if (ctx->type == SENSOR_TYPE_ACCELEROMETER) {
         sad = (struct sensor_accel_data *) data;
         if (sad->sad_x != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("x = %x, ", (uint32_t)sad->sad_x * 1000000000);
+            console_printf("x = %s ", floattostr(sad->sad_x, tmpstr, 13));
         }
         if (sad->sad_y != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("y = %x, ", (uint32_t)sad->sad_y * 1000000000);
+            console_printf("y = %s ", floattostr(sad->sad_y, tmpstr, 13));
         }
         if (sad->sad_z != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("z = %x.", (uint32_t)sad->sad_z * 1000000000);
+            console_printf("z = %s", floattostr(sad->sad_z, tmpstr, 13));
         }
         console_printf("\n");
     }
