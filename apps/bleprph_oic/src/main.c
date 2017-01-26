@@ -98,14 +98,15 @@ bleprph_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
-    /* Indicate that the flags field should be included; specify a value of 0
-     * to instruct the stack to fill the value in for us.
+    /* Advertise two flags:
+     *     o Discoverability in forthcoming advertisement (general)
+     *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags_is_present = 1;
-    fields.flags = 0;
+    fields.flags = BLE_HS_ADV_F_DISC_GEN |
+                   BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
-     * stack fill this one automatically as well.  This is done by assiging the
+     * stack fill this value automatically.  This is done by assiging the
      * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
      */
     fields.tx_pwr_lvl_is_present = 1;

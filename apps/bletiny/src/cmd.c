@@ -1927,7 +1927,6 @@ cmd_set_adv_data(void)
     tmp = parse_arg_long_bounds("flags", 0, UINT8_MAX, &rc);
     if (rc == 0) {
         adv_fields.flags = tmp;
-        adv_fields.flags_is_present = 1;
     } else if (rc != ENOENT) {
         console_printf("invalid 'flags' parameter\n");
         help_cmd_long_bounds("flags", 0, UINT8_MAX);

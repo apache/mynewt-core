@@ -103,12 +103,12 @@ print_conn_desc(const struct ble_gap_conn_desc *desc)
 void
 print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
-    char s[BLE_HCI_MAX_ADV_DATA_LEN];
+    char s[BLE_HS_ADV_MAX_SZ];
     const uint8_t *u8p;
     ble_uuid_any_t uuid;
     int i;
 
-    if (fields->flags_is_present) {
+    if (fields->flags != 0) {
         BLECENT_LOG(DEBUG, "    flags=0x%02x\n", fields->flags);
     }
 
