@@ -30,4 +30,4 @@ pkg.deps:
 pkg.apis: console
 
 pkg.init:
-    console_pkg_init: 1
+    console_pkg_init: 20

@@ -34,4 +34,4 @@ pkg.deps.STATS_NEWTMGR:
     - mgmt/mgmt
 
 pkg.init:
-    stats_module_init: 0
+    stats_module_init: 10
