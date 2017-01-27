@@ -68,7 +68,7 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     int rc;
     int rsp_len;
     CborError g_err = CborNoError;
-    CborEncoder *penc = (CborEncoder*)encode_off->eo_encoder;
+    CborEncoder *penc = (CborEncoder*)encode_off->eo_arg;
     CborEncoder rsp;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
@@ -80,10 +80,23 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     }
     rc = OS_OK;
 
-    /* Matching timestamps and indices for sending a log entry */
-    if (ueh.ue_ts < encode_off->eo_ts   ||
-        (ueh.ue_ts == encode_off->eo_ts &&
-         ueh.ue_index <= encode_off->eo_index)) {
+    /* If specified timestamp is nonzero, it is the primary criterion, and the
+     * specified index is the secondary criterion.  If specified timetsamp is
+     * zero, specified index is the only criterion.
+     *
+     * If specified timestamp == 0: encode entries whose index >=
+     *     specified index.
+     * Else: encode entries whose timestamp >= specified timestamp and whose
+     *      index >= specified index
+     */
+
+    if (encode_off->eo_ts == 0) {
+        if (encode_off->eo_index > ueh.ue_index) {
+            goto err;
+        }
+    } else if (ueh.ue_ts < encode_off->eo_ts   ||
+               (ueh.ue_ts == encode_off->eo_ts &&
+                ueh.ue_index < encode_off->eo_index)) {
         goto err;
     }
 
@@ -180,7 +193,7 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     g_err |= cbor_encode_text_stringz(cb, "entries");
     g_err |= cbor_encoder_create_array(cb, &entries, CborIndefiniteLength);
 
-    encode_off.eo_encoder  = (void*)&entries;
+    encode_off.eo_arg  = (void*)&entries;
     encode_off.eo_index    = index;
     encode_off.eo_ts       = ts;
     encode_off.rsp_len = rsp_len;

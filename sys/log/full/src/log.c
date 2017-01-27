@@ -36,6 +36,7 @@ struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static uint8_t log_inited;
+static uint8_t log_written;
 
 #if MYNEWT_VAL(LOG_CLI)
 int shell_log_dump_all_cmd(int, char **);
@@ -59,10 +60,10 @@ log_init(void)
         return;
     }
     log_inited = 1;
+    log_written = 0;
 
     g_log_info.li_version = LOG_VERSION_V2;
-    g_log_info.li_index = 0;
-    g_log_info.li_timestamp = 0;
+    g_log_info.li_next_index = 0;
 
 #if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
@@ -105,6 +106,47 @@ log_registered(struct log *log)
     return 0;
 }
 
+static int
+log_read_hdr_walk(struct log *log, void *arg, void *dptr, uint16_t len)
+{
+    struct encode_off *encode_off;
+    struct log_entry_hdr *hdr;
+    int rc;
+
+    encode_off = arg;
+    hdr = encode_off->eo_arg;
+
+    rc = log_read(log, dptr, hdr, 0, sizeof *hdr);
+    if (rc < sizeof *hdr) {
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * Reads the final log entry's header from the specified log.
+ *
+ * @param log                   The log to read from.
+ * @param out_hdr               On success, the last entry header gets written
+ *                                  here.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static int
+log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
+{
+    struct encode_off encode_off;
+    int rc;
+
+    encode_off.eo_arg = out_hdr;
+    encode_off.eo_ts = -1;
+    encode_off.eo_index = 0;
+    encode_off.rsp_len = 0;
+
+    rc = log_walk(log, log_read_hdr_walk, &encode_off);
+    return rc;
+}
+
 /*
  * Associate an instantiation of a log with the logging infrastructure
  */
@@ -112,14 +154,34 @@ int
 log_register(char *name, struct log *log, const struct log_handler *lh,
              void *arg, uint8_t level)
 {
+    struct log_entry_hdr hdr;
+    int sr;
+    int rc;
+
+    assert(!log_written);
+
     log->l_name = name;
     log->l_log = (struct log_handler *)lh;
     log->l_arg = arg;
     log->l_level = level;
 
-    /*assert(!log_registered(log));*/
     if (!log_registered(log)) {
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+    }
+
+    /* If this is a persisted log, read the index from its most recent entry.
+     * We need to ensure the index of all subseqently written entries is
+     * monotonically increasing.
+     */
+    if (log->l_log->log_type == LOG_TYPE_STORAGE) {
+        rc = log_read_last_hdr(log, &hdr);
+        if (rc == 0) {
+            OS_ENTER_CRITICAL(sr);
+            if (hdr.ue_index >= g_log_info.li_next_index) {
+                g_log_info.li_next_index = hdr.ue_index + 1;
+            }
+            OS_EXIT_CRITICAL(sr);
+        }
     }
 
     return (0);
@@ -131,7 +193,12 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
 {
     struct log_entry_hdr *ue;
     int rc;
+    int sr;
     struct os_timeval tv;
+    uint32_t idx;
+
+    /* Remember that a log entry has been written since boot. */
+    log_written = 1;
 
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
@@ -149,8 +216,9 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
 
     ue = (struct log_entry_hdr *) data;
 
-    /* Could check for li_index wraparound here */
-    g_log_info.li_index++;
+    OS_ENTER_CRITICAL(sr);
+    idx = g_log_info.li_next_index++;
+    OS_EXIT_CRITICAL(sr);
 
     /* Try to get UTC Time */
     rc = os_gettimeofday(&tv, NULL);
@@ -160,10 +228,9 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         ue->ue_ts = tv.tv_sec * 1000000 + tv.tv_usec;
     }
 
-    g_log_info.li_timestamp = ue->ue_ts;
     ue->ue_level = level;
     ue->ue_module = module;
-    ue->ue_index = g_log_info.li_index;
+    ue->ue_index = idx;
 
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
@@ -207,6 +274,11 @@ err:
     return (rc);
 }
 
+/**
+ * Reads from the specified log.
+ *
+ * @return                      The number of bytes read; 0 on failure.
+ */
 int
 log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len)
@@ -227,8 +299,6 @@ log_flush(struct log *log)
     if (rc != 0) {
         goto err;
     }
-
-    g_log_info.li_index = 0;
 
     return (0);
 err:

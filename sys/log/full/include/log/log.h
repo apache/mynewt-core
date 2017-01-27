@@ -31,8 +31,7 @@ extern "C" {
 
 /* Global log info */
 struct log_info {
-    int64_t li_timestamp;
-    uint8_t li_index;
+    uint32_t li_next_index;
     uint8_t li_version;
 };
 #define LOG_VERSION_V2  2
@@ -72,7 +71,7 @@ struct log_handler {
 
 struct log_entry_hdr {
     int64_t ue_ts;
-    uint16_t ue_index;
+    uint32_t ue_index;
     uint8_t ue_module;
     uint8_t ue_level;
 }__attribute__((__packed__));
@@ -82,9 +81,9 @@ struct log_entry_hdr {
  * Encode request - packages log entry request and response
  */
 struct encode_off {
-    void *eo_encoder; /* typecast CborEncoder */
+    void *eo_arg; /* typecast CborEncoder */
     int64_t eo_ts;
-    uint8_t eo_index;
+    uint32_t eo_index;
     uint32_t rsp_len;
 };
 

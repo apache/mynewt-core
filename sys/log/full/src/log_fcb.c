@@ -113,7 +113,7 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     memset(&loc, 0, sizeof(loc));
 
     /*
-     * if timestamp for request is < 1, return last log entry
+     * if timestamp for request is < 0, return last log entry
      */
     if (encode_off->eo_ts < 0) {
         locp = &fcb->f_active;
