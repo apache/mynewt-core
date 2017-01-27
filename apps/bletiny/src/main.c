@@ -124,7 +124,6 @@ static void
 bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint8_t *u8p;
-    ble_uuid_any_t uuid;
     int i;
 
     if (fields->flags != 0) {
@@ -152,7 +151,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    uuids16(%scomplete)=",
                        fields->uuids16_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids16; i++) {
-            console_printf("0x%04x ", fields->uuids16[i]);
+            print_uuid(&fields->uuids16[i].u);
+            console_printf(" ");
         }
         console_printf("\n");
     }
@@ -161,7 +161,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    uuids32(%scomplete)=",
                        fields->uuids32_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids32; i++) {
-            console_printf("0x%08x ", (unsigned int)fields->uuids32[i]);
+            print_uuid(&fields->uuids32[i].u);
+            console_printf(" ");
         }
         console_printf("\n");
     }
@@ -169,12 +170,9 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids128 != NULL) {
         console_printf("    uuids128(%scomplete)=",
                        fields->uuids128_is_complete ? "" : "in");
-        u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            ble_uuid_init_from_buf(&uuid, u8p, 16);
-            print_uuid(&uuid.u);
+            print_uuid(&fields->uuids128[i].u);
             console_printf(" ");
-            u8p += 16;
         }
         console_printf("\n");
     }
@@ -188,13 +186,6 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->tx_pwr_lvl_is_present) {
         console_printf("    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
-    }
-
-    if (fields->device_class != NULL) {
-        console_printf("    device_class=");
-        print_bytes(fields->device_class,
-                            BLE_HS_ADV_DEVICE_CLASS_LEN);
-        console_printf("\n");
     }
 
     if (fields->slave_itvl_range != NULL) {
@@ -227,16 +218,6 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->adv_itvl_is_present) {
         console_printf("    adv_itvl=0x%04x\n", fields->adv_itvl);
-    }
-
-    if (fields->le_addr != NULL) {
-        console_printf("    le_addr=");
-        print_addr(fields->le_addr);
-        console_printf("\n");
-    }
-
-    if (fields->le_role_is_present) {
-        console_printf("    le_role=0x%02x\n", fields->le_role);
     }
 
     if (fields->svc_data_uuid32 != NULL) {
@@ -896,6 +877,7 @@ static int
 bletiny_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
+    struct ble_hs_adv_fields fields;
     int conn_idx;
     int rc;
 
@@ -943,7 +925,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                                event->disc.length_data);
         print_bytes(event->disc.data, event->disc.length_data);
         console_printf(" fields:\n");
-        bletiny_print_adv_fields(event->disc.fields);
+        ble_hs_adv_parse_fields(&fields, event->disc.data,
+                                event->disc.length_data);
+        bletiny_print_adv_fields(&fields);
         console_printf("\n");
         return 0;
 
