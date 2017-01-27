@@ -20,12 +20,12 @@
 
 TEST_CASE(log_flush_fcb)
 {
-    struct encode_off encode_off = { 0 };
+    struct log_offset log_offset = { 0 };
     int rc;
 
     rc = log_flush(&my_log);
     TEST_ASSERT(rc == 0);
 
-    rc = log_walk(&my_log, log_test_walk2, &encode_off);
+    rc = log_walk(&my_log, log_test_walk2, &log_offset);
     TEST_ASSERT(rc == 0);
 }

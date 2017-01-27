@@ -52,7 +52,8 @@ log_console_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_console_walk(struct log *log, log_walk_func_t walk_func, void *arg)
+log_console_walk(struct log *log, log_walk_func_t walk_func,
+        struct log_offset *log_offset)
 {
     /* You don't walk console, console walk you. */
     return (OS_EINVAL);

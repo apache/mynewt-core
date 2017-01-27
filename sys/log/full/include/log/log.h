@@ -41,14 +41,34 @@ extern struct log_info g_log_info;
 
 struct log;
 
-typedef int (*log_walk_func_t)(struct log *, void *arg, void *offset,
-        uint16_t len);
+/**
+ * Used for walks and reads; indicates part of log to access.
+ */
+struct log_offset {
+    /* If   lo_ts == -1: Only access last log entry;
+     * Elif lo_ts == 0:  Don't filter by timestamp;
+     * Else:             Only access entries whose ts >= lo_ts.
+     */
+    int64_t lo_ts;
+
+    /* Only access entries whose index >= lo_index. */
+    uint32_t lo_index;
+
+    /* On read, lo_data_len gets populated with the number of bytes read. */
+    uint32_t lo_data_len;
+
+    /* Specific to walk / read function. */
+    void *lo_arg;
+};
+
+typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
+        void *offset, uint16_t len);
 
 typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
         uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_walk_func_t)(struct log *,
-        log_walk_func_t walk_func, void *arg);
+        log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
 /*
  * This function pointer points to a function that restores the numebr
@@ -76,16 +96,6 @@ struct log_entry_hdr {
     uint8_t ue_level;
 }__attribute__((__packed__));
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
-
-/*
- * Encode request - packages log entry request and response
- */
-struct encode_off {
-    void *eo_arg; /* typecast CborEncoder */
-    int64_t eo_ts;
-    uint32_t eo_index;
-    uint32_t rsp_len;
-};
 
 #define LOG_LEVEL_DEBUG    (0)
 #define LOG_LEVEL_INFO     (1)
@@ -211,7 +221,7 @@ void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
-        void *arg);
+        struct log_offset *log_offset);
 int log_flush(struct log *log);
 int log_rtr_erase(struct log *log, void *arg);
 

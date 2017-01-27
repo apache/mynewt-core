@@ -27,7 +27,7 @@
 #include "log/log.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 #define FCB_FLASH_AREAS 2
@@ -44,8 +44,10 @@ extern char *str_logs[FCB_STR_LOGS_CNT];
 extern int str_idx;
 extern int str_max_idx;
 
-int log_test_walk1(struct log *log, void *arg, void *dptr, uint16_t len);
-int log_test_walk2(struct log *log, void *arg, void *dptr, uint16_t len);
+int log_test_walk1(struct log *log, struct log_offset *log_offset,
+                   void *dptr, uint16_t len);
+int log_test_walk2(struct log *log, struct log_offset *log_offset,
+                   void *dptr, uint16_t len);
 
 #ifdef __cplusplus
 }

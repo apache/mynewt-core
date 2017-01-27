@@ -107,14 +107,13 @@ log_registered(struct log *log)
 }
 
 static int
-log_read_hdr_walk(struct log *log, void *arg, void *dptr, uint16_t len)
+log_read_hdr_walk(struct log *log, struct log_offset *log_offset, void *dptr,
+                  uint16_t len)
 {
-    struct encode_off *encode_off;
     struct log_entry_hdr *hdr;
     int rc;
 
-    encode_off = arg;
-    hdr = encode_off->eo_arg;
+    hdr = log_offset->lo_arg;
 
     rc = log_read(log, dptr, hdr, 0, sizeof *hdr);
     if (rc < sizeof *hdr) {
@@ -135,15 +134,15 @@ log_read_hdr_walk(struct log *log, void *arg, void *dptr, uint16_t len)
 static int
 log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
 {
-    struct encode_off encode_off;
+    struct log_offset log_offset;
     int rc;
 
-    encode_off.eo_arg = out_hdr;
-    encode_off.eo_ts = -1;
-    encode_off.eo_index = 0;
-    encode_off.rsp_len = 0;
+    log_offset.lo_arg = out_hdr;
+    log_offset.lo_ts = -1;
+    log_offset.lo_index = 0;
+    log_offset.lo_data_len = 0;
 
-    rc = log_walk(log, log_read_hdr_walk, &encode_off);
+    rc = log_walk(log, log_read_hdr_walk, &log_offset);
     return rc;
 }
 
@@ -260,11 +259,12 @@ log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
 }
 
 int
-log_walk(struct log *log, log_walk_func_t walk_func, void *arg)
+log_walk(struct log *log, log_walk_func_t walk_func,
+         struct log_offset *log_offset)
 {
     int rc;
 
-    rc = log->l_log->log_walk(log, walk_func, arg);
+    rc = log->l_log->log_walk(log, walk_func, log_offset);
     if (rc != 0) {
         goto err;
     }

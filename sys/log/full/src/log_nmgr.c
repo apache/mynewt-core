@@ -55,20 +55,20 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
 
 /**
  * Log encode entry
- * @param log structure, arg:struct passed locally, dataptr, len
+ * @param log structure, log_offset, dataptr, len
  * @return 0 on success; non-zero on failure
  */
 static int
-log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
+log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
+                      void *dptr, uint16_t len)
 {
-    struct encode_off *encode_off = (struct encode_off *)arg;
     struct log_entry_hdr ueh;
     char data[128];
     int dlen;
     int rc;
     int rsp_len;
     CborError g_err = CborNoError;
-    CborEncoder *penc = (CborEncoder*)encode_off->eo_arg;
+    CborEncoder *penc = (CborEncoder*)log_offset->lo_arg;
     CborEncoder rsp;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
@@ -90,13 +90,13 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
      *      index >= specified index
      */
 
-    if (encode_off->eo_ts == 0) {
-        if (encode_off->eo_index > ueh.ue_index) {
+    if (log_offset->lo_ts == 0) {
+        if (log_offset->lo_index > ueh.ue_index) {
             goto err;
         }
-    } else if (ueh.ue_ts < encode_off->eo_ts   ||
-               (ueh.ue_ts == encode_off->eo_ts &&
-                ueh.ue_index < encode_off->eo_index)) {
+    } else if (ueh.ue_ts < log_offset->lo_ts   ||
+               (ueh.ue_ts == log_offset->lo_ts &&
+                ueh.ue_index < log_offset->lo_index)) {
         goto err;
     }
 
@@ -127,13 +127,13 @@ log_nmgr_encode_entry(struct log *log, void *arg, void *dptr, uint16_t len)
     g_err |= cbor_encode_text_stringz(&rsp, "module");
     g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
-    rsp_len = encode_off->rsp_len;
+    rsp_len = log_offset->lo_data_len;
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
     if (rsp_len > 400) {
         rc = OS_ENOMEM;
         goto err;
     }
-    encode_off->rsp_len = rsp_len;
+    log_offset->lo_data_len = rsp_len;
 
     g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
@@ -166,14 +166,14 @@ log_encode_entries(struct log *log, CborEncoder *cb,
                    int64_t ts, uint32_t index)
 {
     int rc;
-    struct encode_off encode_off;
+    struct log_offset log_offset;
     int rsp_len = 0;
     CborEncoder entries;
     CborError g_err = CborNoError;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
 
-    memset(&encode_off, 0, sizeof(encode_off));
+    memset(&log_offset, 0, sizeof(log_offset));
 
     /* this code counts how long the message would be if we encoded
      * this outer structure using cbor. */
@@ -193,12 +193,12 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     g_err |= cbor_encode_text_stringz(cb, "entries");
     g_err |= cbor_encoder_create_array(cb, &entries, CborIndefiniteLength);
 
-    encode_off.eo_arg  = (void*)&entries;
-    encode_off.eo_index    = index;
-    encode_off.eo_ts       = ts;
-    encode_off.rsp_len = rsp_len;
+    log_offset.lo_arg       = &entries;
+    log_offset.lo_index     = index;
+    log_offset.lo_ts        = ts;
+    log_offset.lo_data_len  = rsp_len;
 
-    rc = log_walk(log, log_nmgr_encode_entry, &encode_off);
+    rc = log_walk(log, log_nmgr_encode_entry, &log_offset);
 
     g_err |= cbor_encoder_close_container(cb, &entries);
 
