@@ -196,14 +196,14 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     struct os_timeval tv;
     uint32_t idx;
 
-    if (log->l_log->log_type == LOG_TYPE_STORAGE) {
-        /* Remember that a log entry has been persisted since boot. */
-        log_written = 1;
-    }
-
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
         goto err;
+    }
+
+    if (log->l_log->log_type == LOG_TYPE_STORAGE) {
+        /* Remember that a log entry has been persisted since boot. */
+        log_written = 1;
     }
 
     /*
