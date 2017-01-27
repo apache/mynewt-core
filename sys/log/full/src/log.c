@@ -106,20 +106,27 @@ log_registered(struct log *log)
     return 0;
 }
 
+struct log_read_hdr_arg {
+    struct log_entry_hdr *hdr;
+    int read_success;
+};
+
 static int
 log_read_hdr_walk(struct log *log, struct log_offset *log_offset, void *dptr,
                   uint16_t len)
 {
-    struct log_entry_hdr *hdr;
+    struct log_read_hdr_arg *arg;
     int rc;
 
-    hdr = log_offset->lo_arg;
+    arg = log_offset->lo_arg;
 
-    rc = log_read(log, dptr, hdr, 0, sizeof *hdr);
-    if (rc < sizeof *hdr) {
-        return -1;
+    rc = log_read(log, dptr, arg->hdr, 0, sizeof *arg->hdr);
+    if (rc >= sizeof *arg->hdr) {
+        arg->read_success = 1;
     }
-    return 0;
+
+    /* Abort the walk; only one header needed. */
+    return 1;
 }
 
 /**
@@ -134,16 +141,23 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset, void *dptr,
 static int
 log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
 {
+    struct log_read_hdr_arg arg;
     struct log_offset log_offset;
-    int rc;
 
-    log_offset.lo_arg = out_hdr;
+    arg.hdr = out_hdr;
+    arg.read_success = 0;
+
+    log_offset.lo_arg = &arg;
     log_offset.lo_ts = -1;
     log_offset.lo_index = 0;
     log_offset.lo_data_len = 0;
 
-    rc = log_walk(log, log_read_hdr_walk, &log_offset);
-    return rc;
+    log_walk(log, log_read_hdr_walk, &log_offset);
+    if (!arg.read_success) {
+        return -1;
+    }
+
+    return 0;
 }
 
 /*
