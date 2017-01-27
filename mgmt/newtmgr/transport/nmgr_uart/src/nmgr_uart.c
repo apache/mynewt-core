@@ -327,7 +327,7 @@ nmgr_uart_rx_char(void *arg, uint8_t data)
         assert(!nus->nus_rx_q);
         nus->nus_rx_q = nus->nus_rx;
         nus->nus_rx = NULL;
-        os_eventq_put(g_mgmt_evq, &nus->nus_cb_ev);
+        os_eventq_put(mgmt_evq_get(), &nus->nus_cb_ev);
         return 0;
     } else {
         rc = os_mbuf_append(m, &data, 1);
