@@ -45,15 +45,6 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_read = NULL,
         .mh_write = imgr_upload
     },
-    [IMGMGR_NMGR_ID_FILE] = {
-#if MYNEWT_VAL(IMGMGR_FS)
-        .mh_read = imgr_file_download,
-        .mh_write = imgr_file_upload
-#else
-        .mh_read = NULL,
-        .mh_write = NULL
-#endif
-    },
     [IMGMGR_NMGR_ID_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_list,

@@ -105,8 +105,6 @@ struct nmgr_jbuf;
 
 int imgr_boot2_read(struct mgmt_cbuf *);
 int imgr_boot2_write(struct mgmt_cbuf *);
-int imgr_file_upload(struct mgmt_cbuf *);
-int imgr_file_download(struct mgmt_cbuf *);
 int imgr_core_list(struct mgmt_cbuf *);
 int imgr_core_load(struct mgmt_cbuf *);
 int imgr_core_erase(struct mgmt_cbuf *);

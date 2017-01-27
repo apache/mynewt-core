@@ -747,8 +747,6 @@ nffs_init(void)
         return rc;
     }
 
-    NFFS_LOG(DEBUG, "nffs_init");
-
     fs_register(&nffs_ops);
     return 0;
 }

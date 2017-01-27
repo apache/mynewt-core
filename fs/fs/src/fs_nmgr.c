@@ -19,7 +19,7 @@
 
 #include "syscfg/syscfg.h"
 
-#if MYNEWT_VAL(IMGMGR_FS)
+#if MYNEWT_VAL(FS_NMGR)
 
 #include <limits.h>
 #include <assert.h>
@@ -35,15 +35,43 @@
 #include "bsp/bsp.h"
 #include "mgmt/mgmt.h"
 
-#include "imgmgr/imgmgr.h"
-#include "imgmgr_priv.h"
+#include "fs/fs.h"
+#include "fs_priv.h"
 
-int
-imgr_file_download(struct mgmt_cbuf *cb)
+static struct {
+    struct {
+        uint32_t off;
+        uint32_t size;
+        const struct flash_area *fa;
+        struct fs_file *file;
+    } upload;
+} fs_nmgr_state;
+
+static int fs_nmgr_file_download(struct mgmt_cbuf *cb);
+static int fs_nmgr_file_upload(struct mgmt_cbuf *cb);
+
+static const struct mgmt_handler fs_nmgr_handlers[] = {
+    [FS_NMGR_ID_FILE] = {
+        .mh_read = fs_nmgr_file_download,
+        .mh_write = fs_nmgr_file_upload
+    },
+};
+
+#define FS_NMGR_HANDLER_CNT                                                \
+    sizeof(fs_nmgr_handlers) / sizeof(fs_nmgr_handlers[0])
+
+static struct mgmt_group fs_nmgr_group = {
+    .mg_handlers = fs_nmgr_handlers,
+    .mg_handlers_count = FS_NMGR_HANDLER_CNT,
+    .mg_group_id = MGMT_GROUP_ID_FS,
+};
+
+static int
+fs_nmgr_file_download(struct mgmt_cbuf *cb)
 {
     long long unsigned int off = UINT_MAX;
-    char tmp_str[IMGMGR_NMGR_MAX_NAME + 1];
-    uint8_t img_data[IMGMGR_NMGR_MAX_MSG];
+    char tmp_str[FS_NMGR_MAX_NAME + 1];
+    uint8_t img_data[FS_NMGR_MAX_MSG];
     const struct cbor_attr_t dload_attr[3] = {
         [0] = {
             .attribute = "off",
@@ -118,11 +146,11 @@ err:
     return 0;
 }
 
-int
-imgr_file_upload(struct mgmt_cbuf *cb)
+static int
+fs_nmgr_file_upload(struct mgmt_cbuf *cb)
 {
-    uint8_t img_data[IMGMGR_NMGR_MAX_MSG];
-    char file_name[IMGMGR_NMGR_MAX_NAME + 1];
+    uint8_t img_data[FS_NMGR_MAX_MSG];
+    char file_name[FS_NMGR_MAX_NAME + 1];
     size_t img_len;
     long long unsigned int off = UINT_MAX;
     long long unsigned int size = UINT_MAX;
@@ -169,24 +197,24 @@ imgr_file_upload(struct mgmt_cbuf *cb)
         /*
          * New upload.
          */
-        imgr_state.upload.off = 0;
-        imgr_state.upload.size = size;
+        fs_nmgr_state.upload.off = 0;
+        fs_nmgr_state.upload.size = size;
 
         if (!strlen(file_name)) {
             rc = MGMT_ERR_EINVAL;
             goto err;
         }
-        if (imgr_state.upload.file) {
-            fs_close(imgr_state.upload.file);
-            imgr_state.upload.file = NULL;
+        if (fs_nmgr_state.upload.file) {
+            fs_close(fs_nmgr_state.upload.file);
+            fs_nmgr_state.upload.file = NULL;
         }
         rc = fs_open(file_name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE,
-          &imgr_state.upload.file);
+          &fs_nmgr_state.upload.file);
         if (rc) {
             rc = MGMT_ERR_EINVAL;
             goto err;
         }
-    } else if (off != imgr_state.upload.off) {
+    } else if (off != fs_nmgr_state.upload.off) {
         /*
          * Invalid offset. Drop the data, and respond with the offset we're
          * expecting data for.
@@ -194,21 +222,21 @@ imgr_file_upload(struct mgmt_cbuf *cb)
         goto out;
     }
 
-    if (!imgr_state.upload.file) {
+    if (!fs_nmgr_state.upload.file) {
         rc = MGMT_ERR_EINVAL;
         goto err;
     }
     if (img_len) {
-        rc = fs_write(imgr_state.upload.file, img_data, img_len);
+        rc = fs_write(fs_nmgr_state.upload.file, img_data, img_len);
         if (rc) {
             rc = MGMT_ERR_EINVAL;
             goto err_close;
         }
-        imgr_state.upload.off += img_len;
-        if (imgr_state.upload.size == imgr_state.upload.off) {
+        fs_nmgr_state.upload.off += img_len;
+        if (fs_nmgr_state.upload.size == fs_nmgr_state.upload.off) {
             /* Done */
-            fs_close(imgr_state.upload.file);
-            imgr_state.upload.file = NULL;
+            fs_close(fs_nmgr_state.upload.file);
+            fs_nmgr_state.upload.file = NULL;
         }
     }
 out:
@@ -216,7 +244,7 @@ out:
     g_err |= cbor_encode_text_stringz(&rsp, "rc");
     g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
     g_err |= cbor_encode_text_stringz(&rsp, "off");
-    g_err |= cbor_encode_uint(&rsp, imgr_state.upload.off);
+    g_err |= cbor_encode_uint(&rsp, fs_nmgr_state.upload.off);
     g_err |= cbor_encoder_close_container(penc, &rsp);
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -224,10 +252,19 @@ out:
     return 0;
 
 err_close:
-    fs_close(imgr_state.upload.file);
-    imgr_state.upload.file = NULL;
+    fs_close(fs_nmgr_state.upload.file);
+    fs_nmgr_state.upload.file = NULL;
 err:
     mgmt_cbuf_setoerr(cb, rc);
     return 0;
+}
+
+int
+fs_nmgr_init(void)
+{
+    int rc;
+
+    rc = mgmt_group_register(&fs_nmgr_group);
+    return rc;
 }
 #endif
