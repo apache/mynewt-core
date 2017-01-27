@@ -75,7 +75,9 @@ log_cbmem_walk(struct log *log, log_walk_func_t walk_func,
      */
     if (log_offset->lo_ts < 0) {
         hdr = cbmem->c_entry_end;
-        rc = walk_func(log, log_offset, (void *)hdr, hdr->ceh_len);
+        if (hdr != NULL) {
+            rc = walk_func(log, log_offset, (void *)hdr, hdr->ceh_len);
+        }
     } else {
         cbmem_iter_start(cbmem, &iter);
         while (1) {
