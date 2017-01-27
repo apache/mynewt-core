@@ -1883,9 +1883,9 @@ bletiny_set_adv_data_help(void)
 static int
 cmd_set_adv_data(void)
 {
-    static bssnz_t uint16_t uuids16[CMD_ADV_DATA_MAX_UUIDS16];
-    static bssnz_t uint32_t uuids32[CMD_ADV_DATA_MAX_UUIDS32];
-    static bssnz_t uint8_t uuids128[CMD_ADV_DATA_MAX_UUIDS128][16];
+    static bssnz_t ble_uuid16_t uuids16[CMD_ADV_DATA_MAX_UUIDS16];
+    static bssnz_t ble_uuid32_t uuids32[CMD_ADV_DATA_MAX_UUIDS32];
+    static bssnz_t ble_uuid128_t uuids128[CMD_ADV_DATA_MAX_UUIDS128];
     static bssnz_t uint8_t
         public_tgt_addrs[CMD_ADV_DATA_MAX_PUBLIC_TGT_ADDRS]
                         [BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN];
@@ -1935,7 +1935,7 @@ cmd_set_adv_data(void)
                 help_cmd_uint16("uuid16");
                 return EINVAL;
             }
-            uuids16[adv_fields.num_uuids16] = uuid16;
+            uuids16[adv_fields.num_uuids16] = (ble_uuid16_t) BLE_UUID16_INIT(uuid16);
             adv_fields.num_uuids16++;
         } else if (rc == ENOENT) {
             break;
@@ -1966,7 +1966,7 @@ cmd_set_adv_data(void)
                 help_cmd_uint32("uuid32");
                 return EINVAL;
             }
-            uuids32[adv_fields.num_uuids32] = uuid32;
+            uuids32[adv_fields.num_uuids32] = (ble_uuid32_t) BLE_UUID32_INIT(uuid32);
             adv_fields.num_uuids32++;
         } else if (rc == ENOENT) {
             break;
@@ -1997,7 +1997,8 @@ cmd_set_adv_data(void)
                 help_cmd_byte_stream_exact_length("uuid128", 16);
                 return EINVAL;
             }
-            memcpy(uuids128[adv_fields.num_uuids128], uuid128, 16);
+            ble_uuid_init_from_buf((ble_uuid_any_t *) &uuids128[adv_fields.num_uuids128],
+                                   uuid128, 16);
             adv_fields.num_uuids128++;
         } else if (rc == ENOENT) {
             break;

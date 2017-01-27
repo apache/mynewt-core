@@ -124,7 +124,6 @@ static void
 bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint8_t *u8p;
-    ble_uuid_any_t uuid;
     int i;
 
     if (fields->flags != 0) {
@@ -152,7 +151,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    uuids16(%scomplete)=",
                        fields->uuids16_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids16; i++) {
-            console_printf("0x%04x ", fields->uuids16[i]);
+            print_uuid(&fields->uuids16[i].u);
+            console_printf(" ");
         }
         console_printf("\n");
     }
@@ -161,7 +161,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    uuids32(%scomplete)=",
                        fields->uuids32_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids32; i++) {
-            console_printf("0x%08x ", (unsigned int)fields->uuids32[i]);
+            print_uuid(&fields->uuids32[i].u);
+            console_printf(" ");
         }
         console_printf("\n");
     }
@@ -169,12 +170,9 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids128 != NULL) {
         console_printf("    uuids128(%scomplete)=",
                        fields->uuids128_is_complete ? "" : "in");
-        u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            ble_uuid_init_from_buf(&uuid, u8p, 16);
-            print_uuid(&uuid.u);
+            print_uuid(&fields->uuids128[i].u);
             console_printf(" ");
-            u8p += 16;
         }
         console_printf("\n");
     }

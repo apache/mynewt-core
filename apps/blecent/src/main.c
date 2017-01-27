@@ -279,7 +279,7 @@ blecent_should_connect(const struct ble_gap_disc_desc *disc)
      * service (0x1811).
      */
     for (i = 0; i < fields.num_uuids16; i++) {
-        if (fields.uuids16[i] == BLECENT_SVC_ALERT_UUID) {
+        if (ble_uuid_u16(&fields.uuids16[i].u) == BLECENT_SVC_ALERT_UUID) {
             return 1;
         }
     }

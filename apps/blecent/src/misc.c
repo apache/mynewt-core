@@ -105,7 +105,6 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     char s[BLE_HS_ADV_MAX_SZ];
     const uint8_t *u8p;
-    ble_uuid_any_t uuid;
     int i;
 
     if (fields->flags != 0) {
@@ -116,7 +115,8 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
         BLECENT_LOG(DEBUG, "    uuids16(%scomplete)=",
                     fields->uuids16_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids16; i++) {
-            BLECENT_LOG(DEBUG, "0x%04x ", fields->uuids16[i]);
+            print_uuid(&fields->uuids16[i].u);
+            BLECENT_LOG(DEBUG, " ");
         }
         BLECENT_LOG(DEBUG, "\n");
     }
@@ -125,7 +125,8 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
         BLECENT_LOG(DEBUG, "    uuids32(%scomplete)=",
                     fields->uuids32_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids32; i++) {
-            BLECENT_LOG(DEBUG, "0x%08x ", fields->uuids32[i]);
+            print_uuid(&fields->uuids32[i].u);
+            BLECENT_LOG(DEBUG, " ");
         }
         BLECENT_LOG(DEBUG, "\n");
     }
@@ -133,12 +134,9 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids128 != NULL) {
         BLECENT_LOG(DEBUG, "    uuids128(%scomplete)=",
                     fields->uuids128_is_complete ? "" : "in");
-        u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            ble_uuid_init_from_buf(&uuid, u8p, 16);
-            print_uuid(&uuid.u);
+            print_uuid(&fields->uuids128[i].u);
             BLECENT_LOG(DEBUG, " ");
-            u8p += 16;
         }
         BLECENT_LOG(DEBUG, "\n");
     }
