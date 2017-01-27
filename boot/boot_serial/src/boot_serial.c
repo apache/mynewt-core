@@ -297,10 +297,10 @@ boot_serial_input(char *buf, int len)
      */
     if (hdr->nh_group == MGMT_GROUP_ID_IMAGE) {
         switch (hdr->nh_id) {
-        case IMGMGR_NMGR_OP_STATE:
+        case IMGMGR_NMGR_ID_STATE:
             bs_list(buf, len);
             break;
-        case IMGMGR_NMGR_OP_UPLOAD:
+        case IMGMGR_NMGR_ID_UPLOAD:
             bs_upload(buf, len);
             break;
         default:
