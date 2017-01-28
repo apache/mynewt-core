@@ -23,15 +23,19 @@ syscfg.defs:
         value: 0
 
     LOG_FCB:
-        description: 'TBD'
+        description: 'Support logging to FCB.'
         value: 0
 
+    LOG_CONSOLE:
+        description: 'Support logging to console.'
+        value: 1
+
     LOG_CLI:
-        description: 'TBD'
+        description: 'Expose "log" command in shell.'
         value: 0
         restrictions:
             - SHELL_TASK
 
     LOG_NEWTMGR:
-        description: 'TBD'
+        description: 'Expose "log" command in newtmgr.'
         value: 0

@@ -17,6 +17,10 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
+
+#if MYNEWT_VAL(LOG_CONSOLE)
+
 #include <os/os.h>
 #include <cbmem/cbmem.h>
 #include <console/console.h>
@@ -74,3 +78,5 @@ const struct log_handler log_console_handler = {
     .log_flush = log_console_flush,
     .log_rtr_erase = NULL,
 };
+
+#endif

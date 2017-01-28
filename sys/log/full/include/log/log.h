@@ -226,9 +226,13 @@ int log_flush(struct log *log);
 int log_rtr_erase(struct log *log, void *arg);
 
 /* Handler exports */
+#if MYNEWT_VAL(LOG_CONSOLE)
 extern const struct log_handler log_console_handler;
+#endif
 extern const struct log_handler log_cbmem_handler;
+#if MYNEWT_VAL(LOG_FCB)
 extern const struct log_handler log_fcb_handler;
+#endif
 
 /* Private */
 #if MYNEWT_VAL(LOG_NEWTMGR)
