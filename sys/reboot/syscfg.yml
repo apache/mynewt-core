@@ -26,6 +26,12 @@ syscfg.defs:
             - LOG_FCB
             - REBOOT_LOG_FLASH_AREA
 
+    REBOOT_LOG_CONSOLE:
+        description: 'TBD'
+        value: 1
+        restrictions:
+            - LOG_CONSOLE
+
     REBOOT_LOG_FLASH_AREA:
         description: 'TBD'
         type: flash_owner

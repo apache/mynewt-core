@@ -23,7 +23,6 @@
 #include "syscfg/syscfg.h"
 #include "sysflash/sysflash.h"
 #include "os/os.h"
-#include "console/console.h"
 #include "log/log.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
@@ -106,10 +105,12 @@ reboot_init_handler(int log_store_type, uint8_t entries)
             arg = &reboot_log_fcb;
             break;
 #endif
+#if MYNEWT_VAL(REBOOT_LOG_CONSOLE)
        case LOG_STORE_CONSOLE:
             reboot_log_handler = (struct log_handler *)&log_console_handler;
             arg = NULL;
             break;
+#endif
        default:
             assert(0);
     }
@@ -244,8 +245,10 @@ log_reboot_pkg_init(void)
 #if MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT)
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     type = LOG_STORE_FCB;
-#else
+#elif MYNEWT_VAL(REBOOT_LOG_CONSOLE)
     type = LOG_STORE_CONSOLE;
+#else
+#error "sys/reboot included, but no log target"
 #endif
     rc = reboot_init_handler(type, MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT));
     SYSINIT_PANIC_ASSERT(rc == 0);
