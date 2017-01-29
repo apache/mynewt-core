@@ -164,3 +164,12 @@ end
 define mn_msys1_print
     mn_mbuf_pool_print &os_msys_init_1_mbuf_pool 
 end
+
+define mn_msys1_free_print
+    set $om = os_msys_init_1_mempool.slh_first
+
+    while $om != 0
+        printf "Mbuf addr: %p\n", $om
+        set $om = $om->mb_next.sle_next
+    end
+end
