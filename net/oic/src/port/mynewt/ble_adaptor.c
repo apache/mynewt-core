@@ -299,7 +299,7 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         if (os_mbuf_appendfrom(n, m, off, blk)) {
             goto err;
         }
-        off -= blk;
+        off -= mtu;
         os_mbuf_adj(m, -blk);
     }
     return 0;
