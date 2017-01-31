@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <hal/hal_flash_int.h>
+#include <os/os.h>
 
 #include "MK64F12.h"
 #include "fsl_flash.h"
@@ -112,9 +113,17 @@ mk64f12_flash_write(const struct hal_flash *dev, uint32_t address,
 static int
 mk64f12_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
-    if (FLASH_Erase(&mk64f12_config, sector_address, mk64f12_config.PFlashSectorSize,
-                    kFLASH_apiEraseKey) == kStatus_Success)
+    int sr;
+    int rc;
+
+    OS_ENTER_CRITICAL(sr);
+    rc = FLASH_Erase(&mk64f12_config, sector_address,
+                     mk64f12_config.PFlashSectorSize,
+                     kFLASH_apiEraseKey);
+    OS_EXIT_CRITICAL(sr);
+    if (rc == kStatus_Success) {
         return 0;
+    }
     return -1;
 }
 
@@ -122,7 +131,8 @@ static int
 mk64f12_flash_sector_info(const struct hal_flash *dev, int idx,
         uint32_t *addr, uint32_t *sz)
 {
-    *addr = mk64f12_config.PFlashBlockBase + (idx * mk64f12_config.PFlashSectorSize);
+    *addr = mk64f12_config.PFlashBlockBase +
+            (idx * mk64f12_config.PFlashSectorSize);
     *sz = mk64f12_config.PFlashSectorSize;
     return 0;
 }
@@ -133,7 +143,8 @@ mk64f12_flash_init(const struct hal_flash *dev)
     if (FLASH_Init(&mk64f12_config) == kStatus_Success) {
         mk64f12_flash_dev.hf_base_addr = mk64f12_config.PFlashBlockBase;
         mk64f12_flash_dev.hf_size = mk64f12_config.PFlashTotalSize;
-        mk64f12_flash_dev.hf_sector_cnt = (mk64f12_config.PFlashTotalSize / mk64f12_config.PFlashSectorSize);
+        mk64f12_flash_dev.hf_sector_cnt =
+             (mk64f12_config.PFlashTotalSize / mk64f12_config.PFlashSectorSize);
     }
     return 0;
 }
