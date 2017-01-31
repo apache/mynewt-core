@@ -71,6 +71,10 @@
 #define BLETINY_MAX_DSCS               1
 #endif
 
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+#define BLETINY_COC_MTU               (256)
+#endif
+
 struct log bletiny_log;
 
 bssnz_t struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
@@ -84,6 +88,14 @@ static struct os_mempool bletiny_chr_pool;
 
 static void *bletiny_dsc_mem;
 static struct os_mempool bletiny_dsc_pool;
+
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+static void *bletiny_coc_conn_mem;
+static struct os_mempool bletiny_coc_conn_pool;
+
+static void *bletiny_sdu_coc_mem;
+static struct os_mempool bletiny_sdu_coc_pool;
+#endif
 
 static struct os_callout bletiny_tx_timer;
 struct bletiny_tx_data_s
@@ -599,6 +611,7 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
 
     conn->handle = desc->conn_handle;
     SLIST_INIT(&conn->svcs);
+    SLIST_INIT(&conn->coc_list);
 
     return conn;
 }
@@ -1549,6 +1562,190 @@ bletiny_on_reset(int reason)
     console_printf("Error: Resetting state; reason=%d\n", reason);
 }
 
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
+
+static int
+bletiny_l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    struct bletiny_l2cap_coc *prev, *cur;
+
+    conn = bletiny_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    coc = os_memblock_get(&bletiny_coc_conn_pool);
+    if (!coc) {
+        return ENOMEM;
+    }
+
+    coc->chan = chan;
+
+    prev = NULL;
+    SLIST_FOREACH(cur, &conn->coc_list, next) {
+        prev = cur;
+    }
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&conn->coc_list, coc, next);
+    } else {
+        SLIST_INSERT_AFTER(prev, coc, next);
+    }
+
+    return 0;
+}
+
+static void
+bletiny_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    struct bletiny_l2cap_coc *cur;
+
+    conn = bletiny_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    coc = NULL;
+    SLIST_FOREACH(cur, &conn->coc_list, next) {
+        if (cur->chan == chan) {
+            coc = cur;
+            break;
+        }
+    }
+
+    if (!coc) {
+        return;
+    }
+
+    SLIST_REMOVE(&conn->coc_list, coc, bletiny_l2cap_coc, next);
+    os_memblock_put(&bletiny_coc_conn_pool, coc);
+}
+
+static void
+bletiny_l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu)
+{
+    console_printf("LE CoC SDU received, chan: 0x%08lx\n", (uint32_t) chan);
+}
+
+static int
+bletiny_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
+                           struct ble_l2cap_chan *chan)
+{
+    struct os_mbuf *sdu_rx;
+
+    sdu_rx = os_memblock_get(&bletiny_sdu_coc_pool);
+    if (!sdu_rx) {
+            return BLE_HS_ENOMEM;
+    }
+
+    ble_l2cap_recv_ready(chan, sdu_rx);
+
+    return 0;
+}
+
+static int
+bletiny_l2cap_event(struct ble_l2cap_event *event, void *arg)
+{
+    switch(event->type) {
+        case BLE_L2CAP_EVENT_COC_CONNECTED:
+            if (event->connect.status) {
+                console_printf("LE COC error: %d\n", event->connect.status);
+                return 0;
+            }
+
+            console_printf("LE COC connected, conn: %d, chan: 0x%08lx\n",
+                           event->connect.conn_handle,
+                           (uint32_t) event->connect.chan);
+
+            bletiny_l2cap_coc_add(event->connect.conn_handle,
+                                  event->connect.chan);
+
+            return 0;
+        case BLE_L2CAP_EVENT_COC_DISCONNECTED:
+            console_printf("LE CoC disconnected, chan: 0x%08lx\n",
+                           (uint32_t) event->disconnect.chan);
+
+            bletiny_l2cap_coc_remove(event->disconnect.conn_handle,
+                                     event->disconnect.chan);
+            return 0;
+        case BLE_L2CAP_EVENT_COC_ACCEPT:
+            return bletiny_l2cap_coc_accept(event->accept.conn_handle,
+                                            event->accept.peer_sdu_size,
+                                            event->accept.chan);
+
+        case BLE_L2CAP_EVENT_COC_DATA_RECEIVED:
+            bletiny_l2cap_coc_recv(event->receive.chan, event->receive.sdu_rx);
+            return 0;
+        default:
+            return 0;
+    }
+}
+#endif
+
+int
+bletiny_l2cap_create_srv(uint16_t psm)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    return ble_l2cap_create_server(psm, BLETINY_COC_MTU, bletiny_l2cap_event,
+                                                                       NULL);
+#endif
+}
+
+int
+bletiny_l2cap_connect(uint16_t conn_handle, uint16_t psm)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    struct os_mbuf *sdu_rx;
+
+    sdu_rx = os_memblock_get(&bletiny_sdu_coc_pool);
+    assert(sdu_rx != NULL);
+
+    return ble_l2cap_connect(conn_handle, psm, BLETINY_COC_MTU, sdu_rx,
+                             bletiny_l2cap_event, NULL);
+#endif
+}
+
+int
+bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    int i;
+
+    conn = bletiny_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    i = 0;
+    SLIST_FOREACH(coc, &conn->coc_list, next) {
+        if (i == idx) {
+                break;
+        }
+        i++;
+    }
+    assert(coc != NULL);
+
+    ble_l2cap_disconnect(coc->chan);
+
+    return 0;
+#endif
+}
+
 /**
  * main
  *
@@ -1592,6 +1789,31 @@ main(void)
                          sizeof (struct bletiny_dsc), bletiny_dsc_mem,
                          "bletiny_dsc_pool");
     assert(rc == 0);
+
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
+    /* For testing we want to support all the available channels */
+    bletiny_sdu_coc_mem = malloc(
+        OS_MEMPOOL_BYTES(BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct os_mbuf)));
+    assert(bletiny_sdu_coc_mem != NULL);
+
+    rc = os_mempool_init(&bletiny_sdu_coc_pool,
+                         BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct os_mbuf), bletiny_sdu_coc_mem,
+                         "bletiny_coc_sdu_pool");
+    assert(rc == 0);
+
+    bletiny_coc_conn_mem = malloc(
+        OS_MEMPOOL_BYTES(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct bletiny_l2cap_coc)));
+    assert(bletiny_coc_conn_mem != NULL);
+
+    rc = os_mempool_init(&bletiny_coc_conn_pool,
+                         MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct bletiny_l2cap_coc), bletiny_coc_conn_mem,
+                         "bletiny_coc_conn_pool");
+    assert(rc == 0);
+#endif
 
     /* Initialize the logging system. */
     log_register("bletiny", &bletiny_log, &log_console_handler, NULL,

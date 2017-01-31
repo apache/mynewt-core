@@ -1164,6 +1164,119 @@ cmd_l2cap_update(int argc, char **argv)
     return 0;
 }
 
+static void
+bletiny_l2cap_create_srv_help(void)
+{
+    console_printf("Available l2cap create_srv commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available l2cap create_srv params: \n");
+    help_cmd_uint16("psm");
+    help_cmd_uint16("mtu");
+}
+
+static int
+cmd_l2cap_create_srv(int argc, char **argv)
+{
+    uint16_t psm = 0;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+            bletiny_l2cap_create_srv_help();
+        return 0;
+    }
+
+    psm = parse_arg_uint16("psm", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'psm' parameter\n");
+        help_cmd_uint16("psm");
+        return rc;
+    }
+
+    rc = bletiny_l2cap_create_srv(psm);
+    if (rc) {
+        console_printf("Server create error: 0x%02x", rc);
+    }
+
+    return 0;
+}
+
+static void
+bletiny_l2cap_connect_help(void)
+{
+    console_printf("Available l2cap connect commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available l2cap connect params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16("psm");
+}
+
+static int
+cmd_l2cap_connect(int argc, char **argv)
+{
+    uint16_t conn = 0;
+    uint16_t psm = 0;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+            bletiny_l2cap_connect_help();
+        return 0;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
+    }
+
+    psm = parse_arg_uint16("psm", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'psm' parameter\n");
+        help_cmd_uint16("psm");
+        return rc;
+    }
+
+    return bletiny_l2cap_connect(conn, psm);
+}
+
+static void
+bletiny_l2cap_disconnect_help(void)
+{
+    console_printf("Available l2cap disconnect commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available l2cap disconnect params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16("idx");
+    console_printf("\n Use 'b show coc' to get those parameters \n");
+}
+
+static int
+cmd_l2cap_disconnect(int argc, char **argv)
+{
+    uint16_t conn;
+    uint16_t idx;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_l2cap_disconnect_help();
+        return 0;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
+    }
+
+    idx = parse_arg_uint16("idx", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'idx' parameter\n");
+        help_cmd_uint16("idx");
+        return 0;
+    }
+
+    return bletiny_l2cap_disconnect(conn, idx);
+}
+
 static const struct cmd_entry cmd_l2cap_entries[];
 
 static int
@@ -1180,6 +1293,9 @@ cmd_l2cap_help(int argc, char **argv)
 
 static const struct cmd_entry cmd_l2cap_entries[] = {
     { "update", cmd_l2cap_update },
+    { "create_srv", cmd_l2cap_create_srv },
+    { "connect", cmd_l2cap_connect },
+    { "disconnect", cmd_l2cap_disconnect },
     { "help", cmd_l2cap_help },
     { NULL, NULL }
 };
@@ -1608,6 +1724,34 @@ cmd_show_conn(int argc, char **argv)
     return 0;
 }
 
+static int
+cmd_show_coc(int argc, char **argv)
+{
+    struct bletiny_conn *conn = NULL;
+    struct bletiny_l2cap_coc *coc;
+    int i, j;
+
+    for (i = 0; i < bletiny_num_conns; i++) {
+        conn = bletiny_conns + i;
+        if (!conn) {
+            break;
+        }
+
+        if (SLIST_EMPTY(&conn->coc_list)) {
+            continue;
+        }
+
+        console_printf("conn_handle: 0x%04x\n", conn->handle);
+        j = 0;
+        SLIST_FOREACH(coc, &conn->coc_list, next) {
+            console_printf("    idx: %i, chan pointer = 0x%08lx\n", j++,
+                           (uint32_t)coc->chan);
+        }
+    }
+
+    return 0;
+}
+
 static struct cmd_entry cmd_show_entries[];
 
 static int
@@ -1626,6 +1770,7 @@ static struct cmd_entry cmd_show_entries[] = {
     { "addr", cmd_show_addr },
     { "chr", cmd_show_chr },
     { "conn", cmd_show_conn },
+    { "coc", cmd_show_coc },
     { "help", cmd_show_help },
     { NULL, NULL }
 };
