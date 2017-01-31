@@ -31,6 +31,11 @@
 #include "MK64F12.h"
 #include "fsl_flash.h"
 
+/*
+ * Alignment restriction on writes.
+ */
+#define MK64F12_FLASH_ALIGN     8
+
 static int mk64f12_flash_read(const struct hal_flash *dev, uint32_t address,
         void *dst, uint32_t num_bytes);
 static int mk64f12_flash_write(const struct hal_flash *dev, uint32_t address,
@@ -54,7 +59,7 @@ static flash_config_t mk64f12_config;
 struct hal_flash mk64f12_flash_dev = {
     /* Most items are set after FLASH_Init() */
     .hf_itf = &mk64f12_flash_funcs,
-    .hf_align = 4
+    .hf_align = MK64F12_FLASH_ALIGN
 };
 
 static int
@@ -69,16 +74,39 @@ static int
 mk64f12_flash_write(const struct hal_flash *dev, uint32_t address,
         const void *src, uint32_t len)
 {
-    if (address % sizeof(uint32_t)) {
+    uint8_t padded[MK64F12_FLASH_ALIGN];
+    uint8_t pad_len;
+
+    if (address % MK64F12_FLASH_ALIGN) {
         /*
          * Unaligned write.
          */
         return -1;
     }
 
-    if (FLASH_Program(&mk64f12_config, address, (uint32_t *)src, len) == kStatus_Success)
-        return 0;
-    return -1;
+    pad_len = len & (MK64F12_FLASH_ALIGN - 1);
+    if (pad_len) {
+        /*
+         * FLASH_Program also needs length to be aligned to 8 bytes.
+         * Pad these writes.
+         */
+        len -= pad_len;
+        memcpy(padded, (uint8_t *)src + len, pad_len);
+        memset(padded + pad_len, 0xff, sizeof(padded) - pad_len);
+    }
+    if (len) {
+        if (FLASH_Program(&mk64f12_config, address, (uint32_t *)src, len) !=
+            kStatus_Success) {
+            return -1;
+        }
+    }
+    if (pad_len) {
+        if (FLASH_Program(&mk64f12_config, address + len, (uint32_t *)padded,
+                          MK64F12_FLASH_ALIGN) != kStatus_Success) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 static int
