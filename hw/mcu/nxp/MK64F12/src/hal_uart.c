@@ -391,15 +391,13 @@ hal_uart_config(int port, int32_t speed, uint8_t databits, uint8_t stopbits,
     NVIC_SetVector(u->u_irq, (uint32_t)s_uartirqs[port]);
 
     /* Initialize UART device */
-    if (port != 0) {
-        UART_Init(u->u_base, &uconfig, CLOCK_GetFreq(u->clk_src));
-        UART_EnableTx(u->u_base, true);
-        UART_EnableRx(u->u_base, true);
-        UART_EnableInterrupts(u->u_base,
-                              kUART_RxDataRegFullInterruptEnable
-                              | kUART_RxOverrunInterruptEnable);
-        EnableIRQ(u->u_irq);
-    }
+    UART_Init(u->u_base, &uconfig, CLOCK_GetFreq(u->clk_src));
+    UART_EnableTx(u->u_base, true);
+    UART_EnableRx(u->u_base, true);
+    UART_EnableInterrupts(u->u_base,
+                          kUART_RxDataRegFullInterruptEnable |
+                          kUART_RxOverrunInterruptEnable);
+    EnableIRQ(u->u_irq);
 
     return 0;
 }
@@ -449,15 +447,6 @@ int hal_uart_init(int port, void *cfg)
         else {
             uarts[port].u_configured = 0;
         }
-    }
-
-    if (port == 0) {
-        CLOCK_EnableClock(uarts[0].p_clock);
-        PORT_SetPinMux(uarts[0].p_base, uarts[0].u_pin_rx, kPORT_MuxAlt3);
-        PORT_SetPinMux(uarts[0].p_base, uarts[0].u_pin_tx, kPORT_MuxAlt3);
-        DbgConsole_Init((uint32_t)uarts[0].u_base, 115200,
-                        DEBUG_CONSOLE_DEVICE_TYPE_UART, CLOCK_GetFreq(uarts[0].clk_src));
-        PRINTF("UART%d CONFIGURED\r\n", port);
     }
 
     return 0;
