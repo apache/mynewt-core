@@ -47,6 +47,28 @@ static struct shell_cmd cmd_b = {
 
 static bssnz_t uint8_t cmd_buf[CMD_BUF_SZ];
 
+static struct kv_pair cmd_own_addr_types[] = {
+    { "public",     BLE_OWN_ADDR_PUBLIC },
+    { "random",     BLE_OWN_ADDR_RANDOM },
+    { "rpa_pub",    BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT },
+    { "rpa_rnd",    BLE_OWN_ADDR_RPA_RANDOM_DEFAULT },
+    { NULL }
+};
+
+static struct kv_pair cmd_peer_addr_types[] = {
+    { "public",     BLE_ADDR_PUBLIC },
+    { "random",     BLE_ADDR_RANDOM },
+    { "public_id",  BLE_ADDR_PUBLIC_ID },
+    { "random_id",  BLE_ADDR_RANDOM_ID },
+    { NULL }
+};
+
+static struct kv_pair cmd_addr_type[] = {
+    { "public",     BLE_ADDR_PUBLIC },
+    { "random",     BLE_ADDR_RANDOM },
+    { NULL }
+};
+
 /*****************************************************************************
  * $misc                                                                     *
  *****************************************************************************/
@@ -244,14 +266,6 @@ static struct kv_pair cmd_adv_disc_modes[] = {
     { NULL }
 };
 
-static struct kv_pair cmd_adv_addr_types[] = {
-    { "public", BLE_ADDR_TYPE_PUBLIC },
-    { "random", BLE_ADDR_TYPE_RANDOM },
-    { "rpa_pub", BLE_ADDR_TYPE_RPA_PUB_DEFAULT },
-    { "rpa_rnd", BLE_ADDR_TYPE_RPA_RND_DEFAULT },
-    { NULL }
-};
-
 static struct kv_pair cmd_adv_filt_types[] = {
     { "none", BLE_HCI_ADV_FILT_NONE },
     { "scan", BLE_HCI_ADV_FILT_SCAN },
@@ -399,11 +413,10 @@ bletiny_adv_help(void)
     console_printf("Available adv params: \n");
     help_cmd_kv_dflt("conn", cmd_adv_conn_modes, BLE_GAP_CONN_MODE_UND);
     help_cmd_kv_dflt("disc", cmd_adv_disc_modes, BLE_GAP_DISC_MODE_GEN);
-    help_cmd_kv_dflt("peer_addr_type", cmd_adv_addr_types,
-    BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_kv_dflt("peer_addr_type", cmd_peer_addr_types, BLE_ADDR_PUBLIC);
     help_cmd_byte_stream_exact_length("peer_addr", 6);
-    help_cmd_kv_dflt("own_addr_type", cmd_adv_addr_types,
-                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
+                     BLE_OWN_ADDR_PUBLIC);
     help_cmd_long_bounds_dflt("chan_map", 0, 0xff, 0);
     help_cmd_kv_dflt("filt", cmd_adv_filt_types, BLE_HCI_ADV_FILT_NONE);
     help_cmd_long_bounds_dflt("itvl_min", 0, UINT16_MAX, 0);
@@ -417,9 +430,9 @@ cmd_adv(int argc, char **argv)
 {
     struct ble_gap_adv_params params;
     int32_t duration_ms;
-    uint8_t peer_addr_type;
+    ble_addr_t peer_addr;
+    ble_addr_t *peer_addr_param = &peer_addr;
     uint8_t own_addr_type;
-    uint8_t peer_addr[8];
     int rc;
 
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
@@ -453,18 +466,18 @@ cmd_adv(int argc, char **argv)
         return rc;
     }
 
-    peer_addr_type = parse_arg_kv_default(
-        "peer_addr_type", cmd_adv_addr_types, BLE_ADDR_TYPE_PUBLIC, &rc);
+    peer_addr.type = parse_arg_kv_default(
+        "peer_addr_type", cmd_peer_addr_types, BLE_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'peer_addr_type' parameter\n");
-        help_cmd_kv_dflt("peer_addr_type", cmd_adv_addr_types,
-                         BLE_ADDR_TYPE_PUBLIC);
+        help_cmd_kv_dflt("peer_addr_type", cmd_peer_addr_types,
+                         BLE_ADDR_PUBLIC);
         return rc;
     }
 
-    rc = parse_arg_mac("peer_addr", peer_addr);
+    rc = parse_arg_mac("peer_addr", peer_addr.val);
     if (rc == ENOENT) {
-        memset(peer_addr, 0, sizeof peer_addr);
+        peer_addr_param = NULL;
     } else if (rc != 0) {
         console_printf("invalid 'peer_addr' parameter\n");
         help_cmd_byte_stream_exact_length("peer_addr", 6);
@@ -472,11 +485,11 @@ cmd_adv(int argc, char **argv)
     }
 
     own_addr_type = parse_arg_kv_default(
-        "own_addr_type", cmd_adv_addr_types, BLE_ADDR_TYPE_PUBLIC, &rc);
+        "own_addr_type", cmd_own_addr_types, BLE_OWN_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'own_addr_type' parameter\n");
-        help_cmd_kv_dflt("own_addr_type", cmd_adv_addr_types,
-                         BLE_ADDR_TYPE_PUBLIC);
+        help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
+                         BLE_OWN_ADDR_PUBLIC);
         return rc;
     }
 
@@ -527,8 +540,8 @@ cmd_adv(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_adv_start(own_addr_type, peer_addr_type, peer_addr,
-                           duration_ms, &params);
+    rc = bletiny_adv_start(own_addr_type, peer_addr_param, duration_ms,
+                           &params);
     if (rc != 0) {
         console_printf("advertise fail: %d\n", rc);
         return rc;
@@ -541,23 +554,6 @@ cmd_adv(int argc, char **argv)
  * $connect                                                                  *
  *****************************************************************************/
 
-static struct kv_pair cmd_conn_peer_addr_types[] = {
-    { "public",         BLE_HCI_CONN_PEER_ADDR_PUBLIC },
-    { "random",         BLE_HCI_CONN_PEER_ADDR_RANDOM },
-    { "rpa_pub",        BLE_HCI_CONN_PEER_ADDR_PUBLIC_IDENT },
-    { "rpa_rnd",        BLE_HCI_CONN_PEER_ADDR_RANDOM_IDENT },
-    { "wl",             BLE_GAP_ADDR_TYPE_WL },
-    { NULL }
-};
-
-static struct kv_pair cmd_conn_own_addr_types[] = {
-    { "public", BLE_ADDR_TYPE_PUBLIC },
-    { "random", BLE_ADDR_TYPE_RANDOM },
-    { "rpa_pub", BLE_ADDR_TYPE_RPA_PUB_DEFAULT },
-    { "rpa_rnd", BLE_ADDR_TYPE_RPA_RND_DEFAULT },
-    { NULL }
-};
-
 static void
 bletiny_conn_help(void)
 {
@@ -565,11 +561,10 @@ bletiny_conn_help(void)
     console_printf("\thelp\n");
     console_printf("\tcancel\n");
     console_printf("Available conn params: \n");
-    help_cmd_kv_dflt("peer_addr_type", cmd_conn_peer_addr_types,
-                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_kv_dflt("peer_addr_type", cmd_peer_addr_types, BLE_ADDR_PUBLIC);
     help_cmd_byte_stream_exact_length("peer_addr", 6);
-    help_cmd_kv_dflt("own_addr_type", cmd_conn_own_addr_types,
-                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
+                     BLE_OWN_ADDR_PUBLIC);
     help_cmd_uint16_dflt("scan_itvl", 0x0010);
     help_cmd_uint16_dflt("scan_window", 0x0010);
     help_cmd_uint16_dflt("itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
@@ -586,8 +581,8 @@ cmd_conn(int argc, char **argv)
 {
     struct ble_gap_conn_params params;
     int32_t duration_ms;
-    uint8_t peer_addr[6];
-    int peer_addr_type;
+    ble_addr_t peer_addr;
+    ble_addr_t *peer_addr_param = &peer_addr;
     int own_addr_type;
     int rc;
 
@@ -606,39 +601,36 @@ cmd_conn(int argc, char **argv)
         return 0;
     }
 
-    peer_addr_type = parse_arg_kv_default("peer_addr_type",
-                                          cmd_conn_peer_addr_types,
-                                          BLE_ADDR_TYPE_PUBLIC, &rc);
+    peer_addr.type = parse_arg_kv_default("peer_addr_type", cmd_peer_addr_types,
+                                          BLE_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'peer_addr_type' parameter\n");
-        help_cmd_kv_dflt("peer_addr_type", cmd_conn_peer_addr_types,
-                         BLE_ADDR_TYPE_PUBLIC);
+        help_cmd_kv_dflt("peer_addr_type", cmd_peer_addr_types,
+                         BLE_ADDR_PUBLIC);
         return rc;
     }
 
-    if (peer_addr_type != BLE_GAP_ADDR_TYPE_WL) {
-        rc = parse_arg_mac("peer_addr", peer_addr);
-        if (rc == ENOENT) {
-            /* Allow "addr" for backwards compatibility. */
-            rc = parse_arg_mac("addr", peer_addr);
-        }
-
-        if (rc != 0) {
-            console_printf("invalid 'peer_addr' parameter\n");
-            help_cmd_byte_stream_exact_length("peer_addr", 6);
-            return rc;
-        }
-    } else {
-        memset(peer_addr, 0, sizeof peer_addr);
+    rc = parse_arg_mac("peer_addr", peer_addr.val);
+    if (rc == ENOENT) {
+        /* Allow "addr" for backwards compatibility. */
+        rc = parse_arg_mac("addr", peer_addr.val);
     }
 
-    own_addr_type = parse_arg_kv_default("own_addr_type",
-                                         cmd_conn_own_addr_types,
-                                         BLE_ADDR_TYPE_PUBLIC, &rc);
+    if (rc == ENOENT) {
+        /* With no "peer_addr" specified we'll use white list */
+        peer_addr_param = NULL;
+    } else if (rc != 0) {
+        console_printf("invalid 'peer_addr' parameter\n");
+        help_cmd_byte_stream_exact_length("peer_addr", 6);
+        return rc;
+    }
+
+    own_addr_type = parse_arg_kv_default("own_addr_type", cmd_own_addr_types,
+                                         BLE_OWN_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'own_addr_type' parameter\n");
-        help_cmd_kv_dflt("own_addr_type", cmd_conn_own_addr_types,
-                         BLE_ADDR_TYPE_PUBLIC);
+        help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
+                         BLE_OWN_ADDR_PUBLIC);
         return rc;
     }
 
@@ -707,8 +699,8 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_conn_initiate(own_addr_type, peer_addr_type, peer_addr,
-                               duration_ms, &params);
+    rc = bletiny_conn_initiate(own_addr_type, peer_addr_param, duration_ms,
+                               &params);
     if (rc != 0) {
         return rc;
     }
@@ -1434,14 +1426,6 @@ static struct kv_pair cmd_scan_filt_policies[] = {
     { NULL }
 };
 
-static struct kv_pair cmd_scan_addr_types[] = {
-    { "public",  BLE_ADDR_TYPE_PUBLIC },
-    { "random",  BLE_ADDR_TYPE_RANDOM },
-    { "rpa_pub", BLE_ADDR_TYPE_RPA_PUB_DEFAULT },
-    { "rpa_rnd", BLE_ADDR_TYPE_RPA_RND_DEFAULT },
-    { NULL }
-};
-
 static void
 bletiny_scan_help(void)
 {
@@ -1457,8 +1441,8 @@ bletiny_scan_help(void)
     help_cmd_kv_dflt("filt", cmd_scan_filt_policies,
                      BLE_HCI_SCAN_FILT_NO_WL);
     help_cmd_uint16_dflt("nodups", 0);
-    help_cmd_kv_dflt("own_addr_type", cmd_scan_addr_types,
-                     BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
+                     BLE_OWN_ADDR_PUBLIC);
 }
 
 static int
@@ -1536,12 +1520,12 @@ cmd_scan(int argc, char **argv)
         return rc;
     }
 
-    own_addr_type = parse_arg_kv_default("own_addr_type", cmd_scan_addr_types,
-                                         BLE_ADDR_TYPE_PUBLIC, &rc);
+    own_addr_type = parse_arg_kv_default("own_addr_type", cmd_own_addr_types,
+                                         BLE_OWN_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'own_addr_type' parameter\n");
-        help_cmd_kv_dflt("own_addr_type", cmd_scan_addr_types,
-                         BLE_ADDR_TYPE_PUBLIC);
+        help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
+                         BLE_OWN_ADDR_PUBLIC);
         return rc;
     }
 
@@ -1565,7 +1549,7 @@ cmd_show_addr(int argc, char **argv)
     int rc;
 
     console_printf("public_id_addr=");
-    rc = ble_hs_id_copy_addr(BLE_ADDR_TYPE_PUBLIC, id_addr, NULL);
+    rc = ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, id_addr, NULL);
     if (rc == 0) {
         print_addr(id_addr);
     } else {
@@ -1573,7 +1557,7 @@ cmd_show_addr(int argc, char **argv)
     }
 
     console_printf(" random_id_addr=");
-    rc = ble_hs_id_copy_addr(BLE_ADDR_TYPE_RANDOM, id_addr, NULL);
+    rc = ble_hs_id_copy_addr(BLE_ADDR_RANDOM, id_addr, NULL);
     if (rc == 0) {
         print_addr(id_addr);
     } else {
@@ -2278,8 +2262,8 @@ cmd_set_sm_data(void)
 }
 
 static struct kv_pair cmd_set_addr_types[] = {
-    { "public",         BLE_ADDR_TYPE_PUBLIC },
-    { "random",         BLE_ADDR_TYPE_RANDOM },
+    { "public",         BLE_ADDR_PUBLIC },
+    { "random",         BLE_ADDR_RANDOM },
     { NULL }
 };
 
@@ -2287,7 +2271,7 @@ static void
 bletiny_set_addr_help(void)
 {
     console_printf("Available set addr params: \n");
-    help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_TYPE_PUBLIC);
+    help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_PUBLIC);
     help_cmd_byte_stream_exact_length("addr", 6);
 }
 
@@ -2299,10 +2283,10 @@ cmd_set_addr(void)
     int rc;
 
     addr_type = parse_arg_kv_default("addr_type", cmd_set_addr_types,
-                                     BLE_ADDR_TYPE_PUBLIC, &rc);
+                                     BLE_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'addr_type' parameter\n");
-        help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_TYPE_PUBLIC);
+        help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_PUBLIC);
         return rc;
     }
 
@@ -2314,7 +2298,7 @@ cmd_set_addr(void)
     }
 
     switch (addr_type) {
-    case BLE_ADDR_TYPE_PUBLIC:
+    case BLE_ADDR_PUBLIC:
         /* We shouldn't be writing to the controller's address (g_dev_addr).
          * There is no standard way to set the local public address, so this is
          * our only option at the moment.
@@ -2323,7 +2307,7 @@ cmd_set_addr(void)
         ble_hs_id_set_pub(g_dev_addr);
         break;
 
-    case BLE_ADDR_TYPE_RANDOM:
+    case BLE_ADDR_RANDOM:
         rc = ble_hs_id_set_rnd(addr);
         if (rc != 0) {
             return rc;
@@ -2563,12 +2547,6 @@ cmd_update(int argc, char **argv)
  * $white list                                                               *
  *****************************************************************************/
 
-static struct kv_pair cmd_wl_addr_types[] = {
-    { "public",         BLE_HCI_CONN_PEER_ADDR_PUBLIC },
-    { "random",         BLE_HCI_CONN_PEER_ADDR_RANDOM },
-    { NULL }
-};
-
 #define CMD_WL_MAX_SZ   8
 
 static void
@@ -2579,16 +2557,14 @@ bletiny_wl_help(void)
     console_printf("Available wl params: \n");
     console_printf("\tlist of:\n");
     help_cmd_byte_stream_exact_length("addr", 6);
-    help_cmd_kv("addr_type", cmd_wl_addr_types);
+    help_cmd_kv("addr_type", cmd_addr_type);
 }
 
 static int
 cmd_wl(int argc, char **argv)
 {
-    static struct ble_gap_white_entry white_list[CMD_WL_MAX_SZ];
-    uint8_t addr_type;
-    uint8_t addr[6];
-    int wl_cnt;
+    static ble_addr_t addrs[CMD_WL_MAX_SZ];
+    int addrs_cnt;
     int rc;
 
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
@@ -2596,13 +2572,13 @@ cmd_wl(int argc, char **argv)
         return 0;
     }
 
-    wl_cnt = 0;
+    addrs_cnt = 0;
     while (1) {
-        if (wl_cnt >= CMD_WL_MAX_SZ) {
+        if (addrs_cnt >= CMD_WL_MAX_SZ) {
             return EINVAL;
         }
 
-        rc = parse_arg_mac("addr", addr);
+        rc = parse_arg_mac("addr", addrs[addrs_cnt].val);
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
@@ -2611,23 +2587,21 @@ cmd_wl(int argc, char **argv)
             return rc;
         }
 
-        addr_type = parse_arg_kv("addr_type", cmd_wl_addr_types, &rc);
+        addrs[addrs_cnt].type = parse_arg_kv("addr_type", cmd_addr_type, &rc);
         if (rc != 0) {
             console_printf("invalid 'addr' parameter\n");
-            help_cmd_kv("addr_type", cmd_wl_addr_types);
+            help_cmd_kv("addr_type", cmd_addr_type);
             return rc;
         }
 
-        memcpy(white_list[wl_cnt].addr, addr, 6);
-        white_list[wl_cnt].addr_type = addr_type;
-        wl_cnt++;
+        addrs_cnt++;
     }
 
-    if (wl_cnt == 0) {
+    if (addrs_cnt == 0) {
         return EINVAL;
     }
 
-    bletiny_wl_set(white_list, wl_cnt);
+    bletiny_wl_set(addrs, addrs_cnt);
 
     return 0;
 }
@@ -2792,18 +2766,12 @@ static struct kv_pair cmd_keystore_entry_type[] = {
     { NULL }
 };
 
-static struct kv_pair cmd_keystore_addr_type[] = {
-    { "public",     BLE_ADDR_TYPE_PUBLIC },
-    { "random",     BLE_ADDR_TYPE_RANDOM },
-    { NULL }
-};
-
 static void
 bletiny_keystore_parse_keydata_help(void)
 {
     console_printf("Available keystore parse keydata params: \n");
     help_cmd_kv("type", cmd_keystore_entry_type);
-    help_cmd_kv("addr_type", cmd_keystore_addr_type);
+    help_cmd_kv("addr_type", cmd_addr_type);
     help_cmd_byte_stream_exact_length("addr", 6);
     help_cmd_uint16("ediv");
     help_cmd_uint64("rand");
@@ -2826,14 +2794,14 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
     switch (*obj_type) {
     case BLE_STORE_OBJ_TYPE_PEER_SEC:
     case BLE_STORE_OBJ_TYPE_OUR_SEC:
-        rc = parse_arg_kv("addr_type", cmd_keystore_addr_type, &rc);
+        out->sec.peer_addr.type = parse_arg_kv("addr_type", cmd_addr_type, &rc);
         if (rc != 0) {
             console_printf("invalid 'addr_type' parameter\n");
-            help_cmd_kv("addr_type", cmd_keystore_addr_type);
+            help_cmd_kv("addr_type", cmd_addr_type);
             return rc;
         }
 
-        rc = parse_arg_mac("addr", out->sec.peer_addr);
+        rc = parse_arg_mac("addr", out->sec.peer_addr.val);
         if (rc != 0) {
             console_printf("invalid 'addr' parameter\n");
             help_cmd_byte_stream_exact_length("addr", 6);
@@ -2912,8 +2880,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
                 help_cmd_byte_stream_exact_length("csrk", 16);
                 return rc;
             }
-            out->sec.peer_addr_type = key->sec.peer_addr_type;
-            memcpy(out->sec.peer_addr, key->sec.peer_addr, 6);
+            out->sec.peer_addr = key->sec.peer_addr;
             out->sec.ediv = key->sec.ediv;
             out->sec.rand_num = key->sec.rand_num;
             break;
@@ -3013,12 +2980,12 @@ cmd_keystore_iterator(int obj_type,
         case BLE_STORE_OBJ_TYPE_PEER_SEC:
         case BLE_STORE_OBJ_TYPE_OUR_SEC:
             console_printf("Key: ");
-            if (val->sec.peer_addr_type == BLE_STORE_ADDR_TYPE_NONE) {
+            if (ble_addr_cmp(&val->sec.peer_addr, BLE_ADDR_ANY) == 0) {
                 console_printf("ediv=%u ", val->sec.ediv);
                 console_printf("ediv=%llu ", val->sec.rand_num);
             } else {
-                console_printf("addr_type=%u ", val->sec.peer_addr_type);
-                print_addr(val->sec.peer_addr);
+                console_printf("addr_type=%u ", val->sec.peer_addr.type);
+                print_addr(val->sec.peer_addr.val);
             }
             console_printf("\n");
 

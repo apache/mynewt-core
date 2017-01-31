@@ -21,6 +21,7 @@
 #define H_BLEPRPH_
 
 #include "log/log.h"
+#include "nimble/ble.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -55,17 +55,17 @@ static void
 bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr_type);
-    print_addr(desc->our_ota_addr);
+                desc->conn_handle, desc->our_ota_addr.type);
+    print_addr(desc->our_ota_addr.val);
     BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr_type);
-    print_addr(desc->our_id_addr);
+                desc->our_id_addr.type);
+    print_addr(desc->our_id_addr.val);
     BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr_type);
-    print_addr(desc->peer_ota_addr);
+                desc->peer_ota_addr.type);
+    print_addr(desc->peer_ota_addr.val);
     BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr_type);
-    print_addr(desc->peer_id_addr);
+                desc->peer_id_addr.type);
+    print_addr(desc->peer_id_addr.val);
     BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
@@ -133,7 +133,7 @@ bleprph_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);

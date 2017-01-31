@@ -21,6 +21,7 @@
 #define H_BLETINY_PRIV_
 
 #include <inttypes.h>
+#include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "log/log.h"
 #include "os/queue.h"
@@ -153,17 +154,16 @@ int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
                        uint16_t offset, struct os_mbuf *om);
 int bletiny_write_reliable(uint16_t conn_handle,
                            struct ble_gatt_attr *attrs, int num_attrs);
-int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
-                      const uint8_t *peer_addr, int32_t duration_ms,
+int bletiny_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
+                      int32_t duration_ms,
                       const struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
-int bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
-                          uint8_t *peer_addr, int32_t duration_ms,
+int bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                          int32_t duration_ms,
                           struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
-int bletiny_wl_set(struct ble_gap_white_entry *white_list,
-                    int white_list_count);
+int bletiny_wl_set(ble_addr_t *addrs, int addrs_count);
 int bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,
                  const struct ble_gap_disc_params *disc_params);
 int bletiny_scan_cancel(void);
