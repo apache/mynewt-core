@@ -33,6 +33,7 @@
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
+#include "sensor/light.h"
 #include "console/console.h"
 #include "shell/shell.h"
 
@@ -96,6 +97,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     struct sensor_shell_read_ctx *ctx;
     struct sensor_accel_data *sad;
     struct sensor_mag_data *smd;
+    struct sensor_light_data *sld;
     char tmpstr[13];
 
     ctx = (struct sensor_shell_read_ctx *) arg;
@@ -126,6 +128,20 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         }
         if (smd->smd_z != SENSOR_MAG_DATA_UNUSED) {
             console_printf("z = %i", (int)smd->smd_z);
+        }
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_LIGHT) {
+        sld = (struct sensor_light_data *) data;
+        if (sld->sld_full != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("Full = %u, ", sld->sld_full);
+        }
+        if (sld->sld_ir != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("IR = %u, ", sld->sld_ir);
+        }
+        if (sld->sld_lux != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("Lux = %u, ", (unsigned int)sld->sld_lux);
         }
         console_printf("\n");
     }

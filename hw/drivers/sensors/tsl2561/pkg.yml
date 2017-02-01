@@ -33,17 +33,3 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
-
-pkg.deps.TSL2561_CLI:
-    - "@apache-mynewt-core/sys/console/full"
-    - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/sys/sysinit"
-
-pkg.deps.TSL2561_LOG:
-    - "@apache-mynewt-core/sys/log"
-
-pkg.deps.TSL2561_STATS:
-    - "@apache-mynewt-core/sys/stats"
-
-pkg.init_function: tsl2561_init
-pkg.init_stage: 6

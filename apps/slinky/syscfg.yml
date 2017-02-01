@@ -43,3 +43,11 @@ syscfg.vals:
 
     OS_MAIN_TASK_PRIO: 10
     OS_MAIN_STACKS_SIZE: 512
+
+syscfg.defs:
+    TSL2561_PRESENT:
+        description: 'TSL2561 is present'
+        value: 0
+    LSM303DLHC_PRESENT:
+        description: 'LSM303 is present'
+        value: 0

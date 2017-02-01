@@ -21,9 +21,6 @@
 # SOFTWARE.
 
 syscfg.defs:
-    TSL2561_TASK:
-        description: 'Enable the TSL2561 sensor driver'
-        value: 0
     TSL2561_I2CADDR:
         description: 'HW I2C address for the TSL2561 (0x29, 0x39 or 0x49)'
         value: 0x39

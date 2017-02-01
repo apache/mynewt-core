@@ -31,6 +31,7 @@
 #include <config/config.h>
 #include <sensor/sensor.h>
 #include <lsm303dlhc/lsm303dlhc.h>
+#include <tsl2561/tsl2561.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -240,33 +241,50 @@ static int
 config_sensor(void)
 {
     struct os_dev *dev;
-    struct lsm303dlhc_cfg cfg;
     int rc;
+
+#if MYNEWT_VAL(TSL2561_PRESENT)
+    struct tsl2561_cfg tslcfg;
+
+    dev = (struct os_dev *) os_dev_open("light0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+    rc = tsl2561_init(dev, NULL);
+
+    /* Gain set to 1X and Inetgration time set to 13ms */
+    tslcfg.gain = TSL2561_LIGHT_GAIN_1X;
+    tslcfg.integration_time = TSL2561_LIGHT_ITIME_13MS;
+
+    rc = tsl2561_config((struct tsl2561 *)dev, &tslcfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+#endif
+
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+    struct lsm303dlhc_cfg lsmcfg;
 
     dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
     rc = lsm303dlhc_init(dev, NULL);
-    if (rc != 0) {
-        os_dev_close(dev);
-        goto err;
-    }
 
     /* read once per sec.  API should take this value in ms. */
-    cfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
-    cfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
+    lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
+    lsmcfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
 
-    rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &cfg);
-    if (rc != 0) {
+    rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
+    if (rc) {
         os_dev_close(dev);
         goto err;
     }
+#endif
 
     os_dev_close(dev);
 
     return (0);
 err:
-    return (rc);
+    return rc;
 }
 #endif
 

@@ -38,35 +38,42 @@
 #define __ADAFRUIT_TSL2561_H__
 
 #include <os/os.h>
+#include "os/os_dev.h"
+#include "sensor/sensor.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
-struct tsl2561_i2c {
-    uint8_t i2c_num;
-    uint8_t i2c_addr;
+enum tsl2561_light_gain {
+    TSL2561_LIGHT_GAIN_1X         = 0x00,         /* 1X    */
+    TSL2561_LIGHT_GAIN_16X        = 0x01 << 4     /* 16X   */
+};
+
+enum tsl2561_light_itime {
+    TSL2561_LIGHT_ITIME_13MS      = 0x00,         /* 13ms  */
+    TSL2561_LIGHT_ITIME_101MS     = 0x01,         /* 101ms */
+    TSL2561_LIGHT_ITIME_402MS     = 0x01 << 1     /* 402ms */
 };
 
 struct tsl2561_cfg {
     uint8_t gain;
     uint8_t integration_time;
-    uint8_t enabled;
 };
 
-struct tsl2561_dev {
-    struct tsl2561_i2c i2c;
+struct tsl2561 {
+    struct os_dev dev;
+    struct sensor sensor;
     struct tsl2561_cfg cfg;
+    os_time_t last_read_time;
 };
-*/
 
 /**
  * Initialize the tsl2561. This function is normally called by sysinit.
  *
  * @param dev  Pointer to the tsl2561_dev device descriptor
  */
-void tsl2561_init(void);
+int tsl2561_init(struct os_dev *dev, void *arg);
 
 /**
  * Enable or disables the sensor to save power
@@ -89,10 +96,11 @@ uint8_t tsl2561_get_enable(void);
  *
  * @param broadband The full (visible + ir) sensor output
  * @param ir        The ir sensor output
+ * @param tsl2561   Config and OS device structure
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int tsl2561_get_data(uint16_t *broadband, uint16_t *ir);
+int tsl2561_get_data(uint16_t *broadband, uint16_t *ir, struct tsl2561 *tsl2561);
 
 /**
  * Sets the integration time used when sampling light values.
@@ -178,6 +186,8 @@ int tsl2561_enable_interrupt(uint8_t enable);
  * @return 0 on success, and non-zero error code on failure
  */
 int tsl2561_clear_interrupt(void);
+
+int tsl2561_config(struct tsl2561 *, struct tsl2561_cfg *);
 
 #ifdef __cplusplus
 }
