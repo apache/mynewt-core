@@ -649,7 +649,7 @@ bletest_init_scanner(void)
 #endif
         if (add_whitelist & 1) {
             rc = bletest_hci_le_add_to_whitelist(g_bletest_cur_peer_addr,
-                                                 BLE_ADDR_TYPE_RANDOM);
+                                                 BLE_ADDR_RANDOM);
             assert(rc == 0);
         }
     }
