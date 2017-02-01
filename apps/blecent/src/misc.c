@@ -82,14 +82,14 @@ void
 print_conn_desc(const struct ble_gap_conn_desc *desc)
 {
     BLECENT_LOG(DEBUG, "handle=%d our_ota_addr_type=%d our_ota_addr=%s ",
-                desc->conn_handle, desc->our_ota_addr_type,
-                addr_str(desc->our_ota_addr));
+                desc->conn_handle, desc->our_ota_addr.type,
+                addr_str(desc->our_ota_addr.val));
     BLECENT_LOG(DEBUG, "our_id_addr_type=%d our_id_addr=%s ",
-                desc->our_id_addr_type, addr_str(desc->our_id_addr));
+                desc->our_id_addr.type, addr_str(desc->our_id_addr.val));
     BLECENT_LOG(DEBUG, "peer_ota_addr_type=%d peer_ota_addr=%s ",
-                desc->peer_ota_addr_type, addr_str(desc->peer_ota_addr));
+                desc->peer_ota_addr.type, addr_str(desc->peer_ota_addr.val));
     BLECENT_LOG(DEBUG, "peer_id_addr_type=%d peer_id_addr=%s ",
-                desc->peer_id_addr_type, addr_str(desc->peer_id_addr));
+                desc->peer_id_addr.type, addr_str(desc->peer_id_addr.val));
     BLECENT_LOG(DEBUG, "conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d",
                 desc->conn_itvl, desc->conn_latency,

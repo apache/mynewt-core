@@ -243,7 +243,7 @@ blecent_scan(void)
     disc_params.filter_policy = 0;
     disc_params.limited = 0;
 
-    rc = ble_gap_disc(BLE_ADDR_TYPE_PUBLIC, BLE_HS_FOREVER, &disc_params,
+    rc = ble_gap_disc(BLE_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params,
                       blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error initiating GAP discovery procedure; rc=%d\n",
@@ -312,11 +312,12 @@ blecent_connect_if_interesting(const struct ble_gap_disc_desc *disc)
     /* Try to connect the the advertiser.  Allow 30 seconds (30000 ms) for
      * timeout.
      */
-    rc = ble_gap_connect(BLE_ADDR_TYPE_PUBLIC, disc->addr_type, disc->addr,
-                         30000, NULL, blecent_gap_event, NULL);
+    rc = ble_gap_connect(BLE_ADDR_PUBLIC, &disc->addr, 30000, NULL,
+                         blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to connect to device; addr_type=%d "
-                           "addr=%s\n", disc->addr_type, addr_str(disc->addr));
+                           "addr=%s\n", disc->addr.type,
+                           addr_str(disc->addr.val));
         return;
     }
 }

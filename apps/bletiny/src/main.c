@@ -908,8 +908,8 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISC:
         console_printf("received advertisement; event_type=%d rssi=%d "
                        "addr_type=%d addr=", event->disc.event_type,
-                       event->disc.rssi, event->disc.addr_type);
-        print_addr(event->disc.addr);
+                       event->disc.rssi, event->disc.addr.type);
+        print_addr(event->disc.addr.val);
 
         /*
          * There is no adv data to print in case of connectable
@@ -1011,6 +1011,13 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                        event->mtu.conn_handle,
                        event->mtu.channel_id,
                        event->mtu.value);
+        return 0;
+
+    case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+        console_printf("identity resolved ");
+        rc = ble_gap_conn_find(event->identity_resolved.conn_handle, &desc);
+        assert(rc == 0);
+        print_conn_desc(&desc);
         return 0;
 
     default:
@@ -1295,26 +1302,24 @@ bletiny_adv_stop(void)
 }
 
 int
-bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
-                  const uint8_t *peer_addr, int32_t duration_ms,
-                  const struct ble_gap_adv_params *params)
+bletiny_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
+                  int32_t duration_ms, const struct ble_gap_adv_params *params)
 {
     int rc;
 
-    rc = ble_gap_adv_start(own_addr_type, peer_addr_type, peer_addr,
-                           duration_ms, params, bletiny_gap_event, NULL);
+    rc = ble_gap_adv_start(own_addr_type, direct_addr, duration_ms, params,
+                           bletiny_gap_event, NULL);
     return rc;
 }
 
 int
-bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
-                      uint8_t *peer_addr, int32_t duration_ms,
-                      struct ble_gap_conn_params *params)
+bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                      int32_t duration_ms, struct ble_gap_conn_params *params)
 {
     int rc;
 
-    rc = ble_gap_connect(own_addr_type, peer_addr_type, peer_addr, duration_ms,
-                         params, bletiny_gap_event, NULL);
+    rc = ble_gap_connect(own_addr_type, peer_addr, duration_ms, params,
+                         bletiny_gap_event, NULL);
 
     return rc;
 }
@@ -1338,11 +1343,11 @@ bletiny_term_conn(uint16_t conn_handle, uint8_t reason)
 }
 
 int
-bletiny_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
+bletiny_wl_set(ble_addr_t *addrs, int addrs_count)
 {
     int rc;
 
-    rc = ble_gap_wl_set(white_list, white_list_count);
+    rc = ble_gap_wl_set(addrs, addrs_count);
     return rc;
 }
 
@@ -1461,8 +1466,7 @@ bletiny_sec_restart(uint16_t conn_handle,
         }
 
         memset(&key_sec, 0, sizeof key_sec);
-        key_sec.peer_addr_type = desc.peer_id_addr_type;
-        memcpy(key_sec.peer_addr, desc.peer_id_addr, 6);
+        key_sec.peer_addr = desc.peer_id_addr;
 
         rc = ble_hs_atomic_conn_flags(conn_handle, &conn_flags);
         if (rc != 0) {
