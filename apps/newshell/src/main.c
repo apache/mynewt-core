@@ -39,6 +39,8 @@ init_task(void)
                  SHELL_TASK_PRIO, OS_WAIT_FOREVER,
                  shell_task_stack, SHELL_STACK_SIZE);
     shell_init(SHELL_PROMPT);
+    shell_os_register(shell_register);
+    shell_prompt_register(shell_register);
 }
 
 int

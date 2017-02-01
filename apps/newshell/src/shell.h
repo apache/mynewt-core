@@ -50,6 +50,16 @@ struct shell_module {
     const struct shell_cmd *commands;
 };
 
+/** @brief Callback called when registering module
+ *
+ *  @param module_name Name of the module
+ *  @param commands Array of shell_cmd structs
+ *
+ * @return 0 in case of success or negative value in case of error.
+ */
+typedef int (*shell_register_function_t)(const char *module_name,
+                                         const struct shell_cmd *commands);
+
 /** @brief Register a shell_module object
  *
  *  @param shell_name Module name to be entered in shell console.
@@ -92,6 +102,9 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
  *  @param name Module name.
  */
 void shell_register_default_module(const char *name);
+
+void shell_os_register(shell_register_function_t register_func);
+void shell_prompt_register(shell_register_function_t register_func);
 
 #ifdef __cplusplus
 }
