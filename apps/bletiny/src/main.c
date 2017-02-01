@@ -1013,6 +1013,13 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                        event->mtu.value);
         return 0;
 
+    case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+        console_printf("identity resolved ");
+        rc = ble_gap_conn_find(event->identity_resolved.conn_handle, &desc);
+        assert(rc == 0);
+        print_conn_desc(&desc);
+        return 0;
+
     default:
         return 0;
     }
