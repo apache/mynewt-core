@@ -166,6 +166,21 @@ get_command_and_module(char *argv[], int *module)
 }
 
 static int
+get_command_from_module(const char *command, int len, int module)
+{
+    int i;
+    const struct shell_module *shell_module;
+
+    shell_module = &shell_modules[module];
+    for (i = 0; shell_module->commands[i].cmd_name; i++) {
+        if (!strncmp(command, shell_module->commands[i].cmd_name, len)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int
 show_cmd_help(char *argv[])
 {
     const char *command = NULL;
@@ -213,6 +228,23 @@ print_module_commands(const int module)
 
     for (i = 0; shell_module->commands[i].cmd_name; i++) {
         console_printf("%s\n", shell_module->commands[i].cmd_name);
+    }
+}
+
+static void
+print_command_params(const int module, const int command)
+{
+    const struct shell_module *shell_module = &shell_modules[module];
+    const struct shell_cmd *shell_cmd = &shell_module->commands[command];
+    int i;
+
+    if (shell_cmd->params && shell_cmd->params[0].param_name) {
+        console_printf("\n");
+    }
+
+    for (i = 0; shell_cmd->params[i].param_name; i++) {
+        console_printf("%s - %s\n", shell_cmd->params[i].param_name,
+                       shell_cmd->params[i].help);
     }
 }
 
@@ -383,6 +415,372 @@ shell(void *arg)
     }
 }
 
+static int
+get_token(char **cur, int *null_terminated)
+{
+    char *str = *cur;
+
+    *null_terminated = 0;
+    /* remove ' ' at the beginning */
+    while (*str && *str == ' ') {
+        str++;
+    }
+
+    if (!str) {
+        *null_terminated = 1;
+        return 0;
+    }
+
+    *cur = str;
+    str = strchr(str, ' ');
+
+    if (str == NULL) {
+        *null_terminated = 1;
+        return strlen(*cur);
+    }
+
+    return str - *cur;
+}
+
+static int
+get_last_token(char **cur)
+{
+    *cur = strrchr(*cur, ' ');
+    if (*cur == NULL) {
+        return 0;
+    }
+    (*cur)++;
+    return strlen(*cur);
+}
+
+static int
+complete_param(char *line, uint8_t len, const char *param_prefix,
+                 int param_len, int module_idx, int command_idx)
+{
+    const char *first_match = NULL;
+    int i, common_chars = -1, space = 0;
+    const struct shell_cmd *command;
+
+    command = &shell_modules[module_idx].commands[command_idx];
+
+    for (i = 0; command->params[i].param_name; i++) {
+        int j;
+
+        if (strncmp(param_prefix,
+            command->params[i].param_name, param_len)) {
+            continue;
+        }
+
+        if (!first_match) {
+            first_match = command->params[i].param_name;
+            continue;
+        }
+
+        /* more commands match, print first match */
+        if (first_match && (common_chars < 0)) {
+            console_printf("\n%s\n", first_match);
+            common_chars = strlen(first_match);
+        }
+
+        /* cut common part of matching names */
+        for (j = 0; j < common_chars; j++) {
+            if (first_match[j] != command->params[i].param_name[j]) {
+                break;
+            }
+        }
+
+        common_chars = j;
+
+        console_printf("%s\n", command->params[i].param_name);
+    }
+
+    /* no match, do nothing */
+    if (!first_match) {
+        return 0;
+    }
+
+    if (common_chars >= 0) {
+        /* multiple match, restore prompt */
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+    } else {
+        common_chars = strlen(first_match);
+        space = 1;
+    }
+
+    /* complete common part */
+    for (i = param_len; i < common_chars; i++) {
+        console_printf("%c", first_match[i]);
+        line[len++] = first_match[i];
+    }
+
+    /* for convenience add space after command */
+    if (space) {
+        console_printf(" ");
+        line[len] = ' ';
+    }
+
+    return common_chars - param_len + space;
+}
+
+static int
+complete_command(char *line, uint8_t len, char *command_prefix,
+                 int command_len, int module_idx)
+{
+    const char *first_match = NULL;
+    int i, common_chars = -1, space = 0;
+    const struct shell_module *module;
+
+    module = &shell_modules[module_idx];
+
+    for (i = 0; module->commands[i].cmd_name; i++) {
+        int j;
+
+        if (strncmp(command_prefix,
+            module->commands[i].cmd_name, command_len)) {
+            continue;
+        }
+
+        if (!first_match) {
+            first_match = module->commands[i].cmd_name;
+            continue;
+        }
+
+        /* more commands match, print first match */
+        if (first_match && (common_chars < 0)) {
+            console_printf("\n%s\n", first_match);
+            common_chars = strlen(first_match);
+        }
+
+        /* cut common part of matching names */
+        for (j = 0; j < common_chars; j++) {
+            if (first_match[j] != module->commands[i].cmd_name[j]) {
+                break;
+            }
+        }
+
+        common_chars = j;
+
+        console_printf("%s\n", module->commands[i].cmd_name);
+    }
+
+    /* no match, do nothing */
+    if (!first_match) {
+        return 0;
+    }
+
+    if (common_chars >= 0) {
+        /* multiple match, restore prompt */
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+    } else {
+        common_chars = strlen(first_match);
+        space = 1;
+    }
+
+    /* complete common part */
+    for (i = command_len; i < common_chars; i++) {
+        console_printf("%c", first_match[i]);
+        line[len++] = first_match[i];
+    }
+
+    /* for convenience add space after command */
+    if (space) {
+        console_printf(" ");
+        line[len] = ' ';
+    }
+
+    return common_chars - command_len + space;
+}
+
+static int
+complete_module(char *line, int len, char *module_prefix, int module_len)
+{
+    int i;
+    const char *first_match = NULL;
+    int common_chars = -1, space = 0;
+
+    if (!module_len) {
+        console_printf("\n");
+        for (i = 0; i < num_of_shell_entities; i++) {
+            console_printf("%s\n", shell_modules[i].module_name);
+        }
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
+    }
+
+    for (i = 0; i < num_of_shell_entities; i++) {
+        int j;
+
+        if (strncmp(module_prefix,
+                     shell_modules[i].module_name,
+                     module_len)) {
+            continue;
+        }
+
+        if (!first_match) {
+            first_match = shell_modules[i].module_name;
+            continue;
+        }
+
+        /* more commands match, print first match */
+        if (first_match && (common_chars < 0)) {
+            console_printf("\n%s\n", first_match);
+            common_chars = strlen(first_match);
+        }
+
+        /* cut common part of matching names */
+        for (j = 0; j < common_chars; j++) {
+            if (first_match[j] != shell_modules[i].module_name[j]) {
+                break;
+            }
+        }
+
+        common_chars = j;
+
+        console_printf("%s\n", shell_modules[i].module_name);
+    }
+
+    /* no match, do nothing */
+    if (!first_match) {
+        return 0;
+    }
+
+    if (common_chars >= 0) {
+        /* multiple match, restore prompt */
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+    } else {
+        common_chars = strlen(first_match);
+        space = 1;
+    }
+
+    /* complete common part */
+    for (i = module_len; i < common_chars; i++) {
+        console_printf("%c", first_match[i]);
+        line[len++] = first_match[i];
+    }
+
+    /* for convenience add space after command */
+    if (space) {
+        console_printf(" ");
+        line[len] = ' ';
+    }
+
+    return common_chars - module_len + space;
+}
+
+static int
+complete_select(char *line, int len, char *cur, int tok_len)
+{
+    int null_terminated = 0;
+    cur += tok_len + 1;
+    tok_len = get_token(&cur, &null_terminated);
+    if (tok_len == 0) {
+        if (default_module != -1) {
+            return 0;
+        }
+        console_printf("\n");
+        print_modules();
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
+    }
+
+    if (null_terminated) {
+        if (default_module == -1) {
+            return complete_module(line, len, cur, tok_len);
+        }
+    }
+    return 0;
+}
+
+static uint8_t
+completion(char *line, uint8_t len)
+{
+    char *cur;
+    int tok_len;
+    int module, command;
+    int null_terminated = 0;
+
+    /*
+     * line to completion is not ended by '\0' as the line that gets from
+     * os_eventq_get function
+     */
+    line[len] = '\0';
+
+    cur = line;
+    tok_len = get_token(&cur, &null_terminated);
+
+    /* empty token - print options */
+    if (tok_len == 0) {
+        console_printf("\n");
+        if (default_module == -1) {
+            print_modules();
+        } else {
+            print_module_commands(default_module);
+        }
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
+    }
+
+    /* token can be completed */
+    if (null_terminated) {
+        if (default_module == -1) {
+            return complete_module(line, len, cur, tok_len);
+        }
+        return complete_command(line, len, cur, tok_len, default_module);
+    }
+
+    if (strncmp("select", cur, tok_len) == 0) {
+        return complete_select(line, len, cur, tok_len);
+    }
+
+    if (default_module != -1) {
+        module = default_module;
+    } else {
+        module = get_destination_module(cur, tok_len);
+
+        if (module == -1) {
+            return 0;
+        }
+
+        cur += tok_len + 1;
+        tok_len = get_token(&cur, &null_terminated);
+
+        if (tok_len == 0) {
+            console_printf("\n");
+            print_module_commands(module);
+            console_printf("%s", get_prompt());
+            console_printf("%s", line);
+            return 0;
+        }
+
+        if (null_terminated) {
+            return complete_command(line, len, cur, tok_len, module);
+        }
+    }
+
+
+
+    command = get_command_from_module(cur, tok_len, module);
+    if (command == -1) {
+        return 0;
+    }
+
+    cur += tok_len;
+    tok_len = get_last_token(&cur);
+    if (tok_len == 0) {
+        print_command_params(module, command);
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
+    }
+    return complete_param(line, len, cur, tok_len, module, command);
+}
+
 void
 shell_register_app_cmd_handler(shell_cmd_function_t handler)
 {
@@ -440,5 +838,5 @@ shell_init(const char *str)
 
     prompt = str ? str : "";
 
-    console_init(&avail_queue, &cmds_queue, NULL);
+    console_init(&avail_queue, &cmds_queue, completion);
 }
