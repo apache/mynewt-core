@@ -250,7 +250,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 {
     struct nrf51_hal_i2c *i2c;
     NRF_TWI_Type *regs = NULL;
-    int rc;
+    int rc = -1;
     int i;
     uint32_t start;
 
@@ -273,7 +273,6 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         regs->TXD = pdata->buffer[i];
         while (!regs->EVENTS_TXDSENT && !regs->EVENTS_ERROR) {
             if (os_time_get() - start > timo) {
-                rc = -1;
                 regs->TASKS_STOP = 1;
                 goto err;
             }
@@ -288,7 +287,6 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         regs->TASKS_STOP = 1;
         while (!regs->EVENTS_STOPPED && !regs->EVENTS_ERROR) {
             if (os_time_get() - start > timo) {
-                rc = -1;
                 goto err;
             }
         }
