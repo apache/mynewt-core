@@ -21,8 +21,10 @@
 #include <syscfg/syscfg.h>
 
 #include <os/os_dev.h>
+#if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
+#endif
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
@@ -87,6 +89,8 @@ void
 hal_bsp_init(void)
 {
     int rc;
+
+    (void)rc;
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, CONSOLE_UART,
