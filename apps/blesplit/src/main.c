@@ -51,17 +51,17 @@ static void
 blesplit_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     BLESPLIT_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr_type);
-    print_addr(desc->our_ota_addr);
+                desc->conn_handle, desc->our_ota_addr.type);
+    print_addr(desc->our_ota_addr.val);
     BLESPLIT_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr_type);
-    print_addr(desc->our_id_addr);
+                desc->our_id_addr.type);
+    print_addr(desc->our_id_addr.val);
     BLESPLIT_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr_type);
-    print_addr(desc->peer_ota_addr);
+                desc->peer_ota_addr.type);
+    print_addr(desc->peer_ota_addr.val);
     BLESPLIT_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr_type);
-    print_addr(desc->peer_id_addr);
+                desc->peer_id_addr.type);
+    print_addr(desc->peer_id_addr.val);
     BLESPLIT_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
@@ -113,7 +113,9 @@ blesplit_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (uint16_t[]){ GATT_SVR_SVC_ALERT_UUID };
+    fields.uuids16 = (ble_uuid16_t[]) {
+        BLE_UUID16_INIT(GATT_SVR_SVC_ALERT_UUID),
+    };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
 
