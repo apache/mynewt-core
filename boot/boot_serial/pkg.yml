@@ -37,3 +37,7 @@ pkg.deps:
 
 pkg.req_apis:
     - console
+
+pkg.init:
+    boot_serial_os_dev_init: 0
+    boot_serial_pkg_init: 200

@@ -29,6 +29,8 @@
 #include <flash_map/flash_map.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_system.h>
+#include <hal/hal_gpio.h>
+#include <hal/hal_watchdog.h>
 
 #include <os/endian.h>
 #include <os/os.h>
@@ -48,6 +50,7 @@
 #include "boot_serial/boot_serial.h"
 #include "boot_serial_priv.h"
 
+#define BOOT_SERIAL_INPUT_MAX   128
 #define BOOT_SERIAL_OUT_MAX	48
 
 static uint32_t curr_off;
@@ -411,6 +414,9 @@ boot_serial_start(int max_input)
     int dec_off;
     int full_line;
 
+    rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
+    assert(rc == 0);
+
     rc = console_init(NULL);
     assert(rc == 0);
     console_echo(0);
@@ -421,12 +427,19 @@ boot_serial_start(int max_input)
 
     off = 0;
     while (1) {
+        hal_watchdog_tickle();
         rc = console_read(buf + off, max_input - off, &full_line);
         if (rc <= 0 && !full_line) {
             continue;
         }
         off += rc;
         if (!full_line) {
+            if (off == max_input) {
+                /*
+                 * Full line, no newline yet. Reset the input buffer.
+                 */
+                off = 0;
+            }
             continue;
         }
         if (buf[0] == SHELL_NLIP_PKT_START1 &&
@@ -441,5 +454,35 @@ boot_serial_start(int max_input)
             boot_serial_input(&dec[2], dec_off - 2);
         }
         off = 0;
+    }
+}
+
+/*
+ * os_init() will not be called with bootloader, so we need to initialize
+ * devices created by hal_bsp_init() here.
+ */
+void
+boot_serial_os_dev_init(void)
+{
+    os_dev_initialize_all(OS_DEV_INIT_PRIMARY);
+    os_dev_initialize_all(OS_DEV_INIT_SECONDARY);
+
+    /*
+     * Configure GPIO line as input. This is read later to see if
+     * we should stay and keep waiting for input.
+     */
+    hal_gpio_init_in(BOOT_SERIAL_DETECT_PIN, BOOT_SERIAL_DETECT_PIN_CFG);
+}
+
+void
+boot_serial_pkg_init(void)
+{
+    /*
+     * Configure a GPIO as input, and compare it against expected value.
+     * If it matches, await for download commands from serial.
+     */
+    if (hal_gpio_read(BOOT_SERIAL_DETECT_PIN) == BOOT_SERIAL_DETECT_PIN_VAL) {
+        boot_serial_start(BOOT_SERIAL_INPUT_MAX);
+        assert(0);
     }
 }
