@@ -44,6 +44,9 @@
 #include "tsl2561_priv.h"
 
 #if MYNEWT_VAL(TSL2561_CLI)
+extern uint8_t g_tsl2561_integration_time;
+extern uint8_t g_tsl2561_gain;
+
 static int tsl2561_shell_cmd(int argc, char **argv);
 
 static struct shell_cmd tsl2561_shell_cmd_struct = {
@@ -127,6 +130,7 @@ tsl2561_shell_cmd_read(int argc, char **argv)
     uint16_t samples = 1;
     long val;
     int rc;
+    struct tsl2561 tsl2561;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
@@ -141,7 +145,11 @@ tsl2561_shell_cmd_read(int argc, char **argv)
     }
 
     while(samples--) {
-        rc = tsl2561_get_data(&full, &ir);
+
+        tsl2561.cfg.gain = g_tsl2561_gain;
+        tsl2561.cfg.integration_time = g_tsl2561_integration_time;
+
+        rc = tsl2561_get_data(&full, &ir, &tsl2561);
         if (rc != 0) {
             console_printf("Read failed: %d\n", rc);
             return rc;
@@ -177,7 +185,7 @@ tsl2561_shell_cmd_gain(int argc, char **argv)
         if ((val != 1) && (val != 16)) {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
-        tsl2561_set_gain(val ? TSL2561_GAIN_16X : TSL2561_GAIN_1X);
+        tsl2561_set_gain(val ? TSL2561_LIGHT_GAIN_16X : TSL2561_LIGHT_GAIN_1X);
     }
 
     return 0;
@@ -197,13 +205,13 @@ tsl2561_shell_cmd_time(int argc, char **argv)
     if (argc == 2) {
         time = tsl2561_get_integration_time();
         switch (time) {
-            case TSL2561_INTEGRATIONTIME_13MS:
+            case TSL2561_LIGHT_ITIME_13MS:
                 console_printf("13\n");
             break;
-            case TSL2561_INTEGRATIONTIME_101MS:
+            case TSL2561_LIGHT_ITIME_101MS:
                 console_printf("101\n");
             break;
-            case TSL2561_INTEGRATIONTIME_402MS:
+            case TSL2561_LIGHT_ITIME_402MS:
                 console_printf("402\n");
             break;
         }
@@ -220,13 +228,13 @@ tsl2561_shell_cmd_time(int argc, char **argv)
         }
         switch(val) {
             case 13:
-                tsl2561_set_integration_time(TSL2561_INTEGRATIONTIME_13MS);
+                tsl2561_set_integration_time(TSL2561_LIGHT_ITIME_13MS);
             break;
             case 101:
-                tsl2561_set_integration_time(TSL2561_INTEGRATIONTIME_101MS);
+                tsl2561_set_integration_time(TSL2561_LIGHT_ITIME_101MS);
             break;
             case 402:
-                tsl2561_set_integration_time(TSL2561_INTEGRATIONTIME_402MS);
+                tsl2561_set_integration_time(TSL2561_LIGHT_ITIME_402MS);
             break;
         }
     }

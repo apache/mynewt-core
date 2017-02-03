@@ -189,6 +189,11 @@ int tsl2561_clear_interrupt(void);
 
 int tsl2561_config(struct tsl2561 *, struct tsl2561_cfg *);
 
+#if MYNEWT_VAL(TSL2561_CLI)
+int tsl2561_shell_init(void);
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

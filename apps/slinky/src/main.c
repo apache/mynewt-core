@@ -47,6 +47,9 @@
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
+#if MYNEWT_VAL(TSL2561_CLI)
+#include <tsl2561/tsl2561.h>
+#endif
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -375,6 +378,10 @@ main(int argc, char **argv)
             hal_system_start(entry);
         }
     }
+#endif
+
+#if MYNEWT_VAL(TSL2561_CLI)
+    tsl2561_shell_init();
 #endif
 
     config_sensor();

@@ -58,6 +58,13 @@
 /* ToDo: Add timer based polling in bg and data ready callback (os_event?) */
 /* ToDo: Move values to struct incl. address to allow multiple instances */
 
+#if MYNEWT_VAL(TSL2561_CLI)
+uint8_t g_tsl2561_gain;
+uint8_t g_tsl2561_integration_time;
+uint8_t g_tsl2561_enabled;
+#endif
+
+
 #if MYNEWT_VAL(TSL2561_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(tsl2561_stat_section)
@@ -216,6 +223,83 @@ tsl2561_read16(uint8_t reg, uint16_t *value)
 err:
     return rc;
 }
+
+#if MYNEWT_VAL(TSL2561_CLI)
+int
+tsl2561_enable(uint8_t state)
+{
+    int rc;
+
+    /* Enable the device by setting the control bit to 0x03 */
+    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
+                        state ? TSL2561_CONTROL_POWERON :
+                                TSL2561_CONTROL_POWEROFF);
+    if (!rc) {
+        g_tsl2561_enabled = state ? 1 : 0;
+    }
+
+    return rc;
+}
+
+uint8_t
+tsl2561_get_enable (void)
+{
+    return g_tsl2561_enabled;
+}
+
+int
+tsl2561_set_integration_time(uint8_t int_time)
+{
+    int rc;
+
+    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                        g_tsl2561_integration_time | g_tsl2561_gain);
+    if (rc) {
+        goto error;
+    }
+
+    g_tsl2561_integration_time = int_time;
+
+error:
+    return rc;
+}
+
+uint8_t
+tsl2561_get_integration_time(void)
+{
+    return g_tsl2561_integration_time;
+}
+
+int
+tsl2561_set_gain(uint8_t gain)
+{
+    int rc;
+
+    if ((gain != TSL2561_LIGHT_GAIN_1X) && (gain != TSL2561_LIGHT_GAIN_16X)) {
+        TSL2561_ERR("Invalid gain value\n");
+        rc = EINVAL;
+        goto error;
+    }
+
+    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                        g_tsl2561_integration_time | gain);
+    if (rc) {
+        goto error;
+    }
+
+    g_tsl2561_gain = gain;
+
+error:
+    return rc;
+}
+
+uint8_t
+tsl2561_get_gain(void)
+{
+    return g_tsl2561_gain;
+}
+#endif
+
 
 int
 tsl2561_get_data(uint16_t *broadband, uint16_t *ir, struct tsl2561 *tsl2561)
