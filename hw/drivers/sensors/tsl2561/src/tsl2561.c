@@ -58,12 +58,9 @@
 /* ToDo: Add timer based polling in bg and data ready callback (os_event?) */
 /* ToDo: Move values to struct incl. address to allow multiple instances */
 
-#if MYNEWT_VAL(TSL2561_CLI)
 uint8_t g_tsl2561_gain;
 uint8_t g_tsl2561_integration_time;
 uint8_t g_tsl2561_enabled;
-#endif
-
 
 #if MYNEWT_VAL(TSL2561_STATS)
 /* Define the stats section and records */
@@ -224,7 +221,6 @@ err:
     return rc;
 }
 
-#if MYNEWT_VAL(TSL2561_CLI)
 int
 tsl2561_enable(uint8_t state)
 {
@@ -253,14 +249,14 @@ tsl2561_set_integration_time(uint8_t int_time)
     int rc;
 
     rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-                        g_tsl2561_integration_time | g_tsl2561_gain);
+                        int_time | g_tsl2561_gain);
     if (rc) {
-        goto error;
+        goto err;
     }
 
     g_tsl2561_integration_time = int_time;
 
-error:
+err:
     return rc;
 }
 
@@ -278,18 +274,18 @@ tsl2561_set_gain(uint8_t gain)
     if ((gain != TSL2561_LIGHT_GAIN_1X) && (gain != TSL2561_LIGHT_GAIN_16X)) {
         TSL2561_ERR("Invalid gain value\n");
         rc = EINVAL;
-        goto error;
+        goto err;
     }
 
     rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
                         g_tsl2561_integration_time | gain);
     if (rc) {
-        goto error;
+        goto err;
     }
 
     g_tsl2561_gain = gain;
 
-error:
+err:
     return rc;
 }
 
@@ -298,8 +294,6 @@ tsl2561_get_gain(void)
 {
     return g_tsl2561_gain;
 }
-#endif
-
 
 int
 tsl2561_get_data(uint16_t *broadband, uint16_t *ir, struct tsl2561 *tsl2561)
@@ -698,26 +692,17 @@ tsl2561_config(struct tsl2561 *tsl2561, struct tsl2561_cfg *cfg)
 {
     int rc;
 
-    if ((cfg->gain != TSL2561_LIGHT_GAIN_1X) &&
-        (cfg->gain != TSL2561_LIGHT_GAIN_16X)) {
-        TSL2561_ERR("Invalid gain value\n");
-        rc = SYS_EINVAL;
+    rc = tsl2561_enable(1);
+
+    rc |= tsl2561_set_integration_time(cfg->integration_time);
+
+    rc |= tsl2561_set_gain(cfg->gain);
+    if (rc) {
         goto err;
     }
 
     /* Overwrite the configuration data. */
     memcpy(&tsl2561->cfg, cfg, sizeof(*cfg));
-
-    /* Enable the device by setting the control bit to 0x03 */
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
-                        TSL2561_CONTROL_POWERON);
-
-    /* Set integration time and gain */
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-                        cfg->integration_time | cfg->gain);
-    if (rc) {
-        goto err;
-    }
 
 err:
     return (rc);
