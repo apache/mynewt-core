@@ -51,7 +51,7 @@ struct mfg_meta_flash_area {
 struct mfg_meta_flash_traits {
     uint8_t device_id;
     uint8_t min_write_sz;
-}
+};
 
 int mfg_next_tlv(struct mfg_meta_tlv *tlv, uint32_t *off);
 int mfg_next_tlv_with_type(struct mfg_meta_tlv *tlv, uint32_t *off,
