@@ -1088,13 +1088,6 @@ split_go(int loader_slot, int split_slot, void **entry)
     app_fap = NULL;
     loader_fap = NULL;
 
-    /* Determine the sector layout of the image slots and scratch area. */
-    rc = boot_read_sectors();
-    if (rc != 0) {
-        rc = SPLIT_GO_ERR;
-        goto done;
-    }
-
     rc = boot_read_image_headers();
     if (rc != 0) {
         goto done;
@@ -1127,8 +1120,7 @@ split_go(int loader_slot, int split_slot, void **entry)
         goto done;
     }
 
-    entry_val = boot_data.slots[split_slot].area.fa_off +
-                boot_data.slots[split_slot].hdr.ih_hdr_size;
+    entry_val = app_fap->fa_off + boot_data.imgs[split_slot].hdr.ih_hdr_size;
     *entry = (void *) entry_val;
     rc = SPLIT_GO_OK;
 
