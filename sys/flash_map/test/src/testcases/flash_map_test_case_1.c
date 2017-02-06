@@ -46,7 +46,7 @@ TEST_CASE(flash_map_test_case_1)
         hf = hal_bsp_flash_dev(fa->fa_device_id);
         TEST_ASSERT_FATAL(hf != NULL, "hal_bsp_flash_dev");
 
-        rc = flash_area_to_sectors(i, NULL, &sect_cnt, fa_sectors);
+        rc = flash_area_to_sectors(i, &sect_cnt, fa_sectors);
         TEST_ASSERT_FATAL(rc == 0, "flash_area_to_sectors failed");
 
         end = fa->fa_off;

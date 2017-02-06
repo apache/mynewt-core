@@ -51,42 +51,40 @@ config_init_fs(void)
 #include "fcb/fcb.h"
 #include "config/config_fcb.h"
 
-static struct flash_area conf_fcb_sectors[NFFS_AREA_MAX + 1];
+static struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
 
 static struct conf_fcb config_init_conf_fcb = {
     .cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC),
-    .cf_fcb.f_sectors = conf_fcb_sectors,
+    .cf_fcb.f_sectors = conf_fcb_area,
 };
 
 static void
 config_init_fcb(void)
 {
-    const struct flash_area *fap;
     int cnt;
     int rc;
 
-    rc = flash_area_to_sectors(MYNEWT_VAL(CONFIG_FCB_FLASH_AREA), NULL,
-                               &cnt, NULL);
+    rc = flash_area_to_sectors(MYNEWT_VAL(CONFIG_FCB_FLASH_AREA), &cnt, NULL);
     SYSINIT_PANIC_ASSERT(rc == 0);
     SYSINIT_PANIC_ASSERT(
-        cnt <= sizeof(conf_fcb_sectors) / sizeof(conf_fcb_sectors[0]));
+        cnt <= sizeof(conf_fcb_area) / sizeof(conf_fcb_area[0]));
     flash_area_to_sectors(
-        MYNEWT_VAL(CONFIG_FCB_FLASH_AREA), NULL, &cnt, conf_fcb_sectors);
+        MYNEWT_VAL(CONFIG_FCB_FLASH_AREA), &cnt, conf_fcb_area);
 
     config_init_conf_fcb.cf_fcb.f_sector_cnt = cnt;
 
-    rc = flash_area_open(MYNEWT_VAL(CONFIG_FCB_FLASH_AREA), &fap);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
     rc = conf_fcb_src(&config_init_conf_fcb);
-    if (rc != 0) {
-        rc = flash_area_erase(fap, 0, fap->fa_size);
-        SYSINIT_PANIC_ASSERT(rc == 0);
+    if (rc) {
+        for (cnt = 0;
+             cnt < config_init_conf_fcb.cf_fcb.f_sector_cnt;
+             cnt++) {
 
+            flash_area_erase(&conf_fcb_area[cnt], 0,
+                             conf_fcb_area[cnt].fa_size);
+        }
         rc = conf_fcb_src(&config_init_conf_fcb);
-        SYSINIT_PANIC_ASSERT(rc == 0);
     }
-
+    SYSINIT_PANIC_ASSERT(rc == 0);
     rc = conf_fcb_dst(&config_init_conf_fcb);
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
