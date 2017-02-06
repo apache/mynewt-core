@@ -44,7 +44,7 @@
 
 /* Task 1 */
 #define TASK1_PRIO (8)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(32)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
 #define MAX_CBMEM_BUF 300
 static struct os_task task1;
 static volatile int g_task1_loops;
