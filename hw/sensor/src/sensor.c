@@ -37,6 +37,14 @@ struct {
     TAILQ_HEAD(, sensor) mgr_sensor_list;
 } sensor_mgr;
 
+struct sensor_read_ctx {
+    sensor_data_func_t user_func;
+    void *user_arg;
+};
+
+/**
+ * Lock sensor manager to access the list of sensors
+ */
 int
 sensor_mgr_lock(void)
 {
@@ -49,6 +57,9 @@ sensor_mgr_lock(void)
     return (rc);
 }
 
+/**
+ * Unlock sensor manager once the list of sensors has been accessed
+ */
 void
 sensor_mgr_unlock(void)
 {
@@ -85,7 +96,7 @@ sensor_mgr_insert(struct sensor *sensor)
 }
 
 /**
- * Register the sensor with the global sensor list.   This makes the sensor
+ * Register the sensor with the global sensor list. This makes the sensor
  * searchable by other packages, who may want to look it up by type.
  *
  * @param The sensor to register
@@ -136,10 +147,10 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
      */
     sensor_read(sensor, SENSOR_TYPE_ALL, NULL, NULL, OS_TIMEOUT_NEVER);
 
-    /* Remove the sensor from the sensor list for insertion sort. */
+    /* Remove the sensor from the sensor list for insert. */
     sensor_mgr_remove(sensor);
 
-    /* Set next wakeup, and insertion sort the sensor back into the
+    /* Set next wakeup, and insert the sensor back into the
      * list.
      */
     os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
@@ -160,6 +171,8 @@ err:
 /**
  * Event that wakes up the sensor manager, this goes through the sensor
  * list and polls any active sensors.
+ *
+ * @param OS event
  */
 static void
 sensor_mgr_wakeup_event(struct os_event *ev)
@@ -214,6 +227,10 @@ done:
     os_callout_reset(&sensor_mgr.mgr_wakeup_callout, task_next_wakeup);
 }
 
+/**
+ * Get the current eventq, the system is misconfigured if there is still
+ * no parent eventq.
+ */
 struct os_eventq *
 sensor_mgr_evq_get(void)
 {
@@ -348,7 +365,7 @@ sensor_mgr_match_bydevname(struct sensor *sensor, void *arg)
 
 
 /**
- * Search teh sensor list, and find the next sensor that correspondes
+ * Search the sensor list and find the next sensor that corresponds
  * to a given device name.
  *
  * @param The device name to search for
@@ -437,7 +454,7 @@ err:
 
 
 /**
- * Register a sensor listener.  This allows a calling application to receive
+ * Register a sensor listener. This allows a calling application to receive
  * callbacks for data from a given sensor object.
  *
  * For more information on the type of callbacks available, see the documentation
@@ -468,6 +485,16 @@ err:
     return (rc);
 }
 
+/**
+ * Un-register a sensor listener. This allows a calling application to unset
+ * callbacks for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The listener to remove from the sensor listener list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
 int
 sensor_unregister_listener(struct sensor *sensor,
         struct sensor_listener *listener)
@@ -489,12 +516,6 @@ sensor_unregister_listener(struct sensor *sensor,
 err:
     return (rc);
 }
-
-
-struct sensor_read_ctx {
-    sensor_data_func_t user_func;
-    void *user_arg;
-};
 
 static int
 sensor_read_data_func(struct sensor *sensor, void *arg, void *data)

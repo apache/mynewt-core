@@ -347,7 +347,8 @@ err:
     return rc;
 }
 
-int tsl2561_setup_interrupt (uint8_t rate, uint16_t lower, uint16_t upper)
+int
+tsl2561_setup_interrupt (uint8_t rate, uint16_t lower, uint16_t upper)
 {
     int rc;
     uint8_t intval;
@@ -383,7 +384,8 @@ err:
     return rc;
 }
 
-int tsl2561_enable_interrupt (uint8_t enable)
+int
+tsl2561_enable_interrupt (uint8_t enable)
 {
     int rc;
     uint8_t persist_val;
@@ -412,7 +414,8 @@ err:
     return rc;
 }
 
-int tsl2561_clear_interrupt (void)
+int
+tsl2561_clear_interrupt (void)
 {
     int rc;
     uint8_t payload = { TSL2561_COMMAND_BIT | TSL2561_CLEAR_BIT };
@@ -438,6 +441,14 @@ err:
     return rc;
 }
 
+/**
+ * Expects to be called back through os_dev_create().
+ *
+ * @param The device object associated with this accellerometer
+ * @param Argument passed to OS device init, unused
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 int
 tsl2561_init(struct os_dev *dev, void *arg)
 {
