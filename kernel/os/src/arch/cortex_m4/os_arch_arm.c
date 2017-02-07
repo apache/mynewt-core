@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <syscfg/syscfg.h>
 
 #include "os/os.h"
 #include "os/os_arch.h"
@@ -34,6 +35,12 @@ extern void SysTick_Handler(void);
 
 /* Initial program status register */
 #define INITIAL_xPSR    0x01000000
+
+/*
+ * Initial LR indicating basic frame.
+ * See ARMv7-M Architecture Ref Manual
+ */
+#define INITIAL_LR      0xfffffffd;
 
 /*
  * Exception priorities. The higher the number, the lower the priority. A
@@ -55,6 +62,9 @@ struct stack_frame {
     uint32_t    r9;
     uint32_t    r10;
     uint32_t    r11;
+#if MYNEWT_VAL(HARDFLOAT)
+    uint32_t    exc_lr;
+#endif
     uint32_t    r0;
     uint32_t    r1;
     uint32_t    r2;
@@ -165,6 +175,9 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     sf->xpsr = INITIAL_xPSR;
     sf->pc = (uint32_t)t->t_func;
     sf->r0 = (uint32_t)t->t_arg;
+#if MYNEWT_VAL(HARDFLOAT)
+    sf->exc_lr = INITIAL_LR;
+#endif
 
     return (s);
 }
