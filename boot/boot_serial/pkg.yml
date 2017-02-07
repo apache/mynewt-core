@@ -38,6 +38,11 @@ pkg.deps:
 pkg.req_apis:
     - console
 
+pkg.cflags.SELFTEST:
+    - -DBOOT_SERIAL_DETECT_PIN=0
+    - -DBOOT_SERIAL_DETECT_PIN_VAL=1
+    - -DBOOT_SERIAL_DETECT_PIN_CFG=0
+
 pkg.init:
     boot_serial_os_dev_init: 0
     boot_serial_pkg_init: 200
