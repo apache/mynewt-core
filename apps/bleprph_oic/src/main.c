@@ -261,7 +261,7 @@ app_get_light(oc_request_t *request, oc_interface_mask_t interface)
         state = false;
     }
     oc_rep_start_root_object();
-        switch (interface) {
+    switch (interface) {
     case OC_IF_BASELINE:
         oc_process_baseline_interface(request->resource);
     case OC_IF_RW:
