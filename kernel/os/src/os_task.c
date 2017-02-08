@@ -98,6 +98,7 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
 {
     struct os_sanity_check *sc;
     int rc;
+    struct os_task *task;
 
     memset(t, 0, sizeof(*t));
 
@@ -131,6 +132,10 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
             stack_size);
     t->t_stacktop = &stack_bottom[stack_size];
     t->t_stacksize = stack_size;
+
+    STAILQ_FOREACH(task, &g_os_task_list, t_os_task_list) {
+        assert(t->t_prio != task->t_prio);
+    }
 
     /* insert this task into the task list */
     STAILQ_INSERT_TAIL(&g_os_task_list, t, t_os_task_list);
