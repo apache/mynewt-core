@@ -22,6 +22,8 @@
 
 #include <inttypes.h>
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,6 +45,12 @@ extern uint8_t _ram_start;
 
 /* UART info */
 #define CONSOLE_UART    "uart0"
+
+#if MYNEWT_VAL(BOOT_SERIAL)
+#define BOOT_SERIAL_DETECT_PIN          13 /* Button 1 */
+#define BOOT_SERIAL_DETECT_PIN_CFG      HAL_GPIO_PULL_UP
+#define BOOT_SERIAL_DETECT_PIN_VAL      0
+#endif
 
 #define NFFS_AREA_MAX   (8)
 

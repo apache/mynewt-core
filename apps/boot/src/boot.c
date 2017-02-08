@@ -28,8 +28,6 @@
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
 #if MYNEWT_VAL(BOOT_SERIAL)
-#include <hal/hal_gpio.h>
-#include <boot_serial/boot_serial.h>
 #include <sysinit/sysinit.h>
 #endif
 #include <console/console.h>
@@ -39,10 +37,6 @@
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
 
-#if MYNEWT_VAL(BOOT_SERIAL)
-#define BOOT_SER_CONS_INPUT         128
-#endif
-
 int
 main(void)
 {
@@ -50,23 +44,13 @@ main(void)
     int rc;
 
 #if MYNEWT_VAL(BOOT_SERIAL)
+    hal_bsp_init();
     sysinit();
 #else
     flash_map_init();
-    hal_bsp_init();
+    hal_bsp_init(); /* XXX this should be before flash_map_init() */
 #endif
 
-#if MYNEWT_VAL(BOOT_SERIAL)
-    /*
-     * Configure a GPIO as input, and compare it against expected value.
-     * If it matches, await for download commands from serial.
-     */
-    hal_gpio_init_in(BOOT_SERIAL_DETECT_PIN, BOOT_SERIAL_DETECT_PIN_CFG);
-    if (hal_gpio_read(BOOT_SERIAL_DETECT_PIN) == BOOT_SERIAL_DETECT_PIN_VAL) {
-        boot_serial_start(BOOT_SER_CONS_INPUT);
-        assert(0);
-    }
-#endif
     rc = boot_go(&rsp);
     assert(rc == 0);
 
