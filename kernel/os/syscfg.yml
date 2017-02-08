@@ -31,7 +31,7 @@ syscfg.defs:
         restrictions:
             - SHELL_TASK
     OS_COREDUMP:
-        description: 'TBD'
+        description: 'Attempt to dump corefile when system crashes'
         value: 0
     OS_SCHEDULING:
         description: 'Whether OS will be started or not'
