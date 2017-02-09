@@ -132,7 +132,6 @@ os_main(void *arg)
 {
     int (*fn)(int argc, char **argv) = arg;
 
-    os_eventq_init(os_eventq_dflt_get());
 #if !MYNEWT_VAL(SELFTEST)
     fn(0, NULL);
 #else
@@ -175,6 +174,7 @@ os_init(int (*main_fn)(int argc, char **arg))
 
     TAILQ_INIT(&g_callout_list);
     STAILQ_INIT(&g_os_task_list);
+    os_eventq_init(os_eventq_dflt_get());
 
     /* Initialize device list. */
     os_dev_reset();

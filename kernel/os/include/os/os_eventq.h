@@ -56,8 +56,6 @@ void os_eventq_remove(struct os_eventq *, struct os_event *);
 struct os_eventq *os_eventq_dflt_get(void);
 void os_eventq_designate(struct os_eventq **dst, struct os_eventq *val,
                          struct os_event *start_ev);
-void os_eventq_ensure(struct os_eventq **evq, struct os_event *start_ev);
-
 #ifdef __cplusplus
 }
 #endif
