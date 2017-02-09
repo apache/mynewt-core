@@ -43,12 +43,12 @@ main(void)
     struct boot_rsp rsp;
     int rc;
 
-#if MYNEWT_VAL(BOOT_SERIAL)
     hal_bsp_init();
+
+#if MYNEWT_VAL(BOOT_SERIAL)
     sysinit();
 #else
     flash_map_init();
-    hal_bsp_init(); /* XXX this should be before flash_map_init() */
 #endif
 
     rc = boot_go(&rsp);
