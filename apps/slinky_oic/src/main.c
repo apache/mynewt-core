@@ -244,7 +244,6 @@ init_tasks(void)
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    mgmt_evq_set(os_eventq_dflt_get());
 }
 
 /**

@@ -356,13 +356,9 @@ main(void)
 
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
-    ble_hs_evq_set(os_eventq_dflt_get());
-
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    mgmt_evq_set(os_eventq_dflt_get());
-
     oc_ble_coap_gatt_srv_init();
+
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
