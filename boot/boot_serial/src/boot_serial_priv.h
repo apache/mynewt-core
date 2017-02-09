@@ -41,8 +41,6 @@ extern "C" {
 #define NMGR_OP_READ            0
 #define NMGR_OP_WRITE           2
 
-#define NMGR_F_CBOR_RSP_COMPLETE 0x01
-
 #define MGMT_GROUP_ID_DEFAULT   0
 #define MGMT_GROUP_ID_IMAGE     1
 
@@ -50,7 +48,14 @@ extern "C" {
 #define NMGR_ID_RESET           5
 
 struct nmgr_hdr {
-    uint8_t  nh_op;             /* NMGR_OP_XXX */
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
+    uint8_t  _res1:5;
+#endif
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  _res1:5;
+    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
+#endif
     uint8_t  nh_flags;
     uint16_t nh_len;            /* length of the payload */
     uint16_t nh_group;          /* NMGR_GROUP_XXX */
