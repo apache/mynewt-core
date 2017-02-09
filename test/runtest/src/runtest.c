@@ -43,7 +43,10 @@ static struct os_eventq *run_evq;
 
 extern int run_nmgr_register_group();
 
-static struct os_eventq *
+/**
+ * Retrieves the event queue used by the runtest package.
+ */
+struct os_eventq *
 run_evq_get(void)
 {
     return run_evq;
