@@ -40,5 +40,3 @@ syscfg.vals:
     STATS_NEWTMGR: 1
     LOG_NEWTMGR: 1
     CONFIG_NEWTMGR: 1
-
-    OS_MAIN_STACK_SIZE: 512
