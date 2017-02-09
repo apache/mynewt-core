@@ -51,7 +51,6 @@ struct os_event run_test_event;
 char run_testname[RUNTEST_REQ_SIZE];
 char run_token[RUNTEST_REQ_SIZE];
 
-static struct os_eventq *run_evq;
 struct runtest_evq_arg runtest_arg;
 os_event_fn *run_callback;
 
@@ -59,13 +58,6 @@ void
 run_evcb_set(os_event_fn *cb)
 {
     run_callback = cb;
-}
-
-static struct os_eventq *
-run_evq_get(void)
-{
-    os_eventq_ensure(&run_evq, NULL);
-    return run_evq;
 }
 
 /*

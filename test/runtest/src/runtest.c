@@ -39,7 +39,21 @@ struct shell_cmd runtest_cmd_struct;
 struct mgmt_group runtest_nmgr_group;
 #endif
 
+static struct os_eventq *run_evq;
+
 extern int run_nmgr_register_group();
+
+static struct os_eventq *
+run_evq_get(void)
+{
+    return run_evq;
+}
+
+void
+run_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&run_evq, evq, NULL);
+}
 
 /*
  * Package init routine to register newtmgr "run" commands
@@ -60,4 +74,6 @@ runtest_init(void)
     rc = run_nmgr_register_group();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
+
+    run_evq_set(os_eventq_dflt_get());
 }

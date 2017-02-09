@@ -18,6 +18,7 @@
  */
 #include <assert.h>
 #include <syscfg/syscfg.h>
+#include <sysinit/sysinit.h>
 #include <os/os.h>
 #include <os/endian.h>
 #include <string.h>
@@ -33,7 +34,6 @@ struct log oc_log;
 struct os_eventq *
 oc_evq_get(void)
 {
-    os_eventq_ensure(&oc_evq, NULL);
     return oc_evq;
 }
 
@@ -146,4 +146,11 @@ oc_connectivity_init(void)
     }
 
     return 0;
+}
+
+void
+oc_init(void)
+{
+    SYSINIT_ASSERT_ACTIVE();
+    oc_evq_set(os_eventq_dflt_get());
 }

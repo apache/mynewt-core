@@ -48,3 +48,6 @@ pkg.cflags:
     - -DSECURE=0
     - "-I@apache-mynewt-core/net/oic/src/port/mynewt"
     - "-I@apache-mynewt-core/net/oic/include/oic"
+
+pkg.init:
+    oc_init: 500

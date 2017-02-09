@@ -74,7 +74,6 @@ struct nmgr_transport {
 };
 
 void nmgr_event_put(struct os_event *ev);
-int nmgr_task_init(void);
 int nmgr_transport_init(struct nmgr_transport *nt,
         nmgr_transport_out_func_t output_func,
         nmgr_transport_get_mtu_func_t get_mtu_func);
