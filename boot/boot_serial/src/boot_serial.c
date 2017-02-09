@@ -41,7 +41,6 @@
 
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
-#include <cborattr/cborattr.h>
 #include <base64/base64.h>
 #include <crc/crc16.h>
 
@@ -49,6 +48,10 @@
 
 #include "boot_serial/boot_serial.h"
 #include "boot_serial_priv.h"
+
+#if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) < 0
+#error "Boot serial needs OS_CPUTIME timer"
+#endif
 
 #define BOOT_SERIAL_INPUT_MAX   128
 #define BOOT_SERIAL_OUT_MAX	48
@@ -107,6 +110,52 @@ bs_find_val(char *buf, char *name)
 }
 
 /*
+ * Convert version into string without use of snprintf().
+ */
+static int
+u32toa(char *tgt, uint32_t val)
+{
+    char *dst;
+    uint32_t d = 1;
+    uint32_t dgt;
+    int n = 0;
+
+    dst = tgt;
+    while (val / d >= 10) {
+        d *= 10;
+    }
+    while (d) {
+        dgt = val / d;
+        val %= d;
+        d /= 10;
+        if (n || dgt > 0 || d == 0) {
+            *dst++ = dgt + '0';
+            ++n;
+        }
+    }
+    *dst = '\0';
+
+    return dst - tgt;
+}
+
+/*
+ * dst has to be able to fit "255.255.65535.4294967295" (25 characters).
+ */
+static void
+bs_list_img_ver(char *dst, int maxlen, struct image_version *ver)
+{
+    int off;
+
+    off = u32toa(dst, ver->iv_major);
+    dst[off++] = '.';
+    off += u32toa(dst + off, ver->iv_minor);
+    dst[off++] = '.';
+    off += u32toa(dst + off, ver->iv_revision);
+    dst[off++] = '.';
+    off += u32toa(dst + off, ver->iv_build_num);
+}
+
+/*
  * List images.
  */
 static void
@@ -143,9 +192,7 @@ bs_list(char *buf, int len)
         cbor_encode_int(&image, i);
         cbor_encode_text_stringz(&image, "version");
 
-        len = snprintf((char *)tmpbuf, sizeof(tmpbuf),
-          "%u.%u.%u.%u", hdr.ih_ver.iv_major, hdr.ih_ver.iv_minor,
-          hdr.ih_ver.iv_revision, (unsigned int)hdr.ih_ver.iv_build_num);
+        bs_list_img_ver((char *)tmpbuf, sizeof(tmpbuf), &hdr.ih_ver);
         cbor_encode_text_stringz(&image, (char *)tmpbuf);
         cbor_encoder_close_container(&images, &image);
     }
@@ -162,11 +209,15 @@ bs_upload(char *buf, int len)
 {
     CborParser parser;
     struct cbor_buf_reader reader;
+    struct CborValue root_value;
     struct CborValue value;
-    uint8_t img_data[400];
-    long long unsigned int off = UINT_MAX;
+    uint8_t img_data[512];
+    long long int off = UINT_MAX;
     size_t img_blen = 0;
-    long long unsigned int data_len = UINT_MAX;
+    long long int data_len = UINT_MAX;
+    size_t slen;
+    char name_str[8];
+    /*
     const struct cbor_attr_t attr[4] = {
         [0] = {
             .attribute = "data",
@@ -188,18 +239,105 @@ bs_upload(char *buf, int len)
             .nodefault = true
         }
     };
+     */
     const struct flash_area *fap = NULL;
     int rc;
 
     memset(img_data, 0, sizeof(img_data));
-    cbor_buf_reader_init(&reader, (uint8_t *)buf, len);
-    cbor_parser_init(&reader.r, 0, &parser, &value);
-    rc = cbor_read_object(&value, attr);
-    if (rc || off == UINT_MAX) {
-        rc = MGMT_ERR_EINVAL;
-        goto out;
-    }
 
+    cbor_buf_reader_init(&reader, (uint8_t *)buf, len);
+    cbor_parser_init(&reader.r, 0, &parser, &root_value);
+
+    /*
+     * Expected data format.
+     * {
+     *    "data":<img_data>
+     *    "len":<image len>
+     *    "off":<current offset of image data>
+     * }
+     */
+
+    /*
+     * Object comes within { ... }
+     */
+    if (!cbor_value_is_container(&root_value)) {
+        goto out_invalid_data;
+    }
+    if (cbor_value_enter_container(&root_value, &value)) {
+        goto out_invalid_data;
+    }
+    while (cbor_value_is_valid(&value)) {
+        /*
+         * Decode key.
+         */
+        if (cbor_value_calculate_string_length(&value, &slen)) {
+            goto out_invalid_data;
+        }
+        if (!cbor_value_is_text_string(&value) ||
+            slen >= sizeof(name_str) - 1) {
+            goto out_invalid_data;
+        }
+        if (cbor_value_copy_text_string(&value, name_str, &slen, &value)) {
+            goto out_invalid_data;
+        }
+        name_str[slen] = '\0';
+        if (!strcmp(name_str, "data")) {
+            /*
+             * Image data
+             */
+            if (value.type != CborByteStringType) {
+                goto out_invalid_data;
+            }
+            if (cbor_value_calculate_string_length(&value, &slen) ||
+                slen >= sizeof(img_data)) {
+                goto out_invalid_data;
+            }
+            if (cbor_value_copy_byte_string(&value, img_data, &slen, &value)) {
+                goto out_invalid_data;
+            }
+            img_blen = slen;
+        } else if (!strcmp(name_str, "off")) {
+            /*
+             * Offset of the data.
+             */
+            if (value.type != CborIntegerType) {
+                goto out_invalid_data;
+            }
+            if (cbor_value_get_int64(&value, &off)) {
+                goto out_invalid_data;
+            }
+            if (cbor_value_advance(&value)) {
+                goto out_invalid_data;
+            }
+        } else if (!strcmp(name_str, "len")) {
+            /*
+             * Length of the image. This should only be present in the first
+             * block of data; when offset is 0.
+             */
+            if (value.type != CborIntegerType) {
+                goto out_invalid_data;
+            }
+            if (cbor_value_get_int64(&value, &data_len)) {
+                goto out_invalid_data;
+            }
+            if (cbor_value_advance(&value)) {
+                goto out_invalid_data;
+            }
+        } else {
+            /*
+             * Skip unknown keys.
+             */
+            if (cbor_value_advance(&value)) {
+                goto out_invalid_data;
+            }
+        }
+    }
+    if (off == UINT_MAX) {
+        /*
+         * Offset must be set in every block.
+         */
+        goto out_invalid_data;
+    }
 
     rc = flash_area_open(flash_area_id_from_image_slot(0), &fap);
     if (rc) {
@@ -210,8 +348,7 @@ bs_upload(char *buf, int len)
     if (off == 0) {
         curr_off = 0;
         if (data_len > fap->fa_size) {
-            rc = MGMT_ERR_EINVAL;
-            goto out;
+            goto out_invalid_data;
         }
         rc = flash_area_erase(fap, 0, fap->fa_size);
         if (rc) {
@@ -225,11 +362,12 @@ bs_upload(char *buf, int len)
         goto out;
     }
     rc = flash_area_write(fap, curr_off, img_data, img_blen);
-    if (rc) {
+    if (rc == 0) {
+        curr_off += img_blen;
+    } else {
+out_invalid_data:
         rc = MGMT_ERR_EINVAL;
-        goto out;
     }
-    curr_off += img_blen;
 
 out:
     cbor_encoder_create_map(&bs_root, &bs_rsp, CborIndefiniteLength);
@@ -338,7 +476,7 @@ boot_serial_output(void)
     len = bs_writer.bytes_written;
 
     bs_hdr->nh_op++;
-    bs_hdr->nh_flags = NMGR_F_CBOR_RSP_COMPLETE;
+    bs_hdr->nh_flags = 0;
     bs_hdr->nh_len = htons(len);
     bs_hdr->nh_group = htons(bs_hdr->nh_group);
 
@@ -413,9 +551,28 @@ boot_serial_start(int max_input)
     char *dec;
     int dec_off;
     int full_line;
+#ifdef BOOT_SERIAL_REPORT_PIN
+    uint32_t tick;
+#endif
 
+#if 0
+    /*
+     * This is commented out, as it includes divide operation, bloating
+     * the bootloader 10%.
+     * Note that there are calls to hal_watchdog_tickle() in the subsequent
+     * code.
+     */
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
+#endif
+#ifdef BOOT_SERIAL_REPORT_PIN
+    /*
+     * Configure GPIO line as output. This is a pin we toggle at the
+     * given frequency.
+     */
+    hal_gpio_init_out(BOOT_SERIAL_REPORT_PIN, 0);
+    tick = os_cputime_get32();
+#endif
 
     rc = console_init(NULL);
     assert(rc == 0);
@@ -428,6 +585,12 @@ boot_serial_start(int max_input)
     off = 0;
     while (1) {
         hal_watchdog_tickle();
+#ifdef BOOT_SERIAL_REPORT_PIN
+        if (os_cputime_get32() - tick > BOOT_SERIAL_REPORT_FREQ) {
+            hal_gpio_toggle(BOOT_SERIAL_REPORT_PIN);
+            tick = os_cputime_get32();
+        }
+#endif
         rc = console_read(buf + off, max_input - off, &full_line);
         if (rc <= 0 && !full_line) {
             continue;
