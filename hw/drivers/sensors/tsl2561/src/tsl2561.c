@@ -124,7 +124,11 @@ tsl2561_write8(uint8_t reg, uint32_t value)
     rc = hal_i2c_master_write(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TSL2561_ERR("Failed to write @0x%02X with value 0x%02X\n", reg, value);
+        TSL2561_ERR("Failed to write 0x%02X:0x%02X with value 0x%02X\n",
+                    data_struct.address, reg, value);
+#if MYNEWT_VAL(TSL2561_STATS)
+        STATS_INC(g_tsl2561stats, errors);
+#endif
     }
 
     return rc;
@@ -273,7 +277,7 @@ tsl2561_set_gain(uint8_t gain)
 
     if ((gain != TSL2561_LIGHT_GAIN_1X) && (gain != TSL2561_LIGHT_GAIN_16X)) {
         TSL2561_ERR("Invalid gain value\n");
-        rc = EINVAL;
+        rc = SYS_EINVAL;
         goto err;
     }
 

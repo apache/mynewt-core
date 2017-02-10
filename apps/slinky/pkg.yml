@@ -34,6 +34,7 @@ pkg.deps:
     - hw/drivers/sensors/sim
     - hw/drivers/sensors/lsm303dlhc
     - hw/drivers/sensors/tsl2561
+    - hw/drivers/sensors/bno055
     - boot/bootutil
     - sys/shell
     - sys/config

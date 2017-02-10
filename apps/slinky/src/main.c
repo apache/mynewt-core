@@ -32,6 +32,7 @@
 #include <sensor/sensor.h>
 #include <lsm303dlhc/lsm303dlhc.h>
 #include <tsl2561/tsl2561.h>
+#include <bno055/bno055.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -47,9 +48,6 @@
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
-#if MYNEWT_VAL(TSL2561_CLI)
-#include <tsl2561/tsl2561.h>
-#endif
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -252,6 +250,10 @@ config_sensor(void)
     dev = (struct os_dev *) os_dev_open("light0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
     rc = tsl2561_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
 
     /* Gain set to 1X and Inetgration time set to 13ms */
     tslcfg.gain = TSL2561_LIGHT_GAIN_1X;
@@ -271,6 +273,10 @@ config_sensor(void)
     assert(dev != NULL);
 
     rc = lsm303dlhc_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
 
     /* read once per sec.  API should take this value in ms. */
     lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
@@ -279,6 +285,27 @@ config_sensor(void)
     rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
     if (rc) {
         os_dev_close(dev);
+        goto err;
+    }
+#endif
+
+#if MYNEWT_VAL(BNO055_PRESENT)
+    struct bno055_cfg bcfg;
+
+    dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = bno055_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        assert(0);
+        goto err;
+    }
+
+    rc = bno055_config((struct bno055 *) dev, &bcfg);
+    if (rc) {
+        os_dev_close(dev);
+        assert(0);
         goto err;
     }
 #endif
@@ -382,6 +409,10 @@ main(int argc, char **argv)
 
 #if MYNEWT_VAL(TSL2561_CLI)
     tsl2561_shell_init();
+#endif
+
+#if MYNEWT_VAL(BNO055_CLI)
+    bno055_shell_init();
 #endif
 
     config_sensor();

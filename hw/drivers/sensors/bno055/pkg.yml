@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,41 +17,16 @@
 # under the License.
 #
 
-# Package: apps/slinky
+pkg.name: hw/drivers/sensors/bno055
+pkg.description: Driver for the BNO055
+pkg.author: "Adafruit <support@adafruit.com>"
+pkg.homepage: "http://www.adafruit.com/"
+pkg.keywords:
+    - adafruit
+    - bno055
+    - i2c
+    - sensor
 
-syscfg.vals:
-    # Enable the shell task.
-    SHELL_TASK: 1
-
-    # Include names for statistics.
-    STATS_NAMES: 1
-
-    # Log reboot messages to a flash circular buffer.
-    REBOOT_LOG_FCB: 1
-    LOG_FCB: 1
-
-    CONFIG_FCB: 1
-
-    # Enable shell commands.
-    STATS_CLI: 1
-    LOG_CLI: 1
-    CONFIG_CLI: 1
-
-    # Enable newtmgr commands.
-    STATS_NEWTMGR: 1
-    LOG_NEWTMGR: 1
-    CONFIG_NEWTMGR: 1
-
-    OS_MAIN_TASK_PRIO: 10
-    OS_MAIN_STACK_SIZE: 512
-
-syscfg.defs:
-    TSL2561_PRESENT:
-        description: 'TSL2561 is present'
-        value: 0
-    LSM303DLHC_PRESENT:
-        description: 'LSM303 is present'
-        value: 0
-    BNO055_PRESENT:
-        description: 'BNO055 is present'
-        value: 0
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"

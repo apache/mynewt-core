@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,41 +17,19 @@
 # under the License.
 #
 
-# Package: apps/slinky
-
-syscfg.vals:
-    # Enable the shell task.
-    SHELL_TASK: 1
-
-    # Include names for statistics.
-    STATS_NAMES: 1
-
-    # Log reboot messages to a flash circular buffer.
-    REBOOT_LOG_FCB: 1
-    LOG_FCB: 1
-
-    CONFIG_FCB: 1
-
-    # Enable shell commands.
-    STATS_CLI: 1
-    LOG_CLI: 1
-    CONFIG_CLI: 1
-
-    # Enable newtmgr commands.
-    STATS_NEWTMGR: 1
-    LOG_NEWTMGR: 1
-    CONFIG_NEWTMGR: 1
-
-    OS_MAIN_TASK_PRIO: 10
-    OS_MAIN_STACK_SIZE: 512
-
 syscfg.defs:
-    TSL2561_PRESENT:
-        description: 'TSL2561 is present'
+    BNO055_I2CADDR:
+        description: 'HW I2C address for the BNO055'
+        value: 0x28
+    BNO055_I2CBUS:
+        description: 'I2C bus number for the BNO055'
+        value: -1
+    BNO055_CLI:
+        description: 'Enable shell support for the BNO055'
         value: 0
-    LSM303DLHC_PRESENT:
-        description: 'LSM303 is present'
+    BNO055_LOG:
+        description: 'Enable BNO055 logging'
         value: 0
-    BNO055_PRESENT:
-        description: 'BNO055 is present'
+    BNO055_STATS:
+        description: 'Enable BNO055 statistics'
         value: 0
