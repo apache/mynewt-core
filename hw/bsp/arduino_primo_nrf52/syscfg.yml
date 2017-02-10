@@ -37,10 +37,10 @@ syscfg.defs:
         value:  1
     UART_0_PIN_TX:
         description: 'TBD'
-        value:  6
+        value:  12
     UART_0_PIN_RX:
         description: 'TBD'
-        value:  5
+        value:  11
     UART_0_PIN_RTS:
         description: 'TBD'
         value:  0
@@ -53,10 +53,10 @@ syscfg.defs:
         value:  1
     UART_1_PIN_TX:
         description: 'TBD'
-        value:  11
+        value:  5
     UART_1_PIN_RX:
         description: 'TBD'
-        value:  12
+        value:  6
     UART_1_PIN_RTS:
         description: 'TBD'
         value:  0
@@ -115,5 +115,3 @@ syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
-
-    CONSOLE_BAUD: 9600
