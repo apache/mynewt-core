@@ -23,12 +23,6 @@ TEST_CASE(callout_test_stop)
 {
     int k;
 
-#if MYNEWT_VAL(SELFTEST)
-    /* Initializing the OS */
-    os_init(NULL);
-    sysinit();
-#endif
-
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_stop_send, "callout_task_stop_send",
         callout_task_stop_send, NULL, SEND_STOP_CALLOUT_TASK_PRIO,
@@ -49,10 +43,4 @@ TEST_CASE(callout_test_stop)
         os_callout_init(&callout_stop_test[k], &callout_stop_evq[k],
            my_callout_stop_func, NULL);
     }
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Does not return until OS_restart is called */
-    os_start();
-#endif
-
 }
