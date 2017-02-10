@@ -45,7 +45,7 @@ struct os_task_obj
 
 /* Task states */
 typedef enum os_task_state {
-    OS_TASK_READY = 1, 
+    OS_TASK_READY = 1,
     OS_TASK_SLEEP = 2,
     OS_TASK_SUSPEND = 3
 } os_task_state_t;
