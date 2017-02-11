@@ -33,10 +33,6 @@ TEST_CASE(flash_map_test_case_1)
     int sect_cnt;
     uint32_t end;
 
-#if MYNEWT_VAL(SELFTEST)
-    sysinit();
-#endif
-
     for (i = 0; i < flash_map_entries; i++) {
         rc = flash_area_open(i, &fa);
         if (rc) {

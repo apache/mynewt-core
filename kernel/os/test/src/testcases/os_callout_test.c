@@ -21,13 +21,6 @@
 /* Test case to test the basics of the callout */
 TEST_CASE(callout_test)
 {
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Initializing the OS */
-    os_init(NULL);
-    sysinit();
-#endif
-
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_send, "callout_task_send",
         callout_task_send, NULL, SEND_CALLOUT_TASK_PRIO, OS_WAIT_FOREVER,
@@ -42,9 +35,4 @@ TEST_CASE(callout_test)
 
     /* Initialize the callout function */
     os_callout_init(&callout_test_c, &callout_evq, my_callout, NULL);
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Does not return until OS_restart is called */
-    os_start();
-#endif
 }

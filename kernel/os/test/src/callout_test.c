@@ -131,10 +131,9 @@ callout_task_receive(void *arg)
     tm = os_callout_wakeup_ticks(now);
     TEST_ASSERT(tm == OS_TIMEOUT_NEVER);
     OS_EXIT_CRITICAL(sr);
-    
+
     /* Finishes the test when OS has been started */
     os_test_restart();
-
 }
 
 /* This is callout to send the stop_callout */
@@ -142,13 +141,12 @@ void
 callout_task_stop_send(void *arg)
 {
     int k;
-    int j;    
+    int j;
      /* Should say whether callout is armed or not */
     for(k = 0; k<MULTI_SIZE; k++){
         j = os_callout_queued(&callout_stop_test[k]);
         TEST_ASSERT(j == 0);
     }
-
 
     /* Show that  callout is not armed after calling callout_stop */
     for(k = 0; k<MULTI_SIZE; k++){
@@ -181,12 +179,12 @@ callout_task_stop_receive(void *arg)
 
 
      }
-     
+
     /* Show that event is removed from the queued after calling callout_stop */
     for(k=0; k<MULTI_SIZE; k++){
         os_callout_stop(&callout_stop_test[k]);
         /* Testing that the event has been removed from queue */
-        TEST_ASSERT_FATAL(1); 
+        TEST_ASSERT_FATAL(1);
      }
     /* Finishes the test when OS has been started */
     os_test_restart();
@@ -207,7 +205,7 @@ callout_task_stop_speak(void *arg)
     TEST_ASSERT(i == 1);
 
     os_callout_stop(&callout_speak);
-    
+
     /* Send the callout */ 
     os_time_delay(OS_TICKS_PER_SEC/ 100 );
     /* Finishes the test when OS has been started */
@@ -232,7 +230,7 @@ TEST_CASE_DECL(callout_test_stop)
 TEST_CASE_DECL(callout_test)
 
 TEST_SUITE(os_callout_test_suite)
-{   
+{
     callout_test();
     callout_test_stop();
     callout_test_speak();

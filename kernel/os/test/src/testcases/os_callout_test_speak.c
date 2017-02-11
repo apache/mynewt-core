@@ -21,13 +21,6 @@
 /* Test case to test case for speak and listen */
 TEST_CASE(callout_test_speak)
 {
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Initializing the OS */
-    os_init(NULL);
-    sysinit();
-#endif
-
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_speak, "callout_task_speak",
         callout_task_stop_speak, NULL, SPEAK_CALLOUT_TASK_PRIO,
@@ -43,9 +36,4 @@ TEST_CASE(callout_test_speak)
     /* Initialize the callout function */
     os_callout_init(&callout_speak, &callout_evq,
         my_callout_speak_func, NULL);
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Does not return until OS_restart is called */
-    os_start();
-#endif
 }
