@@ -205,14 +205,15 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
 }
 
 /**
- * Finds n-th element offset
+ * Finds the last n-th element fcb_entry (0 index means last element!)
  * @param0 ptr to fcb
  * @param1 n number of entries to calculate offset before
- * @param2 ptr to the offset before to be returned
+ * @param2 ptr to the fcb_entry to be returned
  * @return 0 on success; non-zero on failure
  */
 int
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off)
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
+        struct fcb_entry *last_n_entry)
 {
     struct fcb_entry loc;
     struct fcb_entry start;
@@ -223,18 +224,17 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off)
     while (!fcb_getnext(fcb, &loc)) {
         if (i == 0) {
             /* Start from the beginning of fcb entries */
-            *last_n_off = loc.fe_elem_off;
-            start = loc;
+            *last_n_entry = start = loc;
         }
-        /* Update last_n_off after n entries and keep updating */
-        if (i >= (entries - 1)) {
+        /* Update last_n_entry after n entries and keep updating */
+        else if (i > entries) {
             fcb_getnext(fcb, &start);
-            *last_n_off = start.fe_elem_off;
+            *last_n_entry = start;
         }
         i++;
     }
 
-    return 0;
+    return (entries + 1) > i ? OS_ENOENT : 0;
 }
 
 /**

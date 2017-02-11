@@ -218,11 +218,10 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     struct fcb fcb_scratch;
     struct fcb *fcb;
     const struct flash_area *ptr;
-    uint32_t offset;
+    struct fcb_entry entry;
     int rc;
 
     rc = 0;
-    offset = 0;
     if (!log) {
         rc = -1;
         goto err;
@@ -249,13 +248,13 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     }
 
     /* Calculate offset of n-th last entry */
-    rc = fcb_offset_last_n(fcb, fcb_log->fl_entries, &offset);
+    rc = fcb_offset_last_n(fcb, fcb_log->fl_entries, &entry);
     if (rc) {
         goto err;
     }
 
     /* Copy to scratch */
-    rc = log_fcb_copy(log, fcb, &fcb_scratch, offset);
+    rc = log_fcb_copy(log, fcb, &fcb_scratch, entry.fe_elem_off);
     if (rc) {
         goto err;
     }
