@@ -47,7 +47,6 @@ struct os_task_obj
 typedef enum os_task_state {
     OS_TASK_READY = 1,
     OS_TASK_SLEEP = 2,
-    OS_TASK_SUSPEND = 3
 } os_task_state_t;
 
 /* Task flags */
@@ -99,7 +98,7 @@ struct os_task {
 int os_task_init(struct os_task *, const char *, os_task_func_t, void *,
         uint8_t, os_time_t, os_stack_t *, uint16_t);
 
-int os_task_suspend(struct os_task *t);
+int os_task_remove(struct os_task *t);
 
 uint8_t os_task_count(void);
 

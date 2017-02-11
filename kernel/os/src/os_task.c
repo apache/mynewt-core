@@ -153,12 +153,12 @@ err:
 }
 
 /*
- * Suspend specified task
+ * Removes specified task
  * XXX
  * NOTE: This interface is currently experimental and not ready for common use
  */
 int
-os_task_suspend(struct os_task *t)
+os_task_remove(struct os_task *t)
 {
     struct os_task *current;
     int rc;
@@ -202,7 +202,7 @@ os_task_suspend(struct os_task *t)
     }
 
     OS_ENTER_CRITICAL(sr);
-    rc = os_sched_suspend(t);
+    rc = os_sched_remove(t);
     OS_EXIT_CRITICAL(sr);
     return rc;
 }
