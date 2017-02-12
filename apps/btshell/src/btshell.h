@@ -142,6 +142,7 @@ int btshell_rssi(uint16_t conn_handle, int8_t *out_rssi);
 int btshell_l2cap_create_srv(uint16_t psm);
 int btshell_l2cap_connect(uint16_t conn, uint16_t psm);
 int btshell_l2cap_disconnect(uint16_t conn, uint16_t idx);
+int btshell_l2cap_send(uint16_t conn, uint16_t idx, uint16_t bytes);
 #define BTSHELL_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BTSHELL_LOG(lvl, ...) \
     LOG_ ## lvl(&btshell_log, BTSHELL_LOG_MODULE, __VA_ARGS__)
