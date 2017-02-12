@@ -1279,6 +1279,55 @@ cmd_l2cap_disconnect(int argc, char **argv)
     return bletiny_l2cap_disconnect(conn, idx);
 }
 
+static void
+bletiny_l2cap_send_help(void)
+{
+    console_printf("Available l2cap send commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available l2cap disconnect params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint16("idx");
+    help_cmd_uint16("bytes");
+    console_printf("\n Use 'b show coc' to get conn and idx parameters.\n");
+    console_printf("bytes stands for number of bytes to send .\n");
+}
+
+static int
+cmd_l2cap_send(int argc, char **argv)
+{
+    uint16_t conn;
+    uint16_t idx;
+    uint16_t bytes;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_l2cap_send_help();
+        return 0;
+    }
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+       console_printf("invalid 'conn' parameter\n");
+       help_cmd_uint16("conn");
+       return rc;
+    }
+
+    idx = parse_arg_uint16("idx", &rc);
+    if (rc != 0) {
+       console_printf("invalid 'idx' parameter\n");
+       help_cmd_uint16("idx");
+       return rc;
+    }
+
+    bytes = parse_arg_uint16("bytes", &rc);
+    if (rc != 0) {
+       console_printf("invalid 'bytes' parameter\n");
+       help_cmd_uint16("bytes");
+       return rc;
+    }
+
+    return bletiny_l2cap_send(conn, idx, bytes);
+}
+
 static const struct cmd_entry cmd_l2cap_entries[];
 
 static int
@@ -1298,6 +1347,7 @@ static const struct cmd_entry cmd_l2cap_entries[] = {
     { "create_srv", cmd_l2cap_create_srv },
     { "connect", cmd_l2cap_connect },
     { "disconnect", cmd_l2cap_disconnect },
+    { "send", cmd_l2cap_send },
     { "help", cmd_l2cap_help },
     { NULL, NULL }
 };

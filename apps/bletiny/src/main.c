@@ -1756,6 +1756,81 @@ bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
 #endif
 }
 
+int
+bletiny_l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    struct os_mbuf *sdu_tx;
+    uint8_t b[] = {0x00, 0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88, 0x99};
+    int i;
+    int rc;
+
+    console_printf("conn=%d, idx=%d, bytes=%d\n", conn_handle, idx, bytes);
+
+    conn = bletiny_conn_find(conn_handle);
+    if (conn == NULL) {
+        console_printf("conn=%d does not exist\n", conn_handle);
+        return 0;
+    }
+
+    i = 0;
+    SLIST_FOREACH(coc, &conn->coc_list, next) {
+        if (i == idx) {
+            break;
+        }
+        i++;
+    }
+    if (coc == NULL) {
+        console_printf("Are you sure your channel exist?\n");
+        return 0;
+    }
+
+    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+    if (sdu_tx == NULL) {
+        console_printf("No memory in the test sdu pool\n");
+        return 0;
+    }
+
+    /* For the testing purpose we fill up buffer with known data, easy
+     * to validate on other side. In this loop we add as many full chunks as we
+     * can
+     */
+    for (i = 0; i < bytes / sizeof(b); i++) {
+        rc = os_mbuf_append(sdu_tx, b, sizeof(b));
+        if (rc) {
+            console_printf("Cannot append data %i !\n", i);
+            os_mbuf_free_chain(sdu_tx);
+            return rc;
+        }
+    }
+
+    /* Here we add the rest < sizeof(b) */
+    rc = os_mbuf_append(sdu_tx, b, bytes - (sizeof(b) * i));
+    if (rc) {
+        console_printf("Cannot append data %i !\n", i);
+        os_mbuf_free_chain(sdu_tx);
+        return rc;
+    }
+
+    rc = ble_l2cap_send(coc->chan, sdu_tx);
+    if (rc) {
+        console_printf("Could not send data rc=%d\n", rc);
+        if (rc == BLE_HS_EBUSY) {
+            os_mbuf_free_chain(sdu_tx);
+        }
+    }
+
+    return rc;
+
+#endif
+}
 /**
  * main
  *
