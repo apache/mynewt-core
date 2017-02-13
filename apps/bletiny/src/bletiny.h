@@ -78,9 +78,17 @@ struct bletiny_svc {
 
 SLIST_HEAD(bletiny_svc_list, bletiny_svc);
 
+struct bletiny_l2cap_coc {
+    SLIST_ENTRY(bletiny_l2cap_coc) next;
+    struct ble_l2cap_chan *chan;
+};
+
+SLIST_HEAD(bletiny_l2cap_coc_list, bletiny_l2cap_coc);
+
 struct bletiny_conn {
     uint16_t handle;
     struct bletiny_svc_list svcs;
+    struct bletiny_l2cap_coc_list coc_list;
 };
 
 extern struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
@@ -182,7 +190,9 @@ int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
 int bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
                      uint16_t num);
 int bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi);
-
+int bletiny_l2cap_create_srv(uint16_t psm);
+int bletiny_l2cap_connect(uint16_t conn, uint16_t psm);
+int bletiny_l2cap_disconnect(uint16_t conn, uint16_t idx);
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
     LOG_ ## lvl(&bletiny_log, BLETINY_LOG_MODULE, __VA_ARGS__)

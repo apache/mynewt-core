@@ -158,10 +158,11 @@ struct {                                                \
     }                                                       \
     else {                                                  \
         struct type *curelm = SLIST_FIRST((head));          \
-        while (SLIST_NEXT(curelm, field) != (elm))          \
-            curelm = SLIST_NEXT(curelm, field);             \
-        SLIST_NEXT(curelm, field) =                         \
-            SLIST_NEXT(SLIST_NEXT(curelm, field), field);   \
+        while (SLIST_NEXT(curelm, field) &&                 \
+               SLIST_NEXT(curelm, field) != (elm)) {        \
+              curelm = SLIST_NEXT(curelm, field);           \
+        }                                                   \
+        SLIST_NEXT(curelm, field) = SLIST_NEXT(elm, field); \
     }                                                       \
 } while (0)
 
