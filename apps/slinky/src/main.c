@@ -292,7 +292,7 @@ config_sensor(void)
 #if MYNEWT_VAL(BNO055_PRESENT)
     struct bno055_cfg bcfg;
 
-    dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
+    dev = (struct os_dev *) os_dev_open("accel1", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
     rc = bno055_init(dev, NULL);

@@ -160,7 +160,7 @@ bno055_read8(uint8_t reg, uint8_t *value)
     /* Register write */
     payload = reg;
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+                              OS_TICKS_PER_SEC / 10, 0);
     if (rc) {
         BNO055_ERR("I2C register write failed at address 0x%02X:0x%02X\n",
                    data_struct.address, reg);
@@ -366,6 +366,62 @@ err:
     return rc;
 }
 
+/**
+ * Use external crystal 32.768KHz
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+bno055_set_ext_xtal_use(uint8_t use_xtal)
+{
+    int rc;
+    uint8_t prev_mode;
+
+    prev_mode = g_bno055_mode;
+
+    /* Switch to config mode */
+    rc = bno055_set_mode(BNO055_OPERATION_MODE_CONFIG);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay(OS_TICKS_PER_SEC/1000 * 25);
+
+    rc = bno055_write8(BNO055_PAGE_ID_ADDR, 0);
+    if (rc) {
+        goto err;
+    }
+
+    if (use_xtal) {
+        /* Use External Clock */
+        rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_CLK_SEL);
+        if (rc) {
+            goto err;
+        }
+    } else {
+        /* Use Internal clock */
+        rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, 0x00);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    os_time_delay(OS_TICKS_PER_SEC/1000 * 10);
+
+    /* Reset to previous operating mode */
+    rc = bno055_set_mode(prev_mode);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
+
+    return 0;
+err:
+    return rc;
+}
+
+
 int
 bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
 {
@@ -374,6 +430,16 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     uint8_t prev_mode;
 
     prev_mode = g_bno055_mode;
+
+    /**
+     * As per Section 5.5 in the BNO055 Datasheet,
+     * external crystal should be used for accurate
+     * results
+     */
+    rc = bno055_set_ext_xtal_use(1);
+    if (rc) {
+        goto err;
+    }
 
     /* Check if we can read the chip address */
     rc = bno055_read8(BNO055_CHIP_ID_ADDR, &id);
@@ -390,6 +456,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         }
 
         if(id != BNO055_ID) {
+            rc = SYS_EINVAL;
             goto err;
         }
     }
@@ -429,8 +496,6 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     if (rc) {
         goto err;
     }
-
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
 
     return 0;
 err:
@@ -514,6 +579,13 @@ bno055_find_reg(sensor_type_t type, uint8_t *reg)
     return rc;
 }
 
+/**
+ * Get vector data from sensor
+ *
+ * @param pointer to teh structure to be filled up
+ * @param Type of sensor
+ * @return 0 on success, non-zero on error
+ */
 int
 bno055_get_vector_data(void *datastruct, int type)
 {
@@ -592,7 +664,8 @@ err:
 /**
  * Get temperature from bno055 sensor
  *
- * @return temperature in degree celcius
+ * @param pointer to the temperature variable to be filled up
+ * @return 0 on success, non-zero on error
  */
 int
 bno055_get_temp(int8_t *temp)
@@ -826,3 +899,4 @@ bno055_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 err:
     return (rc);
 }
+
