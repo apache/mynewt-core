@@ -51,16 +51,16 @@ static void
 blesplit_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     BLESPLIT_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                 desc->conn_handle, desc->our_ota_addr.type);
+                desc->conn_handle, desc->our_ota_addr.type);
     print_addr(desc->our_ota_addr.val);
     BLESPLIT_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                 desc->our_id_addr.type);
+                desc->our_id_addr.type);
     print_addr(desc->our_id_addr.val);
     BLESPLIT_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                 desc->peer_ota_addr.type);
+                desc->peer_ota_addr.type);
     print_addr(desc->peer_ota_addr.val);
     BLESPLIT_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                 desc->peer_id_addr.type);
+                desc->peer_id_addr.type);
     print_addr(desc->peer_id_addr.val);
     BLESPLIT_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                  "encrypted=%d authenticated=%d bonded=%d\n",
@@ -113,8 +113,8 @@ blesplit_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (ble_uuid16_t[]){
-        BLE_UUID16_INIT(GATT_SVR_SVC_ALERT_UUID)
+    fields.uuids16 = (ble_uuid16_t[]) {
+        BLE_UUID16_INIT(GATT_SVR_SVC_ALERT_UUID),
     };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
@@ -129,7 +129,7 @@ blesplit_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, blesplit_gap_event, NULL);
     if (rc != 0) {
         BLESPLIT_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
