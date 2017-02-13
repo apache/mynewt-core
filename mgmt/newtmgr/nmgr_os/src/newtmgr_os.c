@@ -330,7 +330,7 @@ nmgr_reset(struct mgmt_cbuf *cb)
     os_callout_init(&nmgr_reset_callout, mgmt_evq_get(), nmgr_reset_tmo, NULL);
 
 #if MYNEWT_VAL(LOG_SOFT_RESET)
-    log_reboot(HAL_RESET_SOFT);
+    log_reboot(HAL_RESET_REQUESTED);
 #endif
     os_callout_reset(&nmgr_reset_callout, OS_TICKS_PER_SEC / 4);
 
