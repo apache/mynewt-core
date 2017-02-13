@@ -62,13 +62,24 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Some application configurations */
-#define BLETEST_ROLE_ADVERTISER         (0)
-#define BLETEST_ROLE_SCANNER            (1)
-#define BLETEST_ROLE_INITIATOR          (2)
+#define BLETEST_ROLE_NONE               (0)
+#define BLETEST_ROLE_ADVERTISER         (1)
+#define BLETEST_ROLE_SCANNER            (2)
+#define BLETEST_ROLE_INITIATOR          (3)
 
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_ADVERTISER
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_ADVERTISER
+#endif
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_SCANNER
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_SCANNER
+#endif
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_INITIATOR
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_INITIATOR
+#endif
+
+#ifndef BLETEST_CFG_ROLE
+#error "No role defined! Must define a valid role in syscfg.yml in apps/bletest"
+#endif
 
 /* Advertiser config */
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)

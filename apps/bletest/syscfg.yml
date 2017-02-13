@@ -17,6 +17,14 @@
 #
 
 # Package: apps/bletest
+syscfg.defs:
+    BLETEST_ROLE:
+        description: >
+            The role of the bletest code. Should be set to:
+                1: Advertiser
+                2: Scanner
+                3: Initiator
+        value: 1
 
 syscfg.vals:
     MSYS_1_BLOCK_COUNT: 16
