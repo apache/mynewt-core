@@ -108,7 +108,7 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
-    .data : AT (__etext)
+    .data :
     {
         __data_start__ = .;
         *(vtable)
@@ -139,7 +139,7 @@ SECTIONS
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
-    } > RAM
+    } > RAM AT > FLASH
 
     /* Non-zeroed BSS.  This section is similar to BSS, with the following two
      * caveats:
