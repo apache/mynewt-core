@@ -305,7 +305,7 @@ config_sensor(void)
     rc = bno055_config((struct bno055 *) dev, &bcfg);
     if (rc) {
         os_dev_close(dev);
-        assert(0);
+        //assert(0);
         goto err;
     }
 #endif

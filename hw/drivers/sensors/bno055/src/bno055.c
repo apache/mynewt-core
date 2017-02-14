@@ -125,7 +125,7 @@ bno055_write8(uint8_t reg, uint32_t value)
     };
 
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+                              OS_TICKS_PER_SEC, 1);
     if (rc) {
         BNO055_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                        data_struct.address, reg, value);
@@ -347,6 +347,12 @@ err:
     return (rc);
 }
 
+/**
+ * Get chip ID from the sensor
+ *
+ * @param Pointer to the variable to fill up chip ID in
+ * @return 0 on success, non-zero on failure
+ */
 int
 bno055_get_chip_id(uint8_t *id)
 {
@@ -431,16 +437,6 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
 
     prev_mode = g_bno055_mode;
 
-    /**
-     * As per Section 5.5 in the BNO055 Datasheet,
-     * external crystal should be used for accurate
-     * results
-     */
-    rc = bno055_set_ext_xtal_use(1);
-    if (rc) {
-        goto err;
-    }
-
     /* Check if we can read the chip address */
     rc = bno055_read8(BNO055_CHIP_ID_ADDR, &id);
     if (rc) {
@@ -467,7 +463,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     }
 
     /* Reset sensor */
-    rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, 0x20);
+    rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_RST_SYS);
     if (rc) {
         goto err;
     }
@@ -487,6 +483,16 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     }
 
     os_time_delay(OS_TICKS_PER_SEC/1000 * 10);
+
+    /**
+     * As per Section 5.5 in the BNO055 Datasheet,
+     * external crystal should be used for accurate
+     * results
+     */
+    rc = bno055_set_ext_xtal_use(1);
+    if (rc) {
+        goto err;
+    }
 
     /* Overwrite the configuration data. */
     memcpy(&bno055->cfg, cfg, sizeof(*cfg));

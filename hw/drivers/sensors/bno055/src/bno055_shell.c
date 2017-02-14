@@ -30,6 +30,7 @@
 #include "sensor/mag.h"
 #include "sensor/quat.h"
 #include "sensor/euler.h"
+#include "hal/hal_i2c.h"
 
 #if MYNEWT_VAL(BNO055_CLI)
 extern uint8_t g_bno055_mode;
@@ -333,37 +334,66 @@ bno055_shell_cmd_int(int argc, char **argv)
     /* Unknown command */
     return bno055_shell_err_invalid_arg(argv[2]);
 }
+#endif
 
 static int
-bno055_shell_cmd_dump(int argc, char **argv)
+bno055_shell_cmd_dumpreg(int argc, char **argv)
 {
-  uint8_t val;
+    long addr;
+    uint8_t val;
+    int rc;
 
-  if (argc > 3) {
-      return bno055_shell_err_too_many_args(argv[1]);
-  }
+    if (bno055_shell_stol(argv[2], 0, UINT8_MAX, &addr)) {
+        return bno055_shell_err_invalid_arg(argv[2]);
+    }
+    rc = bno055_read8((uint8_t)addr, &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (ADDR): 0x%02X", (uint8_t)addr, val);
 
-  val = 0;
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_CONTROL, &val));
-  console_printf("0x%02X (CONTROL): 0x%02X\n", BNO055_REGISTER_CONTROL, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_TIMING, &val));
-  console_printf("0x%02X (TIMING):  0x%02X\n", BNO055_REGISTER_TIMING, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_THRESHHOLDL_LOW, &val));
-  console_printf("0x%02X (THRLL):   0x%02X\n", BNO055_REGISTER_THRESHHOLDL_LOW, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_THRESHHOLDL_HIGH, &val));
-  console_printf("0x%02X (THRLH):   0x%02X\n", BNO055_REGISTER_THRESHHOLDL_HIGH, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_THRESHHOLDH_LOW, &val));
-  console_printf("0x%02X (THRHL):   0x%02X\n", BNO055_REGISTER_THRESHHOLDH_LOW, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_THRESHHOLDH_HIGH, &val));
-  console_printf("0x%02X (THRHH):   0x%02X\n", BNO055_REGISTER_THRESHHOLDH_HIGH, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_INTERRUPT, &val));
-  console_printf("0x%02X (INTER):   0x%02X\n", BNO055_REGISTER_INTERRUPT, val);
-  assert(0 == bno055_read8(BNO055_COMMAND_BIT | BNO055_REGISTER_ID, &val));
-  console_printf("0x%02X (ID):      0x%02X\n", BNO055_REGISTER_ID, val);
-
-  return 0;
+    return 0;
+err:
+    return rc;
 }
-#endif
+
+static int
+shell_i2cscan_cmd(int argc, char **argv)
+{
+    uint8_t addr;
+    int32_t timeout = OS_TICKS_PER_SEC / 10;
+    uint8_t dev_count = 0;
+    long i2cnum;
+    int rc;
+
+    if (bno055_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
+        return bno055_shell_err_invalid_arg(argv[2]);
+    }
+
+    console_printf("Scanning I2C bus %u\n"
+                   "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
+                   "00:          ", (uint8_t)i2cnum);
+
+
+    /* Scan all valid I2C addresses (0x08..0x77) */
+    for (addr = 0x08; addr < 0x78; addr++) {
+        rc = hal_i2c_master_probe((uint8_t)i2cnum, addr, timeout);
+        /* Print addr header every 16 bytes */
+        if (!(addr % 16)) {
+            console_printf("\n%02x: ", addr);
+        }
+        /* Display the addr if a response was received */
+        if (!rc) {
+            console_printf("%02x ", addr);
+            dev_count++;
+        } else {
+            console_printf("-- ");
+        }
+    }
+    console_printf("\nFound %u devices on I2C bus 0\n", dev_count);
+
+    return 0;
+}
 
 static int
 bno055_shell_cmd(int argc, char **argv)
@@ -402,11 +432,15 @@ bno055_shell_cmd(int argc, char **argv)
         return bno055_shell_cmd_pmode(argc, argv);
     }
 
+#endif
     /* Dump Registers command */
     if (argc > 1 && strcmp(argv[1], "dumpreg") == 0) {
         return bno055_shell_cmd_dumpreg(argc, argv);
     }
-#endif
+
+    if (argc > 1 && strcmp(argv[1], "i2cscan") == 0) {
+        return shell_i2cscan_cmd(argc, argv);
+    }
     return bno055_shell_err_unknown_arg(argv[1]);
 }
 

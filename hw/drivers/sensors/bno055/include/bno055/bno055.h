@@ -77,6 +77,17 @@ int
 bno055_get_temp(int8_t *temp);
 
 /**
+ * Reads a single byte from the specified register
+ *
+ * @param The register address to read from
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+bno055_read8(uint8_t reg, uint8_t *value);
+
+/**
  * Setting mode for the bno055 sensor
  *
  * @param Operation mode for the sensor
