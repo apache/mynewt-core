@@ -31,6 +31,10 @@ TEST_CASE(fcb_test_last_of_n)
     fcb = &test_fcb;
     fcb->f_scratch_cnt = 1;
 
+    /* No fcbs available */
+    rc = fcb_offset_last_n(fcb, 1, &loc);
+    assert (rc != 0);
+
     /*
      * Add some fcbs.
      */
@@ -50,26 +54,29 @@ TEST_CASE(fcb_test_last_of_n)
         areas[i] = loc;
     }
 
-    /* after last valid entry */
-    rc = fcb_offset_last_n(fcb, 5, &loc);
-    assert (rc != 0);
-
     /* last entry */
-    rc = fcb_offset_last_n(fcb, 0, &loc);
+    rc = fcb_offset_last_n(fcb, 1, &loc);
     assert (rc == 0);
     assert (areas[4].fe_area == loc.fe_area);
     assert (areas[4].fe_data_off == loc.fe_data_off);
     assert (areas[4].fe_data_len == loc.fe_data_len);
 
     /* somewhere in the middle */
-    rc = fcb_offset_last_n(fcb, 2, &loc);
+    rc = fcb_offset_last_n(fcb, 3, &loc);
     assert (rc == 0);
     assert (areas[2].fe_area == loc.fe_area);
     assert (areas[2].fe_data_off == loc.fe_data_off);
     assert (areas[2].fe_data_len == loc.fe_data_len);
 
     /* first entry */
-    rc = fcb_offset_last_n(fcb, 4, &loc);
+    rc = fcb_offset_last_n(fcb, 5, &loc);
+    assert (rc == 0);
+    assert (areas[0].fe_area == loc.fe_area);
+    assert (areas[0].fe_data_off == loc.fe_data_off);
+    assert (areas[0].fe_data_len == loc.fe_data_len);
+
+    /* after last valid entry, returns the first one like for 5 */
+    rc = fcb_offset_last_n(fcb, 6, &loc);
     assert (rc == 0);
     assert (areas[0].fe_area == loc.fe_area);
     assert (areas[0].fe_data_off == loc.fe_data_off);
