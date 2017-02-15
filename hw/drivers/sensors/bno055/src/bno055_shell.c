@@ -118,7 +118,7 @@ bno055_shell_cmd_get_chip_id(int argc, char **argv)
         if (rc) {
             console_printf("Read failed %d", rc);
         }
-        console_printf("%x\n", id ? 16u : 1u);
+        console_printf("0x%02X\n", id);
     }
 
     return 0;
@@ -140,8 +140,8 @@ bno055_shell_cmd_get_rev_info(int argc, char **argv)
         if (rc) {
             console_printf("Read failed %d", rc);
         }
-        console_printf("accel_rev:%x\nmag_rev:%x\ngyro_rev:%x\n"
-                       "sw_rev:%x\nbl_rev:%x\n", ri.bri_accel_rev,
+        console_printf("accel_rev:0x%02X\nmag_rev:0x%02X\ngyro_rev:0x%02X\n"
+                       "sw_rev:0x%02X\nbl_rev:0x%02X\n", ri.bri_accel_rev,
                        ri.bri_mag_rev, ri.bri_gyro_rev, ri.bri_sw_rev,
                        ri.bri_bl_rev);
     }
@@ -234,12 +234,12 @@ bno055_shell_cmd_mode(int argc, char **argv)
     /* Display the mode */
     if (argc == 2) {
         val = bno055_get_mode();
-        console_printf("%u\n", val ? 16u : 1u);
+        console_printf("%u\n", (unsigned int)val);
     }
 
     /* Update the mode */
     if (argc == 3) {
-        if (bno055_shell_stol(argv[2], 1, 16, &val)) {
+        if (bno055_shell_stol(argv[2], 0, 16, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         /* Make sure mode is */
@@ -257,86 +257,6 @@ bno055_shell_cmd_mode(int argc, char **argv)
 err:
     return rc;
 }
-
-#if 0
-static int
-bno055_shell_cmd_int(int argc, char **argv)
-{
-    int rc;
-    int pin;
-    long val;
-    uint8_t rate;
-    uint16_t lower;
-    uint16_t upper;
-
-    if (argc > 6) {
-        return bno055_shell_err_too_many_args(argv[1]);
-    }
-
-    if (argc == 2) {
-        console_printf("ToDo: Display int details\n");
-        return 0;
-    }
-
-    /* Enable the interrupt */
-    if (argc == 3 && strcmp(argv[2], "on") == 0) {
-        return bno055_enable_interrupt(1);
-    }
-
-    /* Disable the interrupt */
-    if (argc == 3 && strcmp(argv[2], "off") == 0) {
-        return bno055_enable_interrupt(0);
-    }
-
-    /* Clear the interrupt on 'clr' */
-    if (argc == 3 && strcmp(argv[2], "clr") == 0) {
-        return bno055_clear_interrupt();
-    }
-
-    /* Configure the interrupt on 'set' */
-    if (argc == 6 && strcmp(argv[2], "set") == 0) {
-        /* Get rate */
-        if (bno055_shell_stol(argv[3], 0, 15, &val)) {
-            return bno055_shell_err_invalid_arg(argv[3]);
-        }
-        rate = (uint8_t)val;
-        /* Get lower threshold */
-        if (bno055_shell_stol(argv[4], 0, UINT16_MAX, &val)) {
-            return bno055_shell_err_invalid_arg(argv[4]);
-        }
-        lower = (uint16_t)val;
-        /* Get upper threshold */
-        if (bno055_shell_stol(argv[5], 0, UINT16_MAX, &val)) {
-            return bno055_shell_err_invalid_arg(argv[5]);
-        }
-        upper = (uint16_t)val;
-        /* Set the values */
-        rc = bno055_setup_interrupt(rate, lower, upper);
-        console_printf("Configured interrupt as:\n");
-        console_printf("\trate: %u\n", rate);
-        console_printf("\tlower: %u\n", lower);
-        console_printf("\tupper: %u\n", upper);
-        return rc;
-    }
-
-    /* Setup INT pin on 'pin' */
-    if (argc == 4 && strcmp(argv[2], "pin") == 0) {
-        /* Get the pin number */
-        if (bno055_shell_stol(argv[3], 0, 0xFF, &val)) {
-            return bno055_shell_err_invalid_arg(argv[3]);
-        }
-        pin = (int)val;
-        /* INT is open drain, pullup is required */
-        rc = hal_gpio_init_in(pin, HAL_GPIO_PULL_UP);
-        assert(rc == 0);
-        console_printf("Set pin \"%d\" to INPUT with pull up enabled\n", pin);
-        return 0;
-    }
-
-    /* Unknown command */
-    return bno055_shell_err_invalid_arg(argv[2]);
-}
-#endif
 
 static int
 bno055_shell_cmd_dumpreg(int argc, char **argv)

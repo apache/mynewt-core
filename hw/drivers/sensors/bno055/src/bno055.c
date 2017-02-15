@@ -266,6 +266,7 @@ bno055_set_mode(uint8_t mode)
         goto err;
     }
 
+    /* Refer table 3-6 in the datasheet for the delay values */
     if (mode == BNO055_OPERATION_MODE_CONFIG) {
         os_time_delay(OS_TICKS_PER_SEC/1000 * 19);
     } else {
