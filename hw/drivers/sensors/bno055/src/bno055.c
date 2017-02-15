@@ -113,10 +113,10 @@ static uint8_t g_bno055_mode;
  * @return 0 on success, non-zero error on failure.
  */
 int
-bno055_write8(uint8_t reg, uint32_t value)
+bno055_write8(uint8_t reg, uint8_t value)
 {
     int rc;
-    uint8_t payload[2] = { reg, value & 0xFF };
+    uint8_t payload[2] = { reg, value};
 
     struct hal_i2c_master_data data_struct = {
         .address = MYNEWT_VAL(BNO055_I2CADDR),
@@ -203,7 +203,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     uint8_t payload[8] = { reg, 0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
-        .address = reg,
+        .address = MYNEWT_VAL(BNO055_I2CADDR),
         .len = 1,
         .buffer = payload
     };
@@ -438,7 +438,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     prev_mode = g_bno055_mode;
 
     /* Check if we can read the chip address */
-    rc = bno055_read8(BNO055_CHIP_ID_ADDR, &id);
+    rc = bno055_get_chip_id(&id);
     if (rc) {
         goto err;
     }
@@ -446,7 +446,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     if (id != BNO055_ID) {
         os_time_delay(OS_TICKS_PER_SEC/2);
 
-        rc = bno055_read8(BNO055_CHIP_ID_ADDR, &id);
+        rc = bno055_get_chip_id(&id);
         if (rc) {
             goto err;
         }
@@ -457,13 +457,13 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         }
     }
 
-    rc = bno055_set_mode(BNO055_OPERATION_MODE_CONFIG);
+    /* Reset sensor */
+    rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_RST_SYS);
     if (rc) {
         goto err;
     }
 
-    /* Reset sensor */
-    rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_RST_SYS);
+    rc = bno055_set_mode(BNO055_OPERATION_MODE_CONFIG);
     if (rc) {
         goto err;
     }

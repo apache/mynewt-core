@@ -88,6 +88,17 @@ int
 bno055_read8(uint8_t reg, uint8_t *value);
 
 /**
+ * Writes a single byte to the specified register
+ *
+ * @param The register address to write to
+ * @param The value to write
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+bno055_write8(uint8_t reg, uint8_t value);
+
+/**
  * Setting mode for the bno055 sensor
  *
  * @param Operation mode for the sensor

@@ -177,10 +177,10 @@ bno055_shell_cmd_read(int argc, char **argv)
         }
         samples = (uint16_t)val;
 
-        if (bno055_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
+        if (bno055_shell_stol(argv[3], 0, UINT16_MAX, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
-        type = (uint16_t)(1 << val);
+        type = (int)(1 << val);
     }
 
     while(samples--) {
@@ -199,6 +199,7 @@ bno055_shell_cmd_read(int argc, char **argv)
             rc = bno055_get_vector_data(databuf, type);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
+                goto err;
             }
             sed = databuf;
             console_printf("h:%u r:%u p:%u\n", (unsigned int)sed->sed_h,
@@ -207,6 +208,7 @@ bno055_shell_cmd_read(int argc, char **argv)
             rc = bno055_get_vector_data(databuf, type);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
+                goto err;
             }
             sad = databuf;
             console_printf("x:%u y:%u z:%u\n", (unsigned int)sad->sad_x,
@@ -361,10 +363,12 @@ static int
 shell_i2cscan_cmd(int argc, char **argv)
 {
     uint8_t addr;
-    int32_t timeout = OS_TICKS_PER_SEC / 10;
+    int32_t timeout;
     uint8_t dev_count = 0;
     long i2cnum;
     int rc;
+
+    timeout = OS_TICKS_PER_SEC / 10;
 
     if (bno055_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
         return bno055_shell_err_invalid_arg(argv[2]);
@@ -389,10 +393,26 @@ shell_i2cscan_cmd(int argc, char **argv)
         } else {
             console_printf("-- ");
         }
+        os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
     }
-    console_printf("\nFound %u devices on I2C bus 0\n", dev_count);
+    console_printf("\nFound %u devices on I2C bus %u\n", dev_count, (uint8_t)i2cnum);
 
     return 0;
+}
+
+static int
+bno055_shell_cmd_reset(int argc, char **argv)
+{
+    int rc;
+    /* Reset sensor */
+    rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_RST_SYS);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
 }
 
 static int
@@ -421,18 +441,19 @@ bno055_shell_cmd(int argc, char **argv)
     if (argc > 1 && strcmp(argv[1], "rev") == 0) {
         return bno055_shell_cmd_get_rev_info(argc, argv);
     }
-#if 0
     /* Reset command */
     if (argc > 1 && strcmp(argv[1], "reset") == 0) {
         return bno055_shell_cmd_reset(argc, argv);
     }
 
+#if 0
     /* Power mode command */
     if (argc > 1 && strcmp(argv[1], "pmode") == 0) {
         return bno055_shell_cmd_pmode(argc, argv);
     }
 
 #endif
+
     /* Dump Registers command */
     if (argc > 1 && strcmp(argv[1], "dumpreg") == 0) {
         return bno055_shell_cmd_dumpreg(argc, argv);
