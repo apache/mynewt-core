@@ -21,11 +21,10 @@
 #
 common_file_to_load () {
     if [ "$MFG_IMAGE" ]; then
-	FILE_NAME=$BIN_BASENAME.bin
+        FILE_NAME=$BIN_BASENAME.bin
     elif [ "$BOOT_LOADER" ]; then
-	FILE_NAME=$BIN_BASENAME.elf.bin
+        FILE_NAME=$BIN_BASENAME.elf.bin
     else
-	FILE_NAME=$BIN_BASENAME.img
+        FILE_NAME=$BIN_BASENAME.img
     fi
 }
-    
