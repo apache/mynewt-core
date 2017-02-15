@@ -1,0 +1,4 @@
+syscfg.defs:
+   HARDFLOAT:
+       description: 'Use hardware FPU'
+       value: 0
