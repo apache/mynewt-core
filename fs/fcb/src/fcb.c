@@ -205,36 +205,39 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
 }
 
 /**
- * Finds n-th element offset
+ * Finds the fcb entry that gives back upto n entries at the end.
  * @param0 ptr to fcb
- * @param1 n number of entries to calculate offset before
- * @param2 ptr to the offset before to be returned
- * @return 0 on success; non-zero on failure
+ * @param1 n number of fcb entries the user wants to get
+ * @param2 ptr to the fcb_entry to be returned
+ * @return 0 on there are any fcbs aviable; OS_ENOENT otherwise
  */
 int
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off)
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
+        struct fcb_entry *last_n_entry)
 {
     struct fcb_entry loc;
-    struct fcb_entry start;
     int i;
+
+    /* assure a minimum amount of entries */
+    if (!entries) {
+        entries = 1;
+    }
 
     i = 0;
     memset(&loc, 0, sizeof(loc));
     while (!fcb_getnext(fcb, &loc)) {
         if (i == 0) {
             /* Start from the beginning of fcb entries */
-            *last_n_off = loc.fe_elem_off;
-            start = loc;
+            *last_n_entry = loc;
         }
-        /* Update last_n_off after n entries and keep updating */
-        if (i >= (entries - 1)) {
-            fcb_getnext(fcb, &start);
-            *last_n_off = start.fe_elem_off;
+        /* Update last_n_entry after n entries and keep updating */
+        else if (i > (entries - 1)) {
+            fcb_getnext(fcb, last_n_entry);
         }
         i++;
     }
 
-    return 0;
+    return (i == 0) ? OS_ENOENT : 0;
 }
 
 /**
