@@ -516,6 +516,9 @@ done:
         free(filepath);
     }
     nffs_unlock();
+    if (rc != 0) {
+        *out_dir = NULL;
+    }
     return rc;
 }
 

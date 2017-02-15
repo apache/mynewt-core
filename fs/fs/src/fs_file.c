@@ -117,7 +117,7 @@ fake_dirent_is_dir(const struct fs_dirent *dirent)
     return FS_EUNINIT;
 }
 
-static struct fs_ops not_initialized_ops = {
+struct fs_ops not_initialized_ops = {
     .f_open          = &fake_open,
     .f_close         = &fake_close,
     .f_read          = &fake_read,
