@@ -99,13 +99,13 @@ int
 bno055_write8(uint8_t reg, uint8_t value);
 
 /**
- * Setting mode for the bno055 sensor
+ * Set operation mode for the bno055 sensor
  *
  * @param Operation mode for the sensor
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_set_mode(uint8_t mode);
+bno055_set_opr_mode(uint8_t mode);
 
 #if MYNEWT_VAL(BNO055_CLI)
 int bno055_shell_init(void);
@@ -140,8 +140,31 @@ bno055_get_chip_id(uint8_t *id);
  * @return mode
  */
 uint8_t
-bno055_get_mode(void);
+bno055_get_opr_mode(void);
 
+/**
+ * Read current power mode of the sensor
+ *
+ * @return mode
+ */
+uint8_t
+bno055_get_pwr_mode(void);
+
+/**
+ * Set power mode for the sensor
+ *
+ * @return mode
+ */
+int
+bno055_set_pwr_mode(uint8_t mode);
+
+/**
+ * Get power mode for the sensor
+ *
+ * @return mode
+ */
+uint8_t
+bno055_get_pwr_mode(void);
 
 #ifdef __cplusplus
 }

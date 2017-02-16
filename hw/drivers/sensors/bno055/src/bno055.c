@@ -102,7 +102,8 @@ static const struct sensor_driver g_bno055_sensor_driver = {
     bno055_sensor_get_config
 };
 
-static uint8_t g_bno055_mode;
+static uint8_t g_bno055_opr_mode;
+static uint8_t g_bno055_pwr_mode;
 
 /**
  * Writes a single byte to the specified register
@@ -251,13 +252,13 @@ err:
 
 
 /**
- * Setting mode for the bno055 sensor
+ * Setting operation mode for the bno055 sensor
  *
  * @param Operation mode for the sensor
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_set_mode(uint8_t mode)
+bno055_set_opr_mode(uint8_t mode)
 {
     int rc;
 
@@ -273,10 +274,43 @@ bno055_set_mode(uint8_t mode)
         os_time_delay(OS_TICKS_PER_SEC/1000 * 7);
     }
 
-    g_bno055_mode = mode;
+    g_bno055_opr_mode = mode;
     return 0;
 err:
     return rc;
+}
+
+/**
+ * Setting power mode for the bno055 sensor
+ *
+ * @param power mode for the sensor
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_pwr_mode(uint8_t mode)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_PWR_MODE_ADDR, mode);
+    if (rc) {
+        goto err;
+    }
+
+    g_bno055_pwr_mode = mode;
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Read current power mode of the sensor
+ *
+ * @return mode
+ */
+uint8_t
+bno055_get_pwr_mode(void)
+{
+    return g_bno055_pwr_mode;
 }
 
 /**
@@ -285,9 +319,9 @@ err:
  * @return mode
  */
 uint8_t
-bno055_get_mode(void)
+bno055_get_opr_mode(void)
 {
-    return g_bno055_mode;
+    return g_bno055_opr_mode;
 }
 
 /**
@@ -384,10 +418,10 @@ bno055_set_ext_xtal_use(uint8_t use_xtal)
     int rc;
     uint8_t prev_mode;
 
-    prev_mode = g_bno055_mode;
+    prev_mode = g_bno055_opr_mode;
 
     /* Switch to config mode */
-    rc = bno055_set_mode(BNO055_OPERATION_MODE_CONFIG);
+    rc = bno055_set_opr_mode(BNO055_OPERATION_MODE_CONFIG);
     if (rc) {
         goto err;
     }
@@ -416,7 +450,7 @@ bno055_set_ext_xtal_use(uint8_t use_xtal)
     os_time_delay(OS_TICKS_PER_SEC/1000 * 10);
 
     /* Reset to previous operating mode */
-    rc = bno055_set_mode(prev_mode);
+    rc = bno055_set_opr_mode(prev_mode);
     if (rc) {
         goto err;
     }
@@ -436,7 +470,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     uint8_t id;
     uint8_t prev_mode;
 
-    prev_mode = g_bno055_mode;
+    prev_mode = g_bno055_opr_mode;
 
     /* Check if we can read the chip address */
     rc = bno055_get_chip_id(&id);
@@ -464,7 +498,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
-    rc = bno055_set_mode(BNO055_OPERATION_MODE_CONFIG);
+    rc = bno055_set_opr_mode(BNO055_OPERATION_MODE_CONFIG);
     if (rc) {
         goto err;
     }
@@ -499,7 +533,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     memcpy(&bno055->cfg, cfg, sizeof(*cfg));
 
     /* Change back to previous mode */
-    rc = bno055_set_mode(prev_mode);
+    rc = bno055_set_opr_mode(prev_mode);
     if (rc) {
         goto err;
     }

@@ -222,7 +222,7 @@ err:
 }
 
 static int
-bno055_shell_cmd_mode(int argc, char **argv)
+bno055_shell_cmd_opr_mode(int argc, char **argv)
 {
     long val;
     int rc;
@@ -233,7 +233,7 @@ bno055_shell_cmd_mode(int argc, char **argv)
 
     /* Display the mode */
     if (argc == 2) {
-        val = bno055_get_mode();
+        val = bno055_get_opr_mode();
         console_printf("%u\n", (unsigned int)val);
     }
 
@@ -247,7 +247,44 @@ bno055_shell_cmd_mode(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
-        rc = bno055_set_mode(val);
+        rc = bno055_set_opr_mode(val);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
+bno055_shell_cmd_pwr_mode(int argc, char **argv)
+{
+    long val;
+    int rc;
+
+    if (argc > 3) {
+        return bno055_shell_err_too_many_args(argv[1]);
+    }
+
+    /* Display the mode */
+    if (argc == 2) {
+        val = bno055_get_pwr_mode();
+        console_printf("%u\n", (unsigned int)val);
+    }
+
+    /* Update the mode */
+    if (argc == 3) {
+        if (bno055_shell_stol(argv[2], 0, 16, &val)) {
+            return bno055_shell_err_invalid_arg(argv[2]);
+        }
+        /* Make sure mode is */
+        if (val > BNO055_POWER_MODE_SUSPEND) {
+            return bno055_shell_err_invalid_arg(argv[2]);
+        }
+
+        rc = bno055_set_pwr_mode(val);
         if (rc) {
             goto err;
         }
@@ -349,7 +386,7 @@ bno055_shell_cmd(int argc, char **argv)
 
     /* Mode command */
     if (argc > 1 && strcmp(argv[1], "mode") == 0) {
-        return bno055_shell_cmd_mode(argc, argv);
+        return bno055_shell_cmd_opr_mode(argc, argv);
     }
 
     /* Chip ID command */
@@ -366,13 +403,10 @@ bno055_shell_cmd(int argc, char **argv)
         return bno055_shell_cmd_reset(argc, argv);
     }
 
-#if 0
     /* Power mode command */
     if (argc > 1 && strcmp(argv[1], "pmode") == 0) {
-        return bno055_shell_cmd_pmode(argc, argv);
+        return bno055_shell_cmd_pwr_mode(argc, argv);
     }
-
-#endif
 
     /* Dump Registers command */
     if (argc > 1 && strcmp(argv[1], "dumpreg") == 0) {
