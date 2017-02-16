@@ -160,6 +160,7 @@ bno055_shell_cmd_read(int argc, char **argv)
     struct sensor_euler_data *sed;
     struct sensor_accel_data *sad;
     int type;
+    char tmpstr[13];
 
     type = 0;
     if (argc > 4) {
@@ -192,9 +193,12 @@ bno055_shell_cmd_read(int argc, char **argv)
                 goto err;
             }
             sqd = databuf;
-            console_printf("x:%u y:%u z:%u w:%u\n", (unsigned int)sqd->sqd_x,
-                          (unsigned int)sqd->sqd_y, (unsigned int)sqd->sqd_z,
-                          (unsigned int)sqd->sqd_w);
+
+            console_printf("x:%s ", sensor_ftostr(sqd->sqd_x, tmpstr, 13));
+            console_printf("y:%s ", sensor_ftostr(sqd->sqd_y, tmpstr, 13));
+            console_printf("z:%s ", sensor_ftostr(sqd->sqd_z, tmpstr, 13));
+            console_printf("w:%s\n", sensor_ftostr(sqd->sqd_w, tmpstr, 13));
+
         } else if (type == SENSOR_TYPE_EULER) {
             rc = bno055_get_vector_data(databuf, type);
             if (rc) {
@@ -202,8 +206,11 @@ bno055_shell_cmd_read(int argc, char **argv)
                 goto err;
             }
             sed = databuf;
-            console_printf("h:%u r:%u p:%u\n", (unsigned int)sed->sed_h,
-                          (unsigned int)sed->sed_r, (unsigned int)sed->sed_p);
+
+            console_printf("h:%s ", sensor_ftostr(sed->sed_h, tmpstr, 13));
+            console_printf("r:%s ", sensor_ftostr(sed->sed_r, tmpstr, 13));
+            console_printf("p:%s\n", sensor_ftostr(sed->sed_p, tmpstr, 13));
+
         } else {
             rc = bno055_get_vector_data(databuf, type);
             if (rc) {
@@ -211,10 +218,14 @@ bno055_shell_cmd_read(int argc, char **argv)
                 goto err;
             }
             sad = databuf;
-            console_printf("x:%u y:%u z:%u\n", (unsigned int)sad->sad_x,
-                          (unsigned int)sad->sad_y, (unsigned int)sad->sad_z);
+
+            console_printf("x:%s ", sensor_ftostr(sad->sad_x, tmpstr, 13));
+            console_printf("y:%s ", sensor_ftostr(sad->sad_y, tmpstr, 13));
+            console_printf("z:%s\n", sensor_ftostr(sad->sad_z, tmpstr, 13));
         }
     }
+
+    free(databuf);
 
     return 0;
 err:
@@ -242,7 +253,7 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
         if (bno055_shell_stol(argv[2], 0, 16, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
-        /* Make sure mode is */
+        /* Make sure mode is valid */
         if (val > BNO055_OPERATION_MODE_NDOF) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
@@ -279,7 +290,7 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
         if (bno055_shell_stol(argv[2], 0, 16, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
-        /* Make sure mode is */
+        /* Make sure mode is valid */
         if (val > BNO055_POWER_MODE_SUSPEND) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }

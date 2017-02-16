@@ -83,10 +83,12 @@ struct sensor_shell_read_ctx {
     int num_entries;
 };
 
-static char*
-floattostr(float num, char *fltstr, int len)
+char*
+sensor_ftostr(float num, char *fltstr, int len)
 {
-    snprintf(fltstr, len, "%s%d.%09ld", num < 0.0 ? "-":"", (int)num,
+    memset(fltstr, 0, len);
+
+    snprintf(fltstr, len, "%s%d.%09ld", num < 0.0 ? "-":"", abs((int)num),
              labs((long int)((num - (float)((int)num)) * 1000000000)));
     return fltstr;
 }
@@ -107,13 +109,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     if (ctx->type == SENSOR_TYPE_ACCELEROMETER) {
         sad = (struct sensor_accel_data *) data;
         if (sad->sad_x != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("x = %s ", floattostr(sad->sad_x, tmpstr, 13));
+            console_printf("x = %s ", sensor_ftostr(sad->sad_x, tmpstr, 13));
         }
         if (sad->sad_y != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("y = %s ", floattostr(sad->sad_y, tmpstr, 13));
+            console_printf("y = %s ", sensor_ftostr(sad->sad_y, tmpstr, 13));
         }
         if (sad->sad_z != SENSOR_ACCEL_DATA_UNUSED) {
-            console_printf("z = %s", floattostr(sad->sad_z, tmpstr, 13));
+            console_printf("z = %s", sensor_ftostr(sad->sad_z, tmpstr, 13));
         }
         console_printf("\n");
     }
@@ -121,13 +123,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     if (ctx->type == SENSOR_TYPE_MAGNETIC_FIELD) {
         smd = (struct sensor_mag_data *) data;
         if (smd->smd_x != SENSOR_MAG_DATA_UNUSED) {
-            console_printf("x = %i, ", (int)smd->smd_x);
+            console_printf("x = %s ", sensor_ftostr(smd->smd_x, tmpstr, 13));
         }
         if (smd->smd_y != SENSOR_MAG_DATA_UNUSED) {
-            console_printf("y = %i, ", (int)smd->smd_y);
+            console_printf("y = %s ", sensor_ftostr(smd->smd_y, tmpstr, 13));
         }
         if (smd->smd_z != SENSOR_MAG_DATA_UNUSED) {
-            console_printf("z = %i", (int)smd->smd_z);
+            console_printf("z = %s ", sensor_ftostr(smd->smd_z, tmpstr, 13));
         }
         console_printf("\n");
     }

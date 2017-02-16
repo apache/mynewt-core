@@ -325,6 +325,9 @@ struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,
 struct sensor *sensor_mgr_find_next_bytype(sensor_type_t, struct sensor *);
 struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
 
+char*
+sensor_ftostr(float num, char *fltstr, int len);
+
 /**
  * }@
  */
