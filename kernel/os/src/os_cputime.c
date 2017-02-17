@@ -30,7 +30,9 @@
  *   @{
  */
 
+#if !defined(OS_CPUTIME_FREQ_32768) && !defined(OS_CPUTIME_FREQ_1MHZ)
 struct os_cputime_data g_os_cputime;
+#endif
 
 /**
  * os cputime init
@@ -49,11 +51,14 @@ os_cputime_init(uint32_t clock_freq)
     int rc;
 
     /* Set the ticks per microsecond. */
+#if !defined(OS_CPUTIME_FREQ_32768) && !defined(OS_CPUTIME_FREQ_1MHZ)
     g_os_cputime.ticks_per_usec = clock_freq / 1000000U;
+#endif
     rc = hal_timer_config(MYNEWT_VAL(OS_CPUTIME_TIMER_NUM), clock_freq);
     return rc;
 }
 
+#if !defined(OS_CPUTIME_FREQ_32768)
 /**
  * os cputime nsecs to ticks
  *
@@ -99,8 +104,50 @@ os_cputime_ticks_to_nsecs(uint32_t ticks)
 
     return nsecs;
 }
+#endif
 
 #if !defined(OS_CPUTIME_FREQ_1MHZ)
+#if defined(OS_CPUTIME_FREQ_32768)
+/**
+ * os cputime usecs to ticks
+ *
+ * Converts the given number of microseconds into cputime ticks.
+ *
+ * @param usecs The number of microseconds to convert to ticks
+ *
+ * @return uint32_t The number of ticks corresponding to 'usecs'
+ */
+uint32_t
+os_cputime_usecs_to_ticks(uint32_t usecs)
+{
+    uint64_t ticks;
+
+    ticks = ((uint64_t)usecs << 9) / 15625;
+    return (uint32_t)ticks;
+}
+
+/**
+ * cputime ticks to usecs
+ *
+ * Convert the given number of ticks into microseconds.
+ *
+ * @param ticks The number of ticks to convert to microseconds.
+ *
+ * @return uint32_t The number of microseconds corresponding to 'ticks'
+ *
+ * NOTE: This calculation will overflow if the value for ticks is greater
+ * than 140737488. I am not going to check that here because that many ticks
+ * is about 4222 seconds, way more than what this routine should be used for.
+ */
+uint32_t
+os_cputime_ticks_to_usecs(uint32_t ticks)
+{
+    uint32_t usecs;
+
+    usecs = ((ticks >> 9) * 15625) + (((ticks & 0x1ff) * 15625) >> 9);
+    return usecs;
+}
+#else
 /**
  * os cputime usecs to ticks
  *
@@ -138,6 +185,7 @@ os_cputime_ticks_to_usecs(uint32_t ticks)
     return us;
 }
 #endif
+#endif
 
 /**
  * os cputime delay ticks
@@ -157,6 +205,7 @@ os_cputime_delay_ticks(uint32_t ticks)
     }
 }
 
+#if !defined(OS_CPUTIME_FREQ_32768)
 /**
  * os cputime delay nsecs
  *
@@ -172,6 +221,7 @@ os_cputime_delay_nsecs(uint32_t nsecs)
     ticks = os_cputime_nsecs_to_ticks(nsecs);
     os_cputime_delay_ticks(ticks);
 }
+#endif
 
 /**
  * os cputime delay usecs

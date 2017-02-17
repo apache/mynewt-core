@@ -45,6 +45,10 @@ extern "C" {
 #define OS_CPUTIME_FREQ_1MHZ
 #endif
 
+#if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768)
+#define OS_CPUTIME_FREQ_32768
+#endif
+
 /* CPUTIME data. */
 struct os_cputime_data
 {
@@ -80,6 +84,7 @@ int os_cputime_init(uint32_t clock_freq);
  */
 uint32_t os_cputime_get32(void);
 
+#if !defined(OS_CPUTIME_FREQ_32768)
 /**
  * os cputime nsecs to ticks
  *
@@ -101,6 +106,7 @@ uint32_t os_cputime_nsecs_to_ticks(uint32_t nsecs);
  * @return uint32_t The number of nanoseconds corresponding to 'ticks'
  */
 uint32_t os_cputime_ticks_to_nsecs(uint32_t ticks);
+#endif
 
 #if defined(OS_CPUTIME_FREQ_1MHZ)
 #define os_cputime_usecs_to_ticks(x)    (x)
@@ -138,6 +144,7 @@ uint32_t os_cputime_ticks_to_usecs(uint32_t ticks);
  */
 void os_cputime_delay_ticks(uint32_t ticks);
 
+#if !defined(OS_CPUTIME_FREQ_32768)
 /**
  * os cputime delay nsecs
  *
@@ -146,6 +153,7 @@ void os_cputime_delay_ticks(uint32_t ticks);
  * @param nsecs The number of nanoseconds to wait.
  */
 void os_cputime_delay_nsecs(uint32_t nsecs);
+#endif
 
 /**
  * os cputime delay usecs
