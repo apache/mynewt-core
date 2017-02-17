@@ -159,6 +159,7 @@ bno055_shell_cmd_read(int argc, char **argv)
     struct sensor_quat_data *sqd;
     struct sensor_euler_data *sed;
     struct sensor_accel_data *sad;
+    int8_t *temp;
     int type;
     char tmpstr[13];
 
@@ -211,6 +212,15 @@ bno055_shell_cmd_read(int argc, char **argv)
             console_printf("r:%s ", sensor_ftostr(sed->sed_r, tmpstr, 13));
             console_printf("p:%s\n", sensor_ftostr(sed->sed_p, tmpstr, 13));
 
+        } else if (type == SENSOR_TYPE_TEMPERATURE) {
+            rc = bno055_get_temp(databuf);
+            if (rc) {
+                console_printf("Read failed: %d\n", rc);
+                goto err;
+            }
+            temp = databuf;
+
+            console_printf("Temperature:%u\n", *temp);
         } else {
             rc = bno055_get_vector_data(databuf, type);
             if (rc) {
@@ -296,6 +306,50 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
         }
 
         rc = bno055_set_pwr_mode(val);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
+bno055_shell_units_cmd(int argc, char **argv)
+{
+    long val;
+    int rc;
+
+    if (argc > 3) {
+        return bno055_shell_err_too_many_args(argv[1]);
+    }
+
+    /* Display the units */
+    if (argc == 2) {
+        val = bno055_get_units();
+        console_printf("Acc, linear acc, gravity: %s\n"
+                       "Mag field strength: Micro Tesla\n"
+                       "Ang rate: %s\n"
+                       "Euler ang: %s\n",
+                       (uint8_t)val & BNO055_ACC_UNIT_MG ? "mg":"m/s^2",
+                       (uint8_t)val & BNO055_ANGRATE_UNIT_RPS ? "Rps":"Dps",
+                       (uint8_t)val & BNO055_EULER_UNIT_RAD ? "Rad":"Deg");
+        console_printf("Quat: Quat units\n"
+                       "Temp: %s\n"
+                       "Fusion data output: %s\n",
+                       (uint8_t)val & BNO055_TEMP_UNIT_DEGF ? "Deg F":"Deg C",
+                       (uint8_t)val & BNO055_DO_FORMAT_ANDROID ? "Android":"Windows");
+    }
+
+    /* Update the units */
+    if (argc == 3) {
+        if (bno055_shell_stol(argv[2], 0, UINT8_MAX, &val)) {
+            return bno055_shell_err_invalid_arg(argv[2]);
+        }
+
+        rc = bno055_set_units(val);
         if (rc) {
             goto err;
         }
@@ -426,6 +480,10 @@ bno055_shell_cmd(int argc, char **argv)
 
     if (argc > 1 && strcmp(argv[1], "i2cscan") == 0) {
         return shell_i2cscan_cmd(argc, argv);
+    }
+
+    if (argc > 1 && strcmp(argv[1], "units") == 0) {
+        return bno055_shell_units_cmd(argc, argv);
     }
     return bno055_shell_err_unknown_arg(argv[1]);
 }

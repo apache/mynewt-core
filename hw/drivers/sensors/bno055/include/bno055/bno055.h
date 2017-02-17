@@ -166,6 +166,23 @@ bno055_set_pwr_mode(uint8_t mode);
 uint8_t
 bno055_get_pwr_mode(void);
 
+/**
+ * Setting units for the bno055 sensor
+ *
+ * @param power mode for the sensor
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_units(uint8_t val);
+
+/**
+ * Read current power mode of the sensor
+ *
+ * @return mode
+ */
+uint8_t
+bno055_get_units(void);
+
 #ifdef __cplusplus
 }
 #endif

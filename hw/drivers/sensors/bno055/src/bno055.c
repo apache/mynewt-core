@@ -104,6 +104,7 @@ static const struct sensor_driver g_bno055_sensor_driver = {
 
 static uint8_t g_bno055_opr_mode;
 static uint8_t g_bno055_pwr_mode;
+static uint8_t g_bno055_units;
 
 /**
  * Writes a single byte to the specified register
@@ -262,19 +263,23 @@ bno055_set_opr_mode(uint8_t mode)
 {
     int rc;
 
+    rc = bno055_write8(BNO055_OPR_MODE_ADDR, BNO055_OPERATION_MODE_CONFIG);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay(OS_TICKS_PER_SEC/1000 * 19);
+
     rc = bno055_write8(BNO055_OPR_MODE_ADDR, mode);
     if (rc) {
         goto err;
     }
 
     /* Refer table 3-6 in the datasheet for the delay values */
-    if (mode == BNO055_OPERATION_MODE_CONFIG) {
-        os_time_delay(OS_TICKS_PER_SEC/1000 * 19);
-    } else {
-        os_time_delay(OS_TICKS_PER_SEC/1000 * 7);
-    }
+    os_time_delay(OS_TICKS_PER_SEC/1000 * 7);
 
     g_bno055_opr_mode = mode;
+
     return 0;
 err:
     return rc;
@@ -311,6 +316,39 @@ uint8_t
 bno055_get_pwr_mode(void)
 {
     return g_bno055_pwr_mode;
+}
+
+/**
+ * Setting units for the bno055 sensor
+ *
+ * @param power mode for the sensor
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_units(uint8_t val)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_UNIT_SEL_ADDR, val);
+    if (rc) {
+        goto err;
+    }
+
+    g_bno055_units = val;
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Read current power mode of the sensor
+ *
+ * @return mode
+ */
+uint8_t
+bno055_get_units(void)
+{
+    return g_bno055_units;
 }
 
 /**
@@ -479,7 +517,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     }
 
     if (id != BNO055_ID) {
-        os_time_delay(OS_TICKS_PER_SEC/2);
+        os_time_delay(OS_TICKS_PER_SEC/1000 * 100);
 
         rc = bno055_get_chip_id(&id);
         if (rc) {
@@ -503,11 +541,8 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
-    /* Wait for about 100 ms */
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 100);
-
     /* Set to normal power mode */
-    rc = bno055_write8(BNO055_PWR_MODE_ADDR, BNO055_POWER_MODE_NORMAL);
+    rc = bno055_set_pwr_mode(BNO055_POWER_MODE_NORMAL);
     if (rc) {
         goto err;
     }
@@ -525,6 +560,14 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
      * results
      */
     rc = bno055_set_ext_xtal_use(1);
+    if (rc) {
+        goto err;
+    }
+
+    /* Setting units and data output format */
+    rc = bno055_set_units(BNO055_ACC_UNIT_MS2 | BNO055_ANGRATE_UNIT_DPS |
+                          BNO055_EULER_UNIT_DEG | BNO055_TEMP_UNIT_DEGC |
+                          BNO055_DO_FORMAT_ANDROID);
     if (rc) {
         goto err;
     }
@@ -637,6 +680,11 @@ bno055_get_vector_data(void *datastruct, int type)
     struct sensor_accel_data *sad;
     struct sensor_euler_data *sed;
     uint8_t reg;
+    uint8_t units;
+    float acc_div;
+    float gyro_div;
+    float euler_div;
+
     int rc;
 
     memset (payload, 0, 6);
@@ -657,6 +705,12 @@ bno055_get_vector_data(void *datastruct, int type)
     y = ((int16_t)payload[2]) | (((int16_t)payload[3]) << 8);
     z = ((int16_t)payload[4]) | (((int16_t)payload[5]) << 8);
 
+    units = bno055_get_units();
+
+    acc_div  = units & BNO055_ACC_UNIT_MG ? 1.0:100.0;
+    gyro_div = units & BNO055_ANGRATE_UNIT_RPS ? 900.0:16.0;
+    euler_div = units & BNO055_EULER_UNIT_RAD ? 16.0:900.0;
+
     /**
      * Convert the value to an appropriate range (section 3.6.4)
      */
@@ -671,25 +725,25 @@ bno055_get_vector_data(void *datastruct, int type)
         case SENSOR_TYPE_GYROSCOPE:
             sad = datastruct;
             /* 1rps = 900 LSB */
-            sad->sad_x = ((double)x)/900.0;
-            sad->sad_y = ((double)y)/900.0;
-            sad->sad_z = ((double)z)/900.0;
+            sad->sad_x = ((double)x)/gyro_div;
+            sad->sad_y = ((double)y)/gyro_div;
+            sad->sad_z = ((double)z)/gyro_div;
             break;
         case SENSOR_TYPE_EULER:
             sad = datastruct;
             /* 1 degree = 16 LSB */
-            sed->sed_h = ((double)x)/16.0;
-            sed->sed_r = ((double)y)/16.0;
-            sed->sed_p = ((double)z)/16.0;
+            sed->sed_h = ((double)x)/euler_div;
+            sed->sed_r = ((double)y)/euler_div;
+            sed->sed_p = ((double)z)/euler_div;
             break;
         case SENSOR_TYPE_ACCELEROMETER:
         case SENSOR_TYPE_LINEAR_ACCEL:
         case SENSOR_TYPE_GRAVITY:
             sad = datastruct;
             /* 1m/s^2 = 100 LSB */
-            sad->sad_x = ((double)x)/100.0;
-            sad->sad_y = ((double)y)/100.0;
-            sad->sad_z = ((double)z)/100.0;
+            sad->sad_x = ((double)x)/acc_div;
+            sad->sad_y = ((double)y)/acc_div;
+            sad->sad_z = ((double)z)/acc_div;
             break;
         default:
             BNO055_ERR("Not supported sensor type: %d\n", type);
@@ -712,8 +766,16 @@ int
 bno055_get_temp(int8_t *temp)
 {
     int rc;
+    uint8_t units;
+    uint8_t div;
 
     rc = bno055_read8(BNO055_TEMP_ADDR, (uint8_t *)temp);
+
+    units = bno055_get_units();
+
+    div = units & BNO055_TEMP_UNIT_DEGF ? 2 : 1;
+
+    *temp = *temp/div;
 
     return rc;
 }

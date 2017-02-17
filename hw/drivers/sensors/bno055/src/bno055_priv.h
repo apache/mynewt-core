@@ -100,7 +100,18 @@
 
 /* Unit selection register */
 #define BNO055_UNIT_SEL_ADDR                                    0X3B
+
 #define BNO055_DATA_SELECT_ADDR                                 0X3C
+#define BNO055_ACC_UNIT_MS2                                      0x0
+#define BNO055_ACC_UNIT_MG                                       0x1
+#define BNO055_ANGRATE_UNIT_DPS                             (0 << 1)
+#define BNO055_ANGRATE_UNIT_RPS                             (1 << 1)
+#define BNO055_EULER_UNIT_DEG                               (0 << 2)
+#define BNO055_EULER_UNIT_RAD                               (1 << 2)
+#define BNO055_TEMP_UNIT_DEGC                               (0 << 4)
+#define BNO055_TEMP_UNIT_DEGF                               (1 << 4)
+#define BNO055_DO_FORMAT_WINDOWS                            (0 << 7)
+#define BNO055_DO_FORMAT_ANDROID                            (1 << 7)
 
 /* Mode registers */
 #define BNO055_OPR_MODE_ADDR                                    0X3D
