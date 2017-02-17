@@ -222,6 +222,7 @@ oicmgr_init(void)
         goto err;
     }
 
+    mgmt_evq_set(os_eventq_dflt_get());
     return (0);
 err:
     return (rc);
