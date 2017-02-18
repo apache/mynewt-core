@@ -45,6 +45,7 @@ It currently supports the following hardware platforms:
 * Arduino Primo NRF52 (Cortex-M4)
 * NUCLEO-F401RE (Cortex-M4)
 * FRDM-K64F from NXP (Cortex-M4)
+* BBC micro:bit (Nordic nrf51822; Cortex-M0)
 
 Apache Mynewt uses the
 [Newt](https://www.github.com/apache/incubator-mynewt-newt) build and package
