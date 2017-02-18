@@ -53,10 +53,10 @@ syscfg.defs:
         value:  1
     UART_1_PIN_TX:
         description: 'TBD'
-        value:  5
+        value:  6
     UART_1_PIN_RX:
         description: 'TBD'
-        value:  6
+        value:  5
     UART_1_PIN_RTS:
         description: 'TBD'
         value:  0
