@@ -65,16 +65,27 @@ static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
 static uint8_t (*completion_cb)(char *line, uint8_t len);
 
+typedef int (*stdout_func_t)(int);
+extern void __stdout_hook_install(int (*hook)(int));
+
+static int
+console_out(int c)
+{
+    if ('\n' == c) {
+        uart_blocking_tx(uart_dev, '\r');
+    }
+    uart_blocking_tx(uart_dev, c);
+
+    return c;
+}
+
 size_t
 console_file_write(void *arg, const char *str, size_t cnt)
 {
     int i;
 
     for (i = 0; i < cnt; i++) {
-        if (str[i] == '\n') {
-            uart_blocking_tx(uart_dev, '\r');
-        }
-        uart_blocking_tx(uart_dev, str[i]);
+        console_out(str[i]);
     }
     return cnt;
 }
@@ -369,6 +380,8 @@ console_init(struct os_eventq *avail, struct os_eventq *lines,
     avail_queue = avail;
     lines_queue = lines;
     completion_cb = completion;
+    __stdout_hook_install(console_out);
+
 
     if (!uart_dev) {
         uart_dev = (struct uart_dev *)os_dev_open(CONSOLE_UART,
