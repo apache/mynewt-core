@@ -29,7 +29,8 @@
 
 #include "console.h"
 
-#define UART_CONSOLE 1
+#define UART_CONSOLE 0
+#define RTT_CONSOLE 1
 
 /* Control characters */
 #define ESC                0x1b
@@ -357,6 +358,8 @@ console_init(struct os_eventq *avail, struct os_eventq *lines,
 
 #if UART_CONSOLE == 1
     rc = uart_console_init();
+#elif RTT_CONSOLE == 1
+    rc = rtt_console_init();
 #endif
     console_out = _get_stdout_hook();
     return rc;

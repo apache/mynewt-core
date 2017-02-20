@@ -41,6 +41,7 @@ void console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
 int console_handle_char(uint8_t byte);
 int uart_console_init(void);
+int rtt_console_init(void);
 
 #ifdef __cplusplus
 }
