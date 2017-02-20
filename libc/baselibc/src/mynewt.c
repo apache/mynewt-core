@@ -18,7 +18,28 @@
  */
 
 #include <stdio.h>
-#include <console/console.h>
+
+static int
+_stdout_hook_default(int c)
+{
+    return EOF;
+}
+
+typedef int (*stdout_func_t)(int);
+
+static stdout_func_t _stdout_hook = _stdout_hook_default;
+
+void
+__stdout_hook_install(stdout_func_t hook)
+{
+    _stdout_hook = hook;
+}
+
+stdout_func_t
+_get_stdout_hook(void)
+{
+    return _stdout_hook;
+}
 
 static size_t
 stdin_read(FILE *fp, char *bp, size_t n)
@@ -27,10 +48,16 @@ stdin_read(FILE *fp, char *bp, size_t n)
 }
 
 static size_t
-stdout_write(FILE *fp, const char *bp, size_t n)
+stdout_write(FILE *fp, const char *str, size_t cnt)
 {
-    console_write(bp, n);
-    return n;
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        if (_stdout_hook((int)str[i]) == EOF) {
+            return EOF;
+        }
+    }
+    return cnt;
 }
 
 static struct File_methods _stdin_methods = {
