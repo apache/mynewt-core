@@ -44,7 +44,7 @@ struct stats_hdr {
     STAILQ_ENTRY(stats_hdr) s_next;
 };
 
-#define STATS_SECT_DECL(__name)             \
+#define STATS_SECT_DECL(__name)                                         \
     struct stats_ ## __name
 #define STATS_SECT_END };
 
