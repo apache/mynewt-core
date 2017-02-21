@@ -20,23 +20,23 @@
 
 syscfg.defs:
     REBOOT_LOG_FCB:
-        description: 'TBD'
+        description: 'Set reboot log target to be FCB.'
         value: 0
         restrictions:
             - LOG_FCB
             - REBOOT_LOG_FLASH_AREA
 
     REBOOT_LOG_CONSOLE:
-        description: 'TBD'
+        description: 'Set reboot log target to be console.'
         value: 1
         restrictions:
             - LOG_CONSOLE
 
     REBOOT_LOG_FLASH_AREA:
-        description: 'TBD'
+        description: 'Flash area where reboot log is stored.'
         type: flash_owner
         value:
 
     REBOOT_LOG_ENTRY_COUNT:
-        description: 'TBD'
+        description: 'Minimum number of reboot log entries retained'
         value: 10

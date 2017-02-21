@@ -19,7 +19,7 @@
 
 syscfg.defs:
     LOG_LEVEL:
-        description: 'TBD'
+        description: 'Limits what level log messages are compiled in.'
         value: 0
 
     LOG_FCB:
