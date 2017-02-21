@@ -51,9 +51,14 @@ oc_send_buffer(struct os_mbuf *m)
     oe = OC_MBUF_ENDPOINT(m);
 
     switch (oe->oe.flags) {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
     case IP:
-        oc_send_buffer_ip(m);
+        oc_send_buffer_ip6(m);
+        break;
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    case IP4:
+        oc_send_buffer_ip4(m);
         break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
@@ -79,8 +84,11 @@ oc_send_multicast_message(struct os_mbuf *m)
      * Send on all the transports.
      */
     void (*funcs[])(struct os_mbuf *) = {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-        oc_send_buffer_ip_mcast,
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+        oc_send_buffer_ip6_mcast,
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+        oc_send_buffer_ip4_mcast,
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
         /* no multicast for GATT, just send unicast */
@@ -108,8 +116,11 @@ oc_send_multicast_message(struct os_mbuf *m)
 void
 oc_connectivity_shutdown(void)
 {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    oc_connectivity_shutdown_ip();
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+    oc_connectivity_shutdown_ip6();
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    oc_connectivity_shutdown_ip4();
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     oc_connectivity_shutdown_serial();
@@ -124,8 +135,13 @@ oc_connectivity_init(void)
 {
     int rc = -1;
 
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    if (oc_connectivity_init_ip() == 0) {
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+    if (oc_connectivity_init_ip6() == 0) {
+        rc = 0;
+    }
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    if (oc_connectivity_init_ip4() == 0) {
         rc = 0;
     }
 #endif

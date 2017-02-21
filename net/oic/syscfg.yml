@@ -29,6 +29,12 @@ syscfg.defs:
     OC_TRANSPORT_IP:
         description: 'Enables OIC transport over IP UDP'
         value: '0'
+    OC_TRANSPORT_IPV6:
+        description: 'Support IPv6'
+        value: '1'
+    OC_TRANSPORT_IPV4:
+        description: 'Support IPv4'
+        value: '0'
     OC_CLIENT:
         description: 'Enables OIC client support'
         value: '0'
