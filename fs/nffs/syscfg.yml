@@ -20,12 +20,12 @@
 
 syscfg.defs:
     NFFS_FLASH_AREA:
-        description: 'TBD'
+        description: 'Flash area to use for NFFS.'
         type: flash_owner
         value:
         restrictions:
             - $notnull
 
     NFFS_DETECT_FAIL:
-        description: 'TBD'
+        description: 'Controls behaviour when encountering corrupt NFFS area.'
         value: 'NFFS_DETECT_FAIL_FORMAT'

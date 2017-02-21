@@ -20,10 +20,10 @@
 
 syscfg.defs:
     RUNTEST_CLI:
-        description: 'TBD'
+        description: 'CLI commands for accessing tests'
         value: 1
         restrictions:
             - SHELL_TASK
     RUNTEST_NEWTMGR:
-        description: 'TBD'
+        description: 'Newtmgr command to execute tests'
         value: 1

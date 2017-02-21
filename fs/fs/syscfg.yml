@@ -20,7 +20,7 @@
 
 syscfg.defs:
     FS_CLI:
-        description: 'TBD'
+        description: 'CLI commands to interact with files.'
         value: 0
         restrictions:
             - SHELL_TASK
