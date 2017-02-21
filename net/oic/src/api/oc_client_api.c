@@ -263,22 +263,16 @@ oc_stop_observe(const char *uri, oc_server_handle_t *server)
     return status;
 }
 
-bool
-oc_do_ip_discovery(const char *rt, oc_discovery_cb_t handler)
+#if MYNEWT_VAL(OC_TRANSPORT_IP)
+static bool
+oc_send_ip_discovery(oc_server_handle_t *handle, const char *rt,
+                     oc_discovery_cb_t handler)
 {
-    oc_server_handle_t handle;
     oc_client_cb_t *cb;
     bool status = false;
     oc_string_t query;
 
-    oc_make_ip_endpoint(mcast, IP | MULTICAST, 5683,
-                       0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xfd);
-    mcast.oe_ip.v6.scope = 0;
-
-    memcpy(&handle.endpoint, &mcast, sizeof(oc_endpoint_t));
-
-    cb = oc_ri_alloc_client_cb("/oic/res", &handle, OC_GET, handler, LOW_QOS);
-
+    cb = oc_ri_alloc_client_cb("/oic/res", handle, OC_GET, handler, LOW_QOS);
     if (!cb) {
         return false;
     }
@@ -297,4 +291,49 @@ oc_do_ip_discovery(const char *rt, oc_discovery_cb_t handler)
     }
     return status;
 }
+
+#if MYNEWT_VAL(OC_TRANSPORT_IPV6)
+bool
+oc_do_ip6_discovery(const char *rt, oc_discovery_cb_t handler)
+{
+    oc_server_handle_t handle;
+
+    oc_make_ip_endpoint(mcast, IP | MULTICAST, 5683,
+                       0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xfd);
+    mcast.oe_ip.v6.scope = 0;
+    memcpy(&handle.endpoint, &mcast, sizeof(oc_endpoint_t));
+
+    return oc_send_ip_discovery(&handle, rt, handler);
+
+}
+#endif
+
+#if MYNEWT_VAL(OC_TRANSPORT_IPV4)
+bool
+oc_do_ip4_discovery(const char *rt, oc_discovery_cb_t handler)
+{
+    oc_server_handle_t handle;
+
+    oc_make_ip4_endpoint(mcast, IP4 | MULTICAST, 5683, 0xe0, 0, 0x01, 0xbb);
+    memcpy(&handle.endpoint, &mcast, sizeof(oc_endpoint_t));
+
+    return oc_send_ip_discovery(&handle, rt, handler);
+}
+#endif
+
+bool
+oc_do_ip_discovery(const char *rt, oc_discovery_cb_t handler)
+{
+    bool status = false;
+
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+    status = oc_do_ip6_discovery(rt, handler);
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    status = oc_do_ip4_discovery(rt, handler);
+#endif
+    return status;
+}
+#endif
+
 #endif /* OC_CLIENT */
