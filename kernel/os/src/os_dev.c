@@ -232,13 +232,16 @@ err:
 }
 
 /**
- * Lookup a device by name, internal function only.
+ * Lookup a device by name.
+ *
+ * WARNING: This should be called before any locking on the device is done, or
+ * the device list itself is modified in any context.  There is no locking.
  *
  * @param name The name of the device to look up.
  *
  * @return A pointer to the device corresponding to name, or NULL if not found.
  */
-static struct os_dev *
+struct os_dev *
 os_dev_lookup(char *name)
 {
     struct os_dev *dev;
