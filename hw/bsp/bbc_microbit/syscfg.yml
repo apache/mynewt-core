@@ -21,48 +21,38 @@
 
 syscfg.defs:
     BSP_NRF51:
-        description: 'TBD'
+        description: 'Set to indicate that BSP has NRF51'
         value: 1
 
     XTAL_32768_SYNTH:
-        description: 'TBD'
+        description: 'Synthesize 32k clock.'
         value: 1
 
     UART_0:
-        description: 'TBD'
+        description: 'Whether to enable UART0'
         value: 1
     UART_0_PIN_TX:
-        description: 'TBD'
+        description: 'TX pin for UART0'
         value: 24
     UART_0_PIN_RX:
-        description: 'TBD'
+        description: 'RX pin for UART0'
         value: 25
     UART_0_PIN_RTS:
-        description: 'TBD'
+        description: 'RTS pin for UART0'
         value: 0
     UART_0_PIN_CTS:
-        description: 'TBD'
+        description: 'CTS pin for UART0'
         value: 0
 
     SPI_0_MASTER:
-        description: 'SPI 0 master'
+        description: 'Whether to enable SPI 0 in master mode'
         value:  0
     SPI_0_MASTER_SS_PIN:
         description: 'SPI 0 (master) SS pin number.'
         value:  24
-    SPI_1_MASTER:
-        description: 'SPI 1 master'
-        value:  0
-        restrictions:
-            - "!SPI_1_SLAVE"
-    SPI_1_MASTER_SS_PIN:
-        description: 'SPI 1 (master) SS pin number.'
-        value:  -1
     SPI_1_SLAVE:
-        description: 'SPI 1 slave'
+        description: 'Whether to enable SPI 1 in slave mode'
         value:  0
-        restrictions:
-            - "!SPI_1_MASTER"
 
     TIMER_0:
         description: 'NRF51 Timer 0'

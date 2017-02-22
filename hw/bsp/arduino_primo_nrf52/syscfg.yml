@@ -21,51 +21,45 @@
 
 syscfg.defs:
     OPENOCD_DEBUG:
-        description: 'TBD'
+        description: 'Use OpenOCD for JTAG access.'
         value: 0
 
     BSP_NRF52:
-        description: 'TBD'
+        description: 'Set to indicate that BSP has NRF52'
         value: 1
 
     XTAL_32768:
-        description: 'TBD'
+        description: 'External 32k oscillator available.'
         value: 1
 
     UART_0:
-        description: 'TBD'
+        description: 'Whether to enable UART0'
         value:  1
     UART_0_PIN_TX:
-        description: 'TBD'
+        description: 'TX pin for UART0'
         value:  12
     UART_0_PIN_RX:
-        description: 'TBD'
+        description: 'RX pin for UART0'
         value:  11
     UART_0_PIN_RTS:
-        description: 'TBD'
+        description: 'RTS pin for UART0'
         value:  0
     UART_0_PIN_CTS:
-        description: 'TBD'
+        description: 'CTS pin for UART0'
         value:  0
 
     UART_1:
-        description: 'Bitbanger UART'
+        description: 'Whether to enable bitbanger UART1'
         value:  1
     UART_1_PIN_TX:
-        description: 'TBD'
+        description: 'TX pin for UART1'
         value:  6
     UART_1_PIN_RX:
-        description: 'TBD'
+        description: 'RX pin for UART1'
         value:  5
-    UART_1_PIN_RTS:
-        description: 'TBD'
-        value:  0
-    UART_1_PIN_CTS:
-        description: 'TBD'
-        value:  0
 
     SPI_0_MASTER:
-        description: 'SPI 0 master'
+        description: 'Whether to enable SPI 0 in master mode'
         value:  1
         restrictions:
             - "!SPI_0_SLAVE"
@@ -73,7 +67,7 @@ syscfg.defs:
         description: 'SPI 0 (master) SS pin number.'
         value:  19
     SPI_1_MASTER:
-        description: 'SPI 1 master'
+        description: 'Whether to enable SPI 1 in master mode'
         value:  0
         restrictions:
             - "!SPI_1_SLAVE"
@@ -81,12 +75,12 @@ syscfg.defs:
         description: 'SPI 1 (master) SS pin number.'
         value:  -1
     SPI_0_SLAVE:
-        description: 'SPI 0 slave'
+        description: 'Whether to enable SPI 0 in slave mode'
         value:  0
         restrictions:
             - "!SPI_0_MASTER"
     SPI_1_SLAVE:
-        description: 'SPI 1 slave'
+        description: 'Whether to enable SPI 1 in slave mode'
         value:  0
         restrictions:
             - "!SPI_1_MASTER"
