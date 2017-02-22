@@ -33,7 +33,6 @@
 #include "hal/hal_i2c.h"
 
 #if MYNEWT_VAL(BNO055_CLI)
-extern uint8_t g_bno055_mode;
 
 static int bno055_shell_cmd(int argc, char **argv);
 
@@ -254,8 +253,11 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
 
     /* Display the mode */
     if (argc == 2) {
-        val = bno055_get_opr_mode();
-        console_printf("%u\n", (unsigned int)val);
+        rc = bno055_get_opr_mode((uint8_t *)&val);
+        if (rc) {
+            goto err;
+        }
+        console_printf("%u\n", ((unsigned int)(*(uint8_t *)&val)));
     }
 
     /* Update the mode */
@@ -264,7 +266,7 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         /* Make sure mode is valid */
-        if (val > BNO055_OPERATION_MODE_NDOF) {
+        if (val > BNO055_OPR_MODE_NDOF) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
@@ -291,7 +293,10 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
 
     /* Display the mode */
     if (argc == 2) {
-        val = bno055_get_pwr_mode();
+        rc = bno055_get_pwr_mode((uint8_t *)&val);
+        if (rc) {
+            goto err;
+        }
         console_printf("%u\n", (unsigned int)val);
     }
 
@@ -301,7 +306,7 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         /* Make sure mode is valid */
-        if (val > BNO055_POWER_MODE_SUSPEND) {
+        if (val > BNO055_PWR_MODE_SUSPEND) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
@@ -328,7 +333,7 @@ bno055_shell_units_cmd(int argc, char **argv)
 
     /* Display the units */
     if (argc == 2) {
-        val = bno055_get_units();
+        rc = bno055_get_units((uint8_t *)&val);
         console_printf("Acc, linear acc, gravity: %s\n"
                        "Mag field strength: Micro Tesla\n"
                        "Ang rate: %s\n"

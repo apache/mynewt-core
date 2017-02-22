@@ -102,16 +102,6 @@
 #define BNO055_UNIT_SEL_ADDR                                    0X3B
 
 #define BNO055_DATA_SELECT_ADDR                                 0X3C
-#define BNO055_ACC_UNIT_MS2                                      0x0
-#define BNO055_ACC_UNIT_MG                                       0x1
-#define BNO055_ANGRATE_UNIT_DPS                             (0 << 1)
-#define BNO055_ANGRATE_UNIT_RPS                             (1 << 1)
-#define BNO055_EULER_UNIT_DEG                               (0 << 2)
-#define BNO055_EULER_UNIT_RAD                               (1 << 2)
-#define BNO055_TEMP_UNIT_DEGC                               (0 << 4)
-#define BNO055_TEMP_UNIT_DEGF                               (1 << 4)
-#define BNO055_DO_FORMAT_WINDOWS                            (0 << 7)
-#define BNO055_DO_FORMAT_ANDROID                            (1 << 7)
 
 /* Mode registers */
 #define BNO055_OPR_MODE_ADDR                                    0X3D
@@ -179,26 +169,6 @@
 #define BNO055_MAG_RADIUS_LSB_ADDR                              0X69
 #define BNO055_MAG_RADIUS_MSB_ADDR                              0X6A
 
-/* Power modes */
-#define BNO055_POWER_MODE_NORMAL                                0X00
-#define BNO055_POWER_MODE_LOWPOWER                              0X01
-#define BNO055_POWER_MODE_SUSPEND                               0X02
-
-/* Operation Modes */
-#define BNO055_OPERATION_MODE_CONFIG                            0X00
-#define BNO055_OPERATION_MODE_ACCONLY                           0X01
-#define BNO055_OPERATION_MODE_MAGONLY                           0X02
-#define BNO055_OPERATION_MODE_GYRONLY                           0X03
-#define BNO055_OPERATION_MODE_ACCMAG                            0X04
-#define BNO055_OPERATION_MODE_ACCGYRO                           0X05
-#define BNO055_OPERATION_MODE_MAGGYRO                           0X06
-#define BNO055_OPERATION_MODE_AMG                               0X07
-#define BNO055_OPERATION_MODE_IMUPLUS                           0X08
-#define BNO055_OPERATION_MODE_COMPASS                           0X09
-#define BNO055_OPERATION_MODE_M4G                               0X0A
-#define BNO055_OPERATION_MODE_NDOF_FMC_OFF                      0X0B
-#define BNO055_OPERATION_MODE_NDOF                              0X0C
-
 /* Remap config - Default: 0x24 */
 #define BNO055_REMAP_CONFIG_P0                                  0x21
 #define BNO055_REMAP_CONFIG_P1                                  0x24
@@ -247,69 +217,5 @@
 #define BNO055_GYRO_DURN_Z_ADDR                                 0X1D
 #define BNO055_GYRO_ANY_MOTION_THRES_ADDR                       0X1E
 #define BNO055_GYRO_ANY_MOTION_SET_ADDR                         0X1F
-
-/* Accelerometer config */
-#define BNO055_ACC_CFG_2G                                        0x0
-#define BNO055_ACC_CFG_4G                                        0x1
-#define BNO055_ACC_CFG_8G                                        0x2
-#define BNO055_ACC_CFG_16G                                       0x3
-
-#define BNO055_ACC_CFG_BW_7_81HZ                          (0x0 << 2)
-#define BNO055_ACC_CFG_BW_15_63HZ                         (0x1 << 2)
-#define BNO055_ACC_CFG_BW_31_25HZ                         (0x2 << 2)
-#define BNO055_ACC_CFG_BW_6_25HZ                          (0x3 << 2)
-#define BNO055_ACC_CFG_BW_125HZ                           (0x4 << 2)
-#define BNO055_ACC_CFG_BW_250HZ                           (0x5 << 2)
-#define BNO055_ACC_CFG_BW_500HZ                           (0x6 << 2)
-#define BNO055_ACC_CFG_BW_1000HZ                          (0x7 << 2)
-
-#define BNO055_ACC_CFG_OPR_MODE_NORMAL                    (0x0 << 5)
-#define BNO055_ACC_CFG_OPR_MODE_SUSPEND                   (0x1 << 5)
-#define BNO055_ACC_CFG_OPR_MODE_LOWPWR1                   (0x2 << 5)
-#define BNO055_ACC_CFG_OPR_MODE_STD                       (0x3 << 5)
-#define BNO055_ACC_CFG_OPR_MODE_LOWPWR2                   (0x4 << 5)
-#define BNO055_ACC_CFG_OPR_MODE_DSUSPEND                  (0x5 << 5)
-
-/* Gyroscope config */
-#define BNO055_GYR_CFG_RNG_2000DPS                               0x0
-#define BNO055_GYR_CFG_RNG_1000DPS                               0x1
-#define BNO055_GYR_CFG_RNG_500DPS                                0x2
-#define BNO055_GYR_CFG_RNG_250DPS                                0x3
-#define BNO055_GYR_CFG_RNG_125DPS                                0x4
-
-#define BNO055_GYR_CFG_BW_523HZ                           (0x0 << 3)
-#define BNO055_GYR_CFG_BW_230HZ                           (0x1 << 3)
-#define BNO055_GYR_CFG_BW_116HZ                           (0x2 << 3)
-#define BNO055_GYR_CFG_BW_47HZ                            (0x3 << 3)
-#define BNO055_GYR_CFG_BW_23HZ                            (0x4 << 3)
-#define BNO055_GYR_CFG_BW_12HZ                            (0x5 << 3)
-#define BNO055_GYR_CFG_BW_64HZ                            (0x6 << 3)
-#define BNO055_GYR_CFG_BW_32HZ                            (0x7 << 3)
-
-#define BNO055_GYR_CFG_OPR_MODE_NORMAL                    (0x0 << 5)
-#define BNO055_GYR_CFG_OPR_MODE_FAST_PWR_UP               (0x1 << 5)
-#define BNO055_GYR_CFG_OPR_MODE_DSUSPEND                  (0x2 << 5)
-#define BNO055_GYR_CFG_OPR_MODE_SUSPEND                   (0x3 << 5)
-#define BNO055_GYR_CFG_OPR_MODE_ADV_PWR_SAVE              (0x4 << 5)
-
-/* Magnetometer config */
-#define BNO055_MAG_CFG_BW_2HZ                                    0x0
-#define BNO055_MAG_CFG_BW_6HZ                                    0x1
-#define BNO055_MAG_CFG_BW_8HZ                                    0x2
-#define BNO055_MAG_CFG_BW_10HZ                                   0x3
-#define BNO055_MAG_CFG_BW_15HZ                                   0x4
-#define BNO055_MAG_CFG_BW_20HZ                                   0x5
-#define BNO055_MAG_CFG_BW_25HZ                                   0x6
-#define BNO055_MAG_CFG_BW_30HZ                                   0x7
-
-#define BNO055_MAG_CFG_OPR_MODE_LOWPWR                    (0x0 << 3)
-#define BNO055_MAG_CFG_OPR_MODE_REG                       (0x1 << 3)
-#define BNO055_MAG_CFG_OPR_MODE_EREG                      (0x2 << 3)
-#define BNO055_MAG_CFG_OPR_MODE_HIGHACC                   (0x3 << 3)
-
-#define BNO055_MAG_CFG_PWR_MODE_NORMAL                    (0x0 << 5)
-#define BNO055_MAG_CFG_PWR_MODE_SLEEP                     (0x1 << 5)
-#define BNO055_MAG_CFG_PWR_MODE_SUSPEND                   (0x2 << 5)
-#define BNO055_MAG_CFG_PWR_MODE_FORCE_MODE                (0x3 << 5)
 
 #define BNO055_ID                                               0xA0

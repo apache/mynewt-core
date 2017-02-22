@@ -39,9 +39,9 @@ struct sensor_euler_data {
 } __attribute__((packed));
 
 /**
- * Accelerometer data is unused for this field.
+ * Euler angles data is unused for this field.
  */
-#define SENSOR_ACCEL_DATA_UNUSED (-1)
+#define SENSOR_EULER_DATA_UNUSED (-1)
 
 #ifdef __cplusplus
 }

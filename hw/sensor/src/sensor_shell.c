@@ -34,6 +34,8 @@
 #include "sensor/accel.h"
 #include "sensor/mag.h"
 #include "sensor/light.h"
+#include "sensor/quat.h"
+#include "sensor/euler.h"
 #include "console/console.h"
 #include "shell/shell.h"
 
@@ -48,12 +50,13 @@ sensor_display_help(void)
 {
     console_printf("Possible commands for sensor are:\n");
     console_printf("  list\n");
+    console_printf("  read\n");
 }
 
 static void
 sensor_cmd_display_sensor(struct sensor *sensor)
 {
-    console_printf("sensor dev = %s, type = %lld\n", sensor->s_dev->od_name,
+    console_printf("sensor dev = %s, type = 0x%llx\n", sensor->s_dev->od_name,
             sensor->s_types);
 }
 
@@ -100,13 +103,19 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     struct sensor_accel_data *sad;
     struct sensor_mag_data *smd;
     struct sensor_light_data *sld;
+    struct sensor_euler_data *sed;
+    struct sensor_quat_data *sqd;
+    int8_t *temperature;
     char tmpstr[13];
 
     ctx = (struct sensor_shell_read_ctx *) arg;
 
     ++ctx->num_entries;
 
-    if (ctx->type == SENSOR_TYPE_ACCELEROMETER) {
+    if (ctx->type == SENSOR_TYPE_ACCELEROMETER ||
+        ctx->type == SENSOR_TYPE_LINEAR_ACCEL  ||
+        ctx->type == SENSOR_TYPE_GRAVITY) {
+
         sad = (struct sensor_accel_data *) data;
         if (sad->sad_x != SENSOR_ACCEL_DATA_UNUSED) {
             console_printf("x = %s ", sensor_ftostr(sad->sad_x, tmpstr, 13));
@@ -144,6 +153,43 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         }
         if (sld->sld_lux != SENSOR_LIGHT_DATA_UNUSED) {
             console_printf("Lux = %u, ", (unsigned int)sld->sld_lux);
+        }
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_TEMPERATURE) {
+        temperature = (int8_t *) data;
+        console_printf("temprature = %d", *temperature);
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_EULER) {
+        sed = (struct sensor_euler_data *) data;
+        if (sed->sed_h != SENSOR_EULER_DATA_UNUSED) {
+            console_printf("h = %s", sensor_ftostr(sed->sed_h, tmpstr, 13));
+        }
+        if (sed->sed_r != SENSOR_EULER_DATA_UNUSED) {
+            console_printf("r = %s", sensor_ftostr(sed->sed_r, tmpstr, 13));
+        }
+        if (sed->sed_p != SENSOR_EULER_DATA_UNUSED) {
+            console_printf("p = %s", sensor_ftostr(sed->sed_p, tmpstr, 13));
+        }
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_ROTATION_VECTOR) {
+        sqd = (struct sensor_quat_data *) data;
+        if (sqd->sqd_x != SENSOR_QUAT_DATA_UNUSED) {
+            console_printf("x = %s ", sensor_ftostr(sqd->sqd_x, tmpstr, 13));
+        }
+        if (sqd->sqd_y != SENSOR_QUAT_DATA_UNUSED) {
+            console_printf("y = %s ", sensor_ftostr(sqd->sqd_y, tmpstr, 13));
+        }
+        if (sqd->sqd_z != SENSOR_QUAT_DATA_UNUSED) {
+            console_printf("z = %s ", sensor_ftostr(sqd->sqd_z, tmpstr, 13));
+        }
+        if (sqd->sqd_w != SENSOR_QUAT_DATA_UNUSED) {
+            console_printf("w = %s ", sensor_ftostr(sqd->sqd_w, tmpstr, 13));
         }
         console_printf("\n");
     }

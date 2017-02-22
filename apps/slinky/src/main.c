@@ -304,6 +304,14 @@ config_sensor(void)
         goto err;
     }
 
+    bcfg.bc_units = BNO055_ACC_UNIT_MS2   | BNO055_ANGRATE_UNIT_DPS |
+                  BNO055_EULER_UNIT_DEG | BNO055_TEMP_UNIT_DEGC   |
+                  BNO055_DO_FORMAT_ANDROID;
+
+    bcfg.bc_opr_mode = BNO055_OPR_MODE_ACCONLY;
+
+    bcfg.bc_pwr_mode = BNO055_PWR_MODE_NORMAL;
+
     rc = bno055_config((struct bno055 *) dev, &bcfg);
     if (rc) {
         os_dev_close(dev);

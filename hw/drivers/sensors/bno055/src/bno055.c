@@ -102,10 +102,6 @@ static const struct sensor_driver g_bno055_sensor_driver = {
     bno055_sensor_get_config
 };
 
-static uint8_t g_bno055_opr_mode;
-static uint8_t g_bno055_pwr_mode;
-static uint8_t g_bno055_units;
-
 /**
  * Writes a single byte to the specified register
  *
@@ -263,12 +259,12 @@ bno055_set_opr_mode(uint8_t mode)
 {
     int rc;
 
-    rc = bno055_write8(BNO055_OPR_MODE_ADDR, BNO055_OPERATION_MODE_CONFIG);
+    rc = bno055_write8(BNO055_OPR_MODE_ADDR, BNO055_OPR_MODE_CONFIG);
     if (rc) {
         goto err;
     }
 
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 19);
+    os_time_delay((OS_TICKS_PER_SEC * 19)/1000 + 1);
 
     rc = bno055_write8(BNO055_OPR_MODE_ADDR, mode);
     if (rc) {
@@ -276,9 +272,7 @@ bno055_set_opr_mode(uint8_t mode)
     }
 
     /* Refer table 3-6 in the datasheet for the delay values */
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 7);
-
-    g_bno055_opr_mode = mode;
+    os_time_delay((OS_TICKS_PER_SEC * 7)/1000 + 1);
 
     return 0;
 err:
@@ -301,7 +295,6 @@ bno055_set_pwr_mode(uint8_t mode)
         goto err;
     }
 
-    g_bno055_pwr_mode = mode;
     return 0;
 err:
     return rc;
@@ -310,12 +303,25 @@ err:
 /**
  * Read current power mode of the sensor
  *
- * @return mode
+ * @param ptr to mode variableto fill up
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-bno055_get_pwr_mode(void)
+int
+bno055_get_pwr_mode(uint8_t *mode)
 {
-    return g_bno055_pwr_mode;
+    int rc;
+    uint8_t val;
+
+    rc = bno055_read8(BNO055_PWR_MODE_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *mode = val;
+
+    return 0;
+err:
+    return rc;
 }
 
 /**
@@ -334,32 +340,57 @@ bno055_set_units(uint8_t val)
         goto err;
     }
 
-    g_bno055_units = val;
     return 0;
 err:
     return rc;
 }
 
 /**
- * Read current power mode of the sensor
+ * Get units of the sensor
  *
- * @return mode
+ * @param ptr to the units variable
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-bno055_get_units(void)
+int
+bno055_get_units(uint8_t *units)
 {
-    return g_bno055_units;
+    int rc;
+    uint8_t val;
+
+    rc = bno055_read8(BNO055_UNIT_SEL_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *units = val;
+
+    return 0;
+err:
+    return rc;
 }
 
 /**
  * Read current operational mode of the sensor
  *
- * @return mode
+ * @param ptr to mode variable to fill up
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-bno055_get_opr_mode(void)
+int
+bno055_get_opr_mode(uint8_t *mode)
 {
-    return g_bno055_opr_mode;
+    int rc;
+    uint8_t val;
+
+    rc = bno055_read8(BNO055_OPR_MODE_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *mode = val;
+
+    return 0;
+err:
+    return rc;
 }
 
 /**
@@ -403,9 +434,11 @@ bno055_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the accelerometer/magnetometer driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER |
-            SENSOR_TYPE_MAGNETIC_FIELD,
-            (struct sensor_driver *) &g_bno055_sensor_driver);
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER         |
+            SENSOR_TYPE_MAGNETIC_FIELD | SENSOR_TYPE_GYROSCOPE       |
+            SENSOR_TYPE_TEMPERATURE    | SENSOR_TYPE_ROTATION_VECTOR |
+            SENSOR_TYPE_GRAVITY        | SENSOR_TYPE_LINEAR_ACCEL    |
+            SENSOR_TYPE_EULER, (struct sensor_driver *) &g_bno055_sensor_driver);
     if (rc != 0) {
         goto err;
     }
@@ -448,23 +481,23 @@ err:
 /**
  * Use external crystal 32.768KHz
  *
+ * @param operational mode of the sensor
  * @return 0 on success, non-zero on failure
  */
 static int
-bno055_set_ext_xtal_use(uint8_t use_xtal)
+bno055_set_ext_xtal_use(uint8_t use_xtal, uint8_t mode)
 {
     int rc;
-    uint8_t prev_mode;
 
-    prev_mode = g_bno055_opr_mode;
-
-    /* Switch to config mode */
-    rc = bno055_set_opr_mode(BNO055_OPERATION_MODE_CONFIG);
-    if (rc) {
-        goto err;
+    if (mode != BNO055_OPR_MODE_CONFIG) {
+        /* Switch to config mode */
+        rc = bno055_set_opr_mode(BNO055_OPR_MODE_CONFIG);
+        if (rc) {
+            goto err;
+        }
     }
 
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 25);
+    os_time_delay((OS_TICKS_PER_SEC * 25)/1000 + 1);
 
     rc = bno055_write8(BNO055_PAGE_ID_ADDR, 0);
     if (rc) {
@@ -485,15 +518,13 @@ bno055_set_ext_xtal_use(uint8_t use_xtal)
         }
     }
 
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 10);
+    os_time_delay((OS_TICKS_PER_SEC * 10)/1000 + 1);
 
     /* Reset to previous operating mode */
-    rc = bno055_set_opr_mode(prev_mode);
+    rc = bno055_set_opr_mode(mode);
     if (rc) {
         goto err;
     }
-
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
 
     return 0;
 err:
@@ -506,9 +537,6 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
 {
     int rc;
     uint8_t id;
-    uint8_t prev_mode;
-
-    prev_mode = g_bno055_opr_mode;
 
     /* Check if we can read the chip address */
     rc = bno055_get_chip_id(&id);
@@ -517,7 +545,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     }
 
     if (id != BNO055_ID) {
-        os_time_delay(OS_TICKS_PER_SEC/1000 * 100);
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
 
         rc = bno055_get_chip_id(&id);
         if (rc) {
@@ -536,13 +564,13 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
-    rc = bno055_set_opr_mode(BNO055_OPERATION_MODE_CONFIG);
+    rc = bno055_set_opr_mode(BNO055_OPR_MODE_CONFIG);
     if (rc) {
         goto err;
     }
 
     /* Set to normal power mode */
-    rc = bno055_set_pwr_mode(BNO055_POWER_MODE_NORMAL);
+    rc = bno055_set_pwr_mode(cfg->bc_pwr_mode);
     if (rc) {
         goto err;
     }
@@ -552,22 +580,20 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 10);
+    os_time_delay((OS_TICKS_PER_SEC * 10)/1000 + 1);
 
     /**
      * As per Section 5.5 in the BNO055 Datasheet,
      * external crystal should be used for accurate
      * results
      */
-    rc = bno055_set_ext_xtal_use(1);
+    rc = bno055_set_ext_xtal_use(1, BNO055_OPR_MODE_CONFIG);
     if (rc) {
         goto err;
     }
 
     /* Setting units and data output format */
-    rc = bno055_set_units(BNO055_ACC_UNIT_MS2 | BNO055_ANGRATE_UNIT_DPS |
-                          BNO055_EULER_UNIT_DEG | BNO055_TEMP_UNIT_DEGC |
-                          BNO055_DO_FORMAT_ANDROID);
+    rc = bno055_set_units(cfg->bc_units);
     if (rc) {
         goto err;
     }
@@ -575,8 +601,8 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     /* Overwrite the configuration data. */
     memcpy(&bno055->cfg, cfg, sizeof(*cfg));
 
-    /* Change back to previous mode */
-    rc = bno055_set_opr_mode(prev_mode);
+    /* Change mode to requested mode */
+    rc = bno055_set_opr_mode(cfg->bc_opr_mode);
     if (rc) {
         goto err;
     }
@@ -705,7 +731,10 @@ bno055_get_vector_data(void *datastruct, int type)
     y = ((int16_t)payload[2]) | (((int16_t)payload[3]) << 8);
     z = ((int16_t)payload[4]) | (((int16_t)payload[5]) << 8);
 
-    units = bno055_get_units();
+    rc = bno055_get_units(&units);
+    if (rc) {
+        goto err;
+    }
 
     acc_div  = units & BNO055_ACC_UNIT_MG ? 1.0:100.0;
     gyro_div = units & BNO055_ANGRATE_UNIT_RPS ? 900.0:16.0;
@@ -770,13 +799,21 @@ bno055_get_temp(int8_t *temp)
     uint8_t div;
 
     rc = bno055_read8(BNO055_TEMP_ADDR, (uint8_t *)temp);
+    if (rc) {
+        goto err;
+    }
 
-    units = bno055_get_units();
+    rc = bno055_get_units(&units);
+    if (rc) {
+        goto err;
+    }
 
     div = units & BNO055_TEMP_UNIT_DEGF ? 2 : 1;
 
     *temp = *temp/div;
 
+    return 0;
+err:
     return rc;
 }
 
@@ -911,7 +948,7 @@ bno055_get_sys_status(uint8_t *system_status, uint8_t *self_test_result, uint8_t
         }
     }
 
-    os_time_delay(OS_TICKS_PER_SEC/1000 * 200);
+    os_time_delay((OS_TICKS_PER_SEC * 200)/1000 + 1);
 
     return 0;
 err:
@@ -996,7 +1033,11 @@ bno055_sensor_get_config(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
-    cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
+    if (type != SENSOR_TYPE_TEMPERATURE) {
+        cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
+    } else {
+        cfg->sc_valtype = SENSOR_VALUE_TYPE_INT32;
+    }
 
     return (0);
 err:
