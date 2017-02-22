@@ -21,7 +21,7 @@
 
 syscfg.defs:
     BSP_USBMKW41Z:
-        description: 'TBD'
+        description: 'Set to indicate that BSP has MKW41Z'
         value: 1
 
 syscfg.vals:
