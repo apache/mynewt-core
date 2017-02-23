@@ -234,8 +234,6 @@ done:
 struct os_eventq *
 sensor_mgr_evq_get(void)
 {
-    os_eventq_ensure(&sensor_mgr.mgr_eventq, NULL);
-
     return (sensor_mgr.mgr_eventq);
 }
 
