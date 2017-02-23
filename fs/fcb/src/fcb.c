@@ -47,7 +47,10 @@ fcb_init(struct fcb *fcb)
             max_align = flash_area_align(fap);
         }
         rc = fcb_sector_hdr_read(fcb, fap, &fda);
-        if (rc <= 0) {
+        if (rc < 0) {
+            return rc;
+        }
+        if (rc == 0) {
             continue;
         }
         if (oldest < 0) {
