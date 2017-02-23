@@ -304,9 +304,6 @@ coap_notify_observers(oc_resource_t *resource,
     if (m) {
         os_mbuf_free_chain(m);
     }
-    if (m) {
-        os_mbuf_free_chain(m);
-    }
     return num_observers;
 }
 /*---------------------------------------------------------------------------*/
