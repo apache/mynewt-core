@@ -29,6 +29,10 @@
 #include <log/log.h>
 #include <stats/stats.h>
 #include <config/config.h>
+#include <sensor/sensor.h>
+#include <lsm303dlhc/lsm303dlhc.h>
+#include <tsl2561/tsl2561.h>
+#include <bno055/bno055.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -158,11 +162,11 @@ task1_handler(void *arg)
     hal_gpio_init_out(g_led_pin, 1);
 
     if (imgr_my_version(&ver) == 0) {
-        console_printf("\nSlinky %u.%u.%u.%u\n",
+        console_printf("\nSensors Test %u.%u.%u.%u\n",
           ver.iv_major, ver.iv_minor, ver.iv_revision,
           (unsigned int)ver.iv_build_num);
     } else {
-        console_printf("\nSlinky\n");
+        console_printf("\nSensors Test\n");
     }
 
     while (1) {
@@ -233,6 +237,132 @@ init_tasks(void)
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 }
 
+#if !ARCH_sim
+static int
+config_sensor(void)
+{
+    struct os_dev *dev;
+    int rc;
+
+#if MYNEWT_VAL(TSL2561_PRESENT)
+    struct tsl2561_cfg tslcfg;
+
+    dev = (struct os_dev *) os_dev_open("light0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+    rc = tsl2561_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    /* Gain set to 1X and Inetgration time set to 13ms */
+    tslcfg.gain = TSL2561_LIGHT_GAIN_1X;
+    tslcfg.integration_time = TSL2561_LIGHT_ITIME_13MS;
+
+    rc = tsl2561_config((struct tsl2561 *)dev, &tslcfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+    os_dev_close(dev);
+#endif
+
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+    struct lsm303dlhc_cfg lsmcfg;
+
+    dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lsm303dlhc_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    /* read once per sec.  API should take this value in ms. */
+    lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
+    lsmcfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
+
+    rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+    os_dev_close(dev);
+#endif
+
+#if MYNEWT_VAL(BNO055_PRESENT)
+    struct bno055_cfg bcfg;
+
+    dev = (struct os_dev *) os_dev_open("accel1", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = bno055_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        assert(0);
+        goto err;
+    }
+
+    bcfg.bc_units = BNO055_ACC_UNIT_MS2   | BNO055_ANGRATE_UNIT_DPS |
+                  BNO055_EULER_UNIT_DEG | BNO055_TEMP_UNIT_DEGC   |
+                  BNO055_DO_FORMAT_ANDROID;
+
+    bcfg.bc_opr_mode = BNO055_OPR_MODE_ACCONLY;
+
+    bcfg.bc_pwr_mode = BNO055_PWR_MODE_NORMAL;
+
+    rc = bno055_config((struct bno055 *) dev, &bcfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+    os_dev_close(dev);
+#endif
+
+    return (0);
+err:
+    return rc;
+}
+
+#endif
+
+#ifdef ARCH_sim
+static int
+config_sensor(void)
+{
+    struct os_dev *dev;
+    struct cfg;
+    int rc;
+
+    dev = (struct os_dev *) os_dev_open("simaccel0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = sim_accel_init(dev, NULL);
+    if (rc != 0) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    cfg.sac_nr_samples = 10;
+    cfg.sac_nr_axises = 1;
+    /* read once per sec.  API should take this value in ms. */
+    cfg.sac_sample_itvl = OS_TICKS_PER_SEC;
+
+    rc = sim_accel_config((struct sim_accel *) dev, &cfg);
+    if (rc != 0) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    os_dev_close(dev);
+
+    return (0);
+err:
+    return (rc);
+}
+#endif
+
 /**
  * main
  *
@@ -286,10 +416,22 @@ main(int argc, char **argv)
     }
 #endif
 
+#if MYNEWT_VAL(TSL2561_CLI)
+    tsl2561_shell_init();
+#endif
+
+#if MYNEWT_VAL(BNO055_CLI)
+    bno055_shell_init();
+#endif
+
+    config_sensor();
+
     /*
      * As the last thing, process events from default event queue.
      */
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
     }
+
+    return (0);
 }

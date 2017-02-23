@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -6,7 +5,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,30 +16,42 @@
 # under the License.
 #
 
-pkg.name: apps/slinky
-pkg.type: app
-pkg.description: "Example application which uses a variety of mynewt features."
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
+# Package: apps/sensors_test
 
-pkg.deps:
-    - test/flash_test
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
-    - kernel/os
-    - boot/bootutil
-    - sys/shell
-    - sys/config
-    - sys/console/full
-    - sys/id
-    - sys/log/full
-    - sys/stats/full
-    - boot/split
+syscfg.vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
 
-pkg.deps.CONFIG_NFFS:
-    - fs/nffs
+    # Include names for statistics.
+    STATS_NAMES: 1
 
-pkg.deps.CONFIG_FCB:
-    - fs/fcb
+    # Log reboot messages to a flash circular buffer.
+    REBOOT_LOG_FCB: 1
+    LOG_FCB: 1
+
+    CONFIG_FCB: 1
+
+    # Enable shell commands.
+    STATS_CLI: 1
+    LOG_CLI: 1
+    CONFIG_CLI: 1
+
+    # Enable newtmgr commands.
+    STATS_NEWTMGR: 1
+    LOG_NEWTMGR: 1
+    CONFIG_NEWTMGR: 1
+
+    TSL2561_CLI: 1
+    BNO055_CLI: 1
+
+syscfg.defs:
+    TSL2561_PRESENT:
+        description: 'TSL2561 is present'
+        value : 1
+    LSM303DLHC_PRESENT:
+        description: 'LSM303 is present'
+        value : 1
+    BNO055_PRESENT:
+        description: 'BNO055 is present'
+        value : 1
+
