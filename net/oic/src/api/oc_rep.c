@@ -23,11 +23,7 @@
 #include "port/oc_assert.h"
 #include "api/oc_priv.h"
 #include <tinycbor/cbor_mbuf_writer.h>
-<<<<<<< HEAD
-#include <tinycbor/cbor_buf_reader.h>
-=======
 #include <tinycbor/cbor_mbuf_reader.h>
->>>>>>> develop
 
 #ifdef OC_CLIENT
 static struct os_mempool oc_rep_objects;
@@ -35,18 +31,10 @@ static uint8_t oc_rep_objects_area[OS_MEMPOOL_BYTES(EST_NUM_REP_OBJECTS,
       sizeof(oc_rep_t))];
 #endif
 
-<<<<<<< HEAD
-static const CborEncoder g_empty;
-static struct os_mbuf *g_outm;
-CborEncoder g_encoder, root_map, links_array;
-CborError g_err;
-struct CborMbufWriter g_buf_writer;
-=======
 static struct os_mbuf *g_outm;
 CborEncoder g_encoder, root_map, links_array;
 CborError g_err;
 struct cbor_mbuf_writer g_buf_writer;
->>>>>>> develop
 
 void
 oc_rep_new(struct os_mbuf *m)

@@ -177,10 +177,7 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
           coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
             STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt2, omp_next);
         } else {
-<<<<<<< HEAD
-=======
             STATS_INC(oc_ble_stats, iframe);
->>>>>>> develop
             oc_recv_message(om2);
         }
     }
@@ -288,15 +285,9 @@ oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
         STAILQ_NEXT(pkt, omp_next) = NULL;
         return 0;
     }
-<<<<<<< HEAD
-    off = pkt->omp_len % mtu;
-
-    while (off > mtu) {
-=======
 
     off = pkt->omp_len - (pkt->omp_len % mtu);
     while (off >= mtu) {
->>>>>>> develop
         n = os_msys_get_pkthdr(mtu, 0);
         if (!n) {
             goto err;
@@ -347,15 +338,11 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
     mtu = ble_att_mtu(conn_handle);
-<<<<<<< HEAD
-    assert(mtu > 4);
-=======
     if (mtu < 4) {
         oc_ble_coap_conn_del(conn_handle);
         os_mbuf_free_chain(m);
         return;
     }
->>>>>>> develop
     mtu -= 3; /* # of bytes for ATT notification base */
 
     if (oc_ble_frag(m, mtu)) {

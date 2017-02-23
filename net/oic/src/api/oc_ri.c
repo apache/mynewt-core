@@ -347,11 +347,7 @@ does_interface_support_method(oc_resource_t *resource,
 }
 
 bool
-<<<<<<< HEAD
-oc_ri_invoke_coap_entity_handler(coap_packet_t *request,
-=======
 oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
->>>>>>> develop
                                  coap_packet_t *response, int32_t *offset,
                                  oc_endpoint_t *endpoint)
 {

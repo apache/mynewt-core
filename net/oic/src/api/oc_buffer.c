@@ -32,12 +32,6 @@
 
 #include "port/mynewt/adaptor.h"
 
-<<<<<<< HEAD
-static struct os_mempool oc_buffers;
-static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(1, sizeof(oc_message_t))];
-
-=======
->>>>>>> develop
 static struct os_mqueue oc_inq;
 static struct os_mqueue oc_outq;
 
@@ -56,31 +50,6 @@ oc_allocate_mbuf(struct oc_endpoint *oe)
 }
 
 void
-<<<<<<< HEAD
-oc_message_add_ref(oc_message_t *message)
-{
-    if (message) {
-        message->ref_count++;
-    }
-}
-
-void
-oc_message_unref(oc_message_t *message)
-{
-    if (message) {
-        assert(message->ref_count > 0);
-        message->ref_count--;
-        if (message->ref_count == 0) {
-            os_memblock_put(&oc_buffers, message);
-            OC_LOG_DEBUG("buffer: freed oc_message; free: %d\n",
-              oc_buffers.mp_num_free);
-        }
-    }
-}
-
-void
-=======
->>>>>>> develop
 oc_recv_message(struct os_mbuf *m)
 {
     int rc;
@@ -146,22 +115,6 @@ oc_buffer_rx(struct os_event *ev)
     while ((m = os_mqueue_get(&oc_inq)) != NULL) {
         OC_LOG_DEBUG("oc_buffer_rx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
-<<<<<<< HEAD
-
-        if (OS_MBUF_PKTHDR(m)->omp_len > MAX_PAYLOAD_SIZE) {
-            STATS_INC(coap_stats, itoobig);
-            goto free_msg;
-        }
-        if (os_mbuf_copydata(m, 0, OS_MBUF_PKTHDR(m)->omp_len, msg->data)) {
-            STATS_INC(coap_stats, imem);
-            goto free_msg;
-        }
-        memcpy(&msg->endpoint, OC_MBUF_ENDPOINT(m), sizeof(msg->endpoint));
-        msg->length = OS_MBUF_PKTHDR(m)->omp_len;
-        os_mbuf_free_chain(m);
-        m = NULL;
-=======
->>>>>>> develop
 
 #ifdef OC_SECURITY
         /*
@@ -172,25 +125,11 @@ oc_buffer_rx(struct os_event *ev)
             OC_LOG_DEBUG("oc_buffer_rx: encrypted request\n");
             oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
         } else {
-<<<<<<< HEAD
-            coap_receive(msg);
-        }
-#else
-        coap_receive(msg);
-#endif
-free_msg:
-        if (msg) {
-            oc_message_unref(msg);
-=======
             coap_receive(m);
         }
 #else
         coap_receive(&m);
 #endif
-        if (m) {
-            os_mbuf_free_chain(m);
->>>>>>> develop
-        }
         if (m) {
             os_mbuf_free_chain(m);
         }
@@ -200,11 +139,6 @@ free_msg:
 void
 oc_buffer_init(void)
 {
-<<<<<<< HEAD
-    os_mempool_init(&oc_buffers, 1, sizeof(oc_message_t), oc_buffer_area,
-                    "oc_bufs");
-=======
->>>>>>> develop
     os_mqueue_init(&oc_inq, oc_buffer_rx, NULL);
     os_mqueue_init(&oc_outq, oc_buffer_tx, NULL);
 }

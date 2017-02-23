@@ -19,14 +19,8 @@
 
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
-<<<<<<< HEAD
-
-#include <mmc/mmc.h>
-
-=======
 #include <disk/disk.h>
 #include <mmc/mmc.h>
->>>>>>> develop
 #include <stdio.h>
 
 #define MIN(n, m) (((n) < (m)) ? (n) : (m))
@@ -366,11 +360,7 @@ wait_busy(struct mmc_cfg *mmc)
  * @return 0 on success, non-zero on failure
  */
 int
-<<<<<<< HEAD
-mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, size_t len)
-=======
 mmc_read(uint8_t mmc_id, uint32_t addr, void *buf, uint32_t len)
->>>>>>> develop
 {
     uint8_t cmd;
     uint8_t res;
@@ -458,11 +448,7 @@ out:
  * @return 0 on success, non-zero on failure
  */
 int
-<<<<<<< HEAD
-mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, size_t len)
-=======
 mmc_write(uint8_t mmc_id, uint32_t addr, const void *buf, uint32_t len)
->>>>>>> develop
 {
     uint8_t cmd;
     uint8_t res;
@@ -596,8 +582,6 @@ out:
     hal_gpio_write(mmc->ss_pin, 1);
     return (rc);
 }
-<<<<<<< HEAD
-=======
 
 /*
  *
@@ -616,4 +600,3 @@ struct disk_ops mmc_ops = {
     .write = &mmc_write,
     .ioctl = &mmc_ioctl,
 };
->>>>>>> develop

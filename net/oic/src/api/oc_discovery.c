@@ -136,7 +136,6 @@ oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
     rt_len = oc_ri_get_query_value(req->query, req->query_len, "rt", &rt);
 
     oc_uuid_to_str(oc_core_get_device_id(0), uuid, sizeof(uuid));
-<<<<<<< HEAD
 
     switch (interface) {
     case OC_IF_LL: {
@@ -158,29 +157,6 @@ oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
 
     int response_length = oc_rep_finalize();
 
-=======
-
-    switch (interface) {
-    case OC_IF_LL: {
-        oc_rep_start_links_array();
-        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
-        oc_rep_end_links_array();
-    } break;
-    case OC_IF_BASELINE: {
-        oc_rep_start_root_object();
-        oc_process_baseline_interface(req->resource);
-        oc_rep_set_array(root, links);
-        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
-        oc_rep_close_array(root, links);
-        oc_rep_end_root_object();
-    } break;
-    default:
-        break;
-    }
-
-    int response_length = oc_rep_finalize();
-
->>>>>>> develop
     if (matches && response_length > 0) {
         req->response->response_buffer->response_length = response_length;
         req->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
