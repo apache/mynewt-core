@@ -101,7 +101,6 @@ static uint16_t g_nlip_expected_len;
 static struct os_eventq *
 shell_evq_get(void)
 {
-    os_eventq_ensure(&shell_evq, NULL);
     return shell_evq;
 }
 
@@ -607,4 +606,6 @@ shell_init(void)
 
     os_mqueue_init(&g_shell_nlip_mq, shell_event_data_in, NULL);
     console_init(shell_console_rx_cb);
+
+    shell_evq_set(os_eventq_dflt_get());
 }

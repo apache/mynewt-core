@@ -28,7 +28,7 @@ fsutil_read_file(const char *path, uint32_t offset, uint32_t len, void *dst,
 
     rc = fs_open(path, FS_ACCESS_READ, &file);
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
     rc = fs_read(file, len, dst, out_len);
@@ -51,7 +51,7 @@ fsutil_write_file(const char *path, const void *data, uint32_t len)
 
     rc = fs_open(path, FS_ACCESS_WRITE, &file);
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
     rc = fs_write(file, data, len);

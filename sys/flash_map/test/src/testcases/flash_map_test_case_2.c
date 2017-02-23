@@ -33,14 +33,10 @@ TEST_CASE(flash_map_test_case_2)
     uint8_t wd[256];
     uint8_t rd[256];
 
-#if MYNEWT_VAL(SELFTEST)
-    sysinit();
-#endif
-
     rc = flash_area_open(FLASH_AREA_IMAGE_0, &fa);
     TEST_ASSERT_FATAL(rc == 0, "flash_area_open() fail");
 
-    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, NULL, &sec_cnt, fa_sectors);
+    rc = flash_area_to_sectors(FLASH_AREA_IMAGE_0, &sec_cnt, fa_sectors);
     TEST_ASSERT_FATAL(rc == 0, "flash_area_to_sectors failed");
 
     /*

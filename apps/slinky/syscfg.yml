@@ -40,17 +40,3 @@ syscfg.vals:
     STATS_NEWTMGR: 1
     LOG_NEWTMGR: 1
     CONFIG_NEWTMGR: 1
-
-    OS_MAIN_TASK_PRIO: 10
-    OS_MAIN_STACK_SIZE: 512
-
-syscfg.defs:
-    TSL2561_PRESENT:
-        description: 'TSL2561 is present'
-        value: 0
-    LSM303DLHC_PRESENT:
-        description: 'LSM303 is present'
-        value: 0
-    BNO055_PRESENT:
-        description: 'BNO055 is present'
-        value: 0

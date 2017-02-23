@@ -30,7 +30,8 @@ extern "C" {
         (reason == HAL_RESET_WATCHDOG ? "WDOG" :                        \
           (reason == HAL_RESET_SOFT ? "SOFT" :                          \
             (reason == HAL_RESET_BROWNOUT ? "BROWNOUT" :                \
-              "UNKNOWN")))))
+              (reason == HAL_RESET_REQUESTED ? "REQUESTED" :            \
+                "UNKNOWN"))))))
 
 int reboot_init_handler(int log_store_type, uint8_t entries);
 int log_reboot(enum hal_reset_reason);

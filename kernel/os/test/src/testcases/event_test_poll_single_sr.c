@@ -24,11 +24,6 @@ TEST_CASE(event_test_poll_single_sr)
 {
     int i;
 
-#if MYNEWT_VAL(SELFTEST)
-    /* Initializing the OS */
-    os_init();
-    sysinit();
-#endif
     /* Initialize the task */
     os_task_init(&eventq_task_poll_single_s, "eventq_task_poll_single_s",
         eventq_task_poll_single_send, NULL, SEND_TASK_POLL_SINGLE_PRIO,
@@ -44,10 +39,4 @@ TEST_CASE(event_test_poll_single_sr)
 
         m_event[i].ev_arg = (void *)(intptr_t)(10 * i);
     }
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Does not return until OS_restart is called */
-    os_start();
-#endif
-
 }

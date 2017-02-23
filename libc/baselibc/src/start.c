@@ -19,10 +19,9 @@
 #include <stdlib.h>
 
 #include <sysinit/sysinit.h>
+#include <os/os.h>
 
 extern int main(int argc, char **argv);
-extern void os_init(void);
-extern void os_start(void);
 
 /*
  * Rudimentary startup function.
@@ -35,7 +34,7 @@ void _start(void)
     rc = main(0, NULL);
     exit(rc);
 #else
-    os_init();
+    os_init(main);
     os_start();
 #endif
 }

@@ -29,6 +29,9 @@ pkg.keywords:
 
 pkg.cflags: -DSTM32F407xx
 
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
 pkg.deps:
     - hw/mcu/stm/stm32f4xx
     - libc/baselibc

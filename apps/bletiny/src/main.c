@@ -71,6 +71,10 @@
 #define BLETINY_MAX_DSCS               1
 #endif
 
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+#define BLETINY_COC_MTU               (256)
+#endif
+
 struct log bletiny_log;
 
 bssnz_t struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
@@ -85,6 +89,14 @@ static struct os_mempool bletiny_chr_pool;
 static void *bletiny_dsc_mem;
 static struct os_mempool bletiny_dsc_pool;
 
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+static void *bletiny_coc_conn_mem;
+static struct os_mempool bletiny_coc_conn_pool;
+
+static void *bletiny_sdu_coc_mem;
+static struct os_mempool bletiny_sdu_coc_pool;
+#endif
+
 static struct os_callout bletiny_tx_timer;
 struct bletiny_tx_data_s
 {
@@ -97,7 +109,10 @@ static struct bletiny_tx_data_s bletiny_tx_data;
 int bletiny_full_disc_prev_chr_val;
 
 #define XSTR(s) STR(s)
+#ifndef STR
 #define STR(s) #s
+#endif
+
 
 #ifdef DEVICE_NAME
 #define BLETINY_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
@@ -121,10 +136,9 @@ static void
 bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint8_t *u8p;
-    ble_uuid_any_t uuid;
     int i;
 
-    if (fields->flags_is_present) {
+    if (fields->flags != 0) {
         console_printf("    flags=0x%02x:\n", fields->flags);
 
         if (!(fields->flags & BLE_HS_ADV_F_DISC_LTD) &&
@@ -149,7 +163,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    uuids16(%scomplete)=",
                        fields->uuids16_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids16; i++) {
-            console_printf("0x%04x ", fields->uuids16[i]);
+            print_uuid(&fields->uuids16[i].u);
+            console_printf(" ");
         }
         console_printf("\n");
     }
@@ -158,7 +173,8 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
         console_printf("    uuids32(%scomplete)=",
                        fields->uuids32_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids32; i++) {
-            console_printf("0x%08x ", (unsigned int)fields->uuids32[i]);
+            print_uuid(&fields->uuids32[i].u);
+            console_printf(" ");
         }
         console_printf("\n");
     }
@@ -166,12 +182,9 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids128 != NULL) {
         console_printf("    uuids128(%scomplete)=",
                        fields->uuids128_is_complete ? "" : "in");
-        u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            ble_uuid_init_from_buf(&uuid, u8p, 16);
-            print_uuid(&uuid.u);
+            print_uuid(&fields->uuids128[i].u);
             console_printf(" ");
-            u8p += 16;
         }
         console_printf("\n");
     }
@@ -185,13 +198,6 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->tx_pwr_lvl_is_present) {
         console_printf("    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
-    }
-
-    if (fields->device_class != NULL) {
-        console_printf("    device_class=");
-        print_bytes(fields->device_class,
-                            BLE_HS_ADV_DEVICE_CLASS_LEN);
-        console_printf("\n");
     }
 
     if (fields->slave_itvl_range != NULL) {
@@ -224,16 +230,6 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->adv_itvl_is_present) {
         console_printf("    adv_itvl=0x%04x\n", fields->adv_itvl);
-    }
-
-    if (fields->le_addr != NULL) {
-        console_printf("    le_addr=");
-        print_addr(fields->le_addr);
-        console_printf("\n");
-    }
-
-    if (fields->le_role_is_present) {
-        console_printf("    le_role=0x%02x\n", fields->le_role);
     }
 
     if (fields->svc_data_uuid32 != NULL) {
@@ -615,6 +611,7 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
 
     conn->handle = desc->conn_handle;
     SLIST_INIT(&conn->svcs);
+    SLIST_INIT(&conn->coc_list);
 
     return conn;
 }
@@ -694,7 +691,7 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
                 bletiny_full_disc_prev_chr_val <= chr->chr.def_handle) {
 
                 rc = bletiny_disc_all_dscs(conn_handle,
-                                           chr->chr.val_handle + 1,
+                                           chr->chr.val_handle,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
                     bletiny_full_disc_complete(rc);
@@ -893,6 +890,7 @@ static int
 bletiny_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
+    struct ble_hs_adv_fields fields;
     int conn_idx;
     int rc;
 
@@ -923,8 +921,8 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISC:
         console_printf("received advertisement; event_type=%d rssi=%d "
                        "addr_type=%d addr=", event->disc.event_type,
-                       event->disc.rssi, event->disc.addr_type);
-        print_addr(event->disc.addr);
+                       event->disc.rssi, event->disc.addr.type);
+        print_addr(event->disc.addr.val);
 
         /*
          * There is no adv data to print in case of connectable
@@ -940,7 +938,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                                event->disc.length_data);
         print_bytes(event->disc.data, event->disc.length_data);
         console_printf(" fields:\n");
-        bletiny_print_adv_fields(event->disc.fields);
+        ble_hs_adv_parse_fields(&fields, event->disc.data,
+                                event->disc.length_data);
+        bletiny_print_adv_fields(&fields);
         console_printf("\n");
         return 0;
 
@@ -1026,6 +1026,13 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
                        event->mtu.value);
         return 0;
 
+    case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+        console_printf("identity resolved ");
+        rc = ble_gap_conn_find(event->identity_resolved.conn_handle, &desc);
+        assert(rc == 0);
+        print_conn_desc(&desc);
+        return 0;
+
     default:
         return 0;
     }
@@ -1061,8 +1068,8 @@ bletiny_tx_timer_cb(struct os_event *ev)
     if (om) {
         /* Put the HCI header in the mbuf */
         om->om_len = len + 4;
-        htole16(om->om_data, bletiny_tx_data.tx_handle);
-        htole16(om->om_data + 2, len);
+        put_le16(om->om_data, bletiny_tx_data.tx_handle);
+        put_le16(om->om_data + 2, len);
         dptr = om->om_data + 4;
 
         /*
@@ -1070,7 +1077,7 @@ bletiny_tx_timer_cb(struct os_event *ev)
          * The rest of the data gets filled with incrementing pattern starting
          * from 0.
          */
-        htole16(dptr, len - 4);
+        put_le16(dptr, len - 4);
         dptr[2] = 0xff;
         dptr[3] = 0xff;
         dptr += 4;
@@ -1156,7 +1163,7 @@ bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
 {
     int rc;
 
-    rc = ble_gattc_disc_all_dscs(conn_handle, start_handle - 1, end_handle,
+    rc = ble_gattc_disc_all_dscs(conn_handle, start_handle, end_handle,
                                  bletiny_on_disc_d, NULL);
     return rc;
 }
@@ -1308,26 +1315,24 @@ bletiny_adv_stop(void)
 }
 
 int
-bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
-                  const uint8_t *peer_addr, int32_t duration_ms,
-                  const struct ble_gap_adv_params *params)
+bletiny_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
+                  int32_t duration_ms, const struct ble_gap_adv_params *params)
 {
     int rc;
 
-    rc = ble_gap_adv_start(own_addr_type, peer_addr_type, peer_addr,
-                           duration_ms, params, bletiny_gap_event, NULL);
+    rc = ble_gap_adv_start(own_addr_type, direct_addr, duration_ms, params,
+                           bletiny_gap_event, NULL);
     return rc;
 }
 
 int
-bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
-                      uint8_t *peer_addr, int32_t duration_ms,
-                      struct ble_gap_conn_params *params)
+bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                      int32_t duration_ms, struct ble_gap_conn_params *params)
 {
     int rc;
 
-    rc = ble_gap_connect(own_addr_type, peer_addr_type, peer_addr, duration_ms,
-                         params, bletiny_gap_event, NULL);
+    rc = ble_gap_connect(own_addr_type, peer_addr, duration_ms, params,
+                         bletiny_gap_event, NULL);
 
     return rc;
 }
@@ -1351,11 +1356,11 @@ bletiny_term_conn(uint16_t conn_handle, uint8_t reason)
 }
 
 int
-bletiny_wl_set(struct ble_gap_white_entry *white_list, int white_list_count)
+bletiny_wl_set(ble_addr_t *addrs, int addrs_count)
 {
     int rc;
 
-    rc = ble_gap_wl_set(white_list, white_list_count);
+    rc = ble_gap_wl_set(addrs, addrs_count);
     return rc;
 }
 
@@ -1474,8 +1479,7 @@ bletiny_sec_restart(uint16_t conn_handle,
         }
 
         memset(&key_sec, 0, sizeof key_sec);
-        key_sec.peer_addr_type = desc.peer_id_addr_type;
-        memcpy(key_sec.peer_addr, desc.peer_id_addr, 6);
+        key_sec.peer_addr = desc.peer_id_addr;
 
         rc = ble_hs_atomic_conn_flags(conn_handle, &conn_flags);
         if (rc != 0) {
@@ -1558,12 +1562,195 @@ bletiny_on_reset(int reason)
     console_printf("Error: Resetting state; reason=%d\n", reason);
 }
 
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
+
+static int
+bletiny_l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    struct bletiny_l2cap_coc *prev, *cur;
+
+    conn = bletiny_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    coc = os_memblock_get(&bletiny_coc_conn_pool);
+    if (!coc) {
+        return ENOMEM;
+    }
+
+    coc->chan = chan;
+
+    prev = NULL;
+    SLIST_FOREACH(cur, &conn->coc_list, next) {
+        prev = cur;
+    }
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&conn->coc_list, coc, next);
+    } else {
+        SLIST_INSERT_AFTER(prev, coc, next);
+    }
+
+    return 0;
+}
+
+static void
+bletiny_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
+{
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    struct bletiny_l2cap_coc *cur;
+
+    conn = bletiny_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    coc = NULL;
+    SLIST_FOREACH(cur, &conn->coc_list, next) {
+        if (cur->chan == chan) {
+            coc = cur;
+            break;
+        }
+    }
+
+    if (!coc) {
+        return;
+    }
+
+    SLIST_REMOVE(&conn->coc_list, coc, bletiny_l2cap_coc, next);
+    os_memblock_put(&bletiny_coc_conn_pool, coc);
+}
+
+static void
+bletiny_l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu)
+{
+    console_printf("LE CoC SDU received, chan: 0x%08lx\n", (uint32_t) chan);
+}
+
+static int
+bletiny_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
+                           struct ble_l2cap_chan *chan)
+{
+    struct os_mbuf *sdu_rx;
+
+    sdu_rx = os_memblock_get(&bletiny_sdu_coc_pool);
+    if (!sdu_rx) {
+            return BLE_HS_ENOMEM;
+    }
+
+    ble_l2cap_recv_ready(chan, sdu_rx);
+
+    return 0;
+}
+
+static int
+bletiny_l2cap_event(struct ble_l2cap_event *event, void *arg)
+{
+    switch(event->type) {
+        case BLE_L2CAP_EVENT_COC_CONNECTED:
+            if (event->connect.status) {
+                console_printf("LE COC error: %d\n", event->connect.status);
+                return 0;
+            }
+
+            console_printf("LE COC connected, conn: %d, chan: 0x%08lx\n",
+                           event->connect.conn_handle,
+                           (uint32_t) event->connect.chan);
+
+            bletiny_l2cap_coc_add(event->connect.conn_handle,
+                                  event->connect.chan);
+
+            return 0;
+        case BLE_L2CAP_EVENT_COC_DISCONNECTED:
+            console_printf("LE CoC disconnected, chan: 0x%08lx\n",
+                           (uint32_t) event->disconnect.chan);
+
+            bletiny_l2cap_coc_remove(event->disconnect.conn_handle,
+                                     event->disconnect.chan);
+            return 0;
+        case BLE_L2CAP_EVENT_COC_ACCEPT:
+            return bletiny_l2cap_coc_accept(event->accept.conn_handle,
+                                            event->accept.peer_sdu_size,
+                                            event->accept.chan);
+
+        case BLE_L2CAP_EVENT_COC_DATA_RECEIVED:
+            bletiny_l2cap_coc_recv(event->receive.chan, event->receive.sdu_rx);
+            return 0;
+        default:
+            return 0;
+    }
+}
+#endif
+
+int
+bletiny_l2cap_create_srv(uint16_t psm)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    return ble_l2cap_create_server(psm, BLETINY_COC_MTU, bletiny_l2cap_event,
+                                                                       NULL);
+#endif
+}
+
+int
+bletiny_l2cap_connect(uint16_t conn_handle, uint16_t psm)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    struct os_mbuf *sdu_rx;
+
+    sdu_rx = os_memblock_get(&bletiny_sdu_coc_pool);
+    assert(sdu_rx != NULL);
+
+    return ble_l2cap_connect(conn_handle, psm, BLETINY_COC_MTU, sdu_rx,
+                             bletiny_l2cap_event, NULL);
+#endif
+}
+
+int
+bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    struct bletiny_conn *conn;
+    struct bletiny_l2cap_coc *coc;
+    int i;
+
+    conn = bletiny_conn_find(conn_handle);
+    assert(conn != NULL);
+
+    i = 0;
+    SLIST_FOREACH(coc, &conn->coc_list, next) {
+        if (i == idx) {
+                break;
+        }
+        i++;
+    }
+    assert(coc != NULL);
+
+    ble_l2cap_disconnect(coc->chan);
+
+    return 0;
+#endif
+}
+
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages,
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -1602,6 +1789,31 @@ main(void)
                          sizeof (struct bletiny_dsc), bletiny_dsc_mem,
                          "bletiny_dsc_pool");
     assert(rc == 0);
+
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
+    /* For testing we want to support all the available channels */
+    bletiny_sdu_coc_mem = malloc(
+        OS_MEMPOOL_BYTES(BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct os_mbuf)));
+    assert(bletiny_sdu_coc_mem != NULL);
+
+    rc = os_mempool_init(&bletiny_sdu_coc_pool,
+                         BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct os_mbuf), bletiny_sdu_coc_mem,
+                         "bletiny_coc_sdu_pool");
+    assert(rc == 0);
+
+    bletiny_coc_conn_mem = malloc(
+        OS_MEMPOOL_BYTES(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct bletiny_l2cap_coc)));
+    assert(bletiny_coc_conn_mem != NULL);
+
+    rc = os_mempool_init(&bletiny_coc_conn_pool,
+                         MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         sizeof (struct bletiny_l2cap_coc), bletiny_coc_conn_mem,
+                         "bletiny_coc_conn_pool");
+    assert(rc == 0);
+#endif
 
     /* Initialize the logging system. */
     log_register("bletiny", &bletiny_log, &log_console_handler, NULL,

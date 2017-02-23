@@ -20,7 +20,7 @@
 
 syscfg.defs:
     WIFI_MGMT_CLI:
-        description: 'TBD'
+        description: 'CLI for interacting with Wi-Fi interfaces'
         value: 0
         restrictions:
             - SHELL_TASK

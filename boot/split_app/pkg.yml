@@ -21,5 +21,9 @@ pkg.name: boot/split_app
 pkg.description: Required by the application half of a split image.  The split image library helps manage and configure split image operation.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
+pkg.deps:
+    - kernel/os
 pkg.keywords:
     - split
+    - boot
+    - image

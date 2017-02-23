@@ -19,10 +19,10 @@
 
 syscfg.defs:
     CRASH_TEST_CLI:
-        description: 'TBD'
+        description: 'CLI for trying out crashes'
         value: 1
         restrictions:
             - SHELL_TASK
     CRASH_TEST_NEWTMGR:
-        description: 'TBD'
+        description: 'Newtmgr commands for crashing'
         value: 1

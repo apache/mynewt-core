@@ -367,9 +367,9 @@ err:
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages, calls
+ * init_tasks to initialize additional tasks (and possibly other objects),
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -412,7 +412,7 @@ main(int argc, char **argv)
         void *entry;
         rc = split_app_go(&entry, true);
         if(rc == 0) {
-            hal_system_start(entry);
+            hal_system_restart(entry);
         }
     }
 #endif

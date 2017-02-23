@@ -41,7 +41,7 @@ int
 tu_init(void)
 {
 #if MYNEWT_VAL(SELFTEST)
-    os_init();
+    os_init(NULL);
     sysinit();
 #endif
 

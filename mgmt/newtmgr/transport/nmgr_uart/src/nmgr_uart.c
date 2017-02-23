@@ -75,8 +75,7 @@ nmgr_uart_out(struct nmgr_transport *nt, struct os_mbuf *m)
     struct nmgr_uart_state *nus = (struct nmgr_uart_state *)nt;
     struct os_mbuf_pkthdr *mpkt;
     struct os_mbuf *n;
-    char tmp_buf[12];
-    uint16_t crc;
+    uint16_t tmp_buf[6];
     char *dst;
     int off;
     int boff;
@@ -89,32 +88,49 @@ nmgr_uart_out(struct nmgr_transport *nt, struct os_mbuf *m)
     assert(OS_MBUF_IS_PKTHDR(m));
     mpkt = OS_MBUF_PKTHDR(m);
 
+    /*
+     * Compute CRC-16 and append it to end.
+     */
     off = 0;
-    crc = CRC16_INITIAL_CRC;
+    tmp_buf[0] = CRC16_INITIAL_CRC;
     for (n = m; n; n = SLIST_NEXT(n, om_next)) {
-        crc = crc16_ccitt(crc, n->om_data, n->om_len);
+        tmp_buf[0] = crc16_ccitt(tmp_buf[0], n->om_data, n->om_len);
     }
-    crc = htons(crc);
-    dst = os_mbuf_extend(m, sizeof(crc));
+    tmp_buf[0] = htons(tmp_buf[0]);
+    dst = os_mbuf_extend(m, sizeof(uint16_t));
     if (!dst) {
         goto err;
     }
-    memcpy(dst, &crc, sizeof(crc));
+    memcpy(dst, tmp_buf, sizeof(uint16_t));
 
+    /*
+     * Create another mbuf chain with base64 encoded data.
+     */
     n = os_msys_get(SHELL_NLIP_MAX_FRAME, 0);
     if (!n || OS_MBUF_TRAILINGSPACE(n) < 32) {
         goto err;
     }
 
     while (off < mpkt->omp_len) {
-        tx_sz = 2;
-        dst = os_mbuf_extend(n, 2);
+        /*
+         * First fragment has a different header, and length of the full frame
+         * (need to base64 encode that).
+         */
         if (off == 0) {
-            *(uint16_t *)dst = htons(SHELL_NLIP_PKT);
-            *(uint16_t *)tmp_buf = htons(mpkt->omp_len);
-            boff = 2;
+            tmp_buf[0] = htons(SHELL_NLIP_PKT);
         } else {
-            *(uint16_t *)dst = htons(SHELL_NLIP_DATA);
+            tmp_buf[0] = htons(SHELL_NLIP_DATA);
+        }
+        rc = os_mbuf_append(n, tmp_buf, sizeof(uint16_t));
+        if (rc) {
+            goto err;
+        }
+        tx_sz = 2;
+
+        if (off == 0) {
+            tmp_buf[0] = htons(mpkt->omp_len);
+            boff = sizeof(uint16_t);
+        } else {
             boff = 0;
         }
 
@@ -128,7 +144,7 @@ nmgr_uart_out(struct nmgr_transport *nt, struct os_mbuf *m)
             if (tx_sz + BASE64_ENCODE_SIZE(slen + boff) >= 124) {
                 break;
             }
-            rc = os_mbuf_copydata(m, off, slen, tmp_buf + boff);
+            rc = os_mbuf_copydata(m, off, slen, (uint8_t *)tmp_buf + boff);
             assert(rc == 0);
 
             off += slen;
@@ -327,7 +343,7 @@ nmgr_uart_rx_char(void *arg, uint8_t data)
         assert(!nus->nus_rx_q);
         nus->nus_rx_q = nus->nus_rx;
         nus->nus_rx = NULL;
-        os_eventq_put(g_mgmt_evq, &nus->nus_cb_ev);
+        os_eventq_put(mgmt_evq_get(), &nus->nus_cb_ev);
         return 0;
     } else {
         rc = os_mbuf_append(m, &data, 1);

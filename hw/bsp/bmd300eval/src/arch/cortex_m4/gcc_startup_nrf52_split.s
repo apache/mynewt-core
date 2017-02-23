@@ -83,8 +83,11 @@ __isr_vector_split:
 Reset_Handler_split:
     .fnstart
 
-    /* Clear BSS */
+    /* Clear CPU state before proceeding */
     mov     r0, #0
+    msr     control, r0
+    msr     primask, r0
+    /* Clear BSS */
     ldr     r2, =__bss_start__
     ldr     r3, =__bss_end__
 .bss_zero_loop:

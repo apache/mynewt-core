@@ -289,32 +289,39 @@ os_eventq_dflt_get(void)
     return &os_eventq_main;
 }
 
+/**
+ * Reassigns an event queue pointer to the specified value.  This function is
+ * used for configuring a package to use a particular event queue.  A package's
+ * event queue can generally be reassigned repeatedly.  If the package has a
+ * startup event, the event is moved from the current queue (if any) to the
+ * specified queue.
+ *
+ * @param cur_evq               Points to the eventq pointer to reassign.
+ *                                  *cur_evq should be NULL if the package's
+ *                                  eventq has not been assigned yet.
+ * @param new_evq               The eventq that the package should be
+ *                                  associated with.
+ * @param start_ev              The package's startup event, if any.  If this
+ *                                  is non-NULL, the event gets removed from
+ *                                  the current queue (if set), and enqueued to
+ *                                  the new eventq.
+ */
 void
-os_eventq_designate(struct os_eventq **dst, struct os_eventq *val,
+os_eventq_designate(struct os_eventq **cur_evq,
+                    struct os_eventq *new_evq,
                     struct os_event *start_ev)
 {
-    *dst = val;
+    struct os_eventq *prev_evq;
+
+    prev_evq = *cur_evq;
+    *cur_evq = new_evq;
+
     if (start_ev != NULL) {
-        os_eventq_put(*dst, start_ev);
-    }
-}
-
-void
-os_eventq_ensure(struct os_eventq **evq, struct os_event *start_ev)
-{
-    struct os_eventq *eventq_dflt;
-
-    if (*evq == NULL) {
-        eventq_dflt = os_eventq_dflt_get();
-        if (eventq_dflt != NULL) {
-            os_eventq_designate(evq, eventq_dflt, start_ev);
+        if (start_ev->ev_queued) {
+            assert(prev_evq != NULL);
+            os_eventq_remove(prev_evq, start_ev);
         }
-
-        /* The system is misconfigured if there is still no parent eventq.  The
-         * application should have explicitly specified a parent queue for each
-         * package, or indicated a default.
-         */
-        assert(*evq != NULL);
+        os_eventq_put(new_evq, start_ev);
     }
 }
 

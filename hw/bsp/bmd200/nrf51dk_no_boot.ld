@@ -1,30 +1,26 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- * 
- *  http://www.apache.org/licenses/LICENSE-2.0
+/* Linker script for Nordic Semiconductor nRF5 devices
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Version: Sourcery G++ 4.5-1
+ * Support: https://support.codesourcery.com/GNUToolchain/
+ *
+ * Copyright (c) 2007, 2008, 2009, 2010 CodeSourcery, Inc.
+ *
+ * The authors hereby grant permission to use, copy, modify, distribute,
+ * and license this software and its documentation for any purpose, provided
+ * that existing copyright notices are retained in all copies and that this
+ * notice is included verbatim in any distributions.  No written agreement,
+ * license, or royalty fee is required for any of the authorized uses.
+ * Modifications to this software may be copyrighted by their authors
+ * and need not follow the licensing terms described here, provided that
+ * the new terms are clearly indicated on the first page of each file where
+ * they apply.
  */
+OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
-/* Linker script for STM32F407 when running code from SRAM */
-
-/* Linker script to configure memory regions. */
 MEMORY
-{ 
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 1024K
-  CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000
+{
+  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x40000
+  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x8000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -46,19 +42,13 @@ MEMORY
  *   __data_end__
  *   __bss_start__
  *   __bss_end__
- *   __end__
- *   end
  *   __HeapBase
  *   __HeapLimit
  *   __StackLimit
  *   __StackTop
  *   __stack
- *   __coredata_start__
- *   __coredata_end__
- *   __corebss_start__
- *   __corebss_end__
- *   __ecoredata
- *   __ecorebss
+ *   __bssnz_start__
+ *   __bssnz_end__
  */
 ENTRY(Reset_Handler)
 
@@ -66,8 +56,9 @@ SECTIONS
 {
     .text :
     {
-        __vector_tbl_reloc__ = .;
+        __isr_vector_start = .;
         KEEP(*(.isr_vector))
+        __isr_vector_end = .;
         *(.text*)
 
         KEEP(*(.init))
@@ -89,86 +80,68 @@ SECTIONS
 
         *(.rodata*)
 
-        KEEP(*(.eh_frame*))
-    } > RAM
+        *(.eh_frame*)
+        . = ALIGN(4);
+    } > FLASH
+
 
     .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > RAM
+        . = ALIGN(4);
+    } > FLASH
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > RAM
-
+        . = ALIGN(4);
+    } > FLASH
     __exidx_end = .;
 
-    . = ALIGN(8);
     __etext = .;
 
-    .coredata : AT (__etext)
+    /* Keep first in RAM, as well as in bootloader */
+    .vector_relocation :
     {
-        __coredata_start__ = .;
-        *(.data.core)
-        . = ALIGN(8);
-        __coredata_end__ = .;
-    } > CCM
-
-    __ecoredata = __etext + SIZEOF(.coredata);
-
-    /* This section is here so that the start of .data has the same VMA and LMA */
-    .ram_coredata (NOLOAD):
-    {
-        . = . + SIZEOF(.coredata);
+        . = ALIGN(4);
+        __vector_tbl_reloc__ = .;
+        . = . + (__isr_vector_end - __isr_vector_start);
+        . = ALIGN(4);
     } > RAM
-
-    .data : AT (__ecoredata)
+            
+    .data : AT (__etext)
     {
         __data_start__ = .;
         *(vtable)
         *(.data*)
 
+        . = ALIGN(4);
         /* preinit data */
         PROVIDE_HIDDEN (__preinit_array_start = .);
-        KEEP(*(.preinit_array))
+        *(.preinit_array)
         PROVIDE_HIDDEN (__preinit_array_end = .);
 
         . = ALIGN(4);
         /* init data */
         PROVIDE_HIDDEN (__init_array_start = .);
-        KEEP(*(SORT(.init_array.*)))
-        KEEP(*(.init_array))
+        *(SORT(.init_array.*))
+        *(.init_array)
         PROVIDE_HIDDEN (__init_array_end = .);
 
 
         . = ALIGN(4);
         /* finit data */
         PROVIDE_HIDDEN (__fini_array_start = .);
-        KEEP(*(SORT(.fini_array.*)))
-        KEEP(*(.fini_array))
+        *(SORT(.fini_array.*))
+        *(.fini_array)
         PROVIDE_HIDDEN (__fini_array_end = .);
 
-        KEEP(*(.jcr*))
+        *(.jcr)
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
-
     } > RAM
-
-    .corebss (NOLOAD):
-    {
-        . = ALIGN(4);
-        __corebss_start__ = .;
-        *(.bss.core)
-        . = ALIGN(4);
-        __corebss_end__ = .;
-        *(.corebss*)
-        *(.bss.core.nz)
-        . = ALIGN(4);
-        __ecorebss = .;
-    } > CCM
 
     .bss :
     {
@@ -180,8 +153,8 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
+    /* Heap starts after BSS */
     __HeapBase = .;
-    __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
      * used for linker to calculate size of stack sections, and assign
@@ -189,14 +162,18 @@ SECTIONS
     .stack_dummy (COPY):
     {
         *(.stack*)
-    } > CCM
+    } > RAM
 
-    /* Set stack top to end of CCM; stack limit is bottom of stack */
-    __StackTop = ORIGIN(CCM) + LENGTH(CCM);
+    /* Set stack top to end of RAM, and stack limit move down by
+     * size of stack_dummy section */
+    __StackTop = ORIGIN(RAM) + LENGTH(RAM);
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
-    
-    /* Check for CCM overflow */
-    ASSERT(__StackLimit >= __ecorebss, "CCM overflow!")
+
+    /* Top of head is the bottom of the stack */
+    __HeapLimit = __StackLimit;
+
+    /* Check if data + heap + stack exceeds RAM limit */
+    ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
 }
 

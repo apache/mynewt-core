@@ -23,6 +23,7 @@
 #include <tinycbor/cbor.h>
 #include <inttypes.h>
 #include <os/os.h>
+#include <os/endian.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,8 +35,15 @@ extern "C" {
 #define NMGR_OP_WRITE_RSP       (3)
 
 struct nmgr_hdr {
-    uint8_t  nh_op;             /* NMGR_OP_XXX */
-    uint8_t  nh_flags;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
+    uint8_t  _res1:5;
+#endif
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  _res1:5;
+    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
+#endif
+    uint8_t  nh_flags;          /* XXX reserved for future flags */
     uint16_t nh_len;            /* length of the payload */
     uint16_t nh_group;          /* NMGR_GROUP_XXX */
     uint8_t  nh_seq;            /* sequence number */
@@ -66,7 +74,6 @@ struct nmgr_transport {
 };
 
 void nmgr_event_put(struct os_event *ev);
-int nmgr_task_init(void);
 int nmgr_transport_init(struct nmgr_transport *nt,
         nmgr_transport_out_func_t output_func,
         nmgr_transport_get_mtu_func_t get_mtu_func);

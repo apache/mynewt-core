@@ -29,7 +29,6 @@
 #include "config/config_fcb.h"
 #include "config_priv.h"
 
-#define CONF_FCB_MAGIC		0xc0ffeeee
 #define CONF_FCB_VERS		1
 
 struct conf_fcb_load_cb_arg {
@@ -51,7 +50,6 @@ conf_fcb_src(struct conf_fcb *cf)
 {
     int rc;
 
-    cf->cf_fcb.f_magic = CONF_FCB_MAGIC;
     cf->cf_fcb.f_version = CONF_FCB_VERS;
     cf->cf_fcb.f_scratch_cnt = 1;
 

@@ -82,14 +82,14 @@ void
 print_conn_desc(const struct ble_gap_conn_desc *desc)
 {
     BLECENT_LOG(DEBUG, "handle=%d our_ota_addr_type=%d our_ota_addr=%s ",
-                desc->conn_handle, desc->our_ota_addr_type,
-                addr_str(desc->our_ota_addr));
+                desc->conn_handle, desc->our_ota_addr.type,
+                addr_str(desc->our_ota_addr.val));
     BLECENT_LOG(DEBUG, "our_id_addr_type=%d our_id_addr=%s ",
-                desc->our_id_addr_type, addr_str(desc->our_id_addr));
+                desc->our_id_addr.type, addr_str(desc->our_id_addr.val));
     BLECENT_LOG(DEBUG, "peer_ota_addr_type=%d peer_ota_addr=%s ",
-                desc->peer_ota_addr_type, addr_str(desc->peer_ota_addr));
+                desc->peer_ota_addr.type, addr_str(desc->peer_ota_addr.val));
     BLECENT_LOG(DEBUG, "peer_id_addr_type=%d peer_id_addr=%s ",
-                desc->peer_id_addr_type, addr_str(desc->peer_id_addr));
+                desc->peer_id_addr.type, addr_str(desc->peer_id_addr.val));
     BLECENT_LOG(DEBUG, "conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d",
                 desc->conn_itvl, desc->conn_latency,
@@ -103,12 +103,11 @@ print_conn_desc(const struct ble_gap_conn_desc *desc)
 void
 print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
-    char s[BLE_HCI_MAX_ADV_DATA_LEN];
+    char s[BLE_HS_ADV_MAX_SZ];
     const uint8_t *u8p;
-    ble_uuid_any_t uuid;
     int i;
 
-    if (fields->flags_is_present) {
+    if (fields->flags != 0) {
         BLECENT_LOG(DEBUG, "    flags=0x%02x\n", fields->flags);
     }
 
@@ -116,7 +115,8 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
         BLECENT_LOG(DEBUG, "    uuids16(%scomplete)=",
                     fields->uuids16_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids16; i++) {
-            BLECENT_LOG(DEBUG, "0x%04x ", fields->uuids16[i]);
+            print_uuid(&fields->uuids16[i].u);
+            BLECENT_LOG(DEBUG, " ");
         }
         BLECENT_LOG(DEBUG, "\n");
     }
@@ -125,7 +125,8 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
         BLECENT_LOG(DEBUG, "    uuids32(%scomplete)=",
                     fields->uuids32_is_complete ? "" : "in");
         for (i = 0; i < fields->num_uuids32; i++) {
-            BLECENT_LOG(DEBUG, "0x%08x ", fields->uuids32[i]);
+            print_uuid(&fields->uuids32[i].u);
+            BLECENT_LOG(DEBUG, " ");
         }
         BLECENT_LOG(DEBUG, "\n");
     }
@@ -133,12 +134,9 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
     if (fields->uuids128 != NULL) {
         BLECENT_LOG(DEBUG, "    uuids128(%scomplete)=",
                     fields->uuids128_is_complete ? "" : "in");
-        u8p = fields->uuids128;
         for (i = 0; i < fields->num_uuids128; i++) {
-            ble_uuid_init_from_buf(&uuid, u8p, 16);
-            print_uuid(&uuid.u);
+            print_uuid(&fields->uuids128[i].u);
             BLECENT_LOG(DEBUG, " ");
-            u8p += 16;
         }
         BLECENT_LOG(DEBUG, "\n");
     }
@@ -153,12 +151,6 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->tx_pwr_lvl_is_present) {
         BLECENT_LOG(DEBUG, "    tx_pwr_lvl=%d\n", fields->tx_pwr_lvl);
-    }
-
-    if (fields->device_class != NULL) {
-        BLECENT_LOG(DEBUG, "    device_class=");
-        print_bytes(fields->device_class, BLE_HS_ADV_DEVICE_CLASS_LEN);
-        BLECENT_LOG(DEBUG, "\n");
     }
 
     if (fields->slave_itvl_range != NULL) {
@@ -189,14 +181,6 @@ print_adv_fields(const struct ble_hs_adv_fields *fields)
 
     if (fields->adv_itvl_is_present) {
         BLECENT_LOG(DEBUG, "    adv_itvl=0x%04x\n", fields->adv_itvl);
-    }
-
-    if (fields->le_addr != NULL) {
-        BLECENT_LOG(DEBUG, "    le_addr=%s\n", addr_str(fields->le_addr));
-    }
-
-    if (fields->le_role_is_present) {
-        BLECENT_LOG(DEBUG, "    le_role=0x%02x\n", fields->le_role);
     }
 
     if (fields->svc_data_uuid32 != NULL) {

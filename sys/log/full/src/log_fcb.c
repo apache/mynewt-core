@@ -99,12 +99,12 @@ log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
+log_fcb_walk(struct log *log, log_walk_func_t walk_func,
+             struct log_offset *log_offset)
 {
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_entry *locp;
-    struct encode_off *encode_off = (struct encode_off *)arg;
     int rc;
 
     rc = 0;
@@ -113,14 +113,14 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func, void *arg)
     memset(&loc, 0, sizeof(loc));
 
     /*
-     * if timestamp for request is < 1, return last log entry
+     * if timestamp for request is < 0, return last log entry
      */
-    if (encode_off->eo_ts < 0) {
+    if (log_offset->lo_ts < 0) {
         locp = &fcb->f_active;
-        rc = walk_func(log, arg, (void *)locp, locp->fe_data_len);
+        rc = walk_func(log, log_offset, (void *)locp, locp->fe_data_len);
     } else {
         while (fcb_getnext(fcb, &loc) == 0) {
-            rc = walk_func(log, arg, (void *) &loc, loc.fe_data_len);
+            rc = walk_func(log, log_offset, (void *) &loc, loc.fe_data_len);
             if (rc) {
                 break;
             }
@@ -218,11 +218,10 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     struct fcb fcb_scratch;
     struct fcb *fcb;
     const struct flash_area *ptr;
-    uint32_t offset;
+    struct fcb_entry entry;
     int rc;
 
     rc = 0;
-    offset = 0;
     if (!log) {
         rc = -1;
         goto err;
@@ -249,13 +248,13 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     }
 
     /* Calculate offset of n-th last entry */
-    rc = fcb_offset_last_n(fcb, fcb_log->fl_entries, &offset);
+    rc = fcb_offset_last_n(fcb, fcb_log->fl_entries, &entry);
     if (rc) {
         goto err;
     }
 
     /* Copy to scratch */
-    rc = log_fcb_copy(log, fcb, &fcb_scratch, offset);
+    rc = log_fcb_copy(log, fcb, &fcb_scratch, entry.fe_elem_off);
     if (rc) {
         goto err;
     }

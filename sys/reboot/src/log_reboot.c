@@ -23,7 +23,6 @@
 #include "syscfg/syscfg.h"
 #include "sysflash/sysflash.h"
 #include "os/os.h"
-#include "console/console.h"
 #include "log/log.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
@@ -46,13 +45,15 @@ static char reboot_cnt_str[12];
 static char soft_reboot_str[12];
 static char *reboot_cnt_get(int argc, char **argv, char *buf, int max_len);
 static int reboot_cnt_set(int argc, char **argv, char *val);
+static int reboot_cnt_export(void (*export_func)(char *name, char *val),
+                             enum conf_export_tgt tgt);
 
 struct conf_handler reboot_conf_handler = {
     .ch_name = "reboot",
     .ch_get = reboot_cnt_get,
     .ch_set = reboot_cnt_set,
     .ch_commit = NULL,
-    .ch_export = NULL
+    .ch_export = reboot_cnt_export
 };
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
@@ -106,10 +107,12 @@ reboot_init_handler(int log_store_type, uint8_t entries)
             arg = &reboot_log_fcb;
             break;
 #endif
+#if MYNEWT_VAL(REBOOT_LOG_CONSOLE)
        case LOG_STORE_CONSOLE:
             reboot_log_handler = (struct log_handler *)&log_console_handler;
             arg = NULL;
             break;
+#endif
        default:
             assert(0);
     }
@@ -149,18 +152,18 @@ log_reboot(enum hal_reset_reason reason)
 
     reboot_tmp_cnt = reboot_cnt;
 
-    if (reason == HAL_RESET_SOFT) {
+    if (reason == HAL_RESET_REQUESTED) {
         /*
-         * Save reboot count as soft reboot cnt if the reason is
-         * a soft reboot
+         * Save soft_reboot as 1 if user is requesting restart.
          */
-        reboot_tmp_cnt = reboot_cnt + 1;
+        reboot_tmp_cnt = 1;
         conf_save_one("reboot/soft_reboot",
                       conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
                                           str, sizeof(str)));
+        reboot_tmp_cnt = reboot_cnt + 1;
     } else {
         conf_save_one("reboot/soft_reboot", "0");
-        if (soft_reboot) {
+        if (soft_reboot && reason == HAL_RESET_SOFT) {
             /* No need to log as it's not a hard reboot */
             goto err;
         } else {
@@ -229,6 +232,16 @@ err:
     return OS_ENOENT;
 }
 
+static int
+reboot_cnt_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
+{
+    if (tgt == CONF_EXPORT_SHOW) {
+        func("reboot/reboot_cnt", reboot_cnt_str);
+        func("reboot/soft_reboot", soft_reboot_str);
+    }
+    return 0;
+}
+
 void
 log_reboot_pkg_init(void)
 {
@@ -244,8 +257,10 @@ log_reboot_pkg_init(void)
 #if MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT)
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     type = LOG_STORE_FCB;
-#else
+#elif MYNEWT_VAL(REBOOT_LOG_CONSOLE)
     type = LOG_STORE_CONSOLE;
+#else
+#error "sys/reboot included, but no log target"
 #endif
     rc = reboot_init_handler(type, MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT));
     SYSINIT_PANIC_ASSERT(rc == 0);

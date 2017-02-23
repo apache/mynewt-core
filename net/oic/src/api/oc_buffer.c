@@ -104,6 +104,7 @@ oc_buffer_tx(struct os_event *ev)
     struct os_mbuf *m;
 
     while ((m = os_mqueue_get(&oc_outq)) != NULL) {
+        STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next) = NULL;
         OC_LOG_DEBUG("oc_buffer_tx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 #ifdef OC_CLIENT

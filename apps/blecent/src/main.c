@@ -243,7 +243,7 @@ blecent_scan(void)
     disc_params.filter_policy = 0;
     disc_params.limited = 0;
 
-    rc = ble_gap_disc(BLE_ADDR_TYPE_PUBLIC, BLE_HS_FOREVER, &disc_params,
+    rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params,
                       blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error initiating GAP discovery procedure; rc=%d\n",
@@ -259,6 +259,8 @@ blecent_scan(void)
 static int
 blecent_should_connect(const struct ble_gap_disc_desc *disc)
 {
+    struct ble_hs_adv_fields fields;
+    int rc;
     int i;
 
     /* The device has to be advertising connectability. */
@@ -268,11 +270,16 @@ blecent_should_connect(const struct ble_gap_disc_desc *disc)
         return 0;
     }
 
+    rc = ble_hs_adv_parse_fields(&fields, disc->data, disc->length_data);
+    if (rc != 0) {
+        return rc;
+    }
+
     /* The device has to advertise support for the Alert Notification
      * service (0x1811).
      */
-    for (i = 0; i < disc->fields->num_uuids16; i++) {
-        if (disc->fields->uuids16[i] == BLECENT_SVC_ALERT_UUID) {
+    for (i = 0; i < fields.num_uuids16; i++) {
+        if (ble_uuid_u16(&fields.uuids16[i].u) == BLECENT_SVC_ALERT_UUID) {
             return 1;
         }
     }
@@ -305,11 +312,12 @@ blecent_connect_if_interesting(const struct ble_gap_disc_desc *disc)
     /* Try to connect the the advertiser.  Allow 30 seconds (30000 ms) for
      * timeout.
      */
-    rc = ble_gap_connect(BLE_ADDR_TYPE_PUBLIC, disc->addr_type, disc->addr,
-                         30000, NULL, blecent_gap_event, NULL);
+    rc = ble_gap_connect(BLE_OWN_ADDR_PUBLIC, &disc->addr, 30000, NULL,
+                         blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to connect to device; addr_type=%d "
-                           "addr=%s\n", disc->addr_type, addr_str(disc->addr));
+                           "addr=%s\n", disc->addr.type,
+                           addr_str(disc->addr.val));
         return;
     }
 }
@@ -332,12 +340,19 @@ static int
 blecent_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
+    struct ble_hs_adv_fields fields;
     int rc;
 
     switch (event->type) {
     case BLE_GAP_EVENT_DISC:
+        rc = ble_hs_adv_parse_fields(&fields, event->disc.data,
+                                     event->disc.length_data);
+        if (rc != 0) {
+            return 0;
+        }
+
         /* An advertisment report was received during GAP discovery. */
-        print_adv_fields(event->disc.fields);
+        print_adv_fields(&fields);
 
         /* Try to connect to the advertiser if it looks interesting. */
         blecent_connect_if_interesting(&event->disc);

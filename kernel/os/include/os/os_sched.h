@@ -35,7 +35,7 @@ void os_sched_os_timer_exp(void);
 os_error_t os_sched_insert(struct os_task *);
 int os_sched_sleep(struct os_task *, os_time_t nticks);
 int os_sched_wakeup(struct os_task *);
-int os_sched_suspend(struct os_task *);
+int os_sched_remove(struct os_task *);
 void os_sched_resort(struct os_task *);
 os_time_t os_sched_wakeup_ticks(os_time_t now);
 

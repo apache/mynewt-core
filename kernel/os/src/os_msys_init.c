@@ -100,6 +100,7 @@ os_msys_init(void)
 {
     os_msys_reset();
 
+    (void)os_msys_init_once;
 #if MYNEWT_VAL(MSYS_1_BLOCK_COUNT) > 0
     os_msys_init_once(os_msys_init_1_data,
                       &os_msys_init_1_mempool,

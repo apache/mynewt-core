@@ -37,24 +37,15 @@
 static int imgr_upload(struct mgmt_cbuf *);
 
 static const struct mgmt_handler imgr_nmgr_handlers[] = {
-    [IMGMGR_NMGR_OP_STATE] = {
+    [IMGMGR_NMGR_ID_STATE] = {
         .mh_read = imgmgr_state_read,
         .mh_write = imgmgr_state_write,
     },
-    [IMGMGR_NMGR_OP_UPLOAD] = {
+    [IMGMGR_NMGR_ID_UPLOAD] = {
         .mh_read = NULL,
         .mh_write = imgr_upload
     },
-    [IMGMGR_NMGR_OP_FILE] = {
-#if MYNEWT_VAL(IMGMGR_FS)
-        .mh_read = imgr_file_download,
-        .mh_write = imgr_file_upload
-#else
-        .mh_read = NULL,
-        .mh_write = NULL
-#endif
-    },
-    [IMGMGR_NMGR_OP_CORELIST] = {
+    [IMGMGR_NMGR_ID_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_list,
         .mh_write = NULL
@@ -63,7 +54,7 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_write = NULL
 #endif
     },
-    [IMGMGR_NMGR_OP_CORELOAD] = {
+    [IMGMGR_NMGR_ID_CORELOAD] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_load,
         .mh_write = imgr_core_erase,

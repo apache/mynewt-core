@@ -37,28 +37,32 @@
 extern "C" {
 #endif
 
-/*
- * shared amongst all os tests
+/* These test tasks must have a lower priority than the main task (i.e.,
+ * greater number).  These tasks should not start running until the main task
+ * has created all of them and goes idle.  The reason is that these tasks need
+ * to interract with one another, so they require all sibling tasks to be
+ * running.
  */
+#define TASK1_PRIO (MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1)
+#define TASK2_PRIO (TASK1_PRIO + 1)
+#define TASK3_PRIO (TASK2_PRIO + 1)
+#define TASK4_PRIO (TASK3_PRIO + 1)
+
 extern struct os_task task1;
 extern os_stack_t *stack1;
 extern uint32_t stack1_size;
-#define TASK1_PRIO (20) 
 
 extern struct os_task task2;
 extern os_stack_t *stack2;
 extern uint32_t stack2_size;
-#define TASK2_PRIO (21) 
 
 extern struct os_task task3;
 extern os_stack_t *stack3;
 extern uint32_t stack3_size;
-#define TASK3_PRIO (22) 
 
 extern struct os_task task4;
 extern os_stack_t *stack4;
 extern uint32_t stack4_size;
-#define TASK4_PRIO (23) 
 
 void os_test_restart(void);
 

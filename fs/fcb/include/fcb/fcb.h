@@ -127,8 +127,12 @@ int fcb_free_sector_cnt(struct fcb *fcb);
  */
 int fcb_is_empty(struct fcb *fcb);
 
+/*
+ * Element at offset *entries* from last position (backwards).
+ */
 int
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries, uint32_t *last_n_off);
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
+        struct fcb_entry *last_n_entry);
 
 /*
  * Clears FCB passed to it

@@ -28,6 +28,9 @@
  *   @defgroup OSMempool Memory Pools
  *   @{
  */
+/*
+#define OS_CHECK_DUP_FREE 1
+*/
 
 #define OS_MEMPOOL_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
 
@@ -202,6 +205,11 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
         return OS_INVALID_PARM;
     }
 
+#ifdef OS_CHECK_DUP_FREE
+    SLIST_FOREACH(block, mp, mb_next) {
+        assert(block != (struct os_memblock *)block_addr);
+    }
+#endif
     block = (struct os_memblock *)block_addr;
     OS_ENTER_CRITICAL(sr);
 

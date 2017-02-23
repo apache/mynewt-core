@@ -126,25 +126,10 @@ extern char buildID[TESTBENCH_BUILDID_SZ];
 /*
  * Pool of test worker tasks and matching stacks
  */
-#ifndef TASK1_PRIO
-#define TASK1_PRIO (21) 
 struct os_task task1;
-#endif
-
-#ifndef TASK2_PRIO
-#define TASK2_PRIO (22) 
 struct os_task task2;
-#endif
-
-#ifndef TASK3_PRIO
-#define TASK3_PRIO (23) 
 struct os_task task3;
-#endif
-
-#ifndef TASK4_PRIO
-#define TASK4_PRIO (24) 
 struct os_task task4;
-#endif
 
 /*
  * stacks are re-used to minimize space on the target

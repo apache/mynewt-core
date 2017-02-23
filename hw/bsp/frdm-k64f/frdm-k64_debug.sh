@@ -42,5 +42,6 @@ pyocd-gdbserver &
 set +m
 
 echo "target remote localhost:3333" > $GDB_CMD_FILE
+echo "mem 0x20030000 0xffffffff rw nocache" >> $GDB_CMD_FILE
 arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
 rm $GDB_CMD_FILE

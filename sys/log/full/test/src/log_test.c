@@ -46,7 +46,8 @@ int str_idx = 0;
 int str_max_idx = 0;
 
 int
-log_test_walk1(struct log *log, void *arg, void *dptr, uint16_t len)
+log_test_walk1(struct log *log, struct log_offset *log_offset,
+               void *dptr, uint16_t len)
 {
     int rc;
     struct log_entry_hdr ueh;
@@ -74,7 +75,8 @@ log_test_walk1(struct log *log, void *arg, void *dptr, uint16_t len)
 }
 
 int
-log_test_walk2(struct log *log, void *arg, void *dptr, uint16_t len)
+log_test_walk2(struct log *log, struct log_offset *log_offset,
+               void *dptr, uint16_t len)
 {
     TEST_ASSERT(0);
     return 0;

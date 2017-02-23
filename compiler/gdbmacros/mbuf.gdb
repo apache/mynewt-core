@@ -51,6 +51,26 @@ Prints the packet header associated with the specified mbuf.  If the specified
 mbuf does not contain a packet header, the output is indeterminate.
 end
 
+define mn_mbuf_usrhdr_print
+    # Calculate address of user header.
+    set $data_addr = (uint8_t *)&($arg0)->om_data
+    set $phdr_addr = $data_addr + sizeof(struct os_mbuf)
+    set $uhdr_addr = $phdr_addr + sizeof(struct os_mbuf_pkthdr)
+
+    # Determine length of user header.
+    set $uhdr_len = $uhdr_addr - $phdr_addr
+
+    # Print header.
+    p/x *$uhdr_addr@$uhdr_len
+end
+
+document mn_mbuf_usrhdr_print
+usage: mn_mbuf_usrhdr_print <struct os_mbuf *>
+
+Prints the user header associated with the specified mbuf.  If the specified
+mbuf does not contain a user header, the output is indeterminate.
+end
+
 define mn_mbuf_print
     set $om = (struct os_mbuf *)($arg0)
 
@@ -60,6 +80,11 @@ define mn_mbuf_print
     if ($om)->om_pkthdr_len > 0
         printf "Packet header: "
         mn_mbuf_pkthdr_print $om
+    end
+
+    if ($om)->om_pkthdr_len > sizeof (struct os_mbuf_pkthdr)
+        printf "User header: "
+        mn_mbuf_usrhdr_print $om
     end
 end
 
@@ -154,13 +179,22 @@ Applies the mn_mbuf_print function to each element in the specified pool.  Both
 allocated and unallocated mbufs are printed.
 end
 
-document mn_mbuf_pool_print
+define mn_msys1_print
+    mn_mbuf_pool_print &os_msys_init_1_mbuf_pool 
+end
+
+document mn_msys1_print
 usage: mn_msys1_print
 
 Prints all mbufs in the first msys pool.  Both allocated and unallocated mbufs
 are printed.
 end
 
-define mn_msys1_print
-    mn_mbuf_pool_print &os_msys_init_1_mbuf_pool 
+define mn_msys1_free_print
+    set $om = os_msys_init_1_mempool.slh_first
+
+    while $om != 0
+        printf "Mbuf addr: %p\n", $om
+        set $om = $om->mb_next.sle_next
+    end
 end

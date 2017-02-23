@@ -27,7 +27,3 @@ syscfg.vals:
 
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
-
-    # Default task settings
-    OS_MAIN_TASK_PRIO: 10
-    OS_MAIN_STACK_SIZE: 428

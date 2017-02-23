@@ -55,17 +55,17 @@ static void
 bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr_type);
-    print_addr(desc->our_ota_addr);
+                desc->conn_handle, desc->our_ota_addr.type);
+    print_addr(desc->our_ota_addr.val);
     BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr_type);
-    print_addr(desc->our_id_addr);
+                desc->our_id_addr.type);
+    print_addr(desc->our_id_addr.val);
     BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr_type);
-    print_addr(desc->peer_ota_addr);
+                desc->peer_ota_addr.type);
+    print_addr(desc->peer_ota_addr.val);
     BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr_type);
-    print_addr(desc->peer_id_addr);
+                desc->peer_id_addr.type);
+    print_addr(desc->peer_id_addr.val);
     BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
@@ -98,14 +98,15 @@ bleprph_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
-    /* Indicate that the flags field should be included; specify a value of 0
-     * to instruct the stack to fill the value in for us.
+    /* Advertise two flags:
+     *     o Discoverability in forthcoming advertisement (general)
+     *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags_is_present = 1;
-    fields.flags = 0;
+    fields.flags = BLE_HS_ADV_F_DISC_GEN |
+                   BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
-     * stack fill this one automatically as well.  This is done by assiging the
+     * stack fill this value automatically.  This is done by assiging the
      * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
      */
     fields.tx_pwr_lvl_is_present = 1;
@@ -116,8 +117,9 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids128 =
-        BLE_UUID128(BLE_UUID128_DECLARE(OC_GATT_SERVICE_UUID))->value;
+    fields.uuids128 = (ble_uuid128_t []) {
+        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
+    };
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 
@@ -131,7 +133,7 @@ bleprph_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -259,7 +261,7 @@ app_get_light(oc_request_t *request, oc_interface_mask_t interface)
         state = false;
     }
     oc_rep_start_root_object();
-        switch (interface) {
+    switch (interface) {
     case OC_IF_BASELINE:
         oc_process_baseline_interface(request->resource);
     case OC_IF_RW:
@@ -328,9 +330,8 @@ static const oc_handler_t omgr_oc_handler = {
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages,
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -355,13 +356,9 @@ main(void)
 
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
-    ble_hs_evq_set(os_eventq_dflt_get());
-
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    mgmt_evq_set(os_eventq_dflt_get());
-
     oc_ble_coap_gatt_srv_init();
+
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;

@@ -62,13 +62,24 @@ uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Some application configurations */
-#define BLETEST_ROLE_ADVERTISER         (0)
-#define BLETEST_ROLE_SCANNER            (1)
-#define BLETEST_ROLE_INITIATOR          (2)
+#define BLETEST_ROLE_NONE               (0)
+#define BLETEST_ROLE_ADVERTISER         (1)
+#define BLETEST_ROLE_SCANNER            (2)
+#define BLETEST_ROLE_INITIATOR          (3)
 
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_ADVERTISER
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_ADVERTISER
+#endif
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_SCANNER
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_SCANNER
+#endif
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_INITIATOR
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_INITIATOR
+#endif
+
+#ifndef BLETEST_CFG_ROLE
+#error "No role defined! Must define a valid role in syscfg.yml in apps/bletest"
+#endif
 
 /* Advertiser config */
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
@@ -649,7 +660,7 @@ bletest_init_scanner(void)
 #endif
         if (add_whitelist & 1) {
             rc = bletest_hci_le_add_to_whitelist(g_bletest_cur_peer_addr,
-                                                 BLE_ADDR_TYPE_RANDOM);
+                                                 BLE_ADDR_RANDOM);
             assert(rc == 0);
         }
     }
@@ -876,11 +887,11 @@ bletest_send_packet(uint16_t handle)
 #endif
 
         /* Put the HCI header in the mbuf */
-        htole16(om->om_data, handle);
-        htole16(om->om_data + 2, pktlen + 4);
+        put_le16(om->om_data, handle);
+        put_le16(om->om_data + 2, pktlen + 4);
 
         /* Place L2CAP header in packet */
-        htole16(om->om_data + 4, pktlen);
+        put_le16(om->om_data + 4, pktlen);
         om->om_data[6] = 0;
         om->om_data[7] = 0;
         om->om_len = 8;
@@ -1247,9 +1258,8 @@ bletest_task_handler(void *arg)
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages,
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */

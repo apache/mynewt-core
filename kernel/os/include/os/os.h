@@ -86,7 +86,7 @@ typedef enum os_error os_error_t;
 #define OS_MAIN_TASK_PRIO       MYNEWT_VAL(OS_MAIN_TASK_PRIO)
 #define OS_MAIN_STACK_SIZE      MYNEWT_VAL(OS_MAIN_STACK_SIZE)
 
-void os_init(void);
+void os_init(int (*fn)(int argc, char **argv));
 void os_start(void);
 
 /* XXX: Not sure if this should go here; I want to differentiate API that

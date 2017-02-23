@@ -64,6 +64,7 @@ struct hal_uart {
     uint8_t u_configured:1;
     uint8_t u_open:1;
     uint8_t u_tx_started:1;
+    uint8_t u_rx_stall:1;
     struct uart_ring ur_tx;
     uint8_t tx_buffer[TX_BUF_SZ];
     struct uart_ring ur_rx;
@@ -82,6 +83,16 @@ static PORT_Type *const s_uartPort[] = NXP_UART_PORTS;
 static clock_ip_name_t const s_uartPortClocks[] = NXP_UART_PORT_CLOCKS;
 static uint8_t const s_uartPIN_RX[] = NXP_UART_PIN_RX;
 static uint8_t const s_uartPIN_TX[] = NXP_UART_PIN_TX;
+
+static void uart_irq0(void);
+static void uart_irq1(void);
+static void uart_irq2(void);
+static void uart_irq3(void);
+static void uart_irq4(void);
+static void uart_irq5(void);
+static void (*s_uartirqs[])(void) = {
+    uart_irq0, uart_irq1, uart_irq2, uart_irq3, uart_irq4, uart_irq5
+};
 
 /*
  * RING BUFFER FUNCTIONS
@@ -167,8 +178,9 @@ hal_uart_tx_fill_buf(struct hal_uart *u)
 
     OS_ENTER_CRITICAL(sr);
     while (!ur_is_full(&u->ur_tx)) {
-        if (u->u_tx_func)
+        if (u->u_tx_func) {
             data = u->u_tx_func(u->u_func_arg);
+        }
         if (data <= 0) {
             break;
         }
@@ -199,29 +211,31 @@ void hal_uart_start_tx(int port)
         /* add data to TX ring buffer */
         if (u->u_tx_started == 0) {
             rc = hal_uart_tx_fill_buf(u);
-            if (rc > 0)
+            if (rc > 0) {
                 u->u_tx_started = 1;
+            }
         }
 
         /* Send data only when UART TX register is empty and TX ring buffer has data to send out. */
         while (!ur_is_empty(&u->ur_tx) &&
-               (kUART_TxDataRegEmptyFlag & UART_GetStatusFlags(u->u_base)))
-        {
+               (kUART_TxDataRegEmptyFlag & UART_GetStatusFlags(u->u_base))) {
             data = ur_read(&u->ur_tx);
             UART_WriteByte(u->u_base, data);
             ur_bump(&u->ur_tx);
         }
 
         if (ur_is_empty(&u->ur_tx)) {
-            if (u->u_tx_done)
+            if (u->u_tx_done) {
                 u->u_tx_done(u->u_func_arg);
+            }
             u->u_tx_started = 0;
             break;
         }
     }
 }
 
-void hal_uart_start_rx(int port)
+void
+hal_uart_start_rx(int port)
 {
     struct hal_uart *u;
     os_sr_t sr;
@@ -235,46 +249,93 @@ void hal_uart_start_rx(int port)
         return;
     }
 
-    /* Send back what's in the RX ring buffer until it's empty or we get an error */
-    while ((rc >= 0) && !ur_is_empty(&u->ur_rx))
-    {
+    u->u_rx_stall = 0;
+
+    /* Send back what's in the RX ring buffer until it's empty or we get an
+     * error */
+    while ((rc >= 0) && !ur_is_empty(&u->ur_rx)) {
         OS_ENTER_CRITICAL(sr);
         rc = u->u_rx_func(u->u_func_arg, ur_read(&u->ur_rx));
-        if (rc >= 0)
+        if (rc >= 0) {
             ur_bump(&u->ur_rx);
+        } else {
+            u->u_rx_stall = 1;
+        }
         OS_EXIT_CRITICAL(sr);
     }
 }
 
-void uart_irq_handler(void)
+static void
+uart_irq_handler(int port)
 {
     struct hal_uart *u;
-    int port;
+    uint32_t status;
     uint8_t data;
 
-    for (port = 0; port < FSL_FEATURE_SOC_UART_COUNT; port++) {
-        u = &uarts[port];
-        if (u->u_configured && u->u_open) {
-            /* Check for RX data */
-            if ((kUART_RxDataRegFullFlag | kUART_RxOverrunFlag) &
-                    UART_GetStatusFlags(u->u_base)) {
-                data = UART_ReadByte(u->u_base);
+    u = &uarts[port];
+    if (u->u_configured && u->u_open) {
+        status = UART_GetStatusFlags(u->u_base);
+        /* Check for RX data */
+        if (status & (kUART_RxDataRegFullFlag | kUART_RxOverrunFlag)) {
+            data = UART_ReadByte(u->u_base);
+            if (u->u_rx_stall || u->u_rx_func(u->u_func_arg, data) < 0) {
+                /*
+                 * RX queue full.
+                 */
+                u->u_rx_stall = 1;
                 ur_queue(&u->ur_rx, data);
             }
-            /* Check for TX complete */
-            if (kUART_TxDataRegEmptyFlag & UART_GetStatusFlags(u->u_base)) {
-                if (u->u_tx_started) {
-                    u->u_tx_started = 0;
-                    if (u->u_tx_done)
-                        u->u_tx_done(u->u_func_arg);
-                }
+        }
+        /* Check for TX complete */
+        if (kUART_TxDataRegEmptyFlag & UART_GetStatusFlags(u->u_base)) {
+            if (u->u_tx_started) {
+                u->u_tx_started = 0;
+                if (u->u_tx_done)
+                    u->u_tx_done(u->u_func_arg);
             }
         }
     }
 }
 
-int hal_uart_config(int port, int32_t speed, uint8_t databits, uint8_t stopbits,
-                    enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
+static void
+uart_irq0(void)
+{
+    uart_irq_handler(0);
+}
+
+static void
+uart_irq1(void)
+{
+    uart_irq_handler(1);
+}
+
+static void
+uart_irq2(void)
+{
+    uart_irq_handler(2);
+}
+
+static void
+uart_irq3(void)
+{
+    uart_irq_handler(3);
+}
+
+static void
+uart_irq4(void)
+{
+    uart_irq_handler(4);
+}
+
+static void
+uart_irq5(void)
+{
+    uart_irq_handler(5);
+}
+
+int
+hal_uart_config(int port, int32_t speed, uint8_t databits, uint8_t stopbits,
+                enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
     struct hal_uart *u;
     uart_config_t uconfig;
@@ -327,18 +388,16 @@ int hal_uart_config(int port, int32_t speed, uint8_t databits, uint8_t stopbits,
     u->u_open = 1;
     u->u_tx_started = 0;
 
-    NVIC_SetVector(u->u_irq, (uint32_t)uart_irq_handler);
+    NVIC_SetVector(u->u_irq, (uint32_t)s_uartirqs[port]);
 
     /* Initialize UART device */
-    if (port != 0) {
-        UART_Init(u->u_base, &uconfig, CLOCK_GetFreq(u->clk_src));
-        UART_EnableTx(u->u_base, true);
-        UART_EnableRx(u->u_base, true);
-        UART_EnableInterrupts(u->u_base,
-                              kUART_RxDataRegFullInterruptEnable
-                              | kUART_RxOverrunInterruptEnable);
-        EnableIRQ(u->u_irq);
-    }
+    UART_Init(u->u_base, &uconfig, CLOCK_GetFreq(u->clk_src));
+    UART_EnableTx(u->u_base, true);
+    UART_EnableRx(u->u_base, true);
+    UART_EnableInterrupts(u->u_base,
+                          kUART_RxDataRegFullInterruptEnable |
+                          kUART_RxOverrunInterruptEnable);
+    EnableIRQ(u->u_irq);
 
     return 0;
 }
@@ -388,15 +447,6 @@ int hal_uart_init(int port, void *cfg)
         else {
             uarts[port].u_configured = 0;
         }
-    }
-
-    if (port == 0) {
-        CLOCK_EnableClock(uarts[0].p_clock);
-        PORT_SetPinMux(uarts[0].p_base, uarts[0].u_pin_rx, kPORT_MuxAlt3);
-        PORT_SetPinMux(uarts[0].p_base, uarts[0].u_pin_tx, kPORT_MuxAlt3);
-        DbgConsole_Init((uint32_t)uarts[0].u_base, 115200,
-                        DEBUG_CONSOLE_DEVICE_TYPE_UART, CLOCK_GetFreq(uarts[0].clk_src));
-        PRINTF("UART%d CONFIGURED\r\n", port);
     }
 
     return 0;

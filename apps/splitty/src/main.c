@@ -44,7 +44,7 @@
 
 /* Task 1 */
 #define TASK1_PRIO (8)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(32)
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
 #define MAX_CBMEM_BUF 300
 static struct os_task task1;
 static volatile int g_task1_loops;
@@ -168,9 +168,9 @@ init_tasks(void)
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages, calls
+ * init_tasks to initialize additional tasks (and possibly other objects),
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */

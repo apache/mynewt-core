@@ -26,11 +26,11 @@
 extern "C" {
 #endif
 
-#define IMGMGR_NMGR_OP_STATE        0
-#define IMGMGR_NMGR_OP_UPLOAD       1
-#define IMGMGR_NMGR_OP_FILE         2
-#define IMGMGR_NMGR_OP_CORELIST     3
-#define IMGMGR_NMGR_OP_CORELOAD     4
+#define IMGMGR_NMGR_ID_STATE        0
+#define IMGMGR_NMGR_ID_UPLOAD       1
+#define IMGMGR_NMGR_ID_FILE         2
+#define IMGMGR_NMGR_ID_CORELIST     3
+#define IMGMGR_NMGR_ID_CORELOAD     4
 
 #define IMGMGR_NMGR_MAX_MSG         400
 #define IMGMGR_NMGR_MAX_NAME		64

@@ -26,7 +26,11 @@
 static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
 
 #if MYNEWT_VAL(FS_CLI)
-static int g_cli_initialized = 0;
+static uint8_t g_cli_initialized;
+#endif
+
+#if MYNEWT_VAL(FS_NMGR)
+static uint8_t g_nmgr_initialized;
 #endif
 
 int
@@ -46,6 +50,13 @@ fs_register(struct fs_ops *fops)
     if (!g_cli_initialized) {
         fs_cli_init();
         g_cli_initialized = 1;
+    }
+#endif
+
+#if MYNEWT_VAL(FS_NMGR)
+    if (!g_nmgr_initialized) {
+        fs_nmgr_init();
+        g_nmgr_initialized = 1;
     }
 #endif
 
@@ -80,8 +91,13 @@ fs_ops_for(const char *fs_name)
     return fops;
 }
 
+struct fs_ops not_initialized_ops;
+
 struct fs_ops *
 fs_ops_from_container(struct fops_container *container)
 {
+    if (!container) {
+        return &not_initialized_ops;
+    }
     return container->fops;
 }

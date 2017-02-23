@@ -35,7 +35,8 @@
 #include "console/console.h"
 
 static int
-shell_log_dump_entry(struct log *log, void *arg, void *dptr, uint16_t len)
+shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
+                     void *dptr, uint16_t len)
 {
     struct log_entry_hdr ueh;
     char data[128];

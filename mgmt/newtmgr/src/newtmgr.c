@@ -52,7 +52,6 @@ static struct nmgr_cbuf {
 struct os_eventq *
 mgmt_evq_get(void)
 {
-    os_eventq_ensure(&nmgr_evq, NULL);
     return nmgr_evq;
 }
 
@@ -348,23 +347,6 @@ nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
     return rc;
 }
 
-int
-nmgr_task_init(void)
-{
-    int rc;
-
-    rc = nmgr_os_groups_register();
-    if (rc != 0) {
-        goto err;
-    }
-
-    nmgr_cbuf_init(&nmgr_task_cbuf);
-
-    return (0);
-err:
-    return (rc);
-}
-
 void
 nmgr_pkg_init(void)
 {
@@ -373,6 +355,10 @@ nmgr_pkg_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = nmgr_task_init();
+    rc = nmgr_os_groups_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
+
+    nmgr_cbuf_init(&nmgr_task_cbuf);
+
+    mgmt_evq_set(os_eventq_dflt_get());
 }

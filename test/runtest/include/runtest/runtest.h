@@ -29,6 +29,11 @@ extern "C" {
 void runtest_init(void);
 
 /*
+ * Retrieves the event queue used by the runtest package.
+ */
+struct os_eventq *run_evq_get(void);
+
+/*
  * Callback for runtest events - newtmgr uses this to add
  * run test requests to default queue for test application (e.g., mynewtsanity)
  */

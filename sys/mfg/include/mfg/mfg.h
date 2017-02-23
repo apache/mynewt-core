@@ -30,6 +30,9 @@
 #define MFG_META_TLV_TYPE_HASH          0x01
 #define MFG_META_TLV_TYPE_FLASH_AREA    0x02
 
+/** Informational only; not read by firmware. */
+#define MFG_META_TLV_TYPE_FLASH_TRAITS  0x03
+
 struct mfg_meta_tlv {
     uint8_t type;
     uint8_t size;
@@ -42,6 +45,12 @@ struct mfg_meta_flash_area {
     uint16_t pad16;
     uint32_t offset;
     uint32_t size;
+};
+
+/** Informational only; not read by firmware. */
+struct mfg_meta_flash_traits {
+    uint8_t device_id;
+    uint8_t min_write_sz;
 };
 
 int mfg_next_tlv(struct mfg_meta_tlv *tlv, uint32_t *off);

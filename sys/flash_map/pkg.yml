@@ -30,4 +30,4 @@ pkg.deps:
     - sys/mfg
 
 pkg.init:
-    flash_map_init: 1
+    flash_map_init: 2

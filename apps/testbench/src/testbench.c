@@ -358,8 +358,6 @@ main(int argc, char **argv)
 
     conf_load();
 
-    rc = init_tasks();
-
     /*
      * Register the tests that can be run by lookup
      * - each test is added to the ts_suites slist
@@ -368,6 +366,8 @@ main(int argc, char **argv)
     TEST_SUITE_REGISTER(testbench_mutex);
     TEST_SUITE_REGISTER(testbench_sem);
     TEST_SUITE_REGISTER(testbench_json);
+
+    rc = init_tasks();
 
     /*
      * This sets the callback function for the events that are

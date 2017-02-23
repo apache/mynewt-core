@@ -35,14 +35,17 @@ It currently supports the following hardware platforms:
 * BLE Nano from RedBear (Nordic nRF51822 SoC based)
 * BLE Nano2 and Blend2 from RedBear (Nordic nRF52832 SoC based)
 * BMD-300-EVAL-ES from Rigado (Cortex-M4)
-* STM32F3DISCOVERY from ST Micro (Cortex-M4)
+* BMD-200 from Rigado (Cortex-M0)
 * STM32F4DISCOVERY from ST Micro (Cortex-M4)
 * STM32-E407 from Olimex (Cortex-M4)
 * Arduino Zero (Cortex-M0)
 * Arduino Zero Pro (Cortex-M0)
 * Arduino M0 Pro (Cortex-M0)
+* Arduino MKR1000 (Cortex-M0)
+* Arduino Primo NRF52 (Cortex-M4)
 * NUCLEO-F401RE (Cortex-M4)
 * FRDM-K64F from NXP (Cortex-M4)
+* BBC micro:bit (Nordic nrf51822; Cortex-M0)
 
 Apache Mynewt uses the
 [Newt](https://www.github.com/apache/incubator-mynewt-newt) build and package
@@ -59,11 +62,15 @@ completely replaces the proprietary SoftDevice on Nordic chipsets.
     - Support for up to 32 simultaneous connections.
     - Legacy and SC (secure connections) SMP support (pairing and bonding).
 * A flash filesystem, NFFS, which is designed for tiny (128KB->16MB) flashes.
+* FatFS
+* Flash Circular Buffer
+* JSON and CBOR encoding
 * Bootloader support
 * Remote Software Upgrade
 * HAL and BSP infrastructure designed to abstract microcontroller specifics
 * Shell and Console support
 * Statistics and Logging Infrastructure
+* OIC Client and Server
 
 For more information on the Mynewt OS, please visit our website [here](https://mynewt.apache.org/).
 If you'd like to get started, visit the [Quick Start Guide](http://mynewt.apache.org/quick-start/).
@@ -75,6 +82,7 @@ Mynewt is being actively developed.  Some of the features we're currently workin
 * Deep sleep: Mynewt OS will coordinate peripherals and processor to put the
   processor to sleep when all tasks are idle.
 * Sensor API
+* IP Stack
 * Support for different boards and microcontroller architectures, we're working
   on:
     - ESP8266

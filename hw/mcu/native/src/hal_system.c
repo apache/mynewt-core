@@ -64,6 +64,7 @@ mcu_sim_parse_args(int argc, char **argv)
 {
     int ch;
     char *progname;
+    extern int main(int argc, char **arg);
 
 #if MYNEWT_VAL(OS_SCHEDULING)
     if (g_os_started) {
@@ -88,7 +89,7 @@ mcu_sim_parse_args(int argc, char **argv)
         }
     }
 #if MYNEWT_VAL(OS_SCHEDULING)
-    os_init();
+    os_init(main);
     os_start();
 #endif
 }

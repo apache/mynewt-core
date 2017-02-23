@@ -19,14 +19,11 @@
 # Package: mgmt/imgmgr
 
 syscfg.defs:
-    IMGMGR_FS:
-        description: 'TBD'
-        value: 0
     IMGMGR_COREDUMP:
-        description: 'TBD'
+        description: 'Newtmgr commands for fetching/erasing coredump'
         value: 0
     IMGMGR_CLI:
-        description: 'TBD'
+        description: 'CLI commands to interact with image management'
         value: 0
         restrictions:
             - SHELL_TASK

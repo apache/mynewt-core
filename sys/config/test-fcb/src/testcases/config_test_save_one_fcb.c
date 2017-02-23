@@ -26,6 +26,7 @@ TEST_CASE(config_test_save_one_fcb)
     config_wipe_srcs();
     config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
 
+    cf.cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC);
     cf.cf_fcb.f_sectors = fcb_areas;
     cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
 

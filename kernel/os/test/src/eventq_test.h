@@ -31,27 +31,29 @@
 #endif
 
 #if MYNEWT_VAL(SELFTEST)
-#define MY_STACK_SIZE        (5120)
-#define POLL_STACK_SIZE        (4096)
+#define MY_STACK_SIZE                   (5120)
+#define POLL_STACK_SIZE                 (4096)
 #else
-#define MY_STACK_SIZE        (128)
-#define POLL_STACK_SIZE        (32) /* for now */
+#define MY_STACK_SIZE                   (128)
+#define POLL_STACK_SIZE                 (32) /* for now */
 #endif
+
+#define INITIAL_EVENTQ_TASK_PRIO        (10)
 
 /* Task 1 sending task */
 /* Define task stack and task object */
-#define SEND_TASK_PRIO        (1)
+#define SEND_TASK_PRIO                  (INITIAL_EVENTQ_TASK_PRIO + 1)
 extern struct os_task eventq_task_s;
 extern os_stack_t eventq_task_stack_s[MY_STACK_SIZE];
 
 /* Task 2 receiving task */
-#define RECEIVE_TASK_PRIO     (2)
+#define RECEIVE_TASK_PRIO               (INITIAL_EVENTQ_TASK_PRIO + 2)
 extern struct os_task eventq_task_r;
 extern os_stack_t eventq_task_stack_r[MY_STACK_SIZE];
 
 extern struct os_eventq my_eventq;
 
-#define SIZE_MULTI_EVENT        (4)
+#define SIZE_MULTI_EVENT       (4)
 extern struct os_eventq multi_eventq[SIZE_MULTI_EVENT];
 
 /* This is to set the events we will use below */
@@ -63,34 +65,34 @@ extern uint8_t my_event_type;
 
 /* Setting up data for the poll */
 /* Define the task stack for the eventq_task_poll_send */
-#define SEND_TASK_POLL_PRIO        (3)
+#define SEND_TASK_POLL_PRIO             (INITIAL_EVENTQ_TASK_PRIO + 3)
 extern struct os_task eventq_task_poll_s;
 extern os_stack_t eventq_task_stack_poll_s[POLL_STACK_SIZE];
 
 /* Define the task stack for the eventq_task_poll_receive */
-#define RECEIVE_TASK_POLL_PRIO     (4)
+#define RECEIVE_TASK_POLL_PRIO          (INITIAL_EVENTQ_TASK_PRIO + 4)
 extern struct os_task eventq_task_poll_r;
 extern os_stack_t eventq_task_stack_poll_r[POLL_STACK_SIZE ];
 
 /* Setting the data for the poll timeout */
 /* Define the task stack for the eventq_task_poll_timeout_send */
-#define SEND_TASK_POLL_TIMEOUT_PRIO        (5)
+#define SEND_TASK_POLL_TIMEOUT_PRIO     (INITIAL_EVENTQ_TASK_PRIO + 5)
 extern struct os_task eventq_task_poll_timeout_s;
 extern os_stack_t eventq_task_stack_poll_timeout_s[POLL_STACK_SIZE];
 
 /* Define the task stack for the eventq_task_poll_receive */
-#define RECEIVE_TASK_POLL_TIMEOUT_PRIO     (6)
+#define RECEIVE_TASK_POLL_TIMEOUT_PRIO  (INITIAL_EVENTQ_TASK_PRIO + 6)
 extern struct os_task eventq_task_poll_timeout_r;
 extern os_stack_t eventq_task_stack_poll_timeout_r[POLL_STACK_SIZE];
 
 /* Setting the data for the poll single */
 /* Define the task stack for the eventq_task_poll_single_send */
-#define SEND_TASK_POLL_SINGLE_PRIO        (7)
+#define SEND_TASK_POLL_SINGLE_PRIO      (INITIAL_EVENTQ_TASK_PRIO + 7)
 extern struct os_task eventq_task_poll_single_s;
 extern os_stack_t eventq_task_stack_poll_single_s[POLL_STACK_SIZE];
 
 /* Define the task stack for the eventq_task_poll_single_receive */
-#define RECEIVE_TASK_POLL_SINGLE_PRIO     (8)
+#define RECEIVE_TASK_POLL_SINGLE_PRIO   (INITIAL_EVENTQ_TASK_PRIO + 8)
 extern struct os_task eventq_task_poll_single_r;
 extern os_stack_t eventq_task_stack_poll_single_r[POLL_STACK_SIZE];
 

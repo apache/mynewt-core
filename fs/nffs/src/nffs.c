@@ -516,6 +516,9 @@ done:
         free(filepath);
     }
     nffs_unlock();
+    if (rc != 0) {
+        *out_dir = NULL;
+    }
     return rc;
 }
 
@@ -746,8 +749,6 @@ nffs_init(void)
     if (rc != 0) {
         return rc;
     }
-
-    NFFS_LOG(DEBUG, "nffs_init");
 
     fs_register(&nffs_ops);
     return 0;

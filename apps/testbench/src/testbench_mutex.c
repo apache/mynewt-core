@@ -56,19 +56,19 @@ testbench_mutex_tc_posttest(void* arg)
     int taskcount = (int) arg;
 
     if (taskcount >= 1) {
-        err = os_task_suspend(&task1);
+        err = os_task_remove(&task1);
         TEST_ASSERT(err == OS_OK);
     }
     if (taskcount >= 2) {
-        err = os_task_suspend(&task2);
+        err = os_task_remove(&task2);
         TEST_ASSERT(err == OS_OK);
     }
     if (taskcount >= 3) {
-        err = os_task_suspend(&task3);
+        err = os_task_remove(&task3);
         TEST_ASSERT(err == OS_OK);
     }
     if (taskcount >= 4) {
-        err = os_task_suspend(&task4);
+        err = os_task_remove(&task4);
         TEST_ASSERT(err == OS_OK);
     }
 
@@ -100,19 +100,19 @@ testbench_mutex_posttest(void* arg)
     int taskcount = (int) arg;
 
     if (taskcount >= 1) {
-        err = os_task_suspend(&task1);
+        err = os_task_remove(&task1);
         TEST_ASSERT(err == OS_OK);
     }
     if (taskcount >= 2) {
-        err = os_task_suspend(&task2);
+        err = os_task_remove(&task2);
         TEST_ASSERT(err == OS_OK);
     }
     if (taskcount >= 3) {
-        err = os_task_suspend(&task3);
+        err = os_task_remove(&task3);
         TEST_ASSERT(err == OS_OK);
     }
     if (taskcount >= 4) {
-        err = os_task_suspend(&task4);
+        err = os_task_remove(&task4);
         TEST_ASSERT(err == OS_OK);
     }
 
