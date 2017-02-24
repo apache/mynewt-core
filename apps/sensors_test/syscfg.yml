@@ -16,15 +16,42 @@
 # under the License.
 #
 
-# Package: sys/shell 
+# Package: apps/sensors_test
+
+syscfg.vals:
+    # Enable the shell task.
+    SHELL_TASK: 1
+
+    # Include names for statistics.
+    STATS_NAMES: 1
+
+    # Log reboot messages to a flash circular buffer.
+    REBOOT_LOG_FCB: 1
+    LOG_FCB: 1
+
+    CONFIG_FCB: 1
+
+    # Enable shell commands.
+    STATS_CLI: 1
+    LOG_CLI: 1
+    CONFIG_CLI: 1
+
+    # Enable newtmgr commands.
+    STATS_NEWTMGR: 1
+    LOG_NEWTMGR: 1
+    CONFIG_NEWTMGR: 1
+
+    TSL2561_CLI: 1
+    BNO055_CLI: 1
 
 syscfg.defs:
-    SHELL_TASK:
-        description: 'Controls whether shell is enabled or not.'
-        value: 0
-    SHELL_MAX_INPUT_LEN:
-        description: 'Maximum input line length'
-        value: 256
-    SHELL_DEBUG:
-        description: Enables additional error checking in the shell package.
-        value: 0
+    TSL2561_PRESENT:
+        description: 'TSL2561 is present'
+        value : 1
+    LSM303DLHC_PRESENT:
+        description: 'LSM303 is present'
+        value : 1
+    BNO055_PRESENT:
+        description: 'BNO055 is present'
+        value : 1
+

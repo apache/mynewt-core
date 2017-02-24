@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,15 +17,16 @@
 # under the License.
 #
 
-# Package: sys/shell 
+pkg.name: hw/drivers/sensors/bno055
+pkg.description: Driver for the BNO055
+pkg.author: "Adafruit <support@adafruit.com>"
+pkg.homepage: "http://www.adafruit.com/"
+pkg.keywords:
+    - adafruit
+    - bno055
+    - i2c
+    - sensor
 
-syscfg.defs:
-    SHELL_TASK:
-        description: 'Controls whether shell is enabled or not.'
-        value: 0
-    SHELL_MAX_INPUT_LEN:
-        description: 'Maximum input line length'
-        value: 256
-    SHELL_DEBUG:
-        description: Enables additional error checking in the shell package.
-        value: 0
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"

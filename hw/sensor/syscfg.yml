@@ -16,15 +16,13 @@
 # under the License.
 #
 
-# Package: sys/shell 
+# Package: hw/sensor
 
 syscfg.defs:
-    SHELL_TASK:
-        description: 'Controls whether shell is enabled or not.'
-        value: 0
-    SHELL_MAX_INPUT_LEN:
-        description: 'Maximum input line length'
-        value: 256
-    SHELL_DEBUG:
-        description: Enables additional error checking in the shell package.
-        value: 0
+    SENSOR_MGR_WAKEUP_RATE:
+        description: 'The default wakeup rate of the sensor manager'
+        value: 1
+
+    SENSOR_CLI:
+        description: 'Whether or not to enable the sensor shell support'
+        value: 1

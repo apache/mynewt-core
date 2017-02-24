@@ -210,7 +210,7 @@ err:
 static int
 shell_cmd(char *cmd, char **argv, int argc)
 {
-    struct shell_cmd *sc;
+    struct shell_cmd *sc = NULL;
     int rc;
 
     rc = shell_cmd_find(cmd, &sc);

@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -5,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -16,15 +17,35 @@
 # under the License.
 #
 
-# Package: sys/shell 
+pkg.name: apps/sensors_test
+pkg.type: app
+pkg.description: "Example application which uses a variety of mynewt features."
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
 
-syscfg.defs:
-    SHELL_TASK:
-        description: 'Controls whether shell is enabled or not.'
-        value: 0
-    SHELL_MAX_INPUT_LEN:
-        description: 'Maximum input line length'
-        value: 256
-    SHELL_DEBUG:
-        description: Enables additional error checking in the shell package.
-        value: 0
+pkg.deps:
+    - test/flash_test
+    - mgmt/imgmgr
+    - mgmt/newtmgr
+    - mgmt/newtmgr/transport/nmgr_shell
+    - kernel/os
+    - hw/sensor
+    - hw/drivers/sensors/sim
+    - hw/drivers/sensors/lsm303dlhc
+    - hw/drivers/sensors/tsl2561
+    - hw/drivers/sensors/bno055
+    - boot/bootutil
+    - sys/shell
+    - sys/config
+    - sys/console/full
+    - sys/id
+    - sys/log/full
+    - sys/stats/full
+    - boot/split
+
+pkg.deps.CONFIG_NFFS:
+    - fs/nffs
+
+pkg.deps.CONFIG_FCB:
+    - fs/fcb
