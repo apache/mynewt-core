@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,15 +17,19 @@
 # under the License.
 #
 
-# Package: sys/shell 
-
 syscfg.defs:
-    SHELL_TASK:
-        description: 'Controls whether shell is enabled or not.'
+    BNO055_I2CADDR:
+        description: 'HW I2C address for the BNO055'
+        value: 0x28
+    BNO055_I2CBUS:
+        description: 'I2C bus number for the BNO055'
+        value: -1
+    BNO055_CLI:
+        description: 'Enable shell support for the BNO055'
         value: 0
-    SHELL_MAX_INPUT_LEN:
-        description: 'Maximum input line length'
-        value: 256
-    SHELL_DEBUG:
-        description: Enables additional error checking in the shell package.
+    BNO055_LOG:
+        description: 'Enable BNO055 logging'
+        value: 0
+    BNO055_STATS:
+        description: 'Enable BNO055 statistics'
         value: 0
