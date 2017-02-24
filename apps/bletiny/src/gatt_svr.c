@@ -366,7 +366,7 @@ static int
 gatt_svr_access_test(uint16_t conn_handle, uint16_t attr_handle,
                      struct ble_gatt_access_ctxt *ctxt,
                      void *arg)
-
+{
     uint16_t uuid16;
     int rc;
 
