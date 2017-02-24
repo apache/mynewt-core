@@ -24,6 +24,7 @@
 #include "syscfg/syscfg.h"
 #include "bsp/cmsis_nvic.h"
 #include "hal/hal_timer.h"
+#include "os/os_trace_api.h"
 #include "nrf.h"
 #include "mcu/nrf52_hal.h"
 
@@ -317,6 +318,8 @@ hal_timer_irq_handler(struct nrf52_hal_timer *bsptimer)
     uint32_t compare;
     NRF_TIMER_Type *hwtimer;
 
+    os_trace_enter_isr();
+
     /* Check interrupt source. If set, clear them */
     hwtimer = bsptimer->tmr_reg;
     compare = hwtimer->EVENTS_COMPARE[NRF_TIMER_CC_INT];
@@ -342,6 +345,8 @@ hal_timer_irq_handler(struct nrf52_hal_timer *bsptimer)
         /* XXX: Recommended by nordic to make sure interrupts are cleared */
         compare = hwtimer->EVENTS_COMPARE[NRF_TIMER_CC_INT];
     }
+
+    os_trace_exit_isr();
 }
 #endif
 
