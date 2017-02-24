@@ -351,7 +351,7 @@ gatt_svr_chr_access_sec_test(uint16_t conn_handle, uint16_t attr_handle,
  * from 128 bit vendor specific UUID.
  */
 static uint16_t
-xtract_uuid16_from_pts_uuid128(const ble_uuid_t *uuid)
+extract_uuid16_from_pts_uuid128(const ble_uuid_t *uuid)
 {
     const uint8_t *u8ptr;
     uint16_t uuid16;
