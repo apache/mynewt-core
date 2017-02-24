@@ -41,7 +41,7 @@ syscfg.defs:
         value:  5
     UART_0_PIN_CTS:
         description: 'CTS pin for UART0'
-        value: 0
+        value: 7
 
     UART_1:
         description: 'Whether to enable bitbanger UART1'
