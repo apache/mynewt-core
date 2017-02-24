@@ -30,11 +30,8 @@
 #include "uart_hal/uart_hal.h"
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
-#include "sensor/sensor.h"
-#include "sim/sim_accel.h"
 
 static struct uart_dev os_bsp_uart0;
-struct sim_accel sim_accel_sensor;
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -54,20 +51,10 @@ hal_bsp_power_state(int state)
     return (0);
 }
 
-static int
-slinky_sim_accel_init(struct os_dev *dev, void *arg)
-{
-    return (0);
-}
-
 void
 hal_bsp_init(void)
 {
     int rc;
-
-    rc = os_dev_create((struct os_dev *) &sim_accel_sensor, "simaccel0",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIMARY, slinky_sim_accel_init, NULL);
-    assert(rc == 0);
 
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
