@@ -83,15 +83,10 @@ err:
 void
 os_sched_ctx_sw_hook(struct os_task *next_t)
 {
-    if (g_current_task == next_t) {
-        return;
-    }
-
     next_t->t_ctx_sw_cnt++;
     g_current_task->t_run_time += g_os_time - g_os_last_ctx_sw_time;
     g_os_last_ctx_sw_time = g_os_time;
 }
-
 
 /**
  * os sched get current task
@@ -143,9 +138,7 @@ os_sched(struct os_task *next_t)
         next_t = os_sched_next_task();
     }
 
-    if (next_t != g_current_task) {
-        os_arch_ctx_sw(next_t);
-    }
+    os_arch_ctx_sw(next_t);
 
     OS_EXIT_CRITICAL(sr);
 }
