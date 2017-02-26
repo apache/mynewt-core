@@ -22,7 +22,7 @@
 #include "host/ble_hs_adv.h"
 #include "ble_hs_priv.h"
 
-#define BLE_EDDYSTONE_MAX_SVC_DATA_LEN  23
+#define BLE_EDDYSTONE_MAX_SVC_DATA_LEN  22
 #define BLE_EDDYSTONE_SVC_DATA_BASE_SZ  3
 
 #define BLE_EDDYSTONE_SERVICE_UUID      0xfeaa
@@ -75,7 +75,8 @@ ble_eddystone_set_adv_data_gen(struct ble_hs_adv_fields *adv_fields,
     if (adv_fields->num_uuids16 > BLE_EDDYSTONE_MAX_UUIDS16) {
         return BLE_HS_EINVAL;
     }
-    if (svc_data_len > BLE_EDDYSTONE_MAX_SVC_DATA_LEN) {
+    if (svc_data_len > BLE_EDDYSTONE_MAX_SVC_DATA_LEN -
+                       BLE_EDDYSTONE_SVC_DATA_BASE_SZ) {
         return BLE_HS_EINVAL;
     }
     if (adv_fields->num_uuids16 > 0 && !adv_fields->uuids16_is_complete) {
@@ -119,6 +120,8 @@ ble_eddystone_set_adv_data_gen(struct ble_hs_adv_fields *adv_fields,
  *                              BLE_HS_EMSGSIZE if the specified data is too
  *                                  large to fit in an advertisement;
  *                              Other nonzero on failure.
+ *
+ * @see https://github.com/google/eddystone/tree/master/eddystone-uid
  */
 int
 ble_eddystone_set_adv_data_uid(struct ble_hs_adv_fields *adv_fields, void *uid)
@@ -127,12 +130,22 @@ ble_eddystone_set_adv_data_uid(struct ble_hs_adv_fields *adv_fields, void *uid)
     return BLE_HS_ENOTSUP;
 #endif
 
-    void *svc_data;
+    uint8_t *svc_data;
+    int8_t tx_pwr;
     int rc;
 
     svc_data = ble_eddystone_set_svc_data_base(BLE_EDDYSTONE_FRAME_TYPE_UID);
-    memcpy(svc_data, uid, 16);
-    rc = ble_eddystone_set_adv_data_gen(adv_fields, 16);
+
+    rc = ble_hs_hci_util_read_adv_tx_pwr(&tx_pwr);
+    if (rc != 0) {
+        return rc;
+    }
+    svc_data[0] = tx_pwr;
+    memcpy(&svc_data + 1, uid, 16);
+    svc_data[17] = 0; /* RFU, must be zero */
+    svc_data[18] = 0; /* RFU, must be zero */
+
+    rc = ble_eddystone_set_adv_data_gen(adv_fields, 19);
     if (rc != 0) {
         return rc;
     }
@@ -162,6 +175,8 @@ ble_eddystone_set_adv_data_uid(struct ble_hs_adv_fields *adv_fields, void *uid)
  *                              BLE_HS_EMSGSIZE if the specified data is too
  *                                  large to fit in an advertisement;
  *                              Other nonzero on failure.
+ *
+ * @see https://github.com/google/eddystone/tree/master/eddystone-url
  */
 int
 ble_eddystone_set_adv_data_url(struct ble_hs_adv_fields *adv_fields,
@@ -186,7 +201,7 @@ ble_eddystone_set_adv_data_url(struct ble_hs_adv_fields *adv_fields,
     }
 
     svc_data = ble_eddystone_set_svc_data_base(BLE_EDDYSTONE_FRAME_TYPE_URL);
-    
+
     rc = ble_hs_hci_util_read_adv_tx_pwr(&tx_pwr);
     if (rc != 0) {
         return rc;
