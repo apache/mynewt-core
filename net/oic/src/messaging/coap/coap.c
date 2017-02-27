@@ -555,7 +555,7 @@ coap_parse_message(struct coap_packet_rx *pkt, struct os_mbuf **mp)
 
     m = *mp;
     /* initialize packet */
-    memset(pkt, 0, sizeof(coap_packet_t));
+    memset(pkt, 0, sizeof(*pkt));
 
     STATS_INC(coap_stats, iframe);
 
