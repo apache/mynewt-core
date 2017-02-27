@@ -224,6 +224,7 @@ coap_notify_observers(oc_resource_t *resource,
         response_buf = &response_buffer;
         if (response_buf->code == OC_IGNORE) {
             OC_LOG_ERROR("coap_notify_observers: Resource ignored request\n");
+            os_mbuf_free_chain(m);
             return num_observers;
         }
     }
