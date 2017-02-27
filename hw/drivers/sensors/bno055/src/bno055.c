@@ -79,7 +79,7 @@ STATS_SECT_DECL(bno055_stat_section) g_bno055stats;
 #endif
 
 #if MYNEWT_VAL(BNO055_LOG)
-#define LOG_MODULE_BNO055 (303)
+#define LOG_MODULE_BNO055 (305)
 #define BNO055_INFO(...)  LOG_INFO(&_log, LOG_MODULE_BNO055, __VA_ARGS__)
 #define BNO055_ERR(...)   LOG_ERROR(&_log, LOG_MODULE_BNO055, __VA_ARGS__)
 static struct log _log;
@@ -294,6 +294,8 @@ bno055_set_pwr_mode(uint8_t mode)
     if (rc) {
         goto err;
     }
+
+    os_time_delay((OS_TICKS_PER_SEC * 1)/1000 + 1);
 
     return 0;
 err:
@@ -537,6 +539,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
 {
     int rc;
     uint8_t id;
+    uint8_t mode;
 
     /* Check if we can read the chip address */
     rc = bno055_get_chip_id(&id);
@@ -564,6 +567,8 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
+    os_time_delay(OS_TICKS_PER_SEC);
+
     rc = bno055_set_opr_mode(BNO055_OPR_MODE_CONFIG);
     if (rc) {
         goto err;
@@ -574,13 +579,6 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     if (rc) {
         goto err;
     }
-
-    rc = bno055_write8(BNO055_SYS_TRIGGER_ADDR, 0x0);
-    if (rc) {
-        goto err;
-    }
-
-    os_time_delay((OS_TICKS_PER_SEC * 10)/1000 + 1);
 
     /**
      * As per Section 5.5 in the BNO055 Datasheet,
@@ -598,14 +596,41 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
-    /* Overwrite the configuration data. */
-    memcpy(&bno055->cfg, cfg, sizeof(*cfg));
-
     /* Change mode to requested mode */
     rc = bno055_set_opr_mode(cfg->bc_opr_mode);
     if (rc) {
         goto err;
     }
+
+    os_time_delay(OS_TICKS_PER_SEC/2);
+
+    rc = bno055_get_opr_mode(&mode);
+    if (rc) {
+        goto err;
+    }
+
+    if (cfg->bc_opr_mode != mode) {
+
+        /* Trying to set operation mode again */
+        rc = bno055_set_opr_mode(cfg->bc_opr_mode);
+        if (rc) {
+            goto err;
+        }
+
+        rc = bno055_get_opr_mode(&mode);
+
+        if (rc) {
+            goto err;
+        }
+
+        if (cfg->bc_opr_mode != mode) {
+            BNO055_ERR("Config mode and read mode do not match.\n");
+            return rc;
+        }
+    }
+
+    /* Overwrite the configuration data. */
+    memcpy(&bno055->cfg, cfg, sizeof(*cfg));
 
     return 0;
 err:
