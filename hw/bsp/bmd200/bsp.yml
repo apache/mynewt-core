@@ -28,6 +28,8 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
 bsp.part2linkerscript: "hw/bsp/bmd200/split-nrf51dk.ld"
 bsp.downloadscript: "hw/bsp/bmd200/nrf51dk_download.sh"
 bsp.debugscript: "hw/bsp/bmd200/nrf51dk_debug.sh"
+bsp.downloadscript.WINDOWS.OVERRIDE: "hw/bsp/bmd200/nrf51dk_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/bmd200/nrf51dk_debug.cmd"
 
 bsp.flash_map:
     areas:
