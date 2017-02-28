@@ -26,8 +26,10 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/bbc_microbit/boot-nrf51xxac.ld"
     - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.part2linkerscript: "hw/bsp/bbc_microbit/split-nrf51dk.ld"
-bsp.downloadscript: "hw/bsp/bbc_microbit/microbit_download.sh"
-bsp.debugscript: "hw/bsp/bbc_microbit/microbit_debug.sh"
+bsp.downloadscript: hw/bsp/bbc_microbit/microbit_download.sh
+bsp.debugscript: hw/bsp/bbc_microbit/microbit_debug.sh
+bsp.downloadscript.WINDOWS.OVERWRITE: hw/bsp/bbc_microbit/microbit_download.cmd
+bsp.debugscript.WINDOWS.OVERWRITE: hw/bsp/bbc_microbit/microbit_debug.cmd
 
 bsp.flash_map:
     areas:
