@@ -18,23 +18,18 @@
  */
 
 #include <inttypes.h>
-#include <assert.h>
 #include <ctype.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdio.h>
 
+#include "os/os.h"
 #include "syscfg/syscfg.h"
 #include "sysinit/sysinit.h"
-#include "os/os.h"
-#include "uart/uart.h"
-#include "bsp/bsp.h"
 
 #include "console.h"
 
-#define CONSOLE_BAUD 115200
-#define CONSOLE_FLOW_CONTROL UART_FLOW_CTL_NONE
-#define CONSOLE_TX_BUF_SIZE 32
-#define CONSOLE_RX_BUF_SIZE 128
-#define CONSOLE_ECHO 1
-#define CONSOLE_HIST_ENABLE 0
+#define UART_CONSOLE 1
 
 /* Control characters */
 #define ESC                0x1b
@@ -59,24 +54,30 @@
 static int esc_state;
 static unsigned int ansi_val, ansi_val_2;
 
-static struct uart_dev *uart_dev;
 static uint8_t cur, end;
 static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
 static uint8_t (*completion_cb)(char *line, uint8_t len);
 
 typedef int (*stdout_func_t)(int);
-extern void __stdout_hook_install(int (*hook)(int));
 
 static int
-console_out(int c)
+console_out_hook_default(int c)
 {
-    if ('\n' == c) {
-        uart_blocking_tx(uart_dev, '\r');
-    }
-    uart_blocking_tx(uart_dev, c);
+    return EOF;
+}
 
-    return c;
+static stdout_func_t console_out = console_out_hook_default;
+extern stdout_func_t _get_stdout_hook(void);
+
+void
+console_printf(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
 }
 
 size_t
@@ -96,16 +97,6 @@ console_write(const char *str, int cnt)
     console_file_write(NULL, str, cnt);
 }
 
-/*
- * Interrupts disabled when console_tx_char/console_rx_char are called.
- * Characters sent only in blocking mode.
- */
-static int
-console_tx_char(void *arg)
-{
-    return -1;
-}
-
 static inline void
 cursor_forward(unsigned int count)
 {
@@ -121,17 +112,17 @@ cursor_backward(unsigned int count)
 static inline void
 cursor_save(void)
 {
-    uart_blocking_tx(uart_dev, ESC);
-    uart_blocking_tx(uart_dev, '[');
-    uart_blocking_tx(uart_dev, 's');
+    console_out(ESC);
+    console_out('[');
+    console_out('s');
 }
 
 static inline void
 cursor_restore(void)
 {
-    uart_blocking_tx(uart_dev, ESC);
-    uart_blocking_tx(uart_dev, '[');
-    uart_blocking_tx(uart_dev, 'u');
+    console_out(ESC);
+    console_out('[');
+    console_out('u');
 }
 
 static void
@@ -140,7 +131,7 @@ insert_char(char *pos, char c, uint8_t end)
     char tmp;
 
     /* Echo back to console */
-    uart_blocking_tx(uart_dev, c);
+    console_out(c);
 
     if (end == 0) {
         *pos = c;
@@ -153,7 +144,7 @@ insert_char(char *pos, char c, uint8_t end)
     cursor_save();
 
     while (end-- > 0) {
-        uart_blocking_tx(uart_dev, tmp);
+        console_out(tmp);
         c = *pos;
         *(pos++) = tmp;
         tmp = c;
@@ -166,11 +157,11 @@ insert_char(char *pos, char c, uint8_t end)
 static void
 del_char(char *pos, uint8_t end)
 {
-    uart_blocking_tx(uart_dev, '\b');
+    console_out('\b');
 
     if (end == 0) {
-        uart_blocking_tx(uart_dev, ' ');
-        uart_blocking_tx(uart_dev, '\b');
+        console_out(' ');
+        console_out('\b');
         return;
     }
 
@@ -178,10 +169,10 @@ del_char(char *pos, uint8_t end)
 
     while (end-- > 0) {
         *pos = *(pos + 1);
-        uart_blocking_tx(uart_dev, *(pos++));
+        console_out(*(pos++));
     }
 
-    uart_blocking_tx(uart_dev, ' ');
+    console_out(' ');
 
     /* Move cursor back to right place */
     cursor_restore();
@@ -278,11 +269,8 @@ ansi_cmd:
     esc_state &= ~ESC_ANSI;
 }
 
-/*
- * Interrupts disabled when console_tx_char/console_rx_char are called.
- */
-static int
-console_rx_char(void *arg, uint8_t byte)
+int
+console_handle_char(uint8_t byte)
 {
     static struct os_event *ev;
     static struct console_input *input;
@@ -330,8 +318,8 @@ console_rx_char(void *arg, uint8_t byte)
             break;
         case '\r':
             input->line[cur + end] = '\0';
-            uart_blocking_tx(uart_dev, '\r');
-            uart_blocking_tx(uart_dev, '\n');
+            console_out('\r');
+            console_out('\n');
             cur = 0;
             end = 0;
             os_eventq_put(lines_queue, ev);
@@ -358,37 +346,18 @@ console_rx_char(void *arg, uint8_t byte)
 }
 
 int
-console_is_init(void)
-{
-    return (uart_dev != NULL);
-}
-
-int
 console_init(struct os_eventq *avail, struct os_eventq *lines,
              uint8_t (*completion)(char *str, uint8_t len))
 {
-    struct uart_conf uc = {
-        .uc_speed = CONSOLE_BAUD,
-        .uc_databits = 8,
-        .uc_stopbits = 1,
-        .uc_parity = UART_PARITY_NONE,
-        .uc_flow_ctl = CONSOLE_FLOW_CONTROL,
-        .uc_tx_char = console_tx_char,
-        .uc_rx_char = console_rx_char,
-    };
+    int rc = 0;
 
     avail_queue = avail;
     lines_queue = lines;
     completion_cb = completion;
-    __stdout_hook_install(console_out);
 
-
-    if (!uart_dev) {
-        uart_dev = (struct uart_dev *)os_dev_open(CONSOLE_UART,
-          OS_TIMEOUT_NEVER, &uc);
-        if (!uart_dev) {
-            return -1;
-        }
-    }
-    return 0;
+#if UART_CONSOLE == 1
+    rc = uart_console_init();
+#endif
+    console_out = _get_stdout_hook();
+    return rc;
 }

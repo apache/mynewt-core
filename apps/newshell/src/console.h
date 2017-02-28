@@ -35,11 +35,12 @@ struct console_input {
 
 int console_init(struct os_eventq *avail_queue, struct os_eventq *cmd_queue,
                  uint8_t (*completion)(char *str, uint8_t len));
-int console_is_init(void);
 size_t console_file_write(void *arg, const char *str, size_t cnt);
 void console_write(const char *str, int cnt);
 void console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
+int console_handle_char(uint8_t byte);
+int uart_console_init(void);
 
 #ifdef __cplusplus
 }

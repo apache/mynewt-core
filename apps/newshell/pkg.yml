@@ -28,3 +28,4 @@ pkg.deps:
     - kernel/os
     - sys/console/stub
     - time/datetime
+    - hw/drivers/rtt
