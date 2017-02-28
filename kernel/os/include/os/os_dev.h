@@ -108,6 +108,7 @@ os_dev_resume(struct os_dev *dev)
 
 int os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg);
+struct os_dev *os_dev_lookup(char *name);
 int os_dev_initialize_all(uint8_t stage);
 int os_dev_suspend_all(os_time_t, uint8_t);
 int os_dev_resume_all(void);
