@@ -465,6 +465,9 @@ main(void)
 {
     int rc;
 
+    /* Set initial BLE device address. */
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
+
     /* Initialize OS */
     sysinit();
 
