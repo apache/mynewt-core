@@ -123,7 +123,6 @@ extern "C" {
 #define BNO055_MAG_CFG_PWR_MODE_SUSPEND                   (0x2 << 5)
 #define BNO055_MAG_CFG_PWR_MODE_FORCE_MODE                (0x3 << 5)
 
-
 struct bno055_cfg {
     uint8_t bc_opr_mode;
     uint8_t bc_pwr_mode;
@@ -143,6 +142,27 @@ struct bno055_rev_info {
      uint8_t bri_gyro_rev;
      uint8_t bri_bl_rev;
      uint16_t bri_sw_rev;
+};
+
+struct bno055_calib_info {
+    uint8_t bci_sys;
+    uint8_t bci_gyro;
+    uint8_t bci_accel;
+    uint8_t bci_mag;
+};
+
+struct bno055_sensor_offsets {
+    uint16_t bso_acc_off_x;
+    uint16_t bso_acc_off_y;
+    uint16_t bso_acc_off_z;
+    uint16_t bso_gyro_off_x;
+    uint16_t bso_gyro_off_y;
+    uint16_t bso_gyro_off_z;
+    uint16_t bso_mag_off_x;
+    uint16_t bso_mag_off_y;
+    uint16_t bso_mag_off_z;
+    uint16_t bso_acc_radius;
+    uint16_t bso_mag_radius;
 };
 
 /**
@@ -195,6 +215,74 @@ bno055_read8(uint8_t reg, uint8_t *value);
  */
 int
 bno055_write8(uint8_t reg, uint8_t value);
+
+/**
+ * Writes a multiple bytes to the specified register
+ *
+ * @param The register address to write to
+ * @param The data buffer to write from
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len);
+
+/**
+ * Gets current calibration status
+ *
+ * @param Calibration info structure to fill up calib state
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_calib_status(struct bno055_calib_info *bci);
+
+/**
+ * Checks if bno055 is fully calibrated
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_is_calib(void);
+
+/**
+ * Reads the sensor's offset registers into a byte array
+ *
+ * @param byte array to return offsets into
+ * @return 0 on success, non-zero on failure
+ *
+ */
+int
+bno055_get_raw_sensor_offsets(uint8_t *offsets);
+
+/**
+ *
+ * Reads the sensor's offset registers into an offset struct
+ *
+ * @param structure to fill up offsets data
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_sensor_offsets(struct bno055_sensor_offsets *offsets);
+
+/**
+ *
+ * Writes calibration data to the sensor's offset registers
+ *
+ * @param calibration data
+ * @return 0 on success, non-zero on success
+ */
+int
+bno055_set_sensor_raw_offsets(uint8_t* calibdata, uint8_t len);
+
+/**
+ *
+ * Writes to the sensor's offset registers from an offset struct
+ *
+ * @param pointer to the offset structure
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_sensor_offsets(struct bno055_sensor_offsets  *offsets);
 
 /**
  * Set operation mode for the bno055 sensor

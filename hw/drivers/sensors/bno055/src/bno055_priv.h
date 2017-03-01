@@ -108,10 +108,10 @@
 #define BNO055_PWR_MODE_ADDR                                    0X3E
 
 #define BNO055_SYS_TRIGGER_ADDR                                 0X3F
-#define BNO055_SYS_TRIGGER_CLK_SEL                              (0x01 << 7)
-#define BNO055_SYS_TRIGGER_RST_INT                              (0x01 << 6)
-#define BNO055_SYS_TRIGGER_RST_SYS                              (0x01 << 5)
-#define BNO055_SYS_TRIGGER_SELF_TEST                            (0x01)
+#define BNO055_SYS_TRIGGER_CLK_SEL                       (0x01 << 7)
+#define BNO055_SYS_TRIGGER_RST_INT                       (0x01 << 6)
+#define BNO055_SYS_TRIGGER_RST_SYS                       (0x01 << 5)
+#define BNO055_SYS_TRIGGER_SELF_TEST                          (0x01)
 
 #define BNO055_TEMP_SOURCE_ADDR                                 0X40
 
@@ -217,5 +217,7 @@
 #define BNO055_GYRO_DURN_Z_ADDR                                 0X1D
 #define BNO055_GYRO_ANY_MOTION_THRES_ADDR                       0X1E
 #define BNO055_GYRO_ANY_MOTION_SET_ADDR                         0X1F
+
+#define BNO055_NUM_OFFSET_REGISTERS                             22
 
 #define BNO055_ID                                               0xA0

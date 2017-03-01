@@ -96,9 +96,78 @@ bno055_shell_help(void)
     console_printf("\trev\n");
     console_printf("\treset\n");
     console_printf("\tpmode [0-normal   | 1-lowpower     | 2-suspend]\n");
+    console_printf("\tsensor_offsets\n");
     console_printf("\tdumpreg [addr]\n");
 
     return 0;
+}
+
+static int
+bno055_shell_cmd_sensor_offsets(int argc, char **argv)
+{
+    int i;
+    int rc;
+    struct bno055_sensor_offsets bso;
+    long val;
+    uint16_t offsetdata[11] = {0};
+    char *tok;
+
+    rc = 0;
+    if (argc > 3) {
+        return bno055_shell_err_too_many_args(argv[1]);
+    }
+
+    /* Display the chip id */
+    if (argc == 2) {
+        rc = bno055_get_sensor_offsets(&bso);
+        if (rc) {
+            console_printf("Read failed %d\n", rc);
+            goto err;
+        }
+        console_printf("Offsets:\n");
+        console_printf("      \tacc \t |    gyro\t |    mag \t \n"
+                       "\tx  :0x%02X\t :  0x%02X\t :  0x%02X\t \n"
+                       "\ty  :0x%02X\t :  0x%02X\t :  0x%02X\t \n"
+                       "\tz  :0x%02X\t :  0x%02X\t :  0x%02X\t \n"
+                       "\trad:0x%02X\t :        \t :  0x%02X\t \n",
+                       bso.bso_acc_off_x, bso.bso_mag_off_x,
+                       bso.bso_gyro_off_x, bso.bso_acc_off_y,
+                       bso.bso_mag_off_y, bso.bso_gyro_off_y,
+                       bso.bso_acc_off_z, bso.bso_mag_off_z,
+                       bso.bso_gyro_off_z, bso.bso_acc_radius,
+                       bso.bso_mag_radius);
+    } else if (argc == 3) {
+        tok = strtok(argv[2], ":");
+        i = 0;
+        do {
+            if (bno055_shell_stol(tok, 0, UINT16_MAX, &val)) {
+                return bno055_shell_err_invalid_arg(argv[2]);
+            }
+            offsetdata[i] = val;
+            tok = strtok(0, ":");
+        } while(i++ < 11 && tok);
+
+        bso.bso_acc_off_x  = offsetdata[0];
+        bso.bso_acc_off_y  = offsetdata[1];
+        bso.bso_acc_off_z  = offsetdata[2];
+        bso.bso_gyro_off_x = offsetdata[3];
+        bso.bso_gyro_off_y = offsetdata[4];
+        bso.bso_gyro_off_z = offsetdata[5];
+        bso.bso_mag_off_x  = offsetdata[6];
+        bso.bso_mag_off_y  = offsetdata[7];
+        bso.bso_mag_off_z  = offsetdata[8];
+        bso.bso_acc_radius = offsetdata[9];
+        bso.bso_mag_radius = offsetdata[10];
+
+        rc = bno055_set_sensor_offsets(&bso);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    return 0;
+err:
+    return rc;
 }
 
 static int
@@ -490,6 +559,11 @@ bno055_shell_cmd(int argc, char **argv)
     if (argc > 1 && strcmp(argv[1], "units") == 0) {
         return bno055_shell_units_cmd(argc, argv);
     }
+
+    if (argc > 1 && strcmp(argv[1], "sensor_offsets") == 0) {
+        return bno055_shell_cmd_sensor_offsets(argc, argv);
+    }
+
     return bno055_shell_err_unknown_arg(argv[1]);
 }
 

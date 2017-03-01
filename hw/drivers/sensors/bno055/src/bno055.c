@@ -136,6 +136,59 @@ bno055_write8(uint8_t reg, uint8_t value)
 }
 
 /**
+ * Writes a multiple bytes to the specified register
+ *
+ * @param The register address to write to
+ * @param The data buffer to write from
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
+{
+    int rc;
+    uint8_t payload[23] = { reg, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0};
+
+    struct hal_i2c_master_data data_struct = {
+        .address = MYNEWT_VAL(BNO055_I2CADDR),
+        .len = 1,
+        .buffer = payload
+    };
+
+    memcpy(&payload[1], buffer, len);
+
+    /* Register write */
+    rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
+                              OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        BNO055_ERR("I2C access failed at address 0x%02X\n", addr);
+#if MYNEWT_VAL(BNO055_STATS)
+        STATS_INC(g_bno055stats, errors);
+#endif
+        goto err;
+    }
+
+    memset(payload, 0, sizeof(payload));
+    data_struct.len = len;
+    rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
+                              OS_TICKS_PER_SEC / 10, len);
+
+    if (rc) {
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+#if MYNEWT_VAL(BNO055_STATS)
+        STATS_INC(g_bno055stats, errors);
+#endif
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
  * Reads a single byte from the specified register
  *
  * @param The register address to read from
@@ -198,7 +251,9 @@ static int
 bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
 {
     int rc;
-    uint8_t payload[8] = { reg, 0, 0, 0, 0, 0, 0, 0};
+    uint8_t payload[23] = { reg, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
         .address = MYNEWT_VAL(BNO055_I2CADDR),
@@ -206,13 +261,8 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
         .buffer = payload
     };
 
-    if (len > 8) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
     /* Clear the supplied buffer */
-    memset(buffer, 0, 8);
+    memset(buffer, 0, 22);
 
     /* Register write */
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
@@ -225,7 +275,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
         goto err;
     }
 
-    /* Read six bytes back */
+    /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
     rc = hal_i2c_master_read(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
@@ -246,7 +296,6 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
 err:
     return rc;
 }
-
 
 /**
  * Setting operation mode for the bno055 sensor
@@ -685,7 +734,7 @@ bno055_find_reg(sensor_type_t type, uint8_t *reg)
 {
     int rc;
 
-    rc = 0;
+    rc = SYS_EOK;
     switch(type) {
         case SENSOR_TYPE_ACCELEROMETER:
             *reg = BNO055_ACCEL_DATA_X_LSB_ADDR;
@@ -1035,6 +1084,248 @@ err:
     return rc;
 }
 
+/**
+ * Gets current calibration status
+ *
+ * @param Calibration info structure to fill up calib state
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_calib_status(struct bno055_calib_info *bci)
+{
+    uint8_t status;
+    int rc;
+
+    rc = bno055_read8(BNO055_CALIB_STAT_ADDR, &status);
+    if (rc) {
+        goto err;
+    }
+
+    bci->bci_sys = (status >> 6) & 0x03;
+    bci->bci_gyro = (status >> 4) & 0x03;
+    bci->bci_accel = (status >> 2) & 0x03;
+    bci->bci_mag = status & 0x03;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Checks if bno055 is fully calibrated
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_is_calib(void)
+{
+    struct bno055_calib_info bci;
+    int rc;
+
+    rc = bno055_get_calib_status(&bci);
+    if (rc) {
+        goto err;
+    }
+
+    if (bci.bci_sys< 3 || bci.bci_gyro < 3 || bci.bci_accel < 3 || bci.bci_mag < 3) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Reads the sensor's offset registers into a byte array
+ *
+ * @param byte array to return offsets into
+ * @return 0 on success, non-zero on failure
+ *
+ */
+int
+bno055_get_raw_sensor_offsets(uint8_t *offsets)
+{
+    uint8_t prev_mode;
+    int rc;
+
+    rc = SYS_EOK;
+    if (!bno055_is_calib()) {
+        rc = bno055_get_opr_mode(&prev_mode);
+        if (rc) {
+            goto err;
+        }
+
+        rc = bno055_set_opr_mode(BNO055_OPR_MODE_CONFIG);
+        if (rc) {
+            goto err;
+        }
+
+        rc = bno055_readlen(BNO055_ACCEL_OFFSET_X_LSB_ADDR, offsets,
+                            BNO055_NUM_OFFSET_REGISTERS);
+        if (rc) {
+            goto err;
+        }
+
+        rc = bno055_set_opr_mode(prev_mode);
+        if (rc) {
+            goto err;
+        }
+
+        return 0;
+    }
+err:
+    return rc;
+}
+
+/**
+ *
+ * Reads the sensor's offset registers into an offset struct
+ *
+ * @param structure to fill up offsets data
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_sensor_offsets(struct bno055_sensor_offsets *offsets)
+{
+    uint8_t payload[22];
+    int rc;
+
+
+    rc = bno055_get_raw_sensor_offsets(payload);
+    if (rc) {
+        goto err;
+    }
+
+    offsets->bso_acc_off_x  = (payload[1] << 8)  | payload[0];
+    offsets->bso_acc_off_y  = (payload[3] << 8)  | payload[2];
+    offsets->bso_acc_off_z  = (payload[5] << 8)  | payload[4];
+
+    offsets->bso_gyro_off_x = (payload[7] << 8)  | payload[6];
+    offsets->bso_gyro_off_y = (payload[9] << 8)  | payload[8];
+    offsets->bso_gyro_off_z = (payload[11] << 8) | payload[10];
+
+    offsets->bso_mag_off_x  = (payload[13] << 8) | payload[12];
+    offsets->bso_mag_off_y  = (payload[15] << 8) | payload[14];
+    offsets->bso_mag_off_z  = (payload[17] << 8) | payload[16];
+
+    offsets->bso_acc_radius = (payload[19] << 8) | payload[18];
+    offsets->bso_mag_radius = (payload[21] << 8) | payload[20];
+
+    return 0;
+err:
+    return rc;
+}
+
+
+/**
+ *
+ * Writes calibration data to the sensor's offset registers
+ *
+ * @param calibration data
+ * @param calibration data length
+ * @return 0 on success, non-zero on success
+ */
+int
+bno055_set_sensor_raw_offsets(uint8_t* calibdata, uint8_t len)
+{
+    uint8_t prev_mode;
+    int rc;
+
+    if (len != 22) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    rc = bno055_get_opr_mode(&prev_mode);
+    if (rc) {
+        goto err;
+    }
+
+    rc = bno055_set_opr_mode(BNO055_OPR_MODE_CONFIG);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay((25 * OS_TICKS_PER_SEC)/1000 + 1);
+
+    rc = bno055_writelen(BNO055_ACCEL_OFFSET_X_LSB_ADDR, calibdata, len);
+    if (rc) {
+        goto err;
+    }
+
+    rc = bno055_set_opr_mode(prev_mode);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ *
+ * Writes to the sensor's offset registers from an offset struct
+ *
+ * @param pointer to the offset structure
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_sensor_offsets(struct bno055_sensor_offsets  *offsets)
+{
+    uint8_t prev_mode;
+    int rc;
+
+    rc = bno055_get_opr_mode(&prev_mode);
+    if (rc) {
+        goto err;
+    }
+
+    rc = bno055_set_opr_mode(BNO055_OPR_MODE_CONFIG);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay((25 * OS_TICKS_PER_SEC)/1000 + 1);
+
+    rc |= bno055_write8(BNO055_ACCEL_OFFSET_X_LSB_ADDR, (offsets->bso_acc_off_x) & 0x0FF);
+    rc |= bno055_write8(BNO055_ACCEL_OFFSET_X_MSB_ADDR, (offsets->bso_acc_off_x >> 8) & 0x0FF);
+    rc |= bno055_write8(BNO055_ACCEL_OFFSET_Y_LSB_ADDR, (offsets->bso_acc_off_y) & 0x0FF);
+    rc |= bno055_write8(BNO055_ACCEL_OFFSET_Y_MSB_ADDR, (offsets->bso_acc_off_y >> 8) & 0x0FF);
+    rc |= bno055_write8(BNO055_ACCEL_OFFSET_Z_LSB_ADDR, (offsets->bso_acc_off_z) & 0x0FF);
+    rc |= bno055_write8(BNO055_ACCEL_OFFSET_Z_MSB_ADDR, (offsets->bso_acc_off_z >> 8) & 0x0FF);
+
+    rc |= bno055_write8(BNO055_GYRO_OFFSET_X_LSB_ADDR, (offsets->bso_gyro_off_x) & 0x0FF);
+    rc |= bno055_write8(BNO055_GYRO_OFFSET_X_MSB_ADDR, (offsets->bso_gyro_off_x >> 8) & 0x0FF);
+    rc |= bno055_write8(BNO055_GYRO_OFFSET_Y_LSB_ADDR, (offsets->bso_gyro_off_y) & 0x0FF);
+    rc |= bno055_write8(BNO055_GYRO_OFFSET_Y_MSB_ADDR, (offsets->bso_gyro_off_y >> 8) & 0x0FF);
+    rc |= bno055_write8(BNO055_GYRO_OFFSET_Z_LSB_ADDR, (offsets->bso_gyro_off_z) & 0x0FF);
+    rc |= bno055_write8(BNO055_GYRO_OFFSET_Z_MSB_ADDR, (offsets->bso_gyro_off_z >> 8) & 0x0FF);
+
+    rc |= bno055_write8(BNO055_MAG_OFFSET_X_LSB_ADDR, (offsets->bso_mag_off_x) & 0x0FF);
+    rc |= bno055_write8(BNO055_MAG_OFFSET_X_MSB_ADDR, (offsets->bso_mag_off_x >> 8) & 0x0FF);
+    rc |= bno055_write8(BNO055_MAG_OFFSET_Y_LSB_ADDR, (offsets->bso_mag_off_y) & 0x0FF);
+    rc |= bno055_write8(BNO055_MAG_OFFSET_Y_MSB_ADDR, (offsets->bso_mag_off_y >> 8) & 0x0FF);
+    rc |= bno055_write8(BNO055_MAG_OFFSET_Z_LSB_ADDR, (offsets->bso_mag_off_z) & 0x0FF);
+    rc |= bno055_write8(BNO055_MAG_OFFSET_Z_MSB_ADDR, (offsets->bso_mag_off_z >> 8) & 0x0FF);
+
+    rc |= bno055_write8(BNO055_ACCEL_RADIUS_LSB_ADDR, (offsets->bso_acc_radius) & 0x0FF);
+    rc |= bno055_write8(BNO055_ACCEL_RADIUS_MSB_ADDR, (offsets->bso_acc_radius >> 8) & 0x0FF);
+
+    rc |= bno055_write8(BNO055_MAG_RADIUS_LSB_ADDR, (offsets->bso_mag_radius) & 0x0FF);
+    rc |= bno055_write8(BNO055_MAG_RADIUS_MSB_ADDR, (offsets->bso_mag_radius >> 8) & 0x0FF);
+
+    rc |= bno055_set_opr_mode(prev_mode);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
 static void *
 bno055_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 {
@@ -1064,8 +1355,8 @@ bno055_sensor_get_config(struct sensor *sensor, sensor_type_t type,
         cfg->sc_valtype = SENSOR_VALUE_TYPE_INT32;
     }
 
-    return (0);
+    return 0;
 err:
-    return (rc);
+    return rc;
 }
 
