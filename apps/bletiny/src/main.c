@@ -1740,6 +1740,7 @@ bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     struct bletiny_conn *conn;
     struct bletiny_l2cap_coc *coc;
     int i;
+    int rc = 0;
 
     conn = bletiny_conn_find(conn_handle);
     assert(conn != NULL);
@@ -1753,9 +1754,12 @@ bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     }
     assert(coc != NULL);
 
-    ble_l2cap_disconnect(coc->chan);
+    rc = ble_l2cap_disconnect(coc->chan);
+    if (rc) {
+        console_printf("Could not disconnect channel rc=%d\n", rc);
+    }
 
-    return 0;
+    return rc;
 #endif
 }
 
