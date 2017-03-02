@@ -38,11 +38,16 @@ struct shell_param {
     const char *help;
 };
 
+struct shell_cmd_help {
+    const char *summary;
+    const char *usage;
+    const struct shell_param *params;
+};
+
 struct shell_cmd {
     const char *cmd_name;
     shell_cmd_function_t cb;
-    const char *help;
-    const struct shell_param *params;
+    const struct shell_cmd_help *help;
 };
 
 struct shell_module {

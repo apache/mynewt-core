@@ -198,8 +198,9 @@ show_cmd_help(char *argv[])
         if (!strcmp(command, shell_module->commands[i].cmd_name)) {
             console_printf("%s %s\n",
                            shell_module->commands[i].cmd_name,
-                           shell_module->commands[i].help ?
-                           shell_module->commands[i].help : "");
+                           shell_module->commands[i].help &&
+                           shell_module->commands[i].help->usage ?
+                           shell_module->commands[i].help->usage : "");
             return 0;
         }
     }
@@ -238,13 +239,13 @@ print_command_params(const int module, const int command)
     const struct shell_cmd *shell_cmd = &shell_module->commands[command];
     int i;
 
-    if (shell_cmd->params && shell_cmd->params[0].param_name) {
-        console_printf("\n");
+    if (!(shell_cmd->help && shell_cmd->help->params)) {
+        return;
     }
 
-    for (i = 0; shell_cmd->params[i].param_name; i++) {
-        console_printf("%s - %s\n", shell_cmd->params[i].param_name,
-                       shell_cmd->params[i].help);
+    for (i = 0; shell_cmd->help->params[i].param_name; i++) {
+        console_printf("%s - %s\n", shell_cmd->help->params[i].param_name,
+                       shell_cmd->help->params[i].help);
     }
 }
 
@@ -463,16 +464,20 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
 
     command = &shell_modules[module_idx].commands[command_idx];
 
-    for (i = 0; command->params[i].param_name; i++) {
+    if (!(command->help && command->help->params)) {
+        return 0;
+    }
+
+    for (i = 0; command->help->params[i].param_name; i++) {
         int j;
 
         if (strncmp(param_prefix,
-            command->params[i].param_name, param_len)) {
+            command->help->params[i].param_name, param_len)) {
             continue;
         }
 
         if (!first_match) {
-            first_match = command->params[i].param_name;
+            first_match = command->help->params[i].param_name;
             continue;
         }
 
@@ -484,14 +489,14 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
 
         /* cut common part of matching names */
         for (j = 0; j < common_chars; j++) {
-            if (first_match[j] != command->params[i].param_name[j]) {
+            if (first_match[j] != command->help->params[i].param_name[j]) {
                 break;
             }
         }
 
         common_chars = j;
 
-        console_printf("%s\n", command->params[i].param_name);
+        console_printf("%s\n", command->help->params[i].param_name);
     }
 
     /* no match, do nothing */
@@ -773,6 +778,7 @@ completion(char *line, uint8_t len)
     cur += tok_len;
     tok_len = get_last_token(&cur);
     if (tok_len == 0) {
+        console_printf("\n");
         print_command_params(module, command);
         console_printf("%s", get_prompt());
         console_printf("%s", line);

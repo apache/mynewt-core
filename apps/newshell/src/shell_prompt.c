@@ -57,15 +57,31 @@ shell_ticks_cmd(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(CMD_HELP)
 static const struct shell_param ticks_params[] = {
-            {"on", "turn on"},
-            {"off", "turn on"},
-            { NULL, NULL}
+    {"on", "turn on"},
+    {"off", "turn on"},
+    { NULL, NULL}
 };
 
+static const struct shell_cmd_help ticks_help = {
+   .summary = "shell ticks command",
+   .usage = "usage: ticks [on|off]",
+   .params = ticks_params,
+};
+#endif
+
 static const struct shell_cmd prompt_commands[] = {
-    { "ticks", shell_ticks_cmd, "shell ticks command, usage: ticks [on|off]", ticks_params},
-    { NULL, NULL, NULL, NULL}
+    {
+        .cmd_name = "ticks",
+        .cb = shell_ticks_cmd,
+#if MYNEWT_VAL(CMD_HELP)
+        .help = &ticks_help,
+#else
+        .help = NULL,
+#endif
+    },
+    { NULL, NULL, NULL },
 };
 
 

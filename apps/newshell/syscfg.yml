@@ -18,6 +18,18 @@
 
 # Package: apps/newshell
 
+syscfg.defs:
+
+    CMD_HELP:
+        description: ' '
+        value: 1
+    SHELL_OS_MODULE:
+        description: ' '
+        value: 1
+    SHELL_PROMPT_MODULE:
+        description: ' '
+        value: 1
+
 syscfg.vals:
     SHELL_TASK: 0
     OS_MAIN_STACK_SIZE: 512
