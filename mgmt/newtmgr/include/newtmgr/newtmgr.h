@@ -29,27 +29,6 @@
 extern "C" {
 #endif
 
-#define NMGR_OP_READ            (0)
-#define NMGR_OP_READ_RSP        (1)
-#define NMGR_OP_WRITE           (2)
-#define NMGR_OP_WRITE_RSP       (3)
-
-struct nmgr_hdr {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
-    uint8_t  _res1:5;
-#endif
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    uint8_t  _res1:5;
-    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
-#endif
-    uint8_t  nh_flags;          /* XXX reserved for future flags */
-    uint16_t nh_len;            /* length of the payload */
-    uint16_t nh_group;          /* NMGR_GROUP_XXX */
-    uint8_t  nh_seq;            /* sequence number */
-    uint8_t  nh_id;             /* message ID within group */
-};
-
 struct nmgr_transport;
 
 /**
