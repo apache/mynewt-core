@@ -64,8 +64,9 @@ print_inode_entry(struct nffs_inode_entry *inode_entry, int indent)
 
     name[inode.ni_filename_len] = '\0';
 
-    printf("%*s%s %d %x\n", indent, "", name[0] == '\0' ? "/" : name,
-           inode.ni_seq, inode.ni_inode_entry->nie_flags);
+    printf("%*s%s %ju %jx\n", indent, "", name[0] == '\0' ? "/" : name,
+           (uintmax_t) inode.ni_seq,
+           (uintmax_t) inode.ni_inode_entry->nie_flags);
 }
 
 void
@@ -99,16 +100,17 @@ print_nffs_flash_inode(struct nffs_area *area, uint32_t off)
     rc = hal_flash_read(area->na_flash_id, area->na_offset + off + sizeof(ndi),
                          filename, len);
 
-    printf("  off %x %s id %x flen %d seq %d last %x prnt %x flgs %x %s\n",
-           off,
+    printf("  off %jx %s id %jx flen %ju seq %ju last %jx prnt %jx "
+           "flgs %jx %s\n",
+           (uintmax_t) off,
            (nffs_hash_id_is_file(ndi.ndi_id) ? "File" :
             (nffs_hash_id_is_dir(ndi.ndi_id) ? "Dir" : "???")),
-           ndi.ndi_id,
-           ndi.ndi_filename_len,
-           ndi.ndi_seq,
-           ndi.ndi_lastblock_id,
-           ndi.ndi_parent_id,
-           ndi.ndi_flags,
+           (uintmax_t) ndi.ndi_id,
+           (uintmax_t) ndi.ndi_filename_len,
+           (uintmax_t) ndi.ndi_seq,
+           (uintmax_t) ndi.ndi_lastblock_id,
+           (uintmax_t) ndi.ndi_parent_id,
+           (uintmax_t) ndi.ndi_flags,
            filename);
     return sizeof(ndi) + ndi.ndi_filename_len;
 }
@@ -123,13 +125,13 @@ print_nffs_flash_block(struct nffs_area *area, uint32_t off)
                         &ndb, sizeof(ndb));
     assert(rc == 0);
 
-    printf("  off %x Block id %x len %d seq %d prev %x own ino %x\n",
-           off,
-           ndb.ndb_id,
-           ndb.ndb_data_len,
-           ndb.ndb_seq,
-           ndb.ndb_prev_id,
-           ndb.ndb_inode_id);
+    printf("  off %jx Block id %jx len %ju seq %ju prev %jx own ino %jx\n",
+           (uintmax_t) off,
+           (uintmax_t) ndb.ndb_id,
+           (uintmax_t) ndb.ndb_data_len,
+           (uintmax_t) ndb.ndb_seq,
+           (uintmax_t) ndb.ndb_prev_id,
+           (uintmax_t) ndb.ndb_inode_id);
     return sizeof(ndb) + ndb.ndb_data_len;
 }
 
@@ -176,9 +178,16 @@ print_nffs_flash_areas(int verbose)
         if (!nffs_area_magic_is_set(&darea)) {
             printf("Area header corrupt!\n");
         }
-        printf("area %d: id %d %x-%x cur %x len %d flashid %x gc-seq %d %s%s\n",
-               i, area.na_id, area.na_offset, area.na_offset + area.na_length,
-               area.na_cur, area.na_length, area.na_flash_id, darea.nda_gc_seq,
+        printf("area %d: id %ju %jx-%jx cur %jx len %ju flashid %jx "
+               "gc-seq %jd %s%s\n",
+               i,
+               (uintmax_t)area.na_id,
+               (uintmax_t)area.na_offset,
+               (uintmax_t)area.na_offset + area.na_length,
+               (uintmax_t)area.na_cur,
+               (uintmax_t)area.na_length,
+               (uintmax_t)area.na_flash_id,
+               (uintmax_t)darea.nda_gc_seq,
                nffs_scratch_area_idx == i ? "(scratch)" : "",
                !nffs_area_magic_is_set(&darea) ? "corrupt" : "");
         if (verbose < 2) {
@@ -204,11 +213,12 @@ print_hashlist(struct nffs_hash_entry *he)
     list = nffs_hash + idx;
 
     SLIST_FOREACH(he, list, nhe_next) {
-        printf("hash_entry %s 0x%x: id 0x%x flash_loc 0x%x next 0x%x\n",
+        printf("hash_entry %s %p: id 0x%jx flash_loc 0x%jx next %p\n",
                    nffs_hash_id_is_inode(he->nhe_id) ? "inode" : "block",
-                   (unsigned int)he,
-                   he->nhe_id, he->nhe_flash_loc,
-                   (unsigned int)he->nhe_next.sle_next);
+                   he,
+                   (uintmax_t)he->nhe_id,
+                   (uintmax_t)he->nhe_flash_loc,
+                   he->nhe_next.sle_next);
    }
 }
 
@@ -228,10 +238,13 @@ print_hash(void)
 
     NFFS_HASH_FOREACH(he, i, next) {
         if (nffs_hash_id_is_inode(he->nhe_id)) {
-            printf("hash_entry inode %d 0x%x: id 0x%x flash_loc 0x%x next 0x%x\n",
-                   i, (unsigned int)he,
-                   he->nhe_id, he->nhe_flash_loc,
-                   (unsigned int)he->nhe_next.sle_next);
+            printf("hash_entry inode %d %p: id 0x%jx flash_loc 0x%jx "
+                   "next %p\n",
+                   i,
+                   he,
+                   (uintmax_t)he->nhe_id,
+                   (uintmax_t)he->nhe_flash_loc,
+                   he->nhe_next.sle_next);
             if (he->nhe_id == NFFS_ID_ROOT_DIR) {
                 continue;
             }
@@ -239,56 +252,66 @@ print_hash(void)
                                   &area_idx, &area_offset);
             rc = nffs_inode_read_disk(area_idx, area_offset, &di);
             if (rc) {
-                printf("%d: fail inode read id 0x%x rc %d\n",
-                       i, he->nhe_id, rc);
+                printf("%d: fail inode read id 0x%jx rc %d\n",
+                       i, (uintmax_t)he->nhe_id, rc);
             }
-            printf("    Disk inode: id %x seq %d parent %x last %x flgs %x\n",
-                   di.ndi_id,
-                   di.ndi_seq,
-                   di.ndi_parent_id,
-                   di.ndi_lastblock_id,
-                   di.ndi_flags);
+            printf("    Disk inode: id %jx seq %ju parent %jx last %jx "
+                   "flgs %jx\n",
+                   (uintmax_t)di.ndi_id,
+                   (uintmax_t)di.ndi_seq,
+                   (uintmax_t)di.ndi_parent_id,
+                   (uintmax_t)di.ndi_lastblock_id,
+                   (uintmax_t)di.ndi_flags);
             ni.ni_inode_entry = (struct nffs_inode_entry *)he;
             ni.ni_seq = di.ndi_seq; 
             ni.ni_parent = nffs_hash_find_inode(di.ndi_parent_id);
-            printf("    RAM inode: entry 0x%x seq %d parent %x filename %s\n",
-                   (unsigned int)ni.ni_inode_entry,
-                   ni.ni_seq,
-                   (unsigned int)ni.ni_parent,
+            printf("    RAM inode: entry %p seq %ju parent %p "
+                   "filename %s\n",
+                   ni.ni_inode_entry,
+                   (uintmax_t)ni.ni_seq,
+                   ni.ni_parent,
                    ni.ni_filename);
 
         } else if (nffs_hash_id_is_block(he->nhe_id)) {
-            printf("hash_entry block %d 0x%x: id 0x%x flash_loc 0x%x next 0x%x\n",
-                   i, (unsigned int)he,
-                   he->nhe_id, he->nhe_flash_loc,
-                   (unsigned int)he->nhe_next.sle_next);
+            printf("hash_entry block %d %p: id 0x%jx flash_loc 0x%jx "
+                   "next %p\n",
+                   i,
+                   he,
+                   (uintmax_t)he->nhe_id,
+                   (uintmax_t)he->nhe_flash_loc,
+                   he->nhe_next.sle_next);
             rc = nffs_block_from_hash_entry(&nb, he);
             if (rc) {
-                printf("%d: fail block read id 0x%x rc %d\n",
-                       i, he->nhe_id, rc);
+                printf("%d: fail block read id 0x%jx rc %d\n",
+                       i, (uintmax_t)he->nhe_id, rc);
             }
-            printf("    block: id %x seq %d inode %x prev %x\n",
-                   nb.nb_hash_entry->nhe_id, nb.nb_seq, 
-                   nb.nb_inode_entry->nie_hash_entry.nhe_id, 
-                   nb.nb_prev->nhe_id);
+            printf("    block: id %jx seq %ju inode %jx prev %jx\n",
+                   (uintmax_t)nb.nb_hash_entry->nhe_id,
+                   (uintmax_t)nb.nb_seq, 
+                   (uintmax_t)nb.nb_inode_entry->nie_hash_entry.nhe_id, 
+                   (uintmax_t)nb.nb_prev->nhe_id);
             nffs_flash_loc_expand(nb.nb_hash_entry->nhe_flash_loc,
                                   &area_idx, &area_offset);
             rc = nffs_block_read_disk(area_idx, area_offset, &db);
             if (rc) {
-                printf("%d: fail disk block read id 0x%x rc %d\n",
-                       i, nb.nb_hash_entry->nhe_id, rc);
+                printf("%d: fail disk block read id 0x%jx rc %d\n",
+                       i, (uintmax_t)nb.nb_hash_entry->nhe_id, rc);
             }
-            printf("    disk block: id %x seq %d inode %x prev %x len %d\n",
-                   db.ndb_id,
-                   db.ndb_seq,
-                   db.ndb_inode_id,
-                   db.ndb_prev_id,
-                   db.ndb_data_len);
+            printf("    disk block: id %jx seq %ju inode %jx prev %jx "
+                   "len %ju\n",
+                   (uintmax_t)db.ndb_id,
+                   (uintmax_t)db.ndb_seq,
+                   (uintmax_t)db.ndb_inode_id,
+                   (uintmax_t)db.ndb_prev_id,
+                   (uintmax_t)db.ndb_data_len);
         } else {
-            printf("hash_entry UNKNONN %d 0x%x: id 0x%x flash_loc 0x%x next 0x%x\n",
-                   i, (unsigned int)he,
-                   he->nhe_id, he->nhe_flash_loc,
-                   (unsigned int)he->nhe_next.sle_next);
+            printf("hash_entry UNKNONN %d %p: id 0x%jx flash_loc 0x%jx "
+                   "next %p\n",
+                   i,
+                   he,
+                   (uintmax_t)he->nhe_id,
+                   (uintmax_t)he->nhe_flash_loc,
+                   he->nhe_next.sle_next);
         }
     }
 
@@ -301,27 +324,32 @@ nffs_print_object(struct nffs_disk_object *dobj)
     struct nffs_disk_block *db = &dobj->ndo_disk_block;
 
     if (dobj->ndo_type == NFFS_OBJECT_TYPE_INODE) {
-        printf("    %s id %x seq %d prnt %x last %x\n",
+        printf("    %s id %jx seq %ju prnt %jx last %jx\n",
                nffs_hash_id_is_file(di->ndi_id) ? "File" :
                 nffs_hash_id_is_dir(di->ndi_id) ? "Dir" : "???",
-               di->ndi_id, di->ndi_seq, di->ndi_parent_id,
-               di->ndi_lastblock_id);
+               (uintmax_t)di->ndi_id,
+               (uintmax_t)di->ndi_seq,
+               (uintmax_t)di->ndi_parent_id,
+               (uintmax_t)di->ndi_lastblock_id);
     } else if (dobj->ndo_type != NFFS_OBJECT_TYPE_BLOCK) {
-        printf("    %s: id %x seq %d ino %x prev %x len %d\n",
+        printf("    %s: id %jx seq %ju ino %jx prev %jx len %ju\n",
                nffs_hash_id_is_block(db->ndb_id) ? "Block" : "Block?",
-               db->ndb_id, db->ndb_seq, db->ndb_inode_id,
-               db->ndb_prev_id, db->ndb_data_len);
+               (uintmax_t)db->ndb_id,
+               (uintmax_t)db->ndb_seq,
+               (uintmax_t)db->ndb_inode_id,
+               (uintmax_t)db->ndb_prev_id,
+               (uintmax_t)db->ndb_data_len);
     }
 }
 
 void
 print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
 {
-    struct nffs_block nb;
+    struct nffs_block nb = { 0 };
     struct nffs_disk_block db;
     uint32_t area_offset;
     uint8_t area_idx;
-    int rc;
+    int rc = 0;
 
     if (he == NULL) {
         return;
@@ -331,8 +359,8 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
                               &area_idx, &area_offset);
         rc = nffs_block_read_disk(area_idx, area_offset, &db);
         if (rc) {
-            printf("%p: fail block read id 0x%x rc %d\n",
-                   he, he->nhe_id, rc);
+            printf("%p: fail block read id 0x%jx rc %d\n",
+                   he, (uintmax_t)he->nhe_id, rc);
         }
         nb.nb_hash_entry = he;
         nb.nb_seq = db.ndb_seq;
@@ -352,28 +380,43 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
         db.ndb_id = 0;
     }
     if (!verbose) {
-        printf("%s%s id %x idx/off %d/%x seq %d ino %x prev %x len %d\n",
+        printf("%s%s id %jx idx/off %ju/%jx seq %ju ino %jx prev %jx "
+               "len %ju\n",
                nffs_hash_entry_is_dummy(he) ? "Dummy " : "",
                nffs_hash_id_is_block(he->nhe_id) ? "Block" : "Unknown",
-               he->nhe_id, area_idx, area_offset, nb.nb_seq,
-               nb.nb_inode_entry->nie_hash_entry.nhe_id,
-               (unsigned int)db.ndb_prev_id, db.ndb_data_len);
+               (uintmax_t)he->nhe_id,
+               (uintmax_t)area_idx,
+               (uintmax_t)area_offset,
+               (uintmax_t)nb.nb_seq,
+               (uintmax_t)nb.nb_inode_entry->nie_hash_entry.nhe_id,
+               (uintmax_t)db.ndb_prev_id,
+               (uintmax_t)db.ndb_data_len);
         return;
     }
-    printf("%s%s id %x loc %x/%x %x ent %p\n",
+    printf("%s%s id %jx loc %jx/%jx %jx ent %p\n",
            nffs_hash_entry_is_dummy(he) ? "Dummy " : "",
            nffs_hash_id_is_block(he->nhe_id) ? "Block:" : "Unknown:",
-           he->nhe_id, area_idx, area_offset, he->nhe_flash_loc, he);
+           (uintmax_t)he->nhe_id,
+           (uintmax_t)area_idx,
+           (uintmax_t)area_offset,
+           (uintmax_t)he->nhe_flash_loc,
+           he);
     if (nb.nb_inode_entry) {
-        printf("  Ram: ent %p seq %d ino %p prev %p len %d\n",
-               nb.nb_hash_entry, nb.nb_seq,
-               nb.nb_inode_entry, nb.nb_prev, nb.nb_data_len);
+        printf("  Ram: ent %p seq %ju ino %p prev %p len %ju\n",
+               nb.nb_hash_entry,
+               (uintmax_t)nb.nb_seq,
+               nb.nb_inode_entry,
+               nb.nb_prev,
+               (uintmax_t)nb.nb_data_len);
     }
     if (db.ndb_id) {
-        printf("  Disk %s id %x seq %d ino %x prev %x len %d\n",
+        printf("  Disk %s id %jx seq %ju ino %jx prev %jx len %ju\n",
                nffs_hash_id_is_block(db.ndb_id) ? "Block:" : "???:",
-               db.ndb_id, db.ndb_seq, db.ndb_inode_id,
-               db.ndb_prev_id, db.ndb_data_len);
+               (uintmax_t)db.ndb_id,
+               (uintmax_t)db.ndb_seq,
+               (uintmax_t)db.ndb_inode_id,
+               (uintmax_t)db.ndb_prev_id,
+               (uintmax_t)db.ndb_data_len);
     }
 }
 
@@ -386,7 +429,7 @@ print_nffs_hash_inode(struct nffs_hash_entry *he, int verbose)
     int cached_name_len;
     uint32_t area_offset;
     uint8_t area_idx;
-    int rc;
+    int rc = 0;
 
     if (he == NULL) {
         return;
@@ -396,8 +439,8 @@ print_nffs_hash_inode(struct nffs_hash_entry *he, int verbose)
                               &area_idx, &area_offset);
         rc = nffs_inode_read_disk(area_idx, area_offset, &di);
         if (rc) {
-            printf("Entry %p: fail inode read id 0x%x rc %d\n",
-                   he, he->nhe_id, rc);
+            printf("Entry %p: fail inode read id 0x%jx rc %d\n",
+                   he, (uintmax_t)he->nhe_id, rc);
         }
         ni.ni_inode_entry = (struct nffs_inode_entry *)he;
         ni.ni_seq = di.ndi_seq; 
@@ -415,8 +458,8 @@ print_nffs_hash_inode(struct nffs_hash_entry *he, int verbose)
             rc = nffs_flash_read(area_idx, area_offset + sizeof di,
                          ni.ni_filename, cached_name_len);
             if (rc != 0) {
-                printf("entry %p: fail filename read id 0x%x rc %d\n",
-                       he, he->nhe_id, rc);
+                printf("entry %p: fail filename read id 0x%jx rc %d\n",
+                       he, (uintmax_t)he->nhe_id, rc);
                 return;
             }
         }
@@ -425,41 +468,56 @@ print_nffs_hash_inode(struct nffs_hash_entry *he, int verbose)
         di.ndi_id = 0;
     }
     if (!verbose) {
-        printf("%s%s id %x idx/off %x/%x seq %d prnt %x last %x flags %x",
+        printf("%s%s id %jx idx/off %jx/%jx seq %ju prnt %jx last %jx "
+               "flags %jx",
                nffs_hash_entry_is_dummy(he) ? "Dummy " : "",
-
                nffs_hash_id_is_file(he->nhe_id) ? "File" :
                 he->nhe_id == NFFS_ID_ROOT_DIR ? "**ROOT Dir" : 
                 nffs_hash_id_is_dir(he->nhe_id) ? "Dir" : "Inode",
 
-               he->nhe_id, area_idx, area_offset, ni.ni_seq, di.ndi_parent_id,
-               di.ndi_lastblock_id, nie->nie_flags);
+               (uintmax_t)he->nhe_id,
+               (uintmax_t)area_idx,
+               (uintmax_t)area_offset,
+               (uintmax_t)ni.ni_seq,
+               (uintmax_t)di.ndi_parent_id,
+               (uintmax_t)di.ndi_lastblock_id,
+               (uintmax_t)nie->nie_flags);
         if (ni.ni_inode_entry) {
-            printf(" ref %d\n", ni.ni_inode_entry->nie_refcnt);
+            printf(" ref %ju\n", (uintmax_t)ni.ni_inode_entry->nie_refcnt);
         } else {
             printf("\n");
         }
         return;
     }
-    printf("%s%s id %x loc %x/%x %x entry %p\n",
+    printf("%s%s id %jx loc %jx/%jx %jx entry %p\n",
            nffs_hash_entry_is_dummy(he) ? "Dummy " : "",
            nffs_hash_id_is_file(he->nhe_id) ? "File:" :
             he->nhe_id == NFFS_ID_ROOT_DIR ? "**ROOT Dir:" : 
             nffs_hash_id_is_dir(he->nhe_id) ? "Dir:" : "Inode:",
-           he->nhe_id, area_idx, area_offset, he->nhe_flash_loc, he);
+           (uintmax_t)he->nhe_id,
+           (uintmax_t)area_idx,
+           (uintmax_t)area_offset,
+           (uintmax_t)he->nhe_flash_loc,
+           he);
     if (ni.ni_inode_entry) {
-        printf("  ram: ent %p seq %d prnt %p lst %p ref %d flgs %x nm %s\n",
-               ni.ni_inode_entry, ni.ni_seq, ni.ni_parent,
+        printf("  ram: ent %p seq %ju prnt %p lst %p ref %ju flgs %jx nm %s\n",
+               ni.ni_inode_entry,
+               (uintmax_t)ni.ni_seq,
+               ni.ni_parent,
                ni.ni_inode_entry->nie_last_block_entry,
-               ni.ni_inode_entry->nie_refcnt, ni.ni_inode_entry->nie_flags,
+               (uintmax_t)ni.ni_inode_entry->nie_refcnt,
+               (uintmax_t)ni.ni_inode_entry->nie_flags,
                ni.ni_filename);
     }
     if (rc == 0) {
-        printf("  Disk %s: id %x seq %d prnt %x lst %x flgs %x\n",
+        printf("  Disk %s: id %jx seq %ju prnt %jx lst %jx flgs %jx\n",
                nffs_hash_id_is_file(di.ndi_id) ? "File" :
                 nffs_hash_id_is_dir(di.ndi_id) ? "Dir" : "???",
-               di.ndi_id, di.ndi_seq, di.ndi_parent_id,
-               di.ndi_lastblock_id, di.ndi_flags);
+               (uintmax_t)di.ndi_id,
+               (uintmax_t)di.ndi_seq,
+               (uintmax_t)di.ndi_parent_id,
+               (uintmax_t)di.ndi_lastblock_id,
+               (uintmax_t)di.ndi_flags);
     }
 }
 
@@ -480,8 +538,10 @@ print_hash_entries(int verbose)
             } else if (nffs_hash_id_is_block(he->nhe_id)) {
                 print_nffs_hash_block(he, verbose);
             } else {
-                printf("UNKNOWN type hash entry %d: id 0x%x loc 0x%x\n",
-                       i, he->nhe_id, he->nhe_flash_loc);
+                printf("UNKNOWN type hash entry %d: id 0x%jx loc 0x%jx\n",
+                       i,
+                       (uintmax_t)he->nhe_id,
+                       (uintmax_t)he->nhe_flash_loc);
             }
             he = next;
         }
@@ -501,8 +561,10 @@ print_nffs_hashlist(int verbose)
         } else if (nffs_hash_id_is_block(he->nhe_id)) {
             print_nffs_hash_block(he, verbose);
         } else {
-            printf("UNKNOWN type hash entry %d: id 0x%x loc 0x%x\n",
-                   i, he->nhe_id, he->nhe_flash_loc);
+            printf("UNKNOWN type hash entry %d: id 0x%jx loc 0x%jx\n",
+                   i,
+                   (uintmax_t)he->nhe_id,
+                   (uintmax_t)he->nhe_flash_loc);
         }
     }
 }
