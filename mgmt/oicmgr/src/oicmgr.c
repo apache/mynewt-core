@@ -22,6 +22,7 @@
 
 #include <os/os.h>
 #include <os/endian.h>
+#include <defs/error.h>
 
 #include <assert.h>
 #include <string.h>
@@ -52,9 +53,6 @@ static struct omgr_state omgr_state = {
     .os_event.ev_cb = omgr_event_start,
 };
 
-static void omgr_oic_get(oc_request_t *request, oc_interface_mask_t interface);
-static void omgr_oic_put(oc_request_t *request, oc_interface_mask_t interface);
-
 struct os_eventq *
 mgmt_evq_get(void)
 {
@@ -67,124 +65,199 @@ mgmt_evq_set(struct os_eventq *evq)
     os_eventq_designate(&omgr_state.os_evq, evq, &omgr_state.os_event);
 }
 
-static const struct mgmt_handler *
-omgr_find_handler(const char *q, int qlen)
+static int
+omgr_oic_read_hdr(struct CborValue *cv, struct nmgr_hdr *out_hdr)
 {
-    char id_str[8];
-    int grp = -1;
-    int id = -1;
-    char *str;
-    char *eptr;
-    int slen;
+    size_t hlen;
+    int rc;
 
-    slen = oc_ri_get_query_value(q, qlen, "gr", &str);
-    if (slen > 0 && slen < sizeof(id_str) - 1) {
-        memcpy(id_str, str, slen);
-        id_str[slen] = '\0';
-        grp = strtoul(id_str, &eptr, 0);
-        if (*eptr != '\0') {
-            return NULL;
-        }
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "_h",
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = (void *)out_hdr,
+            .addr.bytestring.len = &hlen,
+            .nodefault = 1,
+            .len = sizeof *out_hdr,
+        },
+        [1] = { 0 }
+    };
+
+    rc = cbor_read_object(cv, attrs);
+    if (rc != 0 || hlen != sizeof *out_hdr) {
+        return MGMT_ERR_EINVAL;
     }
-    slen = oc_ri_get_query_value(q, qlen, "id", &str);
-    if (slen > 0 && slen < sizeof(id_str) - 1) {
-        memcpy(id_str, str, slen);
-        id_str[slen] = '\0';
-        id = strtoul(id_str, &eptr, 0);
-        if (*eptr != '\0') {
-            return NULL;
-        }
+
+    out_hdr->nh_len = ntohs(out_hdr->nh_len);
+    out_hdr->nh_group = ntohs(out_hdr->nh_group);
+
+    return 0;
+}
+
+static int
+omgr_encode_nmp_hdr(struct CborEncoder *enc, struct nmgr_hdr hdr)
+{
+    int rc;
+
+    rc = cbor_encode_text_string(enc, "_h", 2);
+    if (rc != 0) {
+        return MGMT_ERR_ENOMEM;
     }
-    return mgmt_find_handler(grp, id);
+
+    hdr.nh_len = htons(hdr.nh_len);
+    hdr.nh_group = htons(hdr.nh_group);
+
+    /* Encode the NMP header in the response. */
+    rc = cbor_encode_byte_string(enc, (void *)&hdr, sizeof hdr);
+    if (rc != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    return 0;
+}
+
+static int
+omgr_send_err_rsp(struct CborEncoder *enc, const struct nmgr_hdr *hdr,
+                  int nmp_status)
+{
+    int rc;
+
+    rc = omgr_encode_nmp_hdr(enc, *hdr);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = cbor_encode_text_stringz(enc, "rc");
+    if (rc != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    rc = cbor_encode_int(enc, nmp_status);
+    if (rc != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    return 0;
 }
 
 static void
-omgr_oic_op(oc_request_t *req, oc_interface_mask_t mask, int isset)
+omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask)
 {
     struct omgr_state *o = &omgr_state;
     const struct mgmt_handler *handler;
     uint16_t data_off;
     struct os_mbuf *m;
     int rc = 0;
-    extern CborEncoder g_encoder;
+    struct nmgr_hdr hdr;
+    int rsp_hdr_filled = 0;
 
-    if (!req->query_len) {
-        goto bad_req;
-    }
+    coap_get_payload(req->packet, &m, &data_off);
 
-    handler = omgr_find_handler(req->query, req->query_len);
-    if (!handler) {
-        goto bad_req;
-    }
-
-    rc = coap_get_payload(req->packet, &m, &data_off);
     cbor_mbuf_reader_init(&o->os_cbuf.ob_reader, m, data_off);
-
     cbor_parser_init(&o->os_cbuf.ob_reader.r, 0, &o->os_cbuf.ob_mj.parser,
                      &o->os_cbuf.ob_mj.it);
 
-    /* start generating the CBOR OUTPUT */
-    /* this is worth a quick note.  We are encoding CBOR within CBOR, so we
-     * need to use the same encoder as ocf stack.  We are using their global
-     * encoder g_encoder which they intialized before this function is called.
-     * But we can't call their macros here as it won't use the right mape
-     * encoder (ob_mj) */
+    rc = omgr_oic_read_hdr(&o->os_cbuf.ob_mj.it, &hdr);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        goto done;
+    }
+
+    /* Convert request header to response header to be sent. */
+    switch (hdr.nh_op) {
+    case NMGR_OP_READ:
+        hdr.nh_op = NMGR_OP_READ_RSP;
+        break;
+
+    case NMGR_OP_WRITE:
+        hdr.nh_op = NMGR_OP_WRITE_RSP;
+        break;
+
+    default:
+        goto done;
+    }
+    rsp_hdr_filled = 1;
+
+    /* Begin root map in response. */
     cbor_encoder_create_map(&g_encoder, &o->os_cbuf.ob_mj.encoder,
                             CborIndefiniteLength);
+
+    handler = mgmt_find_handler(hdr.nh_group, hdr.nh_id);
+    if (handler == NULL) {
+        rc = MGMT_ERR_ENOENT;
+        goto done;
+    }
+
+    cbor_mbuf_reader_init(&o->os_cbuf.ob_reader, m, data_off);
+    cbor_parser_init(&o->os_cbuf.ob_reader.r, 0, &o->os_cbuf.ob_mj.parser,
+                     &o->os_cbuf.ob_mj.it);
 
     switch (mask) {
     case OC_IF_BASELINE:
         oc_process_baseline_interface(req->resource);
+        /* Fallthrough */
+
     case OC_IF_RW:
-        if (!isset) {
-            cbor_encode_text_string(&root_map, "r", 1);
-            if (handler->mh_read) {
+        switch (hdr.nh_op) {
+        case NMGR_OP_READ_RSP:
+            if (handler->mh_read == NULL) {
+                rc = MGMT_ERR_ENOENT;
+            } else {
                 rc = handler->mh_read(&o->os_cbuf.ob_mj);
-            } else {
-                goto bad_req;
             }
-        } else {
-            cbor_encode_text_string(&root_map, "w", 1);
-            if (handler->mh_write) {
+            break;
+
+        case NMGR_OP_WRITE_RSP:
+            if (handler->mh_write == NULL) {
+                rc = MGMT_ERR_ENOENT;
+            } else {
                 rc = handler->mh_write(&o->os_cbuf.ob_mj);
-            } else {
-                goto bad_req;
             }
+            break;
+
+        default:
+            rc = MGMT_ERR_EINVAL;
+            break;
         }
-        if (rc) {
-            goto bad_req;
+        if (rc != 0) {
+            goto done;
+        }
+
+        /* Encode the NMP header in the response. */
+        rc = omgr_encode_nmp_hdr(&o->os_cbuf.ob_mj.encoder, hdr);
+        if (rc != 0) {
+            rc = MGMT_ERR_ENOMEM;
+            goto done;
         }
         break;
+
     default:
         break;
     }
 
-    cbor_encoder_close_container(&g_encoder, &o->os_cbuf.ob_mj.encoder);
-    oc_send_response(req, OC_STATUS_OK);
+    rc = 0;
 
-    return;
-bad_req:
-    /*
-     * XXXX might send partially constructed response as payload
-     */
-    if (rc == MGMT_ERR_ENOMEM) {
-        rc = OC_STATUS_INTERNAL_SERVER_ERROR;
-    } else {
-        rc = OC_STATUS_BAD_REQUEST;
+done:
+    if (rc != 0) {
+        if (rsp_hdr_filled) {
+            rc = omgr_send_err_rsp(&g_encoder, &hdr, rc);
+        }
+        switch (rc) {
+        case 0:
+            break;
+
+        case MGMT_ERR_ENOMEM:
+            rc = OC_STATUS_INTERNAL_SERVER_ERROR;
+            break;
+
+        default:
+            rc = OC_STATUS_BAD_REQUEST;
+            break;
+        }
     }
+
+    cbor_encoder_close_container(&g_encoder, &o->os_cbuf.ob_mj.encoder);
     oc_send_response(req, rc);
-}
-
-static void
-omgr_oic_get(oc_request_t *req, oc_interface_mask_t mask)
-{
-    omgr_oic_op(req, mask, 0);
-}
-
-static void
-omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask)
-{
-    omgr_oic_op(req, mask, 1);
 }
 
 static void
@@ -204,7 +277,6 @@ omgr_event_start(struct os_event *ev)
     oc_resource_bind_resource_interface(res, mode);
     oc_resource_set_default_interface(res, mode);
     oc_resource_set_discoverable(res);
-    oc_resource_set_request_handler(res, OC_GET, omgr_oic_get);
     oc_resource_set_request_handler(res, OC_PUT, omgr_oic_put);
     oc_add_resource(res);
 }
