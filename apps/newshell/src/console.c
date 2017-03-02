@@ -24,13 +24,8 @@
 #include <stdio.h>
 
 #include "os/os.h"
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
 
 #include "console.h"
-
-#define UART_CONSOLE 0
-#define RTT_CONSOLE 1
 
 /* Control characters */
 #define ESC                0x1b
@@ -356,9 +351,9 @@ console_init(struct os_eventq *avail, struct os_eventq *lines,
     lines_queue = lines;
     completion_cb = completion;
 
-#if UART_CONSOLE == 1
+#if MYNEWT_VAL(CONSOLE_UART)
     rc = uart_console_init();
-#elif RTT_CONSOLE == 1
+#elif MYNEWT_VAL(CONSOLE_RTT)
     rc = rtt_console_init();
 #endif
     console_out = _get_stdout_hook();

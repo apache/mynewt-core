@@ -19,16 +19,32 @@
 # Package: apps/newshell
 
 syscfg.defs:
-
-    CMD_HELP:
-        description: ' '
+    SHELL_CMD_HELP:
+        description: 'Include help information for shell commands'
         value: 1
+
     SHELL_OS_MODULE:
-        description: ' '
+        description: 'Include shell os module'
         value: 1
     SHELL_PROMPT_MODULE:
-        description: ' '
+        description: 'Include shell prompt module'
         value: 1
+
+    CONSOLE_RTT:
+        description: 'Enable console over RTT'
+        value: 1
+    CONSOLE_UART:
+        description: 'Enable console over UART'
+        value: 0
+
+    CONSOLE_UART_BAUD:
+        description: 'Console UART baud rate.'
+        value: '115200'
+    CONSOLE_UART_FLOW_CONTROL:
+        description: 'Console UART flow control.'
+        value: 'UART_FLOW_CTL_NONE'
+
+
 
 syscfg.vals:
     SHELL_TASK: 0

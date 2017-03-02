@@ -156,7 +156,7 @@ shell_os_date_cmd(int argc, char **argv)
     return rc;
 }
 
-#if MYNEWT_VAL(CMD_HELP)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param tasks_params[] = {
     {"", "task name"},
     {NULL, NULL}
@@ -195,7 +195,7 @@ static const struct shell_cmd os_commands[] = {
     {
         .cmd_name = "tasks",
         .cb = shell_os_tasks_display_cmd,
-#if MYNEWT_VAL(CMD_HELP)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &tasks_help,
 #else
         .help = NULL,
@@ -204,7 +204,7 @@ static const struct shell_cmd os_commands[] = {
     {
         .cmd_name = "mpool",
         .cb = shell_os_mpool_display_cmd,
-#if MYNEWT_VAL(CMD_HELP)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &mpool_help,
 #else
         .help = NULL,
@@ -213,7 +213,7 @@ static const struct shell_cmd os_commands[] = {
     {
         .cmd_name = "date",
         .cb = shell_os_date_cmd,
-#if MYNEWT_VAL(CMD_HELP)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &date_help,
 #else
         .help = NULL,

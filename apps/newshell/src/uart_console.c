@@ -26,13 +26,6 @@
 
 #include "console.h"
 
-#define CONSOLE_BAUD 115200
-#define CONSOLE_FLOW_CONTROL UART_FLOW_CTL_NONE
-#define CONSOLE_TX_BUF_SIZE 32
-#define CONSOLE_RX_BUF_SIZE 128
-#define CONSOLE_ECHO 1
-#define CONSOLE_HIST_ENABLE 0
-
 static struct uart_dev *uart_dev;
 
 extern void __stdout_hook_install(int (*hook)(int));
@@ -71,11 +64,11 @@ int
 uart_console_init()
 {
     struct uart_conf uc = {
-        .uc_speed = CONSOLE_BAUD,
+        .uc_speed = MYNEWT_VAL(CONSOLE_UART_BAUD),
         .uc_databits = 8,
         .uc_stopbits = 1,
         .uc_parity = UART_PARITY_NONE,
-        .uc_flow_ctl = CONSOLE_FLOW_CONTROL,
+        .uc_flow_ctl = MYNEWT_VAL(CONSOLE_UART_FLOW_CONTROL),
         .uc_tx_char = console_tx_char,
         .uc_rx_char = console_rx_char,
     };

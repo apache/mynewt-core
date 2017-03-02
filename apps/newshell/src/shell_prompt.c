@@ -57,7 +57,7 @@ shell_ticks_cmd(int argc, char **argv)
     return 0;
 }
 
-#if MYNEWT_VAL(CMD_HELP)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param ticks_params[] = {
     {"on", "turn on"},
     {"off", "turn on"},
@@ -75,7 +75,7 @@ static const struct shell_cmd prompt_commands[] = {
     {
         .cmd_name = "ticks",
         .cb = shell_ticks_cmd,
-#if MYNEWT_VAL(CMD_HELP)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &ticks_help,
 #else
         .help = NULL,
