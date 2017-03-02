@@ -33,15 +33,24 @@ rtt(void *arg)
 {
     int sr;
     int key;
+    int i = 0;
 
     while (1) {
         OS_ENTER_CRITICAL(sr);
         key = SEGGER_RTT_GetKey();
         if (key >= 0) {
             console_handle_char((char)key);
+            i = 0;
         }
         OS_EXIT_CRITICAL(sr);
-        os_time_delay(OS_TICKS_PER_SEC / 20);
+        /* These values were selected to keep the shell responsive
+         * and at the same time reduce context switches.
+         * Min sleep is 50ms and max is 250ms.
+         */
+        if (i < 5) {
+            ++i;
+        }
+        os_time_delay((OS_TICKS_PER_SEC / 20) * i);
     }
 }
 
