@@ -240,15 +240,15 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
     int split_status;
     uint8_t state_flags;
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, images, image;
+    CborEncoder images;
+    CborEncoder image;
 
     any_non_bootable = 0;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "images");
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "images");
 
-    g_err |= cbor_encoder_create_array(&rsp, &images, CborIndefiniteLength);
+    g_err |= cbor_encoder_create_array(&cb->encoder, &images,
+                                       CborIndefiniteLength);
     for (i = 0; i < 2; i++) {
         rc = imgr_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
@@ -261,7 +261,8 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
 
         state_flags = imgmgr_state_flags(i);
 
-        g_err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
+        g_err |= cbor_encoder_create_map(&images, &image,
+                                         CborIndefiniteLength);
         g_err |= cbor_encode_text_stringz(&image, "slot");
         g_err |= cbor_encode_int(&image, i);
 
@@ -294,7 +295,7 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         g_err |= cbor_encoder_close_container(&images, &image);
     }
 
-    g_err |= cbor_encoder_close_container(&rsp, &images);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &images);
 
     if (any_non_bootable) {
         split_status = split_check_status();
@@ -302,10 +303,8 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         split_status = SPLIT_STATUS_INVALID;
     }
 
-    g_err |= cbor_encode_text_stringz(&rsp, "splitStatus");
-    g_err |= cbor_encode_int(&rsp, split_status);
-
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "splitStatus");
+    g_err |= cbor_encode_int(&cb->encoder, split_status);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -341,45 +340,37 @@ imgmgr_state_write(struct mgmt_cbuf *cb)
 
     rc = cbor_read_object(&cb->it, write_attr);
     if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     /* Validate arguments. */
     if ((hash_len == 0) && !confirm) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     if (hash_len != 0) {
         slot = imgr_find_by_hash(hash, NULL);
         if (slot < 0) {
-            rc = MGMT_ERR_EINVAL;
-            goto err;
+            return MGMT_ERR_EINVAL;
         }
 
         rc = imgmgr_state_set_pending(slot, confirm);
         if (rc != 0) {
-            goto err;
+            return rc;
         }
     } else {
         /* Confirm current setup. */
         rc = imgmgr_state_confirm();
         if (rc != 0) {
-            goto err;
+            return rc;
         }
     }
 
     /* Send the current image state in the response. */
     rc = imgmgr_state_read(cb);
     if (rc != 0) {
-        goto err;
+        return rc;
     }
-
-    return 0;
-
-err:
-    mgmt_cbuf_setoerr(cb, rc);
 
     return 0;
 }

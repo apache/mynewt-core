@@ -95,46 +95,39 @@ stats_nmgr_read(struct mgmt_cbuf *cb)
         { NULL },
     };
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, stats;
+    CborEncoder stats;
 
     g_err = cbor_read_object(&cb->it, attrs);
     if (g_err != 0) {
-        g_err = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     hdr = stats_group_find(stats_name);
     if (!hdr) {
-        g_err = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "name");
-    g_err |= cbor_encode_text_stringz(&rsp, stats_name);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "name");
+    g_err |= cbor_encode_text_stringz(&cb->encoder, stats_name);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "group");
-    g_err |= cbor_encode_text_string(&rsp, "sys", sizeof("sys")-1);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "group");
+    g_err |= cbor_encode_text_string(&cb->encoder, "sys", sizeof("sys")-1);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "fields");
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "fields");
 
-    g_err |= cbor_encoder_create_map(&rsp, &stats, CborIndefiniteLength);
+    g_err |= cbor_encoder_create_map(&cb->encoder, &stats,
+                                     CborIndefiniteLength);
 
     stats_walk(hdr, stats_nmgr_walk_func, &stats);
 
-    g_err |= cbor_encoder_close_container(&rsp, &stats);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &stats);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
-    return (0);
-err:
-    mgmt_cbuf_setoerr(cb, g_err);
 
     return (0);
 }
@@ -143,17 +136,15 @@ static int
 stats_nmgr_list(struct mgmt_cbuf *cb)
 {
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, stats;
+    CborEncoder stats;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
-    g_err |= cbor_encode_text_stringz(&rsp, "stat_list");
-    g_err |= cbor_encoder_create_array(&rsp, &stats, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "stat_list");
+    g_err |= cbor_encoder_create_array(&cb->encoder, &stats,
+                                       CborIndefiniteLength);
     stats_group_walk(stats_nmgr_encode_name, &stats);
-    g_err |= cbor_encoder_close_container(&rsp, &stats);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &stats);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;

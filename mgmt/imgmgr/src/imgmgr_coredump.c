@@ -40,20 +40,24 @@ imgr_core_list(struct mgmt_cbuf *cb)
     int rc;
 
     rc = flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa);
-    if (rc) {
-        rc = MGMT_ERR_EINVAL;
-    } else {
-        rc = flash_area_read(fa, 0, &hdr, sizeof(hdr));
-        if (rc != 0) {
-            rc = MGMT_ERR_EINVAL;
-        } else if (hdr.ch_magic != COREDUMP_MAGIC) {
-            rc = MGMT_ERR_ENOENT;
-        } else {
-            rc = 0;
-        }
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
     }
 
-    mgmt_cbuf_setoerr(cb, rc);
+    rc = flash_area_read(fa, 0, &hdr, sizeof(hdr));
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    if (hdr.ch_magic != COREDUMP_MAGIC) {
+        return MGMT_ERR_ENOENT;
+    }
+
+    rc = mgmt_cbuf_setoerr(cb, 0);
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
 }
 
@@ -75,21 +79,17 @@ imgr_core_load(struct mgmt_cbuf *cb)
     uint8_t data[IMGMGR_NMGR_MAX_MSG];
     struct coredump_header *hdr;
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp;
 
     hdr = (struct coredump_header *)data;
 
     rc = cbor_read_object(&cb->it, dload_attr);
     if (rc || off == UINT_MAX) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     rc = flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa);
     if (rc) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     rc = flash_area_read(fa, 0, hdr, sizeof(*hdr));
@@ -115,14 +115,12 @@ imgr_core_load(struct mgmt_cbuf *cb)
         goto err_close;
     }
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
-    g_err |= cbor_encode_text_stringz(&rsp, "off");
-    g_err |= cbor_encode_int(&rsp, off);
-    g_err |= cbor_encode_text_stringz(&rsp, "data");
-    g_err |= cbor_encode_byte_string(&rsp, data, sz);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "off");
+    g_err |= cbor_encode_int(&cb->encoder, off);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "data");
+    g_err |= cbor_encode_byte_string(&cb->encoder, data, sz);
 
     flash_area_close(fa);
     if (g_err) {
@@ -132,8 +130,6 @@ imgr_core_load(struct mgmt_cbuf *cb)
 
 err_close:
     flash_area_close(fa);
-err:
-    mgmt_cbuf_setoerr(cb, rc);
     return rc;
 }
 
@@ -148,24 +144,26 @@ imgr_core_erase(struct mgmt_cbuf *cb)
     int rc;
 
     rc = flash_area_open(MYNEWT_VAL(COREDUMP_FLASH_AREA), &fa);
-    if (rc) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
     }
 
     rc = flash_area_read(fa, 0, &hdr, sizeof(hdr));
     if (rc == 0 &&
       (hdr.ch_magic == COREDUMP_MAGIC || hdr.ch_magic == 0xffffffff)) {
         rc = flash_area_erase(fa, 0, fa->fa_size);
-        if (rc) {
-            rc = MGMT_ERR_EINVAL;
+        if (rc != 0) {
+            return MGMT_ERR_EINVAL;
         }
     }
-    rc = 0;
 
     flash_area_close(fa);
-err:
-    mgmt_cbuf_setoerr(cb, rc);
+
+    rc = mgmt_cbuf_setoerr(cb, rc);
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
 }
 
