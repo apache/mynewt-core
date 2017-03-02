@@ -105,11 +105,6 @@ run_nmgr_test(struct mgmt_cbuf *cb)
 
     os_eventq_put(run_evq_get(), &run_test_event);
             
-    if (rc) {
-        rc = MGMT_ERR_EINVAL;
-    }
-
-    mgmt_cbuf_setoerr(cb, rc);
     return 0;
 }
 
@@ -120,23 +115,21 @@ static int
 run_nmgr_list(struct mgmt_cbuf *cb)
 {
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, run_list;
+    CborEncoder run_list;
     struct ts_suite *ts;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "run_list");
-    g_err |= cbor_encoder_create_array(&rsp, &run_list, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "run_list");
+    g_err |= cbor_encoder_create_array(&cb->encoder, &run_list,
+                                       CborIndefiniteLength);
 
     SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
         g_err |= cbor_encode_text_stringz(&run_list, ts->ts_name);
     }
 
-    g_err |= cbor_encoder_close_container(&rsp, &run_list);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &run_list);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;

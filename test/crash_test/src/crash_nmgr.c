@@ -33,7 +33,7 @@
 static int crash_test_nmgr_write(struct mgmt_cbuf *);
 
 static const struct mgmt_handler crash_test_nmgr_handler[] = {
-    [0] = { crash_test_nmgr_write, crash_test_nmgr_write }
+    [0] = { NULL, crash_test_nmgr_write }
 };
 
 struct mgmt_group crash_test_nmgr_group = {
@@ -60,15 +60,20 @@ crash_test_nmgr_write(struct mgmt_cbuf *cb)
     int rc;
 
     rc = cbor_read_object(&cb->it, attr);
-    if (rc) {
-        rc = MGMT_ERR_EINVAL;
-    } else {
-        rc = crash_device(tmp_str);
-        if (rc) {
-            rc = MGMT_ERR_EINVAL;
-        }
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
     }
-    mgmt_cbuf_setoerr(cb, rc);
+
+    rc = crash_device(tmp_str);
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    rc = mgmt_cbuf_setoerr(cb, 0);
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
 }
 

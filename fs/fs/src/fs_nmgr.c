@@ -90,19 +90,15 @@ fs_nmgr_file_download(struct mgmt_cbuf *cb)
     uint32_t out_len;
     struct fs_file *file;
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp;
 
     rc = cbor_read_object(&cb->it, dload_attr);
     if (rc || off == UINT_MAX) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     rc = fs_open(tmp_str, FS_ACCESS_READ, &file);
     if (rc || !file) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
+        return MGMT_ERR_ENOMEM;
     }
 
     rc = fs_seek(file, off);
@@ -116,34 +112,30 @@ fs_nmgr_file_download(struct mgmt_cbuf *cb)
         goto err_close;
     }
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "off");
+    g_err |= cbor_encode_uint(&cb->encoder, off);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "off");
-    g_err |= cbor_encode_uint(&rsp, off);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "data");
+    g_err |= cbor_encode_byte_string(&cb->encoder, img_data, out_len);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "data");
-    g_err |= cbor_encode_byte_string(&rsp, img_data, out_len);
-
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
     if (off == 0) {
         rc = fs_filelen(file, &out_len);
-        g_err |= cbor_encode_text_stringz(&rsp, "len");
-        g_err |= cbor_encode_uint(&rsp, out_len);
+        g_err |= cbor_encode_text_stringz(&cb->encoder, "len");
+        g_err |= cbor_encode_uint(&cb->encoder, out_len);
     }
-    g_err |= cbor_encoder_close_container(penc, &rsp);
 
     fs_close(file);
     if (g_err) {
-          return MGMT_ERR_ENOMEM;
+        return MGMT_ERR_ENOMEM;
     }
+
     return 0;
 
 err_close:
     fs_close(file);
-err:
-    mgmt_cbuf_setoerr(cb, rc);
-    return 0;
+    return rc;
 }
 
 static int
@@ -183,14 +175,11 @@ fs_nmgr_file_upload(struct mgmt_cbuf *cb)
         [4] = { 0 },
     };
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp;
     int rc;
 
     rc = cbor_read_object(&cb->it, off_attr);
     if (rc || off == UINT_MAX) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     if (off == 0) {
@@ -201,8 +190,7 @@ fs_nmgr_file_upload(struct mgmt_cbuf *cb)
         fs_nmgr_state.upload.size = size;
 
         if (!strlen(file_name)) {
-            rc = MGMT_ERR_EINVAL;
-            goto err;
+            return MGMT_ERR_EINVAL;
         }
         if (fs_nmgr_state.upload.file) {
             fs_close(fs_nmgr_state.upload.file);
@@ -211,8 +199,7 @@ fs_nmgr_file_upload(struct mgmt_cbuf *cb)
         rc = fs_open(file_name, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE,
           &fs_nmgr_state.upload.file);
         if (rc) {
-            rc = MGMT_ERR_EINVAL;
-            goto err;
+            return MGMT_ERR_EINVAL;
         }
     } else if (off != fs_nmgr_state.upload.off) {
         /*
@@ -223,8 +210,7 @@ fs_nmgr_file_upload(struct mgmt_cbuf *cb)
     }
 
     if (!fs_nmgr_state.upload.file) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
     if (img_len) {
         rc = fs_write(fs_nmgr_state.upload.file, img_data, img_len);
@@ -239,13 +225,12 @@ fs_nmgr_file_upload(struct mgmt_cbuf *cb)
             fs_nmgr_state.upload.file = NULL;
         }
     }
+
 out:
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
-    g_err |= cbor_encode_text_stringz(&rsp, "off");
-    g_err |= cbor_encode_uint(&rsp, fs_nmgr_state.upload.off);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "off");
+    g_err |= cbor_encode_uint(&cb->encoder, fs_nmgr_state.upload.off);
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
@@ -254,9 +239,7 @@ out:
 err_close:
     fs_close(fs_nmgr_state.upload.file);
     fs_nmgr_state.upload.file = NULL;
-err:
-    mgmt_cbuf_setoerr(cb, rc);
-    return 0;
+    return rc;
 }
 
 int

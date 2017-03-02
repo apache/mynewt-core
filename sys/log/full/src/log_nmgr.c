@@ -250,8 +250,7 @@ log_nmgr_read(struct mgmt_cbuf *cb)
     int64_t ts;
     uint64_t index;
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, logs;
+    CborEncoder logs;
 
     const struct cbor_attr_t attr[4] = {
         [0] = {
@@ -281,10 +280,9 @@ log_nmgr_read(struct mgmt_cbuf *cb)
     }
 
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "logs");
-
-    g_err |= cbor_encoder_create_array(&rsp, &logs, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "logs");
+    g_err |= cbor_encoder_create_array(&cb->encoder, &logs,
+                                       CborIndefiniteLength);
 
     name_len = strlen(name);
     log = NULL;
@@ -321,10 +319,9 @@ log_nmgr_read(struct mgmt_cbuf *cb)
     }
 
 err:
-    g_err |= cbor_encoder_close_container(&rsp, &logs);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, rc);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &logs);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, rc);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -344,15 +341,14 @@ log_nmgr_module_list(struct mgmt_cbuf *cb)
     int module;
     char *str;
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, modules;
+    CborEncoder modules;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "module_map");
-    g_err |= cbor_encoder_create_map(&rsp, &modules, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "module_map");
+    g_err |= cbor_encoder_create_map(&cb->encoder, &modules,
+                                     CborIndefiniteLength);
 
     module = LOG_MODULE_DEFAULT;
     while (module < LOG_MODULE_MAX) {
@@ -367,8 +363,7 @@ log_nmgr_module_list(struct mgmt_cbuf *cb)
         module++;
     }
 
-    g_err |= cbor_encoder_close_container(&rsp, &modules);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &modules);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -385,16 +380,15 @@ static int
 log_nmgr_logs_list(struct mgmt_cbuf *cb)
 {
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, log_list;
+    CborEncoder log_list;
     struct log *log;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "log_list");
-    g_err |= cbor_encoder_create_array(&rsp, &log_list, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "log_list");
+    g_err |= cbor_encoder_create_array(&cb->encoder, &log_list,
+                                       CborIndefiniteLength);
 
     log = NULL;
     while (1) {
@@ -410,8 +404,7 @@ log_nmgr_logs_list(struct mgmt_cbuf *cb)
         g_err |= cbor_encode_text_stringz(&log_list, log->l_name);
     }
 
-    g_err |= cbor_encoder_close_container(&rsp, &log_list);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &log_list);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -428,17 +421,16 @@ static int
 log_nmgr_level_list(struct mgmt_cbuf *cb)
 {
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, level_map;
+    CborEncoder level_map;
     int level;
     char *str;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
 
-    g_err |= cbor_encode_text_stringz(&rsp, "level_map");
-    g_err |= cbor_encoder_create_map(&rsp, &level_map, CborIndefiniteLength);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "level_map");
+    g_err |= cbor_encoder_create_map(&cb->encoder, &level_map,
+                                     CborIndefiniteLength);
 
     level = LOG_LEVEL_DEBUG;
     while (level < LOG_LEVEL_MAX) {
@@ -453,8 +445,7 @@ log_nmgr_level_list(struct mgmt_cbuf *cb)
         level++;
     }
 
-    g_err |= cbor_encoder_close_container(&rsp, &level_map);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &level_map);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -470,9 +461,6 @@ log_nmgr_level_list(struct mgmt_cbuf *cb)
 static int
 log_nmgr_clear(struct mgmt_cbuf *cb)
 {
-    CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp;
     struct log *log;
     int rc;
 
@@ -489,19 +477,16 @@ log_nmgr_clear(struct mgmt_cbuf *cb)
 
         rc = log_flush(log);
         if (rc) {
-            goto err;
+            return rc;
         }
     }
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
 
-    if (g_err) {
-        return MGMT_ERR_ENOMEM;
+    rc = mgmt_cbuf_setoerr(cb, 0);
+    if (rc != 0) {
+        return rc;
     }
+
     return 0;
-err:
-    mgmt_cbuf_setoerr(cb, rc);
-    return (rc);
 }
 
 /**
