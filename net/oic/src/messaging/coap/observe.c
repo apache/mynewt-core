@@ -206,7 +206,7 @@ coap_notify_observers(oc_resource_t *resource,
         num_observers = resource->num_observers;
     }
     response.separate_response = 0;
-    if (!response_buf && resource && (resource->properties & OC_PERIODIC)) {
+    if (!response_buf && resource) {
         OC_LOG_DEBUG("coap_notify_observers: Issue GET request to resource\n");
         /* performing GET on the resource */
         m = os_msys_get_pkthdr(0, 0);
