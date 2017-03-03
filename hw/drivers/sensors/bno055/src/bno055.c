@@ -240,7 +240,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     };
 
     /* Clear the supplied buffer */
-    memset(buffer, 0, 22);
+    memset(buffer, 0, len);
 
     /* Register write */
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
