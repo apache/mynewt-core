@@ -21,7 +21,7 @@
 
 syscfg.defs:
     CLOCK_FREQ:
-        description: 'TBD'
+        description: 'Clock frequency (hertz).'
         value:  546000000ul
 
     UART_0:
