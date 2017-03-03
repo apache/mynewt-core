@@ -44,33 +44,11 @@
 #if MYNEWT_VAL(BNO055_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(bno055_stat_section)
-    STATS_SECT_ENTRY(samples_acc_2g)
-    STATS_SECT_ENTRY(samples_acc_4g)
-    STATS_SECT_ENTRY(samples_acc_8g)
-    STATS_SECT_ENTRY(samples_acc_16g)
-    STATS_SECT_ENTRY(samples_mag_1_3g)
-    STATS_SECT_ENTRY(samples_mag_1_9g)
-    STATS_SECT_ENTRY(samples_mag_2_5g)
-    STATS_SECT_ENTRY(samples_mag_4_0g)
-    STATS_SECT_ENTRY(samples_mag_4_7g)
-    STATS_SECT_ENTRY(samples_mag_5_6g)
-    STATS_SECT_ENTRY(samples_mag_8_1g)
     STATS_SECT_ENTRY(errors)
 STATS_SECT_END
 
 /* Define stat names for querying */
 STATS_NAME_START(bno055_stat_section)
-    STATS_NAME(bno055_stat_section, samples_acc_2g)
-    STATS_NAME(bno055_stat_section, samples_acc_4g)
-    STATS_NAME(bno055_stat_section, samples_acc_8g)
-    STATS_NAME(bno055_stat_section, samples_acc_16g)
-    STATS_NAME(bno055_stat_section, samples_mag_1_3g)
-    STATS_NAME(bno055_stat_section, samples_mag_1_9g)
-    STATS_NAME(bno055_stat_section, samples_mag_2_5g)
-    STATS_NAME(bno055_stat_section, samples_mag_4_0g)
-    STATS_NAME(bno055_stat_section, samples_mag_4_7g)
-    STATS_NAME(bno055_stat_section, samples_mag_5_6g)
-    STATS_NAME(bno055_stat_section, samples_mag_8_1g)
     STATS_NAME(bno055_stat_section, errors)
 STATS_NAME_END(bno055_stat_section)
 
@@ -444,6 +422,31 @@ err:
     return rc;
 }
 
+static int
+bno055_default_cfg(struct bno055_cfg *cfg)
+{
+    cfg->bc_opr_mode = BNO055_OPR_MODE_ACCONLY;
+    cfg->bc_pwr_mode = BNO055_PWR_MODE_NORMAL;
+    cfg->bc_units = BNO055_DO_FORMAT_ANDROID|
+                    BNO055_ACC_UNIT_MS2|
+                    BNO055_ANGRATE_UNIT_DPS|
+                    BNO055_EULER_UNIT_DEG|
+                    BNO055_TEMP_UNIT_DEGC;
+    cfg->bc_placement = BNO055_AXIS_CFG_P1;
+    cfg->bc_acc_range = BNO055_ACC_CFG_RNG_4G;
+    cfg->bc_acc_bw = BNO055_ACC_CFG_BW_6_25HZ;
+    cfg->bc_acc_res = 14;
+    cfg->bc_gyro_range = BNO055_GYR_CFG_RNG_2000DPS;
+    cfg->bc_gyro_bw = BNO055_GYR_CFG_BW_32HZ;
+    cfg->bc_gyro_res = 16;
+    cfg->bc_mag_odr = BNO055_MAG_CFG_ODR_2HZ;
+    cfg->bc_mag_xy_rep = 15;
+    cfg->bc_mag_z_rep = 16;
+    cfg->bc_mag_res = BNO055_MAG_RES_13_13_15;
+
+    return 0;
+}
+
 /**
  * Expects to be called back through os_dev_create().
  *
@@ -460,6 +463,11 @@ bno055_init(struct os_dev *dev, void *arg)
     int rc;
 
     bno055 = (struct bno055 *) dev;
+
+    rc = bno055_default_cfg(&bno055->cfg);
+    if (rc) {
+        goto err;
+    }
 
 #if MYNEWT_VAL(BNO055_LOG)
     log_register("bno055", &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
@@ -582,6 +590,117 @@ err:
     return rc;
 }
 
+int
+bno055_placement_cfg(uint8_t placement)
+{
+    uint8_t remap_cfg;
+    uint8_t remap_sign;
+    int rc;
+
+    rc = SYS_EOK;
+
+    switch(placement) {
+
+    case BNO055_AXIS_CFG_P0:
+        remap_cfg = BNO055_REMAP_CONFIG_P0;
+        remap_sign = BNO055_REMAP_SIGN_P0;
+        break;
+    case BNO055_AXIS_CFG_P1:
+        remap_cfg = BNO055_REMAP_CONFIG_P1;
+        remap_sign = BNO055_REMAP_SIGN_P1;
+        break;
+    case BNO055_AXIS_CFG_P2:
+        remap_cfg = BNO055_REMAP_CONFIG_P2;
+        remap_sign = BNO055_REMAP_SIGN_P2;
+        break;
+    case BNO055_AXIS_CFG_P3:
+        remap_cfg = BNO055_REMAP_CONFIG_P3;
+        remap_sign = BNO055_REMAP_SIGN_P3;
+        break;
+    case BNO055_AXIS_CFG_P4:
+        remap_cfg = BNO055_REMAP_CONFIG_P4;
+        remap_sign = BNO055_REMAP_SIGN_P4;
+        break;
+    case BNO055_AXIS_CFG_P5:
+        remap_cfg = BNO055_REMAP_CONFIG_P5;
+        remap_sign = BNO055_REMAP_SIGN_P5;
+        break;
+    case BNO055_AXIS_CFG_P6:
+        remap_cfg = BNO055_REMAP_CONFIG_P6;
+        remap_sign = BNO055_REMAP_SIGN_P6;
+        break;
+    case BNO055_AXIS_CFG_P7:
+        remap_cfg = BNO055_REMAP_CONFIG_P7;
+        remap_sign = BNO055_REMAP_SIGN_P7;
+        break;
+    default:
+        BNO055_ERR("Invalid Axis config, Assuming P1(default) \n");
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    rc = bno055_write8(BNO055_AXIS_MAP_CONFIG_ADDR, remap_cfg);
+    if (rc) {
+        goto err;
+    }
+
+    rc = bno055_write8(BNO055_AXIS_MAP_SIGN_ADDR, remap_sign);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+int
+bno055_acc_cfg(struct bno055_cfg *cfg)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_ACCEL_CONFIG_ADDR, cfg->bc_acc_range|
+                       cfg->bc_acc_bw|cfg->bc_acc_opr_mode);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+int
+bno055_mag_cfg(struct bno055_cfg *cfg)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_MAG_CONFIG_ADDR, cfg->bc_mag_odr|
+                       cfg->bc_mag_pwr_mode|cfg->bc_mag_opr_mode);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+int
+bno055_gyro_cfg(struct bno055_cfg *cfg)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_GYRO_CONFIG_ADDR, cfg->bc_gyro_range|
+                       cfg->bc_gyro_bw|cfg->bc_gyro_opr_mode);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
 
 int
 bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
@@ -629,21 +748,27 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
+    bno055->cfg.bc_pwr_mode = cfg->bc_pwr_mode;
+
     /**
      * As per Section 5.5 in the BNO055 Datasheet,
      * external crystal should be used for accurate
      * results
      */
-    rc = bno055_set_ext_xtal_use(1, BNO055_OPR_MODE_CONFIG);
+    rc = bno055_set_ext_xtal_use(cfg->bc_use_ext_xtal, BNO055_OPR_MODE_CONFIG);
     if (rc) {
         goto err;
     }
+
+    bno055->cfg.bc_use_ext_xtal = cfg->bc_use_ext_xtal;
 
     /* Setting units and data output format */
     rc = bno055_set_units(cfg->bc_units);
     if (rc) {
         goto err;
     }
+
+    bno055->cfg.bc_units = cfg->bc_units;
 
     /* Change mode to requested mode */
     rc = bno055_set_opr_mode(cfg->bc_opr_mode);
@@ -674,12 +799,12 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
 
         if (cfg->bc_opr_mode != mode) {
             BNO055_ERR("Config mode and read mode do not match.\n");
-            return rc;
+            rc = SYS_EINVAL;
+            goto err;
         }
     }
 
-    /* Overwrite the configuration data. */
-    memcpy(&bno055->cfg, cfg, sizeof(*cfg));
+    bno055->cfg.bc_opr_mode = cfg->bc_opr_mode;
 
     return 0;
 err:

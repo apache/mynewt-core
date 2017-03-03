@@ -60,10 +60,10 @@ extern "C" {
 #define BNO055_DO_FORMAT_ANDROID                            (1 << 7)
 
 /* Accelerometer config */
-#define BNO055_ACC_CFG_2G                                        0x0
-#define BNO055_ACC_CFG_4G                                        0x1
-#define BNO055_ACC_CFG_8G                                        0x2
-#define BNO055_ACC_CFG_16G                                       0x3
+#define BNO055_ACC_CFG_RNG_2G                                    0x0
+#define BNO055_ACC_CFG_RNG_4G                                    0x1
+#define BNO055_ACC_CFG_RNG_8G                                    0x2
+#define BNO055_ACC_CFG_RNG_16G                                   0x3
 
 #define BNO055_ACC_CFG_BW_7_81HZ                          (0x0 << 2)
 #define BNO055_ACC_CFG_BW_15_63HZ                         (0x1 << 2)
@@ -104,14 +104,14 @@ extern "C" {
 #define BNO055_GYR_CFG_OPR_MODE_ADV_PWR_SAVE              (0x4 << 5)
 
 /* Magnetometer config */
-#define BNO055_MAG_CFG_BW_2HZ                                    0x0
-#define BNO055_MAG_CFG_BW_6HZ                                    0x1
-#define BNO055_MAG_CFG_BW_8HZ                                    0x2
-#define BNO055_MAG_CFG_BW_10HZ                                   0x3
-#define BNO055_MAG_CFG_BW_15HZ                                   0x4
-#define BNO055_MAG_CFG_BW_20HZ                                   0x5
-#define BNO055_MAG_CFG_BW_25HZ                                   0x6
-#define BNO055_MAG_CFG_BW_30HZ                                   0x7
+#define BNO055_MAG_CFG_ODR_2HZ                                    0x0
+#define BNO055_MAG_CFG_ODR_6HZ                                    0x1
+#define BNO055_MAG_CFG_ODR_8HZ                                    0x2
+#define BNO055_MAG_CFG_ODR_10HZ                                   0x3
+#define BNO055_MAG_CFG_ODR_15HZ                                   0x4
+#define BNO055_MAG_CFG_ODR_20HZ                                   0x5
+#define BNO055_MAG_CFG_ODR_25HZ                                   0x6
+#define BNO055_MAG_CFG_ODR_30HZ                                   0x7
 
 #define BNO055_MAG_CFG_OPR_MODE_LOWPWR                    (0x0 << 3)
 #define BNO055_MAG_CFG_OPR_MODE_REG                       (0x1 << 3)
@@ -123,10 +123,41 @@ extern "C" {
 #define BNO055_MAG_CFG_PWR_MODE_SUSPEND                   (0x2 << 5)
 #define BNO055_MAG_CFG_PWR_MODE_FORCE_MODE                (0x3 << 5)
 
+/*
+ * Just a placeholder to specify resolution/axis x:13 bits, y:13 bits,
+ * z:15 bits
+ */
+#define BNO055_MAG_RES_13_13_15                                 0x00
+
+#define BNO055_AXIS_CFG_P0                                      0x00
+#define BNO055_AXIS_CFG_P1                                      0x01 /* Default */
+#define BNO055_AXIS_CFG_P2                                      0x02
+#define BNO055_AXIS_CFG_P3                                      0x03
+#define BNO055_AXIS_CFG_P4                                      0x04
+#define BNO055_AXIS_CFG_P5                                      0x05
+#define BNO055_AXIS_CFG_P6                                      0x06
+#define BNO055_AXIS_CFG_P7                                      0x07
+
 struct bno055_cfg {
     uint8_t bc_opr_mode;
     uint8_t bc_pwr_mode;
     uint8_t bc_units;
+    uint8_t bc_placement;
+    uint8_t bc_acc_range;
+    uint8_t bc_acc_bw;
+    uint8_t bc_acc_opr_mode;
+    uint8_t bc_acc_res;
+    uint8_t bc_gyro_range;
+    uint8_t bc_gyro_bw;
+    uint8_t bc_gyro_opr_mode;
+    uint8_t bc_gyro_res;
+    uint8_t bc_mag_odr;
+    uint8_t bc_mag_xy_rep;
+    uint8_t bc_mag_z_rep;
+    uint8_t bc_mag_res;
+    uint8_t bc_mag_pwr_mode;
+    uint8_t bc_mag_opr_mode;
+    uint8_t bc_use_ext_xtal;
 };
 
 struct bno055 {

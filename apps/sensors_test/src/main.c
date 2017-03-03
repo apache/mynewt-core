@@ -312,6 +312,8 @@ config_sensor(void)
 
     bcfg.bc_pwr_mode = BNO055_PWR_MODE_NORMAL;
 
+    bcfg.bc_use_ext_xtal = 1;
+
     rc = bno055_config((struct bno055 *) dev, &bcfg);
     if (rc) {
         os_dev_close(dev);
