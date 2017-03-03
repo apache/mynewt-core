@@ -26,11 +26,17 @@ extern "C" {
 
 struct os_eventq *oc_evq_get(void);
 
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-int oc_connectivity_init_ip(void);
-void oc_connectivity_shutdown_ip(void);
-void oc_send_buffer_ip(struct os_mbuf *);
-void oc_send_buffer_ip_mcast(struct os_mbuf *);
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+int oc_connectivity_init_ip6(void);
+void oc_connectivity_shutdown_ip6(void);
+void oc_send_buffer_ip6(struct os_mbuf *);
+void oc_send_buffer_ip6_mcast(struct os_mbuf *);
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+int oc_connectivity_init_ip4(void);
+void oc_connectivity_shutdown_ip4(void);
+void oc_send_buffer_ip4(struct os_mbuf *);
+void oc_send_buffer_ip4_mcast(struct os_mbuf *);
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)

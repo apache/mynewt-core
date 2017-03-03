@@ -30,6 +30,11 @@ typedef struct {
     uint8_t scope;
 } oc_ipv6_addr_t;
 
+typedef struct {
+    uint16_t port;
+    uint8_t address[4];
+} oc_ipv4_addr_t;
+
 enum oc_transport_flags {
     IP = 1 << 0,
     GATT = 1 << 1,
@@ -37,6 +42,7 @@ enum oc_transport_flags {
     MULTICAST = 1 << 3,
     SECURED = 1 << 4,
     SERIAL = 1 << 5,
+    IP4 = 1 << 6,
 };
 
 /*
@@ -48,7 +54,10 @@ enum oc_transport_flags {
  */
 struct oc_endpoint_ip {
     enum oc_transport_flags flags;
-    oc_ipv6_addr_t v6;
+    union {
+        oc_ipv6_addr_t v6;
+        oc_ipv4_addr_t v4;
+    };
 };
 
 /*
@@ -82,6 +91,10 @@ typedef struct oc_endpoint {
 #define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)         \
     oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
                                         .v6 = {.port = __port__,        \
+                                               .address = { __VA_ARGS__ } } } }
+#define oc_make_ip4_endpoint(__name__, __flags__, __port__, ...)        \
+    oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
+                                        .v4 = {.port = __port__,        \
                                                .address = { __VA_ARGS__ } } } }
 
 #ifdef OC_SECURITY
