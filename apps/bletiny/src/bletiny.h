@@ -193,6 +193,7 @@ int bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi);
 int bletiny_l2cap_create_srv(uint16_t psm);
 int bletiny_l2cap_connect(uint16_t conn, uint16_t psm);
 int bletiny_l2cap_disconnect(uint16_t conn, uint16_t idx);
+int bletiny_l2cap_send(uint16_t conn, uint16_t idx, uint16_t bytes);
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
     LOG_ ## lvl(&bletiny_log, BLETINY_LOG_MODULE, __VA_ARGS__)
