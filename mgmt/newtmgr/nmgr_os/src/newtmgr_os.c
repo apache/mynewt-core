@@ -271,16 +271,12 @@ nmgr_datetime_set(struct mgmt_cbuf *cb)
     struct os_timezone tz;
     char buf[DATETIME_BUFSIZE];
     int rc = 0;
-    const struct cbor_attr_t datetime_write_attr[3] = {
+    const struct cbor_attr_t datetime_write_attr[] = {
         [0] = {
             .attribute = "datetime",
             .type = CborAttrTextStringType,
             .addr.string = buf,
             .len = sizeof(buf),
-        },
-        [1] = {
-            .attribute = "rc",
-            .type = CborAttrIntegerType,
         },
         { 0 },
     };
