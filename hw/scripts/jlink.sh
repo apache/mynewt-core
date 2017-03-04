@@ -103,37 +103,50 @@ jlink_load () {
 #
 jlink_debug() {
     if [ -z "$NO_GDB" ]; then
-	GDB_CMD_FILE=.gdb_cmds
+        GDB_CMD_FILE=.gdb_cmds
 
-	if [ -z $FILE_NAME ]; then
+        if [ -z $FILE_NAME ]; then
             echo "Missing filename"
             exit 1
-	fi
-	if [ ! -f "$FILE_NAME" ]; then
+        fi
+        if [ ! -f "$FILE_NAME" ]; then
             echo "Cannot find file" $FILE_NAME
             exit 1
-	fi
+        fi
 
-	echo "Debugging" $FILE_NAME
+        echo "Debugging" $FILE_NAME
 
-	# Monitor mode. Background process gets it's own process group.
-	set -m
-	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
-	set +m
+        if [ -x "$COMSPEC" ]; then
+            #
+            # Launch jlink server in a separate command interpreter, to make
+            # sure it doesn't get killed by Ctrl-C signal from bash.
+            #
+            $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
+        else
+            #
+            # Block Ctrl-C from getting passed to jlink server.
+            #
+            set -m
+            $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
+            set +m
+        fi
 
-	echo "target remote localhost:3333" > $GDB_CMD_FILE
-	# Whether target should be reset or not
-	if [ ! -z "$RESET" ]; then
-	    echo "mon reset" >> $GDB_CMD_FILE
-	    echo "si" >> $GDB_CMD_FILE
-	fi
-	echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
+        echo "target remote localhost:3333" > $GDB_CMD_FILE
+        # Whether target should be reset or not
+        if [ ! -z "$RESET" ]; then
+            echo "mon reset" >> $GDB_CMD_FILE
+            echo "si" >> $GDB_CMD_FILE
+        fi
+        echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-	arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-
-	rm $GDB_CMD_FILE
+        if [ -x "$COMSPEC" ]; then
+            $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+        else
+            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+            rm $GDB_CMD_FILE
+        fi
     else
-	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
+        $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
     fi
     return 0
 }
