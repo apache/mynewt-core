@@ -71,6 +71,7 @@ int
 shell_log_dump_all_cmd(int argc, char **argv)
 {
     struct log *log;
+    struct log_offset log_offset;
     int rc;
 
     log = NULL;
@@ -86,7 +87,12 @@ shell_log_dump_all_cmd(int argc, char **argv)
 
         console_printf("Dumping log %s\n", log->l_name);
 
-        rc = log_walk(log, shell_log_dump_entry, NULL);
+        log_offset.lo_arg = NULL;
+        log_offset.lo_ts = 0;
+        log_offset.lo_index = 0;
+        log_offset.lo_data_len = 0;
+
+        rc = log_walk(log, shell_log_dump_entry, &log_offset);
         if (rc != 0) {
             goto err;
         }
