@@ -76,12 +76,20 @@ openocd_debug () {
             exit 1
         fi
 
-        #
-        # Block Ctrl-C from getting passed to openocd.
-        #
-        set -m
-        openocd $CFG -f $OCD_CMD_FILE -c init -c halt &
-        set +m
+        if [ -x "$COMSPEC" ]; then
+            #
+            # Launch openocd in a separate command interpreter, to make sure
+            # it doesn't get killed by Ctrl-C signal from bash.
+            #
+            $COMSPEC /C "start $COMSPEC /C openocd $CFG -f $OCD_CMD_FILE -c init -c halt"
+        else
+            #
+            # Block Ctrl-C from getting passed to openocd.
+            #
+            set -m
+            openocd $CFG -f $OCD_CMD_FILE -c init -c halt &
+            set +m
+        fi
 
         GDB_CMD_FILE=.gdb_cmds
 
@@ -89,15 +97,21 @@ openocd_debug () {
         if [ ! -z "$RESET" ]; then
             echo "mon reset halt" >> $GDB_CMD_FILE
         fi
-        arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-        rm $GDB_CMD_FILE
+        if [ -x "$COMSPEC" ]; then
+            $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+        else
+            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+            rm $GDB_CMD_FILE
+        fi
     else
         # No GDB, wait for openocd to exit
         openocd $CFG -f $OCD_CMD_FILE -c init -c halt
         return $?
     fi
 
-    rm $OCD_CMD_FILE
+    if [ ! -x "$COMSPEC" ]; then
+        rm $OCD_CMD_FILE
+    fi
     return 0
 }
 
