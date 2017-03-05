@@ -82,8 +82,7 @@ openocd_debug () {
             # it doesn't get killed by Ctrl-C signal from bash.
             #
             CFG=`echo $CFG | sed 's/\//\\\\/g'`
-            echo $CFG
-            $COMSPEC "/C start openocd openocd $CFG -f $OCD_CMD_FILE -c init -c halt"
+            $COMSPEC "/C start $COMSPEC /C openocd -l openocd.log $CFG -f $OCD_CMD_FILE -c init -c halt"
         else
             #
             # Block Ctrl-C from getting passed to openocd.
@@ -99,8 +98,13 @@ openocd_debug () {
         if [ ! -z "$RESET" ]; then
             echo "mon reset halt" >> $GDB_CMD_FILE
         fi
-        arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-        rm $GDB_CMD_FILE
+	if [ $WINDOWS -eq 1 ]; then
+	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
+            $COMSPEC "/C start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+	else
+            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+            rm $GDB_CMD_FILE
+	fi
     else
         # No GDB, wait for openocd to exit
         openocd $CFG -f $OCD_CMD_FILE -c init -c halt
