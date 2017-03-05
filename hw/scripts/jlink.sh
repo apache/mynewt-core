@@ -17,15 +17,6 @@
 
 . $CORE_PATH/hw/scripts/common.sh
 
-if which JLinkGDBServerCL >/dev/null 2>&1; then
-  JLINK_GDB_SERVER=JLinkGDBServerCL
-elif which JLinkGDBServer >/dev/null 2>&1; then
-  JLINK_GDB_SERVER=JLinkGDBServer
-else
-  echo "Cannot find JLinkGDBServer, make sure J-Link tools are in your PATH"
-  exit 1
-fi
-
 #
 # FILE_NAME is the file to load
 # FLASH_OFFSET is location in the flash
@@ -35,6 +26,10 @@ jlink_load () {
     GDB_CMD_FILE=.gdb_cmds
     GDB_OUT_FILE=.gdb_out
 
+    windows_detect
+    if [ $WINDOWS -eq 1 ]; then
+	JLINK_GDB_SERVER=JLinkGDBServerCL
+    fi
     if [ -z $FILE_NAME ]; then
         echo "Missing filename"
         exit 1
@@ -102,6 +97,11 @@ jlink_load () {
 # RESET is set if we should reset the target at attach time
 #
 jlink_debug() {
+    windows_detect
+    if [ $WINDOWS -eq 1 ]; then
+	JLINK_GDB_SERVER=JLinkGDBServerCL
+    fi
+
     if [ -z "$NO_GDB" ]; then
         GDB_CMD_FILE=.gdb_cmds
 
@@ -116,12 +116,12 @@ jlink_debug() {
 
         echo "Debugging" $FILE_NAME
 
-        if [ -x "$COMSPEC" ]; then
+        if [ $WINDOWS -eq 1 ]; then
             #
             # Launch jlink server in a separate command interpreter, to make
             # sure it doesn't get killed by Ctrl-C signal from bash.
             #
-            $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
+            $COMSPEC "/C start $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
         else
             #
             # Block Ctrl-C from getting passed to jlink server.
@@ -139,12 +139,8 @@ jlink_debug() {
         fi
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-        if [ -x "$COMSPEC" ]; then
-            $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
-        else
-            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-            rm $GDB_CMD_FILE
-        fi
+        arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+        rm $GDB_CMD_FILE
     else
         $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
     fi
