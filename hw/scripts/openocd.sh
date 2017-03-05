@@ -62,6 +62,8 @@ openocd_load () {
 openocd_debug () {
     OCD_CMD_FILE=.openocd_cmds
 
+    windows_detect
+
     echo "gdb_port 3333" > $OCD_CMD_FILE
     echo "telnet_port 4444" >> $OCD_CMD_FILE
     echo "$EXTRA_JTAG_CMD" >> $OCD_CMD_FILE
@@ -76,12 +78,14 @@ openocd_debug () {
             exit 1
         fi
 
-        if [ -x "$COMSPEC" ]; then
+        if [ $WINDOWS -eq 1 ]; then
             #
             # Launch openocd in a separate command interpreter, to make sure
             # it doesn't get killed by Ctrl-C signal from bash.
             #
-            $COMSPEC /C "start $COMSPEC /C openocd $CFG -f $OCD_CMD_FILE -c init -c halt"
+            CFG=`echo $CFG | sed 's/\//\\\\/g'`
+            echo $CFG
+            $COMSPEC "/C start openocd openocd $CFG -f $OCD_CMD_FILE -c init -c halt"
         else
             #
             # Block Ctrl-C from getting passed to openocd.
@@ -97,12 +101,8 @@ openocd_debug () {
         if [ ! -z "$RESET" ]; then
             echo "mon reset halt" >> $GDB_CMD_FILE
         fi
-        if [ -x "$COMSPEC" ]; then
-            $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
-        else
-            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-            rm $GDB_CMD_FILE
-        fi
+        arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+        rm $GDB_CMD_FILE
     else
         # No GDB, wait for openocd to exit
         openocd $CFG -f $OCD_CMD_FILE -c init -c halt
