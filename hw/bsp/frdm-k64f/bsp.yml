@@ -23,8 +23,8 @@ bsp.linkerscript: "hw/bsp/frdm-k64f/MK64FN1M0xxx12_flash.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE: "hw/bsp/frdm-k64f/boot-MK64FN1M0xxx12_flash.ld"
 bsp.downloadscript: "hw/bsp/frdm-k64f/frdm-k64_download.sh"
 bsp.debugscript: "hw/bsp/frdm-k64f/frdm-k64_debug.sh"
-bsp.downloadscript.WINDOWS.OVERRIDE: "hw/bsp/frdm-k64f/frdm-k64_download.cmd"
-bsp.debugscript.WINDOWS.OVERRIDE: "hw/bsp/frdm-k64f/frdm-k64_debug.cmd"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/frdm-k64f/frdm-k64_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/frdm-k64f/frdm-k64_debug.cmd"
 
 bsp.flash_map:
     areas:
