@@ -17,6 +17,8 @@
 
 . $CORE_PATH/hw/scripts/common.sh
 
+JLINK_GDB_SERVER=JLinkGDBServer
+
 #
 # FILE_NAME is the file to load
 # FLASH_OFFSET is location in the flash
@@ -123,7 +125,7 @@ jlink_debug() {
             # Launch jlink server in a separate command interpreter, to make
             # sure it doesn't get killed by Ctrl-C signal from bash.
             #
-            $COMSPEC "/C start $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
+            $COMSPEC "/C start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
         else
             #
             # Block Ctrl-C from getting passed to jlink server.
@@ -141,8 +143,13 @@ jlink_debug() {
         fi
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-        arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-        rm $GDB_CMD_FILE
+	if [ $WINDOWS -eq 1 ]; then
+	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
+	    $COMSPEC "/C start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+	else
+            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+            rm $GDB_CMD_FILE
+	fi
     else
         $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
     fi
