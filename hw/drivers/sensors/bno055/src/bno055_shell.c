@@ -42,23 +42,6 @@ static struct shell_cmd bno055_shell_cmd_struct = {
 };
 
 static int
-bno055_shell_stol(char *param_val, long min, long max, long *output)
-{
-    char *endptr;
-    long lval;
-
-    lval = strtol(param_val, &endptr, 10); /* Base 10 */
-    if (param_val != '\0' && *endptr == '\0' &&
-        lval >= min && lval <= max) {
-            *output = lval;
-    } else {
-        return EINVAL;
-    }
-
-    return 0;
-}
-
-static int
 bno055_shell_err_too_many_args(char *cmd_name)
 {
     console_printf("Error: too many arguments for command \"%s\"\n",
@@ -140,7 +123,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
         tok = strtok(argv[2], ":");
         i = 0;
         do {
-            if (bno055_shell_stol(tok, 0, UINT16_MAX, &val)) {
+            if (sensor_shell_stol(tok, 0, UINT16_MAX, &val)) {
                 return bno055_shell_err_invalid_arg(argv[2]);
             }
             offsetdata[i] = val;
@@ -238,16 +221,17 @@ bno055_shell_cmd_read(int argc, char **argv)
 
     /* Since this is the biggest struct, malloc space for it */
     databuf = malloc(sizeof(*sqd));
+    assert(databuf != NULL);
 
 
     /* Check if more than one sample requested */
     if (argc == 4) {
-        if (bno055_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
+        if (sensor_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         samples = (uint16_t)val;
 
-        if (bno055_shell_stol(argv[3], 0, UINT16_MAX, &val)) {
+        if (sensor_shell_stol(argv[3], 0, UINT16_MAX, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         type = (int)(1 << val);
@@ -331,7 +315,7 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
 
     /* Update the mode */
     if (argc == 3) {
-        if (bno055_shell_stol(argv[2], 0, 16, &val)) {
+        if (sensor_shell_stol(argv[2], 0, BNO055_OPR_MODE_NDOF, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         /* Make sure mode is valid */
@@ -371,7 +355,7 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
 
     /* Update the mode */
     if (argc == 3) {
-        if (bno055_shell_stol(argv[2], 0, 16, &val)) {
+        if (sensor_shell_stol(argv[2], 0, BNO055_PWR_MODE_SUSPEND, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         /* Make sure mode is valid */
@@ -419,7 +403,7 @@ bno055_shell_units_cmd(int argc, char **argv)
 
     /* Update the units */
     if (argc == 3) {
-        if (bno055_shell_stol(argv[2], 0, UINT8_MAX, &val)) {
+        if (sensor_shell_stol(argv[2], 0, UINT8_MAX, &val)) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
@@ -441,7 +425,7 @@ bno055_shell_cmd_dumpreg(int argc, char **argv)
     uint8_t val;
     int rc;
 
-    if (bno055_shell_stol(argv[2], 0, UINT8_MAX, &addr)) {
+    if (sensor_shell_stol(argv[2], 0, UINT8_MAX, &addr)) {
         return bno055_shell_err_invalid_arg(argv[2]);
     }
     rc = bno055_read8((uint8_t)addr, &val);
@@ -453,47 +437,6 @@ bno055_shell_cmd_dumpreg(int argc, char **argv)
     return 0;
 err:
     return rc;
-}
-
-static int
-shell_i2cscan_cmd(int argc, char **argv)
-{
-    uint8_t addr;
-    int32_t timeout;
-    uint8_t dev_count = 0;
-    long i2cnum;
-    int rc;
-
-    timeout = OS_TICKS_PER_SEC / 10;
-
-    if (bno055_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
-        return bno055_shell_err_invalid_arg(argv[2]);
-    }
-
-    console_printf("Scanning I2C bus %u\n"
-                   "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
-                   "00:          ", (uint8_t)i2cnum);
-
-
-    /* Scan all valid I2C addresses (0x08..0x77) */
-    for (addr = 0x08; addr < 0x78; addr++) {
-        rc = hal_i2c_master_probe((uint8_t)i2cnum, addr, timeout);
-        /* Print addr header every 16 bytes */
-        if (!(addr % 16)) {
-            console_printf("\n%02x: ", addr);
-        }
-        /* Display the addr if a response was received */
-        if (!rc) {
-            console_printf("%02x ", addr);
-            dev_count++;
-        } else {
-            console_printf("-- ");
-        }
-        os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
-    }
-    console_printf("\nFound %u devices on I2C bus %u\n", dev_count, (uint8_t)i2cnum);
-
-    return 0;
 }
 
 static int
@@ -550,10 +493,6 @@ bno055_shell_cmd(int argc, char **argv)
     /* Dump Registers command */
     if (argc > 1 && strcmp(argv[1], "dumpreg") == 0) {
         return bno055_shell_cmd_dumpreg(argc, argv);
-    }
-
-    if (argc > 1 && strcmp(argv[1], "i2cscan") == 0) {
-        return shell_i2cscan_cmd(argc, argv);
     }
 
     if (argc > 1 && strcmp(argv[1], "units") == 0) {

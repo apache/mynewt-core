@@ -38,6 +38,7 @@
 #include "sensor/euler.h"
 #include "console/console.h"
 #include "shell/shell.h"
+#include "hal/hal_i2c.h"
 
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
@@ -239,6 +240,67 @@ err:
     return;
 }
 
+int
+sensor_shell_stol(char *param_val, long min, long max, long *output)
+{
+    char *endptr;
+    long lval;
+
+    lval = strtol(param_val, &endptr, 10); /* Base 10 */
+    if (param_val != '\0' && *endptr == '\0' &&
+        lval >= min && lval <= max) {
+            *output = lval;
+    } else {
+        return EINVAL;
+    }
+
+    return 0;
+}
+
+static int
+sensor_cmd_i2cscan(int argc, char **argv)
+{
+    uint8_t addr;
+    int32_t timeout;
+    uint8_t dev_count = 0;
+    long i2cnum;
+    int rc;
+
+    timeout = OS_TICKS_PER_SEC / 10;
+
+    if (sensor_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
+        console_printf("Invalid i2c interface:%s\n", argv[2]);
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    console_printf("Scanning I2C bus %u\n"
+                   "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
+                   "00:          ", (uint8_t)i2cnum);
+
+
+    /* Scan all valid I2C addresses (0x08..0x77) */
+    for (addr = 0x08; addr < 0x78; addr++) {
+        rc = hal_i2c_master_probe((uint8_t)i2cnum, addr, timeout);
+        /* Print addr header every 16 bytes */
+        if (!(addr % 16)) {
+            console_printf("\n%02x: ", addr);
+        }
+        /* Display the addr if a response was received */
+        if (!rc) {
+            console_printf("%02x ", addr);
+            dev_count++;
+        } else {
+            console_printf("-- ");
+        }
+        os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
+    }
+    console_printf("\nFound %u devices on I2C bus %u\n", dev_count, (uint8_t)i2cnum);
+
+    return 0;
+err:
+    return rc;
+}
 
 static int
 sensor_cmd_exec(int argc, char **argv)
@@ -264,6 +326,11 @@ sensor_cmd_exec(int argc, char **argv)
             goto err;
         }
         sensor_cmd_read(argv[2], (sensor_type_t) atoi(argv[3]), atoi(argv[4]));
+    } else if (!strcmp(argv[1], "i2cscan")) {
+        rc = sensor_cmd_i2cscan(argc, argv);
+        if (rc) {
+            goto err;
+        }
     } else {
         console_printf("Unknown sensor command %s\n", subcmd);
         rc = SYS_EINVAL;

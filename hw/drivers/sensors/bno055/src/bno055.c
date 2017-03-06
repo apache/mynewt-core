@@ -806,6 +806,14 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
 
     bno055->cfg.bc_opr_mode = cfg->bc_opr_mode;
 
+    rc = bno055_acc_cfg(cfg);
+    if (rc) {
+        goto err;
+    }
+
+    bno055->cfg.bc_acc_range = cfg->bc_acc_range;
+    bno055->cfg.bc_acc_bw = cfg->bc_acc_bw;
+
     return 0;
 err:
     return rc;
