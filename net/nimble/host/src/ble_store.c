@@ -73,9 +73,9 @@ ble_store_read_our_sec(struct ble_store_key_sec *key_sec,
     union ble_store_key *store_key;
     int rc;
 
-    BLE_HS_DBG_ASSERT(key_sec->peer_addr_type == BLE_ADDR_TYPE_PUBLIC ||
-                      key_sec->peer_addr_type == BLE_ADDR_TYPE_RANDOM ||
-                      key_sec->peer_addr_type == BLE_STORE_ADDR_TYPE_NONE);
+    BLE_HS_DBG_ASSERT(key_sec->peer_addr.type == BLE_ADDR_PUBLIC ||
+                      key_sec->peer_addr.type == BLE_ADDR_RANDOM ||
+                      ble_addr_cmp(&key_sec->peer_addr, BLE_ADDR_ANY) == 0);
 
     store_key = (void *)key_sec;
     store_value = (void *)value_sec;
@@ -86,29 +86,17 @@ ble_store_read_our_sec(struct ble_store_key_sec *key_sec,
 static int
 ble_store_persist_sec(int obj_type, struct ble_store_value_sec *value_sec)
 {
-    struct ble_store_key_sec key_sec;
     union ble_store_value *store_value;
-    union ble_store_key *store_key;
     int rc;
 
-    BLE_HS_DBG_ASSERT(value_sec->peer_addr_type == BLE_ADDR_TYPE_PUBLIC ||
-                      value_sec->peer_addr_type == BLE_ADDR_TYPE_RANDOM);
+    BLE_HS_DBG_ASSERT(value_sec->peer_addr.type == BLE_ADDR_PUBLIC ||
+                      value_sec->peer_addr.type == BLE_ADDR_RANDOM);
+    BLE_HS_DBG_ASSERT(value_sec->ltk_present ||
+                      value_sec->irk_present ||
+                      value_sec->csrk_present);
 
-    /* If the value contains no keys, delete the corresponding entry.
-     * Otherwise, write it.
-     */
-    if (!value_sec->ltk_present &&
-        !value_sec->irk_present &&
-        !value_sec->csrk_present) {
-
-        ble_store_key_from_value_sec(&key_sec, value_sec);
-        store_key = (void *)&key_sec;
-        rc = ble_store_delete(obj_type, store_key);
-    } else {
-        store_value = (void *)value_sec;
-        rc = ble_store_write(obj_type, store_value);
-    }
-
+    store_value = (void *)value_sec;
+    rc = ble_store_write(obj_type, store_value);
     return rc;
 }
 
@@ -122,6 +110,28 @@ ble_store_write_our_sec(struct ble_store_value_sec *value_sec)
 }
 
 int
+ble_store_delete_our_sec(struct ble_store_key_sec *key_sec)
+{
+    union ble_store_key *store_key;
+    int rc;
+
+    store_key = (void *)key_sec;
+    rc = ble_store_delete(BLE_STORE_OBJ_TYPE_OUR_SEC, store_key);
+    return rc;
+}
+
+int
+ble_store_delete_peer_sec(struct ble_store_key_sec *key_sec)
+{
+    union ble_store_key *store_key;
+    int rc;
+
+    store_key = (void *)key_sec;
+    rc = ble_store_delete(BLE_STORE_OBJ_TYPE_PEER_SEC, store_key);
+    return rc;
+}
+
+int
 ble_store_read_peer_sec(struct ble_store_key_sec *key_sec,
                         struct ble_store_value_sec *value_sec)
 {
@@ -129,9 +139,8 @@ ble_store_read_peer_sec(struct ble_store_key_sec *key_sec,
     union ble_store_key *store_key;
     int rc;
 
-    BLE_HS_DBG_ASSERT(key_sec->peer_addr_type == BLE_ADDR_TYPE_PUBLIC ||
-                      key_sec->peer_addr_type == BLE_ADDR_TYPE_RANDOM ||
-                      key_sec->peer_addr_type == BLE_STORE_ADDR_TYPE_NONE);
+    BLE_HS_DBG_ASSERT(key_sec->peer_addr.type == BLE_ADDR_PUBLIC ||
+                      key_sec->peer_addr.type == BLE_ADDR_RANDOM);
 
     store_key = (void *)key_sec;
     store_value = (void *)value_sec;
@@ -154,13 +163,13 @@ ble_store_write_peer_sec(struct ble_store_value_sec *value_sec)
         return rc;
     }
 
-    if (value_sec->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE &&
+    if (ble_addr_cmp(&value_sec->peer_addr, BLE_ADDR_ANY) &&
         value_sec->irk_present) {
 
         /* Write the peer IRK to the controller keycache
          * There is not much to do here if it fails */
-        rc = ble_hs_pvcy_add_entry(value_sec->peer_addr,
-                                          value_sec->peer_addr_type,
+        rc = ble_hs_pvcy_add_entry(value_sec->peer_addr.val,
+                                          value_sec->peer_addr.type,
                                           value_sec->irk);
         if (rc != 0) {
             return rc;
@@ -168,25 +177,6 @@ ble_store_write_peer_sec(struct ble_store_value_sec *value_sec)
     }
 
     return 0;
-}
-
-int
-ble_store_delete_peer_sec(struct ble_store_key_sec *key_sec)
-{
-    union ble_store_key *store_key;
-    int rc;
-
-    store_key = (void *)key_sec;
-    rc = ble_store_delete(BLE_STORE_OBJ_TYPE_PEER_SEC, store_key);
-
-    if(key_sec->peer_addr_type == BLE_STORE_ADDR_TYPE_NONE) {
-        /* don't error check this since we don't know without looking up
-         * the value whether it had a valid IRK */
-        ble_hs_pvcy_remove_entry(key_sec->peer_addr_type,
-                                    key_sec->peer_addr);
-    }
-
-    return rc;
 }
 
 int
@@ -229,8 +219,7 @@ void
 ble_store_key_from_value_cccd(struct ble_store_key_cccd *out_key,
                               struct ble_store_value_cccd *value)
 {
-    out_key->peer_addr_type = value->peer_addr_type;
-    memcpy(out_key->peer_addr, value->peer_addr, 6);
+    out_key->peer_addr = value->peer_addr;
     out_key->chr_val_handle = value->chr_val_handle;
     out_key->idx = 0;
 }
@@ -239,8 +228,7 @@ void
 ble_store_key_from_value_sec(struct ble_store_key_sec *out_key,
                              struct ble_store_value_sec *value)
 {
-    out_key->peer_addr_type = value->peer_addr_type;
-    memcpy(out_key->peer_addr, value->peer_addr, sizeof out_key->peer_addr);
+    out_key->peer_addr = value->peer_addr;
 
     out_key->ediv = value->ediv;
     out_key->rand_num = value->rand_num;
@@ -262,11 +250,11 @@ void ble_store_iterate(int obj_type,
     switch(obj_type) {
         case BLE_STORE_OBJ_TYPE_PEER_SEC:
         case BLE_STORE_OBJ_TYPE_OUR_SEC:
-            key.sec.peer_addr_type = BLE_STORE_ADDR_TYPE_NONE;
+            key.sec.peer_addr = *BLE_ADDR_ANY;
             pidx = &key.sec.idx;
             break;
         case BLE_STORE_OBJ_TYPE_CCCD:
-            key.cccd.peer_addr_type = BLE_STORE_ADDR_TYPE_NONE;
+            key.cccd.peer_addr = *BLE_ADDR_ANY;
             pidx = &key.cccd.idx;
         default:
             return;

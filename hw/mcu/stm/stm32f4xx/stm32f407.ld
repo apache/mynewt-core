@@ -112,17 +112,17 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
-    .coredata : AT (__etext)
+    .coredata :
     {
         __coredata_start__ = .;
         *(.data.core)
         . = ALIGN(4);
         __coredata_end__ = .;
-    } > CCM
+    } > CCM AT > FLASH
 
     __ecoredata = __etext + SIZEOF(.coredata);
 
-    .data : AT (__ecoredata)
+    .data :
     {
         __data_start__ = .;
         *(vtable)
@@ -153,7 +153,7 @@ SECTIONS
         /* All data end */
         __data_end__ = .;
 
-    } > RAM
+    } > RAM AT > FLASH
 
     .corebss (NOLOAD):
     {

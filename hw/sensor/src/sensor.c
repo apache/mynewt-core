@@ -1,0 +1,573 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+#include <string.h>
+#include <errno.h>
+#include <assert.h>
+
+#include "os/os.h"
+#include "sysinit/sysinit.h"
+
+#include "sensor/sensor.h"
+
+#include "sensor_priv.h"
+
+struct {
+    struct os_mutex mgr_lock;
+
+    struct os_callout mgr_wakeup_callout;
+    struct os_eventq *mgr_eventq;
+
+    TAILQ_HEAD(, sensor) mgr_sensor_list;
+} sensor_mgr;
+
+struct sensor_read_ctx {
+    sensor_data_func_t user_func;
+    void *user_arg;
+};
+
+/**
+ * Lock sensor manager to access the list of sensors
+ */
+int
+sensor_mgr_lock(void)
+{
+    int rc;
+
+    rc = os_mutex_pend(&sensor_mgr.mgr_lock, OS_TIMEOUT_NEVER);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+    return (rc);
+}
+
+/**
+ * Unlock sensor manager once the list of sensors has been accessed
+ */
+void
+sensor_mgr_unlock(void)
+{
+    (void) os_mutex_release(&sensor_mgr.mgr_lock);
+}
+
+static void
+sensor_mgr_remove(struct sensor *sensor)
+{
+    TAILQ_REMOVE(&sensor_mgr.mgr_sensor_list, sensor, s_next);
+}
+
+static void
+sensor_mgr_insert(struct sensor *sensor)
+{
+    struct sensor *cursor;
+
+    cursor = NULL;
+    TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+        if (cursor->s_next_run == OS_TIMEOUT_NEVER) {
+            break;
+        }
+
+        if (OS_TIME_TICK_LT(sensor->s_next_run, cursor->s_next_run)) {
+            break;
+        }
+    }
+
+    if (cursor) {
+        TAILQ_INSERT_BEFORE(cursor, sensor, s_next);
+    } else {
+        TAILQ_INSERT_TAIL(&sensor_mgr.mgr_sensor_list, sensor, s_next);
+    }
+}
+
+/**
+ * Register the sensor with the global sensor list. This makes the sensor
+ * searchable by other packages, who may want to look it up by type.
+ *
+ * @param The sensor to register
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_mgr_register(struct sensor *sensor)
+{
+    int rc;
+
+    rc = sensor_mgr_lock();
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    sensor_mgr_insert(sensor);
+
+    sensor_unlock(sensor);
+
+    sensor_mgr_unlock();
+
+    return (0);
+err:
+    return (rc);
+}
+
+
+static os_time_t
+sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
+{
+    uint32_t sensor_ticks;
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Sensor read results.  Every time a sensor is read, all of its
+     * listeners are called by default.  Specify NULL as a callback,
+     * because we just want to run all the listeners.
+     */
+    sensor_read(sensor, SENSOR_TYPE_ALL, NULL, NULL, OS_TIMEOUT_NEVER);
+
+    /* Remove the sensor from the sensor list for insert. */
+    sensor_mgr_remove(sensor);
+
+    /* Set next wakeup, and insert the sensor back into the
+     * list.
+     */
+    os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
+    sensor->s_next_run = now + sensor_ticks;
+
+    /* Re-insert the sensor manager, with the new wakeup time. */
+    sensor_mgr_insert(sensor);
+
+    /* Unlock the sensor to allow other access */
+    sensor_unlock(sensor);
+
+    return (sensor->s_next_run);
+err:
+    /* Couldn't lock it.  Re-run task and spin until we get result. */
+    return (0);
+}
+
+/**
+ * Event that wakes up the sensor manager, this goes through the sensor
+ * list and polls any active sensors.
+ *
+ * @param OS event
+ */
+static void
+sensor_mgr_wakeup_event(struct os_event *ev)
+{
+    struct sensor *cursor;
+    os_time_t now;
+    os_time_t task_next_wakeup;
+    os_time_t next_wakeup;
+    int rc;
+
+    now = os_time_get();
+    task_next_wakeup = now + SENSOR_MGR_WAKEUP_TICKS;
+
+    rc = sensor_mgr_lock();
+    if (rc != 0) {
+        /* Schedule again in 1 tick, see if we can reacquire the lock */
+        task_next_wakeup = now + 1;
+        goto done;
+    }
+
+     TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+        /* Sensors that are not periodic are inserted at the end of the sensor
+         * list.
+         */
+        if (cursor->s_next_run == OS_TIMEOUT_NEVER) {
+            break;
+        }
+
+        /* List is sorted by what runs first.  If we reached the first element that
+         * doesn't run, break out.
+         */
+        if (OS_TIME_TICK_LT(now, cursor->s_next_run)) {
+            break;
+        }
+
+        /* Sensor poll one completes the poll, updates the sensor's "next run,"
+         * and re-inserts it into the list.  It returns the next wakeup time
+         * for this sensor.
+         */
+        next_wakeup = sensor_mgr_poll_one(cursor, now);
+
+        /* If the next wakeup time for this sensor is before the task's next
+         * scheduled wakeup, move that forward, so we can collect data from that
+         * sensor
+         */
+        if (task_next_wakeup > next_wakeup) {
+            task_next_wakeup = next_wakeup;
+        }
+    }
+
+done:
+    os_callout_reset(&sensor_mgr.mgr_wakeup_callout, task_next_wakeup);
+}
+
+/**
+ * Get the current eventq, the system is misconfigured if there is still
+ * no parent eventq.
+ */
+struct os_eventq *
+sensor_mgr_evq_get(void)
+{
+    return (sensor_mgr.mgr_eventq);
+}
+
+static void
+sensor_mgr_init(void)
+{
+    memset(&sensor_mgr, 0, sizeof(sensor_mgr));
+    TAILQ_INIT(&sensor_mgr.mgr_sensor_list);
+
+    /**
+     * Initialize sensor polling callout and set it to fire on boot.
+     */
+    os_callout_init(&sensor_mgr.mgr_wakeup_callout, sensor_mgr_evq_get(),
+            sensor_mgr_wakeup_event, NULL);
+    os_callout_reset(&sensor_mgr.mgr_wakeup_callout, 0);
+
+    os_mutex_init(&sensor_mgr.mgr_lock);
+}
+
+/**
+ * The sensor manager contains a list of sensors, this function returns
+ * the next sensor in that list, for which compare_func() returns successful
+ * (one).  If prev_cursor is provided, the function starts at that point
+ * in the sensor list.
+ *
+ * @warn This function MUST be locked by sensor_mgr_lock/unlock() if the goal is
+ * to iterate through sensors (as opposed to just finding one.)  As the
+ * "prev_cursor" may be resorted in the sensor list, in between calls.
+ *
+ * @param The comparison function to use against sensors in the list.
+ * @param The argument to provide to that comparison function
+ * @param The previous sensor in the sensor manager list, in case of
+ *        iteration.  If desire is to find first matching sensor, provide a
+ *        NULL value.
+ *
+ * @return A pointer to the first sensor found from prev_cursor, or
+ *         NULL, if none found.
+ *
+ */
+struct sensor *
+sensor_mgr_find_next(sensor_mgr_compare_func_t compare_func, void *arg,
+        struct sensor *prev_cursor)
+{
+    struct sensor *cursor;
+    int rc;
+
+    cursor = NULL;
+
+    /* Couldn't acquire lock of sensor list, exit */
+    rc = sensor_mgr_lock();
+    if (rc != 0) {
+        goto done;
+    }
+
+    cursor = prev_cursor;
+    if (cursor == NULL) {
+        cursor = TAILQ_FIRST(&sensor_mgr.mgr_sensor_list);
+    } else {
+        cursor = TAILQ_NEXT(prev_cursor, s_next);
+    }
+
+    while (cursor != NULL) {
+        if (compare_func(cursor, arg)) {
+            break;
+        }
+        cursor = TAILQ_NEXT(cursor, s_next);
+    }
+
+    sensor_mgr_unlock();
+
+done:
+    return (cursor);
+}
+
+
+
+static int
+sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
+{
+    sensor_type_t *type;
+
+    type = (sensor_type_t *) arg;
+
+    /* s_types is a bitmask that contains the supported sensor types for this
+     * sensor, and type is the bitmask we're searching for.  Compare the two,
+     * and if there is a match, return true (1).
+     */
+    if ((*type & sensor->s_types) != 0) {
+        return (1);
+    } else {
+        return (0);
+    }
+}
+
+/**
+ * Find the "next" sensor available for a given sensor type.
+ *
+ * If the sensor parameter, is present find the next entry from that
+ * parameter.  Otherwise, find the first matching sensor.
+ *
+ * @param The type of sensor to search for
+ * @param The cursor to search from, or NULL to start from the beginning.
+ *
+ * @return A pointer to the sensor object matching that sensor type, or NULL if
+ *         none found.
+ */
+struct sensor *
+sensor_mgr_find_next_bytype(sensor_type_t type, struct sensor *prev_cursor)
+{
+    return (sensor_mgr_find_next(sensor_mgr_match_bytype, (void *) &type,
+                prev_cursor));
+}
+
+static int
+sensor_mgr_match_bydevname(struct sensor *sensor, void *arg)
+{
+    char *devname;
+
+    devname = (char *) arg;
+
+    if (!strcmp(sensor->s_dev->od_name, devname)) {
+        return (1);
+    }
+
+    return (0);
+}
+
+
+/**
+ * Search the sensor list and find the next sensor that corresponds
+ * to a given device name.
+ *
+ * @param The device name to search for
+ * @param The previous sensor found with this device name
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+struct sensor *
+sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor)
+{
+    return (sensor_mgr_find_next(sensor_mgr_match_bydevname, devname,
+            prev_cursor));
+}
+
+/**
+ * Initialize the sensor package, called through SYSINIT.  Note, this function
+ * will assert if called directly, and _NOT_ through the sysinit package.
+ */
+void
+sensor_pkg_init(void)
+{
+    sensor_mgr_init();
+
+#if MYNEWT_VAL(SENSOR_CLI)
+    sensor_shell_register();
+#endif
+}
+
+
+/**
+ * Lock access to the sensor specified by sensor.  Blocks until lock acquired.
+ *
+ * @param The sensor to lock
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+sensor_lock(struct sensor *sensor)
+{
+    int rc;
+
+    rc = os_mutex_pend(&sensor->s_lock, OS_TIMEOUT_NEVER);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+    return (rc);
+}
+
+/**
+ * Unlock access to the sensor specified by sensor.  Blocks until lock acquired.
+ *
+ * @param The sensor to unlock access to.
+ */
+void
+sensor_unlock(struct sensor *sensor)
+{
+    os_mutex_release(&sensor->s_lock);
+}
+
+
+/**
+ * Initialize a sensor
+ *
+ * @param The sensor to initialize
+ * @param The device to associate with this sensor.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_init(struct sensor *sensor, struct os_dev *dev)
+{
+    int rc;
+
+    memset(sensor, 0, sizeof(*sensor));
+
+    rc = os_mutex_init(&sensor->s_lock);
+    if (rc != 0) {
+        goto err;
+    }
+    sensor->s_dev = dev;
+
+    return (0);
+err:
+    return (rc);
+}
+
+
+/**
+ * Register a sensor listener. This allows a calling application to receive
+ * callbacks for data from a given sensor object.
+ *
+ * For more information on the type of callbacks available, see the documentation
+ * for the sensor listener structure.
+ *
+ * @param The sensor to register a listener on
+ * @param The listener to register onto the sensor
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_register_listener(struct sensor *sensor,
+        struct sensor_listener *listener)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    SLIST_INSERT_HEAD(&sensor->s_listener_list, listener, sl_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
+/**
+ * Un-register a sensor listener. This allows a calling application to unset
+ * callbacks for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The listener to remove from the sensor listener list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
+int
+sensor_unregister_listener(struct sensor *sensor,
+        struct sensor_listener *listener)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove this entry from the list */
+    SLIST_REMOVE(&sensor->s_listener_list, listener, sensor_listener,
+            sl_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
+static int
+sensor_read_data_func(struct sensor *sensor, void *arg, void *data)
+{
+    struct sensor_listener *listener;
+    struct sensor_read_ctx *ctx;
+
+    /* Notify all listeners first */
+    SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
+        listener->sl_func(sensor, listener->sl_arg, data);
+    }
+
+    /* Call data function */
+    ctx = (struct sensor_read_ctx *) arg;
+    if (ctx->user_func != NULL) {
+        return (ctx->user_func(sensor, ctx->user_arg, data));
+    } else {
+        return (0);
+    }
+}
+
+/**
+ * Read the data for sensor type "type," from the sensor, "sensor" and
+ * return the result into the "value" parameter.
+ *
+ * @param The senssor to read data from
+ * @param The type of sensor data to read from the sensor
+ * @param The callback to call for data returned from that sensor
+ * @param The argument to pass to this callback.
+ * @param Timeout before aborting sensor read
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+sensor_read(struct sensor *sensor, sensor_type_t type,
+        sensor_data_func_t data_func, void *arg, uint32_t timeout)
+{
+    struct sensor_read_ctx src;
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto done;
+    }
+
+    src.user_func = data_func;
+    src.user_arg = arg;
+
+    rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
+            timeout);
+
+    sensor_unlock(sensor);
+
+done:
+    return (rc);
+}
+

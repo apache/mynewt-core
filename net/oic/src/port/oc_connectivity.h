@@ -18,72 +18,104 @@
 #define OC_CONNECTIVITY_H
 
 #include "mynewt/config.h"
-#include "oic/oc_network_events.h"
-#include "oc_log.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct
-{
-  uint16_t port;
-  uint8_t address[16];
-  uint8_t scope;
+typedef struct {
+    uint16_t port;
+    uint8_t address[16];
+    uint8_t scope;
 } oc_ipv6_addr_t;
 
-typedef struct
-{
-  uint8_t type;
-  uint8_t address[6];
-  uint16_t conn_handle;
-} oc_le_addr_t;
+typedef struct {
+    uint16_t port;
+    uint8_t address[4];
+} oc_ipv4_addr_t;
 
-typedef struct
-{
-  enum transport_flags
-  {
+enum oc_transport_flags {
     IP = 1 << 0,
     GATT = 1 << 1,
     IPSP = 1 << 2,
     MULTICAST = 1 << 3,
     SECURED = 1 << 4,
-    SERIAL = 1 <<5,
-  } flags;
+    SERIAL = 1 << 5,
+    IP4 = 1 << 6,
+};
 
-  union
-  {
-    oc_ipv6_addr_t ipv6_addr;
-    oc_le_addr_t bt_addr;
-  };
+/*
+ * OC endpoint data structure comes in different variations,
+ * depending on flags field.
+ */
+/*
+ * oc_endpoint for IPv6 source
+ */
+struct oc_endpoint_ip {
+    enum oc_transport_flags flags;
+    union {
+        oc_ipv6_addr_t v6;
+        oc_ipv4_addr_t v4;
+    };
+};
+
+/*
+ * oc_endpoint for BLE source.
+ */
+struct oc_endpoint_ble {
+    enum oc_transport_flags flags;
+    uint16_t conn_handle;
+};
+
+/*
+ * oc_endpoint for multicast target and serial port.
+ */
+struct oc_endpoint_plain {
+    enum oc_transport_flags flags;
+};
+
+typedef struct oc_endpoint {
+    union {
+        struct oc_endpoint_ip oe_ip;
+        struct oc_endpoint_ble oe_ble;
+        struct oc_endpoint_plain oe;
+    };
 } oc_endpoint_t;
 
-#define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)                \
-  oc_endpoint_t __name__ = {.flags = __flags__,                                \
-                            .ipv6_addr = {.port = __port__,                    \
-                                          .address = { __VA_ARGS__ } } }
+#define OC_MBUF_ENDPOINT(m)                                            \
+    ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
+                            sizeof(struct os_mbuf_pkthdr)))
 
-typedef struct oc_message_s
-{
-  struct oc_message_s *next;
-  oc_endpoint_t endpoint;
-  size_t length;
-  uint8_t ref_count;
-  uint8_t data[MAX_PAYLOAD_SIZE];
-} oc_message_t;
 
-void oc_send_buffer(oc_message_t *message);
+#define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)         \
+    oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
+                                        .v6 = {.port = __port__,        \
+                                               .address = { __VA_ARGS__ } } } }
+#define oc_make_ip4_endpoint(__name__, __flags__, __port__, ...)        \
+    oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
+                                        .v4 = {.port = __port__,        \
+                                               .address = { __VA_ARGS__ } } } }
 
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);
 #endif /* OC_SECURITY */
 
 int oc_connectivity_init(void);
-
 void oc_connectivity_shutdown(void);
 
-void oc_send_multicast_message(oc_message_t *message);
+static inline int
+oc_endpoint_use_tcp(struct oc_endpoint *oe)
+{
+    if (oe->oe.flags & GATT) {
+        return 1;
+    }
+    return 0;
+}
+
+
+void oc_send_buffer(struct os_mbuf *);
+void oc_send_multicast_message(struct os_mbuf *);
 
 #ifdef __cplusplus
 }

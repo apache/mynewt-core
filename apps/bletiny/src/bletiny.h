@@ -21,6 +21,7 @@
 #define H_BLETINY_PRIV_
 
 #include <inttypes.h>
+#include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "log/log.h"
 #include "os/queue.h"
@@ -77,9 +78,17 @@ struct bletiny_svc {
 
 SLIST_HEAD(bletiny_svc_list, bletiny_svc);
 
+struct bletiny_l2cap_coc {
+    SLIST_ENTRY(bletiny_l2cap_coc) next;
+    struct ble_l2cap_chan *chan;
+};
+
+SLIST_HEAD(bletiny_l2cap_coc_list, bletiny_l2cap_coc);
+
 struct bletiny_conn {
     uint16_t handle;
     struct bletiny_svc_list svcs;
+    struct bletiny_l2cap_coc_list coc_list;
 };
 
 extern struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
@@ -115,7 +124,7 @@ int parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val,
 int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);
-int parse_arg_uuid(char *name, uint8_t *dst_uuid128);
+int parse_arg_uuid(char *name, ble_uuid_any_t *uuid);
 int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int cmd_init(void);
@@ -128,20 +137,21 @@ void bletiny_lock(void);
 void bletiny_unlock(void);
 int bletiny_exchange_mtu(uint16_t conn_handle);
 int bletiny_disc_svcs(uint16_t conn_handle);
-int bletiny_disc_svc_by_uuid(uint16_t conn_handle, uint8_t *uuid128);
+int bletiny_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid);
 int bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                               uint16_t end_handle, uint8_t *uuid128);
-int bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t chr_val_handle,
-                           uint16_t chr_end_handle);
+                               uint16_t end_handle, const ble_uuid_t *uuid);
+int bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
+                          uint16_t end_handle);
 int bletiny_disc_full(uint16_t conn_handle);
 int bletiny_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle);
 int bletiny_read(uint16_t conn_handle, uint16_t attr_handle);
-int bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle);
+int bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle,
+                      uint16_t offset);
 int bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                          uint16_t end_handle, uint8_t *uuid128);
+                          uint16_t end_handle, const ble_uuid_t *uuid);
 int bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                        int num_attr_handles);
 int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
@@ -149,20 +159,19 @@ int bletiny_write(uint16_t conn_handle, uint16_t attr_handle,
 int bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
                          struct os_mbuf *om);
 int bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
-                       struct os_mbuf *om);
+                       uint16_t offset, struct os_mbuf *om);
 int bletiny_write_reliable(uint16_t conn_handle,
                            struct ble_gatt_attr *attrs, int num_attrs);
-int bletiny_adv_start(uint8_t own_addr_type, uint8_t peer_addr_type,
-                      const uint8_t *peer_addr, int32_t duration_ms,
+int bletiny_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
+                      int32_t duration_ms,
                       const struct ble_gap_adv_params *params);
 int bletiny_adv_stop(void);
-int bletiny_conn_initiate(uint8_t own_addr_type, uint8_t peer_addr_type,
-                          uint8_t *peer_addr, int32_t duration_ms,
+int bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                          int32_t duration_ms,
                           struct ble_gap_conn_params *params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
-int bletiny_wl_set(struct ble_gap_white_entry *white_list,
-                    int white_list_count);
+int bletiny_wl_set(ble_addr_t *addrs, int addrs_count);
 int bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,
                  const struct ble_gap_disc_params *disc_params);
 int bletiny_scan_cancel(void);
@@ -181,7 +190,10 @@ int bletiny_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
 int bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
                      uint16_t num);
 int bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi);
-
+int bletiny_l2cap_create_srv(uint16_t psm);
+int bletiny_l2cap_connect(uint16_t conn, uint16_t psm);
+int bletiny_l2cap_disconnect(uint16_t conn, uint16_t idx);
+int bletiny_l2cap_send(uint16_t conn, uint16_t idx, uint16_t bytes);
 #define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
 #define BLETINY_LOG(lvl, ...) \
     LOG_ ## lvl(&bletiny_log, BLETINY_LOG_MODULE, __VA_ARGS__)
@@ -201,7 +213,7 @@ int gatt_svr_init(void);
 void print_bytes(const uint8_t *bytes, int len);
 void print_mbuf(const struct os_mbuf *om);
 void print_addr(const void *addr);
-void print_uuid(const void *uuid128);
+void print_uuid(const ble_uuid_t *uuid);
 int svc_is_empty(const struct bletiny_svc *svc);
 uint16_t chr_end_handle(const struct bletiny_svc *svc,
                         const struct bletiny_chr *chr);

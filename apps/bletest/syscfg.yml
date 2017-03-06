@@ -17,7 +17,18 @@
 #
 
 # Package: apps/bletest
+syscfg.defs:
+    BLETEST_ROLE:
+        description: >
+            The role of the bletest code. Should be set to:
+                1: Advertiser
+                2: Scanner
+                3: Initiator
+        value: 1
 
 syscfg.vals:
     MSYS_1_BLOCK_COUNT: 16
-    BLE_SM: 0
+    BLE_SM_LEGACY: 0
+
+    # Default task settings
+    OS_MAIN_STACK_SIZE: 256

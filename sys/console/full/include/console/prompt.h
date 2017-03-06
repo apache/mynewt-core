@@ -34,6 +34,8 @@ void console_set_prompt(char);
 
 void console_no_prompt(void);
 
+void console_yes_prompt(void);
+
 #ifdef __cplusplus
 }
 #endif

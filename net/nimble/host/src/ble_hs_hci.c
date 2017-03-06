@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include "os/os.h"
+#include "mem/mem.h"
 #include "nimble/ble_hci_trans.h"
 #include "ble_hs_priv.h"
 #include "ble_hs_dbg_priv.h"
@@ -91,7 +92,7 @@ ble_hs_hci_rx_cmd_complete(uint8_t event_code, uint8_t *data, int len,
     }
 
     num_pkts = data[2];
-    opcode = le16toh(data + 3);
+    opcode = get_le16(data + 3);
     params = data + 5;
 
     /* XXX: Process num_pkts field. */
@@ -134,7 +135,7 @@ ble_hs_hci_rx_cmd_status(uint8_t event_code, uint8_t *data, int len,
 
     status = data[2];
     num_pkts = data[3];
-    opcode = le16toh(data + 4);
+    opcode = get_le16(data + 4);
 
     /* XXX: Process num_pkts field. */
     (void)num_pkts;
@@ -254,7 +255,7 @@ ble_hs_hci_cmd_tx(void *cmd, void *evt_buf, uint8_t evt_buf_len,
     uint16_t opcode;
     int rc;
 
-    opcode = le16toh(cmd);
+    opcode = get_le16(cmd);
 
     BLE_HS_DBG_ASSERT(ble_hs_hci_ack == NULL);
     ble_hs_hci_lock();
@@ -363,62 +364,12 @@ ble_hs_hci_max_acl_payload_sz(void)
 }
 
 /**
- * Splits an appropriately-sized fragment from the front of an outgoing ACL
- * data packet, if necessary.  If the packet size is within the controller's
- * buffer size requirements, no splitting is performed.  The fragment data is
- * removed from the data packet mbuf.
- *
- * @param om                    The ACL data packet.  If this constitutes a
- *                                  single fragment, it gets set to NULL on
- *                                  success.
- * @param out_frag              On success, this points to the fragment to
- *                                  send.  If the entire packet can fit within
- *                                  a single fragment, this will point to the
- *                                  ACL data packet itself ('om').
- *
- * @return                      0 on success;
- *                              BLE host core return code on error.
+ * Allocates an mbuf to contain an outgoing ACL data fragment.
  */
-static int
-ble_hs_hci_split_frag(struct os_mbuf **om, struct os_mbuf **out_frag)
+static struct os_mbuf *
+ble_hs_hci_frag_alloc(uint16_t frag_size, void *arg)
 {
-    struct os_mbuf *frag;
-    uint16_t max_sz;
-    int rc;
-
-    /* Assume failure. */
-    *out_frag = NULL;
-
-    max_sz = ble_hs_hci_max_acl_payload_sz();
-
-    if (OS_MBUF_PKTLEN(*om) <= max_sz) {
-        /* Final fragment. */
-        *out_frag = *om;
-        *om = NULL;
-        return 0;
-    }
-
-    frag = ble_hs_mbuf_acm_pkt();
-    if (frag == NULL) {
-        rc = BLE_HS_ENOMEM;
-        goto err;
-    }
-
-    /* Move data from the front of the packet into the fragment mbuf. */
-    rc = os_mbuf_appendfrom(frag, *om, 0, max_sz);
-    if (rc != 0) {
-        rc = BLE_HS_ENOMEM;
-        goto err;
-    }
-    os_mbuf_adj(*om, max_sz);
-
-    /* More fragments to follow. */
-    *out_frag = frag;
-    return 0;
-
-err:
-    os_mbuf_free_chain(frag);
-    return rc;
+    return ble_hs_mbuf_acm_pkt();
 }
 
 static struct os_mbuf *
@@ -430,7 +381,7 @@ ble_hs_hci_acl_hdr_prepend(struct os_mbuf *om, uint16_t handle,
 
     hci_hdr.hdh_handle_pb_bc =
         ble_hs_hci_util_handle_pb_bc_join(handle, pb_flag, 0);
-    htole16(&hci_hdr.hdh_len, OS_MBUF_PKTHDR(om)->omp_len);
+    put_le16(&hci_hdr.hdh_len, OS_MBUF_PKTHDR(om)->omp_len);
 
     om2 = os_mbuf_prepend(om, sizeof hci_hdr);
     if (om2 == NULL) {
@@ -446,7 +397,7 @@ ble_hs_hci_acl_hdr_prepend(struct os_mbuf *om, uint16_t handle,
     memcpy(om->om_data, &hci_hdr, sizeof hci_hdr);
 
     BLE_HS_LOG(DEBUG, "host tx hci data; handle=%d length=%d\n", handle,
-               le16toh(&hci_hdr.hdh_len));
+               get_le16(&hci_hdr.hdh_len));
 
     return om;
 }
@@ -473,10 +424,8 @@ ble_hs_hci_acl_tx(struct ble_hs_conn *connection, struct os_mbuf *txom)
 
     /* Send fragments until the entire packet has been sent. */
     while (txom != NULL) {
-        rc = ble_hs_hci_split_frag(&txom, &frag);
-        if (rc != 0) {
-            goto err;
-        }
+        frag = mem_split_frag(&txom, ble_hs_hci_max_acl_payload_sz(),
+                              ble_hs_hci_frag_alloc, NULL);
 
         frag = ble_hs_hci_acl_hdr_prepend(frag, connection->bhc_handle, pb);
         if (frag == NULL) {

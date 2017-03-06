@@ -23,7 +23,6 @@
 #include <inttypes.h>
 #include "host/ble_gap.h"
 #include "ble_hs_priv.h"
-#include "ble_hs_test_util_store.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,6 +51,17 @@ struct ble_hs_test_util_mbuf_params {
     unsigned prev_tx:1;
     unsigned rx_queue:1;
     unsigned prep_list:1;
+};
+
+struct ble_hs_test_util_att_info_entry {
+    uint16_t handle;        /* 0 on last entry */
+    const ble_uuid_t *uuid;
+};
+
+struct ble_hs_test_util_att_group_type_entry {
+    uint16_t start_handle;  /* 0 on last entry */
+    uint16_t end_handle;    /* 0 on last entry */
+    const ble_uuid_t *uuid;
 };
 
 #define BLE_HS_TEST_UTIL_L2CAP_HCI_HDR(handle, pb, len) \
@@ -89,8 +99,7 @@ void ble_hs_test_util_create_rpa_conn(uint16_t handle, uint8_t own_addr_type,
 void ble_hs_test_util_create_conn(uint16_t handle, const uint8_t *addr,
                                   ble_gap_event_fn *cb, void *cb_arg);
 int ble_hs_test_util_connect(uint8_t own_addr_type,
-                                   uint8_t peer_addr_type,
-                                   const uint8_t *peer_addr,
+                                   const ble_addr_t *peer_addr,
                                    int32_t duration_ms,
                                    const struct ble_gap_conn_params *params,
                                    ble_gap_event_fn *cb,
@@ -112,18 +121,19 @@ int ble_hs_test_util_disc(uint8_t own_addr_type, int32_t duration_ms,
 int ble_hs_test_util_disc_cancel(uint8_t ack_status);
 void ble_hs_test_util_verify_tx_disconnect(uint16_t handle, uint8_t reason);
 void ble_hs_test_util_verify_tx_create_conn(const struct hci_create_conn *exp);
-int ble_hs_test_util_adv_set_fields(struct ble_hs_adv_fields *adv_fields,
-                                    uint8_t hci_status);
+int ble_hs_test_util_adv_set_fields(const struct ble_hs_adv_fields *adv_fields,
+                                    int cmd_fail_idx, uint8_t hci_status);
+int ble_hs_test_util_adv_rsp_set_fields(
+    const struct ble_hs_adv_fields *adv_fields,
+    int cmd_fail_idx, uint8_t hci_status);
 int ble_hs_test_util_adv_start(uint8_t own_addr_type,
-                               uint8_t peer_addr_type,
-                               const uint8_t *peer_addr,
+                               const ble_addr_t *peer_addr,
                                const struct ble_gap_adv_params *adv_params,
                                int32_t duration_ms,
                                ble_gap_event_fn *cb, void *cb_arg,
                                int fail_idx, uint8_t fail_status);
 int ble_hs_test_util_adv_stop(uint8_t hci_status);
-int ble_hs_test_util_wl_set(struct ble_gap_white_entry *white_list,
-                            uint8_t white_list_count,
+int ble_hs_test_util_wl_set(ble_addr_t *addrs, uint8_t addrs_count,
                             int fail_idx, uint8_t fail_status);
 int ble_hs_test_util_conn_update(uint16_t conn_handle,
                                  struct ble_gap_upd_params *params,
@@ -141,11 +151,65 @@ int ble_hs_test_util_l2cap_rx(uint16_t conn_handle,
 int ble_hs_test_util_l2cap_rx_payload_flat(uint16_t conn_handle, uint16_t cid,
                                            const void *data, int len);
 void ble_hs_test_util_rx_hci_buf_size_ack(uint16_t buf_size);
+void ble_hs_test_util_set_att_mtu(uint16_t conn_handle, uint16_t mtu);
 int ble_hs_test_util_rx_att_mtu_cmd(uint16_t conn_handle, int is_req,
                                     uint16_t mtu);
-int ble_hs_test_util_rx_att_read(uint16_t conn_handle, uint16_t attr_handle);
-int ble_hs_test_util_rx_att_read_blob(uint16_t conn_handle,
-                                      uint16_t attr_handle, uint16_t offset);
+int ble_hs_test_util_rx_att_find_info_req(uint16_t conn_handle,
+                                          uint16_t start_handle,
+                                          uint16_t end_handle);
+int ble_hs_test_util_rx_att_find_type_value_req(uint16_t conn_handle,
+                                                uint16_t start_handle,
+                                                uint16_t end_handle,
+                                                uint16_t attr_type,
+                                                const void *attr_val,
+                                                uint16_t attr_len);
+int ble_hs_test_util_rx_att_read_type_req(uint16_t conn_handle,
+                                          uint16_t start_handle,
+                                          uint16_t end_handle,
+                                          const ble_uuid_t *uuid);
+int ble_hs_test_util_rx_att_read_type_req16(uint16_t conn_handle,
+                                            uint16_t start_handle,
+                                            uint16_t end_handle,
+                                            uint16_t uuid16);
+int ble_hs_test_util_rx_att_read_req(uint16_t conn_handle,
+                                     uint16_t attr_handle);
+int ble_hs_test_util_rx_att_read_blob_req(uint16_t conn_handle,
+                                          uint16_t attr_handle,
+                                          uint16_t offset);
+int ble_hs_test_util_rx_att_read_mult_req(uint16_t conn_handle,
+                                          const uint16_t *handles,
+                                          int num_handles);
+int ble_hs_test_util_rx_att_read_group_type_req(uint16_t conn_handle,
+                                                uint16_t start_handle,
+                                                uint16_t end_handle,
+                                                const ble_uuid_t *uuid);
+int ble_hs_test_util_rx_att_read_group_type_req16(uint16_t conn_handle,
+                                                  uint16_t start_handle,
+                                                  uint16_t end_handle,
+                                                  uint16_t uuid16);
+int ble_hs_test_util_rx_att_write_req(uint16_t conn_handle,
+                                      uint16_t attr_handle,
+                                      const void *attr_val,
+                                      uint16_t attr_len);
+int ble_hs_test_util_rx_att_write_cmd(uint16_t conn_handle,
+                                      uint16_t attr_handle,
+                                      const void *attr_val,
+                                      uint16_t attr_len);
+int ble_hs_test_util_rx_att_prep_write_req(uint16_t conn_handle,
+                                           uint16_t attr_handle,
+                                           uint16_t offset,
+                                           const void *attr_val,
+                                           uint16_t attr_len);
+int ble_hs_test_util_rx_att_exec_write_req(uint16_t conn_handle,
+                                           uint8_t flags);
+int ble_hs_test_util_rx_att_notify_req(uint16_t conn_handle,
+                                       uint16_t attr_handle,
+                                       void *attr_val,
+                                       uint16_t attr_len);
+int ble_hs_test_util_rx_att_indicate_req(uint16_t conn_handle,
+                                         uint16_t attr_handle,
+                                         void *attr_val,
+                                         uint16_t attr_len);
 void ble_hs_test_util_rx_att_err_rsp(uint16_t conn_handle, uint8_t req_op,
                                      uint8_t error_code, uint16_t err_handle);
 void ble_hs_test_util_set_startup_acks(void);
@@ -164,7 +228,11 @@ void ble_hs_test_util_verify_tx_read_rsp(uint8_t *attr_data, int attr_len);
 void ble_hs_test_util_verify_tx_read_blob_rsp(uint8_t *attr_data,
                                               int attr_len);
 void ble_hs_test_util_verify_tx_write_rsp(void);
+void ble_hs_test_util_verify_tx_find_info_rsp(
+    struct ble_hs_test_util_att_info_entry *entries);
 void ble_hs_test_util_verify_tx_mtu_cmd(int is_req, uint16_t mtu);
+void ble_hs_test_util_verify_tx_read_group_type_rsp(
+    struct ble_hs_test_util_att_group_type_entry *entries);
 void ble_hs_test_util_verify_tx_err_rsp(uint8_t req_op, uint16_t handle,
                                         uint8_t error_code);
 uint8_t ble_hs_test_util_verify_tx_l2cap_update_req(
@@ -203,6 +271,9 @@ int ble_hs_test_util_mbuf_count(
 void ble_hs_test_util_assert_mbufs_freed(
     const struct ble_hs_test_util_mbuf_params *params);
 void ble_hs_test_util_post_test(void *arg);
+int ble_hs_test_util_num_cccds(void);
+int ble_hs_test_util_num_our_secs(void);
+int ble_hs_test_util_num_peer_secs(void);
 void ble_hs_test_util_init_no_start(void);
 void ble_hs_test_util_init(void);
 

@@ -45,16 +45,14 @@ uint16_t g_ble_nmgr_attr_handle;
  */
 
 /* {8D53DC1D-1DB7-4CD3-868B-8A527460AA84} */
-const uint8_t gatt_svr_svc_newtmgr[16] = {
-    0x84, 0xaa, 0x60, 0x74, 0x52, 0x8a, 0x8b, 0x86,
-    0xd3, 0x4c, 0xb7, 0x1d, 0x1d, 0xdc, 0x53, 0x8d
-};
+static const ble_uuid128_t gatt_svr_svc_newtmgr =
+    BLE_UUID128_INIT(0x84, 0xaa, 0x60, 0x74, 0x52, 0x8a, 0x8b, 0x86,
+                     0xd3, 0x4c, 0xb7, 0x1d, 0x1d, 0xdc, 0x53, 0x8d);
 
 /* {DA2E7828-FBCE-4E01-AE9E-261174997C48} */
-const uint8_t gatt_svr_chr_newtmgr[16] = {
-    0x48, 0x7c, 0x99, 0x74, 0x11, 0x26, 0x9e, 0xae,
-    0x01, 0x4e, 0xce, 0xfb, 0x28, 0x78, 0x2e, 0xda
-};
+static const ble_uuid128_t gatt_svr_chr_newtmgr =
+    BLE_UUID128_INIT(0x48, 0x7c, 0x99, 0x74, 0x11, 0x26, 0x9e, 0xae,
+                     0x01, 0x4e, 0xce, 0xfb, 0x28, 0x78, 0x2e, 0xda);
 
 static int
 gatt_svr_chr_access_newtmgr(uint16_t conn_handle, uint16_t attr_handle,
@@ -64,10 +62,10 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
         /* Service: newtmgr */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = (void *)gatt_svr_svc_newtmgr,
+        .uuid = &gatt_svr_svc_newtmgr.u,
         .characteristics = (struct ble_gatt_chr_def[]) { {
             /* Characteristic: Write No Rsp */
-            .uuid128 = (void *)gatt_svr_chr_newtmgr,
+            .uuid = &gatt_svr_chr_newtmgr.u,
             .access_cb = gatt_svr_chr_access_newtmgr,
             .flags = BLE_GATT_CHR_F_WRITE_NO_RSP | BLE_GATT_CHR_F_NOTIFY,
             .val_handle = &g_ble_nmgr_attr_handle,
@@ -197,6 +195,7 @@ nmgr_ble_out(struct nmgr_transport *nt, struct os_mbuf *om)
 
     return (0);
 err:
+    os_mbuf_free_chain(om);
     return (rc);
 }
 
@@ -233,6 +232,9 @@ void
 newtmgr_ble_pkg_init(void)
 {
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     rc = nmgr_ble_gatt_svr_init();
     SYSINIT_PANIC_ASSERT(rc == 0);

@@ -19,14 +19,23 @@
 # Package: kernel/os
 
 syscfg.defs:
+    OS_MAIN_TASK_PRIO:
+        description: 'Priority of initialization and main task'
+        value: 127
+    OS_MAIN_STACK_SIZE:
+        description: 'Stack size of initialization and main task'
+        value: 1024
     OS_CLI:
-        description: 'TBD'
+        description: 'CLI commands to inspect OS'
         value: 0
         restrictions:
             - SHELL_TASK
     OS_COREDUMP:
-        description: 'TBD'
+        description: 'Attempt to dump corefile when system crashes'
         value: 0
+    OS_SCHEDULING:
+        description: 'Whether OS will be started or not'
+        value: 1
     OS_CPUTIME_FREQ:
         description: 'Frequency of os cputime'
         value: 1000000
@@ -40,32 +49,32 @@ syscfg.defs:
         description: 'The interval (in milliseconds) at which the watchdog should reset if not tickled, in ms'
         value: 30000
     MSYS_1_BLOCK_COUNT:
-        description: 'TBD'
+        description: '1st system pool of mbufs; number of entries'
         value: 12
     MSYS_1_BLOCK_SIZE:
-        description: 'TBD'
+        description: '1st system pool of mbufs; size of an entry'
         value: 292
     MSYS_2_BLOCK_COUNT:
-        description: 'TBD'
+        description: '2nd system pool of mbufs; number of entries'
         value: 0
     MSYS_2_BLOCK_SIZE:
-        description: 'TBD'
+        description: '2nd system pool of mbufs; size of an entry'
         value: 0
     MSYS_3_BLOCK_COUNT:
-        description: 'TBD'
+        description: '3rd system pool of mbufs; number of entries'
         value: 0
     MSYS_3_BLOCK_SIZE:
-        description: 'TBD'
+        description: '3rd system pool of mbufs; size of an entry'
         value: 0
     MSYS_4_BLOCK_COUNT:
-        description: 'TBD'
+        description: '4th system pool of mbufs; number of entries'
         value: 0
     MSYS_4_BLOCK_SIZE:
-        description: 'TBD'
+        description: '4th system pool of mbufs; size of an entry'
         value: 0
     MSYS_5_BLOCK_COUNT:
-        description: 'TBD'
+        description: '5th system pool of mbufs; number of entries'
         value: 0
     MSYS_5_BLOCK_SIZE:
-        description: 'TBD'
+        description: '5th system pool of mbufs; size of an entry'
         value: 0

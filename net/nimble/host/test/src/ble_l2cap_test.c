@@ -47,25 +47,23 @@ static void
 ble_l2cap_test_util_rx_update_req(uint16_t conn_handle, uint8_t id,
                                   struct ble_l2cap_sig_update_params *params)
 {
-    struct ble_l2cap_sig_update_req req;
+    struct ble_l2cap_sig_update_req *req;
     struct hci_data_hdr hci_hdr;
     struct os_mbuf *om;
-    void *v;
     int rc;
 
     hci_hdr = BLE_HS_TEST_UTIL_L2CAP_HCI_HDR(
         2, BLE_HCI_PB_FIRST_FLUSH,
         BLE_L2CAP_HDR_SZ + BLE_L2CAP_SIG_HDR_SZ + BLE_L2CAP_SIG_UPDATE_REQ_SZ);
 
-    rc = ble_l2cap_sig_init_cmd(BLE_L2CAP_SIG_OP_UPDATE_REQ, id,
-                                BLE_L2CAP_SIG_UPDATE_REQ_SZ, &om, &v);
-    TEST_ASSERT_FATAL(rc == 0);
+    req = ble_l2cap_sig_cmd_get(BLE_L2CAP_SIG_OP_UPDATE_REQ, id,
+                                BLE_L2CAP_SIG_UPDATE_REQ_SZ, &om);
+    TEST_ASSERT_FATAL(req != NULL);
 
-    req.itvl_min = params->itvl_min;
-    req.itvl_max = params->itvl_max;
-    req.slave_latency = params->slave_latency;
-    req.timeout_multiplier = params->timeout_multiplier;
-    ble_l2cap_sig_update_req_write(v, BLE_L2CAP_SIG_UPDATE_REQ_SZ, &req);
+    req->itvl_min = htole16(params->itvl_min);
+    req->itvl_max = htole16(params->itvl_max);
+    req->slave_latency = htole16(params->slave_latency);
+    req->timeout_multiplier = htole16(params->timeout_multiplier);
 
     ble_hs_test_util_set_ack(
         ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
@@ -86,17 +84,17 @@ ble_l2cap_test_util_verify_tx_update_conn(
                                            BLE_HCI_OCF_LE_CONN_UPDATE,
                                            &param_len);
     TEST_ASSERT(param_len == BLE_HCI_CONN_UPDATE_LEN);
-    TEST_ASSERT(le16toh(param + 0) == 2);
-    TEST_ASSERT(le16toh(param + 2) == params->itvl_min);
-    TEST_ASSERT(le16toh(param + 4) == params->itvl_max);
-    TEST_ASSERT(le16toh(param + 6) == params->latency);
-    TEST_ASSERT(le16toh(param + 8) == params->supervision_timeout);
-    TEST_ASSERT(le16toh(param + 10) == params->min_ce_len);
-    TEST_ASSERT(le16toh(param + 12) == params->max_ce_len);
+    TEST_ASSERT(get_le16(param + 0) == 2);
+    TEST_ASSERT(get_le16(param + 2) == params->itvl_min);
+    TEST_ASSERT(get_le16(param + 4) == params->itvl_max);
+    TEST_ASSERT(get_le16(param + 6) == params->latency);
+    TEST_ASSERT(get_le16(param + 8) == params->supervision_timeout);
+    TEST_ASSERT(get_le16(param + 10) == params->min_ce_len);
+    TEST_ASSERT(get_le16(param + 12) == params->max_ce_len);
 }
 
 static int
-ble_l2cap_test_util_dummy_rx(uint16_t conn_handle, struct os_mbuf **om)
+ble_l2cap_test_util_dummy_rx(struct ble_l2cap_chan *chan)
 {
     return 0;
 }
@@ -115,13 +113,12 @@ ble_l2cap_test_util_create_conn(uint16_t conn_handle, uint8_t *addr,
     conn = ble_hs_conn_find(conn_handle);
     TEST_ASSERT_FATAL(conn != NULL);
 
-    chan = ble_l2cap_chan_alloc();
+    chan = ble_l2cap_chan_alloc(conn_handle);
     TEST_ASSERT_FATAL(chan != NULL);
 
-    chan->blc_cid = BLE_L2CAP_TEST_CID;
-    chan->blc_my_mtu = 240;
-    chan->blc_default_mtu = 240;
-    chan->blc_rx_fn = ble_l2cap_test_util_dummy_rx;
+    chan->scid = BLE_L2CAP_TEST_CID;
+    chan->my_mtu = 240;
+    chan->rx_fn = ble_l2cap_test_util_dummy_rx;
 
     ble_hs_conn_chan_insert(conn, chan);
 
@@ -194,7 +191,7 @@ ble_l2cap_test_util_verify_first_frag(uint16_t conn_handle,
     conn = ble_hs_conn_find(conn_handle);
     TEST_ASSERT_FATAL(conn != NULL);
     TEST_ASSERT(conn->bhc_rx_chan != NULL &&
-                conn->bhc_rx_chan->blc_cid == BLE_L2CAP_TEST_CID);
+                conn->bhc_rx_chan->scid == BLE_L2CAP_TEST_CID);
 
     ble_hs_unlock();
 }
@@ -214,7 +211,7 @@ ble_l2cap_test_util_verify_middle_frag(uint16_t conn_handle,
     conn = ble_hs_conn_find(conn_handle);
     TEST_ASSERT_FATAL(conn != NULL);
     TEST_ASSERT(conn->bhc_rx_chan != NULL &&
-                conn->bhc_rx_chan->blc_cid == BLE_L2CAP_TEST_CID);
+                conn->bhc_rx_chan->scid == BLE_L2CAP_TEST_CID);
 
     ble_hs_unlock();
 }
@@ -253,6 +250,23 @@ TEST_CASE(ble_l2cap_test_case_bad_header)
 
     rc = ble_l2cap_test_util_rx_first_frag(2, 14, 1234, 10);
     TEST_ASSERT(rc == BLE_HS_ENOENT);
+}
+
+TEST_CASE(ble_l2cap_test_case_bad_handle)
+{
+    int rc;
+
+    ble_l2cap_test_util_init();
+
+    ble_l2cap_test_util_create_conn(2, ((uint8_t[]){1,2,3,4,5,6}),
+                                    NULL, NULL);
+
+    rc = ble_l2cap_test_util_rx_first_frag(1234, 14, 1234, 10);
+    TEST_ASSERT(rc == BLE_HS_ENOTCONN);
+
+    /* Ensure we did not send anything in return. */
+    ble_hs_test_util_tx_all();
+    TEST_ASSERT_FATAL(ble_hs_test_util_prev_tx_dequeue() == NULL);
 }
 
 /*****************************************************************************
@@ -321,6 +335,7 @@ TEST_CASE(ble_l2cap_test_case_frag_channels)
 {
     struct ble_hs_conn *conn;
     int rc;
+    uint16_t data_len = 30;
 
     ble_l2cap_test_util_init();
 
@@ -328,28 +343,79 @@ TEST_CASE(ble_l2cap_test_case_frag_channels)
                                     NULL, NULL);
 
     /* Receive a starting fragment on the first channel. */
-    rc = ble_l2cap_test_util_rx_first_frag(2, 14, BLE_L2CAP_TEST_CID, 30);
+    rc = ble_l2cap_test_util_rx_first_frag(2, 14, BLE_L2CAP_TEST_CID, data_len);
     TEST_ASSERT(rc == 0);
 
     ble_hs_lock();
     conn = ble_hs_conn_find(2);
     TEST_ASSERT_FATAL(conn != NULL);
     TEST_ASSERT(conn->bhc_rx_chan != NULL &&
-                conn->bhc_rx_chan->blc_cid == BLE_L2CAP_TEST_CID);
+                conn->bhc_rx_chan->scid == BLE_L2CAP_TEST_CID);
     ble_hs_unlock();
 
     /* Receive a starting fragment on a different channel.  The first fragment
      * should get discarded.
      */
-    rc = ble_l2cap_test_util_rx_first_frag(2, 14, BLE_L2CAP_CID_ATT, 30);
+    ble_hs_test_util_set_att_mtu(conn->bhc_handle, data_len);
+    rc = ble_l2cap_test_util_rx_first_frag(2, 14, BLE_L2CAP_CID_ATT, data_len);
     TEST_ASSERT(rc == 0);
 
     ble_hs_lock();
     conn = ble_hs_conn_find(2);
     TEST_ASSERT_FATAL(conn != NULL);
     TEST_ASSERT(conn->bhc_rx_chan != NULL &&
-                conn->bhc_rx_chan->blc_cid == BLE_L2CAP_CID_ATT);
+                conn->bhc_rx_chan->scid == BLE_L2CAP_CID_ATT);
     ble_hs_unlock();
+
+    /* Terminate the connection.  The received fragments should get freed.
+     * Mbuf leaks are tested in the post-test-case callback.
+     */
+    ble_hs_test_util_conn_disconnect(2);
+}
+
+TEST_CASE(ble_l2cap_test_case_frag_timeout)
+{
+    int32_t ticks_from_now;
+    int rc;
+
+    ble_l2cap_test_util_init();
+
+    ble_l2cap_test_util_create_conn(2, ((uint8_t[]){1,2,3,4,5,6}),
+                                    NULL, NULL);
+
+    /* Ensure timer is not set. */
+    ticks_from_now = ble_hs_conn_timer();
+    TEST_ASSERT_FATAL(ticks_from_now == BLE_HS_FOREVER);
+
+    /* Receive the first fragment of a multipart ACL data packet. */
+    rc = ble_l2cap_test_util_rx_first_frag(2, 14, BLE_L2CAP_TEST_CID, 30);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    /* Ensure timer will expire in 30 seconds. */
+    ticks_from_now = ble_hs_conn_timer();
+    TEST_ASSERT(ticks_from_now == MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT));
+
+    /* Almost let the timer expire. */
+    os_time_advance(MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT) - 1);
+    ticks_from_now = ble_hs_conn_timer();
+    TEST_ASSERT(ticks_from_now == 1);
+
+    /* Receive a second fragment. */
+    rc = ble_l2cap_test_util_rx_next_frag(2, 14);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    /* Ensure timer got reset. */
+    ticks_from_now = ble_hs_conn_timer();
+    TEST_ASSERT(ticks_from_now == MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT));
+
+    /* Allow the timer to expire. */
+    ble_hs_test_util_set_ack_disconnect(0);
+    os_time_advance(MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT));
+    ticks_from_now = ble_hs_conn_timer();
+    TEST_ASSERT(ticks_from_now == BLE_HS_FOREVER);
+
+    /* Ensure connection was terminated. */
+    ble_hs_test_util_verify_tx_disconnect(2, BLE_ERR_REM_USER_CONN_TERM);
 }
 
 /*****************************************************************************
@@ -367,7 +433,7 @@ TEST_CASE(ble_l2cap_test_case_sig_unsol_rsp)
 
     /* Receive an unsolicited response. */
     rc = ble_hs_test_util_rx_l2cap_update_rsp(2, 100, 0);
-    TEST_ASSERT(rc == BLE_HS_ENOENT);
+    TEST_ASSERT(rc == 0);
 
     /* Ensure we did not send anything in return. */
     ble_hs_test_util_tx_all();
@@ -408,7 +474,7 @@ ble_l2cap_test_util_peer_updates(int accept)
     l2cap_params.itvl_min = 0x200;
     l2cap_params.itvl_max = 0x300;
     l2cap_params.slave_latency = 0;
-    l2cap_params.timeout_multiplier = 0x100;
+    l2cap_params.timeout_multiplier = 0x500;
     ble_l2cap_test_util_rx_update_req(2, 1, &l2cap_params);
 
     /* Ensure an update response command got sent. */
@@ -419,7 +485,7 @@ ble_l2cap_test_util_peer_updates(int accept)
         params.itvl_min = 0x200;
         params.itvl_max = 0x300;
         params.latency = 0;
-        params.supervision_timeout = 0x100;
+        params.supervision_timeout = 0x500;
         params.min_ce_len = BLE_GAP_INITIAL_CONN_MIN_CE_LEN;
         params.max_ce_len = BLE_GAP_INITIAL_CONN_MAX_CE_LEN;
         ble_l2cap_test_util_verify_tx_update_conn(&params);
@@ -547,7 +613,7 @@ TEST_CASE(ble_l2cap_test_case_sig_update_init_fail_bad_id)
 
     /* Receive response from peer with incorrect ID. */
     rc = ble_hs_test_util_rx_l2cap_update_rsp(2, id + 1, 0);
-    TEST_ASSERT(rc == BLE_HS_ENOENT);
+    TEST_ASSERT(rc == 0);
 
     /* Ensure callback did not get called. */
     TEST_ASSERT(ble_l2cap_test_update_status == -1);
@@ -566,9 +632,11 @@ TEST_SUITE(ble_l2cap_test_suite)
     tu_suite_set_post_test_cb(ble_hs_test_util_post_test, NULL);
 
     ble_l2cap_test_case_bad_header();
+    ble_l2cap_test_case_bad_handle();
     ble_l2cap_test_case_frag_single();
     ble_l2cap_test_case_frag_multiple();
     ble_l2cap_test_case_frag_channels();
+    ble_l2cap_test_case_frag_timeout();
     ble_l2cap_test_case_sig_unsol_rsp();
     ble_l2cap_test_case_sig_update_accept();
     ble_l2cap_test_case_sig_update_reject();

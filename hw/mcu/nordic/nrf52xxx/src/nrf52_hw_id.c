@@ -19,10 +19,8 @@
 
 #include <inttypes.h>
 #include <string.h>
-
 #include <hal/hal_bsp.h>
-
-#include "nrf52.h"
+#include "nrf.h"
 
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))

@@ -33,14 +33,14 @@
 
 #include "config.h"
 
-#ifdef OC_SERVER
+#if defined(OC_SERVER) && MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 
 #include <stdio.h>
 #include <string.h>
 
 #include <os/os_mempool.h>
 
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 #include "separate.h"
 #include "transactions.h"
 
@@ -51,7 +51,7 @@ static uint8_t coap_separate_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
 /*---------------------------------------------------------------------------*/
 /*- Separate Response API ---------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 /**
  * \brief Initiate a separate response with an empty ACK
  * \param request The request to accept
@@ -64,35 +64,36 @@ static uint8_t coap_separate_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,
  * then retry later.
  */
 int
-coap_separate_accept(void *request, oc_separate_response_t *separate_response,
+coap_separate_accept(struct coap_packet_rx *coap_req,
+                     oc_separate_response_t *separate_response,
                      oc_endpoint_t *endpoint, int observe)
 {
+    coap_separate_t *item;
+    coap_separate_t *separate_store;
+
     if (separate_response->active == 0) {
-        OC_LIST_STRUCT_INIT(separate_response, requests);
+        SLIST_INIT(&separate_response->requests);
     }
 
-    coap_packet_t *const coap_req = (coap_packet_t *)request;
-
-    for (coap_separate_t *item = oc_list_head(separate_response->requests);
-         item != NULL; item = oc_list_item_next(separate_response->requests)) {
+    SLIST_FOREACH(item, &separate_response->requests, next) {
         if (item->token_len == coap_req->token_len &&
           memcmp(item->token, coap_req->token, item->token_len) == 0) {
             return 0;
         }
     }
 
-    coap_separate_t *separate_store = os_memblock_get(&coap_separate_pool);
+    separate_store = os_memblock_get(&coap_separate_pool);
 
     if (!separate_store) {
         return 0;
     }
 
-    oc_list_add(separate_response->requests, separate_store);
+    SLIST_INSERT_HEAD(&separate_response->requests, separate_store, next);
 
     erbium_status_code = CLEAR_TRANSACTION;
     /* send separate ACK for CON */
     if (coap_req->type == COAP_TYPE_CON) {
-        LOG("Sending ACK for separate response\n");
+        OC_LOG_DEBUG("Sending ACK for separate response\n");
         coap_packet_t ack[1];
         /* ACK with empty code (0) */
         coap_init_message(ack, COAP_TYPE_ACK, 0, coap_req->mid);
@@ -100,12 +101,9 @@ coap_separate_accept(void *request, oc_separate_response_t *separate_response,
             coap_set_header_observe(ack, observe);
         }
         coap_set_token(ack, coap_req->token, coap_req->token_len);
-        oc_message_t *message = oc_allocate_message();
-        if (message != NULL) {
-            message->endpoint.flags = IP;
-            memcpy(&message->endpoint, endpoint, sizeof(oc_endpoint_t));
-            message->length = coap_serialize_message(ack, message->data);
-            coap_send_message(message);
+        struct os_mbuf *message = oc_allocate_mbuf(endpoint); /* XXXX? */
+        if (message != NULL && coap_serialize_message(ack, message) == 0) {
+            coap_send_message(message, 0);
         } else {
             coap_separate_clear(separate_response, separate_store);
             erbium_status_code = SERVICE_UNAVAILABLE_5_03;
@@ -133,7 +131,7 @@ coap_separate_accept(void *request, oc_separate_response_t *separate_response,
 }
 /*----------------------------------------------------------------------------*/
 void
-coap_separate_resume(void *response, coap_separate_t *separate_store,
+coap_separate_resume(coap_packet_t *response, coap_separate_t *separate_store,
                      uint8_t code, uint16_t mid)
 {
     coap_init_message(response, separate_store->type, code, mid);
@@ -151,7 +149,8 @@ void
 coap_separate_clear(oc_separate_response_t *separate_response,
                     coap_separate_t *separate_store)
 {
-    oc_list_remove(separate_response->requests, separate_store);
+    SLIST_REMOVE(&separate_response->requests, separate_store, coap_separate,
+      next);
     os_memblock_put(&coap_separate_pool, separate_store);
 }
 
@@ -161,4 +160,4 @@ coap_separate_init(void)
     os_mempool_init(&coap_separate_pool, MAX_NUM_CONCURRENT_REQUESTS,
       sizeof(coap_separate_t), coap_separate_area, "coap_sep");
 }
-#endif /* OC_SERVER */
+#endif /* OC_SERVER && OC_SEPARATE_RESPONSES */

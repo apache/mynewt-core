@@ -20,43 +20,43 @@
 
 syscfg.defs:
     CONFIG_FCB:
-        description: 'TBD'
+        description: 'Config default storage is in FCB'
         value: 0
         restrictions:
             - '!CONFIG_NFFS'
             - 'CONFIG_FCB_FLASH_AREA'
     CONFIG_NFFS:
-        description: 'TBD'
+        description: 'Config default storage is in NFFS'
         value: 0
         restrictions:
             - '!CONFIG_FCB'
     CONFIG_NEWTMGR:
-        description: 'TBD'
+        description: 'Newtmgr access to config'
         value: 0
 
     CONFIG_CLI:
-        description: 'TBD'
+        description: 'CLI commands for accessing config'
         value: 0
         restrictions:
             - 'SHELL_TASK'
 
 syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_FLASH_AREA:
-        description: 'TBD'
+        description: 'BSP flash area for config'
         type: 'flash_owner'
         value:
     CONFIG_FCB_MAGIC:
-        description: 'TBD'
-        value: 0xc09f6e5e
+        description: 'Magic to identify valid configuration area'
+        value: 0xc0ffeeee
 
 syscfg.defs.CONFIG_NFFS:
     CONFIG_NFFS_DIR:
-        description: 'TBD'
+        description: 'Directory where config is stored'
         value: '"/cfg"'
     CONFIG_NFFS_FILE:
-        description: 'TBD'
+        description: 'Name for the default config file'
         value: '"/cfg/run"'
     CONFIG_NFFS_MAX_LINES:
-        description: 'TBD'
+        description: 'Limit how many items stored in file before compressing'
         value: 32
 

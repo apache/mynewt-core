@@ -23,28 +23,27 @@
 #include <tinycbor/cbor.h>
 #include <inttypes.h>
 #include <os/os.h>
+#include <os/endian.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define NMGR_OP_READ            (0)
-#define NMGR_OP_READ_RSP        (1)
-#define NMGR_OP_WRITE           (2)
-#define NMGR_OP_WRITE_RSP       (3)
-
-struct nmgr_hdr {
-    uint8_t  nh_op;             /* NMGR_OP_XXX */
-    uint8_t  nh_flags;
-    uint16_t nh_len;            /* length of the payload */
-    uint16_t nh_group;          /* NMGR_GROUP_XXX */
-    uint8_t  nh_seq;            /* sequence number */
-    uint8_t  nh_id;             /* message ID within group */
-};
-
 struct nmgr_transport;
+
+/**
+ * Transmit function.  The supplied mbuf is always consumed, regardless of
+ * return code.
+ */
 typedef int (*nmgr_transport_out_func_t)(struct nmgr_transport *nt,
         struct os_mbuf *m);
+
+/**
+ * MTU query function.  The supplied mbuf should contain a request received
+ * from the peer whose MTU is being queried.  This function takes an mbuf
+ * parameter because some transports store connection-specific information in
+ * the mbuf user header (e.g., the BLE transport stores the connection handle).
+ */
 typedef uint16_t (*nmgr_transport_get_mtu_func_t)(struct os_mbuf *m);
 
 struct nmgr_transport {
@@ -54,7 +53,6 @@ struct nmgr_transport {
 };
 
 void nmgr_event_put(struct os_event *ev);
-int nmgr_task_init(void);
 int nmgr_transport_init(struct nmgr_transport *nt,
         nmgr_transport_out_func_t output_func,
         nmgr_transport_get_mtu_func_t get_mtu_func);

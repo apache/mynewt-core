@@ -20,8 +20,9 @@
 #ifndef H_SYSINIT_
 #define H_SYSINIT_
 
+#include <inttypes.h>
+#include <assert.h>
 #include "syscfg/syscfg.h"
-#include "bootutil/bootutil.h"
 
 #if MYNEWT_VAL(SPLIT_APPLICATION)
 #include "split/split.h"
@@ -31,15 +32,19 @@
 extern "C" {
 #endif
 
-typedef void sysinit_panic_fn(const char *file, int line);
+extern uint8_t sysinit_active;
 
-#ifndef MYNEWT_VAL_SYSINIT_PANIC_FN
-#include <assert.h>
-#define SYSINIT_PANIC() assert(0)
-#else
-void MYNEWT_VAL(SYSINIT_PANIC_FN)(const char *file, int line);
-#define SYSINIT_PANIC() MYNEWT_VAL(SYSINIT_PANIC_FN)(__FILE__, __LINE__)
-#endif
+void sysinit_start(void);
+void sysinit_end(void);
+
+typedef void sysinit_panic_fn(const char *file, int line, const char *func,
+                              const char *expr);
+
+extern sysinit_panic_fn *sysinit_panic_cb;
+
+void sysinit_panic_set(sysinit_panic_fn *panic_fn);
+
+#define SYSINIT_PANIC() sysinit_panic_cb(NULL, 0, NULL, NULL)
 
 #define SYSINIT_PANIC_ASSERT(rc) do \
 {                                   \
@@ -48,12 +53,27 @@ void MYNEWT_VAL(SYSINIT_PANIC_FN)(const char *file, int line);
     }                               \
 } while (0)
 
+/**
+ * Asserts that system initialization is in progress.  This macro is used to
+ * ensure packages don't get initialized a second time after system
+ * initialization has completed.
+ */
+#if MYNEWT_VAL(SYSINIT_CONSTRAIN_INIT)
+#define SYSINIT_ASSERT_ACTIVE() assert(sysinit_active)
+#else
+#define SYSINIT_ASSERT_ACTIVE()
+#endif
 
 #if MYNEWT_VAL(SPLIT_LOADER)
 
 /*** System initialization for loader (first stage of split image). */
 void sysinit_loader(void);
-#define sysinit() sysinit_loader()
+#define sysinit() do                                                        \
+{                                                                           \
+    sysinit_start();                                                        \
+    sysinit_loader();                                                       \
+    sysinit_end();                                                          \
+} while (0)
 
 #elif MYNEWT_VAL(SPLIT_APPLICATION)
 
@@ -62,15 +82,22 @@ void sysinit_app(void);
 #define sysinit() do                                                        \
 {                                                                           \
     /* Record that a split app is running; imgmgt needs to know this. */    \
-    split_app_active_set(1);                                           \
+    split_app_active_set(1);                                                \
+    sysinit_start();                                                        \
     sysinit_app();                                                          \
+    sysinit_end();                                                          \
 } while (0)
 
 #else
 
 /*** System initialization for a unified image (no split). */
 void sysinit_app(void);
-#define sysinit() sysinit_app()
+#define sysinit() do                                                        \
+{                                                                           \
+    sysinit_start();                                                        \
+    sysinit_app();                                                          \
+    sysinit_end();                                                          \
+} while (0)
 
 #endif
 

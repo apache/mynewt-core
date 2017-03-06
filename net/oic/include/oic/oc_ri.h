@@ -61,9 +61,9 @@ typedef enum {
   OC_IGNORE
 } oc_status_t;
 
-typedef struct oc_separate_response_s oc_separate_response_t;
+typedef struct oc_separate_response oc_separate_response_t;
 
-typedef struct oc_response_buffer_s oc_response_buffer_t;
+typedef struct oc_response_buffer oc_response_buffer_t;
 
 typedef struct
 {
@@ -95,24 +95,21 @@ typedef enum {
 
 #define NUM_OC_CORE_RESOURCES (__NUM_OC_CORE_RESOURCES__ + MAX_NUM_DEVICES)
 
-typedef struct oc_resource_s oc_resource_t;
+typedef struct oc_resource oc_resource_t;
 
-typedef struct
-{
-  oc_endpoint_t *origin;
-  oc_resource_t *resource;
-  const char *query;
-  int query_len;
-  oc_rep_t *request_payload;
-  oc_response_t *response;
-  void *packet;
+typedef struct oc_request {
+    oc_endpoint_t *origin;
+    oc_resource_t *resource;
+    const char *query;
+    int query_len;
+    oc_response_t *response;
+    struct coap_packet_rx *packet;
 } oc_request_t;
 
 typedef void (*oc_request_handler_t)(oc_request_t *, oc_interface_mask_t);
 
-typedef struct oc_resource_s
-{
-  struct oc_resource_s *next;
+typedef struct oc_resource {
+  SLIST_ENTRY(oc_resource) next;
   int device;
   oc_string_t uri;
   oc_string_array_t types;
@@ -151,6 +148,12 @@ int oc_ri_get_query_value(const char *query, int query_len, const char *key,
                           char **value);
 
 oc_interface_mask_t oc_ri_get_interface_mask(char *iface, int if_len);
+
+typedef struct coap_packet coap_packet_t;
+struct coap_packet_rx;
+bool oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
+                                      coap_packet_t *response, int32_t *offset,
+                                      oc_endpoint_t *endpoint);
 
 #ifdef __cplusplus
 }

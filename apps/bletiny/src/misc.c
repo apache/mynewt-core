@@ -64,25 +64,13 @@ print_addr(const void *addr)
 }
 
 void
-print_uuid(const void *uuid128)
+print_uuid(const ble_uuid_t *uuid)
 {
-    uint16_t uuid16;
-    const uint8_t *u8p;
+    char buf[BLE_UUID_STR_LEN];
 
-    uuid16 = ble_uuid_128_to_16(uuid128);
-    if (uuid16 != 0) {
-        console_printf("0x%04x", uuid16);
-        return;
-    }
+    ble_uuid_to_str(uuid, buf);
 
-    u8p = uuid128;
-
-    /* 00001101-0000-1000-8000-00805f9b34fb */
-    console_printf("%02x%02x%02x%02x-", u8p[15], u8p[14], u8p[13], u8p[12]);
-    console_printf("%02x%02x-%02x%02x-", u8p[11], u8p[10], u8p[9], u8p[8]);
-    console_printf("%02x%02x%02x%02x%02x%02x%02x%02x",
-                   u8p[7], u8p[6], u8p[5], u8p[4],
-                   u8p[3], u8p[2], u8p[1], u8p[0]);
+    console_printf(buf);
 }
 
 int
@@ -114,17 +102,17 @@ void
 print_conn_desc(const struct ble_gap_conn_desc *desc)
 {
     console_printf("handle=%d our_ota_addr_type=%d our_ota_addr=",
-                   desc->conn_handle, desc->our_ota_addr_type);
-    print_addr(desc->our_ota_addr);
+                   desc->conn_handle, desc->our_ota_addr.type);
+    print_addr(desc->our_ota_addr.val);
     console_printf(" our_id_addr_type=%d our_id_addr=",
-                   desc->our_id_addr_type);
-    print_addr(desc->our_id_addr);
+                   desc->our_id_addr.type);
+    print_addr(desc->our_id_addr.val);
     console_printf(" peer_ota_addr_type=%d peer_ota_addr=",
-                   desc->peer_ota_addr_type);
-    print_addr(desc->peer_ota_addr);
+                   desc->peer_ota_addr.type);
+    print_addr(desc->peer_ota_addr.val);
     console_printf(" peer_id_addr_type=%d peer_id_addr=",
-                   desc->peer_id_addr_type);
-    print_addr(desc->peer_id_addr);
+                   desc->peer_id_addr.type);
+    print_addr(desc->peer_id_addr.val);
     console_printf(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                    "encrypted=%d authenticated=%d bonded=%d\n",
                    desc->conn_itvl, desc->conn_latency,

@@ -31,11 +31,12 @@ pkg.cflags:
     # STM SDK files require these defines.
     - '-DSTM32F407xx'
 
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/stm/stm32f4xx
     - libc/baselibc
-    - sys/flash_map
 
 pkg.deps.ADC_1:
     - hw/drivers/adc/adc_stm32f4

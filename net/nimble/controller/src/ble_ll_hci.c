@@ -24,6 +24,7 @@
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "nimble/hci_common.h"
+#include "nimble/hci_vendor.h"
 #include "nimble/ble_hci_trans.h"
 #include "controller/ble_hw.h"
 #include "controller/ble_ll_adv.h"
@@ -35,6 +36,9 @@
 #include "ble_ll_conn_priv.h"
 
 static void ble_ll_hci_cmd_proc(struct os_event *ev);
+
+/* OS event to enqueue command */
+static struct os_event g_ble_ll_hci_cmd_ev;
 
 /* LE event mask */
 static uint8_t g_ble_ll_hci_le_event_mask[BLE_HCI_SET_LE_EVENT_MASK_LEN];
@@ -98,7 +102,7 @@ ble_ll_hci_send_noop(void)
         evbuf[0] = BLE_HCI_EVCODE_COMMAND_COMPLETE;
         evbuf[1] = 3;
         evbuf[2] = ble_ll_hci_get_num_cmd_pkts();
-        htole16(evbuf + 3, opcode);
+        put_le16(evbuf + 3, opcode);
         ble_ll_hci_event_send(evbuf);
         rc = BLE_ERR_SUCCESS;
     } else {
@@ -180,10 +184,10 @@ ble_ll_hci_rd_local_version(uint8_t *rspbuf, uint8_t *rsplen)
 
     /* Place the data packet length and number of packets in the buffer */
     rspbuf[0] = BLE_HCI_VER_BCS_4_2;
-    htole16(rspbuf + 1, hci_rev);
+    put_le16(rspbuf + 1, hci_rev);
     rspbuf[3] = BLE_LMP_VER_BCS_4_2;
-    htole16(rspbuf + 4, mfrg);
-    htole16(rspbuf + 6, lmp_subver);
+    put_le16(rspbuf + 4, mfrg);
+    put_le16(rspbuf + 6, lmp_subver);
     *rsplen = BLE_HCI_RD_LOC_VER_INFO_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
@@ -280,7 +284,7 @@ static int
 ble_ll_hci_le_read_bufsize(uint8_t *rspbuf, uint8_t *rsplen)
 {
     /* Place the data packet length and number of packets in the buffer */
-    htole16(rspbuf, g_ble_ll_data.ll_acl_pkt_size);
+    put_le16(rspbuf, g_ble_ll_data.ll_acl_pkt_size);
     rspbuf[2] = g_ble_ll_data.ll_num_acl_pkts;
     *rsplen = BLE_HCI_RD_BUF_SIZE_RSPLEN;
     return BLE_ERR_SUCCESS;
@@ -310,8 +314,8 @@ ble_ll_hci_le_wr_sugg_data_len(uint8_t *cmdbuf)
     uint16_t tx_time;
 
     /* Get suggested octets and time */
-    tx_oct = le16toh(cmdbuf);
-    tx_time = le16toh(cmdbuf + 2);
+    tx_oct = get_le16(cmdbuf);
+    tx_time = get_le16(cmdbuf + 2);
 
     /* If valid, write into suggested and change connection initial times */
     if (ble_ll_chk_txrx_octets(tx_oct) && ble_ll_chk_txrx_time(tx_time)) {
@@ -344,8 +348,8 @@ static int
 ble_ll_hci_le_rd_sugg_data_len(uint8_t *rspbuf, uint8_t *rsplen)
 {
     /* Place the data packet length and number of packets in the buffer */
-    htole16(rspbuf, g_ble_ll_conn_params.sugg_tx_octets);
-    htole16(rspbuf + 2, g_ble_ll_conn_params.sugg_tx_time);
+    put_le16(rspbuf, g_ble_ll_conn_params.sugg_tx_octets);
+    put_le16(rspbuf + 2, g_ble_ll_conn_params.sugg_tx_time);
     *rsplen = BLE_HCI_RD_SUGG_DATALEN_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
@@ -364,10 +368,10 @@ static int
 ble_ll_hci_le_rd_max_data_len(uint8_t *rspbuf, uint8_t *rsplen)
 {
     /* Place the data packet length and number of packets in the buffer */
-    htole16(rspbuf, g_ble_ll_conn_params.supp_max_tx_octets);
-    htole16(rspbuf + 2, g_ble_ll_conn_params.supp_max_tx_time);
-    htole16(rspbuf + 4, g_ble_ll_conn_params.supp_max_rx_octets);
-    htole16(rspbuf + 6, g_ble_ll_conn_params.supp_max_rx_time);
+    put_le16(rspbuf, g_ble_ll_conn_params.supp_max_tx_octets);
+    put_le16(rspbuf + 2, g_ble_ll_conn_params.supp_max_tx_time);
+    put_le16(rspbuf + 4, g_ble_ll_conn_params.supp_max_rx_octets);
+    put_le16(rspbuf + 6, g_ble_ll_conn_params.supp_max_rx_time);
     *rsplen = BLE_HCI_RD_MAX_DATALEN_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
@@ -407,7 +411,7 @@ ble_ll_hci_le_read_supp_states(uint8_t *rspbuf, uint8_t *rsplen)
 
     /* Add list of supported states. */
     supp_states = ble_ll_read_supp_states();
-    htole64(rspbuf, supp_states);
+    put_le64(rspbuf, supp_states);
     *rsplen = BLE_HCI_RD_SUPP_STATES_RSPLEN;
     return BLE_ERR_SUCCESS;
 }
@@ -505,6 +509,87 @@ ble_ll_hci_le_cmd_send_cmd_status(uint16_t ocf)
 }
 
 /**
+ * Returns the vendor specific capabilities
+ *
+ * @param rspbuf Pointer to response buffer
+ * @param rsplen Length of response buffer
+ *
+ * @return int BLE error code
+ */
+static int
+ble_ll_hci_vendor_caps(uint8_t *rspbuf, uint8_t *rsplen)
+{
+    /* Clear all bytes */
+    memset(rspbuf, 0, 14);
+
+    /* Fill out the ones we support */
+    rspbuf[0] = BLE_LL_ADV_INSTANCES;
+    rspbuf[9] = 0x60;
+    *rsplen = 14;
+    return BLE_ERR_SUCCESS;
+}
+
+/**
+ * Process a vendor command sent from the host to the controller. The HCI
+ * command has a 3 byte command header followed by data. The header is:
+ *  -> opcode (2 bytes)
+ *  -> Length of parameters (1 byte; does include command header bytes).
+ *
+ * @param cmdbuf Pointer to command buffer. Points to start of command header.
+ * @param ocf    Opcode command field.
+ * @param *rsplen Pointer to length of response
+ *
+ * @return int  This function returns a BLE error code. If a command status
+ *              event should be returned as opposed to command complete,
+ *              256 gets added to the return value.
+ */
+static int
+ble_ll_hci_vendor_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
+{
+    int rc;
+    uint8_t cmdlen;
+    uint8_t *rspbuf;
+
+    /* Assume error; if all pass rc gets set to 0 */
+    rc = BLE_ERR_INV_HCI_CMD_PARMS;
+
+    /* Get length from command */
+    cmdlen = cmdbuf[sizeof(uint16_t)];
+
+    /*
+     * The command response pointer points into the same buffer as the
+     * command data itself. That is fine, as each command reads all the data
+     * before crafting a response.
+     */
+    rspbuf = cmdbuf + BLE_HCI_EVENT_CMD_COMPLETE_MIN_LEN;
+
+    /* Move past HCI command header */
+    cmdbuf += BLE_HCI_CMD_HDR_LEN;
+
+    switch (ocf) {
+    case BLE_HCI_OCF_VENDOR_CAPS:
+        if (cmdlen == 0) {
+            ble_ll_hci_vendor_caps(rspbuf, rsplen);
+            rc = BLE_ERR_SUCCESS;
+        }
+        break;
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+    case BLE_HCI_OCF_MULTI_ADV:
+        if (cmdlen > 0) {
+            rc = ble_ll_adv_multi_adv_cmd(cmdbuf, cmdlen, rspbuf, rsplen);
+        }
+        break;
+#endif
+    default:
+        rc = BLE_ERR_UNKNOWN_HCI_CMD;
+        break;
+    }
+
+    /* XXX: for now, all vendor commands return a command complete */
+    return rc;
+}
+
+/**
  * Process a LE command sent from the host to the controller. The HCI command
  * has a 3 byte command header followed by data. The header is:
  *  -> opcode (2 bytes)
@@ -534,7 +619,7 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
 
     /* Check the length to make sure it is valid */
     cmdlen = g_ble_hci_le_cmd_len[ocf];
-    if ((cmdlen != 0xFF) && (len != cmdlen)) {
+    if (len != cmdlen) {
         goto ll_hci_le_cmd_exit;
     }
 
@@ -562,27 +647,19 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
         rc = ble_ll_set_random_addr(cmdbuf);
         break;
     case BLE_HCI_OCF_LE_SET_ADV_PARAMS:
-        /* Length should be one byte */
-        rc = ble_ll_adv_set_adv_params(cmdbuf);
+        rc = ble_ll_adv_set_adv_params(cmdbuf, 0, 0);
         break;
     case BLE_HCI_OCF_LE_RD_ADV_CHAN_TXPWR:
         rc = ble_ll_adv_read_txpwr(rspbuf, rsplen);
         break;
     case BLE_HCI_OCF_LE_SET_ADV_DATA:
-        if (len > 0) {
-            --len;
-            rc = ble_ll_adv_set_adv_data(cmdbuf, len);
-        }
+        rc = ble_ll_adv_set_adv_data(cmdbuf, 0);
         break;
     case BLE_HCI_OCF_LE_SET_SCAN_RSP_DATA:
-        if (len > 0) {
-            --len;
-            rc = ble_ll_adv_set_scan_rsp_data(cmdbuf, len);
-        }
+        rc = ble_ll_adv_set_scan_rsp_data(cmdbuf, 0);
         break;
     case BLE_HCI_OCF_LE_SET_ADV_ENABLE:
-        /* Length should be one byte */
-        rc = ble_ll_adv_set_enable(cmdbuf);
+        rc = ble_ll_adv_set_enable(cmdbuf, 0);
         break;
     case BLE_HCI_OCF_LE_SET_SCAN_ENABLE:
         rc = ble_ll_scan_set_enable(cmdbuf);
@@ -917,18 +994,13 @@ ble_ll_hci_cmd_proc(struct os_event *ev)
     uint8_t *cmdbuf;
     uint16_t opcode;
     uint16_t ocf;
-    os_error_t err;
 
     /* The command buffer is the event argument */
     cmdbuf = (uint8_t *)ev->ev_arg;
     assert(cmdbuf != NULL);
 
-    /* Free the event */
-    err = os_memblock_put(&g_ble_ll_hci_ev_pool, ev);
-    assert(err == OS_OK);
-
     /* Get the opcode from the command buffer */
-    opcode = le16toh(cmdbuf);
+    opcode = get_le16(cmdbuf);
     ocf = BLE_HCI_OCF(opcode);
     ogf = BLE_HCI_OGF(opcode);
 
@@ -951,6 +1023,9 @@ ble_ll_hci_cmd_proc(struct os_event *ev)
     case BLE_HCI_OGF_LE:
         rc = ble_ll_hci_le_cmd_proc(cmdbuf, ocf, &rsplen);
         break;
+    case BLE_HCI_OGF_VENDOR:
+        rc = ble_ll_hci_vendor_cmd_proc(cmdbuf, ocf, &rsplen);
+        break;
     default:
         /* XXX: Need to support other OGF. For now, return unsupported */
         rc = BLE_ERR_UNKNOWN_HCI_CMD;
@@ -964,7 +1039,7 @@ ble_ll_hci_cmd_proc(struct os_event *ev)
         cmdbuf[0] = BLE_HCI_EVCODE_COMMAND_COMPLETE;
         cmdbuf[1] = 4 + rsplen;
         cmdbuf[2] = ble_ll_hci_get_num_cmd_pkts();
-        htole16(cmdbuf + 3, opcode);
+        put_le16(cmdbuf + 3, opcode);
         cmdbuf[5] = (uint8_t)rc;
     } else {
         /* Create a command status event */
@@ -973,7 +1048,7 @@ ble_ll_hci_cmd_proc(struct os_event *ev)
         cmdbuf[1] = 4;
         cmdbuf[2] = (uint8_t)rc;
         cmdbuf[3] = ble_ll_hci_get_num_cmd_pkts();
-        htole16(cmdbuf + 4, opcode);
+        put_le16(cmdbuf + 4, opcode);
     }
 
     /* Count commands and those in error */
@@ -1004,14 +1079,13 @@ ble_ll_hci_cmd_rx(uint8_t *cmd, void *arg)
     struct os_event *ev;
 
     /* Get an event structure off the queue */
-    ev = (struct os_event *)os_memblock_get(&g_ble_ll_hci_ev_pool);
-    if (!ev) {
+    ev = &g_ble_ll_hci_cmd_ev;
+    if (ev->ev_queued) {
         return BLE_ERR_MEM_CAPACITY;
     }
 
     /* Fill out the event and post to Link Layer */
     ev->ev_queued = 0;
-    ev->ev_cb = ble_ll_hci_cmd_proc;
     ev->ev_arg = cmd;
     os_eventq_put(&g_ble_ll_data.ll_evq, ev);
 
@@ -1035,6 +1109,9 @@ ble_ll_hci_acl_rx(struct os_mbuf *om, void *arg)
 void
 ble_ll_hci_init(void)
 {
+    /* Set event callback for command processing */
+    g_ble_ll_hci_cmd_ev.ev_cb = ble_ll_hci_cmd_proc;
+
     /* Set defaults for LE events: Vol 2 Part E 7.8.1 */
     g_ble_ll_hci_le_event_mask[0] = 0x1f;
 

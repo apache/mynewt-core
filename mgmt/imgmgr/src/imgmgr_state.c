@@ -28,10 +28,6 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
-#define IMGMGR_STATE_F_PENDING          0x01
-#define IMGMGR_STATE_F_CONFIRMED        0x02
-#define IMGMGR_STATE_F_ACTIVE           0x04
-
 uint8_t
 imgmgr_state_flags(int query_slot)
 {
@@ -60,6 +56,14 @@ imgmgr_state_flags(int query_slot)
             flags |= IMGMGR_STATE_F_CONFIRMED;
         } else if (query_slot == 1) {
             flags |= IMGMGR_STATE_F_PENDING;
+        }
+        break;
+
+    case BOOT_SWAP_TYPE_PERM:
+        if (query_slot == 0) {
+            flags |= IMGMGR_STATE_F_CONFIRMED;
+        } else if (query_slot == 1) {
+            flags |= IMGMGR_STATE_F_PENDING | IMGMGR_STATE_F_PERMANENT;
         }
         break;
 
@@ -133,7 +137,7 @@ imgmgr_state_slot_in_use(int slot)
 }
 
 int
-imgmgr_state_test_slot(int slot)
+imgmgr_state_set_pending(int slot, int permanent)
 {
     uint32_t image_flags;
     uint8_t state_flags;
@@ -143,8 +147,8 @@ imgmgr_state_test_slot(int slot)
     state_flags = imgmgr_state_flags(slot);
     split_app_active = split_app_active_get();
 
-    /* Unconfirmed slots are always testable.  A confirmed slot can only be
-     * tested if it is a loader in a split image setup.
+    /* Unconfirmed slots are always runable.  A confirmed slot can only be
+     * run if it is a loader in a split image setup.
      */
     if (state_flags & IMGMGR_STATE_F_CONFIRMED &&
         (slot != 0 || !split_app_active)) {
@@ -161,17 +165,28 @@ imgmgr_state_test_slot(int slot)
         /* Unified image or loader. */
         if (!split_app_active) {
             /* No change in split status. */
-            rc = boot_set_pending();
+            rc = boot_set_pending(permanent);
             if (rc != 0) {
                 return MGMT_ERR_EUNKNOWN;
             }
         } else {
             /* Currently loader + app; testing loader-only. */
-            rc = split_write_split(SPLIT_MODE_TEST_LOADER);
+            if (permanent) {
+                rc = split_write_split(SPLIT_MODE_LOADER);
+            } else {
+                rc = split_write_split(SPLIT_MODE_TEST_LOADER);
+            }
+            if (rc != 0) {
+                return MGMT_ERR_EUNKNOWN;
+            }
         }
     } else {
         /* Testing split app. */
-        rc = split_write_split(SPLIT_MODE_TEST_APP);
+        if (permanent) {
+            rc = split_write_split(SPLIT_MODE_APP);
+        } else {
+            rc = split_write_split(SPLIT_MODE_TEST_APP);
+        }
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
@@ -180,7 +195,7 @@ imgmgr_state_test_slot(int slot)
     return 0;
 }
 
-static int
+int
 imgmgr_state_confirm(void)
 {
     int rc;
@@ -225,15 +240,15 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
     int split_status;
     uint8_t state_flags;
     CborError g_err = CborNoError;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp, images, image;
+    CborEncoder images;
+    CborEncoder image;
 
     any_non_bootable = 0;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "images");
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "images");
 
-    g_err |= cbor_encoder_create_array(&rsp, &images, CborIndefiniteLength);
+    g_err |= cbor_encoder_create_array(&cb->encoder, &images,
+                                       CborIndefiniteLength);
     for (i = 0; i < 2; i++) {
         rc = imgr_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
@@ -246,7 +261,8 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
 
         state_flags = imgmgr_state_flags(i);
 
-        g_err |= cbor_encoder_create_map(&images, &image, CborIndefiniteLength);
+        g_err |= cbor_encoder_create_map(&images, &image,
+                                         CborIndefiniteLength);
         g_err |= cbor_encode_text_stringz(&image, "slot");
         g_err |= cbor_encode_int(&image, i);
 
@@ -272,10 +288,14 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         g_err |= cbor_encode_boolean(&image,
                                      state_flags & IMGMGR_STATE_F_ACTIVE);
 
+        g_err |= cbor_encode_text_stringz(&image, "permanent");
+        g_err |= cbor_encode_boolean(&image,
+                                     state_flags & IMGMGR_STATE_F_PERMANENT);
+
         g_err |= cbor_encoder_close_container(&images, &image);
     }
 
-    g_err |= cbor_encoder_close_container(&rsp, &images);
+    g_err |= cbor_encoder_close_container(&cb->encoder, &images);
 
     if (any_non_bootable) {
         split_status = split_check_status();
@@ -283,10 +303,8 @@ imgmgr_state_read(struct mgmt_cbuf *cb)
         split_status = SPLIT_STATUS_INVALID;
     }
 
-    g_err |= cbor_encode_text_stringz(&rsp, "splitStatus");
-    g_err |= cbor_encode_int(&rsp, split_status);
-
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "splitStatus");
+    g_err |= cbor_encode_int(&cb->encoder, split_status);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -322,49 +340,37 @@ imgmgr_state_write(struct mgmt_cbuf *cb)
 
     rc = cbor_read_object(&cb->it, write_attr);
     if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     /* Validate arguments. */
     if ((hash_len == 0) && !confirm) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
-    }
-    if ((hash_len != 0) && confirm) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
-    if (!confirm) {
+    if (hash_len != 0) {
         slot = imgr_find_by_hash(hash, NULL);
         if (slot < 0) {
-            rc = MGMT_ERR_EINVAL;
-            goto err;
+            return MGMT_ERR_EINVAL;
         }
 
-        rc = imgmgr_state_test_slot(slot);
+        rc = imgmgr_state_set_pending(slot, confirm);
         if (rc != 0) {
-            goto err;
+            return rc;
         }
     } else {
         /* Confirm current setup. */
         rc = imgmgr_state_confirm();
         if (rc != 0) {
-            goto err;
+            return rc;
         }
     }
 
     /* Send the current image state in the response. */
     rc = imgmgr_state_read(cb);
     if (rc != 0) {
-        goto err;
+        return rc;
     }
-
-    return 0;
-
-err:
-    mgmt_cbuf_setoerr(cb, rc);
 
     return 0;
 }

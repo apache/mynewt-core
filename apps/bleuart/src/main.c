@@ -52,20 +52,6 @@
 #include "nmgrble/newtmgr_ble.h"
 #include "bleuart/bleuart.h"
 
-/** bleuart task settings. */
-#define bleuart_TASK_PRIO           1
-#define bleuart_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-struct os_eventq bleuart_evq;
-struct os_task bleuart_task;
-bssnz_t os_stack_t bleuart_stack[bleuart_STACK_SIZE];
-
-/** Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0xba, 0xaa, 0xad, 0xba, 0xaa, 0xad};
-
-/** Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
 static int bleuart_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
@@ -89,20 +75,21 @@ bleuart_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
-    /* Indicate that the flags field should be included; specify a value of 0
-     * to instruct the stack to fill the value in for us.
+    /* Advertise two flags:
+     *     o Discoverability in forthcoming advertisement (general)
+     *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags_is_present = 1;
-    fields.flags = 0;
+    fields.flags = BLE_HS_ADV_F_DISC_GEN |
+                   BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
-     * stack fill this one automatically as well.  This is done by assiging the
+     * stack fill this value automatically.  This is done by assiging the
      * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
      */
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
-    fields.uuids128 = (void *)gatt_svr_svc_uart;
+    fields.uuids128 = BLE_UUID128(&gatt_svr_svc_uart_uuid.u);
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 
@@ -125,7 +112,7 @@ bleuart_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, bleuart_gap_event, NULL);
     if (rc != 0) {
         return;
@@ -185,20 +172,10 @@ bleuart_on_sync(void)
 }
 
 /**
- * Event loop for the main bleuart task.
- */
-static void
-bleuart_task_handler(void *unused)
-{
-    os_eventq_run(&bleuart_evq);
-}
-
-/**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages,
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -210,10 +187,6 @@ main(void)
     /* Initialize OS */
     sysinit();
 
-    os_task_init(&bleuart_task, "bleuart", bleuart_task_handler,
-                 NULL, bleuart_TASK_PRIO, OS_WAIT_FOREVER,
-                 bleuart_stack, bleuart_STACK_SIZE);
-
     /* Initialize the BLE host. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
@@ -222,21 +195,14 @@ main(void)
     rc = bleuart_gatt_svr_init();
     assert(rc == 0);
 
-    /* Initialize eventq */
-    os_eventq_init(&bleuart_evq);
-
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("Mynewt_BLEuart");
     assert(rc == 0);
 
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&bleuart_evq);
-
-    /* Start the OS */
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never exit */
 
     return 0;
 }

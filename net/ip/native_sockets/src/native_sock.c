@@ -27,6 +27,7 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 
+#include <sysinit/sysinit.h>
 #include <os/os.h>
 #include <os/os_mbuf.h>
 #include "mn_socket/mn_socket.h"
@@ -728,6 +729,9 @@ native_sock_init(void)
     struct native_sock_state *nss = &native_sock_state;
     int i;
     os_stack_t *sp;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     for (i = 0; i < NATIVE_SOCK_MAX; i++) {
         native_socks[i].ns_fd = -1;

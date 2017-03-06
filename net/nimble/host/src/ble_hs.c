@@ -61,9 +61,6 @@ static struct os_event ble_hs_ev_start = {
 uint8_t ble_hs_sync_state;
 static int ble_hs_reset_reason;
 
-#define BLE_HS_HEARTBEAT_OS_TICKS       \
-    (MYNEWT_VAL(BLE_HS_HEARTBEAT_FREQ) * OS_TICKS_PER_SEC / 1000)
-
 #define BLE_HS_SYNC_RETRY_RATE          (OS_TICKS_PER_SEC / 10)
 
 static struct os_task *ble_hs_parent_task;
@@ -110,7 +107,6 @@ STATS_NAME_END(ble_hs_stats)
 static struct os_eventq *
 ble_hs_evq_get(void)
 {
-    os_eventq_ensure(&ble_hs_evq, &ble_hs_ev_start);
     return ble_hs_evq;
 }
 
@@ -314,10 +310,13 @@ ble_hs_timer_exp(struct os_event *ev)
 
     ticks_until_next = ble_sm_timer();
     ble_hs_timer_sched(ticks_until_next);
+
+    ticks_until_next = ble_hs_conn_timer();
+    ble_hs_timer_sched(ticks_until_next);
 }
 
 static void
-ble_hs_timer_timer_reset(uint32_t ticks)
+ble_hs_timer_reset(uint32_t ticks)
 {
     int rc;
 
@@ -341,7 +340,7 @@ ble_hs_timer_sched(int32_t ticks_from_now)
     if (!os_callout_queued(&ble_hs_timer_timer) ||
         OS_TIME_TICK_LT(abs_time, ble_hs_timer_timer.c_ticks)) {
 
-        ble_hs_timer_timer_reset(ticks_from_now);
+        ble_hs_timer_reset(ticks_from_now);
     }
 }
 
@@ -351,7 +350,7 @@ ble_hs_timer_resched(void)
     /* Reschedule the timer to run immediately.  The timer callback will query
      * each module for an up-to-date expiration time.
      */
-    ble_hs_timer_timer_reset(0);
+    ble_hs_timer_reset(0);
 }
 
 static void
@@ -389,7 +388,10 @@ ble_hs_event_reset(struct os_event *ev)
 static void
 ble_hs_event_start(struct os_event *ev)
 {
-    ble_hs_start();
+    int rc;
+
+    rc = ble_hs_start();
+    assert(rc == 0);
 }
 
 void
@@ -402,7 +404,7 @@ ble_hs_enqueue_hci_event(uint8_t *hci_evt)
         ble_hci_trans_buf_free(hci_evt);
     } else {
         ev->ev_queued = 0;
-        ev->ev_cb = ble_hs_event_rx_hci_ev,
+        ev->ev_cb = ble_hs_event_rx_hci_ev;
         ev->ev_arg = hci_evt;
         os_eventq_put(ble_hs_evq_get(), ev);
     }
@@ -539,6 +541,9 @@ ble_hs_init(void)
 {
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     log_init();
 
     /* Create memory pool of OS events */
@@ -600,4 +605,6 @@ ble_hs_init(void)
 
     /* Configure the HCI transport to communicate with a host. */
     ble_hci_trans_cfg_hs(ble_hs_hci_rx_evt, NULL, ble_hs_rx_data, NULL);
+
+    ble_hs_evq_set(os_eventq_dflt_get());
 }

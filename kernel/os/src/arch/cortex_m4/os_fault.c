@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -73,8 +73,6 @@ struct coredump_regs {
     uint32_t psr;
 };
 
-void __assert_func(const char *file, int line, const char *func, const char *e);
-
 #if MYNEWT_VAL(OS_COREDUMP)
 static void
 trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
@@ -95,14 +93,26 @@ trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
     /*
      * SP just before exception for the coredump.
      * See ARMv7-M Architecture Ref Manual, sections B1.5.6 - B1.5.8
-     * SP is adjusted by 0x20.
-     * If SCB->CCR.STKALIGN is set, SP is aligned to 8-byte boundary on
-     * exception entry.
+     * If floating point registers were pushed to stack, SP is adjusted
+     * by 0x68.
+     * Otherwise, SP is adjusted by 0x20.
+     * If SCB->CCR.STKALIGN is set, or fpu is active, SP is aligned to
+     * 8-byte boundary on exception entry.
      * If this alignment adjustment happened, xPSR will have bit 9 set.
      */
-    regs->sp = ((uint32_t)tf->ef) + 0x20;
-    if ((SCB->CCR & SCB_CCR_STKALIGN_Msk) & tf->ef->psr & (1 << 9)) {
-        regs->sp += 4;
+    if ((tf->lr & 0x10) == 0) {
+        /*
+         * Extended frame
+         */
+        regs->sp = ((uint32_t)tf->ef) + 0x68;
+        if (tf->ef->psr & (1 << 9)) {
+            regs->sp += 4;
+        }
+    } else {
+        regs->sp = ((uint32_t)tf->ef) + 0x20;
+        if ((SCB->CCR & SCB_CCR_STKALIGN_Msk) & tf->ef->psr & (1 << 9)) {
+            regs->sp += 4;
+        }
     }
     regs->lr = tf->ef->lr;
     regs->pc = tf->ef->pc;
@@ -118,7 +128,8 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     OS_ENTER_CRITICAL(sr);
     (void)sr;
     console_blocking_mode();
-    console_printf("Assert %s; failed in %s:%d\n", e ? e : "", file, line);
+    console_printf("Assert @ 0x%x\n",
+                   (unsigned int)__builtin_return_address(0));
     if (hal_debugger_connected()) {
        /*
         * If debugger is attached, breakpoint before the trap.

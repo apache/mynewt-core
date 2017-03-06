@@ -23,6 +23,7 @@
 
 #include <string.h>
 
+#include <defs/error.h>
 #include <flash_map/flash_map.h>
 #include <hal/hal_bsp.h>
 
@@ -45,6 +46,43 @@ static struct shell_cmd shell_imgr_cmd = {
 };
 
 static void
+imgr_cli_too_few_args(void)
+{
+    console_printf("Too few args\n");
+}
+
+static const char *
+imgr_cli_flags_str(uint32_t image_flags, uint8_t state_flags)
+{
+    static char buf[8];
+    char *p;
+
+    memset(buf, ' ', sizeof buf);
+    p = buf;
+
+    if (state_flags & IMGMGR_STATE_F_ACTIVE) {
+        *p = 'a';
+    }
+    p++;
+    if (!(image_flags & IMAGE_F_NON_BOOTABLE)) {
+        *p = 'b';
+    }
+    p++;
+    if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
+        *p = 'c';
+    }
+    p++;
+    if (state_flags & IMGMGR_STATE_F_PENDING) {
+        *p = 'p';
+    }
+    p++;
+
+    *p = '\0';
+
+    return buf;
+}
+
+static void
 imgr_cli_show_slot(int slot)
 {
     uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
@@ -52,59 +90,71 @@ imgr_cli_show_slot(int slot)
     struct image_version ver;
     char ver_str[IMGMGR_NMGR_MAX_VER];
     uint32_t flags;
+    uint8_t state_flags;
 
     if (imgr_read_info(slot, &ver, hash, &flags)) {
         return;
     }
 
+    state_flags = imgmgr_state_flags(slot);
+
     (void)imgr_ver_str(&ver, ver_str);
 
-    console_printf("%8s: %s %c\n",
+    console_printf("%8s: %s %s\n",
       ver_str, hex_format(hash, IMGMGR_HASH_LEN, hash_str, sizeof(hash_str)),
-      flags & IMAGE_F_NON_BOOTABLE ? ' ' : 'b');
+      imgr_cli_flags_str(flags, state_flags));
 }
 
-static void
-imgr_cli_boot_get(void)
-{
-    int rc;
-    int slot;
-
-    /*
-     * Display test image (if set)
-     */
-    rc = boot_vect_read_test(&slot);
-    if (rc == 0) {
-        imgr_cli_show_slot(slot);
-    } else {
-        console_printf("No test img set\n");
-        return;
-    }
-}
-
-static void
-imgr_cli_boot_set(char *hash_str)
+static int
+imgr_cli_hash_parse(const char *arg, int *out_slot)
 {
     uint8_t hash[IMGMGR_HASH_LEN];
     struct image_version ver;
     int slot;
     int rc;
 
-    if (hex_parse(hash_str, strlen(hash_str), hash, sizeof(hash)) !=
-      sizeof(hash)) {
-        console_printf("Invalid hash %s\n", hash_str);
-        return;
+    rc = hex_parse(arg, strlen(arg), hash, sizeof hash);
+    if (rc != sizeof hash) {
+        console_printf("Invalid hash: %s\n", arg);
+        return SYS_EINVAL;
     }
 
     slot = imgr_find_by_hash(hash, &ver);
     if (slot == -1) {
         console_printf("Unknown img\n");
+        return SYS_ENOENT;
+    }
+
+    *out_slot = slot;
+    return 0;
+}
+
+static void
+imgr_cli_set_pending(char *hash_str, int permanent)
+{
+    int slot;
+    int rc;
+
+    rc = imgr_cli_hash_parse(hash_str, &slot);
+    if (rc != 0) {
         return;
     }
 
-    rc = imgmgr_state_test_slot(slot);
+    rc = imgmgr_state_set_pending(slot, permanent);
     if (rc) {
         console_printf("Error setting image to pending; rc=%d\n", rc);
+        return;
+    }
+}
+
+static void
+imgr_cli_confirm(void)
+{
+    int rc;
+
+    rc = imgmgr_state_confirm();
+    if (rc != 0) {
+        console_printf("Error confirming image state; rc=%d\n", rc);
         return;
     }
 }
@@ -115,21 +165,26 @@ imgr_cli_cmd(int argc, char **argv)
     int i;
 
     if (argc < 2) {
-        console_printf("Too few args\n");
+        imgr_cli_too_few_args();
         return 0;
     }
     if (!strcmp(argv[1], "list")) {
         for (i = 0; i < 2; i++) {
             imgr_cli_show_slot(i);
         }
-    } else if (!strcmp(argv[1], "boot")) {
-        if (argc > 2) {
-            imgr_cli_boot_set(argv[2]);
+    } else if (!strcmp(argv[1], "test")) {
+        if (argc < 3) {
+            imgr_cli_too_few_args();
+            return 0;
         } else {
-            imgr_cli_boot_get();
+            imgr_cli_set_pending(argv[2], 0);
         }
-    } else if (!strcmp(argv[1], "ver")) {
-        imgr_cli_show_slot(boot_current_slot);
+    } else if (!strcmp(argv[1], "confirm")) {
+        if (argc < 3) {
+            imgr_cli_confirm();
+        } else {
+            imgr_cli_set_pending(argv[2], 1);
+        }
     } else {
         console_printf("Unknown cmd\n");
     }

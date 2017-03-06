@@ -56,17 +56,17 @@ flash_cli_cmd(int argc, char **argv)
          * print status
          */
         console_printf("Flash at 0x%lx size 0x%lx with %d sectors,"
-          "alignment req %d bytes\n", 
-                (long unsigned int) hf->hf_base_addr, 
+          " alignment req %d bytes\n",
+                (long unsigned int) hf->hf_base_addr,
                 (long unsigned int) hf->hf_size,
-                hf->hf_sector_cnt, 
+                hf->hf_sector_cnt,
                 hf->hf_align);
         sec_cnt = hf->hf_sector_cnt;
         if (sec_cnt > 32) {
             sec_cnt = 32;
         }
         for (i = 0; i < sec_cnt; i++) {
-            console_printf("  %d: %lx\n", i, 
+            console_printf("  %d: %lx\n", i,
                     (long unsigned int) hal_flash_sector_size(hf, i));
         }
         if (sec_cnt != hf->hf_sector_cnt) {
@@ -90,7 +90,7 @@ flash_cli_cmd(int argc, char **argv)
         }
     }
     if (!strcmp(argv[1], "erase")) {
-        console_printf("Erase 0x%lx + %lx\n", 
+        console_printf("Erase 0x%lx + %lx\n",
                 (long unsigned int) off, (long unsigned int) sz);
 
         if (hal_flash_erase(0, off, sz)) {
@@ -98,13 +98,13 @@ flash_cli_cmd(int argc, char **argv)
         }
         console_printf("Done!\n");
     } else if (!strcmp(argv[1], "read")) {
-        console_printf("Read 0x%lx + %lx\n", 
+        console_printf("Read 0x%lx + %lx\n",
                 (long unsigned int) off, (long unsigned int) sz);
         sz += off;
         while (off < sz) {
             sec_cnt = min(sizeof(tmp_buf), sz - off);
             if (hal_flash_read(0, off, tmp_buf, sec_cnt)) {
-                console_printf("flash read failure at %lx\n", 
+                console_printf("flash read failure at %lx\n",
                         (long unsigned int) off);
                 break;
             }
@@ -112,12 +112,12 @@ flash_cli_cmd(int argc, char **argv)
                 soff += snprintf(pr_str + soff, sizeof(pr_str) - soff,
                   "0x%02x ", tmp_buf[i] & 0xff);
             }
-            console_printf("  0x%lx: %s\n", 
+            console_printf("  0x%lx: %s\n",
                     (long unsigned int) off, pr_str);
             off += sec_cnt;
         }
     } else if (!strcmp(argv[1], "write")) {
-        console_printf("Write 0x%lx + %lx\n", 
+        console_printf("Write 0x%lx + %lx\n",
                 (long unsigned int) off, (long unsigned int) sz);
 
         sz += off;
@@ -128,7 +128,7 @@ flash_cli_cmd(int argc, char **argv)
         while (off < sz) {
             sec_cnt = min(sizeof(tmp_buf), sz - off);
             if (hal_flash_write(0, off, tmp_buf, sec_cnt)) {
-                console_printf("flash write failure at %lx\n", 
+                console_printf("flash write failure at %lx\n",
                         (long unsigned int) off);
             }
             off += sec_cnt;

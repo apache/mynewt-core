@@ -17,5 +17,5 @@
 
 syscfg.defs:
     FLASH_MAP_MAX_AREAS:
-        description: 'TBD'
+        description: 'Maximum number of expected flash areas'
         value: 10

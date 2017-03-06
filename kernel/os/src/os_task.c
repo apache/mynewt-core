@@ -98,6 +98,7 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
 {
     struct os_sanity_check *sc;
     int rc;
+    struct os_task *task;
 
     memset(t, 0, sizeof(*t));
 
@@ -132,6 +133,10 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
     t->t_stacktop = &stack_bottom[stack_size];
     t->t_stacksize = stack_size;
 
+    STAILQ_FOREACH(task, &g_os_task_list, t_os_task_list) {
+        assert(t->t_prio != task->t_prio);
+    }
+
     /* insert this task into the task list */
     STAILQ_INSERT_TAIL(&g_os_task_list, t, t_os_task_list);
 
@@ -148,12 +153,12 @@ err:
 }
 
 /*
- * Suspend specified task
+ * Removes specified task
  * XXX
  * NOTE: This interface is currently experimental and not ready for common use
  */
 int
-os_task_suspend(struct os_task *t)
+os_task_remove(struct os_task *t)
 {
     struct os_task *current;
     int rc;
@@ -176,9 +181,9 @@ os_task_suspend(struct os_task *t)
     }
 
     /*
-     * Disallowing suspending tasks which are waiting on a lock
+     * Disallow suspending tasks which are waiting on a lock
      */
-    if (t->t_flags && (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT |
+    if (t->t_flags & (OS_TASK_FLAG_SEM_WAIT | OS_TASK_FLAG_MUTEX_WAIT |
                                                OS_TASK_FLAG_EVQ_WAIT)) {
         return OS_EBUSY;
     }
@@ -188,16 +193,16 @@ os_task_suspend(struct os_task *t)
      * Checking lockcnt and flags separately so we can assert separately XXX
      */
     if (t->t_lockcnt) {
-        assert(t->t_flags && OS_TASK_FLAG_LOCK_HELD);
+        assert(t->t_flags & OS_TASK_FLAG_LOCK_HELD);
         return OS_EBUSY;
     }
-    if (t->t_flags && OS_TASK_FLAG_LOCK_HELD) {
+    if (t->t_flags & OS_TASK_FLAG_LOCK_HELD) {
         assert(t->t_lockcnt);
         return OS_EBUSY;
     }
 
     OS_ENTER_CRITICAL(sr);
-    rc = os_sched_suspend(t);
+    rc = os_sched_remove(t);
     OS_EXIT_CRITICAL(sr);
     return rc;
 }

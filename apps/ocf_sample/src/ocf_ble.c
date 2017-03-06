@@ -116,14 +116,15 @@ ocf_ble_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
-    /* Indicate that the flags field should be included; specify a value of 0
-     * to instruct the stack to fill the value in for us.
+    /* Advertise two flags:
+     *     o Discoverability in forthcoming advertisement (general)
+     *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags_is_present = 1;
-    fields.flags = 0;
+    fields.flags = BLE_HS_ADV_F_DISC_GEN |
+                   BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
-     * stack fill this one automatically as well.  This is done by assiging the
+     * stack fill this value automatically.  This is done by assiging the
      * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
      */
     fields.tx_pwr_lvl_is_present = 1;
@@ -144,7 +145,7 @@ ocf_ble_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, 0, NULL, BLE_HS_FOREVER,
                            &adv_params, ocf_ble_gap_event, NULL);
     if (rc != 0) {
         OCF_BLE_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);

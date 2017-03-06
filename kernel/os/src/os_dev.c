@@ -91,6 +91,32 @@ os_dev_add(struct os_dev *dev)
     return (0);
 }
 
+/**
+ * Call device initialize routine, and mark it ready. This is a private
+ * function.
+ *
+ * @param dev The device to initialize.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static int
+os_dev_initialize(struct os_dev *dev)
+{
+    int rc;
+
+    rc = dev->od_init(dev, dev->od_init_arg);
+    if (rc != 0) {
+        if (dev->od_flags & OS_DEV_F_INIT_CRITICAL) {
+            goto err;
+        }
+    } else {
+        dev->od_flags |= OS_DEV_F_STATUS_READY;
+    }
+    return 0;
+err:
+    return rc;
+}
+
 
 /**
  * Create a new device in the kernel.
@@ -122,7 +148,9 @@ os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
         goto err;
     }
 
-    return (0);
+    if (g_os_started) {
+        rc = os_dev_initialize(dev);
+    }
 err:
     return (rc);
 }
@@ -138,23 +166,17 @@ int
 os_dev_initialize_all(uint8_t stage)
 {
     struct os_dev *dev;
-    int rc;
+    int rc = 0;
 
     STAILQ_FOREACH(dev, &g_os_dev_list, od_next) {
         if (dev->od_stage == stage) {
-            rc = dev->od_init(dev, dev->od_init_arg);
-            if (rc != 0) {
-                if (dev->od_flags & OS_DEV_F_INIT_CRITICAL) {
-                    goto err;
-                }
-            } else {
-                dev->od_flags |= OS_DEV_F_STATUS_READY;
+            rc = os_dev_initialize(dev);
+            if (rc) {
+                break;
             }
         }
     }
 
-    return (0);
-err:
     return (rc);
 }
 
@@ -210,13 +232,16 @@ err:
 }
 
 /**
- * Lookup a device by name, internal function only.
+ * Lookup a device by name.
+ *
+ * WARNING: This should be called before any locking on the device is done, or
+ * the device list itself is modified in any context.  There is no locking.
  *
  * @param name The name of the device to look up.
  *
  * @return A pointer to the device corresponding to name, or NULL if not found.
  */
-static struct os_dev *
+struct os_dev *
 os_dev_lookup(char *name)
 {
     struct os_dev *dev;

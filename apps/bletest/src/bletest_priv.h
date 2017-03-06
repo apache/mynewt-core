@@ -45,17 +45,13 @@ int bletest_hci_rd_local_feat(void);
 int bletest_hci_rd_local_supp_cmd(void);
 int bletest_hci_le_read_supp_states(void);
 int bletest_hci_le_rd_max_datalen(void);
-int bletest_hci_le_set_adv_data(uint8_t *data, uint8_t len);
-int bletest_hci_le_set_adv_params(struct hci_adv_params *adv);
 int bletest_hci_le_read_rem_used_feat(uint16_t handle);
 int bletest_hci_le_set_rand_addr(uint8_t *addr);
 int bletest_hci_rd_rem_version(uint16_t handle);
 int bletest_hci_le_set_host_chan_class(uint8_t *chanmap);
 int bletest_hci_le_rd_chanmap(uint16_t handle);
-int bletest_hci_le_set_adv_enable(uint8_t enable);
 int bletest_hci_le_set_event_mask(uint64_t event_mask);
 int bletest_hci_set_event_mask(uint64_t event_mask);
-int bletest_hci_le_set_scan_rsp_data(uint8_t *data, uint8_t len);
 int bletest_hci_le_add_to_whitelist(uint8_t *addr, uint8_t addr_type);
 int bletest_hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dups);
 int bletest_hci_le_create_connection(struct hci_create_conn *hcc);
@@ -65,6 +61,22 @@ int bletest_hci_le_set_scan_params(uint8_t scan_type, uint16_t scan_itvl,
 int bletest_hci_le_add_resolv_list(uint8_t *local_irk, uint8_t *peer_irk,
                                    uint8_t *peer_ident_addr, uint8_t addr_type);
 int bletest_hci_le_enable_resolv_list(uint8_t enable);
+
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+int bletest_hci_le_set_multi_rand_addr(uint8_t *addr, uint8_t instance);
+int bletest_hci_le_set_multi_adv_data(uint8_t *data, uint8_t len,
+                                      uint8_t instance);
+int bletest_hci_le_set_multi_adv_params(struct hci_multi_adv_params *adv,
+                                        uint8_t instance);
+int bletest_hci_le_set_multi_adv_enable(uint8_t enable, uint8_t instance);
+int bletest_hci_le_set_multi_scan_rsp_data(uint8_t *data, uint8_t len,
+                                           uint8_t instance);
+#else
+int bletest_hci_le_set_adv_data(uint8_t *data, uint8_t len);
+int bletest_hci_le_set_adv_params(struct hci_adv_params *adv);
+int bletest_hci_le_set_adv_enable(uint8_t enable);
+int bletest_hci_le_set_scan_rsp_data(uint8_t *data, uint8_t len);
+#endif
 
 
 #ifdef __cplusplus

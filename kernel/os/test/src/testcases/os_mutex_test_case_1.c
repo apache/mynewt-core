@@ -33,15 +33,11 @@ TEST_CASE(os_mutex_test_case_1)
     TEST_ASSERT(rc == 0);
 
     os_task_init(&task1, "task1", mutex_test1_task1_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, sizeof(stack1));
+                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, stack1_size);
 
-    os_task_init(&task2, "task2", mutex_task2_handler, NULL, TASK2_PRIO, 
-            OS_WAIT_FOREVER, stack2, sizeof(stack2));
+    os_task_init(&task2, "task2", mutex_task2_handler, NULL,
+                 TASK2_PRIO, OS_WAIT_FOREVER, stack2, stack2_size);
 
-    os_task_init(&task3, "task3", mutex_task3_handler, NULL, TASK3_PRIO, 
-            OS_WAIT_FOREVER, stack3, sizeof(stack3));
-
-#if MYNEWT_VAL(SELFTEST)
-    os_start();
-#endif
+    os_task_init(&task3, "task3", mutex_task3_handler, NULL,
+                 TASK3_PRIO, OS_WAIT_FOREVER, stack3, stack3_size);
 }

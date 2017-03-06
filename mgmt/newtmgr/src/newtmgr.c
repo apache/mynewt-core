@@ -25,6 +25,8 @@
 #include "os/os.h"
 #include "os/endian.h"
 
+#include "mem/mem.h"
+
 #include "mgmt/mgmt.h"
 
 #include "newtmgr/newtmgr.h"
@@ -42,15 +44,14 @@ struct os_eventq *nmgr_evq;
  */
 static struct nmgr_cbuf {
     struct mgmt_cbuf n_b;
-    struct CborMbufWriter writer;
-    struct CborMbufReader reader;
+    struct cbor_mbuf_writer writer;
+    struct cbor_mbuf_reader reader;
     struct os_mbuf *n_out_m;
 } nmgr_task_cbuf;
 
 struct os_eventq *
 mgmt_evq_get(void)
 {
-    os_eventq_ensure(&nmgr_evq, NULL);
     return nmgr_evq;
 }
 
@@ -94,89 +95,92 @@ nmgr_init_rsp(struct os_mbuf *m, struct nmgr_hdr *src)
 
 static void
 nmgr_send_err_rsp(struct nmgr_transport *nt, struct os_mbuf *m,
-  struct nmgr_hdr *hdr, int rc)
+                  struct nmgr_hdr *hdr, int status)
 {
+    struct CborEncoder map;
+    int rc;
+
     hdr = nmgr_init_rsp(m, hdr);
     if (!hdr) {
+        os_mbuf_free_chain(m);
         return;
     }
 
-    mgmt_cbuf_setoerr(&nmgr_task_cbuf.n_b, rc);
-    hdr->nh_len +=
-        cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
+    rc = cbor_encoder_create_map(&nmgr_task_cbuf.n_b.encoder, &map,
+                                 CborIndefiniteLength);
+    if (rc != 0) {
+        return;
+    }
 
-    hdr->nh_len = htons(hdr->nh_len);
-    hdr->nh_flags = 0;
+    rc = mgmt_cbuf_setoerr(&nmgr_task_cbuf.n_b, status);
+    if (rc != 0) {
+        return;
+    }
+
+    rc = cbor_encoder_close_container(&nmgr_task_cbuf.n_b.encoder, &map);
+    if (rc != 0) {
+        return;
+    }
+
+    hdr->nh_len =
+        htons(cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder));
+
     nt->nt_output(nt, nmgr_task_cbuf.n_out_m);
 }
 
-static int
-nmgr_send_rspfrag(struct nmgr_transport *nt, struct os_mbuf *rsp,
-                  struct os_mbuf *req, uint16_t len)
+/**
+ * Allocates an mbuf to contain an outgoing response fragment.
+ */
+static struct os_mbuf *
+nmgr_rsp_frag_alloc(uint16_t frag_size, void *arg)
 {
-    struct os_mbuf *rspfrag;
-    int rc;
+    struct os_mbuf *src_rsp;
+    struct os_mbuf *frag;
 
-    rspfrag = NULL;
+    /* We need to duplicate the user header from the source response, as that
+     * is where transport-specific information is stored.
+     */
+    src_rsp = arg;
 
-    rspfrag = os_msys_get_pkthdr(len, OS_MBUF_USRHDR_LEN(req));
-    if (!rspfrag) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
+    frag = os_msys_get_pkthdr(frag_size, OS_MBUF_USRHDR_LEN(src_rsp));
+    if (frag != NULL) {
+        /* Copy the user header from the response into the fragment mbuf. */
+        memcpy(OS_MBUF_USRHDR(frag), OS_MBUF_USRHDR(src_rsp),
+               OS_MBUF_USRHDR_LEN(src_rsp));
     }
 
-    /* Copy the request packet header into the response. */
-    memcpy(OS_MBUF_USRHDR(rspfrag), OS_MBUF_USRHDR(req),
-           OS_MBUF_USRHDR_LEN(req));
-
-    if (os_mbuf_appendfrom(rspfrag, rsp, 0, len)) {
-        rc = MGMT_ERR_ENOMEM;
-        goto err;
-    }
-
-    nt->nt_output(nt, rspfrag);
-
-    return MGMT_ERR_EOK;
-err:
-    if (rspfrag) {
-        os_mbuf_free_chain(rspfrag);
-    }
-    return rc;
+    return frag;
 }
 
+/**
+ * Sends a newtmgr response, fragmenting it as needed.  The supplied response
+ * mbuf is consumed on success and in some failure cases.  If the mbuf is
+ * consumed, the supplied pointer is set to NULL.
+ *
+ * This function prefers not to consume the supplied mbuf on failure.  The
+ * reason for this is to allow the caller to reuse the mbuf for an error
+ * response.
+ */
 static int
-nmgr_rsp_fragment(struct nmgr_transport *nt, struct nmgr_hdr *rsp_hdr,
-                  struct os_mbuf *rsp, struct os_mbuf *req)
+nmgr_rsp_tx(struct nmgr_transport *nt, struct os_mbuf **rsp, uint16_t mtu)
 {
-    uint16_t mtu;
-    uint16_t rsplen;
-    uint16_t len ;
+    struct os_mbuf *frag;
     int rc;
 
-    len = 0;
-
-    mtu = nt->nt_get_mtu(req);
-
-    do {
-        len = OS_MBUF_PKTLEN(rsp);
-        if (len >= mtu) {
-            rsplen = mtu;
-        } else {
-            rsplen = len;
+    while (*rsp != NULL) {
+        frag = mem_split_frag(rsp, mtu, nmgr_rsp_frag_alloc, *rsp);
+        if (frag == NULL) {
+            return MGMT_ERR_ENOMEM;
         }
 
-        rc = nmgr_send_rspfrag(nt, rsp, req, rsplen);
-        if (rc) {
-            goto err;
+        rc = nt->nt_output(nt, frag);
+        if (rc != 0) {
+            /* Output function already freed mbuf. */
+            return MGMT_ERR_EUNKNOWN;
         }
-
-        os_mbuf_adj(rsp, rsplen);
-
-    } while (OS_MBUF_PKTLEN(rsp));
+    }
 
     return MGMT_ERR_EOK;
-err:
-    return rc;
 }
 
 static void
@@ -184,10 +188,12 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
 {
     struct os_mbuf *rsp;
     const struct mgmt_handler *handler;
+    CborEncoder payload_enc;
     struct nmgr_hdr *rsp_hdr;
     struct nmgr_hdr hdr;
     int off;
     uint16_t len;
+    uint16_t mtu;
     int rc;
 
     rsp_hdr = NULL;
@@ -203,7 +209,9 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         goto err;
     }
 
-    /* Copy the request packet header into the response. */
+    mtu = nt->nt_get_mtu(req);
+
+    /* Copy the request user header into the response. */
     memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
 
     off = 0;
@@ -237,6 +245,16 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         cbor_parser_init(&nmgr_task_cbuf.reader.r, 0,
                          &nmgr_task_cbuf.n_b.parser, &nmgr_task_cbuf.n_b.it);
 
+        /* Begin response payload.  Response fields are inserted into the root
+         * map as key value pairs.
+         */
+        rc = cbor_encoder_create_map(&nmgr_task_cbuf.n_b.encoder, &payload_enc,
+                                     CborIndefiniteLength);
+        if (rc != 0) {
+            rc = MGMT_ERR_ENOMEM;
+            goto err;
+        }
+
         if (hdr.nh_op == NMGR_OP_READ) {
             if (handler->mh_read) {
                 rc = handler->mh_read(&nmgr_task_cbuf.n_b);
@@ -252,30 +270,49 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
         } else {
             rc = MGMT_ERR_EINVAL;
         }
-
         if (rc != 0) {
+            goto err;
+        }
+
+        /* End response payload. */
+        rc = cbor_encoder_close_container(&nmgr_task_cbuf.n_b.encoder,
+                                          &payload_enc);
+        if (rc != 0) {
+            rc = MGMT_ERR_ENOMEM;
             goto err;
         }
 
         rsp_hdr->nh_len +=
             cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
-        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
-
         rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
-        rc = nmgr_rsp_fragment(nt, rsp_hdr, rsp, req);
+
+        rc = nmgr_rsp_tx(nt, &rsp, mtu);
         if (rc) {
-            goto err;
+            /* If the entire mbuf was consumed by the transport, don't attempt
+             * to send an error response.
+             */
+            if (rsp == NULL) {
+                goto err_norsp;
+            } else {
+                goto err;
+            }
         }
+
+        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
     }
 
     os_mbuf_free_chain(rsp);
     os_mbuf_free_chain(req);
     return;
+
 err:
-    OS_MBUF_PKTHDR(rsp)->omp_len = rsp->om_len = 0;
+    /* Clear partially written response. */
+    os_mbuf_adj(rsp, OS_MBUF_PKTLEN(rsp));
+
     nmgr_send_err_rsp(nt, rsp, &hdr, rc);
     os_mbuf_free_chain(req);
     return;
+
 err_norsp:
     os_mbuf_free_chain(rsp);
     os_mbuf_free_chain(req);
@@ -348,28 +385,18 @@ nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req)
     return rc;
 }
 
-int
-nmgr_task_init(void)
-{
-    int rc;
-
-    rc = nmgr_os_groups_register();
-    if (rc != 0) {
-        goto err;
-    }
-
-    nmgr_cbuf_init(&nmgr_task_cbuf);
-
-    return (0);
-err:
-    return (rc);
-}
-
 void
 nmgr_pkg_init(void)
 {
     int rc;
 
-    rc = nmgr_task_init();
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    rc = nmgr_os_groups_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
+
+    nmgr_cbuf_init(&nmgr_task_cbuf);
+
+    mgmt_evq_set(os_eventq_dflt_get());
 }

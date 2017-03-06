@@ -19,6 +19,7 @@
 #include <inttypes.h>
 #include <assert.h>
 
+#include <sysinit/sysinit.h>
 #include <shell/shell.h>
 #include <mgmt/mgmt.h>
 #include <newtmgr/newtmgr.h>
@@ -43,6 +44,7 @@ nmgr_shell_out(struct nmgr_transport *nt, struct os_mbuf *m)
 
     return (0);
 err:
+    os_mbuf_free_chain(m);
     return (rc);
 }
 
@@ -56,6 +58,9 @@ void
 nmgr_shell_pkg_init(void)
 {
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     rc = nmgr_transport_init(&nmgr_shell_transport, nmgr_shell_out,
       nmgr_shell_get_mtu);

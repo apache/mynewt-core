@@ -97,6 +97,8 @@ shell_os_mpool_display_cmd(int argc, char **argv)
 
     console_printf("Mempools: \n");
     mp = NULL;
+    console_printf("%32s %5s %4s %4s %4s\n", "name", "blksz", "cnt", "free",
+                   "min");
     while (1) {
         mp = os_mempool_info_get_next(mp, &omi);
         if (mp == NULL) {
@@ -111,9 +113,9 @@ shell_os_mpool_display_cmd(int argc, char **argv)
             }
         }
 
-        console_printf("  %s (blksize: %d, nblocks: %d, nfree: %d)\n",
-                omi.omi_name, omi.omi_block_size, omi.omi_num_blocks,
-                omi.omi_num_free);
+        console_printf("%32s %5d %4d %4d %4d\n", omi.omi_name,
+                       omi.omi_block_size, omi.omi_num_blocks,
+                       omi.omi_num_free, omi.omi_min_free);
     }
 
     if (name && !found) {

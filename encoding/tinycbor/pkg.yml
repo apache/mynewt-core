@@ -23,5 +23,7 @@ pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
-pkg.cflags: -DWITHOUT_OPEN_MEMSTREAM -I../include/tinycbor
+pkg.cflags:
+    - -DWITHOUT_OPEN_MEMSTREAM
+    - "-I@apache-mynewt-core/encoding/tinycbor/include/tinycbor"
 pkg.cflags.float_user: -DFLOAT_SUPPORT

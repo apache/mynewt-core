@@ -26,17 +26,22 @@
 extern "C" {
 #endif
 
-#define IMGMGR_NMGR_OP_STATE        0
-#define IMGMGR_NMGR_OP_UPLOAD       1
-#define IMGMGR_NMGR_OP_FILE         2
-#define IMGMGR_NMGR_OP_CORELIST     3
-#define IMGMGR_NMGR_OP_CORELOAD     4
+#define IMGMGR_NMGR_ID_STATE        0
+#define IMGMGR_NMGR_ID_UPLOAD       1
+#define IMGMGR_NMGR_ID_FILE         2
+#define IMGMGR_NMGR_ID_CORELIST     3
+#define IMGMGR_NMGR_ID_CORELOAD     4
 
 #define IMGMGR_NMGR_MAX_MSG         400
 #define IMGMGR_NMGR_MAX_NAME		64
 #define IMGMGR_NMGR_MAX_VER         25  /* 255.255.65535.4294967295\0 */
 
 #define IMGMGR_HASH_LEN             32
+
+#define IMGMGR_STATE_F_PENDING          0x01
+#define IMGMGR_STATE_F_CONFIRMED        0x02
+#define IMGMGR_STATE_F_ACTIVE           0x04
+#define IMGMGR_STATE_F_PERMANENT        0x08
 
 extern int boot_current_slot;
 
@@ -66,7 +71,8 @@ int imgr_my_version(struct image_version *ver);
 
 uint8_t imgmgr_state_flags(int query_slot);
 int imgmgr_state_slot_in_use(int slot);
-int imgmgr_state_test_slot(int slot);
+int imgmgr_state_set_pending(int slot, int permanent);
+int imgmgr_state_confirm(void);
 
 #ifdef __cplusplus
 }

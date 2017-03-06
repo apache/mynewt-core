@@ -42,6 +42,10 @@ os_stack_t *stack3;
 
 struct os_task task4;
 os_stack_t *stack4;
+
+struct os_mutex g_mutex1;
+struct os_mutex g_mutex2;
+volatile int g_mutex_test;
 #endif /* MYNEWT_VAL(SELFTEST) */
 
 volatile int g_task1_val;
@@ -49,12 +53,10 @@ volatile int g_task2_val;
 volatile int g_task3_val;
 volatile int g_task4_val;
 
-#if MYNEWT_VAL(SELFTEST)
-struct os_mutex g_mutex1;
-struct os_mutex g_mutex2;
-volatile int g_mutex_test;
-#endif
-
+/*
+ * Handlers for each of the test threads are implemented here as they
+ * are shared amongst multiple test cases.
+ */
 /**
  * mutex test basic 
  *  
@@ -294,7 +296,7 @@ mutex_task3_handler(void *arg)
     }
 }
 
-void 
+void
 mutex_task4_handler(void *arg)
 {
     os_error_t err;
@@ -327,33 +329,52 @@ mutex_task4_handler(void *arg)
 }
 
 void
-os_mutex_ts_pretest(void* arg)
+os_mutex_tc_pretest(void* arg)
 {
+#if MYNEWT_VAL(SELFTEST)
+    /*
+     * Only call if running in "native" simulated environment
+     */
+    os_init(NULL);
     sysinit();
+#endif
+    return;
 }
 
 void
-os_mutex_ts_posttest(void* arg)
+os_mutex_tc_posttest(void* arg)
 {
+#if MYNEWT_VAL(SELFTEST)
+    /*
+     * Only call if running in "native" simulated environment
+     */
+    os_start();
+#endif
     return;
 }
 
 void
 os_mutex_test_init(void *arg)
 {
+
+    /*
+     * Stack should be allocated in target environemnt
+     * so they are sized correctly.
+     */
 #if MYNEWT_VAL(SELFTEST)
     stack1 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack1);
+    stack1_size = MUTEX_TEST_STACK_SIZE;
     stack2 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack2);
+    stack2_size = MUTEX_TEST_STACK_SIZE;
     stack3 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack3);
+    stack3_size = MUTEX_TEST_STACK_SIZE;
     stack4 = malloc(sizeof(os_stack_t) * MUTEX_TEST_STACK_SIZE);
     assert(stack4);
+    stack4_size = MUTEX_TEST_STACK_SIZE;
 #endif
-
-    tu_suite_set_pre_test_cb(os_mutex_ts_pretest, NULL);
-    tu_suite_set_post_test_cb(os_mutex_ts_posttest, NULL);
 }
 
 TEST_CASE_DECL(os_mutex_test_basic)
@@ -362,7 +383,14 @@ TEST_CASE_DECL(os_mutex_test_case_2)
 
 TEST_SUITE(os_mutex_test_suite)
 {
+    tu_case_set_post_cb(os_mutex_tc_posttest, NULL);
     os_mutex_test_basic();
+
+    tu_case_set_pre_cb(os_mutex_tc_pretest, NULL);
+    tu_case_set_post_cb(os_mutex_tc_posttest, NULL);
     os_mutex_test_case_1();
+
+    tu_case_set_pre_cb(os_mutex_tc_pretest, NULL);
+    tu_case_set_post_cb(os_mutex_tc_posttest, NULL);
     os_mutex_test_case_2();
 }

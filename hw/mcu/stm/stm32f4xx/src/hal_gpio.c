@@ -385,7 +385,7 @@ hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
     mcu_pin_mask = GPIO_MASK(pin);
     cfg->Pin = mcu_pin_mask;
 
-    /* Enable the GPIO clockl */
+    /* Enable the GPIO clock */
     hal_gpio_clk_enable(port);
 
     /* Initialize pin as an input, setting proper mode */
@@ -461,19 +461,30 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
  */
 int hal_gpio_init_out(int pin, int val)
 {
-    int rc;
-    GPIO_InitTypeDef init_cfg;
+    GPIO_InitTypeDef cfg;
+    int port;
 
-    init_cfg.Mode = GPIO_MODE_OUTPUT_PP;
-    init_cfg.Pull = GPIO_NOPULL;
-    init_cfg.Speed = GPIO_SPEED_HIGH;
-    init_cfg.Alternate = 0;
-
-    hal_gpio_write(pin, val);
-    rc = hal_gpio_init_stm(pin, &init_cfg);
-    if (rc) {
-        return rc;
+    /* Is this a valid pin? */
+    port = GPIO_PORT(pin);
+    if (port >= HAL_GPIO_NUM_PORTS) {
+        return -1;
     }
+
+    /* Enable the GPIO clock */
+    hal_gpio_clk_enable(port);
+
+    /* Write initial output value */
+    hal_gpio_write(pin, val);
+
+    cfg.Pin = GPIO_MASK(pin);
+    cfg.Mode = GPIO_MODE_OUTPUT_PP;
+    cfg.Pull = GPIO_NOPULL;
+    cfg.Speed = GPIO_SPEED_HIGH;
+    cfg.Alternate = 0;
+
+    /* Initialize pin as an output, setting proper mode */
+    HAL_GPIO_Init(portmap[port], &cfg);
+
     return 0;
 }
 

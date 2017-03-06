@@ -25,7 +25,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - sys/console/full
     - test/flash_test
     - mgmt/imgmgr
     - mgmt/newtmgr
@@ -34,9 +33,10 @@ pkg.deps:
     - boot/bootutil
     - sys/shell
     - sys/config
+    - sys/console/full
     - sys/id
-    - sys/log
-    - sys/stats
+    - sys/log/full
+    - sys/stats/full
     - boot/split
 
 pkg.deps.CONFIG_NFFS:

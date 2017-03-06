@@ -83,6 +83,20 @@ __isr_vector_split:
 Reset_Handler_split:
     .fnstart
 
+    /* Clear CPU state before proceeding */
+    mov     r0, #0
+    msr     control, r0
+    msr     primask, r0
+    /* Clear BSS */
+    mov     r0, #0
+    ldr     r2, =__bss_start__
+    ldr     r3, =__bss_end__
+.bss_zero_loop:
+    cmp     r2, r3
+    itt     lt
+    strlt   r0, [r2], #4
+    blt    .bss_zero_loop
+
 
 /*     Loop to copy data from read only memory to RAM. The ranges
  *      of copy from/to are specified by following symbols evaluated in
@@ -138,7 +152,7 @@ Reset_Handler_split:
 
     LDR     R0, =SystemInit
     BLX     R0
-    LDR     R0, =_start
+    LDR     R0, =_start_split
     BX      R0
 
     .pool

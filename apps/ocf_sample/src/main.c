@@ -23,6 +23,7 @@
 #include <bsp/bsp.h>
 #include <log/log.h>
 #include <oic/oc_api.h>
+#include <cborattr/cborattr.h>
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 #include <console/console.h>
 #include <console/prompt.h>
@@ -34,13 +35,6 @@
 #include "ocf_sample.h"
 #endif
 
-/** Task for handling OCF-specific events. */
-#define OCF_MAIN_TASK_PRIO          (8)
-#define OCF_MAIN_TASK_STACK_SIZE    (OS_STACK_ALIGN(512))
-static os_stack_t ocf_stack[OCF_MAIN_TASK_STACK_SIZE];
-struct os_task ocf_main_task;
-struct os_eventq ocf_main_evq;
-
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
 static void issue_requests(void);
 #endif
@@ -51,59 +45,65 @@ static bool light_state = false;
 static void
 get_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    PRINT("GET_light:\n");
+    printf("GET_light:\n");
     oc_rep_start_root_object();
     switch (interface) {
-        case OC_IF_BASELINE:
-            oc_process_baseline_interface(request->resource);
-        case OC_IF_RW:
-            oc_rep_set_boolean(root, state, light_state);
-            break;
-        default:
-            break;
+    case OC_IF_BASELINE:
+        oc_process_baseline_interface(request->resource);
+    case OC_IF_RW:
+        oc_rep_set_boolean(root, state, light_state);
+        break;
+    default:
+        break;
     }
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
-    PRINT("Light state %d\n", light_state);
+    printf("Light state %d\n", light_state);
 }
 
 static void
 put_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    PRINT("PUT_light:\n");
-    bool state = false;
-    oc_rep_t *rep = request->request_payload;
-    while (rep != NULL) {
-        PRINT("key: %s ", oc_string(rep->name));
-        switch (rep->type) {
-            case BOOL:
-                state = rep->value_boolean;
-                PRINT("value: %d\n", state);
-                break;
-            default:
-                oc_send_response(request, OC_STATUS_BAD_REQUEST);
-                return;
-                break;
+    bool state;
+    int len;
+    uint16_t data_off;
+    struct os_mbuf *m;
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "state",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &state,
+            .dflt.boolean = false
+        },
+        [1] = {
         }
-        rep = rep->next;
+    };
+
+    printf("PUT_light:\n");
+
+    len = coap_get_payload(request->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
+        oc_send_response(request, OC_STATUS_BAD_REQUEST);
+    } else {
+        printf("value: %d\n", state);
+        light_state = state;
+        oc_send_response(request, OC_STATUS_CHANGED);
     }
-    oc_send_response(request, OC_STATUS_CHANGED);
-    light_state = state;
 }
 
 static void
 register_resources(void)
 {
-  oc_resource_t *res = oc_new_resource("/light/1", 1, 0);
-  oc_resource_bind_resource_type(res, "oic.r.light");
-  oc_resource_bind_resource_interface(res, OC_IF_RW);
-  oc_resource_set_default_interface(res, OC_IF_RW);
+    oc_resource_t *res = oc_new_resource("/light/1", 1, 0);
+    oc_resource_bind_resource_type(res, "oic.r.light");
+    oc_resource_bind_resource_interface(res, OC_IF_RW);
+    oc_resource_set_default_interface(res, OC_IF_RW);
 
-  oc_resource_set_discoverable(res);
-  oc_resource_set_periodic_observable(res, 1);
-  oc_resource_set_request_handler(res, OC_GET, get_light);
-  oc_resource_set_request_handler(res, OC_PUT, put_light);
-  oc_add_resource(res);
+    oc_resource_set_discoverable(res);
+    oc_resource_set_periodic_observable(res, 1);
+    oc_resource_set_request_handler(res, OC_GET, get_light);
+    oc_resource_set_request_handler(res, OC_PUT, put_light);
+    oc_add_resource(res);
 }
 #endif
 
@@ -123,48 +123,56 @@ set_device_custom_property(void *data)
 static void
 stop_observe(struct os_event *ev)
 {
-    PRINT("Stopping OBSERVE\n");
+    printf("Stopping OBSERVE\n");
     oc_stop_observe(light_1, &light_server);
 }
 
 static void
 put_light(oc_client_response_t *data)
 {
-    PRINT("PUT_light:\n");
+    printf("PUT_light:\n");
     if (data->code == OC_STATUS_CHANGED)
-        PRINT("PUT response OK\n");
+        printf("PUT response OK\n");
     else
-        PRINT("PUT response code %d\n", data->code);
+        printf("PUT response code %d\n", data->code);
 }
 
 static void
-observe_light(oc_client_response_t *data)
+observe_light(oc_client_response_t *rsp)
 {
-    PRINT("OBSERVE_light:\n");
-    oc_rep_t *rep = data->payload;
-    while (rep != NULL) {
-        PRINT("key %s, value ", oc_string(rep->name));
-        switch (rep->type) {
-            case BOOL:
-                PRINT("%d\n", rep->value_boolean);
-                light_state = rep->value_boolean;
-                break;
-            default:
-                break;
+    bool state;
+    int len;
+    uint16_t data_off;
+    struct os_mbuf *m;
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "state",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &state,
+            .dflt.boolean = false
+        },
+        [1] = {
         }
-        rep = rep->next;
+    };
+
+    len = coap_get_payload(rsp->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
+        printf("OBSERVE_light: %d\n", state);
+        light_state = state;
     }
 
     if (oc_init_put(light_1, &light_server, NULL, &put_light, LOW_QOS)) {
         oc_rep_start_root_object();
         oc_rep_set_boolean(root, state, !light_state);
         oc_rep_end_root_object();
-        if (oc_do_put())
-            PRINT("Sent PUT request\n");
-        else
-            PRINT("Could not send PUT\n");
-    } else
-        PRINT("Could not init PUT\n");
+        if (oc_do_put() == true) {
+            printf("Sent PUT request\n");
+        } else {
+            printf("Could not send PUT\n");
+        }
+    } else {
+        printf("Could not init PUT\n");
+    }
 }
 
 static oc_discovery_flags_t
@@ -225,42 +233,20 @@ oc_handler_t ocf_handler = {
  };
 
 static void
-ocf_main_task_handler(void *arg)
-{
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    os_callout_init(&callout, &ocf_main_evq, stop_observe, NULL);
-#endif
-    while (1) {
-        os_eventq_run(&ocf_main_evq);
-    }
-    oc_main_shutdown();
-}
-
-static void
 ocf_init_tasks(void)
 {
-    int rc;
-
-    rc = os_task_init(&ocf_main_task, "ocf", ocf_main_task_handler, NULL,
-            OCF_MAIN_TASK_PRIO, OS_WAIT_FOREVER, ocf_stack,
-            OCF_MAIN_TASK_STACK_SIZE);
-    assert(rc == 0);
-
-    /* Initialize eventq */
-    os_eventq_init(&ocf_main_evq);
-
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&ocf_main_evq);
-
+#if (MYNEWT_VAL(OC_CLIENT) == 1)
+    os_callout_init(&callout, os_eventq_dflt_get(), stop_observe, NULL);
+#endif
     oc_main_init(&ocf_handler);
 }
 
 int
 main(int argc, char **argv)
 {
-    int rc;
-
-    (void)rc;
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
 
     /* Initialize OS */
     sysinit();
@@ -271,8 +257,10 @@ main(int argc, char **argv)
 
     ocf_init_tasks();
 
-    /* Start the OS */
-    os_start();
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
 
     /* os start should never return. If it does, this should be an error */
     assert(0);

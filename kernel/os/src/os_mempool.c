@@ -28,6 +28,9 @@
  *   @defgroup OSMempool Memory Pools
  *   @{
  */
+/*
+#define OS_CHECK_DUP_FREE 1
+*/
 
 #define OS_MEMPOOL_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
 
@@ -77,6 +80,7 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
     /* Initialize the memory pool structure */
     mp->mp_block_size = block_size;
     mp->mp_num_free = blocks;
+    mp->mp_min_free = blocks;
     mp->mp_num_blocks = blocks;
     mp->mp_membuf_addr = (uint32_t)membuf;
     mp->name = name;
@@ -165,6 +169,9 @@ os_memblock_get(struct os_mempool *mp)
 
             /* Decrement number free by 1 */
             mp->mp_num_free--;
+            if (mp->mp_min_free > mp->mp_num_free) {
+                mp->mp_min_free = mp->mp_num_free;
+            }
         }
         OS_EXIT_CRITICAL(sr);
     }
@@ -198,6 +205,11 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
         return OS_INVALID_PARM;
     }
 
+#ifdef OS_CHECK_DUP_FREE
+    SLIST_FOREACH(block, mp, mb_next) {
+        assert(block != (struct os_memblock *)block_addr);
+    }
+#endif
     block = (struct os_memblock *)block_addr;
     OS_ENTER_CRITICAL(sr);
 
@@ -233,6 +245,7 @@ os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
     omi->omi_block_size = cur->mp_block_size;
     omi->omi_num_blocks = cur->mp_num_blocks;
     omi->omi_num_free = cur->mp_num_free;
+    omi->omi_min_free = cur->mp_min_free;
     strncpy(omi->omi_name, cur->name, sizeof(omi->omi_name));
 
     return (cur);

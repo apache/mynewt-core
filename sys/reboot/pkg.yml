@@ -30,11 +30,10 @@ pkg.deps:
     - mgmt/imgmgr
     - sys/config
     - sys/flash_map
-    - sys/log
 pkg.deps.REBOOT_LOG_FCB:
     - fs/fcb
 pkg.req_apis:
-    - console
+    - log
 
-pkg.init_function: log_reboot_pkg_init
-pkg.init_stage: 2
+pkg.init:
+    log_reboot_pkg_init: 200

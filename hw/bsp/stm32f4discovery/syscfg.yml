@@ -19,8 +19,11 @@
 
 syscfg.defs:
     UART_0:
-        description: 'TBD'
+        description: 'UART 0'
         value:  1
+    TIMER_0:
+        description: 'Timer 0'
+        value:  0
 
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

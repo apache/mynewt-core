@@ -25,15 +25,16 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - sys/console/full
+    - boot/bootutil
+    - boot/split
+    - boot/split_app
+    - kernel/os
     - mgmt/imgmgr
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/nmgr_shell
-    - kernel/os
-    - boot/bootutil
-    - sys/shell
     - sys/config
+    - sys/console/full
     - sys/id
-    - sys/log
-    - sys/stats
-    - boot/split
+    - sys/log/full
+    - sys/shell
+    - sys/stats/full

@@ -20,11 +20,19 @@
 #ifndef OC_GATT_H
 #define OC_GATT_H
 
+#include "host/ble_uuid.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int ble_coap_gatt_srv_init(void);
+/* ADE3D529-C784-4F63-A987-EB69F70EE816 */
+#define OC_GATT_SERVICE_UUID  0x16, 0xe8, 0x0e, 0xf7, 0x69, 0xeb, 0x87, 0xa9, \
+                              0x63, 0x4f, 0x84, 0xc7, 0x29, 0xd5, 0xe3, 0xad
+
+int oc_ble_coap_gatt_srv_init(void);
+void oc_ble_coap_conn_new(uint16_t conn_handle);
+void oc_ble_coap_conn_del(uint16_t conn_handle);
 
 #ifdef __cplusplus
 }

@@ -28,13 +28,15 @@
 extern "C" {
 #endif
 
+#define INITIAL_CALLOUT_TASK_PRIO       (20)
+
 /* Task 1 for sending */
-#define CALLOUT_STACK_SIZE        (5120)
-#define SEND_CALLOUT_TASK_PRIO        (1)
+#define CALLOUT_STACK_SIZE              (5120)
+#define SEND_CALLOUT_TASK_PRIO          (INITIAL_CALLOUT_TASK_PRIO + 0)
 extern struct os_task callout_task_struct_send;
 extern os_stack_t callout_task_stack_send[CALLOUT_STACK_SIZE];
 
-#define RECEIVE_CALLOUT_TASK_PRIO        (2)
+#define RECEIVE_CALLOUT_TASK_PRIO       (INITIAL_CALLOUT_TASK_PRIO + 1)
 extern struct os_task callout_task_struct_receive;
 extern os_stack_t callout_task_stack_receive[CALLOUT_STACK_SIZE];
 
@@ -43,11 +45,11 @@ extern struct os_eventq callout_evq;
 extern struct os_event callout_ev;
 
 /* The callout_stop task */
-#define SEND_STOP_CALLOUT_TASK_PRIO        (3)
+#define SEND_STOP_CALLOUT_TASK_PRIO     (INITIAL_CALLOUT_TASK_PRIO + 2)
 extern struct os_task callout_task_struct_stop_send;
 extern os_stack_t callout_task_stack_stop_send[CALLOUT_STACK_SIZE];
 
-#define RECEIVE_STOP_CALLOUT_TASK_PRIO        (4)
+#define RECEIVE_STOP_CALLOUT_TASK_PRIO  (INITIAL_CALLOUT_TASK_PRIO + 3)
 extern struct os_task callout_task_struct_stop_receive;
 extern os_stack_t callout_task_stack_stop_receive[CALLOUT_STACK_SIZE];
 
@@ -60,12 +62,12 @@ extern struct os_eventq callout_stop_evq[MULTI_SIZE];
 extern struct os_event callout_stop_ev;
 
 /* Declearing varables for callout_speak */
-#define SPEAK_CALLOUT_TASK_PRIO        (5)
+#define SPEAK_CALLOUT_TASK_PRIO         (INITIAL_CALLOUT_TASK_PRIO + 4)
 extern struct os_task callout_task_struct_speak;
 extern os_stack_t callout_task_stack_speak[CALLOUT_STACK_SIZE];
 
 /* Declearing varaibles for listen */
-#define LISTEN_CALLOUT_TASK_PRIO        (6)
+#define LISTEN_CALLOUT_TASK_PRIO        (INITIAL_CALLOUT_TASK_PRIO + 5)
 extern struct os_task callout_task_struct_listen;
 extern os_stack_t callout_task_stack_listen[CALLOUT_STACK_SIZE];
 

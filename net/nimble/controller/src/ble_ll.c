@@ -190,9 +190,6 @@ static void ble_ll_event_dbuf_overflow(struct os_event *ev);
 struct os_task g_ble_ll_task;
 os_stack_t g_ble_ll_stack[BLE_LL_STACK_SIZE];
 
-struct os_mempool g_ble_ll_hci_ev_pool;
-static void *ble_ll_hci_os_event_buf;
-
 /** Our global device address (public) */
 uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
 
@@ -578,8 +575,8 @@ ble_ll_tx_pkt_in(void)
         STAILQ_REMOVE_HEAD(&g_ble_ll_data.ll_tx_pkt_q, omp_next);
 
         /* Strip HCI ACL header to get handle and length */
-        handle = le16toh(om->om_data);
-        length = le16toh(om->om_data + 2);
+        handle = get_le16(om->om_data);
+        length = get_le16(om->om_data + 2);
         os_mbuf_adj(om, sizeof(struct hci_data_hdr));
 
         /* Do some basic error checking */
@@ -1154,8 +1151,7 @@ ble_ll_reset(void)
     ble_ll_flush_pkt_queue(&g_ble_ll_data.ll_rx_pkt_q);
 
     /* Reset LL stats */
-    memset((uint8_t *)&ble_ll_stats + sizeof(struct stats_hdr), 0,
-           sizeof(struct stats_ble_ll_stats) - sizeof(struct stats_hdr));
+    STATS_RESET(ble_ll_stats);
 
 #ifdef BLE_LL_LOG
     g_ble_ll_log_index = 0;
@@ -1217,6 +1213,9 @@ ble_ll_init(void)
     uint8_t features;
     struct ble_ll_obj *lldata;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     /* Get pointer to global data object */
     lldata = &g_ble_ll_data;
 
@@ -1245,16 +1244,6 @@ ble_ll_init(void)
     /* Initialize wait for response timer */
     os_cputime_timer_init(&g_ble_ll_data.ll_wfr_timer, ble_ll_wfr_timer_exp,
                           NULL);
-
-    ble_ll_hci_os_event_buf = malloc(
-        OS_MEMPOOL_BYTES(16, sizeof (struct os_event)));
-    SYSINIT_PANIC_ASSERT(ble_ll_hci_os_event_buf != NULL);
-
-    /* Create memory pool of OS events */
-    rc = os_mempool_init(&g_ble_ll_hci_ev_pool, 16,
-                         sizeof (struct os_event), ble_ll_hci_os_event_buf,
-                         "g_ble_ll_hci_ev_pool");
-    SYSINIT_PANIC_ASSERT(rc == 0);
 
     /* Initialize LL HCI */
     ble_ll_hci_init();

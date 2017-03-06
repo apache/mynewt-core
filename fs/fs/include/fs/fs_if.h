@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <os/queue.h>
+
 /*
  * Common interface filesystem(s) provide.
  */
@@ -52,12 +54,41 @@ struct fs_ops {
     int (*f_dirent_is_dir)(const struct fs_dirent *dirent);
 
     const char *f_name;
+
+    SLIST_ENTRY(fs_ops) sc_next;
 };
 
-/*
- * Currently allow only one type of FS, starts at root.
+struct fops_container {
+    struct fs_ops *fops;
+};
+
+/**
+ * Registers a new filesystem interface
+ *
+ * @param fops filesystem operations table
+ *
+ * @return 0 on success, non-zero on failure
  */
-int fs_register(const struct fs_ops *);
+int fs_register(struct fs_ops *fops);
+
+/**
+ * Will look for the number of registered filesystems and will return
+ * the fops if there is only one.
+ *
+ * @return fops if there's only one registered filesystem, NULL otherwise.
+ */
+struct fs_ops *fs_ops_try_unique(void);
+
+/**
+ * Retrieve a filesystem's operations table
+ *
+ * @param name Name of the filesystem to retrieve fs_ops for
+ *
+ * @return valid pointer on success, NULL on failure
+ */
+struct fs_ops *fs_ops_for(const char *name);
+
+struct fs_ops *fs_ops_from_container(struct fops_container *container);
 
 #ifdef __cplusplus
 }

@@ -24,7 +24,6 @@
 #include "host/ble_uuid.h"
 #include "host/ble_hs_test.h"
 #include "ble_hs_test_util.h"
-#include "ble_hs_test_util_store.h"
 
 #define BLE_GATTS_NOTIFY_TEST_CHR_1_UUID    0x1111
 #define BLE_GATTS_NOTIFY_TEST_CHR_2_UUID    0x2222
@@ -44,14 +43,14 @@ ble_gatts_notify_test_misc_reg_cb(struct ble_gatt_register_ctxt *ctxt,
 
 static const struct ble_gatt_svc_def ble_gatts_notify_test_svcs[] = { {
     .type = BLE_GATT_SVC_TYPE_PRIMARY,
-    .uuid128 = BLE_UUID16(0x1234),
+    .uuid = BLE_UUID16_DECLARE(0x1234),
     .characteristics = (struct ble_gatt_chr_def[]) { {
-        .uuid128 = BLE_UUID16(BLE_GATTS_NOTIFY_TEST_CHR_1_UUID),
+        .uuid = BLE_UUID16_DECLARE(BLE_GATTS_NOTIFY_TEST_CHR_1_UUID),
         .access_cb = ble_gatts_notify_test_misc_access,
         .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY |
                  BLE_GATT_CHR_F_INDICATE,
     }, {
-        .uuid128 = BLE_UUID16(BLE_GATTS_NOTIFY_TEST_CHR_2_UUID),
+        .uuid = BLE_UUID16_DECLARE(BLE_GATTS_NOTIFY_TEST_CHR_2_UUID),
         .access_cb = ble_gatts_notify_test_misc_access,
         .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY |
                  BLE_GATT_CHR_F_INDICATE,
@@ -122,7 +121,7 @@ ble_gatts_notify_test_misc_read_notify(uint16_t conn_handle,
     TEST_ASSERT_FATAL(om->om_len == 3);
     TEST_ASSERT_FATAL(om->om_data[0] == BLE_ATT_OP_READ_RSP);
 
-    flags = le16toh(om->om_data + 1);
+    flags = get_le16(om->om_data + 1);
     return flags;
 }
 
@@ -138,7 +137,7 @@ ble_gatts_notify_test_misc_try_enable_notify(uint16_t conn_handle,
     req.bawq_handle = chr_def_handle + 2;
     ble_att_write_req_write(buf, sizeof buf, &req);
 
-    htole16(buf + BLE_ATT_WRITE_REQ_BASE_SZ, flags);
+    put_le16(buf + BLE_ATT_WRITE_REQ_BASE_SZ, flags);
     rc = ble_hs_test_util_l2cap_rx_payload_flat(conn_handle, BLE_L2CAP_CID_ATT,
                                                 buf, sizeof buf);
     if (fail) {
@@ -236,9 +235,6 @@ ble_gatts_notify_test_misc_init(uint16_t *out_conn_handle, int bonding,
 
     ble_gatts_notify_test_num_events = 0;
 
-    ble_hs_test_util_store_init(10, 10, 10);
-    ble_hs_cfg.store_read_cb = ble_hs_test_util_store_read;
-    ble_hs_cfg.store_write_cb = ble_hs_test_util_store_write;
 
     rc = ble_gatts_register_svcs(ble_gatts_notify_test_svcs,
                                  ble_gatts_notify_test_misc_reg_cb, NULL);
@@ -316,7 +312,7 @@ ble_gatts_notify_test_misc_init(uint16_t *out_conn_handle, int bonding,
     } else {
         exp_num_cccds = 0;
     }
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == exp_num_cccds);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == exp_num_cccds);
 }
 
 static void
@@ -373,7 +369,7 @@ ble_gatts_notify_test_misc_reg_cb(struct ble_gatt_register_ctxt *ctxt,
     uint16_t uuid16;
 
     if (ctxt->op == BLE_GATT_REGISTER_OP_CHR) {
-        uuid16 = ble_uuid_128_to_16(ctxt->chr.chr_def->uuid128);
+        uuid16 = ble_uuid_u16(ctxt->chr.chr_def->uuid);
         switch (uuid16) {
         case BLE_GATTS_NOTIFY_TEST_CHR_1_UUID:
             ble_gatts_notify_test_chr_1_def_handle = ctxt->chr.def_handle;
@@ -761,7 +757,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_n)
                                      BLE_GATTS_CLT_CFG_F_NOTIFY, 0);
 
     /* Ensure both CCCDs still persisted. */
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == 2);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == 2);
 
     /* Update characteristic 1's value. */
     ble_gatts_notify_test_chr_1_len = 1;
@@ -807,7 +803,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_n)
     TEST_ASSERT(flags == BLE_GATTS_CLT_CFG_F_NOTIFY);
 
     /* Ensure both CCCDs still persisted. */
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == 2);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == 2);
 }
 
 TEST_CASE(ble_gatts_notify_test_bonded_i)
@@ -825,7 +821,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_i)
                                      BLE_GATTS_CLT_CFG_F_INDICATE, 0);
 
     /* Ensure both CCCDs still persisted. */
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == 2);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == 2);
 
     /* Update characteristic 1's value. */
     ble_gatts_notify_test_chr_1_len = 1;
@@ -897,7 +893,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_i)
     TEST_ASSERT(flags == BLE_GATTS_CLT_CFG_F_INDICATE);
 
     /* Ensure both CCCDs still persisted. */
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == 2);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == 2);
 }
 
 TEST_CASE(ble_gatts_notify_test_bonded_i_no_ack)
@@ -925,7 +921,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_i_no_ack)
         ble_gatts_notify_test_chr_1_len);
 
     /* Verify 'updated' state is still persisted. */
-    key_cccd.peer_addr_type = BLE_STORE_ADDR_TYPE_NONE;
+    key_cccd.peer_addr = *BLE_ADDR_ANY;
     key_cccd.chr_val_handle = ble_gatts_notify_test_chr_1_def_handle + 1;
     key_cccd.idx = 0;
 
@@ -938,7 +934,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_i_no_ack)
                                      BLE_GATTS_CLT_CFG_F_INDICATE, 1, 0, 0);
 
     /* Ensure CCCD still persisted. */
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == 1);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == 1);
 
     /* Reconnect. */
     ble_hs_test_util_create_conn(conn_handle, ((uint8_t[]){2,3,4,5,6,7,8,9}),
@@ -966,7 +962,7 @@ TEST_CASE(ble_gatts_notify_test_bonded_i_no_ack)
     TEST_ASSERT(flags == 0);
 
     /* Ensure CCCD still persisted. */
-    TEST_ASSERT(ble_hs_test_util_store_num_cccds == 1);
+    TEST_ASSERT(ble_hs_test_util_num_cccds() == 1);
 
     /* Verify 'updated' state is no longer persisted. */
     rc = ble_store_read_cccd(&key_cccd, &value_cccd);
@@ -983,19 +979,19 @@ TEST_CASE(ble_gatts_notify_test_disallowed)
 
     const struct ble_gatt_svc_def svcs[] = { {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = BLE_UUID16(0x1234),
+        .uuid = BLE_UUID16_DECLARE(0x1234),
         .characteristics = (struct ble_gatt_chr_def[]) { {
-            .uuid128 = BLE_UUID16(1),
+            .uuid = BLE_UUID16_DECLARE(1),
             .access_cb = ble_gatts_notify_test_misc_access,
             .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             .val_handle = &chr1_val_handle,
         }, {
-            .uuid128 = BLE_UUID16(2),
+            .uuid = BLE_UUID16_DECLARE(2),
             .access_cb = ble_gatts_notify_test_misc_access,
             .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_INDICATE,
             .val_handle = &chr2_val_handle,
         }, {
-            .uuid128 = BLE_UUID16(3),
+            .uuid = BLE_UUID16_DECLARE(3),
             .access_cb = ble_gatts_notify_test_misc_access,
             .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY |
                      BLE_GATT_CHR_F_INDICATE,

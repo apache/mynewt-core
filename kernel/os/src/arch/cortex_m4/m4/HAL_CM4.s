@@ -24,8 +24,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *---------------------------------------------------------------------------*/
+#include <syscfg/syscfg.h>
 
-        .file   "HAL_CM4.S"
         .syntax unified
 
 /*----------------------------------------------------------------------------
@@ -155,12 +155,28 @@ PendSV_Handler:
         BXEQ    LR                      /* RETI, no task switch */
 
         MRS     R12,PSP                 /* Read PSP */
+#if MYNEWT_VAL(HARDFLOAT)
+        TST     LR,#0x10                /* is it extended frame? */
+        IT      EQ
+        VSTMDBEQ R12!,{S16-S31}         /* yes; push the regs */
+        STMDB   R12!,{R4-R11,LR}        /* Save Old context */
+#else
         STMDB   R12!,{R4-R11}           /* Save Old context */
+#endif
         STR     R12,[R1,#0]             /* Update stack pointer in current task */
         STR     R2,[R3]                 /* g_current_task = highest ready */
 
         LDR     R12,[R2,#0]             /* get stack pointer of task we will start */
+#if MYNEWT_VAL(HARDFLOAT)
+        LDMIA   R12!,{R4-R11,LR}        /* Restore New Context */
+        TST     LR,#0x10                /* is it extended frame? */
+        ITTE    EQ
+        VLDMIAEQ R12!,{S16-S31}         /* yes; pull the regs */
+        MVNEQ   LR,#~0xFFFFFFED         /* BX treats it as extended */
+        MVNNE   LR,#~0xFFFFFFFD         /* BX treats is as basic frame */
+#else
         LDMIA   R12!,{R4-R11}           /* Restore New Context */
+#endif
         MSR     PSP,R12                 /* Write PSP */
         BX      LR                      /* Return to Thread Mode */
 

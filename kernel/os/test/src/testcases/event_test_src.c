@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -22,10 +22,6 @@ TEST_CASE(event_test_sr)
 {
     int i;
 
-#if MYNEWT_VAL(SELFTEST)
-    /* Initializing the OS */
-    sysinit();
-#endif
     /* Initialize the task */
     os_task_init(&eventq_task_s, "eventq_task_s", eventq_task_send, NULL,
         SEND_TASK_PRIO, OS_WAIT_FOREVER, eventq_task_stack_s, MY_STACK_SIZE);
@@ -40,10 +36,4 @@ TEST_CASE(event_test_sr)
     for (i = 0; i < SIZE_MULTI_EVENT; i++){
         os_eventq_init(&multi_eventq[i]);
     }
-
-#if MYNEWT_VAL(SELFTEST)
-    /* Does not return until OS_restart is called */
-    os_start();
-#endif
-
 }

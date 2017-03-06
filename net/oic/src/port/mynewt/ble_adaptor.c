@@ -22,171 +22,203 @@
 #include <assert.h>
 #include <os/os.h>
 #include <string.h>
-#include "oc_buffer.h"
+
+#include <stats/stats.h>
+#include "oic/oc_gatt.h"
+#include "oic/oc_log.h"
+#include "messaging/coap/coap.h"
+#include "api/oc_buffer.h"
 #include "port/oc_connectivity.h"
-#include "../oc_log.h"
 #include "adaptor.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+/* OIC Transport Profile GATT */
 
-/* a custom service for COAP over GATT */
-/* {e3f9f9c4-8a83-4055-b647-728b769745d6} */
-const uint8_t gatt_svr_svc_coap[16] = {
-    0xd6, 0x45, 0x97, 0x76, 0x8b, 0x72, 0x47, 0xb6,
-    0x55, 0x40, 0x83, 0x8a, 0xc4, 0xf9, 0xf9, 0xe3,
-};
+/* service UUID */
+/* ADE3D529-C784-4F63-A987-EB69F70EE816 */
+static const ble_uuid128_t oc_gatt_svc_uuid =
+    BLE_UUID128_INIT(OC_GATT_SERVICE_UUID);
 
-/* {e467fee6-d6bb-4956-94df-0090350631f5} */
-const uint8_t gatt_svr_chr_coap[16] = {
-    0xf5, 0x31, 0x06, 0x35, 0x90, 0x00, 0xdf, 0x94,
-    0x56, 0x49, 0xbb, 0xd6, 0xe6, 0xfe, 0x67, 0xe4,
-};
+/* request characteristic UUID */
+/* AD7B334F-4637-4B86-90B6-9D787F03D218 */
+static const ble_uuid128_t oc_gatt_req_chr_uuid =
+    BLE_UUID128_INIT(0x18, 0xd2, 0x03, 0x7f, 0x78, 0x9d, 0xb6, 0x90,
+                     0x86, 0x4b, 0x37, 0x46, 0x4f, 0x33, 0x7b, 0xad);
 
-/* queue to hold mbufs until we get called from oic */
-struct os_mqueue ble_coap_mq;
+/* response characteristic UUID */
+/* E9241982-4580-42C4-8831-95048216B256 */
+static const ble_uuid128_t oc_gatt_rsp_chr_uuid =
+    BLE_UUID128_INIT(0x56, 0xb2, 0x16, 0x82, 0x04, 0x95, 0x31, 0x88,
+                     0xc4, 0x42, 0x80, 0x45, 0x82, 0x19, 0x24, 0xe9);
+
+STATS_SECT_START(oc_ble_stats)
+    STATS_SECT_ENTRY(iframe)
+    STATS_SECT_ENTRY(iseg)
+    STATS_SECT_ENTRY(ibytes)
+    STATS_SECT_ENTRY(ierr)
+    STATS_SECT_ENTRY(oframe)
+    STATS_SECT_ENTRY(oseg)
+    STATS_SECT_ENTRY(obytes)
+    STATS_SECT_ENTRY(oerr)
+STATS_SECT_END
+STATS_SECT_DECL(oc_ble_stats) oc_ble_stats;
+STATS_NAME_START(oc_ble_stats)
+    STATS_NAME(oc_ble_stats, iframe)
+    STATS_NAME(oc_ble_stats, iseg)
+    STATS_NAME(oc_ble_stats, ibytes)
+    STATS_NAME(oc_ble_stats, ierr)
+    STATS_NAME(oc_ble_stats, oframe)
+    STATS_NAME(oc_ble_stats, oseg)
+    STATS_NAME(oc_ble_stats, obytes)
+    STATS_NAME(oc_ble_stats, oerr)
+STATS_NAME_END(oc_ble_stats)
+
+static STAILQ_HEAD(, os_mbuf_pkthdr) oc_ble_reass_q;
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
 /* ble nmgr attr handle */
-uint16_t g_ble_coap_attr_handle;
+static uint16_t oc_ble_coap_req_handle;
+static uint16_t oc_ble_coap_rsp_handle;
 
-static int
-gatt_svr_chr_access_coap(uint16_t conn_handle, uint16_t attr_handle,
-                         struct ble_gatt_access_ctxt *ctxt, void *arg);
+static int oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+                   struct ble_gatt_access_ctxt *ctxt, void *arg);
 
-static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
-    {
+static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
         /* Service: newtmgr */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid128 = (void *)gatt_svr_svc_coap,
-        .characteristics = (struct ble_gatt_chr_def[]) { {
-            /* Characteristic: Write No Rsp */
-            .uuid128 = (void *)gatt_svr_chr_coap,
-            .access_cb = gatt_svr_chr_access_coap,
-            .flags = BLE_GATT_CHR_F_WRITE_NO_RSP | BLE_GATT_CHR_F_NOTIFY,
-            .val_handle = &g_ble_coap_attr_handle,
-        }, {
-            0, /* No more characteristics in this service */
-        } },
+        .uuid = &oc_gatt_svc_uuid.u,
+        .characteristics = (struct ble_gatt_chr_def[]) {
+            {
+                /* Characteristic: Request */
+                .uuid = &oc_gatt_req_chr_uuid.u,
+                .access_cb = oc_gatt_chr_access,
+                .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP |
+                         BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &oc_ble_coap_req_handle,
+            },{
+                /* Characteristic: Response */
+                .uuid = &oc_gatt_rsp_chr_uuid.u,
+                .access_cb = oc_gatt_chr_access,
+                .flags = BLE_GATT_CHR_F_NOTIFY,
+                .val_handle = &oc_ble_coap_rsp_handle,
+            },{
+                0, /* No more characteristics in this service */
+            }
+        },
     },
     {
         0, /* No more services */
     },
 };
 
-static int
-gatt_svr_chr_access_coap(uint16_t conn_handle, uint16_t attr_handle,
-                         struct ble_gatt_access_ctxt *ctxt, void *arg)
+int
+oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle)
 {
-    struct os_mbuf *m;
-    int rc;
-    (void) attr_handle; /* no need to use this since we have onyl one attr
-                         * tied to this callback */
+    struct os_mbuf_pkthdr *pkt1;
+    struct oc_endpoint_ble *oe_ble;
+    struct os_mbuf *om2;
+    struct os_mbuf_pkthdr *pkt2;
+    uint8_t hdr[6]; /* sizeof(coap_tcp_hdr32) */
 
-    switch (ctxt->op) {
-        case BLE_GATT_ACCESS_OP_WRITE_CHR:
-            m = ctxt->om;
-            /* stick the conn handle at the end of the frame -- we will
-             * pull it out later */
-            rc = os_mbuf_append(m, &conn_handle, sizeof(conn_handle));
-            if (rc) {
-                return BLE_ATT_ERR_INSUFFICIENT_RES;
+    pkt1 = OS_MBUF_PKTHDR(om1);
+    assert(pkt1);
+
+    STATS_INC(oc_ble_stats, iseg);
+    STATS_INCN(oc_ble_stats, ibytes, pkt1->omp_len);
+
+    OC_LOG_DEBUG("oc_gatt rx seg %u-%x-%u\n", conn_handle,
+                 (unsigned)pkt1, pkt1->omp_len);
+
+    STAILQ_FOREACH(pkt2, &oc_ble_reass_q, omp_next) {
+        om2 = OS_MBUF_PKTHDR_TO_MBUF(pkt2);
+        oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(om2);
+        if (conn_handle == oe_ble->conn_handle) {
+            /*
+             * Data from same connection. Append.
+             */
+            os_mbuf_concat(om2, om1);
+            os_mbuf_copydata(om2, 0, sizeof(hdr), hdr);
+
+            if (coap_tcp_msg_size(hdr, sizeof(hdr)) <= pkt2->omp_len) {
+                STAILQ_REMOVE(&oc_ble_reass_q, pkt2, os_mbuf_pkthdr, omp_next);
+                STATS_INC(oc_ble_stats, iframe);
+                oc_recv_message(om2);
             }
-            rc = os_mqueue_put(&ble_coap_mq, oc_evq_get(), m);
-            if (rc) {
-                return BLE_ATT_ERR_PREPARE_QUEUE_FULL;
-            }
-
-            /* tell nimble we are keeping the mbuf */
-            ctxt->om = NULL;
-
+            pkt1 = NULL;
             break;
-        default:
-            assert(0);
-            return BLE_ATT_ERR_UNLIKELY;
+        }
+    }
+    if (pkt1) {
+        /*
+         * New frame, need to add oc_endpoint_ble in the front.
+         * Check if there is enough space available. If not, allocate a
+         * new pkthdr.
+         */
+        if (OS_MBUF_USRHDR_LEN(om1) < sizeof(struct oc_endpoint_ble)) {
+            om2 = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_ble));
+            if (!om2) {
+                OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
+                STATS_INC(oc_ble_stats, ierr);
+                return -1;
+            }
+            OS_MBUF_PKTHDR(om2)->omp_len = pkt1->omp_len;
+            SLIST_NEXT(om2, om_next) = om1;
+        } else {
+            om2 = om1;
+        }
+        oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(om2);
+        oe_ble->flags = GATT;
+        oe_ble->conn_handle = conn_handle;
+        pkt2 = OS_MBUF_PKTHDR(om2);
+
+        if (os_mbuf_copydata(om2, 0, sizeof(hdr), hdr) ||
+          coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
+            STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt2, omp_next);
+        } else {
+            STATS_INC(oc_ble_stats, iframe);
+            oc_recv_message(om2);
+        }
     }
     return 0;
 }
 
-oc_message_t *
-oc_attempt_rx_gatt(void)
+static int
+oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
+                   struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
+    struct os_mbuf *m;
     int rc;
-    struct os_mbuf *m = NULL;
-    struct os_mbuf_pkthdr *pkt;
-    uint16_t conn_handle;
-    oc_message_t *message = NULL;
+    (void) attr_handle; /* xxx req should only come in via req handle */
 
-    LOG("oc_transport_gatt attempt rx\n");
+    switch (ctxt->op) {
+    case BLE_GATT_ACCESS_OP_WRITE_CHR:
+        m = ctxt->om;
 
-    /* get an mbuf from the queue */
-    m = os_mqueue_get(&ble_coap_mq);
-    if (NULL == m) {
-        ERROR("oc_transport_gatt: Woke for for receive but found no mbufs\n");
-        goto rx_attempt_err;
+        rc = oc_ble_reass(m, conn_handle);
+        if (rc) {
+            return BLE_ATT_ERR_INSUFFICIENT_RES;
+        }
+
+        /* tell nimble we are keeping the mbuf */
+        ctxt->om = NULL;
+
+        break;
+    default:
+        assert(0);
+        return BLE_ATT_ERR_UNLIKELY;
     }
-
-    if (!OS_MBUF_IS_PKTHDR(m)) {
-        ERROR("oc_transport_gatt: received mbuf that wasn't a packet header\n");
-        goto rx_attempt_err;
-    }
-
-    pkt = OS_MBUF_PKTHDR(m);
-
-    LOG("oc_transport_gatt rx %p-%u\n", pkt, pkt->omp_len);
-    /* get the conn handle from the end of the message */
-    rc = os_mbuf_copydata(m, pkt->omp_len - sizeof(conn_handle),
-                          sizeof(conn_handle), &conn_handle);
-    if (rc != 0) {
-        ERROR("Failed to retrieve conn_handle from mbuf \n");
-        goto rx_attempt_err;
-    }
-
-    /* trim conn_handle from the end */
-    os_mbuf_adj(m, - sizeof(conn_handle));
-
-    message = oc_allocate_message();
-    if (NULL == message) {
-        ERROR("Could not allocate OC message buffer\n");
-        goto rx_attempt_err;
-    }
-
-    if (pkt->omp_len > MAX_PAYLOAD_SIZE) {
-        ERROR("Message to large for OC message buffer\n");
-        goto rx_attempt_err;
-    }
-    /* copy to message from mbuf chain */
-    rc = os_mbuf_copydata(m, 0, pkt->omp_len, message->data);
-    if (rc != 0) {
-        ERROR("Failed to copy message from mbuf to OC message buffer \n");
-        goto rx_attempt_err;
-    }
-
-    os_mbuf_free_chain(m);
-    message->endpoint.flags = GATT;
-    message->endpoint.bt_addr.conn_handle = conn_handle;
-    message->length = pkt->omp_len;
-    LOG("Successfully rx length %lu\n", (unsigned long)message->length);
-    return message;
-
-    /* add the addr info to the message */
-rx_attempt_err:
-    if (m) {
-        os_mbuf_free_chain(m);
-    }
-    if (message) {
-        oc_message_unref(message);
-    }
-    return NULL;
+    return 0;
 }
 #endif
 
 int
-ble_coap_gatt_srv_init(void)
+oc_ble_coap_gatt_srv_init(void)
 {
 #if (MYNEWT_VAL(OC_SERVER) == 1)
     int rc;
+
     rc = ble_gatts_count_cfg(gatt_svr_svcs);
     if (rc != 0) {
         return rc;
@@ -197,24 +229,41 @@ ble_coap_gatt_srv_init(void)
         return rc;
     }
 #endif
-
+    (void)stats_init_and_reg(STATS_HDR(oc_ble_stats),
+      STATS_SIZE_INIT_PARMS(oc_ble_stats, STATS_SIZE_32),
+      STATS_NAME_INIT_PARMS(oc_ble_stats), "oc_ble");
     return 0;
 }
 
-static void
-oc_event_gatt(struct os_event *ev)
+void
+oc_ble_coap_conn_new(uint16_t conn_handle)
 {
-    oc_message_t *pmsg;
+    OC_LOG_DEBUG("oc_gatt newconn %x\n", conn_handle);
+}
 
-    while ((pmsg = oc_attempt_rx_gatt()) != NULL) {
-        oc_network_event(pmsg);
+void
+oc_ble_coap_conn_del(uint16_t conn_handle)
+{
+    struct os_mbuf_pkthdr *pkt;
+    struct os_mbuf *m;
+    struct oc_endpoint_ble *oe_ble;
+
+    OC_LOG_DEBUG("oc_gatt endconn %x\n", conn_handle);
+    STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
+        m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
+        oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(m);
+        if (oe_ble->conn_handle == conn_handle) {
+            STAILQ_REMOVE(&oc_ble_reass_q, pkt, os_mbuf_pkthdr, omp_next);
+            os_mbuf_free_chain(m);
+            break;
+        }
     }
 }
 
 int
 oc_connectivity_init_gatt(void)
 {
-    os_mqueue_init(&ble_coap_mq, oc_event_gatt, NULL);
+    STAILQ_INIT(&oc_ble_reass_q);
     return 0;
 }
 
@@ -224,52 +273,93 @@ oc_connectivity_shutdown_gatt(void)
     /* there is not unregister for BLE */
 }
 
-void
-oc_send_buffer_gatt(oc_message_t *message)
+static int
+oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
 {
-    struct os_mbuf *m = NULL;
-    int rc;
+    struct os_mbuf_pkthdr *pkt;
+    struct os_mbuf *n;
+    uint16_t off, blk;
 
-    /* get a packet header */
-    m = os_msys_get_pkthdr(0, 0);
-    if (m == NULL) {
-        ERROR("oc_transport_gatt: No mbuf available\n");
-        goto err;
+    pkt = OS_MBUF_PKTHDR(m);
+    if (pkt->omp_len <= mtu) {
+        STAILQ_NEXT(pkt, omp_next) = NULL;
+        return 0;
     }
 
-    /* add this data to the mbuf */
-    rc = os_mbuf_append(m, message->data, message->length);
-    if (rc != 0) {
-        ERROR("oc_transport_gatt: could not append data \n");
-        goto err;
+    off = pkt->omp_len - (pkt->omp_len % mtu);
+    while (off >= mtu) {
+        n = os_msys_get_pkthdr(mtu, 0);
+        if (!n) {
+            goto err;
+        }
+        STAILQ_NEXT(OS_MBUF_PKTHDR(n), omp_next) = STAILQ_NEXT(pkt, omp_next);
+        STAILQ_NEXT(pkt, omp_next) = OS_MBUF_PKTHDR(n);
+
+        blk = pkt->omp_len - off;
+        if (os_mbuf_appendfrom(n, m, off, blk)) {
+            goto err;
+        }
+        off -= mtu;
+        os_mbuf_adj(m, -blk);
     }
-
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    ERROR("send not supported on client");
-#endif
-
-#if (MYNEWT_VAL(OC_SERVER) == 1)
-    ble_gattc_notify_custom(message->endpoint.bt_addr.conn_handle,
-                            g_ble_coap_attr_handle, m);
-    m = NULL;
-#endif
-
+    return 0;
 err:
-    if (m) {
+    pkt = OS_MBUF_PKTHDR(m);
+    while (1) {
+        pkt = STAILQ_NEXT(pkt, omp_next);
         os_mbuf_free_chain(m);
-    }
-    oc_message_unref(message);
-    return;
+        if (!pkt) {
+            break;
+        }
+        m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
+    };
+    return -1;
 }
 
 void
-oc_send_buffer_gatt_mcast(oc_message_t *message)
+oc_send_buffer_gatt(struct os_mbuf *m)
 {
+    struct oc_endpoint *oe;
+    struct os_mbuf_pkthdr *pkt;
+    uint16_t mtu;
+    uint16_t conn_handle;
+
+    assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ble));
+    oe = OC_MBUF_ENDPOINT(m);
+    conn_handle = oe->oe_ble.conn_handle;
+
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
-    ERROR("send not supported on client");
-#elif (MYNEWT_VAL(OC_SERVER) == 1)
-    oc_message_unref(message);
-    ERROR("oc_transport_gatt: no multicast support for server only system \n");
+    OC_LOG_ERROR("oc_gatt send not supported on client");
+#endif
+
+#if (MYNEWT_VAL(OC_SERVER) == 1)
+
+    STATS_INC(oc_ble_stats, oframe);
+    STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
+
+    mtu = ble_att_mtu(conn_handle);
+    if (mtu < 4) {
+        oc_ble_coap_conn_del(conn_handle);
+        os_mbuf_free_chain(m);
+        return;
+    }
+    mtu -= 3; /* # of bytes for ATT notification base */
+
+    if (oc_ble_frag(m, mtu)) {
+        STATS_INC(oc_ble_stats, oerr);
+        return;
+    }
+    while (1) {
+        STATS_INC(oc_ble_stats, oseg);
+        pkt = STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next);
+
+        ble_gattc_notify_custom(conn_handle, oc_ble_coap_rsp_handle, m);
+        if (pkt) {
+            m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
+        } else {
+            break;
+        }
+    }
 #endif
 }
 

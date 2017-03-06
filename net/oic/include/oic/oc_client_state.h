@@ -25,23 +25,22 @@
 extern "C" {
 #endif
 
+#ifdef OC_CLIENT
 typedef enum { HIGH_QOS = 0, LOW_QOS } oc_qos_t;
 
-typedef struct
-{
-  oc_rep_t *payload;
-  oc_status_t code;
-  int observe_option;
+typedef struct oc_client_response {
+    struct coap_packet_rx *packet;
+    oc_status_t code;
+    uint32_t observe_option;
 } oc_client_response_t;
 
-typedef struct
-{
-  oc_endpoint_t endpoint;
+typedef struct oc_server_handle {
+    oc_endpoint_t endpoint;
 } oc_server_handle_t;
 
 typedef enum {
-  OC_STOP_DISCOVERY = 0,
-  OC_CONTINUE_DISCOVERY
+    OC_STOP_DISCOVERY = 0,
+    OC_CONTINUE_DISCOVERY
 } oc_discovery_flags_t;
 
 typedef oc_discovery_flags_t(oc_discovery_cb_t)(const char *, const char *,
@@ -51,8 +50,8 @@ typedef oc_discovery_flags_t(oc_discovery_cb_t)(const char *, const char *,
 
 typedef void (*oc_response_handler_t)(oc_client_response_t *);
 
-typedef struct oc_client_cb_s {
-    struct oc_client_cb_s *next;
+typedef struct oc_client_cb {
+    SLIST_ENTRY(oc_client_cb) next;
     struct os_callout callout;
     oc_string_t uri;
     uint8_t token[COAP_TOKEN_LEN];
@@ -70,7 +69,8 @@ typedef struct oc_client_cb_s {
     oc_method_t method;
 } oc_client_cb_t;
 
-bool oc_ri_invoke_client_cb(void *response, oc_endpoint_t *endpoint);
+bool oc_ri_invoke_client_cb(struct coap_packet_rx *response,
+                            oc_endpoint_t *endpoint);
 
 oc_client_cb_t *oc_ri_alloc_client_cb(const char *uri,
                                       oc_server_handle_t *server,
@@ -82,12 +82,13 @@ oc_client_cb_t *oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
 
 void oc_ri_remove_client_cb_by_mid(uint16_t mid);
 
-oc_discovery_flags_t oc_ri_process_discovery_payload(uint8_t *payload, int len,
+oc_discovery_flags_t oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                                      oc_discovery_cb_t *handler,
                                                      oc_endpoint_t *endpoint);
 
 bool oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
                     uint16_t mid);
+#endif
 
 #ifdef __cplusplus
 }

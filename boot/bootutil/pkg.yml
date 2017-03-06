@@ -31,3 +31,6 @@ pkg.deps:
     - kernel/os 
     - sys/defs
     - sys/flash_map
+
+pkg.deps.BOOTUTIL_SIGN_EC256:
+    - crypto/tinycrypt

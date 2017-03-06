@@ -47,6 +47,10 @@ extern "C" {
 #define NULL ((void *)0)
 #endif
 
+#ifndef bool
+enum {false, true} bool;
+#endif
+
 #define TC_CRYPTO_SUCCESS 1
 #define TC_CRYPTO_FAIL 0
 

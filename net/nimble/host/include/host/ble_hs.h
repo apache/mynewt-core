@@ -25,7 +25,6 @@
 #include "host/ble_att.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
-#include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_hs_id.h"
 #include "host/ble_hs_log.h"
@@ -67,6 +66,10 @@ struct os_event;
 #define BLE_HS_ENOMEM_EVT           20
 #define BLE_HS_ENOADDR              21
 #define BLE_HS_ENOTSYNCED           22
+#define BLE_HS_EAUTHEN              23
+#define BLE_HS_EAUTHOR              24
+#define BLE_HS_EENCRYPT             25
+#define BLE_HS_EENCRYPT_KEY_SZ      26
 
 #define BLE_HS_ERR_ATT_BASE         0x100   /* 256 */
 #define BLE_HS_ATT_ERR(x)           ((x) ? BLE_HS_ERR_ATT_BASE + (x) : 0)

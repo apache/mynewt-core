@@ -41,6 +41,12 @@ console_no_prompt(void)
     do_prompt = 0;
 }
 
+void
+console_yes_prompt(void)
+{
+    do_prompt = 1;
+}
+
 /* print the prompt to the console */
 void
 console_print_prompt(void)

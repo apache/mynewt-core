@@ -29,5 +29,5 @@ pkg.deps:
     - hw/drivers/uart
 pkg.apis: console
 
-pkg.init_function: console_pkg_init
-pkg.init_stage: 0
+pkg.init:
+    console_pkg_init: 20

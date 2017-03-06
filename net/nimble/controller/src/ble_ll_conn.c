@@ -216,7 +216,6 @@ STATS_NAME_START(ble_ll_conn_stats)
     STATS_NAME(ble_ll_conn_stats, mic_failures)
 STATS_NAME_END(ble_ll_conn_stats)
 
-static void ble_ll_conn_spvn_timeout(struct os_event *ev);
 static void ble_ll_conn_event_end(struct os_event *ev);
 
 /**
@@ -1123,6 +1122,7 @@ ble_ll_conn_event_start_cb(struct ble_ll_sched_item *sch)
     int rc;
     uint32_t usecs;
     uint32_t wfr_time;
+    uint32_t txstart;
     struct ble_ll_conn_sm *connsm;
 
     /* XXX: note that we can extend end time here if we want. Look at this */
@@ -1152,7 +1152,8 @@ ble_ll_conn_event_start_cb(struct ble_ll_sched_item *sch)
 
     if (connsm->conn_role == BLE_LL_CONN_ROLE_MASTER) {
         /* Set start time of transmission */
-        rc = ble_phy_tx_set_start_time(sch->start_time + XCVR_PROC_DELAY_USECS);
+        txstart = sch->start_time + os_cputime_usecs_to_ticks(XCVR_PROC_DELAY_USECS);
+        rc = ble_phy_tx_set_start_time(txstart);
         if (!rc) {
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
             if (CONN_F_ENCRYPTED(connsm)) {
@@ -1330,23 +1331,6 @@ ble_ll_conn_auth_pyld_timer_start(struct ble_ll_conn_sm *connsm)
 #endif
 
 /**
- * Connection supervision timer callback; means that the connection supervision
- * timeout has been reached and we should perform the appropriate actions.
- *
- * Context: Interrupt (cputimer)
- *
- * @param arg Pointer to connection state machine.
- */
-void
-ble_ll_conn_spvn_timer_cb(void *arg)
-{
-    struct ble_ll_conn_sm *connsm;
-
-    connsm = (struct ble_ll_conn_sm *)arg;
-    ble_ll_event_send(&connsm->conn_spvn_ev);
-}
-
-/**
  * Called when a create connection command has been received. This initializes
  * a connection state machine in the master role.
  *
@@ -1450,18 +1434,9 @@ ble_ll_conn_sm_new(struct ble_ll_conn_sm *connsm)
      */
     connsm->conn_param_req.handle = 0;
 
-    /* Initialize connection supervision timer */
-    os_cputime_timer_init(&connsm->conn_spvn_timer, ble_ll_conn_spvn_timer_cb,
-                       connsm);
-
     /* Calculate the next data channel */
     connsm->last_unmapped_chan = 0;
     connsm->data_chan_index = ble_ll_conn_calc_dci(connsm);
-
-    /* Initialize event */
-    connsm->conn_spvn_ev.ev_arg = connsm;
-    connsm->conn_spvn_ev.ev_queued = 0;
-    connsm->conn_spvn_ev.ev_cb = ble_ll_conn_spvn_timeout;
 
     /* Connection end event */
     connsm->conn_ev_end.ev_arg = connsm;
@@ -1581,9 +1556,6 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
     /* Remove scheduler events just in case */
     ble_ll_sched_rmv_elem(&connsm->conn_sch);
 
-    /* Stop supervision timer */
-    os_cputime_timer_stop(&connsm->conn_spvn_timer);
-
     /* Stop any control procedures that might be running */
     os_callout_stop(&connsm->ctrl_proc_rsp_timer);
 
@@ -1614,7 +1586,6 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
     }
 
     /* Make sure events off queue */
-    os_eventq_remove(&g_ble_ll_data.ll_evq, &connsm->conn_spvn_ev);
     os_eventq_remove(&g_ble_ll_data.ll_evq, &connsm->conn_ev_end);
 
     /* Connection state machine is now idle */
@@ -1630,7 +1601,7 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
     if (ble_err) {
         if (ble_err == BLE_ERR_UNK_CONN_ID) {
             evbuf = ble_ll_init_get_conn_comp_ev();
-            ble_ll_conn_comp_event_send(connsm, ble_err, evbuf);
+            ble_ll_conn_comp_event_send(connsm, ble_err, evbuf, NULL);
         } else {
             ble_ll_disconn_comp_event_send(connsm, ble_err);
         }
@@ -1655,7 +1626,6 @@ ble_ll_conn_next_event(struct ble_ll_conn_sm *connsm)
 {
     uint16_t latency;
     uint32_t itvl;
-    uint32_t tmo;
     uint32_t cur_ww;
     uint32_t max_ww;
     struct ble_ll_conn_upd_req *upd;
@@ -1709,12 +1679,8 @@ ble_ll_conn_next_event(struct ble_ll_conn_sm *connsm)
         connsm->anchor_point +=
             os_cputime_usecs_to_ticks(upd->winoffset * BLE_LL_CONN_ITVL_USECS);
 
-        /* Reset the connection supervision timeout */
-        os_cputime_timer_stop(&connsm->conn_spvn_timer);
-        tmo = connsm->supervision_tmo;
-        tmo = tmo * BLE_HCI_CONN_SPVN_TMO_UNITS * 1000;
-        tmo = os_cputime_usecs_to_ticks(tmo);
-        os_cputime_timer_start(&connsm->conn_spvn_timer, connsm->anchor_point+tmo);
+        /* Reset the starting point of the connection supervision timeout */
+        connsm->last_rxd_pdu_cputime = connsm->anchor_point;
 
         /* Reset update scheduled flag */
         connsm->csmflags.cfbit.conn_update_sched = 0;
@@ -1804,7 +1770,8 @@ ble_ll_conn_next_event(struct ble_ll_conn_sm *connsm)
  * @ return 0: connection NOT created. 1: connection created
  */
 static int
-ble_ll_conn_created(struct ble_ll_conn_sm *connsm, uint32_t endtime)
+ble_ll_conn_created(struct ble_ll_conn_sm *connsm, uint32_t endtime,
+                    struct ble_mbuf_hdr *rxhdr)
 {
     int rc;
     uint8_t *evbuf;
@@ -1813,15 +1780,17 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, uint32_t endtime)
     /* Set state to created */
     connsm->conn_state = BLE_LL_CONN_STATE_CREATED;
 
-    /* Set supervision timeout */
-    usecs = connsm->conn_itvl * BLE_LL_CONN_ITVL_USECS * 6;
-    os_cputime_timer_relative(&connsm->conn_spvn_timer, usecs);
-
     /* Clear packet received flag */
     connsm->csmflags.cfbit.pkt_rxd = 0;
 
     /* Consider time created the last scheduled time */
     connsm->last_scheduled = os_cputime_get32();
+
+    /*
+     * Set the last rxd pdu time since this is where we want to start the
+     * supervision timer from.
+     */
+    connsm->last_rxd_pdu_cputime = connsm->last_scheduled;
 
     /*
      * Set first connection event time. If slave the endtime is the receive end
@@ -1867,11 +1836,11 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, uint32_t endtime)
             }
         }
         if (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) {
-            evbuf = ble_ll_adv_get_conn_comp_ev();
+            ble_ll_adv_send_conn_comp_ev(connsm, rxhdr);
         } else {
             evbuf = ble_ll_init_get_conn_comp_ev();
+            ble_ll_conn_comp_event_send(connsm, BLE_ERR_SUCCESS, evbuf, NULL);
         }
-        ble_ll_conn_comp_event_send(connsm, BLE_ERR_SUCCESS, evbuf);
     }
 
     return rc;
@@ -1889,6 +1858,7 @@ static void
 ble_ll_conn_event_end(struct os_event *ev)
 {
     uint8_t ble_err;
+    uint32_t tmo;
     struct ble_ll_conn_sm *connsm;
 
     /* Better be a connection state machine! */
@@ -1897,10 +1867,6 @@ ble_ll_conn_event_end(struct os_event *ev)
 
     /* Check if we need to resume scanning */
     ble_ll_scan_chk_resume();
-
-    /* Log event end */
-    ble_ll_log(BLE_LL_LOG_ID_CONN_EV_END, 0, connsm->event_cntr,
-               connsm->ce_end_time);
 
     /* If we have transmitted the terminate IND successfully, we are done */
     if ((connsm->csmflags.cfbit.terminate_ind_txd) ||
@@ -1969,6 +1935,36 @@ ble_ll_conn_event_end(struct os_event *ev)
             return;
         }
     }
+
+    /*
+     * This is definitely not perfect but hopefully will be fine in regards to
+     * the specification. We check the supervision timer at connection event
+     * end. If the next connection event is going to start past the supervision
+     * timeout we end the connection here. I guess this goes against the spec
+     * in two ways:
+     * 1) We are actually causing a supervision timeout before the time
+     * specified. However, this is really a moot point because the supervision
+     * timeout would have expired before we could possibly receive a packet.
+     * 2) We may end the supervision timeout a bit later than specified as
+     * we only check this at event end and a bad CRC could cause us to continue
+     * the connection event longer than the supervision timeout. Given that two
+     * bad CRC's consecutively ends the connection event, I dont regard this as
+     * a big deal but it could cause a slightly longer supervision timeout.
+     */
+    if (connsm->conn_state == BLE_LL_CONN_STATE_CREATED) {
+        tmo = (uint32_t)connsm->conn_itvl * BLE_LL_CONN_ITVL_USECS * 6UL;
+    } else {
+        tmo = connsm->supervision_tmo * BLE_HCI_CONN_SPVN_TMO_UNITS * 1000UL;
+    }
+    tmo = os_cputime_usecs_to_ticks(tmo);
+    if ((int32_t)(connsm->anchor_point - connsm->last_rxd_pdu_cputime) >= tmo) {
+        ble_ll_conn_end(connsm, BLE_ERR_CONN_SPVN_TMO);
+        return;
+    }
+
+    /* Log event end */
+    ble_ll_log(BLE_LL_LOG_ID_CONN_EV_END, connsm->conn_handle,
+               connsm->event_cntr, connsm->conn_sch.start_time);
 
     /* If we have completed packets, send an event */
     ble_ll_conn_num_comp_pkts_event_send(connsm);
@@ -2046,7 +2042,7 @@ ble_ll_conn_req_pdu_update(struct os_mbuf *m, uint8_t *adva, uint8_t addr_type,
         memcpy(dptr, addr, BLE_DEV_ADDR_LEN);
     }
     memcpy(dptr + BLE_DEV_ADDR_LEN, adva, BLE_DEV_ADDR_LEN);
-    htole16(dptr + 20, txoffset);
+    put_le16(dptr + 20, txoffset);
 
     /* Set BLE transmit header */
     ble_hdr->txinfo.hdr_byte = hdr;
@@ -2221,8 +2217,9 @@ ble_ll_init_rx_pkt_in(uint8_t *rxbuf, struct ble_mbuf_hdr *ble_hdr)
         g_ble_ll_conn_create_sm = NULL;
         ble_ll_scan_sm_stop(0);
         payload_len = rxbuf[1] & BLE_ADV_PDU_HDR_LEN_MASK;
-        endtime = ble_hdr->beg_cputime + BLE_TX_DUR_USECS_M(payload_len);
-        ble_ll_conn_created(connsm, endtime);
+        endtime = ble_hdr->beg_cputime +
+            os_cputime_usecs_to_ticks(BLE_TX_DUR_USECS_M(payload_len));
+        ble_ll_conn_created(connsm, endtime, NULL);
     } else {
         ble_ll_scan_chk_resume();
     }
@@ -2254,7 +2251,7 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
     uint8_t peer_addr_type;
     uint8_t *adv_addr;
     uint8_t *peer;
-    uint8_t *init_addr;
+    uint8_t *init_addr = NULL;
     uint8_t pyld_len;
     uint8_t inita_is_rpa;
     uint32_t endtime;
@@ -2363,7 +2360,7 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
          * If the inita is a RPA, we must see if it resolves based on the
          * identity address of the resolved ADVA.
          */
-        if (inita_is_rpa) {
+        if (init_addr && inita_is_rpa) {
             if ((index < 0) ||
                 !ble_ll_resolv_rpa(init_addr,
                                    g_ble_ll_resolv_list[index].rl_local_irk)) {
@@ -2372,7 +2369,8 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
         }
 
         /* Attempt to schedule new connection. Possible that this might fail */
-        endtime = ble_hdr->beg_cputime + BLE_TX_DUR_USECS_M(pyld_len);
+        endtime = ble_hdr->beg_cputime +
+            os_cputime_usecs_to_ticks(BLE_TX_DUR_USECS_M(pyld_len));
         if (!ble_ll_sched_master_new(connsm, endtime,
                                      MYNEWT_VAL(BLE_LL_CONN_INIT_SLOTS))) {
             /* Setup to transmit the connect request */
@@ -2445,21 +2443,6 @@ ble_ll_conn_timeout(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
 }
 
 /**
- * Connection supervision timeout. When called, it means that the connection
- * supervision timeout has been reached. If reached, we end the connection.
- *
- * Context: Link Layer
- *
- * @param arg Pointer to connection state machine.
- */
-static void
-ble_ll_conn_spvn_timeout(struct os_event *ev)
-{
-    ble_ll_conn_timeout((struct ble_ll_conn_sm *)ev->ev_arg,
-                        BLE_ERR_CONN_SPVN_TMO);
-}
-
-/**
  * Called when a data channel PDU has started that matches the access
  * address of the current connection. Note that the CRC of the PDU has not
  * been checked yet.
@@ -2497,6 +2480,9 @@ ble_ll_conn_rx_isr_start(struct ble_mbuf_hdr *rxhdr, uint32_t aa)
         /* Set flag denoting we have received a packet in connection event */
         connsm->csmflags.cfbit.pkt_rxd = 1;
 
+        /* Connection is established */
+        connsm->conn_state = BLE_LL_CONN_STATE_ESTABLISHED;
+
         /* Set anchor point (and last) if 1st rxd frame in connection event */
         if (connsm->csmflags.cfbit.slave_set_last_anchor) {
             connsm->csmflags.cfbit.slave_set_last_anchor = 0;
@@ -2523,7 +2509,6 @@ ble_ll_conn_rx_data_pdu(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *hdr)
     uint8_t *rxbuf;
     uint16_t acl_len;
     uint16_t acl_hdr;
-    uint32_t tmo;
     struct ble_ll_conn_sm *connsm;
 
     if (BLE_MBUF_HDR_CRC_OK(hdr)) {
@@ -2532,11 +2517,6 @@ ble_ll_conn_rx_data_pdu(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *hdr)
         /* We better have a connection state machine */
         connsm = ble_ll_conn_find_active_conn(hdr->rxinfo.handle);
         if (connsm) {
-            /* Reset the connection supervision timeout */
-            os_cputime_timer_stop(&connsm->conn_spvn_timer);
-            tmo = connsm->supervision_tmo * BLE_HCI_CONN_SPVN_TMO_UNITS * 1000;
-            os_cputime_timer_relative(&connsm->conn_spvn_timer, tmo);
-
             /* Check state machine */
             ble_ll_conn_chk_csm_flags(connsm);
 
@@ -2621,8 +2601,8 @@ ble_ll_conn_rx_data_pdu(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *hdr)
                     rxbuf = rxpdu->om_data;
 
                     acl_hdr = (acl_hdr << 12) | connsm->conn_handle;
-                    htole16(rxbuf, acl_hdr);
-                    htole16(rxbuf + 2, acl_len);
+                    put_le16(rxbuf, acl_hdr);
+                    put_le16(rxbuf + 2, acl_len);
                     ble_hci_trans_ll_acl_tx(rxpdu);
                 }
 
@@ -2666,7 +2646,7 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
     uint8_t conn_nesn;
     uint8_t reply;
     uint8_t rem_bytes;
-    uint8_t opcode;
+    uint8_t opcode = 0;
     uint8_t rx_pyld_len;
     uint32_t endtime;
     struct os_mbuf *txpdu;
@@ -2698,6 +2678,10 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
         goto conn_exit;
     }
 
+    /* Calculate the end time of the received PDU */
+    endtime = rxhdr->beg_cputime +
+        os_cputime_usecs_to_ticks(BLE_TX_DUR_USECS_M(rx_pyld_len));
+
     /*
      * Check the packet CRC. A connection event can continue even if the
      * received PDU does not pass the CRC check. If we receive two consecutive
@@ -2722,6 +2706,9 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
     } else {
         /* Reset consecutively received bad crcs (since this one was good!) */
         connsm->cons_rxd_bad_crc = 0;
+
+        /* Set last valid received pdu time (resets supervision timer) */
+        connsm->last_rxd_pdu_cputime = endtime;
 
         /*
          * Check for valid LLID before proceeding. We have seen some weird
@@ -2864,7 +2851,6 @@ chk_rx_terminate_ind:
     if (rx_pyld_len && CONN_F_ENCRYPTED(connsm)) {
         rx_pyld_len += BLE_LL_DATA_MIC_LEN;
     }
-    endtime = rxhdr->beg_cputime + BLE_TX_DUR_USECS_M(rx_pyld_len);
     if (reply && ble_ll_conn_can_send_next_pdu(connsm, endtime)) {
         rc = ble_ll_conn_tx_data_pdu(connsm);
     }
@@ -3054,7 +3040,8 @@ ble_ll_conn_set_global_chanmap(uint8_t num_used_chans, uint8_t *chanmap)
  * @return 0: connection not started; 1 connecton started
  */
 int
-ble_ll_conn_slave_start(uint8_t *rxbuf, uint32_t conn_req_end, uint8_t pat)
+ble_ll_conn_slave_start(uint8_t *rxbuf, uint32_t conn_req_end, uint8_t pat,
+                        struct ble_mbuf_hdr *rxhdr)
 {
     int rc;
     uint32_t temp;
@@ -3089,16 +3076,16 @@ ble_ll_conn_slave_start(uint8_t *rxbuf, uint32_t conn_req_end, uint8_t pat)
     dptr = rxbuf + BLE_LL_CONN_REQ_ADVA_OFF + BLE_DEV_ADDR_LEN;
 
     /* Set connection state machine information */
-    connsm->access_addr = le32toh(dptr);
+    connsm->access_addr = get_le32(dptr);
     crcinit = dptr[6];
     crcinit = (crcinit << 8) | dptr[5];
     crcinit = (crcinit << 8) | dptr[4];
     connsm->crcinit = crcinit;
     connsm->tx_win_size = dptr[7];
-    connsm->tx_win_off = le16toh(dptr + 8);
-    connsm->conn_itvl = le16toh(dptr + 10);
-    connsm->slave_latency = le16toh(dptr + 12);
-    connsm->supervision_tmo = le16toh(dptr + 14);
+    connsm->tx_win_off = get_le16(dptr + 8);
+    connsm->conn_itvl = get_le16(dptr + 10);
+    connsm->slave_latency = get_le16(dptr + 12);
+    connsm->supervision_tmo = get_le16(dptr + 14);
     memcpy(&connsm->chanmap, dptr + 16, BLE_LL_CONN_CHMAP_LEN);
     connsm->hop_inc = dptr[21] & 0x1F;
     connsm->master_sca = dptr[21] >> 5;
@@ -3148,7 +3135,7 @@ ble_ll_conn_slave_start(uint8_t *rxbuf, uint32_t conn_req_end, uint8_t pat)
     /* Set initial schedule callback */
     connsm->conn_sch.sched_cb = ble_ll_conn_event_start_cb;
 
-    rc = ble_ll_conn_created(connsm, conn_req_end);
+    rc = ble_ll_conn_created(connsm, conn_req_end, rxhdr);
     if (!rc) {
         SLIST_REMOVE(&g_ble_ll_conn_active_list, connsm, ble_ll_conn_sm, act_sle);
         STAILQ_INSERT_TAIL(&g_ble_ll_conn_free_list, connsm, free_stqe);
@@ -3189,6 +3176,9 @@ ble_ll_conn_module_reset(void)
         g_ble_ll_conn_comp_ev = NULL;
     }
 
+    /* Reset connection we are attempting to create */
+    g_ble_ll_conn_create_sm = NULL;
+
     /* Now go through and end all the connections */
     while (1) {
         connsm = SLIST_FIRST(&g_ble_ll_conn_active_list);
@@ -3228,8 +3218,7 @@ ble_ll_conn_module_reset(void)
     conn_params->master_chan_map[4] = 0x1f;
 
     /* Reset statistics */
-    memset((uint8_t *)&ble_ll_conn_stats + sizeof(struct stats_hdr), 0,
-           sizeof(struct stats_ble_ll_conn_stats) - sizeof(struct stats_hdr));
+    STATS_RESET(ble_ll_conn_stats);
 }
 
 /* Initialize the connection module */

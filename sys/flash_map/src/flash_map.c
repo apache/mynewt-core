@@ -80,7 +80,7 @@ flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
 
     hf = hal_bsp_flash_dev(fa->fa_device_id);
     for (i = 0; i < hf->hf_sector_cnt; i++) {
-        hf->hf_itf->hff_sector_info(i, &start, &size);
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
         if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
             if (ret) {
                 ret->fa_id = id;
@@ -241,6 +241,9 @@ flash_map_init(void)
 
     int num_areas;
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     rc = hal_flash_init();
     SYSINIT_PANIC_ASSERT(rc == 0);

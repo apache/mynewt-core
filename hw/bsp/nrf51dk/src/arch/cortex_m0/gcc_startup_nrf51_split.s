@@ -88,6 +88,11 @@ __isr_vector_split:
 Reset_Handler_split:
     .fnstart
 
+/* Clear CPU state before proceeding */
+    SUBS    r0, r0
+    MSR     CONTROL, r0
+    MSR     PRIMASK, r0
+
 /* Make sure ALL RAM banks are powered on */
     MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
 
@@ -101,6 +106,16 @@ Reset_Handler_split:
     ORRS    R2, R1
     STR     R2, [R0]
 
+    /* Clear BSS */
+    subs    r0, r0
+    ldr     r2, =__bss_start__
+    ldr     r3, =__bss_end__
+.bss_zero_loop:
+    cmp     r2, r3
+    bhs     .data_copy_loop
+    stmia   r2!, {r0}
+    b    .bss_zero_loop
+
 /*     Loop to copy data from read only memory to RAM. The ranges
  *      of copy from/to are specified by following symbols evaluated in
  *      linker script.
@@ -108,6 +123,7 @@ Reset_Handler_split:
  *      __data_start__/__data_end__: RAM address range that data should be
  *      copied to. Both must be aligned to 4 bytes boundary.  */
 
+.data_copy_loop:
     ldr    r1, =__etext
     ldr    r2, =__data_start__
     ldr    r3, =__data_end__
@@ -153,7 +169,7 @@ Reset_Handler_split:
 
     LDR     R0, =SystemInit
     BLX     R0
-    LDR     R0, =_start
+    LDR     R0, =_start_split
     BX      R0
 
     .pool

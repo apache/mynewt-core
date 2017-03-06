@@ -38,4 +38,4 @@ fi
 
 echo "Downloading" ${FILE_NAME} "to" ${FLASH_OFFSET}
 
-pyocd-flashtool -se --address ${FLASH_OFFSET} ${FILE_NAME}
+pyocd-flashtool -se --address ${FLASH_OFFSET} ${FILE_NAME} bin

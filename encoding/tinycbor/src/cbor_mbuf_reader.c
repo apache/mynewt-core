@@ -22,68 +22,81 @@
 #include <os/os_mbuf.h>
 
 static uint8_t
-cbuf_mbuf_reader_get8(struct cbor_decoder_reader *d, int offset) {
+cbor_mbuf_reader_get8(struct cbor_decoder_reader *d, int offset)
+{
     uint8_t val;
-    struct CborMbufReader *cb = (struct CborMbufReader *) d;
+    struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
+
     os_mbuf_copydata(cb->m, offset + cb->init_off, sizeof(val), &val);
     return val;
 }
 
 static uint16_t
-cbuf_mbuf_reader_get16(struct cbor_decoder_reader *d, int offset) {
+cbor_mbuf_reader_get16(struct cbor_decoder_reader *d, int offset)
+{
     uint16_t val;
-    struct CborMbufReader *cb = (struct CborMbufReader *) d;
+    struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
+
     os_mbuf_copydata(cb->m, offset + cb->init_off, sizeof(val), &val);
     return cbor_ntohs(val);
 }
 
 static uint32_t
-cbuf_mbuf_reader_get32(struct cbor_decoder_reader *d, int offset) {
+cbor_mbuf_reader_get32(struct cbor_decoder_reader *d, int offset)
+{
     uint32_t val;
-    struct CborMbufReader *cb = (struct CborMbufReader *) d;
+    struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
+
     os_mbuf_copydata(cb->m, offset + cb->init_off, sizeof(val), &val);
     return cbor_ntohl(val);
 }
 
 static uint64_t
-cbuf_mbuf_reader_get64(struct cbor_decoder_reader *d, int offset) {
+cbor_mbuf_reader_get64(struct cbor_decoder_reader *d, int offset)
+{
     uint64_t val;
-    struct CborMbufReader *cb = (struct CborMbufReader *) d;
+    struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
+
     os_mbuf_copydata(cb->m, offset + cb->init_off, sizeof(val), &val);
     return cbor_ntohll(val);
 }
 
 static uintptr_t
-cbor_mbuf_reader_cmp(struct cbor_decoder_reader *d, char *buf, int offset, size_t len) {
-    struct CborMbufReader *cb = (struct CborMbufReader *) d;
+cbor_mbuf_reader_cmp(struct cbor_decoder_reader *d, char *buf, int offset,
+                     size_t len)
+{
+    struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
     return os_mbuf_cmpf(cb->m, offset + cb->init_off, buf, len);
 }
 
 static uintptr_t
-cbor_mbuf_reader_cpy(struct cbor_decoder_reader *d, char *dst, int offset, size_t len) {
+cbor_mbuf_reader_cpy(struct cbor_decoder_reader *d, char *dst, int offset,
+                     size_t len)
+{
     int rc;
-    struct CborMbufReader *cb = (struct CborMbufReader *) d;
-    rc = os_mbuf_copydata(cb->m, offset + cb->init_off, len, dst);
+    struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
 
-    if(rc == 0) {
+    rc = os_mbuf_copydata(cb->m, offset + cb->init_off, len, dst);
+    if (rc == 0) {
         return true;
     }
     return false;
 }
 
 void
-cbor_mbuf_reader_init(struct CborMbufReader *cb, struct os_mbuf *m,
-                        int initial_offset)
+cbor_mbuf_reader_init(struct cbor_mbuf_reader *cb, struct os_mbuf *m,
+                      int initial_offset)
 {
     struct os_mbuf_pkthdr *hdr;
-    cb->r.get8 = &cbuf_mbuf_reader_get8;
-    cb->r.get16 = &cbuf_mbuf_reader_get16;
-    cb->r.get32 = &cbuf_mbuf_reader_get32;
-    cb->r.get64 = &cbuf_mbuf_reader_get64;
+
+    cb->r.get8 = &cbor_mbuf_reader_get8;
+    cb->r.get16 = &cbor_mbuf_reader_get16;
+    cb->r.get32 = &cbor_mbuf_reader_get32;
+    cb->r.get64 = &cbor_mbuf_reader_get64;
     cb->r.cmp = &cbor_mbuf_reader_cmp;
     cb->r.cpy = &cbor_mbuf_reader_cpy;
 
-    assert (OS_MBUF_IS_PKTHDR(m));
+    assert(OS_MBUF_IS_PKTHDR(m));
     hdr = OS_MBUF_PKTHDR(m);
     cb->m = m;
     cb->init_off = initial_offset;

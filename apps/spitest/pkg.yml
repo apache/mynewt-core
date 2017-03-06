@@ -29,5 +29,5 @@ pkg.deps:
     - kernel/os
     - sys/shell
     - sys/config
-    - sys/log
-    - sys/stats
+    - sys/log/full
+    - sys/stats/full

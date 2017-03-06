@@ -42,20 +42,6 @@
 /** Log data. */
 struct log blecent_log;
 
-/** blecent task settings. */
-#define BLECENT_TASK_PRIO           1
-#define BLECENT_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-struct os_eventq blecent_evq;
-struct os_task blecent_task;
-bssnz_t os_stack_t blecent_stack[BLECENT_STACK_SIZE];
-
-/** Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN] = {0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c};
-
-/** Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
-
 static int blecent_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
@@ -135,8 +121,8 @@ blecent_read_write_subscribe(const struct peer *peer)
 
     /* Read the supported-new-alert-category characteristic. */
     chr = peer_chr_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_SUP_NEW_ALERT_CAT_UUID));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_SUP_NEW_ALERT_CAT_UUID));
     if (chr == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer doesn't support the Supported New "
                            "Alert Category characteristic\n");
@@ -155,8 +141,8 @@ blecent_read_write_subscribe(const struct peer *peer)
      * characteristic.
      */
     chr = peer_chr_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_ALERT_NOT_CTRL_PT));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_ALERT_NOT_CTRL_PT));
     if (chr == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer doesn't support the Alert "
                            "Notification Control Point characteristic\n");
@@ -177,9 +163,9 @@ blecent_read_write_subscribe(const struct peer *peer)
      * characteristic's client-characteristic-configuration-descriptor (CCCD).
      */
     dsc = peer_dsc_find_uuid(peer,
-                             BLE_UUID16(BLECENT_SVC_ALERT_UUID),
-                             BLE_UUID16(BLECENT_CHR_UNR_ALERT_STAT_UUID),
-                             BLE_UUID16(BLE_GATT_DSC_CLT_CFG_UUID16));
+                             BLE_UUID16_DECLARE(BLECENT_SVC_ALERT_UUID),
+                             BLE_UUID16_DECLARE(BLECENT_CHR_UNR_ALERT_STAT_UUID),
+                             BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16));
     if (dsc == NULL) {
         BLECENT_LOG(ERROR, "Error: Peer lacks a CCCD for the Unread Alert "
                            "Status characteristic\n");
@@ -257,7 +243,7 @@ blecent_scan(void)
     disc_params.filter_policy = 0;
     disc_params.limited = 0;
 
-    rc = ble_gap_disc(BLE_ADDR_TYPE_PUBLIC, BLE_HS_FOREVER, &disc_params,
+    rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params,
                       blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error initiating GAP discovery procedure; rc=%d\n",
@@ -273,6 +259,8 @@ blecent_scan(void)
 static int
 blecent_should_connect(const struct ble_gap_disc_desc *disc)
 {
+    struct ble_hs_adv_fields fields;
+    int rc;
     int i;
 
     /* The device has to be advertising connectability. */
@@ -282,11 +270,16 @@ blecent_should_connect(const struct ble_gap_disc_desc *disc)
         return 0;
     }
 
+    rc = ble_hs_adv_parse_fields(&fields, disc->data, disc->length_data);
+    if (rc != 0) {
+        return rc;
+    }
+
     /* The device has to advertise support for the Alert Notification
      * service (0x1811).
      */
-    for (i = 0; i < disc->fields->num_uuids16; i++) {
-        if (disc->fields->uuids16[i] == BLECENT_SVC_ALERT_UUID) {
+    for (i = 0; i < fields.num_uuids16; i++) {
+        if (ble_uuid_u16(&fields.uuids16[i].u) == BLECENT_SVC_ALERT_UUID) {
             return 1;
         }
     }
@@ -319,11 +312,12 @@ blecent_connect_if_interesting(const struct ble_gap_disc_desc *disc)
     /* Try to connect the the advertiser.  Allow 30 seconds (30000 ms) for
      * timeout.
      */
-    rc = ble_gap_connect(BLE_ADDR_TYPE_PUBLIC, disc->addr_type, disc->addr,
-                         30000, NULL, blecent_gap_event, NULL);
+    rc = ble_gap_connect(BLE_OWN_ADDR_PUBLIC, &disc->addr, 30000, NULL,
+                         blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error: Failed to connect to device; addr_type=%d "
-                           "addr=%s\n", disc->addr_type, addr_str(disc->addr));
+                           "addr=%s\n", disc->addr.type,
+                           addr_str(disc->addr.val));
         return;
     }
 }
@@ -346,12 +340,19 @@ static int
 blecent_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
+    struct ble_hs_adv_fields fields;
     int rc;
 
     switch (event->type) {
     case BLE_GAP_EVENT_DISC:
+        rc = ble_hs_adv_parse_fields(&fields, event->disc.data,
+                                     event->disc.length_data);
+        if (rc != 0) {
+            return 0;
+        }
+
         /* An advertisment report was received during GAP discovery. */
-        print_adv_fields(event->disc.fields);
+        print_adv_fields(&fields);
 
         /* Try to connect to the advertiser if it looks interesting. */
         blecent_connect_if_interesting(&event->disc);
@@ -453,22 +454,9 @@ blecent_on_sync(void)
 }
 
 /**
- * Event loop for the main blecent task.
- */
-static void
-blecent_task_handler(void *unused)
-{
-    while (1) {
-        os_eventq_run(&blecent_evq);
-    }
-}
-
-/**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * All application logic and NimBLE host work is performed in default task.
  *
  * @return int NOTE: this function should never return!
  */
@@ -477,22 +465,15 @@ main(void)
 {
     int rc;
 
+    /* Set initial BLE device address. */
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
+
     /* Initialize OS */
     sysinit();
 
     /* Initialize the blecent log. */
     log_register("blecent", &blecent_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
-
-    /* Initialize the eventq for the application task. */
-    os_eventq_init(&blecent_evq);
-
-    /* Create the blecent task.  All application logic and NimBLE host
-     * operations are performed in this task.
-     */
-    os_task_init(&blecent_task, "blecent", blecent_task_handler,
-                 NULL, BLECENT_TASK_PRIO, OS_WAIT_FOREVER,
-                 blecent_stack, BLECENT_STACK_SIZE);
 
     /* Configure the host. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
@@ -508,14 +489,10 @@ main(void)
     rc = ble_svc_gap_device_name_set("nimble-blecent");
     assert(rc == 0);
 
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&blecent_evq);
-
-    /* Start the OS */
-    os_start();
-
     /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
 
     return 0;
 }

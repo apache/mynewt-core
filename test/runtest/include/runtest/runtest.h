@@ -29,9 +29,29 @@ extern "C" {
 void runtest_init(void);
 
 /*
- * XXX global used to gate starting test - hack
+ * Retrieves the event queue used by the runtest package.
  */
-extern volatile int runtest_start;
+struct os_eventq *run_evq_get(void);
+
+/*
+ * Callback for runtest events - newtmgr uses this to add
+ * run test requests to default queue for test application (e.g., mynewtsanity)
+ */
+void run_evcb_set(os_event_fn *cb);
+
+/*
+ * Token is append to log messages - for use by ci gateway
+ */
+#define RUNTEST_REQ_SIZE  32
+extern char runtest_test_token[RUNTEST_REQ_SIZE];
+
+/*
+ * Argument struct passed in from "run" requests via newtmgr
+ */
+struct runtest_evq_arg {
+    char* run_testname;
+    char* run_token;
+};
 
 #ifdef __cplusplus
 }

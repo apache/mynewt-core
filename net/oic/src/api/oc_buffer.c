@@ -18,6 +18,7 @@
 
 #include <os/os_eventq.h>
 #include <os/os_mempool.h>
+#include <os/os_mbuf.h>
 
 #include "messaging/coap/engine.h"
 #include "port/oc_signal_main_loop.h"
@@ -31,164 +32,114 @@
 
 #include "port/mynewt/adaptor.h"
 
-static struct os_mempool oc_buffers;
-static uint8_t oc_buffer_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS * 2,
-      sizeof(oc_message_t))];
+static struct os_mqueue oc_inq;
+static struct os_mqueue oc_outq;
 
-static void oc_buffer_handler(struct os_event *);
+struct os_mbuf *
+oc_allocate_mbuf(struct oc_endpoint *oe)
+{
+    struct os_mbuf *m;
 
-static struct oc_message_s *oc_buffer_inq;
-static struct oc_message_s *oc_buffer_outq;
-static struct os_event oc_buffer_ev = {
-    .ev_cb = oc_buffer_handler
-};
+    /* get a packet header */
+    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    if (!m) {
+        return NULL;
+    }
+    memcpy(OC_MBUF_ENDPOINT(m), oe, sizeof(struct oc_endpoint));
+    return m;
+}
+
+void
+oc_recv_message(struct os_mbuf *m)
+{
+    int rc;
+
+    rc = os_mqueue_put(&oc_inq, oc_evq_get(), m);
+    assert(rc == 0);
+}
+
+void
+oc_send_message(struct os_mbuf *m)
+{
+    int rc;
+
+    rc = os_mqueue_put(&oc_outq, oc_evq_get(), m);
+    assert(rc == 0);
+}
+
+static void
+oc_buffer_tx(struct os_event *ev)
+{
+    struct os_mbuf *m;
+
+    while ((m = os_mqueue_get(&oc_outq)) != NULL) {
+        STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next) = NULL;
+        OC_LOG_DEBUG("oc_buffer_tx: ");
+        OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
+#ifdef OC_CLIENT
+        if (OC_MBUF_ENDPOINT(m)->oe.flags & MULTICAST) {
+            oc_send_multicast_message(m);
+        } else {
+#endif
+#ifdef OC_SECURITY
+            /* XXX convert this */
+            if (OC_MBUF_ENDPOINT(m)->flags & SECURED) {
+                OC_LOG_DEBUG("oc_buffer_tx: DTLS\n");
+
+                if (!oc_sec_dtls_connected(oe)) {
+                    oc_process_post(&oc_dtls_handler,
+                                    oc_events[INIT_DTLS_CONN_EVENT], m);
+                } else {
+                    oc_process_post(&oc_dtls_handler,
+                                    oc_events[RI_TO_DTLS_EVENT], m);
+                }
+            } else
+#endif
+            {
+                oc_send_buffer(m);
+            }
+#ifdef OC_CLIENT
+        }
+#endif
+    }
+}
+
+static void
+oc_buffer_rx(struct os_event *ev)
+{
+    struct os_mbuf *m;
+#if defined(OC_SECURITY)
+    uint8_t b;
+#endif
+
+    while ((m = os_mqueue_get(&oc_inq)) != NULL) {
+        OC_LOG_DEBUG("oc_buffer_rx: ");
+        OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
+
+#ifdef OC_SECURITY
+        /*
+         * XXX make sure first byte is within first mbuf
+         */
+        b = m->om_data[0];
+        if (b > 19 && b < 64) {
+            OC_LOG_DEBUG("oc_buffer_rx: encrypted request\n");
+            oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
+        } else {
+            coap_receive(m);
+        }
+#else
+        coap_receive(&m);
+#endif
+        if (m) {
+            os_mbuf_free_chain(m);
+        }
+    }
+}
 
 void
 oc_buffer_init(void)
 {
-    os_mempool_init(&oc_buffers, MAX_NUM_CONCURRENT_REQUESTS * 2,
-      sizeof(oc_message_t), oc_buffer_area, "oc_bufs");
+    os_mqueue_init(&oc_inq, oc_buffer_rx, NULL);
+    os_mqueue_init(&oc_outq, oc_buffer_tx, NULL);
 }
 
-oc_message_t *
-oc_allocate_message(void)
-{
-    oc_message_t *message = (oc_message_t *)os_memblock_get(&oc_buffers);
-
-    if (message) {
-        message->length = 0;
-        message->next = 0;
-        message->ref_count = 1;
-        LOG("buffer: Allocated TX/RX buffer; num free: %d\n",
-          oc_buffers.mp_num_free);
-    } else {
-        LOG("buffer: No free TX/RX buffers!\n");
-    }
-    return message;
-}
-
-void
-oc_message_add_ref(oc_message_t *message)
-{
-    if (message) {
-        message->ref_count++;
-    }
-}
-
-void
-oc_message_unref(oc_message_t *message)
-{
-    if (message) {
-        message->ref_count--;
-        if (message->ref_count == 0) {
-            os_memblock_put(&oc_buffers, message);
-            LOG("buffer: freed TX/RX buffer; num free: %d\n",
-              oc_buffers.mp_num_free);
-        }
-    }
-}
-
-static void
-oc_queue_msg(struct oc_message_s **head, struct oc_message_s *msg)
-{
-    struct oc_message_s *tmp;
-
-    msg->next = NULL; /* oc_message_s has been oc_list once, clear next */
-    if (!*head) {
-        *head = msg;
-    } else {
-        for (tmp = *head; tmp->next; tmp = tmp->next);
-        tmp->next = msg;
-    }
-}
-
-void
-oc_recv_message(oc_message_t *message)
-{
-    oc_queue_msg(&oc_buffer_inq, message);
-    os_eventq_put(oc_evq_get(), &oc_buffer_ev);
-}
-
-void
-oc_send_message(oc_message_t *message)
-{
-    oc_queue_msg(&oc_buffer_outq, message);
-    os_eventq_put(oc_evq_get(), &oc_buffer_ev);
-}
-
-static void
-oc_buffer_tx(struct oc_message_s *message)
-{
-#ifdef OC_CLIENT
-    if (message->endpoint.flags & MULTICAST) {
-        LOG("Outbound network event: multicast request\n");
-        oc_send_multicast_message(message);
-        oc_message_unref(message);
-    } else {
-#endif
-#ifdef OC_SECURITY
-        /* XXX convert this */
-        if (message->endpoint.flags & SECURED) {
-            LOG("Outbound network event: forwarding to DTLS\n");
-
-            if (!oc_sec_dtls_connected(&message->endpoint)) {
-                LOG("Posting INIT_DTLS_CONN_EVENT\n");
-                oc_process_post(&oc_dtls_handler,
-                  oc_events[INIT_DTLS_CONN_EVENT], msg);
-            } else {
-                LOG("Posting RI_TO_DTLS_EVENT\n");
-                oc_process_post(&oc_dtls_handler,
-                  oc_events[RI_TO_DTLS_EVENT], msg);
-            }
-        } else
-#endif
-        {
-            LOG("Outbound network event: unicast message\n");
-            oc_send_buffer(message);
-            oc_message_unref(message);
-        }
-#ifdef OC_CLIENT
-    }
-#endif
-}
-
-static void
-oc_buffer_rx(struct oc_message_s *msg)
-{
-#ifdef OC_SECURITY
-    uint8_t b = (uint8_t)(msg->data[0];
-    if (b > 19 && b < 64) {
-        LOG("Inbound network event: encrypted request\n");
-        oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], msg);
-    } else {
-        LOG("Inbound network event: decrypted request\n");
-        coap_receive(msg);
-        oc_message_unref(msg);
-    }
-#else
-    LOG("Inbound network event: decrypted request\n");
-    coap_receive(msg);
-    oc_message_unref(msg);
-#endif
-}
-
-static void
-oc_buffer_handler(struct os_event *ev)
-{
-    struct oc_message_s *msg;
-
-    while (oc_buffer_outq || oc_buffer_inq) {
-        msg = oc_buffer_outq;
-        if (msg) {
-            oc_buffer_outq = msg->next;
-            msg->next = NULL;
-            oc_buffer_tx(msg);
-        }
-        msg = oc_buffer_inq;
-        if (msg) {
-            oc_buffer_inq = msg->next;
-            msg->next = NULL;
-            oc_buffer_rx(msg);
-        }
-    }
-}

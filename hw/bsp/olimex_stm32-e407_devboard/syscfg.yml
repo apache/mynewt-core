@@ -19,45 +19,34 @@
 # Package: hw/bsp/olimex_stm32-e407_devboard
 
 syscfg.defs:
-    CLOCK_FREQ:
-        description: 'TBD'
-        value:  1000000
-
     ADC_1:
         description: "ADC_1"
-        value:  1
+        value:  0
     ADC_2:
         description: "ADC_2"
         value:  0
     ADC_3:
         description: "ADC_3"
-        value:  1
-    UART_0:
-        description: 'TBD'
-        value:  1
-    UART_1:
-        description: 'TBD'
         value:  0
+    UART_0:
+        description: 'Whether to enable UART0'
+        value:  1
 
     I2C_0:
         description: 'I2C0'
         value: 0
 
-    SPI_0:
-        description: 'TBD'
-        value:  0
-
     SPI_0_MASTER:
-        description: 'TBD'
+        description: 'Whether to enable SPI 0 in master mode'
         value:  0
         restrictions:
-            - SPI_0
+            - "!SPI_0_SLAVE"
 
     SPI_0_SLAVE:
-        description: 'TBD'
+        description: 'Whether to enable SPI 0 in slave mode'
         value:  0
         restrictions:
-            - SPI_0
+            - "!SPI_0_MASTER"
 
     TIMER_0:
         description: 'TIMER_0'

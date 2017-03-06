@@ -216,64 +216,70 @@ oc_interate_query(oc_request_t *request, char **key, int *key_len, char **value,
   return 1;
 }
 
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 void
 oc_indicate_separate_response(oc_request_t *request,
                               oc_separate_response_t *response)
 {
-  request->response->separate_response = response;
-  oc_send_response(request, OC_STATUS_OK);
+    request->response->separate_response = response;
+    oc_send_response(request, OC_STATUS_OK);
 }
 
 void
 oc_set_separate_response_buffer(oc_separate_response_t *handle)
 {
-  oc_rep_new(handle->buffer, COAP_MAX_BLOCK_SIZE); // check
+    assert(handle->buffer);
+    oc_rep_new(handle->buffer); // check
 }
 
 void
 oc_send_separate_response(oc_separate_response_t *handle,
                           oc_status_t response_code)
 {
-  oc_response_buffer_t response_buffer;
-  response_buffer.buffer = handle->buffer;
-  response_buffer.response_length = response_length();
-  response_buffer.code = oc_status_code(response_code);
+    oc_response_buffer_t response_buffer;
+    coap_separate_t *cur, *next = NULL;
+    coap_packet_t response[1];
+    coap_transaction_t *t;
 
-  coap_separate_t *cur = oc_list_head(handle->requests), *next = NULL;
-  coap_packet_t response[1];
+    response_buffer.buffer = handle->buffer;
+    response_buffer.response_length = response_length();
+    response_buffer.code = oc_status_code(response_code);
 
-  while (cur != NULL) {
-    next = cur->next;
-    if (cur->observe > 0) {
-      coap_transaction_t *t =
-        coap_new_transaction(coap_get_mid(), &cur->endpoint);
-      if (t) {
-        coap_separate_resume(response, cur, oc_status_code(response_code),
-                             t->mid);
-        coap_set_header_content_format(response, APPLICATION_CBOR);
-        if (cur->observe == 1) {
-          coap_set_header_observe(response, 1);
+    for (cur = SLIST_FIRST(&handle->requests); cur; cur = next) {
+        next = SLIST_NEXT(cur, next);
+        if (cur->observe > 0) {
+            t = coap_new_transaction(coap_get_mid(), &cur->endpoint);
+            if (t) {
+                coap_separate_resume(response, cur,
+                  oc_status_code(response_code), t->mid);
+                coap_set_header_content_format(response, APPLICATION_CBOR);
+                if (cur->observe == 1) {
+                    coap_set_header_observe(response, 1);
+                }
+                if (response_buffer.response_length > 0) {
+                    coap_set_payload(response, handle->buffer,
+                      response_buffer.response_length);
+                }
+                t->type = response->type;
+                if (!coap_serialize_message(response, t->m)) {
+                    coap_send_transaction(t);
+                } else {
+                    coap_clear_transaction(t);
+                }
+            }
+            coap_separate_clear(handle, cur);
+        } else {
+            if (coap_notify_observers(NULL, &response_buffer,
+                &cur->endpoint) == 0) {
+                coap_separate_clear(handle, cur);
+            }
         }
-        if (response_buffer.response_length > 0) {
-          coap_set_payload(response, handle->buffer,
-                           response_buffer.response_length);
-        }
-        t->message->length = coap_serialize_message(response, t->message->data);
-        coap_send_transaction(t);
-      }
-      coap_separate_clear(handle, cur);
-    } else {
-      if (coap_notify_observers(NULL, &response_buffer, &cur->endpoint) == 0) {
-        coap_separate_clear(handle, cur);
-      }
     }
-    cur = next;
-  }
-  if (oc_list_length(handle->requests) == 0) {
-    handle->active = 0;
-  }
+    if (SLIST_FIRST(&handle->requests) == NULL) {
+        handle->active = 0;
+    }
 }
-
+#endif
 int
 oc_notify_observers(oc_resource_t *resource)
 {

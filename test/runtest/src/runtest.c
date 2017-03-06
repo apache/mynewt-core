@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "console/console.h"
@@ -38,24 +39,44 @@ struct shell_cmd runtest_cmd_struct;
 struct mgmt_group runtest_nmgr_group;
 #endif
 
-int
-runtest()
-{
-    /* XXX */
+static struct os_eventq *run_evq;
 
-    return 0;
+extern int run_nmgr_register_group();
+
+/**
+ * Retrieves the event queue used by the runtest package.
+ */
+struct os_eventq *
+run_evq_get(void)
+{
+    return run_evq;
 }
 
 void
+run_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&run_evq, evq, NULL);
+}
+
+/*
+ * Package init routine to register newtmgr "run" commands
+ */
+void
 runtest_init(void)
 {
-    runtest_start = 1;
+    int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
 #if MYNEWT_VAL(RUNTEST_CLI)
     shell_cmd_register(&runtest_cmd_struct);
 #endif
 
 #if MYNEWT_VAL(RUNTEST_NEWTMGR)
-    mgmt_group_register(&runtest_nmgr_group);
+    rc = run_nmgr_register_group();
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
+
+    run_evq_set(os_eventq_dflt_get());
 }

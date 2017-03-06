@@ -26,11 +26,8 @@ main(void)
     /* Initialize OS */
     sysinit();
 
-    /* Start the OS */
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
-
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
     return 0;
 }

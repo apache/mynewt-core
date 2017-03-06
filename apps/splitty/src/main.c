@@ -34,7 +34,6 @@
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
-#include <json/json.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
@@ -45,20 +44,15 @@
 
 /* Task 1 */
 #define TASK1_PRIO (8)
-#define TASK1_STACK_SIZE    OS_STACK_ALIGN(192)
-#define MAX_CBMEM_BUF 600
+#define TASK1_STACK_SIZE    OS_STACK_ALIGN(128)
+#define MAX_CBMEM_BUF 300
 static struct os_task task1;
 static volatile int g_task1_loops;
 
 /* Task 2 */
 #define TASK2_PRIO (9)
-#define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
+#define TASK2_STACK_SIZE    OS_STACK_ALIGN(32)
 static struct os_task task2;
-
-/* Task 3 */
-#define TASK3_PRIO (10)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task3;
 
 static struct log my_log;
 
@@ -69,8 +63,6 @@ static struct os_sem g_test_sem;
 
 /* For LED toggling */
 static int g_led_pin;
-
-static struct os_eventq splitty_evq;
 
 STATS_SECT_START(gpio_stats)
 STATS_SECT_ENTRY(toggles)
@@ -144,18 +136,6 @@ task2_handler(void *arg)
 }
 
 /**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
- */
-static void
-task3_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&splitty_evq);
-    }
-}
-
-/**
  * init_tasks
  *
  * Called by main.c after sysinit(). This function performs initializations
@@ -183,26 +163,14 @@ init_tasks(void)
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 
-    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task3, "task3", task3_handler, NULL,
-            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&splitty_evq);
-    os_eventq_dflt_set(&splitty_evq);
 }
 
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages, calls
+ * init_tasks to initialize additional tasks (and possibly other objects),
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -228,14 +196,13 @@ main(int argc, char **argv)
 
     conf_load();
 
-    log_reboot(HARD_REBOOT);
+    log_reboot(hal_reset_cause());
 
     init_tasks();
 
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
-
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never exit */
     return rc;
 }

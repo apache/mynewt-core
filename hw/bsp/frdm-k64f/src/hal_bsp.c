@@ -29,9 +29,12 @@
 #include "hal/hal_flash_int.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
+    MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || MYNEWT_VAL(UART_5)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #include "hal/hal_uart.h"
+#endif
 #include "bsp/cmsis_nvic.h"
 #include "mcu/frdm-k64f_hal.h"
 #include "fsl_device_registers.h"
@@ -158,6 +161,7 @@ hal_bsp_init(void)
 {
     int rc = 0;
 
+    (void)rc;
     // Init pinmux and other hardware setup.
     init_hardware();
     BOARD_BootClockRUN();

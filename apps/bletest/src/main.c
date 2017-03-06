@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include "sysinit/sysinit.h"
+#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"
@@ -34,6 +35,7 @@
 #include "nimble/ble.h"
 #include "nimble/ble_hci_trans.h"
 #include "nimble/hci_common.h"
+#include "nimble/hci_vendor.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
@@ -50,30 +52,34 @@
 #include "../src/ble_hs_priv.h"
 #include "bletest_priv.h"
 
-#define BLETEST_HOST_PROC_TASK_PRIO     4
 #define BLETEST_TASK_PRIO               5
 
 /* For LED toggling */
 int g_led_pin;
-
-/* Our global device address (public) */
-uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
-
-/* Our random address (in case we need it) */
-uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
 /* A buffer for host advertising data */
 uint8_t g_host_adv_data[BLE_HCI_MAX_ADV_DATA_LEN];
 uint8_t g_host_adv_len;
 
 /* Some application configurations */
-#define BLETEST_ROLE_ADVERTISER         (0)
-#define BLETEST_ROLE_SCANNER            (1)
-#define BLETEST_ROLE_INITIATOR          (2)
+#define BLETEST_ROLE_NONE               (0)
+#define BLETEST_ROLE_ADVERTISER         (1)
+#define BLETEST_ROLE_SCANNER            (2)
+#define BLETEST_ROLE_INITIATOR          (3)
 
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_INITIATOR)
-#define BLETEST_CFG_ROLE                (BLETEST_ROLE_ADVERTISER)
-//#define BLETEST_CFG_ROLE                (BLETEST_ROLE_SCANNER)
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_ADVERTISER
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_ADVERTISER
+#endif
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_SCANNER
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_SCANNER
+#endif
+#if MYNEWT_VAL(BLETEST_ROLE) == BLETEST_ROLE_INITIATOR
+#define BLETEST_CFG_ROLE                BLETEST_ROLE_INITIATOR
+#endif
+
+#ifndef BLETEST_CFG_ROLE
+#error "No role defined! Must define a valid role in syscfg.yml in apps/bletest"
+#endif
 
 /* Advertiser config */
 #define BLETEST_CFG_ADV_OWN_ADDR_TYPE   (BLE_HCI_ADV_OWN_ADDR_PUBLIC)
@@ -82,6 +88,72 @@ uint8_t g_host_adv_len;
 #define BLETEST_CFG_ADV_TYPE            BLE_HCI_ADV_TYPE_ADV_IND
 #define BLETEST_CFG_ADV_FILT_POLICY     (BLE_HCI_ADV_FILT_NONE)
 #define BLETEST_CFG_ADV_ADDR_RES_EN     (0)
+
+/* Multi-adv config */
+/*
+ * Number of advertising instances to start up, not including the default
+ * instance. The default instance is used to connect. If this number is greater
+ * than the number of available advertising instances, we only use the number
+ * of available advertising instances (defined by the configuration setting:
+ * BLE_MULTI_ADV_INSTANCES.
+ */
+#define BLETEST_CFG_ADV_TEST_INSTANCES     (8)
+
+struct bletest_multi_adv_interval
+{
+    uint8_t adv_type;
+    /*
+     * Note: if own addr type greater than 1, we use own addr field; otherwise
+     * we use the set multi random address call to set the random address
+     */
+    uint8_t adv_own_addr_type;
+    uint16_t adv_itvl;
+};
+
+/*
+ * NOTE: currently, these are all NONCONN_IND. Thus, must be 100 msecs or
+ * greater
+ */
+const struct bletest_multi_adv_interval
+bletest_multi_adv_instances[BLETEST_CFG_ADV_TEST_INSTANCES] = {
+    {BLE_HCI_ADV_TYPE_ADV_NONCONN_IND,
+     BLE_HCI_ADV_OWN_ADDR_PUBLIC,
+     (100000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_SCAN_IND,
+     BLE_HCI_ADV_OWN_ADDR_RANDOM,
+     (110000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_NONCONN_IND,
+     BLE_HCI_ADV_OWN_ADDR_RANDOM,
+     (120000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_NONCONN_IND,
+     BLE_HCI_ADV_OWN_ADDR_PUBLIC,
+     (130000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_SCAN_IND,
+     BLE_HCI_ADV_OWN_ADDR_MAX + 1,
+     (140000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_NONCONN_IND,
+     BLE_HCI_ADV_OWN_ADDR_MAX + 1,
+     (150000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_NONCONN_IND,
+     BLE_HCI_ADV_OWN_ADDR_PUBLIC,
+     (160000 / BLE_HCI_ADV_ITVL)},
+
+    {BLE_HCI_ADV_TYPE_ADV_SCAN_IND,
+     BLE_HCI_ADV_OWN_ADDR_PUBLIC,
+     (170000 / BLE_HCI_ADV_ITVL)}
+};
+
+/*
+ * Determines if own address contains random address or set through the
+ * multi-adv set random address command
+ */
+#define BLETEST_CFG_MULTI_ADV_RANDOM_OWN    (0)
 
 /* Scan config */
 #define BLETEST_CFG_SCAN_ITVL           (700000 / BLE_HCI_SCAN_ITVL)
@@ -95,7 +167,7 @@ uint8_t g_host_adv_len;
 #define BLETEST_CFG_CONN_ITVL           (128)  /* in 1.25 msec increments */
 #define BLETEST_CFG_SLAVE_LATENCY       (0)
 #define BLETEST_CFG_INIT_FILTER_POLICY  (BLE_HCI_CONN_FILT_NO_WL)
-#define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 20 seconds */
+#define BLETEST_CFG_CONN_SPVN_TMO       (1000)  /* 10 msec increments */
 #define BLETEST_CFG_MIN_CE_LEN          (6)
 #define BLETEST_CFG_MAX_CE_LEN          (BLETEST_CFG_CONN_ITVL)
 #define BLETEST_CFG_CONN_PEER_ADDR_TYPE (BLE_HCI_CONN_PEER_ADDR_PUBLIC)
@@ -121,7 +193,6 @@ uint8_t g_host_adv_len;
 uint32_t g_next_os_time;
 int g_bletest_state;
 struct os_eventq g_bletest_evq;
-struct os_eventq g_bletest_host_proc_evq;
 struct os_callout g_bletest_timer;
 struct os_task bletest_task;
 bssnz_t os_stack_t bletest_stack[BLETEST_STACK_SIZE];
@@ -140,10 +211,6 @@ uint16_t g_bletest_outstanding_pkts;
 uint16_t g_bletest_ltk_reply_handle;
 uint32_t g_bletest_hw_id[4];
 struct hci_create_conn g_cc;
-
-/* Host processing task */
-struct os_task bletest_host_proc_task;
-bssnz_t os_stack_t bletest_host_proc_stack[BLETEST_STACK_SIZE];
 
 /* --- For LE encryption testing --- */
 /* Key: 0x4C68384139F574D836BCF34E9DFB01BF */
@@ -294,6 +361,175 @@ bletest_set_adv_data(uint8_t *dptr, uint8_t *addr)
 }
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+void
+bletest_init_adv_instances(void)
+{
+    uint8_t i;
+    int rc;
+    uint8_t *addr;
+    uint8_t adv_len;
+    uint8_t inst_allowed;
+    uint8_t rand_addr[BLE_DEV_ADDR_LEN];
+    struct hci_multi_adv_params adv;
+
+    inst_allowed = MYNEWT_VAL(BLE_MULTI_ADV_INSTANCES);
+    if (inst_allowed > BLETEST_CFG_ADV_TEST_INSTANCES) {
+        inst_allowed = BLETEST_CFG_ADV_TEST_INSTANCES;
+    }
+
+    /* Start up all the instances */
+    for (i = 1; i <= inst_allowed; ++i) {
+        memset(&adv, 0, sizeof(struct hci_multi_adv_params));
+
+        adv.own_addr_type = bletest_multi_adv_instances[i-1].adv_own_addr_type;
+        if (adv.own_addr_type == BLE_HCI_ADV_OWN_ADDR_PUBLIC) {
+            addr = g_dev_addr;
+        } else {
+            memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
+            rand_addr[5] |= 0xc0;
+            rand_addr[0] = i;
+            /*
+             * NOTE: we overload own address type with a special case
+             * to denote if we use own address or call to set multi random
+             * address.
+             */
+            if (adv.own_addr_type == BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+                rc = bletest_hci_le_set_multi_rand_addr(rand_addr, i);
+                assert(rc == 0);
+                addr = rand_addr;
+            } else {
+                adv.own_addr_type = BLE_HCI_ADV_OWN_ADDR_RANDOM;
+                addr = rand_addr;
+                memcpy(adv.own_addr, addr, BLE_DEV_ADDR_LEN);
+            }
+        }
+
+        adv.adv_type = bletest_multi_adv_instances[i - 1].adv_type;
+        adv.adv_channel_map = 0x07;
+        adv.adv_filter_policy = BLE_HCI_ADV_FILT_NONE;
+        adv.peer_addr_type = BLE_HCI_ADV_PEER_ADDR_PUBLIC;
+        adv_len = bletest_set_adv_data(&g_host_adv_data[0], addr);
+
+        adv.adv_itvl_min = bletest_multi_adv_instances[i - 1].adv_itvl;
+        adv.adv_itvl_max = bletest_multi_adv_instances[i - 1].adv_itvl;
+        adv.adv_tx_pwr = -1 * i;
+
+        /* Set the advertising parameters */
+        rc = bletest_hci_le_set_multi_adv_params(&adv, i);
+        assert(rc == 0);
+
+        /* Set advertising data */
+        if (adv_len != 0) {
+            rc = bletest_hci_le_set_multi_adv_data(&g_host_adv_data[0], adv_len,
+                                                   i);
+            assert(rc == 0);
+
+            /* Set scan response data */
+            rc = bletest_hci_le_set_multi_scan_rsp_data(&g_host_adv_data[0],
+                                                        adv_len, i);
+            assert(rc == 0);
+        }
+
+        /* Set the advertising parameters */
+        rc = bletest_hci_le_set_multi_adv_enable(1, i);
+        assert(rc == 0);
+    }
+}
+
+void
+bletest_init_advertising(uint8_t instance, int8_t txpwr)
+{
+    int rc;
+    int set_peer_addr;
+    uint8_t adv_len;
+    uint8_t *addr;
+    uint8_t rand_addr[BLE_DEV_ADDR_LEN];
+    struct hci_multi_adv_params adv;
+
+    /* Make sure it is a valid instance */
+    assert(instance < BLE_LL_ADV_INSTANCES);
+
+    /* Just zero out advertising */
+    set_peer_addr = 0;
+    memset(&adv, 0, sizeof(struct hci_multi_adv_params));
+
+    /* If we are using a random address, we need to set it */
+    adv.own_addr_type = BLETEST_CFG_ADV_OWN_ADDR_TYPE;
+    if (adv.own_addr_type & 1) {
+        memcpy(rand_addr, g_dev_addr, BLE_DEV_ADDR_LEN);
+        rand_addr[5] |= 0xc0;
+        if (BLETEST_CFG_MULTI_ADV_RANDOM_OWN == 1) {
+            addr = rand_addr;
+            memcpy(adv.own_addr, addr, BLE_DEV_ADDR_LEN);
+        } else {
+            rc = bletest_hci_le_set_multi_rand_addr(rand_addr, instance);
+            assert(rc == 0);
+            addr = rand_addr;
+        }
+    } else {
+        addr = g_dev_addr;
+    }
+
+    /* Set advertising parameters */
+    adv.adv_type = BLETEST_CFG_ADV_TYPE;
+    adv.adv_channel_map = 0x07;
+    adv.adv_filter_policy = BLETEST_CFG_ADV_FILT_POLICY;
+    if ((adv.adv_filter_policy & 1) || (BLETEST_CFG_ADV_ADDR_RES_EN == 1)) {
+        set_peer_addr = 1;
+    }
+    adv.peer_addr_type = BLETEST_CFG_ADV_PEER_ADDR_TYPE;
+    if ((adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) ||
+        (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD)) {
+        set_peer_addr = 1;
+        adv_len = 0;
+    } else {
+        adv_len = bletest_set_adv_data(&g_host_adv_data[0], addr);
+    }
+
+    /* Not allowed for multi-adv command */
+    if (adv.own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM) {
+        assert(0);
+    }
+
+    if (set_peer_addr) {
+        memcpy(adv.peer_addr, g_bletest_cur_peer_addr, BLE_DEV_ADDR_LEN);
+        if (adv.peer_addr_type == BLE_HCI_ADV_PEER_ADDR_RANDOM) {
+            adv.peer_addr[5] |= 0xc0;
+        }
+    }
+
+    console_printf("Trying to connect to %x.%x.%x.%x.%x.%x\n",
+                   adv.peer_addr[0], adv.peer_addr[1], adv.peer_addr[2],
+                   adv.peer_addr[3], adv.peer_addr[4], adv.peer_addr[5]);
+
+    if (adv.adv_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD) {
+        adv.adv_itvl_min = 0;
+        adv.adv_itvl_max = 0;
+    } else {
+        adv.adv_itvl_min = BLETEST_CFG_ADV_ITVL;
+        adv.adv_itvl_max = BLETEST_CFG_ADV_ITVL; /* Advertising interval */
+    }
+
+    adv.adv_tx_pwr = txpwr;
+
+    /* Set the advertising parameters */
+    rc = bletest_hci_le_set_multi_adv_params(&adv, instance);
+    assert(rc == 0);
+
+    /* Set advertising data */
+    if (adv_len != 0) {
+        rc = bletest_hci_le_set_multi_adv_data(&g_host_adv_data[0], adv_len,
+                                               instance);
+        assert(rc == 0);
+
+        /* Set scan response data */
+        rc = bletest_hci_le_set_multi_scan_rsp_data(&g_host_adv_data[0],adv_len,
+                                                    instance);
+        assert(rc == 0);
+    }
+}
+#else
 void
 bletest_init_advertising(void)
 {
@@ -387,7 +623,8 @@ bletest_init_advertising(void)
         assert(rc == 0);
     }
 }
-#endif
+#endif  /* MULTI_ADV SUPPORT */
+#endif  /* BLETEST_ROLE_ADVERTISER */
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
 void
@@ -423,7 +660,7 @@ bletest_init_scanner(void)
 #endif
         if (add_whitelist & 1) {
             rc = bletest_hci_le_add_to_whitelist(g_bletest_cur_peer_addr,
-                                                 BLE_ADDR_TYPE_RANDOM);
+                                                 BLE_ADDR_RANDOM);
             assert(rc == 0);
         }
     }
@@ -650,11 +887,11 @@ bletest_send_packet(uint16_t handle)
 #endif
 
         /* Put the HCI header in the mbuf */
-        htole16(om->om_data, handle);
-        htole16(om->om_data + 2, pktlen + 4);
+        put_le16(om->om_data, handle);
+        put_le16(om->om_data + 2, pktlen + 4);
 
         /* Place L2CAP header in packet */
-        htole16(om->om_data + 4, pktlen);
+        put_le16(om->om_data + 4, pktlen);
         om->om_data[6] = 0;
         om->om_data[7] = 0;
         om->om_len = 8;
@@ -733,13 +970,22 @@ bletest_execute_advertiser(void)
                 /* restart initiating */
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+                bletest_init_advertising(0,0);
+                bletest_hci_le_set_multi_adv_enable(1, 0);
+#else
                 bletest_init_advertising();
                 bletest_hci_le_set_adv_enable(1);
+#endif
             }
         } else {
             /* If we failed to start advertising we should keep trying */
             if (ble_ll_adv_enabled() == 0) {
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+                bletest_hci_le_set_multi_adv_enable(1, 0);
+#else
                 bletest_hci_le_set_adv_enable(1);
+#endif
             }
         }
     }
@@ -817,7 +1063,7 @@ bletest_execute_advertiser(void)
     }
 #endif /* XXX: throughput test */
 }
-#endif
+#endif /* XXX: BLETEST_ROLE_ADVERTISER */
 
 /**
  * Main bletest function. Called by the task timer every 50 msecs.
@@ -888,7 +1134,15 @@ bletest_task_handler(void *arg)
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Initialize the advertiser */
     console_printf("Starting BLE test task as advertiser\n");
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+    /* Start up all advertising instances except default one */
+    bletest_init_adv_instances();
+
+    /* Start advertising on instance 0 at 0 dbm */
+    bletest_init_advertising(0, 0);
+#else
     bletest_init_advertising();
+#endif
 #endif
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_SCANNER)
@@ -985,8 +1239,13 @@ bletest_task_handler(void *arg)
 
     /* Begin advertising if we are an advertiser */
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
+#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+    rc = bletest_hci_le_set_multi_adv_enable(1, 0);
+    assert(rc == 0);
+#else
     rc = bletest_hci_le_set_adv_enable(1);
     assert(rc == 0);
+#endif
 #endif
 
     bletest_timer_cb(NULL);
@@ -997,24 +1256,10 @@ bletest_task_handler(void *arg)
 }
 
 /**
- * BLE test host processing task handler
- *
- * @param arg
- */
-void
-bletest_host_proc_task_handler(void *arg)
-{
-    while (1) {
-        os_eventq_run(&g_bletest_host_proc_evq);
-    }
-}
-
-/**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages,
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -1064,18 +1309,6 @@ main(void)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    /* Initialize eventq for bletest host processing task */
-    os_eventq_init(&g_bletest_host_proc_evq);
-
-    rc = os_task_init(&bletest_host_proc_task, "bletest_host_proc",
-                      bletest_host_proc_task_handler, NULL,
-                      BLETEST_HOST_PROC_TASK_PRIO, OS_WAIT_FOREVER,
-                      bletest_host_proc_stack, BLETEST_STACK_SIZE);
-    assert(rc == 0);
-
-    /* Set the default eventq for packages that lack a dedicated task. */
-    os_eventq_dflt_set(&g_bletest_host_proc_evq);
-
     /* Initialize eventq for bletest task */
     os_eventq_init(&g_bletest_evq);
 
@@ -1084,8 +1317,10 @@ main(void)
                       BLETEST_STACK_SIZE);
     assert(rc == 0);
 
-    /* Start the OS */
-    os_start();
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
 
     /* os start should never return. If it does, this should be an error */
     assert(0);

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#include "syscfg/syscfg.h"
 
 #include <assert.h>
 #include "os/os_mutex.h"
@@ -29,28 +29,34 @@
  *   @{
  */
 
+#if MYNEWT_VAL(OS_SCHEDULING)
 static struct os_mutex os_malloc_mutex;
+#endif
 
 static void
 os_malloc_lock(void)
 {
+#if MYNEWT_VAL(OS_SCHEDULING)
     int rc;
 
     if (g_os_started) {
         rc = os_mutex_pend(&os_malloc_mutex, 0xffffffff);
         assert(rc == 0);
     }
+#endif
 }
 
 static void
 os_malloc_unlock(void)
 {
+#if MYNEWT_VAL(OS_SCHEDULING)
     int rc;
 
     if (g_os_started) {
         rc = os_mutex_release(&os_malloc_mutex);
         assert(rc == 0);
     }
+#endif
 }
 
 /**

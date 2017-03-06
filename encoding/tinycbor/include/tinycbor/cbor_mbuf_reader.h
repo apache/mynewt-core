@@ -20,23 +20,21 @@
 #ifndef CBOR_MBUF_READER_H
 #define CBOR_MBUF_READER_H
 
+#include <tinycbor/cbor.h>
+#include <os/os_mbuf.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <tinycbor/cbor.h>
-#include <os/os_mbuf.h>
-
-struct CborMbufReader {
+struct cbor_mbuf_reader {
     struct cbor_decoder_reader r;
     int init_off;                     /* initial offset into the data */
     struct os_mbuf *m;
 };
 
-void
-cbor_mbuf_reader_init(struct CborMbufReader *cb,
-                        struct os_mbuf *m,
-                        int intial_offset);
+void cbor_mbuf_reader_init(struct cbor_mbuf_reader *cb, struct os_mbuf *m,
+                           int intial_offset);
 
 #ifdef __cplusplus
 }

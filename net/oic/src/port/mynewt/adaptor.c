@@ -18,26 +18,22 @@
  */
 #include <assert.h>
 #include <syscfg/syscfg.h>
+#include <sysinit/sysinit.h>
 #include <os/os.h>
 #include <os/endian.h>
 #include <string.h>
 #include <log/log.h>
-#include "../oc_network_events_mutex.h"
-#include "../oc_connectivity.h"
-#include "oc_buffer.h"
-#include "../oc_log.h"
+#include "oic/oc_log.h"
+#include "port/oc_connectivity.h"
 #include "adaptor.h"
 
 static struct os_eventq *oc_evq;
 
-/* not sure if these semaphores are necessary yet.  If we are running
- * all of this from one task, we may not need these */
-static struct os_mutex oc_net_mutex;
+struct log oc_log;
 
 struct os_eventq *
 oc_evq_get(void)
 {
-    os_eventq_ensure(&oc_evq, NULL);
     return oc_evq;
 }
 
@@ -48,81 +44,83 @@ oc_evq_set(struct os_eventq *evq)
 }
 
 void
-oc_network_event_handler_mutex_init(void)
+oc_send_buffer(struct os_mbuf *m)
 {
-    os_error_t rc;
-    rc = os_mutex_init(&oc_net_mutex);
-    assert(rc == 0);
-}
+    struct oc_endpoint *oe;
 
-void
-oc_network_event_handler_mutex_lock(void)
-{
-    os_mutex_pend(&oc_net_mutex, OS_TIMEOUT_NEVER);
-}
+    oe = OC_MBUF_ENDPOINT(m);
 
-void
-oc_network_event_handler_mutex_unlock(void)
-{
-    os_mutex_release(&oc_net_mutex);
-}
-
-void
-oc_send_buffer(oc_message_t *message)
-{
-    switch (message->endpoint.flags) {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
+    switch (oe->oe.flags) {
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
     case IP:
-        oc_send_buffer_ip(message);
+        oc_send_buffer_ip6(m);
+        break;
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    case IP4:
+        oc_send_buffer_ip4(m);
         break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     case GATT:
-        oc_send_buffer_gatt(message);
+        oc_send_buffer_gatt(m);
         break;
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     case SERIAL:
-        oc_send_buffer_serial(message);
+        oc_send_buffer_serial(m);
         break;
 #endif
     default:
-        ERROR("Unknown transport option %u\n", message->endpoint.flags);
-        oc_message_unref(message);
+        OC_LOG_ERROR("Unknown transport option %u\n", oe->oe.flags);
+        os_mbuf_free_chain(m);
     }
 }
 
-void oc_send_multicast_message(oc_message_t *message)
+void
+oc_send_multicast_message(struct os_mbuf *m)
 {
-    oc_message_add_ref(message);
-
-    /* send on all the transports.  Don't forget to reference the message
-     * so it doesn't get deleted  */
-
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    oc_send_buffer_ip_mcast(message);
+    /*
+     * Send on all the transports.
+     */
+    void (*funcs[])(struct os_mbuf *) = {
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+        oc_send_buffer_ip6_mcast,
 #endif
-
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+        oc_send_buffer_ip4_mcast,
+#endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    /* no multicast for GATT, just send unicast */
-    oc_message_add_ref(message);
-    oc_send_buffer_gatt(message);
+        /* no multicast for GATT, just send unicast */
+        oc_send_buffer_gatt,
 #endif
-
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    /* no multi-cast for serial.  just send unicast */
-    oc_message_add_ref(message);
-    oc_send_buffer_serial(message);
+        /* no multi-cast for serial.  just send unicast */
+        oc_send_buffer_serial,
 #endif
+    };
+    struct os_mbuf *n;
+    int i;
 
-    oc_message_unref(message);
+    for (i = 0; i < (sizeof(funcs) / sizeof(funcs[0])) - 1; i++) {
+        n = os_mbuf_dup(m);
+        funcs[i](m);
+        if (!n) {
+            return;
+        }
+        m = n;
+    }
+    funcs[(sizeof(funcs) / sizeof(funcs[0])) - 1](m);
 }
 
 void
 oc_connectivity_shutdown(void)
 {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    oc_connectivity_shutdown_ip();
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+    oc_connectivity_shutdown_ip6();
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    oc_connectivity_shutdown_ip4();
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     oc_connectivity_shutdown_serial();
@@ -137,8 +135,13 @@ oc_connectivity_init(void)
 {
     int rc = -1;
 
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    if (oc_connectivity_init_ip() == 0) {
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+    if (oc_connectivity_init_ip6() == 0) {
+        rc = 0;
+    }
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    if (oc_connectivity_init_ip4() == 0) {
         rc = 0;
     }
 #endif
@@ -159,4 +162,11 @@ oc_connectivity_init(void)
     }
 
     return 0;
+}
+
+void
+oc_init(void)
+{
+    SYSINIT_ASSERT_ACTIVE();
+    oc_evq_set(os_eventq_dflt_get());
 }

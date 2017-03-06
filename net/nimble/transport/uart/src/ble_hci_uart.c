@@ -22,8 +22,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdint.h>
-#include "os/os_cputime.h"
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
+#include "os/os_cputime.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
 #include "mem/mem.h"
@@ -562,7 +563,15 @@ ble_hci_uart_rx_acl(uint8_t data)
          */
         if (pktlen > ble_hci_uart_max_acl_datalen) {
             os_mbuf_free_chain(ble_hci_uart_state.rx_acl.buf);
+#if MYNEWT_VAL(BLE_DEVICE)
             ble_hci_uart_sync_lost();
+#else
+        /*
+         * XXX: not sure what to do about host in this case. Just go back to
+         * none for now.
+         */
+        ble_hci_uart_state.rx_type = BLE_HCI_UART_H4_NONE;
+#endif
         }
     }
 
@@ -964,6 +973,9 @@ ble_hci_uart_init(void)
     int acl_data_length;
     int acl_block_size;
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     ble_hci_uart_free_mem();
 

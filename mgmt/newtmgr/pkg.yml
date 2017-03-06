@@ -28,6 +28,7 @@ pkg.deps:
     - kernel/os
     - mgmt/mgmt
     - mgmt/newtmgr/nmgr_os
+    - util/mem
 
 pkg.deps.NEWTMGR_BLE_HOST:
     - mgmt/newtmgr/transport/ble
@@ -35,5 +36,5 @@ pkg.deps.NEWTMGR_BLE_HOST:
 pkg.apis:
     - newtmgr
 
-pkg.init_function: nmgr_pkg_init
-pkg.init_stage: 5
+pkg.init:
+    nmgr_pkg_init: 500

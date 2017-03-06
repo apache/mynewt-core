@@ -23,6 +23,7 @@ pkg.author: "Petteri Aimonen"
 pkg.homepage: "https://github.com/PetteriAimonen/Baselibc"
 pkg.keywords:
     - libc
-
+pkg.deps:
+    - kernel/os
 pkg.req_apis:
     - console

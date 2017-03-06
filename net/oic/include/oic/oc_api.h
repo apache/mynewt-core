@@ -19,7 +19,8 @@
 
 #include "../src/port/mynewt/config.h"
 #include "../src/messaging/coap/oc_coap.h"
-#include "oc_ri.h"
+#include "oic/oc_ri.h"
+#include "oic/oc_api.h"
 #include "../src/port/oc_signal_main_loop.h"
 #include "../src/port/oc_storage.h"
 
@@ -100,14 +101,17 @@ int oc_get_query_value(oc_request_t *request, const char *key, char **value);
 void oc_send_response(oc_request_t *request, oc_status_t response_code);
 void oc_ignore_request(oc_request_t *request);
 
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 void oc_indicate_separate_response(oc_request_t *request,
                                    oc_separate_response_t *response);
 void oc_set_separate_response_buffer(oc_separate_response_t *handle);
 void oc_send_separate_response(oc_separate_response_t *handle,
                                oc_status_t response_code);
+#endif
 
 int oc_notify_observers(oc_resource_t *resource);
 
+#ifdef OC_CLIENT
 /** Client side */
 #include "oc_client_state.h"
 
@@ -135,33 +139,10 @@ bool oc_do_observe(const char *uri, oc_server_handle_t *server,
                    oc_qos_t qos);
 
 bool oc_stop_observe(const char *uri, oc_server_handle_t *server);
+#endif
 
-/** Common operations */
-
-/** API for setting handlers for interrupts */
-
-#define oc_signal_interrupt_handler(name)                                      \
-  do {                                                                         \
-    oc_process_poll(&(name##_interrupt_x));                                    \
-    oc_signal_main_loop();                                                     \
-  } while (0)
-
-#define oc_activate_interrupt_handler(name)                                    \
-  (oc_process_start(&(name##_interrupt_x), 0))
-
-#define oc_define_interrupt_handler(name)                                      \
-  void name##_interrupt_x_handler(void);                                       \
-  OC_PROCESS(name##_interrupt_x, "");                                          \
-  OC_PROCESS_THREAD(name##_interrupt_x, ev, data)                              \
-  {                                                                            \
-    OC_PROCESS_POLLHANDLER(name##_interrupt_x_handler());                      \
-    OC_PROCESS_BEGIN();                                                        \
-    while (oc_process_is_running(&(name##_interrupt_x))) {                     \
-      OC_PROCESS_YIELD();                                                      \
-    }                                                                          \
-    OC_PROCESS_END();                                                          \
-  }                                                                            \
-  void name##_interrupt_x_handler(void)
+struct os_eventq;
+void oc_evq_set(struct os_eventq *evq);
 
 #ifdef __cplusplus
 }

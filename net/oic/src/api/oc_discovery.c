@@ -84,6 +84,9 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
                       int rt_len)
 {
   int dev, matches = 0;
+#ifdef OC_SERVER
+  oc_resource_t *resource;
+#endif
   oc_rep_start_object(*device, links);
   oc_rep_set_text_string(links, di, uuid);
   oc_rep_set_array(links, links);
@@ -100,14 +103,14 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
   }
 
 #ifdef OC_SERVER
-  oc_resource_t *resource = oc_ri_get_app_resources();
-  for (; resource; resource = resource->next) {
-
-    if (!(resource->properties & OC_DISCOVERABLE))
-      continue;
-
-    if (filter_resource(resource, rt, rt_len, oc_rep_array(links)))
-      matches++;
+  for (resource = oc_ri_get_app_resources(); resource;
+       resource = SLIST_NEXT(resource, next)) {
+      if (!(resource->properties & OC_DISCOVERABLE)) {
+          continue;
+      }
+      if (filter_resource(resource, rt, rt_len, oc_rep_array(links))) {
+          matches++;
+      }
   }
 #endif
 
@@ -124,45 +127,43 @@ process_device_object(CborEncoder *device, const char *uuid, const char *rt,
 }
 
 static void
-oc_core_discovery_handler(oc_request_t *request, oc_interface_mask_t interface)
+oc_core_discovery_handler(oc_request_t *req, oc_interface_mask_t interface)
 {
-  char *rt = NULL;
-  int rt_len = 0, matches = 0;
-  if (request->query_len) {
-    rt_len =
-      oc_ri_get_query_value(request->query, request->query_len, "rt", &rt);
-  }
+    char *rt = NULL;
+    int rt_len = 0, matches = 0;
+    char uuid[37];
 
-  char uuid[37];
-  oc_uuid_to_str(oc_core_get_device_id(0), uuid, 37);
+    rt_len = oc_ri_get_query_value(req->query, req->query_len, "rt", &rt);
 
-  switch (interface) {
-  case OC_IF_LL: {
-    oc_rep_start_links_array();
-    matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
-    oc_rep_end_links_array();
-  } break;
-  case OC_IF_BASELINE: {
-    oc_rep_start_root_object();
-    oc_process_baseline_interface(request->resource);
-    oc_rep_set_array(root, links);
-    matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
-    oc_rep_close_array(root, links);
-    oc_rep_end_root_object();
-  } break;
-  default:
-    break;
-  }
+    oc_uuid_to_str(oc_core_get_device_id(0), uuid, sizeof(uuid));
 
-  int response_length = oc_rep_finalize();
+    switch (interface) {
+    case OC_IF_LL: {
+        oc_rep_start_links_array();
+        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
+        oc_rep_end_links_array();
+    } break;
+    case OC_IF_BASELINE: {
+        oc_rep_start_root_object();
+        oc_process_baseline_interface(req->resource);
+        oc_rep_set_array(root, links);
+        matches = process_device_object(oc_rep_array(links), uuid, rt, rt_len);
+        oc_rep_close_array(root, links);
+        oc_rep_end_root_object();
+    } break;
+    default:
+        break;
+    }
 
-  if (matches && response_length > 0) {
-    request->response->response_buffer->response_length = response_length;
-    request->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
-  } else {
-    /* There were rt/if selections and there were no matches, so ignore */
-    request->response->response_buffer->code = OC_IGNORE;
-  }
+    int response_length = oc_rep_finalize();
+
+    if (matches && response_length > 0) {
+        req->response->response_buffer->response_length = response_length;
+        req->response->response_buffer->code = oc_status_code(OC_STATUS_OK);
+    } else {
+        /* There were rt/if selections and there were no matches, so ignore */
+        req->response->response_buffer->code = OC_IGNORE;
+    }
 }
 
 void
@@ -175,24 +176,34 @@ oc_create_discovery_resource(void)
 
 #ifdef OC_CLIENT
 oc_discovery_flags_t
-oc_ri_process_discovery_payload(uint8_t *payload, int len,
+oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                 oc_discovery_cb_t *handler,
                                 oc_endpoint_t *endpoint)
 {
   oc_discovery_flags_t ret = OC_CONTINUE_DISCOVERY;
-  oc_string_t uri;
-  uri.ptr = 0;
-  oc_string_t di;
-  di.ptr = 0;
+  oc_string_t uri = {
+      .os_sz = 0,
+      .os_str = NULL
+  };
+  oc_string_t di = {
+      .os_sz = 0,
+      .os_str = NULL
+  };
   bool secure = false;
-  uint16_t dtls_port = 0, default_port = endpoint->ipv6_addr.port;
+  uint16_t dtls_port = 0, default_port = endpoint->oe_ip.v6.port;
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
+  uint16_t data_off;
+  struct os_mbuf *m;
+  int len;
+
   memcpy(&handle.endpoint, endpoint, sizeof(oc_endpoint_t));
 
   oc_rep_t *array = 0, *rep;
-  int s = oc_parse_rep(payload, len, &rep);
+
+  len = coap_get_payload(rsp, &m, &data_off);
+  int s = oc_parse_rep(m, data_off, len, &rep);
   if (s == 0)
     array = rep;
   while (array != NULL) {
@@ -263,11 +274,11 @@ oc_ri_process_discovery_payload(uint8_t *payload, int len,
               resource_info = resource_info->next;
             }
             if (secure) {
-              handle.endpoint.ipv6_addr.port = dtls_port;
-              handle.endpoint.flags |= SECURED;
+              handle.endpoint.oe_ip.v6.port = dtls_port;
+              handle.endpoint.oe_ip.flags |= SECURED;
             } else {
-              handle.endpoint.ipv6_addr.port = default_port;
-              handle.endpoint.flags &= ~SECURED;
+              handle.endpoint.oe_ip.v6.port = default_port;
+              handle.endpoint.oe_ip.flags &= ~SECURED;
             }
 
             if (handler(oc_string(di), oc_string(uri), types, interfaces,

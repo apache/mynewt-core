@@ -19,6 +19,7 @@
 
 #include "os/os.h"
 #include "os/queue.h"
+#include "os_priv.h"
 
 #include <assert.h>
 
@@ -29,9 +30,8 @@
  *   @{
  */
 
-TAILQ_HEAD(, os_task) g_os_run_list = TAILQ_HEAD_INITIALIZER(g_os_run_list);
-
-TAILQ_HEAD(, os_task) g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);
+struct os_task_list g_os_run_list = TAILQ_HEAD_INITIALIZER(g_os_run_list);
+struct os_task_list g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);
 
 struct os_task *g_current_task;
 
@@ -83,15 +83,10 @@ err:
 void
 os_sched_ctx_sw_hook(struct os_task *next_t)
 {
-    if (g_current_task == next_t) {
-        return;
-    }
-
     next_t->t_ctx_sw_cnt++;
     g_current_task->t_run_time += g_os_time - g_os_last_ctx_sw_time;
     g_os_last_ctx_sw_time = g_os_time;
 }
-
 
 /**
  * os sched get current task
@@ -143,9 +138,7 @@ os_sched(struct os_task *next_t)
         next_t = os_sched_next_task();
     }
 
-    if (next_t != g_current_task) {
-        os_arch_ctx_sw(next_t);
-    }
+    os_arch_ctx_sw(next_t);
 
     OS_EXIT_CRITICAL(sr);
 }
@@ -194,12 +187,12 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
 }
 
 /**
- * os sched suspend
+ * os sched remove
  *
  * XXX
  * NOTE - This routine is currently experimental and not ready for common use
  *
- * Stops a task and removes it from the run list
+ * Stops a task and removes it from the task list.
  *
  * @return int
  *
@@ -207,7 +200,7 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
  * the scheduler
  */
 int
-os_sched_suspend(struct os_task *t)
+os_sched_remove(struct os_task *t)
 {
 
     if (t->t_state == OS_TASK_SLEEP) {
@@ -215,9 +208,10 @@ os_sched_suspend(struct os_task *t)
     } else if (t->t_state == OS_TASK_READY) {
         TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
     }
-    t->t_state = OS_TASK_SUSPEND;
     t->t_next_wakeup = 0;
     t->t_flags |= OS_TASK_FLAG_NO_TIMEOUT;
+
+    STAILQ_REMOVE(&g_os_task_list, t, os_task, t_os_task_list);
 
     return OS_OK;
 }

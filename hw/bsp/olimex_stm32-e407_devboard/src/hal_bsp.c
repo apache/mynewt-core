@@ -26,9 +26,13 @@
 #include "stm32f4xx_hal_adc.h"
 #include "flash_map/flash_map.h"
 #include "os/os_dev.h"
+#if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
+#endif
+#if MYNEWT_VAL(ADC_1) || MYNEWT_VAL(ADC_2) || MYNEWT_VAL(ADC_3)
 #include "adc_stm32f4/adc_stm32f4.h"
+#endif
 #include "hal/hal_i2c.h"
 #include "hal/hal_timer.h"
 #include "hal/hal_bsp.h"
@@ -40,7 +44,9 @@
 #include "mcu/stm32f4_bsp.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
 
-static struct uart_dev hal_uart0;
+#if MYNEWT_VAL(UART_0)
+struct uart_dev hal_uart0;
+#endif
 
 /* XXX should not be here */
 
@@ -53,8 +59,6 @@ struct adc_dev my_dev_adc2;
 #if MYNEWT_VAL(ADC_3)
 struct adc_dev my_dev_adc3;
 #endif
-
-struct stm32f4_uart_cfg;
 
 #if MYNEWT_VAL(ADC_1)
 /*
@@ -269,21 +273,19 @@ struct stm32f4_hal_spi_cfg spi0_cfg = {
     .irq_prio = 2
 };
 #endif
-
-static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART6,
-        .suc_rcc_reg = &RCC->APB2ENR,
-        .suc_rcc_dev = RCC_APB2ENR_USART6EN,
-        .suc_pin_tx = MCU_GPIO_PORTC(6),	/* PC6 */
-        .suc_pin_rx = MCU_GPIO_PORTC(7),	/* PC7 */
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF8_USART6,
-        .suc_irqn = USART6_IRQn
-    }
+#if MYNEWT_VAL(UART_0)
+static const struct stm32f4_uart_cfg uart_cfg0 = {
+    .suc_uart = USART6,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART6EN,
+    .suc_pin_tx = MCU_GPIO_PORTC(6),	/* PC6 */
+    .suc_pin_rx = MCU_GPIO_PORTC(7),	/* PC7 */
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF8_USART6,
+    .suc_irqn = USART6_IRQn
 };
-
+#endif
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = &_ram_start,
@@ -294,13 +296,6 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = CCRAM_SIZE
     }
 };
-
-const struct stm32f4_uart_cfg *
-bsp_uart_config(int port)
-{
-    assert(port < UART_CNT);
-    return &uart_cfg[port];
-}
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -348,6 +343,7 @@ hal_bsp_init(void)
 {
     int rc;
 
+    (void)rc;
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
@@ -358,9 +354,11 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, CONSOLE_UART,
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)bsp_uart_config(0));
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg0);
     assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(ADC_1)
     rc = os_dev_create((struct os_dev *) &my_dev_adc1, "adc1",

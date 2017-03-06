@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 /* This library wraps the tinycbor decoder with a attribute based decoder
- * suitable for decoding a binary version of json.  Specificallly, the
+ * suitable for decoding a binary version of json.  Specifically, the
  * contents of the cbor contains pairs of attributes.  where the attribute
  * is a key/value pair.  keys are always text strings, but values can be
  * many different things (enumerated below) */
@@ -50,6 +50,8 @@ typedef enum CborAttrType {
     CborAttrFloatType,
     CborAttrDoubleType,
     CborAttrArrayType,
+    CborAttrObjectType,
+    CborAttrStructObjectType,
     CborAttrNullType,
 } CborAttrType;
 
@@ -106,6 +108,7 @@ struct cbor_attr_t {
         } bytestring;
         struct cbor_array_t array;
         size_t offset;
+        struct cbor_attr_t *obj;
     } addr;
     union {
         long long int integer;
@@ -114,13 +117,39 @@ struct cbor_attr_t {
         float fval;
     } dflt;
     size_t len;
-    const struct json_enum_t *map;
     bool nodefault;
 };
 
-int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
-int cbor_read_array(struct CborParser *, const struct cbor_array_t *);
+/*
+ * Use the following macros to declare template initializers for
+ * CborAttrStructObjectType arrays. Writing the equivalents out by hand is
+ * error-prone.
+ *
+ * CBOR_STRUCT_OBJECT takes a structure name s, and a fieldname f in s.
+ *
+ * CBOR_STRUCT_ARRAY takes the name of a structure array, a pointer to a an
+ * initializer defining the subobject type, and the address of an integer to
+ * store the length in.
+ */
+#define CBORATTR_STRUCT_OBJECT(s, f)        .addr.offset = offsetof(s, f)
+#define CBORATTR_STRUCT_ARRAY(a, e, n)                                  \
+    .addr.array.element_type = CborAttrStructObjectType,                \
+    .addr.array.arr.objects.subtype = e,                                \
+    .addr.array.arr.objects.base = (char*)a,                            \
+    .addr.array.arr.objects.stride = sizeof(a[0]),                      \
+    .addr.array.count = n,                                              \
+    .addr.array.maxlen = (int)(sizeof(a)/sizeof(a[0]))
 
+#define CBORATTR_ATTR_UNNAMED (char *)(-1)
+
+int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
+int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
+
+int cbor_read_flat_attrs(const uint8_t *data, int len,
+                         const struct cbor_attr_t *attrs);
+struct os_mbuf;
+int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
+                         const struct cbor_attr_t *attrs);
 
 #ifdef __cplusplus
 }

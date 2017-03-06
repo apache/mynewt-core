@@ -63,9 +63,9 @@ struct boot_status {
  * ~                Swap status (variable, aligned)                ~
  * ~                                                               ~
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Copy done   |       0xff padding (up to min-write-sz)       ~
+ * |   Copy done   |     0xff padding (up to min-write-sz - 1)     ~
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Image OK    |       0xff padding (up to min-write-sz)       ~
+ * |   Image OK    |     0xff padding (up to min-write-sz - 1)     ~
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 

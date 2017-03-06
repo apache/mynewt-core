@@ -46,24 +46,25 @@
  *   @{
  */
 
-
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
 
 /**
- * Initialize a mbuf queue.  An mbuf queue is a queue of mbufs that tie
- * to a specific task's event queue.  Mbuf queues are a helper API around
- * a common paradigm, which is to wait on an event queue, until at least
- * 1 packet is available, and then process a queue of packets.
+ * Initializes an mqueue.  An mqueue is a queue of mbufs that ties to a
+ * particular task's event queue.  Mqueues form a helper API around a common
+ * paradigm: wait on an event queue until at least one packet is available,
+ * then process a queue of packets.
  *
  * When mbufs are available on the queue, an event OS_EVENT_T_MQUEUE_DATA
  * will be posted to the task's mbuf queue.
  *
- * @param mq The mbuf queue to initialize
- * @param arg The argument to provide to the event posted on this mbuf queue
+ * @param mq                    The mqueue to initialize
+ * @param ev_cb                 The callback to associate with the mqeueue
+ *                                  event.  Typically, this callback pulls each
+ *                                  packet off the mqueue and processes them.
+ * @param arg                   The argument to associate with the mqueue event.
  *
- * @return 0 on success, non-zero on failure.
- *
+ * @return                      0 on success, non-zero on failure.
  */
 int
 os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg)
@@ -111,12 +112,12 @@ os_mqueue_get(struct os_mqueue *mq)
 }
 
 /**
- * Put a new mbuf in the mbuf queue.  Appends an mbuf to the end of the
- * mbuf queue, and posts an event to the event queue passed in.
+ * Adds a packet (i.e. packet header mbuf) to an mqueue. The event associated
+ * with the mqueue gets posted to the specified eventq.
  *
- * @param mq The mbuf queue to append the mbuf to
- * @param evq The event queue to post an OS_EVENT_T_MQUEUE_DATA event to
- * @param m The mbuf to append to the mbuf queue
+ * @param mq                    The mbuf queue to append the mbuf to.
+ * @param evq                   The event queue to post an event to.
+ * @param m                     The mbuf to append to the mbuf queue.
  *
  * @return 0 on success, non-zero on failure.
  */
@@ -1275,6 +1276,59 @@ os_mbuf_pullup(struct os_mbuf *om, uint16_t len)
 bad:
     os_mbuf_free_chain(om);
     return (NULL);
+}
+
+/**
+ * Removes and frees empty mbufs from the front of a chain.  If the chain
+ * contains a packet header, it is preserved.
+ *
+ * @param om                    The mbuf chain to trim.
+ *
+ * @return                      The head of the trimmed mbuf chain.
+ */
+struct os_mbuf *
+os_mbuf_trim_front(struct os_mbuf *om)
+{
+    struct os_mbuf *next;
+    struct os_mbuf *cur;
+
+    /* Abort early if there is nothing to trim. */
+    if (om->om_len != 0) {
+        return om;
+    }
+
+    /* Starting with the second mbuf in the chain, continue removing and
+     * freeing mbufs until an non-empty one is encountered.
+     */
+    cur = SLIST_NEXT(om, om_next);
+    while (cur != NULL && cur->om_len == 0) {
+        next = SLIST_NEXT(cur, om_next);
+
+        SLIST_NEXT(om, om_next) = next;
+        os_mbuf_free(cur);
+
+        cur = next;
+    }
+
+    if (cur == NULL) {
+        /* All buffers after the first have been freed. */
+        return om;
+    }
+
+    /* Try to remove the first mbuf in the chain.  If this buffer contains a
+     * packet header, make sure the second buffer can accommodate it.
+     */
+    if (OS_MBUF_LEADINGSPACE(cur) >= om->om_pkthdr_len) {
+        /* Second buffer has room; copy packet header. */
+        cur->om_pkthdr_len = om->om_pkthdr_len;
+        memcpy(OS_MBUF_PKTHDR(cur), OS_MBUF_PKTHDR(om), om->om_pkthdr_len);
+
+        /* Free first buffer. */
+        os_mbuf_free(om);
+        om = cur;
+    }
+
+    return om;
 }
 
 /**

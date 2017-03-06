@@ -37,24 +37,15 @@
 static int imgr_upload(struct mgmt_cbuf *);
 
 static const struct mgmt_handler imgr_nmgr_handlers[] = {
-    [IMGMGR_NMGR_OP_STATE] = {
+    [IMGMGR_NMGR_ID_STATE] = {
         .mh_read = imgmgr_state_read,
         .mh_write = imgmgr_state_write,
     },
-    [IMGMGR_NMGR_OP_UPLOAD] = {
+    [IMGMGR_NMGR_ID_UPLOAD] = {
         .mh_read = NULL,
         .mh_write = imgr_upload
     },
-    [IMGMGR_NMGR_OP_FILE] = {
-#if MYNEWT_VAL(IMGMGR_FS)
-        .mh_read = imgr_file_download,
-        .mh_write = imgr_file_upload
-#else
-        .mh_read = NULL,
-        .mh_write = NULL
-#endif
-    },
-    [IMGMGR_NMGR_OP_CORELIST] = {
+    [IMGMGR_NMGR_ID_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_list,
         .mh_write = NULL
@@ -63,7 +54,7 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_write = NULL
 #endif
     },
-    [IMGMGR_NMGR_OP_CORELOAD] = {
+    [IMGMGR_NMGR_ID_CORELOAD] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_load,
         .mh_write = imgr_core_erase,
@@ -266,14 +257,11 @@ imgr_upload(struct mgmt_cbuf *cb)
     int best;
     int rc;
     int i;
-    CborEncoder *penc = &cb->encoder;
-    CborEncoder rsp;
     CborError g_err = CborNoError;
 
     rc = cbor_read_object(&cb->it, off_attr);
     if (rc || off == UINT_MAX) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
 
     if (off == 0) {
@@ -281,13 +269,11 @@ imgr_upload(struct mgmt_cbuf *cb)
             /*
              * Image header is the first thing in the image.
              */
-            rc = MGMT_ERR_EINVAL;
-            goto err;
+            return MGMT_ERR_EINVAL;
         }
         hdr = (struct image_header *)img_data;
         if (hdr->ih_magic != IMAGE_MAGIC) {
-            rc = MGMT_ERR_EINVAL;
-            goto err;
+            return MGMT_ERR_EINVAL;
         }
 
         /*
@@ -327,12 +313,10 @@ imgr_upload(struct mgmt_cbuf *cb)
             }
             rc = flash_area_open(area_id, &imgr_state.upload.fa);
             if (rc) {
-                rc = MGMT_ERR_EINVAL;
-                goto err;
+                return MGMT_ERR_EINVAL;
             }
             if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
-                rc = MGMT_ERR_EINVAL;
-                goto err;
+                return MGMT_ERR_EINVAL;
             }
             /*
              * XXX only erase if needed.
@@ -343,8 +327,7 @@ imgr_upload(struct mgmt_cbuf *cb)
             /*
              * No slot where to upload!
              */
-            rc = MGMT_ERR_ENOMEM;
-            goto err;
+            return MGMT_ERR_ENOMEM;
         }
     } else if (off != imgr_state.upload.off) {
         /*
@@ -355,8 +338,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     }
 
     if (!imgr_state.upload.fa) {
-        rc = MGMT_ERR_EINVAL;
-        goto err;
+        return MGMT_ERR_EINVAL;
     }
     if (data_len) {
         rc = flash_area_write(imgr_state.upload.fa, imgr_state.upload.off,
@@ -372,13 +354,12 @@ imgr_upload(struct mgmt_cbuf *cb)
             imgr_state.upload.fa = NULL;
         }
     }
+
 out:
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, MGMT_ERR_EOK);
-    g_err |= cbor_encode_text_stringz(&rsp, "off");
-    g_err |= cbor_encode_int(&rsp, imgr_state.upload.off);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "off");
+    g_err |= cbor_encode_int(&cb->encoder, imgr_state.upload.off);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -387,15 +368,16 @@ out:
 err_close:
     flash_area_close(imgr_state.upload.fa);
     imgr_state.upload.fa = NULL;
-err:
-    mgmt_cbuf_setoerr(cb, rc);
-    return 0;
+    return rc;
 }
 
 void
 imgmgr_module_init(void)
 {
     int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
     rc = mgmt_group_register(&imgr_nmgr_group);
     SYSINIT_PANIC_ASSERT(rc == 0);

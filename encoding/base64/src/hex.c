@@ -66,7 +66,7 @@ hex_format(void *src_v, int src_len, char *dst, int dst_len)
  * @return		-1 on failure; number of bytes of input
  */
 int
-hex_parse(char *src, int src_len, void *dst_v, int dst_len)
+hex_parse(const char *src, int src_len, void *dst_v, int dst_len)
 {
     int i;
     uint8_t *dst = (uint8_t *)dst_v;

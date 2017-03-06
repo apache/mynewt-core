@@ -24,6 +24,7 @@
 #include "stats/stats.h"
 #include "os/queue.h"
 #include "host/ble_att.h"
+#include "host/ble_uuid.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -120,7 +121,7 @@ SLIST_HEAD(ble_att_prep_entry_list, ble_att_prep_entry);
 struct ble_att_svr_conn {
     /** This list is sorted by attribute handle ID. */
     struct ble_att_prep_entry_list basc_prep_list;
-    uint32_t basc_prep_write_rx_time;
+    os_time_t basc_prep_timeout_at;
 };
 
 /**
@@ -139,19 +140,16 @@ typedef int ble_att_svr_access_fn(uint16_t conn_handle, uint16_t attr_handle,
                                   uint8_t op, uint16_t offset,
                                   struct os_mbuf **om, void *arg);
 
-int ble_att_svr_register(const uint8_t *uuid, uint8_t flags,
-                         uint16_t *handle_id,
+int ble_att_svr_register(const ble_uuid_t *uuid, uint8_t flags,
+                         uint8_t min_key_size, uint16_t *handle_id,
                          ble_att_svr_access_fn *cb, void *cb_arg);
-int ble_att_svr_register_uuid16(uint16_t uuid16, uint8_t flags,
-                                uint16_t *handle_id, ble_att_svr_access_fn *cb,
-                                void *cb_arg);
 
 struct ble_att_svr_entry {
     STAILQ_ENTRY(ble_att_svr_entry) ha_next;
 
-    uint8_t ha_uuid[16];
+    const ble_uuid_t *ha_uuid;
     uint8_t ha_flags;
-    uint8_t ha_pad1;
+    uint8_t ha_min_key_size;
     uint16_t ha_handle_id;
     ble_att_svr_access_fn *ha_cb;
     void *ha_cb_arg;
@@ -161,13 +159,14 @@ SLIST_HEAD(ble_att_clt_entry_list, ble_att_clt_entry);
 
 /*** @gen */
 
-struct ble_l2cap_chan *ble_att_create_chan(void);
+struct ble_l2cap_chan *ble_att_create_chan(uint16_t conn_handle);
 void ble_att_conn_chan_find(uint16_t conn_handle, struct ble_hs_conn **out_conn,
                             struct ble_l2cap_chan **out_chan);
 void ble_att_inc_tx_stat(uint8_t att_op);
 void ble_att_truncate_to_mtu(const struct ble_l2cap_chan *att_chan,
                              struct os_mbuf *txom);
 void ble_att_set_peer_mtu(struct ble_l2cap_chan *chan, uint16_t peer_mtu);
+uint16_t ble_att_chan_mtu(const struct ble_l2cap_chan *chan);
 int ble_att_init(void);
 
 #define BLE_ATT_LOG_CMD(is_tx, cmd_name, conn_handle, log_cb, cmd) \
@@ -182,11 +181,13 @@ int ble_att_svr_start(void);
 
 struct ble_att_svr_entry *
 ble_att_svr_find_by_uuid(struct ble_att_svr_entry *start_at,
-                         const uint8_t *uuid,
+                         const ble_uuid_t *uuid,
                          uint16_t end_handle);
 uint16_t ble_att_svr_prev_handle(void);
 int ble_att_svr_rx_mtu(uint16_t conn_handle, struct os_mbuf **rxom);
 struct ble_att_svr_entry *ble_att_svr_find_by_handle(uint16_t handle_id);
+int32_t ble_att_svr_ticks_until_tmo(const struct ble_att_svr_conn *svr,
+                                    os_time_t now);
 int ble_att_svr_rx_find_info(uint16_t conn_handle, struct os_mbuf **rxom);
 int ble_att_svr_rx_find_type_value(uint16_t conn_handle,
                                    struct os_mbuf **rxom);
@@ -223,7 +224,7 @@ int ble_att_svr_init(void);
 /** An information-data entry in a find information response. */
 struct ble_att_find_info_idata {
     uint16_t attr_handle;
-    uint8_t uuid128[16];
+    ble_uuid_any_t uuid;
 };
 
 /** A handles-information entry in a find by type value response. */
@@ -263,11 +264,11 @@ int ble_att_clt_tx_read_mult(uint16_t conn_handle,
 int ble_att_clt_rx_read_mult(uint16_t conn_handle, struct os_mbuf **rxom);
 int ble_att_clt_tx_read_type(uint16_t conn_handle,
                              const struct ble_att_read_type_req *req,
-                             const void *uuid128);
+                             const ble_uuid_t *uuid);
 int ble_att_clt_rx_read_type(uint16_t conn_handle, struct os_mbuf **rxom);
 int ble_att_clt_tx_read_group_type(
     uint16_t conn_handle, const struct ble_att_read_group_type_req *req,
-    const void *uuid128);
+    const ble_uuid_t *uuid128);
 int ble_att_clt_rx_read_group_type(uint16_t conn_handle,
                                    struct os_mbuf **rxom);
 int ble_att_clt_tx_find_info(uint16_t conn_handle,

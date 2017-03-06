@@ -16,28 +16,100 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <string.h>
+
 #include <log/log.h>
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
+#include <mn_socket/mn_socket.h>
+#endif
+#include "oic/oc_log.h"
+#include "port/oc_connectivity.h"
 
-/* logging data for this module. TODO, the application should
- * define the logging strategy for this module */
-#define MAX_CBMEM_BUF   (600)
-static uint32_t *cbmem_buf;
-static struct cbmem cbmem;
-struct log oc_log;
+void
+oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
+{
+    char *str;
+    char tmp[46 + 6];
 
-int
-oc_log_init(void) {
+    (void)tmp;
+    (void)str;
 
-    log_init();
+    switch (oe->oe.flags) {
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
+    case IP: {
+        int len;
 
-    cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
-    if (cbmem_buf == NULL) {
-        return -1;
+        mn_inet_ntop(MN_PF_INET6, oe->oe_ip.v6.address, tmp, sizeof(tmp));
+        len = strlen(tmp);
+        snprintf(tmp + len, sizeof(tmp) - len, "-%u\n", oe->oe_ip.v6.port);
+        str = tmp;
+        break;
     }
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+    case GATT:
+        snprintf(tmp, sizeof(tmp), "ble %u\n", oe->oe_ble.conn_handle);
+        str = tmp;
+        break;
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+    case SERIAL:
+        str = "serial\n";
+        break;
+#endif
+    case MULTICAST:
+        str = "multicast\n";
+        break;
+    default:
+        str = "<unkwn>\n";
+        break;
+    }
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, str);
+}
 
-    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_register("iot", &oc_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
+void
+oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char)
+{
+    int i;
+    uint8_t *p = (uint8_t *)addr;
 
-    LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY, "OC Init");
-    return 0;
+    (void)p;
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "[");
+    for (i = 0; i < len; i++) {
+        if (print_char) {
+            log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%c", p[i]);
+        } else {
+            log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%02x", p[i]);
+        }
+    }
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "]\n");
+}
+
+void
+oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *m, int off, int len,
+                  int print_char)
+{
+    int i;
+    uint8_t tmp[4];
+    int blen;
+
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "[");
+    while (len) {
+        blen = len;
+        if (blen > sizeof(tmp)) {
+            blen = sizeof(tmp);
+        }
+        os_mbuf_copydata(m, off, blen, tmp);
+        for (i = 0; i < blen; i++) {
+            if (print_char) {
+                log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%c", tmp[i]);
+            } else {
+                log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%02x", tmp[i]);
+            }
+        }
+        off += blen;
+        len -= blen;
+    }
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "]\n");
 }

@@ -38,8 +38,7 @@
 
 #include "transactions.h"
 #include "observe.h"
-#include "oc_buffer.h"
-#include "util/oc_list.h"
+#include "api/oc_buffer.h"
 
 #ifdef OC_CLIENT
 #include "oc_client_state.h"
@@ -54,8 +53,7 @@
 static struct os_mempool oc_transaction_memb;
 static uint8_t oc_transaction_area[OS_MEMPOOL_BYTES(COAP_MAX_OPEN_TRANSACTIONS,
       sizeof(coap_transaction_t))];
-
-OC_LIST(transactions_list);
+static SLIST_HEAD(, coap_transaction) oc_transaction_list;
 
 static void coap_transaction_retrans(struct os_event *ev);
 
@@ -70,24 +68,20 @@ coap_transaction_t *
 coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
 {
     coap_transaction_t *t;
+    struct os_mbuf *m;
 
     t = os_memblock_get(&oc_transaction_memb);
     if (t) {
-        oc_message_t *message = oc_allocate_message();
-        if (message) {
-            LOG("Created new transaction %d %d\n", mid, (int) message->length);
+        m = oc_allocate_mbuf(endpoint);
+        if (m) {
             t->mid = mid;
             t->retrans_counter = 0;
-
-            t->message = message;
-
-            /* save client address */
-            memcpy(&t->message->endpoint, endpoint, sizeof(oc_endpoint_t));
+            t->m = m;
 
             os_callout_init(&t->retrans_timer, oc_evq_get(),
               coap_transaction_retrans, t);
             /* list itself makes sure same element is not added twice */
-            oc_list_add(transactions_list, t);
+            SLIST_INSERT_HEAD(&oc_transaction_list, t, next);
         } else {
             os_memblock_put(&oc_transaction_memb, t);
             t = NULL;
@@ -101,77 +95,79 @@ coap_new_transaction(uint16_t mid, oc_endpoint_t *endpoint)
 void
 coap_send_transaction(coap_transaction_t *t)
 {
-  LOG("Sending transaction %u\n", t->mid);
-  bool confirmable = false;
+    bool confirmable = false;
 
-  confirmable =
-    (COAP_TYPE_CON == ((COAP_HEADER_TYPE_MASK & t->message->data[0]) >>
-                       COAP_HEADER_TYPE_POSITION))
-      ? true
-      : false;
+    confirmable = (COAP_TYPE_CON == t->type) ? true : false;
 
-  if (confirmable) {
-    if (t->retrans_counter < COAP_MAX_RETRANSMIT) {
-      /* not timed out yet */
-      LOG("Keeping transaction %u\n", t->mid);
+    OC_LOG_DEBUG("Sending transaction %u\n", t->mid);
 
-      if (t->retrans_counter == 0) {
-        t->retrans_tmo =
-          COAP_RESPONSE_TIMEOUT_TICKS +
-          (oc_random_rand() %
-           (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
-        LOG("Initial interval " OC_CLK_FMT "\n", t->retrans_tmo);
-      } else {
-        t->retrans_tmo <<= 1; /* double */
-        LOG("Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
-      }
+    if (confirmable) {
+        if (t->retrans_counter < COAP_MAX_RETRANSMIT) {
+            /* not timed out yet */
+            if (t->retrans_counter == 0) {
+                t->retrans_tmo =
+                  COAP_RESPONSE_TIMEOUT_TICKS +
+                  (oc_random_rand() %
+                    (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
+                OC_LOG_DEBUG("Initial interval " OC_CLK_FMT "\n",
+                             t->retrans_tmo);
+            } else {
+                t->retrans_tmo <<= 1; /* double */
+                OC_LOG_DEBUG("Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
+            }
 
-      os_callout_reset(&t->retrans_timer, t->retrans_tmo);
+            os_callout_reset(&t->retrans_timer, t->retrans_tmo);
 
-      coap_send_message(t->message);
+            coap_send_message(t->m, 1);
 
-      oc_message_add_ref(t->message);
-
-      t = NULL;
-    } else {
-      /* timed out */
-      LOG("Timeout\n");
+            t = NULL;
+        } else {
+            /* timed out */
+            OC_LOG_DEBUG("Timeout\n");
 
 #ifdef OC_SERVER
-      LOG("timeout.. so removing observers\n");
-      /* handle observers */
-      coap_remove_observer_by_client(&t->message->endpoint);
+            /* handle observers */
+            coap_remove_observer_by_client(OC_MBUF_ENDPOINT(t->m));
 #endif /* OC_SERVER */
 
 #ifdef OC_SECURITY
-      if (t->message->endpoint.flags & SECURED) {
-        oc_sec_dtls_close_init(&t->message->endpoint);
-      }
+            if (OC_MBUF_ENDPOINT(t->m)->flags & SECURED) {
+                oc_sec_dtls_close_init(OC_MBUF_ENDPOINT(t->m));
+            }
 #endif /* OC_SECURITY */
 
 #ifdef OC_CLIENT
-      oc_ri_remove_client_cb_by_mid(t->mid);
+            oc_ri_remove_client_cb_by_mid(t->mid);
 #endif /* OC_CLIENT */
 
-      coap_clear_transaction(t);
-    }
-  } else {
-    coap_send_message(t->message);
-    oc_message_add_ref(t->message);
+            coap_clear_transaction(t);
+        }
+    } else {
+        coap_send_message(t->m, 0);
+        t->m = NULL;
 
-    coap_clear_transaction(t);
-  }
+        coap_clear_transaction(t);
+    }
 }
 /*---------------------------------------------------------------------------*/
 void
 coap_clear_transaction(coap_transaction_t *t)
 {
-    if (t) {
-        LOG("Freeing transaction %u: %p\n", t->mid, t);
+    struct coap_transaction *tmp;
 
+    if (t) {
         os_callout_stop(&t->retrans_timer);
-        oc_message_unref(t->message);
-        oc_list_remove(transactions_list, t);
+        os_mbuf_free_chain(t->m);
+
+        /*
+         * Transaction might not be in the list yet.
+         */
+        SLIST_FOREACH(tmp, &oc_transaction_list, next) {
+            if (t == tmp) {
+                SLIST_REMOVE(&oc_transaction_list, t, coap_transaction, next);
+                break;
+            }
+        }
         os_memblock_put(&oc_transaction_memb, t);
   }
 }
@@ -179,16 +175,14 @@ coap_clear_transaction(coap_transaction_t *t)
 coap_transaction_t *
 coap_get_transaction_by_mid(uint16_t mid)
 {
-  coap_transaction_t *t = NULL;
+    coap_transaction_t *t;
 
-  for (t = (coap_transaction_t *)oc_list_head(transactions_list); t;
-       t = t->next) {
-    if (t->mid == mid) {
-      LOG("Found transaction for MID %u: %p\n", t->mid, t);
-      return t;
+    SLIST_FOREACH(t, &oc_transaction_list, next) {
+        if (t->mid == mid) {
+            return t;
+        }
     }
-  }
-  return NULL;
+    return NULL;
 }
 
 static void
@@ -196,7 +190,7 @@ coap_transaction_retrans(struct os_event *ev)
 {
     coap_transaction_t *t = ev->ev_arg;
     ++(t->retrans_counter);
-    LOG("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
+    OC_LOG_DEBUG("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
     coap_send_transaction(t);
 }
 

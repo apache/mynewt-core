@@ -26,5 +26,8 @@ pkg.keywords:
     - filesystem
     - ffs
 
+pkg.deps:
+    - fs/disk
+
 pkg.deps.FS_CLI:
     - sys/shell

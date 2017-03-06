@@ -21,20 +21,83 @@
 #include "fs/fs.h"
 #include "fs/fs_if.h"
 #include "fs_priv.h"
+#include <string.h>
 
-const struct fs_ops *fs_root_ops = NULL;
-
-int
-fs_register(const struct fs_ops *fops)
-{
-    if (fs_root_ops) {
-        return FS_EEXIST;
-    }
-    fs_root_ops = fops;
+static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
 
 #if MYNEWT_VAL(FS_CLI)
-    fs_cli_init();
+static uint8_t g_cli_initialized;
+#endif
+
+#if MYNEWT_VAL(FS_NMGR)
+static uint8_t g_nmgr_initialized;
+#endif
+
+int
+fs_register(struct fs_ops *fops)
+{
+    struct fs_ops *sc;
+
+    SLIST_FOREACH(sc, &root_fops, sc_next) {
+        if (strcmp(sc->f_name, fops->f_name) == 0) {
+            return FS_EEXIST;
+        }
+    }
+
+    SLIST_INSERT_HEAD(&root_fops, fops, sc_next);
+
+#if MYNEWT_VAL(FS_CLI)
+    if (!g_cli_initialized) {
+        fs_cli_init();
+        g_cli_initialized = 1;
+    }
+#endif
+
+#if MYNEWT_VAL(FS_NMGR)
+    if (!g_nmgr_initialized) {
+        fs_nmgr_init();
+        g_nmgr_initialized = 1;
+    }
 #endif
 
     return FS_EOK;
+}
+
+struct fs_ops *
+fs_ops_try_unique(void)
+{
+    struct fs_ops *fops = SLIST_FIRST(&root_fops);
+
+    if (fops && !SLIST_NEXT(fops, sc_next)) {
+        return fops;
+    }
+
+    return NULL;
+}
+
+struct fs_ops *
+fs_ops_for(const char *fs_name)
+{
+    struct fs_ops *fops = NULL;
+    struct fs_ops *sc;
+
+    SLIST_FOREACH(sc, &root_fops, sc_next) {
+        if (strcmp(sc->f_name, fs_name) == 0) {
+            fops = sc;
+            break;
+        }
+    }
+
+    return fops;
+}
+
+struct fs_ops not_initialized_ops;
+
+struct fs_ops *
+fs_ops_from_container(struct fops_container *container)
+{
+    if (!container) {
+        return &not_initialized_ops;
+    }
+    return container->fops;
 }

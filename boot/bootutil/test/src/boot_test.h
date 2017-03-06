@@ -59,6 +59,7 @@ extern struct boot_test_img_addrs boot_test_img_addrs[];
 #define BOOT_TEST_AREA_IDX_SCRATCH 6
 
 uint8_t boot_test_util_byte_at(int img_msb, uint32_t image_offset);
+uint8_t boot_test_util_flash_align(void);
 void boot_test_util_init_flash(void);
 void boot_test_util_copy_area(int from_area_idx, int to_area_idx);
 void boot_test_util_swap_areas(int area_idx1, int area_idx2);
@@ -66,6 +67,7 @@ void boot_test_util_write_image(const struct image_header *hdr,
                                        int slot);
 void boot_test_util_write_hash(const struct image_header *hdr, int slot);
 void boot_test_util_mark_revert(void);
+void boot_test_util_mark_swap_perm(void);
 void boot_test_util_verify_area(const struct flash_area *area_desc,
                                        const struct image_header *hdr,
                                        uint32_t image_addr, int img_msb);

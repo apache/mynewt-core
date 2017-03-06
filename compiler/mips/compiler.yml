@@ -18,7 +18,7 @@
 #
 
 compiler.path.cc: "mips-mti-elf-gcc"
-compiler.path.as: "mips-mti-elf-gcc -x assembler-with-cpp"
+compiler.path.as: "mips-mti-elf-gcc"
 compiler.path.archive: "mips-mti-elf-ar"
 compiler.path.objdump: "mips-mti-elf-objdump"
 compiler.path.objsize: "mips-mti-elf-size"
@@ -28,6 +28,8 @@ compiler.flags.base: -std=gnu11 -EL -mips32r2 -Wall -Werror
 compiler.flags.default: [compiler.flags.base, -O2, -g]
 compiler.flags.optimized: [compiler.flags.base, -Os, -g]
 compiler.flags.debug: [compiler.flags.base, -g3]
+
+compiler.as.flags: [-x, assembler-with-cpp]
 
 compiler.ld.flags: -Wl,-defsym,__app_start=0x80000000
 compiler.ld.resolve_circular_deps: true

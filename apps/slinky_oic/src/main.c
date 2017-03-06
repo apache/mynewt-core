@@ -34,9 +34,9 @@
 #include <bootutil/image.h>
 #include <imgmgr/imgmgr.h>
 #include <mgmt/mgmt.h>
+#include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
-#include <json/json.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 
@@ -55,13 +55,6 @@ static volatile int g_task1_loops;
 #define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
-
-/* Task 3 */
-#define TASK3_PRIO (10)
-#define TASK3_STACK_SIZE    OS_STACK_ALIGN(512)
-static struct os_task task3;
-
-static struct os_eventq slinky_oic_evq;
 
 static struct log my_log;
 
@@ -206,17 +199,22 @@ task2_handler(void *arg)
     }
 }
 
-/**
- * This task serves as a container for the shell and newtmgr packages.  These
- * packages enqueue timer events when they need this task to do work.
+/*
+ * OIC platform/resource registration.
  */
 static void
-task3_handler(void *arg)
+omgr_app_init(void)
 {
-    while (1) {
-        os_eventq_run(&slinky_oic_evq);
-    }
+    oc_init_platform("MyNewt", NULL, NULL);
+    /*
+      oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
+                  NULL);
+    */
 }
+
+static const oc_handler_t omgr_oc_handler = {
+    .init = omgr_app_init,
+};
 
 /**
  * init_tasks
@@ -245,27 +243,15 @@ init_tasks(void)
     os_task_init(&task2, "task2", task2_handler, NULL,
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 
-    pstack = malloc(sizeof(os_stack_t)*TASK3_STACK_SIZE);
-    assert(pstack);
-
-    os_task_init(&task3, "task3", task3_handler, NULL,
-            TASK3_PRIO, OS_WAIT_FOREVER, pstack, TASK3_STACK_SIZE);
-
-    /* Initialize eventq and designate it as the default.  Packages that need
-     * to schedule work items will piggyback on this eventq.  Example packages
-     * which do this are sys/shell and mgmt/newtmgr.
-     */
-    os_eventq_init(&slinky_oic_evq);
-    os_eventq_dflt_set(&slinky_oic_evq);
-    mgmt_evq_set(&slinky_oic_evq);
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
 }
 
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages, calls
+ * init_tasks to initialize additional tasks (and possibly other objects),
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -286,6 +272,9 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
+    /* Initialize the OIC  */
+    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),
                STATS_NAME_INIT_PARMS(gpio_stats));
@@ -294,7 +283,7 @@ main(int argc, char **argv)
 
     conf_load();
 
-    log_reboot(HARD_REBOOT);
+    log_reboot(hal_reset_cause());
 
 #if MYNEWT_VAL(SPLIT_LOADER)
     {
@@ -308,10 +297,10 @@ main(int argc, char **argv)
 
     init_tasks();
 
-    os_start();
-
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never returns */
 
     return rc;
 }

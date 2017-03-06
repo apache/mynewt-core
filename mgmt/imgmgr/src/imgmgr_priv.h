@@ -93,9 +93,6 @@ struct imgr_state {
         uint32_t off;
         uint32_t size;
         const struct flash_area *fa;
-#if MYNEWT_VAL(IMGMGR_FS)
-        struct fs_file *file;
-#endif
     } upload;
 };
 
@@ -103,15 +100,9 @@ extern struct imgr_state imgr_state;
 
 struct nmgr_jbuf;
 
-int imgr_boot2_read(struct mgmt_cbuf *);
-int imgr_boot2_write(struct mgmt_cbuf *);
-int imgr_file_upload(struct mgmt_cbuf *);
-int imgr_file_download(struct mgmt_cbuf *);
 int imgr_core_list(struct mgmt_cbuf *);
 int imgr_core_load(struct mgmt_cbuf *);
 int imgr_core_erase(struct mgmt_cbuf *);
-int imgr_splitapp_read(struct mgmt_cbuf *);
-int imgr_splitapp_write(struct mgmt_cbuf *);
 int imgmgr_state_read(struct mgmt_cbuf *cb);
 int imgmgr_state_write(struct mgmt_cbuf *njb);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);

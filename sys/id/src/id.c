@@ -149,6 +149,9 @@ id_init(void)
 {
     int rc;
 
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     rc = conf_register(&id_conf);
     SYSINIT_PANIC_ASSERT(rc == 0);
 

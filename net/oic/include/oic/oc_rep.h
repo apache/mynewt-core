@@ -31,7 +31,8 @@ extern "C" {
 extern CborEncoder g_encoder, root_map, links_array;
 extern CborError g_err;
 
-void oc_rep_new(uint8_t *payload, int size);
+struct os_mbuf;
+void oc_rep_new(struct os_mbuf *m);
 void oc_rep_reset(void);
 int oc_rep_finalize(void);
 
@@ -190,6 +191,7 @@ int oc_rep_finalize(void);
     g_err |= cbor_encoder_close_container(&object##_map, &key##_value_array);  \
   } while (0)
 
+#ifdef OC_CLIENT
 typedef enum {
   NIL = 0,
   INT = 0x01,
@@ -219,15 +221,17 @@ typedef struct oc_rep_s
     double value_double;
     oc_string_t value_string;
     oc_array_t value_array;
+    oc_string_array_t value_string_array;
     struct oc_rep_s *value_object;
     struct oc_rep_s *value_object_array;
   };
 } oc_rep_t;
 
-uint16_t oc_parse_rep(const uint8_t *payload, uint16_t payload_size,
-                      oc_rep_t **value_list);
+uint16_t oc_parse_rep(struct os_mbuf *m, uint16_t payload_off,
+                      uint16_t payload_size, oc_rep_t **out_rep);
 
 void oc_free_rep(oc_rep_t *rep);
+#endif
 
 #ifdef __cplusplus
 }

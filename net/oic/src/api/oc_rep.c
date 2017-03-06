@@ -17,37 +17,38 @@
 #include <stddef.h>
 #include <os/os_mempool.h>
 
-#include "oc_rep.h"
+#include "oic/oc_rep.h"
+#include "oic/oc_log.h"
 #include "config.h"
 #include "port/oc_assert.h"
-#include "port/oc_log.h"
 #include "api/oc_priv.h"
-#include <tinycbor/cbor_buf_writer.h>
-#include <tinycbor/cbor_buf_reader.h>
+#include <tinycbor/cbor_mbuf_writer.h>
+#include <tinycbor/cbor_mbuf_reader.h>
 
+#ifdef OC_CLIENT
 static struct os_mempool oc_rep_objects;
 static uint8_t oc_rep_objects_area[OS_MEMPOOL_BYTES(EST_NUM_REP_OBJECTS,
       sizeof(oc_rep_t))];
+#endif
 
-static const CborEncoder g_empty;
-static uint8_t *g_buf;
+static struct os_mbuf *g_outm;
 CborEncoder g_encoder, root_map, links_array;
 CborError g_err;
-struct CborBufWriter g_buf_writer;
+struct cbor_mbuf_writer g_buf_writer;
 
 void
-oc_rep_new(uint8_t *out_payload, int size)
+oc_rep_new(struct os_mbuf *m)
 {
     g_err = CborNoError;
-    g_buf = out_payload;
-    cbor_buf_writer_init(&g_buf_writer, out_payload, size);
+    g_outm = m;
+    cbor_mbuf_writer_init(&g_buf_writer, m);
     cbor_encoder_init(&g_encoder, &g_buf_writer.enc, 0);
 }
 
 int
 oc_rep_finalize(void)
 {
-    int size = cbor_buf_writer_buffer_size(&g_buf_writer, g_buf);
+    int size = OS_MBUF_PKTLEN(g_outm);
     oc_rep_reset();
     if (g_err != CborNoError) {
         return -1;
@@ -58,9 +59,10 @@ oc_rep_finalize(void)
 void
 oc_rep_reset(void)
 {
-    g_encoder = g_empty;
+    memset(&g_encoder, 0, sizeof(g_encoder));
 }
 
+#ifdef OC_CLIENT
 static oc_rep_t *
 _alloc_rep(void)
 {
@@ -142,8 +144,7 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
   *err |= cbor_value_calculate_string_length(value, &len);
   len++;
   oc_alloc_string(&cur->name, len);
-  *err |= cbor_value_copy_text_string(value, (char *)oc_string(cur->name), &len,
-                                      NULL);
+  *err |= cbor_value_copy_text_string(value, oc_string(cur->name), &len, NULL);
   *err |= cbor_value_advance(value);
   /* value */
   switch (value->type) {
@@ -163,8 +164,9 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
     *err |= cbor_value_calculate_string_length(value, &len);
     len++;
     oc_alloc_string(&cur->value_string, len);
-    *err |= cbor_value_copy_byte_string(
-      value, oc_cast(cur->value_string, uint8_t), &len, NULL);
+    *err |= cbor_value_copy_byte_string(value,
+                                        (uint8_t *)oc_string(cur->value_string),
+                                        &len, NULL);
     cur->type = BYTE_STRING;
     break;
   case CborTextStringType:
@@ -279,15 +281,15 @@ oc_parse_rep_value(CborValue *value, oc_rep_t **rep, CborError *err)
 }
 
 uint16_t
-oc_parse_rep(const uint8_t *in_payload, uint16_t payload_size,
-             oc_rep_t **out_rep)
+oc_parse_rep(struct os_mbuf *m, uint16_t payload_off,
+             uint16_t payload_size, oc_rep_t **out_rep)
 {
   CborParser parser;
   CborValue root_value, cur_value, map;
   CborError err = CborNoError;
-  struct cbor_buf_reader br;
+  struct cbor_mbuf_reader br;
 
-  cbor_buf_reader_init(&br, in_payload, payload_size);
+  cbor_mbuf_reader_init(&br, m, payload_off);
   err |= cbor_parser_init(&br.r, 0, &parser, &root_value);
   if (cbor_value_is_map(&root_value)) {
     err |= cbor_value_enter_container(&root_value, &cur_value);
@@ -321,3 +323,4 @@ oc_rep_init(void)
     os_mempool_init(&oc_rep_objects, EST_NUM_REP_OBJECTS,
       sizeof(oc_rep_t), oc_rep_objects_area, "oc_rep_o");
 }
+#endif

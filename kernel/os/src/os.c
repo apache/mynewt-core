@@ -42,6 +42,10 @@ struct os_task g_idle_task;
 os_stack_t g_idle_task_stack[OS_STACK_ALIGN(OS_IDLE_STACK_SIZE)];
 
 uint32_t g_os_idle_ctr;
+
+static struct os_task os_main_task;
+static os_stack_t os_main_stack[OS_STACK_ALIGN(OS_MAIN_STACK_SIZE)];
+
 /* Default zero.  Set by the architecture specific code when os is started.
  */
 int g_os_started;
@@ -123,6 +127,21 @@ os_started(void)
     return (g_os_started);
 }
 
+static void
+os_main(void *arg)
+{
+    int (*fn)(int argc, char **argv) = arg;
+
+#if !MYNEWT_VAL(SELFTEST)
+    fn(0, NULL);
+#else
+    (void)fn;
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+#endif
+    assert(0);
+}
 
 void
 os_init_idle_task(void)
@@ -149,12 +168,13 @@ os_init_idle_task(void)
  * support to initialize the operating system.
  */
 void
-os_init(void)
+os_init(int (*main_fn)(int argc, char **arg))
 {
     os_error_t err;
 
     TAILQ_INIT(&g_callout_list);
     STAILQ_INIT(&g_os_task_list);
+    os_eventq_init(os_eventq_dflt_get());
 
     /* Initialize device list. */
     os_dev_reset();
@@ -162,6 +182,12 @@ os_init(void)
     err = os_arch_os_init();
     assert(err == OS_OK);
 
+    if (main_fn) {
+        err = os_task_init(&os_main_task, "main", os_main, main_fn,
+                           OS_MAIN_TASK_PRIO, OS_WAIT_FOREVER, os_main_stack,
+                           OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
+        assert(err == 0);
+    }
     /* Call bsp related OS initializations */
     hal_bsp_init();
 
@@ -179,21 +205,30 @@ os_init(void)
 void
 os_start(void)
 {
+#if MYNEWT_VAL(OS_SCHEDULING)
     os_error_t err;
-
-    err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
-    assert(err == OS_OK);
 
     /* Enable the watchdog prior to starting the OS */
     hal_watchdog_enable();
 
     err = os_arch_os_start();
     assert(err == OS_OK);
+#else
+    assert(0);
+#endif
 }
 
 void
 os_pkg_init(void)
 {
+    os_error_t err;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
+    assert(err == OS_OK);
+
     os_msys_init();
 }
 

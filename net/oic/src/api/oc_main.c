@@ -20,8 +20,6 @@
 #include "port/oc_assert.h"
 #include "port/oc_clock.h"
 #include "port/oc_connectivity.h"
-#include "port/oc_connectivity.h"
-#include "port/oc_network_events_mutex.h"
 
 #include "oc_api.h"
 
@@ -36,57 +34,58 @@ static bool initialized = false;
 int
 oc_main_init(oc_handler_t *handler)
 {
-  int ret;
-  extern int oc_stack_errno;
+    int ret;
+    extern int oc_stack_errno;
 
-  if (initialized == true)
-    return 0;
-
-  oc_ri_init();
+    if (initialized == true) {
+        return 0;
+    }
+    oc_ri_init();
 
 #ifdef OC_SECURITY
-  handler->get_credentials();
+    handler->get_credentials();
 
-  oc_sec_load_pstat();
-  oc_sec_load_doxm();
-  oc_sec_load_cred();
+    oc_sec_load_pstat();
+    oc_sec_load_doxm();
+    oc_sec_load_cred();
 
-  oc_sec_dtls_init_context();
+    oc_sec_dtls_init_context();
 #endif
 
-  oc_network_event_handler_mutex_init();
-  ret = oc_connectivity_init();
-  if (ret < 0)
-    goto err;
-
-  handler->init();
+    ret = oc_connectivity_init();
+    if (ret < 0) {
+        goto err;
+    }
+    handler->init();
 
 #ifdef OC_SERVER
-  handler->register_resources();
+    if (handler->register_resources) {
+        handler->register_resources();
+    }
 #endif
 
 #ifdef OC_SECURITY
-  oc_sec_create_svr();
-  oc_sec_load_acl();
+    oc_sec_create_svr();
+    oc_sec_load_acl();
 #endif
 
-  if (oc_stack_errno != 0) {
-    ret = -oc_stack_errno;
-    goto err;
-  }
+    if (oc_stack_errno != 0) {
+        ret = -oc_stack_errno;
+        goto err;
+    }
 
-  PRINT("oc_main: Stack successfully initialized\n");
+    OC_LOG_INFO("oci: Initialized\n");
 
 #ifdef OC_CLIENT
-  handler->requests_entry();
+    handler->requests_entry();
 #endif
 
-  initialized = true;
-  return 0;
+    initialized = true;
+    return 0;
 
 err:
-  oc_abort("oc_main: Error in stack initialization\n");
-  return ret;
+    oc_abort("oc_main: Error in stack initialization\n");
+    return ret;
 }
 
 oc_clock_time_t
@@ -98,17 +97,17 @@ oc_main_poll(void)
 void
 oc_main_shutdown(void)
 {
-  if (initialized == false) {
-    PRINT("tiny_ocf is not initialized\n");
-    return;
-  }
+    if (initialized == false) {
+        OC_LOG_ERROR("oci: not initialized\n");
+        return;
+    }
 
-  oc_connectivity_shutdown();
-  oc_ri_shutdown();
+    oc_connectivity_shutdown();
+    oc_ri_shutdown();
 
-#ifdef OC_SECURITY /* fix ensure this gets executed on constraied platforms */
-  oc_sec_dump_state();
+#ifdef OC_SECURITY /* fix ensure this gets executed on constrained platforms */
+    oc_sec_dump_state();
 #endif
 
-  initialized = false;
+    initialized = false;
 }

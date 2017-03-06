@@ -20,8 +20,7 @@
 #include <assert.h>
 #include "hal/hal_watchdog.h"
 #include "bsp/cmsis_nvic.h"
-#include "nrf52.h"
-#include "nrf52_bitfields.h"
+#include "nrf.h"
 
 static void
 nrf52_hal_wdt_default_handler(void)

@@ -29,3 +29,5 @@ pkg.deps:
 pkg.deps.SELFTEST:
     - fs/nffs
     - sys/console/stub
+    - sys/log/full
+    - sys/stats/stub

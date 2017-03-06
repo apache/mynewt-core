@@ -23,8 +23,10 @@
 
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
+#include "defs/error.h"
 #include "console/console.h"
 #include "console/prompt.h"
+#include "console/ticks.h"
 #include "os/os.h"
 #include "os/endian.h"
 #include "base64/base64.h"
@@ -43,6 +45,8 @@ static struct os_mqueue g_shell_nlip_mq;
 static int shell_echo_cmd(int argc, char **argv);
 static int shell_help_cmd(int argc, char **argv);
 int shell_prompt_cmd(int argc, char **argv);
+int shell_ticks_cmd(int argc, char **argv);
+
 
 static void shell_event_console_rdy(struct os_event *ev);
 
@@ -60,6 +64,10 @@ static struct shell_cmd g_shell_help_cmd = {
 static struct shell_cmd g_shell_prompt_cmd = {
    .sc_cmd = "prompt",
    .sc_cmd_func = shell_prompt_cmd
+}; 
+static struct shell_cmd g_shell_ticks_cmd = {
+   .sc_cmd = "ticks",
+   .sc_cmd_func = shell_ticks_cmd
 };
 static struct shell_cmd g_shell_os_tasks_display_cmd = {
     .sc_cmd = "tasks",
@@ -93,7 +101,6 @@ static uint16_t g_nlip_expected_len;
 static struct os_eventq *
 shell_evq_get(void)
 {
-    os_eventq_ensure(&shell_evq, NULL);
     return shell_evq;
 }
 
@@ -139,10 +146,48 @@ err:
     return (rc);
 }
 
+static int
+shell_cmd_find(char *cmd_name, struct shell_cmd **out_cmd)
+{
+    struct shell_cmd *sc;
+    int rc;
+
+    rc = shell_cmd_list_lock();
+    if (rc != 0) {
+        return rc;
+    }
+
+    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
+        if (!strcmp(sc->sc_cmd, cmd_name)) {
+            break;
+        }
+    }
+
+    rc = shell_cmd_list_unlock();
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (out_cmd != NULL) {
+        *out_cmd = sc;
+    }
+
+    if (sc == NULL) {
+        return SYS_ENOENT;
+    }
+
+    return 0;
+}
+
 int
 shell_cmd_register(struct shell_cmd *sc)
 {
     int rc;
+
+#if MYNEWT_VAL(SHELL_DEBUG)
+    /* Ensure command not already registered. */
+    assert(shell_cmd_find(sc->sc_cmd, NULL) == SYS_ENOENT);
+#endif
 
     /* Add the command that is being registered. */
     rc = shell_cmd_list_lock();
@@ -165,34 +210,22 @@ err:
 static int
 shell_cmd(char *cmd, char **argv, int argc)
 {
-    struct shell_cmd *sc;
+    struct shell_cmd *sc = NULL;
     int rc;
 
-    rc = shell_cmd_list_lock();
-    if (rc != 0) {
-        goto err;
-    }
-
-    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
-        if (!strcmp(sc->sc_cmd, cmd)) {
-            break;
-        }
-    }
-
-    rc = shell_cmd_list_unlock();
-    if (rc != 0) {
-        goto err;
-    }
-
-    if (sc) {
+    rc = shell_cmd_find(cmd, &sc);
+    switch (rc) {
+    case 0:
         sc->sc_cmd_func(argc, argv);
-    } else {
-        console_printf("Unknown command %s\n", cmd);
-    }
+        return 0;
 
-    return (0);
-err:
-    return (rc);
+    case SYS_ENOENT:
+        console_printf("Unknown command %s\n", cmd);
+        return 0;
+
+    default:
+        return rc;
+    }
 }
 
 static int
@@ -530,6 +563,9 @@ shell_help_cmd(int argc, char **argv)
 void
 shell_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
 #if !MYNEWT_VAL(SHELL_TASK)
     return;
 #endif
@@ -555,6 +591,9 @@ shell_init(void)
 
     rc = shell_cmd_register(&g_shell_prompt_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
+    
+    rc = shell_cmd_register(&g_shell_ticks_cmd);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
     SYSINIT_PANIC_ASSERT(rc == 0);
@@ -567,4 +606,6 @@ shell_init(void)
 
     os_mqueue_init(&g_shell_nlip_mq, shell_event_data_in, NULL);
     console_init(shell_console_rx_cb);
+
+    shell_evq_set(os_eventq_dflt_get());
 }

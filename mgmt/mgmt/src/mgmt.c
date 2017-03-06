@@ -137,14 +137,20 @@ err:
     return (NULL);
 }
 
-void
+int
 mgmt_cbuf_setoerr(struct mgmt_cbuf *cb, int errcode)
 {
-    CborEncoder *penc = &cb->encoder;
-    CborError g_err = CborNoError;
-    CborEncoder rsp;
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
-    g_err |= cbor_encode_text_stringz(&rsp, "rc");
-    g_err |= cbor_encode_int(&rsp, errcode);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    int rc;
+
+    rc = cbor_encode_text_stringz(&cb->encoder, "rc");
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = cbor_encode_int(&cb->encoder, errcode);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }

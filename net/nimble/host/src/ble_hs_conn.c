@@ -50,7 +50,7 @@ ble_hs_conn_can_alloc(void)
 }
 
 struct ble_l2cap_chan *
-ble_hs_conn_chan_find(struct ble_hs_conn *conn, uint16_t cid)
+ble_hs_conn_chan_find_by_scid(struct ble_hs_conn *conn, uint16_t cid)
 {
 #if !NIMBLE_BLE_CONNECT
     return NULL;
@@ -58,11 +58,32 @@ ble_hs_conn_chan_find(struct ble_hs_conn *conn, uint16_t cid)
 
     struct ble_l2cap_chan *chan;
 
-    SLIST_FOREACH(chan, &conn->bhc_channels, blc_next) {
-        if (chan->blc_cid == cid) {
+    SLIST_FOREACH(chan, &conn->bhc_channels, next) {
+        if (chan->scid == cid) {
             return chan;
         }
-        if (chan->blc_cid > cid) {
+        if (chan->scid > cid) {
+            return NULL;
+        }
+    }
+
+    return NULL;
+}
+
+struct ble_l2cap_chan *
+ble_hs_conn_chan_find_by_dcid(struct ble_hs_conn *conn, uint16_t cid)
+{
+#if !NIMBLE_BLE_CONNECT
+    return NULL;
+#endif
+
+    struct ble_l2cap_chan *chan;
+
+    SLIST_FOREACH(chan, &conn->bhc_channels, next) {
+        if (chan->dcid == cid) {
+            return chan;
+        }
+        if (chan->dcid > cid) {
             return NULL;
         }
     }
@@ -81,11 +102,11 @@ ble_hs_conn_chan_insert(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
     struct ble_l2cap_chan *cur;
 
     prev = NULL;
-    SLIST_FOREACH(cur, &conn->bhc_channels, blc_next) {
-        if (cur->blc_cid == chan->blc_cid) {
+    SLIST_FOREACH(cur, &conn->bhc_channels, next) {
+        if (cur->scid == chan->scid) {
             return BLE_HS_EALREADY;
         }
-        if (cur->blc_cid > chan->blc_cid) {
+        if (cur->scid > chan->scid) {
             break;
         }
 
@@ -93,16 +114,16 @@ ble_hs_conn_chan_insert(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
     }
 
     if (prev == NULL) {
-        SLIST_INSERT_HEAD(&conn->bhc_channels, chan, blc_next);
+        SLIST_INSERT_HEAD(&conn->bhc_channels, chan, next);
     } else {
-        SLIST_INSERT_AFTER(prev, chan, blc_next);
+        SLIST_INSERT_AFTER(prev, chan, next);
     }
 
     return 0;
 }
 
 struct ble_hs_conn *
-ble_hs_conn_alloc(void)
+ble_hs_conn_alloc(uint16_t conn_handle)
 {
 #if !NIMBLE_BLE_CONNECT
     return NULL;
@@ -117,10 +138,11 @@ ble_hs_conn_alloc(void)
         goto err;
     }
     memset(conn, 0, sizeof *conn);
+    conn->bhc_handle = conn_handle;
 
     SLIST_INIT(&conn->bhc_channels);
 
-    chan = ble_att_create_chan();
+    chan = ble_att_create_chan(conn_handle);
     if (chan == NULL) {
         goto err;
     }
@@ -129,7 +151,7 @@ ble_hs_conn_alloc(void)
         goto err;
     }
 
-    chan = ble_l2cap_sig_create_chan();
+    chan = ble_l2cap_sig_create_chan(conn_handle);
     if (chan == NULL) {
         goto err;
     }
@@ -138,11 +160,10 @@ ble_hs_conn_alloc(void)
         goto err;
     }
 
-    /* XXX: We should create the SM channel even if not configured.  We need it
-     * to reject SM messages.
+    /* Create the SM channel even if not configured. We need it to reject SM
+     * messages.
      */
-#if NIMBLE_BLE_SM
-    chan = ble_sm_create_chan();
+    chan = ble_sm_create_chan(conn_handle);
     if (chan == NULL) {
         goto err;
     }
@@ -150,7 +171,6 @@ ble_hs_conn_alloc(void)
     if (rc != 0) {
         goto err;
     }
-#endif
 
     rc = ble_gatts_conn_init(&conn->bhc_gatt_svr);
     if (rc != 0) {
@@ -166,14 +186,14 @@ err:
     return NULL;
 }
 
-static void
+void
 ble_hs_conn_delete_chan(struct ble_hs_conn *conn, struct ble_l2cap_chan *chan)
 {
     if (conn->bhc_rx_chan == chan) {
         conn->bhc_rx_chan = NULL;
     }
 
-    SLIST_REMOVE(&conn->bhc_channels, chan, ble_l2cap_chan, blc_next);
+    SLIST_REMOVE(&conn->bhc_channels, chan, ble_l2cap_chan, next);
     ble_l2cap_chan_free(chan);
 }
 
@@ -260,7 +280,7 @@ ble_hs_conn_find_assert(uint16_t conn_handle)
 }
 
 struct ble_hs_conn *
-ble_hs_conn_find_by_addr(uint8_t addr_type, uint8_t *addr)
+ble_hs_conn_find_by_addr(const ble_addr_t *addr)
 {
 #if !NIMBLE_BLE_CONNECT
     return NULL;
@@ -271,9 +291,7 @@ ble_hs_conn_find_by_addr(uint8_t addr_type, uint8_t *addr)
     BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
 
     SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
-        if (conn->bhc_peer_addr_type == addr_type &&
-            memcmp(conn->bhc_peer_addr, addr, 6) == 0) {
-
+        if (ble_addr_cmp(&conn->bhc_peer_addr, addr) == 0) {
             return conn;
         }
     }
@@ -332,43 +350,38 @@ void
 ble_hs_conn_addrs(const struct ble_hs_conn *conn,
                   struct ble_hs_conn_addrs *addrs)
 {
+    const uint8_t *our_id_addr_val;
     int rc;
 
     /* Determine our address information. */
-    addrs->our_id_addr_type =
+    addrs->our_id_addr.type =
         ble_hs_misc_addr_type_to_id(conn->bhc_our_addr_type);
-    rc = ble_hs_id_addr(addrs->our_id_addr_type, &addrs->our_id_addr, NULL);
+    rc = ble_hs_id_addr(addrs->our_id_addr.type, &our_id_addr_val, NULL);
     assert(rc == 0);
 
-    if (memcmp(conn->bhc_our_rpa_addr, ble_hs_conn_null_addr, 6) == 0) {
-        addrs->our_ota_addr_type = addrs->our_id_addr_type;
+    memcpy(addrs->our_id_addr.val, our_id_addr_val, 6);
+
+    if (memcmp(conn->bhc_our_rpa_addr.val, ble_hs_conn_null_addr, 6) == 0) {
         addrs->our_ota_addr = addrs->our_id_addr;
     } else {
-        addrs->our_ota_addr_type = conn->bhc_our_addr_type;
         addrs->our_ota_addr = conn->bhc_our_rpa_addr;
     }
 
     /* Determine peer address information. */
-    addrs->peer_ota_addr_type = conn->bhc_peer_addr_type;
     addrs->peer_id_addr = conn->bhc_peer_addr;
-    switch (conn->bhc_peer_addr_type) {
-    case BLE_ADDR_TYPE_PUBLIC:
-        addrs->peer_id_addr_type = BLE_ADDR_TYPE_PUBLIC;
-        addrs->peer_ota_addr = conn->bhc_peer_addr;
+    addrs->peer_ota_addr = conn->bhc_peer_addr;
+    switch (conn->bhc_peer_addr.type) {
+    case BLE_ADDR_PUBLIC:
+    case BLE_ADDR_RANDOM:
         break;
 
-    case BLE_ADDR_TYPE_RANDOM:
-        addrs->peer_id_addr_type = BLE_ADDR_TYPE_RANDOM;
-        addrs->peer_ota_addr = conn->bhc_peer_addr;
-        break;
-
-    case BLE_ADDR_TYPE_RPA_PUB_DEFAULT:
-        addrs->peer_id_addr_type = BLE_ADDR_TYPE_PUBLIC;
+    case BLE_ADDR_PUBLIC_ID:
+        addrs->peer_id_addr.type = BLE_ADDR_PUBLIC;
         addrs->peer_ota_addr = conn->bhc_peer_rpa_addr;
         break;
 
-    case BLE_ADDR_TYPE_RPA_RND_DEFAULT:
-        addrs->peer_id_addr_type = BLE_ADDR_TYPE_RANDOM;
+    case BLE_ADDR_RANDOM_ID:
+        addrs->peer_id_addr.type = BLE_ADDR_RANDOM;
         addrs->peer_ota_addr = conn->bhc_peer_rpa_addr;
         break;
 
@@ -376,6 +389,99 @@ ble_hs_conn_addrs(const struct ble_hs_conn *conn,
         BLE_HS_DBG_ASSERT(0);
         break;
     }
+}
+
+int32_t
+ble_hs_conn_timer(void)
+{
+    /* If there are no timeouts configured, then there is nothing to check. */
+#if MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT) == 0 && \
+    BLE_HS_ATT_SVR_QUEUED_WRITE_TMO == 0
+     
+    return BLE_HS_FOREVER;
+#endif
+
+    struct ble_hs_conn *conn;
+    os_time_t now;
+    int32_t next_exp_in;
+    int32_t time_diff;
+    uint16_t conn_handle;
+
+    conn_handle = BLE_HS_CONN_HANDLE_NONE;
+    next_exp_in = BLE_HS_FOREVER;
+    now = os_time_get();
+
+    ble_hs_lock();
+
+    /* This loop performs one of two tasks:
+     * 1. Determine if any connections need to be terminated due to timeout.
+     *    If so, break out of the loop and terminate the connection.  This
+     *    function will need to be executed again.
+     * 2. Otherwise, determine when the next timeout will occur.
+     */
+    SLIST_FOREACH(conn, &ble_hs_conns, bhc_next) {
+        if (!(conn->bhc_flags & BLE_HS_CONN_F_TERMINATING)) {
+
+#if MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT) != 0
+            /* Check each connection's rx fragment timer.  If too much time
+             * passes after a partial packet is received, the connection is
+             * terminated.
+             */
+            if (conn->bhc_rx_chan != NULL) {
+                time_diff = conn->bhc_rx_timeout - now;
+
+                if (time_diff <= 0) {
+                    /* ACL reassembly has timed out.  Remember the connection
+                     * handle so it can be terminated after the mutex is
+                     * unlocked.
+                     */
+                    conn_handle = conn->bhc_handle;
+                    break;
+                }
+
+                /* Determine if this connection is the soonest to time out. */
+                if (time_diff < next_exp_in) {
+                    next_exp_in = time_diff;
+                }
+            }
+#endif
+
+#if BLE_HS_ATT_SVR_QUEUED_WRITE_TMO
+            /* Check each connection's rx queued write timer.  If too much
+             * time passes after a prep write is received, the queue is
+             * cleared.
+             */
+            time_diff = ble_att_svr_ticks_until_tmo(&conn->bhc_att_svr, now);
+            if (time_diff <= 0) {
+                /* ACL reassembly has timed out.  Remember the connection
+                 * handle so it can be terminated after the mutex is
+                 * unlocked.
+                 */
+                conn_handle = conn->bhc_handle;
+                break;
+            }
+
+            /* Determine if this connection is the soonest to time out. */
+            if (time_diff < next_exp_in) {
+                next_exp_in = time_diff;
+            }
+#endif
+        }
+    }
+
+    ble_hs_unlock();
+
+    /* If a connection has timed out, terminate it.  We need to recursively
+     * call this function again to determine when the next timeout is.  This
+     * is a tail-recursive call, so it should be optimized to execute in the
+     * same stack frame.
+     */
+    if (conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+        ble_gap_terminate(conn_handle, BLE_ERR_REM_USER_CONN_TERM);
+        return ble_hs_conn_timer();
+    }
+
+    return next_exp_in;
 }
 
 int 

@@ -29,6 +29,12 @@ syscfg.defs:
     OC_TRANSPORT_IP:
         description: 'Enables OIC transport over IP UDP'
         value: '0'
+    OC_TRANSPORT_IPV6:
+        description: 'Support IPv6'
+        value: '1'
+    OC_TRANSPORT_IPV4:
+        description: 'Support IPv4'
+        value: '0'
     OC_CLIENT:
         description: 'Enables OIC client support'
         value: '0'
@@ -52,7 +58,7 @@ syscfg.defs:
 
     OC_APP_RESOURCES:
         description: 'Maximum number of server resources'
-        value: 8
+        value: 3
 
     OC_NUM_DEVICES:
         description: 'Number of devices on the OCF platform'
@@ -62,4 +68,10 @@ syscfg.defs:
         description: 'Platform payload size'
         value: 256
 
+    OC_SEPARATE_RESPONSES:
+        description: 'Support COAP delayed responses for slow resousrces.'
+        value: 1
 
+    OC_LOGGING:
+        description: 'Logging enabled'
+        value: 0

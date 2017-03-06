@@ -20,11 +20,20 @@ syscfg.vals:
     # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
     LOG_LEVEL: 0
 
+    BLE_GATT_WRITE_MAX_ATTRS: 6
+    BLE_HCI_EVT_HI_BUF_COUNT: 4
+    BLE_HCI_EVT_LO_BUF_COUNT: 3
+
     # Disable central and observer roles.
     BLE_ROLE_BROADCASTER: 1
     BLE_ROLE_CENTRAL: 0
     BLE_ROLE_OBSERVER: 0
     BLE_ROLE_PERIPHERAL: 1
+
+    # Disable security manager
+    BLE_SM: 0
+    BLE_LL_CFG_FEAT_LE_ENCRYPTION: 0
+    BLE_LL_CFG_FEAT_LL_PRIVACY: 0
 
     # Disable unused eddystone feature.
     BLE_EDDYSTONE: 0
@@ -41,11 +50,14 @@ syscfg.vals:
     # Enable Config.
     CONFIG_NEWTMGR: 1
 
+    # OC server, with bluetooth transport.
     OC_SERVER: 1
     OC_TRANSPORT_GATT: 1
-    OC_TRANSPORT_SERIAL: 1
 
     SHELL_TASK: 1
     STATS_CLI: 1
     LOG_CLI: 1
     STATS_NAMES: 1
+
+    # Default task settings
+    OS_MAIN_STACK_SIZE: 336

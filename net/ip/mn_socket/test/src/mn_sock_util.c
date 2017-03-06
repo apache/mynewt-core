@@ -677,6 +677,7 @@ sock_udp_mcast_v6(void)
     msin6.msin6_family = MN_AF_INET6;
     msin6.msin6_len = sizeof(msin6);
     msin6.msin6_port = htons(44344);
+    msin6.msin6_scope_id = 0;
     memset(&msin6.msin6_addr, 0, sizeof(msin6.msin6_addr));
 
     rc = mn_socket(&rx_sock, MN_PF_INET6, MN_SOCK_DGRAM, 0);

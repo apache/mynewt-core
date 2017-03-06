@@ -27,11 +27,12 @@ pkg.deps:
     - hw/hal
     - time/datetime
     - kernel/os
-    - encoding/json
-    - sys/reboot
     - mgmt/mgmt
     - encoding/tinycbor
     - encoding/cborattr
+
+pkg.deps.LOG_SOFT_RESET:
+    - sys/reboot
 
 pkg.req_apis:
     - newtmgr

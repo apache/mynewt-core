@@ -26,7 +26,11 @@ syscfg.vals:
     LOG_LEVEL: 1
 
     # Disable security manager (pairing and bonding).
-    BLE_SM: 0
+    BLE_SM_LEGACY: 0
+    BLE_SM_SC: 0
 
     # Disable eddystone beacons.
     BLE_EDDYSTONE: 0
+
+    # Default task settings
+    OS_MAIN_STACK_SIZE: 512

@@ -20,6 +20,7 @@
 #ifndef H_TESTUTIL_
 #define H_TESTUTIL_
 
+#include <assert.h>
 #include <inttypes.h>
 #include <setjmp.h>
 
@@ -50,9 +51,6 @@ extern "C" {
 typedef void tu_case_report_fn_t(char *msg, int msg_len, void *arg);
 typedef void tu_suite_restart_fn_t(void *arg);
 
-typedef void tu_pre_test_fn_t(void *arg);
-typedef void tu_post_test_fn_t(void *arg);
-
 typedef void tu_init_test_fn_t(void *arg);
 typedef void tu_pre_test_fn_t(void *arg);
 typedef void tu_post_test_fn_t(void *arg);
@@ -74,6 +72,8 @@ void tu_suite_pre_test(void);
 void tu_suite_post_test(void);
 void tu_suite_complete(void);
 
+int tu_suite_register(tu_testsuite_fn_t* ts, const char *name);
+
 struct ts_suite {
     SLIST_ENTRY(ts_suite) ts_next;
     const char *ts_name;
@@ -81,8 +81,7 @@ struct ts_suite {
 };
 
 SLIST_HEAD(ts_testsuite_list, ts_suite);
-
-extern struct ts_testsuite_list *ts_suites;
+extern struct ts_testsuite_list g_ts_suites;
 
 struct ts_config {
     int ts_print_results;
@@ -184,7 +183,6 @@ extern struct ts_config *ts_current_config;
 
 extern const char *tu_suite_name;
 extern const char *tu_case_name;
-extern int tu_first_idx;
 
 extern int tu_any_failed;
 extern int tu_suite_failed;
@@ -193,10 +191,10 @@ extern int tu_case_failed;
 extern int tu_case_idx;
 extern jmp_buf tu_case_jb;
 
-#define TEST_SUITE_NAME(suite_name) TEST_SUITE##suite_name
+#define TEST_SUITE_DECL(suite_name) extern void suite_name()
 
-#define TEST_SUITE_DECL(suite_name)                         \
-  extern tu_testsuite_fn_t *TEST_SUITE##suite_name()
+#define TEST_SUITE_REGISTER(suite_name)                      \
+  tu_suite_register((tu_testsuite_fn_t*)suite_name, ((const char *)#suite_name));
 
 #define TEST_SUITE(suite_name)                               \
 void                                                         \
@@ -216,8 +214,8 @@ TEST_SUITE_##suite_name(void);                               \
     TEST_SUITE_##suite_name(void)
 
 /*
- * for creating multiple files with test cases
- * all belonging to the same suite
+ * For declaring the test cases across multiple files
+ * belonging to the same suite
  */
 #define TEST_CASE_DECL(case_name)                            \
     int case_name(void);
@@ -232,19 +230,17 @@ TEST_SUITE_##suite_name(void);                               \
     case_name(void)                                           \
     {                                                         \
         tu_suite_pre_test();                                  \
-        if (tu_case_idx >= tu_first_idx) {                    \
-            tu_case_init(#case_name);                         \
+        tu_case_init(#case_name);                             \
                                                               \
-            tu_case_pre_test();                               \
-            if (setjmp(tu_case_jb) == 0) {                    \
-                TEST_CASE_##case_name();                      \
-                tu_case_post_test();                          \
-                if (!tu_case_failed) {                        \
-                    tu_case_pass();                           \
-                }                                             \
+        tu_case_pre_test();                                   \
+        if (setjmp(tu_case_jb) == 0) {                        \
+            TEST_CASE_##case_name();                          \
+            tu_case_post_test();                              \
+            if (!tu_case_failed) {                            \
+                tu_case_pass();                               \
             }                                                 \
-            tu_case_complete();                               \
         }                                                     \
+        tu_case_complete();                                   \
         tu_suite_post_test();                                 \
                                                               \
         return tu_case_failed;                                \
@@ -266,7 +262,15 @@ TEST_SUITE_##suite_name(void);                               \
 #define REST_OR_0_AUX_N(first, ...) __VA_ARGS__
 
 #define XSTR(s) STR(s)
+#ifndef STR
 #define STR(s) #s
+#endif
+
+#if MYNEWT_VAL(TESTUTIL_SYSTEM_ASSERT)
+
+#define TEST_ASSERT_FULL(fatal, expr, ...) (assert(expr))
+
+#else 
 
 #define TEST_ASSERT_FULL(fatal, expr, ...) do                 \
 {                                                             \
@@ -276,6 +280,8 @@ TEST_SUITE_##suite_name(void);                               \
                             __VA_ARGS__);                     \
     }                                                         \
 } while (0)
+
+#endif
 
 #define TEST_ASSERT(...)                                      \
     TEST_ASSERT_FULL(0, FIRST(__VA_ARGS__), REST_OR_0(__VA_ARGS__))

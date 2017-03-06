@@ -78,11 +78,12 @@ pkg.cflags:
     - '-DUART0_ENABLED=1'
     - '-DWDT_ENABLED=1'
 
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/nordic/nrf52xxx
     - libc/baselibc
-    - sys/flash_map
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf52

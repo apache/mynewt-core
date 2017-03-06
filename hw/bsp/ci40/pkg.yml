@@ -31,3 +31,9 @@ pkg.keywords:
 pkg.cflags:
 pkg.deps:
     - hw/mcu/mips/danube
+
+pkg.deps.UART_0:
+    - hw/drivers/uart/uart_hal
+
+pkg.deps.UART_1:
+    - hw/drivers/uart/uart_hal

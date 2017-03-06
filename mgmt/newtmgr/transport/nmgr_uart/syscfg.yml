@@ -24,5 +24,5 @@ syscfg.defs:
 
   NMGR_UART_SPEED:
     description: 'Baudrate for newtmgr UART'
-    value: CONSOLE_UART_SPEED
+    value: 115200
 

@@ -26,6 +26,7 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "host/ble_hs.h"
 #include "store/ram/ble_store_ram.h"
 
@@ -73,10 +74,10 @@ ble_store_ram_print_value_sec(struct ble_store_value_sec *sec)
 static void
 ble_store_ram_print_key_sec(struct ble_store_key_sec *key_sec)
 {
-    if (key_sec->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
+    if (ble_addr_cmp(&key_sec->peer_addr, BLE_ADDR_ANY)) {
         BLE_HS_LOG(DEBUG, "peer_addr_type=%d peer_addr=",
-                       key_sec->peer_addr_type);
-        ble_hs_log_flat_buf(key_sec->peer_addr, 6);
+                       key_sec->peer_addr.type);
+        ble_hs_log_flat_buf(key_sec->peer_addr.val, 6);
         BLE_HS_LOG(DEBUG, " ");
     }
     if (key_sec->ediv_rand_present) {
@@ -87,7 +88,8 @@ ble_store_ram_print_key_sec(struct ble_store_key_sec *key_sec)
 
 static int
 ble_store_ram_find_sec(struct ble_store_key_sec *key_sec,
-                   struct ble_store_value_sec *value_secs, int num_value_secs)
+                       struct ble_store_value_sec *value_secs,
+                       int num_value_secs)
 {
     struct ble_store_value_sec *cur;
     int skipped;
@@ -98,13 +100,8 @@ ble_store_ram_find_sec(struct ble_store_key_sec *key_sec,
     for (i = 0; i < num_value_secs; i++) {
         cur = value_secs + i;
 
-        if (key_sec->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
-            if (cur->peer_addr_type != key_sec->peer_addr_type) {
-                continue;
-            }
-
-            if (memcmp(cur->peer_addr, key_sec->peer_addr,
-                       sizeof cur->peer_addr) != 0) {
+        if (ble_addr_cmp(&key_sec->peer_addr, BLE_ADDR_ANY)) {
+            if (ble_addr_cmp(&cur->peer_addr, &key_sec->peer_addr)) {
                 continue;
             }
         }
@@ -132,7 +129,7 @@ ble_store_ram_find_sec(struct ble_store_key_sec *key_sec,
 
 static int
 ble_store_ram_read_our_sec(struct ble_store_key_sec *key_sec,
-                       struct ble_store_value_sec *value_sec)
+                           struct ble_store_value_sec *value_sec)
 {
     int idx;
 
@@ -157,7 +154,7 @@ ble_store_ram_write_our_sec(struct ble_store_value_sec *value_sec)
 
     ble_store_key_from_value_sec(&key_sec, value_sec);
     idx = ble_store_ram_find_sec(&key_sec, ble_store_ram_our_secs,
-                             ble_store_ram_num_our_secs);
+                                 ble_store_ram_num_our_secs);
     if (idx == -1) {
         if (ble_store_ram_num_our_secs >= STORE_MAX_SLV_LTKS) {
             BLE_HS_LOG(DEBUG, "error persisting our sec; too many entries "
@@ -174,8 +171,79 @@ ble_store_ram_write_our_sec(struct ble_store_value_sec *value_sec)
 }
 
 static int
+ble_store_ram_delete_obj(void *values, int value_size, int idx,
+                         int *num_values)
+{
+    uint8_t *dst;
+    uint8_t *src;
+    int move_count;
+
+    (*num_values)--;
+    if (idx < *num_values) {
+        dst = values;
+        dst += idx * value_size;
+        src = dst + value_size;
+
+        move_count = *num_values - idx;
+        memmove(dst, src, move_count);
+    }
+
+    return 0;
+}
+
+static int
+ble_store_ram_delete_sec(struct ble_store_key_sec *key_sec,
+                         struct ble_store_value_sec *value_secs,
+                         int *num_value_secs)
+{
+    int idx;
+    int rc;
+
+    idx = ble_store_ram_find_sec(key_sec, value_secs, *num_value_secs);
+    if (idx == -1) {
+        return BLE_HS_ENOENT;
+    }
+
+    rc = ble_store_ram_delete_obj(value_secs, sizeof *value_secs, idx,
+                                  num_value_secs);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+ble_store_ram_delete_our_sec(struct ble_store_key_sec *key_sec)
+{
+    int rc;
+
+    rc = ble_store_ram_delete_sec(key_sec, ble_store_ram_our_secs,
+                                  &ble_store_ram_num_our_secs);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+ble_store_ram_delete_peer_sec(struct ble_store_key_sec *key_sec)
+{
+    int rc;
+
+    rc = ble_store_ram_delete_sec(key_sec, ble_store_ram_peer_secs,
+                                  &ble_store_ram_num_peer_secs);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
 ble_store_ram_read_peer_sec(struct ble_store_key_sec *key_sec,
-                        struct ble_store_value_sec *value_sec)
+                            struct ble_store_value_sec *value_sec)
 {
     int idx;
 
@@ -200,7 +268,7 @@ ble_store_ram_write_peer_sec(struct ble_store_value_sec *value_sec)
 
     ble_store_key_from_value_sec(&key_sec, value_sec);
     idx = ble_store_ram_find_sec(&key_sec, ble_store_ram_peer_secs,
-                             ble_store_ram_num_peer_secs);
+                                 ble_store_ram_num_peer_secs);
     if (idx == -1) {
         if (ble_store_ram_num_peer_secs >= STORE_MAX_MST_LTKS) {
             BLE_HS_LOG(DEBUG, "error persisting peer sec; too many entries "
@@ -231,12 +299,8 @@ ble_store_ram_find_cccd(struct ble_store_key_cccd *key)
     for (i = 0; i < ble_store_ram_num_cccds; i++) {
         cccd = ble_store_ram_cccds + i;
 
-        if (key->peer_addr_type != BLE_STORE_ADDR_TYPE_NONE) {
-            if (cccd->peer_addr_type != key->peer_addr_type) {
-                continue;
-            }
-
-            if (memcmp(cccd->peer_addr, key->peer_addr, 6) != 0) {
+        if (ble_addr_cmp(&key->peer_addr, BLE_ADDR_ANY)) {
+            if (ble_addr_cmp(&cccd->peer_addr, &key->peer_addr)) {
                 continue;
             }
         }
@@ -307,7 +371,7 @@ ble_store_ram_write_cccd(struct ble_store_value_cccd *value_cccd)
  */
 int
 ble_store_ram_read(int obj_type, union ble_store_key *key,
-               union ble_store_value *value)
+                   union ble_store_value *value)
 {
     int rc;
 
@@ -372,9 +436,41 @@ ble_store_ram_write(int obj_type, union ble_store_value *val)
     }
 }
 
+int
+ble_store_ram_delete(int obj_type, union ble_store_key *key)
+{
+    int rc;
+
+    switch (obj_type) {
+    case BLE_STORE_OBJ_TYPE_PEER_SEC:
+        rc = ble_store_ram_delete_peer_sec(&key->sec);
+        return rc;
+
+    case BLE_STORE_OBJ_TYPE_OUR_SEC:
+        rc = ble_store_ram_delete_our_sec(&key->sec);
+        return rc;
+
+    case BLE_STORE_OBJ_TYPE_CCCD:
+        /* XXX: There is no good reason not to support this. */
+        return BLE_HS_ENOTSUP;
+
+    default:
+        return BLE_HS_ENOTSUP;
+    }
+}
+
 void
 ble_store_ram_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
     ble_hs_cfg.store_read_cb = ble_store_ram_read;
     ble_hs_cfg.store_write_cb = ble_store_ram_write;
+    ble_hs_cfg.store_delete_cb = ble_store_ram_delete;
+
+    /* Re-initialize BSS values in case of unit tests. */
+    ble_store_ram_num_our_secs = 0;
+    ble_store_ram_num_peer_secs = 0;
+    ble_store_ram_num_cccds = 0;
 }

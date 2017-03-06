@@ -36,6 +36,10 @@ extern "C" {
 #define STR(x) #x
 #endif
 
+#define NMGR_OP_READ            (0)
+#define NMGR_OP_READ_RSP        (1)
+#define NMGR_OP_WRITE           (2)
+#define NMGR_OP_WRITE_RSP       (3)
 
 /* First 64 groups are reserved for system level newtmgr commands.
  * Per-user commands are then defined after group 64.
@@ -47,7 +51,8 @@ extern "C" {
 #define MGMT_GROUP_ID_LOGS      (4)
 #define MGMT_GROUP_ID_CRASH     (5)
 #define MGMT_GROUP_ID_SPLIT     (6)
-#define MGMT_GROUP_ID_RUNTEST   (7)
+#define MGMT_GROUP_ID_RUN       (7)
+#define MGMT_GROUP_ID_FS        (8)
 #define MGMT_GROUP_ID_PERUSER   (64)
 
 /**
@@ -61,6 +66,24 @@ extern "C" {
 #define MGMT_ERR_ENOENT     (5)
 #define MGMT_ERR_EBADSTATE  (6)     /* Current state disallows command. */
 #define MGMT_ERR_EPERUSER   (256)
+
+#define NMGR_HDR_SIZE           (8)
+
+struct nmgr_hdr {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
+    uint8_t  _res1:5;
+#endif
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  _res1:5;
+    uint8_t  nh_op:3;           /* NMGR_OP_XXX */
+#endif
+    uint8_t  nh_flags;          /* XXX reserved for future flags */
+    uint16_t nh_len;            /* length of the payload */
+    uint16_t nh_group;          /* NMGR_GROUP_XXX */
+    uint8_t  nh_seq;            /* sequence number */
+    uint8_t  nh_id;             /* message ID within group */
+};
 
 struct mgmt_cbuf;
 
@@ -84,7 +107,7 @@ struct mgmt_group {
             sizeof(struct mgmt_handler));
 
 int mgmt_group_register(struct mgmt_group *group);
-void mgmt_cbuf_setoerr(struct mgmt_cbuf *njb, int errcode);
+int mgmt_cbuf_setoerr(struct mgmt_cbuf *njb, int errcode);
 const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
   uint16_t handler_id);
 

@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -28,7 +28,12 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 {
     char msg[256];
 
-    snprintf(msg, sizeof(msg), "assert at %s:%d\n", file, line);
+    if (file) {
+        snprintf(msg, sizeof(msg), "assert at %s:%d\n", file, line);
+    } else {
+        snprintf(msg, sizeof(msg), "assert @ %p\n",
+                 __builtin_return_address(0));
+    }
     write(1, msg, strlen(msg));
     _exit(1);
 }

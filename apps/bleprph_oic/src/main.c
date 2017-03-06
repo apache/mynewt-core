@@ -21,35 +21,30 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
-#include "bsp/bsp.h"
-#include "os/os.h"
-#include "bsp/bsp.h"
-#include "hal/hal_gpio.h"
-#include "console/console.h"
-#include "imgmgr/imgmgr.h"
-#include "mgmt/mgmt.h"
+#include <sysinit/sysinit.h>
+#include <bsp/bsp.h>
+#include <os/os.h>
+#include <bsp/bsp.h>
+#include <hal/hal_gpio.h>
+#include <console/console.h>
+#include <mgmt/mgmt.h>
+
+#include <oic/oc_api.h>
+#include <oic/oc_gatt.h>
+#include <oic/oc_log.h>
+#include <cborattr/cborattr.h>
 
 /* BLE */
-#include "nimble/ble.h"
-#include "host/ble_hs.h"
-#include "services/gap/ble_svc_gap.h"
+#include <nimble/ble.h>
+#include <host/ble_hs.h>
+#include <services/gap/ble_svc_gap.h>
 
 /* Application-specified header. */
 #include "bleprph.h"
 
-#include "oic/oc_gatt.h"
 
 /** Log data. */
 struct log bleprph_log;
-
-/** bleprph task settings. */
-#define BLEPRPH_TASK_PRIO           1
-#define BLEPRPH_STACK_SIZE          (OS_STACK_ALIGN(336))
-
-static struct os_eventq bleprph_evq;
-static struct os_task bleprph_task;
-static os_stack_t bleprph_stack[BLEPRPH_STACK_SIZE];
 
 static int bleprph_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -60,17 +55,17 @@ static void
 bleprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr_type);
-    print_addr(desc->our_ota_addr);
+                desc->conn_handle, desc->our_ota_addr.type);
+    print_addr(desc->our_ota_addr.val);
     BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr_type);
-    print_addr(desc->our_id_addr);
+                desc->our_id_addr.type);
+    print_addr(desc->our_id_addr.val);
     BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr_type);
-    print_addr(desc->peer_ota_addr);
+                desc->peer_ota_addr.type);
+    print_addr(desc->peer_ota_addr.val);
     BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr_type);
-    print_addr(desc->peer_id_addr);
+                desc->peer_id_addr.type);
+    print_addr(desc->peer_id_addr.val);
     BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
@@ -103,14 +98,15 @@ bleprph_advertise(void)
 
     memset(&fields, 0, sizeof fields);
 
-    /* Indicate that the flags field should be included; specify a value of 0
-     * to instruct the stack to fill the value in for us.
+    /* Advertise two flags:
+     *     o Discoverability in forthcoming advertisement (general)
+     *     o BLE-only (BR/EDR unsupported).
      */
-    fields.flags_is_present = 1;
-    fields.flags = 0;
+    fields.flags = BLE_HS_ADV_F_DISC_GEN |
+                   BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Indicate that the TX power level field should be included; have the
-     * stack fill this one automatically as well.  This is done by assiging the
+     * stack fill this value automatically.  This is done by assiging the
      * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
      */
     fields.tx_pwr_lvl_is_present = 1;
@@ -121,9 +117,11 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (uint16_t[]){ GATT_SVR_SVC_ALERT_UUID, 0x1812 };
-    fields.num_uuids16 = 2;
-    fields.uuids16_is_complete = 1;
+    fields.uuids128 = (ble_uuid128_t []) {
+        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
+    };
+    fields.num_uuids128 = 1;
+    fields.uuids128_is_complete = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
@@ -135,7 +133,7 @@ bleprph_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_ADDR_TYPE_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, bleprph_gap_event, NULL);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -180,6 +178,8 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
             bleprph_advertise();
+        } else {
+            oc_ble_coap_conn_new(event->connect.conn_handle);
         }
         return 0;
 
@@ -187,6 +187,8 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         bleprph_print_conn_desc(&event->disconnect.conn);
         BLEPRPH_LOG(INFO, "\n");
+
+        oc_ble_coap_conn_del(event->disconnect.conn.conn_handle);
 
         /* Connection terminated; resume advertising. */
         bleprph_advertise();
@@ -248,23 +250,88 @@ bleprph_on_sync(void)
     bleprph_advertise();
 }
 
-/*
- * Event loop for the main bleprph task.
- */
 static void
-bleprph_task_handler(void *unused)
+app_get_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    while (1) {
-        os_eventq_run(&bleprph_evq);
+    bool state;
+
+    if (hal_gpio_read(LED_BLINK_PIN)) {
+        state = true;
+    } else {
+        state = false;
+    }
+    oc_rep_start_root_object();
+    switch (interface) {
+    case OC_IF_BASELINE:
+        oc_process_baseline_interface(request->resource);
+    case OC_IF_RW:
+        oc_rep_set_boolean(root, state, state);
+        break;
+    default:
+        break;
+    }
+    oc_rep_end_root_object();
+    oc_send_response(request, OC_STATUS_OK);
+}
+
+static void
+app_set_light(oc_request_t *request, oc_interface_mask_t interface)
+{
+    bool state;
+    int len;
+    uint16_t data_off;
+    struct os_mbuf *m;
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "state",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &state,
+            .dflt.boolean = false
+        },
+        [1] = {
+        }
+    };
+
+    len = coap_get_payload(request->packet, &m, &data_off);
+    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
+        oc_send_response(request, OC_STATUS_BAD_REQUEST);
+    } else {
+        hal_gpio_write(LED_BLINK_PIN, state == true);
+        oc_send_response(request, OC_STATUS_CHANGED);
     }
 }
+
+static void
+omgr_app_init(void)
+{
+    oc_resource_t *res;
+
+    oc_init_platform("MyNewt", NULL, NULL);
+    oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
+                  NULL);
+
+    res = oc_new_resource("/light/1", 1, 0);
+    oc_resource_bind_resource_type(res, "oic.r.light");
+    oc_resource_bind_resource_interface(res, OC_IF_RW);
+    oc_resource_set_default_interface(res, OC_IF_RW);
+
+    oc_resource_set_discoverable(res);
+    oc_resource_set_periodic_observable(res, 1);
+    oc_resource_set_request_handler(res, OC_GET, app_get_light);
+    oc_resource_set_request_handler(res, OC_PUT, app_set_light);
+    oc_add_resource(res);
+
+}
+
+static const oc_handler_t omgr_oc_handler = {
+    .init = omgr_app_init,
+};
 
 /**
  * main
  *
- * The main function for the project. This function initializes the os, calls
- * init_tasks to initialize tasks (and possibly other objects), then starts the
- * OS. We should not return from os start.
+ * The main task for the project. This function initializes the packages,
+ * then starts serving events from default event queue.
  *
  * @return int NOTE: this function should never return!
  */
@@ -274,44 +341,39 @@ main(void)
     int rc;
 
     /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0xf0, 0x0b, 0xa5, 0x0a}, 6);
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
 
     /* Initialize OS */
     sysinit();
 
     /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
 
-    os_eventq_init(&bleprph_evq);
-    os_eventq_dflt_set(&bleprph_evq);
+    /* Initialize the OIC  */
+    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
+    oc_ble_coap_gatt_srv_init();
 
-    /*
-     * Create the bleprph task.  All omgr and NimBLE host operations are
-     * performed in this task.
-     */
-    os_task_init(&bleprph_task, "bleprph", bleprph_task_handler,
-                 NULL, BLEPRPH_TASK_PRIO, OS_WAIT_FOREVER,
-                 bleprph_stack, BLEPRPH_STACK_SIZE);
-    mgmt_evq_set(&bleprph_evq);
-    ble_hs_evq_set(&bleprph_evq);
-
-    ble_coap_gatt_srv_init();
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pimple-bleprph");
+    rc = ble_svc_gap_device_name_set("pi");
     assert(rc == 0);
 
-    /* Start the OS */
-    os_start();
+    /* Our light resource */
+    hal_gpio_init_out(LED_BLINK_PIN, 1);
 
-    /* os start should never return. If it does, this should be an error */
-    assert(0);
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never exit */
 
     return 0;
 }
