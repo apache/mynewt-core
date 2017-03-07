@@ -1086,6 +1086,7 @@ os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
         }
 
         cur = next;
+        cur_off = 0;
     }
 
     /* Append the remaining data to the end of the chain. */
