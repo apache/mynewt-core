@@ -54,6 +54,9 @@ split-nrf52dk.ld
 rb-nano2_no_boot.ld
 split-rb-nano2.ld
 nrf52.ld
+ada_feather_nrf52_no_boot.ld
+split_ada_feather_nrf52.ld
+split-microbit.ld
 system_nrf52.c
 gcc_startup_nrf52.s
 nrf51_to_nrf52.h
