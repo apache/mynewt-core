@@ -52,6 +52,7 @@ sensor_display_help(void)
     console_printf("Possible commands for sensor are:\n");
     console_printf("  list\n");
     console_printf("  read\n");
+    console_printf("  i2cscan\n");
 }
 
 static void

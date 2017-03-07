@@ -811,9 +811,6 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         goto err;
     }
 
-    bno055->cfg.bc_acc_range = cfg->bc_acc_range;
-    bno055->cfg.bc_acc_bw = cfg->bc_acc_bw;
-
     return 0;
 err:
     return rc;
