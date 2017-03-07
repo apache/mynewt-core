@@ -17,12 +17,27 @@
  * under the License.
  */
 
+#include <stdio.h>
 #include <stddef.h>
 #include <limits.h>
 #include "os/os_fault.h"
+#include "syscfg/syscfg.h"
 #include "sysinit/sysinit.h"
 
-sysinit_panic_fn *sysinit_panic_cb = __assert_func;
+static void
+sysinit_dflt_panic_cb(const char *file, int line, const char *func,
+                      const char *expr, const char *msg)
+{
+#if MYNEWT_VAL(SYSINIT_PANIC_MESSAGE)
+    if (msg != NULL) {
+        fprintf(stderr, "sysinit failure: %s\n", msg);
+    }
+#endif
+
+    __assert_func(file, line, func, expr);
+}
+
+sysinit_panic_fn *sysinit_panic_cb = sysinit_dflt_panic_cb;
 
 uint8_t sysinit_active;
 

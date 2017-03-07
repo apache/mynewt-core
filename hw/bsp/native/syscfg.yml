@@ -18,7 +18,12 @@
 #
 
 syscfg.vals:
+    # Sim isn't flash constrained, so include filename, line number, and
+    # message in asserts and sysinit panic messages.
     BASELIBC_ASSERT_FILE_LINE: 1
+    SYSINIT_PANIC_FILE_LINE: 1
+    SYSINIT_PANIC_MESSAGE: 1
+
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

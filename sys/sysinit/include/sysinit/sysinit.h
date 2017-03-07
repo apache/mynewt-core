@@ -38,20 +38,40 @@ void sysinit_start(void);
 void sysinit_end(void);
 
 typedef void sysinit_panic_fn(const char *file, int line, const char *func,
-                              const char *expr);
+                              const char *expr, const char *msg);
 
 extern sysinit_panic_fn *sysinit_panic_cb;
 
 void sysinit_panic_set(sysinit_panic_fn *panic_fn);
 
-#define SYSINIT_PANIC() sysinit_panic_cb(NULL, 0, NULL, NULL)
+#if MYNEWT_VAL(SYSINIT_PANIC_MESSAGE)
 
-#define SYSINIT_PANIC_ASSERT(rc) do \
-{                                   \
-    if (!(rc)) {                    \
-        SYSINIT_PANIC();            \
-    }                               \
+#if MYNEWT_VAL(SYSINIT_PANIC_FILE_LINE)
+#define SYSINIT_PANIC_MSG(msg) sysinit_panic_cb(__FILE__, __LINE__, 0, 0, msg)
+#else
+#define SYSINIT_PANIC_MSG(msg) sysinit_panic_cb(0, 0, 0, 0, msg)
+#endif
+
+#else
+
+#if MYNEWT_VAL(SYSINIT_PANIC_FILE_LINE)
+#define SYSINIT_PANIC_MSG(msg) sysinit_panic_cb(__FILE__, __LINE__, 0, 0, 0)
+#else
+#define SYSINIT_PANIC_MSG(msg) sysinit_panic_cb(0, 0, 0, 0, 0)
+#endif
+
+#endif
+
+#define SYSINIT_PANIC() SYSINIT_PANIC_MSG(NULL)
+
+#define SYSINIT_PANIC_ASSERT_MSG(rc, msg) do \
+{                                            \
+    if (!(rc)) {                             \
+        SYSINIT_PANIC_MSG(msg);              \
+    }                                        \
 } while (0)
+
+#define SYSINIT_PANIC_ASSERT(rc) SYSINIT_PANIC_ASSERT_MSG(rc, NULL)
 
 /**
  * Asserts that system initialization is in progress.  This macro is used to
