@@ -37,5 +37,5 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     }
     len = write(1, msg, strlen(msg));
     (void)len;
-    _exit(1);
+    _Exit(1);
 }
