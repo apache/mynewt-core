@@ -225,7 +225,7 @@ uart_dev_set_attr(int fd, int32_t baudrate, uint8_t databits,
 
     rc = tcsetattr(fd, TCSANOW, &tty);
     if (rc != 0) {
-        dprintf(1, "tcsetattr failed; %d (%s)\n", errno, strerror(errno));
+        fprintf(stderr, "tcsetattr failed; %d (%s)\n", errno, strerror(errno));
         return -1;
     }
 
