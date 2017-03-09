@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/un.h>
 #include <stdio.h>
 
 #include <sysinit/sysinit.h>
@@ -32,6 +33,7 @@
 #include <os/os_mbuf.h>
 #include "mn_socket/mn_socket.h"
 #include "mn_socket/mn_socket_ops.h"
+#include "native_sockets/native_sock.h"
 
 #include "native_sock_priv.h"
 
@@ -182,8 +184,10 @@ static int
 native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa,
   int *sa_len)
 {
+    struct sockaddr_un *sun = (struct sockaddr_un *)sa;
     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
     struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+    struct mn_sockaddr_un *msun = (struct mn_sockaddr_un *)ms;
     struct mn_sockaddr_in *msin = (struct mn_sockaddr_in *)ms;
     struct mn_sockaddr_in6 *msin6 = (struct mn_sockaddr_in6 *)ms;
 
@@ -208,6 +212,19 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa,
         sin6->sin6_scope_id = msin6->msin6_scope_id;
         *sa_len = sizeof(*sin6);
         break;
+    case MN_AF_LOCAL:
+        sun->sun_family = AF_LOCAL;
+#ifndef MN_LINUX
+        sun->sun_len = sizeof(*sun);
+#endif
+        sun->sun_path[0] = '\0';
+        strncat(sun->sun_path, msun->msun_path, sizeof sun->sun_path);
+        if (strcmp(sun->sun_path, msun->msun_path) != 0) {
+            /* Path too long. */
+            return MN_EINVAL;
+        }
+        *sa_len = sizeof(*sun);
+        break;
     default:
         return MN_EPROTONOSUPPORT;
     }
@@ -217,8 +234,10 @@ native_sock_mn_addr_to_addr(struct mn_sockaddr *ms, struct sockaddr *sa,
 static int
 native_sock_addr_to_mn_addr(struct sockaddr *sa, struct mn_sockaddr *ms)
 {
+    struct mn_sockaddr_un *msun = (struct mn_sockaddr_un *)ms;
     struct mn_sockaddr_in *msin = (struct mn_sockaddr_in *)ms;
     struct mn_sockaddr_in6 *msin6 = (struct mn_sockaddr_in6 *)ms;
+    struct sockaddr_un *sun = (struct sockaddr_un *)sa;
     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
     struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
 
@@ -236,6 +255,14 @@ native_sock_addr_to_mn_addr(struct sockaddr *sa, struct mn_sockaddr *ms)
         msin6->msin6_flowinfo = sin6->sin6_flowinfo;
         memcpy(&msin6->msin6_addr, &sin6->sin6_addr, sizeof(msin6->msin6_addr));
         msin6->msin6_scope_id = sin6->sin6_scope_id;
+        break;
+    case AF_LOCAL:
+        msun->msun_family = MN_AF_LOCAL;
+        strncpy(msun->msun_path, sun->sun_path, sizeof msun->msun_path);
+        if (strcmp(msun->msun_path, sun->sun_path) != 0) {
+            /* Path too long. */
+            return MN_EINVAL;
+        }
         break;
     default:
         return MN_EPROTONOSUPPORT;
@@ -258,6 +285,9 @@ native_sock_create(struct mn_socket **sp, uint8_t domain,
         break;
     case MN_PF_INET6:
         domain = PF_INET6;
+        break;
+    case MN_PF_LOCAL:
+        domain = PF_LOCAL;
         break;
     default:
         return MN_EPROTONOSUPPORT;
@@ -356,7 +386,7 @@ native_sock_bind(struct mn_socket *s, struct mn_sockaddr *addr)
 {
     struct native_sock_state *nss = &native_sock_state;
     struct native_sock *ns = (struct native_sock *)s;
-    struct sockaddr_storage ss;
+    struct sockaddr_un ss;
     struct sockaddr *sa = (struct sockaddr *)&ss;
     int rc;
     int sa_len;
@@ -615,6 +645,15 @@ native_sock_setsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
                 name = IPV6_MULTICAST_IF;
                 val32 = *(uint32_t *)val;
             }
+            rc = setsockopt(ns->ns_fd, level, name, &val32, sizeof(val32));
+            if (rc) {
+                return native_sock_err_to_mn_err(errno);
+            }
+            return 0;
+
+        case MN_REUSEADDR:
+            name = SO_REUSEADDR;
+            val32 = *(uint32_t *)val;
             rc = setsockopt(ns->ns_fd, level, name, &val32, sizeof(val32));
             if (rc) {
                 return native_sock_err_to_mn_err(errno);

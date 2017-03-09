@@ -140,6 +140,7 @@ struct mn_mreq {
 #define MN_MCAST_JOIN_GROUP             1
 #define MN_MCAST_LEAVE_GROUP            2
 #define MN_MCAST_IF                     3
+#define MN_REUSEADDR                    4
 
 /*
  * Socket calls.
