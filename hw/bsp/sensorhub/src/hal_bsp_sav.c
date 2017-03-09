@@ -16,23 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+//#include <stdint.h>
+//#include <stddef.h>
 #include <assert.h>
 #include "syscfg/syscfg.h"
-#include "os/os_dev.h"
+//#include "bsp/bsp.h"
+
 #if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
+//#include <uart/uart.h>
+//#include <uart_hal/uart_hal.h>
 #endif
+#include "os/os_dev.h"
+
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash_int.h>
 #include <hal/hal_timer.h>
+
 #include <stm32f427xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
 #include <mcu/stm32f4_bsp.h>
-#include "bsp/bsp.h"
 
 #if MYNEWT_VAL(UART_0)
+#include "bsp/bsp.h"
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
+
 static struct uart_dev hal_uart0;
 
 static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {

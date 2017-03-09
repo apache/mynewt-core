@@ -23,7 +23,7 @@
 #include "syscfg/syscfg.h"
 #include <flash_map/flash_map.h>
 #include <os/os.h>
-#include <bsp/bsp.h>
+
 #include <hal/hal_bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>

@@ -30,7 +30,7 @@
 #  - BOOT_LOADER is set if downloading a bootloader
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-s $BSP_PATH -f f4discovery.cfg"
+CFG="-s $BSP_PATH -f sensorhub.cfg"
 #ADG! CFG="-s $BSP_PATH -f /usr/share/openocd/scripts/interface/jlink.cfg -f /home/alan/dev/myproj-2/targets/stm_blinky/openocd.cfg"
 
 if [ "$MFG_IMAGE" ]; then

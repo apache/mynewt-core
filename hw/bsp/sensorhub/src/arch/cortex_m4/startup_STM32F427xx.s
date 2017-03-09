@@ -1,4 +1,4 @@
-/* File: startup_STM32F40x.S
+/* File: startup_STM32F42x.S
  * Purpose: startup file for Cortex-M4 devices. Should use with
  *   GCC for ARM Embedded Processors
  * Version: V1.4
@@ -168,6 +168,15 @@ __isr_vector:
     .long     CRYP_IRQHandler               /* CRYP crypto */
     .long     HASH_RNG_IRQHandler           /* Hash and Rng */
     .long     FPU_IRQHandler                /* FPU */
+    .long     UART7_IRQHandler              /* UART7 */
+    .long     UART8_IRQHandler              /* UART8 */
+    .long     SPI4_IRQHandler               /* SPI4 */
+    .long     SPI5_IRQHandler               /* SPI5 */
+    .long     SPI6_IRQHandler               /* SPI6 */
+    .long     SAI1_IRQHandler               /* SAI1 */
+    .long     0                             /* Reserved */
+    .long     0                             /* Reserved */
+    .long     DMA2D_IRQHandler              /* DMA2D */
 
     .size    __isr_vector, . - __isr_vector
 
@@ -348,6 +357,13 @@ Reset_Handler:
     def_irq_default_handler     CRYP_IRQHandler
     def_irq_default_handler     HASH_RNG_IRQHandler
     def_irq_default_handler     FPU_IRQHandler
+    def_irq_default_handler     UART7_IRQHandler
+    def_irq_default_handler     UART8_IRQHandler
+    def_irq_default_handler     SPI4_IRQHandler
+    def_irq_default_handler     SPI5_IRQHandler
+    def_irq_default_handler     SPI6_IRQHandler
+    def_irq_default_handler     SAI1_IRQHandler
+    def_irq_default_handler     DMA2D_IRQHandler
     def_irq_default_handler     DEF_IRQHandler
 
     .end

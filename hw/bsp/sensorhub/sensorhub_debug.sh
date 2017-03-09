@@ -30,7 +30,7 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-s $BSP_PATH -f $BSP_PATH/f4discovery.cfg"
+CFG="-s $BSP_PATH -f $BSP_PATH/sensorhub.cfg"
 #ADG! CFG="-s $BSP_PATH -f /usr/share/openocd/scripts/interface/jlink.cfg -f /home/alan/dev/myproj-2/targets/stm_blinky/openocd.cfg"
 
 # Exit openocd when gdb detaches.

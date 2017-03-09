@@ -35,11 +35,11 @@ extern "C" {
 /* More convenient section placement macros. */
 #define bssnz_t         sec_bss_nz_core
 
+/* System SRAM */
 extern uint8_t _ram_start;
+#define RAM_SIZE        (192 * 1024)
+/* System CCM (core coupled memory) data RAM. */
 extern uint8_t _ccram_start;
-
-/* System SRAM including CCM (core coupled memory) data RAM. */
-#define RAM_SIZE        (256 * 1024)
 #define CCRAM_SIZE      (64 * 1024)
 
 /* 4KB of backup SRAM, accessible only from the CPU. 
@@ -50,7 +50,7 @@ extern uint8_t _ccram_start;
 /* LED pins */
 #define LED_BLINK_PIN   MCU_GPIO_PORTD(12)
 
-/* UART */
+/* UART pins */
 #define UART_CNT 1
 #define CONSOLE_UART 	"uart0"
 
