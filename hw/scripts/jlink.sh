@@ -40,8 +40,10 @@ jlink_load () {
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
-        echo "Cannot find file" $FILE_NAME
-        exit 1
+	# tries stripping current path for readability
+        FILE=${FILE_NAME##$(pwd)/}
+	echo "Cannot find file" $FILE
+	exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
         echo "Missing flash offset"

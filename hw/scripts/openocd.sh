@@ -35,6 +35,8 @@ openocd_load () {
 	exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
+	# tries stripping current path for readability
+        FILE=${FILE_NAME##$(pwd)/}
 	echo "Cannot find file" $FILE
 	exit 1
     fi
