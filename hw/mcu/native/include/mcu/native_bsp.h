@@ -25,6 +25,8 @@ extern "C" {
 
 extern const struct hal_flash native_flash_dev;
 
+int uart_set_dev(int port, const char *dev_str);
+
 #ifdef __cplusplus
 }
 #endif
