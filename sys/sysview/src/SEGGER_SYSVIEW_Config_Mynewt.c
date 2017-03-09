@@ -61,7 +61,7 @@ extern unsigned int SystemCoreClock;
 #endif
 
 #ifndef   SYSVIEW_SYSDESC0
-  #define SYSVIEW_SYSDESC0        "I#15=SysTick"
+  #define SYSVIEW_SYSDESC0        "I#18=UART,I#19=SPI0,I#20=SPI1,I#22=GPIO,I#24=TIMER0,I#29=RNG,I#32=WATCHDOG,I#33=OS_TICK"
 #endif
 
 // Define as 1 if the Cortex-M cycle counter is used as SystemView timestamp. Must match SEGGER_SYSVIEW_Conf.h
