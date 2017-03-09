@@ -34,6 +34,7 @@ compiler.flags.debug: [compiler.flags.base, -O0]
 compiler.as.flags: [-x, assembler-with-cpp]
 compiler.ld.mapfile: false
 compiler.ld.binfile: false
+compiler.ld.flags: -lm
 
 # Linux.
 compiler.flags.base.LINUX: >
