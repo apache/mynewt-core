@@ -42,10 +42,19 @@
 #endif
 #include "os/os_dev.h"
 #include "bsp.h"
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
 #include <lsm303dlhc/lsm303dlhc.h>
-#include <tsl2561/tsl2561.h>
-#include <tcs34725/tcs34725.h>
+static struct lsm303dlhc lsm303dlhc;
+#endif
+#if MYNEWT_VAL(BNO055_PRESENT)
 #include <bno055/bno055.h>
+#endif
+#if MYNEWT_VAL(TSL2561_PRESENT)
+#include <tsl2561/tsl2561.h>
+#endif
+#if MYNEWT_VAL(TCS34725_PRESENT)
+#include <tcs34725/tcs34725.h>
+#endif
 
 #if MYNEWT_VAL(LSM303DLHC_PRESENT)
 static struct lsm303dlhc lsm303dlhc;
