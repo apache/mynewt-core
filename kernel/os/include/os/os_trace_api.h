@@ -25,6 +25,14 @@
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 
+#define OS_TRACE_ID_OFFSET                    (32u)
+
+#define OS_TRACE_ID_EVQ_PUT                   (1u + OS_TRACE_ID_OFFSET)
+#define OS_TRACE_ID_EVQ_GET                   (2u + OS_TRACE_ID_OFFSET)
+#define OS_TRACE_ID_MUTEX_INIT                (3u + OS_TRACE_ID_OFFSET)
+#define OS_TRACE_ID_MUTEX_RELEASE             (4u + OS_TRACE_ID_OFFSET)
+#define OS_TRACE_ID_MUTEX_PEND                (5u + OS_TRACE_ID_OFFSET)
+
 #if MYNEWT_VAL(OS_SYSVIEW)
 void os_trace_enter_isr(void);
 void os_trace_exit_isr(void);
