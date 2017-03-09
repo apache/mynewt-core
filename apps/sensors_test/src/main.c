@@ -32,6 +32,7 @@
 #include <sensor/sensor.h>
 #include <lsm303dlhc/lsm303dlhc.h>
 #include <tsl2561/tsl2561.h>
+#include <tcs34725/tcs34725.h>
 #include <bno055/bno055.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
@@ -244,6 +245,29 @@ config_sensor(void)
     struct os_dev *dev;
     int rc;
 
+#if MYNEWT_VAL(TCS34725_PRESENT)
+    struct tcs34725_cfg tcscfg;
+
+    dev = (struct os_dev *) os_dev_open("color0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+    rc = tcs34725_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    /* Gain set to 16X and Inetgration time set to 24ms */
+    tcscfg.gain = TCS34725_GAIN_16X;;
+    tcscfg.integration_time = TCS34725_INTEGRATIONTIME_24MS;
+
+    rc = tcs34725_config((struct tcs34725 *)dev, &tcscfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+    os_dev_close(dev);
+#endif
+
 #if MYNEWT_VAL(TSL2561_PRESENT)
     struct tsl2561_cfg tslcfg;
 
@@ -309,9 +333,9 @@ config_sensor(void)
                     BNO055_DO_FORMAT_ANDROID;
 
     bcfg.bc_opr_mode = BNO055_OPR_MODE_ACCONLY;
-
     bcfg.bc_pwr_mode = BNO055_PWR_MODE_NORMAL;
-
+    bcfg.bc_acc_bw = BNO055_ACC_CFG_BW_125HZ;
+    bcfg.bc_acc_range =  BNO055_ACC_CFG_RNG_16G;
     bcfg.bc_use_ext_xtal = 1;
 
     rc = bno055_config((struct bno055 *) dev, &bcfg);
@@ -416,6 +440,10 @@ main(int argc, char **argv)
             hal_system_restart(entry);
         }
     }
+#endif
+
+#if MYNEWT_VAL(TCS34725_CLI)
+    tcs34725_shell_init();
 #endif
 
 #if MYNEWT_VAL(TSL2561_CLI)

@@ -36,6 +36,7 @@
 #include "sensor/light.h"
 #include "sensor/quat.h"
 #include "sensor/euler.h"
+#include "sensor/color.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
@@ -107,6 +108,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     struct sensor_light_data *sld;
     struct sensor_euler_data *sed;
     struct sensor_quat_data *sqd;
+    struct sensor_color_data *scd;
     int8_t *temperature;
     char tmpstr[13];
 
@@ -192,6 +194,29 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         }
         if (sqd->sqd_w != SENSOR_QUAT_DATA_UNUSED) {
             console_printf("w = %s ", sensor_ftostr(sqd->sqd_w, tmpstr, 13));
+        }
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_COLOR) {
+        scd = (struct sensor_color_data *) data;
+        if (scd->scd_r != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("red = %u, ", scd->scd_r);
+        }
+        if (scd->scd_g != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("green = %u, ", scd->scd_g);
+        }
+        if (scd->scd_b != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("blue = %u, ", scd->scd_b);
+        }
+        if (scd->scd_c != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("clear = %u, ", scd->scd_c);
+        }
+        if (scd->scd_lux != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("lux = %u, ", scd->scd_lux);
+        }
+        if (scd->scd_colortemp != SENSOR_LIGHT_DATA_UNUSED) {
+            console_printf("color temperature = %u, ", scd->scd_colortemp);
         }
         console_printf("\n");
     }

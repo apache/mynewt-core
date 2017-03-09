@@ -72,12 +72,12 @@ typedef enum {
     SENSOR_TYPE_GRAVITY              = (1 << 27),
     /* Euler Orientation Sensor */
     SENSOR_TYPE_EULER                = (1 << 28),
+    /* Color Sensor */
+    SENSOR_TYPE_COLOR                = (1 << 29),
     /* User defined sensor type 1 */
-    SENSOR_TYPE_USER_DEFINED_1       = (1 << 29),
+    SENSOR_TYPE_USER_DEFINED_1       = (1 << 30),
     /* User defined sensor type 2 */
-    SENSOR_TYPE_USER_DEFINED_2       = (1 << 30),
-    /* User defined sensor type 3 */
-    SENSOR_TYPE_USER_DEFINED_3       = (1 << 31),
+    SENSOR_TYPE_USER_DEFINED_2       = (1 << 31),
     /* A selector, describes all sensors */
     SENSOR_TYPE_ALL                  = 0xFFFFFFFF
 } sensor_type_t;
