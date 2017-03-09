@@ -102,13 +102,13 @@ static GPIO_TypeDef * const portmap[HAL_GPIO_NUM_PORTS] =
     GPIOH,
 #endif
 #if defined GPIOI_BASE
-    GPIOI
+    GPIOI,
 #endif
 #if defined GPIOJ_BASE
-    GPIOJ
+    GPIOJ,
 #endif
 #if defined GPIOK_BASE
-    GPIOK
+    GPIOK,
 #endif
 };
 
