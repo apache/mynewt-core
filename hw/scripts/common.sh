@@ -28,3 +28,17 @@ common_file_to_load () {
         FILE_NAME=$BIN_BASENAME.img
     fi
 }
+
+#
+# Check if this is executing in Windows. If so, set variable WINDOWS to 1.
+# Also check if $COMSPEC is set or not.
+#
+windows_detect() {
+    WINDOWS=0
+    if [ $OS = "Windows_NT" ]; then
+	WINDOWS=1
+    fi
+    if [ $WINDOWS -eq 1 -a -z "$COMSPEC" ]; then
+	COMSPEC=cmd.exe
+    fi
+}
