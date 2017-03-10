@@ -17,44 +17,15 @@
  * under the License.
  */
 
-#include <assert.h>
-#include <stddef.h>
-#include <inttypes.h>
-#include "syscfg/syscfg.h"
-#include <flash_map/flash_map.h>
-#include <os/os.h>
+/* Linker script for STM32F427 when running from flash and using the bootloader */
 
-#include <hal/hal_bsp.h>
-#include <hal/hal_system.h>
-#include <hal/hal_flash.h>
-#if MYNEWT_VAL(BOOT_SERIAL)
-#include <sysinit/sysinit.h>
-#endif
-#include <console/console.h>
-#include "bootutil/image.h"
-#include "bootutil/bootutil.h"
-
-#define BOOT_AREA_DESC_MAX  (256)
-#define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
-
-int
-main(void)
+/* Linker script to configure memory regions. */
+MEMORY
 {
-    struct boot_rsp rsp;
-    int rc;
-
-    hal_bsp_init();
-
-#if MYNEWT_VAL(BOOT_SERIAL)
-    sysinit();
-#else
-    flash_map_init();
-#endif
-
-    rc = boot_go(&rsp);
-    assert(rc == 0);
-
-    hal_system_start((void *)(rsp.br_image_addr + rsp.br_hdr->ih_hdr_size));
-
-    return 0;
+  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 384K /* First image slot. */
+  CCM (rwx) :   ORIGIN = 0x10000000, LENGTH = 64K
+  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 192K
 }
+
+/* This linker script is used for images and thus contains an image header */
+_imghdr_size = 0x20;

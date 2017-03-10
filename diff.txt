@@ -1,0 +1,330 @@
+diff --git a/apps/boot/src/boot.c b/apps/boot/src/boot.c
+index 9cd59e7..4f4f827 100755
+--- a/apps/boot/src/boot.c
++++ b/apps/boot/src/boot.c
+@@ -23,7 +23,7 @@
+ #include "syscfg/syscfg.h"
+ #include <flash_map/flash_map.h>
+ #include <os/os.h>
+-#include <bsp/bsp.h>
++//#include <bsp/bsp.h>
+ #include <hal/hal_bsp.h>
+ #include <hal/hal_system.h>
+ #include <hal/hal_flash.h>
+diff --git a/hw/bsp/sensorhub/boot-stm32f4discovery.ld b/hw/bsp/sensorhub/boot-stm32f4discovery.ld
+deleted file mode 100644
+index ae34f19..0000000
+--- a/hw/bsp/sensorhub/boot-stm32f4discovery.ld
++++ /dev/null
+@@ -1,31 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one
+- * or more contributor license agreements.  See the NOTICE file
+- * distributed with this work for additional information
+- * regarding copyright ownership.  The ASF licenses this file
+- * to you under the Apache License, Version 2.0 (the
+- * "License"); you may not use this file except in compliance
+- * with the License.  You may obtain a copy of the License at
+- *
+- *  http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
+- */
+-
+-/* Linker script for STM32F427 when running from flash and using the bootloader */
+-
+-/* Linker script to configure memory regions. */
+-MEMORY
+-{
+-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+-  CCM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
+-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 192K
+-}
+-
+-/* The bootloader does not contain an image header */
+-_imghdr_size = 0x0;
+diff --git a/hw/bsp/sensorhub/bsp.yml b/hw/bsp/sensorhub/bsp.yml
+index c87e36a..f19e0e8 100644
+--- a/hw/bsp/sensorhub/bsp.yml
++++ b/hw/bsp/sensorhub/bsp.yml
+@@ -20,15 +20,15 @@
+ bsp.arch: cortex_m4
+ bsp.compiler: compiler/arm-none-eabi-m4
+ bsp.linkerscript:
+-    - "hw/bsp/stm32f4discovery/stm32f4discovery.ld"
++    - "hw/bsp/sensorhub/sensorhub.ld"
+     - "hw/mcu/stm/stm32f4xx/stm32f427.ld"
+ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+-    - "hw/bsp/stm32f4discovery/boot-stm32f4discovery.ld"
++    - "hw/bsp/sensorhub/boot-sensorhub.ld"
+     - "hw/mcu/stm/stm32f4xx/stm32f427.ld"
+-bsp.downloadscript: "hw/bsp/stm32f4discovery/stm32f4discovery_download.sh"
+-bsp.debugscript: "hw/bsp/stm32f4discovery/stm32f4discovery_debug.sh"
+-bsp.downloadscript.WINDOWS.OVERRIDE: "hw/bsp/stm32f4discovery/stm32f4discovery_download.cmd"
+-bsp.debugscript.WINDOWS.OVERRIDE: "hw/bsp/stm32f4discovery/stm32f4discovery_debug.cmd"
++bsp.downloadscript: "hw/bsp/sensorhub/sensorhub_download.sh"
++bsp.debugscript: "hw/bsp/sensorhub/sensorhub_debug.sh"
++bsp.downloadscript.WINDOWS.OVERRIDE: "hw/bsp/sensorhub/sensorhub_download.cmd"
++bsp.debugscript.WINDOWS.OVERRIDE: "hw/bsp/sensorhub/sensorhub_debug.cmd"
+ 
+ bsp.flash_map:
+     areas:
+diff --git a/hw/bsp/sensorhub/f4discovery.cfg b/hw/bsp/sensorhub/f4discovery.cfg
+deleted file mode 100644
+index 3fa5699..0000000
+--- a/hw/bsp/sensorhub/f4discovery.cfg
++++ /dev/null
+@@ -1,22 +0,0 @@
+-#!/bin/sh
+-# Licensed to the Apache Software Foundation (ASF) under one
+-# or more contributor license agreements.  See the NOTICE file
+-# distributed with this work for additional information
+-# regarding copyright ownership.  The ASF licenses this file
+-# to you under the Apache License, Version 2.0 (the
+-# "License"); you may not use this file except in compliance
+-# with the License.  You may obtain a copy of the License at
+-# 
+-#   http://www.apache.org/licenses/LICENSE-2.0
+-# 
+-# Unless required by applicable law or agreed to in writing,
+-# software distributed under the License is distributed on an
+-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+-# KIND, either express or implied.  See the License for the
+-# specific language governing permissions and limitations
+-# under the License.
+-
+-# JLink debugger
+-source [find interface/jlink.cfg]
+-transport select hla_swd
+-source [find target/stm32f4x.cfg]
+diff --git a/hw/bsp/sensorhub/include/bsp/bsp.h b/hw/bsp/sensorhub/include/bsp/bsp.h
+index f7866a2..ef7f6b4 100644
+--- a/hw/bsp/sensorhub/include/bsp/bsp.h
++++ b/hw/bsp/sensorhub/include/bsp/bsp.h
+@@ -1,4 +1,4 @@
+-/*
++quit/*
+  * Licensed to the Apache Software Foundation (ASF) under one
+  * or more contributor license agreements.  See the NOTICE file
+  * distributed with this work for additional information
+@@ -35,11 +35,10 @@ extern "C" {
+ /* More convenient section placement macros. */
+ #define bssnz_t         sec_bss_nz_core
+ 
+-extern uint8_t _ram_start;
+-extern uint8_t _ccram_start;
+-
+ /* System SRAM including CCM (core coupled memory) data RAM. */
++extern uint8_t _ram_start;
+ #define RAM_SIZE        (192 * 1024)
++extern uint8_t _ccram_start;
+ #define CCRAM_SIZE      (64 * 1024)
+ 
+ /* 4KB of backup SRAM, accessible only from the CPU. 
+@@ -54,14 +53,14 @@ extern uint8_t _ccram_start;
+ #define UART_CNT 1
+ #define CONSOLE_UART 	"uart0"
+ 
+-#if MYNEWT_VAL(BOOT_SERIAL)
++//#if MYNEWT_VAL(BOOT_SERIAL)
+ #define BOOT_SERIAL_DETECT_PIN          16 /* on Sensor Hub board BOOT0 is dedicated! */
+ #define BOOT_SERIAL_DETECT_PIN_CFG      HAL_GPIO_PULL_UP
+ #define BOOT_SERIAL_DETECT_PIN_VAL      0
+ 
+ #define BOOT_SERIAL_REPORT_PIN          LED_BLINK_PIN
+ #define BOOT_SERIAL_REPORT_FREQ         (MYNEWT_VAL(OS_CPUTIME_FREQ) / 4)
+-#endif
++//#endif
+ 
+ #define NFFS_AREA_MAX    (8)
+ 
+diff --git a/hw/bsp/sensorhub/src/hal_bsp.c b/hw/bsp/sensorhub/src/hal_bsp.c
+index 18a0f6c..1cea958 100644
+--- a/hw/bsp/sensorhub/src/hal_bsp.c
++++ b/hw/bsp/sensorhub/src/hal_bsp.c
+@@ -16,15 +16,10 @@
+  * specific language governing permissions and limitations
+  * under the License.
+  */
++#include <stdint.h>
++#include <stddef.h>
+ #include <assert.h>
+-
+-#include <syscfg/syscfg.h>
+-
+-#include <os/os_dev.h>
+-#if MYNEWT_VAL(UART_0)
+-#include <uart/uart.h>
+-#include <uart_hal/uart_hal.h>
+-#endif
++#include "syscfg/syscfg.h"
+ 
+ #include <hal/hal_bsp.h>
+ #include <hal/hal_gpio.h>
+@@ -35,7 +30,12 @@
+ #include <stm32f4xx_hal_gpio_ex.h>
+ #include <mcu/stm32f4_bsp.h>
+ 
+-#include "bsp/bsp.h"
++#if MYNEWT_VAL(UART_0)
++#include <uart/uart.h>
++#include <uart_hal/uart_hal.h>
++#endif
++#include "os/os_dev.h"
++#include "bsp.h"
+ 
+ #if MYNEWT_VAL(UART_0)
+ static struct uart_dev hal_uart0;
+diff --git a/hw/bsp/sensorhub/stm32f4discovery.ld b/hw/bsp/sensorhub/stm32f4discovery.ld
+deleted file mode 100644
+index 923a133..0000000
+--- a/hw/bsp/sensorhub/stm32f4discovery.ld
++++ /dev/null
+@@ -1,31 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one
+- * or more contributor license agreements.  See the NOTICE file
+- * distributed with this work for additional information
+- * regarding copyright ownership.  The ASF licenses this file
+- * to you under the Apache License, Version 2.0 (the
+- * "License"); you may not use this file except in compliance
+- * with the License.  You may obtain a copy of the License at
+- *
+- *  http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
+- */
+-
+-/* Linker script for STM32F427 when running from flash and using the bootloader */
+-
+-/* Linker script to configure memory regions. */
+-MEMORY
+-{
+-  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 384K /* First image slot. */
+-  CCM (rwx) :   ORIGIN = 0x10000000, LENGTH = 64K
+-  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 192K
+-}
+-
+-/* This linker script is used for images and thus contains an image header */
+-_imghdr_size = 0x20;
+diff --git a/hw/bsp/sensorhub/stm32f4discovery_debug.cmd b/hw/bsp/sensorhub/stm32f4discovery_debug.cmd
+deleted file mode 100755
+index d6cfc11..0000000
+--- a/hw/bsp/sensorhub/stm32f4discovery_debug.cmd
++++ /dev/null
+@@ -1,3 +0,0 @@
+-@rem Execute a shell with a script of the same name and .sh extension
+-
+-@bash "%~dp0%~n0.sh"
+diff --git a/hw/bsp/sensorhub/stm32f4discovery_debug.sh b/hw/bsp/sensorhub/stm32f4discovery_debug.sh
+deleted file mode 100755
+index 14b2a64..0000000
+--- a/hw/bsp/sensorhub/stm32f4discovery_debug.sh
++++ /dev/null
+@@ -1,39 +0,0 @@
+-#!/bin/sh
+-# Licensed to the Apache Software Foundation (ASF) under one
+-# or more contributor license agreements.  See the NOTICE file
+-# distributed with this work for additional information
+-# regarding copyright ownership.  The ASF licenses this file
+-# to you under the Apache License, Version 2.0 (the
+-# "License"); you may not use this file except in compliance
+-# with the License.  You may obtain a copy of the License at
+-# 
+-#   http://www.apache.org/licenses/LICENSE-2.0
+-# 
+-# Unless required by applicable law or agreed to in writing,
+-# software distributed under the License is distributed on an
+-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+-# KIND, either express or implied.  See the License for the
+-# specific language governing permissions and limitations
+-# under the License.
+-#
+-
+-# Called with following variables set:
+-#  - CORE_PATH is absolute path to @apache-mynewt-core
+-#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+-#  - BIN_BASENAME is the path to prefix to target binary,
+-#    .elf appended to name is the ELF file
+-#  - FEATURES holds the target features string
+-#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+-#  - RESET set if target should be reset when attaching
+-#  - NO_GDB set if we should not start gdb to debug
+-#
+-. $CORE_PATH/hw/scripts/openocd.sh
+-
+-FILE_NAME=$BIN_BASENAME.elf
+-CFG="-s $BSP_PATH -f $BSP_PATH/f4discovery.cfg"
+-#ADG! CFG="-s $BSP_PATH -f /usr/share/openocd/scripts/interface/jlink.cfg -f /home/alan/dev/myproj-2/targets/stm_blinky/openocd.cfg"
+-
+-# Exit openocd when gdb detaches.
+-EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32f4x.cpu configure -event gdb-detach {if {[stm32f4x.cpu curstate] eq \"halted\"} resume;shutdown}"
+-
+-openocd_debug
+diff --git a/hw/bsp/sensorhub/stm32f4discovery_download.cmd b/hw/bsp/sensorhub/stm32f4discovery_download.cmd
+deleted file mode 100755
+index d6cfc11..0000000
+--- a/hw/bsp/sensorhub/stm32f4discovery_download.cmd
++++ /dev/null
+@@ -1,3 +0,0 @@
+-@rem Execute a shell with a script of the same name and .sh extension
+-
+-@bash "%~dp0%~n0.sh"
+diff --git a/hw/bsp/sensorhub/stm32f4discovery_download.sh b/hw/bsp/sensorhub/stm32f4discovery_download.sh
+deleted file mode 100755
+index 5a3a17d..0000000
+--- a/hw/bsp/sensorhub/stm32f4discovery_download.sh
++++ /dev/null
+@@ -1,42 +0,0 @@
+-#!/bin/sh
+-# Licensed to the Apache Software Foundation (ASF) under one
+-# or more contributor license agreements.  See the NOTICE file
+-# distributed with this work for additional information
+-# regarding copyright ownership.  The ASF licenses this file
+-# to you under the Apache License, Version 2.0 (the
+-# "License"); you may not use this file except in compliance
+-# with the License.  You may obtain a copy of the License at
+-# 
+-#   http://www.apache.org/licenses/LICENSE-2.0
+-# 
+-# Unless required by applicable law or agreed to in writing,
+-# software distributed under the License is distributed on an
+-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+-# KIND, either express or implied.  See the License for the
+-# specific language governing permissions and limitations
+-# under the License.
+-#
+-
+-# Called with following variables set:
+-#  - CORE_PATH is absolute path to @apache-mynewt-core
+-#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+-#  - BIN_BASENAME is the path to prefix to target binary,
+-#    .elf appended to name is the ELF file
+-#  - IMAGE_SLOT is the image slot to download to (for non-mfg-image, non-boot)
+-#  - FEATURES holds the target features string
+-#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+-#  - MFG_IMAGE is "1" if this is a manufacturing image
+-#  - FLASH_OFFSET contains the flash offset to download to
+-#  - BOOT_LOADER is set if downloading a bootloader
+-. $CORE_PATH/hw/scripts/openocd.sh
+-
+-CFG="-s $BSP_PATH -f f4discovery.cfg"
+-#ADG! CFG="-s $BSP_PATH -f /usr/share/openocd/scripts/interface/jlink.cfg -f /home/alan/dev/myproj-2/targets/stm_blinky/openocd.cfg"
+-
+-if [ "$MFG_IMAGE" ]; then
+-    FLASH_OFFSET=0x08000000
+-fi
+-
+-common_file_to_load
+-openocd_load
+-openocd_reset_run

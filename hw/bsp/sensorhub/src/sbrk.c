@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,44 +17,34 @@
  * under the License.
  */
 
-#include <assert.h>
-#include <stddef.h>
-#include <inttypes.h>
-#include "syscfg/syscfg.h"
-#include <flash_map/flash_map.h>
-#include <os/os.h>
+extern char __HeapBase;
+extern char __HeapLimit;
 
-#include <hal/hal_bsp.h>
-#include <hal/hal_system.h>
-#include <hal/hal_flash.h>
-#if MYNEWT_VAL(BOOT_SERIAL)
-#include <sysinit/sysinit.h>
-#endif
-#include <console/console.h>
-#include "bootutil/image.h"
-#include "bootutil/bootutil.h"
-
-#define BOOT_AREA_DESC_MAX  (256)
-#define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
-
-int
-main(void)
+void *
+_sbrk(int incr)
 {
-    struct boot_rsp rsp;
-    int rc;
+    static char *brk = &__HeapBase;
 
-    hal_bsp_init();
+    void *prev_brk;
 
-#if MYNEWT_VAL(BOOT_SERIAL)
-    sysinit();
-#else
-    flash_map_init();
-#endif
+    if (incr < 0) {
+        /* Returning memory to the heap. */
+        incr = -incr;
+        if (brk - incr < &__HeapBase) {
+            prev_brk = (void *)-1;
+        } else {
+            prev_brk = brk;
+            brk -= incr;
+        }
+    } else {
+        /* Allocating memory from the heap. */
+        if (&__HeapLimit - brk >= incr) {
+            prev_brk = brk;
+            brk += incr;
+        } else {
+            prev_brk = (void *)-1;
+        }
+    }
 
-    rc = boot_go(&rsp);
-    assert(rc == 0);
-
-    hal_system_start((void *)(rsp.br_image_addr + rsp.br_hdr->ih_hdr_size));
-
-    return 0;
+    return prev_brk;
 }
