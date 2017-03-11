@@ -31,18 +31,37 @@ extern "C" {
 /* Data representing a singular read from a color sensor
  */
 struct sensor_color_data {
-    uint16_t scd_r;         /* Red data   */
-    uint16_t scd_g;         /* Green data */
-    uint16_t scd_b;         /* Blue data  */
-    uint16_t scd_c;         /* Clear data */
-    uint16_t scd_lux;       /* Lux data   */
-    uint16_t scd_colortemp; /* Color temp */
-} __attribute__((packed));
+    uint16_t scd_r;          /* Red data   */
+    uint16_t scd_g;          /* Green data */
+    uint16_t scd_b;          /* Blue data  */
+    uint16_t scd_c;          /* Clear data */
+    uint16_t scd_lux;        /* Lux data   */
+    uint16_t scd_colortemp;  /* Color temp */
+    /*
+     * The following is only used in AMS DN40
+     * calculation for lux
+     */
+    uint16_t scd_saturation;   /* Saturation        */
+    uint16_t scd_saturation75; /* Saturation75      */
+    uint8_t scd_is_sat;        /* Sensor saturrated */
+    float scd_cratio;          /* C Ratio           */
+    uint16_t scd_maxlux;       /* Max Lux value     */
+    uint16_t scd_ir;           /* Infrared value    */
 
-/**
- * Color Sensor data is unused for this field.
- */
-#define SENSOR_COLOR_DATA_UNUSED (-1)
+    /* Validity */
+    uint16_t scd_r_is_valid:1;
+    uint16_t scd_g_is_valid:1;
+    uint16_t scd_b_is_valid:1;
+    uint16_t scd_c_is_valid:1;
+    uint16_t scd_lux_is_valid:1;
+    uint16_t scd_colortemp_is_valid:1;
+    uint16_t scd_saturation_is_valid:1;
+    uint16_t scd_saturation75_is_valid:1;
+    uint16_t scd_is_sat_is_valid:1;
+    uint16_t scd_cratio_is_valid:1;
+    uint16_t scd_maxlux_is_valid:1;
+    uint16_t scd_ir_is_valid:1;
+} __attribute__((packed));
 
 #ifdef __cplusplus
 }
