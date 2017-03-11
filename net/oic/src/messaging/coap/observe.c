@@ -231,11 +231,13 @@ coap_notify_observers(oc_resource_t *resource,
 
     coap_observer_t *obs = NULL;
     /* iterate over observers */
-    for (obs = SLIST_FIRST(&oc_observers);
-         obs && ((resource && obs->resource == resource) ||
-           (endpoint &&
-             memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0));
-         obs = SLIST_NEXT(obs, next)) {
+    for (obs = SLIST_FIRST(&oc_observers); obs; obs = SLIST_NEXT(obs, next)) {
+        /* skip if neither resource nor endpoint match */
+        if (resource != obs->resource &&
+            0 != memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t))) {
+            continue;
+        }
+
         num_observers = obs->resource->num_observers;
 #if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
         if (response.separate_response != NULL &&

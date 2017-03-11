@@ -200,25 +200,44 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 
     if (ctx->type == SENSOR_TYPE_COLOR) {
         scd = (struct sensor_color_data *) data;
-        if (scd->scd_r != SENSOR_LIGHT_DATA_UNUSED) {
-            console_printf("red = %u, ", scd->scd_r);
+        if (scd->scd_r_is_valid) {
+            console_printf("r = %u, ", scd->scd_r);
         }
-        if (scd->scd_g != SENSOR_LIGHT_DATA_UNUSED) {
-            console_printf("green = %u, ", scd->scd_g);
+        if (scd->scd_g_is_valid) {
+            console_printf("g = %u, ", scd->scd_g);
         }
-        if (scd->scd_b != SENSOR_LIGHT_DATA_UNUSED) {
-            console_printf("blue = %u, ", scd->scd_b);
+        if (scd->scd_b_is_valid) {
+            console_printf("b = %u, ", scd->scd_b);
         }
-        if (scd->scd_c != SENSOR_LIGHT_DATA_UNUSED) {
-            console_printf("clear = %u, ", scd->scd_c);
+        if (scd->scd_c_is_valid) {
+            console_printf("c = %u, ", scd->scd_c);
         }
-        if (scd->scd_lux != SENSOR_LIGHT_DATA_UNUSED) {
+        if (scd->scd_lux_is_valid) {
             console_printf("lux = %u, ", scd->scd_lux);
         }
-        if (scd->scd_colortemp != SENSOR_LIGHT_DATA_UNUSED) {
-            console_printf("color temperature = %u, ", scd->scd_colortemp);
+        if (scd->scd_colortemp_is_valid) {
+            console_printf("cct = %uK, ", scd->scd_colortemp);
         }
-        console_printf("\n");
+        if (scd->scd_ir_is_valid) {
+            console_printf("ir = %u, \n", scd->scd_ir);
+        }
+        if (scd->scd_saturation_is_valid) {
+            console_printf("sat = %u, ", scd->scd_saturation);
+        }
+        if (scd->scd_saturation_is_valid) {
+            console_printf("sat75 = %u, ", scd->scd_saturation75);
+        }
+        if (scd->scd_is_sat_is_valid) {
+            console_printf(scd->scd_is_sat ? "is saturated, " : "not saturated, ");
+        }
+        if (scd->scd_cratio_is_valid) {
+            console_printf("cRatio = %s, ", sensor_ftostr(scd->scd_cratio, tmpstr, 13));
+        }
+        if (scd->scd_maxlux_is_valid) {
+            console_printf("max lux = %u, ", scd->scd_maxlux);
+        }
+
+        console_printf("\n\n");
     }
 
     return (0);

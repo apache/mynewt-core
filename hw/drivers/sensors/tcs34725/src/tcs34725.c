@@ -534,6 +534,11 @@ tcs34725_config(struct tcs34725 *tcs34725, struct tcs34725_cfg *cfg)
         goto err;
     }
 
+    rc = tcs34725_enable_interrupt(1);
+    if (rc) {
+        goto err;
+    }
+
     /* Overwrite the configuration data. */
     memcpy(&tcs34725->cfg, cfg, sizeof(*cfg));
 
@@ -638,19 +643,19 @@ err:
 
 /**
  *
- * Converts raw RGB values to color temp in deg K
+ * Converts raw RGB values to color temp in deg K and lux
  *
- * @param red value
- * @param green value
- * @param blue value
- * @return final CCT value using McCamy's formula
+ * @param ptr to sensor color data ptr
+ * @param ptr to sensor
  */
-static uint16_t
-tcs34725_calculate_color_temp(uint16_t r, uint16_t g, uint16_t b)
+static int
+tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs34725)
 {
-    float n;
-    float cct;
+    int rc;
 
+    rc = 0;
+#if MYNEWT_VAL(USE_TCS34725_TAOS_DN25)
+    float n;
     /**
      * From the designer's notebook by TAOS:
      * Mapping sensor response  RGB values to CIE tristimulus values(XYZ)
@@ -679,12 +684,13 @@ tcs34725_calculate_color_temp(uint16_t r, uint16_t g, uint16_t b)
      * n = (xc - 0.3320F) / (0.1858F - yc);
      */
 
-     /*
-      * n can be calculated directly using the following formula for
-      * above considerations
-      */
-    n = ((0.23881)*r + (0.25499)*g + (-0.58291)*b) / ((0.11109)*r + (-0.85406)*g +
-         (0.52289)*b);
+    /*
+     * n can be calculated directly using the following formula for
+     * above considerations
+     */
+    n = ((0.23881)*scd->scd_r + (0.25499)*scd->scd_g + (-0.58291)*scd->scd_b) /
+         ((0.11109)*scd->scd_r + (-0.85406)*scd->scd_g + (0.52289)*scd->scd_b);
+
 
     /*
      * Calculate the final CCT
@@ -692,35 +698,134 @@ tcs34725_calculate_color_temp(uint16_t r, uint16_t g, uint16_t b)
      */
 
 #if MYNEWT_VAL(USE_MATH)
-    cct = (449.0F * powf(n, 3)) + (3525.0F * powf(n, 2)) + (6823.3F * n) + 5520.33F;
+    scd->scd_colortemp = (449.0F * powf(n, 3)) + (3525.0F * powf(n, 2)) + (6823.3F * n) + 5520.33F;
 #else
-    cct = (449.0F * n * n * n) + (3525.0F * n * n) + (6823.3F * n) + 5520.33F;
+    scd->scd_colortemp = (449.0F * n * n * n) + (3525.0F * n * n) + (6823.3F * n) + 5520.33F;
 #endif
 
-    /* Return the results in degrees Kelvin */
-    return (uint16_t)cct;
+    scd->scd_lux = (-0.32466F * scd->scd_r) + (1.57837F * scd->scd_g) + (-0.73191F * scd->scd_b);
+
+    scd->scd_r_is_valid = 1;
+    scd->scd_g_is_valid = 1;
+    scd->scd_b_is_valid = 1;
+    scd->scd_c_is_valid = 1;
+    scd->scd_colortemp_is_valid = 1;
+    scd->scd_lux_is_valid = 1;
+
+    goto err;
+#else
+    uint8_t againx;
+    uint8_t atime;
+    uint16_t atime_ms;
+    uint16_t r_comp;
+    uint16_t g_comp;
+    uint16_t b_comp;
+    float cpl;
+    uint8_t agc_cur;
+
+    const struct tcs_agc agc_list[4] = {
+        { TCS34725_GAIN_60X, TCS34725_INTEGRATIONTIME_700MS,     0, 47566 },
+        { TCS34725_GAIN_16X, TCS34725_INTEGRATIONTIME_154MS,  3171, 63422 },
+        { TCS34725_GAIN_4X,  TCS34725_INTEGRATIONTIME_154MS, 15855, 63422 },
+        { TCS34725_GAIN_1X,  TCS34725_INTEGRATIONTIME_2_4MS,   248,     0 }
+    };
+
+    agc_cur = 0;
+    while(1) {
+        if (agc_list[agc_cur].max_cnt && scd->scd_c > agc_list[agc_cur].max_cnt) {
+            agc_cur++;
+        } else if (agc_list[agc_cur].min_cnt &&
+                   scd->scd_c < agc_list[agc_cur].min_cnt) {
+            agc_cur--;
+            break;
+        } else {
+            break;
+        }
+
+        rc = tcs34725_set_gain(agc_list[agc_cur].ta_gain);
+        if (rc) {
+            goto err;
+        }
+
+        rc = tcs34725_set_integration_time(agc_list[agc_cur].ta_time);
+        if (rc) {
+            goto err;
+        }
+
+        /* Shock absorber */
+        os_time_delay((256 - (uint16_t)agc_list[agc_cur].ta_time) * 2.4 * 2 * OS_TICKS_PER_SEC);
+
+        rc = tcs34725_get_rawdata(&scd->scd_r, &scd->scd_g, &scd->scd_b, &scd->scd_c, tcs34725);
+        if (rc) {
+            goto err;
+        }
+        break;
+    }
+
+    atime = (uint16_t)agc_list[agc_cur].ta_time;
+
+    /* Formula from the datasheet */
+    atime_ms = ((256 - atime) * 2.4);
+
+    switch(agc_list[agc_cur].ta_time) {
+        case TCS34725_GAIN_1X:
+            againx = 1;
+            break;
+        case TCS34725_GAIN_4X:
+            againx = 4;
+            break;
+        case TCS34725_GAIN_16X:
+            againx = 16;
+            break;
+        case TCS34725_GAIN_60X:
+            againx = 60;
+            break;
+        default:
+            rc = SYS_EINVAL;
+            goto err;
+    }
+
+    scd->scd_ir = (scd->scd_r + scd->scd_g + scd->scd_b > scd->scd_c) ?
+                  (scd->scd_r + scd->scd_g + scd->scd_b - scd->scd_c) / 2 : 0;
+
+    r_comp = scd->scd_r - scd->scd_ir;
+    g_comp = scd->scd_g - scd->scd_ir;
+    b_comp = scd->scd_b - scd->scd_ir;
+
+    scd->scd_cratio = (float)scd->scd_ir / (float)scd->scd_c;
+
+    scd->scd_saturation = ((256 - atime) > 63) ? 65535 : 1024 * (256 - atime);
+
+    scd->scd_saturation75 = (atime_ms < 150) ? (scd->scd_saturation - scd->scd_saturation / 4) : scd->scd_saturation;
+
+    scd->scd_is_sat = (atime_ms < 150 && scd->scd_c > scd->scd_saturation75) ? 1 : 0;
+
+    cpl = (atime_ms * againx) / (TCS34725_GA * TCS34725_DF);
+
+    scd->scd_maxlux = 65535 / (cpl * 3);
+
+    scd->scd_lux = (TCS34725_R_COEF * (float)r_comp + TCS34725_G_COEF * (float)g_comp +
+           TCS34725_B_COEF * (float)b_comp) / cpl;
+
+    scd->scd_colortemp = TCS34725_CT_COEF * (float)b_comp / (float)r_comp + TCS34725_CT_OFFSET;
+
+    scd->scd_r_is_valid = 1;
+    scd->scd_g_is_valid = 1;
+    scd->scd_b_is_valid = 1;
+    scd->scd_c_is_valid = 1;
+    scd->scd_lux_is_valid = 1;
+    scd->scd_colortemp_is_valid = 1;
+    scd->scd_saturation_is_valid = 1;
+    scd->scd_saturation75_is_valid = 1;
+    scd->scd_is_sat_is_valid = 1;
+    scd->scd_cratio_is_valid = 1;
+    scd->scd_maxlux_is_valid = 1;
+    scd->scd_ir_is_valid = 1;
+#endif
+
+err:
+    return rc;
 }
-
-/**
- *
- * Converts the raw RGB values to lux
- *
- * @param red value
- * @param green value
- * @param blue value
- * @return lux value
- */
-static uint16_t
-tcs34725_calculate_lux(uint16_t r, uint16_t g, uint16_t b)
-{
-    float lux;
-
-    lux = (-0.32466F * r) + (1.57837F * g) + (-0.73191F * b);
-
-    return (uint16_t)lux;
-}
-
-
 
 static int
 tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
@@ -755,8 +860,10 @@ tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
         scd.scd_g = g;
         scd.scd_b = b;
         scd.scd_c = c;
-        scd.scd_lux = tcs34725_calculate_lux(r, g, b);
-        scd.scd_colortemp = tcs34725_calculate_color_temp(r, g, b);
+        rc = tcs34725_calc_colortemp_lux(&scd, tcs34725);
+        if (rc) {
+            goto err;
+        }
 
         /* Call data function */
         rc = data_func(sensor, data_arg, &scd);

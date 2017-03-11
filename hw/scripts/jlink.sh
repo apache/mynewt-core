@@ -17,14 +17,7 @@
 
 . $CORE_PATH/hw/scripts/common.sh
 
-if which JLinkGDBServerCL >/dev/null 2>&1; then
-  JLINK_GDB_SERVER=JLinkGDBServerCL
-elif which JLinkGDBServer >/dev/null 2>&1; then
-  JLINK_GDB_SERVER=JLinkGDBServer
-else
-  echo "Cannot find JLinkGDBServer, make sure J-Link tools are in your PATH"
-  exit 1
-fi
+JLINK_GDB_SERVER=JLinkGDBServer
 
 #
 # FILE_NAME is the file to load
@@ -35,6 +28,10 @@ jlink_load () {
     GDB_CMD_FILE=.gdb_cmds
     GDB_OUT_FILE=.gdb_out
 
+    windows_detect
+    if [ $WINDOWS -eq 1 ]; then
+	JLINK_GDB_SERVER=JLinkGDBServerCL
+    fi
     if [ -z $FILE_NAME ]; then
         echo "Missing filename"
         exit 1
@@ -104,38 +101,57 @@ jlink_load () {
 # RESET is set if we should reset the target at attach time
 #
 jlink_debug() {
-    if [ -z "$NO_GDB" ]; then
-	GDB_CMD_FILE=.gdb_cmds
+    windows_detect
+    if [ $WINDOWS -eq 1 ]; then
+	JLINK_GDB_SERVER=JLinkGDBServerCL
+    fi
 
-	if [ -z $FILE_NAME ]; then
+    if [ -z "$NO_GDB" ]; then
+        GDB_CMD_FILE=.gdb_cmds
+
+        if [ -z $FILE_NAME ]; then
             echo "Missing filename"
             exit 1
-	fi
-	if [ ! -f "$FILE_NAME" ]; then
+        fi
+        if [ ! -f "$FILE_NAME" ]; then
             echo "Cannot find file" $FILE_NAME
             exit 1
+        fi
+
+        echo "Debugging" $FILE_NAME
+
+        if [ $WINDOWS -eq 1 ]; then
+            #
+            # Launch jlink server in a separate command interpreter, to make
+            # sure it doesn't get killed by Ctrl-C signal from bash.
+            #
+            $COMSPEC "/C start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
+        else
+            #
+            # Block Ctrl-C from getting passed to jlink server.
+            #
+            set -m
+            $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
+            set +m
+        fi
+
+        echo "target remote localhost:3333" > $GDB_CMD_FILE
+        # Whether target should be reset or not
+        if [ ! -z "$RESET" ]; then
+            echo "mon reset" >> $GDB_CMD_FILE
+            echo "si" >> $GDB_CMD_FILE
+        fi
+        echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
+
+	if [ $WINDOWS -eq 1 ]; then
+	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
+	    $COMSPEC "/C start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+	else
+            arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
+            rm $GDB_CMD_FILE
 	fi
-
-	echo "Debugging" $FILE_NAME
-
-	# Monitor mode. Background process gets it's own process group.
-	set -m
-	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
-	set +m
-
-	echo "target remote localhost:3333" > $GDB_CMD_FILE
-	# Whether target should be reset or not
-	if [ ! -z "$RESET" ]; then
-	    echo "mon reset" >> $GDB_CMD_FILE
-	    echo "si" >> $GDB_CMD_FILE
-	fi
-	echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
-
-	arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-
-	rm $GDB_CMD_FILE
     else
-	$JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
+        $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
     fi
     return 0
 }

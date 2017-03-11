@@ -101,9 +101,24 @@
 #define TCS34725_REG_BDATAL       0x1A
 #define TCS34725_REG_BDATAH       0x1B
 
+#define TCS34725_R_COEF         0.136F
+#define TCS34725_G_COEF         1.000F
+#define TCS34725_B_COEF        -0.444F
+#define TCS34725_GA               1.0F
+#define TCS34725_DF             310.0F
+#define TCS34725_CT_COEF       3810.0F
+#define TCS34725_CT_OFFSET     1391.0F
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct tcs_agc {
+    uint8_t ta_gain;
+    uint8_t ta_time;
+    uint16_t min_cnt;
+    uint16_t max_cnt;
+};
 
 /**
  * Writes a single byte to the specified register
