@@ -294,6 +294,7 @@ sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
     while (1) {
         rc = sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
         if (rc) {
+            console_printf("Cannot read sensor %s\n", name);
             goto err;
         }
         if (ctx.num_entries >= nsamples) {
