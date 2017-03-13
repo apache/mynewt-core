@@ -59,8 +59,19 @@ sensor_display_help(void)
 static void
 sensor_cmd_display_sensor(struct sensor *sensor)
 {
-    console_printf("sensor dev = %s, type = 0x%llx\n", sensor->s_dev->od_name,
-            sensor->s_types);
+    int type;
+    int i;
+
+    console_printf("sensor dev = %s, type = ", sensor->s_dev->od_name);
+
+    for (i = 0; i < 32; i++) {
+        type = (0x1 << i) & sensor->s_types;
+        if (type) {
+            console_printf("0x%x ", type);
+        }
+    }
+
+    console_printf("\n");
 }
 
 static void
@@ -243,7 +254,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     return (0);
 }
 
-static void
+static int
 sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
 {
     struct sensor *sensor;
@@ -261,6 +272,14 @@ sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
      */
     memset(&ctx, 0, sizeof(ctx));
 
+    if (!(type & sensor->s_types)) {
+        rc = SYS_EINVAL;
+        /* Directly return without trying to unregister */
+        console_printf("Read req for wrng type 0x%x from selected sensor: %s\n",
+                       (int)type, name);
+        return rc;
+    }
+
     ctx.type = type;
 
     listener.sl_sensor_type = type;
@@ -269,11 +288,14 @@ sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
 
     rc = sensor_register_listener(sensor, &listener);
     if (rc != 0) {
-        goto err;
+        return rc;
     }
 
     while (1) {
         rc = sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
+        if (rc) {
+            goto err;
+        }
         if (ctx.num_entries >= nsamples) {
             break;
         }
@@ -281,8 +303,10 @@ sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
 
     sensor_unregister_listener(sensor, &listener);
 
+    return 0;
 err:
-    return;
+    sensor_unregister_listener(sensor, &listener);
+    return rc;
 }
 
 int
@@ -370,7 +394,11 @@ sensor_cmd_exec(int argc, char **argv)
             rc = SYS_EINVAL;
             goto err;
         }
-        sensor_cmd_read(argv[2], (sensor_type_t) atoi(argv[3]), atoi(argv[4]));
+
+        rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), atoi(argv[4]));
+        if (rc) {
+            goto err;
+        }
     } else if (!strcmp(argv[1], "i2cscan")) {
         rc = sensor_cmd_i2cscan(argc, argv);
         if (rc) {

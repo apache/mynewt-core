@@ -753,7 +753,7 @@ tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs3
         }
 
         /* Shock absorber */
-        os_time_delay((256 - (uint16_t)agc_list[agc_cur].ta_time) * 2.4 * 2 * OS_TICKS_PER_SEC);
+        os_time_delay((256 - ((uint16_t)agc_list[agc_cur].ta_time) * 2.4 * 2 * OS_TICKS_PER_SEC)/1000 + 1);
 
         rc = tcs34725_get_rawdata(&scd->scd_r, &scd->scd_g, &scd->scd_b, &scd->scd_c, tcs34725);
         if (rc) {
