@@ -23,6 +23,13 @@ syscfg.defs:
         description: 'Controls whether shell is enabled or not.'
         value: 0
 
+    SHELL_TASK_PRIO:
+        description: 'Shell task priority'
+        value: 3
+    SHELL_STACK_SIZE:
+        description: 'Shell task stack size'
+        value: 512
+
     SHELL_CMD_HELP:
         description: 'Include help information for shell commands'
         value: 1

@@ -27,14 +27,18 @@
 #include "newshell/console/console.h"
 #include "newshell/shell/shell.h"
 
+static struct os_task shell_task;
+static os_stack_t shell_task_stack[MYNEWT_VAL(SHELL_STACK_SIZE)];
+#define SHELL_PROMPT "shell> "
+
 #define ARGC_MAX                10
 #define MODULE_NAME_MAX_LEN     20
 #define COMMAND_MAX_LEN         50
 #define SHELL_MAX_INPUT_LEN     80
+
 /* additional chars are "> " (include '\0' )*/
 #define PROMPT_SUFFIX 3
 #define PROMPT_MAX_LEN (MODULE_NAME_MAX_LEN + PROMPT_SUFFIX)
-#define SHELL_PROMPT "shell> "
 
 #define MAX_MODULES 4
 static struct shell_module shell_modules[MAX_MODULES];
@@ -853,13 +857,15 @@ shell_init(void)
 
     console_init(&avail_queue, &cmds_queue, completion);
 
+    /* Initialize the task */
+    os_task_init(&shell_task, "shell", shell, NULL,
+                 MYNEWT_VAL(SHELL_TASK_PRIO), OS_WAIT_FOREVER,
+                 shell_task_stack, MYNEWT_VAL(SHELL_STACK_SIZE));
+
 #if MYNEWT_VAL(SHELL_OS_MODULE)
     shell_os_register(shell_register);
 #endif
 #if MYNEWT_VAL(SHELL_PROMPT_MODULE)
     shell_prompt_register(shell_register);
 #endif
-
-    /* shell main loop - never exit */
-    shell(NULL);
 }
