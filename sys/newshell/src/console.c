@@ -26,7 +26,7 @@
 #include "os/os.h"
 #include "syscfg/syscfg.h"
 
-#include "console.h"
+#include "newshell/console/console.h"
 
 /* Control characters */
 #define ESC                0x1b

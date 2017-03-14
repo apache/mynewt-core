@@ -24,8 +24,8 @@
 #include "datetime/datetime.h"
 #include "syscfg/syscfg.h"
 
-#include "console.h"
-#include "shell.h"
+#include "newshell/console/console.h"
+#include "newshell/shell/shell.h"
 
 #define SHELL_OS "os"
 

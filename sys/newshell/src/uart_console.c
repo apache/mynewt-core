@@ -25,7 +25,7 @@
 #include "bsp/bsp.h"
 #include "syscfg/syscfg.h"
 
-#include "console.h"
+#include "newshell/console/console.h"
 
 static struct uart_dev *uart_dev;
 

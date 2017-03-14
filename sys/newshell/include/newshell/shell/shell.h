@@ -75,13 +75,6 @@ typedef int (*shell_register_function_t)(const char *module_name,
 int shell_register(const char *shell_name,
                    const struct shell_cmd *shell_commands);
 
-/** @brief Initialize shell with optional prompt, NULL in case no prompt is
- *         needed.
- *
- *  @param prompt Prompt to be printed on console.
- */
-void shell_init(const char *prompt);
-
 /** @brief Optionally register an app default cmd handler.
  *
  *  @param handler To be called if no cmd found in cmds registered with

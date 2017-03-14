@@ -22,8 +22,8 @@
 #include "os/os.h"
 #include "syscfg/syscfg.h"
 
-#include "console.h"
-#include "shell.h"
+#include "newshell/console/console.h"
+#include "newshell/shell/shell.h"
 
 #define PROMPT_LEN 15
 #define SHELL_PROMPT "prompt"

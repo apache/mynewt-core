@@ -17,14 +17,17 @@
 # under the License.
 #
 
-pkg.name: apps/newshell
-pkg.type: app
-pkg.description: new shell application
+pkg.name: sys/newshell
+pkg.description: New shell package
 pkg.author: "Michal Narajowski <michal.narajowski@codecoup.pl>"
 pkg.homepage: "http://www.codecoup.pl/"
 pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - sys/console/full
-    - sys/newshell
+    - sys/console/stub
+    - time/datetime
+    - hw/drivers/rtt
+
+pkg.init:
+    shell_init: 500

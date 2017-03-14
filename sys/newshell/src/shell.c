@@ -24,9 +24,8 @@
 #include "sysinit/sysinit.h"
 #include "os/os.h"
 
-#include "console.h"
-
-#include "shell.h"
+#include "newshell/console/console.h"
+#include "newshell/shell/shell.h"
 
 #define ARGC_MAX                10
 #define MODULE_NAME_MAX_LEN     20
@@ -35,6 +34,7 @@
 /* additional chars are "> " (include '\0' )*/
 #define PROMPT_SUFFIX 3
 #define PROMPT_MAX_LEN (MODULE_NAME_MAX_LEN + PROMPT_SUFFIX)
+#define SHELL_PROMPT "shell> "
 
 #define MAX_MODULES 4
 static struct shell_module shell_modules[MAX_MODULES];
@@ -835,14 +835,31 @@ shell_register(const char *module_name, const struct shell_cmd *commands)
 }
 
 void
-shell_init(const char *str)
+shell_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+#if !MYNEWT_VAL(SHELL_TASK)
+    return;
+#endif
+
     os_eventq_init(&cmds_queue);
     os_eventq_init(&avail_queue);
 
     line_queue_init();
 
-    prompt = str ? str : "";
+    prompt = SHELL_PROMPT;
 
     console_init(&avail_queue, &cmds_queue, completion);
+
+#if MYNEWT_VAL(SHELL_OS_MODULE)
+    shell_os_register(shell_register);
+#endif
+#if MYNEWT_VAL(SHELL_PROMPT_MODULE)
+    shell_prompt_register(shell_register);
+#endif
+
+    /* shell main loop - never exit */
+    shell(NULL);
 }
