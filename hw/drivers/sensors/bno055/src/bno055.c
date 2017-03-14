@@ -849,6 +849,11 @@ bno055_get_quat_data(void *datastruct)
     sqd->sqd_y = ((((uint16_t)buffer[5]) << 8) | ((uint16_t)buffer[4])) * scale;
     sqd->sqd_z = ((((uint16_t)buffer[7]) << 8) | ((uint16_t)buffer[6])) * scale;
 
+    sqd->sqd_w_is_valid = 1;
+    sqd->sqd_x_is_valid = 1;
+    sqd->sqd_y_is_valid = 1;
+    sqd->sqd_z_is_valid = 1;
+
     return 0;
 err:
     return rc;
@@ -954,6 +959,11 @@ bno055_get_vector_data(void *datastruct, int type)
             smd->smd_x = ((double)x)/16.0;
             smd->smd_y = ((double)y)/16.0;
             smd->smd_z = ((double)z)/16.0;
+
+            smd->smd_x_is_valid = 1;
+            smd->smd_y_is_valid = 1;
+            smd->smd_z_is_valid = 1;
+
             break;
         case SENSOR_TYPE_GYROSCOPE:
             sad = datastruct;
@@ -961,6 +971,10 @@ bno055_get_vector_data(void *datastruct, int type)
             sad->sad_x = ((double)x)/gyro_div;
             sad->sad_y = ((double)y)/gyro_div;
             sad->sad_z = ((double)z)/gyro_div;
+
+            sad->sad_x_is_valid = 1;
+            sad->sad_y_is_valid = 1;
+            sad->sad_z_is_valid = 1;
             break;
         case SENSOR_TYPE_EULER:
             sad = datastruct;
@@ -968,6 +982,10 @@ bno055_get_vector_data(void *datastruct, int type)
             sed->sed_h = ((double)x)/euler_div;
             sed->sed_r = ((double)y)/euler_div;
             sed->sed_p = ((double)z)/euler_div;
+
+            sed->sed_h_is_valid = 1;
+            sed->sed_r_is_valid = 1;
+            sed->sed_p_is_valid = 1;
             break;
         case SENSOR_TYPE_ACCELEROMETER:
         case SENSOR_TYPE_LINEAR_ACCEL:
@@ -977,6 +995,10 @@ bno055_get_vector_data(void *datastruct, int type)
             sad->sad_x = ((double)x)/acc_div;
             sad->sad_y = ((double)y)/acc_div;
             sad->sad_z = ((double)z)/acc_div;
+
+            sad->sad_x_is_valid = 1;
+            sad->sad_y_is_valid = 1;
+            sad->sad_z_is_valid = 1;
             break;
         default:
             BNO055_ERR("Not supported sensor type: %d\n", type);

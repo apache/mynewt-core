@@ -35,12 +35,11 @@ struct sensor_light_data {
     uint16_t sld_full;
     uint16_t sld_ir;
     uint32_t sld_lux;
+    /* Validity */
+    uint8_t sld_full_is_valid:1;
+    uint8_t sld_ir_is_valid:1;
+    uint8_t sld_lux_is_valid:1;
 } __attribute__((packed));
-
-/**
- * Luminosity Sensor data is unused for this field.
- */
-#define SENSOR_LIGHT_DATA_UNUSED (-1)
 
 #ifdef __cplusplus
 }

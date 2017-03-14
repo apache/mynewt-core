@@ -132,13 +132,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         ctx->type == SENSOR_TYPE_GRAVITY) {
 
         sad = (struct sensor_accel_data *) data;
-        if (sad->sad_x != SENSOR_ACCEL_DATA_UNUSED) {
+        if (sad->sad_x_is_valid) {
             console_printf("x = %s ", sensor_ftostr(sad->sad_x, tmpstr, 13));
         }
-        if (sad->sad_y != SENSOR_ACCEL_DATA_UNUSED) {
+        if (sad->sad_y_is_valid) {
             console_printf("y = %s ", sensor_ftostr(sad->sad_y, tmpstr, 13));
         }
-        if (sad->sad_z != SENSOR_ACCEL_DATA_UNUSED) {
+        if (sad->sad_z_is_valid) {
             console_printf("z = %s", sensor_ftostr(sad->sad_z, tmpstr, 13));
         }
         console_printf("\n");
@@ -146,13 +146,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 
     if (ctx->type == SENSOR_TYPE_MAGNETIC_FIELD) {
         smd = (struct sensor_mag_data *) data;
-        if (smd->smd_x != SENSOR_MAG_DATA_UNUSED) {
+        if (smd->smd_x_is_valid) {
             console_printf("x = %s ", sensor_ftostr(smd->smd_x, tmpstr, 13));
         }
-        if (smd->smd_y != SENSOR_MAG_DATA_UNUSED) {
+        if (smd->smd_y_is_valid) {
             console_printf("y = %s ", sensor_ftostr(smd->smd_y, tmpstr, 13));
         }
-        if (smd->smd_z != SENSOR_MAG_DATA_UNUSED) {
+        if (smd->smd_z_is_valid) {
             console_printf("z = %s ", sensor_ftostr(smd->smd_z, tmpstr, 13));
         }
         console_printf("\n");
@@ -160,13 +160,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 
     if (ctx->type == SENSOR_TYPE_LIGHT) {
         sld = (struct sensor_light_data *) data;
-        if (sld->sld_full != SENSOR_LIGHT_DATA_UNUSED) {
+        if (sld->sld_full_is_valid) {
             console_printf("Full = %u, ", sld->sld_full);
         }
-        if (sld->sld_ir != SENSOR_LIGHT_DATA_UNUSED) {
+        if (sld->sld_ir_is_valid) {
             console_printf("IR = %u, ", sld->sld_ir);
         }
-        if (sld->sld_lux != SENSOR_LIGHT_DATA_UNUSED) {
+        if (sld->sld_lux_is_valid) {
             console_printf("Lux = %u, ", (unsigned int)sld->sld_lux);
         }
         console_printf("\n");
@@ -180,13 +180,13 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 
     if (ctx->type == SENSOR_TYPE_EULER) {
         sed = (struct sensor_euler_data *) data;
-        if (sed->sed_h != SENSOR_EULER_DATA_UNUSED) {
+        if (sed->sed_h_is_valid) {
             console_printf("h = %s", sensor_ftostr(sed->sed_h, tmpstr, 13));
         }
-        if (sed->sed_r != SENSOR_EULER_DATA_UNUSED) {
+        if (sed->sed_r_is_valid) {
             console_printf("r = %s", sensor_ftostr(sed->sed_r, tmpstr, 13));
         }
-        if (sed->sed_p != SENSOR_EULER_DATA_UNUSED) {
+        if (sed->sed_p_is_valid) {
             console_printf("p = %s", sensor_ftostr(sed->sed_p, tmpstr, 13));
         }
         console_printf("\n");
@@ -194,16 +194,16 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 
     if (ctx->type == SENSOR_TYPE_ROTATION_VECTOR) {
         sqd = (struct sensor_quat_data *) data;
-        if (sqd->sqd_x != SENSOR_QUAT_DATA_UNUSED) {
+        if (sqd->sqd_x_is_valid) {
             console_printf("x = %s ", sensor_ftostr(sqd->sqd_x, tmpstr, 13));
         }
-        if (sqd->sqd_y != SENSOR_QUAT_DATA_UNUSED) {
+        if (sqd->sqd_y_is_valid) {
             console_printf("y = %s ", sensor_ftostr(sqd->sqd_y, tmpstr, 13));
         }
-        if (sqd->sqd_z != SENSOR_QUAT_DATA_UNUSED) {
+        if (sqd->sqd_z_is_valid) {
             console_printf("z = %s ", sensor_ftostr(sqd->sqd_z, tmpstr, 13));
         }
-        if (sqd->sqd_w != SENSOR_QUAT_DATA_UNUSED) {
+        if (sqd->sqd_w_is_valid) {
             console_printf("w = %s ", sensor_ftostr(sqd->sqd_w, tmpstr, 13));
         }
         console_printf("\n");

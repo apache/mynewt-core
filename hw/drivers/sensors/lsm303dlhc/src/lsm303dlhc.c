@@ -425,6 +425,10 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
         sad.sad_y = (float)y * mg_lsb * 9.80665F;
         sad.sad_z = (float)z * mg_lsb * 9.80665F;
 
+        sad.sad_x_is_valid = 1;
+        sad.sad_y_is_valid = 1;
+        sad.sad_z_is_valid = 1;
+
         /* Call data function */
         rc = data_func(sensor, data_arg, &sad);
         if (rc != 0) {
@@ -510,6 +514,10 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
         smd.smd_x = (float)x / gauss_lsb_xy * 100.0F;
         smd.smd_y = (float)y / gauss_lsb_xy * 100.0F;
         smd.smd_z = (float)z / gauss_lsb_z * 100.0F;
+
+        smd.smd_x_is_valid = 1;
+        smd.smd_y_is_valid = 1;
+        smd.smd_z_is_valid = 1;
 
         /* Call data function */
         rc = data_func(sensor, data_arg, &smd);

@@ -705,10 +705,6 @@ tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs3
 
     scd->scd_lux = (-0.32466F * scd->scd_r) + (1.57837F * scd->scd_g) + (-0.73191F * scd->scd_b);
 
-    scd->scd_r_is_valid = 1;
-    scd->scd_g_is_valid = 1;
-    scd->scd_b_is_valid = 1;
-    scd->scd_c_is_valid = 1;
     scd->scd_colortemp_is_valid = 1;
     scd->scd_lux_is_valid = 1;
 
@@ -809,10 +805,6 @@ tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs3
 
     scd->scd_colortemp = TCS34725_CT_COEF * (float)b_comp / (float)r_comp + TCS34725_CT_OFFSET;
 
-    scd->scd_r_is_valid = 1;
-    scd->scd_g_is_valid = 1;
-    scd->scd_b_is_valid = 1;
-    scd->scd_c_is_valid = 1;
     scd->scd_lux_is_valid = 1;
     scd->scd_colortemp_is_valid = 1;
     scd->scd_saturation_is_valid = 1;
@@ -860,6 +852,12 @@ tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
         scd.scd_g = g;
         scd.scd_b = b;
         scd.scd_c = c;
+
+        scd.scd_r_is_valid = 1;
+        scd.scd_g_is_valid = 1;
+        scd.scd_b_is_valid = 1;
+        scd.scd_c_is_valid = 1;
+
         rc = tcs34725_calc_colortemp_lux(&scd, tcs34725);
         if (rc) {
             goto err;

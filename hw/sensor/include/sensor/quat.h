@@ -36,12 +36,12 @@ struct sensor_quat_data {
     float sqd_y;
     float sqd_z;
     float sqd_w;
+    /* Validity */
+    uint8_t sqd_x_is_valid:1;
+    uint8_t sqd_y_is_valid:1;
+    uint8_t sqd_z_is_valid:1;
+    uint8_t sqd_w_is_valid:1;
 } __attribute__((packed));
-
-/**
- * Quaternion data is unused for this field.
- */
-#define SENSOR_QUAT_DATA_UNUSED (-1)
 
 #ifdef __cplusplus
 }

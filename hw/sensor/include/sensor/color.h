@@ -43,7 +43,7 @@ struct sensor_color_data {
      */
     uint16_t scd_saturation;   /* Saturation        */
     uint16_t scd_saturation75; /* Saturation75      */
-    uint8_t scd_is_sat;        /* Sensor saturrated */
+    uint8_t scd_is_sat;        /* Sensor saturated  */
     float scd_cratio;          /* C Ratio           */
     uint16_t scd_maxlux;       /* Max Lux value     */
     uint16_t scd_ir;           /* Infrared value    */

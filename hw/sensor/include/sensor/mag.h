@@ -35,12 +35,11 @@ struct sensor_mag_data {
     float smd_x;
     float smd_y;
     float smd_z;
+    /* Validity */
+    uint8_t smd_x_is_valid:1;
+    uint8_t smd_y_is_valid:1;
+    uint8_t smd_z_is_valid:1;
 } __attribute__((packed));
-
-/**
- * Magnetometer data is unused for this field.
- */
-#define SENSOR_MAG_DATA_UNUSED (-1)
 
 #ifdef __cplusplus
 }

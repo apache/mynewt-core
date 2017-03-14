@@ -35,12 +35,12 @@ struct sensor_accel_data {
     float sad_x;
     float sad_y;
     float sad_z;
-} __attribute__((packed));
 
-/**
- * Accelerometer data is unused for this field.
- */
-#define SENSOR_ACCEL_DATA_UNUSED (-1)
+    /* Validity */
+    uint8_t sad_x_is_valid:1;
+    uint8_t sad_y_is_valid:1;
+    uint8_t sad_z_is_valid:1;
+} __attribute__((packed));
 
 #ifdef __cplusplus
 }
