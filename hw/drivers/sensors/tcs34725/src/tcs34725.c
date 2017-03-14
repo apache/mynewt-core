@@ -91,10 +91,6 @@ static const struct sensor_driver g_tcs34725_sensor_driver = {
     tcs34725_sensor_get_config
 };
 
-uint8_t g_tcs34725_gain;
-uint8_t g_tcs34725_integration_time;
-uint8_t g_tcs34725_enabled;
-
 /**
  * Writes a single byte to the specified register
  *
@@ -332,8 +328,6 @@ tcs34725_enable(uint8_t enable)
         }
     }
 
-    g_tcs34725_enabled = enable;
-
     return 0;
 err:
     return rc;
@@ -399,12 +393,25 @@ err:
 /**
  * Indicates whether the sensor is enabled or not
  *
- * @return 1 if enabled, 0 if disabled
+ * @param ptr to is_enabled variable
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-tcs34725_get_enable (void)
+int
+tcs34725_get_enable (uint8_t *is_enabled)
 {
-    return g_tcs34725_enabled;
+    int rc;
+    uint8_t tmp;
+
+    rc = tcs34725_read8(TCS34725_REG_ENABLE, &tmp);
+    if (rc) {
+        goto err;
+    }
+
+    *is_enabled = tmp;
+
+    return 0;
+err:
+    return rc;
 }
 
 /**
@@ -418,14 +425,12 @@ tcs34725_set_integration_time(uint8_t int_time)
 {
     int rc;
 
-    rc = tcs34725_write8(TCS34725_REG_ATIME,
-                         int_time | g_tcs34725_gain);
+    rc = tcs34725_write8(TCS34725_REG_ATIME, int_time);
     if (rc) {
         goto err;
     }
 
-    g_tcs34725_integration_time = int_time;
-
+    return 0;
 err:
     return rc;
 }
@@ -433,12 +438,23 @@ err:
 /**
  * Gets integration time set earlier
  *
- * @return integration time
+ * @param ptr to integration time
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-tcs34725_get_integration_time(void)
+int
+tcs34725_get_integration_time(uint8_t *int_time)
 {
-    return g_tcs34725_integration_time;
+    int rc;
+    uint8_t tmp;
+
+    rc = tcs34725_read8(TCS34725_REG_ATIME, &tmp);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
 }
 
 /**
@@ -458,13 +474,10 @@ tcs34725_set_gain(uint8_t gain)
         goto err;
     }
 
-    rc = tcs34725_write8(TCS34725_REG_CONTROL,
-                        g_tcs34725_integration_time | gain);
+    rc = tcs34725_write8(TCS34725_REG_CONTROL, gain);
     if (rc) {
         goto err;
     }
-
-    g_tcs34725_gain = gain;
 
 err:
     return rc;
@@ -473,12 +486,25 @@ err:
 /**
  * Get gain of the sensor
  *
- * @return gain
+ * @param ptr to gain
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-tcs34725_get_gain(void)
+int
+tcs34725_get_gain(uint8_t *gain)
 {
-    return g_tcs34725_gain;
+    int rc;
+    uint8_t tmp;
+
+    rc = tcs34725_read8(TCS34725_REG_CONTROL, &tmp);
+    if (rc) {
+        goto err;
+    }
+
+    *gain = tmp;
+
+    return 0;
+err:
+    return rc;
 }
 
 /**

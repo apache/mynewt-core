@@ -27,9 +27,6 @@
 #include "defs/error.h"
 
 #if MYNEWT_VAL(TCS34725_CLI)
-extern uint8_t g_tcs34725_integration_time;
-extern uint8_t g_tcs34725_gain;
-
 static int tcs34725_shell_cmd(int argc, char **argv);
 
 static struct shell_cmd tcs34725_shell_cmd_struct = {
@@ -121,9 +118,6 @@ tcs34725_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
-        tcs34725.cfg.gain = g_tcs34725_gain;
-        tcs34725.cfg.integration_time = g_tcs34725_integration_time;
-
         rc = tcs34725_get_rawdata(&r, &g, &b, &c, &tcs34725);
         if (rc) {
             console_printf("Read failed: %d\n", rc);
@@ -150,7 +144,10 @@ tcs34725_shell_cmd_gain(int argc, char **argv)
 
     /* Display the gain */
     if (argc == 2) {
-        gain = tcs34725_get_gain();
+        rc = tcs34725_get_gain(&gain);
+        if (rc) {
+            goto err;
+        }
         console_printf("\tgain [0: 1|1: 4|2: 16|3: 60]\n");
         console_printf("%u\n", gain);
     }
@@ -189,7 +186,11 @@ tcs34725_shell_cmd_time(int argc, char **argv)
 
     /* Display the integration time */
     if (argc == 2) {
-        time = tcs34725_get_integration_time();
+        rc = tcs34725_get_integration_time(&time);
+        if (rc) {
+            goto err;
+        }
+
         switch (time) {
             case TCS34725_INTEGRATIONTIME_2_4MS:
                 console_printf("2.4\n");
@@ -338,14 +339,22 @@ tcs34725_shell_cmd_en(int argc, char **argv)
 {
     char *endptr;
     long lval;
+    int rc;
+    uint8_t is_enabled;
 
+    rc = 0;
     if (argc > 3) {
         return tcs34725_shell_err_too_many_args(argv[1]);
     }
 
     /* Display current enable state */
     if (argc == 2) {
-        console_printf("%u\n", tcs34725_get_enable());
+        rc = tcs34725_get_enable(&is_enabled);
+        if (rc) {
+            console_printf("Cannot get enable state of the sensor\n");
+            goto err;
+        }
+        console_printf("%u\n", is_enabled);
     }
 
     /* Update the enable state */
@@ -360,6 +369,8 @@ tcs34725_shell_cmd_en(int argc, char **argv)
     }
 
     return 0;
+err:
+    return rc;
 }
 
 static int

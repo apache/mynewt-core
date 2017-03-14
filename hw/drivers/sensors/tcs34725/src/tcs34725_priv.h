@@ -179,10 +179,11 @@ tcs34725_get_chip_id(uint8_t *id);
 /**
  * Get gain of the sensor
  *
- * @return gain
+ * @param ptr to gain
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-tcs34725_get_gain(void);
+int
+tcs34725_get_gain(uint8_t *gain);
 
 /**
  * Set gain of the sensor
@@ -235,10 +236,11 @@ tcs34725_set_integration_time(uint8_t int_time);
 /**
  * Gets integration time set earlier
  *
- * @return integration time
+ * @param ptr to integration time
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-tcs34725_get_integration_time(void);
+int
+tcs34725_get_integration_time(uint8_t *int_time);
 
 /**
  *
@@ -253,10 +255,11 @@ tcs34725_enable(uint8_t enable);
 /**
  * Indicates whether the sensor is enabled or not
  *
- * @return 1 if enabled, 0 if disabled
+ * @param ptr to is_enabled variable
+ * @return 0 on success, non-zero on failure
  */
-uint8_t
-tcs34725_get_enable (void);
+int
+tcs34725_get_enable (uint8_t *is_enabled);
 
 /**
  * Reads the raw red, green, blue and clear channel values
