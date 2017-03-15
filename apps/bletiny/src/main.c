@@ -1851,6 +1851,10 @@ main(void)
 {
     int rc;
 
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
+
     /* Initialize OS */
     sysinit();
 
