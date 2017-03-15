@@ -32,6 +32,7 @@
 #include "mcu/mcu_hal.h"
 
 static struct uart_dev os_bsp_uart0;
+static struct uart_dev os_bsp_uart1;
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -57,6 +58,10 @@ hal_bsp_init(void)
     int rc;
 
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
+    assert(rc == 0);
+
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
     assert(rc == 0);
 }
