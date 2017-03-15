@@ -76,7 +76,7 @@ imgr_core_load(struct mgmt_cbuf *cb)
     int rc;
     int sz;
     const struct flash_area *fa;
-    uint8_t data[IMGMGR_NMGR_MAX_MSG];
+    uint8_t data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
     struct coredump_header *hdr;
     CborError g_err = CborNoError;
 

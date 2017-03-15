@@ -19,16 +19,6 @@
 # Package: mgmt/imgmgr
 
 syscfg.defs:
-    IMGMGR_COREDUMP:
-        description: 'Newtmgr commands for fetching/erasing coredump'
-        value: 0
-    IMGMGR_CLI:
-        description: 'CLI commands to interact with image management'
-        value: 0
-        restrictions:
-            - SHELL_TASK
-    IMGMGR_MAX_CHUNK_SIZE:
-        description: >
-            The maximum amount of image or core data that can fit in a
-            single NMP message
+    CBORATTR_MAX_SIZE:
+        description: 'The maximum size of a CBOR attribute during decoding'
         value: 512

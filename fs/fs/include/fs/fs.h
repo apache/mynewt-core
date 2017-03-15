@@ -81,7 +81,6 @@ int fs_dirent_is_dir(const struct fs_dirent *);
 
 #define FS_NMGR_ID_FILE     0
 
-#define FS_NMGR_MAX_MSG     400
 #define FS_NMGR_MAX_NAME    64
 
 #ifdef __cplusplus

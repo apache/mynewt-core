@@ -28,3 +28,9 @@ syscfg.defs:
     FS_NMGR:
         description: 'Enables file system newtmgr commands.'
         value: 0
+
+    FS_UPLOAD_MAX_CHUNK_SIZE:
+        description: >
+            The maximum amount of file data that can fit in a
+            single NMP upload request
+        value: 512
