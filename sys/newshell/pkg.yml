@@ -25,9 +25,9 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-    - sys/console/stub
     - time/datetime
-    - hw/drivers/rtt
+pkg.req_apis:
+    - console
 
 pkg.init:
     shell_init: 500

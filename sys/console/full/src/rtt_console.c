@@ -2,8 +2,8 @@
 
 #include "os/os.h"
 #include "rtt/SEGGER_RTT.h"
-
-#include "newshell/console/console.h"
+#include "console/console.h"
+#include "console_priv.h"
 
 #define RTT_TASK_PRIO         (5)
 #define RTT_STACK_SIZE        (512)

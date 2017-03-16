@@ -24,7 +24,7 @@
 #include "sysinit/sysinit.h"
 #include "os/os.h"
 
-#include "newshell/console/console.h"
+#include "console/console.h"
 #include "newshell/shell/shell.h"
 
 static struct os_task shell_task;

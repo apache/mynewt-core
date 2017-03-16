@@ -19,27 +19,16 @@
 # Package: sys/console/full
 
 syscfg.defs:
-    CONSOLE_BAUD:
+    CONSOLE_RTT:
+        description: 'Enable console over RTT'
+        value: 0
+    CONSOLE_UART:
+        description: 'Enable console over UART'
+        value: 0
+
+    CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'
         value: '115200'
-    CONSOLE_FLOW_CONTROL:
+    CONSOLE_UART_FLOW_CONTROL:
         description: 'Console UART flow control.'
         value: 'UART_FLOW_CTL_NONE'
-    CONSOLE_TX_BUF_SIZE:
-        description: 'Console transmit buffer size; must be power of 2.'
-        value: 32
-    CONSOLE_RX_BUF_SIZE:
-        description: 'Console receive buffer size.'
-        value: 128
-    CONSOLE_TICKS:
-        description: 'Print OS Ticks'
-        value: '1'
-    CONSOLE_PROMPT:
-        description: 'Default console prompt '
-        value: '0'
-    CONSOLE_ECHO:
-        description: 'Default console echo '
-        value: '1'
-    CONSOLE_HIST_ENABLE:
-        description: 'Console history '
-        value: 0

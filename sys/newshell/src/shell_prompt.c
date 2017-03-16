@@ -22,7 +22,7 @@
 #include "os/os.h"
 #include "syscfg/syscfg.h"
 
-#include "newshell/console/console.h"
+#include "console/console.h"
 #include "newshell/shell/shell.h"
 
 #define PROMPT_LEN 15

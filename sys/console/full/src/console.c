@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -25,8 +26,8 @@
 
 #include "os/os.h"
 #include "syscfg/syscfg.h"
-
-#include "newshell/console/console.h"
+#include "console/console.h"
+#include "console_priv.h"
 
 /* Control characters */
 #define ESC                0x1b
@@ -343,10 +344,18 @@ console_handle_char(uint8_t byte)
 }
 
 int
+console_is_init(void)
+{
+    return avail_queue || lines_queue;
+}
+
+int
 console_init(struct os_eventq *avail, struct os_eventq *lines,
              uint8_t (*completion)(char *str, uint8_t len))
 {
     int rc = 0;
+
+    assert(!console_is_init());
 
     avail_queue = avail;
     lines_queue = lines;

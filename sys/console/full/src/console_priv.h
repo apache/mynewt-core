@@ -17,30 +17,18 @@
  * under the License.
  */
 
+#ifndef __CONSOLE_PRIV_H__
+#define __CONSOLE_PRIV_H__
 
-#include "console/console.h"
-#include "console/prompt.h"
-#include "syscfg/syscfg.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-static char do_ticks = MYNEWT_VAL(CONSOLE_TICKS);
+int uart_console_init(void);
+int rtt_console_init(void);
 
-/* Turn OS Ticks off */
-void
-console_no_ticks(void)
-{
-    do_ticks = 0;
+#ifdef __cplusplus
 }
+#endif
 
-/* Turn OS Ticks on */
-void
-console_yes_ticks(void)
-{
-    do_ticks = 1;
-}
-
-/* return value of CONSOLE_TICKS */
-char console_get_ticks(void)
-{
-    return do_ticks;
-}
-
+#endif /* __CONSOLE_PRIV_H__ */

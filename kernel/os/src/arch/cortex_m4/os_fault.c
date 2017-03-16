@@ -127,7 +127,6 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 
     OS_ENTER_CRITICAL(sr);
     (void)sr;
-    console_blocking_mode();
     console_printf("Assert @ 0x%x\n",
                    (unsigned int)__builtin_return_address(0));
     if (hal_debugger_connected()) {
@@ -148,7 +147,6 @@ os_default_irq(struct trap_frame *tf)
     struct coredump_regs regs;
 #endif
 
-    console_blocking_mode();
     console_printf("Unhandled interrupt (%ld), exception sp 0x%08lx\n",
       SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk, (uint32_t)tf->ef);
     console_printf(" r0:0x%08lx  r1:0x%08lx  r2:0x%08lx  r3:0x%08lx\n",
