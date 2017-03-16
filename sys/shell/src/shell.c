@@ -463,7 +463,7 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
                  int param_len, int module_idx, int command_idx)
 {
     const char *first_match = NULL;
-    int i, common_chars = -1, space = 0;
+    int i, common_chars = -1;
     const struct shell_cmd *command;
 
     command = &shell_modules[module_idx].commands[command_idx];
@@ -514,7 +514,6 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
         console_printf("%s", line);
     } else {
         common_chars = strlen(first_match);
-        space = 1;
     }
 
     /* complete common part */
@@ -523,13 +522,7 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
         line[len++] = first_match[i];
     }
 
-    /* for convenience add space after command */
-    if (space) {
-        console_printf(" ");
-        line[len] = ' ';
-    }
-
-    return common_chars - param_len + space;
+    return common_chars - param_len;
 }
 
 static int
