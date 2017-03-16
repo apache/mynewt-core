@@ -127,18 +127,21 @@ void
 testbench_ts_pass(char *msg, int msg_len, void *arg)
 {
     TESTBENCH_UPDATE_TOD;
+
+    total_tests++;
     LOG_INFO(&testlog, LOG_MODULE_TEST, "%s test case %s PASSED %s %s",
              buildID, tu_case_name, msg, runtest_token);
-    return;
 }
 
 void
 testbench_ts_fail(char *msg, int msg_len, void *arg)
 {
     TESTBENCH_UPDATE_TOD;
+
+    total_tests++;
+    total_fails++;
     LOG_INFO(&testlog, LOG_MODULE_TEST, "%s test case %s FAILED %s %s",
              buildID, tu_case_name, msg, runtest_token);
-    return;
 }
 
 #if 0
@@ -209,8 +212,6 @@ testbench_runtests(struct os_event *ev)
         SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
             if (run_all || !strcmp(runtest_arg->run_testname, ts->ts_name)) {
                 ts->ts_test();
-                total_tests += tu_case_idx;
-                total_fails += tu_case_failed;
             }
         }
     } else {
@@ -219,8 +220,6 @@ testbench_runtests(struct os_event *ev)
          */
         SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
             ts->ts_test();
-            total_tests += tu_case_idx;
-            total_fails += tu_case_failed;
         }
     }
     testbench_test_complete();

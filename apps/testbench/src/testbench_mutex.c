@@ -75,20 +75,6 @@ testbench_mutex_tc_posttest(void* arg)
     return;
 }
 
-void
-testbench_mutex_ts_pass(char *msg, int msg_len, void *arg)
-{
-    LOG_INFO(&testlog, LOG_MODULE_TEST,
-              "%s test case %s PASSED %s", buildID, tu_case_name, msg);
-}
-    
-void
-testbench_mutex_ts_fail(char *msg, int msg_len, void *arg)
-{
-    LOG_INFO(&testlog, LOG_MODULE_TEST,
-             "%s test case %s FAILED %s", buildID, tu_case_name, msg);
-}
-
 /*
  * "Suspend" the test worker tasks after each test completes.
  * These tasks can be re-used for other tests, the stack also can be re-used.
@@ -131,10 +117,8 @@ testbench_mutex_init(void *arg)
     LOG_DEBUG(&testlog, LOG_MODULE_TEST,
              "%s testbench test_init", buildID);
 
-    tu_suite_set_pass_cb(testbench_mutex_ts_pass, NULL);
-    tu_suite_set_fail_cb(testbench_mutex_ts_fail, NULL);
-
-    return;
+    tu_suite_set_pass_cb(testbench_ts_pass, NULL);
+    tu_suite_set_fail_cb(testbench_ts_fail, NULL);
 }
 
 TEST_CASE_DECL(os_mutex_test_basic)
