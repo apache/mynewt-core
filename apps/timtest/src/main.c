@@ -32,7 +32,7 @@
 #define TASK1_STACK_SIZE    OS_STACK_ALIGN(64)
 struct os_task task1;
 
-#define TASK1_TIMER_NUM     (1)
+#define TASK1_TIMER_NUM     (0)
 #define TASK1_TIMER_FREQ    (4000000)
 
 /* Task 2 */
@@ -40,7 +40,7 @@ struct os_task task1;
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 struct os_task task2;
 
-#define TASK2_TIMER_NUM     (2)
+#define TASK2_TIMER_NUM     (1)
 #define TASK2_TIMER_FREQ    (31250)
 
 /* For LED toggling */
