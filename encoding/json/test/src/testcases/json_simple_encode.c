@@ -79,6 +79,8 @@ TEST_CASE(test_json_simple_encode)
     rc = json_encode_object_finish(&encoder);
     TEST_ASSERT(rc == 0);
 
+    bigbuf[buf_index] = '\0';
+
     /* does it match what we expect it to */
     rc = strcmp(bigbuf, output);
     TEST_ASSERT(rc == 0);
