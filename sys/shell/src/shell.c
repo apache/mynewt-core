@@ -232,7 +232,12 @@ print_module_commands(const int module)
     console_printf("help\n");
 
     for (i = 0; shell_module->commands[i].cmd_name; i++) {
-        console_printf("%s\n", shell_module->commands[i].cmd_name);
+        console_printf("%s", shell_module->commands[i].cmd_name);
+        if (shell_module->commands[i].help &&
+            shell_module->commands[i].help->summary) {
+        console_printf(" - %s", shell_module->commands[i].help->summary);
+        }
+        console_printf("\n");
     }
 }
 
