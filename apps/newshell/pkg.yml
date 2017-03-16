@@ -27,4 +27,4 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - sys/console/full
-    - sys/newshell
+    - sys/shell
