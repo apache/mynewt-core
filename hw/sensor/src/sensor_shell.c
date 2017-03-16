@@ -40,6 +40,10 @@
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
+#include "hal/hal_timer.h"
+
+#define SENSOR_SHELL_TIMER_NUM        (1)
+#define SENSOR_SHELL_TIMER_CLOCK_FREQ (100000)
 
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
@@ -47,13 +51,31 @@ static struct shell_cmd shell_sensor_cmd = {
     .sc_cmd_func = sensor_cmd_exec
 };
 
+struct os_sem g_sensor_shell_sem;
+struct hal_timer g_sensor_shell_timer;
+uint32_t sensor_shell_timer_arg = 0xdeadc0de;
+uint8_t g_timer_is_config;
+
+struct sensor_poll_data {
+    int spd_nsamples;
+    int spd_poll_itvl;
+    int spd_poll_duration;
+    int spd_poll_delay;
+};
+
 static void
 sensor_display_help(void)
 {
     console_printf("Possible commands for sensor are:\n");
     console_printf("  list\n");
-    console_printf("  read\n");
-    console_printf("  i2cscan\n");
+    console_printf("      list of sensors registered\n");
+    console_printf("  read <sensor_name> <type> [-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n");
+    console_printf("      read <no_of_samples> from sensor<sensor_name> of type:<type> at preset interval or \n");
+    console_printf("      at <poll_interval> rate for <poll_duration>");
+    console_printf("  i2cscan <I2C num>\n");
+    console_printf("      scan I2C bus for connected devices\n");
+    console_printf("  type <sensor_name>\n");
+    console_printf("      types supported by registered sensor\n");
 }
 
 static void
@@ -254,13 +276,29 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     return (0);
 }
 
+void
+sensor_shell_timer_cb(void *arg)
+{
+    int timer_arg_val;
+    int rc;
+
+    timer_arg_val = *(int *)arg;
+    rc = hal_timer_start(&g_sensor_shell_timer, timer_arg_val);
+    assert(rc == 0);
+    os_sem_release(&g_sensor_shell_sem);
+}
+
 static int
-sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
+sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
 {
     struct sensor *sensor;
     struct sensor_listener listener;
     struct sensor_shell_read_ctx ctx;
     int rc;
+    int duration;
+    int64_t start_ts;
+    int newline;
+    char ch;
 
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(name, NULL);
@@ -291,22 +329,90 @@ sensor_cmd_read(char *name, sensor_type_t type, int nsamples)
         return rc;
     }
 
+    if (spd->spd_poll_itvl) {
+
+        if (!g_timer_is_config) {
+            rc = hal_timer_config(SENSOR_SHELL_TIMER_NUM, SENSOR_SHELL_TIMER_CLOCK_FREQ);
+            assert(rc == 0);
+            g_timer_is_config = 1;
+        }
+
+        sensor_shell_timer_arg = 1000 * spd->spd_poll_itvl;
+        rc = hal_timer_set_cb(SENSOR_SHELL_TIMER_NUM, &g_sensor_shell_timer, sensor_shell_timer_cb,
+                              &sensor_shell_timer_arg);
+        assert(rc == 0);
+
+        rc = hal_timer_start(&g_sensor_shell_timer, sensor_shell_timer_arg);
+    }   assert(rc == 0);
+
+    start_ts = 0;
+    duration = 0;
+
     while (1) {
+        if (spd->spd_poll_itvl) {
+            /*
+             * Wait for semaphore from callback,
+             * this semaphore should only be considered when a
+             * a poll interval is specified
+             */
+            os_sem_pend(&g_sensor_shell_sem, OS_TIMEOUT_NEVER);
+        }
+
         rc = sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
         if (rc) {
             console_printf("Cannot read sensor %s\n", name);
             goto err;
         }
-        if (ctx.num_entries >= nsamples) {
+
+        /* Condition for number of samples */
+        if (spd->spd_nsamples && ctx.num_entries >= spd->spd_nsamples) {
+            hal_timer_stop(&g_sensor_shell_timer);
+            break;
+        }
+
+        /*
+         * Incrementing duration based on interval if specified or
+         * os_time if interval is not specified and checking duration
+         */
+        if (spd->spd_poll_duration) {
+            if (spd->spd_poll_itvl) {
+                duration += spd->spd_poll_itvl;
+            } else {
+                if (!start_ts) {
+                    start_ts = os_get_uptime_usec()/1000;
+                } else {
+                    duration = os_get_uptime_usec()/1000 - start_ts;
+                }
+
+            }
+
+            if (duration >= spd->spd_poll_duration) {
+                hal_timer_stop(&g_sensor_shell_timer);
+                console_printf("Sensor polling done\n");
+                break;
+            }
+        }
+
+        ch = 0;
+        /* Check for escape sequence */
+        rc = console_read(&ch, 1, &newline);
+        if (rc) {
+            hal_timer_stop(&g_sensor_shell_timer);
+            goto err;
+        }
+        /* ^C or q or Q gets it out of the sampling loop */
+        if (ch == 3 || ch == 'q' || ch == 'Q') {
+            hal_timer_stop(&g_sensor_shell_timer);
+            console_printf("Sensor polling stopped\n");
             break;
         }
     }
 
+err:
+    os_sem_release(&g_sensor_shell_sem);
+
     sensor_unregister_listener(sensor, &listener);
 
-    return 0;
-err:
-    sensor_unregister_listener(sensor, &listener);
     return rc;
 }
 
@@ -375,8 +481,10 @@ err:
 static int
 sensor_cmd_exec(int argc, char **argv)
 {
+    struct sensor_poll_data spd;
     char *subcmd;
     int rc;
+    int i;
 
     if (argc <= 1) {
         sensor_display_help();
@@ -388,15 +496,31 @@ sensor_cmd_exec(int argc, char **argv)
     if (!strcmp(subcmd, "list")) {
         sensor_cmd_list_sensors();
     } else if (!strcmp(subcmd, "read")) {
-        if (argc != 5) {
-            console_printf("Three arguments required for read: device name, "
-                    "sensor type and number of samples, only %d provided.\n",
-                    argc - 2);
+        if (argc < 6) {
+            console_printf("Too few arguments: %d\n"
+                           "Usage: sensor read <sensor_name> <type>"
+                           "[-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n",
+                           argc - 2);
             rc = SYS_EINVAL;
             goto err;
         }
 
-        rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), atoi(argv[4]));
+        i = 4;
+        memset(&spd, 0, sizeof(struct sensor_poll_data));
+        if (!strcmp(argv[i], "-n")) {
+            spd.spd_nsamples = atoi(argv[++i]);
+            i++;
+        }
+        if (!strcmp(argv[i], "-i")) {
+            spd.spd_poll_itvl = atoi(argv[++i]);
+            i++;
+        }
+        if (!strcmp(argv[i], "-d")) {
+            spd.spd_poll_duration = atoi(argv[++i]);
+            i++;
+        }
+
+        rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), &spd);
         if (rc) {
             goto err;
         }
