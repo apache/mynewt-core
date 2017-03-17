@@ -279,6 +279,8 @@ log_nmgr_read(struct mgmt_cbuf *cb)
         return rc;
     }
 
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "next_index");
+    g_err |= cbor_encode_int(&cb->encoder, g_log_info.li_next_index);
 
     g_err |= cbor_encode_text_stringz(&cb->encoder, "logs");
     g_err |= cbor_encoder_create_array(&cb->encoder, &logs,
