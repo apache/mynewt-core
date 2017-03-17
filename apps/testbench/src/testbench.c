@@ -360,9 +360,9 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
-    reboot_start(hal_reset_cause());
-
     conf_load();
+
+    reboot_start(hal_reset_cause());
 
     /*
      * Register the tests that can be run by lookup
