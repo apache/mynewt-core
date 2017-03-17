@@ -124,24 +124,30 @@ extern uint32_t stack3_size;
 extern uint32_t stack4_size;
 
 void
-testbench_ts_pass(char *msg, int msg_len, void *arg)
+testbench_ts_result(char *msg, void *arg, bool passed)
 {
     TESTBENCH_UPDATE_TOD;
 
     total_tests++;
-    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s test case %s PASSED %s %s",
-             buildID, tu_case_name, msg, runtest_token);
+    if (!passed) {
+        total_fails++;
+    }
+
+    LOG_INFO(&testlog, LOG_MODULE_TEST,
+            "{\"k\":\"%s\",\"n\":\"%s\",\"r\":%d,\"m\":\"%s\"}",
+             runtest_token, tu_case_name, passed, msg);
 }
 
 void
-testbench_ts_fail(char *msg, int msg_len, void *arg)
+testbench_ts_pass(char *msg, void *arg)
 {
-    TESTBENCH_UPDATE_TOD;
+    testbench_ts_result(msg, arg, true);
+}
 
-    total_tests++;
-    total_fails++;
-    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s test case %s FAILED %s %s",
-             buildID, tu_case_name, msg, runtest_token);
+void
+testbench_ts_fail(char *msg, void *arg)
+{
+    testbench_ts_result(msg, arg, false);
 }
 
 #if 0
@@ -234,6 +240,7 @@ testbench_runtests(struct os_event *ev)
 static void
 testbench_test_complete()
 {
+    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s Done", runtest_token);
     LOG_INFO(&testlog, LOG_MODULE_TEST,
              "%s TESTBENCH TEST %s - Tests run:%d pass:%d fail:%d %s",
              buildID,
