@@ -37,7 +37,7 @@
 #include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
-#include <reboot/reboot_start.h>
+#include <reboot/log_reboot.h>
 #include <os/os_time.h>
 
 #ifdef ARCH_sim

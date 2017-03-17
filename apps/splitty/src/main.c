@@ -34,7 +34,7 @@
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
-#include <reboot/reboot_start.h>
+#include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
 
