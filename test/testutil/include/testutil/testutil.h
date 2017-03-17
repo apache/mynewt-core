@@ -48,7 +48,7 @@ extern "C" {
  *      tu_suite_complete -> ts_suite_complete_cb
  */
 
-typedef void tu_case_report_fn_t(char *msg, int msg_len, void *arg);
+typedef void tu_case_report_fn_t(char *msg, void *arg);
 typedef void tu_suite_restart_fn_t(void *arg);
 
 typedef void tu_init_test_fn_t(void *arg);
