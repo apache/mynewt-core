@@ -43,17 +43,17 @@ static uint16_t reboot_cnt;
 static uint16_t soft_reboot;
 static char reboot_cnt_str[12];
 static char soft_reboot_str[12];
-static char *reboot_cnt_get(int argc, char **argv, char *buf, int max_len);
-static int reboot_cnt_set(int argc, char **argv, char *val);
-static int reboot_cnt_export(void (*export_func)(char *name, char *val),
+static char *reboot_conf_get(int argc, char **argv, char *buf, int max_len);
+static int reboot_conf_set(int argc, char **argv, char *val);
+static int reboot_conf_export(void (*export_func)(char *name, char *val),
                              enum conf_export_tgt tgt);
 
 struct conf_handler reboot_conf_handler = {
     .ch_name = "reboot",
-    .ch_get = reboot_cnt_get,
-    .ch_set = reboot_cnt_set,
+    .ch_get = reboot_conf_get,
+    .ch_set = reboot_conf_set,
     .ch_commit = NULL,
-    .ch_export = reboot_cnt_export
+    .ch_export = reboot_conf_export
 };
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
@@ -127,6 +127,19 @@ reboot_init_handler(int log_store_type, uint8_t entries)
     return 0;
 }
 
+static int
+reboot_cnt_inc(void)
+{
+    char str[12];
+    int rc;
+
+    reboot_cnt++;
+    rc = conf_save_one("reboot/reboot_cnt",
+                       conf_str_from_value(CONF_INT16, &reboot_cnt,
+                                           str, sizeof(str)));
+    return rc;
+}
+
 /**
  * Logs reboot with the specified reason
  * @param reason for reboot
@@ -135,105 +148,83 @@ reboot_init_handler(int log_store_type, uint8_t entries)
 int
 log_reboot(enum hal_reset_reason reason)
 {
-    int rc;
-    char str[12] = {0};
     struct image_version ver;
-    int16_t reboot_tmp_cnt;
 
-    rc = 0;
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     {
         const struct flash_area *ptr;
         if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
-            goto err;
+            return 0;
         }
     }
 #endif
 
-    reboot_tmp_cnt = reboot_cnt;
-
     if (reason == HAL_RESET_REQUESTED) {
-        /*
-         * Save soft_reboot as 1 if user is requesting restart.
-         */
-        reboot_tmp_cnt = 1;
-        conf_save_one("reboot/soft_reboot",
-                      conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
-                                          str, sizeof(str)));
-        reboot_tmp_cnt = reboot_cnt + 1;
+        conf_save_one("reboot/soft_reboot", "1");
     } else {
         conf_save_one("reboot/soft_reboot", "0");
-        if (soft_reboot && reason == HAL_RESET_SOFT) {
-            /* No need to log as it's not a hard reboot */
-            goto err;
-        } else {
-            reboot_cnt++;
-            reboot_tmp_cnt = reboot_cnt;
-        }
     }
 
-    /*
-     * Only care for this return code as it will tell whether the config is
-     * full, the caller of the function might not care about the return code
-     * Saving the reboot cnt
-     */
-    rc = conf_save_one("reboot/reboot_cnt",
-                       conf_str_from_value(CONF_INT16, &reboot_tmp_cnt,
-                                           str, sizeof(str)));
+    if (!soft_reboot || reason != HAL_RESET_SOFT) {
+        imgr_my_version(&ver);
 
-    imgr_my_version(&ver);
+        /* Log a reboot */
+        LOG_CRITICAL(&reboot_log, LOG_MODULE_REBOOT, "rsn:%s, cnt:%u,"
+                     " img:%u.%u.%u.%u", REBOOT_REASON_STR(reason),
+                     reboot_cnt, ver.iv_major, ver.iv_minor,
+                     ver.iv_revision, (unsigned int)ver.iv_build_num);
+    }
 
-    /* Log a reboot */
-    LOG_CRITICAL(&reboot_log, LOG_MODULE_REBOOT, "rsn:%s, cnt:%u,"
-                 " img:%u.%u.%u.%u", REBOOT_REASON_STR(reason), reboot_tmp_cnt,
-                 ver.iv_major, ver.iv_minor, ver.iv_revision,
-                 (unsigned int)ver.iv_build_num);
-err:
-    return (rc);
+    return 0;
+}
+
+/**
+ * Increments the reboot counter and writes an entry to the reboot log, if
+ * necessary.  This function should be called from main() after config
+ * settings have been loaded via conf_load().
+ *
+ * @param reason                The cause of the reboot.
+ */
+void
+reboot_start(enum hal_reset_reason reason)
+{
+    reboot_cnt_inc();
+    log_reboot(reason);
 }
 
 static char *
-reboot_cnt_get(int argc, char **argv, char *buf, int max_len)
+reboot_conf_get(int argc, char **argv, char *buf, int max_len)
 {
     if (argc == 1) {
         if (!strcmp(argv[0], "reboot_cnt")) {
-            return reboot_cnt_str;
+            return conf_str_from_value(CONF_INT16, &reboot_cnt,
+                                       reboot_cnt_str, sizeof reboot_cnt_str);
         } else if (!strcmp(argv[0], "soft_reboot")) {
-            return soft_reboot_str;
+            return conf_str_from_value(CONF_INT16, &soft_reboot,
+                                       soft_reboot_str,
+                                       sizeof soft_reboot_str);
         }
     }
     return NULL;
 }
 
 static int
-reboot_cnt_set(int argc, char **argv, char *val)
+reboot_conf_set(int argc, char **argv, char *val)
 {
-    int rc;
-
     if (argc == 1) {
         if (!strcmp(argv[0], "reboot_cnt")) {
-            rc = CONF_VALUE_SET(val, CONF_STRING, reboot_cnt_str);
-            if (rc) {
-                goto err;
-            }
-
-            return CONF_VALUE_SET(reboot_cnt_str, CONF_INT16, reboot_cnt);
+            return CONF_VALUE_SET(val, CONF_INT16, reboot_cnt);
         } else if (!strcmp(argv[0], "soft_reboot")) {
-            rc = CONF_VALUE_SET(val, CONF_STRING, soft_reboot_str);
-            if (rc) {
-                goto err;
-            }
-
-            return CONF_VALUE_SET(soft_reboot_str, CONF_INT16, soft_reboot);
+            return CONF_VALUE_SET(val, CONF_INT16, soft_reboot);
         }
     }
 
-err:
     return OS_ENOENT;
 }
 
 static int
-reboot_cnt_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
+reboot_conf_export(void (*func)(char *name, char *val),
+                   enum conf_export_tgt tgt)
 {
     if (tgt == CONF_EXPORT_SHOW) {
         func("reboot/reboot_cnt", reboot_cnt_str);

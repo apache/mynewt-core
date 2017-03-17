@@ -34,7 +34,7 @@
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
-#include <reboot/log_reboot.h>
+#include <reboot/reboot_start.h>
 #include <os/os_time.h>
 #include <id/id.h>
 
@@ -196,7 +196,7 @@ main(int argc, char **argv)
 
     conf_load();
 
-    log_reboot(hal_reset_cause());
+    reboot_start(hal_reset_cause());
 
     init_tasks();
 

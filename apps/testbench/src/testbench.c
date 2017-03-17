@@ -43,7 +43,7 @@
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
-#include <reboot/log_reboot.h>
+#include <reboot/reboot_start.h>
 #include <os/os_time.h>
 #include <id/id.h>
 #include <os/os_eventq.h>
@@ -353,7 +353,7 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
-    log_reboot(hal_reset_cause());
+    reboot_start(hal_reset_cause());
 
     conf_load();
 

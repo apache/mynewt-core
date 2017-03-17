@@ -46,7 +46,7 @@
 #include <assert.h>
 #include <string.h>
 #include <json/json.h>
-#include <reboot/log_reboot.h>
+#include <reboot/reboot_start.h>
 #include <os/os_time.h>
 #include <id/id.h>
 

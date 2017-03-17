@@ -37,7 +37,7 @@
 #include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
-#include <reboot/log_reboot.h>
+#include <reboot/reboot_start.h>
 #include <os/os_time.h>
 
 #ifdef ARCH_sim
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 
     conf_load();
 
-    log_reboot(hal_reset_cause());
+    reboot_start(hal_reset_cause());
 
 #if MYNEWT_VAL(SPLIT_LOADER)
     {
