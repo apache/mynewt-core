@@ -35,9 +35,9 @@
  */
 
 /**
- * os sem create
+ * os sem initialize
  *
- * Create a semaphore and initialize it.
+ * Initialize a semaphore
  *
  * @param sem Pointer to semaphore
  *        tokens: # of tokens the semaphore should contain initially.
