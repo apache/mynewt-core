@@ -42,9 +42,6 @@
 #include "hal/hal_i2c.h"
 #include "hal/hal_timer.h"
 
-#define SENSOR_SHELL_TIMER_NUM        (1)
-#define SENSOR_SHELL_TIMER_CLOCK_FREQ (100000)
-
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
     .sc_cmd = "sensor",
@@ -282,10 +279,102 @@ sensor_shell_timer_cb(void *arg)
     int timer_arg_val;
     int rc;
 
-    timer_arg_val = *(int *)arg;
+    timer_arg_val = *(uint32_t *)arg;
+    os_sem_release(&g_sensor_shell_sem);
     rc = hal_timer_start(&g_sensor_shell_timer, timer_arg_val);
     assert(rc == 0);
-    os_sem_release(&g_sensor_shell_sem);
+}
+
+/* HAL timer configuration */
+static void
+sensor_shell_config_timer(struct sensor_poll_data *spd)
+{
+    int rc;
+
+    if (!g_timer_is_config) {
+        rc = hal_timer_config(MYNEWT_VAL(SENSOR_SHELL_TIMER_NUM),
+                 MYNEWT_VAL(SENSOR_SHELL_TIMER_FREQ));
+        assert(rc == 0);
+        g_timer_is_config = 1;
+    }
+
+    sensor_shell_timer_arg =
+        (spd->spd_poll_itvl * 1000000) / hal_timer_get_resolution(MYNEWT_VAL(SENSOR_SHELL_TIMER_NUM));
+
+    rc = hal_timer_set_cb(MYNEWT_VAL(SENSOR_SHELL_TIMER_NUM),
+                          &g_sensor_shell_timer,
+                          sensor_shell_timer_cb,
+                          &sensor_shell_timer_arg);
+    assert(rc == 0);
+
+    rc = hal_timer_start(&g_sensor_shell_timer, sensor_shell_timer_arg);
+    assert(rc == 0);
+}
+
+/* Check for number of samples */
+static int
+sensor_shell_chk_nsamples(struct sensor_poll_data *spd,
+                          struct sensor_shell_read_ctx *ctx)
+{
+    /* Condition for number of samples */
+    if (spd->spd_nsamples && ctx->num_entries >= spd->spd_nsamples) {
+        hal_timer_stop(&g_sensor_shell_timer);
+        return 0;
+    }
+
+    return -1;
+}
+
+/* Check for escape sequence */
+static int
+sensor_shell_chk_escape_seq(void)
+{
+    char ch;
+    int newline;
+    int rc;
+
+    ch = 0;
+    /* Check for escape sequence */
+    rc = console_read(&ch, 1, &newline);
+    /* ^C or q or Q gets it out of the sampling loop */
+    if (rc || (ch == 3 || ch == 'q' || ch == 'Q')) {
+        hal_timer_stop(&g_sensor_shell_timer);
+        console_printf("Sensor polling stopped rc:%u\n", rc);
+        return 0;
+    }
+
+    return -1;
+}
+
+/*
+ * Incrementing duration based on interval if specified or
+ * os_time if interval is not specified and checking duration
+ */
+static int
+sensor_shell_polling_done(struct sensor_poll_data *spd,
+                          int64_t *start_ts,
+                          int *duration)
+{
+
+    if (spd->spd_poll_duration) {
+        if (spd->spd_poll_itvl) {
+            *duration += spd->spd_poll_itvl;
+        } else {
+            if (!*start_ts) {
+                *start_ts = os_get_uptime_usec()/1000;
+            } else {
+                *duration = os_get_uptime_usec()/1000 - *start_ts;
+            }
+        }
+
+        if (*duration >= spd->spd_poll_duration) {
+            hal_timer_stop(&g_sensor_shell_timer);
+            console_printf("Sensor polling done\n");
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 static int
@@ -297,8 +386,6 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
     int rc;
     int duration;
     int64_t start_ts;
-    int newline;
-    char ch;
 
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(name, NULL);
@@ -306,8 +393,7 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
         console_printf("Sensor %s not found!\n", name);
     }
 
-    /* Register a listener and then trigger/read a bunch of samples.
-     */
+    /* Register a listener and then trigger/read a bunch of samples */
     memset(&ctx, 0, sizeof(ctx));
 
     if (!(type & sensor->s_types)) {
@@ -329,24 +415,14 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
         return rc;
     }
 
+    /* Initialize the semaphore*/
+    os_sem_init(&g_sensor_shell_sem, 0);
+
     if (spd->spd_poll_itvl) {
+        sensor_shell_config_timer(spd);
+    }
 
-        if (!g_timer_is_config) {
-            rc = hal_timer_config(SENSOR_SHELL_TIMER_NUM, SENSOR_SHELL_TIMER_CLOCK_FREQ);
-            assert(rc == 0);
-            g_timer_is_config = 1;
-        }
-
-        sensor_shell_timer_arg = 1000 * spd->spd_poll_itvl;
-        rc = hal_timer_set_cb(SENSOR_SHELL_TIMER_NUM, &g_sensor_shell_timer, sensor_shell_timer_cb,
-                              &sensor_shell_timer_arg);
-        assert(rc == 0);
-
-        rc = hal_timer_start(&g_sensor_shell_timer, sensor_shell_timer_arg);
-    }   assert(rc == 0);
-
-    start_ts = 0;
-    duration = 0;
+    start_ts = duration = 0;
 
     while (1) {
         if (spd->spd_poll_itvl) {
@@ -364,46 +440,18 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
             goto err;
         }
 
-        /* Condition for number of samples */
-        if (spd->spd_nsamples && ctx.num_entries >= spd->spd_nsamples) {
-            hal_timer_stop(&g_sensor_shell_timer);
+        /* Check number of samples if provided */
+        if (!sensor_shell_chk_nsamples(spd, &ctx)) {
             break;
         }
 
-        /*
-         * Incrementing duration based on interval if specified or
-         * os_time if interval is not specified and checking duration
-         */
-        if (spd->spd_poll_duration) {
-            if (spd->spd_poll_itvl) {
-                duration += spd->spd_poll_itvl;
-            } else {
-                if (!start_ts) {
-                    start_ts = os_get_uptime_usec()/1000;
-                } else {
-                    duration = os_get_uptime_usec()/1000 - start_ts;
-                }
-
-            }
-
-            if (duration >= spd->spd_poll_duration) {
-                hal_timer_stop(&g_sensor_shell_timer);
-                console_printf("Sensor polling done\n");
-                break;
-            }
+        /* Check duration if provided */
+        if (!sensor_shell_polling_done(spd, &start_ts, &duration)) {
+            break;
         }
 
-        ch = 0;
-        /* Check for escape sequence */
-        rc = console_read(&ch, 1, &newline);
-        if (rc) {
-            hal_timer_stop(&g_sensor_shell_timer);
-            goto err;
-        }
-        /* ^C or q or Q gets it out of the sampling loop */
-        if (ch == 3 || ch == 'q' || ch == 'Q') {
-            hal_timer_stop(&g_sensor_shell_timer);
-            console_printf("Sensor polling stopped\n");
+        /* Check escape sequence */
+        if(!sensor_shell_chk_escape_seq()) {
             break;
         }
     }
