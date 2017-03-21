@@ -92,6 +92,98 @@ sensor_cmd_display_sensor(struct sensor *sensor)
     console_printf("\n");
 }
 
+static int
+sensor_cmd_display_type(char **argv)
+{
+    int i;
+    int rc;
+    struct sensor *sensor;
+    unsigned int type;
+
+    /* Look up sensor by name */
+    sensor = sensor_mgr_find_next_bydevname(argv[2], NULL);
+    if (!sensor) {
+        console_printf("Sensor %s not found!\n", argv[2]);
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    console_printf("sensor dev = %s, \ntype =\n", argv[2]);
+
+    for (i = 0; i < 32; i++) {
+        type = (0x1 << i) & sensor->s_types;
+        if (!type) {
+            continue;
+        }
+
+        switch (type) {
+            case SENSOR_TYPE_NONE:
+                console_printf("    no type: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_ACCELEROMETER:
+                console_printf("    accelerometer: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_MAGNETIC_FIELD:
+                console_printf("    magnetic field: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_GYROSCOPE:
+                console_printf("    gyroscope: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_LIGHT:
+                console_printf("    light: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_TEMPERATURE:
+                console_printf("    temperature: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+                console_printf("    ambient temperature: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_PRESSURE:
+                console_printf("    pressure: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_PROXIMITY:
+                console_printf("    proximity: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_RELATIVE_HUMIDITY:
+                console_printf("    humidity: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_ROTATION_VECTOR:
+                console_printf("    vector: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_ALTITUDE:
+                console_printf("    altitude: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_WEIGHT:
+                console_printf("    weight: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_LINEAR_ACCEL:
+                console_printf("    accel: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_GRAVITY:
+                console_printf("    gravity: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_EULER:
+                console_printf("    euler: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_COLOR:
+                console_printf("    color: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_USER_DEFINED_1:
+                console_printf("    user defined 1: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_USER_DEFINED_2:
+                console_printf("    user defined 2: 0x%x\n", type);
+                break;
+            default:
+                console_printf("    unknown type: 0x%x\n", type);
+                break;
+        }
+    }
+
+err:
+    return rc;
+}
+
 static void
 sensor_cmd_list_sensors(void)
 {
@@ -556,6 +648,11 @@ sensor_cmd_exec(int argc, char **argv)
         }
     } else if (!strcmp(argv[1], "i2cscan")) {
         rc = sensor_cmd_i2cscan(argc, argv);
+        if (rc) {
+            goto err;
+        }
+    } else if (!strcmp(argv[1], "type")) {
+        rc = sensor_cmd_display_type(argv);
         if (rc) {
             goto err;
         }
