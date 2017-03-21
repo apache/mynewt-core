@@ -289,6 +289,13 @@ This product bundles parts of STM32CubeF4 1.5, which is available under the
     * hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
     * hw/bsp/stm32f4discovery/src/system_stm32f4xx.c
 
+This product bundles parts of STM32CubeF7, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f7xx/src/ext
+    * hw/bsp/stm32f767-nucleo/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/stm32f767-nucleo/src/system_stm32f7xx.c
+    * hw/bsp/stm32f767-nucleo/src/arch/cortex_m7/startup_stm32f767xx.s
+
 This product bundles parts of mbed, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/nordic/nrf51xxx/include/mcu/cortex_m0.h
@@ -352,8 +359,18 @@ This product bundles part of NXP mkw41z, which is available under the
     * hw/bsp/usbmkw41z/no-boot-mkw41z512.ld
     * hw/bsp/usbmkw41z/src/arch/cortex_m0/gcc_startup_mkw41z.s
 
-This product bundles part of mips architecture and ci40, which is available under the
-"3-clause BSD" license.  Bundled files are:
+This product bundles part of mips architecture and ci40, which is available
+under the "3-clause BSD" license.  Bundled files are:
     * kernel/os/src/arch/mips/asm/ctx.S
     * kernel/os/src/arch/mips/asm/excpt_isr.S
     * hw/bsp/ci40/uhi32.ld
+
+This product bundles LwIP, which is available under the "3-clause BSD"
+license. For details, and bundled files see:
+    * net/ip/lwip_base/COPYING
+    * net/ip/lwip_base
+
+This product bundles tinycrypt, which is available under the "3-clause BSD"
+license. For details, and bundled files see:
+    * crypto/tinycrypt/LICENSE
+    * crypto/tinycrypt
