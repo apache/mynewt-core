@@ -26,11 +26,3 @@ syscfg.defs:
     SENSOR_CLI:
         description: 'Whether or not to enable the sensor shell support'
         value: 1
-
-    SENSOR_SHELL_TIMER_FREQ:
-        description: 'Frequency of sensor shell timer'
-        value: 100000
-
-    SENSOR_SHELL_TIMER_NUM:
-        description: 'Timer number to use for sensor shell, 1 by default.'
-        value: 1

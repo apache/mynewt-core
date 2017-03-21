@@ -40,7 +40,7 @@
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
-#include "hal/hal_timer.h"
+#include "os/os_cputime.h"
 
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
@@ -51,7 +51,6 @@ static struct shell_cmd shell_sensor_cmd = {
 struct os_sem g_sensor_shell_sem;
 struct hal_timer g_sensor_shell_timer;
 uint32_t sensor_shell_timer_arg = 0xdeadc0de;
-uint8_t g_timer_is_config;
 
 struct sensor_poll_data {
     int spd_nsamples;
@@ -277,38 +276,22 @@ void
 sensor_shell_timer_cb(void *arg)
 {
     int timer_arg_val;
-    int rc;
 
     timer_arg_val = *(uint32_t *)arg;
+    os_cputime_timer_relative(&g_sensor_shell_timer, timer_arg_val);
     os_sem_release(&g_sensor_shell_sem);
-    rc = hal_timer_start(&g_sensor_shell_timer, timer_arg_val);
-    assert(rc == 0);
 }
 
-/* HAL timer configuration */
+/* os cputime timer configuration and initialization */
 static void
 sensor_shell_config_timer(struct sensor_poll_data *spd)
 {
-    int rc;
+    sensor_shell_timer_arg = os_cputime_usecs_to_ticks(spd->spd_poll_itvl * 1000);
 
-    if (!g_timer_is_config) {
-        rc = hal_timer_config(MYNEWT_VAL(SENSOR_SHELL_TIMER_NUM),
-                 MYNEWT_VAL(SENSOR_SHELL_TIMER_FREQ));
-        assert(rc == 0);
-        g_timer_is_config = 1;
-    }
-
-    sensor_shell_timer_arg =
-        (spd->spd_poll_itvl * 1000000) / hal_timer_get_resolution(MYNEWT_VAL(SENSOR_SHELL_TIMER_NUM));
-
-    rc = hal_timer_set_cb(MYNEWT_VAL(SENSOR_SHELL_TIMER_NUM),
-                          &g_sensor_shell_timer,
-                          sensor_shell_timer_cb,
+    os_cputime_timer_init(&g_sensor_shell_timer, sensor_shell_timer_cb,
                           &sensor_shell_timer_arg);
-    assert(rc == 0);
 
-    rc = hal_timer_start(&g_sensor_shell_timer, sensor_shell_timer_arg);
-    assert(rc == 0);
+    os_cputime_timer_relative(&g_sensor_shell_timer, sensor_shell_timer_arg);
 }
 
 /* Check for number of samples */
@@ -318,7 +301,7 @@ sensor_shell_chk_nsamples(struct sensor_poll_data *spd,
 {
     /* Condition for number of samples */
     if (spd->spd_nsamples && ctx->num_entries >= spd->spd_nsamples) {
-        hal_timer_stop(&g_sensor_shell_timer);
+        os_cputime_timer_stop(&g_sensor_shell_timer);
         return 0;
     }
 
@@ -338,7 +321,7 @@ sensor_shell_chk_escape_seq(void)
     rc = console_read(&ch, 1, &newline);
     /* ^C or q or Q gets it out of the sampling loop */
     if (rc || (ch == 3 || ch == 'q' || ch == 'Q')) {
-        hal_timer_stop(&g_sensor_shell_timer);
+        os_cputime_timer_stop(&g_sensor_shell_timer);
         console_printf("Sensor polling stopped rc:%u\n", rc);
         return 0;
     }
@@ -351,24 +334,23 @@ sensor_shell_chk_escape_seq(void)
  * os_time if interval is not specified and checking duration
  */
 static int
-sensor_shell_polling_done(struct sensor_poll_data *spd,
-                          int64_t *start_ts,
-                          int *duration)
+sensor_shell_polling_done(struct sensor_poll_data *spd, int64_t *duration,
+                          int64_t *start_ts)
 {
 
     if (spd->spd_poll_duration) {
         if (spd->spd_poll_itvl) {
-            *duration += spd->spd_poll_itvl;
+            *duration += spd->spd_poll_itvl * 1000;
         } else {
             if (!*start_ts) {
-                *start_ts = os_get_uptime_usec()/1000;
+                *start_ts = os_get_uptime_usec();
             } else {
-                *duration = os_get_uptime_usec()/1000 - *start_ts;
+                *duration = os_get_uptime_usec() - *start_ts;
             }
         }
 
-        if (*duration >= spd->spd_poll_duration) {
-            hal_timer_stop(&g_sensor_shell_timer);
+        if (*duration >= spd->spd_poll_duration * 1000) {
+            os_cputime_timer_stop(&g_sensor_shell_timer);
             console_printf("Sensor polling done\n");
             return 0;
         }
@@ -384,7 +366,7 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
     struct sensor_listener listener;
     struct sensor_shell_read_ctx ctx;
     int rc;
-    int duration;
+    int64_t duration;
     int64_t start_ts;
 
     /* Look up sensor by name */
