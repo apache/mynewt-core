@@ -169,13 +169,13 @@ init_tasks(void)
     res = hal_timer_get_resolution(TASK2_TIMER_NUM);
     assert(res == (1000000000 / TASK2_TIMER_FREQ));
 
-    pstack = malloc(sizeof(os_stack_t)*TASK1_STACK_SIZE);
+    pstack = malloc(sizeof(os_stack_t) * TASK1_STACK_SIZE);
     assert(pstack);
 
     os_task_init(&task1, "task1", task1_handler, NULL,
             TASK1_PRIO, OS_WAIT_FOREVER, pstack, TASK1_STACK_SIZE);
 
-    pstack = malloc(sizeof(os_stack_t)*TASK1_STACK_SIZE);
+    pstack = malloc(sizeof(os_stack_t) * TASK2_STACK_SIZE);
     assert(pstack);
 
     os_task_init(&task2, "task2", task2_handler, NULL,
