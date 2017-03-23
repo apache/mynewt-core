@@ -71,7 +71,7 @@ init_task(void)
 #endif
 
 int
-rtt_console_is_init()
+rtt_console_is_init(void)
 {
 #if MYNEWT_VAL(CONSOLE_INPUT)
     return rtt_task.t_state == OS_TASK_READY ||
@@ -82,7 +82,7 @@ rtt_console_is_init()
 }
 
 int
-rtt_console_init()
+rtt_console_init(void)
 {
     SEGGER_RTT_Init();
     __stdout_hook_install(rtt_console_out);

@@ -66,13 +66,13 @@ console_rx_char(void *arg, uint8_t byte)
 }
 
 int
-uart_console_is_init()
+uart_console_is_init(void)
 {
     return uart_dev != NULL;
 }
 
 int
-uart_console_init()
+uart_console_init(void)
 {
     struct uart_conf uc = {
         .uc_speed = MYNEWT_VAL(CONSOLE_UART_BAUD),
