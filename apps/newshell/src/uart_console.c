@@ -23,6 +23,7 @@
 #include "os/os.h"
 #include "uart/uart.h"
 #include "bsp/bsp.h"
+#include "syscfg/syscfg.h"
 
 #include "console.h"
 

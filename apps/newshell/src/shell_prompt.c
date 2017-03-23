@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "os/os.h"
+#include "syscfg/syscfg.h"
 
 #include "console.h"
 #include "shell.h"

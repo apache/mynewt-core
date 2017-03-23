@@ -22,6 +22,7 @@
 
 #include "os/os.h"
 #include "datetime/datetime.h"
+#include "syscfg/syscfg.h"
 
 #include "console.h"
 #include "shell.h"

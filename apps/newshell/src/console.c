@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "os/os.h"
+#include "syscfg/syscfg.h"
 
 #include "console.h"
 
