@@ -24,7 +24,9 @@
 extern "C" {
 #endif
 
+int uart_console_is_init(void);
 int uart_console_init(void);
+int rtt_console_is_init(void);
 int rtt_console_init(void);
 
 #ifdef __cplusplus

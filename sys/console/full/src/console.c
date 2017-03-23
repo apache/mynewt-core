@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "os/os.h"
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "console/console.h"
 #include "console_priv.h"
@@ -358,20 +359,32 @@ console_handle_char(uint8_t byte)
 int
 console_is_init(void)
 {
-    return avail_queue || lines_queue;
+#if MYNEWT_VAL(CONSOLE_UART)
+    return uart_console_is_init();
+#endif
+#if MYNEWT_VAL(CONSOLE_RTT)
+    return rtt_console_is_init();
+#endif
+    return 0;
 }
 
 int
 console_init(struct os_eventq *avail, struct os_eventq *lines,
              uint8_t (*completion)(char *str, uint8_t len))
 {
-    int rc = 0;
-
-    assert(!console_is_init());
-
     avail_queue = avail;
     lines_queue = lines;
     completion_cb = completion;
+    return 0;
+}
+
+void
+console_pkg_init(void)
+{
+    int rc = 0;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
 
 #if MYNEWT_VAL(CONSOLE_UART)
     rc = uart_console_init();
@@ -380,5 +393,5 @@ console_init(struct os_eventq *avail, struct os_eventq *lines,
     rc = rtt_console_init();
 #endif
     console_out = _get_stdout_hook();
-    return rc;
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }

@@ -66,6 +66,13 @@ init_task(void)
 }
 
 int
+rtt_console_is_init()
+{
+    return rtt_task.t_state == OS_TASK_READY ||
+           rtt_task.t_state == OS_TASK_SLEEP;
+}
+
+int
 rtt_console_init()
 {
     SEGGER_RTT_Init();

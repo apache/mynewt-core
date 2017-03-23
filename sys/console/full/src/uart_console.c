@@ -66,6 +66,12 @@ console_rx_char(void *arg, uint8_t byte)
 }
 
 int
+uart_console_is_init()
+{
+    return uart_dev != NULL;
+}
+
+int
 uart_console_init()
 {
     struct uart_conf uc = {
