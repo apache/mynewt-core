@@ -34,6 +34,7 @@ struct console_input {
 };
 
 int console_is_init(void);
+void console_echo(int on);
 int console_init(struct os_eventq *avail_queue, struct os_eventq *cmd_queue,
                  uint8_t (*completion)(char *str, uint8_t len));
 size_t console_file_write(void *arg, const char *str, size_t cnt);

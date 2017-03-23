@@ -50,6 +50,7 @@
 #define ESC_ANSI_VAL_2  (1 << 4)
 
 static int esc_state;
+static int echo = 1;
 static unsigned int ansi_val, ansi_val_2;
 
 static uint8_t cur, end;
@@ -63,6 +64,12 @@ static int
 console_out_hook_default(int c)
 {
     return EOF;
+}
+
+void
+console_echo(int on)
+{
+    echo = on;
 }
 
 static stdout_func_t console_out = console_out_hook_default;
@@ -128,8 +135,10 @@ insert_char(char *pos, char c, uint8_t end)
 {
     char tmp;
 
-    /* Echo back to console */
-    console_out(c);
+    if (echo) {
+        /* Echo back to console */
+        console_out(c);
+    }
 
     if (end == 0) {
         *pos = c;

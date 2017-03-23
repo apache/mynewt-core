@@ -38,6 +38,11 @@ console_is_init(void)
     return 0;
 }
 
+static void inline
+console_echo(int on)
+{
+}
+
 static int inline
 console_init(struct os_eventq *avail_queue, struct os_eventq *cmd_queue,
                  uint8_t (*completion)(char *str, uint8_t len))
