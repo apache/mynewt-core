@@ -286,6 +286,10 @@ console_handle_char(uint8_t byte)
     static struct os_event *ev;
     static struct console_input *input;
 
+    if (!avail_queue || !lines_queue) {
+        return 0;
+    }
+
     if (!ev) {
         ev = os_eventq_get_no_wait(avail_queue);
         if (!ev)
