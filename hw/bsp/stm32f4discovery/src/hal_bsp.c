@@ -34,6 +34,8 @@
 #include <stm32f407xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
 #include <mcu/stm32f4_bsp.h>
+#include "mcu/stm32f4xx_mynewt_hal.h"
+#include "hal/hal_i2c.h"
 
 #include "bsp/bsp.h"
 
@@ -54,6 +56,20 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
     }
 };
 #endif
+
+#if MYNEWT_VAL(I2C_0)
+static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = MCU_GPIO_PORTB(9),		/* PB9 */
+    .hic_pin_scl = MCU_GPIO_PORTB(8),		/* PB8 */
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_speed = 100000				/* 100kHz */
+};
+#endif
+
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -100,6 +116,12 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
 #endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &i2c_cfg0);
+    assert(rc == 0);
+#endif
+
 }
 
 /**
