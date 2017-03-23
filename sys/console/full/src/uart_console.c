@@ -37,6 +37,9 @@ uart_console_out(int c)
 {
     if ('\n' == c) {
         uart_blocking_tx(uart_dev, '\r');
+        console_is_midline = 0;
+    } else {
+        console_is_midline = 1;
     }
     uart_blocking_tx(uart_dev, c);
 

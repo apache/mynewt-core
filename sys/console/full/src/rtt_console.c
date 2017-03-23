@@ -21,6 +21,9 @@ rtt_console_out(int character)
 
     if ('\n' == c) {
         SEGGER_RTT_WriteNoLock(0, &CR, 1);
+        console_is_midline = 0;
+    } else {
+        console_is_midline = 1;
     }
 
     SEGGER_RTT_WriteNoLock(0, &c, 1);

@@ -49,6 +49,9 @@
 #define ESC_ANSI_VAL    (1 << 3)
 #define ESC_ANSI_VAL_2  (1 << 4)
 
+/* Indicates whether the previous line of output was completed. */
+int console_is_midline;
+
 static int esc_state;
 static int echo = 1;
 static unsigned int ansi_val, ansi_val_2;
