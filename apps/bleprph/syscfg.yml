@@ -21,6 +21,7 @@
 syscfg.vals:
     # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
     LOG_LEVEL: 1
+    CONSOLE_INPUT: 0
 
     # Disable central and observer roles.
     BLE_ROLE_BROADCASTER: 1
