@@ -1478,6 +1478,559 @@ err:
     return rc;
 }
 
+/**
+ * Get threshold for interrupts
+ *
+ * @param ptr to threshold
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_int_thresh(uint32_t intr, uint8_t *thresh)
+{
+    int rc;
+    uint8_t val;
+    uint8_t mask;
+    uint8_t reg;
+
+    mask = 0;
+    switch(intr) {
+        case BNO055_INT_ACC_HG:
+            reg = BNO055_ACCEL_HIGH_G_THRES_ADDR;
+            break;
+        case BNO055_INT_ACC_SM:
+        case BNO055_INT_ACC_NM:
+            reg = BNO055_ACCEL_NO_MOTION_THRES_ADDR;
+            break;
+        case BNO055_INT_ACC_AM:
+            reg = BNO055_ACCEL_ANY_MOTION_THRES_ADDR;
+            break;
+        case BNO055_INT_GYR_AM:
+            reg = BNO055_GYRO_ANY_MOTION_THRES_ADDR;
+            mask = 0x3F;
+            break;
+        case BNO055_INT_GYR_HR_X_AXIS:
+            reg = BNO055_GYRO_HIGHRATE_X_SET_ADDR;
+            mask = 0x1F;
+            break;
+        case BNO055_INT_GYR_HR_Y_AXIS:
+            reg = BNO055_GYRO_HIGHRATE_Y_SET_ADDR;
+            mask = 0x1F;
+            break;
+        case BNO055_INT_GYR_HR_Z_AXIS:
+            reg = BNO055_GYRO_HIGHRATE_Z_SET_ADDR;
+            mask = 0x1F;
+            break;
+        default:
+            rc = SYS_EINVAL;
+            goto err;
+    }
+
+    rc = bno055_read8(reg, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *thresh = val | mask;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set threshold for interrupts
+ *
+ * @param threshold
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_int_thresh(uint32_t intr, uint8_t thresh)
+{
+    int rc;
+    uint8_t mask;
+    uint8_t val;
+    uint8_t reg;
+
+    mask = val = 0;
+    switch(intr) {
+        case BNO055_INT_ACC_HG:
+            reg = BNO055_ACCEL_HIGH_G_THRES_ADDR;
+            break;
+        case BNO055_INT_ACC_SM:
+        case BNO055_INT_ACC_NM:
+            reg = BNO055_ACCEL_NO_MOTION_THRES_ADDR;
+            break;
+        case BNO055_INT_ACC_AM:
+            reg = BNO055_ACCEL_ANY_MOTION_THRES_ADDR;
+            break;
+        case BNO055_INT_GYR_AM:
+            reg = BNO055_GYRO_ANY_MOTION_THRES_ADDR;
+            mask = 0x3F;
+            break;
+        case BNO055_INT_GYR_HR_X_AXIS:
+            reg = BNO055_GYRO_HIGHRATE_X_SET_ADDR;
+            mask = 0x1F;
+            break;
+        case BNO055_INT_GYR_HR_Y_AXIS:
+            reg = BNO055_GYRO_HIGHRATE_Y_SET_ADDR;
+            mask = 0x1F;
+            break;
+        case BNO055_INT_GYR_HR_Z_AXIS:
+            reg = BNO055_GYRO_HIGHRATE_Z_SET_ADDR;
+            mask = 0x1F;
+            break;
+        default:
+            rc = SYS_EINVAL;
+            goto err;
+    }
+
+    if (mask && thresh > mask) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (mask) {
+        rc = bno055_read8(reg, &val);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    thresh = thresh | val;
+
+    rc = bno055_write8(reg, thresh);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Get interrupt trigger delay
+ *
+ * @param ptr to duration
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_int_duration(uint32_t intr, uint8_t *duration)
+{
+    int rc;
+    uint8_t val;
+    uint8_t mask;
+    uint8_t shift;
+    uint8_t reg;
+
+    mask = val = shift = 0;
+    switch(intr) {
+      case BNO055_INT_GYR_HR_X_AXIS:
+          reg = BNO055_GYRO_DURN_X_ADDR;
+          break;
+      case BNO055_INT_GYR_HR_Y_AXIS:
+          reg = BNO055_GYRO_DURN_Y_ADDR;
+          break;
+      case BNO055_INT_GYR_HR_Z_AXIS:
+          reg = BNO055_GYRO_DURN_Z_ADDR;
+          break;
+      case BNO055_INT_ACC_HG:
+          reg = BNO055_ACCEL_HIGH_G_DURN_ADDR;
+          break;
+      case BNO055_INT_ACC_NM:
+          reg = BNO055_ACCEL_NO_MOTION_SET_ADDR;
+          mask = 0x3F;
+          shift = 1;
+          break;
+      case BNO055_INT_ACC_AM:
+          reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
+          mask = 0x3;
+          break;
+      case BNO055_INT_GYR_AM:
+          reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
+          mask = 0xc;
+          shift = 2;
+          break;
+      default:
+          rc = SYS_EINVAL;
+          goto err;
+    }
+
+    rc = bno055_read8(reg, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *duration = val | mask;
+
+    if (shift) {
+        *duration >>= shift;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set interrupt trigger delay
+ *
+ * @param ptr to duration
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_int_duration(uint32_t intr, uint8_t duration)
+{
+    int rc;
+    uint8_t val;
+    uint8_t mask;
+    uint8_t shift;
+    uint8_t reg;
+
+    val = mask = shift = 0;
+    switch(intr) {
+      case BNO055_INT_GYR_HR_X_AXIS:
+          reg = BNO055_GYRO_DURN_X_ADDR;
+          break;
+      case BNO055_INT_GYR_HR_Y_AXIS:
+          reg = BNO055_GYRO_DURN_Y_ADDR;
+          break;
+      case BNO055_INT_GYR_HR_Z_AXIS:
+          reg = BNO055_GYRO_DURN_Z_ADDR;
+          break;
+      case BNO055_INT_ACC_HG:
+          reg = BNO055_ACCEL_HIGH_G_DURN_ADDR;
+          break;
+      case BNO055_INT_ACC_NM:
+          reg = BNO055_ACCEL_NO_MOTION_SET_ADDR;
+          mask = 0x3F;
+          shift = 1;
+          break;
+      case BNO055_INT_ACC_AM:
+          reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
+          mask = 0x3;
+          break;
+      case BNO055_INT_GYR_AM:
+          reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
+          mask = 0x3;
+          shift = 2;
+          break;
+      default:
+          rc = SYS_EINVAL;
+          goto err;
+    }
+
+    if (mask && duration > mask) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    rc = bno055_read8(reg, &val);
+    if (rc) {
+        goto err;
+    }
+
+    if (shift) {
+        duration <<= shift;
+    }
+
+    if (mask) {
+        rc = bno055_read8(reg, &val);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    val |= duration;
+
+    rc = bno055_write8(reg, duration);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Enable axis interrupt,
+ *
+ * @param interrupt axis
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_enable_int_axis(uint32_t intr_axis, uint8_t enable)
+{
+    int rc;
+    uint8_t reg;
+    uint8_t val;
+    uint8_t intr;
+
+    intr = 0;
+    if (intr_axis & BNO055_INT_ACC_AM || intr_axis & BNO055_INT_ACC_NM) {
+        reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
+        intr = (intr_axis >> BNO055_INT_ACC_AM_POS) & 0xFF;
+    }
+
+    if (intr_axis & BNO055_INT_ACC_HG) {
+        reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
+        intr = (intr_axis >> BNO055_INT_ACC_HG_POS) & 0xFF;
+    }
+
+    rc = bno055_read8(reg, &val);
+    if (rc) {
+        goto err;
+    }
+
+    intr = enable ? intr | val : intr & val;
+
+    rc = bno055_write8(reg, intr);
+    if (rc) {
+        goto err;
+    }
+
+    if (intr_axis & BNO055_INT_GYR_AM) {
+        reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
+        intr = (intr_axis >> BNO055_INT_GYR_AM_POS) & 0xFF;
+    }
+
+    if (intr_axis & BNO055_INT_GYR_HR) {
+        reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
+        intr = (intr_axis >> BNO055_INT_GYR_HR_POS) & 0xFF;
+    }
+
+    rc = bno055_read8(reg, &val);
+    if (rc) {
+        goto err;
+    }
+
+    intr = enable ? intr | val : intr & val;
+
+    rc = bno055_write8(reg, intr);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Get acc int settings
+ *
+ * @param ptr to int settings
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_acc_int_settings(uint8_t *settings)
+{
+    int rc;
+    uint8_t val;
+
+    rc = bno055_read8(BNO055_ACCEL_INTR_SETTINGS_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *settings = val;
+err:
+    return rc;
+}
+
+/**
+ * Set acc int settings
+ *
+ * @param int settings
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_acc_int_settings(uint8_t settings)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_ACCEL_INTR_SETTINGS_ADDR, settings);
+    if (rc) {
+        goto err;
+    }
+
+err:
+    return rc;
+}
+
+/**
+ * Get enabled/disabled interrupts
+ *
+ * @param ptr to interrupt mask
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_int_enable(uint8_t *intr)
+{
+    int rc;
+    uint8_t val;
+    uint8_t mask;
+
+    rc = bno055_read8(BNO055_INT_EN_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    mask |= (val & BNO055_INT_EN_ACC_AM ? BNO055_INT_ACC_AM : 0);
+    mask |= (val & BNO055_INT_EN_ACC_HG ? BNO055_INT_ACC_HG : 0);
+    mask |= (val & BNO055_INT_EN_GYR_HR ? BNO055_INT_GYR_HR : 0);
+    mask |= (val & BNO055_INT_EN_GYR_AM ? BNO055_INT_GYR_AM : 0);
+
+    if (val & BNO055_INT_EN_ACC_NM) {
+        val = 0;
+        rc = bno055_read8(BNO055_ACCEL_NO_MOTION_SET_ADDR, &val);
+        if (rc) {
+            goto err;
+        }
+
+        mask |= (val & BNO055_ACCEL_SMNM ? BNO055_INT_ACC_SM : BNO055_INT_ACC_NM);
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Enable/Disable interrupts
+ *
+ * @param Interrupt mask
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_int_enable(uint8_t intr, uint8_t enable)
+{
+    int rc;
+    uint8_t mask;
+    uint8_t smnm;
+    uint8_t val;
+
+    mask  = (intr & BNO055_INT_ACC_AM ? BNO055_INT_EN_ACC_AM : 0);
+    mask |= (intr & BNO055_INT_ACC_HG ? BNO055_INT_EN_ACC_HG : 0);
+    mask |= (intr & BNO055_INT_GYR_HR ? BNO055_INT_EN_GYR_HR : 0);
+    mask |= (intr & BNO055_INT_GYR_AM ? BNO055_INT_EN_GYR_AM : 0);
+
+    /* Both of them can't be set */
+    if (intr & BNO055_INT_ACC_NM && intr & BNO055_INT_ACC_SM) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    smnm = 0;
+    if (intr & BNO055_INT_ACC_SM) {
+        smnm = 0xF0 | BNO055_ACCEL_SMNM;
+        mask |= BNO055_INT_EN_ACC_NM;
+    } else if (intr & BNO055_INT_ACC_NM) {
+        smnm = 0xF0;
+        mask |= BNO055_INT_EN_ACC_NM;
+    }
+
+    if (smnm) {
+        smnm &= 0x0F;
+        rc = bno055_read8(BNO055_ACCEL_NO_MOTION_SET_ADDR, &val);
+        if (rc) {
+            goto err;
+        }
+
+        val |= smnm;
+        rc = bno055_write8(BNO055_ACCEL_NO_MOTION_SET_ADDR, val);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    val = 0;
+    rc = bno055_read8(BNO055_INT_EN_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    if (enable) {
+        val |= mask;
+    } else {
+        val &= ~mask;
+    }
+
+    rc = bno055_write8(BNO055_INT_EN_ADDR, val);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Get interrupt status
+ *
+ * @param ptr to interrupt status to fill up
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_int_status(uint8_t *int_mask)
+{
+    int rc;
+    uint8_t val;
+
+    rc = bno055_read8(BNO055_INTR_STAT_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *int_mask = val;
+err:
+    return rc;
+}
+
+/**
+ * Set interrupt mask
+ *
+ * @param Interrupt mask
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_set_int_mask(uint8_t int_mask)
+{
+    int rc;
+
+    rc = bno055_write8(BNO055_INT_MASK_ADDR, int_mask);
+    if (rc) {
+        goto err;
+    }
+
+err:
+    return rc;
+}
+
+/**
+ * Get interrupt mask
+ *
+ * @param ptr to interrupt mask
+ * @return 0 on success, non-zero on failure
+ */
+int
+bno055_get_int_mask(uint8_t *int_mask)
+{
+    int rc;
+    uint8_t val;
+
+    rc = bno055_read8(BNO055_INT_MASK_ADDR, &val);
+    if (rc) {
+        goto err;
+    }
+
+    *int_mask = val;
+err:
+    return rc;
+}
+
 static void *
 bno055_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 {
