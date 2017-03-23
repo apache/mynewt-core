@@ -283,6 +283,10 @@ ansi_cmd:
 int
 console_handle_char(uint8_t byte)
 {
+#if !MYNEWT_VAL(CONSOLE_INPUT)
+    return 0;
+#endif
+
     static struct os_event *ev;
     static struct console_input *input;
 

@@ -25,6 +25,9 @@ syscfg.defs:
     CONSOLE_RTT:
         description: 'Set console output to RTT'
         value: 0
+    CONSOLE_INPUT:
+        description: 'Enable console input'
+        value: 1
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'

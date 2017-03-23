@@ -3,12 +3,15 @@
 #include "os/os.h"
 #include "rtt/SEGGER_RTT.h"
 #include "console/console.h"
+#include "syscfg/syscfg.h"
 #include "console_priv.h"
 
+#if MYNEWT_VAL(CONSOLE_INPUT)
 #define RTT_TASK_PRIO         (5)
 #define RTT_STACK_SIZE        (512)
 static struct os_task rtt_task;
 static os_stack_t rtt_task_stack[RTT_STACK_SIZE];
+#endif
 
 extern void __stdout_hook_install(int (*hook)(int));
 
@@ -31,6 +34,7 @@ rtt_console_out(int character)
     return character;
 }
 
+#if MYNEWT_VAL(CONSOLE_INPUT)
 void
 rtt(void *arg)
 {
@@ -64,12 +68,17 @@ init_task(void)
     os_task_init(&rtt_task, "rtt", rtt, NULL, RTT_TASK_PRIO,
                  OS_WAIT_FOREVER, rtt_task_stack, RTT_STACK_SIZE);
 }
+#endif
 
 int
 rtt_console_is_init()
 {
+#if MYNEWT_VAL(CONSOLE_INPUT)
     return rtt_task.t_state == OS_TASK_READY ||
            rtt_task.t_state == OS_TASK_SLEEP;
+#else
+    return 1;
+#endif
 }
 
 int
@@ -77,6 +86,8 @@ rtt_console_init()
 {
     SEGGER_RTT_Init();
     __stdout_hook_install(rtt_console_out);
+#if MYNEWT_VAL(CONSOLE_INPUT)
     init_task();
+#endif
     return 0;
 }
