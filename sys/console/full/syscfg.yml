@@ -19,11 +19,11 @@
 # Package: sys/console/full
 
 syscfg.defs:
-    CONSOLE_RTT:
-        description: 'Enable console over RTT'
-        value: 0
     CONSOLE_UART:
-        description: 'Enable console over UART'
+        description: 'Set console output to UART'
+        value: 1
+    CONSOLE_RTT:
+        description: 'Set console output to RTT'
         value: 0
 
     CONSOLE_UART_BAUD:

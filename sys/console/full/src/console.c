@@ -363,7 +363,8 @@ console_init(struct os_eventq *avail, struct os_eventq *lines,
 
 #if MYNEWT_VAL(CONSOLE_UART)
     rc = uart_console_init();
-#elif MYNEWT_VAL(CONSOLE_RTT)
+#endif
+#if MYNEWT_VAL(CONSOLE_RTT)
     rc = rtt_console_init();
 #endif
     console_out = _get_stdout_hook();
