@@ -1625,35 +1625,35 @@ bno055_get_int_duration(uint32_t intr, uint8_t *duration)
 
     mask = val = shift = 0;
     switch(intr) {
-      case BNO055_INT_GYR_HR_X_AXIS:
-          reg = BNO055_GYRO_DURN_X_ADDR;
-          break;
-      case BNO055_INT_GYR_HR_Y_AXIS:
-          reg = BNO055_GYRO_DURN_Y_ADDR;
-          break;
-      case BNO055_INT_GYR_HR_Z_AXIS:
-          reg = BNO055_GYRO_DURN_Z_ADDR;
-          break;
-      case BNO055_INT_ACC_HG:
-          reg = BNO055_ACCEL_HIGH_G_DURN_ADDR;
-          break;
-      case BNO055_INT_ACC_NM:
-          reg = BNO055_ACCEL_NO_MOTION_SET_ADDR;
-          mask = 0x3F;
-          shift = 1;
-          break;
-      case BNO055_INT_ACC_AM:
-          reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
-          mask = 0x3;
-          break;
-      case BNO055_INT_GYR_AM:
-          reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
-          mask = 0xc;
-          shift = 2;
-          break;
-      default:
-          rc = SYS_EINVAL;
-          goto err;
+        case BNO055_INT_GYR_HR_X_AXIS:
+            reg = BNO055_GYRO_DURN_X_ADDR;
+            break;
+        case BNO055_INT_GYR_HR_Y_AXIS:
+            reg = BNO055_GYRO_DURN_Y_ADDR;
+            break;
+        case BNO055_INT_GYR_HR_Z_AXIS:
+            reg = BNO055_GYRO_DURN_Z_ADDR;
+            break;
+        case BNO055_INT_ACC_HG:
+            reg = BNO055_ACCEL_HIGH_G_DURN_ADDR;
+            break;
+        case BNO055_INT_ACC_NM:
+            reg = BNO055_ACCEL_NO_MOTION_SET_ADDR;
+            mask = 0x3F;
+            shift = 1;
+            break;
+        case BNO055_INT_ACC_AM:
+            reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
+            mask = 0x3;
+            break;
+        case BNO055_INT_GYR_AM:
+            reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
+            mask = 0xc;
+            shift = 2;
+            break;
+        default:
+            rc = SYS_EINVAL;
+            goto err;
     }
 
     rc = bno055_read8(reg, &val);
@@ -1689,35 +1689,35 @@ bno055_set_int_duration(uint32_t intr, uint8_t duration)
 
     val = mask = shift = 0;
     switch(intr) {
-      case BNO055_INT_GYR_HR_X_AXIS:
-          reg = BNO055_GYRO_DURN_X_ADDR;
-          break;
-      case BNO055_INT_GYR_HR_Y_AXIS:
-          reg = BNO055_GYRO_DURN_Y_ADDR;
-          break;
-      case BNO055_INT_GYR_HR_Z_AXIS:
-          reg = BNO055_GYRO_DURN_Z_ADDR;
-          break;
-      case BNO055_INT_ACC_HG:
-          reg = BNO055_ACCEL_HIGH_G_DURN_ADDR;
-          break;
-      case BNO055_INT_ACC_NM:
-          reg = BNO055_ACCEL_NO_MOTION_SET_ADDR;
-          mask = 0x3F;
-          shift = 1;
-          break;
-      case BNO055_INT_ACC_AM:
-          reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
-          mask = 0x3;
-          break;
-      case BNO055_INT_GYR_AM:
-          reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
-          mask = 0x3;
-          shift = 2;
-          break;
-      default:
-          rc = SYS_EINVAL;
-          goto err;
+        case BNO055_INT_GYR_HR_X_AXIS:
+            reg = BNO055_GYRO_DURN_X_ADDR;
+            break;
+        case BNO055_INT_GYR_HR_Y_AXIS:
+            reg = BNO055_GYRO_DURN_Y_ADDR;
+            break;
+        case BNO055_INT_GYR_HR_Z_AXIS:
+            reg = BNO055_GYRO_DURN_Z_ADDR;
+            break;
+        case BNO055_INT_ACC_HG:
+            reg = BNO055_ACCEL_HIGH_G_DURN_ADDR;
+            break;
+        case BNO055_INT_ACC_NM:
+            reg = BNO055_ACCEL_NO_MOTION_SET_ADDR;
+            mask = 0x3F;
+            shift = 1;
+            break;
+        case BNO055_INT_ACC_AM:
+            reg = BNO055_ACCEL_INTR_SETTINGS_ADDR;
+            mask = 0x3;
+            break;
+        case BNO055_INT_GYR_AM:
+            reg = BNO055_GYRO_INTR_SETTINGS_ADDR;
+            mask = 0x3;
+            shift = 2;
+            break;
+        default:
+            rc = SYS_EINVAL;
+            goto err;
     }
 
     if (mask && duration > mask) {
@@ -1877,7 +1877,7 @@ bno055_get_int_enable(uint8_t *intr)
         goto err;
     }
 
-    mask |= (val & BNO055_INT_EN_ACC_AM ? BNO055_INT_ACC_AM : 0);
+    mask = (val & BNO055_INT_EN_ACC_AM ? BNO055_INT_ACC_AM : 0);
     mask |= (val & BNO055_INT_EN_ACC_HG ? BNO055_INT_ACC_HG : 0);
     mask |= (val & BNO055_INT_EN_GYR_HR ? BNO055_INT_GYR_HR : 0);
     mask |= (val & BNO055_INT_EN_GYR_AM ? BNO055_INT_GYR_AM : 0);
@@ -1891,6 +1891,8 @@ bno055_get_int_enable(uint8_t *intr)
 
         mask |= (val & BNO055_ACCEL_SMNM ? BNO055_INT_ACC_SM : BNO055_INT_ACC_NM);
     }
+
+    *intr = mask;
 
     return 0;
 err:
