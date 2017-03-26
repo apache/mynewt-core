@@ -24,7 +24,7 @@
 #include <mn_socket/mn_socket.h>
 
 #define OIC_TAPP_PRIO       9
-#define OIC_TAPP_STACK_SIZE 1024
+#define OIC_TAPP_STACK_SIZE OS_STACK_ALIGN(1024)
 
 /*
  * How long to wait before declaring discovery process failure.
@@ -33,7 +33,7 @@
 
 static struct os_task oic_tapp;
 static const char *oic_test_phase;
-static os_stack_t oic_tapp_stack[OS_STACK_ALIGN(OIC_TAPP_STACK_SIZE)];
+static os_stack_t oic_tapp_stack[OIC_TAPP_STACK_SIZE];
 struct os_eventq oic_tapp_evq;
 static struct os_callout oic_test_timer;
 static struct oc_server_handle oic_tgt;
@@ -41,7 +41,8 @@ static struct oc_server_handle oic_tgt;
 static void
 oic_test_timer_cb(struct os_event *ev)
 {
-    TEST_ASSERT_FATAL(0, "test_phase: %s\n", oic_test_phase ? oic_test_phase : "unknwn");
+    TEST_ASSERT_FATAL(0, "test_phase: %s\n",
+                      oic_test_phase ? oic_test_phase : "unknwn");
 }
 
 void
@@ -85,6 +86,8 @@ oic_test_handler(void *arg)
     oc_main_init(&test_handler);
     test_discovery();
     test_getset();
+    test_observe();
+    oc_main_shutdown();
     tu_restart();
 }
 
@@ -102,7 +105,7 @@ oic_test_init(void)
 
     rc = os_task_init(&oic_tapp, "oic_test", oic_test_handler, NULL,
                       OIC_TAPP_PRIO, OS_WAIT_FOREVER,
-                      oic_tapp_stack, OS_STACK_ALIGN(OIC_TAPP_STACK_SIZE));
+                      oic_tapp_stack, OIC_TAPP_STACK_SIZE);
     TEST_ASSERT_FATAL(rc == 0);
     oc_evq_set(&oic_tapp_evq);
 

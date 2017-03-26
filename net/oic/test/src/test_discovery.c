@@ -23,6 +23,7 @@
 
 static int test_discovery_state;
 static volatile int test_discovery_done;
+static struct oc_resource *test_res_light;
 
 static void test_discovery_next_step(struct os_event *);
 static struct os_event test_discovery_next_ev = {
@@ -121,15 +122,16 @@ test_discovery_next_step(struct os_event *ev)
         oic_test_reset_tmo("2nd discovery");
         break;
     case 3: {
-        oc_resource_t *res = oc_new_resource("/light/test", 1, 0);
+        test_res_light = oc_new_resource("/light/test", 1, 0);
 
-        oc_resource_bind_resource_type(res, "oic.r.light");
-        oc_resource_bind_resource_interface(res, OC_IF_RW);
-        oc_resource_set_default_interface(res, OC_IF_RW);
+        oc_resource_bind_resource_type(test_res_light, "oic.r.light");
+        oc_resource_bind_resource_interface(test_res_light, OC_IF_RW);
+        oc_resource_set_default_interface(test_res_light, OC_IF_RW);
 
-        oc_resource_set_discoverable(res);
-        oc_resource_set_request_handler(res, OC_GET, test_discovery_get);
-        oc_add_resource(res);
+        oc_resource_set_discoverable(test_res_light);
+        oc_resource_set_request_handler(test_res_light, OC_GET,
+                                        test_discovery_get);
+        oc_add_resource(test_res_light);
         oc_do_ip_discovery(NULL, test_discovery_cb);
         oic_test_reset_tmo("3rd discovery");
         break;
@@ -148,6 +150,7 @@ test_discovery(void)
     while (!test_discovery_done) {
         os_eventq_run(&oic_tapp_evq);
     }
+    oc_delete_resource(test_res_light);
 }
 
 
