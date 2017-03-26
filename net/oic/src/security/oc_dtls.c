@@ -37,7 +37,7 @@ oc_sec_dtls_get_peer(oc_endpoint_t *endpoint)
 {
   oc_sec_dtls_peer_t *peer = oc_list_head(dtls_peers);
   while (peer != NULL) {
-    if (memcmp(&peer->session.addr, endpoint, sizeof(oc_endpoint_t)) == 0)
+    if (memcmp(&peer->session.addr, endpoint, oc_endpoint_size(endpoint)) == 0)
       break;
     peer = oc_list_item_next(peer);
   }

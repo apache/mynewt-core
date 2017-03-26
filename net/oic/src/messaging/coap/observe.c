@@ -111,7 +111,7 @@ coap_remove_observer_by_client(oc_endpoint_t *endpoint)
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0) {
+        if (memcmp(&obs->endpoint, endpoint, oc_endpoint_size(endpoint)) == 0) {
             obs->resource->num_observers--;
             coap_remove_observer(obs);
             removed++;
@@ -131,7 +131,7 @@ coap_remove_observer_by_token(oc_endpoint_t *endpoint, uint8_t *token,
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0 &&
+        if (memcmp(&obs->endpoint, endpoint, oc_endpoint_size(endpoint)) == 0 &&
           obs->token_len == token_len &&
           memcmp(obs->token, token, token_len) == 0) {
             obs->resource->num_observers--;
@@ -153,7 +153,8 @@ coap_remove_observer_by_uri(oc_endpoint_t *endpoint, const char *uri)
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (((memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0)) &&
+        if (((memcmp(&obs->endpoint, endpoint,
+                     oc_endpoint_size(endpoint)) == 0)) &&
           (obs->url == uri || memcmp(obs->url, uri, strlen(obs->url)) == 0)) {
             obs->resource->num_observers--;
             coap_remove_observer(obs);
@@ -173,7 +174,7 @@ coap_remove_observer_by_mid(oc_endpoint_t *endpoint, uint16_t mid)
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (memcmp(&obs->endpoint, endpoint, sizeof(*endpoint)) == 0 &&
+        if (memcmp(&obs->endpoint, endpoint, oc_endpoint_size(endpoint)) == 0 &&
           obs->last_mid == mid) {
             obs->resource->num_observers--;
             coap_remove_observer(obs);
@@ -233,8 +234,9 @@ coap_notify_observers(oc_resource_t *resource,
     /* iterate over observers */
     for (obs = SLIST_FIRST(&oc_observers); obs; obs = SLIST_NEXT(obs, next)) {
         /* skip if neither resource nor endpoint match */
-        if (resource != obs->resource &&
-            0 != memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t))) {
+        if ((resource && resource != obs->resource) ||
+            (endpoint && memcmp(&obs->endpoint, endpoint,
+                                oc_endpoint_size(endpoint)) != 0)) {
             continue;
         }
 
