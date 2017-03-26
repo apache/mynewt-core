@@ -251,6 +251,14 @@ oc_ri_alloc_resource(void)
 void
 oc_ri_delete_resource(oc_resource_t *resource)
 {
+    oc_resource_t *tmp;
+
+    SLIST_FOREACH(tmp, &oc_app_resources, next) {
+        if (tmp == resource) {
+            SLIST_REMOVE(&oc_app_resources, tmp, oc_resource, next);
+            break;
+        }
+    }
     os_memblock_put(&oc_resource_pool, resource);
 }
 
