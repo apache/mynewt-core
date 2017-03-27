@@ -278,7 +278,8 @@ coap_notify_observers(oc_resource_t *resource,
                 coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
 
                 notification->mid = transaction->mid;
-                if (obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
+                if (!oc_endpoint_use_tcp(&obs->endpoint) &&
+                    obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
                     OC_LOG_DEBUG("coap_observe_notify: forcing CON "
                                  "notification to check for client liveness\n");
                     notification->type = COAP_TYPE_CON;
