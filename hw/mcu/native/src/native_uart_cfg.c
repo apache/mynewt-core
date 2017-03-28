@@ -167,8 +167,20 @@ uart_dev_set_attr(int fd, int32_t baudrate, uint8_t databits,
 
     tty.c_cflag |= (speed | CLOCAL | CREAD);
 
-    /* Disable flow control. */
-    tty.c_cflag &= ~CRTSCTS;
+    /* Set flow control. */
+    switch (flow_ctl) {
+    case HAL_UART_FLOW_CTL_NONE:
+        tty.c_cflag &= ~CRTSCTS;
+        break;
+
+    case HAL_UART_FLOW_CTL_RTS_CTS:
+        tty.c_cflag |= CRTSCTS;
+        break;
+
+    default:
+        fprintf(stderr, "invalid flow control setting: %d\n", flow_ctl);
+        return -1;
+    }
 
     errno = 0;
     rc = cfsetospeed(&tty, speed);
