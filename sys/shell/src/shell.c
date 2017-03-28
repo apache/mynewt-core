@@ -28,8 +28,6 @@
 #include "shell/shell.h"
 #include "shell_priv.h"
 
-static struct os_task shell_task;
-static os_stack_t shell_task_stack[MYNEWT_VAL(SHELL_STACK_SIZE)];
 #define SHELL_PROMPT "shell> "
 
 #define ARGC_MAX                10
@@ -56,8 +54,6 @@ static shell_prompt_function_t app_prompt_handler;
 static struct console_input buf[MAX_CMD_QUEUED];
 
 static struct os_eventq avail_queue;
-static struct os_eventq cmds_queue;
-
 static struct os_event shell_console_ev[MAX_CMD_QUEUED];
 
 static const char *
@@ -372,58 +368,60 @@ get_cb(int argc, char *argv[])
     return NULL;
 }
 
-void
-shell(void *arg)
+static void
+shell(struct os_event *ev)
 {
     char *argv[ARGC_MAX + 1];
     size_t argc;
+    struct console_input *cmd;
+    shell_cmd_function_t cb;
+    size_t argc_offset = 0;
 
-    while (1) {
-        struct os_event *ev;
-        struct console_input *cmd;
-        shell_cmd_function_t cb;
-        size_t argc_offset = 0;
-
+    if (!ev) {
         console_printf("%s", get_prompt());
-
-        ev = os_eventq_get(&cmds_queue);
-        if (!ev) {
-            continue;
-        }
-        cmd = ev->ev_arg;
-
-        argc = line2argv(cmd->line, argv, ARGC_MAX + 1);
-        if (!argc) {
-            os_eventq_put(&avail_queue, ev);
-            continue;
-        }
-
-        cb = get_cb(argc, argv);
-        if (!cb) {
-            if (app_cmd_handler != NULL) {
-                cb = app_cmd_handler;
-            } else {
-                console_printf("Unrecognized command: %s\n", argv[0]);
-                console_printf("Type 'help' for list of available commands\n");
-                os_eventq_put(&avail_queue, ev);
-                continue;
-            }
-        }
-
-        /* Allow invoking a cmd with module name as a prefix; a command should
-         * not know how it was invoked (with or without prefix)
-         */
-        if (default_module == -1 && cb != select_module && cb != show_help) {
-            argc_offset = 1;
-        }
-
-        /* Execute callback with arguments */
-        if (cb(argc - argc_offset, &argv[argc_offset]) < 0) {
-            show_cmd_help(argv);
-        }
-
-        os_eventq_put(&avail_queue, ev);
+        return;
     }
+
+    cmd = ev->ev_arg;
+    if (!cmd) {
+        console_printf("%s", get_prompt());
+        return;
+    }
+
+    argc = line2argv(cmd->line, argv, ARGC_MAX + 1);
+    if (!argc) {
+        os_eventq_put(&avail_queue, ev);
+        console_printf("%s", get_prompt());
+        return;
+    }
+
+    cb = get_cb(argc, argv);
+    if (!cb) {
+        if (app_cmd_handler != NULL) {
+            cb = app_cmd_handler;
+        } else {
+            console_printf("Unrecognized command: %s\n", argv[0]);
+            console_printf("Type 'help' for list of available commands\n");
+            os_eventq_put(&avail_queue, ev);
+            console_printf("%s", get_prompt());
+            return;
+        }
+    }
+
+    /* Allow invoking a cmd with module name as a prefix; a command should
+     * not know how it was invoked (with or without prefix)
+     */
+    if (default_module == -1 && cb != select_module && cb != show_help) {
+        argc_offset = 1;
+    }
+
+    /* Execute callback with arguments */
+    if (cb(argc - argc_offset, &argv[argc_offset]) < 0) {
+        show_cmd_help(argv);
+    }
+
+    os_eventq_put(&avail_queue, ev);
+    console_printf("%s", get_prompt());
 }
 
 static int
@@ -818,6 +816,7 @@ line_queue_init(void)
     int i;
 
     for (i = 0; i < MAX_CMD_QUEUED; i++) {
+        shell_console_ev[i].ev_cb = shell;
         shell_console_ev[i].ev_arg = &buf[i];
         os_eventq_put(&avail_queue, &shell_console_ev[i]);
     }
@@ -847,19 +846,10 @@ shell_init(void)
     return;
 #endif
 
-    os_eventq_init(&cmds_queue);
     os_eventq_init(&avail_queue);
-
     line_queue_init();
-
     prompt = SHELL_PROMPT;
-
-    console_init(&avail_queue, &cmds_queue, completion);
-
-    /* Initialize the task */
-    os_task_init(&shell_task, "shell", shell, NULL,
-                 MYNEWT_VAL(SHELL_TASK_PRIO), OS_WAIT_FOREVER,
-                 shell_task_stack, MYNEWT_VAL(SHELL_STACK_SIZE));
+    console_init(&avail_queue, os_eventq_dflt_get(), completion);
 
 #if MYNEWT_VAL(SHELL_OS_MODULE)
     shell_os_register(shell_register);
