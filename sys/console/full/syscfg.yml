@@ -28,6 +28,9 @@ syscfg.defs:
     CONSOLE_INPUT:
         description: 'Enable console input'
         value: 1
+    CONSOLE_TICKS:
+        description: 'Print OS Ticks'
+        value: 1
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'

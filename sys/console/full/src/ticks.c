@@ -17,22 +17,30 @@
  * under the License.
  */
 
-#ifndef __CONSOLE_TICKS_H__
-#define __CONSOLE_TICKS_H__
 
-#include <stdarg.h>
+#include "syscfg/syscfg.h"
+#include "console/console.h"
+#include "console/prompt.h"
 
+static char do_ticks = MYNEWT_VAL(CONSOLE_TICKS);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void console_no_ticks(void);
-void console_yes_ticks(void);
-char console_get_ticks(void);
-
-#ifdef __cplusplus
+/* Turn OS Ticks off */
+void
+console_no_ticks(void)
+{
+    do_ticks = 0;
 }
-#endif
 
-#endif /* __CONSOLE_PROMPT_H__ */
+/* Turn OS Ticks on */
+void
+console_yes_ticks(void)
+{
+    do_ticks = 1;
+}
+
+/* return value of CONSOLE_TICKS */
+char console_get_ticks(void)
+{
+    return do_ticks;
+}
+

@@ -27,6 +27,7 @@
 #include "os/os.h"
 #include "sysinit/sysinit.h"
 #include "console/console.h"
+#include "console/ticks.h"
 #include "console_priv.h"
 
 /* Control characters */
@@ -108,6 +109,13 @@ void
 console_printf(const char *fmt, ...)
 {
     va_list args;
+
+    if (console_get_ticks()) {
+        /* Prefix each line with a timestamp. */
+        if (!console_is_midline) {
+            printf("%06lu ", (unsigned long)os_time_get());
+        }
+    }
 
     va_start(args, fmt);
     vprintf(fmt, args);
