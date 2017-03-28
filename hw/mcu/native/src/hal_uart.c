@@ -37,6 +37,7 @@
 #include <termios.h>
 #include <errno.h>
 
+#include "mcu/mcu_sim.h"
 #include "native_uart_cfg_priv.h"
 
 #define UART_CNT                2
