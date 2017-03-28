@@ -19,10 +19,10 @@
 
 #include <ctype.h>
 
+#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "rtt/SEGGER_RTT.h"
 #include "console/console.h"
-#include "syscfg/syscfg.h"
 #include "console_priv.h"
 
 #if MYNEWT_VAL(CONSOLE_INPUT)

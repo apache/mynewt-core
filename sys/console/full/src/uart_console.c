@@ -20,10 +20,10 @@
 #include <ctype.h>
 #include <assert.h>
 
+#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "uart/uart.h"
 #include "bsp/bsp.h"
-#include "syscfg/syscfg.h"
 
 #include "console/console.h"
 #include "console_priv.h"

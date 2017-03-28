@@ -22,11 +22,10 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdio.h>
 
+#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
 #include "console/console.h"
 #include "console_priv.h"
 

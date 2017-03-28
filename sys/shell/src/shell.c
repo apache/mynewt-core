@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "console/console.h"
 #include "sysinit/sysinit.h"

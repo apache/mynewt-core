@@ -19,9 +19,9 @@
 
 #include <stdio.h>
 
+#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "console/console.h"
-#include "syscfg/syscfg.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
