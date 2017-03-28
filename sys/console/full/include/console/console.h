@@ -44,6 +44,7 @@ void console_printf(const char *fmt, ...)
 int console_handle_char(uint8_t byte);
 
 extern int console_is_midline;
+extern int console_out(int character);
 
 #ifdef __cplusplus
 }

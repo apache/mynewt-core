@@ -61,12 +61,41 @@ static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
 static uint8_t (*completion_cb)(char *line, uint8_t len);
 
-typedef int (*stdout_func_t)(int);
+/* Definitions for libc */
+static size_t stdin_read(FILE *fp, char *bp, size_t n);
+static size_t stdout_write(FILE *fp, const char *str, size_t cnt);
 
-static int
-console_out_hook_default(int c)
+static struct File_methods _stdio_methods = {
+    .write = stdout_write,
+    .read = stdin_read
+};
+
+static struct File _stdio = {
+    .vmt = &_stdio_methods
+};
+
+struct File *const stdin = &_stdio;
+struct File *const stdout = &_stdio;
+struct File *const stderr = &_stdio;
+/***/
+
+static size_t
+stdin_read(FILE *fp, char *bp, size_t n)
 {
-    return EOF;
+    return 0;
+}
+
+static size_t
+stdout_write(FILE *fp, const char *str, size_t cnt)
+{
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        if (console_out((int)str[i]) == EOF) {
+            return EOF;
+        }
+    }
+    return cnt;
 }
 
 void
@@ -74,9 +103,6 @@ console_echo(int on)
 {
     echo = on;
 }
-
-static stdout_func_t console_out = console_out_hook_default;
-extern stdout_func_t _get_stdout_hook(void);
 
 void
 console_printf(const char *fmt, ...)
@@ -91,12 +117,7 @@ console_printf(const char *fmt, ...)
 size_t
 console_file_write(void *arg, const char *str, size_t cnt)
 {
-    int i;
-
-    for (i = 0; i < cnt; i++) {
-        console_out(str[i]);
-    }
-    return cnt;
+    return stdout_write(NULL, str, cnt);
 }
 
 void
@@ -399,6 +420,5 @@ console_pkg_init(void)
 #if MYNEWT_VAL(CONSOLE_RTT)
     rc = rtt_console_init();
 #endif
-    console_out = _get_stdout_hook();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }

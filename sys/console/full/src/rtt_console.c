@@ -17,9 +17,11 @@
  * under the License.
  */
 
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(CONSOLE_RTT)
 #include <ctype.h>
 
-#include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "rtt/SEGGER_RTT.h"
 #include "console/console.h"
@@ -32,12 +34,10 @@ static struct os_task rtt_task;
 static os_stack_t rtt_task_stack[RTT_STACK_SIZE];
 #endif
 
-extern void __stdout_hook_install(int (*hook)(int));
-
 static const char CR = '\r';
 
-static int
-rtt_console_out(int character)
+int
+console_out(int character)
 {
     char c = (char)character;
 
@@ -104,9 +104,10 @@ int
 rtt_console_init(void)
 {
     SEGGER_RTT_Init();
-    __stdout_hook_install(rtt_console_out);
 #if MYNEWT_VAL(CONSOLE_INPUT)
     init_task();
 #endif
     return 0;
 }
+
+#endif /* MYNEWT_VAL(CONSOLE_RTT) */
