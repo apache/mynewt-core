@@ -405,7 +405,7 @@ datetime_format(const struct os_timeval *tv, const struct os_timezone *tz,
         minswest = 0;
     }
 
-    if (minswest < 0) {
+    if (minswest <= 0) {
         sign = '+';
         minswest = -minswest;
     } else {
@@ -414,14 +414,14 @@ datetime_format(const struct os_timeval *tv, const struct os_timezone *tz,
 
     off_hour = minswest / 60;
     off_min = minswest % 60;
-    if (off_hour || off_min) {
-        rc = snprintf(cp, rlen, "%c%02d:%02d", sign, off_hour, off_min);
-        cp += rc;
-        rlen -= rc;
-        if (rc < 0 || rlen <= 0) {
-            goto err;
-        }
+
+    rc = snprintf(cp, rlen, "%c%02d:%02d", sign, off_hour, off_min);
+    cp += rc;
+    rlen -= rc;
+    if (rc < 0 || rlen <= 0) {
+        goto err;
     }
+
     return (0);
 
 err:
