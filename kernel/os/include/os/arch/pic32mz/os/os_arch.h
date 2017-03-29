@@ -17,14 +17,14 @@
  * under the License.
  */
 
-#ifndef _OS_ARCH_MIPS_H
-#define _OS_ARCH_MIPS_H
+#ifndef _OS_ARCH_PIC32MZ_H
+#define _OS_ARCH_PIC32MZ_H
 
 #include <stdint.h>
-#include <mips/cpu.h>
-#include <mips/m32c0.h>
+#include <xc.h>
 
-#include "mcu/mips.h"
+// is this req'd? It seems a little odd to include up the tree
+#include "mcu/pic32mz2048.h"
 
 struct os_task;
 
@@ -42,6 +42,8 @@ typedef uint32_t os_stack_t;
 #define OS_ALIGNMENT        (4)
 #define OS_STACK_ALIGNMENT  (8)
 
+#define OS_SR_IPL_BITS (0xE0)
+
 /*
  * Stack sizes for common OS tasks
  */
@@ -52,11 +54,13 @@ typedef uint32_t os_stack_t;
     (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
 
 /* Enter a critical section, save processor state, and block interrupts */
-#define OS_ENTER_CRITICAL(__os_sr) do {__os_sr = _mips_intdisable();} while(0)
+#define OS_ENTER_CRITICAL(__os_sr) do {__os_sr = __builtin_get_isr_state(); \
+        __builtin_disable_interrupts();} while(0)
 
 /* Exit a critical section, restore processor state and unblock interrupts */
-#define OS_EXIT_CRITICAL(__os_sr) _mips_intrestore(__os_sr)
-#define OS_IS_CRITICAL() ((mips_getsr() & 1) == 0)
+#define OS_EXIT_CRITICAL(__os_sr) __builtin_set_isr_state(__os_sr)
+/*  This is not the only way interrupts can be disabled */
+#define OS_IS_CRITICAL() ((__builtin_get_isr_state() & 1) == 0)
 #define OS_ASSERT_CRITICAL() assert(OS_IS_CRITICAL())
 
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
@@ -77,4 +81,4 @@ void os_default_irq_asm(void);
 void os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio);
 void os_bsp_ctx_sw(void);
 
-#endif /* _OS_ARCH_MIPS_H */
+#endif /* _OS_ARCH_PIC32MZ_H */

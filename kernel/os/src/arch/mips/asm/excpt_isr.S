@@ -70,9 +70,6 @@ AENT(__isr_vec_fallback)
 	.set    pop
 END(__isr_vec)
 
-/* XXX: these are all pointelss, if there was a way to detect if a symbol is
-   defined elsewhere it could be fixed .ifdef does not seem to work for this */
-
 .text
 .weak   _mips_isr_sw1
 _mips_isr_sw1:

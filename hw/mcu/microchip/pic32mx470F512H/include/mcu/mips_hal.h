@@ -17,9 +17,23 @@
  * under the License.
  */
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+/* This file defines the HAL implementations within this MCU */
 
-#define OS_TICKS_PER_SEC    (1000)
+#ifndef MIPS_HAL_H
+#define MIPS_HAL_H
 
-#endif /* __MCU_MIPS_H__ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Helper functions to enable/disable interrupts. */
+#define __HAL_DISABLE_INTERRUPTS(__os_sr) do {__os_sr = __builtin_get_isr_state(); \
+        __builtin_disable_interrupts();} while(0)
+
+#define __HAL_ENABLE_INTERRUPTS(__os_sr) __builtin_set_isr_state(__os_sr)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* MCU_HAL_H */

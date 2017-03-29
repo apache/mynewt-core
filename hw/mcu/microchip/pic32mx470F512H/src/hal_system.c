@@ -17,9 +17,19 @@
  * under the License.
  */
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#include "hal/hal_system.h"
 
-#define OS_TICKS_PER_SEC    (1000)
+#include <stdint.h>
 
-#endif /* __MCU_MIPS_H__ */
+void
+hal_system_reset(void)
+{
+    while (1) {
+    }
+}
+
+int
+hal_debugger_connected(void)
+{
+    return 0;
+}

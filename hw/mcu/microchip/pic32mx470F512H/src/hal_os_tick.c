@@ -17,9 +17,20 @@
  * under the License.
  */
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#include <assert.h>
+#include <os/os.h>
+#include <hal/hal_os_tick.h>
 
-#define OS_TICKS_PER_SEC    (1000)
+/*
+ * XXX implement tickless mode.
+ */
+void
+os_tick_idle(os_time_t ticks)
+{
+    OS_ASSERT_CRITICAL();
+}
 
-#endif /* __MCU_MIPS_H__ */
+void
+os_tick_init(uint32_t os_ticks_per_sec, int prio)
+{
+}

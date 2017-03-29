@@ -16,10 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef H_BSP_H
+#define H_BSP_H
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#include <inttypes.h>
 
-#define OS_TICKS_PER_SEC    (1000)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* __MCU_MIPS_H__ */
+/* Define special stackos sections */
+#define sec_data_core   __attribute__((section(".data.core")))
+#define sec_bss_core    __attribute__((section(".bss.core")))
+#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
+
+/* More convenient section placement macros. */
+#define bssnz_t         sec_bss_nz_core
+
+extern uint8_t _ram_start;
+extern uint8_t _ccram_start;
+
+#define RAM_SIZE        (128 * 1024)
+#define CCRAM_SIZE      (64 * 1024)
+
+/* UART */
+#define UART_CNT 4
+#define CONSOLE_UART "uart2"
+
+#define NFFS_AREA_MAX    (8)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* H_BSP_H */

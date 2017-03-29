@@ -25,14 +25,19 @@
 
 #include "os_priv.h"
 
-#include <mips/hal.h>
-#include <mips/uhi_syscalls.h>
-
 #include <string.h>
 
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void SysTick_Handler(void);
+
+struct ctx {
+    uint32_t regs[31];
+    uint32_t epc;
+    uint32_t badvaddr;
+    uint32_t status;
+    uint32_t cause;
+};
 
 /* XXX: determine how to deal with running un-privileged */
 /* only priv currently supported */
@@ -41,19 +46,23 @@ uint32_t os_flags = OS_RUN_PRIV;
 extern struct os_task g_idle_task;
 
 /* core timer interrupt */
-void __attribute__((interrupt, keep_interrupts_masked))
-_mips_isr_hw5(void)
+void __attribute__((interrupt(IPL1AUTO),
+vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
 {
-    mips_setcompare(mips_getcompare() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) /
-       OS_TICKS_PER_SEC));
     timer_handler();
+    _CP0_SET_COMPARE(_CP0_GET_COMPARE() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
+    IFS0CLR = _IFS0_CTIF_MASK;
 }
+
+/* context switch interrupt, in ctx.S */
+void __attribute__((interrupt(IPL1AUTO),
+vector(_CORE_SOFTWARE_0_VECTOR))) isr_sw0(void);
 
 static int
 os_in_isr(void)
 {
     /* check the EXL bit */
-    return (mips_getsr() & (1 << 1)) ? 1 : 0;
+    return (_CP0_GET_STATUS() & _CP0_STATUS_EXL_MASK) ? 1 : 0;
 }
 
 void
@@ -69,8 +78,7 @@ os_arch_ctx_sw(struct os_task *t)
         os_sched_ctx_sw_hook(t);
     }
 
-    /* trigger sw interrupt */
-    mips_biscr(1 << 8);
+    IFS0SET = _IFS0_CS0IF_MASK;
 }
 
 os_sr_t
@@ -93,29 +101,26 @@ os_arch_in_critical(void)
     return OS_IS_CRITICAL();
 }
 
-reg_t get_global_pointer(void);
+uint32_t get_global_pointer(void);
 
 /* assumes stack_top will be 8 aligned */
 
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
-    os_stack_t *s = stack_top - ((((sizeof(struct gpctx) - 1) /
+    os_stack_t *s = stack_top - ((((sizeof(struct ctx) - 1) /
         OS_STACK_ALIGNMENT) + 1) * 2);
 
-    struct gpctx ctx = {
-        .r = {
-            [3] = (reg_t)t->t_arg,
-            [27] = get_global_pointer(),
-            [28] = (reg_t)(stack_top - 4)
-        },
-        .status = mips_getsr(),
-        .cause = mips_getcr(),
-        .epc = (reg_t)t->t_func
-    };
+    struct ctx ctx;
 
+    ctx.regs[3] = (uint32_t)t->t_arg;
+    ctx.regs[27] = get_global_pointer();
+    ctx.regs[28] = (uint32_t)(stack_top - 4);
+    ctx.status = _CP0_GET_STATUS() | _CP0_STATUS_IE_MASK;
+    ctx.cause = _CP0_GET_CAUSE();
+    ctx.epc = (uint32_t)t->t_func;
     /* copy struct onto the stack */
-    memcpy(s, &ctx, sizeof(struct gpctx));
+    memcpy(s, &ctx, sizeof(ctx));
 
     return (s);
 }
@@ -123,7 +128,6 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 void
 os_arch_init(void)
 {
-    mips_bissr((1 << 15) | (1 << 8));
     os_init_idle_task();
 }
 
@@ -135,6 +139,34 @@ os_arch_os_init(void)
     err = OS_ERR_IN_ISR;
     if (os_in_isr() == 0) {
         err = OS_OK;
+        os_sr_t sr;
+        OS_ENTER_CRITICAL(sr);
+
+        _CP0_BIC_STATUS(_CP0_STATUS_IPL_MASK);
+        /* multi vector mode */
+        INTCONSET = _INTCON_MVEC_MASK;
+        /* vector spacing 0x20  */
+        _CP0_SET_INTCTL(_CP0_GET_INTCTL() | (1 << _CP0_INTCTL_VS_POSITION));
+
+        /* enable core timer interrupt */
+        IEC0SET = _IEC0_CTIE_MASK;
+        /* set interrupt priority */
+        IPC0CLR = _IPC0_CTIP_MASK;
+        IPC0SET = (1 << _IPC0_CTIP_POSITION); // priority 1
+        /* set interrupt subpriority */
+        IPC0CLR = _IPC0_CTIS_MASK;
+        IPC0SET = (0 << _IPC0_CTIS_POSITION); // subpriority 0
+
+        /* enable software interrupt 0 */
+        IEC0SET = _IEC0_CS0IE_MASK;
+        /* set interrupt priority */
+        IPC0CLR = _IPC0_CS0IP_MASK;
+        IPC0SET = (1 << _IPC0_CS0IP_POSITION); // priority 1
+        /* set interrupt subpriority */
+        IPC0CLR = _IPC0_CS0IS_MASK;
+        IPC0SET = (0 << _IPC0_CS0IS_POSITION); // subpriority 0
+
+        OS_EXIT_CRITICAL(sr);
 
         /* should be in kernel mode here */
         os_arch_init();
@@ -151,10 +183,10 @@ os_arch_start(void)
     t = os_sched_next_task();
 
     /* set the core timer compare register */
-    mips_setcompare(mips_getcount() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
+    _CP0_SET_COMPARE(_CP0_GET_COUNT() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
 
     /* global interrupt enable */
-    mips_bissr(1);
+    __builtin_enable_interrupts();
 
     /* Mark the OS as started, right before we run our first task */
     g_os_started = 1;
@@ -170,7 +202,7 @@ os_arch_os_start(void)
 {
     os_error_t err;
 
-    err = OS_ERR_IN_ISR;
+    err = OS_OK; // OS_ERR_IN_ISR
     if (os_in_isr() == 0) {
         err = OS_OK;
         /* should be in kernel mode here */

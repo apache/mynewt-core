@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,10 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef BSP_SYSID_H
+#define BSP_SYSID_H
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define OS_TICKS_PER_SEC    (1000)
+/* stub until this BSP gets new HAL */
+enum system_device_id  
+{
+    RESERVED,
+};
 
-#endif /* __MCU_MIPS_H__ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* BSP_SYSID_H */
