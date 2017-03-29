@@ -1847,7 +1847,7 @@ bletiny_l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes)
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+main(int argc, char **argv)
 {
     int rc;
 
