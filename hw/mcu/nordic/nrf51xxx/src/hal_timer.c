@@ -365,7 +365,7 @@ hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
  * This is the global timer interrupt routine.
  *
  */
-#if NRF51_TIMER_DEFINED
+#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2))
 static void
 hal_timer_irq_handler(struct nrf51_hal_timer *bsptimer)
 {
