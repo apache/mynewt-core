@@ -122,8 +122,17 @@ os_cputime_usecs_to_ticks(uint32_t usecs)
 {
     uint64_t ticks;
 
-    ticks = ((uint64_t)usecs << 9) / 15625;
-    return (uint32_t)ticks;
+    /*
+     * Faster calculation but could be off 1 full tick since we do not
+     * add residual back. Adding back the residual is commented out below, but
+     * shown.
+     */
+    ticks = (uint64_t)usecs * (uint32_t)((((uint64_t)1 << 32) * 32768) / 1000000);
+
+    /* Residual */
+    //ticks += ((uint64_t)us * (1526122139+1)) >> 32;
+
+    return (uint32_t)(ticks >> 32);
 }
 
 /**
