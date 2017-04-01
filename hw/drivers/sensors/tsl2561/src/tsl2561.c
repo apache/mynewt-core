@@ -37,6 +37,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #include "defs/error.h"
 #include "os/os.h"

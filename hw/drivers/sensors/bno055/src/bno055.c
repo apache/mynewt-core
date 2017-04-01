@@ -977,7 +977,7 @@ bno055_get_vector_data(void *datastruct, int type)
             sad->sad_z_is_valid = 1;
             break;
         case SENSOR_TYPE_EULER:
-            sad = datastruct;
+            sed = datastruct;
             /* 1 degree = 16 LSB */
             sed->sed_h = ((double)x)/euler_div;
             sed->sed_r = ((double)y)/euler_div;

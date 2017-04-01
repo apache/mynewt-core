@@ -30,6 +30,7 @@
 #include <stats/stats.h>
 #include <config/config.h>
 #include <sensor/sensor.h>
+#include <sim/sim_accel.h>
 #include <lsm303dlhc/lsm303dlhc.h>
 #include <tsl2561/tsl2561.h>
 #include <tcs34725/tcs34725.h>
@@ -358,7 +359,7 @@ static int
 config_sensor(void)
 {
     struct os_dev *dev;
-    struct cfg;
+    struct sim_accel_cfg cfg;
     int rc;
 
     dev = (struct os_dev *) os_dev_open("simaccel0", OS_TIMEOUT_NEVER, NULL);

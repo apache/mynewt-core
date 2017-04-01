@@ -237,6 +237,11 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
 
     ++ctx->num_entries;
 
+    console_printf("ts: [ secs: %ld usecs: %d cputime: %u ]\n",
+                   (long int)sensor->s_sts.st_ostv.tv_sec,
+                   (int)sensor->s_sts.st_ostv.tv_usec,
+                   (unsigned int)sensor->s_sts.st_cputime);
+
     if (ctx->type == SENSOR_TYPE_ACCELEROMETER ||
         ctx->type == SENSOR_TYPE_LINEAR_ACCEL  ||
         ctx->type == SENSOR_TYPE_GRAVITY) {
@@ -331,7 +336,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
             console_printf("b = %u, ", scd->scd_b);
         }
         if (scd->scd_c_is_valid) {
-            console_printf("c = %u, ", scd->scd_c);
+            console_printf("c = %u, \n", scd->scd_c);
         }
         if (scd->scd_lux_is_valid) {
             console_printf("lux = %u, ", scd->scd_lux);
@@ -566,6 +571,7 @@ sensor_cmd_i2cscan(int argc, char **argv)
 
     timeout = OS_TICKS_PER_SEC / 10;
 
+    rc = 0;
     if (sensor_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
         console_printf("Invalid i2c interface:%s\n", argv[2]);
         rc = SYS_EINVAL;
@@ -579,7 +585,11 @@ sensor_cmd_i2cscan(int argc, char **argv)
 
     /* Scan all valid I2C addresses (0x08..0x77) */
     for (addr = 0x08; addr < 0x78; addr++) {
+#ifndef ARCH_sim
         rc = hal_i2c_master_probe((uint8_t)i2cnum, addr, timeout);
+#else
+        (void)timeout;
+#endif
         /* Print addr header every 16 bytes */
         if (!(addr % 16)) {
             console_printf("\n%02x: ", addr);
@@ -629,15 +639,15 @@ sensor_cmd_exec(int argc, char **argv)
 
         i = 4;
         memset(&spd, 0, sizeof(struct sensor_poll_data));
-        if (!strcmp(argv[i], "-n")) {
+        if (argv[i] && !strcmp(argv[i], "-n")) {
             spd.spd_nsamples = atoi(argv[++i]);
             i++;
         }
-        if (!strcmp(argv[i], "-i")) {
+        if (argv[i] && !strcmp(argv[i], "-i")) {
             spd.spd_poll_itvl = atoi(argv[++i]);
             i++;
         }
-        if (!strcmp(argv[i], "-d")) {
+        if (argv[i] && !strcmp(argv[i], "-d")) {
             spd.spd_poll_duration = atoi(argv[++i]);
             i++;
         }

@@ -30,6 +30,12 @@
 #include "uart_hal/uart_hal.h"
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(SIM_ACCEL_PRESENT)
+#include "sim/sim_accel.h"
+static struct sim_accel os_bsp_accel0;
+#endif
 
 static struct uart_dev os_bsp_uart0;
 static struct uart_dev os_bsp_uart1;
@@ -52,6 +58,14 @@ hal_bsp_power_state(int state)
     return (0);
 }
 
+#if MYNEWT_VAL(SIM_ACCEL_PRESENT)
+int
+simaccel_init(struct os_dev *odev, void *arg)
+{
+    return 0;
+}
+#endif
+
 void
 hal_bsp_init(void)
 {
@@ -64,4 +78,10 @@ hal_bsp_init(void)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
     assert(rc == 0);
+
+#if MYNEWT_VAL(SIM_ACCEL_PRESENT)
+    rc = os_dev_create((struct os_dev *) &os_bsp_accel0, "simaccel0",
+            OS_DEV_INIT_PRIMARY, 0, simaccel_init, (void *) NULL);
+    assert(rc == 0);
+#endif
 }
