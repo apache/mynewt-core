@@ -204,6 +204,38 @@ slinky_color_init(struct os_dev *dev, void *arg)
 }
 #endif
 
+static void
+sensor_dev_create(void)
+{
+    int rc;
+
+    rc = 0;
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+    rc = os_dev_create((struct os_dev *) &lsm303dlhc, "accel0",
+      OS_DEV_INIT_PRIMARY, 0, slinky_accel_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BNO055_PRESENT)
+    rc = os_dev_create((struct os_dev *) &bno055, "accel1",
+      OS_DEV_INIT_PRIMARY, 0, slinky_accel_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TSL2561_PRESENT)
+    rc = os_dev_create((struct os_dev *) &tsl2561, "light0",
+      OS_DEV_INIT_PRIMARY, 0, slinky_light_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TCS34725_PRESENT)
+    rc = os_dev_create((struct os_dev *) &tcs34725, "color0",
+      OS_DEV_INIT_PRIMARY, 0, slinky_color_init, NULL);
+    assert(rc == 0);
+#endif
+
+}
+
 void
 hal_bsp_init(void)
 {
@@ -255,30 +287,6 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(LSM303DLHC_PRESENT)
-    rc = os_dev_create((struct os_dev *) &lsm303dlhc, "accel0",
-      OS_DEV_INIT_PRIMARY, 0, slinky_accel_init, NULL);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(BNO055_PRESENT)
-    rc = os_dev_create((struct os_dev *) &bno055, "accel1",
-      OS_DEV_INIT_PRIMARY, 0, slinky_accel_init, NULL);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TSL2561_PRESENT)
-    rc = os_dev_create((struct os_dev *) &tsl2561, "light0",
-      OS_DEV_INIT_PRIMARY, 0, slinky_light_init, NULL);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TCS34725_PRESENT)
-    rc = os_dev_create((struct os_dev *) &tcs34725, "color0",
-      OS_DEV_INIT_PRIMARY, 0, slinky_color_init, NULL);
-    assert(rc == 0);
-#endif
-
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
@@ -291,4 +299,5 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+    sensor_dev_create();
 }
