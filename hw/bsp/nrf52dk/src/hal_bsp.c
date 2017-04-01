@@ -209,7 +209,7 @@ sensor_dev_create(void)
 {
     int rc;
 
-    rc = 0;
+    (void)rc;
 #if MYNEWT_VAL(LSM303DLHC_PRESENT)
     rc = os_dev_create((struct os_dev *) &lsm303dlhc, "accel0",
       OS_DEV_INIT_PRIMARY, 0, slinky_accel_init, NULL);
