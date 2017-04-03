@@ -383,6 +383,8 @@ main(int argc, char **argv)
 
     testbench_test_init(); /* initialize globals include blink duty cycle */
 
+    LOG_INFO(&testlog, LOG_MODULE_TEST, "testbench app initialized");
+
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
     }
