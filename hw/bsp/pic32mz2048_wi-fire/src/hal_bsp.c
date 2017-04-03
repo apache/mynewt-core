@@ -16,10 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "hal/hal_bsp.h"
+#include "bsp/bsp.h"
+#include <assert.h>
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
-
-#define OS_TICKS_PER_SEC    (1000)
-
-#endif /* __MCU_MIPS_H__ */
+const struct hal_flash *
+bsp_flash_dev(uint8_t id)
+{
+    return 0;
+}

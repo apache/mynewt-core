@@ -17,9 +17,23 @@
  * under the License.
  */
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#include "hal/hal_watchdog.h"
 
-#define OS_TICKS_PER_SEC    (1000)
+#include <assert.h>
 
-#endif /* __MCU_MIPS_H__ */
+int
+hal_watchdog_init(uint32_t expire_msecs)
+{
+    return (0);
+}
+
+void
+hal_watchdog_enable(void)
+{
+}
+
+void
+hal_watchdog_tickle(void)
+{
+}
+

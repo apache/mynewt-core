@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#ifndef __MCU_PIC32_H__
+#define __MCU_PIC32_H__
 
 #define OS_TICKS_PER_SEC    (1000)
 
-#endif /* __MCU_MIPS_H__ */
+#endif /* __MCU_PIC32_H__ */

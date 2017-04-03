@@ -118,7 +118,7 @@ hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
 static void
 uart_irq_handler(int port)
 {
-    uint8_t lsr = uart_reg_read(1, CR_UART_LSR);
+    uint8_t lsr = uart_reg_read(port, CR_UART_LSR);
     if (lsr & CR_UART_LSR_RXFER) {
         /* receive error */
         if (lsr & CR_UART_LSR_BI) {
@@ -201,6 +201,9 @@ hal_uart_start_tx(int port)
 void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
+    /* wait for transmit holding register to be empty */
+    while(!(uart_reg_read(port, CR_UART_LSR) & CR_UART_LSR_THRE)) {
+    }
     /* write to transmit holding register */
     uart_reg_write(port, CR_UART_RBR_THR_DLL, data);
     /* wait for transmit holding register to be empty */

@@ -17,9 +17,35 @@
  * under the License.
  */
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+#define HEAPSIZE (1024)
 
-#define OS_TICKS_PER_SEC    (1000)
+static char __Heap[HEAPSIZE];
 
-#endif /* __MCU_MIPS_H__ */
+void *
+_sbrk(int incr)
+{
+    static char *brk = __Heap;
+
+    void *prev_brk;
+
+    if (incr < 0) {
+        /* Returning memory to the heap. */
+        incr = -incr;
+        if (brk - incr < __Heap) {
+            prev_brk = (void *)-1;
+        } else {
+            prev_brk = brk;
+            brk -= incr;
+        }
+    } else {
+        /* Allocating memory from the heap. */
+        if ((__Heap + HEAPSIZE) - brk >= incr) {
+            prev_brk = brk;
+            brk += incr;
+        } else {
+            prev_brk = (void *)-1;
+        }
+    }
+
+    return prev_brk;
+}

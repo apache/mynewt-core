@@ -16,10 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef H_MIPS_BSP_
+#define H_MIPS_BSP_
 
-#ifndef __MCU_MIPS_H__
-#define __MCU_MIPS_H__
+extern const struct hal_flash native_flash_dev;
 
-#define OS_TICKS_PER_SEC    (1000)
-
-#endif /* __MCU_MIPS_H__ */
+#endif /* H_NATIVE_BSP_ */
