@@ -262,9 +262,10 @@ sensor_base_ts_update_event(struct os_event *ev)
      * hence the hardcoded value of 3600 seconds, We want to make
      * sure that the cputime never gets wrapped more than once.
      * os_timeval usecs value gets wrapped in 2147 secs since it is int32_t.
-     * Hence, we take 2146 secs so that we update before it gets wrapped.
+     * Hence, we take 2000 secs so that we update before it gets wrapped
+     * without cutting it too close.
      */
-    ticks += OS_TICKS_PER_SEC * 2146;
+    ticks += OS_TICKS_PER_SEC * 2000;
 
     sensor_base_ts.st_ostv = ostv;
     sensor_base_ts.st_ostz = ostz;
