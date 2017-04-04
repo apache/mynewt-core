@@ -70,7 +70,7 @@ int coap_remove_observer_by_uri(oc_endpoint_t *endpoint, const char *uri);
 int coap_remove_observer_by_mid(oc_endpoint_t *endpoint, uint16_t mid);
 
 int coap_notify_observers(oc_resource_t *resource,
-                          oc_response_buffer_t *response_buf,
+                          struct oc_response_buffer *response_buf,
                           oc_endpoint_t *endpoint);
 // int coap_notify_observers_sub(oc_resource_t *resource, const char *subpath);
 
