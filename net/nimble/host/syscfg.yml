@@ -50,6 +50,9 @@ syscfg.defs:
     BLE_MONITOR_RTT:
         description: Enables monitor interface over RTT
         value: 0
+    BLE_MONITOR_DEBUG:
+        description: Enables host logging via monitor interface
+        value: 0
 
     # L2CAP settings.
     BLE_L2CAP_MAX_CHANS:
