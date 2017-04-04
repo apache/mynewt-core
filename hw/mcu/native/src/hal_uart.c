@@ -189,6 +189,8 @@ uart_poller(void *arg)
             for (bytes = 0; bytes < UART_MAX_BYTES_PER_POLL; bytes++) {
                 if (uart->u_tx_run) {
                     uart_transmit_char(uart);
+                } else {
+                    break;
                 }
             }
             for (bytes = 0; bytes < UART_MAX_BYTES_PER_POLL; bytes++) {
