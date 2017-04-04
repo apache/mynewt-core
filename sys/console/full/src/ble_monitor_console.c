@@ -17,23 +17,25 @@
  * under the License.
  */
 
-#ifndef __CONSOLE_PRIV_H__
-#define __CONSOLE_PRIV_H__
+#include <syscfg/syscfg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if MYNEWT_VAL(CONSOLE_BLE_MONITOR)
 
-int uart_console_is_init(void);
-int uart_console_init(void);
-void uart_console_blocking_mode(void);
-void uart_console_non_blocking_mode(void);
-int rtt_console_is_init(void);
-int rtt_console_init(void);
-int ble_monitor_console_is_init(void);
+#include "host/ble_monitor.h"
+#include "console/console.h"
 
-#ifdef __cplusplus
+int
+console_out(int c)
+{
+    console_is_midline = (c != '\n');
+
+    return ble_monitor_out(c);
 }
-#endif
 
-#endif /* __CONSOLE_PRIV_H__ */
+int
+ble_monitor_console_is_init(void)
+{
+    return 1;
+}
+
+#endif /* MYNEWT_VAL(CONSOLE_BLE_MONITOR) */
