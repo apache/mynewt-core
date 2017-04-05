@@ -73,6 +73,7 @@
 #endif
 
 #include "testbench.h"
+#include "tbb.h"
 
 struct os_timeval tv;
 struct os_timezone tz;
@@ -149,20 +150,6 @@ testbench_ts_fail(char *msg, void *arg)
 {
     testbench_ts_result(msg, arg, false);
 }
-
-#if 0
-void
-testbench_tc_pretest(void* arg)
-{
-    return;
-}
-
-void
-testbench_tc_postest(void* arg)
-{
-    return;
-}
-#endif
 
 void
 testbench_test_init()
@@ -359,6 +346,10 @@ main(int argc, char **argv)
     cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
+
+#if MYNEWT_VAL(TESTBENCH_BLE)
+    tbb_init();
+#endif
 
     conf_load();
 
