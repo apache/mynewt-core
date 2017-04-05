@@ -194,8 +194,6 @@ nffs_gc_block_chain_collate(struct nffs_hash_entry *last_entry,
         goto done;
     }
 
-    memset(&last_block, 0, sizeof(last_block));
-
     to_area = nffs_areas + to_area_idx;
 
     entry = last_entry;

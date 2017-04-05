@@ -215,6 +215,7 @@ nffs_block_to_disk(const struct nffs_block *block,
 {
     assert(block->nb_inode_entry != NULL);
 
+    memset(out_disk_block, 0, sizeof *out_disk_block);
     out_disk_block->ndb_id = block->nb_hash_entry->nhe_id;
     out_disk_block->ndb_seq = block->nb_seq;
     out_disk_block->ndb_inode_id =

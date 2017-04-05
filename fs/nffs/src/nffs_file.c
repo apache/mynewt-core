@@ -89,7 +89,7 @@ nffs_file_new(struct nffs_inode_entry *parent, const char *filename,
         goto err;
     }
 
-    memset(&disk_inode, 0xff, sizeof disk_inode);
+    memset(&disk_inode, 0, sizeof disk_inode);
     if (is_dir) {
         disk_inode.ndi_id = nffs_hash_next_dir_id++;
     } else {

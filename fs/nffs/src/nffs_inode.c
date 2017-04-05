@@ -236,7 +236,8 @@ nffs_inode_from_entry(struct nffs_inode *out_inode,
     }
     if (cached_name_len != 0) {
         STATS_INC(nffs_stats, nffs_readcnt_inodeent);
-        rc = nffs_flash_read(area_idx, area_offset + sizeof disk_inode, out_inode->ni_filename, cached_name_len);
+        rc = nffs_flash_read(area_idx, area_offset + sizeof disk_inode,
+                             out_inode->ni_filename, cached_name_len);
         if (rc != 0) {
             return rc;
         }
@@ -276,16 +277,6 @@ nffs_inode_delete_blocks_from_ram(struct nffs_inode_entry *inode_entry)
 
     return 0;
 }
-
-            /* Dead comment?? XXX
-             * The block references something that does not exist in RAM.  This
-             * is likely because the pointed-to object was in an area that has
-             * been garbage collected.  Terminate the delete procedure and
-             * report success.
-             */
-            /* XXX: This does not inspire confidence; the caller should somehow
-             * indicate that it expects this possibility.
-             */
 
 /**
  * Deletes the specified inode entry from the RAM representation.
@@ -473,6 +464,7 @@ nffs_inode_delete_from_disk(struct nffs_inode *inode)
 
     inode->ni_seq++;
 
+    memset(&disk_inode, 0, sizeof disk_inode);
     disk_inode.ndi_id = inode->ni_inode_entry->nie_hash_entry.nhe_id;
     disk_inode.ndi_seq = inode->ni_seq;
     disk_inode.ndi_parent_id = NFFS_ID_NONE;
@@ -617,6 +609,7 @@ nffs_inode_rename(struct nffs_inode_entry *inode_entry,
         return rc;
     }
 
+    memset(&disk_inode, 0, sizeof disk_inode);
     disk_inode.ndi_id = inode_entry->nie_hash_entry.nhe_id;
     disk_inode.ndi_seq = inode.ni_seq + 1;
     disk_inode.ndi_parent_id = nffs_inode_parent_id(&inode);
@@ -684,6 +677,7 @@ nffs_inode_update(struct nffs_inode_entry *inode_entry)
         return rc;
     }
 
+    memset(&disk_inode, 0, sizeof disk_inode);
     disk_inode.ndi_id = inode_entry->nie_hash_entry.nhe_id;
     disk_inode.ndi_seq = inode.ni_seq + 1;
     disk_inode.ndi_parent_id = nffs_inode_parent_id(&inode);
