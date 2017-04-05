@@ -2464,6 +2464,46 @@ static struct kv_pair cmd_set_addr_types[] = {
 };
 
 static void
+bletiny_set_priv_mode_help(void)
+{
+    console_printf("Available set priv_mode params: \n");
+    help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_PUBLIC);
+    help_cmd_byte_stream_exact_length("addr", 6);
+    help_cmd_uint8("mode");
+}
+
+static int
+cmd_set_priv_mode(void)
+{
+    ble_addr_t addr;
+    uint8_t priv_mode;
+    int rc;
+
+    addr.type = parse_arg_kv_default("addr_type", cmd_set_addr_types,
+                                     BLE_ADDR_PUBLIC, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'addr_type' parameter\n");
+        help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_PUBLIC);
+        return rc;
+    }
+
+    rc = parse_arg_mac("addr", addr.val);
+    if (rc != 0) {
+        console_printf("invalid 'addr' parameter\n");
+        help_cmd_byte_stream_exact_length("addr", 6);
+        return rc;
+    }
+
+    priv_mode = parse_arg_uint8("mode", &rc);
+    if (rc != 0) {
+        console_printf("missing mode\n");
+        return rc;
+    }
+
+    return ble_gap_set_priv_mode(&addr, priv_mode);
+}
+
+static void
 bletiny_set_addr_help(void)
 {
     console_printf("Available set addr params: \n");
@@ -2544,6 +2584,7 @@ cmd_set(int argc, char **argv)
         bletiny_set_adv_data_help();
         bletiny_set_sm_data_help();
         bletiny_set_addr_help();
+        bletiny_set_priv_mode_help();
         return 0;
     }
 
@@ -2554,6 +2595,11 @@ cmd_set(int argc, char **argv)
 
     if (argc > 1 && strcmp(argv[1], "sm_data") == 0) {
         rc = cmd_set_sm_data();
+        return rc;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "priv_mode") == 0) {
+        rc = cmd_set_priv_mode();
         return rc;
     }
 
