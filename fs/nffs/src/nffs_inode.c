@@ -202,6 +202,8 @@ nffs_inode_from_entry(struct nffs_inode *out_inode,
     int cached_name_len;
     int rc;
 
+    memset(out_inode, 0, sizeof *out_inode);
+
     if (nffs_inode_is_dummy(entry)) {
         nffs_inode_restore_from_dummy_entry(out_inode, entry);
         return FS_ENOENT;
