@@ -21,14 +21,15 @@
 #define H_TBB_
 
 #include "syscfg/syscfg.h"
-#include "log/log.h"
+
+#if MYNEWT_VAL(TESTBENCH_BLE)
+
 #include "nimble/ble.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(TESTBENCH_BLE)
 
 void tbb_init(void);
 
