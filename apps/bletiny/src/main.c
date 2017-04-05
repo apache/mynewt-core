@@ -726,7 +726,12 @@ bletiny_disc_full_chrs(uint16_t conn_handle)
     }
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
-        if (!svc_is_empty(svc) && SLIST_EMPTY(&svc->chrs)) {
+        if (!svc_is_empty(svc) && !svc->char_disc_sent) {
+            /* Since it might happen that service does not have characteristics
+             * for some reason, lets keep track on services for which we send
+             * characteristic discovery
+             */
+            svc->char_disc_sent = true;
             rc = bletiny_disc_all_chrs(conn_handle, svc->svc.start_handle,
                                        svc->svc.end_handle);
             if (rc != 0) {
