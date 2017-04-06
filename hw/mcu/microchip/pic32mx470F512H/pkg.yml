@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/microchip/pic32mx470f512h
+pkg.name: hw/mcu/microchip/pic32mx470F512H
 pkg.description: MCU definition for the Microchip PIC32MX470F512H microcontroller.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
