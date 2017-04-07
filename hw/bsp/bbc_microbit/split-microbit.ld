@@ -116,7 +116,7 @@ SECTIONS
          _loader_ram_end = .;
     } > RAM
 
-    .data :
+    .data : AT (__etext)
     {
         __data_start__ = .;
         *(.data*)
@@ -146,7 +146,7 @@ SECTIONS
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
-    } > RAM AT > FLASH
+    } > RAM
 
     .bss :
     {
