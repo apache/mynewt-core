@@ -619,7 +619,7 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
 
     /* Check the length to make sure it is valid */
     cmdlen = g_ble_hci_le_cmd_len[ocf];
-    if (len != cmdlen) {
+    if (len != cmdlen && cmdlen != BLE_HCI_VARIABLE_LEN) {
         goto ll_hci_le_cmd_exit;
     }
 
@@ -759,6 +759,9 @@ ble_ll_hci_le_cmd_proc(uint8_t *cmdbuf, uint16_t ocf, uint8_t *rsplen)
         break;
     case BLE_HCI_OCF_LE_SET_RPA_TMO:
         rc = ble_ll_resolv_set_rpa_tmo(cmdbuf);
+        break;
+    case BLE_HCI_OCF_LE_SET_PRIVACY_MODE:
+        rc = ble_ll_resolve_set_priv_mode(cmdbuf);
         break;
 #endif
     case BLE_HCI_OCF_LE_RD_MAX_DATA_LEN:
