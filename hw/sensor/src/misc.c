@@ -17,33 +17,27 @@
  * under the License.
  */
 
-#ifndef __SENSOR_QUAT_H__
-#define __SENSOR_QUAT_H__
+#include "bleprph.h"
 
-#include "os/os.h"
-#include "os/os_dev.h"
-#include "sensor/sensor.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Data representing a singular read from a quat sensor.
+/**
+ * Utility function to log an array of bytes.
  */
-struct sensor_quat_data {
-    float sqd_x;
-    float sqd_y;
-    float sqd_z;
-    float sqd_w;
-    /* Validity */
-    uint8_t sqd_x_is_valid:1;
-    uint8_t sqd_y_is_valid:1;
-    uint8_t sqd_z_is_valid:1;
-    uint8_t sqd_w_is_valid:1;
-} __attribute__((packed));
+void
+print_bytes(const uint8_t *bytes, int len)
+{
+    int i;
 
-#ifdef __cplusplus
+    for (i = 0; i < len; i++) {
+        BLEPRPH_LOG(INFO, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
+    }
 }
-#endif
 
-#endif /* __SENSOR_ACCEL_H__ */
+void
+print_addr(const void *addr)
+{
+    const uint8_t *u8p;
+
+    u8p = addr;
+    BLEPRPH_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
+                u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+}

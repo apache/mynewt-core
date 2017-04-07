@@ -58,7 +58,7 @@ syscfg.defs:
 
     OC_APP_RESOURCES:
         description: 'Maximum number of server resources'
-        value: 3
+        value: 7
 
     OC_NUM_DEVICES:
         description: 'Number of devices on the OCF platform'

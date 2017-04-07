@@ -37,13 +37,19 @@ syscfg.vals:
     CONFIG_CLI: 1
 
     # Enable newtmgr commands.
-    STATS_NEWTMGR: 1
-    LOG_NEWTMGR: 1
-    CONFIG_NEWTMGR: 1
+    STATS_NEWTMGR: 0
+    LOG_NEWTMGR: 0
+    CONFIG_NEWTMGR: 0
 
     TSL2561_CLI: 0
     BNO055_CLI: 0
     TCS34725_CLI: 1
+    SENSOR_BLE_OIC: 1
+
+    BLE_ROLE_CENTRAL: 0
+    BLE_ROLE_OBSERVER: 0
+    OC_SERVER: 1
+    OC_TRANSPORT_GATT: 1
 
 syscfg.defs:
     TSL2561_PRESENT:

@@ -26,9 +26,6 @@ pkg.keywords:
 
 pkg.deps:
     - test/flash_test
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
     - kernel/os
     - hw/sensor
     - hw/drivers/sensors/sim

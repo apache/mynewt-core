@@ -40,7 +40,6 @@
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"
 #endif
-#include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 #include <imgmgr/imgmgr.h>
@@ -50,6 +49,7 @@
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
+#include <oic/oc_api.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -106,6 +106,10 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
+
+static const oc_handler_t sensor_oic_handler = {
+    .init = sensor_oic_init,
+};
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -407,7 +411,7 @@ main(int argc, char **argv)
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
 #endif
-
+    /* Initialize OS */
     sysinit();
 
     rc = conf_register(&test_conf_handler);
@@ -421,6 +425,8 @@ main(int argc, char **argv)
                STATS_NAME_INIT_PARMS(gpio_stats));
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
+
+    oc_main_init((oc_handler_t *)&sensor_oic_handler);
 
     flash_test_init();
 

@@ -86,7 +86,6 @@ static int oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
                    struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
-        /* Service: newtmgr */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid = &oc_gatt_svc_uuid.u,
         .characteristics = (struct ble_gatt_chr_def[]) {

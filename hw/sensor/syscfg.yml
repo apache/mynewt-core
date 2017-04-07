@@ -26,3 +26,16 @@ syscfg.defs:
     SENSOR_CLI:
         description: 'Whether or not to enable the sensor shell support'
         value: 1
+
+    SENSOR_BLE_OIC:
+        description: 'Enable/Disable the OIC sensor gatt svr'
+        value: 1
+        restrictions:
+            # Disable central and observer roles.
+            - BLE_ROLE_BROADCASTER
+            - '!BLE_ROLE_CENTRAL'
+            - '!BLE_ROLE_OBSERVER'
+            - BLE_ROLE_PERIPHERAL
+            # OC server, with bluetooth transport.
+            - OC_SERVER
+            - OC_TRANSPORT_GATT

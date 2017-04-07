@@ -230,7 +230,11 @@ oc_core_init_platform(const char *mfg_name, oc_core_init_platform_cb_t init_cb,
     }
     oc_rep_new(tmp);
     oc_rep_start_root_object();
+#if 0
     oc_rep_set_string_array(root, rt, core_resources[OCF_P].types);
+#else
+    oc_rep_set_text_string(root, rt, "oic.wk.p");
+#endif
     oc_core_encode_interfaces_mask(oc_rep_object(root),
                                    core_resources[OCF_P].interfaces);
     oc_rep_set_uint(root, p, core_resources[OCF_P].properties & ~OC_PERIODIC);
