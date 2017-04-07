@@ -31,3 +31,6 @@ pkg.deps:
 
 pkg.req_apis:
     - console
+
+pkg.cflags:
+    - -Wno-unused-result

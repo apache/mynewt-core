@@ -27,6 +27,8 @@
 #include "sensor/sensor.h"
 
 #include "sensor_priv.h"
+#include "os/os_time.h"
+#include "os/os_cputime.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -41,6 +43,9 @@ struct sensor_read_ctx {
     sensor_data_func_t user_func;
     void *user_arg;
 };
+
+struct sensor_timestamp sensor_base_ts;
+struct os_callout st_up_osco;
 
 /**
  * Lock sensor manager to access the list of sensors
@@ -228,6 +233,49 @@ done:
 }
 
 /**
+ * Event that wakes up timestamp update procedure, this updates the base
+ * os_timeval in the global structure along with the base cputime
+ * @param OS event
+ */
+static void
+sensor_base_ts_update_event(struct os_event *ev)
+{
+    os_time_t ticks;
+    int rc;
+    struct os_timeval ostv;
+    struct os_timezone ostz;
+
+    ticks = os_time_get();
+
+    rc = os_gettimeofday(&ostv, &ostz);
+    if (rc) {
+        /* There is nothing we can do here
+         * just reset the timer frequently if we
+         * fail to get time, till then we will keep using
+         * old timestamp values.
+         */
+        ticks += OS_TICKS_PER_SEC * 600;
+        goto done;
+    }
+
+    /* CPU time gets wrapped in 4295 seconds since it is uint32_t,
+     * hence the hardcoded value of 3600 seconds, We want to make
+     * sure that the cputime never gets wrapped more than once.
+     * os_timeval usecs value gets wrapped in 2147 secs since it is int32_t.
+     * Hence, we take 2000 secs so that we update before it gets wrapped
+     * without cutting it too close.
+     */
+    ticks += OS_TICKS_PER_SEC * 2000;
+
+    sensor_base_ts.st_ostv = ostv;
+    sensor_base_ts.st_ostz = ostz;
+    sensor_base_ts.st_cputime = os_cputime_get32();
+
+done:
+    os_callout_reset(&st_up_osco, ticks);
+}
+
+/**
  * Get the current eventq, the system is misconfigured if there is still
  * no parent eventq.
  */
@@ -237,11 +285,22 @@ sensor_mgr_evq_get(void)
     return (sensor_mgr.mgr_eventq);
 }
 
+void
+sensor_mgr_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&sensor_mgr.mgr_eventq, evq, NULL);
+}
+
 static void
 sensor_mgr_init(void)
 {
+    struct os_timeval ostv;
+    struct os_timezone ostz;
+
     memset(&sensor_mgr, 0, sizeof(sensor_mgr));
     TAILQ_INIT(&sensor_mgr.mgr_sensor_list);
+
+    sensor_mgr_evq_set(os_eventq_dflt_get());
 
     /**
      * Initialize sensor polling callout and set it to fire on boot.
@@ -249,6 +308,21 @@ sensor_mgr_init(void)
     os_callout_init(&sensor_mgr.mgr_wakeup_callout, sensor_mgr_evq_get(),
             sensor_mgr_wakeup_event, NULL);
     os_callout_reset(&sensor_mgr.mgr_wakeup_callout, 0);
+
+    /* Initialize sensor cputime update callout and set it to fire after an
+     * hour, CPU time gets wrapped in 4295 seconds,
+     * hence the hardcoded value of 3600 seconds, We make sure that the
+     * cputime never gets wrapped more than once.
+     */
+    os_gettimeofday(&ostv, &ostz);
+
+    sensor_base_ts.st_ostv = ostv;
+    sensor_base_ts.st_ostz = ostz;
+    sensor_base_ts.st_cputime = os_cputime_get32();
+
+    os_callout_init(&st_up_osco, sensor_mgr_evq_get(),
+            sensor_base_ts_update_event, NULL);
+    os_callout_reset(&st_up_osco, OS_TICKS_PER_SEC);
 
     os_mutex_init(&sensor_mgr.mgr_lock);
 }
@@ -535,6 +609,32 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data)
     }
 }
 
+static void
+sensor_up_timestamp(struct sensor *sensor)
+{
+    uint32_t curr_ts_ticks;
+    uint32_t ts;
+
+    curr_ts_ticks = os_cputime_get32();
+
+    ts = os_cputime_ticks_to_usecs(curr_ts_ticks -
+             sensor_base_ts.st_cputime);
+
+    /* Updating cputime */
+    sensor_base_ts.st_cputime = sensor->s_sts.st_cputime = curr_ts_ticks;
+
+    /* Updating seconds */
+    sensor_base_ts.st_ostv.tv_sec  = sensor_base_ts.st_ostv.tv_sec + (ts +
+        sensor_base_ts.st_ostv.tv_usec)/1000000;
+    sensor->s_sts.st_ostv.tv_sec = sensor_base_ts.st_ostv.tv_sec;
+
+    /* Updating Micro seconds */
+    sensor_base_ts.st_ostv.tv_usec  =
+        (sensor_base_ts.st_ostv.tv_usec + ts)%1000000;
+    sensor->s_sts.st_ostv.tv_usec = sensor_base_ts.st_ostv.tv_usec;
+
+}
+
 /**
  * Read the data for sensor type "type," from the sensor, "sensor" and
  * return the result into the "value" parameter.
@@ -562,8 +662,13 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     src.user_func = data_func;
     src.user_arg = arg;
 
+    sensor_up_timestamp(sensor);
+
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
             timeout);
+    if (rc) {
+        goto done;
+    }
 
     sensor_unlock(sensor);
 

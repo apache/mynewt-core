@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
@@ -139,7 +140,7 @@ cbor_internal_read_object(CborValue *root_value,
                           int offset)
 {
     const struct cbor_attr_t *cursor, *best_match;
-    char attrbuf[CBOR_ATTR_MAX + 1];
+    char attrbuf[MYNEWT_VAL(CBORATTR_MAX_SIZE) + 1];
     void *lptr;
     CborValue cur_value;
     CborError err = 0;
@@ -189,7 +190,7 @@ cbor_internal_read_object(CborValue *root_value,
         /* get the attribute */
         if (cbor_value_is_text_string(&cur_value)) {
             if (cbor_value_calculate_string_length(&cur_value, &len) == 0) {
-                if (len > CBOR_ATTR_MAX) {
+                if (len > MYNEWT_VAL(CBORATTR_MAX_SIZE)) {
                     err |= CborErrorDataTooLarge;
                     goto err_return;
                 }

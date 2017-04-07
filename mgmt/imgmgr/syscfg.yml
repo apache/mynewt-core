@@ -27,3 +27,8 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
+    IMGMGR_MAX_CHUNK_SIZE:
+        description: >
+            The maximum amount of image or core data that can fit in a
+            single NMP message
+        value: 512

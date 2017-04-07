@@ -111,7 +111,7 @@ coap_remove_observer_by_client(oc_endpoint_t *endpoint)
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0) {
+        if (memcmp(&obs->endpoint, endpoint, oc_endpoint_size(endpoint)) == 0) {
             obs->resource->num_observers--;
             coap_remove_observer(obs);
             removed++;
@@ -131,7 +131,7 @@ coap_remove_observer_by_token(oc_endpoint_t *endpoint, uint8_t *token,
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0 &&
+        if (memcmp(&obs->endpoint, endpoint, oc_endpoint_size(endpoint)) == 0 &&
           obs->token_len == token_len &&
           memcmp(obs->token, token, token_len) == 0) {
             obs->resource->num_observers--;
@@ -153,7 +153,8 @@ coap_remove_observer_by_uri(oc_endpoint_t *endpoint, const char *uri)
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (((memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0)) &&
+        if (((memcmp(&obs->endpoint, endpoint,
+                     oc_endpoint_size(endpoint)) == 0)) &&
           (obs->url == uri || memcmp(obs->url, uri, strlen(obs->url)) == 0)) {
             obs->resource->num_observers--;
             coap_remove_observer(obs);
@@ -173,7 +174,7 @@ coap_remove_observer_by_mid(oc_endpoint_t *endpoint, uint16_t mid)
     obs = SLIST_FIRST(&oc_observers);
     while (obs) {
         next = SLIST_NEXT(obs, next);
-        if (memcmp(&obs->endpoint, endpoint, sizeof(*endpoint)) == 0 &&
+        if (memcmp(&obs->endpoint, endpoint, oc_endpoint_size(endpoint)) == 0 &&
           obs->last_mid == mid) {
             obs->resource->num_observers--;
             coap_remove_observer(obs);
@@ -231,11 +232,14 @@ coap_notify_observers(oc_resource_t *resource,
 
     coap_observer_t *obs = NULL;
     /* iterate over observers */
-    for (obs = SLIST_FIRST(&oc_observers);
-         obs && ((resource && obs->resource == resource) ||
-           (endpoint &&
-             memcmp(&obs->endpoint, endpoint, sizeof(oc_endpoint_t)) == 0));
-         obs = SLIST_NEXT(obs, next)) {
+    for (obs = SLIST_FIRST(&oc_observers); obs; obs = SLIST_NEXT(obs, next)) {
+        /* skip if neither resource nor endpoint match */
+        if ((resource && resource != obs->resource) ||
+            (endpoint && memcmp(&obs->endpoint, endpoint,
+                                oc_endpoint_size(endpoint)) != 0)) {
+            continue;
+        }
+
         num_observers = obs->resource->num_observers;
 #if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
         if (response.separate_response != NULL &&
@@ -274,7 +278,8 @@ coap_notify_observers(oc_resource_t *resource,
                 coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
 
                 notification->mid = transaction->mid;
-                if (obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
+                if (!oc_endpoint_use_tcp(&obs->endpoint) &&
+                    obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
                     OC_LOG_DEBUG("coap_observe_notify: forcing CON "
                                  "notification to check for client liveness\n");
                     notification->type = COAP_TYPE_CON;

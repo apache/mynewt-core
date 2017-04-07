@@ -135,8 +135,12 @@ sim_accel_sensor_read(struct sensor *sensor, sensor_type_t type,
      * returned.
      */
     sad.sad_x = 0.0;
-    sad.sad_y = SENSOR_ACCEL_DATA_UNUSED;
-    sad.sad_z = SENSOR_ACCEL_DATA_UNUSED;
+    sad.sad_y = 0.0;
+    sad.sad_z = 0.0;
+
+    sad.sad_x_is_valid = 1;
+    sad.sad_y_is_valid = 0;
+    sad.sad_z_is_valid = 0;
 
     if (sa->sa_cfg.sac_nr_axises > 1) {
         sad.sad_y = 0.0;

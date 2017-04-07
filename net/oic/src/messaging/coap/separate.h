@@ -64,15 +64,15 @@ typedef struct coap_separate {
     oc_endpoint_t endpoint;
 } coap_separate_t;
 
-typedef struct coap_packet coap_packet_t;
+struct coap_packet;
 int coap_separate_accept(struct coap_packet_rx *request,
-                         oc_separate_response_t *separate_response,
+                         struct oc_separate_response *separate_response,
                          oc_endpoint_t *endpoint, int observe);
-void coap_separate_resume(coap_packet_t *response,
-                          coap_separate_t *separate_store,
+void coap_separate_resume(struct coap_packet *response,
+                          struct coap_separate *separate_store,
                           uint8_t code, uint16_t mid);
-void coap_separate_clear(oc_separate_response_t *separate_response,
-                         coap_separate_t *separate_store);
+void coap_separate_clear(struct oc_separate_response *separate_response,
+                         struct coap_separate *separate_store);
 
 void coap_separate_init(void);
 

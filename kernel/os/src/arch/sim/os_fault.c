@@ -27,6 +27,7 @@ void
 __assert_func(const char *file, int line, const char *func, const char *e)
 {
     char msg[256];
+    int len;
 
     if (file) {
         snprintf(msg, sizeof(msg), "assert @ %s:%d\n", file, line);
@@ -34,6 +35,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
         snprintf(msg, sizeof(msg), "assert @ %p\n",
                  __builtin_return_address(0));
     }
-    write(1, msg, strlen(msg));
-    _exit(1);
+    len = write(1, msg, strlen(msg));
+    (void)len;
+    _Exit(1);
 }

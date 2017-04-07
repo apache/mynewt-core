@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
+#include "hal/hal_gpio.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_rcc.h"
@@ -102,13 +102,13 @@ static GPIO_TypeDef * const portmap[HAL_GPIO_NUM_PORTS] =
     GPIOH,
 #endif
 #if defined GPIOI_BASE
-    GPIOI
+    GPIOI,
 #endif
 #if defined GPIOJ_BASE
-    GPIOJ
+    GPIOJ,
 #endif
 #if defined GPIOK_BASE
-    GPIOK
+    GPIOK,
 #endif
 };
 

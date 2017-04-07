@@ -18,12 +18,23 @@
 
 # Package: apps/testbench
 
+syscfg.defs:
+    TESTBENCH_BLE:
+        description: Enables BLE support in the testbench app.
+        value: 0
+
+    TESTBENCH_BLE_NAME:
+        description: The BLE name to use.
+        value: '"testbench-ble"'
+
 syscfg.vals:
     # Enable the shell task.
     SHELL_TASK: 1
 
     # Include names for statistics.
     STATS_NAMES: 1
+    STATS_CLI: 1
+    STATS_NEWTMGR: 1
 
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
@@ -33,11 +44,9 @@ syscfg.vals:
     OS_COREDUMP: 1
     IMGMGR_COREDUMP: 1
 
-#   CONFIG_NFFS: 1
     CONFIG_FCB: 1
 
     # Enable shell commands.
-    #    STATS_CLI: 1
     LOG_CLI: 1
     CONFIG_CLI: 1
 
@@ -48,7 +57,8 @@ syscfg.vals:
     RUNTEST_CLI: 1
     RUNTEST_NEWTMGR: 1
 
-#    BSP_ARDUINO_ZERO_PRO: 1
+    CRASH_TEST_CLI: 1
+    IMGMGR_CLI: 1
 
     # Default task settings
     OS_MAIN_STACK_SIZE: 768

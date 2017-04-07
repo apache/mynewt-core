@@ -992,12 +992,12 @@ ble_ll_ctrl_rx_conn_update(struct ble_ll_conn_sm *connsm, uint8_t *dptr,
 
     /* XXX: validate them at some point. If they dont check out, we
        return the unknown response */
+    rsp_opcode = BLE_ERR_MAX;
 
     /* If instant is in the past, we have to end the connection */
     conn_events = (reqdata->instant - connsm->event_cntr) & 0xFFFF;
     if (conn_events >= 32767) {
         ble_ll_conn_timeout(connsm, BLE_ERR_INSTANT_PASSED);
-        rsp_opcode = BLE_ERR_MAX;
     } else {
         connsm->csmflags.cfbit.conn_update_sched = 1;
     }
@@ -1522,6 +1522,7 @@ ble_ll_ctrl_rx_pdu(struct ble_ll_conn_sm *connsm, struct os_mbuf *om)
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
     int restart_encryption;
 #endif
+    int rc = 0;
 
     /* XXX: where do we validate length received and packet header length?
      * do this in LL task when received. Someplace!!! What I mean
@@ -1558,15 +1559,19 @@ ble_ll_ctrl_rx_pdu(struct ble_ll_conn_sm *connsm, struct os_mbuf *om)
 
     ble_ll_log(BLE_LL_LOG_ID_LL_CTRL_RX, opcode, len, 0);
 
-    /* opcode must be good */
-    if ((opcode >= BLE_LL_CTRL_OPCODES) ||
-        (len != g_ble_ll_ctrl_pkt_lengths[opcode])) {
-        goto rx_malformed_ctrl;
-    }
-
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION) == 1)
     restart_encryption = 0;
 #endif
+
+    /* If opcode comes from reserved value or CtrlData fields is invalid
+     * we shall respond with LL_UNKNOWN_RSP
+     */
+    if ((opcode >= BLE_LL_CTRL_OPCODES) ||
+        (len != g_ble_ll_ctrl_pkt_lengths[opcode])) {
+        rc = -1;
+        rsp_opcode = BLE_LL_CTRL_UNKNOWN_RSP;
+        goto ll_ctrl_send_rsp;
+    }
 
     /* Check if the feature is supported. */
     switch (opcode) {
@@ -1626,7 +1631,9 @@ ble_ll_ctrl_rx_pdu(struct ble_ll_conn_sm *connsm, struct os_mbuf *om)
     case BLE_LL_CTRL_LENGTH_REQ:
         /* Extract parameters and check if valid */
         if (ble_ll_ctrl_len_proc(connsm, dptr)) {
-            goto rx_malformed_ctrl;
+            rc  = -1;
+            rsp_opcode = BLE_LL_CTRL_UNKNOWN_RSP;
+            goto ll_ctrl_send_rsp;
         }
 
         /*
@@ -1647,7 +1654,9 @@ ble_ll_ctrl_rx_pdu(struct ble_ll_conn_sm *connsm, struct os_mbuf *om)
         if (connsm->cur_ctrl_proc == BLE_LL_CTRL_PROC_DATA_LEN_UPD) {
             /* Process the received data */
             if (ble_ll_ctrl_len_proc(connsm, dptr)) {
-                goto rx_malformed_ctrl;
+                rc = -1;
+                rsp_opcode = BLE_LL_CTRL_UNKNOWN_RSP;
+                goto ll_ctrl_send_rsp;
             }
 
             /* Stop the control procedure */
@@ -1722,7 +1731,7 @@ ble_ll_ctrl_rx_pdu(struct ble_ll_conn_sm *connsm, struct os_mbuf *om)
 
     /* Free mbuf or send response */
 ll_ctrl_send_rsp:
-    if (rsp_opcode == 255) {
+    if (rsp_opcode == BLE_ERR_MAX) {
         os_mbuf_free_chain(om);
     } else {
         /*
@@ -1743,11 +1752,7 @@ ll_ctrl_send_rsp:
         }
 #endif
     }
-    return 0;
-
-rx_malformed_ctrl:
-    os_mbuf_free_chain(om);
-    return -1;
+    return rc;
 }
 
 /**

@@ -71,7 +71,7 @@ fs_nmgr_file_download(struct mgmt_cbuf *cb)
 {
     long long unsigned int off = UINT_MAX;
     char tmp_str[FS_NMGR_MAX_NAME + 1];
-    uint8_t img_data[FS_NMGR_MAX_MSG];
+    uint8_t img_data[MYNEWT_VAL(FS_UPLOAD_MAX_CHUNK_SIZE)];
     const struct cbor_attr_t dload_attr[3] = {
         [0] = {
             .attribute = "off",
@@ -141,7 +141,7 @@ err_close:
 static int
 fs_nmgr_file_upload(struct mgmt_cbuf *cb)
 {
-    uint8_t img_data[FS_NMGR_MAX_MSG];
+    uint8_t img_data[MYNEWT_VAL(FS_UPLOAD_MAX_CHUNK_SIZE)];
     char file_name[FS_NMGR_MAX_NAME + 1];
     size_t img_len;
     long long unsigned int off = UINT_MAX;

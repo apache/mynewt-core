@@ -726,7 +726,12 @@ bletiny_disc_full_chrs(uint16_t conn_handle)
     }
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
-        if (!svc_is_empty(svc) && SLIST_EMPTY(&svc->chrs)) {
+        if (!svc_is_empty(svc) && !svc->char_disc_sent) {
+            /* Since it might happen that service does not have characteristics
+             * for some reason, lets keep track on services for which we send
+             * characteristic discovery
+             */
+            svc->char_disc_sent = true;
             rc = bletiny_disc_all_chrs(conn_handle, svc->svc.start_handle,
                                        svc->svc.end_handle);
             if (rc != 0) {
@@ -1847,9 +1852,13 @@ bletiny_l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes)
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+main(int argc, char **argv)
 {
     int rc;
+
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
 
     /* Initialize OS */
     sysinit();

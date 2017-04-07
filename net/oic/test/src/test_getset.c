@@ -23,6 +23,7 @@
 
 static int test_getset_state;
 static volatile int test_getset_done;
+static struct oc_resource *test_res_getset;
 
 static void test_getset_next_step(struct os_event *);
 static struct os_event test_getset_next_ev = {
@@ -80,20 +81,19 @@ test_getset_next_step(struct os_event *ev)
 
     test_getset_state++;
     switch (test_getset_state) {
-    case 1: {
-        oc_resource_t *res;
+    case 1:
+        test_res_getset = oc_new_resource("/getset", 1, 0);
+        TEST_ASSERT_FATAL(test_res_getset);
 
-        res = oc_new_resource("/getset", 1, 0);
-        TEST_ASSERT_FATAL(res);
+        oc_resource_bind_resource_interface(test_res_getset, OC_IF_RW);
+        oc_resource_set_default_interface(test_res_getset, OC_IF_RW);
 
-        oc_resource_bind_resource_interface(res, OC_IF_RW);
-        oc_resource_set_default_interface(res, OC_IF_RW);
-
-        oc_resource_set_request_handler(res, OC_GET, test_getset_get);
-        oc_resource_set_request_handler(res, OC_PUT, test_getset_put);
-        b_rc = oc_add_resource(res);
+        oc_resource_set_request_handler(test_res_getset, OC_GET,
+                                        test_getset_get);
+        oc_resource_set_request_handler(test_res_getset, OC_PUT,
+                                        test_getset_put);
+        b_rc = oc_add_resource(test_res_getset);
         TEST_ASSERT(b_rc == true);
-    }
         /* fall-through */
     case 2:
     case 3:
@@ -121,7 +121,7 @@ test_getset(void)
     while (!test_getset_done) {
         os_eventq_run(&oic_tapp_evq);
     }
-    oc_main_shutdown();
+    oc_delete_resource(test_res_getset);
 }
 
 

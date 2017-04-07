@@ -22,6 +22,7 @@
 
 #include "os/os.h"
 #include "os/os_dev.h"
+#include "syscfg/syscfg.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,12 +73,12 @@ typedef enum {
     SENSOR_TYPE_GRAVITY              = (1 << 27),
     /* Euler Orientation Sensor */
     SENSOR_TYPE_EULER                = (1 << 28),
+    /* Color Sensor */
+    SENSOR_TYPE_COLOR                = (1 << 29),
     /* User defined sensor type 1 */
-    SENSOR_TYPE_USER_DEFINED_1       = (1 << 29),
+    SENSOR_TYPE_USER_DEFINED_1       = (1 << 30),
     /* User defined sensor type 2 */
-    SENSOR_TYPE_USER_DEFINED_2       = (1 << 30),
-    /* User defined sensor type 3 */
-    SENSOR_TYPE_USER_DEFINED_3       = (1 << 31),
+    SENSOR_TYPE_USER_DEFINED_2       = (1 << 31),
     /* A selector, describes all sensors */
     SENSOR_TYPE_ALL                  = 0xFFFFFFFF
 } sensor_type_t;
@@ -200,14 +201,20 @@ struct sensor_driver {
     sensor_get_config_func_t sd_get_config;
 };
 
+struct sensor_timestamp {
+    struct os_timeval st_ostv;
+    struct os_timezone st_ostz;
+    uint32_t st_cputime;
+};
+
 /*
  * Return the OS device structure corresponding to this sensor
  */
 #define SENSOR_GET_DEVICE(__s) ((__s)->s_dev)
 
 struct sensor {
-    /* The OS device this sensor inherits from, this is typically a sensor specific
-     * driver.
+    /* The OS device this sensor inherits from, this is typically a sensor
+     * specific driver.
      */
     struct os_dev *s_dev;
 
@@ -215,9 +222,9 @@ struct sensor {
     struct os_mutex s_lock;
 
 
-    /* A bit mask describing the types of sensor objects available from this sensor.
-     * If the bit corresponding to the sensor_type_t is set, then this sensor supports
-     * that variable.
+    /* A bit mask describing the types of sensor objects available from this
+     * sensor. If the bit corresponding to the sensor_type_t is set, then this
+     * sensor supports that variable.
      */
     sensor_type_t s_types;
     /**
@@ -225,15 +232,19 @@ struct sensor {
      */
     uint32_t s_poll_rate;
 
-    /**
-     * The next time at which we want to poll data from this sensor
-     */
+    /* The next time at which we want to poll data from this sensor */
     os_time_t s_next_run;
 
-    /* Sensor driver specific functions, created by the device registering the sensor.
+    /* Sensor driver specific functions, created by the device registering the
+     * sensor.
      */
     struct sensor_driver *s_funcs;
-    /* A list of listeners that are registered to receive data off of this sensor
+
+    /* Sensor last reading timestamp */
+    struct sensor_timestamp s_sts;
+
+    /* A list of listeners that are registered to receive data off of this
+     * sensor
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
     /* The next sensor in the global sensor list. */

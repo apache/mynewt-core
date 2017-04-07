@@ -269,7 +269,7 @@ main(int argc, char **argv)
 
     conf_load();
 
-    log_reboot(hal_reset_cause());
+    reboot_start(hal_reset_cause());
 
     init_tasks();
 

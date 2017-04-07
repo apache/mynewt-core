@@ -38,9 +38,6 @@ extern "C" {
  * is a key/value pair.  keys are always text strings, but values can be
  * many different things (enumerated below) */
 
-    /* maximum size of the string attribute name for this decoder */
-#define CBOR_ATTR_MAX (128)
-
 typedef enum CborAttrType {
     CborAttrIntegerType = 1,
     CborAttrUnsignedIntegerType,

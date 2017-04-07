@@ -21,11 +21,24 @@
 #
 common_file_to_load () {
     if [ "$MFG_IMAGE" ]; then
-	FILE_NAME=$BIN_BASENAME.bin
+        FILE_NAME=$BIN_BASENAME.bin
     elif [ "$BOOT_LOADER" ]; then
-	FILE_NAME=$BIN_BASENAME.elf.bin
+        FILE_NAME=$BIN_BASENAME.elf.bin
     else
-	FILE_NAME=$BIN_BASENAME.img
+        FILE_NAME=$BIN_BASENAME.img
     fi
 }
-    
+
+#
+# Check if this is executing in Windows. If so, set variable WINDOWS to 1.
+# Also check if $COMSPEC is set or not.
+#
+windows_detect() {
+    WINDOWS=0
+    if [ $OS = "Windows_NT" ]; then
+	WINDOWS=1
+    fi
+    if [ $WINDOWS -eq 1 -a -z "$COMSPEC" ]; then
+	COMSPEC=cmd.exe
+    fi
+}

@@ -21,4 +21,4 @@
 
 extern const struct hal_flash native_flash_dev;
 
-#endif /* H_NATIVE_BSP_ */
+#endif /* H_MIPS_BSP_ */

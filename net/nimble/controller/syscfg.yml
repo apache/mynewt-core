@@ -137,6 +137,14 @@ syscfg.defs:
             material often.
         value: '32'
 
+    # Crystal setting time
+    BLE_XTAL_SETTLE_TIME:
+        description: >
+            The settling time of the high-frequency oscillator. This is
+            used to turn on/off the clock used for the radio (assuming
+            the HW supports this). This value is in microseconds.
+        value: '0'
+
     # Configuration for LL supported features.
     #
     # There are a total 8 features that the LL can support. These can be found
@@ -195,3 +203,12 @@ syscfg.defs:
             policy feature. Currently, this feature is not supported by the
             nimble controller.
         value: '0'
+
+    BLE_PUBLIC_DEV_ADDR:
+        description: >
+            Allows the target or app to override the public device address
+            used by the controller. If all zero, the controller will
+            attempt to retrieve the public device address from its
+            chip specific location. If non-zero, this address will
+            be used.
+        value: "(uint8_t[6]){0x00, 0x00, 0x00, 0x00, 0x00, 0x00}"

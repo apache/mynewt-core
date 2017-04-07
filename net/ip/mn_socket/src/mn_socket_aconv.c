@@ -85,7 +85,7 @@ mn_inet_ntop(int af, const void *src_v, void *dst, int len)
         for (i = 0; i < sizeof(*a6); i += 2) {
             memcpy(&u16, &a6->s_addr[i], 2);
             u16 = htons(u16);
-            rc += snprintf(dst + rc, len - rc, "%x", 16);
+            rc += snprintf(dst + rc, len - rc, "%x", u16);
             if (rc >= len) {
                 return NULL;
             }

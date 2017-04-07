@@ -977,6 +977,8 @@ nffs_restore_disk_object(int area_idx, uint32_t area_offset,
 {
     int rc;
 
+    memset(out_disk_object, 0, sizeof *out_disk_object);
+
     rc = nffs_flash_read(area_idx, area_offset,
                          &out_disk_object->ndo_un_obj,
                          sizeof(out_disk_object->ndo_un_obj));

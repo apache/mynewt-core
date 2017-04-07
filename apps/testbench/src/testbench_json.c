@@ -39,15 +39,10 @@ testbench_json_init(void *arg)
     LOG_DEBUG(&testlog, LOG_MODULE_TEST,
              "%s testbench json_init", buildID);
 
-    tu_case_idx = 0;
-    tu_case_failed = 0;
-
     bigbuf = os_malloc(JSON_BIGBUF_SIZE);
 
     tu_suite_set_pass_cb(testbench_ts_pass, NULL);
     tu_suite_set_fail_cb(testbench_ts_fail, NULL);
-
-    return;
 }
 
 void

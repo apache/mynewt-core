@@ -15,11 +15,12 @@
 */
 
 #include "oc_uuid.h"
-#include "port/oc_random.h"
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <hal/hal_bsp.h>
 
 void
 oc_str_to_uuid(const char *str, oc_uuid_t *uuid)
@@ -92,17 +93,11 @@ oc_uuid_to_str(const oc_uuid_t *uuid, char *buffer, int buflen)
 void
 oc_gen_uuid(oc_uuid_t *uuid)
 {
-  int i;
-  uint16_t r;
-
-  for (i = 0; i < 8; i++) {
-    r = oc_random_rand();
-    memcpy((uint8_t *)&uuid->id[i * 2], (uint8_t *)&r, sizeof(r));
-  }
+  hal_bsp_hw_id(&uuid->id[0], sizeof(uuid->id));
 
   /*  From RFC 4122
       Set the two most significant bits of the
-      clock_seq_hi_and_reserved (8th octect) to
+      clock_seq_hi_and_reserved (8th octet) to
       zero and one, respectively.
   */
   uuid->id[8] &= 0x3f;

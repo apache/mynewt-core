@@ -22,3 +22,11 @@ syscfg.defs:
     SYSINIT_CONSTRAIN_INIT:
         description: Only allow packages to be initialized by sysinit.
         value: 1
+
+    SYSINIT_PANIC_FILE_LINE:
+        description: Include filename and line number in sysinit panic.
+        value: 0
+
+    SYSINIT_PANIC_MESSAGE:
+        description: Include descriptive message in sysinit panic.
+        value: 0

@@ -201,14 +201,24 @@
 
 /* Interrupt Registers */
 #define BNO055_INT_MASK_ADDR                                    0X0F
-#define BNO055_INT_ADDR                                         0X10
+
+#define BNO055_INT_EN_ADDR                                      0X10
+#define BNO055_INT_EN_ACC_NM                                (1 << 7)
+#define BNO055_INT_EN_ACC_AM                                (1 << 6)
+#define BNO055_INT_EN_ACC_HG                                (1 << 5)
+#define BNO055_INT_EN_GYR_HR                                (1 << 3)
+#define BNO055_INT_EN_GYR_AM                                (1 << 2)
+
 #define BNO055_ACCEL_ANY_MOTION_THRES_ADDR                      0X11
 #define BNO055_ACCEL_INTR_SETTINGS_ADDR                         0X12
 #define BNO055_ACCEL_HIGH_G_DURN_ADDR                           0X13
 #define BNO055_ACCEL_HIGH_G_THRES_ADDR                          0X14
+
 #define BNO055_ACCEL_NO_MOTION_THRES_ADDR                       0X15
+#define BNO055_ACCEL_SMNM                                   (1 << 0)
+
 #define BNO055_ACCEL_NO_MOTION_SET_ADDR                         0X16
-#define BNO055_GYRO_INTR_SETING_ADDR                            0X17
+#define BNO055_GYRO_INTR_SETTINGS_ADDR                          0X17
 #define BNO055_GYRO_HIGHRATE_X_SET_ADDR                         0X18
 #define BNO055_GYRO_DURN_X_ADDR                                 0X19
 #define BNO055_GYRO_HIGHRATE_Y_SET_ADDR                         0X1A
@@ -218,6 +228,35 @@
 #define BNO055_GYRO_ANY_MOTION_THRES_ADDR                       0X1E
 #define BNO055_GYRO_ANY_MOTION_SET_ADDR                         0X1F
 
-#define BNO055_NUM_OFFSET_REGISTERS                             22
+#define BNO055_NUM_OFFSET_REGISTERS                               22
+
+#define BNO055_INT_ACC_AM_POS                                      0
+#define BNO055_INT_ACC_HG_POS                                      8
+#define BNO055_INT_GYR_HR_POS                                     16
+#define BNO055_INT_GYR_AM_POS                                     24
+
+#define BNO055_INT_ACC_AM                                          1
+#define BNO055_INT_ACC_AM_X_AXIS   (1 << 2) << BNO055_INT_ACC_AM_POS
+#define BNO055_INT_ACC_AM_Y_AXIS   (1 << 3) << BNO055_INT_ACC_AM_POS
+#define BNO055_INT_ACC_AM_Z_AXIS   (1 << 4) << BNO055_INT_ACC_AM_POS
+
+#define BNO055_INT_ACC_HG                                          2
+#define BNO055_INT_ACC_HG_X_AXIS   (1 << 5) << BNO055_INT_ACC_HG_POS
+#define BNO055_INT_ACC_HG_Y_AXIS   (1 << 6) << BNO055_INT_ACC_HG_POS
+#define BNO055_INT_ACC_HG_Z_AXIS   (1 << 7) << BNO055_INT_ACC_HG_POS
+
+#define BNO055_INT_GYR_HR                                          4
+#define BNO055_INT_GYR_HR_X_AXIS   (1 << 3) << BNO055_INT_GYR_HR_POS
+#define BNO055_INT_GYR_HR_Y_AXIS   (1 << 4) << BNO055_INT_GYR_HR_POS
+#define BNO055_INT_GYR_HR_Z_AXIS   (1 << 5) << BNO055_INT_GYR_HR_POS
+
+#define BNO055_INT_GYR_AM                                          8
+#define BNO055_INT_GYR_AM_X_AXIS   (1 << 0) << BNO055_INT_GYR_AM_POS
+#define BNO055_INT_GYR_AM_Y_AXIS   (1 << 1) << BNO055_INT_GYR_AM_POS
+#define BNO055_INT_GYR_AM_Z_AXIS   (1 << 2) << BNO055_INT_GYR_AM_POS
+
+#define BNO055_INT_ACC_NM                                         16
+
+#define BNO055_INT_ACC_SM                                         32
 
 #define BNO055_ID                                               0xA0

@@ -74,17 +74,17 @@ static void
 ocf_ble_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
     OCF_BLE_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr_type);
-    print_addr(desc->our_ota_addr);
+                desc->conn_handle, desc->our_ota_addr.type);
+    print_addr(desc->our_ota_addr.val);
     OCF_BLE_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr_type);
-    print_addr(desc->our_id_addr);
+                desc->our_id_addr.type);
+    print_addr(desc->our_id_addr.val);
     OCF_BLE_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr_type);
-    print_addr(desc->peer_ota_addr);
+                desc->peer_ota_addr.type);
+    print_addr(desc->peer_ota_addr.val);
     OCF_BLE_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr_type);
-    print_addr(desc->peer_id_addr);
+                desc->peer_id_addr.type);
+    print_addr(desc->peer_id_addr.val);
     OCF_BLE_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
@@ -145,7 +145,7 @@ ocf_ble_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, 0, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, ocf_ble_gap_event, NULL);
     if (rc != 0) {
         OCF_BLE_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -257,21 +257,11 @@ static const uint8_t ocf_ble_addr[6] = {1,2,3,4,5,6};
 void
 ocf_ble_init(void)
 {
-    int rc;
-
     /* Initialize the ocf_ble log. */
     log_register("ocf_ble", &ocf_ble_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
     memcpy(g_dev_addr, ocf_ble_addr, sizeof(g_dev_addr));
-
-    /* COAP Gatt server initialization */
-    rc = ble_coap_gatt_srv_init();
-    assert(rc == 0);
-
-    /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("Mynewt_OCF");
-    assert(rc == 0);
 
     /* Initialize the BLE host. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,

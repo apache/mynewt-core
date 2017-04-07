@@ -55,17 +55,12 @@ testbench_mempool_init(void *arg)
     LOG_DEBUG(&testlog, LOG_MODULE_TEST,
              "%s testbench mempool_init", buildID);
 
-    tu_case_idx = 0;
-    tu_case_failed = 0;
-
     TstMembufSz = (sizeof(os_membuf_t) *
                    OS_MEMPOOL_SIZE(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE));
     TstMembuf = os_malloc(TstMembufSz);
 
     tu_suite_set_pass_cb(testbench_ts_pass, NULL);
     tu_suite_set_fail_cb(testbench_ts_fail, NULL);
-
-    return;
 }
 
 void

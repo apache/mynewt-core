@@ -22,4 +22,4 @@
 
 #define OS_TICKS_PER_SEC    (1000)
 
-#endif /* __MCU_CORTEX_M4_H__ */
+#endif /* __MCU_MIPS_H__ */

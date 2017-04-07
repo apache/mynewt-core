@@ -35,4 +35,4 @@ extern "C" {
 }
 #endif
 
-#endif /* MCU_HAL_H */
+#endif /* MIPS_HAL_H */

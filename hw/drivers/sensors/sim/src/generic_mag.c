@@ -135,8 +135,12 @@ sim_mag_sensor_read(struct sensor *sensor, sensor_type_t type,
      * returned.
      */
     smd.smd_x = 0.0;
-    smd.smd_y = SENSOR_MAG_DATA_UNUSED;
-    smd.smd_z = SENSOR_MAG_DATA_UNUSED;
+    smd.smd_y = 0.0;
+    smd.smd_z = 0.0;
+
+    smd.smd_x_is_valid = 1;
+    smd.smd_y_is_valid = 0;
+    smd.smd_z_is_valid = 0;
 
     if (sm->sm_cfg.smc_nr_axises > 1) {
         smd.smd_y = 0.0;

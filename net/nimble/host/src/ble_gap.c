@@ -1434,13 +1434,13 @@ ble_gap_wl_tx_clear(void)
 /**
  * Overwrites the controller's white list with the specified contents.
  *
- * @param addr                  The entries to write to the white list.
+ * @param addrs                 The entries to write to the white list.
  * @param white_list_count      The number of entries in the white list.
  *
  * @return                      0 on success; nonzero on failure.
  */
 int
-ble_gap_wl_set(const ble_addr_t *addr, uint8_t white_list_count)
+ble_gap_wl_set(const ble_addr_t *addrs, uint8_t white_list_count)
 {
 #if !MYNEWT_VAL(BLE_WHITELIST)
     return BLE_HS_ENOTSUP;
@@ -1459,8 +1459,8 @@ ble_gap_wl_set(const ble_addr_t *addr, uint8_t white_list_count)
     }
 
     for (i = 0; i < white_list_count; i++) {
-        if (addr[i].type != BLE_ADDR_PUBLIC &&
-            addr[i].type != BLE_ADDR_RANDOM) {
+        if (addrs[i].type != BLE_ADDR_PUBLIC &&
+            addrs[i].type != BLE_ADDR_RANDOM) {
 
             rc = BLE_HS_EINVAL;
             goto done;
@@ -1473,7 +1473,7 @@ ble_gap_wl_set(const ble_addr_t *addr, uint8_t white_list_count)
     }
 
     BLE_HS_LOG(INFO, "GAP procedure initiated: set whitelist; ");
-    ble_gap_log_wl(addr, white_list_count);
+    ble_gap_log_wl(addrs, white_list_count);
     BLE_HS_LOG(INFO, "\n");
 
     rc = ble_gap_wl_tx_clear();
@@ -1482,7 +1482,7 @@ ble_gap_wl_set(const ble_addr_t *addr, uint8_t white_list_count)
     }
 
     for (i = 0; i < white_list_count; i++) {
-        rc = ble_gap_wl_tx_add(addr + i);
+        rc = ble_gap_wl_tx_add(addrs + i);
         if (rc != 0) {
             goto done;
         }
@@ -2353,7 +2353,8 @@ ble_gap_conn_create_tx(uint8_t own_addr_type, const ble_addr_t *peer_addr,
  *                                  already in progress;
  *                              BLE_HS_EBUSY if initiating a connection is not
  *                                  possible because scanning is in progress;
- *                              BLE_HS_EDONE if the specified peer is already connected;
+ *                              BLE_HS_EDONE if the specified peer is already
+ *                                  connected;
  *                              Other nonzero on error.
  */
 int
@@ -2619,6 +2620,9 @@ ble_gap_update_entry_free(struct ble_gap_update_entry *entry)
     int rc;
 
     if (entry != NULL) {
+#if MYNEWT_VAL(BLE_HS_DEBUG)
+        memset(entry, 0xff, sizeof *entry);
+#endif
         rc = os_memblock_put(&ble_gap_update_entry_pool, entry);
         BLE_HS_DBG_ASSERT_EVAL(rc == 0);
     }
@@ -2868,6 +2872,7 @@ ble_gap_update_params(uint16_t conn_handle,
 
     struct ble_l2cap_sig_update_params l2cap_params;
     struct ble_gap_update_entry *entry;
+    struct ble_gap_update_entry *dup;
     struct ble_hs_conn *conn;
     int rc;
 
@@ -2888,8 +2893,9 @@ ble_gap_update_params(uint16_t conn_handle,
         goto done;
     }
 
-    entry = ble_gap_update_entry_find(conn_handle, NULL);
-    if (entry != NULL) {
+    /* Don't allow two concurrent updates to the same connection. */
+    dup = ble_gap_update_entry_find(conn_handle, NULL);
+    if (dup != NULL) {
         rc = BLE_HS_EALREADY;
         goto done;
     }
@@ -2925,8 +2931,10 @@ done:
     if (rc == 0) {
         ble_hs_timer_resched();
     } else {
-        ble_gap_update_entry_free(entry);
-
+        /* If the l2cap_params struct is populated, the only error is that the
+         * controller doesn't support the connection parameters request
+         * procedure.  In this case, fallback to the L2CAP update procedure.
+         */
         if (l2cap_params.itvl_min != 0) {
             rc = ble_l2cap_sig_update(conn_handle,
                                       &l2cap_params,
@@ -2938,6 +2946,7 @@ done:
     if (rc == 0) {
         SLIST_INSERT_HEAD(&ble_gap_update_entries, entry, next);
     } else {
+        ble_gap_update_entry_free(entry);
         STATS_INC(ble_gap_stats, update_fail);
     }
     ble_hs_unlock();

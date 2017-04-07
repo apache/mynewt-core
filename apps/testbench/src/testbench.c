@@ -73,6 +73,7 @@
 #endif
 
 #include "testbench.h"
+#include "tbb.h"
 
 struct os_timeval tv;
 struct os_timezone tz;
@@ -124,36 +125,31 @@ extern uint32_t stack3_size;
 extern uint32_t stack4_size;
 
 void
-testbench_ts_pass(char *msg, int msg_len, void *arg)
+testbench_ts_result(char *msg, void *arg, bool passed)
 {
     TESTBENCH_UPDATE_TOD;
-    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s test case %s PASSED %s %s",
-             buildID, tu_case_name, msg, runtest_token);
-    return;
+
+    total_tests++;
+    if (!passed) {
+        total_fails++;
+    }
+
+    LOG_INFO(&testlog, LOG_MODULE_TEST,
+            "{\"k\":\"%s\",\"n\":\"%s\",\"r\":%d,\"m\":\"%s\"}",
+             runtest_token, tu_case_name, passed, msg);
 }
 
 void
-testbench_ts_fail(char *msg, int msg_len, void *arg)
+testbench_ts_pass(char *msg, void *arg)
 {
-    TESTBENCH_UPDATE_TOD;
-    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s test case %s FAILED %s %s",
-             buildID, tu_case_name, msg, runtest_token);
-    return;
-}
-
-#if 0
-void
-testbench_tc_pretest(void* arg)
-{
-    return;
+    testbench_ts_result(msg, arg, true);
 }
 
 void
-testbench_tc_postest(void* arg)
+testbench_ts_fail(char *msg, void *arg)
 {
-    return;
+    testbench_ts_result(msg, arg, false);
 }
-#endif
 
 void
 testbench_test_init()
@@ -209,8 +205,6 @@ testbench_runtests(struct os_event *ev)
         SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
             if (run_all || !strcmp(runtest_arg->run_testname, ts->ts_name)) {
                 ts->ts_test();
-                total_tests += tu_case_idx;
-                total_fails += tu_case_failed;
             }
         }
     } else {
@@ -219,8 +213,6 @@ testbench_runtests(struct os_event *ev)
          */
         SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
             ts->ts_test();
-            total_tests += tu_case_idx;
-            total_fails += tu_case_failed;
         }
     }
     testbench_test_complete();
@@ -235,6 +227,7 @@ testbench_runtests(struct os_event *ev)
 static void
 testbench_test_complete()
 {
+    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s Done", runtest_token);
     LOG_INFO(&testlog, LOG_MODULE_TEST,
              "%s TESTBENCH TEST %s - Tests run:%d pass:%d fail:%d %s",
              buildID,
@@ -354,9 +347,13 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
-    log_reboot(hal_reset_cause());
+#if MYNEWT_VAL(TESTBENCH_BLE)
+    tbb_init();
+#endif
 
     conf_load();
+
+    reboot_start(hal_reset_cause());
 
     /*
      * Register the tests that can be run by lookup
@@ -376,6 +373,8 @@ main(int argc, char **argv)
     run_evcb_set((os_event_fn*) testbench_runtests);
 
     testbench_test_init(); /* initialize globals include blink duty cycle */
+
+    LOG_INFO(&testlog, LOG_MODULE_TEST, "testbench app initialized");
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());

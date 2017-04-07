@@ -156,8 +156,8 @@ extern os_stack_t *stack4;
 void testbench_ts_init(void *arg);
 void testbench_ts_pretest(void* arg);
 void testbench_ts_posttest(void* arg);
-void testbench_ts_pass(char *msg, int msg_len, void *arg);
-void testbench_ts_fail(char *msg, int msg_len, void *arg);
+void testbench_ts_pass(char *msg, void *arg);
+void testbench_ts_fail(char *msg, void *arg);
 
 void testbench_tc_pretest(void* arg);
 void testbench_tc_postest(void* arg);

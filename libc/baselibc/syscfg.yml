@@ -4,3 +4,9 @@ syscfg.defs:
     BASELIBC_PRESENT:
         description: "Indicates that baselibc is the libc implementation."
         value: 1
+
+    BASELIBC_ASSERT_FILE_LINE:
+        description: >
+            Include filename and line number in assert messages.  Aids in
+            debugging, but increases text size.
+        value: 0

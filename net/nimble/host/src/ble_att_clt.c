@@ -70,8 +70,8 @@ ble_att_clt_tx_req(uint16_t conn_handle, struct os_mbuf *txom)
 
     ble_hs_lock();
 
-    ble_att_conn_chan_find(conn_handle, &conn, &chan);
-    if (chan == NULL) {
+    rc = ble_att_conn_chan_find(conn_handle, &conn, &chan);
+    if (rc != 0) {
         rc = BLE_HS_ENOTCONN;
     } else {
         ble_att_truncate_to_mtu(chan, txom);
@@ -129,8 +129,8 @@ ble_att_clt_tx_mtu(uint16_t conn_handle, const struct ble_att_mtu_cmd *req)
 
     ble_hs_lock();
 
-    ble_att_conn_chan_find(conn_handle, &conn, &chan);
-    if (chan == NULL) {
+    rc = ble_att_conn_chan_find(conn_handle, &conn, &chan);
+    if (rc != 0) {
         rc = BLE_HS_ENOTCONN;
     } else if (chan->flags & BLE_L2CAP_CHAN_F_TXED_MTU) {
         rc = BLE_HS_EALREADY;
@@ -158,8 +158,10 @@ ble_att_clt_tx_mtu(uint16_t conn_handle, const struct ble_att_mtu_cmd *req)
 
     ble_hs_lock();
 
-    ble_att_conn_chan_find(conn_handle, &conn, &chan);
-    chan->flags |= BLE_L2CAP_CHAN_F_TXED_MTU;
+    rc = ble_att_conn_chan_find(conn_handle, &conn, &chan);
+    if (rc == 0) {
+        chan->flags |= BLE_L2CAP_CHAN_F_TXED_MTU;
+    }
 
     ble_hs_unlock();
 
@@ -183,13 +185,17 @@ ble_att_clt_rx_mtu(uint16_t conn_handle, struct os_mbuf **rxom)
 
         ble_hs_lock();
 
-        ble_att_conn_chan_find(conn_handle, NULL, &chan);
-        ble_att_set_peer_mtu(chan, cmd.bamc_mtu);
-        mtu = ble_att_chan_mtu(chan);
+        rc = ble_att_conn_chan_find(conn_handle, NULL, &chan);
+        if (rc == 0) {
+            ble_att_set_peer_mtu(chan, cmd.bamc_mtu);
+            mtu = ble_att_chan_mtu(chan);
+        }
 
         ble_hs_unlock();
 
-        ble_gap_mtu_event(conn_handle, BLE_L2CAP_CID_ATT, mtu);
+        if (rc == 0) {
+            ble_gap_mtu_event(conn_handle, BLE_L2CAP_CID_ATT, mtu);
+        }
     }
 
     ble_gattc_rx_mtu(conn_handle, rc, mtu);
@@ -918,7 +924,20 @@ ble_att_clt_tx_write_cmd(uint16_t conn_handle,
     return BLE_HS_ENOTSUP;
 #endif
 
+    uint8_t b;
     int rc;
+    int i;
+
+    BLE_HS_LOG(DEBUG, "ble_att_clt_tx_write_cmd(): ");
+    for (i = 0; i < OS_MBUF_PKTLEN(txom); i++) {
+        if (i != 0) {
+            BLE_HS_LOG(DEBUG, ":");
+        }
+        rc = os_mbuf_copydata(txom, i, 1, &b);
+        assert(rc == 0);
+        BLE_HS_LOG(DEBUG, "0x%02x", b);
+    }
+    
 
     rc = ble_att_clt_tx_write_req_or_cmd(conn_handle, req, txom, 0);
     if (rc != 0) {

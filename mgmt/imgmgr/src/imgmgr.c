@@ -225,7 +225,7 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
 static int
 imgr_upload(struct mgmt_cbuf *cb)
 {
-    uint8_t img_data[IMGMGR_NMGR_MAX_MSG];
+    uint8_t img_data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
     long long unsigned int off = UINT_MAX;
     long long unsigned int size = UINT_MAX;
     size_t data_len = 0;

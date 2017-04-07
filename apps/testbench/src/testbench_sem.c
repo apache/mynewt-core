@@ -72,12 +72,11 @@ testbench_sem_init(void *arg)
     tu_case_idx = 0;
     tu_case_failed = 0;
 
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_sem suite init", buildID);
+    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_sem suite init",
+              buildID);
 
     tu_suite_set_pass_cb(testbench_ts_pass, NULL);
     tu_suite_set_fail_cb(testbench_ts_fail, NULL);
-
-    return;
 }
 
 TEST_CASE(os_sem_test_null)

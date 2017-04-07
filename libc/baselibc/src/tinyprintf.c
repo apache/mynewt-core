@@ -52,7 +52,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* This is a smaller implementation of printf-family of functions,
  * based on tinyprintf code by Kustaa Nyholm.
- * The formats supported by this implementation are: 'd' 'u' 'c' 's' 'x' 'X'.
+ * The formats supported by this implementation are:
+ *     'd' 'u' 'c' 's' 'x' 'X' 'p'.
  * Zero padding and field width are also supported.
  * If the library is compiled with 'PRINTF_SUPPORT_LONG' defined then the
  * long specifier is also supported.
@@ -61,6 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 
 struct param {
     unsigned char width; /**< field width */
@@ -231,6 +233,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
     char bf[23];
     char ch;
     char lng;
+    void *v;
 
     p.bf = bf;
 
@@ -298,6 +301,16 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             case 'o':
                 p.base = 8;
                 ui2a(intarg(lng, 0, &va), &p);
+                written += putchw(putp, &p);
+                break;
+            case 'p':
+                v = va_arg(va, void *);
+                ui2a((uintptr_t)v, &p);
+                p.base = 16;
+                p.width = 2 * sizeof(void*);
+                p.lz = 1;
+                written += putf(putp, '0');
+                written += putf(putp, 'x');
                 written += putchw(putp, &p);
                 break;
             case 'c':

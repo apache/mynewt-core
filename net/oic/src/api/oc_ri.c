@@ -251,6 +251,14 @@ oc_ri_alloc_resource(void)
 void
 oc_ri_delete_resource(oc_resource_t *resource)
 {
+    oc_resource_t *tmp;
+
+    SLIST_FOREACH(tmp, &oc_app_resources, next) {
+        if (tmp == resource) {
+            SLIST_REMOVE(&oc_app_resources, tmp, oc_resource, next);
+            break;
+        }
+    }
     os_memblock_put(&oc_resource_pool, resource);
 }
 
@@ -801,7 +809,7 @@ oc_ri_get_client_cb(const char *uri, oc_server_handle_t *server,
         if (oc_string_len(cb->uri) == strlen(uri) &&
           strncmp(oc_string(cb->uri), uri, strlen(uri)) == 0 &&
           memcmp(&cb->server.endpoint, &server->endpoint,
-            sizeof(oc_endpoint_t)) == 0 &&
+                 oc_endpoint_size(&cb->server.endpoint)) == 0 &&
           cb->method == method) {
             return cb;
         }

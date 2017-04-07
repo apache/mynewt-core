@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include "testutil/testutil.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
@@ -225,6 +226,7 @@ nffs_write_append(struct nffs_cache_inode *cache_inode, const void *data,
 
     inode_entry = cache_inode->nci_inode.ni_inode_entry;
 
+    memset(&disk_block, 0, sizeof disk_block);
     disk_block.ndb_id = nffs_hash_next_block_id++;
     disk_block.ndb_seq = 0;
     disk_block.ndb_inode_id = inode_entry->nie_hash_entry.nhe_id;

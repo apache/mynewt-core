@@ -83,6 +83,20 @@ typedef struct oc_endpoint {
     };
 } oc_endpoint_t;
 
+static inline int
+oc_endpoint_size(struct oc_endpoint *oe)
+{
+    if (oe->oe.flags & (IP | IP4)) {
+        return sizeof (struct oc_endpoint_ip);
+    } else if (oe->oe.flags & GATT) {
+        return sizeof (struct oc_endpoint_ble);
+    } else if (oe->oe.flags & SERIAL) {
+        return sizeof (struct oc_endpoint_plain);
+    } else {
+        return sizeof (struct oc_endpoint);
+    }
+}
+
 #define OC_MBUF_ENDPOINT(m)                                            \
     ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
                             sizeof(struct os_mbuf_pkthdr)))

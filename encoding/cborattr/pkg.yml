@@ -26,4 +26,4 @@ pkg.keywords:
 pkg.deps:
     - "encoding/tinycbor"
 
-pkg.cflags.float_user: -DFLOAT_SUPPORT
+pkg.cflags.FLOAT_USER: -DFLOAT_SUPPORT

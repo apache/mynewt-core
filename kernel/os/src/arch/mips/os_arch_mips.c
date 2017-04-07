@@ -44,7 +44,8 @@ extern struct os_task g_idle_task;
 void __attribute__((interrupt, keep_interrupts_masked))
 _mips_isr_hw5(void)
 {
-    mips_setcompare(mips_getcompare() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
+    mips_setcompare(mips_getcompare() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) /
+       OS_TICKS_PER_SEC));
     timer_handler();
 }
 
@@ -150,9 +151,6 @@ os_arch_start(void)
     t = os_sched_next_task();
 
     /* set the core timer compare register */
-    /* XXX: take this magic number (for a 1ms tick from a 546MHz clock) and put
-    ** it in bsp or mcu somewhere
-    */
     mips_setcompare(mips_getcount() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
 
     /* global interrupt enable */

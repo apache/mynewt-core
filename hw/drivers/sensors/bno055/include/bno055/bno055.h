@@ -104,14 +104,14 @@ extern "C" {
 #define BNO055_GYR_CFG_OPR_MODE_ADV_PWR_SAVE              (0x4 << 5)
 
 /* Magnetometer config */
-#define BNO055_MAG_CFG_ODR_2HZ                                    0x0
-#define BNO055_MAG_CFG_ODR_6HZ                                    0x1
-#define BNO055_MAG_CFG_ODR_8HZ                                    0x2
-#define BNO055_MAG_CFG_ODR_10HZ                                   0x3
-#define BNO055_MAG_CFG_ODR_15HZ                                   0x4
-#define BNO055_MAG_CFG_ODR_20HZ                                   0x5
-#define BNO055_MAG_CFG_ODR_25HZ                                   0x6
-#define BNO055_MAG_CFG_ODR_30HZ                                   0x7
+#define BNO055_MAG_CFG_ODR_2HZ                                   0x0
+#define BNO055_MAG_CFG_ODR_6HZ                                   0x1
+#define BNO055_MAG_CFG_ODR_8HZ                                   0x2
+#define BNO055_MAG_CFG_ODR_10HZ                                  0x3
+#define BNO055_MAG_CFG_ODR_15HZ                                  0x4
+#define BNO055_MAG_CFG_ODR_20HZ                                  0x5
+#define BNO055_MAG_CFG_ODR_25HZ                                  0x6
+#define BNO055_MAG_CFG_ODR_30HZ                                  0x7
 
 #define BNO055_MAG_CFG_OPR_MODE_LOWPWR                    (0x0 << 3)
 #define BNO055_MAG_CFG_OPR_MODE_REG                       (0x1 << 3)
@@ -168,11 +168,11 @@ struct bno055 {
 };
 
 struct bno055_rev_info {
-     uint8_t bri_accel_rev;
-     uint8_t bri_mag_rev;
-     uint8_t bri_gyro_rev;
-     uint8_t bri_bl_rev;
-     uint16_t bri_sw_rev;
+    uint8_t bri_accel_rev;
+    uint8_t bri_mag_rev;
+    uint8_t bri_gyro_rev;
+    uint8_t bri_bl_rev;
+    uint16_t bri_sw_rev;
 };
 
 struct bno055_calib_info {
