@@ -39,227 +39,10 @@
 #include "sensor/color.h"
 #include "console/console.h"
 
-/* BLE */
-#include <nimble/ble.h>
-#include <host/ble_hs.h>
-#include <services/gap/ble_svc_gap.h>
-
 /* OIC */
-#include <oic/oc_gatt.h>
 #include <oic/oc_rep.h>
 #include <oic/oc_ri.h>
 #include <oic/oc_api.h>
-
-/* Application-specified header. */
-#include "bleprph.h"
-
-/** Log data. */
-struct log bleprph_log;
-static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
-
-/**
- * Logs information about a connection to the console.
- */
-static void
-sensor_oic_print_conn_desc(struct ble_gap_conn_desc *desc)
-{
-    BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
-                desc->conn_handle, desc->our_ota_addr.type);
-    print_addr(desc->our_ota_addr.val);
-    BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
-                desc->our_id_addr.type);
-    print_addr(desc->our_id_addr.val);
-    BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
-                desc->peer_ota_addr.type);
-    print_addr(desc->peer_ota_addr.val);
-    BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
-                desc->peer_id_addr.type);
-    print_addr(desc->peer_id_addr.val);
-    BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                "encrypted=%d authenticated=%d bonded=%d\n",
-                desc->conn_itvl, desc->conn_latency,
-                desc->supervision_timeout,
-                desc->sec_state.encrypted,
-                desc->sec_state.authenticated,
-                desc->sec_state.bonded);
-}
-
-/**
- * Enables advertising with the following parameters:
- *     o General discoverable mode.
- *     o Undirected connectable mode.
- */
-static void
-sensor_oic_advertise(void)
-{
-    struct ble_gap_adv_params adv_params;
-    struct ble_hs_adv_fields fields;
-    const char *name;
-    int rc;
-
-    /**
-     *  Set the advertisement data included in our advertisements:
-     *     o Flags (indicates advertisement type and other general info).
-     *     o Advertising tx power.
-     *     o Device name.
-     *     o 16-bit service UUIDs (alert notifications).
-     */
-
-    memset(&fields, 0, sizeof fields);
-
-    /* Advertise two flags:
-     *     o Discoverability in forthcoming advertisement (general)
-     *     o BLE-only (BR/EDR unsupported).
-     */
-    fields.flags = BLE_HS_ADV_F_DISC_GEN |
-                   BLE_HS_ADV_F_BREDR_UNSUP;
-
-    /* Indicate that the TX power level field should be included; have the
-     * stack fill this value automatically.  This is done by assiging the
-     * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
-     */
-    fields.tx_pwr_lvl_is_present = 1;
-    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
-
-    name = ble_svc_gap_device_name();
-    fields.name = (uint8_t *)name;
-    fields.name_len = strlen(name);
-    fields.name_is_complete = 1;
-
-    fields.uuids128 = (ble_uuid128_t []) {
-        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
-    };
-    fields.num_uuids128 = 1;
-    fields.uuids128_is_complete = 1;
-
-    rc = ble_gap_adv_set_fields(&fields);
-    if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
-        return;
-    }
-
-    /* Begin advertising. */
-    memset(&adv_params, 0, sizeof adv_params);
-    adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
-    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
-                           &adv_params, sensor_oic_gap_event, NULL);
-    if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
-        return;
-    }
-}
-
-/**
- * The nimble host executes this callback when a GAP event occurs.  The
- * application associates a GAP event callback with each connection that forms.
- * sensor_oic uses the same callback for all connections.
- *
- * @param event                 The type of event being signalled.
- * @param ctxt                  Various information pertaining to the event.
- * @param arg                   Application-specified argument; unuesd by
- *                                  sensor_oic.
- *
- * @return                      0 if the application successfully handled the
- *                                  event; nonzero on failure.  The semantics
- *                                  of the return code is specific to the
- *                                  particular GAP event being signalled.
- */
-static int
-sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
-{
-    struct ble_gap_conn_desc desc;
-    int rc;
-
-    switch (event->type) {
-    case BLE_GAP_EVENT_CONNECT:
-        /* A new connection was established or a connection attempt failed. */
-        BLEPRPH_LOG(INFO, "connection %s; status=%d ",
-                       event->connect.status == 0 ? "established" : "failed",
-                       event->connect.status);
-        if (event->connect.status == 0) {
-            rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
-            assert(rc == 0);
-            sensor_oic_print_conn_desc(&desc);
-        }
-        BLEPRPH_LOG(INFO, "\n");
-
-        if (event->connect.status != 0) {
-            /* Connection failed; resume advertising. */
-            sensor_oic_advertise();
-        } else {
-            oc_ble_coap_conn_new(event->connect.conn_handle);
-        }
-        return 0;
-
-    case BLE_GAP_EVENT_DISCONNECT:
-        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
-        sensor_oic_print_conn_desc(&event->disconnect.conn);
-        BLEPRPH_LOG(INFO, "\n");
-
-        oc_ble_coap_conn_del(event->disconnect.conn.conn_handle);
-
-        /* Connection terminated; resume advertising. */
-        sensor_oic_advertise();
-        return 0;
-
-    case BLE_GAP_EVENT_CONN_UPDATE:
-        /* The central has updated the connection parameters. */
-        BLEPRPH_LOG(INFO, "connection updated; status=%d ",
-                    event->conn_update.status);
-        rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
-        assert(rc == 0);
-        sensor_oic_print_conn_desc(&desc);
-        BLEPRPH_LOG(INFO, "\n");
-        return 0;
-
-    case BLE_GAP_EVENT_ENC_CHANGE:
-        /* Encryption has been enabled or disabled for this connection. */
-        BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
-                    event->enc_change.status);
-        rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
-        assert(rc == 0);
-        sensor_oic_print_conn_desc(&desc);
-        BLEPRPH_LOG(INFO, "\n");
-        return 0;
-
-    case BLE_GAP_EVENT_SUBSCRIBE:
-        BLEPRPH_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
-                          "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
-                    event->subscribe.conn_handle,
-                    event->subscribe.attr_handle,
-                    event->subscribe.reason,
-                    event->subscribe.prev_notify,
-                    event->subscribe.cur_notify,
-                    event->subscribe.prev_indicate,
-                    event->subscribe.cur_indicate);
-        return 0;
-
-    case BLE_GAP_EVENT_MTU:
-        BLEPRPH_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
-                    event->mtu.conn_handle,
-                    event->mtu.channel_id,
-                    event->mtu.value);
-        return 0;
-    }
-
-    return 0;
-}
-
-
-static void
-sensor_oic_on_reset(int reason)
-{
-    BLEPRPH_LOG(ERROR, "Resetting state; reason=%d\n", reason);
-}
-
-static void
-sensor_oic_on_sync(void)
-{
-    /* Begin advertising. */
-    sensor_oic_advertise();
-}
-
 
 static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
@@ -491,15 +274,15 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
         case SENSOR_TYPE_USER_DEFINED_1:
         /* User defined sensor type 2 */
         case SENSOR_TYPE_USER_DEFINED_2:
+            break;
         /* None */
         case SENSOR_TYPE_NONE:
-            rc = SYS_EINVAL;
             goto err;
     }
 
     return 0;
 err:
-   return rc;
+    return rc;
 }
 
 static void
@@ -551,6 +334,7 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     sensor_unregister_listener(sensor, &listener);
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
+    return;
 err:
     sensor_unregister_listener(sensor, &listener);
     oc_send_response(request, OC_STATUS_NOT_FOUND);
@@ -560,37 +344,9 @@ void
 sensor_oic_init(void)
 {
     oc_resource_t *res;
-    int rc;
 
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
-
-    /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
-    /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
-    /* Initialize the OIC  */
-    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    oc_ble_coap_gatt_srv_init();
-
-    ble_hs_cfg.reset_cb = sensor_oic_on_reset;
-    ble_hs_cfg.sync_cb = sensor_oic_on_sync;
-    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
-
-    /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pi");
-    assert(rc == 0);
-
-    oc_init_platform("MyNewt", NULL, NULL);
-    oc_add_device("/oic/d", "oic.d.color", "color0", "1.0", "1.0", NULL,
-                  NULL);
-
-    res = oc_new_resource("/color/1", 1, 0);
-    oc_resource_bind_resource_type(res, "oic.r.color0");
+    res = oc_new_resource("/color0", 1, 0);
+    oc_resource_bind_resource_type(res, "sensors.r.color0");
     oc_resource_bind_resource_interface(res, OC_IF_R);
     oc_resource_set_default_interface(res, OC_IF_R);
 
