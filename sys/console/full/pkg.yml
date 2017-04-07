@@ -27,7 +27,7 @@ pkg.deps:
     - hw/hal
     - kernel/os
     - hw/drivers/uart
+    - hw/drivers/rtt
 pkg.apis: console
-
 pkg.init:
     console_pkg_init: 20

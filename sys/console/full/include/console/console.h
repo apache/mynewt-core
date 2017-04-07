@@ -16,28 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
-#include <stdarg.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (*console_rx_cb)(void);
+struct os_eventq;
 
-int console_init(console_rx_cb rx_cb);
+#define MAX_LINE_LEN 80
+struct console_input {
+    char line[MAX_LINE_LEN];
+};
+
 int console_is_init(void);
-void console_write(const char *str, int cnt);
-int console_read(char *str, int cnt, int *newline);
-void console_blocking_mode(void);
 void console_echo(int on);
-
+int console_init(struct os_eventq *avail_queue, struct os_eventq *cmd_queue,
+                 uint8_t (*completion)(char *str, uint8_t len));
+size_t console_file_write(void *arg, const char *str, size_t cnt);
+void console_write(const char *str, int cnt);
 void console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
+int console_handle_char(uint8_t byte);
 
 extern int console_is_midline;
+extern int console_out(int character);
 
 #ifdef __cplusplus
 }

@@ -24,9 +24,10 @@
 extern "C" {
 #endif
 
-int shell_os_tasks_display_cmd(int argc, char **argv);
-int shell_os_mpool_display_cmd(int argc, char **argv);
-int shell_os_date_cmd(int argc, char **argv);
+#include "shell/shell.h"
+
+void shell_os_register(shell_register_function_t register_func);
+void shell_prompt_register(shell_register_function_t register_func);
 
 #ifdef __cplusplus
 }

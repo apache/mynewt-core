@@ -17,18 +17,17 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <string.h>
+
+#include "syscfg/syscfg.h"
 #include "os/os.h"
-
-#include "os/queue.h"
-#include "os/os_time.h"
-
+#include "datetime/datetime.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
-#include <assert.h>
-#include <string.h>
-#include <datetime/datetime.h>
+#define SHELL_OS "os"
 
 int
 shell_os_tasks_display_cmd(int argc, char **argv)
@@ -77,7 +76,7 @@ shell_os_tasks_display_cmd(int argc, char **argv)
         console_printf("Couldn't find task with name %s\n", name);
     }
 
-    return (0);
+    return 0;
 }
 
 int
@@ -123,7 +122,7 @@ shell_os_mpool_display_cmd(int argc, char **argv)
                 name);
     }
 
-    return (0);
+    return 0;
 }
 
 int
@@ -155,5 +154,78 @@ shell_os_date_cmd(int argc, char **argv)
         rc = -1;
     }
 
-    return (rc);
+    return rc;
 }
+
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+static const struct shell_param tasks_params[] = {
+    {"", "task name"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help tasks_help = {
+    .summary = "show os tasks",
+    .usage = "tasks usage",
+    .params = tasks_params,
+};
+
+static const struct shell_param mpool_params[] = {
+    {"", "mpool name"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help mpool_help = {
+    .summary = "show system mpool",
+    .usage = "mpool usage",
+    .params = mpool_params,
+};
+
+static const struct shell_param date_params[] = {
+    {"", "datetime to set"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help date_help = {
+    .summary = "show system date",
+    .usage = "date usage",
+    .params = date_params,
+};
+#endif
+
+static const struct shell_cmd os_commands[] = {
+    {
+        .cmd_name = "tasks",
+        .cb = shell_os_tasks_display_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &tasks_help,
+#else
+        .help = NULL,
+#endif
+    },
+    {
+        .cmd_name = "mpool",
+        .cb = shell_os_mpool_display_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &mpool_help,
+#else
+        .help = NULL,
+#endif
+    },
+    {
+        .cmd_name = "date",
+        .cb = shell_os_date_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &date_help,
+#else
+        .help = NULL,
+#endif
+    },
+    { NULL, NULL, NULL },
+};
+
+void
+shell_os_register(shell_register_function_t register_func)
+{
+    register_func(SHELL_OS, os_commands);
+}
+

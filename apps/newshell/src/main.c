@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,31 +17,22 @@
  * under the License.
  */
 
-#include <stdio.h>
-#include <console/console.h>
+#include <stddef.h>
 
-static size_t
-stdin_read(FILE *fp, char *bp, size_t n)
+#include "sysinit/sysinit.h"
+#include "os/os.h"
+
+int
+main(int argc, char **argv)
 {
-    return 0;
+    int rc;
+
+    sysinit();
+
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
+    /* Never exit */
+
+    return rc;
 }
-
-static size_t
-stdout_write(FILE *fp, const char *bp, size_t n)
-{
-    console_write(bp, n);
-    return n;
-}
-
-static struct File_methods _stdin_methods = {
-    .write = stdout_write,
-    .read = stdin_read
-};
-
-static struct File _stdin = {
-    .vmt = &_stdin_methods
-};
-
-struct File *const stdin = &_stdin;
-struct File *const stdout = &_stdin;
-struct File *const stderr = &_stdin;

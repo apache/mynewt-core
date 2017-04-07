@@ -21,543 +21,819 @@
 #include <string.h>
 #include <assert.h>
 
-#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
-#include "defs/error.h"
-#include "console/console.h"
-#include "console/prompt.h"
-#include "console/ticks.h"
 #include "os/os.h"
-#include "os/endian.h"
-#include "base64/base64.h"
-#include "crc/crc16.h"
+#include "console/console.h"
+#include "sysinit/sysinit.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
-static shell_nlip_input_func_t g_shell_nlip_in_func;
-static void *g_shell_nlip_in_arg;
+#define SHELL_PROMPT "shell> "
 
-static struct os_mqueue g_shell_nlip_mq;
+#define ARGC_MAX                10
+#define MODULE_NAME_MAX_LEN     20
+#define COMMAND_MAX_LEN         50
+#define SHELL_MAX_INPUT_LEN     80
 
-#define SHELL_HELP_PER_LINE     6
-#define SHELL_MAX_ARGS          20
+/* additional chars are "> " (include '\0' )*/
+#define PROMPT_SUFFIX 3
+#define PROMPT_MAX_LEN (MODULE_NAME_MAX_LEN + PROMPT_SUFFIX)
 
-static int shell_echo_cmd(int argc, char **argv);
-static int shell_help_cmd(int argc, char **argv);
-int shell_prompt_cmd(int argc, char **argv);
-int shell_ticks_cmd(int argc, char **argv);
+#define MAX_MODULES 4
+static struct shell_module shell_modules[MAX_MODULES];
+static size_t num_of_shell_entities;
 
+static const char *prompt;
+static char default_module_prompt[PROMPT_MAX_LEN];
+static int default_module = -1;
 
-static void shell_event_console_rdy(struct os_event *ev);
+static shell_cmd_function_t app_cmd_handler;
+static shell_prompt_function_t app_prompt_handler;
 
-/* Shared queue that the shell uses for work items. */
-static struct os_eventq *shell_evq;
+#define MAX_CMD_QUEUED 1
+static struct console_input buf[MAX_CMD_QUEUED];
 
-static struct shell_cmd g_shell_echo_cmd = {
-    .sc_cmd = "echo",
-    .sc_cmd_func = shell_echo_cmd
-};
-static struct shell_cmd g_shell_help_cmd = {
-    .sc_cmd = "?",
-    .sc_cmd_func = shell_help_cmd
-};
-static struct shell_cmd g_shell_prompt_cmd = {
-   .sc_cmd = "prompt",
-   .sc_cmd_func = shell_prompt_cmd
-}; 
-static struct shell_cmd g_shell_ticks_cmd = {
-   .sc_cmd = "ticks",
-   .sc_cmd_func = shell_ticks_cmd
-};
-static struct shell_cmd g_shell_os_tasks_display_cmd = {
-    .sc_cmd = "tasks",
-    .sc_cmd_func = shell_os_tasks_display_cmd
-};
-static struct shell_cmd g_shell_os_mpool_display_cmd = {
-    .sc_cmd = "mempools",
-    .sc_cmd_func = shell_os_mpool_display_cmd
-};
-static struct shell_cmd g_shell_os_date_cmd = {
-    .sc_cmd = "date",
-    .sc_cmd_func = shell_os_date_cmd
-};
+static struct os_eventq avail_queue;
+static struct os_event shell_console_ev[MAX_CMD_QUEUED];
 
-static struct os_event shell_console_rdy_ev = {
-    .ev_cb = shell_event_console_rdy,
-};
-
-static struct os_mutex g_shell_cmd_list_lock;
-
-static char *shell_line;
-static int shell_line_len;
-static char *argv[SHELL_MAX_ARGS];
-
-static STAILQ_HEAD(, shell_cmd) g_shell_cmd_list =
-    STAILQ_HEAD_INITIALIZER(g_shell_cmd_list);
-
-static struct os_mbuf *g_nlip_mbuf;
-static uint16_t g_nlip_expected_len;
-
-static struct os_eventq *
-shell_evq_get(void)
+static const char *
+get_prompt(void)
 {
-    return shell_evq;
-}
+    if (app_prompt_handler) {
+        const char *str;
 
-void
-shell_evq_set(struct os_eventq *evq)
-{
-    os_eventq_designate(&shell_evq, evq, NULL);
-}
-
-int
-shell_cmd_list_lock(void)
-{
-    int rc;
-
-    if (!os_started()) {
-        return (0);
-    }
-
-    rc = os_mutex_pend(&g_shell_cmd_list_lock, OS_WAIT_FOREVER);
-    if (rc != 0) {
-        goto err;
-    }
-    return (0);
-err:
-    return (rc);
-}
-
-int
-shell_cmd_list_unlock(void)
-{
-    int rc;
-
-    if (!os_started()) {
-        return (0);
-    }
-
-    rc = os_mutex_release(&g_shell_cmd_list_lock);
-    if (rc != 0) {
-        goto err;
-    }
-    return (0);
-err:
-    return (rc);
-}
-
-static int
-shell_cmd_find(char *cmd_name, struct shell_cmd **out_cmd)
-{
-    struct shell_cmd *sc;
-    int rc;
-
-    rc = shell_cmd_list_lock();
-    if (rc != 0) {
-        return rc;
-    }
-
-    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
-        if (!strcmp(sc->sc_cmd, cmd_name)) {
-            break;
+        str = app_prompt_handler();
+        if (str) {
+            return str;
         }
     }
 
-    rc = shell_cmd_list_unlock();
-    if (rc != 0) {
-        return rc;
+    if (default_module != -1) {
+        return default_module_prompt;
     }
 
-    if (out_cmd != NULL) {
-        *out_cmd = sc;
+    return prompt;
+}
+
+static size_t
+line2argv(char *str, char *argv[], size_t size)
+{
+    size_t argc = 0;
+
+    if (!strlen(str)) {
+        return 0;
     }
 
-    if (sc == NULL) {
-        return SYS_ENOENT;
+    while (*str && *str == ' ') {
+        str++;
+    }
+
+    if (!*str) {
+        return 0;
+    }
+
+    argv[argc++] = str;
+
+    while ((str = strchr(str, ' '))) {
+        *str++ = '\0';
+
+        while (*str && *str == ' ') {
+            str++;
+        }
+
+        if (!*str) {
+            break;
+        }
+
+        argv[argc++] = str;
+
+        if (argc == size) {
+            console_printf("Too many parameters (max %zu)\n", size - 1);
+            return 0;
+        }
+    }
+
+    /* keep it POSIX style where argv[argc] is required to be NULL */
+    argv[argc] = NULL;
+
+    return argc;
+}
+
+static int
+get_destination_module(const char *module_str, uint8_t len)
+{
+    int i;
+
+    for (i = 0; i < num_of_shell_entities; i++) {
+        if (!strncmp(module_str,
+                     shell_modules[i].module_name, len)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+/* For a specific command: argv[0] = module name, argv[1] = command name
+ * If a default module was selected: argv[0] = command name
+ */
+static const char *
+get_command_and_module(char *argv[], int *module)
+{
+    *module = -1;
+
+    if (!argv[0]) {
+        console_printf("Unrecognized command\n");
+        return NULL;
+    }
+
+    if (default_module == -1) {
+        if (!argv[1] || argv[1][0] == '\0') {
+            console_printf("Unrecognized command: %s\n", argv[0]);
+            return NULL;
+        }
+
+        *module = get_destination_module(argv[0], MODULE_NAME_MAX_LEN);
+        if (*module == -1) {
+            console_printf("Illegal module %s\n", argv[0]);
+            return NULL;
+        }
+
+        return argv[1];
+    }
+
+    *module = default_module;
+    return argv[0];
+}
+
+static int
+get_command_from_module(const char *command, int len, int module)
+{
+    int i;
+    const struct shell_module *shell_module;
+
+    shell_module = &shell_modules[module];
+    for (i = 0; shell_module->commands[i].cmd_name; i++) {
+        if (!strncmp(command, shell_module->commands[i].cmd_name, len)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int
+show_cmd_help(char *argv[])
+{
+    const char *command = NULL;
+    int module = -1;
+    const struct shell_module *shell_module = NULL;
+    int i;
+
+    command = get_command_and_module(argv, &module);
+    if ((module == -1) || (command == NULL)) {
+        return 0;
+    }
+
+    shell_module = &shell_modules[module];
+    for (i = 0; shell_module->commands[i].cmd_name; i++) {
+        if (!strcmp(command, shell_module->commands[i].cmd_name)) {
+            console_printf("%s %s\n",
+                           shell_module->commands[i].cmd_name,
+                           shell_module->commands[i].help &&
+                           shell_module->commands[i].help->usage ?
+                           shell_module->commands[i].help->usage : "");
+            return 0;
+        }
+    }
+
+    console_printf("Unrecognized command: %s\n", argv[0]);
+    return 0;
+}
+
+static void
+print_modules(void)
+{
+    int module;
+
+    for (module = 0; module < num_of_shell_entities; module++) {
+        console_printf("%s\n", shell_modules[module].module_name);
+    }
+}
+
+static void
+print_module_commands(const int module)
+{
+    const struct shell_module *shell_module = &shell_modules[module];
+    int i;
+
+    console_printf("help\n");
+
+    for (i = 0; shell_module->commands[i].cmd_name; i++) {
+        console_printf("%s", shell_module->commands[i].cmd_name);
+        if (shell_module->commands[i].help &&
+            shell_module->commands[i].help->summary) {
+        console_printf(" - %s", shell_module->commands[i].help->summary);
+        }
+        console_printf("\n");
+    }
+}
+
+static void
+print_command_params(const int module, const int command)
+{
+    const struct shell_module *shell_module = &shell_modules[module];
+    const struct shell_cmd *shell_cmd = &shell_module->commands[command];
+    int i;
+
+    if (!(shell_cmd->help && shell_cmd->help->params)) {
+        return;
+    }
+
+    for (i = 0; shell_cmd->help->params[i].param_name; i++) {
+        console_printf("%s - %s\n", shell_cmd->help->params[i].param_name,
+                       shell_cmd->help->params[i].help);
+    }
+}
+
+static int
+show_help(int argc, char *argv[])
+{
+    int module;
+
+    /* help per command */
+    if ((argc > 2) || ((default_module != -1) && (argc == 2))) {
+        return show_cmd_help(&argv[1]);
+    }
+
+    /* help per module */
+    if ((argc == 2) || ((default_module != -1) && (argc == 1))) {
+        if (default_module == -1) {
+            module = get_destination_module(argv[1], MODULE_NAME_MAX_LEN);
+            if (module == -1) {
+                console_printf("Illegal module %s\n", argv[1]);
+                return 0;
+            }
+        } else {
+            module = default_module;
+        }
+
+        print_module_commands(module);
+    } else { /* help for all entities */
+        console_printf("Available modules:\n");
+        print_modules();
+        console_printf("To select a module, enter 'select <module name>'.\n");
     }
 
     return 0;
 }
 
-int
-shell_cmd_register(struct shell_cmd *sc)
+static int
+set_default_module(const char *name)
 {
-    int rc;
+    int module;
 
-#if MYNEWT_VAL(SHELL_DEBUG)
-    /* Ensure command not already registered. */
-    assert(shell_cmd_find(sc->sc_cmd, NULL) == SYS_ENOENT);
-#endif
-
-    /* Add the command that is being registered. */
-    rc = shell_cmd_list_lock();
-    if (rc != 0) {
-        goto err;
+    if (strlen(name) > MODULE_NAME_MAX_LEN) {
+        console_printf("Module name %s is too long, default is not changed\n",
+                       name);
+        return -1;
     }
 
-    STAILQ_INSERT_TAIL(&g_shell_cmd_list, sc, sc_next);
+    module = get_destination_module(name, MODULE_NAME_MAX_LEN);
 
-    rc = shell_cmd_list_unlock();
-    if (rc != 0) {
-        goto err;
+    if (module == -1) {
+        console_printf("Illegal module %s, default is not changed\n", name);
+        return -1;
     }
 
-    return (0);
-err:
-    return (rc);
+    default_module = module;
+
+    strncpy(default_module_prompt, name, MODULE_NAME_MAX_LEN);
+    strcat(default_module_prompt, "> ");
+
+    return 0;
 }
 
 static int
-shell_cmd(char *cmd, char **argv, int argc)
+select_module(int argc, char *argv[])
 {
-    struct shell_cmd *sc = NULL;
-    int rc;
-
-    rc = shell_cmd_find(cmd, &sc);
-    switch (rc) {
-    case 0:
-        sc->sc_cmd_func(argc, argv);
-        return 0;
-
-    case SYS_ENOENT:
-        console_printf("Unknown command %s\n", cmd);
-        return 0;
-
-    default:
-        return rc;
+    if (argc == 1) {
+        default_module = -1;
+    } else {
+        set_default_module(argv[1]);
     }
+
+    return 0;
+}
+
+static shell_cmd_function_t
+get_cb(int argc, char *argv[])
+{
+    const char *first_string = argv[0];
+    int module = -1;
+    const struct shell_module *shell_module;
+    const char *command;
+    int i;
+
+    if (!first_string || first_string[0] == '\0') {
+        console_printf("Illegal parameter\n");
+        return NULL;
+    }
+
+    if (!strcmp(first_string, "help")) {
+        return show_help;
+    }
+
+    if (!strcmp(first_string, "select")) {
+        return select_module;
+    }
+
+    if ((argc == 1) && (default_module == -1)) {
+        console_printf("Missing parameter\n");
+        return NULL;
+    }
+
+    command = get_command_and_module(argv, &module);
+    if ((module == -1) || (command == NULL)) {
+        return NULL;
+    }
+
+    shell_module = &shell_modules[module];
+    console_printf("module: %d, command: %s\n", module, command);
+    for (i = 0; shell_module->commands[i].cmd_name; i++) {
+        if (!strcmp(command, shell_module->commands[i].cmd_name)) {
+            return shell_module->commands[i].cb;
+        }
+    }
+
+    return NULL;
+}
+
+static void
+shell(struct os_event *ev)
+{
+    char *argv[ARGC_MAX + 1];
+    size_t argc;
+    struct console_input *cmd;
+    shell_cmd_function_t cb;
+    size_t argc_offset = 0;
+
+    if (!ev) {
+        console_printf("%s", get_prompt());
+        return;
+    }
+
+    cmd = ev->ev_arg;
+    if (!cmd) {
+        console_printf("%s", get_prompt());
+        return;
+    }
+
+    argc = line2argv(cmd->line, argv, ARGC_MAX + 1);
+    if (!argc) {
+        os_eventq_put(&avail_queue, ev);
+        console_printf("%s", get_prompt());
+        return;
+    }
+
+    cb = get_cb(argc, argv);
+    if (!cb) {
+        if (app_cmd_handler != NULL) {
+            cb = app_cmd_handler;
+        } else {
+            console_printf("Unrecognized command: %s\n", argv[0]);
+            console_printf("Type 'help' for list of available commands\n");
+            os_eventq_put(&avail_queue, ev);
+            console_printf("%s", get_prompt());
+            return;
+        }
+    }
+
+    /* Allow invoking a cmd with module name as a prefix; a command should
+     * not know how it was invoked (with or without prefix)
+     */
+    if (default_module == -1 && cb != select_module && cb != show_help) {
+        argc_offset = 1;
+    }
+
+    /* Execute callback with arguments */
+    if (cb(argc - argc_offset, &argv[argc_offset]) < 0) {
+        show_cmd_help(argv);
+    }
+
+    os_eventq_put(&avail_queue, ev);
+    console_printf("%s", get_prompt());
 }
 
 static int
-shell_process_command(char *line, int len)
+get_token(char **cur, int *null_terminated)
 {
-    char *tok;
-    char *tok_ptr;
-    int argc;
+    char *str = *cur;
 
-    tok_ptr = NULL;
-    tok = strtok_r(line, " ", &tok_ptr);
-    argc = 0;
-    while (argc < SHELL_MAX_ARGS - 1 && tok != NULL) {
-        argv[argc++] = tok;
-
-        tok = strtok_r(NULL, " ", &tok_ptr);
+    *null_terminated = 0;
+    /* remove ' ' at the beginning */
+    while (*str && *str == ' ') {
+        str++;
     }
 
-    /* Terminate the argument list with a null pointer. */
-    argv[argc] = NULL;
-
-    if (argc) {
-        (void) shell_cmd(argv[0], argv, argc);
+    if (!str) {
+        *null_terminated = 1;
+        return 0;
     }
-    else {
+
+    *cur = str;
+    str = strchr(str, ' ');
+
+    if (str == NULL) {
+        *null_terminated = 1;
+        return strlen(*cur);
+    }
+
+    return str - *cur;
+}
+
+static int
+get_last_token(char **cur)
+{
+    *cur = strrchr(*cur, ' ');
+    if (*cur == NULL) {
+        return 0;
+    }
+    (*cur)++;
+    return strlen(*cur);
+}
+
+static int
+complete_param(char *line, uint8_t len, const char *param_prefix,
+                 int param_len, int module_idx, int command_idx)
+{
+    const char *first_match = NULL;
+    int i, common_chars = -1;
+    const struct shell_cmd *command;
+
+    command = &shell_modules[module_idx].commands[command_idx];
+
+    if (!(command->help && command->help->params)) {
+        return 0;
+    }
+
+    for (i = 0; command->help->params[i].param_name; i++) {
+        int j;
+
+        if (strncmp(param_prefix,
+            command->help->params[i].param_name, param_len)) {
+            continue;
+        }
+
+        if (!first_match) {
+            first_match = command->help->params[i].param_name;
+            continue;
+        }
+
+        /* more commands match, print first match */
+        if (first_match && (common_chars < 0)) {
+            console_printf("\n%s\n", first_match);
+            common_chars = strlen(first_match);
+        }
+
+        /* cut common part of matching names */
+        for (j = 0; j < common_chars; j++) {
+            if (first_match[j] != command->help->params[i].param_name[j]) {
+                break;
+            }
+        }
+
+        common_chars = j;
+
+        console_printf("%s\n", command->help->params[i].param_name);
+    }
+
+    /* no match, do nothing */
+    if (!first_match) {
+        return 0;
+    }
+
+    if (common_chars >= 0) {
+        /* multiple match, restore prompt */
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+    } else {
+        common_chars = strlen(first_match);
+    }
+
+    /* complete common part */
+    for (i = param_len; i < common_chars; i++) {
+        console_printf("%c", first_match[i]);
+        line[len++] = first_match[i];
+    }
+
+    return common_chars - param_len;
+}
+
+static int
+complete_command(char *line, uint8_t len, char *command_prefix,
+                 int command_len, int module_idx)
+{
+    const char *first_match = NULL;
+    int i, common_chars = -1, space = 0;
+    const struct shell_module *module;
+
+    module = &shell_modules[module_idx];
+
+    for (i = 0; module->commands[i].cmd_name; i++) {
+        int j;
+
+        if (strncmp(command_prefix,
+            module->commands[i].cmd_name, command_len)) {
+            continue;
+        }
+
+        if (!first_match) {
+            first_match = module->commands[i].cmd_name;
+            continue;
+        }
+
+        /* more commands match, print first match */
+        if (first_match && (common_chars < 0)) {
+            console_printf("\n%s\n", first_match);
+            common_chars = strlen(first_match);
+        }
+
+        /* cut common part of matching names */
+        for (j = 0; j < common_chars; j++) {
+            if (first_match[j] != module->commands[i].cmd_name[j]) {
+                break;
+            }
+        }
+
+        common_chars = j;
+
+        console_printf("%s\n", module->commands[i].cmd_name);
+    }
+
+    /* no match, do nothing */
+    if (!first_match) {
+        return 0;
+    }
+
+    if (common_chars >= 0) {
+        /* multiple match, restore prompt */
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+    } else {
+        common_chars = strlen(first_match);
+        space = 1;
+    }
+
+    /* complete common part */
+    for (i = command_len; i < common_chars; i++) {
+        console_printf("%c", first_match[i]);
+        line[len++] = first_match[i];
+    }
+
+    /* for convenience add space after command */
+    if (space) {
+        console_printf(" ");
+        line[len] = ' ';
+    }
+
+    return common_chars - command_len + space;
+}
+
+static int
+complete_module(char *line, int len, char *module_prefix, int module_len)
+{
+    int i;
+    const char *first_match = NULL;
+    int common_chars = -1, space = 0;
+
+    if (!module_len) {
         console_printf("\n");
+        for (i = 0; i < num_of_shell_entities; i++) {
+            console_printf("%s\n", shell_modules[i].module_name);
+        }
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
     }
-    console_print_prompt();
-    return (0);
+
+    for (i = 0; i < num_of_shell_entities; i++) {
+        int j;
+
+        if (strncmp(module_prefix,
+                     shell_modules[i].module_name,
+                     module_len)) {
+            continue;
+        }
+
+        if (!first_match) {
+            first_match = shell_modules[i].module_name;
+            continue;
+        }
+
+        /* more commands match, print first match */
+        if (first_match && (common_chars < 0)) {
+            console_printf("\n%s\n", first_match);
+            common_chars = strlen(first_match);
+        }
+
+        /* cut common part of matching names */
+        for (j = 0; j < common_chars; j++) {
+            if (first_match[j] != shell_modules[i].module_name[j]) {
+                break;
+            }
+        }
+
+        common_chars = j;
+
+        console_printf("%s\n", shell_modules[i].module_name);
+    }
+
+    /* no match, do nothing */
+    if (!first_match) {
+        return 0;
+    }
+
+    if (common_chars >= 0) {
+        /* multiple match, restore prompt */
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+    } else {
+        common_chars = strlen(first_match);
+        space = 1;
+    }
+
+    /* complete common part */
+    for (i = module_len; i < common_chars; i++) {
+        console_printf("%c", first_match[i]);
+        line[len++] = first_match[i];
+    }
+
+    /* for convenience add space after command */
+    if (space) {
+        console_printf(" ");
+        line[len] = ' ';
+    }
+
+    return common_chars - module_len + space;
 }
 
 static int
-shell_nlip_process(char *data, int len)
+complete_select(char *line, int len, char *cur, int tok_len)
 {
-    uint16_t copy_len;
-    int rc;
-    struct os_mbuf *m;
-    uint16_t crc;
-
-    rc = base64_decode(data, data);
-    if (rc < 0) {
-        goto err;
-    }
-    len = rc;
-
-    if (g_nlip_mbuf == NULL) {
-        if (len < 2) {
-            rc = -1;
-            goto err;
+    int null_terminated = 0;
+    cur += tok_len + 1;
+    tok_len = get_token(&cur, &null_terminated);
+    if (tok_len == 0) {
+        if (default_module != -1) {
+            return 0;
         }
+        console_printf("\n");
+        print_modules();
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
+    }
 
-        g_nlip_expected_len = ntohs(*(uint16_t *) data);
-        g_nlip_mbuf = os_msys_get_pkthdr(g_nlip_expected_len, 0);
-        if (!g_nlip_mbuf) {
-            rc = -1;
-            goto err;
+    if (null_terminated) {
+        if (default_module == -1) {
+            return complete_module(line, len, cur, tok_len);
         }
-
-        data += sizeof(uint16_t);
-        len -= sizeof(uint16_t);
     }
-
-    copy_len = min(g_nlip_expected_len - OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len,
-            len);
-
-    rc = os_mbuf_copyinto(g_nlip_mbuf, OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len,
-            data, copy_len);
-    if (rc != 0) {
-        goto err;
-    }
-
-    if (OS_MBUF_PKTHDR(g_nlip_mbuf)->omp_len == g_nlip_expected_len) {
-        if (g_shell_nlip_in_func) {
-            crc = CRC16_INITIAL_CRC;
-            for (m = g_nlip_mbuf; m; m = SLIST_NEXT(m, om_next)) {
-                crc = crc16_ccitt(crc, m->om_data, m->om_len);
-            }
-            if (crc == 0 && g_nlip_expected_len >= sizeof(crc)) {
-                os_mbuf_adj(g_nlip_mbuf, -sizeof(crc));
-                g_shell_nlip_in_func(g_nlip_mbuf, g_shell_nlip_in_arg);
-            } else {
-                os_mbuf_free_chain(g_nlip_mbuf);
-            }
-        } else {
-            os_mbuf_free_chain(g_nlip_mbuf);
-        }
-        g_nlip_mbuf = NULL;
-        g_nlip_expected_len = 0;
-    }
-
-    return (0);
-err:
-    return (rc);
+    return 0;
 }
 
-static int
-shell_nlip_mtx(struct os_mbuf *m)
+static uint8_t
+completion(char *line, uint8_t len)
 {
-#define SHELL_NLIP_MTX_BUF_SIZE (12)
-    uint8_t readbuf[SHELL_NLIP_MTX_BUF_SIZE];
-    char encodebuf[BASE64_ENCODE_SIZE(SHELL_NLIP_MTX_BUF_SIZE)];
-    char pkt_seq[3] = { '\n', SHELL_NLIP_PKT_START1, SHELL_NLIP_PKT_START2 };
-    char esc_seq[2] = { SHELL_NLIP_DATA_START1, SHELL_NLIP_DATA_START2 };
-    uint16_t totlen;
-    uint16_t dlen;
-    uint16_t off;
-    uint16_t crc;
-    int rb_off;
-    int elen;
-    uint16_t nwritten;
-    uint16_t linelen;
-    int rc;
-    struct os_mbuf *tmp;
-    void *ptr;
+    char *cur;
+    int tok_len;
+    int module, command;
+    int null_terminated = 0;
 
-    /* Convert the mbuf into a packet.
-     *
-     * starts with 06 09
-     * base64 encode:
-     *  - total packet length (uint16_t)
-     *  - data
-     *  - crc
-     * base64 encoded data must be less than 122 bytes per line to
-     * avoid overflows and adhere to convention.
-     *
-     * continuation packets are preceded by 04 20 until the entire
-     * buffer has been sent.
+    /*
+     * line to completion is not ended by '\0' as the line that gets from
+     * os_eventq_get function
      */
-    crc = CRC16_INITIAL_CRC;
-    for (tmp = m; tmp; tmp = SLIST_NEXT(tmp, om_next)) {
-        crc = crc16_ccitt(crc, tmp->om_data, tmp->om_len);
-    }
-    crc = htons(crc);
-    ptr = os_mbuf_extend(m, sizeof(crc));
-    if (!ptr) {
-        rc = -1;
-        goto err;
-    }
-    memcpy(ptr, &crc, sizeof(crc));
+    line[len] = '\0';
 
-    totlen = OS_MBUF_PKTHDR(m)->omp_len;
-    nwritten = 0;
-    off = 0;
+    cur = line;
+    tok_len = get_token(&cur, &null_terminated);
 
-    /* Start a packet */
-    console_write(pkt_seq, sizeof(pkt_seq));
-
-    linelen = 0;
-
-    rb_off = 2;
-    dlen = htons(totlen);
-    memcpy(readbuf, &dlen, sizeof(dlen));
-
-    while (totlen > 0) {
-        dlen = min(SHELL_NLIP_MTX_BUF_SIZE - rb_off, totlen);
-
-        rc = os_mbuf_copydata(m, off, dlen, readbuf + rb_off);
-        if (rc != 0) {
-            goto err;
-        }
-        off += dlen;
-
-        /* If the next packet will overwhelm the line length, truncate
-         * this line.
-         */
-        if (linelen +
-                BASE64_ENCODE_SIZE(min(SHELL_NLIP_MTX_BUF_SIZE - rb_off,
-                        totlen - dlen)) >= 120) {
-            elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 1);
-            console_write(encodebuf, elen);
-            console_write("\n", 1);
-            console_write(esc_seq, sizeof(esc_seq));
-            linelen = 0;
+    /* empty token - print options */
+    if (tok_len == 0) {
+        console_printf("\n");
+        if (default_module == -1) {
+            print_modules();
         } else {
-            elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 0);
-            console_write(encodebuf, elen);
-            linelen += elen;
+            print_module_commands(default_module);
         }
-
-        rb_off = 0;
-
-        nwritten += elen;
-        totlen -= dlen;
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
     }
 
-    elen = base64_pad(encodebuf, linelen);
-    console_write(encodebuf, elen);
-
-    console_write("\n", 1);
-
-    return (0);
-err:
-    return (rc);
-}
-
-int
-shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg)
-{
-    g_shell_nlip_in_func = nf;
-    g_shell_nlip_in_arg = arg;
-
-    return (0);
-}
-
-int
-shell_nlip_output(struct os_mbuf *m)
-{
-    int rc;
-
-    rc = os_mqueue_put(&g_shell_nlip_mq, shell_evq_get(), m);
-    if (rc != 0) {
-        goto err;
+    /* token can be completed */
+    if (null_terminated) {
+        if (default_module == -1) {
+            return complete_module(line, len, cur, tok_len);
+        }
+        return complete_command(line, len, cur, tok_len, default_module);
     }
 
-    return (0);
-err:
-    return (rc);
-}
+    if (strncmp("select", cur, tok_len) == 0) {
+        return complete_select(line, len, cur, tok_len);
+    }
 
-static void
-shell_read_console(void)
-{
-    int rc;
-    int full_line;
+    if (default_module != -1) {
+        module = default_module;
+    } else {
+        module = get_destination_module(cur, tok_len);
 
-    while (1) {
-        rc = console_read(shell_line + shell_line_len,
-          MYNEWT_VAL(SHELL_MAX_INPUT_LEN) - shell_line_len, &full_line);
-        if (rc <= 0 && !full_line) {
-            break;
+        if (module == -1) {
+            return 0;
         }
-        shell_line_len += rc;
-        if (full_line) {
-            if (shell_line_len > 2) {
-                if (shell_line[0] == SHELL_NLIP_PKT_START1 &&
-                        shell_line[1] == SHELL_NLIP_PKT_START2) {
-                    if (g_nlip_mbuf) {
-                        os_mbuf_free_chain(g_nlip_mbuf);
-                        g_nlip_mbuf = NULL;
-                    }
-                    g_nlip_expected_len = 0;
 
-                    rc = shell_nlip_process(&shell_line[2], shell_line_len - 2);
-                } else if (shell_line[0] == SHELL_NLIP_DATA_START1 &&
-                        shell_line[1] == SHELL_NLIP_DATA_START2) {
-                    rc = shell_nlip_process(&shell_line[2], shell_line_len - 2);
-                } else {
-                    shell_process_command(shell_line, shell_line_len);
-                }
-            } else {
-                shell_process_command(shell_line, shell_line_len);
-            }
-            shell_line_len = 0;
+        cur += tok_len + 1;
+        tok_len = get_token(&cur, &null_terminated);
+
+        if (tok_len == 0) {
+            console_printf("\n");
+            print_module_commands(module);
+            console_printf("%s", get_prompt());
+            console_printf("%s", line);
+            return 0;
+        }
+
+        if (null_terminated) {
+            return complete_command(line, len, cur, tok_len, module);
         }
     }
+
+
+
+    command = get_command_from_module(cur, tok_len, module);
+    if (command == -1) {
+        return 0;
+    }
+
+    cur += tok_len;
+    tok_len = get_last_token(&cur);
+    if (tok_len == 0) {
+        console_printf("\n");
+        print_command_params(module, command);
+        console_printf("%s", get_prompt());
+        console_printf("%s", line);
+        return 0;
+    }
+    return complete_param(line, len, cur, tok_len, module, command);
 }
 
-static void
-shell_event_console_rdy(struct os_event *ev)
+void
+shell_register_app_cmd_handler(shell_cmd_function_t handler)
 {
-    shell_read_console();
+    app_cmd_handler = handler;
 }
 
-static void
-shell_event_data_in(struct os_event *ev)
+void
+shell_register_prompt_handler(shell_prompt_function_t handler)
 {
-    struct os_mbuf *m;
+    app_prompt_handler = handler;
+}
 
-    /* Copy data out of the mbuf 12 bytes at a time and write it to
-     * the console.
-     */
-    while (1) {
-        m = os_mqueue_get(&g_shell_nlip_mq);
-        if (!m) {
-            break;
-        }
+void
+shell_register_default_module(const char *name)
+{
+    int result = set_default_module(name);
 
-        (void) shell_nlip_mtx(m);
-
-        os_mbuf_free_chain(m);
+    if (result != -1) {
+        console_printf("\n%s", default_module_prompt);
     }
 }
 
-/**
- * This function is called from the console APIs when data is available
- * to be read.  This is either a full line, or when the
- * console buffer (default = 128) is full.
- */
 static void
-shell_console_rx_cb(void)
-{
-    os_eventq_put(shell_evq_get(), &shell_console_rdy_ev);
-}
-
-static int
-shell_echo_cmd(int argc, char **argv)
+line_queue_init(void)
 {
     int i;
 
-    for (i = 1; i < argc; i++) {
-        console_write(argv[i], strlen(argv[i]));
-        console_write(" ", sizeof(" ")-1);
+    for (i = 0; i < MAX_CMD_QUEUED; i++) {
+        shell_console_ev[i].ev_cb = shell;
+        shell_console_ev[i].ev_arg = &buf[i];
+        os_eventq_put(&avail_queue, &shell_console_ev[i]);
     }
-    console_write("\n", sizeof("\n")-1);
-
-    return (0);
 }
 
-static int
-shell_help_cmd(int argc, char **argv)
+int
+shell_register(const char *module_name, const struct shell_cmd *commands)
 {
-    int rc;
-    int i = 0;
-    struct shell_cmd *sc;
-
-    rc = shell_cmd_list_lock();
-    if (rc != 0) {
+    if (num_of_shell_entities >= MAX_MODULES) {
         return -1;
     }
-    console_printf("Commands:\n");
-    STAILQ_FOREACH(sc, &g_shell_cmd_list, sc_next) {
-        console_printf("%9s ", sc->sc_cmd);
-        if (i++ % SHELL_HELP_PER_LINE == SHELL_HELP_PER_LINE - 1) {
-            console_printf("\n");
-        }
-    }
-    if (i % SHELL_HELP_PER_LINE) {
-        console_printf("\n");
-    }
-    shell_cmd_list_unlock();
 
-    return (0);
+    shell_modules[num_of_shell_entities].module_name = module_name;
+    shell_modules[num_of_shell_entities].commands = commands;
+    ++num_of_shell_entities;
+
+    return 0;
 }
 
 void
@@ -570,42 +846,15 @@ shell_init(void)
     return;
 #endif
 
-    int rc;
+    os_eventq_init(&avail_queue);
+    line_queue_init();
+    prompt = SHELL_PROMPT;
+    console_init(&avail_queue, os_eventq_dflt_get(), completion);
 
-    free(shell_line);
-    shell_line = NULL;
-
-#if MYNEWT_VAL(SHELL_MAX_INPUT_LEN) > 0
-    shell_line = malloc(MYNEWT_VAL(SHELL_MAX_INPUT_LEN));
-    SYSINIT_PANIC_ASSERT(shell_line != NULL);
+#if MYNEWT_VAL(SHELL_OS_MODULE)
+    shell_os_register(shell_register);
 #endif
-
-    rc = os_mutex_init(&g_shell_cmd_list_lock);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = shell_cmd_register(&g_shell_echo_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = shell_cmd_register(&g_shell_help_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = shell_cmd_register(&g_shell_prompt_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-    
-    rc = shell_cmd_register(&g_shell_ticks_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = shell_cmd_register(&g_shell_os_tasks_display_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = shell_cmd_register(&g_shell_os_mpool_display_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = shell_cmd_register(&g_shell_os_date_cmd);
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    os_mqueue_init(&g_shell_nlip_mq, shell_event_data_in, NULL);
-    console_init(shell_console_rx_cb);
-
-    shell_evq_set(os_eventq_dflt_get());
+#if MYNEWT_VAL(SHELL_PROMPT_MODULE)
+    shell_prompt_register(shell_register);
+#endif
 }

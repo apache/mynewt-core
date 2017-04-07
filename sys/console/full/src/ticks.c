@@ -18,9 +18,9 @@
  */
 
 
+#include "syscfg/syscfg.h"
 #include "console/console.h"
 #include "console/prompt.h"
-#include "syscfg/syscfg.h"
 
 static char do_ticks = MYNEWT_VAL(CONSOLE_TICKS);
 

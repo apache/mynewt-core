@@ -17,59 +17,78 @@
  * under the License.
  */
 
+#include <stdio.h>
 #include <string.h>
-#include "shell/shell.h"
-#include <console/console.h>
-#include <console/prompt.h>
-static char shell_prompt = '>';
 
-void console_set_prompt(char p);
+#include "syscfg/syscfg.h"
+#include "os/os.h"
+#include "console/console.h"
+#include "shell/shell.h"
+#include "shell_priv.h"
+
+#define PROMPT_LEN 15
+#define SHELL_PROMPT "prompt"
+
+static const char *
+ticks_prompt(void)
+{
+    static char str[PROMPT_LEN];
+    snprintf(str, sizeof(str), "%lu", (unsigned long)os_time_get());
+    strcat(str, "> ");
+    return str;
+}
 
 /**
- * Handles the 'prompt' command
- * with set argument, sets the prompt to the provided char
- * with the show argument, echos the current prompt
- * otherwise echos the prompt and the usage message
+ * Handles the 'ticks' command
  */
 int
-shell_prompt_cmd(int argc, char **argv)
+shell_ticks_cmd(int argc, char **argv)
 {
-    int rc;
-
-    rc = shell_cmd_list_lock();
-    if (rc != 0) {
-        return -1;
-    }
     if (argc > 1) {
-        if (!strcmp(argv[1], "show")) {
-            console_printf(" Prompt character: %c\n", shell_prompt);
-        }   
-        else if (!strcmp(argv[1],"set")) {
-            shell_prompt = argv[2][0];
-            console_printf(" Prompt set to: %c\n", argv[2][0]);
-            console_set_prompt(argv[2][0]);
+        if (!strcmp(argv[1], "on")) {
+            shell_register_prompt_handler(ticks_prompt);
+            console_printf(" Console Ticks on\n");
         }
-        else if (!strcmp(argv[1], "on")) {
-            console_yes_prompt();
-            console_printf(" Prompt now on.\n");
-        }   
-        else if (!strcmp(argv[1], "off")) {
-            console_no_prompt();
-            console_printf(" Prompt now off.\n");
+        else if (!strcmp(argv[1],"off")) {
+            console_printf(" Console Ticks off\n");
+            shell_register_prompt_handler(NULL);
         }
-        else {
-            goto usage;
-        }
-    } 
-    else {
-        goto usage;
+        return 0;
     }
-    shell_cmd_list_unlock();
+    console_printf(" Usage: ticks [on|off]\n");
     return 0;
-usage:
-    console_printf("Usage: prompt [on|off]|[set|show] [prompt_char]\n");
-    shell_cmd_list_unlock();
-    return 0;
-  
 }
- 
+
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+static const struct shell_param ticks_params[] = {
+    {"on", "turn on"},
+    {"off", "turn on"},
+    { NULL, NULL}
+};
+
+static const struct shell_cmd_help ticks_help = {
+   .summary = "shell ticks command",
+   .usage = "usage: ticks [on|off]",
+   .params = ticks_params,
+};
+#endif
+
+static const struct shell_cmd prompt_commands[] = {
+    {
+        .cmd_name = "ticks",
+        .cb = shell_ticks_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &ticks_help,
+#else
+        .help = NULL,
+#endif
+    },
+    { NULL, NULL, NULL },
+};
+
+
+void
+shell_prompt_register(shell_register_function_t register_func)
+{
+    register_func(SHELL_PROMPT, prompt_commands);
+}

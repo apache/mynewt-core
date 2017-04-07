@@ -27,11 +27,8 @@
 extern "C" {
 #endif
 
-
 void console_no_ticks(void);
-
 void console_yes_ticks(void);
-
 char console_get_ticks(void);
 
 #ifdef __cplusplus

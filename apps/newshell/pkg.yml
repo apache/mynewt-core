@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,18 +17,14 @@
 # under the License.
 #
 
-# Package: sys/console/minimal
+pkg.name: apps/newshell
+pkg.type: app
+pkg.description: new shell application
+pkg.author: "Michal Narajowski <michal.narajowski@codecoup.pl>"
+pkg.homepage: "http://www.codecoup.pl/"
+pkg.keywords:
 
-syscfg.defs:
-    CONSOLE_BAUD:
-        description: 'Console UART baud rate.'
-        value: '115200'
-    CONSOLE_FLOW_CONTROL:
-        description: 'Console UART flow control.'
-        value: 'UART_FLOW_CTL_NONE'
-    CONSOLE_TX_BUF_SIZE:
-        description: 'Console transmit buffer size; must be power of 2.'
-        value: 32
-    CONSOLE_RX_BUF_SIZE:
-        description: 'Console receive buffer size.'
-        value: 128
+pkg.deps:
+    - kernel/os
+    - sys/console/full
+    - sys/shell

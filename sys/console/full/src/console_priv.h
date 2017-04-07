@@ -17,17 +17,20 @@
  * under the License.
  */
 
-#ifndef H_SHELL_TICKS_
-#define H_SHELL_TICKS_
+#ifndef __CONSOLE_PRIV_H__
+#define __CONSOLE_PRIV_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int shell_ticks_cmd(int argc, char **argv);
+int uart_console_is_init(void);
+int uart_console_init(void);
+int rtt_console_is_init(void);
+int rtt_console_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* __CONSOLE_PRIV_H__ */

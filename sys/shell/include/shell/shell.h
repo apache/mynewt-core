@@ -16,40 +16,90 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #ifndef __SHELL_H__
 #define __SHELL_H__
-
-#include <os/os.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct os_eventq;
+/** @brief Callback called when command is entered.
+ *
+ *  @param argc Number of parameters passed.
+ *  @param argv Array of option strings. First option is always command name.
+ *
+ * @return 0 in case of success or negative value in case of error.
+ */
+typedef int (*shell_cmd_function_t)(int argc, char *argv[]);
 
-typedef int (*shell_cmd_func_t)(int argc, char **argv);
-struct shell_cmd {
-    char *sc_cmd;
-    shell_cmd_func_t sc_cmd_func;
-    STAILQ_ENTRY(shell_cmd) sc_next;
+struct shell_param {
+    const char *param_name;
+    const char *help;
 };
 
-int shell_cmd_register(struct shell_cmd *sc);
+struct shell_cmd_help {
+    const char *summary;
+    const char *usage;
+    const struct shell_param *params;
+};
 
-#define SHELL_NLIP_PKT_START1 (6)
-#define SHELL_NLIP_PKT_START2 (9)
-#define SHELL_NLIP_DATA_START1 (4)
-#define SHELL_NLIP_DATA_START2 (20)
+struct shell_cmd {
+    const char *cmd_name;
+    shell_cmd_function_t cb;
+    const struct shell_cmd_help *help;
+};
 
-typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
-int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
-int shell_nlip_output(struct os_mbuf *m);
+struct shell_module {
+    const char *module_name;
+    const struct shell_cmd *commands;
+};
 
-void shell_evq_set(struct os_eventq *evq);
-void shell_init(void);
+/** @brief Callback called when registering module
+ *
+ *  @param module_name Name of the module
+ *  @param commands Array of shell_cmd structs
+ *
+ * @return 0 in case of success or negative value in case of error.
+ */
+typedef int (*shell_register_function_t)(const char *module_name,
+                                         const struct shell_cmd *commands);
 
-int shell_cmd_list_lock(void);
-int shell_cmd_list_unlock(void);
+/** @brief Register a shell_module object
+ *
+ *  @param shell_name Module name to be entered in shell console.
+ *
+ *  @param shell_commands Array of commands to register.
+ *  The array should be terminated with an empty element.
+ */
+int shell_register(const char *shell_name,
+                   const struct shell_cmd *shell_commands);
+
+/** @brief Optionally register an app default cmd handler.
+ *
+ *  @param handler To be called if no cmd found in cmds registered with
+ *  shell_init.
+ */
+void shell_register_app_cmd_handler(shell_cmd_function_t handler);
+
+/** @brief Callback to get the current prompt.
+ *
+ *  @returns Current prompt string.
+ */
+typedef const char *(*shell_prompt_function_t)(void);
+
+/** @brief Optionally register a custom prompt callback.
+ *
+ *  @param handler To be called to get the current prompt.
+ */
+void shell_register_prompt_handler(shell_prompt_function_t handler);
+
+/** @brief Optionally register a default module, to avoid typing it in
+ *  shell console.
+ *
+ *  @param name Module name.
+ */
+void shell_register_default_module(const char *name);
 
 #ifdef __cplusplus
 }

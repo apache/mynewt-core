@@ -19,13 +19,18 @@
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
-#include <stdarg.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (*console_rx_cb)(void);
+struct os_eventq;
+
+#define MAX_LINE_LEN 80
+struct console_input {
+    char line[MAX_LINE_LEN];
+};
 
 static int inline
 console_is_init(void)
@@ -33,22 +38,22 @@ console_is_init(void)
     return 0;
 }
 
-static int inline
-console_init(console_rx_cb rxcb)
-{
-    return 0;
-}
-
-static int inline
-console_read(char *str, int cnt, int *newline)
-{
-    *newline = 0;
-    return 0;
-}
-
 static void inline
-console_blocking_mode(void)
+console_echo(int on)
 {
+}
+
+static int inline
+console_init(struct os_eventq *avail_queue, struct os_eventq *cmd_queue,
+                 uint8_t (*completion)(char *str, uint8_t len))
+{
+    return 0;
+}
+
+static size_t inline
+console_file_write(void *arg, const char *str, size_t cnt)
+{
+    return 0;
 }
 
 static void inline
@@ -59,17 +64,17 @@ console_write(const char *str, int cnt)
 static void inline console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));
 
+
 static void inline
 console_printf(const char *fmt, ...)
 {
 }
 
-static void inline
-console_echo(int on)
+static int inline
+console_handle_char(uint8_t byte)
 {
+    return 0;
 }
-
-#define console_is_midline  (0)
 
 #ifdef __cplusplus
 }
