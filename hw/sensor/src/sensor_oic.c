@@ -252,7 +252,7 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
             }
             if (((struct sensor_color_data *)(databuf))->scd_cratio_is_valid) {
                 oc_rep_set_double(root, cratio,
-                    ((struct sensor_color_data *)(databuf))->scd_cratio_is_valid);
+                    ((struct sensor_color_data *)(databuf))->scd_cratio);
             } else {
                 goto err;
             }
@@ -279,6 +279,10 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
         case SENSOR_TYPE_NONE:
             goto err;
     }
+
+    oc_rep_set_uint(root, ts_secs, (long int)sensor->s_sts.st_ostv.tv_sec);
+    oc_rep_set_int(root, ts_usecs, (int)sensor->s_sts.st_ostv.tv_usec);
+    oc_rep_set_uint(root, ts_cputime, (unsigned int)sensor->s_sts.st_cputime);
 
     return 0;
 err:
