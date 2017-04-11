@@ -81,11 +81,11 @@ STAILQ_HEAD(ble_ll_pkt_q, os_mbuf_pkthdr);
  */
 struct ble_ll_obj
 {
+    /* Supported features */
+    uint32_t ll_supp_features;
+
     /* Current Link Layer state */
     uint8_t ll_state;
-
-    /* Supported features */
-    uint8_t ll_supp_features;
 
     /* Number of ACL data packets supported */
     uint8_t ll_num_acl_pkts;
@@ -175,14 +175,23 @@ extern STATS_SECT_DECL(ble_ll_stats) ble_ll_stats;
 #define BLE_LL_STATE_CONNECTION     (4)
 
 /* LL Features */
-#define BLE_LL_FEAT_LE_ENCRYPTION   (0x01)
-#define BLE_LL_FEAT_CONN_PARM_REQ   (0x02)
-#define BLE_LL_FEAT_EXTENDED_REJ    (0x04)
-#define BLE_LL_FEAT_SLAVE_INIT      (0x08)
-#define BLE_LL_FEAT_LE_PING         (0x10)
-#define BLE_LL_FEAT_DATA_LEN_EXT    (0x20)
-#define BLE_LL_FEAT_LL_PRIVACY      (0x40)
-#define BLE_LL_FEAT_EXT_SCAN_FILT   (0x80)
+#define BLE_LL_FEAT_LE_ENCRYPTION    (0x00000001)
+#define BLE_LL_FEAT_CONN_PARM_REQ    (0x00000002)
+#define BLE_LL_FEAT_EXTENDED_REJ     (0x00000004)
+#define BLE_LL_FEAT_SLAVE_INIT       (0x00000008)
+#define BLE_LL_FEAT_LE_PING          (0x00000010)
+#define BLE_LL_FEAT_DATA_LEN_EXT     (0x00000020)
+#define BLE_LL_FEAT_LL_PRIVACY       (0x00000040)
+#define BLE_LL_FEAT_EXT_SCAN_FILT    (0x00000080)
+#define BLE_LL_FEAT_LE_2M_PHY        (0x00000100)
+#define BLE_LL_FEAT_STABLE_MOD_ID_TX (0x00000200)
+#define BLE_LL_FEAT_STABLE_MOD_ID_RX (0x00000400)
+#define BLE_LL_FEAT_LE_CODED_PHY     (0x00000800)
+#define BLE_LL_FEAT_EXT_ADV          (0x00001000)
+#define BLE_LL_FEAT_PERIODIC_ADV     (0x00002000)
+#define BLE_LL_FEAT_CSA2             (0x00004000)
+#define BLE_LL_FEAT_LE_POWER_CLASS_1 (0x00008000)
+#define BLE_LL_FEAT_MIN_USED_CHAN    (0x00010000)
 
 /* LL timing */
 #define BLE_LL_IFS                  (150)       /* usecs */
@@ -252,6 +261,7 @@ struct ble_dev_addr
  * -> Payload (max 37 bytes)
  */
 #define BLE_ADV_PDU_HDR_TYPE_MASK           (0x0F)
+#define BLE_ADV_PDU_HDR_CHSEL_MASK          (0x20)
 #define BLE_ADV_PDU_HDR_TXADD_MASK          (0x40)
 #define BLE_ADV_PDU_HDR_RXADD_MASK          (0x80)
 #define BLE_ADV_PDU_HDR_LEN_MASK            (0x3F)
@@ -264,6 +274,9 @@ struct ble_dev_addr
 #define BLE_ADV_PDU_TYPE_SCAN_RSP           (4)
 #define BLE_ADV_PDU_TYPE_CONNECT_REQ        (5)
 #define BLE_ADV_PDU_TYPE_ADV_SCAN_IND       (6)
+
+/* If Channel Selection Algorithm #2 is supported */
+#define BLE_ADV_PDU_HDR_CHSEL               (0x20)
 
 /*
  * TxAdd and RxAdd bit definitions. A 0 is a public address; a 1 is a
@@ -408,7 +421,7 @@ void ble_ll_wfr_disable(void);
 void ble_ll_wfr_timer_exp(void *arg);
 
 /* Read set of features supported by the Link Layer */
-uint8_t ble_ll_read_supp_features(void);
+uint32_t ble_ll_read_supp_features(void);
 
 /* Read set of states supported by the Link Layer */
 uint64_t ble_ll_read_supp_states(void);

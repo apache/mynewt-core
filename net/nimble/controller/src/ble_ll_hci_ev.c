@@ -198,7 +198,7 @@ ble_ll_hci_ev_rd_rem_used_feat(struct ble_ll_conn_sm *connsm, uint8_t status)
             evbuf[3] = status;
             put_le16(evbuf + 4, connsm->conn_handle);
             memset(evbuf + 6, 0, BLE_HCI_RD_LOC_SUPP_FEAT_RSPLEN);
-            evbuf[6] = connsm->common_features;
+            put_le32(evbuf + 6, connsm->common_features);
             ble_ll_hci_event_send(evbuf);
         }
     }
@@ -267,3 +267,28 @@ ble_ll_hci_ev_databuf_overflow(void)
         }
     }
 }
+
+/**
+ * Send a LE Channel Selection Algorithm event.
+ *
+ * @param connsm Pointer to connection state machine
+ */
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+void
+ble_ll_hci_ev_le_csa(struct ble_ll_conn_sm *connsm)
+{
+    uint8_t *evbuf;
+
+    if (ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_CHAN_SEL_ALG)) {
+        evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
+        if (evbuf) {
+            evbuf[0] = BLE_HCI_EVCODE_LE_META;
+            evbuf[1] = BLE_HCI_LE_SUBEV_CHAN_SEL_ALG_LEN;
+            evbuf[2] = BLE_HCI_LE_SUBEV_CHAN_SEL_ALG;
+            put_le16(evbuf + 3, connsm->conn_handle);
+            evbuf[5] = connsm->csmflags.cfbit.csa2_supp ? 0x01 : 0x00;
+            ble_ll_hci_event_send(evbuf);
+        }
+    }
+}
+#endif

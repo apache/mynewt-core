@@ -115,6 +115,7 @@ union ble_ll_conn_sm_flags {
         uint32_t encrypted:1;
         uint32_t encrypt_chg_sent:1;
         uint32_t le_ping_supp:1;
+        uint32_t csa2_supp:1;
     } cfbit;
     uint32_t conn_flags;
 } __attribute__((packed));
@@ -148,9 +149,9 @@ struct ble_ll_conn_sm
     uint8_t chanmap[BLE_LL_CONN_CHMAP_LEN];
     uint8_t req_chanmap[BLE_LL_CONN_CHMAP_LEN];
     uint16_t chanmap_instant;
+    uint16_t channel_id; /* TODO could be union with hop and last chan used */
     uint8_t hop_inc;
     uint8_t data_chan_index;
-    uint8_t unmapped_chan;
     uint8_t last_unmapped_chan;
     uint8_t num_used_chans;
 
@@ -176,7 +177,7 @@ struct ble_ll_conn_sm
     uint8_t cur_ctrl_proc;
     uint8_t disconnect_reason;
     uint8_t rxd_disconnect_reason;
-    uint8_t common_features;        /* Just a uint8 for now */
+    uint32_t common_features;
     uint8_t vers_nr;
     uint16_t pending_ctrl_procs;
     uint16_t event_cntr;
@@ -272,6 +273,7 @@ struct ble_ll_conn_sm
 #define CONN_F_ENCRYPTED(csm)       ((csm)->csmflags.cfbit.encrypted)
 #define CONN_F_ENC_CHANGE_SENT(csm) ((csm)->csmflags.cfbit.encrypt_chg_sent)
 #define CONN_F_LE_PING_SUPP(csm)    ((csm)->csmflags.cfbit.le_ping_supp)
+#define CONN_F_CSA2_SUPP(csm)       ((csm)->csmflags.cfbit.csa2_supp)
 
 /* Role */
 #define CONN_IS_MASTER(csm)         (csm->conn_role == BLE_LL_CONN_ROLE_MASTER)
@@ -283,6 +285,9 @@ struct ble_ll_conn_sm
  *
  */
 struct ble_ll_conn_sm *ble_ll_conn_find_active_conn(uint16_t handle);
+
+/* required for unit testing */
+uint8_t ble_ll_conn_calc_dci(struct ble_ll_conn_sm *conn, uint16_t latency);
 
 #ifdef __cplusplus
 }

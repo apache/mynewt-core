@@ -126,6 +126,10 @@ ble_ll_conn_req_pdu_make(struct ble_ll_conn_sm *connsm)
     /* Construct first PDU header byte */
     pdu_type = BLE_ADV_PDU_TYPE_CONNECT_REQ;
 
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+    pdu_type |= BLE_ADV_PDU_HDR_CHSEL;
+#endif
+
     /* Set BLE transmit header */
     ble_ll_mbuf_init(m, BLE_CONNECT_REQ_LEN, pdu_type);
 
@@ -500,6 +504,7 @@ ble_ll_conn_create(uint8_t *cmdbuf)
     /* Initialize state machine in master role and start state machine */
     ble_ll_conn_master_init(connsm, hcc);
     ble_ll_conn_sm_new(connsm);
+    /* CSA will be selected when advertising is received */
 
     /* Create the connection request */
     ble_ll_conn_req_pdu_make(connsm);

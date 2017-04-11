@@ -1071,9 +1071,9 @@ ble_ll_read_supp_states(void)
 /**
  * Returns the features supported by the link layer
  *
- * @return uint8_t bitmask of supported features.
+ * @return uint32_t bitmask of supported features.
  */
-uint8_t
+uint32_t
 ble_ll_read_supp_features(void)
 {
     return g_ble_ll_data.ll_supp_features;
@@ -1231,7 +1231,7 @@ void
 ble_ll_init(void)
 {
     int rc;
-    uint8_t features;
+    uint32_t features;
 #ifdef BLE_XCVR_RFCLK
     uint32_t xtal_ticks;
 #endif
@@ -1337,6 +1337,11 @@ ble_ll_init(void)
 
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_PING) == 1)
     features |= BLE_LL_FEAT_LE_PING;
+#endif
+
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+    /* CSA2 */
+    features |= BLE_LL_FEAT_CSA2;
 #endif
 
     /* Initialize random number generation */

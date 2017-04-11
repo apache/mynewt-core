@@ -563,26 +563,115 @@ ble_ll_conn_calc_access_addr(void)
     return aa;
 }
 
-/**
- * Determine data channel index to be used for the upcoming/current
- * connection event
- *
- * @param conn
- *
- * @return uint8_t
- */
-uint8_t
-ble_ll_conn_calc_dci(struct ble_ll_conn_sm *conn)
+static uint8_t
+ble_ll_conn_remapped_channel(uint8_t remap_index, const uint8_t *chanmap)
 {
-    int     i;
-    int     j;
-    uint8_t chan;
-    uint8_t curchan;
-    uint8_t remap_index;
-    uint8_t bitpos;
     uint8_t cntr;
     uint8_t mask;
     uint8_t usable_chans;
+    uint8_t chan;
+    int i, j;
+
+    /* NOTE: possible to build a map but this would use memory. For now,
+       we just calculate */
+    /* Iterate through channel map to find this channel */
+    chan = 0;
+    cntr = 0;
+    for (i = 0; i < BLE_LL_CONN_CHMAP_LEN; i++) {
+        usable_chans = chanmap[i];
+        if (usable_chans != 0) {
+            mask = 0x01;
+            for (j = 0; j < 8; j++) {
+                if (usable_chans & mask) {
+                    if (cntr == remap_index) {
+                        return (chan + j);
+                    }
+                    ++cntr;
+                }
+                mask <<= 1;
+            }
+        }
+        chan += 8;
+    }
+
+    /* we should never reach here */
+    assert(0);
+    return 0;
+}
+
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+static uint16_t
+ble_ll_conn_csa2_perm(uint16_t in)
+{
+    uint16_t out = 0;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        out |= ((in >> i) & 0x00000001) << (7 - i);
+    }
+
+    for (i = 8; i < 16; i++) {
+        out |= ((in >> i) & 0x00000001) << (15 + 8 - i);
+    }
+
+    return out;
+}
+
+static uint16_t
+ble_ll_conn_csa2_prng(uint16_t counter, uint16_t ch_id)
+{
+    uint16_t prn_e;
+
+    prn_e = counter ^ ch_id;
+
+    prn_e = ble_ll_conn_csa2_perm(prn_e);
+    prn_e = (prn_e * 17) + ch_id;
+
+    prn_e = ble_ll_conn_csa2_perm(prn_e);
+    prn_e = (prn_e * 17) + ch_id;
+
+    prn_e = ble_ll_conn_csa2_perm(prn_e);
+    prn_e = (prn_e * 17) + ch_id;
+
+    prn_e = prn_e ^ ch_id;
+
+    return prn_e;
+}
+
+static uint8_t
+ble_ll_conn_calc_dci_csa2(struct ble_ll_conn_sm *conn)
+{
+    uint16_t channel_unmapped;
+    uint8_t remap_index;
+
+    uint16_t prn_e;
+    uint8_t bitpos;
+
+    prn_e = ble_ll_conn_csa2_prng(conn->event_cntr, conn->channel_id);
+
+    channel_unmapped = prn_e % 37;
+
+    /*
+     * If unmapped channel is the channel index of a used channel it is used
+     * as channel index.
+     */
+    bitpos = 1 << (channel_unmapped & 0x07);
+    if (conn->chanmap[channel_unmapped >> 3] & bitpos) {
+        return channel_unmapped;
+    }
+
+    remap_index = (conn->num_used_chans * prn_e) / 0x10000;
+
+    return ble_ll_conn_remapped_channel(remap_index, conn->chanmap);
+}
+#endif
+
+static uint8_t
+ble_ll_conn_calc_dci_csa1(struct ble_ll_conn_sm *conn)
+{
+    uint8_t curchan;
+    uint8_t remap_index;
+    uint8_t bitpos;
 
     /* Get next unmapped channel */
     curchan = conn->last_unmapped_chan + conn->hop_inc;
@@ -590,40 +679,49 @@ ble_ll_conn_calc_dci(struct ble_ll_conn_sm *conn)
         curchan -= BLE_PHY_NUM_DATA_CHANS;
     }
 
-    /* Set the current unmapped channel */
-    conn->unmapped_chan = curchan;
+    /* Save unmapped channel */
+    conn->last_unmapped_chan = curchan;
 
     /* Is this a valid channel? */
     bitpos = 1 << (curchan & 0x07);
-    if ((conn->chanmap[curchan >> 3] & bitpos) == 0) {
-
-        /* Calculate remap index */
-        remap_index = curchan % conn->num_used_chans;
-
-        /* NOTE: possible to build a map but this would use memory. For now,
-           we just calculate */
-        /* Iterate through channel map to find this channel */
-        chan = 0;
-        cntr = 0;
-        for (i = 0; i < BLE_LL_CONN_CHMAP_LEN; i++) {
-            usable_chans = conn->chanmap[i];
-            if (usable_chans != 0) {
-                mask = 0x01;
-                for (j = 0; j < 8; j++) {
-                    if (usable_chans & mask) {
-                        if (cntr == remap_index) {
-                            return (chan + j);
-                        }
-                        ++cntr;
-                    }
-                    mask <<= 1;
-                }
-            }
-            chan += 8;
-        }
+    if (conn->chanmap[curchan >> 3] & bitpos) {
+        return curchan;
     }
 
-    return curchan;
+    /* Calculate remap index */
+    remap_index = curchan % conn->num_used_chans;
+
+    return ble_ll_conn_remapped_channel(remap_index, conn->chanmap);
+}
+
+/**
+ * Determine data channel index to be used for the upcoming/current
+ * connection event
+ *
+ * @param conn
+ * @param latency Used only for CSA #1
+ *
+ * @return uint8_t
+ */
+uint8_t
+ble_ll_conn_calc_dci(struct ble_ll_conn_sm *conn, uint16_t latency)
+{
+    uint8_t index;
+
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+    if (CONN_F_CSA2_SUPP(conn)) {
+        return ble_ll_conn_calc_dci_csa2(conn);
+    }
+#endif
+
+    index = conn->data_chan_index;
+
+    while (latency > 0) {
+        index = ble_ll_conn_calc_dci_csa1(conn);
+        latency--;
+    }
+
+    return index;
 }
 
 /**
@@ -1496,6 +1594,27 @@ ble_ll_conn_master_init(struct ble_ll_conn_sm *connsm,
     connsm->conn_sch.sched_cb = ble_ll_conn_event_start_cb;
 }
 
+static void
+ble_ll_conn_set_csa(struct ble_ll_conn_sm *connsm, bool chsel)
+{
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+    if (chsel) {
+        CONN_F_CSA2_SUPP(connsm) = 1;
+        connsm->channel_id = ((connsm->access_addr & 0xffff0000) >> 16) ^
+                              (connsm->access_addr & 0x0000ffff);
+
+        /* calculate the next data channel */
+        connsm->data_chan_index = ble_ll_conn_calc_dci(connsm, 0);
+        return;
+    }
+#endif
+
+    connsm->last_unmapped_chan = 0;
+
+    /* calculate the next data channel */
+    connsm->data_chan_index = ble_ll_conn_calc_dci(connsm, 1);
+}
+
 /**
  * Create a new connection state machine. This is done once per
  * connection when the HCI command "create connection" is issued to the
@@ -1533,10 +1652,6 @@ ble_ll_conn_sm_new(struct ble_ll_conn_sm *connsm)
      * parameter update request and the rest of the parameters are valid.
      */
     connsm->conn_param_req.handle = 0;
-
-    /* Calculate the next data channel */
-    connsm->last_unmapped_chan = 0;
-    connsm->data_chan_index = ble_ll_conn_calc_dci(connsm);
 
     /* Connection end event */
     connsm->conn_ev_end.ev_arg = connsm;
@@ -1858,11 +1973,7 @@ ble_ll_conn_next_event(struct ble_ll_conn_sm *connsm)
     }
 
     /* Calculate data channel index of next connection event */
-    while (latency > 0) {
-        connsm->last_unmapped_chan = connsm->unmapped_chan;
-        connsm->data_chan_index = ble_ll_conn_calc_dci(connsm);
-        --latency;
-    }
+    connsm->data_chan_index = ble_ll_conn_calc_dci(connsm, latency);
 
     /*
      * If we are trying to terminate connection, check if next wake time is
@@ -2030,6 +2141,9 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, struct ble_mbuf_hdr *rxhdr)
         } else {
             evbuf = ble_ll_init_get_conn_comp_ev();
             ble_ll_conn_comp_event_send(connsm, BLE_ERR_SUCCESS, evbuf, NULL);
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CSA2) == 1)
+            ble_ll_hci_ev_le_csa(connsm);
+#endif
         }
     }
 
@@ -2191,9 +2305,11 @@ ble_ll_conn_req_pdu_update(struct os_mbuf *m, uint8_t *adva, uint8_t addr_type,
 
     assert(m != NULL);
 
-    /* Retain pdu type but clear txadd/rxadd bits */
+    /* clear txadd/rxadd bits only */
     ble_hdr = BLE_MBUF_HDR_PTR(m);
-    hdr = ble_hdr->txinfo.hdr_byte & BLE_ADV_PDU_HDR_TYPE_MASK;
+    hdr = ble_hdr->txinfo.hdr_byte &
+          ~(BLE_ADV_PDU_HDR_RXADD_MASK | BLE_ADV_PDU_HDR_TXADD_MASK);
+
     if (addr_type) {
         /* Set random address */
         hdr |= BLE_ADV_PDU_HDR_RXADD_MASK;
@@ -2409,6 +2525,8 @@ ble_ll_init_rx_pkt_in(uint8_t *rxbuf, struct ble_mbuf_hdr *ble_hdr)
         /* Connection has been created. Stop scanning */
         g_ble_ll_conn_create_sm = NULL;
         ble_ll_scan_sm_stop(0);
+
+        ble_ll_conn_set_csa(connsm, rxbuf[0] & BLE_ADV_PDU_HDR_CHSEL_MASK);
         ble_ll_conn_created(connsm, NULL);
     } else {
         ble_ll_scan_chk_resume();
@@ -3358,6 +3476,7 @@ ble_ll_conn_slave_start(uint8_t *rxbuf, uint8_t pat, struct ble_mbuf_hdr *rxhdr)
     /* Start the connection state machine */
     connsm->conn_role = BLE_LL_CONN_ROLE_SLAVE;
     ble_ll_conn_sm_new(connsm);
+    ble_ll_conn_set_csa(connsm, rxbuf[0] & BLE_ADV_PDU_HDR_CHSEL_MASK);
 
     /* Set initial schedule callback */
     connsm->conn_sch.sched_cb = ble_ll_conn_event_start_cb;
