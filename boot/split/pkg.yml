@@ -25,7 +25,7 @@ pkg.keywords:
     - split
 
 pkg.deps: 
-    - boot/bootutil
+    - "@mcuboot/boot/bootutil"
 
 pkg.init:
     split_app_init: 500

@@ -18,3 +18,12 @@
 #
 
 project.name: "apache-mynewt-core"
+
+project.repositories:
+    - mcuboot
+
+repository.mcuboot:
+    type: github
+    vers: 0-dev
+    user: runtimeco
+    repo: mcuboot
