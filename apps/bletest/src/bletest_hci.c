@@ -115,7 +115,7 @@ bletest_send_ltk_req_reply(uint16_t handle)
         return -1;
     }
 
-    if (le16toh(ack_conn_handle) != conn_handle) {
+    if (le16toh(ack_conn_handle) != handle) {
         return -1;
     }
     return 0;
