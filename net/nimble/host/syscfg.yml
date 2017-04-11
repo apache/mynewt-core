@@ -98,6 +98,11 @@ syscfg.defs:
     BLE_SM_SC:
         description: 'Security manager secure connections (4.2).'
         value: 0
+    BLE_SM_ALG_DEBUG:
+        description: >
+            Detailed logging from cryptographic functions available when debug
+            level logs enabled in host.
+        value: 1
 
     BLE_SM_MAX_PROCS:
         description: >
