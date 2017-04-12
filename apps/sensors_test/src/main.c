@@ -92,6 +92,8 @@ static struct os_sem g_test_sem;
 /* For LED toggling */
 static int g_led_pin;
 
+extern int oc_stack_errno;
+
 STATS_SECT_START(gpio_stats)
 STATS_SECT_ENTRY(toggles)
 STATS_SECT_END
@@ -659,21 +661,6 @@ main(int argc, char **argv)
 
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    oc_ble_coap_gatt_srv_init();
-
-    ble_hs_cfg.reset_cb = sensor_oic_on_reset;
-    ble_hs_cfg.sync_cb = sensor_oic_on_sync;
-    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
-
-    /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pi");
-    assert(rc == 0);
-
-    oc_main_init((oc_handler_t *)&sensor_oic_handler);
-
-    oc_init_platform("MyNewt", NULL, NULL);
-    oc_add_device("/oic/d", "oic.d.color", "color0", "1.0", "1.0", NULL,
-                  NULL);
 
     flash_test_init();
 
@@ -709,6 +696,24 @@ main(int argc, char **argv)
 #endif
 
     config_sensor();
+
+    oc_ble_coap_gatt_srv_init();
+
+    ble_hs_cfg.reset_cb = sensor_oic_on_reset;
+    ble_hs_cfg.sync_cb = sensor_oic_on_sync;
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+
+    /* Set the default device name. */
+    rc = ble_svc_gap_device_name_set("pi");
+    assert(rc == 0);
+
+    rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
+    assert(!rc);
+
+    oc_init_platform("MyNewt", NULL, NULL);
+    oc_add_device("/oic/d", "oic.d.color", "color0", "1.0", "1.0", NULL,
+                  NULL);
+    assert(!oc_stack_errno);
 
     /*
      * As the last thing, process events from default event queue.

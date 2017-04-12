@@ -289,17 +289,187 @@ err:
     return rc;
 }
 
+static int
+sensor_typename_to_type(char *typename, sensor_type_t *type,
+                        struct sensor *sensor)
+{
+    if (!strcmp(typename, "acc")) {
+        /* Accelerometer functionality supported */
+        *type = SENSOR_TYPE_ACCELEROMETER;
+    } else if (!strcmp(typename, "mag")) {
+        /* Magnetic field supported */
+        *type = SENSOR_TYPE_MAGNETIC_FIELD;
+    } else if (!strcmp(typename, "gyr")) {
+        /* Gyroscope supported */
+        *type = SENSOR_TYPE_GYROSCOPE;
+    } else if (!strcmp(typename, "lt")) {
+        /* Light supported */
+        *type = SENSOR_TYPE_LIGHT;
+    } else if (!strcmp(typename, "tmp")) {
+        /* Temperature supported */
+        *type = SENSOR_TYPE_TEMPERATURE;
+    } else if (!strcmp(typename, "ambtmp")) {
+        /* Ambient temperature supported */
+        *type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
+    } else if (!strcmp(typename, "psr")) {
+        /* Pressure sensor supported */
+        *type = SENSOR_TYPE_PRESSURE;
+    } else if (!strcmp(typename, "prox")) {
+        /* Proximity sensor supported */
+        *type = SENSOR_TYPE_PROXIMITY;
+    } else if (!strcmp(typename, "rhmty")) {
+        /* Relative humidity supported */
+        *type = SENSOR_TYPE_RELATIVE_HUMIDITY;
+    } else if (!strcmp(typename, "quat")) {
+        /* Rotation vector (quaternion)) supported */
+        *type = SENSOR_TYPE_ROTATION_VECTOR;
+    } else if (!strcmp(typename, "alt")) {
+        /* Altitude Supported */
+        *type = SENSOR_TYPE_ALTITUDE;
+    } else if (!strcmp(typename, "wt")) {
+        /* Weight Supported */
+        *type = SENSOR_TYPE_WEIGHT;
+    } else if (!strcmp(typename, "lacc")) {
+        /* Linear Accelerometer (Without Gravity)) */
+        *type = SENSOR_TYPE_LINEAR_ACCEL;
+    } else if (!strcmp(typename, "grav")) {
+        /* Gravity Sensor */
+        *type = SENSOR_TYPE_GRAVITY;
+    } else if (!strcmp(typename, "eul")) {
+        /* Euler Orientation Sensor */
+        *type = SENSOR_TYPE_EULER;
+    } else if (!strcmp(typename, "col")) {
+        /* Color Sensor */
+        *type = SENSOR_TYPE_COLOR;
+    } else if (!strcmp(typename, "udef1")) {
+        /* User defined sensor type 1 */
+        *type = SENSOR_TYPE_USER_DEFINED_1;
+    } else if (!strcmp(typename, "udef2")) {
+        /* User defined sensor type 2 */
+        *type = SENSOR_TYPE_USER_DEFINED_2;
+    } else {
+        goto err;
+    }
+
+    if (!(*type & sensor->s_types)) {
+        goto err;
+    }
+
+    return SYS_EOK;
+err:
+    return SYS_EINVAL;
+}
+
+static int
+sensor_type_to_typename(char **typename, sensor_type_t type,
+                        struct sensor *sensor)
+{
+    switch(type) {
+        /* Accelerometer functionality supported */
+        case SENSOR_TYPE_ACCELEROMETER:
+            *typename =  "acc";
+            break;
+        /* Magnetic field supported */
+        case SENSOR_TYPE_MAGNETIC_FIELD:
+            *typename = "mag";
+            break;
+        /* Gyroscope supported */
+        case SENSOR_TYPE_GYROSCOPE:
+            *typename = "gyr";
+            break;
+        /* Light supported */
+        case SENSOR_TYPE_LIGHT:
+            *typename = "lt";
+            break;
+        /* Temperature supported */
+        case SENSOR_TYPE_TEMPERATURE:
+            *typename = "tmp";
+            break;
+        /* Ambient temperature supported */
+        case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+            *typename = "ambtmp";
+            break;
+        /* Pressure sensor supported */
+        case SENSOR_TYPE_PRESSURE:
+            *typename = "psr";
+            break;
+        /* Proximity sensor supported */
+        case SENSOR_TYPE_PROXIMITY:
+            *typename = "prox";
+            break;
+        /* Relative humidity supported */
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            *typename = "rhmty";
+            break;
+        /* Rotation vector (quaternion)) supported */
+        case SENSOR_TYPE_ROTATION_VECTOR:
+            *typename = "quat";
+            break;
+        /* Altitude Supported */
+        case SENSOR_TYPE_ALTITUDE:
+            *typename = "alt";
+            break;
+        /* Weight Supported */
+        case SENSOR_TYPE_WEIGHT:
+            *typename = "wt";
+            break;
+        /* Linear Accelerometer (Without Gravity)) */
+        case SENSOR_TYPE_LINEAR_ACCEL:
+            *typename = "lacc";
+            break;
+        /* Gravity Sensor */
+        case SENSOR_TYPE_GRAVITY:
+            *typename = "grav";
+            break;
+        /* Euler Orientation Sensor */
+        case SENSOR_TYPE_EULER:
+            *typename = "eul";
+            break;
+        /* Color Sensor */
+        case SENSOR_TYPE_COLOR:
+            *typename = "col";
+            break;
+        /* User defined sensor type 1 */
+        case SENSOR_TYPE_USER_DEFINED_1:
+            *typename = "udef1";
+            break;
+        /* User defined sensor type 2 */
+        case SENSOR_TYPE_USER_DEFINED_2:
+            *typename = "udef2";
+            break;
+        default:
+            goto err;
+    }
+
+    if (!(type & sensor->s_types)) {
+        goto err;
+    }
+
+    return SYS_EOK;
+err:
+    return SYS_EINVAL;
+}
+
 static void
 sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
 {
     int rc;
     struct sensor *sensor;
     struct sensor_listener listener;
+    char *devname;
+    char *typename;
+    sensor_type_t type;
+    const char s[2] = "/";
+
+    /* Parse the sensor device name from the uri  */
+    devname = strtok((char *)&(request->resource->uri.os_str[1]), s);
+    typename = strtok(NULL, s);
 
     /* Look up sensor by name */
-    sensor = sensor_mgr_find_next_bydevname("color0", NULL);
+    sensor = sensor_mgr_find_next_bydevname(devname, NULL);
     if (!sensor) {
-        console_printf("Sensor %s not found!\n", "color0");
+        rc = SYS_EINVAL;
+        goto err;
     }
 
     oc_rep_start_root_object();
@@ -311,7 +481,13 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
         /* Register a listener and then trigger/read a bunch of samples */
         memset(&listener, 0, sizeof(listener));
 
-        listener.sl_sensor_type = sensor->s_types & SENSOR_TYPE_COLOR;
+        rc = sensor_typename_to_type(typename, &type, sensor);
+        if (rc) {
+            /* Type either not supported by sensor or not found */
+            goto err;
+        }
+
+        listener.sl_sensor_type = type;
         listener.sl_func = sensor_oic_encode;
         listener.sl_arg = (void *)&listener.sl_sensor_type;
 
@@ -348,16 +524,62 @@ void
 sensor_oic_init(void)
 {
     oc_resource_t *res;
+    struct sensor *sensor;
+    char *tmpstr;
+    size_t bufsize;
+    char *typename;
+    int i;
+    int rc;
 
-    res = oc_new_resource("/color0", 1, 0);
-    oc_resource_bind_resource_type(res, "sensors.r.color0");
-    oc_resource_bind_resource_interface(res, OC_IF_R);
-    oc_resource_set_default_interface(res, OC_IF_R);
+    sensor = NULL;
 
-    oc_resource_set_discoverable(res);
-    oc_resource_set_periodic_observable(res, 1);
-    oc_resource_set_request_handler(res, OC_GET, sensor_oic_get_data);
-    oc_add_resource(res);
+    while (1) {
+
+        sensor_mgr_lock();
+
+        sensor = sensor_mgr_find_next_bytype(SENSOR_TYPE_ALL, sensor);
+
+        sensor_mgr_unlock();
+
+        if (sensor == NULL) {
+            /* Sensor not found */
+            break;
+        }
+
+        i = 0;
+        typename = NULL;
+
+        /* Iterate through N types of sensors */
+        while (i < 32) {
+            if (sensor->s_types & (1 << i)) {
+                rc = sensor_type_to_typename(&typename, (1 << i), sensor);
+                if (rc) {
+                    break;
+                }
+                bufsize = strlen(sensor->s_dev->od_name) + 1;
+                tmpstr = (char *)calloc(bufsize, bufsize);
+                sprintf(tmpstr, "/%s/%s", sensor->s_dev->od_name, typename);
+                res = oc_new_resource(tmpstr, 1, 0);
+                free(tmpstr);
+
+                bufsize = strlen(sensor->s_dev->od_name) + strlen("sensors.r.");
+                tmpstr = (char *)calloc(bufsize, bufsize);
+                sprintf(tmpstr, "sensors.r.%s", sensor->s_dev->od_name);
+
+                oc_resource_bind_resource_type(res, tmpstr);
+                free(tmpstr);
+
+                oc_resource_bind_resource_interface(res, OC_IF_R);
+                oc_resource_set_default_interface(res, OC_IF_R);
+
+                oc_resource_set_discoverable(res);
+                oc_resource_set_periodic_observable(res, 1);
+                oc_resource_set_request_handler(res, OC_GET, sensor_oic_get_data);
+                oc_add_resource(res);
+            }
+            i++;
+        }
+    }
 }
 
 #endif
