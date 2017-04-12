@@ -80,4 +80,4 @@ syscfg.defs:
         value: 0
     FLOAT_USER:
         descriptiong: 'Enable float support for users'
-        value: 1
+        value: 0

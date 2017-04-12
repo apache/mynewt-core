@@ -52,6 +52,8 @@ syscfg.vals:
     OC_TRANSPORT_GATT: 1
     OC_APP_RESOURCES : 20
 
+    FLOAT_USER: 1
+
 syscfg.defs:
     TSL2561_PRESENT:
         description: 'TSL2561 is present'

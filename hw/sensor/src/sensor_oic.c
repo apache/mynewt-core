@@ -460,9 +460,15 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     char *typename;
     sensor_type_t type;
     const char s[2] = "/";
+    char *tmpstr;
+
+    tmpstr = calloc(request->resource->uri.os_sz, request->resource->uri.os_sz);
+
+    memcpy(tmpstr, (char *)&(request->resource->uri.os_str[1]),
+           request->resource->uri.os_sz - 1);
 
     /* Parse the sensor device name from the uri  */
-    devname = strtok((char *)&(request->resource->uri.os_str[1]), s);
+    devname = strtok(tmpstr, s);
     typename = strtok(NULL, s);
 
     /* Look up sensor by name */
@@ -511,11 +517,13 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
         break;
     }
 
+    free(tmpstr);
     sensor_unregister_listener(sensor, &listener);
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
     return;
 err:
+    free(tmpstr);
     sensor_unregister_listener(sensor, &listener);
     oc_send_response(request, OC_STATUS_NOT_FOUND);
 }
@@ -562,7 +570,7 @@ sensor_oic_init(void)
                 res = oc_new_resource(tmpstr, 1, 0);
                 free(tmpstr);
 
-                bufsize = strlen(sensor->s_dev->od_name) + strlen("sensors.r.");
+                bufsize = strlen(sensor->s_dev->od_name) + sizeof("sensors.r.");
                 tmpstr = (char *)calloc(bufsize, bufsize);
                 sprintf(tmpstr, "sensors.r.%s", sensor->s_dev->od_name);
 
