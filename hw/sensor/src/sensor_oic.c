@@ -460,9 +460,7 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     char *typename;
     sensor_type_t type;
     const char s[2] = "/";
-    char *tmpstr;
-
-    tmpstr = calloc(request->resource->uri.os_sz, request->resource->uri.os_sz);
+    char tmpstr[COAP_MAX_URI];
 
     memcpy(tmpstr, (char *)&(request->resource->uri.os_str[1]),
            request->resource->uri.os_sz - 1);
@@ -517,13 +515,11 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
         break;
     }
 
-    free(tmpstr);
     sensor_unregister_listener(sensor, &listener);
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
     return;
 err:
-    free(tmpstr);
     sensor_unregister_listener(sensor, &listener);
     oc_send_response(request, OC_STATUS_NOT_FOUND);
 }
@@ -533,8 +529,7 @@ sensor_oic_init(void)
 {
     oc_resource_t *res;
     struct sensor *sensor;
-    char *tmpstr;
-    size_t bufsize;
+    char tmpstr[COAP_MAX_URI];
     char *typename;
     int i;
     int rc;
@@ -564,25 +559,24 @@ sensor_oic_init(void)
                 if (rc) {
                     break;
                 }
-                bufsize = strlen(sensor->s_dev->od_name) + 1;
-                tmpstr = (char *)calloc(bufsize, bufsize);
-                sprintf(tmpstr, "/%s/%s", sensor->s_dev->od_name, typename);
-                res = oc_new_resource(tmpstr, 1, 0);
-                free(tmpstr);
 
-                bufsize = strlen(sensor->s_dev->od_name) + sizeof("sensors.r.");
-                tmpstr = (char *)calloc(bufsize, bufsize);
-                sprintf(tmpstr, "sensors.r.%s", sensor->s_dev->od_name);
+                memset(tmpstr, 0, sizeof(tmpstr));
+                snprintf(tmpstr, sizeof(tmpstr), "/%s/%s",
+                         sensor->s_dev->od_name, typename);
+                res = oc_new_resource(tmpstr, 1, 0);
+
+                memset(tmpstr, 0, sizeof(tmpstr));
+                snprintf(tmpstr, sizeof(tmpstr), "sensors.r.%s", sensor->s_dev->od_name);
 
                 oc_resource_bind_resource_type(res, tmpstr);
-                free(tmpstr);
 
                 oc_resource_bind_resource_interface(res, OC_IF_R);
                 oc_resource_set_default_interface(res, OC_IF_R);
 
                 oc_resource_set_discoverable(res);
                 oc_resource_set_periodic_observable(res, 1);
-                oc_resource_set_request_handler(res, OC_GET, sensor_oic_get_data);
+                oc_resource_set_request_handler(res, OC_GET,
+                                                sensor_oic_get_data);
                 oc_add_resource(res);
             }
             i++;
