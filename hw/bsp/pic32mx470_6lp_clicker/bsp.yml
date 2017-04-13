@@ -17,30 +17,37 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/pic32mx470_6LP_clicker
-pkg.type: bsp
-pkg.description: BSP definition for the 6LoWPAN Clicker board.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - pic32
-    - microchip
-    - clicker
+bsp.arch: pic32
+bsp.compiler: compiler/xc32
 
-pkg.lflags:
-    - -Wl,--defsym=_min_heap_size=0x400
+bsp.flash_map:
+    areas:
+        # System areas.
+        FLASH_AREA_BOOTLOADER:
+            device: 0
+            offset: 0x00000000
+            size: 0kB
+        FLASH_AREA_IMAGE_0:
+            device: 0
+            offset: 0x00000000
+            size: 0kB
+        FLASH_AREA_IMAGE_1:
+            device: 0
+            offset: 0x00000000
+            size: 0kB
+        FLASH_AREA_IMAGE_SCRATCH:
+            device: 0
+            offset: 0x00000000
+            size: 0kB
 
-pkg.deps:
-    - hw/mcu/microchip/pic32mx470f512h
-
-pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
-
-pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
-
-pkg.deps.UART_2:
-    - hw/drivers/uart/uart_hal
-
-pkg.deps.UART_3:
-    - hw/drivers/uart/uart_hal
+        # User areas.
+        FLASH_AREA_REBOOT_LOG:
+            user_id: 0
+            device: 0
+            offset: 0x00000000
+            size: 0kB
+        FLASH_AREA_NFFS:
+            user_id: 1
+            device: 0
+            offset: 0x00000000
+            size: 0kB

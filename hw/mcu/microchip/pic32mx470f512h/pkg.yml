@@ -17,25 +17,15 @@
 # under the License.
 #
 
-# Package: hw/bsp/pic32mx470_6LP_clicker
+pkg.name: hw/mcu/microchip/pic32mx470f512h
+pkg.description: MCU definition for the Microchip PIC32MX470F512H microcontroller.
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - pic32
 
-syscfg.defs:
-    CLOCK_FREQ:
-        description: 'TBD'
-        value:  80000000ul
-
-    UART_0:
-        description: 'TBD'
-        value:  1
-
-    UART_1:
-        description: 'TBD'
-        value:  1
-
-    UART_2:
-        description: 'TBD'
-        value:  1
-
-    UART_3:
-        description: 'TBD'
-        value:  1
+pkg.cflags:
+    - -mprocessor=32MX470F512H
+pkg.deps:
+    - hw/hal
+    - compiler/xc32

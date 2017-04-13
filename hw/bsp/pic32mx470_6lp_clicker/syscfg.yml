@@ -17,37 +17,25 @@
 # under the License.
 #
 
-bsp.arch: pic32mx
-bsp.compiler: compiler/xc32
+# Package: hw/bsp/pic32mx470_6lp_clicker
 
-bsp.flash_map:
-    areas:
-        # System areas.
-        FLASH_AREA_BOOTLOADER:
-            device: 0
-            offset: 0x00000000
-            size: 0kB
-        FLASH_AREA_IMAGE_0:
-            device: 0
-            offset: 0x00000000
-            size: 0kB
-        FLASH_AREA_IMAGE_1:
-            device: 0
-            offset: 0x00000000
-            size: 0kB
-        FLASH_AREA_IMAGE_SCRATCH:
-            device: 0
-            offset: 0x00000000
-            size: 0kB
+syscfg.defs:
+    CLOCK_FREQ:
+        description: 'TBD'
+        value:  80000000ul
 
-        # User areas.
-        FLASH_AREA_REBOOT_LOG:
-            user_id: 0
-            device: 0
-            offset: 0x00000000
-            size: 0kB
-        FLASH_AREA_NFFS:
-            user_id: 1
-            device: 0
-            offset: 0x00000000
-            size: 0kB
+    UART_0:
+        description: 'TBD'
+        value:  1
+
+    UART_1:
+        description: 'TBD'
+        value:  1
+
+    UART_2:
+        description: 'TBD'
+        value:  1
+
+    UART_3:
+        description: 'TBD'
+        value:  1

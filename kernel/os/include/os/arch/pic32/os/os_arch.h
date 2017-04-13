@@ -17,14 +17,13 @@
  * under the License.
  */
 
-#ifndef _OS_ARCH_PIC32MX_H
-#define _OS_ARCH_PIC32MX_H
+#ifndef _OS_ARCH_H
+#define _OS_ARCH_H
 
 #include <stdint.h>
 #include <xc.h>
 
-// is this req'd? It seems a little odd to include up the tree
-#include "mcu/pic32mx470.h"
+#include "mcu/pic32.h"
 
 struct os_task;
 
@@ -81,4 +80,4 @@ void os_default_irq_asm(void);
 void os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio);
 void os_bsp_ctx_sw(void);
 
-#endif /* _OS_ARCH_PIC32MX_H */
+#endif /* _OS_ARCH_H */

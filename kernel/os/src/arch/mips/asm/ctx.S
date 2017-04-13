@@ -33,10 +33,16 @@
 #include <mips/cpu.h>
 #include <mips/hal.h>
 
+#define OS_STACK_ALIGNMENT  (8)
+
+#define CTX_ALIGNED_SIZE ((((CTX_SIZE - 1) / OS_STACK_ALIGNMENT) + 1) * \
+    OS_STACK_ALIGNMENT)
+
 # note that k0 is not saved when using these macros.
 # The cause register is saved but not resored.
 
 # saves to location k0
+
 .macro _gpctx_save
     REG_S   $1, CTX_REG(1) (k0)
     REG_S   $2, CTX_REG(2) (k0)
@@ -69,7 +75,7 @@
     REG_S   $29, CTX_REG(29)(k0)
     REG_S   $30, CTX_REG(30)(k0)
     REG_S   $31, CTX_REG(31)(k0)
-    PTR_S   $0, CTX_LINK(k0) # Clear the link field
+    PTR_S   $0, CTX_LINK(k0)        # Clear the link field
 
 #if (__mips_isa_rev < 6)
 	mfhi	$9
@@ -79,7 +85,8 @@
 #endif
 
     # cp0
-    REG_S	ra, CTX_EPC(k0)
+    PTR_MFC0 $9, C0_EPC
+    REG_S	$9, CTX_EPC(k0)
     PTR_MFC0 $9, C0_BADVADDR
 	REG_S	$9, CTX_BADVADDR(k0)
     mfc0	$9, C0_SR
@@ -145,6 +152,7 @@
     REG_L   $31, CTX_REG(31)(a0)
 
     di
+
     REG_L   k0, CTX_EPC(a0)
     PTR_MTC0 k0, C0_EPC
     lw      k0, CTX_STATUS(a0)
@@ -175,8 +183,8 @@ _mips_isr_sw0:
     # context switch
     .set noat
     # save k0
-    REG_S   $26, (CTX_REG(25) - CTX_SIZE) (sp)
-    addi    k0, sp, -((((CTX_SIZE - 1) / 8) + 1) * 8)
+    REG_S   $26, (CTX_REG(25) - CTX_ALIGNED_SIZE)(sp)
+    addi    k0, sp, -CTX_ALIGNED_SIZE
     _gpctx_save                     # save the context
     .set at
     lw      t0, g_current_task      # get current task

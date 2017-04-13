@@ -27,16 +27,22 @@
 
 #include <string.h>
 
+#define OS_TICK_PERIOD ((MYNEWT_VAL(CLOCK_FREQ) / 2) / OS_TICKS_PER_SEC)
+
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void SysTick_Handler(void);
 
 struct ctx {
-    uint32_t regs[31];
+    uint32_t regs[30];
     uint32_t epc;
     uint32_t badvaddr;
     uint32_t status;
     uint32_t cause;
+#if (__mips_isa_rev < 6)
+    uint32_t lo;
+    uint32_t hi;
+#endif
 };
 
 /* XXX: determine how to deal with running un-privileged */
@@ -45,12 +51,14 @@ uint32_t os_flags = OS_RUN_PRIV;
 
 extern struct os_task g_idle_task;
 
+struct os_task *g_fpu_task;
+
 /* core timer interrupt */
 void __attribute__((interrupt(IPL1AUTO),
 vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
 {
     timer_handler();
-    _CP0_SET_COMPARE(_CP0_GET_COMPARE() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
+    _CP0_SET_COMPARE(_CP0_GET_COMPARE() + OS_TICK_PERIOD);
     IFS0CLR = _IFS0_CTIF_MASK;
 }
 
@@ -108,21 +116,21 @@ uint32_t get_global_pointer(void);
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
+    stack_top -= 4; /* space for incoming arguments */
     os_stack_t *s = stack_top - ((((sizeof(struct ctx) - 1) /
-        OS_STACK_ALIGNMENT) + 1) * 2);
+        OS_STACK_ALIGNMENT) + 1) * (OS_STACK_ALIGNMENT/sizeof(os_stack_t)));
 
     struct ctx ctx;
 
     ctx.regs[3] = (uint32_t)t->t_arg;
     ctx.regs[27] = get_global_pointer();
-    ctx.regs[28] = (uint32_t)(stack_top - 4);
     ctx.status = _CP0_GET_STATUS() | _CP0_STATUS_IE_MASK;
     ctx.cause = _CP0_GET_CAUSE();
     ctx.epc = (uint32_t)t->t_func;
     /* copy struct onto the stack */
     memcpy(s, &ctx, sizeof(ctx));
 
-    return (s);
+    return (uint32_t)stack_top;
 }
 
 void
@@ -152,19 +160,19 @@ os_arch_os_init(void)
         IEC0SET = _IEC0_CTIE_MASK;
         /* set interrupt priority */
         IPC0CLR = _IPC0_CTIP_MASK;
-        IPC0SET = (1 << _IPC0_CTIP_POSITION); // priority 1
+        IPC0SET = (1 << _IPC0_CTIP_POSITION); /* priority 1 */
         /* set interrupt subpriority */
         IPC0CLR = _IPC0_CTIS_MASK;
-        IPC0SET = (0 << _IPC0_CTIS_POSITION); // subpriority 0
+        IPC0SET = (0 << _IPC0_CTIS_POSITION); /* subpriority 0 */
 
         /* enable software interrupt 0 */
         IEC0SET = _IEC0_CS0IE_MASK;
         /* set interrupt priority */
         IPC0CLR = _IPC0_CS0IP_MASK;
-        IPC0SET = (1 << _IPC0_CS0IP_POSITION); // priority 1
+        IPC0SET = (1 << _IPC0_CS0IP_POSITION); /* priority 1 */
         /* set interrupt subpriority */
         IPC0CLR = _IPC0_CS0IS_MASK;
-        IPC0SET = (0 << _IPC0_CS0IS_POSITION); // subpriority 0
+        IPC0SET = (0 << _IPC0_CS0IS_POSITION); /* subpriority 0 */
 
         OS_EXIT_CRITICAL(sr);
 
@@ -183,7 +191,7 @@ os_arch_start(void)
     t = os_sched_next_task();
 
     /* set the core timer compare register */
-    _CP0_SET_COMPARE(_CP0_GET_COUNT() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) / 1000));
+    _CP0_SET_COMPARE(_CP0_GET_COUNT() + OS_TICK_PERIOD);
 
     /* global interrupt enable */
     __builtin_enable_interrupts();
@@ -202,7 +210,7 @@ os_arch_os_start(void)
 {
     os_error_t err;
 
-    err = OS_OK; // OS_ERR_IN_ISR
+    err = OS_ERR_IN_ISR;
     if (os_in_isr() == 0) {
         err = OS_OK;
         /* should be in kernel mode here */

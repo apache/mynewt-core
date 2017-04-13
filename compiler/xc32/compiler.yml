@@ -24,7 +24,7 @@ compiler.path.objdump: "xc32-objdump"
 compiler.path.objsize: "xc32-size"
 compiler.path.objcopy: "xc32-objcopy"
 
-compiler.flags.base: -I/opt/microchip/xc32/v1.42/pic32mx/include -std=gnu11
+compiler.flags.base: -std=gnu11
 compiler.flags.default: [compiler.flags.base, -O2, -g3]
 compiler.flags.optimized: [compiler.flags.base, -Os -g3]
 compiler.flags.debug: [compiler.flags.base, -g3]
