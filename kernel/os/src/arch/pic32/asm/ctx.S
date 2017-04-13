@@ -17,7 +17,8 @@
  * under the License.
  */
 
-#include <xc.h>
+#include "mcu/mcu.h"
+#include "os/os_arch_defs.h"
 #include "syscfg/syscfg.h"
 
 #define OS_STACK_ALIGNMENT  (8)

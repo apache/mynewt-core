@@ -17,30 +17,25 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/pic32mx470_6LP_clicker
-pkg.type: bsp
-pkg.description: BSP definition for the 6LoWPAN Clicker board.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - pic32
-    - microchip
-    - clicker
+# Package: hw/bsp/pic32mx470_6lp_clicker
 
-pkg.lflags:
-    - -Wl,--defsym=_min_heap_size=0x400
+syscfg.defs:
+    CLOCK_FREQ:
+        description: 'TBD'
+        value:  80000000ul
 
-pkg.deps:
-    - hw/mcu/microchip/pic32mx470f512h
+    UART_0:
+        description: 'TBD'
+        value:  1
 
-pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    UART_1:
+        description: 'TBD'
+        value:  1
 
-pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
+    UART_2:
+        description: 'TBD'
+        value:  1
 
-pkg.deps.UART_2:
-    - hw/drivers/uart/uart_hal
-
-pkg.deps.UART_3:
-    - hw/drivers/uart/uart_hal
+    UART_3:
+        description: 'TBD'
+        value:  1
