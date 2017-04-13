@@ -120,6 +120,14 @@ console_blocking_mode(void)
 #endif
 }
 
+void
+console_non_blocking_mode(void)
+{
+#if MYNEWT_VAL(CONSOLE_UART)
+    uart_console_non_blocking_mode();
+#endif
+}
+
 static inline void
 cursor_forward(unsigned int count)
 {
@@ -368,7 +376,9 @@ console_handle_char(uint8_t byte)
             break;
         case '\t':
             if (completion_cb && !end) {
+                console_blocking_mode();
                 cur += completion_cb(input->line, cur);
+                console_non_blocking_mode();
             }
             break;
         default:

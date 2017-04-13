@@ -42,6 +42,7 @@ void console_write(const char *str, int cnt);
 int console_read(char *str, int cnt, int *newline);
 #endif
 void console_blocking_mode(void);
+void console_non_blocking_mode(void);
 void console_echo(int on);
 
 int console_printf(const char *fmt, ...)

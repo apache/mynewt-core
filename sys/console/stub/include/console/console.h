@@ -63,6 +63,11 @@ console_blocking_mode(void)
 }
 
 static void inline
+console_non_blocking_mode(void)
+{
+}
+
+static void inline
 console_echo(int on)
 {
 }

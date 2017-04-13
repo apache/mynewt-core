@@ -118,6 +118,18 @@ uart_console_blocking_mode(void)
     OS_EXIT_CRITICAL(sr);
 }
 
+void
+uart_console_non_blocking_mode(void)
+{
+    int sr;
+
+    OS_ENTER_CRITICAL(sr);
+    if (write_char_cb) {
+        write_char_cb = console_queue_char;
+    }
+    OS_EXIT_CRITICAL(sr);
+}
+
 int
 console_out(int c)
 {
