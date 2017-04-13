@@ -17,7 +17,7 @@
 # under the License.
 #
 
-bsp.arch: pic32mx
+bsp.arch: pic32
 bsp.compiler: compiler/xc32
 
 bsp.flash_map:
