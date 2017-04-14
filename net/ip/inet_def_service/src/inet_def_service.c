@@ -106,7 +106,7 @@ inet_def_tcp_readable(void *arg, int err)
 {
     struct inet_def_tcp *idt = (struct inet_def_tcp *)arg;
 
-    if (err) {
+    if (err && !idt->closed) {
         idt->closed = 1;
         /*
          * No locking here. Assuming new connection notifications, as well as
@@ -241,7 +241,11 @@ inet_def_event(struct os_event *ev)
     case INET_DEF_ECHO:
         while (mn_recvfrom(sock, &m, (struct mn_sockaddr *)&msin) == 0) {
             console_printf("echo %d bytes\n", OS_MBUF_PKTLEN(m));
-            rc = mn_sendto(sock, m, (struct mn_sockaddr *)&msin);
+            if ((int)ev->ev_arg == MN_SOCK_DGRAM) {
+                rc = mn_sendto(sock, m, (struct mn_sockaddr *)&msin);
+            } else {
+                rc = mn_sendto(sock, m, NULL);
+            }
             if (rc) {
                 console_printf("  failed: %d!!!!\n", rc);
                 os_mbuf_free_chain(m);
@@ -307,108 +311,6 @@ inet_def_event(struct os_event *ev)
         os_free(idt);
     }
 }
-
-#if 0
-static void
-inet_def_srv(void *arg)
-{
-    struct inet_def_udp *idu;
-    struct inet_def_tcp *idt;
-    struct mn_socket *sock;
-    struct os_event *ev;
-    struct mn_sockaddr_in msin;
-    struct os_mbuf *m;
-    enum inet_def_type type;
-    int rc;
-    int off;
-    int loop_cnt;
-
-    while (1) {
-        /*
-         * Wait here. When event comes, check what type of socket got it,
-         * and then act on it.
-         */
-        ev = os_eventq_get(inet_def_evq);
-        type = ev->ev_type;
-        idt = (struct inet_def_tcp *)ev;
-        idu = (struct inet_def_udp *)ev;
-        if ((int)ev->ev_arg == MN_SOCK_DGRAM) {
-            sock = idu->socket;
-        } else {
-            sock = idt->socket;
-        }
-        switch (type) {
-        case INET_DEF_ECHO:
-            while (mn_recvfrom(sock, &m, (struct mn_sockaddr *)&msin) == 0) {
-                console_printf("echo %d bytes\n", OS_MBUF_PKTLEN(m));
-                rc = mn_sendto(sock, m, (struct mn_sockaddr *)&msin);
-                if (rc) {
-                    console_printf("  failed: %d!!!!\n", rc);
-                    os_mbuf_free_chain(m);
-                }
-            }
-            break;
-        case INET_DEF_DISCARD:
-            while (mn_recvfrom(sock, &m, NULL) == 0) {
-                console_printf("discard %d bytes\n", OS_MBUF_PKTLEN(m));
-                os_mbuf_free_chain(m);
-            }
-            break;
-        case INET_DEF_CHARGEN:
-            while (mn_recvfrom(sock, &m, NULL) == 0) {
-                os_mbuf_free_chain(m);
-            }
-            if ((int)ev->ev_arg == MN_SOCK_STREAM && idt->closed) {
-                /*
-                 * Don't try to send tons of data to a closed socket.
-                 */
-                break;
-            }
-            loop_cnt = 0;
-            do {
-                m = os_msys_get(CHARGEN_WRITE_SZ, 0);
-                if (m) {
-                    for (off = 0;
-                         OS_MBUF_TRAILINGSPACE(m) >= CHARGEN_PATTERN_SZ;
-                         off += CHARGEN_PATTERN_SZ) {
-                        os_mbuf_copyinto(m, off, chargen_pattern,
-                          CHARGEN_PATTERN_SZ);
-                    }
-                    console_printf("chargen %d bytes\n", m->om_len);
-                    rc = mn_sendto(sock, m, NULL); /* assumes TCP for now */
-                    if (rc) {
-                        os_mbuf_free_chain(m);
-                        if (rc != MN_ENOBUFS && rc != MN_EAGAIN) {
-                            console_write("  sendto fail!!! %d\n", rc);
-                        }
-                        break;
-                    }
-                } else {
-                    /*
-                     * Mbuf shortage. Wait for them to appear.
-                     */
-                    os_time_delay(1);
-                }
-                loop_cnt++;
-            } while (loop_cnt < 32);
-            break;
-        default:
-            assert(0);
-            break;
-        }
-        if ((int)ev->ev_arg == MN_SOCK_STREAM && idt->closed) {
-            /*
-             * Remote end has closed the connection, as indicated in the
-             * callback. Close the socket and free the memory.
-             */
-            mn_socket_set_cbs(idt->socket, NULL, NULL);
-            os_eventq_remove(&inet_def_evq, &idt->ev);
-            mn_close(idt->socket);
-            os_free(idt);
-        }
-    }
-}
-#endif
 
 void
 inet_def_service_init(struct os_eventq *evq)
