@@ -80,7 +80,7 @@ extern "C" {
 #define MEMP_NUM_TCP_PCB                3	/* XXX */
 /* MEMP_NUM_TCP_PCB_LISTEN: the number of listening TCP
    connections. */
-#define MEMP_NUM_TCP_PCB_LISTEN         1
+#define MEMP_NUM_TCP_PCB_LISTEN         3
 /* MEMP_NUM_TCP_SEG: the number of simultaneously queued TCP
    segments. */
 #define MEMP_NUM_TCP_SEG                (TCP_SND_QUEUELEN + 1)
@@ -101,11 +101,17 @@ extern "C" {
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
 #ifndef PBUF_POOL_SIZE
-#define PBUF_POOL_SIZE                  3
+#define PBUF_POOL_SIZE                  6
 #endif
 
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
 #define PBUF_POOL_BUFSIZE               1580
+
+/*
+ * Disable this; causes excessive stack use in device drivers calling
+ * pbuf_alloc()
+ */
+#define PBUF_POOL_FREE_OOSEQ            0
 
 /* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
    link level header. */
