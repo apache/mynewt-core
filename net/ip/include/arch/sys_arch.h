@@ -143,7 +143,7 @@ sys_thread_new(const char *name, void (*thread)(void *arg), void *arg,
 
     task = (struct os_task *)os_malloc(sizeof(*task));
     assert(task);
-    stack = (os_stack_t *)os_malloc(stacksize);
+    stack = (os_stack_t *)os_malloc(stacksize * sizeof(os_stack_t));
     assert(stack);
     if (os_task_init(task, name, thread, arg, prio, OS_WAIT_FOREVER, stack,
         stacksize)) {
