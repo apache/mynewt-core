@@ -44,6 +44,8 @@
 #include <oic/oc_ri.h>
 #include <oic/oc_api.h>
 
+static const char g_s_oic_dn[] = "x.mynewt.sensors.r.";
+
 static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 {
@@ -456,23 +458,22 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     int rc;
     struct sensor *sensor;
     struct sensor_listener listener;
-    char *devname;
+    char devname[COAP_MAX_URI] = {0};
     char *typename;
     sensor_type_t type;
-    const char s[2] = "/";
-    char tmpstr[COAP_MAX_URI];
 
-    memcpy(tmpstr, (char *)&(request->resource->uri.os_str[1]),
+    memcpy(devname, (char *)&(request->resource->uri.os_str[1]),
            request->resource->uri.os_sz - 1);
-
-    /* Parse the sensor device name from the uri  */
-    devname = strtok(tmpstr, s);
-    typename = strtok(NULL, s);
 
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(devname, NULL);
     if (!sensor) {
         rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (memcmp(g_s_oic_dn, request->resource->types.oa_arr.s,
+               sizeof(g_s_oic_dn) - 1)) {
         goto err;
     }
 
@@ -485,6 +486,8 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
         /* Register a listener and then trigger/read a bunch of samples */
         memset(&listener, 0, sizeof(listener));
 
+        typename =
+            &(request->resource->types.oa_arr.s[sizeof(g_s_oic_dn) - 1]);
         rc = sensor_typename_to_type(typename, &type, sensor);
         if (rc) {
             /* Type either not supported by sensor or not found */
@@ -561,15 +564,13 @@ sensor_oic_init(void)
                 }
 
                 memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "/%s/%s",
-                         sensor->s_dev->od_name, typename);
+                snprintf(tmpstr, sizeof(tmpstr), "/%s", sensor->s_dev->od_name);
+
                 res = oc_new_resource(tmpstr, 1, 0);
 
                 memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "sensors.r.%s", sensor->s_dev->od_name);
-
+                snprintf(tmpstr, sizeof(tmpstr), "x.mynewt.sensors.r.%s", typename);
                 oc_resource_bind_resource_type(res, tmpstr);
-
                 oc_resource_bind_resource_interface(res, OC_IF_R);
                 oc_resource_set_default_interface(res, OC_IF_R);
 
