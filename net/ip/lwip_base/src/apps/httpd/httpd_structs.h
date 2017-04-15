@@ -3,10 +3,6 @@
 
 #include "lwip/apps/httpd.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if LWIP_HTTPD_DYNAMIC_HEADERS
 /** This struct is used for a list of HTTP header strings for various
  * filename extensions. */
@@ -114,9 +110,5 @@ static const char * const g_pcSSIExtensions[] = {
 };
 #define NUM_SHTML_EXTENSIONS (sizeof(g_pcSSIExtensions) / sizeof(const char *))
 #endif /* LWIP_HTTPD_SSI */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_HTTPD_STRUCTS_H */

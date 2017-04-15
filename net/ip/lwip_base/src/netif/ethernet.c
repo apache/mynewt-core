@@ -56,6 +56,10 @@
 #include "netif/ppp/pppoe.h"
 #endif /* PPPOE_SUPPORT */
 
+#ifdef LWIP_HOOK_FILENAME
+#include LWIP_HOOK_FILENAME
+#endif
+
 const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
@@ -69,9 +73,9 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
  * @param p the received packet, p->payload pointing to the ethernet header
  * @param netif the network interface on which the packet was received
  * 
- * @see @ref LWIP_HOOK_UNKNOWN_ETH_PROTOCOL,
- * @ref ETHARP_SUPPORT_VLAN and
- * @ref LWIP_HOOK_VLAN_CHECK.
+ * @see LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+ * @see ETHARP_SUPPORT_VLAN
+ * @see LWIP_HOOK_VLAN_CHECK
  */
 err_t
 ethernet_input(struct pbuf *p, struct netif *netif)
@@ -98,7 +102,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
      (unsigned)ethhdr->dest.addr[3], (unsigned)ethhdr->dest.addr[4], (unsigned)ethhdr->dest.addr[5],
      (unsigned)ethhdr->src.addr[0],  (unsigned)ethhdr->src.addr[1],  (unsigned)ethhdr->src.addr[2],
      (unsigned)ethhdr->src.addr[3],  (unsigned)ethhdr->src.addr[4],  (unsigned)ethhdr->src.addr[5],
-     htons(ethhdr->type)));
+     lwip_htons(ethhdr->type)));
 
   type = ethhdr->type;
 #if ETHARP_SUPPORT_VLAN
@@ -130,7 +134,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #endif /* ETHARP_SUPPORT_VLAN */
 
 #if LWIP_ARP_FILTER_NETIF
-  netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, htons(type));
+  netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, lwip_htons(type));
 #endif /* LWIP_ARP_FILTER_NETIF*/
 
   if (ethhdr->dest.addr[0] & 1) {
@@ -247,7 +251,7 @@ free_and_return:
  * Send an ethernet packet on the network using netif->linkoutput().
  * The ethernet header is filled in before sending.
  *
- * @see @ref LWIP_HOOK_VLAN_SET
+ * @see LWIP_HOOK_VLAN_SET
  *
  * @param netif the lwIP network interface on which to send the packet
  * @param p the packet to send. pbuf layer must be @ref PBUF_LINK.
@@ -262,7 +266,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
                 u16_t eth_type)
 {
   struct eth_hdr* ethhdr;
-  u16_t eth_type_be = htons(eth_type);
+  u16_t eth_type_be = lwip_htons(eth_type);
 
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
   s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
@@ -276,7 +280,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
     }
     vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)p->payload) + SIZEOF_ETH_HDR);
     vlanhdr->tpid     = eth_type_be;
-    vlanhdr->prio_vid = htons((u16_t)vlan_prio_vid);
+    vlanhdr->prio_vid = lwip_htons((u16_t)vlan_prio_vid);
 
     eth_type_be = PP_HTONS(ETHTYPE_VLAN);
   } else

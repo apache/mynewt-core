@@ -275,8 +275,8 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
   PPPDEBUG(LOG_DEBUG, ("ppp_connect[%d]: holdoff=%d\n", pcb->netif->num, holdoff));
 
   if (holdoff == 0) {
-    new_phase(pcb, PPP_PHASE_INITIALIZE);
-    return pcb->link_cb->connect(pcb, pcb->link_ctx_cb);
+    ppp_do_connect(pcb);
+    return ERR_OK;
   }
 
   new_phase(pcb, PPP_PHASE_HOLDOFF);
@@ -302,7 +302,8 @@ err_t ppp_listen(ppp_pcb *pcb) {
 
   if (pcb->link_cb->listen) {
     new_phase(pcb, PPP_PHASE_INITIALIZE);
-    return pcb->link_cb->listen(pcb, pcb->link_ctx_cb);
+    pcb->link_cb->listen(pcb, pcb->link_ctx_cb);
+    return ERR_OK;
   }
   return ERR_IF;
 }
@@ -695,7 +696,7 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
   if (!netif_add(pcb->netif,
 #if LWIP_IPV4
-                 IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY,
+                 IP4_ADDR_ANY4, IP4_ADDR_BROADCAST, IP4_ADDR_ANY4,
 #endif /* LWIP_IPV4 */
                  (void *)pcb, ppp_netif_init_cb, NULL)) {
     LWIP_MEMPOOL_FREE(PPP_PCB, pcb);
@@ -1090,7 +1091,7 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
 
-  netif_set_addr(pcb->netif, IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY);
+  netif_set_addr(pcb->netif, IP4_ADDR_ANY4, IP4_ADDR_BROADCAST, IP4_ADDR_ANY4);
   return 1;
 }
 
@@ -1219,7 +1220,7 @@ u32_t get_mask(u32_t addr) {
 #if 0
   u32_t mask, nmask;
 
-  addr = htonl(addr);
+  addr = lwip_htonl(addr);
   if (IP_CLASSA(addr)) { /* determine network mask for address class */
     nmask = IP_CLASSA_NET;
   } else if (IP_CLASSB(addr)) {
@@ -1229,7 +1230,7 @@ u32_t get_mask(u32_t addr) {
   }
 
   /* class D nets are disallowed by bad_ip_adrs */
-  mask = PP_HTONL(0xffffff00UL) | htonl(nmask);
+  mask = PP_HTONL(0xffffff00UL) | lwip_htonl(nmask);
 
   /* XXX
    * Scan through the system's network interfaces.
@@ -1447,7 +1448,7 @@ int get_loop_output(void) {
 struct protocol_list {
   u_short proto;
   const char *name;
-} protocol_list[] = {
+} const protocol_list[] = {
   { 0x21, "IP" },
   { 0x23, "OSI Network Layer" },
   { 0x25, "Xerox NS IDP" },
@@ -1582,7 +1583,7 @@ struct protocol_list {
  * protocol_name - find a name for a PPP protocol.
  */
 const char * protocol_name(int proto) {
-  struct protocol_list *lp;
+  const struct protocol_list *lp;
 
   for (lp = protocol_list; lp->proto != 0; ++lp) {
     if (proto == lp->proto) {
