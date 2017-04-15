@@ -181,9 +181,9 @@ extern "C" {
 
 /* ---------- Statistics options ---------- */
 /* XXX hook into sys/stats */
-#define STATS                           0
+#define LWIP_STATS                           0
 
-#if STATS
+#if LWIP_STATS
 #define LINK_STATS                      1
 #define IP_STATS                        1
 #define ICMP_STATS                      1
@@ -196,6 +196,7 @@ extern "C" {
 #endif /* STATS */
 
 #define LWIP_PROVIDE_ERRNO 1
+#define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS 1
 #define ERRNO                     0
 
 #ifdef __cplusplus
