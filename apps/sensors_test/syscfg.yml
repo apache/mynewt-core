@@ -45,7 +45,6 @@ syscfg.vals:
     BNO055_CLI: 1
     TCS34725_CLI: 1
     SENSOR_BLE_OIC: 1
-
     BLE_ROLE_CENTRAL: 0
     BLE_ROLE_OBSERVER: 0
     OC_SERVER: 1
@@ -70,4 +69,3 @@ syscfg.defs:
     SIM_ACCEL_PRESENT:
         description: 'SIM ACCEL is present'
         value : 0
-

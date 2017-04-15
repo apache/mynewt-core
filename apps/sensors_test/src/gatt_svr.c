@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <syscfg/syscfg.h>
+#if MYNEWT_VAL(SENSOR_BLE_OIC)
 
 #include <assert.h>
 #include <stdio.h>
@@ -307,3 +309,5 @@ gatt_svr_init(void)
 
     return 0;
 }
+
+#endif

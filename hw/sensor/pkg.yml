@@ -24,13 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - net/nimble/controller
-    - net/nimble/host
-    - net/nimble/host/services/gap
-    - net/nimble/host/services/gatt
-    - net/nimble/host/store/ram
-    - net/nimble/transport/ram
-    - mgmt/oicmgr
     - sys/shell
     - sys/console/full
     - sys/log/full

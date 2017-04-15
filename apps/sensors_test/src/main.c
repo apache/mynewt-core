@@ -42,13 +42,13 @@
 #endif
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
-#include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
 #include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 
+#if MYNEWT_VAL(SENSOR_BLE_OIC)
 /* BLE */
 #include <nimble/ble.h>
 #include <host/ble_hs.h>
@@ -60,6 +60,13 @@
 
 /* Application-specified header. */
 #include "bleprph.h"
+
+static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
+
+/** Log data. */
+struct log bleprph_log;
+
+#endif
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -76,23 +83,15 @@ static volatile int g_task1_loops;
 #define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
-
-static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
-
-/** Log data. */
-struct log bleprph_log;
+static volatile int g_task2_loops;
 
 static struct log my_log;
-
-static volatile int g_task2_loops;
 
 /* Global test semaphore */
 static struct os_sem g_test_sem;
 
 /* For LED toggling */
 static int g_led_pin;
-
-extern int oc_stack_errno;
 
 STATS_SECT_START(gpio_stats)
 STATS_SECT_ENTRY(toggles)
@@ -123,6 +122,9 @@ static uint8_t test8_shadow;
 static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
+
+#if MYNEWT_VAL(SENSOR_BLE_OIC)
+extern int oc_stack_errno;
 
 static const oc_handler_t sensor_oic_handler = {
     .init = sensor_oic_init,
@@ -332,6 +334,7 @@ sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
 
     return 0;
 }
+#endif
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -383,19 +386,12 @@ task1_handler(void *arg)
 {
     struct os_task *t;
     int prev_pin_state, curr_pin_state;
-    struct image_version ver;
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    if (imgr_my_version(&ver) == 0) {
-        console_printf("\nSensors Test %u.%u.%u.%u\n",
-          ver.iv_major, ver.iv_minor, ver.iv_revision,
-          (unsigned int)ver.iv_build_num);
-    } else {
-        console_printf("\nSensors Test\n");
-    }
+    console_printf("\nSensors Test App\n");
 
     while (1) {
         t = os_sched_get_current_task();
@@ -578,9 +574,8 @@ err:
     return rc;
 }
 
-#endif
+#else
 
-#ifdef ARCH_sim
 static int
 config_sensor(void)
 {
@@ -616,6 +611,70 @@ err:
 }
 #endif
 
+static void
+sensors_dev_shell_init(void)
+{
+
+#if MYNEWT_VAL(TCS34725_CLI)
+    tcs34725_shell_init();
+#endif
+
+#if MYNEWT_VAL(TSL2561_CLI)
+    tsl2561_shell_init();
+#endif
+
+#if MYNEWT_VAL(BNO055_CLI)
+    bno055_shell_init();
+#endif
+
+}
+
+static void
+sensor_ble_oic_server_init(void)
+{
+#if MYNEWT_VAL(SENSOR_BLE_OIC)
+    int rc;
+
+    /* Set initial BLE device address. */
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
+
+    oc_ble_coap_gatt_srv_init();
+
+    ble_hs_cfg.reset_cb = sensor_oic_on_reset;
+    ble_hs_cfg.sync_cb = sensor_oic_on_sync;
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+
+    /* Set the default device name. */
+    rc = ble_svc_gap_device_name_set("pi");
+    assert(rc == 0);
+
+    rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
+    assert(!rc);
+
+    oc_init_platform("MyNewt", NULL, NULL);
+    oc_add_device("/oic/d", "oic.d.pi", "pi", "1.0", "1.0", NULL,
+                  NULL);
+    assert(!oc_stack_errno);
+#endif
+}
+
+static void
+ble_oic_log_init(void)
+{
+#if MYNEWT_VAL(SENSOR_BLE_OIC)
+    /* Initialize the bleprph log. */
+    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
+
+    /* Initialize the NimBLE host configuration. */
+    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
+                 LOG_SYSLEVEL);
+
+    /* Initialize the OIC  */
+    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+#endif
+}
+
 /**
  * main
  *
@@ -648,19 +707,7 @@ main(int argc, char **argv)
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
-
-    /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
-    /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
-    /* Initialize the OIC  */
-    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    ble_oic_log_init();
 
     flash_test_init();
 
@@ -683,37 +730,11 @@ main(int argc, char **argv)
     }
 #endif
 
-#if MYNEWT_VAL(TCS34725_CLI)
-    tcs34725_shell_init();
-#endif
-
-#if MYNEWT_VAL(TSL2561_CLI)
-    tsl2561_shell_init();
-#endif
-
-#if MYNEWT_VAL(BNO055_CLI)
-    bno055_shell_init();
-#endif
+    sensors_dev_shell_init();
 
     config_sensor();
 
-    oc_ble_coap_gatt_srv_init();
-
-    ble_hs_cfg.reset_cb = sensor_oic_on_reset;
-    ble_hs_cfg.sync_cb = sensor_oic_on_sync;
-    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
-
-    /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pi");
-    assert(rc == 0);
-
-    rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
-    assert(!rc);
-
-    oc_init_platform("MyNewt", NULL, NULL);
-    oc_add_device("/oic/d", "oic.d.color", "color0", "1.0", "1.0", NULL,
-                  NULL);
-    assert(!oc_stack_errno);
+    sensor_ble_oic_server_init();
 
     /*
      * As the last thing, process events from default event queue.
