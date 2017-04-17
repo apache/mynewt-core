@@ -32,5 +32,8 @@ pkg.deps:
     - net/ip/lwip_base
     - net/ip/mn_socket
 
+pkg.deps.LWIP_CLI:
+    - sys/shell
+
 pkg.init:
     ip_init: 200
