@@ -27,6 +27,8 @@
 #include <lwip/tcpip.h>
 #include <lwip/udp.h>
 #include <lwip/tcp.h>
+#include <lwip/igmp.h>
+#include <lwip/mld6.h>
 #include "ip_priv.h"
 
 static int lwip_sock_create(struct mn_socket **sp, uint8_t domain,
@@ -607,10 +609,62 @@ lwip_getsockopt(struct mn_socket *s, uint8_t level,
     return MN_EPROTONOSUPPORT;
 }
 
-static int
-lwip_setsockopt(struct mn_socket *s, uint8_t level,
-  uint8_t name, void *val)
+static struct netif *
+lwip_nif_from_idx(int idx)
 {
+    struct netif *nif;
+
+    for (nif = netif_list; nif; nif = nif->next) {
+        if (idx == nif->num) {
+            return nif;
+        }
+    }
+    return NULL;
+}
+
+static int
+lwip_setsockopt(struct mn_socket *ms, uint8_t level, uint8_t name, void *val)
+{
+    struct netif *nif;
+    struct mn_mreq *mreq;
+    int rc = MN_EPROTONOSUPPORT;
+
+    if (level == MN_SO_LEVEL) {
+        switch (name) {
+        case MN_MCAST_JOIN_GROUP:
+        case MN_MCAST_LEAVE_GROUP:
+            mreq = (struct mn_mreq *)val;
+
+            LOCK_TCPIP_CORE();
+            nif = lwip_nif_from_idx(mreq->mm_idx);
+            if (mreq->mm_family == MN_AF_INET) {
+#if LWIP_IGMP
+                if (name == MN_MCAST_JOIN_GROUP) {
+                    rc = igmp_joingroup_netif(nif,
+                                              (ip4_addr_t *)&mreq->mm_addr);
+                } else {
+                    rc = igmp_leavegroup_netif(nif,
+                                              (ip4_addr_t *)&mreq->mm_addr);
+                }
+#endif
+            } else if (mreq->mm_family == MN_AF_INET6) {
+#if LWIP_IPV6_MLD && LWIP_IPV6
+                if (name == MN_MCAST_JOIN_GROUP) {
+                    rc = mld6_joingroup_netif(nif,
+                                              (ip6_addr_t *)&mreq->mm_addr);
+                } else {
+                    rc = mld6_leavegroup_netif(nif,
+                                              (ip6_addr_t *)&mreq->mm_addr);
+                }
+#endif
+            }
+            UNLOCK_TCPIP_CORE();
+            return lwip_err_to_mn_err(rc);
+        case MN_MCAST_IF:
+        default:
+            break;
+        }
+    }
     return MN_EPROTONOSUPPORT;
 }
 
