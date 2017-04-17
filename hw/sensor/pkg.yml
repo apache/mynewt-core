@@ -24,10 +24,14 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
+    - kernel/os
+
+pkg.deps.SENSOR_OIC:
+    - net/oic
+
+pkg.deps.SENSOR_CLI:
     - sys/shell
     - sys/console/full
-    - sys/log/full
-    - sys/stats/full
 
 pkg.init:
     sensor_pkg_init: 501

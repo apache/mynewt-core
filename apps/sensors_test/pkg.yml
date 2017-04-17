@@ -44,8 +44,10 @@ pkg.deps:
     - mgmt/imgmgr
     #- mgmt/newtmgr
 
-pkg.deps.SENSOR_BLE_OIC:
+pkg.deps.SENSOR_OIC:
     - mgmt/oicmgr
+
+pkg.deps.SENSOR_BLE:
     - net/nimble/controller
     - net/nimble/host
     - net/nimble/host/services/gap

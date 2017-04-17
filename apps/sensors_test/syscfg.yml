@@ -44,10 +44,13 @@ syscfg.vals:
     TSL2561_CLI: 0
     BNO055_CLI: 1
     TCS34725_CLI: 1
-    SENSOR_BLE_OIC: 1
+
+    # Setup Sensor BLE OIC GATT Server
+    SENSOR_OIC: 1
     BLE_ROLE_CENTRAL: 0
     BLE_ROLE_OBSERVER: 0
     OC_SERVER: 1
+
     OC_TRANSPORT_GATT: 1
     OC_APP_RESOURCES : 20
 
@@ -69,3 +72,11 @@ syscfg.defs:
     SIM_ACCEL_PRESENT:
         description: 'SIM ACCEL is present'
         value : 0
+    SENSOR_BLE:
+        description: 'BLE transport is used for sensor data'
+        value : 1
+        restrictions:
+        - BLE_ROLE_BROADCASTER
+        - '!BLE_ROLE_CENTRAL'
+        - '!BLE_ROLE_OBSERVER'
+        - BLE_ROLE_PERIPHERAL

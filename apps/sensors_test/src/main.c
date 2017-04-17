@@ -47,17 +47,25 @@
 #include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
+#include <os/os_time.h>
 
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
+#if MYNEWT_VAL(SENSOR_OIC)
+#include <oic/oc_api.h>
+#include <oic/oc_gatt.h>
+
+extern int oc_stack_errno;
+
+static const oc_handler_t sensor_oic_handler = {
+    .init = sensor_oic_init,
+};
+
+#endif
+
+#if MYNEWT_VAL(SENSOR_BLE)
 /* BLE */
 #include <nimble/ble.h>
 #include <host/ble_hs.h>
 #include <services/gap/ble_svc_gap.h>
-
-#include <os/os_time.h>
-#include <oic/oc_api.h>
-#include <oic/oc_gatt.h>
-
 /* Application-specified header. */
 #include "bleprph.h"
 
@@ -123,12 +131,7 @@ static char test_str[32];
 static uint32_t cbmem_buf[MAX_CBMEM_BUF];
 static struct cbmem cbmem;
 
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
-extern int oc_stack_errno;
-
-static const oc_handler_t sensor_oic_handler = {
-    .init = sensor_oic_init,
-};
+#if MYNEWT_VAL(SENSOR_OIC) && MYNEWT_VAL(SENSOR_BLE)
 
 /**
  * Logs information about a connection to the console.
@@ -632,7 +635,7 @@ sensors_dev_shell_init(void)
 static void
 sensor_ble_oic_server_init(void)
 {
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
+#if MYNEWT_VAL(SENSOR_BLE) && MYNEWT_VAL(SENSOR_OIC)
     int rc;
 
     /* Set initial BLE device address. */
@@ -661,7 +664,7 @@ sensor_ble_oic_server_init(void)
 static void
 ble_oic_log_init(void)
 {
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
+#if MYNEWT_VAL(SENSOR_BLE)
     /* Initialize the bleprph log. */
     log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
@@ -669,7 +672,9 @@ ble_oic_log_init(void)
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
+#endif
 
+#if MYNEWT_VAL(SENSOR_OIC)
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif

@@ -17,7 +17,7 @@
  * under the License.
  */
 #include <syscfg/syscfg.h>
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
+#if MYNEWT_VAL(SENSOR_BLE)
 
 #include <assert.h>
 #include <stdio.h>

@@ -343,7 +343,7 @@ int
 sensor_shell_stol(char *param_val, long min, long max, long *output);
 #endif
 
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
+#if MYNEWT_VAL(SENSOR_OIC)
 void sensor_oic_init(void);
 #endif
 

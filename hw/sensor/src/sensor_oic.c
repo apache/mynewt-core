@@ -19,7 +19,7 @@
 
 #include "syscfg/syscfg.h"
 
-#if MYNEWT_VAL(SENSOR_BLE_OIC)
+#if MYNEWT_VAL(SENSOR_OIC)
 
 #include <string.h>
 #include <stdio.h>
@@ -37,7 +37,6 @@
 #include "sensor/quat.h"
 #include "sensor/euler.h"
 #include "sensor/color.h"
-#include "console/console.h"
 
 /* OIC */
 #include <oic/oc_rep.h>
