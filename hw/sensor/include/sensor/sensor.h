@@ -68,17 +68,28 @@ typedef enum {
     /* Weight Supported */
     SENSOR_TYPE_WEIGHT               = (1 << 11),
     /* Linear Accelerometer (Without Gravity) */
-    SENSOR_TYPE_LINEAR_ACCEL         = (1 << 26),
+    SENSOR_TYPE_LINEAR_ACCEL         = (1 << 12),
     /* Gravity Sensor */
-    SENSOR_TYPE_GRAVITY              = (1 << 27),
+    SENSOR_TYPE_GRAVITY              = (1 << 13),
     /* Euler Orientation Sensor */
-    SENSOR_TYPE_EULER                = (1 << 28),
+    SENSOR_TYPE_EULER                = (1 << 14),
     /* Color Sensor */
-    SENSOR_TYPE_COLOR                = (1 << 29),
+    SENSOR_TYPE_COLOR                = (1 << 15),
+
+    /* Standard sensor types to be defined here */
+
     /* User defined sensor type 1 */
-    SENSOR_TYPE_USER_DEFINED_1       = (1 << 30),
+    SENSOR_TYPE_USER_DEFINED_1       = (1 << 26),
     /* User defined sensor type 2 */
-    SENSOR_TYPE_USER_DEFINED_2       = (1 << 31),
+    SENSOR_TYPE_USER_DEFINED_2       = (1 << 27),
+    /* User defined sensor type 3 */
+    SENSOR_TYPE_USER_DEFINED_3       = (1 << 28),
+    /* User defined sensor type 4 */
+    SENSOR_TYPE_USER_DEFINED_4       = (1 << 29),
+    /* User defined sensor type 5 */
+    SENSOR_TYPE_USER_DEFINED_5       = (1 << 30),
+    /* User defined sensor type 6 */
+    SENSOR_TYPE_USER_DEFINED_6       = (1 << 31),
     /* A selector, describes all sensors */
     SENSOR_TYPE_ALL                  = 0xFFFFFFFF
 } sensor_type_t;
