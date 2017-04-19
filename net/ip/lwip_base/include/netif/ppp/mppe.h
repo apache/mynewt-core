@@ -41,10 +41,6 @@
 
 #include "netif/ppp/pppcrypt.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MPPE_PAD		4	/* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
 
@@ -63,7 +59,7 @@ extern "C" {
  * This is not nice ... the alternative is a bitfield struct though.
  * And unfortunately, we cannot share the same bits for the option
  * names above since C and H are the same bit.  We could do a u_int32
- * but then we have to do a htonl() all the time and/or we still need
+ * but then we have to do a lwip_htonl() all the time and/or we still need
  * to know which octet is which.
  */
 #define MPPE_C_BIT		0x01	/* MPPC */
@@ -174,8 +170,4 @@ void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
 err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
 
 #endif /* MPPE_H */
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */

@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "syscfg/syscfg.h"
+
 #include <lwip/tcpip.h>
 
 #include "ip_priv.h"
@@ -25,6 +27,9 @@ int ip_init(void)
     if (lwip_socket_init()) {
         return -1;
     }
+#if MYNEWT_VAL(LWIP_CLI)
+    lwip_cli_init();
+#endif
     tcpip_init(NULL, NULL);
     return 0;
 }

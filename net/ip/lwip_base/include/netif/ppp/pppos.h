@@ -42,10 +42,6 @@
 #include "ppp.h"
 #include "vj.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */
 enum {
@@ -119,8 +115,4 @@ err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
 #endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 #endif /* PPPOS_H */
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

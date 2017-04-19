@@ -24,8 +24,11 @@
 #include <mn_socket/mn_socket.h>
 #include <mn_socket/mn_socket_ops.h>
 
+#include <lwip/tcpip.h>
 #include <lwip/udp.h>
 #include <lwip/tcp.h>
+#include <lwip/igmp.h>
+#include <lwip/mld6.h>
 #include "ip_priv.h"
 
 static int lwip_sock_create(struct mn_socket **sp, uint8_t domain,
@@ -63,7 +66,7 @@ static const struct mn_socket_ops lwip_sock_ops = {
     .mso_getpeername = lwip_getpeername,
 
     .mso_itf_getnext = lwip_itf_getnext,
-    .mso_itf_addr_getnext = lwip_itf_addr_getnext
+    .mso_itf_addr_getnext = lwip_itf_addr_getnext,
 };
 
 struct lwip_sock {
@@ -93,7 +96,7 @@ lwip_mn_addr_to_addr(struct mn_sockaddr *ms, ip_addr_t *addr, uint16_t *port)
     case MN_AF_INET:
         msin = (struct mn_sockaddr_in *)ms;
         IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
-        *port = msin->msin_port;
+        *port = ntohs(msin->msin_port);
         memcpy(ip_2_ip4(addr), &msin->msin_addr, sizeof(struct mn_in_addr));
         return 0;
 #endif
@@ -101,7 +104,7 @@ lwip_mn_addr_to_addr(struct mn_sockaddr *ms, ip_addr_t *addr, uint16_t *port)
     case MN_AF_INET6:
         msin6 =  (struct mn_sockaddr_in6 *)ms;
         IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V6);
-        *port = msin6->msin6_port;
+        *port = ntohs(msin6->msin6_port);
         memcpy(ip_2_ip6(addr), &msin6->msin6_addr, sizeof(struct mn_in6_addr));
         return 0;
 #endif
@@ -122,9 +125,7 @@ lwip_addr_to_mn_addr(struct mn_sockaddr *ms, const ip_addr_t *addr,
     } else {
         ms->msa_family = MN_AF_INET6;
     }
-#if !LWIP_IPV4
-    ms->msa_family = MN_AF_INET;
-#endif
+    port = htons(port);
     switch (ms->msa_family) {
 #if LWIP_IPV4
     case MN_AF_INET:
@@ -145,7 +146,7 @@ lwip_addr_to_mn_addr(struct mn_sockaddr *ms, const ip_addr_t *addr,
     }
 }
 
-static int
+int
 lwip_err_to_mn_err(int rc)
 {
     switch (rc) {
@@ -198,6 +199,7 @@ lwip_sock_udp_rx(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     for (q = p; q; q = q->next) {
         os_mbuf_copyinto(m, off, q->payload, p->len);
     }
+    pbuf_free(p);
     STAILQ_INSERT_TAIL(&s->ls_rx, OS_MBUF_PKTHDR(m), omp_next);
     mn_socket_readable(&s->ls_sock, 0);
 }
@@ -226,6 +228,7 @@ lwip_sock_tcp_rx(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     for (q = p; q; q = q->next) {
         os_mbuf_copyinto(m, off, q->payload, p->len);
     }
+    pbuf_free(p);
     STAILQ_INSERT_TAIL(&s->ls_rx, OS_MBUF_PKTHDR(m), omp_next);
     mn_socket_readable(&s->ls_sock, 0);
 
@@ -246,7 +249,7 @@ lwip_sock_tcp_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
     struct lwip_sock *s = (struct lwip_sock *)arg;
 
-    mn_socket_writable(&s->ls_sock, err);
+    mn_socket_writable(&s->ls_sock, lwip_err_to_mn_err(err));
     return ERR_OK;
 }
 
@@ -255,7 +258,7 @@ lwip_sock_tcp_err(void *arg, err_t err)
 {
     struct lwip_sock *s = (struct lwip_sock *)arg;
 
-    mn_socket_writable(&s->ls_sock, err);
+    mn_socket_writable(&s->ls_sock, lwip_err_to_mn_err(err));
 }
 
 static err_t
@@ -264,11 +267,20 @@ lwip_sock_accept(void *arg, struct tcp_pcb *new, err_t err)
     struct lwip_sock *s = (struct lwip_sock *)arg;
     struct lwip_sock *new_s;
 
+    if (err != ERR_OK) {
+        return err;
+    }
     new_s = os_memblock_get(&lwip_sockets);
-    assert(new_s); /* memory pool should be sized correctly */
+    if (!new_s) {
+        return ERR_MEM;
+    }
     new_s->ls_type = MN_SOCK_STREAM;
     new_s->ls_sock.ms_ops = &lwip_sock_ops;
     new_s->ls_pcb.tcp = new;
+    tcp_arg(new, new_s);
+    tcp_recv(new, lwip_sock_tcp_rx);
+    tcp_sent(new, lwip_sock_tcp_sent);
+    tcp_err(new, lwip_sock_tcp_err);
     STAILQ_INIT(&new_s->ls_rx);
     new_s->ls_tx = NULL;
     if (mn_socket_newconn(&s->ls_sock, &new_s->ls_sock)) {
@@ -293,6 +305,7 @@ lwip_sock_create(struct mn_socket **sp, uint8_t domain, uint8_t type,
     STAILQ_INIT(&s->ls_rx);
     s->ls_tx = NULL;
 
+    LOCK_TCPIP_CORE();
     switch (type) {
 #if LWIP_UDP
     case MN_SOCK_DGRAM:
@@ -312,6 +325,7 @@ lwip_sock_create(struct mn_socket **sp, uint8_t domain, uint8_t type,
     default:
         break;
     }
+    UNLOCK_TCPIP_CORE();
     if (!s->ls_pcb.ip) {
         os_memblock_put(&lwip_sockets, s);
         return MN_EPROTONOSUPPORT;
@@ -327,6 +341,7 @@ lwip_close(struct mn_socket *ms)
     struct lwip_sock *s = (struct lwip_sock *)ms;
     struct os_mbuf_pkthdr *m;
 
+    LOCK_TCPIP_CORE();
     switch (s->ls_type) {
 #if LWIP_UDP
     case MN_SOCK_DGRAM:
@@ -335,10 +350,14 @@ lwip_close(struct mn_socket *ms)
 #endif
 #if LWIP_TCP
     case MN_SOCK_STREAM:
+        tcp_recv(s->ls_pcb.tcp, NULL);
+        tcp_sent(s->ls_pcb.tcp, NULL);
+        tcp_err(s->ls_pcb.tcp, NULL);
         tcp_close(s->ls_pcb.tcp);
         break;
     }
 #endif
+    UNLOCK_TCPIP_CORE();
     while ((m = STAILQ_FIRST(&s->ls_rx))) {
         STAILQ_REMOVE_HEAD(&s->ls_rx, omp_next);
         os_mbuf_free_chain(OS_MBUF_PKTHDR_TO_MBUF(m));
@@ -363,27 +382,26 @@ lwip_connect(struct mn_socket *ms, struct mn_sockaddr *addr)
     if (rc) {
         return rc;
     }
+    rc = MN_EPROTONOSUPPORT;
+    LOCK_TCPIP_CORE();
     switch (s->ls_type) {
 #if LWIP_UDP
     case MN_SOCK_DGRAM:
         rc = udp_connect(s->ls_pcb.udp, &ip, port);
-        if (rc) {
-            return lwip_err_to_mn_err(rc);
-        }
-        return 0;
+        rc = lwip_err_to_mn_err(rc);
+        break;
 #endif
 #if LWIP_TCP
     case MN_SOCK_STREAM:
         rc = tcp_connect(s->ls_pcb.tcp, &ip, port, lwip_sock_tcp_connected);
-        if (rc) {
-            return lwip_err_to_mn_err(rc);
-        }
-        return 0;
+        rc = lwip_err_to_mn_err(rc);
+        break;
 #endif
     default:
         break;
     }
-    return MN_EPROTONOSUPPORT;
+    UNLOCK_TCPIP_CORE();
+    return rc;
 }
 
 static int
@@ -398,27 +416,26 @@ lwip_bind(struct mn_socket *ms, struct mn_sockaddr *addr)
     if (rc) {
         return rc;
     }
+    rc = MN_EPROTONOSUPPORT;
+    LOCK_TCPIP_CORE();
     switch (s->ls_type) {
 #if LWIP_UDP
     case MN_SOCK_DGRAM:
         rc = udp_bind(s->ls_pcb.udp, &ip, port);
-        if (rc) {
-            return lwip_err_to_mn_err(rc);
-        }
-        return 0;
+        rc = lwip_err_to_mn_err(rc);
+        break;
 #endif
 #if LWIP_TCP
     case MN_SOCK_STREAM:
         rc = tcp_bind(s->ls_pcb.tcp, &ip, port);
-        if (rc) {
-            return lwip_err_to_mn_err(rc);
-        }
-        return 0;
+        rc = lwip_err_to_mn_err(rc);
+        break;
 #endif
     default:
         break;
     }
-    return MN_EPROTONOSUPPORT;
+    UNLOCK_TCPIP_CORE();
+    return rc;
 }
 
 static int
@@ -429,12 +446,14 @@ lwip_listen(struct mn_socket *ms, uint8_t qlen)
     struct tcp_pcb *pcb;
 
     if (s->ls_type == MN_SOCK_STREAM) {
-        tcp_accept(s->ls_pcb.tcp, lwip_sock_accept);
+        LOCK_TCPIP_CORE();
         pcb = tcp_listen_with_backlog(s->ls_pcb.tcp, qlen);
+        UNLOCK_TCPIP_CORE();
         if (!pcb) {
             return MN_EADDRINUSE;
         }
         s->ls_pcb.tcp = pcb;
+        tcp_accept(pcb, lwip_sock_accept);
         return 0;
     }
 #endif
@@ -448,6 +467,7 @@ lwip_stream_tx(struct lwip_sock *s, int notify)
     struct os_mbuf *m;
     struct os_mbuf *n;
 
+    rc = 0;
     while (s->ls_tx && rc == 0) {
         m = s->ls_tx;
         n = SLIST_NEXT(m, om_next);
@@ -510,8 +530,9 @@ lwip_sendto(struct mn_socket *ms, struct os_mbuf *m,
             pbuf_take_at(p, n->om_data, n->om_len, off);
             off += n->om_len;
         }
-
+        LOCK_TCPIP_CORE();
         rc = udp_sendto(s->ls_pcb.udp, p, &ip_addr, port);
+        UNLOCK_TCPIP_CORE();
         if (rc) {
             rc = lwip_err_to_mn_err(rc);
             pbuf_free(p);
@@ -525,8 +546,13 @@ lwip_sendto(struct mn_socket *ms, struct os_mbuf *m,
         if (s->ls_tx) {
             return MN_EAGAIN;
         }
+        if (addr) {
+            return MN_EINVAL;
+        }
+        LOCK_TCPIP_CORE();
         s->ls_tx = m;
         rc = lwip_stream_tx(s, 0);
+        UNLOCK_TCPIP_CORE();
         return rc;
 #endif
     default:
@@ -543,6 +569,7 @@ lwip_recvfrom(struct mn_socket *ms, struct os_mbuf **mp,
     struct os_mbuf_pkthdr *m;
     int slen;
 
+    LOCK_TCPIP_CORE();
     m = STAILQ_FIRST(&s->ls_rx);
     if (m) {
         STAILQ_REMOVE_HEAD(&s->ls_rx, omp_next);
@@ -562,12 +589,14 @@ lwip_recvfrom(struct mn_socket *ms, struct os_mbuf **mp,
             } else {
 #if LWIP_TCP
                 lwip_addr_to_mn_addr(addr, &s->ls_pcb.ip->local_ip,
-                  s->ls_pcb.tcp->local_port);
+                                     s->ls_pcb.tcp->local_port);
 #endif
             }
         }
+        UNLOCK_TCPIP_CORE();
         return 0;
     } else {
+        UNLOCK_TCPIP_CORE();
         *mp = NULL;
         return MN_EAGAIN;
     }
@@ -580,10 +609,62 @@ lwip_getsockopt(struct mn_socket *s, uint8_t level,
     return MN_EPROTONOSUPPORT;
 }
 
-static int
-lwip_setsockopt(struct mn_socket *s, uint8_t level,
-  uint8_t name, void *val)
+static struct netif *
+lwip_nif_from_idx(int idx)
 {
+    struct netif *nif;
+
+    for (nif = netif_list; nif; nif = nif->next) {
+        if (idx == nif->num) {
+            return nif;
+        }
+    }
+    return NULL;
+}
+
+static int
+lwip_setsockopt(struct mn_socket *ms, uint8_t level, uint8_t name, void *val)
+{
+    struct netif *nif;
+    struct mn_mreq *mreq;
+    int rc = MN_EPROTONOSUPPORT;
+
+    if (level == MN_SO_LEVEL) {
+        switch (name) {
+        case MN_MCAST_JOIN_GROUP:
+        case MN_MCAST_LEAVE_GROUP:
+            mreq = (struct mn_mreq *)val;
+
+            LOCK_TCPIP_CORE();
+            nif = lwip_nif_from_idx(mreq->mm_idx);
+            if (mreq->mm_family == MN_AF_INET) {
+#if LWIP_IGMP
+                if (name == MN_MCAST_JOIN_GROUP) {
+                    rc = igmp_joingroup_netif(nif,
+                                              (ip4_addr_t *)&mreq->mm_addr);
+                } else {
+                    rc = igmp_leavegroup_netif(nif,
+                                              (ip4_addr_t *)&mreq->mm_addr);
+                }
+#endif
+            } else if (mreq->mm_family == MN_AF_INET6) {
+#if LWIP_IPV6_MLD && LWIP_IPV6
+                if (name == MN_MCAST_JOIN_GROUP) {
+                    rc = mld6_joingroup_netif(nif,
+                                              (ip6_addr_t *)&mreq->mm_addr);
+                } else {
+                    rc = mld6_leavegroup_netif(nif,
+                                              (ip6_addr_t *)&mreq->mm_addr);
+                }
+#endif
+            }
+            UNLOCK_TCPIP_CORE();
+            return lwip_err_to_mn_err(rc);
+        case MN_MCAST_IF:
+        default:
+            break;
+        }
+    }
     return MN_EPROTONOSUPPORT;
 }
 
@@ -591,48 +672,56 @@ static int
 lwip_getsockname(struct mn_socket *ms, struct mn_sockaddr *addr)
 {
     struct lwip_sock *s = (struct lwip_sock *)ms;
+    int rc;
 
+    rc = MN_EPROTONOSUPPORT;
+    LOCK_TCPIP_CORE();
     switch (s->ls_type) {
 #if LWIP_UDP
     case MN_SOCK_DGRAM:
         lwip_addr_to_mn_addr(addr, &s->ls_pcb.ip->local_ip,
-          s->ls_pcb.udp->local_port);
-        return 0;
+                             s->ls_pcb.udp->local_port);
+        rc = 0;
 #endif
 #if LWIP_TCP
     case MN_SOCK_STREAM:
         lwip_addr_to_mn_addr(addr, &s->ls_pcb.ip->local_ip,
-          s->ls_pcb.tcp->local_port);
-        return 0;
+                             s->ls_pcb.tcp->local_port);
+        rc = 0;
 #endif
     default:
         break;
     }
-    return MN_EPROTONOSUPPORT;
+    UNLOCK_TCPIP_CORE();
+    return rc;
 }
 
 static int
 lwip_getpeername(struct mn_socket *ms, struct mn_sockaddr *addr)
 {
     struct lwip_sock *s = (struct lwip_sock *)ms;
+    int rc;
 
+    rc = MN_EPROTONOSUPPORT;
+    LOCK_TCPIP_CORE();
     switch (s->ls_type) {
 #if LWIP_UDP
     case MN_SOCK_DGRAM:
         lwip_addr_to_mn_addr(addr, &s->ls_pcb.ip->remote_ip,
-          s->ls_pcb.udp->remote_port);
-        return 0;
+                             s->ls_pcb.udp->remote_port);
+        rc = 0;
 #endif
 #if LWIP_TCP
     case MN_SOCK_STREAM:
         lwip_addr_to_mn_addr(addr, &s->ls_pcb.ip->remote_ip,
-          s->ls_pcb.tcp->remote_port);
-        return 0;
+                             s->ls_pcb.tcp->remote_port);
+        rc = 0;
 #endif
     default:
         break;
     }
-    return MN_EPROTONOSUPPORT;
+    UNLOCK_TCPIP_CORE();
+    return rc;
 }
 
 int
@@ -642,8 +731,8 @@ lwip_socket_init(void)
     int cnt;
     void *mem;
 
-    cnt = MEMP_NUM_TCP_PCB + MEMP_NUM_UDP_PCB;
-    mem = malloc(OS_MEMPOOL_SIZE(cnt, sizeof(struct lwip_sock)));
+    cnt = MEMP_NUM_TCP_PCB + MEMP_NUM_UDP_PCB + MEMP_NUM_TCP_PCB_LISTEN;
+    mem = os_malloc(OS_MEMPOOL_BYTES(cnt, sizeof(struct lwip_sock)));
     if (!mem) {
         return -1;
     }

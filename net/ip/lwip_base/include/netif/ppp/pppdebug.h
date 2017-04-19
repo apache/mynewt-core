@@ -40,10 +40,6 @@
 #ifndef PPPDEBUG_H
 #define PPPDEBUG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Trace levels. */
 #define LOG_CRITICAL  (PPP_DEBUG | LWIP_DBG_LEVEL_SEVERE)
 #define LOG_ERR       (PPP_DEBUG | LWIP_DBG_LEVEL_SEVERE)
@@ -80,9 +76,5 @@ extern "C" {
 #endif /* PPP_DEBUG */
 
 #endif /* PPPDEBUG_H */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* PPP_SUPPORT */

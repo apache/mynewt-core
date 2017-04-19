@@ -35,8 +35,8 @@
 #if PPP_SUPPORT && PPPOS_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include <string.h>
-#include <stddef.h>
 
+#include "lwip/arch.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
@@ -57,9 +57,9 @@ LWIP_MEMPOOL_DECLARE(PPPOS_PCB, MEMP_NUM_PPPOS_INTERFACES, sizeof(pppos_pcb), "P
 /* callbacks called from PPP core */
 static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol);
-static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
+static void pppos_connect(ppp_pcb *ppp, void *ctx);
 #if PPP_SERVER
-static err_t pppos_listen(ppp_pcb *ppp, void *ctx);
+static void pppos_listen(ppp_pcb *ppp, void *ctx);
 #endif /* PPP_SERVER */
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
@@ -298,7 +298,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   return err;
 }
 
-static err_t
+static void
 pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -327,11 +327,10 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
    */
   PPPDEBUG(LOG_INFO, ("pppos_connect: unit %d: connecting\n", ppp->netif->num));
   ppp_start(ppp); /* notify upper layers */
-  return ERR_OK;
 }
 
 #if PPP_SERVER
-static err_t
+static void
 pppos_listen(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -360,7 +359,6 @@ pppos_listen(ppp_pcb *ppp, void *ctx)
    */
   PPPDEBUG(LOG_INFO, ("pppos_listen: unit %d: listening\n", ppp->netif->num));
   ppp_start(ppp); /* notify upper layers */
-  return ERR_OK;
 }
 #endif /* PPP_SERVER */
 
@@ -404,9 +402,9 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
 /** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
  *
- * @param pcb PPP descriptor index, returned by pppos_create()
- * @param data received data
- * @param len length of received data
+ * @param ppp PPP descriptor index, returned by pppos_create()
+ * @param s received data
+ * @param l length of received data
  */
 err_t
 pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
@@ -458,9 +456,9 @@ PACK_STRUCT_END
 
 /** Pass received raw characters to PPPoS to be decoded.
  *
- * @param pcb PPP descriptor index, returned by pppos_create()
- * @param data received data
- * @param len length of received data
+ * @param ppp PPP descriptor index, returned by pppos_create()
+ * @param s received data
+ * @param l length of received data
  */
 void
 pppos_input(ppp_pcb *ppp, u8_t *s, int l)
@@ -471,18 +469,20 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
   u8_t escaped;
   PPPOS_DECL_PROTECT(lev);
 
-  PPPOS_PROTECT(lev);
-  if (!pppos->open) {
-    PPPOS_UNPROTECT(lev);
-    return;
-  }
-  PPPOS_UNPROTECT(lev);
-
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
     cur_char = *s++;
 
     PPPOS_PROTECT(lev);
+    /* ppp_input can disconnect the interface, we need to abort to prevent a memory
+     * leak if there are remaining bytes because pppos_connect and pppos_listen
+     * functions expect input buffer to be free. Furthermore there are no real
+     * reason to continue reading bytes if we are disconnected.
+     */
+    if (!pppos->open) {
+      PPPOS_UNPROTECT(lev);
+      return;
+    }
     escaped = ESCAPE_P(pppos->in_accm, cur_char);
     PPPOS_UNPROTECT(lev);
     /* Handle special characters. */

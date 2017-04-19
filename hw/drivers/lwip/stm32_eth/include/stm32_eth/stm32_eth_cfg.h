@@ -17,16 +17,31 @@
  * under the License.
  */
 
-#ifndef __STM32F4_ETH_CFG_H__
-#define __STM32F4_ETH_CFG_H__
+#ifndef __STM32_ETH_CFG_H__
+#define __STM32_ETH_CFG_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * BSP specific ethernet settings.
  */
-#define STM32F4_MAX_PORTS	9
+#define STM32_MAX_PORTS	9
 
-struct stm32f4_eth_cfg {
+struct stm32_eth_cfg {
     /* Mask of pins from ports A-I to use */
-    uint32_t sec_port_mask[STM32F4_MAX_PORTS];
+    uint32_t sec_port_mask[STM32_MAX_PORTS];
+    enum {
+        SMSC_8710_RMII,
+        LAN_8742_RMII
+    } sec_phy_type;
+    int sec_phy_irq;
+    uint8_t sec_phy_addr;
 };
-#endif /* __STM32F4_ETH_CFG_H__ */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __STM32_ETH_CFG_H__ */

@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <inttypes.h>
+
 #include "os/queue.h"
 
 /* HAL timer struct */

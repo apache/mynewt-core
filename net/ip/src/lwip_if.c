@@ -36,9 +36,11 @@ lwip_if_flags(uint8_t if_flags)
 
     flags = 0;
 
-    if ((if_flags & (NETIF_FLAG_UP | NETIF_FLAG_LINK_UP)) ==
-      (NETIF_FLAG_UP | NETIF_FLAG_LINK_UP)) {
+    if (if_flags & NETIF_FLAG_UP) {
         flags |= MN_ITF_F_UP;
+    }
+    if (if_flags & NETIF_FLAG_LINK_UP) {
+        flags |= MN_ITF_F_LINK;
     }
     if (if_flags & (NETIF_FLAG_IGMP | NETIF_FLAG_MLD6)) {
         flags |= MN_ITF_F_MULTICAST;
@@ -46,9 +48,6 @@ lwip_if_flags(uint8_t if_flags)
     return flags;
 }
 
-/*
- * XXX locking
- */
 int
 lwip_itf_getnext(struct mn_itf *mi)
 {
@@ -64,6 +63,7 @@ lwip_itf_getnext(struct mn_itf *mi)
     mi->mif_idx = UCHAR_MAX;
 
     rc = MN_ENOBUFS;
+    LOCK_TCPIP_CORE();
     for (nif = netif_list; nif; nif = nif->next) {
         cur_idx = nif->num;
         if (cur_idx <= prev_idx || cur_idx >= mi->mif_idx) {
@@ -76,6 +76,7 @@ lwip_itf_getnext(struct mn_itf *mi)
         mi->mif_flags = lwip_if_flags(nif->flags);
         rc = 0;
     }
+    UNLOCK_TCPIP_CORE();
     return rc;
 }
 
@@ -109,8 +110,10 @@ lwip_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
     int copy_next = 0;
 #endif
 
+    LOCK_TCPIP_CORE();
     nif = netif_find(mi->mif_name);
     if (!nif) {
+        UNLOCK_TCPIP_CORE();
         return MN_EINVAL;
     }
 
@@ -122,6 +125,7 @@ lwip_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
               sizeof(struct mn_in_addr));
             mia->mifa_plen = plen(ip_2_ip4(&nif->netmask),
               sizeof(struct mn_in_addr));
+            UNLOCK_TCPIP_CORE();
             return 0;
         }
 #endif
@@ -139,6 +143,7 @@ lwip_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
             memcpy(&mia->mifa_addr, netif_ip6_addr(nif, i),
               sizeof(struct mn_in6_addr));
             mia->mifa_plen = 64;
+            UNLOCK_TCPIP_CORE();
             return 0;
         }
         if (!memcmp(&mia->mifa_addr, netif_ip6_addr(nif, i),
@@ -147,6 +152,6 @@ lwip_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
         }
     }
 #endif
+    UNLOCK_TCPIP_CORE();
     return -1;
 }
-
