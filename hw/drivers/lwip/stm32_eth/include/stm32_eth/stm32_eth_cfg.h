@@ -16,17 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __IP_INIT_H__
-#define __IP_INIT_H__
+
+#ifndef __STM32_ETH_CFG_H__
+#define __STM32_ETH_CFG_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int ip_init(void);
+/*
+ * BSP specific ethernet settings.
+ */
+#define STM32_MAX_PORTS	9
+
+struct stm32_eth_cfg {
+    /* Mask of pins from ports A-I to use */
+    uint32_t sec_port_mask[STM32_MAX_PORTS];
+    enum {
+        SMSC_8710_RMII,
+        LAN_8742_RMII
+    } sec_phy_type;
+    int sec_phy_irq;
+    uint8_t sec_phy_addr;
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __IP_INIT_H__ */
+#endif /* __STM32_ETH_CFG_H__ */

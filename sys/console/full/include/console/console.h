@@ -34,7 +34,7 @@ int console_read(char *str, int cnt, int *newline);
 void console_blocking_mode(void);
 void console_echo(int on);
 
-void console_printf(const char *fmt, ...)
+int console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
 
 extern int console_is_midline;

@@ -38,43 +38,73 @@ static const FILE console_file = {
     .vmt = &console_file_ops
 };
 
-void
+/**
+ * Prints the specified format string to the console.
+ *
+ * @return                      The number of characters that would have been
+ *                                  printed if the console buffer were
+ *                                  unlimited.  This return value is analogous
+ *                                  to that of snprintf.
+ */
+int
 console_printf(const char *fmt, ...)
 {
     va_list args;
+    int num_chars;
+
+    num_chars = 0;
+
     if (console_get_ticks()) {
         /* Prefix each line with a timestamp. */
         if (!console_is_midline) {
-            fprintf((FILE *)&console_file, "%lu:", (unsigned long)os_time_get());
+            num_chars += fprintf((FILE *)&console_file, "%lu:",
+                                 (unsigned long)os_time_get());
         }
     }
     va_start(args, fmt);
-    vfprintf((FILE *)&console_file, fmt, args);
+    num_chars += vfprintf((FILE *)&console_file, fmt, args);
     va_end(args);
+
+    return num_chars;
 }
 
 #else
 
-void
+/**
+ * Prints the specified format string to the console.
+ *
+ * @return                      The number of characters that would have been
+ *                                  printed if the console buffer were
+ *                                  unlimited.  This return value is analogous
+ *                                  to that of snprintf.
+ */
+int
 console_printf(const char *fmt, ...)
 {
     va_list args;
     char buf[CONS_OUTPUT_MAX_LINE];
+    int num_chars;
     int len;
+
     if (console_get_ticks()) {
         /* Prefix each line with a timestamp. */
         if (!console_is_midline) {
-            len = snprintf(buf, sizeof(buf), "%lu:", (unsigned long)os_time_get());
+            len = snprintf(buf, sizeof(buf), "%lu:",
+                           (unsigned long)os_time_get());
+            num_chars += len;
             console_write(buf, len);
         }
     }
 
     va_start(args, fmt);
     len = vsnprintf(buf, sizeof(buf), fmt, args);
+    num_chars += len;
     if (len >= sizeof(buf)) {
         len = sizeof(buf) - 1;
     }
     console_write(buf, len);
     va_end(args);
+
+    return num_chars;
 }
 #endif

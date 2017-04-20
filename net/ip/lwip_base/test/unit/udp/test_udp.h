@@ -3,14 +3,6 @@
 
 #include "../lwip_check.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 Suite* udp_suite(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

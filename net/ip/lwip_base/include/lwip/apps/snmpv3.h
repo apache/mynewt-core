@@ -38,10 +38,6 @@
 #include "lwip/apps/snmp_opts.h"
 #include "lwip/err.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if LWIP_SNMP && LWIP_SNMP_V3
 
 #define SNMP_V3_AUTH_ALGO_INVAL  0
@@ -89,10 +85,6 @@ void snmpv3_password_to_key_sha(
     u8_t        engineLength, /* IN  - length of snmpEngineID */
     u8_t       *key);         /* OUT - pointer to caller 20-octet buffer */
 
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* LWIP_HDR_APPS_SNMP_V3_H */

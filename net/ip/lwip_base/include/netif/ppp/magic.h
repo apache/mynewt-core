@@ -80,10 +80,6 @@
 #ifndef MAGIC_H
 #define MAGIC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /***********************
 *** PUBLIC FUNCTIONS ***
 ***********************/
@@ -122,9 +118,5 @@ void magic_random_bytes(unsigned char *buf, u32_t buf_len);
 u32_t magic_pow(u8_t pow);
 
 #endif /* MAGIC_H */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* PPP_SUPPORT */

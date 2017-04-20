@@ -17,11 +17,33 @@
  * under the License.
  */
 
-#ifndef __STM32F4_ETH_H__
-#define __STM32F4_ETH_H__
+#ifndef __STM32_ETH_H__
+#define __STM32_ETH_H__
 
-int stm32f4_eth_init(void *cfg);
-int stm32f4_eth_open(void);
-int stm32f4_eth_close(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* __STM32F4_ETH_H__ */
+/*
+ * Initialize the ethernet device with cfg.
+ *
+ * @param cfg HW specific configuration.
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int stm32_eth_init(const void *cfg);
+
+/*
+ * Set the MAC address for ethernet to use.
+ *
+ * @param addr Byte array of 6 bytes to use as MAC address.
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int stm32_eth_set_hwaddr(uint8_t *addr);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __STM32_ETH_H__ */

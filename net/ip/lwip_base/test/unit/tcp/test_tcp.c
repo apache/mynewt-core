@@ -35,8 +35,8 @@ tcp_setup(void)
 {
   /* reset iss to default (6510) */
   tcp_ticks = 0;
-  tcp_ticks = 0 - (tcp_next_iss() - 6510);
-  tcp_next_iss();
+  tcp_ticks = 0 - (tcp_next_iss(NULL) - 6510);
+  tcp_next_iss(NULL);
   tcp_ticks = 0;
 
   test_tcp_timer = 0;
@@ -46,9 +46,9 @@ tcp_setup(void)
 static void
 tcp_teardown(void)
 {
-  tcp_remove_all();
   netif_list = NULL;
   netif_default = NULL;
+  tcp_remove_all();
 }
 
 
@@ -418,11 +418,12 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   tcp_ticks = SEQNO1 - ISS;
   pcb = test_tcp_new_counters_pcb(&counters);
   EXPECT_RET(pcb != NULL);
-  EXPECT(pcb->lastack == SEQNO1);
   tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
   pcb->mss = TCP_MSS;
   /* disable initial congestion window (we don't send a SYN here...) */
   pcb->cwnd = 2*TCP_MSS;
+  /* start in congestion advoidance */
+  pcb->ssthresh = pcb->cwnd;
 
   /* send 6 mss-sized segments */
   for (i = 0; i < 6; i++) {
@@ -443,7 +444,9 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   /* ACK the first segment */
   p = tcp_create_rx_segment(pcb, NULL, 0, 0, TCP_MSS, TCP_ACK);
   test_tcp_input(p, &netif);
-  /* ensure this didn't trigger a retransmission */
+  /* ensure this didn't trigger a retransmission. Only one
+  segment should be transmitted because cwnd opened up by
+  TCP_MSS and a fraction since we are in congestion avoidance */
   EXPECT(txcounters.num_tx_calls == 1);
   EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
   memset(&txcounters, 0, sizeof(txcounters));
@@ -513,11 +516,10 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
 
   /* create and initialize the pcb */
   tcp_ticks = 0;
-  tcp_ticks = 0 - tcp_next_iss();
-  tcp_ticks = SEQNO1 - tcp_next_iss();
+  tcp_ticks = 0 - tcp_next_iss(NULL);
+  tcp_ticks = SEQNO1 - tcp_next_iss(NULL);
   pcb = test_tcp_new_counters_pcb(&counters);
   EXPECT_RET(pcb != NULL);
-  EXPECT(pcb->lastack == SEQNO1);
   tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
   pcb->mss = TCP_MSS;
   /* disable initial congestion window (we don't send a SYN here...) */

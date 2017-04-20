@@ -247,11 +247,13 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 	    val = va_arg(args, unsigned int);
 	    base = 16;
 	    break;
+#if 0 /* unused (and wrong on LLP64 systems) */
 	case 'p':
 	    val = (unsigned long) va_arg(args, void *);
 	    base = 16;
 	    neg = 2;
 	    break;
+#endif /* unused (and wrong on LLP64 systems) */
 	case 's':
 	    str = va_arg(args, char *);
 	    break;
@@ -267,7 +269,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 #endif /* do we always have strerror() in embedded ? */
 	case 'I':
 	    ip = va_arg(args, u32_t);
-	    ip = ntohl(ip);
+	    ip = lwip_ntohl(ip);
 	    ppp_slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
 	    str = num;

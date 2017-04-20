@@ -17,16 +17,3 @@
  * under the License.
  */
 
-#ifndef __STM32F4_ETH_CFG_H__
-#define __STM32F4_ETH_CFG_H__
-
-/*
- * BSP specific ethernet settings.
- */
-#define STM32F4_MAX_PORTS	9
-
-struct stm32f4_eth_cfg {
-    /* Mask of pins from ports A-I to use */
-    uint32_t sec_port_mask[STM32F4_MAX_PORTS];
-};
-#endif /* __STM32F4_ETH_CFG_H__ */

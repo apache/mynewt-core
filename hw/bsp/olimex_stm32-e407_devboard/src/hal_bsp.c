@@ -41,14 +41,16 @@
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 #include "hal/hal_spi.h"
 #endif
+#if MYNEWT_VAL(ETH_0)
+#include "stm32_eth/stm32_eth.h"
+#include "stm32_eth/stm32_eth_cfg.h"
+#endif
 #include "mcu/stm32f4_bsp.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
 
 #if MYNEWT_VAL(UART_0)
 struct uart_dev hal_uart0;
 #endif
-
-/* XXX should not be here */
 
 #if MYNEWT_VAL(ADC_1)
 struct adc_dev my_dev_adc1;
@@ -286,6 +288,36 @@ static const struct stm32f4_uart_cfg uart_cfg0 = {
     .suc_irqn = USART6_IRQn
 };
 #endif
+#if MYNEWT_VAL(ETH_0)
+static const struct stm32_eth_cfg eth_cfg = {
+    /*
+     * PORTA
+     *   PA1 - ETH_RMII_REF_CLK
+     *   PA2 - ETH_RMII_MDIO
+     *   PA3 - ETH_RMII_MDINT  (GPIO irq?)
+     *   PA7 - ETH_RMII_CRS_DV
+     */
+    .sec_port_mask[0] = (1 << 1) | (1 << 2) | (1 << 7),
+
+    /*
+     * PORTC
+     *   PC1 - ETH_RMII_MDC
+     *   PC4 - ETH_RMII_RXD0
+     *   PC5 - ETH_RMII_RXD1
+     */
+    .sec_port_mask[2] = (1 << 1) | (1 << 4) | (1 << 5),
+
+    /*
+     * PORTG
+     *   PG11 - ETH_RMII_TXEN
+     *   PG13 - ETH_RMII_TXD0
+     *   PG14 - ETH_RMII_TXD1
+     */
+    .sec_port_mask[6] = (1 << 11) | (1 << 13) | (1 << 14),
+    .sec_phy_type = SMSC_8710_RMII,
+    .sec_phy_irq = MCU_GPIO_PORTA(3)
+};
+#endif
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = &_ram_start,
@@ -386,5 +418,10 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
+#endif
+
+#if MYNEWT_VAL(ETH_0)
+    rc = stm32_eth_init(&eth_cfg);
+    assert(rc == 0);
 #endif
 }

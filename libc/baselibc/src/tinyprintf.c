@@ -70,6 +70,7 @@ struct param {
     char sign:1;        /**<  The sign to display (if any) */
     char alt:1;         /**< alternate form */
     char uc:1;          /**<  Upper case (for base16 only) */
+    char left:1;        /**<  Force text to left (padding on right) */
     char base;  /**<  number base (e.g.: 8, 10, 16) */
     char *bf;           /**<  Buffer to output */
 };
@@ -155,8 +156,8 @@ static unsigned putchw(FILE *putp, struct param *p)
     else if (p->alt && p->base == 8)
         n--;
 
-    /* Fill with space, before alternate or sign */
-    if (!p->lz) {
+    /* Unless left-aligned, fill with space, before alternate or sign */
+    if (!p->lz && !p->left) {
         while (n-- > 0)
             written += putf(putp, ' ');
     }
@@ -183,6 +184,12 @@ static unsigned putchw(FILE *putp, struct param *p)
     bf = p->bf;
     while ((ch = *bf++))
         written += putf(putp, ch);
+
+    /* If left-aligned, pad the end with spaces. */
+    if (p->left) {
+        while (n-- > 0)
+            written += putf(putp, ' ');
+    }
     
     return written;
 }
@@ -246,16 +253,23 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             p.alt = 0;
             p.width = 0;
             p.sign = 0;
+            p.left = 0;
             lng = 0;
 
             /* Flags */
             while ((ch = *(fmt++))) {
                 switch (ch) {
                 case '0':
-                    p.lz = 1;
+                    if (!p.left) {
+                        p.lz = 1;
+                    }
                     continue;
                 case '#':
                     p.alt = 1;
+                    continue;
+                case '-':
+                    p.left = 1;
+                    p.lz = 0;
                     continue;
                 default:
                     break;

@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/lwip/stm32f4_eth
-pkg.description: Driver for STM43F4 on-chip ethernet
+pkg.name: hw/drivers/lwip/stm32_eth
+pkg.description: Driver for STM32FXXXX on-chip ethernet
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -27,7 +27,15 @@ pkg.keywords:
     - ethernet
 pkg.deps:
     - hw/hal
-    - hw/mcu/stm/stm32f4xx
     - net/ip/lwip_base
+
+pkg.deps.MCU_STM32F4:
+    - hw/mcu/stm/stm32f4xx
+
+pkg.deps.MCU_STM32F7:
+    - hw/mcu/stm/stm32f7xx
+
 pkg.req_apis: 
 
+pkg.init:
+    stm32_eth_open: 240
