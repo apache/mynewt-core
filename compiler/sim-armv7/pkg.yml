@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,19 +17,12 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/native
-pkg.description: MCU definition native applications.
+pkg.name: compiler/sim-armv7
+pkg.type: compiler
+pkg.description: Compiler definition for native gcc compiler.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - native
-    - x86
-
-pkg.deps:
-    - hw/hal
-
-pkg.req_apis:
-    - console
-
-pkg.cflags:
-    - -Wno-unused-result
+    - sim
+    - compiler
+    - gcc
