@@ -86,6 +86,8 @@ console_printf(const char *fmt, ...)
     int num_chars;
     int len;
 
+    num_chars = 0;
+
     if (console_get_ticks()) {
         /* Prefix each line with a timestamp. */
         if (!console_is_midline) {
