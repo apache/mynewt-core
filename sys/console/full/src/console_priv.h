@@ -17,41 +17,21 @@
  * under the License.
  */
 
+#ifndef __CONSOLE_PRIV_H__
+#define __CONSOLE_PRIV_H__
 
-#include "console/console.h"
-#include "console/prompt.h"
-#include <syscfg/syscfg.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* console prompt, always followed by a space */
-static char console_prompt[] = " > ";
-static char do_prompt = MYNEWT_VAL(CONSOLE_PROMPT);
+int uart_console_is_init(void);
+int uart_console_init(void);
+void uart_console_blocking_mode(void);
+int rtt_console_is_init(void);
+int rtt_console_init(void);
 
-
-/* set the prompt character, leave the space */
-void
-console_set_prompt(char p)
-{
-    do_prompt = 1;
-    console_prompt[1] = p;
+#ifdef __cplusplus
 }
+#endif
 
-void
-console_no_prompt(void)
-{
-    do_prompt = 0;
-}
-
-void
-console_yes_prompt(void)
-{
-    do_prompt = 1;
-}
-
-/* print the prompt to the console */
-void
-console_print_prompt(void)
-{
-    if (do_prompt) {
-        console_printf("%s", console_prompt);
-    }
-}
+#endif /* __CONSOLE_PRIV_H__ */
