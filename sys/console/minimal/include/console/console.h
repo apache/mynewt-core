@@ -46,11 +46,12 @@ console_echo(int on)
 {
 }
 
-static void console_printf(const char *fmt, ...)
+static int console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
-static void inline
+static int inline
 console_printf(const char *fmt, ...)
 {
+    return 0;
 }
 
 #define console_is_midline  0
