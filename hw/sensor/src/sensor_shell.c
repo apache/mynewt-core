@@ -230,7 +230,6 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     struct sensor_euler_data *sed;
     struct sensor_quat_data *sqd;
     struct sensor_color_data *scd;
-    int8_t *temperature;
     char tmpstr[13];
 
     ctx = (struct sensor_shell_read_ctx *) arg;
@@ -288,8 +287,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     }
 
     if (ctx->type == SENSOR_TYPE_TEMPERATURE) {
-        temperature = (int8_t *) data;
-        console_printf("temprature = %d", *temperature);
+        console_printf("temprature = %d", *(int *)data);
         console_printf("\n");
     }
 
@@ -364,6 +362,16 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         }
 
         console_printf("\n\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_PRESSURE) {
+        console_printf("pressure = %d", *(int *)data);
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_RELATIVE_HUMIDITY) {
+        console_printf("relative humidity = %d", *(int *)data);
+        console_printf("\n");
     }
 
     return (0);

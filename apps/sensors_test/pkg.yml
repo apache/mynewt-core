@@ -33,6 +33,7 @@ pkg.deps:
     - hw/drivers/sensors/tsl2561
     - hw/drivers/sensors/bno055
     - hw/drivers/sensors/tcs34725
+    - hw/drivers/sensors/bme280
     - boot/bootutil
     - sys/shell
     - sys/config

@@ -34,6 +34,7 @@
 #include <tsl2561/tsl2561.h>
 #include <tcs34725/tcs34725.h>
 #include <bno055/bno055.h>
+#include <bme280/bme280.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -385,6 +386,25 @@ config_sensor(void)
 {
     struct os_dev *dev;
     int rc;
+
+#if MYNEWT_VAL(BME280_PRESENT)
+    struct bme280_cfg bmecfg;
+
+    dev = (struct os_dev *) os_dev_open("bme280", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+    rc = bme280_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    rc = bme280_config((struct bme280 *)dev, &bmecfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+    os_dev_close(dev);
+#endif
 
 #if MYNEWT_VAL(TCS34725_PRESENT)
     struct tcs34725_cfg tcscfg;
