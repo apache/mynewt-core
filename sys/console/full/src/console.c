@@ -51,6 +51,16 @@
 #define ESC_ANSI_VAL    (1 << 3)
 #define ESC_ANSI_VAL_2  (1 << 4)
 
+#define CONSOLE_NLIP_PKT_START1 (6)
+#define CONSOLE_NLIP_PKT_START2 (9)
+#define CONSOLE_NLIP_DATA_START1 (4)
+#define CONSOLE_NLIP_DATA_START2 (20)
+
+#define NLIP_PKT_START1  (1 << 0)
+#define NLIP_PKT_START2  (1 << 1)
+#define NLIP_DATA_START1 (1 << 2)
+#define NLIP_DATA_START2 (1 << 3)
+
 /* Indicates whether the previous line of output was completed. */
 int console_is_midline;
 
@@ -64,7 +74,8 @@ static struct os_eventq compat_lines_queue;
 #endif
 
 static int esc_state;
-static int echo = 1;
+static int nlip_state;
+static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 
 static uint8_t cur, end;
@@ -160,6 +171,10 @@ static void
 insert_char(char *pos, char c, uint8_t end)
 {
     char tmp;
+
+    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+        return;
+    }
 
     if (echo) {
         /* Echo back to console */
@@ -302,6 +317,31 @@ ansi_cmd:
     esc_state &= ~ESC_ANSI;
 }
 
+static int
+handle_nlip(uint8_t byte)
+{
+    if (((nlip_state & NLIP_PKT_START1) &&
+         (nlip_state & NLIP_PKT_START2)) ||
+        ((nlip_state & NLIP_DATA_START1) &&
+         (nlip_state & NLIP_DATA_START2)))
+    {
+        return 1;
+    }
+
+    if ((nlip_state & NLIP_PKT_START1) &&
+        (byte == CONSOLE_NLIP_PKT_START2)) {
+        nlip_state |= NLIP_PKT_START2;
+        return 1;
+    } else if ((nlip_state & NLIP_DATA_START1) &&
+               (byte == CONSOLE_NLIP_DATA_START2)) {
+        nlip_state |= NLIP_DATA_START2;
+        return 1;
+    } else {
+        nlip_state = 0;
+        return 0;
+    }
+}
+
 int
 console_handle_char(uint8_t byte)
 {
@@ -321,6 +361,41 @@ console_handle_char(uint8_t byte)
         if (!ev)
             return 0;
         input = ev->ev_arg;
+    }
+
+    if (handle_nlip(byte))  {
+        if (byte == '\n') {
+            insert_char(&input->line[cur++], byte, end);
+            input->line[cur] = '\0';
+            cur = 0;
+            end = 0;
+            os_eventq_put(lines_queue, ev);
+            nlip_state = 0;
+
+#if MYNEWT_VAL(CONSOLE_COMPAT)
+            if (console_compat_rx_cb) {
+                console_compat_rx_cb();
+            }
+#endif
+
+            input = NULL;
+            ev = NULL;
+            console_echo(1);
+            return 0;
+        /* Ignore characters if there's no more buffer space */
+        } else if (byte == CONSOLE_NLIP_PKT_START2) {
+            /* Disable echo to not flood the UART */
+            console_echo(0);
+            insert_char(&input->line[cur++], CONSOLE_NLIP_PKT_START1, end);
+        } else if (byte == CONSOLE_NLIP_DATA_START2) {
+            /* Disable echo to not flood the UART */
+            console_echo(0);
+            insert_char(&input->line[cur++], CONSOLE_NLIP_DATA_START1, end);
+        }
+
+        insert_char(&input->line[cur++], byte, end);
+
+        return 0;
     }
 
     /* Handle ANSI escape mode */
@@ -349,6 +424,12 @@ console_handle_char(uint8_t byte)
     if (!isprint(byte)) {
         handle_ansi(byte, input->line);
         switch (byte) {
+        case CONSOLE_NLIP_PKT_START1:
+            nlip_state |= NLIP_PKT_START1;
+            break;
+        case CONSOLE_NLIP_DATA_START1:
+            nlip_state |= NLIP_DATA_START1;
+            break;
         case DEL:
             if (cur > 0) {
                 del_char(&input->line[--cur], end);
@@ -388,10 +469,7 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    /* Ignore characters if there's no more buffer space */
-    if (cur + end < sizeof(input->line) - 1) {
-        insert_char(&input->line[cur++], byte, end);
-    }
+    insert_char(&input->line[cur++], byte, end);
     return 0;
 }
 

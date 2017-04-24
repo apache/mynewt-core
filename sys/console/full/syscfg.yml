@@ -31,6 +31,9 @@ syscfg.defs:
     CONSOLE_TICKS:
         description: 'Print OS Ticks'
         value: 1
+    CONSOLE_ECHO:
+        description: 'Default console echo'
+        value: 1
     CONSOLE_COMPAT:
         description: 'Console backward compatibility'
         value: 1
