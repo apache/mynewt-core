@@ -72,10 +72,10 @@ enum os_error {
     OS_TIMEOUT = 6,
     OS_ERR_IN_ISR = 7,      /* Function cannot be called from ISR */
     OS_ERR_PRIV = 8,        /* Privileged access error */
-    OS_NOT_STARTED = 9,     /* Operating must be started to call this function, but isn't */
+    OS_NOT_STARTED = 9,     /* OS must be started to call this function, but isn't */
     OS_ENOENT = 10,         /* No such thing */
     OS_EBUSY = 11,          /* Resource busy */
-    OS_ERROR = 12,           /* Generic Error */
+    OS_ERROR = 12,          /* Generic Error */
 };
 
 #define OS_WAIT_FOREVER (-1)
@@ -96,6 +96,7 @@ void os_init_idle_task(void);
 #include "os/endian.h"
 #include "os/os_arch.h"
 #include "os/os_callout.h"
+#include "os/os_cputime.h"
 #include "os/os_dev.h"
 #include "os/os_eventq.h"
 #include "os/os_heap.h"
