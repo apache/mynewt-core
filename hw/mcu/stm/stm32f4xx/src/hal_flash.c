@@ -106,7 +106,16 @@ stm32f4_flash_write(const struct hal_flash *dev, uint32_t address,
 static void
 stm32f4_flash_erase_sector_id(int sector_id)
 {
-    FLASH_Erase_Sector(sector_id, FLASH_VOLTAGE_RANGE_1);
+    FLASH_EraseInitTypeDef eraseinit;
+    uint32_t SectorError;
+    
+    eraseinit.TypeErase = FLASH_TYPEERASE_SECTORS;
+    eraseinit.Banks = 0;
+    eraseinit.Sector = sector_id;
+    eraseinit.NbSectors = 1;
+    eraseinit.VoltageRange = FLASH_VOLTAGE_RANGE_1; 
+
+    HAL_FLASHEx_Erase(&eraseinit, &SectorError);
 }
 
 static int
