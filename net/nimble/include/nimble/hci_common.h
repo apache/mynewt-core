@@ -422,9 +422,18 @@ extern "C" {
 
 /* --- LE set default PHY (OCF 0x0031) */
 #define BLE_HCI_LE_SET_DEFAULT_PHY_LEN              (3)
+#define BLE_HCI_LE_PHY_NO_TX_PREF_MASK              (0x01)
+#define BLE_HCI_LE_PHY_NO_RX_PREF_MASK              (0x02)
+
+#define BLE_HCI_LE_PHY_1M_PREF_MASK                 (0x01)
+#define BLE_HCI_LE_PHY_2M_PREF_MASK                 (0x02)
+#define BLE_HCI_LE_PHY_CODED_PREF_MASK              (0x04)
 
 /* --- LE set PHY (OCF 0x0032) */
 #define BLE_HCI_LE_SET_PHY_LEN                      (7)
+#define BLE_HCI_LE_PHY_CODED_ANY                    (0x0000)
+#define BLE_HCI_LE_PHY_CODED_S2_PREF                (0x0001)
+#define BLE_HCI_LE_PHY_CODED_S8_PREF                (0x0002)
 
 /* --- LE enhanced receiver test (OCF 0x0033) */
 #define BLE_HCI_LE_ENH_RCVR_TEST_LEN                (3)
@@ -662,6 +671,9 @@ extern "C" {
 /* LE data length change event (sub event 0x07) */
 #define BLE_HCI_LE_DATA_LEN_CHG_LEN         (11)
 
+/* LE PHY update complete event (sub event 0x0C) */
+#define BLE_HCI_LE_PHY_UPD_LEN              (6)
+
 /* LE Channel Selection Algorithm event (sub event 0x14) */
 #define BLE_HCI_LE_SUBEV_CHAN_SEL_ALG_LEN   (4)
 
@@ -863,6 +875,16 @@ struct hci_read_rssi_ack_params
     uint16_t connection_handle;
     uint8_t status;
     int8_t rssi;
+};
+
+/* PHY updated completed LE meta subevent */
+struct hci_le_phy_upd_complete
+{
+    uint8_t subevent_code;
+    uint8_t status;
+    uint16_t connection_handle;
+    uint8_t tx_phy;
+    uint8_t rx_phy;
 };
 
 #define BLE_HCI_DATA_HDR_SZ                 4

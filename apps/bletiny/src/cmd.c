@@ -3551,6 +3551,180 @@ cmd_svcchg(int argc, char **argv)
     return 0;
 }
 
+static const struct cmd_entry cmd_phy_entries[];
+
+static int
+cmd_phy_help(int argc, char **argv)
+{
+    int i;
+
+    console_printf("Available PHY commands:\n");
+    for (i = 0; cmd_phy_entries[i].name != NULL; i++) {
+        console_printf("\t%s\n", cmd_phy_entries[i].name);
+    }
+    return 0;
+}
+
+static void
+bletiny_phy_set_help(void)
+{
+    console_printf("Available PHY set commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available PHY set params: \n");
+    help_cmd_uint16("conn");
+    help_cmd_uint8("tx_phys_mask");
+    help_cmd_uint8("rx_phys_mask");
+    help_cmd_uint16("phy_opts");
+}
+
+static int
+cmd_phy_set(int argc, char **argv)
+{
+    uint16_t conn;
+    uint8_t tx_phys_mask;
+    uint8_t rx_phys_mask;
+    uint16_t phy_opts;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_phy_set_help();
+        return 0;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
+        return rc;
+    }
+
+    tx_phys_mask = parse_arg_uint8("tx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'tx_phys_mask' parameter\n");
+        help_cmd_uint8("tx_phys_mask");
+        return rc;
+    }
+
+    rx_phys_mask = parse_arg_uint8("rx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'rx_phys_mask' parameter\n");
+        help_cmd_uint8("rx_phys_mask");
+        return rc;
+    }
+
+    phy_opts = parse_arg_uint16("phy_opts", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'phy_opts' parameter\n");
+        help_cmd_uint16("phy_opts");
+        return rc;
+    }
+
+    return ble_gap_set_prefered_le_phy(conn, tx_phys_mask, rx_phys_mask,
+                                       phy_opts);
+}
+
+static void
+bletiny_phy_set_def_help(void)
+{
+    console_printf("Available PHY set_def commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available PHY set_def params: \n");
+    help_cmd_uint8("tx_phys_mask");
+    help_cmd_uint8("rx_phys_mask");
+}
+
+static int
+cmd_phy_set_def(int argc, char **argv)
+{
+    uint8_t tx_phys_mask;
+    uint8_t rx_phys_mask;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_phy_set_def_help();
+        return 0;
+    }
+
+    tx_phys_mask = parse_arg_uint8("tx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'tx_phys_mask' parameter\n");
+        help_cmd_uint8("tx_phys_mask");
+        return rc;
+    }
+
+    rx_phys_mask = parse_arg_uint8("rx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'rx_phys_mask' parameter\n");
+        help_cmd_uint8("rx_phys_mask");
+        return rc;
+    }
+
+    return ble_gap_set_prefered_default_le_phy(tx_phys_mask, rx_phys_mask);
+}
+
+static void
+bletiny_phy_read_help(void)
+{
+    console_printf("Available PHY read commands: \n");
+    console_printf("\thelp\n");
+    console_printf("Available PHY read params: \n");
+    help_cmd_uint16("conn");
+}
+
+static int
+cmd_phy_read(int argc, char **argv)
+{
+
+    uint16_t conn = 0;
+    uint8_t tx_phy;
+    uint8_t rx_phy;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+            bletiny_phy_read_help();
+        return 0;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        help_cmd_uint16("conn");
+        return rc;
+    }
+
+    rc = ble_gap_read_le_phy(conn, &tx_phy, &rx_phy);
+    if (rc != 0) {
+        console_printf("Could not read PHY error: %d\n", rc);
+        return rc;
+    }
+
+    console_printf("TX_PHY: %d\n", tx_phy);
+    console_printf("RX_PHY: %d\n", tx_phy);
+
+    return 0;
+}
+
+static const struct cmd_entry cmd_phy_entries[] = {
+    { "read", cmd_phy_read },
+    { "set_def", cmd_phy_set_def },
+    { "set", cmd_phy_set },
+    { "help", cmd_phy_help },
+    { NULL, NULL }
+};
+
+static int
+cmd_phy(int argc, char **argv)
+{
+    int rc;
+
+    rc = cmd_exec(cmd_phy_entries, argc, argv);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
 /*****************************************************************************
  * $init                                                                     *
  *****************************************************************************/
@@ -3579,6 +3753,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "wl",         cmd_wl },
     { "write",      cmd_write },
     { "svcchg",     cmd_svcchg },
+    { "phy",        cmd_phy },
     { NULL, NULL }
 };
 
