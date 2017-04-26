@@ -27,6 +27,7 @@ Dummy change for testing pull requests
 Another change
 
 1)Test1 - ckc
+2)Test2 - ckc
 
 Apache Mynewt is an open-source operating system for tiny embedded devices.
 Its goal is to make it easy to develop applications for microcontroller
