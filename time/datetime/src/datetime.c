@@ -379,21 +379,12 @@ datetime_format(const struct os_timeval *tv, const struct os_timezone *tz,
     cp = ostr;
     rlen = olen;
 
-    rc = snprintf(cp, rlen, "%04d-%02d-%02dT%02d:%02d:%02d",
-        ct.year, ct.mon, ct.day, ct.hour, ct.min, ct.sec);
+    rc = snprintf(cp, rlen, "%04d-%02d-%02dT%02d:%02d:%02d.%06d",
+        ct.year, ct.mon, ct.day, ct.hour, ct.min, ct.sec, ct.usec);
     cp += rc;
     rlen -= rc;
     if (rc < 0 || rlen <= 0) {
         goto err;
-    }
-
-    if (ct.usec != 0) {
-        rc = snprintf(cp, rlen, ".%06d", ct.usec);
-        cp += rc;
-        rlen -= rc;
-        if (rc < 0 || rlen <= 0) {
-            goto err;
-        }
     }
 
     if (tz != NULL) {
