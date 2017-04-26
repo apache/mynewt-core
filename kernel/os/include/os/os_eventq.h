@@ -49,6 +49,7 @@ struct os_eventq {
 void os_eventq_init(struct os_eventq *);
 int os_eventq_inited(const struct os_eventq *evq);
 void os_eventq_put(struct os_eventq *, struct os_event *);
+struct os_event *os_eventq_get_no_wait(struct os_eventq *evq);
 struct os_event *os_eventq_get(struct os_eventq *);
 void os_eventq_run(struct os_eventq *evq);
 struct os_event *os_eventq_poll(struct os_eventq **, int, os_time_t);

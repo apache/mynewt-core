@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -23,20 +23,10 @@
 #include "console/ticks.h"
 #include "os/os_time.h"
 
-#define CONS_OUTPUT_MAX_LINE	128
+#define CONS_OUTPUT_MAX_LINE    128
 
 
 #if MYNEWT_VAL(BASELIBC_PRESENT)
-size_t console_file_write(FILE *p, const char *str, size_t cnt);
-
-static const struct File_methods console_file_ops = {
-    .write = console_file_write,
-    .read = NULL
-};
-
-static const FILE console_file = {
-    .vmt = &console_file_ops
-};
 
 /**
  * Prints the specified format string to the console.
@@ -57,16 +47,17 @@ console_printf(const char *fmt, ...)
     if (console_get_ticks()) {
         /* Prefix each line with a timestamp. */
         if (!console_is_midline) {
-            num_chars += fprintf((FILE *)&console_file, "%lu:",
-                                 (unsigned long)os_time_get());
+            num_chars += printf("%06lu ", (unsigned long)os_time_get());
         }
     }
+
     va_start(args, fmt);
-    num_chars += vfprintf((FILE *)&console_file, fmt, args);
+    num_chars += vprintf(fmt, args);
     va_end(args);
 
     return num_chars;
 }
+
 
 #else
 
@@ -91,7 +82,7 @@ console_printf(const char *fmt, ...)
     if (console_get_ticks()) {
         /* Prefix each line with a timestamp. */
         if (!console_is_midline) {
-            len = snprintf(buf, sizeof(buf), "%lu:",
+            len = snprintf(buf, sizeof(buf), "%06lu ",
                            (unsigned long)os_time_get());
             num_chars += len;
             console_write(buf, len);

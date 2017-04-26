@@ -19,11 +19,17 @@
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
-#include <stdarg.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct os_eventq;
+
+struct console_input {
+    char line[0];
+};
 
 typedef void (*console_rx_cb)(void);
 
@@ -34,9 +40,14 @@ console_is_init(void)
 }
 
 static int inline
-console_init(console_rx_cb rxcb)
+console_init(console_rx_cb rx_cb)
 {
     return 0;
+}
+
+static void inline
+console_write(const char *str, int cnt)
+{
 }
 
 static int inline
@@ -52,7 +63,12 @@ console_blocking_mode(void)
 }
 
 static void inline
-console_write(const char *str, int cnt)
+console_non_blocking_mode(void)
+{
+}
+
+static void inline
+console_echo(int on)
 {
 }
 
@@ -66,8 +82,26 @@ console_printf(const char *fmt, ...)
 }
 
 static void inline
-console_echo(int on)
+console_set_queues(struct os_eventq *avail_queue,
+                   struct os_eventq *cmd_queue)
 {
+}
+
+static void inline
+console_set_completion_cb(uint8_t (*completion)(char *str, uint8_t len))
+{
+}
+
+static int inline
+console_handle_char(uint8_t byte)
+{
+    return 0;
+}
+
+static int inline
+console_out(int character)
+{
+    return 0;
 }
 
 #define console_is_midline  (0)

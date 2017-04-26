@@ -17,35 +17,22 @@
  * under the License.
  */
 
-#ifndef __CONSOLE_TICKS_H__
-#define __CONSOLE_TICKS_H__
-
-#include <stdarg.h>
-
+#ifndef __CONSOLE_PRIV_H__
+#define __CONSOLE_PRIV_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-static void inline
-console_no_ticks(void)
-{
-}
-
-static void inline
-console_yes_ticks(void)
-{
-}
-
-static char inline
-console_get_ticks(void)
-{
-    return 0;
-}
+int uart_console_is_init(void);
+int uart_console_init(void);
+void uart_console_blocking_mode(void);
+void uart_console_non_blocking_mode(void);
+int rtt_console_is_init(void);
+int rtt_console_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CONSOLE_PROMPT_H__ */
+#endif /* __CONSOLE_PRIV_H__ */
