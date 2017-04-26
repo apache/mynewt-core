@@ -28,13 +28,26 @@ extern "C" {
 #endif
 
 /* print console prompt */
-void console_print_prompt();
+static void inline
+console_print_prompt(void)
+{
+}
+
 /* set the console prompt character */
-void console_set_prompt(char);
+static void inline
+console_set_prompt(char ch)
+{
+}
 
-void console_no_prompt(void);
+static void inline
+console_no_prompt(void)
+{
+}
 
-void console_yes_prompt(void);
+static void inline
+console_yes_prompt(void)
+{
+}
 
 #ifdef __cplusplus
 }

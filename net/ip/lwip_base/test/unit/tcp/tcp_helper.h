@@ -6,10 +6,6 @@
 #include "lwip/tcp.h"
 #include "lwip/netif.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* counters used for test_tcp_counters_* callback functions */
 struct test_tcp_counters {
   u32_t recv_calls;
@@ -52,9 +48,5 @@ void test_tcp_input(struct pbuf *p, struct netif *inp);
 void test_tcp_init_netif(struct netif *netif, struct test_tcp_txcounters *txcounters,
                          ip_addr_t *ip_addr, ip_addr_t *netmask);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

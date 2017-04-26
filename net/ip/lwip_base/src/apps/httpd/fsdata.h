@@ -35,10 +35,6 @@
 #include "lwip/apps/httpd_opts.h"
 #include "lwip/apps/fs.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct fsdata_file {
   const struct fsdata_file *next;
   const unsigned char *name;
@@ -50,9 +46,5 @@ struct fsdata_file {
   const struct fsdata_chksum *chksum;
 #endif /* HTTPD_PRECALCULATED_CHECKSUM */
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_FSDATA_H */

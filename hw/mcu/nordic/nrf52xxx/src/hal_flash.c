@@ -43,6 +43,15 @@ static const struct hal_flash_funcs nrf52k_flash_funcs = {
     .hff_init = nrf52k_flash_init
 };
 
+#ifdef NRF52840_XXAA
+const struct hal_flash nrf52k_flash_dev = {
+    .hf_itf = &nrf52k_flash_funcs,
+    .hf_base_addr = 0x00000000,
+    .hf_size = 1024 * 1024,	/* XXX read from factory info? */
+    .hf_sector_cnt = 256,	/* XXX read from factory info? */
+    .hf_align = 1
+};
+#elif defined(NRF52832_XXAA)
 const struct hal_flash nrf52k_flash_dev = {
     .hf_itf = &nrf52k_flash_funcs,
     .hf_base_addr = 0x00000000,
@@ -50,6 +59,9 @@ const struct hal_flash nrf52k_flash_dev = {
     .hf_sector_cnt = 128,	/* XXX read from factory info? */
     .hf_align = 1
 };
+#else
+#error "Must define hal_flash struct for NRF52 type"
+#endif
 
 #define NRF52K_FLASH_READY() (NRF_NVMC->READY == NVMC_READY_READY_Ready)
 

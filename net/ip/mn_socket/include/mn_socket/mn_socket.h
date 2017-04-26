@@ -55,6 +55,7 @@ extern "C" {
 #define MN_EUNKNOWN             11
 #define MN_EADDRNOTAVAIL        12
 #define MN_ENETUNREACH          13
+#define MN_OPNOSUPPORT          14
 
 /*
  * Multicast macros
@@ -198,6 +199,7 @@ const char *mn_inet_ntop(int af, const void *src, void *dst, int len);
  */
 #define MN_ITF_F_UP        1
 #define MN_ITF_F_MULTICAST 2
+#define MN_ITF_F_LINK      4
 
 struct mn_itf {
     char mif_name[MN_ITF_NAME_MAX];
@@ -219,6 +221,11 @@ struct mn_itf_addr {
  */
 int mn_itf_getnext(struct mn_itf *);
 int mn_itf_addr_getnext(struct mn_itf *, struct mn_itf_addr *);
+
+/*
+ * Find specific interface, given name.
+ */
+int mn_itf_get(char *name, struct mn_itf *mi);
 
 #ifdef __cplusplus
 }

@@ -1,10 +1,6 @@
 #ifndef LWIP_HDR_LWIP_CHECK_H
 #define LWIP_HDR_LWIP_CHECK_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Common header file for lwIP unit tests using the check framework */
 
 #include <config.h>
@@ -36,10 +32,6 @@ Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, SFun se
 
 #ifdef LWIP_UNITTESTS_LIB
 int lwip_unittests_run(void)
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* LWIP_HDR_LWIP_CHECK_H */

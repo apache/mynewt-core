@@ -37,10 +37,6 @@
 
 #include "lwip/apps/snmp_opts.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if LWIP_SNMP && LWIP_SNMP_V3
 
 #include "snmp_pbuf_stream.h"
@@ -65,10 +61,6 @@ err_t snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length, const u8_t* ke
     const u8_t* priv_param, const u32_t engine_boots, const u32_t engine_time, u8_t algo, u8_t mode);
 err_t snmpv3_build_priv_param(u8_t* priv_param);
 
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* LWIP_HDR_APPS_SNMP_V3_PRIV_H */

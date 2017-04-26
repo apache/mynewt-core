@@ -25,34 +25,37 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - sys/console/full
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
-    - kernel/os
-    - boot/bootutil
-    - boot/split_app
-    - encoding/json/test
-#    - sys/shell
-    - sys/config
-    - sys/id
-    - sys/log/full
-    - sys/stats/full
-    - sys/flash_map
-    - sys/flash_map/test
-    - test/testutil
-    - kernel/os/test
-    - encoding/json/test
-    - test/crash_test
-    - test/runtest
+    - "@apache-mynewt-core/boot/split_app"
+    - "@apache-mynewt-core/encoding/json/test"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/kernel/os/test"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/mgmt/newtmgr"
+    - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/sys/flash_map/test"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/test/crash_test"
+    - "@apache-mynewt-core/test/runtest"
+    - "@apache-mynewt-core/test/testutil"
+
+pkg.deps.TESTBENCH_BLE:
+    - "@apache-mynewt-core/mgmt/newtmgr/transport/ble"
+    - "@apache-mynewt-core/net/nimble/controller"
+    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-core/net/nimble/host/services/gap"
+    - "@apache-mynewt-core/net/nimble/host/services/gatt"
+    - "@apache-mynewt-core/net/nimble/host/store/ram"
+    - "@apache-mynewt-core/net/nimble/transport/ram"
 
 pkg.deps.CONFIG_NFFS:
-    - fs/nffs
-    - fs/nffs/test
+    - "@apache-mynewt-core/fs/nffs"
+    - "@apache-mynewt-core/fs/nffs/test"
 
 pkg.deps.CONFIG_FCB:
-    - fs/fcb
-    - fs/fcb/test
-
-
-#   pkg.cflags: -DDEBUG_MALLOC
+    - "@apache-mynewt-core/fs/fcb"
+    - "@apache-mynewt-core/fs/fcb/test"

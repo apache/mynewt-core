@@ -35,10 +35,6 @@
 
 #include "netif/ppp/ppp_opts.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #ifdef PPP_INCLUDE_SETTINGS_HEADER
@@ -142,10 +138,10 @@ extern "C" {
  */
 struct link_callbacks {
   /* Start a connection (e.g. Initiate discovery phase) */
-  err_t (*connect) (ppp_pcb *pcb, void *ctx);
+  void (*connect) (ppp_pcb *pcb, void *ctx);
 #if PPP_SERVER
   /* Listen for an incoming connection (Passive mode) */
-  err_t (*listen) (ppp_pcb *pcb, void *ctx);
+  void (*listen) (ppp_pcb *pcb, void *ctx);
 #endif /* PPP_SERVER */
   /* End a connection (i.e. initiate disconnect phase) */
   void (*disconnect) (ppp_pcb *pcb, void *ctx);
@@ -630,8 +626,4 @@ void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len);
 
 
 #endif /* PPP_SUPPORT */
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* LWIP_HDR_PPP_IMPL_H */

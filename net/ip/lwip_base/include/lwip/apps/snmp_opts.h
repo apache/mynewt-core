@@ -39,10 +39,6 @@
 
 #include "lwip/opt.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @defgroup snmp_opts Options
  * @ingroup snmp
@@ -292,10 +288,6 @@ extern "C" {
 
 #ifndef LWIP_SNMP_V3_MBEDTLS
 #define LWIP_SNMP_V3_MBEDTLS       LWIP_SNMP_V3
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* LWIP_HDR_SNMP_OPTS_H */

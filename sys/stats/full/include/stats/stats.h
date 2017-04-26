@@ -19,6 +19,7 @@
 #ifndef __UTIL_STATS_H__
 #define __UTIL_STATS_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include "syscfg/syscfg.h"
 #include "os/queue.h"

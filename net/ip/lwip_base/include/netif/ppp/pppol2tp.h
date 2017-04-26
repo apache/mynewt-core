@@ -39,10 +39,6 @@
 
 #include "ppp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Timeout */
 #define PPPOL2TP_CONTROL_TIMEOUT         (5*1000)  /* base for quick timeout calculation */
 #define PPPOL2TP_SLOW_RETRY              (60*1000) /* persistent retry interval */
@@ -202,8 +198,4 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 #endif /* PPPOL2TP_H */
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

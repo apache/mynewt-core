@@ -31,7 +31,7 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Erik Ekman <erik.ekman@verisure.com>
+ * Author: Erik Ekman <erik@kryo.se>
  *
  */
 
@@ -39,10 +39,6 @@
 #define LWIP_HDR_APPS_MDNS_OPTS_H
 
 #include "lwip/opt.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @defgroup mdns_opts Options
@@ -73,10 +69,6 @@ extern "C" {
 /**
  * @}
  */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_HDR_APPS_MDNS_OPTS_H */
 

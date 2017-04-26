@@ -26,9 +26,6 @@ pkg.keywords:
 
 pkg.deps:
     - test/flash_test
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
     - kernel/os
     - hw/sensor
     - hw/drivers/sensors/sim
@@ -44,6 +41,19 @@ pkg.deps:
     - sys/log/full
     - sys/stats/full
     - boot/split
+    - mgmt/imgmgr
+    #- mgmt/newtmgr
+
+pkg.deps.SENSOR_OIC:
+    - mgmt/oicmgr
+
+pkg.deps.SENSOR_BLE:
+    - net/nimble/controller
+    - net/nimble/host
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
+    - net/nimble/host/store/ram
+    - net/nimble/transport/ram
 
 pkg.deps.CONFIG_NFFS:
     - fs/nffs

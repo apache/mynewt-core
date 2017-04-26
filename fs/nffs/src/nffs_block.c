@@ -342,6 +342,8 @@ nffs_block_from_hash_entry_no_ptrs(struct nffs_block *out_block,
 
     assert(nffs_hash_id_is_block(block_entry->nhe_id));
 
+    memset(out_block, 0, sizeof *out_block);
+
     if (nffs_hash_entry_is_dummy(block_entry)) {
         /*
          * We can't read this from disk so we'll be missing filling in anything

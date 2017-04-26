@@ -20,6 +20,24 @@
 #include <mcu/cortex_m4.h>
 #include "hal/hal_system.h"
 
+/**
+ * Function called at startup. Called after BSS and .data initialized but
+ * prior to the _start function.
+ *
+ * NOTE: this function is called by both the bootloader and the application.
+ * If you add code here that you do not want executed in either case you need
+ * to conditionally compile it using the config variable BOOT_LOADER (will
+ * be set to 1 in case of bootloader build)
+ *
+ */
+void
+hal_system_init(void)
+{
+#if MYNEWT_VAL(MCU_DCDC_ENABLED)
+    NRF_POWER->DCDCEN = 1;
+#endif
+}
+
 void
 hal_system_reset(void)
 {

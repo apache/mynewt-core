@@ -127,7 +127,7 @@ fcb_is_empty(struct fcb *fcb)
 int
 fcb_put_len(uint8_t *buf, uint16_t len)
 {
-    if (len < CHAR_MAX) {
+    if (len < 0x80) {
         buf[0] = len;
         return 1;
     } else if (len < FCB_MAX_LEN) {
