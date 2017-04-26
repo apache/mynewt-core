@@ -456,9 +456,11 @@ introduction to this subject.
 Other significant improvements can be made by supplying
 assembly or inline replacements for htons() and htonl()
 if you're using a little-endian architecture.
-#define LWIP_PLATFORM_BYTESWAP 1
-#define LWIP_PLATFORM_HTONS(x) <your_htons>
-#define LWIP_PLATFORM_HTONL(x) <your_htonl>
+#define lwip_htons(x) <your_htons>
+#define lwip_htonl(x) <your_htonl>
+If you #define them to htons() and htonl(), you should
+#define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS to prevent lwIP from
+defining hton*/ntoh* compatibility macros.
 
 Check your network interface driver if it reads at
 a higher speed than the maximum wire-speed. If the

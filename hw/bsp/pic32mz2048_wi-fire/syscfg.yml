@@ -17,7 +17,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/pic32mx470_6LP_clicker
+# Package: hw/bsp/pic32mx2048_wi-fire
 
 syscfg.defs:
     CLOCK_FREQ:

@@ -34,25 +34,11 @@
 
 #include "lwip/opt.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @defgroup netbiosns_opts Options
  * @ingroup netbiosns
  * @{
  */
-
-/** Since there's no standard function for case-insensitive string comparision,
- * we need another define here:
- * define this to stricmp() for windows or strcasecmp() for linux.
- * If not defined, comparision is case sensitive and the provided hostname must be
- * uppercase.
- */
-#if !defined NETBIOS_STRCMP || defined __DOXYGEN__
-#define NETBIOS_STRCMP(str1, str2) strcmp(str1, str2)
-#endif
 
 /** NetBIOS name of lwip device
  * This must be uppercase until NETBIOS_STRCMP() is defined to a string
@@ -69,9 +55,5 @@ extern "C" {
 /**
  * @}
  */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_HDR_APPS_NETBIOS_OPTS_H */

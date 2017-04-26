@@ -21,12 +21,17 @@
 
 TEST_CASE(nffs_test_large_unlink)
 {
-    static char file_contents[1024 * 4];
-    char filename[256];
+    /* It should not be necessary to initialize this array, but the libgcc
+     * version of strcmp triggers a "Conditional jump or move depends on
+     * uninitialised value(s)" valgrind warning.
+     */
+    char filename[256] = { 0 };
     int rc;
     int i;
     int j;
     int k;
+
+    static char file_contents[1024 * 4];
 
     /*** Setup. */
     nffs_config.nc_num_inodes = 1024;

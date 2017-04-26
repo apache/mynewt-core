@@ -20,9 +20,14 @@
 #ifndef H_HAL_TIMER_
 #define H_HAL_TIMER_
 
+#include <inttypes.h>
+#include "os/queue.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <inttypes.h>
 
 #include "os/queue.h"
 

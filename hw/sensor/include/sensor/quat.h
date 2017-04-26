@@ -28,8 +28,7 @@
 extern "C" {
 #endif
 
-/* Data representing a singular read from an accelerometer.
- * All values are in MS^2
+/* Data representing a singular read from a quat sensor.
  */
 struct sensor_quat_data {
     float sqd_x;

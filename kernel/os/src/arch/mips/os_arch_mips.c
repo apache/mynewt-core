@@ -101,7 +101,7 @@ os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
     os_stack_t *s = stack_top - ((((sizeof(struct gpctx) - 1) /
-        OS_STACK_ALIGNMENT) + 1) * 2);
+        OS_STACK_ALIGNMENT) + 1) * (OS_STACK_ALIGNMENT/sizeof(os_stack_t)));
 
     struct gpctx ctx = {
         .r = {

@@ -168,6 +168,9 @@ Reset_Handler_split:
 
     LDR     R0, =SystemInit
     BLX     R0
+
+    BL      hal_system_init
+
     LDR     R0, =_start_split
     BX      R0
 

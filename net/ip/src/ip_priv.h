@@ -30,6 +30,9 @@ int lwip_itf_getnext(struct mn_itf *mi);
 int lwip_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia);
 
 int lwip_socket_init(void);
+void lwip_cli_init(void);
+
+int lwip_err_to_mn_err(int rc);
 
 #ifdef __cplusplus
 }

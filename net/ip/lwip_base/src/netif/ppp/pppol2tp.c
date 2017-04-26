@@ -73,7 +73,7 @@ LWIP_MEMPOOL_DECLARE(PPPOL2TP_PCB, MEMP_NUM_PPPOL2TP_INTERFACES, sizeof(pppol2tp
 static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
 static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx);    /* Destroy a L2TP control block */
-static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
+static void pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
@@ -113,6 +113,10 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
+#if !PPPOL2TP_AUTH_SUPPORT
+  LWIP_UNUSED_ARG(secret);
+  LWIP_UNUSED_ARG(secret_len);
+#endif /* !PPPOL2TP_AUTH_SUPPORT */
 
   if (ipaddr == NULL) {
     goto ipaddr_check_failed;
@@ -251,7 +255,7 @@ static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx) {
 }
 
 /* Be a LAC, connect to a LNS. */
-static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
+static void pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   err_t err;
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   lcp_options *lcp_wo;
@@ -322,7 +326,6 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
     PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCRQ, error=%d\n", err));
   }
   sys_timeout(PPPOL2TP_CONTROL_TIMEOUT, pppol2tp_timeout, l2tp);
-  return err;
 }
 
 /* Disconnect */

@@ -23,4 +23,4 @@ pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
-pkg.cflags.float_user: -DFLOAT_SUPPORT
+pkg.cflags.FLOAT_USER: -DFLOAT_SUPPORT

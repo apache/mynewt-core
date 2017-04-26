@@ -19,6 +19,7 @@
 
 #include <inttypes.h>
 #include <assert.h>
+#include <string.h>
 
 #include <os/os.h>
 
@@ -135,4 +136,19 @@ int
 mn_itf_addr_getnext(struct mn_itf *mi, struct mn_itf_addr *mia)
 {
     return mn_sock_tgt->mso_itf_addr_getnext(mi, mia);
+}
+
+int
+mn_itf_get(char *name, struct mn_itf *mi)
+{
+    memset(mi, 0, sizeof(*mi));
+    while (1) {
+        if (mn_itf_getnext(mi)) {
+            break;
+        }
+        if (!strcmp(name, mi->mif_name)) {
+            return 0;
+        }
+    }
+    return -1;
 }

@@ -24,13 +24,14 @@ TEST_CASE(fcb_test_len)
     uint16_t len;
     uint16_t len2;
     int rc;
+    int rc2;
 
     for (len = 0; len < FCB_MAX_LEN; len++) {
         rc = fcb_put_len(buf, len);
         TEST_ASSERT(rc == 1 || rc == 2);
 
-        rc = fcb_get_len(buf, &len2);
-        TEST_ASSERT(rc == 1 || rc == 2);
+        rc2 = fcb_get_len(buf, &len2);
+        TEST_ASSERT(rc2 == rc);
 
         TEST_ASSERT(len == len2);
     }

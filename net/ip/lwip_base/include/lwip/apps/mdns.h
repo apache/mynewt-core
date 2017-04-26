@@ -31,7 +31,7 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Erik Ekman <erik.ekman@verisure.com>
+ * Author: Erik Ekman <erik@kryo.se>
  *
  */
 #ifndef LWIP_HDR_MDNS_H
@@ -39,10 +39,6 @@
 
 #include "lwip/apps/mdns_opts.h"
 #include "lwip/netif.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #if LWIP_MDNS_RESPONDER
 
@@ -69,9 +65,5 @@ err_t mdns_resp_add_service_txtitem(struct mdns_service *service, const char *tx
 void mdns_resp_netif_settings_changed(struct netif *netif);
 
 #endif /* LWIP_MDNS_RESPONDER */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_HDR_MDNS_H */

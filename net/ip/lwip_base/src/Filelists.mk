@@ -164,10 +164,18 @@ MDNSFILES=$(LWIPDIR)/apps/mdns/mdns.c
 # NETBIOSNSFILES: NetBIOS name server
 NETBIOSNSFILES=$(LWIPDIR)/apps/netbiosns/netbiosns.c
 
+# TFTPFILES: TFTP server files
+TFTPFILES=$(LWIPDIR)/apps/tftp/tftp_server.c
+
+# MQTTFILES: MQTT client files
+MQTTFILES=$(LWIPDIR)/apps/mqtt/mqtt.c
+
 # LWIPAPPFILES: All LWIP APPs
 LWIPAPPFILES=$(SNMPFILES) \
 	$(HTTPDFILES) \
 	$(LWIPERFFILES) \
 	$(SNTPFILES) \
 	$(MDNSFILES) \
-	$(NETBIOSNSFILES)
+	$(NETBIOSNSFILES) \
+	$(TFTPFILES) \
+	$(MQTTFILES)

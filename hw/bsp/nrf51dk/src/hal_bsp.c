@@ -31,8 +31,12 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
+#endif
+#if MYNEWT_VAL(UART_0)
 #include "uart_hal/uart_hal.h"
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;

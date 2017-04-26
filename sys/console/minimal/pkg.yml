@@ -26,7 +26,10 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - kernel/os
+pkg.deps.CONSOLE_UART:
     - hw/drivers/uart
+pkg.deps.CONSOLE_RTT:
+    - hw/drivers/rtt
 pkg.apis: console
 
 pkg.init:

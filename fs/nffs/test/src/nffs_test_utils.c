@@ -54,7 +54,11 @@ void
 nffs_test_util_assert_ent_name(struct fs_dirent *dirent,
                                const char *expected_name)
 {
-    char name[NFFS_FILENAME_MAX_LEN + 1];
+    /* It should not be necessary to initialize this array, but the libgcc
+     * version of strcmp triggers a "Conditional jump or move depends on
+     * uninitialised value(s)" valgrind warning.
+     */
+    char name[NFFS_FILENAME_MAX_LEN + 1] = { 0 };
     uint8_t name_len;
     int rc;
 

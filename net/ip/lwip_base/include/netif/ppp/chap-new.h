@@ -36,10 +36,6 @@
 
 #include "ppp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * CHAP packets begin with a standard header with code, id, len (2 bytes).
  */
@@ -193,8 +189,4 @@ extern void chap_auth_with_peer(ppp_pcb *pcb, const char *our_name, int digest_c
 extern const struct protent chap_protent;
 
 #endif /* CHAP_H */
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* PPP_SUPPORT && CHAP_SUPPORT */

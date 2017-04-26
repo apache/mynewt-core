@@ -38,3 +38,6 @@ pkg.deps:
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
+
+pkg.deps.ETH_0:
+    - hw/drivers/lwip/stm32_eth

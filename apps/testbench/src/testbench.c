@@ -73,6 +73,7 @@
 #endif
 
 #include "testbench.h"
+#include "tbb.h"
 
 struct os_timeval tv;
 struct os_timezone tz;
@@ -123,9 +124,50 @@ extern uint32_t stack2_size;
 extern uint32_t stack3_size;
 extern uint32_t stack4_size;
 
+struct ts_suite *current_ts;
+
 void
 testbench_ts_result(char *msg, void *arg, bool passed)
 {
+    /* Must log valid json with a strlen less than LOG_PRINTF_MAX_ENTRY_LEN */
+    char buf[LOG_PRINTF_MAX_ENTRY_LEN];
+    char *n;
+    int n_len;
+    char *s;
+    int s_len;
+    char *m;
+    int m_len;
+
+    int len = 35; /* str length of {"k":"","n":"","s":"","m":"","r":1} */
+    len += strlen(runtest_token);
+
+    /* How much of the test name can we log? */
+    n_len = strlen(tu_case_name);
+    if (len + n_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
+        n_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    }
+    len += n_len;
+    n = buf;
+    strncpy(n, tu_case_name, n_len + 1);
+
+    /* How much of the suite name can we log? */
+    s_len = strlen(current_ts->ts_name);
+    if (len + s_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
+        s_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    }
+    len += s_len;
+    s = n + n_len + 2;
+    strncpy(s, current_ts->ts_name, s_len + 1);
+
+    /* How much of the message can we log? */
+    m_len = strlen(msg);
+    if (len + m_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
+        m_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    }
+    m = s + s_len + 2;
+    strncpy(m, msg, m_len + 1);
+
+
     TESTBENCH_UPDATE_TOD;
 
     total_tests++;
@@ -134,8 +176,8 @@ testbench_ts_result(char *msg, void *arg, bool passed)
     }
 
     LOG_INFO(&testlog, LOG_MODULE_TEST,
-            "{\"k\":\"%s\",\"n\":\"%s\",\"r\":%d,\"m\":\"%s\"}",
-             runtest_token, tu_case_name, passed, msg);
+            "{\"k\":\"%s\",\"n\":\"%s\",\"s\":\"%s\",\"m\":\"%s\",\"r\":%d}",
+             runtest_token, n, s, m, passed);
 }
 
 void
@@ -149,20 +191,6 @@ testbench_ts_fail(char *msg, void *arg)
 {
     testbench_ts_result(msg, arg, false);
 }
-
-#if 0
-void
-testbench_tc_pretest(void* arg)
-{
-    return;
-}
-
-void
-testbench_tc_postest(void* arg)
-{
-    return;
-}
-#endif
 
 void
 testbench_test_init()
@@ -178,7 +206,6 @@ testbench_test_init()
 static int
 testbench_runtests(struct os_event *ev)
 {
-    struct ts_suite *ts;
     struct runtest_evq_arg *runtest_arg;
     int run_all = 0;
 
@@ -215,17 +242,17 @@ testbench_runtests(struct os_event *ev)
         /*
          * go through entire list of registered test suites
          */
-        SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
-            if (run_all || !strcmp(runtest_arg->run_testname, ts->ts_name)) {
-                ts->ts_test();
+        SLIST_FOREACH(current_ts, &g_ts_suites, ts_next) {
+            if (run_all || !strcmp(runtest_arg->run_testname, current_ts->ts_name)) {
+                current_ts->ts_test();
             }
         }
     } else {
         /*
          * run all tests if NULL event is passed as an argument (untested)
          */
-        SLIST_FOREACH(ts, &g_ts_suites, ts_next) {
-            ts->ts_test();
+        SLIST_FOREACH(current_ts, &g_ts_suites, ts_next) {
+            current_ts->ts_test();
         }
     }
     testbench_test_complete();
@@ -359,6 +386,10 @@ main(int argc, char **argv)
     cbmem_buf = malloc(sizeof(uint32_t) * MAX_CBMEM_BUF);
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
+
+#if MYNEWT_VAL(TESTBENCH_BLE)
+    tbb_init();
+#endif
 
     conf_load();
 

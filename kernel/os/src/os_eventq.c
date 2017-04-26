@@ -96,6 +96,20 @@ os_eventq_put(struct os_eventq *evq, struct os_event *ev)
     }
 }
 
+struct os_event *
+os_eventq_get_no_wait(struct os_eventq *evq)
+{
+    struct os_event *ev;
+
+    ev = STAILQ_FIRST(&evq->evq_list);
+    if (ev) {
+        STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
+        ev->ev_queued = 0;
+    }
+
+    return ev;
+}
+
 /**
  * Pull a single item from an event queue.  This function blocks until there
  * is an item on the event queue to read.

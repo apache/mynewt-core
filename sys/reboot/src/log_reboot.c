@@ -98,7 +98,11 @@ reboot_init_handler(int log_store_type, uint8_t entries)
 
             rc = fcb_init(fcbp);
             if (rc) {
-                return rc;
+                flash_area_erase(ptr, 0, ptr->fa_size);
+                rc = fcb_init(fcbp);
+                if (rc) {
+                    return rc;
+                }
             }
             reboot_log_handler = (struct log_handler *)&log_fcb_handler;
             if (rc) {

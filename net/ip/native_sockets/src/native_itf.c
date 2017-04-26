@@ -34,8 +34,11 @@ itf_flags(int if_flags)
 
     flags = 0;
 
-    if ((if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
+    if (if_flags & IFF_UP) {
         flags |= MN_ITF_F_UP;
+    }
+    if (if_flags & IFF_RUNNING) {
+        flags |= MN_ITF_F_LINK;
     }
     if (if_flags & IFF_MULTICAST) {
         flags |= MN_ITF_F_MULTICAST;

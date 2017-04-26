@@ -61,7 +61,7 @@ extern "C" {
 #ifndef LWIP_DNS_ADDRTYPE_DEFAULT
 #define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV4_IPV6
 #endif
-#elif defined(LWIP_IPV4)
+#elif LWIP_IPV4
 #define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV4
 #else
 #define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV6
@@ -76,6 +76,7 @@ struct local_hostlist_entry {
   ip_addr_t addr;
   struct local_hostlist_entry *next;
 };
+#define DNS_LOCAL_HOSTLIST_ELEM(name, addr_init) {name, addr_init, NULL}
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
 #ifndef DNS_LOCAL_HOSTLIST_MAX_NAMELEN
 #define DNS_LOCAL_HOSTLIST_MAX_NAMELEN  DNS_MAX_NAME_LENGTH
@@ -83,6 +84,13 @@ struct local_hostlist_entry {
 #define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct local_hostlist_entry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
 #endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
 #endif /* DNS_LOCAL_HOSTLIST */
+
+#if LWIP_IPV4
+extern const ip_addr_t dns_mquery_v4group;
+#endif /* LWIP_IPV4 */
+#if LWIP_IPV6
+extern const ip_addr_t dns_mquery_v6group;
+#endif /* LWIP_IPV6 */
 
 /** Callback which is invoked when a hostname is found.
  * A function of this type must be implemented by the application using the DNS resolver.
@@ -104,10 +112,14 @@ err_t            dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *add
                                    u8_t dns_addrtype);
 
 
-#if DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+#if DNS_LOCAL_HOSTLIST
+size_t         dns_local_iterate(dns_found_callback iterator_fn, void *iterator_arg);
+err_t          dns_local_lookup(const char *hostname, ip_addr_t *addr, u8_t dns_addrtype);
+#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
 int            dns_local_removehost(const char *hostname, const ip_addr_t *addr);
 err_t          dns_local_addhost(const char *hostname, const ip_addr_t *addr);
-#endif /* DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+#endif /* DNS_LOCAL_HOSTLIST */
 
 #ifdef __cplusplus
 }

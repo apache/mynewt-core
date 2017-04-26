@@ -186,6 +186,8 @@ Reset_Handler:
     LDR     R0, =SystemInit
     BLX     R0
 
+    BL      hal_system_init
+
     LDR     R0, =_start
     BX      R0
 

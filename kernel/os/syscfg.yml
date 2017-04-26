@@ -78,3 +78,6 @@ syscfg.defs:
     MSYS_5_BLOCK_SIZE:
         description: '5th system pool of mbufs; size of an entry'
         value: 0
+    FLOAT_USER:
+        descriptiong: 'Enable float support for users'
+        value: 0

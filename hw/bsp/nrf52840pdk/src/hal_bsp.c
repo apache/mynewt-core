@@ -35,6 +35,36 @@
 #include "uart_hal/uart_hal.h"
 #include "os/os_dev.h"
 #include "bsp.h"
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+#include <lsm303dlhc/lsm303dlhc.h>
+static struct lsm303dlhc lsm303dlhc;
+#endif
+#if MYNEWT_VAL(BNO055_PRESENT)
+#include <bno055/bno055.h>
+#endif
+#if MYNEWT_VAL(TSL2561_PRESENT)
+#include <tsl2561/tsl2561.h>
+#endif
+#if MYNEWT_VAL(TCS34725_PRESENT)
+#include <tcs34725/tcs34725.h>
+#endif
+
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+static struct lsm303dlhc lsm303dlhc;
+#endif
+
+#if MYNEWT_VAL(BNO055_PRESENT)
+static struct bno055 bno055;
+#endif
+
+#if MYNEWT_VAL(TSL2561_PRESENT)
+static struct tsl2561 tsl2561;
+#endif
+
+#if MYNEWT_VAL(TCS34725_PRESENT)
+static struct tcs34725 tcs34725;
+#endif
+
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -144,6 +174,61 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return cfg_pri;
 }
 
+#if MYNEWT_VAL(LSM303DLHC_PRESENT) || MYNEWT_VAL(BNO055_PRESENT)
+static int
+accel_init(struct os_dev *dev, void *arg)
+{
+   return (0);
+}
+#endif
+
+#if MYNEWT_VAL(TSL2561_PRESENT)
+static int
+light_init(struct os_dev *dev, void *arg)
+{
+    return (0);
+}
+#endif
+
+#if MYNEWT_VAL(TCS34725_PRESENT)
+static int
+color_init(struct os_dev *dev, void *arg)
+{
+    return (0);
+}
+#endif
+
+static void
+sensor_dev_create(void)
+{
+    int rc;
+
+    (void)rc;
+#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+    rc = os_dev_create((struct os_dev *) &lsm303dlhc, "accel0",
+      OS_DEV_INIT_PRIMARY, 0, accel_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BNO055_PRESENT)
+    rc = os_dev_create((struct os_dev *) &bno055, "accel1",
+      OS_DEV_INIT_PRIMARY, 0, accel_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TSL2561_PRESENT)
+    rc = os_dev_create((struct os_dev *) &tsl2561, "light0",
+      OS_DEV_INIT_PRIMARY, 0, light_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TCS34725_PRESENT)
+    rc = os_dev_create((struct os_dev *) &tcs34725, "color0",
+      OS_DEV_INIT_PRIMARY, 0, color_init, NULL);
+    assert(rc == 0);
+#endif
+}
+
 void
 hal_bsp_init(void)
 {
@@ -206,4 +291,5 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+    sensor_dev_create();
 }
