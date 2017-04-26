@@ -178,7 +178,7 @@ bletest_multi_adv_instances[BLETEST_CFG_ADV_TEST_INSTANCES] = {
 #define BLETEST_CFG_RAND_PKT_SIZE       (1)
 #define BLETEST_CFG_SUGG_DEF_TXOCTETS   (251)
 #define BLETEST_CFG_SUGG_DEF_TXTIME     \
-    BLE_TX_DUR_USECS_M(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4)
+    ble_phy_pdu_dur(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4, BLE_PHY_1M)
 
 /* Test configurations. One of these should be set to 1 */
 #if !defined(BLETEST_CONCURRENT_CONN_TEST) && !defined(BLETEST_THROUGHPUT_TEST)
