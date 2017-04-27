@@ -28,8 +28,8 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jä
 #include "node/mac/LoRaMac.h"
 #include "node/mac/LoRaMacTest.h"
 
+#include "os/os.h"
 #include "hal/hal_timer.h"
-#include "os/os_cputime.h"
 
 #include "lora_priv.h"
 
@@ -3120,9 +3120,9 @@ LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl
 
             LoRaMacBufferPktLen = pktHeaderLen;
 
-            memcpyr( LoRaMacBuffer + LoRaMacBufferPktLen, LoRaMacAppEui, 8 );
+            swap_buf( LoRaMacBuffer + LoRaMacBufferPktLen, LoRaMacAppEui, 8 );
             LoRaMacBufferPktLen += 8;
-            memcpyr( LoRaMacBuffer + LoRaMacBufferPktLen, LoRaMacDevEui, 8 );
+            swap_buf( LoRaMacBuffer + LoRaMacBufferPktLen, LoRaMacDevEui, 8 );
             LoRaMacBufferPktLen += 8;
 
             LoRaMacDevNonce = Radio.Random( );

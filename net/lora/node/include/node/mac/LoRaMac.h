@@ -48,7 +48,7 @@
 
 // Includes board dependent definitions such as channels frequencies
 #include "LoRaMac-definitions.h"
-#include "node/timer.h"
+#include "node/utilities.h"
 
 
 /*!

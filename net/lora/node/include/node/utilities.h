@@ -53,20 +53,27 @@ Maintainer: Miguel Luis and Gregory Cristian
 int32_t randr( int32_t min, int32_t max );
 
 /*!
- * \brief Copies size elements of src array to dst array reversing the byte order
- *
- * \param [OUT] dst  Destination array
- * \param [IN]  src  Source array
- * \param [IN]  size Number of bytes to be copied
- */
-void memcpyr( uint8_t *dst, const uint8_t *src, uint16_t size );
-
-/*!
  * \brief Converts a nibble to an hexadecimal character
  *
  * \param [IN] a   Nibble to be converted
  * \retval hexChar Converted hexadecimal character
  */
 int8_t Nibble2HexChar( uint8_t a );
+
+/*!
+ * \brief Return the Time elapsed since a fix moment in Time
+ *
+ * \param [IN] savedTime    fix moment in Time
+ * \retval time             returns elapsed time
+ */
+uint32_t TimerGetElapsedTime( uint32_t savedTime );
+
+/*!
+ * \brief Return the Time elapsed since a fix moment in Time
+ *
+ * \param [IN] eventInFuture    fix moment in the future
+ * \retval time             returns difference between now and future event
+ */
+uint32_t TimerGetFutureTime( uint32_t eventInFuture );
 
 #endif // __UTILITIES_H__
