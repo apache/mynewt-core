@@ -134,17 +134,19 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
             oc_rep_set_double(root, ambient_temp, *(double *)databuf);
             break;
 
-#if 0
         /* Pressure sensor supported */
-        SENSOR_TYPE_PRESSURE:
-            oc_rep_set_double(root, pressure, (double *)databuf);
-
+        case SENSOR_TYPE_PRESSURE:
+            oc_rep_set_uint(root, pressure, *(uint32_t *)databuf);
+            break;
+#if 0
         /* Proximity sensor supported */
         SENSOR_TYPE_PROXIMITY:
-
-        /* Relative humidity supported */
-        SENSOR_TYPE_RELATIVE_HUMIDITY:
 #endif
+        /* Relative humidity supported */
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            oc_rep_set_uint(root, humidity, *(uint32_t *)databuf);
+            break;
+
         /* Rotation vector (quaternion) supported */
         case SENSOR_TYPE_ROTATION_VECTOR:
             if (((struct sensor_quat_data *)(databuf))->sqd_x_is_valid) {
@@ -457,12 +459,19 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     int rc;
     struct sensor *sensor;
     struct sensor_listener listener;
-    char devname[COAP_MAX_URI] = {0};
+    char *devname;
     char *typename;
     sensor_type_t type;
+    char tmpstr[COAP_MAX_URI] = {0};
+    const char s[2] = "/";
 
-    memcpy(devname, (char *)&(request->resource->uri.os_str[1]),
+    memcpy(tmpstr, (char *)&(request->resource->uri.os_str[1]),
            request->resource->uri.os_sz - 1);
+
+    /* Parse the sensor device name from the uri  */
+    devname = strtok(tmpstr, s);
+
+    typename = strtok(NULL, s);
 
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(devname, NULL);
@@ -563,7 +572,7 @@ sensor_oic_init(void)
                 }
 
                 memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "/%s", sensor->s_dev->od_name);
+                snprintf(tmpstr, sizeof(tmpstr), "/%s/%s", sensor->s_dev->od_name, typename);
 
                 res = oc_new_resource(tmpstr, 1, 0);
 

@@ -398,6 +398,8 @@ config_sensor(void)
         goto err;
     }
 
+    memset(&bmecfg, 0, sizeof(bmecfg));
+
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
     if (rc) {
         os_dev_close(dev);
@@ -564,6 +566,10 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(BNO055_CLI)
     bno055_shell_init();
+#endif
+
+#if MYNEWT_VAL(BME280_CLI)
+    bme280_shell_init();
 #endif
 
 }

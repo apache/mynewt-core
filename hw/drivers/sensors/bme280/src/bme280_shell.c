@@ -126,7 +126,6 @@ bme280_shell_cmd_read(int argc, char **argv)
     uint16_t samples = 1;
     long val;
     int rc;
-    struct bme280 bme280;
 
     if (argc > 3) {
         return bme280_shell_err_too_many_args(argv[1]);
@@ -142,13 +141,27 @@ bme280_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
-        rc = bme280_get_data(&temp, &press, &humid, &bme280);
-        if (rc != 0) {
+        rc = bme280_get_pressure(&press);
+        if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;
         }
+
+        rc = bme280_get_temperature(&temp);
+        if (rc) {
+            console_printf("Read failed: %d\n", rc);
+            return rc;
+        }
+
+        rc = bme280_get_humidity(&humid);
+        if (rc) {
+            console_printf("Read failed: %d\n", rc);
+            return rc;
+        }
+
         console_printf("temperature: %u\tpressure: %u\thumidity: %u\n",
-                       temp, press, humid);
+                       (unsigned int)temp, (unsigned int)press,
+                       (unsigned int)humid);
     }
 
     return 0;
@@ -171,7 +184,7 @@ bme280_shell_cmd_oversample(int argc, char **argv)
         if (bme280_shell_stol(argv[2], 4, 8, &val)) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
-        rc = bme280_get_oversampling(val, &oversample);
+        rc = bme280_get_oversample(val, &oversample);
         if (rc) {
             goto err;
         }
@@ -204,10 +217,46 @@ err:
 }
 
 static int
+bme280_shell_cmd_mode(int argc, char **argv)
+{
+    uint8_t mode;
+    long val;
+    int rc;
+
+    if (argc > 3) {
+        return bme280_shell_err_too_many_args(argv[1]);
+    }
+
+    if (argc == 2) {
+        rc = bme280_get_mode(&mode);
+        if (rc) {
+            goto err;
+        }
+        console_printf("mode: %u", mode);
+    }
+
+    /* Chaneg mode */
+    if (argc == 3) {
+        if (bme280_shell_stol(argv[2], 0, 1, &val)) {
+            return bme280_shell_err_invalid_arg(argv[2]);
+        }
+        rc = bme280_set_mode(val);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
 bme280_shell_cmd_iir(int argc, char **argv)
 {
     uint8_t iir;
     long val;
+    int rc;
 
     if (argc > 3) {
         return bme280_shell_err_too_many_args(argv[1]);
@@ -234,6 +283,8 @@ bme280_shell_cmd_iir(int argc, char **argv)
     }
 
     return 0;
+err:
+    return rc;
 }
 
 static int

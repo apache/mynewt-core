@@ -167,7 +167,7 @@ int bme280_get_pressure(uint32_t *press);
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_humidity(uint32_t *humidity);
+int bme280_get_humidity(uint32_t *humid);
 
 /**
  * Sets the sampling rate

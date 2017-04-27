@@ -195,8 +195,8 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
     uint32_t humid;
     int rc;
 
-    if (!(type & SENSOR_TYPE_PRESSURE)    ||
-        !(type & SENSOR_TYPE_TEMPERATURE) ||
+    if (!(type & SENSOR_TYPE_PRESSURE)    &&
+        !(type & SENSOR_TYPE_TEMPERATURE) &&
         !(type & SENSOR_TYPE_RELATIVE_HUMIDITY)) {
         rc = SYS_EINVAL;
         goto err;
@@ -289,26 +289,74 @@ int
 bme280_config(struct bme280 *bme280, struct bme280_cfg *cfg)
 {
     int rc;
+    uint8_t id;
 
-    rc = bme280_set_iir(cfg->bc_iir);
-
-    rc |= bme280_set_mode(cfg->bc_mode);
-
-    rc |= bme280_set_oversample(cfg->bc_boc[0].boc_type,
-                                cfg->bc_boc[0].boc_oversample);
-
-    rc |= bme280_set_oversample(cfg->bc_boc[1].boc_type,
-                                cfg->bc_boc[1].boc_oversample);
-
-    rc |= bme280_set_oversample(cfg->bc_boc[2].boc_type,
-                                cfg->bc_boc[2].boc_oversample);
-
+    /* Check if we can read the chip address */
+    rc = bme280_get_chipid(&id);
     if (rc) {
         goto err;
     }
 
-    /* Overwrite the configuration data. */
-    memcpy(&bme280->cfg, cfg, sizeof(*cfg));
+    if (id != BME280_CHIPID && id != BMP280_CHIPID) {
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
+
+        rc = bme280_get_chipid(&id);
+        if (rc) {
+            goto err;
+        }
+
+        if(id != BME280_CHIPID && id != BMP280_CHIPID) {
+            rc = SYS_EINVAL;
+            goto err;
+        }
+    }
+
+    rc = bme280_set_iir(cfg->bc_iir);
+    if (rc) {
+        goto err;
+    }
+
+    bme280->cfg.bc_iir = cfg->bc_iir;
+
+    rc = bme280_set_mode(cfg->bc_mode);
+    if (rc) {
+        goto err;
+    }
+
+    bme280->cfg.bc_mode = cfg->bc_mode;
+
+    if (!cfg->bc_boc[0].boc_type) {
+        rc = bme280_set_oversample(cfg->bc_boc[0].boc_type,
+                                   cfg->bc_boc[0].boc_oversample);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    bme280->cfg.bc_boc[0].boc_type = cfg->bc_boc[0].boc_type;
+    bme280->cfg.bc_boc[0].boc_oversample = cfg->bc_boc[0].boc_oversample;
+
+    if (!cfg->bc_boc[1].boc_type) {
+        rc = bme280_set_oversample(cfg->bc_boc[1].boc_type,
+                                   cfg->bc_boc[1].boc_oversample);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    bme280->cfg.bc_boc[1].boc_type = cfg->bc_boc[1].boc_type;
+    bme280->cfg.bc_boc[1].boc_oversample = cfg->bc_boc[1].boc_oversample;
+
+    if (!cfg->bc_boc[2].boc_type) {
+        rc = bme280_set_oversample(cfg->bc_boc[2].boc_type,
+                                   cfg->bc_boc[2].boc_oversample);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    bme280->cfg.bc_boc[2].boc_type = cfg->bc_boc[2].boc_type;
+    bme280->cfg.bc_boc[2].boc_oversample = cfg->bc_boc[2].boc_oversample;
 
 err:
     return (rc);
@@ -327,36 +375,35 @@ int
 bme280_readlen(uint8_t addr, uint8_t *payload, uint8_t len)
 {
     int i;
+    uint16_t retval;
     int rc;
-    uint8_t txdata;
-    uint8_t rxdata;
+
+    rc = 0;
 
     /* Select the device */
     hal_gpio_write(MYNEWT_VAL(BME280_CSPIN), 0);
 
     /* Send the address */
-    rc = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM), addr | BME280_SPI_READ_CMD_BIT);
-    if (rc) {
+    retval = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM),
+                            addr | BME280_SPI_READ_CMD_BIT);
+    if (retval == 0xFFFF) {
+        rc = SYS_EINVAL;
         goto err;
     }
 
-    txdata = 0;
-
     for (i = 0; i < len; i++) {
         /* Read data */
-        rc = hal_spi_txrx(MYNEWT_VAL(BME280_SPINUM), &txdata, &rxdata, 1);
-        if (rc) {
+        retval = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM), 0);
+        if (retval == 0xFFFF) {
+            rc = SYS_EINVAL;
             goto err;
         }
-
-        payload[i] = rxdata;
+        payload[i] = retval;
     }
 
+err:
     /* De-select the device */
     hal_gpio_write(MYNEWT_VAL(BME280_CSPIN), 1);
-
-    return 0;
-err:
     return rc;
 }
 
@@ -380,14 +427,16 @@ bme280_writelen(uint8_t addr, uint8_t *payload, uint8_t len)
 
     /* Send the address */
     rc = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM), addr | BME280_SPI_READ_CMD_BIT);
-    if (rc) {
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
         goto err;
     }
 
     for (i = 0; i < len; i++) {
         /* Read data */
         rc = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM), payload[i]);
-        if (rc) {
+        if (rc == 0xFFFF) {
+            rc = SYS_EINVAL;
             goto err;
         }
     }
@@ -702,7 +751,7 @@ bme280_get_chipid(uint8_t *chipid)
     int rc;
     uint8_t tmp;
 
-    rc = bme280_readlen(BME280_REG_ADDR_PRESS, &tmp, 1);
+    rc = bme280_readlen(BME280_REG_ADDR_CHIPID, &tmp, 1);
     if (rc) {
         goto err;
     }

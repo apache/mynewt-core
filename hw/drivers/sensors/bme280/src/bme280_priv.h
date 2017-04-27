@@ -79,7 +79,9 @@
 
 #define BME280_REG_ADDR_RESET             0xE0
 
-#define BME280_REG_CHIPID                 0x60
+#define BME280_CHIPID                     0x60
+
+#define BMP280_CHIPID                     0x58
 
 #ifdef __cplusplus
 extern "C" {
