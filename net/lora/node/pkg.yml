@@ -35,8 +35,7 @@ pkg.deps.LORA_NODE_CLI:
     - "@apache-mynewt-core/util/parse"
 
 pkg.req_apis:
-    - lora_node_board
-    - lora_node_radio
+    - lora_node_driver
 
 pkg.init:
     lora_node_init: 200

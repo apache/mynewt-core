@@ -15,13 +15,14 @@ Maintainer: Miguel Luis, Gregory Cristian and Wael Guibene
 #include <assert.h>
 #include <math.h>
 #include <string.h>
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
+#include "bsp/bsp.h"
 #include "os/os.h"
 #include "node/lora.h"
 #include "node/radio.h"
-#include "board/board.h"
 #include "sx1276.h"
 #include "sx1276-board.h"
 
@@ -179,10 +180,6 @@ const FskBandwidth_t FskBandwidths[] =
     { 300000, 0x00 }, // Invalid Bandwidth
 };
 
-/*
- * Private global variables
- */
-
 /*!
  * Radio callbacks variable
  */
@@ -288,13 +285,14 @@ void SX1276Init( RadioEvents_t *events )
     os_cputime_timer_init(&RxTimeoutTimer, SX1276OnTimeoutIrq, NULL);
     os_cputime_timer_init(&RxTimeoutSyncWord, SX1276OnTimeoutIrq, NULL);
 
+    SX1276IoInit( );
+    SX1276IoIrqInit( DioIrq );
+
     SX1276Reset( );
 
     RxChainCalibration( );
 
     SX1276SetOpMode( RF_OPMODE_SLEEP );
-
-    SX1276IoIrqInit( DioIrq );
 
     for( i = 0; i < sizeof( RadioRegsInit ) / sizeof( RadioRegisters_t ); i++ )
     {
@@ -1264,13 +1262,13 @@ int16_t SX1276ReadRssi( RadioModems_t modem )
 void SX1276Reset( void )
 {
     // Set RESET pin to 0
-    hal_gpio_init_out(RADIO_RESET, 0);
+    hal_gpio_init_out(SX1276_NRESET, 0);
 
     // Wait 1 ms
     os_cputime_delay_usecs(1000);
 
     // Configure RESET as input
-    hal_gpio_init_in(RADIO_RESET, HAL_GPIO_PULL_NONE);
+    hal_gpio_init_in(SX1276_NRESET, HAL_GPIO_PULL_NONE);
 
     // Wait 6 ms
     os_cputime_delay_usecs(6000);

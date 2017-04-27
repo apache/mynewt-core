@@ -53,6 +53,7 @@
  * lora_tx_rpt 50 5 100
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <limits.h>
 #include "sysinit/sysinit.h"
@@ -61,7 +62,6 @@
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
-#include "board/board.h"
 #include "node/radio.h"
 #include "console/console.h"
 #include "shell/shell.h"
