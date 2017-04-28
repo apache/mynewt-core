@@ -34,11 +34,9 @@ Description: Ping-Pong implementation.  Adapted to run in the MyNewt OS.
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
-#include "board/board.h"
 #include "node/radio.h"
 #include "loraping.h"
 
-#define LORAPING_SPI_BAUDRATE               500
 #define USE_BAND_915
 
 #if defined(USE_BAND_433)
