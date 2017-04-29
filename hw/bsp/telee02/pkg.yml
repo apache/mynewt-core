@@ -89,6 +89,9 @@ pkg.deps:
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf52
 
+pkg.deps.LORA_NODE:
+    - hw/drivers/lora/sx1276
+
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
 
