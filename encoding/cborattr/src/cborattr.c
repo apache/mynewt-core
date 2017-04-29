@@ -219,7 +219,8 @@ cbor_internal_read_object(CborValue *root_value,
                 if (cursor->attribute == CBORATTR_ATTR_UNNAMED &&
                     attrbuf[0] == '\0') {
                     best_match = cursor;
-                } else if (!memcmp(cursor->attribute, attrbuf, len)) {
+                } else if (strlen(cursor->attribute) == len &&
+                    !memcmp(cursor->attribute, attrbuf, len)) {
                     break;
                 }
             }
