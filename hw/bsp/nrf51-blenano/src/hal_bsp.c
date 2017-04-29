@@ -32,6 +32,10 @@
 #include "hal/hal_spi.h"
 #include "os/os_dev.h"
 
+#if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
+#include "hal/hal_i2c.h"
+#endif
+
 #if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
@@ -65,6 +69,23 @@ static const struct nrf51_hal_spi_cfg os_bsp_spi1s_cfg = {
     .ss_pin       = 24
 };
 #endif
+
+#if MYNEWT_VAL(I2C_0)
+static const struct nrf51_hal_i2c_cfg os_bsp_i2c0_cfg = {
+    .sda_pin = MYNEWT_VAL(I2C_0_SDA_PIN),
+    .scl_pin = MYNEWT_VAL(I2C_0_SCL_PIN),
+    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQUENCY),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+static const struct nrf51_hal_i2c_cfg os_bsp_i2c1_cfg = {
+    .sda_pin = MYNEWT_VAL(I2C_1_SDA_PIN),
+    .scl_pin = MYNEWT_VAL(I2C_1_SCL_PIN),
+    .i2c_frequency = MYNEWT_VAL(I2C_1_FREQUENCY),
+};
+#endif
+
 
 /*
  * What memory to include in coredump.
@@ -171,6 +192,16 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(SPI_1_SLAVE)
     rc = hal_spi_init(1, (void *)&os_bsp_spi1s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, (void *)&os_bsp_i2c0_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+    rc = hal_i2c_init(1, (void *)&os_bsp_i2c1_cfg);
     assert(rc == 0);
 #endif
 }
