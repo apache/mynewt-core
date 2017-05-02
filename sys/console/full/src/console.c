@@ -116,8 +116,8 @@ console_read(char *str, int cnt, int *newline)
     }
     cmd = ev->ev_arg;
     len = strlen(cmd->line);
-    if (cnt < len) {
-        len = cnt;
+    if ((cnt - 1) < len) {
+        len = cnt - 1;
     }
     memcpy(str, cmd->line, len);
     str[len] = '\0';
