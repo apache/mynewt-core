@@ -25,3 +25,4 @@ syscfg.defs:
 syscfg.vals:
     STATS_CLI: 1
     STATS_NAMES: 1
+    SHELL_TASK: 1
