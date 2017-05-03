@@ -41,3 +41,10 @@ syscfg.defs:
     SHELL_MAX_COMPAT_COMMANDS:
         description: 'Max number of compatibility commands'
         value: 10
+
+    SHELL_OS_MODULE:
+        description: 'Include shell os module'
+        value: 1
+    SHELL_PROMPT_MODULE:
+        description: 'Include shell prompt module'
+        value: 0

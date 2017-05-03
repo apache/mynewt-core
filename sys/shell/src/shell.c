@@ -26,6 +26,7 @@
 #include "console/console.h"
 #include "sysinit/sysinit.h"
 #include "shell/shell.h"
+#include "shell_priv.h"
 
 #define SHELL_PROMPT "shell> "
 
@@ -490,4 +491,11 @@ shell_init(void)
     line_queue_init();
     prompt = SHELL_PROMPT;
     console_set_queues(&avail_queue, os_eventq_dflt_get());
+
+#if MYNEWT_VAL(SHELL_OS_MODULE)
+    shell_os_register(shell_register);
+#endif
+#if MYNEWT_VAL(SHELL_PROMPT_MODULE)
+    shell_prompt_register(shell_register);
+#endif
 }
