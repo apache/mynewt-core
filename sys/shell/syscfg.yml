@@ -22,9 +22,16 @@ syscfg.defs:
     SHELL_TASK:
         description: 'Controls whether shell is enabled or not.'
         value: 0
-    SHELL_MAX_INPUT_LEN:
-        description: 'Maximum input line length'
-        value: 256
-    SHELL_DEBUG:
-        description: Enables additional error checking in the shell package.
-        value: 0
+
+    SHELL_CMD_ARGC_MAX:
+        description: 'Max number of command line arguments'
+        value: 12
+    SHELL_CMD_HELP:
+        description: 'Include help information for shell commands'
+        value: 1
+    SHELL_MAX_MODULES:
+        description: 'Max number of modules'
+        value: 3
+    SHELL_MAX_CMD_QUEUED:
+        description: 'Max number of command lines queued'
+        value: 1
