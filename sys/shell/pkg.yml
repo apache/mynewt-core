@@ -26,6 +26,8 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - time/datetime
+    - encoding/base64
+    - util/crc
 pkg.req_apis:
     - console
 

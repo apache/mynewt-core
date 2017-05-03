@@ -44,6 +44,9 @@ syscfg.defs:
     SHELL_COMPLETION:
         description: 'Include completion functionality'
         value: 1
+    SHELL_NEWTMGR:
+        description: 'Enable newtmgr over shell'
+        value: 1
 
     SHELL_OS_MODULE:
         description: 'Include shell os module'

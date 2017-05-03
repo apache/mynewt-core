@@ -101,6 +101,13 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
  */
 void shell_register_default_module(const char *name);
 
+#if MYNEWT_VAL(SHELL_NEWTMGR)
+struct os_mbuf;
+typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
+int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);
+int shell_nlip_output(struct os_mbuf *m);
+#endif
+
 #if MYNEWT_VAL(SHELL_COMPAT)
 int shell_cmd_register(struct shell_cmd *sc);
 #endif

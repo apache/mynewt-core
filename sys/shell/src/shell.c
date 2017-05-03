@@ -381,6 +381,30 @@ shell_process_command(char *line)
     console_printf("%s", get_prompt());
 }
 
+#if MYNEWT_VAL(SHELL_NEWTMGR)
+static void
+shell_process_nlip_line(char *shell_line)
+{
+    size_t shell_line_len;
+
+    shell_line_len = strlen(shell_line);
+    if (shell_line_len > 2) {
+        if (shell_line[0] == SHELL_NLIP_PKT_START1 &&
+                shell_line[1] == SHELL_NLIP_PKT_START2) {
+            shell_nlip_clear_pkt();
+            shell_nlip_process(&shell_line[2], shell_line_len - 2);
+        } else if (shell_line[0] == SHELL_NLIP_DATA_START1 &&
+                shell_line[1] == SHELL_NLIP_DATA_START2) {
+            shell_nlip_process(&shell_line[2], shell_line_len - 2);
+        } else {
+            shell_process_command(shell_line);
+        }
+    } else {
+        shell_process_command(shell_line);
+    }
+}
+#endif
+
 static void
 shell(struct os_event *ev)
 {
@@ -397,7 +421,11 @@ shell(struct os_event *ev)
         return;
     }
 
+#if MYNEWT_VAL(SHELL_NEWTMGR)
+    shell_process_nlip_line(cmd->line);
+#else
     shell_process_command(cmd->line);
+#endif
     os_eventq_put(&avail_queue, ev);
 }
 
@@ -892,6 +920,10 @@ shell_init(void)
     line_queue_init();
     prompt = SHELL_PROMPT;
     console_set_queues(&avail_queue, os_eventq_dflt_get());
+
+#if MYNEWT_VAL(SHELL_NEWTMGR)
+    shell_nlip_init();
+#endif
 
 #if MYNEWT_VAL(SHELL_COMPLETION)
     console_set_completion_cb(completion);
