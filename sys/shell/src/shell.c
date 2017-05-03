@@ -449,6 +449,33 @@ shell_register(const char *module_name, const struct shell_cmd *commands)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_COMPAT)
+#define SHELL_COMPAT_MODULE_NAME "compat"
+static struct shell_cmd compat_commands[MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS)];
+static int num_compat_commands;
+static int module_registered = 0;
+
+int
+shell_cmd_register(struct shell_cmd *sc)
+{
+    if (num_compat_commands >= MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS)) {
+        console_printf("Max number of compat commands reached");
+        assert(0);
+    }
+
+    if (!module_registered) {
+        shell_register(SHELL_COMPAT_MODULE_NAME, compat_commands);
+        set_default_module(SHELL_COMPAT_MODULE_NAME);
+        module_registered = 0;
+    }
+
+    compat_commands[num_compat_commands].sc_cmd = sc->sc_cmd;
+    compat_commands[num_compat_commands].sc_cmd_func = sc->sc_cmd_func;
+    ++num_compat_commands;
+    return 0;
+}
+#endif
+
 void
 shell_init(void)
 {

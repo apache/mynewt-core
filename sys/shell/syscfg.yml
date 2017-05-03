@@ -35,3 +35,9 @@ syscfg.defs:
     SHELL_MAX_CMD_QUEUED:
         description: 'Max number of command lines queued'
         value: 1
+    SHELL_COMPAT:
+        description: 'Enable compatibility module'
+        value: 1
+    SHELL_MAX_COMPAT_COMMANDS:
+        description: 'Max number of compatibility commands'
+        value: 10

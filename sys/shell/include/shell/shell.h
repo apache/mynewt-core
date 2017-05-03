@@ -101,6 +101,10 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
  */
 void shell_register_default_module(const char *name);
 
+#if MYNEWT_VAL(SHELL_COMPAT)
+int shell_cmd_register(struct shell_cmd *sc);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
