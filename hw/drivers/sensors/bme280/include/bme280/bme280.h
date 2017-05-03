@@ -93,6 +93,7 @@ struct bme280_cfg {
     uint8_t bc_iir;
     struct bme280_over_cfg bc_boc[3];
     uint8_t bc_mode;
+    uint8_t bc_sby_dur;
 };
 
 struct bme280 {
@@ -233,6 +234,24 @@ int bme280_config(struct bme280 *bme280, struct bme280_cfg *cfg);
  */
 int
 bme280_get_chipid(uint8_t *chipid);
+
+/**
+ * Set the standy duration setting
+ *
+ * @param duration
+ * @return 0 on success, non-zero on failure
+ */
+int
+bme280_set_sby_duration(uint8_t dur);
+
+/**
+ * Get the standy duration setting
+ *
+ * @param ptr to duration
+ * @return 0 on success, non-zero on failure
+ */
+int
+bme280_get_sby_duration(uint8_t *dur);
 
 #if MYNEWT_VAL(BME280_CLI)
 int bme280_shell_init(void);

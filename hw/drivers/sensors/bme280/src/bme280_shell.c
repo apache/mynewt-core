@@ -82,12 +82,12 @@ bme280_shell_help(void)
     console_printf("%s cmd [flags...]\n", bme280_shell_cmd_struct.sc_cmd);
     console_printf("cmd:\n");
     console_printf("\tr    [n_samples]\n");
-    console_printf("\tmode [0-sleep | 1-forced | 3-normal]\n");
-    console_printf("\tiir [1-enabled | 0-disabled]");
+    console_printf("\tmode [0-sleep | 1/2-forced | 3-normal]\n");
+    console_printf("\tiir [1-enabled | 0-disabled]\n");
     console_printf("\toversample [type 5-temperature | 6-pressure | 8-humidity]\n"
                    "             [0-none | 1-x1 | 2-x2 | 3-x4 | 4-x8 | 5-x16]\n");
     console_printf("\treset\n");
-    console_printf("\tchip_id");
+    console_printf("\tchipid\n");
     console_printf("\tdump\n");
 
     return 0;
@@ -104,7 +104,7 @@ bme280_shell_cmd_read_chipid(int argc, char **argv)
         goto err;
     }
 
-    console_printf("CHIP_ID:%02X", chipid);
+    console_printf("CHIP_ID:0x%02X\n", chipid);
 
     return 0;
 err:
@@ -159,7 +159,7 @@ bme280_shell_cmd_read(int argc, char **argv)
             return rc;
         }
 
-        console_printf("temperature: %u\tpressure: %u\thumidity: %u\n",
+        console_printf("temperature: %u pressure: %u\thumidity: %u\n",
                        (unsigned int)temp, (unsigned int)press,
                        (unsigned int)humid);
     }
@@ -235,9 +235,9 @@ bme280_shell_cmd_mode(int argc, char **argv)
         console_printf("mode: %u", mode);
     }
 
-    /* Chaneg mode */
+    /* Change mode */
     if (argc == 3) {
-        if (bme280_shell_stol(argv[2], 0, 1, &val)) {
+        if (bme280_shell_stol(argv[2], 0, 3, &val)) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
         rc = bme280_set_mode(val);
@@ -268,7 +268,7 @@ bme280_shell_cmd_iir(int argc, char **argv)
         if (rc) {
             goto err;
         }
-        console_printf("IIR: %02X", iir);
+        console_printf("IIR: 0x%02X", iir);
     }
 
     /* Enable/disable iir*/

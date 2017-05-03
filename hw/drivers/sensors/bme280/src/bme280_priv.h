@@ -45,24 +45,23 @@
 #define BME280_REG_ADDR_VERSION           0xD1
 #define BME280_REG_ADDR_SOFTRESET         0xE0
 
-#define BME280_REG_ADDR_CAL26             0xE1  // R calibration stored in 0xE1-0xF0
+#define BME280_REG_ADDR_CAL26             0xE1  /* R calibration stored in 0xE1-0xF0 */
 
 #define BME280_REG_ADDR_CTRL_HUM          0xF2
-#define BME280_REG_CTRL_HUM_NONE        (0x1F)
-#define BME280_REG_CTRL_HUM_HOVER       (0x11)
+#define BME280_REG_CTRL_HUM_HOVER        (0x7)
 
 #define BME280_REG_ADDR_STATUS            0XF3
 #define BME280_REG_STATUS_MEAS            0x04
 #define BME280_REG_STATUS_IM_UP           0x01
 
 #define BME280_REG_ADDR_CTRL_MEAS         0xF4
-#define BME280_REG_CTRL_MEAS_TOVER (0x11 << 5)
-#define BME280_REG_CTRL_MEAS_POVER (0x11 << 3)
-#define BME280_REG_CTRL_MEAS_MODE       (0x11)
+#define BME280_REG_CTRL_MEAS_TOVER  (0x7 << 5)
+#define BME280_REG_CTRL_MEAS_POVER  (0x7 << 2)
+#define BME280_REG_CTRL_MEAS_MODE        (0x3)
 
 #define BME280_REG_ADDR_CONFIG            0xF5
-#define BME280_REG_CONFIG_STANDBY  (0x11 << 5)
-#define BME280_REG_CONFIG_FILTER   (0x11 << 3)
+#define BME280_REG_CONFIG_STANDBY   (0x7 << 5)
+#define BME280_REG_CONFIG_FILTER    (0x7 << 3)
 #define BME280_REG_CONFIG_SPI3_EN        (0x1)
 
 #define BME280_REG_ADDR_PRESS             0xF7

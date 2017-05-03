@@ -37,6 +37,9 @@
 #include "sensor/quat.h"
 #include "sensor/euler.h"
 #include "sensor/color.h"
+#include "sensor/temperature.h"
+#include "sensor/pressure.h"
+#include "sensor/humidity.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
@@ -230,6 +233,9 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     struct sensor_euler_data *sed;
     struct sensor_quat_data *sqd;
     struct sensor_color_data *scd;
+    struct sensor_temp_data *std;
+    struct sensor_press_data *spd;
+    struct sensor_humid_data *shd;
     char tmpstr[13];
 
     ctx = (struct sensor_shell_read_ctx *) arg;
@@ -287,7 +293,10 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     }
 
     if (ctx->type == SENSOR_TYPE_TEMPERATURE) {
-        console_printf("temprature = %d", *(int *)data);
+        std = (struct sensor_temp_data *) data;
+        if (std->std_temp_is_valid) {
+            console_printf("temprature = %s", sensor_ftostr(std->std_temp, tmpstr, 13));
+        }
         console_printf("\n");
     }
 
@@ -365,12 +374,20 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     }
 
     if (ctx->type == SENSOR_TYPE_PRESSURE) {
-        console_printf("pressure = %d", *(int *)data);
+        spd = (struct sensor_press_data *) data;
+        if (spd->spd_press_is_valid) {
+            console_printf("pressure = %s Pa",
+                           sensor_ftostr(spd->spd_press, tmpstr, 13));
+        }
         console_printf("\n");
     }
 
     if (ctx->type == SENSOR_TYPE_RELATIVE_HUMIDITY) {
-        console_printf("relative humidity = %d", *(int *)data);
+        shd = (struct sensor_humid_data *) data;
+        if (shd->shd_humid_is_valid) {
+            console_printf("relative humidity = %s",
+                           sensor_ftostr(shd->shd_humid, tmpstr, 13));
+        }
         console_printf("\n");
     }
 
