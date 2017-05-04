@@ -42,6 +42,14 @@
 #include "stats/stats.h"
 #endif
 
+#ifndef MATHLIB_SUPPORT
+
+double NAN = 0.0/0.0;
+double POS_INF = 1.0 /0.0;
+double NEG_INF = -1.0/0.0;
+
+#endif
+
 static struct hal_spi_settings spi_bme280_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE0,
@@ -54,12 +62,16 @@ struct bme280_calib_data bcd;
 #if MYNEWT_VAL(BME280_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(bme280_stat_section)
-    STATS_SECT_ENTRY(errors)
+    STATS_SECT_ENTRY(read_errors)
+    STATS_SECT_ENTRY(write_errors)
+    STATS_SECT_ENTRY(invalid_data_errors)
 STATS_SECT_END
 
 /* Define stat names for querying */
 STATS_NAME_START(bme280_stat_section)
-    STATS_NAME(bme280_stat_section, errors)
+    STATS_NAME(bme280_stat_section, read_errors)
+    STATS_NAME(bme280_stat_section, write_errors)
+    STATS_NAME(bme280_stat_section, invalid_data_errors)
 STATS_NAME_END(bme280_stat_section)
 
 /* Global variable used to hold stats data */
@@ -67,7 +79,7 @@ STATS_SECT_DECL(bme280_stat_section) g_bme280stats;
 #endif
 
 #if MYNEWT_VAL(BME280_LOG)
-#define LOG_MODULE_BME280    (2561)
+#define LOG_MODULE_BME280    (280)
 #define BME280_INFO(...)     LOG_INFO(&_log, LOG_MODULE_BME280, __VA_ARGS__)
 #define BME280_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_BME280, __VA_ARGS__)
 static struct log _log;
@@ -90,7 +102,7 @@ static const struct sensor_driver g_bme280_sensor_driver = {
     bme280_sensor_get_config
 };
 
-float g_t_fine;
+int32_t g_t_fine;
 
 static int
 bme280_default_cfg(struct bme280_cfg *cfg)
@@ -98,7 +110,7 @@ bme280_default_cfg(struct bme280_cfg *cfg)
     cfg->bc_iir = BME280_FILTER_OFF;
     cfg->bc_mode = BME280_MODE_NORMAL;
 
-    cfg->bc_boc[0].boc_type = SENSOR_TYPE_TEMPERATURE;
+    cfg->bc_boc[0].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
     cfg->bc_boc[0].boc_oversample = BME280_SAMPLING_NONE;
     cfg->bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
     cfg->bc_boc[1].boc_oversample = BME280_SAMPLING_NONE;
@@ -153,7 +165,7 @@ bme280_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_TEMPERATURE |
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_AMBIENT_TEMPERATURE |
                            SENSOR_TYPE_PRESSURE            |
                            SENSOR_TYPE_RELATIVE_HUMIDITY,
                            (struct sensor_driver *) &g_bme280_sensor_driver);
@@ -195,22 +207,30 @@ bme280_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
 
 #if MYNEWT_VAL(BME280_SPEC_CALC)
 /**
- * Returns temperature in DegC, as float
- * Output value of “51.23” equals 51.23 DegC.
+ * Returns temperature in DegC, as double
+ * Output value of "51.23" equals 51.23 DegC.
  *
  * @param uncompensated raw temperature value
  * @return 0 on success, non-zero on failure
  */
-static float
-bme280_compensate_temperature(uint32_t rawtemp, struct bme280_calib_data *bcd)
+static double
+bme280_compensate_temperature(int32_t rawtemp, struct bme280_calib_data *bcd)
 {
-    float var1, var2, comptemp;
+    double var1, var2, comptemp;
 
-    var1 = (((float)rawtemp)/16384.0 – ((float)bcd->bcd_dig_T1)/1024.0) *
-            ((float)bcd->bcd_dig_T2);
-    var2 = ((((float)rawtemp)/131072.0 – ((float)bcd->bcd_dig_T1)/8192.0) *
-            (((float)rawtemp)/131072.0 – ((float)bcd->bcd_dig_T1)/8192.0)) *
-             ((float)bcd->bcd_dig_T3);
+    if (rawtemp == 0x800000) {
+        BME280_ERR("Invalid temp data\n");
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, invalid_data_errors);
+#endif
+        return NAN;
+    }
+
+    var1 = (((double)rawtemp)/16384.0 - ((double)bcd->bcd_dig_T1)/1024.0) *
+            ((double)bcd->bcd_dig_T2);
+    var2 = ((((double)rawtemp)/131072.0 - ((double)bcd->bcd_dig_T1)/8192.0) *
+            (((double)rawtemp)/131072.0 - ((double)bcd->bcd_dig_T1)/8192.0)) *
+             ((double)bcd->bcd_dig_T3);
 
     g_t_fine = var1 + var2;
 
@@ -220,60 +240,25 @@ bme280_compensate_temperature(uint32_t rawtemp, struct bme280_calib_data *bcd)
 }
 
 /**
- * Returns pressure in Pa as float.
- * Output value of “96386.2” equals 96386.2 Pa = 963.862 hPa
+ * Returns pressure in Pa as double.
+ * Output value of "96386.2" equals 96386.2 Pa = 963.862 hPa
  *
  * @param uncompensated raw pressure value
  * @return 0 on success, non-zero on failure
  */
-static float
-bme280_compensate_pressure(uint32_t rawpress, struct bme280_calib_data *bcd)
+static double
+bme280_compensate_pressure(int32_t rawpress, struct bme280_calib_data *bcd)
 {
-    float var1, var2, p;
-    uint32_t temp;
+    double var1, var2, p;
+    int32_t temp;
 
-    if (!g_t_fine) {
-        if(!bme280_get_temperature(&temp)) {
-            (void)bme280_compensate_temperature(temp);
-        }
+    if (rawpress == 0x800000) {
+        BME280_ERR("Invalid press data\n");
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, invalid_data_errors);
+#endif
+        return NAN;
     }
-
-    var1 = ((float)g_t_fine/2.0) – 64000.0;
-    var2 = var1 * var1 * ((float)bcd->bcd_dig_P6) / 32768.0;
-    var2 = var2 + var1 * ((float)bcd->bcd_dig_P5) * 2.0;
-    var2 = (var2/4.0)+(((float)bcd->bcd_dig_P4) * 65536.0);
-    var1 = (((float)bcd->bcd_dig_P3) * var1 * var1 / 524288.0 +
-            ((float)bcd->bcd_dig_P2) * var1) / 524288.0;
-    var1 = (1.0 + var1 / 32768.0)*((float)bcd->bcd_dig_P1);
-
-    if (var1 == 0.0)
-    {
-        return 0;
-    }
-
-    p = 1048576.0 – (float)rawpress;
-    p = (p – (var2 / 4096.0)) * 6250.0 / var1;
-
-    var1 = ((float)bcd->bcd_dig_P9) * p * p / 2147483648.0;
-    var2 = p * ((float)bcd->bcd_dig_P8) / 32768.0;
-
-    p = p + (var1 + var2 + ((float)bcd->bcd_dig_P7)) / 16.0;
-
-    return p;
-}
-
-/**
- * Returns humidity in %rH as float.
- * Output value of “46.332” represents 46.332 %rH
- *
- * @param uncompensated raw humidity value
- * @return 0 on success, non-zero on failure
- */
-static float
-bme280_compensate_humidity(uint32_t rawhumid, struct bme280_calib_data *bcd)
-{
-    float h;
-    uint32_t temp;
 
     if (!g_t_fine) {
         if(!bme280_get_temperature(&temp)) {
@@ -281,14 +266,65 @@ bme280_compensate_humidity(uint32_t rawhumid, struct bme280_calib_data *bcd)
         }
     }
 
-    h = (((float)g_t_fine) – 76800.0);
-    h = (rawhumid – (((float)bcd->bcd_dig_H4) * 64.0 +
-         ((float)bcd->bcd_dig_H5) / 16384.0 * h)) *
-         (((float)bcd->bcd_dig_H2) / 65536.0 * (1.0 +
-           ((float)bcd->bcd_dig_H6) / 67108864.0 * h *
-          (1.0 + ((float)bcd->bcd_dig_H3) / 67108864.0 * h)));
+    var1 = ((double)g_t_fine/2.0) - 64000.0;
+    var2 = var1 * var1 * ((double)bcd->bcd_dig_P6) / 32768.0;
+    var2 = var2 + var1 * ((double)bcd->bcd_dig_P5) * 2.0;
+    var2 = (var2/4.0)+(((double)bcd->bcd_dig_P4) * 65536.0);
+    var1 = (((double)bcd->bcd_dig_P3) * var1 * var1 / 524288.0 +
+            ((double)bcd->bcd_dig_P2) * var1) / 524288.0;
+    var1 = (1.0 + var1 / 32768.0)*((double)bcd->bcd_dig_P1);
 
-    h = h * (1.0 – ((float)bcd->bcd_dig_H1) * h / 524288.0);
+    if (var1 == 0.0)
+    {
+        return 0;
+    }
+
+    p = 1048576.0 - (double)rawpress;
+    p = (p - (var2 / 4096.0)) * 6250.0 / var1;
+
+    var1 = ((double)bcd->bcd_dig_P9) * p * p / 2147483648.0;
+    var2 = p * ((double)bcd->bcd_dig_P8) / 32768.0;
+
+    p = p + (var1 + var2 + ((double)bcd->bcd_dig_P7)) / 16.0;
+
+    return p;
+}
+
+/**
+ * Returns humidity in %rH as double.
+ * Output value of "46.332" represents 46.332 %rH
+ *
+ * @param uncompensated raw humidity value
+ * @return 0 on success, non-zero on failure
+ */
+static double
+bme280_compensate_humidity(int32_t rawhumid, struct bme280_calib_data *bcd)
+{
+    double h;
+    int32_t temp;
+
+    if (rawhumid == 0x8000) {
+        BME280_ERR("Invalid humidity data\n");
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, invalid_data_errors);
+#endif
+        return NAN;
+    }
+
+    if (!g_t_fine) {
+        if(!bme280_get_temperature(&temp)) {
+            (void)bme280_compensate_temperature(temp, bcd);
+        }
+    }
+
+    h = (((double)g_t_fine) - 76800.0);
+    h = (rawhumid - (((double)bcd->bcd_dig_H4) * 64.0 +
+         ((double)bcd->bcd_dig_H5) / 16384.0 * h)) *
+         (((double)bcd->bcd_dig_H2) / 65536.0 * (1.0 +
+           ((double)bcd->bcd_dig_H6) / 67108864.0 * h *
+          (1.0 + ((double)bcd->bcd_dig_H3) / 67108864.0 * h)));
+
+    h = h * (1.0 - ((double)bcd->bcd_dig_H1) * h / 524288.0);
     if (h > 100.0) {
         h = 100.0;
     } else if (h < 0.0) {
@@ -302,15 +338,23 @@ bme280_compensate_humidity(uint32_t rawhumid, struct bme280_calib_data *bcd)
 
 /**
  * Returns temperature in DegC, as float
- * Output value of “51.23” equals 51.23 DegC.
+ * Output value of "51.23" equals 51.23 DegC.
  *
  * @param uncompensated raw temperature value
  * @return 0 on success, non-zero on failure
  */
 static float
-bme280_compensate_temperature(uint32_t rawtemp, struct bme280_calib_data *bcd)
+bme280_compensate_temperature(int32_t rawtemp, struct bme280_calib_data *bcd)
 {
-    float var1, var2, comptemp;
+    int32_t var1, var2, comptemp;
+
+    if (rawtemp == 0x800000) {
+        BME280_ERR("Invalid temp data\n");
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, invalid_data_errors);
+#endif
+        return NAN;
+    }
 
     rawtemp >>= 4;
 
@@ -325,21 +369,29 @@ bme280_compensate_temperature(uint32_t rawtemp, struct bme280_calib_data *bcd)
 
     comptemp = ((int32_t)(g_t_fine * 5 + 128)) >> 8;
 
-    return comptemp/100;
+    return (float)comptemp/100;
 }
 
 /**
  * Returns pressure in Pa as float.
- * Output value of “96386.2” equals 96386.2 Pa = 963.862 hPa
+ * Output value of "96386.2" equals 96386.2 Pa = 963.862 hPa
  *
  * @param uncompensated raw pressure value
  * @return 0 on success, non-zero on failure
  */
 static float
-bme280_compensate_pressure(uint32_t rawpress, struct bme280_calib_data *bcd)
+bme280_compensate_pressure(int32_t rawpress, struct bme280_calib_data *bcd)
 {
-    float var1, var2, p;
-    uint32_t temp;
+    int64_t var1, var2, p;
+    int32_t temp;
+
+    if (rawpress == 0x800000) {
+        BME280_ERR("Invalid pressure data\n");
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, invalid_data_errors);
+#endif
+        return NAN;
+    }
 
     if (!g_t_fine) {
         if(!bme280_get_temperature(&temp)) {
@@ -375,7 +427,7 @@ bme280_compensate_pressure(uint32_t rawpress, struct bme280_calib_data *bcd)
 
 /**
  * Returns humidity in %rH as float.
- * Output value of “46.332” represents 46.332 %rH
+ * Output value of "46.332" represents 46.332 %rH
  *
  * @param uncompensated raw humidity value
  * @return 0 on success, non-zero on failure
@@ -383,9 +435,17 @@ bme280_compensate_pressure(uint32_t rawpress, struct bme280_calib_data *bcd)
 static float
 bme280_compensate_humidity(uint32_t rawhumid, struct bme280_calib_data *bcd)
 {
-    float h;
-    uint32_t temp;
+    int32_t h;
+    int32_t temp;
     int32_t tmp32;
+
+    if (rawhumid == 0x8000) {
+        BME280_ERR("Invalid humidity data\n");
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, invalid_data_errors);
+#endif
+        return NAN;
+    }
 
     if (!g_t_fine) {
         if(!bme280_get_temperature(&temp)) {
@@ -419,19 +479,33 @@ static int
 bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
-    uint32_t rawtemp;
-    uint32_t rawpress;
-    uint32_t rawhumid;
+    int32_t rawtemp;
+    int32_t rawpress;
+    int32_t rawhumid;
     struct sensor_temp_data std;
     struct sensor_press_data spd;
     struct sensor_humid_data shd;
+    struct bme280 *bme280;
     int rc;
 
     if (!(type & SENSOR_TYPE_PRESSURE)    &&
-        !(type & SENSOR_TYPE_TEMPERATURE) &&
+        !(type & SENSOR_TYPE_AMBIENT_TEMPERATURE) &&
         !(type & SENSOR_TYPE_RELATIVE_HUMIDITY)) {
         rc = SYS_EINVAL;
         goto err;
+    }
+
+    bme280 = (struct bme280 *)SENSOR_GET_DEVICE(sensor);
+
+    /*
+     * For forced mode the sensor goes to sleep after setting the sensor to
+     * forced mode and grabbing sensor data
+     */
+    if (bme280->cfg.bc_mode == BME280_MODE_FORCED) {
+        rc = bme280_forced_mode_measurement();
+        if (rc) {
+            goto err;
+        }
     }
 
     rawtemp = rawpress = rawhumid = 0;
@@ -444,7 +518,10 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         spd.spd_press = bme280_compensate_pressure(rawpress, &bcd);
-        spd.spd_press_is_valid = 1;
+
+        if (spd.spd_press != NAN) {
+            spd.spd_press_is_valid = 1;
+        }
 
         /* Call data function */
         rc = data_func(sensor, data_arg, &spd);
@@ -454,14 +531,17 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     /* Get a new temperature sample */
-    if (type & SENSOR_TYPE_TEMPERATURE) {
+    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
         rc = bme280_get_temperature(&rawtemp);
         if (rc) {
             goto err;
         }
 
         std.std_temp = bme280_compensate_temperature(rawtemp, &bcd);
-        std.std_temp_is_valid = 1;
+
+        if (std.std_temp != NAN) {
+            std.std_temp_is_valid = 1;
+        }
 
         /* Call data function */
         rc = data_func(sensor, data_arg, &std);
@@ -478,7 +558,10 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         shd.shd_humid = bme280_compensate_humidity(rawhumid, &bcd);
-        shd.shd_humid_is_valid = 1;
+
+        if (shd.shd_humid != NAN) {
+            shd.shd_humid_is_valid = 1;
+        }
 
         /* Call data function */
         rc = data_func(sensor, data_arg, &shd);
@@ -499,7 +582,7 @@ bme280_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     int rc;
 
     if (!(type & SENSOR_TYPE_PRESSURE)    ||
-        !(type & SENSOR_TYPE_TEMPERATURE) ||
+        !(type & SENSOR_TYPE_AMBIENT_TEMPERATURE) ||
         !(type & SENSOR_TYPE_RELATIVE_HUMIDITY)) {
         rc = SYS_EINVAL;
         goto err;
@@ -547,31 +630,68 @@ bme280_get_calibinfo(struct bme280_calib_data *bcd)
     int rc;
     uint8_t payload[33];
 
+    /**
+     *------------|------------------|--------------------|
+     *  trimming  |    reg addrs     |    bits            |
+     *____________|__________________|____________________|
+     *	dig_T1    |  0x88  |  0x89   | from 0 : 7 to 8: 15
+     *	dig_T2    |  0x8A  |  0x8B   | from 0 : 7 to 8: 15
+     *	dig_T3    |  0x8C  |  0x8D   | from 0 : 7 to 8: 15
+     *	dig_P1    |  0x8E  |  0x8F   | from 0 : 7 to 8: 15
+     *	dig_P2    |  0x90  |  0x91   | from 0 : 7 to 8: 15
+     *	dig_P3    |  0x92  |  0x93   | from 0 : 7 to 8: 15
+     *	dig_P4    |  0x94  |  0x95   | from 0 : 7 to 8: 15
+     *	dig_P5    |  0x96  |  0x97   | from 0 : 7 to 8: 15
+     *	dig_P6    |  0x98  |  0x99   | from 0 : 7 to 8: 15
+     *	dig_P7    |  0x9A  |  0x9B   | from 0 : 7 to 8: 15
+     *	dig_P8    |  0x9C  |  0x9D   | from 0 : 7 to 8: 15
+     *	dig_P9    |  0x9E  |  0x9F   | from 0 : 7 to 8: 15
+     *	dig_H1    |       0xA1       | from 0 to 7
+     *	dig_H2    |  0xE1  |  0xE2   | from 0 : 7 to 8: 15
+     *	dig_H3    |       0xE3       | from 0 to 7
+     *	dig_H4    |  0xE4  | 0xE5    | from 4 : 11 to 0: 3
+     *	dig_H5    |  0xE5  | 0xE6    | from 0 : 3 to 4: 11
+     *	dig_H6    |       0xE7       | from 0 to 7
+     *------------|------------------|--------------------|
+     * Hence, we read it in two transactions, one starting at
+     * BME280_REG_ADDR_DIG_T1, second one starting at
+     * BME280_REG_ADDR_DIG_H2.
+     */
+
     rc = bme280_readlen(BME280_REG_ADDR_DIG_T1, payload, sizeof(payload));
     if (rc) {
         goto err;
     }
 
-    bcd->bcd_dig_T1 = payload[0] | payload[1] << 8;
-    bcd->bcd_dig_T2 = payload[3] | payload[2] << 8;
-    bcd->bcd_dig_T3 = payload[5] | payload[4] << 8;
+    bcd->bcd_dig_T1 = (uint16_t)(payload[0] | (uint16_t)(((uint8_t)payload[1]) << 8));
+    bcd->bcd_dig_T2 = (int16_t) (payload[2] | (int16_t)((int8_t)payload[3]) << 8);
+    bcd->bcd_dig_T3 = (int16_t) (payload[4] | (int16_t)((int8_t)payload[5]) << 8);
 
-    bcd->bcd_dig_P1 = payload[7] | payload[6] << 8;
-    bcd->bcd_dig_P2 = payload[9] | payload[8] << 8;
-    bcd->bcd_dig_P3 = payload[11] | payload[10] << 8;
-    bcd->bcd_dig_P4 = payload[13] | payload[12] << 8;
-    bcd->bcd_dig_P5 = payload[15] | payload[14] << 8;
-    bcd->bcd_dig_P6 = payload[17] | payload[16] << 8;
-    bcd->bcd_dig_P7 = payload[19] | payload[18] << 8;
-    bcd->bcd_dig_P8 = payload[21] | payload[20] << 8;
-    bcd->bcd_dig_P9 = payload[23] | payload[22] << 8;
+    bcd->bcd_dig_P1 = (uint16_t) (payload[6] |  (uint16_t)(((uint8_t)payload[7]) << 8));
+    bcd->bcd_dig_P2 = (int16_t) (payload[8]  | (int16_t)(((int8_t)payload[9])  << 8));
+    bcd->bcd_dig_P3 = (int16_t) (payload[10] | (int16_t)(((int8_t)payload[11]) << 8));
+    bcd->bcd_dig_P4 = (int16_t) (payload[12] | (int16_t)(((int8_t)payload[13]) << 8));
+    bcd->bcd_dig_P5 = (int16_t) (payload[14] | (int16_t)(((int8_t)payload[15]) << 8));
+    bcd->bcd_dig_P6 = (int16_t) (payload[16] | (int16_t)(((int8_t)payload[17]) << 8));
+    bcd->bcd_dig_P7 = (int16_t) (payload[18] | (int16_t)(((int8_t)payload[19]) << 8));
+    bcd->bcd_dig_P8 = (int16_t) (payload[20] | (int16_t)(((int8_t)payload[21]) << 8));
+    bcd->bcd_dig_P9 = (int16_t) (payload[22] | (int16_t)(((int8_t)payload[23]) << 8));
 
-    bcd->bcd_dig_H1 = payload[24];
-    bcd->bcd_dig_H2 = payload[26] | payload[25] << 8;
-    bcd->bcd_dig_H3 = payload[27];
-    bcd->bcd_dig_H4 = (payload[28] << 4) | (payload[29] & 0xF);
-    bcd->bcd_dig_H5 = (payload[31] << 4) | (payload[30] >> 4);
-    bcd->bcd_dig_H6 = (int8_t)payload[32];
+    bcd->bcd_dig_H1 = payload[25];
+
+    memset(payload, 0, 7);
+    rc = bme280_readlen(BME280_REG_ADDR_DIG_H2, payload, 7);
+    if (rc) {
+        goto err;
+    }
+
+    bcd->bcd_dig_H2 = (int16_t) (payload[0] | (int16_t)(((int8_t)payload[1]) << 8));
+    bcd->bcd_dig_H3 = payload[2];
+    bcd->bcd_dig_H4 = (int16_t)(((int16_t)((int8_t)payload[3]) << 4) |
+                                (payload[4] & 0x0F));
+    bcd->bcd_dig_H5 = (int16_t)(((int16_t)((int8_t)payload[5]) << 4) |
+                                (((int8_t)payload[6]) >> 4));
+    bcd->bcd_dig_H6 = (int8_t)payload[7];
 
     return 0;
 err:
@@ -727,6 +847,11 @@ bme280_readlen(uint8_t addr, uint8_t *payload, uint8_t len)
                             addr | BME280_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
+        BME280_ERR("SPI_%u register write failed addr:0x%02X\n",
+                   MYNEWT_VAL(BME280_SPINUM), addr);
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, read_errors);
+#endif
         goto err;
     }
 
@@ -735,14 +860,22 @@ bme280_readlen(uint8_t addr, uint8_t *payload, uint8_t len)
         retval = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM), 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
+            BME280_ERR("SPI_%u read failed addr:0x%02X\n",
+                       MYNEWT_VAL(BME280_SPINUM), addr);
+#if MYNEWT_VAL(BME280_STATS)
+            STATS_INC(g_bme280stats, read_errors);
+#endif
             goto err;
         }
         payload[i] = retval;
     }
 
+    rc = 0;
+
 err:
     /* De-select the device */
     hal_gpio_write(MYNEWT_VAL(BME280_CSPIN), 1);
+
     return rc;
 }
 
@@ -769,6 +902,11 @@ bme280_writelen(uint8_t addr, uint8_t *payload, uint8_t len)
                         addr & ~BME280_SPI_READ_CMD_BIT);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
+        BME280_ERR("SPI_%u register write failed addr:0x%02X\n",
+                   MYNEWT_VAL(BME280_SPINUM), addr);
+#if MYNEWT_VAL(BME280_STATS)
+        STATS_INC(g_bme280stats, write_errors);
+#endif
         goto err;
     }
 
@@ -777,15 +915,24 @@ bme280_writelen(uint8_t addr, uint8_t *payload, uint8_t len)
         rc = hal_spi_tx_val(MYNEWT_VAL(BME280_SPINUM), payload[i]);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
+            BME280_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
+                       MYNEWT_VAL(BME280_SPINUM), addr);
+#if MYNEWT_VAL(BME280_STATS)
+            STATS_INC(g_bme280stats, write_errors);
+#endif
             goto err;
         }
     }
 
+
+    rc = 0;
+
+err:
     /* De-select the device */
     hal_gpio_write(MYNEWT_VAL(BME280_CSPIN), 1);
 
-    return 0;
-err:
+    os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
+
     return rc;
 }
 
@@ -797,7 +944,7 @@ err:
  * @return 0 on success, and non-zero error code on failure
  */
 int
-bme280_get_temperature(uint32_t *temp)
+bme280_get_temperature(int32_t *temp)
 {
     int rc;
     uint8_t tmp[3];
@@ -807,8 +954,15 @@ bme280_get_temperature(uint32_t *temp)
         goto err;
     }
 
-    *temp = (tmp[1] << 8 | tmp[0]) << 4 | (tmp[2] >> 4);
+#if MYNEWT_VAL(BME280_SPEC_CALC)
+    *temp = (int32_t)((((uint32_t)(tmp[0])) << 12) |
+                      (((uint32_t)(tmp[1])) <<  4) |
+                       ((uint32_t)tmp[2] >> 4));
+#else
+    *temp = ((tmp[0] << 16) | (tmp[1] << 8) | tmp[2]);
+#endif
 
+    return 0;
 err:
     return rc;
 }
@@ -821,7 +975,7 @@ err:
  * @return 0 on success, and non-zero error code on failure
  */
 int
-bme280_get_humidity(uint32_t *humid)
+bme280_get_humidity(int32_t *humid)
 {
     int rc;
     uint8_t tmp[2];
@@ -830,9 +984,13 @@ bme280_get_humidity(uint32_t *humid)
     if (rc) {
         goto err;
     }
+#if MYNEWT_VAL(BME280_SPEC_CALC)
+    *humid = (tmp[0] << 8 | tmp[1]);
+#else
+    *humid = (tmp[0] << 8 | tmp[1]);
+#endif
 
-    *humid = (tmp[1] << 8 | tmp[0]);
-
+    return 0;
 err:
     return rc;
 }
@@ -845,18 +1003,25 @@ err:
  * @return 0 on success, and non-zero error code on failure
  */
 int
-bme280_get_pressure(uint32_t *press)
+bme280_get_pressure(int32_t *press)
 {
     int rc;
     uint8_t tmp[3];
 
-    rc = bme280_readlen(BME280_REG_ADDR_PRESS, tmp, 2);
+    rc = bme280_readlen(BME280_REG_ADDR_PRESS, tmp, 3);
     if (rc) {
         goto err;
     }
 
-    *press = (tmp[1] << 8 | tmp[0]) << 4 | (tmp[2] >> 4);
+#if MYNEWT_VAL(BME280_SPEC_CALC)
+    *press = (int32_t)((((uint32_t)(tmp[0])) << 12) |
+                      (((uint32_t)(tmp[1])) <<  4)  |
+                       ((uint32_t)tmp[2] >> 4));
+#else
+    *press = ((tmp[0] << 16) | (tmp[1] << 8) | tmp[2]);
+#endif
 
+    return 0;
 err:
     return rc;
 }
@@ -896,6 +1061,7 @@ bme280_get_iir(uint8_t *iir)
 
     *iir = ((tmp & BME280_REG_CONFIG_FILTER) >> 5);
 
+    return 0;
 err:
     return rc;
 }
@@ -950,6 +1116,7 @@ bme280_get_mode(uint8_t *mode)
 
     *mode = (tmp & BME280_REG_CTRL_MEAS_MODE);
 
+    return 0;
 err:
     return rc;
 }
@@ -997,18 +1164,18 @@ bme280_get_oversample(sensor_type_t type, uint8_t *oversample)
     int rc;
     uint8_t tmp;
 
-    if (type & SENSOR_TYPE_TEMPERATURE || type & SENSOR_TYPE_PRESSURE) {
+    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE || type & SENSOR_TYPE_PRESSURE) {
         rc = bme280_readlen(BME280_REG_ADDR_CTRL_MEAS, &tmp, 1);
         if (rc) {
             goto err;
         }
 
-        if (type & SENSOR_TYPE_TEMPERATURE) {
+        if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
             *oversample = ((tmp & BME280_REG_CTRL_MEAS_TOVER) >> 5);
         }
 
         if (type & SENSOR_TYPE_PRESSURE) {
-            *oversample = ((tmp & BME280_REG_CTRL_MEAS_POVER) >> 3);
+            *oversample = ((tmp & BME280_REG_CTRL_MEAS_POVER) >> 2);
         }
     }
 
@@ -1039,13 +1206,13 @@ bme280_set_oversample(sensor_type_t type, uint8_t oversample)
     int rc;
     uint8_t cfg;
 
-    if (type & SENSOR_TYPE_TEMPERATURE || type & SENSOR_TYPE_PRESSURE) {
+    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE || type & SENSOR_TYPE_PRESSURE) {
         rc = bme280_readlen(BME280_REG_ADDR_CTRL_MEAS, &cfg, 1);
         if (rc) {
             goto err;
         }
 
-        if (type & SENSOR_TYPE_TEMPERATURE) {
+        if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
             cfg = cfg | ((oversample << 5) & BME280_REG_CTRL_MEAS_TOVER);
         }
 
@@ -1098,6 +1265,7 @@ bme280_get_chipid(uint8_t *chipid)
 
     *chipid = tmp;
 
+    return 0;
 err:
     return rc;
 }
@@ -1155,3 +1323,38 @@ err:
     return rc;
 }
 
+/**
+ * Take forced measurement
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bme280_forced_mode_measurement(void)
+{
+    uint8_t status;
+    int rc;
+
+    /*
+     * If we are in forced mode, the BME sensor goes back to sleep after each
+     * measurement and we need to set it to forced mode once at this point, so
+     * it will take the next measurement and then return to sleep again.
+     * In normal mode simply does new measurements periodically.
+     */
+    rc = bme280_set_mode(BME280_MODE_FORCED);
+    if (rc) {
+        goto err;
+    }
+
+    status = 1;
+    while(status) {
+        rc = bme280_readlen(BME280_REG_ADDR_STATUS, &status, 1);
+        if (rc) {
+            goto err;
+        }
+        os_time_delay(OS_TICKS_PER_SEC/1000);
+    }
+
+    return 0;
+err:
+    return rc;
+}

@@ -37,13 +37,16 @@
 #include "sensor/quat.h"
 #include "sensor/euler.h"
 #include "sensor/color.h"
+#include "sensor/temperature.h"
+#include "sensor/pressure.h"
+#include "sensor/humidity.h"
 
 /* OIC */
 #include <oic/oc_rep.h>
 #include <oic/oc_ri.h>
 #include <oic/oc_api.h>
 
-static const char g_s_oic_dn[] = "x.mynewt.sensors.r.";
+static const char g_s_oic_dn[] = "x.mynewt.snsr.";
 
 static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
@@ -126,17 +129,26 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 
         /* Temperature supported */
         case SENSOR_TYPE_TEMPERATURE:
-            oc_rep_set_double(root, temp, *(double *)databuf);
+            if (((struct sensor_temp_data *)(databuf))->std_temp_is_valid) {
+                oc_rep_set_double(root, temp,
+                    ((struct sensor_temp_data *)(databuf))->std_temp);
+            }
             break;
 
         /* Ambient temperature supported */
         case SENSOR_TYPE_AMBIENT_TEMPERATURE:
-            oc_rep_set_double(root, ambient_temp, *(double *)databuf);
+            if (((struct sensor_temp_data *)(databuf))->std_temp_is_valid) {
+                oc_rep_set_double(root, temp,
+                    ((struct sensor_temp_data *)(databuf))->std_temp);
+            }
             break;
 
         /* Pressure sensor supported */
         case SENSOR_TYPE_PRESSURE:
-            oc_rep_set_uint(root, pressure, *(uint32_t *)databuf);
+            if (((struct sensor_press_data *)(databuf))->spd_press_is_valid) {
+                oc_rep_set_double(root, press,
+                    ((struct sensor_press_data *)(databuf))->spd_press);
+            }
             break;
 #if 0
         /* Proximity sensor supported */
@@ -144,7 +156,10 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 #endif
         /* Relative humidity supported */
         case SENSOR_TYPE_RELATIVE_HUMIDITY:
-            oc_rep_set_uint(root, humidity, *(uint32_t *)databuf);
+            if (((struct sensor_humid_data *)(databuf))->shd_humid_is_valid) {
+                oc_rep_set_double(root, humid,
+                    ((struct sensor_humid_data *)(databuf))->shd_humid);
+            }
             break;
 
         /* Rotation vector (quaternion) supported */
@@ -577,7 +592,7 @@ sensor_oic_init(void)
                 res = oc_new_resource(tmpstr, 1, 0);
 
                 memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "x.mynewt.sensors.r.%s", typename);
+                snprintf(tmpstr, sizeof(tmpstr), "%s%s", g_s_oic_dn, typename);
                 oc_resource_bind_resource_type(res, tmpstr);
                 oc_resource_bind_resource_interface(res, OC_IF_R);
                 oc_resource_set_default_interface(res, OC_IF_R);

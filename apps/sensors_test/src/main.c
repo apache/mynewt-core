@@ -401,14 +401,14 @@ config_sensor(void)
     memset(&bmecfg, 0, sizeof(bmecfg));
 
     bmecfg.bc_mode = BME280_MODE_NORMAL;
-    bmecfg.bc_iir = BME280_FILTER_OFF;
-    bmecfg.bc_sby_dur = BME280_STANDBY_MS_1000;
+    bmecfg.bc_iir = BME280_FILTER_X16;
+    bmecfg.bc_sby_dur = BME280_STANDBY_MS_0_5;
     bmecfg.bc_boc[0].boc_type = SENSOR_TYPE_RELATIVE_HUMIDITY;
     bmecfg.bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
-    bmecfg.bc_boc[2].boc_type = SENSOR_TYPE_TEMPERATURE;
+    bmecfg.bc_boc[2].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
     bmecfg.bc_boc[0].boc_oversample = BME280_SAMPLING_X1;
-    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X1;
-    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X1;
+    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X16;
+    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X2;
 
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
     if (rc) {

@@ -32,3 +32,7 @@ syscfg.defs:
         value: 1
         restrictions:
             - OC_SERVER
+
+    MATHLIB_SUPPORT:
+        description: 'Is MATHLIB support present'
+        value: 0

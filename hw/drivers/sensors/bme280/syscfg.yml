@@ -36,3 +36,6 @@ syscfg.defs:
     BME280_CSPIN:
         description: 'CS pin for BME280'
         value : 0
+    BME280_SPEC_CALC:
+        description: 'BME280 Spec calculation insetad of built in one'
+        value : 1

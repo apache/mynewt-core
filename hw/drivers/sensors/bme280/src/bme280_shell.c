@@ -120,9 +120,9 @@ bme280_shell_cmd_reset(int argc, char **argv)
 static int
 bme280_shell_cmd_read(int argc, char **argv)
 {
-    uint32_t temp;
-    uint32_t press;
-    uint32_t humid;
+    int32_t temp;
+    int32_t press;
+    int32_t humid;
     uint16_t samples = 1;
     long val;
     int rc;
@@ -159,9 +159,8 @@ bme280_shell_cmd_read(int argc, char **argv)
             return rc;
         }
 
-        console_printf("temperature: %u pressure: %u\thumidity: %u\n",
-                       (unsigned int)temp, (unsigned int)press,
-                       (unsigned int)humid);
+        console_printf("temperature: %d pressure: %d\thumidity: %d\n",
+                       (int)temp, (int)press, (int)humid);
     }
 
     return 0;

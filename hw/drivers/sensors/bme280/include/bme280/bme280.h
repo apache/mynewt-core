@@ -131,26 +131,13 @@ int bme280_set_iir(uint8_t iir);
 int bme280_get_iir(uint8_t *iir);
 
 /**
- * Gets a new data sample from the sensor.
- *
- * @param temperature sensor output
- * @param pressure sensor output
- * @param humidity sensor output
- * @param bme280 config and OS device structure
- *
- * @return 0 on success, and non-zero error code on failure
- */
-int bme280_get_data(uint32_t *temp, uint32_t *press, uint32_t *humidity,
-                    struct bme280 *bme280);
-
-/**
  * Gets temperature
  *
  * @param temperature
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_temperature(uint32_t *temp);
+int bme280_get_temperature(int32_t *temp);
 
 /**
  * Gets pressure
@@ -159,7 +146,7 @@ int bme280_get_temperature(uint32_t *temp);
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_pressure(uint32_t *press);
+int bme280_get_pressure(int32_t *press);
 
 /**
  * Gets humidity
@@ -168,7 +155,7 @@ int bme280_get_pressure(uint32_t *press);
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_humidity(uint32_t *humid);
+int bme280_get_humidity(int32_t *humid);
 
 /**
  * Sets the sampling rate
@@ -252,6 +239,14 @@ bme280_set_sby_duration(uint8_t dur);
  */
 int
 bme280_get_sby_duration(uint8_t *dur);
+
+/**
+ * Take forced measurement
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bme280_forced_mode_measurement(void);
 
 #if MYNEWT_VAL(BME280_CLI)
 int bme280_shell_init(void);

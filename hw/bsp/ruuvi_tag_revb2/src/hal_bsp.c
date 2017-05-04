@@ -189,7 +189,7 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 
 #if MYNEWT_VAL(LSM303DLHC_PRESENT) || MYNEWT_VAL(BNO055_PRESENT)
 static int
-slinky_accel_init(struct os_dev *dev, void *arg)
+accel_init(struct os_dev *dev, void *arg)
 {
    return (0);
 }

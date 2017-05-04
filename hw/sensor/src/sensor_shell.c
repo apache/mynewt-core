@@ -292,10 +292,12 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_TEMPERATURE) {
+    if (ctx->type == SENSOR_TYPE_TEMPERATURE      ||
+        ctx->type == SENSOR_TYPE_AMBIENT_TEMPERATURE) {
+
         std = (struct sensor_temp_data *) data;
         if (std->std_temp_is_valid) {
-            console_printf("temprature = %s", sensor_ftostr(std->std_temp, tmpstr, 13));
+            console_printf("temperature = %s Deg C", sensor_ftostr(std->std_temp, tmpstr, 13));
         }
         console_printf("\n");
     }
@@ -385,7 +387,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     if (ctx->type == SENSOR_TYPE_RELATIVE_HUMIDITY) {
         shd = (struct sensor_humid_data *) data;
         if (shd->shd_humid_is_valid) {
-            console_printf("relative humidity = %s",
+            console_printf("relative humidity = %s%%rh",
                            sensor_ftostr(shd->shd_humid, tmpstr, 13));
         }
         console_printf("\n");
