@@ -31,7 +31,7 @@
 /* JTAG on, WDT off */
 #pragma config JTAGEN=1, FWDTEN=0
 /* DMT off, primary oscilator EC mode, PLL */
-#pragma config FDMTEN=0, POSCMOD=0, FNOSC=1
+#pragma config FDMTEN=0, POSCMOD=0, FNOSC=1, DMTCNT=1
 /* 24MHz posc input to pll, div by 3, multiply by 50, div by 2 -> 200mhz*/
 #pragma config FPLLODIV=1, FPLLMULT=49, FPLLICLK=0, FPLLRNG=1, FPLLIDIV=2
 /* USB off */
