@@ -24,8 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - pic32
 
-pkg.cflags:
-    - -mprocessor=32MX470F512H
 pkg.deps:
     - hw/hal
     - compiler/xc32

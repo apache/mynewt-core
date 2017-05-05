@@ -26,7 +26,9 @@ pkg.keywords:
     - pic32
     - microchip
     - clicker
-
+    
+pkg.cflags:
+    - -mprocessor=32MX470F512H
 pkg.lflags:
     - -Wl,--defsym=_min_heap_size=0x400
 
