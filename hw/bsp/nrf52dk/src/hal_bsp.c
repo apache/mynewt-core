@@ -187,30 +187,6 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return cfg_pri;
 }
 
-#if MYNEWT_VAL(LSM303DLHC_PRESENT) || MYNEWT_VAL(BNO055_PRESENT)
-static int
-accel_init(struct os_dev *dev, void *arg)
-{
-   return (0);
-}
-#endif
-
-#if MYNEWT_VAL(TSL2561_PRESENT)
-static int
-light_init(struct os_dev *dev, void *arg)
-{
-    return (0);
-}
-#endif
-
-#if MYNEWT_VAL(TCS34725_PRESENT)
-static int
-color_init(struct os_dev *dev, void *arg)
-{
-    return (0);
-}
-#endif
-
 static void
 sensor_dev_create(void)
 {
@@ -219,31 +195,31 @@ sensor_dev_create(void)
     (void)rc;
 #if MYNEWT_VAL(LSM303DLHC_PRESENT)
     rc = os_dev_create((struct os_dev *) &lsm303dlhc, "accel0",
-      OS_DEV_INIT_PRIMARY, 0, accel_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, lsm303dlhc_init, NULL);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(BNO055_PRESENT)
     rc = os_dev_create((struct os_dev *) &bno055, "accel1",
-      OS_DEV_INIT_PRIMARY, 0, accel_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, bno055_init, NULL);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(TSL2561_PRESENT)
     rc = os_dev_create((struct os_dev *) &tsl2561, "light0",
-      OS_DEV_INIT_PRIMARY, 0, light_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, tasl2561_init, NULL);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(TCS34725_PRESENT)
     rc = os_dev_create((struct os_dev *) &tcs34725, "color0",
-      OS_DEV_INIT_PRIMARY, 0, color_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, tcs34725_init, NULL);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(BME280_PRESENT)
     rc = os_dev_create((struct os_dev *) &bme280, "bme280",
-      OS_DEV_INIT_PRIMARY, 0, color_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, bme280_init, NULL);
     assert(rc == 0);
 #endif
 }

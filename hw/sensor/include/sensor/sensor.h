@@ -259,7 +259,7 @@ struct sensor {
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
     /* The next sensor in the global sensor list. */
-    TAILQ_ENTRY(sensor) s_next;
+    SLIST_ENTRY(sensor) s_next;
 };
 
 int sensor_init(struct sensor *, struct os_dev *dev);

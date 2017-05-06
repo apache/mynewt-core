@@ -36,7 +36,7 @@ struct {
     struct os_callout mgr_wakeup_callout;
     struct os_eventq *mgr_eventq;
 
-    TAILQ_HEAD(, sensor) mgr_sensor_list;
+    SLIST_HEAD(, sensor) mgr_sensor_list;
 } sensor_mgr;
 
 struct sensor_read_ctx {
@@ -74,16 +74,16 @@ sensor_mgr_unlock(void)
 static void
 sensor_mgr_remove(struct sensor *sensor)
 {
-    TAILQ_REMOVE(&sensor_mgr.mgr_sensor_list, sensor, s_next);
+    SLIST_REMOVE(&sensor_mgr.mgr_sensor_list, sensor, sensor, s_next);
 }
 
 static void
 sensor_mgr_insert(struct sensor *sensor)
 {
-    struct sensor *cursor;
+    struct sensor *cursor, *prev;
 
-    cursor = NULL;
-    TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+    prev = cursor = NULL;
+    SLIST_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
         if (cursor->s_next_run == OS_TIMEOUT_NEVER) {
             break;
         }
@@ -91,12 +91,14 @@ sensor_mgr_insert(struct sensor *sensor)
         if (OS_TIME_TICK_LT(sensor->s_next_run, cursor->s_next_run)) {
             break;
         }
+
+        prev = cursor;
     }
 
-    if (cursor) {
-        TAILQ_INSERT_BEFORE(cursor, sensor, s_next);
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&sensor_mgr.mgr_sensor_list, sensor, s_next);
     } else {
-        TAILQ_INSERT_TAIL(&sensor_mgr.mgr_sensor_list, sensor, s_next);
+        SLIST_INSERT_AFTER(prev, sensor, s_next);
     }
 }
 
@@ -198,7 +200,7 @@ sensor_mgr_wakeup_event(struct os_event *ev)
         goto done;
     }
 
-     TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+    SLIST_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
         /* Sensors that are not periodic are inserted at the end of the sensor
          * list.
          */
@@ -297,9 +299,6 @@ sensor_mgr_init(void)
     struct os_timeval ostv;
     struct os_timezone ostz;
 
-    memset(&sensor_mgr, 0, sizeof(sensor_mgr));
-    TAILQ_INIT(&sensor_mgr.mgr_sensor_list);
-
     sensor_mgr_evq_set(os_eventq_dflt_get());
 
     /**
@@ -364,16 +363,16 @@ sensor_mgr_find_next(sensor_mgr_compare_func_t compare_func, void *arg,
 
     cursor = prev_cursor;
     if (cursor == NULL) {
-        cursor = TAILQ_FIRST(&sensor_mgr.mgr_sensor_list);
+        cursor = SLIST_FIRST(&sensor_mgr.mgr_sensor_list);
     } else {
-        cursor = TAILQ_NEXT(prev_cursor, s_next);
+        cursor = SLIST_NEXT(prev_cursor, s_next);
     }
 
     while (cursor != NULL) {
         if (compare_func(cursor, arg)) {
             break;
         }
-        cursor = TAILQ_NEXT(cursor, s_next);
+        cursor = SLIST_NEXT(cursor, s_next);
     }
 
     sensor_mgr_unlock();

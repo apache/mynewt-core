@@ -37,15 +37,13 @@
 #include <bme280/bme280.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
-#if MYNEWT_VAL(SPLIT_LOADER)
-#include "split/split.h"
-#endif
 #include <assert.h>
 #include <string.h>
 #include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 #include <os/os_time.h>
+#include <defs/error.h>
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -437,10 +435,9 @@ config_sensor(void)
 
     dev = (struct os_dev *) os_dev_open("color0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
-    rc = tcs34725_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
+
+    if (dev->od_flags & OS_DEV_F_STATUS_READY) {
+        console_printf("config_sensor %s init failed\n", dev->od_name);
     }
 
     /* Gain set to 16X and Inetgration time set to 24ms */
@@ -459,10 +456,10 @@ config_sensor(void)
 
     dev = (struct os_dev *) os_dev_open("light0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
-    rc = tsl2561_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
+
+    if (dev->od_flags & OS_DEV_F_STATUS_READY) {
+        rc= SYS_ENODEV;
+        console_printf("config_sensor %s init failed\n", dev->od_name);
     }
 
     /* Gain set to 1X and Inetgration time set to 13ms */
@@ -482,10 +479,8 @@ config_sensor(void)
     dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    rc = lsm303dlhc_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
+    if (dev->od_flags & OS_DEV_F_STATUS_READY) {
+        console_printf("config_sensor %s init failed\n", dev->od_name);
     }
 
     /* read once per sec.  API should take this value in ms. */
@@ -505,10 +500,8 @@ config_sensor(void)
     dev = (struct os_dev *) os_dev_open("accel1", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    rc = bno055_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
+    if (dev->od_flags & OS_DEV_F_STATUS_READY) {
+        console_printf("config_sensor %s init failed\n", dev->od_name);
     }
 
     bcfg.bc_units = BNO055_ACC_UNIT_MS2   | BNO055_ANGRATE_UNIT_DPS |
@@ -523,18 +516,12 @@ config_sensor(void)
 
     rc = bno055_config((struct bno055 *) dev, &bcfg);
     if (rc) {
-        console_printf("config_sensor %s failed %d\n", dev->od_name, rc);
+        console_printf("config_sensor %s failed rc:%d\n", dev->od_name, rc);
     }
     os_dev_close(dev);
 #endif
 
     return 0;
-
-err:
-
-    console_printf("config_sensor %s init failed %d\n", dev->od_name, rc);
-
-    return rc;
 }
 
 #else
