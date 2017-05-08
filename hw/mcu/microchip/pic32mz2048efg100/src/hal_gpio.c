@@ -136,7 +136,7 @@ static void
 hal_gpio_handle_isr(uint32_t port)
 {
     uint8_t index = 0;
-    static unsigned int i = 0;
+
     for (index = 0; index < HAL_GPIO_MAX_IRQ; ++index) {
         uint32_t mask, val;
 
@@ -377,7 +377,6 @@ hal_gpio_irq_release(int pin)
 void
 hal_gpio_irq_enable(int pin)
 {
-    volatile uint32_t dummy;
     uint32_t port, mask, ctx;
 
     uint8_t index = hal_gpio_find_pin(pin);
