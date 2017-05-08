@@ -32,6 +32,7 @@ TEST_SUITE(test_cborattr_suite)
     test_cborattr_decode_string_array();
     test_cborattr_decode_object_array();
     test_cborattr_decode_unnamed_array();
+    test_cborattr_decode_substring_key();
 }
 
 #if MYNEWT_VAL(SELFTEST)
