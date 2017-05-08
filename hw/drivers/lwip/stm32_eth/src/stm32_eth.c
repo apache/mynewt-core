@@ -462,7 +462,7 @@ stm32_lwip_init(struct netif *nif)
 }
 
 int
-stm32_mii_dump(void (*func)(const char *fmt, ...))
+stm32_mii_dump(int (*func)(const char *fmt, ...))
 {
     int i;
     struct stm32_eth_state *ses = &stm32_eth_state;

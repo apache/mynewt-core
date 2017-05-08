@@ -116,7 +116,11 @@ console_read(char *str, int cnt, int *newline)
     }
     cmd = ev->ev_arg;
     len = strlen(cmd->line);
-    strncpy(str, cmd->line, len+1);
+    if ((cnt - 1) < len) {
+        len = cnt - 1;
+    }
+    memcpy(str, cmd->line, len);
+    str[len] = '\0';
     os_eventq_put(avail_queue, ev);
     *newline = 1;
     return len;

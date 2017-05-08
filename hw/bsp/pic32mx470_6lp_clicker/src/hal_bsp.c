@@ -21,7 +21,7 @@
 #include <assert.h>
 
 const struct hal_flash *
-bsp_flash_dev(uint8_t id)
+hal_bsp_flash_dev(uint8_t id)
 {
     return 0;
 }

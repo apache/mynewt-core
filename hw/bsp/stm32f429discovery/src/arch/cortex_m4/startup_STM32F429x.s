@@ -556,6 +556,3 @@ g_pfnVectors:
    .thumb_set DMA2D_IRQHandler,Default_Handler
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
-
-
