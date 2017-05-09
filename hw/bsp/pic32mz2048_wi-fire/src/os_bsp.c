@@ -20,7 +20,8 @@
 #include "hal/hal_bsp.h"
 #include "syscfg/syscfg.h"
 #include "uart/uart.h"
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
+    MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || MYNEWT_VAL(UART_5)
 #include "uart_hal/uart_hal.h"
 #endif
 
