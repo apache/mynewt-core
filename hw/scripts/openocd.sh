@@ -85,7 +85,7 @@ openocd_debug () {
             #
 
             CFG=`echo $CFG | sed 's/\//\\\\/g'`
-            $COMSPEC /C "start openocd -l openocd.log $CFG -f $OCD_CMD_FILE -c init -c halt"
+            $COMSPEC /C "start $COMSPEC /C openocd -l openocd.log $CFG -f $OCD_CMD_FILE -c init -c halt"
         else
             #
             # Block Ctrl-C from getting passed to openocd.
@@ -104,7 +104,7 @@ openocd_debug () {
 	echo "FILENAME" $FILE_NAME >>out
 	if [ $WINDOWS -eq 1 ]; then
 	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
-            $COMSPEC /C "start arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+            $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
 	else
             arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
             rm $GDB_CMD_FILE
