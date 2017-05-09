@@ -70,7 +70,7 @@ print_uuid(const ble_uuid_t *uuid)
 
     ble_uuid_to_str(uuid, buf);
 
-    console_printf(buf);
+    console_printf("%s", buf);
 }
 
 int
