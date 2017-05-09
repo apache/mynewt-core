@@ -18,6 +18,8 @@
  */
 
 #include "hal/hal_bsp.h"
+#include "mcu/mcu.h"
+#include "mcu/mips_hal.h"
 #include "syscfg/syscfg.h"
 #include "uart/uart.h"
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
@@ -57,6 +59,10 @@ static struct uart_dev os_bsp_uart3;
 
 #if MYNEWT_VAL(UART_4)
 static struct uart_dev os_bsp_uart4;
+static const struct mips_uart_cfg uart4_cfg = {
+    .tx = MCU_GPIO_PORTF(8),
+    .rx = MCU_GPIO_PORTF(2)
+};
 #endif
 
 #if MYNEWT_VAL(UART_5)
@@ -90,7 +96,7 @@ hal_bsp_init(void)
 
     #if MYNEWT_VAL(UART_3)
         rc = os_dev_create((struct os_dev *) &os_bsp_uart3, "uart3",
-            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, &uart4_cfg);
         assert(rc == 0);
     #endif
 
