@@ -26,6 +26,12 @@
 extern "C" {
 #endif
 
+/* I/O pins for UART */
+struct mips_uart_cfg {
+    uint8_t tx;
+    uint8_t rx;
+};
+
 /* Helper functions to enable/disable interrupts. */
 #define __HAL_DISABLE_INTERRUPTS(__os_sr) do {__os_sr = __builtin_get_isr_state(); \
         __builtin_disable_interrupts();} while(0)
