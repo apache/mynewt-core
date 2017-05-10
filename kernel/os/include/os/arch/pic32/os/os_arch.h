@@ -59,7 +59,7 @@ typedef uint32_t os_stack_t;
 /* Exit a critical section, restore processor state and unblock interrupts */
 #define OS_EXIT_CRITICAL(__os_sr) __builtin_set_isr_state(__os_sr)
 /*  This is not the only way interrupts can be disabled */
-#define OS_IS_CRITICAL() ((__builtin_get_isr_state() & 1) == 0)
+#define OS_IS_CRITICAL() ((_CP0_GET_STATUS() & 1) == 0)
 #define OS_ASSERT_CRITICAL() assert(OS_IS_CRITICAL())
 
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);

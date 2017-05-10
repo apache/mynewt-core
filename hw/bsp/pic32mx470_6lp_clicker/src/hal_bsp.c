@@ -16,12 +16,74 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "hal/hal_bsp.h"
-#include "bsp/bsp.h"
 #include <assert.h>
+
+#include <hal/hal_bsp.h>
+#include <syscfg/syscfg.h>
+
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
+#include <uart/uart.h>
+#include <uart_hal/uart_hal.h>
+#endif
+
+#include <xc.h>
+
+#pragma config CP=1, FWDTEN=0, FCKSM=1, FPBDIV=1, OSCIOFNC=1, POSCMOD=1
+/* PLL conf div in: 2, mul: 20, div out: 1 8->4->80->80 */
+#pragma config FNOSC=3, FPLLODIV=0, UPLLEN=1, FPLLMUL=5, FPLLIDIV=1, FSRSSEL=7
+/* PGEC2/PGED2 pair is used */
+#pragma config ICESEL=2
+
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev os_bsp_uart1;
+#endif
+
+#if MYNEWT_VAL(UART_2)
+static struct uart_dev os_bsp_uart2;
+#endif
+
+#if MYNEWT_VAL(UART_3)
+static struct uart_dev os_bsp_uart3;
+#endif
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
     return 0;
+}
+
+void
+hal_bsp_init(void)
+{
+    int rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_2)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart2, "uart2",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_3)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart3, "uart3",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+    (void)rc;
 }
