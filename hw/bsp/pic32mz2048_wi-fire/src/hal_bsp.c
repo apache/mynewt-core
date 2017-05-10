@@ -29,6 +29,11 @@
 #include <uart_hal/uart_hal.h>
 #endif
 
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || \
+    MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_3_MASTER) || \
+    MYNEWT_VAL(SPI_4_MASTER) || MYNEWT_VAL(SPI_5_MASTER)
+#include "hal/hal_spi.h"
+#endif
 #include <bsp/bsp.h>
 
 #include <xc.h>
@@ -69,6 +74,48 @@ static const struct mips_uart_cfg uart4_cfg = {
 
 #if MYNEWT_VAL(UART_5)
 static struct uart_dev os_bsp_uart5;
+#endif
+
+#if MYNEWT_VAL(SPI_1_MASTER)
+/*
+ * SPI 1 (J9 connector)
+ *   MOSI -> RF0
+ *   MISO -> RD11
+ *   SCK  -> RG6
+ */
+static const struct mips_spi_cfg spi1_cfg = {
+    .mosi = MCU_GPIO_PORTF(0),
+    .miso = MCU_GPIO_PORTD(11),
+    .sck = MCU_GPIO_PORTG(6)
+};
+#endif
+
+#if MYNEWT_VAL(SPI_2_MASTER)
+/*
+ * SPI 2 (microSD card)
+ *   MOSI -> RB10
+ *   MISO -> RC4
+ *   SCK  -> RB14
+ */
+static const struct mips_spi_cfg spi2_cfg = {
+    .mosi = MCU_GPIO_PORTB(10),
+    .miso = MCU_GPIO_PORTC(4),
+    .sck = MCU_GPIO_PORTB(14)
+};
+#endif
+
+#if MYNEWT_VAL(SPI_3_MASTER)
+/*
+ * SPI 3 (MRF24WG0MA)
+ *   MOSI -> RF5
+ *   MISO -> RG0
+ *   SCK  -> RD10
+ */
+static const struct mips_spi_cfg spi3_cfg = {
+    .mosi = MCU_GPIO_PORTF(5),
+    .miso = MCU_GPIO_PORTG(0),
+    .sck = MCU_GPIO_PORTD(10)
+};
 #endif
 
 const struct hal_flash *
@@ -115,6 +162,36 @@ hal_bsp_init(void)
     #if MYNEWT_VAL(UART_5)
         rc = os_dev_create((struct os_dev *) &os_bsp_uart5, "uart5",
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+        assert(rc == 0);
+    #endif
+
+    #if MYNEWT_VAL(SPI_0_MASTER)
+        rc = hal_spi_init(0, NULL, HAL_SPI_TYPE_MASTER);
+        assert(rc == 0);
+    #endif
+
+    #if MYNEWT_VAL(SPI_1_MASTER)
+        rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
+        assert(rc == 0);
+    #endif
+
+    #if MYNEWT_VAL(SPI_2_MASTER)
+        rc = hal_spi_init(2, &spi2_cfg, HAL_SPI_TYPE_MASTER);
+        assert(rc == 0);
+    #endif
+
+    #if MYNEWT_VAL(SPI_3_MASTER)
+        rc = hal_spi_init(3, &spi3_cfg, HAL_SPI_TYPE_MASTER);
+        assert(rc == 0);
+    #endif
+
+    #if MYNEWT_VAL(SPI_4_MASTER)
+        rc = hal_spi_init(4, NULL, HAL_SPI_TYPE_MASTER);
+        assert(rc == 0);
+    #endif
+
+    #if MYNEWT_VAL(SPI_5_MASTER)
+        rc = hal_spi_init(5, NULL, HAL_SPI_TYPE_MASTER);
         assert(rc == 0);
     #endif
 
