@@ -245,7 +245,7 @@ __attribute__((interrupt(IPL1AUTO), vector(_UART2_TX_VECTOR))) uart_2_tx_isr(voi
 }
 
 void
-__attribute__((interrupt(IPL1AUTO), vector(_UART3_RX_VECTOR))) uart_3_tx_rx_isr(void)
+__attribute__((interrupt(IPL1AUTO), vector(_UART3_RX_VECTOR))) uart_3_rx_isr(void)
 {
     uart_receive_ready(2);
     IFS4CLR = _IFS4_U3RXIF_MASK;

@@ -299,9 +299,9 @@ net_cli(int argc, char **argv)
                 console_printf(" %s/%d\n", addr_str, itf_addr.mifa_plen);
             }
         }
-#ifndef ARCH_sim
+#if MYNEWT_VAL(MCU_STM32F4) || MYNEWT_VAL(MCU_STM32F7)
     } else if (!strcmp(argv[1], "mii")) {
-        extern int stm32_mii_dump(void (*func)(const char *fmt, ...));
+        extern int stm32_mii_dump(int (*func)(const char *fmt, ...));
 
         stm32_mii_dump(console_printf);
 #endif

@@ -160,7 +160,11 @@ os_callout_tick(void)
         OS_EXIT_CRITICAL(sr);
 
         if (c) {
-            os_eventq_put(c->c_evq, &c->c_ev);
+            if (c->c_evq) {
+                os_eventq_put(c->c_evq, &c->c_ev);
+            } else {
+                c->c_ev.ev_cb(&c->c_ev);
+            }
         } else {
             break;
         }

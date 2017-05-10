@@ -27,6 +27,8 @@ pkg.keywords:
     - microchip
     - clicker
 
+pkg.cflags:
+    - -mprocessor=32MZ2048EFG100
 pkg.lflags:
     - -Wl,--defsym=_min_heap_size=0x400
 
