@@ -115,7 +115,7 @@ tcs34725_write8(uint8_t reg, uint32_t value)
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
-                       addr, reg, value);
+                       data_struct.address, reg, value);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
@@ -149,7 +149,7 @@ tcs34725_read8(uint8_t reg, uint8_t *value)
     rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TCS34725_ERR("I2C access failed at address 0x%02X\n", addr);
+        TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
@@ -162,7 +162,7 @@ tcs34725_read8(uint8_t reg, uint8_t *value)
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
-        TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
@@ -200,7 +200,7 @@ tcs34725_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TCS34725_ERR("I2C access failed at address 0x%02X\n", addr);
+        TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
@@ -214,7 +214,7 @@ tcs34725_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
@@ -255,7 +255,7 @@ tcs34725_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
     rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TCS34725_ERR("I2C access failed at address 0x%02X\n", addr);
+        TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
@@ -268,7 +268,7 @@ tcs34725_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
                               OS_TICKS_PER_SEC / 10, len);
 
     if (rc) {
-        TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
 #endif
