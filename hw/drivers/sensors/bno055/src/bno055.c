@@ -141,7 +141,7 @@ bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        BNO055_ERR("I2C access failed at address 0x%02X\n", addr);
+        BNO055_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -154,7 +154,7 @@ bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
                               OS_TICKS_PER_SEC / 10, len);
 
     if (rc) {
-        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -205,7 +205,7 @@ bno055_read8(uint8_t reg, uint8_t *value)
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
-        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -246,7 +246,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        BNO055_ERR("I2C access failed at address 0x%02X\n", addr);
+        BNO055_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -260,7 +260,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
