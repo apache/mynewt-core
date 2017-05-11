@@ -398,7 +398,7 @@ config_sensor(void)
     }
 
     /* Gain set to 16X and Inetgration time set to 24ms */
-    tcscfg.gain = TCS34725_GAIN_16X;;
+    tcscfg.gain = TCS34725_GAIN_16X;
     tcscfg.integration_time = TCS34725_INTEGRATIONTIME_24MS;
 
     rc = tcs34725_config((struct tcs34725 *)dev, &tcscfg);
