@@ -37,7 +37,6 @@
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "nimble/ble_hci_trans.h"
-#include "controller/ble_ll.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_uuid.h"
@@ -46,9 +45,6 @@
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
 #include "host/ble_sm.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
 
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
