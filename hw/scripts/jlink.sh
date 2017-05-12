@@ -125,7 +125,7 @@ jlink_debug() {
             # Launch jlink server in a separate command interpreter, to make
             # sure it doesn't get killed by Ctrl-C signal from bash.
             #
-            $COMSPEC /C "start $JLINK_GDB_SERVER $EXTRA_JTAG_CMD -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
+            $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER $EXTRA_JTAG_CMD -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
         else
             #
             # Block Ctrl-C from getting passed to jlink server.
@@ -145,7 +145,7 @@ jlink_debug() {
 
 	if [ $WINDOWS -eq 1 ]; then
 	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
-	    $COMSPEC /C "start arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+	    $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
 	else
             arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
             rm $GDB_CMD_FILE
