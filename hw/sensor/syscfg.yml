@@ -36,3 +36,7 @@ syscfg.defs:
     MATHLIB_SUPPORT:
         description: 'Is MATHLIB support present'
         value: 0
+
+    SENSOR_OIC_OBS_RATE:
+        description: 'Set OIC server observation rate in seconds'
+        value: 1

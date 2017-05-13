@@ -323,7 +323,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         /* Wait one second */
-        os_time_delay(OS_TICKS_PER_SEC);
+        os_time_delay(OS_TICKS_PER_SEC * MYNEWT_VAL(SENSOR_OIC_OBS_RATE));
 
         /* Toggle the LED */
         (void)hal_gpio_toggle(g_led_pin);

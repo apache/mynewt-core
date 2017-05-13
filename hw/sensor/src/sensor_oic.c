@@ -598,7 +598,7 @@ sensor_oic_init(void)
                 oc_resource_set_default_interface(res, OC_IF_R);
 
                 oc_resource_set_discoverable(res);
-                oc_resource_set_periodic_observable(res, 1);
+                oc_resource_set_periodic_observable(res, MYNEWT_VAL(SENSOR_OIC_OBS_RATE));
                 oc_resource_set_request_handler(res, OC_GET,
                                                 sensor_oic_get_data);
                 oc_add_resource(res);
