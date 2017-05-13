@@ -404,10 +404,9 @@ config_sensor(void)
 
     dev = (struct os_dev *) os_dev_open("bme280", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
-    rc = bme280_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
+
+    if (dev->od_flags & OS_DEV_F_STATUS_READY) {
+        console_printf("config_sensor %s init failed\n", dev->od_name);
     }
 
     memset(&bmecfg, 0, sizeof(bmecfg));
@@ -424,8 +423,7 @@ config_sensor(void)
 
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
     if (rc) {
-        os_dev_close(dev);
-        goto err;
+        console_printf("config_sensor %s failed %d\n", dev->od_name, rc);
     }
     os_dev_close(dev);
 #endif
