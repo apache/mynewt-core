@@ -30,6 +30,7 @@
 #include "sensor/mag.h"
 #include "sensor/quat.h"
 #include "sensor/euler.h"
+#include "sensor/temperature.h"
 #include "bno055/bno055.h"
 #include "bno055_priv.h"
 
@@ -1018,13 +1019,13 @@ err:
  * @return 0 on success, non-zero on error
  */
 int
-bno055_get_temp(int8_t *temp)
+bno055_get_temp(uint8_t *temp)
 {
     int rc;
     uint8_t units;
     uint8_t div;
 
-    rc = bno055_read8(BNO055_TEMP_ADDR, (uint8_t *)temp);
+    rc = bno055_read8(BNO055_TEMP_ADDR, temp);
     if (rc) {
         goto err;
     }
@@ -1037,6 +1038,31 @@ bno055_get_temp(int8_t *temp)
     div = units & BNO055_TEMP_UNIT_DEGF ? 2 : 1;
 
     *temp = *temp/div;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Get temperature data from bno055 sensor and mark it valid
+ *
+ * @param pointer to the temperature data structure
+ * @return 0 on success, non-zero on error
+ */
+static int
+bno055_get_temp_data(struct sensor_temp_data *std)
+{
+    int rc;
+    uint8_t temp;
+
+    rc = bno055_get_temp(&temp);
+    if (rc) {
+        goto err;
+    }
+
+    std->std_temp = temp;
+    std->std_temp_is_valid = 1;
 
     return 0;
 err:
@@ -1071,7 +1097,7 @@ bno055_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
     } else if (type == SENSOR_TYPE_TEMPERATURE) {
-        rc = bno055_get_temp(databuf);
+        rc = bno055_get_temp_data(databuf);
         if (rc) {
             goto err;
         }

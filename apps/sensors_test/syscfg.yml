@@ -44,6 +44,7 @@ syscfg.vals:
     TSL2561_CLI: 0
     BNO055_CLI: 1
     TCS34725_CLI: 1
+    BME280_CLI: 1
 
     # Setup Sensor BLE OIC GATT Server
     SENSOR_OIC: 1
@@ -65,6 +66,9 @@ syscfg.defs:
         value : 0
     BNO055_PRESENT:
         description: 'BNO055 is present'
+        value : 1
+    BME280_PRESENT:
+        description: 'BME280 is present'
         value : 1
     TCS34725_PRESENT:
         description: 'TCS34725 is present'
