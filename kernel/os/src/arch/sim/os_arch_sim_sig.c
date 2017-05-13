@@ -17,8 +17,25 @@
  * under the License.
  */
 
+/**
+ * This file implements the "signals" version of sim.  This implementation uses
+ * signals to perform context switches.  This is the more correct version of
+ * sim: the OS tick timer will cause a high-priority task to preempt a
+ * low-priority task.  Unfortunately, there are stability issues because a task
+ * can be preempted while it is in the middle of a system call, potentially
+ * causing deadlock or memory corruption.
+ *
+ * To use this version of sim, enable the MCU_NATIVE_USE_SIGNALS syscfg
+ * setting.  
+ */
+
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(MCU_NATIVE_USE_SIGNALS)
+
 #include "os/os.h"
 #include "os_priv.h"
+#include "os_arch_sim_priv.h"
 
 #include <hal/hal_bsp.h>
 
@@ -34,71 +51,10 @@
 #include <sys/time.h>
 #include <assert.h>
 
-struct stack_frame {
-    int sf_mainsp;              /* stack on which main() is executing */
-    sigjmp_buf sf_jb;
-    struct os_task *sf_task;
-};
-
-/*
- * Assert that 'sf_mainsp' and 'sf_jb' are at the specific offsets where
- * os_arch_frame_init() expects them to be.
- */
-CTASSERT(offsetof(struct stack_frame, sf_mainsp) == 0);
-CTASSERT(offsetof(struct stack_frame, sf_jb) == 4);
-
-extern void os_arch_frame_init(struct stack_frame *sf);
-
-#define sim_setjmp(__jb) sigsetjmp(__jb, 0)
-#define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret)
-
-#define OS_USEC_PER_TICK    (1000000 / OS_TICKS_PER_SEC)
-
-static pid_t mypid;
-static sigset_t allsigs, nosigs;
-static void timer_handler(int sig);
-
 static bool suspended;      /* process is blocked in sigsuspend() */
 static sigset_t suspsigs;   /* signals delivered in sigsuspend() */
-
-/*
- * Called from 'os_arch_frame_init()' when setjmp returns indirectly via
- * longjmp. The return value of setjmp is passed to this function as 'rc'.
- */
-void
-os_arch_task_start(struct stack_frame *sf, int rc)
-{
-    struct os_task *task;
-
-    /*
-     * Interrupts are disabled when a task starts executing. This happens in
-     * two different ways:
-     * - via os_arch_os_start() for the first task.
-     * - via os_sched() for all other tasks.
-     *
-     * Enable interrupts before starting the task.
-     */
-    OS_EXIT_CRITICAL(0);
-
-    task = sf->sf_task;
-    task->t_func(task->t_arg);
-
-    /* This should never return */
-    assert(0);
-}
-
-os_stack_t *
-os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
-{
-    struct stack_frame *sf;
-
-    sf = (struct stack_frame *) ((uint8_t *) stack_top - sizeof(*sf));
-    sf->sf_task = t;
-
-    os_arch_frame_init(sf);
-
-    return ((os_stack_t *)sf);
-}
+static sigset_t allsigs;
+static sigset_t nosigs;
 
 void
 os_arch_ctx_sw(struct os_task *next_t)
@@ -107,16 +63,12 @@ os_arch_ctx_sw(struct os_task *next_t)
      * gdb will stop execution of the program on most signals (e.g. SIGUSR1)
      * whereas it passes SIGURG to the process without any special settings.
      */
-    kill(mypid, SIGURG);
+    kill(os_arch_sim_pid, SIGURG);
 }
 
 static void
 ctxsw_handler(int sig)
 {
-    struct os_task *t, *next_t;
-    struct stack_frame *sf;
-    int rc;
-
     OS_ASSERT_CRITICAL();
 
     /*
@@ -126,34 +78,9 @@ ctxsw_handler(int sig)
      */
     if (suspended) {
         sigaddset(&suspsigs, sig);
-        return;
+    } else {
+        os_arch_sim_ctx_sw();
     }
-
-    t = os_sched_get_current_task();
-    next_t = os_sched_next_task();
-    if (t == next_t) {
-        /*
-         * Context switch not needed - just return.
-         */
-        return;
-    }
-
-    if (t) {
-        sf = (struct stack_frame *) t->t_stackptr;
-
-        rc = sim_setjmp(sf->sf_jb);
-        if (rc != 0) {
-            OS_ASSERT_CRITICAL();
-            return;
-        }
-    }
-
-    os_sched_ctx_sw_hook(next_t);
-
-    os_sched_set_current_task(next_t);
-
-    sf = (struct stack_frame *) next_t->t_stackptr;
-    sim_longjmp(sf->sf_jb, 1);
 }
 
 /*
@@ -210,6 +137,23 @@ os_arch_in_critical(void)
     return (sigismember(&omask, SIGALRM));
 }
 
+static void
+timer_handler(int sig)
+{
+    OS_ASSERT_CRITICAL();
+
+    /*
+     * Just record that this handler was called when the process was blocked.
+     * The handler will be called after sigsuspend() returns in the proper
+     * order.
+     */
+    if (suspended) {
+        sigaddset(&suspsigs, sig);
+    } else {
+        os_arch_sim_tick();
+    }
+}
+
 static struct {
     int num;
     void (*handler)(int sig);
@@ -253,7 +197,7 @@ os_tick_idle(os_time_t ticks)
      * OS time is always correct.
      */
     if (sigismember(&suspsigs, SIGALRM)) {
-        timer_handler(SIGALRM);
+        os_arch_sim_tick();
     }
     for (i = 0; i < NUMSIGS; i++) {
         sig = signals[i].num;
@@ -276,8 +220,8 @@ os_tick_idle(os_time_t ticks)
     }
 }
 
-static void
-signals_init(void)
+void
+os_arch_sim_signals_init(void)
 {
     int i, error;
     struct sigaction sa;
@@ -305,8 +249,8 @@ signals_init(void)
     assert(sigismember(&allsigs, SIGALRM));
 }
 
-static void
-signals_cleanup(void)
+void
+os_arch_sim_signals_cleanup(void)
 {
     int i, error;
     struct sigaction sa;
@@ -319,143 +263,4 @@ signals_cleanup(void)
     }
 }
 
-static void
-timer_handler(int sig)
-{
-    struct timeval time_now, time_diff;
-    int ticks;
-
-    static struct timeval time_last;
-    static int time_inited;
-
-    OS_ASSERT_CRITICAL();
-
-    /*
-     * Just record that this handler was called when the process was blocked.
-     * The handler will be called after sigsuspend() returns in the proper
-     * order.
-     */
-    if (suspended) {
-        sigaddset(&suspsigs, sig);
-        return;
-    }
-
-    if (!time_inited) {
-        gettimeofday(&time_last, NULL);
-        time_inited = 1;
-    }
-
-    gettimeofday(&time_now, NULL);
-    if (timercmp(&time_now, &time_last, <)) {
-        /*
-         * System time going backwards.
-         */
-        time_last = time_now;
-    } else {
-        timersub(&time_now, &time_last, &time_diff);
-
-        ticks = time_diff.tv_sec * OS_TICKS_PER_SEC;
-        ticks += time_diff.tv_usec / OS_USEC_PER_TICK;
-
-        /*
-         * Update 'time_last' but account for the remainder usecs that did not
-         * contribute towards whole 'ticks'.
-         */
-        time_diff.tv_sec = 0;
-        time_diff.tv_usec %= OS_USEC_PER_TICK;
-        timersub(&time_now, &time_diff, &time_last);
-
-        os_time_advance(ticks);
-    }
-}
-
-static void
-start_timer(void)
-{
-    struct itimerval it;
-    int rc;
-
-    memset(&it, 0, sizeof(it));
-    it.it_value.tv_sec = 0;
-    it.it_value.tv_usec = OS_USEC_PER_TICK;
-    it.it_interval.tv_sec = 0;
-    it.it_interval.tv_usec = OS_USEC_PER_TICK;
-
-    rc = setitimer(ITIMER_REAL, &it, NULL);
-    assert(rc == 0);
-}
-
-static void
-stop_timer(void)
-{
-    struct itimerval it;
-    int rc;
-
-    memset(&it, 0, sizeof(it));
-
-    rc = setitimer(ITIMER_REAL, &it, NULL);
-    assert(rc == 0);
-}
-
-os_error_t
-os_arch_os_init(void)
-{
-    mypid = getpid();
-    g_current_task = NULL;
-
-    STAILQ_INIT(&g_os_task_list);
-    TAILQ_INIT(&g_os_run_list);
-    TAILQ_INIT(&g_os_sleep_list);
-
-    /*
-     * Setup all interrupt handlers.
-     *
-     * This must be done early because task initialization uses critical
-     * sections which function correctly only when 'allsigs' is initialized.
-     */
-    signals_init();
-
-    os_init_idle_task();
-
-    return OS_OK;
-}
-
-os_error_t
-os_arch_os_start(void)
-{
-    struct stack_frame *sf;
-    struct os_task *t;
-    os_sr_t sr;
-
-    /*
-     * Disable interrupts before enabling any interrupt sources. Pending
-     * interrupts will be recognized when the first task starts executing.
-     */
-    OS_ENTER_CRITICAL(sr);
-    assert(sr == 0);
-
-    /* Enable the interrupt sources */
-    start_timer();
-
-    t = os_sched_next_task();
-    os_sched_set_current_task(t);
-
-    g_os_started = 1;
-
-    sf = (struct stack_frame *) t->t_stackptr;
-    sim_longjmp(sf->sf_jb, 1);
-
-    return 0;
-}
-
-/**
- * Stops the tick timer and clears the "started" flag.  This function is only
- * implemented for sim.
- */
-void
-os_arch_os_stop(void)
-{
-    stop_timer();
-    signals_cleanup();
-    g_os_started = 0;
-}
+#endif /* MYNEWT_VAL(MCU_NATIVE_USE_SIGNALS) */

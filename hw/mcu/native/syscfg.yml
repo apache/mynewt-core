@@ -24,3 +24,24 @@ syscfg.defs:
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
         value: 1
+
+    MCU_NATIVE_USE_SIGNALS:
+        description: >
+            Whether to use POSIX signals to implement context switches.  Valid
+            values are as follows:
+                1: More correctness; less stability.  The OS tick timer will
+                   cause a high-priority task to preempt a low-priority task.
+                   This causes stability issues because a task can be preempted
+                   while it is in the middle of a system call, potentially
+                   causing deadlock or memory corruption.
+
+                0: Less correctness; more stability.  The OS tick timer only
+                   runs while the idle task is active.  Therefore, a sleeping
+                   high-priority task will not preempt a low-priority task due
+                   to a timing event (e.g., delay or callout expired).
+                   However, this version of sim does not suffer from the
+                   stability issues that affect the "signals" implementation.
+
+            Unit tests should use 1.  Long-running sim processes should use 0.
+
+        value: 1
