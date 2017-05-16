@@ -223,7 +223,7 @@ bno055_get_quat_data(void *sqd);
  * @return temperature in degree celcius
  */
 int
-bno055_get_temp(int8_t *temp);
+bno055_get_temp(uint8_t *temp);
 
 /**
  * Gets current calibration status

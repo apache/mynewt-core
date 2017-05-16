@@ -100,7 +100,7 @@ static void (*s_uartirqs[])(void) = {
 
 static uint8_t ur_is_empty(struct uart_ring *ur)
 {
-    return (ur->ur_head == ur->ur_tail);;
+    return (ur->ur_head == ur->ur_tail);
 }
 
 static uint8_t ur_is_full(struct uart_ring *ur)

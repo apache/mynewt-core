@@ -34,6 +34,7 @@
 #include <tsl2561/tsl2561.h>
 #include <tcs34725/tcs34725.h>
 #include <bno055/bno055.h>
+#include <bme280/bme280.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #if MYNEWT_VAL(SPLIT_LOADER)
@@ -322,7 +323,7 @@ task1_handler(void *arg)
         ++g_task1_loops;
 
         /* Wait one second */
-        os_time_delay(OS_TICKS_PER_SEC);
+        os_time_delay(OS_TICKS_PER_SEC * MYNEWT_VAL(SENSOR_OIC_OBS_RATE));
 
         /* Toggle the LED */
         (void)hal_gpio_toggle(g_led_pin);
@@ -386,6 +387,37 @@ config_sensor(void)
     struct os_dev *dev;
     int rc;
 
+#if MYNEWT_VAL(BME280_PRESENT)
+    struct bme280_cfg bmecfg;
+
+    dev = (struct os_dev *) os_dev_open("bme280", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+    rc = bme280_init(dev, NULL);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+
+    memset(&bmecfg, 0, sizeof(bmecfg));
+
+    bmecfg.bc_mode = BME280_MODE_NORMAL;
+    bmecfg.bc_iir = BME280_FILTER_X16;
+    bmecfg.bc_sby_dur = BME280_STANDBY_MS_0_5;
+    bmecfg.bc_boc[0].boc_type = SENSOR_TYPE_RELATIVE_HUMIDITY;
+    bmecfg.bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
+    bmecfg.bc_boc[2].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
+    bmecfg.bc_boc[0].boc_oversample = BME280_SAMPLING_X1;
+    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X16;
+    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X2;
+
+    rc = bme280_config((struct bme280 *)dev, &bmecfg);
+    if (rc) {
+        os_dev_close(dev);
+        goto err;
+    }
+    os_dev_close(dev);
+#endif
+
 #if MYNEWT_VAL(TCS34725_PRESENT)
     struct tcs34725_cfg tcscfg;
 
@@ -398,7 +430,7 @@ config_sensor(void)
     }
 
     /* Gain set to 16X and Inetgration time set to 24ms */
-    tcscfg.gain = TCS34725_GAIN_16X;;
+    tcscfg.gain = TCS34725_GAIN_16X;
     tcscfg.integration_time = TCS34725_INTEGRATIONTIME_24MS;
 
     rc = tcs34725_config((struct tcs34725 *)dev, &tcscfg);
@@ -544,6 +576,10 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(BNO055_CLI)
     bno055_shell_init();
+#endif
+
+#if MYNEWT_VAL(BME280_CLI)
+    bme280_shell_init();
 #endif
 
 }

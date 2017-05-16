@@ -48,6 +48,9 @@ static struct lsm303dlhc lsm303dlhc;
 #if MYNEWT_VAL(TCS34725_PRESENT)
 #include <tcs34725/tcs34725.h>
 #endif
+#if MYNEWT_VAL(BME280_PRESENT)
+#include <bme280/bme280.h>
+#endif
 
 #if MYNEWT_VAL(LSM303DLHC_PRESENT)
 static struct lsm303dlhc lsm303dlhc;
@@ -65,6 +68,9 @@ static struct tsl2561 tsl2561;
 static struct tcs34725 tcs34725;
 #endif
 
+#if MYNEWT_VAL(BME280_PRESENT)
+static struct bme280 bme280;
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -198,6 +204,14 @@ color_init(struct os_dev *dev, void *arg)
 }
 #endif
 
+#if MYNEWT_VAL(BME280_PRESENT)
+static int
+press_init(struct os_dev *dev, void *arg)
+{
+    return (0);
+}
+#endif
+
 static void
 sensor_dev_create(void)
 {
@@ -225,6 +239,12 @@ sensor_dev_create(void)
 #if MYNEWT_VAL(TCS34725_PRESENT)
     rc = os_dev_create((struct os_dev *) &tcs34725, "color0",
       OS_DEV_INIT_PRIMARY, 0, color_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BME280_PRESENT)
+    rc = os_dev_create((struct os_dev *) &bme280, "bme280",
+      OS_DEV_INIT_PRIMARY, 0, press_init, NULL);
     assert(rc == 0);
 #endif
 }

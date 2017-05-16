@@ -30,6 +30,7 @@
 #include "sensor/mag.h"
 #include "sensor/quat.h"
 #include "sensor/euler.h"
+#include "sensor/temperature.h"
 #include "bno055/bno055.h"
 #include "bno055_priv.h"
 
@@ -141,7 +142,7 @@ bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        BNO055_ERR("I2C access failed at address 0x%02X\n", addr);
+        BNO055_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -154,7 +155,7 @@ bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
                               OS_TICKS_PER_SEC / 10, len);
 
     if (rc) {
-        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -205,7 +206,7 @@ bno055_read8(uint8_t reg, uint8_t *value)
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
-        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -246,7 +247,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     rc = hal_i2c_master_write(MYNEWT_VAL(BNO055_I2CBUS), &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        BNO055_ERR("I2C access failed at address 0x%02X\n", addr);
+        BNO055_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -260,7 +261,7 @@ bno055_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
 #if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
 #endif
@@ -1018,13 +1019,13 @@ err:
  * @return 0 on success, non-zero on error
  */
 int
-bno055_get_temp(int8_t *temp)
+bno055_get_temp(uint8_t *temp)
 {
     int rc;
     uint8_t units;
     uint8_t div;
 
-    rc = bno055_read8(BNO055_TEMP_ADDR, (uint8_t *)temp);
+    rc = bno055_read8(BNO055_TEMP_ADDR, temp);
     if (rc) {
         goto err;
     }
@@ -1037,6 +1038,31 @@ bno055_get_temp(int8_t *temp)
     div = units & BNO055_TEMP_UNIT_DEGF ? 2 : 1;
 
     *temp = *temp/div;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Get temperature data from bno055 sensor and mark it valid
+ *
+ * @param pointer to the temperature data structure
+ * @return 0 on success, non-zero on error
+ */
+static int
+bno055_get_temp_data(struct sensor_temp_data *std)
+{
+    int rc;
+    uint8_t temp;
+
+    rc = bno055_get_temp(&temp);
+    if (rc) {
+        goto err;
+    }
+
+    std->std_temp = temp;
+    std->std_temp_is_valid = 1;
 
     return 0;
 err:
@@ -1071,7 +1097,7 @@ bno055_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
     } else if (type == SENSOR_TYPE_TEMPERATURE) {
-        rc = bno055_get_temp(databuf);
+        rc = bno055_get_temp_data(databuf);
         if (rc) {
             goto err;
         }
