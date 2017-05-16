@@ -30,7 +30,7 @@ pkg.deps:
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/nmgr_shell
     - kernel/os
-    - boot/bootutil
+    - "@mcuboot/boot/bootutil"
     - sys/shell
     - sys/config
     - sys/console/full
