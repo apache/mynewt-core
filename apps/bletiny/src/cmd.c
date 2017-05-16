@@ -1594,6 +1594,13 @@ static struct kv_pair cmd_scan_filt_policies[] = {
     { NULL }
 };
 
+static struct kv_pair cmd_scan_ext_types[] = {
+    { "1M",         0x01 },
+    { "coded",      0x02 },
+    { "both",       0x03 },
+    { NULL }
+};
+
 static void
 bletiny_scan_help(void)
 {
@@ -1601,7 +1608,8 @@ bletiny_scan_help(void)
     console_printf("\thelp\n");
     console_printf("\tcancel\n");
     console_printf("Available scan params: \n");
-    help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
+    help_cmd_kv_dflt("ext", cmd_scan_ext_types, 0);
+    help_cmd_long_bounds_dflt("dur_ms", 1, INT32_MAX, BLE_HS_FOREVER);
     help_cmd_bool_dflt("ltd", 0);
     help_cmd_bool_dflt("passive", 0);
     help_cmd_uint16_dflt("itvl", 0);
@@ -1611,14 +1619,26 @@ bletiny_scan_help(void)
     help_cmd_uint16_dflt("nodups", 0);
     help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
                      BLE_OWN_ADDR_PUBLIC);
+    console_printf("Available scan params when ext != none: \n");
+    help_cmd_uint16_dflt("duration", 0);
+    help_cmd_uint16_dflt("period", 0);
+    help_cmd_bool_dflt("lr_passive", 0);
+    help_cmd_uint16_dflt("lr_itvl", 0);
+    help_cmd_uint16_dflt("lr_window", 0);
+
 }
 
 static int
 cmd_scan(int argc, char **argv)
 {
-    struct ble_gap_disc_params params;
+    struct ble_gap_disc_params params = {0};
+    struct ble_gap_ext_disc_params uncoded = {0};
+    struct ble_gap_ext_disc_params coded = {0};
+    uint8_t extended;
     int32_t duration_ms;
     uint8_t own_addr_type;
+    uint16_t duration;
+    uint16_t period;
     int rc;
 
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
@@ -1635,6 +1655,15 @@ cmd_scan(int argc, char **argv)
 
         return 0;
     }
+
+    extended = parse_arg_kv_default("ext", cmd_scan_ext_types, 0, &rc);
+    if (rc != 0) {
+        help_cmd_kv_dflt("ext", cmd_scan_ext_types, 0);
+        console_printf("invalid 'ext' parameter\n");
+        return rc;
+    }
+
+    console_printf("Scan type: %d\n", extended);
 
     duration_ms = parse_arg_long_bounds_default("dur", 1, INT32_MAX,
                                                 BLE_HS_FOREVER, &rc);
@@ -1697,6 +1726,75 @@ cmd_scan(int argc, char **argv)
         return rc;
     }
 
+    if (extended == 0) {
+        goto regular_scan;
+    }
+
+    /* Copy above parameters to uncoded params */
+    uncoded.passive = params.passive;
+    uncoded.itvl = params.itvl;
+    uncoded.window = params.window;
+
+    duration = parse_arg_uint16_dflt("duration", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'duration' parameter\n");
+        help_cmd_uint16_dflt("duration", 0);
+        return rc;
+    }
+
+    period = parse_arg_uint16_dflt("period", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'period' parameter\n");
+        help_cmd_uint16_dflt("period", 0);
+        return rc;
+    }
+
+    coded.itvl = parse_arg_uint16_dflt("lr_itvl", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'lr_itvl' parameter\n");
+        help_cmd_uint16_dflt("lr_itvl", 0);
+        return rc;
+    }
+
+    coded.window = parse_arg_uint16_dflt("lr_window", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'lr_window' parameter\n");
+        help_cmd_uint16_dflt("lr_window", 0);
+        return rc;
+    }
+
+    coded.passive = parse_arg_uint16_dflt("lr_passive", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'lr_passive' parameter\n");
+        help_cmd_uint16_dflt("lr_window", 0);
+        return rc;
+    }
+
+    switch (extended) {
+    case 0x01:
+        rc = bletiny_ext_scan(own_addr_type, duration, period,
+                         params.filter_duplicates, params.filter_policy,
+                         params.limited, &uncoded, NULL);
+        break;
+    case 0x02:
+        rc = bletiny_ext_scan(own_addr_type, duration, period,
+                              params.filter_duplicates, params.filter_policy,
+                              params.limited, NULL, &coded);
+        break;
+    case 0x03:
+        rc = bletiny_ext_scan(own_addr_type, duration, period,
+                              params.filter_duplicates, params.filter_policy,
+                              params.limited, &uncoded, &coded);
+        break;
+    default:
+        rc = -1;
+        console_printf("Something went wrong :)\n");
+        break;
+    }
+
+    return rc;
+
+regular_scan:
     rc = bletiny_scan(own_addr_type, duration_ms, &params);
     if (rc != 0) {
         console_printf("error scanning; rc=%d\n", rc);
