@@ -117,6 +117,12 @@ typedef enum {
  */
 #define SENSOR_VALUE_TYPE_FLOAT_TRIPLET (4)
 
+/**
+ * Sensor interfaces
+ */
+#define SENSOR_ITF_SPI    (0)
+#define SENSOR_ITF_I2C    (1)
+#define SENSOR_ITF_UART   (2)
 
 /**
  * Configuration structure, describing a specific sensor type off of
@@ -207,7 +213,6 @@ typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 struct sensor_driver {
-    sensor_get_interface_func_t sd_get_interface;
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
 };
@@ -218,10 +223,27 @@ struct sensor_timestamp {
     uint32_t st_cputime;
 };
 
+struct sensor_itf {
+
+    /* Sensor interface type */
+    uint8_t si_type;
+
+    /* Sensor interface number */
+    uint8_t si_num;
+
+    /* Sensor CS pin */
+    uint8_t si_cspin;
+};
+
 /*
  * Return the OS device structure corresponding to this sensor
  */
 #define SENSOR_GET_DEVICE(__s) ((__s)->s_dev)
+
+/*
+ * Return the interface for this sensor
+ */
+#define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
 
 struct sensor {
     /* The OS device this sensor inherits from, this is typically a sensor
@@ -253,6 +275,9 @@ struct sensor {
 
     /* Sensor last reading timestamp */
     struct sensor_timestamp s_sts;
+
+    /* Sensor interface structure */
+    struct sensor_itf s_itf;
 
     /* A list of listeners that are registered to receive data off of this
      * sensor
@@ -292,6 +317,23 @@ sensor_set_driver(struct sensor *sensor, sensor_type_t type,
 }
 
 /**
+ * Set interface type and number
+ *
+ * @param The sensor to set the interface for
+ * @param The interface type to set
+ * @param The interface number to set
+ */
+static inline int
+sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
+{
+    sensor->s_itf.si_type = s_itf->si_type;
+    sensor->s_itf.si_num = s_itf->si_num;
+    sensor->s_itf.si_cspin = s_itf->si_cspin;
+
+    return (0);
+}
+
+/**
  * Read the configuration for the sensor type "type," and return the
  * configuration into "cfg."
  *
@@ -306,21 +348,6 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
         struct sensor_cfg *cfg)
 {
     return (sensor->s_funcs->sd_get_config(sensor, type, cfg));
-}
-
-/**
- * Get a more specific interface for this sensor, like accelerometer, or gyro.
- *
- * @param The sensor to get the interface from
- * @param The type of interface to get from this sensor
- *
- * @return A pointer to the more specific sensor interface on success, or NULL
- * if not found.
- */
-static inline void *
-sensor_get_interface(struct sensor *sensor, sensor_type_t type)
-{
-    return (sensor->s_funcs->sd_get_interface(sensor, type));
 }
 
 /**

@@ -42,8 +42,8 @@ syscfg.vals:
     CONFIG_NEWTMGR: 0
 
     TSL2561_CLI: 0
-    BNO055_CLI: 1
-    TCS34725_CLI: 1
+    BNO055_CLI: 0
+    TCS34725_CLI: 0
     BME280_CLI: 1
 
     # Setup Sensor BLE OIC GATT Server
@@ -58,24 +58,6 @@ syscfg.vals:
     FLOAT_USER: 1
 
 syscfg.defs:
-    TSL2561_PRESENT:
-        description: 'TSL2561 is present'
-        value : 0
-    LSM303DLHC_PRESENT:
-        description: 'LSM303 is present'
-        value : 0
-    BNO055_PRESENT:
-        description: 'BNO055 is present'
-        value : 1
-    BME280_PRESENT:
-        description: 'BME280 is present'
-        value : 1
-    TCS34725_PRESENT:
-        description: 'TCS34725 is present'
-        value : 1
-    SIM_ACCEL_PRESENT:
-        description: 'SIM ACCEL is present'
-        value : 0
     SENSOR_BLE:
         description: 'BLE transport is used for sensor data'
         value : 1

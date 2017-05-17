@@ -29,12 +29,25 @@
 #include <log/log.h>
 #include <config/config.h>
 #include <sensor/sensor.h>
+#if ARCH_sim
 #include <sim/sim_accel.h>
+#endif
+#if MYNEWT_VAL(LSM303_OFB)
 #include <lsm303dlhc/lsm303dlhc.h>
+#endif
+#if MYNEWT_VAL(TSL2561_OFB)
 #include <tsl2561/tsl2561.h>
+#endif
+#if MYNEWT_VAL(TCS34725_OFB)
 #include <tcs34725/tcs34725.h>
+#endif
+#if MYNEWT_VAL(BNO055_OFB)
 #include <bno055/bno055.h>
+#endif
+#if MYNEWT_VAL(BME280_ONB)||MYNEWT_VAL(BME280_OFB)
 #include <bme280/bme280.h>
+#endif
+
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #include <assert.h>
@@ -399,7 +412,9 @@ config_sensor(void)
     struct os_dev *dev;
     int rc;
 
-#if MYNEWT_VAL(BME280_PRESENT)
+    (void)rc;
+    (void)*dev;
+#if MYNEWT_VAL(BME280_OFB)||MYNEWT_VAL(BME280_ONB)
     struct bme280_cfg bmecfg;
 
     dev = (struct os_dev *) os_dev_open("bme280", OS_TIMEOUT_NEVER, NULL);
@@ -428,7 +443,7 @@ config_sensor(void)
     os_dev_close(dev);
 #endif
 
-#if MYNEWT_VAL(TCS34725_PRESENT)
+#if MYNEWT_VAL(TCS34725_OFB)
     struct tcs34725_cfg tcscfg;
 
     dev = (struct os_dev *) os_dev_open("color0", OS_TIMEOUT_NEVER, NULL);
@@ -449,7 +464,7 @@ config_sensor(void)
     os_dev_close(dev);
 #endif
 
-#if MYNEWT_VAL(TSL2561_PRESENT)
+#if MYNEWT_VAL(TSL2561_OFB)
     struct tsl2561_cfg tslcfg;
 
     dev = (struct os_dev *) os_dev_open("light0", OS_TIMEOUT_NEVER, NULL);
@@ -471,7 +486,7 @@ config_sensor(void)
     os_dev_close(dev);
 #endif
 
-#if MYNEWT_VAL(LSM303DLHC_PRESENT)
+#if MYNEWT_VAL(LSM303DLHC_OFB)
     struct lsm303dlhc_cfg lsmcfg;
 
     dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
@@ -492,7 +507,7 @@ config_sensor(void)
     os_dev_close(dev);
 #endif
 
-#if MYNEWT_VAL(BNO055_PRESENT)
+#if MYNEWT_VAL(BNO055_OFB)
     struct bno055_cfg bcfg;
 
     dev = (struct os_dev *) os_dev_open("accel1", OS_TIMEOUT_NEVER, NULL);

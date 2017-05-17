@@ -44,7 +44,6 @@
 #include "bsp.h"
 #if MYNEWT_VAL(LSM303DLHC_PRESENT)
 #include <lsm303dlhc/lsm303dlhc.h>
-static struct lsm303dlhc lsm303dlhc;
 #endif
 #if MYNEWT_VAL(BNO055_PRESENT)
 #include <bno055/bno055.h>
@@ -87,6 +86,12 @@ static const struct nrf52_uart_cfg os_bsp_uart0_cfg = {
     .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
     .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
 };
+
+
+static const struct sensor_itf uart_0_itf = {
+    .si_type = SENSOR_ITF_UART,
+    .si_num = 0,
+};
 #endif
 
 #if MYNEWT_VAL(UART_1)
@@ -95,6 +100,11 @@ static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
     .ubc_txpin = MYNEWT_VAL(UART_1_PIN_TX),
     .ubc_rxpin = MYNEWT_VAL(UART_1_PIN_RX),
     .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
+};
+
+static const struct sensor_itf uart_1_itf = {
+    .si_type = SENSOR_ITF_UART,
+    .si_num = 1,
 };
 #endif
 
@@ -107,6 +117,12 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
     .sck_pin      = 23,
     .mosi_pin     = 24,
     .miso_pin     = 25,
+};
+
+static const struct sensor_itf spi_0_itf = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cspin = 3
 };
 #endif
 
@@ -124,6 +140,12 @@ static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
     .scl_pin = 27,
     .sda_pin = 26,
     .i2c_frequency = 100    /* 100 kHz */
+};
+
+
+static const struct sensor_itf i2c_0_itf = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num = 0,
 };
 #endif
 
@@ -195,33 +217,34 @@ sensor_dev_create(void)
     (void)rc;
 #if MYNEWT_VAL(LSM303DLHC_PRESENT)
     rc = os_dev_create((struct os_dev *) &lsm303dlhc, "accel0",
-      OS_DEV_INIT_PRIMARY, 0, lsm303dlhc_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, lsm303dlhc_init, (void *)&i2c_0_itf);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(BNO055_PRESENT)
     rc = os_dev_create((struct os_dev *) &bno055, "accel1",
-      OS_DEV_INIT_PRIMARY, 0, bno055_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, bno055_init, (void *)&i2c_0_itf);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(TSL2561_PRESENT)
     rc = os_dev_create((struct os_dev *) &tsl2561, "light0",
-      OS_DEV_INIT_PRIMARY, 0, tasl2561_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, tsl2561_init, (void *)&i2c_0_itf);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(TCS34725_PRESENT)
     rc = os_dev_create((struct os_dev *) &tcs34725, "color0",
-      OS_DEV_INIT_PRIMARY, 0, tcs34725_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, tcs34725_init, (void *)&i2c_0_itf);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(BME280_PRESENT)
     rc = os_dev_create((struct os_dev *) &bme280, "bme280",
-      OS_DEV_INIT_PRIMARY, 0, bme280_init, NULL);
+      OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf);
     assert(rc == 0);
 #endif
+
 }
 
 void

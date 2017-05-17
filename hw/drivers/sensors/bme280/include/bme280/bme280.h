@@ -96,10 +96,16 @@ struct bme280_cfg {
     uint8_t bc_sby_dur;
 };
 
+struct bme280_pdd {
+    struct bme280_calib_data bcd;
+    int32_t t_fine;
+};
+
 struct bme280 {
     struct os_dev dev;
     struct sensor sensor;
     struct bme280_cfg cfg;
+    struct bme280_pdd pdd;
     os_time_t last_read_time;
 };
 
@@ -115,92 +121,102 @@ int bme280_init(struct os_dev *dev, void *arg);
 /**
  * Sets IIR filter
  *
+ * @param The sensor interface
  * @param filter setting
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_set_iir(uint8_t iir);
+int bme280_set_iir(struct sensor_itf *itf, uint8_t iir);
 
 /**
  * Get IIR filter setting
  *
+ * @param The sensor interface
  * @param ptr to fill up iir setting into
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_iir(uint8_t *iir);
+int bme280_get_iir(struct sensor_itf *itf, uint8_t *iir);
 
 /**
  * Gets temperature
  *
+ * @param The sensor interface
  * @param temperature
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_temperature(int32_t *temp);
+int bme280_get_temperature(struct sensor_itf *itf, int32_t *temp);
 
 /**
  * Gets pressure
  *
+ * @param The sensor interface
  * @param pressure
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_pressure(int32_t *press);
+int bme280_get_pressure(struct sensor_itf *itf, int32_t *press);
 
 /**
  * Gets humidity
  *
+ * @param The sensor interface
  * @param humidity
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_humidity(int32_t *humid);
+int bme280_get_humidity(struct sensor_itf *itf, int32_t *humid);
 
 /**
  * Sets the sampling rate
  *
+ * @param The sensor interface
  * @param sensor type
  * @param sampling rate
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_set_oversample(sensor_type_t type, uint8_t rate);
+int bme280_set_oversample(struct sensor_itf *itf, sensor_type_t type, uint8_t rate);
 
 /**
  * Gets the current sampling rate for the type of sensor
  *
+ * @param The sensor interface
  * @param Type of sensor to return sampling rate
  *
  * @return 0 on success, non-zero on failure
  */
-int bme280_get_oversample(sensor_type_t type, uint8_t *rate);
+int bme280_get_oversample(struct sensor_itf *itf, sensor_type_t type, uint8_t *rate);
 
 /**
  * Sets the operating mode
  *
+ * @param The sensor interface
  * @param mode
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_set_mode(uint8_t mode);
+int bme280_set_mode(struct sensor_itf *itf, uint8_t mode);
 
 /**
  * Gets the operating mode
  *
+ * @param The sensor interface
  * @param ptr to the mode variable to be filled up
  *
  * @return 0 on success, and non-zero error code on failure
  */
-int bme280_get_mode(uint8_t *mode);
+int bme280_get_mode(struct sensor_itf *itf, uint8_t *mode);
 
 /**
  * Resets the BME280 chip
  *
+ * @param The sensor interface
  * @return 0 on success, non-zero on failure
  */
 int
-bme280_reset(void);
+bme280_reset(struct sensor_itf *itf);
 
 /**
  * Configure BME280 sensor
@@ -215,38 +231,42 @@ int bme280_config(struct bme280 *bme280, struct bme280_cfg *cfg);
 /**
  * Get the chip id
  *
+ * @param The sensor interface
  * @param ptr to fill up the chip id
  *
  * @return 0 on success, and non-zero error code on failure
  */
 int
-bme280_get_chipid(uint8_t *chipid);
+bme280_get_chipid(struct sensor_itf *itf, uint8_t *chipid);
 
 /**
  * Set the standy duration setting
  *
+ * @param The sensor interface
  * @param duration
  * @return 0 on success, non-zero on failure
  */
 int
-bme280_set_sby_duration(uint8_t dur);
+bme280_set_sby_duration(struct sensor_itf *itf, uint8_t dur);
 
 /**
  * Get the standy duration setting
  *
+ * @param The sensor interface
  * @param ptr to duration
  * @return 0 on success, non-zero on failure
  */
 int
-bme280_get_sby_duration(uint8_t *dur);
+bme280_get_sby_duration(struct sensor_itf *itf, uint8_t *dur);
 
 /**
  * Take forced measurement
  *
+ * @param The sensor interface
  * @return 0 on success, non-zero on failure
  */
 int
-bme280_forced_mode_measurement(void);
+bme280_forced_mode_measurement(struct sensor_itf *itf);
 
 #if MYNEWT_VAL(BME280_CLI)
 int bme280_shell_init(void);

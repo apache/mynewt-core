@@ -17,16 +17,24 @@
 # under the License.
 #
 
-syscfg.defs:
-    BNO055_I2CADDR:
-        description: 'HW I2C address for the BNO055'
-        value: 0x28
-    BNO055_CLI:
-        description: 'Enable shell support for the BNO055'
-        value: 0
-    BNO055_LOG:
-        description: 'Enable BNO055 logging'
-        value: 0
-    BNO055_STATS:
-        description: 'Enable BNO055 statistics'
-        value: 0
+pkg.name: hw/sensor/creator
+pkg.description: Device creation for the sensor
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - sensors
+
+pkg.deps.BME280_OFB:
+    - hw/drivers/sensors/bme280
+pkg.deps.LSM303DLHC_OFB:
+    - hw/drivers/sensors/lsm303dlhc
+pkg.deps.TSL2561_OFB:
+    - hw/drivers/sensors/tsl2561
+pkg.deps.BNO055_OFB:
+    - hw/drivers/sensors/bno055
+pkg.deps.TCS34725_OFB:
+    - hw/drivers/sensors/tcs34725
+pkg.deps.MCU_NATIVE:
+    - hw/drivers/sensors/sim
+pkg.init:
+    sensor_dev_create: 500

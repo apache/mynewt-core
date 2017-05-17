@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,16 +16,24 @@
 # under the License.
 #
 
+# Package: hw/sensor/creator
+
 syscfg.defs:
-    BNO055_I2CADDR:
-        description: 'HW I2C address for the BNO055'
-        value: 0x28
-    BNO055_CLI:
-        description: 'Enable shell support for the BNO055'
-        value: 0
-    BNO055_LOG:
-        description: 'Enable BNO055 logging'
-        value: 0
-    BNO055_STATS:
-        description: 'Enable BNO055 statistics'
-        value: 0
+    TSL2561_OFB:
+        description: 'TSL2561 is present'
+        value : 0
+    LSM303DLHC_OFB:
+        description: 'LSM303 is present'
+        value : 0
+    BNO055_OFB:
+        description: 'BNO055 is present'
+        value : 0
+    BME280_OFB:
+        description: 'BME280 is present'
+        value : 1
+    TCS34725_OFB:
+        description: 'TCS34725 is present'
+        value : 0
+    SIM_ACCEL_OFB:
+        description: 'SIM ACCEL is present'
+        value : 0
