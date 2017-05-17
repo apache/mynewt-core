@@ -19,6 +19,8 @@
 #ifndef __WIFI_MGMT_H__
 #define __WIFI_MGMT_H__
 
+#include <os/os.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
