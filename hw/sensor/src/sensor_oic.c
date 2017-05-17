@@ -37,13 +37,16 @@
 #include "sensor/quat.h"
 #include "sensor/euler.h"
 #include "sensor/color.h"
+#include "sensor/temperature.h"
+#include "sensor/pressure.h"
+#include "sensor/humidity.h"
 
 /* OIC */
 #include <oic/oc_rep.h>
 #include <oic/oc_ri.h>
 #include <oic/oc_api.h>
 
-static const char g_s_oic_dn[] = "x.mynewt.sensors.r.";
+static const char g_s_oic_dn[] = "x.mynewt.snsr.";
 
 static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
@@ -126,25 +129,39 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 
         /* Temperature supported */
         case SENSOR_TYPE_TEMPERATURE:
-            oc_rep_set_double(root, temp, *(double *)databuf);
+            if (((struct sensor_temp_data *)(databuf))->std_temp_is_valid) {
+                oc_rep_set_double(root, temp,
+                    ((struct sensor_temp_data *)(databuf))->std_temp);
+            }
             break;
 
         /* Ambient temperature supported */
         case SENSOR_TYPE_AMBIENT_TEMPERATURE:
-            oc_rep_set_double(root, ambient_temp, *(double *)databuf);
+            if (((struct sensor_temp_data *)(databuf))->std_temp_is_valid) {
+                oc_rep_set_double(root, temp,
+                    ((struct sensor_temp_data *)(databuf))->std_temp);
+            }
             break;
 
-#if 0
         /* Pressure sensor supported */
-        SENSOR_TYPE_PRESSURE:
-            oc_rep_set_double(root, pressure, (double *)databuf);
-
+        case SENSOR_TYPE_PRESSURE:
+            if (((struct sensor_press_data *)(databuf))->spd_press_is_valid) {
+                oc_rep_set_double(root, press,
+                    ((struct sensor_press_data *)(databuf))->spd_press);
+            }
+            break;
+#if 0
         /* Proximity sensor supported */
         SENSOR_TYPE_PROXIMITY:
-
-        /* Relative humidity supported */
-        SENSOR_TYPE_RELATIVE_HUMIDITY:
 #endif
+        /* Relative humidity supported */
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            if (((struct sensor_humid_data *)(databuf))->shd_humid_is_valid) {
+                oc_rep_set_double(root, humid,
+                    ((struct sensor_humid_data *)(databuf))->shd_humid);
+            }
+            break;
+
         /* Rotation vector (quaternion) supported */
         case SENSOR_TYPE_ROTATION_VECTOR:
             if (((struct sensor_quat_data *)(databuf))->sqd_x_is_valid) {
@@ -457,12 +474,19 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     int rc;
     struct sensor *sensor;
     struct sensor_listener listener;
-    char devname[COAP_MAX_URI] = {0};
+    char *devname;
     char *typename;
     sensor_type_t type;
+    char tmpstr[COAP_MAX_URI] = {0};
+    const char s[2] = "/";
 
-    memcpy(devname, (char *)&(request->resource->uri.os_str[1]),
+    memcpy(tmpstr, (char *)&(request->resource->uri.os_str[1]),
            request->resource->uri.os_sz - 1);
+
+    /* Parse the sensor device name from the uri  */
+    devname = strtok(tmpstr, s);
+
+    typename = strtok(NULL, s);
 
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(devname, NULL);
@@ -563,18 +587,18 @@ sensor_oic_init(void)
                 }
 
                 memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "/%s", sensor->s_dev->od_name);
+                snprintf(tmpstr, sizeof(tmpstr), "/%s/%s", sensor->s_dev->od_name, typename);
 
                 res = oc_new_resource(tmpstr, 1, 0);
 
                 memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "x.mynewt.sensors.r.%s", typename);
+                snprintf(tmpstr, sizeof(tmpstr), "%s%s", g_s_oic_dn, typename);
                 oc_resource_bind_resource_type(res, tmpstr);
                 oc_resource_bind_resource_interface(res, OC_IF_R);
                 oc_resource_set_default_interface(res, OC_IF_R);
 
                 oc_resource_set_discoverable(res);
-                oc_resource_set_periodic_observable(res, 1);
+                oc_resource_set_periodic_observable(res, MYNEWT_VAL(SENSOR_OIC_OBS_RATE));
                 oc_resource_set_request_handler(res, OC_GET,
                                                 sensor_oic_get_data);
                 oc_add_resource(res);

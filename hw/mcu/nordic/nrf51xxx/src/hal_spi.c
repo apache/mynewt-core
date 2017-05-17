@@ -512,7 +512,7 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         irq_handler = nrf51_spi1_irq_handler;
         if (spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_1_MASTER)
-            spi->nhs_spi.spim = NRF_SPIM1;
+            spi->nhs_spi.spim = NRF_SPI1;
 #else
             assert(0);
 #endif

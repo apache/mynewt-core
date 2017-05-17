@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,45 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef H_BSP_H
-#define H_BSP_H
 
-#include <inttypes.h>
-#include "mcu/mcu.h"
+#ifndef __SENSOR_TEMPERATURE_H__
+#define __SENSOR_TEMPERATURE_H__
+
+#include "os/os.h"
+#include "os/os_dev.h"
+#include "sensor/sensor.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Define special stackos sections */
-#define sec_data_core   __attribute__((section(".data.core")))
-#define sec_bss_core    __attribute__((section(".bss.core")))
-#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
+/* Data representing a singular read from a temperature sensor
+ * All values are in Deg C
+ */
+struct sensor_temp_data {
+    float std_temp;
 
-/* More convenient section placement macros. */
-#define bssnz_t         sec_bss_nz_core
-
-extern uint8_t _ram_start;
-extern uint8_t _ccram_start;
-
-#define RAM_SIZE        (128 * 1024)
-#define CCRAM_SIZE      (64 * 1024)
-
-/* LED pins */
-#define LED_1           MCU_GPIO_PORTG(6)
-#define LED_2           MCU_GPIO_PORTD(4)
-#define LED_3           MCU_GPIO_PORTB(11)
-#define LED_4           MCU_GPIO_PORTG(15)
-#define LED_BLINK_PIN   LED_1
-
-/* UART */
-#define UART_CNT 6
-#define CONSOLE_UART "uart3"
-
-#define NFFS_AREA_MAX    (8)
+    /* Validity */
+    uint8_t std_temp_is_valid:1;
+} __attribute__((packed));
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* H_BSP_H */
+#endif /* __SENSOR_TEMPERATURE_H__ */

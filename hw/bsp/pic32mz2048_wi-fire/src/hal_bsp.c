@@ -19,9 +19,21 @@
 #include "hal/hal_bsp.h"
 #include "bsp/bsp.h"
 #include <assert.h>
+#include <xc.h>
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
     return 0;
+}
+
+int
+hal_bsp_hw_id(uint8_t *id, int max_len)
+{
+    if (max_len > sizeof(DEVID)) {
+        max_len = sizeof(DEVID);
+    }
+
+    memcpy(id, &DEVID, max_len);
+    return max_len;
 }

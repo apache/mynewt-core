@@ -21,6 +21,7 @@
 #include "bsp/bsp.h"
 #include "syscfg/syscfg.h"
 #include "mcu/mips_hal.h"
+#include "mcu/pps.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -33,6 +34,7 @@ struct hal_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
+    const struct mips_uart_cfg *u_pins;
 };
 static struct hal_uart uarts[UART_CNT];
 
@@ -376,6 +378,12 @@ hal_uart_blocking_tx(int port, uint8_t data)
 int
 hal_uart_init(int port, void *arg)
 {
+    if (port >= UART_CNT) {
+        return -1;
+    }
+
+    uarts[port].u_pins = arg;
+
     return 0;
 }
 
@@ -415,6 +423,42 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         break;
     default:
         return -1;
+    }
+
+    /* Configure TX/RX pins */
+    if (uarts[port].u_pins) {
+        int ret = 0;
+        switch(port) {
+        case 0:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U1TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U1RX_IN_FUNC);
+            break;
+        case 1:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U2TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U2RX_IN_FUNC);
+            break;
+        case 2:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U3TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U3RX_IN_FUNC);
+            break;
+        case 3:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U4TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U4RX_IN_FUNC);
+            break;
+        case 4:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U5TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U5RX_IN_FUNC);
+            break;
+        case 5:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U6TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U6RX_IN_FUNC);
+            break;
+        default:
+            return -1;
+        }
+        if (ret) {
+            return -1;
+        }
     }
 
     uint16_t divisor = peripheral_clk / (4 * baudrate) - 1;
