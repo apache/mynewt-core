@@ -27,6 +27,8 @@ bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/mcu/stm/stm32f7xx/stm32f767.ld"
 bsp.downloadscript: "hw/bsp/stm32f767-nucleo/nucleo767_download.sh"
 bsp.debugscript: "hw/bsp/stm32f767-nucleo/nucleo767_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/stm32f767-nucleo/nucleo767_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/stm32f767-nucleo/nucleo767_debug.cmd"
 
 bsp.flash_map:
     areas:
