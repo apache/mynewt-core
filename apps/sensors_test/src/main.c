@@ -471,7 +471,6 @@ config_sensor(void)
     assert(dev != NULL);
 
     if (dev->od_flags & OS_DEV_F_STATUS_READY) {
-        rc= SYS_ENODEV;
         console_printf("config_sensor %s init failed\n", dev->od_name);
     }
 

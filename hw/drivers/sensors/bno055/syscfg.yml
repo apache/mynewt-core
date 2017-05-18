@@ -30,3 +30,9 @@ syscfg.defs:
     BNO055_STATS:
         description: 'Enable BNO055 statistics'
         value: 0
+    BNO055_SHELL_ITF_TYPE:
+        description: 'BNO055 interface type'
+        value: 1
+    BNO055_SHELL_ITF_NUM:
+        description: 'BNO055 interface number'
+        value: 0
