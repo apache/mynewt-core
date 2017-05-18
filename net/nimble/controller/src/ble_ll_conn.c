@@ -216,6 +216,27 @@ STATS_NAME_START(ble_ll_conn_stats)
     STATS_NAME(ble_ll_conn_stats, mic_failures)
 STATS_NAME_END(ble_ll_conn_stats)
 
+static inline int ble_ll_conn_phy_to_phy_mode(int phy, int phy_options)
+{
+    int phy_mode;
+
+    /*
+     * Mode values are set in a way that 1M, 2M and Coded(S=2) are equivalent
+     * to 1M, 2M and Coded in HCI. The only conversion is needed for Coded(S=8)
+     * which uses non-HCI value.
+     */
+
+    phy_mode = phy;
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
+    if (phy == BLE_PHY_CODED && phy_options == BLE_HCI_LE_PHY_CODED_S8_PREF) {
+        phy_mode = BLE_PHY_MODE_CODED_125KBPS;
+    }
+#endif
+
+    return phy_mode;
+}
+
 static void ble_ll_conn_event_end(struct os_event *ev);
 
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
@@ -238,14 +259,14 @@ ble_ll_conn_chk_phy_upd_start(struct ble_ll_conn_sm *csm)
     int rc;
 
     /* If no host preferences or  */
-    if (((csm->phy_data.host_pref_tx_phys == 0) &&
-         (csm->phy_data.host_pref_rx_phys == 0)) ||
-        ((csm->phy_data.host_pref_tx_phys & CONN_CUR_TX_PHY_MASK(csm)) &&
-         (csm->phy_data.host_pref_rx_phys & CONN_CUR_RX_PHY_MASK(csm)))) {
+    if (((csm->phy_data.host_pref_tx_phys_mask == 0) &&
+         (csm->phy_data.host_pref_rx_phys_mask == 0)) ||
+        ((csm->phy_data.host_pref_tx_phys_mask & CONN_CUR_TX_PHY_MASK(csm)) &&
+         (csm->phy_data.host_pref_rx_phys_mask & CONN_CUR_RX_PHY_MASK(csm)))) {
         rc = -1;
     } else {
-        csm->phy_data.req_pref_tx_phys = csm->phy_data.host_pref_tx_phys;
-        csm->phy_data.req_pref_rx_phys = csm->phy_data.host_pref_rx_phys;
+        csm->phy_data.req_pref_tx_phys_mask = csm->phy_data.host_pref_tx_phys_mask;
+        csm->phy_data.req_pref_rx_phys_mask = csm->phy_data.host_pref_rx_phys_mask;
         ble_ll_ctrl_proc_start(csm, BLE_LL_CTRL_PROC_PHY_UPDATE);
         rc = 0;
     }
@@ -512,6 +533,7 @@ ble_ll_conn_calc_access_addr(void)
     uint8_t bits_diff;
     uint8_t consecutive;
     uint8_t transitions;
+    uint8_t ones;
 
     /* Calculate a random access address */
     aa = 0;
@@ -551,6 +573,7 @@ ble_ll_conn_calc_access_addr(void)
         /* Cannot have more than 24 transitions */
         transitions = 0;
         consecutive = 0;
+        ones = 0;
         mask = 0x00000001;
         while (mask < 0x80000000) {
             prev_bit = aa & mask;
@@ -571,14 +594,33 @@ ble_ll_conn_calc_access_addr(void)
                 }
             }
 
+            if (prev_bit) {
+                ones++;
+            }
+
+            /* 8 lsb should have at least three 1 */
+            if (mask == 0x00000100 && ones < 3) {
+                break;
+            }
+
+            /* 16 lsb should have no more than 11 transitions */
+            if (mask == 0x00010000 && transitions > 11) {
+                break;
+            }
+
             /* This is invalid! */
             if (consecutive > 6) {
                 break;
             }
         }
 
+        /* Invalid sequence found */
+        if (mask != 0x80000000) {
+            continue;
+        }
+
         /* Cannot be more than 24 transitions */
-        if ((consecutive > 6) || (transitions > 24)) {
+        if (transitions > 24) {
             continue;
         }
 
@@ -1117,8 +1159,8 @@ ble_ll_conn_tx_data_pdu(struct ble_ll_conn_sm *connsm)
          * received a frame and we are replying to it.
          */
         ticks = (BLE_LL_IFS * 3) + connsm->eff_max_rx_time +
-                ble_phy_pdu_dur(next_txlen, connsm->phy_data.tx_phy_mode) +
-                ble_phy_pdu_dur(cur_txlen, connsm->phy_data.tx_phy_mode);
+                ble_phy_mode_pdu_dur(next_txlen, connsm->phy_data.tx_phy_mode) +
+                ble_phy_mode_pdu_dur(cur_txlen, connsm->phy_data.tx_phy_mode);
 
         if (connsm->conn_role == BLE_LL_CONN_ROLE_MASTER) {
             ticks += (BLE_LL_IFS + connsm->eff_max_rx_time);
@@ -1267,7 +1309,7 @@ conn_tx_pdu:
 #endif
 
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
-    ble_phy_set_mode(connsm->phy_data.tx_phy_mode,connsm->phy_data.rx_phy_mode);
+    ble_phy_mode_set(connsm->phy_data.tx_phy_mode,connsm->phy_data.rx_phy_mode);
 #endif
 
     /* Set transmit end callback */
@@ -1388,7 +1430,7 @@ ble_ll_conn_event_start_cb(struct ble_ll_sched_item *sch)
 #endif
 
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
-    ble_phy_set_mode(connsm->phy_data.rx_phy_mode,connsm->phy_data.rx_phy_mode);
+    ble_phy_mode_set(connsm->phy_data.rx_phy_mode,connsm->phy_data.rx_phy_mode);
 #endif
 
 #if MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768
@@ -1442,7 +1484,7 @@ ble_ll_conn_event_start_cb(struct ble_ll_sched_item *sch)
              * to be sure we do not bail out early.
              */
             usecs = connsm->slave_cur_tx_win_usecs + BLE_LL_IFS +
-                ble_phy_pdu_start_off(connsm->phy_data.rx_phy_mode) +
+                ble_phy_mode_pdu_start_off(connsm->phy_data.rx_phy_mode) +
                 (BLE_LL_JITTER_USECS * 2) + connsm->slave_cur_window_widening;
             wfr_time = connsm->anchor_point + os_cputime_usecs_to_ticks(usecs);
             ble_ll_wfr_enable(wfr_time);
@@ -1515,10 +1557,10 @@ ble_ll_conn_can_send_next_pdu(struct ble_ll_conn_sm *connsm, uint32_t begtime,
             if (rem_bytes > connsm->eff_max_tx_octets) {
                 rem_bytes = connsm->eff_max_tx_octets;
             }
-            usecs = ble_phy_pdu_dur(rem_bytes, connsm->phy_data.tx_phy_mode);
+            usecs = ble_phy_mode_pdu_dur(rem_bytes, connsm->phy_data.tx_phy_mode);
         } else {
             /* We will send empty pdu (just a LL header) */
-            usecs = ble_phy_pdu_dur(0, connsm->phy_data.tx_phy_mode);
+            usecs = ble_phy_mode_pdu_dur(0, connsm->phy_data.tx_phy_mode);
         }
         usecs += (BLE_LL_IFS * 2) + connsm->eff_max_rx_time;
 
@@ -1699,14 +1741,14 @@ ble_ll_conn_sm_new(struct ble_ll_conn_sm *connsm)
 
     /* XXX: TODO set these based on PHY that started connection */
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
-    connsm->phy_data.cur_tx_phy = BLE_HCI_LE_PHY_1M;
-    connsm->phy_data.cur_rx_phy = BLE_HCI_LE_PHY_1M;
-    connsm->phy_data.tx_phy_mode = BLE_PHY_1M;
-    connsm->phy_data.rx_phy_mode = BLE_PHY_1M;
-    connsm->phy_data.req_pref_tx_phys = 0;
-    connsm->phy_data.req_pref_rx_phys = 0;
-    connsm->phy_data.host_pref_tx_phys = g_ble_ll_data.ll_pref_tx_phys;
-    connsm->phy_data.host_pref_rx_phys = g_ble_ll_data.ll_pref_rx_phys;
+    connsm->phy_data.cur_tx_phy = BLE_PHY_1M;
+    connsm->phy_data.cur_rx_phy = BLE_PHY_1M;
+    connsm->phy_data.tx_phy_mode = BLE_PHY_MODE_1M;
+    connsm->phy_data.rx_phy_mode = BLE_PHY_MODE_1M;
+    connsm->phy_data.req_pref_tx_phys_mask = 0;
+    connsm->phy_data.req_pref_rx_phys_mask = 0;
+    connsm->phy_data.host_pref_tx_phys_mask = g_ble_ll_data.ll_pref_tx_phys;
+    connsm->phy_data.host_pref_rx_phys_mask = g_ble_ll_data.ll_pref_rx_phys;
     connsm->phy_data.phy_options = 0;
 #endif
 
@@ -2066,16 +2108,17 @@ ble_ll_conn_next_event(struct ble_ll_conn_sm *connsm)
         /* Set cur phy to new phy */
         if (connsm->phy_data.new_tx_phy) {
             connsm->phy_data.cur_tx_phy = connsm->phy_data.new_tx_phy;
+            connsm->phy_data.tx_phy_mode =
+                                ble_ll_conn_phy_to_phy_mode(connsm->phy_data.cur_tx_phy,
+                                                   connsm->phy_data.phy_options);
         }
-        connsm->phy_data.tx_phy_mode = connsm->phy_data.cur_tx_phy;
+
         if (connsm->phy_data.new_rx_phy) {
             connsm->phy_data.cur_rx_phy = connsm->phy_data.new_rx_phy;
+            connsm->phy_data.rx_phy_mode =
+                                ble_ll_conn_phy_to_phy_mode(connsm->phy_data.cur_rx_phy,
+                                                   connsm->phy_data.phy_options);
         }
-        connsm->phy_data.rx_phy_mode = connsm->phy_data.cur_rx_phy;
-
-#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
-        /* XXX: TODO convert to coded phy mode if new phy is coded */
-#endif
 
         /* Clear flags and set flag to send event at next instant */
         CONN_F_PHY_UPDATE_SCHED(connsm) = 0;
@@ -2194,7 +2237,7 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, struct ble_mbuf_hdr *rxhdr)
 
         usecs = rxhdr->rem_usecs + 1250 +
             (connsm->tx_win_off * BLE_LL_CONN_TX_WIN_USECS) +
-            ble_phy_pdu_dur(BLE_CONNECT_REQ_LEN, BLE_PHY_1M);
+            ble_phy_mode_pdu_dur(BLE_CONNECT_REQ_LEN, BLE_PHY_MODE_1M);
 
         /* Anchor point is cputime. */
         endtime = os_cputime_usecs_to_ticks(usecs);
@@ -2214,7 +2257,7 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, struct ble_mbuf_hdr *rxhdr)
 #else
         connsm->last_anchor_point = rxhdr->beg_cputime;
         endtime = rxhdr->beg_cputime +
-            os_cputime_usecs_to_ticks(ble_phy_pdu_dur(BLE_CONNECT_REQ_LEN,
+            os_cputime_usecs_to_ticks(ble_phy_mode_pdu_dur(BLE_CONNECT_REQ_LEN,
                                                       BLE_PHY_1M));
         connsm->slave_cur_tx_win_usecs =
             connsm->tx_win_size * BLE_LL_CONN_TX_WIN_USECS;
@@ -3153,10 +3196,10 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
 #if MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768
     endtime = rxhdr->beg_cputime;
     add_usecs = rxhdr->rem_usecs +
-        ble_phy_pdu_dur(rx_pyld_len, connsm->phy_data.rx_phy_mode);
+        ble_phy_mode_pdu_dur(rx_pyld_len, connsm->phy_data.rx_phy_mode);
 #else
     endtime = rxhdr->beg_cputime +
-        os_cputime_usecs_to_ticks(ble_phy_pdu_dur(rx_pyld_len,
+        os_cputime_usecs_to_ticks(ble_phy_mode_pdu_dur(rx_pyld_len,
                                                   connsm->phy_data.rx_phy_mode));
 
     add_usecs = 0;
@@ -3684,17 +3727,17 @@ ble_ll_conn_module_reset(void)
     maxbytes = min(MYNEWT_VAL(BLE_LL_SUPP_MAX_RX_BYTES), max_phy_pyld);
     conn_params->supp_max_rx_octets = maxbytes;
     conn_params->supp_max_rx_time =
-        ble_phy_pdu_dur(maxbytes + BLE_LL_DATA_MIC_LEN, BLE_PHY_1M);
+        ble_phy_mode_pdu_dur(maxbytes + BLE_LL_DATA_MIC_LEN, BLE_PHY_MODE_1M);
 
     maxbytes = min(MYNEWT_VAL(BLE_LL_SUPP_MAX_TX_BYTES), max_phy_pyld);
     conn_params->supp_max_tx_octets = maxbytes;
     conn_params->supp_max_tx_time =
-        ble_phy_pdu_dur(maxbytes + BLE_LL_DATA_MIC_LEN, BLE_PHY_1M);
+        ble_phy_mode_pdu_dur(maxbytes + BLE_LL_DATA_MIC_LEN, BLE_PHY_MODE_1M);
 
     maxbytes = min(MYNEWT_VAL(BLE_LL_CONN_INIT_MAX_TX_BYTES), max_phy_pyld);
     conn_params->conn_init_max_tx_octets = maxbytes;
     conn_params->conn_init_max_tx_time =
-        ble_phy_pdu_dur(maxbytes + BLE_LL_DATA_MIC_LEN, BLE_PHY_1M);
+        ble_phy_mode_pdu_dur(maxbytes + BLE_LL_DATA_MIC_LEN, BLE_PHY_MODE_1M);
 
     conn_params->sugg_tx_octets = BLE_LL_CONN_SUPP_BYTES_MIN;
     conn_params->sugg_tx_time = BLE_LL_CONN_SUPP_TIME_MIN;
