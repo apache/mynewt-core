@@ -77,16 +77,13 @@ static struct log _log;
 #define TCS34725_ERR(...)
 #endif
 
-/* Exports for the sensor interface.
- */
-static void *tcs34725_sensor_get_interface(struct sensor *, sensor_type_t);
+/* Exports for the sensor API */
 static int tcs34725_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int tcs34725_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_tcs34725_sensor_driver = {
-    tcs34725_sensor_get_interface,
     tcs34725_sensor_read,
     tcs34725_sensor_get_config
 };
@@ -94,13 +91,14 @@ static const struct sensor_driver g_tcs34725_sensor_driver = {
 /**
  * Writes a single byte to the specified register
  *
+ * @param The sensor interface
  * @param The register address to write to
  * @param The value to write
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-tcs34725_write8(uint8_t reg, uint32_t value)
+tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 {
     int rc;
     uint8_t payload[2] = { reg | TCS34725_COMMAND_BIT, value & 0xFF };
@@ -111,7 +109,7 @@ tcs34725_write8(uint8_t reg, uint32_t value)
         .buffer = payload
     };
 
-    rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
@@ -127,13 +125,14 @@ tcs34725_write8(uint8_t reg, uint32_t value)
 /**
  * Reads a single byte from the specified register
  *
+ * @param The sensor interface
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-tcs34725_read8(uint8_t reg, uint8_t *value)
+tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
     uint8_t payload;
@@ -146,8 +145,7 @@ tcs34725_read8(uint8_t reg, uint8_t *value)
 
     /* Register write */
     payload = reg | TCS34725_COMMAND_BIT;
-    rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
 #if MYNEWT_VAL(TCS34725_STATS)
@@ -158,8 +156,7 @@ tcs34725_read8(uint8_t reg, uint8_t *value)
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
         TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
@@ -182,7 +179,7 @@ error:
  * @return 0 on success and non-zero on failure
  */
 int
-tcs34725_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
+tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len)
 {
     int rc;
     uint8_t payload[9] = { reg | TCS34725_COMMAND_BIT, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -197,7 +194,7 @@ tcs34725_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     memset(buffer, 0, len);
 
     /* Register write */
-    rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
@@ -210,7 +207,7 @@ tcs34725_readlen(uint8_t reg, uint8_t *buffer, uint8_t len)
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
@@ -232,13 +229,14 @@ err:
 /**
  * Writes a multiple bytes to the specified register
  *
+ * @param The sensor interface
  * @param The register address to write to
  * @param The data buffer to write from
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-tcs34725_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
+tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len)
 {
     int rc;
     uint8_t payload[9] = { reg, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -252,7 +250,7 @@ tcs34725_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
     memcpy(&payload[1], buffer, len);
 
     /* Register write */
-    rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
@@ -264,7 +262,7 @@ tcs34725_writelen(uint8_t reg, uint8_t *buffer, uint8_t len)
 
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, len);
 
     if (rc) {
@@ -281,7 +279,7 @@ err:
 }
 
 
-#if MYNEWT_VAL(USE_MATH)
+#if MYNEWT_VAL(MATHLIB_SUPPORT)
 /**
  * Float power function
  *
@@ -300,16 +298,17 @@ powf(float base, float exp)
  *
  * Enables the device
  *
+ * @param The sensor interface
  * @param enable/disable
  * @return 0 on success, non-zero on error
  */
 int
-tcs34725_enable(uint8_t enable)
+tcs34725_enable(struct sensor_itf *itf, uint8_t enable)
 {
     int rc;
     uint8_t reg;
 
-    rc = tcs34725_read8(TCS34725_REG_ENABLE, &reg);
+    rc = tcs34725_read8(itf, TCS34725_REG_ENABLE, &reg);
     if (rc) {
         goto err;
     }
@@ -317,12 +316,14 @@ tcs34725_enable(uint8_t enable)
     os_time_delay((3 * OS_TICKS_PER_SEC)/1000 + 1);
 
     if (enable) {
-        rc = tcs34725_write8(TCS34725_REG_ENABLE, reg | TCS34725_ENABLE_PON | TCS34725_ENABLE_AEN);
+        rc = tcs34725_write8(itf, TCS34725_REG_ENABLE,
+                             reg | TCS34725_ENABLE_PON | TCS34725_ENABLE_AEN);
         if (rc) {
             goto err;
         }
     } else {
-        rc = tcs34725_write8(TCS34725_REG_ENABLE, reg & ~(TCS34725_ENABLE_PON | TCS34725_ENABLE_AEN));
+        rc = tcs34725_write8(itf, TCS34725_REG_ENABLE, reg &
+                             ~(TCS34725_ENABLE_PON | TCS34725_ENABLE_AEN));
         if (rc) {
             goto err;
         }
@@ -351,7 +352,7 @@ tcs34725_init(struct os_dev *dev, void *arg)
     tcs34725 = (struct tcs34725 *) dev;
 
 #if MYNEWT_VAL(TCS34725_LOG)
-    log_register("tcs34725", &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif
 
     sensor = &tcs34725->sensor;
@@ -393,16 +394,17 @@ err:
 /**
  * Indicates whether the sensor is enabled or not
  *
+ * @param The sensor interface
  * @param ptr to is_enabled variable
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_get_enable (uint8_t *is_enabled)
+tcs34725_get_enable(struct sensor_itf *itf, uint8_t *is_enabled)
 {
     int rc;
     uint8_t tmp;
 
-    rc = tcs34725_read8(TCS34725_REG_ENABLE, &tmp);
+    rc = tcs34725_read8(itf, TCS34725_REG_ENABLE, &tmp);
     if (rc) {
         goto err;
     }
@@ -417,15 +419,16 @@ err:
 /**
  * Sets integration time
  *
+ * @param The sensor interface
  * @param integration time to be set
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_set_integration_time(uint8_t int_time)
+tcs34725_set_integration_time(struct sensor_itf *itf, uint8_t int_time)
 {
     int rc;
 
-    rc = tcs34725_write8(TCS34725_REG_ATIME, int_time);
+    rc = tcs34725_write8(itf, TCS34725_REG_ATIME, int_time);
     if (rc) {
         goto err;
     }
@@ -438,16 +441,17 @@ err:
 /**
  * Gets integration time set earlier
  *
+ * @param The sensor interface
  * @param ptr to integration time
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_get_integration_time(uint8_t *int_time)
+tcs34725_get_integration_time(struct sensor_itf *itf, uint8_t *int_time)
 {
     int rc;
     uint8_t tmp;
 
-    rc = tcs34725_read8(TCS34725_REG_ATIME, &tmp);
+    rc = tcs34725_read8(itf, TCS34725_REG_ATIME, &tmp);
     if (rc) {
         goto err;
     }
@@ -460,11 +464,12 @@ err:
 /**
  * Set gain of the sensor
  *
+ * @param The sensor interface
  * @param gain
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_set_gain(uint8_t gain)
+tcs34725_set_gain(struct sensor_itf *itf, uint8_t gain)
 {
     int rc;
 
@@ -474,7 +479,7 @@ tcs34725_set_gain(uint8_t gain)
         goto err;
     }
 
-    rc = tcs34725_write8(TCS34725_REG_CONTROL, gain);
+    rc = tcs34725_write8(itf, TCS34725_REG_CONTROL, gain);
     if (rc) {
         goto err;
     }
@@ -486,16 +491,17 @@ err:
 /**
  * Get gain of the sensor
  *
+ * @param The sensor interface
  * @param ptr to gain
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_get_gain(uint8_t *gain)
+tcs34725_get_gain(struct sensor_itf *itf, uint8_t *gain)
 {
     int rc;
     uint8_t tmp;
 
-    rc = tcs34725_read8(TCS34725_REG_CONTROL, &tmp);
+    rc = tcs34725_read8(itf, TCS34725_REG_CONTROL, &tmp);
     if (rc) {
         goto err;
     }
@@ -510,17 +516,18 @@ err:
 /**
  * Get chip ID from the sensor
  *
+ * @param The sensor interface
  * @param Pointer to the variable to fill up chip ID in
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_get_chip_id(uint8_t *id)
+tcs34725_get_chip_id(struct sensor_itf *itf, uint8_t *id)
 {
     int rc;
     uint8_t idtmp;
 
     /* Check if we can read the chip address */
-    rc = tcs34725_read8(TCS34725_REG_ID, &idtmp);
+    rc = tcs34725_read8(itf, TCS34725_REG_ID, &idtmp);
     if (rc) {
         goto err;
     }
@@ -544,23 +551,26 @@ tcs34725_config(struct tcs34725 *tcs34725, struct tcs34725_cfg *cfg)
 {
     int rc;
     uint8_t id;
+    struct sensor_itf *itf;
 
-    rc = tcs34725_get_chip_id(&id);
+    itf = SENSOR_GET_ITF(&(tcs34725->sensor));
+
+    rc = tcs34725_get_chip_id(itf, &id);
     if (id != TCS34725_ID || rc != 0) {
         rc = SYS_EINVAL;
         goto err;
     }
 
-    rc |= tcs34725_enable(1);
+    rc |= tcs34725_enable(itf, 1);
 
-    rc |= tcs34725_set_integration_time(cfg->integration_time);
+    rc |= tcs34725_set_integration_time(itf, cfg->integration_time);
 
-    rc |= tcs34725_set_gain(cfg->gain);
+    rc |= tcs34725_set_gain(itf, cfg->gain);
     if (rc) {
         goto err;
     }
 
-    rc = tcs34725_enable_interrupt(1);
+    rc = tcs34725_enable_interrupt(itf, 1);
     if (rc) {
         goto err;
     }
@@ -576,6 +586,7 @@ err:
  * Reads the raw red, green, blue and clear channel values
  *
  *
+ * @param The sensor interface
  * @param red value to return
  * @param green value to return
  * @param blue value to return
@@ -583,8 +594,8 @@ err:
  * @param driver sturcture containing config
  */
 int
-tcs34725_get_rawdata(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c,
-                     struct tcs34725 *tcs34725)
+tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
+                     uint16_t *b, uint16_t *c, struct tcs34725 *tcs34725)
 {
     uint8_t payload[8] = {0};
     int rc;
@@ -625,7 +636,7 @@ tcs34725_get_rawdata(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c,
 
     *c = *r = *g = *b = 0;
 
-    rc = tcs34725_readlen(TCS34725_REG_CDATAL, payload, 8);
+    rc = tcs34725_readlen(itf, TCS34725_REG_CDATAL, payload, 8);
     if (rc) {
         goto err;
     }
@@ -671,11 +682,14 @@ err:
  *
  * Converts raw RGB values to color temp in deg K and lux
  *
+ * @param The sensor interface
  * @param ptr to sensor color data ptr
  * @param ptr to sensor
  */
 static int
-tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs34725)
+tcs34725_calc_colortemp_lux(struct sensor_itf *itf,
+                            struct sensor_color_data *scd,
+                            struct tcs34725 *tcs34725)
 {
     int rc;
 
@@ -764,12 +778,12 @@ tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs3
             break;
         }
 
-        rc = tcs34725_set_gain(agc_list[agc_cur].ta_gain);
+        rc = tcs34725_set_gain(itf, agc_list[agc_cur].ta_gain);
         if (rc) {
             goto err;
         }
 
-        rc = tcs34725_set_integration_time(agc_list[agc_cur].ta_time);
+        rc = tcs34725_set_integration_time(itf, agc_list[agc_cur].ta_time);
         if (rc) {
             goto err;
         }
@@ -777,7 +791,7 @@ tcs34725_calc_colortemp_lux(struct sensor_color_data *scd, struct tcs34725 *tcs3
         /* Shock absorber */
         os_time_delay((256 - ((uint16_t)agc_list[agc_cur].ta_time) * 2.4 * 2 * OS_TICKS_PER_SEC)/1000 + 1);
 
-        rc = tcs34725_get_rawdata(&scd->scd_r, &scd->scd_g, &scd->scd_b, &scd->scd_c, tcs34725);
+        rc = tcs34725_get_rawdata(itf, &scd->scd_r, &scd->scd_g, &scd->scd_b, &scd->scd_c, tcs34725);
         if (rc) {
             goto err;
         }
@@ -851,6 +865,7 @@ tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
 {
     struct tcs34725 *tcs34725;
     struct sensor_color_data scd;
+    struct sensor_itf *itf;
     uint16_t r;
     uint16_t g;
     uint16_t b;
@@ -863,13 +878,14 @@ tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
+    itf = SENSOR_GET_ITF(sensor);
     tcs34725 = (struct tcs34725 *) SENSOR_GET_DEVICE(sensor);
 
     /* Get a new accelerometer sample */
     if (type & SENSOR_TYPE_COLOR) {
         r = g = b = c = 0;
 
-        rc = tcs34725_get_rawdata(&r, &g, &b, &c, tcs34725);
+        rc = tcs34725_get_rawdata(itf, &r, &g, &b, &c, tcs34725);
         if (rc) {
             goto err;
         }
@@ -884,7 +900,7 @@ tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
         scd.scd_b_is_valid = 1;
         scd.scd_c_is_valid = 1;
 
-        rc = tcs34725_calc_colortemp_lux(&scd, tcs34725);
+        rc = tcs34725_calc_colortemp_lux(itf, &scd, tcs34725);
         if (rc) {
             goto err;
         }
@@ -904,16 +920,17 @@ err:
 /**
  * enables/disables interrupts
  *
+ * @param The sensor interface
  * @param enable/disable
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_enable_interrupt(uint8_t enable)
+tcs34725_enable_interrupt(struct sensor_itf *itf, uint8_t enable)
 {
     uint8_t reg;
     int rc;
 
-    rc = tcs34725_read8(TCS34725_REG_ENABLE, &reg);
+    rc = tcs34725_read8(itf, TCS34725_REG_ENABLE, &reg);
     if (rc) {
         goto err;
     }
@@ -924,7 +941,7 @@ tcs34725_enable_interrupt(uint8_t enable)
         reg &= ~TCS34725_ENABLE_AIEN;
     }
 
-    rc = tcs34725_write8(TCS34725_REG_ENABLE, reg);
+    rc = tcs34725_write8(itf, TCS34725_REG_ENABLE, reg);
     if (rc) {
         goto err;
     }
@@ -943,10 +960,11 @@ err:
  * |    1  |      11     |          00110               |
  * |_______|_____________|______________________________|
  *
+ * @param The sensor interface
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_clear_interrupt(void)
+tcs34725_clear_interrupt(struct sensor_itf *itf)
 {
     int rc;
     uint8_t payload = TCS34725_COMMAND_BIT | TCS34725_CMD_TYPE | TCS34725_CMD_ADDR;
@@ -957,7 +975,7 @@ tcs34725_clear_interrupt(void)
         .buffer = &payload
     };
 
-    rc = hal_i2c_master_write(MYNEWT_VAL(TCS34725_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         goto err;
@@ -973,13 +991,14 @@ err:
  * the high threshold, the high threshold is ignored and only the low
  * threshold is evaluated
  *
+ * @param The sensor interface
  * @param lower threshold
  * @param higher threshold
  *
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_set_int_limits(uint16_t low, uint16_t high)
+tcs34725_set_int_limits(struct sensor_itf *itf, uint16_t low, uint16_t high)
 {
     uint8_t payload[4];
     int rc;
@@ -989,17 +1008,11 @@ tcs34725_set_int_limits(uint16_t low, uint16_t high)
     payload[2] = high & 0xFF;
     payload[3] = high >> 8;
 
-    rc = tcs34725_writelen(TCS34725_REG_AILTL, payload, sizeof(payload));
+    rc = tcs34725_writelen(itf, TCS34725_REG_AILTL, payload, sizeof(payload));
     if (rc) {
         return rc;
     }
     return 0;
-}
-
-static void *
-tcs34725_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
-{
-    return (NULL);
 }
 
 /**
@@ -1008,18 +1021,19 @@ tcs34725_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
  * the high threshold, the high threshold is ignored and only the low
  * threshold is evaluated
  *
+ * @param The sensor interface
  * @param ptr to lower threshold
  * @param ptr to higher threshold
  *
  * @return 0 on success, non-zero on failure
  */
 int
-tcs34725_get_int_limits(uint16_t *low, uint16_t *high)
+tcs34725_get_int_limits(struct sensor_itf *itf, uint16_t *low, uint16_t *high)
 {
     uint8_t payload[4];
     int rc;
 
-    rc = tcs34725_readlen(TCS34725_REG_AILTL, payload, sizeof(payload));
+    rc = tcs34725_readlen(itf, TCS34725_REG_AILTL, payload, sizeof(payload));
     if (rc) {
         return rc;
     }
