@@ -17,23 +17,31 @@
  * under the License.
  */
 
+#include <xc.h>
 #include "hal/hal_watchdog.h"
-
-#include <assert.h>
 
 int
 hal_watchdog_init(uint32_t expire_msecs)
 {
-    return (0);
+    /*
+     * Cannot change watchdog prescaler at runtime.
+     * Only check if the watchdog timer is greater than expire_msecs.
+     */
+    uint32_t wdt_period = 1;
+    wdt_period <<= (WDTCON & _WDTCON_RUNDIV_MASK) >> _WDTCON_RUNDIV_POSITION;
+
+    return wdt_period < expire_msecs ? -1 : 0;
 }
 
 void
 hal_watchdog_enable(void)
 {
+    WDTCONSET = _WDTCON_ON_MASK;
 }
 
 void
 hal_watchdog_tickle(void)
 {
+    volatile uint16_t *wdtclrkey = (volatile uint16_t*)&WDTCON + 1;
+    *wdtclrkey = 0x5743;
 }
-
