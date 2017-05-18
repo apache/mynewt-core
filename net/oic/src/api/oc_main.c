@@ -43,7 +43,9 @@ oc_main_init(oc_handler_t *handler)
     oc_ri_init();
 
 #ifdef OC_SECURITY
-    handler->get_credentials();
+    if (handler->get_credentials) {
+        handler->get_credentials();
+    }
 
     oc_sec_load_pstat();
     oc_sec_load_doxm();
@@ -56,7 +58,10 @@ oc_main_init(oc_handler_t *handler)
     if (ret < 0) {
         goto err;
     }
-    handler->init();
+
+    if (handler->init) {
+        handler->init();
+    }
 
 #ifdef OC_SERVER
     if (handler->register_resources) {
@@ -77,7 +82,9 @@ oc_main_init(oc_handler_t *handler)
     OC_LOG_INFO("oci: Initialized\n");
 
 #ifdef OC_CLIENT
-    handler->requests_entry();
+    if (handler->requests_entry) {
+        handler->requests_entry();
+    }
 #endif
 
     initialized = true;

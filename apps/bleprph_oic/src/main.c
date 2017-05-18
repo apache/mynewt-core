@@ -32,6 +32,7 @@
 #include <oic/oc_api.h>
 #include <oic/oc_gatt.h>
 #include <oic/oc_log.h>
+#include <oic/oc_mynewt.h>
 #include <cborattr/cborattr.h>
 
 /* BLE */
@@ -323,10 +324,6 @@ omgr_app_init(void)
 
 }
 
-static const oc_handler_t omgr_oc_handler = {
-    .init = omgr_app_init,
-};
-
 /**
  * main
  *
@@ -356,8 +353,7 @@ main(void)
 
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-    oc_main_init((oc_handler_t *)&omgr_oc_handler);
-    oc_ble_coap_gatt_srv_init();
+    oc_cfg.main_handler.init = omgr_app_init;
 
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;

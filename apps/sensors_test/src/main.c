@@ -50,12 +50,9 @@
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
 #include <oic/oc_gatt.h>
+#include <oic/oc_mynewt.h>
 
 extern int oc_stack_errno;
-
-static const oc_handler_t sensor_oic_handler = {
-    .init = sensor_oic_init,
-};
 
 #endif
 
@@ -593,7 +590,7 @@ sensor_ble_oic_server_init(void)
     /* Set initial BLE device address. */
     memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
 
-    oc_ble_coap_gatt_srv_init();
+    oc_cfg.main_handler.init = sensor_oic_init;
 
     ble_hs_cfg.reset_cb = sensor_oic_on_reset;
     ble_hs_cfg.sync_cb = sensor_oic_on_sync;
@@ -602,9 +599,6 @@ sensor_ble_oic_server_init(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("pi");
     assert(rc == 0);
-
-    rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
-    assert(!rc);
 
     oc_init_platform("MyNewt", NULL, NULL);
     oc_add_device("/oic/d", "oic.d.pi", "pi", "1.0", "1.0", NULL,
