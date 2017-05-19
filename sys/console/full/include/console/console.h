@@ -34,6 +34,8 @@ struct console_input {
 };
 
 typedef void (*console_rx_cb)(void);
+typedef void (*console_append_char_cb)(char *line, uint8_t byte);
+typedef void (*completion_cb)(char *str, console_append_char_cb cb);
 
 int console_init(console_rx_cb rx_cb);
 int console_is_init(void);
@@ -50,7 +52,7 @@ int console_printf(const char *fmt, ...)
 
 void console_set_queues(struct os_eventq *avail_queue,
                         struct os_eventq *cmd_queue);
-void console_set_completion_cb(uint8_t (*completion)(char *str, uint8_t len));
+void console_set_completion_cb(completion_cb cb);
 int console_handle_char(uint8_t byte);
 
 extern int console_is_midline;
