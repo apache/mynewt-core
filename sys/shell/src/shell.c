@@ -54,8 +54,9 @@ static struct os_event shell_console_ev[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 static const char *
 get_prompt(void)
 {
+    const char *str;
+
     if (app_prompt_handler) {
-        const char *str;
 
         str = app_prompt_handler();
         if (str) {
@@ -121,7 +122,7 @@ get_destination_module(const char *module_str, uint8_t len)
 
     for (i = 0; i < num_of_shell_entities; i++) {
         if (!strncmp(module_str,
-                     shell_modules[i].module_name, len)) {
+                     shell_modules[i].name, len)) {
             return i;
         }
     }
@@ -205,7 +206,7 @@ print_modules(void)
     int module;
 
     for (module = 0; module < num_of_shell_entities; module++) {
-        console_printf("%s\n", shell_modules[module].module_name);
+        console_printf("%s\n", shell_modules[module].name);
     }
 }
 
@@ -505,7 +506,7 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
                  int param_len, int module_idx, int command_idx)
 {
     const char *first_match = NULL;
-    int i, common_chars = -1;
+    int i, j, common_chars = -1;
     const struct shell_cmd *command;
 
     command = &shell_modules[module_idx].commands[command_idx];
@@ -515,7 +516,6 @@ complete_param(char *line, uint8_t len, const char *param_prefix,
     }
 
     for (i = 0; command->help->params[i].param_name; i++) {
-        int j;
 
         if (strncmp(param_prefix,
             command->help->params[i].param_name, param_len)) {
@@ -573,14 +573,12 @@ complete_command(char *line, uint8_t len, char *command_prefix,
                  int command_len, int module_idx)
 {
     const char *first_match = NULL;
-    int i, common_chars = -1, space = 0;
+    int i, j, common_chars = -1, space = 0;
     const struct shell_module *module;
 
     module = &shell_modules[module_idx];
 
     for (i = 0; module->commands[i].sc_cmd; i++) {
-        int j;
-
         if (strncmp(command_prefix,
             module->commands[i].sc_cmd, command_len)) {
             continue;
@@ -642,14 +640,14 @@ complete_command(char *line, uint8_t len, char *command_prefix,
 static int
 complete_module(char *line, int len, char *module_prefix, int module_len)
 {
-    int i;
+    int i, j;
     const char *first_match = NULL;
     int common_chars = -1, space = 0;
 
     if (!module_len) {
         console_printf("\n");
         for (i = 0; i < num_of_shell_entities; i++) {
-            console_printf("%s\n", shell_modules[i].module_name);
+            console_printf("%s\n", shell_modules[i].name);
         }
         console_printf("%s", get_prompt());
         console_printf("%s", line);
@@ -657,16 +655,15 @@ complete_module(char *line, int len, char *module_prefix, int module_len)
     }
 
     for (i = 0; i < num_of_shell_entities; i++) {
-        int j;
 
         if (strncmp(module_prefix,
-                     shell_modules[i].module_name,
+                     shell_modules[i].name,
                      module_len)) {
             continue;
         }
 
         if (!first_match) {
-            first_match = shell_modules[i].module_name;
+            first_match = shell_modules[i].name;
             continue;
         }
 
@@ -679,14 +676,14 @@ complete_module(char *line, int len, char *module_prefix, int module_len)
 
         /* cut common part of matching names */
         for (j = 0; j < common_chars; j++) {
-            if (first_match[j] != shell_modules[i].module_name[j]) {
+            if (first_match[j] != shell_modules[i].name[j]) {
                 break;
             }
         }
 
         common_chars = j;
 
-        console_printf("%s\n", shell_modules[i].module_name);
+        console_printf("%s\n", shell_modules[i].name);
     }
 
     /* no match, do nothing */
@@ -722,6 +719,7 @@ static int
 complete_select(char *line, int len, char *cur, int tok_len)
 {
     int null_terminated = 0;
+
     cur += tok_len + 1;
     tok_len = get_token(&cur, &null_terminated);
     if (tok_len == 0) {
@@ -750,6 +748,10 @@ completion(char *line, uint8_t len)
     int tok_len;
     int module, command;
     int null_terminated = 0;
+
+    if (len == MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN)) {
+        return 0;
+    }
 
     /*
      * line to completion is not ended by '\0' as the line that gets from
@@ -809,8 +811,6 @@ completion(char *line, uint8_t len)
             return complete_command(line, len, cur, tok_len, module);
         }
     }
-
-
 
     command = get_command_from_module(cur, tok_len, module);
     if (command == -1) {
@@ -872,7 +872,7 @@ shell_register(const char *module_name, const struct shell_cmd *commands)
         return -1;
     }
 
-    shell_modules[num_of_shell_entities].module_name = module_name;
+    shell_modules[num_of_shell_entities].name = module_name;
     shell_modules[num_of_shell_entities].commands = commands;
     ++num_of_shell_entities;
 
@@ -883,20 +883,20 @@ shell_register(const char *module_name, const struct shell_cmd *commands)
 #define SHELL_COMPAT_MODULE_NAME "compat"
 static struct shell_cmd compat_commands[MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS)];
 static int num_compat_commands;
-static int module_registered = 0;
+static int module_registered;
 
 int
-shell_cmd_register(struct shell_cmd *sc)
+shell_cmd_register(const struct shell_cmd *sc)
 {
     if (num_compat_commands >= MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS)) {
-        console_printf("Max number of compat commands reached");
+        console_printf("Max number of compat commands reached\n");
         assert(0);
     }
 
     if (!module_registered) {
         shell_register(SHELL_COMPAT_MODULE_NAME, compat_commands);
         set_default_module(SHELL_COMPAT_MODULE_NAME);
-        module_registered = 0;
+        module_registered = 1;
     }
 
     compat_commands[num_compat_commands].sc_cmd = sc->sc_cmd;
