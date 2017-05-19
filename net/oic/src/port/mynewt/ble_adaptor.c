@@ -37,9 +37,9 @@
 /* OIC Transport Profile GATT */
 
 /* service UUID */
-/* ADE3D529-C784-4F63-A987-EB69F70EE816 */
-static const ble_uuid128_t oc_gatt_svc_uuid =
-    BLE_UUID128_INIT(OC_GATT_SERVICE_UUID);
+/* 0x9923 */
+static const ble_uuid16_t oc_gatt_svc_uuid =
+    BLE_UUID16_INIT(OC_GATT_SERVICE_UUID);
 
 /* request characteristic UUID */
 /* AD7B334F-4637-4B86-90B6-9D787F03D218 */
