@@ -185,6 +185,8 @@ insert_char(char *pos, char c, uint8_t end)
         console_out(c);
     }
 
+    ++cur;
+
     if (end == 0) {
         *pos = c;
         return;
@@ -369,7 +371,7 @@ console_handle_char(uint8_t byte)
 
     if (handle_nlip(byte))  {
         if (byte == '\n') {
-            insert_char(&input->line[cur++], byte, end);
+            insert_char(&input->line[cur], byte, end);
             input->line[cur] = '\0';
             cur = 0;
             end = 0;
@@ -390,14 +392,14 @@ console_handle_char(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur++], CONSOLE_NLIP_PKT_START1, end);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur++], CONSOLE_NLIP_DATA_START1, end);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
         }
 
-        insert_char(&input->line[cur++], byte, end);
+        insert_char(&input->line[cur], byte, end);
 
         return 0;
     }
@@ -473,7 +475,7 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    insert_char(&input->line[cur++], byte, end);
+    insert_char(&input->line[cur], byte, end);
     return 0;
 }
 
