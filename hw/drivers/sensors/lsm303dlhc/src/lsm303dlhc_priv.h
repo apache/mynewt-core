@@ -20,9 +20,6 @@
 #ifndef __LSM303DLHC_PRIV_H__
 #define __LSM303DLHC_PRIV_H__
 
-#define LSM303DLHC_ADDR_ACCEL                     (0x19) /* 0011001 */
-#define LSM303DLHC_ADDR_MAG                       (0x1E) /* 0011110 */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,9 +75,12 @@ enum lsm303dlhc_registers_mag {
     LSM303DLHC_REGISTER_MAG_TEMP_OUT_L_M          = 0x32
 };
 
-int lsm303dlhc_write8(uint8_t addr, uint8_t reg, uint32_t value);
-int lsm303dlhc_read8(uint8_t addr, uint8_t reg, uint8_t *value);
-int lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer);
+int lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
+                      uint32_t value);
+int lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
+                     uint8_t *value);
+int lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
+                      uint8_t *buffer);
 
 #ifdef __cplusplus
 }

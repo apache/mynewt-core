@@ -32,7 +32,7 @@
 #if ARCH_sim
 #include <sim/sim_accel.h>
 #endif
-#if MYNEWT_VAL(LSM303_OFB)
+#if MYNEWT_VAL(LSM303DLHC_OFB)
 #include <lsm303dlhc/lsm303dlhc.h>
 #endif
 #if MYNEWT_VAL(TSL2561_OFB)

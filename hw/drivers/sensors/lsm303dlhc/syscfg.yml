@@ -21,9 +21,12 @@
 # SOFTWARE.
 
 syscfg.defs:
-    LSM303DLHC_I2CBUS:
-        description: 'I2C bus number for the LSM303DLHC'
-        value: -1
+    LSM303DLHC_I2CADDR_MAG:
+        description: 'HW I2C address for the LSM303 Mag'
+        value: 0x1E
+    LSM303DLHC_I2CADDR_ACCEL:
+        description: 'HW I2C address for the LSM303 Accel'
+        value: 0x19
     LSM303DLHC_LOG:
         description: 'Enable LSM303DLHC logging'
         value: 0
