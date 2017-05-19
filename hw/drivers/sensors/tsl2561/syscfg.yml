@@ -24,9 +24,6 @@ syscfg.defs:
     TSL2561_I2CADDR:
         description: 'HW I2C address for the TSL2561 (0x29, 0x39 or 0x49)'
         value: 0x39
-    TSL2561_I2CBUS:
-        description: 'I2C bus number for the TSL2561'
-        value: -1
     TSL2561_CLI:
         description: 'Enable shell support for the TSL2561'
         value: 0
@@ -35,4 +32,10 @@ syscfg.defs:
         value: 0
     TSL2561_STATS:
         description: 'Enable TSL2561 statistics'
+        value: 0
+    TSL2561_SHELL_ITF_TYPE:
+        description: 'Select interface type'
+        value: 1
+    TSL2561_SHELL_ITF_NUM:
+        description: 'Select interface number'
         value: 0
