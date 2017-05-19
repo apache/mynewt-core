@@ -344,7 +344,7 @@ json_internal_read_object(struct json_buffer *jb,
                 }
                 // Scroll back one
                 c = jb->jb_read_prev(jb);
-                (void)sscanf(uescape, "%04x", &u);
+                u = strtoul(uescape, NULL, 16);
                 *pval++ = (char)u;        /* will truncate values above 0xff */
                 break;
             default:                /* handles double quote and solidus */
