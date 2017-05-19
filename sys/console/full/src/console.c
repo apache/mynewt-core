@@ -348,17 +348,17 @@ handle_nlip(uint8_t byte)
     }
 }
 
-static void
+static int
 console_append_char(char *line, uint8_t byte)
 {
     if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
-        return;
+        return 0;
     }
 
     line[cur + end] = byte;
 
     if (byte == '\0') {
-        return;
+        return 1;
     }
 
     if (echo) {
@@ -366,6 +366,7 @@ console_append_char(char *line, uint8_t byte)
         console_out(byte);
     }
     ++cur;
+    return 1;
 }
 
 int

@@ -562,7 +562,9 @@ complete_param(char *line, const char *param_prefix,
 
     /* complete common part */
     for (i = param_len; i < common_chars; i++) {
-        append_char(line, first_match[i]);
+        if (!append_char(line, first_match[i])) {
+            return;
+        }
     }
 }
 
@@ -623,7 +625,9 @@ complete_command(char *line, char *command_prefix,
 
     /* complete common part */
     for (i = command_len; i < common_chars; i++) {
-        append_char(line, first_match[i]);
+        if (!append_char(line, first_match[i])) {
+            return;
+        }
     }
 
     /* for convenience add space after command */
@@ -698,7 +702,9 @@ complete_module(char *line, char *module_prefix,
 
     /* complete common part */
     for (i = module_len; i < common_chars; i++) {
-        append_char(line, first_match[i]);
+        if (!append_char(line, first_match[i])) {
+            return;
+        }
     }
 
     /* for convenience add space after command */
@@ -745,7 +751,9 @@ completion(char *line, console_append_char_cb append_char)
      * line to completion is not ended by '\0' as the line that gets from
      * os_eventq_get function
      */
-    append_char(line, '\0');
+    if (!append_char(line, '\0')) {
+        return;
+    }
 
     cur = line;
     tok_len = get_token(&cur, &null_terminated);
