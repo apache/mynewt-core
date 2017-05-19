@@ -462,6 +462,11 @@ bno055_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
+    if (!arg || !dev) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
     bno055 = (struct bno055 *) dev;
 
     rc = bno055_default_cfg(&bno055->cfg);
@@ -499,6 +504,12 @@ bno055_init(struct os_dev *dev, void *arg)
             SENSOR_TYPE_GRAVITY        | SENSOR_TYPE_LINEAR_ACCEL    |
             SENSOR_TYPE_EULER, (struct sensor_driver *) &g_bno055_sensor_driver);
     if (rc != 0) {
+        goto err;
+    }
+
+    /* Set the interface */
+    rc = sensor_set_interface(sensor, arg);
+    if (rc) {
         goto err;
     }
 

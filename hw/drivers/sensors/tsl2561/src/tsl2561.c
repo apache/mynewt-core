@@ -572,6 +572,11 @@ tsl2561_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
+    if (!arg || !dev) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
     tsl2561 = (struct tsl2561 *) dev;
 
 #if MYNEWT_VAL(TSL2561_LOG)
@@ -599,6 +604,12 @@ tsl2561_init(struct os_dev *dev, void *arg)
     /* Add the light driver */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_LIGHT,
             (struct sensor_driver *) &g_tsl2561_sensor_driver);
+    if (rc) {
+        goto err;
+    }
+
+    /* Set the interface */
+    rc = sensor_set_interface(sensor, arg);
     if (rc) {
         goto err;
     }

@@ -128,7 +128,7 @@ bme280_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
-    if (!arg) {
+    if (!arg || !dev) {
         rc = SYS_ENODEV;
         goto err;
     }

@@ -349,6 +349,11 @@ tcs34725_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
+    if (!arg || !dev) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
     tcs34725 = (struct tcs34725 *) dev;
 
 #if MYNEWT_VAL(TCS34725_LOG)
@@ -378,6 +383,12 @@ tcs34725_init(struct os_dev *dev, void *arg)
     rc = sensor_set_driver(sensor, SENSOR_TYPE_COLOR,
                            (struct sensor_driver *) &g_tcs34725_sensor_driver);
     if (rc != 0) {
+        goto err;
+    }
+
+    /* Set the interface */
+    rc = sensor_set_interface(sensor, arg);
+    if (rc) {
         goto err;
     }
 

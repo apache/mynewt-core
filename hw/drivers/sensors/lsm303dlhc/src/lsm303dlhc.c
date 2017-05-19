@@ -257,6 +257,11 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
+    if (!arg || !dev) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
     lsm = (struct lsm303dlhc *) dev;
 
 #if MYNEWT_VAL(LSM303DLHC_LOG)
@@ -287,6 +292,12 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
             SENSOR_TYPE_MAGNETIC_FIELD,
             (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
     if (rc != 0) {
+        goto err;
+    }
+
+    /* Set the interface */
+    rc = sensor_set_interface(sensor, arg);
+    if (rc) {
         goto err;
     }
 
