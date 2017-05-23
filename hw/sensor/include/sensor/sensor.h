@@ -172,17 +172,6 @@ struct sensor_listener {
 };
 
 /**
- * Get a more specific interface on this sensor object (e.g. Gyro, Magnometer),
- * which has additional functions for managing the sensor.
- *
- * @param The sensor to get the interface on
- * @param The type of sensor interface to get.
- *
- * @return void * A pointer to the specific interface requested, or NULL on failure.
- */
-typedef void *(*sensor_get_interface_func_t)(struct sensor *, sensor_type_t);
-
-/**
  * Read a single value from a sensor, given a specific sensor type
  * (e.g. SENSOR_TYPE_PROXIMITY).
  *
@@ -290,7 +279,31 @@ struct sensor {
 int sensor_init(struct sensor *, struct os_dev *dev);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
+
+/**
+ * Register a sensor listener. This allows a calling application to receive
+ * callbacks for data from a given sensor object.
+ *
+ * For more information on the type of callbacks available, see the documentation
+ * for the sensor listener structure.
+ *
+ * @param The sensor to register a listener on
+ * @param The listener to register onto the sensor
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
 int sensor_register_listener(struct sensor *, struct sensor_listener *);
+
+/**
+ * Un-register a sensor listener. This allows a calling application to unset
+ * callbacks for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The listener to remove from the sensor listener list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
 int sensor_unregister_listener(struct sensor *, struct sensor_listener *);
 
 int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *,

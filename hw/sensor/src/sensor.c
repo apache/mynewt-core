@@ -486,7 +486,7 @@ sensor_lock(struct sensor *sensor)
 }
 
 /**
- * Unlock access to the sensor specified by sensor.  Blocks until lock acquired.
+ * Unlock access to the sensor specified by sensor.
  *
  * @param The sensor to unlock access to.
  */
@@ -635,7 +635,7 @@ sensor_up_timestamp(struct sensor *sensor)
 }
 
 /**
- * Read the data for sensor type "type," from the sensor, "sensor" and
+ * Read the data for sensor type "type," from the given sensor and
  * return the result into the "value" parameter.
  *
  * @param The senssor to read data from
