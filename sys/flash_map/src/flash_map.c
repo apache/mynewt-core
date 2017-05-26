@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <os/os.h>
 #include "syscfg/syscfg.h"
 #include "sysinit/sysinit.h"
 #include "sysflash/sysflash.h"
@@ -131,6 +132,35 @@ flash_area_align(const struct flash_area *fa)
     return hal_flash_align(fa->fa_device_id);
 }
 
+int
+flash_area_is_empty(const struct flash_area *fa, bool *empty)
+{
+    unsigned int data[64];
+    uint32_t data_off = 0;
+    int8_t bytestoread;
+    uint8_t i;
+    int rc;
+
+    while(data_off < fa->fa_size)
+    {
+        bytestoread = min(64, fa->fa_size - data_off);
+        rc = flash_area_read(fa, data_off, data, bytestoread);
+        if (rc) {
+            return rc;
+        }
+        for(i = 0; i < bytestoread; i++){
+            if(data[i] != (unsigned int)-1){
+                goto notempty;
+            }
+        }
+        data_off+=bytestoread;
+    }
+    *empty = true;
+    return 0;
+notempty:
+    *empty = false;
+    return 0;
+}
 /**
  * Converts the specified image slot index to a flash area ID.  If the
  * specified value is not a valid image slot index (0 or 1), a crash is

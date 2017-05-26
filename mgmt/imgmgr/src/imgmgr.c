@@ -245,7 +245,7 @@ imgr_erase(struct mgmt_cbuf *cb)
         if (rc == 0) {
             /* Image in slot is ok. */
             if (imgmgr_state_slot_in_use(i)) {
-                /* Slot is in use; can't upload to this. */
+                /* Slot is in use; can't erase to this. */
                 continue;
             } else {
                 /*
@@ -269,14 +269,11 @@ imgr_erase(struct mgmt_cbuf *cb)
         if (rc) {
             return MGMT_ERR_EINVAL;
         }
-        /*
-         * XXX only erase if needed.
-         */
         rc = flash_area_erase(imgr_state.upload.fa, 0,
           imgr_state.upload.fa->fa_size);
     } else {
         /*
-         * No slot where to upload!
+         * No slot where to erase!
          */
         return MGMT_ERR_ENOMEM;
     }
@@ -329,6 +326,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     int best;
     int rc;
     int i;
+    bool empty = false;
     CborError g_err = CborNoError;
 
     rc = cbor_read_object(&cb->it, off_attr);
@@ -389,6 +387,16 @@ imgr_upload(struct mgmt_cbuf *cb)
             }
             if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
                 return MGMT_ERR_EINVAL;
+            }
+
+            rc = flash_area_is_empty(imgr_state.upload.fa, &empty);
+            if (rc) {
+                return MGMT_ERR_EINVAL;
+            }
+
+            if(!empty) {
+                rc = flash_area_erase(imgr_state.upload.fa, 0,
+                  imgr_state.upload.fa->fa_size);
             }
         } else {
             /*
