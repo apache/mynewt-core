@@ -40,13 +40,13 @@ console_out(int character)
     char c = (char)character;
 
     if ('\n' == c) {
-        SEGGER_RTT_WriteNoLock(0, &CR, 1);
+        SEGGER_RTT_WriteWithOverwriteNoLock(0, &CR, 1);
         console_is_midline = 0;
     } else {
         console_is_midline = 1;
     }
 
-    SEGGER_RTT_WriteNoLock(0, &c, 1);
+    SEGGER_RTT_WriteWithOverwriteNoLock(0, &c, 1);
 
     return character;
 }
