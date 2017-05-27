@@ -135,29 +135,34 @@ flash_area_align(const struct flash_area *fa)
 int
 flash_area_is_empty(const struct flash_area *fa, bool *empty)
 {
-    unsigned int data[64];
+    uint32_t data[64 >> 2];
     uint32_t data_off = 0;
-    int8_t bytestoread;
+    int8_t bytes_to_read;
     uint8_t i;
     int rc;
 
     while(data_off < fa->fa_size)
     {
-        bytestoread = min(64, fa->fa_size - data_off);
-        rc = flash_area_read(fa, data_off, data, bytestoread);
+        bytes_to_read = min(64, fa->fa_size - data_off);
+        rc = flash_area_read(fa, data_off, data, bytes_to_read);
         if (rc) {
             return rc;
         }
-        for(i = 0; i < bytestoread; i++){
-            if(data[i] != (unsigned int)-1){
-                goto notempty;
-            }
+        for (i = 0; i < bytes_to_read >> 2; i++){
+          if (data[i] != (uint32_t) -1) {
+            goto not_empty;
+          }
         }
-        data_off+=bytestoread;
+        for (i = i << 2; i < bytes_to_read; i++) {
+          if (*(((uint8_t *) data) + i) != (uint8_t) -1) {
+            goto not_empty;
+          }
+        }
+        data_off+=bytes_to_read;
     }
     *empty = true;
     return 0;
-notempty:
+not_empty:
     *empty = false;
     return 0;
 }
