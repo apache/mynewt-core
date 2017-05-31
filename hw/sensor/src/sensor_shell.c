@@ -80,16 +80,17 @@ sensor_display_help(void)
 static void
 sensor_cmd_display_sensor(struct sensor *sensor)
 {
-    int type;
     int i;
+    sensor_type_t type;
 
-    console_printf("sensor dev = %s, type = ", sensor->s_dev->od_name);
+    console_printf("sensor dev = %s, configured type = ", sensor->s_dev->od_name);
+    type = 0x1;
 
     for (i = 0; i < 32; i++) {
-        type = (0x1 << i) & sensor->s_types;
-        if (type) {
-            console_printf("0x%x ", type);
+        if (sensor_mgr_match_bytype(sensor, (void *)&type)) {
+            console_printf("0x%x ", (unsigned int)type);
         }
+        type <<= 1;
     }
 
     console_printf("\n");
@@ -176,6 +177,18 @@ sensor_cmd_display_type(char **argv)
                 break;
             case SENSOR_TYPE_USER_DEFINED_2:
                 console_printf("    user defined 2: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_USER_DEFINED_3:
+                console_printf("    user defined 3: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_USER_DEFINED_4:
+                console_printf("    user defined 4: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_USER_DEFINED_5:
+                console_printf("    user defined 5: 0x%x\n", type);
+                break;
+            case SENSOR_TYPE_USER_DEFINED_6:
+                console_printf("    user defined 6: 0x%x\n", type);
                 break;
             default:
                 console_printf("    unknown type: 0x%x\n", type);

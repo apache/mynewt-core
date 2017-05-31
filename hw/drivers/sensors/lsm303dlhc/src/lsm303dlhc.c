@@ -264,6 +264,8 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
 
     lsm = (struct lsm303dlhc *) dev;
 
+    lsm->cfg.mask = SENSOR_TYPE_ALL;
+
 #if MYNEWT_VAL(LSM303DLHC_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif
@@ -288,7 +290,7 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the accelerometer/magnetometer driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER |
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_LINEAR_ACCEL |
             SENSOR_TYPE_MAGNETIC_FIELD,
             (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
     if (rc != 0) {
@@ -319,48 +321,69 @@ lsm303dlhc_config(struct lsm303dlhc *lsm, struct lsm303dlhc_cfg *cfg)
 
     itf = SENSOR_GET_ITF(&(lsm->sensor));
 
-    /* Overwrite the configuration data. */
-    memcpy(&lsm->cfg, cfg, sizeof(*cfg));
+    /* Most sensor chips have a single address and just use different
+     * registers to get data for different sensors
+     */
+    if (!cfg->acc_addr || !cfg->mag_addr) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
 
     /* Set accel data rate (or power down) and enable XYZ output */
-    rc = lsm303dlhc_write8(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_ACCEL),
+    rc = lsm303dlhc_write8(itf, cfg->acc_addr,
                            LSM303DLHC_REGISTER_ACCEL_CTRL_REG1_A,
-                           lsm->cfg.accel_rate | 0x07);
-    if (rc != 0) {
+                           cfg->accel_rate | 0x07);
+    if (rc) {
         goto err;
     }
+
+    lsm->cfg.accel_rate = cfg->accel_rate;
 
     /* Set accel scale */
-    rc = lsm303dlhc_write8(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_ACCEL),
+    rc = lsm303dlhc_write8(itf, cfg->acc_addr,
                            LSM303DLHC_REGISTER_ACCEL_CTRL_REG4_A,
-                           lsm->cfg.accel_range);
-    if (rc != 0) {
+                           cfg->accel_range);
+    if (rc) {
         goto err;
     }
 
+    lsm->cfg.accel_range = cfg->accel_range;
+
     /* Enable the magnetomer (set to continuous conversion mode) */
-    rc = lsm303dlhc_write8(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_MAG),
+    rc = lsm303dlhc_write8(itf, cfg->mag_addr,
                            LSM303DLHC_REGISTER_MAG_MR_REG_M, 0x00);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
     /* Set mag rate */
-    rc = lsm303dlhc_write8(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_MAG),
+    rc = lsm303dlhc_write8(itf, cfg->mag_addr,
                            LSM303DLHC_REGISTER_MAG_CRA_REG_M,
-                           lsm->cfg.mag_rate);
-    if (rc != 0) {
+                           cfg->mag_rate);
+    if (rc) {
         goto err;
     }
+
+    lsm->cfg.mag_rate = cfg->mag_rate;
 
     /* Set mag gain */
-    rc = lsm303dlhc_write8(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_MAG),
+    rc = lsm303dlhc_write8(itf, cfg->mag_addr,
                            LSM303DLHC_REGISTER_MAG_CRB_REG_M,
-                           lsm->cfg.mag_gain);
-    if (rc != 0) {
+                           cfg->mag_gain);
+    if (rc) {
         goto err;
     }
 
+    lsm->cfg.mag_gain = cfg->mag_gain;
+
+    rc = sensor_set_type_mask(&(lsm->sensor),  cfg->mask);
+    if (rc) {
+        goto err;
+    }
+
+    lsm->cfg.mask = cfg->mask;
+
+    return 0;
 err:
     return (rc);
 }
@@ -381,7 +404,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     struct sensor_itf *itf;
 
     /* If the read isn't looking for accel or mag data, don't do anything. */
-    if (!(type & SENSOR_TYPE_ACCELEROMETER) &&
+    if (!(type & SENSOR_TYPE_LINEAR_ACCEL) &&
        (!(type & SENSOR_TYPE_MAGNETIC_FIELD))) {
         rc = SYS_EINVAL;
         goto err;
@@ -391,9 +414,9 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     lsm = (struct lsm303dlhc *) SENSOR_GET_DEVICE(sensor);
 
     /* Get a new accelerometer sample */
-    if (type & SENSOR_TYPE_ACCELEROMETER) {
+    if (type & SENSOR_TYPE_LINEAR_ACCEL) {
         x = y = z = 0;
-        rc = lsm303dlhc_read48(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_ACCEL),
+        rc = lsm303dlhc_read48(itf, lsm->cfg.acc_addr,
                                LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A | 0x80,
                                payload);
         if (rc != 0) {
@@ -457,7 +480,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     /* Get a new magnetometer sample */
     if (type & SENSOR_TYPE_MAGNETIC_FIELD) {
         x = y = z = 0;
-        rc = lsm303dlhc_read48(itf, MYNEWT_VAL(LSM303DLHC_I2CADDR_MAG),
+        rc = lsm303dlhc_read48(itf, lsm->cfg.mag_addr,
                                LSM303DLHC_REGISTER_MAG_OUT_X_H_M,
                                payload);
         if (rc != 0) {
@@ -555,7 +578,7 @@ lsm303dlhc_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 {
     int rc;
 
-    if ((type != SENSOR_TYPE_ACCELEROMETER) &&
+    if ((type != SENSOR_TYPE_LINEAR_ACCEL) &&
         (type != SENSOR_TYPE_MAGNETIC_FIELD)) {
         rc = SYS_EINVAL;
         goto err;

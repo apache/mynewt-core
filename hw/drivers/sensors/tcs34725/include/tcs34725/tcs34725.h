@@ -43,6 +43,8 @@ extern "C" {
 struct tcs34725_cfg {
     uint8_t gain;
     uint8_t integration_time;
+    uint8_t int_enable;
+    sensor_type_t mask;
 };
 
 struct tcs34725 {

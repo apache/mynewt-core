@@ -79,7 +79,7 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
 };
 
 #if MYNEWT_VAL(BME280_ONB)
-static const struct sensor_itf spi_0_itf = {
+static const struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
     .si_cspin = 3
@@ -164,6 +164,50 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return cfg_pri;
 }
 
+/**
+ * BME280 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(BME280_ONB)
+static int
+config_bme280_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct bme280_cfg bmecfg;
+
+    dev = (struct os_dev *) os_dev_open("bme280_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    memset(&bmecfg, 0, sizeof(bmecfg));
+
+    bmecfg.bc_mode = BME280_MODE_NORMAL;
+    bmecfg.bc_iir = BME280_FILTER_X16;
+    bmecfg.bc_sby_dur = BME280_STANDBY_MS_0_5;
+    bmecfg.bc_boc[0].boc_type = SENSOR_TYPE_RELATIVE_HUMIDITY;
+    bmecfg.bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
+    bmecfg.bc_boc[2].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
+    bmecfg.bc_boc[0].boc_oversample = BME280_SAMPLING_X1;
+    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X16;
+    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X2;
+    bmecfg.bc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                       SENSOR_TYPE_PRESSURE|
+                       SENSOR_TYPE_RELATIVE_HUMIDITY;
+
+    rc = bme280_config((struct bme280 *)dev, &bmecfg);
+
+err:
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 static void
 sensor_dev_create(void)
 {
@@ -172,7 +216,10 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(BME280_ONB)
     rc = os_dev_create((struct os_dev *) &bme280, "bme280",
-      OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf);
+      OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf_bme);
+    assert(rc == 0);
+
+    rc = config_bme280_sensor();
     assert(rc == 0);
 #endif
 

@@ -94,7 +94,7 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     uint8_t payload[2] = { reg, value};
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(BNO055_I2CADDR),
+        .address = itf->si_addr,
         .len = 2,
         .buffer = payload
     };
@@ -130,7 +130,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                               0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(BNO055_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = payload
     };
@@ -179,7 +179,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     uint8_t payload;
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(BNO055_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &payload
     };
@@ -231,7 +231,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                               0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(BNO055_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = payload
     };
@@ -443,6 +443,7 @@ bno055_default_cfg(struct bno055_cfg *cfg)
     cfg->bc_mag_xy_rep = 15;
     cfg->bc_mag_z_rep = 16;
     cfg->bc_mag_res = BNO055_MAG_RES_13_13_15;
+    cfg->bc_mask = SENSOR_TYPE_ACCELEROMETER;
 
     return 0;
 }
@@ -827,6 +828,13 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
     if (rc) {
         goto err;
     }
+
+    rc = sensor_set_type_mask(&(bno055->sensor), cfg->bc_mask);
+    if (rc) {
+        goto err;
+    }
+
+    bno055->cfg.bc_mask = cfg->bc_mask;
 
     return 0;
 err:

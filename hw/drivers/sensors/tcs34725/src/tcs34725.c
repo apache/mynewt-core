@@ -104,7 +104,7 @@ tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     uint8_t payload[2] = { reg | TCS34725_COMMAND_BIT, value & 0xFF };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TCS34725_I2CADDR),
+        .address = itf->si_addr,
         .len = 2,
         .buffer = payload
     };
@@ -138,7 +138,7 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     uint8_t payload;
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TCS34725_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &payload
     };
@@ -185,7 +185,7 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
     uint8_t payload[9] = { reg | TCS34725_COMMAND_BIT, 0, 0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TCS34725_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = payload
     };
@@ -242,7 +242,7 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
     uint8_t payload[9] = { reg, 0, 0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TCS34725_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = payload
     };
@@ -356,6 +356,8 @@ tcs34725_init(struct os_dev *dev, void *arg)
 
     tcs34725 = (struct tcs34725 *) dev;
 
+    tcs34725->cfg.mask = SENSOR_TYPE_ALL;
+
 #if MYNEWT_VAL(TCS34725_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif
@@ -394,6 +396,11 @@ tcs34725_init(struct os_dev *dev, void *arg)
 
     rc = sensor_mgr_register(sensor);
     if (rc != 0) {
+        goto err;
+    }
+
+    rc = sensor_set_type_mask(sensor, tcs34725->cfg.mask);
+    if (rc) {
         goto err;
     }
 
@@ -572,23 +579,40 @@ tcs34725_config(struct tcs34725 *tcs34725, struct tcs34725_cfg *cfg)
         goto err;
     }
 
-    rc |= tcs34725_enable(itf, 1);
-
-    rc |= tcs34725_set_integration_time(itf, cfg->integration_time);
-
-    rc |= tcs34725_set_gain(itf, cfg->gain);
+    rc = tcs34725_enable(itf, 1);
     if (rc) {
         goto err;
     }
 
-    rc = tcs34725_enable_interrupt(itf, 1);
+    rc = tcs34725_set_integration_time(itf, cfg->integration_time);
     if (rc) {
         goto err;
     }
 
-    /* Overwrite the configuration data. */
-    memcpy(&tcs34725->cfg, cfg, sizeof(*cfg));
+    tcs34725->cfg.integration_time = cfg->integration_time;
 
+    rc = tcs34725_set_gain(itf, cfg->gain);
+    if (rc) {
+        goto err;
+    }
+
+    tcs34725->cfg.gain = cfg->gain;
+
+    rc = tcs34725_enable_interrupt(itf, cfg->int_enable);
+    if (rc) {
+        goto err;
+    }
+
+    tcs34725->cfg.int_enable = cfg->int_enable;
+
+    rc = sensor_set_type_mask(&(tcs34725->sensor), cfg->mask);
+    if (rc) {
+        goto err;
+    }
+
+    tcs34725->cfg.mask = cfg->mask;
+
+    return 0;
 err:
     return (rc);
 }
@@ -981,7 +1005,7 @@ tcs34725_clear_interrupt(struct sensor_itf *itf)
     uint8_t payload = TCS34725_COMMAND_BIT | TCS34725_CMD_TYPE | TCS34725_CMD_ADDR;
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TCS34725_I2CADDR),
+        .address = itf->si_addr,
         .len = 0,
         .buffer = &payload
     };

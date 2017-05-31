@@ -41,9 +41,9 @@ syscfg.vals:
     LOG_NEWTMGR: 0
     CONFIG_NEWTMGR: 0
 
-    TSL2561_CLI: 0
-    BNO055_CLI: 0
-    TCS34725_CLI: 0
+    TSL2561_CLI: 1
+    BNO055_CLI: 1
+    TCS34725_CLI: 1
     BME280_CLI: 1
 
     # Setup Sensor BLE OIC GATT Server

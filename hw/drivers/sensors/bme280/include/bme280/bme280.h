@@ -94,6 +94,7 @@ struct bme280_cfg {
     struct bme280_over_cfg bc_boc[3];
     uint8_t bc_mode;
     uint8_t bc_sby_dur;
+    uint8_t bc_s_mask;
 };
 
 struct bme280_pdd {

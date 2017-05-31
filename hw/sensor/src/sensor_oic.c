@@ -52,9 +52,16 @@ static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 {
     int rc;
+    sensor_type_t type;
 
-    rc = SYS_EINVAL;
-    switch(SENSOR_TYPE_ALL & (*(uint32_t *)arg)) {
+    type = *(sensor_type_t *)arg;
+
+    if (!sensor_mgr_match_bytype(sensor, &type)) {
+        rc = SYS_ENOENT;
+        goto err;
+    }
+
+    switch(type) {
         /* Gyroscope supported */
         case SENSOR_TYPE_GYROSCOPE:
         /* Accelerometer functionality supported */
@@ -150,10 +157,7 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
                     ((struct sensor_press_data *)(databuf))->spd_press);
             }
             break;
-#if 0
-        /* Proximity sensor supported */
-        SENSOR_TYPE_PROXIMITY:
-#endif
+
         /* Relative humidity supported */
         case SENSOR_TYPE_RELATIVE_HUMIDITY:
             if (((struct sensor_humid_data *)(databuf))->shd_humid_is_valid) {
@@ -189,13 +193,7 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
                 goto err;
             }
             break;
-#if 0
-        /* Altitude Supported */
-        SENSOR_TYPE_ALTITUDE:
 
-        /* Weight Supported */
-        SENSOR_TYPE_WEIGHT:
-#endif
         /* Euler Orientation Sensor */
         case SENSOR_TYPE_EULER:
             if (((struct sensor_euler_data *)(databuf))->sed_h_is_valid) {
@@ -288,13 +286,32 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
             }
             break;
 
+        /* Support for these sensors is currently not there, hence
+         * encoding would fail for them
+         */
+
+        /* Proximity sensor supported */
+        case SENSOR_TYPE_PROXIMITY:
+        /* Altitude Supported */
+        case SENSOR_TYPE_ALTITUDE:
+        /* Weight Supported */
+        case SENSOR_TYPE_WEIGHT:
         /* User defined sensor type 1 */
         case SENSOR_TYPE_USER_DEFINED_1:
         /* User defined sensor type 2 */
         case SENSOR_TYPE_USER_DEFINED_2:
-            break;
+        /* User defined sensor type 3 */
+        case SENSOR_TYPE_USER_DEFINED_3:
+        /* User defined sensor type 4 */
+        case SENSOR_TYPE_USER_DEFINED_4:
+        /* User defined sensor type 5 */
+        case SENSOR_TYPE_USER_DEFINED_5:
+        /* User defined sensor type 6 */
+        case SENSOR_TYPE_USER_DEFINED_6:
+
         /* None */
         case SENSOR_TYPE_NONE:
+        default:
             goto err;
     }
 

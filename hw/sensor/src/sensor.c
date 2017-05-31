@@ -29,6 +29,7 @@
 #include "sensor_priv.h"
 #include "os/os_time.h"
 #include "os/os_cputime.h"
+#include "defs/error.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -381,9 +382,15 @@ done:
     return (cursor);
 }
 
-
-
-static int
+/**
+ * Check if sensor type matches
+ *
+ * @param The sensor object
+ * @param The type to check
+ *
+ * @return 1 if matches, 0 if it doesn't match.
+ */
+int
 sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
 {
     sensor_type_t *type;
@@ -391,14 +398,12 @@ sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
     type = (sensor_type_t *) arg;
 
     /* s_types is a bitmask that contains the supported sensor types for this
-     * sensor, and type is the bitmask we're searching for.  Compare the two,
-     * and if there is a match, return true (1).
+     * sensor, and type is the bitmask we're searching for. We also look at
+     * the mask as the driver might be configured to work in a mode where only
+     * some of the sensors are supported but not all. Compare the three,
+     * and if there is a match, return 1. If it is not supported, return 0.
      */
-    if ((*type & sensor->s_types) != 0) {
-        return (1);
-    } else {
-        return (0);
-    }
+    return (*type & sensor->s_types & sensor->s_mask) ? 1 : 0;
 }
 
 /**
@@ -654,24 +659,29 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     int rc;
 
     rc = sensor_lock(sensor);
-    if (rc != 0) {
-        goto done;
+    if (rc) {
+        goto err;
     }
 
     src.user_func = data_func;
     src.user_arg = arg;
+
+    if (!sensor_mgr_match_bytype(sensor, (void *)&type)) {
+        rc = SYS_ENOENT;
+        goto err;
+    }
 
     sensor_up_timestamp(sensor);
 
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
             timeout);
     if (rc) {
-        goto done;
+        goto err;
     }
 
     sensor_unlock(sensor);
 
-done:
+err:
     return (rc);
 }
 

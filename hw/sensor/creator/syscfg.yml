@@ -30,10 +30,7 @@ syscfg.defs:
         value : 0
     BME280_OFB:
         description: 'BME280 is present'
-        value : 1
+        value : 0
     TCS34725_OFB:
         description: 'TCS34725 is present'
-        value : 0
-    SIM_ACCEL_OFB:
-        description: 'SIM ACCEL is present'
         value : 0

@@ -158,6 +158,7 @@ struct bno055_cfg {
     uint8_t bc_mag_pwr_mode;
     uint8_t bc_mag_opr_mode;
     uint8_t bc_use_ext_xtal;
+    uint32_t bc_mask;
 };
 
 struct bno055 {

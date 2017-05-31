@@ -59,6 +59,7 @@ enum tsl2561_light_itime {
 struct tsl2561_cfg {
     uint8_t gain;
     uint8_t integration_time;
+    sensor_type_t mask;
 };
 
 struct tsl2561 {

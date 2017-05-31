@@ -73,6 +73,9 @@ struct lsm303dlhc_cfg {
     enum lsm303dlhc_accel_rate accel_rate;
     enum lsm303dlhc_mag_gain mag_gain;
     enum lsm303dlhc_mag_rate mag_rate;
+    uint8_t mag_addr;
+    uint8_t acc_addr;
+    sensor_type_t mask;
 };
 
 struct lsm303dlhc {

@@ -109,6 +109,7 @@ bme280_default_cfg(struct bme280_cfg *cfg)
     cfg->bc_boc[1].boc_oversample = BME280_SAMPLING_NONE;
     cfg->bc_boc[2].boc_type = SENSOR_TYPE_RELATIVE_HUMIDITY;
     cfg->bc_boc[2].boc_oversample = BME280_SAMPLING_NONE;
+    cfg->bc_s_mask = SENSOR_TYPE_ALL;
 
     return 0;
 }
@@ -162,7 +163,7 @@ bme280_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    /* Add the driver */
+    /* Add the driver with all the supported type */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_AMBIENT_TEMPERATURE |
                            SENSOR_TYPE_PRESSURE            |
                            SENSOR_TYPE_RELATIVE_HUMIDITY,
@@ -195,7 +196,7 @@ bme280_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    rc = hal_gpio_init_out(sensor->s_itf.si_cspin, 1);
+    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
     if (rc) {
         goto err;
     }
@@ -836,6 +837,13 @@ bme280_config(struct bme280 *bme280, struct bme280_cfg *cfg)
 
     os_time_delay((OS_TICKS_PER_SEC * 200)/1000 + 1);
 
+    rc = sensor_set_type_mask(sensor,  cfg->bc_mask);
+    if (rc) {
+        goto err;
+    }
+
+    bme280->cfg.bc_mask = cfg->bc_mask;
+
     return 0;
 err:
     return (rc);
@@ -861,7 +869,7 @@ bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     rc = 0;
 
     /* Select the device */
-    hal_gpio_write(itf->si_cspin, 0);
+    hal_gpio_write(itf->si_cs_pin, 0);
 
     /* Send the address */
     retval = hal_spi_tx_val(itf->si_num, addr | BME280_SPI_READ_CMD_BIT);
@@ -894,7 +902,7 @@ bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 
 err:
     /* De-select the device */
-    hal_gpio_write(itf->si_cspin, 1);
+    hal_gpio_write(itf->si_cs_pin, 1);
 
     return rc;
 }
@@ -916,7 +924,7 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     int rc;
 
     /* Select the device */
-    hal_gpio_write(itf->si_cspin, 0);
+    hal_gpio_write(itf->si_cs_pin, 0);
 
     /* Send the address */
     rc = hal_spi_tx_val(itf->si_num, addr & ~BME280_SPI_READ_CMD_BIT);
@@ -949,7 +957,7 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 
 err:
     /* De-select the device */
-    hal_gpio_write(itf->si_cspin, 1);
+    hal_gpio_write(itf->si_cs_pin, 1);
 
     os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
 

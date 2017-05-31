@@ -101,7 +101,7 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     uint8_t payload[2] = { reg, value & 0xFF };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 2,
         .buffer = payload
     };
@@ -126,7 +126,7 @@ tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
     uint8_t payload[3] = { reg, value & 0xFF, (value >> 8) & 0xFF };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 3,
         .buffer = payload
     };
@@ -148,7 +148,7 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     uint8_t payload;
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &payload
     };
@@ -183,7 +183,7 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
     uint8_t payload[2] = { reg, 0 };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = payload
     };
@@ -313,7 +313,7 @@ tsl2561_get_integration_time(struct sensor_itf *itf, uint8_t *itime)
         goto err;
     }
 
-    *itime = reg | 0x0F;
+    *itime = reg & 0x0F;
 
     return 0;
 err:
@@ -379,7 +379,7 @@ tsl2561_get_gain(struct sensor_itf *itf, uint8_t *gain)
         goto err;
     }
 
-    *gain = reg | 0xF0;
+    *gain = reg & 0xF0;
 
     return 0;
 err:
@@ -536,7 +536,7 @@ tsl2561_clear_interrupt(struct sensor_itf *itf)
     uint8_t payload = { TSL2561_COMMAND_BIT | TSL2561_CLEAR_BIT };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &payload
     };
@@ -578,6 +578,8 @@ tsl2561_init(struct os_dev *dev, void *arg)
     }
 
     tsl2561 = (struct tsl2561 *) dev;
+
+    tsl2561->cfg.mask = SENSOR_TYPE_ALL;
 
 #if MYNEWT_VAL(TSL2561_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
@@ -857,6 +859,13 @@ tsl2561_config(struct tsl2561 *tsl2561, struct tsl2561_cfg *cfg)
     }
 
     tsl2561->cfg.gain = cfg->gain;
+
+    rc = sensor_set_type_mask(&(tsl2561->sensor), cfg->mask);
+    if (rc) {
+        goto err;
+    }
+
+    tsl2561->cfg.mask = cfg->mask;
 
     return 0;
 err:
