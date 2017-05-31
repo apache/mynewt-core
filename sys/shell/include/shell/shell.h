@@ -51,7 +51,7 @@ struct shell_cmd {
 };
 
 struct shell_module {
-    const char *module_name;
+    const char *name;
     const struct shell_cmd *commands;
 };
 
@@ -62,7 +62,7 @@ struct shell_module {
  *
  * @return 0 in case of success or negative value in case of error.
  */
-typedef int (*shell_register_function_t)(const char *module_name,
+typedef int (*shell_register_function_t)(const char *name,
                                          const struct shell_cmd *commands);
 
 /** @brief Register a shell_module object
@@ -109,7 +109,7 @@ int shell_nlip_output(struct os_mbuf *m);
 #endif
 
 #if MYNEWT_VAL(SHELL_COMPAT)
-int shell_cmd_register(struct shell_cmd *sc);
+int shell_cmd_register(const struct shell_cmd *sc);
 #endif
 
 #ifdef __cplusplus
