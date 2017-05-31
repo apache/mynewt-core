@@ -33,6 +33,13 @@ extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
 extern void SysTick_Handler(void);
 
+#if MYNEWT_VAL(HARDFLOAT)
+struct ctx_fp {
+    uint32_t regs[32];
+    uint32_t fcsr;
+};
+#endif
+
 struct ctx {
     uint32_t regs[30];
     uint32_t epc;
@@ -53,6 +60,8 @@ extern struct os_task g_idle_task;
 
 struct os_task *g_fpu_task;
 
+struct os_task_t* g_fpu_user;
+
 /* core timer interrupt */
 void __attribute__((interrupt(IPL1AUTO),
 vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
@@ -63,8 +72,9 @@ vector(_CORE_TIMER_VECTOR))) isr_core_timer(void)
 }
 
 /* context switch interrupt, in ctx.S */
-void __attribute__((interrupt(IPL1AUTO),
-vector(_CORE_SOFTWARE_0_VECTOR))) isr_sw0(void);
+void
+__attribute__((interrupt(IPL1AUTO), vector(_CORE_SOFTWARE_0_VECTOR)))
+isr_sw0(void);
 
 static int
 os_in_isr(void)
@@ -111,20 +121,40 @@ os_arch_in_critical(void)
 
 uint32_t get_global_pointer(void);
 
+static inline int
+os_bytes_to_stack_aligned_words(int byts) {
+    return (((byts - 1) / OS_STACK_ALIGNMENT) + 1) *
+        (OS_STACK_ALIGNMENT/sizeof(os_stack_t));
+}
+
 /* assumes stack_top will be 8 aligned */
 
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
-    stack_top -= 4; /* space for incoming arguments */
-    os_stack_t *s = stack_top - ((((sizeof(struct ctx) - 1) /
-        OS_STACK_ALIGNMENT) + 1) * (OS_STACK_ALIGNMENT/sizeof(os_stack_t)));
+    int lazy_space = 0;
+#if MYNEWT_VAL(HARDFLOAT)
+    lazy_space += os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp));
+#endif
+
+    /* If stack does not have space for the FPU context, assume the
+    thread won't use it. */
+    int ctx_space = os_bytes_to_stack_aligned_words(sizeof(struct ctx));
+    if ((lazy_space + ctx_space + 4) >= size) {
+        /* stack too small */
+        stack_top -= 4;
+    } else {
+        struct ctx_fp ctx_fp;
+        ctx_fp.fcsr = 0;
+        memcpy(stack_top - os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp)), &ctx_fp, sizeof(ctx_fp));
+        stack_top -= lazy_space + 4;
+    }
+    os_stack_t *s = stack_top - ctx_space;
 
     struct ctx ctx;
-
     ctx.regs[3] = (uint32_t)t->t_arg;
     ctx.regs[27] = get_global_pointer();
-    ctx.status = _CP0_GET_STATUS() | _CP0_STATUS_IE_MASK;
+    ctx.status = (_CP0_GET_STATUS() & ~_CP0_STATUS_CU1_MASK) | _CP0_STATUS_IE_MASK;
     ctx.cause = _CP0_GET_CAUSE();
     ctx.epc = (uint32_t)t->t_func;
     /* copy struct onto the stack */
