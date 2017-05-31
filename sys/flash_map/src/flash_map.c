@@ -132,6 +132,18 @@ flash_area_align(const struct flash_area *fa)
     return hal_flash_align(fa->fa_device_id);
 }
 
+/**
+ * Checks if a flash area has been erased. Returns false if there are any
+ * non 0xFFFFFFFF bytes.
+ *
+ * @param fa                    An opened flash area to iterate.
+ *                                  the count of flash area TLVs in the meta
+ *                                  region is greater than this number, this
+ *                                  function fails.
+ * @param empty (out)           On success, the is_empty result gets written
+ *                                  here.
+ * @return                      0 on success; nonzero on failure.
+ */
 int
 flash_area_is_empty(const struct flash_area *fa, bool *empty)
 {
@@ -141,20 +153,14 @@ flash_area_is_empty(const struct flash_area *fa, bool *empty)
     uint8_t i;
     int rc;
 
-    while(data_off < fa->fa_size)
-    {
+    while(data_off < fa->fa_size) {
         bytes_to_read = min(64, fa->fa_size - data_off);
         rc = flash_area_read(fa, data_off, data, bytes_to_read);
         if (rc) {
             return rc;
         }
-        for (i = 0; i < bytes_to_read >> 2; i++){
+        for (i = 0; i < bytes_to_read >> 2; i++) {
           if (data[i] != (uint32_t) -1) {
-            goto not_empty;
-          }
-        }
-        for (i = i << 2; i < bytes_to_read; i++) {
-          if (*(((uint8_t *) data) + i) != (uint8_t) -1) {
             goto not_empty;
           }
         }
@@ -166,6 +172,7 @@ not_empty:
     *empty = false;
     return 0;
 }
+
 /**
  * Converts the specified image slot index to a flash area ID.  If the
  * specified value is not a valid image slot index (0 or 1), a crash is

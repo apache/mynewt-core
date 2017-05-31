@@ -271,6 +271,8 @@ imgr_erase(struct mgmt_cbuf *cb)
         }
         rc = flash_area_erase(imgr_state.upload.fa, 0,
           imgr_state.upload.fa->fa_size);
+        flash_area_close(imgr_state.upload.fa);
+        imgr_state.upload.fa = NULL;
     } else {
         /*
          * No slot where to erase!
