@@ -41,7 +41,7 @@ extern "C" {
  * match the linker scripts when platform executes from flash,
  * and match the target offset specified in download script.
  */
-#include <stdlib.h>
+#include <stdbool.h>
 #include <inttypes.h>
 
 struct flash_area {
