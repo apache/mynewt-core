@@ -156,7 +156,7 @@ observe_light(oc_client_response_t *rsp)
     };
 
     len = coap_get_payload(rsp->packet, &m, &data_off);
-    if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
+    if (!cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
         printf("OBSERVE_light: %d\n", state);
         light_state = state;
     }
