@@ -193,6 +193,7 @@ sensor_oic_advertise(void)
         return;
     }
 
+#if 0
     /* Advertise the 16-bit CoAP-over-BLE service UUID in the scan response. */
     memset(&fields, 0, sizeof fields);
     fields.uuids16 = (ble_uuid16_t[]) {
@@ -206,6 +207,7 @@ sensor_oic_advertise(void)
         BLEPRPH_LOG(ERROR, "error setting scan response data; rc=%d\n", rc);
         return;
     }
+#endif
 
     /* Begin advertising. */
     memset(&adv_params, 0, sizeof adv_params);
@@ -443,14 +445,14 @@ sensor_ble_oic_server_init(void)
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pi");
+    rc = ble_svc_gap_device_name_set("sensy");
     assert(rc == 0);
 
     rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
     assert(!rc);
 
     oc_init_platform("MyNewt", NULL, NULL);
-    oc_add_device("/oic/d", "oic.d.pi", "pi", "1.0", "1.0", NULL,
+    oc_add_device("/oic/d", "oic.d.sensy", "sensy", "1.0", "1.0", NULL,
                   NULL);
     assert(!oc_stack_errno);
 #endif
