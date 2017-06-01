@@ -170,15 +170,29 @@ sensor_oic_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (ble_uuid16_t[]) {
-        BLE_UUID16_INIT(OC_GATT_SERVICE_UUID)
+    fields.uuids128 = (ble_uuid128_t []) {
+        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
     };
-    fields.num_uuids16 = 1;
-    fields.uuids16_is_complete = 1;
+    fields.num_uuids128 = 1;
+    fields.uuids128_is_complete = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
         BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        return;
+    }
+
+    /* Advertise the 16-bit CoAP-over-BLE service UUID in the scan response. */
+    memset(&fields, 0, sizeof fields);
+    fields.uuids16 = (ble_uuid16_t[]) {
+        BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID)
+    };
+    fields.num_uuids16 = 1;
+    fields.uuids16_is_complete = 1;
+
+    rc = ble_gap_adv_rsp_set_fields(&fields);
+    if (rc != 0) {
+        BLEPRPH_LOG(ERROR, "error setting scan response data; rc=%d\n", rc);
         return;
     }
 
