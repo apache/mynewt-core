@@ -91,6 +91,9 @@
     mfc0    k0, _CP0_BADVADDR
 	sw	    k0, CTX_BADVADDR(sp)
     mfc0	k0, _CP0_STATUS
+    # disable co-precessor 1
+    li	    k1, ~_CP0_STATUS_CU1_MASK
+    and	    k0, k0, k1
 	sw	    k0, CTX_STATUS(sp)
     mfc0    k0, _CP0_CAUSE
     sw      k0, CTX_CAUSE(sp)
@@ -144,8 +147,8 @@
     # cp0
     lw     k0, CTX_EPC(sp)
     mtc0   k0, _CP0_EPC
-    lw     k0, CTX_STATUS(sp)
     # STATUS here will have EXL set
+    lw     k0, CTX_STATUS(sp)
     mtc0   k0, _CP0_STATUS
     ehb
     # restore k0
@@ -153,13 +156,111 @@
     .set pop
 .endm
 
+#if MYNEWT_VAL(HARDFLOAT)
+
+#define CTX_FP_SIZE (33 * 4)
+#define CTX_FP_ALIGNED_SIZE ((((CTX_FP_SIZE - 1) / OS_STACK_ALIGNMENT) + 1) * \
+    OS_STACK_ALIGNMENT)
+#define CTX_FP_OFFS(r) (((r) * 4) - CTX_FP_ALIGNED_SIZE)
+#define CTX_FP_REG(r) CTX_FP_OFFS(r)
+#define CTX_FP64_REG(r) CTX_FP_OFFS(r)
+#define CTX_FP_FCSR CTX_FP_OFFS(32)
+
+#define TASK_STACK_TOP (4)
+
+.macro _fpctx_save
+    sdc1	$f0, CTX_FP_REG(0)(k0)
+    sdc1	$f2, CTX_FP_REG(2)(k0)
+    sdc1	$f4, CTX_FP_REG(4)(k0)
+    sdc1	$f6, CTX_FP_REG(6)(k0)
+    sdc1	$f8, CTX_FP_REG(8)(k0)
+    sdc1	$f10, CTX_FP_REG(10)(k0)
+    sdc1	$f12, CTX_FP_REG(12)(k0)
+    sdc1	$f14, CTX_FP_REG(14)(k0)
+    sdc1	$f16, CTX_FP_REG(16)(k0)
+    sdc1	$f18, CTX_FP_REG(18)(k0)
+    sdc1	$f20, CTX_FP_REG(20)(k0)
+    sdc1	$f22, CTX_FP_REG(22)(k0)
+    sdc1	$f24, CTX_FP_REG(24)(k0)
+    sdc1	$f26, CTX_FP_REG(26)(k0)
+    sdc1	$f28, CTX_FP_REG(28)(k0)
+    sdc1	$f30, CTX_FP_REG(30)(k0)
+    cfc1	k1, $31
+    sw	    k1, CTX_FP_FCSR(k0)
+.endm
+
+.macro _fpctx_load
+    ldc1	$f0, CTX_FP_REG(0)(k0)
+    ldc1	$f2, CTX_FP_REG(2)(k0)
+    ldc1	$f4, CTX_FP_REG(4)(k0)
+    ldc1	$f6, CTX_FP_REG(6)(k0)
+    ldc1	$f8, CTX_FP_REG(8)(k0)
+    ldc1	$f10, CTX_FP_REG(10)(k0)
+    ldc1	$f12, CTX_FP_REG(12)(k0)
+    ldc1	$f14, CTX_FP_REG(14)(k0)
+    ldc1	$f16, CTX_FP_REG(16)(k0)
+    ldc1	$f18, CTX_FP_REG(18)(k0)
+    ldc1	$f20, CTX_FP_REG(20)(k0)
+    ldc1	$f22, CTX_FP_REG(22)(k0)
+    ldc1	$f24, CTX_FP_REG(24)(k0)
+    ldc1	$f26, CTX_FP_REG(26)(k0)
+    ldc1	$f28, CTX_FP_REG(28)(k0)
+    ldc1	$f30, CTX_FP_REG(30)(k0)
+    lw      k0, CTX_FP_FCSR(k0)
+    ctc1	k0, $31
+.endm
+#endif
+
 .text
 .global get_global_pointer
 .ent get_global_pointer
 get_global_pointer:
-    .set noat
     move   v0, gp
     jr     ra
+.end
+
+.text
+.set noat
+.set nomips16
+.globl _general_exception_context
+.ent _general_exception_context
+_general_exception_context:
+#if MYNEWT_VAL(HARDFLOAT)
+    mfc0    k0, _CP0_CAUSE
+    ext     k0, k0, 2, 5                # set k0 to the ExcCode field of cause
+    li      k1, 0x0b
+    bne     k0, k1, loop
+
+    # enable co-precessor 1
+    mfc0    k0, _CP0_STATUS
+    li	    k1, _CP0_STATUS_CU1_MASK
+    or	    k0, k0, k1
+    mtc0    k0, _CP0_STATUS
+
+    lw      k1, g_current_task          # get current task
+    lw      k0, g_fpu_user              # get current FPU user
+    beq     k0, k1, return              # if current task owns FPU context then just return
+
+    # Save FPU context to FPU user
+    beqz    k0, load                    # if there is an FPU user
+    lw      k0, TASK_STACK_TOP(k0)      # get FPU user stack top
+    _fpctx_save
+    lw      k1, g_current_task          # get current task
+
+load:
+    # Load FPU context from current task
+    beqz    k1, return                  # if there is a current task
+    la      k0, g_fpu_user
+    sw      k1, 0(k0)                   # set FPU user to current task
+    lw      k0, TASK_STACK_TOP(k1)      # get current task stack top
+    _fpctx_load
+
+return :
+    eret
+#endif
+
+loop:
+    b       loop                        # loop (default for general exception handler)
 .end
 
 .text
@@ -170,21 +271,21 @@ isr_sw0:
     rdpgpr  sp, sp
 
     # context switch
-    _gpctx_save                     # save the context
+    _gpctx_save                         # save the context
     .set at
-    lw      k0, g_current_task      # get current task
-    beqz    k0, 1f                  # if there is a current task
-    sw      sp, 0(k0)               # update stored sp
+    lw      k0, g_current_task          # get current task
+    beqz    k0, 1f                      # if there is a current task
+    sw      sp, 0(k0)                   # update stored sp
 1:
-    li      k0, _IFS0_CS0IF_MASK    # clear sw interrupt
+    li      k0, _IFS0_CS0IF_MASK        # clear sw interrupt
     sw      k0, IFS0CLR
 
-    lw      k0, g_os_run_list       # get new task
-    sw      k0, g_current_task      # g_current_task = g_os_run_list
+    lw      k0, g_os_run_list           # get new task
+    sw      k0, g_current_task          # g_current_task = g_os_run_list
 
-    lw      sp, 0(k0)               # restore sp
+    lw      sp, 0(k0)                   # restore sp
     .set noat
-    _gpctx_load
+    _gpctx_load                         # load the context
     wrpgpr  sp, sp
     eret
 .end
