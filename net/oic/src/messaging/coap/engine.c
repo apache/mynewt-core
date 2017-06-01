@@ -31,17 +31,20 @@
  * This file is part of the Contiki operating system.
  */
 
-#include "engine.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
 /* OIC Stack headers */
 #include "api/oc_buffer.h"
-#include "oc_ri.h"
+#include "oic/oc_ri.h"
+#include "messaging/coap/engine.h"
 
 #ifdef OC_CLIENT
-#include "oc_client_state.h"
+#include "oic/oc_client_state.h"
 #endif
 
 /*---------------------------------------------------------------------------*/

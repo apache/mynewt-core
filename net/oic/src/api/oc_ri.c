@@ -18,24 +18,28 @@
 #include <stddef.h>
 #include <strings.h>
 
+#include <syscfg/syscfg.h>
+
 #include <os/os_callout.h>
 #include <os/os_mempool.h>
 #include <os/queue.h>
 
-#include "messaging/coap/constants.h"
-#include "messaging/coap/engine.h"
-#include "messaging/coap/oc_coap.h"
+#include "oic/port/mynewt/config.h"
 
-#include "port/oc_random.h"
+#include "oic/messaging/coap/constants.h"
+#include "messaging/coap/engine.h"
+#include "oic/messaging/coap/oc_coap.h"
+
+#include "oic/port/oc_random.h"
 #include "port/oc_clock.h"
 #include "port/mynewt/adaptor.h"
 
 #include "api/oc_buffer.h"
-#include "oc_core_res.h"
-#include "oc_discovery.h"
-#include "oc_ri.h"
-#include "oc_uuid.h"
-#include "oc_priv.h"
+#include "oic/oc_core_res.h"
+#include "oic/oc_discovery.h"
+#include "oic/oc_ri.h"
+#include "oic/oc_uuid.h"
+#include "api/oc_priv.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_acl.h"

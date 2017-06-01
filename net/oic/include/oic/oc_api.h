@@ -17,12 +17,12 @@
 #ifndef OC_API_H
 #define OC_API_H
 
-#include "../src/port/mynewt/config.h"
-#include "../src/messaging/coap/oc_coap.h"
+#include "oic/port/mynewt/config.h"
 #include "oic/oc_ri.h"
 #include "oic/oc_api.h"
-#include "../src/port/oc_signal_main_loop.h"
-#include "../src/port/oc_storage.h"
+#include "oic/port/oc_storage.h"
+#include "oic/messaging/coap/coap.h"
+#include "oic/messaging/coap/separate.h"
 
 #ifdef __cplusplus
 extern "C" {

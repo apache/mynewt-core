@@ -16,8 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "../oc_random.h"
 #include <stdlib.h>
+
+#include "port/oc_random.h"
 
 void oc_random_init(unsigned short seed)
 {

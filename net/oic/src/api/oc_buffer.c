@@ -16,19 +16,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <syscfg/syscfg.h>
+
 #include <os/os_eventq.h>
 #include <os/os_mempool.h>
 #include <os/os_mbuf.h>
 
+#include "oic/port/mynewt/config.h"
 #include "messaging/coap/engine.h"
-#include "port/oc_signal_main_loop.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"
 #endif
 
-#include "config.h"
-#include "oc_buffer.h"
+#include "api/oc_buffer.h"
 
 #include "port/mynewt/adaptor.h"
 

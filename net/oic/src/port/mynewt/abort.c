@@ -17,8 +17,11 @@
  * under the License.
  */
 
-#include "../oc_assert.h"
+#include <syscfg/syscfg.h>
+
 #include <assert.h>
+
+#include "port/oc_assert.h"
 
 #ifndef abort_impl
 

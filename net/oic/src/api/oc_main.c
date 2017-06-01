@@ -17,11 +17,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
 #include "port/oc_assert.h"
 #include "port/oc_clock.h"
-#include "port/oc_connectivity.h"
+#include "oic/port/oc_connectivity.h"
 
-#include "oc_api.h"
+#include "oic/oc_api.h"
+#include "oic/oc_log.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"

@@ -14,10 +14,13 @@
  // limitations under the License.
  */
 
+#include <syscfg/syscfg.h>
+
 #include <os/os_mbuf.h>
 
+#include "oic/port/mynewt/config.h"
 #include "oic/oc_core_res.h"
-#include "messaging/coap/oc_coap.h"
+#include "oic/messaging/coap/oc_coap.h"
 #include "oic/oc_rep.h"
 #include "oic/oc_ri.h"
 
