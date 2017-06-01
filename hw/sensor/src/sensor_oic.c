@@ -51,15 +51,9 @@ static const char g_s_oic_dn[] = "x.mynewt.snsr.";
 static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 {
-    int rc;
     sensor_type_t type;
 
     type = *(sensor_type_t *)arg;
-
-    if (!sensor_mgr_match_bytype(sensor, &type)) {
-        rc = SYS_ENOENT;
-        goto err;
-    }
 
     switch(type) {
         /* Gyroscope supported */
@@ -321,7 +315,7 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
 
     return 0;
 err:
-    return rc;
+    return SYS_EINVAL;
 }
 
 static int
@@ -382,11 +376,19 @@ sensor_typename_to_type(char *typename, sensor_type_t *type,
     } else if (!strcmp(typename, "udef2")) {
         /* User defined sensor type 2 */
         *type = SENSOR_TYPE_USER_DEFINED_2;
+    } else if (!strcmp(typename, "udef3")) {
+        /* User defined sensor type 3 */
+        *type = SENSOR_TYPE_USER_DEFINED_3;
+    } else if (!strcmp(typename, "udef4")) {
+        /* User defined sensor type 4 */
+        *type = SENSOR_TYPE_USER_DEFINED_4;
+    } else if (!strcmp(typename, "udef5")) {
+        /* User defined sensor type 5 */
+        *type = SENSOR_TYPE_USER_DEFINED_5;
+    } else if (!strcmp(typename, "udef6")) {
+        /* User defined sensor type 6 */
+        *type = SENSOR_TYPE_USER_DEFINED_6;
     } else {
-        goto err;
-    }
-
-    if (!(*type & sensor->s_types)) {
         goto err;
     }
 
@@ -399,6 +401,11 @@ static int
 sensor_type_to_typename(char **typename, sensor_type_t type,
                         struct sensor *sensor)
 {
+
+    if (!sensor_mgr_match_bytype(sensor, (void *)&type)) {
+        goto err;
+    }
+
     switch(type) {
         /* Accelerometer functionality supported */
         case SENSOR_TYPE_ACCELEROMETER:
@@ -472,12 +479,24 @@ sensor_type_to_typename(char **typename, sensor_type_t type,
         case SENSOR_TYPE_USER_DEFINED_2:
             *typename = "udef2";
             break;
+        /* User defined sensor type 3 */
+        case SENSOR_TYPE_USER_DEFINED_3:
+            *typename = "udef3";
+            break;
+        /* User defined sensor type 4 */
+        case SENSOR_TYPE_USER_DEFINED_4:
+            *typename = "udef4";
+            break;
+        /* User defined sensor type 5 */
+        case SENSOR_TYPE_USER_DEFINED_5:
+            *typename = "udef5";
+            break;
+        /* User defined sensor type 6 */
+        case SENSOR_TYPE_USER_DEFINED_6:
+            *typename = "udef6";
+            break;
         default:
             goto err;
-    }
-
-    if (!(type & sensor->s_types)) {
-        goto err;
     }
 
     return SYS_EOK;
@@ -573,6 +592,7 @@ sensor_oic_init(void)
     oc_resource_t *res;
     struct sensor *sensor;
     char tmpstr[COAP_MAX_URI];
+    sensor_type_t type;
     char *typename;
     int i;
     int rc;
@@ -597,8 +617,9 @@ sensor_oic_init(void)
 
         /* Iterate through N types of sensors */
         while (i < 32) {
-            if (sensor->s_types & (1 << i)) {
-                rc = sensor_type_to_typename(&typename, (1 << i), sensor);
+            type = (1 << i);
+            if (sensor_mgr_match_bytype(sensor, &type)) {
+                rc = sensor_type_to_typename(&typename, type, sensor);
                 if (rc) {
                     break;
                 }
