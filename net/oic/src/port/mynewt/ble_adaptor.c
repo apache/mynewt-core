@@ -98,8 +98,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
                 /* Characteristic: Request */
                 .uuid = &oc_gatt_req_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
-                .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP |
-                         BLE_GATT_CHR_F_NOTIFY,
+                .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
                 .val_handle = &oc_ble_coap_req_handle,
             },{
                 /* Characteristic: Response */
