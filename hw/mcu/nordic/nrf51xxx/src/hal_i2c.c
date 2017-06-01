@@ -166,14 +166,14 @@ hal_i2c_clear_bus(struct nrf51_hal_i2c_cfg *cfg)
 {
     int i;
 
-    //Input connected, standard-low disconnected-high, pull-ups
+    /* Input connected, standard-low disconnected-high, pull-ups */
     NRF_GPIO->PIN_CNF[cfg->scl_pin] = NRF51_SCL_PIN_CONF;
     NRF_GPIO->PIN_CNF[cfg->sda_pin] = NRF51_SDA_PIN_CONF;
 
     hal_gpio_write(cfg->scl_pin, 1);
     hal_gpio_write(cfg->sda_pin, 1);
 
-    //Still with input buffer connected, the direction is output
+    /* Still with input buffer connected, the direction is output */
     NRF_GPIO->DIRSET = ((1<<cfg->scl_pin)|(1<<cfg->sda_pin));
 
     hal_i2c_delay_us(4);
