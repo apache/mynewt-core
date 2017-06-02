@@ -554,6 +554,15 @@ cmd_adv(int argc, char **argv)
  * $connect                                                                  *
  *****************************************************************************/
 
+static struct kv_pair cmd_ext_phy_opts[] = {
+    { "none",        0x00 },
+    { "1M",          0x01 },
+    { "coded",       0x02 },
+    { "both",        0x03 },
+    { "all",         0x04 },
+    { NULL }
+};
+
 static void
 bletiny_conn_help(void)
 {
@@ -561,6 +570,7 @@ bletiny_conn_help(void)
     console_printf("\thelp\n");
     console_printf("\tcancel\n");
     console_printf("Available conn params: \n");
+    help_cmd_kv_dflt("ext", cmd_ext_phy_opts, 0);
     help_cmd_kv_dflt("peer_addr_type", cmd_peer_addr_types, BLE_ADDR_PUBLIC);
     help_cmd_byte_stream_exact_length("peer_addr", 6);
     help_cmd_kv_dflt("own_addr_type", cmd_own_addr_types,
@@ -574,17 +584,35 @@ bletiny_conn_help(void)
     help_cmd_uint16_dflt("min_ce_len", 0x0010);
     help_cmd_uint16_dflt("max_ce_len", 0x0300);
     help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, 0);
+    console_printf("Available conn params when ext != none: \n");
+    help_cmd_uint16_dflt("coded_scan_itvl", 0x0010);
+    help_cmd_uint16_dflt("coded_scan_window", 0x0010);
+    help_cmd_uint16_dflt("coded_itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+    help_cmd_uint16_dflt("coded_itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+    help_cmd_uint16_dflt("coded_latency", 0);
+    help_cmd_uint16_dflt("coded_timeout", 0x0100);
+    help_cmd_uint16_dflt("coded_min_ce_len", 0x0010);
+    help_cmd_uint16_dflt("coded_max_ce_len", 0x0300);
+    help_cmd_uint16_dflt("2M_itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+    help_cmd_uint16_dflt("2M_itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+    help_cmd_uint16_dflt("2M_latency", 0);
+    help_cmd_uint16_dflt("2M_timeout", 0x0100);
+    help_cmd_uint16_dflt("2M_min_ce_len", 0x0010);
+    help_cmd_uint16_dflt("2M_max_ce_len", 0x0300);
 }
 
 static int
 cmd_conn(int argc, char **argv)
 {
-    struct ble_gap_conn_params params;
+    struct ble_gap_conn_params phy_1M_params = {0};
+    struct ble_gap_conn_params phy_coded_params = {0};
+    struct ble_gap_conn_params phy_2M_params = {0};
     int32_t duration_ms;
     ble_addr_t peer_addr;
     ble_addr_t *peer_addr_param = &peer_addr;
     int own_addr_type;
     int rc;
+    uint8_t ext;
 
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
         bletiny_conn_help();
@@ -600,6 +628,15 @@ cmd_conn(int argc, char **argv)
 
         return 0;
     }
+
+    ext = parse_arg_kv_default("ext", cmd_ext_phy_opts, 0, &rc);
+    if (rc != 0) {
+        help_cmd_kv_dflt("ext", cmd_ext_phy_opts, 0);
+        console_printf("invalid 'ext' parameter\n");
+        return rc;
+    }
+
+    console_printf("Connection type: %d\n", ext);
 
     peer_addr.type = parse_arg_kv_default("peer_addr_type", cmd_peer_addr_types,
                                           BLE_ADDR_PUBLIC, &rc);
@@ -634,21 +671,21 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
-    params.scan_itvl = parse_arg_uint16_dflt("scan_itvl", 0x0010, &rc);
+    phy_1M_params.scan_itvl = parse_arg_uint16_dflt("scan_itvl", 0x0010, &rc);
     if (rc != 0) {
         console_printf("invalid 'scan_itvl' parameter\n");
         help_cmd_uint16_dflt("scan_itvl", 0x0010);
         return rc;
     }
 
-    params.scan_window = parse_arg_uint16_dflt("scan_window", 0x0010, &rc);
+    phy_1M_params.scan_window = parse_arg_uint16_dflt("scan_window", 0x0010, &rc);
     if (rc != 0) {
         console_printf("invalid 'scan_window' parameter\n");
         help_cmd_uint16_dflt("scan_window", 0x0010);
         return rc;
     }
 
-    params.itvl_min = parse_arg_uint16_dflt(
+    phy_1M_params.itvl_min = parse_arg_uint16_dflt(
         "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
     if (rc != 0) {
         console_printf("invalid 'itvl_min' parameter\n");
@@ -656,7 +693,7 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
-    params.itvl_max = parse_arg_uint16_dflt(
+    phy_1M_params.itvl_max = parse_arg_uint16_dflt(
         "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
     if (rc != 0) {
         console_printf("invalid 'itvl_max' parameter\n");
@@ -664,28 +701,28 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
-    params.latency = parse_arg_uint16_dflt("latency", 0, &rc);
+    phy_1M_params.latency = parse_arg_uint16_dflt("latency", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'latency' parameter\n");
         help_cmd_uint16_dflt("latency", 0);
         return rc;
     }
 
-    params.supervision_timeout = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
+    phy_1M_params.supervision_timeout = parse_arg_uint16_dflt("timeout", 0x0100, &rc);
     if (rc != 0) {
         console_printf("invalid 'timeout' parameter\n");
         help_cmd_uint16_dflt("timeout", 0x0100);
         return rc;
     }
 
-    params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
+    phy_1M_params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
     if (rc != 0) {
         console_printf("invalid 'min_ce_len' parameter\n");
         help_cmd_uint16_dflt("min_ce_len", 0x0010);
         return rc;
     }
 
-    params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
+    phy_1M_params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
     if (rc != 0) {
         console_printf("invalid 'max_ce_len' parameter\n");
         help_cmd_uint16_dflt("max_ce_len", 0x0300);
@@ -699,13 +736,155 @@ cmd_conn(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_conn_initiate(own_addr_type, peer_addr_param, duration_ms,
-                               &params);
-    if (rc != 0) {
+    if (ext == 0x00) {
+        rc = bletiny_conn_initiate(own_addr_type, peer_addr_param, duration_ms,
+                                   &phy_1M_params);
         return rc;
     }
 
-    return 0;
+    if (ext == 0x01) {
+        rc = bletiny_ext_conn_initiate(own_addr_type, peer_addr_param,
+                                       duration_ms, &phy_1M_params, NULL, NULL);
+        return rc;
+    }
+
+    /* Get coded params */
+    phy_coded_params.scan_itvl = parse_arg_uint16_dflt("coded_scan_itvl",
+                                                           0x0010, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_scan_itvl' parameter\n");
+        help_cmd_uint16_dflt("coded_scan_itvl", 0x0010);
+        return rc;
+    }
+
+    phy_coded_params.scan_window = parse_arg_uint16_dflt("coded_scan_window",
+                                                         0x0010, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_scan_window' parameter\n");
+        help_cmd_uint16_dflt("coded_scan_window", 0x0010);
+        return rc;
+    }
+
+    phy_coded_params.itvl_min = parse_arg_uint16_dflt("coded_itvl_min",
+                                                      BLE_GAP_INITIAL_CONN_ITVL_MIN,
+                                                      &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_itvl_min' parameter\n");
+        help_cmd_uint16_dflt("coded_itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+        return rc;
+    }
+
+    phy_coded_params.itvl_max = parse_arg_uint16_dflt("coded_itvl_max",
+                                                      BLE_GAP_INITIAL_CONN_ITVL_MAX,
+                                                      &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_itvl_max' parameter\n");
+        help_cmd_uint16_dflt("coded_itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+        return rc;
+    }
+
+    phy_coded_params.latency =
+            parse_arg_uint16_dflt("coded_latency", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_latency' parameter\n");
+        help_cmd_uint16_dflt("coded_latency", 0);
+        return rc;
+    }
+
+    phy_coded_params.supervision_timeout =
+            parse_arg_uint16_dflt("coded_timeout", 0x0100, &rc);
+
+    if (rc != 0) {
+        console_printf("invalid 'coded_timeout' parameter\n");
+        help_cmd_uint16_dflt("coded_timeout", 0x0100);
+        return rc;
+    }
+
+    phy_coded_params.min_ce_len =
+            parse_arg_uint16_dflt("coded_min_ce_len", 0x0010, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_min_ce_len' parameter\n");
+        help_cmd_uint16_dflt("coded_min_ce_len", 0x0010);
+        return rc;
+    }
+
+    phy_coded_params.max_ce_len = parse_arg_uint16_dflt("coded_max_ce_len",
+                                                        0x0300, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'coded_max_ce_len' parameter\n");
+        help_cmd_uint16_dflt("coded_max_ce_len", 0x0300);
+        return rc;
+    }
+
+    /* Get 2M params */
+    phy_2M_params.itvl_min = parse_arg_uint16_dflt("2m_itvl_min",
+                                                   BLE_GAP_INITIAL_CONN_ITVL_MIN,
+                                                   &rc);
+    if (rc != 0) {
+        console_printf("invalid '2m_itvl_min' parameter\n");
+        help_cmd_uint16_dflt("2m_itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN);
+        return rc;
+    }
+
+    phy_2M_params.itvl_max = parse_arg_uint16_dflt("2m_itvl_max",
+                                  BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    if (rc != 0) {
+        console_printf("invalid '2m_itvl_max' parameter\n");
+        help_cmd_uint16_dflt("2m_itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX);
+        return rc;
+    }
+
+    phy_2M_params.latency =
+            parse_arg_uint16_dflt("2m_latency", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid '2m_latency' parameter\n");
+        help_cmd_uint16_dflt("2m_latency", 0);
+        return rc;
+    }
+
+    phy_2M_params.supervision_timeout = parse_arg_uint16_dflt("2m_timeout",
+                                                              0x0100, &rc);
+
+    if (rc != 0) {
+        console_printf("invalid '2m_timeout' parameter\n");
+        help_cmd_uint16_dflt("2m_timeout", 0x0100);
+        return rc;
+    }
+
+    phy_2M_params.min_ce_len = parse_arg_uint16_dflt("2m_min_ce_len", 0x0010,
+                                                     &rc);
+    if (rc != 0) {
+        console_printf("invalid '2m_min_ce_len' parameter\n");
+        help_cmd_uint16_dflt("2m_min_ce_len", 0x0010);
+        return rc;
+    }
+
+    phy_2M_params.max_ce_len = parse_arg_uint16_dflt("2m_max_ce_len",
+                                                        0x0300, &rc);
+    if (rc != 0) {
+        console_printf("invalid '2m_max_ce_len' parameter\n");
+        help_cmd_uint16_dflt("2m_max_ce_len", 0x0300);
+        return rc;
+    }
+
+    if (ext == 0x02) {
+        rc = bletiny_ext_conn_initiate(own_addr_type, peer_addr_param,
+                                       duration_ms, NULL, NULL, &phy_coded_params);
+        return rc;
+    }
+
+    if (ext == 0x03) {
+        rc = bletiny_ext_conn_initiate(own_addr_type, peer_addr_param,
+                                       duration_ms, &phy_1M_params, NULL,
+                                       &phy_coded_params);
+        return rc;
+    }
+
+    rc = bletiny_ext_conn_initiate(own_addr_type, peer_addr_param,
+                                           duration_ms, &phy_1M_params,
+                                           &phy_2M_params,
+                                           &phy_coded_params);
+    return rc;
 }
 
 /*****************************************************************************

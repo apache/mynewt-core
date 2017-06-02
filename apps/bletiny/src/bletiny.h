@@ -171,6 +171,11 @@ int bletiny_adv_stop(void);
 int bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
                           int32_t duration_ms,
                           struct ble_gap_conn_params *params);
+int bletiny_ext_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                              int32_t duration_ms,
+                              struct ble_gap_conn_params *phy_1m_params,
+                              struct ble_gap_conn_params *phy_2m_params,
+                              struct ble_gap_conn_params *phy_coded_params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
 int bletiny_wl_set(ble_addr_t *addrs, int addrs_count);
