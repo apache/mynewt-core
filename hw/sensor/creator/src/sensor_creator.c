@@ -255,10 +255,11 @@ config_lsm303dlhc_sensor(void)
     lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
     lsmcfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
     /* Device I2C addr for accelerometer */
-    lsmcfg.acc_addr = 0x1E;
+    lsmcfg.acc_addr = LSM303DLHC_ADDR_ACCEL;
     /* Device I2C addr for magnetometer */
-    lsmcfg.mag_addr = 0x19;
-    lsmcfg.mask = SENSOR_TYPE_ACCELEROMETER|
+    lsmcfg.mag_addr = LSM303DLHC_ADDR_MAG;
+
+    lsmcfg.mask = SENSOR_TYPE_LINEAR_ACCEL|
                   SENSOR_TYPE_MAGNETIC_FIELD;
 
     rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);

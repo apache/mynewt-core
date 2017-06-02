@@ -382,6 +382,8 @@ lsm303dlhc_config(struct lsm303dlhc *lsm, struct lsm303dlhc_cfg *cfg)
     }
 
     lsm->cfg.mask = cfg->mask;
+    lsm->cfg.mag_addr = cfg->mag_addr;
+    lsm->cfg.acc_addr = cfg->acc_addr;
 
     return 0;
 err:

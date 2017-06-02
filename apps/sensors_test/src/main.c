@@ -29,25 +29,6 @@
 #include <log/log.h>
 #include <config/config.h>
 #include <sensor/sensor.h>
-#if ARCH_sim
-#include <sim/sim_accel.h>
-#endif
-#if MYNEWT_VAL(LSM303DLHC_OFB)
-#include <lsm303dlhc/lsm303dlhc.h>
-#endif
-#if MYNEWT_VAL(TSL2561_OFB)
-#include <tsl2561/tsl2561.h>
-#endif
-#if MYNEWT_VAL(TCS34725_OFB)
-#include <tcs34725/tcs34725.h>
-#endif
-#if MYNEWT_VAL(BNO055_OFB)
-#include <bno055/bno055.h>
-#endif
-#if MYNEWT_VAL(BME280_ONB)||MYNEWT_VAL(BME280_OFB)
-#include <bme280/bme280.h>
-#endif
-
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
 #include <assert.h>

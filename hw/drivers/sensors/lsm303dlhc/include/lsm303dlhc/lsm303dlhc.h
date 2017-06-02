@@ -68,6 +68,9 @@ enum lsm303dlhc_mag_rate {
     LSM303DLHC_MAG_RATE_220             = 0x07 << 2   /* 220 Hz  */
 };
 
+#define LSM303DLHC_ADDR_ACCEL                  0x19  /* 0011001 */
+#define LSM303DLHC_ADDR_MAG                    0x1E  /* 0011110 */
+
 struct lsm303dlhc_cfg {
     enum lsm303dlhc_accel_range accel_range;
     enum lsm303dlhc_accel_rate accel_rate;
