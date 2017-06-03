@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,27 +17,12 @@
 # under the License.
 #
 
-pkg.name: kernel/os
-pkg.description: Mynewt operating system core.
+pkg.name: kernel/sim
+pkg.description: Simulated OS scheduler; used by native BSPs.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - sim
 
 pkg.deps:
-    - sys/sysinit
-    - util/mem
-
-pkg.req_apis:
-    - console
-
-pkg.deps.OS_CLI:
-    - sys/shell
-
-pkg.deps.OS_COREDUMP:
-    - sys/coredump
-
-pkg.deps.BSP_SIMULATED:
-    - "@apache-mynewt-core/kernel/sim"
-
-pkg.init:
-    os_pkg_init: 0
+    - "@apache-mynewt-core/kernel/os"

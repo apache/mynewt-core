@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,38 +17,43 @@
  * under the License.
  */
 
-#ifndef _OS_SCHED_H
-#define _OS_SCHED_H
-
-#include "os/os_task.h"
+#ifndef H_KERNEL_SIM_
+#define H_KERNEL_SIM_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <setjmp.h>
+#include "os/os_arch.h"
+#include "os/os_error.h"
+#include "os/os_time.h"
 struct os_task;
+struct stack_frame;
 
-TAILQ_HEAD(os_task_list, os_task);
+struct stack_frame {
+    int sf_mainsp;              /* stack on which main() is executing */
+    sigjmp_buf sf_jb;
+    struct os_task *sf_task;
+};
 
-extern struct os_task *g_current_task;
-extern struct os_task_list g_os_run_list;
-extern struct os_task_list g_os_sleep_list;
-
-void os_sched_ctx_sw_hook(struct os_task *);
-struct os_task *os_sched_get_current_task(void);
-void os_sched_set_current_task(struct os_task *);
-struct os_task *os_sched_next_task(void);
-void os_sched(struct os_task *);
-void os_sched_os_timer_exp(void);
-os_error_t os_sched_insert(struct os_task *);
-int os_sched_sleep(struct os_task *, os_time_t nticks);
-int os_sched_wakeup(struct os_task *);
-int os_sched_remove(struct os_task *);
-void os_sched_resort(struct os_task *);
-os_time_t os_sched_wakeup_ticks(os_time_t now);
+void sim_task_start(struct stack_frame *sf, int rc);
+os_stack_t *sim_task_stack_init(struct os_task *t, os_stack_t *stack_top,
+                                int size);
+os_error_t sim_os_start(void);
+void sim_os_stop(void);
+os_error_t sim_os_init(void);
+void sim_ctx_sw(struct os_task *next_t);
+os_sr_t sim_save_sr(void);
+void sim_restore_sr(os_sr_t osr);
+int sim_in_critical(void);
+void sim_tick_idle(os_time_t ticks);
+void sim_assert_fail(const char *file, int line, const char *func,
+                     const char *e)
+                     __attribute((noreturn));
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _OS_SCHED_H */
+#endif

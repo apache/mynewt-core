@@ -36,6 +36,8 @@ struct os_callout {
     TAILQ_ENTRY(os_callout) c_next;
 };
 
+TAILQ_HEAD(os_callout_list, os_callout);
+
 void os_callout_init(struct os_callout *cf, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg);
 void os_callout_stop(struct os_callout *);
