@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -6,7 +5,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,19 +16,14 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/native-armv7
-pkg.type: bsp
-pkg.description: BSP definition for native (ARMv7) applications.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - native
-    - bsp
+define hook-stop
+handle SIGALRM nopass
+end
 
-pkg.deps:
-    - hw/mcu/native
-    - hw/drivers/uart/uart_hal
-    - net/ip/native_sockets
+define hook-run
+handle SIGALRM pass
+end
 
-pkg.deps.BLE_DEVICE:
-    - hw/drivers/nimble/native
+define hook-continue
+handle SIGALRM pass
+end

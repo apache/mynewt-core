@@ -1,4 +1,4 @@
-#
+#!/bin/sh
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -7,8 +7,8 @@
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
 # 
-#  http://www.apache.org/licenses/LICENSE-2.0
-#
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -17,19 +17,27 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/native-armv7
-pkg.type: bsp
-pkg.description: BSP definition for native (ARMv7) applications.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - native
-    - bsp
+# Called with following variables set:
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+#  - RESET set if target should be reset when attaching
 
-pkg.deps:
-    - hw/mcu/native
-    - hw/drivers/uart/uart_hal
-    - net/ip/native_sockets
+if [ -z "$BSP_PATH" ]; then
+    echo "Need binary to debug"
+    exit 1
+fi
 
-pkg.deps.BLE_DEVICE:
-    - hw/drivers/nimble/native
+if [ -z "$BIN_BASENAME" ]; then
+    echo "Need binary to debug"
+    exit 1
+fi
+
+GDB_SCRIPT_PATH=$BSP_PATH/sim.gdb
+FILE_NAME=$BIN_BASENAME.elf
+
+echo "Debugging" $FILE_NAME
+
+gdb -x $GDB_SCRIPT_PATH $FILE_NAME
