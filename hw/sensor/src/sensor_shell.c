@@ -40,6 +40,7 @@
 #include "sensor/temperature.h"
 #include "sensor/pressure.h"
 #include "sensor/humidity.h"
+#include "sensor/gyro.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
@@ -249,6 +250,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
     struct sensor_temp_data *std;
     struct sensor_press_data *spd;
     struct sensor_humid_data *shd;
+    struct sensor_gyro_data *sgd;
     char tmpstr[13];
 
     ctx = (struct sensor_shell_read_ctx *) arg;
@@ -287,6 +289,20 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         }
         if (smd->smd_z_is_valid) {
             console_printf("z = %s ", sensor_ftostr(smd->smd_z, tmpstr, 13));
+        }
+        console_printf("\n");
+    }
+
+    if (ctx->type == SENSOR_TYPE_GYROSCOPE) {
+        sgd = (struct sensor_gyro_data *) data;
+        if (sgd->sgd_x_is_valid) {
+            console_printf("x = %s ", sensor_ftostr(sgd->sgd_x, tmpstr, 13));
+        }
+        if (sgd->sgd_y_is_valid) {
+            console_printf("y = %s ", sensor_ftostr(sgd->sgd_y, tmpstr, 13));
+        }
+        if (sgd->sgd_z_is_valid) {
+            console_printf("z = %s ", sensor_ftostr(sgd->sgd_z, tmpstr, 13));
         }
         console_printf("\n");
     }
