@@ -17,6 +17,11 @@
 # under the License.
 #
 
+syscfg.defs:
+    BSP_SIMULATED:
+        description: Indicates that Mynewt is being hosted in another OS.
+        value: 1
+
 syscfg.vals:
     # Sim isn't flash constrained, so include filename, line number, and
     # message in asserts and sysinit panic messages.

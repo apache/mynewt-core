@@ -16,26 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 
-#include "os/os.h"
-#include "os_priv.h"
+#ifndef H_OS_ERROR_
+#define H_OS_ERROR_
 
-void
-__assert_func(const char *file, int line, const char *func, const char *e)
-{
-    char msg[256];
-    int len;
+#include "syscfg/syscfg.h"
 
-    if (file) {
-        snprintf(msg, sizeof(msg), "assert @ %s:%d\n", file, line);
-    } else {
-        snprintf(msg, sizeof(msg), "assert @ %p\n",
-                 __builtin_return_address(0));
-    }
-    len = write(1, msg, strlen(msg));
-    (void)len;
-    _Exit(1);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* OS error enumerations */
+enum os_error {
+    OS_OK = 0,
+    OS_ENOMEM = 1,
+    OS_EINVAL = 2,
+    OS_INVALID_PARM = 3,
+    OS_MEM_NOT_ALIGNED = 4,
+    OS_BAD_MUTEX = 5,
+    OS_TIMEOUT = 6,
+    OS_ERR_IN_ISR = 7,      /* Function cannot be called from ISR */
+    OS_ERR_PRIV = 8,        /* Privileged access error */
+    OS_NOT_STARTED = 9,     /* OS must be started to call this function, but isn't */
+    OS_ENOENT = 10,         /* No such thing */
+    OS_EBUSY = 11,          /* Resource busy */
+    OS_ERROR = 12,          /* Generic Error */
+};
+
+typedef enum os_error os_error_t;
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif
