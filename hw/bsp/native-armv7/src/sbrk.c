@@ -16,24 +16,45 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdio.h>
-#include <string.h>
+
+#include <sys/mman.h>
 #include <unistd.h>
 
-#include "os/os.h"
-#include "os_priv.h"
+#include <hal/hal_bsp.h>
 
-void
-__assert_func(const char *file, int line, const char *func, const char *e)
+extern int getpagesize(void);
+
+static void *cont;
+static int sys_pagesize;
+static int cont_left;
+
+void *
+_sbrk(int incr)
 {
-    char msg[256];
+    void *result;
 
-    if (file) {
-        snprintf(msg, sizeof(msg), "assert @ %s:%d\n", file, line);
-    } else {
-        snprintf(msg, sizeof(msg), "assert @ %p\n",
-                 __builtin_return_address(0));
+    if (!sys_pagesize) {
+        sys_pagesize = getpagesize();
     }
-    write(1, msg, strlen(msg));
-    _exit(1);
+    if (cont && incr <= cont_left) {
+        result = cont;
+        cont_left -= incr;
+        if (cont_left) {
+            cont = (char *)cont + incr;
+        } else {
+            cont = NULL;
+        }
+        return result;
+    }
+    result = mmap(NULL, incr, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED,
+      -1, 0);
+    if (result) {
+        cont_left = sys_pagesize - (incr % sys_pagesize);
+        if (cont_left) {
+            cont = (char *)result + incr;
+        } else {
+            cont = NULL;
+        }
+    }
+    return result;
 }
