@@ -82,7 +82,6 @@ pkg.cflags:
     - '-DTWIS0_ENABLED=1'
     - '-DTWIS1_ENABLED=0'
     - '-DUART0_ENABLED=1'
-    - '-DUART1_ENABLED=1'
     - '-DWDT_ENABLED=1'
 
 pkg.cflags.HARDFLOAT:
@@ -99,4 +98,4 @@ pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
 
 pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
+    - hw/drivers/uart/uart_bitbang
