@@ -20,8 +20,6 @@
 #ifndef OC_GATT_H
 #define OC_GATT_H
 
-#include "host/ble_uuid.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

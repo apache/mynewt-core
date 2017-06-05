@@ -17,8 +17,9 @@
 #ifndef OC_CONNECTIVITY_H
 #define OC_CONNECTIVITY_H
 
-#include "mynewt/config.h"
 #include <stdint.h>
+
+#include "oic/port/mynewt/config.h"
 
 #ifdef __cplusplus
 extern "C" {

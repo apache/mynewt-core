@@ -37,19 +37,21 @@
 #include <stddef.h> /* for size_t */
 #include <stdint.h>
 
-#include "conf.h"
-#include "constants.h"
+#include <syscfg/syscfg.h>
+
+#include <stats/stats.h>
+
+#include "oic/port/mynewt/config.h"
+#include "oic/messaging/coap/conf.h"
+#include "oic/messaging/coap/constants.h"
+#include "oic/oc_log.h"
+#include "oic/port/oc_connectivity.h"
+#include "oic/port/oc_random.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stats/stats.h>
-/* OIC stack headers */
-#include "../src/port/mynewt/config.h"
-#include "oic/oc_log.h"
-#include "../src/port/oc_connectivity.h"
-#include "../src/port/oc_random.h"
 
 #ifndef MAX
 #define MAX(n, m) (((n) < (m)) ? (m) : (n))

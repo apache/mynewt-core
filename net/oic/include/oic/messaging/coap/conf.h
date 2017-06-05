@@ -31,55 +31,49 @@
  * This file is part of the Contiki operating system.
  */
 
-#ifndef SEPARATE_H
-#define SEPARATE_H
+#ifndef CONF_H
+#define CONF_H
 
-#include "coap.h"
-#include "transactions.h"
+#include "oic/port/mynewt/config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
-/* OIC stack headers */
-#include "oc_coap.h"
-#include "oic/oc_ri.h"
+/* Features that can be disabled to achieve smaller memory footprint */
+#define COAP_LINK_FORMAT_FILTERING 0
+#define COAP_PROXY_OPTION_PROCESSING 0
 
-typedef struct coap_separate {
-    SLIST_ENTRY(coap_separate) next;
-    coap_message_type_t type;
+/* The number of concurrent messages that can be stored for retransmission in
+ * the transaction layer. */
+#ifndef COAP_MAX_OPEN_TRANSACTIONS
+#define COAP_MAX_OPEN_TRANSACTIONS (MAX_NUM_CONCURRENT_REQUESTS)
+#endif /* COAP_MAX_OPEN_TRANSACTIONS */
 
-    uint8_t token_len;
-    uint8_t token[COAP_TOKEN_LEN];
+/* Maximum number of failed request attempts before action */
+#ifndef COAP_MAX_ATTEMPTS
+#define COAP_MAX_ATTEMPTS 2
+#endif /* COAP_MAX_ATTEMPTS */
 
-    uint32_t block1_num;
-    uint16_t block1_size;
+/* Conservative size limit, as not all options have to be set at the same time.
+ * Check when Proxy-Uri option is used */
+#ifndef COAP_MAX_HEADER_SIZE /*     Hdr                  CoF  If-Match         \
+                                Obs Blo strings   */
+#define COAP_MAX_HEADER_SIZE                                                   \
+  (4 + COAP_TOKEN_LEN + 3 + 1 + COAP_ETAG_LEN + 4 + 4 + 30) /* 65 */
+#endif /* COAP_MAX_HEADER_SIZE */
 
-    uint32_t block2_num;
-    uint16_t block2_size;
+/* Number of observer slots (each takes abot xxx bytes) */
+#ifndef COAP_MAX_OBSERVERS
+#define COAP_MAX_OBSERVERS (MAX_APP_RESOURCES + MAX_NUM_CONCURRENT_REQUESTS)
+#endif /* COAP_MAX_OBSERVERS */
 
-    int32_t observe;
-
-    oc_endpoint_t endpoint;
-} coap_separate_t;
-
-struct coap_packet;
-int coap_separate_accept(struct coap_packet_rx *request,
-                         struct oc_separate_response *separate_response,
-                         oc_endpoint_t *endpoint, int observe);
-void coap_separate_resume(struct coap_packet *response,
-                          struct coap_separate *separate_store,
-                          uint8_t code, uint16_t mid);
-void coap_separate_clear(struct oc_separate_response *separate_response,
-                         struct coap_separate *separate_store);
-
-void coap_separate_init(void);
-
-#endif
+/* Interval in notifies in which NON notifies are changed to CON notifies to
+ * check client. */
+#define COAP_OBSERVE_REFRESH_INTERVAL 20
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SEPARATE_H */
+#endif /* CONF_H */

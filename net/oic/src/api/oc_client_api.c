@@ -14,9 +14,12 @@
 // limitations under the License.
 */
 
-#include "messaging/coap/coap.h"
-#include "messaging/coap/transactions.h"
-#include "oc_api.h"
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
+#include "oic/messaging/coap/coap.h"
+#include "oic/messaging/coap/transactions.h"
+#include "oic/oc_api.h"
 #include "api/oc_buffer.h"
 
 #ifdef OC_CLIENT

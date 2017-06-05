@@ -14,13 +14,16 @@
 // limitations under the License.
 */
 
-#include "oc_uuid.h"
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <syscfg/syscfg.h>
+
 #include <hal/hal_bsp.h>
+
+#include "oic/oc_uuid.h"
 
 void
 oc_str_to_uuid(const char *str, oc_uuid_t *uuid)

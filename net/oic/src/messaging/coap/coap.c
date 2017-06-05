@@ -35,8 +35,11 @@
 #include <string.h>
 #include <assert.h>
 
-#include "coap.h"
-#include "transactions.h"
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
+#include "oic/messaging/coap/coap.h"
+#include "oic/messaging/coap/transactions.h"
 
 #include "api/oc_buffer.h"
 #ifdef OC_SECURITY
@@ -486,7 +489,8 @@ err_mem:
 void
 coap_send_message(struct os_mbuf *m, int dup)
 {
-    OC_LOG_INFO("coap_send_message(): (%u)\n", OS_MBUF_PKTLEN(m));
+    OC_LOG_INFO("coap_send_message(): (%u) %s\n", OS_MBUF_PKTLEN(m),
+      dup ? "dup" : "");
 
     STATS_INC(coap_stats, oframe);
 
@@ -570,11 +574,11 @@ coap_parse_message(struct coap_packet_rx *pkt, struct os_mbuf **mp)
     }
     if (m->om_len < opt_len) {
         m = os_mbuf_pullup(m, opt_len);
+        *mp = m;
         if (!m) {
             STATS_INC(coap_stats, imem);
             return INTERNAL_SERVER_ERROR_5_00;
         }
-        *mp = m;
     }
     pkt->m = m;
 
@@ -648,7 +652,7 @@ err_short:
     }
     cur_opt += pkt->token_len;
 
-    OC_LOG_DEBUG("Token (len %u) ");
+    OC_LOG_DEBUG("Token (len %u) ", pkt->token_len);
     OC_LOG_HEX(LOG_LEVEL_DEBUG, pkt->token, pkt->token_len);
 
     /* parse options */
@@ -755,8 +759,7 @@ err_short:
             pkt->proxy_uri_off = cur_opt;
             pkt->proxy_uri_len = opt_len;
 #endif
-            OC_LOG_DEBUG("Proxy-Uri NOT IMPLEMENTED [%s]\n",
-                         (char *)pkt->proxy_uri);
+            OC_LOG_DEBUG("Proxy-Uri NOT IMPLEMENTED\n");
             coap_error_message =
               "This is a constrained server (MyNewt)";
             STATS_INC(coap_stats, ierr);
@@ -767,8 +770,7 @@ err_short:
             pkt->proxy_scheme_off = cur_opt;
             pkt->proxy_scheme_len = opt_len;
 #endif
-            OC_LOG_DEBUG("Proxy-Scheme NOT IMPLEMENTED [%s]\n",
-                         pkt->proxy_scheme);
+            OC_LOG_DEBUG("Proxy-Scheme NOT IMPLEMENTED\n");
             coap_error_message =
               "This is a constrained server (MyNewt)";
             STATS_INC(coap_stats, ierr);

@@ -34,10 +34,10 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "coap.h"
-#include "observe.h"
-#include "separate.h"
-#include "transactions.h"
+#include "oic/messaging/coap/coap.h"
+#include "oic/messaging/coap/observe.h"
+#include "oic/messaging/coap/separate.h"
+#include "oic/messaging/coap/transactions.h"
 
 #ifdef __cplusplus
 extern "C" {

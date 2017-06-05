@@ -17,7 +17,7 @@
 #ifndef OC_COAP_H
 #define OC_COAP_H
 
-#include "separate.h"
+#include "oic/messaging/coap/separate.h"
 
 #ifdef __cplusplus
 extern "C" {

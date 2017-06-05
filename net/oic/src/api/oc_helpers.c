@@ -16,7 +16,11 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "oc_helpers.h"
+
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
+#include "oic/oc_helpers.h"
 
 void
 oc_new_string(oc_string_t *os, const char str[])

@@ -31,21 +31,23 @@
  * This file is part of the Contiki operating system.
  */
 
-#include "config.h"
-
-#ifdef OC_SERVER
-
 #include <stdio.h>
 #include <string.h>
+
+#include <syscfg/syscfg.h>
 
 #include <os/os_mempool.h>
 #include <os/queue.h>
 
-#include "observe.h"
+#include "oic/port/mynewt/config.h"
 
-#include "oc_coap.h"
-#include "oc_rep.h"
-#include "oc_ri.h"
+#ifdef OC_SERVER
+
+#include "oic/messaging/coap/observe.h"
+#include "oic/messaging/coap/oc_coap.h"
+#include "oic/oc_rep.h"
+#include "oic/oc_ri.h"
+
 /*-------------------*/
 uint64_t observe_counter = 3;
 /*---------------------------------------------------------------------------*/
