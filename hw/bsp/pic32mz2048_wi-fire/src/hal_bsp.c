@@ -46,7 +46,11 @@
 #pragma config FPLLODIV=1, FPLLMULT=49, FPLLICLK=0, FPLLRNG=1, FPLLIDIV=2
 /* USB off */
 #pragma config FUSBIDIO=0
-
+/*
+ * Watchdog in non-window mode, watchdog disabled during flash programming,
+ * period: 32s
+ */
+#pragma config WINDIS=1, WDTSPGM=1, WDTPS=15
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
