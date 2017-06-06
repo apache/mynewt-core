@@ -122,6 +122,12 @@ imgr_core_load(struct mgmt_cbuf *cb)
     g_err |= cbor_encode_text_stringz(&cb->encoder, "data");
     g_err |= cbor_encode_byte_string(&cb->encoder, data, sz);
 
+    /* Only include length in first response. */
+    if (off == 0) {
+        g_err |= cbor_encode_text_stringz(&cb->encoder, "len");
+        g_err |= cbor_encode_uint(&cb->encoder, hdr->ch_size);
+    }
+
     flash_area_close(fa);
     if (g_err) {
         return MGMT_ERR_ENOMEM;
