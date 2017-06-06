@@ -15,7 +15,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 #ifndef __LORAMAC_BOARD_H__
 #define __LORAMAC_BOARD_H__
 
-#include "lora_priv.h"
+#include "node/lora_priv.h"
 
 /*!
  * Returns individual channel mask
