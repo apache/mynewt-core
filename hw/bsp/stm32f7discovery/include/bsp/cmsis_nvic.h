@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-#define NVIC_NUM_VECTORS      (16 + 109)   // CORE + MCU Peripherals
+#define NVIC_NUM_VECTORS      (16 + 98)   // CORE + MCU Peripherals
 #define NVIC_USER_IRQ_OFFSET  16
 
 #include "stm32f7xx.h"

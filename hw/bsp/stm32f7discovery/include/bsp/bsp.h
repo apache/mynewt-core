@@ -37,7 +37,6 @@ extern "C" {
 extern uint8_t _ram_start;
 extern uint8_t _dtcmram_start;
 extern uint8_t _itcmram_start;
-extern uint8_t _ram2_start;
 
 #define RAM_SIZE        (256 * 1024)
 #define DTCMRAM_SIZE    (64 * 1024)
