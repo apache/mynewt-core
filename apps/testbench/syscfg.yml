@@ -62,3 +62,11 @@ syscfg.vals:
 
     # Default task settings
     OS_MAIN_STACK_SIZE: 768
+
+    # OC server, with serial transport.
+    OC_SERVER: 1
+    OC_TRANSPORT_SERIAL: 1
+
+    # Optionally add OC BLE transport.
+syscfg.vals.TESTBENCH_BLE:
+    OC_TRANSPORT_GATT: 1
