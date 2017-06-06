@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32f767xx.s
+  * @file      startup_stm32f746xx.s
   * @author    MCD Application Team
-  * @version   V1.2.0
-  * @date      30-December-2016
-  * @brief     STM32F767xx Devices vector table for GCC based toolchain.
+  * @Version    V1.0.2
+  * @Date       21-September-2015
+  * @brief     STM32F746xx Devices vector table for GCC based toolchain.
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -16,7 +16,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -51,8 +51,7 @@
 .global  g_pfnVectors
 .global  Default_Handler
 
-/* start address for the initialization values of the .data section.
-defined in linker script */
+/* start address for the initialization values of the .data section.  defined in linker script */
 .word  _sidata
 /* start address for the .data section. defined in linker script */
 .word  _sdata
@@ -95,10 +94,8 @@ LoopCopyDataInit:
   adds  r2, r0, r1
   cmp  r2, r3
   bcc  CopyDataInit
-
   ldr  r2, =_sbss
   b  LoopFillZerobss
-
 /* Zero fill the bss segment. */
 FillZerobss:
   movs  r3, #0
@@ -274,18 +271,6 @@ __isr_vector:
   .word     I2C4_EV_IRQHandler                /* I2C4 Event                   */
   .word     I2C4_ER_IRQHandler                /* I2C4 Error                   */
   .word     SPDIF_RX_IRQHandler               /* SPDIF_RX                     */
-  .word     0                                 /* Reserved                     */
-  .word     DFSDM1_FLT0_IRQHandler            /* DFSDM1 Filter 0 global Interrupt */
-  .word     DFSDM1_FLT1_IRQHandler            /* DFSDM1 Filter 1 global Interrupt */
-  .word     DFSDM1_FLT2_IRQHandler            /* DFSDM1 Filter 2 global Interrupt */
-  .word     DFSDM1_FLT3_IRQHandler            /* DFSDM1 Filter 3 global Interrupt */
-  .word     SDMMC2_IRQHandler                 /* SDMMC2                       */
-  .word     CAN3_TX_IRQHandler                /* CAN3 TX                      */
-  .word     CAN3_RX0_IRQHandler               /* CAN3 RX0                     */
-  .word     CAN3_RX1_IRQHandler               /* CAN3 RX1                     */
-  .word     CAN3_SCE_IRQHandler               /* CAN3 SCE                     */
-  .word     JPEG_IRQHandler                   /* JPEG                         */
-  .word     MDIOS_IRQHandler                  /* MDIOS                        */
   .size     __isr_vector, . - __isr_vector
 
 /*******************************************************************************
@@ -616,37 +601,5 @@ __isr_vector:
    .weak      SPDIF_RX_IRQHandler
    .thumb_set SPDIF_RX_IRQHandler,Default_Handler
 
-   .weak      DFSDM1_FLT0_IRQHandler
-   .thumb_set DFSDM1_FLT0_IRQHandler,Default_Handler
-
-   .weak      DFSDM1_FLT1_IRQHandler
-   .thumb_set DFSDM1_FLT1_IRQHandler,Default_Handler
-
-   .weak      DFSDM1_FLT2_IRQHandler
-   .thumb_set DFSDM1_FLT2_IRQHandler,Default_Handler
-
-   .weak      DFSDM1_FLT3_IRQHandler
-   .thumb_set DFSDM1_FLT3_IRQHandler,Default_Handler
-
-   .weak      SDMMC2_IRQHandler
-   .thumb_set SDMMC2_IRQHandler,Default_Handler
-
-   .weak      CAN3_TX_IRQHandler
-   .thumb_set CAN3_TX_IRQHandler,Default_Handler
-
-   .weak      CAN3_RX0_IRQHandler
-   .thumb_set CAN3_RX0_IRQHandler,Default_Handler
-
-   .weak      CAN3_RX1_IRQHandler
-   .thumb_set CAN3_RX1_IRQHandler,Default_Handler
-
-   .weak      CAN3_SCE_IRQHandler
-   .thumb_set CAN3_SCE_IRQHandler,Default_Handler
-
-   .weak      JPEG_IRQHandler
-   .thumb_set JPEG_IRQHandler,Default_Handler
-
-   .weak      MDIOS_IRQHandler
-   .thumb_set MDIOS_IRQHandler,Default_Handler
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
