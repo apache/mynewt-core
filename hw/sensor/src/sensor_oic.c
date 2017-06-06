@@ -40,6 +40,7 @@
 #include "sensor/temperature.h"
 #include "sensor/pressure.h"
 #include "sensor/humidity.h"
+#include "sensor/gyro.h"
 
 /* OIC */
 #include <oic/oc_rep.h>
@@ -58,6 +59,27 @@ sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
     switch(type) {
         /* Gyroscope supported */
         case SENSOR_TYPE_GYROSCOPE:
+
+            if (((struct sensor_gyro_data *)(databuf))->sgd_x_is_valid) {
+                oc_rep_set_double(root, x,
+                    ((struct sensor_gyro_data *)(databuf))->sgd_x);
+            } else {
+                goto err;
+            }
+            if (((struct sensor_gyro_data *)(databuf))->sgd_y_is_valid) {
+                oc_rep_set_double(root, y,
+                    ((struct sensor_gyro_data *)(databuf))->sgd_y);
+            } else {
+                goto err;
+            }
+            if (((struct sensor_gyro_data *)(databuf))->sgd_z_is_valid) {
+                oc_rep_set_double(root, z,
+                    ((struct sensor_gyro_data *)(databuf))->sgd_z);
+            } else {
+                goto err;
+            }
+            break;
+
         /* Accelerometer functionality supported */
         case SENSOR_TYPE_ACCELEROMETER:
         /* Linear Accelerometer (Without Gravity) */
