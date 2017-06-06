@@ -31,7 +31,7 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jä
 #include "os/os.h"
 #include "hal/hal_timer.h"
 
-#include "lora_priv.h"
+#include "node/lora_priv.h"
 
 /*!
  * Maximum PHY layer payload size
@@ -1558,7 +1558,7 @@ static void OnMacStateCheckTimerEvent(void *unused)
                         LoRaMacFlags.Bits.MacDone = 0;
                         // Sends the same frame again
                         OnTxDelayedTimerEvent(NULL);
-                    }    
+                    }
                 }
             }
         }

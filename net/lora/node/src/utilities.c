@@ -22,7 +22,7 @@
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "node/utilities.h"
-#include "lora_priv.h"
+#include "node/lora_priv.h"
 
 int32_t
 randr(int32_t min, int32_t max)
@@ -56,7 +56,7 @@ round(double d)
 
 uint32_t
 TimerGetElapsedTime(uint32_t savedTime)
-{ 
+{
     return savedTime - os_cputime_get32();
 }
 
