@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef __SIM_ACCEL_H__
-#define __SIM_ACCEL_H__
+#ifndef __SENSOR_GYRO_H__
+#define __SENSOR_GYRO_H__
 
 #include "os/os.h"
 #include "os/os_dev.h"
@@ -28,25 +28,21 @@
 extern "C" {
 #endif
 
-struct sim_accel_cfg {
-    uint8_t sac_nr_samples;
-    uint8_t sac_nr_axises;
-    uint16_t sac_sample_itvl;
-    sensor_type_t sac_mask;
-};
-
-struct sim_accel {
-    struct os_dev sa_dev;
-    struct sensor sa_sensor;
-    struct sim_accel_cfg sa_cfg;
-    os_time_t sa_last_read_time;
-};
-
-int sim_accel_init(struct os_dev *, void *);
-int sim_accel_config(struct sim_accel *, struct sim_accel_cfg *);
+/* Data representing a singular read from a gyroscope
+ * All values are in degress per sec
+ */
+struct sensor_gyro_data {
+    float sgd_x;
+    float sgd_y;
+    float sgd_z;
+    /* Validity */
+    uint8_t sgd_x_is_valid:1;
+    uint8_t sgd_y_is_valid:1;
+    uint8_t sgd_z_is_valid:1;
+} __attribute__((packed));
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __SENSOR_SIM_H__ */
+#endif /* __SENSOR_GYRO_H__ */

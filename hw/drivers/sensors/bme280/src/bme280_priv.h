@@ -89,20 +89,22 @@ extern "C" {
 /**
  * Write multiple length data to BME280 sensor over SPI
  *
+ * @param The sensor interface
  * @param register address
  * @param variable length payload
  * @param length of the payload to write
  */
-int bme280_writelen(uint8_t addr, uint8_t *payload, uint8_t len);
+int bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
 
 /**
  * Read multiple length data from BME280 sensor over SPI
  *
+ * @param The sensor interface
  * @param register address
  * @param variable length payload
  * @param length of the payload to read
  */
-int bme280_readlen(uint8_t addr, uint8_t *payload, uint8_t len);
+int bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
 
 #ifdef __cplusplus
 }

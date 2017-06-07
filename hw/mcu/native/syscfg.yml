@@ -45,3 +45,7 @@ syscfg.defs:
             Unit tests should use 1.  Long-running sim processes should use 0.
 
         value: 1
+    MCU_NATIVE:
+        description: >
+            Set to indicate that we are using native mcu.
+        value: 1

@@ -117,6 +117,12 @@ typedef enum {
  */
 #define SENSOR_VALUE_TYPE_FLOAT_TRIPLET (4)
 
+/**
+ * Sensor interfaces
+ */
+#define SENSOR_ITF_SPI    (0)
+#define SENSOR_ITF_I2C    (1)
+#define SENSOR_ITF_UART   (2)
 
 /**
  * Configuration structure, describing a specific sensor type off of
@@ -166,17 +172,6 @@ struct sensor_listener {
 };
 
 /**
- * Get a more specific interface on this sensor object (e.g. Gyro, Magnometer),
- * which has additional functions for managing the sensor.
- *
- * @param The sensor to get the interface on
- * @param The type of sensor interface to get.
- *
- * @return void * A pointer to the specific interface requested, or NULL on failure.
- */
-typedef void *(*sensor_get_interface_func_t)(struct sensor *, sensor_type_t);
-
-/**
  * Read a single value from a sensor, given a specific sensor type
  * (e.g. SENSOR_TYPE_PROXIMITY).
  *
@@ -207,7 +202,6 @@ typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 struct sensor_driver {
-    sensor_get_interface_func_t sd_get_interface;
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
 };
@@ -218,10 +212,30 @@ struct sensor_timestamp {
     uint32_t st_cputime;
 };
 
+struct sensor_itf {
+
+    /* Sensor interface type */
+    uint8_t si_type;
+
+    /* Sensor interface number */
+    uint8_t si_num;
+
+    /* Sensor CS pin */
+    uint8_t si_cs_pin;
+
+    /* Sensor address */
+    uint16_t si_addr;
+};
+
 /*
  * Return the OS device structure corresponding to this sensor
  */
 #define SENSOR_GET_DEVICE(__s) ((__s)->s_dev)
+
+/*
+ * Return the interface for this sensor
+ */
+#define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
 
 struct sensor {
     /* The OS device this sensor inherits from, this is typically a sensor
@@ -238,6 +252,9 @@ struct sensor {
      * sensor supports that variable.
      */
     sensor_type_t s_types;
+
+    /* Sensor mask */
+    sensor_type_t s_mask;
     /**
      * Poll rate in MS for this sensor.
      */
@@ -254,18 +271,45 @@ struct sensor {
     /* Sensor last reading timestamp */
     struct sensor_timestamp s_sts;
 
+    /* Sensor interface structure */
+    struct sensor_itf s_itf;
+
     /* A list of listeners that are registered to receive data off of this
      * sensor
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
     /* The next sensor in the global sensor list. */
-    TAILQ_ENTRY(sensor) s_next;
+    SLIST_ENTRY(sensor) s_next;
 };
 
 int sensor_init(struct sensor *, struct os_dev *dev);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
+
+/**
+ * Register a sensor listener. This allows a calling application to receive
+ * callbacks for data from a given sensor object.
+ *
+ * For more information on the type of callbacks available, see the documentation
+ * for the sensor listener structure.
+ *
+ * @param The sensor to register a listener on
+ * @param The listener to register onto the sensor
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
 int sensor_register_listener(struct sensor *, struct sensor_listener *);
+
+/**
+ * Un-register a sensor listener. This allows a calling application to unset
+ * callbacks for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The listener to remove from the sensor listener list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
 int sensor_unregister_listener(struct sensor *, struct sensor_listener *);
 
 int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *,
@@ -292,6 +336,53 @@ sensor_set_driver(struct sensor *sensor, sensor_type_t type,
 }
 
 /**
+ * Set the sensor driver mask so that the developer who configures the
+ * sensor tells the sensor framework which sensor data to send back to
+ * the user
+ *
+ * @param The sensor to set the mask for
+ * @param The mask
+ */
+static inline int
+sensor_set_type_mask(struct sensor *sensor, sensor_type_t mask)
+{
+    sensor->s_mask = mask;
+
+    return (0);
+}
+
+/**
+ * Check if sensor type is supported by the sensor device
+ *
+ * @param sensor object
+ * @param Type to be checked
+ * @return type bitfield, if supported, 0 if not supported
+ */
+static inline sensor_type_t
+sensor_check_type(struct sensor *sensor, sensor_type_t type)
+{
+    return (sensor->s_types & sensor->s_mask & type);
+}
+
+/**
+ * Set interface type and number
+ *
+ * @param The sensor to set the interface for
+ * @param The interface type to set
+ * @param The interface number to set
+ */
+static inline int
+sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
+{
+    sensor->s_itf.si_type = s_itf->si_type;
+    sensor->s_itf.si_num = s_itf->si_num;
+    sensor->s_itf.si_cs_pin = s_itf->si_cs_pin;
+    sensor->s_itf.si_addr = s_itf->si_addr;
+
+    return (0);
+}
+
+/**
  * Read the configuration for the sensor type "type," and return the
  * configuration into "cfg."
  *
@@ -306,21 +397,6 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
         struct sensor_cfg *cfg)
 {
     return (sensor->s_funcs->sd_get_config(sensor, type, cfg));
-}
-
-/**
- * Get a more specific interface for this sensor, like accelerometer, or gyro.
- *
- * @param The sensor to get the interface from
- * @param The type of interface to get from this sensor
- *
- * @return A pointer to the more specific sensor interface on success, or NULL
- * if not found.
- */
-static inline void *
-sensor_get_interface(struct sensor *sensor, sensor_type_t type)
-{
-    return (sensor->s_funcs->sd_get_interface(sensor, type));
 }
 
 /**
@@ -342,10 +418,64 @@ struct os_eventq *sensor_mgr_evq_get(void);
 
 
 typedef int (*sensor_mgr_compare_func_t)(struct sensor *, void *);
+
+/**
+ * The sensor manager contains a list of sensors, this function returns
+ * the next sensor in that list, for which compare_func() returns successful
+ * (one).  If prev_cursor is provided, the function starts at that point
+ * in the sensor list.
+ *
+ * @warn This function MUST be locked by sensor_mgr_lock/unlock() if the goal is
+ * to iterate through sensors (as opposed to just finding one.)  As the
+ * "prev_cursor" may be resorted in the sensor list, in between calls.
+ *
+ * @param The comparison function to use against sensors in the list.
+ * @param The argument to provide to that comparison function
+ * @param The previous sensor in the sensor manager list, in case of
+ *        iteration.  If desire is to find first matching sensor, provide a
+ *        NULL value.
+ *
+ * @return A pointer to the first sensor found from prev_cursor, or
+ *         NULL, if none found.
+ *
+ */
 struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,
         struct sensor *);
+
+/**
+ * Find the "next" sensor available for a given sensor type.
+ *
+ * If the sensor parameter, is present find the next entry from that
+ * parameter.  Otherwise, find the first matching sensor.
+ *
+ * @param The type of sensor to search for
+ * @param The cursor to search from, or NULL to start from the beginning.
+ *
+ * @return A pointer to the sensor object matching that sensor type, or NULL if
+ *         none found.
+ */
 struct sensor *sensor_mgr_find_next_bytype(sensor_type_t, struct sensor *);
+
+/**
+ * Search the sensor list and find the next sensor that corresponds
+ * to a given device name.
+ *
+ * @param The device name to search for
+ * @param The previous sensor found with this device name
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
 struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
+
+/**
+ * Check if sensor type matches
+ *
+ * @param The sensor object
+ * @param The type to check
+ *
+ * @return 1 if matches, 0 if it doesn't match.
+ */
+int sensor_mgr_match_bytype(struct sensor *sensor, void *arg);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*

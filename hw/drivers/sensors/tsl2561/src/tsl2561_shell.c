@@ -44,9 +44,6 @@
 #include "tsl2561_priv.h"
 
 #if MYNEWT_VAL(TSL2561_CLI)
-extern uint8_t g_tsl2561_integration_time;
-extern uint8_t g_tsl2561_gain;
-
 static int tsl2561_shell_cmd(int argc, char **argv);
 
 static struct shell_cmd tsl2561_shell_cmd_struct = {
@@ -54,15 +51,10 @@ static struct shell_cmd tsl2561_shell_cmd_struct = {
     .sc_cmd_func = tsl2561_shell_cmd
 };
 
-/*
-static int
-tsl2561_shell_err_too_few_args(char *cmd_name)
-{
-    console_printf("Error: too few arguments for command \"%s\"\n",
-                   cmd_name);
-    return -1;
-}
-*/
+static struct sensor_itf g_sensor_itf = {
+    .si_type = MYNEWT_VAL(TSL2561_SHELL_ITF_TYPE),
+    .si_num = MYNEWT_VAL(TSL2561_SHELL_ITF_NUM),
+};
 
 static int
 tsl2561_shell_stol(char *param_val, long min, long max, long *output)
@@ -70,7 +62,8 @@ tsl2561_shell_stol(char *param_val, long min, long max, long *output)
     char *endptr;
     long lval;
 
-    lval = strtol(param_val, &endptr, 10); /* Base 10 */
+    /* Base 10 */
+    lval = strtol(param_val, &endptr, 10);
     if (param_val != '\0' && *endptr == '\0' &&
         lval >= min && lval <= max) {
             *output = lval;
@@ -130,7 +123,6 @@ tsl2561_shell_cmd_read(int argc, char **argv)
     uint16_t samples = 1;
     long val;
     int rc;
-    struct tsl2561 tsl2561;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
@@ -146,11 +138,8 @@ tsl2561_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
-        tsl2561.cfg.gain = g_tsl2561_gain;
-        tsl2561.cfg.integration_time = g_tsl2561_integration_time;
-
-        rc = tsl2561_get_data(&full, &ir, &tsl2561);
-        if (rc != 0) {
+        rc = tsl2561_get_data(&g_sensor_itf, &full, &ir);
+        if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;
         }
@@ -165,6 +154,8 @@ static int
 tsl2561_shell_cmd_gain(int argc, char **argv)
 {
     long val;
+    uint8_t gain;
+    int rc;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
@@ -172,7 +163,11 @@ tsl2561_shell_cmd_gain(int argc, char **argv)
 
     /* Display the gain */
     if (argc == 2) {
-        uint8_t gain = tsl2561_get_gain();
+        rc = tsl2561_get_gain(&g_sensor_itf, &gain);
+        if (rc) {
+            console_printf("Getting gain failed rc:%d", rc);
+            goto err;
+        }
         console_printf("%u\n", gain ? 16u : 1u);
     }
 
@@ -185,10 +180,15 @@ tsl2561_shell_cmd_gain(int argc, char **argv)
         if ((val != 1) && (val != 16)) {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
-        tsl2561_set_gain(val ? TSL2561_LIGHT_GAIN_16X : TSL2561_LIGHT_GAIN_1X);
+        rc = tsl2561_set_gain(&g_sensor_itf, val ?
+                              TSL2561_LIGHT_GAIN_16X : TSL2561_LIGHT_GAIN_1X);
+        if (rc) {
+            console_printf("Setting gain failed rc:%d", rc);
+        }
     }
 
-    return 0;
+err:
+    return rc;
 }
 
 static int
@@ -196,6 +196,7 @@ tsl2561_shell_cmd_time(int argc, char **argv)
 {
     uint8_t time;
     long val;
+    int rc;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
@@ -203,7 +204,12 @@ tsl2561_shell_cmd_time(int argc, char **argv)
 
     /* Display the integration time */
     if (argc == 2) {
-        time = tsl2561_get_integration_time();
+        rc = tsl2561_get_integration_time(&g_sensor_itf, &time);
+        if (rc) {
+            console_printf("Getting integration time failed rc:%d", rc);
+            goto err;
+        }
+
         switch (time) {
             case TSL2561_LIGHT_ITIME_13MS:
                 console_printf("13\n");
@@ -228,18 +234,23 @@ tsl2561_shell_cmd_time(int argc, char **argv)
         }
         switch(val) {
             case 13:
-                tsl2561_set_integration_time(TSL2561_LIGHT_ITIME_13MS);
+                rc = tsl2561_set_integration_time(&g_sensor_itf, TSL2561_LIGHT_ITIME_13MS);
             break;
             case 101:
-                tsl2561_set_integration_time(TSL2561_LIGHT_ITIME_101MS);
+                rc = tsl2561_set_integration_time(&g_sensor_itf, TSL2561_LIGHT_ITIME_101MS);
             break;
             case 402:
-                tsl2561_set_integration_time(TSL2561_LIGHT_ITIME_402MS);
+                rc = tsl2561_set_integration_time(&g_sensor_itf, TSL2561_LIGHT_ITIME_402MS);
             break;
+        }
+
+        if (rc) {
+            console_printf("Setting integration time failed rc:%d", rc);
         }
     }
 
-    return 0;
+err:
+    return rc;
 }
 
 static int
@@ -263,17 +274,17 @@ tsl2561_shell_cmd_int(int argc, char **argv)
 
     /* Enable the interrupt */
     if (argc == 3 && strcmp(argv[2], "on") == 0) {
-        return tsl2561_enable_interrupt(1);
+        return tsl2561_enable_interrupt(&g_sensor_itf, 1);
     }
 
     /* Disable the interrupt */
     if (argc == 3 && strcmp(argv[2], "off") == 0) {
-        return tsl2561_enable_interrupt(0);
+        return tsl2561_enable_interrupt(&g_sensor_itf, 0);
     }
 
     /* Clear the interrupt on 'clr' */
     if (argc == 3 && strcmp(argv[2], "clr") == 0) {
-        return tsl2561_clear_interrupt();
+        return tsl2561_clear_interrupt(&g_sensor_itf);
     }
 
     /* Configure the interrupt on 'set' */
@@ -294,12 +305,18 @@ tsl2561_shell_cmd_int(int argc, char **argv)
         }
         upper = (uint16_t)val;
         /* Set the values */
-        rc = tsl2561_setup_interrupt(rate, lower, upper);
+        rc = tsl2561_setup_interrupt(&g_sensor_itf, rate, lower, upper);
+        if (rc) {
+            console_printf("Interrupt setup failed rc:%d", rc);
+            return rc;
+        }
+
         console_printf("Configured interrupt as:\n");
         console_printf("\trate: %u\n", rate);
         console_printf("\tlower: %u\n", lower);
         console_printf("\tupper: %u\n", upper);
-        return rc;
+
+        return 0;
     }
 
     /* Setup INT pin on 'pin' */
@@ -325,6 +342,8 @@ tsl2561_shell_cmd_en(int argc, char **argv)
 {
     char *endptr;
     long lval;
+    int rc;
+    uint8_t enabled;
 
     if (argc > 3) {
         return tsl2561_shell_err_too_many_args(argv[1]);
@@ -332,7 +351,13 @@ tsl2561_shell_cmd_en(int argc, char **argv)
 
     /* Display current enable state */
     if (argc == 2) {
-        console_printf("%u\n", tsl2561_get_enable());
+        rc = tsl2561_get_enable(&g_sensor_itf, &enabled);
+        if (rc) {
+            console_printf("Enable read failure rc:%d", rc);
+            goto err;
+        }
+
+        console_printf("%u\n", enabled);
     }
 
     /* Update the enable state */
@@ -340,44 +365,102 @@ tsl2561_shell_cmd_en(int argc, char **argv)
         lval = strtol(argv[2], &endptr, 10); /* Base 10 */
         if (argv[2] != '\0' && *endptr == '\0' &&
             lval >= 0 && lval <= 1) {
-                tsl2561_enable(lval);
+            rc = tsl2561_enable(&g_sensor_itf, lval);
+            if (rc) {
+                console_printf("Could not enable sensor rc:%d", rc);
+                goto err;
+            }
         } else {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
     }
 
     return 0;
+err:
+    return rc;
 }
 
 static int
 tsl2561_shell_cmd_dump(int argc, char **argv)
 {
-  uint8_t val;
+    uint8_t val;
+    int rc;
 
-  if (argc > 3) {
-      return tsl2561_shell_err_too_many_args(argv[1]);
-  }
+    if (argc > 3) {
+        return tsl2561_shell_err_too_many_args(argv[1]);
+    }
 
-  /* Dump all the register values for debug purposes */
-  val = 0;
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL, &val));
-  console_printf("0x%02X (CONTROL): 0x%02X\n", TSL2561_REGISTER_CONTROL, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING, &val));
-  console_printf("0x%02X (TIMING):  0x%02X\n", TSL2561_REGISTER_TIMING, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDL_LOW, &val));
-  console_printf("0x%02X (THRLL):   0x%02X\n", TSL2561_REGISTER_THRESHHOLDL_LOW, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDL_HIGH, &val));
-  console_printf("0x%02X (THRLH):   0x%02X\n", TSL2561_REGISTER_THRESHHOLDL_HIGH, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDH_LOW, &val));
-  console_printf("0x%02X (THRHL):   0x%02X\n", TSL2561_REGISTER_THRESHHOLDH_LOW, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDH_HIGH, &val));
-  console_printf("0x%02X (THRHH):   0x%02X\n", TSL2561_REGISTER_THRESHHOLDH_HIGH, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT, &val));
-  console_printf("0x%02X (INTER):   0x%02X\n", TSL2561_REGISTER_INTERRUPT, val);
-  assert(0 == tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_ID, &val));
-  console_printf("0x%02X (ID):      0x%02X\n", TSL2561_REGISTER_ID, val);
+    /* Dump all the register values for debug purposes */
+    val = 0;
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (CONTROL): 0x%02X\n",
+                   TSL2561_REGISTER_CONTROL, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (TIMING):  0x%02X\n",
+                   TSL2561_REGISTER_TIMING, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDL_LOW,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (THRLL):   0x%02X\n",
+                   TSL2561_REGISTER_THRESHHOLDL_LOW, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDL_HIGH,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (THRLH):   0x%02X\n",
+                   TSL2561_REGISTER_THRESHHOLDL_HIGH, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDH_LOW,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (THRHL):   0x%02X\n",
+                   TSL2561_REGISTER_THRESHHOLDH_LOW, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_THRESHHOLDH_HIGH,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (THRHH):   0x%02X\n",
+                   TSL2561_REGISTER_THRESHHOLDH_HIGH, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (INTER):   0x%02X\n",
+                   TSL2561_REGISTER_INTERRUPT, val);
+    rc = tsl2561_read8(&g_sensor_itf,
+                       TSL2561_COMMAND_BIT | TSL2561_REGISTER_ID,
+                       &val);
+    if (rc) {
+        goto err;
+    }
+    console_printf("0x%02X (ID):      0x%02X\n",
+                 TSL2561_REGISTER_ID, val);
 
-  return 0;
+    return 0;
+err:
+    console_printf("Read failed rc:%d", rc);
+    return rc;
 }
 
 static int

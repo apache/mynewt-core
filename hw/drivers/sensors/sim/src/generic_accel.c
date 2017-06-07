@@ -33,14 +33,12 @@
 
 /* Exports for the sensor interface.
  */
-static void *sim_accel_sensor_get_interface(struct sensor *, sensor_type_t);
 static int sim_accel_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int sim_accel_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_sim_accel_sensor_driver = {
-    sim_accel_sensor_get_interface,
     sim_accel_sensor_read,
     sim_accel_sensor_get_config
 };
@@ -93,13 +91,6 @@ sim_accel_config(struct sim_accel *sa, struct sim_accel_cfg *cfg)
 
     return (0);
 }
-
-static void *
-sim_accel_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
-{
-    return (NULL);
-}
-
 
 static int
 sim_accel_sensor_read(struct sensor *sensor, sensor_type_t type,

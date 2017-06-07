@@ -43,6 +43,8 @@ extern "C" {
 struct tcs34725_cfg {
     uint8_t gain;
     uint8_t integration_time;
+    uint8_t int_enable;
+    sensor_type_t mask;
 };
 
 struct tcs34725 {
@@ -76,6 +78,141 @@ tcs34725_config(struct tcs34725 *tcs34725, struct tcs34725_cfg *cfg);
 #if MYNEWT_VAL(TCS34725_CLI)
 int tcs34725_shell_init(void);
 #endif
+
+/**
+ * Get chip ID from the sensor
+ *
+ * @param The sensor interface
+ * @param Pointer to the variable to fill up chip ID in
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_get_chip_id(struct sensor_itf *itf, uint8_t *id);
+
+/**
+ * Get gain of the sensor
+ *
+ * @param The sensor interface
+ * @param ptr to gain
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_get_gain(struct sensor_itf *itf, uint8_t *gain);
+
+/**
+ * Set gain of the sensor
+ *
+ * @param The sensor interface
+ * @param gain
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_set_gain(struct sensor_itf *itf, uint8_t gain);
+
+/**
+ * enables/disables interrupts
+ *
+ * @param enable/disable
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_enable_interrupt(struct sensor_itf *itf, uint8_t enable);
+
+/**
+ * Clears the interrupts
+ *
+ * @param The sensor interface
+ * @param The sensor interface
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_clear_interrupt(struct sensor_itf *itf);
+
+/**
+ * Sets threshold limits for interrupts, if the low threshold is set above
+ * the high threshold, the high threshold is ignored and only the low
+ * threshold is evaluated
+ *
+ * @param The sensor interface
+ * @param lower threshold
+ * @param higher threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_set_int_limits(struct sensor_itf *itf, uint16_t low, uint16_t high);
+
+/**
+ * Sets integration time
+ *
+ * @param The sensor interface
+ * @param integration time to be set
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_set_integration_time(struct sensor_itf *itf, uint8_t int_time);
+
+/**
+ * Gets integration time set earlier
+ *
+ * @param The sensor interface
+ * @param ptr to integration time
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_get_integration_time(struct sensor_itf *itf, uint8_t *int_time);
+
+/**
+ *
+ * Enables the device
+ *
+ * @param The sensor interface
+ * @param enable/disable
+ * @return 0 on success, non-zero on error
+ */
+int
+tcs34725_enable(struct sensor_itf *itf, uint8_t enable);
+
+/**
+ * Indicates whether the sensor is enabled or not
+ *
+ * @param The sensor interface
+ * @param ptr to is_enabled variable
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_get_enable(struct sensor_itf *itf, uint8_t *is_enabled);
+
+/**
+ * Reads the raw red, green, blue and clear channel values
+ *
+ *
+ * @param The sensor interface
+ * @param red value to return
+ * @param green value to return
+ * @param blue value to return
+ * @param clear channel value
+ * @param driver sturcture containing config
+ */
+int
+tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
+                     uint16_t *b, uint16_t *c, struct tcs34725 *tcs34725);
+
+/**
+ *
+ * Gets threshold limits for interrupts, if the low threshold is set above
+ * the high threshold, the high threshold is ignored and only the low
+ * threshold is evaluated
+ *
+ * @param The sensor interface
+ * @param ptr to lower threshold
+ * @param ptr to higher threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+tcs34725_get_int_limits(struct sensor_itf *itf, uint16_t *low, uint16_t *high);
+
 
 #ifdef __cplusplus
 }
