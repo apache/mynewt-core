@@ -34,9 +34,6 @@ extern "C" {
 /* LED pins */
 #define LED_BLINK_PIN   (0x1)
 
-/* UART info */
-#define CONSOLE_UART    	"uart0"
-
 #define NFFS_AREA_MAX    (8)
 
 #ifdef __cplusplus

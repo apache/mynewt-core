@@ -194,7 +194,7 @@ uart_console_init(void)
     write_char_cb = console_queue_char;
 
     if (!uart_dev) {
-        uart_dev = (struct uart_dev *)os_dev_open(CONSOLE_UART,
+        uart_dev = (struct uart_dev *)os_dev_open(MYNEWT_VAL(CONSOLE_UART_DEV),
           OS_TIMEOUT_NEVER, &uc);
         if (!uart_dev) {
             return -1;

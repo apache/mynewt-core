@@ -47,7 +47,6 @@ extern uint8_t _itcmram_start;
 
 /* UART */
 #define UART_CNT        1
-#define CONSOLE_UART    "uart0"
 
 #define NFFS_AREA_MAX   (8)
 

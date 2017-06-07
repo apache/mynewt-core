@@ -53,9 +53,6 @@ extern uint8_t _ram_start;
 #define SX1276_RXTX         (21)
 #define SX1276_ANT_HF_CTRL  (27)
 
-/* UART info */
-#define CONSOLE_UART    "uart0"
-
 #if MYNEWT_VAL(BOOT_SERIAL)
 #define BOOT_SERIAL_DETECT_PIN          12
 #define BOOT_SERIAL_DETECT_PIN_CFG      HAL_GPIO_PULL_UP

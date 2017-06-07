@@ -34,9 +34,6 @@ extern uint8_t _ram_start;
 #define LED_1           (50)    /* Port B, pin 18 */
 #define LED_BLINK_PIN   (LED_0)
 
-/* UART info */
-#define CONSOLE_UART    "uart0"
-
 /* WWW: is this needed? */
 //#define NFFS_AREA_MAX    (8)
 

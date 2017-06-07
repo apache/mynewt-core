@@ -63,3 +63,6 @@ syscfg.defs:
     SPI_3_MASTER:
         description: 'SPI connected to MRF24WG0MA'
         value:  1
+
+syscfg.vals:
+    CONSOLE_UART_DEV: '"uart3"'

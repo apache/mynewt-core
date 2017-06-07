@@ -32,9 +32,6 @@ extern uint8_t __DATA_ROM;
 /* LED pins */
 #define LED_BLINK_PIN       MCU_GPIO_PORTB(22)
 
-/* UART info */
-#define CONSOLE_UART        "uart0"
-
 /* This defines the maximum NFFS areas (block) are in the BSPs NFS file
  * system space.  This in conjunction with flash map determines how
  * many NFS blocks there will be.  A minimum is the number of individually
