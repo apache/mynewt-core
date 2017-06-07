@@ -31,3 +31,6 @@ syscfg.defs:
     UART_1:
         description: 'Whether to enable UART1'
         value:  1
+
+syscfg.vals:
+    CONSOLE_UART_DEV: '"uart1"'

@@ -39,3 +39,6 @@ syscfg.defs:
     UART_3:
         description: 'Whether to enable UART3'
         value:  1
+
+syscfg.vals:
+    CONSOLE_UART_DEV: '"uart2"'

@@ -49,7 +49,6 @@ extern uint8_t _ccram_start;
 
 /* UART */
 #define UART_CNT 6
-#define CONSOLE_UART "uart3"
 
 /* SPI */
 #define SPI_CNT         (6)
