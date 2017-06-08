@@ -36,7 +36,6 @@
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"
 #endif
-#include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 #include <imgmgr/imgmgr.h>
@@ -47,6 +46,8 @@
 #include <os/os_time.h>
 #include <id/id.h>
 #include <os/os_eventq.h>
+#include <oic/oc_api.h>
+#include <oic/oc_gatt.h>
 
 #include "testutil/testutil.h"
 
@@ -369,6 +370,14 @@ TEST_SUITE_DECL(testbench_mutex);
 TEST_SUITE_DECL(testbench_sem);
 TEST_SUITE_DECL(testbench_json);
 
+static void
+omgr_app_init(void)
+{ }
+
+static const oc_handler_t omgr_oc_handler = {
+    .init = omgr_app_init,
+};
+
 /*
  * main()
  * Keep this app simple, just run the tests and then report success or failure.
@@ -390,6 +399,11 @@ main(int argc, char **argv)
 #if MYNEWT_VAL(TESTBENCH_BLE)
     tbb_init();
 #endif
+
+    /* Initialize the OIC  */
+    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
+    oc_ble_coap_gatt_srv_init();
 
     conf_load();
 
