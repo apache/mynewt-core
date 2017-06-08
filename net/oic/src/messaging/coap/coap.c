@@ -546,16 +546,20 @@ coap_parse_message(struct coap_packet_rx *pkt, struct os_mbuf **mp)
 {
     struct os_mbuf *m;
     int is_tcp;
-    struct coap_udp_hdr *udp;
-    struct coap_tcp_hdr0 *cth0;
-    struct coap_tcp_hdr8 *cth8;
-    struct coap_tcp_hdr16 *cth16;
-    struct coap_tcp_hdr32 *cth32;
+    struct coap_udp_hdr udp;
+    union {
+        struct coap_tcp_hdr0 c0;
+        struct coap_tcp_hdr8 c8;
+        struct coap_tcp_hdr16 c16;
+        struct coap_tcp_hdr32 c32;
+    } cth;
     uint8_t tmp[4];
     uint16_t cur_opt;
     unsigned int opt_num = 0;
     unsigned int opt_delta = 0;
     size_t opt_len = 0;
+    uint8_t data_len;
+    int rc;
 
     m = *mp;
     /* initialize packet */
@@ -584,18 +588,18 @@ coap_parse_message(struct coap_packet_rx *pkt, struct os_mbuf **mp)
 
     /* parse header fields */
     if (!is_tcp) {
-        cur_opt = sizeof(*udp);
-        if (m->om_len < cur_opt) {
+        cur_opt = sizeof(udp);
+        rc = os_mbuf_copydata(m, 0, sizeof(udp), &udp);
+        if (rc != 0) {
 err_short:
             STATS_INC(coap_stats, ilen);
             return BAD_REQUEST_4_00;
         }
-        udp = (struct coap_udp_hdr *)m->om_data;
-        pkt->version = udp->version;
-        pkt->type = udp->type;
-        pkt->token_len = udp->token_len;
-        pkt->code = udp->code;
-        pkt->mid = ntohs(udp->id);
+        pkt->version = udp.version;
+        pkt->type = udp.type;
+        pkt->token_len = udp.token_len;
+        pkt->code = udp.code;
+        pkt->mid = ntohs(udp.id);
         if (pkt->version != 1) {
             coap_error_message = "CoAP version must be 1";
             STATS_INC(coap_stats, ierr);
@@ -607,38 +611,43 @@ err_short:
          * not be present. Need to figure out which header is present
          * programmatically.
          */
-        cth0 = (struct coap_tcp_hdr0 *)m->om_data;
-        if (cth0->data_len < 13) {
-            cur_opt = sizeof(*cth0);
+        rc = os_mbuf_copydata(m, 0, sizeof(cth.c0), &cth.c0);
+        if (rc != 0) {
+            goto err_short;
+        }
+        data_len = cth.c0.data_len;
+
+        if (data_len < 13) {
+            cur_opt = sizeof(cth.c0);
             if (m->om_len < cur_opt) {
                 goto err_short;
             }
-            pkt->token_len = cth0->token_len;
-            pkt->code = cth0->code;
-        } else if (cth0->data_len == 13) {
-            cur_opt = sizeof(*cth8);
-            if (m->om_len < cur_opt) {
+            pkt->token_len = cth.c0.token_len;
+            pkt->code = cth.c0.code;
+        } else if (data_len == 13) {
+            cur_opt = sizeof(cth.c8);
+            rc = os_mbuf_copydata(m, 0, sizeof(cth.c8), &cth.c8);
+            if (rc != 0) {
                 goto err_short;
             }
-            cth8 = (struct coap_tcp_hdr8 *)m->om_data;
-            pkt->token_len = cth8->token_len;
-            pkt->code = cth8->code;
-        } else if (cth0->data_len == 14) {
-            cur_opt = sizeof(*cth16);
-            if (m->om_len < cur_opt) {
+            pkt->token_len = cth.c8.token_len;
+            pkt->code = cth.c8.code;
+        } else if (data_len == 14) {
+            cur_opt = sizeof(cth.c16);
+            rc = os_mbuf_copydata(m, 0, sizeof(cth.c16), &cth.c16);
+            if (rc != 0) {
                 goto err_short;
             }
-            cth16 = (struct coap_tcp_hdr16 *)m->om_data;
-            pkt->token_len = cth16->token_len;
-            pkt->code = cth16->code;
+            pkt->token_len = cth.c16.token_len;
+            pkt->code = cth.c16.code;
         } else {
-            cur_opt = sizeof(*cth32);
-            if (m->om_len < cur_opt) {
+            cur_opt = sizeof(cth.c32);
+            rc = os_mbuf_copydata(m, 0, sizeof(cth.c32), &cth.c32);
+            if (rc != 0) {
                 goto err_short;
             }
-            cth32 = (struct coap_tcp_hdr32 *)m->om_data;
-            pkt->token_len = cth32->token_len;
-            pkt->code = cth32->code;
+            pkt->token_len = cth.c32.token_len;
+            pkt->code = cth.c32.code;
         }
     }
     if (pkt->token_len > COAP_TOKEN_LEN) {
