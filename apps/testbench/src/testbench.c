@@ -396,14 +396,14 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
-#if MYNEWT_VAL(TESTBENCH_BLE)
-    tbb_init();
-#endif
-
     /* Initialize the OIC  */
     log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
+
+#if MYNEWT_VAL(TESTBENCH_BLE)
+    tbb_init();
     oc_ble_coap_gatt_srv_init();
+#endif
 
     conf_load();
 
