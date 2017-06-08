@@ -1030,7 +1030,8 @@ static void PrepareRxDoneAbort( void )
     os_cputime_timer_relative(&MacStateCheckTimer, 1);
 }
 
-static void OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
+static void
+OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
 {
     LoRaMacHeader_t macHdr;
     LoRaMacFrameCtrl_t fCtrl;
@@ -1484,9 +1485,9 @@ static void OnRadioRxTimeout( void )
     }
 }
 
-static void OnMacStateCheckTimerEvent(void *unused)
+static void
+OnMacStateCheckTimerEvent(void *unused)
 {
-    os_cputime_timer_stop(&MacStateCheckTimer);
     bool txTimeout = false;
 
     if( LoRaMacFlags.Bits.MacDone == 1 )
@@ -1705,13 +1706,13 @@ static void OnTxDelayedTimerEvent(void *unused)
     ScheduleTx( );
 }
 
-static void OnRxWindow1TimerEvent(void *unused)
+static void
+OnRxWindow1TimerEvent(void *unused)
 {
     uint16_t symbTimeout = 5; // DR_2, DR_1, DR_0
     int8_t datarate = 0;
     uint32_t bandwidth = 0; // LoRa 125 kHz
 
-    os_cputime_timer_stop(&RxWindowTimer1);
     RxSlot = 0;
 
     if( LoRaMacDeviceClass == CLASS_C )
@@ -1805,7 +1806,8 @@ static void OnRxWindow1TimerEvent(void *unused)
 #endif
 }
 
-static void OnRxWindow2TimerEvent(void *unused)
+static void
+OnRxWindow2TimerEvent(void *unused)
 {
     uint16_t symbTimeout = 5; // DR_2, DR_1, DR_0
     uint32_t bandwidth = 0; // LoRa 125 kHz
