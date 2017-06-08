@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <xc.h>
+#include "os/os_error.h"
 
 #include "mcu/pic32.h"
 
