@@ -48,7 +48,7 @@ extern uint8_t _ccram_start;
 #define LED_BLINK_PIN   LED_1
 
 /* UART */
-#define UART_CNT 6
+#define UART_CNT        (6)
 
 /* SPI */
 #define SPI_CNT         (6)
