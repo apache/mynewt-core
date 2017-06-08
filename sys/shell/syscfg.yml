@@ -33,8 +33,10 @@ syscfg.defs:
         description: 'Max number of modules'
         value: 3
     SHELL_MAX_CMD_QUEUED:
-        description: 'Max number of command lines queued'
-        value: 1
+        description: >
+            Max number of command lines queued.  A value >= 2 is required if
+            the shell is acting as a newtmgr transport.
+        value: 2
     SHELL_COMPAT:
         description: 'Enable compatibility module'
         value: 1
