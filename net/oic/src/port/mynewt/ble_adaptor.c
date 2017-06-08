@@ -45,17 +45,23 @@ static const ble_uuid128_t oc_gatt_svc_uuid =
 static const ble_uuid16_t runtime_coap_svc_uuid =
     BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID);
 
-/* request characteristic UUID */
+/* iotivity request characteristic UUID */
 /* AD7B334F-4637-4B86-90B6-9D787F03D218 */
 static const ble_uuid128_t oc_gatt_req_chr_uuid =
     BLE_UUID128_INIT(0x18, 0xd2, 0x03, 0x7f, 0x78, 0x9d, 0xb6, 0x90,
                      0x86, 0x4b, 0x37, 0x46, 0x4f, 0x33, 0x7b, 0xad);
 
-/* response characteristic UUID */
+/* iotivity response characteristic UUID */
 /* E9241982-4580-42C4-8831-95048216B256 */
 static const ble_uuid128_t oc_gatt_rsp_chr_uuid =
     BLE_UUID128_INIT(0x56, 0xb2, 0x16, 0x82, 0x04, 0x95, 0x31, 0x88,
                      0xc4, 0x42, 0x80, 0x45, 0x82, 0x19, 0x24, 0xe9);
+
+/* runtime request characteristic UUID */
+static const ble_uuid16_t runtime_coap_req_chr_uuid = BLE_UUID16_INIT(0x9924);
+
+/* runtime response characteristic UUID */
+static const ble_uuid16_t runtime_coap_rsp_chr_uuid = BLE_UUID16_INIT(0x9925);
 
 STATS_SECT_START(oc_ble_stats)
     STATS_SECT_ENTRY(iframe)
@@ -89,7 +95,8 @@ static uint16_t oc_ble_coap_rsp_handle;
 static int oc_gatt_chr_access(uint16_t conn_handle, uint16_t attr_handle,
                    struct ble_gatt_access_ctxt *ctxt, void *arg);
 
-static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
+static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
+    {
         /* Service: iotivity */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid = &oc_gatt_svc_uuid.u,
@@ -110,24 +117,26 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = { {
                 0, /* No more characteristics in this service */
             }
         },
+    },
 
+    {
         /* Service: CoAP-over-BLE */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid = &runtime_coap_svc_uuid.u,
         .characteristics = (struct ble_gatt_chr_def[]) {
             {
                 /* Characteristic: Request */
-                .uuid = &oc_gatt_req_chr_uuid.u,
+                .uuid = &runtime_coap_req_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
                 .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP |
                          BLE_GATT_CHR_F_NOTIFY,
-                .val_handle = &oc_ble_coap_req_handle,
+                .val_handle = NULL,
             },{
                 /* Characteristic: Response */
-                .uuid = &oc_gatt_rsp_chr_uuid.u,
+                .uuid = &runtime_coap_rsp_chr_uuid.u,
                 .access_cb = oc_gatt_chr_access,
                 .flags = BLE_GATT_CHR_F_NOTIFY,
-                .val_handle = &oc_ble_coap_rsp_handle,
+                .val_handle = NULL,
             },{
                 0, /* No more characteristics in this service */
             }
