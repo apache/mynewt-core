@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,24 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 
-#include "os/os.h"
-#include "os_priv.h"
+#ifndef __NATIVE_ARMV7_BSP_H
+#define __NATIVE_ARMV7_BSP_H
 
-void
-__assert_func(const char *file, int line, const char *func, const char *e)
-{
-    char msg[256];
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    if (file) {
-        snprintf(msg, sizeof(msg), "assert at %s:%d\n", file, line);
-    } else {
-        snprintf(msg, sizeof(msg), "assert @ %p\n",
-                 __builtin_return_address(0));
-    }
-    write(1, msg, strlen(msg));
-    _exit(1);
+/* Define special stackos sections */
+#define sec_data_core
+#define sec_bss_core
+#define sec_bss_nz_core
+
+/* More convenient section placement macros. */
+#define bssnz_t
+
+/* LED pins */
+#define LED_BLINK_PIN   (0x1)
+
+#define NFFS_AREA_MAX    (8)
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif  /* __NATIVE_ARMV7_BSP_H */

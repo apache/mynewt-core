@@ -23,7 +23,6 @@
  */
 
 #include "os/os.h"
-#include "os_priv.h"
 
 #include <hal/hal_bsp.h>
 
@@ -38,17 +37,16 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <assert.h>
-#include "os_arch_sim_priv.h"
+#include "sim/sim.h"
+#include "sim_priv.h"
 
 #define sim_setjmp(__jb) sigsetjmp(__jb, 0)
 #define sim_longjmp(__jb, __ret) siglongjmp(__jb, __ret)
 
-pid_t os_arch_sim_pid;
-
-extern void os_arch_frame_init(struct stack_frame *sf);
+pid_t sim_pid;
 
 void
-os_arch_sim_ctx_sw(void)
+sim_switch_tasks(void)
 {
     struct os_task *t, *next_t;
     struct stack_frame *sf;
@@ -84,7 +82,7 @@ os_arch_sim_ctx_sw(void)
 }
 
 void
-os_arch_sim_tick(void)
+sim_tick(void)
 {
     struct timeval time_now, time_diff;
     int ticks;
@@ -124,7 +122,7 @@ os_arch_sim_tick(void)
 }
 
 static void
-os_arch_sim_start_timer(void)
+sim_start_timer(void)
 {
     struct itimerval it;
     int rc;
@@ -140,7 +138,7 @@ os_arch_sim_start_timer(void)
 }
 
 static void
-os_arch_sim_stop_timer(void)
+sim_stop_timer(void)
 {
     struct itimerval it;
     int rc;
@@ -156,14 +154,14 @@ os_arch_sim_stop_timer(void)
  * longjmp. The return value of setjmp is passed to this function as 'rc'.
  */
 void
-os_arch_task_start(struct stack_frame *sf, int rc)
+sim_task_start(struct stack_frame *sf, int rc)
 {
     struct os_task *task;
 
     /*
      * Interrupts are disabled when a task starts executing. This happens in
      * two different ways:
-     * - via os_arch_os_start() for the first task.
+     * - via sim_os_start() for the first task.
      * - via os_sched() for all other tasks.
      *
      * Enable interrupts before starting the task.
@@ -178,7 +176,7 @@ os_arch_task_start(struct stack_frame *sf, int rc)
 }
 
 os_stack_t *
-os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
+sim_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
     struct stack_frame *sf;
 
@@ -191,7 +189,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 }
 
 os_error_t
-os_arch_os_start(void)
+sim_os_start(void)
 {
     struct stack_frame *sf;
     struct os_task *t;
@@ -205,7 +203,7 @@ os_arch_os_start(void)
     assert(sr == 0);
 
     /* Enable the interrupt sources */
-    os_arch_sim_start_timer();
+    sim_start_timer();
 
     t = os_sched_next_task();
     os_sched_set_current_task(t);
@@ -223,24 +221,24 @@ os_arch_os_start(void)
  * implemented for sim.
  */
 void
-os_arch_os_stop(void)
+sim_os_stop(void)
 {
-    os_arch_sim_stop_timer();
-    os_arch_sim_signals_cleanup();
+    sim_stop_timer();
+    sim_signals_cleanup();
     g_os_started = 0;
 }
 
 os_error_t
-os_arch_os_init(void)
+sim_os_init(void)
 {
-    os_arch_sim_pid = getpid();
+    sim_pid = getpid();
     g_current_task = NULL;
 
     STAILQ_INIT(&g_os_task_list);
     TAILQ_INIT(&g_os_run_list);
     TAILQ_INIT(&g_os_sleep_list);
 
-    os_arch_sim_signals_init();
+    sim_signals_init();
 
     os_init_idle_task();
 

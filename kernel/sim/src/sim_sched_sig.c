@@ -34,8 +34,7 @@
 #if MYNEWT_VAL(MCU_NATIVE_USE_SIGNALS)
 
 #include "os/os.h"
-#include "os_priv.h"
-#include "os_arch_sim_priv.h"
+#include "sim_priv.h"
 
 #include <hal/hal_bsp.h>
 
@@ -57,13 +56,13 @@ static sigset_t allsigs;
 static sigset_t nosigs;
 
 void
-os_arch_ctx_sw(struct os_task *next_t)
+sim_ctx_sw(struct os_task *next_t)
 {
     /*
      * gdb will stop execution of the program on most signals (e.g. SIGUSR1)
      * whereas it passes SIGURG to the process without any special settings.
      */
-    kill(os_arch_sim_pid, SIGURG);
+    kill(sim_pid, SIGURG);
 }
 
 static void
@@ -79,7 +78,7 @@ ctxsw_handler(int sig)
     if (suspended) {
         sigaddset(&suspsigs, sig);
     } else {
-        os_arch_sim_ctx_sw();
+        sim_switch_tasks();
     }
 }
 
@@ -89,7 +88,7 @@ ctxsw_handler(int sig)
  * Returns 1 if signals were already blocked and 0 otherwise.
  */
 os_sr_t
-os_arch_save_sr(void)
+sim_save_sr(void)
 {
     int error;
     sigset_t omask;
@@ -105,7 +104,7 @@ os_arch_save_sr(void)
 }
 
 void
-os_arch_restore_sr(os_sr_t osr)
+sim_restore_sr(os_sr_t osr)
 {
     int error;
 
@@ -122,7 +121,7 @@ os_arch_restore_sr(os_sr_t osr)
 }
 
 int
-os_arch_in_critical(void)
+sim_in_critical(void)
 {
     int error;
     sigset_t omask;
@@ -150,7 +149,7 @@ timer_handler(int sig)
     if (suspended) {
         sigaddset(&suspsigs, sig);
     } else {
-        os_arch_sim_tick();
+        sim_tick();
     }
 }
 
@@ -165,7 +164,7 @@ static struct {
 #define NUMSIGS     (sizeof(signals)/sizeof(signals[0]))
 
 void
-os_tick_idle(os_time_t ticks)
+sim_tick_idle(os_time_t ticks)
 {
     int i, rc, sig;
     struct itimerval it;
@@ -197,7 +196,7 @@ os_tick_idle(os_time_t ticks)
      * OS time is always correct.
      */
     if (sigismember(&suspsigs, SIGALRM)) {
-        os_arch_sim_tick();
+        sim_tick();
     }
     for (i = 0; i < NUMSIGS; i++) {
         sig = signals[i].num;
@@ -221,7 +220,7 @@ os_tick_idle(os_time_t ticks)
 }
 
 void
-os_arch_sim_signals_init(void)
+sim_signals_init(void)
 {
     int i, error;
     struct sigaction sa;
@@ -243,14 +242,14 @@ os_arch_sim_signals_init(void)
 
     /*
      * We use SIGALRM as a proxy for 'allsigs' to check if we are inside
-     * a critical section (for e.g. see os_arch_in_critical()). Make sure
+     * a critical section (for e.g. see sim_in_critical()). Make sure
      * that SIGALRM is indeed present in 'allsigs'.
      */
     assert(sigismember(&allsigs, SIGALRM));
 }
 
 void
-os_arch_sim_signals_cleanup(void)
+sim_signals_cleanup(void)
 {
     int i, error;
     struct sigaction sa;

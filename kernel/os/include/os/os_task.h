@@ -95,6 +95,10 @@ struct os_task {
     SLIST_ENTRY(os_task) t_obj_list;
 };
 
+STAILQ_HEAD(os_task_stailq, os_task);
+
+extern struct os_task_stailq g_os_task_list;
+
 int os_task_init(struct os_task *, const char *, os_task_func_t, void *,
         uint8_t, os_time_t, os_stack_t *, uint16_t);
 

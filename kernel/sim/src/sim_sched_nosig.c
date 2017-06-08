@@ -35,7 +35,6 @@
 #if !MYNEWT_VAL(MCU_NATIVE_USE_SIGNALS)
 
 #include "os/os.h"
-#include "os_priv.h"
 
 #include <hal/hal_bsp.h>
 
@@ -50,7 +49,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <assert.h>
-#include "os_arch_sim_priv.h"
+#include "sim_priv.h"
 
 static sigset_t nosigs;
 static sigset_t suspsigs;   /* signals delivered in sigsuspend() */
@@ -59,11 +58,11 @@ static int ctx_sw_pending;
 static int interrupts_enabled = 1;
 
 void
-os_arch_ctx_sw(struct os_task *next_t)
+sim_ctx_sw(struct os_task *next_t)
 {
     if (interrupts_enabled) {
         /* Perform the context switch immediately. */
-        os_arch_sim_ctx_sw();
+        sim_switch_tasks();
     } else {
         /* Remember that we want to perform a context switch.  Perform it when
          * interrupts are re-enabled.
@@ -78,7 +77,7 @@ os_arch_ctx_sw(struct os_task *next_t)
  * Returns 1 if interrupts were already disabled; 0 otherwise.
  */
 os_sr_t
-os_arch_save_sr(void)
+sim_save_sr(void)
 {
     if (!interrupts_enabled) {
         return 1;
@@ -89,7 +88,7 @@ os_arch_save_sr(void)
 }
 
 void
-os_arch_restore_sr(os_sr_t osr)
+sim_restore_sr(os_sr_t osr)
 {
     OS_ASSERT_CRITICAL();
     assert(osr == 0 || osr == 1);
@@ -104,13 +103,13 @@ os_arch_restore_sr(os_sr_t osr)
          * Perform it now that interrupts are enabled again.
          */
         ctx_sw_pending = 0;
-        os_arch_sim_ctx_sw();
+        sim_switch_tasks();
     }
     interrupts_enabled = 1;
 }
 
 int
-os_arch_in_critical(void)
+sim_in_critical(void)
 {
     return !interrupts_enabled;
 }
@@ -155,7 +154,7 @@ sig_handler_alrm(int sig)
 }
 
 void
-os_tick_idle(os_time_t ticks)
+sim_tick_idle(os_time_t ticks)
 {
     int rc;
     struct itimerval it;
@@ -188,7 +187,7 @@ os_tick_idle(os_time_t ticks)
      * OS time is always correct.
      */
     if (sigismember(&suspsigs, SIGALRM)) {
-        os_arch_sim_tick();
+        sim_tick();
     }
 
     if (ticks > 0) {
@@ -205,7 +204,7 @@ os_tick_idle(os_time_t ticks)
 }
 
 void
-os_arch_sim_signals_init(void)
+sim_signals_init(void)
 {
     sigset_t sigset_alrm;
     struct sigaction sa;
@@ -227,7 +226,7 @@ os_arch_sim_signals_init(void)
 }
 
 void
-os_arch_sim_signals_cleanup(void)
+sim_signals_cleanup(void)
 {
     int error;
     struct sigaction sa;

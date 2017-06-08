@@ -16,24 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#ifndef __NATIVE_MIPS_BSP_H
+#define __NATIVE_MIPS_BSP_H
 
-#include "os/os.h"
-#include "os_priv.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void
-__assert_func(const char *file, int line, const char *func, const char *e)
-{
-    char msg[256];
+/* Define special stackos sections */
+#define sec_data_core
+#define sec_bss_core
+#define sec_bss_nz_core
 
-    if (file) {
-        snprintf(msg, sizeof(msg), "assert @ %s:%d\n", file, line);
-    } else {
-        snprintf(msg, sizeof(msg), "assert @ %p\n",
-                 __builtin_return_address(0));
-    }
-    write(1, msg, strlen(msg));
-    _exit(1);
+/* More convenient section placement macros. */
+#define bssnz_t
+
+/* LED pins */
+#define LED_BLINK_PIN   (0x1)
+
+#define NFFS_AREA_MAX    (8)
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif  /* __NATIVE_MIPS_BSP_H */

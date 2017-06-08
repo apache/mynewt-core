@@ -36,5 +36,8 @@ pkg.deps.OS_CLI:
 pkg.deps.OS_COREDUMP:
     - sys/coredump
 
+pkg.deps.BSP_SIMULATED:
+    - "@apache-mynewt-core/kernel/sim"
+
 pkg.init:
     os_pkg_init: 0
