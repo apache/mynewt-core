@@ -24,12 +24,32 @@
 #include <string.h>
 #include <log/log.h>
 #include "oic/oc_log.h"
+#include "oic/oc_api.h"
+#include "oic/oc_mynewt.h"
 #include "port/oc_connectivity.h"
 #include "adaptor.h"
 
+#if MYNEWT_VAL(OC_TRANSPORT_GATT)
+#include "oic/oc_gatt.h"
+#endif
+
+static void oc_event_start(struct os_event *ev);
+
+static struct os_event oc_ev_start = {
+    .ev_cb = oc_event_start,
+};
+
 static struct os_eventq *oc_evq;
 
+struct oc_cfg oc_cfg;
+
 struct log oc_log;
+
+static void
+oc_event_start(struct os_event *ev)
+{
+    oc_main_init(&oc_cfg.main_handler);
+}
 
 struct os_eventq *
 oc_evq_get(void)
@@ -40,7 +60,7 @@ oc_evq_get(void)
 void
 oc_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&oc_evq, evq, NULL);
+    os_eventq_designate(&oc_evq, evq, &oc_ev_start);
 }
 
 void
@@ -167,6 +187,15 @@ oc_connectivity_init(void)
 void
 oc_init(void)
 {
+    int rc;
+
+    (void)rc;
+
     SYSINIT_ASSERT_ACTIVE();
     oc_evq_set(os_eventq_dflt_get());
+
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+    rc = oc_ble_coap_gatt_srv_init();
+    SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to initialize CoAP GATT server");
+#endif
 }

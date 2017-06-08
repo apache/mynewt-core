@@ -33,4 +33,5 @@ pkg.apis:
     - newtmgr
 
 pkg.init:
-    oicmgr_init: 500
+    # This must get initialized after net/oic.
+    oicmgr_init: 510
