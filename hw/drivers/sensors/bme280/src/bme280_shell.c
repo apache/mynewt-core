@@ -42,23 +42,6 @@ static struct sensor_itf g_sensor_itf = {
 };
 
 static int
-bme280_shell_stol(char *param_val, long min, long max, long *output)
-{
-    char *endptr;
-    long lval;
-
-    lval = strtol(param_val, &endptr, 10); /* Base 10 */
-    if (param_val != '\0' && *endptr == '\0' &&
-        lval >= min && lval <= max) {
-            *output = lval;
-    } else {
-        return EINVAL;
-    }
-
-    return 0;
-}
-
-static int
 bme280_shell_err_too_many_args(char *cmd_name)
 {
     console_printf("Error: too many arguments for command \"%s\"\n",
@@ -130,7 +113,7 @@ bme280_shell_cmd_read(int argc, char **argv)
     int32_t press;
     int32_t humid;
     uint16_t samples = 1;
-    long val;
+    uint16_t val;
     int rc;
 
     if (argc > 3) {
@@ -139,10 +122,11 @@ bme280_shell_cmd_read(int argc, char **argv)
 
     /* Check if more than one sample requested */
     if (argc == 3) {
-        if (bme280_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[2], 1, UINT16_MAX, &rc);
+        if (rc) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
-        samples = (uint16_t)val;
+        samples = val;
     }
 
     while(samples--) {
@@ -175,7 +159,7 @@ bme280_shell_cmd_read(int argc, char **argv)
 static int
 bme280_shell_cmd_oversample(int argc, char **argv)
 {
-    long val;
+    uint8_t val;
     int rc;
     uint8_t oversample;
     uint32_t type;
@@ -186,7 +170,8 @@ bme280_shell_cmd_oversample(int argc, char **argv)
 
     /* Display the oversample */
     if (argc == 3) {
-        if (bme280_shell_stol(argv[2], 4, 8, &val)) {
+        val = parse_ll_bounds(argv[2], 4, 8, &rc);
+        if (rc) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
         rc = bme280_get_oversample(&g_sensor_itf, val, &oversample);
@@ -198,13 +183,15 @@ bme280_shell_cmd_oversample(int argc, char **argv)
 
     /* Update the oversampling  */
     if (argc == 4) {
-        if (bme280_shell_stol(argv[2], 4, 8, &val)) {
+        val = parse_ll_bounds(argv[2], 4, 8, &rc);
+        if (rc) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
 
         type = val;
 
-        if (bme280_shell_stol(argv[3], 0, 5, &val)) {
+        val = parse_ll_bounds(argv[3], 0, 5, &rc);
+        if (rc) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
 
@@ -225,7 +212,7 @@ static int
 bme280_shell_cmd_mode(int argc, char **argv)
 {
     uint8_t mode;
-    long val;
+    uint8_t val;
     int rc;
 
     if (argc > 3) {
@@ -242,7 +229,8 @@ bme280_shell_cmd_mode(int argc, char **argv)
 
     /* Change mode */
     if (argc == 3) {
-        if (bme280_shell_stol(argv[2], 0, 3, &val)) {
+        val = parse_ll_bounds(argv[2], 0, 3, &rc);
+        if (rc) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
         rc = bme280_set_mode(&g_sensor_itf, val);
@@ -260,7 +248,7 @@ static int
 bme280_shell_cmd_iir(int argc, char **argv)
 {
     uint8_t iir;
-    long val;
+    uint8_t val;
     int rc;
 
     if (argc > 3) {
@@ -278,7 +266,8 @@ bme280_shell_cmd_iir(int argc, char **argv)
 
     /* Enable/disable iir*/
     if (argc == 3) {
-        if (bme280_shell_stol(argv[2], 0, 1, &val)) {
+        val = parse_ll_bounds(argv[2], 0, 1, &rc);
+        if (rc) {
             return bme280_shell_err_invalid_arg(argv[2]);
         }
         rc = bme280_set_iir(&g_sensor_itf, val);
