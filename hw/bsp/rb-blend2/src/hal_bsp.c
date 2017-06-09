@@ -29,6 +29,7 @@
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_i2c.h"
 #include "hal/hal_watchdog.h"
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
