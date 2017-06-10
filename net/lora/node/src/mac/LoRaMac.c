@@ -31,6 +31,10 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jä
 #include "os/os.h"
 #include "hal/hal_timer.h"
 
+#if MYNEWT_VAL(OS_CPUTIME_FREQ) != 1000000
+#error "Current code only allows a 1MHz cputime frequency"
+#endif
+
 #include "node/lora_priv.h"
 
 /*!
@@ -509,9 +513,11 @@ static uint8_t Channel;
 /*!
  * Stores the time at LoRaMac initialization.
  *
+ * NOTE: units of this variable are in usecs.
+ *
  * \remark Used for the BACKOFF_DC computation.
  */
-static uint32_t LoRaMacInitializationTime = 0;
+static uint64_t LoRaMacInitializationTime;
 
 /*!
  * LoRaMac internal states
@@ -947,49 +953,39 @@ LoRaMacStatus_t SendFrameOnChannel( ChannelParams_t channel );
  * \param [IN] timeout     Time in seconds while the radio is kept in continuous wave mode
  * \retval status          Status of the operation.
  */
-LoRaMacStatus_t SetTxContinuousWave( uint16_t timeout );
+LoRaMacStatus_t SetTxContinuousWave(uint16_t timeout);
 
 /*!
  * \brief Resets MAC specific parameters to default
  */
-static void ResetMacParameters( void );
+static void ResetMacParameters(void);
 
 static void OnRadioTxDone(void)
 {
     uint32_t curTime = os_cputime_get32();
 
-    if( LoRaMacDeviceClass != CLASS_C )
-    {
+    if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
-    }
-    else
-    {
+    } else {
         OnRxWindow2TimerEvent(NULL);
     }
 
     // Setup timers
-    if( IsRxWindowsEnabled == true )
-    {
-        os_cputime_timer_relative(&RxWindowTimer1, RxWindow1Delay);
-        if( LoRaMacDeviceClass != CLASS_C )
-        {
-            os_cputime_timer_relative(&RxWindowTimer2, RxWindow2Delay);
+    if (IsRxWindowsEnabled == true) {
+        os_cputime_timer_relative(&RxWindowTimer1, RxWindow1Delay * 1000);
+        if (LoRaMacDeviceClass != CLASS_C) {
+            os_cputime_timer_relative(&RxWindowTimer2, RxWindow2Delay * 1000);
         }
-        if( ( LoRaMacDeviceClass == CLASS_C ) || ( NodeAckRequested == true ) )
-        {
-            os_cputime_timer_relative(
-                &AckTimeoutTimer,
-                RxWindow2Delay + ACK_TIMEOUT +
-                    randr(-ACK_TIMEOUT_RND, ACK_TIMEOUT_RND));
+        if ((LoRaMacDeviceClass == CLASS_C) || ( NodeAckRequested == true )) {
+            os_cputime_timer_relative(&AckTimeoutTimer,
+                    (RxWindow2Delay + ACK_TIMEOUT +
+                    randr(-ACK_TIMEOUT_RND, ACK_TIMEOUT_RND)) * 1000);
         }
-    }
-    else
-    {
+    } else {
         McpsConfirm.Status = LORAMAC_EVENT_INFO_STATUS_OK;
         MlmeConfirm.Status = LORAMAC_EVENT_INFO_STATUS_RX2_TIMEOUT;
 
-        if( LoRaMacFlags.Value == 0 )
-        {
+        if (LoRaMacFlags.Value == 0) {
             LoRaMacFlags.Bits.McpsReq = 1;
         }
         LoRaMacFlags.Bits.MacDone = 1;
@@ -997,13 +993,14 @@ static void OnRadioTxDone(void)
 
     // Update last tx done time for the current channel
     Bands[Channels[Channel].Band].LastTxDoneTime = curTime;
+
     // Update Aggregated last tx done time
     AggregatedLastTxDoneTime = curTime;
-    // Update Backoff
-    CalculateBackOff( Channel );
 
-    if( NodeAckRequested == false )
-    {
+    // Update Backoff
+    CalculateBackOff(Channel);
+
+    if (NodeAckRequested == false) {
         McpsConfirm.Status = LORAMAC_EVENT_INFO_STATUS_OK;
         ChannelsNbRepCounter++;
     }
@@ -1027,11 +1024,10 @@ static void PrepareRxDoneAbort( void )
     LoRaMacFlags.Bits.MacDone = 1;
 
     // Trig OnMacCheckTimerEvent call as soon as possible
-    os_cputime_timer_relative(&MacStateCheckTimer, 1);
+    os_cputime_timer_relative(&MacStateCheckTimer, 1000);
 }
 
-static void
-OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
+static void OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
 {
     LoRaMacHeader_t macHdr;
     LoRaMacFrameCtrl_t fCtrl;
@@ -1422,7 +1418,7 @@ OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
     LoRaMacFlags.Bits.MacDone = 1;
 
     // Trig OnMacCheckTimerEvent call as soon as possible
-    os_cputime_timer_relative(&MacStateCheckTimer, 1);
+    os_cputime_timer_relative(&MacStateCheckTimer, 1000);
 }
 
 static void OnRadioTxTimeout( void )
@@ -1667,7 +1663,7 @@ OnMacStateCheckTimerEvent(void *unused)
     {
         // Operation not finished restart timer
         os_cputime_timer_relative(&MacStateCheckTimer,
-                                  MAC_STATE_CHECK_TIMEOUT);
+                                  MAC_STATE_CHECK_TIMEOUT * 1000);
     }
 
     if( LoRaMacFlags.Bits.McpsInd == 1 )
@@ -1904,12 +1900,15 @@ static void OnAckTimeoutTimerEvent(void *unused)
     }
 }
 
-static bool SetNextChannel( uint32_t* time )
+static bool
+SetNextChannel(uint32_t *time)
 {
+    uint8_t i, k, j;
     uint8_t nbEnabledChannels = 0;
-    uint8_t delayTx = 0;
+    uint8_t delay_tx = 0;
     uint8_t enabledChannels[LORA_MAX_NB_CHANNELS];
-    uint32_t nextTxDelay = ( uint32_t )( -1 );
+    uint32_t next_tx_delay = ( uint32_t )( -1 );
+    uint32_t elapsed_tx_done_time;
 
     memset( enabledChannels, 0, LORA_MAX_NB_CHANNELS );
 
@@ -1941,38 +1940,30 @@ static bool SetNextChannel( uint32_t* time )
 #endif
 
     // Update Aggregated duty cycle
-    if( AggregatedTimeOff <= TimerGetElapsedTime( AggregatedLastTxDoneTime ) )
-    {
+    elapsed_tx_done_time = TimerGetElapsedTime(AggregatedLastTxDoneTime);
+    if (AggregatedTimeOff <= elapsed_tx_done_time) {
         AggregatedTimeOff = 0;
 
         // Update bands Time OFF
-        for( uint8_t i = 0; i < LORA_MAX_NB_BANDS; i++ )
-        {
-            if( ( IsLoRaMacNetworkJoined == false ) || ( DutyCycleOn == true ) )
-            {
-                if( Bands[i].TimeOff <= TimerGetElapsedTime( Bands[i].LastTxDoneTime ) )
-                {
+        for (i = 0; i < LORA_MAX_NB_BANDS; i++) {
+            if ((IsLoRaMacNetworkJoined == false) || (DutyCycleOn == true)) {
+                if (Bands[i].TimeOff <= TimerGetElapsedTime(Bands[i].LastTxDoneTime)) {
                     Bands[i].TimeOff = 0;
                 }
-                if( Bands[i].TimeOff != 0 )
-                {
-                    nextTxDelay = MIN( Bands[i].TimeOff - TimerGetElapsedTime( Bands[i].LastTxDoneTime ), nextTxDelay );
+
+                if (Bands[i].TimeOff != 0) {
+                    next_tx_delay = MIN( Bands[i].TimeOff - TimerGetElapsedTime(Bands[i].LastTxDoneTime), next_tx_delay);
                 }
-            }
-            else
-            {
-                if( DutyCycleOn == false )
-                {
+            } else {
+                if (DutyCycleOn == false) {
                     Bands[i].TimeOff = 0;
                 }
             }
         }
 
         // Search how many channels are enabled
-        for( uint8_t i = 0, k = 0; i < LORA_MAX_NB_CHANNELS; i += 16, k++ )
-        {
-            for( uint8_t j = 0; j < 16; j++ )
-            {
+        for (i = 0, k = 0; i < LORA_MAX_NB_CHANNELS; i += 16, k++) {
+            for (j = 0; j < 16; j++) {
 #if defined( USE_BAND_915 ) || defined( USE_BAND_915_HYBRID )
                 if( ( ChannelsMaskRemaining[k] & ( 1 << j ) ) != 0 )
 #else
@@ -1993,44 +1984,38 @@ static bool SetNextChannel( uint32_t* time )
                     }
 #endif
                     if( ( ( Channels[i + j].DrRange.Fields.Min <= LoRaMacParams.ChannelsDatarate ) &&
-                          ( LoRaMacParams.ChannelsDatarate <= Channels[i + j].DrRange.Fields.Max ) ) == false )
-                    { // Check if the current channel selection supports the given datarate
+                          ( LoRaMacParams.ChannelsDatarate <= Channels[i + j].DrRange.Fields.Max ) ) == false ) {
+                        // Check if the current channel selection supports the given datarate
                         continue;
                     }
-                    if( Bands[Channels[i + j].Band].TimeOff > 0 )
-                    { // Check if the band is available for transmission
-                        delayTx++;
+
+                    if (Bands[Channels[i + j].Band].TimeOff > 0) {
+                        // Check if the band is available for transmission
+                        delay_tx++;
                         continue;
                     }
                     enabledChannels[nbEnabledChannels++] = i + j;
                 }
             }
         }
-    }
-    else
-    {
-        delayTx++;
-        nextTxDelay = AggregatedTimeOff - TimerGetElapsedTime( AggregatedLastTxDoneTime );
+    } else {
+        delay_tx++;
+        next_tx_delay = AggregatedTimeOff - elapsed_tx_done_time;
     }
 
-    if( nbEnabledChannels > 0 )
-    {
+    if (nbEnabledChannels > 0) {
         Channel = enabledChannels[randr( 0, nbEnabledChannels - 1 )];
 #if defined( USE_BAND_915 ) || defined( USE_BAND_915_HYBRID )
-        if( Channel < ( LORA_MAX_NB_CHANNELS - 8 ) )
-        {
+        if (Channel < ( LORA_MAX_NB_CHANNELS - 8 )) {
             DisableChannelInMask( Channel, ChannelsMaskRemaining );
         }
 #endif
         *time = 0;
         return true;
-    }
-    else
-    {
-        if( delayTx > 0 )
-        {
-            // Delay transmission due to AggregatedTimeOff or to a band time off
-            *time = nextTxDelay;
+    } else {
+        if (delay_tx > 0) {
+            // Delay transmission due to aggregated time off or to a band time off
+            *time = next_tx_delay;
             return true;
         }
         // Datarate not supported by any channel
@@ -2890,23 +2875,22 @@ LoRaMacStatus_t Send( LoRaMacHeader_t *macHdr, uint8_t fPort, void *fBuffer, uin
     return status;
 }
 
-static LoRaMacStatus_t ScheduleTx( )
+static LoRaMacStatus_t
+ScheduleTx(void)
 {
-    uint32_t dutyCycleTimeOff = 0;
+    uint32_t duty_cycle_time_off = 0;
 
     // Check if the device is off
-    if( MaxDCycle == 255 )
-    {
+    if ( MaxDCycle == 255) {
         return LORAMAC_STATUS_DEVICE_OFF;
     }
-    if( MaxDCycle == 0 )
-    {
+
+    if (MaxDCycle == 0) {
         AggregatedTimeOff = 0;
     }
 
     // Select channel
-    while( SetNextChannel( &dutyCycleTimeOff ) == false )
-    {
+    while (SetNextChannel(&duty_cycle_time_off) == false) {
         // Set the default datarate
         LoRaMacParams.ChannelsDatarate = LoRaMacParamsDefaults.ChannelsDatarate;
 
@@ -2917,68 +2901,68 @@ static LoRaMacStatus_t ScheduleTx( )
     }
 
     // Schedule transmission of frame
-    if( dutyCycleTimeOff == 0 )
-    {
+    if (duty_cycle_time_off == 0) {
         // Try to send now
-        return SendFrameOnChannel( Channels[Channel] );
-    }
-    else
-    {
+        return SendFrameOnChannel(Channels[Channel]);
+    } else {
         // Send later - prepare timer
         LoRaMacState |= LORAMAC_TX_DELAYED;
-        os_cputime_timer_relative(&TxDelayedTimer, dutyCycleTimeOff);
+
+        /* NOTE: dutyCycleTimeOff is already in cputime timer units. */
+        os_cputime_timer_relative(&TxDelayedTimer, duty_cycle_time_off);
 
         return LORAMAC_STATUS_OK;
     }
 }
 
-static uint16_t JoinDutyCycle( void )
+static uint16_t
+JoinDutyCycle(void)
 {
-    uint16_t dutyCycle = 0;
-    uint32_t timeElapsed = TimerGetElapsedTime( LoRaMacInitializationTime );
+    uint16_t duty_cycle;
+    uint32_t elapsed_secs;
+    uint64_t elapsed_usecs;
 
-    if( timeElapsed < 3600e3 )
-    {
-        dutyCycle = BACKOFF_DC_1_HOUR;
+    elapsed_usecs = os_get_uptime_usec() - LoRaMacInitializationTime;
+    elapsed_secs = (uint32_t)(elapsed_usecs / 1000000);
+
+    if (elapsed_secs < 3600) {
+        duty_cycle = BACKOFF_DC_1_HOUR;
+    } else if (elapsed_secs < (3600 + 36000)) {
+        duty_cycle = BACKOFF_DC_10_HOURS;
+    } else {
+        duty_cycle = BACKOFF_DC_24_HOURS;
     }
-    else if( timeElapsed < ( 3600e3 + 36000e3 ) )
-    {
-        dutyCycle = BACKOFF_DC_10_HOURS;
-    }
-    else
-    {
-        dutyCycle = BACKOFF_DC_24_HOURS;
-    }
-    return dutyCycle;
+    return duty_cycle;
 }
 
-static void CalculateBackOff( uint8_t channel )
+static void
+CalculateBackOff(uint8_t channel)
 {
-    uint16_t dutyCycle = Bands[Channels[channel].Band].DCycle;
-    uint16_t joinDutyCycle = 0;
+    uint16_t duty_cycle = Bands[Channels[channel].Band].DCycle;
+    uint16_t join_duty_cycle;
+    uint32_t tx_ticks;
 
     // Reset time-off to initial value.
     Bands[Channels[channel].Band].TimeOff = 0;
 
-    if( IsLoRaMacNetworkJoined == false )
-    {
+    /* Convert the tx time on air (which is in msecs) to cputimer ticks */
+    tx_ticks = os_cputime_usecs_to_ticks(TxTimeOnAir * 1000);
+
+    if (IsLoRaMacNetworkJoined == false) {
         // The node has not joined yet. Apply join duty cycle to all regions.
-        joinDutyCycle = JoinDutyCycle( );
-        dutyCycle = MAX( dutyCycle, joinDutyCycle );
+        join_duty_cycle = JoinDutyCycle( );
+        duty_cycle = MAX(duty_cycle, join_duty_cycle);
 
         // Update Band time-off.
-        Bands[Channels[channel].Band].TimeOff = TxTimeOnAir * dutyCycle - TxTimeOnAir;
-    }
-    else
-    {
-        if( DutyCycleOn == true )
-        {
-            Bands[Channels[channel].Band].TimeOff = TxTimeOnAir * dutyCycle - TxTimeOnAir;
+        Bands[Channels[channel].Band].TimeOff = (tx_ticks * duty_cycle) - tx_ticks;
+    } else {
+        if (DutyCycleOn == true) {
+            Bands[Channels[channel].Band].TimeOff = (tx_ticks * duty_cycle) - tx_ticks;
         }
     }
 
     // Update Aggregated Time OFF
-    AggregatedTimeOff = AggregatedTimeOff + ( TxTimeOnAir * AggregatedDCycle - TxTimeOnAir );
+    AggregatedTimeOff = AggregatedTimeOff + ((tx_ticks * AggregatedDCycle) - tx_ticks);
 }
 
 static int8_t AlternateDatarate( uint16_t nbTrials )
@@ -3090,7 +3074,7 @@ static void ResetMacParameters( void )
     Channel = LORA_MAX_NB_CHANNELS;
 
     // Store the current initialization time
-    LoRaMacInitializationTime = os_cputime_get32();
+    LoRaMacInitializationTime = os_get_uptime_usec();
 }
 
 LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort, void *fBuffer, uint16_t fBufferSize )
@@ -3313,7 +3297,7 @@ LoRaMacStatus_t SendFrameOnChannel( ChannelParams_t channel )
     MlmeConfirm.TxTimeOnAir = TxTimeOnAir;
 
     // Starts the MAC layer status check timer
-    os_cputime_timer_relative(&MacStateCheckTimer, MAC_STATE_CHECK_TIMEOUT);
+    os_cputime_timer_relative(&MacStateCheckTimer, MAC_STATE_CHECK_TIMEOUT * 1000);
 
     if( IsLoRaMacNetworkJoined == false )
     {
@@ -3337,7 +3321,7 @@ LoRaMacStatus_t SetTxContinuousWave( uint16_t timeout )
     //txPower = TxPowers[txPowerIndex];
 
     // Starts the MAC layer status check timer
-    os_cputime_timer_relative(&MacStateCheckTimer, MAC_STATE_CHECK_TIMEOUT);
+    os_cputime_timer_relative(&MacStateCheckTimer, MAC_STATE_CHECK_TIMEOUT * 1000);
 
     //Radio.SetTxContinuousWave( Channels[Channel].Frequency, txPower, timeout );
 
@@ -4333,13 +4317,12 @@ LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest )
     int8_t datarate;
     bool readyToSend = false;
 
-    if( mcpsRequest == NULL )
-    {
+    if (mcpsRequest == NULL) {
         return LORAMAC_STATUS_PARAMETER_INVALID;
     }
-    if( ( ( LoRaMacState & LORAMAC_TX_RUNNING ) == LORAMAC_TX_RUNNING ) ||
-        ( ( LoRaMacState & LORAMAC_TX_DELAYED ) == LORAMAC_TX_DELAYED ) )
-    {
+
+    if (((LoRaMacState & LORAMAC_TX_RUNNING) == LORAMAC_TX_RUNNING) ||
+        ((LoRaMacState & LORAMAC_TX_DELAYED) == LORAMAC_TX_DELAYED)) {
         return LORAMAC_STATUS_BUSY;
     }
 
@@ -4347,10 +4330,8 @@ LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest )
     memset ( ( uint8_t* ) &McpsConfirm, 0, sizeof( McpsConfirm ) );
     McpsConfirm.Status = LORAMAC_EVENT_INFO_STATUS_ERROR;
 
-    switch( mcpsRequest->Type )
-    {
+    switch (mcpsRequest->Type) {
         case MCPS_UNCONFIRMED:
-        {
             readyToSend = true;
             AckTimeoutRetries = 1;
 
@@ -4360,9 +4341,7 @@ LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest )
             fBufferSize = mcpsRequest->Req.Unconfirmed.fBufferSize;
             datarate = mcpsRequest->Req.Unconfirmed.Datarate;
             break;
-        }
         case MCPS_CONFIRMED:
-        {
             readyToSend = true;
             AckTimeoutRetriesCounter = 1;
             AckTimeoutRetries = mcpsRequest->Req.Confirmed.NbTrials;
@@ -4373,9 +4352,7 @@ LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest )
             fBufferSize = mcpsRequest->Req.Confirmed.fBufferSize;
             datarate = mcpsRequest->Req.Confirmed.Datarate;
             break;
-        }
         case MCPS_PROPRIETARY:
-        {
             readyToSend = true;
             AckTimeoutRetries = 1;
 
@@ -4384,7 +4361,6 @@ LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest )
             fBufferSize = mcpsRequest->Req.Proprietary.fBufferSize;
             datarate = mcpsRequest->Req.Proprietary.Datarate;
             break;
-        }
         default:
             break;
     }
