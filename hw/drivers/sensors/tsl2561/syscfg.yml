@@ -36,3 +36,6 @@ syscfg.defs:
     TSL2561_SHELL_ITF_NUM:
         description: 'Select interface number'
         value: 0
+    TSL2561_SHELL_ITF_ADDR:
+        description: 'TSL2561 I2C Addresss'
+        value: 0x39
