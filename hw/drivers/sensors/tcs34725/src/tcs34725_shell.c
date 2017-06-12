@@ -37,6 +37,7 @@ static struct shell_cmd tcs34725_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(TCS34725_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(TCS34725_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(TCS34725_SHELL_ITF_ADDR)
 };
 
 static int
@@ -86,8 +87,8 @@ tcs34725_shell_help(void)
     console_printf("%s cmd [flags...]\n", tcs34725_shell_cmd_struct.sc_cmd);
     console_printf("cmd:\n");
     console_printf("\tr    [n_samples]\n");
-    console_printf("\tgain [1|16]\n");
-    console_printf("\ttime [13|101|402]\n");
+    console_printf("\tgain [0: 1|1: 4|2: 16|3: 60]\n");
+    console_printf("\ttime [0: 2.4|1: 24|2: 50|3: 101|4: 154|5: 700]\n");
     console_printf("\ten   [0|1]\n");
     console_printf("\tint  pin [p_num(0..255)]\n");
     console_printf("\tint  on|off|clr\n");
@@ -108,6 +109,8 @@ tcs34725_shell_cmd_read(int argc, char **argv)
     long val;
     int rc;
     struct tcs34725 tcs34725;
+    uint8_t int_time;
+    int delay_ticks;
 
     if (argc > 3) {
         return tcs34725_shell_err_too_many_args(argv[1]);
@@ -123,16 +126,55 @@ tcs34725_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
+        rc = tcs34725_get_integration_time(&g_sensor_itf, &int_time);
+        if (rc) {
+            goto err;
+        }
+
+        /* Set a delay for the integration time */
+        switch (int_time)
+        {
+            case TCS34725_INTEGRATIONTIME_2_4MS:
+                delay_ticks = 3;
+                break;
+            case TCS34725_INTEGRATIONTIME_24MS:
+                delay_ticks = 24;
+                break;
+            case TCS34725_INTEGRATIONTIME_50MS:
+                delay_ticks = 50;
+                break;
+            case TCS34725_INTEGRATIONTIME_101MS:
+                delay_ticks = 101;
+                break;
+            case TCS34725_INTEGRATIONTIME_154MS:
+                delay_ticks = 154;
+                break;
+            case TCS34725_INTEGRATIONTIME_700MS:
+                delay_ticks = 700;
+                break;
+            default:
+                /*
+                 * If the integration time specified is not from the config,
+                 * it will get considered as valid inetgration time in ms
+                 */
+                delay_ticks = 700;
+                break;
+        }
+
+        os_time_delay((delay_ticks * OS_TICKS_PER_SEC)/1000 + 1);
+
         rc = tcs34725_get_rawdata(&g_sensor_itf, &r, &g, &b, &c, &tcs34725);
         if (rc) {
-            console_printf("Read failed: %d\n", rc);
-            return rc;
+            goto err;
         }
 
         console_printf("r: %u g: %u b: %u c: %u \n", r, g, b, c);
     }
 
     return 0;
+err:
+    console_printf("Read failed: %d\n", rc);
+    return rc;
 }
 
 
