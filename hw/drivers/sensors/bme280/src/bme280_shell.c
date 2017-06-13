@@ -192,7 +192,7 @@ bme280_shell_cmd_oversample(int argc, char **argv)
 
         val = parse_ll_bounds(argv[3], 0, 5, &rc);
         if (rc) {
-            return bme280_shell_err_invalid_arg(argv[2]);
+            return bme280_shell_err_invalid_arg(argv[3]);
         }
 
         oversample = val;

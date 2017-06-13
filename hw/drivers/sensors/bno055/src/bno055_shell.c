@@ -241,7 +241,7 @@ bno055_shell_cmd_read(int argc, char **argv)
 
         val = parse_ll_bounds(argv[3], 0, UINT16_MAX, &rc);
         if (rc) {
-            return bno055_shell_err_invalid_arg(argv[2]);
+            return bno055_shell_err_invalid_arg(argv[3]);
         }
         type = (int)(1 << val);
     }
