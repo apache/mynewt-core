@@ -219,7 +219,7 @@ bno055_shell_cmd_read(int argc, char **argv)
     int type;
     char tmpstr[13];
 
-    type = 0;
+    type = SENSOR_TYPE_NONE;
     if (argc > 4) {
         return bno055_shell_err_too_many_args(argv[1]);
     }
@@ -240,8 +240,11 @@ bno055_shell_cmd_read(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         type = (int)(1 << val);
+    } else {
+        console_printf("Usage:\n");
+        console_printf("\tr     [n_samples] [ 0-acc          | 1 -mag       | 2 -gyro    | 4 -temp   |\n"
+                       "\t                    9-quat         | 26-linearacc | 27-gravity | 28-euler  ]\n\n");
     }
-
     while(samples--) {
 
         if (type == SENSOR_TYPE_ROTATION_VECTOR) {
