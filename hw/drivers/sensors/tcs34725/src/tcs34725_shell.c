@@ -25,6 +25,7 @@
 #include "tcs34725/tcs34725.h"
 #include "tcs34725_priv.h"
 #include "defs/error.h"
+#include "parse/parse.h"
 
 #if MYNEWT_VAL(TCS34725_CLI)
 static int tcs34725_shell_cmd(int argc, char **argv);
@@ -38,23 +39,6 @@ static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(TCS34725_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(TCS34725_SHELL_ITF_NUM),
 };
-
-static int
-tcs34725_shell_stol(char *param_val, long min, long max, long *output)
-{
-    char *endptr;
-    long lval;
-
-    lval = strtol(param_val, &endptr, 10); /* Base 10 */
-    if (param_val != '\0' && *endptr == '\0' &&
-        lval >= min && lval <= max) {
-            *output = lval;
-    } else {
-        return SYS_EINVAL;
-    }
-
-    return 0;
-}
 
 static int
 tcs34725_shell_err_too_many_args(char *cmd_name)
@@ -105,7 +89,7 @@ tcs34725_shell_cmd_read(int argc, char **argv)
     uint16_t b;
     uint16_t c;
     uint16_t samples = 1;
-    long val;
+    uint16_t val;
     int rc;
     struct tcs34725 tcs34725;
 
@@ -115,7 +99,8 @@ tcs34725_shell_cmd_read(int argc, char **argv)
 
     /* Check if more than one sample requested */
     if (argc == 3) {
-        if (tcs34725_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[2], 1, UINT16_MAX, &rc);
+        if (rc) {
             return tcs34725_shell_err_invalid_arg(argv[2]);
         }
         samples = (uint16_t)val;
@@ -139,7 +124,7 @@ tcs34725_shell_cmd_read(int argc, char **argv)
 static int
 tcs34725_shell_cmd_gain(int argc, char **argv)
 {
-    long val;
+    uint8_t val;
     uint8_t gain;
     int rc;
 
@@ -159,11 +144,8 @@ tcs34725_shell_cmd_gain(int argc, char **argv)
 
     /* Update the gain */
     if (argc == 3) {
-        if (tcs34725_shell_stol(argv[2], 0, 3, &val)) {
-            return tcs34725_shell_err_invalid_arg(argv[2]);
-        }
-        /* Make sure gain is valid */
-        if (val > 3) {
+        val = parse_ll_bounds(argv[2], 0, 3, &rc);
+        if (rc) {
             return tcs34725_shell_err_invalid_arg(argv[2]);
         }
         rc = tcs34725_set_gain(&g_sensor_itf, val);
@@ -182,7 +164,7 @@ static int
 tcs34725_shell_cmd_time(int argc, char **argv)
 {
     uint8_t time;
-    long val;
+    uint8_t val;
     int rc;
 
     if (argc > 3) {
@@ -223,7 +205,8 @@ tcs34725_shell_cmd_time(int argc, char **argv)
 
     /* Set the integration time */
     if (argc == 3) {
-        if (tcs34725_shell_stol(argv[2], 0, 5, &val)) {
+        val = parse_ll_bounds(argv[2], 0, 5, &rc);
+        if (rc) {
             return tcs34725_shell_err_invalid_arg(argv[2]);
         }
 
@@ -267,7 +250,7 @@ tcs34725_shell_cmd_int(int argc, char **argv)
 {
     int rc;
     int pin;
-    long val;
+    uint16_t val;
     uint16_t lower;
     uint16_t upper;
 
@@ -303,15 +286,17 @@ tcs34725_shell_cmd_int(int argc, char **argv)
     /* Configure the interrupt on 'set' */
     if (argc == 3 && strcmp(argv[2], "set") == 0) {
         /* Get lower threshold */
-        if (tcs34725_shell_stol(argv[4], 0, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[4], 0, UINT16_MAX, &rc);
+        if (rc) {
             return tcs34725_shell_err_invalid_arg(argv[4]);
         }
-        lower = (uint16_t)val;
+        lower = val;
         /* Get upper threshold */
-        if (tcs34725_shell_stol(argv[5], 0, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[5], 0, UINT16_MAX, &rc);
+        if (rc) {
             return tcs34725_shell_err_invalid_arg(argv[5]);
         }
-        upper = (uint16_t)val;
+        upper = val;
         /* Set the values */
         rc = tcs34725_set_int_limits(&g_sensor_itf, lower, upper);
         console_printf("Configured interrupt as:\n");
@@ -323,7 +308,8 @@ tcs34725_shell_cmd_int(int argc, char **argv)
     /* Setup INT pin on 'pin' */
     if (argc == 4 && strcmp(argv[2], "pin") == 0) {
         /* Get the pin number */
-        if (tcs34725_shell_stol(argv[3], 0, 0xFF, &val)) {
+        val = parse_ll_bounds(argv[3], 0, 0xFF, &rc);
+        if (rc) {
             return tcs34725_shell_err_invalid_arg(argv[3]);
         }
         pin = (int)val;

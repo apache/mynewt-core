@@ -45,6 +45,7 @@
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
 #include "os/os_cputime.h"
+#include "parse/parse.h"
 
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
@@ -61,6 +62,11 @@ struct sensor_poll_data {
     int spd_poll_itvl;
     int spd_poll_duration;
     int spd_poll_delay;
+};
+
+struct sensor_shell_read_ctx {
+    sensor_type_t type;
+    int num_entries;
 };
 
 static void
@@ -221,11 +227,6 @@ sensor_cmd_list_sensors(void)
 
     sensor_mgr_unlock();
 }
-
-struct sensor_shell_read_ctx {
-    sensor_type_t type;
-    int num_entries;
-};
 
 char*
 sensor_ftostr(float num, char *fltstr, int len)
@@ -599,38 +600,21 @@ err:
     return rc;
 }
 
-int
-sensor_shell_stol(char *param_val, long min, long max, long *output)
-{
-    char *endptr;
-    long lval;
-
-    lval = strtol(param_val, &endptr, 10); /* Base 10 */
-    if (param_val != '\0' && *endptr == '\0' &&
-        lval >= min && lval <= max) {
-            *output = lval;
-    } else {
-        return EINVAL;
-    }
-
-    return 0;
-}
-
 static int
 sensor_cmd_i2cscan(int argc, char **argv)
 {
     uint8_t addr;
     int32_t timeout;
     uint8_t dev_count = 0;
-    long i2cnum;
+    uint8_t i2cnum;
     int rc;
 
     timeout = OS_TICKS_PER_SEC / 10;
 
     rc = 0;
-    if (sensor_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
+    i2cnum = parse_ll_bounds(argv[2], 0, 0xf, &rc);
+    if (rc) {
         console_printf("Invalid i2c interface:%s\n", argv[2]);
-        rc = SYS_EINVAL;
         goto err;
     }
 
