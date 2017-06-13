@@ -29,6 +29,7 @@
 #include "sensor_priv.h"
 #include "os/os_time.h"
 #include "os/os_cputime.h"
+#include "defs/error.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -36,7 +37,7 @@ struct {
     struct os_callout mgr_wakeup_callout;
     struct os_eventq *mgr_eventq;
 
-    TAILQ_HEAD(, sensor) mgr_sensor_list;
+    SLIST_HEAD(, sensor) mgr_sensor_list;
 } sensor_mgr;
 
 struct sensor_read_ctx {
@@ -74,16 +75,16 @@ sensor_mgr_unlock(void)
 static void
 sensor_mgr_remove(struct sensor *sensor)
 {
-    TAILQ_REMOVE(&sensor_mgr.mgr_sensor_list, sensor, s_next);
+    SLIST_REMOVE(&sensor_mgr.mgr_sensor_list, sensor, sensor, s_next);
 }
 
 static void
 sensor_mgr_insert(struct sensor *sensor)
 {
-    struct sensor *cursor;
+    struct sensor *cursor, *prev;
 
-    cursor = NULL;
-    TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+    prev = cursor = NULL;
+    SLIST_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
         if (cursor->s_next_run == OS_TIMEOUT_NEVER) {
             break;
         }
@@ -91,12 +92,14 @@ sensor_mgr_insert(struct sensor *sensor)
         if (OS_TIME_TICK_LT(sensor->s_next_run, cursor->s_next_run)) {
             break;
         }
+
+        prev = cursor;
     }
 
-    if (cursor) {
-        TAILQ_INSERT_BEFORE(cursor, sensor, s_next);
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&sensor_mgr.mgr_sensor_list, sensor, s_next);
     } else {
-        TAILQ_INSERT_TAIL(&sensor_mgr.mgr_sensor_list, sensor, s_next);
+        SLIST_INSERT_AFTER(prev, sensor, s_next);
     }
 }
 
@@ -198,7 +201,7 @@ sensor_mgr_wakeup_event(struct os_event *ev)
         goto done;
     }
 
-     TAILQ_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
+    SLIST_FOREACH(cursor, &sensor_mgr.mgr_sensor_list, s_next) {
         /* Sensors that are not periodic are inserted at the end of the sensor
          * list.
          */
@@ -297,9 +300,6 @@ sensor_mgr_init(void)
     struct os_timeval ostv;
     struct os_timezone ostz;
 
-    memset(&sensor_mgr, 0, sizeof(sensor_mgr));
-    TAILQ_INIT(&sensor_mgr.mgr_sensor_list);
-
     sensor_mgr_evq_set(os_eventq_dflt_get());
 
     /**
@@ -364,16 +364,16 @@ sensor_mgr_find_next(sensor_mgr_compare_func_t compare_func, void *arg,
 
     cursor = prev_cursor;
     if (cursor == NULL) {
-        cursor = TAILQ_FIRST(&sensor_mgr.mgr_sensor_list);
+        cursor = SLIST_FIRST(&sensor_mgr.mgr_sensor_list);
     } else {
-        cursor = TAILQ_NEXT(prev_cursor, s_next);
+        cursor = SLIST_NEXT(prev_cursor, s_next);
     }
 
     while (cursor != NULL) {
         if (compare_func(cursor, arg)) {
             break;
         }
-        cursor = TAILQ_NEXT(cursor, s_next);
+        cursor = SLIST_NEXT(cursor, s_next);
     }
 
     sensor_mgr_unlock();
@@ -382,9 +382,15 @@ done:
     return (cursor);
 }
 
-
-
-static int
+/**
+ * Check if sensor type matches
+ *
+ * @param The sensor object
+ * @param The type to check
+ *
+ * @return 1 if matches, 0 if it doesn't match.
+ */
+int
 sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
 {
     sensor_type_t *type;
@@ -392,14 +398,12 @@ sensor_mgr_match_bytype(struct sensor *sensor, void *arg)
     type = (sensor_type_t *) arg;
 
     /* s_types is a bitmask that contains the supported sensor types for this
-     * sensor, and type is the bitmask we're searching for.  Compare the two,
-     * and if there is a match, return true (1).
+     * sensor, and type is the bitmask we're searching for. We also look at
+     * the mask as the driver might be configured to work in a mode where only
+     * some of the sensors are supported but not all. Compare the three,
+     * and if there is a match, return 1. If it is not supported, return 0.
      */
-    if ((*type & sensor->s_types) != 0) {
-        return (1);
-    } else {
-        return (0);
-    }
+    return (*type & sensor->s_types & sensor->s_mask) ? 1 : 0;
 }
 
 /**
@@ -487,7 +491,7 @@ sensor_lock(struct sensor *sensor)
 }
 
 /**
- * Unlock access to the sensor specified by sensor.  Blocks until lock acquired.
+ * Unlock access to the sensor specified by sensor.
  *
  * @param The sensor to unlock access to.
  */
@@ -636,7 +640,7 @@ sensor_up_timestamp(struct sensor *sensor)
 }
 
 /**
- * Read the data for sensor type "type," from the sensor, "sensor" and
+ * Read the data for sensor type "type," from the given sensor and
  * return the result into the "value" parameter.
  *
  * @param The senssor to read data from
@@ -655,24 +659,29 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     int rc;
 
     rc = sensor_lock(sensor);
-    if (rc != 0) {
-        goto done;
+    if (rc) {
+        goto err;
     }
 
     src.user_func = data_func;
     src.user_arg = arg;
+
+    if (!sensor_mgr_match_bytype(sensor, (void *)&type)) {
+        rc = SYS_ENOENT;
+        goto err;
+    }
 
     sensor_up_timestamp(sensor);
 
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
             timeout);
     if (rc) {
-        goto done;
+        goto err;
     }
 
     sensor_unlock(sensor);
 
-done:
+err:
     return (rc);
 }
 

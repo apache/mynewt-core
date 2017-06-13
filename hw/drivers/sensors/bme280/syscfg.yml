@@ -21,9 +21,15 @@
 # SOFTWARE.
 
 syscfg.defs:
-    BME280_SPINUM:
-        description: 'SPI number for the BME280'
-        value: -1
+    BME280_SHELL_ITF_NUM:
+        description: 'Shell interface number for the BME280'
+        value: 0
+    BME280_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the BME280'
+        value: 0
+    BME280_SHELL_CSPIN:
+        description: 'CS pin for BME280'
+        value : 3
     BME280_CLI:
         description: 'Enable shell support for the BME280'
         value: 0
@@ -33,9 +39,6 @@ syscfg.defs:
     BME280_STATS:
         description: 'Enable BME280 statistics'
         value: 0
-    BME280_CSPIN:
-        description: 'CS pin for BME280'
-        value : 0
     BME280_SPEC_CALC:
         description: 'BME280 Spec calculation insetad of built in one'
         value : 1

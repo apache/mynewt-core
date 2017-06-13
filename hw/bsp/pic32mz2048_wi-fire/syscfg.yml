@@ -20,30 +20,49 @@
 # Package: hw/bsp/pic32mx2048_wi-fire
 
 syscfg.defs:
+    HARDFLOAT:
+        description: 'Whether to enable UART0 FPU context switch'
+        value:  1
+
     CLOCK_FREQ:
-        description: 'TBD'
+        description: 'System clock frequency, defined in hal_bsp.c'
         value:  200000000ul
 
     UART_0:
-        description: 'TBD'
+        description: 'Whether to enable UART0'
         value:  1
 
     UART_1:
-        description: 'TBD'
+        description: 'Whether to enable UART1'
         value:  1
 
     UART_2:
-        description: 'TBD'
+        description: 'Whether to enable UART2'
         value:  1
 
     UART_3:
-        description: 'TBD'
+        description: 'Whether to enable UART3'
         value:  1
 
     UART_4:
-        description: 'TBD'
+        description: 'Whether to enable UART4'
         value:  1
 
     UART_5:
-        description: 'TBD'
+        description: 'Whether to enable UART5'
         value:  1
+
+    SPI_1_MASTER:
+        description: 'SPI on J9 connector'
+        value:  1
+
+    SPI_2_MASTER:
+        description: 'SPI connected to microSD card'
+        value:  1
+
+    SPI_3_MASTER:
+        description: 'SPI connected to MRF24WG0MA'
+        value:  1
+
+syscfg.vals:
+    CONSOLE_UART_DEV: '"uart3"'

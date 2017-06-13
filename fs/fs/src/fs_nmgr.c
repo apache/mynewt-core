@@ -28,7 +28,6 @@
 
 #include "os/os.h"
 #include "os/endian.h"
-#include "newtmgr/newtmgr.h"
 #include "bootutil/image.h"
 #include "fs/fs.h"
 #include "cborattr/cborattr.h"

@@ -17,12 +17,13 @@
 #ifndef OC_REP_H
 #define OC_REP_H
 
-#include <tinycbor/cbor.h>
-#include "oc_constants.h"
-#include "oc_helpers.h"
-#include "../src/port/mynewt/config.h"
 #include <stdbool.h>
 #include <stdint.h>
+
+#include <tinycbor/cbor.h>
+#include "oic/oc_constants.h"
+#include "oic/oc_helpers.h"
+#include "oic/port/mynewt/config.h"
 
 #ifdef __cplusplus
 extern "C" {

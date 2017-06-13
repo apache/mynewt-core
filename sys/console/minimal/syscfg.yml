@@ -47,3 +47,7 @@ syscfg.defs:
     CONSOLE_UART_TX_BUF_SIZE:
         description: 'UART console transmit buffer size; must be power of 2.'
         value: 32
+
+    CONSOLE_UART_DEV:
+        description: 'Console UART device.'
+        value: '"uart0"'

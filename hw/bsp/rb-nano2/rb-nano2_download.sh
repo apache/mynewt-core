@@ -37,6 +37,14 @@ if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0
 fi
 
+# We write the config registers for BPROT so that NVMC write
+# protection gets disabled for all blocks of the flash
+# We also write the DISABLEINDEBUG register so that, write
+# protection gets disabled in debug register by default
+CFG_POST_INIT="mww 0x40000600 0;mww 0x40000604 0;mww 0x40000608 1;\
+               mww 0x40000610 0;mww 0x40000614 0;
+              "
+
 common_file_to_load
 openocd_load
 openocd_reset_run

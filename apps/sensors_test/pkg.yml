@@ -28,12 +28,6 @@ pkg.deps:
     - test/flash_test
     - kernel/os
     - hw/sensor
-    - hw/drivers/sensors/sim
-    - hw/drivers/sensors/lsm303dlhc
-    - hw/drivers/sensors/tsl2561
-    - hw/drivers/sensors/bno055
-    - hw/drivers/sensors/tcs34725
-    - hw/drivers/sensors/bme280
     - boot/bootutil
     - sys/shell
     - sys/config
@@ -43,10 +37,11 @@ pkg.deps:
     - sys/stats/full
     - boot/split
     - mgmt/imgmgr
-    #- mgmt/newtmgr
+    - mgmt/newtmgr/transport/ble
+    - hw/sensor/creator
 
 pkg.deps.SENSOR_OIC:
-    - mgmt/oicmgr
+   #- mgmt/oicmgr
 
 pkg.deps.SENSOR_BLE:
     - net/nimble/controller

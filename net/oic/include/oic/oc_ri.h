@@ -17,10 +17,10 @@
 #ifndef OC_RI_H
 #define OC_RI_H
 
-#include "../src/port/mynewt/config.h"
-#include "oc_rep.h"
-#include "oc_uuid.h"
-#include "../../src/port/oc_connectivity.h"
+#include "oic/port/mynewt/config.h"
+#include "oic/oc_rep.h"
+#include "oic/oc_uuid.h"
+#include "oic/port/oc_connectivity.h"
 
 #ifdef __cplusplus
 extern "C" {

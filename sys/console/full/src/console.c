@@ -81,7 +81,7 @@ static unsigned int ansi_val, ansi_val_2;
 static uint8_t cur, end;
 static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
-static uint8_t (*completion_cb)(char *line, uint8_t len);
+static completion_cb completion;
 
 void
 console_echo(int on)
@@ -184,6 +184,8 @@ insert_char(char *pos, char c, uint8_t end)
         /* Echo back to console */
         console_out(c);
     }
+
+    ++cur;
 
     if (end == 0) {
         *pos = c;
@@ -346,6 +348,27 @@ handle_nlip(uint8_t byte)
     }
 }
 
+static int
+console_append_char(char *line, uint8_t byte)
+{
+    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+        return 0;
+    }
+
+    line[cur + end] = byte;
+
+    if (byte == '\0') {
+        return 1;
+    }
+
+    if (echo) {
+        /* Echo back to console */
+        console_out(byte);
+    }
+    ++cur;
+    return 1;
+}
+
 int
 console_handle_char(uint8_t byte)
 {
@@ -369,7 +392,7 @@ console_handle_char(uint8_t byte)
 
     if (handle_nlip(byte))  {
         if (byte == '\n') {
-            insert_char(&input->line[cur++], byte, end);
+            insert_char(&input->line[cur], byte, end);
             input->line[cur] = '\0';
             cur = 0;
             end = 0;
@@ -390,14 +413,14 @@ console_handle_char(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur++], CONSOLE_NLIP_PKT_START1, end);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur++], CONSOLE_NLIP_DATA_START1, end);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
         }
 
-        insert_char(&input->line[cur++], byte, end);
+        insert_char(&input->line[cur], byte, end);
 
         return 0;
     }
@@ -460,9 +483,9 @@ console_handle_char(uint8_t byte)
             ev = NULL;
             break;
         case '\t':
-            if (completion_cb && !end) {
+            if (completion && !end) {
                 console_blocking_mode();
-                cur += completion_cb(input->line, cur);
+                completion(input->line, console_append_char);
                 console_non_blocking_mode();
             }
             break;
@@ -473,7 +496,7 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    insert_char(&input->line[cur++], byte, end);
+    insert_char(&input->line[cur], byte, end);
     return 0;
 }
 
@@ -497,9 +520,9 @@ console_set_queues(struct os_eventq *avail, struct os_eventq *lines)
 }
 
 void
-console_set_completion_cb(uint8_t (*completion)(char *str, uint8_t len))
+console_set_completion_cb(completion_cb cb)
 {
-    completion_cb = completion;
+    completion = cb;
 }
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)

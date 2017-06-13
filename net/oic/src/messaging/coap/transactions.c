@@ -33,15 +33,18 @@
 #include <string.h>
 #include <stddef.h>
 
+#include <syscfg/syscfg.h>
+
 #include <os/os_callout.h>
 #include <os/os_mempool.h>
 
-#include "transactions.h"
-#include "observe.h"
+#include "oic/port/mynewt/config.h"
+#include "oic/messaging/coap/transactions.h"
+#include "oic/messaging/coap/observe.h"
 #include "api/oc_buffer.h"
 
 #ifdef OC_CLIENT
-#include "oc_client_state.h"
+#include "oic/oc_client_state.h"
 #endif /* OC_CLIENT */
 
 #ifdef OC_SECURITY

@@ -21,21 +21,24 @@
 
 syscfg.defs:
     CLOCK_FREQ:
-        description: 'TBD'
+        description: 'System clock frequency, defined in hal_bsp.c'
         value:  80000000ul
 
     UART_0:
-        description: 'TBD'
+        description: 'Whether to enable UART0'
         value:  1
 
     UART_1:
-        description: 'TBD'
+        description: 'Whether to enable UART1'
         value:  1
 
     UART_2:
-        description: 'TBD'
+        description: 'Whether to enable UART2'
         value:  1
 
     UART_3:
-        description: 'TBD'
+        description: 'Whether to enable UART3'
         value:  1
+
+syscfg.vals:
+    CONSOLE_UART_DEV: '"uart2"'

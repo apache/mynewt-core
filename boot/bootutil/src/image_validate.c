@@ -24,6 +24,7 @@
 
 #include "syscfg/syscfg.h"
 #include "hal/hal_flash.h"
+#include "hal/hal_watchdog.h"
 #include "flash_map/flash_map.h"
 #include "bootutil/image.h"
 #include "bootutil/sign_key.h"
@@ -66,6 +67,9 @@ bootutil_img_hash(struct image_header *hdr, const struct flash_area *fap,
      */
     size = hdr->ih_img_size + hdr->ih_hdr_size;
     for (off = 0; off < size; off += blk_sz) {
+        /* Pet the watchdog, in case it is still enabled after a soft reset. */
+        hal_watchdog_tickle();
+
         blk_sz = size - off;
         if (blk_sz > tmp_buf_sz) {
             blk_sz = tmp_buf_sz;

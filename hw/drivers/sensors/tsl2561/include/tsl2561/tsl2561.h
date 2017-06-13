@@ -59,6 +59,7 @@ enum tsl2561_light_itime {
 struct tsl2561_cfg {
     uint8_t gain;
     uint8_t integration_time;
+    sensor_type_t mask;
 };
 
 struct tsl2561 {
@@ -69,84 +70,97 @@ struct tsl2561 {
 };
 
 /**
- * Initialize the tsl2561. This function is normally called by sysinit.
+ * Expects to be called back through os_dev_create().
  *
- * @param dev  Pointer to the tsl2561_dev device descriptor
+ * @param ptr to the device object associated with this accelerometer
+ * @param argument passed to OS device init
+ *
+ * @return 0 on success, non-zero on failure.
  */
 int tsl2561_init(struct os_dev *dev, void *arg);
 
 /**
  * Enable or disables the sensor to save power
  *
+ * @param The sensor interface
  * @param state  1 to enable the sensor, 0 to disable it
  *
- * @return 0 on success, and non-zero error code on failure
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_enable(uint8_t state);
+int tsl2561_enable(struct sensor_itf *itf, uint8_t state);
 
 /**
  * Gets the current 'enabled' state for the IC
  *
- * @return 1 if the IC is enabled, otherwise 0
+ * @param The sensor interface
+ * @param ptr to the enabled variable to be filled up
+ * @return 0 on success, non-zero on failure
  */
-uint8_t tsl2561_get_enable(void);
+int tsl2561_get_enable(struct sensor_itf *itf, uint8_t *enabled);
 
 /**
  * Gets a new data sample from the light sensor.
  *
+ * @param The sensor interface
  * @param broadband The full (visible + ir) sensor output
  * @param ir        The ir sensor output
- * @param tsl2561   Config and OS device structure
  *
- * @return 0 on success, and non-zero error code on failure
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_get_data(uint16_t *broadband, uint16_t *ir, struct tsl2561 *tsl2561);
+int tsl2561_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir);
 
 /**
  * Sets the integration time used when sampling light values.
  *
+ * @param The sensor interface
  * @param int_time The integration time which can be one of:
  *                  - 0x00: 13ms
  *                  - 0x01: 101ms
  *                  - 0x02: 402ms
  *
- * @return 0 on success, and non-zero error code on failure
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_set_integration_time(uint8_t int_time);
+int tsl2561_set_integration_time(struct sensor_itf *itf, uint8_t int_time);
 
 /**
  * Gets the current integration time used when sampling light values.
  *
- * @return The integration time which can be one of:
+ * @param The sensor interface
+ * @param ptr to the integration time which can be one of:
  *         - 0x00: 13ms
  *         - 0x01: 101ms
  *         - 0x02: 402ms
+ * @return 0 on success, non-zero on failure
  */
-uint8_t tsl2561_get_integration_time(void);
+int tsl2561_get_integration_time(struct sensor_itf *itf, uint8_t *int_time);
 
 /**
  * Sets the gain increment used when sampling light values.
  *
+ * @param The sensor interface
  * @param gain The gain increment which can be one of:
  *                  - 0x00: 1x (no gain)
  *                  - 0x10: 16x gain
  *
- * @return 0 on success, and non-zero error code on failure
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_set_gain(uint8_t gain);
+int tsl2561_set_gain(struct sensor_itf *itf, uint8_t gain);
 
 /**
  * Gets the current gain increment used when sampling light values.
  *
- * @return The gain increment which can be one of:
+ * @param The sensor interface
+ * @param ptr to the gain increment which can be one of:
  *         - 0x00: 1x (no gain)
  *         - 0x10: 16x gain
+ * @return 0 on success, non-zero on failure
  */
-uint8_t tsl2561_get_gain(void);
+int tsl2561_get_gain(struct sensor_itf *itf, uint8_t *gain);
 
 /**
  * Sets the upper and lower interrupt thresholds
  *
+ * @param The sensor interface
  * @param rate    Sets the rate of interrupts to the host processor:
  *                - 0   Every ADC cycle generates interrupt
  *                - 1   Any value outside of threshold range
@@ -167,26 +181,34 @@ uint8_t tsl2561_get_gain(void);
  * @param lower   The lower threshold
  * @param upper   The upper threshold
  *
- * @return 0 on success, and non-zero error code on failure
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_setup_interrupt(uint8_t rate, uint16_t lower, uint16_t upper);
+int tsl2561_setup_interrupt(struct sensor_itf *itf, uint8_t rate, uint16_t lower, uint16_t upper);
 
 /**
  * Enables or disables the HW interrupt on the device
  *
+ * @param The sensor interface
  * @param enable  0 to disable the interrupt, 1 to enablee it
  *
- * @return 0 on success, and non-zero error code on failure
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_enable_interrupt(uint8_t enable);
+int tsl2561_enable_interrupt(struct sensor_itf *itf, uint8_t enable);
 
 /**
  * Clear an asserted interrupt on the device
  *
- * @return 0 on success, and non-zero error code on failure
+ * @param The sensor interface
+ * @return 0 on success, non-zero on failure
  */
-int tsl2561_clear_interrupt(void);
+int tsl2561_clear_interrupt(struct sensor_itf *itf);
 
+/**
+ * Configure the sensor
+ *
+ * @param ptr to sensor driver
+ * @param ptr to sensor driver config
+ */
 int tsl2561_config(struct tsl2561 *, struct tsl2561_cfg *);
 
 #if MYNEWT_VAL(TSL2561_CLI)

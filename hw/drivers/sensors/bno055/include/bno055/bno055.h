@@ -158,6 +158,7 @@ struct bno055_cfg {
     uint8_t bc_mag_pwr_mode;
     uint8_t bc_mag_opr_mode;
     uint8_t bc_use_ext_xtal;
+    uint32_t bc_mask;
 };
 
 struct bno055 {
@@ -205,91 +206,111 @@ int bno055_init(struct os_dev *dev, void *arg);
 
 int bno055_config(struct bno055 *, struct bno055_cfg *);
 
+/**
+ * Get vector data from sensor
+ *
+ * @param The sensor ineterface
+ * @param pointer to the structure to be filled up
+ * @param Type of sensor
+ * @return 0 on success, non-zero on error
+ */
 int
-bno055_get_vector_data(void *datastruct, int type);
+bno055_get_vector_data(struct sensor_itf *itf, void *datastruct, int type);
 
 /**
  * Get quat data from sensor
  *
+ * @param The sensor ineterface
  * @param sensor quat data to be filled up
  * @return 0 on success, non-zero on error
  */
 int
-bno055_get_quat_data(void *sqd);
+bno055_get_quat_data(struct sensor_itf *itf, void *sqd);
 
 /**
  * Get temperature from bno055 sensor
  *
+ * @param The sensor ineterface
  * @return temperature in degree celcius
  */
 int
-bno055_get_temp(uint8_t *temp);
+bno055_get_temp(struct sensor_itf *itf, uint8_t *temp);
 
 /**
  * Gets current calibration status
  *
+ * @param The sensor ineterface
  * @param Calibration info structure to fill up calib state
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_get_calib_status(struct bno055_calib_info *bci);
+bno055_get_calib_status(struct sensor_itf *itf, struct bno055_calib_info *bci);
 
 /**
  * Checks if bno055 is fully calibrated
  *
+ * @param The sensor ineterface
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_is_calib(void);
+bno055_is_calib(struct sensor_itf *itf);
 
 /**
  * Reads the sensor's offset registers into a byte array
  *
+ * @param The sensor ineterface
  * @param byte array to return offsets into
  * @return 0 on success, non-zero on failure
  *
  */
 int
-bno055_get_raw_sensor_offsets(uint8_t *offsets);
+bno055_get_raw_sensor_offsets(struct sensor_itf *itf, uint8_t *offsets);
 
 /**
  *
  * Reads the sensor's offset registers into an offset struct
  *
+ * @param The sensor ineterface
  * @param structure to fill up offsets data
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_get_sensor_offsets(struct bno055_sensor_offsets *offsets);
+bno055_get_sensor_offsets(struct sensor_itf *itf,
+                          struct bno055_sensor_offsets *offsets);
 
 /**
  *
  * Writes calibration data to the sensor's offset registers
  *
+ * @param The sensor ineterface
  * @param calibration data
  * @return 0 on success, non-zero on success
  */
 int
-bno055_set_sensor_raw_offsets(uint8_t* calibdata, uint8_t len);
+bno055_set_sensor_raw_offsets(struct sensor_itf *itf, uint8_t* calibdata,
+                              uint8_t len);
 
 /**
  *
  * Writes to the sensor's offset registers from an offset struct
  *
+ * @param The sensor ineterface
  * @param pointer to the offset structure
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_set_sensor_offsets(struct bno055_sensor_offsets  *offsets);
+bno055_set_sensor_offsets(struct sensor_itf *itf,
+                          struct bno055_sensor_offsets  *offsets);
 
 /**
  * Set operation mode for the bno055 sensor
  *
+ * @param The sensor interface
  * @param Operation mode for the sensor
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_set_opr_mode(uint8_t mode);
+bno055_set_opr_mode(struct sensor_itf *itf, uint8_t mode);
 
 #if MYNEWT_VAL(BNO055_CLI)
 int bno055_shell_init(void);
@@ -298,76 +319,84 @@ int bno055_shell_init(void);
 /**
  * Get Revision info for different sensors in the bno055
  *
+ * @param The sensor interface
  * @param pass the pointer to the revision structure
  * @return 0 on success, non-zero on error
  */
 int
-bno055_get_rev_info(struct bno055_rev_info *ri);
+bno055_get_rev_info(struct sensor_itf *itf, struct bno055_rev_info *ri);
 
 /**
  * Set power mode for the sensor
  *
+ * @param The sensor interface
  * @return mode
  */
 int
-bno055_set_pwr_mode(uint8_t mode);
+bno055_set_pwr_mode(struct sensor_itf *itf, uint8_t mode);
 
 /**
  * Setting units for the bno055 sensor
  *
+ * @param The sensor interface
  * @param power mode for the sensor
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_set_units(uint8_t val);
+bno055_set_units(struct sensor_itf *itf, uint8_t val);
 
 /**
  * Read current power mode of the sensor
  *
+ * @param The sensor interface
  * @param ptr to mode variableto fill up
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_get_pwr_mode(uint8_t *mode);
+bno055_get_pwr_mode(struct sensor_itf *itf, uint8_t *mode);
 
 /**
  * Read current operational mode of the sensor
  *
+ * @param The sensor interface
  * @param ptr to mode variable to fill up
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_get_opr_mode(uint8_t *mode);
+bno055_get_opr_mode(struct sensor_itf *itf, uint8_t *mode);
 
 /**
  * Get units of the sensor
  *
+ * @param The sensor interface
  * @param ptr to the units variable
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_get_units(uint8_t *units);
+bno055_get_units(struct sensor_itf *itf, uint8_t *units);
 
 /**
  * Gets system status, test results and errors if any from the sensor
  *
+ * @param The sensor interface
  * @param ptr to system status
  * @param ptr to self test result
  * @param ptr to system error
  */
 
 int
-bno055_get_sys_status(uint8_t *system_status, uint8_t *self_test_result,
-                      uint8_t *system_error);
+bno055_get_sys_status(struct sensor_itf *itf, uint8_t *system_status,
+                      uint8_t *self_test_result, uint8_t *system_error);
 
 /**
  * Get chip ID from the sensor
  *
+ * @param The sensor interface
  * @param Pointer to the variable to fill up chip ID in
  * @return 0 on success, non-zero on failure
  */
 int
-bno055_get_chip_id(uint8_t *id);
+bno055_get_chip_id(struct sensor_itf *itf, uint8_t *id);
 
 
 #ifdef __cplusplus

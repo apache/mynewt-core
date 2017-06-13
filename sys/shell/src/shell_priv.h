@@ -24,9 +24,21 @@
 extern "C" {
 #endif
 
-int shell_os_tasks_display_cmd(int argc, char **argv);
-int shell_os_mpool_display_cmd(int argc, char **argv);
-int shell_os_date_cmd(int argc, char **argv);
+#include "shell/shell.h"
+
+#if MYNEWT_VAL(SHELL_NEWTMGR)
+#define SHELL_NLIP_PKT_START1 (6)
+#define SHELL_NLIP_PKT_START2 (9)
+#define SHELL_NLIP_DATA_START1 (4)
+#define SHELL_NLIP_DATA_START2 (20)
+
+int shell_nlip_process(char *data, int len);
+void shell_nlip_init(void);
+void shell_nlip_clear_pkt(void);
+#endif
+
+void shell_os_register(shell_register_function_t register_func);
+void shell_prompt_register(shell_register_function_t register_func);
 
 #ifdef __cplusplus
 }

@@ -43,9 +43,6 @@ extern uint8_t _ram_start;
 #define LED_BLINK_PIN   (8)
 #define LED_2           (11)
 
-/* UART info */
-#define CONSOLE_UART    "uart0"
-
 #if MYNEWT_VAL(BOOT_SERIAL)
 #define BOOT_SERIAL_DETECT_PIN          16 /* on IRC-BTLE board P0.16=SWITCH_1 */
 //#define BOOT_SERIAL_DETECT_PIN          30 /* on IRC-BTLE board P0.30=SWITCH_2 */

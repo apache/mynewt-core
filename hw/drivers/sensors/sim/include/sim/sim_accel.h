@@ -32,6 +32,7 @@ struct sim_accel_cfg {
     uint8_t sac_nr_samples;
     uint8_t sac_nr_axises;
     uint16_t sac_sample_itvl;
+    sensor_type_t sac_mask;
 };
 
 struct sim_accel {

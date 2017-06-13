@@ -41,8 +41,6 @@ extern uint8_t _ram_start;
 #define LED_BLINK_PIN   (25)
 
 /* UART info */
-#define CONSOLE_UART    	"uart0"
-
 #define ESPDUINO_UART           "uart1"
 #define ESPDUINO_UART_SPEED     9600
 

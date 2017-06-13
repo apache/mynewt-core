@@ -20,7 +20,7 @@
 syscfg.defs:
   NMGR_UART:
     description: 'UART port number to use for newtmgr'
-    value: CONSOLE_UART
+    value: '"uart0"'
 
   NMGR_UART_SPEED:
     description: 'Baudrate for newtmgr UART'

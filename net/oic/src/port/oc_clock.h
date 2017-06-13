@@ -50,8 +50,11 @@
 #ifndef OC_CLOCK_H
 #define OC_CLOCK_H
 
-#include "mynewt/config.h"
 #include <stdint.h>
+
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -15,14 +15,17 @@
 */
 #include <stddef.h>
 
+#include <syscfg/syscfg.h>
+
 #include <os/os_callout.h>
 
+#include "oic/port/mynewt/config.h"
 #include "messaging/coap/engine.h"
-#include "messaging/coap/oc_coap.h"
-#include "messaging/coap/separate.h"
-#include "oc_api.h"
-#include "oc_constants.h"
-#include "oc_core_res.h"
+#include "oic/messaging/coap/oc_coap.h"
+#include "oic/messaging/coap/separate.h"
+#include "oic/oc_api.h"
+#include "oic/oc_constants.h"
+#include "oic/oc_core_res.h"
 
 extern int oc_stack_errno;
 // TODO:

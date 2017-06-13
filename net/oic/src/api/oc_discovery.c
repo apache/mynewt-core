@@ -14,13 +14,16 @@
 // limitations under the License.
 */
 
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
 #ifdef OC_CLIENT
-#include "oc_client_state.h"
+#include "oic/oc_client_state.h"
 #endif /* OC_CLIENT */
 
-#include "messaging/coap/oc_coap.h"
-#include "oc_api.h"
-#include "oc_core_res.h"
+#include "oic/messaging/coap/oc_coap.h"
+#include "oic/oc_api.h"
+#include "oic/oc_core_res.h"
 
 static bool
 filter_resource(oc_resource_t *resource, const char *rt, int rt_len,

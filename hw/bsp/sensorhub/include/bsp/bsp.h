@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -42,9 +42,9 @@ extern uint8_t _ram_start;
 extern uint8_t _ccram_start;
 #define CCRAM_SIZE      (64 * 1024)
 
-/* 4KB of backup SRAM, accessible only from the CPU. 
- * Protected and retained in Standby or VBAT mode. 
- */ 
+/* 4KB of backup SRAM, accessible only from the CPU.
+ * Protected and retained in Standby or VBAT mode.
+ */
 #define BACKUPRAM_SIZE  (4 * 1024)
 
 /* LED pins */
@@ -52,7 +52,6 @@ extern uint8_t _ccram_start;
 
 /* UART pins */
 #define UART_CNT 1
-#define CONSOLE_UART 	"uart0"
 
 #if MYNEWT_VAL(BOOT_SERIAL)
 #define BOOT_SERIAL_DETECT_PIN          16 /* on Sensor Hub board BOOT0 is dedicated! */

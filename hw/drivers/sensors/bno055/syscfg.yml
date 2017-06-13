@@ -18,12 +18,6 @@
 #
 
 syscfg.defs:
-    BNO055_I2CADDR:
-        description: 'HW I2C address for the BNO055'
-        value: 0x28
-    BNO055_I2CBUS:
-        description: 'I2C bus number for the BNO055'
-        value: -1
     BNO055_CLI:
         description: 'Enable shell support for the BNO055'
         value: 0
@@ -32,4 +26,10 @@ syscfg.defs:
         value: 0
     BNO055_STATS:
         description: 'Enable BNO055 statistics'
+        value: 0
+    BNO055_SHELL_ITF_TYPE:
+        description: 'BNO055 interface type'
+        value: 1
+    BNO055_SHELL_ITF_NUM:
+        description: 'BNO055 interface number'
         value: 0
