@@ -86,16 +86,13 @@ static struct log _log;
 #define LSM303DLHC_ERR(...)
 #endif
 
-/* Exports for the sensor interface.
- */
-static void *lsm303dlhc_sensor_get_interface(struct sensor *, sensor_type_t);
+/* Exports for the sensor API */
 static int lsm303dlhc_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int lsm303dlhc_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_lsm303dlhc_sensor_driver = {
-    lsm303dlhc_sensor_get_interface,
     lsm303dlhc_sensor_read,
     lsm303dlhc_sensor_get_config
 };
@@ -103,6 +100,7 @@ static const struct sensor_driver g_lsm303dlhc_sensor_driver = {
 /**
  * Writes a single byte to the specified register
  *
+ * @param The sensor interface
  * @param The I2C address to use
  * @param The register address to write to
  * @param The value to write
@@ -110,7 +108,8 @@ static const struct sensor_driver g_lsm303dlhc_sensor_driver = {
  * @return 0 on success, non-zero error on failure.
  */
 int
-lsm303dlhc_write8(uint8_t addr, uint8_t reg, uint32_t value)
+lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
+                  uint32_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value & 0xFF };
@@ -121,7 +120,7 @@ lsm303dlhc_write8(uint8_t addr, uint8_t reg, uint32_t value)
         .buffer = payload
     };
 
-    rc = hal_i2c_master_write(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LSM303DLHC_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
@@ -137,6 +136,7 @@ lsm303dlhc_write8(uint8_t addr, uint8_t reg, uint32_t value)
 /**
  * Reads a single byte from the specified register
  *
+ * @param The sensor interface
  * @param The I2C address to use
  * @param The register address to read from
  * @param Pointer to where the register value should be written
@@ -144,7 +144,8 @@ lsm303dlhc_write8(uint8_t addr, uint8_t reg, uint32_t value)
  * @return 0 on success, non-zero error on failure.
  */
 int
-lsm303dlhc_read8(uint8_t addr, uint8_t reg, uint8_t *value)
+lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
+                 uint8_t *value)
 {
     int rc;
     uint8_t payload;
@@ -157,19 +158,19 @@ lsm303dlhc_read8(uint8_t addr, uint8_t reg, uint8_t *value)
 
     /* Register write */
     payload = reg;
-    rc = hal_i2c_master_write(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LSM303DLHC_ERR("I2C access failed at address 0x%02X\n", addr);
 #if MYNEWT_VAL(LSM303DLHC_STATS)
         STATS_INC(g_lsm303dlhcstats, errors);
 #endif
-        goto error;
+        goto err;
     }
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
@@ -179,12 +180,23 @@ lsm303dlhc_read8(uint8_t addr, uint8_t reg, uint8_t *value)
 #endif
     }
 
-error:
+err:
     return rc;
 }
 
+/**
+ * Reads a six bytes from the specified register
+ *
+ * @param The sensor interface
+ * @param The I2C address to use
+ * @param The register address to read from
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 int
-lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer)
+lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
+                  uint8_t *buffer)
 {
     int rc;
     uint8_t payload[7] = { reg, 0, 0, 0, 0, 0, 0 };
@@ -199,20 +211,20 @@ lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer)
     memset(buffer, 0, 6);
 
     /* Register write */
-    rc = hal_i2c_master_write(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LSM303DLHC_ERR("I2C access failed at address 0x%02X\n", addr);
 #if MYNEWT_VAL(LSM303DLHC_STATS)
         STATS_INC(g_lsm303dlhcstats, errors);
 #endif
-        goto error;
+        goto err;
     }
 
     /* Read six bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = 6;
-    rc = hal_i2c_master_read(MYNEWT_VAL(LSM303DLHC_I2CBUS), &data_struct,
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
@@ -220,16 +232,13 @@ lsm303dlhc_read48(uint8_t addr, uint8_t reg, uint8_t *buffer)
 #if MYNEWT_VAL(LSM303DLHC_STATS)
         STATS_INC(g_lsm303dlhcstats, errors);
 #endif
-        goto error;
+        goto err;
     }
 
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, 6);
 
-    /* ToDo: Log raw reads */
-    // console_printf("0x%04X\n", (uint16_t)payload[0] | ((uint16_t)payload[1] << 8));
-
-error:
+err:
     return rc;
 }
 
@@ -248,10 +257,17 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
+    if (!arg || !dev) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
     lsm = (struct lsm303dlhc *) dev;
 
+    lsm->cfg.mask = SENSOR_TYPE_ALL;
+
 #if MYNEWT_VAL(LSM303DLHC_LOG)
-    log_register("lsm303dlhc", &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif
 
     sensor = &lsm->sensor;
@@ -264,7 +280,7 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
         STATS_NAME_INIT_PARMS(lsm303dlhc_stat_section));
     SYSINIT_PANIC_ASSERT(rc == 0);
     /* Register the entry with the stats registry */
-    rc = stats_register("lsm303dlhc", STATS_HDR(g_lsm303dlhcstats));
+    rc = stats_register(dev->od_name, STATS_HDR(g_lsm303dlhcstats));
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
@@ -274,10 +290,16 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the accelerometer/magnetometer driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER |
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_LINEAR_ACCEL |
             SENSOR_TYPE_MAGNETIC_FIELD,
             (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
     if (rc != 0) {
+        goto err;
+    }
+
+    /* Set the interface */
+    rc = sensor_set_interface(sensor, arg);
+    if (rc) {
         goto err;
     }
 
@@ -295,58 +317,77 @@ int
 lsm303dlhc_config(struct lsm303dlhc *lsm, struct lsm303dlhc_cfg *cfg)
 {
     int rc;
+    struct sensor_itf *itf;
 
-    /* Overwrite the configuration data. */
-    memcpy(&lsm->cfg, cfg, sizeof(*cfg));
+    itf = SENSOR_GET_ITF(&(lsm->sensor));
+
+    /* Most sensor chips have a single address and just use different
+     * registers to get data for different sensors
+     */
+    if (!cfg->acc_addr || !cfg->mag_addr) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
 
     /* Set accel data rate (or power down) and enable XYZ output */
-    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_ACCEL,
-        LSM303DLHC_REGISTER_ACCEL_CTRL_REG1_A,
-        lsm->cfg.accel_rate | 0x07);
-    if (rc != 0) {
+    rc = lsm303dlhc_write8(itf, cfg->acc_addr,
+                           LSM303DLHC_REGISTER_ACCEL_CTRL_REG1_A,
+                           cfg->accel_rate | 0x07);
+    if (rc) {
         goto err;
     }
+
+    lsm->cfg.accel_rate = cfg->accel_rate;
 
     /* Set accel scale */
-    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_ACCEL,
-        LSM303DLHC_REGISTER_ACCEL_CTRL_REG4_A,
-        lsm->cfg.accel_range);
-    if (rc != 0) {
+    rc = lsm303dlhc_write8(itf, cfg->acc_addr,
+                           LSM303DLHC_REGISTER_ACCEL_CTRL_REG4_A,
+                           cfg->accel_range);
+    if (rc) {
         goto err;
     }
 
+    lsm->cfg.accel_range = cfg->accel_range;
+
     /* Enable the magnetomer (set to continuous conversion mode) */
-    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_MAG,
-        LSM303DLHC_REGISTER_MAG_MR_REG_M,
-        0x00);
-    if (rc != 0) {
+    rc = lsm303dlhc_write8(itf, cfg->mag_addr,
+                           LSM303DLHC_REGISTER_MAG_MR_REG_M, 0x00);
+    if (rc) {
         goto err;
     }
 
     /* Set mag rate */
-    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_MAG,
-        LSM303DLHC_REGISTER_MAG_CRA_REG_M,
-        lsm->cfg.mag_rate);
-    if (rc != 0) {
+    rc = lsm303dlhc_write8(itf, cfg->mag_addr,
+                           LSM303DLHC_REGISTER_MAG_CRA_REG_M,
+                           cfg->mag_rate);
+    if (rc) {
         goto err;
     }
+
+    lsm->cfg.mag_rate = cfg->mag_rate;
 
     /* Set mag gain */
-    rc = lsm303dlhc_write8(LSM303DLHC_ADDR_MAG,
-        LSM303DLHC_REGISTER_MAG_CRB_REG_M,
-        lsm->cfg.mag_gain);
-    if (rc != 0) {
+    rc = lsm303dlhc_write8(itf, cfg->mag_addr,
+                           LSM303DLHC_REGISTER_MAG_CRB_REG_M,
+                           cfg->mag_gain);
+    if (rc) {
         goto err;
     }
 
+    lsm->cfg.mag_gain = cfg->mag_gain;
+
+    rc = sensor_set_type_mask(&(lsm->sensor),  cfg->mask);
+    if (rc) {
+        goto err;
+    }
+
+    lsm->cfg.mask = cfg->mask;
+    lsm->cfg.mag_addr = cfg->mag_addr;
+    lsm->cfg.acc_addr = cfg->acc_addr;
+
+    return 0;
 err:
     return (rc);
-}
-
-static void *
-lsm303dlhc_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
-{
-    return (NULL);
 }
 
 static int
@@ -362,22 +403,24 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     int16_t gauss_lsb_xy;
     int16_t gauss_lsb_z;
     uint8_t payload[6];
+    struct sensor_itf *itf;
 
     /* If the read isn't looking for accel or mag data, don't do anything. */
-    if (!(type & SENSOR_TYPE_ACCELEROMETER) &&
+    if (!(type & SENSOR_TYPE_LINEAR_ACCEL) &&
        (!(type & SENSOR_TYPE_MAGNETIC_FIELD))) {
         rc = SYS_EINVAL;
         goto err;
     }
 
+    itf = SENSOR_GET_ITF(sensor);
     lsm = (struct lsm303dlhc *) SENSOR_GET_DEVICE(sensor);
 
     /* Get a new accelerometer sample */
-    if (type & SENSOR_TYPE_ACCELEROMETER) {
+    if (type & SENSOR_TYPE_LINEAR_ACCEL) {
         x = y = z = 0;
-        rc = lsm303dlhc_read48(LSM303DLHC_ADDR_ACCEL,
-                              LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A | 0x80,
-                              payload);
+        rc = lsm303dlhc_read48(itf, lsm->cfg.acc_addr,
+                               LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A | 0x80,
+                               payload);
         if (rc != 0) {
             goto err;
         }
@@ -439,9 +482,9 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     /* Get a new magnetometer sample */
     if (type & SENSOR_TYPE_MAGNETIC_FIELD) {
         x = y = z = 0;
-        rc = lsm303dlhc_read48(LSM303DLHC_ADDR_MAG,
-                              LSM303DLHC_REGISTER_MAG_OUT_X_H_M,
-                              payload);
+        rc = lsm303dlhc_read48(itf, lsm->cfg.mag_addr,
+                               LSM303DLHC_REGISTER_MAG_OUT_X_H_M,
+                               payload);
         if (rc != 0) {
             goto err;
         }
@@ -537,7 +580,7 @@ lsm303dlhc_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 {
     int rc;
 
-    if ((type != SENSOR_TYPE_ACCELEROMETER) &&
+    if ((type != SENSOR_TYPE_LINEAR_ACCEL) &&
         (type != SENSOR_TYPE_MAGNETIC_FIELD)) {
         rc = SYS_EINVAL;
         goto err;

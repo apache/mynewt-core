@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <mips/cpu.h>
 #include <mips/m32c0.h>
+#include "os/os_error.h"
 
 #include "mcu/mips.h"
 

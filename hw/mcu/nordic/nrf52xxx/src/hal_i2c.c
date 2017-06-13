@@ -164,8 +164,15 @@ hal_i2c_clear_bus(struct nrf52_hal_i2c_cfg *cfg)
 {
     int i;
 
-    hal_gpio_init_out(cfg->scl_pin, 1);
-    hal_gpio_init_in(cfg->sda_pin, HAL_GPIO_PULL_UP);
+    /* Input connected, standard-low disconnected-high, pull-ups */
+    NRF_GPIO->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;
+    NRF_GPIO->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF;
+
+    hal_gpio_write(cfg->scl_pin, 1);
+    hal_gpio_write(cfg->sda_pin, 1);
+
+    /* Still with input buffer connected, the direction is output */
+    NRF_GPIO->DIRSET = ((1<<cfg->scl_pin)|(1<<cfg->sda_pin));
 
     hal_i2c_delay_us(4);
 
@@ -181,7 +188,7 @@ hal_i2c_clear_bus(struct nrf52_hal_i2c_cfg *cfg)
             }
             hal_gpio_write(cfg->scl_pin, 0);
             hal_i2c_delay_us(4);
-            hal_gpio_write(cfg->sda_pin, 1);
+            hal_gpio_write(cfg->scl_pin, 1);
             hal_i2c_delay_us(4);
         }
     }
@@ -225,8 +232,6 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
         goto err;
     }
 
-    NRF_GPIO->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;
-    NRF_GPIO->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF;
     hal_i2c_clear_bus(cfg);
 
     NRF_GPIO->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;

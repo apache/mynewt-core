@@ -30,6 +30,7 @@
 #include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include <hal/hal_flash.h>
+#include <hal/hal_watchdog.h>
 #include <os/os_malloc.h>
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
@@ -867,6 +868,9 @@ boot_copy_image(struct boot_status *bs)
     swap_idx = 0;
     last_sector_idx = boot_data.imgs[0].num_sectors - 1;
     while (last_sector_idx >= 0) {
+        /* Pet the watchdog, in case it is still enabled after a soft reset. */
+        hal_watchdog_tickle();
+
         sz = boot_copy_sz(last_sector_idx, &first_sector_idx);
         if (swap_idx >= bs->idx) {
             boot_swap_sectors(first_sector_idx, sz, bs);

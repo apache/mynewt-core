@@ -45,8 +45,8 @@ syscfg.defs:
         value: 5
 
     UART_1:
-        description: 'Whether to enable UART1'
-        value: 1
+        description: 'Whether to enable bitbanger UART1'
+        value: 0
     UART_1_PIN_TX:
         description: 'TX pin for UART1'
         value: 12

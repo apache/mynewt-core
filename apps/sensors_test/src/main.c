@@ -29,23 +29,30 @@
 #include <log/log.h>
 #include <config/config.h>
 #include <sensor/sensor.h>
-#include <sim/sim_accel.h>
-#include <lsm303dlhc/lsm303dlhc.h>
-#include <tsl2561/tsl2561.h>
-#include <tcs34725/tcs34725.h>
-#include <bno055/bno055.h>
-#include <bme280/bme280.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
-#if MYNEWT_VAL(SPLIT_LOADER)
-#include "split/split.h"
-#endif
 #include <assert.h>
 #include <string.h>
 #include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 #include <os/os_time.h>
+#include <defs/error.h>
+#if MYNEWT_VAL(TCS34725_CLI)
+#include "tcs34725/tcs34725.h"
+#endif
+#if MYNEWT_VAL(TSL2561_CLI)
+#include "tsl2561/tsl2561.h"
+#endif
+#if MYNEWT_VAL(BME280_CLI)
+#include "bme280/bme280.h"
+#endif
+#if MYNEWT_VAL(BNO055_CLI)
+#include "bno055/bno055.h"
+#endif
+#if MYNEWT_VAL(LSM303DLHC_CLI)
+#include "lsm303dlhc/lsm303dlhc.h"
+#endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -380,188 +387,6 @@ init_tasks(void)
             TASK2_PRIO, OS_WAIT_FOREVER, pstack, TASK2_STACK_SIZE);
 }
 
-#if !ARCH_sim
-static int
-config_sensor(void)
-{
-    struct os_dev *dev;
-    int rc;
-
-#if MYNEWT_VAL(BME280_PRESENT)
-    struct bme280_cfg bmecfg;
-
-    dev = (struct os_dev *) os_dev_open("bme280", OS_TIMEOUT_NEVER, NULL);
-    assert(dev != NULL);
-    rc = bme280_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    memset(&bmecfg, 0, sizeof(bmecfg));
-
-    bmecfg.bc_mode = BME280_MODE_NORMAL;
-    bmecfg.bc_iir = BME280_FILTER_X16;
-    bmecfg.bc_sby_dur = BME280_STANDBY_MS_0_5;
-    bmecfg.bc_boc[0].boc_type = SENSOR_TYPE_RELATIVE_HUMIDITY;
-    bmecfg.bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
-    bmecfg.bc_boc[2].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
-    bmecfg.bc_boc[0].boc_oversample = BME280_SAMPLING_X1;
-    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X16;
-    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X2;
-
-    rc = bme280_config((struct bme280 *)dev, &bmecfg);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
-    }
-    os_dev_close(dev);
-#endif
-
-#if MYNEWT_VAL(TCS34725_PRESENT)
-    struct tcs34725_cfg tcscfg;
-
-    dev = (struct os_dev *) os_dev_open("color0", OS_TIMEOUT_NEVER, NULL);
-    assert(dev != NULL);
-    rc = tcs34725_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    /* Gain set to 16X and Inetgration time set to 24ms */
-    tcscfg.gain = TCS34725_GAIN_16X;
-    tcscfg.integration_time = TCS34725_INTEGRATIONTIME_24MS;
-
-    rc = tcs34725_config((struct tcs34725 *)dev, &tcscfg);
-    if (rc) {
-        console_printf("config_sensor %s failed %d\n", dev->od_name, rc);
-    }
-    os_dev_close(dev);
-#endif
-
-#if MYNEWT_VAL(TSL2561_PRESENT)
-    struct tsl2561_cfg tslcfg;
-
-    dev = (struct os_dev *) os_dev_open("light0", OS_TIMEOUT_NEVER, NULL);
-    assert(dev != NULL);
-    rc = tsl2561_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    /* Gain set to 1X and Inetgration time set to 13ms */
-    tslcfg.gain = TSL2561_LIGHT_GAIN_1X;
-    tslcfg.integration_time = TSL2561_LIGHT_ITIME_13MS;
-
-    rc = tsl2561_config((struct tsl2561 *)dev, &tslcfg);
-    if (rc) {
-        console_printf("config_sensor %s failed %d\n", dev->od_name, rc);
-    }
-    os_dev_close(dev);
-#endif
-
-#if MYNEWT_VAL(LSM303DLHC_PRESENT)
-    struct lsm303dlhc_cfg lsmcfg;
-
-    dev = (struct os_dev *) os_dev_open("accel0", OS_TIMEOUT_NEVER, NULL);
-    assert(dev != NULL);
-
-    rc = lsm303dlhc_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    /* read once per sec.  API should take this value in ms. */
-    lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
-    lsmcfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
-
-    rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
-    if (rc) {
-        console_printf("config_sensor %s failed %d\n", dev->od_name, rc);
-    }
-    os_dev_close(dev);
-#endif
-
-#if MYNEWT_VAL(BNO055_PRESENT)
-    struct bno055_cfg bcfg;
-
-    dev = (struct os_dev *) os_dev_open("accel1", OS_TIMEOUT_NEVER, NULL);
-    assert(dev != NULL);
-
-    rc = bno055_init(dev, NULL);
-    if (rc) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    bcfg.bc_units = BNO055_ACC_UNIT_MS2   | BNO055_ANGRATE_UNIT_DPS |
-                    BNO055_EULER_UNIT_DEG | BNO055_TEMP_UNIT_DEGC   |
-                    BNO055_DO_FORMAT_ANDROID;
-
-    bcfg.bc_opr_mode = BNO055_OPR_MODE_ACCONLY;
-    bcfg.bc_pwr_mode = BNO055_PWR_MODE_NORMAL;
-    bcfg.bc_acc_bw = BNO055_ACC_CFG_BW_125HZ;
-    bcfg.bc_acc_range =  BNO055_ACC_CFG_RNG_16G;
-    bcfg.bc_use_ext_xtal = 1;
-
-    rc = bno055_config((struct bno055 *) dev, &bcfg);
-    if (rc) {
-        console_printf("config_sensor %s failed %d\n", dev->od_name, rc);
-    }
-    os_dev_close(dev);
-#endif
-
-    return 0;
-
-err:
-
-    console_printf("config_sensor %s init failed %d\n", dev->od_name, rc);
-
-    return rc;
-}
-
-#else
-
-static int
-config_sensor(void)
-{
-    struct os_dev *dev;
-    struct sim_accel_cfg cfg;
-    int rc;
-
-    dev = (struct os_dev *) os_dev_open("simaccel0", OS_TIMEOUT_NEVER, NULL);
-    assert(dev != NULL);
-
-    rc = sim_accel_init(dev, NULL);
-    if (rc != 0) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    cfg.sac_nr_samples = 10;
-    cfg.sac_nr_axises = 1;
-    /* read once per sec.  API should take this value in ms. */
-    cfg.sac_sample_itvl = OS_TICKS_PER_SEC;
-
-    rc = sim_accel_config((struct sim_accel *) dev, &cfg);
-    if (rc != 0) {
-        os_dev_close(dev);
-        goto err;
-    }
-
-    os_dev_close(dev);
-
-    return (0);
-err:
-    console_printf("config_sensor %s init failed %d\n", dev->od_name, rc);
-
-    return (rc);
-}
-#endif
-
 static void
 sensors_dev_shell_init(void)
 {
@@ -600,14 +425,14 @@ sensor_ble_oic_server_init(void)
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pi");
+    rc = ble_svc_gap_device_name_set("sensy");
     assert(rc == 0);
 
     rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
     assert(!rc);
 
     oc_init_platform("MyNewt", NULL, NULL);
-    oc_add_device("/oic/d", "oic.d.pi", "pi", "1.0", "1.0", NULL,
+    oc_add_device("/oic/d", "oic.d.sensy", "sensy", "1.0", "1.0", NULL,
                   NULL);
     assert(!oc_stack_errno);
 #endif
@@ -662,9 +487,6 @@ main(int argc, char **argv)
 
     /* Sensor device shell init */
     sensors_dev_shell_init();
-
-    /* Configure sensors */
-    config_sensor();
 
     /* Initialize BLE OIC GATT Server */
     sensor_ble_oic_server_init();

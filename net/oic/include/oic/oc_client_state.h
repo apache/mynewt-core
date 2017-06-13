@@ -17,9 +17,10 @@
 #ifndef OC_CLIENT_STATE_H
 #define OC_CLIENT_STATE_H
 
-#include "../../src/messaging/coap/constants.h"
-#include "oc_ri.h"
 #include <stdbool.h>
+
+#include "oic/messaging/coap/constants.h"
+#include "oic/oc_ri.h"
 
 #ifdef __cplusplus
 extern "C" {

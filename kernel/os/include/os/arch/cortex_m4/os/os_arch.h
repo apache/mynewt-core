@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include "mcu/cortex_m4.h"
 #include "os/os_time.h"
+#include "os/os_error.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -129,6 +129,20 @@ bleprph_advertise(void)
         return;
     }
 
+    /* Advertise the 16-bit CoAP-over-BLE service UUID in the scan response. */
+    memset(&fields, 0, sizeof fields);
+    fields.uuids16 = (ble_uuid16_t[]) {
+        BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID)
+    };
+    fields.num_uuids16 = 1;
+    fields.uuids16_is_complete = 1;
+
+    rc = ble_gap_adv_rsp_set_fields(&fields);
+    if (rc != 0) {
+        BLEPRPH_LOG(ERROR, "error setting scan response data; rc=%d\n", rc);
+        return;
+    }
+
     /* Begin advertising. */
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
@@ -364,7 +378,7 @@ main(void)
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("pi");
+    rc = ble_svc_gap_device_name_set("c5");
     assert(rc == 0);
 
     /* Our light resource */

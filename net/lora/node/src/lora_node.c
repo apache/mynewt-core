@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -20,7 +20,7 @@
 #include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "node/lora.h"
-#include "lora_priv.h"
+#include "node/lora_priv.h"
 
 STATS_SECT_DECL(lora_stats) lora_stats;
 STATS_NAME_START(lora_stats)

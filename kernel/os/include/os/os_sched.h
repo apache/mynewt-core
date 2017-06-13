@@ -26,6 +26,14 @@
 extern "C" {
 #endif
 
+struct os_task;
+
+TAILQ_HEAD(os_task_list, os_task);
+
+extern struct os_task *g_current_task;
+extern struct os_task_list g_os_run_list;
+extern struct os_task_list g_os_sleep_list;
+
 void os_sched_ctx_sw_hook(struct os_task *);
 struct os_task *os_sched_get_current_task(void);
 void os_sched_set_current_task(struct os_task *);

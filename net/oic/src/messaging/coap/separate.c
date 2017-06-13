@@ -31,18 +31,20 @@
  * This file is part of the Contiki operating system.
  */
 
-#include "config.h"
-
-#if defined(OC_SERVER) && MYNEWT_VAL(OC_SEPARATE_RESPONSES)
-
 #include <stdio.h>
 #include <string.h>
 
+#include <syscfg/syscfg.h>
+
 #include <os/os_mempool.h>
 
+#include "oic/port/mynewt/config.h"
+
+#if defined(OC_SERVER) && MYNEWT_VAL(OC_SEPARATE_RESPONSES)
+
 #include "api/oc_buffer.h"
-#include "separate.h"
-#include "transactions.h"
+#include "oic/messaging/coap/separate.h"
+#include "oic/messaging/coap/transactions.h"
 
 static struct os_mempool coap_separate_pool;
 static uint8_t coap_separate_area[OS_MEMPOOL_BYTES(MAX_NUM_CONCURRENT_REQUESTS,

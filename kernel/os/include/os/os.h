@@ -61,26 +61,7 @@ int os_info_init(void);
  */
 int os_started(void);
 
-/* OS error enumerations */
-enum os_error {
-    OS_OK = 0,
-    OS_ENOMEM = 1,
-    OS_EINVAL = 2,
-    OS_INVALID_PARM = 3,
-    OS_MEM_NOT_ALIGNED = 4,
-    OS_BAD_MUTEX = 5,
-    OS_TIMEOUT = 6,
-    OS_ERR_IN_ISR = 7,      /* Function cannot be called from ISR */
-    OS_ERR_PRIV = 8,        /* Privileged access error */
-    OS_NOT_STARTED = 9,     /* OS must be started to call this function, but isn't */
-    OS_ENOENT = 10,         /* No such thing */
-    OS_EBUSY = 11,          /* Resource busy */
-    OS_ERROR = 12,          /* Generic Error */
-};
-
 #define OS_WAIT_FOREVER (-1)
-
-typedef enum os_error os_error_t;
 
 #define OS_IDLE_PRIO (0xff)
 #define OS_MAIN_TASK_PRIO       MYNEWT_VAL(OS_MAIN_TASK_PRIO)
@@ -98,6 +79,7 @@ void os_init_idle_task(void);
 #include "os/os_callout.h"
 #include "os/os_cputime.h"
 #include "os/os_dev.h"
+#include "os/os_error.h"
 #include "os/os_eventq.h"
 #include "os/os_heap.h"
 #include "os/os_fault.h"

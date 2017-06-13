@@ -101,14 +101,16 @@ openocd_debug () {
         if [ ! -z "$RESET" ]; then
             echo "mon reset halt" >> $GDB_CMD_FILE
         fi
-	echo "FILENAME" $FILE_NAME >>out
-	if [ $WINDOWS -eq 1 ]; then
-	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
+
+        echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
+
+        if [ $WINDOWS -eq 1 ]; then
+            FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
             $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
-	else
+        else
             arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
             rm $GDB_CMD_FILE
-	fi
+        fi
     else
         # No GDB, wait for openocd to exit
         openocd $CFG -f $OCD_CMD_FILE -c init -c halt

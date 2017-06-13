@@ -41,6 +41,7 @@ extern "C" {
  * match the linker scripts when platform executes from flash,
  * and match the target offset specified in download script.
  */
+#include <stdbool.h>
 #include <inttypes.h>
 
 struct flash_area {
@@ -75,6 +76,7 @@ int flash_area_read(const struct flash_area *, uint32_t off, void *dst,
 int flash_area_write(const struct flash_area *, uint32_t off, const void *src,
   uint32_t len);
 int flash_area_erase(const struct flash_area *, uint32_t off, uint32_t len);
+int flash_area_is_empty(const struct flash_area *, bool *);
 
 /*
  * Alignment restriction for flash writes.

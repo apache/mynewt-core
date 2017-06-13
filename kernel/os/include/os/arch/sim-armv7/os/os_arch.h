@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,12 +21,14 @@
 #define _OS_ARCH_SIM_H
 
 #include <mcu/mcu_sim.h>
+#include "os/os_error.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct os_task;
+struct stack_frame;
 
 /* CPU status register */
 typedef unsigned int os_sr_t;
@@ -66,6 +68,7 @@ typedef unsigned int os_stack_t;
 
 void _Die(char *file, int line);
 
+void os_arch_frame_init(struct stack_frame *sf);
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
 void os_arch_ctx_sw(struct os_task *);
 os_sr_t os_arch_save_sr(void);

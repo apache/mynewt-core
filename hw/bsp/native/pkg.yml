@@ -19,7 +19,7 @@
 
 pkg.name: hw/bsp/native
 pkg.type: bsp
-pkg.description: BSP definition for native (amd64) applications.
+pkg.description: BSP definition for native (i386) applications.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -33,4 +33,3 @@ pkg.deps:
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/native
-

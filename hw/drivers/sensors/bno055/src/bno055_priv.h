@@ -261,36 +261,42 @@
 
 #define BNO055_ID                                               0xA0
 
+struct sensor_itf;
+
 /**
  * Reads a single byte from the specified register
  *
+ * @param The sensor interface
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-bno055_read8(uint8_t reg, uint8_t *value);
+bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 
 /**
  * Writes a single byte to the specified register
  *
+ * @param The sensor interface
  * @param The register address to write to
  * @param The value to write
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-bno055_write8(uint8_t reg, uint8_t value);
+bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
 
 /**
  * Writes a multiple bytes to the specified register
  *
+ * @param The sensor interface
  * @param The register address to write to
  * @param The data buffer to write from
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-bno055_writelen(uint8_t reg, uint8_t *buffer, uint8_t len);
+bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+                uint8_t len);
 

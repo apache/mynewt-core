@@ -33,7 +33,7 @@ define mn_gen_queue_print
     set $count = 0
     while $cur != 0 && $count != $max_entries
         printf "[entry %p]\n", $cur
-        set $cur = *((uint32_t *)((uint8_t *)$cur) + ($arg1))
+        set $cur = *((uint32_t *)(((uint8_t *)$cur) + ($arg1)))
 
         set $count++
     end

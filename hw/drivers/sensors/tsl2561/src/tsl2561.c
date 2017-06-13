@@ -56,28 +56,15 @@
 #include "stats/stats.h"
 #endif
 
-/* ToDo: Add timer based polling in bg and data ready callback (os_event?) */
-/* ToDo: Move values to struct incl. address to allow multiple instances */
-
-uint8_t g_tsl2561_gain;
-uint8_t g_tsl2561_integration_time;
-uint8_t g_tsl2561_enabled;
-
 #if MYNEWT_VAL(TSL2561_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(tsl2561_stat_section)
-    STATS_SECT_ENTRY(samples_13ms)
-    STATS_SECT_ENTRY(samples_101ms)
-    STATS_SECT_ENTRY(samples_402ms)
     STATS_SECT_ENTRY(ints_cleared)
     STATS_SECT_ENTRY(errors)
 STATS_SECT_END
 
 /* Define stat names for querying */
 STATS_NAME_START(tsl2561_stat_section)
-    STATS_NAME(tsl2561_stat_section, samples_13ms)
-    STATS_NAME(tsl2561_stat_section, samples_101ms)
-    STATS_NAME(tsl2561_stat_section, samples_402ms)
     STATS_NAME(tsl2561_stat_section, ints_cleared)
     STATS_NAME(tsl2561_stat_section, errors)
 STATS_NAME_END(tsl2561_stat_section)
@@ -96,33 +83,30 @@ static struct log _log;
 #define TSL2561_ERR(...)
 #endif
 
-/* Exports for the sensor interface.
- */
-static void *tsl2561_sensor_get_interface(struct sensor *, sensor_type_t);
+/* Exports for the sensor API */
 static int tsl2561_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int tsl2561_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_tsl2561_sensor_driver = {
-    tsl2561_sensor_get_interface,
     tsl2561_sensor_read,
     tsl2561_sensor_get_config
 };
 
 int
-tsl2561_write8(uint8_t reg, uint32_t value)
+tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value & 0xFF };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 2,
         .buffer = payload
     };
 
-    rc = hal_i2c_master_write(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TSL2561_ERR("Failed to write 0x%02X:0x%02X with value 0x%02X\n",
@@ -136,18 +120,18 @@ tsl2561_write8(uint8_t reg, uint32_t value)
 }
 
 int
-tsl2561_write16(uint8_t reg, uint16_t value)
+tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
 {
     int rc;
     uint8_t payload[3] = { reg, value & 0xFF, (value >> 8) & 0xFF };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 3,
         .buffer = payload
     };
 
-    rc = hal_i2c_master_write(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TSL2561_ERR("Failed to write @0x%02X with value 0x%02X 0x%02X\n",
@@ -158,20 +142,20 @@ tsl2561_write16(uint8_t reg, uint16_t value)
 }
 
 int
-tsl2561_read8(uint8_t reg, uint8_t *value)
+tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
     uint8_t payload;
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &payload
     };
 
     /* Register write */
     payload = reg;
-    rc = hal_i2c_master_write(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TSL2561_ERR("Failed to address sensor\n");
@@ -180,31 +164,32 @@ tsl2561_read8(uint8_t reg, uint8_t *value)
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
         TSL2561_ERR("Failed to read @0x%02X\n", reg);
     }
 
+    return 0;
 err:
     return rc;
 }
 
 int
-tsl2561_read16(uint8_t reg, uint16_t *value)
+tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
 {
     int rc;
     uint8_t payload[2] = { reg, 0 };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = payload
     };
 
     /* Register write */
-    rc = hal_i2c_master_write(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TSL2561_ERR("Failed to address sensor\n");
@@ -214,7 +199,7 @@ tsl2561_read16(uint8_t reg, uint16_t *value)
     /* Read two bytes back */
     memset(payload, 0, 2);
     data_struct.len = 2;
-    rc = hal_i2c_master_read(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
     *value = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
     if (rc) {
@@ -222,59 +207,134 @@ tsl2561_read16(uint8_t reg, uint16_t *value)
         goto err;
     }
 
+    return 0;
 err:
     return rc;
 }
 
+/**
+ * Enable or disables the sensor to save power
+ *
+ * @param The sensor interface
+ * @param state  1 to enable the sensor, 0 to disable it
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
-tsl2561_enable(uint8_t state)
+tsl2561_enable(struct sensor_itf *itf, uint8_t state)
+{
+    /* Enable the device by setting the control bit to 0x03 */
+    return tsl2561_write8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
+                          state ? TSL2561_CONTROL_POWERON :
+                          TSL2561_CONTROL_POWEROFF);
+}
+
+/**
+ * Checks if the sensor in enabled or not
+ *
+ * @param The sensor interface
+ * @param ptr to enabled
+ *
+ * @return 0 on success, non-zero on fialure
+ */
+int
+tsl2561_get_enable(struct sensor_itf *itf, uint8_t *enabled)
 {
     int rc;
+    uint8_t reg;
 
     /* Enable the device by setting the control bit to 0x03 */
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
-                        state ? TSL2561_CONTROL_POWERON :
-                                TSL2561_CONTROL_POWEROFF);
-    if (!rc) {
-        g_tsl2561_enabled = state ? 1 : 0;
-    }
-
-    return rc;
-}
-
-uint8_t
-tsl2561_get_enable (void)
-{
-    return g_tsl2561_enabled;
-}
-
-int
-tsl2561_set_integration_time(uint8_t int_time)
-{
-    int rc;
-
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-                        int_time | g_tsl2561_gain);
+    rc =  tsl2561_read8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
+                        &reg);
     if (rc) {
         goto err;
     }
 
-    g_tsl2561_integration_time = int_time;
+    *enabled = reg & 0x03 ? 1 : 0;
 
+    return 0;
 err:
     return rc;
 }
 
-uint8_t
-tsl2561_get_integration_time(void)
-{
-    return g_tsl2561_integration_time;
-}
-
+/**
+ * Sets the integration time used when sampling light values.
+ *
+ * @param The sensor interface
+ * @param int_time The integration time which can be one of:
+ *                  - 0x00: 13ms
+ *                  - 0x01: 101ms
+ *                  - 0x02: 402ms
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
-tsl2561_set_gain(uint8_t gain)
+tsl2561_set_integration_time(struct sensor_itf *itf,
+                             uint8_t int_time)
 {
     int rc;
+    uint8_t gain;
+
+    rc = tsl2561_get_gain(itf, &gain);
+    if (rc) {
+        goto err;
+    }
+
+    rc = tsl2561_write8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                        int_time | gain);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Gets the current integration time used when sampling light values.
+ *
+ * @param The sensor interface
+ * @param ptr to the integration time which can be one of:
+ *         - 0x00: 13ms
+ *         - 0x01: 101ms
+ *         - 0x02: 402ms
+ * @return 0 on success, non-zero on failure
+ */
+int
+tsl2561_get_integration_time(struct sensor_itf *itf, uint8_t *itime)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = tsl2561_read8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                       &reg);
+    if (rc) {
+        goto err;
+    }
+
+    *itime = reg & 0x0F;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Sets the gain increment used when sampling light values.
+ *
+ * @param The sensor interface
+ * @param gain The gain increment which can be one of:
+ *                  - 0x00: 1x (no gain)
+ *                  - 0x10: 16x gain
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+tsl2561_set_gain(struct sensor_itf *itf, uint8_t gain)
+{
+    int rc;
+    uint8_t int_time;
 
     if ((gain != TSL2561_LIGHT_GAIN_1X) && (gain != TSL2561_LIGHT_GAIN_16X)) {
         TSL2561_ERR("Invalid gain value\n");
@@ -282,115 +342,157 @@ tsl2561_set_gain(uint8_t gain)
         goto err;
     }
 
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-                        g_tsl2561_integration_time | gain);
+    rc = tsl2561_get_integration_time(itf, &int_time);
     if (rc) {
         goto err;
     }
 
-    g_tsl2561_gain = gain;
+    rc = tsl2561_write8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                        int_time | gain);
+    if (rc) {
+        goto err;
+    }
 
+    return 0;
 err:
     return rc;
 }
 
-uint8_t
-tsl2561_get_gain(void)
-{
-    return g_tsl2561_gain;
-}
-
+/**
+ * Gets the current gain increment used when sampling light values.
+ *
+ * @param The sensor ineterface
+ * @param ptr to the gain increment which can be one of:
+ *         - 0x00: 1x (no gain)
+ *         - 0x10: 16x gain
+ * @return 0 on success, non-zero on failure
+ */
 int
-tsl2561_get_data(uint16_t *broadband, uint16_t *ir, struct tsl2561 *tsl2561)
+tsl2561_get_gain(struct sensor_itf *itf, uint8_t *gain)
 {
     int rc;
-    int delay_ticks;
+    uint8_t reg;
 
-    /* Wait integration time ms before getting a data sample */
-    switch (tsl2561->cfg.integration_time) {
-        case TSL2561_LIGHT_ITIME_13MS:
-            delay_ticks = 14 * OS_TICKS_PER_SEC / 1000;
-        break;
-        case TSL2561_LIGHT_ITIME_101MS:
-            delay_ticks = 102 * OS_TICKS_PER_SEC / 1000;
-        break;
-        case TSL2561_LIGHT_ITIME_402MS:
-        default:
-            delay_ticks = 403 * OS_TICKS_PER_SEC / 1000;
-        break;
-    }
-    os_time_delay(delay_ticks);
-
-    *broadband = *ir = 0;
-    rc = tsl2561_read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW,
-                        broadband);
-    if (rc) {
-        goto err;
-    }
-    rc = tsl2561_read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW,
-                        ir);
+    rc = tsl2561_read8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+                       &reg);
     if (rc) {
         goto err;
     }
 
-#if MYNEWT_VAL(TSL2561_STATS)
-    switch (tsl2561->cfg.integration_time) {
-        case TSL2561_LIGHT_ITIME_13MS:
-            STATS_INC(g_tsl2561stats, samples_13ms);
-        break;
-        case TSL2561_LIGHT_ITIME_101MS:
-            STATS_INC(g_tsl2561stats, samples_101ms);
-        break;
-        case TSL2561_LIGHT_ITIME_402MS:
-            STATS_INC(g_tsl2561stats, samples_402ms);
-        default:
-        break;
-    }
-#endif
+    *gain = reg & 0xF0;
 
+    return 0;
 err:
     return rc;
 }
 
+/**
+ * Gets a new data sample from the light sensor.
+ *
+ * @param The sensor interface
+ * @param broadband The full (visible + ir) sensor output
+ * @param ir        The ir sensor output
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
-tsl2561_setup_interrupt (uint8_t rate, uint16_t lower, uint16_t upper)
+tsl2561_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
+{
+    int rc;
+
+    *broadband = *ir = 0;
+    rc = tsl2561_read16(itf, TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
+                        TSL2561_REGISTER_CHAN0_LOW, broadband);
+    if (rc) {
+        goto err;
+    }
+    rc = tsl2561_read16(itf, TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
+                        TSL2561_REGISTER_CHAN1_LOW, ir);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Sets the upper and lower interrupt thresholds
+ *
+ * @param The sensor interface
+ * @param rate    Sets the rate of interrupts to the host processor:
+ *                - 0   Every ADC cycle generates interrupt
+ *                - 1   Any value outside of threshold range
+ *                - 2   2 integration time periods out of range
+ *                - 3   3 integration time periods out of range
+ *                - 4   4 integration time periods out of range
+ *                - 5   5 integration time periods out of range
+ *                - 6   6 integration time periods out of range
+ *                - 7   7 integration time periods out of range
+ *                - 8   8 integration time periods out of range
+ *                - 9   9 integration time periods out of range
+ *                - 10  10 integration time periods out of range
+ *                - 11  11 integration time periods out of range
+ *                - 12  12 integration time periods out of range
+ *                - 13  13 integration time periods out of range
+ *                - 14  14 integration time periods out of range
+ *                - 15  15 integration time periods out of range
+ * @param lower   The lower threshold
+ * @param upper   The upper threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+tsl2561_setup_interrupt(struct sensor_itf *itf, uint8_t rate, uint16_t lower,
+                        uint16_t upper)
 {
     int rc;
     uint8_t intval;
 
     /* Set lower threshold */
-    rc = tsl2561_write16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_THRESHHOLDL_LOW,
-                         lower);
+    rc = tsl2561_write16(itf, TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
+                         TSL2561_REGISTER_THRESHHOLDL_LOW, lower);
     if (rc) {
         goto err;
     }
 
     /* Set upper threshold */
-    rc = tsl2561_write16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_THRESHHOLDH_LOW,
-                         upper);
+    rc = tsl2561_write16(itf, TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
+                         TSL2561_REGISTER_THRESHHOLDH_LOW, upper);
     if (rc) {
         goto err;
     }
 
     /* Set rate */
-    rc = tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT, &intval);
+    rc = tsl2561_read8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
+                       &intval);
     if (rc) {
         goto err;
     }
     /* Maintain the INTR Control Select bits */
     rate = (intval & 0xF0) | (rate & 0xF);
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
+    rc = tsl2561_write8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
                         rate);
     if (rc) {
         goto err;
     }
 
+    return 0;
 err:
     return rc;
 }
 
+/**
+ * Enables or disables the HW interrupt on the device
+ *
+ * @param The sensor interface
+ * @param enable0 to disable the interrupt, 1 to enablee it
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
-tsl2561_enable_interrupt (uint8_t enable)
+tsl2561_enable_interrupt(struct sensor_itf *itf, uint8_t enable)
 {
     int rc;
     uint8_t persist_val;
@@ -403,36 +505,44 @@ tsl2561_enable_interrupt (uint8_t enable)
     }
 
     /* Read the current value to maintain PERSIST state */
-    rc = tsl2561_read8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT, &persist_val);
+    rc = tsl2561_read8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
+                       &persist_val);
     if (rc) {
         goto err;
     }
 
     /* Enable (1) or disable (0)  level interrupts */
-    rc = tsl2561_write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
+    rc = tsl2561_write8(itf, TSL2561_COMMAND_BIT | TSL2561_REGISTER_INTERRUPT,
                         ((enable & 0x01) << 4) | (persist_val & 0x0F) );
     if (rc) {
         goto err;
     }
 
+    return 0;
 err:
     return rc;
 }
 
+/**
+ * Clear an asserted interrupt on the device
+ *
+ * @param The sensor interface
+ * @return 0 on success, non-zero on failure
+ */
 int
-tsl2561_clear_interrupt (void)
+tsl2561_clear_interrupt(struct sensor_itf *itf)
 {
     int rc;
     uint8_t payload = { TSL2561_COMMAND_BIT | TSL2561_CLEAR_BIT };
 
     struct hal_i2c_master_data data_struct = {
-        .address = MYNEWT_VAL(TSL2561_I2CADDR),
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &payload
     };
 
     /* To clear the interrupt set the CLEAR bit in the COMMAND register */
-    rc = hal_i2c_master_write(MYNEWT_VAL(TSL2561_I2CBUS), &data_struct,
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         goto err;
@@ -442,6 +552,7 @@ tsl2561_clear_interrupt (void)
     STATS_INC(g_tsl2561stats, ints_cleared);
 #endif
 
+    return 0;
 err:
     return rc;
 }
@@ -461,10 +572,17 @@ tsl2561_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     int rc;
 
+    if (!arg || !dev) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
     tsl2561 = (struct tsl2561 *) dev;
 
+    tsl2561->cfg.mask = SENSOR_TYPE_ALL;
+
 #if MYNEWT_VAL(TSL2561_LOG)
-    log_register("tsl2561", &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif
 
     sensor = &tsl2561->sensor;
@@ -477,36 +595,36 @@ tsl2561_init(struct os_dev *dev, void *arg)
         STATS_NAME_INIT_PARMS(tsl2561_stat_section));
     SYSINIT_PANIC_ASSERT(rc == 0);
     /* Register the entry with the stats registry */
-    rc = stats_register("tsl2561", STATS_HDR(g_tsl2561stats));
+    rc = stats_register(dev->od_name, STATS_HDR(g_tsl2561stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
     rc = sensor_init(sensor, dev);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
     /* Add the light driver */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_LIGHT,
             (struct sensor_driver *) &g_tsl2561_sensor_driver);
-    if (rc != 0) {
+    if (rc) {
+        goto err;
+    }
+
+    /* Set the interface */
+    rc = sensor_set_interface(sensor, arg);
+    if (rc) {
         goto err;
     }
 
     rc = sensor_mgr_register(sensor);
-    if (rc != 0) {
+    if (rc) {
         goto err;
     }
 
-    return (0);
+    return 0;
 err:
-    return (rc);
+    return rc;
 
-}
-
-static void *
-tsl2561_sensor_get_interface(struct sensor *sensor, sensor_type_t type)
-{
-    return (NULL);
 }
 
 static uint32_t
@@ -646,6 +764,7 @@ tsl2561_sensor_read(struct sensor *sensor, sensor_type_t type,
 {
     struct tsl2561 *tsl2561;
     struct sensor_light_data sld;
+    struct sensor_itf *itf;
     uint16_t full;
     uint16_t ir;
     uint32_t lux;
@@ -657,13 +776,14 @@ tsl2561_sensor_read(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
-    tsl2561 = (struct tsl2561 *) SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    tsl2561 = (struct tsl2561 *)SENSOR_GET_DEVICE(sensor);
 
     /* Get a new accelerometer sample */
     if (type & SENSOR_TYPE_LIGHT) {
         full = ir = 0;
 
-        rc = tsl2561_get_data(&full, &ir, tsl2561);
+        rc = tsl2561_get_data(itf, &full, &ir);
         if (rc) {
             goto err;
         }
@@ -702,28 +822,52 @@ tsl2561_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     cfg->sc_valtype = SENSOR_VALUE_TYPE_INT32;
 
-    return (0);
+    return 0;
 err:
-    return (rc);
+    return rc;
 }
 
+/**
+ * Configure the sensor
+ *
+ * @param ptr to sensor driver
+ * @param ptr to sensor driver config
+ */
 int
 tsl2561_config(struct tsl2561 *tsl2561, struct tsl2561_cfg *cfg)
 {
     int rc;
+    struct sensor_itf *itf;
 
-    rc = tsl2561_enable(1);
+    itf = SENSOR_GET_ITF(&(tsl2561->sensor));
 
-    rc |= tsl2561_set_integration_time(cfg->integration_time);
-
-    rc |= tsl2561_set_gain(cfg->gain);
+    rc = tsl2561_enable(itf, 1);
     if (rc) {
         goto err;
     }
 
-    /* Overwrite the configuration data. */
-    memcpy(&tsl2561->cfg, cfg, sizeof(*cfg));
+    rc = tsl2561_set_integration_time(itf, cfg->integration_time);
+    if (rc) {
+        goto err;
+    }
 
+    tsl2561->cfg.integration_time = cfg->integration_time;
+
+    rc = tsl2561_set_gain(itf, cfg->gain);
+    if (rc) {
+        goto err;
+    }
+
+    tsl2561->cfg.gain = cfg->gain;
+
+    rc = sensor_set_type_mask(&(tsl2561->sensor), cfg->mask);
+    if (rc) {
+        goto err;
+    }
+
+    tsl2561->cfg.mask = cfg->mask;
+
+    return 0;
 err:
-    return (rc);
+    return rc;
 }

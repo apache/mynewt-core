@@ -23,8 +23,6 @@
 
 #include <cborattr/cborattr.h>
 
-#include <oic/../../src/messaging/coap/observe.h>
-
 static int test_observe_state;
 static volatile int test_observe_done;
 static struct oc_resource *test_res_observe;

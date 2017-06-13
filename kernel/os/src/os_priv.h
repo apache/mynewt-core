@@ -26,15 +26,10 @@
 extern "C" {
 #endif
 
-TAILQ_HEAD(os_task_list, os_task);
-TAILQ_HEAD(os_callout_list, os_callout);
-STAILQ_HEAD(os_task_stailq, os_task);
-
 extern struct os_task g_idle_task;
 extern struct os_task_list g_os_run_list;
 extern struct os_task_list g_os_sleep_list;
 extern struct os_task_stailq g_os_task_list;
-extern struct os_task *g_current_task;
 extern struct os_callout_list g_callout_list;
 
 void os_msys_init(void);

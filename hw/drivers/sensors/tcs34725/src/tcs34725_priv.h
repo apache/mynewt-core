@@ -123,41 +123,46 @@ struct tcs_agc {
 /**
  * Writes a single byte to the specified register
  *
+ * @param The sensor interface
  * @param The register address to write to
  * @param The value to write
  *
  * @return 0 on success, non-zero error on failure.
  */
 
-int tcs34725_write8(uint8_t reg, uint32_t value);
+int tcs34725_write8(struct sensor_itf *itf,
+                    uint8_t reg, uint32_t value);
 
 /**
  * Writes multiple bytes to the specified register
  *
+ * @param The sensor interface
  * @param The register address to write to
  * @param The data buffer to write from
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-tcs34725_writelen(uint8_t reg, uint8_t *buffer, uint8_t len);
+tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
 
 
 /**
  * Reads a single byte from the specified register
  *
+ * @param The sensor interface
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-tcs34725_read8(uint8_t reg, uint8_t *value);
+tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 
 /**
  * Read data from the sensor of variable length (MAX: 8 bytes)
  *
  *
+ * @param The sensor interface
  * @param Register to read from
  * @param Bufer to read into
  * @param Length of the buffer
@@ -165,129 +170,7 @@ tcs34725_read8(uint8_t reg, uint8_t *value);
  * @return 0 on success and non-zero on failure
  */
 int
-tcs34725_readlen(uint8_t reg, uint8_t *buffer, uint8_t len);
-
-/**
- * Get chip ID from the sensor
- *
- * @param Pointer to the variable to fill up chip ID in
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_get_chip_id(uint8_t *id);
-
-/**
- * Get gain of the sensor
- *
- * @param ptr to gain
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_get_gain(uint8_t *gain);
-
-/**
- * Set gain of the sensor
- *
- * @param gain
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_set_gain(uint8_t gain);
-
-/**
- * enables/disables interrupts
- *
- * @param enable/disable
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_enable_interrupt(uint8_t enable);
-
-/**
- * Clears the interrupts
- *
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_clear_interrupt(void);
-
-/**
- * Sets threshold limits for interrupts, if the low threshold is set above
- * the high threshold, the high threshold is ignored and only the low
- * threshold is evaluated
- *
- * @param lower threshold
- * @param higher threshold
- *
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_set_int_limits(uint16_t low, uint16_t high);
-
-/**
- * Sets integration time
- *
- * @param integration time to be set
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_set_integration_time(uint8_t int_time);
-
-/**
- * Gets integration time set earlier
- *
- * @param ptr to integration time
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_get_integration_time(uint8_t *int_time);
-
-/**
- *
- * Enables the device
- *
- * @param enable/disable
- * @return 0 on success, non-zero on error
- */
-int
-tcs34725_enable(uint8_t enable);
-
-/**
- * Indicates whether the sensor is enabled or not
- *
- * @param ptr to is_enabled variable
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_get_enable (uint8_t *is_enabled);
-
-/**
- * Reads the raw red, green, blue and clear channel values
- *
- *
- * @param red value to return
- * @param green value to return
- * @param blue value to return
- * @param clear channel value
- * @param driver sturcture containing config
- */
-int
-tcs34725_get_rawdata(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c,
-                     struct tcs34725 *tcs34725);
-
-/**
- *
- * Gets threshold limits for interrupts, if the low threshold is set above
- * the high threshold, the high threshold is ignored and only the low
- * threshold is evaluated
- *
- * @param ptr to lower threshold
- * @param ptr to higher threshold
- *
- * @return 0 on success, non-zero on failure
- */
-int
-tcs34725_get_int_limits(uint16_t *low, uint16_t *high);
+tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
 
 #ifdef __cplusplus
 }

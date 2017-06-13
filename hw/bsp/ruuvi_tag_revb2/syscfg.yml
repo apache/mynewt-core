@@ -87,6 +87,10 @@ syscfg.defs:
         description: 'NRF52 I2C (TWI) interface 0'
         value:  '0'
 
+    BME280_ONB:
+        description: 'ruuvi-tag onboard bme280 sensor'
+        value:  0
+
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

@@ -23,7 +23,7 @@
  * ##### Receiver
  * # Sit on a single channel.
  * lora set_freq 915000000
- * 
+ *
  * # Allow 250-byte packets.
  * lora max_payload_len 1 250
  *
@@ -42,7 +42,7 @@
  * # Display information about recent receives.
  * lora_rx_info
  *
- * ##### Transceiver
+ * ##### Transmitter
  * # Sit on a single channel.
  * lora set_freq 915000000
  *

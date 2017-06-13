@@ -40,9 +40,6 @@ extern uint8_t _ram_start;
 /* LED */
 #define LED_BLINK_PIN   (11)
 
-/* UART info */
-#define CONSOLE_UART    "uart0"
-
 #define NFFS_AREA_MAX   (8)
 
 #ifdef __cplusplus

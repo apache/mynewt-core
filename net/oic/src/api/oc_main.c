@@ -17,11 +17,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <syscfg/syscfg.h>
+
+#include "oic/port/mynewt/config.h"
 #include "port/oc_assert.h"
 #include "port/oc_clock.h"
-#include "port/oc_connectivity.h"
+#include "oic/port/oc_connectivity.h"
 
-#include "oc_api.h"
+#include "oic/oc_api.h"
+#include "oic/oc_log.h"
 
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"
@@ -74,7 +78,7 @@ oc_main_init(oc_handler_t *handler)
         goto err;
     }
 
-    OC_LOG_INFO("oci: Initialized\n");
+    OC_LOG_INFO("oic: Initialized\n");
 
 #ifdef OC_CLIENT
     handler->requests_entry();
@@ -98,7 +102,7 @@ void
 oc_main_shutdown(void)
 {
     if (initialized == false) {
-        OC_LOG_ERROR("oci: not initialized\n");
+        OC_LOG_ERROR("oic: not initialized\n");
         return;
     }
 

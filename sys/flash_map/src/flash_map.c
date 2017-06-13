@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <os/os.h>
 #include "syscfg/syscfg.h"
 #include "sysinit/sysinit.h"
 #include "sysflash/sysflash.h"
@@ -129,6 +130,47 @@ uint8_t
 flash_area_align(const struct flash_area *fa)
 {
     return hal_flash_align(fa->fa_device_id);
+}
+
+/**
+ * Checks if a flash area has been erased. Returns false if there are any
+ * non 0xFFFFFFFF bytes.
+ *
+ * @param fa                    An opened flash area to iterate.
+ *                                  the count of flash area TLVs in the meta
+ *                                  region is greater than this number, this
+ *                                  function fails.
+ * @param empty (out)           On success, the is_empty result gets written
+ *                                  here.
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+flash_area_is_empty(const struct flash_area *fa, bool *empty)
+{
+    uint32_t data[64 >> 2];
+    uint32_t data_off = 0;
+    int8_t bytes_to_read;
+    uint8_t i;
+    int rc;
+
+    while(data_off < fa->fa_size) {
+        bytes_to_read = min(64, fa->fa_size - data_off);
+        rc = flash_area_read(fa, data_off, data, bytes_to_read);
+        if (rc) {
+            return rc;
+        }
+        for (i = 0; i < bytes_to_read >> 2; i++) {
+          if (data[i] != (uint32_t) -1) {
+            goto not_empty;
+          }
+        }
+        data_off+=bytes_to_read;
+    }
+    *empty = true;
+    return 0;
+not_empty:
+    *empty = false;
+    return 0;
 }
 
 /**
