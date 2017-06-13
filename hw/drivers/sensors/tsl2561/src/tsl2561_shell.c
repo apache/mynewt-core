@@ -55,6 +55,7 @@ static struct shell_cmd tsl2561_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(TSL2561_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(TSL2561_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(TSL2561_SHELL_ITF_ADDR),
 };
 
 static int

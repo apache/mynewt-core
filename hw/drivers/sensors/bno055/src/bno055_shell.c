@@ -45,6 +45,7 @@ static struct shell_cmd bno055_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(BNO055_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(BNO055_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(BNO055_SHELL_ITF_ADDR),
 };
 
 static int
