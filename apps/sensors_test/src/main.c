@@ -33,7 +33,6 @@
 #include <hal/hal_system.h>
 #include <assert.h>
 #include <string.h>
-#include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 #include <os/os_time.h>
