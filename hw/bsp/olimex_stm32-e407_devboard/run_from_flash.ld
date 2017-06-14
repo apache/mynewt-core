@@ -17,15 +17,15 @@
  * under the License.
  */
 
-/* Linker script for STM32F407 when running from flash and using the bootloader */
+/* Linker script for STM32F407 when running from flash without bootloader */
 
 /* Linker script to configure memory regions. */
 MEMORY
 {
-  FLASH (rx) :  ORIGIN = 0x08020000, LENGTH = 256K /* First image slot. */
+  FLASH (rx) :  ORIGIN = 0x08000000, LENGTH = 1024K
   CCM (rwx) :   ORIGIN = 0x10000000, LENGTH = 64K
   RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 128K
 }
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+/* No image header */
+_imghdr_size = 0x0;
