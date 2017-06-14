@@ -34,6 +34,7 @@
 /* Control characters */
 #define ESC                0x1b
 #define DEL                0x7f
+#define BS                 0x08
 
 /* ANSI escape sequences */
 #define ANSI_ESC           '['
@@ -458,6 +459,7 @@ console_handle_char(uint8_t byte)
             nlip_state |= NLIP_DATA_START1;
             break;
         case DEL:
+        case BS:
             if (cur > 0) {
                 del_char(&input->line[--cur], end);
             }
