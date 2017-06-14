@@ -40,7 +40,6 @@
 #include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
-#include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <os/os_time.h>
 #include <id/id.h>
@@ -264,8 +263,6 @@ main(int argc, char **argv)
                STATS_NAME_INIT_PARMS(gpio_stats));
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
-
-    flash_test_init();
 
     conf_load();
 

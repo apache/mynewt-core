@@ -25,5 +25,10 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - hw/hal
+    - sys/shell
 pkg.req_apis:
     - console
+
+pkg.init:
+    flash_test_init: 500
+

@@ -17,31 +17,19 @@
 # under the License.
 #
 
-pkg.name: apps/slinky
-pkg.type: app
-pkg.description: "Example application which uses a variety of mynewt features."
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.name: test/i2c_scan
+pkg.description: Scan given i2c bus for devices
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - test/flash_test
-    - test/i2c_scan
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
     - kernel/os
-    - boot/bootutil
+    - hw/hal
     - sys/shell
-    - sys/config
-    - sys/console/full
-    - sys/id
-    - sys/log/full
-    - sys/stats/full
-    - boot/split
+    - util/parse
 
-pkg.deps.CONFIG_NFFS:
-    - fs/nffs
+pkg.req_apis:
+    - console
 
-pkg.deps.CONFIG_FCB:
-    - fs/fcb
+pkg.init:
+    i2c_scan_init: 500

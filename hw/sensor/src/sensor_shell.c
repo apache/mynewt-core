@@ -78,8 +78,6 @@ sensor_display_help(void)
     console_printf("  read <sensor_name> <type> [-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n");
     console_printf("      read <no_of_samples> from sensor<sensor_name> of type:<type> at preset interval or \n");
     console_printf("      at <poll_interval> rate for <poll_duration>");
-    console_printf("  i2cscan <I2C num>\n");
-    console_printf("      scan I2C bus for connected devices\n");
     console_printf("  type <sensor_name>\n");
     console_printf("      types supported by registered sensor\n");
 }
@@ -601,56 +599,6 @@ err:
 }
 
 static int
-sensor_cmd_i2cscan(int argc, char **argv)
-{
-    uint8_t addr;
-    int32_t timeout;
-    uint8_t dev_count = 0;
-    uint8_t i2cnum;
-    int rc;
-
-    timeout = OS_TICKS_PER_SEC / 10;
-
-    rc = 0;
-    i2cnum = parse_ll_bounds(argv[2], 0, 0xf, &rc);
-    if (rc) {
-        console_printf("Invalid i2c interface:%s\n", argv[2]);
-        goto err;
-    }
-
-    console_printf("Scanning I2C bus %u\n"
-                   "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
-                   "00:          ", (uint8_t)i2cnum);
-
-
-    /* Scan all valid I2C addresses (0x08..0x77) */
-    for (addr = 0x08; addr < 0x78; addr++) {
-#ifndef ARCH_sim
-        rc = hal_i2c_master_probe((uint8_t)i2cnum, addr, timeout);
-#else
-        (void)timeout;
-#endif
-        /* Print addr header every 16 bytes */
-        if (!(addr % 16)) {
-            console_printf("\n%02x: ", addr);
-        }
-        /* Display the addr if a response was received */
-        if (!rc) {
-            console_printf("%02x ", addr);
-            dev_count++;
-        } else {
-            console_printf("-- ");
-        }
-        os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
-    }
-    console_printf("\nFound %u devices on I2C bus %u\n", dev_count, (uint8_t)i2cnum);
-
-    return 0;
-err:
-    return rc;
-}
-
-static int
 sensor_cmd_exec(int argc, char **argv)
 {
     struct sensor_poll_data spd;
@@ -693,11 +641,6 @@ sensor_cmd_exec(int argc, char **argv)
         }
 
         rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), &spd);
-        if (rc) {
-            goto err;
-        }
-    } else if (!strcmp(argv[1], "i2cscan")) {
-        rc = sensor_cmd_i2cscan(argc, argv);
         if (rc) {
             goto err;
         }
