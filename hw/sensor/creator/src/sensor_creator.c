@@ -58,19 +58,24 @@ static struct tcs34725 tcs34725;
 static struct bme280 bme280;
 #endif
 
-#if MYNEWT_VAL(UART_0)
-static const struct sensor_itf uart_0_itf = {
-    .si_type = SENSOR_ITF_UART,
-    .si_num = 0,
-};
-#endif
-
-#if MYNEWT_VAL(UART_1)
-static struct sensor_itf uart_1_itf = {
-    .si_type = SENSOR_ITF_UART,
-    .si_num = 1,
-};
-#endif
+/**
+ * If a UART sensor needs to be created, interface is defined in
+ * the following way
+ *
+ * #if MYNEWT_VAL(UART_0)
+ * static const struct sensor_itf uart_0_itf = {
+ *   .si_type = SENSOR_ITF_UART,
+ *   .si_num = 0,
+ * };
+ * #endif
+ *
+ * #if MYNEWT_VAL(UART_1)
+ * static struct sensor_itf uart_1_itf = {
+ *    .si_type = SENSOR_ITF_UART,
+ *    .si_num = 1,
+ *};
+ *#endif
+ */
 
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BME280_OFB)
 static struct sensor_itf spi_0_itf_bme = {
