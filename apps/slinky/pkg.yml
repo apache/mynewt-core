@@ -26,6 +26,7 @@ pkg.keywords:
 
 pkg.deps:
     - test/flash_test
+    - test/i2c_scan
     - mgmt/imgmgr
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/nmgr_shell
