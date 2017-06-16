@@ -93,7 +93,7 @@ bleprph_advertise(void)
      *     o Flags (indicates advertisement type and other general info).
      *     o Advertising tx power.
      *     o Device name.
-     *     o 16-bit service UUIDs (alert notifications).
+     *     o service UUID.
      */
 
     memset(&fields, 0, sizeof fields);
@@ -117,29 +117,25 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
+#if MYNEWT_VAL(ADVERTISE_128BIT_UUID)
+    /* Advertise the 128-bit CoAP-over-BLE service UUID in the scan response. */
     fields.uuids128 = (ble_uuid128_t []) {
         BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
     };
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
-
-    rc = ble_gap_adv_set_fields(&fields);
-    if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
-        return;
-    }
-
+#endif
+#if MYNEWT_VAL(ADVERTISE_16BIT_UUID)
     /* Advertise the 16-bit CoAP-over-BLE service UUID in the scan response. */
-    memset(&fields, 0, sizeof fields);
     fields.uuids16 = (ble_uuid16_t[]) {
         BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID)
     };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
-
-    rc = ble_gap_adv_rsp_set_fields(&fields);
+#endif
+    rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error setting scan response data; rc=%d\n", rc);
+        BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 

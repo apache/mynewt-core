@@ -16,6 +16,14 @@
 # under the License.
 #
 
+syscfg.defs:
+    ADVERTISE_16BIT_UUID:
+        description: 'Advertise Runtime 16 bit service UUID'
+        value: 1
+    ADVERTISE_128BIT_UUID:
+        description: 'Advertise Iotivity 128 bit service UUID'
+        value: 0
+
 syscfg.vals:
     # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
     LOG_LEVEL: 0

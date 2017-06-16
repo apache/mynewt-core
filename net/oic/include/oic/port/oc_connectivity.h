@@ -66,6 +66,7 @@ struct oc_endpoint_ip {
  */
 struct oc_endpoint_ble {
     enum oc_transport_flags flags;
+    uint8_t srv_idx;
     uint16_t conn_handle;
 };
 
