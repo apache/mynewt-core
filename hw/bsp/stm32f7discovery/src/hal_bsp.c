@@ -185,6 +185,7 @@ hal_bsp_init(void)
 
     (void)rc;
 
+    SCB_EnableICache();
     SystemClock_Config();
 
 #if MYNEWT_VAL(UART_0)
