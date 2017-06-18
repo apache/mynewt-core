@@ -511,14 +511,14 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int cnt)
             SPIxBUF(spi_num) = *tx++;
         }
 
+        /* Wait until RX FIFO is not empty */
+        while (SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK) {
+        }
+
         /* Always read RX FIFO to avoid overrun */
         rdata = SPIxBUF(spi_num);
 
         if (rx) {
-            /* Wait until RX FIFO is not empty */
-            while (SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK) {
-            }
-
             *rx++ = rdata;
         }
     }
