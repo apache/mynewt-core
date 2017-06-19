@@ -180,11 +180,10 @@ hal_spi_config_master(int spi_num, struct hal_spi_settings *psettings)
      *
      *                 Fpb2
      * Fsck =  -------------------
-     *          (2 * SPIxBRG) + 1
+     *          2 * (SPIxBRG + 1)
      */
     pbclk = MYNEWT_VAL(CLOCK_FREQ) / ((PB2DIV & _PB2DIV_PBDIV_MASK) + 1);
-    SPIxBRG(spi_num) =
-        (pbclk - psettings->baudrate) / (2 * psettings->baudrate);
+    SPIxBRG(spi_num) = (pbclk / (2 * psettings->baudrate)) - 1;
 
     SPIxSTATCLR(spi_num) = _SPI1STAT_SPIROV_MASK;
     SPIxCONSET(spi_num) = _SPI1CON_ENHBUF_MASK | _SPI1CON_MSTEN_MASK;
