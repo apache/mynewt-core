@@ -180,11 +180,10 @@ hal_spi_config_master(int spi_num, struct hal_spi_settings *psettings)
      *
      *                 Fpb2
      * Fsck =  -------------------
-     *          (2 * SPIxBRG) + 1
+     *          2 * (SPIxBRG + 1)
      */
     pbclk = MYNEWT_VAL(CLOCK_FREQ) / ((PB2DIV & _PB2DIV_PBDIV_MASK) + 1);
-    SPIxBRG(spi_num) =
-        (pbclk - psettings->baudrate) / (2 * psettings->baudrate);
+    SPIxBRG(spi_num) = (pbclk / (2 * psettings->baudrate)) - 1;
 
     SPIxSTATCLR(spi_num) = _SPI1STAT_SPIROV_MASK;
     SPIxCONSET(spi_num) = _SPI1CON_ENHBUF_MASK | _SPI1CON_MSTEN_MASK;
@@ -511,14 +510,14 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int cnt)
             SPIxBUF(spi_num) = *tx++;
         }
 
+        /* Wait until RX FIFO is not empty */
+        while (SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK) {
+        }
+
         /* Always read RX FIFO to avoid overrun */
         rdata = SPIxBUF(spi_num);
 
         if (rx) {
-            /* Wait until RX FIFO is not empty */
-            while (SPIxSTAT(spi_num) & _SPI1STAT_SPIRBE_MASK) {
-            }
-
             *rx++ = rdata;
         }
     }
