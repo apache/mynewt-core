@@ -36,30 +36,6 @@ static char *cmd_args[CMD_MAX_ARGS][2];
 static int cmd_num_args;
 
 int
-parse_err_too_few_args(char *cmd_name)
-{
-    console_printf("Error: too few arguments for command \"%s\"\n",
-                   cmd_name);
-    return -1;
-}
-
-const struct cmd_entry *
-parse_cmd_find(const struct cmd_entry *cmds, char *name)
-{
-    const struct cmd_entry *cmd;
-    int i;
-
-    for (i = 0; cmds[i].name != NULL; i++) {
-        cmd = cmds + i;
-        if (strcmp(name, cmd->name) == 0) {
-            return cmd;
-        }
-    }
-
-    return NULL;
-}
-
-int
 parse_arg_find_idx(const char *key)
 {
     int i;

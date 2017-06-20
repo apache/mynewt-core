@@ -23,19 +23,11 @@
 #include <inttypes.h>
 #include "host/ble_uuid.h"
 
-typedef int cmd_fn(int argc, char **argv);
-struct cmd_entry {
-    char *name;
-    cmd_fn *cb;
-};
-
 struct kv_pair {
     char *key;
     int val;
 };
 
-const struct cmd_entry *parse_cmd_find(const struct cmd_entry *cmds,
-                                       char *name);
 const struct kv_pair *parse_kv_find(const struct kv_pair *kvs, char *name);
 int parse_arg_find_idx(const char *key);
 char *parse_arg_extract(const char *key);
@@ -61,7 +53,6 @@ int parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len);
 int parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len);
 int parse_arg_mac(char *name, uint8_t *dst);
 int parse_arg_uuid(char *name, ble_uuid_any_t *uuid);
-int parse_err_too_few_args(char *cmd_name);
 int parse_arg_all(int argc, char **argv);
 int parse_eddystone_url(char *full_url, uint8_t *out_scheme, char *out_body,
                         uint8_t *out_body_len, uint8_t *out_suffix);
