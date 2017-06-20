@@ -23,7 +23,7 @@
 #include "host/ble_gap.h"
 #include "host/ble_l2cap.h"
 #include "console/console.h"
-#include "bletiny.h"
+#include "btshell.h"
 #include "cmd.h"
 #include "cmd_l2cap.h"
 
@@ -76,7 +76,7 @@ cmd_l2cap_update(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_l2cap_update(conn_handle, &params);
+    rc = btshell_l2cap_update(conn_handle, &params);
     if (rc != 0) {
         console_printf("error txing l2cap update; rc=%d\n", rc);
         return rc;
@@ -106,7 +106,7 @@ cmd_l2cap_create_server(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_l2cap_create_srv(psm);
+    rc = btshell_l2cap_create_srv(psm);
     if (rc) {
         console_printf("Server create error: 0x%02x", rc);
     }
@@ -141,7 +141,7 @@ cmd_l2cap_connect(int argc, char **argv)
         return rc;
     }
 
-    return bletiny_l2cap_connect(conn, psm);
+    return btshell_l2cap_connect(conn, psm);
 }
 
 /*****************************************************************************
@@ -171,5 +171,5 @@ cmd_l2cap_disconnect(int argc, char **argv)
         return 0;
     }
 
-    return bletiny_l2cap_disconnect(conn, idx);
+    return btshell_l2cap_disconnect(conn, idx);
 }

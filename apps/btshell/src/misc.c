@@ -21,7 +21,7 @@
 #include "host/ble_uuid.h"
 #include "host/ble_gap.h"
 
-#include "bletiny.h"
+#include "btshell.h"
 
 /**
  * Utility function to log an array of bytes.
@@ -74,15 +74,15 @@ print_uuid(const ble_uuid_t *uuid)
 }
 
 int
-svc_is_empty(const struct bletiny_svc *svc)
+svc_is_empty(const struct btshell_svc *svc)
 {
     return svc->svc.end_handle < svc->svc.start_handle;
 }
 
 uint16_t
-chr_end_handle(const struct bletiny_svc *svc, const struct bletiny_chr *chr)
+chr_end_handle(const struct btshell_svc *svc, const struct btshell_chr *chr)
 {
-    const struct bletiny_chr *next_chr;
+    const struct btshell_chr *next_chr;
 
     next_chr = SLIST_NEXT(chr, next);
     if (next_chr != NULL) {
@@ -93,7 +93,7 @@ chr_end_handle(const struct bletiny_svc *svc, const struct bletiny_chr *chr)
 }
 
 int
-chr_is_empty(const struct bletiny_svc *svc, const struct bletiny_chr *chr)
+chr_is_empty(const struct btshell_svc *svc, const struct btshell_chr *chr)
 {
     return chr_end_handle(svc, chr) <= chr->chr.val_handle;
 }
@@ -123,7 +123,7 @@ print_conn_desc(const struct ble_gap_conn_desc *desc)
 }
 
 static void
-print_dsc(struct bletiny_dsc *dsc)
+print_dsc(struct btshell_dsc *dsc)
 {
     console_printf("            dsc_handle=%d uuid=", dsc->dsc.handle);
     print_uuid(&dsc->dsc.uuid.u);
@@ -131,9 +131,9 @@ print_dsc(struct bletiny_dsc *dsc)
 }
 
 static void
-print_chr(struct bletiny_chr *chr)
+print_chr(struct btshell_chr *chr)
 {
-    struct bletiny_dsc *dsc;
+    struct btshell_dsc *dsc;
 
     console_printf("        def_handle=%d val_handle=%d properties=0x%02x "
                    "uuid=", chr->chr.def_handle, chr->chr.val_handle,
@@ -147,9 +147,9 @@ print_chr(struct bletiny_chr *chr)
 }
 
 void
-print_svc(struct bletiny_svc *svc)
+print_svc(struct btshell_svc *svc)
 {
-    struct bletiny_chr *chr;
+    struct btshell_chr *chr;
 
     console_printf("    start=%d end=%d uuid=", svc->svc.start_handle,
                    svc->svc.end_handle);

@@ -24,7 +24,7 @@
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "host/ble_gatt.h"
-#include "bletiny.h"
+#include "btshell.h"
 
 /* 0000xxxx-8c26-476f-89a7-a108033a69c7 */
 #define PTS_UUID_DECLARE(uuid16)                                \

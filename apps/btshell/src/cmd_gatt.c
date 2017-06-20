@@ -26,7 +26,7 @@
 #include "services/gatt/ble_svc_gatt.h"
 #include "console/console.h"
 #include "parse/parse.h"
-#include "bletiny.h"
+#include "btshell.h"
 #include "cmd.h"
 #include "cmd_gatt.h"
 
@@ -59,10 +59,10 @@ cmd_gatt_discover_characteristic(int argc, char **argv)
 
     rc = parse_arg_uuid("uuid", &uuid);
     if (rc == 0) {
-        rc = bletiny_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
+        rc = btshell_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
                                        &uuid.u);
     } else if (rc == ENOENT) {
-        rc = bletiny_disc_all_chrs(conn_handle, start_handle, end_handle);
+        rc = btshell_disc_all_chrs(conn_handle, start_handle, end_handle);
     } else  {
         console_printf("invalid 'uuid' parameter\n");
         return rc;
@@ -94,7 +94,7 @@ cmd_gatt_discover_descriptor(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_disc_all_dscs(conn_handle, start_handle, end_handle);
+    rc = btshell_disc_all_dscs(conn_handle, start_handle, end_handle);
     if (rc != 0) {
         console_printf("error discovering descriptors; rc=%d\n", rc);
         return rc;
@@ -123,9 +123,9 @@ cmd_gatt_discover_service(int argc, char **argv)
 
     rc = parse_arg_uuid("uuid", &uuid);
     if (rc == 0) {
-        rc = bletiny_disc_svc_by_uuid(conn_handle, &uuid.u);
+        rc = btshell_disc_svc_by_uuid(conn_handle, &uuid.u);
     } else if (rc == ENOENT) {
-        rc = bletiny_disc_svcs(conn_handle);
+        rc = btshell_disc_svcs(conn_handle);
     } else  {
         console_printf("invalid 'uuid' parameter\n");
         return rc;
@@ -156,7 +156,7 @@ cmd_gatt_discover_full(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_disc_full(conn_handle);
+    rc = btshell_disc_full(conn_handle);
     if (rc != 0) {
         console_printf("error discovering all; rc=%d\n", rc);
         return rc;
@@ -186,7 +186,7 @@ cmd_gatt_exchange_mtu(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_exchange_mtu(conn_handle);
+    rc = btshell_exchange_mtu(conn_handle);
     if (rc != 0) {
         console_printf("error exchanging mtu; rc=%d\n", rc);
         return rc;
@@ -216,7 +216,7 @@ cmd_gatt_notify(int argc, char **argv)
         return rc;
     }
 
-    bletiny_chrup(attr_handle);
+    btshell_chrup(attr_handle);
 
     return 0;
 }
@@ -309,17 +309,17 @@ cmd_gatt_read(int argc, char **argv)
 
     if (num_attr_handles == 1) {
         if (is_long) {
-            rc = bletiny_read_long(conn_handle, attr_handles[0], offset);
+            rc = btshell_read_long(conn_handle, attr_handles[0], offset);
         } else {
-            rc = bletiny_read(conn_handle, attr_handles[0]);
+            rc = btshell_read(conn_handle, attr_handles[0]);
         }
     } else if (num_attr_handles > 1) {
-        rc = bletiny_read_mult(conn_handle, attr_handles, num_attr_handles);
+        rc = btshell_read_mult(conn_handle, attr_handles, num_attr_handles);
     } else if (is_uuid) {
         if (start == 0 || end == 0) {
             rc = EINVAL;
         } else {
-            rc = bletiny_read_by_uuid(conn_handle, start, end, &uuid.u);
+            rc = btshell_read_by_uuid(conn_handle, start, end, &uuid.u);
         }
     } else {
         rc = EINVAL;
@@ -390,7 +390,7 @@ cmd_gatt_find_included_services(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_find_inc_svcs(conn_handle, start_handle, end_handle);
+    rc = btshell_find_inc_svcs(conn_handle, start_handle, end_handle);
     if (rc != 0) {
         console_printf("error finding included services; rc=%d\n", rc);
         return rc;
@@ -406,12 +406,12 @@ cmd_gatt_find_included_services(int argc, char **argv)
 int
 cmd_gatt_show(int argc, char **argv)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_svc *svc;
     int i;
 
-    for (i = 0; i < bletiny_num_conns; i++) {
-        conn = bletiny_conns + i;
+    for (i = 0; i < btshell_num_conns; i++) {
+        conn = btshell_conns + i;
 
         console_printf("CONNECTION: handle=%d\n", conn->handle);
 
@@ -460,12 +460,12 @@ int
 cmd_gatt_show_conn(int argc, char **argv)
 {
     struct ble_gap_conn_desc conn_desc;
-    struct bletiny_conn *conn;
+    struct btshell_conn *conn;
     int rc;
     int i;
 
-    for (i = 0; i < bletiny_num_conns; i++) {
-        conn = bletiny_conns + i;
+    for (i = 0; i < btshell_num_conns; i++) {
+        conn = btshell_conns + i;
 
         rc = ble_gap_conn_find(conn->handle, &conn_desc);
         if (rc == 0) {
@@ -479,12 +479,12 @@ cmd_gatt_show_conn(int argc, char **argv)
 int
 cmd_gatt_show_coc(int argc, char **argv)
 {
-    struct bletiny_conn *conn = NULL;
-    struct bletiny_l2cap_coc *coc;
+    struct btshell_conn *conn = NULL;
+    struct btshell_l2cap_coc *coc;
     int i, j;
 
-    for (i = 0; i < bletiny_num_conns; i++) {
-        conn = bletiny_conns + i;
+    for (i = 0; i < btshell_num_conns; i++) {
+        conn = btshell_conns + i;
         if (!conn) {
             break;
         }
@@ -601,20 +601,20 @@ cmd_gatt_write(int argc, char **argv)
             rc = -EINVAL;
             goto done;
         }
-        rc = bletiny_write_no_rsp(conn_handle, attrs[0].handle, attrs[0].om);
+        rc = btshell_write_no_rsp(conn_handle, attrs[0].handle, attrs[0].om);
         attrs[0].om = NULL;
     } else if (is_long) {
         if (num_attrs != 1) {
             rc = -EINVAL;
             goto done;
         }
-        rc = bletiny_write_long(conn_handle, attrs[0].handle,
+        rc = btshell_write_long(conn_handle, attrs[0].handle,
                                 attrs[0].offset, attrs[0].om);
         attrs[0].om = NULL;
     } else if (num_attrs > 1) {
-        rc = bletiny_write_reliable(conn_handle, attrs, num_attrs);
+        rc = btshell_write_reliable(conn_handle, attrs, num_attrs);
     } else if (num_attrs == 1) {
-        rc = bletiny_write(conn_handle, attrs[0].handle, attrs[0].om);
+        rc = btshell_write(conn_handle, attrs[0].handle, attrs[0].om);
         attrs[0].om = NULL;
     } else {
         rc = -EINVAL;

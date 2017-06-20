@@ -29,7 +29,7 @@
 #include "host/ble_eddystone.h"
 #include "parse/parse.h"
 #include "cmd.h"
-#include "bletiny.h"
+#include "btshell.h"
 
 #define CMD_MAX_ARGS        16
 

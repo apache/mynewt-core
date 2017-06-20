@@ -30,7 +30,7 @@
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
-#include "bletiny.h"
+#include "btshell.h"
 #include "cmd.h"
 
 /* BLE */
@@ -54,7 +54,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
-/* XXX: An app should not include private headers from a library.  The bletiny
+/* XXX: An app should not include private headers from a library.  The btshell
  * app uses some of nimble's internal details for logging.
  */
 #include "../src/ble_hs_conn_priv.h"
@@ -75,38 +75,38 @@
 #define BLETINY_COC_MTU               (256)
 #endif
 
-struct log bletiny_log;
+struct log btshell_log;
 
-bssnz_t struct bletiny_conn bletiny_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
-int bletiny_num_conns;
+bssnz_t struct btshell_conn btshell_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
+int btshell_num_conns;
 
-static void *bletiny_svc_mem;
-static struct os_mempool bletiny_svc_pool;
+static void *btshell_svc_mem;
+static struct os_mempool btshell_svc_pool;
 
-static void *bletiny_chr_mem;
-static struct os_mempool bletiny_chr_pool;
+static void *btshell_chr_mem;
+static struct os_mempool btshell_chr_pool;
 
-static void *bletiny_dsc_mem;
-static struct os_mempool bletiny_dsc_pool;
+static void *btshell_dsc_mem;
+static struct os_mempool btshell_dsc_pool;
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
-static void *bletiny_coc_conn_mem;
-static struct os_mempool bletiny_coc_conn_pool;
+static void *btshell_coc_conn_mem;
+static struct os_mempool btshell_coc_conn_pool;
 
-static void *bletiny_sdu_coc_mem;
-static struct os_mempool bletiny_sdu_coc_pool;
+static void *btshell_sdu_coc_mem;
+static struct os_mempool btshell_sdu_coc_pool;
 #endif
 
-static struct os_callout bletiny_tx_timer;
-struct bletiny_tx_data_s
+static struct os_callout btshell_tx_timer;
+struct btshell_tx_data_s
 {
     uint16_t tx_num;
     uint16_t tx_rate;
     uint16_t tx_handle;
     uint16_t tx_len;
 };
-static struct bletiny_tx_data_s bletiny_tx_data;
-int bletiny_full_disc_prev_chr_val;
+static struct btshell_tx_data_s btshell_tx_data;
+int btshell_full_disc_prev_chr_val;
 
 #define XSTR(s) STR(s)
 #ifndef STR
@@ -121,7 +121,7 @@ int bletiny_full_disc_prev_chr_val;
 #endif
 
 static void
-bletiny_print_error(char *msg, uint16_t conn_handle,
+btshell_print_error(char *msg, uint16_t conn_handle,
                     const struct ble_gatt_error *error)
 {
     if (msg == NULL) {
@@ -133,7 +133,7 @@ bletiny_print_error(char *msg, uint16_t conn_handle,
 }
 
 static void
-bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
+btshell_print_adv_fields(const struct ble_hs_adv_fields *fields)
 {
     uint8_t *u8p;
     int i;
@@ -260,12 +260,12 @@ bletiny_print_adv_fields(const struct ble_hs_adv_fields *fields)
 }
 
 static int
-bletiny_conn_find_idx(uint16_t handle)
+btshell_conn_find_idx(uint16_t handle)
 {
     int i;
 
-    for (i = 0; i < bletiny_num_conns; i++) {
-        if (bletiny_conns[i].handle == handle) {
+    for (i = 0; i < btshell_num_conns; i++) {
+        if (btshell_conns[i].handle == handle) {
             return i;
         }
     }
@@ -273,24 +273,24 @@ bletiny_conn_find_idx(uint16_t handle)
     return -1;
 }
 
-static struct bletiny_conn *
-bletiny_conn_find(uint16_t handle)
+static struct btshell_conn *
+btshell_conn_find(uint16_t handle)
 {
     int idx;
 
-    idx = bletiny_conn_find_idx(handle);
+    idx = btshell_conn_find_idx(handle);
     if (idx == -1) {
         return NULL;
     } else {
-        return bletiny_conns + idx;
+        return btshell_conns + idx;
     }
 }
 
-static struct bletiny_svc *
-bletiny_svc_find_prev(struct bletiny_conn *conn, uint16_t svc_start_handle)
+static struct btshell_svc *
+btshell_svc_find_prev(struct btshell_conn *conn, uint16_t svc_start_handle)
 {
-    struct bletiny_svc *prev;
-    struct bletiny_svc *svc;
+    struct btshell_svc *prev;
+    struct btshell_svc *svc;
 
     prev = NULL;
     SLIST_FOREACH(svc, &conn->svcs, next) {
@@ -304,14 +304,14 @@ bletiny_svc_find_prev(struct bletiny_conn *conn, uint16_t svc_start_handle)
     return prev;
 }
 
-static struct bletiny_svc *
-bletiny_svc_find(struct bletiny_conn *conn, uint16_t svc_start_handle,
-                 struct bletiny_svc **out_prev)
+static struct btshell_svc *
+btshell_svc_find(struct btshell_conn *conn, uint16_t svc_start_handle,
+                 struct btshell_svc **out_prev)
 {
-    struct bletiny_svc *prev;
-    struct bletiny_svc *svc;
+    struct btshell_svc *prev;
+    struct btshell_svc *svc;
 
-    prev = bletiny_svc_find_prev(conn, svc_start_handle);
+    prev = btshell_svc_find_prev(conn, svc_start_handle);
     if (prev == NULL) {
         svc = SLIST_FIRST(&conn->svcs);
     } else {
@@ -328,10 +328,10 @@ bletiny_svc_find(struct bletiny_conn *conn, uint16_t svc_start_handle,
     return svc;
 }
 
-static struct bletiny_svc *
-bletiny_svc_find_range(struct bletiny_conn *conn, uint16_t attr_handle)
+static struct btshell_svc *
+btshell_svc_find_range(struct btshell_conn *conn, uint16_t attr_handle)
 {
-    struct bletiny_svc *svc;
+    struct btshell_svc *svc;
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
         if (svc->svc.start_handle <= attr_handle &&
@@ -345,39 +345,39 @@ bletiny_svc_find_range(struct bletiny_conn *conn, uint16_t attr_handle)
 }
 
 static void
-bletiny_chr_delete(struct bletiny_chr *chr)
+btshell_chr_delete(struct btshell_chr *chr)
 {
-    struct bletiny_dsc *dsc;
+    struct btshell_dsc *dsc;
 
     while ((dsc = SLIST_FIRST(&chr->dscs)) != NULL) {
         SLIST_REMOVE_HEAD(&chr->dscs, next);
-        os_memblock_put(&bletiny_dsc_pool, dsc);
+        os_memblock_put(&btshell_dsc_pool, dsc);
     }
 
-    os_memblock_put(&bletiny_chr_pool, chr);
+    os_memblock_put(&btshell_chr_pool, chr);
 }
 
 static void
-bletiny_svc_delete(struct bletiny_svc *svc)
+btshell_svc_delete(struct btshell_svc *svc)
 {
-    struct bletiny_chr *chr;
+    struct btshell_chr *chr;
 
     while ((chr = SLIST_FIRST(&svc->chrs)) != NULL) {
         SLIST_REMOVE_HEAD(&svc->chrs, next);
-        bletiny_chr_delete(chr);
+        btshell_chr_delete(chr);
     }
 
-    os_memblock_put(&bletiny_svc_pool, svc);
+    os_memblock_put(&btshell_svc_pool, svc);
 }
 
-static struct bletiny_svc *
-bletiny_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
+static struct btshell_svc *
+btshell_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_svc *prev;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_svc *prev;
+    struct btshell_svc *svc;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
         BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
@@ -385,13 +385,13 @@ bletiny_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
         return NULL;
     }
 
-    svc = bletiny_svc_find(conn, gatt_svc->start_handle, &prev);
+    svc = btshell_svc_find(conn, gatt_svc->start_handle, &prev);
     if (svc != NULL) {
         /* Service already discovered. */
         return svc;
     }
 
-    svc = os_memblock_get(&bletiny_svc_pool);
+    svc = os_memblock_get(&btshell_svc_pool);
     if (svc == NULL) {
         BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING SERVICE\n");
         return NULL;
@@ -410,11 +410,11 @@ bletiny_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
     return svc;
 }
 
-static struct bletiny_chr *
-bletiny_chr_find_prev(const struct bletiny_svc *svc, uint16_t chr_val_handle)
+static struct btshell_chr *
+btshell_chr_find_prev(const struct btshell_svc *svc, uint16_t chr_val_handle)
 {
-    struct bletiny_chr *prev;
-    struct bletiny_chr *chr;
+    struct btshell_chr *prev;
+    struct btshell_chr *chr;
 
     prev = NULL;
     SLIST_FOREACH(chr, &svc->chrs, next) {
@@ -428,14 +428,14 @@ bletiny_chr_find_prev(const struct bletiny_svc *svc, uint16_t chr_val_handle)
     return prev;
 }
 
-static struct bletiny_chr *
-bletiny_chr_find(const struct bletiny_svc *svc, uint16_t chr_val_handle,
-                 struct bletiny_chr **out_prev)
+static struct btshell_chr *
+btshell_chr_find(const struct btshell_svc *svc, uint16_t chr_val_handle,
+                 struct btshell_chr **out_prev)
 {
-    struct bletiny_chr *prev;
-    struct bletiny_chr *chr;
+    struct btshell_chr *prev;
+    struct btshell_chr *chr;
 
-    prev = bletiny_chr_find_prev(svc, chr_val_handle);
+    prev = btshell_chr_find_prev(svc, chr_val_handle);
     if (prev == NULL) {
         chr = SLIST_FIRST(&svc->chrs);
     } else {
@@ -452,16 +452,16 @@ bletiny_chr_find(const struct bletiny_svc *svc, uint16_t chr_val_handle,
     return chr;
 }
 
-static struct bletiny_chr *
-bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
+static struct btshell_chr *
+btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
                 const struct ble_gatt_chr *gatt_chr)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_chr *prev;
-    struct bletiny_chr *chr;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_chr *prev;
+    struct btshell_chr *chr;
+    struct btshell_svc *svc;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
         BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
@@ -469,20 +469,20 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
         return NULL;
     }
 
-    svc = bletiny_svc_find(conn, svc_start_handle, NULL);
+    svc = btshell_svc_find(conn, svc_start_handle, NULL);
     if (svc == NULL) {
         BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
 
-    chr = bletiny_chr_find(svc, gatt_chr->val_handle, &prev);
+    chr = btshell_chr_find(svc, gatt_chr->val_handle, &prev);
     if (chr != NULL) {
         /* Characteristic already discovered. */
         return chr;
     }
 
-    chr = os_memblock_get(&bletiny_chr_pool);
+    chr = os_memblock_get(&btshell_chr_pool);
     if (chr == NULL) {
         BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING CHARACTERISTIC\n");
         return NULL;
@@ -500,11 +500,11 @@ bletiny_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
     return chr;
 }
 
-static struct bletiny_dsc *
-bletiny_dsc_find_prev(const struct bletiny_chr *chr, uint16_t dsc_handle)
+static struct btshell_dsc *
+btshell_dsc_find_prev(const struct btshell_chr *chr, uint16_t dsc_handle)
 {
-    struct bletiny_dsc *prev;
-    struct bletiny_dsc *dsc;
+    struct btshell_dsc *prev;
+    struct btshell_dsc *dsc;
 
     prev = NULL;
     SLIST_FOREACH(dsc, &chr->dscs, next) {
@@ -518,14 +518,14 @@ bletiny_dsc_find_prev(const struct bletiny_chr *chr, uint16_t dsc_handle)
     return prev;
 }
 
-static struct bletiny_dsc *
-bletiny_dsc_find(const struct bletiny_chr *chr, uint16_t dsc_handle,
-                 struct bletiny_dsc **out_prev)
+static struct btshell_dsc *
+btshell_dsc_find(const struct btshell_chr *chr, uint16_t dsc_handle,
+                 struct btshell_dsc **out_prev)
 {
-    struct bletiny_dsc *prev;
-    struct bletiny_dsc *dsc;
+    struct btshell_dsc *prev;
+    struct btshell_dsc *dsc;
 
-    prev = bletiny_dsc_find_prev(chr, dsc_handle);
+    prev = btshell_dsc_find_prev(chr, dsc_handle);
     if (prev == NULL) {
         dsc = SLIST_FIRST(&chr->dscs);
     } else {
@@ -542,17 +542,17 @@ bletiny_dsc_find(const struct bletiny_chr *chr, uint16_t dsc_handle,
     return dsc;
 }
 
-static struct bletiny_dsc *
-bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
+static struct btshell_dsc *
+btshell_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
                 const struct ble_gatt_dsc *gatt_dsc)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_dsc *prev;
-    struct bletiny_dsc *dsc;
-    struct bletiny_svc *svc;
-    struct bletiny_chr *chr;
+    struct btshell_conn *conn;
+    struct btshell_dsc *prev;
+    struct btshell_dsc *dsc;
+    struct btshell_svc *svc;
+    struct btshell_chr *chr;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
         BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
@@ -560,14 +560,14 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
         return NULL;
     }
 
-    svc = bletiny_svc_find_range(conn, chr_val_handle);
+    svc = btshell_svc_find_range(conn, chr_val_handle);
     if (svc == NULL) {
         BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
 
-    chr = bletiny_chr_find(svc, chr_val_handle, NULL);
+    chr = btshell_chr_find(svc, chr_val_handle, NULL);
     if (chr == NULL) {
         BLETINY_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
                            "HANDLE=%d\n",
@@ -575,13 +575,13 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
         return NULL;
     }
 
-    dsc = bletiny_dsc_find(chr, gatt_dsc->handle, &prev);
+    dsc = btshell_dsc_find(chr, gatt_dsc->handle, &prev);
     if (dsc != NULL) {
         /* Descriptor already discovered. */
         return dsc;
     }
 
-    dsc = os_memblock_get(&bletiny_dsc_pool);
+    dsc = os_memblock_get(&btshell_dsc_pool);
     if (dsc == NULL) {
         console_printf("OOM WHILE DISCOVERING DESCRIPTOR\n");
         return NULL;
@@ -599,15 +599,15 @@ bletiny_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
     return dsc;
 }
 
-static struct bletiny_conn *
-bletiny_conn_add(struct ble_gap_conn_desc *desc)
+static struct btshell_conn *
+btshell_conn_add(struct ble_gap_conn_desc *desc)
 {
-    struct bletiny_conn *conn;
+    struct btshell_conn *conn;
 
-    assert(bletiny_num_conns < MYNEWT_VAL(BLE_MAX_CONNECTIONS));
+    assert(btshell_num_conns < MYNEWT_VAL(BLE_MAX_CONNECTIONS));
 
-    conn = bletiny_conns + bletiny_num_conns;
-    bletiny_num_conns++;
+    conn = btshell_conns + btshell_num_conns;
+    btshell_num_conns++;
 
     conn->handle = desc->conn_handle;
     SLIST_INIT(&conn->svcs);
@@ -617,17 +617,17 @@ bletiny_conn_add(struct ble_gap_conn_desc *desc)
 }
 
 static void
-bletiny_conn_delete_idx(int idx)
+btshell_conn_delete_idx(int idx)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_svc *svc;
 
-    assert(idx >= 0 && idx < bletiny_num_conns);
+    assert(idx >= 0 && idx < btshell_num_conns);
 
-    conn = bletiny_conns + idx;
+    conn = btshell_conns + idx;
     while ((svc = SLIST_FIRST(&conn->svcs)) != NULL) {
         SLIST_REMOVE_HEAD(&conn->svcs, next);
-        bletiny_svc_delete(svc);
+        btshell_svc_delete(svc);
     }
 
     /* This '#if' is not strictly necessary.  It is here to prevent a spurious
@@ -635,16 +635,16 @@ bletiny_conn_delete_idx(int idx)
      */
 #if MYNEWT_VAL(BLE_MAX_CONNECTIONS) > 1
     int i;
-    for (i = idx + 1; i < bletiny_num_conns; i++) {
-        bletiny_conns[i - 1] = bletiny_conns[i];
+    for (i = idx + 1; i < btshell_num_conns; i++) {
+        btshell_conns[i - 1] = btshell_conns[i];
     }
 #endif
 
-    bletiny_num_conns--;
+    btshell_num_conns--;
 }
 
 static int
-bletiny_on_mtu(uint16_t conn_handle, const struct ble_gatt_error *error,
+btshell_on_mtu(uint16_t conn_handle, const struct ble_gatt_error *error,
                uint16_t mtu, void *arg)
 {
     switch (error->status) {
@@ -654,7 +654,7 @@ bletiny_on_mtu(uint16_t conn_handle, const struct ble_gatt_error *error,
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -662,25 +662,25 @@ bletiny_on_mtu(uint16_t conn_handle, const struct ble_gatt_error *error,
 }
 
 static void
-bletiny_full_disc_complete(int rc)
+btshell_full_disc_complete(int rc)
 {
     console_printf("full discovery complete; rc=%d\n", rc);
-    bletiny_full_disc_prev_chr_val = 0;
+    btshell_full_disc_prev_chr_val = 0;
 }
 
 static void
-bletiny_disc_full_dscs(uint16_t conn_handle)
+btshell_disc_full_dscs(uint16_t conn_handle)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_chr *chr;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_chr *chr;
+    struct btshell_svc *svc;
     int rc;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
         BLETINY_LOG(DEBUG, "Failed to discover descriptors for conn=%d; "
                            "not connected\n", conn_handle);
-        bletiny_full_disc_complete(BLE_HS_ENOTCONN);
+        btshell_full_disc_complete(BLE_HS_ENOTCONN);
         return;
     }
 
@@ -688,73 +688,73 @@ bletiny_disc_full_dscs(uint16_t conn_handle)
         SLIST_FOREACH(chr, &svc->chrs, next) {
             if (!chr_is_empty(svc, chr) &&
                 SLIST_EMPTY(&chr->dscs) &&
-                bletiny_full_disc_prev_chr_val <= chr->chr.def_handle) {
+                btshell_full_disc_prev_chr_val <= chr->chr.def_handle) {
 
-                rc = bletiny_disc_all_dscs(conn_handle,
+                rc = btshell_disc_all_dscs(conn_handle,
                                            chr->chr.val_handle,
                                            chr_end_handle(svc, chr));
                 if (rc != 0) {
-                    bletiny_full_disc_complete(rc);
+                    btshell_full_disc_complete(rc);
                 }
 
-                bletiny_full_disc_prev_chr_val = chr->chr.val_handle;
+                btshell_full_disc_prev_chr_val = chr->chr.val_handle;
                 return;
             }
         }
     }
 
     /* All descriptors discovered. */
-    bletiny_full_disc_complete(0);
+    btshell_full_disc_complete(0);
 }
 
 static void
-bletiny_disc_full_chrs(uint16_t conn_handle)
+btshell_disc_full_chrs(uint16_t conn_handle)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_svc *svc;
     int rc;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
         BLETINY_LOG(DEBUG, "Failed to discover characteristics for conn=%d; "
                            "not connected\n", conn_handle);
-        bletiny_full_disc_complete(BLE_HS_ENOTCONN);
+        btshell_full_disc_complete(BLE_HS_ENOTCONN);
         return;
     }
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
         if (!svc_is_empty(svc) && SLIST_EMPTY(&svc->chrs)) {
-            rc = bletiny_disc_all_chrs(conn_handle, svc->svc.start_handle,
+            rc = btshell_disc_all_chrs(conn_handle, svc->svc.start_handle,
                                        svc->svc.end_handle);
             if (rc != 0) {
-                bletiny_full_disc_complete(rc);
+                btshell_full_disc_complete(rc);
             }
             return;
         }
     }
 
     /* All characteristics discovered. */
-    bletiny_disc_full_dscs(conn_handle);
+    btshell_disc_full_dscs(conn_handle);
 }
 
 static int
-bletiny_on_disc_s(uint16_t conn_handle, const struct ble_gatt_error *error,
+btshell_on_disc_s(uint16_t conn_handle, const struct ble_gatt_error *error,
                   const struct ble_gatt_svc *service, void *arg)
 {
     switch (error->status) {
     case 0:
-        bletiny_svc_add(conn_handle, service);
+        btshell_svc_add(conn_handle, service);
         break;
 
     case BLE_HS_EDONE:
         console_printf("service discovery successful\n");
-        if (bletiny_full_disc_prev_chr_val > 0) {
-            bletiny_disc_full_chrs(conn_handle);
+        if (btshell_full_disc_prev_chr_val > 0) {
+            btshell_disc_full_chrs(conn_handle);
         }
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -762,7 +762,7 @@ bletiny_on_disc_s(uint16_t conn_handle, const struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
+btshell_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
                   const struct ble_gatt_chr *chr, void *arg)
 {
     intptr_t svc_start_handle;
@@ -771,18 +771,18 @@ bletiny_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
 
     switch (error->status) {
     case 0:
-        bletiny_chr_add(conn_handle, svc_start_handle, chr);
+        btshell_chr_add(conn_handle, svc_start_handle, chr);
         break;
 
     case BLE_HS_EDONE:
         console_printf("characteristic discovery successful\n");
-        if (bletiny_full_disc_prev_chr_val > 0) {
-            bletiny_disc_full_chrs(conn_handle);
+        if (btshell_full_disc_prev_chr_val > 0) {
+            btshell_disc_full_chrs(conn_handle);
         }
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -790,24 +790,24 @@ bletiny_on_disc_c(uint16_t conn_handle, const struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
+btshell_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
                   uint16_t chr_val_handle, const struct ble_gatt_dsc *dsc,
                   void *arg)
 {
     switch (error->status) {
     case 0:
-        bletiny_dsc_add(conn_handle, chr_val_handle, dsc);
+        btshell_dsc_add(conn_handle, chr_val_handle, dsc);
         break;
 
     case BLE_HS_EDONE:
         console_printf("descriptor discovery successful\n");
-        if (bletiny_full_disc_prev_chr_val > 0) {
-            bletiny_disc_full_dscs(conn_handle);
+        if (btshell_full_disc_prev_chr_val > 0) {
+            btshell_disc_full_dscs(conn_handle);
         }
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -815,7 +815,7 @@ bletiny_on_disc_d(uint16_t conn_handle, const struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
+btshell_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
                 struct ble_gatt_attr *attr, void *arg)
 {
     switch (error->status) {
@@ -832,7 +832,7 @@ bletiny_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -840,7 +840,7 @@ bletiny_on_read(uint16_t conn_handle, const struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
+btshell_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
                  struct ble_gatt_attr *attr, void *arg)
 {
     switch (error->status) {
@@ -850,7 +850,7 @@ bletiny_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -858,7 +858,7 @@ bletiny_on_write(uint16_t conn_handle, const struct ble_gatt_error *error,
 }
 
 static int
-bletiny_on_write_reliable(uint16_t conn_handle,
+btshell_on_write_reliable(uint16_t conn_handle,
                           const struct ble_gatt_error *error,
                           struct ble_gatt_attr *attrs, uint8_t num_attrs,
                           void *arg)
@@ -879,7 +879,7 @@ bletiny_on_write_reliable(uint16_t conn_handle,
         break;
 
     default:
-        bletiny_print_error(NULL, conn_handle, error);
+        btshell_print_error(NULL, conn_handle, error);
         break;
     }
 
@@ -887,7 +887,7 @@ bletiny_on_write_reliable(uint16_t conn_handle,
 }
 
 static int
-bletiny_gap_event(struct ble_gap_event *event, void *arg)
+btshell_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
     struct ble_hs_adv_fields fields;
@@ -904,7 +904,7 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             print_conn_desc(&desc);
-            bletiny_conn_add(&desc);
+            btshell_conn_add(&desc);
         }
         return 0;
 
@@ -912,9 +912,9 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
         console_printf("disconnect; reason=%d ", event->disconnect.reason);
         print_conn_desc(&event->disconnect.conn);
 
-        conn_idx = bletiny_conn_find_idx(event->disconnect.conn.conn_handle);
+        conn_idx = btshell_conn_find_idx(event->disconnect.conn.conn_handle);
         if (conn_idx != -1) {
-            bletiny_conn_delete_idx(conn_idx);
+            btshell_conn_delete_idx(conn_idx);
         }
         return 0;
 
@@ -940,7 +940,7 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
         console_printf(" fields:\n");
         ble_hs_adv_parse_fields(&fields, event->disc.data,
                                 event->disc.length_data);
-        bletiny_print_adv_fields(&fields);
+        btshell_print_adv_fields(&fields);
         console_printf("\n");
         return 0;
 
@@ -1039,14 +1039,14 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
 }
 
 static void
-bletiny_on_l2cap_update(uint16_t conn_handle, int status, void *arg)
+btshell_on_l2cap_update(uint16_t conn_handle, int status, void *arg)
 {
     console_printf("l2cap update complete; conn_handle=%d status=%d\n",
                    conn_handle, status);
 }
 
 static void
-bletiny_tx_timer_cb(struct os_event *ev)
+btshell_tx_timer_cb(struct os_event *ev)
 {
     int i;
     uint8_t len;
@@ -1054,11 +1054,11 @@ bletiny_tx_timer_cb(struct os_event *ev)
     uint8_t *dptr;
     struct os_mbuf *om;
 
-    if ((bletiny_tx_data.tx_num == 0) || (bletiny_tx_data.tx_len == 0)) {
+    if ((btshell_tx_data.tx_num == 0) || (btshell_tx_data.tx_len == 0)) {
         return;
     }
 
-    len = bletiny_tx_data.tx_len;
+    len = btshell_tx_data.tx_len;
 
     om = NULL;
     if (os_msys_num_free() >= 4) {
@@ -1068,7 +1068,7 @@ bletiny_tx_timer_cb(struct os_event *ev)
     if (om) {
         /* Put the HCI header in the mbuf */
         om->om_len = len + 4;
-        put_le16(om->om_data, bletiny_tx_data.tx_handle);
+        put_le16(om->om_data, btshell_tx_data.tx_handle);
         put_le16(om->om_data + 2, len);
         dptr = om->om_data + 4;
 
@@ -1092,27 +1092,27 @@ bletiny_tx_timer_cb(struct os_event *ev)
         OS_MBUF_PKTHDR(om)->omp_len = om->om_len;
         ble_hci_trans_hs_acl_tx(om);
 
-        --bletiny_tx_data.tx_num;
+        --btshell_tx_data.tx_num;
     }
 
-    if (bletiny_tx_data.tx_num) {
-        timeout = (int32_t)bletiny_tx_data.tx_rate;
+    if (btshell_tx_data.tx_num) {
+        timeout = (int32_t)btshell_tx_data.tx_rate;
         timeout = (timeout * OS_TICKS_PER_SEC) / 1000;
-        os_callout_reset(&bletiny_tx_timer, timeout);
+        os_callout_reset(&btshell_tx_timer, timeout);
     }
 }
 
 int
-bletiny_exchange_mtu(uint16_t conn_handle)
+btshell_exchange_mtu(uint16_t conn_handle)
 {
     int rc;
 
-    rc = ble_gattc_exchange_mtu(conn_handle, bletiny_on_mtu, NULL);
+    rc = ble_gattc_exchange_mtu(conn_handle, btshell_on_mtu, NULL);
     return rc;
 }
 
 int
-bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
+btshell_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
                       uint16_t end_handle)
 {
     intptr_t svc_start_handle;
@@ -1120,12 +1120,12 @@ bletiny_disc_all_chrs(uint16_t conn_handle, uint16_t start_handle,
 
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_all_chrs(conn_handle, start_handle, end_handle,
-                                 bletiny_on_disc_c, (void *)svc_start_handle);
+                                 btshell_on_disc_c, (void *)svc_start_handle);
     return rc;
 }
 
 int
-bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
+btshell_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                            uint16_t end_handle, const ble_uuid_t *uuid)
 {
     intptr_t svc_start_handle;
@@ -1133,77 +1133,77 @@ bletiny_disc_chrs_by_uuid(uint16_t conn_handle, uint16_t start_handle,
 
     svc_start_handle = start_handle;
     rc = ble_gattc_disc_chrs_by_uuid(conn_handle, start_handle, end_handle,
-                                     uuid, bletiny_on_disc_c,
+                                     uuid, btshell_on_disc_c,
                                      (void *)svc_start_handle);
     return rc;
 }
 
 int
-bletiny_disc_svcs(uint16_t conn_handle)
+btshell_disc_svcs(uint16_t conn_handle)
 {
     int rc;
 
-    rc = ble_gattc_disc_all_svcs(conn_handle, bletiny_on_disc_s, NULL);
+    rc = ble_gattc_disc_all_svcs(conn_handle, btshell_on_disc_s, NULL);
     return rc;
 }
 
 int
-bletiny_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid)
+btshell_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid)
 {
     int rc;
 
     rc = ble_gattc_disc_svc_by_uuid(conn_handle, uuid,
-                                    bletiny_on_disc_s, NULL);
+                                    btshell_on_disc_s, NULL);
     return rc;
 }
 
 int
-bletiny_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
+btshell_disc_all_dscs(uint16_t conn_handle, uint16_t start_handle,
                       uint16_t end_handle)
 {
     int rc;
 
     rc = ble_gattc_disc_all_dscs(conn_handle, start_handle, end_handle,
-                                 bletiny_on_disc_d, NULL);
+                                 btshell_on_disc_d, NULL);
     return rc;
 }
 
 int
-bletiny_disc_full(uint16_t conn_handle)
+btshell_disc_full(uint16_t conn_handle)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_svc *svc;
+    struct btshell_conn *conn;
+    struct btshell_svc *svc;
 
     /* Undiscover everything first. */
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
         return BLE_HS_ENOTCONN;
     }
 
     while ((svc = SLIST_FIRST(&conn->svcs)) != NULL) {
         SLIST_REMOVE_HEAD(&conn->svcs, next);
-        bletiny_svc_delete(svc);
+        btshell_svc_delete(svc);
     }
 
-    bletiny_full_disc_prev_chr_val = 1;
-    bletiny_disc_svcs(conn_handle);
+    btshell_full_disc_prev_chr_val = 1;
+    btshell_disc_svcs(conn_handle);
 
     return 0;
 }
 
 int
-bletiny_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
+btshell_find_inc_svcs(uint16_t conn_handle, uint16_t start_handle,
                        uint16_t end_handle)
 {
     int rc;
 
     rc = ble_gattc_find_inc_svcs(conn_handle, start_handle, end_handle,
-                                 bletiny_on_disc_s, NULL);
+                                 btshell_on_disc_s, NULL);
     return rc;
 }
 
 int
-bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
+btshell_read(uint16_t conn_handle, uint16_t attr_handle)
 {
     struct os_mbuf *om;
     int rc;
@@ -1219,45 +1219,45 @@ bletiny_read(uint16_t conn_handle, uint16_t attr_handle)
             os_mbuf_free_chain(om);
         }
     } else {
-        rc = ble_gattc_read(conn_handle, attr_handle, bletiny_on_read, NULL);
+        rc = ble_gattc_read(conn_handle, attr_handle, btshell_on_read, NULL);
     }
     return rc;
 }
 
 int
-bletiny_read_long(uint16_t conn_handle, uint16_t attr_handle, uint16_t offset)
+btshell_read_long(uint16_t conn_handle, uint16_t attr_handle, uint16_t offset)
 {
     int rc;
 
     rc = ble_gattc_read_long(conn_handle, attr_handle, offset,
-                             bletiny_on_read, NULL);
+                             btshell_on_read, NULL);
     return rc;
 }
 
 int
-bletiny_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
+btshell_read_by_uuid(uint16_t conn_handle, uint16_t start_handle,
                       uint16_t end_handle, const ble_uuid_t *uuid)
 {
     int rc;
 
     rc = ble_gattc_read_by_uuid(conn_handle, start_handle, end_handle, uuid,
-                                bletiny_on_read, NULL);
+                                btshell_on_read, NULL);
     return rc;
 }
 
 int
-bletiny_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
+btshell_read_mult(uint16_t conn_handle, uint16_t *attr_handles,
                    int num_attr_handles)
 {
     int rc;
 
     rc = ble_gattc_read_mult(conn_handle, attr_handles, num_attr_handles,
-                             bletiny_on_read, NULL);
+                             btshell_on_read, NULL);
     return rc;
 }
 
 int
-bletiny_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf *om)
+btshell_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf *om)
 {
     int rc;
 
@@ -1265,14 +1265,14 @@ bletiny_write(uint16_t conn_handle, uint16_t attr_handle, struct os_mbuf *om)
         rc = ble_att_svr_write_local(attr_handle, om);
     } else {
         rc = ble_gattc_write(conn_handle, attr_handle, om,
-                             bletiny_on_write, NULL);
+                             btshell_on_write, NULL);
     }
 
     return rc;
 }
 
 int
-bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
+btshell_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
                      struct os_mbuf *om)
 {
     int rc;
@@ -1283,30 +1283,30 @@ bletiny_write_no_rsp(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 int
-bletiny_write_long(uint16_t conn_handle, uint16_t attr_handle,
+btshell_write_long(uint16_t conn_handle, uint16_t attr_handle,
                    uint16_t offset, struct os_mbuf *om)
 {
     int rc;
 
     rc = ble_gattc_write_long(conn_handle, attr_handle, offset,
-                              om, bletiny_on_write, NULL);
+                              om, btshell_on_write, NULL);
     return rc;
 }
 
 int
-bletiny_write_reliable(uint16_t conn_handle,
+btshell_write_reliable(uint16_t conn_handle,
                        struct ble_gatt_attr *attrs,
                        int num_attrs)
 {
     int rc;
 
     rc = ble_gattc_write_reliable(conn_handle, attrs, num_attrs,
-                                  bletiny_on_write_reliable, NULL);
+                                  btshell_on_write_reliable, NULL);
     return rc;
 }
 
 int
-bletiny_adv_stop(void)
+btshell_adv_stop(void)
 {
     int rc;
 
@@ -1315,30 +1315,30 @@ bletiny_adv_stop(void)
 }
 
 int
-bletiny_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
+btshell_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
                   int32_t duration_ms, const struct ble_gap_adv_params *params)
 {
     int rc;
 
     rc = ble_gap_adv_start(own_addr_type, direct_addr, duration_ms, params,
-                           bletiny_gap_event, NULL);
+                           btshell_gap_event, NULL);
     return rc;
 }
 
 int
-bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+btshell_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
                       int32_t duration_ms, struct ble_gap_conn_params *params)
 {
     int rc;
 
     rc = ble_gap_connect(own_addr_type, peer_addr, duration_ms, params,
-                         bletiny_gap_event, NULL);
+                         btshell_gap_event, NULL);
 
     return rc;
 }
 
 int
-bletiny_conn_cancel(void)
+btshell_conn_cancel(void)
 {
     int rc;
 
@@ -1347,7 +1347,7 @@ bletiny_conn_cancel(void)
 }
 
 int
-bletiny_term_conn(uint16_t conn_handle, uint8_t reason)
+btshell_term_conn(uint16_t conn_handle, uint8_t reason)
 {
     int rc;
 
@@ -1356,7 +1356,7 @@ bletiny_term_conn(uint16_t conn_handle, uint8_t reason)
 }
 
 int
-bletiny_wl_set(ble_addr_t *addrs, int addrs_count)
+btshell_wl_set(ble_addr_t *addrs, int addrs_count)
 {
     int rc;
 
@@ -1365,18 +1365,18 @@ bletiny_wl_set(ble_addr_t *addrs, int addrs_count)
 }
 
 int
-bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,
+btshell_scan(uint8_t own_addr_type, int32_t duration_ms,
              const struct ble_gap_disc_params *disc_params)
 {
     int rc;
 
     rc = ble_gap_disc(own_addr_type, duration_ms, disc_params,
-                      bletiny_gap_event, NULL);
+                      btshell_gap_event, NULL);
     return rc;
 }
 
 int
-bletiny_scan_cancel(void)
+btshell_scan_cancel(void)
 {
     int rc;
 
@@ -1385,7 +1385,7 @@ bletiny_scan_cancel(void)
 }
 
 int
-bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields)
+btshell_set_adv_data(struct ble_hs_adv_fields *adv_fields)
 {
     int rc;
 
@@ -1394,7 +1394,7 @@ bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields)
 }
 
 int
-bletiny_update_conn(uint16_t conn_handle, struct ble_gap_upd_params *params)
+btshell_update_conn(uint16_t conn_handle, struct ble_gap_upd_params *params)
 {
     int rc;
 
@@ -1403,13 +1403,13 @@ bletiny_update_conn(uint16_t conn_handle, struct ble_gap_upd_params *params)
 }
 
 void
-bletiny_chrup(uint16_t attr_handle)
+btshell_chrup(uint16_t attr_handle)
 {
     ble_gatts_chr_updated(attr_handle);
 }
 
 int
-bletiny_datalen(uint16_t conn_handle, uint16_t tx_octets, uint16_t tx_time)
+btshell_datalen(uint16_t conn_handle, uint16_t tx_octets, uint16_t tx_time)
 {
     int rc;
 
@@ -1418,18 +1418,18 @@ bletiny_datalen(uint16_t conn_handle, uint16_t tx_octets, uint16_t tx_time)
 }
 
 int
-bletiny_l2cap_update(uint16_t conn_handle,
+btshell_l2cap_update(uint16_t conn_handle,
                      struct ble_l2cap_sig_update_params *params)
 {
     int rc;
 
-    rc = ble_l2cap_sig_update(conn_handle, params, bletiny_on_l2cap_update,
+    rc = ble_l2cap_sig_update(conn_handle, params, btshell_on_l2cap_update,
                               NULL);
     return rc;
 }
 
 int
-bletiny_sec_pair(uint16_t conn_handle)
+btshell_sec_pair(uint16_t conn_handle)
 {
 #if !NIMBLE_BLE_SM
     return BLE_HS_ENOTSUP;
@@ -1442,7 +1442,7 @@ bletiny_sec_pair(uint16_t conn_handle)
 }
 
 int
-bletiny_sec_start(uint16_t conn_handle)
+btshell_sec_start(uint16_t conn_handle)
 {
 #if !NIMBLE_BLE_SM
     return BLE_HS_ENOTSUP;
@@ -1455,7 +1455,7 @@ bletiny_sec_start(uint16_t conn_handle)
 }
 
 int
-bletiny_sec_restart(uint16_t conn_handle,
+btshell_sec_restart(uint16_t conn_handle,
                     uint8_t *ltk,
                     uint16_t ediv,
                     uint64_t rand_val,
@@ -1516,7 +1516,7 @@ bletiny_sec_restart(uint16_t conn_handle,
  * @return int
  */
 int
-bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
+btshell_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
 {
     /* Cannot be currently in a session */
     if (num == 0) {
@@ -1524,7 +1524,7 @@ bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
     }
 
     /* Do not allow start if already in progress */
-    if (bletiny_tx_data.tx_num != 0) {
+    if (btshell_tx_data.tx_num != 0) {
         return -1;
     }
 
@@ -1533,18 +1533,18 @@ bletiny_tx_start(uint16_t handle, uint16_t len, uint16_t rate, uint16_t num)
         return -2;
     }
 
-    bletiny_tx_data.tx_num = num;
-    bletiny_tx_data.tx_rate = rate;
-    bletiny_tx_data.tx_len = len;
-    bletiny_tx_data.tx_handle = handle;
+    btshell_tx_data.tx_num = num;
+    btshell_tx_data.tx_rate = rate;
+    btshell_tx_data.tx_len = len;
+    btshell_tx_data.tx_handle = handle;
 
-    os_callout_reset(&bletiny_tx_timer, 0);
+    os_callout_reset(&btshell_tx_timer, 0);
 
     return 0;
 }
 
 int
-bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi)
+btshell_rssi(uint16_t conn_handle, int8_t *out_rssi)
 {
     int rc;
 
@@ -1557,7 +1557,7 @@ bletiny_rssi(uint16_t conn_handle, int8_t *out_rssi)
 }
 
 static void
-bletiny_on_reset(int reason)
+btshell_on_reset(int reason)
 {
     console_printf("Error: Resetting state; reason=%d\n", reason);
 }
@@ -1565,16 +1565,16 @@ bletiny_on_reset(int reason)
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
 
 static int
-bletiny_l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan)
+btshell_l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_l2cap_coc *coc;
-    struct bletiny_l2cap_coc *prev, *cur;
+    struct btshell_conn *conn;
+    struct btshell_l2cap_coc *coc;
+    struct btshell_l2cap_coc *prev, *cur;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     assert(conn != NULL);
 
-    coc = os_memblock_get(&bletiny_coc_conn_pool);
+    coc = os_memblock_get(&btshell_coc_conn_pool);
     if (!coc) {
         return ENOMEM;
     }
@@ -1596,13 +1596,13 @@ bletiny_l2cap_coc_add(uint16_t conn_handle, struct ble_l2cap_chan *chan)
 }
 
 static void
-bletiny_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
+btshell_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
 {
-    struct bletiny_conn *conn;
-    struct bletiny_l2cap_coc *coc;
-    struct bletiny_l2cap_coc *cur;
+    struct btshell_conn *conn;
+    struct btshell_l2cap_coc *coc;
+    struct btshell_l2cap_coc *cur;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     assert(conn != NULL);
 
     coc = NULL;
@@ -1617,23 +1617,23 @@ bletiny_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
         return;
     }
 
-    SLIST_REMOVE(&conn->coc_list, coc, bletiny_l2cap_coc, next);
-    os_memblock_put(&bletiny_coc_conn_pool, coc);
+    SLIST_REMOVE(&conn->coc_list, coc, btshell_l2cap_coc, next);
+    os_memblock_put(&btshell_coc_conn_pool, coc);
 }
 
 static void
-bletiny_l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu)
+btshell_l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu)
 {
     console_printf("LE CoC SDU received, chan: 0x%08lx\n", (uint32_t) chan);
 }
 
 static int
-bletiny_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
+btshell_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
                            struct ble_l2cap_chan *chan)
 {
     struct os_mbuf *sdu_rx;
 
-    sdu_rx = os_memblock_get(&bletiny_sdu_coc_pool);
+    sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
     if (!sdu_rx) {
             return BLE_HS_ENOMEM;
     }
@@ -1644,7 +1644,7 @@ bletiny_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
 }
 
 static int
-bletiny_l2cap_event(struct ble_l2cap_event *event, void *arg)
+btshell_l2cap_event(struct ble_l2cap_event *event, void *arg)
 {
     switch(event->type) {
         case BLE_L2CAP_EVENT_COC_CONNECTED:
@@ -1657,7 +1657,7 @@ bletiny_l2cap_event(struct ble_l2cap_event *event, void *arg)
                            event->connect.conn_handle,
                            (uint32_t) event->connect.chan);
 
-            bletiny_l2cap_coc_add(event->connect.conn_handle,
+            btshell_l2cap_coc_add(event->connect.conn_handle,
                                   event->connect.chan);
 
             return 0;
@@ -1665,16 +1665,16 @@ bletiny_l2cap_event(struct ble_l2cap_event *event, void *arg)
             console_printf("LE CoC disconnected, chan: 0x%08lx\n",
                            (uint32_t) event->disconnect.chan);
 
-            bletiny_l2cap_coc_remove(event->disconnect.conn_handle,
+            btshell_l2cap_coc_remove(event->disconnect.conn_handle,
                                      event->disconnect.chan);
             return 0;
         case BLE_L2CAP_EVENT_COC_ACCEPT:
-            return bletiny_l2cap_coc_accept(event->accept.conn_handle,
+            return btshell_l2cap_coc_accept(event->accept.conn_handle,
                                             event->accept.peer_sdu_size,
                                             event->accept.chan);
 
         case BLE_L2CAP_EVENT_COC_DATA_RECEIVED:
-            bletiny_l2cap_coc_recv(event->receive.chan, event->receive.sdu_rx);
+            btshell_l2cap_coc_recv(event->receive.chan, event->receive.sdu_rx);
             return 0;
         default:
             return 0;
@@ -1683,7 +1683,7 @@ bletiny_l2cap_event(struct ble_l2cap_event *event, void *arg)
 #endif
 
 int
-bletiny_l2cap_create_srv(uint16_t psm)
+btshell_l2cap_create_srv(uint16_t psm)
 {
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
     console_printf("BLE L2CAP LE COC not supported.");
@@ -1691,13 +1691,13 @@ bletiny_l2cap_create_srv(uint16_t psm)
     return 0;
 #else
 
-    return ble_l2cap_create_server(psm, BLETINY_COC_MTU, bletiny_l2cap_event,
+    return ble_l2cap_create_server(psm, BLETINY_COC_MTU, btshell_l2cap_event,
                                                                        NULL);
 #endif
 }
 
 int
-bletiny_l2cap_connect(uint16_t conn_handle, uint16_t psm)
+btshell_l2cap_connect(uint16_t conn_handle, uint16_t psm)
 {
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
     console_printf("BLE L2CAP LE COC not supported.");
@@ -1707,16 +1707,16 @@ bletiny_l2cap_connect(uint16_t conn_handle, uint16_t psm)
 
     struct os_mbuf *sdu_rx;
 
-    sdu_rx = os_memblock_get(&bletiny_sdu_coc_pool);
+    sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
     assert(sdu_rx != NULL);
 
     return ble_l2cap_connect(conn_handle, psm, BLETINY_COC_MTU, sdu_rx,
-                             bletiny_l2cap_event, NULL);
+                             btshell_l2cap_event, NULL);
 #endif
 }
 
 int
-bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
+btshell_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
 {
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
     console_printf("BLE L2CAP LE COC not supported.");
@@ -1724,11 +1724,11 @@ bletiny_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     return 0;
 #else
 
-    struct bletiny_conn *conn;
-    struct bletiny_l2cap_coc *coc;
+    struct btshell_conn *conn;
+    struct btshell_l2cap_coc *coc;
     int i;
 
-    conn = bletiny_conn_find(conn_handle);
+    conn = btshell_conn_find(conn_handle);
     assert(conn != NULL);
 
     i = 0;
@@ -1763,66 +1763,66 @@ main(void)
     sysinit();
 
     /* Allocate some application specific memory pools. */
-    bletiny_svc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_SVCS, sizeof (struct bletiny_svc)));
-    assert(bletiny_svc_mem != NULL);
+    btshell_svc_mem = malloc(
+        OS_MEMPOOL_BYTES(BLETINY_MAX_SVCS, sizeof (struct btshell_svc)));
+    assert(btshell_svc_mem != NULL);
 
-    rc = os_mempool_init(&bletiny_svc_pool, BLETINY_MAX_SVCS,
-                         sizeof (struct bletiny_svc), bletiny_svc_mem,
-                         "bletiny_svc_pool");
+    rc = os_mempool_init(&btshell_svc_pool, BLETINY_MAX_SVCS,
+                         sizeof (struct btshell_svc), btshell_svc_mem,
+                         "btshell_svc_pool");
     assert(rc == 0);
 
-    bletiny_chr_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_CHRS, sizeof (struct bletiny_chr)));
-    assert(bletiny_chr_mem != NULL);
+    btshell_chr_mem = malloc(
+        OS_MEMPOOL_BYTES(BLETINY_MAX_CHRS, sizeof (struct btshell_chr)));
+    assert(btshell_chr_mem != NULL);
 
-    rc = os_mempool_init(&bletiny_chr_pool, BLETINY_MAX_CHRS,
-                         sizeof (struct bletiny_chr), bletiny_chr_mem,
-                         "bletiny_chr_pool");
+    rc = os_mempool_init(&btshell_chr_pool, BLETINY_MAX_CHRS,
+                         sizeof (struct btshell_chr), btshell_chr_mem,
+                         "btshell_chr_pool");
     assert(rc == 0);
 
-    bletiny_dsc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_DSCS, sizeof (struct bletiny_dsc)));
-    assert(bletiny_dsc_mem != NULL);
+    btshell_dsc_mem = malloc(
+        OS_MEMPOOL_BYTES(BLETINY_MAX_DSCS, sizeof (struct btshell_dsc)));
+    assert(btshell_dsc_mem != NULL);
 
-    rc = os_mempool_init(&bletiny_dsc_pool, BLETINY_MAX_DSCS,
-                         sizeof (struct bletiny_dsc), bletiny_dsc_mem,
-                         "bletiny_dsc_pool");
+    rc = os_mempool_init(&btshell_dsc_pool, BLETINY_MAX_DSCS,
+                         sizeof (struct btshell_dsc), btshell_dsc_mem,
+                         "btshell_dsc_pool");
     assert(rc == 0);
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
     /* For testing we want to support all the available channels */
-    bletiny_sdu_coc_mem = malloc(
+    btshell_sdu_coc_mem = malloc(
         OS_MEMPOOL_BYTES(BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
                          sizeof (struct os_mbuf)));
-    assert(bletiny_sdu_coc_mem != NULL);
+    assert(btshell_sdu_coc_mem != NULL);
 
-    rc = os_mempool_init(&bletiny_sdu_coc_pool,
+    rc = os_mempool_init(&btshell_sdu_coc_pool,
                          BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct os_mbuf), bletiny_sdu_coc_mem,
-                         "bletiny_coc_sdu_pool");
+                         sizeof (struct os_mbuf), btshell_sdu_coc_mem,
+                         "btshell_coc_sdu_pool");
     assert(rc == 0);
 
-    bletiny_coc_conn_mem = malloc(
+    btshell_coc_conn_mem = malloc(
         OS_MEMPOOL_BYTES(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct bletiny_l2cap_coc)));
-    assert(bletiny_coc_conn_mem != NULL);
+                         sizeof (struct btshell_l2cap_coc)));
+    assert(btshell_coc_conn_mem != NULL);
 
-    rc = os_mempool_init(&bletiny_coc_conn_pool,
+    rc = os_mempool_init(&btshell_coc_conn_pool,
                          MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct bletiny_l2cap_coc), bletiny_coc_conn_mem,
-                         "bletiny_coc_conn_pool");
+                         sizeof (struct btshell_l2cap_coc), btshell_coc_conn_mem,
+                         "btshell_coc_conn_pool");
     assert(rc == 0);
 #endif
 
     /* Initialize the logging system. */
-    log_register("bletiny", &bletiny_log, &log_console_handler, NULL,
+    log_register("btshell", &btshell_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
-    ble_hs_cfg.reset_cb = bletiny_on_reset;
+    ble_hs_cfg.reset_cb = btshell_on_reset;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     rc = gatt_svr_init();
@@ -1831,14 +1831,14 @@ main(void)
     cmd_init();
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("nimble-bletiny");
+    rc = ble_svc_gap_device_name_set("nimble-btshell");
     assert(rc == 0);
 
-    /* Create a callout (timer).  This callout is used by the "tx" bletiny
+    /* Create a callout (timer).  This callout is used by the "tx" btshell
      * command to repeatedly send packets of sequential data bytes.
      */
-    os_callout_init(&bletiny_tx_timer, os_eventq_dflt_get(),
-                    bletiny_tx_timer_cb, NULL);
+    os_callout_init(&btshell_tx_timer, os_eventq_dflt_get(),
+                    btshell_tx_timer_cb, NULL);
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());

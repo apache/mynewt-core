@@ -41,7 +41,7 @@
 #include "shell/shell.h"
 
 #include "cmd.h"
-#include "bletiny.h"
+#include "btshell.h"
 #include "cmd_gatt.h"
 #include "cmd_l2cap.h"
 
@@ -138,7 +138,7 @@ cmd_advertise(int argc, char **argv)
     }
 
     if (argc > 1 && strcmp(argv[1], "stop") == 0) {
-        rc = bletiny_adv_stop();
+        rc = btshell_adv_stop();
         if (rc != 0) {
             console_printf("advertise stop fail: %d\n", rc);
             return rc;
@@ -224,7 +224,7 @@ cmd_advertise(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_adv_start(own_addr_type, peer_addr_param, duration_ms,
+    rc = btshell_adv_start(own_addr_type, peer_addr_param, duration_ms,
                            &params);
     if (rc != 0) {
         console_printf("advertise fail: %d\n", rc);
@@ -276,7 +276,7 @@ cmd_connect(int argc, char **argv)
     }
 
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
-        rc = bletiny_conn_cancel();
+        rc = btshell_conn_cancel();
         if (rc != 0) {
             console_printf("connection cancel fail: %d\n", rc);
             return rc;
@@ -369,7 +369,7 @@ cmd_connect(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_conn_initiate(own_addr_type, peer_addr_param, duration_ms,
+    rc = btshell_conn_initiate(own_addr_type, peer_addr_param, duration_ms,
                                &params);
     if (rc != 0) {
         console_printf("error connecting; rc=%d\n", rc);
@@ -431,7 +431,7 @@ cmd_disconnect(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_term_conn(conn_handle, reason);
+    rc = btshell_term_conn(conn_handle, reason);
     if (rc != 0) {
         console_printf("error terminating connection; rc=%d\n", rc);
         return rc;
@@ -478,7 +478,7 @@ cmd_scan(int argc, char **argv)
     }
 
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
-        rc = bletiny_scan_cancel();
+        rc = btshell_scan_cancel();
         if (rc != 0) {
             console_printf("connection cancel fail: %d\n", rc);
             return rc;
@@ -537,7 +537,7 @@ cmd_scan(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_scan(own_addr_type, duration_ms, &params);
+    rc = btshell_scan(own_addr_type, duration_ms, &params);
     if (rc != 0) {
         console_printf("error scanning; rc=%d\n", rc);
         return rc;
@@ -965,7 +965,7 @@ cmd_set_adv_data(int argc, char **argv)
                                             eddystone_url_body_len,
                                             eddystone_url_suffix);
     } else {
-        rc = bletiny_set_adv_data(&adv_fields);
+        rc = btshell_set_adv_data(&adv_fields);
     }
     if (rc != 0) {
         console_printf("error setting advertisement data; rc=%d\n", rc);
@@ -1049,7 +1049,7 @@ cmd_white_list(int argc, char **argv)
         return EINVAL;
     }
 
-    bletiny_wl_set(addrs, addrs_cnt);
+    btshell_wl_set(addrs, addrs_cnt);
 
     return 0;
 }
@@ -1088,7 +1088,7 @@ cmd_conn_rssi(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_rssi(conn_handle, &rssi);
+    rc = btshell_rssi(conn_handle, &rssi);
     if (rc != 0) {
         console_printf("error reading rssi; rc=%d\n", rc);
         return rc;
@@ -1170,7 +1170,7 @@ cmd_conn_update_params(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_update_conn(conn_handle, &params);
+    rc = btshell_update_conn(conn_handle, &params);
     if (rc != 0) {
         console_printf("error updating connection; rc=%d\n", rc);
         return rc;
@@ -1231,7 +1231,7 @@ cmd_conn_datalen(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_datalen(conn_handle, tx_octets, tx_time);
+    rc = btshell_datalen(conn_handle, tx_octets, tx_time);
     if (rc != 0) {
         console_printf("error setting data length; rc=%d\n", rc);
         return rc;
@@ -1665,7 +1665,7 @@ cmd_security_pair(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_sec_pair(conn_handle);
+    rc = btshell_sec_pair(conn_handle);
     if (rc != 0) {
         console_printf("error initiating pairing; rc=%d\n", rc);
         return rc;
@@ -1706,7 +1706,7 @@ cmd_security_start(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_sec_start(conn_handle);
+    rc = btshell_sec_start(conn_handle);
     if (rc != 0) {
         console_printf("error starting security; rc=%d\n", rc);
         return rc;
@@ -1753,7 +1753,7 @@ cmd_security_encryption(int argc, char **argv)
 
     ediv = parse_arg_uint16("ediv", &rc);
     if (rc == ENOENT) {
-        rc = bletiny_sec_restart(conn_handle, NULL, 0, 0, 0);
+        rc = btshell_sec_restart(conn_handle, NULL, 0, 0, 0);
     } else {
         rand_val = parse_arg_uint64("rand", &rc);
         if (rc != 0) {
@@ -1773,7 +1773,7 @@ cmd_security_encryption(int argc, char **argv)
             return rc;
         }
 
-        rc = bletiny_sec_restart(conn_handle, ltk, ediv, rand_val, auth);
+        rc = btshell_sec_restart(conn_handle, ltk, ediv, rand_val, auth);
     }
 
     if (rc != 0) {
@@ -1950,7 +1950,7 @@ cmd_test_tx(int argc, char **argv)
         return rc;
     }
 
-    rc = bletiny_tx_start(handle, len, rate, num);
+    rc = btshell_tx_start(handle, len, rate, num);
     return rc;
 }
 
