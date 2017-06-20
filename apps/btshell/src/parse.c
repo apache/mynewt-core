@@ -59,22 +59,6 @@ parse_cmd_find(const struct cmd_entry *cmds, char *name)
     return NULL;
 }
 
-struct kv_pair *
-parse_kv_find(struct kv_pair *kvs, char *name)
-{
-    struct kv_pair *kv;
-    int i;
-
-    for (i = 0; kvs[i].key != NULL; i++) {
-        kv = kvs + i;
-        if (strcmp(name, kv->key) == 0) {
-            return kv;
-        }
-    }
-
-    return NULL;
-}
-
 int
 parse_arg_find_idx(const char *key)
 {
@@ -318,10 +302,26 @@ parse_arg_uint32_dflt(char *name, uint32_t dflt, int *out_status)
     return val;
 }
 
-int
-parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status)
+const struct kv_pair *
+parse_kv_find(const struct kv_pair *kvs, char *name)
 {
-    struct kv_pair *kv;
+    const struct kv_pair *kv;
+    int i;
+
+    for (i = 0; kvs[i].key != NULL; i++) {
+        kv = kvs + i;
+        if (strcmp(name, kv->key) == 0) {
+            return kv;
+        }
+    }
+
+    return NULL;
+}
+
+int
+parse_arg_kv(char *name, const struct kv_pair *kvs, int *out_status)
+{
+    const struct kv_pair *kv;
     char *sval;
 
     sval = parse_arg_extract(name);
@@ -341,7 +341,7 @@ parse_arg_kv(char *name, struct kv_pair *kvs, int *out_status)
 }
 
 int
-parse_arg_kv_default(char *name, struct kv_pair *kvs, int def_val,
+parse_arg_kv_default(char *name, const struct kv_pair *kvs, int def_val,
                      int *out_status)
 {
     int val;

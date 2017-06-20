@@ -71,7 +71,7 @@ cmd_parse_conn_start_end(uint16_t *out_conn, uint16_t *out_start,
     return 0;
 }
 
-static struct kv_pair cmd_own_addr_types[] = {
+static const struct kv_pair cmd_own_addr_types[] = {
     { "public",     BLE_OWN_ADDR_PUBLIC },
     { "random",     BLE_OWN_ADDR_RANDOM },
     { "rpa_pub",    BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT },
@@ -79,7 +79,7 @@ static struct kv_pair cmd_own_addr_types[] = {
     { NULL }
 };
 
-static struct kv_pair cmd_peer_addr_types[] = {
+static const struct kv_pair cmd_peer_addr_types[] = {
     { "public",     BLE_ADDR_PUBLIC },
     { "random",     BLE_ADDR_RANDOM },
     { "public_id",  BLE_ADDR_PUBLIC_ID },
@@ -87,7 +87,7 @@ static struct kv_pair cmd_peer_addr_types[] = {
     { NULL }
 };
 
-static struct kv_pair cmd_addr_type[] = {
+static const struct kv_pair cmd_addr_type[] = {
     { "public",     BLE_ADDR_PUBLIC },
     { "random",     BLE_ADDR_RANDOM },
     { NULL }
@@ -99,21 +99,21 @@ static struct kv_pair cmd_addr_type[] = {
  * $advertise                                                                *
  *****************************************************************************/
 
-static struct kv_pair cmd_adv_conn_modes[] = {
+static const struct kv_pair cmd_adv_conn_modes[] = {
     { "non", BLE_GAP_CONN_MODE_NON },
     { "und", BLE_GAP_CONN_MODE_UND },
     { "dir", BLE_GAP_CONN_MODE_DIR },
     { NULL }
 };
 
-static struct kv_pair cmd_adv_disc_modes[] = {
+static const struct kv_pair cmd_adv_disc_modes[] = {
     { "non", BLE_GAP_DISC_MODE_NON },
     { "ltd", BLE_GAP_DISC_MODE_LTD },
     { "gen", BLE_GAP_DISC_MODE_GEN },
     { NULL }
 };
 
-static struct kv_pair cmd_adv_filt_types[] = {
+static const struct kv_pair cmd_adv_filt_types[] = {
     { "none", BLE_HCI_ADV_FILT_NONE },
     { "scan", BLE_HCI_ADV_FILT_SCAN },
     { "conn", BLE_HCI_ADV_FILT_CONN },
@@ -455,7 +455,7 @@ static const struct shell_cmd_help disconnect_help = {
  * $scan                                                                     *
  *****************************************************************************/
 
-static struct kv_pair cmd_scan_filt_policies[] = {
+static const struct kv_pair cmd_scan_filt_policies[] = {
     { "no_wl", BLE_HCI_SCAN_FILT_NO_WL },
     { "use_wl", BLE_HCI_SCAN_FILT_USE_WL },
     { "no_wl_inita", BLE_HCI_SCAN_FILT_NO_WL_INITA },
@@ -568,7 +568,7 @@ static const struct shell_cmd_help scan_help = {
  * $set                                                                      *
  *****************************************************************************/
 
-static struct kv_pair cmd_set_addr_types[] = {
+static const struct kv_pair cmd_set_addr_types[] = {
     { "public",         BLE_ADDR_PUBLIC },
     { "random",         BLE_ADDR_RANDOM },
     { NULL }
@@ -1256,7 +1256,7 @@ static const struct shell_cmd_help conn_datalen_help = {
  * keystore                                                                  *
  *****************************************************************************/
 
-static struct kv_pair cmd_keystore_entry_type[] = {
+static const struct kv_pair cmd_keystore_entry_type[] = {
     { "msec",       BLE_STORE_OBJ_TYPE_PEER_SEC },
     { "ssec",       BLE_STORE_OBJ_TYPE_OUR_SEC },
     { "cccd",       BLE_STORE_OBJ_TYPE_CCCD },
