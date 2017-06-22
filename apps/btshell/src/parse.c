@@ -114,7 +114,7 @@ parse_arg_long_bounds(char *name, long min, long max, int *out_status)
 }
 
 long
-parse_arg_long_bounds_default(char *name, long min, long max,
+parse_arg_long_bounds_dflt(char *name, long min, long max,
                               long dflt, int *out_status)
 {
     long val;
@@ -158,9 +158,9 @@ parse_arg_bool(char *name, int *out_status)
 }
 
 uint8_t
-parse_arg_bool_default(char *name, uint8_t dflt, int *out_status)
+parse_arg_bool_dflt(char *name, uint8_t dflt, int *out_status)
 {
-    return parse_arg_long_bounds_default(name, 0, 1, dflt, out_status);
+    return parse_arg_long_bounds_dflt(name, 0, 1, dflt, out_status);
 }
 
 uint8_t
@@ -280,7 +280,7 @@ parse_arg_kv(char *name, const struct kv_pair *kvs, int *out_status)
 }
 
 int
-parse_arg_kv_default(char *name, const struct kv_pair *kvs, int def_val,
+parse_arg_kv_dflt(char *name, const struct kv_pair *kvs, int def_val,
                      int *out_status)
 {
     int val;

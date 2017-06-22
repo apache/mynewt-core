@@ -147,22 +147,22 @@ cmd_advertise(int argc, char **argv)
         return 0;
     }
 
-    params.conn_mode = parse_arg_kv_default("conn", cmd_adv_conn_modes,
-                                            BLE_GAP_CONN_MODE_UND, &rc);
+    params.conn_mode = parse_arg_kv_dflt("conn", cmd_adv_conn_modes,
+                                         BLE_GAP_CONN_MODE_UND, &rc);
     if (rc != 0) {
         console_printf("invalid 'conn' parameter\n");
         return rc;
     }
 
-    params.disc_mode = parse_arg_kv_default("discov", cmd_adv_disc_modes,
-                                            BLE_GAP_DISC_MODE_GEN, &rc);
+    params.disc_mode = parse_arg_kv_dflt("discov", cmd_adv_disc_modes,
+                                         BLE_GAP_DISC_MODE_GEN, &rc);
     if (rc != 0) {
         console_printf("invalid 'discov' parameter\n");
         return rc;
     }
 
-    peer_addr.type = parse_arg_kv_default(
-        "peer_addr_type", cmd_peer_addr_types, BLE_ADDR_PUBLIC, &rc);
+    peer_addr.type = parse_arg_kv_dflt("peer_addr_type", cmd_peer_addr_types,
+                                       BLE_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'peer_addr_type' parameter\n");
         return rc;
@@ -176,49 +176,46 @@ cmd_advertise(int argc, char **argv)
         return rc;
     }
 
-    own_addr_type = parse_arg_kv_default(
-        "own_addr_type", cmd_own_addr_types, BLE_OWN_ADDR_PUBLIC, &rc);
+    own_addr_type = parse_arg_kv_dflt("own_addr_type", cmd_own_addr_types,
+                                      BLE_OWN_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'own_addr_type' parameter\n");
         return rc;
     }
 
-    params.channel_map = parse_arg_long_bounds_default("channel_map", 0, 0xff, 0,
-                                                       &rc);
+    params.channel_map = parse_arg_uint8_dflt("channel_map", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'channel_map' parameter\n");
         return rc;
     }
 
-    params.filter_policy = parse_arg_kv_default("filter", cmd_adv_filt_types,
-                                                BLE_HCI_ADV_FILT_NONE, &rc);
+    params.filter_policy = parse_arg_kv_dflt("filter", cmd_adv_filt_types,
+                                             BLE_HCI_ADV_FILT_NONE, &rc);
     if (rc != 0) {
         console_printf("invalid 'filter' parameter\n");
         return rc;
     }
 
-    params.itvl_min = parse_arg_long_bounds_default("interval_min", 0, UINT16_MAX,
-                                                    0, &rc);
+    params.itvl_min = parse_arg_uint16_dflt("interval_min", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'interval_min' parameter\n");
         return rc;
     }
 
-    params.itvl_max = parse_arg_long_bounds_default("interval_max", 0, UINT16_MAX,
-                                                    0, &rc);
+    params.itvl_max = parse_arg_uint16_dflt("interval_max", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'interval_max' parameter\n");
         return rc;
     }
 
-    params.high_duty_cycle = parse_arg_long_bounds_default("high_duty", 0, 1, 0, &rc);
+    params.high_duty_cycle = parse_arg_bool_dflt("high_duty", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'high_duty' parameter\n");
         return rc;
     }
 
-    duration_ms = parse_arg_long_bounds_default("duration", 1, INT32_MAX,
-                                                BLE_HS_FOREVER, &rc);
+    duration_ms = parse_arg_long_bounds_dflt("duration", 1, INT32_MAX,
+                                             BLE_HS_FOREVER, &rc);
     if (rc != 0) {
         console_printf("invalid 'duration' parameter\n");
         return rc;
@@ -285,8 +282,8 @@ cmd_connect(int argc, char **argv)
         return 0;
     }
 
-    peer_addr.type = parse_arg_kv_default("peer_addr_type", cmd_peer_addr_types,
-                                          BLE_ADDR_PUBLIC, &rc);
+    peer_addr.type = parse_arg_kv_dflt("peer_addr_type", cmd_peer_addr_types,
+                                       BLE_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'peer_addr_type' parameter\n");
         return rc;
@@ -306,8 +303,8 @@ cmd_connect(int argc, char **argv)
         return rc;
     }
 
-    own_addr_type = parse_arg_kv_default("own_addr_type", cmd_own_addr_types,
-                                         BLE_OWN_ADDR_PUBLIC, &rc);
+    own_addr_type = parse_arg_kv_dflt("own_addr_type", cmd_own_addr_types,
+                                      BLE_OWN_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'own_addr_type' parameter\n");
         return rc;
@@ -325,15 +322,17 @@ cmd_connect(int argc, char **argv)
         return rc;
     }
 
-    params.itvl_min = parse_arg_uint16_dflt(
-        "interval_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
+    params.itvl_min = parse_arg_uint16_dflt("interval_min",
+                                            BLE_GAP_INITIAL_CONN_ITVL_MIN,
+                                            &rc);
     if (rc != 0) {
         console_printf("invalid 'interval_min' parameter\n");
         return rc;
     }
 
-    params.itvl_max = parse_arg_uint16_dflt(
-        "interval_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    params.itvl_max = parse_arg_uint16_dflt("interval_max",
+                                            BLE_GAP_INITIAL_CONN_ITVL_MAX,
+                                            &rc);
     if (rc != 0) {
         console_printf("invalid 'interval_max' parameter\n");
         return rc;
@@ -351,19 +350,21 @@ cmd_connect(int argc, char **argv)
         return rc;
     }
 
-    params.min_ce_len = parse_arg_uint16_dflt("min_conn_event_len", 0x0010, &rc);
+    params.min_ce_len = parse_arg_uint16_dflt("min_conn_event_len",
+                                              0x0010, &rc);
     if (rc != 0) {
         console_printf("invalid 'min_conn_event_len' parameter\n");
         return rc;
     }
 
-    params.max_ce_len = parse_arg_uint16_dflt("max_conn_event_len", 0x0300, &rc);
+    params.max_ce_len = parse_arg_uint16_dflt("max_conn_event_len",
+                                              0x0300, &rc);
     if (rc != 0) {
         console_printf("invalid 'max_conn_event_len' parameter\n");
         return rc;
     }
 
-    duration_ms = parse_arg_long_bounds_default("duration", 1, INT32_MAX, 0, &rc);
+    duration_ms = parse_arg_long_bounds_dflt("duration", 1, INT32_MAX, 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'duration' parameter\n");
         return rc;
@@ -486,20 +487,20 @@ cmd_scan(int argc, char **argv)
         return 0;
     }
 
-    duration_ms = parse_arg_long_bounds_default("duration", 1, INT32_MAX,
-                                                BLE_HS_FOREVER, &rc);
+    duration_ms = parse_arg_long_bounds_dflt("duration", 1, INT32_MAX,
+                                             BLE_HS_FOREVER, &rc);
     if (rc != 0) {
         console_printf("invalid 'duration' parameter\n");
         return rc;
     }
 
-    params.limited = parse_arg_bool_default("limited", 0, &rc);
+    params.limited = parse_arg_bool_dflt("limited", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'limited' parameter\n");
         return rc;
     }
 
-    params.passive = parse_arg_bool_default("passive", 0, &rc);
+    params.passive = parse_arg_bool_dflt("passive", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'passive' parameter\n");
         return rc;
@@ -517,21 +518,21 @@ cmd_scan(int argc, char **argv)
         return rc;
     }
 
-    params.filter_policy = parse_arg_kv_default(
-        "filter", cmd_scan_filt_policies, BLE_HCI_SCAN_FILT_NO_WL, &rc);
+    params.filter_policy = parse_arg_kv_dflt("filter", cmd_scan_filt_policies,
+                                             BLE_HCI_SCAN_FILT_NO_WL, &rc);
     if (rc != 0) {
         console_printf("invalid 'filter' parameter\n");
         return rc;
     }
 
-    params.filter_duplicates = parse_arg_bool_default("nodups", 0, &rc);
+    params.filter_duplicates = parse_arg_bool_dflt("nodups", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'nodups' parameter\n");
         return rc;
     }
 
-    own_addr_type = parse_arg_kv_default("own_addr_type", cmd_own_addr_types,
-                                         BLE_OWN_ADDR_PUBLIC, &rc);
+    own_addr_type = parse_arg_kv_dflt("own_addr_type", cmd_own_addr_types,
+                                      BLE_OWN_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'own_addr_type' parameter\n");
         return rc;
@@ -582,8 +583,8 @@ cmd_set_addr(void)
     int addr_type;
     int rc;
 
-    addr_type = parse_arg_kv_default("addr_type", cmd_set_addr_types,
-                                     BLE_ADDR_PUBLIC, &rc);
+    addr_type = parse_arg_kv_dflt("addr_type", cmd_set_addr_types,
+                                  BLE_ADDR_PUBLIC, &rc);
     if (rc != 0) {
         console_printf("invalid 'addr_type' parameter\n");
         return rc;
@@ -740,7 +741,7 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    tmp = parse_arg_long_bounds("flags", 0, UINT8_MAX, &rc);
+    tmp = parse_arg_uint8("flags", &rc);
     if (rc == 0) {
         adv_fields.flags = tmp;
     } else if (rc != ENOENT) {
@@ -768,10 +769,8 @@ cmd_set_adv_data(int argc, char **argv)
         adv_fields.uuids16 = uuids16;
     }
 
-    tmp = parse_arg_long("uuids16_is_complete", &rc);
-    if (rc == 0) {
-        adv_fields.uuids16_is_complete = !!tmp;
-    } else if (rc != ENOENT) {
+    tmp = parse_arg_bool_dflt("uuids16_is_complete", 0, &rc);
+    if (rc != 0) {
         console_printf("invalid 'uuids16_is_complete' parameter\n");
         return rc;
     }
@@ -796,10 +795,8 @@ cmd_set_adv_data(int argc, char **argv)
         adv_fields.uuids32 = uuids32;
     }
 
-    tmp = parse_arg_long("uuids32_is_complete", &rc);
-    if (rc == 0) {
-        adv_fields.uuids32_is_complete = !!tmp;
-    } else if (rc != ENOENT) {
+    tmp = parse_arg_bool_dflt("uuids32_is_complete", 0, &rc);
+    if (rc != 0) {
         console_printf("invalid 'uuids32_is_complete' parameter\n");
         return rc;
     }
@@ -825,10 +822,8 @@ cmd_set_adv_data(int argc, char **argv)
         adv_fields.uuids128 = uuids128;
     }
 
-    tmp = parse_arg_long("uuids128_is_complete", &rc);
-    if (rc == 0) {
-        adv_fields.uuids128_is_complete = !!tmp;
-    } else if (rc != ENOENT) {
+    tmp = parse_arg_bool_dflt("uuids128_is_complete", 0, &rc);
+    if (rc != 0) {
         console_printf("invalid 'uuids128_is_complete' parameter\n");
         return rc;
     }
@@ -978,11 +973,11 @@ cmd_set_adv_data(int argc, char **argv)
 static const struct shell_param set_adv_data_params[] = {
     {"flags", "usage: =[0-UINT8_MAX]"},
     {"uuid16", "usage: =[UINT16]"},
-    {"uuid16_is_complete", "usage: =[0-1]"},
+    {"uuid16_is_complete", "usage: =[0-1], default=0"},
     {"uuid32", "usage: =[UINT32]"},
-    {"uuid32_is_complete", "usage: =[0-1]"},
+    {"uuid32_is_complete", "usage: =[0-1], default=0"},
     {"uuid128", "usage: =[XX:XX...], len=16 octets"},
-    {"uuid128_is_complete", "usage: =[0-1]"},
+    {"uuid128_is_complete", "usage: =[0-1], default=0"},
     {"tx_power_level", "usage: =[INT8_MIN-INT8_MAX]"},
     {"slave_interval_range", "usage: =[XX:XX:XX:XX]"},
     {"public_target_address", "usage: =[XX:XX:XX:XX:XX:XX]"},
@@ -1132,17 +1127,19 @@ cmd_conn_update_params(int argc, char **argv)
         return rc;
     }
 
-    params.itvl_min = parse_arg_uint16_dflt(
-        "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
+    params.itvl_min = parse_arg_uint16_dflt("interval_min",
+                                            BLE_GAP_INITIAL_CONN_ITVL_MIN,
+                                            &rc);
     if (rc != 0) {
-        console_printf("invalid 'itvl_min' parameter\n");
+        console_printf("invalid 'interval_min' parameter\n");
         return rc;
     }
 
-    params.itvl_max = parse_arg_uint16_dflt(
-        "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    params.itvl_max = parse_arg_uint16_dflt("interval_max",
+                                            BLE_GAP_INITIAL_CONN_ITVL_MAX,
+                                            &rc);
     if (rc != 0) {
-        console_printf("invalid 'itvl_max' parameter\n");
+        console_printf("invalid 'interval_max' parameter\n");
         return rc;
     }
 
@@ -1158,15 +1155,17 @@ cmd_conn_update_params(int argc, char **argv)
         return rc;
     }
 
-    params.min_ce_len = parse_arg_uint16_dflt("min_ce_len", 0x0010, &rc);
+    params.min_ce_len = parse_arg_uint16_dflt("min_conn_event_len",
+                                              0x0010, &rc);
     if (rc != 0) {
-        console_printf("invalid 'min_ce_len' parameter\n");
+        console_printf("invalid 'min_conn_event_len' parameter\n");
         return rc;
     }
 
-    params.max_ce_len = parse_arg_uint16_dflt("max_ce_len", 0x0300, &rc);
+    params.max_ce_len = parse_arg_uint16_dflt("max_conn_event_len",
+                                              0x0300, &rc);
     if (rc != 0) {
-        console_printf("invalid 'max_ce_len' parameter\n");
+        console_printf("invalid 'max_conn_event_len' parameter\n");
         return rc;
     }
 
@@ -1219,13 +1218,13 @@ cmd_conn_datalen(int argc, char **argv)
         return rc;
     }
 
-    tx_octets = parse_arg_long("octets", &rc);
+    tx_octets = parse_arg_uint16("octets", &rc);
     if (rc != 0) {
         console_printf("invalid 'octets' parameter\n");
         return rc;
     }
 
-    tx_time = parse_arg_long("time", &rc);
+    tx_time = parse_arg_uint16("time", &rc);
     if (rc != 0) {
         console_printf("invalid 'time' parameter\n");
         return rc;
@@ -1280,7 +1279,8 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
     switch (*obj_type) {
     case BLE_STORE_OBJ_TYPE_PEER_SEC:
     case BLE_STORE_OBJ_TYPE_OUR_SEC:
-        out->sec.peer_addr.type = parse_arg_kv("addr_type", cmd_addr_type, &rc);
+        out->sec.peer_addr.type = parse_arg_kv("addr_type",
+                                               cmd_addr_type, &rc);
         if (rc != 0) {
             console_printf("invalid 'addr_type' parameter\n");
             return rc;
