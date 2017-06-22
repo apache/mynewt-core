@@ -25,6 +25,7 @@
 #include "hal/hal_gpio.h"
 #include "bme280/bme280.h"
 #include "bme280_priv.h"
+#include "parse/parse.h"
 
 #if MYNEWT_VAL(BME280_CLI)
 
@@ -38,7 +39,7 @@ static struct shell_cmd bme280_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(BME280_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(BME280_SHELL_ITF_NUM),
-    .si_cspin = MYNEWT_VAL(BME280_SHELL_CSPIN)
+    .si_cs_pin = MYNEWT_VAL(BME280_SHELL_CSPIN)
 };
 
 static int

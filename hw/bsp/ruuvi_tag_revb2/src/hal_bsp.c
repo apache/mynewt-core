@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <assert.h>
 #include <nrf52.h>
 #include "os/os_cputime.h"
@@ -31,6 +32,7 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
+#include "defs/error.h"
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #endif
@@ -82,7 +84,7 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
 static const struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
-    .si_cspin = 3
+    .si_cs_pin = 3
 };
 #endif
 #endif

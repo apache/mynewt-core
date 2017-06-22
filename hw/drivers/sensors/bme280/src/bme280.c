@@ -837,12 +837,12 @@ bme280_config(struct bme280 *bme280, struct bme280_cfg *cfg)
 
     os_time_delay((OS_TICKS_PER_SEC * 200)/1000 + 1);
 
-    rc = sensor_set_type_mask(sensor,  cfg->bc_mask);
+    rc = sensor_set_type_mask(&(bme280->sensor),  cfg->bc_s_mask);
     if (rc) {
         goto err;
     }
 
-    bme280->cfg.bc_mask = cfg->bc_mask;
+    bme280->cfg.bc_s_mask = cfg->bc_s_mask;
 
     return 0;
 err:
