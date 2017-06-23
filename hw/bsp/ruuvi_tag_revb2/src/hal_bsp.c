@@ -167,12 +167,12 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 }
 
 /**
- * BME280 Sensor default configuration used by the creator package
+ * BME280 Sensor default configuration
  *
  * @return 0 on success, non-zero on failure
  */
 #if MYNEWT_VAL(BME280_ONB)
-static int
+int
 config_bme280_sensor(void)
 {
     int rc;
@@ -181,11 +181,6 @@ config_bme280_sensor(void)
 
     dev = (struct os_dev *) os_dev_open("bme280_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
-
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
 
     memset(&bmecfg, 0, sizeof(bmecfg));
 
@@ -204,7 +199,6 @@ config_bme280_sensor(void)
 
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
@@ -217,11 +211,8 @@ sensor_dev_create(void)
     (void)rc;
 
 #if MYNEWT_VAL(BME280_ONB)
-    rc = os_dev_create((struct os_dev *) &bme280, "bme280",
+    rc = os_dev_create((struct os_dev *) &bme280, "bme280_0",
       OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf_bme);
-    assert(rc == 0);
-
-    rc = config_bme280_sensor();
     assert(rc == 0);
 #endif
 
