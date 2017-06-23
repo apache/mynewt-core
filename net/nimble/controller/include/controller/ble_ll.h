@@ -147,10 +147,12 @@ STATS_SECT_START(ble_ll_stats)
     STATS_SECT_ENTRY(rx_adv_ind)
     STATS_SECT_ENTRY(rx_adv_direct_ind)
     STATS_SECT_ENTRY(rx_adv_nonconn_ind)
+    STATS_SECT_ENTRY(rx_adv_ext_ind)
     STATS_SECT_ENTRY(rx_scan_reqs)
     STATS_SECT_ENTRY(rx_scan_rsps)
     STATS_SECT_ENTRY(rx_connect_reqs)
     STATS_SECT_ENTRY(rx_scan_ind)
+    STATS_SECT_ENTRY(rx_aux_connect_rsp)
     STATS_SECT_ENTRY(adv_txg)
     STATS_SECT_ENTRY(adv_late_starts)
     STATS_SECT_ENTRY(sched_state_conn_errs)
@@ -160,6 +162,12 @@ STATS_SECT_START(ble_ll_stats)
     STATS_SECT_ENTRY(scan_req_txf)
     STATS_SECT_ENTRY(scan_req_txg)
     STATS_SECT_ENTRY(scan_rsp_txg)
+    STATS_SECT_ENTRY(aux_missed_adv)
+    STATS_SECT_ENTRY(aux_scheduled)
+    STATS_SECT_ENTRY(aux_received)
+    STATS_SECT_ENTRY(aux_fired_for_read)
+    STATS_SECT_ENTRY(aux_conn_req_tx)
+    STATS_SECT_ENTRY(aux_conn_rsp_err)
 STATS_SECT_END
 extern STATS_SECT_DECL(ble_ll_stats) ble_ll_stats;
 
@@ -249,6 +257,14 @@ struct ble_dev_addr
 #define BLE_ADV_PDU_TYPE_SCAN_RSP           (4)
 #define BLE_ADV_PDU_TYPE_CONNECT_REQ        (5)
 #define BLE_ADV_PDU_TYPE_ADV_SCAN_IND       (6)
+#define BLE_ADV_PDU_TYPE_ADV_EXT_IND        (7)
+#define BLE_ADV_PDU_TYPE_AUX_ADV_IND        BLE_ADV_PDU_TYPE_ADV_EXT_IND
+#define BLE_ADV_PDU_TYPE_AUX_SCAN_RSP       BLE_ADV_PDU_TYPE_ADV_EXT_IND
+#define BLE_ADV_PDU_TYPE_AUX_SYNC_IND       BLE_ADV_PDU_TYPE_ADV_EXT_IND
+#define BLE_ADV_PDU_TYPE_AUX_CHAIN_IND      BLE_ADV_PDU_TYPE_ADV_EXT_IND
+#define BLE_ADV_PDU_TYPE_AUX_CONNECT_REQ    BLE_ADV_PDU_TYPE_CONNECT_REQ
+#define BLE_ADV_PDU_TYPE_AUX_SCAN_REQ       BLE_ADV_PDU_TYPE_SCAN_REQ
+#define BLE_ADV_PDU_TYPE_AUX_CONNECT_RSP    (8)
 
 /* If Channel Selection Algorithm #2 is supported */
 #define BLE_ADV_PDU_HDR_CHSEL               (0x20)
@@ -317,6 +333,10 @@ struct ble_dev_addr
 #define BLE_CONNECT_REQ_LEN         (34)
 #define BLE_CONNECT_REQ_PDU_LEN     (BLE_CONNECT_REQ_LEN + BLE_LL_PDU_HDR_LEN)
 
+#define BLE_SCAN_REQ_LEN            (12)
+#define BLE_SCAN_RSP_MAX_LEN        (37)
+#define BLE_SCAN_RSP_MAX_EXT_LEN    (251)
+
 /*--- External API ---*/
 /* Initialize the Link Layer */
 void ble_ll_init(void);
@@ -327,8 +347,19 @@ int ble_ll_reset(void);
 /* 'Boolean' function returning true if address is a valid random address */
 int ble_ll_is_valid_random_addr(uint8_t *addr);
 
-/* Calculate the amount of time a pdu of 'len' bytes will take to transmit */
-uint16_t ble_ll_pdu_tx_time_get(uint16_t len);
+/* Calculate the amount of time in microseconds a PDU with payload length of
+ * 'payload_len' will take to transmit on a PHY 'phy_mode'. */
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_2M_PHY) || MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY))
+uint32_t ble_ll_pdu_tx_time_get(uint16_t payload_len, int phy_mode);
+#else
+#define ble_ll_pdu_tx_time_get(payload_len, phy_mode) \
+    (((payload_len) + BLE_LL_PDU_HDR_LEN + BLE_LL_ACC_ADDR_LEN \
+            + BLE_LL_PREAMBLE_LEN + BLE_LL_CRC_LEN) << 3)
+#endif
+
+/* Calculate maximum octets of PDU payload which can be transmitted during
+ * 'usecs' on a PHY 'phy_mode'. */
+uint16_t ble_ll_pdu_max_tx_octets_get(uint32_t usecs, int phy_mode);
 
 /* Is this address a resolvable private address? */
 int ble_ll_is_rpa(uint8_t *addr, uint8_t addr_type);
@@ -411,6 +442,15 @@ void ble_ll_rand_sample(uint8_t rnum);
 int ble_ll_rand_data_get(uint8_t *buf, uint8_t len);
 void ble_ll_rand_prand_get(uint8_t *prand);
 int ble_ll_rand_start(void);
+
+static inline int
+ble_ll_get_addr_type(uint8_t txrxflag)
+{
+    if (txrxflag) {
+        return BLE_HCI_ADV_OWN_ADDR_RANDOM;
+    }
+    return BLE_HCI_ADV_OWN_ADDR_PUBLIC;
+}
 
 /*
  * XXX: temporary LL debug log. Will get removed once we transition to real

@@ -69,6 +69,7 @@ extern uint8_t g_ble_ll_sched_offset_ticks;
 #define BLE_LL_SCHED_TYPE_ADV       (1)
 #define BLE_LL_SCHED_TYPE_SCAN      (2)
 #define BLE_LL_SCHED_TYPE_CONN      (3)
+#define BLE_LL_SCHED_TYPE_AUX_SCAN  (4)
 
 /* Return values for schedule callback. */
 #define BLE_LL_SCHED_STATE_RUNNING  (0)
@@ -104,12 +105,6 @@ int ble_ll_sched_init(void);
 /* Remove item(s) from schedule */
 void ble_ll_sched_rmv_elem(struct ble_ll_sched_item *sch);
 
-/* Get a schedule item */
-struct ble_ll_sched_item *ble_ll_sched_get_item(void);
-
-/* Free a schedule item */
-void ble_ll_sched_free_item(struct ble_ll_sched_item *sch);
-
 /* Schedule a new master connection */
 struct ble_ll_conn_sm;
 int ble_ll_sched_master_new(struct ble_ll_conn_sm *connsm,
@@ -142,6 +137,16 @@ int ble_ll_sched_conn_reschedule(struct ble_ll_conn_sm * connsm);
  * @return int 0: No events are scheduled 1: there is an upcoming event
  */
 int ble_ll_sched_next_time(uint32_t *next_event_time);
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+struct ble_ll_scan_sm;
+struct ble_ll_aux_data;
+int ble_ll_sched_aux_scan(struct ble_mbuf_hdr *ble_hdr,
+                          struct ble_ll_scan_sm *scansm,
+                          struct ble_ll_aux_data *aux_scan);
+
+int ble_ll_sched_is_busy_in(uint32_t usec);
+#endif
 
 /* Stop the scheduler */
 void ble_ll_sched_stop(void);

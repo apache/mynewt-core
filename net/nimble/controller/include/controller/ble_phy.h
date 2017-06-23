@@ -124,13 +124,15 @@ int ble_phy_txpwr_get(void);
 /* Disable the PHY */
 void ble_phy_disable(void);
 
+#define BLE_PHY_WFR_ENABLE_RX       (0)
+#define BLE_PHY_WFR_ENABLE_TXRX     (1)
+
 #if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768)
 void ble_phy_stop_usec_timer(void);
 void ble_phy_wfr_enable(int txrx, uint32_t wfr_usecs);
-#define BLE_PHY_WFR_ENABLE_RX       (0)
-#define BLE_PHY_WFR_ENABLE_TXRX     (1)
 #else
 #define ble_phy_stop_usec_timer()
+#define ble_phy_wfr_enable(txrx, wfr_usecs)
 #endif
 
 /* Starts rf clock */
@@ -194,6 +196,9 @@ void ble_phy_resolv_list_disable(void);
 #define BLE_PHY_MODE_CODED_125KBPS  (0)
 #define BLE_PHY_MODE_CODED_500KBPS  (3)
 
+/* The number of different modes */
+#define BLE_PHY_NUM_MODE            (4)
+
 /* PHY numbers (compatible with HCI) */
 #define BLE_PHY_1M                  (BLE_HCI_LE_PHY_1M)
 #define BLE_PHY_2M                  (BLE_HCI_LE_PHY_2M)
@@ -205,17 +210,34 @@ void ble_phy_resolv_list_disable(void);
 #define BLE_PHY_MASK_CODED          (BLE_HCI_LE_PHY_CODED_PREF_MASK)
 
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_2M_PHY) || MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY))
-uint32_t ble_phy_mode_pdu_dur(uint8_t len, int phy);
 uint32_t ble_phy_mode_pdu_start_off(int phy);
 void ble_phy_mode_set(int cur_phy, int txtorx_phy);
 #else
-#define ble_phy_mode_pdu_dur(len, phy)      \
-    (((len) + BLE_LL_PDU_HDR_LEN + BLE_LL_ACC_ADDR_LEN + BLE_LL_PREAMBLE_LEN \
-      + BLE_LL_CRC_LEN) << 3)
-
 #define ble_phy_mode_pdu_start_off(phy)     (40)
 
 #endif
+
+int ble_phy_get_cur_phy(void);
+static inline int ble_ll_phy_to_phy_mode(int phy, int phy_options)
+{
+    int phy_mode;
+
+    /*
+     * Mode values are set in a way that 1M, 2M and Coded(S=2) are equivalent
+     * to 1M, 2M and Coded in HCI. The only conversion is needed for Coded(S=8)
+     * which uses non-HCI value.
+     */
+
+    phy_mode = phy;
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
+    if (phy == BLE_PHY_CODED && phy_options == BLE_HCI_LE_PHY_CODED_S8_PREF) {
+        phy_mode = BLE_PHY_MODE_CODED_125KBPS;
+    }
+#endif
+
+    return phy_mode;
+}
 
 #ifdef __cplusplus
 }

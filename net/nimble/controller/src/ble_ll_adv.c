@@ -434,7 +434,7 @@ ble_ll_adv_tx_start_cb(struct ble_ll_sched_item *sch)
     ble_phy_txpwr_set(advsm->adv_txpwr);
 
     /* Set channel */
-    rc = ble_phy_setchan(advsm->adv_chan, 0, 0);
+    rc = ble_phy_setchan(advsm->adv_chan, BLE_ACCESS_ADDR_ADV, BLE_LL_CRCINIT_ADV);
     assert(rc == 0);
 
     /* Set transmit start time. */
@@ -527,7 +527,7 @@ ble_ll_adv_set_sched(struct ble_ll_adv_sm *advsm)
     sch->sched_type = BLE_LL_SCHED_TYPE_ADV;
 
     /* Set end time to maximum time this schedule item may take */
-    max_usecs = ble_phy_mode_pdu_dur(advsm->adv_pdu_len, BLE_PHY_MODE_1M);
+    max_usecs = ble_ll_pdu_tx_time_get(advsm->adv_pdu_len, BLE_PHY_MODE_1M);
     switch (advsm->adv_type) {
     case BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD:
     case BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD:

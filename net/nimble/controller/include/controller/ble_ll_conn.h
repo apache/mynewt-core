@@ -25,6 +25,7 @@
 #include "nimble/hci_common.h"
 #include "controller/ble_ll_sched.h"
 #include "controller/ble_ll_ctrl.h"
+#include "controller/ble_phy.h"
 #include "hal/hal_timer.h"
 
 #ifdef __cplusplus
@@ -120,7 +121,9 @@ union ble_ll_conn_sm_flags {
         uint32_t phy_update_sched: 1;
         uint32_t ctrlr_phy_update: 1;
         uint32_t phy_update_event: 1;
-        uint32_t peer_phy_update: 1;    /* XXX:combine with ctrlr udpate bit? */
+        uint32_t peer_phy_update: 1; /* XXX:combine with ctrlr udpate bit? */
+        uint32_t aux_conn_req: 1;
+        uint32_t aux_conn_rsp: 1;
     } cfbit;
     uint32_t conn_flags;
 } __attribute__((packed));
@@ -191,6 +194,7 @@ struct ble_ll_conn_sm
     uint16_t rem_max_rx_time;
     uint16_t eff_max_tx_time;
     uint16_t eff_max_rx_time;
+    uint8_t max_tx_octets_phy_mode[BLE_PHY_NUM_MODE];
 
     /* XXX: TODO: could make this conditional */
     struct ble_ll_conn_phy_data phy_data;
@@ -310,6 +314,12 @@ struct ble_ll_conn_sm
 
     /* XXX: for now, just store them all */
     struct ble_ll_conn_params conn_cp;
+
+    struct ble_ll_scan_sm *scansm;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+    struct hci_ext_create_conn initial_params;
+#endif
+
 };
 
 /* Flags */
@@ -328,6 +338,8 @@ struct ble_ll_conn_sm
 #define CONN_F_CTRLR_PHY_UPDATE(csm) ((csm)->csmflags.cfbit.ctrlr_phy_update)
 #define CONN_F_PHY_UPDATE_EVENT(csm) ((csm)->csmflags.cfbit.phy_update_event)
 #define CONN_F_PEER_PHY_UPDATE(csm)  ((csm)->csmflags.cfbit.peer_phy_update)
+#define CONN_F_AUX_CONN_REQ(csm)  ((csm)->csmflags.cfbit.aux_conn_req)
+#define CONN_F_AUX_CONN_RSP(csm)  ((csm)->csmflags.cfbit.aux_conn_rsp)
 
 /* Role */
 #define CONN_IS_MASTER(csm)         (csm->conn_role == BLE_LL_CONN_ROLE_MASTER)

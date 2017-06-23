@@ -62,23 +62,30 @@ struct ble_encryption_block
  */
 struct ble_mbuf_hdr_rxinfo
 {
-    uint8_t flags;
+    uint16_t flags;
     uint8_t channel;
     uint8_t handle;
     int8_t  rssi;
+    int8_t  phy;
 #if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
     void *advsm;   /* advertising state machine */
+#endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+    void *aux_data;
 #endif
 };
 
 /* Flag definitions for rxinfo  */
-#define BLE_MBUF_HDR_F_CRC_OK           (0x80)
-#define BLE_MBUF_HDR_F_DEVMATCH         (0x40)
-#define BLE_MBUF_HDR_F_MIC_FAILURE      (0x20)
-#define BLE_MBUF_HDR_F_SCAN_RSP_TXD     (0x10)
-#define BLE_MBUF_HDR_F_SCAN_RSP_CHK     (0x08)
-#define BLE_MBUF_HDR_F_RESOLVED         (0x04)
-#define BLE_MBUF_HDR_F_RXSTATE_MASK     (0x03)
+#define BLE_MBUF_HDR_F_RESOLVED         (0x0800)
+#define BLE_MBUF_HDR_F_EXT_ADV          (0x0400)
+#define BLE_MBUF_HDR_F_AUX_PTR_WAIT     (0x0200)
+#define BLE_MBUF_HDR_F_AUX_INVALID      (0x0100)
+#define BLE_MBUF_HDR_F_CRC_OK           (0x0080)
+#define BLE_MBUF_HDR_F_DEVMATCH         (0x0040)
+#define BLE_MBUF_HDR_F_MIC_FAILURE      (0x0020)
+#define BLE_MBUF_HDR_F_SCAN_RSP_TXD     (0x0010)
+#define BLE_MBUF_HDR_F_SCAN_RSP_CHK     (0x0008)
+#define BLE_MBUF_HDR_F_RXSTATE_MASK     (0x0007)
 
 /* Transmit info. NOTE: no flags defined */
 struct ble_mbuf_hdr_txinfo
@@ -101,17 +108,23 @@ struct ble_mbuf_hdr
 #endif
 };
 
+#define BLE_MBUF_HDR_AUX_INVALID(hdr) \
+    (!!((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_AUX_INVALID))
+
+#define BLE_MBUF_HDR_WAIT_AUX(hdr)      \
+    (!!((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_AUX_PTR_WAIT))
+
 #define BLE_MBUF_HDR_CRC_OK(hdr)        \
-    ((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_CRC_OK)
+    (!!((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_CRC_OK))
 
 #define BLE_MBUF_HDR_MIC_FAILURE(hdr)   \
-    ((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_MIC_FAILURE)
+    (!!((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_MIC_FAILURE))
 
 #define BLE_MBUF_HDR_RESOLVED(hdr)      \
-    ((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_RESOLVED)
+    (!!((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_RESOLVED))
 
 #define BLE_MBUF_HDR_RX_STATE(hdr)      \
-    ((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_RXSTATE_MASK)
+    ((uint8_t)((hdr)->rxinfo.flags & BLE_MBUF_HDR_F_RXSTATE_MASK))
 
 #define BLE_MBUF_HDR_PTR(om)            \
     (struct ble_mbuf_hdr *)((uint8_t *)om + sizeof(struct os_mbuf) + \

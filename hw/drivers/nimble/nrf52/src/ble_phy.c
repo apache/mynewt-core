@@ -63,9 +63,6 @@ extern uint32_t g_nrf_irk_list[];
 #define NRF_TX_PWR_MAX_DBM      (4)
 #define NRF_TX_PWR_MIN_DBM      (-40)
 
-/* The number of different modulations */
-#define BLE_PHY_NUM_MODULATIONS (4)
-
 /* BLE PHY data structure */
 struct ble_phy_obj
 {
@@ -80,7 +77,7 @@ struct ble_phy_obj
     uint8_t phy_tx_pyld_len;
     uint8_t phy_txtorx_phy_mode;
     uint8_t phy_cur_phy_mode;
-    uint16_t phy_mode_pkt_start_off[BLE_PHY_NUM_MODULATIONS];
+    uint16_t phy_mode_pkt_start_off[BLE_PHY_NUM_MODE];
     uint32_t phy_aar_scratch;
     uint32_t phy_access_address;
     uint32_t phy_pcnf0;
@@ -193,54 +190,6 @@ struct nrf_ccm_data g_nrf_ccm_data;
 
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
 
-static inline int ble_phy_pdu_coded_dur(int pyld_len, int s)
-{
-    /*
-     * Specification provides duration for each PDU field directly in us so we
-     * can use them directly here (Vol 6, Part B, 2.2).
-     */
-    return 80 + 256 + 16 + 24 + /* Preamble + Access Address + CI + TERM1 */
-            s * ((BLE_LL_PDU_HDR_LEN + pyld_len) * 8 + 24 + 3); /* PDU + CRC + TERM2 */
-}
-
-/**
- * Calculate the length of BLE PDU
- *
- * Returns the number of usecs it will take to transmit a PDU of payload
- * length 'len' bytes. Each byte takes 8 usecs. This routine includes the LL
- * overhead: preamble (1), access addr (4) and crc (3) and the PDU header (2)
- * for a total of 10 bytes.
- *
- * @param pyld_len PDU payload length (does not include include header).
- * @param phy_mode PHY modulation being used.
- *
- * @return uint32_t The number of usecs it will take to transmit a PDU of
- *                  length 'len' bytes.
- */
-uint32_t
-ble_phy_mode_pdu_dur(uint8_t pyld_len, int phy_mode)
-{
-    uint32_t usecs;
-
-    if (phy_mode == BLE_PHY_MODE_1M) {
-        /* 8 usecs per byte */
-        usecs = (pyld_len + BLE_LL_PREAMBLE_LEN + BLE_LL_ACC_ADDR_LEN
-                 + BLE_LL_CRC_LEN + BLE_LL_PDU_HDR_LEN) << 3;
-    } else if (phy_mode == BLE_PHY_MODE_2M) {
-        /* 4 usecs per byte */
-        usecs = (pyld_len + (2 * BLE_LL_PREAMBLE_LEN) + BLE_LL_ACC_ADDR_LEN
-                 + BLE_LL_CRC_LEN + BLE_LL_PDU_HDR_LEN) << 2;
-    } else if (phy_mode == BLE_PHY_MODE_CODED_125KBPS) {
-        usecs = ble_phy_pdu_coded_dur(pyld_len, 8);
-    } else if (phy_mode == BLE_PHY_MODE_CODED_500KBPS) {
-        usecs = ble_phy_pdu_coded_dur(pyld_len, 2);
-    } else {
-        assert(0);
-    }
-    return usecs;
-}
-
-
 /* Packet start offset (in usecs). This is the preamble plus access address.
  * For LE Coded PHY this also includes CI and TERM1. */
 uint32_t
@@ -280,6 +229,27 @@ ble_phy_mode_set(int cur_phy_mode, int txtorx_phy_mode)
     g_ble_phy_data.phy_txtorx_phy_mode = (uint8_t)txtorx_phy_mode;
 }
 #endif
+
+int
+ble_phy_get_cur_phy(void)
+{
+#if (BLE_LL_BT5_PHY_SUPPORTED == 1)
+    switch (g_ble_phy_data.phy_cur_phy_mode) {
+        case BLE_PHY_MODE_1M:
+            return BLE_PHY_1M;
+        case BLE_PHY_MODE_2M:
+            return BLE_PHY_2M;
+        case BLE_PHY_MODE_CODED_125KBPS:
+        case BLE_PHY_MODE_CODED_500KBPS:
+            return BLE_PHY_CODED;
+        default:
+            assert(0);
+            return -1;
+    }
+#else
+    return BLE_PHY_1M;
+#endif
+}
 
 /**
  * Copies the data from the phy receive buffer into a mbuf chain.
@@ -686,7 +656,7 @@ ble_phy_tx_end_isr(void)
          */
         wfr_time = BLE_LL_IFS + (2 * BLE_LL_JITTER_USECS) +
             ble_phy_mode_pdu_start_off(phy) - ble_phy_mode_pdu_start_off(phy);
-        wfr_time += ble_phy_mode_pdu_dur(txlen, phy);
+        wfr_time += ble_ll_pdu_tx_time_get(txlen, phy);
         wfr_time = os_cputime_usecs_to_ticks(wfr_time);
         ble_ll_wfr_enable(txstart + wfr_time);
 #endif
@@ -809,6 +779,10 @@ ble_phy_rx_start_isr(void)
     ble_hdr->rxinfo.flags = ble_ll_state_get();
     ble_hdr->rxinfo.channel = g_ble_phy_data.phy_chan;
     ble_hdr->rxinfo.handle = 0;
+    ble_hdr->rxinfo.phy = ble_phy_get_cur_phy();
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+    ble_hdr->rxinfo.aux_data = NULL;
+#endif
 
 #if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768)
     /*
@@ -905,6 +879,8 @@ ble_phy_isr(void)
         if (g_ble_phy_data.phy_state == BLE_PHY_STATE_RX) {
             NRF_RADIO->EVENTS_DISABLED = 0;
             ble_ll_wfr_timer_exp(NULL);
+        } else if (g_ble_phy_data.phy_state == BLE_PHY_STATE_IDLE) {
+            assert(0);
         } else {
             ble_phy_tx_end_isr();
         }
@@ -1214,7 +1190,7 @@ ble_phy_tx_set_start_time(uint32_t cputime, uint8_t rem_usecs)
 int
 ble_phy_rx_set_start_time(uint32_t cputime, uint8_t rem_usecs)
 {
-    int rc;
+    int rc = 0;
 
     /* XXX: This should not be necessary, but paranoia is good! */
     /* Clear timer0 compare to TXEN since we are transmitting */
@@ -1526,10 +1502,10 @@ ble_phy_setchan(uint8_t chan, uint32_t access_addr, uint32_t crcinit)
         }
 
         /* Set current access address */
-        ble_phy_set_access_addr(BLE_ACCESS_ADDR_ADV);
+        ble_phy_set_access_addr(access_addr);
 
         /* Configure crcinit */
-        NRF_RADIO->CRCINIT = BLE_LL_CRCINIT_ADV;
+        NRF_RADIO->CRCINIT = crcinit;
     }
 
     /* Set the frequency and the data whitening initial value */
