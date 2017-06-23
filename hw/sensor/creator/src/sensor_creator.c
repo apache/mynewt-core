@@ -138,11 +138,6 @@ config_bme280_sensor(void)
     dev = (struct os_dev *) os_dev_open("bme280_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
     memset(&bmecfg, 0, sizeof(bmecfg));
 
     bmecfg.bc_mode = BME280_MODE_NORMAL;
@@ -160,7 +155,6 @@ config_bme280_sensor(void)
 
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
@@ -182,11 +176,6 @@ config_tcs34725_sensor(void)
     dev = (struct os_dev *) os_dev_open("tcs34725_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
     /* Gain set to 16X and Inetgration time set to 24ms */
     tcscfg.gain = TCS34725_GAIN_16X;
     tcscfg.integration_time = TCS34725_INTEGRATIONTIME_24MS;
@@ -195,7 +184,6 @@ config_tcs34725_sensor(void)
 
     rc = tcs34725_config((struct tcs34725 *)dev, &tcscfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
@@ -217,11 +205,6 @@ config_tsl2561_sensor(void)
     dev = (struct os_dev *) os_dev_open("tsl2561_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
     /* Gain set to 1X and Inetgration time set to 13ms */
     tslcfg.gain = TSL2561_LIGHT_GAIN_1X;
     tslcfg.integration_time = TSL2561_LIGHT_ITIME_13MS;
@@ -229,7 +212,6 @@ config_tsl2561_sensor(void)
 
     rc = tsl2561_config((struct tsl2561 *)dev, &tslcfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
@@ -251,11 +233,6 @@ config_lsm303dlhc_sensor(void)
     dev = (struct os_dev *) os_dev_open("lsm303dlhc_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
     /* read once per sec.  API should take this value in ms. */
     lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
     lsmcfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
@@ -269,7 +246,6 @@ config_lsm303dlhc_sensor(void)
 
     rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
@@ -291,11 +267,6 @@ config_bno055_sensor(void)
     dev = (struct os_dev *) os_dev_open("bno055_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
     bcfg.bc_units = BNO055_ACC_UNIT_MS2   | BNO055_ANGRATE_UNIT_DPS |
                     BNO055_EULER_UNIT_DEG | BNO055_TEMP_UNIT_DEGC   |
                     BNO055_DO_FORMAT_ANDROID;
@@ -315,7 +286,6 @@ config_bno055_sensor(void)
 
     rc = bno055_config((struct bno055 *) dev, &bcfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
