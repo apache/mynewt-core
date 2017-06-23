@@ -68,4 +68,9 @@ syscfg.vals:
     STATS_NAMES: 1
 
     # Default task settings
-    OS_MAIN_STACK_SIZE: 336
+    OS_MAIN_STACK_SIZE: 568
+
+    # Lots of smaller mbufs are required for newtmgr-over-OIC using typical BLE
+    # ATT MTU values.
+    MSYS_1_BLOCK_COUNT: 20
+    MSYS_1_BLOCK_SIZE: 150
