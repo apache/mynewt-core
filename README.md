@@ -32,6 +32,7 @@ It currently supports the following hardware platforms:
 * nRF52 DK from Nordic Semiconductor (Cortex-M4)
 * RuuviTag Sensor beacon platform (Nordic nRF52832 based)
 * nRF51 DK from Nordic Semiconductor (Cortex-M0)
+* VBLUno51 from VNG IoT Lab (Nordic nRF51822 SoC based)
 * BLE Nano from RedBear (Nordic nRF51822 SoC based)
 * BLE Nano2 and Blend2 from RedBear (Nordic nRF52832 SoC based)
 * BMD-300-EVAL-ES from Rigado (Cortex-M4)
