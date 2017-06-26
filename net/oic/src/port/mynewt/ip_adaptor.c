@@ -348,7 +348,7 @@ oc_connectivity_init_ip6(void)
     return 0;
 
 oc_connectivity_init_err:
-    oc_connectivity_shutdown();
+    oc_connectivity_shutdown_ip6();
     return rc;
 }
 

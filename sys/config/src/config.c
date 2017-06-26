@@ -260,6 +260,9 @@ conf_get_value(char *name, char *buf, int buf_len)
         return NULL;
     }
 
+    if (!ch->ch_get) {
+        return NULL;
+    }
     return ch->ch_get(name_argc - 1, &name_argv[1], buf, buf_len);
 }
 

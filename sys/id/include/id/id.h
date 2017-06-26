@@ -28,6 +28,8 @@ extern "C" {
  * Maximum configurable serial number.
  */
 #define ID_SERIAL_MAX_LEN       64
+extern char id_serial[];
+extern char id_mfghash[];
 
 /*
  * Initialize manufacturing info storage/reporting.

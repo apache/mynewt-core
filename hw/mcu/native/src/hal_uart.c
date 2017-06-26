@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
+
 #include "defs/error.h"
 #include "os/os.h"
 #include "hal/hal_uart.h"
@@ -42,7 +44,11 @@
 
 #define UART_CNT                2
 
+#if MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE)
+#define UART_MAX_BYTES_PER_POLL	MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE) - 2
+#else
 #define UART_MAX_BYTES_PER_POLL	64
+#endif
 #define UART_POLLER_STACK_SZ	OS_STACK_ALIGN(1024)
 #define UART_POLLER_PRIO	0
 
