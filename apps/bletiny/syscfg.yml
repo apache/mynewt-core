@@ -18,6 +18,11 @@
 
 # Package: apps/bletiny
 
+syscfg.defs:
+    BLETINY_HELP:
+        description: Include usage information for bletiny shell commands.
+        value: 1
+
 syscfg.vals:
     # Enable the shell task.
     SHELL_TASK: 1
