@@ -207,6 +207,7 @@ main(void)
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
     ble_hs_cfg.sync_cb = bleuart_on_sync;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     rc = bleuart_gatt_svr_init();
     assert(rc == 0);

@@ -1939,6 +1939,7 @@ main(int argc, char **argv)
                  LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = bletiny_on_reset;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     rc = gatt_svr_init();
     assert(rc == 0);

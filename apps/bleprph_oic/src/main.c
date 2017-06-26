@@ -388,6 +388,7 @@ main(void)
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("c5");
