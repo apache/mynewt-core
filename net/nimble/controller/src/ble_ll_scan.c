@@ -2249,7 +2249,9 @@ ble_ll_scan_set_scan_params(uint8_t *cmd)
     scanp->scan_filt_policy = filter_policy;
     scanp->own_addr_type = own_addr_type;
     
+#if (BLE_LL_SCAN_PHY_NUMBER == 2)
     g_ble_ll_scan_params[PHY_CODED].configured = 0;
+#endif
 
     return 0;
 }
@@ -2332,6 +2334,7 @@ ble_ll_set_ext_scan_params(uint8_t *cmd)
     }
 
     if (cmd[2] & BLE_HCI_LE_PHY_CODED_PREF_MASK) {
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
         coded->scan_type = cmd[idx];
         idx++;
         coded->scan_itvl = get_le16(cmd + idx);
@@ -2348,6 +2351,9 @@ ble_ll_set_ext_scan_params(uint8_t *cmd)
 
         /* That means user whats to use this PHY for scanning */
         coded->configured = 1;
+#else
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+#endif
     }
 
     /* For now we don't accept request for continuous scan if 2 PHYs are
@@ -2709,7 +2715,9 @@ ble_ll_scan_init(void)
     }
 
     scansm->phy_data[PHY_UNCODED].phy = BLE_PHY_1M;
+#if (BLE_LL_SCAN_PHY_NUMBER == 2)
     scansm->phy_data[PHY_CODED].phy = BLE_PHY_CODED;
+#endif
 
     /* Initialize scanning timer */
     os_cputime_timer_init(&scansm->scan_timer, ble_ll_scan_timer_cb, scansm);
