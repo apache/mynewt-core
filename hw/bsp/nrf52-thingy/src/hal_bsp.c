@@ -41,7 +41,6 @@
 #include "uart_bitbang/uart_bitbang.h"
 #endif
 #include "os/os_dev.h"
-#include "button/button.h"
 #include "bsp.h"
 
 #if MYNEWT_VAL(UART_0)
@@ -91,15 +90,6 @@ static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
     .i2c_frequency = 100    /* 100 kHz */
 };
 #endif
-
-struct button_dev os_bsp_button0;
-
-static const struct button_cfg os_bsp_button0_cfg = {
-    .bc_pin = 11,
-    .bc_pull = HAL_GPIO_PULL_NONE,
-    .bc_invert = 0,
-    .bc_debounce_time_us = 1000
-};
 
 /*
  * What memory to include in coredump.
@@ -223,9 +213,5 @@ hal_bsp_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_bitbang_init, (void *)&os_bsp_uart1_cfg);
     assert(rc == 0);
 #endif
-
-    rc = os_dev_create((struct os_dev *) &os_bsp_button0, "button0",
-        OS_DEV_INIT_PRIMARY, 0, button_init, (void *) &os_bsp_button0_cfg);
-    assert(rc == 0);
 
 }

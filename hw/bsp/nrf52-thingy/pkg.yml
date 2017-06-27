@@ -86,7 +86,6 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - hw/mcu/nordic/nrf52xxx
     - libc/baselibc
-    - hw/drivers/button
 
 pkg.deps.BLE_DEVICE:
     - hw/drivers/nimble/nrf52
