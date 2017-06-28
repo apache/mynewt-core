@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+struct os_eventq;
+
 /** @brief Callback called when command is entered.
  *
  *  @param argc Number of parameters passed.
@@ -90,6 +92,12 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
  *  @param name Module name.
  */
 void shell_register_default_module(const char *name);
+
+/** @brief Optionally set event queue to process shell command events
+ *
+ *  @param evq Event queue to be used in shell
+ */
+void shell_evq_set(struct os_eventq *evq);
 
 #if MYNEWT_VAL(SHELL_NEWTMGR)
 struct os_mbuf;

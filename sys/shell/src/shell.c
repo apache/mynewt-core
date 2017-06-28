@@ -51,6 +51,15 @@ static struct console_input buf[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 static struct os_eventq avail_queue;
 static struct os_event shell_console_ev[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 
+/* Shared queue that the shell uses for work items. */
+static struct os_eventq *shell_evq;
+
+void
+shell_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&shell_evq, evq, NULL);
+}
+
 static const char *
 get_prompt(void)
 {
@@ -920,10 +929,12 @@ shell_init(void)
     return;
 #endif
 
+    shell_evq_set(os_eventq_dflt_get());
     os_eventq_init(&avail_queue);
     line_queue_init();
+    console_set_queues(&avail_queue, shell_evq);
+
     prompt = SHELL_PROMPT;
-    console_set_queues(&avail_queue, os_eventq_dflt_get());
 
 #if MYNEWT_VAL(SHELL_NEWTMGR)
     shell_nlip_init();
