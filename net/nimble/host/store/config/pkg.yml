@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,28 +16,23 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: apps/bleprph
-pkg.type: app
-pkg.description: Simple BLE peripheral application.
+
+pkg.name: net/nimble/host/store/config
+pkg.description: sys/config-based persistence layer for the NimBLE host.
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - ble
+    - bluetooth
+    - nimble
+    - persistence
 
-pkg.deps: 
-    - boot/split
-    - kernel/os 
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/ble
-    - net/nimble/controller
+pkg.deps:
+    - encoding/base64
     - net/nimble/host
-    - net/nimble/host/services/ans
-    - net/nimble/host/services/gap
-    - net/nimble/host/services/gatt
-    - net/nimble/host/store/config
-    - net/nimble/transport/ram
-    - sys/console/full
-    - sys/log/full
-    - sys/stats/full
-    - sys/sysinit
-    - sys/id
+
+pkg.deps.BLE_STORE_CONFIG_PERSIST:
+    - sys/config
+
+pkg.init:
+    ble_store_config_init: 500
