@@ -934,9 +934,9 @@ shell_init(void)
 #endif
 
 #if MYNEWT_VAL(SHELL_OS_MODULE)
-    shell_os_register(shell_register);
+    shell_os_register();
 #endif
 #if MYNEWT_VAL(SHELL_PROMPT_MODULE)
-    shell_prompt_register(shell_register);
+    shell_prompt_register();
 #endif
 }
