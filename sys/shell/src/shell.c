@@ -882,7 +882,8 @@ int
 shell_register(const char *module_name, const struct shell_cmd *commands)
 {
     if (num_of_shell_entities >= MYNEWT_VAL(SHELL_MAX_MODULES)) {
-        return -1;
+        console_printf("Max number of modules reached\n");
+        assert(0);
     }
 
     shell_modules[num_of_shell_entities].name = module_name;
