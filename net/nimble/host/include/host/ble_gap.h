@@ -112,6 +112,7 @@ struct hci_conn_update;
 #define BLE_GAP_EVENT_MTU                   15
 #define BLE_GAP_EVENT_IDENTITY_RESOLVED     16
 #define BLE_GAP_EVENT_PHY_UPDATE_COMPLETE   17
+#define BLE_GAP_EVENT_EXT_DISC              18
 
 /*** Reason codes for the subscribe GAP event. */
 
@@ -188,6 +189,12 @@ struct ble_gap_conn_params {
     uint16_t max_ce_len;
 };
 
+struct ble_gap_ext_disc_params {
+    uint16_t itvl;
+    uint16_t window;
+    uint8_t passive:1;
+};
+
 struct ble_gap_disc_params {
     uint16_t itvl;
     uint16_t window;
@@ -210,6 +217,28 @@ struct ble_gap_passkey_params {
     uint8_t action;
     uint32_t numcmp;
 };
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+struct ble_gap_ext_disc_desc {
+    /*** Common fields. */
+    uint8_t props;
+    uint8_t data_status;
+    uint8_t legacy_event_type;
+    ble_addr_t addr;
+    int8_t rssi;
+    uint8_t tx_power;
+    uint8_t sid;
+    uint8_t prim_phy;
+    uint8_t sec_phy;
+    uint8_t length_data;
+    uint8_t *data;
+    /***
+     * LE direct advertising report fields; direct_addr is BLE_ADDR_ANY if
+     * direct address fields are not present.
+     */
+    ble_addr_t direct_addr;
+};
+#endif
 
 struct ble_gap_disc_desc {
     /*** Common fields. */
@@ -284,6 +313,14 @@ struct ble_gap_event {
          */
         struct ble_gap_disc_desc disc;
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+        /**
+         * Represents an extended advertising report received during a discovery
+         * procedure.  Valid for the following event types:
+         *     o BLE_GAP_EVENT_EXT_DISC
+         */
+        struct ble_gap_ext_disc_desc ext_disc;
+#endif
         /**
          * Represents an attempt to update a connection's parameters.  If the
          * attempt was successful, the connection's descriptor reflects the
@@ -566,12 +603,24 @@ int ble_gap_adv_rsp_set_fields(const struct ble_hs_adv_fields *rsp_fields);
 int ble_gap_disc(uint8_t own_addr_type, int32_t duration_ms,
                  const struct ble_gap_disc_params *disc_params,
                  ble_gap_event_fn *cb, void *cb_arg);
+int ble_gap_ext_disc(uint8_t own_addr_type, uint16_t duration, uint16_t period,
+                     uint8_t filter_duplicates, uint8_t filter_policy,
+                     uint8_t limited,
+                     const struct ble_gap_ext_disc_params *uncoded_params,
+                     const struct ble_gap_ext_disc_params *coded_params,
+                     ble_gap_event_fn *cb, void *cb_arg);
 int ble_gap_disc_cancel(void);
 int ble_gap_disc_active(void);
 int ble_gap_connect(uint8_t own_addr_type, const ble_addr_t *peer_addr,
                     int32_t duration_ms,
                     const struct ble_gap_conn_params *params,
                     ble_gap_event_fn *cb, void *cb_arg);
+int ble_gap_ext_connect(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                        int32_t duration_ms, uint8_t phy_mask,
+                        const struct ble_gap_conn_params *phy_1m_conn_params,
+                        const struct ble_gap_conn_params *phy_2m_conn_params,
+                        const struct ble_gap_conn_params *phy_coded_conn_params,
+                        ble_gap_event_fn *cb, void *cb_arg);
 int ble_gap_conn_cancel(void);
 int ble_gap_conn_active(void);
 int ble_gap_terminate(uint16_t conn_handle, uint8_t hci_reason);

@@ -109,6 +109,7 @@ struct ble_gap_master_state {
 
         struct {
             uint8_t limited:1;
+            uint8_t extended:1;
         } disc;
     };
 };
@@ -664,8 +665,15 @@ ble_gap_master_connect_cancelled(void)
     }
 }
 
+
+static int
+ble_gap_is_extended_disc(void)
+{
+    return ble_gap_master.disc.extended;
+}
+
 static void
-ble_gap_disc_report(struct ble_gap_disc_desc *desc)
+ble_gap_disc_report(void *desc)
 {
     struct ble_gap_master_state state;
     struct ble_gap_event event;
@@ -674,8 +682,17 @@ ble_gap_disc_report(struct ble_gap_disc_desc *desc)
 
     if (state.cb != NULL) {
         memset(&event, 0, sizeof event);
-        event.type = BLE_GAP_EVENT_DISC;
-        event.disc = *desc;
+        if (ble_gap_is_extended_disc()) {
+#if MYNEWT_VAL(BLE_EXT_ADV)
+            event.type = BLE_GAP_EVENT_EXT_DISC;
+            event.ext_disc = *((struct ble_gap_ext_disc_desc *)desc);
+#else
+            assert(0);
+#endif
+        } else {
+            event.type = BLE_GAP_EVENT_DISC;
+            event.disc = *((struct ble_gap_disc_desc *)desc);
+        }
 
         state.cb(&event, state.cb_arg);
     }
@@ -1113,6 +1130,33 @@ ble_gap_accept_slave_conn(uint8_t addr_type, uint8_t *addr)
     return rc;
 }
 
+static int
+ble_gap_rx_adv_report_sanity_check(uint8_t *adv_data, uint8_t adv_data_len)
+{
+    const struct ble_hs_adv_field *flags;
+    int rc;
+
+    STATS_INC(ble_gap_stats, rx_adv_report);
+
+    if (ble_gap_master.op != BLE_GAP_OP_M_DISC) {
+        return -1;
+    }
+
+    /* If a limited discovery procedure is active, discard non-limited
+     * advertisements.
+     */
+    if (ble_gap_master.disc.limited) {
+        rc = ble_hs_adv_find_field(BLE_HS_ADV_TYPE_FLAGS, adv_data,
+                                   adv_data_len, &flags);
+        if ((rc == 0) && (flags->length == 2) &&
+            !(flags->value[0] & BLE_HS_ADV_F_DISC_LTD)) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 void
 ble_gap_rx_adv_report(struct ble_gap_disc_desc *desc)
 {
@@ -1120,30 +1164,24 @@ ble_gap_rx_adv_report(struct ble_gap_disc_desc *desc)
     return;
 #endif
 
-    const struct ble_hs_adv_field *flags;
-    int rc;
-
-    STATS_INC(ble_gap_stats, rx_adv_report);
-
-    if (ble_gap_master.op != BLE_GAP_OP_M_DISC) {
+    if (ble_gap_rx_adv_report_sanity_check(desc->data, desc->length_data)) {
         return;
-    }
-
-    /* If a limited discovery procedure is active, discard non-limited
-     * advertisements.
-     */
-    if (ble_gap_master.disc.limited) {
-        rc = ble_hs_adv_find_field(BLE_HS_ADV_TYPE_FLAGS, desc->data,
-                                   desc->length_data, &flags);
-        if ((rc == 0) && (flags->length == 2) &&
-            !(flags->value[0] & BLE_HS_ADV_F_DISC_LTD)) {
-            return;
-        }
     }
 
     ble_gap_disc_report(desc);
 }
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+void
+ble_gap_rx_ext_adv_report(struct ble_gap_ext_disc_desc *desc)
+{
+    if (ble_gap_rx_adv_report_sanity_check(desc->data, desc->length_data)) {
+        return;
+    }
+
+    ble_gap_disc_report(desc);
+}
+#endif
 /**
  * Processes an incoming connection-complete HCI event.
  */
@@ -2154,6 +2192,58 @@ ble_gap_disc_tx_params(uint8_t own_addr_type,
     return 0;
 }
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static int
+ble_gap_ext_disc_tx_params(uint8_t own_addr_type, uint8_t filter_policy,
+                       const struct ble_hs_hci_ext_scan_param *uncoded_params,
+                       const struct ble_hs_hci_ext_scan_param *coded_params)
+{
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_LE_EXT_SCAN_BASE_LEN +
+                                2 * BLE_HCI_LE_EXT_SCAN_SINGLE_PARAM_LEN];
+    uint8_t phy_mask = 0;
+    struct ble_hs_hci_ext_scan_param param[2] = {{0}};
+    struct ble_hs_hci_ext_scan_param *p = param;
+    int phy_count = 0;
+    int rc;
+
+    if (uncoded_params) {
+        phy_mask |= BLE_HCI_LE_PHY_1M_PREF_MASK;
+        memcpy(&param[phy_count], uncoded_params, sizeof(*uncoded_params));
+        phy_count++;
+    }
+
+    if (coded_params) {
+        phy_mask |= BLE_HCI_LE_PHY_CODED_PREF_MASK;
+        memcpy(&param[phy_count], coded_params, sizeof(*coded_params));
+        phy_count++;
+    }
+
+    rc = ble_hs_hci_cmd_build_le_set_ext_scan_params(own_addr_type,
+                                                     filter_policy,
+                                                     phy_mask,
+                                                     phy_count,
+                                                     &p, buf, sizeof(buf));
+
+    if (rc != 0) {
+        return BLE_HS_EINVAL;
+    }
+
+    return ble_hs_hci_cmd_tx_empty_ack(buf);
+}
+
+static int
+ble_gap_ext_disc_enable_tx(uint8_t enable, uint8_t filter_duplicates,
+                           uint16_t duration, uint16_t period)
+{
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + BLE_HCI_LE_SET_EXT_SCAN_ENABLE_LEN];
+
+    ble_hs_hci_cmd_build_le_set_ext_scan_enable(enable, filter_duplicates,
+                                                duration, period,
+                                                buf, sizeof buf);
+    return ble_hs_hci_cmd_tx_empty_ack(buf);
+}
+#endif
+
 /**
  * Cancels the discovery procedure currently in progress.  A success return
  * code indicates that scanning has been fully aborted; a new discovery or
@@ -2178,7 +2268,15 @@ ble_gap_disc_cancel(void)
         goto done;
     }
 
-    rc = ble_gap_disc_enable_tx(0, 0);
+    if (!ble_gap_is_extended_disc()) {
+        rc = ble_gap_disc_enable_tx(0, 0);
+    } else {
+#if MYNEWT_VAL(BLE_EXT_ADV)
+        rc = ble_gap_ext_disc_enable_tx(0, 0, 0, 0);
+#else
+        assert(0);
+#endif
+    }
     if (rc != 0) {
         goto done;
     }
@@ -2193,6 +2291,151 @@ done:
     }
 
     return rc;
+}
+
+static int
+ble_gap_disc_ext_validate(uint8_t own_addr_type)
+{
+    if (own_addr_type > BLE_HCI_ADV_OWN_ADDR_MAX) {
+        return BLE_HS_EINVAL;
+    }
+
+    if (ble_gap_conn_active()) {
+        return BLE_HS_EBUSY;
+    }
+
+    if (ble_gap_disc_active()) {
+        return BLE_HS_EALREADY;
+    }
+
+    return 0;
+}
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static void
+ble_gap_ext_disc_fill_dflts(uint8_t limited,
+                            struct ble_hs_hci_ext_scan_param *disc_params)
+{
+   if (disc_params->scan_itvl == 0) {
+        if (limited) {
+            disc_params->scan_itvl = BLE_GAP_LIM_DISC_SCAN_INT;
+        } else {
+            disc_params->scan_itvl = BLE_GAP_SCAN_FAST_INTERVAL_MIN;
+        }
+    }
+
+    if (disc_params->scan_window == 0) {
+        if (limited) {
+            disc_params->scan_window = BLE_GAP_LIM_DISC_SCAN_WINDOW;
+        } else {
+            disc_params->scan_window = BLE_GAP_SCAN_FAST_WINDOW;
+        }
+    }
+}
+
+static void
+ble_gap_ext_scan_params_to_hci(const struct ble_gap_ext_disc_params *params,
+                               struct ble_hs_hci_ext_scan_param *hci_params)
+{
+
+    memset(hci_params, 0, sizeof(*hci_params));
+
+    if (params->passive) {
+        hci_params->scan_type =  BLE_HCI_SCAN_TYPE_PASSIVE;
+    } else {
+        hci_params->scan_type = BLE_HCI_SCAN_TYPE_ACTIVE;
+    }
+
+    hci_params->scan_itvl = params->itvl;
+    hci_params->scan_window = params->window;
+}
+#endif
+
+int
+ble_gap_ext_disc(uint8_t own_addr_type, uint16_t duration, uint16_t period,
+                 uint8_t filter_duplicates, uint8_t filter_policy,
+                 uint8_t limited,
+                 const struct ble_gap_ext_disc_params *uncoded_params,
+                 const struct ble_gap_ext_disc_params *coded_params,
+                 ble_gap_event_fn *cb, void *cb_arg)
+{
+#if !MYNEWT_VAL(BLE_ROLE_OBSERVER) || !MYNEWT_VAL(BLE_EXT_ADV)
+    return BLE_HS_ENOTSUP;
+#else
+
+    struct ble_hs_hci_ext_scan_param ucp;
+    struct ble_hs_hci_ext_scan_param cp;
+    int rc;
+
+    STATS_INC(ble_gap_stats, discover);
+
+    ble_hs_lock();
+
+    rc = ble_gap_disc_ext_validate(own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
+
+    /* Make a copy of the parameter structure and fill unspecified values with
+     * defaults.
+     */
+
+    if (uncoded_params) {
+        ble_gap_ext_scan_params_to_hci(uncoded_params, &ucp);
+        ble_gap_ext_disc_fill_dflts(limited, &ucp);
+
+        /* XXX: We should do it only once */
+        if (!uncoded_params->passive) {
+            rc = ble_hs_id_use_addr(own_addr_type);
+            if (rc != 0) {
+                goto done;
+            }
+        }
+    }
+
+    if (coded_params) {
+        ble_gap_ext_scan_params_to_hci(coded_params, &cp);
+        ble_gap_ext_disc_fill_dflts(limited, &cp);
+
+        /* XXX: We should do it only once */
+        if (!coded_params->passive) {
+            rc = ble_hs_id_use_addr(own_addr_type);
+            if (rc != 0) {
+                goto done;
+            }
+        }
+    }
+
+    ble_gap_master.disc.limited = limited;
+    ble_gap_master.disc.extended = 1;
+    ble_gap_master.cb = cb;
+    ble_gap_master.cb_arg = cb_arg;
+
+    rc = ble_gap_ext_disc_tx_params(own_addr_type, filter_policy,
+                                    uncoded_params ? &ucp : NULL,
+                                    coded_params ? &cp : NULL);
+    if (rc != 0) {
+        goto done;
+    }
+
+    ble_gap_master.op = BLE_GAP_OP_M_DISC;
+
+    rc = ble_gap_ext_disc_enable_tx(1, filter_duplicates, duration, period);
+    if (rc != 0) {
+        ble_gap_master_reset_state();
+        goto done;
+    }
+
+    rc = 0;
+
+done:
+    ble_hs_unlock();
+
+    if (rc != 0) {
+        STATS_INC(ble_gap_stats, discover_fail);
+    }
+    return rc;
+#endif
 }
 
 static void
@@ -2223,19 +2466,7 @@ ble_gap_disc_validate(uint8_t own_addr_type,
         return BLE_HS_EINVAL;
     }
 
-    if (own_addr_type > BLE_HCI_ADV_OWN_ADDR_MAX) {
-        return BLE_HS_EINVAL;
-    }
-
-    if (ble_gap_conn_active()) {
-        return BLE_HS_EBUSY;
-    }
-
-    if (ble_gap_disc_active()) {
-        return BLE_HS_EALREADY;
-    }
-
-    return 0;
+    return ble_gap_disc_ext_validate(own_addr_type);
 }
 
 /**
@@ -2316,6 +2547,7 @@ ble_gap_disc(uint8_t own_addr_type, int32_t duration_ms,
 
     ble_gap_master.disc.limited = params.limited;
     ble_gap_master.cb = cb;
+    ble_gap_master.disc.extended = 0;
     ble_gap_master.cb_arg = cb_arg;
 
     BLE_HS_LOG(INFO, "GAP procedure initiated: discovery; ");
@@ -2412,6 +2644,242 @@ ble_gap_conn_create_tx(uint8_t own_addr_type, const ble_addr_t *peer_addr,
 
     return 0;
 }
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static void
+ble_gap_copy_params(struct hci_ext_conn_params *hcc_params,
+                    const struct ble_gap_conn_params *gap_params)
+{
+    hcc_params->scan_itvl = gap_params->scan_itvl;
+    hcc_params->scan_window = gap_params->scan_window;
+    hcc_params->conn_itvl_max = gap_params->itvl_max;
+    hcc_params->conn_itvl_min = gap_params->itvl_min;
+    hcc_params->max_ce_len = gap_params->max_ce_len;
+    hcc_params->min_ce_len = gap_params->min_ce_len;
+    hcc_params->conn_latency = gap_params->latency;
+    hcc_params->supervision_timeout = gap_params->supervision_timeout;
+}
+
+static int
+ble_gap_ext_conn_create_tx(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                           uint8_t phy_mask,
+                           const struct ble_gap_conn_params *phy_1m_conn_params,
+                           const struct ble_gap_conn_params *phy_2m_conn_params,
+                           const struct ble_gap_conn_params *phy_coded_conn_params)
+{
+    uint8_t buf[BLE_HCI_CMD_HDR_LEN + sizeof(struct hci_ext_create_conn)];
+    struct hci_ext_create_conn hcc = {0};
+    int rc;
+
+    if (peer_addr == NULL) {
+        /* Application wants to connect to any device in the white list.  The
+         * peer address type and peer address fields are ignored by the
+         * controller; fill them with dummy values.
+         */
+        hcc.filter_policy = BLE_HCI_CONN_FILT_USE_WL;
+        hcc.peer_addr_type = 0;
+        memset(hcc.peer_addr, 0, sizeof hcc.peer_addr);
+    } else {
+        hcc.filter_policy = BLE_HCI_CONN_FILT_NO_WL;
+        hcc.peer_addr_type = peer_addr->type;;
+        memcpy(hcc.peer_addr, peer_addr->val, sizeof hcc.peer_addr);
+    }
+
+    hcc.own_addr_type = own_addr_type;
+
+    hcc.init_phy_mask = phy_mask;
+
+    if (phy_mask & BLE_GAP_LE_PHY_1M_MASK) {
+        /* XXX same structs */
+        ble_gap_copy_params(&hcc.params[0], phy_1m_conn_params);
+    }
+
+    if (phy_mask & BLE_GAP_LE_PHY_2M_MASK) {
+        /* XXX same structs */
+        ble_gap_copy_params(&hcc.params[1], phy_2m_conn_params);
+    }
+
+    if (phy_mask & BLE_GAP_LE_PHY_CODED_MASK) {
+        /* XXX same structs */
+        ble_gap_copy_params(&hcc.params[2], phy_coded_conn_params);
+    }
+
+    rc = ble_hs_hci_cmd_build_le_ext_create_conn(&hcc, buf, sizeof buf);
+    if (rc != 0) {
+        return BLE_HS_EUNKNOWN;
+    }
+
+    rc = ble_hs_hci_cmd_tx_empty_ack(buf);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/**
+ * Initiates a connect procedure.
+ *
+ * @param own_addr_type         The type of address the stack should use for
+ *                                  itself during connection establishment.
+ *                                      o BLE_OWN_ADDR_PUBLIC
+ *                                      o BLE_OWN_ADDR_RANDOM
+ *                                      o BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT
+ *                                      o BLE_OWN_ADDR_RPA_RANDOM_DEFAULT
+ * @param peer_addr             The address of the peer to connect to.
+ *                                  If this parameter is NULL, the white list
+ *                                  is used.
+ * @param duration_ms           The duration of the discovery procedure.
+ *                                  On expiration, the procedure ends and a
+ *                                  BLE_GAP_EVENT_DISC_COMPLETE event is
+ *                                  reported.  Units are milliseconds.
+ * @param phy_mask              Define on which PHYs connection attempt should
+ *                                  be done
+ * @param phy_1m_conn_params     Additional arguments specifying the particulars
+ *                                  of the connect procedure. When
+ *                                  BLE_GAP_LE_PHY_1M_MASK is set in phy_mask
+ *                                  this parameter can be specify to null for
+ *                                  default values.
+ * @param phy_2m_conn_params     Additional arguments specifying the particulars
+ *                                  of the connect procedure. When
+ *                                  BLE_GAP_LE_PHY_2M_MASK is set in phy_mask
+ *                                  this parameter can be specify to null for
+ *                                  default values.
+ * @param phy_coded_conn_params  Additional arguments specifying the particulars
+ *                                  of the connect procedure. When
+ *                                  BLE_GAP_LE_PHY_CODED_MASK is set in phy_mask
+ *                                  this parameter can be specify to null for
+ *                                  default values.
+ * @param cb                    The callback to associate with this connect
+ *                                  procedure.  When the connect procedure
+ *                                  completes, the result is reported through
+ *                                  this callback.  If the connect procedure
+ *                                  succeeds, the connection inherits this
+ *                                  callback as its event-reporting mechanism.
+ * @param cb_arg                The optional argument to pass to the callback
+ *                                  function.
+ *
+ * @return                      0 on success;
+ *                              BLE_HS_EALREADY if a connection attempt is
+ *                                  already in progress;
+ *                              BLE_HS_EBUSY if initiating a connection is not
+ *                                  possible because scanning is in progress;
+ *                              BLE_HS_EDONE if the specified peer is already
+ *                                  connected;
+ *                              Other nonzero on error.
+ */
+int
+ble_gap_ext_connect(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                int32_t duration_ms, uint8_t phy_mask,
+                const struct ble_gap_conn_params *phy_1m_conn_params,
+                const struct ble_gap_conn_params *phy_2m_conn_params,
+                const struct ble_gap_conn_params *phy_coded_conn_params,
+                ble_gap_event_fn *cb, void *cb_arg)
+{
+#if !MYNEWT_VAL(BLE_ROLE_CENTRAL)
+    return BLE_HS_ENOTSUP;
+#endif
+
+    uint32_t duration_ticks;
+    int rc;
+
+    STATS_INC(ble_gap_stats, initiate);
+
+    ble_hs_lock();
+
+    if (ble_gap_conn_active()) {
+        rc = BLE_HS_EALREADY;
+        goto done;
+    }
+
+    if (ble_gap_disc_active()) {
+        rc = BLE_HS_EBUSY;
+        goto done;
+    }
+
+    if (!ble_hs_conn_can_alloc()) {
+        rc = BLE_HS_ENOMEM;
+        goto done;
+    }
+
+    if (peer_addr &&
+        peer_addr->type != BLE_ADDR_PUBLIC &&
+        peer_addr->type != BLE_ADDR_RANDOM &&
+        peer_addr->type != BLE_ADDR_PUBLIC_ID &&
+        peer_addr->type != BLE_ADDR_RANDOM_ID) {
+
+        rc = BLE_HS_EINVAL;
+        goto done;
+    }
+
+    if ((phy_mask & BLE_GAP_LE_PHY_1M_MASK) && phy_1m_conn_params == NULL) {
+        phy_1m_conn_params = &ble_gap_conn_params_dflt;
+    }
+
+    if ((phy_mask & BLE_GAP_LE_PHY_2M_MASK) && phy_2m_conn_params == NULL) {
+        phy_2m_conn_params = &ble_gap_conn_params_dflt;
+    }
+
+    if ((phy_mask & BLE_GAP_LE_PHY_CODED_MASK) && phy_coded_conn_params == NULL) {
+        phy_coded_conn_params = &ble_gap_conn_params_dflt;
+    }
+
+    if (duration_ms == 0) {
+        duration_ms = BLE_GAP_CONN_DUR_DFLT;
+    }
+
+    if (duration_ms != BLE_HS_FOREVER) {
+        rc = os_time_ms_to_ticks(duration_ms, &duration_ticks);
+        if (rc != 0) {
+            /* Duration too great. */
+            rc = BLE_HS_EINVAL;
+            goto done;
+        }
+    }
+
+    /* Verify peer not already connected. */
+    if (ble_hs_conn_find_by_addr(peer_addr) != NULL) {
+        rc = BLE_HS_EDONE;
+        goto done;
+    }
+
+    /* XXX: Verify conn_params. */
+
+    rc = ble_hs_id_use_addr(own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
+
+    ble_gap_master.cb = cb;
+    ble_gap_master.cb_arg = cb_arg;
+    ble_gap_master.conn.using_wl = peer_addr == NULL;
+    ble_gap_master.conn.our_addr_type = own_addr_type;
+
+    ble_gap_master.op = BLE_GAP_OP_M_CONN;
+
+    rc = ble_gap_ext_conn_create_tx(own_addr_type, peer_addr, phy_mask,
+                                    phy_1m_conn_params, phy_2m_conn_params,
+                                    phy_coded_conn_params);
+    if (rc != 0) {
+        ble_gap_master_reset_state();
+        goto done;
+    }
+
+    if (duration_ms != BLE_HS_FOREVER) {
+        ble_gap_master_set_timer(duration_ticks);
+    }
+
+    rc = 0;
+
+done:
+    ble_hs_unlock();
+
+    if (rc != 0) {
+        STATS_INC(ble_gap_stats, initiate_fail);
+    }
+    return rc;
+}
+#endif
 
 /**
  * Initiates a connect procedure.

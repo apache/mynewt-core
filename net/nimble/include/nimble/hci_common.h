@@ -215,6 +215,10 @@ extern "C" {
 #define BLE_HCI_ADV_SCAN_RSP_MASK           (0x0008)
 #define BLE_HCI_ADV_LEGACY_MASK             (0x0010)
 
+#define BLE_HCI_ADV_COMPLETED               (0x00)
+#define BLE_HCI_ADV_INCOMPLETE              (0x01)
+#define BLE_HCI_ADV_CORRUPTED               (0x10)
+
 /* Own address types */
 #define BLE_HCI_ADV_OWN_ADDR_PUBLIC         (0)
 #define BLE_HCI_ADV_OWN_ADDR_RANDOM         (1)
@@ -449,9 +453,14 @@ extern "C" {
 
 /* --- LE enhanced receiver test (OCF 0x0033) */
 #define BLE_HCI_LE_ENH_RCVR_TEST_LEN                (3)
+#define BLE_HCI_LE_PHY_1M                           (1)
+#define BLE_HCI_LE_PHY_2M                           (2)
+#define BLE_HCI_LE_PHY_CODED                        (3)
 
 /* --- LE enhanced transmitter test (OCF 0x0034) */
 #define BLE_HCI_LE_ENH_TRANS_TEST_LEN               (4)
+#define BLE_HCI_LE_PHY_CODED_S8                     (3)
+#define BLE_HCI_LE_PHY_CODED_S2                     (4)
 
 /* --- LE set advertising set random address (OCF 0x0035) */
 #define BLE_HCI_LE_SET_ADV_SET_RND_ADDR_LEN         (7)
@@ -482,12 +491,15 @@ extern "C" {
 
 /* --- LE set extended scan parameters (OCF 0x0041) */
 #define BLE_HCI_LE_SET_EXT_SCAN_PARAM_LEN           BLE_HCI_VARIABLE_LEN
+#define BLE_HCI_LE_EXT_SCAN_BASE_LEN                (3)
+#define BLE_HCI_LE_EXT_SCAN_SINGLE_PARAM_LEN        (5)
 
 /* --- LE set extended scan enable (OCF 0x0042) */
 #define BLE_HCI_LE_SET_EXT_SCAN_ENABLE_LEN          (6)
 
 /* --- LE extended create connection (OCF 0x0043) */
 #define BLE_HCI_LE_EXT_CREATE_CONN_LEN              BLE_HCI_VARIABLE_LEN
+#define BLE_HCI_LE_EXT_CREATE_CONN_BASE_LEN         (10)
 
 /* --- LE periodic advertising create sync (OCF 0x0044) */
 #define BLE_HCI_LE_PER_ADV_CREATE_SYNC_LEN          (14)
@@ -771,7 +783,7 @@ struct hci_create_conn
     uint16_t max_ce_len;
 };
 
-#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV) || MYNEWT_VAL(BLE_EXT_ADV)
+#if MYNEWT_VAL(BLE_EXT_ADV)
 /* LE create connection command (ocf=0x0043). */
 struct hci_ext_conn_params
 {
@@ -794,6 +806,29 @@ struct hci_ext_create_conn
     uint8_t init_phy_mask;
     struct hci_ext_conn_params params[3];
 };
+
+struct hci_ext_adv_report_param {
+    uint16_t evt_type;
+    uint8_t addr_type;
+    uint8_t addr[6];
+    uint8_t prim_phy;
+    uint8_t sec_phy;
+    uint8_t sid;
+    uint8_t tx_power;
+    int8_t rssi;
+    uint16_t per_adv_itvl;
+    uint8_t dir_addr_type;
+    uint8_t dir_addr[6];
+    uint8_t adv_data_len;
+    uint8_t adv_data[0];
+} __attribute__((packed));
+
+struct hci_ext_adv_report {
+    /* We support one report per event for now */
+    uint8_t subevt;
+    uint8_t num_reports;
+    struct hci_ext_adv_report_param params[0];
+} __attribute__((packed));
 #endif
 
 /* LE connection update command (ocf=0x0013). */
