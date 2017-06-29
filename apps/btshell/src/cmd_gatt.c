@@ -215,7 +215,7 @@ cmd_gatt_notify(int argc, char **argv)
         return rc;
     }
 
-    btshell_chrup(attr_handle);
+    btshell_notify(attr_handle);
 
     return 0;
 }

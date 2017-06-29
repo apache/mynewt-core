@@ -127,7 +127,7 @@ int btshell_scan_cancel(void);
 int btshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int btshell_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);
-void btshell_chrup(uint16_t attr_handle);
+void btshell_notify(uint16_t attr_handle);
 int btshell_datalen(uint16_t conn_handle, uint16_t tx_octets,
                     uint16_t tx_time);
 int btshell_l2cap_update(uint16_t conn_handle,
