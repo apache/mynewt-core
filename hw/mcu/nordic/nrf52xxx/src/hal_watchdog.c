@@ -20,7 +20,9 @@
 #include <assert.h>
 #include "hal/hal_watchdog.h"
 #include "bsp/cmsis_nvic.h"
+#include "os/os_trace_api.h"
 #include "nrf.h"
+
 
 static void
 nrf52_hal_wdt_default_handler(void)
@@ -32,10 +34,12 @@ nrf52_hal_wdt_default_handler(void)
 static void
 nrf52_wdt_irq_handler(void)
 {
+    os_trace_enter_isr();
     if (NRF_WDT->INTENSET & WDT_INTENSET_TIMEOUT_Msk) {
         NRF_WDT->EVENTS_TIMEOUT = 0;
         nrf52_hal_wdt_default_handler();
     }
+    os_trace_exit_isr();
 }
 
 int

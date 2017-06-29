@@ -33,6 +33,9 @@ syscfg.defs:
     OS_COREDUMP:
         description: 'Attempt to dump corefile when system crashes'
         value: 0
+    OS_SYSVIEW:
+        description: 'Enable OS sysview tracing'
+        value: 0
     OS_SCHEDULING:
         description: 'Whether OS will be started or not'
         value: 1

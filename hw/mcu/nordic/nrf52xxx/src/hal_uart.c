@@ -23,6 +23,8 @@
 
 #include "nrf.h"
 #include "mcu/nrf52_hal.h"
+#include "os/os_trace_api.h"
+
 
 #include <assert.h>
 
@@ -173,6 +175,8 @@ uart_irq_handler(void)
     struct hal_uart *u;
     int rc;
 
+    os_trace_enter_isr();
+
     u = &uart;
     if (NRF_UARTE0->EVENTS_ENDTX) {
         NRF_UARTE0->EVENTS_ENDTX = 0;
@@ -199,6 +203,7 @@ uart_irq_handler(void)
             NRF_UARTE0->TASKS_STARTRX = 1;
         }
     }
+    os_trace_exit_isr();
 }
 
 static uint32_t

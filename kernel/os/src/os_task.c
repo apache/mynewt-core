@@ -20,6 +20,7 @@
 
 #include "os/os.h"
 #include "os_priv.h"
+#include "os/os_trace_api.h"
 
 #include <assert.h>
 #include <string.h>
@@ -146,6 +147,7 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
         goto err;
     }
 
+    os_trace_task_info(t);
 
     return (0);
 err:

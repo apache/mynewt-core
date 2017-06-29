@@ -21,6 +21,7 @@
 #include "os/os.h"
 #include "os/queue.h"
 #include "os/os_dev.h"
+#include "os/os_trace_api.h"
 #include "os_priv.h"
 
 #include "hal/hal_os_tick.h"
@@ -111,6 +112,8 @@ os_idle_task(void *arg)
         /* Tell the architecture specific support to put the processor to sleep
          * for 'n' ticks.
          */
+
+        os_trace_idle();
         os_tick_idle(iticks);
         OS_EXIT_CRITICAL(sr);
     }
