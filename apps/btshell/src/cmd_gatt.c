@@ -25,7 +25,6 @@
 #include "host/ble_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include "console/console.h"
-#include "parse/parse.h"
 #include "btshell.h"
 #include "cmd.h"
 #include "cmd_gatt.h"
@@ -558,8 +557,8 @@ cmd_gatt_write(int argc, char **argv)
             goto done;
         }
 
-        rc = parse_byte_stream("value", sizeof cmd_buf - total_attr_len,
-                               cmd_buf + total_attr_len, &attr_len);
+        rc = parse_arg_byte_stream("value", sizeof cmd_buf - total_attr_len,
+                                   cmd_buf + total_attr_len, &attr_len);
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {

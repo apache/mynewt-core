@@ -36,7 +36,6 @@
 #include "services/gatt/ble_svc_gatt.h"
 #include "../src/ble_hs_priv.h"
 
-#include "parse/parse.h"
 #include "console/console.h"
 #include "shell/shell.h"
 
@@ -653,7 +652,7 @@ cmd_set(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream_exact_length("irk", irk, 16);
+    rc = parse_arg_byte_stream_exact_length("irk", irk, 16);
     if (rc == 0) {
         good = 1;
         ble_hs_pvcy_set_our_irk(irk);
@@ -802,7 +801,7 @@ cmd_set_adv_data(int argc, char **argv)
     }
 
     while (1) {
-        rc = parse_byte_stream_exact_length("uuid128", uuid128, 16);
+        rc = parse_arg_byte_stream_exact_length("uuid128", uuid128, 16);
         if (rc == 0) {
             if (adv_fields.num_uuids128 >= CMD_ADV_DATA_MAX_UUIDS128) {
                 console_printf("invalid 'uuid128' parameter\n");
@@ -842,9 +841,9 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream_exact_length("slave_interval_range",
-                                        slave_itvl_range,
-                                        BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
+    rc = parse_arg_byte_stream_exact_length("slave_interval_range",
+                                            slave_itvl_range,
+                                            BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
     if (rc == 0) {
         adv_fields.slave_itvl_range = slave_itvl_range;
     } else if (rc != ENOENT) {
@@ -852,9 +851,9 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream("service_data_uuid16",
-                           CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN,
-                           svc_data_uuid16, &svc_data_uuid16_len);
+    rc = parse_arg_byte_stream("service_data_uuid16",
+                               CMD_ADV_DATA_SVC_DATA_UUID16_MAX_LEN,
+                               svc_data_uuid16, &svc_data_uuid16_len);
     if (rc == 0) {
         adv_fields.svc_data_uuid16 = svc_data_uuid16;
         adv_fields.svc_data_uuid16_len = svc_data_uuid16_len;
@@ -864,7 +863,7 @@ cmd_set_adv_data(int argc, char **argv)
     }
 
     while (1) {
-        rc = parse_byte_stream_exact_length(
+        rc = parse_arg_byte_stream_exact_length(
             "public_target_address", public_tgt_addr,
             BLE_HS_ADV_PUBLIC_TGT_ADDR_ENTRY_LEN);
         if (rc == 0) {
@@ -904,9 +903,9 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream("service_data_uuid32",
-                           CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN,
-                           svc_data_uuid32, &svc_data_uuid32_len);
+    rc = parse_arg_byte_stream("service_data_uuid32",
+                               CMD_ADV_DATA_SVC_DATA_UUID32_MAX_LEN,
+                               svc_data_uuid32, &svc_data_uuid32_len);
     if (rc == 0) {
         adv_fields.svc_data_uuid32 = svc_data_uuid32;
         adv_fields.svc_data_uuid32_len = svc_data_uuid32_len;
@@ -915,9 +914,9 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream("service_data_uuid128",
-                           CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN,
-                           svc_data_uuid128, &svc_data_uuid128_len);
+    rc = parse_arg_byte_stream("service_data_uuid128",
+                               CMD_ADV_DATA_SVC_DATA_UUID128_MAX_LEN,
+                               svc_data_uuid128, &svc_data_uuid128_len);
     if (rc == 0) {
         adv_fields.svc_data_uuid128 = svc_data_uuid128;
         adv_fields.svc_data_uuid128_len = svc_data_uuid128_len;
@@ -926,7 +925,7 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream("uri", CMD_ADV_DATA_URI_MAX_LEN, uri, &uri_len);
+    rc = parse_arg_byte_stream("uri", CMD_ADV_DATA_URI_MAX_LEN, uri, &uri_len);
     if (rc == 0) {
         adv_fields.uri = uri;
         adv_fields.uri_len = uri_len;
@@ -935,8 +934,8 @@ cmd_set_adv_data(int argc, char **argv)
         return rc;
     }
 
-    rc = parse_byte_stream("mfg_data", CMD_ADV_DATA_MFG_DATA_MAX_LEN,
-                           mfg_data, &mfg_data_len);
+    rc = parse_arg_byte_stream("mfg_data", CMD_ADV_DATA_MFG_DATA_MAX_LEN,
+                               mfg_data, &mfg_data_len);
     if (rc == 0) {
         adv_fields.mfg_data = mfg_data;
         adv_fields.mfg_data_len = mfg_data_len;
@@ -1323,7 +1322,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
     switch (obj_type) {
         case BLE_STORE_OBJ_TYPE_PEER_SEC:
         case BLE_STORE_OBJ_TYPE_OUR_SEC:
-            rc = parse_byte_stream_exact_length("ltk", out->sec.ltk, 16);
+            rc = parse_arg_byte_stream_exact_length("ltk", out->sec.ltk, 16);
             if (rc == 0) {
                 out->sec.ltk_present = 1;
                 swap_in_place(out->sec.ltk, 16);
@@ -1332,7 +1331,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
                 console_printf("invalid 'ltk' parameter\n");
                 return rc;
             }
-            rc = parse_byte_stream_exact_length("irk", out->sec.irk, 16);
+            rc = parse_arg_byte_stream_exact_length("irk", out->sec.irk, 16);
             if (rc == 0) {
                 out->sec.irk_present = 1;
                 swap_in_place(out->sec.irk, 16);
@@ -1341,7 +1340,7 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
                 console_printf("invalid 'irk' parameter\n");
                 return rc;
             }
-            rc = parse_byte_stream_exact_length("csrk", out->sec.csrk, 16);
+            rc = parse_arg_byte_stream_exact_length("csrk", out->sec.csrk, 16);
             if (rc == 0) {
                 out->sec.csrk_present = 1;
                 swap_in_place(out->sec.csrk, 16);
@@ -1585,7 +1584,7 @@ cmd_auth_passkey(int argc, char **argv)
            break;
 
         case BLE_SM_IOACT_OOB:
-            rc = parse_byte_stream_exact_length("oob", pk.oob, 16);
+            rc = parse_arg_byte_stream_exact_length("oob", pk.oob, 16);
             if (rc != 0) {
                 console_printf("invalid 'oob' parameter\n");
                 return rc;
@@ -1767,7 +1766,7 @@ cmd_security_encryption(int argc, char **argv)
             return rc;
         }
 
-        rc = parse_byte_stream_exact_length("ltk", ltk, 16);
+        rc = parse_arg_byte_stream_exact_length("ltk", ltk, 16);
         if (rc != 0) {
             console_printf("invalid 'ltk' parameter\n");
             return rc;

@@ -35,4 +35,3 @@ pkg.deps:
     - sys/stats/full
     - sys/console/full
     - sys/shell
-    - util/parse
