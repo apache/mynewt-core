@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "hal/hal_flash.h"
 #include "testutil/testutil.h"
@@ -203,13 +204,11 @@ nffs_test_suite_cache_init(void)
 int
 main(void)
 {
-    ts_config.ts_print_results = 1;
-    ts_config.ts_system_assert = 0; /* handle asserts */
     nffs_config.nc_num_inodes = 1024 * 8;
     nffs_config.nc_num_blocks = 1024 * 20;
     nffs_current_area_descs = nffs_selftest_area_descs;
 
-    tu_init();
+    sysinit();
 
     tu_suite_set_init_cb((void*)nffs_test_suite_gen_1_1_init, NULL);
     nffs_test_suite();

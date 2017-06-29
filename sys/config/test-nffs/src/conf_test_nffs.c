@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include <os/os.h>
 #include <testutil/testutil.h>
 #include <nffs/nffs.h>
@@ -355,8 +356,7 @@ TEST_SUITE(config_test_all)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     conf_init();
     config_test_all();

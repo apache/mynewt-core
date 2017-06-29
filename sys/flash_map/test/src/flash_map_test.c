@@ -51,8 +51,7 @@ TEST_SUITE(flash_map_test_suite)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     fa_sectors = (struct flash_area *)
                 malloc(sizeof(struct flash_area*) * SELFTEST_FA_SECTOR_COUNT);

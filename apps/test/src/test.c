@@ -30,8 +30,7 @@ extern int util_test_all(void);
 int
 main(void)
 {
-    tu_config.tc_print_results = 1;
-    tu_init();
+    sysinit();
 
     os_test_all();
     nffs_test_all();

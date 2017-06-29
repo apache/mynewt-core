@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "sysflash/sysflash.h"
 #include "testutil/testutil.h"
@@ -89,10 +90,7 @@ boot_test_all(void)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_parse_args(argc, argv);
-
-    tu_init();
+    sysinit();
 
     boot_test_all();
 

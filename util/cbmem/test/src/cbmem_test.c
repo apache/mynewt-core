@@ -20,6 +20,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "cbmem/cbmem.h"
@@ -96,8 +97,7 @@ TEST_SUITE(cbmem_test_suite)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     tu_suite_set_init_cb(setup_cbmem1, NULL);
     cbmem_test_suite();
