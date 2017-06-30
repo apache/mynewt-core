@@ -30,6 +30,11 @@ syscfg.defs:
             Used by BSP packages to configure LP clock for controller.
         value: 1
 
+    BLE_HW_WHITELIST_ENABLE:
+        description: >
+            Used to enable hardware white list
+        value: 1
+
     BLE_LL_PRIO:
         description: 'The priority of the LL task'
         type: 'task_priority'
@@ -253,4 +258,4 @@ syscfg.defs:
 
 syscfg.vals.BLE_LL_CFG_FEAT_LL_EXT_ADV:
     BLE_LL_CFG_FEAT_LE_CSA2: 1
-
+    BLE_HW_WHITELIST_ENABLE: 0
