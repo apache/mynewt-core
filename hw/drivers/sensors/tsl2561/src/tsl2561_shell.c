@@ -42,6 +42,7 @@
 #include "hal/hal_gpio.h"
 #include "tsl2561/tsl2561.h"
 #include "tsl2561_priv.h"
+#include "parse/parse.h"
 
 #if MYNEWT_VAL(TSL2561_CLI)
 static int tsl2561_shell_cmd(int argc, char **argv);
@@ -54,25 +55,8 @@ static struct shell_cmd tsl2561_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(TSL2561_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(TSL2561_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(TSL2561_SHELL_ITF_ADDR),
 };
-
-static int
-tsl2561_shell_stol(char *param_val, long min, long max, long *output)
-{
-    char *endptr;
-    long lval;
-
-    /* Base 10 */
-    lval = strtol(param_val, &endptr, 10);
-    if (param_val != '\0' && *endptr == '\0' &&
-        lval >= min && lval <= max) {
-            *output = lval;
-    } else {
-        return EINVAL;
-    }
-
-    return 0;
-}
 
 static int
 tsl2561_shell_err_too_many_args(char *cmd_name)
@@ -121,7 +105,7 @@ tsl2561_shell_cmd_read(int argc, char **argv)
     uint16_t full;
     uint16_t ir;
     uint16_t samples = 1;
-    long val;
+    uint16_t val;
     int rc;
 
     if (argc > 3) {
@@ -130,10 +114,11 @@ tsl2561_shell_cmd_read(int argc, char **argv)
 
     /* Check if more than one sample requested */
     if (argc == 3) {
-        if (tsl2561_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[2], 1, UINT16_MAX, &rc);
+        if (rc) {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
-        samples = (uint16_t)val;
+        samples = val;
     }
 
     while(samples--) {
@@ -153,7 +138,7 @@ tsl2561_shell_cmd_read(int argc, char **argv)
 static int
 tsl2561_shell_cmd_gain(int argc, char **argv)
 {
-    long val;
+    uint8_t val;
     uint8_t gain;
     int rc;
 
@@ -173,11 +158,9 @@ tsl2561_shell_cmd_gain(int argc, char **argv)
 
     /* Update the gain */
     if (argc == 3) {
-        if (tsl2561_shell_stol(argv[2], 1, 16, &val)) {
-            return tsl2561_shell_err_invalid_arg(argv[2]);
-        }
+        val = parse_ll_bounds(argv[2], 1, 16, &rc);
         /* Make sure gain is 1 ot 16 */
-        if ((val != 1) && (val != 16)) {
+        if (rc || ((val != 1) && (val != 16))) {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
         rc = tsl2561_set_gain(&g_sensor_itf, val ?
@@ -225,11 +208,9 @@ tsl2561_shell_cmd_time(int argc, char **argv)
 
     /* Set the integration time */
     if (argc == 3) {
-        if (tsl2561_shell_stol(argv[2], 13, 402, &val)) {
-            return tsl2561_shell_err_invalid_arg(argv[2]);
-        }
+        val = parse_ll_bounds(argv[2], 13, 402, &rc);
         /* Make sure val is 13, 102 or 402 */
-        if ((val != 13) && (val != 101) && (val != 402)) {
+        if (rc || ((val != 13) && (val != 101) && (val != 402))) {
             return tsl2561_shell_err_invalid_arg(argv[2]);
         }
         switch(val) {
@@ -258,7 +239,7 @@ tsl2561_shell_cmd_int(int argc, char **argv)
 {
     int rc;
     int pin;
-    long val;
+    uint16_t val;
     uint8_t rate;
     uint16_t lower;
     uint16_t upper;
@@ -290,20 +271,23 @@ tsl2561_shell_cmd_int(int argc, char **argv)
     /* Configure the interrupt on 'set' */
     if (argc == 6 && strcmp(argv[2], "set") == 0) {
         /* Get rate */
-        if (tsl2561_shell_stol(argv[3], 0, 15, &val)) {
+        val = parse_ll_bounds(argv[3], 0, 15, &rc);
+        if (rc) {
             return tsl2561_shell_err_invalid_arg(argv[3]);
         }
-        rate = (uint8_t)val;
+        rate = val;
         /* Get lower threshold */
-        if (tsl2561_shell_stol(argv[4], 0, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[4], 0, UINT16_MAX, &rc);
+        if (rc) {
             return tsl2561_shell_err_invalid_arg(argv[4]);
         }
-        lower = (uint16_t)val;
+        lower = val;
         /* Get upper threshold */
-        if (tsl2561_shell_stol(argv[5], 0, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[5], 0, UINT16_MAX, &rc);
+        if (rc) {
             return tsl2561_shell_err_invalid_arg(argv[5]);
         }
-        upper = (uint16_t)val;
+        upper = val;
         /* Set the values */
         rc = tsl2561_setup_interrupt(&g_sensor_itf, rate, lower, upper);
         if (rc) {
@@ -322,10 +306,11 @@ tsl2561_shell_cmd_int(int argc, char **argv)
     /* Setup INT pin on 'pin' */
     if (argc == 4 && strcmp(argv[2], "pin") == 0) {
         /* Get the pin number */
-        if (tsl2561_shell_stol(argv[3], 0, 0xFF, &val)) {
+        val = parse_ll_bounds(argv[3], 0, 0xFF, &rc);
+        if (rc) {
             return tsl2561_shell_err_invalid_arg(argv[3]);
         }
-        pin = (int)val;
+        pin = val;
         /* INT is open drain, pullup is required */
         rc = hal_gpio_init_in(pin, HAL_GPIO_PULL_UP);
         assert(rc == 0);

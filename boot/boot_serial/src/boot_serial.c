@@ -53,8 +53,8 @@
 #error "Boot serial needs OS_CPUTIME timer"
 #endif
 
-#define BOOT_SERIAL_INPUT_MAX   128
-#define BOOT_SERIAL_OUT_MAX	48
+#define BOOT_SERIAL_INPUT_MAX   512
+#define BOOT_SERIAL_OUT_MAX     80
 
 static uint32_t curr_off;
 static uint32_t img_size;
@@ -75,6 +75,10 @@ static CborEncoder bs_rsp;
 int
 bs_cbor_writer(struct cbor_encoder_writer *cew, const char *data, int len)
 {
+    if (cew->bytes_written + len > sizeof(bs_obuf)) {
+        return CborErrorOutOfMemory;
+    }
+
     memcpy(&bs_obuf[cew->bytes_written], data, len);
     cew->bytes_written += len;
 

@@ -33,3 +33,6 @@ syscfg.defs:
     BNO055_SHELL_ITF_NUM:
         description: 'BNO055 interface number'
         value: 0
+    BNO055_SHELL_ITF_ADDR:
+        description: 'BNO055 I2C Address'
+        value: 0x28

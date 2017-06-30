@@ -159,6 +159,22 @@ bleuart_gap_event(struct ble_gap_event *event, void *arg)
         /* Connection terminated; resume advertising. */
         bleuart_advertise();
         return 0;
+
+    case BLE_GAP_EVENT_REPEAT_PAIRING:
+        /* We already have a bond with the peer, but it is attempting to
+         * establish a new secure link.  This app sacrifices security for
+         * convenience: just throw away the old bond and accept the new link.
+         */
+
+        /* Delete the old bond. */
+        rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
+        assert(rc == 0);
+        ble_store_util_delete_peer(&desc.peer_id_addr);
+
+        /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+         * continue with the pairing operation.
+         */
+        return BLE_GAP_REPEAT_PAIRING_RETRY;
     }
 
     return 0;
@@ -191,6 +207,7 @@ main(void)
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
     ble_hs_cfg.sync_cb = bleuart_on_sync;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     rc = bleuart_gatt_svr_init();
     assert(rc == 0);

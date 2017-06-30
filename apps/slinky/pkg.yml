@@ -39,6 +39,10 @@ pkg.deps:
     - sys/stats/full
     - boot/split
 
+pkg.deps.I2C_0: test/i2c_scan
+pkg.deps.I2C_1: test/i2c_scan
+pkg.deps.I2C_2: test/i2c_scan
+
 pkg.deps.CONFIG_NFFS:
     - fs/nffs
 

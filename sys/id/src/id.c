@@ -46,10 +46,10 @@ static const char *bsp_str = "";
 static const char *app_str = "";
 #endif
 
-static char serial[ID_SERIAL_MAX_LEN];
+char id_serial[ID_SERIAL_MAX_LEN];
 
 /** Base64-encoded null-terminated manufacturing hash. */
-static char id_mfghash[BASE64_ENCODE_SIZE(MFG_HASH_SZ) + 1];
+char id_mfghash[BASE64_ENCODE_SIZE(MFG_HASH_SZ) + 1];
 
 struct conf_handler id_conf = {
     .ch_name = "id",
@@ -75,7 +75,7 @@ id_conf_get(int argc, char **argv, char *val, int val_len_max)
         } else if (!strcmp(argv[0], "app")) {
             return (char *)app_str;
         } else if (!strcmp(argv[0], "serial")) {
-            return serial;
+            return id_serial;
         } else if (!strcmp(argv[0], "mfghash")) {
             return id_mfghash;
         }
@@ -88,7 +88,7 @@ id_conf_set(int argc, char **argv, char *val)
 {
     if (argc == 1) {
         if (!strcmp(argv[0], "serial")) {
-            return CONF_VALUE_SET(val, CONF_STRING, serial);
+            return CONF_VALUE_SET(val, CONF_STRING, id_serial);
         }
     }
     return OS_ENOENT;
@@ -112,7 +112,7 @@ id_conf_export(void (*export_func)(char *name, char *val),
         export_func("id/app", (char *)app_str);
         export_func("id/mfghash", (char *)id_mfghash);
     }
-    export_func("id/serial", serial);
+    export_func("id/serial", id_serial);
 
     return 0;
 }

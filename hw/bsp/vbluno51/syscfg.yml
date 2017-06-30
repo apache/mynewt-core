@@ -1,0 +1,82 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Package: hw/bsp/vbluno51
+
+syscfg.defs:
+    BSP_NRF51:
+        description: 'Set to indicate that BSP has NRF51'
+        value: 1
+
+    XTAL_32768:
+        description: 'External 32k oscillator available.'
+        value: 1
+
+    UART_0:
+        description: 'Whether to enable UART0'
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TX pin for UART0'
+        value: 10
+    UART_0_PIN_RX:
+        description: 'RX pin for UART0'
+        value: 11
+    UART_0_PIN_RTS:
+        description: 'RTS pin for UART0'
+        value: 12
+    UART_0_PIN_CTS:
+        description: 'CTS pin for UART0'
+        value: 13
+
+    SPI_0_MASTER:
+        description: 'SPI 0 master'
+        value:  1
+    SPI_0_MASTER_SS_PIN:
+        description: 'SPI 0 (master) SS pin number.'
+        value:  23
+    SPI_1_SLAVE:
+        description: 'SPI 1 slave'
+        value:  1
+
+    TIMER_0:
+        description: 'NRF51 Timer 0'
+        value:  1
+    TIMER_1:
+        description: 'NRF51 Timer 1'
+        value:  0
+    TIMER_2:
+        description: 'NRF51 Timer 2'
+        value:  0
+    TIMER_3:
+        description: 'NRF51 RTC0'
+        value:  0
+
+    I2C_0:
+        description: 'NRF51 I2C (TWI) interface 0'
+        value:  '1'
+
+    I2C_1:
+        description: 'NRF51 I2C (TWI) interface 1'
+        value:  '1'
+
+syscfg.vals:
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1

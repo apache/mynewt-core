@@ -45,6 +45,7 @@
 #include "shell/shell.h"
 #include "hal/hal_i2c.h"
 #include "os/os_cputime.h"
+#include "parse/parse.h"
 
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
@@ -63,6 +64,11 @@ struct sensor_poll_data {
     int spd_poll_delay;
 };
 
+struct sensor_shell_read_ctx {
+    sensor_type_t type;
+    int num_entries;
+};
+
 static void
 sensor_display_help(void)
 {
@@ -72,8 +78,6 @@ sensor_display_help(void)
     console_printf("  read <sensor_name> <type> [-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n");
     console_printf("      read <no_of_samples> from sensor<sensor_name> of type:<type> at preset interval or \n");
     console_printf("      at <poll_interval> rate for <poll_duration>");
-    console_printf("  i2cscan <I2C num>\n");
-    console_printf("      scan I2C bus for connected devices\n");
     console_printf("  type <sensor_name>\n");
     console_printf("      types supported by registered sensor\n");
 }
@@ -221,11 +225,6 @@ sensor_cmd_list_sensors(void)
 
     sensor_mgr_unlock();
 }
-
-struct sensor_shell_read_ctx {
-    sensor_type_t type;
-    int num_entries;
-};
 
 char*
 sensor_ftostr(float num, char *fltstr, int len)
@@ -599,73 +598,6 @@ err:
     return rc;
 }
 
-int
-sensor_shell_stol(char *param_val, long min, long max, long *output)
-{
-    char *endptr;
-    long lval;
-
-    lval = strtol(param_val, &endptr, 10); /* Base 10 */
-    if (param_val != '\0' && *endptr == '\0' &&
-        lval >= min && lval <= max) {
-            *output = lval;
-    } else {
-        return EINVAL;
-    }
-
-    return 0;
-}
-
-static int
-sensor_cmd_i2cscan(int argc, char **argv)
-{
-    uint8_t addr;
-    int32_t timeout;
-    uint8_t dev_count = 0;
-    long i2cnum;
-    int rc;
-
-    timeout = OS_TICKS_PER_SEC / 10;
-
-    rc = 0;
-    if (sensor_shell_stol(argv[2], 0, 0xf, &i2cnum)) {
-        console_printf("Invalid i2c interface:%s\n", argv[2]);
-        rc = SYS_EINVAL;
-        goto err;
-    }
-
-    console_printf("Scanning I2C bus %u\n"
-                   "     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n"
-                   "00:          ", (uint8_t)i2cnum);
-
-
-    /* Scan all valid I2C addresses (0x08..0x77) */
-    for (addr = 0x08; addr < 0x78; addr++) {
-#ifndef ARCH_sim
-        rc = hal_i2c_master_probe((uint8_t)i2cnum, addr, timeout);
-#else
-        (void)timeout;
-#endif
-        /* Print addr header every 16 bytes */
-        if (!(addr % 16)) {
-            console_printf("\n%02x: ", addr);
-        }
-        /* Display the addr if a response was received */
-        if (!rc) {
-            console_printf("%02x ", addr);
-            dev_count++;
-        } else {
-            console_printf("-- ");
-        }
-        os_time_delay(OS_TICKS_PER_SEC/1000 * 20);
-    }
-    console_printf("\nFound %u devices on I2C bus %u\n", dev_count, (uint8_t)i2cnum);
-
-    return 0;
-err:
-    return rc;
-}
-
 static int
 sensor_cmd_exec(int argc, char **argv)
 {
@@ -709,11 +641,6 @@ sensor_cmd_exec(int argc, char **argv)
         }
 
         rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), &spd);
-        if (rc) {
-            goto err;
-        }
-    } else if (!strcmp(argv[1], "i2cscan")) {
-        rc = sensor_cmd_i2cscan(argc, argv);
         if (rc) {
             goto err;
         }

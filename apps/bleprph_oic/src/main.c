@@ -93,7 +93,7 @@ bleprph_advertise(void)
      *     o Flags (indicates advertisement type and other general info).
      *     o Advertising tx power.
      *     o Device name.
-     *     o 16-bit service UUIDs (alert notifications).
+     *     o service UUID.
      */
 
     memset(&fields, 0, sizeof fields);
@@ -117,29 +117,25 @@ bleprph_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
+#if MYNEWT_VAL(ADVERTISE_128BIT_UUID)
+    /* Advertise the 128-bit CoAP-over-BLE service UUID in the scan response. */
     fields.uuids128 = (ble_uuid128_t []) {
         BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
     };
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
-
-    rc = ble_gap_adv_set_fields(&fields);
-    if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
-        return;
-    }
-
+#endif
+#if MYNEWT_VAL(ADVERTISE_16BIT_UUID)
     /* Advertise the 16-bit CoAP-over-BLE service UUID in the scan response. */
-    memset(&fields, 0, sizeof fields);
     fields.uuids16 = (ble_uuid16_t[]) {
         BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID)
     };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
-
-    rc = ble_gap_adv_rsp_set_fields(&fields);
+#endif
+    rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error setting scan response data; rc=%d\n", rc);
+        BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -246,6 +242,22 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
                     event->mtu.channel_id,
                     event->mtu.value);
         return 0;
+
+    case BLE_GAP_EVENT_REPEAT_PAIRING:
+        /* We already have a bond with the peer, but it is attempting to
+         * establish a new secure link.  This app sacrifices security for
+         * convenience: just throw away the old bond and accept the new link.
+         */
+
+        /* Delete the old bond. */
+        rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
+        assert(rc == 0);
+        ble_store_util_delete_peer(&desc.peer_id_addr);
+
+        /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+         * continue with the pairing operation.
+         */
+        return BLE_GAP_REPEAT_PAIRING_RETRY;
     }
 
     return 0;
@@ -376,6 +388,7 @@ main(void)
     ble_hs_cfg.reset_cb = bleprph_on_reset;
     ble_hs_cfg.sync_cb = bleprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("c5");

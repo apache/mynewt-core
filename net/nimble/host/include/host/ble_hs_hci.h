@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -16,20 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __FLASH_TEST_H__ 
-#define __FLASH_TEST_H__
+
+#ifndef H_BLE_HS_HCI_
+#define H_BLE_HS_HCI_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * adds the flash test commands to your shell */
-int
-flash_test_init(void);
+int ble_hs_hci_read_chan_map(uint16_t conn_handle, uint8_t *out_chan_map);
+int ble_hs_hci_set_chan_class(const uint8_t *chan_map);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __FLASH_TEST_H__ */
+#endif

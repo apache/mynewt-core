@@ -347,7 +347,7 @@ oc_connectivity_init_ip4(void)
     return 0;
 
 oc_connectivity_init_err:
-    oc_connectivity_shutdown();
+    oc_connectivity_shutdown_ip4();
     return rc;
 }
 

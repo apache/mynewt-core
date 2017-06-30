@@ -480,8 +480,6 @@ int sensor_mgr_match_bytype(struct sensor *sensor, void *arg);
 #if MYNEWT_VAL(SENSOR_CLI)
 char*
 sensor_ftostr(float num, char *fltstr, int len);
-int
-sensor_shell_stol(char *param_val, long min, long max, long *output);
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)

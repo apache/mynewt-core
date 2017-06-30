@@ -19,7 +19,6 @@
 #include <inttypes.h>
 #include <os/os.h>
 #include <console/console.h>
-#include <flash_test/flash_test.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
@@ -147,9 +146,11 @@ err:
     return -1;
 }
 
-
-int
-flash_test_init(void) {
+/*
+ * Initialize the package. Only called from sysinit().
+ */
+void
+flash_test_init(void)
+{
     shell_cmd_register(&flash_cmd_struct);
-    return 0;
 }

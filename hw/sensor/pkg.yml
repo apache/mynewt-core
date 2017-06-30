@@ -32,6 +32,7 @@ pkg.deps.SENSOR_OIC:
 pkg.deps.SENSOR_CLI:
     - sys/shell
     - sys/console/full
+    - util/parse
 
 pkg.init:
     sensor_pkg_init: 501
