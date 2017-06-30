@@ -122,7 +122,6 @@ int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
  * Probes the i2c bus for a device with this address.  THIS API
  * issues a start condition, probes the address using a read
  * command and issues a stop condition.
- * hal_i2c_master_begin/end with this method.
  *
  * @param i2c_num The number of the I2C to probe
  * @param address The address to probe for

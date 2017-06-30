@@ -96,5 +96,9 @@ syscfg.defs:
         description: 'SPI connected to MRF24WG0MA'
         value:  1
 
+    I2C_3:
+        description: 'I2C available on J6 connector'
+        value:  1
+
 syscfg.vals:
     CONSOLE_UART_DEV: '"uart3"'
