@@ -26,6 +26,7 @@ pkg.keywords:
 
 pkg.deps:
     - test/flash_test
+    - test/i2c_scan
     - kernel/os
     - hw/sensor
     - boot/bootutil

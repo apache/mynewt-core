@@ -28,6 +28,38 @@ syscfg.defs:
         description: 'System clock frequency, defined in hal_bsp.c'
         value:  200000000ul
 
+    TIMER_0:
+        description: "Whether to enable Timer 0"
+        value:  1
+
+    TIMER_1:
+        description: "Whether to enable Timer 1"
+        value:  0
+
+    TIMER_2:
+        description: "Whether to enable Timer 2"
+        value:  0
+
+    TIMER_3:
+        description: "Whether to enable Timer 3"
+        value:  0
+
+    TIMER_4:
+        description: "Whether to enable Timer 4"
+        value:  0
+
+    TIMER_5:
+        description: "Whether to enable Timer 5"
+        value:  0
+
+    TIMER_6:
+        description: "Whether to enable Timer 6"
+        value:  0
+
+    TIMER_7:
+        description: "Whether to enable Timer 7"
+        value:  0
+
     UART_0:
         description: 'Whether to enable UART0'
         value:  1

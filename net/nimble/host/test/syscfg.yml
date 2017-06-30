@@ -28,3 +28,4 @@ syscfg.vals:
     BLE_SM_SC: 1
     MSYS_1_BLOCK_COUNT: 100
     BLE_L2CAP_COC_MAX_NUM: 1
+    CONFIG_FCB: 1

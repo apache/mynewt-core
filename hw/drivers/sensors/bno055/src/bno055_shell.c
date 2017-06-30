@@ -31,6 +31,7 @@
 #include "sensor/quat.h"
 #include "sensor/euler.h"
 #include "hal/hal_i2c.h"
+#include "parse/parse.h"
 
 #if MYNEWT_VAL(BNO055_CLI)
 
@@ -44,6 +45,7 @@ static struct shell_cmd bno055_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(BNO055_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(BNO055_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(BNO055_SHELL_ITF_ADDR),
 };
 
 static int
@@ -96,7 +98,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
     int i;
     int rc;
     struct bno055_sensor_offsets bso;
-    long val;
+    uint16_t val;
     uint16_t offsetdata[11] = {0};
     char *tok;
 
@@ -128,7 +130,8 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
         tok = strtok(argv[2], ":");
         i = 0;
         do {
-            if (sensor_shell_stol(tok, 0, UINT16_MAX, &val)) {
+            val = parse_ll_bounds(tok, 0, UINT16_MAX, &rc);
+            if (rc) {
                 return bno055_shell_err_invalid_arg(argv[2]);
             }
             offsetdata[i] = val;
@@ -209,7 +212,7 @@ static int
 bno055_shell_cmd_read(int argc, char **argv)
 {
     uint16_t samples = 1;
-    long val;
+    uint16_t val;
     int rc;
     void *databuf;
     struct sensor_quat_data *sqd;
@@ -231,13 +234,15 @@ bno055_shell_cmd_read(int argc, char **argv)
 
     /* Check if more than one sample requested */
     if (argc == 4) {
-        if (sensor_shell_stol(argv[2], 1, UINT16_MAX, &val)) {
+        val = parse_ll_bounds(argv[2], 0, UINT16_MAX, &rc);
+        if (rc) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         samples = (uint16_t)val;
 
-        if (sensor_shell_stol(argv[3], 0, UINT16_MAX, &val)) {
-            return bno055_shell_err_invalid_arg(argv[2]);
+        val = parse_ll_bounds(argv[3], 0, UINT16_MAX, &rc);
+        if (rc) {
+            return bno055_shell_err_invalid_arg(argv[3]);
         }
         type = (int)(1 << val);
     } else {
@@ -305,7 +310,7 @@ err:
 static int
 bno055_shell_cmd_opr_mode(int argc, char **argv)
 {
-    long val;
+    uint8_t val;
     int rc;
 
     if (argc > 3) {
@@ -323,7 +328,8 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
 
     /* Update the mode */
     if (argc == 3) {
-        if (sensor_shell_stol(argv[2], 0, BNO055_OPR_MODE_NDOF, &val)) {
+        val = parse_ll_bounds(argv[2], 0, BNO055_OPR_MODE_NDOF, &rc);
+        if (rc) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
         /* Make sure mode is valid */
@@ -345,7 +351,7 @@ err:
 static int
 bno055_shell_cmd_pwr_mode(int argc, char **argv)
 {
-    long val;
+    uint8_t val;
     int rc;
 
     if (argc > 3) {
@@ -363,11 +369,8 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
 
     /* Update the mode */
     if (argc == 3) {
-        if (sensor_shell_stol(argv[2], 0, BNO055_PWR_MODE_SUSPEND, &val)) {
-            return bno055_shell_err_invalid_arg(argv[2]);
-        }
-        /* Make sure mode is valid */
-        if (val > BNO055_PWR_MODE_SUSPEND) {
+        val = parse_ll_bounds(argv[2], 0, BNO055_PWR_MODE_SUSPEND, &rc);
+        if (rc) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
@@ -385,7 +388,7 @@ err:
 static int
 bno055_shell_units_cmd(int argc, char **argv)
 {
-    long val;
+    uint8_t val;
     int rc;
 
     if (argc > 3) {
@@ -411,7 +414,8 @@ bno055_shell_units_cmd(int argc, char **argv)
 
     /* Update the units */
     if (argc == 3) {
-        if (sensor_shell_stol(argv[2], 0, UINT8_MAX, &val)) {
+        val = parse_ll_bounds(argv[2], 0, UINT8_MAX, &rc);
+        if (rc) {
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
@@ -429,18 +433,20 @@ err:
 static int
 bno055_shell_cmd_dumpreg(int argc, char **argv)
 {
-    long addr;
+    uint8_t addr;
     uint8_t val;
     int rc;
 
-    if (sensor_shell_stol(argv[2], 0, UINT8_MAX, &addr)) {
+    addr = parse_ll_bounds(argv[2], 0, UINT8_MAX, &rc);
+    if (rc) {
         return bno055_shell_err_invalid_arg(argv[2]);
     }
-    rc = bno055_read8(&g_sensor_itf, (uint8_t)addr, &val);
+
+    rc = bno055_read8(&g_sensor_itf, addr, &val);
     if (rc) {
         goto err;
     }
-    console_printf("0x%02X (ADDR): 0x%02X", (uint8_t)addr, val);
+    console_printf("0x%02X (ADDR): 0x%02X", addr, val);
 
     return 0;
 err:

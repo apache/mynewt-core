@@ -1,0 +1,91 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/bsp/vbluno51
+pkg.type: bsp
+pkg.description: BSP definition for the VBLUno51 nRF51822 board.
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - nrf51
+    - vbluno51
+
+pkg.cflags:
+    # Nordic SDK files require these defines.
+    - '-DCLOCK_ENABLED=1'
+    - '-DCOMP_ENABLED=0'
+    - '-DEGU_ENABLED=0'
+    - '-DGPIOTE_ENABLED=1'
+    - '-DI2S_ENABLED=0'
+    - '-DLPCOMP_ENABLED=1'
+    - '-DNRF51'
+    - '-DPDM_ENABLED=0'
+    - '-DPERIPHERAL_RESOURCE_SHARING_ENABLED=1'
+    - '-DPWM0_ENABLED=1'
+    - '-DPWM1_ENABLED=0'
+    - '-DPWM2_ENABLED=0'
+    - '-DQDEC_ENABLED=1'
+    - '-DRNG_ENABLED=1'
+    - '-DRTC0_ENABLED=0'
+    - '-DRTC1_ENABLED=0'
+    - '-DRTC2_ENABLED=0'
+    - '-DSPI0_CONFIG_MISO_PIN=25'
+    - '-DSPI0_CONFIG_MOSI_PIN=24'
+    - '-DSPI0_CONFIG_SCK_PIN=28'
+    - '-DSPI0_ENABLED=1'
+    - '-DSPI0_USE_EASY_DMA=0'
+    - '-DSPI1_ENABLED=0'
+    - '-DSPI2_ENABLED=0'
+    - '-DSPIS0_CONFIG_MISO_PIN=4'
+    - '-DSPIS0_CONFIG_MOSI_PIN=3'
+    - '-DSPIS0_CONFIG_SCK_PIN=2'
+    - '-DSPIS0_ENABLED=0'
+    - '-DSPIS1_CONFIG_MISO_PIN=25'
+    - '-DSPIS1_CONFIG_MOSI_PIN=24'
+    - '-DSPIS1_CONFIG_SCK_PIN=28'
+    - '-DSPIS1_ENABLED=1'
+    - '-DSPIS2_ENABLED=0'
+    - '-DTIMER0_ENABLED=1'
+    - '-DTIMER1_ENABLED=0'
+    - '-DTIMER2_ENABLED=0'
+    - '-DTIMER3_ENABLED=0'
+    - '-DTIMER4_ENABLED=0'
+    - '-DTWI0_CONFIG_SCL=30'
+    - '-DTWI0_CONFIG_SDA=29'
+    - '-DTWI1_CONFIG_SCL=6'
+    - '-DTWI1_CONFIG_SDA=5'
+    - '-DTWI0_ENABLED=1'
+    - '-DTWI1_ENABLED=1'
+    - '-DTWIS0_ENABLED=0'
+    - '-DTWIS1_ENABLED=0'
+    - '-DUART0_ENABLED=1'
+    - '-DWDT_ENABLED=1'
+
+pkg.deps:
+    - hw/mcu/nordic/nrf51xxx
+    - libc/baselibc
+
+pkg.deps.BLE_DEVICE:
+    - hw/drivers/nimble/nrf51
+
+pkg.deps.UART_0:
+    - hw/drivers/uart/uart_hal
+
+pkg.deps.UART_1:
+    - hw/drivers/uart/uart_bitbang

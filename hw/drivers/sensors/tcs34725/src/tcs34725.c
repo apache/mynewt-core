@@ -474,6 +474,8 @@ tcs34725_get_integration_time(struct sensor_itf *itf, uint8_t *int_time)
         goto err;
     }
 
+    *int_time = tmp;
+
     return 0;
 err:
     return rc;
@@ -634,40 +636,6 @@ tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
 {
     uint8_t payload[8] = {0};
     int rc;
-    int delay_ticks;
-
-    /* Set a delay for the integration time */
-    switch (tcs34725->cfg.integration_time)
-    {
-        case TCS34725_INTEGRATIONTIME_2_4MS:
-            delay_ticks = (3 * OS_TICKS_PER_SEC)/1000 + 1;
-            break;
-        case TCS34725_INTEGRATIONTIME_24MS:
-            delay_ticks = (24 * OS_TICKS_PER_SEC)/1000 + 1;
-            break;
-        case TCS34725_INTEGRATIONTIME_50MS:
-            delay_ticks = (50 * OS_TICKS_PER_SEC)/1000 + 1;
-            break;
-        case TCS34725_INTEGRATIONTIME_101MS:
-            delay_ticks = (101 * OS_TICKS_PER_SEC)/1000 + 1;
-            break;
-        case TCS34725_INTEGRATIONTIME_154MS:
-            delay_ticks = (154 * OS_TICKS_PER_SEC)/1000 + 1;
-            break;
-        case TCS34725_INTEGRATIONTIME_700MS:
-            delay_ticks = (700 * OS_TICKS_PER_SEC)/1000 + 1;
-            break;
-        default:
-            /*
-             * If the integration time specified is not from the config,
-             * it will get considered as valid inetgration time in ms
-             */
-            delay_ticks = (tcs34725->cfg.integration_time * OS_TICKS_PER_SEC)/
-                          1000 + 1;
-            break;
-    }
-
-    os_time_delay(delay_ticks);
 
     *c = *r = *g = *b = 0;
 

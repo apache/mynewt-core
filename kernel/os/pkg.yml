@@ -39,5 +39,8 @@ pkg.deps.OS_COREDUMP:
 pkg.deps.BSP_SIMULATED:
     - "@apache-mynewt-core/kernel/sim"
 
+pkg.deps.OS_SYSVIEW:
+    - sys/sysview
+
 pkg.init:
     os_pkg_init: 0

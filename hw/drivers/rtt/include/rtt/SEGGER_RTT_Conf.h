@@ -69,6 +69,8 @@ Revision: $Rev: 4351 $
   #include <intrinsics.h>
 #endif
 
+#include "rtt/SEGGER_RTT_Conf_Mynewt.h"
+
 /*********************************************************************
 *
 *       Defines, configurable
@@ -172,8 +174,13 @@ Revision: $Rev: 4351 $
                                                 );                             \
                             }
 #else
-    #define SEGGER_RTT_LOCK()  
-    #define SEGGER_RTT_UNLOCK()
+    #ifndef   SEGGER_RTT_LOCK
+      #define SEGGER_RTT_LOCK()                // Lock RTT (nestable)   (i.e. disable interrupts)
+    #endif
+
+    #ifndef   SEGGER_RTT_UNLOCK
+      #define SEGGER_RTT_UNLOCK()              // Unlock RTT (nestable) (i.e. enable previous interrupt lock state)
+    #endif
   #endif
 #endif
 

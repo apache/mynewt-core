@@ -33,8 +33,8 @@
 #include <hal/hal_timer.h>
 
 #include <stm32f746xx.h>
-#include <stm32f7xx_hal_gpio_ex.h>
 #include <mcu/stm32f7_bsp.h>
+#include <stm32f7xx_hal_gpio_ex.h>
 
 #if MYNEWT_VAL(ETH_0)
 #include <stm32_eth/stm32_eth.h>

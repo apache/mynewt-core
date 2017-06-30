@@ -32,7 +32,7 @@ pkg.deps:
     - net/nimble/transport/ram
     - sys/console/full
     - sys/log/full
-    - sys/stats/stub
+    - sys/stats/full
     - mgmt/oicmgr
     - sys/sysinit
     - sys/shell

@@ -33,4 +33,7 @@ syscfg.defs:
     TCS34725_SHELL_ITF_NUM:
         description: 'TCS34725 interface number'
         value: 0
+    TCS34725_SHELL_ITF_ADDR:
+        description: 'TCS34725 I2C address'
+        value : 0x29
 

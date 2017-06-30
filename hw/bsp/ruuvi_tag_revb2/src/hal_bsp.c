@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <assert.h>
 #include <nrf52.h>
 #include "os/os_cputime.h"
@@ -31,6 +32,7 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
+#include "defs/error.h"
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #endif
@@ -82,7 +84,7 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
 static const struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
-    .si_cspin = 3
+    .si_cs_pin = 3
 };
 #endif
 #endif
@@ -165,12 +167,12 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 }
 
 /**
- * BME280 Sensor default configuration used by the creator package
+ * BME280 Sensor default configuration
  *
  * @return 0 on success, non-zero on failure
  */
 #if MYNEWT_VAL(BME280_ONB)
-static int
+int
 config_bme280_sensor(void)
 {
     int rc;
@@ -179,11 +181,6 @@ config_bme280_sensor(void)
 
     dev = (struct os_dev *) os_dev_open("bme280_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
-
-    if (!(dev->od_flags & OS_DEV_F_STATUS_READY)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
 
     memset(&bmecfg, 0, sizeof(bmecfg));
 
@@ -202,7 +199,6 @@ config_bme280_sensor(void)
 
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
 
-err:
     os_dev_close(dev);
     return rc;
 }
@@ -215,11 +211,8 @@ sensor_dev_create(void)
     (void)rc;
 
 #if MYNEWT_VAL(BME280_ONB)
-    rc = os_dev_create((struct os_dev *) &bme280, "bme280",
+    rc = os_dev_create((struct os_dev *) &bme280, "bme280_0",
       OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf_bme);
-    assert(rc == 0);
-
-    rc = config_bme280_sensor();
     assert(rc == 0);
 #endif
 

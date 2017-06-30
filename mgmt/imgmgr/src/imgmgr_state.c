@@ -343,27 +343,29 @@ imgmgr_state_write(struct mgmt_cbuf *cb)
         return MGMT_ERR_EINVAL;
     }
 
-    /* Validate arguments. */
-    if ((hash_len == 0) && !confirm) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    if (hash_len != 0) {
+    /* Determine which slot is being operated on. */
+    if (hash_len == 0) {
+        if (confirm) {
+            slot = 0;
+        } else {
+            /* A 'test' without a hash is invalid. */
+            return MGMT_ERR_EINVAL;
+        }
+    } else {
         slot = imgr_find_by_hash(hash, NULL);
         if (slot < 0) {
             return MGMT_ERR_EINVAL;
         }
+    }
 
-        rc = imgmgr_state_set_pending(slot, confirm);
-        if (rc != 0) {
-            return rc;
-        }
-    } else {
+    if (slot == 0 && confirm) {
         /* Confirm current setup. */
         rc = imgmgr_state_confirm();
-        if (rc != 0) {
-            return rc;
-        }
+    } else {
+        rc = imgmgr_state_set_pending(slot, confirm);
+    }
+    if (rc != 0) {
+        return rc;
     }
 
     /* Send the current image state in the response. */

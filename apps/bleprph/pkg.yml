@@ -33,7 +33,7 @@ pkg.deps:
     - net/nimble/host/services/ans
     - net/nimble/host/services/gap
     - net/nimble/host/services/gatt
-    - net/nimble/host/store/ram
+    - net/nimble/host/store/config
     - net/nimble/transport/ram
     - sys/console/full
     - sys/log/full

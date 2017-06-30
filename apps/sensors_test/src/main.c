@@ -33,7 +33,6 @@
 #include <hal/hal_system.h>
 #include <assert.h>
 #include <string.h>
-#include <flash_test/flash_test.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 #include <os/os_time.h>
@@ -425,7 +424,7 @@ sensor_ble_oic_server_init(void)
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
 
     /* Set the default device name. */
-    rc = ble_svc_gap_device_name_set("sensy");
+    rc = ble_svc_gap_device_name_set("sn");
     assert(rc == 0);
 
     rc = oc_main_init((oc_handler_t *)&sensor_oic_handler);
