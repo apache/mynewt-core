@@ -911,8 +911,7 @@ bletiny_decode_event_type(struct ble_gap_ext_disc_desc *desc)
 
     if (desc->props & BLE_HCI_ADV_LEGACY_MASK) {
         console_printf("Legacy PDU type %d", desc->legacy_event_type);
-        if (desc->legacy_event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD ||
-                desc->legacy_event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD) {
+        if (desc->legacy_event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
             directed = 1;
         }
         goto common_data;
@@ -1015,8 +1014,7 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
          * There is no adv data to print in case of connectable
          * directed advertising
          */
-        if (event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD ||
-                event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD) {
+        if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
                 console_printf("\nConnectable directed advertising event\n");
                 return 0;
         }
