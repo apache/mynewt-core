@@ -94,7 +94,8 @@ openocd_debug () {
             # Block Ctrl-C from getting passed to openocd.
             #
             set -m
-            openocd $CFG -f $OCD_CMD_FILE -c init -c halt &
+            openocd $CFG -f $OCD_CMD_FILE -c init -c halt >openocd.log 2>&1 &
+            openocdpid=$!
             set +m
         fi
 
@@ -113,6 +114,10 @@ openocd_debug () {
         else
             $GDB -x $GDB_CMD_FILE $FILE_NAME
             rm $GDB_CMD_FILE
+            sleep 1
+            if [ -d /proc/$openocdpid ] ; then
+                kill -9 $openocdpid
+            fi
         fi
     else
         # No GDB, wait for openocd to exit
