@@ -335,7 +335,6 @@ get_cb(int argc, char *argv[])
     }
 
     shell_module = &shell_modules[module];
-    console_printf("module: %d, command: %s\n", module, command);
     for (i = 0; shell_module->commands[i].sc_cmd; i++) {
         if (!strcmp(command, shell_module->commands[i].sc_cmd)) {
             return shell_module->commands[i].sc_cmd_func;
