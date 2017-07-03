@@ -112,7 +112,9 @@ openocd_debug () {
             FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
             $COMSPEC /C "start $COMSPEC /C $GDB -x $GDB_CMD_FILE $FILE_NAME"
         else
+            set -m
             $GDB -x $GDB_CMD_FILE $FILE_NAME
+            set +m
             rm $GDB_CMD_FILE
             sleep 1
             if [ -d /proc/$openocdpid ] ; then
