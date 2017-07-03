@@ -193,16 +193,17 @@ show_cmd_help(char *argv[])
             console_printf("%s:\n", shell_module->commands[i].sc_cmd);
 
             if (!shell_module->commands[i].help) {
-                console_printf("\n");
+                console_printf("(no help available)\n");
                 return 0;
             }
             if (shell_module->commands[i].help->usage) {
+                console_printf("%s:\n", shell_module->commands[i].sc_cmd);
                 console_printf("%s\n", shell_module->commands[i].help->usage);
             } else if (shell_module->commands[i].help->summary) {
-                console_printf("%s\n",
-                               shell_module->commands[i].help->summary);
+                console_printf("%s:\n", shell_module->commands[i].sc_cmd);
+                console_printf("%s\n", shell_module->commands[i].help->summary);
             } else {
-                console_printf("\n");
+                console_printf("(no help available)\n");
             }
 
             return 0;
