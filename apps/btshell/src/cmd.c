@@ -671,7 +671,7 @@ cmd_set(int argc, char **argv)
 
 static const struct shell_param set_params[] = {
     {"addr", "set device address, usage: =[XX:XX:XX:XX:XX:XX]"},
-    {"addr_type", "set device address type, usage: =[public|random|public_id|random_id], default: public"},
+    {"addr_type", "set device address type, usage: =[public|random], default: public"},
     {"mtu", "Maximum Transimssion Unit, usage: =[0-UINT16_MAX]"},
     {"irk", "Identity Resolving Key, usage: =[XX:XX...], len=16 octets"},
     {NULL, NULL}
