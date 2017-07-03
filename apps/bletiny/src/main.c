@@ -907,9 +907,14 @@ bletiny_decode_adv_data(uint8_t *adv_data, uint8_t adv_data_len)
 static void
 bletiny_decode_event_type(struct ble_gap_ext_disc_desc *desc)
 {
+    uint8_t directed = 0;
+
     if (desc->props & BLE_HCI_ADV_LEGACY_MASK) {
         console_printf("Legacy PDU type %d", desc->legacy_event_type);
-        goto adv_data;
+        if (desc->legacy_event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
+            directed = 1;
+        }
+        goto common_data;
     }
 
     console_printf("Extended adv: ");
@@ -921,6 +926,7 @@ bletiny_decode_event_type(struct ble_gap_ext_disc_desc *desc)
     }
     if (desc->props & BLE_HCI_ADV_DIRECT_MASK) {
         console_printf("'dir' ");
+        directed = 1;
     }
 
     if (desc->props & BLE_HCI_ADV_SCAN_RSP_MASK) {
@@ -941,9 +947,20 @@ bletiny_decode_event_type(struct ble_gap_ext_disc_desc *desc)
         console_printf("reserved %d", desc->data_status);
         break;
     }
+
+common_data:
+    console_printf(" rssi=%d txpower=%d, pphy=%d, sphy=%d, sid=%d,"
+                   " addr_type=%d addr=",
+                   desc->rssi, desc->tx_power, desc->prim_phy, desc->sec_phy,
+                   desc->sid, desc->addr.type);
+    print_addr(desc->addr.val);
+    if (directed) {
+        console_printf(" init_addr_type=%d inita=", desc->direct_addr.type);
+        print_addr(desc->direct_addr.val);
+    }
+
     console_printf("\n");
 
-adv_data:
     if(!desc->length_data) {
         return;
     }
@@ -997,8 +1014,7 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
          * There is no adv data to print in case of connectable
          * directed advertising
          */
-        if (event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD ||
-                event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD) {
+        if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
                 console_printf("\nConnectable directed advertising event\n");
                 return 0;
         }
