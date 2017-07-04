@@ -1811,6 +1811,11 @@ cmd_security_set_data(int argc, char **argv)
 
     good = 0;
 
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
     tmp = parse_arg_bool("oob_flag", &rc);
     if (rc == 0) {
         ble_hs_cfg.sm_oob_data_flag = tmp;
